@@ -8,6 +8,7 @@ import Mathlib.Analysis.Complex.UpperHalfPlane.Exp
 import Mathlib.Analysis.Complex.UpperHalfPlane.Manifold
 import Mathlib.NumberTheory.ModularForms.Basic
 import Mathlib.NumberTheory.ModularForms.Identities
+import Mathlib.NumberTheory.ModularForms.QExpansion
 import LeanModularForms.ForMathlib.Identities
 import Mathlib.RingTheory.PowerSeries.Basic
 
@@ -95,17 +96,12 @@ local notation "𝕢" => Periodic.qParam
 
 namespace SlashInvariantFormClass
 
-variable (h) in
-/--
-The analytic function `F` such that `f τ = F (exp (2 * π * I * τ / n))`, extended by a choice of
-limit at `0`.
--/
-def cuspFunction : ℂ → ℂ := Function.Periodic.cuspFunction h (f ∘ ofComplex)
+
 
 variable [hF : SlashInvariantFormClass F Γ k]
 include hF
 
-theorem periodic_comp_ofComplex (hΓ : Γ.width ∣ h) : Periodic (f ∘ ofComplex) h := by
+theorem periodic_comp_ofComplex' (hΓ : Γ.width ∣ h) : Periodic (f ∘ ofComplex) h := by
   intro w
   by_cases hw : 0 < im w
   · have : 0 < im (w + h) := by simp only [add_im, natCast_im, add_zero, hw]
@@ -117,9 +113,9 @@ theorem periodic_comp_ofComplex (hΓ : Γ.width ∣ h) : Periodic (f ∘ ofCompl
     simp only [comp_apply, ofComplex_apply_of_im_nonpos this,
       ofComplex_apply_of_im_nonpos (not_lt.mp hw)]
 
-theorem eq_cuspFunction {τ : ℍ} [NeZero h] (hΓ : Γ.width ∣ h) :
+theorem eq_cuspFunction' {τ : ℍ} [NeZero h] (hΓ : Γ.width ∣ h) :
     cuspFunction h f (𝕢 h τ) = f τ := by
-  simpa using (periodic_comp_ofComplex f hΓ).eq_cuspFunction (NeZero.ne _) τ
+  simpa using (periodic_comp_ofComplex' f hΓ).eq_cuspFunction (NeZero.ne _) τ
 
 end SlashInvariantFormClass
 
@@ -129,95 +125,30 @@ namespace ModularFormClass
 -- These declarations don't logically need `f` to be a modular form (although they are pretty
 -- useless without!)
 
-variable (h) in
-/-- The `q`-expansion of a level `n` modular form, bundled as a `PowerSeries`. -/
-def qExpansion : PowerSeries ℂ :=
-  .mk fun n ↦ (↑n.factorial)⁻¹ * iteratedDeriv n (cuspFunction h f) 0
 
-lemma qExpansion_coeff (n : ℕ) :
-    (qExpansion h f).coeff ℂ n = (↑n.factorial)⁻¹ * iteratedDeriv n (cuspFunction h f) 0 := by
-  simp [qExpansion]
 
-variable (h) in
-/--
-The `q`-expansion of a level `n` modular form, bundled as a `FormalMultilinearSeries`.
 
-TODO: Maybe get rid of this and instead define a general API for converting `PowerSeries` to
-`FormalMultlinearSeries`.
--/
-def qExpansionFormalMultilinearSeries : FormalMultilinearSeries ℂ ℂ ℂ :=
-  fun n ↦ (qExpansion h f).coeff ℂ n • ContinuousMultilinearMap.mkPiAlgebraFin ℂ n _
-
-lemma qExpansionFormalMultilinearSeries_apply_norm (n : ℕ) :
-    ‖qExpansionFormalMultilinearSeries h f n‖ = ‖(qExpansion h f).coeff ℂ n‖ := by
-  rw [qExpansionFormalMultilinearSeries,
-    ← (ContinuousMultilinearMap.piFieldEquiv ℂ (Fin n) ℂ).symm.norm_map]
-  simp
 
 variable [hF : ModularFormClass F Γ k]
 include hF
 
-theorem differentiableAt_comp_ofComplex (hz : 0 < im z) :
-    DifferentiableAt ℂ (f ∘ ofComplex) z :=
-  mdifferentiableAt_iff_differentiableAt.mp ((holo f _).comp z (mdifferentiableAt_ofComplex hz))
-
-theorem bounded_at_infty_comp_ofComplex :
-    BoundedAtFilter I∞ (f ∘ ofComplex) := by
-  simpa only [SlashAction.slash_one, ModularForm.toSlashInvariantForm_coe]
-    using (ModularFormClass.bdd_at_infty f 1).comp_tendsto tendsto_comap_im_ofComplex
-
 variable [NeZero h] (hΓ : Γ.width ∣ h)
 include hΓ
 
-theorem differentiableAt_cuspFunction  (hq : ‖q‖ < 1) :
+theorem differentiableAt_cuspFunction'  (hq : ‖q‖ < 1) :
     DifferentiableAt ℂ (cuspFunction h f) q := by
   have npos : 0 < (h : ℝ) := mod_cast (Nat.pos_iff_ne_zero.mpr (NeZero.ne _))
   rcases eq_or_ne q 0 with rfl | hq'
-  · exact (periodic_comp_ofComplex f hΓ).differentiableAt_cuspFunction_zero npos
+  · exact (periodic_comp_ofComplex' f hΓ).differentiableAt_cuspFunction_zero npos
       (eventually_of_mem (preimage_mem_comap (Ioi_mem_atTop 0))
         (fun _ ↦ differentiableAt_comp_ofComplex f))
       (bounded_at_infty_comp_ofComplex f)
   · exact Periodic.qParam_right_inv npos.ne' hq' ▸
-      (periodic_comp_ofComplex f hΓ).differentiableAt_cuspFunction npos.ne'
+      (periodic_comp_ofComplex' f hΓ).differentiableAt_cuspFunction npos.ne'
         <| differentiableAt_comp_ofComplex _ <| Periodic.im_invQParam_pos_of_norm_lt_one npos hq hq'
 
-lemma analyticAt_cuspFunction_zero :
-    AnalyticAt ℂ (cuspFunction h f) 0 :=
-  DifferentiableOn.analyticAt
-    (fun q hq ↦ (differentiableAt_cuspFunction _ hΓ hq).differentiableWithinAt)
-    (by simpa only [ball_zero_eq] using Metric.ball_mem_nhds (0 : ℂ) zero_lt_one)
 
-lemma hasSum_qExpansion_of_abs_lt (hq : ‖q‖ < 1) :
-    HasSum (fun m ↦ (qExpansion h f).coeff ℂ m • q ^ m) (cuspFunction h f q) := by
-  simp only [qExpansion_coeff, ← eq_cuspFunction f hΓ]
-  have hdiff : DifferentiableOn ℂ (cuspFunction h f) (Metric.ball 0 1) := by
-    refine fun z hz ↦ (differentiableAt_cuspFunction f hΓ ?_).differentiableWithinAt
-    simpa using hz
-  have qmem : q ∈ Metric.ball 0 1 := by simpa using hq
-  convert hasSum_taylorSeries_on_ball hdiff qmem using 2 with m
-  rw [sub_zero, smul_eq_mul, smul_eq_mul, mul_right_comm, smul_eq_mul, mul_assoc]
 
-lemma hasSum_qExpansion :
-    HasSum (fun m : ℕ ↦ (qExpansion h f).coeff ℂ m • 𝕢 h τ ^ m) (f τ) := by
-  simpa only [eq_cuspFunction f hΓ] using
-    hasSum_qExpansion_of_abs_lt f hΓ (τ.norm_qParam_lt_one h)
-
-lemma qExpansionFormalMultilinearSeries_radius :
-    1 ≤ (qExpansionFormalMultilinearSeries h f).radius := by
-  refine le_of_forall_lt_imp_le_of_dense fun r hr ↦ ?_
-  lift r to NNReal using hr.ne_top
-  apply FormalMultilinearSeries.le_radius_of_summable
-  simp only [qExpansionFormalMultilinearSeries_apply_norm]
-  rw [← r.abs_eq]
-  simp_rw [← Real.norm_eq_abs, ← Complex.norm_real, ← norm_pow, ← norm_mul]
-  exact (hasSum_qExpansion_of_abs_lt f hΓ (by simpa using hr)).summable.norm
-
-/-- The `q`-expansion of `f` is an `FPowerSeries` representing `cuspFunction h f`. -/
-lemma hasFPowerSeries_cuspFunction :
-    HasFPowerSeriesOnBall (cuspFunction h f) (qExpansionFormalMultilinearSeries h f) 0 1 := by
-  refine ⟨qExpansionFormalMultilinearSeries_radius f hΓ, zero_lt_one, fun {y} hy ↦ ?_⟩
-  replace hy : ‖y‖ < 1 := by simpa [enorm_eq_nnnorm, ← NNReal.coe_lt_one] using hy
-  simpa [qExpansionFormalMultilinearSeries] using hasSum_qExpansion_of_abs_lt f hΓ hy
 
 /-- The `q`-expansion coefficient can be expressed as a `circleIntegral` for any radius `0 < R < 1`.
 -/
@@ -225,7 +156,7 @@ lemma qExpansion_coeff_eq_circleIntegral (n : ℕ) {R : ℝ} (hR : 0 < R) (hR' :
     (qExpansion h f).coeff ℂ n =
       ((2 * π * I)⁻¹ * ∮ (z : ℂ) in C(0, R), cuspFunction h f z / z ^ (n + 1)) := by
   have : DifferentiableOn ℂ (cuspFunction h f) (Metric.closedBall 0 R) := fun z hz ↦
-      (differentiableAt_cuspFunction f hΓ <| (mem_closedBall_zero_iff.mp hz).trans_lt hR')
+      (differentiableAt_cuspFunction' f hΓ <| (mem_closedBall_zero_iff.mp hz).trans_lt hR')
         |>.differentiableWithinAt
   have := this.circleIntegral_one_div_sub_center_pow_smul hR n
   rw [smul_eq_mul, div_eq_mul_inv, mul_assoc, mul_comm, ← div_eq_iff two_pi_I_ne_zero] at this
@@ -262,7 +193,7 @@ lemma qExpansion_coeff_eq_intervalIntegral (n : ℕ)
     ring_nf
   -- now just complex exponential arithmetic to finish
   simp_rw [deriv_circleMap, this, show u + t * I = τ by rfl, show ⟨↑τ, τ.2⟩ = τ by rfl,
-    eq_cuspFunction _ hΓ, smul_eq_mul, pow_succ]
+    eq_cuspFunction' _ hΓ, smul_eq_mul, pow_succ]
   ring_nf -- why do we need to do ring_nf twice here?
   field_simp [(show 𝕢 h τ ≠ 0 from Complex.exp_ne_zero _), Real.pi_ne_zero, NeZero.ne]
   ring_nf
@@ -298,7 +229,7 @@ theorem exp_decay_atImInfty_of_width_dvd [ModularFormClass F Γ k]
   -- Now the interesting case.
   · haveI : NeZero h := ⟨hΓ'⟩
     simpa [comp_def] using
-      ((periodic_comp_ofComplex f hΓ).exp_decay_of_zero_at_inf
+      ((periodic_comp_ofComplex' f hΓ).exp_decay_of_zero_at_inf
         (mod_cast (Nat.pos_iff_ne_zero.mpr (NeZero.ne _)))
         (eventually_of_mem (preimage_mem_comap (Ioi_mem_atTop 0))
           fun _ ↦ differentiableAt_comp_ofComplex f)
@@ -319,10 +250,6 @@ namespace CuspFormClass
 
 variable [hF : CuspFormClass F Γ k]
 include hF
-
-theorem exp_decay_atImInfty (hΓ : Γ.width ∣ h):
-    f =O[atImInfty] fun τ ↦ Real.exp (-2 * π * τ.im / h) :=
-  IsZeroAtImInfty.exp_decay_atImInfty_of_width_dvd (by simpa using zero_at_infty f 1) hΓ
 
 /-- If `f` is cuspidal, then it has exponentially rapid decay at every cusp. -/
 theorem exp_decay_atImInfty_translate [Γ.FiniteIndex] (γ : SL(2, ℤ)) :
