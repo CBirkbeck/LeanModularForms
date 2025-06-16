@@ -25,16 +25,6 @@ local notation "𝕢" => qParam
 
 variable {F : Type*} [FunLike F ℍ ℂ] {k : ℤ}
 
-namespace SlashInvariantForm
-
-variable [SlashInvariantFormClass F Γ(1) k]
-
-
-
-
-
-end SlashInvariantForm
-
 namespace ModularFormClass
 
 variable [ModularFormClass F Γ(1) k]
