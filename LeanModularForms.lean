@@ -1,5 +1,13 @@
 import LeanModularForms.ForMathlib.AtImInfty
+import LeanModularForms.ForMathlib.Bounds
+import LeanModularForms.ForMathlib.CongruenceSubgroupsCopy
+import LeanModularForms.ForMathlib.CongruenceSubgrps
 import LeanModularForms.ForMathlib.FunctionsBoundedAtInfty
+import LeanModularForms.ForMathlib.Identities
+import LeanModularForms.ForMathlib.IsBoundedAtImInfty
+import LeanModularForms.ForMathlib.LevelOne
+import LeanModularForms.ForMathlib.Petersson
+import LeanModularForms.ForMathlib.QExpansion
 import LeanModularForms.ForMathlib.SlashActions
 import LeanModularForms.ForMathlib.UpperHalfPlane
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing
