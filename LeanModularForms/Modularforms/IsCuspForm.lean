@@ -159,3 +159,8 @@ lemma CuspFormSubmodule_mem_iff_coeffZero_eq_zero  (k : ℤ) (f : ModularForm Γ
     f ∈ CuspFormSubmodule Γ(1) k ↔ (qExpansion 1 f).coeff ℂ 0 = 0 := by
   have := IsCuspForm_iff_coeffZero_eq_zero k f
   apply this
+
+lemma CuspForm_to_ModularForm_apply (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k)
+    (hf : IsCuspForm Γ k f) (z : ℍ) :  (IsCuspForm_to_CuspForm Γ k f hf) z = f z := by
+  have := congr_fun (CuspForm_to_ModularForm_Fun_coe Γ k f hf) z
+  simpa using this
