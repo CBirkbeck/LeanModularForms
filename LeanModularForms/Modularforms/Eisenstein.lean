@@ -730,6 +730,7 @@ lemma PowerSeries.coeff_add (f g : PowerSeries ℂ) (n : ℕ) :
     (f + g).coeff ℂ n = (f.coeff ℂ n) + (g.coeff ℂ n) := by
   exact rfl
 
+
 open ArithmeticFunction
 
 section Ramanujan_Formula

@@ -517,6 +517,32 @@ lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Ev
     Nat.floor ((k : ℚ)/ 12) else Nat.floor ((k : ℚ) / 12) + 1 := by
   apply dim_modforms_lvl_one k hk hk2
 
+
+lemma MF_mul_apply (f g : ModularForm Γ(1) k) (z : ℍ) :
+    (f.mul g) z = f z * g z := by
+  simp
+
+lemma Delta_eq_E4E6_apply (z : ℍ) : Δ z = ((E₄ z)^3 - (E₆ z)^2) / 1728 := by
+  rw [← Delta_apply]
+  rw [Delta_E4_eqn,  Delta_E4_E6_aux]
+  rw [CuspForm_to_ModularForm_apply]
+  rw [@pow_three, pow_two]
+  rw [@DirectSum.sub_apply]
+  simp
+  simp_rw [DirectSum.of_mul_of]
+  simp
+  have := MF_mul_apply E₆ E₆  z
+  have : (GradedMonoid.GMul.mul E₆ E₆) z = E₆ z * E₆ z := by
+    rfl
+  have h2 : (GradedMonoid.GMul.mul E₄ (GradedMonoid.GMul.mul E₄ E₄)) z =
+    E₄ z * (GradedMonoid.GMul.mul E₄ E₄) z := by rfl
+  have h3 : (GradedMonoid.GMul.mul E₄ E₄) z = E₄ z * E₄ z := by
+    rfl
+  rw [this, h2, h3]
+  ring
+
+
+
 lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.index Γ ≠ 0) :
     FiniteDimensional ℂ (ModularForm Γ k) := by sorry
 --use the norm to turn it into a level one question.
