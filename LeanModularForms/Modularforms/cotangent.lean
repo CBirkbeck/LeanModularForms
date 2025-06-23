@@ -238,7 +238,7 @@ lemma logDeriv_of_prod {x : ℂ} (hx : x ∈ ℂ_ℤ) (n : ℕ) :
   · exact fun i _ ↦ sinTerm_ne_zero hx i
   · intro i _
     simp only [sinTerm, differentiableAt_const, differentiableAt_const_add_iff,
-      differentiableAt_neg_iff, differentiableAt_id', DifferentiableAt.pow,
+      differentiableAt_fun_neg_iff, differentiableAt_id', DifferentiableAt.pow,
       DifferentiableAt.div_const]
 
 theorem tendsto_logDeriv_euler_cot_sub (x : ℂ) (hx : x ∈ ℂ_ℤ) :
