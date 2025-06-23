@@ -35,6 +35,9 @@ lemma one_add_eta_q_ne_zero (n : ℕ) (z : ℍ) : 1 + eta_q n z ≠ 0 := by
 
 noncomputable abbrev eta_prod_term (z : ℂ) := ∏' (n : ℕ), (1 + eta_q n z)
 
+lemma eta_prod_term_eq_exp (z : ℂ) :
+    eta_prod_term z = ∏' (n : ℕ), (1 - cexp (2 * π * Complex.I * (n + 1) * z)) := by sorry
+
 local notation "ηₚ" => eta_prod_term
 
 /- The eta function. Best to define it on all of ℂ since we want to take its logDeriv. -/
@@ -336,14 +339,14 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
     have:= hasProdLocallyUniformlyOn_eta
     simp [eta_q_eq_exp] at this
     simpa using this
-  · sorry
-    --exact eta_tprod_ne_zero z
-  · simp only [ne_eq, exp_ne_zero, not_false_eq_true]
-    sorry
-  · sorry
-    --exact eta_tprod_ne_zero z
-  · sorry
-    --fun_prop
+  · have := eta_prod_term_ne_zero z
+    rw [eta_prod_term_eq_exp] at this
+    simpa using this
+  · simp [ne_eq, exp_ne_zero, not_false_eq_true, Periodic.qParam]
+  · apply eta_prod_term_ne_zero z
+  · have : (𝕢 24) = fun z => exp (2 * π * Complex.I * z / 24):=  by rfl
+    rw [this]
+    fun_prop
   · apply eta_differentiableAt
 
 
