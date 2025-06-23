@@ -1,19 +1,58 @@
+import LeanModularForms.Modularforms.tendstolems
+import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Analysis.Complex.LocallyUniformLimit
+import Mathlib.Topology.Algebra.InfiniteSum.UniformOn
 import Mathlib.Topology.Separation.CompletelyRegular
-import Mathlib.NumberTheory.ArithmeticFunction
-import Mathlib.NumberTheory.ModularForms.Basic
-import Mathlib.NumberTheory.ModularForms.EisensteinSeries.Defs
-import LeanModularForms.Modularforms.tendstolems
 
 
-open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
+open  TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex
 
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat Classical
 
-open ArithmeticFunction
 
+theorem logDeriv_tprod_eq_tsum2  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ → ℂ → ℂ)
+    (hf : ∀ i, f i x ≠ 0)
+    (hd : ∀ i : ℕ, DifferentiableOn ℂ (f i) s) (hm : Summable fun i ↦ logDeriv (f i) ↑x)
+    (htend : MultipliableLocallyUniformlyOn f s) (hnez : ∏' (i : ℕ), f i ↑x ≠ 0) :
+    logDeriv (∏' i : ℕ, f i ·) x = ∑' i : ℕ, logDeriv (f i) x := by
+    have h2 := Summable.hasSum hm
+    rw [Summable.hasSum_iff_tendsto_nat hm] at h2
+    apply symm
+    rw [← Summable.hasSum_iff hm]
+    rw [Summable.hasSum_iff_tendsto_nat hm]
+    let g := (∏' i : ℕ, f i ·)
+    have := logDeriv_tendsto (fun n ↦ ∏ i ∈ Finset.range n, (f i)) g (s := s) hs (p := atTop)
+    simp only [eventually_atTop, ge_iff_le, ne_eq, forall_exists_index, Subtype.forall, g] at this
+    have HT := this x x.2 ?_ ?_ ?_ ?_
+    conv =>
+      enter [1]
+      ext n
+      rw [← logDeriv_prod _ _ _ (by intro i hi; apply hf i)
+        (by intro i hi; apply (hd i x x.2).differentiableAt; exact IsOpen.mem_nhds hs x.2)]
+    apply HT.congr
+    intro m
+    congr
+    ext i
+    simp only [Finset.prod_apply]
+    have:= htend.hasProdLocallyUniformlyOn.tendstoLocallyUniformlyOn_finsetRange
+    convert this
+    simp
+    use 0
+    intro b hb
+    rw [DifferentiableOn]
+    intro z hz
+    apply DifferentiableAt.differentiableWithinAt
+    have hp : ∀ (i : ℕ), i ∈ Finset.range b →  DifferentiableAt ℂ (f i) z := by
+      intro i hi
+      have := (hd i z hz).differentiableAt
+      apply this
+      exact IsOpen.mem_nhds hs hz
+    have := DifferentiableAt.finset_prod hp
+    convert this
+    simp only [Finset.prod_apply]
+    · exact hnez
 
 
 theorem logDeriv_tprod_eq_tsum  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ → ℂ → ℂ)

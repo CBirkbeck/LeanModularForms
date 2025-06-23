@@ -1,6 +1,7 @@
 import LeanModularForms.Modularforms.E2
 import LeanModularForms.Modularforms.csqrt
 import LeanModularForms.Modularforms.logDeriv_lems
+import Mathlib
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex MatrixGroups
@@ -16,6 +17,11 @@ noncomputable abbrev eta_q (n : ℕ) (z : ℂ) :=  - (𝕢 1 z) ^ (n + 1)
 lemma eta_q_eq_exp (n : ℕ) (z : ℂ) : eta_q n z = -cexp (2 * π * Complex.I * (n + 1) * z) := by
   simp [eta_q, Periodic.qParam, ← Complex.exp_nsmul]
   ring_nf
+
+lemma eta_q_eq_exp' (n : ℕ) : eta_q n =
+  fun z => -cexp (2 * π * Complex.I * (n + 1) * z) := by
+  ext z
+  simpa using eta_q_eq_exp n z
 
 lemma eta_q_eq_pow (n : ℕ) (z : ℂ) : eta_q n z = -cexp (2 * π * Complex.I * z) ^ (n + 1) := by
   simp [eta_q, Periodic.qParam]
@@ -48,6 +54,23 @@ theorem Summable_eta_q (z : ℍ) : Summable fun n : ℕ ↦ ‖eta_q n z‖ := b
     simp_rw  [eta_q, eta_q_eq_pow, norm_neg, norm_pow, summable_nat_add_iff 1]
     simp only [summable_geometric_iff_norm_lt_one, norm_norm]
     apply exp_upperHalfPlane_lt_one z
+
+lemma hasProdLocallyUniformlyOn_eta :
+    HasProdLocallyUniformlyOn (fun n a ↦ 1 + eta_q n a) ηₚ {x | 0 < x.im} := by
+  apply hasProdLocallyUniformlyOn_of_forall_compact (isOpen_lt continuous_const Complex.continuous_im)
+  intro K hK hcK
+  by_cases hN : ¬ Nonempty K
+  · rw [hasProdUniformlyOn_iff_tendstoUniformlyOn]
+    simpa [not_nonempty_iff_eq_empty'.mp hN] using tendstoUniformlyOn_empty
+  have hc : ContinuousOn (fun x ↦ ‖cexp (2 * ↑π * Complex.I * x)‖) K := by fun_prop
+  obtain ⟨z, hz, hB, HB⟩ := IsCompact.exists_sSup_image_eq_and_ge hcK (by simpa using hN) hc
+  apply Summable.hasProdUniformlyOn_nat_one_add hcK (Summable_eta_q ⟨z, by simpa using (hK hz)⟩)
+  · filter_upwards with n x hx
+    simpa only [eta_q, eta_q_eq_pow n x, norm_neg, norm_pow, coe_mk_subtype,
+        eta_q_eq_pow n (⟨z, hK hz⟩ : ℍ)] using
+        pow_le_pow_left₀ (by simp [norm_nonneg]) (HB x hx) (n + 1)
+  · simp_rw [eta_q_eq_exp']
+    fun_prop
 
 lemma eta_tndntunif : TendstoLocallyUniformlyOn
     (fun n a ↦ ∏ i ∈ Finset.range n, (1 + eta_q i a)) ηₚ atTop {x | 0 < x.im} := by
@@ -192,7 +215,7 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
   unfold ModularForm.eta
   unfold eta_prod_term
   rw [logDeriv_mul]
-  have HG := logDeriv_tprod_eq_tsum (s := {x : ℂ | 0 < x.im}) ?_ z
+  have HG := logDeriv_tprod_eq_tsum2 (s := {x : ℂ | 0 < x.im}) ?_ z
     (fun (n : ℕ) => fun (x : ℂ) => 1 - cexp (2 * π * Complex.I * (n + 1) * x)) ?_ ?_ ?_ ?_ ?_
   simp only [mem_setOf_eq, UpperHalfPlane.coe] at *
   conv =>
@@ -309,9 +332,10 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
       simp only [UpperHalfPlane.coe, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
       ring_nf
   · simp_rw [sub_eq_add_neg]
-    have:= eta_tndntunif
-    simp [eta_q_eq_exp, eta_prod_term] at this
-    sorry
+    use ηₚ
+    have:= hasProdLocallyUniformlyOn_eta
+    simp [eta_q_eq_exp] at this
+    simpa using this
   · sorry
     --exact eta_tprod_ne_zero z
   · simp only [ne_eq, exp_ne_zero, not_false_eq_true]
