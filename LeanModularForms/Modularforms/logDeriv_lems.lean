@@ -12,7 +12,7 @@ open  TopologicalSpace Set MeasureTheory intervalIntegral
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat Classical
 
 
-theorem logDeriv_tprod_eq_tsum2  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ → ℂ → ℂ)
+theorem logDeriv_tprod_eq_tsum2 {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ → ℂ → ℂ)
     (hf : ∀ i, f i x ≠ 0)
     (hd : ∀ i : ℕ, DifferentiableOn ℂ (f i) s) (hm : Summable fun i ↦ logDeriv (f i) ↑x)
     (htend : MultipliableLocallyUniformlyOn f s) (hnez : ∏' (i : ℕ), f i ↑x ≠ 0) :
