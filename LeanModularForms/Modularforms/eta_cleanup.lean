@@ -1,7 +1,6 @@
 import LeanModularForms.Modularforms.E2
 import LeanModularForms.Modularforms.csqrt
 import LeanModularForms.Modularforms.logDeriv_lems
-import Mathlib
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex MatrixGroups
@@ -12,32 +11,34 @@ open ArithmeticFunction
 
 local notation "𝕢" => Periodic.qParam
 
-noncomputable abbrev eta_q (n : ℕ) (z : ℂ) :=  - (𝕢 1 z) ^ (n + 1)
+local notation "𝕢₁" => Periodic.qParam 1
 
-lemma eta_q_eq_exp (n : ℕ) (z : ℂ) : eta_q n z = -cexp (2 * π * Complex.I * (n + 1) * z) := by
+noncomputable abbrev eta_q (n : ℕ) (z : ℂ) := (𝕢₁ z) ^ (n + 1)
+
+lemma eta_q_eq_exp (n : ℕ) (z : ℂ) : eta_q n z = cexp (2 * π * Complex.I * (n + 1) * z) := by
   simp [eta_q, Periodic.qParam, ← Complex.exp_nsmul]
   ring_nf
 
 lemma eta_q_eq_exp' (n : ℕ) : eta_q n =
-  fun z => -cexp (2 * π * Complex.I * (n + 1) * z) := by
+  fun z => cexp (2 * π * Complex.I * (n + 1) * z) := by
   ext z
   simpa using eta_q_eq_exp n z
 
-lemma eta_q_eq_pow (n : ℕ) (z : ℂ) : eta_q n z = -cexp (2 * π * Complex.I * z) ^ (n + 1) := by
+lemma eta_q_eq_pow (n : ℕ) (z : ℂ) : eta_q n z = cexp (2 * π * Complex.I * z) ^ (n + 1) := by
   simp [eta_q, Periodic.qParam]
 
-lemma one_add_eta_q_ne_zero (n : ℕ) (z : ℍ) : 1 + eta_q n z ≠ 0 := by
-  rw [eta_q_eq_exp, ← sub_eq_add_neg, sub_ne_zero]
+lemma one_add_eta_q_ne_zero (n : ℕ) (z : ℍ) : 1 - eta_q n z ≠ 0 := by
+  rw [eta_q_eq_exp, sub_ne_zero]
   intro h
   have := exp_upperHalfPlane_lt_one_nat z n
   rw [← h] at this
   simp only [norm_one, lt_self_iff_false] at *
 
-noncomputable abbrev etaProdTerm (z : ℂ) := ∏' (n : ℕ), (1 + eta_q n z)
+noncomputable abbrev etaProdTerm (z : ℂ) := ∏' (n : ℕ), (1 - eta_q n z)
 
 lemma etaProdTerm_eq_exp (z : ℂ) :
     etaProdTerm z = ∏' (n : ℕ), (1 - cexp (2 * π * Complex.I * (n + 1) * z)) := by
-    simp_rw [etaProdTerm, eta_q_eq_exp, sub_eq_add_neg]
+    simp_rw [etaProdTerm, eta_q_eq_exp]
 
 local notation "ηₚ" => etaProdTerm
 
@@ -46,15 +47,7 @@ noncomputable def ModularForm.eta (z : ℂ) := (𝕢 24 z) * ηₚ z
 
 local notation "η" => ModularForm.eta
 
-/-this is being PRd-/
-lemma prod_tendstoUniformlyOn_tprod' {α : Type*} [TopologicalSpace α] {f : ℕ → α → ℂ} {K : Set α}
-    (hK : IsCompact K) {u : ℕ → ℝ} (hu : Summable u) (h : ∀ n x, x ∈ K → (‖(f n x)‖) ≤ u n)
-    (hcts : ∀ n, ContinuousOn (fun x => (f n x)) K) :
-    TendstoUniformlyOn (fun n : ℕ => fun a : α => ∏ i ∈ Finset.range n, (1 + (f i a)))
-    (fun a => ∏' i, (1 + (f i a))) atTop K := by
-    apply tendstoUniformlyOn_tprod' hK hu h  hcts
-
-theorem Summable_eta_q (z : ℍ) : Summable fun n : ℕ ↦ ‖eta_q n z‖ := by
+theorem Summable_eta_q (z : ℍ) : Summable fun n : ℕ ↦ ‖-eta_q n z‖ := by
     simp_rw  [eta_q, eta_q_eq_pow, norm_neg, norm_pow, summable_nat_add_iff 1]
     simp only [summable_geometric_iff_norm_lt_one, norm_norm]
     apply exp_upperHalfPlane_lt_one z
@@ -70,7 +63,8 @@ lemma qParam_ContDiff (n : ℝ) (m : WithTop ℕ∞) : ContDiff ℂ m (𝕢 n) :
     fun_prop
 
 lemma hasProdLocallyUniformlyOn_eta :
-    HasProdLocallyUniformlyOn (fun n a ↦ 1 + eta_q n a) ηₚ {x | 0 < x.im} := by
+    HasProdLocallyUniformlyOn (fun n a ↦ 1 - eta_q n a) ηₚ {x | 0 < x.im} := by
+  simp_rw [sub_eq_add_neg]
   apply hasProdLocallyUniformlyOn_of_forall_compact (isOpen_lt continuous_const Complex.continuous_im)
   intro K hK hcK
   by_cases hN : ¬ Nonempty K
@@ -83,7 +77,7 @@ lemma hasProdLocallyUniformlyOn_eta :
     simpa only [eta_q, eta_q_eq_pow n x, norm_neg, norm_pow, coe_mk_subtype,
         eta_q_eq_pow n (⟨z, hK hz⟩ : ℍ)] using
         pow_le_pow_left₀ (by simp [norm_nonneg]) (HB x hx) (n + 1)
-  · simp_rw [eta_q_eq_exp']
+  · simp_rw [eta_q, Periodic.qParam]
     fun_prop
 
 lemma tprod_ne_zero' {ι α : Type*} (x : α) (f : ι → α → ℂ) (hf : ∀ i x, 1 + f i x ≠ 0)
@@ -95,7 +89,7 @@ lemma tprod_ne_zero' {ι α : Type*} (x : α) (f : ι → α → ℂ) (hf : ∀ 
 
 theorem etaProdTerm_ne_zero (z : ℍ) : ηₚ z ≠ 0 := by
   simp only [etaProdTerm, eta_q, ne_eq]
-  refine tprod_ne_zero' z (fun (n : ℕ) (x : ℍ) => eta_q n x) ?_ ?_
+  refine tprod_ne_zero' z (fun (n : ℕ) (x : ℍ) => -eta_q n x) ?_ ?_
   · refine fun i x => by simpa using one_add_eta_q_ne_zero i x
   · intro x
     rw [←summable_norm_iff]
@@ -105,7 +99,6 @@ theorem etaProdTerm_ne_zero (z : ℍ) : ηₚ z ≠ 0 := by
 lemma eta_nonzero_on_UpperHalfPlane (z : ℍ) : η z ≠ 0 := by
   rw [ModularForm.eta, Periodic.qParam]
   simpa using etaProdTerm_ne_zero z
-
 
 /-
 lemma differentiable_eta_q (n : ℕ) : Differentiable ℂ (eta_q n) := by
@@ -127,26 +120,26 @@ lemma logDeriv_one_sub_mul_cexp_comp (r : ℂ) {g : ℂ → ℂ} (hg : Different
 
 
 theorem one_add_eta_logDeriv_eq (z : ℂ) (i : ℕ) :
-  logDeriv (fun x ↦ 1 + eta_q i x) z = 2 * ↑π * Complex.I * (↑i + 1) * eta_q i z / (1 + eta_q i z) := by
+  logDeriv (fun x ↦ 1 - eta_q i x) z = 2 * ↑π * Complex.I * (↑i + 1) * -eta_q i z / (1 - eta_q i z) := by
   have h2 : (fun x ↦ 1 - cexp (2 * ↑π * Complex.I * (↑i + 1) * x)) =
       ((fun z ↦ 1 - 1 * cexp z) ∘ fun x ↦ 2 * ↑π * Complex.I * (↑i + 1) * x) := by aesop
   have h3 : deriv (fun x : ℂ ↦ (2 * π * Complex.I * (i + 1) * x)) =
         fun _ ↦ 2 * π * Complex.I * (i + 1) := by
       ext y
       simpa using deriv_const_mul (2 * π * Complex.I * (i + 1)) (d := fun (x : ℂ) => x) (x := y)
-  simp_rw [eta_q_eq_exp, ← sub_eq_add_neg, h2, logDeriv_one_sub_mul_cexp_comp 1
+  simp_rw [eta_q_eq_exp, h2, logDeriv_one_sub_mul_cexp_comp 1
     (g := fun x => (2 * π * Complex.I * (i + 1) * x)) (by fun_prop), h3]
   simp
 
 lemma tsum_log_deriv_eta_q (z : ℂ) :
-  ∑' (i : ℕ), logDeriv (fun x ↦ 1 + eta_q i x) z =
-  ∑' n : ℕ, (2 * ↑π * Complex.I * (n + 1)) * (eta_q n z) / (1  + eta_q n z) := by
+  ∑' (i : ℕ), logDeriv (fun x ↦ 1 - eta_q i x) z =
+  ∑' n : ℕ, (2 * ↑π * Complex.I * (n + 1)) * (-eta_q n z) / (1  - eta_q n z) := by
   refine tsum_congr (fun i => ?_)
   apply one_add_eta_logDeriv_eq
 
 lemma tsum_log_deriv_eta_q' (z : ℂ) :
-  ∑' (i : ℕ), logDeriv (fun x ↦ 1 + eta_q i x) z =
-   (2 * ↑π * Complex.I) * ∑' n : ℕ, (n + 1) * (eta_q n z) / (1  + eta_q n z) := by
+  ∑' (i : ℕ), logDeriv (fun x ↦ 1 - eta_q i x) z =
+   (2 * ↑π * Complex.I) * ∑' n : ℕ, (n + 1) * (-eta_q n z) / (1  - eta_q n z) := by
   rw [tsum_log_deriv_eta_q z, ← tsum_mul_left]
   congr 1
   ext i
@@ -190,12 +183,12 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
   rw [logDeriv_mul (UpperHalfPlane.coe z) _ (etaProdTerm_ne_zero z) _
     (etaProdTerm_differentiableAt z)]
   · have HG := logDeriv_tprod_eq_tsum2 (isOpen_lt continuous_const Complex.continuous_im) z
-      (fun n x => 1 + eta_q n x) (fun i ↦ one_add_eta_q_ne_zero i z) ?_ ?_ ?_ (etaProdTerm_ne_zero z)
+      (fun n x => 1 - eta_q n x) (fun i ↦ one_add_eta_q_ne_zero i z) ?_ ?_ ?_ (etaProdTerm_ne_zero z)
     rw [show z.1 = UpperHalfPlane.coe z by rfl] at HG
     rw [HG]
     · rw [tsum_log_deriv_eta_q' z, E₂, logDeriv_z_term z]
       simp only [mul_neg, one_div, mul_inv_rev, Pi.smul_apply, smul_eq_mul]
-      rw [G2_q_exp', riemannZeta_two, ← (tsum_eq_tsum_sigma_pos' z), mul_sub, sub_eq_add_neg, mul_add]
+      rw [G2_q_exp'', riemannZeta_two, ← (tsum_eq_tsum_sigma_pos'' z), mul_sub, sub_eq_add_neg, mul_add]
       conv =>
         enter [1,2,2,1]
         ext n
@@ -208,8 +201,6 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
         ring
       · have hpi : (π : ℂ) ≠ 0 := by simpa using Real.pi_ne_zero
         field_simp
-        simp only [eta_q_eq_exp, Periodic.qParam, ofReal_one, div_one, ← exp_nsmul, nsmul_eq_mul, Nat.cast_add,
-          Nat.cast_one, sub_eq_add_neg, ← mul_assoc]
         ring_nf
         congr
         ext n
@@ -218,20 +209,17 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
       simp_rw [eta_q_eq_exp]
       fun_prop
     · simp only [mem_setOf_eq, one_add_eta_logDeriv_eq]
-      apply ((summable_nat_add_iff 1).mpr ((logDeriv_q_expo_summable (cexp (2 * ↑π * Complex.I * ↑z))
-        (by simpa using exp_upperHalfPlane_lt_one z)).mul_left (-2 * π * Complex.I))).congr
+      apply ((summable_nat_add_iff 1).mpr ((logDeriv_q_expo_summable (𝕢₁ z)
+        (by simpa [Periodic.qParam] using exp_upperHalfPlane_lt_one z)).mul_left (-2 * π * Complex.I))).congr
       intro b
-      simp only [neg_mul, Nat.cast_add, Nat.cast_one, ← exp_nsmul, nsmul_eq_mul, sub_eq_add_neg,
-        eta_q_eq_exp, mul_neg]
-      have : (1 + -cexp (2 * ↑π * Complex.I * (↑b + 1) * ↑z)) ≠ 0 := by
-        simpa [eta_q_eq_exp] using (one_add_eta_q_ne_zero b z)
-      rw [show (↑b + 1) * (2 * ↑π * Complex.I * ↑z) = (2 * ↑π * Complex.I * (b+1) * ↑z)  by ring, UpperHalfPlane.coe] at *
+      have := one_add_eta_q_ne_zero b z
+      simp only [UpperHalfPlane.coe, ne_eq, neg_mul, Nat.cast_add, Nat.cast_one, mul_neg] at *
       field_simp
       left
       ring
     · use ηₚ
       apply (hasProdLocallyUniformlyOn_eta).congr
-      exact fun n ⦃x⦄ hx ↦ Eq.refl ((fun b ↦ ∏ i ∈ n, (fun n a ↦ 1 + eta_q n a) i b) x)
+      exact fun n ⦃x⦄ hx ↦ Eq.refl ((fun b ↦ ∏ i ∈ n, (fun n a ↦ 1 - eta_q n a) i b) x)
   · simp [ne_eq, exp_ne_zero, not_false_eq_true, Periodic.qParam]
   · fun_prop
 
