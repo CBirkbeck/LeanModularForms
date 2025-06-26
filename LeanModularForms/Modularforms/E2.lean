@@ -676,6 +676,14 @@ lemma G2_q_exp (z : ℍ) : G₂ z = (2 * riemannZeta 2)  - 8 * π ^ 2 *
       Nat.factorial_one, Nat.cast_one, div_one, pow_one] at *
     apply this
 
+lemma G2_q_exp' (z : ℍ) : G₂ z = (2 * riemannZeta 2)  - 8 * π ^ 2 *
+  ∑' n : ℕ+, sigma 1 n * cexp (2 * π * Complex.I * z) ^ (n : ℕ) := by
+  rw [G2_q_exp z]
+  congr
+  ext n
+  rw [ ← Complex.exp_nsmul _  (n : ℕ)]
+  ring_nf
+
 lemma G2_periodic :  (G₂ ∣[(2 : ℤ)] ModularGroup.T) = G₂ := by
   ext z
   simp only [ SL_slash_def, slash, ModularGroup.det_coe, ofReal_one, Int.reduceSub, zpow_one,
@@ -831,6 +839,21 @@ lemma tsum_eq_tsum_sigma_pos (z : ℍ) : ∑' n : ℕ,
     rw [tsum_eq_tsum_sigma z ]
     rw [tsum_pnat_eq_tsum_succ (fun n => sigma 1 n * cexp (2 * π * Complex.I * n * z))]
     simp
+
+lemma tsum_eq_tsum_sigma_pos' (z : ℍ) : ∑' n : ℕ,
+    (n + 1) * cexp (2 * π * Complex.I * z) ^ (n + 1) / (1 - cexp (2 * π *  Complex.I * z) ^ (n + 1)) =
+    ∑' n : ℕ+, (sigma 1 n)* cexp (2 * π * Complex.I * z) ^ (n : ℕ) := by
+  conv =>
+    enter [1,1]
+    ext n
+    rw [← Complex.exp_nsmul]
+    rw [show cexp ((n + 1) • (2 * ↑π * Complex.I * ↑z)) =
+      cexp ((2 * ↑π * Complex.I * (n + 1) * ↑z)) by ring_nf]
+  rw [tsum_eq_tsum_sigma_pos z]
+  congr
+  ext n
+  rw [← Complex.exp_nsmul _ (n : ℕ)]
+  ring_nf
 
 /--This we should get from the modular forms repo stuff. Will port these things soon. -/
 lemma E₂_eq (z : UpperHalfPlane) : E₂ z =
