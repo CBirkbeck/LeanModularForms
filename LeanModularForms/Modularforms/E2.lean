@@ -825,6 +825,13 @@ lemma tsum_eq_tsum_sigma (z : ℍ) : ∑' n : ℕ,
     simp at *
     apply this.subtype
 
+lemma tsum_eq_tsum_sigma_pos (z : ℍ) : ∑' n : ℕ,
+    (n + 1) * cexp (2 * π * Complex.I * (n + 1) * z) / (1 - cexp (2 * π *  Complex.I * (n + 1) * z)) =
+    ∑' n : ℕ+, (sigma 1 n)* cexp (2 * π * Complex.I * n * z) := by
+    rw [tsum_eq_tsum_sigma z ]
+    rw [tsum_pnat_eq_tsum_succ (fun n => sigma 1 n * cexp (2 * π * Complex.I * n * z))]
+    simp
+
 /--This we should get from the modular forms repo stuff. Will port these things soon. -/
 lemma E₂_eq (z : UpperHalfPlane) : E₂ z =
     1 - 24 * ∑' (n : ℕ+),
