@@ -133,10 +133,9 @@ lemma logDeriv_one_sub_mul_cexp_comp (r : ℂ) {g : ℂ → ℂ} (hg : Different
   rw [logDeriv_comp (by fun_prop) (hg y), logDeriv_one_sub_exp]
   ring
 
-lemma tsum_log_deriv_eta_q (z : ℂ) :
-  ∑' (i : ℕ), logDeriv (fun x ↦ 1 + eta_q i x) z =
-  ∑' n : ℕ, (2 * ↑π * Complex.I * (n + 1)) * (eta_q n z) / (1  + eta_q n z) := by
-  refine tsum_congr (fun i => ?_)
+
+theorem one_add_eta_logDeriv_eq (z : ℂ) (i : ℕ) :
+  logDeriv (fun x ↦ 1 + eta_q i x) z = 2 * ↑π * Complex.I * (↑i + 1) * eta_q i z / (1 + eta_q i z) := by
   have h2 : (fun x ↦ 1 - cexp (2 * ↑π * Complex.I * (↑i + 1) * x)) =
       ((fun z ↦ 1 - 1 * cexp z) ∘ fun x ↦ 2 * ↑π * Complex.I * (↑i + 1) * x) := by aesop
   have h3 : deriv (fun x : ℂ ↦ (2 * π * Complex.I * (i + 1) * x)) =
@@ -146,6 +145,20 @@ lemma tsum_log_deriv_eta_q (z : ℂ) :
   simp_rw [eta_q_eq_exp, ← sub_eq_add_neg, h2, logDeriv_one_sub_mul_cexp_comp 1
     (g := fun x => (2 * π * Complex.I * (i + 1) * x)) (by fun_prop), h3]
   simp
+
+lemma tsum_log_deriv_eta_q (z : ℂ) :
+  ∑' (i : ℕ), logDeriv (fun x ↦ 1 + eta_q i x) z =
+  ∑' n : ℕ, (2 * ↑π * Complex.I * (n + 1)) * (eta_q n z) / (1  + eta_q n z) := by
+  refine tsum_congr (fun i => ?_)
+  apply one_add_eta_logDeriv_eq
+
+lemma tsum_log_deriv_eta_q' (z : ℂ) :
+  ∑' (i : ℕ), logDeriv (fun x ↦ 1 + eta_q i x) z =
+   (2 * ↑π * Complex.I) * ∑' n : ℕ, (n + 1) * (eta_q n z) / (1  + eta_q n z) := by
+  rw [tsum_log_deriv_eta_q z, ← tsum_mul_left]
+  congr 1
+  ext i
+  ring
 
 lemma tsum_log_deriv_eqn (z : ℍ) :
   ∑' (i : ℕ), logDeriv (fun x ↦ 1 - cexp (2 * ↑π * Complex.I * (↑i + 1) * x)) ↑z  =
@@ -219,129 +232,68 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
   unfold eta_prod_term
   rw [logDeriv_mul]
   have HG := logDeriv_tprod_eq_tsum2 (s := {x : ℂ | 0 < x.im}) ?_ z
-    (fun (n : ℕ) => fun (x : ℂ) => 1 - cexp (2 * π * Complex.I * (n + 1) * x)) ?_ ?_ ?_ ?_ ?_
+    (fun n x => 1 + eta_q n x) ?_ ?_ ?_ ?_ ?_
   simp only [mem_setOf_eq, UpperHalfPlane.coe] at *
-  conv =>
-    enter [1,2,1]
-    intro z
-    conv =>
-    enter [1]
-    intro n
-    rw [eta_q_eq_exp, ← sub_eq_add_neg]
   rw [HG]
-  · have := tsum_log_deriv_eqn z
+  · have := tsum_log_deriv_eta_q' z
     have h0 := logDeriv_z_term z
     simp only [UpperHalfPlane.coe] at *
     rw [this, E₂, h0]
-    simp
-    rw [G2_q_exp]
-    rw [riemannZeta_two]
-    conv =>
-      enter [1,2,1]
-      ext n
-      rw [show  -(2 * ↑π * Complex.I * (↑n + 1) * cexp (2 * ↑π * Complex.I * (↑n + 1) * z.1)) /
-        (1 - cexp (2 * ↑π * Complex.I * (↑n + 1) * z.1)) =
-        (-2 * ↑π * Complex.I) * (((↑n + 1) * cexp (2 * ↑π * Complex.I * (↑n + 1) * z.1)) /
-        (1 - cexp (2 * ↑π * Complex.I * (n + 1) * z.1))) by ring]
-    rw [tsum_mul_left (a := -2 * ↑π * Complex.I)]
-    have := tsum_eq_tsum_sigma z
+    simp only [mul_neg, one_div, mul_inv_rev, Pi.smul_apply, smul_eq_mul]
+    rw [G2_q_exp, riemannZeta_two]
+    have := tsum_eq_tsum_sigma_pos z
     simp only [UpperHalfPlane.coe] at *
-    rw [this, mul_sub]
-    rw [sub_eq_add_neg, mul_add]
+    rw [← this, mul_sub, sub_eq_add_neg, mul_add]
+    conv =>
+      enter [1,2,2,1]
+      ext n
+      rw [neg_div, neg_eq_neg_one_mul ]
+    rw [tsum_mul_left, ← mul_assoc]
     congr 1
     · have hpi : (π : ℂ) ≠ 0 := by simpa using Real.pi_ne_zero
       ring_nf
       field_simp
       ring
-    ·
-      have hr :    ↑π * Complex.I / 12 *
-         -((↑π ^ 2 / (6 : ℂ))⁻¹ * 2⁻¹ * (8 * ↑π ^ 2 * ∑' (n : ℕ+), ↑((σ 1) ↑n) * cexp (2 * ↑π * Complex.I * ↑↑n * ↑z))) =
-        (↑π * Complex.I * (1 / 12) * -(((π : ℂ) ^ 2 * (1 / 6))⁻¹ * (1 / 2) * (↑π ^ 2 * 8)) *
-        ∑' (n : ℕ+), ↑((σ 1) ↑n) * cexp (↑π * Complex.I * 2 * ↑↑n * z.1)) := by
-          ring_nf
-          rfl
-      simp only [UpperHalfPlane.coe] at *
-      rw [hr]
-      congr 1
+    · simp_rw [← mul_assoc]
+      simp_rw [eta_q_eq_exp]
       have hpi : (π : ℂ) ≠ 0 := by simpa using Real.pi_ne_zero
       field_simp
-      ring
-      conv =>
-        enter [1,1]
-        ext n
-        rw [show (n : ℂ) + 1 = (((n + 1) : ℕ) : ℂ) by simp]
-      have hl := tsum_pnat_eq_tsum_succ3
-        (fun n ↦ ↑((σ 1) (n)) * cexp (↑π * Complex.I * 2 * (↑n) * ↑z))
-      simp only [UpperHalfPlane.coe] at hl
-      rw [ hl]
-      apply tsum_congr
-      intro b
-      simp
-      left
-      congr 1
-      ring
+      simp_rw [sub_eq_add_neg]
+      simp [eta_q, Periodic.qParam, ← Complex.exp_nsmul]
+      simp_rw [← mul_assoc]
+      ring_nf
+      congr
+      ext n
+      ring_nf
   · exact isOpen_lt continuous_const Complex.continuous_im
   · intro i
-    simp only [mem_setOf_eq, ne_eq]
-    rw [@sub_eq_zero]
-    intro h
-    have j := exp_upperHalfPlane_lt_one_nat z i
-    simp only [UpperHalfPlane.coe] at *
-    rw [← h] at j
-    simp at j
+    apply one_add_eta_q_ne_zero i
   · intro i x hx
+    simp_rw [eta_q_eq_exp]
     fun_prop
   · simp only [mem_setOf_eq]
-    have h0 : ∀ i : ℕ, Differentiable ℂ (fun x => (2 * π * Complex.I * (i + 1) * x)) := by
-      intro i
-      fun_prop
-    have h1 := fun i : ℕ => logDeriv_one_sub_exp_comp 1 (fun x => (2 * π * Complex.I * (i + 1) * x)) (h0 i)
-    have h2 : ∀ i : ℕ, (fun x ↦ 1 - cexp (2 * ↑π * Complex.I * (↑i + 1) * x))=
-      ((fun z ↦ 1 - 1 * cexp z) ∘ fun x ↦ 2 * ↑π * Complex.I * (↑i + 1) * x) := by
-      intro i
-      ext y
-      simp
-    have h3 : ∀ i : ℕ, deriv (fun x : ℂ => (2 * π * Complex.I * (i + 1) * x)) =
-        fun _ => 2 * (π : ℂ) * Complex.I * (i + 1) := by
-      intro i
-      ext y
-      rw [deriv_mul]
-      · simp only [differentiableAt_const, deriv_mul, deriv_const', zero_mul, mul_zero, add_zero,
-        deriv_add, deriv_id'', mul_one, zero_add]
-      · simp only [differentiableAt_const]
-      · simp only [differentiableAt_id']
-    conv =>
-      enter [1]
-      ext i
-      rw [h2 i, h1 i, h3 i]
-    simp only [neg_mul, one_mul]
-    conv =>
-      enter [1]
-      ext i
-      rw [mul_assoc, neg_div, ← mul_div]
-    apply Summable.neg
-    apply Summable.mul_left
-    have hS := logDeriv_q_expo_summable (cexp (2 * ↑π * Complex.I * ↑z))
-      (by simpa using exp_upperHalfPlane_lt_one z)
+    simp_rw [one_add_eta_logDeriv_eq]
+    have hS := (logDeriv_q_expo_summable (cexp (2 * ↑π * Complex.I * ↑z))
+      (by simpa using exp_upperHalfPlane_lt_one z)).mul_left (-2 * π * Complex.I)
     rw [← summable_nat_add_iff 1] at hS
     apply hS.congr
     intro b
-    congr
-    simp only [Nat.cast_add, Nat.cast_one]
-    · rw [← Complex.exp_nsmul]
-      simp only [UpperHalfPlane.coe, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
-      ring_nf
-    · rw [← Complex.exp_nsmul]
-      simp only [UpperHalfPlane.coe, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
-      ring_nf
-  · simp_rw [sub_eq_add_neg]
-    use ηₚ
+    simp_rw [eta_q_eq_exp, sub_eq_add_neg, ← Complex.exp_nsmul]
+    simp
+    have : (1 + -cexp (2 * ↑π * Complex.I * (↑b + 1) * ↑z)) ≠ 0 := by
+      simpa [eta_q_eq_exp] using (one_add_eta_q_ne_zero b z)
+    rw [show (↑b + 1) * (2 * ↑π * Complex.I * ↑z) = (2 * ↑π * Complex.I * (b+1) * ↑z)  by ring]
+    rw [UpperHalfPlane.coe] at *
+    field_simp
+    left
+    ring
+  · use ηₚ
     have:= hasProdLocallyUniformlyOn_eta
     simp [eta_q_eq_exp] at this
-    simpa using this
-  · have := eta_prod_term_ne_zero z
-    rw [eta_prod_term_eq_exp] at this
-    simpa using this
+    apply this.congr
+    intro n x hx
+    simp [eta_q_eq_exp]
+  · apply eta_prod_term_ne_zero z
   · simp [ne_eq, exp_ne_zero, not_false_eq_true, Periodic.qParam]
   · apply eta_prod_term_ne_zero z
   · have : (𝕢 24) = fun z => exp (2 * π * Complex.I * z / 24):=  by rfl
