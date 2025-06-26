@@ -27,6 +27,8 @@ def G₂_a : ℍ → ℂ := fun z => limUnder (atTop)
 
 def E₂ : ℍ → ℂ := (1 / (2 * riemannZeta 2)) •  G₂
 
+local notation "𝕢₁" => Periodic.qParam 1
+
 @[coe]
 abbrev coe2 (g : SL(2, ℤ)) : (GL (Fin 2) ℝ) :=
   Matrix.SpecialLinearGroup.toGL ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) g)
@@ -684,6 +686,13 @@ lemma G2_q_exp' (z : ℍ) : G₂ z = (2 * riemannZeta 2)  - 8 * π ^ 2 *
   rw [ ← Complex.exp_nsmul _  (n : ℕ)]
   ring_nf
 
+lemma G2_q_exp'' (z : ℍ) : G₂ z = (2 * riemannZeta 2)  - 8 * π ^ 2 *
+  ∑' n : ℕ+, sigma 1 n * (𝕢₁ z) ^ (n : ℕ) := by
+  rw [G2_q_exp' z]
+  congr
+  ext n
+  simp [Periodic.qParam]
+
 lemma G2_periodic :  (G₂ ∣[(2 : ℤ)] ModularGroup.T) = G₂ := by
   ext z
   simp only [ SL_slash_def, slash, ModularGroup.det_coe, ofReal_one, Int.reduceSub, zpow_one,
@@ -854,6 +863,12 @@ lemma tsum_eq_tsum_sigma_pos' (z : ℍ) : ∑' n : ℕ,
   ext n
   rw [← Complex.exp_nsmul _ (n : ℕ)]
   ring_nf
+
+lemma tsum_eq_tsum_sigma_pos'' (z : ℍ) : ∑' n : ℕ,
+    (n + 1) * (𝕢₁ z) ^ (n + 1) / (1 - (𝕢₁ z) ^ (n + 1)) =
+    ∑' n : ℕ+, (sigma 1 n) * (𝕢₁ z) ^ (n : ℕ) := by
+  rw [Periodic.qParam]
+  simpa using tsum_eq_tsum_sigma_pos' z
 
 /--This we should get from the modular forms repo stuff. Will port these things soon. -/
 lemma E₂_eq (z : UpperHalfPlane) : E₂ z =
