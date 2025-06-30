@@ -6,6 +6,7 @@ import Mathlib.Data.Complex.FiniteDimensional
 import Mathlib.Data.Int.Star
 import Mathlib.NumberTheory.ArithmeticFunction
 import Mathlib.NumberTheory.ModularForms.EisensteinSeries.UniformConvergence
+import Mathlib.NumberTheory.ModularForms.EisensteinSeries.Summable
 import Mathlib.Order.CompletePartialOrder
 import Mathlib.Topology.Algebra.Module.ModuleTopology
 import Mathlib.Topology.EMetricSpace.Paracompact
@@ -1074,6 +1075,10 @@ theorem tsum_uexp_contDiffOn (k : ℕ) :
   apply le_of_eq
   norm_cast
   simp
+  have h0 : (fun z ↦ (2 * ↑π * Complex.I * ↑n) ^ m * cexp (2 * ↑π * Complex.I * ↑n * z)) =
+    (fun z ↦ (2 * ↑π * Complex.I * ↑n) ^ m) * (fun z => cexp (2 * ↑π * Complex.I * n * z)) := by
+    rfl
+  rw [h0]
   rw [derivWithin_mul]
   rw [derivWithin_cexp ]
   rw [derivWithin_const_mul]
@@ -1102,7 +1107,7 @@ theorem iter_der_within_add (k : ℕ+) (x : {z : ℂ | 0 < z.im}) :
       Complex.exp (2 * ↑π * Complex.I * n * x) := by
   rw [iteratedDerivWithin_const_sub (PNat.pos k) ]
   simp
-  rw [iteratedDerivWithin_neg' ]
+  rw [iteratedDerivWithin_fun_neg]
   rw [iteratedDerivWithin_const_mul]
   congr
   have :=  exp_series_ite_deriv_uexp2 k x

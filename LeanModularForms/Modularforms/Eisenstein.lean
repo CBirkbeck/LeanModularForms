@@ -656,7 +656,7 @@ lemma Delta_q_one_term : (qExpansion 1 Delta).coeff ℂ 1 = 1 := by
   simp
   rw [← derivWithin_of_isOpen (s := Metric.ball 0 (1 / 2 : ℝ)) (isOpen_ball) (by simp) ]
   rw [derivWithin_congr Delta_cuspFuntion_eq ]
-  rw [derivWithin_mul ]
+  rw [derivWithin_fun_mul ]
   simp
   have := derivWithin_id' ( 0 * ∏' (i : ℕ), (1 - 0 ^ (i + 1)) ^ 24 : ℂ) (Metric.ball 0 (1 / 2 : ℝ)) ?_
   simp at *
