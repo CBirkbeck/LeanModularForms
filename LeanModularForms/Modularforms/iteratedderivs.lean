@@ -37,24 +37,34 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
    (-1) ^ (↑k + 1) * ((↑k + 1) * ↑k !) * ((x + ↑d) ^ (↑k + 1 + 1))⁻¹ := by
     rw [DifferentiableAt.derivWithin]
     · simp only [deriv_const_mul_field']
+
+
+      have h0 : (fun z : ℂ => ((z + d) ^ (k + 1))⁻¹) = (fun z : ℂ => (z + d) ^ (k + 1))⁻¹ := by
+        rfl
+      rw [h0]
+      have h1 : (fun z : ℂ => ((z + d) ^ (k + 1))) = (fun z : ℂ => (z + d)) ^ (k + 1) := by
+        rfl
+      rw [h1]
       rw [deriv_inv'', deriv_pow'', deriv_add_const', deriv_id'']
       simp only [Nat.cast_add, Nat.cast_one, add_tsub_cancel_right, mul_one, ← pow_mul]
       rw [pow_add]
-      simp only [Int.cast_mul, Int.cast_pow, Int.cast_negSucc, zero_add, Nat.cast_one,
+      simp [Int.cast_mul, Int.cast_pow, Int.cast_negSucc, zero_add, Nat.cast_one,
         Int.cast_ofNat, Nat.cast_add,pow_one, Nat.cast_mul, mul_neg, mul_one, Int.cast_add,
           Int.cast_one, neg_mul]
-      have Hw : -(((k: ℂ) + 1) * (x + ↑d) ^ k) / (x + ↑d) ^ ((k + 1) * 2) = -(↑k + 1) / (x + ↑d) ^ (k + 2) :=
+
+      have Hw : (-(((k : ℂ) + 1) * (x + ↑d) ^ k) / ((x + ↑d) ^ k * (x + ↑d)) ^ 2) = -(↑k + 1) / (x + ↑d) ^ (k + 2) :=
         by
         rw [div_eq_div_iff]
         norm_cast
         simp
         ring
         norm_cast
-        apply pow_ne_zero ((k + 1) * 2) (upper_ne_int ⟨x, hx⟩ d)
+        apply pow_ne_zero
+        apply mul_ne_zero
+        apply pow_ne_zero k (upper_ne_int ⟨x, hx⟩ d)
+        apply upper_ne_int ⟨x, hx⟩ d
         norm_cast
         apply pow_ne_zero (k + 2) (upper_ne_int ⟨x, hx⟩ d)
-
-      simp at *
       rw [Hw]
       ring
       fun_prop

@@ -47,6 +47,10 @@ theorem derivWithin_tsum_fun' {α : Type _} (f : α → ℂ → ℂ) {s : Set �
   apply hu2 n ⟨x, hx⟩
   filter_upwards
   intro t r hr
+  have h0 : (fun x ↦ ∑ n ∈ t, f n x) = ∑ n ∈ t, f n  := by
+    ext x
+    simp only [Finset.sum_apply]
+  rw [h0]
   apply HasDerivAt.sum
   intro q hq
   apply HasDerivWithinAt.hasDerivAt
@@ -206,6 +210,10 @@ theorem hasDerivAt_tsum_fun {α : Type _} (f : α → ℂ → ℂ)
   apply hu2 n ⟨x, hx⟩
   filter_upwards
   intro t r hr
+  have h0 : (fun x ↦ ∑ n ∈ t, f n x) = ∑ n ∈ t, f n  := by
+    ext x
+    simp only [Finset.sum_apply]
+  rw [h0]
   apply HasDerivAt.sum
   intro q hq
   apply HasDerivWithinAt.hasDerivAt

@@ -51,7 +51,6 @@ theorem logDeriv_tprod_eq_tsum2 {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
       exact IsOpen.mem_nhds hs hz
     have := DifferentiableAt.finset_prod hp
     convert this
-    simp only [Finset.prod_apply]
     · exact hnez
 
 
@@ -93,7 +92,6 @@ theorem logDeriv_tprod_eq_tsum  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
       exact IsOpen.mem_nhds hs hz
     have := DifferentiableAt.finset_prod hp
     convert this
-    simp only [Finset.prod_apply]
     · exact hnez
 
 
@@ -101,8 +99,9 @@ lemma logDeriv_one_sub_exp (r : ℂ) : logDeriv (fun z => 1 - r * cexp (z)) =
     fun z => -r * cexp z / (1 - r * cexp ( z)) := by
   ext z
   rw [logDeriv]
-  simp only [Pi.div_apply, differentiableAt_const, differentiableAt_exp, DifferentiableAt.mul,
-    deriv_sub, deriv_const', deriv_mul, zero_mul, Complex.deriv_exp, zero_add, zero_sub, neg_mul]
+  simp only [Pi.div_apply, differentiableAt_const, differentiableAt_exp, DifferentiableAt.fun_mul,
+    deriv_fun_sub, deriv_const', deriv_fun_mul, zero_mul, Complex.deriv_exp, zero_add, zero_sub,
+    neg_mul]
 
 lemma logDeriv_one_sub_exp_comp (r : ℂ) (g : ℂ → ℂ) (hg : Differentiable ℂ g) :
     logDeriv ((fun z => 1 - r * cexp (z)) ∘ g) =
@@ -111,7 +110,7 @@ lemma logDeriv_one_sub_exp_comp (r : ℂ) (g : ℂ → ℂ) (hg : Differentiable
   rw  [logDeriv_comp, logDeriv_one_sub_exp]
   simp only [neg_mul]
   ring
-  simp only [differentiableAt_const, differentiableAt_exp, DifferentiableAt.mul,
+  simp only [differentiableAt_const, differentiableAt_exp, DifferentiableAt.fun_mul,
     DifferentiableAt.fun_sub]
   exact hg y
 
@@ -187,8 +186,6 @@ lemma logDeriv_eqOn_iff (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn
   have h2 := h hy
   rw [func_div] at h2
   have hderiv : EqOn (deriv (f * g⁻¹))  (deriv f * g⁻¹ - f * deriv g / g ^ 2) s := by
-    have hfg : f * g⁻¹ = fun x => f x * (g⁻¹ x) := by rfl
-    rw [hfg]
     intro z hz
     rw [deriv_mul]
     have hgi : g⁻¹ = (fun x => x⁻¹) ∘ g := by
@@ -249,7 +246,6 @@ lemma logDeriv_eqOn_iff (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn
     simp_rw [logDeriv_apply]
     have HJ := deriv_EqOn_congr s hz hs2 hx
     rw [HJ, h]
-    nth_rw 1 [show z • g = fun x => z • g x by rfl]
     rw [deriv_const_smul]
     simp
     rw [mul_div_mul_left (deriv g x) (g x) hz0]

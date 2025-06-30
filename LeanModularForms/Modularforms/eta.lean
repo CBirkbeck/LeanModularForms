@@ -99,11 +99,11 @@ lemma tsum_log_deriv_eqn (z : ℍ) :
         fun _ => 2 * (π : ℂ) * Complex.I * (i + 1) := by
       intro i
       ext y
-      rw [deriv_mul]
+      rw [deriv_fun_mul]
       · simp only [differentiableAt_const, deriv_mul, deriv_const', zero_mul, mul_zero, add_zero,
         deriv_add, deriv_id'', mul_one, zero_add]
       · simp only [differentiableAt_const]
-      · simp only [differentiableAt_id']
+      · simp only [differentiableAt_fun_id]
   rw [h2 i, h1 i, h3 i]
   simp
 
@@ -235,11 +235,11 @@ lemma eta_logDeriv (z : ℍ) : logDeriv η z = (π * Complex.I / 12) * E₂ z :=
         fun _ => 2 * (π : ℂ) * Complex.I * (i + 1) := by
       intro i
       ext y
-      rw [deriv_mul]
+      rw [deriv_fun_mul]
       · simp only [differentiableAt_const, deriv_mul, deriv_const', zero_mul, mul_zero, add_zero,
         deriv_add, deriv_id'', mul_one, zero_add]
       · simp only [differentiableAt_const]
-      · simp only [differentiableAt_id']
+      · simp only [differentiableAt_fun_id]
     conv =>
       enter [1]
       ext i
@@ -283,7 +283,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
       intro z
       rw [neg_div]
       simp
-    simp only [deriv.neg', deriv_inv', neg_neg, inv_inj]
+    simp only [deriv.fun_neg', deriv_inv', neg_neg, inv_inj]
     norm_cast
     · simpa only using
       eta_DifferentiableAt_UpperHalfPlane (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ)
@@ -294,7 +294,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
       simp
     apply DifferentiableAt.neg
     apply DifferentiableAt.inv
-    simp only [differentiableAt_id']
+    simp only [differentiableAt_fun_id]
     exact ne_zero z
   rw [h0, show ((csqrt) * η) = (fun x => (csqrt) x * η x) by rfl, logDeriv_mul]
   nth_rw 2 [logDeriv_apply]

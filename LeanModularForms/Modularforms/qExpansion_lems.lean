@@ -78,7 +78,7 @@ lemma cuspFunction_mul (a b : ℤ) (f : ModularForm Γ(n) a) (g : ModularForm Γ
 
 theorem derivWithin_mul2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn ℂ f s)
     (hd : DifferentiableOn ℂ g s) :
-    s.restrict (derivWithin (fun y => f y * g y) s) =
+    s.restrict (derivWithin (f * g) s) =
       s.restrict (derivWithin f s * g  + f  * derivWithin g s)  := by
   ext y
   simp

@@ -199,8 +199,8 @@ noncomputable def cotTerm (x : ℂ) (n : ℕ) : ℂ := 1 / (x - (n + 1)) + 1 / (
 theorem logDeriv_sinTerm_eq_cotTerm (x : ℂ) (hx: x ∈ ℂ_ℤ) (i : ℕ) :
     logDeriv (fun (z : ℂ) ↦ sinTerm z i) x = cotTerm x i := by
   simp only [sinTerm, logDeriv_apply, differentiableAt_const, deriv_const_add', deriv_div_const,
-    deriv.neg', differentiableAt_id', deriv_pow'', Nat.cast_ofNat, Nat.add_one_sub_one, pow_one,
-    deriv_id'', mul_one, cotTerm, one_div]
+    deriv.fun_neg', differentiableAt_fun_id, deriv_fun_pow'', Nat.cast_ofNat, Nat.add_one_sub_one,
+    pow_one, deriv_id'', mul_one, cotTerm, one_div]
   rw [div_div]
   conv =>
     enter [1,2]
@@ -238,7 +238,7 @@ lemma logDeriv_of_prod {x : ℂ} (hx : x ∈ ℂ_ℤ) (n : ℕ) :
   · exact fun i _ ↦ sinTerm_ne_zero hx i
   · intro i _
     simp only [sinTerm, differentiableAt_const, differentiableAt_const_add_iff,
-      differentiableAt_fun_neg_iff, differentiableAt_id', DifferentiableAt.pow,
+      differentiableAt_fun_neg_iff, differentiableAt_fun_id, DifferentiableAt.fun_pow,
       DifferentiableAt.div_const]
 
 theorem tendsto_logDeriv_euler_cot_sub (x : ℂ) (hx : x ∈ ℂ_ℤ) :

@@ -19,63 +19,9 @@ lemma norm_symm (x y : ℤ) : ‖![x, y]‖ = ‖![y,x]‖ := by
 
 lemma linear_bigO (m : ℤ) (z : ℍ) : (fun (n : ℤ) => ((m : ℂ) * z + n)⁻¹) =O[cofinite]
     fun n => (|(n : ℝ)|⁻¹)  := by
-  have h1 : (fun (n : ℤ) => ((m : ℂ) * z + n)⁻¹) =O[cofinite]
-    (fun n : ℤ => ((r z * ‖![n, m]‖))⁻¹) := by
-    rw [@Asymptotics.isBigO_iff']
-    use 1
-    simp
-    constructor
-    repeat{
-    use 0
-    intro n hn
-    have := EisensteinSeries.summand_bound z (k := 1) (by norm_num) ![m, n]
-    simp only [Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
-      ge_iff_le] at *
-    nth_rw 2 [mul_comm]
-    simp_rw [Real.rpow_neg_one] at this
-    have hr : (r z)⁻¹ = |r z|⁻¹ := by
-      simp only [inv_inj]
-      apply symm
-      rw [abs_eq_self]
-      exact (r_pos z).le
-    rw [← hr, norm_symm]
-    exact this}
-  apply  Asymptotics.IsBigO.trans  h1
-  rw [@Asymptotics.isBigO_iff']
-  use (r z)⁻¹
-  refine ⟨by simp; exact r_pos z, ?_⟩
-  simp
-  constructor
-  use min (-1) m
-  intro n hn
-  --have := EisensteinSeries.summand_bound z (k := 1) (by norm_num) ![n, m]
-  rw [mul_comm]
-  gcongr
-  · simp [(r_pos z).le]
-  · exact r_pos z
-  · exact le_abs_self (r z)
-  · simp; omega
-  · rw [EisensteinSeries.norm_eq_max_natAbs]
-    simp
-    left
-    norm_cast
-    rw [Int.abs_eq_natAbs]
-    rfl
-  use max 1 m
-  intro b hb
-  rw [EisensteinSeries.norm_eq_max_natAbs]
-  simp
-  rw [mul_comm]
-  gcongr
-  · simp [(r_pos z).le]
-  · exact r_pos z
-  · exact le_abs_self (r z)
-  · simp; omega
-  · simp at *;
-    left
-    norm_cast
-    rw [Int.abs_eq_natAbs]
-    rfl
+  have :=  Asymptotics.IsBigO.abs_right (EisensteinSeries.linear_inv_isBigO_right m z)
+  simp_rw [← abs_inv]
+  apply this
 
 lemma linear_bigO_pow (m : ℤ) (z : ℍ) (k : ℕ) : (fun (n : ℤ) => ((((m : ℂ) * z + n)) ^ k )⁻¹) =O[cofinite]
     fun n => ((|(n : ℝ)| ^ k)⁻¹)  := by
@@ -112,60 +58,8 @@ lemma linear_bigO_nat (m : ℤ) (z : ℍ) : (fun (n : ℕ) => ((m : ℂ) * z + n
 
 lemma linear_bigO' (m : ℤ) (z : ℍ) : (fun (n : ℤ) => ((n : ℂ) * z + m)⁻¹) =O[cofinite]
     fun n => (|(n : ℝ)|⁻¹)  := by
-  have h1 : (fun (n : ℤ) => ((n : ℂ) * z + m)⁻¹) =O[cofinite]
-    (fun n : ℤ => ((r z * ‖![m, n]‖))⁻¹) := by
-    rw [@Asymptotics.isBigO_iff']
-    use 1
-    simp
-    constructor
-    repeat{
-    use 0
-    intro n hn
-    have := EisensteinSeries.summand_bound z (k := 1) (by norm_num) ![n, m]
-    simp only [Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
-      ge_iff_le] at *
-    nth_rw 2 [mul_comm]
-    simp_rw [Real.rpow_neg_one] at this
-    have hr : (r z)⁻¹ = |r z|⁻¹ := by
-      simp only [inv_inj]
-      apply symm
-      rw [abs_eq_self]
-      exact (r_pos z).le
-    rw [← hr, norm_symm]
-    exact this}
-  apply  Asymptotics.IsBigO.trans  h1
-  rw [@Asymptotics.isBigO_iff']
-  use (r z)⁻¹
-  refine ⟨by simp; exact r_pos z, ?_⟩
-  simp
-  constructor
-  use min (-1) m
-  intro n hn
-  --have := EisensteinSeries.summand_bound z (k := 1) (by norm_num) ![n, m]
-  rw [mul_comm]
-  gcongr
-  · simp [(r_pos z).le]
-  · exact r_pos z
-  · exact le_abs_self (r z)
-  · simp; omega
-  · rw [EisensteinSeries.norm_eq_max_natAbs]
-    simp
-    right
-    norm_cast
-    rw [Int.abs_eq_natAbs]
-    rfl
-  use max 1 m
-  intro b hb
-  rw [EisensteinSeries.norm_eq_max_natAbs]
-  simp
-  rw [mul_comm]
-  gcongr
-  · simp [(r_pos z).le]
-  · exact r_pos z
-  · exact le_abs_self (r z)
-  · simp; omega
-  · simp at *;
-    right
-    norm_cast
-    rw [Int.abs_eq_natAbs]
-    rfl
+  have hz : (z : ℂ) ≠ 0 := by
+    exact ne_zero z
+  have :=  Asymptotics.IsBigO.abs_right (EisensteinSeries.linear_inv_isBigO_left m hz)
+  simp_rw [← abs_inv]
+  apply this
