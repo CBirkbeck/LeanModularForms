@@ -72,7 +72,7 @@ lemma verga : Tendsto (fun N : ℕ => Finset.Ico (-N : ℤ) N) atTop atTop := by
   apply  tendsto_atTop_finset_of_monotone (fun _ _ _ ↦ Finset.Ico_subset_Ico (by omega) (by gcongr))
   intro x
   use (x).natAbs + 1
-  simp [le_abs]
+  simp
   constructor
   apply le_trans _ (int_add_abs_self_nonneg x)
   omega

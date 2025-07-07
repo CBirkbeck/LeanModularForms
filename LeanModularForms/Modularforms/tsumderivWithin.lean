@@ -127,8 +127,7 @@ noncomputable def cts_exp_two_pi_n (K : Set ℂ) : ContinuousMap K ℂ where
       ‖((2 * ↑π * Complex.I * n) ^ (k + 1) * r ^ n)‖ := by
         intro n
         norm_cast
-        simp [BoundedContinuousFunction.norm_mkOfCompact, Nat.cast_pow, map_pow,
-          abs_norm, map_mul, mul_eq_mul_right_iff]
+        simp [Nat.cast_pow]
         norm_cast
         simp only [Nat.cast_pow]
         have hh : |π| = π := by simp [Real.pi_pos.le]
@@ -259,8 +258,7 @@ theorem iter_deriv_comp_bound3 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact
       ‖((2 * ↑π * Complex.I * n) ^ (k) * r ^ n)‖ := by
         intro n
         norm_cast
-        simp [BoundedContinuousFunction.norm_mkOfCompact, Nat.cast_pow, map_pow,
-          abs_norm, map_mul, mul_eq_mul_right_iff]
+        simp [Nat.cast_pow]
         norm_cast
         simp only [Nat.cast_pow]
         have hh : |π| = π := by simp [Real.pi_pos.le]

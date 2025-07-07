@@ -17,7 +17,7 @@ theorem upper_ne_int (x : ℍ) (d : ℤ) : (x : ℂ) + d ≠ 0 :=
   by
   by_contra h
   rw [add_eq_zero_iff_eq_neg] at h
-  have h1 : 0 < (x : ℂ).im := by simp [x.2]; exact im_pos x
+  have h1 : 0 < (x : ℂ).im := by simp; exact im_pos x
   rw [h] at h1
   simp at h1
 
@@ -27,11 +27,10 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
       (fun t : ℂ => (-1) ^ k * k ! * (1 / (t + d) ^ (k + 1))) {z : ℂ | 0 < z.im} := by
   intro x hx
   induction' k with k IH generalizing x
-  simp only [iteratedDerivWithin_zero, pow_zero, Nat.factorial_zero, algebraMap.coe_one, pow_one,
-    one_mul]
+  simp only [iteratedDerivWithin_zero, pow_zero, Nat.factorial_zero, one_mul]
   simp  at *
   rw [iteratedDerivWithin_succ]
-  simp only [one_div, Opens.coe_mk, Nat.cast_succ, Nat.factorial, Nat.cast_mul]
+  simp only [one_div, Nat.cast_succ, Nat.factorial, Nat.cast_mul]
   have := (IH hx)
   have H : derivWithin (fun (z : ℂ) => (-1: ℂ) ^ k * ↑k ! * ((z + ↑d) ^ (k + 1))⁻¹) {z : ℂ | 0 < z.im} x =
    (-1) ^ (↑k + 1) * ((↑k + 1) * ↑k !) * ((x + ↑d) ^ (↑k + 1 + 1))⁻¹ := by
@@ -46,11 +45,9 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
         rfl
       rw [h1]
       rw [deriv_inv'', deriv_pow'', deriv_add_const', deriv_id'']
-      simp only [Nat.cast_add, Nat.cast_one, add_tsub_cancel_right, mul_one, ← pow_mul]
+      simp only [Nat.cast_add, Nat.cast_one, add_tsub_cancel_right, mul_one]
       rw [pow_add]
-      simp [Int.cast_mul, Int.cast_pow, Int.cast_negSucc, zero_add, Nat.cast_one,
-        Int.cast_ofNat, Nat.cast_add,pow_one, Nat.cast_mul, mul_neg, mul_one, Int.cast_add,
-          Int.cast_one, neg_mul]
+      simp [pow_one]
 
       have Hw : (-(((k : ℂ) + 1) * (x + ↑d) ^ k) / ((x + ↑d) ^ k * (x + ↑d)) ^ 2) = -(↑k + 1) / (x + ↑d) ^ (k + 2) :=
         by
@@ -103,7 +100,7 @@ theorem aut_iter_deriv' (d : ℤ) (k : ℕ) :
 
   theorem aut_contDiffOn (d : ℤ) (k : ℕ) : ContDiffOn ℂ k (fun z : ℂ => 1 / (z - d))
     {z : ℂ | 0 < z.im} := by
-  simp only [one_div, Opens.coe_mk]
+  simp only [one_div]
   apply ContDiffOn.inv
   apply ContDiffOn.sub
   apply contDiffOn_id
@@ -127,7 +124,7 @@ theorem iter_div_aut_add (d : ℤ) (k : ℕ) :
       (fun z : ℂ => 1 / (z - d)) + fun z : ℂ => 1 / (z + d) :=
     by rfl
   rw [h1]
-  simp only [Opens.coe_mk, one_div, Pi.add_apply] at *
+  simp only [one_div, Pi.add_apply] at *
   rw [iteratedDerivWithin_add hx ?_]
   · have h2 := aut_iter_deriv d k hx
     have h3 := aut_iter_deriv' d k hx

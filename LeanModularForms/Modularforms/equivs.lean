@@ -65,7 +65,7 @@ def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ �
     rintro ⟨n, ⟨k, l⟩, h⟩
     rw [Nat.mem_divisorsAntidiagonal] at h
     simp_rw [mapdiv]
-    simp only [h, PNat.mk_coe, eq_self_iff_true, Subtype.coe_eta]
+    simp only [PNat.mk_coe]
     ext
     simp at *
     simp_rw [h]
@@ -79,5 +79,5 @@ def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ �
 
     simp at *
     simp_rw [mapdiv]
-    simp [eq_self_iff_true, Subtype.coe_eta]
+    simp
     norm_cast
