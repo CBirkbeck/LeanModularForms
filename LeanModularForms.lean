@@ -10,7 +10,6 @@ import LeanModularForms.ForMathlib.Petersson
 import LeanModularForms.ForMathlib.QExpansion
 import LeanModularForms.ForMathlib.SlashActions
 import LeanModularForms.ForMathlib.UpperHalfPlane
-import LeanModularForms.ForMathlib.basic
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing
 import LeanModularForms.Modularforms.AtImInfty
 import LeanModularForms.Modularforms.BigO

@@ -23,7 +23,8 @@ theorem logDeriv_tprod_eq_tsum2 {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
     rw [← Summable.hasSum_iff hm]
     rw [Summable.hasSum_iff_tendsto_nat hm]
     let g := (∏' i : ℕ, f i ·)
-    have := logDeriv_tendsto (fun n ↦ ∏ i ∈ Finset.range n, (f i)) g (s := s) hs (p := atTop)
+    have := logDeriv_tendsto (f := fun (n : ℕ) ↦ ∏ i ∈ Finset.range n, (f i)) (g := g) (s := s) hs
+      (p := atTop)
     simp only [eventually_atTop, ge_iff_le, ne_eq, forall_exists_index, Subtype.forall, g] at this
     have HT := this x x.2 ?_ ?_ ?_ ?_
     conv =>
@@ -66,7 +67,7 @@ theorem logDeriv_tprod_eq_tsum  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
     rw [← Summable.hasSum_iff hm]
     rw [Summable.hasSum_iff_tendsto_nat hm]
     let g := (∏' i : ℕ, f i ·)
-    have := logDeriv_tendsto (fun n ↦ ∏ i ∈ Finset.range n, (f i)) g (s := s) hs (p := atTop)
+    have := logDeriv_tendsto (f := fun n ↦ ∏ i ∈ Finset.range n, (f i)) (g:=g) (s := s) hs (p := atTop)
     simp only [eventually_atTop, ge_iff_le, ne_eq, forall_exists_index, Subtype.forall, g] at this
     have HT := this x x.2 ?_ ?_ ?_ ?_
     conv =>
@@ -146,9 +147,7 @@ lemma func_div (a b c d : ℂ → ℂ) (x : ℂ) (hb : b x ≠ 0) (hd :  d x ≠
      (a / b) x = (c /d) x ↔ (a * d) x = (b * c) x := by
   constructor
   intro h
-  simp only [Pi.sub_apply, Pi.zero_apply] at *
-  simp only [Pi.mul_apply]
-  simp only [Pi.div_apply] at h
+  simp at *
   rw [div_eq_div_iff] at h
   nth_rw 2 [mul_comm]
   exact h
@@ -246,6 +245,7 @@ lemma logDeriv_eqOn_iff (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn
     simp_rw [logDeriv_apply]
     have HJ := deriv_EqOn_congr s hz hs2 hx
     rw [HJ, h]
+
     rw [deriv_const_smul]
     simp
     rw [mul_div_mul_left (deriv g x) (g x) hz0]

@@ -17,6 +17,16 @@ noncomputable def η (z : ℂ) := cexp (2 * π * Complex.I * z / 24) * ∏' (n :
     (1 - cexp (2 * π * Complex.I * (n + 1) * z))
 
 
+lemma tendstoUniformlyOn_tprod' [TopologicalSpace α] {f : ℕ → α → ℂ} {K : Set α}
+    (hK : IsCompact K) {u : ℕ → ℝ} (hu : Summable u) (h : ∀ n x, x ∈ K → ‖f n x‖ ≤ u n)
+    (hcts : ∀ n, ContinuousOn (fun x => (f n x)) K) :
+    TendstoUniformlyOn (fun n : ℕ => fun a : α => ∏ i ∈ Finset.range n, (1 + (f i a)))
+    (fun a => ∏' i, (1 + (f i a))) atTop K := by
+  apply HasProdUniformlyOn.tendstoUniformlyOn_finsetRange
+  apply Summable.hasProdUniformlyOn_nat_one_add hK hu ?_ hcts
+  filter_upwards with n x hx using h n x hx
+  simp
+
 /-this is being PRd-/
 lemma prod_tendstoUniformlyOn_tprod' {α : Type*} [TopologicalSpace α] {f : ℕ → α → ℂ} (K : Set α)
     (hK : IsCompact K) (u : ℕ → ℝ) (hu : Summable u) (h : ∀ n x, x ∈ K → (‖(f n x)‖) ≤ u n)
@@ -100,8 +110,7 @@ lemma tsum_log_deriv_eqn (z : ℍ) :
       intro i
       ext y
       rw [deriv_fun_mul]
-      · simp only [differentiableAt_const, deriv_mul, deriv_const', zero_mul, mul_zero, add_zero,
-        deriv_add, deriv_id'', mul_one, zero_add]
+      · simp only [deriv_const', zero_mul, deriv_id'', mul_one, zero_add]
       · simp only [differentiableAt_const]
       · simp only [differentiableAt_fun_id]
   rw [h2 i, h1 i, h3 i]
@@ -236,8 +245,7 @@ lemma eta_logDeriv (z : ℍ) : logDeriv η z = (π * Complex.I / 12) * E₂ z :=
       intro i
       ext y
       rw [deriv_fun_mul]
-      · simp only [differentiableAt_const, deriv_mul, deriv_const', zero_mul, mul_zero, add_zero,
-        deriv_add, deriv_id'', mul_one, zero_add]
+      · simp only [deriv_const', zero_mul, deriv_id'', mul_one, zero_add]
       · simp only [differentiableAt_const]
       · simp only [differentiableAt_fun_id]
     conv =>
@@ -310,9 +318,8 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   simp only [coe_mk_subtype] at Rb
   rw [Rb]
   have E := E₂_transform z
-  simp only [one_div, neg_mul, smul_eq_mul, SL_slash_def, slash, ← ModularGroup.sl_moeb,
-    modular_S_smul, ModularGroup.det_coe, ofReal_one, Int.reduceSub, zpow_one, mul_one,
-    ModularGroup.denom_S, Int.reduceNeg, zpow_neg] at *
+  simp only [one_div, neg_mul, smul_eq_mul, SL_slash_def, modular_S_smul, ModularGroup.denom_S,
+    Int.reduceNeg, zpow_neg] at *
   have h00 :  (UpperHalfPlane.mk (-z : ℂ)⁻¹ z.im_inv_neg_coe_pos) = (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ) := by
     simp [UpperHalfPlane.mk]
     ring_nf
@@ -343,7 +350,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
     rw [@mem_slitPlane_iff]
     right
     have hz := z.2
-    simp only [UpperHalfPlane.coe] at hz
+    simp only at hz
     exact Ne.symm (ne_of_lt hz)
   · apply eta_DifferentiableAt_UpperHalfPlane z
 

@@ -24,9 +24,9 @@ lemma eta_q_eq_pow (n : ℕ) (z : ℂ) : eta_q n z = cexp (2 * π * Complex.I * 
 
 theorem qParam_lt_one (z : ℍ) (r : ℝ) (hr : 0 < r) :
     ‖𝕢 r z‖ < 1 := by
-  simp [Periodic.qParam, norm_exp, mul_re, re_ofNat, ofReal_re, im_ofNat, ofReal_im, mul_zero, sub_zero,
-    Complex.I_re, mul_im, zero_mul, add_zero, Complex.I_im, mul_one, sub_self, coe_re, coe_im,
-    zero_sub, Real.exp_lt_one_iff, Left.neg_neg_iff]
+  simp [Periodic.qParam, norm_exp, mul_re, re_ofNat, ofReal_re, im_ofNat, ofReal_im, mul_zero,
+    sub_zero, Complex.I_re, mul_im, zero_mul, add_zero, Complex.I_im, mul_one, sub_self, coe_re,
+    coe_im, zero_sub, Real.exp_lt_one_iff]
   rw [neg_div, neg_lt_zero]
   positivity
 
@@ -91,7 +91,7 @@ lemma tprod_ne_zero' {ι α : Type*} (x : α) (f : ι → α → ℂ) (hf : ∀ 
   (hu : ∀ x : α, Summable fun n => f n x) : (∏' i : ι, (1 + f i) x) ≠ 0 := by
   simp only [Pi.add_apply, Pi.one_apply, ne_eq]
   rw [← Complex.cexp_tsum_eq_tprod (f := fun n => 1 + f n x) (fun n => hf n x)]
-  · simp only [comp_apply, exp_ne_zero, not_false_eq_true]
+  · simp only [exp_ne_zero, not_false_eq_true]
   · exact Complex.summable_log_one_add_of_summable (hu x)
 
 theorem etaProdTerm_ne_zero (z : ℍ) : ηₚ z ≠ 0 := by
@@ -153,7 +153,7 @@ lemma tsum_log_deriv_eta_q' (z : ℂ) :
 lemma logDeriv_q (n : ℝ) (z : ℂ) : logDeriv (𝕢 n) z = 2 * ↑π * Complex.I / n := by
   have : (𝕢 n) = (fun z ↦ cexp (z)) ∘ (fun z => (2 * ↑π * Complex.I / n) * z)  := by
     ext y
-    simp only [Periodic.qParam, ofReal_ofNat, comp_apply]
+    simp only [Periodic.qParam, comp_apply]
     ring_nf
   rw [this, logDeriv_comp (by fun_prop) (by fun_prop), deriv_const_mul _ (by fun_prop)]
   simp only [LogDeriv_exp, Pi.one_apply, deriv_id'', mul_one, one_mul]
@@ -263,8 +263,8 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   simp only [coe_mk_subtype] at Rb
   rw [Rb]
   have E := E₂_transform z
-  simp only [one_div, neg_mul, smul_eq_mul, SL_slash_def, slash, ← ModularGroup.sl_moeb,
-    modular_S_smul, ModularGroup.det_coe, ofReal_one, Int.reduceSub, zpow_one, mul_one,
+  simp only [one_div, neg_mul, smul_eq_mul, SL_slash_def,
+    modular_S_smul,
     ModularGroup.denom_S, Int.reduceNeg, zpow_neg] at *
   have h00 :  (UpperHalfPlane.mk (-z : ℂ)⁻¹ z.im_inv_neg_coe_pos) = (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ) := by
     simp [UpperHalfPlane.mk]
@@ -296,7 +296,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
     rw [@mem_slitPlane_iff]
     right
     have hz := z.2
-    simp only [UpperHalfPlane.coe] at hz
+    simp  at hz
     exact Ne.symm (ne_of_lt hz)
   · apply eta_DifferentiableAt_UpperHalfPlane z
 

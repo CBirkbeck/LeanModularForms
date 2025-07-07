@@ -1,4 +1,4 @@
-/-
+/- /-
 Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
@@ -73,4 +73,5 @@ theorem derivWithin_tsum {ι F E : Type*} [NontriviallyNormedField E] [IsRCLikeN
     apply HasDerivWithinAt.hasDerivAt
     · exact DifferentiableWithinAt.hasDerivWithinAt (hf2 q r hr).differentiableWithinAt
     · exact IsOpen.mem_nhds hs hr
+ -/
  -/
