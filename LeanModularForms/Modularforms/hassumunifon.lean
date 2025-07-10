@@ -19,7 +19,7 @@ is the sum of the derivatives, under suitable conditions.
 
 -/
 
-open Set Metric TopologicalSpace Function Filter
+open Set Metric TopologicalSpace Function Filter Complex UpperHalfPlane
 
 open scoped Topology NNReal Nat Complex Pointwise
 
@@ -68,14 +68,12 @@ theorem derivWithin_tsum {F E : Type*} [NontriviallyNormedField E] [IsRCLikeNorm
     · exact DifferentiableWithinAt.hasDerivWithinAt (hf2 q r hr).differentiableWithinAt
     · exact IsOpen.mem_nhds hs hr
 
-
 lemma tsum_eq_summable {ι α : Type*} [AddCommMonoid α] [ TopologicalSpace α]
     (g : ι → α) (h : ∑' n, g n ≠ 0) :
     Summable g := by
   by_contra hg
   rw [tsum_eq_zero_of_not_summable hg] at h
   aesop
-
 
 variable {α β ι : Type*} [CommMonoid α] {f : ι → β → α} {g : β → α} {𝔖 : Set (Set β)}
   {x : β} {s : Set β} {I : Finset ι} [UniformSpace α] [TopologicalSpace β] [T2Space α] [DecidableEq ι]
@@ -107,18 +105,19 @@ lemma MultipliableLocallyUniformlyOn_congr (f f' : ι → β → α) (h : ∀ i,
 theorem iteratedDerivWithin_tsum {F E : Type*} [NontriviallyNormedField E] [IsRCLikeNormedField E]
     [NormedField F] [NormedSpace E F] (f : ι → E → F) {s : Set E}
     (m : ℕ) (hs : IsOpen s) {x : E} (hx : x ∈ s)
-    (h : ∀ k, SummableLocallyUniformlyOn (fun n ↦ (iteratedDerivWithin k (fun z ↦ f n z) s)) s)
-    (hf2 : ∀ n k r, r ∈ s → DifferentiableAt E (iteratedDerivWithin k (fun z ↦ f n z) s) r) :
+    (h : ∀ k, k ≤ m → SummableLocallyUniformlyOn (fun n ↦ (iteratedDerivWithin k (fun z ↦ f n z) s)) s)
+    (hf2 : ∀ n k r, k ≤ m → r ∈ s → DifferentiableAt E (iteratedDerivWithin k (fun z ↦ f n z) s) r) :
     iteratedDerivWithin m (fun z ↦ ∑' n , f n z) s x = ∑' n, iteratedDerivWithin m (f n) s x := by
   induction' m with m hm generalizing x
   · simp
   · simp_rw [iteratedDerivWithin_succ]
     rw [← derivWithin_tsum _ hs hx]
-    · exact derivWithin_congr (fun _ ht ↦ hm ht) (hm hx)
-    · exact fun y hy => ((h m).summable hy).congr (fun _ => by simp)
-    · exact SummableLocallyUniformlyOn_congr _ _ (fun i ⦃t⦄ ht ↦ iteratedDerivWithin_succ) (h (m+1))
-    · exact fun n r hr ↦ hf2 n m r hr
-
+    · apply derivWithin_congr
+      · exact fun t ht => hm ht (fun k hk => h k (by omega)) (fun k r e hr he => hf2 k r e (by omega) he)
+      · exact hm hx (fun k hk => h k (by omega)) (fun k r e hr he => hf2 k r e (by omega) he)
+    · exact fun y hy => ((h m (by omega)).summable hy).congr (fun _ => by simp)
+    · exact SummableLocallyUniformlyOn_congr _ _ (fun i ⦃t⦄ ht ↦ iteratedDerivWithin_succ) (h (m + 1) (by rfl))
+    · exact fun n r hr ↦ hf2 n m r (by omega) hr
 
 variable
   {𝕜 : Type*} [NontriviallyNormedField 𝕜]
@@ -148,152 +147,178 @@ theorem iteratedDerivWithin_of_isOpen (hs : IsOpen s) :
   simp_rw [iteratedFDerivWithin_of_isOpen (𝕜 := 𝕜) (F := F) (E := 𝕜) (f := f) n hs hx]
 
 
+theorem iteratedDerivWithin_congr_of_isOpen (f : 𝕜 → F) (n : ℕ) (s t : Set 𝕜) (hs : IsOpen s) (ht : IsOpen t) :
+   (s ∩ t).EqOn (iteratedDerivWithin n f s) (iteratedDerivWithin n f t) := by
+  intro r hr
+  rw [iteratedDerivWithin_of_isOpen hs (f := f) (n := n) hr.1,
+    iteratedDerivWithin_of_isOpen ht (f := f) (n := n) hr.2]
+
+theorem iteratedDerivWithin_of_isOpen_eq_iterate (hs : IsOpen s) :
+    EqOn (iteratedDerivWithin n f s) (deriv^[n] f) s := by
+  apply Set.EqOn.trans (iteratedDerivWithin_of_isOpen hs)
+  rw [iteratedDeriv_eq_iterate]
+  exact fun ⦃x⦄ ↦ congrFun rfl
+
 theorem iteratedDerivWithin_zpow (m : ℤ) (k : ℕ) (hs : IsOpen s) :
     s.EqOn (iteratedDerivWithin k (fun y => y ^ m) s)
     (fun y => (∏ i ∈ Finset.range k, ((m : 𝕜) - i)) * y ^ (m - k)) := by
-  apply Set.EqOn.trans (iteratedDerivWithin_of_isOpen hs)
-  rw [iteratedDeriv_eq_iterate]
+  apply Set.EqOn.trans (iteratedDerivWithin_of_isOpen_eq_iterate hs)
   intro t ht
   simp
 
 theorem iteratedDerivWithin_one_div (k : ℕ) (hs : IsOpen s) :
     s.EqOn (iteratedDerivWithin k (fun y => 1 / y) s)
     (fun y => (-1) ^ k * (k !) * (1 / y ^ (k + 1))) := by
-  apply Set.EqOn.trans (iteratedDerivWithin_of_isOpen hs)
-  simp only [iteratedDeriv_eq_iterate, one_div, iter_deriv_inv', Int.reduceNeg]
+  apply Set.EqOn.trans (iteratedDerivWithin_of_isOpen_eq_iterate hs)
+  simp only [one_div, iter_deriv_inv', Int.reduceNeg]
   intro t ht
   rw [show -1 -(k : ℤ) = -(k + 1) by ring]
   norm_cast
   simp
 
-@[simp]
-theorem iter_deriv_inv'' (k : ℕ) (c : 𝕜) :
-    deriv^[k] (fun x => (x + c)⁻¹) = (fun x : 𝕜 => (-1) ^ k * k ! * (x + c)^ (-1 - k : ℤ)) := by
+theorem iter_deriv_inv_linear (k : ℕ) (c d : 𝕜) :
+    deriv^[k] (fun x => (d * x + c)⁻¹) = (fun x : 𝕜 => (-1) ^ k * k ! * d ^ k * (d * x + c)^ (-1 - k : ℤ)) := by
   induction' k with k ihk
-  simp
-  rw [show  k + 1 = 1 + k by ring]
-  rw [@iterate_add_apply, ihk]
-  ext z
-  by_cases hzc : z + c = 0
-  simp [hzc]
-
-
-  sorry
-  simp
-  have h0 : (fun x ↦ (x + c) ^ (-1 - (k : ℤ))) = (fun x => x ^ (-(1 + k : ℤ))) ∘ (fun x => x + c) := by
+  · simp
+  · rw [Nat.factorial_succ, show  k + 1 = 1 + k by ring, @iterate_add_apply, ihk]
     ext z
-    grind
-  rw [h0, deriv_comp]
-  simp
-
-
-  sorry
-  rw [differentiableAt_zpow]
-  aesop
-  simp
-
-/-- The iterated derivative commutes with shifting the function by a constant on the left. -/
-lemma iteratedDerivWithin_comp_const_add (n : ℕ) (f : 𝕜 → F)  :
-    iteratedDerivWithin n (fun z ↦ f (x + z)) s = fun t ↦ (iteratedDerivWithin n f (x +ᵥ s) (x + t)) := by
-  induction n with
-  | zero => simp only [iteratedDerivWithin_zero]
-  | succ n IH =>
-    simp_rw [iteratedDerivWithin_succ]
-
-
-    sorry
-
-/-- The iterated derivative commutes with shifting the function by a constant on the right. -/
-lemma iteratedDeriv_comp_add_const (n : ℕ) (f : 𝕜 → F) (s : 𝕜) :
-    iteratedDeriv n (fun z ↦ f (z + s)) = fun t ↦ iteratedDeriv n f (t + s) := by
-  induction n with
-  | zero => simp only [iteratedDeriv_zero]
-  | succ n IH =>
-    simpa only [iteratedDeriv_succ, IH] using funext <| deriv_comp_add_const _ s
+    simp only [Int.reduceNeg, iterate_one, deriv_const_mul_field',
+      Nat.cast_add, Nat.cast_one]
+    by_cases hd : d = 0
+    · rw [hd]
+      simp
+    · have := deriv_comp_add_const (fun x => (d * x) ^ (-1 - k : ℤ)) (c / d) z
+      have h0 : (fun x ↦ (d * (x + c / d)) ^ (-1 - (k : ℤ))) = (fun x ↦ (d * x + c) ^ (-1 - (k : ℤ))) := by
+        ext y
+        field_simp
+        ring_nf
+      rw [h0, deriv_comp_mul_left d (fun x ↦ (x) ^ (-1 - k : ℤ)) (z + c / d)] at this
+      rw [this]
+      field_simp
+      ring_nf
 
 local notation "ℂ_ℤ " => Complex.integerComplement
 
-lemma cotTerm_iteratedDerivWith (d k : ℕ) : EqOn (iteratedDerivWithin k (fun (z : ℂ) => cotTerm z d) ℂ_ℤ)
-    (fun z : ℂ => (-1) ^ k * k ! * (1 / (z + d) ^ (k + 1) + 1 / (z - d) ^ (k + 1) )) ℂ_ℤ := by
+  theorem contDiffOn_inv_linear (d : ℤ) (k : ℕ) : ContDiffOn ℂ k (fun z : ℂ => 1 / (z + d)) ℂ_ℤ := by
+  simp only [one_div]
+  apply ContDiffOn.inv
+  fun_prop
+  exact fun x hx => Complex.integerComplement_add_ne_zero hx d
+
+ theorem contDiffOn_inv_linear_sub (d : ℤ) (k : ℕ) : ContDiffOn ℂ k (fun z : ℂ => 1 / (z - d)) ℂ_ℤ := by
+  simp_rw [sub_eq_add_neg]
+  convert contDiffOn_inv_linear (-d) k
+  simp
+
+
+
+
+lemma cotTerm_iteratedDeriv (d k : ℕ) : EqOn (iteratedDeriv k (fun (z : ℂ) => cotTerm z d))
+    (fun z : ℂ => (-1) ^ k * k ! * (1 / (z + (d + 1)) ^ (k + 1) + 1 / (z - (d + 1)) ^ (k + 1) )) ℂ_ℤ := by
   intro z hz
   simp_rw [cotTerm]
   have h1 :
     (fun z : ℂ => 1 / (z - (d + 1)) + 1 / (z + (d + 1))) =
-      (fun z : ℂ => 1 / (z - (d + 1))) + fun z : ℂ => 1 / (z + (d +1)) :=
-    by  rfl
-  rw [h1]
-  rw [iteratedDerivWithin_add hz ?_]
+      (fun z : ℂ => 1 / (z - (d + 1))) + fun z : ℂ => 1 / (z + (d +1)) := by rfl
+  rw [h1, iteratedDeriv_add  ?_]
+  · simp only [one_div, iteratedDeriv_eq_iterate, sub_eq_add_neg]
+    have h2 := iter_deriv_inv_linear k (-(d + 1 : ℂ)) 1
+    have h3 := iter_deriv_inv_linear k (d + 1 : ℂ) 1
+    simp only [one_div, one_mul, neg_add_rev, one_pow,
+      mul_one, Int.reduceNeg] at *
+    simp_rw [h2, h3, show -1 -(k : ℤ) = -(k + 1) by ring, show (k : ℤ) + 1 = ((k + 1) : ℕ) by simp,
+      zpow_neg, ← inv_pow, ← inv_zpow, zpow_natCast ]
+    ring
+  · simpa using (contDiffOn_inv_linear (d + 1) k).contDiffAt
+      (IsOpen.mem_nhds ( (by apply Complex.isOpen_compl_range_intCast)) hz)
+  · simpa using (contDiffOn_inv_linear_sub (d + 1) k).contDiffAt
+      (IsOpen.mem_nhds ( (by apply Complex.isOpen_compl_range_intCast)) hz)
+
+lemma cotTerm_iteratedDerivWith (d k : ℕ) : EqOn (iteratedDerivWithin k (fun (z : ℂ) => cotTerm z d) ℂ_ℤ)
+    (fun z : ℂ => (-1) ^ k * k ! * (1 / (z + (d + 1)) ^ (k + 1) + 1 / (z - (d + 1)) ^ (k + 1) )) ℂ_ℤ := by
+  apply Set.EqOn.trans (iteratedDerivWithin_of_isOpen Complex.isOpen_compl_range_intCast)
+  apply cotTerm_iteratedDeriv
+
+
+
+
+
+lemma upperHalfPlane_inter_integerComplement :
+    {z : ℂ | 0 < z.im} ∩ Complex.integerComplement = {z : ℂ | 0 < z.im} := by
+  ext z
+  simp
+  intro hz
+  apply UpperHalfPlane.coe_mem_integerComplement ⟨z,hz⟩
+
+lemma UpperHalPlane_isOpen : IsOpen {z : ℂ | 0 < z.im} := by
+  exact (isOpen_lt continuous_const Complex.continuous_im)
+
+lemma cotTerm_iteratedDerivWith' (d k : ℕ) : EqOn
+    (iteratedDerivWithin k (fun (z : ℂ) => cotTerm z d) {z : ℂ | 0 < z.im})
+    (fun z : ℂ => (-1) ^ k * k ! * (1 / (z + (d + 1)) ^ (k + 1) + 1 / (z - (d + 1)) ^ (k + 1) ))
+    {z : ℂ | 0 < z.im} := by
+  have h1 : IsOpen ℂ_ℤ := by apply Complex.isOpen_compl_range_intCast
+  have := iteratedDerivWithin_congr_of_isOpen (fun (z : ℂ) => cotTerm z d) k _ _
+    UpperHalPlane_isOpen h1
+  rw [upperHalfPlane_inter_integerComplement] at this
+  apply Set.EqOn.trans this
+  intro z hz
+  simpa using  cotTerm_iteratedDerivWith d k (UpperHalfPlane.coe_mem_integerComplement ⟨z,hz⟩)
+
+lemma summableLocallyUniformlyOn_iteratedDerivWithin_cotTerm (d k : ℕ) :
+    SummableLocallyUniformlyOn
+    (fun n : ℕ ↦ iteratedDerivWithin k (fun z : ℂ => cotTerm z d) {z : ℂ | 0 < z.im})
+      {z : ℂ | 0 < z.im} := by
   sorry
 
+theorem aux_iter_der_tsum'' (k : ℕ) (hk : 1 ≤ k) (x : ℍ) :
+    iteratedDerivWithin k
+        ((fun z : ℂ => 1 / z) + fun z : ℂ => ∑' n : ℕ, cotTerm z n) {z : ℂ | 0 < z.im}  x =
+      (-1) ^ (k : ℕ) * (k : ℕ)! * ∑' n : ℤ, 1 / ((x : ℂ) + n) ^ (k + 1 : ℕ) := by
+
+  rw [iteratedDerivWithin_add ?_ ?_]
+  · have := iteratedDerivWithin_tsum (fun (n : ℕ) z => cotTerm z n) (s :=  {z : ℂ | 0 < z.im}) k
+    rw [this]
+    rw [iteratedDerivWithin_one_div]
+    have hx : UpperHalfPlane.coe x ∈ {z : ℂ | 0 < z.im} := by
+      simp [UpperHalfPlane.coe]
+    conv =>
+      enter [1,2,1]
+      ext n
+      rw [cotTerm_iteratedDerivWith' n k hx]
+    simp
+    rw [tsum_of_add_one_of_neg_add_one]
+    rw [tsum_mul_left, Summable.tsum_add]
+    simp_rw [sub_eq_add_neg]
+    simp
+    ring
+    apply  ((summable_nat_add_iff 1).mpr (summable_int_iff_summable_nat_and_neg.mp
+      (EisensteinSeries.linear_right_summable x 1 (k := k + 1) (by omega))).1).congr
+    intro n
+    norm_cast
+    ring
+    apply ((summable_nat_add_iff 1).mpr (summable_int_iff_summable_nat_and_neg.mp
+      (EisensteinSeries.linear_right_summable x 1 (k := k + 1) (by omega))).2).congr
+    intro n
+    simp
+    norm_cast
+    congr
+    simp
+    ring
 
 
 
-theorem aut_iter_deriv (d k : ℕ) :
-    EqOn (iteratedDerivWithin k (fun z : ℂ => 1 / (z + d)) {z : ℂ | 0 < z.im})
-      (fun t : ℂ => (-1) ^ k * k ! * (1 / (t + d) ^ (k + 1))) {z : ℂ | 0 < z.im} := by
-  intro x hx
-  induction' k with k IH generalizing x
-  simp only [iteratedDerivWithin_zero, pow_zero, Nat.factorial_zero, one_mul]
-  simp  at *
-  rw [iteratedDerivWithin_succ]
-  simp only [one_div, Nat.cast_succ, Nat.factorial, Nat.cast_mul]
-  have := (IH hx)
-  have H : derivWithin (fun (z : ℂ) => (-1: ℂ) ^ k * ↑k ! * ((z + ↑d) ^ (k + 1))⁻¹) {z : ℂ | 0 < z.im} x =
-   (-1) ^ (↑k + 1) * ((↑k + 1) * ↑k !) * ((x + ↑d) ^ (↑k + 1 + 1))⁻¹ := by
-    rw [DifferentiableAt.derivWithin]
-    · simp only [deriv_const_mul_field']
 
 
-      have h0 : (fun z : ℂ => ((z + d) ^ (k + 1))⁻¹) = (fun z : ℂ => (z + d) ^ (k + 1))⁻¹ := by
-        rfl
-      rw [h0]
-      have h1 : (fun z : ℂ => ((z + d) ^ (k + 1))) = (fun z : ℂ => (z + d)) ^ (k + 1) := by
-        rfl
-      rw [h1]
-      rw [deriv_inv'', deriv_pow'', deriv_add_const', deriv_id'']
-      simp only [Nat.cast_add, Nat.cast_one, add_tsub_cancel_right, mul_one]
-      rw [pow_add]
-      simp [pow_one]
-
-      have Hw : (-(((k : ℂ) + 1) * (x + ↑d) ^ k) / ((x + ↑d) ^ k * (x + ↑d)) ^ 2) = -(↑k + 1) / (x + ↑d) ^ (k + 2) :=
-        by
-        rw [div_eq_div_iff]
-        norm_cast
-        simp
-        ring
-        norm_cast
-        apply pow_ne_zero
-        apply mul_ne_zero
-        apply pow_ne_zero k (upper_ne_int ⟨x, hx⟩ d)
-        apply upper_ne_int ⟨x, hx⟩ d
-        norm_cast
-        apply pow_ne_zero (k + 2) (upper_ne_int ⟨x, hx⟩ d)
-      rw [Hw]
-      ring
-      fun_prop
-      fun_prop
-      norm_cast
-      apply pow_ne_zero (k + 1) (upper_ne_int ⟨x, hx⟩ d)
-    · apply DifferentiableAt.mul
-      · fun_prop
-      · apply DifferentiableAt.inv
-        fun_prop
-        apply pow_ne_zero (k + 1) (upper_ne_int ⟨x, hx⟩ d)
-    · apply IsOpen.uniqueDiffWithinAt _ hx
-      refine isOpen_lt ?_ ?_
-      · fun_prop
-      · fun_prop
-  rw [←H]
-  apply derivWithin_congr
-  norm_cast at *
-  simp at *
-  intro r hr
-  apply IH hr
-  norm_cast at *
-  simp at *
-  apply this
 
 
+    sorry
+
+
+
+
+    all_goals{sorry}
+  all_goals {sorry}
 
 /- lemma derivWithin_SummableUniformlyOn_eq {F E : Type*} [NontriviallyNormedField E] [IsRCLikeNormedField E]
     [NormedField F] [NormedSpace E F] {f g : α → E → F} {s : Set E}
