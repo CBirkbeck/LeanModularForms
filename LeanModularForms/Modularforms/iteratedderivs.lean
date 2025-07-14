@@ -122,7 +122,8 @@ theorem iter_div_aut_add (d : ℤ) (k : ℕ) :
   have h1 :
     (fun z : ℂ => 1 / (z - d) + 1 / (z + d)) =
       (fun z : ℂ => 1 / (z - d)) + fun z : ℂ => 1 / (z + d) :=
-    by rfl
+    by
+    rfl
   rw [h1]
   simp only [one_div, Pi.add_apply] at *
   rw [iteratedDerivWithin_add hx ?_]
