@@ -499,7 +499,6 @@ theorem summable_norm_mul_geometric_of_norm_lt_one_complex {k : ℕ} {r : ℝ}
       simp only [cast_pow]
       exact (isLittleO_pow_const_mul_const_pow_const_pow_of_norm_lt k hrr').isBigO
 
-
 lemma aux_IsBigO_mul (k : ℕ) (p : ℝ) {f : ℕ → ℂ} (hf : f =O[atTop] (fun n => (↑(n ^ k) : ℝ))) :
     (fun n => f n * (2 * ↑π * Complex.I * ↑n / p) ^ k) =O[atTop]
     (fun n => (↑(n ^ (2 * k)) : ℝ)) := by
@@ -533,15 +532,14 @@ theorem qExpansion_summableLocallyUniformlyOn (k : ℕ) {f : ℕ → ℂ} {p : �
   haveI : CompactSpace K := isCompact_univ_iff.mp (isCompact_iff_isCompact_univ.mp hKc)
   let c : ContinuousMap K ℂ := ⟨fun r : K => Complex.exp (2 * ↑π * Complex.I * r / p), by fun_prop⟩
   let r : ℝ := ‖mkOfCompact c‖
-  have hr : ‖r‖  < 1 :=by
-    simp only [norm_norm, r]
-    rw [norm_lt_iff_of_compact Real.zero_lt_one]
+  have hr : ‖r‖  < 1 := by
+    simp only [norm_norm, r, norm_lt_iff_of_compact Real.zero_lt_one]
     intro x
     simp only [mkOfCompact_apply, ContinuousMap.coe_mk, c]
     have h1 : cexp (2 * ↑π * Complex.I * (↑x / ↑p)) = cexp (2 * ↑π * Complex.I * ↑x / ↑p) := by
       congr 1
       ring
-    simpa using h1 ▸ UpperHalfPlane.norm_exp_two_pi_I_lt_one ⟨((x :ℂ) / p) , by aesop⟩
+    simpa using h1 ▸ UpperHalfPlane.norm_exp_two_pi_I_lt_one ⟨((x : ℂ) / p) , by aesop⟩
   let u : ℕ → ℝ := fun n ↦ ‖f n * (2 * ↑π * Complex.I * ↑n / p) ^ k * r ^ n‖
   refine ⟨u, summable_norm_mul_geometric_of_norm_lt_one_complex hr (aux_IsBigO_mul k p hf), ?_⟩
   intro n z hz
@@ -571,8 +569,7 @@ theorem deriv_iterderivwithin (n a : ℕ) {s : Set ℂ} (hs : IsOpen s) {r : ℂ
     DifferentiableAt ℂ (iteratedDerivWithin a (fun z ↦ cexp (2 * ↑π * Complex.I * z) ^ n) s) r := by
   apply DifferentiableOn.differentiableAt
   suffices DifferentiableOn ℂ (iteratedDeriv a (fun z ↦ cexp (2 * ↑π * Complex.I * z) ^ n)) s by
-    apply this.congr
-    exact iteratedDerivWithin_of_isOpen hs
+    apply this.congr (iteratedDerivWithin_of_isOpen hs)
   fun_prop
   exact hs.mem_nhds hr
 
@@ -594,7 +591,7 @@ theorem tsum_uexp_contDiffOn (k : ℕ) :
   (fun n _ hz => deriv_iterderivwithin n m UpperHalPlane_isOpen hz)) z hz).congr
   (fun z hz => exp_deriv' m ⟨z, hz⟩) (exp_deriv' m ⟨z, hz⟩)
 
-lemma exp_deriv (k : ℕ) (hk : 1 ≤ k) (z : ℍ) :
+lemma exp_deriv {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
   iteratedDerivWithin k
     (fun z => (((π : ℂ) * Complex.I) -
     (2 * π * Complex.I) * ∑' n : ℕ, Complex.exp (2 * π * Complex.I * z) ^ n)) {z : ℂ | 0 < z.im} z =
@@ -605,7 +602,6 @@ lemma exp_deriv (k : ℕ) (hk : 1 ≤ k) (z : ℍ) :
   · simpa using z.2
   · exact UpperHalPlane_isOpen.uniqueDiffOn
   · exact (tsum_uexp_contDiffOn k).contDiffWithinAt (by simpa using z.2)
-
 
 lemma exp_deriv4 {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
   iteratedDerivWithin k
@@ -619,7 +615,7 @@ lemma exp_deriv4 {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
     congr
     ext y
     ring
-  simp only [exp_deriv k hk z, neg_mul, show k + 1 = 1 + k by ring, pow_add, pow_one, this, neg_inj,
+  simp only [exp_deriv hk z, neg_mul, show k + 1 = 1 + k by ring, pow_add, pow_one, this, neg_inj,
     mul_eq_mul_left_iff, mul_eq_zero, OfNat.ofNat_ne_zero, ofReal_eq_zero, I_ne_zero,
     or_false, Real.pi_ne_zero]
   congr
@@ -627,36 +623,29 @@ lemma exp_deriv4 {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
   simpa [← exp_nsmul', ofReal_one, div_one, one_mul, UpperHalfPlane.coe] using
     exp_iter_deriv_within k n (fun n => 1) 1 z.2
 
-lemma mul_left_eq_inv_mul (a b c d : ℂ) (ha : a ≠ 0) : a * b = c * d ↔  b = a⁻¹ * c * d := by
-  field_simp
-  ring_nf
-
 theorem Eisenstein_qExpansion_identity {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
     (-1) ^ k * (k : ℕ)! * ∑' n : ℤ, 1 / ((z : ℂ) + n) ^ (k + 1) =
-      -(2 * π * Complex.I) ^ (k + 1) * ∑' n : ℕ, n ^ k *
-      Complex.exp (2 * ↑π * Complex.I * z) ^ n := by
+    -(2 * π * Complex.I) ^ (k + 1) * ∑' n : ℕ, n ^ k * cexp (2 * ↑π * Complex.I * z) ^ n := by
   rw [← exp_deriv4 hk z, ← cot_series_rep_iteratedDeriv_one_div k hk z]
   apply iteratedDerivWithin_congr
   · intro x hx
     simpa using pi_mul_cot_pi_q_exp  ⟨x, hx⟩
   · simpa using z.2
 
-
 theorem Eisenstein_qExpansion_identity' {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
     ∑' n : ℤ, 1 / ((z : ℂ) + n) ^ (k + 1) =
-      ((-2 * π * Complex.I) ^ (k + 1) / (k !)) * ∑' n : ℕ, n ^ k *
-      Complex.exp (2 * ↑π * Complex.I * z) ^ n := by
-  have := Eisenstein_qExpansion_identity hk z
-  rw [mul_left_eq_inv_mul _ _ _ _ (by simp [Nat.factorial_ne_zero])] at this
-  simp_rw [this, ← tsum_mul_left]
+    ((-2 * π * Complex.I) ^ (k + 1) / (k !)) *
+    ∑' n : ℕ, n ^ k * cexp (2 * ↑π * Complex.I * z) ^ n := by
+  simp_rw [(eq_inv_mul_iff_mul_eq₀ (by simp [Nat.factorial_ne_zero])).mpr
+    (Eisenstein_qExpansion_identity hk z), ← tsum_mul_left]
   congr
   ext n
   have h3 : (k ! : ℂ) ≠ 0 := by
       norm_cast
       apply Nat.factorial_ne_zero
+  rw [show (-2 * ↑π * Complex.I) ^ (k + 1) = (-1)^ (k + 1) * (2 * π * Complex.I) ^ (k + 1) by
+       rw [← neg_pow]; ring]
   field_simp [h3]
-  ring_nf
-  rw [show (-2 : ℂ) ^ k = (-1) ^ k * (2 ^ k) by apply neg_pow 2 k]
   ring_nf
   simp [Nat.mul_two]
 
