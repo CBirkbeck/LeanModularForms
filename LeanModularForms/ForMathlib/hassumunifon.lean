@@ -174,22 +174,14 @@ theorem iteratedDerivWithin_fun_add
     fun y ↦ (∏ i ∈ Finset.range k, ((m : 𝕜) - i)) * y ^ (m - k) := by
   simp [iteratedDerivWithin_univ, iteratedDeriv_eq_iterate] -/
 
-theorem iteratedDerivWithin_of_isOpen (hs : IsOpen s) :
-    EqOn (iteratedDerivWithin n f s) (iteratedDeriv n f) s := by
-  unfold iteratedDerivWithin iteratedDeriv
-  intro x hx
-  simp_rw [iteratedFDerivWithin_of_isOpen n hs hx]
+
 
 theorem iteratedDerivWithin_congr_of_isOpen (f : 𝕜 → F) (n : ℕ) {s t : Set 𝕜} (hs : IsOpen s)
     (ht : IsOpen t) : (s ∩ t).EqOn (iteratedDerivWithin n f s) (iteratedDerivWithin n f t) := by
   intro r hr
   rw [iteratedDerivWithin_of_isOpen hs hr.1, iteratedDerivWithin_of_isOpen ht  hr.2]
 
-theorem iteratedDerivWithin_of_isOpen_eq_iterate (hs : IsOpen s) :
-    EqOn (iteratedDerivWithin n f s) (deriv^[n] f) s := by
-  apply Set.EqOn.trans (iteratedDerivWithin_of_isOpen hs)
-  rw [iteratedDeriv_eq_iterate]
-  exact fun ⦃x⦄ ↦ congrFun rfl
+
 
 theorem iteratedDerivWithin_zpow (m : ℤ) (k : ℕ) (hs : IsOpen s) :
     s.EqOn (iteratedDerivWithin k (fun y ↦ y ^ m) s)
@@ -205,34 +197,6 @@ theorem iteratedDerivWithin_one_div (k : ℕ) (hs : IsOpen s) :
   intro t ht
   simp only [one_div, iter_deriv_inv', Int.reduceNeg]
 
-theorem iter_deriv_inv_linear (k : ℕ) (c d : 𝕜) :
-    deriv^[k] (fun x ↦ (d * x + c)⁻¹) =
-    (fun x : 𝕜 ↦ (-1) ^ k * k ! * d ^ k * (d * x + c)^ (-1 - k : ℤ)) := by
-  induction' k with k ihk
-  · simp
-  · rw [Nat.factorial_succ, show  k + 1 = 1 + k by ring, @iterate_add_apply, ihk]
-    ext z
-    simp only [Int.reduceNeg, iterate_one, deriv_const_mul_field',
-      Nat.cast_add, Nat.cast_one]
-    by_cases hd : d = 0
-    · simp [hd]
-    · have := deriv_comp_add_const (fun x ↦ (d * x) ^ (-1 - k : ℤ)) (c / d) z
-      have h0 : (fun x ↦ (d * (x + c / d)) ^ (-1 - (k : ℤ))) =
-        (fun x ↦ (d * x + c) ^ (-1 - (k : ℤ))) := by
-        ext y
-        field_simp
-        ring_nf
-      rw [h0, deriv_comp_mul_left d (fun x ↦ (x) ^ (-1 - k : ℤ)) (z + c / d)] at this
-      rw [this]
-      field_simp
-      ring_nf
-
-theorem iter_deriv_inv_linear_sub (k : ℕ) (c d : 𝕜) :
-    deriv^[k] (fun x ↦ (d * x - c)⁻¹) =
-    (fun x : 𝕜 ↦ (-1) ^ k * k ! * d ^ k * (d * x - c)^ (-1 - k : ℤ)) := by
-  have := iter_deriv_inv_linear k (-c) d
-  simp only [sub_eq_add_neg] at *
-  exact this
 
 local notation "ℂ_ℤ " => Complex.integerComplement
 
@@ -255,8 +219,8 @@ lemma cotTerm_iteratedDeriv (d k : ℕ) : EqOn (iteratedDeriv k (fun (z : ℂ) �
     (fun z : ℂ ↦ 1 / (z - (d + 1)) + 1 / (z + (d + 1))) =
       (fun z : ℂ ↦ 1 / (z - (d + 1))) + fun z : ℂ ↦ 1 / (z + (d +1)) := by rfl
   rw [h1, iteratedDeriv_add  ?_]
-  · have h2 := iter_deriv_inv_linear_sub k ((d + 1 : ℂ)) 1
-    have h3 := iter_deriv_inv_linear k (d + 1 : ℂ) 1
+  · have h2 := iter_deriv_inv_linear_sub k 1 ((d + 1 : ℂ))
+    have h3 := iter_deriv_inv_linear k 1 (d + 1 : ℂ)
     simp only [one_div, one_mul, one_pow, mul_one, Int.reduceNeg, iteratedDeriv_eq_iterate] at *
     rw [h2, h3]
     ring
