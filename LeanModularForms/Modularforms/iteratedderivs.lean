@@ -44,7 +44,7 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
       have h1 : (fun z : ℂ => ((z + d) ^ (k + 1))) = (fun z : ℂ => (z + d)) ^ (k + 1) := by
         rfl
       rw [h1]
-      rw [deriv_inv'', deriv_pow'', deriv_add_const', deriv_id'']
+      rw [deriv_inv'', deriv_pow, deriv_add_const', deriv_id'']
       simp only [Nat.cast_add, Nat.cast_one, add_tsub_cancel_right, mul_one]
       rw [pow_add]
       simp [pow_one]
@@ -148,19 +148,13 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] {F : Type*}
   [NormedAddCommGroup F] [NormedSpace 𝕜 F] (n : ℕ) (f : 𝕜 → F) (s : Set 𝕜) (x : 𝕜)
 
 
-theorem iteratedDerivWithin_of_isOpen (hs : IsOpen s) :
-    EqOn (iteratedDerivWithin n f s) (iteratedDeriv n f) s := by
-  unfold iteratedDerivWithin iteratedDeriv
-  intro x hx
-  simp_rw [iteratedFDerivWithin_of_isOpen (𝕜 := 𝕜) (F := F) (E := 𝕜) (f := f) n hs hx]
-
 
 
 theorem exp_iter_deriv_within (n m : ℕ) :
     EqOn (iteratedDerivWithin n (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * m * s)) {z : ℂ | 0 < z.im})
       (fun t => (2 * ↑π * Complex.I * m) ^ n * Complex.exp (2 * ↑π * Complex.I * m * t)) {z : ℂ | 0 < z.im} :=
   by
-  apply EqOn.trans (iteratedDerivWithin_of_isOpen _ _ _ ?_)
+  apply EqOn.trans (iteratedDerivWithin_of_isOpen  ?_)
   rw [EqOn]
   intro x _
   apply congr_fun (iteratedDeriv_cexp_const_mul ..)
