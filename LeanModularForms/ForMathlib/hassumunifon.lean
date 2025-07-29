@@ -7,6 +7,7 @@ import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Analysis.CStarAlgebra.Classes
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Cotangent
 import Mathlib.Data.Complex.FiniteDimensional
+import Mathlib.NumberTheory.ArithmeticFunction
 
 /-!
 # Continuity of series of functions
@@ -71,7 +72,7 @@ lemma SummableLocallyUniformlyOn_of_locally_bounded [TopologicalSpace β] [Local
 /-- The `derivWithin` of a absolutely and uniformly converget sum on an open set `s` is the sum
 of the derivatives of squence of functions on the open set `s` -/
 theorem derivWithin_tsum {F E : Type*} [NontriviallyNormedField E] [IsRCLikeNormedField E]
-    [NormedField F] [NormedSpace E F] {f : α → E → F} {s : Set E}
+    [NormedAddCommGroup F] [NormedSpace E F] {f : α → E → F} {s : Set E}
     (hs : IsOpen s) {x : E} (hx : x ∈ s) (hf : ∀ y ∈ s, Summable fun n ↦ f n y)
     (h : SummableLocallyUniformlyOn (fun n ↦ (derivWithin (fun z ↦ f n z) s)) s)
     (hf2 : ∀ n r, r ∈ s → DifferentiableAt E (f n) r) :
@@ -444,8 +445,20 @@ lemma exp_iter_deriv_within (k m : ℕ) (f : ℕ → ℂ) (p : ℝ) :
     ring_nf
   · fun_prop
 
---lemma seva (k : ℕ) (f : ℕ → ℂ) (hf : f =O[cofinite] fun n => (n ^ k : ℂ)) : ∃ (N : ℕ) (r : ℝ), r < 1
-open Nat Asymptotics in
+lemma exp_iter_deriv_within2 (k m : ℕ) (p : ℝ) :
+    EqOn (iteratedDerivWithin k (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * m * s / p)) ℍₒ)
+      (fun s => (2 * ↑π * Complex.I * m / p) ^ k * Complex.exp (2 * ↑π * Complex.I * m * s / p)) ℍₒ := by
+  apply EqOn.trans (iteratedDerivWithin_of_isOpen UpperHalPlane_isOpen)
+  intro x hx
+  have : (fun s ↦ cexp (2 * ↑π * Complex.I * ↑m * s / ↑p)) =
+    (fun s ↦ cexp (((2 * ↑π * Complex.I * ↑m) / p) * s)) := by
+    ext z
+    ring_nf
+  simp only [this, iteratedDeriv_cexp_const_mul]
+  ring_nf
+
+
+/- open Nat Asymptotics in
 theorem summable_norm_mul_geometric_of_norm_lt_one_complex {k : ℕ} {r : ℝ}
     (hr : ‖r‖ < 1) {u : ℕ → ℂ} (hu : u =O[atTop] (fun n ↦ (↑(n ^ k) : ℝ))) :
     Summable fun n : ℕ ↦ ‖u n * r ^ n‖ := by
@@ -462,6 +475,26 @@ theorem summable_norm_mul_geometric_of_norm_lt_one_complex {k : ℕ} {r : ℝ}
   _ =O[atTop] fun n ↦ r' ^ n := by
       simp only [cast_pow]
       exact (isLittleO_pow_const_mul_const_pow_const_pow_of_norm_lt k hrr').isBigO
+ -/
+open Nat Asymptotics in
+theorem summable_norm_mul_geometric_of_norm_lt_one' {F : Type*} [NormedRing F]
+    [NormOneClass F] [NormMulClass F] {k : ℕ} {r : F} (hr : ‖r‖ < 1) {u : ℕ → F}
+    (hu : u =O[atTop] (fun n ↦ ((n ^ k : ℕ) : F))) : Summable fun n : ℕ ↦ ‖u n * r ^ n‖ := by
+  rcases exists_between hr with ⟨r', hrr', h⟩
+  apply summable_of_isBigO_nat (summable_geometric_of_lt_one ((norm_nonneg _).trans hrr'.le) h).norm
+  calc
+  fun n ↦ ‖(u n) * r ^ n‖
+  _ =O[atTop] fun n ↦ ‖u n‖ * ‖r‖ ^ n := by
+      apply (IsBigOWith.of_bound (c := ‖(1 : ℝ)‖) ?_).isBigO
+      filter_upwards [eventually_norm_pow_le r] with n hn
+      simp
+  _ =O[atTop] fun n ↦ ‖((n : F) ^ k)‖ * ‖r‖ ^ n := by
+      simpa [Nat.cast_pow] using (Asymptotics.isBigO_norm_left.mpr
+      (Asymptotics.isBigO_norm_right.mpr hu)).mul (isBigO_refl (fun n => (‖r‖ ^ n)) atTop)
+  _ =O[atTop] fun n ↦ ‖r' ^ n‖ := by
+      convert Asymptotics.isBigO_norm_right.mpr (Asymptotics.isBigO_norm_left.mpr
+        (isLittleO_pow_const_mul_const_pow_const_pow_of_norm_lt k hrr').isBigO)
+      simp only [norm_pow, norm_mul]
 
 lemma aux_IsBigO_mul (k : ℕ) (p : ℝ) {f : ℕ → ℂ} (hf : f =O[atTop] (fun n => (↑(n ^ k) : ℝ))) :
     (fun n => f n * (2 * ↑π * Complex.I * ↑n / p) ^ k) =O[atTop]
@@ -478,7 +511,22 @@ lemma aux_IsBigO_mul (k : ℕ) (p : ℝ) {f : ℕ → ℂ} (hf : f =O[atTop] (fu
   convert hf.mul h0
   ring
 
-lemma exp_nsmul' (x a : ℂ) (n : ℕ) : exp (a * n * x) = exp (a * x) ^ n := by
+lemma aux_IsBigO_mul2 (k l : ℕ) (p : ℝ) {f : ℕ → ℂ} (hf : f =O[atTop] (fun n => (↑(n ^ l) : ℝ))) :
+    (fun n => f n * (2 * ↑π * Complex.I * ↑n / p) ^ k) =O[atTop]
+    (fun n => (↑(n ^ (l + k)) : ℝ)) := by
+  have h0 : (fun n : ℕ => (2 * ↑π * Complex.I * ↑n / p) ^ k) =O[atTop]
+    (fun n => (↑(n ^ (k)) : ℝ)) := by
+    have h1 : (fun n : ℕ => (2 * ↑π * Complex.I * ↑n / p) ^ k) =
+      (fun n : ℕ => ((2 * ↑π * Complex.I / p) ^ k) * ↑n ^ k) := by
+      ext z
+      ring
+    simpa [h1] using (Complex.isBigO_ofReal_right.mp (Asymptotics.isBigO_const_mul_self
+      ((2 * ↑π * Complex.I / p) ^ k) (fun (n : ℕ) ↦ (↑(n ^ k) : ℝ)) atTop))
+  simp only [Nat.cast_pow] at *
+  convert hf.mul h0
+  ring
+
+lemma exp_nsmul' (x a p : ℂ) (n : ℕ) : exp (a * n * x / p) = exp (a * x / p) ^ n := by
   rw [← Complex.exp_nsmul]
   ring_nf
 
@@ -486,38 +534,61 @@ open BoundedContinuousFunction in
 theorem qExpansion_summableLocallyUniformlyOn (k : ℕ) {f : ℕ → ℂ} {p : ℝ} (hp : 0 < p)
     (hf : f =O[atTop] (fun n => (↑(n ^ k) : ℝ))) : SummableLocallyUniformlyOn
     (fun n ↦ iteratedDerivWithin k (fun z ↦ f n * cexp (2 * ↑π * Complex.I * z / p) ^ n) ℍₒ) ℍₒ := by
-  have H (n : ℕ ) : (fun z ↦ f n * cexp (2 * ↑π * Complex.I * z / p) ^ n) =
-    (fun z ↦ f n * cexp (2 * ↑π * Complex.I * n  * z / p)) := by
-    ext z
-    rw [← Complex.exp_nsmul]
-    ring_nf
   apply SummableLocallyUniformlyOn_of_locally_bounded UpperHalPlane_isOpen
   intro K hK hKc
   haveI : CompactSpace K := isCompact_univ_iff.mp (isCompact_iff_isCompact_univ.mp hKc)
   let c : ContinuousMap K ℂ := ⟨fun r : K => Complex.exp (2 * ↑π * Complex.I * r / p), by fun_prop⟩
   let r : ℝ := ‖mkOfCompact c‖
-  have hr : ‖r‖  < 1 := by
-    simp only [norm_norm, r, norm_lt_iff_of_compact Real.zero_lt_one]
+  have hr : ‖r‖ < 1 := by
+    simp only [norm_norm, r, norm_lt_iff_of_compact Real.zero_lt_one, mkOfCompact_apply,
+      ContinuousMap.coe_mk, c]
     intro x
-    simp only [mkOfCompact_apply, ContinuousMap.coe_mk, c]
     have h1 : cexp (2 * ↑π * Complex.I * (↑x / ↑p)) = cexp (2 * ↑π * Complex.I * ↑x / ↑p) := by
       congr 1
       ring
     simpa using h1 ▸ UpperHalfPlane.norm_exp_two_pi_I_lt_one ⟨((x : ℂ) / p) , by aesop⟩
-  let u : ℕ → ℝ := fun n ↦ ‖f n * (2 * ↑π * Complex.I * ↑n / p) ^ k * r ^ n‖
-  refine ⟨u, summable_norm_mul_geometric_of_norm_lt_one_complex hr (aux_IsBigO_mul k p hf), ?_⟩
+  refine ⟨_, by simpa using (summable_norm_mul_geometric_of_norm_lt_one' hr
+    (Asymptotics.isBigO_norm_left.mpr (aux_IsBigO_mul k p hf))), ?_⟩
   intro n z hz
-  simp only [H n, exp_iter_deriv_within k n f p (hK hz), Complex.norm_mul, norm_pow,
+  have h0 := pow_le_pow_left₀ (by apply norm_nonneg _) (norm_coe_le_norm (mkOfCompact c) ⟨z, hz⟩) n
+  simp only [← exp_nsmul', exp_iter_deriv_within k n f p (hK hz), Complex.norm_mul, norm_pow,
     Complex.norm_div, Complex.norm_ofNat, norm_real, norm_eq_abs, norm_I, mul_one,
-    Complex.norm_natCast, u]
-  gcongr
-  have h0 := pow_le_pow_left₀ (by apply norm_nonneg _)
-    (norm_coe_le_norm (mkOfCompact c) ⟨z, hz⟩) n
-  simp only [Nat.cast_pow, norm_mkOfCompact, norm_norm, mkOfCompact_apply, ContinuousMap.coe_mk,
+    Complex.norm_natCast,Nat.cast_pow, norm_mkOfCompact, mkOfCompact_apply, ContinuousMap.coe_mk,
     abs_norm, ge_iff_le, r, c] at *
+  gcongr
   convert h0
-  rw [← norm_pow, ← Complex.exp_nsmul]
-  ring_nf
+  rw [← norm_pow, ← exp_nsmul']
+
+open BoundedContinuousFunction in
+theorem qExpansion_summableLocallyUniformlyOn2 (k l : ℕ) {f : ℕ → ℂ} {p : ℝ} (hp : 0 < p)
+    (hf : f =O[atTop] (fun n => (↑(n ^ l) : ℝ))) : SummableLocallyUniformlyOn
+    (fun n ↦ (f n) • iteratedDerivWithin k (fun z ↦  cexp (2 * ↑π * Complex.I * z / p) ^ n) ℍₒ) ℍₒ := by
+  apply SummableLocallyUniformlyOn_of_locally_bounded UpperHalPlane_isOpen
+  intro K hK hKc
+  haveI : CompactSpace K := isCompact_univ_iff.mp (isCompact_iff_isCompact_univ.mp hKc)
+  let c : ContinuousMap K ℂ := ⟨fun r : K => Complex.exp (2 * ↑π * Complex.I * r / p), by fun_prop⟩
+  let r : ℝ := ‖mkOfCompact c‖
+  have hr : ‖r‖ < 1 := by
+    simp only [norm_norm, r, norm_lt_iff_of_compact Real.zero_lt_one, mkOfCompact_apply,
+      ContinuousMap.coe_mk, c]
+    intro x
+    have h1 : cexp (2 * ↑π * Complex.I * (↑x / ↑p)) = cexp (2 * ↑π * Complex.I * ↑x / ↑p) := by
+      congr 1
+      ring
+    simpa using h1 ▸ UpperHalfPlane.norm_exp_two_pi_I_lt_one ⟨((x : ℂ) / p) , by aesop⟩
+  refine ⟨_, by simpa using (summable_norm_mul_geometric_of_norm_lt_one' hr
+    (Asymptotics.isBigO_norm_left.mpr (aux_IsBigO_mul2 k l p hf))), ?_⟩
+  intro n z hz
+  have h0 := pow_le_pow_left₀ (by apply norm_nonneg _) (norm_coe_le_norm (mkOfCompact c) ⟨z, hz⟩) n
+  simp
+  simp only [Nat.cast_pow, norm_mkOfCompact, mkOfCompact_apply, ContinuousMap.coe_mk, ←
+    exp_nsmul', exp_iter_deriv_within2 k n p (hK hz), norm_mul, norm_pow, norm_div,
+    RCLike.norm_ofNat, norm_real, norm_eq_abs, norm_I, mul_one, RCLike.norm_natCast, abs_norm, r,
+    c] at *
+  rw [← mul_assoc]
+  gcongr
+  convert h0
+  rw [← norm_pow, ← exp_nsmul']
 
 theorem cot_q_ext_summableLocallyUniformlyOn (k : ℕ) : SummableLocallyUniformlyOn
     (fun n ↦ iteratedDerivWithin k (fun z ↦ cexp (2 * ↑π * Complex.I * z) ^ n) ℍₒ) ℍₒ := by
@@ -584,7 +655,9 @@ lemma exp_deriv4 {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
     or_false, Real.pi_ne_zero]
   congr
   ext n
-  simpa [← exp_nsmul', ofReal_one, div_one, one_mul, UpperHalfPlane.coe] using
+  have := exp_nsmul' (p := 1) (a := 2 * π * Complex.I) (n := n)
+  simp only [div_one] at this
+  simpa [this, ofReal_one, div_one, one_mul, UpperHalfPlane.coe] using
     exp_iter_deriv_within k n (fun n => 1) 1 z.2
 
 theorem Eisenstein_qExpansion_identity {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
@@ -612,6 +685,100 @@ theorem Eisenstein_qExpansion_identity' {k : ℕ} (hk : 1 ≤ k) (z : ℍ) :
   field_simp [h3]
   ring_nf
   simp [Nat.mul_two]
+
+open  ArithmeticFunction
+
+def mapdiv (n : ℕ+) : Nat.divisorsAntidiagonal n → ℕ+ × ℕ+ := by
+  refine fun x =>
+   ⟨⟨x.1.1, Nat.pos_of_mem_divisors (Nat.fst_mem_divisors_of_mem_antidiagonal x.2)⟩,
+    (⟨x.1.2, Nat.pos_of_mem_divisors (Nat.snd_mem_divisors_of_mem_antidiagonal x.2)⟩ : ℕ+),
+    Nat.pos_of_mem_divisors (Nat.snd_mem_divisors_of_mem_antidiagonal x.2)⟩
+
+def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ ℕ+ × ℕ+ where
+  toFun x := mapdiv x.1 x.2
+  invFun x :=
+    ⟨⟨x.1.1 * x.2.1, mul_pos x.1.2 x.2.2⟩, ⟨x.1, x.2⟩, by
+      simp only [PNat.mk_coe, Nat.mem_divisorsAntidiagonal, ne_eq, mul_eq_zero, not_or]
+      refine ⟨rfl, PNat.ne_zero x.1, PNat.ne_zero x.2⟩⟩
+  left_inv := by
+    rintro ⟨n, ⟨k, l⟩, h⟩
+    rw [Nat.mem_divisorsAntidiagonal] at h
+    simp_rw [mapdiv, PNat.mk_coe]
+    ext <;> simp [h] at *
+    rfl
+  right_inv := by
+    rintro ⟨n, ⟨k, l⟩, h⟩
+    simp_rw [mapdiv]
+    norm_cast
+    rfl
+
+theorem sigma_eq_sum_div' (k n : ℕ) : sigma k n = ∑ d ∈ Nat.divisors n, (n / d) ^ k := by
+  rw [sigma, ArithmeticFunction.coe_mk, ← Nat.sum_div_divisors]
+
+theorem a333 (k : ℕ) (e : ℕ+) (z : ℍ) :
+    Summable fun c : ℕ+ => (c : ℂ) ^ k * exp (2 * ↑π * Complex.I * e * ↑z * c) := by
+  have he : 0 < (e * (z : ℂ)).im := by
+    simpa using z.2
+  have := (qExpansion_summableLocallyUniformlyOn2 0 k (p := 1) (f := fun n => (n ^ k : ℂ))
+    (by norm_num) (by simp [← Complex.isBigO_ofReal_right, Asymptotics.isBigO_refl ])).summable he
+  suffices  Summable fun c : ℕ => (c : ℂ) ^ k * exp (2 * ↑π * Complex.I * e * ↑z * c)  by
+    apply this.subtype
+  apply this.congr
+  intro b
+  simp [← Complex.exp_nsmul]
+  left
+  ring_nf
+
+theorem summable_auxil_13 (k : ℕ) (z : ℍ) :
+  Summable fun c : (n : ℕ+) × { x // x ∈ (n : ℕ).divisorsAntidiagonal } ↦
+  ↑(↑(c.snd) : ℕ × ℕ).1 ^ k *
+    cexp (2 * ↑π * Complex.I * ↑z * ↑(↑(c.snd) : ℕ × ℕ).1 * ↑↑(↑(c.snd) : ℕ × ℕ).2) := by
+  apply Summable.of_norm
+  rw [summable_sigma_of_nonneg]
+  constructor
+  · apply fun n => (hasSum_fintype _).summable
+  · simp only [Complex.norm_mul, norm_pow, Complex.norm_natCast, tsum_fintype,
+    Finset.univ_eq_attach]
+    · apply Summable.of_nonneg_of_le _ _ (summable_norm_iff.mpr (a333 (k+1) 1 z))
+      · exact fun b => Finset.sum_nonneg (by simp)
+      intro b
+      apply le_trans (b := ∑ _ ∈ (b : ℕ).divisors, b ^ k * ‖exp (2 * ↑π * Complex.I * ↑z * b)‖)
+      · simp only [Finset.sum_attach ((b : ℕ).divisorsAntidiagonal) (fun (x : ℕ × ℕ) =>
+            (x.1 : ℝ) ^ (k : ℕ) * ‖Complex.exp (2 * ↑π * Complex.I * z * x.1 * x.2)‖),
+        Nat.sum_divisorsAntidiagonal ((fun (x : ℕ) => fun (y : ℕ) =>
+            (x : ℝ) ^ (k : ℕ) * ‖Complex.exp (2 * ↑π * Complex.I * z * x * y)‖))]
+        gcongr <;> rename_i i hi <;> simp at hi
+        · exact Nat.le_of_dvd b.2 hi
+        · apply le_of_eq
+          rw [mul_assoc]
+          congr
+          norm_cast
+          exact Nat.mul_div_cancel' hi
+      · simpa [← mul_assoc, add_comm k 1, pow_add] using Nat.card_divisors_le_self (b : ℕ)
+  · simp
+
+theorem tsum_sigma_eqn2 (k : ℕ) (z : ℍ) :
+    ∑' (c : Fin 2 → ℕ+), (c 0 ^ k : ℂ) * Complex.exp (2 * ↑π * Complex.I * z * c 0 * c 1) =
+      ∑' e : ℕ+, sigma k e * Complex.exp (2 * ↑π * Complex.I * z * e) := by
+  rw [← (piFinTwoEquiv fun _ => ℕ+).symm.tsum_eq, ← sigmaAntidiagonalEquivProd.tsum_eq]
+  simp [sigmaAntidiagonalEquivProd, mapdiv, sigma_eq_sum_div']
+  rw [ Summable.tsum_sigma ]
+  apply tsum_congr
+  · intro n
+    simp only [tsum_fintype, Finset.univ_eq_attach,
+      Finset.sum_attach ((n : ℕ).divisorsAntidiagonal)
+        (fun (x : ℕ × ℕ) => (x.1 : ℂ) ^ (k : ℕ) * Complex.exp (2 * ↑π * Complex.I * z * x.1 * x.2)),
+      @Nat.sum_divisorsAntidiagonal' ℂ _
+        (fun (x : ℕ) => fun (y : ℕ) =>
+          (x : ℂ) ^ (k : ℕ) * Complex.exp (2 * ↑π * Complex.I * z * x * y)) n, Finset.sum_mul]
+    apply Finset.sum_congr (rfl)
+    intro i hi
+    have hni : (n / i : ℕ) * (i : ℂ) = n := by
+      norm_cast
+      simp only [Nat.mem_divisors, ne_eq, PNat.ne_zero, not_false_eq_true, and_true] at *
+      exact Nat.div_mul_cancel hi
+    simp [mul_assoc, hni]
+  · exact summable_auxil_13 k z
 
 
 
