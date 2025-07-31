@@ -21,101 +21,76 @@ def gammaSetN (N : ℕ) : Set (Fin 2 → ℤ) := ({N} : Set ℕ) • gammaSet 1 
 
 def gammaSetN_map (N : ℕ) (v : gammaSetN N) : gammaSet 1 0 := by
   have hv2 := v.2
-  simp [gammaSetN] at hv2
-  rw [@mem_smul_set] at hv2
-  use hv2.choose
-  exact hv2.choose_spec.1
+  simp only [gammaSetN, singleton_smul, mem_smul_set, nsmul_eq_mul] at hv2
+  refine ⟨hv2.choose, hv2.choose_spec.1⟩
 
 lemma gammaSet_top_mem (v : Fin 2 → ℤ)  : v ∈ gammaSet 1 0 ↔ IsCoprime (v 0) (v 1) := by
   rw [gammaSet]
   simp only [Fin.isValue, mem_setOf_eq, and_iff_right_iff_imp]
-  intro h
-  exact Subsingleton.eq_zero (Int.cast ∘ v)
+  exact fun h ↦ Subsingleton.eq_zero (Int.cast ∘ v)
 
 lemma gammaSetN_map_eq (N : ℕ) (v : gammaSetN N) : v.1 = N • gammaSetN_map N v := by
   have hv2 := v.2
-  simp [gammaSetN] at hv2
-  rw [@mem_smul_set] at hv2
-  have h1 := hv2.choose_spec.2
-  exact h1.symm
+  simp only [gammaSetN, singleton_smul, mem_smul_set, nsmul_eq_mul] at hv2
+  exact (hv2.choose_spec.2).symm
 
 def gammaSetN_Equiv (N : ℕ) (hN : N ≠ 0) : gammaSetN N ≃ gammaSet 1 0 where
   toFun v := gammaSetN_map N v
   invFun v := by
     use N • v
     simp only [gammaSetN, singleton_smul, nsmul_eq_mul, mem_smul_set]
-    use v
-    simp
+    refine ⟨v, by simp⟩
   left_inv v := by
     simp_rw [← gammaSetN_map_eq N v]
   right_inv v := by
-    simp
     have H : N • v.1 ∈ gammaSetN N := by
-      simp [gammaSetN]
-      rw [@mem_smul_set]
-      use v.1
-      simp
-    rw [gammaSetN]  at H
-    simp at H
-    rw [@mem_smul_set] at H
-    simp at H
+      simp only [gammaSetN, singleton_smul, nsmul_eq_mul, mem_smul_set]
+      refine ⟨v.1, by simp⟩
+    simp [gammaSetN, mem_smul_set] at *
     let x := H.choose
     have hx := H.choose_spec
-    have hxv : ⟨x, hx.1⟩   = v := by
+    have hxv : ⟨H.choose, H.choose_spec.1⟩ = v := by
       ext i
-      have hhxi := congr_fun hx.2 i
-      simp [hN] at hhxi
-      exact hhxi
-    simp_rw [← hxv]
-    rw [gammaSetN_map]
-    simp_all only [ne_eq, nsmul_eq_mul, x]
+      simpa [hN] using (congr_fun H.choose_spec.2 i)
+    simp_all only [gammaSetN_map]
 
 lemma gammaSetN_eisSummand (k : ℤ) (z : ℍ) (n : ℕ) (v : gammaSetN n) : eisSummand k v z =
-  ((n : ℂ)^k)⁻¹ * eisSummand k (gammaSetN_map n v) z := by
+  ((n : ℂ) ^ k)⁻¹ * eisSummand k (gammaSetN_map n v) z := by
   simp only [eisSummand, gammaSetN_map_eq n v, Fin.isValue, Pi.smul_apply, nsmul_eq_mul,
     Int.cast_mul, Int.cast_natCast, zpow_neg, ← mul_inv]
   congr
   rw [← mul_zpow]
   ring_nf
 
-def GammaSet_one_Equiv : (Fin 2 → ℤ) ≃ (Σn : ℕ, gammaSetN n) where
-  toFun v := ⟨(v 0).gcd (v 1), ⟨(v 0).gcd (v 1) • ![(v 0)/(v 0).gcd (v 1), (v 1)/(v 0).gcd (v 1)], by
+private def Fin_to_GammaSetN (v : Fin 2 → ℤ) : Σ n : ℕ, gammaSetN n := by
+  refine ⟨(v 0).gcd (v 1), ⟨(v 0).gcd (v 1) • ![(v 0)/(v 0).gcd (v 1), (v 1)/(v 0).gcd (v 1)], ?_⟩⟩
   by_cases hn : 0 < (v 0).gcd (v 1)
-  apply Set.smul_mem_smul
-  simp only [Fin.isValue, mem_singleton_iff]
-  rw [gammaSet_top_mem, Int.isCoprime_iff_gcd_eq_one]
-  apply Int.gcd_div_gcd_div_gcd hn
-  simp only [Fin.isValue, not_lt, nonpos_iff_eq_zero] at hn
-  rw [hn]
-  simp only [singleton_smul, Nat.succ_eq_add_one, Nat.reduceAdd, Fin.isValue,
-    CharP.cast_eq_zero, EuclideanDomain.div_zero, zero_smul, gammaSetN]
-  use ![1,1]
-  simp only [gammaSet_top_mem, Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one, zero_smul,
-    and_true]
-  exact Int.isCoprime_iff_gcd_eq_one.mpr rfl ⟩⟩
+  · apply Set.smul_mem_smul (by aesop)
+    rw [gammaSet_top_mem, Int.isCoprime_iff_gcd_eq_one]
+    apply Int.gcd_div_gcd_div_gcd hn
+  · simp only [gammaSetN, Fin.isValue, (nonpos_iff_eq_zero.mp (not_lt.mp hn)), singleton_smul,
+      Nat.succ_eq_add_one, Nat.reduceAdd, CharP.cast_eq_zero, EuclideanDomain.div_zero, zero_nsmul]
+    refine ⟨![1,1], by simpa [gammaSet_top_mem] using Int.isCoprime_iff_gcd_eq_one.mpr rfl⟩
+
+def GammaSet_one_Equiv : (Fin 2 → ℤ) ≃ (Σ n : ℕ, gammaSetN n) where
+  toFun v := Fin_to_GammaSetN v
   invFun v := v.2
   left_inv v := by
             ext i
             fin_cases i
-            refine Int.mul_ediv_cancel' (Int.gcd_dvd_left (v 0) (v 1))
-            refine Int.mul_ediv_cancel' (Int.gcd_dvd_right (v 0) (v 1))
+            · refine Int.mul_ediv_cancel' (Int.gcd_dvd_left (v 0) (v 1))
+            · refine Int.mul_ediv_cancel' (Int.gcd_dvd_right (v 0) (v 1))
   right_inv v := by
-           ext i
-           have hv2 := v.2.2
-           simp only [gammaSetN, singleton_smul, mem_smul_set] at hv2
-           obtain ⟨x, hx⟩ := hv2
-           simp_rw [← hx.2]
-           simp only [Fin.isValue, Pi.smul_apply, nsmul_eq_mul]
-           have hg := hx.1.2
-           rw [@Int.isCoprime_iff_gcd_eq_one] at hg
-           rw [Int.gcd_mul_left, hg]
-           omega
-           fin_cases i
-           refine Int.mul_ediv_cancel'  ?_
-           simp
-           exact Int.gcd_dvd_left _ _
-           simp
-           refine Int.mul_ediv_cancel' (Int.gcd_dvd_right _ _)
+          ext i
+          · have hv2 := v.2.2
+            simp only [gammaSetN, singleton_smul, mem_smul_set, nsmul_eq_mul] at hv2
+            obtain ⟨x, hx⟩ := hv2
+            simp [← hx.2, Fin_to_GammaSetN, Fin.isValue, Int.gcd_mul_left,
+              Int.isCoprime_iff_gcd_eq_one.mp hx.1.2]
+          · fin_cases i
+            · refine Int.mul_ediv_cancel'  ?_
+              simpa using Int.gcd_dvd_left _ _
+            · refine Int.mul_ediv_cancel' (Int.gcd_dvd_right _ _)
 
 
 theorem q_exp_iden_2 (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (z : ℍ) :
