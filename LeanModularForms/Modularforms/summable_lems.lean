@@ -471,6 +471,7 @@ theorem extracted_abs_norm_summable (z : ℍ) (i : ℤ) :
     zify
     norm_cast
     rw [pow_max]
+  simp at hg
   rw [hg]
   have hg2 :  y.natAbs ^ 2 ⊔ i.natAbs ^ 2 =  y.natAbs ^ 2:= by
     simp only [sup_eq_left]
@@ -487,12 +488,15 @@ theorem extracted_abs_norm_summable (z : ℍ) (i : ℤ) :
       exact hh.le
     zify
     aesop
-  rw [hg2]
-  simp only [Nat.cast_pow]
-  have := Int.natAbs_pow_two y
+  simp at *
   norm_cast
-  rw [← this]
-  rfl
+  --rw [hg2]
+  --simp only [Nat.cast_pow]
+  have := Int.natAbs_pow_two y
+  have hi := Int.natAbs_pow_two i
+  rw [← this, ← hi]
+  norm_cast
+
 
 
 lemma aux (a b c : ℝ) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) : a⁻¹ ≤ c * b⁻¹ ↔ b ≤ c * a := by
@@ -1515,7 +1519,6 @@ theorem pos_sum_eq (k : ℕ) (hk : 0 < k) :
       -(2 * ↑π * Complex.I) * ∑' n : ℕ+, (2 * ↑π * Complex.I * n) ^ (k : ℕ) * Complex.exp (2 * ↑π * Complex.I * n * x) := by
   ext1 x
   simp
-  left
   apply symm
   have := tsum_pNat fun n : ℕ => (2 * ↑π * Complex.I * n) ^ (k : ℕ) * Complex.exp (2 * ↑π * Complex.I * n * x)
   simp at this

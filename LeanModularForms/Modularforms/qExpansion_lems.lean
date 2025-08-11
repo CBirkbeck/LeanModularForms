@@ -229,12 +229,6 @@ lemma cuspFunction_sub [NeZero n] (f g : ModularForm Γ(n) k) :
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
-theorem iteratedDerivWithin_eq_iteratedDeriv  {n : ℕ} (f : 𝕜 → F) (s : Set 𝕜) (x : 𝕜)
-    (hs : UniqueDiffOn 𝕜 s) (h : ContDiffAt 𝕜 n f x) (hx : x ∈ s) :
-    iteratedDerivWithin n f s x = iteratedDeriv n f x := by
-    rw [iteratedDerivWithin, iteratedDeriv]
-    rw [iteratedFDerivWithin_eq_iteratedFDeriv hs h hx]
-
 lemma qExpansion_sub (f g : ModularForm Γ(1) k) : (qExpansion 1 (f - g)) =
     (qExpansion 1 f) - (qExpansion 1 g) := by
   ext m

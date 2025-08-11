@@ -28,7 +28,7 @@ comes in).
 show they are rings (associativity is gonna be hard). golf/clean everything
 
 -/
-open Commensurable Classical Doset MulOpposite Set
+open Commensurable Classical Doset MulOpposite Set DoubleCoset
 
 open scoped Pointwise
 
@@ -89,7 +89,7 @@ the commensurator of H, this is  the data of a set in `G` equal to some double c
 `HgH`, with `g : Δ`. -/
 structure T' (P : ArithmeticGroupPair G) where
   set : Set G
-  eql : ∃ elt : P.Δ,  set = Doset.doset (elt : G) P.H P.H
+  eql : ∃ elt : P.Δ,  set = DoubleCoset.doubleCoset (elt : G) P.H P.H
 
 /-
 noncomputable instance uninon_monoid : Monoid (Set G) where
@@ -119,7 +119,7 @@ lemma ext (P : ArithmeticGroupPair G) (D1 D2 : T' P) (h : D1.set = D2.set): D1 =
 
 
 /--Make an element of `T' P` given an element `g : P.Δ`, i.e make `HgH`.  -/
-def T_mk (P : ArithmeticGroupPair G) (g : P.Δ) : T' P := ⟨doset g P.H P.H, g, rfl⟩
+def T_mk (P : ArithmeticGroupPair G) (g : P.Δ) : T' P := ⟨DoubleCoset.doubleCoset g P.H P.H, g, rfl⟩
 
 /--Make an element of `M P` given an element `g : P.Δ`, i.e make `gH`.  -/
 def M_mk (P : ArithmeticGroupPair G) (g : P.Δ) : M P := ⟨{(g : G)} * (P.H : Set G), g, rfl⟩
@@ -129,10 +129,10 @@ def T_one (P : ArithmeticGroupPair G) : T' P := T_mk P (1 : P.Δ)
 
 lemma T_one_eq (P : ArithmeticGroupPair G) : T_one P = T_mk P (1 : P.Δ) := rfl
 
-lemma T_one_eq_doset_one (P : ArithmeticGroupPair G) : T_one P = ⟨doset (1 : P.Δ) P.H P.H, 1, rfl⟩ := rfl
+lemma T_one_eq_doset_one (P : ArithmeticGroupPair G) : T_one P = ⟨DoubleCoset.doubleCoset (1 : P.Δ) P.H P.H, 1, rfl⟩ := rfl
 
-lemma T_one_eq_doset_one' (P : ArithmeticGroupPair G) : doset ((T_one P).eql.choose : G) P.H P.H =
-  doset (1 : G) P.H P.H := by
+lemma T_one_eq_doset_one' (P : ArithmeticGroupPair G) : DoubleCoset.doubleCoset ((T_one P).eql.choose : G) P.H P.H =
+  DoubleCoset.doubleCoset (1 : G) P.H P.H := by
   have := (T_one P).eql.choose_spec
   have h2 := T_one_eq_doset_one P
   rw [h2] at this
@@ -143,7 +143,7 @@ lemma T_one_choose_eq (P : ArithmeticGroupPair G) : ∃ h₁ h₂ : P.H,
     h₁ * ((T_one P).eql.choose : G) * h₂ = 1 := by
   have := (T_one P).eql.choose_spec
   rw [T_one, T_mk] at this
-  have h2 := (Doset.eq P.H P.H _ _).mp (Doset.mk_eq_of_doset_eq this.symm)
+  have h2 := (DoubleCoset.eq P.H P.H _ _).mp (DoubleCoset.mk_eq_of_doubleCoset_eq this.symm)
   obtain ⟨h₁, h1, h₂, h2 ⟩ := h2
   refine  ⟨⟨h₁,h1⟩, ⟨h₂,h2.1⟩,h2.2.symm⟩
 
@@ -156,16 +156,16 @@ lemma T_one_choose_mem_H (P : ArithmeticGroupPair G) : ((T_one P).eql.choose : G
 
 
 
-lemma doset_mul_left_eq_self (P : ArithmeticGroupPair G) (h : P.H) (g : G) : doset ((h : G) * g) P.H P.H =
-  doset g P.H P.H := by
-  simp_rw [doset, ← singleton_mul_singleton, ← mul_assoc]
+lemma doset_mul_left_eq_self (P : ArithmeticGroupPair G) (h : P.H) (g : G) : DoubleCoset.doubleCoset ((h : G) * g) P.H P.H =
+  DoubleCoset.doubleCoset g P.H P.H := by
+  simp_rw [DoubleCoset.doubleCoset, ← singleton_mul_singleton, ← mul_assoc]
   conv =>
     enter [1,1,1]
     rw [Subgroup.subgroup_mul_singleton h.2]
 
-lemma doset_mul_right_eq_self (P : ArithmeticGroupPair G) (h : P.H) (g : G) : doset ( g * h) P.H P.H =
-  doset g P.H P.H := by
-  simp_rw [doset, ← singleton_mul_singleton, ← mul_assoc]
+lemma DoubleCoset.doubleCoset_mul_right_eq_self (P : ArithmeticGroupPair G) (h : P.H) (g : G) : DoubleCoset.doubleCoset ( g * h) P.H P.H =
+  DoubleCoset.doubleCoset g P.H P.H := by
+  simp_rw [DoubleCoset.doubleCoset, ← singleton_mul_singleton, ← mul_assoc]
   conv =>
     enter [1]
     rw [mul_assoc]
@@ -173,8 +173,8 @@ lemma doset_mul_right_eq_self (P : ArithmeticGroupPair G) (h : P.H) (g : G) : do
 
 
 
-lemma doset_mul_assoc (f g h : G) : doset ((f * g) * h) H H = doset (f * (g * h)) H H := by
-  simp_rw [doset, ← singleton_mul_singleton, ← mul_assoc]
+lemma DoubleCoset.doubleCoset_mul_assoc (f g h : G) : DoubleCoset.doubleCoset ((f * g) * h) H H = DoubleCoset.doubleCoset (f * (g * h)) H H := by
+  simp_rw [DoubleCoset.doubleCoset, ← singleton_mul_singleton, ← mul_assoc]
 
 def M_one (P : ArithmeticGroupPair G) : M P := M_mk P (1 : P.Δ)
 
@@ -244,9 +244,9 @@ lemma mul_singleton_cancel (g : G) (K L : Set G)  (h:  K * {g} = L * {g}) : K = 
   simp_rw [mul_assoc, Set.singleton_mul_singleton] at h2
   simpa using h2
 
-lemma doset_eq_iUnion_leftCosets (g : G) : doset g H H =
+lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) : DoubleCoset.doubleCoset g H H =
   ⋃ (i : (H ⧸ (ConjAct.toConjAct g • H).subgroupOf H)), (i.out * g) • (H : Set G) := by
-  rw [doset]
+  rw [DoubleCoset.doubleCoset]
   have := set_eq_iUnion_leftCosets H (((ConjAct.toConjAct g • H).subgroupOf H).map H.subtype)
   simp only [Subgroup.subgroupOf_map_subtype, inf_le_right, Subgroup.coe_inf,
     Subgroup.coe_pointwise_smul, true_implies] at this
@@ -279,21 +279,21 @@ lemma doset_eq_iUnion_leftCosets (g : G) : doset g H H =
   convert this
   rw [iUnion_mul]
 
-lemma doset_mul_doset_left (g h : G) :
-    (doset g H H) * (doset h H H) = (doset (g) H H) * {h} * H := by
-  simp_rw [doset, show (H : Set G) * {g} * (H : Set G) * (H * {h} * H) =
+lemma DoubleCoset.doubleCoset_mul_DoubleCoset.doubleCoset_left (g h : G) :
+    (DoubleCoset.doubleCoset g H H) * (DoubleCoset.doubleCoset h H H) = (DoubleCoset.doubleCoset (g) H H) * {h} * H := by
+  simp_rw [DoubleCoset.doubleCoset, show (H : Set G) * {g} * (H : Set G) * (H * {h} * H) =
     H * {g} * (H * H) * {h} * H by simp_rw [← mul_assoc], coe_mul_coe H]
 
-lemma doset_mul_doset_right (g h : G) :
-    (doset g H H) * (doset h H H) = H * {g} * (doset (h) H H) := by
-  simp_rw [doset, show (H : Set G) * {g} * (H : Set G) * (H * {h} * H) =
+lemma DoubleCoset.doubleCoset_mul_DoubleCoset.doubleCoset_right (g h : G) :
+    (DoubleCoset.doubleCoset g H H) * (DoubleCoset.doubleCoset h H H) = H * {g} * (DoubleCoset.doubleCoset (h) H H) := by
+  simp_rw [DoubleCoset.doubleCoset, show (H : Set G) * {g} * (H : Set G) * (H * {h} * H) =
     H * {g} * (H * H) * {h} * H by simp_rw [← mul_assoc], coe_mul_coe H, ← mul_assoc]
 
-lemma doset_mul_doset_eq_union_doset (g h : G) :
-    (doset (g : G) (H : Set G) H) * doset (h : G) (H : Set G) H =
-        ⋃ (i : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H), doset (g * i.out * h : G) H H := by
-  rw [doset_mul_doset_right, doset_eq_iUnion_leftCosets, Set.mul_iUnion]
-  simp_rw [doset]
+lemma DoubleCoset.doubleCoset_mul_DoubleCoset.doubleCoset_eq_union_DoubleCoset.doubleCoset (g h : G) :
+    (DoubleCoset.doubleCoset (g : G) (H : Set G) H) * DoubleCoset.doubleCoset (h : G) (H : Set G) H =
+        ⋃ (i : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H), DoubleCoset.doubleCoset (g * i.out * h : G) H H := by
+  rw [DoubleCoset.doubleCoset_mul_DoubleCoset.doubleCoset_right, DoubleCoset.doubleCoset_eq_iUnion_leftCosets, Set.mul_iUnion]
+  simp_rw [DoubleCoset.doubleCoset]
   have h1 : ∀ (i : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H),
     (H : Set G) * {g} * (↑(Quotient.out i) * h) • ↑H = ↑H * {g * ↑(Quotient.out i) * h} * ↑H := by
     intro i
@@ -303,8 +303,8 @@ lemma doset_mul_doset_eq_union_doset (g h : G) :
     simp_rw [← mul_assoc]
   apply iUnion_congr h1
 
-lemma doset_one_mul (h : G) : doset (h : G) (H : Set G) H =
-    ⋃ (_ : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H), doset (h : G) H H := by
+lemma DoubleCoset.doubleCoset_one_mul (h : G) : DoubleCoset.doubleCoset (h : G) (H : Set G) H =
+    ⋃ (_ : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H), DoubleCoset.doubleCoset (h : G) H H := by
   simp [iUnion_const]
 
 
@@ -381,7 +381,7 @@ lemma Set.exists_mul_eq_of_mem_mul {G : Type*} [Group G] {A B : Set G} {x : G} (
 
 lemma mem_mul_self (a : G) : a ∈ {a} * (H : Set G) := by
   rw [@mem_mul]
-  simp [Subgroup.one_mem]
+  simp
 
 lemma GG (d : Δ) (h h' : H)
   (hyp : {(h : G)} * {(d : G)} * (H : Set G) = {(h' : G)} * {(d : G)} * (H : Set G)):
@@ -429,7 +429,7 @@ lemma AUX (g : G) ( T S : Set G) (h : g ∈ S)  : {g} * T ⊆ S * T  := by
 lemma left_coset_exist (D : T' P) : ∃ (i : Q P D),
   {(D.eql.choose : G)} * (P.H : Set G) = {(i.out : G)} * {(D.eql.choose : G)} * P.H := by
   have hc := D.eql.choose_spec
-  rw [doset_eq_iUnion_leftCosets] at hc
+  rw [DoubleCoset.doubleCoset_eq_iUnion_leftCosets] at hc
   have h1 : {(D.eql.choose : G)} * (P.H : Set G) ⊆ D.set := by
     have v0 := D.eql.choose_spec
     conv =>
@@ -437,7 +437,7 @@ lemma left_coset_exist (D : T' P) : ∃ (i : Q P D),
       rw [v0]
     intro i hi
     simp only [singleton_mul, image_mul_left, mem_preimage, SetLike.mem_coe] at *
-    rw [mem_doset]
+    rw [mem_doubleCoset]
     use 1
     simp only [SetLike.mem_coe, one_mem, one_mul, true_and]
     use (D.eql.choose : G)⁻¹ * i
@@ -446,8 +446,7 @@ lemma left_coset_exist (D : T' P) : ∃ (i : Q P D),
   have h3 := le_trans h1 hr
   simp only [le_eq_subset] at h3
   have h4 : (D.eql.choose : G) ∈ {(D.eql.choose : G)} * (P.H : Set G) := by
-    simp  [singleton_mul, image_mul_left, mem_preimage, SetLike.mem_coe,
-    Subgroup.one_mem]
+    simp [singleton_mul, image_mul_left, mem_preimage, SetLike.mem_coe]
   have h45 := h3 h4
   simp only [mem_iUnion] at h45
   obtain ⟨i, hi⟩ := h45
@@ -461,8 +460,12 @@ lemma left_coset_exist (D : T' P) : ∃ (i : Q P D),
   apply cosets_inf_eq
   apply Set.Nonempty.not_disjoint
   simp_rw [smul_eq_mul_singleton]
-  rw [Set.inter_eq_self_of_subset_left h6]
-  exact nonempty_of_mem h4
+  have := Set.inter_eq_self_of_subset_left h6
+  have ht := nonempty_of_mem h4
+  rw [← this] at ht
+  convert ht
+
+
 
 lemma left_coset_exist_unique (D : T' P) : ∃! (i : Q P D),
   {(D.eql.choose : G)} * (P.H : Set G) = {(i.out : G) * (D.eql.choose : G)} * P.H := by
@@ -753,7 +756,7 @@ lemma 𝕋_singleton_one_mul (D2 : (T' P)) (b : ℤ) :
       enter [2]
       rw [this]
     rw [mul_assoc,doset_mul_left_eq_self]
-    apply doset_mul_right_eq_self P ⟨y.out * (T_one P).eql.choose, by
+    apply DoubleCoset.doubleCoset_mul_right_eq_self P ⟨y.out * (T_one P).eql.choose, by
       apply Subgroup.mul_mem _ (by simp) (T_one_choose_mem_H P) ⟩
   exact h1 (id (Eq.symm key))
 
