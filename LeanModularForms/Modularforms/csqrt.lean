@@ -67,7 +67,7 @@ lemma csqrt_I : (csqrt (Complex.I)) ^ 24  = 1 := by
   rw [Complex.exp_log]
   have hi4 := Complex.I_pow_four
   have : Complex.I ^ 12 = (Complex.I ^ 4) ^ 3 :=by
-    rw [← @npow_mul]
+    rw [← @pow_mul]
   rw [this, hi4]
   simp
   exact I_ne_zero

@@ -767,7 +767,7 @@ lemma E₂_transform (z : ℍ) : (E₂ ∣[(2 : ℤ)] ModularGroup.S) z =
   rw [sub_eq_add_neg]
   congr
   rw [riemannZeta_two]
-  have hpi : (π : ℂ) ≠ 0 := by simp; exact Real.pi_ne_zero --make this a lemma
+  have hpi : (π : ℂ) ≠ 0 := by simp --make this a lemma
   ring_nf
   simp only [inv_pow, inv_I, mul_neg, neg_mul, neg_inj, mul_eq_mul_right_iff, OfNat.ofNat_ne_zero,
     or_false]
@@ -875,13 +875,13 @@ lemma E₂_eq (z : UpperHalfPlane) : E₂ z =
   rw [mul_sub]
   congr 1
   · rw [riemannZeta_two]
-    have hpi : (π : ℂ) ≠ 0 := by simp; exact Real.pi_ne_zero
+    have hpi : (π : ℂ) ≠ 0 := by simp
     field_simp
     ring
   · rw [← mul_assoc]
     congr 1
     · rw [riemannZeta_two]
-      have hpi : (π : ℂ) ≠ 0 := by simp; exact Real.pi_ne_zero
+      have hpi : (π : ℂ) ≠ 0 := by simp
       norm_cast
       field_simp
       ring
