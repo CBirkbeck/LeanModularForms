@@ -22,8 +22,7 @@ lemma eta_q_eq_exp (n : ℕ) (z : ℂ) : eta_q n z = cexp (2 * π * Complex.I * 
 lemma eta_q_eq_pow (n : ℕ) (z : ℂ) : eta_q n z = cexp (2 * π * Complex.I * z) ^ (n + 1) := by
   simp [eta_q, Periodic.qParam]
 
-theorem qParam_lt_one (z : ℍ) (r : ℝ) (hr : 0 < r) :
-    ‖𝕢 r z‖ < 1 := by
+theorem qParam_lt_one (z : ℍ) (r : ℝ) (hr : 0 < r) : ‖𝕢 r z‖ < 1 := by
   simp [Periodic.qParam, norm_exp, mul_re, re_ofNat, ofReal_re, im_ofNat, ofReal_im, mul_zero,
     sub_zero, Complex.I_re, mul_im, zero_mul, add_zero, Complex.I_im, mul_one, sub_self, coe_re,
     coe_im, zero_sub, Real.exp_lt_one_iff]
@@ -35,7 +34,7 @@ lemma one_sub_qParam_ne_zero (r : ℝ) (hr : 0 < r) (z : ℍ) : 1 - 𝕢 r z ≠
   intro h
   have := qParam_lt_one z r
   rw [← h] at this
-  simp [norm_one, lt_self_iff_false] at *
+  simp [lt_self_iff_false] at *
   linarith
 
 lemma one_add_eta_q_ne_zero (n : ℕ) (z : ℍ) : 1 - eta_q n z ≠ 0 := by
@@ -198,7 +197,7 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
         ext n
         rw [neg_div, neg_eq_neg_one_mul]
       rw [tsum_mul_left]
-      have hpi : (π : ℂ) ≠ 0 := by simpa using Real.pi_ne_zero
+      have hpi : (π : ℂ) ≠ 0 := by simp
       congr 1
       · ring_nf
         field_simp
