@@ -397,7 +397,7 @@ theorem G2_c_tendsto (z : ℍ) :
     apply V
 
 lemma G2_cauchy (z : ℍ) :
-  CauchySeq  (fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2))) := by
+  CauchySeq (fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2))) := by
   rw [t8]
   simp
   apply CauchySeq.const_add

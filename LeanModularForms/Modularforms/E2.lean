@@ -643,7 +643,7 @@ lemma G₂_eq_G₂_a (z : ℍ) : G₂ z = G₂_a z := by
   rw [G₂]
   rw [G₂_a]
   rw [Filter.Tendsto.limUnder_eq]
-  have := CauchySeq.tendsto_limUnder  (G2_cauchy z)
+  have := CauchySeq.tendsto_limUnder (G2_cauchy z)
   apply rest _ _ _ this
   have h0 := cc _  (G2_cauchy z) ?_
   conv =>

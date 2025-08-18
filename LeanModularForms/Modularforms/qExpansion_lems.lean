@@ -446,11 +446,12 @@ lemma qExpansion_ext2 {α β : Type*} [FunLike α ℍ ℂ] [FunLike β ℍ ℂ] 
     qExpansion 1 f = qExpansion 1 g := by
   simp_rw [qExpansion]
   ext m
-  simp
+  simp only [PowerSeries.coeff_mk, mul_eq_mul_left_iff, inv_eq_zero, Nat.cast_eq_zero]
   left
-  congr
+  congr 1
   simp_rw [cuspFunction, Periodic.cuspFunction]
   rw [h]
+
 
 lemma qExpansion_of_mul (a b : ℤ) (f : ModularForm Γ(1) a) (g : ModularForm Γ(1) b) :
   qExpansion 1 (((((DirectSum.of (ModularForm Γ(1)) a ) f)) * ((DirectSum.of (ModularForm Γ(1)) b ) g)) (a + b)) =
