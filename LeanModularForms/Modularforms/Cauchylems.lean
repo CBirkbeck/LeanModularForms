@@ -68,7 +68,7 @@ lemma auxl2 (a b c : ℂ): ‖(a - b)‖≤ ‖(a - b + c)‖ + ‖c‖ := by
   simpa using this
 
 lemma CauchySeq_Icc_iff_CauchySeq_Ico (f : ℤ → ℂ) (hs : ∀ n , f n = f (-n))
-  (hc : CauchySeq (fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, f m) ) :
+  (hc : CauchySeq (fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, f m)) :
   CauchySeq (fun N : ℕ => ∑ m ∈ Finset.Ico (-N : ℤ) N, f m) := by
   have h0 := cc f hc hs
   have : CauchySeq fun n: ℕ => f n := by

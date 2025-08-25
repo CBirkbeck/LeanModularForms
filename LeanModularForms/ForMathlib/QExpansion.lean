@@ -153,7 +153,7 @@ theorem differentiableAt_cuspFunction'  (hq : ‖q‖ < 1) :
 /-- The `q`-expansion coefficient can be expressed as a `circleIntegral` for any radius `0 < R < 1`.
 -/
 lemma qExpansion_coeff_eq_circleIntegral (n : ℕ) {R : ℝ} (hR : 0 < R) (hR' : R < 1) :
-    (qExpansion h f).coeff ℂ n =
+    (qExpansion h f).coeff n =
       ((2 * π * I)⁻¹ * ∮ (z : ℂ) in C(0, R), cuspFunction h f z / z ^ (n + 1)) := by
   have : DifferentiableOn ℂ (cuspFunction h f) (Metric.closedBall 0 R) := fun z hz ↦
       (differentiableAt_cuspFunction' f hΓ <| (mem_closedBall_zero_iff.mp hz).trans_lt hR')
@@ -167,7 +167,7 @@ lemma qExpansion_coeff_eq_circleIntegral (n : ℕ) {R : ℝ} (hR : 0 < R) (hR' :
 in the upper half-plane from `t * I` to `N + t * I`, for any `0 < t`.
 -/
 lemma qExpansion_coeff_eq_intervalIntegral (n : ℕ)
-    {t : ℝ} (ht : 0 < t) : (qExpansion h f).coeff ℂ n =
+    {t : ℝ} (ht : 0 < t) : (qExpansion h f).coeff n =
     1 / h * ∫ u in (0)..h, 1 / 𝕢 h (u + t * I) ^ n * f (⟨u + t * I, by simpa using ht⟩) := by
   -- We use a circle integral in the `q`-domain of radius `R = exp (-2 * π * t / N)`.
   let R := Real.exp (-2 * π * t / h)

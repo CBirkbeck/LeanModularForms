@@ -1,22 +1,13 @@
-import Mathlib.Algebra.Lie.OfAssociative
-import Mathlib.Algebra.Order.Ring.Star
-import Mathlib.Analysis.CStarAlgebra.Classes
-import Mathlib.Analysis.Normed.Field.Instances
-import Mathlib.Data.Complex.FiniteDimensional
-import Mathlib.Data.Int.Star
-import Mathlib.NumberTheory.ArithmeticFunction
-import Mathlib.NumberTheory.ModularForms.EisensteinSeries.UniformConvergence
-import Mathlib.NumberTheory.ModularForms.EisensteinSeries.Summable
-import Mathlib.Order.CompletePartialOrder
-import Mathlib.Topology.Algebra.Module.ModuleTopology
-import Mathlib.Topology.EMetricSpace.Paracompact
-import Mathlib.Topology.Separation.CompletelyRegular
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Cotangent
-import LeanModularForms.Modularforms.exp_lems
-import LeanModularForms.Modularforms.upperhalfplane
 import LeanModularForms.Modularforms.BigO
 import LeanModularForms.Modularforms.equivs
 import LeanModularForms.Modularforms.tsumderivWithin
+import LeanModularForms.Modularforms.upperhalfplane
+import Mathlib.Algebra.Lie.OfAssociative
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Cotangent
+import Mathlib.NumberTheory.TsumDivsorsAntidiagonal
+import Mathlib.Order.CompletePartialOrder
+import Mathlib.RingTheory.SimpleRing.Principal
+import Mathlib.Topology.Separation.CompletelyRegular
 
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set
@@ -1651,7 +1642,7 @@ theorem tsum_sigma_eqn2 (k : ℕ) (z : ℍ) :
       ∑' e : ℕ+, sigma k e * Complex.exp (2 * ↑π * Complex.I * z * e) := by
   rw [← (piFinTwoEquiv fun _ => ℕ+).symm.tsum_eq]
   rw [← sigmaAntidiagonalEquivProd.tsum_eq]
-  simp [sigmaAntidiagonalEquivProd, mapdiv]
+  simp [sigmaAntidiagonalEquivProd, divisorsAntidiagonalFactors]
   simp_rw [sigma_eq_sum_div']
   simp
   rw [ Summable.tsum_sigma ]
@@ -1748,7 +1739,7 @@ theorem a1 (k : ℕ) (e : ℕ+) (z : ℍ) :
 theorem a4 (k : ℕ) (z : ℍ) :
     Summable (uncurry fun b c : ℕ+ => ↑b ^ (k - 1) * exp (2 * ↑π * Complex.I * ↑c * ↑z * ↑b)) := by
   rw [sigmaAntidiagonalEquivProd.summable_iff.symm]
-  simp [sigmaAntidiagonalEquivProd, mapdiv]
+  simp [sigmaAntidiagonalEquivProd, divisorsAntidiagonalFactors]
   apply (summable_auxil_1 (k - 1) z).congr
   intro b
   simp
