@@ -452,7 +452,7 @@ lemma PS1 (z : ℍ) (m : ℤ) : limUnder atTop
   (fun N : ℕ => ∑ n ∈ (Finset.Ico (-(N : ℤ)) (N : ℤ)),
     (1 / ((m : ℂ) * z + n) -  1 / (m * z + n + 1))) = 0 := by
   apply Filter.Tendsto.limUnder_eq
-  have :  (fun N : ℕ => ∑ n ∈ (Finset.Ico (-(N : ℤ)) (N : ℤ)),
+  have : (fun N : ℕ => ∑ n ∈ (Finset.Ico (-(N : ℤ)) (N : ℤ)),
     (1 / ((m : ℂ) * z + n) -  1 / (m * z + n + 1))) =
     (fun N : ℕ => (1 / ((m : ℂ) * z - N) -  1 / (m * z + N))) := by
     funext N
@@ -465,11 +465,11 @@ lemma PS1 (z : ℍ) (m : ℤ) : limUnder atTop
 
 
 lemma PS2 (z : ℍ) : ∑' m : ℤ, (limUnder atTop
-  (fun N : ℕ => ∑ n ∈ (Finset.Ico (-(N : ℤ)) (N : ℤ)),
+    (fun N : ℕ => ∑ n ∈ (Finset.Ico (-(N : ℤ)) (N : ℤ)),
     (1 / ((m : ℂ) * z + n) -  1 / (m * z + n + 1)))) = 0 := by
-    convert tsum_zero
-    next m =>
-    apply PS1
+  convert tsum_zero
+  next m =>
+  apply PS1
 
 lemma auxr (z : ℍ) (b : ℤ):
     ((limUnder atTop fun N : ℕ ↦

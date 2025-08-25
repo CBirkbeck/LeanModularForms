@@ -54,7 +54,7 @@ def mapdiv (n : ℕ+) : Nat.divisorsAntidiagonal n → ℕ+ × ℕ+ :=
   use n2
   exact h222
 
-def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ ℕ+ × ℕ+
+/- def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ ℕ+ × ℕ+
     where
   toFun x := mapdiv x.1 x.2
   invFun x :=
@@ -80,4 +80,4 @@ def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ �
     simp at *
     simp_rw [mapdiv]
     simp
-    norm_cast
+    norm_cast -/
