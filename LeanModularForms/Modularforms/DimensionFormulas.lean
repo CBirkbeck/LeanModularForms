@@ -241,10 +241,10 @@ lemma weight_four_one_dimensional : Module.rank ℂ (ModularForm Γ(1) 4) = 1 :=
     rw [@sub_eq_zero] at this
     aesop
 
-lemma weight_eight_one_dimensional  (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (hk3 : k < 12):
+lemma weight_eight_one_dimensional  (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (hk3 : k < 12):
     Module.rank ℂ (ModularForm Γ(1) k) = 1 := by
   rw [rank_eq_one_iff ]
-  refine ⟨E k hk ,Ek_ne_zero k hk hk2, ?_⟩
+  refine ⟨E hk ,Ek_ne_zero k hk hk2, ?_⟩
   by_contra h
   simp at h
   obtain ⟨f, hf⟩ := h
@@ -258,7 +258,7 @@ lemma weight_eight_one_dimensional  (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even
       rw [← IsCuspForm_iff_coeffZero_eq_zero] at h
       exact hf2 h
     set c := (qExpansion 1 f).coeff 0 with hc
-    have hcusp : IsCuspForm Γ(1) k (E k hk - c⁻¹• f) := by
+    have hcusp : IsCuspForm Γ(1) k (E hk - c⁻¹• f) := by
       rw [IsCuspForm_iff_coeffZero_eq_zero]
       rw [qExpansion_sub]
       have := modularForm_normalise f hf2
@@ -268,7 +268,7 @@ lemma weight_eight_one_dimensional  (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even
       simp at *
       rw [hE]
       exact sub_eq_zero_of_eq rfl
-    have := IsCuspForm_weight_lt_eq_zero k (by simpa using hk3) (E k hk - c⁻¹• f) hcusp
+    have := IsCuspForm_weight_lt_eq_zero k (by simpa using hk3) (E hk - c⁻¹• f) hcusp
     have hfc := hf c
     rw [@sub_eq_zero] at this
     aesop
@@ -390,7 +390,7 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
       rw [← Delta_apply] at hDelta
       exact hDelta h
 
-lemma dim_modforms_eq_one_add_dim_cuspforms (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
+lemma dim_modforms_eq_one_add_dim_cuspforms (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) k) =
     1 + Module.rank ℂ (CuspForm (CongruenceSubgroup.Gamma 1) k) := by
     have h1 : Module.rank ℂ (CuspFormSubmodule (CongruenceSubgroup.Gamma 1) k)  =
@@ -401,10 +401,10 @@ lemma dim_modforms_eq_one_add_dim_cuspforms (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk
     rw [← h1, ← Submodule.rank_quotient_add_rank (CuspFormSubmodule (CongruenceSubgroup.Gamma 1) k)]
     congr
     rw [rank_eq_one_iff ]
-    refine ⟨ Submodule.Quotient.mk (E k (by linarith)), ?_, ?_⟩
+    refine ⟨ Submodule.Quotient.mk (E (by linarith)), ?_, ?_⟩
     intro hq
     rw [Submodule.Quotient.mk_eq_zero] at hq
-    have := IsCuspForm_iff_coeffZero_eq_zero k (E k (by linarith))
+    have := IsCuspForm_iff_coeffZero_eq_zero k (E (by linarith))
     rw [IsCuspForm] at this
     rw [this, Ek_q_exp_zero k hk hk2] at hq
     aesop
