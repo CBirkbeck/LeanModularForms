@@ -85,6 +85,7 @@ theorem extracted_66 (z : ℍ) :
   simp only [UpperHalfPlane.coe] at *
   rw [mul_add]
   field_simp
+  simp
   ring
   · intro i hi
     exact extracted_77 z i
@@ -376,7 +377,7 @@ theorem extracted_66c (z : ℍ) :
   rw [show ((d : ℂ) * ↑z + ↑n) ^ 2 = (-↑d * ↑z - ↑n) ^ 2 by ring, ← mul_pow]
   congr
   field_simp
-  simp only [UpperHalfPlane.coe]
+  simp only [UpperHalfPlane.coe, Int.cast_neg, mul_neg]
   ring
   · intro i hi
     exact extracted_77 z i
@@ -586,8 +587,9 @@ lemma D2_mul (A B : SL(2,ℤ)) : D₂ (A * B) = ((D₂ A) ∣[(2 : ℤ)] B) + (D
   rw [ ← sub_eq_iff_eq_add] at hd
   simp only [Fin.isValue, Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.det_coe,
     Int.cast_one, mul_one] at hd
-  simp only [Fin.isValue, ← hd, this, zpow_two]
-  rw [sub_mul, sub_div, ← mul_assoc,  ← mul_assoc]
+
+  simp only [Fin.isValue, ← hd, this, pow_two]
+  rw [ sub_div, ← mul_assoc,  ← mul_assoc]
   simp_rw [mul_div_mul_right _ _ hde ]
   have : denom (↑A) (num ↑B ↑z / denom ↑B ↑z) = denom ↑A ↑(↑B • z) := by
     congr 1
@@ -595,6 +597,8 @@ lemma D2_mul (A B : SL(2,ℤ)) : D₂ (A * B) = ((D₂ A) ∣[(2 : ℤ)] B) + (D
     congr
   rw [this]
   simp
+  nth_rw 3 [mul_comm ]
+  rw [← mul_assoc]
   rw [ mul_div_cancel_right₀]
   ring
   exact denom_ne_zero (↑A) (↑B • z)
@@ -877,12 +881,10 @@ lemma E₂_eq (z : UpperHalfPlane) : E₂ z =
   · rw [riemannZeta_two]
     have hpi : (π : ℂ) ≠ 0 := by simp
     field_simp
-    ring
   · rw [← mul_assoc]
     congr 1
     · rw [riemannZeta_two]
-      have hpi : (π : ℂ) ≠ 0 := by simp
-      norm_cast
+      have hpi : (π ) ≠ 0 := by simp
       field_simp
       ring
     · have hl := tsum_pnat_eq_tsum_succ3 (fun n => sigma 1 n * cexp (2 * π * Complex.I * n * z))

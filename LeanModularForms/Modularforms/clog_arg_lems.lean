@@ -2,7 +2,6 @@ import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Analysis.CStarAlgebra.Classes
 import Mathlib.Analysis.Complex.UpperHalfPlane.FunctionsBoundedAtInfty
 import Mathlib.Analysis.SpecialFunctions.Log.Summable
-import Mathlib.Data.Complex.FiniteDimensional
 import Mathlib.NumberTheory.ArithmeticFunction
 import Mathlib.NumberTheory.ModularForms.Basic
 import Mathlib.NumberTheory.ModularForms.EisensteinSeries.Defs

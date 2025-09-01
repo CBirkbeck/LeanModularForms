@@ -13,19 +13,18 @@ noncomputable section Definitions
 /- The Eisenstein Series E₄ and E₆ -/
 
 def E₄ : ModularForm (CongruenceSubgroup.Gamma ↑1) 4 :=
-  (1/2 : ℂ) • eisensteinSeries_MF (by norm_num) standardcongruencecondition /-they need  1/2 for the
-    normalization to match up (since the sum here is taken over coprime integers).-/
+  E (by norm_num)
 
 def E₆ : ModularForm (CongruenceSubgroup.Gamma ↑1) 6 :=
-  (1/2 : ℂ) • eisensteinSeries_MF (by norm_num) standardcongruencecondition
+   E (by norm_num)
 
-lemma E4_eq : E₄ = E 4 (by norm_num) := rfl
+lemma E4_eq : E₄ = E (k := 4) (by norm_num) := rfl
 
-lemma E6_eq : E₆ = E 6 (by norm_num) := rfl
+lemma E6_eq : E₆ = E (k := 6) (by norm_num) := rfl
 
-lemma E4_apply (z : ℍ) : E₄ z = E 4 (by norm_num) z := rfl
+lemma E4_apply (z : ℍ) : E₄ z = E (k := 4) (by norm_num) z := rfl
 
-lemma E6_apply (z : ℍ) : E₆ z = E 6 (by norm_num) z := rfl
+lemma E6_apply (z : ℍ) : E₆ z = E  (k := 6) (by norm_num) z := rfl
 
 variable (f : ℍ → ℂ) (k : ℤ) (z : ℍ)
 
@@ -295,7 +294,7 @@ lemma sigma_bound (k n : ℕ) : sigma k n ≤ n ^ (k + 1) := by
 def Ek_q (k : ℕ) : ℕ → ℂ :=  fun m => if m = 0 then 1 else
     (1 / (riemannZeta (k))) * ((-2 * ↑π * Complex.I) ^ k / (k - 1)!) * (sigma (k-1) m)
 
-lemma qexpsummable (k : ℕ) (hk : 3 ≤ (k : ℤ)) (z : ℍ) :
+lemma qexpsummable (k : ℕ) (hk : 3 ≤ k) (z : ℍ) :
   Summable fun m ↦ Ek_q k m • 𝕢 ↑1 ↑z ^ m := by
   rw [← summable_nat_add_iff 1]
   simp [Ek_q, Function.Periodic.qParam]
@@ -354,10 +353,10 @@ lemma qexpsummable (k : ℕ) (hk : 3 ≤ (k : ℤ)) (z : ℍ) :
   simpa using Nat.card_divisors_le_self (b + 1)
 
 
-lemma Ek_q_exp_zero (k : ℕ) (hk :  3 ≤ (k : ℤ)) (hk2 : Even k) : (qExpansion 1 (E k hk)).coeff 0 = 1 := by
+lemma Ek_q_exp_zero (k : ℕ) (hk :  3 ≤ k) (hk2 : Even k) : (qExpansion 1 (E hk)).coeff 0 = 1 := by
   let c : ℕ → ℂ := fun m => if m = 0 then 1 else
     (1 / (riemannZeta (k))) * ((-2 * ↑π * Complex.I) ^ k / (k - 1)!) * (sigma (k-1) m)
-  have h := q_exp_unique 1 c (E k hk) ?_
+  have h := q_exp_unique 1 c (E hk) ?_
   have hc := congr_fun h 0
   rw [← hc]
   simp [c]
@@ -392,12 +391,12 @@ lemma Ek_q_exp_zero (k : ℕ) (hk :  3 ≤ (k : ℤ)) (hk2 : Even k) : (qExpansi
   apply this
 
 
-lemma Ek_q_exp (k : ℕ) (hk :  3 ≤ (k : ℤ)) (hk2 : Even k) : (fun m => (qExpansion 1 (E k hk)).coeff m) =
+lemma Ek_q_exp (k : ℕ) (hk :  3 ≤ (k)) (hk2 : Even k) : (fun m => (qExpansion 1 (E hk)).coeff m) =
   fun m => if m = 0 then 1 else
     (1 / (riemannZeta (k))) * ((-2 * ↑π * Complex.I) ^ k / (k - 1)!) * (sigma (k-1) m) := by
   let c : ℕ → ℂ := fun m => if m = 0 then 1 else
       (1 / (riemannZeta (k))) * ((-2 * ↑π * Complex.I) ^ k / (k - 1)!) * (sigma (k-1) m)
-  have h := q_exp_unique 1 c (E k hk) ?_
+  have h := q_exp_unique 1 c (E hk) ?_
   rw [← h]
   intro z
   have := E_k_q_expansion k hk hk2 z
@@ -432,9 +431,8 @@ lemma Ek_q_exp (k : ℕ) (hk :  3 ≤ (k : ℤ)) (hk2 : Even k) : (fun m => (qEx
 lemma E4_q_exp : (fun m => (qExpansion 1 E₄).coeff m) =
     fun m => if m = 0 then 1 else (240 : ℂ) * (sigma 3 m) := by
   have HH := Ek_q_exp 4 (by norm_num) (by exact Nat.even_iff.mpr rfl)
-  rw [E4_eq]
   simp at *
-  rw [HH]
+  rw [E4_eq, HH]
   have Z := riemannZeta_two_mul_nat (k := 2) (by norm_num)
   simp at Z
   rw [ show 2 * 2 = (4 : ℂ) by ring] at Z
@@ -704,7 +702,7 @@ lemma E4_pow_q_exp_one : (qExpansion 1 ((E₄).mul ((E₄).mul E₄))).coeff 1 =
   simp_rw [E4_q_exp_one, this]
   ring
 
-lemma Ek_ne_zero (k : ℕ) (hk :  3 ≤ (k : ℤ)) (hk2 : Even k) : E k hk ≠ 0 := by
+lemma Ek_ne_zero (k : ℕ) (hk :  3 ≤ k) (hk2 : Even k) : E hk ≠ 0 := by
   have := Ek_q_exp_zero k hk hk2
   intro h
   rw [h, qExpansion_zero] at this

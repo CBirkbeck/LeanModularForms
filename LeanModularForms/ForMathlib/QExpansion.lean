@@ -1,4 +1,4 @@
-/-
+/- /-
 Copyright (c) 2024 David Loeffler. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
@@ -261,3 +261,4 @@ theorem exp_decay_atImInfty_translate [Γ.FiniteIndex] (γ : SL(2, ℤ)) :
   apply Subgroup.FiniteIndex.index_ne_zero
 
 end CuspFormClass
+ -/

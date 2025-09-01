@@ -201,7 +201,6 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
       congr 1
       · ring_nf
         field_simp
-        ring
       · field_simp
         ring_nf
         congr
@@ -217,8 +216,6 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
       have := one_add_eta_q_ne_zero b z
       simp only [UpperHalfPlane.coe, ne_eq, neg_mul, Nat.cast_add, Nat.cast_one, mul_neg] at *
       field_simp
-      left
-      ring
     · use ηₚ
       apply (hasProdLocallyUniformlyOn_eta).congr
       exact fun n ⦃x⦄ hx ↦ Eq.refl ((fun b ↦ ∏ i ∈ n, (fun n a ↦ 1 - eta_q n a) i b) x)
@@ -340,10 +337,9 @@ lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn (
     simp only [DifferentiableOn, mem_setOf_eq]
     intro x hx
     apply (eta_DifferentiableAt_UpperHalfPlane ⟨x, hx⟩).differentiableWithinAt
-  · use UpperHalfPlane.I
-    simp only [coe_I, mem_setOf_eq, Complex.I_im, zero_lt_one]
   · exact isOpen_lt continuous_const Complex.continuous_im
-  · exact convex_halfSpace_im_gt 0
+  · refine Convex.isPreconnected ?_
+    exact convex_halfSpace_im_gt 0
   · intro x hx
     simp only [Pi.mul_apply, ne_eq, mul_eq_zero, not_or]
     refine ⟨ ?_ , by apply eta_nonzero_on_UpperHalfPlane ⟨x, hx⟩⟩

@@ -1,4 +1,4 @@
-/-
+/- /-
 Copyright (c) 2025 David Loeffler. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: David Loeffler
@@ -133,3 +133,4 @@ lemma ModularFormClass.petersson_continuous (k : ℤ) (Γ : Subgroup SL(2, ℤ))
     Continuous (petersson k f f') :=
   UpperHalfPlane.petersson_continuous k
     (ModularFormClass.holo f).continuous (ModularFormClass.holo f').continuous
+ -/

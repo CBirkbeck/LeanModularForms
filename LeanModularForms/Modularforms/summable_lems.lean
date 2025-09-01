@@ -390,9 +390,9 @@ theorem summable_diff (z : ℍ) (d : ℤ) :
   intro b
   field_simp
   congr 1
-  rw [neg_div_neg_aux]
+  rw [@neg_div', neg_div_neg_aux]
   ring
-  rw [neg_div_neg_aux]
+  rw [@neg_div', neg_div_neg_aux]
   ring
 
 lemma arg1 (a b c d e f g h : ℂ) : e/ f + g /h  - a / b - c / d = e / f + g / h + a / -b + c / -d := by
@@ -412,6 +412,7 @@ lemma sum_int_pnat3 (z : ℍ) (d : ℤ) :
     have : (z : ℂ) ≠ (0 : ℂ) := by
       exact ne_zero z
     field_simp
+    simp
   rw [arg1]
   ring_nf
   rw [add_comm]
@@ -1817,7 +1818,7 @@ theorem summable_diff_right_a (z : ℍ) (d : ℕ+) :
   have hz := ne_zero z
   simp [UpperHalfPlane.coe] at *
   field_simp
-  rw [add_comm, auxf, add_mul]
+  rw [add_comm, auxf]
   congr 1
   ring
   ring
@@ -1834,7 +1835,7 @@ theorem summable_diff_right  (z : ℍ) (d : ℕ+) :
     have hz := ne_zero z
     simp [UpperHalfPlane.coe] at *
     field_simp
-    rw [auxf, add_mul]
+    rw [auxf]
     congr 1
     ring
     ring
