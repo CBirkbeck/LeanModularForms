@@ -676,16 +676,12 @@ lemma E4_q_exp_one : (qExpansion 1 E₄).coeff 1 = 240 := by
   have H := congr_fun this 1
   simp at H
   rw [H]
-  simp
-  exact rfl
 
 lemma E6_q_exp_one : (qExpansion 1 E₆).coeff 1 = -504 := by
   have := E6_q_exp
   have H := congr_fun this 1
   simp at H
   rw [H]
-  simp
-  exact rfl
 
 lemma antidiagonal_one : Finset.antidiagonal 1 = {(1,0), (0,1)} := by
   ext ⟨x,y⟩
