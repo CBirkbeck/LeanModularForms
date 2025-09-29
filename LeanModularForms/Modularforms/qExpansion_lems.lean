@@ -91,10 +91,12 @@ lemma iteratedDerivWithin_mul (f g : ℂ → ℂ) (s : Set ℂ) (hs : IsOpen s) 
     (hf : ContDiffOn ℂ ⊤ f s)(hg : ContDiffOn ℂ ⊤ g s) :
     iteratedDerivWithin m (f * g) s x =
     ∑ i ∈ Finset.range m.succ, (m.choose i) * (iteratedDerivWithin i f s x) * (iteratedDerivWithin (m - i) g s x) := by
-  induction' m with m hm generalizing f g
+  induction m generalizing f g with
+  | zero =>
   simp only [iteratedDerivWithin_zero, Pi.mul_apply, Nat.succ_eq_add_one, zero_add,
     Finset.range_one, zero_le, Nat.sub_eq_zero_of_le, Finset.sum_singleton, Nat.choose_self,
     Nat.cast_one, one_mul]
+  | succ m hm =>
   have h1 := derivWithin_mul2 f g s (hf.differentiableOn (by simp)) (hg.differentiableOn (by simp))
   have h2 : (fun y => f y * g y) = f * g := by
     ext y
@@ -147,8 +149,10 @@ lemma iteratedDeriv_eq_iteratedDerivWithin (n : ℕ) (f : ℂ → ℂ) (s : Set 
 lemma qExpansion_mul_coeff (a b : ℤ) (f : ModularForm Γ(n) a) (g : ModularForm Γ(n) b)[NeZero n] :
     (qExpansion n (f.mul g)) = ((qExpansion n f)) * ((qExpansion n g)) := by
   ext m
-  induction' m with m hm
+  induction m with
+  | zero =>
   simpa using qExpansion_mul_coeff_zero n a b f g
+  | succ m hm =>
   simp_rw [PowerSeries.coeff_mul ,qExpansion_coeff, cuspFunction_mul ] at *
   have :=iteratedDerivWithin_mul (f := cuspFunction n f) (g := cuspFunction n g) (Metric.ball 0 1) (isOpen_ball) 0 (by simp) (m+1) ?_ ?_
   simp_rw [← iteratedDeriv_eq_iteratedDerivWithin (m+1) _ (Metric.ball 0 1) (isOpen_ball) 0
@@ -362,8 +366,9 @@ lemma qExpansion_add (f g : ModularForm Γ(1) k) : (qExpansion 1 (f + g)) =
 
 lemma IteratedDeriv_smul (a : ℂ)  (f : ℂ → ℂ) (m : ℕ) :
     iteratedDeriv m (a • f) = a • iteratedDeriv m f  := by
-  induction' m with m hm
-  simp
+  induction m with
+  | zero => simp
+  | succ m hm =>
   rw [iteratedDeriv_succ, iteratedDeriv_succ]
   rw [hm]
   ext x
@@ -465,8 +470,9 @@ lemma qExpansion_of_mul (a b : ℤ) (f : ModularForm Γ(1) a) (g : ModularForm �
 
 @[simp] --generalize this away from ℂ
 lemma IteratedDeriv_zero_fun (n : ℕ) (z : ℂ): iteratedDeriv n (fun _ : ℂ => (0 : ℂ)) z = 0 := by
-  induction' n with n hn
-  simp
+  induction n with
+  | zero => simp
+  | succ n hn =>
   rw [iteratedDeriv_succ']
   simp [hn]
 
@@ -478,36 +484,38 @@ lemma iteratedDeriv_const_eq_zero (m : ℕ) (hm : 0 < m) (c : ℂ) :
 
 lemma qExpansion_pow (f : ModularForm Γ(1) k) (n : ℕ) :
   qExpansion 1 ((((DirectSum.of (ModularForm Γ(1)) k ) f) ^ n) (n * k)) = (qExpansion 1 f) ^ n := by
-  induction' n with n hn
-  simp
-  rw [show 0 * k = 0 by ring]
-  have hq : qExpansion 1 ((1 : ModularForm Γ(1) 0)) = 1 := by
-    have : (cuspFunction 1 ((1 : ModularForm Γ(1) 0))) = 1 := by
-      simp only [cuspFunction, Periodic.cuspFunction]
-      ext z
-      simp
-      by_cases hz : z = 0
-      rw [hz]
-      simp
-      apply Filter.Tendsto.limUnder_eq
-      apply tendsto_const_nhds
-      simp [hz]
-    rw [qExpansion]
-    rw [this]
-    ext m
+  induction n with
+  | zero =>
     simp
-    by_cases hm : m = 0
-    rw [hm]
-    simp
-    simp [hm]
-    right
-    have hmp : 0 < m := by omega
-    have := iteratedDeriv_const_eq_zero m hmp 1
-    have ht := congr_fun this 0
-    apply ht
-  rw [← hq]
-  apply qExpansion_ext2
-  rfl
+    rw [show 0 * k = 0 by ring]
+    have hq : qExpansion 1 ((1 : ModularForm Γ(1) 0)) = 1 := by
+      have : (cuspFunction 1 ((1 : ModularForm Γ(1) 0))) = 1 := by
+        simp only [cuspFunction, Periodic.cuspFunction]
+        ext z
+        simp
+        by_cases hz : z = 0
+        rw [hz]
+        simp
+        apply Filter.Tendsto.limUnder_eq
+        apply tendsto_const_nhds
+        simp [hz]
+      rw [qExpansion]
+      rw [this]
+      ext m
+      simp
+      by_cases hm : m = 0
+      rw [hm]
+      simp
+      simp [hm]
+      right
+      have hmp : 0 < m := by omega
+      have := iteratedDeriv_const_eq_zero m hmp 1
+      have ht := congr_fun this 0
+      apply ht
+    rw [← hq]
+    apply qExpansion_ext2
+    rfl
+  | succ n hn =>
   rw [pow_succ, pow_succ]
   rw [show ↑(n + 1) * k = (n • k) + k by simp; ring]
   rw [DirectSum.ofPow] at *

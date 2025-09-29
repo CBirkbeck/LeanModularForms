@@ -1,5 +1,5 @@
 import Mathlib.Analysis.Calculus.UniformLimitsDeriv
-import Mathlib.Analysis.NormedSpace.FunctionSeries
+import Mathlib.Analysis.Normed.Group.FunctionSeries
 import Mathlib.Topology.Algebra.Module.ModuleTopology
 import Mathlib.Topology.ContinuousMap.Compact
 import LeanModularForms.Modularforms.exp_lems

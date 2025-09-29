@@ -58,8 +58,7 @@ lemma eta_tndntunif : TendstoLocallyUniformlyOn (fun n ↦ ∏ x ∈ Finset.rang
     rw [summable_nat_add_iff 1]
     simp only [summable_geometric_iff_norm_lt_one, norm_norm]
     apply  exp_upperHalfPlane_lt_one ⟨z, by simpa using (hK hz)⟩
-  · intro n
-    intro x hx
+  · intro n x hx
     simp only [norm_neg]
     rw [show 2 * ↑π * Complex.I * (↑n + 1) * x = (n+1)* (2 * ↑π * Complex.I  * x) by ring ]
     rw [show (n : ℂ) + 1 = (((n + 1) : ℕ) : ℂ) by simp]
@@ -164,7 +163,7 @@ lemma eta_DifferentiableAt_UpperHalfPlane (z : ℍ) : DifferentiableAt ℂ η z 
 lemma eta_logDeriv (z : ℍ) : logDeriv η z = (π * Complex.I / 12) * E₂ z := by
   unfold η
   rw [logDeriv_mul]
-  have HG := logDeriv_tprod_eq_tsum (s := {x : ℂ | 0 < x.im}) ?_ z
+  have HG := logDeriv_tprod_eq_tsumold (s := {x : ℂ | 0 < x.im}) ?_ z
     (fun (n : ℕ) => fun (x : ℂ) => 1 - cexp (2 * π * Complex.I * (n + 1) * x)) ?_ ?_ ?_ ?_ ?_
   simp only [mem_setOf_eq, UpperHalfPlane.coe] at *
   rw [HG]
@@ -215,7 +214,6 @@ lemma eta_logDeriv (z : ℍ) : logDeriv η z = (π * Complex.I / 12) * E₂ z :=
       apply tsum_congr
       intro b
       simp
-      left
       congr 1
       ring
   · exact isOpen_lt continuous_const Complex.continuous_im

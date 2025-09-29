@@ -17,8 +17,10 @@ open ArithmeticFunction
 
 lemma arg_pow_aux (n : ℕ) (x : ℂ) (hx : x ≠ 0) (hna : |arg x| < π / n) :
   Complex.arg (x ^ n) = n * Complex.arg x := by
-  induction' n with n hn2
-  simp only [pow_zero, arg_one, CharP.cast_eq_zero, zero_mul]
+  induction n with
+  | zero =>
+    simp only [pow_zero, arg_one, CharP.cast_eq_zero, zero_mul]
+  | succ n hn2  =>
   by_cases hn0 : n = 0
   · simp only [hn0, zero_add, pow_one, Nat.cast_one, one_mul]
   · rw [pow_succ, arg_mul, hn2, Nat.cast_add]
