@@ -55,7 +55,7 @@ theorem logDeriv_tprod_eq_tsum2 {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
     · exact hnez
 
 
-theorem logDeriv_tprod_eq_tsum  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ → ℂ → ℂ)
+theorem logDeriv_tprod_eq_tsumold  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ → ℂ → ℂ)
     (hf : ∀ i, f i x ≠ 0)
     (hd : ∀ i : ℕ, DifferentiableOn ℂ (f i) s) (hm : Summable fun i ↦ logDeriv (f i) ↑x)
     (htend : TendstoLocallyUniformlyOn (fun n ↦ ∏ i ∈ Finset.range n, f i)
@@ -166,12 +166,6 @@ lemma func_div (a b c d : ℂ → ℂ) (x : ℂ) (hb : b x ≠ 0) (hd :  d x ≠
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
-lemma Set.EqOn.deriv {f g : 𝕜 → F} {s : Set 𝕜} (hfg : s.EqOn f g) (hs : IsOpen s) :
-    s.EqOn (deriv f) (deriv g) := by
-  intro x hx
-  rw [← derivWithin_of_isOpen hs hx, ← derivWithin_of_isOpen hs hx]
-  exact derivWithin_congr hfg (hfg hx)
-
 lemma deriv_EqOn_congr {f g : ℂ → ℂ} (s : Set ℂ) (hfg : s.EqOn f g) (hs : IsOpen s) :
     s.EqOn (deriv f) ( deriv g) := by
   intro x hx
@@ -180,50 +174,6 @@ lemma deriv_EqOn_congr {f g : ℂ → ℂ} (s : Set ℂ) (hfg : s.EqOn f g) (hs 
   apply derivWithin_congr hfg
   apply hfg hx
 
-
-
-lemma logDeriv_eqOn_iff {E 𝕜 : Type*} [NontriviallyNormedField E] [NontriviallyNormedField 𝕜]
-    [IsRCLikeNormedField 𝕜] [NormedAlgebra 𝕜 E] {f g : 𝕜 → E} {s : Set 𝕜}
-    (hf : DifferentiableOn 𝕜 f s) (hg : DifferentiableOn 𝕜 g s)
-    (hs2 : IsOpen s) (hsc : IsPreconnected s) (hgn : ∀ x ∈ s, g x ≠ 0) (hfn : ∀ x ∈ s, f x ≠ 0) :
-    EqOn (logDeriv f) (logDeriv g) s ↔ ∃ (z : E), z ≠ 0 ∧ s.EqOn f (z • g) := by
-  by_cases hs : s.Nonempty
-  · constructor
-    · simp_rw [logDeriv]
-      intro h
-      obtain ⟨t, ht⟩ := hs
-      refine ⟨(f t) * (g t)⁻¹, mul_ne_zero (hfn t ht) (by simpa using (hgn t ht)), fun y hy => ?_⟩
-      · have hderiv : s.EqOn (deriv (f * g⁻¹)) (deriv f * g⁻¹ - f * deriv g / g ^ 2) := by
-          intro z hz
-          rw [deriv_mul (hf.differentiableAt (hs2.mem_nhds hz)) ((hg.differentiableAt
-            (hs2.mem_nhds hz)).inv (hgn z hz))]
-          simp only [Pi.inv_apply, show g⁻¹ = (fun x => x⁻¹) ∘ g by rfl, deriv_inv, neg_mul,
-            deriv_comp z (differentiableAt_inv (hgn z hz)) (hg.differentiableAt (hs2.mem_nhds hz)),
-            mul_neg, Pi.sub_apply, Pi.mul_apply, comp_apply, Pi.div_apply, Pi.pow_apply]
-          ring
-        have hfg : EqOn (deriv (f * g⁻¹)) 0 s := by
-          apply hderiv.trans
-          intro z hz
-          simp only [Pi.sub_apply, Pi.mul_apply, Pi.inv_apply, Pi.div_apply, Pi.pow_apply,
-            Pi.zero_apply]
-          suffices deriv f z * g z - f z * deriv g z = 0 by
-            field_simp [hgn z hz]
-            simp [this]
-          have H := h hz
-          simp_rw [Pi.div_apply, div_eq_div_iff (hfn z hz) (hgn z hz), mul_comm] at H
-          simp [← H, mul_comm]
-        letI := IsRCLikeNormedField.rclike 𝕜
-        obtain ⟨a, ha⟩ := IsOpen.exists_is_const_of_deriv_eq_zero (f := f * g⁻¹) (s := s) hs2 hsc
-          (hf.mul (DifferentiableOn.inv hg hgn)) hfg
-        have hay := ha y hy
-        have hat := ha t ht
-        simp only [ne_eq, Pi.mul_apply, Pi.inv_apply, Pi.smul_apply, smul_eq_mul] at *
-        rw [hat, ← hay]
-        field_simp [hgn y hy]
-    · rintro ⟨z, hz0, hz⟩ x hx
-      simp [logDeriv_apply, hz.deriv hs2 hx, hz hx, deriv_const_smul _
-        (hg.differentiableAt (hs2.mem_nhds hx)), mul_div_mul_left (deriv g x) (g x) hz0]
-  ·  simpa [not_nonempty_iff_eq_empty.mp hs] using ⟨1, one_ne_zero⟩
 
 lemma logDeriv_eqOn_iff2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn ℂ f s)
     (hg : DifferentiableOn ℂ g s) (hs : s.Nonempty) (hs2 : IsOpen s) (hsc : Convex ℝ s)

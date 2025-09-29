@@ -26,9 +26,11 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
     EqOn (iteratedDerivWithin k (fun z : ℂ => 1 / (z + d)) {z : ℂ | 0 < z.im})
       (fun t : ℂ => (-1) ^ k * k ! * (1 / (t + d) ^ (k + 1))) {z : ℂ | 0 < z.im} := by
   intro x hx
-  induction' k with k IH generalizing x
-  simp only [iteratedDerivWithin_zero, pow_zero, Nat.factorial_zero, one_mul]
-  simp  at *
+  induction k generalizing x with
+  | zero =>
+    simp only [iteratedDerivWithin_zero, pow_zero, Nat.factorial_zero, one_mul]
+    simp  at *
+  | succ k IH =>
   rw [iteratedDerivWithin_succ]
   simp only [one_div, Nat.cast_succ, Nat.factorial, Nat.cast_mul]
   have := (IH hx)

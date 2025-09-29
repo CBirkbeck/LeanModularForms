@@ -19,7 +19,7 @@ lemma Icc_succ (n : ℕ) : Finset.Icc (-(n + 1) : ℤ) (n + 1) = Finset.Icc (-n 
 
 lemma trex (f : ℤ → ℂ) (N : ℕ) (hn : 1 ≤ N) : ∑ m ∈ Finset.Icc (-N : ℤ) N, f m =
   f N + f (-N : ℤ)  + ∑ m ∈ Finset.Icc (-(N - 1) : ℤ) (N - 1), f m := by
-  induction' N with N ih
+  induction N
   simp
   aesop
   zify
@@ -36,10 +36,12 @@ lemma trex (f : ℤ → ℂ) (N : ℕ) (hn : 1 ≤ N) : ∑ m ∈ Finset.Icc (-N
 
 lemma Icc_sum_even (f : ℤ → ℂ) (hf : ∀ n, f n = f (-n)) (N : ℕ):
     ∑ m ∈  Finset.Icc (-N : ℤ) N, f m =  2 * ∑ m ∈ Finset.range (N + 1), f m  - f 0 := by
-  induction' N with N ih
+  induction N with
+  | zero =>
   simp only [CharP.cast_eq_zero, neg_zero, Finset.Icc_self, Finset.sum_singleton, zero_add,
     Finset.range_one]
   ring
+  | succ N ih =>
   have := Icc_succ N
   simp only [neg_add_rev, Int.reduceNeg,  Nat.cast_add, Nat.cast_one] at *
   rw [this, Finset.sum_union, Finset.sum_pair, ih]
