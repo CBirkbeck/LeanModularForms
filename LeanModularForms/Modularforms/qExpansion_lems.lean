@@ -428,7 +428,7 @@ lemma qExpansion_smul (a : ℂ) (f : CuspForm Γ(n) k) [NeZero n] :
       have h0 := CuspFormClass.cuspFunction_apply_zero n (a • f)
       have h1 := CuspFormClass.cuspFunction_apply_zero n f
       simp only [h0, Pi.smul_apply, h1, smul_eq_mul, mul_zero]
-    · simp only [cuspFunction, CuspForm.coe_smul, Pi.smul_apply, smul_eq_mul]
+    · simp only [cuspFunction, CuspForm.IsGLPos.coe_smul, Pi.smul_apply, smul_eq_mul]
       rw [Function.Periodic.cuspFunction_eq_of_nonzero _ _ h,
         Function.Periodic.cuspFunction_eq_of_nonzero _ _ h]
       simp only [comp_apply, Pi.smul_apply, smul_eq_mul]

@@ -10,6 +10,7 @@ import Mathlib.RingTheory.SimpleRing.Principal
 import Mathlib.Topology.Separation.CompletelyRegular
 
 
+
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set
   Metric Filter Function Complex
 
@@ -104,7 +105,7 @@ lemma tsum_pnat_eq_tsum_succ4 {α : Type*} [TopologicalSpace α] [AddCommGroup �
   (f : ℕ → α) (hf : Summable f) : f 0 + ∑' (n : ℕ+), f ↑n = ∑' (n : ℕ), f n := by
   rw [Summable.tsum_eq_zero_add hf]
   simp
-  exact tsum_pnat_eq_tsum_succ f
+  exact tsum_pnat_eq_tsum_succ
 
 
 
@@ -1128,29 +1129,22 @@ theorem iter_exp_eqOn (k : ℕ+) :
 
 theorem summable_iter_aut (k : ℕ) (z : ℍ) :
     Summable fun n : ℕ+ => iteratedDerivWithin k (fun z : ℂ => 1 / (z - n) + 1 / (z + n))
-      {z : ℂ | 0 < z.im} z :=
-  by
-  have := fun d : ℕ+ => iter_div_aut_add d k z.2
-  simp only [Int.cast_natCast, one_div, Pi.add_apply] at *
-  have ht := (summable_congr this).2 ?_
-  norm_cast at *
+      {z : ℂ | 0 < z.im} z := by
+  have HT := summable_pnat_iff_summable_succ
+    (f:= fun n : ℕ => iteratedDerivWithin k
+    (fun z : ℂ => (1 / (z - n) + 1 / (z + n))) {z : ℂ | 0 < z.im} z)
+  simp at *
+  rw [HT]
   by_cases hk : 1 ≤ k
-  conv =>
-    enter [1]
-    ext b
-    rw [← mul_add]
-  rw [summable_mul_left_iff]
-  apply Summable.add
-  · apply (summable_1 k z hk).subtype
-  · apply (summable_2 k z hk).subtype
-  simp only [ne_eq, mul_eq_zero, pow_eq_zero_iff', neg_eq_zero, one_ne_zero, false_and,
-    Nat.cast_eq_zero, false_or]
-  exact Nat.factorial_ne_zero k
-  simp only [not_le, Nat.lt_one_iff] at hk
-  simp_rw [hk]
-  simp only [pow_zero, Nat.factorial_zero, Nat.cast_one, mul_one, zero_add, pow_one, one_mul]
-  simpa using lhs_summable z
+  have := (summableLocallyUniformlyOn_iteratedDerivWithin_cotTerm hk).summable z.2
+  simp [cotTerm] at *
 
+  apply this
+  simp at hk
+  simp [hk]
+  have := Summable_cotTerm (Complex.UpperHalfPlane.coe_mem_integerComplement z)
+  simp [cotTerm] at *
+  apply this
 
 
 
@@ -1439,7 +1433,6 @@ theorem aux_iter_der_tsum (k : ℕ) (hk : 1 ≤ k) (x : ℍ) :
   · have h1 := aut_iter_deriv 0 k x.2
     simp [UpperHalfPlane.coe] at *
     rw [h1]
-
     have := aut_series_ite_deriv_uexp2 k x
     simp [UpperHalfPlane.coe] at *
     rw [this]

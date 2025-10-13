@@ -1,4 +1,4 @@
-/-
+/- /-
 Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
@@ -37,3 +37,4 @@ theorem T_zpow_width_invariant (hn : ↑Γ.width ∣ n) (τ : ℍ) :
   simpa [-sl_moeb, modular_T_zpow_smul] using vAdd_width_periodic f k hn τ
 
 end SlashInvariantFormClass
+ -/

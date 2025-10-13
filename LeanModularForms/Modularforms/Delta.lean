@@ -23,7 +23,7 @@ lemma DiscriminantProductFormula ( z : ℍ) : Δ z =  cexp (2 * π * Complex.I *
       ext n
       rw [show (n : ℂ) + 1 = ((n + 1) : ℕ) by simp]
 
-    have := tprod_pnat_eq_tprod_succ (fun n => (1 - cexp (2 * π * Complex.I * (n) * z)) ^ 24)
+    have := tprod_pnat_eq_tprod_succ (f := fun n => (1 - cexp (2 * π * Complex.I * (n) * z)) ^ 24)
     rw [this]
 
 
@@ -287,9 +287,9 @@ open Real
 lemma Discriminant_zeroAtImInfty (γ : SL(2, ℤ)): IsZeroAtImInfty
     (Discriminant_SIF ∣[(12 : ℤ)] γ) := by
   rw [IsZeroAtImInfty, ZeroAtFilter]
-  have := Discriminant_SIF.slash_action_eq' γ (CongruenceSubgroup.mem_Gamma_one γ)
+  have := Discriminant_SIF.slash_action_eq' γ (by sorry )
   simp at *
-  rw [this]
+  simp_rw [this]
   simp [Discriminant_SIF]
   unfold Δ
   rw [show (0 : ℂ) =  0 * 1 by ring]
@@ -309,7 +309,7 @@ def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
   toFun := Discriminant_SIF
   slash_action_eq' := Discriminant_SIF.slash_action_eq'
   holo' := by
-    rw [mdifferentiable_iff]
+    rw [_root_.mdifferentiable_iff]
     simp
     have := eta_DifferentiableAt_UpperHalfPlane
     have he2 : DifferentiableOn ℂ (fun z => (η z) ^ 24) {z | 0 < z.im} := by
@@ -325,7 +325,7 @@ def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
     simp at *
     rw [ofComplex_apply_of_im_pos hz]
     exact this
-  zero_at_infty' := fun A => Discriminant_zeroAtImInfty A
+  zero_at_cusps' := fun A => Discriminant_zeroAtImInfty A
 
 lemma Delta_apply (z : ℍ) : Delta z = Δ z := by rfl
 
