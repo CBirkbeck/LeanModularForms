@@ -292,7 +292,7 @@ lemma E_k_q_expansion (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (z : ℍ) :
         (1 / (riemannZeta (k))) * ((-2 * ↑π * Complex.I) ^ k / (k - 1)!) *
         ∑' n : ℕ+, sigma (k - 1) n * Complex.exp (2 * ↑π * Complex.I * z * n) := by
   rw [E]
-  rw [ModularForm.smul_apply]
+  rw [ModularForm.IsGLPos.smul_apply]
   have : (eisensteinSeries_MF (k := k) (by omega) 0) z =
     (eisensteinSeries_SIF (N := 1) 0 k) z := rfl
   rw [ this, eisensteinSeries_SIF_apply 0 k z,

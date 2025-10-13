@@ -365,7 +365,7 @@ lemma Ek_q_exp_zero (k : ℕ) (hk :  3 ≤ k) (hk2 : Even k) : (qExpansion 1 (E 
   rw [Summable.hasSum_iff]
   simp at this
   rw [this, tsum_eq_zero_add']
-  have V := tsum_pnat_eq_tsum_succ (fun b => c (b) • 𝕢 ↑1 ↑z ^ (b))
+  have V := tsum_pnat_eq_tsum_succ (f := fun b => c (b) • 𝕢 ↑1 ↑z ^ (b))
   simp at *
   rw [← V]
   simp [c]
@@ -403,7 +403,7 @@ lemma Ek_q_exp (k : ℕ) (hk :  3 ≤ (k)) (hk2 : Even k) : (fun m => (qExpansio
   rw [Summable.hasSum_iff]
   simp at this
   rw [this, tsum_eq_zero_add']
-  have V := tsum_pnat_eq_tsum_succ (fun b => c (b) • 𝕢 ↑1 ↑z ^ (b))
+  have V := tsum_pnat_eq_tsum_succ (f := fun b => c (b) • 𝕢 ↑1 ↑z ^ (b))
   simp at *
   rw [← V]
   simp [c]
