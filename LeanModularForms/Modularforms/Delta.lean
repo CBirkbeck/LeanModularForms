@@ -83,9 +83,9 @@ lemma Discriminant_S_invariant : (Δ ∣[(12 : ℤ)] ModularGroup.S) = Δ := by
 
 def Discriminant_SIF : SlashInvariantForm (CongruenceSubgroup.Gamma 1) 12 where
   toFun := Δ
-  slash_action_eq' A := by
-    intro hA
-    exact slashaction_generators_SL2Z Δ 12 (Discriminant_S_invariant) (Discriminant_T_invariant) A
+  slash_action_eq' A hA := by
+    obtain ⟨A, (hA : A ∈ (CongruenceSubgroup.Gamma 1)), rfl⟩ := hA
+    apply slashaction_generators_SL2Z Δ 12 (Discriminant_S_invariant) (Discriminant_T_invariant)
 
 
 
@@ -284,10 +284,13 @@ theorem Delta_boundedfactor :
 
 open Real
 
-lemma Discriminant_zeroAtImInfty (γ : SL(2, ℤ)): IsZeroAtImInfty
+lemma Discriminant_zeroAtImInfty (γ : SL(2, ℤ)) : IsZeroAtImInfty
     (Discriminant_SIF ∣[(12 : ℤ)] γ) := by
   rw [IsZeroAtImInfty, ZeroAtFilter]
-  have := Discriminant_SIF.slash_action_eq' γ (by sorry )
+  have := Discriminant_SIF.slash_action_eq' γ (by refine
+      (Subgroup.mem_map_iff_mem (Matrix.SpecialLinearGroup.mapGL_injective)).mpr (by apply
+      CongruenceSubgroup.mem_Gamma_one ))
+  rw [ModularForm.SL_slash]
   simp at *
   simp_rw [this]
   simp [Discriminant_SIF]
@@ -309,7 +312,7 @@ def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
   toFun := Discriminant_SIF
   slash_action_eq' := Discriminant_SIF.slash_action_eq'
   holo' := by
-    rw [_root_.mdifferentiable_iff]
+    rw [ UpperHalfPlane.mdifferentiable_iff]
     simp
     have := eta_DifferentiableAt_UpperHalfPlane
     have he2 : DifferentiableOn ℂ (fun z => (η z) ^ 24) {z | 0 < z.im} := by
@@ -325,7 +328,11 @@ def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
     simp at *
     rw [ofComplex_apply_of_im_pos hz]
     exact this
-  zero_at_cusps' := fun A => Discriminant_zeroAtImInfty A
+  zero_at_cusps' {c} hc := by
+    rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z] at hc
+    rw [OnePoint.isZeroAt_iff_forall_SL2Z hc]
+    intro a ha
+    apply Discriminant_zeroAtImInfty a
 
 lemma Delta_apply (z : ℍ) : Delta z = Δ z := by rfl
 
@@ -373,8 +380,13 @@ theorem div_Delta_is_SIF (k : ℤ) (f : CuspForm (CongruenceSubgroup.Gamma 1) k)
   rw [ModularForm.slash_action_eq'_iff (k -12) _ γ]
   have h0 : (⇑f / ⇑Delta) z = (⇑f z / ⇑Delta z) := rfl
   have h1 : (⇑f / ⇑Delta) (γ • z) = (⇑f (γ • z) / ⇑Delta (γ • z)) := rfl
-  have h2 := congrFun (f.slash_action_eq' γ (CongruenceSubgroup.mem_Gamma_one γ)) z
-  have h3 := congrFun (Delta.slash_action_eq' γ (CongruenceSubgroup.mem_Gamma_one γ)) z
+  have h2 := congrFun (f.slash_action_eq' γ (by refine
+      (Subgroup.mem_map_iff_mem (Matrix.SpecialLinearGroup.mapGL_injective)).mpr (by apply
+      CongruenceSubgroup.mem_Gamma_one ))) z
+  have h3 := congrFun (Delta.slash_action_eq' γ (by refine
+      (Subgroup.mem_map_iff_mem (Matrix.SpecialLinearGroup.mapGL_injective)).mpr (by apply
+      CongruenceSubgroup.mem_Gamma_one ))) z
+  rw [← ModularForm.SL_slash] at h2 h3
   rw [ModularForm.slash_action_eq'_iff, CuspForm_apply,  CuspForm_apply] at h2 h3
   rw [h0, h1, h2, h3,  Delta_apply]
   have hD := Δ_ne_zero z
@@ -391,8 +403,10 @@ def CuspForm_div_Discriminant (k : ℤ) (f : CuspForm (CongruenceSubgroup.Gamma 
   ModularForm (CongruenceSubgroup.Gamma 1) (k - 12) where
     toFun := f / Delta
     slash_action_eq' := by
-      intro γ _
-      apply div_Delta_is_SIF
+      intro γ hg
+      have := div_Delta_is_SIF k f
+      obtain ⟨A, (hA : A ∈ (CongruenceSubgroup.Gamma 1)), rfl⟩ := hg
+      apply this
     holo' := by
       rw [mdifferentiable_iff]
       simp only [SlashInvariantForm.coe_mk]
@@ -408,8 +422,10 @@ def CuspForm_div_Discriminant (k : ℤ) (f : CuspForm (CongruenceSubgroup.Gamma 
         simp only [comp_apply, ne_eq]
         rw [ofComplex_apply_of_im_pos hx]
         apply this
-    bdd_at_infty' := by
-      intro A
+    bdd_at_cusps' {c} hc := by
+      rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z] at hc
+      rw [OnePoint.isBoundedAt_iff_forall_SL2Z hc]
+      intro A hA
       have h1 := CuspFormClass.exp_decay_atImInfty 1 f
       have h2 := Delta_isTheta_rexp.2
       rw [IsBoundedAtImInfty, BoundedAtFilter] at *
