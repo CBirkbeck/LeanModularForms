@@ -19,7 +19,7 @@ Also Jacobi identity: Θ₂^4 + Θ₄^4 = Θ₃^4.
 
 open UpperHalfPlane hiding I
 open Complex Real Asymptotics Filter Topology Manifold SlashInvariantForm Matrix ModularGroup
-  ModularForm SlashAction MatrixGroups
+  ModularForm SlashAction MatrixGroups CongruenceSubgroup
 
 local notation "GL(" n ", " R ")" "⁺" => Matrix.GLPos (Fin n) R
 local notation "Γ " n:100 => CongruenceSubgroup.Gamma n
@@ -242,15 +242,25 @@ lemma H₄_β_action : (H₄ ∣[(2 : ℤ)] β.1) = H₄ := calc
 /-- H₂, H₃, H₄ are modular forms of weight 2 and level Γ(2) -/
 noncomputable def H₂_SIF : SlashInvariantForm (Γ 2) 2 where
   toFun := H₂
-  slash_action_eq' := slashaction_generators_Γ2 H₂ (2 : ℤ) H₂_α_action H₂_β_action H₂_negI_action
+  slash_action_eq' A hA := by
+   obtain ⟨A, (hA : A ∈ Γ(2)), rfl⟩ := hA
+   apply slashaction_generators_Γ2 H₂ (2 : ℤ) H₂_α_action H₂_β_action H₂_negI_action
+   apply hA
+
 
 noncomputable def H₃_SIF : SlashInvariantForm (Γ 2) 2 where
   toFun := H₃
-  slash_action_eq' := slashaction_generators_Γ2 H₃ (2 : ℤ) H₃_α_action H₃_β_action H₃_negI_action
+  slash_action_eq' A hA := by
+    obtain ⟨A, (hA : A ∈ Γ(2)), rfl⟩ := hA
+    apply slashaction_generators_Γ2 H₃ (2 : ℤ) H₃_α_action H₃_β_action H₃_negI_action
+    apply hA
 
 noncomputable def H₄_SIF : SlashInvariantForm (Γ 2) 2 where
   toFun := H₄
-  slash_action_eq' := slashaction_generators_Γ2 H₄ (2 : ℤ) H₄_α_action H₄_β_action H₄_negI_action
+  slash_action_eq' A hA := by
+    obtain ⟨A, (hA : A ∈ Γ(2)), rfl⟩ := hA
+    apply slashaction_generators_Γ2 H₄ (2 : ℤ) H₄_α_action H₄_β_action H₄_negI_action
+    apply hA
 
 end H_SlashInvariant
 
@@ -465,19 +475,31 @@ end H_isBoundedAtImInfty
 noncomputable def H₂_MF : ModularForm (Γ 2) 2 := {
   H₂_SIF with
   holo' := H₂_SIF_MDifferentiable
-  bdd_at_infty' := isBoundedAtImInfty_H₂_slash
+  bdd_at_cusps' {c} hc := by
+    rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z] at hc
+    rw [OnePoint.isBoundedAt_iff_forall_SL2Z hc]
+    intro A ha
+    apply isBoundedAtImInfty_H₂_slash
 }
 
 noncomputable def H₃_MF : ModularForm (Γ 2) 2 := {
   H₃_SIF with
   holo' := H₃_SIF_MDifferentiable
-  bdd_at_infty' := isBoundedAtImInfty_H₃_slash
+  bdd_at_cusps' {c} hc := by
+    rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z] at hc
+    rw [OnePoint.isBoundedAt_iff_forall_SL2Z hc]
+    intro A ha
+    apply isBoundedAtImInfty_H₃_slash
 }
 
 noncomputable def H₄_MF : ModularForm (Γ 2) 2 := {
   H₄_SIF with
   holo' := H₄_SIF_MDifferentiable
-  bdd_at_infty' := isBoundedAtImInfty_H₄_slash
+  bdd_at_cusps' {c} hc := by
+    rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z] at hc
+    rw [OnePoint.isBoundedAt_iff_forall_SL2Z hc]
+    intro A ha
+    apply isBoundedAtImInfty_H₄_slash
 }
 
 /-- Jacobi identity -/

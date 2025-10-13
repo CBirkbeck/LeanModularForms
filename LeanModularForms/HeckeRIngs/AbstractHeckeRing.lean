@@ -28,7 +28,7 @@ comes in).
 show they are rings (associativity is gonna be hard). golf/clean everything
 
 -/
-open Commensurable Classical Doset MulOpposite Set DoubleCoset
+open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable
 
 open scoped Pointwise
 
@@ -559,7 +559,7 @@ lemma m'_T_one (D1 d : T' P) : D1 = d ↔ m' P Z D1 (T_one P) d = 1 := by
       (by apply Subgroup.mul_mem _ (by simp only [SetLike.coe_mem]) (T_one_choose_mem_H P))]
     simp
     have := subsingleton_Q_T_one P
-    rw [@subsingleton_iff] at this
+    rw [@_root_.subsingleton_iff] at this
     apply this
   · intro h
     sorry
@@ -899,8 +899,10 @@ lemma 𝕄one_def : (1 : 𝕄 P Z) = Finsupp.single (M_one P) (1 : Z) := by rfl
 
 lemma sum_single_eq_zero {α  : Type*}  (s : Finset α) (fs : α → Z)
     (h : ∑ i ∈ s, single (i : α) (fs i) = 0) :  ∀ i ∈ s, fs i = 0 := by
-  induction' s using Finset.induction_on with i s hi hs
-  simp only [Finset.sum_empty, Finset.not_mem_empty, false_implies, implies_true] at *
+  induction s using Finset.induction_on with
+  | empty =>
+    simp only [Finset.sum_empty, Finset.not_mem_empty, false_implies, implies_true] at *
+  | insert i s hi hs =>
   have hfin := h
   rw [Finset.sum_insert hi] at h hfin
   rw [@add_eq_zero_iff_eq_neg] at h hfin
@@ -912,10 +914,10 @@ lemma sum_single_eq_zero {α  : Type*}  (s : Finset α) (fs : α → Z)
   rw [eq_comm] at h
   rw [eq_single_iff] at h
   simp at h
-  cases' h.1 with hl hr
+  rcases h.1 with hl | hr
   . intro j hj
     simp at hj
-    cases' hj with hj1 hj2
+    rcases hj with hj1 | hj2
     · have h2 := h.2
       sorry
      /-  rw [hl] at h2
@@ -923,10 +925,9 @@ lemma sum_single_eq_zero {α  : Type*}  (s : Finset α) (fs : α → Z)
       aesop -/
     · apply hs hl
       exact hj2
-  · simp at hr
-    intro j hj
+  · intro j hj
     simp at hj
-    cases' hj with hj1 hj2
+    rcases hj with hj1 | hj2
     · have h2 := h.2
       rw [← hj1] at h2 hr
       have hgg := Finsupp.support_finset_sum (s := s) (f := fun m => single m (fs m))
@@ -953,10 +954,12 @@ lemma sum_single_eq_zero {α  : Type*}  (s : Finset α) (fs : α → Z)
 
 
 
+
 lemma sum_single_support (s : Finset (M P)) (fs : M P → Z) :
   (∑ i ∈ s, single i (fs i)).support ⊆ s := by
-  induction' s using Finset.induction_on with i s hi hs
-  simp
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert i s hi hs =>
   rw [Finset.sum_insert hi]
   have := Finsupp.support_add (g₁:= single i (fs i)) (g₂ := ∑ i ∈ s, single i (fs i))
   sorry
@@ -989,8 +992,9 @@ lemma sum_disj (s t : Finset (M P)) (x y : M P → Z) (hst : Disjoint s t) :
 
 lemma finsupp_sum_support_subset_union_support (s : Finset (𝕄 P Z)) :
   ((∑ x ∈ s, x).support) ≤  Finset.biUnion s fun i ↦ i.support := by
-  induction' s using Finset.induction_on with i s hi hs
-  simp
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert i s hi hs =>
   conv =>
     enter[1,1]
     rw [Finset.sum_insert hi]
@@ -1002,9 +1006,10 @@ lemma sum_disj2 (S : (Finset (𝕄 P Z))) (hst : PairwiseDisjoint S.toSet fun x 
   (∑ i ∈ S, i = 0) ↔ ∀ i : S, i = (0 : 𝕄 P Z) := by
   constructor
   · intro h
-    induction' S using Finset.induction_on with i s hi hs
-    · simp only [IsEmpty.forall_iff]
-    · simp only [Subtype.forall, Finset.mem_insert, forall_eq_or_imp]
+    induction S using Finset.induction_on with
+    | empty => simp only [IsEmpty.forall_iff]
+    | insert i s hi hs =>
+      simp only [Subtype.forall, Finset.mem_insert, forall_eq_or_imp]
       rw [Finset.sum_insert hi, single_basis Z i, single_basis Z (∑ x ∈ s, x)] at h
       rw [single_basis Z i]
       have := (sum_disj P Z i.support (∑ x ∈ s, x).support i.toFun (∑ x ∈ s, x).toFun ?_).mp h
@@ -1053,7 +1058,7 @@ lemma d3 (s t : Finset (M P)) (x y : Z) (hst : ¬ s ⊆ t) (hts : ¬ t ⊆ s)
   rw [← Finset.sdiff_eq_empty_iff_subset] at hst hts
   simp [Finset.mem_sdiff, and_imp] at s1 s2
   rw [← @Finset.not_nonempty_iff_eq_empty] at hst hts
-  rw [Mathlib.Tactic.PushNeg.not_not_eq] at hst hts
+  rw [not_not] at hst hts
   have c1 : ∃ i ∈ s, i ∉ t := by
     have :=   Finset.Nonempty.exists_mem hst
     simpa using this
@@ -1068,8 +1073,9 @@ lemma d3 (s t : Finset (M P)) (x y : Z) (hst : ¬ s ⊆ t) (hts : ¬ t ⊆ s)
 
 lemma d43 (s : Finset (M P)) (x : Z) (hx : x ≠ 0) :
   (∑ i ∈ s, single i x).support = s := by
-  induction' s using Finset.induction_on with i s hi hs
-  simp only [Finset.sum_empty, support_zero]
+  induction s using Finset.induction_on with
+  | empty => simp only [Finset.sum_empty, support_zero]
+  | insert i s hi hs =>
   rw [Finset.sum_insert hi, support_add_eq, hs, Finsupp.support_single_ne_zero i hx]
   rfl
   rw [hs, Finsupp.support_single_ne_zero i hx]
@@ -1083,9 +1089,9 @@ lemma d42 (s : Finset (M P)) (x : Z):
   ext t
   simp
   have : (∑ i ∈ s, single i x).toFun = ∑ i ∈ s, (single i x).toFun := by
-    induction' s using Finset.induction_on with i s hi hs
-    simp
-    rfl
+    induction s using Finset.induction_on with
+    | empty => simp; exact rfl
+    | insert i s hi hs =>
     simp_rw [Finset.sum_insert hi]
     ext u
     rw [@Pi.add_apply]
@@ -1282,7 +1288,7 @@ lemma sum_finset_single_indep2 {s t : Finset (M P)} {x y : Z} (hs : s.Nonempty) 
   have := sum_single_eq_zero Z (s ∩ t) (fun _ => x - y) G1
   simp at this
   rw [@sub_eq_zero] at this
-  rw [← @Finset.not_nonempty_iff_eq_empty, Mathlib.Tactic.PushNeg.not_not_eq] at h1
+  rw [← @Finset.not_nonempty_iff_eq_empty, not_not] at h1
   have c1 : ∃ i ∈ s, i ∈ t := by
     have :=   Finset.Nonempty.exists_mem h1
     simpa using this

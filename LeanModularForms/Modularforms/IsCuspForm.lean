@@ -9,7 +9,7 @@ open scoped Interval Real NNReal ENNReal Topology BigOperators Nat Classical
 
 noncomputable section Definitions
 
-
+open CongruenceSubgroup Matrix.SpecialLinearGroup
 
 variable {α ι: Type*}
 
@@ -22,7 +22,7 @@ def ModForm_mk (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : CuspForm Γ k ) : Modul
   toFun := f
   slash_action_eq' := f.slash_action_eq'
   holo' := f.holo'
-  bdd_at_infty' A := (f.zero_at_infty' A).boundedAtFilter
+  bdd_at_cusps' hc g hg := (f.zero_at_cusps' hc g hg).boundedAtFilter
 
 lemma ModForm_mk_inj (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : CuspForm Γ k ) (hf : f ≠ 0) :
   ModForm_mk _ _ f ≠ 0 := by
@@ -40,7 +40,7 @@ def CuspForm_to_ModularForm (Γ : Subgroup SL(2, ℤ)) (k : ℤ) : CuspForm Γ k
     rfl
   map_smul' := by
     intro m f
-    simp only [ModForm_mk, CuspForm.coe_smul, RingHom.id_apply]
+    simp only [ModForm_mk, RingHom.id_apply]
     rfl
 
 def CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ)  : Submodule ℂ (ModularForm Γ k) :=
@@ -69,11 +69,13 @@ instance (priority := 100) CuspFormSubmodule.funLike : FunLike (CuspFormSubmodul
 instance (Γ : Subgroup SL(2, ℤ)) (k : ℤ) : CuspFormClass (CuspFormSubmodule Γ k) Γ k where
   slash_action_eq f := f.1.slash_action_eq'
   holo f := f.1.holo'
-  zero_at_infty f := by
+  zero_at_cusps f := by
     have hf := f.2
     have := mem_CuspFormSubmodule Γ k f hf
     obtain ⟨g, hg⟩ := this
-    convert g.zero_at_infty'
+    intro c hc
+    have := g.zero_at_cusps' hc
+    convert this
     ext y
     aesop
 
@@ -126,8 +128,12 @@ lemma IsCuspForm_iff_coeffZero_eq_zero  (k : ℤ) (f : ModularForm Γ(1) k) :
     use ⟨f.toSlashInvariantForm , f.holo', ?_⟩
     · simp only [CuspForm_to_ModularForm, ModForm_mk]
       rfl
-    · intro A
-      have hf := f.slash_action_eq' A (CongruenceSubgroup.mem_Gamma_one A)
+    · simp_rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z]
+      intro c hc
+      rw [OnePoint.isZeroAt_iff_forall_SL2Z]
+      intro A hA
+      have hf := f.slash_action_eq' A (by refine
+      (Subgroup.mem_map_iff_mem (mapGL_injective)).mpr (by apply CongruenceSubgroup.mem_Gamma_one ))
       simp only [ SlashInvariantForm.toFun_eq_coe, toSlashInvariantForm_coe, SL_slash] at *
       rw [hf]
       rw [qExpansion_coeff] at h
@@ -153,6 +159,7 @@ lemma IsCuspForm_iff_coeffZero_eq_zero  (k : ℤ) (f : ModularForm Γ(1) k) :
       simp only [Nat.cast_one, comp_apply, Periodic, ofReal_one, mul_one, ofComplex_apply] at *
       rw [← hm] at h6
       exact h6
+      exact hc
 
 
 lemma CuspFormSubmodule_mem_iff_coeffZero_eq_zero  (k : ℤ) (f : ModularForm Γ(1) k) :
