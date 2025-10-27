@@ -375,7 +375,7 @@ theorem G2_c_tendsto (z : ℍ) :
     (fun N ↦
       ∑ x ∈ Finset.range N,
         2 * (2 * ↑π * Complex.I) ^ 2 * ∑' (n : ℕ+), ↑↑n * cexp (2 * ↑π * Complex.I * (↑x + 1) * ↑z * ↑↑n))
-    atTop (𝓝 (-8 * ↑π ^ 2 * ∑' (n : ℕ+), ↑((σ 1) ↑n) * cexp (2 * ↑π * Complex.I * ↑↑n * ↑z))) := by
+    atTop (𝓝 (-8 * ↑π ^ 2 * ∑' (n : ℕ+), ↑((sigma 1) ↑n) * cexp (2 * ↑π * Complex.I * ↑↑n * ↑z))) := by
     rw [← t9]
     have hf : Summable fun m : ℕ => ( 2 * (-2 * ↑π * Complex.I) ^ 2 / (2 - 1)! *
         ∑' n : ℕ+, n ^ ((2 - 1)) * Complex.exp (2 * ↑π * Complex.I * (m + 1) * z * n)) := by
