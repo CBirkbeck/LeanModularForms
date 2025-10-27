@@ -171,7 +171,7 @@ lemma EQ0 (k : ℕ) (z : ℍ) : ∑' (x : Fin 2 → ℤ),
 lemma EQ1 (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (z : ℍ) : ∑' (x : Fin 2 → ℤ),
     1 / (x 0 * (z : ℂ) + x 1) ^ ↑k = 2 * riemannZeta ↑k +
     2 * ((-2 * ↑π * Complex.I) ^ k / ↑(k - 1)!) *
-     ∑' (n : ℕ+), ↑((σ (k - 1)) ↑n) * cexp (2 * ↑π * Complex.I * ↑z * ↑↑n) := by
+     ∑' (n : ℕ+), ↑((sigma (k - 1)) ↑n) * cexp (2 * ↑π * Complex.I * ↑z * ↑↑n) := by
   rw [EQ0,  q_exp_iden_2 k (by linarith) hk2]
   simp
   have h1 (c : ℕ+) := q_exp_iden k (by linarith) (c • z)
