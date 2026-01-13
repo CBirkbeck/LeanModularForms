@@ -27,6 +27,47 @@ by Hungerbuehler and Wasem.
 * `generalizedResidueTheorem`: The residue theorem extended to allow singularities
   on the contour (with appropriate conditions).
 
+## Known gaps (sorries)
+
+The following mathematical gaps remain (15 declarations with sorries):
+
+### Category 1: Uniform bounds for C^1 immersions
+**Lemma:** `piecewiseC1Immersion_finite_zeros` (3 sorries at lines ~806, 906, 1112)
+**Issue:** Proving finiteness requires uniform lower bounds on isolation radii,
+which needs the C^1 structure (continuity of derivative) rather than just
+differentiability. The current `PiecewiseC1Curve'` definition doesn't expose
+these bounds directly.
+**What's needed:** Either strengthen the structure definition or add explicit
+hypotheses about derivative continuity and bounds.
+
+### Category 2: Homotopy invariance
+**Lemma:** `homotopy_pv_integral_eq` (1 sorry at line ~1206)
+**Issue:** Requires Cauchy's integral theorem for parametrized contours.
+**What's needed:** Apply mathlib's Cauchy integral formula to the homotopy
+cylinder boundary, then take limits as epsilon -> 0.
+
+### Category 3: Asymptotic analysis
+**Lemmas:** `numerator_O_t_squared`, `denominator_Theta_t_squared`,
+`windingNumberRealIntegrand_bounded`, `windingNumberRealIntegrand_limit_at_zero`,
+`piecewiseC1_flat_order_one` (5 lemmas, ~6 sorries total)
+**Issue:** Taylor expansion bounds and limits near zeros of curves.
+**What's needed:** Careful tracking of derivative bounds using mean value theorem
+and Lipschitz conditions.
+
+### Category 4: Principal value integral computations
+**Lemmas:** `pv_integral_z_power_n`, `laurent_term_compatibility`,
+`compatible_laurent_residue_formula` (3 lemmas, ~7 sorries total)
+**Issue:** Computing PV integrals of z^(-n) over model sector curves.
+**What's needed:** Explicit integration showing the principal value formula
+and the angle condition for convergence.
+
+### Category 5: Main theorems
+**Theorems:** `generalizedResidueTheorem`, `valenceFormula`, `valenceFormula_classical`,
+`zeppelinCurve_windingNumber`, `generalizedWindingNumber_eq_classical`
+(5 theorems, ~6 sorries total)
+**Issue:** These depend on the machinery above.
+**What's needed:** Compose the building blocks once Categories 1-4 are complete.
+
 ## References
 
 * Hungerbuehler, Wasem: "Non-integer valued winding numbers and a generalized Residue Theorem"
@@ -70,7 +111,14 @@ a = a₀ < a₁ < ⋯ < aₙ = b such that Λ|_{[aₖ,aₖ₊₁]} is of class C
 3. Differentiability away from partition points enables calculus operations
 -/
 
-/-- A piecewise C¹ curve is a continuous curve that is C¹ on each piece of a finite partition. -/
+/-- A piecewise C¹ curve is a continuous curve that is C¹ on each piece of a finite partition.
+
+**Strengthened definition:** We require not just differentiability but full C¹ regularity
+(continuous derivative) on each piece. This enables:
+1. Uniform bounds via compactness arguments
+2. Inverse function theorem applications
+3. Proper isolation bounds for zeros of immersions
+-/
 structure PiecewiseC1Curve' where
   /-- The underlying continuous function -/
   toFun : ℝ → ℂ
@@ -84,9 +132,13 @@ structure PiecewiseC1Curve' where
   partition : Finset ℝ
   /-- Partition is contained in the domain -/
   partition_subset : ↑partition ⊆ Icc a b
-  /-- The curve is C¹ on each open interval of the partition -/
+  /-- The curve is differentiable at each non-partition point -/
   differentiable_on_partition :
     ∀ t ∈ Icc a b, t ∉ partition → DifferentiableAt ℝ toFun t
+  /-- C¹ regularity: the derivative is continuous on Icc a b away from partition points.
+      This is the key strengthening that enables uniform bounds. -/
+  deriv_continuous_on :
+    ContinuousOn (deriv toFun) (Icc a b \ ↑partition)
 
 instance : CoeFun PiecewiseC1Curve' (fun _ => ℝ → ℂ) where
   coe := PiecewiseC1Curve'.toFun
@@ -101,6 +153,115 @@ structure PiecewiseC1Immersion' extends PiecewiseC1Curve' where
   deriv_ne_zero : ∀ t ∈ Icc toPiecewiseC1Curve'.a toPiecewiseC1Curve'.b,
     t ∉ toPiecewiseC1Curve'.partition →
     deriv toPiecewiseC1Curve'.toFun t ≠ 0
+
+/-- Key lemma: On any closed interval disjoint from partition points, the derivative
+    has a uniform positive lower bound. This follows from:
+    1. deriv_continuous_on (derivative is continuous)
+    2. deriv_ne_zero (derivative is nonzero)
+    3. Compactness of the interval
+
+    This is the crucial property needed for proving finiteness of zeros. -/
+lemma PiecewiseC1Immersion'.deriv_norm_lower_bound (γ : PiecewiseC1Immersion')
+    (c d : ℝ) (hcd : c < d) (h_sub : Icc c d ⊆ Icc γ.a γ.b)
+    (h_disjoint : Disjoint (Icc c d) (↑γ.toPiecewiseC1Curve'.partition : Set ℝ)) :
+    ∃ δ > 0, ∀ t ∈ Icc c d, δ ≤ ‖deriv γ.toFun t‖ := by
+  -- The derivative is continuous on Icc c d (subset of Icc a b \ partition)
+  have h_cont : ContinuousOn (fun t => ‖deriv γ.toFun t‖) (Icc c d) := by
+    apply ContinuousOn.norm
+    apply γ.toPiecewiseC1Curve'.deriv_continuous_on.mono
+    intro t ht
+    constructor
+    · exact h_sub ht
+    · exact Set.disjoint_left.mp h_disjoint ht
+  -- Icc c d is compact
+  have h_compact : IsCompact (Icc c d) := isCompact_Icc
+  -- The norm function attains its minimum on the compact set
+  have h_nonempty : (Icc c d).Nonempty := Set.nonempty_Icc.mpr (le_of_lt hcd)
+  obtain ⟨t₀, ht₀_mem, ht₀_min⟩ := h_compact.exists_isMinOn h_nonempty h_cont
+  -- The minimum is positive (since derivative is nonzero)
+  have h_pos : 0 < ‖deriv γ.toFun t₀‖ := by
+    apply norm_pos_iff.mpr
+    apply γ.deriv_ne_zero t₀ (h_sub ht₀_mem)
+    exact Set.disjoint_left.mp h_disjoint ht₀_mem
+  use ‖deriv γ.toFun t₀‖, h_pos
+  intro t ht
+  exact ht₀_min ht
+
+/-- Uniform isolation: On a compact interval disjoint from partition, zeros of an immersion
+    are uniformly separated. This follows from:
+    1. deriv_norm_lower_bound gives δ > 0 with |γ'| ≥ δ
+    2. HasDerivAt.eventually_ne gives isolation at each zero
+    3. The isolation radius is uniform because |γ'| is uniformly bounded below -/
+lemma PiecewiseC1Immersion'.zeros_uniformly_separated (γ : PiecewiseC1Immersion')
+    (c d : ℝ) (hcd : c < d) (h_sub : Icc c d ⊆ Icc γ.a γ.b)
+    (h_disjoint : Disjoint (Icc c d) (↑γ.toPiecewiseC1Curve'.partition : Set ℝ))
+    (z₀ : ℂ) :
+    ∃ ε > 0, ∀ t₁ t₂ : ℝ, t₁ ∈ Icc c d → t₂ ∈ Icc c d →
+      γ.toFun t₁ = z₀ → γ.toFun t₂ = z₀ → t₁ ≠ t₂ → ε ≤ |t₁ - t₂| := by
+  -- Get uniform lower bound on derivative
+  obtain ⟨δ, hδ_pos, hδ_bound⟩ := γ.deriv_norm_lower_bound c d hcd h_sub h_disjoint
+  -- Each point in Icc c d is differentiable
+  have h_diff : ∀ t ∈ Icc c d, DifferentiableAt ℝ γ.toFun t := by
+    intro t ht
+    apply γ.toPiecewiseC1Curve'.differentiable_on_partition t (h_sub ht)
+    exact Set.disjoint_left.mp h_disjoint ht
+  -- Use the inverse function theorem / local injectivity
+  -- For each zero t₀ with |γ'(t₀)| ≥ δ > 0, HasDerivAt.eventually_ne gives isolation
+  -- The isolation radius depends on the derivative, which is uniformly bounded
+  -- GAP: Need to formalize the uniform isolation argument using IFT
+  -- The argument is:
+  -- - By C¹ + compact, γ' is uniformly continuous on Icc c d
+  -- - With |γ'| ≥ δ and uniform continuity, get uniform isolation radius
+  use δ / (2 * (1 + ‖deriv γ.toFun c‖))  -- Placeholder bound
+  constructor
+  · positivity
+  intro t₁ t₂ ht₁ ht₂ hz₁ hz₂ hne
+  -- The full proof requires the inverse function theorem machinery
+  -- which shows that with uniform |γ'| ≥ δ, zeros are separated by ≥ f(δ)
+  sorry
+
+/-- Finiteness of zeros on compact intervals disjoint from partition.
+    This is a direct consequence of uniform separation. -/
+lemma PiecewiseC1Immersion'.zeros_finite_on_interval (γ : PiecewiseC1Immersion')
+    (c d : ℝ) (hcd : c < d) (h_sub : Icc c d ⊆ Icc γ.a γ.b)
+    (h_disjoint : Disjoint (Icc c d) (↑γ.toPiecewiseC1Curve'.partition : Set ℝ))
+    (z₀ : ℂ) :
+    Set.Finite {t ∈ Icc c d | γ.toFun t = z₀} := by
+  -- Get uniform separation
+  obtain ⟨ε, hε_pos, hε_sep⟩ := γ.zeros_uniformly_separated c d hcd h_sub h_disjoint z₀
+  -- A subset of [c, d] with points ε-separated has at most ⌊(d - c) / ε⌋ + 1 points
+  -- Proof: if infinite, by compactness there's an accumulation point, contradicting separation
+  by_contra h_inf
+  have h_infinite : Set.Infinite {t ∈ Icc c d | γ.toFun t = z₀} := h_inf
+  -- The set is a subset of the compact Icc c d
+  have h_sub' : {t ∈ Icc c d | γ.toFun t = z₀} ⊆ Icc c d := fun t ht => ht.1
+  -- By Bolzano-Weierstrass, there exists an accumulation point
+  obtain ⟨x, hx_in, hx_acc⟩ := h_infinite.exists_accPt_of_subset_isCompact isCompact_Icc h_sub'
+  rw [accPt_principal_iff_nhdsWithin] at hx_acc
+  -- Get two distinct zeros within ε of x
+  have h_ball : ball x (ε / 2) ∈ 𝓝 x := Metric.ball_mem_nhds x (by linarith)
+  have h1 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball (mem_principal_self _))
+  obtain ⟨t₁, ht₁_ball, ht₁_in, ht₁_ne⟩ := h1
+  simp only [Set.mem_diff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₁_in ht₁_ne
+  -- Get another distinct zero (different from both x and t₁)
+  have hx_ne_t₁ : x ≠ t₁ := Ne.symm ht₁_ne
+  have h_nhds_ne : {t₁}ᶜ ∈ 𝓝 x := isOpen_compl_singleton.mem_nhds hx_ne_t₁
+  have h_ball' : ball x (ε / 2) ∩ {t₁}ᶜ ∈ 𝓝 x := Filter.inter_mem h_ball h_nhds_ne
+  have h2 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball' (mem_principal_self _))
+  obtain ⟨t₂, ⟨ht₂_ball, ht₂_ne_t₁⟩, ht₂_in, _⟩ := h2
+  simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₂_in ht₂_ne_t₁
+  -- t₁ and t₂ are both zeros in Icc c d, distance < ε, but separation says ≥ ε
+  have h_close : |t₁ - t₂| < ε := by
+    have h1 : |t₁ - x| < ε / 2 := by rw [← Real.dist_eq]; exact Metric.mem_ball.mp ht₁_ball
+    have h2 : |t₂ - x| < ε / 2 := by rw [← Real.dist_eq]; exact Metric.mem_ball.mp ht₂_ball
+    calc |t₁ - t₂| = |(t₁ - x) + (x - t₂)| := by ring_nf
+      _ ≤ |t₁ - x| + |x - t₂| := abs_add_le _ _
+      _ = |t₁ - x| + |t₂ - x| := by rw [abs_sub_comm x t₂]
+      _ < ε / 2 + ε / 2 := add_lt_add h1 h2
+      _ = ε := by ring
+  have h_t₁_ne_t₂ : t₁ ≠ t₂ := Ne.symm ht₂_ne_t₁
+  have h_sep : ε ≤ |t₁ - t₂| := hε_sep t₁ t₂ ht₁_in.1 ht₂_in.1 ht₁_in.2 ht₂_in.2 h_t₁_ne_t₂
+  linarith
 
 /-- A cycle is a formal ℤ-linear combination of closed piecewise C¹ curves.
 
@@ -1128,36 +1289,58 @@ lemma homotopy_pv_integral_eq
     (_hH_endpoints : ∀ s ∈ Icc (0:ℝ) 1, H (a, s) = 0 ∧ H (b, s) = 0)
     (_hH_nonzero : ∀ t ∈ Ioo a b, ∀ s ∈ Icc (0:ℝ) 1, H (t, s) ≠ 0) :
     cauchyPrincipalValue (·⁻¹) Γ a b 0 = cauchyPrincipalValue (·⁻¹) γ a b 0 := by
-  -- The proof uses that for each ε > 0, we can compute both integrals by excising
-  -- an ε-neighborhood of the origin. The homotopy H provides a continuous
-  -- deformation, and by Stokes' theorem the integral over the homotopy boundary
-  -- (which is Γ ∪ γ ∪ {connecting arcs}) vanishes.
-  --
-  -- The connecting arcs at the endpoints contribute 0 by _hH_endpoints.
-  -- The connecting arcs at the ε-circles contribute o(ε) by small_arc_integral_vanishes.
-  --
-  -- Key insight: On the annulus {z : ε < |z| < R}, 1/z is holomorphic,
-  -- so the integral over any null-homologous cycle is 0.
-  -- The cycle Γ_ε - γ_ε (where _ε means excising the ε-disk) is null-homologous
-  -- via the homotopy H restricted to {|H| > ε}.
-  --
-  -- Taking ε → 0, the principal values must agree.
-  -- The proof uses homotopy invariance: both integrals agree up to
-  -- contributions that vanish as ε → 0
-  --
-  -- Detailed proof structure:
-  -- 1. Fix ε > 0 small enough that |H(t,s)| > ε for all (t,s) with t ∈ [a+δ, b-δ]
-  -- 2. The excised integrals ∫_{a+δ}^{b-δ} (Γ')⁻¹ dt and ∫_{a+δ}^{b-δ} (γ')⁻¹ dt
-  --    are related by Stokes' theorem applied to the homotopy H
-  -- 3. The boundary contributions from the small arcs at t = a+δ and t = b-δ
-  --    vanish as δ → 0 by _hH_endpoints (H(a,s) = H(b,s) = 0)
-  -- 4. Taking ε → 0 and δ → 0 carefully, the PV integrals agree
-  --
-  -- Key lemmas needed:
-  -- - Contour integral version of Stokes' theorem for holomorphic 1/z
-  -- - small_arc_integral_vanishes for the connecting arcs
-  -- - Uniform continuity of H on compact [a,b] × [0,1]
-  sorry -- Requires Stokes' theorem + careful limit analysis
+  -- Step 1: On Ioo a b, derivatives of H(·,0) and Γ agree (similarly for H(·,1) and γ)
+  have deriv_eq_0 : ∀ t ∈ Ioo a b, deriv (fun t => H (t, 0)) t = deriv Γ t := by
+    intro t ht
+    have h_eq : ∀ᶠ s in 𝓝 t, H (s, 0) = Γ s := by
+      exact Filter.eventually_of_mem (isOpen_Ioo.mem_nhds ht)
+        (fun s hs => _hH0 s (Ioo_subset_Icc_self hs))
+    exact Filter.EventuallyEq.deriv_eq h_eq
+  have deriv_eq_1 : ∀ t ∈ Ioo a b, deriv (fun t => H (t, 1)) t = deriv γ t := by
+    intro t ht
+    have h_eq : ∀ᶠ s in 𝓝 t, H (s, 1) = γ s := by
+      exact Filter.eventually_of_mem (isOpen_Ioo.mem_nhds ht)
+        (fun s hs => _hH1 s (Ioo_subset_Icc_self hs))
+    exact Filter.EventuallyEq.deriv_eq h_eq
+  -- Step 2: PV for H(·,0) equals PV for Γ (integrands are ae equal)
+  have h_at_0 : cauchyPrincipalValue (·⁻¹) (fun t => H (t, 0)) a b 0 =
+                cauchyPrincipalValue (·⁻¹) Γ a b 0 := by
+    unfold cauchyPrincipalValue
+    congr 1
+    funext ε
+    refine intervalIntegral.integral_congr_ae ?_
+    rw [uIoc_of_le (le_of_lt _hab)]
+    have h_on_Ioo : ∀ t ∈ Ioo a b,
+        (if ‖H (t, 0) - 0‖ > ε then (H (t, 0))⁻¹ * deriv (fun t => H (t, 0)) t else 0) =
+        (if ‖Γ t - 0‖ > ε then (Γ t)⁻¹ * deriv Γ t else 0) := by
+      intro t ht_ioo
+      simp only [sub_zero]
+      rw [_hH0 t (Ioo_subset_Icc_self ht_ioo), deriv_eq_0 t ht_ioo]
+    filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
+    exact h_on_Ioo t (ht.mpr ht_Ioc)
+  -- Step 3: PV for H(·,1) equals PV for γ
+  have h_at_1 : cauchyPrincipalValue (·⁻¹) (fun t => H (t, 1)) a b 0 =
+                cauchyPrincipalValue (·⁻¹) γ a b 0 := by
+    unfold cauchyPrincipalValue
+    congr 1
+    funext ε
+    refine intervalIntegral.integral_congr_ae ?_
+    rw [uIoc_of_le (le_of_lt _hab)]
+    have h_on_Ioo : ∀ t ∈ Ioo a b,
+        (if ‖H (t, 1) - 0‖ > ε then (H (t, 1))⁻¹ * deriv (fun t => H (t, 1)) t else 0) =
+        (if ‖γ t - 0‖ > ε then (γ t)⁻¹ * deriv γ t else 0) := by
+      intro t ht_ioo
+      simp only [sub_zero]
+      rw [_hH1 t (Ioo_subset_Icc_self ht_ioo), deriv_eq_1 t ht_ioo]
+    filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
+    exact h_on_Ioo t (ht.mpr ht_Ioc)
+  -- Step 4: Conclude by showing PV is constant along homotopy parameter s
+  rw [← h_at_0, ← h_at_1]
+  -- Core homotopy invariance: PV of H(·,0) = PV of H(·,1)
+  -- By Cauchy's integral theorem, integral around closed contour
+  -- Γ_ε ∪ arc₁ ∪ (-γ_ε) ∪ arc₂ vanishes (1/z holomorphic on ℂ\{0})
+  -- Taking ε → 0 gives the result
+  sorry -- Requires Cauchy's integral theorem for parametrized contours
 
 /-- The key estimate: for small arcs α₁, α₂ connecting Γ and γ at radius ε,
     the integral over these arcs vanishes as ε → 0. -/
@@ -1205,9 +1388,7 @@ theorem generalizedWindingNumber_decomposition
   -- 2. homotopy_pv_integral_eq for each sector Γₗ
   -- 3. generalizedWindingNumber_modelSector for each αₗ/(2π)
   -- 4. Additivity of the integral over the decomposition
-  use { toFun := γ.toFun, a := γ.a, b := γ.b, hab := γ.hab,
-        continuous_toFun := γ.continuous_toFun, partition := γ.partition,
-        partition_subset := γ.partition_subset, differentiable_on_partition := γ.differentiable_on_partition }
+  use γ.toPiecewiseC1Curve'
   use fun _ => 0
   simp
 
@@ -1338,7 +1519,25 @@ lemma numerator_O_t_squared (γ : PiecewiseC1Immersion') (t₀ : ℝ)
       --       ≤ M|t-t₀|(|ẏ(t₀)| + |t-t₀|) + M|t-t₀|(|ẋ(t₀)| + |t-t₀|)
       -- For |t-t₀| < 1, this gives the O((t-t₀)²) bound.
       -- The constant 10 is a conservative upper bound assuming bounded derivatives.
-      sorry -- Requires careful tracking of derivative bounds from Lipschitz
+      --
+      -- MATHEMATICAL GAP: Completing this proof requires:
+      -- (a) A bound on γ(t) using the mean value theorem: |γ(t) - γ(t₀)| ≤ C|t - t₀|
+      --     where C is the supremum of |γ'| on the interval. Since γ is C¹ on a compact
+      --     domain, this supremum exists and is finite.
+      -- (b) Using the Lipschitz property of γ' with constant 1 gives:
+      --     |γ'(t) - γ'(t₀)| ≤ |t - t₀|
+      -- (c) The cross term x·ẏ - y·ẋ involves products of γ and γ', each bounded by
+      --     O(|t - t₀|) terms, giving the O(|t - t₀|²) bound.
+      --
+      -- The proof would use norm_image_sub_le_of_norm_deriv_le_segment from
+      -- Mathlib.Analysis.Calculus.MeanValue, but requires explicit derivative bounds
+      -- which are not directly provided in the PiecewiseC1Immersion' structure.
+      --
+      -- STRUCTURAL GAP: The bound 10 * (t - t₀)² requires deriving specific bounds
+      -- on |γ(t)| and |γ'(t)| from the Lipschitz hypothesis and using them to bound
+      -- the cross-term. This is a standard calculus argument but requires explicit
+      -- manipulation of the derivative bounds.
+      sorry
 
 /-- The denominator x(t)² + y(t)² is Θ(t²) near a zero of the curve.
     This uses the immersion property (nonzero derivative). -/
@@ -1416,12 +1615,17 @@ theorem windingNumberRealIntegrand_bounded
     rw [abs_div]
     apply div_le_of_le_mul₀ (abs_nonneg _)
     · positivity
-    · -- Need: |numerator| ≤ 100 * |γ(t)|²
-      -- Away from zeros, the integrand is continuous on a compact set minus
-      -- small neighborhoods of zeros. It's bounded on this compact set.
-      -- Near zeros, the O(t²)/Θ(t²) bound from numerator/denominator lemmas applies.
-      -- The bound 100 is conservative for any piecewise C¹ immersion.
-      sorry -- Requires continuity argument + local bounds near zeros
+    · -- Need: |numerator| ≤ 100 * |denominator|
+      -- The numerator is x*ẏ - y*ẋ and the denominator is x² + y²
+      -- Away from zeros, this is bounded because:
+      -- |x*ẏ - y*ẋ| ≤ |x|·|ẏ| + |y|·|ẋ| ≤ √(x²+y²) · (|ẋ| + |ẏ|) · √2 (by Cauchy-Schwarz)
+      -- So |numerator| / |denominator| ≤ √2 · (|ẋ| + |ẏ|) / √(x²+y²)
+      -- For γ(t) ≠ 0, this is bounded by max derivative / min distance to 0
+      --
+      -- The constant 100 is conservative; actual bound depends on γ derivatives.
+      -- MATHEMATICAL GAP: Need explicit bounds on derivatives of γ from the
+      -- PiecewiseC1Immersion' structure to complete this proof.
+      sorry
 
 /-- Signed curvature of a curve at a point.
     κ_Λ(t) = (ẋ(t)ÿ(t) - ẏ(t)ẍ(t)) / (ẋ(t)² + ẏ(t)²)^{3/2} -/
@@ -1636,23 +1840,45 @@ lemma pv_integral_z_power_n (C : ModelSectorCurve) (n : ℕ) (hn : n > 1) :
   · -- Iff: PV exists ↔ angle condition
     constructor
     · -- PV exists → angle condition
-      intro _hPV
+      intro hPV
       -- If PV exists, the limit must be finite
-      -- This requires e^{-i(n-1)α} = 1
-      use 0
+      -- This requires e^{-i(n-1)α} = 1, i.e., α*(n-1) = 2kπ for some k
+      -- The PV integral has the form lim_{ε→0} (1 - e^{-i(n-1)α}) / ((n-1)ε^{n-1})
+      -- which converges iff the numerator 1 - e^{-i(n-1)α} = 0
+      -- This happens iff e^{-i(n-1)α} = 1 iff (n-1)α ∈ 2πℤ
+      -- MATHEMATICAL GAP: Requires showing divergence when angle condition fails
+      -- The proof would use that ε^{1-n} → ∞ as ε → 0 for n > 1
+      -- Need to extract k from the convergent PV integral
+      -- The integral structure determines which k makes α*(n-1) = 2kπ
+      -- This requires analysis of the integral convergence to determine k
+      obtain ⟨L, hL⟩ := hPV
+      -- From convergence, extract the angle relationship
+      use 0  -- The specific k depends on C.α
+      -- GAP: Need to show α*(n-1) = 0 or find appropriate k from convergence
       sorry
     · -- angle condition → PV exists
-      intro ⟨k, _hk⟩
+      intro ⟨k, hk⟩
       -- When α(n-1) = 2kπ, we have e^{-i(n-1)α} = 1
-      -- So the divergent term vanishes and the limit exists
+      -- So the divergent term (1 - e^{-i(n-1)α})/ε^{n-1} = 0/ε^{n-1} = 0
+      -- The limit therefore exists and equals 0
       unfold CauchyPrincipalValueExists
       use 0
+      -- The integral over model sector curve with angle condition satisfied
+      -- converges to 0 because the oscillating terms cancel
+      -- MATHEMATICAL GAP: Requires detailed integral computation
+      -- showing that when angle condition holds, the PV integral is 0
+      -- The integrand needs to be shown to converge to 0 as ε → 0
       sorry
   · -- When angle condition holds, PV = 0
-    intro ⟨_k, _hk⟩
-    -- The coefficient 1 - e^{-i(n-1)α} = 0, and all remaining terms
+    intro ⟨k, hk⟩
+    -- The coefficient 1 - e^{-i(n-1)α} = 0 (by angle condition), and all remaining terms
     -- either cancel or vanish in the limit
     unfold cauchyPrincipalValue
+    -- By the angle condition, the divergent ε^{1-n} term has coefficient 0
+    -- The remaining terms are bounded and their limit exists
+    -- MATHEMATICAL GAP: Need to show the limit equals 0
+    -- This requires computing the PV integral with the angle condition
+    -- The proof uses that when angle condition holds, singular terms cancel
     sorry
 
 /-- Lemma 3.1: For α = (p/q)π, the PV ∮_γ dz/z^n = 0 iff n = 2kq/p + 1.
@@ -2009,10 +2235,15 @@ but the generalized winding number formulation is more elegant.
 - Meromorphic order: `meromorphicOrderAt` from `Mathlib.Analysis.Meromorphic.Order`
 -/
 
-/-- The standard fundamental domain for SL₂(ℤ), viewed as a subset of ℂ.
+/- ## Fundamental Domain
 
-The fundamental domain F for the modular group SL₂(ℤ) is:
-  F = { z ∈ ℍ : |z| ≥ 1 and |Re(z)| ≤ 1/2 }
+The standard fundamental domain for SL₂(ℤ).
+
+We use mathlib's `ModularGroup.fd` (notation `𝒟`) which has type `Set ℍ`:
+  𝒟 = { z ∈ ℍ : |z| ≥ 1 and |Re(z)| ≤ 1/2 }
+
+Note: The upper half-plane condition `0 < z.im` is automatic since `ℍ` is
+the upper half-plane by definition.
 
 The boundary ∂F consists of:
 - Left edge: Re(z) = -1/2, from ρ = e^{2πi/3} to i∞
@@ -2028,9 +2259,25 @@ The vertices are:
 arise from the angles at these corners:
 - At i: n_i(∂F) = 2 × (π/2)/(2π) = 1/2 (two copies from identified edges)
 - At ρ: n_ρ(∂F) = 2 × (π/3)/(2π) = 1/3 (two copies from identified edges)
+
+**Mathlib definition:** `ModularGroup.fd` is defined as:
+  `def fd : Set ℍ := {z | 1 ≤ normSq (z : ℂ) ∧ |z.re| ≤ (1 : ℝ) / 2}`
+
+We also have `ModularGroup.fdo` (notation `𝒟ᵒ`) for the interior.
 -/
-def fundamentalDomain : Set ℂ :=
-  {z : ℂ | 0 < z.im ∧ 1 ≤ Complex.normSq z ∧ |z.re| ≤ (1 : ℝ) / 2}
+
+/-- Elliptic point i is in the fundamental domain.
+    Proof: |i| = 1 ≥ 1 and |Re(i)| = 0 ≤ 1/2. -/
+lemma ellipticPoint_i_mem_fd : UpperHalfPlane.I ∈ 𝒟 := by
+  -- 𝒟 = {z | 1 ≤ normSq z ∧ |z.re| ≤ 1/2}
+  -- For i: normSq i = 1, Re(i) = 0
+  simp only [ModularGroup.fd, Set.mem_setOf_eq]
+  constructor
+  · -- normSq i = |i|² = 1 ≥ 1
+    simp only [UpperHalfPlane.coe_I, Complex.normSq_I, le_refl]
+  · -- |Re(i)| = 0 ≤ 1/2
+    simp only [UpperHalfPlane.I_re, abs_zero]
+    norm_num
 
 /-- The elliptic point i of order 2 in the upper half plane.
 
@@ -2064,6 +2311,24 @@ def ellipticPoint_rho : UpperHalfPlane :=
     simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
                Complex.I_im, Complex.ofReal_re, zero_mul, one_mul, zero_add]
     exact div_pos (Real.sqrt_pos.mpr (by norm_num : (3 : ℝ) > 0)) two_pos⟩
+
+/-- Elliptic point ρ = -1/2 + i√3/2 is in the fundamental domain.
+    Proof: |ρ|² = 1/4 + 3/4 = 1 ≥ 1 and |Re(ρ)| = 1/2 ≤ 1/2. -/
+lemma ellipticPoint_rho_mem_fd : ellipticPoint_rho ∈ 𝒟 := by
+  simp only [ModularGroup.fd, Set.mem_setOf_eq]
+  constructor
+  · -- normSq ρ = (-1/2)² + (√3/2)² = 1/4 + 3/4 = 1
+    unfold ellipticPoint_rho
+    change (1 : ℝ) ≤ Complex.normSq (Complex.ofReal (-1/2) +
+      Complex.I * Complex.ofReal (Real.sqrt 3 / 2))
+    rw [mul_comm Complex.I (Complex.ofReal _)]
+    simp only [Complex.normSq_add_mul_I]
+    ring_nf
+    have h : Real.sqrt 3 * Real.sqrt 3 = 3 := Real.mul_self_sqrt (by norm_num : (3:ℝ) ≥ 0)
+    linarith
+  · -- |Re ρ| = |-1/2| = 1/2 ≤ 1/2
+    simp only [ellipticPoint_rho, UpperHalfPlane.re]
+    norm_num
 
 /-- Order of vanishing of a modular form at the cusp (infinity), measured via the q-expansion.
 
@@ -2122,7 +2387,7 @@ theorem valenceFormula
     (_hf_nonzero : f ≠ 0)
     -- The set of all zeros in the fundamental domain (including elliptic points)
     (S : Finset UpperHalfPlane)
-    (_hS : ∀ p ∈ S, (p : ℂ) ∈ fundamentalDomain) :
+    (_hS : ∀ p ∈ S, p ∈ 𝒟) :
     (orderAtCusp f : ℚ) +
     ∑ p ∈ S, windingNumberCoeff p * (orderOfVanishingAt f p : ℚ) = k / 12 := by
   -- Proof by the generalized residue theorem applied to f'/f:
@@ -2181,7 +2446,7 @@ theorem valenceFormula_classical
     (_hf_nonzero : f ≠ 0)
     -- The set of zeros in the interior (excluding elliptic points)
     (S : Finset UpperHalfPlane)
-    (_hS : ∀ p ∈ S, (p : ℂ) ∈ fundamentalDomain ∧ p ≠ ellipticPoint_i ∧ p ≠ ellipticPoint_rho) :
+    (_hS : ∀ p ∈ S, p ∈ 𝒟 ∧ p ≠ ellipticPoint_i ∧ p ≠ ellipticPoint_rho) :
     (orderAtCusp f : ℚ) +
     (1/2 : ℚ) * orderOfVanishingAt f ellipticPoint_i +
     (1/3 : ℚ) * orderOfVanishingAt f ellipticPoint_rho +
@@ -2266,7 +2531,7 @@ theorem delta_zeros :
     orderAtCusp (ModForm_mk _ _ Delta) = 1 ∧
     orderOfVanishingAt Delta ellipticPoint_i = 0 ∧
     orderOfVanishingAt Delta ellipticPoint_rho = 0 ∧
-    ∀ z : UpperHalfPlane, (z : ℂ) ∈ fundamentalDomain → z ≠ ellipticPoint_i → z ≠ ellipticPoint_rho →
+    ∀ z : UpperHalfPlane, z ∈ 𝒟 → z ≠ ellipticPoint_i → z ≠ ellipticPoint_rho →
       orderOfVanishingAt Delta z = 0 := by
   -- By the valence formula for weight 12:
   --   ν_∞(Δ) + (1/2)ν_i(Δ) + (1/3)ν_ρ(Δ) + Σ_p ν_p(Δ) = 12/12 = 1
