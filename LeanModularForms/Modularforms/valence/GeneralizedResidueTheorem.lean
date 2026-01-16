@@ -90,8 +90,9 @@ import Mathlib.NumberTheory.ModularForms.QExpansion
 import LeanModularForms.Modularforms.Delta
 import LeanModularForms.Modularforms.IsCuspForm
 import LeanModularForms.Modularforms.Eisenstein
--- Import ComplexAnalysis module for homotopy invariance results
+-- Import ComplexAnalysis modules
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.HomotopyBridge
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.HelperLemmas
 
 open Complex Set Filter Function MeasureTheory TopologicalSpace Metric Asymptotics HahnSeries
 open scoped Real Topology BigOperators Nat Interval Modular CongruenceSubgroup
@@ -541,13 +542,75 @@ lemma PiecewiseC1Immersion'.zeros_finite_left_of_partition (γ : PiecewiseC1Imme
                 -- The argument is symmetric to the both > x case.
                 -- FTC argument: symmetric to the "both > x" case
                 -- γ(t₂) - γ(t₁) = ∫ γ' = 0, but ‖∫ γ'‖ ≥ (t₂-t₁)·‖L_left‖/2 > 0
-                -- This requires the full FTC machinery from zeros_uniformly_separated
-                sorry
+                -- Get ε_left from L_left tendsto
+                rw [Metric.tendsto_nhdsWithin_nhds] at hL_left_tends
+                obtain ⟨ε_left, hε_left_pos, hε_left_mem⟩ := hL_left_tends (‖L_left‖ / 2)
+                  (div_pos (norm_pos_iff.mpr hL_left_ne) two_pos)
+                -- Both t₁, t₂ < x and close to x
+                have h_t1_dist_x : dist t₁ x < ε_left ∨ dist t₁ x ≥ ε_left := lt_or_ge _ _
+                have h_t2_dist_x : dist t₂ x < ε_left ∨ dist t₂ x ≥ ε_left := lt_or_ge _ _
+                -- If both are within ε_left of x, apply FTC
+                -- The key is that both are in ball x (ε_right/2), and we need them in the ε_left ball
+                -- Since t₁, t₂ < x and close to x (within ε_right/2), they satisfy the left limit condition
+                -- We use zeros_uniformly_isolated_of_deriv_close pattern
+                have hγ_cont_sub : ContinuousOn γ.toFun (Icc t₁ t₂) := by
+                  apply γ.continuous_toFun.mono
+                  intro s ⟨hs_lo, hs_hi⟩
+                  constructor
+                  · exact le_trans ht₁_in.1.1 hs_lo
+                  · have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+                    have : s < γ.b := calc s ≤ t₂ := hs_hi
+                      _ < x := ht₂_lt_x
+                      _ ≤ p - δ := hx_le_pδ
+                      _ ≤ p := by linarith
+                      _ ≤ γ.b := hp_le_b
+                    linarith
+                have hγ_diff_sub : ∀ s ∈ Ioo t₁ t₂, DifferentiableAt ℝ γ.toFun s := by
+                  intro s hs
+                  have hs_in_Icc : s ∈ Icc γ.a γ.b := by
+                    constructor
+                    · have : γ.a < s := calc γ.a ≤ t₁ := ht₁_in.1.1
+                        _ < s := hs.1
+                      linarith
+                    · have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+                      have : s < γ.b := calc s < t₂ := hs.2
+                        _ < x := ht₂_lt_x
+                        _ ≤ p - δ := hx_le_pδ
+                        _ ≤ p := by linarith
+                        _ ≤ γ.b := hp_le_b
+                      linarith
+                  have hs_not_part : s ∉ γ.toPiecewiseC1Curve'.partition := by
+                    intro hs_part
+                    -- s ∈ (t₁, t₂) ⊆ (γ.a, x), and x is a partition point
+                    -- The interval (t₁, t₂) is to the left of x
+                    -- By construction, no partition points in this region (technical)
+                    sorry
+                  exact γ.toPiecewiseC1Curve'.differentiable_on_partition s hs_in_Icc hs_not_part
+                -- Derivative closeness: since [t₁, t₂] ⊂ (_, x) and γ' → L_left from left at x
+                -- For small enough neighborhood, ‖γ' - L_left‖ < ‖L_left‖/2
+                -- This requires that t₁, t₂ are within ε_left of x
+                have hγ'_close_sub : ∀ s ∈ Icc t₁ t₂, ‖deriv γ.toFun s - L_left‖ < ‖L_left‖ / 2 := by
+                  intro s hs
+                  have hs_lt_x : s < x := lt_of_le_of_lt hs.2 ht₂_lt_x
+                  have hs_dist : dist s x < ε_left := by
+                    -- s is between t₁ and t₂, both in ball x (ε_right/2)
+                    -- Need to show s is in ball x ε_left
+                    -- This is true if ε_right/2 ≤ ε_left, otherwise technical argument needed
+                    sorry
+                  rw [dist_eq_norm] at hs_dist
+                  have h_mem := hε_left_mem hs_lt_x hs_dist
+                  rw [dist_eq_norm] at h_mem
+                  exact h_mem
+                have h_eq := ftc_zeros_coincide (le_of_lt h_t1_lt_t2) hL_left_ne
+                  hγ_cont_sub hγ_diff_sub hγ'_close_sub ht₁_zero ht₂_zero
+                exact absurd h_eq (ne_of_lt h_t1_lt_t2)
               · exact absurd ht₂_eq_x ht₂_ne_x
               · -- t₁ < x < t₂: interval crosses partition point x
-                -- The FTC argument needs to split at x and use piecewise differentiability
-                -- Since x is a partition point, γ is C¹ on [t₁, x) and (x, t₂]
-                -- The full proof requires splitting the integral and using one-sided limits
+                -- This case requires splitting the FTC argument at x and using
+                -- one-sided derivative limits from both sides.
+                -- The key insight is that if zeros accumulate at x from both sides,
+                -- we can pick two zeros from the same side and apply FTC.
+                -- Alternatively, use continuity of γ at x to derive contradiction.
                 sorry
             · exact absurd ht₁_eq_x ht₁_ne_x
             · -- t₁ > x, so both t₁ > x and t₂ > t₁ > x
@@ -603,24 +666,178 @@ lemma PiecewiseC1Immersion'.zeros_finite_left_of_partition (γ : PiecewiseC1Imme
               -- 3. Triangle inequality on integrals gives contradiction
               -- PROOF STRUCTURE: Same as zeros_uniformly_separated
               -- The proof follows the exact same pattern but uses L_right instead of γ'(t₁)
-              -- FTC: γ(t₂) - γ(t₁) = ∫ γ' = 0, but ‖∫ γ'‖ ≥ (t₂-t₁)·‖L_right‖/2 > 0
-              sorry
+              -- Apply ftc_zeros_coincide from HelperLemmas
+              -- Need continuity and differentiability on [t₁, t₂]
+              -- Bounds: t₁ ∈ Icc γ.a (p - δ) from ht₁_in.1, similarly for t₂
+              have ht₁_le_pδ : t₁ ≤ p - δ := ht₁_in.1.2
+              have ht₂_le_pδ : t₂ ≤ p - δ := ht₂_in.1.2
+              have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+              have hγ_cont_sub : ContinuousOn γ.toFun (Icc t₁ t₂) := by
+                apply γ.continuous_toFun.mono
+                intro s ⟨hs_lo, hs_hi⟩
+                constructor
+                · exact le_trans ht₁_in.1.1 hs_lo
+                · calc s ≤ t₂ := hs_hi
+                    _ ≤ p - δ := ht₂_le_pδ
+                    _ ≤ p := by linarith
+                    _ ≤ γ.b := hp_le_b
+              have hγ_diff_sub : ∀ s ∈ Ioo t₁ t₂, DifferentiableAt ℝ γ.toFun s := by
+                intro s hs
+                -- s is in (t₁, t₂) ⊆ (x, p - δ), which has no partition points
+                have hs_in_Icc : s ∈ Icc γ.a γ.b := by
+                  constructor
+                  · have : γ.a < s := calc γ.a ≤ t₁ := ht₁_in.1.1
+                      _ < s := hs.1
+                    linarith
+                  · have : s < γ.b := calc s < t₂ := hs.2
+                      _ ≤ p - δ := ht₂_le_pδ
+                      _ ≤ p := by linarith
+                      _ ≤ γ.b := hp_le_b
+                    linarith
+                have hs_not_part : s ∉ γ.toPiecewiseC1Curve'.partition := by
+                  intro hs_part
+                  -- s ∈ (x, p - δ) where x is closest partition point below p
+                  -- By construction of δ_part, (x, p - δ) contains no partition points
+                  -- Key: δ = min(..., δ_part) / 2 where δ_part = p - sSup prev_parts
+                  -- So p - δ ≤ p - δ_part/2 = (p + sSup prev_parts) / 2
+                  -- Any partition point q < p satisfies q ≤ sSup prev_parts
+                  -- So q < (p + sSup prev_parts) / 2 ≤ p - δ would require q ≤ sSup prev_parts
+                  -- But s > x > sSup prev_parts (since x is the accumulation point from partition)
+                  -- This is a technical argument about the δ_part construction
+                  sorry -- Technical: (x, p - δ) contains no partition points by construction
+                exact γ.toPiecewiseC1Curve'.differentiable_on_partition s hs_in_Icc hs_not_part
+              have hγ'_close_sub : ∀ s ∈ Icc t₁ t₂, ‖deriv γ.toFun s - L_right‖ < ‖L_right‖ / 2 := by
+                intro s hs
+                rw [← dist_eq_norm]
+                exact h_deriv_bound s hs
+              -- Apply the FTC contradiction lemma
+              have h_eq := ftc_zeros_coincide (le_of_lt h_t1_lt_t2) hL_right_ne
+                hγ_cont_sub hγ_diff_sub hγ'_close_sub ht₁_zero ht₂_zero
+              -- But t₁ ≠ t₂, contradiction
+              exact absurd h_eq (ne_of_lt h_t1_lt_t2)
           · -- t₂ < t₁, symmetric case
             have h_t2_lt_t1 : t₂ < t₁ := h_lt
             -- Swap roles of t₁ and t₂ and apply same argument
             rcases lt_trichotomy t₂ x with ht₂_lt_x | ht₂_eq_x | ht₂_gt_x
             · -- t₂ < x
               rcases lt_trichotomy t₁ x with ht₁_lt_x | ht₁_eq_x | ht₁_gt_x
-              · -- Both < x: symmetric FTC argument with left_deriv_limit
-                sorry
+              · -- Both t₂ < t₁ < x: FTC argument with left_deriv_limit
+                -- Need to get L_left from left_deriv_limit
+                have hx_gt_a : γ.a < x := by
+                  by_contra h_not
+                  push_neg at h_not
+                  have : γ.a = x := le_antisymm ha_le_x h_not
+                  have : t₂ < γ.a := this ▸ ht₂_lt_x
+                  exact not_lt.mpr ht₂_in.1.1 this
+                obtain ⟨L_left', hL_left_ne', hL_left_tends'⟩ := γ.left_deriv_limit x hx_part hx_gt_a
+                rw [Metric.tendsto_nhdsWithin_nhds] at hL_left_tends'
+                obtain ⟨ε_left', hε_left_pos', hε_left_mem'⟩ := hL_left_tends' (‖L_left'‖ / 2)
+                  (div_pos (norm_pos_iff.mpr hL_left_ne') two_pos)
+                -- FTC on [t₂, t₁] with L_left' as the reference derivative
+                have hγ_cont_sub : ContinuousOn γ.toFun (Icc t₂ t₁) := by
+                  apply γ.continuous_toFun.mono
+                  intro s ⟨hs_lo, hs_hi⟩
+                  constructor
+                  · exact le_trans ht₂_in.1.1 hs_lo
+                  · have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+                    have : s < γ.b := calc s ≤ t₁ := hs_hi
+                      _ < x := ht₁_lt_x
+                      _ ≤ p - δ := hx_le_pδ
+                      _ ≤ p := by linarith
+                      _ ≤ γ.b := hp_le_b
+                    linarith
+                have hγ_diff_sub : ∀ s ∈ Ioo t₂ t₁, DifferentiableAt ℝ γ.toFun s := by
+                  intro s hs
+                  have hs_in_Icc : s ∈ Icc γ.a γ.b := by
+                    constructor
+                    · have : γ.a < s := calc γ.a ≤ t₂ := ht₂_in.1.1
+                        _ < s := hs.1
+                      linarith
+                    · have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+                      have : s < γ.b := calc s < t₁ := hs.2
+                        _ < x := ht₁_lt_x
+                        _ ≤ p - δ := hx_le_pδ
+                        _ ≤ p := by linarith
+                        _ ≤ γ.b := hp_le_b
+                      linarith
+                  have hs_not_part : s ∉ γ.toPiecewiseC1Curve'.partition := by
+                    sorry -- Technical: region contains no partition points
+                  exact γ.toPiecewiseC1Curve'.differentiable_on_partition s hs_in_Icc hs_not_part
+                have hγ'_close_sub : ∀ s ∈ Icc t₂ t₁, ‖deriv γ.toFun s - L_left'‖ < ‖L_left'‖ / 2 := by
+                  intro s hs
+                  have hs_lt_x : s < x := lt_of_le_of_lt hs.2 ht₁_lt_x
+                  have hs_dist : dist s x < ε_left' := by
+                    sorry -- Need t₂, t₁ to be within ε_left' of x
+                  rw [dist_eq_norm] at hs_dist
+                  have h_mem := hε_left_mem' hs_lt_x hs_dist
+                  rw [dist_eq_norm] at h_mem
+                  exact h_mem
+                have h_eq := ftc_zeros_coincide (le_of_lt h_t2_lt_t1) hL_left_ne'
+                  hγ_cont_sub hγ_diff_sub hγ'_close_sub ht₂_zero ht₁_zero
+                exact absurd h_eq (ne_of_lt h_t2_lt_t1)
               · exact absurd ht₁_eq_x ht₁_ne_x
               · -- t₂ < x < t₁: crosses partition point
+                -- Same as the other crossing case - requires splitting or continuity argument
                 sorry
             · exact absurd ht₂_eq_x ht₂_ne_x
             · -- t₂ > x, so both > x (with t₂ < t₁)
               have ht₁_gt_x : t₁ > x := lt_trans ht₂_gt_x h_t2_lt_t1
-              -- Symmetric FTC argument
-              sorry
+              -- Symmetric FTC argument: apply ftc_zeros_coincide on [t₂, t₁]
+              have h_t2_dist_x : dist t₂ x < ε_right := by
+                calc dist t₂ x = |t₂ - x| := Real.dist_eq t₂ x
+                  _ < ε_right / 2 := ht₂_dist
+                  _ < ε_right := by linarith
+              have h_t1_dist_x : dist t₁ x < ε_right := by
+                calc dist t₁ x = |t₁ - x| := Real.dist_eq t₁ x
+                  _ < ε_right / 2 := ht₁_dist
+                  _ < ε_right := by linarith
+              have h_deriv_bound : ∀ s ∈ Icc t₂ t₁, dist (deriv γ.toFun s) L_right < ‖L_right‖ / 2 := by
+                intro s hs
+                have hs_gt_x : s > x := lt_of_lt_of_le ht₂_gt_x hs.1
+                have hs_dist : dist s x < ε_right := by
+                  have h_abs : |s - x| ≤ |t₁ - x| := by
+                    rw [abs_of_pos (by linarith : s - x > 0), abs_of_pos (by linarith : t₁ - x > 0)]
+                    linarith [hs.2]
+                  calc dist s x = |s - x| := Real.dist_eq s x
+                    _ ≤ |t₁ - x| := h_abs
+                    _ < ε_right / 2 := ht₁_dist
+                    _ < ε_right := by linarith
+                exact hε_right_mem hs_gt_x hs_dist
+              have ht₂_le_pδ : t₂ ≤ p - δ := ht₂_in.1.2
+              have ht₁_le_pδ : t₁ ≤ p - δ := ht₁_in.1.2
+              have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+              have hγ_cont_sub : ContinuousOn γ.toFun (Icc t₂ t₁) := by
+                apply γ.continuous_toFun.mono
+                intro s ⟨hs_lo, hs_hi⟩
+                constructor
+                · exact le_trans ht₂_in.1.1 hs_lo
+                · calc s ≤ t₁ := hs_hi
+                    _ ≤ p - δ := ht₁_le_pδ
+                    _ ≤ p := by linarith
+                    _ ≤ γ.b := hp_le_b
+              have hγ_diff_sub : ∀ s ∈ Ioo t₂ t₁, DifferentiableAt ℝ γ.toFun s := by
+                intro s hs
+                have hs_in_Icc : s ∈ Icc γ.a γ.b := by
+                  constructor
+                  · have : γ.a < s := calc γ.a ≤ t₂ := ht₂_in.1.1
+                      _ < s := hs.1
+                    linarith
+                  · have : s < γ.b := calc s < t₁ := hs.2
+                      _ ≤ p - δ := ht₁_le_pδ
+                      _ ≤ p := by linarith
+                      _ ≤ γ.b := hp_le_b
+                    linarith
+                have hs_not_part : s ∉ γ.toPiecewiseC1Curve'.partition := by
+                  intro hs_part
+                  sorry -- Technical: (x, p - δ) contains no partition points by construction
+                exact γ.toPiecewiseC1Curve'.differentiable_on_partition s hs_in_Icc hs_not_part
+              have hγ'_close_sub : ∀ s ∈ Icc t₂ t₁, ‖deriv γ.toFun s - L_right‖ < ‖L_right‖ / 2 := by
+                intro s hs
+                rw [← dist_eq_norm]
+                exact h_deriv_bound s hs
+              have h_eq := ftc_zeros_coincide (le_of_lt h_t2_lt_t1) hL_right_ne
+                hγ_cont_sub hγ_diff_sub hγ'_close_sub ht₂_zero ht₁_zero
+              exact absurd h_eq (ne_of_lt h_t2_lt_t1)
         · -- x = p - δ, zeros accumulate from the left
           push_neg at hx_lt_pδ
           have hx_eq : x = p - δ := le_antisymm hx_le_pδ hx_lt_pδ
@@ -629,7 +846,32 @@ lemma PiecewiseC1Immersion'.zeros_finite_left_of_partition (γ : PiecewiseC1Imme
           · obtain ⟨L_left, hL_left_ne, hL_left_tends⟩ := γ.left_deriv_limit x hx_part hx_gt_a
             -- Similar FTC argument from the left
             -- Get two zeros t₁ < t₂ < x, then FTC gives contradiction
-            sorry
+            rw [Metric.tendsto_nhdsWithin_nhds] at hL_left_tends
+            obtain ⟨ε_left, hε_left_pos, hε_left_mem⟩ := hL_left_tends (‖L_left‖ / 2)
+              (div_pos (norm_pos_iff.mpr hL_left_ne) two_pos)
+            -- Get two zeros from the accumulation at x from the left
+            rw [accPt_principal_iff_nhdsWithin] at hx_acc
+            have h_ball : ball x (ε_left / 2) ∈ 𝓝 x := Metric.ball_mem_nhds x (by linarith)
+            have h1 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball (mem_principal_self _))
+            obtain ⟨t₁'', ht₁''_ball, ht₁''_in, ht₁''_ne⟩ := h1
+            simp only [Set.mem_diff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₁''_in ht₁''_ne
+            have hx_ne_t₁'' : x ≠ t₁'' := Ne.symm ht₁''_ne
+            have h_nhds_ne : {t₁''}ᶜ ∈ 𝓝 x := isOpen_compl_singleton.mem_nhds hx_ne_t₁''
+            have h_ball' : ball x (ε_left / 2) ∩ {t₁''}ᶜ ∈ 𝓝 x := Filter.inter_mem h_ball h_nhds_ne
+            have h2 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball' (mem_principal_self _))
+            obtain ⟨t₂'', ⟨ht₂''_ball, ht₂''_ne_t₁''⟩, ht₂''_in, ht₂''_ne_x⟩ := h2
+            simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₂''_in ht₂''_ne_t₁''
+            -- Two zeros t₁'', t₂'' close to x, both ≠ x
+            have ht₁''_zero : γ.toFun t₁'' = z₀ := ht₁''_in.2
+            have ht₂''_zero : γ.toFun t₂'' = z₀ := ht₂''_in.2
+            -- Order them and apply FTC
+            rcases le_or_lt t₁'' t₂'' with h_le | h_lt
+            · -- t₁'' ≤ t₂''
+              have h_t1_lt_t2 : t₁'' < t₂'' := lt_of_le_of_ne h_le (Ne.symm ht₂''_ne_t₁'')
+              -- Both should be < x (from left accumulation), apply FTC with L_left
+              sorry -- FTC argument similar to "both < x" case
+            · -- t₂'' < t₁''
+              sorry -- FTC argument similar to "both < x with t₂ < t₁" case
           · -- x = γ.a, but then zeros can't accumulate at x because
             -- the only zeros in [γ.a, p-δ] with γ t = z₀ would need t > γ.a
             -- and γ.a is a partition point (endpoint), so no zeros at γ.a
@@ -640,11 +882,48 @@ lemma PiecewiseC1Immersion'.zeros_finite_left_of_partition (γ : PiecewiseC1Imme
             have ha_lt_b : γ.a < γ.b := γ.hab
             -- x is a partition point and x = γ.a, so γ.a ∈ partition
             have ha_part : γ.a ∈ γ.toPiecewiseC1Curve'.partition := by rw [← hx_eq_a]; exact hx_part
-            obtain ⟨L_right, hL_right_ne, hL_right_tends⟩ := γ.right_deriv_limit γ.a ha_part ha_lt_b
+            obtain ⟨L_right', hL_right_ne', hL_right_tends'⟩ := γ.right_deriv_limit γ.a ha_part ha_lt_b
             rw [hx_eq_a] at hx_acc
             -- FTC argument with right derivative at x = γ.a
             -- Get two zeros γ.a < t₁ < t₂, then FTC gives contradiction
-            sorry
+            rw [Metric.tendsto_nhdsWithin_nhds] at hL_right_tends'
+            obtain ⟨ε_right', hε_right_pos', hε_right_mem'⟩ := hL_right_tends' (‖L_right'‖ / 2)
+              (div_pos (norm_pos_iff.mpr hL_right_ne') two_pos)
+            -- Get two zeros from the accumulation
+            rw [accPt_principal_iff_nhdsWithin] at hx_acc
+            have h_ball : ball γ.a (ε_right' / 2) ∈ 𝓝 γ.a := Metric.ball_mem_nhds γ.a (by linarith)
+            have h1 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball (mem_principal_self _))
+            obtain ⟨t₁', ht₁'_ball, ht₁'_in, ht₁'_ne⟩ := h1
+            simp only [Set.mem_diff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₁'_in ht₁'_ne
+            have hx_ne_t₁' : γ.a ≠ t₁' := Ne.symm ht₁'_ne
+            have h_nhds_ne : {t₁'}ᶜ ∈ 𝓝 γ.a := isOpen_compl_singleton.mem_nhds hx_ne_t₁'
+            have h_ball' : ball γ.a (ε_right' / 2) ∩ {t₁'}ᶜ ∈ 𝓝 γ.a := Filter.inter_mem h_ball h_nhds_ne
+            have h2 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball' (mem_principal_self _))
+            obtain ⟨t₂', ⟨ht₂'_ball, ht₂'_ne_t₁'⟩, ht₂'_in, ht₂'_ne_a⟩ := h2
+            simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₂'_in ht₂'_ne_t₁'
+            -- Two zeros t₁', t₂' close to γ.a, both ≠ γ.a
+            have ht₁'_zero : γ.toFun t₁' = z₀ := ht₁'_in.2
+            have ht₂'_zero : γ.toFun t₂' = z₀ := ht₂'_in.2
+            -- Since zeros exclude partition points and γ.a is a partition point, t₁', t₂' > γ.a
+            have ht₁'_gt_a : t₁' > γ.a := by
+              rcases lt_trichotomy t₁' γ.a with h | h | h
+              · exact absurd (lt_of_lt_of_le h ht₁'_in.1.1) (lt_irrefl _)
+              · exact absurd h ht₁'_ne
+              · exact h
+            have ht₂'_gt_a : t₂' > γ.a := by
+              rcases lt_trichotomy t₂' γ.a with h | h | h
+              · exact absurd (lt_of_lt_of_le h ht₂'_in.1.1) (lt_irrefl _)
+              · exact absurd h (Set.notMem_singleton_iff.mp ht₂'_ne_a)
+              · exact h
+            -- Order them and apply FTC
+            rcases le_or_lt t₁' t₂' with h_le | h_lt
+            · -- t₁' ≤ t₂'
+              have h_t1_lt_t2 : t₁' < t₂' := lt_of_le_of_ne h_le (Ne.symm ht₂'_ne_t₁')
+              -- FTC on [t₁', t₂'] with L_right' (both > γ.a)
+              sorry -- FTC argument similar to "both > x" case
+            · -- t₂' < t₁'
+              -- FTC on [t₂', t₁'] with L_right'
+              sorry -- FTC argument similar to "both > x with t₂ < t₁" case
       · -- x is not a partition point, so derivative exists and is nonzero at x
         have hx_in_interval : x ∈ Icc γ.a γ.b := h_sub' hx_in
         have h_diff : DifferentiableAt ℝ γ.toFun x := γ.toPiecewiseC1Curve'.differentiable_on_partition x hx_in_interval hx_part
@@ -3102,10 +3381,20 @@ lemma laurent_term_compatibility (p q : ℕ) (hq : q ≠ 0) (n : ℕ) (hn : n > 
     use 0  -- Placeholder
     sorry
   · -- (∃ k : ℕ, n = 2kq/p + 1) → (∃ k : ℤ, α * (n - 1) = 2kπ)
-    intro ⟨_k, _hk⟩
-    use 0
-    -- n = 2kq/p + 1 means n - 1 = 2kq/p
+    intro ⟨k, hk⟩
+    -- From n = 2kq/p + 1, we have n - 1 = 2kq/p
     -- So α(n-1) = (p/q)π · (2kq/p) = 2kπ
+    -- The witness is k (as an integer)
+    use k
+    -- Goal: α * (n - 1) = 2 * k * π
+    -- α = (p/q) * π, so α * (n - 1) = (p/q) * π * (n - 1)
+    -- From hk: n = 2kq/p + 1, so n - 1 = 2kq/p (when p | 2kq)
+    -- Then (p/q) * (2kq/p) = 2k, so α * (n - 1) = 2k * π
+    --
+    -- MATHEMATICAL NOTE: This direction requires that p | 2kq for hk to make sense
+    -- as an integer equation. The statement needs refinement to handle this properly.
+    -- For now we defer to a sorry since the lemma statement has implicit assumptions
+    -- about divisibility that aren't encoded in the types.
     sorry
 
 /-- The condition on the Laurent series for the principal value to exist.
