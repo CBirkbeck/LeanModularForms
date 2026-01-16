@@ -151,18 +151,60 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
     rcases hx with rfl | rfl | rfl | rfl | rfl <;> norm_num
   endpoints_in_partition := by simp
   continuous_toFun := by
-    -- The curve is continuous on [0, 4] by construction
-    -- Each piece is continuous (polynomial/exponential), and they match at junction points:
-    -- At t = 1: segment 1 ends at -1/2 + √3/2·i = ρ = exp(i·2π/3)
-    -- At t = 2: segment 2 ends at exp(i·π/2) = i, segment 3 starts at i
-    -- At t = 3: segment 3 ends at exp(i·π/3) = 1/2 + √3/2·i = ρ'
-    --
-    -- Proof sketch: Use continuousOn_if_lt to handle piecewise functions,
-    -- show each piece is continuous, and verify matching at boundaries.
-    -- This is tedious but standard - each piece is affine or exp of affine.
-    --
-    -- Mathematical content is straightforward; deferring technical details.
-    sorry
+    -- The curve is continuous on [0, 4] by construction.
+    -- We use Continuous.if repeatedly to prove continuity of nested if-then-else.
+    apply Continuous.continuousOn
+    -- The function is a nested if-then-else. We apply Continuous.if three times.
+    apply Continuous.if
+    · -- Matching at frontier of {t | t ≤ 1} = {1}
+      intro t ht
+      rw [show {t : ℝ | t ≤ 1} = Set.Iic 1 from rfl, frontier_Iic] at ht
+      simp only [mem_singleton_iff] at ht
+      subst ht
+      -- At t = 1: seg1(1) = -1/2 + √3/2·I = seg2(1) = exp(2π/3·I)
+      -- Standard trigonometric identity: exp(2πi/3) = -1/2 + √3/2·I
+      -- Proof: exp(2πi/3) = cos(2π/3) + i·sin(2π/3) = -1/2 + √3/2·i
+      sorry
+    · -- Segment 1: -1/2 + (H - t*(H - √3/2))*I is continuous
+      apply Continuous.add continuous_const
+      apply Continuous.mul _ continuous_const
+      apply Continuous.sub continuous_const
+      exact Continuous.mul continuous_ofReal continuous_const
+    · -- Rest is a nested if-then-else
+      apply Continuous.if
+      · -- Matching at frontier of {t | t ≤ 2} = {2}
+        intro t ht
+        rw [show {t : ℝ | t ≤ 2} = Set.Iic 2 from rfl, frontier_Iic] at ht
+        simp only [mem_singleton_iff] at ht
+        subst ht
+        -- At t = 2: seg2(2) = exp(π/2·I) = seg3(2) = exp(π/2·I)
+        -- Both segments evaluate to exp(πi/2) = i at t = 2
+        sorry
+      · -- Segment 2: exp((2π/3 - (t-1)*(π/6))*I) is continuous
+        apply Continuous.cexp
+        apply Continuous.mul _ continuous_const
+        apply Continuous.sub continuous_const
+        exact Continuous.mul (continuous_ofReal.sub continuous_const) continuous_const
+      · -- Inner nested if
+        apply Continuous.if
+        · -- Matching at frontier of {t | t ≤ 3} = {3}
+          intro t ht
+          rw [show {t : ℝ | t ≤ 3} = Set.Iic 3 from rfl, frontier_Iic] at ht
+          simp only [mem_singleton_iff] at ht
+          subst ht
+          -- At t = 3: seg3(3) = exp(π/3·I) = seg4(3) = 1/2 + √3/2·I
+          -- Standard trigonometric identity: exp(πi/3) = 1/2 + √3/2·i
+          sorry
+        · -- Segment 3: exp((π/2 - (t-2)*(π/6))*I) is continuous
+          apply Continuous.cexp
+          apply Continuous.mul _ continuous_const
+          apply Continuous.sub continuous_const
+          exact Continuous.mul (continuous_ofReal.sub continuous_const) continuous_const
+        · -- Segment 4: 1/2 + (√3/2 + (t-3)*(H-√3/2))*I is continuous
+          apply Continuous.add continuous_const
+          apply Continuous.mul _ continuous_const
+          apply Continuous.add continuous_const
+          exact Continuous.mul (continuous_ofReal.sub continuous_const) continuous_const
   smooth_off_partition := by
     intro t ⟨ht_lo, ht_hi⟩ ht_not_part
     simp only [Finset.mem_insert, Finset.mem_singleton, not_or] at ht_not_part

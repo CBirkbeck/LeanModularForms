@@ -103,38 +103,79 @@ theorem residue_simple_pole_eq_laurent
     res_{z₀}(f) = (1/2πi) ∮_{|z-z₀|=ε} f(z) dz  for small ε
 
     **Isabelle parallel**: This is the definition in `Complex_Residues.thy`
+
+    Note: This requires:
+    - g(z) = (z - z₀) * f(z) is continuous on the punctured closed ball
+    - g is differentiable on the punctured open ball
+    - The limit L = lim_{z → z₀} g(z) exists
+
+    These hold when f has a simple pole at z₀.
 -/
 theorem residue_eq_contour_integral
     (f : ℂ → ℂ) (z₀ : ℂ) (ε : ℝ) (hε : 0 < ε)
-    (hf : DifferentiableOn ℂ f (Metric.ball z₀ ε \ {z₀})) :
+    (hg_cont : ContinuousOn (fun z => (z - z₀) * f z) (Metric.closedBall z₀ ε \ {z₀}))
+    (hg_diff : DifferentiableOn ℂ (fun z => (z - z₀) * f z) (Metric.ball z₀ ε \ {z₀}))
+    (hL : ∃ L, Tendsto (fun z => (z - z₀) * f z) (𝓝[≠] z₀) (𝓝 L)) :
     residueSimplePole f z₀ = (2 * Real.pi * I)⁻¹ * ∮ z in C(z₀, ε), f z := by
   /-
-  Proof strategy using mathlib's Cauchy integral theory:
+  Proof using mathlib's `circleIntegral_sub_center_inv_smul_of_differentiable_on_off_countable_of_tendsto`:
+  If g is continuous on closedBall c R \ {c}, differentiable on ball c R \ {c}, and
+  has limit y at c, then ∮ (z - c)⁻¹ • g(z) dz = 2πi • y.
 
-  Let g(z) = (z - z₀) * f(z). The residue is defined as limUnder (𝓝[≠] z₀) g.
-
-  By mathlib's `circleIntegral_sub_center_inv_smul_of_differentiable_on_off_countable_of_tendsto`:
-  If g is differentiable on ball z₀ ε \ {z₀} and tends to y as z → z₀, then:
-    ∮ (z - z₀)⁻¹ • g(z) dz = 2πi * y
-
-  Since (z - z₀)⁻¹ * g(z) = (z - z₀)⁻¹ * (z - z₀) * f(z) = f(z) for z ≠ z₀,
-  we get: ∮ f(z) dz = 2πi * y, hence y = (2πi)⁻¹ * ∮ f(z) dz.
-
-  The key assumption needed is that the limit of g exists (which defines the residue).
-  This requires that f has at worst a simple pole at z₀.
+  Since (z - z₀)⁻¹ * g(z) = f(z) for z ≠ z₀, we get ∮ f = 2πi * L where L is the limit.
   -/
-  -- This proof requires showing that the limit in the residue definition exists
-  -- and matches what mathlib's circle integral theory provides.
-  -- The full proof needs:
-  -- 1. The limit L = limUnder (𝓝[≠] z₀) (fun z => (z - z₀) * f z) exists
-  -- 2. Apply mathlib's theorem to get ∮ f = 2πi * L
-  -- 3. Conclude L = (2πi)⁻¹ * ∮ f
-  --
-  -- This requires additional assumptions or refactoring the statement.
-  -- The current DifferentiableOn assumption doesn't guarantee a simple pole.
-  -- For a complete proof, we would need to assume the limit exists or that
-  -- f has a simple pole structure.
-  sorry
+  obtain ⟨L, hL⟩ := hL
+  -- The residue is L by definition
+  have hres : residueSimplePole f z₀ = L := hL.limUnder_eq
+  rw [hres]
+  -- Helper: points in ball \ {z₀} have the punctured ball as a neighborhood
+  have h_diff_at : ∀ z ∈ Metric.ball z₀ ε \ {z₀}, DifferentiableAt ℂ (fun z => (z - z₀) * f z) z := by
+    intro z hz
+    have hz_ball : z ∈ Metric.ball z₀ ε := hz.1
+    have hz_ne : z ≠ z₀ := hz.2
+    -- The set ball z₀ ε \ {z₀} is open (as difference of open and closed)
+    have h_open : IsOpen (Metric.ball z₀ ε \ {z₀}) :=
+      Metric.isOpen_ball.sdiff isClosed_singleton
+    exact (hg_diff z hz).differentiableAt (h_open.mem_nhds hz)
+  -- Apply mathlib's theorem
+  -- hz : z ∈ (ball z₀ ε \ {z₀}) \ ∅, so hz.1 : z ∈ ball z₀ ε \ {z₀}
+  -- and hz.1.1 : z ∈ ball z₀ ε, hz.1.2 : z ∉ {z₀}
+  have h_key := circleIntegral_sub_center_inv_smul_of_differentiable_on_off_countable_of_tendsto
+    (c := z₀) (R := ε) (f := fun z => (z - z₀) * f z) (y := L) (s := ∅)
+    hε (by simp) hg_cont (fun z hz => h_diff_at z ⟨hz.1.1, hz.1.2⟩) hL
+  -- h_key : ∮ z in C(z₀, ε), (z - z₀)⁻¹ • ((z - z₀) * f z) = (2 * π * I) • L
+  -- Show that (z - z₀)⁻¹ • ((z - z₀) * f z) = f z for z on the circle
+  have h_integrand : Set.EqOn (fun z => (z - z₀)⁻¹ • ((z - z₀) * f z)) f (Metric.sphere z₀ ε) := by
+    intro z hz
+    have hz_ne : z ≠ z₀ := by
+      intro heq
+      rw [heq, Metric.mem_sphere, dist_self] at hz
+      exact hε.ne hz
+    simp only [smul_eq_mul]
+    field_simp [sub_ne_zero.mpr hz_ne]
+  -- The circle integral only depends on values on the sphere
+  have h_eq : (∮ z in C(z₀, ε), (z - z₀)⁻¹ * ((z - z₀) * f z) : ℂ) = ∮ z in C(z₀, ε), f z := by
+    have h_integrand' : Set.EqOn (fun z => (z - z₀)⁻¹ * ((z - z₀) * f z)) f (Metric.sphere z₀ ε) := by
+      intro z hz
+      have hz_ne : z ≠ z₀ := by
+        intro heq
+        rw [heq, Metric.mem_sphere, dist_self] at hz
+        exact hε.ne hz
+      field_simp [sub_ne_zero.mpr hz_ne]
+    exact circleIntegral.integral_congr hε.le h_integrand'
+  -- Convert smul to mul in h_key
+  simp only [smul_eq_mul] at h_key
+  rw [h_eq] at h_key
+  -- h_key : ∮ z in C(z₀, ε), f z = (2 * π * I) * L
+  -- L = (2πi)⁻¹ * ∮ f
+  have h_ne : (2 * Real.pi * I : ℂ) ≠ 0 := by
+    simp only [ne_eq, mul_eq_zero, not_or]
+    exact ⟨⟨by norm_num, by exact_mod_cast Real.pi_ne_zero⟩, Complex.I_ne_zero⟩
+  field_simp [h_ne]
+  -- h_key : ∮ f = 2 * π * I * L
+  -- Goal: L * 2 * π * I = ∮ f (since multiplication is commutative in ℂ)
+  calc L * 2 * Real.pi * I = 2 * Real.pi * I * L := by ring
+    _ = ∮ z in C(z₀, ε), f z := h_key.symm
 
 /-! ## Linearity of Residues -/
 
@@ -162,59 +203,38 @@ theorem residue_add (f g : ℂ → ℂ) (z₀ : ℂ)
     hLf.add hLg
   rw [h_sum.limUnder_eq, hLf.limUnder_eq, hLg.limUnder_eq]
 
-/-- Residue is homogeneous.
+/-- Residue is homogeneous (when the limit exists).
 
     **Isabelle parallel**: `residue_cmult` in `Complex_Residues.thy`
+
+    Note: This requires the limit defining the residue to exist.
+    For simple poles, this is always satisfied.
 -/
-theorem residue_smul (c : ℂ) (f : ℂ → ℂ) (z₀ : ℂ) :
+theorem residue_smul (c : ℂ) (f : ℂ → ℂ) (z₀ : ℂ)
+    (hf : ∃ L, Tendsto (fun z => (z - z₀) * f z) (𝓝[≠] z₀) (𝓝 L)) :
     residueSimplePole (fun z => c * f z) z₀ = c * residueSimplePole f z₀ := by
   unfold residueSimplePole
   -- The key observation: (z - z₀) * (c * f z) = c * ((z - z₀) * f z)
   have h_eq : (fun z => (z - z₀) * (c * f z)) = (fun z => c * ((z - z₀) * f z)) := by
     ext z; ring
   simp only [h_eq]
-  -- limUnder of (c * g) = c * limUnder of g
-  -- Use that continuous functions commute with limUnder when the limit exists
-  -- If the limit of the inner function doesn't exist, both sides are junk values
-  by_cases h : ∃ L, Tendsto (fun z => (z - z₀) * f z) (𝓝[≠] z₀) (𝓝 L)
-  · -- Case: limit exists
-    obtain ⟨L, hL⟩ := h
-    -- limUnder (fun z => c * ((z - z₀) * f z)) = c * L
-    have h_tendsto : Tendsto (fun z => c * ((z - z₀) * f z)) (𝓝[≠] z₀) (𝓝 (c * L)) :=
-      hL.const_mul c
-    rw [h_tendsto.limUnder_eq, hL.limUnder_eq]
-  · -- Case: limit doesn't exist
-    -- If c = 0, both sides are 0
-    -- If c ≠ 0, we derive a contradiction: limit of c*g exists iff limit of g exists
-    by_cases hc : c = 0
-    · -- c = 0 case: both sides simplify to 0
-      subst hc
-      simp only [zero_mul]
-      -- limUnder of the zero function is 0 (it converges to 0)
-      have h_zero : Tendsto (fun _ : ℂ => (0 : ℂ)) (𝓝[≠] z₀) (𝓝 0) := tendsto_const_nhds
-      exact h_zero.limUnder_eq
-    · -- c ≠ 0: We show the limit of g actually exists, contradicting h
-      exfalso
-      apply h
-      -- Key insight: if the limit of (c * g) exists (call it L), then
-      -- the limit of g = c⁻¹ * (c * g) exists and equals c⁻¹ * L.
-      -- Contrapositively, if the limit of g doesn't exist, then
-      -- the limit of (c * g) doesn't exist either.
-      -- But wait, we need to show the limit DOES exist, not that it doesn't.
-      -- Actually, we're trying to prove the equation holds regardless of whether
-      -- the limit exists. If the limit doesn't exist and c ≠ 0, we need to show
-      -- limUnder (c * g) = c * limUnder g still holds.
-      --
-      -- This is fundamentally unprovable in general because limUnder uses Classical.choose
-      -- when the limit doesn't exist. The two sides may differ.
-      --
-      -- The mathematical fix: the theorem should require the limit to exist,
-      -- OR we accept this as a limitation of the current definition.
-      --
-      -- For practical purposes, residue_smul is only used when the limit exists
-      -- (i.e., when f has a simple pole at z₀), so this case never arises.
-      -- We leave this as sorry with documentation.
-      sorry
+  -- limUnder of (c * g) = c * limUnder of g when the limit exists
+  obtain ⟨L, hL⟩ := hf
+  -- limUnder (fun z => c * ((z - z₀) * f z)) = c * L
+  have h_tendsto : Tendsto (fun z => c * ((z - z₀) * f z)) (𝓝[≠] z₀) (𝓝 (c * L)) :=
+    hL.const_mul c
+  rw [h_tendsto.limUnder_eq, hL.limUnder_eq]
+
+/-- Residue is homogeneous for scalar 0. -/
+theorem residue_smul_zero (f : ℂ → ℂ) (z₀ : ℂ) :
+    residueSimplePole (fun z => (0 : ℂ) * f z) z₀ = 0 * residueSimplePole f z₀ := by
+  simp only [zero_mul]
+  unfold residueSimplePole
+  have h_eq : (fun z => (z - z₀) * (fun z => (0 : ℂ)) z) = (fun _ => (0 : ℂ)) := by
+    ext z; simp only [mul_zero]
+  simp only [h_eq]
+  have h_zero : Tendsto (fun _ : ℂ => (0 : ℂ)) (𝓝[≠] z₀) (𝓝 0) := tendsto_const_nhds
+  exact h_zero.limUnder_eq
 
 /-- Residue of a holomorphic function is zero.
 
@@ -271,9 +291,16 @@ theorem pv_integral_inverse
 /-- The PV integral of c/(z - z₀) for simple poles.
 
     PV ∮_γ c/(z - z₀) dz = 2πi · n_{z₀}(γ) · c = 2πi · n_{z₀}(γ) · res_{z₀}(c/(z-z₀))
+
+    Note: This requires the PV limit of the base integral (·)⁻¹ to exist, which holds
+    for piecewise C¹ curves that intersect {z₀} transversally.
 -/
 theorem pv_integral_simple_pole
-    (γ : PiecewiseC1Curve) (z₀ c : ℂ) :
+    (γ : PiecewiseC1Curve) (z₀ c : ℂ)
+    (hPV : ∃ L, Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      if ‖(fun s => γ.toFun s - z₀) t - 0‖ > ε
+      then (·⁻¹) ((fun s => γ.toFun s - z₀) t) * deriv (fun s => γ.toFun s - z₀) t else 0)
+      (𝓝[>] 0) (𝓝 L)) :
     cauchyPrincipalValue' (fun z => c / (z - z₀)) γ.toFun γ.a γ.b z₀ =
     2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b z₀ * c := by
   -- Key: 2πi ≠ 0
@@ -292,7 +319,6 @@ theorem pv_integral_simple_pole
   have h_deriv_eq : ∀ t, deriv (fun s => γ.toFun s - z₀) t = deriv γ.toFun t := by
     intro t; exact deriv_sub_const (x := t) (c := z₀)
   -- Show the integrands are equal up to factor c
-  -- Show functions are pointwise equal after the rewrite
   have h_integrand' : ∀ ε t,
       (if ‖γ.toFun t - z₀‖ > ε then (fun z => c / (z - z₀)) (γ.toFun t) * deriv γ.toFun t else 0) =
       (if ‖(fun s => γ.toFun s - z₀) t - 0‖ > ε
@@ -313,24 +339,14 @@ theorem pv_integral_simple_pole
     intro t _
     exact h_integrand' ε t
   simp_rw [h_integral']
-  -- The remaining goal should be: limUnder (f * c) = limUnder (g) * c
-  -- where f and g are the same integral (with alpha-equivalent lambdas)
-  -- First, show the integrands inside limUnder are equal
-  -- The functions inside limUnder are definitionally equal after beta reduction
-  -- and simplification of `sub_zero`. We show they are equal by funext + congr.
-  -- Technical gap: the integrands are alpha-equivalent but not definitionally equal
-  -- due to how Lean represents lambdas.
-  -- Now the goal is: limUnder (f * c) = limUnder (f) * c
-  -- This is true when the limit of f exists, by continuity of scalar multiplication
-  -- limUnder (fun ε => g(ε) * c) = limUnder g * c
-  -- However, limUnder uses Classical.choose when limit doesn't exist, so we can't prove this
-  -- definitionally. We need to use that the limit should exist for reasonable curves.
-  --
-  -- For now, we use the fact that both expressions are the same up to the junk value case.
-  -- The mathematical content is correct; this is a technical limitation of limUnder.
-  --
-  -- A cleaner proof would assume the PV limit exists (which it does for piecewise C¹ curves).
-  sorry
+  -- Now goal is: limUnder (f * c) = limUnder f * c where limit of f exists by hPV
+  obtain ⟨L, hL⟩ := hPV
+  -- The limit of (f * c) is L * c by continuity of multiplication
+  have h_mul : Tendsto (fun ε => (∫ t in γ.a..γ.b,
+      if ‖(fun s => γ.toFun s - z₀) t - 0‖ > ε
+      then (·⁻¹) ((fun s => γ.toFun s - z₀) t) * deriv (fun s => γ.toFun s - z₀) t else 0) * c)
+      (𝓝[>] 0) (𝓝 (L * c)) := hL.mul_const c
+  rw [h_mul.limUnder_eq, hL.limUnder_eq]
 
 /-! ## The Generalized Residue Theorem -/
 
@@ -340,14 +356,28 @@ def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=
   ∃ c : ℂ, ∃ g : ℂ → ℂ, AnalyticAt ℂ g z₀ ∧
     ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z
 
+/-- The coefficient in a simple pole decomposition is unique.
+    This follows because the residue is uniquely determined by the limit formula. -/
+theorem simple_pole_coeff_unique (f : ℂ → ℂ) (z₀ : ℂ)
+    (c₁ c₂ : ℂ) (g₁ g₂ : ℂ → ℂ)
+    (hg₁ : AnalyticAt ℂ g₁ z₀) (hg₂ : AnalyticAt ℂ g₂ z₀)
+    (hf₁ : ∀ᶠ z in 𝓝[≠] z₀, f z = c₁ / (z - z₀) + g₁ z)
+    (hf₂ : ∀ᶠ z in 𝓝[≠] z₀, f z = c₂ / (z - z₀) + g₂ z) :
+    c₁ = c₂ := by
+  have h₁ := residue_simple_pole_eq_laurent f z₀ c₁ g₁ hg₁ hf₁
+  have h₂ := residue_simple_pole_eq_laurent f z₀ c₂ g₂ hg₂ hf₂
+  -- h₁ : residueSimplePole f z₀ = c₁
+  -- h₂ : residueSimplePole f z₀ = c₂
+  rw [← h₁, h₂]
+
 /-- Extract the residue from a simple pole decomposition. -/
 theorem residue_of_simple_pole (f : ℂ → ℂ) (z₀ : ℂ) (hf : HasSimplePoleAt f z₀) :
     residueSimplePole f z₀ = Classical.choose hf := by
-  -- The residue equals the coefficient c in the decomposition
-  obtain ⟨c, g, hg, hf_eq⟩ := hf
-  have h := residue_simple_pole_eq_laurent f z₀ c g hg hf_eq
-  -- Need to show c = Classical.choose hf
-  sorry
+  -- Get the decomposition from Classical.choose_spec
+  have hspec := Classical.choose_spec hf
+  obtain ⟨g, hg, hf_eq⟩ := hspec
+  -- Apply residue_simple_pole_eq_laurent
+  exact residue_simple_pole_eq_laurent f z₀ (Classical.choose hf) g hg hf_eq
 
 /-- The Generalized Residue Theorem.
 

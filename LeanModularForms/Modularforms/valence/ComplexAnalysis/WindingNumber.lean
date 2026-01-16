@@ -230,8 +230,21 @@ theorem generalizedWindingNumber_eq_classical'
   --   exp(∫_a^b γ'(t)/(γ(t)-z₀) dt) = (γ(b)-z₀)/(γ(a)-z₀)
   -- For closed curves, γ(a) = γ(b), so this ratio is 1, giving ∫ = 2πi·n.
   --
-  -- TECHNICAL GAP: Full proof requires either extending `integral_closed_curve_eq_two_pi_int`
-  -- to piecewise C¹ curves, or showing the integral splits correctly over smooth pieces.
+  -- TECHNICAL GAP: Full proof requires extending `integral_closed_curve_eq_two_pi_int`
+  -- to piecewise C¹ curves. The key fact is that finite sets have measure zero,
+  -- so the integral over [a,b] equals the integral over [a,b] \ partition.
+  --
+  -- For now, we provide a partial proof showing the structure:
+  -- 1. The curve avoids z₀, so (γ t - z₀) is bounded away from 0
+  -- 2. For closed curves, (γ b - z₀)/(γ a - z₀) = 1
+  -- 3. Using exp_eq_one_iff, we get the integer
+  have hγa_ne : γ.toFun γ.a - z₀ ≠ 0 := sub_ne_zero.mpr (hoff γ.a (left_mem_Icc.mpr (le_of_lt γ.hab)))
+  have hγb_ne : γ.toFun γ.b - z₀ ≠ 0 := sub_ne_zero.mpr (hoff γ.b (right_mem_Icc.mpr (le_of_lt γ.hab)))
+  have hratio_one : (γ.toFun γ.b - z₀) / (γ.toFun γ.a - z₀) = 1 := by
+    rw [← hclosed]; exact div_self hγa_ne
+  -- The missing step is showing exp(∫ γ'/(γ-z₀)) = ratio for piecewise C¹ curves.
+  -- This holds because the integral equals the sum over smooth pieces, and
+  -- exp_integral_eq_endpoint_ratio applies to each piece, with the product telescoping.
   sorry
 
 /-! ## Winding Number Decomposition -/
@@ -304,6 +317,26 @@ theorem generalizedWindingNumber_decomposition'
     --
     -- This is a substantial construction that requires defining the detour
     -- curve explicitly and verifying it satisfies all the conditions.
+    --
+    -- OUTLINE OF CONSTRUCTION:
+    -- 1. Sort zeros by position: let t₁ < t₂ < ... < tₙ be the sorted zeros
+    -- 2. For each tᵢ, choose δᵢ > 0 such that:
+    --    (a) [tᵢ - δᵢ, tᵢ + δᵢ] ⊂ [a, b]
+    --    (b) Intervals are pairwise disjoint
+    --    (c) γ is C¹ on [tᵢ - δᵢ, tᵢ + δᵢ] (no partition points)
+    -- 3. Define γ̃ piecewise:
+    --    - On [a, t₁ - δ₁] ∪ [t₁ + δ₁, t₂ - δ₂] ∪ ... ∪ [tₙ + δₙ, b]: γ̃ = γ
+    --    - On [tᵢ - δᵢ, tᵢ + δᵢ]: a semicircular arc around z₀
+    -- 4. Define angles αᵢ = arg(γ'(tᵢ⁺)) - arg(-γ'(tᵢ⁻))
+    -- 5. Verify the decomposition using homotopy invariance
+    --
+    -- The full construction requires:
+    -- - Finset.sort to order the zeros
+    -- - Choosing δ values via compactness/separation arguments
+    -- - Building the piecewise curve with correct regularity
+    -- - Verifying all conditions for PiecewiseC1Curve
+    --
+    -- This is a significant formalization task that we defer.
     sorry
 
 /-! ## Integral Splitting -/
@@ -376,6 +409,11 @@ theorem cauchyPrincipalValue_split
     -- 3. The product is AEStronglyMeasurable
     -- These follow from standard measure theory but require additional hypotheses on f.
     -- The theorem statement needs strengthening to include these hypotheses.
+    -- For a fully rigorous proof, we would need:
+    -- 1. f measurable (or continuous on the curve)
+    -- 2. γ differentiable with measurable derivative
+    -- These ensure the integrand is AEStronglyMeasurable.
+    -- The boundedness away from z₀ (due to ε-cutoff) ensures finite integral.
     all_goals sorry
   -- So the limit of [a,c] equals the limit of [a,b] + [b,c]
   have h_tendsto_ac : Tendsto (fun ε =>
