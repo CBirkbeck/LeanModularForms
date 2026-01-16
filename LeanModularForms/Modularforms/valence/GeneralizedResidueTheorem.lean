@@ -998,18 +998,18 @@ lemma PiecewiseC1Immersion'.zeros_finite_left_of_partition (γ : PiecewiseC1Imme
         -- The issue: we need γ to be locally injective, which requires FTC
         -- Here we use a different approach: show the zeros form a discrete set near x
         -- Since x ∉ partition, γ is differentiable at x with γ'(x) ≠ 0
-        -- By HasDerivAt.eventually_ne: ∃ nbhd of x where γ t ≠ γ x for t ≠ x
-        -- This means: if we had γ(t₁) = γ(t₂) with both t₁, t₂ ≠ x but both close to x,
-        -- we could potentially still have γ(t₁) = γ(t₂) without contradiction
-        -- The full proof requires the FTC argument from zeros_uniformly_separated
-        -- For now, we use the pattern from zeros_finite_on_interval with a local interval
-        -- GAP: This proof requires showing x ∉ partition implies a small neighborhood
-        -- disjoint from partition, then applying zeros_uniformly_separated.
-        -- The core argument is the same FTC pattern used elsewhere in this file.
-        -- Placeholder: use the fact that γ is an immersion to derive contradiction
-        -- Since γ'(x) ≠ 0 and γ is C¹ near x, γ is locally injective
-        -- But γ(t₁) = γ(t₂) with t₁ ≠ t₂, contradiction
-        sorry
+        -- The FTC argument uses L = deriv γ x:
+        -- 1. Since x ∉ partition and partition is finite, ∃ ball around x avoiding partition
+        -- 2. Derivative is continuous at x (since x is in the interior of a smooth piece)
+        -- 3. Get ε' > 0 such that: derivative is close to deriv γ x in ball x ε'
+        -- 4. Take two zeros t₁, t₂ in this ball and apply ftc_zeros_coincide
+        -- 5. This gives t₁ = t₂, contradicting t₁ ≠ t₂
+        -- The key technical detail is that [t₁, t₂] avoids partition points, ensuring
+        -- differentiability throughout.
+        rcases le_or_lt t₁ t₂ with h_le | h_lt
+        · have h_t1_lt_t2 : t₁ < t₂ := lt_of_le_of_ne h_le (Ne.symm ht₂_ne_t₁)
+          sorry -- FTC with L = deriv γ x gives t₁ = t₂, contradiction
+        · sorry -- Same FTC argument with swapped roles
     · -- Interval is empty
       push_neg at h_nonempty
       have h_empty : Icc γ.a (p - δ) = ∅ := Set.Icc_eq_empty (by linarith)
