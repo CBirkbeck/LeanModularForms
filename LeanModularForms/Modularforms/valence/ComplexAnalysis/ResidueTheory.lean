@@ -429,9 +429,18 @@ theorem generalizedResidueTheorem'
     have h_image_compact : IsCompact (γ.toFun '' Icc γ.a γ.b) := by
       exact isCompact_Icc.image_of_continuousOn γ.continuous_toFun
     have h_finite_intersection : Set.Finite (S ∩ γ.toFun '' Icc γ.a γ.b) := by
-      -- Discrete set intersected with compact set is finite
-      -- Uses hS_discrete to show S has no accumulation points
-      -- Then compact intersection with discrete = finite
+      -- Discrete set intersected with compact set is finite.
+      -- Mathematical argument:
+      -- 1. The subspace topology on S ∩ image is discrete (each point s ∈ S is isolated
+      --    by hS_discrete: there exists ε > 0 with no other S-points in B(s, ε))
+      -- 2. S ∩ image is contained in the compact set (image of curve)
+      -- 3. Suppose S ∩ image is infinite. Then by compactness, it has an accumulation point x.
+      -- 4. If x ∈ S: contradicts that x is isolated in S (by hS_discrete)
+      -- 5. If x ∉ S: points of S cluster at x, so for any r > 0 there exist distinct
+      --    y, z ∈ S with ‖y - x‖, ‖z - x‖ < r. Then ‖y - z‖ < 2r.
+      --    But by hS_discrete for y, ‖y - z‖ ≥ ε_y for some ε_y > 0.
+      --    Taking r < ε_y/2 gives contradiction.
+      -- The technical formalization requires careful handling of the iteration argument.
       sorry
     -- Step 2: The finsum only has finitely many nonzero terms
     -- (winding number is 0 for points not on or enclosed by γ)

@@ -164,7 +164,40 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
       -- At t = 1: seg1(1) = -1/2 + √3/2·I = seg2(1) = exp(2π/3·I)
       -- Standard trigonometric identity: exp(2πi/3) = -1/2 + √3/2·I
       -- Proof: exp(2πi/3) = cos(2π/3) + i·sin(2π/3) = -1/2 + √3/2·i
-      sorry
+      -- First simplify the LHS
+      have lhs_simp : (↑(Real.sqrt 3) / 2 + 1 - (1:ℂ) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
+                    = ↑(Real.sqrt 3) / 2 := by ring
+      -- The RHS is an if-then-else, simplify by deciding the condition
+      simp only [show (1:ℝ) ≤ 2 from by norm_num, ↓reduceIte]
+      -- Now RHS is: exp((2π/3 - 0*(2π/3 - π/2)) * I) which simplifies to exp(2π/3 * I)
+      have rhs_simp : (2 * ↑Real.pi / 3 - ((1:ℂ) - 1) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
+                    = 2 * ↑Real.pi / 3 := by ring
+      conv_lhs =>
+        rw [show (↑(Real.sqrt 3) / 2 + 1 - ↑(1:ℝ) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
+               = ↑(Real.sqrt 3) / 2 from lhs_simp]
+      conv_rhs =>
+        rw [show (2 * ↑Real.pi / 3 - (↑(1:ℝ) - 1) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
+               = 2 * ↑Real.pi / 3 from rhs_simp]
+      rw [Complex.exp_mul_I]
+      have h_cos : Complex.cos (2 * ↑Real.pi / 3 : ℂ) = -1/2 := by
+        have h1 : (2 * ↑Real.pi / 3 : ℂ) = ↑Real.pi - ↑Real.pi / 3 := by push_cast; ring
+        rw [h1, Complex.cos_sub, Complex.cos_pi, Complex.sin_pi]
+        have h2 : Complex.cos (↑Real.pi / 3 : ℂ) = (1 / 2 : ℂ) := by
+          have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+          rw [heq, ← Complex.ofReal_cos, Real.cos_pi_div_three]
+          norm_num
+        rw [h2]
+        ring
+      have h_sin : Complex.sin (2 * ↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
+        have h1 : (2 * ↑Real.pi / 3 : ℂ) = ↑Real.pi - ↑Real.pi / 3 := by push_cast; ring
+        rw [h1, Complex.sin_sub, Complex.sin_pi, Complex.cos_pi]
+        have h2 : Complex.sin (↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
+          have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+          rw [heq, ← Complex.ofReal_sin, Real.sin_pi_div_three]
+          push_cast; ring
+        rw [h2]
+        ring
+      rw [h_cos, h_sin]
     · -- Segment 1: -1/2 + (H - t*(H - √3/2))*I is continuous
       apply Continuous.add continuous_const
       apply Continuous.mul _ continuous_const
@@ -179,7 +212,15 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
         subst ht
         -- At t = 2: seg2(2) = exp(π/2·I) = seg3(2) = exp(π/2·I)
         -- Both segments evaluate to exp(πi/2) = i at t = 2
-        sorry
+        -- First simplify the RHS if-then-else
+        simp only [show (2:ℝ) ≤ 3 from by norm_num, ↓reduceIte]
+        -- Now both sides are exp(... * I), show the arguments are equal
+        congr 1
+        have lhs_simp : (2 * ↑Real.pi / 3 - (↑(2:ℝ) - 1) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
+                      = ↑Real.pi / 2 := by push_cast; field_simp; ring
+        have rhs_simp : (↑Real.pi / 2 - (↑(2:ℝ) - 2) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
+                      = ↑Real.pi / 2 := by push_cast; field_simp; ring
+        rw [lhs_simp, rhs_simp]
       · -- Segment 2: exp((2π/3 - (t-1)*(π/6))*I) is continuous
         apply Continuous.cexp
         apply Continuous.mul _ continuous_const
@@ -194,7 +235,26 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
           subst ht
           -- At t = 3: seg3(3) = exp(π/3·I) = seg4(3) = 1/2 + √3/2·I
           -- Standard trigonometric identity: exp(πi/3) = 1/2 + √3/2·i
-          sorry
+          have lhs_simp : (↑Real.pi / 2 - (↑(3:ℝ) - 2) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
+                        = ↑Real.pi / 3 := by push_cast; field_simp; ring
+          have rhs_simp : (↑(Real.sqrt 3) / 2 + (↑(3:ℝ) - 3) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
+                        = ↑(Real.sqrt 3) / 2 := by push_cast; ring
+          conv_lhs =>
+            rw [show (↑Real.pi / 2 - (↑(3:ℝ) - 2) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
+                   = ↑Real.pi / 3 from lhs_simp]
+          conv_rhs =>
+            rw [show (↑(Real.sqrt 3) / 2 + (↑(3:ℝ) - 3) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
+                   = ↑(Real.sqrt 3) / 2 from rhs_simp]
+          rw [Complex.exp_mul_I]
+          have h_cos : Complex.cos (↑Real.pi / 3 : ℂ) = 1/2 := by
+            have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+            rw [heq, ← Complex.ofReal_cos, Real.cos_pi_div_three]
+            norm_num
+          have h_sin : Complex.sin (↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
+            have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+            rw [heq, ← Complex.ofReal_sin, Real.sin_pi_div_three]
+            push_cast; ring
+          rw [h_cos, h_sin]
         · -- Segment 3: exp((π/2 - (t-2)*(π/6))*I) is continuous
           apply Continuous.cexp
           apply Continuous.mul _ continuous_const
