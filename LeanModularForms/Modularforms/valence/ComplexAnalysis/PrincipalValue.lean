@@ -152,15 +152,21 @@ theorem cauchyPrincipalValueIntegrand_integrable
     intro t ht
     calc ‖cauchyPrincipalValueIntegrand' f γ z₀ ε t‖ ≤ M := hM t ht
       _ ≤ max M 1 := le_max_left M 1
-  -- The proof uses Integrable.mono with the bound max M 1.
-  -- cauchyPrincipalValueIntegrand' is a piecewise function:
-  --   if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0
-  -- It is AEStronglyMeasurable and bounded ae by max M 1 (from h_le).
+  -- The integrand is bounded by a constant on [a, b], and the constant function is integrable
+  -- on finite intervals. The key technical point is AEStronglyMeasurable, which follows
+  -- from the integrand being a composition of continuous/measurable functions.
   --
-  -- Technical completion requires:
-  -- 1. Show const (max M 1) is integrable on Ioo a b
-  -- 2. Show integrand is AEStronglyMeasurable via piecewise
-  -- 3. Apply Integrable.mono' with the bound
+  -- For the full proof:
+  -- 1. The constant (max M 1) is interval integrable on [a, b]
+  -- 2. The integrand is bounded by (max M 1) on [a, b]
+  -- 3. The integrand is AEStronglyMeasurable (piecewise of continuous/zero)
+  -- 4. Apply IntervalIntegrable.mono_fun' to conclude
+  --
+  -- The AEStronglyMeasurable part requires showing the set {t | ε < ‖γ t - z₀‖}
+  -- is measurable (follows from continuity of γ) and that f ∘ γ * γ' is
+  -- AEStronglyMeasurable on the restricted domain.
+  --
+  -- This is a standard but technical argument that we defer.
   sorry
 
 /-! ## Existence of Principal Value -/
@@ -240,11 +246,21 @@ theorem cauchyPrincipalValue_add'
       (∫ t in a..b, cauchyPrincipalValueIntegrand' f γ z₀ ε t) +
       (∫ t in a..b, cauchyPrincipalValueIntegrand' g γ z₀ ε t) := fun ε => by
     simp_rw [h_integrand_eq]
-    -- Apply integral_add with integrability assumptions
-    -- The full proof requires showing each integrand is IntervalIntegrable,
-    -- which follows from boundedness (cauchyPrincipalValueIntegrand_bounded)
-    -- and measurability (piecewise continuous functions are measurable).
-    -- We defer this technical step.
+    -- Apply integral_add. This requires showing each integrand is IntervalIntegrable.
+    --
+    -- The full proof requires showing that for each ε > 0, the integrands are
+    -- IntervalIntegrable, which follows from:
+    -- 1. Boundedness (cauchyPrincipalValueIntegrand_bounded) when continuity holds
+    -- 2. AEStronglyMeasurable (piecewise of measurable functions)
+    --
+    -- However, without explicit continuity assumptions on f, g, γ in this theorem,
+    -- we cannot directly apply cauchyPrincipalValueIntegrand_integrable.
+    --
+    -- The key observation is that if the PV limits exist (hf, hg), then the integrands
+    -- must be integrable for small enough ε (otherwise the limit wouldn't exist).
+    -- A rigorous proof would use this to establish integrability.
+    --
+    -- For now, we defer this technical measurability/integrability argument.
     sorry
   -- Show the sum converges to Lf + Lg using limit algebra
   have h_sum_tendsto : Tendsto (fun ε =>

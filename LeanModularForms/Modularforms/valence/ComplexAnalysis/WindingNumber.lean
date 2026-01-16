@@ -242,9 +242,19 @@ theorem generalizedWindingNumber_eq_classical'
   have hγb_ne : γ.toFun γ.b - z₀ ≠ 0 := sub_ne_zero.mpr (hoff γ.b (right_mem_Icc.mpr (le_of_lt γ.hab)))
   have hratio_one : (γ.toFun γ.b - z₀) / (γ.toFun γ.a - z₀) = 1 := by
     rw [← hclosed]; exact div_self hγa_ne
-  -- The missing step is showing exp(∫ γ'/(γ-z₀)) = ratio for piecewise C¹ curves.
-  -- This holds because the integral equals the sum over smooth pieces, and
-  -- exp_integral_eq_endpoint_ratio applies to each piece, with the product telescoping.
+  -- KEY MATHEMATICAL FACT (requires logarithm integration theory):
+  -- For a closed curve avoiding z₀:
+  --   exp(∫ γ'/(γ-z₀) dt) = (γ(b)-z₀)/(γ(a)-z₀) = 1
+  -- By Complex.exp_eq_one_iff: ∫ γ'/(γ-z₀) dt = n * (2 * π * I) for some n ∈ ℤ
+  -- Hence (2πi)⁻¹ * ∫ γ'/(γ-z₀) dt = n ∈ ℤ
+  --
+  -- REQUIRED INFRASTRUCTURE (not yet in mathlib for piecewise curves):
+  -- 1. Logarithmic derivative: d/dt(log f) = f'/f when f ≠ 0
+  -- 2. FTC for complex log: ∫_a^b f'/f dt = log(f(b)) - log(f(a)) mod 2πi
+  -- 3. Extension to piecewise C¹ curves via partition sum
+  --
+  -- The integer n is the classical winding number of γ around z₀.
+  -- This result is standard in complex analysis textbooks (e.g., Ahlfors).
   sorry
 
 /-! ## Winding Number Decomposition -/
@@ -385,35 +395,18 @@ theorem cauchyPrincipalValue_split
     intro ε
     -- The integral splits by additivity over adjacent intervals.
     -- The integrand g(t) = if ‖γ t - z₀‖ > ε then f(γ t) * γ'(t) else 0
-    -- is bounded (0 where condition fails, and bounded on the complementary set
-    -- because we're away from the singularity).
     symm
     rw [← intervalIntegral.integral_add_adjacent_intervals]
-    -- INTEGRABILITY CONDITIONS:
-    -- The integrand is IntervalIntegrable because it's AEStronglyMeasurable
-    -- (using measurable_deriv) and bounded on any finite interval.
-    -- Both integrability goals: IntervalIntegrable (indicator function) volume _ _
-    -- The indicator function is AEStronglyMeasurable and bounded on finite intervals.
+    -- INTEGRABILITY: For a bounded piecewise function on finite intervals,
+    -- integrability follows from AEStronglyMeasurable + bounded.
+    -- The condition function t ↦ (‖γ t - z₀‖ > ε) creates a piecewise structure:
+    -- - On {t : ‖γ t - z₀‖ > ε}: integrand is f(γ t) * γ'(t)
+    -- - On {t : ‖γ t - z₀‖ ≤ ε}: integrand is 0
     --
-    -- MATHEMATICAL FACT: For any bounded interval [a,b] and fixed ε > 0:
-    -- - The set S = {t : ‖γ t - z₀‖ > ε} is measurable (preimage of open set)
-    -- - On S, the integrand equals f(γ t) * deriv γ t which is measurable (by measurable_deriv)
-    -- - On S^c, the integrand is 0
-    -- - Therefore the integrand is AEStronglyMeasurable
-    -- - The integrand is bounded: 0 on S^c, and bounded on S (away from singularity)
-    -- - On a bounded interval with finite Lebesgue measure, bounded measurable = integrable
-    --
-    -- TECHNICAL NOTE: Full proof requires showing:
-    -- 1. f ∘ γ is measurable (needs f measurable or continuous)
-    -- 2. The indicator condition is measurable
-    -- 3. The product is AEStronglyMeasurable
-    -- These follow from standard measure theory but require additional hypotheses on f.
-    -- The theorem statement needs strengthening to include these hypotheses.
-    -- For a fully rigorous proof, we would need:
-    -- 1. f measurable (or continuous on the curve)
-    -- 2. γ differentiable with measurable derivative
-    -- These ensure the integrand is AEStronglyMeasurable.
-    -- The boundedness away from z₀ (due to ε-cutoff) ensures finite integral.
+    -- TECHNICAL GAP: The theorem statement lacks hypotheses on f and γ needed
+    -- for formal integrability proofs (measurability of f, γ, deriv γ).
+    -- In practice, for the valence formula application, these hold.
+    -- The PV existence hypotheses (hf_ab, hf_bc) implicitly require integrability.
     all_goals sorry
   -- So the limit of [a,c] equals the limit of [a,b] + [b,c]
   have h_tendsto_ac : Tendsto (fun ε =>

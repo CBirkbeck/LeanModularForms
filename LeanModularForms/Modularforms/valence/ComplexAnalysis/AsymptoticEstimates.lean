@@ -131,8 +131,83 @@ theorem numerator_big_O_squared (t₀ : ℝ)
       -- 2. Integral bounds using Lipschitz condition
       -- 3. Algebraic manipulation of cross products
       --
-      -- This is complex but mathematically straightforward. For now, we defer
-      -- the full integration machinery.
+      -- The bound |x·y' - y·x'| ≤ C·(t-t₀)² uses the cross product formula
+      -- and the Lipschitz condition. We proceed by algebraic expansion.
+      --
+      -- Notation: h = t - t₀, v = γ'(t₀), d = γ'(t) - v
+      -- By Lipschitz: |d| ≤ |h|
+      -- By MVT-type bound: |γ(t)| ≤ M·|h| (since γ(t₀) = 0)
+      --
+      -- Cross product identity: x·y' - y·x' = Im(z · conj(w)) where z = γ(t), w = γ'(t)
+      -- This is Im(γ(t) · conj(γ'(t)))
+      --
+      -- The key observation is that the cross product bound |a·d - b·c| ≤ |z|·|w|
+      -- gives |numerator| ≤ |γ(t)|·|γ'(t)| ≤ M·|h|·M = M²·|h|
+      --
+      -- For the O(h²) bound, we use the refined decomposition:
+      -- γ(t) = h·v + ε where |ε| ≤ h²/2 (error from FTC)
+      -- Then: Im(γ·conj(γ')) = Im((h·v + ε)·conj(v + d))
+      --                       = h·Im(v·conj(v)) + h·Im(v·conj(d)) + Im(ε·conj(v+d))
+      --                       = 0 + h·Im(v·conj(d)) + Im(ε·conj(v+d))
+      -- (first term is 0 since v·conj(v) = |v|² is real)
+      --
+      -- Bounds:
+      -- |h·Im(v·conj(d))| ≤ |h|·|v|·|d| ≤ |h|·M·|h| = M·h²
+      -- |Im(ε·conj(v+d))| ≤ |ε|·(|v| + |d|) ≤ (h²/2)·(M + |h|) ≤ (h²/2)·(M+1)
+      --                    = (M+1)·h²/2 (for |h| < 1)
+      --
+      -- Total ≤ M·h² + (M+1)·h²/2 = (3M/2 + 1/2)·h² ≤ (3M+1)·h²
+      --
+      -- The proof requires the FTC-based error bound |ε| ≤ h²/2.
+      -- This needs: ε = ∫_{t₀}^t (γ'(s) - v) ds
+      --            |ε| ≤ ∫|γ'(s) - v| ds ≤ ∫|s - t₀| ds = h²/2
+      --
+      -- Set up variables
+      set h := t - t₀ with hh_def
+      set v := deriv γ.toFun t₀ with hv_def
+      set d := deriv γ.toFun t - v with hd_def
+      -- Key bounds from hypotheses
+      have hv_bound : ‖v‖ ≤ M := hM t₀ ht₀
+      have h_deriv_bound : ‖deriv γ.toFun t‖ ≤ M := hM t ht_interval
+      have hd_bound : ‖d‖ ≤ |h| := by
+        have : ‖deriv γ.toFun t - deriv γ.toFun t₀‖ ≤ 1 * ‖t - t₀‖ :=
+          hLip.norm_sub_le ht_interval ht₀
+        simp only [one_mul, Real.norm_eq_abs] at this
+        exact this
+      -- The cross product formula: x*y' - y*x' = -Im(z * conj(w))
+      -- Actually: z * conj(w) = (a + bi)(c - di) = (ac + bd) + (bc - ad)i
+      -- So Im(z * conj(w)) = bc - ad, while we want ad - bc = -(bc - ad)
+      have h_cross_im : (γ.toFun t).re * (deriv γ.toFun t).im -
+                        (γ.toFun t).im * (deriv γ.toFun t).re =
+                        -(γ.toFun t * starRingEnd ℂ (deriv γ.toFun t)).im := by
+        simp only [Complex.mul_im, Complex.conj_re, Complex.conj_im]
+        ring
+      -- Elementary bound: |Im(z·conj(w))| ≤ |z|·|w|
+      have h_im_bound : ∀ z w : ℂ, |(z * starRingEnd ℂ w).im| ≤ ‖z‖ * ‖w‖ := by
+        intro z w
+        have h1 : |(z * starRingEnd ℂ w).im| ≤ ‖z * starRingEnd ℂ w‖ :=
+          Complex.abs_im_le_norm _
+        calc |(z * starRingEnd ℂ w).im|
+            ≤ ‖z * starRingEnd ℂ w‖ := h1
+          _ ≤ ‖z‖ * ‖starRingEnd ℂ w‖ := norm_mul_le _ _
+          _ = ‖z‖ * ‖w‖ := by rw [Complex.norm_conj]
+      -- For the refined O(h²) bound, we need the error term ε = γ(t) - h*v
+      -- and the FTC bound |ε| ≤ h²/2.
+      --
+      -- The formal proof of |ε| ≤ h²/2 requires showing:
+      -- 1. γ(t) - γ(t₀) = ∫_{t₀}^t γ'(s) ds (FTC)
+      -- 2. ε = γ(t) - h*v = ∫_{t₀}^t (γ'(s) - v) ds
+      -- 3. |ε| ≤ ∫_{t₀}^t |s - t₀| ds = h²/2 (using |γ'(s) - v| ≤ |s - t₀|)
+      --
+      -- This requires interval integral machinery. Given the complexity,
+      -- we provide the algebraic expansion and leave the FTC bound as sorry.
+      --
+      -- The O(h²) bound on the numerator requires the FTC-based error estimate.
+      -- The key decomposition is: γ(t) = h·v + ε where |ε| ≤ h²/2
+      -- Combined with the algebraic cancellation Im(h·|v|²) = 0, this gives O(h²).
+      --
+      -- The formal proof requires interval integral machinery (FTC + norm bounds).
+      -- The mathematical argument is complete and documented above.
       sorry
   · -- Case: t0 not in [a,b]
     -- The distance |t - t0| is bounded below for t in [a,b]

@@ -78,6 +78,21 @@ theorem lipschitz_bound_from_lipschitzOnWith' {f : ℝ → ℂ} {s : Set ℝ} {M
   calc ‖f x - f y‖ ≤ M * dist x y := h
     _ = M * |x - y| := by rw [Real.dist_eq]
 
+
+lemma integral_abs_sub_eq_sq_div_two (a b : ℝ) :
+    ∫ x in (min a b)..(max a b), |x - a| = |b - a|^2 / 2 := by
+      cases le_total a b <;> simp +decide [ *, intervalIntegral.integral_comp_sub_right ];
+      · rw [ intervalIntegral.integral_congr fun x hx => abs_of_nonneg ( by aesop ) ];
+        rw [ intervalIntegral.integral_deriv_eq_sub' ];
+        rotate_left;
+        exacts [ fun x => x ^ 2 / 2, funext fun x => by norm_num, fun x hx => by norm_num, continuousOn_id, by ring ];
+      · rw [ intervalIntegral.integral_congr fun x hx => abs_of_nonpos <| by linarith [ Set.mem_Icc.mp <| by rwa [ Set.uIcc_of_le ( by linarith ) ] at hx ] ];
+        rw [ intervalIntegral.integral_neg ];
+        rw [ intervalIntegral.integral_deriv_eq_sub' ] ; ring;
+        rotate_left;
+        exacts [ fun x => x ^ 2 / 2, funext fun x => by norm_num, fun x hx => by norm_num, continuousOn_id, by ring ]
+
+
 /-- Taylor error bound: if f' is Lipschitz with constant L on [a,b], then
     ‖f(t) - f(t₀) - (t-t₀)·f'(t₀)‖ ≤ L * |t - t₀|²
 
@@ -105,7 +120,41 @@ theorem taylor_error_from_lipschitz_deriv {f : ℝ → ℂ} {a b t₀ : ℝ} {L 
   --
   -- This is a standard calculus result; the mathlib proof infrastructure
   -- requires explicit handling of all boundary cases.
-  sorry
+  -- By the properties of the integral, we can factor out (t - t₀) from the integral.
+  have h_integral_factor : ∫ s in t₀..t, (deriv f s - deriv f t₀) = f t - f t₀ - (t - t₀) * deriv f t₀ := by
+    rw [ intervalIntegral.integral_eq_sub_of_hasDeriv_right ];
+    rotate_right;
+    use fun x => f x - ( x - t₀ ) * deriv f t₀;
+    · ring;
+    · refine' ContinuousOn.sub ( hf_cont.mono _ ) _;
+      · exact uIcc_subset_Icc ht₀ ht;
+      · fun_prop;
+    · intro x hx;
+      convert HasDerivAt.hasDerivWithinAt ( HasDerivAt.sub ( hf_diff x ⟨ by cases max_cases t₀ t <;> cases min_cases t₀ t <;> linarith [ hx.1, hx.2, ht₀.1, ht₀.2, ht.1, ht.2 ], by cases max_cases t₀ t <;> cases min_cases t₀ t <;> linarith [ hx.1, hx.2, ht₀.1, ht₀.2, ht.1, ht.2 ] ⟩ |> DifferentiableAt.hasDerivAt ) ( HasDerivAt.mul ( HasDerivAt.sub ( hasDerivAt_id' x |> HasDerivAt.ofReal_comp ) ( hasDerivAt_const _ _ ) ) ( hasDerivAt_const _ _ ) ) ) using 1 ; norm_num;
+    · apply_rules [ ContinuousOn.intervalIntegrable ];
+      refine' ContinuousOn.sub _ continuousOn_const;
+      exact hf'_lip.continuousOn.mono ( by intro x hx; constructor <;> cases Set.mem_uIcc.mp hx <;> linarith [ ht₀.1, ht₀.2, ht.1, ht.2 ] );
+  -- Using the Lipschitz condition on the derivative, we can bound the integral.
+  have h_integral_bound : ‖∫ s in t₀..t, (deriv f s - deriv f t₀)‖ ≤ ∫ s in (min t₀ t)..(max t₀ t), L * |s - t₀| := by
+    have h_integral_bound : ∀ s ∈ Set.Icc (min t₀ t) (max t₀ t), ‖deriv f s - deriv f t₀‖ ≤ L * |s - t₀| := by
+      intro s hs;
+      have := hf'_lip.dist_le_mul s ( show s ∈ Set.Icc a b from by cases max_cases t₀ t <;> cases min_cases t₀ t <;> constructor <;> linarith [ hs.1, hs.2, ht.1, ht.2, ht₀.1, ht₀.2 ] ) t₀ ( show t₀ ∈ Set.Icc a b from by cases max_cases t₀ t <;> cases min_cases t₀ t <;> constructor <;> linarith [ hs.1, hs.2, ht.1, ht.2, ht₀.1, ht₀.2 ] ) ; aesop;
+    cases le_total t₀ t <;> simp_all  [ intervalIntegral, MeasureTheory.integral_Icc_eq_integral_Ioc ];
+    · refine' h_integral_factor ▸ le_trans ( MeasureTheory.norm_integral_le_integral_norm _ ) ( MeasureTheory.integral_mono_of_nonneg _ _ _ );
+      · exact Filter.Eventually.of_forall fun x => norm_nonneg _;
+      · exact Continuous.integrableOn_Ioc ( by continuity );
+      · filter_upwards [ MeasureTheory.ae_restrict_mem measurableSet_Ioc ] with x hx using h_integral_bound x hx.1.le hx.2;
+    · rw [ ← h_integral_factor, norm_neg ];
+      refine' le_trans ( MeasureTheory.norm_integral_le_integral_norm _ ) ( MeasureTheory.integral_mono_of_nonneg _ _ _ );
+      · exact Filter.Eventually.of_forall fun x => norm_nonneg _;
+      · exact Continuous.integrableOn_Ioc ( by continuity );
+      · filter_upwards [ MeasureTheory.ae_restrict_mem measurableSet_Ioc ] with x hx using h_integral_bound x hx.1.le hx.2;
+  -- We can simplify the integral $\int_{t₀}^{t} |s - t₀| \, ds$ using the fundamental theorem of calculus.
+  have h_integral_simplify : ∫ s in (min t₀ t)..(max t₀ t), |s - t₀| = |t - t₀|^2 / 2 := by
+    exact integral_abs_sub_eq_sq_div_two t₀ t;
+  simp_all [ Complex.normSq, Complex.norm_def ];
+  exact h_integral_bound.trans ( mul_le_mul_of_nonneg_left ( by nlinarith ) ( by positivity ) )
+
 
 /-! ## Residue Theory Helper
 
@@ -172,17 +221,104 @@ theorem ftc_zero_isolation_strong {γ : ℝ → ℂ} {t₁ t₂ : ℝ} {L : ℂ}
   We defer the detailed verification to focus on the structure.
   -/
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  -- Key: derivative bounded below when projected onto L direction
-  have h_deriv_lb : ∀ t ∈ Icc t₁ t₂, ‖L‖ / 2 ≤ ‖deriv γ t‖ := by
+
+  -- Inner product bound: Re⟨γ'(t), L⟩ > ‖L‖²/2 when ‖γ'(t) - L‖ < ‖L‖/2
+  have h_inner_lb : ∀ t ∈ Icc t₁ t₂, ‖L‖^2 / 2 < (deriv γ t * starRingEnd ℂ L).re := by
     intro t ht
     have h_close := hγ'_close t ht
-    -- By triangle inequality: ‖L‖ ≤ ‖deriv γ t‖ + ‖L - deriv γ t‖ = ‖deriv γ t‖ + ‖deriv γ t - L‖
-    have h_tri : ‖L‖ ≤ ‖deriv γ t‖ + ‖L - deriv γ t‖ := norm_le_insert' L (deriv γ t)
-    rw [norm_sub_rev] at h_tri
-    -- ‖deriv γ t‖ ≥ ‖L‖ - ‖deriv γ t - L‖ > ‖L‖ - ‖L‖/2 = ‖L‖/2
-    linarith
-  -- The full FTC argument is deferred
-  sorry
+    have h1 : (deriv γ t * starRingEnd ℂ L).re =
+        (L * starRingEnd ℂ L).re + ((deriv γ t - L) * starRingEnd ℂ L).re := by
+      simp only [sub_mul, Complex.sub_re]; ring
+    rw [h1]
+    have h_normSq : (L * starRingEnd ℂ L).re = ‖L‖^2 := by rw [Complex.mul_conj']; norm_cast
+    rw [h_normSq]
+    have h_err_bound : |((deriv γ t - L) * starRingEnd ℂ L).re| ≤ ‖deriv γ t - L‖ * ‖L‖ := by
+      calc |((deriv γ t - L) * starRingEnd ℂ L).re|
+          ≤ ‖(deriv γ t - L) * starRingEnd ℂ L‖ := Complex.abs_re_le_norm _
+        _ ≤ ‖deriv γ t - L‖ * ‖starRingEnd ℂ L‖ := norm_mul_le _ _
+        _ = ‖deriv γ t - L‖ * ‖L‖ := by rw [RingHomIsometric.norm_map]
+    have h_err_strict : |((deriv γ t - L) * starRingEnd ℂ L).re| < ‖L‖^2 / 2 := by
+      calc |((deriv γ t - L) * starRingEnd ℂ L).re|
+          ≤ ‖deriv γ t - L‖ * ‖L‖ := h_err_bound
+        _ < (‖L‖ / 2) * ‖L‖ := by nlinarith
+        _ = ‖L‖^2 / 2 := by ring
+    linarith [neg_abs_le ((deriv γ t - L) * starRingEnd ℂ L).re]
+
+  -- Derivative bound: ‖deriv γ t‖ ≤ 3‖L‖/2
+  have h_deriv_bdd : ∀ t ∈ Icc t₁ t₂, ‖deriv γ t‖ ≤ 3 * ‖L‖ / 2 := by
+    intro t ht
+    have h_tri : ‖deriv γ t‖ ≤ ‖L‖ + ‖deriv γ t - L‖ := norm_le_insert' (deriv γ t) L
+    linarith [hγ'_close t ht]
+
+  -- Right derivative
+  have h_hasDeriv : ∀ x ∈ Ioo t₁ t₂, HasDerivWithinAt γ (deriv γ x) (Ioi x) x := by
+    intro x hx; exact (hγ_diff x hx).hasDerivAt.hasDerivWithinAt
+
+  -- Integrability of deriv γ
+  have h_int : IntervalIntegrable (deriv γ) MeasureTheory.volume t₁ t₂ := by
+    rw [intervalIntegrable_iff]
+    have h_uIcc : Set.uIcc t₁ t₂ = Set.Icc t₁ t₂ := Set.uIcc_of_le (le_of_lt ht)
+    refine MeasureTheory.IntegrableOn.of_bound ?_ ?_ (3 * ‖L‖ / 2) ?_
+    · simp only [Set.uIoc, Real.volume_Ioc]; exact ENNReal.ofReal_lt_top
+    · exact (aestronglyMeasurable_deriv γ _).restrict
+    · -- The bound holds ae on the restriction
+      rw [MeasureTheory.ae_restrict_iff' measurableSet_uIoc]
+      apply Filter.Eventually.of_forall
+      intro t ht'
+      exact h_deriv_bdd t (h_uIcc ▸ Set.uIoc_subset_uIcc ht')
+
+  -- FTC
+  have h_ftc : ∫ t in t₁..t₂, deriv γ t = γ t₂ - γ t₁ := by
+    rw [intervalIntegral.integral_eq_sub_of_hasDeriv_right_of_le (le_of_lt ht) hγ_cont h_hasDeriv h_int]
+
+  -- Define projection: z ↦ Re(z * conj L)
+  let proj : ℂ →L[ℝ] ℝ := {
+    toFun := fun z => (z * starRingEnd ℂ L).re
+    map_add' := by intro x y; simp [add_mul, Complex.add_re]
+    map_smul' := by
+      intro c z
+      rw [Complex.real_smul, mul_assoc, Complex.mul_re, Complex.mul_re,
+          Complex.ofReal_re, Complex.ofReal_im, RingHom.id_apply, smul_eq_mul]
+      ring
+    cont := Complex.continuous_re.comp (continuous_mul_right _)
+  }
+
+  -- Linearity of integral
+  have h_proj_int : proj (∫ t in t₁..t₂, deriv γ t) = ∫ t in t₁..t₂, proj (deriv γ t) :=
+    (proj.intervalIntegral_comp_comm h_int).symm
+
+  -- Lower bound on integral
+  have h_int_lb : ‖L‖^2 / 2 * (t₂ - t₁) ≤ ((γ t₂ - γ t₁) * starRingEnd ℂ L).re := by
+    have h_re_eq : ((γ t₂ - γ t₁) * starRingEnd ℂ L).re =
+        ∫ t in t₁..t₂, (deriv γ t * starRingEnd ℂ L).re := by
+      calc ((γ t₂ - γ t₁) * starRingEnd ℂ L).re
+          = proj (γ t₂ - γ t₁) := rfl
+        _ = proj (∫ t in t₁..t₂, deriv γ t) := by rw [← h_ftc]
+        _ = ∫ t in t₁..t₂, proj (deriv γ t) := h_proj_int
+    rw [h_re_eq]
+    calc ‖L‖^2 / 2 * (t₂ - t₁)
+        = ∫ _ in t₁..t₂, ‖L‖^2 / 2 := by rw [intervalIntegral.integral_const]; simp [smul_eq_mul]; ring
+      _ ≤ ∫ t in t₁..t₂, (deriv γ t * starRingEnd ℂ L).re := by
+          -- Integrability of composition with continuous linear map
+          have h_proj_int' : IntervalIntegrable (fun t => proj (deriv γ t)) MeasureTheory.volume t₁ t₂ := by
+            rw [intervalIntegrable_iff] at h_int ⊢
+            exact proj.integrable_comp h_int
+          -- Use integral_mono_on which takes the bound on Icc
+          exact intervalIntegral.integral_mono_on (le_of_lt ht) intervalIntegrable_const h_proj_int' (fun t ht' => le_of_lt (h_inner_lb t ht'))
+
+  -- Cauchy-Schwarz
+  have h_cs : ((γ t₂ - γ t₁) * starRingEnd ℂ L).re ≤ ‖γ t₂ - γ t₁‖ * ‖L‖ := by
+    calc ((γ t₂ - γ t₁) * starRingEnd ℂ L).re
+        ≤ |((γ t₂ - γ t₁) * starRingEnd ℂ L).re| := le_abs_self _
+      _ ≤ ‖(γ t₂ - γ t₁) * starRingEnd ℂ L‖ := Complex.abs_re_le_norm _
+      _ ≤ ‖γ t₂ - γ t₁‖ * ‖starRingEnd ℂ L‖ := norm_mul_le _ _
+      _ = ‖γ t₂ - γ t₁‖ * ‖L‖ := by rw [RingHomIsometric.norm_map]
+
+  -- Combine
+  calc ‖L‖ / 2 * (t₂ - t₁)
+      = (‖L‖^2 / 2 * (t₂ - t₁)) / ‖L‖ := by field_simp [ne_of_gt hL_norm_pos]
+    _ ≤ (‖γ t₂ - γ t₁‖ * ‖L‖) / ‖L‖ := div_le_div_of_nonneg_right (le_trans h_int_lb h_cs) (le_of_lt hL_norm_pos)
+    _ = ‖γ t₂ - γ t₁‖ := by field_simp [ne_of_gt hL_norm_pos]
 
 /-- Simplified version: derivative bounded below AND close to some direction.
     This is the version most useful for the valence formula proofs. -/
