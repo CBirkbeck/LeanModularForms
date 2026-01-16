@@ -14,13 +14,22 @@ import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 This file develops the theory of generalized winding numbers, including:
 - The model sector calculation (angle → winding number)
 - The classical case (closed curve avoiding point → integer winding number)
-- The decomposition theorem (winding number = classical + angle contributions)
+- Local contribution theorems (smooth crossing → 1/2, corner → angle/(2π))
 
 ## Main Results
 
-* `generalizedWindingNumber_modelSector` - Model sector gives α/(2π)
-* `generalizedWindingNumber_eq_classical` - Classical case is integer
-* `generalizedWindingNumber_decomposition` - Full decomposition theorem
+* `generalizedWindingNumber_modelSector'` - Model sector gives α/(2π)
+* `generalizedWindingNumber_eq_classical'` - Classical case is integer
+* `generalizedWindingNumber_smooth_crossing'` - Smooth crossing contributes 1/2
+* `generalizedWindingNumber_corner_crossing'` - Corner with angle α contributes α/(2π)
+* `generalizedWindingNumber_sum_of_contributions'` - Total = sum of local contributions
+
+## Approach
+
+We use generalized winding numbers via Cauchy principal values, which handle
+curves passing through singularities directly. No "detoured curve" constructions
+are needed - the principal value definition captures the correct local contributions
+at each crossing point.
 
 ## References
 
