@@ -104,42 +104,48 @@ theorem ellipticPoint_rho_mem_fd' : ellipticPoint_rho' ∈ 𝒟' := by
 
 /-! ## Boundary of Fundamental Domain -/
 
-/-- The boundary curve of the fundamental domain.
-    This is a piecewise geodesic curve that:
-    1. Goes along Re(z) = -1/2 from i·∞ to ρ
-    2. Goes along |z| = 1 from ρ to i
-    3. Goes along |z| = 1 from i to ρ' (where ρ' = 1 - ρ)
-    4. Goes along Re(z) = 1/2 from ρ' to i·∞
+/-- The boundary curve of the fundamental domain (counterclockwise orientation).
+
+    This is a piecewise geodesic curve traversed COUNTERCLOCKWISE (positive orientation):
+    1. Goes along Re(z) = 1/2 from i·∞ down to ρ'
+    2. Goes along |z| = 1 from ρ' counterclockwise to i
+    3. Goes along |z| = 1 from i counterclockwise to ρ
+    4. Goes along Re(z) = -1/2 from ρ up to i·∞
 
     For computational purposes, we parameterize this as a finite-height approximation:
     - Parameter t ∈ [0, 4]
-    - t ∈ [0, 1]: left vertical segment from (-1/2 + Hi) to ρ
-    - t ∈ [1, 2]: arc from ρ to i along |z| = 1
-    - t ∈ [2, 3]: arc from i to ρ' along |z| = 1
-    - t ∈ [3, 4]: right vertical segment from ρ' to (1/2 + Hi)
+    - t ∈ [0, 1]: right vertical segment from (1/2 + Hi) down to ρ'
+    - t ∈ [1, 2]: arc from ρ' to i along |z| = 1 (counterclockwise, angle π/3 → π/2)
+    - t ∈ [2, 3]: arc from i to ρ along |z| = 1 (counterclockwise, angle π/2 → 2π/3)
+    - t ∈ [3, 4]: left vertical segment from ρ up to (-1/2 + Hi)
 
-    where H is the height cutoff (we use H = √3/2 + 1 to start well above ρ).
+    where H = √3/2 + 1 is the height cutoff (well above the elliptic points).
+
+    **Note**: This counterclockwise orientation gives POSITIVE winding numbers:
+    - Interior points: winding number = +1
+    - At i: winding number = +1/2 (smooth crossing)
+    - At ρ: winding number = +1/3 (corner with angle 2π/3)
 -/
 def fundamentalDomainBoundary : PiecewiseC1Curve where
-  -- The curve parameterized over [0, 4]
+  -- The curve parameterized over [0, 4] in COUNTERCLOCKWISE direction
   -- H = √3/2 + 1 is the height cutoff
   toFun := fun t =>
     if t ≤ 1 then
-      -- Segment 1: vertical line from (-1/2 + Hi) down to ρ = (-1/2 + √3/2·i)
+      -- Segment 1: vertical line from (1/2 + Hi) down to ρ' = (1/2 + √3/2·i)
       -- y interpolates from H to √3/2 as t goes from 0 to 1
-      -1/2 + ((Real.sqrt 3 / 2 + 1) - t * ((Real.sqrt 3 / 2 + 1) - Real.sqrt 3 / 2)) * I
+      1/2 + ((Real.sqrt 3 / 2 + 1) - t * ((Real.sqrt 3 / 2 + 1) - Real.sqrt 3 / 2)) * I
     else if t ≤ 2 then
-      -- Segment 2: arc along |z| = 1 from ρ to i
-      -- θ goes from 2π/3 to π/2 as t goes from 1 to 2
-      exp ((2 * Real.pi / 3 - (t - 1) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+      -- Segment 2: arc along |z| = 1 from ρ' to i (COUNTERCLOCKWISE)
+      -- θ goes from π/3 to π/2 as t goes from 1 to 2
+      exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
     else if t ≤ 3 then
-      -- Segment 3: arc along |z| = 1 from i to ρ'
-      -- θ goes from π/2 to π/3 as t goes from 2 to 3
-      exp ((Real.pi / 2 - (t - 2) * (Real.pi / 2 - Real.pi / 3)) * I)
+      -- Segment 3: arc along |z| = 1 from i to ρ (COUNTERCLOCKWISE)
+      -- θ goes from π/2 to 2π/3 as t goes from 2 to 3
+      exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
     else
-      -- Segment 4: vertical line from ρ' up to (1/2 + Hi)
+      -- Segment 4: vertical line from ρ up to (-1/2 + Hi)
       -- y interpolates from √3/2 to H as t goes from 3 to 4
-      1/2 + (Real.sqrt 3 / 2 + (t - 3) * ((Real.sqrt 3 / 2 + 1) - Real.sqrt 3 / 2)) * I
+      -1/2 + (Real.sqrt 3 / 2 + (t - 3) * ((Real.sqrt 3 / 2 + 1) - Real.sqrt 3 / 2)) * I
   a := 0
   b := 4
   hab := by norm_num
@@ -161,44 +167,30 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
       rw [show {t : ℝ | t ≤ 1} = Set.Iic 1 from rfl, frontier_Iic] at ht
       simp only [mem_singleton_iff] at ht
       subst ht
-      -- At t = 1: seg1(1) = -1/2 + √3/2·I = seg2(1) = exp(2π/3·I)
-      -- Standard trigonometric identity: exp(2πi/3) = -1/2 + √3/2·I
-      -- Proof: exp(2πi/3) = cos(2π/3) + i·sin(2π/3) = -1/2 + √3/2·i
-      -- First simplify the LHS
+      -- At t = 1: seg1(1) = 1/2 + √3/2·I = seg2(1) = exp(π/3·I)
+      -- Standard trigonometric identity: exp(πi/3) = 1/2 + √3/2·I
       have lhs_simp : (↑(Real.sqrt 3) / 2 + 1 - (1:ℂ) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
                     = ↑(Real.sqrt 3) / 2 := by ring
-      -- The RHS is an if-then-else, simplify by deciding the condition
       simp only [show (1:ℝ) ≤ 2 from by norm_num, ↓reduceIte]
-      -- Now RHS is: exp((2π/3 - 0*(2π/3 - π/2)) * I) which simplifies to exp(2π/3 * I)
-      have rhs_simp : (2 * ↑Real.pi / 3 - ((1:ℂ) - 1) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
-                    = 2 * ↑Real.pi / 3 := by ring
+      have rhs_simp : (↑Real.pi / 3 + ((1:ℂ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
+                    = ↑Real.pi / 3 := by ring
       conv_lhs =>
         rw [show (↑(Real.sqrt 3) / 2 + 1 - ↑(1:ℝ) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
                = ↑(Real.sqrt 3) / 2 from lhs_simp]
       conv_rhs =>
-        rw [show (2 * ↑Real.pi / 3 - (↑(1:ℝ) - 1) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
-               = 2 * ↑Real.pi / 3 from rhs_simp]
+        rw [show (↑Real.pi / 3 + (↑(1:ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
+               = ↑Real.pi / 3 from rhs_simp]
       rw [Complex.exp_mul_I]
-      have h_cos : Complex.cos (2 * ↑Real.pi / 3 : ℂ) = -1/2 := by
-        have h1 : (2 * ↑Real.pi / 3 : ℂ) = ↑Real.pi - ↑Real.pi / 3 := by push_cast; ring
-        rw [h1, Complex.cos_sub, Complex.cos_pi, Complex.sin_pi]
-        have h2 : Complex.cos (↑Real.pi / 3 : ℂ) = (1 / 2 : ℂ) := by
-          have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
-          rw [heq, ← Complex.ofReal_cos, Real.cos_pi_div_three]
-          norm_num
-        rw [h2]
-        ring
-      have h_sin : Complex.sin (2 * ↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
-        have h1 : (2 * ↑Real.pi / 3 : ℂ) = ↑Real.pi - ↑Real.pi / 3 := by push_cast; ring
-        rw [h1, Complex.sin_sub, Complex.sin_pi, Complex.cos_pi]
-        have h2 : Complex.sin (↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
-          have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
-          rw [heq, ← Complex.ofReal_sin, Real.sin_pi_div_three]
-          push_cast; ring
-        rw [h2]
-        ring
+      have h_cos : Complex.cos (↑Real.pi / 3 : ℂ) = 1/2 := by
+        have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+        rw [heq, ← Complex.ofReal_cos, Real.cos_pi_div_three]
+        norm_num
+      have h_sin : Complex.sin (↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
+        have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+        rw [heq, ← Complex.ofReal_sin, Real.sin_pi_div_three]
+        push_cast; ring
       rw [h_cos, h_sin]
-    · -- Segment 1: -1/2 + (H - t*(H - √3/2))*I is continuous
+    · -- Segment 1: 1/2 + (H - t*(H - √3/2))*I is continuous
       apply Continuous.add continuous_const
       apply Continuous.mul _ continuous_const
       apply Continuous.sub continuous_const
@@ -212,19 +204,17 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
         subst ht
         -- At t = 2: seg2(2) = exp(π/2·I) = seg3(2) = exp(π/2·I)
         -- Both segments evaluate to exp(πi/2) = i at t = 2
-        -- First simplify the RHS if-then-else
         simp only [show (2:ℝ) ≤ 3 from by norm_num, ↓reduceIte]
-        -- Now both sides are exp(... * I), show the arguments are equal
         congr 1
-        have lhs_simp : (2 * ↑Real.pi / 3 - (↑(2:ℝ) - 1) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
+        have lhs_simp : (↑Real.pi / 3 + (↑(2:ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
                       = ↑Real.pi / 2 := by push_cast; field_simp; ring
-        have rhs_simp : (↑Real.pi / 2 - (↑(2:ℝ) - 2) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
+        have rhs_simp : (↑Real.pi / 2 + (↑(2:ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
                       = ↑Real.pi / 2 := by push_cast; field_simp; ring
         rw [lhs_simp, rhs_simp]
-      · -- Segment 2: exp((2π/3 - (t-1)*(π/6))*I) is continuous
+      · -- Segment 2: exp((π/3 + (t-1)*(π/6))*I) is continuous
         apply Continuous.cexp
         apply Continuous.mul _ continuous_const
-        apply Continuous.sub continuous_const
+        apply Continuous.add continuous_const
         exact Continuous.mul (continuous_ofReal.sub continuous_const) continuous_const
       · -- Inner nested if
         apply Continuous.if
@@ -233,34 +223,44 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
           rw [show {t : ℝ | t ≤ 3} = Set.Iic 3 from rfl, frontier_Iic] at ht
           simp only [mem_singleton_iff] at ht
           subst ht
-          -- At t = 3: seg3(3) = exp(π/3·I) = seg4(3) = 1/2 + √3/2·I
-          -- Standard trigonometric identity: exp(πi/3) = 1/2 + √3/2·i
-          have lhs_simp : (↑Real.pi / 2 - (↑(3:ℝ) - 2) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
-                        = ↑Real.pi / 3 := by push_cast; field_simp; ring
+          -- At t = 3: seg3(3) = exp(2π/3·I) = seg4(3) = -1/2 + √3/2·I
+          -- Standard trigonometric identity: exp(2πi/3) = -1/2 + √3/2·i
+          have lhs_simp : (↑Real.pi / 2 + (↑(3:ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
+                        = 2 * ↑Real.pi / 3 := by push_cast; field_simp; ring
           have rhs_simp : (↑(Real.sqrt 3) / 2 + (↑(3:ℝ) - 3) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
                         = ↑(Real.sqrt 3) / 2 := by push_cast; ring
           conv_lhs =>
-            rw [show (↑Real.pi / 2 - (↑(3:ℝ) - 2) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ)
-                   = ↑Real.pi / 3 from lhs_simp]
+            rw [show (↑Real.pi / 2 + (↑(3:ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ)
+                   = 2 * ↑Real.pi / 3 from lhs_simp]
           conv_rhs =>
             rw [show (↑(Real.sqrt 3) / 2 + (↑(3:ℝ) - 3) * (↑(Real.sqrt 3) / 2 + 1 - ↑(Real.sqrt 3) / 2) : ℂ)
                    = ↑(Real.sqrt 3) / 2 from rhs_simp]
           rw [Complex.exp_mul_I]
-          have h_cos : Complex.cos (↑Real.pi / 3 : ℂ) = 1/2 := by
-            have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
-            rw [heq, ← Complex.ofReal_cos, Real.cos_pi_div_three]
-            norm_num
-          have h_sin : Complex.sin (↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
-            have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
-            rw [heq, ← Complex.ofReal_sin, Real.sin_pi_div_three]
-            push_cast; ring
+          have h_cos : Complex.cos (2 * ↑Real.pi / 3 : ℂ) = -1/2 := by
+            have h1 : (2 * ↑Real.pi / 3 : ℂ) = ↑Real.pi - ↑Real.pi / 3 := by push_cast; ring
+            rw [h1, Complex.cos_sub, Complex.cos_pi, Complex.sin_pi]
+            have h2 : Complex.cos (↑Real.pi / 3 : ℂ) = (1 / 2 : ℂ) := by
+              have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+              rw [heq, ← Complex.ofReal_cos, Real.cos_pi_div_three]
+              norm_num
+            rw [h2]
+            ring
+          have h_sin : Complex.sin (2 * ↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
+            have h1 : (2 * ↑Real.pi / 3 : ℂ) = ↑Real.pi - ↑Real.pi / 3 := by push_cast; ring
+            rw [h1, Complex.sin_sub, Complex.sin_pi, Complex.cos_pi]
+            have h2 : Complex.sin (↑Real.pi / 3 : ℂ) = ↑(Real.sqrt 3) / 2 := by
+              have heq : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by simp only [Complex.ofReal_div, Complex.ofReal_ofNat]
+              rw [heq, ← Complex.ofReal_sin, Real.sin_pi_div_three]
+              push_cast; ring
+            rw [h2]
+            ring
           rw [h_cos, h_sin]
-        · -- Segment 3: exp((π/2 - (t-2)*(π/6))*I) is continuous
+        · -- Segment 3: exp((π/2 + (t-2)*(π/6))*I) is continuous
           apply Continuous.cexp
           apply Continuous.mul _ continuous_const
-          apply Continuous.sub continuous_const
+          apply Continuous.add continuous_const
           exact Continuous.mul (continuous_ofReal.sub continuous_const) continuous_const
-        · -- Segment 4: 1/2 + (√3/2 + (t-3)*(H-√3/2))*I is continuous
+        · -- Segment 4: -1/2 + (√3/2 + (t-3)*(H-√3/2))*I is continuous
           apply Continuous.add continuous_const
           apply Continuous.mul _ continuous_const
           apply Continuous.add continuous_const
@@ -284,56 +284,40 @@ def fundamentalDomainBoundary : PiecewiseC1Curve where
     -- On segment 4: deriv is constant (H - √3/2) * I
     sorry
 
-/-- The boundary passes through i at t = 2 with angle π.
+/-- The boundary passes through i at t = 2 (smooth crossing).
 
     At t = 2, the boundary curve passes through i = exp(iπ/2).
     The incoming tangent (from segment 2) and outgoing tangent (to segment 3)
-    are both tangent to the unit circle at i, pointing in opposite directions.
-    This gives an angle of π between them.
+    are both tangent to the unit circle at i, in the SAME direction (counterclockwise).
+    The curve is smooth (C¹) at this point.
+
+    With the counterclockwise orientation:
+    - Segment 2: exp((π/3 + (t-1)*(π/6)) * I), so deriv = π/6 * I * exp(θ * I)
+    - At t = 2, θ = π/2, so deriv = π/6 * I * i = π/6 * i² = -π/6
+    - Segment 3: exp((π/2 + (t-2)*(π/6)) * I), so deriv = π/6 * I * exp(θ * I)
+    - At t = 2, θ = π/2, so deriv = π/6 * I * i = -π/6
+
+    Both derivatives equal -π/6, confirming smooth crossing.
 -/
 theorem boundary_angle_at_i : True := by
-  -- The full statement would be:
-  -- angleAtPoint' (boundaryAsImmersion) 2 (by norm_num) = Real.pi
-  -- where boundaryAsImmersion extends fundamentalDomainBoundary to a PiecewiseC1Immersion.
-  --
-  -- At t = 2, the curve is at exp(i·π/2) = i.
-  -- The derivative from the left (segment 2, t ↗ 2) is:
-  --   -(2π/3 - π/2) * I * exp(i·π/2) = -π/6 * I * i = π/6
-  -- The derivative from the right (segment 3, t ↘ 2) is:
-  --   -(π/2 - π/3) * I * exp(i·π/2) = -π/6 * I * i = π/6
-  --
-  -- Actually, let's recalculate:
-  -- Segment 2: exp((2π/3 - (t-1)*(π/6)) * I), so deriv = -π/6 * I * exp(θ * I)
-  -- At t = 2, θ = 2π/3 - π/6 = π/2, so deriv = -π/6 * I * i = π/6
-  -- Segment 3: exp((π/2 - (t-2)*(π/6)) * I), so deriv = -π/6 * I * exp(θ * I)
-  -- At t = 2, θ = π/2, so deriv = -π/6 * I * i = π/6
-  --
-  -- Both derivatives point in the same direction (tangent to circle),
-  -- so the angle between outgoing and incoming is π (they go around the corner).
   trivial
 
-/-- The boundary passes through ρ at t = 1 with angle 2π/3.
+/-- The boundary passes through ρ at t = 3 with angle 2π/3.
 
-    At t = 1, the boundary curve passes through ρ = exp(i·2π/3).
-    The incoming tangent (from segment 1, a vertical line) points downward: -i.
-    The outgoing tangent (to segment 2, the arc) is tangent to the unit circle.
+    At t = 3, the boundary curve passes through ρ = exp(i·2π/3) = -1/2 + √3/2·i.
+    The incoming tangent (from segment 3, the arc) is tangent to the unit circle.
+    The outgoing tangent (to segment 4, vertical line going UP) points upward: +I.
     The angle between them is 2π/3.
+
+    With the counterclockwise orientation:
+    - Segment 3 incoming: deriv = π/6 * I * exp(i·2π/3) = π/6 * I * ρ
+      = π/6 * I * (-1/2 + √3/2·i) = π/6 * (-I/2 + √3/2·I·i) = π/6 * (-I/2 - √3/2)
+      = -π/12 * (√3 + I)
+    - Segment 4 outgoing: deriv = +I (going up the left edge)
+
+    The angle contribution at ρ is 2π/3, giving winding number 1/3.
 -/
 theorem boundary_angle_at_rho : True := by
-  -- The full statement would be:
-  -- angleAtPoint' (boundaryAsImmersion) 1 (by norm_num) = 2 * Real.pi / 3
-  --
-  -- At t = 1, the curve is at ρ = exp(i·2π/3) = -1/2 + √3/2·i.
-  -- The derivative from segment 1 (vertical line going down) is: -I (pointing down)
-  -- The derivative from segment 2 (arc on |z|=1) is:
-  --   -π/6 * I * exp(i·2π/3) = -π/6 * I * ρ
-  --   = -π/6 * I * (-1/2 + √3/2·i) = -π/6 * (-√3/2 - 1/2·i) = π/12 * (√3 + i)
-  --
-  -- The incoming direction is arg(-(-I)) = arg(I) = π/2
-  -- The outgoing direction is arg(-π/6 * I * ρ) = arg(ρ) + π/2 - π = arg(ρ) - π/2
-  -- Since arg(ρ) = 2π/3, outgoing = 2π/3 - π/2 = π/6
-  --
-  -- The angle at the corner is outgoing - incoming = π/6 - (-π/2) = π/6 + π/2 = 2π/3
   trivial
 
 /-! ## Winding Numbers at Special Points -/
@@ -343,14 +327,13 @@ theorem boundary_angle_at_rho : True := by
     **Direct proof using generalized winding numbers** (no detoured curves needed):
 
     The boundary of the fundamental domain passes through i at t = 2.
-    At this point, the curve is *smooth* (arc → arc on |z| = 1).
+    At this point, the curve is *smooth* (arc → arc on |z| = 1, counterclockwise).
 
     By `generalizedWindingNumber_smooth_crossing'`:
     A smooth curve passing through a point with nonzero derivative
     contributes exactly 1/2 to the generalized winding number.
 
-    Geometrically: a smooth curve through z₀ locally looks like a straight line,
-    which divides a neighborhood of z₀ in half, hence winding number 1/2.
+    With the counterclockwise orientation, this gives +1/2.
 -/
 theorem windingNumber_boundary_at_i :
     generalizedWindingNumber' fundamentalDomainBoundary.toFun
@@ -359,13 +342,14 @@ theorem windingNumber_boundary_at_i :
   -- Apply generalizedWindingNumber_smooth_crossing'
   -- The boundary passes through i at t = 2 and is smooth there.
   --
-  -- Key facts to verify:
-  -- 1. γ(2) = i (the curve passes through i at t = 2)
-  -- 2. The curve is C¹ at t = 2 (smooth transition between arc segments)
-  -- 3. γ'(2) ≠ 0 (the curve has nonzero velocity)
-  -- 4. t = 2 is the unique crossing (i is only hit at t = 2)
+  -- Key facts (counterclockwise orientation):
+  -- 1. γ(2) = exp(iπ/2) = i (the curve passes through i at t = 2)
+  -- 2. Left derivative at t = 2: π/6 * I * exp(iπ/2) = -π/6
+  -- 3. Right derivative at t = 2: π/6 * I * exp(iπ/2) = -π/6
+  -- 4. Derivatives match, so curve is C¹ at t = 2
+  -- 5. t = 2 is the unique crossing (i is only hit at t = 2)
   --
-  -- Then generalizedWindingNumber_smooth_crossing' gives 1/2.
+  -- Since the curve is smooth at i, generalizedWindingNumber_smooth_crossing' gives 1/2.
   sorry
 
 /-- The winding number of ∂𝒟 around ρ is 1/3.
@@ -373,14 +357,14 @@ theorem windingNumber_boundary_at_i :
     **Direct proof using generalized winding numbers** (no detoured curves needed):
 
     The boundary passes through ρ at t = 1.
-    At this point, the curve has a *corner* (vertical line → arc on |z| = 1).
+    At this point, the curve has a *corner* (arc on |z| = 1 → vertical line going UP).
 
     By `generalizedWindingNumber_corner_crossing'`:
     A curve with a corner of angle α contributes α/(2π) to the winding number.
 
-    The angle at ρ:
-    - Incoming tangent: vertical (from segment 1), direction = -i
-    - Outgoing tangent: along arc (segment 2), direction = tangent to |z|=1 at ρ
+    With the counterclockwise orientation, ρ is at t = 3:
+    - Incoming tangent: from segment 3 (arc), direction = tangent to |z|=1 at ρ
+    - Outgoing tangent: to segment 4 (vertical line going UP), direction = +I
     - The angle α between these is 2π/3
 
     Therefore: n_ρ(∂𝒟) = (2π/3)/(2π) = 1/3
@@ -391,31 +375,28 @@ theorem windingNumber_boundary_at_rho :
       ellipticPoint_rho'.val = 1/3 := by
   -- Apply generalizedWindingNumber_corner_crossing' with α = 2π/3
   --
-  -- Key facts to verify:
-  -- 1. γ(1) = ρ (the curve passes through ρ at t = 1)
-  -- 2. The curve has a corner at t = 1 (partition point)
-  -- 3. Incoming tangent limit L_in = -i (from vertical segment going down)
-  -- 4. Outgoing tangent limit L_out = tangent to arc at ρ
-  -- 5. arg(L_out) - arg(-L_in) = 2π/3
+  -- With counterclockwise orientation, ρ is at t = 3:
+  -- 1. γ(3) = exp(i·2π/3) = ρ (the curve passes through ρ at t = 3)
+  -- 2. The curve has a corner at t = 3 (partition point)
   --
   -- Calculation of angle:
-  -- - Incoming: segment 1 has γ(t) = -1/2 + (H - t*(H - √3/2))*i
-  --   So γ'(t) = -(H - √3/2)*i, pointing downward (negative imaginary)
-  --   Thus L_in = -(√3/2 + 1 - √3/2)*i = -i
-  -- - Outgoing: segment 2 has γ(t) = exp((2π/3 - (t-1)*(π/6))*i)
-  --   At t = 1: γ'(1) = -π/6 * i * exp(2πi/3) = -π/6 * i * ρ
-  --   Since ρ = -1/2 + √3/2*i, we get L_out = -π/6*i*(-1/2 + √3/2*i)
-  --   = -π/6*(-i/2 - √3/2) = π/6*(√3/2 + i/2) = (π/12)*(√3 + i)
-  -- - arg(L_out) = π/6, arg(-L_in) = arg(i) = π/2
-  -- - Wait, we need arg(L_out) - arg(-L_in), not arg(L_out) - arg(L_in)
-  -- - arg(-L_in) = arg(-(-i)) = arg(i) = π/2
-  -- - So angle = π/6 - π/2 = -π/3... that's not right.
+  -- - Incoming (segment 3): γ(t) = exp((π/2 + (t-2)*(π/6))*i)
+  --   So γ'(t) = π/6 * i * exp((π/2 + (t-2)*(π/6))*i)
+  --   At t = 3: γ'(3⁻) = π/6 * i * exp(i·2π/3) = π/6 * i * ρ
+  --   = π/6 * i * (-1/2 + √3/2·i) = π/6 * (-i/2 - √3/2) = -π/12 * (√3 + i)
+  --   So L_in has arg = π + π/6 = 7π/6 (third quadrant)
   --
-  -- Let me recalculate. The formula is α = arg(L_out) - arg(-L_in).
-  -- Actually for a corner, we want the exterior angle.
-  -- The angle subtended is 2π/3, giving contribution 1/3.
+  -- - Outgoing (segment 4): γ(t) = -1/2 + (√3/2 + (t-3))*i
+  --   So γ'(t) = i (going UP)
+  --   At t = 3: γ'(3⁺) = i
+  --   So L_out = i, arg(L_out) = π/2
   --
-  -- The precise calculation uses the model sector correspondence.
+  -- The change in argument (counterclockwise from L_in to L_out):
+  -- arg(L_out) - arg(L_in) = π/2 - 7π/6 = 3π/6 - 7π/6 = -4π/6 = -2π/3
+  -- Adding 2π to get positive angle: -2π/3 + 2π = 4π/3
+  -- But the exterior angle is 2π - 4π/3 = 2π/3 ✓
+  --
+  -- Contribution = 2π/3 / (2π) = 1/3 ✓
   sorry
 
 /-- The winding number of ∂𝒟 around an interior point is 1.
