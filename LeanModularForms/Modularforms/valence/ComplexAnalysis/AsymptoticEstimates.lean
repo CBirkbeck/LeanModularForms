@@ -626,6 +626,33 @@ theorem windingNumberIntegrand_limit_at_zero (t₀ : ℝ)
   --
   -- The full proof requires Taylor remainder bounds which involve significant machinery.
   -- The mathematical argument is outlined in the theorem documentation above.
+  --
+  -- **Proof strategy:**
+  -- 1. Use `ContDiffAt` to obtain Taylor expansion:
+  --    γ(t) = (t-t₀)·v + (t-t₀)²/2·a + o((t-t₀)²)
+  --    where v = γ'(t₀), a = γ''(t₀)
+  --
+  -- 2. Compute the Taylor expansion of the numerator:
+  --    x·y' - y·x' = (t-t₀)²/2·(v.re·a.im - v.im·a.re) + o((t-t₀)²)
+  --
+  -- 3. Compute the Taylor expansion of the denominator:
+  --    x² + y² = (t-t₀)²·(v.re² + v.im²) + o((t-t₀)²)
+  --
+  -- 4. The ratio converges to:
+  --    (v.re·a.im - v.im·a.re) / (2·(v.re² + v.im²))
+  --
+  -- 5. This equals (1/2)·κ·|v| where κ = signedCurvature γ t₀:
+  --    κ = (v.re·a.im - v.im·a.re) / |v|³
+  --    (1/2)·κ·|v| = (v.re·a.im - v.im·a.re) / (2·|v|²)
+  --
+  -- The key mathlib tools needed:
+  -- - `taylor_isLittleO` or `taylor_tendsto` for the o(h²) remainder
+  -- - `Tendsto.div` for limits of ratios
+  -- - Algebraic manipulation to match the curvature formula
+  --
+  -- This proof requires significant machinery but is mathematically straightforward.
+  -- The main technical challenge is handling the limit of a ratio where both
+  -- numerator and denominator tend to 0 at rate O(h²).
   sorry
 
 /-! ## Flatness Conditions -/
