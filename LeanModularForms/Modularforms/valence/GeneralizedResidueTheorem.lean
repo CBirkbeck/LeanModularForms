@@ -90,6 +90,8 @@ import Mathlib.NumberTheory.ModularForms.QExpansion
 import LeanModularForms.Modularforms.Delta
 import LeanModularForms.Modularforms.IsCuspForm
 import LeanModularForms.Modularforms.Eisenstein
+-- Import ComplexAnalysis module for homotopy invariance results
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.HomotopyBridge
 
 open Complex Set Filter Function MeasureTheory TopologicalSpace Metric Asymptotics HahnSeries
 open scoped Real Topology BigOperators Nat Interval Modular CongruenceSubgroup
@@ -147,12 +149,30 @@ instance : CoeFun PiecewiseC1Curve' (fun _ => ℝ → ℂ) where
 def PiecewiseC1Curve'.IsClosed (γ : PiecewiseC1Curve') : Prop :=
   γ.toFun γ.a = γ.toFun γ.b
 
-/-- A piecewise C¹ immersion is a piecewise C¹ curve with nonzero derivative -/
+/-- A piecewise C¹ immersion is a piecewise C¹ curve with nonzero derivative.
+
+**Strengthened definition:** We also require nonzero one-sided derivative limits at
+partition points. This ensures the curve doesn't "slow down to zero speed" at corners,
+which is needed for finiteness of zeros (preimages of any point).
+
+The one-sided limits condition handles the case where the derivative might approach 0
+as we approach a partition point from either side. Without this, we cannot rule out
+infinitely many zeros accumulating at a partition point. -/
 structure PiecewiseC1Immersion' extends PiecewiseC1Curve' where
   /-- The derivative is nonzero away from partition points -/
   deriv_ne_zero : ∀ t ∈ Icc toPiecewiseC1Curve'.a toPiecewiseC1Curve'.b,
     t ∉ toPiecewiseC1Curve'.partition →
     deriv toPiecewiseC1Curve'.toFun t ≠ 0
+  /-- The left derivative limit exists and is nonzero at each interior partition point.
+      This ensures the curve has nonzero "arrival speed" at corners. -/
+  left_deriv_limit : ∀ p ∈ toPiecewiseC1Curve'.partition,
+    toPiecewiseC1Curve'.a < p →
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv toPiecewiseC1Curve'.toFun) (𝓝[<] p) (𝓝 L)
+  /-- The right derivative limit exists and is nonzero at each interior partition point.
+      This ensures the curve has nonzero "departure speed" from corners. -/
+  right_deriv_limit : ∀ p ∈ toPiecewiseC1Curve'.partition,
+    p < toPiecewiseC1Curve'.b →
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv toPiecewiseC1Curve'.toFun) (𝓝[>] p) (𝓝 L)
 
 /-- Key lemma: On any closed interval disjoint from partition points, the derivative
     has a uniform positive lower bound. This follows from:
@@ -200,25 +220,104 @@ lemma PiecewiseC1Immersion'.zeros_uniformly_separated (γ : PiecewiseC1Immersion
       γ.toFun t₁ = z₀ → γ.toFun t₂ = z₀ → t₁ ≠ t₂ → ε ≤ |t₁ - t₂| := by
   -- Get uniform lower bound on derivative
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := γ.deriv_norm_lower_bound c d hcd h_sub h_disjoint
-  -- Each point in Icc c d is differentiable
-  have h_diff : ∀ t ∈ Icc c d, DifferentiableAt ℝ γ.toFun t := by
+  -- γ' is continuous on Icc c d (from the structure)
+  have h_deriv_cont : ContinuousOn (deriv γ.toFun) (Icc c d) := by
+    apply γ.toPiecewiseC1Curve'.deriv_continuous_on.mono
     intro t ht
-    apply γ.toPiecewiseC1Curve'.differentiable_on_partition t (h_sub ht)
-    exact Set.disjoint_left.mp h_disjoint ht
-  -- Use the inverse function theorem / local injectivity
-  -- For each zero t₀ with |γ'(t₀)| ≥ δ > 0, HasDerivAt.eventually_ne gives isolation
-  -- The isolation radius depends on the derivative, which is uniformly bounded
-  -- GAP: Need to formalize the uniform isolation argument using IFT
-  -- The argument is:
-  -- - By C¹ + compact, γ' is uniformly continuous on Icc c d
-  -- - With |γ'| ≥ δ and uniform continuity, get uniform isolation radius
-  use δ / (2 * (1 + ‖deriv γ.toFun c‖))  -- Placeholder bound
-  constructor
-  · positivity
+    exact ⟨h_sub ht, Set.disjoint_left.mp h_disjoint ht⟩
+  -- By Heine-Cantor, γ' is uniformly continuous on the compact set Icc c d
+  have h_unif_cont : UniformContinuousOn (deriv γ.toFun) (Icc c d) :=
+    isCompact_Icc.uniformContinuousOn_of_continuous h_deriv_cont
+  -- Get η > 0 such that |s - t| < η implies |γ'(s) - γ'(t)| < δ/2
+  rw [Metric.uniformContinuousOn_iff] at h_unif_cont
+  obtain ⟨η, hη_pos, hη_uc⟩ := h_unif_cont (δ / 2) (by linarith)
+  -- Use η as our separation bound
+  use η, hη_pos
   intro t₁ t₂ ht₁ ht₂ hz₁ hz₂ hne
-  -- The full proof requires the inverse function theorem machinery
-  -- which shows that with uniform |γ'| ≥ δ, zeros are separated by ≥ f(δ)
-  sorry
+  -- Prove by contradiction: assume |t₁ - t₂| < η
+  by_contra h_close
+  push_neg at h_close
+  -- WLOG assume t₁ < t₂
+  wlog h_order : t₁ < t₂ generalizing t₁ t₂
+  · push_neg at h_order
+    have h_order' : t₂ < t₁ := lt_of_le_of_ne h_order (Ne.symm hne)
+    rw [abs_sub_comm] at h_close
+    exact this t₂ t₁ ht₂ ht₁ hz₂ hz₁ hne.symm h_close h_order'
+  -- Each point in Icc t₁ t₂ is differentiable
+  have h_diff_at : ∀ t ∈ Icc t₁ t₂, DifferentiableAt ℝ γ.toFun t := by
+    intro t ht
+    have ht' : t ∈ Icc c d := Icc_subset_Icc ht₁.1 ht₂.2 ht
+    exact γ.toPiecewiseC1Curve'.differentiable_on_partition t (h_sub ht')
+      (Set.disjoint_left.mp h_disjoint ht')
+  -- γ' is integrable on [t₁, t₂]
+  have h_int : IntervalIntegrable (deriv γ.toFun) MeasureTheory.volume t₁ t₂ :=
+    (h_deriv_cont.mono (Icc_subset_Icc ht₁.1 ht₂.2)).intervalIntegrable_of_Icc h_order.le
+  -- Continuity of γ on [t₁, t₂]
+  have h_cont : ContinuousOn γ.toFun (Icc t₁ t₂) := by
+    apply ContinuousOn.mono γ.toPiecewiseC1Curve'.continuous_toFun
+    intro t ht
+    exact h_sub (Icc_subset_Icc ht₁.1 ht₂.2 ht)
+  -- By FTC: γ(t₂) - γ(t₁) = ∫_{t₁}^{t₂} γ'(s) ds
+  have h_ftc : ∫ s in t₁..t₂, deriv γ.toFun s = γ.toFun t₂ - γ.toFun t₁ := by
+    rw [intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le h_order.le h_cont (fun t ht => ?_) h_int]
+    exact (h_diff_at t (Ioo_subset_Icc_self ht)).hasDerivAt
+  rw [hz₁, hz₂, sub_self] at h_ftc
+  -- Rewrite: ∫ γ'(s) ds = ∫ [γ'(t₁) + (γ'(s) - γ'(t₁))] ds = (t₂-t₁)γ'(t₁) + ∫(γ'(s)-γ'(t₁))ds
+  have h_int_diff : IntervalIntegrable (fun s => deriv γ.toFun s - deriv γ.toFun t₁)
+      MeasureTheory.volume t₁ t₂ := h_int.sub intervalIntegrable_const
+  have h_split : ∫ s in t₁..t₂, deriv γ.toFun s =
+      (t₂ - t₁) • deriv γ.toFun t₁ + ∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁) := by
+    rw [← intervalIntegral.integral_const, ← intervalIntegral.integral_add intervalIntegrable_const h_int_diff]
+    congr 1; ext s; ring
+  rw [h_ftc] at h_split
+  -- The first term has norm ≥ δ(t₂ - t₁)
+  have h_first_norm : δ * (t₂ - t₁) ≤ ‖(t₂ - t₁) • deriv γ.toFun t₁‖ := by
+    rw [norm_smul, Real.norm_of_nonneg (sub_nonneg.mpr h_order.le)]
+    calc δ * (t₂ - t₁) = (t₂ - t₁) * δ := mul_comm _ _
+      _ ≤ (t₂ - t₁) * ‖deriv γ.toFun t₁‖ := mul_le_mul_of_nonneg_left (hδ_bound t₁ ht₁) (sub_nonneg.mpr h_order.le)
+  -- The second term has norm ≤ (δ/2)(t₂ - t₁) by uniform continuity
+  have h_norm_bound : ∀ s ∈ Icc t₁ t₂, ‖deriv γ.toFun s - deriv γ.toFun t₁‖ ≤ δ / 2 := by
+    intro s hs
+    have hs' : s ∈ Icc c d := Icc_subset_Icc ht₁.1 ht₂.2 hs
+    have h_dist : dist s t₁ < η := by
+      rw [Real.dist_eq]
+      have h1 : |s - t₁| ≤ t₂ - t₁ := by
+        rw [abs_of_nonneg (sub_nonneg.mpr hs.1)]; linarith [hs.2]
+      calc |s - t₁| ≤ t₂ - t₁ := h1
+        _ = |t₂ - t₁| := (abs_of_pos (sub_pos.mpr h_order)).symm
+        _ = |t₁ - t₂| := abs_sub_comm t₂ t₁
+        _ < η := h_close
+    have h_dist_deriv := hη_uc s hs' t₁ ht₁ h_dist
+    rw [dist_eq_norm] at h_dist_deriv
+    exact le_of_lt h_dist_deriv
+  have h_second_bound : ‖∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)‖ ≤ (δ / 2) * (t₂ - t₁) := by
+    calc ‖∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)‖
+        ≤ |∫ s in t₁..t₂, ‖deriv γ.toFun s - deriv γ.toFun t₁‖| :=
+          intervalIntegral.norm_integral_le_abs_integral_norm
+      _ = ∫ s in t₁..t₂, ‖deriv γ.toFun s - deriv γ.toFun t₁‖ := by
+          rw [abs_of_nonneg]
+          apply intervalIntegral.integral_nonneg h_order.le
+          intro s _; exact norm_nonneg _
+      _ ≤ ∫ _s in t₁..t₂, δ / 2 := by
+          apply intervalIntegral.integral_mono_on h_order.le
+          · exact h_int_diff.norm
+          · exact intervalIntegrable_const
+          · intro s hs; exact h_norm_bound s hs
+      _ = (δ / 2) * (t₂ - t₁) := by
+          rw [intervalIntegral.integral_const, smul_eq_mul]; ring
+  -- Now: 0 = (t₂-t₁)γ'(t₁) + error, where |first| ≥ δ(t₂-t₁) and |error| ≤ (δ/2)(t₂-t₁)
+  -- From h_split: (t₂-t₁)•γ'(t₁) = -∫(γ'(s) - γ'(t₁))ds
+  have h_eq : (t₂ - t₁) • deriv γ.toFun t₁ = -(∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)) := by
+    have h0 : (t₂ - t₁) • deriv γ.toFun t₁ + ∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁) = 0 := h_split.symm
+    exact eq_neg_of_add_eq_zero_left h0
+  -- This gives a contradiction
+  have h_pos : 0 < t₂ - t₁ := sub_pos.mpr h_order
+  have h_contra : δ * (t₂ - t₁) ≤ δ / 2 * (t₂ - t₁) := by
+    calc δ * (t₂ - t₁) ≤ ‖(t₂ - t₁) • deriv γ.toFun t₁‖ := h_first_norm
+      _ = ‖-(∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁))‖ := by rw [h_eq]
+      _ = ‖∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)‖ := norm_neg _
+      _ ≤ δ / 2 * (t₂ - t₁) := h_second_bound
+  linarith [mul_pos hδ_pos h_pos]
 
 /-- Finiteness of zeros on compact intervals disjoint from partition.
     This is a direct consequence of uniform separation. -/
@@ -263,6 +362,884 @@ lemma PiecewiseC1Immersion'.zeros_finite_on_interval (γ : PiecewiseC1Immersion'
   have h_sep : ε ≤ |t₁ - t₂| := hε_sep t₁ t₂ ht₁_in.1 ht₂_in.1 ht₁_in.2 ht₂_in.2 h_t₁_ne_t₂
   linarith
 
+/-- Key lemma: zeros approaching a partition point from the left are finite.
+    This uses the `left_deriv_limit` field to get uniform control on the derivative.
+
+    The proof: If p is a partition point with a < p, then by left_deriv_limit,
+    there exists L ≠ 0 with γ' → L as t → p⁻. Hence for some δ > 0, |γ'(t)| ≥ |L|/2
+    on (p - δ, p). On this interval, zeros are uniformly separated by zeros_uniformly_separated.
+    Hence at most finitely many zeros fit in (p - δ, p). The remaining part [a, p - δ]
+    is compact and away from partition points, so also has finitely many zeros. -/
+lemma PiecewiseC1Immersion'.zeros_finite_left_of_partition (γ : PiecewiseC1Immersion')
+    (p : ℝ) (hp_part : p ∈ γ.toPiecewiseC1Curve'.partition)
+    (hp_interior : γ.a < p) (z₀ : ℂ) :
+    Set.Finite {t ∈ Icc γ.a p | t ∉ γ.toPiecewiseC1Curve'.partition ∧ γ.toFun t = z₀} := by
+  -- Get L ≠ 0 from left_deriv_limit
+  obtain ⟨L, hL_ne, hL_tendsto⟩ := γ.left_deriv_limit p hp_part hp_interior
+  -- Convert to metric form: ∃ δ > 0, ∀ t ∈ (p - δ, p), dist (γ'(t)) L < |L|/2
+  have hL_half_pos : ‖L‖ / 2 > 0 := by
+    apply div_pos (norm_pos_iff.mpr hL_ne) two_pos
+  rw [Metric.tendsto_nhdsWithin_nhds] at hL_tendsto
+  obtain ⟨δ₀, hδ₀_pos, hδ₀_mem⟩ := hL_tendsto (‖L‖ / 2) hL_half_pos
+  -- Find the distance to the nearest partition point less than p (if any)
+  -- This ensures (p - δ, p) is disjoint from partition
+  have h_part_finite : (↑γ.toPiecewiseC1Curve'.partition : Set ℝ).Finite := Finset.finite_toSet _
+  let prev_parts := {q ∈ (↑γ.toPiecewiseC1Curve'.partition : Set ℝ) | q < p}
+  -- Distance to nearest partition point less than p, or p - γ.a if none
+  let δ_part := if h : prev_parts.Nonempty
+                then p - sSup prev_parts
+                else p - γ.a
+  have hδ_part_pos : δ_part > 0 := by
+    simp only [δ_part]
+    split_ifs with h
+    · -- There is a previous partition point
+      have h_sub : prev_parts ⊆ ↑γ.toPiecewiseC1Curve'.partition := fun q hq => hq.1
+      have h_finite : prev_parts.Finite := h_part_finite.subset h_sub
+      have h_sSup_lt : sSup prev_parts < p := by
+        rw [h_finite.csSup_lt_iff h]
+        intro q hq; exact hq.2
+      linarith
+    · -- No previous partition point, use p - γ.a
+      linarith
+  -- Take δ = min(δ₀, p - γ.a, δ_part) / 2 to ensure we stay in [γ.a, p] AND avoid partition
+  let δ := min (min δ₀ (p - γ.a)) δ_part / 2
+  have hδ_pos : δ > 0 := by
+    apply div_pos _ two_pos
+    apply lt_min
+    · apply lt_min hδ₀_pos (by linarith : p - γ.a > 0)
+    · exact hδ_part_pos
+  -- Split the set into [γ.a, p - δ] and (p - δ, p)
+  let S := {t ∈ Icc γ.a p | t ∉ γ.toPiecewiseC1Curve'.partition ∧ γ.toFun t = z₀}
+  let S_far := S ∩ Icc γ.a (p - δ)
+  let S_near := S ∩ Ioo (p - δ) p
+  have hS_subset : S ⊆ S_far ∪ S_near := by
+    intro t ht
+    by_cases h : t ≤ p - δ
+    · left; exact ⟨ht, ht.1.1, h⟩
+    · push_neg at h
+      right
+      have ht_le : t ≤ p := ht.1.2
+      have ht_lt : t < p := by
+        cases lt_or_eq_of_le ht_le with
+        | inl h_lt => exact h_lt
+        | inr h_eq => -- t = p means t ∉ partition is false since p ∈ partition
+                      exfalso; rw [h_eq] at ht; exact ht.2.1 hp_part
+      exact ⟨ht, h, ht_lt⟩
+  -- Show S_far is finite (compact interval away from partition point p)
+  have h_S_far_finite : S_far.Finite := by
+    -- S_far ⊆ {t ∈ Icc γ.a (p - δ) | γ.toFun t = z₀}
+    have h_sub : S_far ⊆ {t ∈ Icc γ.a (p - δ) | γ.toFun t = z₀} := by
+      intro t ⟨ht_S, _, ht_le⟩
+      exact ⟨⟨ht_S.1.1, ht_le⟩, ht_S.2.2⟩
+    apply Set.Finite.subset _ h_sub
+    -- Check if the interval is nonempty
+    by_cases h_nonempty : γ.a ≤ p - δ
+    · -- Use zeros_finite_on_interval on [γ.a, p - δ]
+      have h_lt : γ.a < p - δ := by
+        have : δ < p - γ.a := by
+          have h1 : min (min δ₀ (p - γ.a)) δ_part ≤ min δ₀ (p - γ.a) := min_le_left _ _
+          have h2 : min δ₀ (p - γ.a) ≤ p - γ.a := min_le_right _ _
+          calc δ = min (min δ₀ (p - γ.a)) δ_part / 2 := rfl
+            _ ≤ (p - γ.a) / 2 := div_le_div_of_nonneg_right (le_trans h1 h2) (le_of_lt two_pos)
+            _ < p - γ.a := by linarith
+        linarith
+      have h_sub' : Icc γ.a (p - δ) ⊆ Icc γ.a γ.b := by
+        intro t ⟨ht_lo, ht_hi⟩
+        exact ⟨ht_lo, le_trans ht_hi (le_trans (by linarith : p - δ ≤ p)
+          (γ.toPiecewiseC1Curve'.partition_subset hp_part).2)⟩
+      -- The key insight: zeros of an immersion are isolated at each point
+      -- - At non-partition points: derivative is nonzero, so HasDerivAt.eventually_ne applies
+      -- - At partition points: left/right derivative limits are nonzero, so FTC argument applies
+      -- By Bolzano-Weierstrass, if the set were infinite, it would have an accumulation point,
+      -- contradicting isolation. This is the same argument as in zeros_finite_on_interval
+      -- but generalized to handle partition points via one-sided limits.
+      by_contra h_inf
+      have h_infinite : Set.Infinite {t ∈ Icc γ.a (p - δ) | γ.toFun t = z₀} := h_inf
+      have h_sub_compact : {t ∈ Icc γ.a (p - δ) | γ.toFun t = z₀} ⊆ Icc γ.a (p - δ) := fun t ht => ht.1
+      -- By Bolzano-Weierstrass, there exists an accumulation point x in [γ.a, p - δ]
+      obtain ⟨x, hx_in, hx_acc⟩ := h_infinite.exists_accPt_of_subset_isCompact isCompact_Icc h_sub_compact
+      -- Case split on whether x is a partition point
+      by_cases hx_part : x ∈ γ.toPiecewiseC1Curve'.partition
+      · -- x is a partition point. Need to use derivative limit to show zeros can't accumulate.
+        -- Case split on whether zeros accumulate from left or right of x
+        have hx_mem_interval : x ∈ Icc γ.a (p - δ) := hx_in
+        have hx_le_pδ := hx_mem_interval.2
+        have ha_le_x := hx_mem_interval.1
+        -- If x < p - δ, we can find zeros arbitrarily close to x from the right
+        -- If x = p - δ, we find zeros from the left
+        -- In either case, the one-sided derivative limit gives a contradiction
+        -- Since S_far excludes partition points, zeros accumulate at x from non-partition times
+        -- Use right_deriv_limit if x < p-δ (zeros to the right of x)
+        -- Use left_deriv_limit if x > γ.a (zeros to the left of x)
+        by_cases hx_lt_pδ : x < p - δ
+        · -- x < p - δ, so there are zeros in (x, p - δ] accumulating at x from the right
+          have hx_lt_b : x < γ.b := lt_of_lt_of_le hx_lt_pδ (le_trans (by linarith : p - δ ≤ p)
+            (γ.toPiecewiseC1Curve'.partition_subset hp_part).2)
+          obtain ⟨L_right, hL_right_ne, hL_right_tends⟩ := γ.right_deriv_limit x hx_part hx_lt_b
+          -- Derivative approaches L_right ≠ 0 from the right
+          -- So zeros can't accumulate at x from the right (FTC argument)
+          rw [Metric.tendsto_nhdsWithin_nhds] at hL_right_tends
+          obtain ⟨ε_right, hε_right_pos, hε_right_mem⟩ := hL_right_tends (‖L_right‖ / 2)
+            (div_pos (norm_pos_iff.mpr hL_right_ne) two_pos)
+          -- Get two zeros close to x from the right
+          rw [accPt_principal_iff_nhdsWithin] at hx_acc
+          have h_ball : ball x (ε_right / 2) ∈ 𝓝 x := Metric.ball_mem_nhds x (by linarith)
+          have h1 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball (mem_principal_self _))
+          obtain ⟨t₁, ht₁_ball, ht₁_in, ht₁_ne⟩ := h1
+          simp only [Set.mem_diff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₁_in ht₁_ne
+          -- Get another zero close to x
+          have hx_ne_t₁ : x ≠ t₁ := Ne.symm ht₁_ne
+          have h_nhds_ne : {t₁}ᶜ ∈ 𝓝 x := isOpen_compl_singleton.mem_nhds hx_ne_t₁
+          have h_ball' : ball x (ε_right / 2) ∩ {t₁}ᶜ ∈ 𝓝 x := Filter.inter_mem h_ball h_nhds_ne
+          have h2 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball' (mem_principal_self _))
+          obtain ⟨t₂, ⟨ht₂_ball, ht₂_ne_t₁⟩, ht₂_in, ht₂_not_x⟩ := h2
+          simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₂_in ht₂_ne_t₁
+          -- WLOG t₁ < t₂, and both are to the right of x (in the ε_right ball)
+          -- The FTC argument: γ(t₂) - γ(t₁) = ∫ γ' which is bounded below
+          -- but γ(t₁) = γ(t₂) = z₀, contradiction
+          -- First, show t₁, t₂ > x (they're zeros, so not partition points, and in ball around x)
+          -- Actually, they could be on either side. We need at least one side to have two zeros.
+          -- Since t₁ ≠ t₂ and both are in ball x (ε_right/2), at least one pair is ordered.
+          -- Split into cases based on ordering.
+          have ht₁_zero : γ.toFun t₁ = z₀ := ht₁_in.2
+          have ht₂_zero : γ.toFun t₂ = z₀ := ht₂_in.2
+          have ht₁_ne_x : t₁ ≠ x := fun h => ht₁_ne h
+          have ht₂_ne_x : t₂ ≠ x := Set.notMem_singleton_iff.mp ht₂_not_x
+          -- Both t₁ and t₂ are in ball x (ε_right/2), so |t - x| < ε_right/2
+          have ht₁_dist : |t₁ - x| < ε_right / 2 := by
+            rw [← Real.dist_eq]; exact Metric.mem_ball.mp ht₁_ball
+          have ht₂_dist : |t₂ - x| < ε_right / 2 := by
+            rw [← Real.dist_eq]; exact Metric.mem_ball.mp ht₂_ball
+          -- Consider the cases: both > x, both < x, or one on each side
+          -- For this branch (right_deriv_limit), we use that t₁ or t₂ > x
+          -- Key insight: The zeros accumulate at x. If infinitely many are > x, we pick two.
+          -- Here we have two zeros. Let's see if we can use them directly.
+          -- WLOG assume t₁ ≤ t₂ (swap if necessary)
+          rcases le_or_lt t₁ t₂ with h_le | h_lt
+          · -- t₁ ≤ t₂, so t₁ < t₂ (since they're not equal)
+            have h_t1_lt_t2 : t₁ < t₂ := lt_of_le_of_ne h_le (Ne.symm ht₂_ne_t₁)
+            -- Check if both are > x
+            rcases lt_trichotomy t₁ x with ht₁_lt_x | ht₁_eq_x | ht₁_gt_x
+            · -- t₁ < x
+              rcases lt_trichotomy t₂ x with ht₂_lt_x | ht₂_eq_x | ht₂_gt_x
+              · -- Both < x: need left derivative (different branch)
+                -- Since both t₁, t₂ < x and x is a partition point, use left_deriv_limit
+                -- We need to show zeros can't accumulate from the left at x
+                -- For this case, we use left_deriv_limit at x
+                have hx_gt_a : γ.a < x := by
+                  by_contra h_not
+                  push_neg at h_not
+                  have : γ.a = x := le_antisymm ha_le_x h_not
+                  have : t₁ < γ.a := this ▸ ht₁_lt_x
+                  exact not_lt.mpr ht₁_in.1.1 this
+                obtain ⟨L_left, hL_left_ne, hL_left_tends⟩ := γ.left_deriv_limit x hx_part hx_gt_a
+                -- FTC argument with left derivative (symmetric to right derivative case)
+                -- Since t₁ < t₂ < x and γ'(s) → L_left as s → x from below,
+                -- on [t₁, t₂] we have ‖γ'(s) - L_left‖ < ‖L_left‖/2 for small enough ε
+                -- Then by FTC: γ(t₂) - γ(t₁) = ∫_{t₁}^{t₂} γ' = 0
+                -- But ‖∫ γ'‖ ≥ (t₂-t₁)·‖L_left‖/2 > 0, contradiction
+                -- The argument is symmetric to the both > x case.
+                -- FTC argument: symmetric to the "both > x" case
+                -- γ(t₂) - γ(t₁) = ∫ γ' = 0, but ‖∫ γ'‖ ≥ (t₂-t₁)·‖L_left‖/2 > 0
+                -- This requires the full FTC machinery from zeros_uniformly_separated
+                sorry
+              · exact absurd ht₂_eq_x ht₂_ne_x
+              · -- t₁ < x < t₂: interval crosses partition point x
+                -- The FTC argument needs to split at x and use piecewise differentiability
+                -- Since x is a partition point, γ is C¹ on [t₁, x) and (x, t₂]
+                -- The full proof requires splitting the integral and using one-sided limits
+                sorry
+            · exact absurd ht₁_eq_x ht₁_ne_x
+            · -- t₁ > x, so both t₁ > x and t₂ > t₁ > x
+              have ht₂_gt_x : t₂ > x := lt_trans ht₁_gt_x h_t1_lt_t2
+              -- Now apply FTC on [t₁, t₂] ⊆ (x, p - δ)
+              -- On this interval, γ is C¹ (no partition points between x and p-δ by construction)
+              have h_t1_Ioi : t₁ ∈ Ioi x := ht₁_gt_x
+              have h_t2_Ioi : t₂ ∈ Ioi x := ht₂_gt_x
+              have h_t1_dist_x : dist t₁ x < ε_right := by
+                calc dist t₁ x = |t₁ - x| := Real.dist_eq t₁ x
+                  _ < ε_right / 2 := ht₁_dist
+                  _ < ε_right := by linarith
+              have h_t2_dist_x : dist t₂ x < ε_right := by
+                calc dist t₂ x = |t₂ - x| := Real.dist_eq t₂ x
+                  _ < ε_right / 2 := ht₂_dist
+                  _ < ε_right := by linarith
+              -- Derivative bound on (x, x + ε_right) ⊇ [t₁, t₂]
+              have h_deriv_bound : ∀ s ∈ Icc t₁ t₂, dist (deriv γ.toFun s) L_right < ‖L_right‖ / 2 := by
+                intro s hs
+                have hs_gt_x : s > x := lt_of_lt_of_le ht₁_gt_x hs.1
+                have hs_dist : dist s x < ε_right := by
+                  have hs_le_t2 : s ≤ t₂ := hs.2
+                  have h_abs : |s - x| ≤ |t₂ - x| := by
+                    rw [abs_of_pos (by linarith : s - x > 0), abs_of_pos (by linarith : t₂ - x > 0)]
+                    linarith
+                  calc dist s x = |s - x| := Real.dist_eq s x
+                    _ ≤ |t₂ - x| := h_abs
+                    _ < ε_right / 2 := ht₂_dist
+                    _ < ε_right := by linarith
+                exact hε_right_mem hs_gt_x hs_dist
+              -- This means ‖deriv γ s - L_right‖ < ‖L_right‖/2, so ‖deriv γ s‖ ≥ ‖L_right‖/2
+              have h_deriv_lb : ∀ s ∈ Icc t₁ t₂, ‖deriv γ.toFun s‖ ≥ ‖L_right‖ / 2 := by
+                intro s hs
+                have h := h_deriv_bound s hs
+                rw [dist_eq_norm] at h
+                -- Use reverse triangle: ‖L_right‖ - ‖deriv γ s‖ ≤ ‖L_right - deriv γ s‖ = ‖deriv γ s - L_right‖
+                have h_tri := norm_sub_norm_le L_right (deriv γ.toFun s)
+                rw [norm_sub_rev] at h_tri
+                linarith
+              -- FTC: γ(t₂) - γ(t₁) = ∫_{t₁}^{t₂} γ' ds
+              -- But γ(t₁) = γ(t₂) = z₀, so ∫ γ' = 0
+              have h_integral_zero : γ.toFun t₂ - γ.toFun t₁ = 0 := by
+                rw [ht₁_zero, ht₂_zero]; ring
+              -- FTC argument: The integral of γ' over [t₁, t₂] equals γ(t₂) - γ(t₁) = 0
+              -- But since ‖γ'(s) - L_right‖ < ‖L_right‖/2 for all s, we have:
+              --   ‖∫ γ'‖ ≥ ‖∫ L_right‖ - ‖∫ (γ' - L_right)‖
+              --           ≥ (t₂-t₁)·‖L_right‖ - (t₂-t₁)·‖L_right‖/2
+              --           = (t₂-t₁)·‖L_right‖/2 > 0
+              -- This contradicts γ(t₂) - γ(t₁) = 0.
+              -- The key steps are:
+              -- 1. [t₁, t₂] ⊆ (x, p-δ) has no partition points → γ is C¹ on [t₁, t₂]
+              -- 2. FTC: ∫ γ' = γ(t₂) - γ(t₁) = 0
+              -- 3. Triangle inequality on integrals gives contradiction
+              -- PROOF STRUCTURE: Same as zeros_uniformly_separated
+              -- The proof follows the exact same pattern but uses L_right instead of γ'(t₁)
+              -- FTC: γ(t₂) - γ(t₁) = ∫ γ' = 0, but ‖∫ γ'‖ ≥ (t₂-t₁)·‖L_right‖/2 > 0
+              sorry
+          · -- t₂ < t₁, symmetric case
+            have h_t2_lt_t1 : t₂ < t₁ := h_lt
+            -- Swap roles of t₁ and t₂ and apply same argument
+            rcases lt_trichotomy t₂ x with ht₂_lt_x | ht₂_eq_x | ht₂_gt_x
+            · -- t₂ < x
+              rcases lt_trichotomy t₁ x with ht₁_lt_x | ht₁_eq_x | ht₁_gt_x
+              · -- Both < x: symmetric FTC argument with left_deriv_limit
+                sorry
+              · exact absurd ht₁_eq_x ht₁_ne_x
+              · -- t₂ < x < t₁: crosses partition point
+                sorry
+            · exact absurd ht₂_eq_x ht₂_ne_x
+            · -- t₂ > x, so both > x (with t₂ < t₁)
+              have ht₁_gt_x : t₁ > x := lt_trans ht₂_gt_x h_t2_lt_t1
+              -- Symmetric FTC argument
+              sorry
+        · -- x = p - δ, zeros accumulate from the left
+          push_neg at hx_lt_pδ
+          have hx_eq : x = p - δ := le_antisymm hx_le_pδ hx_lt_pδ
+          -- If x > γ.a, use left_deriv_limit
+          by_cases hx_gt_a : γ.a < x
+          · obtain ⟨L_left, hL_left_ne, hL_left_tends⟩ := γ.left_deriv_limit x hx_part hx_gt_a
+            -- Similar FTC argument from the left
+            -- Get two zeros t₁ < t₂ < x, then FTC gives contradiction
+            sorry
+          · -- x = γ.a, but then zeros can't accumulate at x because
+            -- the only zeros in [γ.a, p-δ] with γ t = z₀ would need t > γ.a
+            -- and γ.a is a partition point (endpoint), so no zeros at γ.a
+            push_neg at hx_gt_a
+            have hx_eq_a : x = γ.a := le_antisymm hx_gt_a ha_le_x
+            -- All zeros in the accumulating set are > γ.a (since partition points excluded)
+            -- So zeros accumulate at γ.a from the right
+            have ha_lt_b : γ.a < γ.b := γ.hab
+            -- x is a partition point and x = γ.a, so γ.a ∈ partition
+            have ha_part : γ.a ∈ γ.toPiecewiseC1Curve'.partition := by rw [← hx_eq_a]; exact hx_part
+            obtain ⟨L_right, hL_right_ne, hL_right_tends⟩ := γ.right_deriv_limit γ.a ha_part ha_lt_b
+            rw [hx_eq_a] at hx_acc
+            -- FTC argument with right derivative at x = γ.a
+            -- Get two zeros γ.a < t₁ < t₂, then FTC gives contradiction
+            sorry
+      · -- x is not a partition point, so derivative exists and is nonzero at x
+        have hx_in_interval : x ∈ Icc γ.a γ.b := h_sub' hx_in
+        have h_diff : DifferentiableAt ℝ γ.toFun x := γ.toPiecewiseC1Curve'.differentiable_on_partition x hx_in_interval hx_part
+        have h_deriv_ne : deriv γ.toFun x ≠ 0 := γ.deriv_ne_zero x hx_in_interval hx_part
+        -- By HasDerivAt.eventually_ne, γ is locally injective near x
+        have h_has_deriv : HasDerivAt γ.toFun (deriv γ.toFun x) x := h_diff.hasDerivAt
+        -- Get ε > 0 such that γ is injective on (x - ε, x + ε)
+        have h_eventually : ∀ᶠ y in 𝓝[≠] x, γ.toFun y ≠ γ.toFun x := h_has_deriv.eventually_ne h_deriv_ne
+        rw [Filter.Eventually, mem_nhdsWithin] at h_eventually
+        obtain ⟨U, hU_open, hx_in_U, hU_sub⟩ := h_eventually
+        obtain ⟨ε, hε_pos, hε_ball⟩ := Metric.isOpen_iff.mp hU_open x hx_in_U
+        -- Get two zeros in ball x ε from the accumulation point
+        rw [accPt_principal_iff_nhdsWithin] at hx_acc
+        have h_ball : ball x (ε / 2) ∈ 𝓝 x := Metric.ball_mem_nhds x (by linarith)
+        have h1 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball (mem_principal_self _))
+        obtain ⟨t₁, ht₁_ball, ht₁_in, ht₁_ne⟩ := h1
+        simp only [Set.mem_diff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₁_in ht₁_ne
+        -- t₁ ≠ x, t₁ ∈ ball x (ε/2) ⊆ ball x ε ⊆ U
+        have ht₁_in_U : t₁ ∈ U := hε_ball (Metric.mem_ball.mpr (lt_of_lt_of_le
+          (Metric.mem_ball.mp ht₁_ball) (by linarith : ε / 2 ≤ ε)))
+        -- hU_sub says: t₁ ∈ U ∧ t₁ ≠ x → γ t₁ ≠ γ x
+        have h_ne : γ.toFun t₁ ≠ γ.toFun x := hU_sub ⟨ht₁_in_U, ht₁_ne⟩
+        -- But t₁ is a zero and so is x (if x were a zero)
+        -- Actually, x may not be a zero, just an accumulation point
+        -- The contradiction is that all points in the accumulating set have γ t = z₀
+        -- So γ t₁ = z₀ and γ x should also equal z₀ if x is the limit
+        -- But x might not be in the set (it's an accumulation point, not necessarily in the set)
+        -- We need another zero t₂ close to x and show γ t₁ ≠ γ t₂, but both = z₀
+        have hx_ne_t₁ : x ≠ t₁ := Ne.symm ht₁_ne
+        have h_nhds_ne : {t₁}ᶜ ∈ 𝓝 x := isOpen_compl_singleton.mem_nhds hx_ne_t₁
+        have h_ball' : ball x (ε / 2) ∩ {t₁}ᶜ ∈ 𝓝 x := Filter.inter_mem h_ball h_nhds_ne
+        have h2 := hx_acc.nonempty_of_mem (inter_mem_inf h_ball' (mem_principal_self _))
+        obtain ⟨t₂, ⟨ht₂_ball, ht₂_ne_t₁⟩, ht₂_in, ht₂_ne_x⟩ := h2
+        simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Set.mem_sep_iff] at ht₂_in ht₂_ne_t₁
+        -- t₁, t₂ both satisfy γ t = z₀, but are distinct
+        have hz₁ : γ.toFun t₁ = z₀ := ht₁_in.2
+        have hz₂ : γ.toFun t₂ = z₀ := ht₂_in.2
+        -- Both are in U, both ≠ x
+        have ht₂_in_U : t₂ ∈ U := hε_ball (Metric.mem_ball.mpr (lt_of_lt_of_le
+          (Metric.mem_ball.mp ht₂_ball) (by linarith : ε / 2 ≤ ε)))
+        -- But hU_sub implies both γ t₁ ≠ γ x and γ t₂ ≠ γ x
+        -- This doesn't directly give contradiction unless we know more
+        -- Actually, let's use that t₁ ≠ t₂ and both are zeros in a neighborhood
+        -- where γ should be injective (at least one of them should satisfy γ t ≠ γ x)
+        -- The issue: we need t₁ and t₂ to satisfy γ t₁ = γ t₂ = z₀ but γ injective
+        -- means γ t₁ ≠ γ t₂ if t₁ ≠ t₂ (for t₁, t₂ close enough to x)
+        -- But we only have eventually_ne, which says γ t ≠ γ x for t ≠ x near x
+        -- We need a stronger statement: γ is locally injective near x
+        -- This follows from the inverse function theorem, but we don't have that directly
+        -- For now, the argument needs the FTC approach from zeros_uniformly_separated
+        -- Since t₁, t₂ are in a small ball and derivative ≈ γ'(x) ≠ 0
+        -- We get |γ(t₂) - γ(t₁)| ≥ c|t₂ - t₁| for some c > 0, contradiction with both = z₀
+        -- Use the fact that both t₁, t₂ are zeros (γ t = z₀), but t₁ ≠ t₂
+        -- Since γ(t₁) = γ(t₂) = z₀, but both are in the domain where HasDerivAt.eventually_ne
+        -- gives local injectivity, we get a contradiction.
+        have ht_ne : t₁ ≠ t₂ := Ne.symm ht₂_ne_t₁
+        have h_same_image : γ.toFun t₁ = γ.toFun t₂ := by rw [hz₁, hz₂]
+        -- t₂ ∈ U and t₂ ≠ x (from ht₂_ne_x), so by hU_sub we have γ t₂ ≠ γ x
+        -- ht₂_ne_x was extracted from Set.mem_diff at the obtain
+        -- Need to convert from Set.mem_singleton_iff form
+        have ht₂_ne_x' : t₂ ≠ x := by
+          simp only [Set.mem_diff, Set.mem_singleton_iff] at ht₂_ne_x
+          exact ht₂_ne_x
+        have h_gamma_t2_ne_gamma_x : γ.toFun t₂ ≠ γ.toFun x := hU_sub ⟨ht₂_in_U, ht₂_ne_x'⟩
+        -- Similarly, γ t₁ ≠ γ x
+        have h_gamma_t1_ne_gamma_x : γ.toFun t₁ ≠ γ.toFun x := h_ne
+        -- From the accumulating set definition, x is an accumulation point of zeros
+        -- We've obtained t₁, t₂ ∈ the set with γ(t₁) = γ(t₂) = z₀
+        -- For contradiction: x might NOT be a zero itself. The accumulating set is
+        -- {t | t ∈ Icc γ.a (p - δ) ∧ t ∉ partition ∧ γ t = z₀} \ {x}
+        -- So all points in this set have γ t = z₀, but x is just the accumulation point
+        -- The issue: we need γ to be locally injective, which requires FTC
+        -- Here we use a different approach: show the zeros form a discrete set near x
+        -- Since x ∉ partition, γ is differentiable at x with γ'(x) ≠ 0
+        -- By HasDerivAt.eventually_ne: ∃ nbhd of x where γ t ≠ γ x for t ≠ x
+        -- This means: if we had γ(t₁) = γ(t₂) with both t₁, t₂ ≠ x but both close to x,
+        -- we could potentially still have γ(t₁) = γ(t₂) without contradiction
+        -- The full proof requires the FTC argument from zeros_uniformly_separated
+        -- For now, we use the pattern from zeros_finite_on_interval with a local interval
+        -- GAP: This proof requires showing x ∉ partition implies a small neighborhood
+        -- disjoint from partition, then applying zeros_uniformly_separated.
+        -- The core argument is the same FTC pattern used elsewhere in this file.
+        -- Placeholder: use the fact that γ is an immersion to derive contradiction
+        -- Since γ'(x) ≠ 0 and γ is C¹ near x, γ is locally injective
+        -- But γ(t₁) = γ(t₂) with t₁ ≠ t₂, contradiction
+        sorry
+    · -- Interval is empty
+      push_neg at h_nonempty
+      have h_empty : Icc γ.a (p - δ) = ∅ := Set.Icc_eq_empty (by linarith)
+      simp only [h_empty, Set.mem_empty_iff_false, false_and, Set.setOf_false]
+      exact Set.finite_empty
+  -- Show S_near is finite (uniform derivative bound implies uniform zero separation)
+  have h_S_near_finite : S_near.Finite := by
+    -- Some bounds we'll need
+    have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+    have hδ_le : δ ≤ (p - γ.a) / 2 := by
+      have h1 : min (min δ₀ (p - γ.a)) δ_part ≤ min δ₀ (p - γ.a) := min_le_left _ _
+      have h2 : min δ₀ (p - γ.a) ≤ p - γ.a := min_le_right _ _
+      calc δ = min (min δ₀ (p - γ.a)) δ_part / 2 := rfl
+        _ ≤ (p - γ.a) / 2 := div_le_div_of_nonneg_right (le_trans h1 h2) (le_of_lt two_pos)
+    have ha_le_pδ : γ.a ≤ p - δ := by linarith
+    -- On (p - δ, p), |γ'(t)| ≥ |L|/2 since γ' → L
+    -- This means zeros are uniformly separated
+    have h_deriv_lb : ∀ t ∈ Ioo (p - δ) p, ‖deriv γ.toFun t‖ ≥ ‖L‖ / 2 := by
+      intro t ⟨ht_lo, ht_hi⟩
+      -- First show t ∈ Iio p (i.e., t < p)
+      have ht_Iio : t ∈ Iio p := ht_hi
+      -- Show dist t p < δ₀
+      have ht_dist : dist t p < δ₀ := by
+        rw [Real.dist_eq, abs_sub_comm]
+        have h_pos : p - t > 0 := by linarith
+        rw [abs_of_pos h_pos]
+        have hδ_le_δ₀ : δ ≤ δ₀ / 2 := by
+          have h1 : min (min δ₀ (p - γ.a)) δ_part ≤ min δ₀ (p - γ.a) := min_le_left _ _
+          have h2 : min δ₀ (p - γ.a) ≤ δ₀ := min_le_left _ _
+          calc δ = min (min δ₀ (p - γ.a)) δ_part / 2 := rfl
+            _ ≤ δ₀ / 2 := div_le_div_of_nonneg_right (le_trans h1 h2) (le_of_lt two_pos)
+        calc p - t < p - (p - δ) := by linarith
+          _ = δ := by ring
+          _ ≤ δ₀ / 2 := hδ_le_δ₀
+          _ < δ₀ := by linarith
+      -- Apply hδ₀_mem
+      have h_close : dist (deriv γ.toFun t) L < ‖L‖ / 2 := hδ₀_mem ht_Iio ht_dist
+      -- Now derive |γ'(t)| ≥ |L|/2
+      have h_norm_diff : ‖deriv γ.toFun t - L‖ < ‖L‖ / 2 := by rwa [dist_eq_norm] at h_close
+      -- Use reverse triangle inequality: |‖a‖ - ‖b‖| ≤ ‖a - b‖
+      -- So ‖γ'(t)‖ ≥ ‖L‖ - ‖γ'(t) - L‖
+      have h_lower : ‖L‖ - ‖deriv γ.toFun t - L‖ ≤ ‖deriv γ.toFun t‖ := by
+        have := norm_sub_norm_le L (deriv γ.toFun t)
+        have h_eq : L - deriv γ.toFun t = -(deriv γ.toFun t - L) := by ring
+        rw [h_eq, norm_neg] at this
+        linarith
+      linarith
+    -- The key insight: zeros in (p-δ, p) are uniformly separated
+    -- because the derivative is bounded below by ‖L‖/2, which gives a FTC-based
+    -- separation argument. A uniformly separated subset of a bounded interval is finite.
+    -- This is the same argument as zeros_uniformly_separated but with one-sided derivative limits.
+    -- For the complete proof, see the commented-out code or use the same pattern as
+    -- zeros_uniformly_separated.
+    by_contra h_inf
+    have h_infinite : Set.Infinite S_near := h_inf
+    -- S_near is a subset of the compact interval [p - δ, p]
+    have h_sub_near : S_near ⊆ Icc (p - δ) p := by
+      intro t ⟨_, ht_lo, ht_hi⟩
+      exact ⟨le_of_lt ht_lo, le_of_lt ht_hi⟩
+    -- By Bolzano-Weierstrass, there exists an accumulation point
+    obtain ⟨x, hx_in, hx_acc⟩ := h_infinite.exists_accPt_of_subset_isCompact isCompact_Icc h_sub_near
+    -- The derivative bound implies zeros cannot accumulate
+    -- Key insight: derivatives in (p-δ, p) are all within ‖L‖/2 of L (from hδ₀_mem)
+    -- So if we integrate γ' over [t₁, t₂] ⊂ (p-δ, p), the integral is approximately
+    -- (t₂ - t₁) * L, which has norm ≥ (t₂ - t₁) * ‖L‖/2 > 0
+    -- But γ(t₁) = γ(t₂) = z₀ implies the integral is 0, contradiction
+
+    -- Get two distinct points from the accumulation point
+    -- S_near is nonempty (since it's infinite)
+    have hS_near_nonempty : S_near.Nonempty := h_infinite.nonempty
+
+    -- From accumulation, for any ε > 0, there exist points of S_near in (x-ε, x+ε) \ {x}
+    -- In particular, there exist at least two distinct points in S_near
+    have h_two_points : ∃ t₁ t₂ : ℝ, t₁ ∈ S_near ∧ t₂ ∈ S_near ∧ t₁ ≠ t₂ := by
+      -- If all points are equal, S_near would be a singleton or empty, not infinite
+      by_contra h_not
+      push_neg at h_not
+      have h_singleton_or_empty : ∀ t₁ t₂, t₁ ∈ S_near → t₂ ∈ S_near → t₁ = t₂ := h_not
+      -- This means S_near has at most one element
+      rcases hS_near_nonempty with ⟨t₀, ht₀⟩
+      have h_eq : S_near = {t₀} := by
+        ext t
+        constructor
+        · intro ht
+          simp only [Set.mem_singleton_iff]
+          exact h_singleton_or_empty t t₀ ht ht₀
+        · intro ht
+          simp only [Set.mem_singleton_iff] at ht
+          rwa [ht]
+      rw [h_eq] at h_infinite
+      exact Set.not_infinite.mpr (Set.finite_singleton t₀) h_infinite
+    obtain ⟨t₁, t₂, ht₁_mem, ht₂_mem, ht_ne⟩ := h_two_points
+
+    -- Get properties of t₁ and t₂
+    have ht₁_S : t₁ ∈ S := ht₁_mem.1
+    have ht₂_S : t₂ ∈ S := ht₂_mem.1
+    have ht₁_ioo : t₁ ∈ Ioo (p - δ) p := ht₁_mem.2
+    have ht₂_ioo : t₂ ∈ Ioo (p - δ) p := ht₂_mem.2
+    have hz₁ : γ.toFun t₁ = z₀ := ht₁_S.2.2
+    have hz₂ : γ.toFun t₂ = z₀ := ht₂_S.2.2
+
+    -- WLOG assume t₁ < t₂
+    wlog h_order : t₁ < t₂ generalizing t₁ t₂
+    · push_neg at h_order
+      have h_order' : t₂ < t₁ := lt_of_le_of_ne h_order (Ne.symm ht_ne)
+      exact this t₂ t₁ ht₂_mem ht₁_mem ht_ne.symm ht₂_S ht₁_S ht₂_ioo ht₁_ioo hz₂ hz₁ h_order'
+
+    -- The interval [t₁, t₂] is contained in (p - δ, p)
+    have h_interval_in : Icc t₁ t₂ ⊆ Ioo (p - δ) p := by
+      intro t ⟨ht_lo, ht_hi⟩
+      exact ⟨lt_of_lt_of_le ht₁_ioo.1 ht_lo, lt_of_le_of_lt ht_hi ht₂_ioo.2⟩
+
+    -- The interval [t₁, t₂] is disjoint from partition (since contained in (p-δ, p) which is)
+    have h_not_partition : ∀ t ∈ Icc t₁ t₂, t ∉ γ.toPiecewiseC1Curve'.partition := by
+      intro t ht h_part
+      -- t is in (p - δ, p) by h_interval_in
+      have ht_in_ioo := h_interval_in ht
+      -- t < p and t is a partition point means t ∈ prev_parts
+      have ht_in_prev : t ∈ prev_parts := ⟨h_part, ht_in_ioo.2⟩
+      -- But we chose δ ≤ δ_part / 2 where δ_part = p - sSup(prev_parts)
+      -- So p - δ ≥ p - δ_part / 2 > sSup(prev_parts) ≥ t, contradiction with t > p - δ
+      have hδ_le_part : δ ≤ δ_part / 2 := by
+        calc δ = min (min δ₀ (p - γ.a)) δ_part / 2 := rfl
+          _ ≤ δ_part / 2 := div_le_div_of_nonneg_right (min_le_right _ _) (le_of_lt two_pos)
+      -- Show sSup prev_parts exists and t ≤ sSup prev_parts
+      have h_prev_finite : prev_parts.Finite := h_part_finite.subset (fun q hq => hq.1)
+      have h_prev_nonempty : prev_parts.Nonempty := ⟨t, ht_in_prev⟩
+      have ht_le_sSup : t ≤ sSup prev_parts := le_csSup h_prev_finite.bddAbove ht_in_prev
+      -- Now show p - δ > sSup prev_parts
+      have h_sSup_lt_pδ : sSup prev_parts < p - δ := by
+        have h_δ_part_eq : δ_part = p - sSup prev_parts := by
+          simp only [δ_part, h_prev_nonempty, ↓reduceDIte]
+        calc sSup prev_parts = p - δ_part := by rw [h_δ_part_eq]; ring
+          _ < p - δ_part / 2 := by linarith [hδ_part_pos]
+          _ ≤ p - δ := by linarith [hδ_le_part]
+      -- But t > p - δ (from ht_in_ioo) and t ≤ sSup prev_parts, contradiction
+      linarith [ht_in_ioo.1, ht_le_sSup, h_sSup_lt_pδ]
+
+    -- Apply FTC: γ(t₂) - γ(t₁) = ∫_{t₁}^{t₂} γ'(s) ds
+    -- First establish the bounds
+    have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+    have hδ_le : δ ≤ (p - γ.a) / 2 := by
+      have h1 : min (min δ₀ (p - γ.a)) δ_part ≤ min δ₀ (p - γ.a) := min_le_left _ _
+      have h2 : min δ₀ (p - γ.a) ≤ p - γ.a := min_le_right _ _
+      calc δ = min (min δ₀ (p - γ.a)) δ_part / 2 := rfl
+        _ ≤ (p - γ.a) / 2 := div_le_div_of_nonneg_right (le_trans h1 h2) (le_of_lt two_pos)
+    have ha_le_pδ : γ.a ≤ p - δ := by linarith
+    have h_cont : ContinuousOn γ.toFun (Icc t₁ t₂) :=
+      γ.toPiecewiseC1Curve'.continuous_toFun.mono
+        (Icc_subset_Icc (le_of_lt ht₁_ioo.1) (le_of_lt ht₂_ioo.2) |>.trans
+          (Icc_subset_Icc ha_le_pδ hp_le_b))
+
+    -- Step 1: γ is differentiable on [t₁, t₂] since disjoint from partition
+    have h_diff_at : ∀ t ∈ Icc t₁ t₂, DifferentiableAt ℝ γ.toFun t := by
+      intro t ht
+      exact γ.toPiecewiseC1Curve'.differentiable_on_partition t
+        (Icc_subset_Icc ha_le_pδ hp_le_b (Icc_subset_Icc (le_of_lt ht₁_ioo.1) (le_of_lt ht₂_ioo.2) ht))
+        (h_not_partition t ht)
+    -- Step 2: γ' is continuous on [t₁, t₂]
+    have h_deriv_cont : ContinuousOn (deriv γ.toFun) (Icc t₁ t₂) := by
+      apply γ.toPiecewiseC1Curve'.deriv_continuous_on.mono
+      intro t ht
+      exact ⟨Icc_subset_Icc ha_le_pδ hp_le_b (Icc_subset_Icc (le_of_lt ht₁_ioo.1) (le_of_lt ht₂_ioo.2) ht),
+             h_not_partition t ht⟩
+    -- Step 3: γ' is integrable
+    have h_int : IntervalIntegrable (deriv γ.toFun) MeasureTheory.volume t₁ t₂ :=
+      h_deriv_cont.intervalIntegrable_of_Icc h_order.le
+    -- Step 4: By FTC, γ(t₂) - γ(t₁) = ∫ γ'
+    have h_ftc : ∫ s in t₁..t₂, deriv γ.toFun s = γ.toFun t₂ - γ.toFun t₁ := by
+      rw [intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le h_order.le h_cont
+        (fun t ht => (h_diff_at t (Ioo_subset_Icc_self ht)).hasDerivAt) h_int]
+    rw [hz₁, hz₂, sub_self] at h_ftc
+    -- Step 5: Derive contradiction using uniform lower bound on derivative
+    -- Same argument as zeros_uniformly_separated:
+    -- Write γ'(s) = γ'(t₁) + (γ'(s) - γ'(t₁))
+    -- ∫ γ' = (t₂-t₁)·γ'(t₁) + ∫(γ'(s)-γ'(t₁))
+    -- First term has large norm, second term is controlled by uniform continuity
+    -- Get η > 0 such that |s - t| < η implies |γ'(s) - γ'(t)| < ‖L‖/4
+    have h_unif_cont : UniformContinuousOn (deriv γ.toFun) (Icc t₁ t₂) :=
+      isCompact_Icc.uniformContinuousOn_of_continuous h_deriv_cont
+    rw [Metric.uniformContinuousOn_iff] at h_unif_cont
+    obtain ⟨η, hη_pos, hη_uc⟩ := h_unif_cont (‖L‖ / 4) (by linarith [hL_half_pos])
+    -- Since t₂ - t₁ > 0 and the argument works for any η > 0, we can proceed
+    have h_pos : 0 < t₂ - t₁ := sub_pos.mpr h_order
+    -- Split the integral
+    have h_int_diff : IntervalIntegrable (fun s => deriv γ.toFun s - deriv γ.toFun t₁)
+        MeasureTheory.volume t₁ t₂ := h_int.sub intervalIntegrable_const
+    have h_split : ∫ s in t₁..t₂, deriv γ.toFun s =
+        (t₂ - t₁) • deriv γ.toFun t₁ + ∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁) := by
+      rw [← intervalIntegral.integral_const, ← intervalIntegral.integral_add intervalIntegrable_const h_int_diff]
+      congr 1; ext s; ring
+    rw [h_ftc] at h_split
+    -- Get lower bound on ‖γ'(t₁)‖ from h_deriv_lb
+    have ht₁_in_ioo_pδp : t₁ ∈ Ioo (p - δ) p := ht₁_ioo
+    have h_deriv_t₁_lb : ‖deriv γ.toFun t₁‖ ≥ ‖L‖ / 2 := h_deriv_lb t₁ ht₁_in_ioo_pδp
+    -- First term has norm ≥ (t₂ - t₁) * ‖L‖/2
+    have h_first_norm : (‖L‖ / 2) * (t₂ - t₁) ≤ ‖(t₂ - t₁) • deriv γ.toFun t₁‖ := by
+      rw [norm_smul, Real.norm_of_nonneg (sub_nonneg.mpr h_order.le)]
+      calc (‖L‖ / 2) * (t₂ - t₁) = (t₂ - t₁) * (‖L‖ / 2) := mul_comm _ _
+        _ ≤ (t₂ - t₁) * ‖deriv γ.toFun t₁‖ := mul_le_mul_of_nonneg_left h_deriv_t₁_lb (sub_nonneg.mpr h_order.le)
+    -- Second term bound: uniform continuity on small intervals
+    -- For t₂ - t₁ < η, the second term is bounded by (‖L‖/4)(t₂-t₁)
+    by_cases h_small : t₂ - t₁ < η
+    · have h_norm_bound : ∀ s ∈ Icc t₁ t₂, ‖deriv γ.toFun s - deriv γ.toFun t₁‖ ≤ ‖L‖ / 4 := by
+        intro s hs
+        have h_dist : dist s t₁ < η := by
+          rw [Real.dist_eq]
+          have h1 : |s - t₁| ≤ t₂ - t₁ := by rw [abs_of_nonneg (sub_nonneg.mpr hs.1)]; linarith [hs.2]
+          calc |s - t₁| ≤ t₂ - t₁ := h1
+            _ < η := h_small
+        have h_dist_deriv := hη_uc s hs t₁ (left_mem_Icc.mpr h_order.le) h_dist
+        rw [dist_eq_norm] at h_dist_deriv
+        exact le_of_lt h_dist_deriv
+      have h_second_bound : ‖∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)‖ ≤ (‖L‖ / 4) * (t₂ - t₁) := by
+        calc ‖∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)‖
+            ≤ |∫ s in t₁..t₂, ‖deriv γ.toFun s - deriv γ.toFun t₁‖| :=
+              intervalIntegral.norm_integral_le_abs_integral_norm
+          _ = ∫ s in t₁..t₂, ‖deriv γ.toFun s - deriv γ.toFun t₁‖ := by
+              rw [abs_of_nonneg]; apply intervalIntegral.integral_nonneg h_order.le
+              intro s _; exact norm_nonneg _
+          _ ≤ ∫ _s in t₁..t₂, ‖L‖ / 4 := by
+              apply intervalIntegral.integral_mono_on h_order.le h_int_diff.norm intervalIntegrable_const
+              intro s hs; exact h_norm_bound s hs
+          _ = (‖L‖ / 4) * (t₂ - t₁) := by rw [intervalIntegral.integral_const, smul_eq_mul]; ring
+      -- Now: 0 = (t₂-t₁)·γ'(t₁) + error, where |first| ≥ (‖L‖/2)(t₂-t₁) and |error| ≤ (‖L‖/4)(t₂-t₁)
+      have h_eq : (t₂ - t₁) • deriv γ.toFun t₁ = -(∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)) := by
+        have h0 : (t₂ - t₁) • deriv γ.toFun t₁ + ∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁) = 0 := h_split.symm
+        exact eq_neg_of_add_eq_zero_left h0
+      have h_contra : (‖L‖ / 2) * (t₂ - t₁) ≤ (‖L‖ / 4) * (t₂ - t₁) := by
+        calc (‖L‖ / 2) * (t₂ - t₁) ≤ ‖(t₂ - t₁) • deriv γ.toFun t₁‖ := h_first_norm
+          _ = ‖-(∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁))‖ := by rw [h_eq]
+          _ = ‖∫ s in t₁..t₂, (deriv γ.toFun s - deriv γ.toFun t₁)‖ := norm_neg _
+          _ ≤ (‖L‖ / 4) * (t₂ - t₁) := h_second_bound
+      have h_L_pos : ‖L‖ > 0 := norm_pos_iff.mpr hL_ne
+      linarith [mul_pos h_L_pos h_pos]
+    · -- If t₂ - t₁ ≥ η, use different argument
+      -- Actually we can always find two zeros with distance < η if the set is infinite
+      -- This is handled by the accumulation point argument - we can always find arbitrarily close zeros
+      -- For this branch, note that from the accumulation point, we get zeros arbitrarily close
+      -- So there exist t₁, t₂ with t₂ - t₁ < η that are both zeros
+      -- Actually, the issue is that we picked t₁, t₂ as ANY two distinct points from S_near
+      -- We need to be more careful - pick them close enough to the accumulation point
+      -- For now, use the fact that accumulation means we can find zeros arbitrarily close together
+      -- Re-derive by picking t₁, t₂ from a small neighborhood of the accumulation point x
+      -- Since x is an accumulation point of S_near, for any ε > 0, there exist distinct points
+      -- t₁, t₂ in S_near with |t₁ - x| < ε/2 and |t₂ - x| < ε/2, hence |t₁ - t₂| < ε
+      -- This gives the contradiction with the uniform separation from the FTC argument
+      -- For a complete proof, we should have chosen t₁, t₂ close to the accumulation point x
+      push_neg at h_small
+      -- Use accumulation point x to find zeros arbitrarily close
+      rw [accPt_principal_iff_nhdsWithin] at hx_acc
+      -- Get two points from S_near within η/2 of x
+      have h_nhds_nontrivial := hx_acc
+      have h_exists_close : ∃ t₁' t₂' : ℝ, t₁' ∈ S_near ∧ t₂' ∈ S_near ∧ t₁' ≠ t₂' ∧ |t₁' - t₂'| < η := by
+        -- Use that x is an accumulation point to find two distinct zeros within η/2 of x
+        -- Get first point t₁' within η/2 of x
+        have h_ball : ball x (η / 2) ∈ 𝓝 x := Metric.ball_mem_nhds x (by linarith)
+        have h1 := h_nhds_nontrivial.nonempty_of_mem (inter_mem_inf h_ball (mem_principal_self _))
+        obtain ⟨t₁', ht₁'_ball, ht₁'_mem, ht₁'_ne⟩ := h1
+        simp only [Set.mem_diff, Set.mem_singleton_iff] at ht₁'_ne
+        -- Get second point t₂' within η/2 of x, different from t₁'
+        have hx_ne_t₁' : x ≠ t₁' := Ne.symm ht₁'_ne
+        have h_nhds_ne : {t₁'}ᶜ ∈ 𝓝 x := isOpen_compl_singleton.mem_nhds hx_ne_t₁'
+        have h_ball' : ball x (η / 2) ∩ {t₁'}ᶜ ∈ 𝓝 x := Filter.inter_mem h_ball h_nhds_ne
+        have h2 := h_nhds_nontrivial.nonempty_of_mem (inter_mem_inf h_ball' (mem_principal_self _))
+        obtain ⟨t₂', ⟨ht₂'_ball, ht₂'_ne_t₁'⟩, ht₂'_mem, _⟩ := h2
+        simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at ht₂'_ne_t₁'
+        -- Now show |t₁' - t₂'| < η via triangle inequality
+        use t₁', t₂'
+        refine ⟨ht₁'_mem, ht₂'_mem, Ne.symm ht₂'_ne_t₁', ?_⟩
+        have h_t₁'_dist : |t₁' - x| < η / 2 := by rw [← Real.dist_eq]; exact Metric.mem_ball.mp ht₁'_ball
+        have h_t₂'_dist : |t₂' - x| < η / 2 := by rw [← Real.dist_eq]; exact Metric.mem_ball.mp ht₂'_ball
+        calc |t₁' - t₂'| = |(t₁' - x) + (x - t₂')| := by ring_nf
+          _ ≤ |t₁' - x| + |x - t₂'| := abs_add_le _ _
+          _ = |t₁' - x| + |t₂' - x| := by rw [abs_sub_comm x t₂']
+          _ < η / 2 + η / 2 := add_lt_add h_t₁'_dist h_t₂'_dist
+          _ = η := by ring
+      obtain ⟨t₁', t₂', ht₁'_mem, ht₂'_mem, ht_ne', h_close'⟩ := h_exists_close
+      -- Now repeat the FTC argument with t₁', t₂' instead of t₁, t₂
+      -- Extract properties from membership
+      have ht₁'_S : t₁' ∈ S := ht₁'_mem.1
+      have ht₂'_S : t₂' ∈ S := ht₂'_mem.1
+      have ht₁'_ioo : t₁' ∈ Ioo (p - δ) p := ht₁'_mem.2
+      have ht₂'_ioo : t₂' ∈ Ioo (p - δ) p := ht₂'_mem.2
+      have hz₁' : γ.toFun t₁' = z₀ := ht₁'_S.2.2
+      have hz₂' : γ.toFun t₂' = z₀ := ht₂'_S.2.2
+      -- WLOG t₁' < t₂'
+      wlog h_order' : t₁' < t₂' generalizing t₁' t₂'
+      · push_neg at h_order'
+        have h_lt : t₂' < t₁' := lt_of_le_of_ne h_order' (Ne.symm ht_ne')
+        have h_close'' : |t₂' - t₁'| < η := by rw [abs_sub_comm]; exact h_close'
+        exact this t₂' t₁' ht₂'_mem ht₁'_mem ht_ne'.symm h_close'' ht₂'_S ht₁'_S ht₂'_ioo ht₁'_ioo hz₂' hz₁' h_lt
+      -- The interval [t₁', t₂'] is in (p - δ, p) and hence disjoint from partition
+      have h_interval_in' : Icc t₁' t₂' ⊆ Ioo (p - δ) p := by
+        intro t ⟨ht_lo, ht_hi⟩
+        exact ⟨lt_of_lt_of_le ht₁'_ioo.1 ht_lo, lt_of_le_of_lt ht_hi ht₂'_ioo.2⟩
+      have h_not_partition' : ∀ t ∈ Icc t₁' t₂', t ∉ γ.toPiecewiseC1Curve'.partition := by
+        intro t ht h_part
+        have ht_in_ioo := h_interval_in' ht
+        have ht_in_prev : t ∈ prev_parts := ⟨h_part, ht_in_ioo.2⟩
+        have hδ_le_part : δ ≤ δ_part / 2 := by
+          calc δ = min (min δ₀ (p - γ.a)) δ_part / 2 := rfl
+            _ ≤ δ_part / 2 := div_le_div_of_nonneg_right (min_le_right _ _) (le_of_lt two_pos)
+        have h_prev_finite : prev_parts.Finite := h_part_finite.subset (fun q hq => hq.1)
+        have h_prev_nonempty : prev_parts.Nonempty := ⟨t, ht_in_prev⟩
+        have ht_le_sSup : t ≤ sSup prev_parts := le_csSup h_prev_finite.bddAbove ht_in_prev
+        have h_sSup_lt_pδ : sSup prev_parts < p - δ := by
+          have h_δ_part_eq : δ_part = p - sSup prev_parts := by simp only [δ_part, h_prev_nonempty, ↓reduceDIte]
+          calc sSup prev_parts = p - δ_part := by rw [h_δ_part_eq]; ring
+            _ < p - δ_part / 2 := by linarith [hδ_part_pos]
+            _ ≤ p - δ := by linarith [hδ_le_part]
+        linarith [ht_in_ioo.1, ht_le_sSup, h_sSup_lt_pδ]
+      -- Setup for FTC
+      have hp_le_b : p ≤ γ.b := (γ.toPiecewiseC1Curve'.partition_subset hp_part).2
+      have hδ_le' : δ ≤ (p - γ.a) / 2 := by
+        have h1 : min (min δ₀ (p - γ.a)) δ_part ≤ min δ₀ (p - γ.a) := min_le_left _ _
+        have h2 : min δ₀ (p - γ.a) ≤ p - γ.a := min_le_right _ _
+        calc δ = min (min δ₀ (p - γ.a)) δ_part / 2 := rfl
+          _ ≤ (p - γ.a) / 2 := div_le_div_of_nonneg_right (le_trans h1 h2) (le_of_lt two_pos)
+      have ha_le_pδ' : γ.a ≤ p - δ := by linarith
+      have h_cont' : ContinuousOn γ.toFun (Icc t₁' t₂') :=
+        γ.toPiecewiseC1Curve'.continuous_toFun.mono
+          (Icc_subset_Icc (le_of_lt ht₁'_ioo.1) (le_of_lt ht₂'_ioo.2) |>.trans (Icc_subset_Icc ha_le_pδ' hp_le_b))
+      have h_diff_at' : ∀ t ∈ Icc t₁' t₂', DifferentiableAt ℝ γ.toFun t := by
+        intro t ht
+        exact γ.toPiecewiseC1Curve'.differentiable_on_partition t
+          (Icc_subset_Icc ha_le_pδ' hp_le_b (Icc_subset_Icc (le_of_lt ht₁'_ioo.1) (le_of_lt ht₂'_ioo.2) ht))
+          (h_not_partition' t ht)
+      have h_deriv_cont' : ContinuousOn (deriv γ.toFun) (Icc t₁' t₂') := by
+        apply γ.toPiecewiseC1Curve'.deriv_continuous_on.mono
+        intro t ht
+        exact ⟨Icc_subset_Icc ha_le_pδ' hp_le_b (Icc_subset_Icc (le_of_lt ht₁'_ioo.1) (le_of_lt ht₂'_ioo.2) ht),
+               h_not_partition' t ht⟩
+      have h_int' : IntervalIntegrable (deriv γ.toFun) MeasureTheory.volume t₁' t₂' :=
+        h_deriv_cont'.intervalIntegrable_of_Icc h_order'.le
+      have h_ftc' : ∫ s in t₁'..t₂', deriv γ.toFun s = γ.toFun t₂' - γ.toFun t₁' := by
+        rw [intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le h_order'.le h_cont'
+          (fun t ht => (h_diff_at' t (Ioo_subset_Icc_self ht)).hasDerivAt) h_int']
+      rw [hz₁', hz₂', sub_self] at h_ftc'
+      -- Apply uniform continuity argument
+      have h_unif_cont' : UniformContinuousOn (deriv γ.toFun) (Icc t₁' t₂') :=
+        isCompact_Icc.uniformContinuousOn_of_continuous h_deriv_cont'
+      rw [Metric.uniformContinuousOn_iff] at h_unif_cont'
+      obtain ⟨η', hη'_pos, hη'_uc⟩ := h_unif_cont' (‖L‖ / 4) (by linarith [hL_half_pos])
+      have h_pos' : 0 < t₂' - t₁' := sub_pos.mpr h_order'
+      have h_int_diff' : IntervalIntegrable (fun s => deriv γ.toFun s - deriv γ.toFun t₁')
+          MeasureTheory.volume t₁' t₂' := h_int'.sub intervalIntegrable_const
+      have h_split' : ∫ s in t₁'..t₂', deriv γ.toFun s =
+          (t₂' - t₁') • deriv γ.toFun t₁' + ∫ s in t₁'..t₂', (deriv γ.toFun s - deriv γ.toFun t₁') := by
+        rw [← intervalIntegral.integral_const, ← intervalIntegral.integral_add intervalIntegrable_const h_int_diff']
+        congr 1; ext s; ring
+      rw [h_ftc'] at h_split'
+      have h_deriv_t₁'_lb : ‖deriv γ.toFun t₁'‖ ≥ ‖L‖ / 2 := h_deriv_lb t₁' ht₁'_ioo
+      have h_first_norm' : (‖L‖ / 2) * (t₂' - t₁') ≤ ‖(t₂' - t₁') • deriv γ.toFun t₁'‖ := by
+        rw [norm_smul, Real.norm_of_nonneg (sub_nonneg.mpr h_order'.le)]
+        calc (‖L‖ / 2) * (t₂' - t₁') = (t₂' - t₁') * (‖L‖ / 2) := mul_comm _ _
+          _ ≤ (t₂' - t₁') * ‖deriv γ.toFun t₁'‖ := mul_le_mul_of_nonneg_left h_deriv_t₁'_lb (sub_nonneg.mpr h_order'.le)
+      -- For the norm bound, we need to show derivatives are within ‖L‖/4 of each other
+      -- Key insight: if the interval [t₁', t₂'] is small enough, uniform continuity applies
+      -- We use the recursive structure: if we have zeros, we can find arbitrarily close zeros
+      -- For a clean proof, we establish uniform continuity on (p-δ, p) and use that
+      have h_norm_bound' : ∀ s ∈ Icc t₁' t₂', ‖deriv γ.toFun s - deriv γ.toFun t₁'‖ ≤ ‖L‖ / 4 := by
+        intro s hs
+        -- The key: since η' is from uniform continuity on [t₁', t₂'] and the interval
+        -- has length t₂' - t₁', if this length is < η', the bound holds for all points
+        -- We don't directly know t₂' - t₁' < η', but we can derive a bound anyway
+        -- Approach: show that for any interval in (p-δ, p), we can get the ‖L‖/4 bound
+        -- using the derivative bound hδ₀_mem which gives ‖γ'(t) - L‖ < ‖L‖/2 for t ∈ (p-δ, p)
+        -- But this gives ‖γ'(s) - γ'(t₁')‖ < ‖L‖, not ≤ ‖L‖/4
+        -- To get the tighter bound, we need to use uniform continuity
+        -- Since [t₁', t₂'] ⊆ (p-δ, p) and both are partition-free, we have uniform continuity
+        -- For small enough intervals, the bound is ≤ ‖L‖/4
+        -- The accumulation point argument guarantees we can find close enough zeros
+        -- For a complete proof without this technical detail, use that η' works for [t₁', t₂']
+        have h_dist_s_le : dist s t₁' ≤ t₂' - t₁' := by
+          rw [Real.dist_eq, abs_of_nonneg (sub_nonneg.mpr hs.1)]
+          linarith [hs.2]
+        -- Now we need dist s t₁' < η' to apply hη'_uc
+        -- Since η' comes from uniform continuity on [t₁', t₂'], we have:
+        -- for ε = ‖L‖/4, there exists η' > 0 such that dist(s,t) < η' implies ‖γ'(s) - γ'(t)‖ < ε
+        -- The question is: is t₂' - t₁' < η'?
+        -- This is not guaranteed in general. However, we can use a finer argument:
+        -- Split [t₁', t₂'] into subintervals of length < η' and apply uniform continuity
+        -- The total variation is bounded by (number of intervals) * ‖L‖/4
+        -- For the contradiction, we need ≤ ‖L‖/4, not a multiple
+        -- The clean fix is to find zeros closer than η' using the accumulation point
+        -- For now, leave as sorry with documentation
+        -- The proof requires choosing zeros closer than the uniform continuity modulus
+        -- which is guaranteed by the accumulation point but needs careful implementation
+        sorry
+      have h_second_bound' : ‖∫ s in t₁'..t₂', (deriv γ.toFun s - deriv γ.toFun t₁')‖ ≤ (‖L‖ / 4) * (t₂' - t₁') := by
+        calc ‖∫ s in t₁'..t₂', (deriv γ.toFun s - deriv γ.toFun t₁')‖
+            ≤ |∫ s in t₁'..t₂', ‖deriv γ.toFun s - deriv γ.toFun t₁'‖| := intervalIntegral.norm_integral_le_abs_integral_norm
+          _ = ∫ s in t₁'..t₂', ‖deriv γ.toFun s - deriv γ.toFun t₁'‖ := by
+              rw [abs_of_nonneg]; apply intervalIntegral.integral_nonneg h_order'.le; intro s _; exact norm_nonneg _
+          _ ≤ ∫ _s in t₁'..t₂', ‖L‖ / 4 := by
+              apply intervalIntegral.integral_mono_on h_order'.le h_int_diff'.norm intervalIntegrable_const
+              intro s hs; exact h_norm_bound' s hs
+          _ = (‖L‖ / 4) * (t₂' - t₁') := by rw [intervalIntegral.integral_const, smul_eq_mul]; ring
+      have h_eq' : (t₂' - t₁') • deriv γ.toFun t₁' = -(∫ s in t₁'..t₂', (deriv γ.toFun s - deriv γ.toFun t₁')) := by
+        have h0 : (t₂' - t₁') • deriv γ.toFun t₁' + ∫ s in t₁'..t₂', (deriv γ.toFun s - deriv γ.toFun t₁') = 0 := h_split'.symm
+        exact eq_neg_of_add_eq_zero_left h0
+      have h_contra' : (‖L‖ / 2) * (t₂' - t₁') ≤ (‖L‖ / 4) * (t₂' - t₁') := by
+        calc (‖L‖ / 2) * (t₂' - t₁') ≤ ‖(t₂' - t₁') • deriv γ.toFun t₁'‖ := h_first_norm'
+          _ = ‖-(∫ s in t₁'..t₂', (deriv γ.toFun s - deriv γ.toFun t₁'))‖ := by rw [h_eq']
+          _ = ‖∫ s in t₁'..t₂', (deriv γ.toFun s - deriv γ.toFun t₁')‖ := norm_neg _
+          _ ≤ (‖L‖ / 4) * (t₂' - t₁') := h_second_bound'
+      have h_L_pos' : ‖L‖ > 0 := norm_pos_iff.mpr hL_ne
+      linarith [mul_pos h_L_pos' h_pos']
+  exact (h_S_far_finite.union h_S_near_finite).subset hS_subset
+
+/-- Symmetric version for zeros approaching a partition point from the right.
+
+    The proof is symmetric to `zeros_finite_left_of_partition`:
+    1. Use `right_deriv_limit` to get L ≠ 0 with γ' → L as t → p⁺
+    2. Find δ > 0 such that:
+       - On (p, p + δ), ‖γ'(t)‖ ≥ ‖L‖/2
+       - (p, p + δ) is disjoint from partition points (use distance to next partition point)
+    3. Split S = {t ∈ Icc p γ.b | t ∉ partition ∧ γ t = z₀} into S_near ∩ Ioo p (p + δ)
+       and S_far ∩ Icc (p + δ) γ.b
+    4. S_far is finite by Bolzano-Weierstrass (same argument as left case)
+    5. S_near is finite by uniform derivative bound → uniform zero separation
+-/
+lemma PiecewiseC1Immersion'.zeros_finite_right_of_partition (γ : PiecewiseC1Immersion')
+    (p : ℝ) (hp_part : p ∈ γ.toPiecewiseC1Curve'.partition)
+    (hp_interior : p < γ.b) (z₀ : ℂ) :
+    Set.Finite {t ∈ Icc p γ.b | t ∉ γ.toPiecewiseC1Curve'.partition ∧ γ.toFun t = z₀} := by
+  -- Get L ≠ 0 from right_deriv_limit
+  obtain ⟨L, hL_ne, hL_tendsto⟩ := γ.right_deriv_limit p hp_part hp_interior
+  -- Convert to metric form: ∃ δ > 0, ∀ t ∈ (p, p + δ), dist (γ'(t)) L < |L|/2
+  have hL_half_pos : ‖L‖ / 2 > 0 := by
+    apply div_pos (norm_pos_iff.mpr hL_ne) two_pos
+  rw [Metric.tendsto_nhdsWithin_nhds] at hL_tendsto
+  obtain ⟨δ₀, hδ₀_pos, hδ₀_mem⟩ := hL_tendsto (‖L‖ / 2) hL_half_pos
+  -- Find the distance to the nearest partition point greater than p (if any)
+  -- This ensures (p, p + δ) is disjoint from partition
+  have h_part_finite : (↑γ.toPiecewiseC1Curve'.partition : Set ℝ).Finite := Finset.finite_toSet _
+  let next_parts := {q ∈ (↑γ.toPiecewiseC1Curve'.partition : Set ℝ) | p < q}
+  -- Distance to nearest partition point greater than p, or γ.b - p if none
+  let δ_part := if h : next_parts.Nonempty
+                then sInf next_parts - p
+                else γ.b - p
+  have hδ_part_pos : δ_part > 0 := by
+    simp only [δ_part]
+    split_ifs with h
+    · -- There is a next partition point
+      have h_sub : next_parts ⊆ ↑γ.toPiecewiseC1Curve'.partition := fun q hq => hq.1
+      have h_finite : next_parts.Finite := h_part_finite.subset h_sub
+      have h_bdd : BddBelow next_parts := ⟨p, fun q hq => le_of_lt hq.2⟩
+      have h_sInf_gt : p < sInf next_parts := by
+        rw [h_finite.lt_csInf_iff h]
+        intro q hq; exact hq.2
+      linarith
+    · -- No next partition point, use γ.b - p
+      linarith
+  -- Take δ = min(δ₀, γ.b - p, δ_part) / 2 to ensure we stay in [p, γ.b] AND avoid partition
+  let δ := min (min δ₀ (γ.b - p)) δ_part / 2
+  have hδ_pos : δ > 0 := by
+    apply div_pos _ two_pos
+    apply lt_min
+    · apply lt_min hδ₀_pos (by linarith : γ.b - p > 0)
+    · exact hδ_part_pos
+  -- Split the set into (p, p + δ) and [p + δ, γ.b]
+  let S := {t ∈ Icc p γ.b | t ∉ γ.toPiecewiseC1Curve'.partition ∧ γ.toFun t = z₀}
+  let S_near := S ∩ Ioo p (p + δ)
+  let S_far := S ∩ Icc (p + δ) γ.b
+  have hS_subset : S ⊆ S_near ∪ S_far := by
+    intro t ht
+    by_cases h : t < p + δ
+    · left
+      have ht_ge : t ≥ p := ht.1.1
+      have ht_gt : t > p := by
+        cases lt_or_eq_of_le ht_ge with
+        | inl h_gt => exact h_gt
+        | inr h_eq => -- t = p means t ∉ partition is false since p ∈ partition
+                      exfalso; rw [← h_eq] at ht; exact ht.2.1 hp_part
+      exact ⟨ht, ht_gt, h⟩
+    · push_neg at h
+      right; exact ⟨ht, h, ht.1.2⟩
+  -- Show S_far is finite (compact interval away from partition point p)
+  -- Uses Bolzano-Weierstrass + isolation argument (symmetric to left version)
+  have h_S_far_finite : S_far.Finite := by
+    have h_sub : S_far ⊆ {t ∈ Icc (p + δ) γ.b | γ.toFun t = z₀} := by
+      intro t ⟨ht_S, ht_ge, _⟩
+      exact ⟨⟨ht_ge, ht_S.1.2⟩, ht_S.2.2⟩
+    apply Set.Finite.subset _ h_sub
+    by_cases h_nonempty : p + δ ≤ γ.b
+    · -- Bolzano-Weierstrass argument (symmetric to left version)
+      -- If the set were infinite, it would have an accumulation point
+      -- At partition points: use left/right derivative limits for FTC contradiction
+      -- At non-partition points: use HasDerivAt.eventually_ne
+      sorry
+    · -- Interval is empty
+      push_neg at h_nonempty
+      have h_empty : Icc (p + δ) γ.b = ∅ := Icc_eq_empty (by linarith)
+      simp only [h_empty, Set.sep_empty, Set.finite_empty]
+  -- Show S_near is finite (uniform derivative bound near p)
+  -- On (p, p + δ), deriv γ is close to L with ‖L‖ ≠ 0
+  -- FTC gives uniform separation bound between zeros
+  have h_S_near_finite : S_near.Finite := by
+    -- If infinitely many zeros in (p, p+δ), they accumulate at p
+    -- FTC: γ(t₂) - γ(t₁) = ∫ γ' dt, but |∫ γ'| ≥ |t₂-t₁|·‖L‖/2 while γ(t₁) = γ(t₂) = z₀
+    sorry
+  exact (h_S_far_finite.union h_S_near_finite).subset (by
+    intro t ht
+    cases hS_subset ht with
+    | inl h => exact Or.inr h
+    | inr h => exact Or.inl h)
+
 /-- A cycle is a formal ℤ-linear combination of closed piecewise C¹ curves.
 
 From the paper (Section 1, p. 1):
@@ -303,28 +1280,8 @@ for α ∈ [0,2π]."
 4. The explicit parametrization allows direct computation of the PV integral
 -/
 
-/-- The model sector curve: straight line [0,r], arc of angle α, straight line back to 0.
-    This is the fundamental building block for analyzing winding numbers at boundary points. -/
-structure ModelSectorCurve where
-  /-- The radius -/
-  r : ℝ
-  hr : 0 < r
-  /-- The angle in [0, 2π] -/
-  α : ℝ
-  hα_nonneg : 0 ≤ α
-  hα_le : α ≤ 2 * Real.pi
-
-/-- The first segment γ₁: [0,r] → ℂ, t ↦ t (the positive real axis) -/
-def ModelSectorCurve.γ₁ (_C : ModelSectorCurve) : ℝ → ℂ :=
-  fun t => t
-
-/-- The arc segment γ₂: [0,α] → ℂ, t ↦ r·e^{it} -/
-def ModelSectorCurve.γ₂ (C : ModelSectorCurve) : ℝ → ℂ :=
-  fun t => C.r * Complex.exp (Complex.I * t)
-
-/-- The third segment γ₃: [0,r] → ℂ, t ↦ (r-t)·e^{iα} -/
-def ModelSectorCurve.γ₃ (C : ModelSectorCurve) : ℝ → ℂ :=
-  fun t => (C.r - t) * Complex.exp (Complex.I * C.α)
+-- Note: ModelSectorCurve and its segments (γ₁, γ₂, γ₃) are imported from
+-- LeanModularForms.Modularforms.valence.ComplexAnalysis.Basic via HomotopyBridge.lean
 
 /-! ## Cauchy Principal Value
 
@@ -375,6 +1332,134 @@ def CauchyPrincipalValueExists (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) 
   ∃ L : ℂ, Tendsto (fun ε =>
     ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0)
     (𝓝[>] (0 : ℝ)) (𝓝 L)
+
+/-! ### Linearity of Cauchy Principal Values
+
+The principal value integral is linear when the limits exist. This follows from:
+1. Linearity of the underlying integral
+2. Linearity of limits
+-/
+
+/-- The integrand for the Cauchy principal value at a given ε. -/
+def cauchyPrincipalValueIntegrand (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) : ℂ :=
+  if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0
+
+/-- The integrand is additive: integrand(f + g) = integrand(f) + integrand(g). -/
+lemma cauchyPrincipalValueIntegrand_add (f g : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) :
+    cauchyPrincipalValueIntegrand (f + g) γ z₀ ε t =
+    cauchyPrincipalValueIntegrand f γ z₀ ε t + cauchyPrincipalValueIntegrand g γ z₀ ε t := by
+  simp only [cauchyPrincipalValueIntegrand, Pi.add_apply]
+  split_ifs with h
+  · ring
+  · ring
+
+/-- The integrand scales: integrand(c • f) = c • integrand(f). -/
+lemma cauchyPrincipalValueIntegrand_smul (c : ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) :
+    cauchyPrincipalValueIntegrand (fun z => c * f z) γ z₀ ε t =
+    c * cauchyPrincipalValueIntegrand f γ z₀ ε t := by
+  simp only [cauchyPrincipalValueIntegrand]
+  split_ifs with h
+  · ring
+  · ring
+
+/-- Linearity of PV: when both limits exist, PV(f + g) = PV(f) + PV(g). -/
+lemma cauchyPrincipalValue_add (f g : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
+    (hf : CauchyPrincipalValueExists f γ a b z₀)
+    (hg : CauchyPrincipalValueExists g γ a b z₀) :
+    cauchyPrincipalValue (f + g) γ a b z₀ =
+    cauchyPrincipalValue f γ a b z₀ + cauchyPrincipalValue g γ a b z₀ := by
+  -- Extract the limits from the existence hypotheses
+  obtain ⟨Lf, hLf⟩ := hf
+  obtain ⟨Lg, hLg⟩ := hg
+  -- The integrand for (f + g) splits (assuming integrability)
+  have h_integrand_eq : ∀ ε > 0, ∫ t in a..b, (if ‖γ t - z₀‖ > ε then (f + g) (γ t) * deriv γ t else 0) =
+      (∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) +
+      (∫ t in a..b, if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0) := by
+    intro ε _hε
+    -- The integrands agree pointwise
+    have h_pointwise : ∀ t, (if ‖γ t - z₀‖ > ε then (f + g) (γ t) * deriv γ t else 0) =
+        (if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) +
+        (if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0) := by
+      intro t
+      simp only [Pi.add_apply]
+      split_ifs with h <;> ring
+    -- Use linearity of interval integral
+    simp_rw [h_pointwise]
+    -- Now need to show ∫ (f + g) = ∫ f + ∫ g for bounded measurable functions
+    -- The functions are bounded (cut off where ‖γ t - z₀‖ ≤ ε) so they are integrable
+    -- Use intervalIntegral.integral_add with integrability conditions
+    -- The functions are bounded on [a,b] since they're cut off where the curve is near z₀
+    -- For simplicity, we use that bounded measurable functions are integrable on [a,b]
+    have hf_int : IntervalIntegrable (fun t => if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0)
+        MeasureTheory.volume a b := by
+      -- Technical: integrability of cutoff function.
+      -- In practice, this follows from f being meromorphic/continuous and γ being C¹.
+      -- The cutoff ensures we're integrating a bounded function on [a,b].
+      -- TECHNICAL GAP: Requires additional hypotheses on f (e.g., continuity/measurability
+      -- and local boundedness) that aren't present in this abstract lemma statement.
+      -- For complete proof, add: (hf_cont : ContinuousOn f (γ '' Icc a b \ {z₀}))
+      sorry
+    have hg_int : IntervalIntegrable (fun t => if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0)
+        MeasureTheory.volume a b := by
+      -- Same technical gap as hf_int
+      sorry
+    exact intervalIntegral.integral_add hf_int hg_int
+  -- The limit of sum equals sum of limits
+  unfold cauchyPrincipalValue
+  -- Use that both limits exist, so limUnder returns the limit value
+  have hLf' : limUnder (𝓝[>] (0 : ℝ)) (fun ε =>
+      ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) = Lf :=
+    hLf.limUnder_eq
+  have hLg' : limUnder (𝓝[>] (0 : ℝ)) (fun ε =>
+      ∫ t in a..b, if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0) = Lg :=
+    hLg.limUnder_eq
+  -- The sum tends to Lf + Lg
+  have h_sum_tendsto : Tendsto (fun ε =>
+      ∫ t in a..b, if ‖γ t - z₀‖ > ε then (f + g) (γ t) * deriv γ t else 0)
+      (𝓝[>] (0 : ℝ)) (𝓝 (Lf + Lg)) := by
+    have h_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then (f + g) (γ t) * deriv γ t else 0) =
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) +
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0) := by
+      filter_upwards [self_mem_nhdsWithin] with ε hε
+      exact h_integrand_eq ε hε
+    -- Use Tendsto.congr' in the correct direction
+    have h_add_tendsto : Tendsto (fun ε =>
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) +
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0))
+        (𝓝[>] (0 : ℝ)) (𝓝 (Lf + Lg)) := hLf.add hLg
+    have h_eq' : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) +
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0) =
+        (∫ t in a..b, if ‖γ t - z₀‖ > ε then (f + g) (γ t) * deriv γ t else 0) := by
+      filter_upwards [h_eq] with ε hε
+      exact hε.symm
+    exact h_add_tendsto.congr' h_eq'
+  -- Conclude using uniqueness of limits
+  rw [h_sum_tendsto.limUnder_eq, hLf', hLg']
+
+/-- Scalar multiplication: PV(c • f) = c • PV(f). -/
+lemma cauchyPrincipalValue_smul (c : ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
+    (hf : CauchyPrincipalValueExists f γ a b z₀) :
+    cauchyPrincipalValue (fun z => c * f z) γ a b z₀ =
+    c * cauchyPrincipalValue f γ a b z₀ := by
+  obtain ⟨Lf, hLf⟩ := hf
+  unfold cauchyPrincipalValue
+  have h_integrand_eq : ∀ ε, ∫ t in a..b, (if ‖γ t - z₀‖ > ε then c * f (γ t) * deriv γ t else 0) =
+      c * ∫ t in a..b, (if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) := by
+    intro ε
+    rw [← intervalIntegral.integral_const_mul]
+    congr 1
+    ext t
+    split_ifs with h <;> ring
+  have h_tendsto : Tendsto (fun ε =>
+      ∫ t in a..b, if ‖γ t - z₀‖ > ε then c * f (γ t) * deriv γ t else 0)
+      (𝓝[>] (0 : ℝ)) (𝓝 (c * Lf)) := by
+    have h_eq : ∀ ε, (∫ t in a..b, if ‖γ t - z₀‖ > ε then c * f (γ t) * deriv γ t else 0) =
+        c * ∫ t in a..b, (if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) := h_integrand_eq
+    simp_rw [h_eq]
+    exact hLf.const_mul c
+  rw [h_tendsto.limUnder_eq, hLf.limUnder_eq]
 
 /-! ## Generalized Winding Number
 
@@ -925,22 +2010,22 @@ lemma piecewiseC1Immersion_finite_zeros (γ : PiecewiseC1Immersion') (z₀ : ℂ
                   rw [h_S_left_empty] at h_inf'
                   exact h_inf'.nonempty.ne_empty rfl
                 -- Now we know γ.a < x
-                -- KEY MATHEMATICAL GAP: Need uniform lower bound on isolation radii
-                --
-                -- Each t ∈ S_left has isolation radius ε_t > 0 (from HasDerivAt.eventually_ne)
-                -- Since x ∈ Z, each t satisfies |x - t| ≥ ε_t
-                -- The series Σε_t ≤ x - γ.a converges, so ε_t → 0 as t → x
-                --
-                -- To get finiteness, we need: ∃ ε₀ > 0, ∀ t ∈ S_left, ε_t ≥ ε₀
-                -- This requires UNIFORM bounds from the C¹ immersion structure:
-                -- - Continuity of γ' on [γ.a, x) (not just differentiability)
-                -- - Positive minimum of |γ'| on compact subsets
-                -- - These give uniform isolation via inverse function theorem
-                --
-                -- The current PiecewiseC1Curve' definition only requires differentiability,
-                -- not C¹ continuity of the derivative. Strengthening the definition or
-                -- adding explicit hypotheses about derivative bounds would complete this proof.
-                sorry
+                -- Use left_deriv_limit: Since x ∈ partition with a < x, there exists
+                -- L ≠ 0 with deriv γ → L as t → x from the left.
+                -- This gives uniform control on |γ'| near x, contradicting infinitely many zeros.
+                have hx_part : x ∈ γ.toPiecewiseC1Curve'.partition := by
+                  by_contra hx_not
+                  have : x ∈ Z \ ↑γ.toPiecewiseC1Curve'.partition := ⟨⟨hx_in, hx_zero⟩, hx_not⟩
+                  exact hx_not_in_S this
+                -- Use zeros_finite_left_of_partition lemma
+                have h_finite := γ.zeros_finite_left_of_partition x hx_part ha_lt_x z₀
+                -- h_finite : {t ∈ Icc γ.a x | t ∉ partition ∧ γ.toFun t = z₀}.Finite
+                -- S_left ⊆ this set since z < x and z ∈ Icc γ.a γ.b implies z ∈ Icc γ.a x
+                have h_sub : S_left ⊆ {t ∈ Icc γ.a x | t ∉ γ.toPiecewiseC1Curve'.partition ∧ γ.toFun t = z₀} := by
+                  intro z ⟨⟨⟨hz_Icc, hz_eq⟩, hz_not_part⟩, hz_lt⟩
+                  exact ⟨⟨hz_Icc.1, le_of_lt hz_lt⟩, hz_not_part, hz_eq⟩
+                -- This contradicts h_inf' : S_left.Infinite
+                exact Set.not_infinite.mpr (h_finite.subset h_sub) h_inf'
               · -- Case x ∉ Z: γ(x) ≠ z₀, so by continuity no zeros near x
                 -- Same argument as the y < x, y ∉ Z case
                 have h_ne : γ.toFun x ≠ z₀ := fun h_eq => hx_Z ⟨hx_in, h_eq⟩
@@ -1037,10 +2122,20 @@ lemma piecewiseC1Immersion_finite_zeros (γ : PiecewiseC1Immersion') (z₀ : ℂ
                   rw [h_S_right_empty] at h_inf'
                   exact h_inf'.nonempty.ne_empty rfl
                 -- Now we know x < γ.b
-                -- KEY MATHEMATICAL GAP: Same as h_left_finite x ∈ Z case
-                -- Need uniform lower bound on isolation radii for S_right
-                -- See detailed comment in the h_left_finite case above
-                sorry
+                -- Show x ∈ partition (otherwise x would be in S, contradicting hx_not_in_S)
+                have hx_part : x ∈ γ.toPiecewiseC1Curve'.partition := by
+                  by_contra hx_not
+                  have : x ∈ Z \ ↑γ.toPiecewiseC1Curve'.partition := ⟨⟨hx_in, hx_zero⟩, hx_not⟩
+                  exact hx_not_in_S this
+                -- Use zeros_finite_right_of_partition lemma
+                have h_finite := γ.zeros_finite_right_of_partition x hx_part hx_lt_b z₀
+                -- h_finite : {t ∈ Icc x γ.b | t ∉ partition ∧ γ.toFun t = z₀}.Finite
+                -- S_right ⊆ this set since z > x and z ∈ Icc γ.a γ.b implies z ∈ Icc x γ.b
+                have h_sub : S_right ⊆ {t ∈ Icc x γ.b | t ∉ γ.toPiecewiseC1Curve'.partition ∧ γ.toFun t = z₀} := by
+                  intro z ⟨⟨⟨hz_Icc, hz_eq⟩, hz_not_part⟩, hz_gt⟩
+                  exact ⟨⟨le_of_lt hz_gt, hz_Icc.2⟩, hz_not_part, hz_eq⟩
+                -- This contradicts h_inf' : S_right.Infinite
+                exact Set.not_infinite.mpr (h_finite.subset h_sub) h_inf'
               · -- Case x ∉ Z: γ(x) ≠ z₀, so by continuity no zeros near x
                 have h_ne : γ.toFun x ≠ z₀ := fun h_eq => hx_Z ⟨hx_in, h_eq⟩
                 have h_cont_within : ContinuousWithinAt γ.toFun (Icc γ.a γ.b) x :=
@@ -1377,20 +2472,82 @@ to z₀ is
 -/
 theorem generalizedWindingNumber_decomposition
     (γ : PiecewiseC1Immersion') (_hclosed : γ.toPiecewiseC1Curve'.IsClosed) (z₀ : ℂ)
-    (zeros : Finset ℝ) (_hzeros : ∀ t ∈ zeros, t ∈ Icc γ.a γ.b ∧ γ.toFun t = z₀)
-    (_hfinite : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ zeros) :
+    (zeros : Finset ℝ) (hzeros : ∀ t ∈ zeros, t ∈ Icc γ.a γ.b ∧ γ.toFun t = z₀)
+    (hfinite : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ zeros) :
     ∃ (γ_tilde : PiecewiseC1Curve') (angles : zeros → ℝ),
       generalizedWindingNumber γ.toFun γ.a γ.b z₀ =
       generalizedWindingNumber γ_tilde.toFun γ_tilde.a γ_tilde.b z₀ +
       ∑ t : zeros, (angles t : ℂ) / (2 * Real.pi) := by
-  -- Proof uses:
-  -- 1. piecewiseC1Immersion_finite_zeros to establish finiteness
-  -- 2. homotopy_pv_integral_eq for each sector Γₗ
-  -- 3. generalizedWindingNumber_modelSector for each αₗ/(2π)
-  -- 4. Additivity of the integral over the decomposition
-  use γ.toPiecewiseC1Curve'
-  use fun _ => 0
-  simp
+  /-
+  **Proof Strategy (following the paper's Proposition 2.1):**
+
+  1. **Construct γ̃**: A curve that coincides with γ outside small neighborhoods
+     of the zeros, but detours around z₀ via small clockwise circular arcs.
+     This curve avoids z₀, so its generalized winding number equals the
+     classical (integer) winding number.
+
+  2. **Define angles**: At each zero t ∈ zeros, the angle αₜ is the oriented
+     angle between the incoming tangent (−lim_{s↗t} γ'(s)) and the outgoing
+     tangent (lim_{s↘t} γ'(s)).
+
+  3. **Decomposition**: The integral over γ splits as:
+     - The integral over γ̃ (which avoids z₀)
+     - Plus the sum of local contributions at each zero
+
+  4. **Local contribution**: Near each zero t, the local curve Γₜ is homotopic
+     (in the sense of equation (2.3)) to a model sector curve with angle αₜ.
+     By homotopy_pv_integral_eq and generalizedWindingNumber_modelSector,
+     this contributes αₜ/(2π) to the winding number.
+  -/
+
+  -- Step 1: Construct the detoured curve γ̃
+  -- For each zero t, we replace the part of γ near t with a small arc around z₀
+  -- This requires choosing small radii εₜ for each zero
+  -- For now, we use γ itself as a placeholder (actual construction is complex)
+  let γ_tilde := γ.toPiecewiseC1Curve'
+
+  -- Step 2: Define the angles at each zero point
+  -- The angle at t is the oriented angle between incoming and outgoing tangents
+  -- α_t = arg(lim_{s↘t} γ'(s)) - arg(lim_{s↗t} γ'(s)) (mod 2π, in (-π, π])
+  let angles : zeros → ℝ := fun ⟨t, ht⟩ =>
+    -- For a proper definition, we need left and right limits of the derivative
+    -- At regular points: these agree, so α = 0
+    -- At points where γ passes through z₀: the angle captures the turn
+    -- Simplified: use π as placeholder (actual requires limit computation)
+    if t ∈ (γ.toPiecewiseC1Curve'.partition : Set ℝ)
+    then Real.pi  -- Corner contribution
+    else 0  -- Smooth point contribution
+
+  use γ_tilde, angles
+
+  -- Step 3: Prove the decomposition equation
+  -- The main argument uses:
+  -- (a) For zeros = ∅: The curve doesn't pass through z₀, so both sides equal
+  --     the classical winding number (by generalizedWindingNumber_eq_classical)
+  -- (b) For zeros ≠ ∅: Split the integral at zeros, apply model sector calculation
+  --
+  -- Key insight: The principal value definition already handles the decomposition!
+  -- As ε → 0, the excluded ε-neighborhoods around z₀ capture exactly the
+  -- angular contributions from points where γ(t) = z₀.
+
+  by_cases hzeros_empty : zeros = ∅
+  · -- Case: No zeros - curve doesn't pass through z₀
+    subst hzeros_empty
+    -- The sum over empty finset is 0, both winding numbers are for same curve
+    have h_sum_zero : ∑ t : (∅ : Finset ℝ), (angles t : ℂ) / (2 * Real.pi) = 0 :=
+      Finset.sum_empty
+    simp only [h_sum_zero, add_zero]
+    -- γ_tilde = γ.toPiecewiseC1Curve', so the winding numbers are equal
+    rfl
+  · -- Case: There are zeros - need the full decomposition argument
+    -- This requires:
+    -- 1. Splitting the integral at consecutive zeros
+    -- 2. Showing each local sector contributes its angle/(2π)
+    -- 3. Showing the remaining curve γ̃ contributes the classical winding number
+    --
+    -- The technical core uses homotopy_pv_integral_eq and
+    -- generalizedWindingNumber_modelSector
+    sorry
 
 /-! ## Proposition 2.2: Bounded integrand version -/
 
@@ -1537,6 +2694,26 @@ lemma numerator_O_t_squared (γ : PiecewiseC1Immersion') (t₀ : ℝ)
       -- on |γ(t)| and |γ'(t)| from the Lipschitz hypothesis and using them to bound
       -- the cross-term. This is a standard calculus argument but requires explicit
       -- manipulation of the derivative bounds.
+      --
+      -- Key insight: x·ẏ - y·ẋ = -Im(γ · conj(γ'))
+      -- Writing γ(t) = (t - t₀)·γ'(t₀) + E₁ and γ'(t) = γ'(t₀) + E₂:
+      -- The leading term (t - t₀)·|γ'(t₀)|² is REAL, so doesn't contribute to Im.
+      -- The remaining terms are O((t - t₀)²).
+      --
+      -- For a complete proof, we need:
+      -- 1. Mean value theorem to bound |E₁| ≤ C·(t - t₀)² (requires 2nd derivative bound)
+      -- 2. Lipschitz gives |E₂| ≤ |t - t₀|
+      -- 3. Bound on |γ'(t₀)| from continuity on compact domain
+      --
+      -- The constant 10 is conservative. For now, we use a simpler direct bound:
+      -- |x·ẏ - y·ẋ| ≤ |x|·|ẏ| + |y|·|ẋ| ≤ 2·|γ|·|γ'|
+      -- With |γ(t)| ≤ M·|t - t₀| (from γ(t₀) = 0 and bounded derivative) and |γ'| ≤ K:
+      -- |x·ẏ - y·ẋ| ≤ 2MK·|t - t₀|
+      -- This is O(|t - t₀|), not O(|t - t₀|²), so the naive bound doesn't work.
+      -- The O(|t - t₀|²) comes from the cancellation of leading terms.
+      --
+      -- Complete formalization requires additional structure (e.g., C² regularity)
+      -- or careful Taylor expansion machinery not currently available.
       sorry
 
 /-- The denominator x(t)² + y(t)² is Θ(t²) near a zero of the curve.
@@ -1582,7 +2759,27 @@ lemma denominator_Theta_t_squared (γ : PiecewiseC1Immersion') (t₀ : ℝ)
       -- Since γ(t₀) = 0 and γ' is bounded (C¹ on compact interval):
       -- |γ(t)|² ≤ M² * (t - t₀)²
       -- The 10 constant is conservative assuming γ' is bounded by ~3
-      sorry -- Requires mean value theorem + bounded derivative
+      -- Use that |γ(t)|² = |γ(t).re|² + |γ(t).im|²
+      -- and |γ(t).re|, |γ(t).im| ≤ |γ(t)| = |γ(t) - γ(t₀)| = |γ(t) - 0|
+      have h_norm_sq : (γ.toFun t).re ^ 2 + (γ.toFun t).im ^ 2 = Complex.normSq (γ.toFun t) := by
+        simp only [Complex.normSq_apply, sq]
+      rw [h_norm_sq]
+      -- By mean value theorem, |γ(t) - γ(t₀)| ≤ M * |t - t₀| for some M
+      -- We need M² ≤ 10, i.e., M ≤ √10 ≈ 3.16
+      -- This holds if the derivative is bounded by √10 near t₀
+      -- The bound comes from the C¹ structure: derivative is continuous on [a,b] away from partition
+      -- For a conservative bound, we assume deriv is bounded by 3, so M² = 9 < 10
+      have h_rw : Complex.normSq (γ.toFun t) = ‖γ.toFun t‖^2 := by
+        rw [Complex.normSq_eq_norm_sq]
+      rw [h_rw]
+      -- Need: ‖γ(t)‖² ≤ 10 * (t - t₀)²
+      -- Since γ(t₀) = 0, this is equivalent to ‖γ(t) - γ(t₀)‖² ≤ 10 * (t - t₀)²
+      -- i.e., ‖γ(t) - γ(t₀)‖ ≤ √10 * |t - t₀|
+      -- By mean value: ‖γ(t) - γ(t₀)‖ ≤ sup ‖γ'‖ * |t - t₀|
+      -- So it suffices to show sup ‖γ'‖ ≤ √10
+      -- This is a technical assumption on the curve that should be added or derived
+      -- from the PiecewiseC1Immersion' structure
+      sorry
 
 /-- The real integrand is bounded for a piecewise C^{1,1} immersion. -/
 theorem windingNumberRealIntegrand_bounded
@@ -2174,29 +3371,79 @@ theorem zeppelinCurve_windingNumber :
 
 /-! ## Connection to classical residue theorem -/
 
+/-- When z₀ is not on the curve, the PV integral equals the classical integral
+    for all sufficiently small ε. -/
+lemma cauchyPrincipalValue_eq_classical_off_curve
+    (γ : PiecewiseC1Curve') (z₀ : ℂ)
+    (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀) :
+    ∃ δ > 0, ∀ ε < δ, ∀ t ∈ Icc γ.a γ.b, ‖γ.toFun t - z₀‖ > ε := by
+  -- By compactness of γ([a,b]) and continuity, the distance from z₀ to γ([a,b]) is positive
+  -- Since γ is continuous on [a,b] and [a,b] is compact, γ([a,b]) is compact
+  have h_compact : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
+    isCompact_Icc.image_of_continuousOn γ.continuous_toFun
+  -- z₀ is not in γ([a,b])
+  have hz_notin : z₀ ∉ γ.toFun '' Icc γ.a γ.b := by
+    rw [Set.mem_image]
+    push_neg
+    intro t ht
+    exact hoff t ht
+  -- The distance from z₀ to the compact set is positive
+  have h_nonempty : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
+    ⟨γ.toFun γ.a, Set.mem_image_of_mem _ (left_mem_Icc.mpr (le_of_lt γ.hab))⟩
+  have h_dist_pos : 0 < infDist z₀ (γ.toFun '' Icc γ.a γ.b) := by
+    rw [← infDist_pos_iff_notMem_closure h_nonempty]
+    rw [h_compact.isClosed.closure_eq]
+    exact hz_notin
+  use infDist z₀ (γ.toFun '' Icc γ.a γ.b), h_dist_pos
+  intro ε hε t ht
+  have ht_in_image : γ.toFun t ∈ γ.toFun '' Icc γ.a γ.b := Set.mem_image_of_mem _ ht
+  have h_dist_eq : dist (γ.toFun t) z₀ = ‖γ.toFun t - z₀‖ := dist_eq_norm _ _
+  calc ‖γ.toFun t - z₀‖ = dist (γ.toFun t) z₀ := h_dist_eq.symm
+    _ = dist z₀ (γ.toFun t) := dist_comm _ _
+    _ ≥ infDist z₀ (γ.toFun '' Icc γ.a γ.b) := infDist_le_dist_of_mem ht_in_image
+    _ > ε := hε
+
 /-- When z₀ is not on the curve, the generalized winding number agrees with
     the classical integer-valued winding number. -/
 theorem generalizedWindingNumber_eq_classical
     (γ : PiecewiseC1Curve') (_hclosed : γ.IsClosed) (z₀ : ℂ)
-    (_hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀) :
+    (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀) :
     generalizedWindingNumber γ.toFun γ.a γ.b z₀ ∈ Set.range (fun n : ℤ => (n : ℂ)) := by
-  -- When z₀ is not on the curve, the Cauchy principal value integral reduces to
-  -- the classical integral, which is an integer
   simp only [Set.mem_range]
-  -- When z₀ ∉ γ, we have ‖γ(t) - z₀‖ > 0 for all t ∈ [a,b]
-  -- So for small enough ε, the ε-exclusion doesn't change the integral
-  -- The classical winding number is (1/2πi) ∮_γ dz/(z - z₀), which is an integer
-  -- by the argument principle / residue theorem
-  --
-  -- Proof sketch:
-  -- 1. dist(z₀, γ([a,b])) > 0 by compactness and _hoff
-  -- 2. For ε < dist(z₀, γ([a,b])), the PV integral equals the classical integral
-  -- 3. The classical integral is an integer (mathlib's winding number)
-  --
-  -- The winding number is computed as (1/2πi) ∮ dz/(z-z₀) = Σ residues = integer
+  -- Step 1: Get the minimum distance δ > 0 from z₀ to the curve
+  obtain ⟨δ, hδ_pos, hδ_sep⟩ := cauchyPrincipalValue_eq_classical_off_curve γ z₀ hoff
+  -- Step 2: For ε < δ, the integrand is just f(γ(t)) * γ'(t) without the cutoff
+  have h_integrand_eq : ∀ ε < δ, ∀ t ∈ Icc γ.a γ.b,
+      (if ‖γ.toFun t - z₀‖ > ε then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0) =
+      (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t := by
+    intro ε hε t ht
+    simp only [hδ_sep ε hε t ht, ↓reduceIte]
+  -- Step 3: The limit as ε → 0⁺ is constant for ε < δ
+  have h_limit_eq : limUnder (𝓝[>] (0 : ℝ)) (fun ε =>
+      ∫ t in γ.a..γ.b, if ‖γ.toFun t - z₀‖ > ε then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0) =
+      ∫ t in γ.a..γ.b, (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t := by
+    apply Filter.Tendsto.limUnder_eq
+    apply Tendsto.congr'
+    · -- Eventually the integral is constant
+      have h_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ε < δ := by
+        apply Filter.eventually_of_mem (Ioo_mem_nhdsGT hδ_pos)
+        intro ε hε
+        exact hε.2
+      filter_upwards [h_ev] with ε hε
+      apply intervalIntegral.integral_congr_ae
+      rw [Set.uIoc_of_le (le_of_lt γ.hab)]
+      apply MeasureTheory.ae_of_all
+      intro t ht
+      exact (h_integrand_eq ε hε t (Ioc_subset_Icc_self ht)).symm
+    · -- Constant function tends to itself
+      exact tendsto_const_nhds
+  -- Step 4: The classical integral is (1/(2πi)) ∮_γ dz/(z - z₀) = integer
+  -- This follows from the residue theorem / argument principle
   unfold generalizedWindingNumber cauchyPrincipalValue
-  simp only
-  -- The limit converges to an integer
+  rw [h_limit_eq]
+  -- The classical winding number is an integer
+  -- This requires: the integral of dz/(z-z₀) around a closed curve is 2πi * n for some n ∈ ℤ
+  -- For now, use sorry - this requires mathlib's complex analysis tools
   sorry
 
 /-! ## Valence Formula for Modular Forms
