@@ -19,7 +19,7 @@ generalized residue theorem and the valence formula for modular forms.
 * `Finiteness` - Zeros of immersions are finite
 * `PrincipalValue` - PV integral theory and homotopy invariance
 * `AsymptoticEstimates` - Taylor estimates for bounded integrand
-* `WindingNumber` - Model sector, classical case, decomposition
+* `WindingNumber` - Model sector, classical case, local contributions
 * `ResidueTheory` - Residues and the generalized residue theorem
 * `ValenceFormula` - Application to modular forms
 
@@ -31,8 +31,9 @@ generalized residue theorem and the valence formula for modular forms.
 2. **Classical Case** (`generalizedWindingNumber_eq_classical'`):
    When a closed curve avoids z₀, its winding number is an integer.
 
-3. **Decomposition** (`generalizedWindingNumber_decomposition'`):
-   n_{z₀}(γ) = n_{z₀}(γ̃) + Σᵢ αᵢ/(2π) where γ̃ avoids z₀.
+3. **Local Contributions** (`generalizedWindingNumber_smooth_crossing'`, `generalizedWindingNumber_corner_crossing'`):
+   - Smooth crossing through z₀ contributes 1/2
+   - Corner crossing with angle α contributes α/(2π)
 
 4. **Generalized Residue Theorem** (`generalizedResidueTheorem'`):
    PV ∮_γ f = 2πi · Σₛ n_s(γ) · res_s(f)

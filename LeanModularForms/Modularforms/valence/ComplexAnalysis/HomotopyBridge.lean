@@ -2624,13 +2624,13 @@ theorem windingNumber_homotopy_invariant_classical
 /-! ## Summary of Proof Strategy for Principal Value Homotopy
 
 For homotopy invariance of principal value integrals (when curves pass through
-singularities), we need a more careful argument than the classical case:
+singularities), the generalized winding number approach handles crossings directly:
 
-1. **Decomposition**: Split the curve at singularity crossing points
-2. **Classical homotopy**: Apply `contourIntegral_eq_of_homotopic` to pieces
-   avoiding the singularity
-3. **Angle contribution**: The model sector contribution depends only on
-   the angle at the crossing, which is preserved by homotopy
+1. **Local contributions**: At each crossing point, the contribution is determined
+   by the local geometry (smooth crossing → 1/2, corner with angle α → α/(2π))
+2. **Homotopy preservation**: The local crossing angle is preserved under homotopy
+3. **No detours needed**: The principal value definition handles crossings directly
+   without constructing auxiliary "detoured" curves
 
 The key insight is that for immersions (nonzero derivative), crossing a
 singularity at a definite angle gives a well-defined contribution that
