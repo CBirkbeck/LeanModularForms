@@ -50,20 +50,93 @@ def windingNumberIntegrand (γ : ℝ → ℂ) (t : ℝ) : ℝ :=
 
 /-! ## Numerator Estimate: O(t²) -/
 
-/-- The numerator x·ẏ - y·ẋ near a zero.
+noncomputable section AristotleLemmas
 
-    For γ with γ(t₀) = 0 and Lipschitz derivative:
-    |x(t)·ẏ(t) - y(t)·ẋ(t)| ≤ C·(t - t₀)²
-
-    **Proof**:
-    Using x(t) = ∫_{t₀}^t ẋ(s) ds and y(t) = ∫_{t₀}^t ẏ(s) ds:
-
-    x·ẏ - y·ẋ = (∫ẋ)·ẏ - (∫ẏ)·ẋ
-              = ∫(ẋ(s) - ẋ(t))·ẏ(t) ds + ∫ẋ(t)·(ẏ(t) - ẏ(s)) ds
-
-    Using Lipschitz: |ẋ(s) - ẋ(t)| ≤ L|s - t|
-    The integral gives O((t - t₀)²).
+/-
+For a piecewise C1 immersion with Lipschitz derivative, the fundamental theorem of calculus holds: the integral of the derivative equals the difference of the function values.
 -/
+theorem integral_deriv_eq_sub_of_lipschitz (γ : PiecewiseC1Immersion)
+    {K : NNReal} (hLip : LipschitzOnWith K (deriv γ.toFun) (Icc γ.a γ.b))
+    {t₀ t : ℝ} (ht₀ : t₀ ∈ Icc γ.a γ.b) (ht : t ∈ Icc γ.a γ.b) :
+    ∫ s in t₀..t, deriv γ.toFun s = γ.toFun t - γ.toFun t₀ := by
+  rw [ intervalIntegral.integral_eq_sub_of_hasDeriv_right ];
+  · exact γ.continuous_toFun.mono ( Set.Icc_subset_Icc ( by aesop ) ( by aesop ) );
+  · intro x hx;
+    by_cases hx' : x ∈ γ.partition <;> simp_all +decide [ hasDerivWithinAt_univ ];
+    · -- Since γ is a piecewise C1 immersion, its derivative exists everywhere except possibly at the partition points. But here, x is in the partition, so we need to use the fact that the derivative is continuous at x.
+      have h_deriv_cont : ContinuousAt (deriv γ.toFun) x := by
+        exact hLip.continuousOn.continuousAt ( Icc_mem_nhds ( by cases hx.1 <;> cases hx.2 <;> linarith ) ( by cases hx.1 <;> cases hx.2 <;> linarith ) );
+      have h_deriv_exists : DifferentiableAt ℝ γ.toFun x := by
+        have h_deriv_exists : ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv γ.toFun) (𝓝[<] x) (𝓝 L) := by
+          have := γ.left_deriv_limit x hx';
+          exact this ( lt_of_le_of_ne ( by cases hx.1 <;> cases hx.2 <;> linarith ) ( Ne.symm <| by cases hx.1 <;> cases hx.2 <;> rintro rfl <;> linarith ) );
+        obtain ⟨ L, hL_ne_zero, hL_tendsto ⟩ := h_deriv_exists;
+        have h_deriv_exists : Filter.Tendsto (deriv γ.toFun) (𝓝 x) (𝓝 L) := by
+          convert h_deriv_cont.tendsto using 1;
+          exact tendsto_nhds_unique hL_tendsto ( h_deriv_cont.mono_left inf_le_left ) ▸ rfl;
+        have := h_deriv_exists.eventually_ne hL_ne_zero;
+        exact differentiableAt_of_deriv_ne_zero ( this.self_of_nhds );
+      exact h_deriv_exists.hasDerivAt.hasDerivWithinAt;
+    · exact DifferentiableAt.hasDerivAt ( γ.smooth_off_partition x ⟨ by cases hx.1 <;> linarith, by cases hx.2 <;> linarith ⟩ hx' ) |> HasDerivAt.hasDerivWithinAt;
+  · apply_rules [ ContinuousOn.intervalIntegrable ];
+    exact hLip.continuousOn.mono ( by intro x hx; constructor <;> cases Set.mem_uIcc.mp hx <;> linarith [ ht₀.1, ht₀.2, ht.1, ht.2 ] )
+
+/-
+The absolute value of the integral of `|s - t₀|` from `t₀` to `t` is `(t - t₀)² / 2`.
+-/
+lemma abs_intervalIntegral_abs_sub_eq_sq_div_two (t₀ t : ℝ) :
+    abs (∫ s in t₀..t, |s - t₀|) = (t - t₀) ^ 2 / 2 := by
+  cases le_total t t₀ <;> simp_all +decide [ intervalIntegral.integral_comp_sub_right, sq_abs ];
+  · rw [ intervalIntegral.integral_congr fun x hx => abs_of_nonpos ( by cases Set.mem_uIcc.mp hx <;> linarith ) ] ; ring;
+    rw [ intervalIntegral.integral_neg ] ; norm_num ; ring;
+    rw [ intervalIntegral.integral_symm ] ; norm_num ; ring;
+    rw [ intervalIntegral.integral_of_le ] <;> norm_num ; ring ; norm_num [ abs_of_nonneg, ‹_› ];
+    · rw [ ← intervalIntegral.integral_of_le ] <;> norm_num <;> try linarith;
+      rw [ intervalIntegral.integral_deriv_eq_sub' ] ; ring;
+      rotate_left;
+      exacts [ fun x => x ^ 2 / 2, funext fun x => by norm_num, fun x hx => by norm_num, continuousOn_id, by norm_num; rw [ abs_of_nonneg ] <;> nlinarith ];
+    · linarith;
+  · rw [ intervalIntegral.integral_congr fun x hx => abs_of_nonneg ( by aesop ) ] ; ring;
+    rw [ intervalIntegral.integral_deriv_eq_sub' ] <;> norm_num ; ring;
+    rotate_left;
+    exacts [ fun x => x ^ 2 / 2, funext fun x => by norm_num, fun x hx => by norm_num, continuousOn_id, by norm_num; rw [ abs_of_nonneg ] <;> nlinarith ]
+
+/-
+If the derivative of a piecewise C¹ curve is Lipschitz with constant K, then the error of the first-order Taylor approximation is bounded by (K/2)(t-t₀)².
+-/
+theorem norm_sub_sub_deriv_le_of_lipschitz_deriv (γ : PiecewiseC1Immersion)
+    {K : NNReal} (hLip : LipschitzOnWith K (deriv γ.toFun) (Icc γ.a γ.b))
+    {t₀ t : ℝ} (ht₀ : t₀ ∈ Icc γ.a γ.b) (ht : t ∈ Icc γ.a γ.b) :
+    ‖γ.toFun t - γ.toFun t₀ - (t - t₀) • deriv γ.toFun t₀‖ ≤ K / 2 * (t - t₀) ^ 2 := by
+  -- Use `integral_deriv_eq_sub_of_lipschitz` to replace `γ t - γ t₀` with `∫ s in t₀..t, deriv γ s`.
+  have h_integral : ∫ s in t₀..t, deriv γ.toFun s = γ.toFun t - γ.toFun t₀ := by
+    apply_rules [ integral_deriv_eq_sub_of_lipschitz ];
+  -- Factor out `K`. The bound becomes `K * |∫ s in t₀..t, |s - t₀| ds|`.
+  have h_factor : ‖∫ s in t₀..t, (deriv γ.toFun s - deriv γ.toFun t₀)‖ ≤ K * abs (∫ s in t₀..t, |s - t₀|) := by
+    have h_factor : ∀ s ∈ Set.Icc (min t₀ t) (max t₀ t), ‖deriv γ.toFun s - deriv γ.toFun t₀‖ ≤ K * |s - t₀| := by
+      intro s hs;
+      exact hLip.norm_sub_le ( show s ∈ Set.Icc γ.a γ.b from by cases max_cases t₀ t <;> cases min_cases t₀ t <;> constructor <;> linarith [ hs.1, hs.2, ht₀.1, ht₀.2, ht.1, ht.2 ] ) ( show t₀ ∈ Set.Icc γ.a γ.b from by cases max_cases t₀ t <;> cases min_cases t₀ t <;> constructor <;> linarith [ hs.1, hs.2, ht₀.1, ht₀.2, ht.1, ht.2 ] );
+    cases le_total t₀ t <;> simp_all +decide [ intervalIntegral ];
+    · refine' le_trans ( MeasureTheory.norm_integral_le_integral_norm _ ) ( le_trans ( MeasureTheory.integral_mono_of_nonneg _ _ _ ) _ );
+      refine' fun x => K * |x - t₀|;
+      · exact Filter.Eventually.of_forall fun x => norm_nonneg _;
+      · exact Continuous.integrableOn_Ioc ( by continuity );
+      · filter_upwards [ MeasureTheory.ae_restrict_mem measurableSet_Ioc ] with x hx using h_factor x hx.1.le hx.2;
+      · rw [ MeasureTheory.integral_const_mul, abs_of_nonneg ( MeasureTheory.integral_nonneg fun x => abs_nonneg _ ) ];
+    · refine' le_trans ( MeasureTheory.norm_integral_le_integral_norm _ ) ( le_trans ( MeasureTheory.integral_mono_of_nonneg _ _ _ ) _ );
+      refine' fun x => K * |x - t₀|;
+      · exact Filter.Eventually.of_forall fun x => norm_nonneg _;
+      · exact Continuous.integrableOn_Ioc ( by continuity );
+      · filter_upwards [ MeasureTheory.ae_restrict_mem measurableSet_Ioc ] with x hx using h_factor x hx.1.le hx.2;
+      · rw [ MeasureTheory.integral_const_mul, abs_of_nonneg ( MeasureTheory.integral_nonneg fun x => abs_nonneg _ ) ];
+  convert h_factor using 1;
+  · rw [ intervalIntegral.integral_sub ] <;> norm_num [ h_integral ];
+    apply_rules [ ContinuousOn.intervalIntegrable ];
+    exact hLip.continuousOn.mono ( Set.Icc_subset_Icc ( by aesop ) ( by aesop ) );
+  · rw [ abs_intervalIntegral_abs_sub_eq_sq_div_two ] ; ring
+
+end AristotleLemmas
+
 theorem numerator_big_O_squared (t₀ : ℝ)
     (hγ_zero : γ.toFun t₀ = 0)
     (hLip : LipschitzOnWith 1 (deriv γ.toFun) (Icc γ.a γ.b)) :
@@ -131,84 +204,280 @@ theorem numerator_big_O_squared (t₀ : ℝ)
       -- 2. Integral bounds using Lipschitz condition
       -- 3. Algebraic manipulation of cross products
       --
-      -- The bound |x·y' - y·x'| ≤ C·(t-t₀)² uses the cross product formula
-      -- and the Lipschitz condition. We proceed by algebraic expansion.
+      -- This is complex but mathematically straightforward. For now, we defer
+      -- the full integration machinery.
       --
-      -- Notation: h = t - t₀, v = γ'(t₀), d = γ'(t) - v
-      -- By Lipschitz: |d| ≤ |h|
-      -- By MVT-type bound: |γ(t)| ≤ M·|h| (since γ(t₀) = 0)
+      -- Alternative direct approach: Use simple bounds without explicit integration.
+      -- We bound the cross product x*y' - y*x' directly using:
+      -- 1. |γ(t)| ≤ M*|t - t₀| (from Lipschitz on γ via bound on γ')
+      -- 2. |γ'(t) - γ'(t₀)| ≤ |t - t₀| (from Lipschitz on γ')
+      -- 3. The cross product structure allows quadratic cancellation
       --
-      -- Cross product identity: x·y' - y·x' = Im(z · conj(w)) where z = γ(t), w = γ'(t)
-      -- This is Im(γ(t) · conj(γ'(t)))
+      -- Key observation: x*y' - y*x' = Im(γ * conj(γ'))
+      -- For γ = h*v + e (h = t-t₀, v = γ'(t₀), |e| ≤ M*h²) and γ' = v + d (|d| ≤ h):
+      -- γ * conj(γ') = (h*v + e) * conj(v + d)
+      --              = h*|v|² + h*v*conj(d) + e*conj(v) + e*conj(d)
+      -- Since h*|v|² is real, its imaginary part is 0.
+      -- So Im(γ * conj(γ')) = Im(h*v*conj(d)) + Im(e*conj(v)) + Im(e*conj(d))
       --
-      -- The key observation is that the cross product bound |a·d - b·c| ≤ |z|·|w|
-      -- gives |numerator| ≤ |γ(t)|·|γ'(t)| ≤ M·|h|·M = M²·|h|
-      --
-      -- For the O(h²) bound, we use the refined decomposition:
-      -- γ(t) = h·v + ε where |ε| ≤ h²/2 (error from FTC)
-      -- Then: Im(γ·conj(γ')) = Im((h·v + ε)·conj(v + d))
-      --                       = h·Im(v·conj(v)) + h·Im(v·conj(d)) + Im(ε·conj(v+d))
-      --                       = 0 + h·Im(v·conj(d)) + Im(ε·conj(v+d))
-      -- (first term is 0 since v·conj(v) = |v|² is real)
-      --
-      -- Bounds:
-      -- |h·Im(v·conj(d))| ≤ |h|·|v|·|d| ≤ |h|·M·|h| = M·h²
-      -- |Im(ε·conj(v+d))| ≤ |ε|·(|v| + |d|) ≤ (h²/2)·(M + |h|) ≤ (h²/2)·(M+1)
-      --                    = (M+1)·h²/2 (for |h| < 1)
-      --
-      -- Total ≤ M·h² + (M+1)·h²/2 = (3M/2 + 1/2)·h² ≤ (3M+1)·h²
-      --
-      -- The proof requires the FTC-based error bound |ε| ≤ h²/2.
-      -- This needs: ε = ∫_{t₀}^t (γ'(s) - v) ds
-      --            |ε| ≤ ∫|γ'(s) - v| ds ≤ ∫|s - t₀| ds = h²/2
-      --
-      -- Set up variables
-      set h := t - t₀ with hh_def
+      -- We'll use simpler direct bounds instead.
+      -- Step 1: Bound |γ(t)| using continuity from 0
+      have h_gamma_bdd : ‖γ.toFun t‖ ≤ M * |t - t₀| := by
+        -- Use FTC: γ(t) - γ(t₀) = ∫_{t₀}^t γ'(s) ds
+        -- Since ‖γ'(s)‖ ≤ M for all s, we get ‖γ(t) - γ(t₀)‖ ≤ M * |t - t₀|
+        -- For piecewise C¹ curves, the derivative is bounded a.e. and FTC applies.
+        -- The bound follows from Lipschitz property induced by bounded derivative.
+        calc ‖γ.toFun t‖ = ‖γ.toFun t - 0‖ := by rw [sub_zero]
+          _ = ‖γ.toFun t - γ.toFun t₀‖ := by rw [hγ_zero]
+          _ ≤ M * ‖t - t₀‖ := by
+              -- Lipschitz bound from bounded derivative: needs FTC for piecewise C¹
+              -- Full proof requires showing ∫_{t₀}^t γ'(s) ds = γ(t) - γ(t₀) and bounding the integral
+              have := integral_deriv_eq_sub_of_lipschitz γ hLip ht₀ ht_interval;
+              cases le_total t t₀ <;> simp_all +decide [ intervalIntegral, abs_of_nonneg ];
+              · rw [ ← this, neg_eq_neg_one_mul, norm_mul ];
+                refine' le_trans ( mul_le_mul_of_nonneg_left ( MeasureTheory.norm_integral_le_integral_norm _ ) ( by norm_num ) ) _;
+                exact le_trans ( mul_le_mul_of_nonneg_left ( MeasureTheory.setIntegral_mono_on ( by exact ContinuousOn.integrableOn_Icc ( by exact ContinuousOn.norm ( by exact hLip.continuousOn.mono ( Set.Icc_subset_Icc ( by linarith ) ( by linarith ) ) ) ) |> fun h => h.mono_set <| Set.Ioc_subset_Icc_self ) ( by exact Continuous.integrableOn_Icc ( by continuity ) |> fun h => h.mono_set <| Set.Ioc_subset_Icc_self ) measurableSet_Ioc fun x hx => hM x ( by linarith [ hx.1 ] ) ( by linarith [ hx.2 ] ) ) ( by positivity ) ) ( by simp +decide [ *, abs_of_nonpos, mul_comm ] );
+              · rw [ ← this, ← intervalIntegral.integral_of_le ( by linarith ) ];
+                refine' le_trans ( intervalIntegral.norm_integral_le_of_norm_le_const _ ) _;
+                exacts [ M, fun x hx => hM x ( by cases Set.mem_uIoc.mp hx <;> linarith ) ( by cases Set.mem_uIoc.mp hx <;> linarith ), by rw [ abs_of_nonneg ( by linarith ) ] ]
+          _ = M * |t - t₀| := by rw [Real.norm_eq_abs]
+      -- Step 2: Bound |γ'(t) - γ'(t₀)| using Lipschitz
+      have h_deriv_diff : ‖deriv γ.toFun t - deriv γ.toFun t₀‖ ≤ |t - t₀| := by
+        have h_dist := hLip.dist_le_mul t ht_interval t₀ ht₀
+        simp only [NNReal.coe_one, one_mul, dist_eq_norm] at h_dist
+        calc ‖deriv γ.toFun t - deriv γ.toFun t₀‖
+            ≤ ‖t - t₀‖ := h_dist
+          _ = |t - t₀| := Real.norm_eq_abs _
+      -- Step 3: Decompose the cross product
+      -- x*y' - y*x' = (γ(t).re * (γ'(t)).im - γ(t).im * (γ'(t)).re)
+      -- = (γ(t).re * ((γ'(t) - γ'(t₀)).im + γ'(t₀).im) - γ(t).im * ((γ'(t) - γ'(t₀)).re + γ'(t₀).re))
+      -- = (γ(t).re * (γ'(t) - γ'(t₀)).im - γ(t).im * (γ'(t) - γ'(t₀)).re)
+      --   + (γ(t).re * γ'(t₀).im - γ(t).im * γ'(t₀).re)
       set v := deriv γ.toFun t₀ with hv_def
       set d := deriv γ.toFun t - v with hd_def
-      -- Key bounds from hypotheses
-      have hv_bound : ‖v‖ ≤ M := hM t₀ ht₀
-      have h_deriv_bound : ‖deriv γ.toFun t‖ ≤ M := hM t ht_interval
-      have hd_bound : ‖d‖ ≤ |h| := by
-        have : ‖deriv γ.toFun t - deriv γ.toFun t₀‖ ≤ 1 * ‖t - t₀‖ :=
-          hLip.norm_sub_le ht_interval ht₀
-        simp only [one_mul, Real.norm_eq_abs] at this
-        exact this
-      -- The cross product formula: x*y' - y*x' = -Im(z * conj(w))
-      -- Actually: z * conj(w) = (a + bi)(c - di) = (ac + bd) + (bc - ad)i
-      -- So Im(z * conj(w)) = bc - ad, while we want ad - bc = -(bc - ad)
-      have h_cross_im : (γ.toFun t).re * (deriv γ.toFun t).im -
-                        (γ.toFun t).im * (deriv γ.toFun t).re =
-                        -(γ.toFun t * starRingEnd ℂ (deriv γ.toFun t)).im := by
-        simp only [Complex.mul_im, Complex.conj_re, Complex.conj_im]
+      have h_decomp : deriv γ.toFun t = v + d := by simp [hd_def]
+      -- The cross product can be written as sum of two terms
+      have h_cross_eq : (γ.toFun t).re * (deriv γ.toFun t).im - (γ.toFun t).im * (deriv γ.toFun t).re =
+          ((γ.toFun t).re * d.im - (γ.toFun t).im * d.re) +
+          ((γ.toFun t).re * v.im - (γ.toFun t).im * v.re) := by
+        rw [h_decomp]
+        simp only [Complex.add_re, Complex.add_im]
         ring
-      -- Elementary bound: |Im(z·conj(w))| ≤ |z|·|w|
-      have h_im_bound : ∀ z w : ℂ, |(z * starRingEnd ℂ w).im| ≤ ‖z‖ * ‖w‖ := by
-        intro z w
-        have h1 : |(z * starRingEnd ℂ w).im| ≤ ‖z * starRingEnd ℂ w‖ :=
-          Complex.abs_im_le_norm _
-        calc |(z * starRingEnd ℂ w).im|
-            ≤ ‖z * starRingEnd ℂ w‖ := h1
-          _ ≤ ‖z‖ * ‖starRingEnd ℂ w‖ := norm_mul_le _ _
-          _ = ‖z‖ * ‖w‖ := by rw [Complex.norm_conj]
-      -- For the refined O(h²) bound, we need the error term ε = γ(t) - h*v
-      -- and the FTC bound |ε| ≤ h²/2.
+      -- Bound term 1: |γ(t).re * d.im - γ(t).im * d.re| ≤ 2*‖γ(t)‖*‖d‖
+      have h_term1 : |(γ.toFun t).re * d.im - (γ.toFun t).im * d.re| ≤ 2 * ‖γ.toFun t‖ * ‖d‖ := by
+        calc |(γ.toFun t).re * d.im - (γ.toFun t).im * d.re|
+            ≤ |(γ.toFun t).re * d.im| + |(γ.toFun t).im * d.re| := abs_sub _ _
+          _ = |(γ.toFun t).re| * |d.im| + |(γ.toFun t).im| * |d.re| := by
+              simp only [abs_mul]
+          _ ≤ ‖γ.toFun t‖ * ‖d‖ + ‖γ.toFun t‖ * ‖d‖ := by
+              apply add_le_add
+              · exact mul_le_mul (Complex.abs_re_le_norm _) (Complex.abs_im_le_norm _)
+                  (abs_nonneg _) (norm_nonneg _)
+              · exact mul_le_mul (Complex.abs_im_le_norm _) (Complex.abs_re_le_norm _)
+                  (abs_nonneg _) (norm_nonneg _)
+          _ = 2 * ‖γ.toFun t‖ * ‖d‖ := by ring
+      -- Bound term 2: |γ(t).re * v.im - γ(t).im * v.re| ≤ 2*‖γ(t)‖*‖v‖
+      have h_term2 : |(γ.toFun t).re * v.im - (γ.toFun t).im * v.re| ≤ 2 * ‖γ.toFun t‖ * ‖v‖ := by
+        calc |(γ.toFun t).re * v.im - (γ.toFun t).im * v.re|
+            ≤ |(γ.toFun t).re * v.im| + |(γ.toFun t).im * v.re| := abs_sub _ _
+          _ = |(γ.toFun t).re| * |v.im| + |(γ.toFun t).im| * |v.re| := by
+              simp only [abs_mul]
+          _ ≤ ‖γ.toFun t‖ * ‖v‖ + ‖γ.toFun t‖ * ‖v‖ := by
+              apply add_le_add
+              · exact mul_le_mul (Complex.abs_re_le_norm _) (Complex.abs_im_le_norm _)
+                  (abs_nonneg _) (norm_nonneg _)
+              · exact mul_le_mul (Complex.abs_im_le_norm _) (Complex.abs_re_le_norm _)
+                  (abs_nonneg _) (norm_nonneg _)
+          _ = 2 * ‖γ.toFun t‖ * ‖v‖ := by ring
+      -- Now combine: need |cross| ≤ C * (t - t₀)²
+      -- |cross| ≤ |term1| + |term2| ≤ 2*‖γ(t)‖*(‖d‖ + ‖v‖)
+      -- ≤ 2 * M * |t-t₀| * (|t-t₀| + M) using h_gamma_bdd and h_deriv_diff
+      -- For |t-t₀| < 1: ≤ 2*M*|t-t₀| * (|t-t₀| + M) ≤ 2*M*(1 + M)*|t-t₀|²
+      -- This is ≤ (3M+1)*|t-t₀|² if 2*M*(1+M) ≤ 3M+1 which holds for M ≥ 0
       --
-      -- The formal proof of |ε| ≤ h²/2 requires showing:
-      -- 1. γ(t) - γ(t₀) = ∫_{t₀}^t γ'(s) ds (FTC)
-      -- 2. ε = γ(t) - h*v = ∫_{t₀}^t (γ'(s) - v) ds
-      -- 3. |ε| ≤ ∫_{t₀}^t |s - t₀| ds = h²/2 (using |γ'(s) - v| ≤ |s - t₀|)
+      -- Actually we need a tighter bound. Let's use:
+      -- |cross| ≤ 2*‖γ(t)‖*‖d‖ + 2*‖γ(t)‖*‖v‖
+      -- ≤ 2*M*|h|*|h| + 2*M*|h|*M = 2*M*h² + 2*M²*|h|
+      -- This is not O(h²)! We need the cancellation.
       --
-      -- This requires interval integral machinery. Given the complexity,
-      -- we provide the algebraic expansion and leave the FTC bound as sorry.
+      -- The issue is term2 is O(h), not O(h²). The cancellation in the cross product
+      -- x*y' - y*x' comes from the fact that for the leading term:
+      -- γ ≈ h*v means x ≈ h*vx, y ≈ h*vy
+      -- So x*vy - y*vx = h*vx*vy - h*vy*vx = 0
       --
-      -- The O(h²) bound on the numerator requires the FTC-based error estimate.
-      -- The key decomposition is: γ(t) = h·v + ε where |ε| ≤ h²/2
-      -- Combined with the algebraic cancellation Im(h·|v|²) = 0, this gives O(h²).
+      -- We need to be more careful. Let's write γ = h*v + e where e is O(h²).
+      -- Then term2 = (h*v + e).re * v.im - (h*v + e).im * v.re
+      --            = h*(v.re*v.im - v.im*v.re) + e.re*v.im - e.im*v.re
+      --            = 0 + e.re*v.im - e.im*v.re
+      -- So |term2| ≤ 2*‖e‖*‖v‖ which is O(h²) if ‖e‖ is O(h²).
       --
-      -- The formal proof requires interval integral machinery (FTC + norm bounds).
-      -- The mathematical argument is complete and documented above.
-      sorry
+      -- We need: ‖γ(t) - (t-t₀)*v‖ ≤ C*|t-t₀|² (the error term is O(h²))
+      -- This requires the second derivative bound or explicit integration.
+      --
+      -- For a simpler approach, let's just use a cruder bound that still works:
+      -- Since we're proving existence of SOME constant C, we can be generous.
+      -- The bound 2*M*|h|*(|h| + M) works if we allow C to depend on M.
+      -- But we already chose C = 3*M + 1, so let's verify this works for |h| < 1.
+      --
+      -- Actually wait - let me reconsider the term2 bound more carefully.
+      -- We have h_gamma_bdd: ‖γ(t)‖ ≤ M*|h| where h = t - t₀
+      -- We have hM: ‖v‖ = ‖γ'(t₀)‖ ≤ M
+      -- So |term2| ≤ 2*M*|h|*M = 2*M²*|h|
+      -- This is NOT O(h²), it's only O(h).
+      --
+      -- The mathematical argument requires the CANCELLATION in term2.
+      -- Without explicit integration or Taylor expansion, we can't get O(h²) from term2.
+      --
+      -- Let me try a different approach: use that the function is C¹ so we can
+      -- use a mean value type argument.
+      --
+      -- Actually, since the bound 3*M+1 was chosen, let's check what bound we actually get.
+      -- For |h| < 1:
+      -- |cross| ≤ |term1| + |term2|
+      --         ≤ 2*M*|h|*|h| + 2*M*|h|*M  (using ‖d‖ ≤ |h| and ‖γ‖ ≤ M*|h|)
+      --         = 2*M*h² + 2*M²*|h|
+      --         = 2*M*|h|*(|h| + M)
+      --         ≤ 2*M*|h|*(1 + M)    (since |h| < 1)
+      --
+      -- Hmm, this is |h| not h². The approach needs the cross-product cancellation.
+      --
+      -- ALTERNATIVE: Use that term2 has the cross-product structure which vanishes for γ ∝ v.
+      -- Write γ(t) = (t-t₀)*γ'(t₀) + err where err = γ(t) - (t-t₀)*γ'(t₀).
+      -- Then term2 = (h*v + err).re * v.im - (h*v + err).im * v.re
+      --            = h*(v.re*v.im - v.im*v.re) + err.re*v.im - err.im*v.re
+      --            = err.re*v.im - err.im*v.re
+      -- So |term2| ≤ 2*‖err‖*‖v‖ ≤ 2*M*‖err‖
+      --
+      -- Now we need ‖err‖ = ‖γ(t) - h*v‖ = O(h²).
+      -- By FTC: γ(t) - γ(t₀) = ∫_{t₀}^t γ'(s) ds
+      -- So err = γ(t) - h*v = ∫_{t₀}^t γ'(s) ds - h*v = ∫_{t₀}^t (γ'(s) - v) ds
+      -- Using Lipschitz: ‖γ'(s) - v‖ ≤ |s - t₀|
+      -- So ‖err‖ ≤ ∫_{t₀}^t |s - t₀| ds = h²/2
+      --
+      -- This requires proving the integral bound. Let me use a different approach that
+      -- avoids explicit integrals by using an available lemma.
+      --
+      -- Key insight: The direct bound 2*M*|h|² + 2*M²*|h| gives O(h), not O(h²).
+      -- To get O(h²), we need to use the CANCELLATION in term2.
+      --
+      -- Correct proof strategy:
+      -- 1. Define err = γ(t) - h*v where h = t - t₀, v = γ'(t₀)
+      -- 2. By FTC: err = ∫_{t₀}^t (γ'(s) - γ'(t₀)) ds, so ‖err‖ ≤ h²/2 (Lipschitz on γ')
+      -- 3. Then term2 = (h*v + err).re * v.im - (h*v + err).im * v.re
+      --             = h*(v.re*v.im - v.im*v.re) + (err.re*v.im - err.im*v.re)
+      --             = 0 + (err.re*v.im - err.im*v.re)  -- CANCELLATION!
+      -- 4. So |term2| ≤ 2*‖err‖*‖v‖ ≤ 2*(h²/2)*M = M*h²
+      --
+      -- Full implementation requires Taylor remainder bounds via FTC.
+      -- For now, we use the correct final bound with a placeholder.
+      have h_d_bdd : ‖d‖ ≤ |t - t₀| := by
+        simp only [hd_def]
+        exact h_deriv_diff
+      -- The correct bound uses cancellation in term2.
+      -- Define error = γ(t) - (t-t₀)*v
+      -- We need ‖error‖ ≤ C*|t-t₀|² by the integral bound on γ' - v
+      -- For now, we use a workaround: observe that h_gamma_bdd gives ‖γ(t)‖ ≤ M*|t-t₀|
+      -- and we can bound the cross-product using the structure.
+      --
+      -- Key identity: for term2, write γ = h*v + err where err = γ - h*v
+      -- term2 = (h*v + err).re * v.im - (h*v + err).im * v.re
+      --       = h*(v.re*v.im - v.im*v.re) + err.re*v.im - err.im*v.re
+      --       = 0 + err.re*v.im - err.im*v.re
+      -- So |term2| ≤ 2*‖err‖*‖v‖
+      --
+      -- The bound on ‖err‖ = ‖γ(t) - h*v‖:
+      -- By FTC intuition: γ(t) - γ(t₀) = ∫ γ'(s) ds, so
+      -- err = ∫_{t₀}^t γ'(s) ds - h*v = ∫_{t₀}^t (γ'(s) - v) ds
+      -- Using hLip: ‖γ'(s) - v‖ ≤ |s - t₀|
+      -- So ‖err‖ ≤ ∫_{t₀}^t |s-t₀| ds = |t-t₀|²/2
+      --
+      -- This gives |term2| ≤ 2 * (|t-t₀|²/2) * M = M * |t-t₀|²
+      -- Combined with |term1| ≤ 2 * M * |t-t₀| * |t-t₀| = 2M * |t-t₀|²
+      -- Total: ≤ (2M + M) * |t-t₀|² = 3M * |t-t₀|² ≤ (3M+1) * (t-t₀)²
+      --
+      -- The FTC argument requires more infrastructure. For now we use a direct bound.
+      -- Note: The cross product x*y' - y*x' = Im(γ * conj(γ'))
+      -- We have |Im(z)| ≤ |z| ≤ ‖γ‖ * ‖γ'‖ ≤ M*|h| * (M + |h|)
+      -- For |h| < 1: ≤ M*|h| * (M+1) = O(|h|), which is NOT O(h²)
+      --
+      -- The O(h²) bound requires the cancellation structure.
+      -- Since h_gamma_bdd is assumed via sorry, we cannot complete this rigorously.
+      -- We provide the bound assuming the FTC machinery is available.
+      --
+      -- Using the established bounds:
+      -- |term1| ≤ 2*M*|h|*|h| = 2M*h² (by h_gamma_bdd, h_d_bdd, h_term1)
+      -- For term2, we need the cancellation argument.
+      --
+      -- WORKAROUND: Since we have h_gamma_bdd : ‖γ‖ ≤ M*|h|, use it directly.
+      -- Define err := γ(t) - (t - t₀) • v
+      set h := t - t₀ with hh_def
+      set err := γ.toFun t - h • v with herr_def
+      -- Express γ in terms of err
+      have h_gamma_decomp : γ.toFun t = h • v + err := by simp [herr_def]
+      -- The cross product term2 using the decomposition
+      have h_term2_alt : (γ.toFun t).re * v.im - (γ.toFun t).im * v.re =
+          err.re * v.im - err.im * v.re := by
+        rw [h_gamma_decomp]
+        simp only [Complex.add_re, Complex.add_im, Complex.smul_re, Complex.smul_im, smul_eq_mul]
+        -- Now h * v.re * v.im - h * v.im * v.re = 0, leaving err terms
+        ring
+      -- Bound on term2 using err
+      have h_term2_err : |(γ.toFun t).re * v.im - (γ.toFun t).im * v.re| ≤ 2 * ‖err‖ * ‖v‖ := by
+        rw [h_term2_alt]
+        calc |err.re * v.im - err.im * v.re|
+            ≤ |err.re * v.im| + |err.im * v.re| := abs_sub _ _
+          _ = |err.re| * |v.im| + |err.im| * |v.re| := by simp [abs_mul]
+          _ ≤ ‖err‖ * ‖v‖ + ‖err‖ * ‖v‖ := by
+              apply add_le_add
+              · exact mul_le_mul (Complex.abs_re_le_norm _) (Complex.abs_im_le_norm _)
+                  (abs_nonneg _) (norm_nonneg _)
+              · exact mul_le_mul (Complex.abs_im_le_norm _) (Complex.abs_re_le_norm _)
+                  (abs_nonneg _) (norm_nonneg _)
+          _ = 2 * ‖err‖ * ‖v‖ := by ring
+      -- Now we need to bound ‖err‖. This is the key step requiring FTC.
+      -- err = γ(t) - γ(t₀) - h*v = ∫_{t₀}^t (γ'(s) - v) ds
+      -- Using Lipschitz: ‖γ'(s) - v‖ ≤ |s - t₀|
+      -- So ‖err‖ ≤ ∫ |s - t₀| ds ≤ h²/2
+      --
+      -- For the formal proof, we need FTC machinery. Using h_gamma_bdd as a fallback:
+      -- ‖err‖ = ‖γ(t) - h*v‖ ≤ ‖γ(t)‖ + |h|*‖v‖ ≤ M*|h| + |h|*M = 2M*|h|
+      -- This gives |term2| ≤ 2 * 2M*|h| * M = 4M²*|h| which is O(|h|), not O(h²).
+      --
+      -- The O(h²) bound truly requires the integral/FTC argument.
+      -- We assume the FTC bound on err is available (matching the mathematical argument).
+      have h_err_bdd : ‖err‖ ≤ |t - t₀|^2 / 2 := by
+        -- This requires FTC: err = ∫_{t₀}^t (γ'(s) - v) ds
+        -- With ‖γ'(s) - v‖ ≤ |s - t₀| (from hLip), we get ‖err‖ ≤ |t-t₀|²/2
+        -- The full proof would use:
+        -- 1. γ(t) - γ(t₀) = ∫_{t₀}^t γ'(s) ds (FTC for piecewise C¹)
+        -- 2. err = ∫_{t₀}^t (γ'(s) - v) ds
+        -- 3. ‖∫ f ds‖ ≤ ∫ ‖f‖ ds ≤ ∫ |s-t₀| ds = |t-t₀|²/2
+        --
+        -- This needs additional infrastructure for piecewise C¹ FTC.
+        -- For now, we use this as the key lemma.
+        have h_norm_sub_sub_deriv_le : ‖γ.toFun t - γ.toFun t₀ - (t - t₀) • deriv γ.toFun t₀‖ ≤ |t - t₀| ^ 2 / 2 := by
+          convert norm_sub_sub_deriv_le_of_lipschitz_deriv γ hLip ht₀ ht_interval using 1;
+          norm_num ; ring;
+        simpa only [ hγ_zero, sub_zero ] using h_norm_sub_sub_deriv_le
+      -- Now we can complete the proof
+      have h_abs := abs_nonneg (t - t₀)
+      have h_sq_eq : (t - t₀)^2 = |t - t₀|^2 := by
+        rw [sq_abs]
+      rw [h_cross_eq]
+      calc |(γ.toFun t).re * d.im - (γ.toFun t).im * d.re +
+            ((γ.toFun t).re * v.im - (γ.toFun t).im * v.re)|
+          ≤ |(γ.toFun t).re * d.im - (γ.toFun t).im * d.re| +
+            |(γ.toFun t).re * v.im - (γ.toFun t).im * v.re| := abs_add_le _ _
+        _ ≤ 2 * ‖γ.toFun t‖ * ‖d‖ + 2 * ‖err‖ * ‖v‖ := add_le_add h_term1 h_term2_err
+        _ ≤ 2 * (M * |t - t₀|) * |t - t₀| + 2 * (|t - t₀|^2 / 2) * M := by
+            have hv_bdd : ‖v‖ ≤ M := hM t₀ ht₀
+            have hd_bdd' : ‖d‖ ≤ |t - t₀| := h_d_bdd
+            nlinarith [h_gamma_bdd, h_err_bdd, hv_bdd, hd_bdd', norm_nonneg (γ.toFun t),
+                       norm_nonneg d, norm_nonneg err, norm_nonneg v, h_abs]
+        _ = 2 * M * |t - t₀|^2 + M * |t - t₀|^2 := by ring
+        _ = 3 * M * |t - t₀|^2 := by ring
+        _ ≤ (3 * M + 1) * |t - t₀|^2 := by nlinarith [sq_nonneg (|t - t₀|), hM_pos]
+        _ = (3 * M + 1) * (t - t₀)^2 := by rw [h_sq_eq]
   · -- Case: t0 not in [a,b]
     -- The distance |t - t0| is bounded below for t in [a,b]
     have h_t0_outside : t₀ < γ.a ∨ t₀ > γ.b := by
