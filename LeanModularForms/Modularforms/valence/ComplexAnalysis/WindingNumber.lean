@@ -11,28 +11,48 @@ import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 /-!
 # Winding Number Theory
 
-This file develops the theory of generalized winding numbers, including:
+This file develops the theory of winding numbers, including:
 - The model sector calculation (angle → winding number)
 - The classical case (closed curve avoiding point → integer winding number)
-- Local contribution theorems (smooth crossing → 1/2, corner → angle/(2π))
+- **Angle-augmented winding numbers** for curves passing through singularities
 
 ## Main Results
 
+### Classical Winding Numbers
 * `generalizedWindingNumber_modelSector'` - Model sector gives α/(2π)
 * `generalizedWindingNumber_eq_classical'` - Classical case is integer
-* `generalizedWindingNumber_smooth_crossing'` - Smooth crossing contributes 1/2
-* `generalizedWindingNumber_corner_crossing'` - Corner with angle α contributes α/(2π)
-* `generalizedWindingNumber_sum_of_contributions'` - Total = sum of local contributions
+
+### Angle-Augmented Winding Numbers
+* `angleAtCrossing` - Angle contribution at a crossing point
+* `windingNumberWithAngles'` - Winding number via explicit angle sum
+* `windingNumber_smooth_crossing` - Smooth crossing contributes 1/2
+* `windingNumber_corner_crossing` - Corner with angle α contributes α/(2π)
+* `windingNumber_decomposition` - Total = integer + sum of angle contributions
 
 ## Approach
 
-We use generalized winding numbers via Cauchy principal values, which handle
-curves passing through singularities directly. No "detoured curve" constructions
-are needed - the principal value definition captures the correct local contributions
-at each crossing point.
+**Important**: The naive PV integral approach does NOT capture angle contributions
+at crossing points (see "Fundamental Issue" section below). Instead, we use an
+**angle-augmented** approach based on the Hungerbühler-Wasem paper:
+
+- At each crossing point, compute α = arg(L_out) - arg(-L_in)
+- Sum contributions: Σ α/(2π)
+- For smooth crossings: α = π → contribution 1/2
+- For corners with angle α: contribution α/(2π)
+
+## Key Advantage: No Detoured Curves
+
+Unlike the classical approach (used by Isabelle's HOL-Complex_Analysis), we do NOT
+need to construct auxiliary "detoured" or "wiggled" curves that avoid singularities.
+Instead, we compute winding number contributions directly at crossing points using
+the angle-augmented definition. This is simpler to formalize and matches the direct
+geometric intuition.
+
+See CLAUDE.md for comparison with Isabelle's approach.
 
 ## References
 
+* Hungerbühler-Wasem: "Non-integer valued winding numbers and a generalized Residue Theorem"
 * Isabelle: `Winding_Numbers.thy` - `winding_number_integer`
 * Isabelle: `Contour_Integration.thy` - `contour_integral_join`
 -/
@@ -268,116 +288,431 @@ theorem generalizedWindingNumber_eq_classical'
 
 /-! ## Local Winding Number Contributions -/
 
-/-- The winding number contribution from a smooth crossing.
+/-! ### Infrastructure for Model Sector Reduction
 
-    **Theorem**: When a smooth (C¹) curve passes through z₀ with nonzero derivative,
-    the generalized winding number contribution is exactly 1/2.
+The key to proving the smooth crossing and corner crossing theorems is reducing
+them to the model sector calculation `generalizedWindingNumber_modelSector'`.
 
-    **Proof**: Locally, a smooth curve through z₀ looks like a straight line.
-    By the model sector calculation with α = π (a line subtends angle π),
-    the contribution is π/(2π) = 1/2.
+**Reduction Strategy**:
 
-    This is the key result for computing winding numbers at smooth crossings,
-    such as at i on the fundamental domain boundary.
+For a curve γ passing through z₀ at t = t₀:
+
+1. **Translation**: Shift so that z₀ = 0 and t₀ = 0 (winding numbers are translation-invariant)
+
+2. **Local linearization**: Near t = 0, γ(t) - z₀ ≈ t · v for some nonzero v ∈ ℂ
+   - For smooth crossing: v = γ'(t₀) (single tangent direction)
+   - For corner crossing: different v⁻ (for t < 0) and v⁺ (for t > 0)
+
+3. **Angle calculation**:
+   - Smooth crossing: incoming direction is -v, outgoing is +v → angle = π
+   - Corner crossing: angle α = arg(v⁺) - arg(-v⁻) (given by hypothesis)
+
+4. **PV integral equivalence**:
+   The key mathematical fact is that for C¹ curves, the PV integral depends only
+   on the local behavior near the singularity. The leading-order terms match the
+   model sector integral, and higher-order corrections vanish in the PV limit.
+
+**Required Infrastructure Lemmas** (stated below, with partial proofs):
 -/
-theorem generalizedWindingNumber_smooth_crossing'
-    (γ : ℝ → ℂ) (a b t₀ : ℝ) (z₀ : ℂ)
-    (hab : a < b) (ht₀ : t₀ ∈ Ioo a b)
-    (hγ_at_z₀ : γ t₀ = z₀)
-    (hγ_smooth : DifferentiableAt ℝ γ t₀)
-    (hγ'_ne : deriv γ t₀ ≠ 0)
-    (hγ_unique : ∀ t ∈ Icc a b, γ t = z₀ → t = t₀) :
-    generalizedWindingNumber' γ a b z₀ = 1/2 := by
-  -- The curve locally looks like a straight line through z₀.
-  -- By Taylor expansion: γ(t) ≈ z₀ + (t - t₀) * γ'(t₀) near t₀.
-  --
-  -- The model sector with α = π (a line) gives contribution π/(2π) = 1/2.
-  --
-  -- PROOF OUTLINE:
-  -- 1. Split the integral: ∫_a^b = ∫_a^{t₀-δ} + ∫_{t₀-δ}^{t₀+δ} + ∫_{t₀+δ}^b
-  -- 2. The outer integrals contribute 0 (curve is bounded away from z₀)
-  -- 3. The middle integral is a PV that matches the model sector with α = π
-  -- 4. By generalizedWindingNumber_modelSector', this gives π/(2π) = 1/2
-  --
-  -- The key insight is that no detoured curve construction is needed:
-  -- the generalized winding number is computed directly via principal value.
-  sorry
 
-/-- The winding number contribution from a corner crossing.
+/-- **Lemma**: Translation invariance of generalized winding number.
 
-    **Theorem**: When a piecewise C¹ curve has a corner at z₀ with oriented angle α
-    between the incoming and outgoing tangents, the contribution is α/(2π).
-
-    **Proof**: Locally, the curve looks like a model sector with angle α.
-    By the model sector calculation, this contributes α/(2π).
-
-    This is used for crossings at corners, such as at ρ on the fundamental
-    domain boundary where the angle is 2π/3, giving contribution 1/3.
+    Shifting both the curve and the point by the same amount preserves
+    the winding number.
 -/
-theorem generalizedWindingNumber_corner_crossing'
-    (γ : ℝ → ℂ) (a b t₀ : ℝ) (z₀ : ℂ) (α : ℝ)
-    (hab : a < b) (ht₀ : t₀ ∈ Ioo a b)
-    (hγ_at_z₀ : γ t₀ = z₀)
-    (hα_pos : 0 < α) (hα_lt : α < 2 * Real.pi)
-    -- The incoming tangent has argument θ₁, outgoing has θ₂, with α = θ₂ - θ₁ + π (mod 2π)
-    (hangle : ∃ (L_in L_out : ℂ), L_in ≠ 0 ∧ L_out ≠ 0 ∧
-      Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_in) ∧
-      Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_out) ∧
-      arg L_out - arg (-L_in) = α)
-    (hγ_unique : ∀ t ∈ Icc a b, γ t = z₀ → t = t₀) :
-    generalizedWindingNumber' γ a b z₀ = α / (2 * Real.pi) := by
-  -- The curve locally looks like a model sector with angle α.
-  -- By the model sector calculation, this contributes α/(2π).
-  --
-  -- PROOF OUTLINE:
-  -- 1. Near t₀, the curve approaches z₀ along direction -L_in
-  -- 2. Near t₀, the curve leaves z₀ along direction L_out
-  -- 3. The angle between these is α (by hypothesis)
-  -- 4. The PV integral matches the model sector integral
-  -- 5. By generalizedWindingNumber_modelSector', we get α/(2π)
-  sorry
+lemma generalizedWindingNumber_translate (γ : ℝ → ℂ) (a b : ℝ) (z₀ w : ℂ) :
+    generalizedWindingNumber' (fun t => γ t + w) a b (z₀ + w) =
+    generalizedWindingNumber' γ a b z₀ := by
+  -- Translation preserves the integrand: ((γ t + w) - (z₀ + w))⁻¹ = (γ t - z₀)⁻¹
+  -- and deriv (γ + w) = deriv γ
+  simp only [generalizedWindingNumber', cauchyPrincipalValue']
+  -- The key simplifications:
+  -- 1. (γ t + w) - (z₀ + w) = γ t - z₀
+  -- 2. ‖(γ t + w) - (z₀ + w)‖ = ‖γ t - z₀‖
+  -- 3. deriv (fun t => γ t + w) t = deriv γ t (constant has zero derivative)
+  congr 2
+  funext ε
+  congr 1
+  funext t
+  simp only [add_sub_add_right_eq_sub]
 
-/-! ## Winding Number for Curves with Multiple Crossings -/
+/-- **Lemma**: Time-shift invariance of generalized winding number.
 
-/-- The generalized winding number equals the sum of local contributions.
-
-    **Theorem**: For a piecewise C¹ curve passing through z₀ at finitely many points,
-    the generalized winding number equals the sum of angle contributions at each crossing.
-
-    This is the direct approach using principal values, without constructing
-    any auxiliary "detoured" curves. The generalized winding number handles
-    all crossings naturally via the principal value definition.
+    Shifting the parameter doesn't change the winding number (after adjusting endpoints).
 -/
-theorem generalizedWindingNumber_sum_of_contributions'
+lemma generalizedWindingNumber_time_shift (γ : ℝ → ℂ) (a b t₀ : ℝ) (z₀ : ℂ) :
+    generalizedWindingNumber' (fun t => γ (t + t₀)) (a - t₀) (b - t₀) z₀ =
+    generalizedWindingNumber' γ a b z₀ := by
+  -- This follows from substitution in the integral.
+  -- Using u = t + t₀: ∫_{a-t₀}^{b-t₀} f(γ(t+t₀)) dt = ∫_a^b f(γ(u)) du
+  simp only [generalizedWindingNumber', cauchyPrincipalValue']
+  congr 2
+  funext ε
+  -- Simplify the LHS to match the form expected by intervalIntegral.integral_comp_add_right
+  simp only [sub_zero, deriv_sub_const_fun]
+  -- Apply substitution theorem for interval integrals
+  have hsub := intervalIntegral.integral_comp_add_right
+    (fun u => if ‖γ u - z₀‖ > ε then (γ u - z₀)⁻¹ * deriv γ u else 0) t₀
+    (a := a - t₀) (b := b - t₀)
+  simp only [sub_add_cancel] at hsub
+  -- Convert LHS to match hsub
+  convert hsub using 2
+  funext t
+  simp only [deriv_comp_add_const γ t₀ t]
+
+/-- **Lemma**: Generalized winding number is invariant under rotation about origin.
+
+    If γ₂(t) = e^{iθ} · γ₁(t), then winding numbers around 0 are equal.
+-/
+lemma generalizedWindingNumber_rotation (γ : ℝ → ℂ) (a b : ℝ) (θ : ℝ) :
+    generalizedWindingNumber' (fun t => exp (I * θ) * γ t) a b 0 =
+    generalizedWindingNumber' γ a b 0 := by
+  -- Rotation around origin preserves winding number.
+  -- Key calculation: (e^{iθ} · z)⁻¹ · d(e^{iθ} · z) = e^{-iθ} · z⁻¹ · e^{iθ} · dz = z⁻¹ · dz
+  -- Also: |e^{iθ} · z| = |z| (rotation preserves norm)
+  simp only [generalizedWindingNumber', cauchyPrincipalValue']
+  congr 2
+  funext ε
+  congr 1
+  funext t
+  simp only [sub_zero]
+  -- Rotation preserves norm: ‖e^{iθ} · z‖ = |e^{iθ}| · ‖z‖ = 1 · ‖z‖
+  have hnorm : ‖exp (I * θ) * γ t‖ = ‖γ t‖ := by
+    rw [norm_mul]
+    have hexp_norm : ‖exp (I * θ)‖ = 1 := by
+      rw [mul_comm I θ, Complex.norm_exp_ofReal_mul_I]
+    rw [hexp_norm, one_mul]
+  rw [hnorm]
+  -- The integrand: (exp (I * θ) * z)⁻¹ * (exp (I * θ) * dz) = z⁻¹ * dz
+  by_cases hdiff : DifferentiableAt ℝ γ t
+  · have hderiv : deriv (fun s => exp (I * θ) * γ s) t = exp (I * θ) * deriv γ t :=
+      deriv_const_mul _ hdiff
+    simp only [hderiv]
+    by_cases h : ‖γ t‖ > ε
+    · simp only [h, ↓reduceIte]
+      -- Goal: (exp(iθ) * γ t)⁻¹ * (exp(iθ) * deriv γ t) = (γ t)⁻¹ * deriv γ t
+      have hexp_ne : exp (I * θ) ≠ 0 := exp_ne_zero _
+      -- Rewrite (exp * γ)⁻¹ = γ⁻¹ * exp⁻¹
+      rw [mul_inv_rev]
+      -- Now: (γ t)⁻¹ * (exp(iθ))⁻¹ * (exp(iθ) * deriv γ t)
+      -- Use associativity: = (γ t)⁻¹ * ((exp(iθ))⁻¹ * (exp(iθ) * deriv γ t))
+      rw [mul_assoc (γ t)⁻¹]
+      -- Now the RHS is: (exp(iθ))⁻¹ * (exp(iθ) * deriv γ t) = (exp(iθ))⁻¹ * exp(iθ) * deriv γ t
+      rw [← mul_assoc (exp (I * θ))⁻¹]
+      rw [inv_mul_cancel₀ hexp_ne, one_mul]
+    · simp only [h, ↓reduceIte]
+  · -- γ not differentiable at t: both derivatives are 0
+    have hderiv1 : deriv (fun s => exp (I * θ) * γ s) t = 0 := by
+      apply deriv_zero_of_not_differentiableAt
+      intro hd
+      apply hdiff
+      have hd' : DifferentiableAt ℝ (fun s => (exp (I * θ))⁻¹ * (exp (I * θ) * γ s)) t :=
+        hd.const_mul _
+      have heq : (fun s => (exp (I * θ))⁻¹ * (exp (I * θ) * γ s)) = γ := by
+        funext s
+        -- Goal: (exp(iθ))⁻¹ * (exp(iθ) * γ s) = γ s
+        -- Manual calculation: use mul_assoc then inv_mul_cancel₀
+        calc (exp (I * θ))⁻¹ * (exp (I * θ) * γ s)
+            = ((exp (I * θ))⁻¹ * exp (I * θ)) * γ s := by ring
+          _ = 1 * γ s := by rw [inv_mul_cancel₀ (exp_ne_zero (I * θ))]
+          _ = γ s := one_mul _
+      rw [heq] at hd'
+      exact hd'
+    have hderiv2 : deriv γ t = 0 := deriv_zero_of_not_differentiableAt hdiff
+    simp only [hderiv1, hderiv2, mul_zero]
+
+-- Suggested corrected statement (local contribution, symmetric PV window):
+-- theorem generalizedWindingNumber_smooth_crossing_local
+--     (γ : ℝ → ℂ) (t₀ : ℝ) (z₀ : ℂ) (δ : ℝ)
+--     (hδ : 0 < δ) (hγ_at : γ t₀ = z₀)
+--     (hγ_smooth : DifferentiableAt ℝ γ t₀) (hγ'_ne : deriv γ t₀ ≠ 0)
+/-!
+## Fundamental Issue with PV-Based Winding Numbers at Crossings
+
+**IMPORTANT**: The theorems `generalizedWindingNumber_smooth_crossing'` and
+`generalizedWindingNumber_corner_crossing'` that were originally in this file
+have been REMOVED because they are FALSE.
+
+### Counterexample (from RT.lean)
+
+For the straight line γ(t) = t through origin with z₀ = 0, δ = 1:
+- The integrand is (γ(t) - z₀)⁻¹ · γ'(t) = t⁻¹ · 1 = 1/t
+- This is an **odd function**
+- PV ∫_{-1}^{1} 1/t dt = 0 (odd function over symmetric interval)
+- So `generalizedWindingNumber' γ (-1) 1 0 = (2πi)⁻¹ · 0 = 0`, **not 1/2**
+
+### Why the corner case also fails
+
+For a piecewise linear curve through z₀ = 0 with different directions:
+- For t < 0: γ(t) ≈ t·L_in, so (γ(t))⁻¹·γ'(t) = (t·L_in)⁻¹·L_in = 1/t
+- For t > 0: γ(t) ≈ t·L_out, so (γ(t))⁻¹·γ'(t) = (t·L_out)⁻¹·L_out = 1/t
+
+The integrand is ALWAYS 1/t regardless of the complex directions!
+The angle information is lost because (tv)⁻¹ · v = 1/t for any nonzero v.
+
+### Fundamental Issue
+
+The PV integral definition `generalizedWindingNumber'` via ∫ dz/(z-z₀) does NOT
+capture angle contributions at crossing points. The symmetric PV excision
+around a crossing point always gives 0, not the expected angle/(2π).
+
+### Required Approach
+
+The correct formalization of the valence formula requires either:
+1. **Asymmetric excision**: Use one-sided limits that capture the argument change
+2. **Argument-based definition**: Define winding contribution via arg(γ(t₀+ε)) - arg(γ(t₀-ε))
+3. **Detoured curves**: Construct auxiliary curves that avoid singularities (Isabelle's approach)
+4. **Explicit angle tracking**: Separate the classical winding number from local angle contributions
+
+The theorems in ValenceFormula.lean that depend on these results will need to be
+reformulated once a correct definition is established.
+-/
+
+/-! ## Angle-Augmented Winding Number
+
+Based on "Non-integer valued winding numbers and a generalized Residue Theorem"
+by Norbert Hungerbühler and Micha Wasem (ETH Zürich, HES-SO).
+
+The PV-based `generalizedWindingNumber'` gives 0 at crossing points because the
+symmetric excision loses direction information. The solution is to explicitly
+track angle contributions at each crossing.
+
+### Key Mathematical Insight
+
+At a crossing point where γ passes through z₀:
+- Incoming tangent: L_in = lim_{t↗t₀} γ'(t)
+- Outgoing tangent: L_out = lim_{t↘t₀} γ'(t)
+- Angle contribution: α = arg(L_out) - arg(-L_in)
+
+For smooth crossing (L_in = L_out = v):
+  α = arg(v) - arg(-v) = π → contribution π/(2π) = 1/2
+
+For corner with exterior angle α:
+  contribution = α/(2π)
+
+-/
+
+/-- The angle contribution at a crossing point where γ passes through z₀.
+
+    This is arg(L_out) - arg(-L_in) where:
+    - L_in = lim_{t→t₀⁻} γ'(t) is the incoming tangent
+    - L_out = lim_{t→t₀⁺} γ'(t) is the outgoing tangent
+
+    For smooth crossing: this equals π (giving contribution 1/2)
+    For corner with angle α: this equals α (giving contribution α/(2π))
+-/
+def angleAtCrossing (γ : PiecewiseC1Immersion) (t₀ : ℝ)
+    (ht₀ : t₀ ∈ Ioo γ.a γ.b) : ℝ :=
+  if h : t₀ ∈ γ.toPiecewiseC1Curve.partition then
+    -- At partition point: use one-sided limits for L_left and L_right
+    let L_left := Classical.choose (γ.left_deriv_limit t₀ h ht₀.1)
+    let L_right := Classical.choose (γ.right_deriv_limit t₀ h ht₀.2)
+    arg L_right - arg (-L_left)
+  else
+    -- At smooth point: derivatives are equal from both sides
+    -- L_in = L_out = deriv γ t₀, so angle = arg(v) - arg(-v) = π
+    Real.pi
+
+/-- At smooth points (not in partition), the crossing angle is π. -/
+theorem angleAtCrossing_smooth (γ : PiecewiseC1Immersion) (t₀ : ℝ)
+    (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hsmooth : t₀ ∉ γ.toPiecewiseC1Curve.partition) :
+    angleAtCrossing γ t₀ ht₀ = Real.pi := by
+  simp only [angleAtCrossing, hsmooth, ↓reduceDIte]
+
+/-- Winding number with explicit angle tracking at crossings.
+
+    For a piecewise C¹ curve passing through z₀ at points in `crossings`,
+    the winding number equals the sum of angle contributions at each crossing,
+    divided by 2π.
+
+    This definition directly captures the geometric winding contribution
+    without relying on PV integrals that lose direction information at crossings.
+-/
+def windingNumberWithAngles
+    (γ : PiecewiseC1Immersion) (_z₀ : ℂ)
+    (crossings : Finset ℝ)
+    (hcrossings_in : ∀ t ∈ crossings, t ∈ Ioo γ.a γ.b)
+    (_hcrossings_at : ∀ t ∈ crossings, γ.toFun t = _z₀) : ℂ :=
+  ∑ t : crossings, (angleAtCrossing γ t (hcrossings_in t t.prop)) / (2 * Real.pi)
+
+/-- Alternative definition using a subtype for cleaner ergonomics. -/
+def windingNumberWithAngles'
     (γ : PiecewiseC1Immersion) (z₀ : ℂ)
-    (crossings : Finset ℝ) (angles : crossings → ℝ)
-    (hcrossings : ∀ t ∈ crossings, t ∈ Icc γ.a γ.b ∧ γ.toFun t = z₀)
-    (hcrossings_only : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ crossings)
-    (hangles : ∀ t : crossings, 0 ≤ angles t ∧ angles t ≤ 2 * Real.pi) :
-    generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
-      ∑ t : crossings, (angles t : ℂ) / (2 * Real.pi) := by
-  -- The proof splits the integral over each crossing and applies the
-  -- corner/smooth crossing results at each point.
+    (crossings : Finset ℝ)
+    (hcrossings_in : ∀ t ∈ crossings, t ∈ Ioo γ.a γ.b)
+    (_hcrossings_at : ∀ t ∈ crossings, γ.toFun t = z₀) : ℂ :=
+  ∑ t : crossings, (angleAtCrossing γ t (hcrossings_in t t.prop)) / (2 * Real.pi)
+
+/-- Helper to construct the membership proof for singletons. -/
+theorem singleton_mem_Ioo (t₀ : ℝ) (a b : ℝ) (ht₀ : t₀ ∈ Ioo a b) :
+    ∀ t ∈ ({t₀} : Finset ℝ), t ∈ Ioo a b := by
+  intro t ht
+  simp only [Finset.mem_singleton] at ht
+  rw [ht]; exact ht₀
+
+/-- Helper to construct the crossing proof for singletons. -/
+theorem singleton_at_crossing (γ : PiecewiseC1Immersion) (t₀ : ℝ) (z₀ : ℂ)
+    (hcross : γ.toFun t₀ = z₀) : ∀ t ∈ ({t₀} : Finset ℝ), γ.toFun t = z₀ := by
+  intro t ht
+  simp only [Finset.mem_singleton] at ht
+  rw [ht]; exact hcross
+
+/-- A single smooth crossing contributes 1/2 to the winding number.
+
+    **Proof idea**: For a singleton set {t₀}, the sum has exactly one term.
+    At a smooth point, angleAtCrossing returns π (by definition).
+    So the winding number is π/(2π) = 1/2.
+-/
+theorem windingNumber_smooth_crossing (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (hcross : γ.toFun t₀ = z₀)
+    (hsmooth : t₀ ∉ γ.toPiecewiseC1Curve.partition) :
+    windingNumberWithAngles' γ z₀ {t₀}
+      (singleton_mem_Ioo t₀ γ.a γ.b ht₀)
+      (singleton_at_crossing γ t₀ z₀ hcross) = 1/2 := by
+  simp only [windingNumberWithAngles']
+  -- The sum over the singleton subtype has exactly one term (Unique instance is automatic)
+  rw [Fintype.sum_unique]
+  -- The default element of the singleton subtype coerces to t₀
+  simp only [Finset.default_singleton]
+  -- At smooth points, angleAtCrossing = π
+  rw [angleAtCrossing_smooth γ t₀ ht₀ hsmooth]
+  -- Now show π / (2 * π) = 1/2
+  field_simp [Real.pi_ne_zero]
+
+/-- A corner crossing with angle α contributes α/(2π) to the winding number.
+
+    **Proof idea**: For a singleton set {t₀}, the sum has exactly one term.
+    The angle at the corner is α (by hypothesis).
+    So the winding number is α/(2π).
+-/
+theorem windingNumber_corner_crossing (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (t₀ : ℝ) (α : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (hcross : γ.toFun t₀ = z₀)
+    (_hcorner : t₀ ∈ γ.toPiecewiseC1Curve.partition)
+    (hangle : angleAtCrossing γ t₀ ht₀ = α) :
+    windingNumberWithAngles' γ z₀ {t₀}
+      (singleton_mem_Ioo t₀ γ.a γ.b ht₀)
+      (singleton_at_crossing γ t₀ z₀ hcross) = α / (2 * Real.pi) := by
+  simp only [windingNumberWithAngles']
+  -- The sum over the singleton subtype has exactly one term (Unique instance is automatic)
+  rw [Fintype.sum_unique]
+  -- The default element of the singleton subtype coerces to t₀
+  simp only [Finset.default_singleton]
+  -- The angle at the crossing is α (by hypothesis hangle)
+  rw [hangle]
+
+/-- The winding number with angles is additive over disjoint crossing sets. -/
+theorem windingNumberWithAngles_union (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (S T : Finset ℝ) (hST : Disjoint S T)
+    (hS_in : ∀ t ∈ S, t ∈ Ioo γ.a γ.b) (hT_in : ∀ t ∈ T, t ∈ Ioo γ.a γ.b)
+    (hS_at : ∀ t ∈ S, γ.toFun t = z₀) (hT_at : ∀ t ∈ T, γ.toFun t = z₀) :
+    windingNumberWithAngles' γ z₀ (S ∪ T)
+      (fun t ht => by
+        simp only [Finset.mem_union] at ht
+        exact ht.elim (hS_in t) (hT_in t))
+      (fun t ht => by
+        simp only [Finset.mem_union] at ht
+        exact ht.elim (hS_at t) (hT_at t)) =
+    windingNumberWithAngles' γ z₀ S hS_in hS_at +
+    windingNumberWithAngles' γ z₀ T hT_in hT_at := by
+  simp only [windingNumberWithAngles']
+  -- The angle function only depends on the value t, not on the membership proof
+  -- (proof irrelevance makes different membership proofs definitionally equal).
+  -- Convert sums over subtypes to sums over finsets, then use Finset.sum_union.
+  -- Technical note: The full proof requires showing that the membership proof used
+  -- in angleAtCrossing doesn't affect the result, which follows from proof irrelevance.
+  -- For the key application (single crossing points), windingNumber_smooth_crossing
+  -- and windingNumber_corner_crossing provide the needed results directly.
+  sorry
+
+/-- For the fundamental domain boundary at elliptic point i (smooth crossing at t=2),
+    the winding contribution is 1/2. -/
+theorem windingNumber_boundary_at_i_angle
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (_hz₀ : z₀ = Complex.I)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (hcross : γ.toFun t₀ = z₀)
+    (hsmooth : t₀ ∉ γ.toPiecewiseC1Curve.partition) :
+    windingNumberWithAngles' γ z₀ {t₀}
+      (singleton_mem_Ioo t₀ γ.a γ.b ht₀)
+      (singleton_at_crossing γ t₀ z₀ hcross) = 1/2 :=
+  windingNumber_smooth_crossing γ z₀ t₀ ht₀ hcross hsmooth
+
+/-- For the fundamental domain boundary at elliptic point ρ (corner at t=3 with angle 2π/3),
+    the winding contribution is 1/3. -/
+theorem windingNumber_boundary_at_rho_angle
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (_hz₀ : z₀ = -1/2 + Complex.I * Real.sqrt 3 / 2)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (hcross : γ.toFun t₀ = z₀)
+    (hcorner : t₀ ∈ γ.toPiecewiseC1Curve.partition)
+    (hangle : angleAtCrossing γ t₀ ht₀ = 2 * Real.pi / 3) :
+    windingNumberWithAngles' γ z₀ {t₀}
+      (singleton_mem_Ioo t₀ γ.a γ.b ht₀)
+      (singleton_at_crossing γ t₀ z₀ hcross) = 1/3 := by
+  rw [windingNumber_corner_crossing γ z₀ t₀ (2 * Real.pi / 3) ht₀ hcross hcorner hangle]
+  simp only [Complex.ofReal_div, Complex.ofReal_mul, Complex.ofReal_ofNat]
+  field_simp [Real.pi_ne_zero]
+
+/-! ## Connection to Generalized Residue Theorem
+
+The angle-augmented winding number satisfies the generalized residue theorem
+from Hungerbühler-Wasem. For a closed piecewise C¹ curve γ and a meromorphic
+function f with simple poles at z₁, ..., zₙ:
+
+  PV (1/2πi) ∮_γ f(z) dz = Σₖ n_{zₖ}(γ) · res_{zₖ} f
+
+where n_{zₖ}(γ) is computed using windingNumberWithAngles for crossing points
+and the classical winding number for points the curve avoids.
+-/
+
+/-- The total winding number around z₀ for a closed piecewise C¹ curve is:
+    - If γ avoids z₀: an integer (classical case)
+    - If γ passes through z₀: sum of angle contributions at crossings
+      plus an integer from the rest of the curve
+
+    **Key point**: We do NOT need to construct an auxiliary "detoured" curve.
+    The integer n represents how many times the curve would wind around z₀
+    if we could somehow "ignore" the crossings. For curves that pass through
+    but don't fully enclose z₀ (like the fundamental domain boundary at
+    elliptic points), this integer is 0.
+
+    In practice, we can compute the total winding number directly using
+    `windingNumberWithAngles'` for the angle contributions, and determine n
+    by geometric reasoning (typically n = 0 or n = 1).
+-/
+theorem windingNumber_decomposition
+    (γ : PiecewiseC1Immersion) (hclosed : γ.toFun γ.a = γ.toFun γ.b) (z₀ : ℂ)
+    (crossings : Finset ℝ)
+    (hcrossings_in : ∀ t ∈ crossings, t ∈ Ioo γ.a γ.b)
+    (hcrossings_at : ∀ t ∈ crossings, γ.toFun t = z₀)
+    (hcrossings_only : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ crossings) :
+    ∃ n : ℤ, generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
+      (n : ℂ) + windingNumberWithAngles' γ z₀ crossings hcrossings_in hcrossings_at := by
+  -- The decomposition follows from the Hungerbühler-Wasem paper, Proposition 1.1:
+  -- n_{z₀}(Λ) = n_{z₀}(Λ̃) + Σₗ αₗ/(2π)
   --
-  -- PROOF OUTLINE:
-  -- 1. Split the interval [a,b] at each crossing point
-  -- 2. On segments between crossings, the curve avoids z₀, contributing 0
-  --    (these are not closed curves, so they don't wind around z₀)
-  -- 3. At each crossing t_i, apply the corner crossing result with angle α_i
-  -- 4. Sum the contributions to get Σ α_i/(2π)
+  -- IMPORTANT: We do NOT construct Λ̃ explicitly. The angle contributions
+  -- are computed directly via `windingNumberWithAngles'`, and the integer n
+  -- is determined by the global topology of how γ winds around z₀.
+  --
+  -- For the fundamental domain boundary at i or ρ:
+  -- - The curve passes through but doesn't enclose the point
+  -- - Hence n = 0, and the total winding = angle contribution alone
   sorry
 
 /-! ## Integral Splitting -/
 
-/-- The contour integral splits when the path is decomposed.
-
-    **Isabelle parallel**: `contour_integral_join` in `Contour_Integration.thy`
--/
 theorem cauchyPrincipalValue_split
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
-    (_hab : a < b) (_hbc : b < c)
+    (hab : a < b) (hbc : b < c)
     (hf_ab : CauchyPrincipalValueExists' f γ a b z₀)
-    (hf_bc : CauchyPrincipalValueExists' f γ b c z₀) :
+    (hf_bc : CauchyPrincipalValueExists' f γ b c z₀)
+    -- Continuity hypotheses needed for integrability
+    (hf_cont : ContinuousOn f (γ '' Icc a c \ {z₀}))
+    (hγ_cont : ContinuousOn γ (Icc a c))
+    (hγ'_cont : ContinuousOn (deriv γ) (Icc a c)) :
     cauchyPrincipalValue' f γ a c z₀ =
     cauchyPrincipalValue' f γ a b z₀ + cauchyPrincipalValue' f γ b c z₀ := by
   -- The PV integral splits additively over adjacent intervals.
@@ -403,29 +738,66 @@ theorem cauchyPrincipalValue_split
   --
   -- We use a limit-based argument: since both sides converge to the same limit,
   -- and the integrals split for any ε where they are well-defined, we get equality of limits.
+  -- Derive interval orderings
+  have hac : a < c := lt_trans hab hbc
+  have hab_le : a ≤ b := le_of_lt hab
+  have hbc_le : b ≤ c := le_of_lt hbc
+  have hac_le : a ≤ c := le_of_lt hac
+  -- Restrict continuity hypotheses to subintervals
+  have hγ_cont_ab : ContinuousOn γ (Icc a b) :=
+    hγ_cont.mono (Icc_subset_Icc_right (le_of_lt hbc))
+  have hγ_cont_bc : ContinuousOn γ (Icc b c) :=
+    hγ_cont.mono (Icc_subset_Icc_left hab_le)
+  have hγ'_cont_ab : ContinuousOn (deriv γ) (Icc a b) :=
+    hγ'_cont.mono (Icc_subset_Icc_right (le_of_lt hbc))
+  have hγ'_cont_bc : ContinuousOn (deriv γ) (Icc b c) :=
+    hγ'_cont.mono (Icc_subset_Icc_left hab_le)
+  -- Show the integral splits eventually (for ε > 0)
   have h_split : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       (∫ t in a..c, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) =
       (∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) +
       (∫ t in b..c, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) := by
-    -- For each fixed ε > 0, the integrand is a bounded function (it's 0 near z₀).
+    -- For each fixed ε > 0, the integrand is bounded and measurable.
     -- The integral splits by additivity.
-    apply Filter.Eventually.of_forall
-    intro ε
+    filter_upwards [self_mem_nhdsWithin] with ε hε
+    -- hε : ε ∈ Ioi 0, i.e., 0 < ε
+    simp only [mem_Ioi] at hε
+    -- The integrand equals cauchyPrincipalValueIntegrand' f γ z₀ ε
+    have h_eq : (fun t => if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) =
+        cauchyPrincipalValueIntegrand' f γ z₀ ε := by
+      ext t; rfl
+    -- Get integrability on [a, b]
+    have hf_cont_ab : ContinuousOn f (γ '' Icc a b \ Metric.ball z₀ ε) := by
+      apply hf_cont.mono
+      intro z ⟨hz_im, hz_ball⟩
+      constructor
+      · -- z ∈ γ '' Icc a c
+        obtain ⟨t, ht, rfl⟩ := hz_im
+        exact ⟨t, Icc_subset_Icc_right (le_of_lt hbc) ht, rfl⟩
+      · -- z ≠ z₀
+        simp only [mem_singleton_iff]
+        intro h_eq'
+        rw [h_eq'] at hz_ball
+        exact hz_ball (Metric.mem_ball_self hε)
+    have hint_ab : IntervalIntegrable (cauchyPrincipalValueIntegrand' f γ z₀ ε) volume a b :=
+      cauchyPrincipalValueIntegrand_integrable f γ a b z₀ ε hε hab hf_cont_ab hγ_cont_ab hγ'_cont_ab
+    -- Get integrability on [b, c]
+    have hf_cont_bc : ContinuousOn f (γ '' Icc b c \ Metric.ball z₀ ε) := by
+      apply hf_cont.mono
+      intro z ⟨hz_im, hz_ball⟩
+      constructor
+      · obtain ⟨t, ht, rfl⟩ := hz_im
+        exact ⟨t, Icc_subset_Icc_left hab_le ht, rfl⟩
+      · simp only [mem_singleton_iff]
+        intro h_eq'
+        rw [h_eq'] at hz_ball
+        exact hz_ball (Metric.mem_ball_self hε)
+    have hint_bc : IntervalIntegrable (cauchyPrincipalValueIntegrand' f γ z₀ ε) volume b c :=
+      cauchyPrincipalValueIntegrand_integrable f γ b c z₀ ε hε hbc hf_cont_bc hγ_cont_bc hγ'_cont_bc
     -- The integral splits by additivity over adjacent intervals.
-    -- The integrand g(t) = if ‖γ t - z₀‖ > ε then f(γ t) * γ'(t) else 0
-    symm
-    rw [← intervalIntegral.integral_add_adjacent_intervals]
-    -- INTEGRABILITY: For a bounded piecewise function on finite intervals,
-    -- integrability follows from AEStronglyMeasurable + bounded.
-    -- The condition function t ↦ (‖γ t - z₀‖ > ε) creates a piecewise structure:
-    -- - On {t : ‖γ t - z₀‖ > ε}: integrand is f(γ t) * γ'(t)
-    -- - On {t : ‖γ t - z₀‖ ≤ ε}: integrand is 0
-    --
-    -- TECHNICAL GAP: The theorem statement lacks hypotheses on f and γ needed
-    -- for formal integrability proofs (measurability of f, γ, deriv γ).
-    -- In practice, for the valence formula application, these hold.
-    -- The PV existence hypotheses (hf_ab, hf_bc) implicitly require integrability.
-    all_goals sorry
+    -- ∫ a..b + ∫ b..c = ∫ a..c
+    simp only [h_eq]
+    exact (intervalIntegral.integral_add_adjacent_intervals hint_ab hint_bc).symm
   -- So the limit of [a,c] equals the limit of [a,b] + [b,c]
   have h_tendsto_ac : Tendsto (fun ε =>
       ∫ t in a..c, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0)

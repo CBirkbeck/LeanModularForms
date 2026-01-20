@@ -128,6 +128,72 @@ theorem cauchyPrincipalValueIntegrand_bounded
       exact ⟨γ t, ⟨t, ht, rfl⟩, by simp only [Metric.mem_ball, not_lt]; exact le_of_lt h⟩
     · simp only [norm_zero, le_refl]
 
+/-! ## Measurability Infrastructure -/
+
+/-- The PV integrand equals an indicator function. -/
+lemma cauchyPrincipalValueIntegrand_eq_indicator (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) :
+    cauchyPrincipalValueIntegrand' f γ z₀ ε =
+      {t | ε < ‖γ t - z₀‖}.indicator (fun t => f (γ t) * deriv γ t) := by
+  ext t
+  unfold cauchyPrincipalValueIntegrand'
+  simp only [Set.indicator, Set.mem_setOf_eq]
+
+/-- The set where the integrand is nonzero is measurable when γ is continuous. -/
+lemma measurableSet_pv_support (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (ε : ℝ)
+    (hγ_cont : ContinuousOn γ (Icc a b)) :
+    MeasurableSet ({t | ε < ‖γ t - z₀‖} ∩ Icc a b) := by
+  have h_norm_cont : ContinuousOn (fun t => ‖γ t - z₀‖) (Icc a b) :=
+    (hγ_cont.sub continuousOn_const).norm
+  have h_open_sub : IsOpen ((Icc a b).restrict (fun t => ‖γ t - z₀‖) ⁻¹' Set.Ioi ε) :=
+    isOpen_Ioi.preimage h_norm_cont.restrict
+  rw [isOpen_induced_iff] at h_open_sub
+  obtain ⟨U, hU_open, hU_eq⟩ := h_open_sub
+  have h_eq : {t | ε < ‖γ t - z₀‖} ∩ Icc a b = U ∩ Icc a b := by
+    ext x
+    constructor
+    · intro ⟨hx_far, hx_Icc⟩
+      refine ⟨?_, hx_Icc⟩
+      have h1 : (⟨x, hx_Icc⟩ : ↑(Icc a b)) ∈ ((Icc a b).restrict (fun t => ‖γ t - z₀‖)) ⁻¹' Set.Ioi ε := by
+        simp only [Set.mem_preimage, Set.restrict_apply, Set.mem_Ioi]
+        exact hx_far
+      rw [← hU_eq] at h1
+      exact h1
+    · intro ⟨hx_U, hx_Icc⟩
+      refine ⟨?_, hx_Icc⟩
+      have h1 : (⟨x, hx_Icc⟩ : ↑(Icc a b)) ∈ Subtype.val ⁻¹' U := hx_U
+      rw [hU_eq] at h1
+      simp only [Set.mem_preimage, Set.restrict_apply, Set.mem_Ioi] at h1
+      exact h1
+  rw [h_eq]
+  exact hU_open.measurableSet.inter isClosed_Icc.measurableSet
+
+/-- The base function (f ∘ γ) * γ' is continuous where the integrand is nonzero. -/
+lemma continuousOn_pv_base (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (ε : ℝ)
+    (hf_cont : ContinuousOn f (γ '' Icc a b \ Metric.ball z₀ ε))
+    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hγ'_cont : ContinuousOn (deriv γ) (Icc a b)) :
+    ContinuousOn (fun t => f (γ t) * deriv γ t) ({t | ε < ‖γ t - z₀‖} ∩ Icc a b) := by
+  intro t ⟨ht_far, ht_Icc⟩
+  have hγt_not_ball : γ t ∉ Metric.ball z₀ ε := by
+    simp only [Metric.mem_ball, not_lt]
+    exact le_of_lt ht_far
+  have hγt_in : γ t ∈ γ '' Icc a b \ Metric.ball z₀ ε :=
+    ⟨Set.mem_image_of_mem γ ht_Icc, hγt_not_ball⟩
+  have hf_at : ContinuousWithinAt f (γ '' Icc a b \ Metric.ball z₀ ε) (γ t) :=
+    hf_cont (γ t) hγt_in
+  have hγ_at : ContinuousWithinAt γ (Icc a b) t := hγ_cont t ht_Icc
+  have hγ'_at : ContinuousWithinAt (deriv γ) (Icc a b) t := hγ'_cont t ht_Icc
+  have h_maps : Set.MapsTo γ ({t | ε < ‖γ t - z₀‖} ∩ Icc a b) (γ '' Icc a b \ Metric.ball z₀ ε) := by
+    intro s ⟨hs_far, hs_Icc⟩
+    refine ⟨Set.mem_image_of_mem γ hs_Icc, ?_⟩
+    simp only [Metric.mem_ball, not_lt]
+    exact le_of_lt hs_far
+  have hfγ_at : ContinuousWithinAt (f ∘ γ) ({t | ε < ‖γ t - z₀‖} ∩ Icc a b) t := by
+    apply ContinuousWithinAt.comp hf_at (hγ_at.mono Set.inter_subset_right) h_maps
+  have hγ'_at' : ContinuousWithinAt (deriv γ) ({t | ε < ‖γ t - z₀‖} ∩ Icc a b) t :=
+    hγ'_at.mono Set.inter_subset_right
+  exact hfγ_at.mul hγ'_at'
+
 /-- The PV integrand is integrable for each ε > 0.
 
     **Proof strategy**: The integrand is bounded (by `cauchyPrincipalValueIntegrand_bounded`)

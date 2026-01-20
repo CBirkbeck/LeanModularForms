@@ -5,6 +5,7 @@ Authors:
 -/
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.Basic
 import Mathlib.Analysis.Calculus.Taylor
+import Mathlib.Analysis.Calculus.LHopital
 
 /-!
 # Asymptotic Estimates for Winding Number Integrand
@@ -438,6 +439,12 @@ theorem numerator_big_O_squared (t₀ : ℝ)
       -- err = γ(t) - γ(t₀) - h*v = ∫_{t₀}^t (γ'(s) - v) ds
       -- Using Lipschitz: ‖γ'(s) - v‖ ≤ |s - t₀|
       -- So ‖err‖ ≤ ∫ |s - t₀| ds ≤ h²/2
+      -- Suggested helper lemma (FTC + Lipschitz derivative):
+      -- lemma norm_sub_sub_deriv_le_of_lipschitz_deriv
+      --     (γ : ℝ → ℂ) (hLip : LipschitzOnWith 1 (deriv γ) (Icc (t₀ - δ) (t₀ + δ)))
+      --     (ht : t ∈ Icc (t₀ - δ) (t₀ + δ)) :
+      --     ‖γ t - γ t₀ - (t - t₀) • deriv γ t₀‖ ≤ |t - t₀|^2 / 2
+      -- Proof: write γ(t) - γ(t₀) = ∫ γ'(s) ds, expand, and apply norm_integral_le_integral_norm.
       --
       -- For the formal proof, we need FTC machinery. Using h_gamma_bdd as a fallback:
       -- ‖err‖ = ‖γ(t) - h*v‖ ≤ ‖γ(t)‖ + |h|*‖v‖ ≤ M*|h| + |h|*M = 2M*|h|
@@ -919,9 +926,10 @@ def signedCurvature (γ : ℝ → ℂ) (t : ℝ) : ℝ :=
   let a := deriv (deriv γ) t
   (v.re * a.im - v.im * a.re) / (v.re^2 + v.im^2)^(3/2 : ℝ)
 
-/-- For a C² curve, the winding number integrand has a limit at a zero.
 
-    **Theorem**: If γ is C² near t₀ with γ(t₀) = 0, then
+/-- For a C² curve with nonzero derivative, the winding number integrand has a limit at a zero.
+
+    **Theorem**: If γ is C² near t₀ with γ(t₀) = 0 and γ'(t₀) ≠ 0, then
     lim_{t→t₀} (x·ẏ - y·ẋ)/(x² + y²) = (1/2)·κ_γ(t₀)·|γ'(t₀)|
 
     where κ_γ is the signed curvature.
@@ -935,13 +943,19 @@ def signedCurvature (γ : ℝ → ℂ) (t : ℝ) : ℝ :=
     x² + y² = (t-t₀)²(ẋ(t₀)² + ẏ(t₀)²) + o((t-t₀)²)
 
     The limit is (ẋ·ÿ - ẏ·ẍ)/(2(ẋ² + ẏ²)) = (1/2)·κ·|γ'|.
+
+    Note: This theorem requires γ'(t₀) ≠ 0. When γ'(t₀) = 0, the limit formula
+    (1/2)*κ*|γ'| = 0 may not capture the actual limiting behavior, which depends
+    on higher-order derivatives. For immersions, γ'(t₀) ≠ 0 always holds.
 -/
 theorem windingNumberIntegrand_limit_at_zero (t₀ : ℝ)
     (hγ_zero : γ.toFun t₀ = 0)
-    (hC2 : ContDiffAt ℝ 2 γ.toFun t₀) :
+    (hC2 : ContDiffAt ℝ 2 γ.toFun t₀)
+    (hv_ne : deriv γ.toFun t₀ ≠ 0) :
     let κ := signedCurvature γ.toFun t₀
     let v := ‖deriv γ.toFun t₀‖
-    Tendsto (windingNumberIntegrand γ.toFun) (𝓝 t₀) (𝓝 ((1/2) * κ * v)) := by
+    Tendsto (windingNumberIntegrand γ.toFun) (𝓝[≠] t₀) (𝓝 ((1/2) * κ * v)) := by
+  -- With hv_ne : deriv γ.toFun t₀ ≠ 0, we can proceed directly.
   -- Second-order Taylor expansion gives:
   -- γ(t) = (t-t₀)·γ'(t₀) + (t-t₀)²/2·γ''(t₀) + o((t-t₀)²)
   -- since γ(t₀) = 0.
@@ -954,49 +968,39 @@ theorem windingNumberIntegrand_limit_at_zero (t₀ : ℝ)
   -- (vx·ay - vy·ax)/(2(vx² + vy²))
   --
   -- This equals (1/2)·κ·|γ'| where κ = signedCurvature γ t₀.
-  --
-  -- The proof requires:
-  -- 1. Taylor expansion from ContDiffAt
-  -- 2. Limit computation for the ratio
-  -- 3. Algebraic simplification to the curvature formula
-  --
-  -- This is a standard calculus limit that follows from Taylor's theorem.
   intro κ v_norm
-  -- The key is to show that near t₀, the integrand is close to the limit.
-  -- For C² curves, we use the second-order Taylor expansion.
+  -- We use L'Hopital's rule twice since both numerator and denominator vanish at t₀,
+  -- and their first derivatives also vanish at t₀.
   --
-  -- From hC2, we have γ(t) = γ(t₀) + (t-t₀)·γ'(t₀) + (t-t₀)²/2·γ''(t₀) + o((t-t₀)²)
-  -- Since γ(t₀) = 0, this simplifies.
+  -- Define:
+  -- f(t) = x(t)·y'(t) - y(t)·x'(t)  (numerator)
+  -- g(t) = x(t)² + y(t)²  (denominator)
   --
-  -- The full proof requires Taylor remainder bounds which involve significant machinery.
-  -- The mathematical argument is outlined in the theorem documentation above.
+  -- At t₀ where γ(t₀) = 0: f(t₀) = 0, g(t₀) = 0
+  -- f'(t) = x'·y' + x·y'' - y'·x' - y·x'' = x·y'' - y·x''
+  -- g'(t) = 2x·x' + 2y·y'
+  -- At t₀: f'(t₀) = 0, g'(t₀) = 0
   --
-  -- **Proof strategy:**
-  -- 1. Use `ContDiffAt` to obtain Taylor expansion:
-  --    γ(t) = (t-t₀)·v + (t-t₀)²/2·a + o((t-t₀)²)
-  --    where v = γ'(t₀), a = γ''(t₀)
+  -- f''(t) = x'·y'' + x·y''' - y'·x'' - y·x'''
+  -- g''(t) = 2(x')² + 2x·x'' + 2(y')² + 2y·y''
+  -- At t₀: f''(t₀) = x'·y'' - y'·x'', g''(t₀) = 2((x')² + (y')²) = 2|v|²
   --
-  -- 2. Compute the Taylor expansion of the numerator:
-  --    x·y' - y·x' = (t-t₀)²/2·(v.re·a.im - v.im·a.re) + o((t-t₀)²)
+  -- By L'Hopital (applied twice):
+  -- lim f/g = lim f'/g' = lim f''/g'' = (x'·y'' - y'·x'') / (2|v|²)
   --
-  -- 3. Compute the Taylor expansion of the denominator:
-  --    x² + y² = (t-t₀)²·(v.re² + v.im²) + o((t-t₀)²)
+  -- This equals (1/2)·κ·|v| by the definition of signed curvature:
+  -- κ = (v.re * a.im - v.im * a.re) / |v|³
+  -- So (1/2)·κ·|v| = (v.re * a.im - v.im * a.re) / (2|v|²)
+  --                = (x'(t₀)·y''(t₀) - y'(t₀)·x''(t₀)) / (2|v|²)
+  --                = f''(t₀) / g''(t₀)
   --
-  -- 4. The ratio converges to:
-  --    (v.re·a.im - v.im·a.re) / (2·(v.re² + v.im²))
+  -- The full proof requires:
+  -- 1. Extract differentiability from ContDiffAt 2
+  -- 2. Apply L'Hopital's rule (HasDerivAt.lhopital_zero_nhdsNE from Mathlib)
+  -- 3. Show the derivative ratio also has a 0/0 form requiring second application
+  -- 4. Verify the algebraic identity
   --
-  -- 5. This equals (1/2)·κ·|v| where κ = signedCurvature γ t₀:
-  --    κ = (v.re·a.im - v.im·a.re) / |v|³
-  --    (1/2)·κ·|v| = (v.re·a.im - v.im·a.re) / (2·|v|²)
-  --
-  -- The key mathlib tools needed:
-  -- - `taylor_isLittleO` or `taylor_tendsto` for the o(h²) remainder
-  -- - `Tendsto.div` for limits of ratios
-  -- - Algebraic manipulation to match the curvature formula
-  --
-  -- This proof requires significant machinery but is mathematically straightforward.
-  -- The main technical challenge is handling the limit of a ratio where both
-  -- numerator and denominator tend to 0 at rate O(h²).
+  -- This is technically complex but mathematically straightforward.
   sorry
 
 /-! ## Flatness Conditions -/
