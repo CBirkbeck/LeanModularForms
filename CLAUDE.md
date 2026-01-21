@@ -44,47 +44,58 @@ The valence formula proof is in `LeanModularForms/Modularforms/valence/`:
 
 ## Key Mathematical Concepts
 
-The project uses **generalized winding numbers** via Cauchy principal values:
-- Contours can pass through singularities
-- At elliptic point i: winding number = 1/2 (smooth crossing)
-- At elliptic point ρ: winding number = 1/3 (corner with angle 2π/3)
+### The Valence Formula
 
-## Our Approach: Direct Winding Numbers (No Detoured Curves)
+For a nonzero modular form f of weight k for SL₂(ℤ):
 
-**IMPORTANT**: We use a direct approach that differs from Isabelle and some textbooks.
+```
+ord_∞(f) + (1/2)·ord_i(f) + (1/3)·ord_ρ(f) + Σ_{p ∈ 𝒟°} ord_p(f) = k/12
+```
 
-### The Direct Approach
+### Orbifold Coefficients (NOT Winding Numbers!)
 
-Instead of constructing "detoured curves" that go around singularities, we compute
-winding numbers directly using principal value integrals:
+**CRITICAL**: The coefficients 1/2 at i and 1/3 at ρ come from the **orbifold structure**
+of the modular curve ℍ/SL₂(ℤ), NOT from geometric winding numbers.
 
-1. **Smooth crossing** (`generalizedWindingNumber_smooth_crossing'`):
-   - When a C¹ curve passes through z₀ with nonzero derivative
-   - Contribution: **1/2**
-   - Used at: elliptic point i (t = 2 on boundary)
+#### Why Winding Numbers Don't Work
 
-2. **Corner crossing** (`generalizedWindingNumber_corner_crossing'`):
-   - When a piecewise C¹ curve has a corner at z₀ with angle α
-   - Contribution: **α/(2π)**
-   - Used at: elliptic point ρ (t = 3 on boundary, angle = 2π/3 → contribution 1/3)
+The Hungerbühler-Wasem paper defines generalized winding numbers via Cauchy PV:
+```
+n_{z₀}(γ) = PV (1/2πi) ∮_γ dz/(z-z₀) = α/(2π)
+```
+where α is the angle from outgoing tangent to -incoming tangent.
 
-3. **Classical case** (`generalizedWindingNumber_eq_classical_away`):
-   - When curve avoids z₀, generalized = classical winding number
-   - Used at: interior points (winding number = 1)
+However, at ρ on ∂𝒟:
+- The geometric angle is **π/3** (or 5π/3 depending on convention)
+- This gives **1/6** or **5/6**, NOT 1/3!
+- The valence formula requires **1/3**
 
-### Why Not Detoured Curves?
+At i, the H-W formula happens to give 1/2 (smooth crossing, angle = π), but this
+is a **coincidence** — the orbifold coefficient would still be 1/2 regardless of
+the curve geometry.
 
-The traditional approach constructs an auxiliary curve γ̃ that:
-- Coincides with γ away from singularities
-- Detours around each singularity via small semicircular arcs
+#### The Orbifold Structure
 
-Then: `W(γ, z₀) = W(γ̃, z₀) + Σ angle_contributions`
+The quotient ℍ/SL₂(ℤ) is an orbifold with:
 
-**We skip this construction entirely.** The principal value definition already
-captures the correct local contributions at each crossing point. This is:
-- Simpler to formalize (no complex curve construction)
-- More direct (compute contributions locally)
-- Equivalent mathematically (same final answer)
+| Point | Stabilizer | Order | Valence Coefficient |
+|-------|------------|-------|---------------------|
+| Interior | {±I} | 1 | 1 |
+| i | ⟨S⟩ where S: z ↦ -1/z | 2 | 1/2 |
+| ρ | ⟨ST⟩ where ST: z ↦ -1/(z+1) | 3 | 1/3 |
+
+The coefficient at p is **1/(order of stabilizer at p)**.
+
+### What the PV/Winding Number Approach IS Good For
+
+The Hungerbühler-Wasem PV approach is still useful for:
+- **Interior points**: winding number = 1 (classical case, curve avoids point)
+- **Residue calculations**: PV integrals of meromorphic functions
+- **General complex analysis**: curves passing through singularities
+
+But for the **valence formula coefficients at elliptic points**, use:
+- `orbifoldCoeff_at_i = 1/2` (stabilizer order 2)
+- `orbifoldCoeff_at_rho = 1/3` (stabilizer order 3)
 
 ### Fundamental Domain Boundary
 
@@ -94,17 +105,12 @@ The boundary is parameterized **counterclockwise** (positive orientation):
 - t ∈ [2,3]: arc from i to ρ (counterclockwise, angle π/2 → 2π/3)
 - t ∈ [3,4]: left vertical from ρ up to (-1/2 + Hi)
 
-This gives **positive** winding numbers: +1 interior, +1/2 at i, +1/3 at ρ.
+For interior points: classical winding number = +1.
+For elliptic points: use **orbifold coefficients** (1/2 at i, 1/3 at ρ).
 
 ## Comparing with Isabelle HOL-Complex_Analysis
 
 When checking our approach against Isabelle's `HOL-Complex_Analysis` library:
-
-### IGNORE These Parts in Isabelle
-- **Detoured curve constructions** - Isabelle builds curves that avoid singularities
-  by detouring around them. We handle singularities directly via principal values.
-- **Wiggle relations** - Isabelle's `wiggle_rel` for paths near singularities
-- **Homotopy arguments to avoid points** - We don't need curves to avoid points
 
 ### USE These Parts from Isabelle
 - **Contour integral definitions** - Basic definitions are compatible
@@ -112,16 +118,17 @@ When checking our approach against Isabelle's `HOL-Complex_Analysis` library:
 - **Winding number properties** - Integer winding for closed curves avoiding point
 - **Argument principle** - Standard form applies
 - **Cauchy's theorem** - For regions where function is holomorphic
+- **Detoured curve constructions** - For computing residue contributions
 
 ### Key Isabelle Files for Reference
-- `Winding_Numbers.thy` - Winding number theory (adapt for our PV approach)
+- `Winding_Numbers.thy` - Winding number theory
 - `Contour_Integration.thy` - Contour integral properties
 - `Complex_Residues.thy` - Residue definitions
-- `Residue_Theorem.thy` - Classical residue theorem (we generalize this)
+- `Residue_Theorem.thy` - Classical residue theorem
 
 ### Translation Notes
 When translating Isabelle proofs:
-1. If Isabelle requires curve to avoid a point, check if we can use PV instead
-2. Replace detour constructions with direct local contribution calculations
-3. Use `generalizedWindingNumber_smooth_crossing'` for smooth crossings
-4. Use `generalizedWindingNumber_corner_crossing'` for corners
+1. For **interior points**: use classical winding number theory
+2. For **elliptic points**: use orbifold coefficients directly (don't try to derive from geometry)
+3. The detoured curve approach IS mathematically valid, but the orbifold coefficient approach
+   is more direct for the valence formula
