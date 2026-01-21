@@ -31,9 +31,10 @@ generalized residue theorem and the valence formula for modular forms.
 2. **Classical Case** (`generalizedWindingNumber_eq_classical'`):
    When a closed curve avoids z₀, its winding number is an integer.
 
-3. **Local Contributions** (`generalizedWindingNumber_smooth_crossing'`, `generalizedWindingNumber_corner_crossing'`):
-   - Smooth crossing through z₀ contributes 1/2
-   - Corner crossing with angle α contributes α/(2π)
+3. **Local Contributions** (Hungerbühler-Wasem geometric winding):
+   - Smooth crossing through z₀: geometric angle π → contribution π/(2π) = 1/2
+   - Corner crossing with angle α: contribution α/(2π)
+   Note: These are GEOMETRIC winding numbers, not orbifold coefficients.
 
 4. **Generalized Residue Theorem** (`generalizedResidueTheorem'`):
    PV ∮_γ f = 2πi · Σₛ n_s(γ) · res_s(f)
@@ -52,7 +53,12 @@ Our approach differs from Isabelle's HOL-Complex_Analysis:
   singularities. The PV definition automatically handles the cancellation of
   singular terms.
 
-This gives a cleaner treatment of winding numbers at elliptic points.
+This gives a cleaner treatment of contour integrals at elliptic points.
+
+**IMPORTANT**: The valence formula coefficients (1/2 at i, 1/3 at ρ) are
+ORBIFOLD coefficients (1/stabilizer order), NOT geometric winding numbers.
+The Hungerbühler-Wasem theory gives the correct geometric winding at i
+(coincidentally 1/2) but NOT at ρ (geometric: 1/6, orbifold: 1/3).
 
 ## References
 
