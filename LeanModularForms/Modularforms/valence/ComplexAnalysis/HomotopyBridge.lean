@@ -2624,17 +2624,20 @@ theorem windingNumber_homotopy_invariant_classical
 /-! ## Summary of Proof Strategy for Principal Value Homotopy
 
 For homotopy invariance of principal value integrals (when curves pass through
-singularities), the generalized winding number approach handles crossings directly:
+singularities), the Hungerbühler-Wasem generalized winding number approach
+handles crossings directly:
 
-1. **Local contributions**: At each crossing point, the contribution is determined
-   by the local geometry (smooth crossing → 1/2, corner with angle α → α/(2π))
+1. **Local contributions (H-W theory)**: At each crossing point, the GEOMETRIC
+   contribution is α/(2π) where α is the angle swept (smooth crossing → π/(2π) = 1/2,
+   corner with angle α → α/(2π))
 2. **Homotopy preservation**: The local crossing angle is preserved under homotopy
 3. **No detours needed**: The principal value definition handles crossings directly
    without constructing auxiliary "detoured" curves
 
-The key insight is that for immersions (nonzero derivative), crossing a
-singularity at a definite angle gives a well-defined contribution that
-is preserved under homotopy.
+**IMPORTANT**: These geometric winding numbers are NOT the same as the valence
+formula coefficients at elliptic points. The valence formula uses ORBIFOLD
+coefficients (1/stabilizer order), which coincide with geometric winding at i
+but differ at ρ (orbifold: 1/3, geometric: 1/6).
 -/
 
 end
