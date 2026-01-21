@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.Basic
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.Infrastructure.LHopital
 import Mathlib.Analysis.Calculus.Taylor
 import Mathlib.Analysis.Calculus.LHopital
 
@@ -48,6 +49,46 @@ def windingNumberIntegrand (γ : ℝ → ℂ) (t : ℝ) : ℝ :=
   let z := γ t
   let z' := deriv γ t
   (z.re * z'.im - z.im * z'.re) / (z.re ^ 2 + z.im ^ 2)
+
+/-! ## Helper Lemmas for CLM Derivatives -/
+
+/-- The derivative of a ContinuousLinearMap composed with a function.
+    For a CLM L : E →L[ℝ] F and differentiable f : ℝ → E, we have
+    deriv (L ∘ f) t = L (deriv f t).
+
+    Proof: Use fderiv chain rule. For f : ℝ → E, deriv f t = fderiv ℝ f t 1.
+    fderiv (L ∘ f) t = (fderiv L (f t)).comp (fderiv f t) = L.comp (fderiv f t)
+    So deriv (L ∘ f) t = (L.comp (fderiv f t)) 1 = L (fderiv f t 1) = L (deriv f t) -/
+theorem ContinuousLinearMap.deriv_comp' {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [NormedAddCommGroup F] [NormedSpace ℝ F] (L : E →L[ℝ] F) {f : ℝ → E} {t : ℝ}
+    (hf : DifferentiableAt ℝ f t) :
+    deriv (L ∘ f) t = L (deriv f t) := by
+  have hL : DifferentiableAt ℝ L (f t) := L.differentiableAt
+  -- Use fderiv chain rule
+  have h_fderiv : fderiv ℝ (L ∘ f) t = (fderiv ℝ L (f t)).comp (fderiv ℝ f t) :=
+    fderiv_comp t hL hf
+  -- fderiv ℝ L (f t) = L
+  have h_fderiv_L : fderiv ℝ L (f t) = L := L.fderiv
+  -- Now use deriv = fderiv 1
+  calc deriv (L ∘ f) t = fderiv ℝ (L ∘ f) t 1 := by rw [fderiv_deriv]
+    _ = (fderiv ℝ L (f t)).comp (fderiv ℝ f t) 1 := by rw [h_fderiv]
+    _ = L.comp (fderiv ℝ f t) 1 := by rw [h_fderiv_L]
+    _ = L (fderiv ℝ f t 1) := rfl
+    _ = L (deriv f t) := by rw [← fderiv_deriv]
+
+/-- deriv (reCLM ∘ f) = (deriv f).re when f is differentiable. -/
+theorem deriv_re_comp_of_differentiable {f : ℝ → ℂ} {t : ℝ} (hf : DifferentiableAt ℝ f t) :
+    deriv (Complex.re ∘ f) t = (deriv f t).re := by
+  have h := Complex.reCLM.deriv_comp' hf
+  simp only [Complex.reCLM_apply] at h
+  exact h
+
+/-- deriv (imCLM ∘ f) = (deriv f).im when f is differentiable. -/
+theorem deriv_im_comp_of_differentiable {f : ℝ → ℂ} {t : ℝ} (hf : DifferentiableAt ℝ f t) :
+    deriv (Complex.im ∘ f) t = (deriv f t).im := by
+  have h := Complex.imCLM.deriv_comp' hf
+  simp only [Complex.imCLM_apply] at h
+  exact h
 
 /-! ## Numerator Estimate: O(t²) -/
 
@@ -920,8 +961,9 @@ theorem windingNumberIntegrand_bounded_global
 
 /-! ## Limit at a Zero (for C² curves) -/
 
-/-- The signed curvature of a curve at a point. -/
-def signedCurvature (γ : ℝ → ℂ) (t : ℝ) : ℝ :=
+/-- The signed curvature of a complex-valued curve at a point.
+    This is the complex version of signedCurvature from LHopital.lean -/
+def signedCurvatureComplex (γ : ℝ → ℂ) (t : ℝ) : ℝ :=
   let v := deriv γ t
   let a := deriv (deriv γ) t
   (v.re * a.im - v.im * a.re) / (v.re^2 + v.im^2)^(3/2 : ℝ)
@@ -952,7 +994,7 @@ theorem windingNumberIntegrand_limit_at_zero (t₀ : ℝ)
     (hγ_zero : γ.toFun t₀ = 0)
     (hC2 : ContDiffAt ℝ 2 γ.toFun t₀)
     (hv_ne : deriv γ.toFun t₀ ≠ 0) :
-    let κ := signedCurvature γ.toFun t₀
+    let κ := signedCurvatureComplex γ.toFun t₀
     let v := ‖deriv γ.toFun t₀‖
     Tendsto (windingNumberIntegrand γ.toFun) (𝓝[≠] t₀) (𝓝 ((1/2) * κ * v)) := by
   -- With hv_ne : deriv γ.toFun t₀ ≠ 0, we can proceed directly.
@@ -967,7 +1009,7 @@ theorem windingNumberIntegrand_limit_at_zero (t₀ : ℝ)
   -- The limit as h → 0 is:
   -- (vx·ay - vy·ax)/(2(vx² + vy²))
   --
-  -- This equals (1/2)·κ·|γ'| where κ = signedCurvature γ t₀.
+  -- This equals (1/2)·κ·|γ'| where κ = signedCurvatureComplex γ t₀.
   intro κ v_norm
   -- We use L'Hopital's rule twice since both numerator and denominator vanish at t₀,
   -- and their first derivatives also vanish at t₀.
@@ -1001,7 +1043,364 @@ theorem windingNumberIntegrand_limit_at_zero (t₀ : ℝ)
   -- 4. Verify the algebraic identity
   --
   -- This is technically complex but mathematically straightforward.
-  sorry
+  --
+  -- The proof uses L'Hopital's rule twice. Let:
+  --   f(t) = x(t)*y'(t) - y(t)*x'(t)  (numerator of windingNumberIntegrand)
+  --   g(t) = x(t)^2 + y(t)^2          (denominator)
+  -- where x = Re(gamma), y = Im(gamma).
+  --
+  -- At t₀ where gamma(t₀) = 0:
+  --   f(t₀) = 0, g(t₀) = 0  (0/0 form)
+  --
+  -- First derivatives:
+  --   f'(t) = x*y'' - y*x''  (since x'*y' - y'*x' = 0)
+  --   g'(t) = 2*x*x' + 2*y*y'
+  -- At t₀: f'(t₀) = 0, g'(t₀) = 0 (still 0/0)
+  --
+  -- Second derivatives at t₀:
+  --   f''(t₀) = x'(t₀)*y''(t₀) - y'(t₀)*x''(t₀)
+  --   g''(t₀) = 2*(x'(t₀)^2 + y'(t₀)^2) = 2*|gamma'(t₀)|^2 != 0
+  --
+  -- By L'Hopital applied twice:
+  --   lim f/g = f''(t₀)/g''(t₀)
+  --           = (x'*y'' - y'*x'') / (2*(x'^2 + y'^2))
+  --           = (v.re * a.im - v.im * a.re) / (2*|v|^2)
+  -- where v = gamma'(t₀), a = gamma''(t₀).
+  --
+  -- This equals (1/2)*kappa*|v| since:
+  --   kappa = (v.re * a.im - v.im * a.re) / |v|^3
+  -- so (1/2)*kappa*|v| = (v.re * a.im - v.im * a.re) / (2*|v|^2)
+  --
+  -- The formal proof requires:
+  -- 1. Extract differentiability from ContDiffAt 2
+  -- 2. Apply deriv.lhopital_zero_nhdsNE twice
+  -- 3. Verify the algebraic identity
+  --
+  -- This requires careful composition of real projections with derivatives.
+  --
+  -- Strategy: Use the fact that for C² functions with nonzero first derivative at a zero,
+  -- the Taylor expansion gives:
+  --   gamma(t) = (t - t₀) * gamma'(t₀) + O((t - t₀)²)
+  --   gamma'(t) = gamma'(t₀) + O(t - t₀)
+  --
+  -- Numerator: x*y' - y*x' ≈ (t-t₀)*v.re * v.im - (t-t₀)*v.im * v.re + O((t-t₀)²)
+  --                        = 0 + O((t-t₀)²)   (leading terms cancel!)
+  --
+  -- For the O((t-t₀)²) term, using second-order Taylor:
+  --   x(t) ≈ (t-t₀)*v.re + (t-t₀)²/2 * a.re
+  --   y(t) ≈ (t-t₀)*v.im + (t-t₀)²/2 * a.im
+  --   x'(t) ≈ v.re + (t-t₀) * a.re
+  --   y'(t) ≈ v.im + (t-t₀) * a.im
+  --
+  -- Numerator expanded to O((t-t₀)²):
+  --   x*y' - y*x' = ((t-t₀)*v.re + (t-t₀)²/2*a.re) * (v.im + (t-t₀)*a.im)
+  --               - ((t-t₀)*v.im + (t-t₀)²/2*a.im) * (v.re + (t-t₀)*a.re)
+  --               = (t-t₀)*v.re*v.im + (t-t₀)²*v.re*a.im + (t-t₀)²/2*a.re*v.im
+  --               - (t-t₀)*v.im*v.re - (t-t₀)²*v.im*a.re - (t-t₀)²/2*a.im*v.re + O((t-t₀)³)
+  --               = (t-t₀)²*(v.re*a.im - v.im*a.re) + O((t-t₀)²)/2 terms
+  --               = (t-t₀)²/2 * (v.re*a.im - v.im*a.re) + O((t-t₀)³)
+  --
+  -- Denominator: x² + y² = (t-t₀)²*(v.re² + v.im²) + O((t-t₀)³)
+  --
+  -- Ratio: [(t-t₀)²/2 * (v.re*a.im - v.im*a.re)] / [(t-t₀)²*(v.re² + v.im²)]
+  --      = (v.re*a.im - v.im*a.re) / (2*(v.re² + v.im²))
+  --      = (1/2) * kappa * |v|   (by definition of kappa)
+  --
+  -- This calculation shows the limit equals (1/2) * κ * v_norm.
+  -- The formal proof uses L'Hopital twice or direct Taylor expansion.
+  --
+  -- For the full formal proof, we would need to:
+  -- 1. Show the derivatives of the numerator and denominator functions
+  -- 2. Verify the L'Hopital conditions (non-vanishing derivative of denominator's derivative)
+  -- 3. Complete the algebraic verification
+  --
+  -- The mathematical content is complete in the comments above.
+  -- The Lean formalization requires careful manipulation of ContDiffAt derivatives.
+  --
+  -- Attempt using direct limit argument:
+  -- We show that the function approaches the limit using the Taylor expansion structure.
+  --
+  -- From ContDiffAt ℝ 2 γ t₀, we have:
+  -- 1. γ is differentiable with continuous derivative
+  -- 2. deriv γ is differentiable at t₀
+  --
+  -- The numerator f(t) = x(t)*y'(t) - y(t)*x'(t) and denominator g(t) = x(t)² + y(t)²
+  -- both have f(t₀) = g(t₀) = 0.
+  --
+  -- For the limit, we use that f(t)/g(t) → L when:
+  -- - f(t) = α(t-t₀)² + o((t-t₀)²)
+  -- - g(t) = β(t-t₀)² + o((t-t₀)²) with β ≠ 0
+  -- - Then f/g → α/β
+  --
+  -- Here:
+  -- - α = (v.re * a.im - v.im * a.re) / 2
+  -- - β = v.re² + v.im² = |γ'(t₀)|² > 0
+  -- - α/β = (v.re * a.im - v.im * a.re) / (2 * (v.re² + v.im²)) = (1/2) * κ * |γ'(t₀)|
+  --
+  -- We use Filter.Tendsto and the algebraic structure.
+  -- Define the limit value
+  let L := (1/2 : ℝ) * κ * v_norm
+  -- The main estimate: near t₀, the integrand is close to L
+  -- This follows from the Taylor expansion structure.
+  -- We use the fact that for C² functions, the ratio converges.
+  --
+  -- Full proof would use:
+  -- 1. Taylor expansion of γ around t₀
+  -- 2. Algebraic manipulation of the resulting expressions
+  -- 3. Standard limit theorems
+  --
+  -- Due to the technical complexity of formalizing Taylor expansions and
+  -- the careful algebra needed, we provide a structured proof outline.
+  --
+  -- Key steps:
+  -- 1. Show f, g are C¹ near t₀ (from γ being C²)
+  -- 2. Compute f'(t₀), g'(t₀) and show both are 0
+  -- 3. Show f', g' are differentiable near t₀ with g''(t₀) ≠ 0
+  -- 4. Apply L'Hopital twice
+  --
+  -- Define the numerator and denominator
+  let num := fun t => (γ.toFun t).re * (deriv γ.toFun t).im - (γ.toFun t).im * (deriv γ.toFun t).re
+  let den := fun t => (γ.toFun t).re ^ 2 + (γ.toFun t).im ^ 2
+  -- Rewrite the goal in terms of num/den
+  have h_eq : windingNumberIntegrand γ.toFun = fun t => num t / den t := by
+    ext t
+    simp only [windingNumberIntegrand, num, den]
+  rw [h_eq]
+  -- The limit value is (1/2) * κ * v_norm
+  -- For the formal proof, we would apply L'Hopital twice.
+  -- The key steps are:
+  -- 1. num(t₀) = 0, den(t₀) = 0 (first 0/0 form)
+  -- 2. (deriv num)(t₀) = 0, (deriv den)(t₀) = 0 (second 0/0 form)
+  -- 3. (deriv (deriv num))(t₀) / (deriv (deriv den))(t₀) = (1/2) * κ * v_norm
+  --
+  -- The L'Hopital rule application requires showing:
+  -- - num, den are differentiable near t₀
+  -- - deriv den ≠ 0 near t₀ (except at t₀)
+  -- - deriv (deriv den)(t₀) ≠ 0
+  --
+  -- For the second application:
+  -- - deriv num, deriv den are differentiable near t₀
+  -- - deriv (deriv den) ≠ 0 near t₀
+  --
+  -- These conditions follow from ContDiffAt ℝ 2 and the nonzero derivative hypothesis.
+  --
+  -- We prove this using the Taylor expansion structure and limit computation.
+  -- First, extract the key properties from ContDiffAt ℝ 2
+  have hγ_diff : DifferentiableAt ℝ γ.toFun t₀ := hC2.differentiableAt one_le_two
+  -- Get the C¹ hypothesis on γ
+  have hγ_C1 : ContDiffAt ℝ 1 γ.toFun t₀ := hC2.of_le one_le_two
+  -- The derivative of γ at t₀ is nonzero, which means |γ'(t₀)|² > 0
+  have h_normSq_pos : (deriv γ.toFun t₀).re ^ 2 + (deriv γ.toFun t₀).im ^ 2 > 0 := by
+    have h1 : (deriv γ.toFun t₀).re ^ 2 + (deriv γ.toFun t₀).im ^ 2 = Complex.normSq (deriv γ.toFun t₀) := by
+      rw [Complex.normSq_apply]; ring
+    rw [h1]
+    exact Complex.normSq_pos.mpr hv_ne
+  -- Define shorthand for key values
+  let v := deriv γ.toFun t₀  -- velocity
+  let a := iteratedDeriv 2 γ.toFun t₀  -- acceleration (second derivative)
+  -- The target limit value
+  let target := (1/2 : ℝ) * κ * v_norm
+  -- We need to show: Tendsto (fun t => num t / den t) (𝓝[≠] t₀) (𝓝 target)
+  -- First show den t₀ = 0 and num t₀ = 0
+  have h_den_zero : den t₀ = 0 := by
+    simp only [den, hγ_zero, Complex.zero_re, Complex.zero_im, sq, mul_zero, add_zero]
+  have h_num_zero : num t₀ = 0 := by
+    simp only [num, hγ_zero, Complex.zero_re, Complex.zero_im, zero_mul, mul_zero, sub_self]
+  -- The mathematical argument:
+  -- For C² functions, γ(t) = (t-t₀)·v + (t-t₀)²/2·a + o((t-t₀)²)
+  -- and γ'(t) = v + (t-t₀)·a + o(t-t₀)
+  --
+  -- The numerator x·y' - y·x' = (t-t₀)²/2 · (v.re·a.im - v.im·a.re) + o((t-t₀)²)
+  -- The denominator x² + y² = (t-t₀)² · (v.re² + v.im²) + o((t-t₀)²)
+  --
+  -- So the ratio tends to:
+  -- (v.re·a.im - v.im·a.re) / (2·(v.re² + v.im²))
+  -- = (1/2) · κ · |v|
+  --
+  -- The proof uses Filter.Tendsto with L'Hopital's rule applied twice.
+  -- For a complete formal proof, we would:
+  -- 1. Apply L'Hopital to get f/g → f'/g' (both f(t₀) = g(t₀) = 0)
+  -- 2. Show f'(t₀) = g'(t₀) = 0 (first derivatives also vanish)
+  -- 3. Apply L'Hopital again to get f'/g' → f''/g''
+  -- 4. Compute f''(t₀)/g''(t₀) = target
+  --
+  -- The key observation is that:
+  -- - num(t₀) = 0 (since γ(t₀) = 0)
+  -- - (deriv num)(t₀) = 0 (cross terms cancel: x'·y' - y'·x' = 0)
+  -- - den(t₀) = 0 (since γ(t₀) = 0)
+  -- - (deriv den)(t₀) = 0 (since x(t₀) = y(t₀) = 0)
+  -- - (iteratedDeriv 2 den)(t₀) = 2(v.re² + v.im²) ≠ 0 (by hv_ne)
+  --
+  -- The ratio f''(t₀)/g''(t₀) equals (v.re·a.im - v.im·a.re)/(2·(v.re² + v.im²))
+  -- which is exactly (1/2) * κ * v_norm by definition of signedCurvatureComplex.
+  --
+  -- The proof strategy is to use the infrastructure lemma windingNumberIntegrand_limit_at_zero'
+  -- which handles the double L'Hopital application for real-valued x and y functions.
+  -- We would:
+  -- 1. Define x' = Complex.re ∘ γ and y' = Complex.im ∘ γ
+  -- 2. Show x'(t₀) = y'(t₀) = 0 (from hγ_zero)
+  -- 3. Show deriv x' t₀ ≠ 0 or deriv y' t₀ ≠ 0 (from hv_ne)
+  -- 4. Show (x', y') is C² at t₀ (from hC2)
+  -- 5. Apply windingNumberIntegrand_limit_at_zero' to get the limit
+  -- 6. Verify the limit formulas match (algebraic identity)
+  --
+  -- The key algebraic identity is that for complex z = x + iy:
+  -- windingNumberIntegrand z = (x * (deriv z).im - y * (deriv z).re) / (x² + y²)
+  --                         = (x * deriv y - y * deriv x) / (x² + y²)
+  -- where deriv y = (deriv z).im and deriv x = (deriv z).re for the component functions.
+  --
+  -- The curvature formulas also match via the identity relating
+  -- signedCurvatureComplex to signedCurvature on components.
+  --
+  -- This is a standard but technical verification; the infrastructure handles the
+  -- core L'Hopital argument via windingNumberIntegrand_limit_at_zero'.
+  --
+  -- Define the real component functions
+  let x' := Complex.re ∘ γ.toFun
+  let y' := Complex.im ∘ γ.toFun
+  -- Show the hypotheses of windingNumberIntegrand_limit_at_zero'
+  have hx_zero : x' t₀ = 0 := by simp only [x', Function.comp_apply, hγ_zero, Complex.zero_re]
+  have hy_zero : y' t₀ = 0 := by simp only [y', Function.comp_apply, hγ_zero, Complex.zero_im]
+  -- Derivative nonzero condition
+  have h_deriv_ne : deriv x' t₀ ≠ 0 ∨ deriv y' t₀ ≠ 0 := by
+    -- deriv (Complex.re ∘ γ) = (deriv γ).re (for differentiable γ)
+    have hx'_deriv : deriv x' t₀ = (deriv γ.toFun t₀).re := by
+      simp only [x']
+      exact deriv_re_comp_of_differentiable hγ_diff
+    have hy'_deriv : deriv y' t₀ = (deriv γ.toFun t₀).im := by
+      simp only [y']
+      exact deriv_im_comp_of_differentiable hγ_diff
+    rw [hx'_deriv, hy'_deriv]
+    by_contra h
+    push_neg at h
+    have h_eq_zero : deriv γ.toFun t₀ = 0 := Complex.ext h.1 h.2
+    exact hv_ne h_eq_zero
+  -- C² condition for the pair (x', y')
+  have hC2_pair : ContDiffAt ℝ 2 (fun t => (x' t, y' t)) t₀ := by
+    -- (x', y') = (Complex.re ∘ γ, Complex.im ∘ γ)
+    -- This is C² since γ is C² and re, im are smooth (linear)
+    -- reCLM : ℂ →L[ℝ] ℝ is a smooth map (linear), so re ∘ γ is C² when γ is C²
+    have h1 : ContDiffAt ℝ 2 (fun t => (γ.toFun t).re) t₀ := by
+      have hRe : ContDiff ℝ 2 (fun z : ℂ => z.re) :=
+        Complex.reCLM.contDiff
+      exact hRe.comp_contDiffAt hC2
+    have h2 : ContDiffAt ℝ 2 (fun t => (γ.toFun t).im) t₀ := by
+      have hIm : ContDiff ℝ 2 (fun z : ℂ => z.im) :=
+        Complex.imCLM.contDiff
+      exact hIm.comp_contDiffAt hC2
+    simp only [x', y', Function.comp_apply]
+    exact h1.prodMk h2
+  -- Apply the infrastructure lemma
+  have h_limit := windingNumberIntegrand_limit_at_zero' hC2_pair hx_zero hy_zero h_deriv_ne
+  -- Now we need to show that the limit formula matches
+  -- The infrastructure gives us limit of (x * deriv y - y * deriv x) / (x² + y²)
+  -- We need to show this equals our num/den and the limit values match
+  -- First, show the integrand formulas match
+  have h_integrand_eq : ∀ t, num t / den t =
+      (x' t * deriv y' t - y' t * deriv x' t) / (x' t^2 + y' t^2) := by
+    intro t
+    simp only [num, den, x', y', Function.comp_apply]
+    -- Need to show: (γ t).re * (deriv γ t).im - (γ t).im * (deriv γ t).re
+    --             = (γ t).re * deriv (Im ∘ γ) t - (γ t).im * deriv (Re ∘ γ) t
+    -- For this we need deriv (Im ∘ γ) t = (deriv γ t).im when γ is differentiable
+    by_cases hγ_diff_t : DifferentiableAt ℝ γ.toFun t
+    · have h_re_deriv : deriv (Complex.re ∘ γ.toFun) t = (deriv γ.toFun t).re :=
+        deriv_re_comp_of_differentiable hγ_diff_t
+      have h_im_deriv : deriv (Complex.im ∘ γ.toFun) t = (deriv γ.toFun t).im :=
+        deriv_im_comp_of_differentiable hγ_diff_t
+      rw [h_re_deriv, h_im_deriv]
+    · -- If γ is not differentiable at t, both sides are 0 (or numerator is 0)
+      have h_deriv_zero : deriv γ.toFun t = 0 := deriv_zero_of_not_differentiableAt hγ_diff_t
+      -- For the non-differentiable case, we need to be careful.
+      -- The composed functions re ∘ γ and im ∘ γ might still be differentiable.
+      -- However, we can show directly that both expressions equal 0.
+      simp [h_deriv_zero]
+  -- Show the limit values match
+  -- Infrastructure limit: (1/2) * κ_infra * v_norm_infra where
+  --   κ_infra = (deriv x' t₀ * iteratedDeriv 2 y' t₀ - deriv y' t₀ * iteratedDeriv 2 x' t₀) /
+  --             (deriv x' t₀^2 + deriv y' t₀^2)^(3/2)
+  --   v_norm_infra = sqrt(deriv x' t₀^2 + deriv y' t₀^2)
+  -- Our limit: (1/2) * κ * v_norm where
+  --   κ = signedCurvatureComplex γ t₀
+  --   v_norm = ‖deriv γ t₀‖
+  -- Need to show these are equal
+  have h_limit_eq : (1 / 2 : ℝ) * κ * v_norm =
+      (1 / 2) * ((deriv x' t₀ * iteratedDeriv 2 y' t₀ - deriv y' t₀ * iteratedDeriv 2 x' t₀) /
+                 (deriv x' t₀^2 + deriv y' t₀^2)^(3/2 : ℝ)) *
+      Real.sqrt (deriv x' t₀^2 + deriv y' t₀^2) := by
+    -- Expand κ and v_norm definitions
+    simp only [κ, v_norm, signedCurvatureComplex]
+    -- deriv x' t₀ = v.re, deriv y' t₀ = v.im
+    have hx'_deriv : deriv x' t₀ = v.re := by
+      simp only [x', v]
+      exact deriv_re_comp_of_differentiable hγ_diff
+    have hy'_deriv : deriv y' t₀ = v.im := by
+      simp only [y', v]
+      exact deriv_im_comp_of_differentiable hγ_diff
+    -- iteratedDeriv 2 x' t₀ = a.re, iteratedDeriv 2 y' t₀ = a.im
+    -- For a CLM L and C^n function f: iteratedDeriv n (L ∘ f) = L (iteratedDeriv n f)
+    have hx'_second : iteratedDeriv 2 x' t₀ = a.re := by
+      simp only [x', a]
+      -- iteratedDeriv 2 (re ∘ γ) = re (iteratedDeriv 2 γ) (for C² γ)
+      have h_C2_deriv : ContDiffAt ℝ 1 (deriv γ.toFun) t₀ := by
+        have := hC2.contDiffAt_iteratedDeriv (m := 1) one_le_two
+        simp only [iteratedDeriv_one] at this
+        exact this
+      have h_deriv_diff : DifferentiableAt ℝ (deriv γ.toFun) t₀ :=
+        h_C2_deriv.differentiableAt le_rfl
+      -- iteratedDeriv 2 = deriv ∘ deriv, so iteratedDeriv 2 (re ∘ γ) = deriv (deriv (re ∘ γ))
+      -- = deriv (re ∘ deriv γ) = re (deriv (deriv γ)) = re (iteratedDeriv 2 γ)
+      calc iteratedDeriv 2 (Complex.re ∘ γ.toFun) t₀
+          = deriv (deriv (Complex.re ∘ γ.toFun)) t₀ := by simp [iteratedDeriv_succ]
+        _ = deriv (fun t => (deriv γ.toFun t).re) t₀ := by
+            congr 1
+            ext t
+            by_cases ht : DifferentiableAt ℝ γ.toFun t
+            · exact deriv_re_comp_of_differentiable ht
+            · simp [deriv_zero_of_not_differentiableAt ht,
+                    deriv_zero_of_not_differentiableAt (fun h => ht (Complex.reCLM.differentiableAt.comp t h |>.of_comp_right_of_surjective (fun _ => ⟨_, rfl⟩) |> fun _ => ht h))]
+        _ = (deriv (deriv γ.toFun) t₀).re := by
+            exact deriv_re_comp_of_differentiable h_deriv_diff
+        _ = (iteratedDeriv 2 γ.toFun t₀).re := by simp [iteratedDeriv_succ]
+    have hy'_second : iteratedDeriv 2 y' t₀ = a.im := by
+      simp only [y', a]
+      have h_C2_deriv : ContDiffAt ℝ 1 (deriv γ.toFun) t₀ := by
+        have := hC2.contDiffAt_iteratedDeriv (m := 1) one_le_two
+        simp only [iteratedDeriv_one] at this
+        exact this
+      have h_deriv_diff : DifferentiableAt ℝ (deriv γ.toFun) t₀ :=
+        h_C2_deriv.differentiableAt le_rfl
+      calc iteratedDeriv 2 (Complex.im ∘ γ.toFun) t₀
+          = deriv (deriv (Complex.im ∘ γ.toFun)) t₀ := by simp [iteratedDeriv_succ]
+        _ = deriv (fun t => (deriv γ.toFun t).im) t₀ := by
+            congr 1
+            ext t
+            by_cases ht : DifferentiableAt ℝ γ.toFun t
+            · exact deriv_im_comp_of_differentiable ht
+            · simp [deriv_zero_of_not_differentiableAt ht,
+                    deriv_zero_of_not_differentiableAt (fun h => ht (Complex.imCLM.differentiableAt.comp t h |>.of_comp_right_of_surjective (fun _ => ⟨_, rfl⟩) |> fun _ => ht h))]
+        _ = (deriv (deriv γ.toFun) t₀).im := by
+            exact deriv_im_comp_of_differentiable h_deriv_diff
+        _ = (iteratedDeriv 2 γ.toFun t₀).im := by simp [iteratedDeriv_succ]
+    rw [hx'_deriv, hy'_deriv, hx'_second, hy'_second]
+    -- v_norm = ‖v‖ = sqrt(v.re² + v.im²)
+    have h_norm_eq : ‖deriv γ.toFun t₀‖ = Real.sqrt (v.re^2 + v.im^2) := by
+      simp only [v]
+      rw [Complex.norm_eq_abs, Complex.abs_apply, Real.sqrt_sq_eq_abs, abs_of_nonneg]
+      · rfl
+      · exact Complex.normSq_nonneg _
+    rw [h_norm_eq]
+  rw [h_limit_eq]
+  -- Convert the goal using the integrand equality
+  have h_tendsto_rewrite : Tendsto (fun t => num t / den t) (𝓝[≠] t₀)
+      (𝓝 ((1 / 2) * ((deriv x' t₀ * iteratedDeriv 2 y' t₀ - deriv y' t₀ * iteratedDeriv 2 x' t₀) /
+           (deriv x' t₀ ^ 2 + deriv y' t₀ ^ 2) ^ (3 / 2 : ℝ)) *
+       Real.sqrt (deriv x' t₀ ^ 2 + deriv y' t₀ ^ 2))) := by
+    have h_eq_fun : (fun t => num t / den t) = (fun t => (x' t * deriv y' t - y' t * deriv x' t) / (x' t^2 + y' t^2)) := by
+      ext t; exact h_integrand_eq t
+    rw [h_eq_fun]
+    exact h_limit
+  exact h_tendsto_rewrite
 
 /-! ## Flatness Conditions -/
 
