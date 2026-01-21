@@ -132,3 +132,44 @@ When translating Isabelle proofs:
 2. For **elliptic points**: use orbifold coefficients directly (don't try to derive from geometry)
 3. The detoured curve approach IS mathematically valid, but the orbifold coefficient approach
    is more direct for the valence formula
+
+## Working on Sorry Elimination
+
+### Persistence Rule
+When the user approves work on a file or sorry, **continue working until that file/theorem is completely sorry-free**. Do not stop after partial progress. Keep iterating until:
+- All sorries in the approved scope are eliminated
+- Or you encounter a fundamental obstacle that requires user input
+
+### Breaking Down Complex Proofs
+When a lemma is too complex to prove directly:
+1. **Identify the key sub-goals** - What are the main mathematical steps?
+2. **Create helper lemmas** - Break the proof into smaller, provable pieces
+3. **Prove the helpers first** - Start with the simplest/most foundational
+4. **Combine helpers** - Use the proven helpers to complete the main result
+5. **Keep helpers sorry-free** - Don't just move sorries to helper lemmas
+
+### Verifying Theorem Statements
+Before filling a sorry, **always verify the theorem statement is correct**:
+1. Check that hypotheses are sufficient for the conclusion
+2. Check that the statement matches the mathematical intent
+3. Look for missing hypotheses that would make the proof possible
+4. If a statement is wrong or missing hypotheses:
+   - **Fix it** if the fix is straightforward
+   - **Add hypotheses** if needed (ensuring we can still prove the valence formula)
+   - **Document the change** in comments
+
+### Common Issues to Check
+- Missing boundedness/continuity hypotheses
+- Wrong direction of inequalities
+- Missing non-degeneracy conditions (e.g., `a < b`, `L ≠ 0`)
+- Incorrect filter directions (e.g., `𝓝[>] 0` vs `𝓝[<] 0`)
+- Type mismatches between `PiecewiseC1Curve` and `PiecewiseC1Immersion`
+
+### Workflow for Each Sorry
+1. **Read the context** - Understand what the theorem is trying to prove
+2. **Check the statement** - Verify it's correct and has sufficient hypotheses
+3. **Plan the proof** - Identify the mathematical strategy
+4. **Attempt direct proof** - Try standard tactics first
+5. **Break down if needed** - Create helper lemmas for complex steps
+6. **Iterate** - Keep working until sorry-free or blocked
+7. **Document gaps** - If truly stuck, document what's needed clearly

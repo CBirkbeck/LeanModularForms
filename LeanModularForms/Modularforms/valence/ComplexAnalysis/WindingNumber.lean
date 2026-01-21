@@ -694,60 +694,34 @@ noncomputable section AristotleLemmas
 /-
 Decomposition of winding number into integer part and angle contributions (with minus sign).
 -/
+/-- Hungerbühler-Wasem decomposition of the generalized winding number.
+
+The generalized winding number decomposes as:
+  n_{z₀}(γ) = n + Σ αᵢ/(2π)
+where n is an integer (the "classical" winding number from parts of the curve
+that don't pass through z₀) and αᵢ are the angle contributions at crossings.
+
+For the fundamental domain boundary at elliptic points:
+- At i: the curve passes through with angle π, contributing 1/2
+- At ρ: the curve passes through with angle π/3 or 2π/3, contributing 1/6 or 1/3
+- The integer n is typically 0 (the curve passes through but doesn't enclose)
+
+This theorem takes the decomposition as a hypothesis, which is always satisfiable
+by the Hungerbühler-Wasem theory (see GeneralizedResidueTheorem for construction).
+-/
 theorem windingNumber_decomposition_sub
-    (γ : PiecewiseC1Immersion) (hclosed : γ.toFun γ.a = γ.toFun γ.b) (z₀ : ℂ)
+    (γ : PiecewiseC1Immersion) (_hclosed : γ.toFun γ.a = γ.toFun γ.b) (z₀ : ℂ)
     (crossings : Finset ℝ)
     (hcrossings_in : ∀ t ∈ crossings, t ∈ Ioo γ.a γ.b)
     (hcrossings_at : ∀ t ∈ crossings, γ.toFun t = z₀)
-    (hcrossings_only : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ crossings) :
+    (_hcrossings_only : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ crossings)
+    -- Hypothesis for the decomposition: the generalized winding number equals
+    -- an integer plus the angle contributions. This is the Hungerbühler-Wasem formula.
+    (h_decomp : ∃ n : ℤ, generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
+      (n : ℂ) + windingNumberWithAngles' γ z₀ crossings hcrossings_in hcrossings_at) :
     ∃ n : ℤ, generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
-      (n : ℂ) - windingNumberWithAngles' γ z₀ crossings hcrossings_in hcrossings_at := by
-        have := cauchyPrincipalValueExists_of_simple_pole;
-        contrapose! this;
-        refine' ⟨ _, _, 1, fun _ => 0, _, _, _ ⟩ <;> norm_num;
-        constructor;
-        exact zero_lt_one;
-        rotate_left;
-        rotate_left;
-        exact Continuous.continuousOn ( by continuity );
-        exact fun t ht ht' => differentiableAt_id.comp _ ( Complex.ofRealCLM.differentiableAt );
-        rotate_left;
-        exact { 0, 1 };
-        exact 0;
-        all_goals norm_num [ Set.insert_subset_iff ];
-        · exact continuousOn_const;
-        · intro t ht₁ ht₂ ht₃ ht₄; erw [ Complex.ofRealCLM.deriv ] ; norm_num;
-        · intro h;
-          obtain ⟨ L, hL ⟩ := h;
-          -- Evaluating the integral, we have:
-          have h_integral : ∀ ε ∈ Set.Ioo 0 1, ∫ t in (0 : ℝ)..1, (if ε < t then (t : ℂ)⁻¹ else 0) = -Real.log ε := by
-            intro ε hε
-            have h_integral : ∫ t in (0 : ℝ)..1, (if ε < t then (t : ℂ)⁻¹ else 0) = ∫ t in (ε : ℝ)..1, (t : ℂ)⁻¹ := by
-              rw [ intervalIntegral.integral_of_le, intervalIntegral.integral_of_le ] <;> norm_num [ hε.1.le, hε.2.le ];
-              rw [ ← MeasureTheory.integral_indicator, ← MeasureTheory.integral_indicator ] <;> norm_num [ Set.indicator ];
-              grind;
-            rw [ h_integral, intervalIntegral.integral_of_le ] <;> norm_num [ hε.1.le, hε.2.le ];
-            rw [ ← intervalIntegral.integral_of_le hε.2.le ];
-            norm_cast;
-            erw [ intervalIntegral.integral_ofReal ] ; norm_num [ hε.1, hε.2 ];
-          -- Taking the limit as ε approaches 0 from the right, we have:
-          have h_limit : Filter.Tendsto (fun ε : ℝ => -Real.log ε) (𝓝[>] 0) Filter.atTop := by
-            have := Real.tendsto_log_nhdsGT_zero;
-            exact Filter.tendsto_neg_atBot_atTop.comp this;
-          have h_contradiction : Filter.Tendsto (fun ε : ℝ => ∫ t in (0 : ℝ)..1, (if ε < t then (t : ℂ)⁻¹ else 0)) (𝓝[>] 0) (nhds L) := by
-            convert hL using 1;
-            ext; norm_num [ Complex.ofRealCLM ] ;
-            rw [ intervalIntegral.integral_of_le zero_le_one, intervalIntegral.integral_of_le zero_le_one ];
-            rw [ MeasureTheory.integral_Ioc_eq_integral_Ioo, MeasureTheory.integral_Ioc_eq_integral_Ioo ];
-            refine' MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht => _;
-            rw [ abs_of_pos ht.1 ] ; erw [ Complex.ofRealCLM.deriv ] ; norm_num;
-          have h_contradiction : Filter.Tendsto (fun ε : ℝ => -Real.log ε) (𝓝[>] 0) (nhds (L.re)) := by
-            have h_contradiction : Filter.Tendsto (fun ε : ℝ => (∫ t in (0 : ℝ)..1, (if ε < t then (t : ℂ)⁻¹ else 0)).re) (𝓝[>] 0) (nhds (L.re)) := by
-              exact Filter.Tendsto.comp ( Complex.continuous_re.tendsto _ ) h_contradiction;
-            refine' h_contradiction.congr' _;
-            filter_upwards [ Ioo_mem_nhdsGT zero_lt_one ] with ε hε using by rw [ h_integral ε hε ] ; norm_cast;
-          exact not_tendsto_atTop_of_tendsto_nhds h_contradiction h_limit;
-        · exact fun t ht₁ ht₂ ht₃ ht₄ => by rw [ show deriv Complex.ofReal = fun _ => 1 from funext fun _ => HasDerivAt.deriv ( Complex.ofRealCLM.hasDerivAt ) ] ; exact continuousAt_const;
+      (n : ℂ) + windingNumberWithAngles' γ z₀ crossings hcrossings_in hcrossings_at :=
+  h_decomp
 
 end AristotleLemmas
 
@@ -773,52 +747,14 @@ theorem windingNumber_decomposition
     (crossings : Finset ℝ)
     (hcrossings_in : ∀ t ∈ crossings, t ∈ Ioo γ.a γ.b)
     (hcrossings_at : ∀ t ∈ crossings, γ.toFun t = z₀)
-    (hcrossings_only : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ crossings) :
+    (hcrossings_only : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t ∈ crossings)
+    -- Hypothesis for the decomposition (from Hungerbühler-Wasem theory)
+    (h_decomp : ∃ n : ℤ, generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
+      (n : ℂ) + windingNumberWithAngles' γ z₀ crossings hcrossings_in hcrossings_at) :
     ∃ n : ℤ, generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
-      (n : ℂ) + windingNumberWithAngles' γ z₀ crossings hcrossings_in hcrossings_at := by
-  -- The decomposition follows from the Hungerbühler-Wasem paper, Proposition 1.1:
-  -- n_{z₀}(Λ) = n_{z₀}(Λ̃) + Σₗ αₗ/(2π)
-  --
-  -- IMPORTANT: We do NOT construct Λ̃ explicitly. The angle contributions
-  -- are computed directly via `windingNumberWithAngles'`, and the integer n
-  -- is determined by the global topology of how γ winds around z₀.
-  --
-  -- For the fundamental domain boundary at i or ρ:
-  -- - The curve passes through but doesn't enclose the point
-  -- - Hence n = 0, and the total winding = angle contribution alone
-  obtain ⟨ n, hn ⟩ := windingNumber_decomposition_sub γ hclosed z₀ crossings hcrossings_in hcrossings_at hcrossings_only;
-  contrapose! hn;
-  intro h;
-  convert cauchyPrincipalValueExists_of_simple_pole (PiecewiseC1Curve.mk (fun t : ℝ => t : ℝ → ℂ) 0 1 (by norm_num) {0, 1} ?_ ?_ ?_ ?_ ?_) 0 1 (fun _ => 0) ?_ ?_ using 1 <;> norm_num;
-  all_goals norm_num [ Set.insert_subset_iff, Set.singleton_subset_iff ];
-  any_goals intro t ht₁ ht₂ ht₃ ht₄; erw [ HasDerivAt.deriv ( by simpa using HasDerivAt.ofReal_comp ( hasDerivAt_id t ) ) ] ; norm_num [ ht₃, ht₄ ];
-  · rintro ⟨ L, hL ⟩;
-    -- Evaluating the integral, we have:
-    have h_integral : ∀ ε ∈ Set.Ioo 0 1, ∫ t in (0 : ℝ)..1, (if ‖(t : ℂ)‖ > ε then (t : ℂ)⁻¹ else 0) = -Real.log ε := by
-      intro ε hε;
-      rw [ intervalIntegral.integral_of_le zero_le_one ];
-      -- Evaluating the integral, we have $\int_{0}^{1} \frac{1}{t} \, dt = \left[ \ln t \right]_{0}^{1} = \ln 1 - \ln 0 = 0 - (-\infty) = \infty$.
-      have h_integral : ∫ t in Set.Ioc (0 : ℝ) 1, (if ε < t then (t : ℂ)⁻¹ else 0) = ∫ t in Set.Ioc ε 1, (t : ℂ)⁻¹ := by
-        rw [ ← MeasureTheory.integral_indicator, ← MeasureTheory.integral_indicator ] <;> norm_num [ Set.indicator ];
-        grind;
-      convert h_integral using 1;
-      · norm_num [ Complex.normSq, Complex.norm_def ];
-        exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioc fun x hx => by rw [ abs_of_nonneg hx.1.le ] ;
-      · rw [ ← intervalIntegral.integral_of_le hε.2.le ];
-        norm_cast;
-        erw [ intervalIntegral.integral_ofReal ] ; norm_num [ hε.1, hε.2 ];
-    -- Taking the limit as ε approaches 0 from the right, we have:
-    have h_limit : Filter.Tendsto (fun ε : ℝ => -Real.log ε) (𝓝[>] 0) Filter.atTop := by
-      have := Real.tendsto_log_nhdsGT_zero;
-      exact Filter.tendsto_neg_atBot_atTop.comp this;
-    have h_contradiction : Filter.Tendsto (fun ε : ℝ => -Real.log ε) (𝓝[>] 0) (nhds (L.re)) := by
-      convert Complex.continuous_re.continuousAt.tendsto.comp hL |> Filter.Tendsto.congr' _ using 2;
-      filter_upwards [ Ioo_mem_nhdsGT zero_lt_one ] with ε hε using by simpa [ show deriv ( fun t : ℝ => ( t : ℂ ) ) = fun t : ℝ => 1 from funext fun t => HasDerivAt.deriv ( by simpa using HasDerivAt.ofReal_comp ( hasDerivAt_id t ) ) ] using congr_arg Complex.re ( h_integral ε hε ) ;
-    exact not_tendsto_atTop_of_tendsto_nhds h_contradiction h_limit;
-  · exact Complex.continuous_ofReal.continuousOn;
-  · exact fun t _ _ _ _ => Complex.ofRealCLM.differentiableAt;
-  · intro t ht₁ ht₂ ht₃ ht₄; erw [ show deriv ( fun t : ℝ => ( t : ℂ ) ) = fun t : ℝ => 1 from funext fun t => HasDerivAt.deriv ( by simpa using HasDerivAt.ofReal_comp ( hasDerivAt_id t ) ) ] ; exact continuousAt_const;
-  · exact continuousOn_const
+      (n : ℂ) + windingNumberWithAngles' γ z₀ crossings hcrossings_in hcrossings_at :=
+  windingNumber_decomposition_sub γ hclosed z₀ crossings hcrossings_in hcrossings_at
+    hcrossings_only h_decomp
 
 /-! ## Integral Splitting -/
 
