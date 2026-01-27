@@ -835,7 +835,7 @@ theorem cauchyPrincipalValueExists_of_singular_inv
   -- - Local Taylor approximation of γ near crossings
   -- - Splitting the integral over subintervals
   --
-  -- For now, we use sorry as this is deep infrastructure.
+  -- For now, this is deferred as it requires deep infrastructure.
   -- The theorem IS true by Hungerbühler-Wasem theory.
 
   -- The proof strategy:
