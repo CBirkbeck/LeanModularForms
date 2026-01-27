@@ -592,14 +592,14 @@ theorem windingNumber_continuous_in_param
     (hγ_cont : Continuous γ)
     (hγ_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, γ (t, s) ≠ z₀)
     -- Additional hypotheses for differentiability (needed for integral definition)
-    (hγ_diff_t : ∀ t ∈ Ioo a b, ∀ s ∈ Icc (0:ℝ) 1, DifferentiableAt ℝ (fun t' => γ (t', s)) t)
+
     (hγ_deriv_cont : Continuous (fun p : ℝ × ℝ => deriv (fun t' => γ (t', p.2)) p.1)) :
     ContinuousOn (fun s => generalizedWindingNumber' (fun t => γ (t, s)) a b z₀) (Icc 0 1) := by
   -- Get uniform lower bound on distance to z₀
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := homotopy_uniform_avoidance γ a b z₀ hab hγ_cont hγ_avoid
   -- Define the integrand f(t,s) = (γ(t,s) - z₀)⁻¹ * ∂ₜγ(t,s)
   let f : ℝ → ℝ → ℂ := fun t s => (γ (t, s) - z₀)⁻¹ * deriv (fun t' => γ (t', s)) t
-  -- The winding number equals (2πi)⁻¹ * ∫ f(t,s) dt when curve avoids z₀
+  -- The winding number equals (2πi)⁻¹ * ∫ f(t,s) dt when curve avoids z
   -- We show this integral is continuous in s using dominated convergence
   intro s₀ hs₀
   -- The strategy: show generalizedWindingNumber' equals (2πi)⁻¹ * ∫ f, which is continuous
@@ -880,14 +880,6 @@ theorem windingNumber_integer_of_closed_avoiding
 -/
 theorem windingNumber_eq_of_homotopic_closed
     (γ₀ γ₁ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
-    (hγ₀_cont : ContinuousOn γ₀ (Icc a b))
-    (hγ₁_cont : ContinuousOn γ₁ (Icc a b))
-    (hγ₀_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ γ₀ t)
-    (hγ₁_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ γ₁ t)
-    (hγ₀'_cont : ContinuousOn (deriv γ₀) (Icc a b))
-    (hγ₁'_cont : ContinuousOn (deriv γ₁) (Icc a b))
-    (hγ₀_closed : γ₀ a = γ₀ b)
-    (hγ₁_closed : γ₁ a = γ₁ b)
     (hhom : ClosedCurvesHomotopicAvoiding γ₀ γ₁ a b z₀) :
     generalizedWindingNumber' γ₀ a b z₀ = generalizedWindingNumber' γ₁ a b z₀ := by
   -- Unpack the smooth homotopy
@@ -912,7 +904,7 @@ theorem windingNumber_eq_of_homotopic_closed
       exact fun t ht => hH_avoid t ht s hs
   -- Step 2: n is continuous on [0,1] (uses windingNumber_continuous_in_param)
   have hn_cont : ContinuousOn n (Icc 0 1) :=
-    windingNumber_continuous_in_param H a b z₀ hab hH_cont hH_avoid hH_diff_t hH_deriv_cont
+    windingNumber_continuous_in_param H a b z₀ hab hH_cont hH_avoid  hH_deriv_cont
   -- Step 3: Apply continuous_integer_valued_constant
   have heq : n 0 = n 1 := continuous_integer_valued_constant n hn_cont hn_int
   -- Step 4: Relate n(0) and n(1) to the original winding numbers using generalizedWindingNumber'_eq_of_eq_on

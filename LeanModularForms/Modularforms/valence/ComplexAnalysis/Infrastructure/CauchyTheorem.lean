@@ -945,8 +945,8 @@ lemma lineIntegral_continuous_in_homotopy_parameter
     Continuous (fun s => ∫ t in a..b, f (H (t, s)) * deriv (fun t' => H (t', s)) t) := by
   -- This requires applying dominated convergence theorem to parametric integrals.
   -- The integrand is continuous in s, and we need a dominating function.
-  -- For technical measure-theoretic details with parametric derivatives, defer to sorry.
-  sorry -- Technical: parametric interval integral continuity with derivative
+  -- For technical measure-theoretic details with parametric derivatives, this is deferred.
+  sorry -- Technical: parametric interval integral continuity with derivative (TODO)
 
 /-- Homotopy invariance: Two homotopic closed curves in a region where f is holomorphic
     have the same line integral.

@@ -437,6 +437,282 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       simp only [not_lt.mpr ht_S, ↓reduceIte]
   exact (h_piecewise.mono_measure Measure.restrict_le_self).congr h_eq.symm
 
+/-! ## Multi-point PV Measurability -/
+
+/-- The set {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} ∩ Icc a b is measurable.
+
+    This is the condition set for multi-point principal value integrands.
+    It's a finite union of preimages of closed balls under the continuous function γ.
+-/
+lemma measurableSet_multipoint_condition
+    {γ : ℝ → ℂ} {a b ε : ℝ} (S : Finset ℂ)
+    (hγ : ContinuousOn γ (Icc a b)) :
+    MeasurableSet ({t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} ∩ Icc a b) := by
+  -- The condition set equals ⋃_{s ∈ S} {t | ‖γ t - s‖ ≤ ε} ∩ Icc a b
+  have h_eq : {t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} ∩ Icc a b =
+      ⋃ s ∈ S, ({t | ‖γ t - s‖ ≤ ε} ∩ Icc a b) := by
+    ext t
+    simp only [Set.mem_inter_iff, Set.mem_setOf_eq, Set.mem_iUnion, exists_prop]
+    constructor
+    · intro ⟨⟨s, hs, h_norm⟩, ht_Icc⟩
+      exact ⟨s, hs, h_norm, ht_Icc⟩
+    · intro ⟨s, hs, h_norm, ht_Icc⟩
+      exact ⟨⟨s, hs, h_norm⟩, ht_Icc⟩
+  rw [h_eq]
+  -- Finite union of measurable sets is measurable
+  apply Finset.measurableSet_biUnion
+  intro s _
+  -- Each {t | ‖γ t - s‖ ≤ ε} ∩ Icc a b is measurable
+  -- Use that the complement {t | ε < ‖γ t - s‖} ∩ Icc a b is measurable
+  have h_compl_meas : MeasurableSet ({t | ε < ‖γ t - s‖} ∩ Icc a b) :=
+    measurableSet_norm_gt_Icc ε (hγ.sub continuousOn_const)
+  -- {t | ‖γ t - s‖ ≤ ε} ∩ Icc = Icc \ ({t | ε < ‖γ t - s‖} ∩ Icc)
+  have h_eq' : {t | ‖γ t - s‖ ≤ ε} ∩ Icc a b =
+      Icc a b \ ({t | ε < ‖γ t - s‖} ∩ Icc a b) := by
+    ext t
+    simp only [Set.mem_inter_iff, Set.mem_setOf_eq, Set.mem_diff, not_and]
+    constructor
+    · intro ⟨h_le, ht_Icc⟩
+      refine ⟨ht_Icc, fun h_gt => absurd h_gt (not_lt.mpr h_le)⟩
+    · intro ⟨ht_Icc, h_not⟩
+      refine ⟨?_, ht_Icc⟩
+      by_contra h_gt
+      push_neg at h_gt
+      exact (h_not h_gt) ht_Icc
+  rw [h_eq']
+  exact isClosed_Icc.measurableSet.diff h_compl_meas
+
+/-- The complement (good set) {t | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b is measurable. -/
+lemma measurableSet_multipoint_goodset
+    {γ : ℝ → ℂ} {a b ε : ℝ} (S : Finset ℂ)
+    (hγ : ContinuousOn γ (Icc a b)) :
+    MeasurableSet ({t | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b) := by
+  -- The good set is the complement of the condition set within Icc a b
+  have h_eq : {t | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b =
+      Icc a b \ ({t | ∃ s ∈ S, ‖γ t - s‖ ≤ ε} ∩ Icc a b) := by
+    ext t
+    constructor
+    · intro ⟨h_good, ht_Icc⟩
+      refine ⟨ht_Icc, ?_⟩
+      intro ⟨⟨s, hs, h_le⟩, _⟩
+      have h_gt := h_good s hs
+      linarith
+    · intro ⟨ht_Icc, h_not⟩
+      refine ⟨?_, ht_Icc⟩
+      intro s hs
+      by_contra h_le
+      push_neg at h_le
+      exact h_not ⟨⟨s, hs, h_le⟩, ht_Icc⟩
+  rw [h_eq]
+  exact isClosed_Icc.measurableSet.diff (measurableSet_multipoint_condition S hγ)
+
+/-- Multi-point PV integrand is AE strongly measurable for piecewise C¹ curves.
+
+    The integrand is: if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g(γ t) * γ'(t)
+-/
+theorem aEStronglyMeasurable_pv_integrand_multipoint
+    {g : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ} {P : Finset ℝ} (S : Finset ℂ)
+    (hg : ContinuousOn g (γ '' Icc a b))
+    (hγ : ContinuousOn γ (Icc a b))
+    (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :
+    AEStronglyMeasurable
+      (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else g (γ t) * deriv γ t)
+      (volume.restrict (Icc a b)) := by
+  -- Define the "good set" where integrand is non-zero
+  let GoodSet := {t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖}
+  -- GoodSet ∩ Icc a b is measurable
+  have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc a b) :=
+    measurableSet_multipoint_goodset S hγ
+  -- The base function g ∘ γ * γ' is AEStronglyMeasurable on Icc a b
+  have h_base_meas : AEStronglyMeasurable (fun t => g (γ t) * deriv γ t)
+      (volume.restrict (Icc a b)) := by
+    -- g ∘ γ is continuous on Icc
+    have hgγ_cont : ContinuousOn (fun t => g (γ t)) (Icc a b) := by
+      apply ContinuousOn.comp hg hγ
+      intro t ht
+      exact Set.mem_image_of_mem _ ht
+    -- γ' is continuous off P, so AEStronglyMeasurable
+    have hγ'_meas : AEStronglyMeasurable (deriv γ) (volume.restrict (Icc a b)) :=
+      aEStronglyMeasurable_of_continuousOn_off_finite hγ'_off_P
+    exact (hgγ_cont.aestronglyMeasurable isClosed_Icc.measurableSet).mul hγ'_meas
+  -- Zero is AEStronglyMeasurable
+  have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
+      (volume.restrict (GoodSet ∩ Icc a b)ᶜ) := aestronglyMeasurable_const
+  -- Restrict base measurability to good set
+  have h_base_meas' : AEStronglyMeasurable (fun t => g (γ t) * deriv γ t)
+      (volume.restrict (GoodSet ∩ Icc a b)) :=
+    h_base_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl)
+  -- Use piecewise measurability
+  have h_piecewise := AEStronglyMeasurable.piecewise hGoodSet_meas h_base_meas' h_zero_meas
+  -- Show our function equals the piecewise function a.e.
+  have h_eq : (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then (0 : ℂ) else g (γ t) * deriv γ t)
+      =ᵐ[volume.restrict (Icc a b)]
+      (GoodSet ∩ Icc a b).piecewise (fun t => g (γ t) * deriv γ t) (fun _ => 0) := by
+    filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
+    simp only [Set.piecewise]
+    by_cases ht_good : t ∈ GoodSet ∩ Icc a b
+    · -- t is in GoodSet: ∀ s ∈ S, ε < ‖γ t - s‖
+      simp only [ht_good, ↓reduceIte]
+      -- So the excision condition is false
+      have ht_not_excl : ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+        push_neg
+        exact ht_good.1
+      simp only [ht_not_excl, ↓reduceIte]
+    · -- t is not in GoodSet
+      simp only [ht_good, ↓reduceIte]
+      -- Either not in Icc (impossible) or excision holds
+      -- ht_good : t ∉ GoodSet ∩ Icc a b
+      -- Since t ∈ Icc (from ht), we have t ∉ GoodSet
+      have h_notGood : t ∉ GoodSet := by
+        intro h_in_good
+        exact ht_good ⟨h_in_good, ht⟩
+      -- h_notGood : ¬(∀ s ∈ S, ε < ‖γ t - s‖)
+      -- So ∃ s ∈ S, ‖γ t - s‖ ≤ ε
+      have h_excl : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+        simp only [GoodSet, Set.mem_setOf_eq] at h_notGood
+        push_neg at h_notGood
+        exact h_notGood
+      simp only [h_excl, ↓reduceIte]
+  exact (h_piecewise.mono_measure Measure.restrict_le_self).congr h_eq.symm
+
+/-- AE strongly measurable for residue-type PV integrand.
+
+    The function: if ‖γ t - s‖ > ε then c/(γ t - s) * γ'(t) else 0
+
+    This is a special case where the function c/(z-s) has a pole at s,
+    but we're only evaluating it where ‖γ t - s‖ > ε, so it's continuous there.
+-/
+theorem aEStronglyMeasurable_pv_integrand_residue
+    {γ : ℝ → ℂ} {a b ε : ℝ} {P : Finset ℝ} {s c : ℂ}
+    (_hε : 0 < ε)
+    (hγ : ContinuousOn γ (Icc a b))
+    (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :
+    AEStronglyMeasurable
+      (fun t => if ‖γ t - s‖ > ε then (c / (γ t - s)) * deriv γ t else 0)
+      (volume.restrict (Icc a b)) := by
+  -- Define the "good set" where the integrand is non-zero
+  let GoodSet := {t : ℝ | ε < ‖γ t - s‖}
+  -- GoodSet ∩ Icc a b is measurable (preimage of open set under continuous function)
+  have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc a b) :=
+    measurableSet_norm_gt_Icc ε (hγ.sub continuousOn_const)
+  -- c/(γ t - s) * γ'(t) is the product of:
+  -- 1. c/(γ t - s) which is continuous on GoodSet (bounded away from pole)
+  -- 2. γ'(t) which is continuous off P
+  -- γ' is AEStronglyMeasurable
+  have hγ'_meas : AEStronglyMeasurable (deriv γ) (volume.restrict (Icc a b)) :=
+    aEStronglyMeasurable_of_continuousOn_off_finite hγ'_off_P
+  -- c/(γ t - s) is continuous on GoodSet ∩ Icc, hence AEStronglyMeasurable there
+  have h_ratio_meas : AEStronglyMeasurable (fun t => c / (γ t - s))
+      (volume.restrict (GoodSet ∩ Icc a b)) := by
+    apply ContinuousOn.aestronglyMeasurable _ hGoodSet_meas
+    apply ContinuousOn.div continuousOn_const
+    · exact (hγ.mono Set.inter_subset_right).sub continuousOn_const
+    · intro t ⟨ht_good, _⟩
+      exact norm_ne_zero_iff.mp (ne_of_gt (lt_trans _hε ht_good))
+  -- Product is AEStronglyMeasurable on GoodSet ∩ Icc
+  have h_prod_meas : AEStronglyMeasurable (fun t => (c / (γ t - s)) * deriv γ t)
+      (volume.restrict (GoodSet ∩ Icc a b)) :=
+    h_ratio_meas.mul (hγ'_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
+  -- Use piecewise: on GoodSet use product, elsewhere use 0
+  have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
+      (volume.restrict (GoodSet ∩ Icc a b)ᶜ) := aestronglyMeasurable_const
+  have h_piecewise := AEStronglyMeasurable.piecewise hGoodSet_meas h_prod_meas h_zero_meas
+  -- Show our function equals the piecewise function a.e.
+  refine (h_piecewise.mono_measure Measure.restrict_le_self).congr ?_
+  filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
+  simp only [Set.piecewise, GoodSet, Set.mem_inter_iff, Set.mem_setOf_eq, gt_iff_lt]
+  by_cases h1 : ε < ‖γ t - s‖
+  · simp only [h1, ht, and_self, ↓reduceIte]
+  · push_neg at h1
+    simp only [not_lt.mpr h1, ht, and_true, ↓reduceIte]
+
+/-- AE strongly measurable for multi-point PV integrand with decomposed function.
+
+    This handles the case where f = g_reg + Σ c_s/(z - s), i.e., a regular part plus
+    singular terms. The key insight is that on the "good set" (where all distances > ε),
+    each singular term is continuous, so f is continuous there.
+
+    The integrand is: if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0 else f(γ t) * γ'(t)
+    where f(z) = g_reg(z) + Σ_{s ∈ S} c_s/(z - s) for z not in S.
+-/
+theorem aEStronglyMeasurable_pv_integrand_decomposed
+    {g_reg : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ} {P : Finset ℝ} (S : Finset ℂ)
+    (coeffs : ℂ → ℂ)
+    (hε : 0 < ε)
+    (hg : ContinuousOn g_reg (γ '' Icc a b))
+    (hγ : ContinuousOn γ (Icc a b))
+    (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :
+    AEStronglyMeasurable
+      (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0
+        else (g_reg (γ t) + ∑ s ∈ S, coeffs s / (γ t - s)) * deriv γ t)
+      (volume.restrict (Icc a b)) := by
+  -- Define the "good set" where integrand is non-zero
+  let GoodSet := {t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖}
+  -- GoodSet ∩ Icc a b is measurable
+  have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc a b) :=
+    measurableSet_multipoint_goodset S hγ
+  -- γ' is AEStronglyMeasurable
+  have hγ'_meas : AEStronglyMeasurable (deriv γ) (volume.restrict (Icc a b)) :=
+    aEStronglyMeasurable_of_continuousOn_off_finite hγ'_off_P
+  -- g_reg ∘ γ is continuous on Icc, hence AEStronglyMeasurable
+  have hgγ_cont : ContinuousOn (fun t => g_reg (γ t)) (Icc a b) := by
+    apply ContinuousOn.comp hg hγ
+    intro t ht; exact Set.mem_image_of_mem _ ht
+  have hgγ_meas : AEStronglyMeasurable (fun t => g_reg (γ t))
+      (volume.restrict (Icc a b)) :=
+    hgγ_cont.aestronglyMeasurable isClosed_Icc.measurableSet
+  -- Each singular term c_s/(γ t - s) is continuous on GoodSet ∩ Icc (bounded away from pole)
+  have h_sing_meas : ∀ s ∈ S, AEStronglyMeasurable (fun t => coeffs s / (γ t - s))
+      (volume.restrict (GoodSet ∩ Icc a b)) := by
+    intro s hs
+    apply ContinuousOn.aestronglyMeasurable _ hGoodSet_meas
+    apply ContinuousOn.div continuousOn_const
+    · exact (hγ.mono Set.inter_subset_right).sub continuousOn_const
+    · intro t ⟨ht_good, _⟩
+      have h_dist := ht_good s hs
+      exact norm_ne_zero_iff.mp (ne_of_gt (lt_trans hε h_dist))
+  -- Sum of singular terms is AEStronglyMeasurable on GoodSet ∩ Icc
+  have h_sum_meas : AEStronglyMeasurable (fun t => ∑ s ∈ S, coeffs s / (γ t - s))
+      (volume.restrict (GoodSet ∩ Icc a b)) :=
+    Finset.aestronglyMeasurable_fun_sum S h_sing_meas
+  -- Total f = g_reg + sum is AEStronglyMeasurable on GoodSet ∩ Icc
+  have h_f_meas : AEStronglyMeasurable (fun t => g_reg (γ t) + ∑ s ∈ S, coeffs s / (γ t - s))
+      (volume.restrict (GoodSet ∩ Icc a b)) :=
+    (hgγ_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl)).add h_sum_meas
+  -- f * γ' is AEStronglyMeasurable on GoodSet ∩ Icc
+  have h_prod_meas : AEStronglyMeasurable
+      (fun t => (g_reg (γ t) + ∑ s ∈ S, coeffs s / (γ t - s)) * deriv γ t)
+      (volume.restrict (GoodSet ∩ Icc a b)) :=
+    h_f_meas.mul (hγ'_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
+  -- Use piecewise: on GoodSet use product, elsewhere use 0
+  have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
+      (volume.restrict (GoodSet ∩ Icc a b)ᶜ) := aestronglyMeasurable_const
+  have h_piecewise := AEStronglyMeasurable.piecewise hGoodSet_meas h_prod_meas h_zero_meas
+  -- Show our function equals the piecewise function a.e.
+  refine (h_piecewise.mono_measure Measure.restrict_le_self).congr ?_
+  filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
+  simp only [Set.piecewise, GoodSet, Set.mem_inter_iff, Set.mem_setOf_eq]
+  by_cases ht_good : (∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b
+  · -- t is in GoodSet: ∀ s ∈ S, ε < ‖γ t - s‖
+    rw [if_pos ht_good]
+    have h_not_excl : ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+      push_neg; exact ht_good.1
+    simp only [h_not_excl, if_false]
+  · -- t is not in GoodSet
+    rw [if_neg ht_good]
+    -- Since t ∈ Icc (from ht), we have ¬(∀ s ∈ S, ε < ‖γ t - s‖)
+    have h_excl : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+      -- ht_good : ¬((∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b)
+      -- After push_neg, becomes: (∀ s ∈ S, ε < ‖γ t - s‖) → t ∉ Icc a b
+      -- Since t ∈ Icc a b (from ht), we must have ¬(∀ s ∈ S, ε < ‖γ t - s‖)
+      -- Which is ∃ s ∈ S, ‖γ t - s‖ ≤ ε
+      by_contra h_not
+      push_neg at h_not
+      -- h_not : ∀ s ∈ S, ε < ‖γ t - s‖
+      -- This gives ⟨h_not, ht⟩ : (∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b
+      exact ht_good ⟨h_not, ht⟩
+    simp only [h_excl, if_true]
+
 /-! ## Integrability of Piecewise Continuous Functions -/
 
 /-- Functions continuous off a finite set are integrable when bounded.
@@ -534,37 +810,13 @@ private theorem Set.countable_setOf_isolated_points' {S : Set ℝ}
       Pairwise.countable_of_isOpen_disjoint h_disj h_open h_nonempty
     exact Set.countable_coe_iff.mp h_countable_S
 
-/-- The preimage of a singleton under a non-constant continuous curve has measure zero.
+/-- The preimage of a singleton under a piecewise C¹ immersion has measure zero.
 
-    **Mathematical content**: For a continuous function γ : [a,b] → ℂ that is not constant
-    on any subinterval, the preimage of any point z₀ is at most countable (and typically
-    finite), hence has Lebesgue measure zero.
+    For a piecewise C¹ curve with nonzero derivative (except at finitely many partition points),
+    the preimage of any point z₀ is at most countable (typically finite), hence has measure zero.
 
-    **Key insight**: A continuous curve can only pass through a point finitely many times
-    unless it stays at that point for an interval of time.
-
-    **Note**: This general version is currently unused. For piecewise C¹ curves with
-    nonzero derivative, use `preimage_singleton_measure_zero_of_deriv_ne_zero` instead,
-    which has a complete proof.
+    This is the correct version for the valence formula applications.
 -/
-theorem preimage_singleton_measure_zero
-    {γ : ℝ → ℂ} {a b : ℝ} (z₀ : ℂ)
-    (hγ : ContinuousOn γ (Icc a b))
-    (h_non_const : ∀ c d : ℝ, c < d → Icc c d ⊆ Icc a b → ∃ t ∈ Icc c d, γ t ≠ γ c) :
-    volume ({t ∈ Icc a b | γ t = z₀}) = 0 := by
-  -- The preimage is closed (continuous preimage of singleton)
-  -- and contains no interval (by non-constancy)
-  -- hence is nowhere dense, which for closed sets means it has empty interior
-  -- A closed set with empty interior in ℝ has measure zero if it's countable
-  --
-  -- Strategy: Show the preimage has no accumulation points in the interior,
-  -- hence is at most countable, hence measure zero.
-  --
-  -- For piecewise C¹ curves with nonzero derivative ae, this is immediate:
-  -- the curve is locally injective ae, so preimages are discrete.
-  sorry
-
-/-- Specialized version for piecewise C¹ immersions where the derivative is nonzero ae. -/
 theorem preimage_singleton_measure_zero_of_deriv_ne_zero
     {γ : ℝ → ℂ} {a b : ℝ} {P : Finset ℝ} (z₀ : ℂ)
     (hγ : ContinuousOn γ (Icc a b))

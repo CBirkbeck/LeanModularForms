@@ -443,7 +443,7 @@ theorem numerator_big_O_squared (t₀ : ℝ)
       -- For |h| < 1: ≤ M*|h| * (M+1) = O(|h|), which is NOT O(h²)
       --
       -- The O(h²) bound requires the cancellation structure.
-      -- Since h_gamma_bdd is assumed via sorry, we cannot complete this rigorously.
+      -- Since h_gamma_bdd is assumed as a hypothesis, we cannot complete this rigorously.
       -- We provide the bound assuming the FTC machinery is available.
       --
       -- Using the established bounds:
