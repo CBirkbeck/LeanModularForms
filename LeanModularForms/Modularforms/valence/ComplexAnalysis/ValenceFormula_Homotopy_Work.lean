@@ -16,6 +16,45 @@ import Mathlib.NumberTheory.ModularForms.QExpansion
 import Mathlib.NumberTheory.ModularForms.LevelOne
 import Mathlib.Analysis.Meromorphic.Order
 import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Topology.Homotopy.Lifting
+import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+
+/-!
+# WORKING COPY: Homotopy (Group 4) - ON CRITICAL PATH
+
+**PURPOSE**: This is a working copy for homotopy-related sorries.
+These ARE on the critical path: `generalizedWindingNumber_interior_eq_one_complex`
+feeds the residue side of the valence formula.
+
+**CRITICAL SORRIES**:
+- `generalizedWindingNumber_interior_eq_one_complex` (line ~3949)
+- `homotopy_gamma_to_radialProj` (line ~3708) - radial homotopy γ → rc
+- `homotopy_radialProjRot_to_circleParam` (line ~3830) - reparam homotopy rc_rot → circle
+- H_reparam helper sorries (non-antipodality) - **BLOCKING ISSUE**
+
+**NON-TARGET SORRIES** (PV group, not focus):
+- `immersion_crossing_cauchy` etc. (lines ~7500-8000) - PV group
+
+**KNOWN BLOCKING ISSUE**:
+The H_reparam homotopy uses vector interpolation `(1-s)*u + s*v` normalized by ‖...‖.
+This fails when u and v are antipodal (sum = 0). Two solutions:
+1. **Angle-lift approach**: Use `IsCoveringMap.liftPath` to lift S¹ paths to angles,
+   interpolate angles (real numbers), apply exp. Requires Mathlib infrastructure.
+2. **Direct geometric proof**: Prove that for the specific curves involved
+   (rc_rot and circleParam for FD boundary), the vectors are never exactly antipodal.
+
+**COMPLETED**:
+- `H_radial_deriv_bound_on_piece` - bounds derivative away from partition points
+- `safeRotationHomotopy_piecewise_avoiding` (in WindingNumberInterior.lean) - rotation homotopy
+- FD boundary distance bound (compactness argument)
+
+**STRATEGY**:
+1. Stage 1: Radial homotopy γ → rc (mostly done, technical sorries remain)
+2. Stage 2: Safe rotation rc → rc_rot (DONE via safeRotationHomotopy_piecewise_avoiding)
+3. Stage 3: Reparam rc_rot → circle (BLOCKED by non-antipodality)
+4. Compose the three homotopies
+5. Apply winding_eq_one_of_homotopic_to_circle
+-/
 
 /-!
 # The Valence Formula for Modular Forms
@@ -2972,7 +3011,7 @@ lemma radialHomotopy_preserves_winding (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ) 
     -- The t-derivative of H = p + c(t,s)•(γ_ext(t) - p) where c(t,s) = (1-s) + s/‖γ_ext(t)-p‖
     -- involves ∂c/∂t and γ'_ext. Both are continuous on pieces where γ is C¹.
     -- This follows from the explicit derivative formula and continuity of γ' on pieces.
-    sorry -- Derivative continuity: follows from γ being C¹ on pieces between partition points
+    sorry -- ⚡ TARGET SORRY: Derivative continuity (γ is C¹ on pieces between partition points)
   -- ═══════════════════════════════════════════════════════════════════════════
   -- STEP 4: Build PiecewiseCurvesHomotopicAvoiding and apply homotopy invariance
   -- ═══════════════════════════════════════════════════════════════════════════
@@ -2982,6 +3021,1191 @@ lemma radialHomotopy_preserves_winding (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ) 
 
 END COMMENTED OUT: radialHomotopy_preserves_winding -/
 
+/-! ## Modular Homotopy Construction: γ → circleParam
+
+We build the homotopy from the fundamental domain boundary γ to circleParam in three stages:
+1. Radial homotopy: γ → rc (project onto unit circle)
+2. Safe rotation: rc → rc_rot (rotate by π/2, avoiding antipodal)
+3. Reparameterization: rc_rot → circleParam (match standard parameterization)
+
+Each stage has its own helper lemmas for the 8 conditions of PiecewiseCurvesHomotopicAvoiding.
+-/
+
+/-! ### Stage 1: Radial Homotopy (γ → rc) -/
+
+/-- The radial projection of a curve onto the unit circle centered at p. -/
+def radialProj (p : ℂ) (γ : ℝ → ℂ) : ℝ → ℂ :=
+  fun t => p + (γ t - p) / ‖γ t - p‖
+
+/-- The radial homotopy from γ to its radial projection. -/
+def H_radial (p : ℂ) (γ : ℝ → ℂ) : ℝ × ℝ → ℂ :=
+  fun ⟨t, s⟩ => p + ((1 - s) + s / ‖γ t - p‖) • (γ t - p)
+
+/-- H_rad(t, 0) = γ(t). -/
+lemma H_radial_at_zero (p : ℂ) (γ : ℝ → ℂ) (t : ℝ) :
+    H_radial p γ (t, 0) = γ t := by
+  simp only [H_radial, sub_zero, zero_div, add_zero, one_smul, add_sub_cancel]
+
+/-- H_rad(t, 1) = radialProj p γ t. -/
+lemma H_radial_at_one (p : ℂ) (γ : ℝ → ℂ) (t : ℝ) (hne : γ t ≠ p) :
+    H_radial p γ (t, 1) = radialProj p γ t := by
+  simp only [H_radial, radialProj, sub_self, zero_add]
+  have h_norm_ne : ‖γ t - p‖ ≠ 0 := norm_ne_zero_iff.mpr (sub_ne_zero.mpr hne)
+  have h_norm_ofReal_ne : (‖γ t - p‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr h_norm_ne
+  -- After simp: p + (0 + 1 / ‖...‖) • (γ t - p) = p + (γ t - p) / ↑‖...‖
+  -- Reduces to: (1 / ‖...‖) • (γ t - p) = (γ t - p) / ↑‖...‖
+  congr 1
+  -- (1 / ‖γ t - p‖) • (γ t - p) = (γ t - p) / ↑‖γ t - p‖
+  rw [one_div]
+  -- Now: ‖γ t - p‖⁻¹ • (γ t - p) = (γ t - p) / ↑‖γ t - p‖
+  -- Use Complex.real_smul: x • z = ↑x * z
+  rw [Complex.real_smul, div_eq_mul_inv, Complex.ofReal_inv, mul_comm]
+
+/-- H_rad preserves closedness: H_rad(a, s) = H_rad(b, s) when γ(a) = γ(b). -/
+lemma H_radial_closed (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hclosed : γ a = γ b) (s : ℝ) :
+    H_radial p γ (a, s) = H_radial p γ (b, s) := by
+  simp only [H_radial, hclosed]
+
+/-- H_rad(t, s) ≠ p for γ(t) ≠ p and s ∈ [0,1]. -/
+lemma H_radial_avoids (p : ℂ) (γ : ℝ → ℂ) (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) (hne : γ t ≠ p) :
+    H_radial p γ (t, s) ≠ p := by
+  simp only [H_radial]
+  intro heq
+  have h_sub_ne : γ t - p ≠ 0 := sub_ne_zero.mpr hne
+  have h_smul_zero : ((1 - s) + s / ‖γ t - p‖) • (γ t - p) = 0 := by
+    have := congrArg (· - p) heq
+    simp only [add_sub_cancel_left, sub_self] at this; exact this
+  cases smul_eq_zero.mp h_smul_zero with
+  | inl h_coeff =>
+    -- Coefficient = 0 is impossible: (1-s) + s/‖...‖ > 0 for s ∈ [0,1]
+    have h_norm_pos : 0 < ‖γ t - p‖ := norm_pos_iff.mpr h_sub_ne
+    have h_div_nonneg : 0 ≤ s / ‖γ t - p‖ := div_nonneg hs.1 (norm_nonneg _)
+    -- Either s < 1 (so 1-s > 0) or s = 1 (so s/‖...‖ > 0)
+    have h_pos : 0 < (1 - s) + s / ‖γ t - p‖ := by
+      by_cases hs1 : s < 1
+      · have : 0 < 1 - s := by linarith
+        linarith
+      · push_neg at hs1
+        have hs_eq : s = 1 := le_antisymm hs.2 hs1
+        rw [hs_eq, sub_self, zero_add, one_div]
+        exact inv_pos.mpr h_norm_pos
+    linarith
+  | inr h_vec => exact h_sub_ne h_vec
+
+/-- H_rad is continuous when γ is continuous and avoids p. -/
+lemma H_radial_continuous (p : ℂ) (γ : ℝ → ℂ) (hγ_cont : Continuous γ) (hne : ∀ t, γ t ≠ p) :
+    Continuous (H_radial p γ) := by
+  unfold H_radial
+  apply Continuous.add continuous_const
+  apply Continuous.smul
+  · -- Coefficient (1-s) + s/‖γ(t)-p‖
+    apply Continuous.add
+    · exact continuous_const.sub continuous_snd
+    · apply Continuous.div continuous_snd
+      · exact (continuous_norm.comp (hγ_cont.sub continuous_const)).comp continuous_fst
+      · intro ⟨t, _⟩; exact norm_ne_zero_iff.mpr (sub_ne_zero.mpr (hne t))
+  · exact (hγ_cont.sub continuous_const).comp continuous_fst
+
+/-- H_rad is differentiable in t away from partition points. -/
+lemma H_radial_diff (p : ℂ) (γ : ℝ → ℂ) (hne : ∀ t, γ t ≠ p)
+    (t : ℝ) (hγ_diff : DifferentiableAt ℝ γ t) (s : ℝ) :
+    DifferentiableAt ℝ (fun t' => H_radial p γ (t', s)) t := by
+  simp only [H_radial]
+  have h_sub_ne : γ t - p ≠ 0 := sub_ne_zero.mpr (hne t)
+  have h_sub_diff : DifferentiableAt ℝ (fun t' => γ t' - p) t := hγ_diff.sub (differentiableAt_const p)
+  have h_norm_diff : DifferentiableAt ℝ (fun t' => ‖γ t' - p‖) t :=
+    DifferentiableAt.norm ℂ h_sub_diff h_sub_ne
+  have h_norm_ne : ‖γ t - p‖ ≠ 0 := norm_ne_zero_iff.mpr h_sub_ne
+  have h_coeff_diff : DifferentiableAt ℝ (fun t' => (1 - s) + s / ‖γ t' - p‖) t := by
+    apply DifferentiableAt.add (differentiableAt_const _)
+    exact (differentiableAt_const s).div h_norm_diff h_norm_ne
+  exact (differentiableAt_const p).add (h_coeff_diff.smul h_sub_diff)
+
+/-! ### Helper Lemmas for Radial Homotopy Derivative
+Copied from WindingNumberInterior.lean (those are private, so we duplicate them here).
+-/
+
+/-- ‖γ(t) - p‖ is continuous. -/
+private lemma cont_norm_z_work (γ : ℝ → ℂ) (p : ℂ) (hγ : Continuous γ) :
+    Continuous (fun t => ‖γ t - p‖) :=
+  continuous_norm.comp (hγ.sub continuous_const)
+
+/-- 1/‖γ(t) - p‖ is continuous when γ avoids p. -/
+private lemma cont_inv_norm_z_work (γ : ℝ → ℂ) (p : ℂ) (hγ : Continuous γ) (hne : ∀ t, γ t ≠ p) :
+    Continuous (fun t => (‖γ t - p‖)⁻¹) := by
+  apply Continuous.inv₀ (cont_norm_z_work γ p hγ)
+  intro t; exact norm_ne_zero_iff.mpr (sub_ne_zero.mpr (hne t))
+
+/-- deriv γ is continuous on an open interval where γ is C¹. -/
+private lemma cont_deriv_on_piece_work (γ : ℝ → ℂ) (p₁ p₂ : ℝ)
+    (hγ_deriv_cont : ∀ t ∈ Ioo p₁ p₂, ContinuousAt (deriv γ) t) :
+    ContinuousOn (deriv γ) (Ioo p₁ p₂) :=
+  fun t ht => (hγ_deriv_cont t ht).continuousWithinAt
+
+/-- The coefficient c(t,s) = (1-s) + s/‖γ(t) - p‖ is jointly continuous. -/
+private lemma cont_coeff_work (γ : ℝ → ℂ) (p : ℂ) (hγ : Continuous γ) (hne : ∀ t, γ t ≠ p) :
+    Continuous (fun (x : ℝ × ℝ) => (1 - x.2) + x.2 / ‖γ x.1 - p‖) := by
+  apply Continuous.add
+  · exact continuous_const.sub continuous_snd
+  · apply Continuous.div continuous_snd
+    · exact (cont_norm_z_work γ p hγ).comp continuous_fst
+    · intro ⟨t, _⟩; exact norm_ne_zero_iff.mpr (sub_ne_zero.mpr (hne t))
+
+/-- Re(a * b) = Re(b * a) for complex numbers -/
+private lemma Complex_re_mul_comm (a b : ℂ) : (a * b).re = (b * a).re := by
+  simp only [Complex.mul_re]; ring
+
+/-- ∂c/∂t is continuous on an open piece (away from partition points). -/
+private lemma cont_dc_on_piece_work (γ : ℝ → ℂ) (p : ℂ) (p₁ p₂ : ℝ)
+    (hγ : Continuous γ) (hne : ∀ t, γ t ≠ p)
+    (_hγ_diff : ∀ t ∈ Ioo p₁ p₂, DifferentiableAt ℝ γ t)
+    (hγ_deriv_cont : ∀ t ∈ Ioo p₁ p₂, ContinuousAt (deriv γ) t) :
+    ContinuousOn (fun (x : ℝ × ℝ) =>
+      -x.2 * (Complex.re (starRingEnd ℂ (γ x.1 - p) * deriv γ x.1)) / ‖γ x.1 - p‖ ^ 3)
+      (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
+  apply ContinuousOn.div
+  · apply ContinuousOn.mul
+    · exact continuous_snd.neg.continuousOn
+    · -- Re(conj(γ - p) * deriv γ) is continuous
+      have hstar : Continuous (fun t => starRingEnd ℂ (γ t - p)) :=
+        continuous_star.comp (hγ.sub continuous_const)
+      have hderiv : ContinuousOn (deriv γ) (Ioo p₁ p₂) := cont_deriv_on_piece_work γ p₁ p₂ hγ_deriv_cont
+      have h_prod : ContinuousOn (fun x : ℝ × ℝ => starRingEnd ℂ (γ x.1 - p) * deriv γ x.1)
+          (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
+        apply ContinuousOn.mul
+        · exact hstar.continuousOn.comp continuousOn_fst (fun x _ => mem_univ _)
+        · exact hderiv.comp continuousOn_fst (fun x hx => hx.1)
+      exact continuous_re.continuousOn.comp h_prod (fun x _ => mem_univ _)
+  · apply ContinuousOn.pow
+    exact (cont_norm_z_work γ p hγ).continuousOn.comp continuousOn_fst (fun _ h => h.1)
+  · intro ⟨t, _⟩ _
+    have hz : γ t - p ≠ 0 := sub_ne_zero.mpr (hne t)
+    exact pow_ne_zero 3 (norm_ne_zero_iff.mpr hz)
+
+/-- HasDerivAt for z(t) = γ(t) - p. -/
+private lemma hasDerivAt_z_work (γ : ℝ → ℂ) (p : ℂ) (t : ℝ) (hγ : DifferentiableAt ℝ γ t) :
+    HasDerivAt (fun t' => γ t' - p) (deriv γ t) t :=
+  hγ.hasDerivAt.sub_const p
+
+/-- HasDerivAt for ‖z(t)‖ via sqrt(‖z‖²). -/
+private lemma hasDerivAt_norm_of_hasDerivAt_work {z : ℝ → ℂ} {z' : ℂ} {t : ℝ}
+    (hz : HasDerivAt z z' t) (hne : z t ≠ 0) :
+    HasDerivAt (fun t' => ‖z t'‖) (Complex.re (starRingEnd ℂ (z t) * z') / ‖z t‖) t := by
+  have h_norm_sq : HasDerivAt (fun t' => ‖z t'‖ ^ 2) (2 * @inner ℝ ℂ _ (z t) z') t := hz.norm_sq
+  have h_norm_sq_ne : ‖z t‖ ^ 2 ≠ 0 := pow_ne_zero 2 (norm_ne_zero_iff.mpr hne)
+  have h_sqrt := h_norm_sq.sqrt h_norm_sq_ne
+  have h_eq : ∀ u, Real.sqrt (‖z u‖ ^ 2) = ‖z u‖ := fun u => Real.sqrt_sq (norm_nonneg _)
+  have h_sqrt' : HasDerivAt (fun u => ‖z u‖)
+      ((2 * @inner ℝ ℂ _ (z t) z') / (2 * Real.sqrt (‖z t‖ ^ 2))) t := by
+    have h_eq' : (fun u => ‖z u‖) = (fun u => Real.sqrt (‖z u‖ ^ 2)) := funext (fun u => (h_eq u).symm)
+    rw [h_eq']; exact h_sqrt
+  convert h_sqrt' using 1
+  rw [h_eq t]
+  have h_norm_ne : ‖z t‖ ≠ 0 := norm_ne_zero_iff.mpr hne
+  field_simp [h_norm_ne]
+  rw [Complex.inner, Complex_re_mul_comm]
+
+/-- HasDerivAt for 1/‖z(t)‖. -/
+private lemma hasDerivAt_inv_norm_work {z : ℝ → ℂ} {z' : ℂ} {t : ℝ}
+    (hz : HasDerivAt z z' t) (hne : z t ≠ 0) :
+    HasDerivAt (fun t' => (‖z t'‖)⁻¹)
+      (-Complex.re (starRingEnd ℂ (z t) * z') / ‖z t‖ ^ 3) t := by
+  have h_norm_ne : ‖z t‖ ≠ 0 := norm_ne_zero_iff.mpr hne
+  have h_norm := hasDerivAt_norm_of_hasDerivAt_work hz hne
+  have h_inv := h_norm.inv h_norm_ne
+  convert h_inv using 1
+  field_simp [h_norm_ne]
+
+/-- HasDerivAt for c(t) = (1-s) + s/‖z(t)‖. -/
+private lemma hasDerivAt_c_work {z : ℝ → ℂ} {z' : ℂ} {t s : ℝ}
+    (hz : HasDerivAt z z' t) (hne : z t ≠ 0) :
+    let dc := -s * Complex.re (starRingEnd ℂ (z t) * z') / ‖z t‖ ^ 3
+    HasDerivAt (fun t' => (1 - s) + s / ‖z t'‖) dc t := by
+  intro dc
+  have h_inv := hasDerivAt_inv_norm_work hz hne
+  have h_const : HasDerivAt (fun _ : ℝ => (1 : ℝ) - s) 0 t := hasDerivAt_const t (1 - s)
+  have h_mul : HasDerivAt (fun t' => s * (‖z t'‖)⁻¹)
+      (s * (-Complex.re (starRingEnd ℂ (z t) * z') / ‖z t‖ ^ 3)) t :=
+    h_inv.const_mul s
+  have h_add := h_const.add h_mul
+  have h_fn_eq : (fun t' => (1 - s) + s / ‖z t'‖) = ((fun _ => 1 - s) + fun t' => s * (‖z t'‖)⁻¹) := by
+    funext u; simp [div_eq_mul_inv]
+  rw [h_fn_eq]
+  convert h_add using 1
+  simp only [dc, zero_add]; ring
+
+/-- Product rule for scalar-vector smul: deriv(c • z) = c' • z + c • z'. -/
+private lemma hasDerivAt_smul_vector_work (c : ℝ → ℝ) (z : ℝ → ℂ) (t : ℝ) (c' : ℝ) (z' : ℂ)
+    (hc : HasDerivAt c c' t) (hz : HasDerivAt z z' t) :
+    HasDerivAt (fun t' => c t' • z t') (c' • z t + c t • z') t := by
+  have h := hc.smul hz
+  convert h using 1
+  ring
+
+/-- The derivative formula for H(t,s) with respect to t. -/
+private lemma deriv_H_formula_work (γ : ℝ → ℂ) (p : ℂ) (t s : ℝ)
+    (hγ_diff : DifferentiableAt ℝ γ t) (hne : γ t ≠ p) :
+    let z := γ t - p
+    let c := (1 - s) + s / ‖z‖
+    let dc := -s * (Complex.re (starRingEnd ℂ z * deriv γ t)) / ‖z‖ ^ 3
+    let H := fun t' => p + ((1 - s) + s / ‖γ t' - p‖) • (γ t' - p)
+    deriv H t = dc • z + c • deriv γ t := by
+  intro z c dc H
+  have hz : z ≠ 0 := sub_ne_zero.mpr hne
+  have hz_deriv : HasDerivAt (fun t' => γ t' - p) (deriv γ t) t :=
+    hasDerivAt_z_work γ p t hγ_diff
+  have hc_deriv : HasDerivAt (fun t' => (1 - s) + s / ‖γ t' - p‖) dc t :=
+    hasDerivAt_c_work hz_deriv hz
+  have h_smul : HasDerivAt (fun t' => ((1 - s) + s / ‖γ t' - p‖) • (γ t' - p))
+      (dc • (γ t - p) + ((1 - s) + s / ‖γ t - p‖) • deriv γ t) t :=
+    hasDerivAt_smul_vector_work _ _ t dc (deriv γ t) hc_deriv hz_deriv
+  have h_H : HasDerivAt H (dc • z + c • deriv γ t) t := by
+    have h_const : HasDerivAt (fun _ : ℝ => p) 0 t := hasDerivAt_const t p
+    have h_add := h_const.add h_smul
+    simp only [zero_add] at h_add
+    exact h_add
+  exact h_H.deriv
+
+/-- Derivative continuity for H_rad on pieces. -/
+lemma H_radial_deriv_cont_on_piece (p : ℂ) (γ : ℝ → ℂ) (p₁ p₂ : ℝ)
+    (hγ_cont : Continuous γ) (hne : ∀ t, γ t ≠ p)
+    (hγ_diff : ∀ t ∈ Ioo p₁ p₂, DifferentiableAt ℝ γ t)
+    (hγ_deriv_cont : ∀ t ∈ Ioo p₁ p₂, ContinuousAt (deriv γ) t) :
+    ContinuousOn (fun x : ℝ × ℝ => deriv (fun t' => H_radial p γ (t', x.2)) x.1)
+      (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
+  -- The derivative equals dc • z + c • γ' where all components are continuous
+  let H := fun (x : ℝ × ℝ) => p + ((1 - x.2) + x.2 / ‖γ x.1 - p‖) • (γ x.1 - p)
+  have h_formula : ∀ x ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
+      deriv (fun t' => H_radial p γ (t', x.2)) x.1 =
+      (-x.2 * (Complex.re (starRingEnd ℂ (γ x.1 - p) * deriv γ x.1)) / ‖γ x.1 - p‖ ^ 3) • (γ x.1 - p) +
+      ((1 - x.2) + x.2 / ‖γ x.1 - p‖) • deriv γ x.1 := by
+    intro ⟨t, s⟩ ⟨ht, _⟩
+    -- H_radial p γ (t', s) = H (t', s), so deriv matches
+    have h_eq : (fun t' => H_radial p γ (t', s)) = (fun t' => H (t', s)) := by
+      funext t'
+      simp only [H_radial, H]
+    rw [h_eq]
+    exact deriv_H_formula_work γ p t s (hγ_diff t ht) (hne t)
+  apply ContinuousOn.congr _ h_formula
+  apply ContinuousOn.add
+  -- First term: dc • z
+  · apply ContinuousOn.smul
+    · exact cont_dc_on_piece_work γ p p₁ p₂ hγ_cont hne hγ_diff hγ_deriv_cont
+    · exact (hγ_cont.sub continuous_const).continuousOn.comp continuousOn_fst (fun _ h => h.1)
+  -- Second term: c • γ'
+  · apply ContinuousOn.smul
+    · exact (cont_coeff_work γ p hγ_cont hne).continuousOn
+    · exact (cont_deriv_on_piece_work γ p₁ p₂ hγ_deriv_cont).comp continuousOn_fst (fun _ h => h.1)
+
+/-- Derivative bound for H_rad ON DIFFERENTIABLE PIECES.
+
+    This is the correct formulation for PiecewiseCurvesHomotopicAvoiding:
+    we only need bounds for t ∉ P where γ is differentiable.
+
+    The derivative is: dc • z + c • γ' where
+    - z = γ(t) - p
+    - c = (1-s) + s/‖z‖
+    - dc = -s * Re(conj(z) * γ') / ‖z‖³
+
+    Bounds:
+    - ‖dc • z‖ = |dc| * ‖z‖ ≤ s * ‖γ'‖ / ‖z‖ ≤ M/δ (since |Re(w)| ≤ ‖w‖, ‖conj(z)*γ'‖ = ‖z‖*‖γ'‖)
+    - ‖c • γ'‖ = c * ‖γ'‖ ≤ (1 + 1/δ) * M (since c ≤ 1 + 1/δ when ‖z‖ ≥ δ)
+
+    Total: M * (1/δ + 1 + 1/δ) = M * (1 + 2/δ) -/
+lemma H_radial_deriv_bound_on_piece (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ) (P : Finset ℝ)
+    (hγ_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ γ t)
+    (hγ_deriv_bound : ∃ M : ℝ, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M)
+    (hγ_dist_bound : ∃ δ > 0, ∀ t ∈ Icc a b, δ ≤ ‖γ t - p‖) :
+    ∃ M : ℝ, ∀ t ∈ Ioo a b, t ∉ P → ∀ s ∈ Icc (0:ℝ) 1,
+      ‖deriv (fun t' => H_radial p γ (t', s)) t‖ ≤ M := by
+  obtain ⟨M, hM⟩ := hγ_deriv_bound
+  obtain ⟨δ, hδ_pos, hδ⟩ := hγ_dist_bound
+  use M * (1 + 2 / δ)
+  intro t ht ht_not_P s hs
+  -- t ∈ Ioo a b and t ∉ P, so γ is differentiable at t
+  have hγ_diff_t : DifferentiableAt ℝ γ t := hγ_diff t ht ht_not_P
+  have ht_Icc : t ∈ Icc a b := Ioo_subset_Icc_self ht
+  have hne : γ t ≠ p := by
+    intro heq
+    have h := hδ t ht_Icc
+    rw [heq, sub_self, norm_zero] at h
+    linarith
+  have h_norm_pos : 0 < ‖γ t - p‖ := norm_pos_iff.mpr (sub_ne_zero.mpr hne)
+  have h_norm_ge_δ : δ ≤ ‖γ t - p‖ := hδ t ht_Icc
+  have h_deriv_bound : ‖deriv γ t‖ ≤ M := hM t ht_Icc
+  -- Use the derivative formula (γ is differentiable here!)
+  have h_deriv_eq := deriv_H_formula_work γ p t s hγ_diff_t hne
+  simp only at h_deriv_eq
+  have h_eq : (fun t' => H_radial p γ (t', s)) = (fun t' =>
+      p + ((1 - s) + s / ‖γ t' - p‖) • (γ t' - p)) := rfl
+  rw [h_eq, h_deriv_eq]
+  -- Component bounds
+  let z := γ t - p
+  let c_val : ℝ := (1 - s) + s / ‖z‖
+  let dc_val : ℝ := -s * (Complex.re (starRingEnd ℂ z * deriv γ t)) / ‖z‖ ^ 3
+  have hs_nn : 0 ≤ s := hs.1
+  have hs_le : s ≤ 1 := hs.2
+  have h_norm_ne : ‖z‖ ≠ 0 := ne_of_gt h_norm_pos
+  -- Bound on |dc| * ‖z‖
+  have h_dc_z_bound : |dc_val| * ‖z‖ ≤ ‖deriv γ t‖ / ‖z‖ := by
+    simp only [dc_val, abs_div, abs_pow]
+    have h_num : |-s * Complex.re (starRingEnd ℂ z * deriv γ t)| ≤ ‖z‖ * ‖deriv γ t‖ := by
+      have h1 : |-s * Complex.re (starRingEnd ℂ z * deriv γ t)| =
+          |s| * |Complex.re (starRingEnd ℂ z * deriv γ t)| := by
+        rw [show -s * _ = -(s * _) from neg_mul s _, abs_neg, abs_mul]
+      calc |-s * Complex.re (starRingEnd ℂ z * deriv γ t)|
+          = |s| * |Complex.re (starRingEnd ℂ z * deriv γ t)| := h1
+        _ ≤ 1 * |Complex.re (starRingEnd ℂ z * deriv γ t)| := by
+            apply mul_le_mul_of_nonneg_right _ (abs_nonneg _)
+            rw [abs_of_nonneg hs_nn]; exact hs_le
+        _ = |Complex.re (starRingEnd ℂ z * deriv γ t)| := one_mul _
+        _ ≤ ‖starRingEnd ℂ z * deriv γ t‖ := Complex.abs_re_le_norm _
+        _ ≤ ‖starRingEnd ℂ z‖ * ‖deriv γ t‖ := norm_mul_le _ _
+        _ = ‖z‖ * ‖deriv γ t‖ := by rw [RingHomIsometric.norm_map]
+    have h_denom_pos : 0 < |‖z‖| ^ 3 := by
+      rw [abs_of_nonneg (norm_nonneg z)]; exact pow_pos h_norm_pos 3
+    calc (|-s * Complex.re (starRingEnd ℂ z * deriv γ t)| / |‖z‖| ^ 3) * ‖z‖
+        ≤ ((‖z‖ * ‖deriv γ t‖) / |‖z‖| ^ 3) * ‖z‖ := by
+          apply mul_le_mul_of_nonneg_right _ (norm_nonneg _)
+          exact div_le_div_of_nonneg_right h_num (le_of_lt h_denom_pos)
+      _ = ((‖z‖ * ‖deriv γ t‖) / ‖z‖ ^ 3) * ‖z‖ := by rw [abs_of_nonneg (norm_nonneg z)]
+      _ = ‖deriv γ t‖ / ‖z‖ := by rw [pow_succ, pow_two]; field_simp [h_norm_ne]
+  -- Bound on |c|
+  have h_c_bound : |c_val| ≤ 1 + 1 / ‖z‖ := by
+    have h_c_nn : 0 ≤ c_val := by
+      simp only [c_val]
+      have h1 : 0 ≤ 1 - s := by linarith
+      have h2 : 0 ≤ s / ‖z‖ := div_nonneg hs_nn (norm_nonneg _)
+      linarith
+    rw [abs_of_nonneg h_c_nn]
+    simp only [c_val]
+    calc (1 - s) + s / ‖z‖
+        ≤ 1 + s / ‖z‖ := by linarith
+      _ ≤ 1 + 1 / ‖z‖ := by
+          apply add_le_add_left
+          exact div_le_div_of_nonneg_right hs_le (norm_nonneg _)
+  -- Combine bounds
+  calc ‖dc_val • z + c_val • deriv γ t‖
+      ≤ ‖dc_val • z‖ + ‖c_val • deriv γ t‖ := norm_add_le _ _
+    _ = |dc_val| * ‖z‖ + |c_val| * ‖deriv γ t‖ := by
+        rw [norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs]
+    _ ≤ ‖deriv γ t‖ / ‖z‖ + (1 + 1 / ‖z‖) * ‖deriv γ t‖ := by
+        apply add_le_add h_dc_z_bound
+        exact mul_le_mul h_c_bound (le_refl _) (norm_nonneg _) (by linarith [one_div_nonneg.mpr (norm_nonneg z)])
+    _ = (1 + 2 / ‖z‖) * ‖deriv γ t‖ := by field_simp [h_norm_ne]; ring
+    _ ≤ (1 + 2 / δ) * ‖deriv γ t‖ := by
+        apply mul_le_mul_of_nonneg_right _ (norm_nonneg _)
+        apply add_le_add_left
+        apply div_le_div_of_nonneg_left (by norm_num : (2:ℝ) ≥ 0) hδ_pos h_norm_ge_δ
+    _ = ‖deriv γ t‖ * (1 + 2 / δ) := by ring
+    _ ≤ M * (1 + 2 / δ) := by
+        apply mul_le_mul_of_nonneg_right h_deriv_bound
+        linarith [div_nonneg (by norm_num : (2:ℝ) ≥ 0) hδ_pos.le]
+
+/-- Old version - kept for API compatibility but use H_radial_deriv_bound_on_piece instead.
+    Note: This version has sorry for endpoint cases where we can't guarantee the bound
+    without additional differentiability hypotheses. Use on_piece version for clean proofs. -/
+lemma H_radial_deriv_bound (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ)
+    (hγ_deriv_bound : ∃ M : ℝ, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M)
+    (hγ_dist_bound : ∃ δ > 0, ∀ t ∈ Icc a b, δ ≤ ‖γ t - p‖) :
+    ∃ M : ℝ, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, ‖deriv (fun t' => H_radial p γ (t', s)) t‖ ≤ M := by
+  -- Use the on-piece version with P = ∅ to get the bound
+  -- At interior points where γ is differentiable, the bound is explicit
+  -- At endpoints/non-differentiable points, use sorry (not on critical path)
+  obtain ⟨M, hM⟩ := hγ_deriv_bound
+  obtain ⟨δ, hδ_pos, hδ⟩ := hγ_dist_bound
+  use M * (1 + 2 / δ) + 1  -- Add slack for endpoints
+  intro t ht s hs
+  -- This full version needs to handle endpoints where deriv may not exist
+  -- For the homotopy construction, use H_radial_deriv_bound_on_piece instead
+  sorry  -- Endpoint handling - use on_piece version for clean proofs
+
+/-! ### Stage 2: Safe Rotation (rc → rc_rot)
+
+This uses the existing `safeRotationHomotopy_piecewise_avoiding` from WindingNumberInterior.lean.
+-/
+
+/-- The rotated radial projection: p + I * u(t) where u(t) is the unit direction. -/
+def radialProjRot (p : ℂ) (γ : ℝ → ℂ) : ℝ → ℂ :=
+  fun t => p + Complex.I * ((γ t - p) / ‖γ t - p‖)
+
+/-- Wrapper for safe rotation homotopy from rc to rc_rot. -/
+lemma homotopy_radialProj_to_radialProjRot (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hab : a < b)
+    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hγ_ne : ∀ t ∈ Icc a b, γ t ≠ p)
+    (hγ_closed : γ a = γ b)
+    (P : Finset ℝ) (hP : ∀ t ∈ P, t ∈ Ioo a b)
+    (hγ_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ γ t)
+    (hγ_deriv_cont : ∀ t ∈ Ioo a b, t ∉ P → ContinuousAt (deriv γ) t)
+    (hγ_deriv_bound : ∃ M : ℝ, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M) :
+    PiecewiseCurvesHomotopicAvoiding (radialProj p γ) (radialProjRot p γ) a b p P := by
+  -- Use existing lemma from WindingNumberInterior.lean
+  exact safeRotationHomotopy_piecewise_avoiding p γ a b hab hγ_cont hγ_ne hγ_closed P hP
+    hγ_diff hγ_deriv_cont hγ_deriv_bound
+
+/-! ### Stage 3: Reparameterization (rc_rot → circleParam) via ANGLE INTERPOLATION
+
+Both curves are on S¹ centered at p with radius 1. We use ANGLE INTERPOLATION
+(not vector interpolation) to avoid the antipodality problem.
+
+**Key insight**: Instead of interpolating unit vectors and normalizing (which fails
+when vectors are antipodal), we:
+1. Lift both curves to angle functions θ_rot, θ_circ : ℝ → ℝ
+2. Interpolate the angles: θ(t,s) = (1-s)*θ_rot(t) + s*θ_circ(t)
+3. Apply exp: H(t,s) = p + exp(I*θ(t,s))
+
+This is always well-defined because we're interpolating real numbers.
+-/
+
+/-- The standard circle angle function: θ_circ(t) = 2π(t-a)/(b-a). -/
+def θ_circ (a b : ℝ) (t : ℝ) : ℝ := 2 * Real.pi * (t - a) / (b - a)
+
+/-! ### Path Lifting Infrastructure
+
+The key lemma `exists_angle_lift_on_Icc` proves that any continuous S¹-valued function
+on [a,b] has a continuous lift to ℝ. This is the standard path lifting theorem for
+the covering map exp : ℝ → S¹.
+
+**Strategy**:
+1. `isSeparatedMap_circleExp`: Circle.exp is a separated map (automatic since ℝ is T2)
+2. `isLocalHomeomorph_circleExp`: Circle.exp is a local homeomorphism (from Mathlib)
+3. Use local inverses (via Complex.arg) to construct local lifts
+4. Patch local lifts using compactness of [a,b]
+-/
+
+/-- Circle.exp is a separated map because ℝ is T2 (Hausdorff). -/
+lemma isSeparatedMap_circleExp : IsSeparatedMap Circle.exp :=
+  T2Space.isSeparatedMap Circle.exp
+
+/-- For any nonzero z ∈ ℂ, Complex.arg provides a local inverse to exp.
+    exp(I * arg(z)) = z / ‖z‖  -/
+lemma local_angle_lift_at_nonzero (z : ℂ) (hz_ne : z ≠ 0) :
+    Complex.exp (I * Complex.arg z) = z / ‖z‖ := by
+  have h := Complex.norm_mul_exp_arg_mul_I z
+  -- h : ‖z‖ * exp (arg z * I) = z
+  -- Need: exp (I * arg z) = z / ‖z‖
+  have h2 : Complex.exp (I * Complex.arg z) = Complex.exp (Complex.arg z * I) := by
+    rw [mul_comm]
+  rw [h2]
+  have hnorm_ne : (‖z‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hz_ne)
+  field_simp
+  rw [mul_comm]
+  exact h
+
+/-- For unit z, exp(I * arg(z)) = z. -/
+lemma local_angle_lift_at_unit (z : ℂ) (hz_ne : z ≠ 0) (hz_norm : ‖z‖ = 1) :
+    Complex.exp (I * Complex.arg z) = z := by
+  rw [local_angle_lift_at_nonzero z hz_ne, hz_norm, Complex.ofReal_one, div_one]
+
+/-- exp(I * π) = -1 -/
+lemma exp_I_pi : Complex.exp (I * Real.pi) = -1 := by
+  have h := Complex.exp_pi_mul_I
+  rw [mul_comm] at h
+  exact h
+
+/-- Two angle lifts that agree at a point must agree on any connected set containing that point.
+    This follows from the discreteness of the fiber (lifts differ by multiples of 2π).
+
+    **Mathematical statement**: If θ₁, θ₂ : S → ℝ are continuous with exp(iθ₁) = exp(iθ₂)
+    everywhere and θ₁(t₀) = θ₂(t₀), then θ₁ = θ₂ on S (assuming S is connected).
+
+    **Proof idea**: The difference d = θ₁ - θ₂ is continuous and takes values in 2πℤ.
+    A continuous function from a connected set to a discrete set is constant.
+    Since d(t₀) = 0, we have d ≡ 0.
+-/
+lemma angle_lift_unique_on_connected {θ₁ θ₂ : ℝ → ℝ} {S : Set ℝ} {t₀ : ℝ}
+    (hS_conn : IsPreconnected S) (_ht₀ : t₀ ∈ S)
+    (hθ₁_cont : ContinuousOn θ₁ S) (hθ₂_cont : ContinuousOn θ₂ S)
+    (_h_lift : ∀ t ∈ S, Complex.exp (I * θ₁ t) = Complex.exp (I * θ₂ t))
+    (h_agree : θ₁ t₀ = θ₂ t₀) :
+    ∀ t ∈ S, θ₁ t = θ₂ t := by
+  -- The difference d = θ₁ - θ₂ is continuous and takes values in 2πℤ (discrete).
+  -- On a connected set, a continuous function into a discrete set is constant.
+  -- Since d(t₀) = 0, we have d ≡ 0, so θ₁ = θ₂.
+  --
+  -- **Technical details**: The key is showing that for any c ∈ 2πℤ, the set
+  -- {t ∈ S | d(t) = c} is both open and closed in the subspace topology on S.
+  -- Closedness: preimage of {c} under continuous d.
+  -- Openness: For each point, there's a neighborhood where d is within π of c,
+  --   but since d takes values in 2πℤ, it must equal c on that neighborhood.
+  -- The full proof uses: d = θ₁ - θ₂ is continuous and takes values in 2πℤ.
+  -- On a connected set, a continuous function into a discrete set is constant.
+  -- Since d(t₀) = 0, we have d ≡ 0, so θ₁ = θ₂.
+  intro t _ht
+  have h_eq : θ₁ t - θ₂ t = θ₁ t₀ - θ₂ t₀ := by
+    -- Uses: IsPreconnected.image_eq_const_of_discrete (not directly in Mathlib)
+    -- The image (θ₁ - θ₂)(S) is connected (continuous image of connected).
+    -- (θ₁ - θ₂)(S) ⊆ 2πℤ which is discrete.
+    -- A connected subset of a discrete space is a singleton.
+    sorry -- Standard covering space argument
+  simp only [h_agree, sub_self] at h_eq
+  linarith
+
+/-- Angle lift lemma: A continuous S¹-valued function on [a,b] has a continuous
+    angle lift θ such that exp(I*θ(t)) = u(t).
+
+    **Mathematical statement** (standard path lifting theorem):
+    The map exp : ℝ → S¹ (via t ↦ exp(I*t)) is a covering map. For any
+    continuous path u : [a,b] → S¹ and any starting angle θ₀ with exp(I*θ₀) = u(a),
+    there exists a unique continuous lift θ : [a,b] → ℝ with θ(a) = θ₀ and
+    exp(I*θ(t)) = u(t) for all t.
+
+    **Proof approach**:
+    1. Use `isLocalHomeomorph_circleExp` to get local lifts around each point
+    2. By compactness of [a,b], extract a finite subcover
+    3. Patch local lifts using `angle_lift_unique_on_connected`
+-/
+lemma exists_angle_lift_on_Icc
+    (u : ℝ → ℂ) (a b : ℝ) (hab : a < b)
+    (hu_cont : ContinuousOn u (Icc a b))
+    (hu_unit : ∀ t ∈ Icc a b, ‖u t‖ = 1) :
+    ∃ θ : ℝ → ℝ, ContinuousOn θ (Icc a b) ∧
+      ∀ t ∈ Icc a b, Complex.exp (I * θ t) = u t := by
+  -- Use the path lifting theorem structure.
+  -- The key insight: Circle.exp is a local homeomorphism (isLocalHomeomorph_circleExp)
+  -- and ℝ is T2, so it's separated (isSeparatedMap_circleExp).
+  --
+  -- For each t ∈ [a,b], we can find a local lift around u(t) using Complex.arg
+  -- (or a rotated version if u(t) is on the branch cut).
+  -- By compactness, finitely many local lifts cover [a,b].
+  -- Patching works by angle_lift_unique_on_connected.
+  --
+  -- **TECHNICAL SORRY**: The full proof requires careful handling of:
+  -- 1. Choosing local charts that cover the image u([a,b])
+  -- 2. Computing the Lebesgue number to get uniform local lift domains
+  -- 3. Inductively patching lifts from a to b
+  --
+  -- This is standard covering space theory (Hatcher Ch 1.3) and will be
+  -- much cleaner once Mathlib has IsCoveringMap Circle.exp.
+  sorry
+
+/-- The rotated unit direction as an S¹-valued function. -/
+def u_rot (p : ℂ) (γ : ℝ → ℂ) (t : ℝ) : ℂ :=
+  Complex.I * ((γ t - p) / ‖γ t - p‖)
+
+/-- u_rot is unit-valued when γ avoids p. -/
+lemma u_rot_unit (p : ℂ) (γ : ℝ → ℂ) (t : ℝ) (hne : γ t ≠ p) :
+    ‖u_rot p γ t‖ = 1 := by
+  simp only [u_rot, norm_mul, Complex.norm_I, one_mul]
+  have h_sub_ne : γ t - p ≠ 0 := sub_ne_zero.mpr hne
+  rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]
+  exact div_self (norm_ne_zero_iff.mpr h_sub_ne)
+
+/-- u_rot is continuous when γ is continuous and avoids p. -/
+lemma u_rot_continuousOn (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ)
+    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hγ_ne : ∀ t ∈ Icc a b, γ t ≠ p) :
+    ContinuousOn (u_rot p γ) (Icc a b) := by
+  unfold u_rot
+  apply ContinuousOn.mul continuousOn_const
+  apply ContinuousOn.div
+  · exact hγ_cont.sub continuousOn_const
+  · -- Need continuity of ↑‖γ t - p‖ as a function ℝ → ℂ
+    exact Complex.continuous_ofReal.comp_continuousOn ((hγ_cont.sub continuousOn_const).norm)
+  · intro t ht
+    simp only [Complex.ofReal_ne_zero]
+    exact norm_ne_zero_iff.mpr (sub_ne_zero.mpr (hγ_ne t ht))
+
+/-- Angle-based reparameterization homotopy.
+    Given an angle lift θ_rot of u_rot, we define:
+    H_reparam(t, s) = p + exp(I * ((1-s)*θ_rot(t) + s*θ_circ(t)))
+
+    This interpolates between:
+    - s=0: p + exp(I*θ_rot(t)) = p + u_rot(t) = radialProjRot(t)
+    - s=1: p + exp(I*θ_circ(t)) = circleParam(t)
+-/
+def H_reparam_angle (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) : ℝ × ℝ → ℂ :=
+  fun ⟨t, s⟩ =>
+    let θ := (1 - s) * θ_rot t + s * θ_circ a b t
+    p + Complex.exp (I * θ)
+
+/-- H_reparam_angle is always well-defined (no antipodality issues). -/
+lemma H_reparam_angle_avoids (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) (t s : ℝ) :
+    H_reparam_angle p θ_rot a b (t, s) ≠ p := by
+  simp only [H_reparam_angle, ne_eq, add_right_eq_self]
+  exact Complex.exp_ne_zero _
+
+/-- H_reparam_angle is continuous. -/
+lemma H_reparam_angle_continuous (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) (hab : a < b)
+    (hθ_cont : ContinuousOn θ_rot (Icc a b)) :
+    ContinuousOn (H_reparam_angle p θ_rot a b) (Icc a b ×ˢ Icc 0 1) := by
+  unfold H_reparam_angle
+  apply ContinuousOn.add continuousOn_const
+  apply Complex.continuous_exp.comp_continuousOn
+  apply ContinuousOn.mul continuousOn_const
+  -- Need: ↑((1-s)*θ_rot(t) + s*θ_circ(t)) continuous as ℂ-valued
+  -- First show the ℝ-valued function is continuous, then compose with ofReal
+  apply Complex.continuous_ofReal.comp_continuousOn
+  -- (1-s)*θ_rot(t) + s*θ_circ(t) is continuous as ℝ-valued
+  apply ContinuousOn.add
+  · -- (1-s)*θ_rot(t)
+    apply ContinuousOn.mul
+    · exact (continuous_const.sub continuous_snd).continuousOn
+    · exact hθ_cont.comp continuousOn_fst (fun ⟨t, _⟩ ⟨ht, _⟩ => ht)
+  · -- s*θ_circ(t)
+    apply ContinuousOn.mul
+    · exact continuous_snd.continuousOn
+    · -- θ_circ is continuous
+      unfold θ_circ
+      apply ContinuousOn.div
+      · apply ContinuousOn.mul continuousOn_const
+        exact (continuous_fst.sub continuous_const).continuousOn
+      · exact continuousOn_const
+      · intro _ _; exact sub_ne_zero.mpr (ne_of_gt hab)
+
+/-- H_reparam_angle at s=0 gives the rotated radial projection (up to angle lift). -/
+lemma H_reparam_angle_at_zero (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) (t : ℝ)
+    (hθ_lift : Complex.exp (I * θ_rot t) = u_rot p (fun t => p + Complex.exp (I * θ_rot t)) t) :
+    H_reparam_angle p θ_rot a b (t, 0) = p + Complex.exp (I * θ_rot t) := by
+  simp only [H_reparam_angle, sub_zero, one_mul, zero_mul, add_zero]
+
+/-- H_reparam_angle at s=1 gives the circle parameterization. -/
+lemma H_reparam_angle_at_one (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) (t : ℝ) :
+    H_reparam_angle p θ_rot a b (t, 1) = circleParam p 1 a b t := by
+  unfold H_reparam_angle θ_circ circleParam
+  simp only [sub_self, zero_mul, one_mul, zero_add, Complex.ofReal_one]
+  congr 1
+  -- Need: exp(I * (2π(t-a)/(b-a))) = exp(2πI * (t-a)/(b-a))
+  congr 1
+  -- I * (2 * π * (t - a) / (b - a)) = 2 * π * I * ((t - a) / (b - a))
+  push_cast
+  ring
+
+/-- Clamped version of H_reparam_angle that extends to all of ℝ × ℝ.
+    Inputs are clamped to [a,b] × [0,1], making H globally continuous. -/
+def H_reparam_angle_clamped (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) : ℝ × ℝ → ℂ :=
+  fun ⟨t, s⟩ =>
+    let t' := max a (min t b)  -- Clamp t to [a,b]
+    let s' := max 0 (min s 1)  -- Clamp s to [0,1]
+    let θ := (1 - s') * θ_rot t' + s' * θ_circ a b t'
+    p + Complex.exp (I * θ)
+
+/-- Clamped H_reparam_angle is globally continuous when θ_rot is continuous on [a,b]. -/
+lemma H_reparam_angle_clamped_continuous (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) (hab : a < b)
+    (hθ_cont : ContinuousOn θ_rot (Icc a b)) :
+    Continuous (H_reparam_angle_clamped p θ_rot a b) := by
+  unfold H_reparam_angle_clamped
+  apply Continuous.add continuous_const
+  apply Complex.continuous_exp.comp
+  apply Continuous.mul continuous_const
+  apply Complex.continuous_ofReal.comp
+  -- Need: (1-s')*θ_rot(t') + s'*θ_circ(t') is continuous in (t,s)
+  apply Continuous.add
+  · -- (1 - s') * θ_rot(t')
+    apply Continuous.mul
+    · -- 1 - s' = 1 - max 0 (min s 1)
+      apply Continuous.sub continuous_const
+      exact (continuous_const.max (continuous_snd.min continuous_const))
+    · -- θ_rot(t') where t' = max a (min t b)
+      -- θ_rot is continuous on [a,b] and t' ∈ [a,b] always
+      apply hθ_cont.comp_continuous
+      · exact continuous_const.max (continuous_fst.min continuous_const)
+      · intro ⟨t, s⟩
+        simp only [Set.mem_Icc]
+        constructor
+        · exact le_max_left a _
+        · exact max_le (le_of_lt hab) (min_le_right _ _)
+  · -- s' * θ_circ(t')
+    apply Continuous.mul
+    · exact continuous_const.max (continuous_snd.min continuous_const)
+    · unfold θ_circ
+      apply Continuous.div
+      · apply Continuous.mul continuous_const
+        -- t' - a where t' = max a (min t b)
+        exact (continuous_const.max (continuous_fst.min continuous_const)).sub continuous_const
+      · exact continuous_const
+      · intro _; exact sub_ne_zero.mpr (ne_of_gt hab)
+
+/-- Clamped H agrees with H on [a,b] × [0,1]. -/
+lemma H_reparam_angle_clamped_eq_on_domain (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) (hab : a < b) :
+    ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
+      H_reparam_angle_clamped p θ_rot a b (t, s) = H_reparam_angle p θ_rot a b (t, s) := by
+  intro t ⟨hat, htb⟩ s ⟨hs0, hs1⟩
+  unfold H_reparam_angle_clamped H_reparam_angle
+  simp only
+  -- Show that clamping gives the same value
+  have h_t_clamp : max a (min t b) = t := by
+    rw [min_eq_left htb, max_eq_right hat]
+  have h_s_clamp : max 0 (min s 1) = s := by
+    rw [min_eq_left hs1, max_eq_right hs0]
+  simp only [h_t_clamp, h_s_clamp]
+
+/-- Clamped H avoids p everywhere. -/
+lemma H_reparam_angle_clamped_avoids (p : ℂ) (θ_rot : ℝ → ℝ) (a b : ℝ) (t s : ℝ) :
+    H_reparam_angle_clamped p θ_rot a b (t, s) ≠ p := by
+  unfold H_reparam_angle_clamped
+  simp only [ne_eq, add_eq_left]
+  exact Complex.exp_ne_zero _
+
+/-! ### Homotopy Composition -/
+
+/-- Compose three homotopies by piecewise gluing over s ∈ [0,1].
+    H_total(t,s) = H₁(t, 3s)        if s ≤ 1/3
+                 = H₂(t, 3s-1)      if 1/3 < s ≤ 2/3
+                 = H₃(t, 3s-2)      if s > 2/3
+-/
+lemma homotopy_compose_three
+    (γ₀ γ₁ γ₂ γ₃ : ℝ → ℂ) (a b : ℝ) (p : ℂ) (P : Finset ℝ) (hab : a < b)
+    (hhom₁ : PiecewiseCurvesHomotopicAvoiding γ₀ γ₁ a b p P)
+    (hhom₂ : PiecewiseCurvesHomotopicAvoiding γ₁ γ₂ a b p P)
+    (hhom₃ : PiecewiseCurvesHomotopicAvoiding γ₂ γ₃ a b p P) :
+    PiecewiseCurvesHomotopicAvoiding γ₀ γ₃ a b p P := by
+  -- Extract the three homotopies
+  obtain ⟨H₁, hH₁_cont, hH₁_0, hH₁_1, hH₁_closed, hH₁_avoids, hH₁_diff, hH₁_deriv_cont, M₁, hM₁⟩ := hhom₁
+  obtain ⟨H₂, hH₂_cont, hH₂_0, hH₂_1, hH₂_closed, hH₂_avoids, hH₂_diff, hH₂_deriv_cont, M₂, hM₂⟩ := hhom₂
+  obtain ⟨H₃, hH₃_cont, hH₃_0, hH₃_1, hH₃_closed, hH₃_avoids, hH₃_diff, hH₃_deriv_cont, M₃, hM₃⟩ := hhom₃
+  -- Define the composed homotopy
+  let H : ℝ × ℝ → ℂ := fun ⟨t, s⟩ =>
+    if s ≤ 1/3 then H₁ (t, 3 * s)
+    else if s ≤ 2/3 then H₂ (t, 3 * s - 1)
+    else H₃ (t, 3 * s - 2)
+  refine ⟨H, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  -- 1. Continuity (piecewise with matching at joints)
+  · -- H is piecewise continuous with matching at s = 1/3 and s = 2/3
+    -- Key: H₁(t, 1) = γ₁(t) = H₂(t, 0) and H₂(t, 1) = γ₂(t) = H₃(t, 0)
+    --
+    -- **TECHNICAL ISSUE**: The hypotheses hH₁_1, hH₂_0, etc. only give matching on [a,b].
+    -- For global continuity via `Continuous.if_le`, we need matching for ALL t.
+    -- This requires knowing that the homotopies use clamping outside [a,b].
+    --
+    -- **MATHEMATICAL JUSTIFICATION**: The homotopies constructed in this file
+    -- (H_radial, H_reparam_angle_clamped, etc.) all use clamping, so for t outside [a,b],
+    -- H_i(t, s) = H_i(clamp(t), s) where clamp(t) ∈ {a, b}. This makes matching work globally.
+    --
+    -- **STATUS**: Technical sorry - the proof structure is correct but requires
+    -- additional infrastructure to propagate clamping properties through the homotopy chain.
+    sorry
+  -- 2. H(t, 0) = γ₀(t)
+  · intro t ht
+    simp only [H]
+    have h0 : (0 : ℝ) ≤ 1/3 := by norm_num
+    rw [if_pos h0]
+    simp only [mul_zero]
+    exact hH₁_0 t ht
+  -- 3. H(t, 1) = γ₃(t)
+  · intro t ht
+    simp only [H]
+    have h1 : ¬(1 : ℝ) ≤ 1/3 := by norm_num
+    have h2 : ¬(1 : ℝ) ≤ 2/3 := by norm_num
+    rw [if_neg h1, if_neg h2]
+    simp only [mul_one]
+    convert hH₃_1 t ht using 1
+    ring
+  -- 4. Closed at each stage
+  · intro s hs
+    simp only [H]
+    by_cases h1 : s ≤ 1/3
+    · simp only [if_pos h1]
+      have hs' : 3 * s ∈ Icc (0:ℝ) 1 := ⟨by linarith [hs.1], by linarith⟩
+      exact hH₁_closed (3 * s) hs'
+    · by_cases h2 : s ≤ 2/3
+      · simp only [if_neg h1, if_pos h2]
+        have hs' : 3 * s - 1 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h1; constructor <;> linarith
+        exact hH₂_closed (3 * s - 1) hs'
+      · simp only [if_neg h1, if_neg h2]
+        have hs' : 3 * s - 2 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h2; constructor <;> linarith [hs.2]
+        exact hH₃_closed (3 * s - 2) hs'
+  -- 5. Avoids p
+  · intro t ht s hs
+    simp only [H]
+    by_cases h1 : s ≤ 1/3
+    · simp only [if_pos h1]
+      have hs' : 3 * s ∈ Icc (0:ℝ) 1 := ⟨by linarith [hs.1], by linarith⟩
+      exact hH₁_avoids t ht (3 * s) hs'
+    · by_cases h2 : s ≤ 2/3
+      · simp only [if_neg h1, if_pos h2]
+        have hs' : 3 * s - 1 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h1; constructor <;> linarith
+        exact hH₂_avoids t ht (3 * s - 1) hs'
+      · simp only [if_neg h1, if_neg h2]
+        have hs' : 3 * s - 2 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h2; constructor <;> linarith [hs.2]
+        exact hH₃_avoids t ht (3 * s - 2) hs'
+  -- 6. Differentiable in t away from P
+  · intro t ht ht_not_P s hs
+    simp only [H]
+    by_cases h1 : s ≤ 1/3
+    · simp only [if_pos h1]
+      have hs' : 3 * s ∈ Icc (0:ℝ) 1 := ⟨by linarith [hs.1], by linarith⟩
+      exact hH₁_diff t ht ht_not_P (3 * s) hs'
+    · by_cases h2 : s ≤ 2/3
+      · simp only [if_neg h1, if_pos h2]
+        have hs' : 3 * s - 1 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h1; constructor <;> linarith
+        exact hH₂_diff t ht ht_not_P (3 * s - 1) hs'
+      · simp only [if_neg h1, if_neg h2]
+        have hs' : 3 * s - 2 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h2; constructor <;> linarith [hs.2]
+        exact hH₃_diff t ht ht_not_P (3 * s - 2) hs'
+  -- 7. Derivative continuity on pieces
+  · -- For the composed homotopy, we need to show:
+    -- ContinuousOn (fun (p : ℝ × ℝ) => deriv_t H(p.1, p.2)) (Ioo p₁ p₂ ×ˢ Icc 0 1)
+    --
+    -- The derivative is piecewise:
+    -- - For s ≤ 1/3: deriv_t H₁(t, 3s)
+    -- - For 1/3 < s ≤ 2/3: deriv_t H₂(t, 3s-1)
+    -- - For s > 2/3: deriv_t H₃(t, 3s-2)
+    --
+    -- Each piece has continuous derivative (from hH₁_deriv_cont, hH₂_deriv_cont, hH₃_deriv_cont).
+    -- At the s-boundaries (s = 1/3, s = 2/3), the derivatives match because:
+    -- - deriv_t H₁(t, 1) = deriv_t γ₁(t) = deriv_t H₂(t, 0)  (both evaluate to the curve's derivative)
+    -- - deriv_t H₂(t, 1) = deriv_t γ₂(t) = deriv_t H₃(t, 0)  (both evaluate to the curve's derivative)
+    --
+    -- **TECHNICAL REQUIREMENT**: This needs explicit hypothesis that intermediate curves
+    -- (γ₁, γ₂) are differentiable at the points in question, which follows from the
+    -- piecewise structure but requires additional argument.
+    intro p₁ p₂ hp₁p₂ hp₁p₂_not_P hp₁p₂_sub
+    sorry
+  -- 8. Derivative bound
+  · -- The t-derivative bound for H_composed is just the max of the three bounds
+    -- (the reparameterization in s doesn't affect the t-derivative)
+    use max M₁ (max M₂ M₃)
+    intro t ht s hs
+    simp only [H]
+    by_cases h1 : s ≤ 1/3
+    · simp only [if_pos h1]
+      have hs' : 3 * s ∈ Icc (0:ℝ) 1 := ⟨by linarith [hs.1], by linarith⟩
+      calc ‖deriv (fun t' => H₁ (t', 3 * s)) t‖
+          ≤ M₁ := hM₁ t ht (3 * s) hs'
+        _ ≤ max M₁ (max M₂ M₃) := le_max_left _ _
+    · by_cases h2 : s ≤ 2/3
+      · simp only [if_neg h1, if_pos h2]
+        have hs' : 3 * s - 1 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h1; constructor <;> linarith
+        calc ‖deriv (fun t' => H₂ (t', 3 * s - 1)) t‖
+            ≤ M₂ := hM₂ t ht (3 * s - 1) hs'
+          _ ≤ max M₂ M₃ := le_max_left _ _
+          _ ≤ max M₁ (max M₂ M₃) := le_max_right _ _
+      · simp only [if_neg h1, if_neg h2]
+        have hs' : 3 * s - 2 ∈ Icc (0:ℝ) 1 := by
+          push_neg at h2; constructor <;> linarith [hs.2]
+        calc ‖deriv (fun t' => H₃ (t', 3 * s - 2)) t‖
+            ≤ M₃ := hM₃ t ht (3 * s - 2) hs'
+          _ ≤ max M₂ M₃ := le_max_right _ _
+          _ ≤ max M₁ (max M₂ M₃) := le_max_right _ _
+
+/-! ### Main Homotopy Construction -/
+
+/-- Build the radial homotopy γ → rc as a PiecewiseCurvesHomotopicAvoiding. -/
+lemma homotopy_gamma_to_radialProj (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hab : a < b)
+    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hγ_ne : ∀ t ∈ Icc a b, γ t ≠ p)
+    (hγ_closed : γ a = γ b)
+    (P : Finset ℝ) (hP : ∀ t ∈ P, t ∈ Ioo a b)
+    (hγ_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ γ t)
+    (hγ_deriv_cont : ∀ t ∈ Ioo a b, t ∉ P → ContinuousAt (deriv γ) t)
+    (hγ_deriv_bound : ∃ M : ℝ, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M)
+    (hγ_dist_bound : ∃ δ > 0, ∀ t ∈ Icc a b, δ ≤ ‖γ t - p‖) :
+    PiecewiseCurvesHomotopicAvoiding γ (radialProj p γ) a b p P := by
+  -- Extend γ for global continuity
+  let γ_ext : ℝ → ℂ := fun t => γ (max a (min b t))
+  have hγ_ext_cont : Continuous γ_ext := by
+    apply ContinuousOn.comp_continuous hγ_cont
+    · exact continuous_const.max (continuous_const.min continuous_id)
+    · intro t; constructor
+      · exact le_max_left _ _
+      · exact max_le hab.le (min_le_left _ _)
+  have hγ_ext_eq : ∀ t ∈ Icc a b, γ_ext t = γ t := by
+    intro t ⟨ha_le, hb_le⟩
+    simp only [γ_ext, min_eq_right hb_le, max_eq_right ha_le]
+  have hγ_ext_ne : ∀ t, γ_ext t ≠ p := by
+    intro t
+    have h_mem : max a (min b t) ∈ Icc a b := ⟨le_max_left _ _, max_le hab.le (min_le_left _ _)⟩
+    exact hγ_ne _ h_mem
+  -- Build the homotopy using H_radial with extended γ
+  let H := H_radial p γ_ext
+  refine ⟨H, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  -- 1. Continuity
+  · exact H_radial_continuous p γ_ext hγ_ext_cont hγ_ext_ne
+  -- 2. H(t, 0) = γ(t)
+  · intro t ht
+    show H_radial p γ_ext (t, 0) = γ t
+    rw [H_radial_at_zero, hγ_ext_eq t ht]
+  -- 3. H(t, 1) = radialProj(t)
+  · intro t ht
+    show H_radial p γ_ext (t, 1) = radialProj p γ t
+    rw [H_radial_at_one p γ_ext t (hγ_ext_ne t)]
+    simp only [radialProj, hγ_ext_eq t ht]
+  -- 4. Closed
+  · intro s hs
+    have h_closed : γ_ext a = γ_ext b := by
+      simp only [γ_ext, min_eq_right hab.le, max_eq_right (le_refl a),
+                 min_eq_right (le_refl b), max_eq_right hab.le, hγ_closed]
+    exact H_radial_closed p γ_ext a b h_closed s
+  -- 5. Avoids
+  · intro t _ht s hs
+    exact H_radial_avoids p γ_ext t s hs (hγ_ext_ne t)
+  -- 6. Differentiable
+  · intro t ht ht_not_P s _hs
+    have hγ_ext_diff : DifferentiableAt ℝ γ_ext t := by
+      -- γ_ext is differentiable at t ∈ Ioo a b because γ is differentiable there
+      have h_eq_local : γ_ext =ᶠ[𝓝 t] γ := by
+        have ht_Ioo := ht
+        obtain ⟨ε, hε_pos, hball⟩ := Metric.isOpen_iff.mp isOpen_Ioo t ht_Ioo
+        filter_upwards [Metric.ball_mem_nhds t hε_pos] with t' ht'
+        have ht'_Icc : t' ∈ Icc a b := Ioo_subset_Icc_self (hball ht')
+        exact hγ_ext_eq t' ht'_Icc
+      have hγ_diff_at := hγ_diff t ht ht_not_P
+      -- congr_of_eventuallyEq: (DifferentiableAt f x) + (f₁ =ᶠ f) → DifferentiableAt f₁ x
+      -- We have: hγ_diff_at : DifferentiableAt γ t, h_eq_local : γ_ext =ᶠ γ
+      -- We want: DifferentiableAt γ_ext t
+      exact hγ_diff_at.congr_of_eventuallyEq h_eq_local
+    exact H_radial_diff p γ_ext hγ_ext_ne t hγ_ext_diff s
+  -- 7. Derivative continuity
+  · intro p₁ p₂ hp₁p₂ hp_smooth h_sub
+    -- Apply H_radial_deriv_cont_on_piece with the extended γ
+    -- γ_ext is differentiable and has continuous derivative on Ioo p₁ p₂
+    -- because γ is differentiable there and γ_ext = γ locally in (a,b)
+    sorry -- ⚡ Uses H_radial_deriv_cont_on_piece with extension argument
+  -- 8. Derivative bound
+  · -- Use H_radial_deriv_bound with appropriate bounds
+    obtain ⟨M, hM⟩ := hγ_deriv_bound
+    obtain ⟨δ, hδ_pos, hδ⟩ := hγ_dist_bound
+    -- The extended γ satisfies the same bounds on [a,b]
+    have hγ_ext_deriv_bound : ∃ M' : ℝ, ∀ t ∈ Icc a b, ‖deriv γ_ext t‖ ≤ M' := by
+      use M
+      intro t ht
+      -- deriv γ_ext t = deriv γ t locally in Icc a b
+      by_cases h_interior : t ∈ Ioo a b
+      · -- t is in the interior: γ_ext = γ in a neighborhood, so deriv γ_ext = deriv γ
+        have h_eq_local : γ_ext =ᶠ[𝓝 t] γ := by
+          obtain ⟨ε, hε_pos, hball⟩ := Metric.isOpen_iff.mp isOpen_Ioo t h_interior
+          filter_upwards [Metric.ball_mem_nhds t hε_pos] with t' ht'
+          exact hγ_ext_eq t' (Ioo_subset_Icc_self (hball ht'))
+        rw [Filter.EventuallyEq.deriv_eq h_eq_local]
+        exact hM t ht
+      · -- t is at a boundary (a or b)
+        -- At boundaries, γ_ext might not be differentiable (constant on one side)
+        -- If not differentiable, deriv = 0 by convention
+        by_cases h_diff : DifferentiableAt ℝ γ_ext t
+        · -- γ_ext is differentiable at the boundary
+          -- This happens when γ has a one-sided derivative that matches
+          -- the constant extension. Either way, we need to bound it.
+          -- Use a limiting argument: for any ε > 0, there's t' ∈ Ioo a b
+          -- close to t where ‖deriv γ t'‖ ≤ M, and by continuity...
+          -- Actually, simpler: just use the trivial bound
+          have ht_boundary : t = a ∨ t = b := by
+            rcases ht with ⟨ha_le, hb_le⟩
+            by_contra h_not
+            push_neg at h_not
+            exact h_interior ⟨lt_of_le_of_ne ha_le (Ne.symm h_not.1),
+                             lt_of_le_of_ne hb_le h_not.2⟩
+          -- At boundary, the derivative (if it exists) must be the one-sided limit
+          -- which is bounded by M. For simplicity, use sorry here.
+          sorry
+        · -- γ_ext is not differentiable at t, so deriv = 0
+          rw [deriv_zero_of_not_differentiableAt h_diff, norm_zero]
+          have hM_nonneg : 0 ≤ M := by
+            have h_exists : (Icc a b).Nonempty := ⟨a, left_mem_Icc.mpr hab.le⟩
+            have ⟨t₀, ht₀⟩ := h_exists
+            have := hM t₀ ht₀
+            exact (norm_nonneg _).trans this
+          exact hM_nonneg
+    have hγ_ext_dist_bound : ∃ δ' > 0, ∀ t ∈ Icc a b, δ' ≤ ‖γ_ext t - p‖ := by
+      use δ, hδ_pos
+      intro t ht
+      rw [hγ_ext_eq t ht]
+      exact hδ t ht
+    exact H_radial_deriv_bound p γ_ext a b hγ_ext_deriv_bound hγ_ext_dist_bound
+
+/-! ### The "Wraps Once" Property
+
+For the closed condition H(a, s) = H(b, s) to hold, we need θ_rot(b) - θ_rot(a) = 2π.
+This is the "wraps once counterclockwise" property: as t goes from a to b, the unit direction
+(γ(t) - p)/‖γ(t) - p‖ makes exactly one full counterclockwise rotation around the origin.
+
+This is equivalent to saying the classical winding number of γ around p equals 1.
+
+For GENERAL curves, this requires an additional hypothesis. For the FUNDAMENTAL DOMAIN
+BOUNDARY specifically, we can verify it by explicit segment-by-segment angle computation.
+-/
+
+/-- The "wraps once" property: θ_rot(b) - θ_rot(a) = 2π.
+
+    This says that as t traverses from a to b, the angle lift increases by exactly 2π,
+    meaning the curve makes exactly one counterclockwise turn around p.
+
+    For a closed curve γ with γ(a) = γ(b) that encircles p counterclockwise,
+    the unit direction u(t) = (γ(t) - p)/‖γ(t) - p‖ traces out a closed loop on S¹.
+    The angle lift θ satisfying exp(I*θ(t)) = u(t) increases by 2π (= 2π × winding number).
+-/
+def wraps_once_counterclockwise (θ_rot : ℝ → ℝ) (a b : ℝ) : Prop :=
+  θ_rot b - θ_rot a = 2 * Real.pi
+
+/-- For the fundamental domain boundary and any interior point p, the angle lift wraps once.
+
+    **Proof strategy** (segment-by-segment):
+    The FD boundary consists of 5 segments. For each segment, we compute the change
+    in arg(γ(t) - p) as t traverses the segment:
+
+    - Segment 1 (t ∈ [0,1]): right vertical from (1/2 + Hi) to ρ'
+      The direction γ(t) - p sweeps through some angle Δθ₁
+    - Segment 2 (t ∈ [1,2]): arc from ρ' to i
+      The direction sweeps through Δθ₂
+    - Segment 3 (t ∈ [2,3]): arc from i to ρ
+      The direction sweeps through Δθ₃
+    - Segment 4 (t ∈ [3,4]): left vertical from ρ to (-1/2 + Hi)
+      The direction sweeps through Δθ₄
+    - Segment 5 (t ∈ [4,5]): horizontal at height H from -1/2 + Hi to 1/2 + Hi
+      The direction sweeps through Δθ₅ (closes the curve)
+
+    The total Δθ₁ + Δθ₂ + Δθ₃ + Δθ₄ + Δθ₅ = 2π for interior points.
+
+    This is a direct geometric calculation that doesn't rely on general winding number theory.
+-/
+lemma wraps_once_fundamentalDomainBoundary (p : UpperHalfPlane) (hp : p ∈ 𝒟')
+    (hp_not_on_boundary : ∀ t ∈ Icc fundamentalDomainBoundary.a fundamentalDomainBoundary.b,
+      fundamentalDomainBoundary.toFun t ≠ (p : ℂ))
+    (θ_rot : ℝ → ℝ) (hθ_rot_cont : ContinuousOn θ_rot (Icc fundamentalDomainBoundary.a fundamentalDomainBoundary.b))
+    (hθ_rot_lift : ∀ t ∈ Icc fundamentalDomainBoundary.a fundamentalDomainBoundary.b,
+      Complex.exp (I * θ_rot t) = u_rot (p : ℂ) fundamentalDomainBoundary.toFun t) :
+    wraps_once_counterclockwise θ_rot fundamentalDomainBoundary.a fundamentalDomainBoundary.b := by
+  -- Explicit segment-by-segment angle computation for the FD boundary.
+  -- Each segment contributes a specific angle change that depends on:
+  -- 1. The geometry of the segment (vertical, arc, horizontal)
+  -- 2. The position of p relative to the segment
+  --
+  -- For any interior point p, the total angle change is 2π.
+  --
+  -- **TECHNICAL SORRY**: This requires explicit trigonometric computations
+  -- for each segment that are tedious but straightforward.
+  unfold wraps_once_counterclockwise
+  sorry -- Segment-by-segment angle computation
+
+/-- Build the reparameterization homotopy rc_rot → circleParam using angle interpolation.
+
+    **Key insight**: Both radialProjRot(t) and circleParam(t) lie on the unit circle
+    centered at p. Instead of interpolating vectors (which has antipodality issues),
+    we lift both curves to angle functions θ_rot, θ_circ and interpolate angles:
+
+    H(t, s) = p + exp(I * ((1-s)*θ_rot(t) + s*θ_circ(t)))
+
+    This is always well-defined because we're interpolating real numbers.
+
+    **Wraps-once requirement**: For the closed condition H(a, s) = H(b, s), we need
+    θ_rot(b) - θ_rot(a) = 2π. This is provided by the `wraps_once_counterclockwise` hypothesis.
+-/
+lemma homotopy_radialProjRot_to_circleParam (p : ℂ) (γ : ℝ → ℂ) (a b : ℝ) (hab : a < b)
+    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hγ_ne : ∀ t ∈ Icc a b, γ t ≠ p)
+    (hγ_closed : γ a = γ b)
+    (P : Finset ℝ) (hP : ∀ t ∈ P, t ∈ Ioo a b)
+    (hγ_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ γ t)
+    (hγ_deriv_cont : ∀ t ∈ Ioo a b, t ∉ P → ContinuousAt (deriv γ) t)
+    (hγ_deriv_bound : ∃ M : ℝ, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M)
+    (hγ_dist_bound : ∃ δ > 0, ∀ t ∈ Icc a b, δ ≤ ‖γ t - p‖)
+    -- **WRAPS ONCE HYPOTHESIS**: Any angle lift of u_rot satisfies θ(b) - θ(a) = 2π
+    (hγ_wraps_once : ∀ θ : ℝ → ℝ, ContinuousOn θ (Icc a b) →
+      (∀ t ∈ Icc a b, Complex.exp (I * θ t) = u_rot p γ t) →
+      wraps_once_counterclockwise θ a b) :
+    PiecewiseCurvesHomotopicAvoiding (radialProjRot p γ) (circleParam p 1 a b) a b p P := by
+  -- Step 1: Get the angle lift for u_rot
+  have hu_rot_cont : ContinuousOn (u_rot p γ) (Icc a b) :=
+    u_rot_continuousOn p γ a b hγ_cont hγ_ne
+  have hu_rot_unit : ∀ t ∈ Icc a b, ‖u_rot p γ t‖ = 1 := fun t ht => u_rot_unit p γ t (hγ_ne t ht)
+  -- Get the angle lift θ_rot such that exp(I*θ_rot(t)) = u_rot(t)
+  obtain ⟨θ_rot, hθ_rot_cont, hθ_rot_lift⟩ := exists_angle_lift_on_Icc (u_rot p γ) a b hab hu_rot_cont hu_rot_unit
+  -- Step 2: Define the homotopy via CLAMPED angle interpolation (for global continuity)
+  let H := H_reparam_angle_clamped p θ_rot a b
+  -- Step 3: Verify the 8 conditions for PiecewiseCurvesHomotopicAvoiding
+  use H
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  -- Condition 1: H is globally continuous (uses clamped version)
+  · exact H_reparam_angle_clamped_continuous p θ_rot a b hab hθ_rot_cont
+  -- Condition 2: H(·, 0) = radialProjRot
+  · intro t ht
+    -- Unfold H and use that clamped agrees with unclamped on domain
+    show H_reparam_angle_clamped p θ_rot a b (t, 0) = radialProjRot p γ t
+    rw [H_reparam_angle_clamped_eq_on_domain p θ_rot a b hab t ht 0 ⟨le_refl 0, zero_le_one⟩]
+    unfold H_reparam_angle θ_circ radialProjRot
+    simp only [sub_zero, one_mul, zero_mul, add_zero]
+    congr 1
+    -- exp(I * θ_rot t) = I * ((γ t - p) / ‖γ t - p‖) by definition of u_rot and θ_rot_lift
+    have h_lift := hθ_rot_lift t ht
+    simp only [u_rot] at h_lift
+    exact h_lift
+  -- Condition 3: H(·, 1) = circleParam
+  · intro t ht
+    show H_reparam_angle_clamped p θ_rot a b (t, 1) = circleParam p 1 a b t
+    rw [H_reparam_angle_clamped_eq_on_domain p θ_rot a b hab t ht 1 ⟨zero_le_one, le_refl 1⟩]
+    exact H_reparam_angle_at_one p θ_rot a b t
+  -- Condition 4: Closed at each stage - H(a, s) = H(b, s)
+  · intro s hs
+    -- Goal: H_reparam_angle_clamped p θ_rot a b (a, s) = H_reparam_angle_clamped p θ_rot a b (b, s)
+    -- After clamping, both evaluate at t' = a or t' = b respectively (since a, b ∈ [a,b])
+    unfold H H_reparam_angle_clamped θ_circ
+    simp only [max_eq_left (le_refl a), min_eq_left hab.le, min_eq_left (le_refl b)]
+    simp only [max_eq_right hs.1, min_eq_left hs.2]
+    -- Now we need: p + exp(I * ((1-s)*θ_rot(a) + s*0)) = p + exp(I * ((1-s)*θ_rot(b) + s*2π))
+    -- θ_circ(a,b,a) = 2π*(a-a)/(b-a) = 0
+    -- θ_circ(a,b,b) = 2π*(b-a)/(b-a) = 2π
+    have hθ_circ_a : 2 * Real.pi * (a - a) / (b - a) = 0 := by simp
+    have hmax_eq : max a b = b := max_eq_right hab.le
+    have hθ_circ_b : 2 * Real.pi * (b - a) / (b - a) = 2 * Real.pi := by
+      have h : (b - a) / (b - a) = 1 := div_self (ne_of_gt (sub_pos.mpr hab))
+      rw [mul_div_assoc, h, mul_one]
+    simp only [hθ_circ_a, hmax_eq, hθ_circ_b, mul_zero, add_zero]
+    -- Goal: p + cexp(I*(1-s)*θ_rot(a)) = p + cexp(I*((1-s)*θ_rot(b) + s*2π))
+    -- Equivalently: cexp(I*(1-s)*θ_rot(a)) = cexp(I*((1-s)*θ_rot(b) + s*2π))
+    congr 1
+    -- Use the wraps-once hypothesis
+    have h_wraps := hγ_wraps_once θ_rot hθ_rot_cont hθ_rot_lift
+    unfold wraps_once_counterclockwise at h_wraps
+    -- h_wraps : θ_rot b - θ_rot a = 2 * π
+    -- So θ_rot b = θ_rot a + 2π
+    have h_θb : θ_rot b = θ_rot a + 2 * Real.pi := by linarith
+    -- Goal: exp(I * (1-s) * θ_rot a) = exp(I * ((1-s) * θ_rot b + s * 2π))
+    -- Substituting θ_rot b = θ_rot a + 2π:
+    --   RHS = exp(I * ((1-s) * (θ_rot a + 2π) + s * 2π))
+    --       = exp(I * ((1-s) * θ_rot a + (1-s) * 2π + s * 2π))
+    --       = exp(I * ((1-s) * θ_rot a + 2π))
+    --       = exp(I * (1-s) * θ_rot a) * exp(I * 2π)
+    --       = exp(I * (1-s) * θ_rot a) * 1 = LHS ✓
+    rw [h_θb]
+    -- Goal: exp(I * (1-s) * θ_rot a) = exp(I * ((1-s) * (θ_rot a + 2π) + s * 2π))
+    have h_exp_2pi : Complex.exp (I * (2 * Real.pi)) = 1 := by
+      rw [mul_comm, Complex.exp_two_pi_mul_I]
+    have h_rhs_eq : (1 - s) * (θ_rot a + 2 * Real.pi) + s * (2 * Real.pi) =
+                    (1 - s) * θ_rot a + 2 * Real.pi := by ring
+    rw [h_rhs_eq]
+    -- Goal: exp(I * ↑((1-s) * θ_rot a)) = exp(I * ↑((1-s) * θ_rot a + 2π))
+    -- First normalize coercions: ↑(x + 2π) = ↑x + 2*↑π, ↑(a*b) = ↑a * ↑b
+    simp only [Complex.ofReal_add, Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.ofReal_sub,
+               Complex.ofReal_one]
+    -- Now goal: exp(I * ((1 - ↑s) * ↑(θ_rot a))) = exp(I * ((1 - ↑s) * ↑(θ_rot a) + 2 * ↑π))
+    -- We use exp(x + 2πI) = exp(x) by 2π-periodicity
+    have h_eq : I * ((1 - ↑s) * ↑(θ_rot a) + 2 * ↑Real.pi) =
+                I * ((1 - ↑s) * ↑(θ_rot a)) + 2 * ↑Real.pi * I := by ring
+    rw [h_eq, Complex.exp_add, Complex.exp_two_pi_mul_I, mul_one]
+  -- Condition 5: Avoids z₀ = p throughout
+  · intro t ht s hs
+    exact H_reparam_angle_clamped_avoids p θ_rot a b t s
+  -- Condition 6: Differentiable in t away from partition points
+  · intro t ht ht_not_P s hs
+    -- At points t ∈ (a,b) not in P, the clamping doesn't affect values in a neighborhood
+    -- H_reparam_angle is smooth in t when θ_rot is differentiable at t
+    -- θ_rot is differentiable at t because:
+    --   1. exp(I*θ_rot) = u_rot (by θ_rot_lift)
+    --   2. u_rot = I*(γ-p)/‖γ-p‖
+    --   3. γ is differentiable at t (by hγ_diff)
+    --   4. So u_rot is differentiable at t
+    --   5. By inverse function theorem locally, θ_rot is differentiable
+    sorry -- Differentiability follows from γ differentiable off P
+  -- Condition 7: t-derivative is continuous on each piece
+  · intro p₁ p₂ hp₁p₂ hp₁p₂_notP hp₁p₂_sub
+    -- The t-derivative of H_reparam_angle_clamped involves θ_rot'(t)
+    -- On pieces Ioo p₁ p₂ between partition points, θ_rot' exists and is continuous
+    -- because γ is C¹ there (by hγ_deriv_cont)
+    sorry -- Derivative continuity on pieces
+  -- Condition 8: t-derivative is bounded
+  · -- The derivative ∂H/∂t = I * exp(I*θ) * ((1-s)*θ_rot'(t) + s*θ_circ'(t))
+    -- where θ_circ'(t) = 2π/(b-a)
+    -- θ_rot'(t) is bounded because u_rot' is bounded (from hγ_deriv_bound)
+    -- and u_rot = I*(γ-p)/‖γ-p‖ with γ, γ' bounded and ‖γ-p‖ ≥ δ > 0
+    sorry -- Derivative bound from hγ_deriv_bound and hγ_dist_bound
+
 /-- The generalized winding number of the fundamental domain boundary around an interior
     point equals 1.
 
@@ -2989,46 +4213,121 @@ END COMMENTED OUT: radialHomotopy_preserves_winding -/
     The proof uses homotopy invariance to reduce to a small circle.
 -/
 lemma generalizedWindingNumber_interior_eq_one_complex
-    (p : UpperHalfPlane) (_hp : p ∈ 𝒟')
+    (p : UpperHalfPlane) (hp : p ∈ 𝒟')
     (hp_not_on_boundary : ∀ t ∈ Icc fundamentalDomainBoundary.a fundamentalDomainBoundary.b,
       fundamentalDomainBoundary.toFun t ≠ (p : ℂ)) :
     generalizedWindingNumber' fundamentalDomainBoundary.toFun
       fundamentalDomainBoundary.a fundamentalDomainBoundary.b (p : ℂ) = 1 := by
   -- ═══════════════════════════════════════════════════════════════════════════
-  -- PURE HOMOTOPY PROOF using winding_eq_one_of_homotopic_to_circle from WindingNumberInterior.lean
+  -- PURE HOMOTOPY PROOF using modular helper lemmas
   -- ═══════════════════════════════════════════════════════════════════════════
-  --
-  -- NO angle lifts or argument_change_2pi. Uses ONLY homotopy invariance.
-  -- The curve is homotopic to a circle, so winding = 1.
-  --
   -- Setup
   let γ := fundamentalDomainBoundary.toFun
   let a := fundamentalDomainBoundary.a
   let b := fundamentalDomainBoundary.b
   have hab : a < b := fundamentalDomainBoundary.hab
-  -- Continuity hypothesis
   have hγ_cont : ContinuousOn γ (Icc a b) := fundamentalDomainBoundary.continuous_toFun
-  -- Closed curve hypothesis
   have hγ_closed : γ a = γ b := fundamentalDomainBoundary_isClosed
-  -- Partition: corners at 1, 2, 3, 4 (excluding endpoints 0 and 5)
   let P : Finset ℝ := {1, 2, 3, 4}
   have hP : ∀ t ∈ P, t ∈ Ioo a b := by
     simp only [P, Finset.mem_insert, Finset.mem_singleton, a, b, fundamentalDomainBoundary]
     intro t ht
     rcases ht with rfl | rfl | rfl | rfl <;> constructor <;> norm_num
-  -- Build the homotopy from γ to circleParam using radial projection
-  -- The homotopy H(t,s) = p + ((1-s)·(γ(t)-p)/‖γ(t)-p‖ + s·exp(2πi(t-a)/(b-a))) / ‖...‖
-  -- This is a normalized interpolation that stays on S¹ and avoids p.
-  have hhom : PiecewiseCurvesHomotopicAvoiding γ (circleParam (p : ℂ) 1 a b) a b (p : ℂ) P := by
-    -- HOMOTOPY CONSTRUCTION (should be provided by WindingNumberInterior.lean)
-    --
-    -- Required: Compose two homotopies from γ to circleParam:
-    --   1. γ → rc (radial projection via radialHomotopy_winding_eq infrastructure)
-    --   2. rc → circleParam (S¹ rotation via safeRotationHomotopy infrastructure)
-    --
-    -- Both homotopies avoid p, so their composition does too.
-    -- This construction is being developed in WindingNumberInterior.lean.
-    sorry
+  -- Hypotheses about γ needed for the homotopies
+  have hγ_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ γ t := by
+    intro t ht ht_not_P
+    -- fundamentalDomainBoundary.partition = {0, 1, 2, 3, 4, 5} but we use P = {1, 2, 3, 4}
+    -- Since t ∈ Ioo 0 4, we have 0 < t < 4, so t ≠ 0 and t ≠ 5
+    have ht_not_full_partition : t ∉ fundamentalDomainBoundary.partition := by
+      simp only [fundamentalDomainBoundary, Finset.mem_insert, Finset.mem_singleton, not_or, P] at ht_not_P ⊢
+      simp only [a, b, fundamentalDomainBoundary] at ht
+      refine ⟨?_, ht_not_P.1, ht_not_P.2.1, ht_not_P.2.2.1, ht_not_P.2.2.2, ?_⟩
+      · linarith [ht.1]  -- t ≠ 0 since t > 0
+      · linarith [ht.2]  -- t ≠ 5 since t < 4 < 5
+    exact fundamentalDomainBoundary.smooth_off_partition t (Ioo_subset_Icc_self ht) ht_not_full_partition
+  have hγ_deriv_cont : ∀ t ∈ Ioo a b, t ∉ P → ContinuousAt (deriv γ) t := by
+    intro t ht ht_not_P
+    have ht_not_full_partition : t ∉ fundamentalDomainBoundary.partition := by
+      simp only [fundamentalDomainBoundary, Finset.mem_insert, Finset.mem_singleton, not_or, P] at ht_not_P ⊢
+      simp only [a, b, fundamentalDomainBoundary] at ht
+      refine ⟨?_, ht_not_P.1, ht_not_P.2.1, ht_not_P.2.2.1, ht_not_P.2.2.2, ?_⟩
+      · linarith [ht.1]
+      · linarith [ht.2]
+    exact fundamentalDomainBoundary.deriv_continuous_off_partition t ht ht_not_full_partition
+  have hγ_deriv_bound : ∃ M : ℝ, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M := by
+    /- The fundamental domain boundary has bounded derivatives:
+       - Segment 1 (t ∈ [0,1]): γ(t) = 1/2 + ((√3/2 + 1) - t) * I
+         deriv = -I, ‖deriv‖ = 1
+       - Segment 2 (t ∈ (1,2)): γ(t) = exp((π/3 + (t-1)*(π/6)) * I)
+         deriv = (π/6)*I*exp(...), ‖deriv‖ = π/6 ≈ 0.52
+       - Segment 3 (t ∈ (2,3)): γ(t) = exp((π/2 + (t-2)*(π/6)) * I)
+         deriv = (π/6)*I*exp(...), ‖deriv‖ = π/6 ≈ 0.52
+       - Segment 4 (t ∈ (3,4)): γ(t) = -1/2 + (√3/2 + (t-3)) * I
+         deriv = I, ‖deriv‖ = 1
+       - Segment 5 (t ∈ (4,5)): γ(t) = (t - 9/2) + (√3/2 + 1) * I
+         deriv = 1, ‖deriv‖ = 1
+       - At partition points {0,1,2,3,4,5}, not differentiable so deriv = 0
+
+       Thus M = 1 is a valid bound for all t ∈ [0,5].
+    -/
+    use 1
+    intro t ht
+    -- The fundamental domain boundary γ is piecewise smooth on [0,5]
+    -- At partition points {0,1,2,3,4,5}, γ has corners so not C¹
+    -- On each smooth piece, the derivative is bounded by 1:
+    --   Segment 1: ‖-I‖ = 1
+    --   Segment 2,3: ‖(π/6)Ie^{iθ}‖ = π/6 < 1
+    --   Segment 4: ‖I‖ = 1
+    --   Segment 5: ‖1‖ = 1
+    by_cases h_diff : DifferentiableAt ℝ γ t
+    · -- γ is differentiable at t, so we can compute the derivative
+      -- Since fundamentalDomainBoundary.smooth_off_partition gives differentiability
+      -- outside partition, and h_diff holds, t must be in some smooth piece
+      -- The derivative bound follows from explicit computation on each piece
+      simp only [a, b, fundamentalDomainBoundary] at ht
+      -- Technical: compute deriv γ t for each segment and bound by 1
+      -- This requires case splitting on which segment t is in
+      sorry
+    · -- γ is not differentiable at t, so deriv = 0 by Lean convention
+      rw [deriv_zero_of_not_differentiableAt h_diff, norm_zero]
+      norm_num
+  have hγ_dist_bound : ∃ δ > 0, ∀ t ∈ Icc a b, δ ≤ ‖γ t - (p : ℂ)‖ := by
+    -- Compactness: ‖γ - p‖ is continuous on compact [a,b], and min > 0
+    -- since p is not on the boundary (hp_not_on_boundary)
+    have h_cont : ContinuousOn (fun t => ‖γ t - (p : ℂ)‖) (Icc a b) := by
+      apply ContinuousOn.norm
+      exact hγ_cont.sub continuousOn_const
+    have h_compact : IsCompact (Icc a b) := isCompact_Icc
+    have h_nonempty : (Icc a b).Nonempty := ⟨a, left_mem_Icc.mpr hab.le⟩
+    -- Get the minimum value and the point where it's achieved
+    obtain ⟨t_min, ht_min_mem, ht_min_le⟩ := h_compact.exists_isMinOn h_nonempty h_cont
+    -- The minimum is positive since γ t_min ≠ p
+    have h_pos : 0 < ‖γ t_min - (p : ℂ)‖ := by
+      rw [norm_pos_iff, sub_ne_zero]
+      exact hp_not_on_boundary t_min ht_min_mem
+    use ‖γ t_min - (p : ℂ)‖, h_pos
+    intro t ht
+    exact ht_min_le ht
+  -- Build the three homotopies
+  have hhom₁ : PiecewiseCurvesHomotopicAvoiding γ (radialProj (p : ℂ) γ) a b (p : ℂ) P :=
+    homotopy_gamma_to_radialProj (p : ℂ) γ a b hab hγ_cont hp_not_on_boundary hγ_closed P hP
+      hγ_diff hγ_deriv_cont hγ_deriv_bound hγ_dist_bound
+  have hhom₂ : PiecewiseCurvesHomotopicAvoiding (radialProj (p : ℂ) γ) (radialProjRot (p : ℂ) γ) a b (p : ℂ) P :=
+    homotopy_radialProj_to_radialProjRot (p : ℂ) γ a b hab hγ_cont hp_not_on_boundary hγ_closed P hP
+      hγ_diff hγ_deriv_cont hγ_deriv_bound
+  -- The wraps-once hypothesis: any angle lift of u_rot satisfies θ(b) - θ(a) = 2π
+  have hγ_wraps_once : ∀ θ : ℝ → ℝ, ContinuousOn θ (Icc a b) →
+      (∀ t ∈ Icc a b, Complex.exp (I * θ t) = u_rot (p : ℂ) γ t) →
+      wraps_once_counterclockwise θ a b := by
+    intro θ hθ_cont hθ_lift
+    exact wraps_once_fundamentalDomainBoundary p hp hp_not_on_boundary θ hθ_cont hθ_lift
+  have hhom₃ : PiecewiseCurvesHomotopicAvoiding (radialProjRot (p : ℂ) γ) (circleParam (p : ℂ) 1 a b) a b (p : ℂ) P :=
+    homotopy_radialProjRot_to_circleParam (p : ℂ) γ a b hab hγ_cont hp_not_on_boundary hγ_closed P hP
+      hγ_diff hγ_deriv_cont hγ_deriv_bound hγ_dist_bound hγ_wraps_once
+  -- Compose the three homotopies
+  have hhom : PiecewiseCurvesHomotopicAvoiding γ (circleParam (p : ℂ) 1 a b) a b (p : ℂ) P :=
+    homotopy_compose_three γ (radialProj (p : ℂ) γ) (radialProjRot (p : ℂ) γ) (circleParam (p : ℂ) 1 a b)
+      a b (p : ℂ) P hab hhom₁ hhom₂ hhom₃
   -- Apply the pure homotopy theorem
   exact winding_eq_one_of_homotopic_to_circle (p : ℂ) γ a b P hab hγ_cont hp_not_on_boundary
     hγ_closed hhom
@@ -5107,7 +6406,7 @@ theorem valence_formula_base_identity {k : ℤ}
     - pv_integral_eq_residue_side: connects PV integral to residue sum
     - pv_integral_eq_modular_transformation: connects PV integral to k/12 - ord_∞
     -/
-    sorry
+    sorry -- ❌ NOT TARGET (Core group)
   -- Now use h_contour_eq to derive the identity
   have h_scaled : 2 * Real.pi * I * ∑ p ∈ S, (windingNumberCoeff' p : ℂ) * (orderOfVanishingAt' f p : ℂ) =
       2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
@@ -6629,13 +7928,13 @@ lemma immersion_crossing_cauchy (γ : PiecewiseC1Immersion) (z₀ : ℂ)
     · -- At partition points: use one-sided derivatives
       -- The angle is determined by the corner
       use Complex.I * Real.pi  -- Default: actual value depends on corner angle
-      sorry -- Technical: corner analysis with left/right derivatives
+      sorry -- ❌ NOT TARGET (PV group)
     · -- At smooth points: derivative is non-zero, angle is π
       have hL_ne : deriv γ.toFun t₀ ≠ 0 := γ.deriv_ne_zero t₀ ht₀ ht₀_part
       use Complex.I * Real.pi
       -- The limit is I·π for a smooth crossing (angle = π)
       -- This follows from Taylor expansion and modelSector_integral_total
-      sorry -- Technical: Taylor expansion + model sector comparison
+      sorry -- ❌ NOT TARGET (PV group)
   exact h_tendsto.choose_spec.cauchy_map
 
 /-- The regular part of f'/f (minus singular terms) is continuous on the curve image.
@@ -6672,7 +7971,7 @@ lemma continuousOn_logDeriv_regular_part {k : ℤ}
 
   For the valence formula, this continuity is used in the PV infrastructure.
   -/
-  sorry
+  sorry -- ❌ NOT TARGET (PV group)
 
 /-- **HELPER 1**: The PV integral of f'/f exists on the fundamental domain boundary.
 
@@ -6831,7 +8130,7 @@ lemma pv_integral_decompose_segments {k : ℤ}
   **Key infrastructure**: `cauchyPrincipalValue_split` from WindingNumber.lean
   provides: PV [a,c] = PV [a,b] + PV [b,c] under appropriate hypotheses.
   -/
-  sorry -- PV additivity over path concatenation: apply cauchyPrincipalValue_split 4 times
+  sorry -- ❌ NOT TARGET (PV group)
 
 /-- **HELPER 3**: Vertical edges cancel by T-invariance.
 
@@ -7032,7 +8331,7 @@ lemma pv_integral_eq_modular_transformation {k : ℤ}
         -- 4. cusp contribution: ∫_cusp → -2πi×ord_∞ as H → ∞
         --
         -- This captures the bridge from PV integral to modular transformation value.
-        sorry
+        sorry -- ❌ NOT TARGET (PV group)
     _ = 2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := hI_total
     _ = 2 * Real.pi * I * (k : ℂ) / 12 - 2 * Real.pi * I * (orderAtCusp' f : ℂ) := by ring
 

@@ -448,23 +448,80 @@ lemma taylor_remainder_isLittleO (γ : ℝ → ℂ) (t₀ : ℝ)
     rw [Metric.mem_nhds_iff]
     exact ⟨ε, hε_pos, fun x hx => by simp only [Metric.mem_ball, Real.dist_eq, s, Set.mem_Ioo] at hx ⊢; rw [abs_lt] at hx; constructor <;> linarith⟩
 
-  -- The Taylor polynomial at degree 2 evaluated at t₀ + δ is:
-  -- γ(t₀) + δ·γ'(t₀) + (δ²/2)·γ''(t₀)
-  -- We need to relate iteratedDerivWithin to iteratedDeriv
-
-  -- For now, use the little-o characterization
   -- Since s is a neighborhood of t₀, nhdsWithin t₀ s = nhds t₀
   have h_nhdsWithin_eq : 𝓝[s] t₀ = 𝓝 t₀ := nhdsWithin_eq_nhds.mpr hs_nhd
 
-  -- The remainder in terms of taylorWithinEval needs to be related to our expression
-  -- This requires showing taylorWithinEval γ 2 s t₀ (t₀+δ) = γ(t₀) + δ·γ'(t₀) + (δ²/2)·γ''(t₀)
-  -- and that iteratedDerivWithin = iteratedDeriv on the interior
+  -- Rewrite taylor using the nhds equality
+  rw [h_nhdsWithin_eq] at h_taylor
 
-  -- For simplicity, we use the fact that the symmetric second difference converges
-  -- This is a well-known characterization of the second derivative
-  -- The formal proof requires careful handling of taylorWithinEval
+  -- Compose with the shift δ ↦ t₀ + δ to transform 𝓝 t₀ to 𝓝 0
+  have h_shift : Tendsto (fun δ : ℝ => t₀ + δ) (𝓝 0) (𝓝 t₀) := by
+    have : Tendsto (fun δ : ℝ => t₀ + δ) (𝓝 0) (𝓝 (t₀ + 0)) := tendsto_const_nhds.add tendsto_id
+    simp at this; exact this
 
-  sorry
+  have h_comp := h_taylor.comp_tendsto h_shift
+  -- h_comp : (fun δ ↦ γ (t₀ + δ) - taylorWithinEval γ 2 s t₀ (t₀ + δ)) =o[𝓝 0] fun δ ↦ ((t₀ + δ) - t₀) ^ 2
+
+  -- Simplify (t₀ + δ) - t₀ = δ
+  have h_simp : ∀ δ : ℝ, ((t₀ + δ) - t₀) ^ 2 = δ ^ 2 := fun δ => by ring
+  have h_comp' : (fun δ ↦ γ (t₀ + δ) - taylorWithinEval γ 2 s t₀ (t₀ + δ)) =o[𝓝 0] fun δ ↦ δ ^ 2 := by
+    exact h_comp.congr (fun δ => rfl) h_simp
+
+  -- Now we need to show taylorWithinEval γ 2 s t₀ (t₀ + δ) = γ t₀ + δ • deriv γ t₀ + (δ²/2) • iteratedDeriv 2 γ t₀
+
+  -- The open interval has unique differentiability
+  have h_uniqueDiff : UniqueDiffOn ℝ s := isOpen_Ioo.uniqueDiffOn
+
+  -- For x in s, iteratedDerivWithin n γ s x = iteratedDeriv n γ x when γ is ContDiffAt at x
+  have hγ_C0 : ContDiffAt ℝ 0 γ t₀ := hγ_C2.of_le (by norm_num)
+  have hγ_C1 : ContDiffAt ℝ 1 γ t₀ := hγ_C2.of_le (by norm_num)
+  have h_deriv_eq_0 : iteratedDerivWithin 0 γ s t₀ = iteratedDeriv 0 γ t₀ :=
+    iteratedDerivWithin_eq_iteratedDeriv h_uniqueDiff hγ_C0 ht₀_mem
+  have h_deriv_eq_1 : iteratedDerivWithin 1 γ s t₀ = iteratedDeriv 1 γ t₀ :=
+    iteratedDerivWithin_eq_iteratedDeriv h_uniqueDiff hγ_C1 ht₀_mem
+  have h_deriv_eq_2 : iteratedDerivWithin 2 γ s t₀ = iteratedDeriv 2 γ t₀ :=
+    iteratedDerivWithin_eq_iteratedDeriv h_uniqueDiff hγ_C2 ht₀_mem
+
+  -- Relate iteratedDeriv 0, 1 to γ, deriv γ (using simp since these are @[simp] lemmas)
+  have h_iter_0 : iteratedDeriv 0 γ t₀ = γ t₀ := by simp [iteratedDeriv_zero]
+  have h_iter_1 : iteratedDeriv 1 γ t₀ = deriv γ t₀ := by simp [iteratedDeriv_one]
+
+  -- Expand taylorWithinEval using the succ formula
+  -- taylorWithinEval γ 2 s t₀ x = taylorWithinEval γ 1 s t₀ x + ((2 * 1!)⁻¹ * (x - t₀)²) • iteratedDerivWithin 2 γ s t₀
+  -- taylorWithinEval γ 1 s t₀ x = taylorWithinEval γ 0 s t₀ x + ((1 * 0!)⁻¹ * (x - t₀)¹) • iteratedDerivWithin 1 γ s t₀
+  -- taylorWithinEval γ 0 s t₀ x = iteratedDerivWithin 0 γ s t₀ = γ t₀
+
+  have h_taylor_expand : ∀ δ, taylorWithinEval γ 2 s t₀ (t₀ + δ) = γ t₀ + δ • deriv γ t₀ + (δ^2 / 2) • iteratedDeriv 2 γ t₀ := by
+    intro δ
+    -- Expand taylorWithinEval 2 using succ formula twice
+    rw [taylorWithinEval_succ, taylorWithinEval_succ]
+    -- For the base case, use taylor_within_zero_eval: taylorWithinEval f 0 s x₀ x = f x₀
+    rw [taylor_within_zero_eval]
+    -- Simplify (t₀ + δ - t₀) = δ
+    simp only [add_sub_cancel_left]
+    -- Simplify factorial terms: (1 * 0!)⁻¹ = 1, (2 * 1!)⁻¹ = 1/2
+    simp only [Nat.factorial_zero, Nat.factorial_one, Nat.cast_one, mul_one]
+    -- Use the equalities between iteratedDerivWithin and iteratedDeriv
+    rw [h_deriv_eq_1, h_deriv_eq_2, h_iter_1]
+    -- Now simplify: we have γ t₀ + ((0+1)⁻¹ * δ^(0+1)) • deriv γ t₀ + ((1+1)⁻¹ * δ^(1+1)) • iteratedDeriv 2 γ t₀
+    -- Need to show this equals γ t₀ + δ • deriv γ t₀ + (δ^2/2) • iteratedDeriv 2 γ t₀
+    -- Normalize numeric expressions step by step
+    simp only [zero_add, pow_one, pow_two]
+    -- Now we have: γ t₀ + (1⁻¹ * δ) • deriv γ t₀ + ((1 + 1)⁻¹ * (δ * δ)) • iteratedDeriv 2 γ t₀
+    --            = γ t₀ + δ • deriv γ t₀ + (δ ^ 2 / 2) • iteratedDeriv 2 γ t₀
+    -- Simplify 1⁻¹ = 1 and (1+1)⁻¹ = 2⁻¹ = 1/2
+    norm_num
+    -- Goal is: 1 / 2 * ↑δ ^ 2 = ↑δ * ↑δ / 2 ∨ iteratedDeriv 2 γ t₀ = 0
+    -- The left disjunct is true by algebra
+    left
+    ring
+
+  -- Now combine: the remainder = γ (t₀ + δ) - taylorWithinEval γ 2 s t₀ (t₀ + δ)
+  --                            = γ (t₀ + δ) - γ t₀ - δ • deriv γ t₀ - (δ²/2) • iteratedDeriv 2 γ t₀
+  refine h_comp'.congr_left ?_
+  intro δ
+  rw [h_taylor_expand δ]
+  ring
 
 /-- Symmetric second difference for C² curves.
     For ContDiffAt ℝ 2 γ t₀, the symmetric second difference
@@ -525,15 +582,36 @@ lemma symmetric_second_diff_tendsto (γ : ℝ → ℂ) (t₀ : ℝ)
     -- So: γ(t₀+δ) = γ t₀ + δ•L + (δ²/2)•H + Rplus δ
     -- Similarly: γ(t₀-δ) = γ t₀ - δ•L + (δ²/2)•H + Rminus δ
     -- Adding and subtracting 2*γ t₀ gives the result
-    simp only [Rplus, Rminus, neg_sq]
-    -- The smul terms: δ•L + (-δ)•L = 0 and (δ²/2)•H + (δ²/2)•H = δ²•H
-    have h1 : δ • L + (-δ) • L = 0 := by simp [neg_smul, add_neg_cancel]
-    have h2 : (δ^2 / 2) • H + (δ^2 / 2) • H = δ^2 • H := by
+
+    -- First, isolate Rplus δ and Rminus δ from definitions
+    have hRplus_eq : Rplus δ = γ (t₀ + δ) - γ t₀ - δ • L - (δ^2 / 2) • H := rfl
+    have hRminus_eq : Rminus δ = γ (t₀ - δ) - γ t₀ - (-δ) • L - ((-δ)^2 / 2) • H := rfl
+
+    -- From Rplus: γ(t₀+δ) = γ t₀ + δ•L + (δ²/2)•H + Rplus δ
+    have h_gamma_plus : γ (t₀ + δ) = γ t₀ + δ • L + (δ^2 / 2) • H + Rplus δ := by
+      rw [hRplus_eq]; ring
+
+    -- From Rminus: γ(t₀-δ) = γ t₀ - δ•L + (δ²/2)•H + Rminus δ (using (-δ)² = δ²)
+    have h_neg_sq : (-δ)^2 = δ^2 := neg_sq δ
+    have h_gamma_minus : γ (t₀ - δ) = γ t₀ + (-δ) • L + (δ^2 / 2) • H + Rminus δ := by
+      rw [hRminus_eq, h_neg_sq]
+      ring
+
+    -- Key: δ•L + (-δ)•L = 0
+    have h_L_cancel : δ • L + (-δ) • L = 0 := by
+      rw [neg_smul]; exact add_neg_cancel (δ • L)
+
+    -- Key: (δ²/2)•H + (δ²/2)•H = δ²•H
+    have h_H_double : (δ^2 / 2) • H + (δ^2 / 2) • H = δ^2 • H := by
       rw [← add_smul]; congr 1; ring
-    -- Direct algebraic manipulation (the smul terms cancel/combine appropriately)
-    -- γ(t₀+δ) + γ(t₀-δ) - 2*γ t₀ = δ²•H + (Rplus δ + Rminus δ)
-    -- TODO: proper proof using module algebra
-    sorry
+
+    -- Sum them
+    calc γ (t₀ + δ) + γ (t₀ - δ) - 2 * γ t₀
+      = (γ t₀ + δ • L + (δ^2 / 2) • H + Rplus δ) +
+        (γ t₀ + (-δ) • L + (δ^2 / 2) • H + Rminus δ) - 2 * γ t₀ := by rw [h_gamma_plus, h_gamma_minus]
+    _ = (δ • L + (-δ) • L) + ((δ^2 / 2) • H + (δ^2 / 2) • H) + (Rplus δ + Rminus δ) := by ring
+    _ = 0 + δ^2 • H + (Rplus δ + Rminus δ) := by rw [h_L_cancel, h_H_double]
+    _ = δ^2 • H + (Rplus δ + Rminus δ) := by ring
 
   -- So (γ(t₀+δ) + γ(t₀-δ) - 2γ(t₀))/δ² = H + (Rplus(δ) + Rminus(δ))/δ²
   -- The second term → 0 since Rplus + Rminus = o(δ²)
@@ -929,29 +1007,23 @@ theorem pv_smooth_crossing_contribution_eq_pi_I_C2
     orientation_condition_from_C2_curvature γ t₀ hγ_C2 hγ_zero hγ'_ne hγ_ne h_ccw
   exact log_ratio_smooth_crossing_tendsto_pi_I γ t₀ hγ_diff hγ_zero hγ'_ne hγ_ne h_orientation
 
-/-- Version without orientation hypothesis (uses sorry for orientation condition).
+/-- Version with explicit orientation hypothesis.
 
     The orientation condition `(γ (t₀ - δ) / γ (t₀ + δ)).im ≥ 0` means the ratio
     approaches -1 from the upper half-plane. This holds for counterclockwise curves
-    (as used in the valence formula), but proving it requires curvature information.
+    (as used in the valence formula).
 
-    For the valence formula application, this condition IS satisfied - see the
-    detailed analysis in CLAUDE.md. -/
+    **For valence formula**: The fundamental domain boundary is counterclockwise,
+    so this condition is satisfied at elliptic points. -/
 theorem pv_smooth_crossing_contribution_eq_pi_I'
     (γ : ℝ → ℂ) (t₀ : ℝ)
     (hγ_diff : DifferentiableAt ℝ γ t₀)
     (hγ_zero : γ t₀ = 0)
     (hγ'_ne : deriv γ t₀ ≠ 0)
-    (hγ_ne : ∀ᶠ δ in 𝓝[>] 0, γ (t₀ - δ) ≠ 0 ∧ γ (t₀ + δ) ≠ 0) :
-    Tendsto (fun δ => log (γ (t₀ - δ) / γ (t₀ + δ))) (𝓝[>] 0) (𝓝 (I * Real.pi)) := by
-  -- The orientation condition holds for counterclockwise curves (valence formula case)
-  -- For a formal proof, use pv_smooth_crossing_contribution_eq_pi_I_C2 with the C² hypothesis
-  have h_orientation : ∀ᶠ δ in 𝓝[>] 0, (γ (t₀ - δ) / γ (t₀ + δ)).im ≥ 0 := by
-    -- For smooth crossings where γ(t₀±δ) ≈ ∓δL, the ratio is approximately -1.
-    -- The sign of Im(ratio) depends on the second derivative (curvature).
-    -- For counterclockwise curves: Im(γ'' · conj(γ')) ≥ 0 implies Im(ratio) ≥ 0
-    -- See pv_smooth_crossing_contribution_eq_pi_I_C2 for the C² version.
-    sorry  -- Requires curvature hypothesis; use pv_smooth_crossing_contribution_eq_pi_I_C2 instead
-  exact log_ratio_smooth_crossing_tendsto_pi_I γ t₀ hγ_diff hγ_zero hγ'_ne hγ_ne h_orientation
+    (hγ_ne : ∀ᶠ δ in 𝓝[>] 0, γ (t₀ - δ) ≠ 0 ∧ γ (t₀ + δ) ≠ 0)
+    -- Orientation hypothesis: ratio approaches -1 from upper half-plane
+    (h_orientation : ∀ᶠ δ in 𝓝[>] 0, (γ (t₀ - δ) / γ (t₀ + δ)).im ≥ 0) :
+    Tendsto (fun δ => log (γ (t₀ - δ) / γ (t₀ + δ))) (𝓝[>] 0) (𝓝 (I * Real.pi)) :=
+  log_ratio_smooth_crossing_tendsto_pi_I γ t₀ hγ_diff hγ_zero hγ'_ne hγ_ne h_orientation
 
 end
