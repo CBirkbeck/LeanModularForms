@@ -2487,6 +2487,44 @@ lemma symmDiff_subset_boundaryLayers {g x e ε₁ ε₂ : ℝ}
         _ ≤ |g - x| := h2
         _ ≤ e := h_approx
 
+/-- **Micro-lemma (3a): tAnnLin membership gives r upper bound**.
+    If t ∈ tAnnLin (i.e., ‖L‖*r ≤ ε₁), then r ≤ ε₁/‖L‖. -/
+lemma tAnnLin_implies_r_le {L_norm r ε₁ : ℝ} (hL_pos : 0 < L_norm)
+    (h_in : L_norm * r ≤ ε₁) : r ≤ ε₁ / L_norm := by
+  rw [le_div_iff₀ hL_pos, mul_comm]; exact h_in
+
+/-- **Micro-lemma (3b): Near-threshold implies r in shell**.
+    If r ≤ R_max and |x - ε| ≤ K₀*r², then r is in a shell around ε/‖L‖
+    of width O(K₀*R_max²/‖L‖).
+
+    More precisely: x ∈ [ε - K₀*R_max², ε + K₀*R_max²], so
+    r ∈ [(ε - K₀*R_max²)/‖L‖, (ε + K₀*R_max²)/‖L‖]. -/
+lemma near_threshold_implies_r_in_shell {L_norm r ε K₀ R_max : ℝ}
+    (hL_pos : 0 < L_norm) (hK₀_nonneg : 0 ≤ K₀) (hR_max_nonneg : 0 ≤ R_max)
+    (hr_le : r ≤ R_max) (hr_nonneg : 0 ≤ r)
+    (h_near : |L_norm * r - ε| ≤ K₀ * r^2) :
+    (ε - K₀ * R_max^2) / L_norm ≤ r ∧ r ≤ (ε + K₀ * R_max^2) / L_norm := by
+  -- From h_near: ε - K₀*r² ≤ L_norm*r ≤ ε + K₀*r²
+  have h_abs := abs_le.mp h_near
+  have h_lower : ε - K₀ * r^2 ≤ L_norm * r := by linarith [h_abs.1]
+  have h_upper : L_norm * r ≤ ε + K₀ * r^2 := by linarith [h_abs.2]
+  -- Since r ≤ R_max, we have K₀*r² ≤ K₀*R_max²
+  have hr2_le : r^2 ≤ R_max^2 := sq_le_sq' (by linarith) hr_le
+  have hK_r2_le : K₀ * r^2 ≤ K₀ * R_max^2 := mul_le_mul_of_nonneg_left hr2_le hK₀_nonneg
+  constructor
+  · -- Lower bound: (ε - K₀*R_max²)/L_norm ≤ r
+    rw [div_le_iff₀ hL_pos]
+    have h1 : ε - K₀ * R_max^2 ≤ ε - K₀ * r^2 := by linarith
+    have h2 : ε - K₀ * r^2 ≤ L_norm * r := h_lower
+    have h3 : L_norm * r = r * L_norm := mul_comm _ _
+    linarith
+  · -- Upper bound: r ≤ (ε + K₀*R_max²)/L_norm
+    rw [le_div_iff₀ hL_pos]
+    have h1 : ε + K₀ * r^2 ≤ ε + K₀ * R_max^2 := by linarith
+    have h2 : L_norm * r ≤ ε + K₀ * r^2 := h_upper
+    have h3 : L_norm * r = r * L_norm := mul_comm _ _
+    linarith
+
 /-- **Thin-shell symmetric difference bound**. The symmetric difference between
     the γ-annulus and the tight linear-model t-annulus has measure O(ε₁²/‖L‖²).
 

@@ -14,27 +14,32 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 37)
+**Last update:** 2026-02-05 (session 38)
 **Target:** `generalizedWindingNumber' fdBoundary 0 5 p = -1` (CLOCKWISE orientation)
-**Status:** IN-PROGRESS - 20 sorries remaining - wrap-count NOT yet proven
+**Status:** IN-PROGRESS - 12 sorries remaining - wrap-count NOT yet proven
 
-### Session 37 Progress (2026-02-05, derivative bound calc structure)
+### Session 38 Progress (2026-02-05, derivative bound proofs COMPLETE)
 
 **Actions taken this session:**
-1. Improved calc structure for `norm_deriv_H_seg2_le.h_bound` inner proof:
-   - Added intermediate step: ‖deriv‖ ≤ |1-s|*π/6 + |s|*‖i_point - rho'‖
-   - Second calc step now proven: |1-s|*π/6 + |s|*‖i-ρ'‖ ≤ |1-s|*1 + |s|*2 ✓
-   - Still needs: first calc step (explicit derivative formula) at line 2642
-2. Applied same calc structure to `norm_deriv_H_seg3_le.h_bound`:
-   - Second calc step now proven ✓
-   - Still needs: first calc step at line 2695
+1. **COMPLETED `norm_deriv_H_seg2_le` derivative bound proof**:
+   - Fixed complex coercion issues: `hpi : (Real.pi / 2 - Real.pi / 3 : ℂ) = Real.pi / 6`
+   - Computed explicit HasDerivAt for arc: `(π/6)*I*exp(θ*I)`
+   - Computed explicit HasDerivAt for chord: `i_point - rho'`
+   - Used proper ofReal CLM pattern for `HasDerivAt (fun t' => (t' : ℂ))`
+   - Fixed norm calculation: `‖(π:ℂ)/6‖ = π/6` via `norm_div` + explicit `norm_num`
+2. **COMPLETED `norm_deriv_H_seg3_le` derivative bound proof**:
+   - Applied same pattern with shifted constants (offset by 2, endpoints rho/i_point)
+   - All coercion and norm issues handled correctly
 
-**Remaining work for derivative bound sorries:**
-- Line 2642: Need HasDerivAt computation for arc + chord with proper coercion handling
-- Line 2695: Same for seg3
+**Sorry count reduced: 20 → 12** (eliminated 8 sorries in derivative bound proofs)
 
-**Note:** Full sorry count unchanged at 20 because the calc structure adds intermediate sorries
-but the second steps are now filled in (net effect: same count).
+**Remaining 12 sorries (by line number):**
+- 1374, 1768, 1779, 1789: Earlier file sections
+- 2265, 2290, 2299, 2311: Segment dispatch / hH1_bound
+- 2383, 2391, 2401: Wrap-count path (hhom₃)
+- 2898: Main theorem assembly
+
+### Session 37 Progress (2026-02-05, derivative bound calc structure)
 
 ---
 
