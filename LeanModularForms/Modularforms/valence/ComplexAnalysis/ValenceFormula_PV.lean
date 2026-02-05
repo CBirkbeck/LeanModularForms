@@ -2550,13 +2550,28 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
   -- Use K = 8*K₀ (absorbs constants from boundary layers)
   use 8 * K₀, by linarith, δ₀, hδ₀_pos
   intro ε₁ ε₂ hε₂_pos hε₂_le hε₁_lt γAnn tAnnLin
-  -- Step 1: Points in symmDiff are in boundary layers
-  -- If t ∈ γAnn ∆ tAnnLin, then the γ-condition and L-condition disagree
-  -- This happens only when |‖γ‖ - ‖L‖|t|| is comparable to the threshold gap
-  -- Step 2: By norm_linear_approx_bound, |‖γ‖ - ‖L‖|t|| ≤ K₀|t|²
-  -- Step 3: Points in symmDiff satisfy |‖L‖*|t| - ε| ≤ K₀|t|² for some ε ∈ {ε₁, ε₂}
-  -- Step 4: With |t| ≤ ε₁/‖L‖ (from either condition), error ≤ K₀*(ε₁/‖L‖)²
-  -- Step 5: Shell width ≈ K₀*ε₁²/‖L‖³, measure ≤ 4*K₀*ε₁²/‖L‖³ ≤ 8*K₀*ε₁²/‖L‖²
+  have hε₁_pos : 0 < ε₁ := lt_of_lt_of_le hε₂_pos hε₂_le
+  have hK₀_nonneg : 0 ≤ K₀ := le_of_lt hK₀_pos
+  -- Key constants
+  let R_max := ε₁ / ‖L‖  -- max radius for points in tAnnLin
+  let Δ := K₀ * R_max^2  -- error bound (constant)
+  have hR_max_pos : 0 < R_max := div_pos hε₁_pos hL_norm_pos
+  have hΔ_nonneg : 0 ≤ Δ := mul_nonneg hK₀_nonneg (sq_nonneg _)
+  -- Shell bounds around ε₁ and ε₂
+  let shell₁_lo := (ε₁ - Δ) / ‖L‖
+  let shell₁_hi := (ε₁ + Δ) / ‖L‖
+  let shell₂_lo := (ε₂ - Δ) / ‖L‖
+  let shell₂_hi := (ε₂ + Δ) / ‖L‖
+  -- Shell width bound
+  have h_shell_width : shell₁_hi - shell₁_lo = 2 * Δ / ‖L‖ := by
+    simp only [shell₁_lo, shell₁_hi]
+    field_simp
+    ring
+  -- The proof requires showing:
+  -- 1. symmDiff ⊆ shell₁ ∪ shell₂ (using norm_linear_approx_bound + symmDiff_subset_boundaryLayers)
+  -- 2. measure(shell₁ ∪ shell₂) ≤ 2 * 2 * (2Δ/‖L‖) = 8Δ/‖L‖ = 8K₀*ε₁²/‖L‖³
+  -- 3. This is ≤ 8K₀*ε₁²/‖L‖² when ε₁ ≤ ‖L‖ (which holds for small δ)
+  -- Full proof requires measure theory infrastructure; placeholder for now
   sorry
 
 /-- **Micro-lemma (F): Singular part bound**. The integral of (t-t₀)⁻¹ over the
