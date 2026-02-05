@@ -1281,6 +1281,92 @@ lemma fdPolygon_seg4_deriv_val : (H_height - Real.sqrt 3 / 2) * I = I := by
   push_cast
   ring
 
+/-! ### Slope Lemmas for fdPolygon (for non-differentiability proof) -/
+
+/-- Slope of fdPolygon on segment 1 (t < 1) equals -(H - √3/2)*I = -I when both points < 1. -/
+lemma slope_fdPolygon_seg1 (s t : ℝ) (hs : s < 1) (ht : t < 1) (hst : s ≠ t) :
+    slope fdPolygon s t = -(H_height - Real.sqrt 3 / 2) * I := by
+  have hs' : s ≤ 1 := le_of_lt hs
+  have ht' : t ≤ 1 := le_of_lt ht
+  have heq_s : fdPolygon s = 1/2 + (H_height - ↑s * (H_height - Real.sqrt 3 / 2)) * I := by
+    simp only [fdPolygon, hs', ↓reduceIte]
+  have heq_t : fdPolygon t = 1/2 + (H_height - ↑t * (H_height - Real.sqrt 3 / 2)) * I := by
+    simp only [fdPolygon, ht', ↓reduceIte]
+  simp only [slope_def_module, heq_s, heq_t, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+  have hne : (↑t : ℂ) - ↑s ≠ 0 := by simp only [sub_ne_zero, ne_eq, Complex.ofReal_inj]; exact hst.symm
+  field_simp [hne]
+  ring
+
+/-- Slope of fdPolygon on segment 2 (t ∈ (1, 2]) equals i - ρ' when both points in (1, 2]. -/
+lemma slope_fdPolygon_seg2 (s t : ℝ) (hs : s > 1) (ht : t > 1) (hs2 : s ≤ 2) (ht2 : t ≤ 2) (hst : s ≠ t) :
+    slope fdPolygon s t = i_point - rho' := by
+  have hs' : ¬(s ≤ 1) := not_le.mpr hs
+  have ht' : ¬(t ≤ 1) := not_le.mpr ht
+  have heq_s : fdPolygon s = chordSegment rho' i_point (s - 1) := by
+    simp only [fdPolygon, hs', ↓reduceIte, hs2]
+  have heq_t : fdPolygon t = chordSegment rho' i_point (t - 1) := by
+    simp only [fdPolygon, ht', ↓reduceIte, ht2]
+  simp only [slope_def_module, heq_s, heq_t, chordSegment, Complex.real_smul,
+             Complex.ofReal_inv, Complex.ofReal_sub, Complex.ofReal_one]
+  have hne : (↑t : ℂ) - ↑s ≠ 0 := by simp only [sub_ne_zero, ne_eq, Complex.ofReal_inj]; exact hst.symm
+  field_simp [hne]
+  ring
+
+/-- Slope of fdPolygon on segment 3 (t ∈ (2, 3]) equals ρ - i when both points in (2, 3]. -/
+lemma slope_fdPolygon_seg3 (s t : ℝ) (hs : s > 2) (ht : t > 2) (hs3 : s ≤ 3) (ht3 : t ≤ 3) (hst : s ≠ t) :
+    slope fdPolygon s t = rho - i_point := by
+  have hs1 : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) hs)
+  have ht1 : ¬(t ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) ht)
+  have hs2 : ¬(s ≤ 2) := not_le.mpr hs
+  have ht2 : ¬(t ≤ 2) := not_le.mpr ht
+  have heq_s : fdPolygon s = chordSegment i_point rho (s - 2) := by
+    simp only [fdPolygon, hs1, ↓reduceIte, hs2, hs3]
+  have heq_t : fdPolygon t = chordSegment i_point rho (t - 2) := by
+    simp only [fdPolygon, ht1, ↓reduceIte, ht2, ht3]
+  simp only [slope_def_module, heq_s, heq_t, chordSegment, Complex.real_smul,
+             Complex.ofReal_inv, Complex.ofReal_sub, Complex.ofReal_one, Complex.ofReal_ofNat]
+  have hne : (↑t : ℂ) - ↑s ≠ 0 := by simp only [sub_ne_zero, ne_eq, Complex.ofReal_inj]; exact hst.symm
+  field_simp [hne]
+  ring
+
+/-- Slope of fdPolygon on segment 4 (t ∈ (3, 4]) equals (H - √3/2)*I when both points in (3, 4]. -/
+lemma slope_fdPolygon_seg4 (s t : ℝ) (hs : s > 3) (ht : t > 3) (hs4 : s ≤ 4) (ht4 : t ≤ 4) (hst : s ≠ t) :
+    slope fdPolygon s t = (H_height - Real.sqrt 3 / 2) * I := by
+  have hs1 : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 3) hs)
+  have ht1 : ¬(t ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 3) ht)
+  have hs2 : ¬(s ≤ 2) := not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 3) hs)
+  have ht2 : ¬(t ≤ 2) := not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 3) ht)
+  have hs3 : ¬(s ≤ 3) := not_le.mpr hs
+  have ht3 : ¬(t ≤ 3) := not_le.mpr ht
+  have heq_s : fdPolygon s = -1/2 + (Real.sqrt 3 / 2 + (s - 3) * (H_height - Real.sqrt 3 / 2)) * I := by
+    simp only [fdPolygon, hs1, ↓reduceIte, hs2, hs3, hs4]
+  have heq_t : fdPolygon t = -1/2 + (Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I := by
+    simp only [fdPolygon, ht1, ↓reduceIte, ht2, ht3, ht4]
+  simp only [slope_def_module, heq_s, heq_t, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+  have hne : (↑t : ℂ) - ↑s ≠ 0 := by simp only [sub_ne_zero, ne_eq, Complex.ofReal_inj]; exact hst.symm
+  field_simp [hne]
+  ring
+
+/-- Slope of fdPolygon on segment 5 (t > 4) equals 1 when both points > 4. -/
+lemma slope_fdPolygon_seg5 (s t : ℝ) (hs : s > 4) (ht : t > 4) (hst : s ≠ t) :
+    slope fdPolygon s t = 1 := by
+  have hs1 : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 4) hs)
+  have ht1 : ¬(t ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 4) ht)
+  have hs2 : ¬(s ≤ 2) := not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 4) hs)
+  have ht2 : ¬(t ≤ 2) := not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 4) ht)
+  have hs3 : ¬(s ≤ 3) := not_le.mpr (lt_trans (by norm_num : (3:ℝ) < 4) hs)
+  have ht3 : ¬(t ≤ 3) := not_le.mpr (lt_trans (by norm_num : (3:ℝ) < 4) ht)
+  have hs4 : ¬(s ≤ 4) := not_le.mpr hs
+  have ht4 : ¬(t ≤ 4) := not_le.mpr ht
+  have heq_s : fdPolygon s = (s - 9/2) + H_height * I := by
+    simp only [fdPolygon, hs1, ↓reduceIte, hs2, hs3, hs4]
+  have heq_t : fdPolygon t = (t - 9/2) + H_height * I := by
+    simp only [fdPolygon, ht1, ↓reduceIte, ht2, ht3, ht4]
+  simp only [slope_def_module, heq_s, heq_t, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+  have hne : (↑t : ℂ) - ↑s ≠ 0 := by simp only [sub_ne_zero, ne_eq, Complex.ofReal_inj]; exact hst.symm
+  field_simp [hne]
+  ring
+
 /-- At t=1, segment 1 derivative (-I) differs from segment 2 derivative (i - ρ').
     Since i - ρ' = I - (1/2 + √3/2*I) = -1/2 + (1 - √3/2)*I, the real parts differ:
     (-I).re = 0, but (i - ρ').re = -1/2 ≠ 0. -/
@@ -1360,6 +1446,220 @@ lemma fdPolygon_deriv_ne_at_t4 : (I : ℂ) ≠ (1 : ℂ) := by
   rw [h_rhs] at h_lhs
   linarith
 
+/-- Slope of fdPolygon with one point at boundary s = 1, other point t < 1. -/
+lemma slope_fdPolygon_at_t1_left (s : ℝ) (hs : s < 1) :
+    slope fdPolygon 1 s = -(H_height - Real.sqrt 3 / 2) * I := by
+  have hs' : s ≤ 1 := le_of_lt hs
+  -- fdPolygon 1 = seg1 formula at 1 = ρ' = 1/2 + √3/2 * I
+  have heq1 : fdPolygon 1 = 1/2 + (Real.sqrt 3 / 2) * I := by
+    simp only [fdPolygon, show (1:ℝ) ≤ 1 from le_refl 1, ↓reduceIte]
+    simp only [H_height]; push_cast; ring
+  have heqs : fdPolygon s = 1/2 + (H_height - ↑s * (H_height - Real.sqrt 3 / 2)) * I := by
+    simp only [fdPolygon, hs', ↓reduceIte]
+  simp only [slope_def_module, heq1, heqs, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+  have hne : (↑s : ℂ) - 1 ≠ 0 := by simp only [sub_ne_zero, ne_eq, Complex.ofReal_eq_one]; exact ne_of_lt hs
+  field_simp [hne]
+  simp only [H_height]; push_cast; ring
+
+/-- Slope of fdPolygon with one point at boundary t = 1, other point s > 1 (and ≤ 2). -/
+lemma slope_fdPolygon_at_t1_right (s : ℝ) (hs : s > 1) (hs2 : s ≤ 2) :
+    slope fdPolygon 1 s = i_point - rho' := by
+  have hs' : ¬(s ≤ 1) := not_le.mpr hs
+  -- fdPolygon 1 = rho' = 1/2 + √3/2 * I (seg1 formula at t=1)
+  have heq1 : fdPolygon 1 = rho' := by
+    simp only [fdPolygon, show (1:ℝ) ≤ 1 from le_refl 1, ↓reduceIte]
+    simp only [rho', H_height]; push_cast; ring
+  -- fdPolygon s = chordSegment rho' i_point (s-1)
+  have heqs : fdPolygon s = chordSegment rho' i_point (s - 1) := by
+    simp only [fdPolygon, hs', ↓reduceIte, hs2]
+  simp only [slope_def_module, heq1, heqs, chordSegment, Complex.real_smul,
+             Complex.ofReal_inv, Complex.ofReal_sub, Complex.ofReal_one]
+  have hne : (↑s : ℂ) - 1 ≠ 0 := by simp only [sub_ne_zero, ne_eq, Complex.ofReal_eq_one]; exact ne_of_gt hs
+  field_simp [hne]
+  simp only [rho', i_point]; ring
+
+/-- Slope of fdPolygon with one point at boundary t = 2, other point s in (1, 2). -/
+lemma slope_fdPolygon_at_t2_left (s : ℝ) (hs1 : s > 1) (hs2 : s < 2) :
+    slope fdPolygon 2 s = i_point - rho' := by
+  have hs1' : ¬(s ≤ 1) := not_le.mpr hs1
+  have hs2' : s ≤ 2 := le_of_lt hs2
+  -- fdPolygon 2 = i_point (seg2 at t=2 is chordSegment rho' i_point 1 = i_point)
+  have heq2 : fdPolygon 2 = i_point := by
+    simp only [fdPolygon, show ¬((2:ℝ) ≤ 1) from by norm_num, ↓reduceIte, show (2:ℝ) ≤ 2 from le_refl 2]
+    simp only [chordSegment]; norm_num
+  have heqs : fdPolygon s = chordSegment rho' i_point (s - 1) := by
+    simp only [fdPolygon, hs1', ↓reduceIte, hs2']
+  simp only [slope_def_module, heq2, heqs, chordSegment, Complex.real_smul,
+             Complex.ofReal_inv, Complex.ofReal_sub, Complex.ofReal_one]
+  have hne : (↑s : ℂ) - 2 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_lt hs2
+  field_simp [hne]
+  simp only [rho', i_point]; push_cast; ring
+
+/-- Slope of fdPolygon with one point at boundary t = 2, other point s in (2, 3]. -/
+lemma slope_fdPolygon_at_t2_right (s : ℝ) (hs2 : s > 2) (hs3 : s ≤ 3) :
+    slope fdPolygon 2 s = rho - i_point := by
+  have hs1' : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) hs2)
+  have hs2' : ¬(s ≤ 2) := not_le.mpr hs2
+  -- fdPolygon 2 = i_point
+  have heq2 : fdPolygon 2 = i_point := by
+    simp only [fdPolygon, show ¬((2:ℝ) ≤ 1) from by norm_num, ↓reduceIte, show (2:ℝ) ≤ 2 from le_refl 2]
+    simp only [chordSegment]; ring_nf; simp only [zero_smul, one_smul, zero_add]
+  have heqs : fdPolygon s = chordSegment i_point rho (s - 2) := by
+    simp only [fdPolygon, hs1', ↓reduceIte, hs2', hs3]
+  simp only [slope_def_module, heq2, heqs, chordSegment, Complex.real_smul,
+             Complex.ofReal_inv, Complex.ofReal_sub, Complex.ofReal_ofNat, Complex.ofReal_one]
+  have hne : (↑s : ℂ) - 2 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_gt hs2
+  field_simp [hne]
+  simp only [rho, i_point]; ring
+
+/-- Slope of fdPolygon with one point at boundary t = 3, other point s in (2, 3). -/
+lemma slope_fdPolygon_at_t3_left (s : ℝ) (hs2 : s > 2) (hs3 : s < 3) :
+    slope fdPolygon 3 s = rho - i_point := by
+  have hs1' : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) hs2)
+  have hs2' : ¬(s ≤ 2) := not_le.mpr hs2
+  have hs3' : s ≤ 3 := le_of_lt hs3
+  -- fdPolygon 3 = rho (seg3 at t=3 is chordSegment i_point rho 1 = rho)
+  have heq3 : fdPolygon 3 = rho := by
+    simp only [fdPolygon, show ¬((3:ℝ) ≤ 1) from by norm_num, show ¬((3:ℝ) ≤ 2) from by norm_num,
+               ↓reduceIte, show (3:ℝ) ≤ 3 from le_refl 3]
+    simp only [chordSegment]; ring_nf; simp only [zero_smul, one_smul, zero_add]
+  have heqs : fdPolygon s = chordSegment i_point rho (s - 2) := by
+    simp only [fdPolygon, hs1', ↓reduceIte, hs2', hs3']
+  simp only [slope_def_module, heq3, heqs, chordSegment, Complex.real_smul,
+             Complex.ofReal_inv, Complex.ofReal_sub, Complex.ofReal_ofNat, Complex.ofReal_one]
+  have hne : (↑s : ℂ) - 3 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_lt hs3
+  field_simp [hne]
+  simp only [rho, i_point]; ring
+
+/-- Slope of fdPolygon with one point at boundary t = 3, other point s in (3, 4]. -/
+lemma slope_fdPolygon_at_t3_right (s : ℝ) (hs3 : s > 3) (hs4 : s ≤ 4) :
+    slope fdPolygon 3 s = (H_height - Real.sqrt 3 / 2) * I := by
+  have hs1' : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 3) hs3)
+  have hs2' : ¬(s ≤ 2) := not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 3) hs3)
+  have hs3' : ¬(s ≤ 3) := not_le.mpr hs3
+  -- fdPolygon 3 = rho = -1/2 + √3/2 * I
+  have heq3 : fdPolygon 3 = -(1:ℂ)/2 + (Real.sqrt 3 / 2) * I := by
+    simp only [fdPolygon, show ¬((3:ℝ) ≤ 1) from by norm_num, show ¬((3:ℝ) ≤ 2) from by norm_num,
+               ↓reduceIte, show (3:ℝ) ≤ 3 from le_refl 3]
+    simp only [chordSegment]; ring_nf; simp only [zero_smul, one_smul, zero_add]
+    simp only [rho]; ring
+  have heqs : fdPolygon s = -1/2 + (Real.sqrt 3 / 2 + (s - 3) * (H_height - Real.sqrt 3 / 2)) * I := by
+    simp only [fdPolygon, hs1', ↓reduceIte, hs2', hs3', hs4]
+  simp only [slope_def_module, heq3, heqs, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+  have hne : (↑s : ℂ) - 3 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_gt hs3
+  field_simp [hne]
+  simp only [H_height]; push_cast; ring
+
+/-- Slope of fdPolygon with one point at boundary t = 4, other point s in (3, 4). -/
+lemma slope_fdPolygon_at_t4_left (s : ℝ) (hs3 : s > 3) (hs4 : s < 4) :
+    slope fdPolygon 4 s = (H_height - Real.sqrt 3 / 2) * I := by
+  have hs1' : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 3) hs3)
+  have hs2' : ¬(s ≤ 2) := not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 3) hs3)
+  have hs3' : ¬(s ≤ 3) := not_le.mpr hs3
+  have hs4' : s ≤ 4 := le_of_lt hs4
+  -- fdPolygon 4 = -1/2 + H*I (seg4 at t=4)
+  have heq4 : fdPolygon 4 = -(1:ℂ)/2 + H_height * I := by
+    simp only [fdPolygon, show ¬((4:ℝ) ≤ 1) from by norm_num, show ¬((4:ℝ) ≤ 2) from by norm_num,
+               show ¬((4:ℝ) ≤ 3) from by norm_num, ↓reduceIte, show (4:ℝ) ≤ 4 from le_refl 4]
+    simp only [H_height]; push_cast; ring
+  have heqs : fdPolygon s = -1/2 + (Real.sqrt 3 / 2 + (s - 3) * (H_height - Real.sqrt 3 / 2)) * I := by
+    simp only [fdPolygon, hs1', ↓reduceIte, hs2', hs3', hs4']
+  simp only [slope_def_module, heq4, heqs, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+  have hne : (↑s : ℂ) - 4 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_lt hs4
+  field_simp [hne]
+  simp only [H_height]; push_cast; ring
+
+/-- Slope of fdPolygon with one point at boundary t = 4, other point s > 4. -/
+lemma slope_fdPolygon_at_t4_right (s : ℝ) (hs4 : s > 4) :
+    slope fdPolygon 4 s = 1 := by
+  have hs1' : ¬(s ≤ 1) := not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 4) hs4)
+  have hs2' : ¬(s ≤ 2) := not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 4) hs4)
+  have hs3' : ¬(s ≤ 3) := not_le.mpr (lt_trans (by norm_num : (3:ℝ) < 4) hs4)
+  have hs4' : ¬(s ≤ 4) := not_le.mpr hs4
+  -- fdPolygon 4 = -1/2 + H*I
+  have heq4 : fdPolygon 4 = -(1:ℂ)/2 + H_height * I := by
+    simp only [fdPolygon, show ¬((4:ℝ) ≤ 1) from by norm_num, show ¬((4:ℝ) ≤ 2) from by norm_num,
+               show ¬((4:ℝ) ≤ 3) from by norm_num, ↓reduceIte, show (4:ℝ) ≤ 4 from le_refl 4]
+    simp only [H_height]; push_cast; ring
+  have heqs : fdPolygon s = (s - 9/2) + H_height * I := by
+    simp only [fdPolygon, hs1', ↓reduceIte, hs2', hs3', hs4']
+  simp only [slope_def_module, heq4, heqs, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+  have hne : (↑s : ℂ) - 4 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_gt hs4
+  field_simp [hne]
+  push_cast; ring
+
+/-- Helper: slope of fdPolygon at 1 from the left tends to seg1 slope. -/
+lemma slope_fdPolygon_tendsto_seg1_left :
+    Tendsto (slope fdPolygon 1) (𝓝[<] 1) (𝓝 (-(H_height - Real.sqrt 3 / 2) * I)) := by
+  have h_mem : Ioo 0 1 ∈ 𝓝[<] (1 : ℝ) := Ioo_mem_nhdsLT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => -(H_height - Real.sqrt 3 / 2) * I)
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t1_left s hs.2).symm
+  · exact tendsto_const_nhds
+
+/-- Helper: slope of fdPolygon at 1 from the right tends to seg2 slope. -/
+lemma slope_fdPolygon_tendsto_seg2_right :
+    Tendsto (slope fdPolygon 1) (𝓝[>] 1) (𝓝 (i_point - rho')) := by
+  have h_mem : Ioo 1 2 ∈ 𝓝[>] (1 : ℝ) := Ioo_mem_nhdsGT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => i_point - rho')
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t1_right s hs.1 (le_of_lt hs.2)).symm
+  · exact tendsto_const_nhds
+
+/-- Helper: slope of fdPolygon at 2 from the left tends to seg2 slope. -/
+lemma slope_fdPolygon_tendsto_seg2_left :
+    Tendsto (slope fdPolygon 2) (𝓝[<] 2) (𝓝 (i_point - rho')) := by
+  have h_mem : Ioo 1 2 ∈ 𝓝[<] (2 : ℝ) := Ioo_mem_nhdsLT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => i_point - rho')
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t2_left s hs.1 hs.2).symm
+  · exact tendsto_const_nhds
+
+/-- Helper: slope of fdPolygon at 2 from the right tends to seg3 slope. -/
+lemma slope_fdPolygon_tendsto_seg3_right :
+    Tendsto (slope fdPolygon 2) (𝓝[>] 2) (𝓝 (rho - i_point)) := by
+  have h_mem : Ioo 2 3 ∈ 𝓝[>] (2 : ℝ) := Ioo_mem_nhdsGT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => rho - i_point)
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t2_right s hs.1 (le_of_lt hs.2)).symm
+  · exact tendsto_const_nhds
+
+/-- Helper: slope of fdPolygon at 3 from the left tends to seg3 slope. -/
+lemma slope_fdPolygon_tendsto_seg3_left :
+    Tendsto (slope fdPolygon 3) (𝓝[<] 3) (𝓝 (rho - i_point)) := by
+  have h_mem : Ioo 2 3 ∈ 𝓝[<] (3 : ℝ) := Ioo_mem_nhdsLT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => rho - i_point)
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t3_left s hs.1 hs.2).symm
+  · exact tendsto_const_nhds
+
+/-- Helper: slope of fdPolygon at 3 from the right tends to seg4 slope. -/
+lemma slope_fdPolygon_tendsto_seg4_right :
+    Tendsto (slope fdPolygon 3) (𝓝[>] 3) (𝓝 ((H_height - Real.sqrt 3 / 2) * I)) := by
+  have h_mem : Ioo 3 4 ∈ 𝓝[>] (3 : ℝ) := Ioo_mem_nhdsGT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => (H_height - Real.sqrt 3 / 2) * I)
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t3_right s hs.1 (le_of_lt hs.2)).symm
+  · exact tendsto_const_nhds
+
+/-- Helper: slope of fdPolygon at 4 from the left tends to seg4 slope. -/
+lemma slope_fdPolygon_tendsto_seg4_left :
+    Tendsto (slope fdPolygon 4) (𝓝[<] 4) (𝓝 ((H_height - Real.sqrt 3 / 2) * I)) := by
+  have h_mem : Ioo 3 4 ∈ 𝓝[<] (4 : ℝ) := Ioo_mem_nhdsLT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => (H_height - Real.sqrt 3 / 2) * I)
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t4_left s hs.1 hs.2).symm
+  · exact tendsto_const_nhds
+
+/-- Helper: slope of fdPolygon at 4 from the right tends to seg5 slope. -/
+lemma slope_fdPolygon_tendsto_seg5_right :
+    Tendsto (slope fdPolygon 4) (𝓝[>] 4) (𝓝 1) := by
+  have h_mem : Ioo 4 5 ∈ 𝓝[>] (4 : ℝ) := Ioo_mem_nhdsGT (by norm_num)
+  apply Tendsto.congr' (f₁ := fun _ => (1 : ℂ))
+  · filter_upwards [h_mem] with s hs
+    exact (slope_fdPolygon_at_t4_right s hs.1).symm
+  · exact tendsto_const_nhds
+
 /-- fdPolygon is NOT differentiable at partition points {1, 2, 3, 4}.
     At each point, the left and right derivatives differ (as computed above).
 
@@ -1373,24 +1673,82 @@ lemma fdPolygon_deriv_ne_at_t4 : (I : ℂ) ≠ (1 : ℂ) := by
 -/
 lemma fdPolygon_not_differentiableAt_partition (t : ℝ) (ht : t ∈ ({1, 2, 3, 4} : Finset ℝ)) :
     ¬DifferentiableAt ℝ fdPolygon t := by
-  -- fdPolygon is piecewise linear with different slopes on adjacent segments.
-  -- At partition points {1,2,3,4}, the left and right derivatives differ:
-  -- - t=1: left slope = -(H-√3/2)*I, right slope = i - ρ'
-  -- - t=2: left slope = i - ρ', right slope = ρ - i
-  -- - t=3: left slope = ρ - i, right slope = (H-√3/2)*I
-  -- - t=4: left slope = (H-√3/2)*I, right slope = 1
-  -- Since a differentiable function must have equal left and right derivatives,
-  -- and these differ (proved in fdPolygon_deriv_ne_at_t* lemmas), fdPolygon is not differentiable.
   simp only [Finset.mem_insert, Finset.mem_singleton] at ht
   rcases ht with rfl | rfl | rfl | rfl
-  all_goals {
-    intro hdiff
-    -- The proof uses that if f is differentiable at a, then the left and right limits
-    -- of the difference quotient must both equal deriv f a. But fdPolygon has different
-    -- left and right limits at partition points (different segment slopes).
-    -- This contradicts the uniqueness of the derivative.
-    sorry -- Technical: slope mismatch argument via tendsto_nhds_unique
-  }
+  -- Case t = 1: left slope = -(H-√3/2)*I, right slope = i - ρ'
+  · intro hdiff
+    have hda : HasDerivAt fdPolygon (deriv fdPolygon 1) 1 := hdiff.hasDerivAt
+    have hslope : Tendsto (slope fdPolygon 1) (𝓝[≠] 1) (𝓝 (deriv fdPolygon 1)) :=
+      hasDerivAt_iff_tendsto_slope.mp hda
+    have hslope_left : Tendsto (slope fdPolygon 1) (𝓝[<] 1) (𝓝 (deriv fdPolygon 1)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_lt hx))
+    have hslope_right : Tendsto (slope fdPolygon 1) (𝓝[>] 1) (𝓝 (deriv fdPolygon 1)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_gt hx))
+    have h_left_eq : deriv fdPolygon 1 = -(H_height - Real.sqrt 3 / 2) * I :=
+      tendsto_nhds_unique hslope_left slope_fdPolygon_tendsto_seg1_left
+    have h_right_eq : deriv fdPolygon 1 = i_point - rho' :=
+      tendsto_nhds_unique hslope_right slope_fdPolygon_tendsto_seg2_right
+    rw [h_left_eq] at h_right_eq
+    -- -(H - √3/2)*I = -I (since H - √3/2 = 1), and -I ≠ i - ρ'
+    have h_lhs_eq : -(H_height - Real.sqrt 3 / 2) * I = -I := by
+      have : (H_height : ℂ) - Real.sqrt 3 / 2 = 1 := by simp only [H_height]; push_cast; ring
+      rw [this, neg_one_mul]
+    rw [h_lhs_eq] at h_right_eq
+    exact fdPolygon_deriv_ne_at_t1 h_right_eq
+  -- Case t = 2: left slope = i - ρ', right slope = ρ - i
+  · intro hdiff
+    have hda : HasDerivAt fdPolygon (deriv fdPolygon 2) 2 := hdiff.hasDerivAt
+    have hslope : Tendsto (slope fdPolygon 2) (𝓝[≠] 2) (𝓝 (deriv fdPolygon 2)) :=
+      hasDerivAt_iff_tendsto_slope.mp hda
+    have hslope_left : Tendsto (slope fdPolygon 2) (𝓝[<] 2) (𝓝 (deriv fdPolygon 2)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_lt hx))
+    have hslope_right : Tendsto (slope fdPolygon 2) (𝓝[>] 2) (𝓝 (deriv fdPolygon 2)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_gt hx))
+    have h_left_eq : deriv fdPolygon 2 = i_point - rho' :=
+      tendsto_nhds_unique hslope_left slope_fdPolygon_tendsto_seg2_left
+    have h_right_eq : deriv fdPolygon 2 = rho - i_point :=
+      tendsto_nhds_unique hslope_right slope_fdPolygon_tendsto_seg3_right
+    rw [h_left_eq] at h_right_eq
+    exact fdPolygon_deriv_ne_at_t2 h_right_eq
+  -- Case t = 3: left slope = ρ - i, right slope = (H-√3/2)*I = I
+  · intro hdiff
+    have hda : HasDerivAt fdPolygon (deriv fdPolygon 3) 3 := hdiff.hasDerivAt
+    have hslope : Tendsto (slope fdPolygon 3) (𝓝[≠] 3) (𝓝 (deriv fdPolygon 3)) :=
+      hasDerivAt_iff_tendsto_slope.mp hda
+    have hslope_left : Tendsto (slope fdPolygon 3) (𝓝[<] 3) (𝓝 (deriv fdPolygon 3)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_lt hx))
+    have hslope_right : Tendsto (slope fdPolygon 3) (𝓝[>] 3) (𝓝 (deriv fdPolygon 3)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_gt hx))
+    have h_left_eq : deriv fdPolygon 3 = rho - i_point :=
+      tendsto_nhds_unique hslope_left slope_fdPolygon_tendsto_seg3_left
+    have h_right_eq : deriv fdPolygon 3 = (H_height - Real.sqrt 3 / 2) * I :=
+      tendsto_nhds_unique hslope_right slope_fdPolygon_tendsto_seg4_right
+    rw [h_left_eq] at h_right_eq
+    -- (H - √3/2)*I = I (since H - √3/2 = 1)
+    have h_rhs_eq : (H_height - Real.sqrt 3 / 2) * I = I := by
+      have : (H_height : ℂ) - Real.sqrt 3 / 2 = 1 := by simp only [H_height]; push_cast; ring
+      rw [this, one_mul]
+    rw [h_rhs_eq] at h_right_eq
+    exact fdPolygon_deriv_ne_at_t3 h_right_eq
+  -- Case t = 4: left slope = I, right slope = 1
+  · intro hdiff
+    have hda : HasDerivAt fdPolygon (deriv fdPolygon 4) 4 := hdiff.hasDerivAt
+    have hslope : Tendsto (slope fdPolygon 4) (𝓝[≠] 4) (𝓝 (deriv fdPolygon 4)) :=
+      hasDerivAt_iff_tendsto_slope.mp hda
+    have hslope_left : Tendsto (slope fdPolygon 4) (𝓝[<] 4) (𝓝 (deriv fdPolygon 4)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_lt hx))
+    have hslope_right : Tendsto (slope fdPolygon 4) (𝓝[>] 4) (𝓝 (deriv fdPolygon 4)) :=
+      hslope.mono_left (nhdsWithin_mono _ (fun x hx => ne_of_gt hx))
+    have h_left_eq : deriv fdPolygon 4 = (H_height - Real.sqrt 3 / 2) * I :=
+      tendsto_nhds_unique hslope_left slope_fdPolygon_tendsto_seg4_left
+    have h_right_eq : deriv fdPolygon 4 = 1 :=
+      tendsto_nhds_unique hslope_right slope_fdPolygon_tendsto_seg5_right
+    rw [h_left_eq] at h_right_eq
+    have h_lhs_eq : (H_height - Real.sqrt 3 / 2) * I = I := by
+      have : (H_height : ℂ) - Real.sqrt 3 / 2 = 1 := by simp only [H_height]; push_cast; ring
+      rw [this, one_mul]
+    rw [h_lhs_eq] at h_right_eq
+    exact fdPolygon_deriv_ne_at_t4 h_right_eq
 
 /-- The polygon derivative is bounded by 3.
     Each segment has bounded derivative:
@@ -2876,6 +3234,271 @@ lemma fdBoundaryToPolygonHomotopy_seg3_deriv_bound (t : ℝ) (_ht : t ∈ Ioo 2 
                       (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 :=
   norm_deriv_H_seg3_le t s hs
 
+/-- Segment 1 derivative bound: ‖deriv H_seg1(·, s)‖ ≤ 5.
+    Formula: 1/2 + (H_height - t*(H_height - √3/2))*I, deriv = -(H_height - √3/2)*I = -I.
+    Since H_height - √3/2 = 1, we have ‖-I‖ = 1 ≤ 5. -/
+lemma norm_deriv_H_seg1_le (t : ℝ) (_s : ℝ) :
+    ‖deriv (fun t' : ℝ => (1/2 : ℂ) + (H_height - (↑t' : ℂ) * (H_height - Real.sqrt 3 / 2)) * I) t‖ ≤ 5 := by
+  have h_height : (H_height : ℂ) - Real.sqrt 3 / 2 = 1 := by
+    simp only [H_height]
+    push_cast
+    ring
+  have h_deriv : HasDerivAt (fun t' : ℝ => (1/2 : ℂ) + ((H_height : ℂ) - (↑t' : ℂ) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I)
+      (-((H_height : ℂ) - Real.sqrt 3 / 2) * I) t := by
+    have h1 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ)) 1 t := Complex.ofRealCLM.hasDerivAt
+    have h2 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+        ((H_height : ℂ) - Real.sqrt 3 / 2) t := by
+      have := h1.mul_const ((H_height : ℂ) - Real.sqrt 3 / 2)
+      simp only [one_mul] at this; exact this
+    have h3 : HasDerivAt (fun t' : ℝ => (H_height : ℂ) - (↑t' : ℂ) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+        (-((H_height : ℂ) - Real.sqrt 3 / 2)) t := by
+      have := (hasDerivAt_const t (H_height : ℂ)).sub h2
+      simp only [zero_sub] at this; exact this
+    have h4 : HasDerivAt (fun t' : ℝ => ((H_height : ℂ) - (↑t' : ℂ) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I)
+        (-((H_height : ℂ) - Real.sqrt 3 / 2) * I) t := h3.mul_const I
+    have := (hasDerivAt_const t ((1/2 : ℂ))).add h4
+    simp only [zero_add] at this; exact this
+  rw [h_deriv.deriv, h_height]
+  simp only [neg_one_mul, norm_neg, Complex.norm_I]
+  norm_num
+
+/-- Segment 4 derivative bound: ‖deriv H_seg4(·, s)‖ ≤ 5.
+    Formula: -1/2 + (√3/2 + (t-3)*(H_height - √3/2))*I, deriv = (H_height - √3/2)*I = I.
+    Since H_height - √3/2 = 1, we have ‖I‖ = 1 ≤ 5. -/
+lemma norm_deriv_H_seg4_le (t : ℝ) (_s : ℝ) :
+    ‖deriv (fun t' : ℝ => (-1/2 : ℂ) + ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I) t‖ ≤ 5 := by
+  have h_height : (H_height : ℂ) - Real.sqrt 3 / 2 = 1 := by
+    simp only [H_height]
+    push_cast
+    ring
+  have h_deriv : HasDerivAt (fun t' : ℝ => (-1/2 : ℂ) + ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I)
+      (((H_height : ℂ) - Real.sqrt 3 / 2) * I) t := by
+    have h1 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ)) 1 t := Complex.ofRealCLM.hasDerivAt
+    have h2 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ) - 3) 1 t := h1.sub_const 3
+    have h3 : HasDerivAt (fun t' : ℝ => ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+        ((H_height : ℂ) - Real.sqrt 3 / 2) t := by
+      have := h2.mul_const ((H_height : ℂ) - Real.sqrt 3 / 2)
+      simp only [one_mul] at this; exact this
+    have h4 : HasDerivAt (fun t' : ℝ => (Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+        ((H_height : ℂ) - Real.sqrt 3 / 2) t := by
+      have := (hasDerivAt_const t (Real.sqrt 3 / 2 : ℂ)).add h3
+      simp only [zero_add] at this; exact this
+    have h5 : HasDerivAt (fun t' : ℝ => ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I)
+        (((H_height : ℂ) - Real.sqrt 3 / 2) * I) t := h4.mul_const I
+    have := (hasDerivAt_const t ((-1/2 : ℂ))).add h5
+    simp only [zero_add] at this; exact this
+  rw [h_deriv.deriv, h_height]
+  simp only [one_mul, Complex.norm_I]
+  norm_num
+
+/-- Segment 5 derivative bound: ‖deriv H_seg5(·, s)‖ ≤ 5.
+    Formula: (t - 9/2) + H_height*I, deriv = 1.
+    We have ‖1‖ = 1 ≤ 5. -/
+lemma norm_deriv_H_seg5_le (t : ℝ) (_s : ℝ) :
+    ‖deriv (fun t' : ℝ => ((↑t' : ℂ) - 9/2) + (H_height : ℂ) * I) t‖ ≤ 5 := by
+  have h_deriv : HasDerivAt (fun t' : ℝ => ((↑t' : ℂ) - 9/2) + (H_height : ℂ) * I) 1 t := by
+    have h1 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ)) 1 t := Complex.ofRealCLM.hasDerivAt
+    have h2 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ) - 9/2) 1 t := h1.sub_const (9/2)
+    have := h2.add_const ((H_height : ℂ) * I)
+    convert this using 1
+  rw [h_deriv.deriv]
+  norm_num
+
+/-- The homotopy is NOT differentiable at t ∈ {1, 3, 4} because left/right derivatives differ.
+
+    At t = 1: left derivative = -I (segment 1), right has nonzero real part (segment 2 involves exp)
+    At t = 3: left derivative has nonzero real part (segment 3), right derivative = I (segment 4)
+    At t = 4: left derivative = I (segment 4), right derivative = 1 (segment 5)
+
+    NOTE: t = 2 is NOT included because at s = 0, the function IS differentiable there
+    (both segments reduce to the arc formula which is smooth through t=2). -/
+lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (k : ℝ) (hk : k ∈ ({1, 3, 4} : Set ℝ)) :
+    ¬DifferentiableAt ℝ (fun t' => fdBoundaryToPolygonHomotopy (t', s)) k := by
+  simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hk
+  rcases hk with rfl | rfl | rfl
+  -- t = 1: left deriv = -(H-√3/2)*I = -I (purely imaginary), right deriv has nonzero real part
+  · intro hd
+    have h_slope := hasDerivAt_iff_tendsto_slope.mp hd.hasDerivAt
+    -- Left slope (t < 1): from seg1 formula, constant slope = -(H-√3/2)*I = -I
+    have h_left_val : Tendsto (slope (fun t' => fdBoundaryToPolygonHomotopy (t', s)) 1) (𝓝[<] 1)
+        (𝓝 (-(H_height - Real.sqrt 3 / 2) * I)) := by
+      have h_mem : Ioo 0 1 ∈ 𝓝[<] (1 : ℝ) := Ioo_mem_nhdsLT (by norm_num : (0 : ℝ) < 1)
+      apply Tendsto.congr' (f₁ := fun _ => -(H_height - Real.sqrt 3 / 2) * I)
+      · filter_upwards [h_mem] with t ht
+        have ht1 : t ≤ 1 := le_of_lt ht.2
+        have h1_1 : (1 : ℝ) ≤ 1 := le_refl 1
+        simp only [slope_def_module, fdBoundaryToPolygonHomotopy, ht1, h1_1, ite_true,
+                   Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+        have hne : (↑t : ℂ) - 1 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_lt ht.2
+        field_simp [hne]
+        simp only [H_height]; push_cast; ring
+      · exact tendsto_const_nhds
+    -- Right slope (t > 1): from seg2 formula (arc-to-chord homotopy)
+    -- The arc derivative has nonzero real part: d/dt[exp((π/3 + (t-1)*π/6)*I)] = (π/6)*I*exp(...) at t=1
+    -- gives (π/6)*I*rho' = (π/6)*(I/2 - √3/2) = -π√3/12 + πI/12 which has Re = -π√3/12 ≠ 0
+    have h_right_val : Tendsto (slope (fun t' => fdBoundaryToPolygonHomotopy (t', s)) 1) (𝓝[>] 1)
+        (𝓝 ((1 - s) * (-Real.pi * Real.sqrt 3 / 12 + Real.pi / 12 * I) +
+            s * (-1/2 + (1 - Real.sqrt 3 / 2) * I))) := by
+      have h_mem : Ioo 1 2 ∈ 𝓝[>] (1 : ℝ) := Ioo_mem_nhdsGT (by norm_num : (1 : ℝ) < 2)
+      sorry -- Technical: derivative computation for arc-to-chord homotopy at t=1
+    -- Subset inclusions for restricting to one-sided neighborhoods
+    have h_iio_subset : Set.Iio (1 : ℝ) ⊆ {1}ᶜ := fun y hy => ne_of_lt hy
+    have h_ioi_subset : Set.Ioi (1 : ℝ) ⊆ {1}ᶜ := fun y hy => ne_of_gt hy
+    have h_left_slope := h_slope.mono_left (nhdsWithin_mono 1 h_iio_subset)
+    have h_right_slope := h_slope.mono_left (nhdsWithin_mono 1 h_ioi_subset)
+    have h_eq_left := tendsto_nhds_unique h_left_slope h_left_val
+    have h_eq_right := tendsto_nhds_unique h_right_slope h_right_val
+    rw [h_eq_left] at h_eq_right
+    -- Now h_eq_right says: -(H-√3/2)*I = (1-s)*arc_deriv + s*chord_deriv
+    -- Taking real parts: 0 = (1-s)*(-π√3/12) + s*(-1/2) = -π√3/12 + s*(π√3/12 - 1/2)
+    -- Since H = √3/2 + 1, we have H - √3/2 = 1, so LHS has Re = 0
+    -- For RHS: Re = (1-s)*(-π√3/12) + s*(-1/2) = -π√3/12 + s*(π√3/12 - 1/2) ≠ 0 for s ∈ [0,1]
+    -- (because π√3/12 ≠ 1/2 and the values don't align)
+    have h_ne : (-(H_height - Real.sqrt 3 / 2) * I) ≠
+        ((1 - s) * (-Real.pi * Real.sqrt 3 / 12 + Real.pi / 12 * I) +
+         s * (-1/2 + (1 - Real.sqrt 3 / 2) * I)) := by
+      intro heq
+      have h_re := congr_arg Complex.re heq
+      simp only [Complex.neg_re, Complex.mul_re, Complex.ofReal_re, Complex.I_re, mul_zero,
+                 Complex.ofReal_im, Complex.I_im, mul_one, sub_zero, neg_zero,
+                 Complex.add_re, Complex.div_ofNat_re, Complex.sub_re, Complex.one_re] at h_re
+      -- LHS real part = 0, RHS real part = (1-s)*(-π√3/12) + s*(-1/2)
+      simp only [H_height] at h_re
+      -- This gives: 0 = -π√3/12 + s*(π√3/12 - 1/2)
+      -- Solving: s = (π√3/12) / (1/2 - π√3/12) but this denominator is 1/2 - π√3/12 ≈ 0.05 > 0
+      -- so s ≈ 0.4534/0.05 ≈ 9 which is outside [0,1]. Contradiction!
+      sorry -- Technical: arithmetic showing this is impossible
+    exact h_ne h_eq_right
+  -- t = 3: left deriv involves arc-to-chord, right deriv = (H-√3/2)*I = I (purely imaginary)
+  · -- The slope from the right (seg4 formula) is (H-√3/2)*I = I (purely imaginary, Re = 0)
+    -- The slope from the left (seg3 arc-to-chord formula) has nonzero real part
+    -- since it involves the arc derivative (π/6)*I*exp(2π/3*I) which has Re = -π√3/12 ≠ 0
+    -- Since these differ, the function can't be differentiable at t=3
+    sorry -- Technical: slope computation showing left ≠ right at t=3
+  -- t = 4: left deriv = (H-√3/2)*I (imaginary), right deriv = 1 (real)
+  · -- Use slope-based argument: if differentiable, both one-sided slopes would converge to same limit
+    intro hd
+    -- If differentiable at 4, slope converges to the derivative from both sides
+    have h_slope := hasDerivAt_iff_tendsto_slope.mp hd.hasDerivAt
+    -- Left side slope (t < 4): function is -1/2 + (√3/2 + (t-3)*(H-√3/2))*I, slope = (H-√3/2)*I
+    have h_left_val : Tendsto (slope (fun t' => fdBoundaryToPolygonHomotopy (t', s)) 4) (𝓝[<] 4)
+        (𝓝 ((H_height - Real.sqrt 3 / 2) * I)) := by
+      have h_mem : Ioo 3 4 ∈ 𝓝[<] (4 : ℝ) := Ioo_mem_nhdsLT (by norm_num : (3 : ℝ) < 4)
+      apply Tendsto.congr' (f₁ := fun _ => (H_height - Real.sqrt 3 / 2) * I)
+      · filter_upwards [h_mem] with t ht
+        have ht1 : ¬(t ≤ 1) := not_le.mpr (lt_of_lt_of_le (by norm_num : (1:ℝ) < 3) (le_of_lt ht.1))
+        have ht2 : ¬(t ≤ 2) := not_le.mpr (lt_of_lt_of_le (by norm_num : (2:ℝ) < 3) (le_of_lt ht.1))
+        have ht3 : ¬(t ≤ 3) := not_le.mpr ht.1
+        have ht4 : t ≤ 4 := le_of_lt ht.2
+        have h4_1 : ¬(4 : ℝ) ≤ 1 := by norm_num
+        have h4_2 : ¬(4 : ℝ) ≤ 2 := by norm_num
+        have h4_3 : ¬(4 : ℝ) ≤ 3 := by norm_num
+        have h4_4 : (4 : ℝ) ≤ 4 := le_refl 4
+        simp only [slope_def_module, fdBoundaryToPolygonHomotopy, ht1, ht2, ht3, ht4, h4_1, h4_2, h4_3, h4_4,
+                   ite_false, ite_true, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+        have hne : (↑t : ℂ) - 4 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_lt ht.2
+        field_simp [hne]
+        simp only [H_height]; push_cast; ring
+      · exact tendsto_const_nhds
+    -- Right side slope (t > 4): function is (t - 9/2) + H*I, slope = 1
+    have h_right_val : Tendsto (slope (fun t' => fdBoundaryToPolygonHomotopy (t', s)) 4) (𝓝[>] 4)
+        (𝓝 1) := by
+      have h_mem : Ioo 4 5 ∈ 𝓝[>] (4 : ℝ) := Ioo_mem_nhdsGT (by norm_num : (4 : ℝ) < 5)
+      apply Tendsto.congr' (f₁ := fun _ => (1 : ℂ))
+      · filter_upwards [h_mem] with t ht
+        have ht1 : ¬(t ≤ 1) := not_le.mpr (lt_of_lt_of_le (by norm_num : (1:ℝ) < 4) (le_of_lt ht.1))
+        have ht2 : ¬(t ≤ 2) := not_le.mpr (lt_of_lt_of_le (by norm_num : (2:ℝ) < 4) (le_of_lt ht.1))
+        have ht3 : ¬(t ≤ 3) := not_le.mpr (lt_of_lt_of_le (by norm_num : (3:ℝ) < 4) (le_of_lt ht.1))
+        have ht4 : ¬(t ≤ 4) := not_le.mpr ht.1
+        have h4_1 : ¬(4 : ℝ) ≤ 1 := by norm_num
+        have h4_2 : ¬(4 : ℝ) ≤ 2 := by norm_num
+        have h4_3 : ¬(4 : ℝ) ≤ 3 := by norm_num
+        have h4_4 : (4 : ℝ) ≤ 4 := le_refl 4
+        simp only [slope_def_module, fdBoundaryToPolygonHomotopy, ht1, ht2, ht3, ht4, h4_1, h4_2, h4_3, h4_4,
+                   ite_false, ite_true, Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+        have hne : (↑t : ℂ) - 4 ≠ 0 := by simp only [sub_ne_zero]; norm_cast; exact ne_of_gt ht.1
+        field_simp [hne]
+        push_cast; ring
+      · exact tendsto_const_nhds
+    -- Restrict h_slope to left and right neighborhoods
+    -- Iio 4 ⊆ {4}ᶜ since y < 4 implies y ≠ 4
+    have h_iio_subset : Set.Iio (4 : ℝ) ⊆ {4}ᶜ := fun y hy => ne_of_lt hy
+    have h_ioi_subset : Set.Ioi (4 : ℝ) ⊆ {4}ᶜ := fun y hy => ne_of_gt hy
+    have h_left_slope := h_slope.mono_left (nhdsWithin_mono 4 h_iio_subset)
+    have h_right_slope := h_slope.mono_left (nhdsWithin_mono 4 h_ioi_subset)
+    -- By uniqueness of limits, both one-sided limits equal deriv
+    have h_eq_left := tendsto_nhds_unique h_left_slope h_left_val
+    have h_eq_right := tendsto_nhds_unique h_right_slope h_right_val
+    -- But (H-√3/2)*I ≠ 1 (one is purely imaginary, the other is purely real)
+    rw [h_eq_left] at h_eq_right
+    have h_ne : ((H_height : ℂ) - Real.sqrt 3 / 2) * I ≠ 1 := by
+      intro heq
+      have h_im := congr_arg Complex.im heq
+      simp only [Complex.mul_I_im, Complex.one_im, Complex.ofReal_sub, Complex.ofReal_div,
+                 Complex.sub_re, Complex.ofReal_re, Complex.div_ofNat_re] at h_im
+      -- This gives H_height - √3/2 = 0, but H_height = √3/2 + 1 > √3/2
+      have h_H_pos : H_height - Real.sqrt 3 / 2 > 0 := by simp only [H_height]; norm_num
+      linarith
+    exact h_ne h_eq_right
+
+/-! ### Derivative Continuity Lemmas for hH1_deriv_cont -/
+
+/-- Segment 1 derivative continuity: constant function is continuous. -/
+lemma deriv_seg1_continuousOn : ContinuousOn
+    (fun (_q : ℝ × ℝ) => -(((H_height : ℂ) - Real.sqrt 3 / 2) * I)) (Set.univ) :=
+  continuousOn_const
+
+/-- Segment 4 derivative continuity: constant function is continuous. -/
+lemma deriv_seg4_continuousOn : ContinuousOn
+    (fun (_q : ℝ × ℝ) => (((H_height : ℂ) - Real.sqrt 3 / 2) * I)) (Set.univ) :=
+  continuousOn_const
+
+/-- Segment 5 derivative continuity: constant function is continuous. -/
+lemma deriv_seg5_continuousOn : ContinuousOn
+    (fun (_q : ℝ × ℝ) => (1 : ℂ)) (Set.univ) :=
+  continuousOn_const
+
+/-- An interval (p₁, p₂) that avoids {1,2,3,4} and is in (0,5) is contained in exactly one segment. -/
+lemma interval_in_segment (p₁ p₂ : ℝ) (hp : p₁ < p₂) (h_avoid : ∀ t ∈ Set.Ioo p₁ p₂, t ∉ ({1, 2, 3, 4} : Finset ℝ))
+    (_h_sub : Set.Ioo p₁ p₂ ⊆ Set.Ioo 0 5) :
+    (p₂ ≤ 1) ∨ (p₁ ≥ 1 ∧ p₂ ≤ 2) ∨ (p₁ ≥ 2 ∧ p₂ ≤ 3) ∨ (p₁ ≥ 3 ∧ p₂ ≤ 4) ∨ (p₁ ≥ 4) := by
+  -- If the interval crosses any partition point, it would contain that point
+  -- Case analysis based on where p₁ and p₂ fall relative to partition points
+  by_cases h1 : p₂ ≤ 1
+  · left; exact h1
+  · right
+    by_cases h2 : p₂ ≤ 2
+    · left
+      constructor
+      · by_contra hlt
+        have h1_in : (1 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h1⟩
+        have := h_avoid 1 h1_in
+        simp at this
+      · exact h2
+    · right
+      by_cases h3 : p₂ ≤ 3
+      · left
+        constructor
+        · by_contra hlt
+          have h2_in : (2 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h2⟩
+          have := h_avoid 2 h2_in
+          simp at this
+        · exact h3
+      · right
+        by_cases h4 : p₂ ≤ 4
+        · left
+          constructor
+          · by_contra hlt
+            have h3_in : (3 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h3⟩
+            have := h_avoid 3 h3_in
+            simp at this
+          · exact h4
+        · right
+          by_contra hlt
+          have h4_in : (4 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h4⟩
+          have := h_avoid 4 h4_in
+          simp at this
+
 /-! ## Main Theorem: Winding Number = -1 (CLOCKWISE orientation) -/
 
 /-- **MAIN THEOREM**: For interior points p in the fundamental domain,
@@ -3028,11 +3651,110 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
     -- Segment 4: deriv = (H_height - √3/2) * I (constant, continuous)
     -- Segment 5: deriv = 1 (constant, continuous)
     --
-    -- To complete this proof:
-    -- 1. Determine which segment contains (p₁, p₂) based on location relative to {1,2,3,4}
-    -- 2. Use the explicit derivative formula for that segment
-    -- 3. Show continuity of that formula on (p₁, p₂) × [0, 1]
-    sorry -- Technical: segment dispatch + derivative formula continuity
+    -- Use interval_in_segment to determine which segment we're in
+    have hseg := interval_in_segment p₁ p₂ hp₁p₂ hpiece h_sub
+    rcases hseg with h_seg1 | ⟨h_seg2_lo, h_seg2_hi⟩ | ⟨h_seg3_lo, h_seg3_hi⟩ | ⟨h_seg4_lo, h_seg4_hi⟩ | h_seg5
+    -- Segment 1: p₂ ≤ 1, so the interval is in (0, 1) where deriv = -(H_height - √3/2)*I (constant)
+    · have hconst : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
+          deriv (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
+          -((H_height : ℂ) - Real.sqrt 3 / 2) * I := by
+        intro q ⟨hq1, _hq2⟩
+        have ht_lt1 : q.1 < 1 := lt_of_lt_of_le hq1.2 h_seg1
+        have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
+            (fun t' : ℝ => (1/2 : ℂ) + (H_height - (↑t' : ℂ) * (H_height - Real.sqrt 3 / 2)) * I) := by
+          filter_upwards [eventually_lt_nhds ht_lt1] with t' ht'
+          simp only [fdBoundaryToPolygonHomotopy, le_of_lt ht', ite_true]
+        rw [heq.deriv_eq]
+        -- Derivative of 1/2 + (H - t*(H - √3/2))*I is -(H - √3/2)*I
+        have h1 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ)) 1 q.1 := Complex.ofRealCLM.hasDerivAt
+        have h2 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+            ((H_height : ℂ) - Real.sqrt 3 / 2) q.1 := by
+          have := h1.mul_const ((H_height : ℂ) - Real.sqrt 3 / 2); simp only [one_mul] at this; exact this
+        have h3 : HasDerivAt (fun t' : ℝ => (H_height : ℂ) - (↑t' : ℂ) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+            (-((H_height : ℂ) - Real.sqrt 3 / 2)) q.1 := by
+          have := (hasDerivAt_const q.1 (H_height : ℂ)).sub h2; simp only [zero_sub] at this; exact this
+        have h4 : HasDerivAt (fun t' : ℝ => ((H_height : ℂ) - (↑t' : ℂ) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I)
+            (-((H_height : ℂ) - Real.sqrt 3 / 2) * I) q.1 := h3.mul_const I
+        have h5 := (hasDerivAt_const q.1 ((1/2 : ℂ))).add h4
+        simp only [zero_add] at h5
+        convert h5.deriv using 2 <;> ring
+      apply ContinuousOn.congr continuousOn_const hconst
+    -- Segment 2: p₁ ≥ 1, p₂ ≤ 2
+    -- For t ∈ (1,2), the homotopy is:
+    --   H(t,s) = (1-s) • exp(θ(t)*I) + s • chord(t)
+    -- where θ(t) = π/3 + (t-1)*(π/6) and chord(t) = chordSegment rho' i_point (t-1)
+    -- The derivative wrt t is: (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
+    -- This is continuous in (t,s) because exp is continuous and everything else is affine
+    · -- Use the explicit formula and show continuity via composition of continuous functions
+      -- On this segment, the homotopy is smooth in t for each s
+      -- We use the fact that on open intervals the derivative can be computed directly
+      apply continuousOn_of_forall_continuousAt
+      intro q ⟨hq1, hq2⟩
+      have ht_gt1 : q.1 > 1 := lt_of_le_of_lt h_seg2_lo hq1.1
+      have ht_lt2 : q.1 < 2 := lt_of_lt_of_le hq1.2 h_seg2_hi
+      -- In a neighborhood of q, the homotopy uses the seg2 formula
+      -- The derivative is a continuous function of (t, s)
+      sorry -- Technical: seg2 derivative continuity via composition
+    -- Segment 3: p₁ ≥ 2, p₂ ≤ 3
+    -- Similar to segment 2, θ(t) = π/2 + (t-2)*(π/6), chord uses i_point and rho
+    · apply continuousOn_of_forall_continuousAt
+      intro q ⟨hq1, hq2⟩
+      have ht_gt2 : q.1 > 2 := lt_of_le_of_lt h_seg3_lo hq1.1
+      have ht_lt3 : q.1 < 3 := lt_of_lt_of_le hq1.2 h_seg3_hi
+      sorry -- Technical: seg3 derivative continuity via composition
+    -- Segment 4: p₁ ≥ 3, p₂ ≤ 4, deriv = (H_height - √3/2)*I (constant)
+    · have hconst : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
+          deriv (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
+          (((H_height : ℂ) - Real.sqrt 3 / 2) * I) := by
+        intro q ⟨hq1, _hq2⟩
+        have ht_gt3 : q.1 > 3 := lt_of_le_of_lt h_seg4_lo hq1.1
+        have ht_lt4 : q.1 < 4 := lt_of_lt_of_le hq1.2 h_seg4_hi
+        have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
+            (fun t' : ℝ => (-1/2 : ℂ) + ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I) := by
+          filter_upwards [eventually_gt_nhds ht_gt3, eventually_lt_nhds ht_lt4] with t' ht3' ht4'
+          simp only [fdBoundaryToPolygonHomotopy]
+          have h1' : ¬(t' ≤ 1) := not_le.mpr (by linarith : 1 < t')
+          have h2' : ¬(t' ≤ 2) := not_le.mpr (by linarith : 2 < t')
+          have h3' : ¬(t' ≤ 3) := not_le.mpr ht3'
+          have h4' : t' ≤ 4 := le_of_lt ht4'
+          simp only [h1', h2', h3', h4', ite_false, ite_true]
+        rw [heq.deriv_eq]
+        -- Derivative formula (same computation as norm_deriv_H_seg4_le)
+        have h1 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ)) 1 q.1 := Complex.ofRealCLM.hasDerivAt
+        have h2 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ) - 3) 1 q.1 := h1.sub_const 3
+        have h3 : HasDerivAt (fun t' : ℝ => ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+            ((H_height : ℂ) - Real.sqrt 3 / 2) q.1 := by
+          have := h2.mul_const ((H_height : ℂ) - Real.sqrt 3 / 2); simp only [one_mul] at this; exact this
+        have h4 : HasDerivAt (fun t' : ℝ => (Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2))
+            ((H_height : ℂ) - Real.sqrt 3 / 2) q.1 := by
+          have := (hasDerivAt_const q.1 (Real.sqrt 3 / 2 : ℂ)).add h3; simp only [zero_add] at this; exact this
+        have h5 : HasDerivAt (fun t' : ℝ => ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I)
+            (((H_height : ℂ) - Real.sqrt 3 / 2) * I) q.1 := h4.mul_const I
+        have h6 := (hasDerivAt_const q.1 ((-1/2 : ℂ))).add h5
+        simp only [zero_add] at h6
+        exact h6.deriv
+      apply ContinuousOn.congr continuousOn_const hconst
+    -- Segment 5: p₁ ≥ 4, deriv = 1 (constant)
+    · have hconst : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
+          deriv (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) q.1 = (1 : ℂ) := by
+        intro q ⟨hq1, _hq2⟩
+        have ht_gt4 : q.1 > 4 := lt_of_le_of_lt h_seg5 hq1.1
+        have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
+            (fun t' : ℝ => ((↑t' : ℂ) - 9/2) + (H_height : ℂ) * I) := by
+          filter_upwards [eventually_gt_nhds ht_gt4] with t' ht4'
+          simp only [fdBoundaryToPolygonHomotopy]
+          have h1' : ¬(t' ≤ 1) := not_le.mpr (by linarith : 1 < t')
+          have h2' : ¬(t' ≤ 2) := not_le.mpr (by linarith : 2 < t')
+          have h3' : ¬(t' ≤ 3) := not_le.mpr (by linarith : 3 < t')
+          have h4' : ¬(t' ≤ 4) := not_le.mpr ht4'
+          simp only [h1', h2', h3', h4', ite_false]
+        rw [heq.deriv_eq]
+        -- Derivative of (t - 9/2) + H*I is 1
+        have h1 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ)) 1 q.1 := Complex.ofRealCLM.hasDerivAt
+        have h2 : HasDerivAt (fun t' : ℝ => (↑t' : ℂ) - 9/2) 1 q.1 := h1.sub_const (9/2)
+        have h3 := h2.add_const ((H_height : ℂ) * I)
+        convert h3.deriv using 1
+      apply ContinuousOn.congr continuousOn_const hconst
 
   -- Step 1c: Derivative bound
   -- The derivative is bounded by 5 on [0,5] × [0,1]:
@@ -3065,14 +3787,15 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
           simp only [fdBoundaryToPolygonHomotopy, le_of_lt ht', ite_true]
         -- The derivative is -(H_height - √3/2) * I = -I (since H_height - √3/2 = 1)
         -- and ‖-I‖ = 1 ≤ 5
-        -- Technical: need HasDerivAt chain rule computation
-        sorry
+        rw [heq.deriv_eq]
+        exact norm_deriv_H_seg1_le t s
       · by_cases h2 : t < 2
         · -- Segment 2: t ∈ [1, 2)
           by_cases h1' : t = 1
           · -- At t = 1, not differentiable (contradiction with hd)
             exfalso
-            sorry  -- fdBoundaryToPolygonHomotopy not diff at t=1
+            subst h1'
+            exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s 1 (by simp) hd
           · -- t ∈ (1, 2), use seg2_deriv_bound
             have ht2' : t ∈ Ioo 1 2 := ⟨lt_of_le_of_ne (not_lt.mp h1) (Ne.symm h1'), h2⟩
             -- Rewrite to segment 2 formula using EventuallyEq
@@ -3088,9 +3811,98 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
             exact fdBoundaryToPolygonHomotopy_seg2_deriv_bound t ht2' s hs
         · by_cases h3 : t < 3
           · -- Segment 3: t ∈ [2, 3)
+            -- Note: by the definition, t=2 is in seg2 (since 2 ≤ 2), but t > 2 is in seg3.
+            -- For the case t ≥ 2 and t < 3, we split further.
+            have ht2_ge : t ≥ 2 := not_lt.mp h2
             by_cases h2' : t = 2
-            · exfalso; sorry  -- Not diff at t=2
-            · have ht3' : t ∈ Ioo 2 3 := ⟨lt_of_le_of_ne (not_lt.mp h2) (Ne.symm h2'), h3⟩
+            · -- At t = 2, the definition uses seg2 formula (since 2 ≤ 2)
+              subst h2'
+              -- Key insight: the function is only differentiable at t=2 when s=0.
+              -- For s≠0, the left and right derivatives differ (chord terms have opposite directions).
+              -- Since we have hd : DifferentiableAt, we can case split on s.
+              by_cases hs0 : s = 0
+              · -- s = 0: pure arc formula, smooth everywhere
+                -- fdBoundaryToPolygonHomotopy (t, 0) = 1 • exp(θ(t)*I) + 0 • chord = exp(θ(t)*I)
+                -- This is smooth, and deriv at t=2 is (π/6)*I*exp(π/2*I) = (π/6)*I*I = -(π/6)
+                subst hs0
+                have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', 0)) =ᶠ[𝓝 2]
+                    (fun t' : ℝ => Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I)) := by
+                  filter_upwards [eventually_gt_nhds (by norm_num : (1:ℝ) < 2),
+                                  eventually_lt_nhds (by norm_num : (2:ℝ) < 3)] with t' ht1' ht2'
+                  simp only [fdBoundaryToPolygonHomotopy]
+                  by_cases ht'_le2 : t' ≤ 2
+                  · -- seg2: (1-0)*arc + 0*chord = arc
+                    simp only [not_le.mpr ht1', ht'_le2, ite_false, ite_true, zero_smul, add_zero,
+                               sub_zero, one_smul]
+                    congr 1; ring
+                  · -- seg3: (1-0)*arc + 0*chord = arc, but with different angle formula
+                    -- seg2: π/3 + (t'-1)*(π/2 - π/3) = π/3 + (t'-1)*π/6
+                    -- seg3: π/2 + (t'-2)*(2π/3 - π/2) = π/2 + (t'-2)*π/6
+                    -- General: seg2 = π/3 + t'*π/6 - π/6 = π/6 + t'*π/6
+                    --          seg3 = π/2 + t'*π/6 - π/3 = π/6 + t'*π/6. They match!
+                    simp only [not_le.mpr ht1', not_le.mpr (lt_of_not_ge ht'_le2),
+                               le_of_lt ht2', ite_false, ite_true, zero_smul, add_zero,
+                               sub_zero, one_smul]
+                    congr 1
+                    push_cast
+                    ring
+                rw [heq.deriv_eq]
+                -- deriv exp((π/3 + (t-1)*π/6)*I) at t=2 = (π/6)*I*exp(π/2*I)
+                -- At t=2: θ = π/3 + 1*π/6 = π/2, so exp(θ*I) = I
+                -- deriv = (π/6)*I*I = -(π/6), with norm π/6 < 1 < 5
+                have h_deriv : HasDerivAt (fun t' : ℝ => Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I))
+                    ((Real.pi / 6) * I * Complex.exp ((Real.pi / 2) * I)) 2 := by
+                  have h_ofReal : HasDerivAt (fun t' : ℝ => (t' : ℂ)) 1 2 := Complex.ofRealCLM.hasDerivAt
+                  have h_inner : HasDerivAt (fun t' : ℝ => (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
+                      ((Real.pi : ℂ) / 6) 2 := by
+                    have h_shift : HasDerivAt (fun t' : ℝ => (t' : ℂ) - 1) 1 2 := h_ofReal.sub_const 1
+                    have h_mul : HasDerivAt (fun t' : ℝ => ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) ((Real.pi : ℂ) / 6) 2 := by
+                      have := h_shift.mul_const ((Real.pi : ℂ) / 6); simp only [one_mul] at this; exact this
+                    have := h_mul.const_add ((Real.pi : ℂ) / 3); simp only at this; exact this
+                  have h_times_I : HasDerivAt (fun t' : ℝ => ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
+                      (((Real.pi : ℂ) / 6) * I) 2 := h_inner.mul_const I
+                  -- At t=2, the inner function equals (π/3 + 1*π/6)*I = (π/2)*I
+                  have h_at_2 : ((Real.pi : ℂ) / 3 + ((2 : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I = (Real.pi / 2) * I := by
+                    push_cast; ring
+                  have h_exp := Complex.hasDerivAt_exp (((Real.pi : ℂ) / 3 + ((2 : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
+                  have h_comp := h_exp.comp 2 h_times_I
+                  simp only [mul_comm (Complex.exp _)] at h_comp
+                  convert h_comp using 2
+                  rw [h_at_2]
+                rw [h_deriv.deriv]
+                -- ‖(π/6)*I*exp(π/2*I)‖ = (π/6)*‖I‖*‖exp(π/2*I)‖ = (π/6)*1*1 = π/6 < 1 < 5
+                calc ‖(Real.pi / 6) * I * Complex.exp ((Real.pi / 2) * I)‖
+                    = ‖(Real.pi / 6 : ℂ)‖ * ‖I‖ * ‖Complex.exp ((Real.pi / 2) * I)‖ := by
+                      rw [norm_mul, norm_mul]
+                  _ = (Real.pi / 6) * 1 * 1 := by
+                      have h1 : ‖(Real.pi / 6 : ℂ)‖ = Real.pi / 6 := by
+                        have hpi : ‖(Real.pi : ℂ)‖ = Real.pi := by
+                          rw [Complex.norm_real]; exact abs_of_pos Real.pi_pos
+                        have h6 : ‖(6 : ℂ)‖ = 6 := by norm_num
+                        rw [norm_div, hpi, h6]
+                      have h2 : ‖(I : ℂ)‖ = 1 := Complex.norm_I
+                      have h3 : ‖Complex.exp ((Real.pi / 2) * I)‖ = 1 := by
+                        have : ((Real.pi / 2) * I : ℂ) = (Real.pi / 2 : ℝ) * I := by push_cast; ring
+                        rw [this, Complex.norm_exp_ofReal_mul_I]
+                      rw [h1, h2, h3]
+                  _ = Real.pi / 6 := by ring
+                  _ ≤ 1 := by have := Real.pi_le_four; linarith
+                  _ ≤ 5 := by norm_num
+              · -- s ≠ 0: The function is NOT differentiable at t=2 (contradiction with hd)
+                -- This is because the left derivative (from seg2) and right derivative (from seg3)
+                -- have different chord terms: s*(i_point - rho') vs s*(rho - i_point).
+                -- Since i_point - rho' ≠ rho - i_point (they differ by 2*i_point - rho' - rho = 2I - 1 ≠ 0),
+                -- the derivatives differ for s ≠ 0.
+                exfalso
+                -- We show the function is not differentiable at t=2 when s ≠ 0
+                apply hs0
+                -- Actually, proving this rigorously requires showing the one-sided derivatives differ.
+                -- For now, we use the fact that the bound still holds.
+                -- The derivative (if it existed) would be bounded by the same calculation as seg2/seg3.
+                -- Since we're in the hd=true case but claimed s≠0 leads to ¬hd, we have a contradiction.
+                -- This requires showing that for s≠0, the function is not differentiable at t=2.
+                sorry  -- Technical: showing left/right derivatives differ for s≠0
+            · have ht3' : t ∈ Ioo 2 3 := ⟨lt_of_le_of_ne ht2_ge (Ne.symm h2'), h3⟩
               -- Rewrite to segment 3 formula using EventuallyEq
               have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
                   (fun t' : ℝ =>
@@ -3105,13 +3917,43 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
               exact fdBoundaryToPolygonHomotopy_seg3_deriv_bound t ht3' s hs
           · by_cases h4 : t < 4
             · -- Segment 4: t ∈ [3, 4)
-              -- Formula: -1/2 + (√3/2 + (t-3)*(H_height - √3/2)) * I
-              -- deriv = (H_height - √3/2) * I = 1 * I = I, ‖I‖ = 1 ≤ 5
-              sorry  -- Technical: vertical line deriv computation, ‖I‖ = 1 ≤ 5
+              by_cases h3' : t = 3
+              · -- At t = 3, not differentiable (contradiction with hd)
+                exfalso
+                subst h3'
+                exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s 3 (by simp) hd
+              · -- t ∈ (3, 4), use norm_deriv_H_seg4_le
+                have ht4' : t ∈ Ioo 3 4 := ⟨lt_of_le_of_ne (not_lt.mp h3) (Ne.symm h3'), h4⟩
+                have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
+                    (fun t' : ℝ => (-1/2 : ℂ) + ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) * ((H_height : ℂ) - Real.sqrt 3 / 2)) * I) := by
+                  filter_upwards [eventually_gt_nhds ht4'.1, eventually_lt_nhds ht4'.2] with t' ht3' ht4''
+                  simp only [fdBoundaryToPolygonHomotopy]
+                  have h1' : ¬(t' ≤ 1) := not_le.mpr (by linarith : 1 < t')
+                  have h2' : ¬(t' ≤ 2) := not_le.mpr (by linarith : 2 < t')
+                  have h3'' : ¬(t' ≤ 3) := not_le.mpr ht3'
+                  have h4''' : t' ≤ 4 := le_of_lt ht4''
+                  simp only [h1', h2', h3'', h4''', ite_false, ite_true]
+                rw [heq.deriv_eq]
+                exact norm_deriv_H_seg4_le t s
             · -- Segment 5: t ∈ [4, 5]
-              -- Formula: (t - 9/2) + H_height * I
-              -- deriv = 1, ‖1‖ = 1 ≤ 5
-              sorry  -- Technical: horizontal line deriv computation, ‖1‖ = 1 ≤ 5
+              by_cases h4' : t = 4
+              · -- At t = 4, not differentiable (contradiction with hd)
+                exfalso
+                subst h4'
+                exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s 4 (by simp) hd
+              · -- t ∈ (4, 5], use norm_deriv_H_seg5_le
+                have ht5' : t > 4 := lt_of_le_of_ne (not_lt.mp h4) (Ne.symm h4')
+                have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
+                    (fun t' : ℝ => ((↑t' : ℂ) - 9/2) + (H_height : ℂ) * I) := by
+                  filter_upwards [eventually_gt_nhds ht5'] with t' ht4'
+                  simp only [fdBoundaryToPolygonHomotopy]
+                  have h1' : ¬(t' ≤ 1) := not_le.mpr (by linarith : 1 < t')
+                  have h2' : ¬(t' ≤ 2) := not_le.mpr (by linarith : 2 < t')
+                  have h3' : ¬(t' ≤ 3) := not_le.mpr (by linarith : 3 < t')
+                  have h4'' : ¬(t' ≤ 4) := not_le.mpr ht4'
+                  simp only [h1', h2', h3', h4'', ite_false]
+                rw [heq.deriv_eq]
+                exact norm_deriv_H_seg5_le t s
     · simp only [deriv_zero_of_not_differentiableAt hd, norm_zero]
       norm_num
 
