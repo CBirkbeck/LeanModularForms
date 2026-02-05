@@ -2492,33 +2492,27 @@ lemma singular_annulus_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {ε₁ ε₂ δ
       4 / ‖L‖ * ε₁ := by
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hab : a < b := (Set.mem_Ioo.mp _hat₀).1.trans_le (le_of_lt (Set.mem_Ioo.mp _hat₀).2)
-  -- Step 1: Map γ-annulus to t-bounds
-  -- From h_lower + localize: |t-t₀| ≤ 2ε₁/‖L‖ on γ-annulus
-  -- From h_upper + ε₂ < ‖γ‖: |t-t₀| > ε₂/(2‖L‖) on γ-annulus
-  let c₁ := ε₂ / (2 * ‖L‖)  -- inner t-radius bound
-  let c₂ := 2 * ε₁ / ‖L‖     -- outer t-radius bound
-  have hc₁_pos : 0 < c₁ := by simp only [c₁]; positivity
-  have hc₂_pos : 0 < c₂ := by simp only [c₂]; positivity
-  have hc₁_le_c₂ : c₁ ≤ c₂ := by
-    simp only [c₁, c₂]
-    have h1 : ε₂ / (2 * ‖L‖) ≤ ε₁ / (2 * ‖L‖) := by
-      apply div_le_div_of_nonneg_right hε₂_le; positivity
-    have h2 : ε₁ / (2 * ‖L‖) ≤ 2 * ε₁ / ‖L‖ := by
-      rw [div_le_div_iff₀ (by positivity : 0 < 2 * ‖L‖) hL_norm_pos]
-      ring_nf; nlinarith [hε₁_pos, hL_norm_pos]
-    exact le_trans h1 h2
-  -- Step 2: Symmetric cancellation setup
-  -- ∫_{c₁ < |t-t₀| ≤ c₂} (t-t₀)⁻¹ = 0 by pv_singular_cancels
-  -- Step 3: The γ-annulus is contained in the symmetric t-annulus
-  -- Step 4: Bound the integral directly (using the measure bound)
-  -- Note: Full proof requires showing γ-annulus ≈ symmetric, then bounding error
-  -- For now, use a direct measure × sup bound as a placeholder
+  -- Define the tight linear-model annulus (radii ε₂/‖L‖ and ε₁/‖L‖)
+  let γAnn := {t : ℝ | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+  let tAnnLin := {t : ℝ | ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}
+  -- Equivalently: {t | ε₂/‖L‖ < |t - t₀| ≤ ε₁/‖L‖}
+  -- Step 1: Symmetric integral over tAnnLin cancels
+  -- ∫_{tAnnLin} (t-t₀)⁻¹ = 0 by symmetry (function is odd about t₀, set is symmetric)
+  -- Step 2: γAnn differs from tAnnLin by symmDiff of measure O(ε₁²/‖L‖²)
+  -- From annulus_symmDiff_measure_bound (uses C² control)
+  -- Step 3: Bound integral over γAnn by:
+  -- |∫_{γAnn}| = |∫_{tAnnLin} + ∫_{γAnn \ tAnnLin} - ∫_{tAnnLin \ γAnn}|
+  --            = |0 + (integral over symmDiff)|
+  --            ≤ measure(symmDiff) × sup|1/(t-t₀)|
+  -- Step 4: sup bound: On γAnn ∪ tAnnLin, |t-t₀| ≥ ε₂/‖L‖, so sup ≤ ‖L‖/ε₂
+  -- With h_ratio: ε₂ ≥ ε₁/2, so sup ≤ 2‖L‖/ε₁
+  -- Step 5: Total: K*(ε₁²/‖L‖²) × (2‖L‖/ε₁) = 2K*ε₁/‖L‖ ≤ 4/‖L‖*ε₁ for suitable K
   calc ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖
       ≤ 4 / ‖L‖ * ε₁ := by
-        -- The full proof uses:
-        -- 1. integral_inv_symm for cancellation
-        -- 2. Thin shell argument for the error
-        -- 3. Measure bound for the γ-annulus
+        -- Proof uses:
+        -- 1. Symmetric cancellation on tAnnLin
+        -- 2. annulus_symmDiff_measure_bound for measure bound
+        -- 3. sup bound from h_ratio
         sorry
 
 /-- **Step bound for ratio ≤ 2**: For cutoffs with ratio ≤ 2, the integral difference
