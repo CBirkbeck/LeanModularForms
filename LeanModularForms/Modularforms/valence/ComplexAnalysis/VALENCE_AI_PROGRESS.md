@@ -692,11 +692,58 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ## Ticket B – PV Infrastructure
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-05 (session 35)
+**Last update:** 2026-02-05 (session 36)
 
-**Status:** IN-PROGRESS (**~18 declarations with sorries** - statements FIXED per coordinator feedback)
+**Status:** IN-PROGRESS (**~30 sorries** - micro-lemma structure complete, proof structure done)
 
-**Session 35 progress (2026-02-05):**
+**Session 36 progress (2026-02-05):**
+
+- **Files touched:** `ValenceFormula_PV.lean`, `VALENCE_AI_PROGRESS.md`
+- **Build:** SUCCESS
+- **Sorry count:** 30 (increased due to micro-lemma sorries, but main proof structure complete)
+
+**MICRO-LEMMA CHAIN IMPLEMENTED for `pv_step_bound_ratio_two`:**
+
+1. **`annulus_implies_t_local` (fully proven):**
+   - Lemma (B): Points in γ-annulus lie in local zone
+   - Uses h_localize directly to get |t-t₀| < min δ₀ δ₁
+
+2. **`annulus_t_measure_bound` (fully proven):**
+   - Lemma (C): |t-t₀| ≤ 2ε₁/‖L‖ for points in γ-annulus
+   - Uses `t_bound_from_gamma_annulus` helper
+
+3. **`remainder_integral_bound_on_annulus` (sorry):**
+   - Lemma (E): ‖∫ r‖ ≤ max 0 C * (4ε₁/‖L‖)
+   - Proof outline: hr_bounded gives ‖r‖ ≤ C, t-measure ≤ 4ε₁/‖L‖
+
+4. **`singular_annulus_bound` (sorry):**
+   - Lemma (F): ‖∫ (t-t₀)⁻¹‖ ≤ 4/‖L‖ * ε₁
+   - Proof outline: approximate symmetry, error O(ε₁)
+
+**MAIN PROOF STRUCTURE COMPLETE:**
+
+`pv_step_bound_ratio_two` now has full proof structure:
+```lean
+calc ‖I ε₂ - I ε₁‖
+    = ‖∫ annulus (singular + remainder)‖       -- h_diff, h_annulus_split
+    ≤ ‖∫ singular‖ + ‖∫ remainder‖            -- norm_add_le
+    ≤ 4/‖L‖ * ε₁ + max 0 C * 4ε₁/‖L‖          -- micro-lemmas E, F
+    = (4 * max 0 C + 4)/‖L‖ * ε₁               -- algebra
+    = K * ε₁                                   -- definition of K
+```
+
+**Sorries in step bound chain:**
+| Line | Lemma | Status |
+|------|-------|--------|
+| 2279 | `remainder_integral_bound_on_annulus` | micro-lemma (E) |
+| 2295 | `singular_annulus_bound` | micro-lemma (F) |
+| 2361 | `h_annulus_split` | integral additivity (measurability) |
+
+**Technical fix:** Added parentheses around if-then-else in interval integrals to fix parsing issues.
+
+---
+
+**Session 35 progress (2026-02-05) [PREVIOUS]:**
 
 - **Files touched:** `ValenceFormula_PV.lean`, `VALENCE_AI_PROGRESS.md`
 - **Build:** SUCCESS
