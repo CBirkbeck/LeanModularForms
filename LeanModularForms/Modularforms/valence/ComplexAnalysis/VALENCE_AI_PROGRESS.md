@@ -17,15 +17,19 @@ Each AI must update this file when returning results.
 **Last update:** 2026-02-05 (session 32)
 **Status:** IN-PROGRESS - **WRAP COUNT PROVEN** ✓ - Rect_Homotopy has sorries only in angle homotopy conditions
 
-### Session 32 Progress (2026-02-05)
+### Session 32 Progress (2026-02-05, continued)
 
-**Commit:** (pending)
+**Commits:** cf2e52f, fb86fe1
 **Files touched:**
-- `ValenceFormula_Rect_Homotopy.lean` - COMPLETED wrap-count proof via lifted angle approach
+- `ValenceFormula_Rect_Homotopy.lean` - wrap-count proof + angle homotopy lemma
 
 **Build:** Compiles successfully (warnings only)
+**Sorry count:** 13 remaining
 
-**Key accomplishment: WRAP-COUNT LEMMA PROVEN** ✓
+**Key accomplishments:**
+
+1. **WRAP-COUNT LEMMA PROVEN** ✓
+2. **`angleHomotopyAdjusted_at_s_zero` PROVEN** ✓ - uses `Complex.norm_mul_exp_arg_mul_I`
 
 **Branch cut analysis lemmas (all PROVEN):**
 1. `tL` - algebraic definition of branch-cut time (no IVT)
@@ -54,10 +58,19 @@ Each AI must update this file when returning results.
 **Key insight:** The raw `Complex.arg` returns values in (-π, π], so `angle(5) = angle(0)` for a closed curve.
 The lifted angle explicitly subtracts 2π after crossing tL, making the total change -2π provable.
 
-**Remaining sorries:** Technical lemmas in angleHomotopyAdjusted conditions (continuity, closedness, etc.)
-These are secondary - the key mathematical content (wrap count) is now proven.
+**KNOWN ISSUE: angleHomotopyAdjusted closedness**
+The current `angleHomotopyAdjusted` uses `fdPolygonRadialCircle_angle` (raw arg) which is periodic.
+For the homotopy to be closed at intermediate s ∈ (0, 1), we need BOTH angle functions to wrap by -2π.
+Current definition: θ₁(5) = θ₁(0) (periodic), θ₂(5) = θ₂(0) - 2π
+This means exponents differ by 2πs, not 2πn, so exp values differ for non-integer s!
 
-**Blockers:** None for wrap count. Remaining work is proving homotopy conditions use the lifted angle.
+**FIX NEEDED:** Change `angleHomotopyAdjusted` to use `fdPolygonRadialCircle_angle_lifted` instead.
+This requires adding `hp_im_pos : 0 < p.im` hypothesis (needed for `tL` definition).
+
+**Remaining sorries (13):** Mostly technical continuity/differentiability in angle homotopy.
+Main mathematical content (wrap count) is proven.
+
+**Blockers:** `angleHomotopyAdjusted_closed` needs definition change (see issue above).
 
 ---
 
