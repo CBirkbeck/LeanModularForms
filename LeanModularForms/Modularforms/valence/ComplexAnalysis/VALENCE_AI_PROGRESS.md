@@ -14,9 +14,105 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 38)
+**Last update:** 2026-02-05 (session 40)
 **Target:** `generalizedWindingNumber' fdBoundary 0 5 p = -1` (CLOCKWISE orientation)
-**Status:** IN-PROGRESS - 12 sorries remaining - wrap-count NOT yet proven
+**Status:** IN-PROGRESS - 15 sorries remaining
+
+### Session 40 Progress (2026-02-05, partition non-diff fix + t=2 handling)
+
+**Reviewer feedback addressed:**
+- Fixed `fdBoundaryToPolygonHomotopy_not_diffAt_partition` → renamed to `fdBoundaryToPolygonHomotopy_not_diffAt_134`
+- Removed t=2 from non-differentiability claim (at s=0, function IS differentiable at t=2)
+- Added separate handling for t=2 case in hH1_bound
+
+**Fresh `rg -n "\\bsorry\\b"` output:**
+```
+1392:    sorry -- Technical: slope mismatch argument via tendsto_nhds_unique
+1776:  sorry -- Technical: composition of differentiable functions
+1786:  sorry -- Technical: continuity of derivative formula
+1797:  sorry -- Technical: explicit bound computation
+2269:  sorry -- Technical: mod 2π arithmetic
+2294:  sorry -- Technical: continuity of angle functions
+2308:  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction vector
+2331:  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1
+2388:  sorry -- Technical: differentiability of angle interpolation
+2398:  sorry -- Technical: continuity of derivative
+2405:  sorry -- Technical: bounded derivative on compact domain
+2962:  · sorry  -- Technical: real-part mismatch at t=1
+2964:  · sorry  -- Technical: real-part mismatch at t=3
+2966:  · sorry  -- Technical: I ≠ 1 at t=4
+3124:    sorry -- Technical: segment dispatch + derivative formula continuity
+3191:              sorry  -- Direct derivative bound at t=2 (seg2 formula endpoint)
+```
+
+**Sorry breakdown:**
+- `fdPolygon_not_differentiableAt_partition` (1392): 1 sorry
+- Radial homotopy (1776, 1786, 1797): 3 sorries
+- Angle homotopy (2269, 2294, 2308, 2331, 2388, 2398, 2405): 7 sorries
+- `fdBoundaryToPolygonHomotopy_not_diffAt_134` (2962, 2964, 2966): 3 sorries
+- `hH1_deriv_cont` (3124): 1 sorry
+- t=2 derivative bound (3191): 1 sorry (NEW)
+
+**Next priorities:**
+1. Fill `hH1_deriv_cont` (segment dispatch for derivative continuity)
+2. Fill t=2 derivative bound at seg2 endpoint
+3. Continue with hhom₂ (radial) and hhom₃ (angle) sorries
+
+---
+
+### Session 39 Progress (2026-02-05, segments 1,4,5 derivative bounds + partition non-diff)
+
+**Actions taken this session:**
+1. **Added micro-lemmas for segments 1, 4, 5 derivative bounds:**
+   - `norm_deriv_H_seg1_le`: segment 1 deriv = -I, ‖-I‖ = 1 ≤ 5
+   - `norm_deriv_H_seg4_le`: segment 4 deriv = I, ‖I‖ = 1 ≤ 5
+   - `norm_deriv_H_seg5_le`: segment 5 deriv = 1, ‖1‖ = 1 ≤ 5
+2. **Filled hH1_bound segment 1 sorry** (line ~3139):
+   - Used EventuallyEq pattern with `eventually_lt_nhds h1`
+   - Applied `norm_deriv_H_seg1_le t s`
+3. **Filled hH1_bound segments 4 and 5:**
+   - Added proper case splits for t=3 and t=4 (partition points)
+   - Used EventuallyEq with `eventually_gt_nhds` + `eventually_lt_nhds`
+   - Applied `norm_deriv_H_seg4_le` and `norm_deriv_H_seg5_le`
+4. **Created consolidated helper lemma `fdBoundaryToPolygonHomotopy_not_diffAt_partition`:**
+   - Proves `¬DifferentiableAt` at k ∈ {1, 2, 3, 4} for any s
+   - All four exfalso cases (t=1, 2, 3, 4) now use this single lemma
+   - Mathematical content documented: left/right derivatives differ at partition points
+
+**Sorry count: 13 remaining (reduced from 16 by consolidation)**
+
+**Current sorry list:**
+```
+Line 1392: fdPolygon_not_differentiableAt_partition
+Line 1776: polygonToCircleRadial_differentiable_off_partition
+Line 1786: polygonToCircleRadial_deriv_cont_on_piece
+Line 1797: polygonToCircleRadial_deriv_bounded
+Line 2269: angle_alignment_at_zero
+Line 2294: angleHomotopyAdjusted_continuous
+Line 2308: angleHomotopyAdjusted_at_s_zero
+Line 2331: angleHomotopyAdjusted_at_s_one_winding
+Line 2388: angleHomotopyAdjusted_differentiable_off_partition
+Line 2398: angleHomotopyAdjusted_deriv_cont_on_piece
+Line 2405: angleHomotopyAdjusted_deriv_bounded
+Line 2966: fdBoundaryToPolygonHomotopy_not_diffAt_partition (4 cases in one sorry)
+Line 3124: hH1_deriv_cont (segment dispatch)
+```
+
+**Key achievements:**
+- hH1_bound segments 1, 4, 5 now have complete EventuallyEq + deriv bound proofs ✓
+- Partition point non-differentiability consolidated into single lemma ✓
+- All segments in hH1_bound now properly dispatch to their respective formulas ✓
+
+**Remaining blockers:**
+1. `fdBoundaryToPolygonHomotopy_not_diffAt_partition` - needs formal proof of left/right derivative mismatch
+2. `hH1_deriv_cont` - segment dispatch for derivative continuity
+
+**Next session priorities:**
+1. Fill `hH1_deriv_cont` (should follow similar EventuallyEq pattern)
+2. Consider if partition non-diff proof can be completed (uses HasDerivWithinAt uniqueness)
+3. Continue wrap-count path (hhom₃)
+
+---
 
 ### Session 38 Progress (2026-02-05, derivative bound proofs COMPLETE)
 
@@ -918,9 +1014,57 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ## Ticket B – PV Infrastructure
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-05 (session 38)
+**Last update:** 2026-02-05 (session 41)
 
-**Status:** IN-PROGRESS (**32 sorries** - h_annulus_split DONE, K constant verified, remainder/singular structures with documented blockers)
+**Status:** IN-PROGRESS (**35 sorries** - annulus_symmDiff_measure_bound structure complete)
+
+### Session 41 Progress (2026-02-05, annulus_symmDiff_measure_bound)
+
+**Context:** Continued from summary - working on `annulus_symmDiff_measure_bound` micro-lemma (5).
+
+**MAJOR CHANGES:**
+
+1. **Fixed δ localization issue:**
+   - Original δ = δ₀ didn't ensure tAnnLin points have |t - t₀| < δ₀ when ‖L‖ < 1
+   - New δ = ‖L‖ * δ₁ / 2 where δ₁ = min(δ₀, ‖L‖/(2K₀))
+   - Added `h_lower_bound` lemma for ‖γ t - γ t₀‖ ≥ ‖L‖/2 * |t - t₀|
+   - Added `h_localize_γAnn` and `h_localize_tAnnLin` localization proofs
+
+2. **Fixed R_max definition:**
+   - Original R_max = ε₁/‖L‖ didn't cover γAnn points (which have |t-t₀| up to 2ε₁/‖L‖)
+   - New R_max = 2 * ε₁ / ‖L‖ covers both cases
+   - Updated hR_bound proof for both γAnn and tAnnLin cases
+
+3. **Corrected measure bound order:**
+   - **IMPORTANT:** The lemma bound was O(ε₁²/‖L‖²) but actual bound is O(ε₁²/‖L‖³)
+   - Changed statement from `K * ε₁^2 / ‖L‖^2` to `K * ε₁^2 / ‖L‖^3`
+   - This affects downstream lemmas like `singular_annulus_bound`
+
+4. **Completed h_subset proof:**
+   - Pointwise→set: symmDiff ⊆ shell₁ ∪ shell₂
+   - Uses `norm_linear_approx_bound` and `symmDiff_subset_boundaryLayers`
+   - Fixed shell labeling (h_near₂ → shell₂, h_near₁ → shell₁)
+
+5. **Added measure calculation structure:**
+   - `h_shell₁_vol` and `h_shell₂_vol`: volume ≤ 4Δ/‖L‖ each (sorry)
+   - `h_total_vol`: volume(shell₁ ∪ shell₂) ≤ 8Δ/‖L‖
+   - Final calc: 8Δ/‖L‖ = 32K₀ε₁²/‖L‖³
+
+**REMAINING SORRIES in annulus_symmDiff_measure_bound:**
+- `h_localize_γAnn` (line 2633): continuity argument for localization
+- `h_shell₁_vol` (line 2730): tedious measure calculation
+- `h_shell₂_vol` (line 2733): similar to shell₁
+
+**MATHEMATICAL ISSUE IDENTIFIED:**
+The corrected measure bound O(ε₁²/‖L‖³) combined with sup bound O(‖L‖/ε₁) gives:
+- Integral bound: O(ε₁/‖L‖²) instead of claimed O(ε₁/‖L‖)
+- `singular_annulus_bound` may need adjustment
+
+**Build:** SUCCESS (warnings only)
+**Sorry count:** 35
+
+---
+
 
 **Session 37 progress (2026-02-05):**
 
@@ -2630,3 +2774,42 @@ tAnnLin = {t | ε₂ < ‖L‖ * |t - t₀| ≤ ε₁}  (tight annulus)
    - Turn |‖L‖r - ε| ≤ K₀r² into r-shell with constant thickness
 
 3. Combine with `volume_shell_le` to complete `annulus_symmDiff_measure_bound`
+
+---
+
+## Session 39 final - Micro-lemmas (2), (3a), (3b) complete
+
+**Date:** 2026-02-05
+**Commits:** 871343e, c6b789b, 3e58286
+
+### Micro-Lemma Status (Updated)
+
+| # | Name | Status | Lines |
+|---|------|--------|-------|
+| 1 | `norm_linear_approx_bound` | ✓ DONE | ~2389 |
+| 2 | `symmDiff_subset_boundaryLayers` | ✓ DONE | ~2428 |
+| 3a | `tAnnLin_implies_r_le` | ✓ DONE | ~2491 |
+| 3b | `near_threshold_implies_r_in_shell` | ✓ DONE | ~2497 |
+| 4 | `volume_shell_le` | ✓ DONE | ~2399 |
+| 5 | Combine in `annulus_symmDiff_measure_bound` | TODO (setup done) | ~2546 |
+
+### What (5) Needs
+
+The proof setup is in place with:
+- Key constants: `R_max`, `Δ`, shell bounds
+- Shell width computation
+
+Remaining steps:
+1. Prove `symmDiff ⊆ shell₁ ∪ shell₂`:
+   - For t ∈ symmDiff, apply `norm_linear_approx_bound`
+   - Apply `symmDiff_subset_boundaryLayers` to get `|x - ε| ≤ K₀*r²`
+   - Apply `near_threshold_implies_r_in_shell` to get shell membership
+2. `volume(symmDiff) ≤ volume(shell₁ ∪ shell₂)` by `measure_mono`
+3. `≤ volume(shell₁) + volume(shell₂)` by `measure_union_le`
+4. `≤ 8*K₀*ε₁²/‖L‖²` by `volume_shell_le`
+
+### Remaining Sorries
+
+- `annulus_symmDiff_measure_bound` - needs (5) complete
+- `singular_annulus_bound` - needs measure bound
+- `remainder_integral_bound_on_annulus` - measure theory conversion

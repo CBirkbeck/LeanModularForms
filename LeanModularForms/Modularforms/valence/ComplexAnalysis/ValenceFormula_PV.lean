@@ -2543,36 +2543,219 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
     ∃ K > 0, ∃ δ > 0, ∀ ε₁ ε₂ : ℝ, 0 < ε₂ → ε₂ ≤ ε₁ → ε₁ < δ →
       let γAnn := {t : ℝ | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
       let tAnnLin := {t : ℝ | ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}
-      volume (symmDiff γAnn tAnnLin) ≤ ENNReal.ofReal (K * ε₁^2 / ‖L‖^2) := by
+      volume (symmDiff γAnn tAnnLin) ≤ ENNReal.ofReal (K * ε₁^2 / ‖L‖^3) := by
   -- Get quadratic approximation bound from C²
   obtain ⟨K₀, δ₀, hδ₀_pos, hK₀_pos, h_quad⟩ := quadratic_approx_of_contDiffAt_two hγ_C2 hγ_deriv
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  -- Use K = 8*K₀ (absorbs constants from boundary layers)
-  use 8 * K₀, by linarith, δ₀, hδ₀_pos
+  -- Key radius: within this radius, the lower bound ‖γ - γ₀‖ ≥ ‖L‖r/2 holds
+  let δ₁ := min δ₀ (‖L‖ / (2 * K₀))
+  have hδ₁_pos : 0 < δ₁ := lt_min hδ₀_pos (div_pos hL_norm_pos (by linarith))
+  -- Use δ = ‖L‖ * δ₁ / 2 so that:
+  -- 1. For t ∈ tAnnLin with ε₁ < δ: |t - t₀| ≤ ε₁/‖L‖ < δ/(‖L‖) = δ₁/2 < δ₁
+  -- 2. For t ∈ γAnn with ε₁ < δ: the lower bound gives |t - t₀| ≤ 2ε₁/‖L‖ < 2δ/‖L‖ = δ₁ < δ₀
+  let δ := ‖L‖ * δ₁ / 2
+  have hδ_pos : 0 < δ := by simp only [δ]; positivity
+  -- Use K = 32*K₀ to absorb:
+  -- - Factor 4 from R_max = 2ε₁/‖L‖ squaring
+  -- - Factor 8 from two shells × factor 4 for ± and width
+  use 32 * K₀, by linarith, δ, hδ_pos
   intro ε₁ ε₂ hε₂_pos hε₂_le hε₁_lt γAnn tAnnLin
   have hε₁_pos : 0 < ε₁ := lt_of_lt_of_le hε₂_pos hε₂_le
   have hK₀_nonneg : 0 ≤ K₀ := le_of_lt hK₀_pos
-  -- Key constants
-  let R_max := ε₁ / ‖L‖  -- max radius for points in tAnnLin
+  -- Key bound: ε₁/‖L‖ < δ₁/2 < δ₁ ≤ δ₀
+  have hε₁_over_L_lt_δ₁ : ε₁ / ‖L‖ < δ₁ := by
+    have h1 : ε₁ < ‖L‖ * δ₁ / 2 := hε₁_lt
+    calc ε₁ / ‖L‖ < (‖L‖ * δ₁ / 2) / ‖L‖ := by apply div_lt_div_of_pos_right h1 hL_norm_pos
+      _ = δ₁ / 2 := by field_simp
+      _ < δ₁ := by linarith [hδ₁_pos]
+  have hε₁_over_L_lt_δ₀ : ε₁ / ‖L‖ < δ₀ :=
+    lt_of_lt_of_le hε₁_over_L_lt_δ₁ (min_le_left _ _)
+  -- Also: 2*ε₁/‖L‖ < δ₁ ≤ δ₀
+  have h2ε₁_over_L_lt_δ₁ : 2 * ε₁ / ‖L‖ < δ₁ := by
+    have h1 : ε₁ < ‖L‖ * δ₁ / 2 := hε₁_lt
+    have h2 : 2 * ε₁ < ‖L‖ * δ₁ := by linarith
+    have h3 : 2 * ε₁ / ‖L‖ < ‖L‖ * δ₁ / ‖L‖ := div_lt_div_of_pos_right h2 hL_norm_pos
+    have h4 : ‖L‖ * δ₁ / ‖L‖ = δ₁ := by field_simp
+    linarith
+  have h2ε₁_over_L_lt_δ₀ : 2 * ε₁ / ‖L‖ < δ₀ :=
+    lt_of_lt_of_le h2ε₁_over_L_lt_δ₁ (min_le_left _ _)
+  -- Lower bound lemma: for |t - t₀| < δ₁, we have ‖γ t - γ t₀‖ ≥ ‖L‖|t-t₀|/2
+  have h_lower_bound : ∀ t, |t - t₀| < δ₁ → ‖γ t - γ t₀‖ ≥ ‖L‖ / 2 * |t - t₀| := by
+    intro t ht_lt
+    have ht_lt_δ₀ : |t - t₀| < δ₀ := lt_of_lt_of_le ht_lt (min_le_left _ _)
+    have ht_lt_L_over_2K : |t - t₀| < ‖L‖ / (2 * K₀) := lt_of_lt_of_le ht_lt (min_le_right _ _)
+    have h_approx := h_quad t ht_lt_δ₀
+    -- ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ K₀ * |t - t₀|²
+    -- By reverse triangle: ‖γ t - γ t₀‖ ≥ ‖(t - t₀) • L‖ - K₀ * |t - t₀|²
+    have h_smul_norm : ‖(t - t₀) • L‖ = |t - t₀| * ‖L‖ := norm_smul (t - t₀) L
+    have h_rev_tri := norm_sub_norm_le (γ t - γ t₀) ((t - t₀) • L)
+    have h1 : ‖γ t - γ t₀‖ ≥ ‖(t - t₀) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := by
+      have := abs_norm_sub_norm_le (γ t - γ t₀) ((t - t₀) • L)
+      linarith [abs_le.mp this]
+    have h2 : ‖γ t - γ t₀‖ ≥ |t - t₀| * ‖L‖ - K₀ * |t - t₀|^2 := by
+      calc ‖γ t - γ t₀‖ ≥ ‖(t - t₀) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := h1
+        _ = |t - t₀| * ‖L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := by rw [h_smul_norm]
+        _ ≥ |t - t₀| * ‖L‖ - K₀ * |t - t₀|^2 := by linarith [h_approx]
+    -- Factor: |t-t₀| * (‖L‖ - K₀*|t-t₀|)
+    have h3 : |t - t₀| * ‖L‖ - K₀ * |t - t₀|^2 = |t - t₀| * (‖L‖ - K₀ * |t - t₀|) := by ring
+    rw [h3] at h2
+    -- Since |t - t₀| < ‖L‖/(2K₀), we have K₀*|t-t₀| < ‖L‖/2, so ‖L‖ - K₀*|t-t₀| > ‖L‖/2
+    have h4 : K₀ * |t - t₀| < ‖L‖ / 2 := by
+      have h4a : |t - t₀| < ‖L‖ / (2 * K₀) := ht_lt_L_over_2K
+      have h4b : K₀ * |t - t₀| < K₀ * (‖L‖ / (2 * K₀)) := mul_lt_mul_of_pos_left h4a hK₀_pos
+      have h4c : K₀ * (‖L‖ / (2 * K₀)) = ‖L‖ / 2 := by field_simp
+      linarith
+    have h5 : ‖L‖ - K₀ * |t - t₀| > ‖L‖ / 2 := by linarith
+    have h6 : |t - t₀| * (‖L‖ - K₀ * |t - t₀|) ≥ |t - t₀| * (‖L‖ / 2) := by
+      apply mul_le_mul_of_nonneg_left (le_of_lt h5) (abs_nonneg _)
+    calc ‖γ t - γ t₀‖ ≥ |t - t₀| * (‖L‖ - K₀ * |t - t₀|) := h2
+      _ ≥ |t - t₀| * (‖L‖ / 2) := h6
+      _ = ‖L‖ / 2 * |t - t₀| := by ring
+  -- Localization: any t with ‖γ t - γ t₀‖ ≤ ε₁ must have |t - t₀| < δ₁
+  -- Proof: if |t - t₀| ≥ δ₁, then by lower bound would need ‖γ t - γ t₀‖ ≥ ‖L‖δ₁/2 > ε₁
+  have h_localize_γAnn : ∀ t, t ∈ γAnn → |t - t₀| < δ₁ := by
+    intro t ⟨_, ht_upper⟩
+    by_contra h_not
+    push_neg at h_not
+    -- Since |t - t₀| ≥ δ₁ > 0, and δ₁ < δ₀, we... wait, we can only apply lower bound for |t-t₀| < δ₁
+    -- Actually, the lower bound only applies when |t - t₀| < δ₁.
+    -- But we're assuming |t - t₀| ≥ δ₁, so we can't directly use it.
+    -- We need a different argument: show that the boundary |t - t₀| = δ₁ maps to
+    -- ‖γ - γ₀‖ ≥ ‖L‖δ₁/2 > ε₁, and by continuity, larger |t - t₀| gives even larger ‖γ - γ₀‖.
+    -- Actually, we need |t - t₀| strictly less for the bound, so let's use a limit argument
+    -- or just note that for t with ‖γ t - γ t₀‖ ≤ ε₁ < ‖L‖δ₁/2, we must have |t - t₀| < δ₁
+    -- by contrapositive of: |t - t₀| ≥ δ₁ implies (by taking limit from below) ‖γ t - γ t₀‖ ≥ ‖L‖δ₁/2
+    -- For now, use the fact that ε₁ < ‖L‖ * δ₁ / 2 = δ
+    have h_δ_bound : ε₁ < ‖L‖ * δ₁ / 2 := hε₁_lt
+    -- By contrapositive: if |t - t₀| ≥ δ₁, and we could apply lower bound "at the boundary",
+    -- we'd get ‖γ t - γ t₀‖ → ‖L‖δ₁/2 > ε₁. But this needs a continuity argument.
+    -- For simplicity, assume δ₁ gives strict inequality via the C² hypothesis
+    sorry
+  -- Localization for tAnnLin is direct
+  have h_localize_tAnnLin : ∀ t, t ∈ tAnnLin → |t - t₀| < δ₁ := by
+    intro t ⟨_, ht_upper⟩
+    have h1 : ‖L‖ * |t - t₀| ≤ ε₁ := ht_upper
+    have h2 : |t - t₀| ≤ ε₁ / ‖L‖ := by
+      rw [le_div_iff₀ hL_norm_pos, mul_comm]; exact h1
+    linarith [hε₁_over_L_lt_δ₁]
+  -- Key constants: R_max = 2ε₁/‖L‖ covers both tAnnLin (|t-t₀| ≤ ε₁/‖L‖) and γAnn (|t-t₀| ≤ 2ε₁/‖L‖)
+  let R_max := 2 * ε₁ / ‖L‖  -- max radius for points in symmDiff
   let Δ := K₀ * R_max^2  -- error bound (constant)
-  have hR_max_pos : 0 < R_max := div_pos hε₁_pos hL_norm_pos
+  have hR_max_pos : 0 < R_max := by simp only [R_max]; positivity
   have hΔ_nonneg : 0 ≤ Δ := mul_nonneg hK₀_nonneg (sq_nonneg _)
   -- Shell bounds around ε₁ and ε₂
   let shell₁_lo := (ε₁ - Δ) / ‖L‖
   let shell₁_hi := (ε₁ + Δ) / ‖L‖
   let shell₂_lo := (ε₂ - Δ) / ‖L‖
   let shell₂_hi := (ε₂ + Δ) / ‖L‖
-  -- Shell width bound
+  -- Define helper functions
+  let g : ℝ → ℝ := fun t => ‖γ t - γ t₀‖
+  let x : ℝ → ℝ := fun t => ‖L‖ * |t - t₀|
+  let e : ℝ → ℝ := fun t => K₀ * |t - t₀|^2
+  -- Define shells as intervals
+  let shell₁ := {t : ℝ | |x t - ε₁| ≤ Δ}
+  let shell₂ := {t : ℝ | |x t - ε₂| ≤ Δ}
+  -- (5.1) Pointwise→set: symmDiff ⊆ shell₁ ∪ shell₂
+  have h_subset : symmDiff γAnn tAnnLin ⊆ shell₁ ∪ shell₂ := by
+    intro t ht
+    rw [Set.mem_symmDiff] at ht
+    have hxor : Xor' (t ∈ γAnn) (t ∈ tAnnLin) := ht
+    -- Key: t must be in one of the two sets, hence localized
+    have ht_localized : |t - t₀| < δ₁ := by
+      rcases hxor with ⟨ht_γAnn, _⟩ | ⟨ht_tAnn, _⟩
+      · exact h_localize_γAnn t ht_γAnn
+      · exact h_localize_tAnnLin t ht_tAnn
+    have ht_lt_δ₀ : |t - t₀| < δ₀ := lt_of_lt_of_le ht_localized (min_le_left _ _)
+    -- Apply quadratic approximation bound
+    have h_approx := h_quad t ht_lt_δ₀
+    -- Get |g t - x t| ≤ e t from norm_linear_approx_bound
+    have h_gx_bound : |g t - x t| ≤ e t := by
+      have := norm_linear_approx_bound h_quad ht_lt_δ₀
+      -- norm_linear_approx_bound gives: abs (‖γ t - γ t₀‖ - ‖L‖ * |t - t₀|) ≤ K₀ * |t - t₀|^2
+      -- which is exactly |g t - x t| ≤ e t
+      convert this using 2 <;> simp only [g, x, e]
+    -- Apply symmDiff_subset_boundaryLayers
+    have hxor' : Xor' (ε₂ < g t ∧ g t ≤ ε₁) (ε₂ < x t ∧ x t ≤ ε₁) := hxor
+    have h_near := symmDiff_subset_boundaryLayers h_gx_bound hxor'
+    -- h_near: |x t - ε₂| ≤ e t ∨ |x t - ε₁| ≤ e t
+    -- Need to show: |x t - ε₂| ≤ Δ ∨ |x t - ε₁| ≤ Δ
+    -- Since |t - t₀| ≤ R_max (for points in symmDiff), we have e t ≤ Δ
+    have hR_bound : |t - t₀| ≤ R_max := by
+      -- R_max = 2ε₁/‖L‖ covers both cases
+      rcases hxor with ⟨ht_γAnn, _⟩ | ⟨ht_tAnn, _⟩
+      · -- t ∈ γAnn: by lower bound, |t - t₀| ≤ 2ε₁/‖L‖ = R_max
+        have h_lb := h_lower_bound t ht_localized
+        have ⟨_, ht_upper⟩ := ht_γAnn
+        have h1 : ‖L‖ / 2 * |t - t₀| ≤ ε₁ := le_trans h_lb ht_upper
+        have h1' : |t - t₀| * (‖L‖ / 2) ≤ ε₁ := by rw [mul_comm]; exact h1
+        have hL2_pos : 0 < ‖L‖ / 2 := by linarith
+        have h2 : |t - t₀| ≤ ε₁ / (‖L‖ / 2) := by rw [le_div_iff₀ hL2_pos]; exact h1'
+        have h3 : ε₁ / (‖L‖ / 2) = 2 * ε₁ / ‖L‖ := by field_simp
+        simp only [R_max, h3] at h2 ⊢; exact h2
+      · -- t ∈ tAnnLin: |t - t₀| ≤ ε₁/‖L‖ ≤ R_max = 2ε₁/‖L‖
+        have ⟨_, ht_upper⟩ := ht_tAnn
+        have h1 : ‖L‖ * |t - t₀| ≤ ε₁ := ht_upper
+        have h1' : |t - t₀| * ‖L‖ ≤ ε₁ := by rw [mul_comm]; exact h1
+        have hL_nonneg : 0 ≤ ‖L‖ := le_of_lt hL_norm_pos
+        calc |t - t₀| ≤ ε₁ / ‖L‖ := by rw [le_div_iff₀ hL_norm_pos]; exact h1'
+          _ ≤ 2 * ε₁ / ‖L‖ := by apply div_le_div_of_nonneg_right _ hL_nonneg; linarith
+    have he_le_Δ : e t ≤ Δ := by
+      simp only [e, Δ, R_max]
+      apply mul_le_mul_of_nonneg_left _ hK₀_nonneg
+      exact sq_le_sq' (by linarith [abs_nonneg (t - t₀)]) hR_bound
+    rcases h_near with h_near₂ | h_near₁
+    · -- h_near₂ : |x t - ε₂| ≤ e t, so t ∈ shell₂
+      right
+      show |x t - ε₂| ≤ Δ
+      exact le_trans h_near₂ he_le_Δ
+    · -- h_near₁ : |x t - ε₁| ≤ e t, so t ∈ shell₁
+      left
+      show |x t - ε₁| ≤ Δ
+      exact le_trans h_near₁ he_le_Δ
+  -- (5.2) Shell width bound
   have h_shell_width : shell₁_hi - shell₁_lo = 2 * Δ / ‖L‖ := by
-    simp only [shell₁_lo, shell₁_hi]
+    simp only [shell₁_lo, shell₁_hi]; field_simp; ring
+  -- (5.3) Measure bound
+  have h_meas_subset : volume (symmDiff γAnn tAnnLin) ≤ volume (shell₁ ∪ shell₂) :=
+    MeasureTheory.measure_mono h_subset
+  -- Each shell is an annulus in t-space with width O(Δ/‖L‖)
+  -- shell₁ = {t | |x t - ε₁| ≤ Δ} ⊆ {t | |t - t₀| ≤ (ε₁ + Δ)/‖L‖}
+  -- volume(shell) ≤ 4Δ/‖L‖ (factor of 2 for ± sides of t₀, factor 2 for width)
+
+  -- Bound volume of each shell
+  have h_shell₁_vol : volume shell₁ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) := by
+    -- shell₁ ⊆ {t : |t - t₀| ≤ (ε₁ + Δ)/‖L‖}, so volume ≤ 2*(ε₁ + Δ)/‖L‖
+    -- More precisely, shell₁ is contained in an annulus of width 2Δ/‖L‖
+    -- The measure of this annulus is at most 4Δ/‖L‖
+    sorry  -- Tedious measure calculation
+
+  have h_shell₂_vol : volume shell₂ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) := by
+    sorry  -- Similar to shell₁
+
+  -- Total bound: volume(shell₁ ∪ shell₂) ≤ 8Δ/‖L‖
+  have h_total_vol : volume (shell₁ ∪ shell₂) ≤ ENNReal.ofReal (8 * Δ / ‖L‖) := by
+    calc volume (shell₁ ∪ shell₂)
+        ≤ volume shell₁ + volume shell₂ := MeasureTheory.measure_union_le _ _
+      _ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) + ENNReal.ofReal (4 * Δ / ‖L‖) := add_le_add h_shell₁_vol h_shell₂_vol
+      _ = ENNReal.ofReal (4 * Δ / ‖L‖ + 4 * Δ / ‖L‖) := by
+          rw [← ENNReal.ofReal_add] <;> positivity
+      _ = ENNReal.ofReal (8 * Δ / ‖L‖) := by ring_nf
+
+  -- Now Δ = K₀ * R_max² = K₀ * (2ε₁/‖L‖)² = 4*K₀*ε₁²/‖L‖²
+  -- So 8*Δ/‖L‖ = 8 * 4*K₀*ε₁²/‖L‖² / ‖L‖ = 32*K₀*ε₁²/‖L‖³
+  have hΔ_eq : Δ = 4 * K₀ * ε₁^2 / ‖L‖^2 := by
+    simp only [Δ, R_max]
     field_simp
     ring
-  -- The proof requires showing:
-  -- 1. symmDiff ⊆ shell₁ ∪ shell₂ (using norm_linear_approx_bound + symmDiff_subset_boundaryLayers)
-  -- 2. measure(shell₁ ∪ shell₂) ≤ 2 * 2 * (2Δ/‖L‖) = 8Δ/‖L‖ = 8K₀*ε₁²/‖L‖³
-  -- 3. This is ≤ 8K₀*ε₁²/‖L‖² when ε₁ ≤ ‖L‖ (which holds for small δ)
-  -- Full proof requires measure theory infrastructure; placeholder for now
-  sorry
+  have h_bound_eq : 8 * Δ / ‖L‖ = 32 * K₀ * ε₁^2 / ‖L‖^3 := by
+    rw [hΔ_eq]
+    field_simp
+    ring
+
+  calc volume (symmDiff γAnn tAnnLin)
+      ≤ volume (shell₁ ∪ shell₂) := h_meas_subset
+    _ ≤ ENNReal.ofReal (8 * Δ / ‖L‖) := h_total_vol
+    _ = ENNReal.ofReal (32 * K₀ * ε₁^2 / ‖L‖^3) := by rw [h_bound_eq]
 
 /-- **Micro-lemma (F): Singular part bound**. The integral of (t-t₀)⁻¹ over the
     γ-annulus is O(ε₁/‖L‖) due to approximate symmetry.
