@@ -2515,3 +2515,56 @@ where c₁ = ε₂/(2‖L‖), c₂ = 2ε₁/‖L‖
 ### Next Step
 
 Implement `annulus_symmDiff_measure_bound` using `numerator_quadratic_bound`.
+
+---
+
+## Session 39 continued - Micro-lemmas implemented
+
+**Date:** 2026-02-05
+**Commit:** 5cfe2e3
+
+### Key Fix: Tight Linear-Model Annulus
+
+Changed from coarse annulus `{c₁ < |t-t₀| ≤ c₂}` to tight annulus:
+```lean
+tAnnLin := {t | ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}
+```
+This ensures `symmDiff = ∅` when K₀=0 (exactly linear case).
+
+### Micro-Lemmas Completed (sorry-free)
+
+1. **`norm_linear_approx_bound`** ✓
+   ```lean
+   abs (‖γ t - γ t₀‖ - ‖L‖ * |t - t₀|) ≤ K₀ * |t - t₀|^2
+   ```
+   Uses: `abs_norm_sub_norm_le`, `norm_smul`
+
+4. **`volume_shell_le`** ✓
+   ```lean
+   volume {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ≤ ENNReal.ofReal (2 * (r₂ - r₁))
+   ```
+   Uses: decomposition into Ico ∪ Ioc, measure_union_le
+
+### Remaining Micro-Lemmas (in annulus_symmDiff_measure_bound)
+
+2. `symmDiff_subset_boundaryLayers` - TODO
+3. `boundaryLayer_subset_shell` - TODO  
+5. Combine (2)+(3)+(4) - TODO
+
+### Updated annulus_symmDiff_measure_bound Signature
+
+```lean
+lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
+    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L) (hL : L ≠ 0) :
+    ∃ K > 0, ∃ δ > 0, ∀ ε₁ ε₂ : ℝ, 0 < ε₂ → ε₂ ≤ ε₁ → ε₁ < δ →
+      let γAnn := {t : ℝ | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+      let tAnnLin := {t : ℝ | ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}
+      volume (symmDiff γAnn tAnnLin) ≤ ENNReal.ofReal (K * ε₁^2 / ‖L‖^2)
+```
+
+### Remaining Sorries
+
+- `annulus_symmDiff_measure_bound` (line ~2441) - needs micro-lemmas 2,3,5
+- `singular_annulus_bound` (line ~2478) - needs symmetric integral cancellation
+- `remainder_integral_bound_on_annulus` (line ~2262) - measure theory conversion
+- Plus others from previous sessions
