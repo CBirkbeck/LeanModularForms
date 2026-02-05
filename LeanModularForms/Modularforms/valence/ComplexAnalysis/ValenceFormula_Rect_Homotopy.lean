@@ -3312,7 +3312,8 @@ lemma norm_deriv_H_seg5_le (t : ℝ) (_s : ℝ) :
 
     NOTE: t = 2 is NOT included because at s = 0, the function IS differentiable there
     (both segments reduce to the arc formula which is smooth through t=2). -/
-lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (k : ℝ) (hk : k ∈ ({1, 3, 4} : Set ℝ)) :
+lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (0:ℝ) 1)
+    (k : ℝ) (hk : k ∈ ({1, 3, 4} : Set ℝ)) :
     ¬DifferentiableAt ℝ (fun t' => fdBoundaryToPolygonHomotopy (t', s)) k := by
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff] at hk
   rcases hk with rfl | rfl | rfl
@@ -3358,16 +3359,37 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (k : ℝ) (hk : k ∈
         ((1 - s) * (-Real.pi * Real.sqrt 3 / 12 + Real.pi / 12 * I) +
          s * (-1/2 + (1 - Real.sqrt 3 / 2) * I)) := by
       intro heq
-      have h_re := congr_arg Complex.re heq
-      simp only [Complex.neg_re, Complex.mul_re, Complex.ofReal_re, Complex.I_re, mul_zero,
-                 Complex.ofReal_im, Complex.I_im, mul_one, sub_zero, neg_zero,
-                 Complex.add_re, Complex.div_ofNat_re, Complex.sub_re, Complex.one_re] at h_re
-      -- LHS real part = 0, RHS real part = (1-s)*(-π√3/12) + s*(-1/2)
-      simp only [H_height] at h_re
-      -- This gives: 0 = -π√3/12 + s*(π√3/12 - 1/2)
-      -- Solving: s = (π√3/12) / (1/2 - π√3/12) but this denominator is 1/2 - π√3/12 ≈ 0.05 > 0
-      -- so s ≈ 0.4534/0.05 ≈ 9 which is outside [0,1]. Contradiction!
-      sorry -- Technical: arithmetic showing this is impossible
+      -- Strategy: Show LHS has Re = 0 but RHS has Re < 0 for s ∈ [0,1]
+      -- Compute real parts explicitly
+      have h_lhs_re : Complex.re (-(H_height - Real.sqrt 3 / 2) * I) = 0 := by
+        have h1 : (H_height : ℂ) - Real.sqrt 3 / 2 = (1 : ℂ) := by
+          simp only [H_height]; push_cast; ring
+        simp only [h1, Complex.neg_re, Complex.one_re, Complex.mul_re,
+                   Complex.I_re, Complex.one_im, Complex.I_im, mul_zero, mul_one, sub_zero]
+      have h_rhs_re : Complex.re ((1 - (s:ℂ)) * (-Real.pi * Real.sqrt 3 / 12 + Real.pi / 12 * I) +
+                               (s:ℂ) * (-1/2 + (1 - Real.sqrt 3 / 2) * I)) =
+                   (1 - s) * (-Real.pi * Real.sqrt 3 / 12) + s * (-1/2) := by
+        have h_im_s : Complex.im (s:ℂ) = 0 := Complex.ofReal_im s
+        have h_im_1_s : Complex.im (1 - (s:ℂ)) = 0 := by simp only [Complex.sub_im, Complex.one_im, h_im_s, sub_zero]
+        have h_im_coeff : Complex.im ((1 : ℂ) - Real.sqrt 3 / 2) = 0 := by simp
+        simp only [Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re, Complex.one_re,
+                   Complex.div_ofNat_re, Complex.neg_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
+                   h_im_s, h_im_1_s, h_im_coeff,
+                   mul_zero, sub_zero, mul_one, Complex.neg_im, Complex.div_ofNat_im, add_zero]
+        ring
+      -- Extract equality of real parts from heq
+      have h_re_eq := congr_arg Complex.re heq
+      rw [h_lhs_re, h_rhs_re] at h_re_eq
+      -- Now h_re_eq : 0 = (1 - s) * (-π√3/12) + s * (-1/2)
+      -- But RHS < 0 for s ∈ [0,1]
+      have hpi : Real.pi > 0 := Real.pi_pos
+      have hsqrt3_pos : Real.sqrt 3 > 0 := Real.sqrt_pos.mpr (by norm_num : (3:ℝ) > 0)
+      have h_neg : (1 - s) * (-Real.pi * Real.sqrt 3 / 12) + s * (-1/2) < 0 := by
+        by_cases hs0 : s = 0
+        · subst hs0; simp only [sub_zero, one_mul, zero_mul, add_zero]; nlinarith [hpi, hsqrt3_pos]
+        · have hs_pos : s > 0 := lt_of_le_of_ne hs.1 (Ne.symm hs0)
+          nlinarith [hs.1, hs.2, hpi, hsqrt3_pos]
+      linarith [h_re_eq, h_neg]
     exact h_ne h_eq_right
   -- t = 3: left deriv involves arc-to-chord, right deriv = (H-√3/2)*I = I (purely imaginary)
   · -- The slope from the right (seg4 formula) is (H-√3/2)*I = I (purely imaginary, Re = 0)
@@ -3693,15 +3715,239 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
       have ht_gt1 : q.1 > 1 := lt_of_le_of_lt h_seg2_lo hq1.1
       have ht_lt2 : q.1 < 2 := lt_of_lt_of_le hq1.2 h_seg2_hi
       -- In a neighborhood of q, the homotopy uses the seg2 formula
-      -- The derivative is a continuous function of (t, s)
-      sorry -- Technical: seg2 derivative continuity via composition
+      -- The derivative is: (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
+      -- where θ = π/3 + (t-1)*(π/6), which is continuous in (t, s).
+      -- First, show the derivative equals this formula at q
+      have hderiv_eq : deriv (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
+          (1 - q.2) • ((Real.pi / 6) * I * Complex.exp ((Real.pi / 3 + (q.1 - 1) * (Real.pi / 6)) * I)) +
+          q.2 • (i_point - rho') := by
+        have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
+            (fun t' : ℝ =>
+              let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I)
+              let chord_point := chordSegment rho' i_point (t' - 1)
+              (1 - q.2) • arc_point + q.2 • chord_point) := by
+          filter_upwards [eventually_gt_nhds ht_gt1, eventually_lt_nhds ht_lt2] with t' ht1' ht2'
+          simp only [fdBoundaryToPolygonHomotopy]
+          simp only [not_le.mpr ht1', le_of_lt ht2', ite_false, ite_true]
+          -- Need to show that (π/2 - π/3) = π/6
+          congr 2; ring
+        rw [heq.deriv_eq]
+        -- Now compute the derivative of the seg2 formula
+        have h_ofReal : HasDerivAt (fun t' : ℝ => (t' : ℂ)) 1 q.1 := Complex.ofRealCLM.hasDerivAt
+        have h_inner : HasDerivAt (fun t' : ℝ => (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
+            ((Real.pi : ℂ) / 6) q.1 := by
+          have h_shift : HasDerivAt (fun t' : ℝ => (t' : ℂ) - 1) 1 q.1 := h_ofReal.sub_const 1
+          have h_mul : HasDerivAt (fun t' : ℝ => ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) ((Real.pi : ℂ) / 6) q.1 := by
+            have := h_shift.mul_const ((Real.pi : ℂ) / 6); simp only [one_mul] at this; exact this
+          have := h_mul.const_add ((Real.pi : ℂ) / 3); simp only at this; exact this
+        have h_times_I : HasDerivAt (fun t' : ℝ => ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
+            (((Real.pi : ℂ) / 6) * I) q.1 := h_inner.mul_const I
+        have h_arc : HasDerivAt (fun t' : ℝ => Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I))
+            ((Real.pi / 6) * I * Complex.exp ((Real.pi / 3 + (q.1 - 1) * (Real.pi / 6)) * I)) q.1 := by
+          have h_exp := Complex.hasDerivAt_exp (((Real.pi : ℂ) / 3 + ((q.1 : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
+          have h_comp := h_exp.comp q.1 h_times_I
+          simp only [mul_comm (Complex.exp _)] at h_comp
+          exact h_comp
+        have h_chord : HasDerivAt (fun t' : ℝ => chordSegment rho' i_point (t' - 1)) (i_point - rho') q.1 := by
+          simp only [chordSegment]
+          have h_shift : HasDerivAt (fun t' : ℝ => t' - 1) (1 : ℝ) q.1 := (hasDerivAt_id q.1).sub_const 1
+          have h1 : HasDerivAt (fun t' : ℝ => (1 - (t' - 1)) • rho') (-rho') q.1 := by
+            have h_coef : HasDerivAt (fun t' : ℝ => (1 - (t' - 1) : ℝ)) (-1 : ℝ) q.1 := by
+              have := (hasDerivAt_const q.1 (1 : ℝ)).sub h_shift; simp only [sub_self, zero_sub] at this
+              convert this using 1
+            have := h_coef.smul_const rho'; simp only [neg_one_smul] at this; exact this
+          have h2 : HasDerivAt (fun t' : ℝ => (t' - 1) • i_point) i_point q.1 := by
+            have := h_shift.smul_const i_point; simp only [one_smul] at this; exact this
+          convert h1.add h2 using 1; ring
+        -- Combined derivative
+        have h_combined : HasDerivAt (fun t' : ℝ =>
+              let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I)
+              let chord_point := chordSegment rho' i_point (t' - 1)
+              (1 - q.2) • arc_point + q.2 • chord_point)
+            ((1 - q.2) • ((Real.pi / 6) * I * Complex.exp ((Real.pi / 3 + (q.1 - 1) * (Real.pi / 6)) * I)) +
+             q.2 • (i_point - rho')) q.1 := by
+          have h1 := h_arc.const_smul (1 - q.2)
+          have h2 := h_chord.const_smul q.2
+          exact h1.add h2
+        exact h_combined.deriv
+      -- Now show the derivative formula is continuous at q
+      -- We need to show (fun q => deriv f q.1) is continuous at q
+      -- The formula (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho') is continuous in (t, s)
+      -- Use the fact that deriv equals this formula in a neighborhood
+      have h_formula_cont : ContinuousAt (fun r : ℝ × ℝ =>
+          (1 - r.2) • ((Real.pi / 6) * I * Complex.exp ((Real.pi / 3 + (r.1 - 1) * (Real.pi / 6)) * I)) +
+          r.2 • (i_point - rho')) q := by
+        apply ContinuousAt.add
+        · -- (1-s) • ((π/6)*I*exp(θ*I)) is continuous
+          apply ContinuousAt.smul
+          · exact (continuous_const.sub continuous_snd).continuousAt
+          · apply ContinuousAt.mul
+            apply ContinuousAt.mul
+            · exact continuousAt_const
+            · exact continuousAt_const
+            · apply Complex.continuous_exp.continuousAt.comp
+              apply ContinuousAt.mul
+              · apply ContinuousAt.add
+                · exact continuousAt_const
+                · apply ContinuousAt.mul
+                  · -- Show (fun r => (r.1 : ℂ) - 1) is continuous at q
+                    have h1 : Continuous (fun r : ℝ × ℝ => (r.1 : ℂ)) :=
+                      Complex.continuous_ofReal.comp continuous_fst
+                    have h2 : Continuous (fun _ : ℝ × ℝ => (1 : ℂ)) := continuous_const
+                    exact (h1.sub h2).continuousAt
+                  · exact continuousAt_const
+              · exact continuousAt_const
+        · -- s • (i_point - rho') is continuous
+          apply ContinuousAt.smul
+          · exact continuous_snd.continuousAt
+          · exact continuousAt_const
+      -- Show that in a neighborhood, the deriv equals the formula
+      apply h_formula_cont.congr
+      -- We need to show the formula holds in a neighborhood of q
+      -- Since q.1 ∈ Ioo p₁ p₂ and q.2 ∈ Icc 0 1, use Ioo for first component
+      -- For the second component, just use univ since the formula holds for all s
+      rw [nhds_prod_eq]
+      have h_mem1 : Ioo p₁ p₂ ∈ 𝓝 q.1 := Ioo_mem_nhds hq1.1 hq1.2
+      filter_upwards [prod_mem_prod h_mem1 univ_mem] with r hr
+      -- For r in the neighborhood, compute the deriv
+      have hr1 : r.1 ∈ Ioo p₁ p₂ := hr.1
+      -- Note: The formula holds for all s ∈ ℝ, so we don't need to restrict r.2
+      have ht_gt1' : r.1 > 1 := lt_of_le_of_lt h_seg2_lo hr1.1
+      have ht_lt2' : r.1 < 2 := lt_of_lt_of_le hr1.2 h_seg2_hi
+      -- Same calculation as hderiv_eq but for r
+      have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', r.2)) =ᶠ[𝓝 r.1]
+          (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I)
+            let chord_point := chordSegment rho' i_point (t' - 1)
+            (1 - r.2) • arc_point + r.2 • chord_point) := by
+        filter_upwards [eventually_gt_nhds ht_gt1', eventually_lt_nhds ht_lt2'] with t' ht1'' ht2''
+        simp only [fdBoundaryToPolygonHomotopy]
+        simp only [not_le.mpr ht1'', le_of_lt ht2'', ite_false, ite_true]
+        congr 2; ring
+      rw [heq.deriv_eq]
+      -- Compute the HasDerivAt
+      have h_ofReal : HasDerivAt (fun t' : ℝ => (t' : ℂ)) 1 r.1 := Complex.ofRealCLM.hasDerivAt
+      have h_inner : HasDerivAt (fun t' : ℝ => (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
+          ((Real.pi : ℂ) / 6) r.1 := by
+        have h_shift : HasDerivAt (fun t' : ℝ => (t' : ℂ) - 1) 1 r.1 := h_ofReal.sub_const 1
+        have h_mul : HasDerivAt (fun t' : ℝ => ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) ((Real.pi : ℂ) / 6) r.1 := by
+          have := h_shift.mul_const ((Real.pi : ℂ) / 6); simp only [one_mul] at this; exact this
+        have := h_mul.const_add ((Real.pi : ℂ) / 3); simp only at this; exact this
+      have h_times_I : HasDerivAt (fun t' : ℝ => ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
+          (((Real.pi : ℂ) / 6) * I) r.1 := h_inner.mul_const I
+      have h_arc : HasDerivAt (fun t' : ℝ => Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I))
+          ((Real.pi / 6) * I * Complex.exp ((Real.pi / 3 + (r.1 - 1) * (Real.pi / 6)) * I)) r.1 := by
+        have h_exp := Complex.hasDerivAt_exp (((Real.pi : ℂ) / 3 + ((r.1 : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
+        have h_comp := h_exp.comp r.1 h_times_I
+        simp only [mul_comm (Complex.exp _)] at h_comp
+        exact h_comp
+      have h_chord : HasDerivAt (fun t' : ℝ => chordSegment rho' i_point (t' - 1)) (i_point - rho') r.1 := by
+        simp only [chordSegment]
+        have h_shift : HasDerivAt (fun t' : ℝ => t' - 1) (1 : ℝ) r.1 := (hasDerivAt_id r.1).sub_const 1
+        have h1 : HasDerivAt (fun t' : ℝ => (1 - (t' - 1)) • rho') (-rho') r.1 := by
+          have h_coef : HasDerivAt (fun t' : ℝ => (1 - (t' - 1) : ℝ)) (-1 : ℝ) r.1 := by
+            have := (hasDerivAt_const r.1 (1 : ℝ)).sub h_shift; simp only [sub_self, zero_sub] at this
+            convert this using 1
+          have := h_coef.smul_const rho'; simp only [neg_one_smul] at this; exact this
+        have h2 : HasDerivAt (fun t' : ℝ => (t' - 1) • i_point) i_point r.1 := by
+          have := h_shift.smul_const i_point; simp only [one_smul] at this; exact this
+        convert h1.add h2 using 1; ring
+      have h_combined : HasDerivAt (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I)
+            let chord_point := chordSegment rho' i_point (t' - 1)
+            (1 - r.2) • arc_point + r.2 • chord_point)
+          ((1 - r.2) • ((Real.pi / 6) * I * Complex.exp ((Real.pi / 3 + (r.1 - 1) * (Real.pi / 6)) * I)) +
+           r.2 • (i_point - rho')) r.1 := by
+        have h1 := h_arc.const_smul (1 - r.2)
+        have h2 := h_chord.const_smul r.2
+        exact h1.add h2
+      exact h_combined.deriv.symm
     -- Segment 3: p₁ ≥ 2, p₂ ≤ 3
     -- Similar to segment 2, θ(t) = π/2 + (t-2)*(π/6), chord uses i_point and rho
     · apply continuousOn_of_forall_continuousAt
       intro q ⟨hq1, hq2⟩
       have ht_gt2 : q.1 > 2 := lt_of_le_of_lt h_seg3_lo hq1.1
       have ht_lt3 : q.1 < 3 := lt_of_lt_of_le hq1.2 h_seg3_hi
-      sorry -- Technical: seg3 derivative continuity via composition
+      -- The derivative is: (1-s)*(π/6)*I*exp(θ*I) + s*(rho - i_point)
+      -- where θ = π/2 + (t-2)*(π/6), which is continuous in (t, s).
+      have h_formula_cont : ContinuousAt (fun r : ℝ × ℝ =>
+          (1 - r.2) • ((Real.pi / 6) * I * Complex.exp ((Real.pi / 2 + (r.1 - 2) * (Real.pi / 6)) * I)) +
+          r.2 • (rho - i_point)) q := by
+        apply ContinuousAt.add
+        · apply ContinuousAt.smul
+          · exact (continuous_const.sub continuous_snd).continuousAt
+          · apply ContinuousAt.mul
+            apply ContinuousAt.mul
+            · exact continuousAt_const
+            · exact continuousAt_const
+            · apply Complex.continuous_exp.continuousAt.comp
+              apply ContinuousAt.mul
+              · apply ContinuousAt.add
+                · exact continuousAt_const
+                · apply ContinuousAt.mul
+                  · have h1 : Continuous (fun r : ℝ × ℝ => (r.1 : ℂ)) :=
+                      Complex.continuous_ofReal.comp continuous_fst
+                    have h2 : Continuous (fun _ : ℝ × ℝ => (2 : ℂ)) := continuous_const
+                    exact (h1.sub h2).continuousAt
+                  · exact continuousAt_const
+              · exact continuousAt_const
+        · apply ContinuousAt.smul
+          · exact continuous_snd.continuousAt
+          · exact continuousAt_const
+      apply h_formula_cont.congr
+      rw [nhds_prod_eq]
+      have h_mem1 : Ioo p₁ p₂ ∈ 𝓝 q.1 := Ioo_mem_nhds hq1.1 hq1.2
+      filter_upwards [prod_mem_prod h_mem1 univ_mem] with r hr
+      have hr1 : r.1 ∈ Ioo p₁ p₂ := hr.1
+      have ht_gt2' : r.1 > 2 := lt_of_le_of_lt h_seg3_lo hr1.1
+      have ht_lt3' : r.1 < 3 := lt_of_lt_of_le hr1.2 h_seg3_hi
+      have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', r.2)) =ᶠ[𝓝 r.1]
+          (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (Real.pi / 6)) * I)
+            let chord_point := chordSegment i_point rho (t' - 2)
+            (1 - r.2) • arc_point + r.2 • chord_point) := by
+        filter_upwards [eventually_gt_nhds ht_gt2', eventually_lt_nhds ht_lt3'] with t' ht2'' ht3''
+        simp only [fdBoundaryToPolygonHomotopy]
+        simp only [not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) ht2''),
+                   not_le.mpr ht2'', le_of_lt ht3'', ite_false, ite_true]
+        congr 2; ring
+      rw [heq.deriv_eq]
+      have h_ofReal : HasDerivAt (fun t' : ℝ => (t' : ℂ)) 1 r.1 := Complex.ofRealCLM.hasDerivAt
+      have h_inner : HasDerivAt (fun t' : ℝ => (Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) * ((Real.pi : ℂ) / 6))
+          ((Real.pi : ℂ) / 6) r.1 := by
+        have h_shift : HasDerivAt (fun t' : ℝ => (t' : ℂ) - 2) 1 r.1 := h_ofReal.sub_const 2
+        have h_mul : HasDerivAt (fun t' : ℝ => ((t' : ℂ) - 2) * ((Real.pi : ℂ) / 6)) ((Real.pi : ℂ) / 6) r.1 := by
+          have := h_shift.mul_const ((Real.pi : ℂ) / 6); simp only [one_mul] at this; exact this
+        have := h_mul.const_add ((Real.pi : ℂ) / 2); simp only at this; exact this
+      have h_times_I : HasDerivAt (fun t' : ℝ => ((Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) * ((Real.pi : ℂ) / 6)) * I)
+          (((Real.pi : ℂ) / 6) * I) r.1 := h_inner.mul_const I
+      have h_arc : HasDerivAt (fun t' : ℝ => Complex.exp ((Real.pi / 2 + (t' - 2) * (Real.pi / 6)) * I))
+          ((Real.pi / 6) * I * Complex.exp ((Real.pi / 2 + (r.1 - 2) * (Real.pi / 6)) * I)) r.1 := by
+        have h_exp := Complex.hasDerivAt_exp (((Real.pi : ℂ) / 2 + ((r.1 : ℂ) - 2) * ((Real.pi : ℂ) / 6)) * I)
+        have h_comp := h_exp.comp r.1 h_times_I
+        simp only [mul_comm (Complex.exp _)] at h_comp
+        exact h_comp
+      have h_chord : HasDerivAt (fun t' : ℝ => chordSegment i_point rho (t' - 2)) (rho - i_point) r.1 := by
+        simp only [chordSegment]
+        have h_shift : HasDerivAt (fun t' : ℝ => t' - 2) (1 : ℝ) r.1 := (hasDerivAt_id r.1).sub_const 2
+        have h1 : HasDerivAt (fun t' : ℝ => (1 - (t' - 2)) • i_point) (-i_point) r.1 := by
+          have h_coef : HasDerivAt (fun t' : ℝ => (1 - (t' - 2) : ℝ)) (-1 : ℝ) r.1 := by
+            have := (hasDerivAt_const r.1 (1 : ℝ)).sub h_shift; simp only [sub_self, zero_sub] at this
+            convert this using 1
+          have := h_coef.smul_const i_point; simp only [neg_one_smul] at this; exact this
+        have h2 : HasDerivAt (fun t' : ℝ => (t' - 2) • rho) rho r.1 := by
+          have := h_shift.smul_const rho; simp only [one_smul] at this; exact this
+        convert h1.add h2 using 1; ring
+      have h_combined : HasDerivAt (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (Real.pi / 6)) * I)
+            let chord_point := chordSegment i_point rho (t' - 2)
+            (1 - r.2) • arc_point + r.2 • chord_point)
+          ((1 - r.2) • ((Real.pi / 6) * I * Complex.exp ((Real.pi / 2 + (r.1 - 2) * (Real.pi / 6)) * I)) +
+           r.2 • (rho - i_point)) r.1 := by
+        have h1 := h_arc.const_smul (1 - r.2)
+        have h2 := h_chord.const_smul r.2
+        exact h1.add h2
+      exact h_combined.deriv.symm
     -- Segment 4: p₁ ≥ 3, p₂ ≤ 4, deriv = (H_height - √3/2)*I (constant)
     · have hconst : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
           deriv (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
@@ -3795,7 +4041,7 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
           · -- At t = 1, not differentiable (contradiction with hd)
             exfalso
             subst h1'
-            exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s 1 (by simp) hd
+            exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s hs 1 (by simp) hd
           · -- t ∈ (1, 2), use seg2_deriv_bound
             have ht2' : t ∈ Ioo 1 2 := ⟨lt_of_le_of_ne (not_lt.mp h1) (Ne.symm h1'), h2⟩
             -- Rewrite to segment 2 formula using EventuallyEq
@@ -3891,17 +4137,19 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
               · -- s ≠ 0: The function is NOT differentiable at t=2 (contradiction with hd)
                 -- This is because the left derivative (from seg2) and right derivative (from seg3)
                 -- have different chord terms: s*(i_point - rho') vs s*(rho - i_point).
-                -- Since i_point - rho' ≠ rho - i_point (they differ by 2*i_point - rho' - rho = 2I - 1 ≠ 0),
-                -- the derivatives differ for s ≠ 0.
+                -- Since i_point - rho' ≠ rho - i_point, the derivatives differ for s ≠ 0.
                 exfalso
                 -- We show the function is not differentiable at t=2 when s ≠ 0
-                apply hs0
-                -- Actually, proving this rigorously requires showing the one-sided derivatives differ.
-                -- For now, we use the fact that the bound still holds.
-                -- The derivative (if it existed) would be bounded by the same calculation as seg2/seg3.
-                -- Since we're in the hd=true case but claimed s≠0 leads to ¬hd, we have a contradiction.
-                -- This requires showing that for s≠0, the function is not differentiable at t=2.
-                sorry  -- Technical: showing left/right derivatives differ for s≠0
+                have h_not_diff : ¬DifferentiableAt ℝ (fun t' ↦ fdBoundaryToPolygonHomotopy (t', s)) 2 := by
+                  -- Proof: the left and right derivatives differ.
+                  -- Left derivative (from seg2): (1-s)*(π/6)*I*exp(π/2*I) + s*(i_point - rho')
+                  -- Right derivative (from seg3): (1-s)*(π/6)*I*exp(π/2*I) + s*(rho - i_point)
+                  -- These differ by s*((i_point - rho') - (rho - i_point)) = s*(2*i_point - rho' - rho)
+                  --                = s*(2*I - (1/2 + √3/2*I) - (-1/2 + √3/2*I)) = s*(2*I - √3*I) = s*(2-√3)*I ≠ 0
+                  -- The proof would use hasDerivAt_iff_tendsto_slope and tendsto_nhds_unique.
+                  -- For now we leave this as sorry.
+                  sorry  -- Technical: showing left/right derivatives differ for s≠0
+                exact h_not_diff hd
             · have ht3' : t ∈ Ioo 2 3 := ⟨lt_of_le_of_ne ht2_ge (Ne.symm h2'), h3⟩
               -- Rewrite to segment 3 formula using EventuallyEq
               have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
@@ -3921,7 +4169,7 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
               · -- At t = 3, not differentiable (contradiction with hd)
                 exfalso
                 subst h3'
-                exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s 3 (by simp) hd
+                exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s hs 3 (by simp) hd
               · -- t ∈ (3, 4), use norm_deriv_H_seg4_le
                 have ht4' : t ∈ Ioo 3 4 := ⟨lt_of_le_of_ne (not_lt.mp h3) (Ne.symm h3'), h4⟩
                 have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
@@ -3940,7 +4188,7 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
               · -- At t = 4, not differentiable (contradiction with hd)
                 exfalso
                 subst h4'
-                exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s 4 (by simp) hd
+                exact fdBoundaryToPolygonHomotopy_not_diffAt_134 s hs 4 (by simp) hd
               · -- t ∈ (4, 5], use norm_deriv_H_seg5_le
                 have ht5' : t > 4 := lt_of_le_of_ne (not_lt.mp h4) (Ne.symm h4')
                 have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]

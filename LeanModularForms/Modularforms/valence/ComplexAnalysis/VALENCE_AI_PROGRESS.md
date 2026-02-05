@@ -14,9 +14,94 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 41)
+**Last update:** 2026-02-05 (session 43)
 **Target:** `generalizedWindingNumber' fdBoundary 0 5 p = -1` (CLOCKWISE orientation)
-**Status:** IN-PROGRESS - 17 sorries remaining
+**Status:** IN-PROGRESS - 14 sorries remaining
+
+### Session 43 Progress (2026-02-05, fixing fdBoundaryToPolygonHomotopy_not_diffAt_134)
+
+**Fresh `rg -n "\\bsorry\\b"` output:**
+```
+2134:  sorry -- Technical: composition of differentiable functions
+2144:  sorry -- Technical: continuity of derivative formula
+2155:  sorry -- Technical: explicit bound computation
+2627:  sorry -- Technical: mod 2π arithmetic
+2652:  sorry -- Technical: continuity of angle functions
+2666:  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction vector
+2689:  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1
+2746:  sorry -- Technical: differentiability of angle interpolation
+2756:  sorry -- Technical: continuity of derivative
+2763:  sorry -- Technical: bounded derivative on compact domain
+3343:      sorry -- Technical: derivative computation for arc-to-chord homotopy at t=1
+3370:      sorry -- Technical: arithmetic showing this is impossible
+3377:    sorry -- Technical: slope computation showing left ≠ right at t=3
+4129:                  sorry  -- Technical: showing left/right derivatives differ for s≠0
+```
+
+**Task 1.1:** Adding `hs : s ∈ Icc 0 1` hypothesis to `fdBoundaryToPolygonHomotopy_not_diffAt_134` - the "s ≈ 9" contradiction requires `s ∈ [0,1]` to derive a contradiction.
+
+---
+
+### Session 42 Progress (2026-02-05, seg2/seg3 continuity COMPLETE + t=2 bound)
+
+**Major accomplishments:**
+1. **COMPLETED seg2 derivative continuity** (formerly line 3697)
+   - Full proof using `ContinuousAt.congr` pattern
+   - Shows derivative formula `(1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')` is continuous in (t,s)
+   - Fixed TopologicalSpace instance issue with explicit `Complex.continuous_ofReal.comp`
+
+2. **COMPLETED seg3 derivative continuity** (formerly line 3704)
+   - Same pattern as seg2 with θ = π/2 + (t-2)*(π/6) and chord (i_point, rho)
+
+3. **COMPLETED t=2 derivative bound for s=0** (formerly line 3824)
+   - Used `by_cases hs0 : s = 0` to split
+   - For s=0: arc-only formula, proved ‖(π/6)*I*exp(π/2*I)‖ = π/6 < 5
+   - For s≠0: function is NOT differentiable at t=2 (left/right chord derivs differ)
+
+**Fresh `rg -n "\\bsorry\\b"` output:**
+```
+2134:  sorry -- Technical: composition of differentiable functions
+2144:  sorry -- Technical: continuity of derivative formula
+2155:  sorry -- Technical: explicit bound computation
+2627:  sorry -- Technical: mod 2π arithmetic
+2652:  sorry -- Technical: continuity of angle functions
+2666:  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction vector
+2689:  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1
+2746:  sorry -- Technical: differentiability of angle interpolation
+2756:  sorry -- Technical: continuity of derivative
+2763:  sorry -- Technical: bounded derivative on compact domain
+3343:      sorry -- Technical: derivative computation for arc-to-chord homotopy at t=1
+3370:      sorry -- Technical: arithmetic showing this is impossible
+3377:    sorry -- Technical: slope computation showing left ≠ right at t=3
+4129:                  sorry  -- Technical: showing left/right derivatives differ for s≠0
+```
+
+**Sorry breakdown (14 total, reduced from 17):**
+- Radial homotopy (2134, 2144, 2155): 3 sorries
+- Angle homotopy (2627, 2652, 2666, 2689, 2746, 2756, 2763): 7 sorries
+- `fdBoundaryToPolygonHomotopy_not_diffAt_134` t=1 case (3343, 3370): 2 sorries
+- `fdBoundaryToPolygonHomotopy_not_diffAt_134` t=3 case (3377): 1 sorry
+- t=2 s≠0 non-differentiability (4129): 1 sorry
+
+**Key achievements this session:**
+- ✓ seg2 continuity COMPLETE (was sorry)
+- ✓ seg3 continuity COMPLETE (was sorry)
+- ✓ t=2 s=0 derivative bound COMPLETE (was sorry)
+- Fixed logic error in s≠0 case (was `apply hs0`, now `exact h_not_diff hd`)
+
+**Remaining blockers:**
+1. t=1 and t=3 cases for `fdBoundaryToPolygonHomotopy_not_diffAt_134` need slope computations
+2. t=2 s≠0 case needs proof that left/right derivatives differ
+3. Angle homotopy sorries (7 remaining)
+4. Radial homotopy sorries (3 remaining)
+
+**Next priorities:**
+1. Fill t=1 case arithmetic (line 3370) showing real parts can't match
+2. Fill t=3 case slope computation (line 3377)
+3. Fill t=2 s≠0 non-differentiability proof (line 4129)
+4. Continue with radial and angle homotopy sorries
+
+---
 
 ### Session 41 Progress (2026-02-05, seg2/seg3 continuity structure)
 
@@ -1069,9 +1154,9 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ## Ticket B – PV Infrastructure
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-05 (session 43)
+**Last update:** 2026-02-05 (session 44)
 
-**Status:** IN-PROGRESS (**36 sorries** - shell_vol_le complete, properness added)
+**Status:** IN-PROGRESS (**36 sorries** - LOCALIZED sets, hProper removed)
 
 ### Session 42 Progress (2026-02-05, Path A decision + remaining sorries plan)
 
@@ -1180,6 +1265,68 @@ This is sufficient for dyadic convergence: O(ε₁) steps with fixed constant.
 - Changed `cases'` Lean 3 syntax to `rcases` for Lean 4
 - Used explicit `MeasureTheory.measure_mono` for subset bounds
 - Proper handling of singleton null sets via `Set.toFinite` + `Set.Finite.measure_zero`
+
+**Build:** SUCCESS (errors=0, warnings only)
+
+---
+
+### Session 44 Progress (2026-02-05, LOCALIZATION - remove hProper)
+
+**Context:** Coordinator identified architectural issue - `hProper` was too strong globally
+and created call-site sorries instead of solving the analytical problem.
+
+**MAJOR CHANGE: Localized sets, deleted hProper**
+
+Coordinator's insight: By baking `t ∈ Icc a b` into the set definitions, localization comes
+from set membership and C² bounds - no global properness needed.
+
+**CHANGES MADE:**
+
+1. **Updated `annulus_symmDiff_measure_bound` signature:**
+   ```lean
+   -- OLD:
+   lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
+       (hγ_C2 ...) (hγ_deriv ...) (hL ...)
+       (hProper : ∀ δ > 0, ∃ M > 0, ∀ t, ‖γ t - γ t₀‖ ≤ M → |t - t₀| < δ)
+
+   -- NEW:
+   lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
+       (hab : a < b) (ht₀ : t₀ ∈ Set.Ioo a b)
+       (hγ_C2 ...) (hγ_deriv ...) (hL ...)
+   ```
+
+2. **Updated set definitions:**
+   ```lean
+   -- OLD: γAnn := {t : ℝ | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+   -- NEW: γAnn := {t : ℝ | t ∈ Set.Icc a b ∧ ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+   ```
+
+3. **Simplified δ definition:**
+   - OLD: `let δ := min M (‖L‖ * δ₁ / 2)` (depended on M from properness)
+   - NEW: `let δ := ‖L‖ * δ₁ / 2` (no M needed)
+
+4. **Updated h_localize_γAnn proof:**
+   - Now uses contrapositive with C² lower bound
+   - Two sorries remain: quadratic analysis case + far-field bound
+
+5. **Updated all set destructuring patterns:**
+   - `⟨_, ht_upper⟩` → `⟨_, _, ht_upper⟩` (3 components: Icc, lower, upper)
+
+6. **Fixed both call sites:**
+   - `singular_annulus_bound`: Removed `hProper` construction, added `hab`
+   - `pv_limit_via_dyadic`: Same change
+
+**DELETED SORRIES:**
+- 2 properness placeholder sorries at call sites (were blocking progress)
+
+**REMAINING SORRIES in annulus_symmDiff_measure_bound:**
+- Quadratic analysis for |t - t₀| > ‖L‖/(2K₀) case
+- Far-field bound for |t - t₀| ≥ δ₀ case
+
+**CURRENT SORRY COUNT:** 36 (same - restructured, not eliminated)
+
+**KEY INSIGHT:** Properness is now IMPLICIT in the set restriction `t ∈ Icc a b`.
+The measure bound only needs to work on [a,b], not globally.
 
 **Build:** SUCCESS (errors=0, warnings only)
 
