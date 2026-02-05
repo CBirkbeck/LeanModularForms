@@ -2234,36 +2234,87 @@ lemma integrand_bound_on_annulus {γ : ℝ → ℂ} {t₀ : ℝ} {C δ₀ : ℝ}
     _ = |t - t₀|⁻¹ + C := by ring
 
 /-- **Step bound for ratio ≤ 2**: For cutoffs with ratio ≤ 2, the integral difference
-is O(ε₁). This is the core lemma for the dyadic PV argument. -/
+is O(ε₁/‖L‖). This is the core lemma for the dyadic PV argument.
+
+**Key hypotheses:**
+- `h_localize`: ensures the γ-annulus lies in the local zone where hr_bounded/h_lower apply
+- K includes the 1/‖L‖ factor to absorb the t-measure bound (4ε₁/‖L‖)
+
+**Proof strategy:** See micro-lemma chain (A)-(F) in VALENCE_AI_PLAN_PV.md -/
 lemma pv_step_bound_ratio_two {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ} {C δ₀ δ₁ : ℝ}
-    {ε₁ ε₂ : ℝ} (hε₂_pos : 0 < ε₂) (hε₂_le_ε₁ : ε₂ ≤ ε₁) (hε₁_le_δ : ε₁ ≤ min δ₀ δ₁)
+    {ε₁ ε₂ : ℝ} (hε₂_pos : 0 < ε₂) (hε₂_le_ε₁ : ε₂ ≤ ε₁)
     (h_ratio : ε₁ ≤ 2 * ε₂) (hL : L ≠ 0) (hδ₀_pos : 0 < δ₀) (hδ₁_pos : 0 < δ₁)
     (hr_bounded : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
       ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ C)
     (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ →
-      ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|) :
+      ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
+    -- Localization: annulus lies in local zone (Style A2)
+    (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₀ δ₁)
+    -- Integrability hypotheses
+    (hat₀ : t₀ ∈ Set.Ioo a b) (hγ_meas : Measurable γ)
+    (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b)) :
     let I := fun ε => ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0
-    let K := max 0 C + 1
+    -- K includes 1/‖L‖ factor to absorb measure bound (4ε₁/‖L‖)
+    let K := (4 * max 0 C + 4) / ‖L‖
     ‖I ε₂ - I ε₁‖ ≤ K * ε₁ := by
   intro I K
   -- Setup: positivity and bound facts
   have hε₁_pos : 0 < ε₁ := lt_of_lt_of_le hε₂_pos hε₂_le_ε₁
-  have hK_pos : 0 < K := by simp only [K]; linarith [le_max_left 0 C]
-  have hK_ge_C : C ≤ K := by simp only [K]; linarith [le_max_right 0 C]
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have hε₁_le_δ₀ : ε₁ ≤ δ₀ := le_trans hε₁_le_δ (min_le_left _ _)
-  have hε₁_le_δ₁ : ε₁ ≤ δ₁ := le_trans hε₁_le_δ (min_le_right _ _)
-  -- Key bound: on the γ-annulus {ε₂ < ‖γ-γ₀‖ ≤ ε₁}, we have |t - t₀| ≤ 2ε₁/‖L‖.
-  -- The integrand decomposes as (t-t₀)⁻¹ + r where ‖r‖ ≤ C.
-  -- The remainder integral is O(ε₁) from measure * bound.
-  -- The singular integral approximately cancels (O(ε₁) error from asymmetry).
-  -- Total: O(ε₁) ≤ K * ε₁ where K = max 0 C + 1 provides slack.
+  have hK_pos : 0 < K := by simp only [K]; positivity
+  have hC_nonneg : 0 ≤ max 0 C := le_max_left 0 C
+  have hK_ge_4C_div_L : 4 * C / ‖L‖ ≤ K := by
+    simp only [K]; apply div_le_div_of_nonneg_right _ hL_norm_pos.le
+    have : C ≤ max 0 C := le_max_right 0 C; linarith
+  -- have1: Integrability at cutoff ε₂
+  have hI_int₂ : IntervalIntegrable
+      (fun t => if ε₂ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
+      MeasureTheory.volume a b :=
+    cutoff_integrand_intervalIntegrable hat₀ hL hγ_meas hγ_cont_deriv ε₂ hε₂_pos
+  -- have2: Integrability at cutoff ε₁
+  have hI_int₁ : IntervalIntegrable
+      (fun t => if ε₁ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
+      MeasureTheory.volume a b :=
+    cutoff_integrand_intervalIntegrable hat₀ hL hγ_meas hγ_cont_deriv ε₁ hε₁_pos
+  -- have3: Rewrite I ε₂ - I ε₁ as annulus integral
+  let f := fun t => (γ t - γ t₀)⁻¹ * deriv γ t
+  have h_diff : I ε₂ - I ε₁ =
+      ∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0 := by
+    simp only [I, f]
+    exact cutoff_diff_eq_annulus_integral hε₂_le_ε₁ hI_int₂ hI_int₁
+  -- have4: Decompose integrand as singular + remainder: f t = (t-t₀)⁻¹ + r t
+  let r := fun t => f t - (↑(t - t₀))⁻¹
+  -- PROOF STRATEGY:
+  -- Step A: Convert γ-annulus to t-bounds using h_lower
+  --   - From h_lower: ‖γ‖ ≥ (‖L‖/2)|t-t₀| for |t-t₀| < δ₁
+  --   - On γ-annulus where ε₂ < ‖γ‖ ≤ ε₁:
+  --     * Upper bound: |t-t₀| ≤ 2ε₁/‖L‖ (from ‖γ‖ ≤ ε₁)
+  --     * Measure of t-region ≤ 4ε₁/‖L‖
   --
-  -- Full formalization requires:
-  -- 1. IntervalIntegrable hypotheses for cutoff_diff_eq_annulus_integral
-  -- 2. Measure bound on the γ-annulus in t-space
-  -- 3. Approximate symmetry of γ-annulus (from Taylor expansion)
-  -- 4. Combining remainder and singular contributions
+  -- Step B: Split integral: ∫ f 1_{annulus} = ∫ (t-t₀)⁻¹ 1_{annulus} + ∫ r 1_{annulus}
+  --
+  -- Step C: Remainder bound
+  --   - From hr_bounded: ‖r(t)‖ ≤ C for |t-t₀| < δ₀
+  --   - |∫ r 1_{annulus}| ≤ C * (measure) ≤ C * 4ε₁/‖L‖
+  --
+  -- Step D: Singular cancellation (using integral_inv_symm structure)
+  --   - γ is approximately linear: γ(t) - γ(t₀) ≈ L(t-t₀)
+  --   - The γ-level sets {‖γ‖ = ε} ≈ {|t-t₀| = 2ε/‖L‖} (symmetric t-circles)
+  --   - By integral_inv_symm, ∫ (t-t₀)⁻¹ over symmetric annulus = 0
+  --   - Error from non-linearity is O(ε₁²) (using C² hypothesis on γ)
+  --
+  -- Step E: Total bound = O(ε₁/‖L‖) + O(ε₁²) = O(ε₁)
+  --   - For K = max 0 C + 1, bound holds when K ≥ 4C/‖L‖
+  --   - This is satisfied for ‖L‖ ≥ 4C/(C+1) ≈ 4 for large C
+  --   - In valence formula context, ‖L‖ = ‖deriv γ t₀‖ is bounded away from 0
+  --
+  -- TECHNICAL NOTE: The full formalization requires:
+  -- 1. Measurability of the γ-annulus indicator (see measurableSet_annulus_set)
+  -- 2. Integrability of f on the annulus (follows from cutoff_integrand_intervalIntegrable)
+  -- 3. Precise error bounds for the linearization of γ near t₀
+  rw [h_diff]
+  -- The bound K * ε₁ holds by the analysis above.
+  -- For dyadic sequence convergence, this is sufficient since K is constant.
   sorry
 
 /-- **Bracket ε between dyadic points**: For any ε ∈ (0, δ], find n with δ/2^(n+1) < ε ≤ δ/2^n. -/
@@ -2353,17 +2404,25 @@ lemma telescoping_sum_bound {X : Type*} [SeminormedAddCommGroup X] {I : ℕ → 
           field_simp [h_pow]; ring
 
 /-- **PV limit via dyadic sequence**. The cutoff integral converges along the
-dyadic sequence, then we extend to all ε by bounded ratio. -/
+dyadic sequence, then we extend to all ε by bounded ratio.
+
+**Key hypothesis:** `h_no_return` ensures γ doesn't return close to γ(t₀) except near t₀.
+This is needed to localize the γ-annulus to the zone where the C² estimates apply. -/
 lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     (hat₀ : t₀ ∈ Set.Ioo a b) (hL : L ≠ 0)
     (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L)
-    (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b)) :
+    (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b))
+    (hγ_meas : Measurable γ)
+    -- No-near-return: γ stays bounded away from γ(t₀) outside a small t-neighborhood
+    (h_no_return : ∃ ρ > 0, ∃ δ_loc > 0, ∀ t ∈ Set.Icc a b, |t - t₀| ≥ δ_loc → ρ ≤ ‖γ t - γ t₀‖) :
     ∃ limit : ℂ, Tendsto (fun ε =>
       ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
       (𝓝[>] 0) (𝓝 limit) := by
-  -- Step 1: Get bounded remainder from C² smoothness
+  -- Step 1: Extract no-return bounds
+  obtain ⟨ρ, hρ_pos, δ_loc, hδ_loc_pos, h_far_bound⟩ := h_no_return
+  -- Step 2: Get bounded remainder from C² smoothness
   obtain ⟨C, δ₀, hδ₀_pos, hr_bounded⟩ := remainder_bounded_of_C2 hL hγ_C2 hγ_deriv
-  -- Step 2: From C², derive HasDerivAt and lower bound on ‖γ t - γ t₀‖
+  -- Step 3: From C², derive HasDerivAt and lower bound on ‖γ t - γ t₀‖
   have hγ_diff : DifferentiableAt ℝ γ t₀ := hγ_C2.differentiableAt one_le_two
   have hγ_hasderiv : HasDerivAt γ L t₀ := by rw [← hγ_deriv]; exact hγ_diff.hasDerivAt
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
@@ -2382,18 +2441,30 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
           apply sub_le_sub; rw [h_smul_norm]; exact h_rem
       _ = (‖L‖ / 2) * |t - t₀| := by ring
   obtain ⟨δ₁, hδ₁_pos, h_lower⟩ := h_lower_exists
-  -- Step 3: Define the cutoff integral I(ε) and work with dyadic sequence
+  -- Step 4: Define working δ that ensures localization
+  -- For ε ≤ min ρ (‖L‖/2 * δ_loc), the γ-annulus is localized to |t-t₀| < δ_loc
+  let δ := min (min δ₀ δ₁) (min ρ ((‖L‖ / 2) * min δ_loc (min δ₀ δ₁)))
+  have hδ_pos : 0 < δ := by simp only [δ]; positivity
+  have hδ_le_δ₀ : δ ≤ δ₀ := le_trans (min_le_left _ _) (min_le_left _ _)
+  have hδ_le_δ₁ : δ ≤ δ₁ := le_trans (min_le_left _ _) (min_le_right _ _)
+  have hδ_le_ρ : δ ≤ ρ := le_trans (min_le_right _ _) (min_le_left _ _)
+  -- Step 5: Derive localization for ε ≤ δ
+  -- Key insight: For ε ≤ δ ≤ ρ, if ‖γ t - γ t₀‖ ≤ ε then t must be close to t₀
+  -- Proof: (1) If |t-t₀| ≥ δ_loc, then h_far_bound gives ‖γ‖ ≥ ρ > ε, contradiction
+  --        (2) If |t-t₀| < δ_loc < min δ₀ δ₁, we're done
+  -- The δ construction ensures δ_loc > 0 and ε ≤ δ implies the bound holds.
+  have h_localize_δ : ∀ ε, 0 < ε → ε ≤ δ →
+      ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε → |t - t₀| < min δ₀ δ₁ := by
+    intro ε hε_pos hε_le_δ t ht_mem hγ_small
+    -- The proof uses h_far_bound to show |t-t₀| < δ_loc, then h_lower to refine
+    -- Technical: need to construct δ more carefully to ensure strict inequality
+    sorry  -- TODO: Fill with micro-lemma chain
+  -- Step 6: Define the cutoff integral I(ε) and constant K
   let I : ℝ → ℂ := fun ε => ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0
-  let δ := min δ₀ δ₁
-  have hδ_pos : 0 < δ := lt_min hδ₀_pos hδ₁_pos
-  have hδ_le_δ₀ : δ ≤ δ₀ := min_le_left _ _
-  have hδ_le_δ₁ : δ ≤ δ₁ := min_le_right _ _
-  -- Step 4: Show step bounds for dyadic sequence
-  -- The step bound follows from integrating the bounded remainder over the annulus.
-  -- Key facts: hr_bounded gives ‖r(t)‖ ≤ C, and the annulus has width O(δ/2^n).
-  -- Use max 0 C + 1 to ensure positivity of the constant.
-  let K := max 0 C + 1
-  have hK_pos : 0 < K := by simp only [K]; linarith [le_max_left 0 C]
+  -- K must include 1/‖L‖ factor to absorb measure bound
+  let K := (4 * max 0 C + 4) / ‖L‖
+  have hK_pos : 0 < K := by simp only [K]; positivity
+  -- Step 7: Show step bounds for dyadic sequence
   have h_step : ∀ n, ‖I (δ / 2^(n+1)) - I (δ / 2^n)‖ ≤ K * δ / 2^n := fun n => by
     -- Setup positivity facts
     have hε₁_pos : 0 < δ / 2^n := div_pos hδ_pos (by positivity)
@@ -2402,13 +2473,16 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       apply div_le_div_of_nonneg_left hδ_pos.le (by positivity)
       exact pow_le_pow_right₀ (by norm_num : (1:ℝ) ≤ 2) (Nat.le_succ n)
     have hε₁_le_δ : δ / 2^n ≤ δ := div_le_self hδ_pos.le (one_le_pow₀ (by norm_num : (1:ℝ) ≤ 2))
-    have hε₁_le_min : δ / 2^n ≤ min δ₀ δ₁ := le_trans hε₁_le_δ (by simp [δ])
     have h_ratio : δ / 2^n ≤ 2 * (δ / 2^(n+1)) := by rw [pow_succ]; ring_nf; linarith
+    -- Derive h_localize for this ε₁
+    have h_loc : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ δ / 2^n → |t - t₀| < min δ₀ δ₁ :=
+      h_localize_δ (δ / 2^n) hε₁_pos hε₁_le_δ
     -- Apply pv_step_bound_ratio_two
     have h_assoc : K * (δ / 2^n) = K * δ / 2^n := by ring
     rw [← h_assoc]
     exact @pv_step_bound_ratio_two γ a b t₀ L C δ₀ δ₁ (δ / 2^n) (δ / 2^(n+1))
-      hε₂_pos hε₂_le_ε₁ hε₁_le_min h_ratio hL hδ₀_pos hδ₁_pos hr_bounded h_lower
+      hε₂_pos hε₂_le_ε₁ h_ratio hL hδ₀_pos hδ₁_pos hr_bounded h_lower
+      h_loc hat₀ hγ_meas hγ_cont_deriv
   -- Step 5: Cauchy sequence from geometric step bounds
   have h_cauchy_seq : CauchySeq (fun n => I (δ / 2^n)) :=
     cauchySeq_pv_dyadic hδ_pos hK_pos h_step
@@ -2491,21 +2565,23 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       -- First, bound ‖I ε - I(δ/2^M)‖ using pv_step_bound_ratio_two
       have hε_pos_use : 0 < ε := hε_pos'
       have hε_le_M : ε ≤ δ / 2^M := hM_upper
-      have hM_le_min : δ / 2^M ≤ min δ₀ δ₁ := by
-        have hM_le_δ : δ / 2^M ≤ δ :=
-          div_le_self hδ_pos.le (one_le_pow₀ (by norm_num : (1:ℝ) ≤ 2))
-        exact le_trans hM_le_δ (by simp [δ])
       have h_ratio_M : δ / 2^M ≤ 2 * ε := by
         have h := hM_lower  -- δ / 2^(M+1) < ε
         have heq : δ / 2^M = 2 * (δ / 2^(M+1)) := by rw [pow_succ]; ring
         rw [heq]
         linarith
+      have hM_le_δ : δ / 2^M ≤ δ :=
+        div_le_self hδ_pos.le (one_le_pow₀ (by norm_num : (1:ℝ) ≤ 2))
+      -- Derive h_localize for this ε₁ = δ/2^M
+      have h_loc_M : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ δ / 2^M → |t - t₀| < min δ₀ δ₁ :=
+        h_localize_δ (δ / 2^M) (div_pos hδ_pos (by positivity)) hM_le_δ
       -- Apply step bound to get ‖I ε - I(δ/2^M)‖ ≤ K * δ / 2^M
       have h_first_piece : ‖I ε - I (δ / 2^M)‖ ≤ K * δ / 2^M := by
         have h_assoc : K * (δ / 2^M) = K * δ / 2^M := by ring
         rw [← h_assoc]
         exact @pv_step_bound_ratio_two γ a b t₀ L C δ₀ δ₁ (δ / 2^M) ε
-          hε_pos_use hε_le_M hM_le_min h_ratio_M hL hδ₀_pos hδ₁_pos hr_bounded h_lower
+          hε_pos_use hε_le_M h_ratio_M hL hδ₀_pos hδ₁_pos hr_bounded h_lower
+          h_loc_M hat₀ hγ_meas hγ_cont_deriv
       -- For the telescoping sum, use the step bounds and geometric series
       -- We use the fact that Σ_{k=N}^{M-1} K*δ/2^k < 2*K*δ/2^N for any M > N
       -- and for M = N the sum is empty (= 0)
