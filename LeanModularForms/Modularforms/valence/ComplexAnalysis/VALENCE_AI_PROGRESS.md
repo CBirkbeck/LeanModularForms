@@ -14,9 +14,29 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 36)
+**Last update:** 2026-02-05 (session 37)
 **Target:** `generalizedWindingNumber' fdBoundary 0 5 p = -1` (CLOCKWISE orientation)
 **Status:** IN-PROGRESS - 20 sorries remaining - wrap-count NOT yet proven
+
+### Session 37 Progress (2026-02-05, derivative bound calc structure)
+
+**Actions taken this session:**
+1. Improved calc structure for `norm_deriv_H_seg2_le.h_bound` inner proof:
+   - Added intermediate step: ‖deriv‖ ≤ |1-s|*π/6 + |s|*‖i_point - rho'‖
+   - Second calc step now proven: |1-s|*π/6 + |s|*‖i-ρ'‖ ≤ |1-s|*1 + |s|*2 ✓
+   - Still needs: first calc step (explicit derivative formula) at line 2642
+2. Applied same calc structure to `norm_deriv_H_seg3_le.h_bound`:
+   - Second calc step now proven ✓
+   - Still needs: first calc step at line 2695
+
+**Remaining work for derivative bound sorries:**
+- Line 2642: Need HasDerivAt computation for arc + chord with proper coercion handling
+- Line 2695: Same for seg3
+
+**Note:** Full sorry count unchanged at 20 because the calc structure adds intermediate sorries
+but the second steps are now filled in (net effect: same count).
+
+---
 
 ### Session 36 Progress (2026-02-05, micro-lemma refactoring)
 
@@ -2568,3 +2588,40 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
 - `singular_annulus_bound` (line ~2478) - needs symmetric integral cancellation
 - `remainder_integral_bound_on_annulus` (line ~2262) - measure theory conversion
 - Plus others from previous sessions
+
+### Session 39 final update
+
+**Commits:** 5cfe2e3, 2525639
+
+### Micro-Lemma Status
+
+| # | Name | Status | Location |
+|---|------|--------|----------|
+| 1 | `norm_linear_approx_bound` | ✓ DONE | Line ~2389 |
+| 2 | `symmDiff_subset_boundaryLayers` | TODO | Inside `annulus_symmDiff_measure_bound` |
+| 3 | `boundaryLayer_subset_shell` | TODO | Inside `annulus_symmDiff_measure_bound` |
+| 4 | `volume_shell_le` | ✓ DONE | Line ~2399 |
+| 5 | Combine (2)+(3)+(4) | TODO | `annulus_symmDiff_measure_bound` body |
+
+### Updated Proof Structure
+
+**`singular_annulus_bound`** now uses:
+```
+tAnnLin = {t | ε₂ < ‖L‖ * |t - t₀| ≤ ε₁}  (tight annulus)
+```
+
+**Proof chain:**
+1. ∫_{tAnnLin} 1/(t-t₀) = 0 (symmetry: odd function, symmetric set)
+2. volume(symmDiff γAnn tAnnLin) ≤ K*ε₁²/‖L‖² (from C² control)
+3. sup|1/(t-t₀)| ≤ 2‖L‖/ε₁ (from h_ratio)
+4. Total ≤ K*ε₁²/‖L‖² × 2‖L‖/ε₁ = 2K*ε₁/‖L‖ ≤ 4/‖L‖*ε₁
+
+### Next Steps
+
+1. Implement micro-lemma (2): `symmDiff_subset_boundaryLayers`
+   - Show: t ∈ symmDiff ⇒ |‖L‖|t| - ε| ≤ K₀|t|² for some ε ∈ {ε₁, ε₂}
+   
+2. Implement micro-lemma (3): `boundaryLayer_subset_shell`
+   - Turn |‖L‖r - ε| ≤ K₀r² into r-shell with constant thickness
+
+3. Combine with `volume_shell_le` to complete `annulus_symmDiff_measure_bound`

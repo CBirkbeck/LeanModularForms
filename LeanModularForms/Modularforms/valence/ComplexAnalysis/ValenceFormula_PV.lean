@@ -2425,6 +2425,68 @@ lemma volume_shell_le {t₀ r₁ r₂ : ℝ} (hr : r₁ ≤ r₂) :
     _ = ENNReal.ofReal (2 * (r₂ - r₁)) := by
         rw [← ENNReal.ofReal_add (by linarith) (by linarith)]; ring_nf
 
+/-- **Micro-lemma (2): Points in symmDiff are near a threshold boundary**.
+    If the γ-condition (ε₂ < g ≤ ε₁) and linear-condition (ε₂ < x ≤ ε₁) disagree,
+    then x must be within error e of either ε₁ or ε₂.
+
+    Here g = ‖γ t - γ t₀‖, x = ‖L‖ * |t - t₀|, e = K₀ * |t - t₀|². -/
+lemma symmDiff_subset_boundaryLayers {g x e ε₁ ε₂ : ℝ}
+    (h_approx : |g - x| ≤ e)
+    (h_xor : Xor' (ε₂ < g ∧ g ≤ ε₁) (ε₂ < x ∧ x ≤ ε₁)) :
+    |x - ε₂| ≤ e ∨ |x - ε₁| ≤ e := by
+  -- From h_xor, either (A ∧ ¬B) or (B ∧ ¬A)
+  rcases h_xor with ⟨⟨hg_lower, hg_upper⟩, hnotB⟩ | ⟨⟨hx_lower, hx_upper⟩, hnotA⟩
+  · -- Case: A ∧ ¬B (γ-condition holds, linear-condition fails)
+    -- ¬B means: x ≤ ε₂ ∨ ε₁ < x
+    by_cases hx_le_ε₂ : x ≤ ε₂
+    · -- Sub-case: x ≤ ε₂ but ε₂ < g
+      left
+      have h1 : ε₂ - x ≤ g - x := by linarith
+      have h2 : g - x ≤ |g - x| := le_abs_self _
+      have hle : x - ε₂ ≤ 0 := by linarith
+      calc |x - ε₂| = ε₂ - x := by rw [abs_of_nonpos hle]; ring
+        _ ≤ g - x := h1
+        _ ≤ |g - x| := h2
+        _ ≤ e := h_approx
+    · -- Sub-case: x > ε₂, so must have ε₁ < x (since ¬B and x > ε₂)
+      push_neg at hx_le_ε₂
+      have hx_gt_ε₁ : ε₁ < x := by
+        by_contra h_not
+        push_neg at h_not
+        exact hnotB ⟨hx_le_ε₂, h_not⟩
+      right
+      have h1 : x - ε₁ ≤ x - g := by linarith
+      have h2 : x - g ≤ |g - x| := by rw [abs_sub_comm]; exact le_abs_self _
+      calc |x - ε₁| = x - ε₁ := abs_of_pos (by linarith)
+        _ ≤ x - g := h1
+        _ ≤ |g - x| := h2
+        _ ≤ e := h_approx
+  · -- Case: B ∧ ¬A (linear-condition holds, γ-condition fails)
+    -- ¬A means: g ≤ ε₂ ∨ ε₁ < g
+    by_cases hg_le_ε₂ : g ≤ ε₂
+    · -- Sub-case: g ≤ ε₂ but ε₂ < x
+      left
+      have h1 : x - ε₂ ≤ x - g := by linarith
+      have h2 : x - g ≤ |g - x| := by rw [abs_sub_comm]; exact le_abs_self _
+      calc |x - ε₂| = x - ε₂ := abs_of_pos (by linarith)
+        _ ≤ x - g := h1
+        _ ≤ |g - x| := h2
+        _ ≤ e := h_approx
+    · -- Sub-case: g > ε₂, so must have ε₁ < g (since ¬A and g > ε₂)
+      push_neg at hg_le_ε₂
+      have hg_gt_ε₁ : ε₁ < g := by
+        by_contra h_not
+        push_neg at h_not
+        exact hnotA ⟨hg_le_ε₂, h_not⟩
+      right
+      have h1 : ε₁ - x ≤ g - x := by linarith
+      have h2 : g - x ≤ |g - x| := le_abs_self _
+      have hle : x - ε₁ ≤ 0 := by linarith
+      calc |x - ε₁| = ε₁ - x := by rw [abs_of_nonpos hle]; ring
+        _ ≤ g - x := h1
+        _ ≤ |g - x| := h2
+        _ ≤ e := h_approx
+
 /-- **Thin-shell symmetric difference bound**. The symmetric difference between
     the γ-annulus and the tight linear-model t-annulus has measure O(ε₁²/‖L‖²).
 

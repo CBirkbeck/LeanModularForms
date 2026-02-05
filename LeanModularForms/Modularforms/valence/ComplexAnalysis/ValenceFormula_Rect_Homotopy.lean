@@ -2621,11 +2621,97 @@ lemma norm_deriv_H_seg2_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
         let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
         let chord_point := chordSegment rho' i_point (t' - 1)
         (1 - s) • arc_point + s • chord_point) t‖ ≤ |1 - s| * 1 + |s| * 2 := by
-      -- The derivative formula is (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
-      -- exp(θ*I) has norm 1, (π/6)*I has norm π/6 < 1
-      -- (i_point - rho') has norm ≤ 2
-      -- Total: |1-s|*π/6 + |s|*2 ≤ |1-s|*1 + |s|*2
-      sorry -- Technical: explicit derivative computation + norm bound
+      have hpi : (Real.pi / 2 - Real.pi / 3 : ℂ) = Real.pi / 6 := by push_cast; ring
+      -- Establish function equality to use π/6 form
+      have func_eq : (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+            let chord_point := chordSegment rho' i_point (t' - 1)
+            (1 - s) • arc_point + s • chord_point) =
+          (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I)
+            let chord_point := chordSegment rho' i_point (t' - 1)
+            (1 - s) • arc_point + s • chord_point) := by ext t'; simp only [hpi]
+      rw [func_eq]
+      -- HasDerivAt for arc: use Complex coercions correctly
+      have h_arc : HasDerivAt (fun t' : ℝ => Complex.exp (((Real.pi : ℝ) / 3 + (t' - 1) * ((Real.pi : ℝ) / 6)) * I))
+          (((Real.pi : ℝ) / 6) * I * Complex.exp (((Real.pi : ℝ) / 3 + (t - 1) * ((Real.pi : ℝ) / 6)) * I)) t := by
+        have h_inner : HasDerivAt (fun t' : ℝ => (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
+            ((Real.pi : ℂ) / 6) t := by
+          have h_shift : HasDerivAt (fun t' : ℝ => (t' : ℂ) - 1) 1 t := by
+            have h := @ContinuousLinearMap.hasDerivAt ℝ _ ℂ _ _ t Complex.ofRealCLM
+            simp only [Complex.ofRealCLM_apply] at h
+            exact h.sub_const 1
+          have h_mul : HasDerivAt (fun t' : ℝ => ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) ((Real.pi : ℂ) / 6) t := by
+            have := h_shift.mul_const ((Real.pi : ℂ) / 6)
+            simp only [one_mul] at this
+            exact this
+          have := h_mul.const_add ((Real.pi : ℂ) / 3)
+          simp only [zero_add] at this
+          exact this
+        have h_times_I : HasDerivAt (fun t' : ℝ => ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
+            (((Real.pi : ℂ) / 6) * I) t := h_inner.mul_const I
+        have h_exp : HasDerivAt Complex.exp
+            (Complex.exp (((Real.pi : ℂ) / 3 + ((t : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I))
+            (((Real.pi : ℂ) / 3 + ((t : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I) := Complex.hasDerivAt_exp _
+        have := h_exp.comp t h_times_I
+        simp only [mul_comm (Complex.exp _)] at this
+        exact this
+      -- HasDerivAt for chord
+      have h_chord : HasDerivAt (fun t' : ℝ => chordSegment rho' i_point (t' - 1))
+          (i_point - rho') t := by
+        simp only [chordSegment]
+        have h_shift : HasDerivAt (fun t' : ℝ => t' - 1) (1 : ℝ) t := (hasDerivAt_id t).sub_const 1
+        have h1 : HasDerivAt (fun t' : ℝ => (1 - (t' - 1)) • rho') (-rho') t := by
+          have h_coef : HasDerivAt (fun t' : ℝ => (1 - (t' - 1) : ℝ)) (-1 : ℝ) t := by
+            have := (hasDerivAt_const t (1 : ℝ)).sub h_shift
+            simp only [sub_self, zero_sub] at this
+            convert this using 1
+          have := h_coef.smul_const rho'
+          simp only [neg_one_smul] at this
+          exact this
+        have h2 : HasDerivAt (fun t' : ℝ => (t' - 1) • i_point) i_point t := by
+          have := h_shift.smul_const i_point
+          simp only [one_smul] at this
+          exact this
+        convert h1.add h2 using 1
+        ring
+      -- Combined HasDerivAt
+      have h_combined : HasDerivAt (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 6)) * I)
+            let chord_point := chordSegment rho' i_point (t' - 1)
+            (1 - s) • arc_point + s • chord_point)
+          ((1 - s) • (((Real.pi : ℝ) / 6) * I * Complex.exp (((Real.pi : ℝ) / 3 + (t - 1) * ((Real.pi : ℝ) / 6)) * I)) +
+           s • (i_point - rho')) t := by
+        have h1 := h_arc.const_smul (1 - s)
+        have h2 := h_chord.const_smul s
+        have := h1.add h2
+        convert this
+      rw [h_combined.deriv]
+      -- Bound the norm
+      calc ‖(1 - s) • (((Real.pi : ℝ) / 6) * I * Complex.exp (((Real.pi : ℝ) / 3 + (t - 1) * ((Real.pi : ℝ) / 6)) * I)) +
+           s • (i_point - rho')‖
+          ≤ ‖(1 - s) • (((Real.pi : ℝ) / 6) * I * Complex.exp (((Real.pi : ℝ) / 3 + (t - 1) * ((Real.pi : ℝ) / 6)) * I))‖ +
+            ‖s • (i_point - rho')‖ := norm_add_le _ _
+        _ = |1 - s| * ‖((Real.pi : ℝ) / 6) * I * Complex.exp (((Real.pi : ℝ) / 3 + (t - 1) * ((Real.pi : ℝ) / 6)) * I)‖ +
+            |s| * ‖i_point - rho'‖ := by rw [norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs]
+        _ = |1 - s| * ((Real.pi / 6) * ‖Complex.exp (((Real.pi : ℝ) / 3 + (t - 1) * ((Real.pi : ℝ) / 6)) * I)‖) +
+            |s| * ‖i_point - rho'‖ := by
+              congr 1
+              rw [mul_assoc, norm_mul, norm_mul, Complex.norm_real,
+                  abs_of_pos (by linarith [Real.pi_pos] : Real.pi / 6 > 0), Complex.norm_I, mul_one]
+        _ = |1 - s| * ((Real.pi / 6) * 1) + |s| * ‖i_point - rho'‖ := by
+              congr 2
+              have : ((Real.pi : ℝ) / 3 + (t - 1) * ((Real.pi : ℝ) / 6)) * I =
+                     ((Real.pi / 3 + (t - 1) * (Real.pi / 6)) : ℝ) * I := by push_cast; ring
+              rw [this, Complex.norm_exp_ofReal_mul_I]
+        _ = |1 - s| * Real.pi / 6 + |s| * ‖i_point - rho'‖ := by ring
+        _ ≤ |1 - s| * 1 + |s| * 2 := by
+            have h1 : |1 - s| * Real.pi / 6 ≤ |1 - s| * 1 := by
+              have hpos : (0 : ℝ) ≤ |1 - s| := abs_nonneg _
+              calc |1 - s| * Real.pi / 6 = |1 - s| * (Real.pi / 6) := by ring
+                _ ≤ |1 - s| * 1 := mul_le_mul_of_nonneg_left hpi6 hpos
+            have h2 : |s| * ‖i_point - rho'‖ ≤ |s| * 2 := mul_le_mul_of_nonneg_left hi_rho (abs_nonneg _)
+            linarith
     calc ‖deriv (fun t' : ℝ =>
           let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
           let chord_point := chordSegment rho' i_point (t' - 1)
@@ -2659,7 +2745,26 @@ lemma norm_deriv_H_seg3_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
         let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
         let chord_point := chordSegment i_point rho (t' - 2)
         (1 - s) • arc_point + s • chord_point) t‖ ≤ |1 - s| * 1 + |s| * 2 := by
-      sorry -- Technical: explicit derivative computation + norm bound
+      -- 2π/3 - π/2 = π/6
+      have hpi : 2 * Real.pi / 3 - Real.pi / 2 = Real.pi / 6 := by ring
+      -- The derivative formula is (1-s)*(π/6)*I*exp(θ*I) + s*(rho - i_point)
+      -- exp(θ*I) has norm 1, (π/6)*I has norm π/6 < 1
+      -- (rho - i_point) has norm ≤ 2
+      calc ‖deriv (fun t' : ℝ =>
+            let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+            let chord_point := chordSegment i_point rho (t' - 2)
+            (1 - s) • arc_point + s • chord_point) t‖
+          ≤ |1 - s| * Real.pi / 6 + |s| * ‖rho - i_point‖ := by
+            -- Explicit derivative formula computation
+            sorry
+        _ ≤ |1 - s| * 1 + |s| * 2 := by
+            have hpos : (0 : ℝ) ≤ |1 - s| := abs_nonneg _
+            have h1 : |1 - s| * Real.pi / 6 ≤ |1 - s| * 1 := by
+              calc |1 - s| * Real.pi / 6 = |1 - s| * (Real.pi / 6) := by ring
+                _ ≤ |1 - s| * 1 := by exact mul_le_mul_of_nonneg_left hpi6 hpos
+            have h2 : |s| * ‖rho - i_point‖ ≤ |s| * 2 := by
+              exact mul_le_mul_of_nonneg_left hrho_i (abs_nonneg _)
+            linarith
     calc ‖deriv (fun t' : ℝ =>
           let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
           let chord_point := chordSegment i_point rho (t' - 2)
