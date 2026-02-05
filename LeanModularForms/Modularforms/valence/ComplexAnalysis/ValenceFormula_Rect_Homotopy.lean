@@ -2002,14 +2002,250 @@ lemma arg_Q2 (z : ℂ) (hz_re : z.re < 0) (hz_im : 0 < z.im) :
   · have h := Complex.arg_mem_Ioc z
     exact h.2
 
+/-! #### BRANCH CUT ANALYSIS: seg4 crosses negative real axis exactly once -/
+
+/-- The unique time on seg4 where the vector (fdPolygon t - p) crosses the negative real axis.
+    At this time, (fdPolygon t - p).im = 0 and (fdPolygon t - p).re < 0.
+    Formula: tL = 3 + (p.im - √3/2) / (H_height - √3/2) -/
+noncomputable def tL (p : ℂ) : ℝ := 3 + (p.im - Real.sqrt 3 / 2) / (H_height - Real.sqrt 3 / 2)
+
+/-- tL is in (3, 4) for interior points. -/
+lemma tL_mem_Ioo (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) : tL p ∈ Set.Ioo (3:ℝ) 4 := by
+  have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
+  have hH : H_height = Real.sqrt 3 / 2 + 1 := rfl
+  have hdenom_pos : H_height - Real.sqrt 3 / 2 > 0 := by rw [hH]; linarith
+  have hnum_pos : p.im - Real.sqrt 3 / 2 > 0 := by linarith
+  have hnum_lt : p.im - Real.sqrt 3 / 2 < H_height - Real.sqrt 3 / 2 := by linarith
+  simp only [tL, Set.mem_Ioo]
+  constructor
+  · -- tL > 3: numerator > 0, denominator > 0
+    have : (p.im - Real.sqrt 3 / 2) / (H_height - Real.sqrt 3 / 2) > 0 :=
+      div_pos hnum_pos hdenom_pos
+    linarith
+  · -- tL < 4: fraction < 1
+    have : (p.im - Real.sqrt 3 / 2) / (H_height - Real.sqrt 3 / 2) < 1 :=
+      (div_lt_one hdenom_pos).mpr hnum_lt
+    linarith
+
+/-- seg4 always has re = -1/2, so (fdPolygon t - p).re < 0 on seg4.
+    Note: uses Ioc 3 4 because at t=3, fdPolygon is in seg3 by definition. -/
+lemma seg4_vec_re_neg (p : ℂ) (hp_re : |p.re| < 1/2) (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) :
+    (fdPolygon t - p).re < 0 := by
+  have hpre_neg : -(1/2) < p.re := (abs_lt.mp hp_re).1
+  have hpre : -1/2 < p.re := by linarith
+  have hseg4_re : (fdPolygon t).re = -1/2 := by
+    simp only [fdPolygon]
+    split_ifs with h1 h2 h3 h4
+    · linarith [ht.1]  -- t ≤ 1 vs t > 3
+    · linarith [ht.1]  -- t ≤ 2 vs t > 3
+    · linarith [ht.1]  -- t ≤ 3 vs t > 3
+    · simp             -- 3 < t ≤ 4: seg4
+    · linarith [ht.2]  -- t > 4 vs t ≤ 4
+  rw [Complex.sub_re, hseg4_re]
+  linarith
+
+/-- On seg4, the imaginary part of fdPolygon t is √3/2 + (t-3)*(H_height - √3/2). -/
+lemma seg4_im_formula (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) :
+    (fdPolygon t).im = Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) := by
+  simp only [fdPolygon]
+  split_ifs with h1 h2 h3 h4
+  · linarith [ht.1]  -- t ≤ 1 vs t > 3
+  · linarith [ht.1]  -- t ≤ 2 vs t > 3
+  · linarith [ht.1]  -- t ≤ 3 vs t > 3
+  · -- seg4: 3 < t ≤ 4, formula: -1/2 + (√3/2 + (t - 3) * (H_height - √3/2)) * I
+    -- The im part is just the coefficient of I
+    have h : (-1/2 + (Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I).im =
+             Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) := by
+      simp [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_im]
+    exact h
+  · linarith [ht.2]  -- t > 4 vs t ≤ 4
+
+/-- Sign of (fdPolygon t - p).im on seg4: negative before tL, zero at tL, positive after. -/
+lemma seg4_vec_im_sign (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) :
+    (t < tL p → (fdPolygon t - p).im < 0) ∧
+    (t = tL p → (fdPolygon t - p).im = 0) ∧
+    (tL p < t → 0 < (fdPolygon t - p).im) := by
+  have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
+  have hH : H_height = Real.sqrt 3 / 2 + 1 := rfl
+  have hdenom_pos : H_height - Real.sqrt 3 / 2 > 0 := by rw [hH]; linarith
+  have hdenom_ne : H_height - Real.sqrt 3 / 2 ≠ 0 := ne_of_gt hdenom_pos
+  have him := seg4_im_formula t ht
+  set D := H_height - Real.sqrt 3 / 2 with hD_def
+  -- Direct: (fdPolygon t - p).im = √3/2 + (t-3)*D - p.im
+  --       = D*(t-3) + √3/2 - p.im = D*(t - 3 - (p.im - √3/2)/D) = D*(t - tL p)
+  have him_eq : (fdPolygon t - p).im = D * (t - tL p) := by
+    rw [Complex.sub_im, him, tL, hD_def]
+    have h1 : Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) - p.im =
+              (H_height - Real.sqrt 3 / 2) * (t - 3) + (Real.sqrt 3 / 2 - p.im) := by ring
+    rw [h1]
+    have h2 : (H_height - Real.sqrt 3 / 2) * (t - (3 + (p.im - Real.sqrt 3 / 2) / (H_height - Real.sqrt 3 / 2))) =
+              (H_height - Real.sqrt 3 / 2) * (t - 3) - (H_height - Real.sqrt 3 / 2) * ((p.im - Real.sqrt 3 / 2) / (H_height - Real.sqrt 3 / 2)) := by ring
+    rw [h2, mul_div_cancel₀ _ hdenom_ne]
+    ring
+  refine ⟨?_, ?_, ?_⟩
+  · intro hlt; rw [him_eq]; exact mul_neg_of_pos_of_neg hdenom_pos (by linarith)
+  · intro heq; rw [him_eq, heq, sub_self, mul_zero]
+  · intro hgt; rw [him_eq]; exact mul_pos hdenom_pos (by linarith)
+
+/-- At tL, the vector fdPolygon t - p is a nonzero negative real. -/
+lemma seg4_vec_at_tL (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    (fdPolygon (tL p) - p).re < 0 ∧ (fdPolygon (tL p) - p).im = 0 := by
+  have htL := tL_mem_Ioo p hp_norm hp_re hp_im_pos hp_im
+  have htL_Ioc : tL p ∈ Set.Ioc (3:ℝ) 4 := ⟨htL.1, le_of_lt htL.2⟩
+  constructor
+  · exact seg4_vec_re_neg p hp_re (tL p) htL_Ioc
+  · exact (seg4_vec_im_sign p hp_norm hp_re hp_im_pos hp_im (tL p) htL_Ioc).2.1 rfl
+
+/-- arg at tL equals π (negative real with re < 0, im = 0). -/
+lemma arg_at_tL_eq_pi (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    Complex.arg (fdPolygon (tL p) - p) = Real.pi := by
+  have hvec := seg4_vec_at_tL p hp_norm hp_re hp_im_pos hp_im
+  rw [Complex.arg_eq_pi_iff]
+  exact ⟨hvec.1, hvec.2⟩
+
+/-- Before tL on seg4: arg < 0 (in Q3, using arg_Q3). -/
+lemma arg_seg4_before (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4)
+    (htL : t < tL p) :
+    Complex.arg (fdPolygon t - p) < 0 := by
+  have him := (seg4_vec_im_sign p hp_norm hp_re hp_im_pos hp_im t ht).1 htL
+  exact (arg_Q3 (fdPolygon t - p) him).2
+
+/-- After tL on seg4: arg > 0 (in Q2, using arg_Q2). -/
+lemma arg_seg4_after (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4)
+    (htL : tL p < t) :
+    0 < Complex.arg (fdPolygon t - p) := by
+  have hre := seg4_vec_re_neg p hp_re t ht
+  have him := (seg4_vec_im_sign p hp_norm hp_re hp_im_pos hp_im t ht).2.2 htL
+  -- arg_Q2 gives π/2 < arg, which implies 0 < arg
+  have h := (arg_Q2 (fdPolygon t - p) hre him).1
+  linarith [Real.pi_pos]
+
+/-! #### WRAP COUNT: lifted angle definition
+
+The raw `Complex.arg` returns values in (-π, π], so it can't track total angle change around a loop.
+For a full counterclockwise loop, the arg stays bounded but the "true" angle decreases by 2π.
+
+The branch cut crossing happens at t = tL(p) on seg4 (the left vertical edge), where:
+- arg approaches π from below (approaching negative real axis from Q3)
+- arg jumps to π exactly at tL
+- arg then decreases to positive values (entering Q2)
+
+To track the full -2π change, we define a lifted angle that subtracts 2π after the branch cut.
+-/
+
+/-- arg is preserved when dividing by a positive real (normalization).
+    For z ≠ 0: arg(z / ‖z‖) = arg(z) -/
+lemma arg_normalize_eq (z : ℂ) (hz : z ≠ 0) :
+    Complex.arg (z / ‖z‖) = Complex.arg z := by
+  have hnorm_pos : (‖z‖ : ℝ) > 0 := norm_pos_iff.mpr hz
+  -- z / ‖z‖ = z * (1/‖z‖) = z * (‖z‖⁻¹)
+  rw [div_eq_mul_inv]
+  -- Use arg_mul_real: (x * r).arg = x.arg for r > 0
+  have hinv_pos : (0 : ℝ) < ‖z‖⁻¹ := inv_pos_of_pos hnorm_pos
+  -- The coercion: (‖z‖ : ℂ)⁻¹ = (‖z‖⁻¹ : ℝ) as a real
+  have h : z * (↑‖z‖)⁻¹ = z * (‖z‖⁻¹ : ℝ) := by
+    congr 1
+    simp only [Complex.ofReal_inv]
+  rw [h]
+  exact Complex.arg_mul_real hinv_pos z
+
+/-- fdPolygonRadialCircle_angle equals arg(fdPolygon t - p) when fdPolygon t ≠ p.
+    This follows because the radial projection just normalizes the direction vector. -/
+lemma fdPolygonRadialCircle_angle_eq_arg (p : ℂ) (t : ℝ) (hne : fdPolygon t ≠ p) :
+    fdPolygonRadialCircle_angle p t = Complex.arg (fdPolygon t - p) := by
+  simp only [fdPolygonRadialCircle_angle, angleOnCircle, fdPolygonRadialCircle, polygonToCircleRadial]
+  -- After unfolding: ((1 - 1) * ‖dir‖ + 1) • (dir / ‖dir‖) = 1 • (dir / ‖dir‖) = dir / ‖dir‖
+  have hdir_ne : fdPolygon t - p ≠ 0 := sub_ne_zero.mpr hne
+  set dir := fdPolygon t - p with hdir_def
+  -- Simplify: (1 - 1) * ‖dir‖ + 1 = 0 * ‖dir‖ + 1 = 1
+  have hscale : (1 - 1 : ℝ) * ‖dir‖ + 1 = 1 := by ring
+  simp only [hscale, one_smul, add_sub_cancel_left]
+  exact arg_normalize_eq dir hdir_ne
+
+/-- Lifted angle function for fdPolygonRadialCircle that accounts for the branch cut crossing.
+    Before tL: use raw arg
+    After tL: subtract 2π to track the full rotation
+
+    This makes the total angle change explicit:
+    - lifted(0) = arg(fdPolygon 0 - p)              (since 0 < tL for interior p)
+    - lifted(5) = arg(fdPolygon 5 - p) - 2π = lifted(0) - 2π  (since 5 > tL) -/
+noncomputable def fdPolygonRadialCircle_angle_lifted (p : ℂ) : ℝ → ℝ := fun t =>
+  if t < tL p then Complex.arg (fdPolygon t - p)
+  else Complex.arg (fdPolygon t - p) - 2 * Real.pi
+
+/-- fdPolygon 0 ≠ p for interior points. -/
+lemma fdPolygon_zero_ne_interior (p : ℂ) (hp_im : p.im < H_height) : fdPolygon 0 ≠ p := by
+  rw [fdPolygon_at_zero]
+  intro heq
+  have him : (1/2 + H_height * I).im = H_height := by simp
+  have hp_im' : p.im = H_height := by rw [← heq]; exact him
+  linarith
+
+/-- fdPolygon 5 ≠ p for interior points (same as fdPolygon 0). -/
+lemma fdPolygon_five_ne_interior (p : ℂ) (hp_im : p.im < H_height) : fdPolygon 5 ≠ p := by
+  have h : fdPolygon 5 = fdPolygon 0 := by simp only [fdPolygon]; norm_num
+  rw [h]
+  exact fdPolygon_zero_ne_interior p hp_im
+
+/-- At t=0, the lifted angle equals the raw fdPolygonRadialCircle_angle (since 0 < tL for interior points). -/
+lemma lifted_angle_at_zero (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    fdPolygonRadialCircle_angle_lifted p 0 = fdPolygonRadialCircle_angle p 0 := by
+  have htL := tL_mem_Ioo p hp_norm hp_re hp_im_pos hp_im
+  simp only [fdPolygonRadialCircle_angle_lifted]
+  rw [if_pos (by linarith [htL.1] : (0 : ℝ) < tL p)]
+  rw [← fdPolygonRadialCircle_angle_eq_arg p 0 (fdPolygon_zero_ne_interior p hp_im)]
+
+/-- At t=5, the lifted angle is raw angle minus 2π (since 5 > tL for interior points). -/
+lemma lifted_angle_at_five (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    fdPolygonRadialCircle_angle_lifted p 5 = fdPolygonRadialCircle_angle p 5 - 2 * Real.pi := by
+  have htL := tL_mem_Ioo p hp_norm hp_re hp_im_pos hp_im
+  simp only [fdPolygonRadialCircle_angle_lifted]
+  rw [if_neg (by linarith [htL.2] : ¬(5 : ℝ) < tL p)]
+  rw [← fdPolygonRadialCircle_angle_eq_arg p 5 (fdPolygon_five_ne_interior p hp_im)]
+
+/-- fdPolygon is periodic with period 5. -/
+lemma fdPolygon_periodic : fdPolygon 5 = fdPolygon 0 := by
+  simp only [fdPolygon]
+  norm_num
+
+/-- The raw angle at 5 equals the raw angle at 0 (fdPolygon is closed). -/
+lemma fdPolygonRadialCircle_angle_periodic (p : ℂ) :
+    fdPolygonRadialCircle_angle p 5 = fdPolygonRadialCircle_angle p 0 := by
+  simp only [fdPolygonRadialCircle_angle, angleOnCircle, fdPolygonRadialCircle, polygonToCircleRadial]
+  rw [show fdPolygon 5 = fdPolygon 0 by simp only [fdPolygon]; norm_num]
+
+/-- The lifted angle wrap count: total change is -2π.
+    This is the correct statement (unlike the raw arg version). -/
+lemma fdPolygonRadialCircle_angle_lifted_change (p : ℂ) (hp_norm : ‖p‖ > 1)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    fdPolygonRadialCircle_angle_lifted p 5 = fdPolygonRadialCircle_angle_lifted p 0 - 2 * Real.pi := by
+  rw [lifted_angle_at_zero p hp_norm hp_re hp_im_pos hp_im]
+  rw [lifted_angle_at_five p hp_norm hp_re hp_im_pos hp_im]
+  rw [fdPolygonRadialCircle_angle_periodic]
+
+/-- Equality form of wrap count using lifted angle. -/
+lemma fdPolygonRadialCircle_angle_change (p : ℂ) (hp_norm : ‖p‖ > 1)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    fdPolygonRadialCircle_angle_lifted p 5 = fdPolygonRadialCircle_angle_lifted p 0 - 2 * Real.pi :=
+  fdPolygonRadialCircle_angle_lifted_change p hp_norm hp_re hp_im_pos hp_im
+
+/-- Wrap count for the lifted angle function. -/
 lemma fdPolygonRadialCircle_wrapCount (p : ℂ) (hp_norm : ‖p‖ > 1)
     (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
-    ∃ θ₀ : ℝ, fdPolygonRadialCircle_angle p 0 = θ₀ ∧
-              fdPolygonRadialCircle_angle p 5 = θ₀ - 2 * Real.pi := by
-  -- The polygon starts and ends at the same point (closed curve)
-  -- Going around the FD boundary clockwise means angle decreases by 2π
-  -- Use quadrant analysis: Q1 → Q4 → Q3 → Q2 → Q1, crossing -π exactly once
-  sorry -- CORE MATHEMATICAL CONTENT: wrap count analysis using quadrant lemmas
+    ∃ θ₀ : ℝ, fdPolygonRadialCircle_angle_lifted p 0 = θ₀ ∧
+              fdPolygonRadialCircle_angle_lifted p 5 = θ₀ - 2 * Real.pi := by
+  use fdPolygonRadialCircle_angle_lifted p 0
+  constructor
+  · rfl
+  · exact fdPolygonRadialCircle_angle_change p hp_norm hp_re hp_im_pos hp_im
 
 /-- circleParamCW also makes exactly one clockwise loop.
     angle(0) = 2π, angle(5) = 0, so change = -2π. -/
