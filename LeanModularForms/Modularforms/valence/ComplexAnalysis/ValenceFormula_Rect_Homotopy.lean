@@ -10,6 +10,7 @@ import Mathlib.Topology.MetricSpace.Basic
 import Mathlib.Analysis.Complex.UpperHalfPlane.Basic
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.Basic
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.PiecewiseHomotopy
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.WindingNumber
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.WindingNumberInterior
 
 /-!
@@ -2269,140 +2270,171 @@ lemma angle_alignment_at_zero (p : ℂ) (hp_norm : ‖p‖ > 1)
 
 /-! ### Step 4: S¹ homotopy micro-lemmas (8 conditions) -/
 
-/-- To handle the angle alignment, we use an adjusted angle function. -/
+/-- To handle the angle alignment, we use an adjusted angle function.
+    Uses the lifted angle so that both θ₁ and θ₂ have the same -2π wrap. -/
 noncomputable def circleParamCW_angle_adjusted (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) : ℝ → ℝ := fun t =>
-  circleParamCW_angle t + (fdPolygonRadialCircle_angle p 0 - circleParamCW_angle 0)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) : ℝ → ℝ := fun t =>
+  circleParamCW_angle t + (fdPolygonRadialCircle_angle_lifted p 0 - circleParamCW_angle 0)
 
-/-- Adjusted S¹ homotopy with angle alignment. -/
+/-- Adjusted S¹ homotopy with angle alignment.
+    CRITICAL: Uses fdPolygonRadialCircle_angle_lifted to ensure closedness at all s ∈ [0,1].
+    With the lifted angle, both θ₁(5) = θ₁(0) - 2π and θ₂(5) = θ₂(0) - 2π,
+    so the exponents at t=0 and t=5 differ by exactly 2π for all s. -/
 noncomputable def angleHomotopyAdjusted (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) : ℝ × ℝ → ℂ := fun (t, s) =>
-  let θ₁ := fdPolygonRadialCircle_angle p t
-  let θ₂ := circleParamCW_angle_adjusted p hp_norm hp_re hp_im t
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) : ℝ × ℝ → ℂ := fun (t, s) =>
+  let θ₁ := fdPolygonRadialCircle_angle_lifted p t
+  let θ₂ := circleParamCW_angle_adjusted p hp_norm hp_re hp_im_pos hp_im t
   p + Complex.exp (I * ((1 - s) * θ₁ + s * θ₂))
 
 /-- Condition 1: Angle homotopy is continuous. -/
 lemma angleHomotopyAdjusted_continuous (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
-    Continuous (angleHomotopyAdjusted p hp_norm hp_re hp_im) := by
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    Continuous (angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im) := by
   -- exp(I * (linear combination of continuous angle functions)) is continuous
   sorry -- Technical: continuity of angle functions
 
-/-- Condition 2: At s=0, angle homotopy equals fdPolygonRadialCircle. -/
+/-- Condition 2: At s=0, angle homotopy equals fdPolygonRadialCircle.
+    NOTE: At s=0, the lifted angle equals the raw angle for t < tL, which is true for t=0.
+    For t > tL, the lifted angle has the -2π adjustment but at s=0 only θ₁ matters. -/
 lemma angleHomotopyAdjusted_at_s_zero (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Icc 0 5) :
-    angleHomotopyAdjusted p hp_norm hp_re hp_im (t, 0) = fdPolygonRadialCircle p t := by
-  simp only [angleHomotopyAdjusted, fdPolygonRadialCircle_angle, angleOnCircle]
-  -- Goal: p + exp(I * ((1-0) * θ + 0 * θ')) = fdPolygonRadialCircle p t
-  -- where θ = arg(fdPolygonRadialCircle p t - p)
-  set w := fdPolygonRadialCircle p t - p with hw_def
-  -- w has norm 1 by fdPolygonRadialCircle_dist
-  have hw_norm : ‖w‖ = 1 := fdPolygonRadialCircle_dist p hp_norm hp_re hp_im t ht
-  have hw_ne : w ≠ 0 := norm_ne_zero_iff.mp (by rw [hw_norm]; norm_num)
-  -- Use the identity: ‖w‖ * exp(arg(w) * I) = w
-  have hkey : ↑‖w‖ * Complex.exp (↑(Complex.arg w) * I) = w := Complex.norm_mul_exp_arg_mul_I w
-  rw [hw_norm, Complex.ofReal_one, one_mul, mul_comm] at hkey
-  -- Now hkey: exp(I * arg(w)) = w
-  -- Simplify the exponent: (1-0)*θ + 0*θ' = θ when 0 is from ℕ→ℂ coercion
-  suffices p + Complex.exp (I * ↑(Complex.arg w)) = fdPolygonRadialCircle p t by
-    convert this using 2
-    -- The ↑0 is the coercion from ℕ to ℂ
-    norm_cast
-    simp only [Int.subNatNat_of_le (by norm_num : 0 ≤ 1)]
-    norm_num
-  rw [hkey, hw_def]
-  ring
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Icc 0 5) :
+    angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t, 0) = fdPolygonRadialCircle p t := by
+  simp only [angleHomotopyAdjusted]
+  -- Goal: p + exp(I * ((1-0) * θ_lifted + 0 * θ')) = fdPolygonRadialCircle p t
+  -- At s=0, the exp argument simplifies to θ_lifted
+  -- Need to show: p + exp(I * θ_lifted(t)) = fdPolygonRadialCircle p t
+  -- This requires showing exp(I * θ_lifted(t)) = fdPolygonRadialCircle p t - p
+  -- For the lifted angle, we need to consider cases t < tL vs t ≥ tL
+  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction vector
 
-/-- Condition 3: At s=1, angle homotopy gives a curve with same winding as circleParamCW. -/
+/-- At s=1, H(·, 1) equals circleParamCW (up to phase). Both have winding = -1. -/
 lemma angleHomotopyAdjusted_at_s_one_winding (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
-    generalizedWindingNumber' (fun t => angleHomotopyAdjusted p hp_norm hp_re hp_im (t, 1)) 0 5 p =
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    generalizedWindingNumber' (fun t => angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t, 1)) 0 5 p =
     generalizedWindingNumber' (circleParamCW p 1 0 5) 0 5 p := by
-  -- Both curves traverse the unit circle around p with the same total angle change (-2π)
-  -- The difference is just a constant angle offset, which doesn't affect winding number
-  sorry -- Technical: winding number depends only on total angle change
+  -- Both sides equal -1:
+  -- - circleParamCW p 1 0 5 is a clockwise unit circle around p → winding = -1
+  -- - H(·, 1) = p + exp(I * (circleParamCW_angle + offset)) is also a clockwise unit circle around p
+  -- Both have the same total angle change (-2π), hence same winding
+  have hab : (0 : ℝ) < 5 := by norm_num
+  have h_cw : generalizedWindingNumber' (circleParamCW p 1 0 5) 0 5 p = -1 :=
+    circleParamCW_winding_eq_neg_one p 1 (by norm_num : (0:ℝ) < 1) 0 5 hab
+  -- H(·, 1) is a unit circle around p with the same wrap count, hence same winding
+  -- At s=1: H(t, 1) = p + exp(I * θ₂(t)) where θ₂ wraps by -2π
+  -- This is the same as circleParamCW with a phase offset
+  -- Since H(·, 1) maintains distance 1 from p and wraps by -2π, its winding is -1
+  rw [h_cw]
+  -- H(·, 1) = p + exp(I * (circleParamCW_angle t + offset))
+  --         = p + exp(I * offset) * exp(I * circleParamCW_angle t)
+  -- This is circleParamCW with a constant phase rotation, which preserves winding
+  -- The winding of H(·, 1) is -1 by the same argument as circleParamCW
+  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1
 
 /-- Condition 4: Angle homotopy is closed at each stage.
-    CRITICAL: Requires wrap count matching! -/
+    With the lifted angle, both θ₁_lifted and θ₂_adjusted wrap by -2π:
+    - θ₁_lifted(5) = θ₁_lifted(0) - 2π (by fdPolygonRadialCircle_angle_lifted_change)
+    - θ₂(5) = θ₂(0) - 2π (since circleParamCW wraps by -2π and the offset is constant)
+    So the exponent difference is (1-s)*2π + s*2π = 2π ≡ 0 (mod 2π). -/
 lemma angleHomotopyAdjusted_closed (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) (s : ℝ) (hs : s ∈ Icc 0 1) :
-    angleHomotopyAdjusted p hp_norm hp_re hp_im (0, s) =
-    angleHomotopyAdjusted p hp_norm hp_re hp_im (5, s) := by
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) (s : ℝ) (hs : s ∈ Icc 0 1) :
+    angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (0, s) =
+    angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (5, s) := by
   simp only [angleHomotopyAdjusted]
   -- Need: exp(I * ((1-s)*θ₁(0) + s*θ₂(0))) = exp(I * ((1-s)*θ₁(5) + s*θ₂(5)))
-  -- This holds iff (1-s)*(θ₁(0)-θ₁(5)) + s*(θ₂(0)-θ₂(5)) ≡ 0 (mod 2π)
-  -- By wrap count: θ₁(0) - θ₁(5) = 2π and θ₂(0) - θ₂(5) = 2π
-  -- So the expression = (1-s)*2π + s*2π = 2π ≡ 0 (mod 2π) ✓
-  sorry -- Technical: wrap count matching ensures closedness
+  -- With lifted angles, both wrap by -2π, so the difference is 2π
+  have hθ₁_wrap := fdPolygonRadialCircle_angle_lifted_change p hp_norm hp_re hp_im_pos hp_im
+  -- θ₁(5) = θ₁(0) - 2π
+  have hθ₂_wrap : circleParamCW_angle_adjusted p hp_norm hp_re hp_im_pos hp_im 5 =
+                  circleParamCW_angle_adjusted p hp_norm hp_re hp_im_pos hp_im 0 - 2 * Real.pi := by
+    simp only [circleParamCW_angle_adjusted, circleParamCW_angle]
+    -- θ₂(t) = circleParamCW_angle t + (θ₁_lifted(0) - circleParamCW_angle 0)
+    -- θ₂(5) = 0 + (θ₁_lifted(0) - 2π) = θ₁_lifted(0) - 2π
+    -- θ₂(0) = 2π + (θ₁_lifted(0) - 2π) = θ₁_lifted(0)
+    -- θ₂(5) - θ₂(0) = (θ₁_lifted(0) - 2π) - θ₁_lifted(0) = -2π
+    ring_nf
+  -- The exponent at t=5 is: (1-s)*θ₁(5) + s*θ₂(5) = (1-s)*(θ₁(0) - 2π) + s*(θ₂(0) - 2π)
+  --                        = (1-s)*θ₁(0) + s*θ₂(0) - 2π
+  -- So exp differs by exp(-2πi) = 1
+  congr 1
+  -- Show the exponents differ by 2πi
+  have harg_diff : I * ((1 - ↑s) * ↑(fdPolygonRadialCircle_angle_lifted p 0) +
+      ↑s * ↑(circleParamCW_angle_adjusted p hp_norm hp_re hp_im_pos hp_im 0)) =
+    I * ((1 - ↑s) * ↑(fdPolygonRadialCircle_angle_lifted p 5) +
+      ↑s * ↑(circleParamCW_angle_adjusted p hp_norm hp_re hp_im_pos hp_im 5)) + 2 * Real.pi * I := by
+    simp only [hθ₁_wrap, hθ₂_wrap, Complex.ofReal_sub, Complex.ofReal_mul, Complex.ofReal_ofNat]
+    ring
+  -- Two expressions with exp equal iff they differ by 2πi·k
+  -- exp(x) = exp(x + 2πi) by periodicity
+  rw [harg_diff, add_comm, Complex.exp_add, Complex.exp_two_pi_mul_I, one_mul]
 
 /-- Condition 5: Angle homotopy avoids p (always on circle of radius 1). -/
 lemma angleHomotopyAdjusted_avoids (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Icc 0 5)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Icc 0 5)
     (s : ℝ) (hs : s ∈ Icc 0 1) :
-    angleHomotopyAdjusted p hp_norm hp_re hp_im (t, s) ≠ p := by
+    angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t, s) ≠ p := by
   simp only [angleHomotopyAdjusted]
   intro heq
   rw [add_eq_left] at heq
-  have hexp_ne : Complex.exp (I * ((1 - s) * fdPolygonRadialCircle_angle p t +
-      s * circleParamCW_angle_adjusted p hp_norm hp_re hp_im t)) ≠ 0 := Complex.exp_ne_zero _
+  have hexp_ne : Complex.exp (I * ((1 - s) * fdPolygonRadialCircle_angle_lifted p t +
+      s * circleParamCW_angle_adjusted p hp_norm hp_re hp_im_pos hp_im t)) ≠ 0 := Complex.exp_ne_zero _
   exact hexp_ne heq
 
 /-- Condition 6: Angle homotopy is differentiable in t away from partition points. -/
 lemma angleHomotopyAdjusted_differentiable_off_partition (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Ioo 0 5)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Ioo 0 5)
     (ht_not_P : t ∉ ({1, 2, 3, 4} : Finset ℝ)) (s : ℝ) (hs : s ∈ Icc 0 1) :
-    DifferentiableAt ℝ (fun t' => angleHomotopyAdjusted p hp_norm hp_re hp_im (t', s)) t := by
+    DifferentiableAt ℝ (fun t' => angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t', s)) t := by
   -- exp(I * (linear combination)) is differentiable when angle functions are
   sorry -- Technical: differentiability of angle interpolation
 
 /-- Condition 7: t-derivative is continuous on each piece. -/
 lemma angleHomotopyAdjusted_deriv_cont_on_piece (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height)
     (p₁ p₂ : ℝ) (hp₁p₂ : p₁ < p₂) (hpiece : ∀ t ∈ Ioo p₁ p₂, t ∉ ({1, 2, 3, 4} : Finset ℝ))
     (h_sub : Ioo p₁ p₂ ⊆ Ioo 0 5) :
     ContinuousOn (fun (q : ℝ × ℝ) => deriv (fun t' =>
-      angleHomotopyAdjusted p hp_norm hp_re hp_im (t', q.2)) q.1)
+      angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t', q.2)) q.1)
       (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
   sorry -- Technical: continuity of derivative
 
 /-- Condition 8: t-derivative is bounded. -/
 lemma angleHomotopyAdjusted_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     ∃ M : ℝ, ∀ t ∈ Icc 0 5, ∀ s ∈ Icc 0 1,
-      ‖deriv (fun t' => angleHomotopyAdjusted p hp_norm hp_re hp_im (t', s)) t‖ ≤ M := by
+      ‖deriv (fun t' => angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t', s)) t‖ ≤ M := by
   sorry -- Technical: bounded derivative on compact domain
 
 /-- Combined: S¹ angle homotopy from fdPolygonRadialCircle. -/
 lemma fdPolygonRadialCircle_piecewise_homotopic_to_adjusted (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     PiecewiseCurvesHomotopicAvoiding (fdPolygonRadialCircle p)
-      (fun t => angleHomotopyAdjusted p hp_norm hp_re hp_im (t, 1)) 0 5 p
+      (fun t => angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t, 1)) 0 5 p
       ({1, 2, 3, 4} : Finset ℝ) := by
-  refine ⟨angleHomotopyAdjusted p hp_norm hp_re hp_im,
-    angleHomotopyAdjusted_continuous p hp_norm hp_re hp_im,
-    fun t ht => angleHomotopyAdjusted_at_s_zero p hp_norm hp_re hp_im t ht,
+  refine ⟨angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im,
+    angleHomotopyAdjusted_continuous p hp_norm hp_re hp_im_pos hp_im,
+    fun t ht => angleHomotopyAdjusted_at_s_zero p hp_norm hp_re hp_im_pos hp_im t ht,
     fun t _ht => rfl,
-    fun s hs => angleHomotopyAdjusted_closed p hp_norm hp_re hp_im s hs,
-    fun t ht s hs => angleHomotopyAdjusted_avoids p hp_norm hp_re hp_im t ht s hs,
+    fun s hs => angleHomotopyAdjusted_closed p hp_norm hp_re hp_im_pos hp_im s hs,
+    fun t ht s hs => angleHomotopyAdjusted_avoids p hp_norm hp_re hp_im_pos hp_im t ht s hs,
     fun t ht ht_not_P s hs =>
-      angleHomotopyAdjusted_differentiable_off_partition p hp_norm hp_re hp_im t ht ht_not_P s hs,
+      angleHomotopyAdjusted_differentiable_off_partition p hp_norm hp_re hp_im_pos hp_im t ht ht_not_P s hs,
     fun p₁ p₂ hp₁p₂ hpiece h_sub =>
-      angleHomotopyAdjusted_deriv_cont_on_piece p hp_norm hp_re hp_im p₁ p₂ hp₁p₂ hpiece h_sub,
-    angleHomotopyAdjusted_deriv_bounded p hp_norm hp_re hp_im⟩
+      angleHomotopyAdjusted_deriv_cont_on_piece p hp_norm hp_re hp_im_pos hp_im p₁ p₂ hp₁p₂ hpiece h_sub,
+    angleHomotopyAdjusted_deriv_bounded p hp_norm hp_re hp_im_pos hp_im⟩
 
 /-- h_wind_eq2b: winding(fdPolygonRadialCircle) = winding(circleParamCW) -/
 lemma winding_radialCircle_eq_circleParamCW (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     generalizedWindingNumber' (fdPolygonRadialCircle p) 0 5 p =
     generalizedWindingNumber' (circleParamCW p 1 0 5) 0 5 p := by
   have hab : (0 : ℝ) < 5 := by norm_num
   -- Step 1: winding(fdPolygonRadialCircle) = winding(angleHomotopyAdjusted(·, 1))
   have h1 := windingNumber_eq_of_piecewise_homotopic (fdPolygonRadialCircle p)
-    (fun t => angleHomotopyAdjusted p hp_norm hp_re hp_im (t, 1)) 0 5 p
+    (fun t => angleHomotopyAdjusted p hp_norm hp_re hp_im_pos hp_im (t, 1)) 0 5 p
     ({1, 2, 3, 4} : Finset ℝ) hab
-    (fdPolygonRadialCircle_piecewise_homotopic_to_adjusted p hp_norm hp_re hp_im)
+    (fdPolygonRadialCircle_piecewise_homotopic_to_adjusted p hp_norm hp_re hp_im_pos hp_im)
   -- Step 2: winding(angleHomotopyAdjusted(·, 1)) = winding(circleParamCW)
-  have h2 := angleHomotopyAdjusted_at_s_one_winding p hp_norm hp_re hp_im
+  have h2 := angleHomotopyAdjusted_at_s_one_winding p hp_norm hp_re hp_im_pos hp_im
   rw [h1, h2]
 
 /-! ### Step 5: Combined h_wind_eq2 -/
@@ -2410,11 +2442,11 @@ lemma winding_radialCircle_eq_circleParamCW (p : ℂ) (hp_norm : ‖p‖ > 1)
 /-- MAIN RESULT: winding(fdPolygon) = winding(circleParamCW) = -1
     Combines h_wind_eq2a (radial) and h_wind_eq2b (S¹ angle). -/
 lemma winding_fdPolygon_eq_circleParamCW (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     generalizedWindingNumber' fdPolygon 0 5 p =
     generalizedWindingNumber' (circleParamCW p 1 0 5) 0 5 p := by
   rw [winding_fdPolygon_eq_radialCircle p hp_norm hp_re hp_im,
-      winding_radialCircle_eq_circleParamCW p hp_norm hp_re hp_im]
+      winding_radialCircle_eq_circleParamCW p hp_norm hp_re hp_im_pos hp_im]
 
 /-! ## Homotopy Differentiability Helpers -/
 
@@ -2552,6 +2584,63 @@ lemma fdBoundaryToPolygonHomotopy_seg3_differentiable (t s : ℝ) :
             (DifferentiableAt.sub differentiableAt_id (differentiableAt_const _))
         exact DifferentiableAt.mul h2 (differentiableAt_const _)
     exact h_chord.const_smul s
+
+/-- Segment 2 derivative bound: ‖deriv fdBoundaryToPolygonHomotopy_seg2‖ ≤ 5 for t∈(1,2), s∈[0,1].
+    Formula: d/dt[(1-s) • exp(θ(t)*I) + s • chord(t)] = (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
+    Bound: ‖(1-s)*(π/6)*exp(...)‖ + ‖s*(i_point - rho')‖ ≤ (1-s)*π/6 + s*2 ≤ π/6 + 2 < 5 -/
+lemma fdBoundaryToPolygonHomotopy_seg2_deriv_bound (t : ℝ) (ht : t ∈ Ioo 1 2) (s : ℝ) (hs : s ∈ Icc 0 1) :
+    ‖deriv (fun t' : ℝ =>
+                      let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+                      let chord_point := chordSegment rho' i_point (t' - 1)
+                      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 := by
+  -- The derivative has two parts:
+  -- 1. Arc part: (1-s) * deriv(exp(θ(t)*I)) = (1-s) * (π/6) * I * exp(θ*I)
+  -- 2. Chord part: s * deriv(chordSegment) = s * (i_point - rho')
+  -- We use a conservative bound: even without computing exactly, ‖deriv‖ ≤ 5
+  -- Define the arc function θ(t') = π/3 + (t' - 1) * (π/6)
+  let θ := fun t' : ℝ => Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)
+  -- Note: π/2 - π/3 = 3π/6 - 2π/6 = π/6
+  have hθ_simp : Real.pi / 2 - Real.pi / 3 = Real.pi / 6 := by ring
+  -- The derivative is: (1-s) • (π/6 * I * exp(θ(t)*I)) + s • (i_point - rho')
+  have hi_rho_bound : ‖i_point - rho'‖ ≤ 2 := by
+    calc ‖i_point - rho'‖ ≤ ‖i_point‖ + ‖rho'‖ := norm_sub_le _ _
+      _ = 1 + 1 := by rw [i_point_norm, rho'_norm]
+      _ = 2 := by norm_num
+  have hpi6_bound : Real.pi / 6 ≤ 1 := by
+    have h := Real.pi_le_four
+    linarith
+  have hs_bound1 : |1 - s| ≤ 1 := by
+    rw [abs_le]
+    constructor <;> linarith [hs.1, hs.2]
+  have hs_bound2 : |s| ≤ 1 := by
+    rw [abs_le]
+    constructor <;> linarith [hs.1, hs.2]
+  -- The bound: ‖deriv‖ ≤ |1-s| * (π/6) + |s| * 2 ≤ 1 * 1 + 1 * 2 = 3 ≤ 5
+  -- We use boundedness of derivatives with a conservative estimate
+  sorry  -- Technical: explicit derivative computation via chain rule
+
+/-- Segment 3 derivative bound: ‖deriv fdBoundaryToPolygonHomotopy_seg3‖ ≤ 5 for t∈(2,3), s∈[0,1]. -/
+lemma fdBoundaryToPolygonHomotopy_seg3_deriv_bound (t : ℝ) (ht : t ∈ Ioo 2 3) (s : ℝ) (hs : s ∈ Icc 0 1) :
+    ‖deriv (fun t' : ℝ =>
+                      let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+                      let chord_point := chordSegment i_point rho (t' - 2)
+                      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 := by
+  -- Similar to seg2: derivative bounded by (1-s) * (π/6) + s * 2 ≤ 5
+  -- Note: 2π/3 - π/2 = 4π/6 - 3π/6 = π/6
+  have hrho_i_bound : ‖rho - i_point‖ ≤ 2 := by
+    calc ‖rho - i_point‖ ≤ ‖rho‖ + ‖i_point‖ := norm_sub_le _ _
+      _ = 1 + 1 := by rw [rho_norm, i_point_norm]
+      _ = 2 := by norm_num
+  have hpi6_bound : Real.pi / 6 ≤ 1 := by
+    have h := Real.pi_le_four
+    linarith
+  have hs_bound1 : |1 - s| ≤ 1 := by
+    rw [abs_le]
+    constructor <;> linarith [hs.1, hs.2]
+  have hs_bound2 : |s| ≤ 1 := by
+    rw [abs_le]
+    constructor <;> linarith [hs.1, hs.2]
+  sorry  -- Technical: explicit derivative computation via chain rule
 
 /-! ## Main Theorem: Winding Number = -1 (CLOCKWISE orientation) -/
 
@@ -2692,10 +2781,24 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
   have hH1_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ → (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo 0 5 →
       ContinuousOn (fun (q : ℝ × ℝ) => deriv (fun t' => fdBoundaryToPolygonHomotopy (t', q.2)) q.1)
         (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
-    intro p₁ p₂ _hp₁p₂ _hpiece _h_sub
-    -- Technical: the derivative is continuous on each segment
-    -- This follows from the fact that each segment formula is smooth in both t and s
-    sorry -- Technical: derivative continuity on pieces
+    intro p₁ p₂ hp₁p₂ hpiece h_sub
+    -- Strategy: If (p₁, p₂) contains no partition points from {1, 2, 3, 4},
+    -- then it's contained in one of the five segments:
+    -- (0, 1), (1, 2), (2, 3), (3, 4), or (4, 5).
+    -- On each segment, the derivative equals an explicit formula (constant or smooth).
+    -- That formula is continuous in both t and s.
+    --
+    -- Segment 1: deriv = -(H_height - √3/2) * I (constant, continuous)
+    -- Segment 2: deriv = (1-s) * (π/6) * I * exp(θ(t)*I) + s * (i_point - rho') (smooth in t,s)
+    -- Segment 3: deriv = (1-s) * (π/6) * I * exp(θ(t)*I) + s * (rho - i_point) (smooth in t,s)
+    -- Segment 4: deriv = (H_height - √3/2) * I (constant, continuous)
+    -- Segment 5: deriv = 1 (constant, continuous)
+    --
+    -- To complete this proof:
+    -- 1. Determine which segment contains (p₁, p₂) based on location relative to {1,2,3,4}
+    -- 2. Use the explicit derivative formula for that segment
+    -- 3. Show continuity of that formula on (p₁, p₂) × [0, 1]
+    sorry -- Technical: segment dispatch + derivative formula continuity
 
   -- Step 1c: Derivative bound
   -- The derivative is bounded by 5 on [0,5] × [0,1]:
@@ -2710,12 +2813,44 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
     use 5  -- Conservative bound
     intro t ht s hs
     by_cases hd : DifferentiableAt ℝ (fun t' => fdBoundaryToPolygonHomotopy (t', s)) t
-    · -- At differentiable points, the derivative is computable from the segment formulas
-      -- We prove boundedness by case analysis on which segment t is in
-      -- Each segment has a bounded derivative formula
-      -- This is a technical computation that doesn't affect the mathematical content
-      -- The bound 5 is conservative; actual max is around 3
-      sorry -- Technical: derivative bound via segment analysis
+    · -- At differentiable points, case analysis on which segment t is in.
+      -- Uses micro-lemmas for each segment.
+      -- Segments 1, 4, 5 have linear formulas with ‖deriv‖ ≤ 2
+      -- Segments 2, 3 have arc+chord formulas with ‖deriv‖ ≤ 5
+      -- We use a uniform bound of 5 for all segments.
+      -- The function is not differentiable at partition points {1, 2, 3, 4},
+      -- so if hd holds, t must be in the interior of one segment.
+      by_cases h1 : t < 1
+      · -- Segment 1: t ∈ [0, 1)
+        -- Formula: 1/2 + (H_height - t * (H_height - √3/2)) * I, independent of s
+        -- deriv = -(H_height - √3/2) * I = -1 * I = -I (since H_height = √3/2 + 1)
+        -- ‖-I‖ = 1 ≤ 5
+        -- Strategy: Use EventuallyEq + explicit derivative computation
+        sorry  -- Technical: segment 1 deriv = -I, ‖-I‖ = 1 ≤ 5
+      · by_cases h2 : t < 2
+        · -- Segment 2: t ∈ [1, 2)
+          by_cases h1' : t = 1
+          · -- At t = 1, not differentiable (contradiction with hd)
+            exfalso
+            sorry  -- fdBoundaryToPolygonHomotopy not diff at t=1
+          · -- t ∈ (1, 2), use seg2_deriv_bound
+            have ht2' : t ∈ Ioo 1 2 := ⟨lt_of_le_of_ne (not_lt.mp h1) (Ne.symm h1'), h2⟩
+            sorry  -- Apply fdBoundaryToPolygonHomotopy_seg2_deriv_bound
+        · by_cases h3 : t < 3
+          · -- Segment 3: t ∈ [2, 3)
+            by_cases h2' : t = 2
+            · exfalso; sorry  -- Not diff at t=2
+            · have ht3' : t ∈ Ioo 2 3 := ⟨lt_of_le_of_ne (not_lt.mp h2) (Ne.symm h2'), h3⟩
+              sorry  -- Apply fdBoundaryToPolygonHomotopy_seg3_deriv_bound
+          · by_cases h4 : t < 4
+            · -- Segment 4: t ∈ [3, 4)
+              -- Formula: -1/2 + (√3/2 + (t-3)*(H_height - √3/2)) * I
+              -- deriv = (H_height - √3/2) * I = 1 * I = I, ‖I‖ = 1 ≤ 5
+              sorry  -- Technical: vertical line deriv computation, ‖I‖ = 1 ≤ 5
+            · -- Segment 5: t ∈ [4, 5]
+              -- Formula: (t - 9/2) + H_height * I
+              -- deriv = 1, ‖1‖ = 1 ≤ 5
+              sorry  -- Technical: horizontal line deriv computation, ‖1‖ = 1 ≤ 5
     · simp only [deriv_zero_of_not_differentiableAt hd, norm_zero]
       norm_num
 
@@ -2743,7 +2878,7 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
   -- - winding_radialCircle_eq_circleParamCW (S¹ angle homotopy)
   have h_wind_eq2 : generalizedWindingNumber' fdPolygon 0 5 p =
       generalizedWindingNumber' (circleParamCW p 1 0 5) 0 5 p :=
-    winding_fdPolygon_eq_circleParamCW p hp_norm hp_re hp_im
+    winding_fdPolygon_eq_circleParamCW p hp_norm hp_re hp_im_pos hp_im
 
   -- Step 5: circleParamCW winding = -1 (CLOCKWISE orientation)
   have h_circle : generalizedWindingNumber' (circleParamCW p 1 0 5) 0 5 p = -1 :=
