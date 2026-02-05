@@ -2233,6 +2233,67 @@ lemma integrand_bound_on_annulus {γ : ℝ → ℂ} {t₀ : ℝ} {C δ₀ : ℝ}
     _ ≤ C + |t - t₀|⁻¹ := by rw [h_inv_norm]; linarith
     _ = |t - t₀|⁻¹ + C := by ring
 
+/-- **Micro-lemma (B): Annulus localization**. Points in the γ-annulus lie in the local zone. -/
+lemma annulus_implies_t_local {γ : ℝ → ℂ} {a b t₀ : ℝ} {ε₁ δ₀ δ₁ : ℝ}
+    (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₀ δ₁)
+    (t : ℝ) (ht_ab : t ∈ Set.Icc a b) (hγ_bound : ‖γ t - γ t₀‖ ≤ ε₁) :
+    |t - t₀| < δ₀ ∧ |t - t₀| < δ₁ := by
+  have h := h_localize t ht_ab hγ_bound
+  exact ⟨lt_of_lt_of_le h (min_le_left _ _), lt_of_lt_of_le h (min_le_right _ _)⟩
+
+/-- **Micro-lemma (C): Measure bound**. The t-region where ε₂ < ‖γ‖ ≤ ε₁ has measure ≤ 4ε₁/‖L‖.
+    More precisely, on the annulus we have |t-t₀| ≤ 2ε₁/‖L‖, so the full t-region
+    has width ≤ 4ε₁/‖L‖ (both sides of t₀). -/
+lemma annulus_t_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ} {ε₁ ε₂ δ₁ : ℝ}
+    (hL : L ≠ 0) (hε₁_pos : 0 < ε₁)
+    (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ → ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
+    (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁)
+    (t : ℝ) (ht_ab : t ∈ Set.Icc a b) (_ht_ne : t ≠ t₀)
+    (hγ_lower : ε₂ < ‖γ t - γ t₀‖) (hγ_upper : ‖γ t - γ t₀‖ ≤ ε₁) :
+    |t - t₀| ≤ 2 * ε₁ / ‖L‖ := by
+  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  have ht_local := h_localize t ht_ab hγ_upper
+  have ht_pos : 0 < |t - t₀| := abs_pos.mpr (sub_ne_zero.mpr _ht_ne)
+  have ht_lt_δ₁ : |t - t₀| < δ₁ := lt_of_lt_of_le ht_local (min_le_right _ _)
+  exact t_bound_from_gamma_annulus hL hε₁_pos h_lower t ht_pos ht_lt_δ₁ hγ_upper
+
+/-- **Micro-lemma (E): Remainder integral bound**. The integral of the remainder term
+    over the annulus is bounded by C times the measure. -/
+lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C δ₀ δ₁ ε₁ ε₂ : ℝ} {L : ℂ}
+    (hL : L ≠ 0) (hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂)
+    (hr_bounded : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
+      ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ C)
+    (_h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ → ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
+    (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₀ δ₁)
+    (_hat₀ : t₀ ∈ Set.Ioo a b) :
+    let r := fun t => (γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹
+    ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ ≤
+      max 0 C * (4 * ε₁ / ‖L‖) := by
+  intro r
+  have _hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  -- Proof strategy:
+  -- 1. On the annulus where ε₂ < ‖γ‖ ≤ ε₁, localization gives |t-t₀| < min δ₀ δ₁
+  -- 2. So hr_bounded applies: ‖r t‖ ≤ C (and hence ≤ max 0 C)
+  -- 3. The t-measure of the annulus is ≤ 4ε₁/‖L‖ (from h_lower inversion)
+  -- 4. Thus ‖∫ r‖ ≤ (max 0 C) * (4ε₁/‖L‖)
+  sorry
+
+/-- **Micro-lemma (F): Singular part bound**. The integral of (t-t₀)⁻¹ over the
+    γ-annulus is O(ε₁) due to approximate symmetry. -/
+lemma singular_annulus_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {ε₁ ε₂ : ℝ} {L : ℂ}
+    (hL : L ≠ 0) (hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂) (hε₂_le : ε₂ ≤ ε₁)
+    (hat₀ : t₀ ∈ Set.Ioo a b) :
+    ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖ ≤
+      4 / ‖L‖ * ε₁ := by
+  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  -- The key insight: the γ-level sets are approximately symmetric around t₀
+  -- So the integral of (t-t₀)⁻¹ is approximately 0.
+  -- The error from asymmetry is O(ε₁) because γ is approximately linear near t₀.
+  -- Crude bound: |∫ (t-t₀)⁻¹| ≤ ∫ |t-t₀|⁻¹ over annulus
+  -- On annulus, t is bounded away from t₀ (since ‖γ‖ > ε₂ > 0)
+  -- So |t-t₀|⁻¹ is bounded, and measure is O(ε₁/‖L‖)
+  sorry
+
 /-- **Step bound for ratio ≤ 2**: For cutoffs with ratio ≤ 2, the integral difference
 is O(ε₁/‖L‖). This is the core lemma for the dyadic PV argument.
 
@@ -2279,43 +2340,48 @@ lemma pv_step_bound_ratio_two {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ} {C �
   -- have3: Rewrite I ε₂ - I ε₁ as annulus integral
   let f := fun t => (γ t - γ t₀)⁻¹ * deriv γ t
   have h_diff : I ε₂ - I ε₁ =
-      ∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0 := by
+      ∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) := by
     simp only [I, f]
     exact cutoff_diff_eq_annulus_integral hε₂_le_ε₁ hI_int₂ hI_int₁
   -- have4: Decompose integrand as singular + remainder: f t = (t-t₀)⁻¹ + r t
   let r := fun t => f t - (↑(t - t₀))⁻¹
-  -- PROOF STRATEGY:
-  -- Step A: Convert γ-annulus to t-bounds using h_lower
-  --   - From h_lower: ‖γ‖ ≥ (‖L‖/2)|t-t₀| for |t-t₀| < δ₁
-  --   - On γ-annulus where ε₂ < ‖γ‖ ≤ ε₁:
-  --     * Upper bound: |t-t₀| ≤ 2ε₁/‖L‖ (from ‖γ‖ ≤ ε₁)
-  --     * Measure of t-region ≤ 4ε₁/‖L‖
-  --
-  -- Step B: Split integral: ∫ f 1_{annulus} = ∫ (t-t₀)⁻¹ 1_{annulus} + ∫ r 1_{annulus}
-  --
-  -- Step C: Remainder bound
-  --   - From hr_bounded: ‖r(t)‖ ≤ C for |t-t₀| < δ₀
-  --   - |∫ r 1_{annulus}| ≤ C * (measure) ≤ C * 4ε₁/‖L‖
-  --
-  -- Step D: Singular cancellation (using integral_inv_symm structure)
-  --   - γ is approximately linear: γ(t) - γ(t₀) ≈ L(t-t₀)
-  --   - The γ-level sets {‖γ‖ = ε} ≈ {|t-t₀| = 2ε/‖L‖} (symmetric t-circles)
-  --   - By integral_inv_symm, ∫ (t-t₀)⁻¹ over symmetric annulus = 0
-  --   - Error from non-linearity is O(ε₁²) (using C² hypothesis on γ)
-  --
-  -- Step E: Total bound = O(ε₁/‖L‖) + O(ε₁²) = O(ε₁)
-  --   - For K = max 0 C + 1, bound holds when K ≥ 4C/‖L‖
-  --   - This is satisfied for ‖L‖ ≥ 4C/(C+1) ≈ 4 for large C
-  --   - In valence formula context, ‖L‖ = ‖deriv γ t₀‖ is bounded away from 0
-  --
-  -- TECHNICAL NOTE: The full formalization requires:
-  -- 1. Measurability of the γ-annulus indicator (see measurableSet_annulus_set)
-  -- 2. Integrability of f on the annulus (follows from cutoff_integrand_intervalIntegrable)
-  -- 3. Precise error bounds for the linearization of γ near t₀
-  rw [h_diff]
-  -- The bound K * ε₁ holds by the analysis above.
-  -- For dyadic sequence convergence, this is sufficient since K is constant.
-  sorry
+  -- have5: Localization adapted for remainder lemma
+  have h_loc_min : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁ := by
+    intro t ht hγ; simp only [min_self]
+    exact lt_of_lt_of_le (h_localize t ht hγ) (min_le_right δ₀ δ₁)
+  -- have6: f t = (t-t₀)⁻¹ + r t, so annulus integral splits
+  have h_split : ∀ t, f t = (↑(t - t₀))⁻¹ + r t := fun t => by simp only [r]; ring
+  -- have7: Annulus integral equals sum of singular and remainder parts
+  -- Proof: use integral_add, then pointwise f = (t-t₀)⁻¹ + r
+  have h_annulus_split :
+      ∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) =
+      (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0)) +
+      (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)) := by
+    -- Use integral_add with integrability from hI_int₂/hI_int₁
+    sorry
+  -- have8: Bound remainder integral using micro-lemma (E)
+  have h_remainder_bound :
+      ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ ≤
+        max 0 C * (4 * ε₁ / ‖L‖) :=
+    remainder_integral_bound_on_annulus hL hε₁_pos hε₂_pos hr_bounded h_lower h_localize hat₀
+  -- have9: Bound singular integral using micro-lemma (F)
+  have h_singular_bound :
+      ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖ ≤
+        4 / ‖L‖ * ε₁ :=
+    singular_annulus_bound hL hε₁_pos hε₂_pos hε₂_le_ε₁ hat₀
+  -- Final computation: combine bounds
+  rw [h_diff, h_annulus_split]
+  calc ‖(∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) +
+         ∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖
+      ≤ ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖ +
+        ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ := norm_add_le _ _
+    _ ≤ 4 / ‖L‖ * ε₁ + max 0 C * (4 * ε₁ / ‖L‖) := add_le_add h_singular_bound h_remainder_bound
+    _ = 4 / ‖L‖ * ε₁ + max 0 C * 4 * ε₁ / ‖L‖ := by ring
+    _ = (4 / ‖L‖ + max 0 C * 4 / ‖L‖) * ε₁ := by ring
+    _ = (4 + max 0 C * 4) / ‖L‖ * ε₁ := by rw [add_div]
+    _ = (4 + 4 * max 0 C) / ‖L‖ * ε₁ := by ring_nf
+    _ = (4 * max 0 C + 4) / ‖L‖ * ε₁ := by ring
+    _ = K * ε₁ := by simp only [K]
 
 /-- **Bracket ε between dyadic points**: For any ε ∈ (0, δ], find n with δ/2^(n+1) < ε ≤ δ/2^n. -/
 lemma exists_dyadic_bracket {δ ε : ℝ} (hδ_pos : 0 < δ) (hε_pos : 0 < ε) (hε_le : ε ≤ δ) :
