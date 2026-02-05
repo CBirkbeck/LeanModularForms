@@ -2292,13 +2292,26 @@ lemma angleHomotopyAdjusted_continuous (p : ℂ) (hp_norm : ‖p‖ > 1)
 lemma angleHomotopyAdjusted_at_s_zero (p : ℂ) (hp_norm : ‖p‖ > 1)
     (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Icc 0 5) :
     angleHomotopyAdjusted p hp_norm hp_re hp_im (t, 0) = fdPolygonRadialCircle p t := by
-  simp only [angleHomotopyAdjusted, sub_zero, one_mul, zero_mul, add_zero]
-  -- Goal: p + exp(I * θ₁) = fdPolygonRadialCircle p t
-  -- where θ₁ = arg(fdPolygonRadialCircle p t - p)
-  -- fdPolygonRadialCircle p t = p + (z-p)/|z-p| for z = fdPolygon t
-  -- So fdPolygonRadialCircle p t - p = (z-p)/|z-p| has norm 1
-  -- exp(I * arg(w)) = w/|w| for w ≠ 0, so exp(I * θ₁) = (fdPolygonRadialCircle p t - p)
-  sorry -- Technical: arg/exp identity
+  simp only [angleHomotopyAdjusted, fdPolygonRadialCircle_angle, angleOnCircle]
+  -- Goal: p + exp(I * ((1-0) * θ + 0 * θ')) = fdPolygonRadialCircle p t
+  -- where θ = arg(fdPolygonRadialCircle p t - p)
+  set w := fdPolygonRadialCircle p t - p with hw_def
+  -- w has norm 1 by fdPolygonRadialCircle_dist
+  have hw_norm : ‖w‖ = 1 := fdPolygonRadialCircle_dist p hp_norm hp_re hp_im t ht
+  have hw_ne : w ≠ 0 := norm_ne_zero_iff.mp (by rw [hw_norm]; norm_num)
+  -- Use the identity: ‖w‖ * exp(arg(w) * I) = w
+  have hkey : ↑‖w‖ * Complex.exp (↑(Complex.arg w) * I) = w := Complex.norm_mul_exp_arg_mul_I w
+  rw [hw_norm, Complex.ofReal_one, one_mul, mul_comm] at hkey
+  -- Now hkey: exp(I * arg(w)) = w
+  -- Simplify the exponent: (1-0)*θ + 0*θ' = θ when 0 is from ℕ→ℂ coercion
+  suffices p + Complex.exp (I * ↑(Complex.arg w)) = fdPolygonRadialCircle p t by
+    convert this using 2
+    -- The ↑0 is the coercion from ℕ to ℂ
+    norm_cast
+    simp only [Int.subNatNat_of_le (by norm_num : 0 ≤ 1)]
+    norm_num
+  rw [hkey, hw_def]
+  ring
 
 /-- Condition 3: At s=1, angle homotopy gives a curve with same winding as circleParamCW. -/
 lemma angleHomotopyAdjusted_at_s_one_winding (p : ℂ) (hp_norm : ‖p‖ > 1)
