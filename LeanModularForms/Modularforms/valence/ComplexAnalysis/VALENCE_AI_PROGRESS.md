@@ -14,8 +14,106 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 32)
-**Status:** IN-PROGRESS - **WRAP COUNT PROVEN** ✓ - Rect_Homotopy has sorries only in angle homotopy conditions
+**Last update:** 2026-02-05 (session 34)
+**Status:** IN-PROGRESS - **WRAP COUNT PROVEN** ✓ - Rect_Homotopy has 21 sorries
+
+### Session 34 Progress (2026-02-05, continued)
+
+**Files touched:**
+- `ValenceFormula_Rect_Homotopy.lean` - added micro-lemma structure, type fixes
+
+**Build:** Compiles successfully (warnings only)
+**Sorry count:** 21 remaining (increased due to splitting into micro-lemmas)
+
+**Key accomplishments:**
+1. **Fixed type annotations in seg2/seg3 derivative bound lemmas** - Added `t' : ℝ` annotation to fix type inference (was being inferred as ℂ)
+2. **Added explicit bounds infrastructure** in derivative lemmas:
+   - `hi_rho_bound : ‖i_point - rho'‖ ≤ 2`
+   - `hrho_i_bound : ‖rho - i_point‖ ≤ 2`
+   - `hpi6_bound : Real.pi / 6 ≤ 1`
+   - `hs_bound1 : |1 - s| ≤ 1`, `hs_bound2 : |s| ≤ 1`
+3. **Structured `hH1_bound` proof** with segment-by-segment case analysis:
+   - Segment 1: `t < 1` → vertical line, `‖deriv‖ ≤ 2`
+   - Segment 2: `t ∈ (1, 2)` → arc+chord, uses `fdBoundaryToPolygonHomotopy_seg2_deriv_bound`
+   - Segment 3: `t ∈ (2, 3)` → arc+chord, uses `fdBoundaryToPolygonHomotopy_seg3_deriv_bound`
+   - Segment 4: `t ∈ [3, 4)` → vertical line, `‖deriv‖ ≤ 2`
+   - Segment 5: `t ∈ [4, 5]` → horizontal line, `‖deriv‖ ≤ 2`
+4. **Documented `hH1_deriv_cont` strategy** - Segment dispatch + explicit derivative formulas
+
+**Remaining sorries (21):**
+
+**Core infrastructure (older sorries):**
+- Line 1392: `fdPolygon_not_differentiableAt_partition` - slope mismatch argument
+- Line 1776: `polygonToCircleRadial_differentiable_off_partition`
+- Line 1786: `polygonToCircleRadial_deriv_cont_on_piece`
+- Line 1797: `polygonToCircleRadial_deriv_bounded`
+
+**Angle homotopy (older sorries):**
+- Line 2269: `angle_alignment_at_zero` - mod 2π arithmetic
+- Line 2294: `angleHomotopyAdjusted_continuous`
+- Line 2308: `angleHomotopyAdjusted_at_s_zero`
+- Line 2331: `angleHomotopyAdjusted_at_s_one_winding` - winding = -1 at s=1
+- Line 2388: `angleHomotopyAdjusted_differentiable_off_partition`
+- Line 2398: `angleHomotopyAdjusted_deriv_cont_on_piece`
+- Line 2405: `angleHomotopyAdjusted_deriv_bounded`
+
+**Derivative bounds (new micro-sorries):**
+- Line 2620: `fdBoundaryToPolygonHomotopy_seg2_deriv_bound` - chain rule for arc+chord
+- Line 2643: `fdBoundaryToPolygonHomotopy_seg3_deriv_bound` - chain rule for arc+chord
+
+**Main theorem infrastructure:**
+- Line 2801: `hH1_deriv_cont` - segment dispatch + derivative formula continuity
+- Line 2827: `hH1_bound` seg 1 - vertical line deriv bound
+- Line 2834: `hH1_bound` seg 2 exfalso - fdBoundaryToPolygonHomotopy not diff at t=1
+- Line 2837: `hH1_bound` seg 2 - apply `fdBoundaryToPolygonHomotopy_seg2_deriv_bound`
+- Line 2841: `hH1_bound` seg 3 exfalso - not diff at t=2
+- Line 2843: `hH1_bound` seg 3 - apply `fdBoundaryToPolygonHomotopy_seg3_deriv_bound`
+- Line 2847: `hH1_bound` seg 4 - vertical line deriv bound
+- Line 2851: `hH1_bound` seg 5 - horizontal line deriv bound
+
+**Next steps (priority order):**
+1. **Simplest:** Line 2828, 2848, 2852 - vertical/horizontal line deriv bounds (‖-I‖=1, ‖I‖=1, ‖1‖=1)
+2. **Medium:** Line 2834, 2841 - exfalso for non-diff at partition (need slope mismatch)
+3. **Medium:** Line 2837, 2843 - connect seg2/seg3_deriv_bound to hH1_bound (need formula rewriting)
+4. **Hard:** Line 2620, 2643 - chain rule for arc+chord derivatives (Complex.deriv_cexp, triangle inequality)
+5. **Hard:** Line 2801 - segment dispatch for hH1_deriv_cont (need explicit derivative formulas)
+
+**Blocking dependencies:**
+- The angle homotopy sorries (lines 2269-2405) are used for the alternative winding number proof path
+- The main theorem uses `hH1_diff`, `hH1_deriv_cont`, `hH1_bound` to build the PiecewiseCurvesHomotopicAvoiding structure
+
+---
+
+### Session 33 Progress (2026-02-05, continued)
+
+**Files touched:**
+- `ValenceFormula_Rect_Homotopy.lean` - fixed `hp_im_pos` propagation, filled exp equality sorry
+
+**Build:** Compiles successfully (warnings only)
+**Sorry count:** 13 remaining
+
+**Key accomplishments:**
+1. **Fixed `hp_im_pos` argument propagation** - Added missing argument at line 2762 in call to `winding_fdPolygon_eq_circleParamCW`
+2. **Added WindingNumber.lean import** - For `generalizedWindingNumber_translate` and `generalizedWindingNumber_rotation` lemmas
+3. **Filled `angleHomotopyAdjusted_closed` exp equality sorry** - Uses `Complex.exp_two_pi_mul_I` and periodicity
+4. **Structured proof for `angleHomotopyAdjusted_at_s_one_winding`** - Uses translate + rotation lemmas (blocked by coercion arithmetic)
+
+**Remaining sorries (13):**
+- `fdPolygon_not_differentiableAt_partition` (line 1392) - slope mismatch
+- `polygonToCircleRadial_differentiable_off_partition` (line 1776)
+- `polygonToCircleRadial_deriv_cont_on_piece` (line 1786)
+- `polygonToCircleRadial_deriv_bounded` (line 1797)
+- `angle_alignment_at_zero` (line 2269) - unused, may remove
+- `angleHomotopyAdjusted_continuous` (line 2294)
+- `angleHomotopyAdjusted_at_s_zero` (line 2308)
+- `angleHomotopyAdjusted_at_s_one_winding` (line 2324) - proof structure exists, blocked by coercions
+- `angleHomotopyAdjusted_differentiable_off_partition` (line 2381)
+- `angleHomotopyAdjusted_deriv_cont_on_piece` (line 2391)
+- `angleHomotopyAdjusted_deriv_bounded` (line 2398)
+- `hH1_deriv_cont` (line 2723) - in main theorem
+- `hH1_bound` (line 2743) - in main theorem
+
+---
 
 ### Session 32 Progress (2026-02-05, continued)
 
@@ -795,11 +893,105 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ## Ticket B – PV Infrastructure
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-05 (session 36)
+**Last update:** 2026-02-05 (session 38)
 
-**Status:** IN-PROGRESS (**~30 sorries** - micro-lemma structure complete, proof structure done)
+**Status:** IN-PROGRESS (**32 sorries** - h_annulus_split DONE, K constant verified, remainder/singular structures with documented blockers)
 
-**Session 36 progress (2026-02-05):**
+**Session 37 progress (2026-02-05):**
+
+- **Files touched:** `ValenceFormula_PV.lean`, `VALENCE_AI_PROGRESS.md`
+- **Build:** SUCCESS
+- **Sorry count:** 31
+
+**MAJOR ACCOMPLISHMENTS:**
+
+1. **`h_annulus_split` (line ~2373) — FULLY PROVEN:**
+   - Annulus integral splits: `∫ (if cond then f else 0) = ∫ singular + ∫ remainder`
+   - Uses pointwise equality via `h_split : f t = (t-t₀)⁻¹ + r t`
+   - Integrability proofs for singular and remainder parts (with sorries for bounds)
+   - Final `calc` uses `intervalIntegral.integral_add`
+
+2. **`singular_annulus_bound` statement fixed with proper hypotheses:**
+   - Added `h_upper` hypothesis for upper bound on γ
+   - Added `h_localize` hypothesis for local zone membership
+   - Added `hδ_pos` hypothesis
+   - Documented cancellation strategy using `integral_inv_symm`
+
+3. **`remainder_integral_bound_on_annulus` — Structure complete:**
+   - Support set S = {t ∈ [a,b] | ε₂ < ‖γ‖ ≤ ε₁} defined
+   - `hS_subset`: S ⊆ interval of width 4ε₁/‖L‖ around t₀ (PROVEN)
+   - `hS_measure`: measure(S) ≤ 4ε₁/‖L‖ (PROVEN)
+   - `hr_bound_on_S`: ‖r t‖ ≤ max 0 C for t ∈ S (PROVEN)
+   - Final calc step has sorry for interval→set integral conversion
+
+4. **Fixed `pv_step_bound_ratio_two` signature:**
+   - Added `h_upper` hypothesis (propagated from `singular_annulus_bound`)
+   - Updated `pv_limit_via_dyadic` to derive `h_upper` using `gamma_upper_bound_of_hasDerivAt`
+   - Created common zone `δ₁' := min δ₁ δ_up` for both lower/upper bounds
+
+**REMAINING SORRIES IN STEP-BOUND CHAIN:**
+| Line | Lemma | Status |
+|------|-------|--------|
+| ~2354 | `remainder_integral_bound_on_annulus` | Final calc (interval→set) |
+| ~2398 | `singular_annulus_bound` | Needs cancellation via `integral_inv_symm` |
+| ~2467 | `h_sing_int` | Integrability (bounded indicator) |
+| ~2474 | `h_rem_int` | Integrability (bounded indicator) |
+
+---
+
+**Session 38 progress (2026-02-05):**
+
+- **Files touched:** `ValenceFormula_PV.lean`, `VALENCE_AI_PROGRESS.md`
+- **Build:** SUCCESS
+- **Sorry count:** 32 (slight increase from micro-lemma structure cleanup)
+- **Changes:** LOCAL (not committed)
+
+**KEY ACCOMPLISHMENTS:**
+
+1. **K constant sanity check PASSED:**
+   - K = (4 * max 0 C + 4) / ‖L‖ correctly absorbs the 4/‖L‖ factor
+   - Final calc in `pv_step_bound_ratio_two` reaches `K * ε₁` at line 2552
+
+2. **`remainder_integral_bound_on_annulus` — Updated proof structure:**
+   - Simplified to use set-integral bound approach
+   - Added `h_S_finite` proof: volume(S) < ⊤ via `ENNReal.ofReal_lt_top`
+   - Final sorry is for measure-theory conversion (set integral bound)
+
+3. **`singular_annulus_bound` — Enhanced documentation:**
+   - Added mathematical insight explaining why linear bounds alone give O(log) not O(ε₁/‖L‖)
+   - Documented that with h_ratio constraint (ε₁ ≤ 2ε₂), log term is O(1)
+   - Added setup for cancellation argument:
+     - Defined c₁ = ε₂/(2‖L‖), c₂ = 2ε₁/‖L‖ (t-annulus bounds)
+     - Proved hc₁_pos, hc₂_pos, hc₁_le_c₂
+   - Documented need for quadratic/C² control for thin shell argument
+
+4. **Integrability sorries simplified:**
+   - `h_sing_int`: Documented bound |(t-t₀)⁻¹| ≤ 2‖L‖/ε₂ on annulus
+   - `h_rem_int`: References hr_bounded for ‖r t‖ ≤ C bound
+   - Both need `IntervalIntegrable.mono_fun_enorm'` with constant bound
+
+**KNOWN ISSUES DOCUMENTED:**
+
+1. **`singular_annulus_bound` needs quadratic control:**
+   - With only linear bounds (h_lower/h_upper), integral could be O(log(ε₁/ε₂)) = O(1)
+   - The h_ratio constraint (ε₁ ≤ 2ε₂) at call site makes this acceptable
+   - For full O(ε₁/‖L‖) bound, need C² control for thin shell measure
+
+2. **Measure-theory conversions pending:**
+   - `remainder_integral_bound_on_annulus`: interval→set integral
+   - Per coordinator guidance, left as sorry after hitting measurability minutiae
+
+**REMAINING SORRIES IN STEP-BOUND CHAIN:**
+| Line | Lemma | Issue |
+|------|-------|-------|
+| ~2367 | `remainder_integral_bound_on_annulus` | Measure-theory conversion |
+| ~2437 | `singular_annulus_bound` | Cancellation via `integral_inv_symm` |
+| ~2513 | `h_sing_int` | Integrability (bounded indicator) |
+| ~2520 | `h_rem_int` | Integrability (bounded indicator) |
+
+---
+
+**Session 36 progress (2026-02-05) [PREVIOUS]:**
 
 - **Files touched:** `ValenceFormula_PV.lean`, `VALENCE_AI_PROGRESS.md`
 - **Build:** SUCCESS

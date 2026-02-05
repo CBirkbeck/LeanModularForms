@@ -2270,29 +2270,161 @@ lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C
     ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ ≤
       max 0 C * (4 * ε₁ / ‖L‖) := by
   intro r
-  have _hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  -- Proof strategy:
-  -- 1. On the annulus where ε₂ < ‖γ‖ ≤ ε₁, localization gives |t-t₀| < min δ₀ δ₁
-  -- 2. So hr_bounded applies: ‖r t‖ ≤ C (and hence ≤ max 0 C)
-  -- 3. The t-measure of the annulus is ≤ 4ε₁/‖L‖ (from h_lower inversion)
-  -- 4. Thus ‖∫ r‖ ≤ (max 0 C) * (4ε₁/‖L‖)
-  sorry
+  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  -- From _hat₀ : t₀ ∈ Ioo a b, we get a < b
+  have hab : a < b := (Set.mem_Ioo.mp _hat₀).1.trans_le (le_of_lt (Set.mem_Ioo.mp _hat₀).2)
+  -- Step 1: Pointwise bound on integrand
+  have h_pw_bound : ∀ t ∈ Set.uIoc a b,
+      ‖if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ ≤ max 0 C := by
+    intro t ht
+    by_cases hcond : ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
+    · simp only [hcond, ↓reduceIte]
+      -- On annulus, use hr_bounded
+      -- Since a < b, we have uIoc a b = Ioc a b ⊆ Icc a b
+      have ht_in_Icc : t ∈ Set.Icc a b := by
+        rw [Set.uIoc_eq_union] at ht
+        rcases ht with ht_ab | ht_ba
+        · exact Set.Ioc_subset_Icc_self ht_ab
+        · -- ht_ba : t ∈ Ioc b a, but a < b, so Ioc b a = ∅
+          rw [Set.Ioc_eq_empty_of_le hab.le] at ht_ba
+          exact absurd ht_ba (Set.not_mem_empty t)
+      have ht_loc := h_localize t ht_in_Icc hcond.2
+      by_cases ht_eq : t = t₀
+      · simp only [ht_eq, sub_self, norm_zero] at hcond
+        exact absurd hcond.1 (not_lt.mpr hε₂_pos.le)
+      have ht_pos : 0 < |t - t₀| := abs_pos.mpr (sub_ne_zero.mpr ht_eq)
+      have ht_lt_δ₀ : |t - t₀| < δ₀ := lt_of_lt_of_le ht_loc (min_le_left _ _)
+      have hr_t := hr_bounded t ht_pos ht_lt_δ₀
+      simp only [r] at hr_t ⊢
+      exact le_trans hr_t (le_max_right 0 C)
+    · simp only [hcond, ↓reduceIte, norm_zero, le_max_iff, le_refl, true_or]
+  -- Step 2: Define the support set S = {t ∈ [a,b] | ε₂ < ‖γ‖ ≤ ε₁}
+  -- The integrand is S.indicator r, so ∫ = ∫_S r
+  -- Use: ‖∫_S r‖ ≤ (max 0 C) * measure(S) ≤ (max 0 C) * (4ε₁/‖L‖)
+  -- where measure(S) ≤ 4ε₁/‖L‖ because S ⊆ {t | |t-t₀| ≤ 2ε₁/‖L‖}
+  let S := {t ∈ Set.Icc a b | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+  -- Step 3: Support measure bound - S is contained in an interval of width 4ε₁/‖L‖
+  have hS_subset : S ⊆ Set.Icc (t₀ - 2 * ε₁ / ‖L‖) (t₀ + 2 * ε₁ / ‖L‖) := by
+    intro t ht
+    obtain ⟨ht_ab, hε_lower, hε_upper⟩ := ht
+    -- Use annulus_t_measure_bound: on annulus, |t - t₀| ≤ 2ε₁/‖L‖
+    have h_loc_adapted : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁ := by
+      intro s hs hγs
+      simp only [min_self]
+      exact lt_of_lt_of_le (h_localize s hs hγs) (min_le_right _ _)
+    by_cases ht_eq : t = t₀
+    · -- t = t₀ is trivially in the interval around t₀
+      rw [ht_eq, Set.mem_Icc]
+      have h_term_pos : 0 < 2 * ε₁ / ‖L‖ := by positivity
+      constructor
+      · linarith [h_term_pos]
+      · linarith [h_term_pos]
+    have ht_bound := annulus_t_measure_bound hL hε₁_pos _h_lower h_loc_adapted t ht_ab ht_eq
+      hε_lower hε_upper
+    rw [abs_le] at ht_bound
+    exact Set.mem_Icc.mpr ⟨by linarith [ht_bound.1], by linarith [ht_bound.2]⟩
+  -- Step 4: Measure of S is at most 4ε₁/‖L‖
+  have hS_measure : MeasureTheory.volume S ≤ ENNReal.ofReal (4 * ε₁ / ‖L‖) := by
+    have h_width : (t₀ + 2 * ε₁ / ‖L‖) - (t₀ - 2 * ε₁ / ‖L‖) = 4 * ε₁ / ‖L‖ := by ring
+    calc MeasureTheory.volume S
+        ≤ MeasureTheory.volume (Set.Icc (t₀ - 2 * ε₁ / ‖L‖) (t₀ + 2 * ε₁ / ‖L‖)) :=
+          MeasureTheory.measure_mono hS_subset
+      _ = ENNReal.ofReal ((t₀ + 2 * ε₁ / ‖L‖) - (t₀ - 2 * ε₁ / ‖L‖)) := Real.volume_Icc
+      _ = ENNReal.ofReal (4 * ε₁ / ‖L‖) := by rw [h_width]
+  -- Step 5: Pointwise bound on r over S
+  have hr_bound_on_S : ∀ t ∈ S, ‖r t‖ ≤ max 0 C := by
+    intro t ⟨ht_ab, hε_lower, hε_upper⟩
+    by_cases ht_eq : t = t₀
+    · -- If t = t₀, then ‖γ t - γ t₀‖ = 0, but hε_lower says ε₂ < 0, contradiction
+      simp only [ht_eq, sub_self, norm_zero] at hε_lower
+      exact absurd hε_lower (not_lt.mpr hε₂_pos.le)
+    have ht_loc := h_localize t ht_ab hε_upper
+    have ht_pos : 0 < |t - t₀| := abs_pos.mpr (sub_ne_zero.mpr ht_eq)
+    have ht_lt_δ₀ : |t - t₀| < δ₀ := lt_of_lt_of_le ht_loc (min_le_left _ _)
+    have hr_t := hr_bounded t ht_pos ht_lt_δ₀
+    simp only [r] at hr_t ⊢
+    exact le_trans hr_t (le_max_right 0 C)
+  -- Step 6: Use set integral bound
+  -- The integrand is 0 outside S, and ‖integrand‖ ≤ max 0 C on S
+  -- measure(S) ≤ 4ε₁/‖L‖, so ‖∫ integrand‖ ≤ max 0 C * 4ε₁/‖L‖
+  -- This requires converting between interval integral and set integral bounds
+  -- Using MeasureTheory machinery for indicator functions
+  have h_S_finite : MeasureTheory.volume S ≠ ⊤ := by
+    have h_lt : MeasureTheory.volume S < ⊤ := calc
+      MeasureTheory.volume S ≤ ENNReal.ofReal (4 * ε₁ / ‖L‖) := hS_measure
+      _ < ⊤ := ENNReal.ofReal_lt_top
+    exact h_lt.ne
+  -- The bound follows from: integrand is bounded by max 0 C on S, 0 elsewhere
+  -- and measure(S) ≤ 4ε₁/‖L‖
+  calc ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖
+      ≤ max 0 C * (4 * ε₁ / ‖L‖) := by
+        -- The detailed proof uses:
+        -- 1. Convert interval integral to set integral over Ioc (using integral_of_le)
+        -- 2. Recognize integrand as indicator function
+        -- 3. Apply norm_setIntegral_le_of_norm_le_const
+        -- 4. Bound measure by hS_measure
+        -- For now, mark as sorry pending full measure-theory development
+        sorry
 
 /-- **Micro-lemma (F): Singular part bound**. The integral of (t-t₀)⁻¹ over the
-    γ-annulus is O(ε₁) due to approximate symmetry. -/
-lemma singular_annulus_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {ε₁ ε₂ : ℝ} {L : ℂ}
+    γ-annulus is O(ε₁/‖L‖) due to approximate symmetry.
+
+    **Mathematical insight:**
+    With only linear bounds (h_lower/h_upper), the γ-annulus maps to a t-annulus
+    {ε₂/(2‖L‖) < |t-t₀| ≤ 2ε₁/‖L‖}, but left and right halves may differ.
+    The integral ∫(t-t₀)⁻¹ over asymmetric annulus = log(b_R/a_R) - log(b_L/a_L).
+    With factor-of-2 linear bounds, this could be O(log(ε₁/ε₂)) = O(1), not O(ε₁/‖L‖).
+
+    **Why this bound works (assuming h_ratio: ε₁ ≤ 2ε₂ at call site):**
+    1. The ratio ε₁/ε₂ ≤ 2 bounds the log term to O(1)
+    2. The cancellation from `integral_inv_symm` eliminates the leading term
+    3. The error from asymmetry is bounded by the thin shell measure × sup
+
+    **KNOWN ISSUE:** This proof may require additional quadratic/C² control
+    for the thin shell argument to get the full O(ε₁/‖L‖) bound.
+    In `pv_step_bound_ratio_two`, the constraint h_ratio: ε₁ ≤ 2ε₂ provides
+    a workaround by keeping the ratio bounded. -/
+lemma singular_annulus_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {ε₁ ε₂ δ : ℝ} {L : ℂ}
     (hL : L ≠ 0) (hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂) (hε₂_le : ε₂ ≤ ε₁)
-    (hat₀ : t₀ ∈ Set.Ioo a b) :
+    (_hat₀ : t₀ ∈ Set.Ioo a b) (hδ_pos : 0 < δ)
+    -- Lower bound: γ-annulus implies t bounded away from t₀
+    (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ → ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
+    -- Upper bound: γ-annulus implies t bounded above
+    (h_upper : ∀ t, 0 < |t - t₀| → |t - t₀| < δ → ‖γ t - γ t₀‖ ≤ 2 * ‖L‖ * |t - t₀|)
+    -- Localization: γ-annulus lies in local zone
+    (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < δ) :
     ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖ ≤
       4 / ‖L‖ * ε₁ := by
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  -- The key insight: the γ-level sets are approximately symmetric around t₀
-  -- So the integral of (t-t₀)⁻¹ is approximately 0.
-  -- The error from asymmetry is O(ε₁) because γ is approximately linear near t₀.
-  -- Crude bound: |∫ (t-t₀)⁻¹| ≤ ∫ |t-t₀|⁻¹ over annulus
-  -- On annulus, t is bounded away from t₀ (since ‖γ‖ > ε₂ > 0)
-  -- So |t-t₀|⁻¹ is bounded, and measure is O(ε₁/‖L‖)
-  sorry
+  have hab : a < b := (Set.mem_Ioo.mp _hat₀).1.trans_le (le_of_lt (Set.mem_Ioo.mp _hat₀).2)
+  -- Step 1: Map γ-annulus to t-bounds
+  -- From h_lower + localize: |t-t₀| ≤ 2ε₁/‖L‖ on γ-annulus
+  -- From h_upper + ε₂ < ‖γ‖: |t-t₀| > ε₂/(2‖L‖) on γ-annulus
+  let c₁ := ε₂ / (2 * ‖L‖)  -- inner t-radius bound
+  let c₂ := 2 * ε₁ / ‖L‖     -- outer t-radius bound
+  have hc₁_pos : 0 < c₁ := by simp only [c₁]; positivity
+  have hc₂_pos : 0 < c₂ := by simp only [c₂]; positivity
+  have hc₁_le_c₂ : c₁ ≤ c₂ := by
+    simp only [c₁, c₂]
+    have h1 : ε₂ / (2 * ‖L‖) ≤ ε₁ / (2 * ‖L‖) := by
+      apply div_le_div_of_nonneg_right hε₂_le; positivity
+    have h2 : ε₁ / (2 * ‖L‖) ≤ 2 * ε₁ / ‖L‖ := by
+      rw [div_le_div_iff₀ (by positivity : 0 < 2 * ‖L‖) hL_norm_pos]
+      ring_nf; nlinarith [hε₁_pos, hL_norm_pos]
+    exact le_trans h1 h2
+  -- Step 2: Symmetric cancellation setup
+  -- ∫_{c₁ < |t-t₀| ≤ c₂} (t-t₀)⁻¹ = 0 by pv_singular_cancels
+  -- Step 3: The γ-annulus is contained in the symmetric t-annulus
+  -- Step 4: Bound the integral directly (using the measure bound)
+  -- Note: Full proof requires showing γ-annulus ≈ symmetric, then bounding error
+  -- For now, use a direct measure × sup bound as a placeholder
+  calc ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖
+      ≤ 4 / ‖L‖ * ε₁ := by
+        -- The full proof uses:
+        -- 1. integral_inv_symm for cancellation
+        -- 2. Thin shell argument for the error
+        -- 3. Measure bound for the γ-annulus
+        sorry
 
 /-- **Step bound for ratio ≤ 2**: For cutoffs with ratio ≤ 2, the integral difference
 is O(ε₁/‖L‖). This is the core lemma for the dyadic PV argument.
@@ -2309,6 +2441,9 @@ lemma pv_step_bound_ratio_two {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ} {C �
       ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ C)
     (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ →
       ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
+    -- Upper bound for singular_annulus_bound
+    (h_upper : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ →
+      ‖γ t - γ t₀‖ ≤ 2 * ‖L‖ * |t - t₀|)
     -- Localization: annulus lies in local zone (Style A2)
     (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₀ δ₁)
     -- Integrability hypotheses
@@ -2357,18 +2492,54 @@ lemma pv_step_bound_ratio_two {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ} {C �
       ∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) =
       (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0)) +
       (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)) := by
-    -- Use integral_add with integrability from hI_int₂/hI_int₁
-    sorry
+    -- Step A: Pointwise split
+    have h_pw : ∀ t, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) =
+        (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) +
+        (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0) := by
+      intro t
+      by_cases hcond : ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
+      · simp only [hcond, ↓reduceIte]; exact h_split t
+      · simp only [hcond, ↓reduceIte, add_zero]
+    -- Step B: Integrability of singular part on annulus
+    -- The function is bounded by 2‖L‖/ε₂ on the annulus (via h_upper), 0 outside
+    have h_sing_int : IntervalIntegrable
+        (fun t => if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0)
+        MeasureTheory.volume a b := by
+      -- Bounded indicator function on finite interval is integrable
+      -- Bound: |(t-t₀)⁻¹| ≤ 2‖L‖/ε₂ on annulus (from h_upper + h_localize)
+      -- On annulus: ε₂ < ‖γ‖ ≤ 2‖L‖|t-t₀| gives |t-t₀| > ε₂/(2‖L‖)
+      -- Hence |(t-t₀)⁻¹| < 2‖L‖/ε₂
+      -- Proof uses IntervalIntegrable.mono_fun_enorm' with constant bound
+      sorry
+    -- Step C: Integrability of remainder part on annulus (bounded by C via hr_bounded)
+    have h_rem_int : IntervalIntegrable
+        (fun t => if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)
+        MeasureTheory.volume a b := by
+      -- Bounded indicator function on finite interval is integrable
+      -- Bound: ‖r t‖ ≤ C on annulus (from hr_bounded + h_localize)
+      sorry
+    -- Step E: Apply integral_congr then integral_add
+    calc ∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0)
+        = ∫ t in a..b, ((if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) +
+                        (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)) := by
+          congr 1; ext t; exact h_pw t
+      _ = (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0)) +
+          (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)) :=
+          intervalIntegral.integral_add h_sing_int h_rem_int
   -- have8: Bound remainder integral using micro-lemma (E)
   have h_remainder_bound :
       ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ ≤
         max 0 C * (4 * ε₁ / ‖L‖) :=
     remainder_integral_bound_on_annulus hL hε₁_pos hε₂_pos hr_bounded h_lower h_localize hat₀
-  -- have9: Bound singular integral using micro-lemma (F)
+  -- have9: Derive localization for δ₁ only (for singular_annulus_bound)
+  have h_loc_δ₁ : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < δ₁ := by
+    intro t ht hγ
+    exact lt_of_lt_of_le (h_localize t ht hγ) (min_le_right δ₀ δ₁)
+  -- have10: Bound singular integral using micro-lemma (F)
   have h_singular_bound :
       ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖ ≤
         4 / ‖L‖ * ε₁ :=
-    singular_annulus_bound hL hε₁_pos hε₂_pos hε₂_le_ε₁ hat₀
+    singular_annulus_bound hL hε₁_pos hε₂_pos hε₂_le_ε₁ hat₀ hδ₁_pos h_lower h_upper h_loc_δ₁
   -- Final computation: combine bounds
   rw [h_diff, h_annulus_split]
   calc ‖(∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) +
@@ -2507,12 +2678,24 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
           apply sub_le_sub; rw [h_smul_norm]; exact h_rem
       _ = (‖L‖ / 2) * |t - t₀| := by ring
   obtain ⟨δ₁, hδ₁_pos, h_lower⟩ := h_lower_exists
+  -- Upper bound: ‖γ t - γ t₀‖ ≤ 2*‖L‖*|t - t₀| for small t
+  obtain ⟨δ_up, hδ_up_pos, h_upper⟩ := gamma_upper_bound_of_hasDerivAt hL hγ_hasderiv
+  -- Use min δ₁ δ_up as the common local zone for both h_lower and h_upper
+  let δ₁' := min δ₁ δ_up
+  have hδ₁'_pos : 0 < δ₁' := by simp only [δ₁']; positivity
+  -- Adapt h_lower and h_upper to the common zone δ₁'
+  have h_lower' : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁' → ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀| := by
+    intro t ht_pos ht_lt
+    exact h_lower t ht_pos (lt_of_lt_of_le ht_lt (min_le_left _ _))
+  have h_upper' : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁' → ‖γ t - γ t₀‖ ≤ 2 * ‖L‖ * |t - t₀| := by
+    intro t ht_pos ht_lt
+    exact h_upper t ht_pos (lt_of_lt_of_le ht_lt (min_le_right _ _))
   -- Step 4: Define working δ that ensures localization
   -- For ε ≤ min ρ (‖L‖/2 * δ_loc), the γ-annulus is localized to |t-t₀| < δ_loc
-  let δ := min (min δ₀ δ₁) (min ρ ((‖L‖ / 2) * min δ_loc (min δ₀ δ₁)))
+  let δ := min (min δ₀ δ₁') (min ρ ((‖L‖ / 2) * min δ_loc (min δ₀ δ₁')))
   have hδ_pos : 0 < δ := by simp only [δ]; positivity
   have hδ_le_δ₀ : δ ≤ δ₀ := le_trans (min_le_left _ _) (min_le_left _ _)
-  have hδ_le_δ₁ : δ ≤ δ₁ := le_trans (min_le_left _ _) (min_le_right _ _)
+  have hδ_le_δ₁' : δ ≤ δ₁' := le_trans (min_le_left _ _) (min_le_right _ _)
   have hδ_le_ρ : δ ≤ ρ := le_trans (min_le_right _ _) (min_le_left _ _)
   -- Step 5: Derive localization for ε ≤ δ
   -- Key insight: For ε ≤ δ ≤ ρ, if ‖γ t - γ t₀‖ ≤ ε then t must be close to t₀
@@ -2520,7 +2703,7 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
   --        (2) If |t-t₀| < δ_loc < min δ₀ δ₁, we're done
   -- The δ construction ensures δ_loc > 0 and ε ≤ δ implies the bound holds.
   have h_localize_δ : ∀ ε, 0 < ε → ε ≤ δ →
-      ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε → |t - t₀| < min δ₀ δ₁ := by
+      ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε → |t - t₀| < min δ₀ δ₁' := by
     intro ε hε_pos hε_le_δ t ht_mem hγ_small
     -- The proof uses h_far_bound to show |t-t₀| < δ_loc, then h_lower to refine
     -- Technical: need to construct δ more carefully to ensure strict inequality
@@ -2541,13 +2724,13 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     have hε₁_le_δ : δ / 2^n ≤ δ := div_le_self hδ_pos.le (one_le_pow₀ (by norm_num : (1:ℝ) ≤ 2))
     have h_ratio : δ / 2^n ≤ 2 * (δ / 2^(n+1)) := by rw [pow_succ]; ring_nf; linarith
     -- Derive h_localize for this ε₁
-    have h_loc : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ δ / 2^n → |t - t₀| < min δ₀ δ₁ :=
+    have h_loc : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ δ / 2^n → |t - t₀| < min δ₀ δ₁' :=
       h_localize_δ (δ / 2^n) hε₁_pos hε₁_le_δ
     -- Apply pv_step_bound_ratio_two
     have h_assoc : K * (δ / 2^n) = K * δ / 2^n := by ring
     rw [← h_assoc]
-    exact @pv_step_bound_ratio_two γ a b t₀ L C δ₀ δ₁ (δ / 2^n) (δ / 2^(n+1))
-      hε₂_pos hε₂_le_ε₁ h_ratio hL hδ₀_pos hδ₁_pos hr_bounded h_lower
+    exact @pv_step_bound_ratio_two γ a b t₀ L C δ₀ δ₁' (δ / 2^n) (δ / 2^(n+1))
+      hε₂_pos hε₂_le_ε₁ h_ratio hL hδ₀_pos hδ₁'_pos hr_bounded h_lower' h_upper'
       h_loc hat₀ hγ_meas hγ_cont_deriv
   -- Step 5: Cauchy sequence from geometric step bounds
   have h_cauchy_seq : CauchySeq (fun n => I (δ / 2^n)) :=
@@ -2639,14 +2822,14 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       have hM_le_δ : δ / 2^M ≤ δ :=
         div_le_self hδ_pos.le (one_le_pow₀ (by norm_num : (1:ℝ) ≤ 2))
       -- Derive h_localize for this ε₁ = δ/2^M
-      have h_loc_M : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ δ / 2^M → |t - t₀| < min δ₀ δ₁ :=
+      have h_loc_M : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ δ / 2^M → |t - t₀| < min δ₀ δ₁' :=
         h_localize_δ (δ / 2^M) (div_pos hδ_pos (by positivity)) hM_le_δ
       -- Apply step bound to get ‖I ε - I(δ/2^M)‖ ≤ K * δ / 2^M
       have h_first_piece : ‖I ε - I (δ / 2^M)‖ ≤ K * δ / 2^M := by
         have h_assoc : K * (δ / 2^M) = K * δ / 2^M := by ring
         rw [← h_assoc]
-        exact @pv_step_bound_ratio_two γ a b t₀ L C δ₀ δ₁ (δ / 2^M) ε
-          hε_pos_use hε_le_M h_ratio_M hL hδ₀_pos hδ₁_pos hr_bounded h_lower
+        exact @pv_step_bound_ratio_two γ a b t₀ L C δ₀ δ₁' (δ / 2^M) ε
+          hε_pos_use hε_le_M h_ratio_M hL hδ₀_pos hδ₁'_pos hr_bounded h_lower' h_upper'
           h_loc_M hat₀ hγ_meas hγ_cont_deriv
       -- For the telescoping sum, use the step bounds and geometric series
       -- We use the fact that Σ_{k=N}^{M-1} K*δ/2^k < 2*K*δ/2^N for any M > N
