@@ -14,8 +14,54 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 29)
-**Status:** IN-PROGRESS - Rect_Homotopy has **18 sorries**, file compiles successfully
+**Last update:** 2026-02-05 (session 31)
+**Status:** IN-PROGRESS - Rect_Homotopy has **~14 sorries**, file compiles successfully
+
+### Session 31 Progress (2026-02-05, continued)
+
+**Commit:** (pending)
+**Files touched:**
+- `ValenceFormula_Rect_Homotopy.lean` - fixed quadrant micro-lemmas, added arg interval lemmas
+
+**Build:** Compiles successfully
+**Sorry count:** ~14 in Rect_Homotopy.lean
+
+**Lemmas fixed/proven:**
+1. `fdPolygon_at_zero` - PROVEN ✓ (fixed)
+2. `fdPolygon_at_one` - PROVEN ✓ (fixed)
+3. `fdPolygon_at_three` - NEW, PROVEN ✓
+4. `fdPolygon_at_four` - PROVEN ✓ (fixed)
+5. `v0_quadrant` - PROVEN ✓ (fixed linarith issues with Complex coercions)
+6. `v1_quadrant` - PROVEN ✓
+7. `v3_quadrant` - PROVEN ✓
+8. `v4_quadrant` - PROVEN ✓
+9. `interior_point_im_bound` - PROVEN ✓ (fixed unknown `Complex.norm_eq_abs`)
+
+**NEW arg interval micro-lemmas (all PROVEN):**
+- `arg_Q1`: re > 0, im > 0 → 0 < arg < π/2
+- `arg_Q4`: re > 0, im < 0 → -π/2 < arg < 0
+- `arg_Q3`: im < 0 → -π < arg < 0
+- `arg_Q2`: re < 0, im > 0 → π/2 < arg ≤ π
+
+**Key mathlib lemmas found:**
+- `Complex.arg_nonneg_iff`, `Complex.arg_neg_iff`, `Complex.arg_lt_pi_div_two_iff`
+- `Complex.neg_pi_div_two_lt_arg_iff`, `Complex.arg_le_pi_div_two_iff`
+- `Complex.arg_mem_Ioc`, `Complex.arg_eq_zero_iff`
+
+**Updated statement of `fdPolygonRadialCircle_wrapCount`:**
+```lean
+lemma fdPolygonRadialCircle_wrapCount (p : ℂ) (hp_norm : ‖p‖ > 1)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+    ∃ θ₀ : ℝ, fdPolygonRadialCircle_angle p 0 = θ₀ ∧
+              fdPolygonRadialCircle_angle p 5 = θ₀ - 2 * Real.pi
+```
+
+**Blockers for `fdPolygonRadialCircle_wrapCount`:**
+- Need to combine quadrant + arg lemmas with continuity argument
+- Quadrant flow: Q1 → Q4 → Q3 → Q2 → back to Q1
+- Key insight: arg crosses -π exactly once (Q3→Q2) giving total change of -2π
+
+---
 
 ### Session 30 Progress (2026-02-05, continued)
 
