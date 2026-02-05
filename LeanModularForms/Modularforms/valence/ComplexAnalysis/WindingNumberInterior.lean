@@ -269,6 +269,148 @@ theorem circleParam_winding_eq_one (z₀ : ℂ) (r : ℝ) (hr : 0 < r) (a b : �
     simp [ne_eq, mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
   field_simp
 
+/-! ## Clockwise Circle Parameterization -/
+
+/-- Clockwise circle parameterization: reverses the direction of circleParam.
+    circleParamCW z₀ r a b t := circleParam z₀ r a b (a + b - t)
+
+    While circleParam traverses the circle counterclockwise (positive orientation),
+    circleParamCW traverses it clockwise (negative orientation).
+-/
+def circleParamCW (z₀ : ℂ) (r : ℝ) (a b : ℝ) (t : ℝ) : ℂ :=
+  circleParam z₀ r a b (a + b - t)
+
+lemma circleParamCW_continuous (z₀ : ℂ) (r : ℝ) (a b : ℝ) :
+    Continuous (circleParamCW z₀ r a b) := by
+  unfold circleParamCW
+  exact (circleParam_continuous z₀ r a b).comp (continuous_const.sub continuous_id)
+
+lemma circleParamCW_closed (z₀ : ℂ) (r : ℝ) (a b : ℝ) (hab : a < b) :
+    circleParamCW z₀ r a b a = circleParamCW z₀ r a b b := by
+  simp only [circleParamCW]
+  have ha : a + b - a = b := by ring
+  have hb : a + b - b = a := by ring
+  rw [ha, hb]
+  exact (circleParam_closed z₀ r a b hab).symm
+
+lemma circleParamCW_dist (z₀ : ℂ) (r : ℝ) (hr : 0 ≤ r) (a b : ℝ) (hab : a < b) (t : ℝ) :
+    ‖circleParamCW z₀ r a b t - z₀‖ = r := by
+  simp only [circleParamCW]
+  exact circleParam_dist z₀ r hr a b hab (a + b - t)
+
+/-- Differentiability of circleParam. -/
+lemma circleParam_differentiable (z₀ : ℂ) (r : ℝ) (a b : ℝ) :
+    Differentiable ℝ (circleParam z₀ r a b) := by
+  unfold circleParam
+  apply Differentiable.add
+  · exact differentiable_const z₀
+  · apply Differentiable.mul
+    · exact differentiable_const _
+    · apply Differentiable.cexp
+      apply Differentiable.mul
+      · exact differentiable_const _
+      · apply Differentiable.div_const
+        apply Differentiable.sub
+        · exact Complex.ofRealCLM.differentiable.comp differentiable_id
+        · exact differentiable_const _
+
+/-- Differentiability of circleParamCW. -/
+lemma circleParamCW_differentiable (z₀ : ℂ) (r : ℝ) (a b : ℝ) :
+    Differentiable ℝ (circleParamCW z₀ r a b) := by
+  unfold circleParamCW
+  exact (circleParam_differentiable z₀ r a b).comp
+    ((differentiable_const _).sub differentiable_id)
+
+/-- The derivative of circleParamCW. Uses chain rule with g(t) = a + b - t.
+    Derivative is -(circleParam derivative at a+b-t) due to inner function g'(t) = -1. -/
+lemma circleParamCW_hasDerivAt (z₀ : ℂ) (r : ℝ) (a b : ℝ) (hab : a < b) (t : ℝ) :
+    HasDerivAt (circleParamCW z₀ r a b) (
+      -(r * (2 * Real.pi * I / (b - a)) *
+        exp (2 * Real.pi * I * (((a + b - t : ℝ) - a) / (b - a))))) t := by
+  unfold circleParamCW
+  -- circleParam is differentiable everywhere
+  have hdiff : DifferentiableAt ℝ (circleParam z₀ r a b) (a + b - t) :=
+    (circleParam_differentiable z₀ r a b).differentiableAt
+  -- g(t) = a + b - t has HasDerivAt with derivative -1
+  have hg : HasDerivAt (fun t : ℝ => (a + b - t : ℝ)) (-1 : ℝ) t := by
+    have h1 : HasDerivAt (fun _ : ℝ => (a + b : ℝ)) 0 t := hasDerivAt_const t (a + b)
+    have h2 : HasDerivAt (fun t : ℝ => t) 1 t := hasDerivAt_id t
+    have h3 := h1.sub h2
+    convert h3 using 1
+    ring
+  -- circleParam has HasDerivAt at (a + b - t)
+  have hf : HasDerivAt (circleParam z₀ r a b)
+      (r * (2 * Real.pi * I / (b - a)) *
+        exp (2 * Real.pi * I * ((↑(a + b - t) - a) / (b - a)))) (a + b - t) := by
+    have hd := circleParam_deriv z₀ r a b hab (a + b - t)
+    rw [← hd]
+    exact hdiff.hasDerivAt
+  -- Chain rule via scomp (scalar derivative composition)
+  have hchain := HasDerivAt.scomp t hf hg
+  simp only [neg_one_smul] at hchain
+  exact hchain
+
+lemma circleParamCW_deriv (z₀ : ℂ) (r : ℝ) (a b : ℝ) (hab : a < b) (t : ℝ) :
+    deriv (circleParamCW z₀ r a b) t =
+    -(r * (2 * Real.pi * I / (b - a)) *
+      exp (2 * Real.pi * I * (((a + b - t : ℝ) - a) / (b - a)))) :=
+  (circleParamCW_hasDerivAt z₀ r a b hab t).deriv
+
+/-- Integrand for circleParamCW is the negative of circleParam's integrand. -/
+lemma circleParamCW_integrand_neg (z₀ : ℂ) (r : ℝ) (hr : 0 < r) (a b : ℝ) (hab : a < b) (t : ℝ) :
+    (circleParamCW z₀ r a b t - z₀)⁻¹ * deriv (circleParamCW z₀ r a b) t =
+    -(2 * Real.pi * I / (b - a)) := by
+  rw [circleParamCW_deriv z₀ r a b hab t]
+  simp only [circleParamCW, circleParam, add_sub_cancel_left]
+  have hr_ne : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr)
+  have hexp_ne : exp (2 * Real.pi * I * (((a + b - t : ℝ) - a) / (b - a))) ≠ 0 := exp_ne_zero _
+  field_simp [hr_ne, hexp_ne]
+
+/-- The winding number of a clockwise circle around its center is -1. -/
+theorem circleParamCW_winding_eq_neg_one (z₀ : ℂ) (r : ℝ) (hr : 0 < r) (a b : ℝ) (hab : a < b) :
+    generalizedWindingNumber' (circleParamCW z₀ r a b) a b z₀ = -1 := by
+  have havoids : ∀ t, ‖circleParamCW z₀ r a b t - z₀‖ = r := fun t =>
+    circleParamCW_dist z₀ r (le_of_lt hr) a b hab t
+  unfold generalizedWindingNumber' cauchyPrincipalValue'
+  -- For ε < r, integrand is constant -2πi/(b-a)
+  have hint_const : ∀ ε > 0, ε < r →
+      (∫ t in a..b, if ‖circleParamCW z₀ r a b t - z₀‖ > ε then
+        (circleParamCW z₀ r a b t - z₀)⁻¹ * deriv (circleParamCW z₀ r a b) t else 0) =
+      -2 * Real.pi * I := by
+    intro ε _hε_pos hε_lt_r
+    have h_cond : ∀ t, ‖circleParamCW z₀ r a b t - z₀‖ > ε := fun t => by
+      rw [havoids]; exact hε_lt_r
+    have h_simp : (fun t => if ‖circleParamCW z₀ r a b t - z₀‖ > ε then
+        (circleParamCW z₀ r a b t - z₀)⁻¹ * deriv (circleParamCW z₀ r a b) t else 0) =
+        fun _ => -(2 * Real.pi * I / (b - a)) := by
+      ext t; simp only [h_cond t, ↓reduceIte]
+      exact circleParamCW_integrand_neg z₀ r hr a b hab t
+    rw [h_simp, intervalIntegral.integral_const]
+    have hba_ne : (b : ℂ) - a ≠ 0 := by
+      simp [sub_ne_zero, Complex.ofReal_inj]; exact ne_of_gt hab
+    simp only [Complex.real_smul, Complex.ofReal_sub]
+    field_simp [hba_ne]
+  have hlim : limUnder (𝓝[>] (0 : ℝ)) (fun ε =>
+      ∫ t in a..b, if ‖circleParamCW z₀ r a b t - z₀‖ > ε then
+        (circleParamCW z₀ r a b t - z₀)⁻¹ * deriv (circleParamCW z₀ r a b) t else 0) =
+      -2 * Real.pi * I := by
+    apply limUnder_eventually_eq_const
+    filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
+    exact hint_const ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2
+  have h_match : (fun ε => ∫ t in a..b,
+      if ‖(fun t => circleParamCW z₀ r a b t - z₀) t - 0‖ > ε then
+        (fun x => x⁻¹) ((fun t => circleParamCW z₀ r a b t - z₀) t) *
+        deriv (fun t => circleParamCW z₀ r a b t - z₀) t
+      else 0) = (fun ε => ∫ t in a..b,
+      if ‖circleParamCW z₀ r a b t - z₀‖ > ε then
+        (circleParamCW z₀ r a b t - z₀)⁻¹ * deriv (circleParamCW z₀ r a b) t
+      else 0) := by
+    ext ε; congr 1 with t; simp only [sub_zero, deriv_sub_const]
+  simp only [h_match, hlim]
+  have hpi_ne : (2 : ℂ) * Real.pi * I ≠ 0 := by
+    simp [ne_eq, mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  field_simp [hpi_ne]
+
 /-! ## Clamping Infrastructure -/
 
 /-- Clamp t to [a, b]. -/

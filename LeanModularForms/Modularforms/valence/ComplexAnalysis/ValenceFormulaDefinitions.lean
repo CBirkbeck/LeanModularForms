@@ -49,6 +49,35 @@ def ellipticPoint_rho' : UpperHalfPlane :=
 /-- The elliptic point ρ as a complex number. -/
 abbrev ellipticPoint_rho : ℂ := (ellipticPoint_rho' : ℂ)
 
+/-- The elliptic point ρ' = ρ + 1 = e^{πi/3} (T-translate of ρ).
+    This appears on the right edge of ∂𝒟 at x = 1/2. -/
+def ellipticPoint_rho_plus_one' : UpperHalfPlane :=
+  ⟨1/2 + (Real.sqrt 3 / 2) * I, by
+    simp only [add_im, one_im, div_im, mul_im, I_re, I_im]
+    norm_num⟩
+
+/-- The elliptic point ρ + 1 as a complex number. -/
+abbrev ellipticPoint_rho_plus_one : ℂ := (ellipticPoint_rho_plus_one' : ℂ)
+
+/-- ρ + 1 equals ρ' (the T-translate). -/
+theorem ellipticPoint_rho_add_one_eq : ellipticPoint_rho + 1 = ellipticPoint_rho_plus_one := by
+  show (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) + 1 = 1/2 + (Real.sqrt 3 / 2) * I
+  ring
+
+/-- ‖ρ + 1‖ = 1 (ρ + 1 is on the unit circle). -/
+theorem ellipticPoint_rho_plus_one_norm : ‖ellipticPoint_rho_plus_one‖ = 1 := by
+  show ‖(1/2 + (Real.sqrt 3 / 2) * I : ℂ)‖ = 1
+  have h_normSq : Complex.normSq (1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1 := by
+    have h1 : (1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
+        ((1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
+    rw [h1, Complex.normSq_add_mul_I]
+    have h2 : (1/2 : ℝ)^2 = 1/4 := by ring
+    have h3 : (Real.sqrt 3 / 2)^2 = 3/4 := by
+      rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]; norm_num
+    rw [h2, h3]; ring
+  show Real.sqrt (Complex.normSq _) = 1
+  rw [h_normSq, Real.sqrt_one]
+
 /-! ## Elliptic Points in Fundamental Domain -/
 
 /-- The elliptic point i is in the fundamental domain. -/
