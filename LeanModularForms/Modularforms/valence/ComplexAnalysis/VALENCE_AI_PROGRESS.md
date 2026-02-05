@@ -14,16 +14,65 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 40)
+**Last update:** 2026-02-05 (session 41)
 **Target:** `generalizedWindingNumber' fdBoundary 0 5 p = -1` (CLOCKWISE orientation)
-**Status:** IN-PROGRESS - 15 sorries remaining
+**Status:** IN-PROGRESS - 17 sorries remaining
 
-### Session 40 Progress (2026-02-05, partition non-diff fix + t=2 handling)
+### Session 41 Progress (2026-02-05, seg2/seg3 continuity structure)
+
+**Work done:**
+- Simplified seg2/seg3 continuity proofs in `hH1_deriv_cont` with explicit sorry placeholders
+- Documented proof strategy for non-differentiability lemmas
+
+**Fresh `rg -n "\\bsorry\\b"` output:**
+```
+1390:    sorry -- Technical: one-sided derivative argument via HasDerivWithinAt
+1774:  sorry -- Technical: composition of differentiable functions
+1784:  sorry -- Technical: continuity of derivative formula
+1795:  sorry -- Technical: explicit bound computation
+2267:  sorry -- Technical: mod 2π arithmetic
+2292:  sorry -- Technical: continuity of angle functions
+2306:  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction vector
+2329:  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1
+2386:  sorry -- Technical: differentiability of angle interpolation
+2396:  sorry -- Technical: continuity of derivative
+2403:  sorry -- Technical: bounded derivative on compact domain
+2960:  · sorry  -- Technical: real-part mismatch at t=1
+2962:  · sorry  -- Technical: real-part mismatch at t=3
+2964:  · sorry  -- Technical: I ≠ 1 at t=4
+3219:      sorry -- Technical: seg2 derivative continuity via composition
+3226:      sorry -- Technical: seg3 derivative continuity via composition
+3346:              sorry  -- Direct derivative bound at t=2 (seg2 formula endpoint)
+```
+
+**Sorry breakdown (17 total):**
+- `fdPolygon_not_differentiableAt_partition` (1390): 1 sorry
+- Radial homotopy (1774, 1784, 1795): 3 sorries
+- Angle homotopy (2267, 2292, 2306, 2329, 2386, 2396, 2403): 7 sorries
+- `fdBoundaryToPolygonHomotopy_not_diffAt_134` (2960, 2962, 2964): 3 sorries
+- `hH1_deriv_cont` seg2/seg3 (3219, 3226): 2 sorries
+- t=2 derivative bound (3346): 1 sorry
+
+**Next priorities:**
+1. Fill seg2/seg3 continuity (arc-chord derivative formula continuous in (t,s))
+2. Fill t=2 derivative bound
+3. Fill non-differentiability proofs using one-sided derivatives
+4. Continue with hhom₂ (radial) and hhom₃ (angle) sorries
+
+---
+
+### Session 40 Progress (2026-02-05, partition non-diff fix + hH1_deriv_cont partial)
 
 **Reviewer feedback addressed:**
 - Fixed `fdBoundaryToPolygonHomotopy_not_diffAt_partition` → renamed to `fdBoundaryToPolygonHomotopy_not_diffAt_134`
 - Removed t=2 from non-differentiability claim (at s=0, function IS differentiable at t=2)
-- Added separate handling for t=2 case in hH1_bound
+- Added separate handling for t=2 case in hH1_bound (with sorry for direct bound)
+
+**hH1_deriv_cont progress:**
+- Added `interval_in_segment` helper lemma (dispatches intervals to segments)
+- Added `deriv_seg1_continuousOn`, `deriv_seg4_continuousOn`, `deriv_seg5_continuousOn` (constant derivatives)
+- Filled hH1_deriv_cont cases for segments 1, 4, 5 (constant derivative = continuousOn_const)
+- Segments 2, 3 still have sorries (need continuity of arc-chord derivative formula)
 
 **Fresh `rg -n "\\bsorry\\b"` output:**
 ```
@@ -41,21 +90,27 @@ Each AI must update this file when returning results.
 2962:  · sorry  -- Technical: real-part mismatch at t=1
 2964:  · sorry  -- Technical: real-part mismatch at t=3
 2966:  · sorry  -- Technical: I ≠ 1 at t=4
-3124:    sorry -- Technical: segment dispatch + derivative formula continuity
-3191:              sorry  -- Direct derivative bound at t=2 (seg2 formula endpoint)
+3207:    · sorry  -- Technical: seg2 derivative formula is continuous in (t, s)
+3209:    · sorry  -- Technical: seg3 derivative formula is continuous in (t, s)
+3329:              sorry  -- Direct derivative bound at t=2 (seg2 formula endpoint)
 ```
 
-**Sorry breakdown:**
+**Sorry breakdown (16 total):**
 - `fdPolygon_not_differentiableAt_partition` (1392): 1 sorry
 - Radial homotopy (1776, 1786, 1797): 3 sorries
 - Angle homotopy (2269, 2294, 2308, 2331, 2388, 2398, 2405): 7 sorries
 - `fdBoundaryToPolygonHomotopy_not_diffAt_134` (2962, 2964, 2966): 3 sorries
-- `hH1_deriv_cont` (3124): 1 sorry
-- t=2 derivative bound (3191): 1 sorry (NEW)
+- `hH1_deriv_cont` seg2/seg3 (3207, 3209): 2 sorries
+- t=2 derivative bound (3329): 1 sorry
+
+**Key achievements this session:**
+- Fixed incorrect claim about t=2 non-differentiability ✓
+- Added segment dispatcher lemma `interval_in_segment` ✓
+- Filled hH1_deriv_cont for constant-derivative segments (1, 4, 5) ✓
 
 **Next priorities:**
-1. Fill `hH1_deriv_cont` (segment dispatch for derivative continuity)
-2. Fill t=2 derivative bound at seg2 endpoint
+1. Fill seg2/seg3 continuity in hH1_deriv_cont (arc-chord derivative formula)
+2. Fill t=2 derivative bound
 3. Continue with hhom₂ (radial) and hhom₃ (angle) sorries
 
 ---
@@ -1014,9 +1069,121 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ## Ticket B – PV Infrastructure
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-05 (session 41)
+**Last update:** 2026-02-05 (session 43)
 
-**Status:** IN-PROGRESS (**35 sorries** - annulus_symmDiff_measure_bound structure complete)
+**Status:** IN-PROGRESS (**36 sorries** - shell_vol_le complete, properness added)
+
+### Session 42 Progress (2026-02-05, Path A decision + remaining sorries plan)
+
+**Context:** Coordinator review confirmed mathematical analysis of measure bound scaling.
+
+**COORDINATOR CONFIRMATION:**
+The O(ε₁²/‖L‖³) scaling is **mathematically correct** for the tight annulus `tAnnLin`:
+- Boundary disagreement occurs when `|‖γ‖ - (‖L‖r)| ≲ K₀ r²`
+- With `r ~ ε/‖L‖`, thickness in `x := ‖L‖r` is `Δx ~ K₀ r² ~ K₀ ε²/‖L‖²`
+- Converting back to `r` gives `Δr = Δx/‖L‖ ~ K₀ ε²/‖L‖³`
+- Measure in `t` of an r-shell is `O(Δr)`
+
+**DECISION: PATH A (recommended by coordinator)**
+Weaken `singular_annulus_bound` instead of changing proof strategy:
+- Current: `≤ 4 / ‖L‖ * ε₁` (O(ε₁/‖L‖))
+- Corrected: `≤ Csing / ‖L‖^2 * ε₁` (O(ε₁/‖L‖²))
+
+This is sufficient for dyadic convergence: O(ε₁) steps with fixed constant.
+
+**STATEMENTS TO MODIFY:**
+
+1. `singular_annulus_bound` (line 2789-2790):
+   ```lean
+   -- OLD: ≤ 4 / ‖L‖ * ε₁
+   -- NEW: ≤ Csing / ‖L‖^2 * ε₁   (Csing from measure bound)
+   ```
+
+2. `pv_step_bound_ratio_two` K definition (line 2843):
+   ```lean
+   -- OLD: let K := (4 * max 0 C + 4) / ‖L‖
+   -- NEW: let K := (4 * max 0 C) / ‖L‖ + Csing / ‖L‖^2
+   ```
+
+**REMAINING SORRIES in annulus_symmDiff_measure_bound (per coordinator guidance):**
+
+1. `h_localize_γAnn` (line 2633):
+   - NOT continuity argument - use contradiction with lower bound
+   - If `|t-t₀| ≥ δ₁` → `‖γ‖ ≥ (‖L‖/2)*δ₁ > ε₁` (contradiction with `t ∈ γAnn`)
+   - Need to arrange δ/ε assumptions so `(‖L‖/2)*δ₁ > ε₁`
+
+2. `h_shell₁_vol` and `h_shell₂_vol` (lines 2730, 2733):
+   - Reduce each shell to `{r₁ < |t-t₀| ≤ r₂}`
+   - Apply existing `volume_shell_le`
+   - Use `measure_mono` to push into standard shell
+
+**COMPLETED THIS SESSION:**
+
+1. **`h_localize_γAnn` proof structure** - Filled case split for δ₁ ≤ |t - t₀| ≤ ‖L‖/(2K₀):
+   - Uses C² lower bound `‖γ‖ ≥ |t - t₀| * (‖L‖ - K₀ * |t - t₀|)`
+   - Shows `‖γ‖ ≥ δ₁ * ‖L‖/2 > ε₁`, contradicting `ht_upper : ‖γ‖ ≤ ε₁`
+   - Two remaining sorries:
+     - `h_lt_δ₀` (line ~2631): localization for |t - t₀| ≥ δ₀ (outside C² zone)
+     - `h_case > ‖L‖/(2K₀)` (line ~2688): larger root r₂ bound
+
+2. **Shell volume proofs simplified:**
+   - Rewrote `h_shell₁_vol` and `h_shell₂_vol` using ball containment approach
+   - Shell ⊆ ball of radius `(ε + Δ)/‖L‖` → volume ≤ `2(ε + Δ)/‖L‖`
+   - Final bound `4Δ/‖L‖` requires `ε ≤ Δ` (true for small ε)
+   - Two remaining sorries for tight constant adjustment
+
+**CURRENT SORRY COUNT:** 36 (was 35)
+
+**REMAINING WORK FOR PATH A:**
+1. Modify `singular_annulus_bound` conclusion: `4/‖L‖ * ε₁` → `Csing/‖L‖² * ε₁`
+2. Modify `pv_step_bound_ratio_two` K: `(4*max 0 C + 4)/‖L‖` → `(4*max 0 C)/‖L‖ + Csing/‖L‖²`
+3. Fill the remaining technical sorries in `annulus_symmDiff_measure_bound`
+
+**Build:** SUCCESS (warnings only)
+
+---
+
+### Session 43 Progress (2026-02-05, shell_vol_le + properness)
+
+**Context:** Coordinator tasked implementing `shell_vol_le` and fixing call sites.
+
+**COMPLETED:**
+
+1. **`shell_vol_le` lemma (line ~2540-2610)** ✓
+   - Implements shell volume bound with proper case split on `ε ≤ Δ`
+   - **Case 1 (ε ≤ Δ):** Shell ⊆ ball of radius `(ε+Δ)/‖L‖ ≤ 2Δ/‖L‖`
+   - **Case 2 (Δ < ε):** Proper annulus, uses `volume_shell_le`
+   - Key fix: uses `rcases (abs_eq hr₁_pos.le).mp ht with h1 | h1` for singleton null proof
+   - Uses `Set.toFinite _` and `Set.Finite.measure_zero` for singleton measure
+
+2. **Replaced shell volume sorries:**
+   - `h_shell₁_vol` now calls `shell_vol_le hL_norm_pos hΔ_nonneg hε₁_pos`
+   - `h_shell₂_vol` now calls `shell_vol_le hL_norm_pos hΔ_nonneg hε₂_pos`
+
+3. **Added properness hypothesis to `annulus_symmDiff_measure_bound`:**
+   ```lean
+   (hProper : ∀ δ > 0, ∃ M > 0, ∀ t, ‖γ t - γ t₀‖ ≤ M → |t - t₀| < δ)
+   ```
+   - Ensures curve doesn't loop back (preimage of small balls is bounded)
+
+4. **Fixed both call sites:**
+   - `singular_annulus_bound` (line ~2942): Properness from `h_far_bound` via contradiction
+   - `pv_limit_exists` (line ~3253): Properness placeholder with sorry (needs local injectivity argument)
+
+**REMAINING SORRIES in `annulus_symmDiff_measure_bound`:**
+- `h_localize_γAnn` - complex quadratic case `|t - t₀| > ‖L‖/(2K₀)`
+- Properness proofs at call sites
+
+**CURRENT SORRY COUNT:** 36 (no change - moved sorries around)
+
+**KEY FIXES:**
+- Changed `cases'` Lean 3 syntax to `rcases` for Lean 4
+- Used explicit `MeasureTheory.measure_mono` for subset bounds
+- Proper handling of singleton null sets via `Set.toFinite` + `Set.Finite.measure_zero`
+
+**Build:** SUCCESS (errors=0, warnings only)
+
+---
 
 ### Session 41 Progress (2026-02-05, annulus_symmDiff_measure_bound)
 
@@ -2813,3 +2980,62 @@ Remaining steps:
 - `annulus_symmDiff_measure_bound` - needs (5) complete
 - `singular_annulus_bound` - needs measure bound
 - `remainder_integral_bound_on_annulus` - measure theory conversion
+
+---
+
+## Session 40 - Shell volume bounds (with sorry placeholder)
+
+**Date:** 2026-02-05
+
+### Summary
+
+Attempted to complete the shell volume bounds (micro-lemma 5.3) in `annulus_symmDiff_measure_bound`.
+
+### Key Work
+
+1. **Implemented pointwise → set containment** (5.1): `h_subset : symmDiff γAnn tAnnLin ⊆ shell₁ ∪ shell₂`
+   - Uses `norm_linear_approx_bound`, `symmDiff_subset_boundaryLayers`, `max_le_iff`
+   - Localizes t via `h_localize_γAnn` and `h_localize_tAnnLin`
+   
+2. **Implemented uniform error bound** (5.2): `he_le_Δ : e t ≤ Δ` for t in symmDiff
+   - Uses `hR_bound : |t - t₀| ≤ R_max` proven from either annulus membership
+
+3. **Shell volume bounds** (5.3): Encountered complex type/scope issues with calc blocks
+   - The proof structure using annulus containment is correct
+   - Width bound `r₂ - r₁ ≤ 2Δ/‖L‖` holds in both cases (ε ≤ Δ and ε > Δ)
+   - Annulus measure = 2(r₂ - r₁) ≤ 4Δ/‖L‖
+   - Used sorry to unblock build while preserving the proof outline
+
+### Technical Issue
+
+The shell volume proof had issues with:
+- `le_max_iff` vs `max_le_iff` - the former is for `a ≤ max b c`, latter for `max a b ≤ c`
+- Calc chain inside by-block conflating with outer have statements
+- Scope of local `h_width` variables
+
+### Updated Sorry Count
+
+ValenceFormula_PV.lean now has 38 sorries (same as before, with shell volume sorries replacing more complex ones).
+
+### Files Modified
+
+- `ValenceFormula_PV.lean`: Simplified shell volume bounds to sorries
+
+### Remaining Work for (5.3)
+
+The proof outline is:
+```lean
+have h_shell₁_vol : volume shell₁ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) := by
+  -- 1. shell₁ ⊆ {r₁ ≤ |t - t₀| ≤ r₂} where r₁ = max(0, (ε₁-Δ)/‖L‖), r₂ = (ε₁+Δ)/‖L‖
+  -- 2. Width: r₂ - r₁ ≤ 2Δ/‖L‖ (proven by cases on ε₁ vs Δ)
+  -- 3. Annulus ⊆ Icc (t₀-r₂) (t₀-r₁) ∪ Icc (t₀+r₁) (t₀+r₂)
+  -- 4. measure = ENNReal.ofReal(r₂-r₁) + ENNReal.ofReal(r₂-r₁) = ENNReal.ofReal(2*(r₂-r₁))
+  -- 5. ≤ ENNReal.ofReal(4*Δ/‖L‖)
+  sorry
+```
+
+### Next Session TODO
+
+1. Fill `h_shell₁_vol` and `h_shell₂_vol` sorries with the annulus measure argument
+2. Or extract as separate lemma `annulus_measure_le` to avoid scope issues
+
