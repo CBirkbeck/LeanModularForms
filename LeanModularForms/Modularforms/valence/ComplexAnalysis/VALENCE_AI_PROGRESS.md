@@ -651,7 +651,7 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 
 **Session 33 progress (2026-02-05):**
 
-- **Commit:** 043b216
+- **Commit:** 8b12743
 - **Files touched:** `ValenceFormula_PV.lean`
 - **Build:** `lake build LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_PV` → SUCCESS (2949 jobs)
 - **Sorry count:** ~17 declaration warnings (same as before, but `pv_limit_via_dyadic` is now sorry-free)
