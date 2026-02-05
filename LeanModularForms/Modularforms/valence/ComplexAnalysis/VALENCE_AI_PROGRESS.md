@@ -17,6 +17,34 @@ Each AI must update this file when returning results.
 **Last update:** 2026-02-05 (session 29)
 **Status:** IN-PROGRESS - Rect_Homotopy has **18 sorries**, file compiles successfully
 
+### Session 30 Progress (2026-02-05, continued)
+
+**Commit:** (pending)
+**Files touched:**
+- `ValenceFormula_Rect_Homotopy.lean` - filled technical radial homotopy lemmas
+
+**Build:** Compiles successfully
+**Sorry count:** 15 in Rect_Homotopy.lean (reduced from 18)
+
+**Lemmas filled:**
+1. `fdPolygonRadialCircle_dist` - PROVEN ✓
+   - Proves `‖fdPolygonRadialCircle p t - p‖ = 1` (on unit circle)
+   - Used `norm_div`, `RCLike.norm_ofReal`, `abs_norm`
+
+2. `polygonToCircleRadial_at_s_zero` - PROVEN ✓
+   - Proves `polygonToCircleRadial p (t, 0) = fdPolygon t`
+   - Used `calc` proof with `Algebra.smul_def`, `mul_div_cancel₀`
+
+3. `polygonToCircleRadial_continuous` - FULLY PROVEN ✓
+   - Main proof using `Continuous.div`, `continuous_norm`, `fdPolygon_continuous`
+
+4. `fdPolygon_ne_p_everywhere` - FULLY PROVEN ✓
+   - Helper lemma: `fdPolygon t ≠ p` for all t ∈ ℝ under interior hypotheses
+   - Segments 1, 4, 5: real/imaginary part comparison
+   - Segments 2, 3: used `chord_in_closed_unit_ball` with `rho'_norm`, `i_point_norm`, `rho_norm`
+
+---
+
 ### Session 29 Progress (2026-02-05)
 
 **Commit:** (pending)
@@ -90,10 +118,29 @@ winding_fdPolygon_eq_circleParamCW  (h_wind_eq2, PROVEN using chain below)
         └── angleHomotopyAdjusted_deriv_bounded (sorry)
 ```
 
+**Remaining sorries (15 total):**
+| Line | Lemma | Category |
+|------|-------|----------|
+| 1373 | `fdPolygon_not_differentiableAt_partition` | technical (not critical) |
+| 1767 | `polygonToCircleRadial_differentiable_off_partition` | technical |
+| 1778 | `polygonToCircleRadial_deriv_cont_on_piece` | technical |
+| 1788 | `polygonToCircleRadial_deriv_bounded` | technical |
+| **1861** | **`fdPolygonRadialCircle_wrapCount`** | **CORE: angle change = -2π** |
+| 1884 | `angle_alignment_at_zero` | technical |
+| 1905 | `angleHomotopyAdjusted_continuous` | technical |
+| 1912 | `angleHomotopyAdjusted_at_s_zero` | technical |
+| 1924 | `angleHomotopyAdjusted_at_s_one_winding` | technical |
+| 1934 | `angleHomotopyAdjusted_closed` | requires wrap count |
+| 1958 | `angleHomotopyAdjusted_differentiable_off_partition` | technical |
+| 1966 | `angleHomotopyAdjusted_deriv_cont_on_piece` | technical |
+| 1976 | `angleHomotopyAdjusted_deriv_bounded` | technical |
+| 2182 | `hH1_deriv_cont` | technical |
+| 2300+ | derivative bounds | technical |
+
 **Next micro-lemmas (ordered):**
 1. [ ] `fdPolygonRadialCircle_wrapCount` - **CORE**: prove angle change along fdPolygon = -2π
-2. [ ] `polygonToCircleRadial_at_s_zero` - radial homotopy at s=0 equals fdPolygon
-3. [ ] `polygonToCircleRadial_continuous` - continuity of radial projection
+2. [x] `polygonToCircleRadial_at_s_zero` - radial homotopy at s=0 equals fdPolygon ✓
+3. [x] `polygonToCircleRadial_continuous` - continuity of radial projection ✓
 4. [ ] `angleHomotopyAdjusted_closed` - uses wrap count to prove closedness for all s
 
 **Critical insight:** The ONE core mathematical lemma is `fdPolygonRadialCircle_wrapCount`:
@@ -645,9 +692,105 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ## Ticket B – PV Infrastructure
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-05 (session 33)
+**Last update:** 2026-02-05 (session 35)
 
-**Status:** IN-PROGRESS (**~17 declarations with sorries** - Two parallel approaches)
+**Status:** IN-PROGRESS (**~18 declarations with sorries** - statements FIXED per coordinator feedback)
+
+**Session 35 progress (2026-02-05):**
+
+- **Files touched:** `ValenceFormula_PV.lean`, `VALENCE_AI_PROGRESS.md`
+- **Build:** SUCCESS
+- **Sorry count:** ~18 declaration warnings (added 1 for h_localize_δ)
+
+**CRITICAL STATEMENT FIXES (per coordinator feedback):**
+
+1. **`pv_step_bound_ratio_two` (lines 2236-2259) — FIXED SIGNATURE:**
+   ```lean
+   lemma pv_step_bound_ratio_two {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ} {C δ₀ δ₁ : ℝ}
+       {ε₁ ε₂ : ℝ} (hε₂_pos : 0 < ε₂) (hε₂_le_ε₁ : ε₂ ≤ ε₁)
+       (h_ratio : ε₁ ≤ 2 * ε₂) (hL : L ≠ 0) (hδ₀_pos : 0 < δ₀) (hδ₁_pos : 0 < δ₁)
+       (hr_bounded : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
+         ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ C)
+       (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ →
+         ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
+       -- NEW: Localization hypothesis (Style A2)
+       (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₀ δ₁)
+       (hat₀ : t₀ ∈ Set.Ioo a b) (hγ_meas : Measurable γ)
+       (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b)) :
+       let I := fun ε => ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0
+       -- NEW: K includes 1/‖L‖ factor
+       let K := (4 * max 0 C + 4) / ‖L‖
+       ‖I ε₂ - I ε₁‖ ≤ K * ε₁
+   ```
+   - **REMOVED:** `hε₁_le_δ : ε₁ ≤ min δ₀ δ₁` (was redundant/wrong)
+   - **ADDED:** `h_localize` — ensures annulus lies in local zone
+   - **CHANGED:** `K := (4 * max 0 C + 4) / ‖L‖` — includes 1/‖L‖ factor
+
+2. **`pv_limit_via_dyadic` (lines 2406-2420) — FIXED SIGNATURE:**
+   ```lean
+   lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
+       (hat₀ : t₀ ∈ Set.Ioo a b) (hL : L ≠ 0)
+       (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L)
+       (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b))
+       (hγ_meas : Measurable γ)
+       -- NEW: No-near-return hypothesis
+       (h_no_return : ∃ ρ > 0, ∃ δ_loc > 0, ∀ t ∈ Set.Icc a b, |t - t₀| ≥ δ_loc → ρ ≤ ‖γ t - γ t₀‖)
+   ```
+   - **ADDED:** `h_no_return` — γ doesn't return close to γ(t₀) far from t₀
+
+3. **Derived `h_localize_δ` (line 2457):**
+   - Helper that derives h_localize for ε ≤ δ from h_no_return + h_lower
+   - Currently has 1 sorry — technical proof of strict inequality
+
+**Sorries remaining in step bound chain:**
+| Line | Lemma | Status |
+|------|-------|--------|
+| 2244 | `pv_step_bound_ratio_two` | CORE - needs micro-lemma chain (A)-(F) |
+| 2457 | `h_localize_δ` (inside pv_limit_via_dyadic) | Technical - derive from h_no_return |
+
+**Next micro-lemmas (from coordinator's chain):**
+1. [ ] `step_diff_eq_annulus` — rewrite I ε₂ - I ε₁ as annulus integral
+2. [ ] `annulus_subset_tIcc` — localize annulus to |t-t₀| < min δ₀ δ₁
+3. [ ] `measure_annulus_le` — deduce measure ≤ 4ε₁/‖L‖
+4. [ ] `integrand_split` — pointwise f = (t-t₀)⁻¹ + err with ‖err‖ ≤ C
+5. [ ] `remainder_integral_bound` — ‖∫ err‖ ≤ C * measure
+6. [ ] `singular_annulus_O_eps` — ‖∫ (t-t₀)⁻¹‖ ≤ const * ε₁
+
+**Session 34 progress (2026-02-05) [PREVIOUS]:**
+
+- **Updated `pv_limit_via_dyadic` hypothesis signature:**
+  - Added `hγ_meas : Measurable γ` as required hypothesis
+  - This is needed for `cutoff_integrand_intervalIntegrable` calls
+
+- **Updated `pv_step_bound_ratio_two` to accept integrability hypotheses:**
+  - Added `hat₀ : t₀ ∈ Set.Ioo a b`
+  - Added `hγ_meas : Measurable γ`
+  - Added `hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b)`
+  - These are needed to call `cutoff_integrand_intervalIntegrable` for the annulus integral
+
+- **Fixed call sites in `pv_limit_via_dyadic`:**
+  - Line ~2446: First call to `pv_step_bound_ratio_two` now passes `hat₀ hγ_meas hγ_cont_deriv`
+  - Line ~2544: Second call (in `h_first_piece`) also updated
+
+- **Added detailed proof strategy to `pv_step_bound_ratio_two` sorry (lines 2275-2310):**
+  - Step A: γ-annulus → t-bounds conversion using h_lower
+  - Step B: Integral split into singular + remainder parts
+  - Step C: Remainder bound is C * measure = O(ε₁)
+  - Step D: Singular cancellation via integral_inv_symm + linearization
+  - Step E: Total is O(ε₁) when K ≥ 4C/‖L‖
+
+- **Key insight documented:** The bound K * ε₁ requires K ≥ 4C/‖L‖ to absorb the
+  remainder contribution C * 4ε₁/‖L‖. Current K = max 0 C + 1 works when
+  ‖L‖ ≥ 4C/(C+1) ≈ 4 for large C, which holds for non-degenerate curves in valence formula.
+
+- **Sorries remaining:**
+  - `pv_step_bound_ratio_two` (line 2238) - **CORE** - needs annulus integral bound formalization
+  - Same other sorries as session 33
+
+- **Next steps for `pv_step_bound_ratio_two`:**
+  1. Formalize t-measure bound: measure ≤ 4ε₁/‖L‖
+  2. Use `intervalIntegral.norm_integral_le_of_norm_le_const` for remainder
+  3. Formalize symmetric cancellation for singular part using `integral_inv_symm`
 
 **Session 33 progress (2026-02-05):**
 
