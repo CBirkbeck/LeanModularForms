@@ -2383,25 +2383,92 @@ lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C
         -- Requires: convert interval integral to set integral, then apply norm bound
         sorry
 
+/-- **Micro-lemma (1): Norm linear approximation bound**.
+    From the quadratic approximation, derive a bound on the difference between
+    ‖γ t - γ t₀‖ and ‖L‖ * |t - t₀|. -/
+lemma norm_linear_approx_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} {K₀ δ₀ : ℝ}
+    (h_quad : ∀ t, |t - t₀| < δ₀ → ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ K₀ * |t - t₀|^2)
+    {t : ℝ} (ht : |t - t₀| < δ₀) :
+    abs (‖γ t - γ t₀‖ - ‖L‖ * |t - t₀|) ≤ K₀ * |t - t₀|^2 := by
+  have h1 : ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ K₀ * |t - t₀|^2 := h_quad t ht
+  have h2 : |‖γ t - γ t₀‖ - ‖(t - t₀) • L‖| ≤ ‖γ t - γ t₀ - (t - t₀) • L‖ := abs_norm_sub_norm_le _ _
+  have h3 : ‖(t - t₀) • L‖ = |t - t₀| * ‖L‖ := norm_smul (t - t₀) L
+  rw [h3, mul_comm] at h2
+  exact le_trans h2 h1
+
+/-- **Micro-lemma (4): Volume of a shell**. The measure of an annulus in ℝ. -/
+lemma volume_shell_le {t₀ r₁ r₂ : ℝ} (hr : r₁ ≤ r₂) :
+    volume {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ≤ ENNReal.ofReal (2 * (r₂ - r₁)) := by
+  -- The set is contained in (t₀ - r₂, t₀ - r₁] ∪ [t₀ + r₁, t₀ + r₂)
+  -- For t ≥ t₀: shell maps to Ioc (t₀ + r₁) (t₀ + r₂)
+  -- For t < t₀: shell maps to Ico (t₀ - r₂) (t₀ - r₁)
+  have h_sub : {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ⊆
+      Set.Ico (t₀ - r₂) (t₀ - r₁) ∪ Set.Ioc (t₀ + r₁) (t₀ + r₂) := by
+    intro t ⟨h_lower, h_upper⟩
+    by_cases ht : t ≥ t₀
+    · right
+      have habs : |t - t₀| = t - t₀ := abs_of_nonneg (sub_nonneg.mpr ht)
+      rw [habs] at h_lower h_upper
+      exact ⟨by linarith, by linarith⟩
+    · left
+      push_neg at ht
+      have habs : |t - t₀| = -(t - t₀) := abs_of_neg (sub_neg.mpr ht)
+      rw [habs] at h_lower h_upper
+      exact ⟨by linarith, by linarith⟩
+  calc volume {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂}
+      ≤ volume (Set.Ico (t₀ - r₂) (t₀ - r₁) ∪ Set.Ioc (t₀ + r₁) (t₀ + r₂)) :=
+        MeasureTheory.measure_mono h_sub
+    _ ≤ volume (Set.Ico (t₀ - r₂) (t₀ - r₁)) + volume (Set.Ioc (t₀ + r₁) (t₀ + r₂)) :=
+        MeasureTheory.measure_union_le _ _
+    _ = ENNReal.ofReal (r₂ - r₁) + ENNReal.ofReal (r₂ - r₁) := by
+        simp only [Real.volume_Ico, Real.volume_Ioc]; ring_nf
+    _ = ENNReal.ofReal (2 * (r₂ - r₁)) := by
+        rw [← ENNReal.ofReal_add (by linarith) (by linarith)]; ring_nf
+
+/-- **Thin-shell symmetric difference bound**. The symmetric difference between
+    the γ-annulus and the tight linear-model t-annulus has measure O(ε₁²/‖L‖²).
+
+    **Key insight:** Use the *tight* linear-model annulus
+      `tAnnLin := {t | ε₂ < ‖L‖ * |t-t₀| ∧ ‖L‖ * |t-t₀| ≤ ε₁}`
+    (equivalently radii ε₂/‖L‖ and ε₁/‖L‖).
+    When K₀=0 (exactly linear), γAnn = tAnnLin and symmDiff has measure 0.
+
+    **Proof via micro-lemmas:**
+    1. `norm_linear_approx_bound`: |‖γ‖ - ‖L‖|t|| ≤ K₀|t|²
+    2. If t ∈ symmDiff, then |‖L‖*|t| - ε| ≤ K₀|t|² for ε ∈ {ε₁, ε₂}
+    3. This confines t to thin shells of width O(ε²/‖L‖²) around |t| = ε/‖L‖
+    4. `volume_shell_le`: measure of shell ≤ 2*(width) -/
+lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
+    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L) (hL : L ≠ 0) :
+    ∃ K > 0, ∃ δ > 0, ∀ ε₁ ε₂ : ℝ, 0 < ε₂ → ε₂ ≤ ε₁ → ε₁ < δ →
+      let γAnn := {t : ℝ | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+      let tAnnLin := {t : ℝ | ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}
+      volume (symmDiff γAnn tAnnLin) ≤ ENNReal.ofReal (K * ε₁^2 / ‖L‖^2) := by
+  -- Get quadratic approximation bound from C²
+  obtain ⟨K₀, δ₀, hδ₀_pos, hK₀_pos, h_quad⟩ := quadratic_approx_of_contDiffAt_two hγ_C2 hγ_deriv
+  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  -- Use K = 8*K₀ (absorbs constants from boundary layers)
+  use 8 * K₀, by linarith, δ₀, hδ₀_pos
+  intro ε₁ ε₂ hε₂_pos hε₂_le hε₁_lt γAnn tAnnLin
+  -- Step 1: Points in symmDiff are in boundary layers
+  -- If t ∈ γAnn ∆ tAnnLin, then the γ-condition and L-condition disagree
+  -- This happens only when |‖γ‖ - ‖L‖|t|| is comparable to the threshold gap
+  -- Step 2: By norm_linear_approx_bound, |‖γ‖ - ‖L‖|t|| ≤ K₀|t|²
+  -- Step 3: Points in symmDiff satisfy |‖L‖*|t| - ε| ≤ K₀|t|² for some ε ∈ {ε₁, ε₂}
+  -- Step 4: With |t| ≤ ε₁/‖L‖ (from either condition), error ≤ K₀*(ε₁/‖L‖)²
+  -- Step 5: Shell width ≈ K₀*ε₁²/‖L‖³, measure ≤ 4*K₀*ε₁²/‖L‖³ ≤ 8*K₀*ε₁²/‖L‖²
+  sorry
+
 /-- **Micro-lemma (F): Singular part bound**. The integral of (t-t₀)⁻¹ over the
     γ-annulus is O(ε₁/‖L‖) due to approximate symmetry.
 
-    **Mathematical insight:**
-    With only linear bounds (h_lower/h_upper), the γ-annulus maps to a t-annulus
-    {ε₂/(2‖L‖) < |t-t₀| ≤ 2ε₁/‖L‖}, but left and right halves may differ.
-    The integral ∫(t-t₀)⁻¹ over asymmetric annulus = log(b_R/a_R) - log(b_L/a_L).
-
-    **Why the bound works with h_ratio (ε₁ ≤ 2ε₂):**
-    The ratio constraint ensures ε₁/ε₂ ≤ 2, so the annulus is "thin".
-    The proof uses:
-    1. Define symmetric t-annulus T = {c₁ < |t-t₀| ≤ c₂} containing γ-annulus
-    2. ∫_T (t-t₀)⁻¹ = 0 by `integral_inv_symm` (exact cancellation)
-    3. γ-annulus ⊆ T, so integral over γ-annulus = 0 + (boundary correction)
-    4. Boundary correction bounded by measure × sup ≤ (4ε₁/‖L‖) * (2‖L‖/ε₂) = 8ε₁/ε₂ ≤ 16ε₁
-
-    **Note:** The O(ε₁/‖L‖) bound requires quadratic/C² control (via `hγ_C2` + `hγ_deriv`)
-    for the thin shell measure estimate. With C² control, γ-annulus is approximately
-    symmetric, so the symmetric integral cancellation works up to O(ε₁/‖L‖) error.
+    **Proof strategy (using thin-shell estimate):**
+    1. From `annulus_symmDiff_measure_bound`: γ-annulus differs from symmetric
+       t-annulus {c₁ < |t-t₀| ≤ c₂} by a set of measure O(ε₁²/‖L‖²).
+    2. Symmetric integral cancels: ∫_{tAnn} (t-t₀)⁻¹ = 0 by `integral_inv_symm`.
+    3. γ-annulus integral = (symmetric integral) + (symmetric difference integral).
+    4. Symmetric difference integral ≤ measure × sup ≤ O(ε₁²/‖L‖²) × O(‖L‖/ε₁) = O(ε₁/‖L‖).
+       (Ratio constraint h_ratio gives sup ‖(t-t₀)⁻¹‖ ≤ 2‖L‖/ε₂ ≤ 4‖L‖/ε₁.)
 
     **Why C² is needed (counterexample without it):**
     A piecewise-linear γ with different slopes on each side of t₀ can make the

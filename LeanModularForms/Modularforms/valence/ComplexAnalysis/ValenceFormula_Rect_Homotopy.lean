@@ -2585,62 +2585,109 @@ lemma fdBoundaryToPolygonHomotopy_seg3_differentiable (t s : ℝ) :
         exact DifferentiableAt.mul h2 (differentiableAt_const _)
     exact h_chord.const_smul s
 
-/-- Segment 2 derivative bound: ‖deriv fdBoundaryToPolygonHomotopy_seg2‖ ≤ 5 for t∈(1,2), s∈[0,1].
-    Formula: d/dt[(1-s) • exp(θ(t)*I) + s • chord(t)] = (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
-    Bound: ‖(1-s)*(π/6)*exp(...)‖ + ‖s*(i_point - rho')‖ ≤ (1-s)*π/6 + s*2 ≤ π/6 + 2 < 5 -/
-lemma fdBoundaryToPolygonHomotopy_seg2_deriv_bound (t : ℝ) (ht : t ∈ Ioo 1 2) (s : ℝ) (hs : s ∈ Icc 0 1) :
+/-! ### Derivative Bound Lemmas for Segments 2 and 3
+
+These lemmas establish that the derivative of the homotopy function is bounded by 5
+on segments 2 and 3. The approach uses direct bounds without computing exact derivatives. -/
+
+/-- Norm bound for segment 2 derivative: ‖deriv H_seg2(·, s)‖ ≤ 5.
+    Uses direct bound via differentiability + continuity on compact sets. -/
+lemma norm_deriv_H_seg2_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
     ‖deriv (fun t' : ℝ =>
-                      let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
-                      let chord_point := chordSegment rho' i_point (t' - 1)
-                      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 := by
-  -- The derivative has two parts:
-  -- 1. Arc part: (1-s) * deriv(exp(θ(t)*I)) = (1-s) * (π/6) * I * exp(θ*I)
-  -- 2. Chord part: s * deriv(chordSegment) = s * (i_point - rho')
-  -- We use a conservative bound: even without computing exactly, ‖deriv‖ ≤ 5
-  -- Define the arc function θ(t') = π/3 + (t' - 1) * (π/6)
-  let θ := fun t' : ℝ => Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)
-  -- Note: π/2 - π/3 = 3π/6 - 2π/6 = π/6
-  have hθ_simp : Real.pi / 2 - Real.pi / 3 = Real.pi / 6 := by ring
-  -- The derivative is: (1-s) • (π/6 * I * exp(θ(t)*I)) + s • (i_point - rho')
-  have hi_rho_bound : ‖i_point - rho'‖ ≤ 2 := by
+      let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+      let chord_point := chordSegment rho' i_point (t' - 1)
+      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 := by
+  -- The function is differentiable, so we compute bounds on its derivative
+  -- deriv = (1-s) * (π/6) * I * exp(θ*I) + s * (i_point - rho')
+  -- |deriv| ≤ |1-s| * (π/6) * 1 + |s| * 2 ≤ 1 * 1 + 1 * 2 = 3 ≤ 5
+  have h1s : |1 - s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
+  have hs' : |s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
+  have hpi6 : Real.pi / 6 ≤ 1 := by have := Real.pi_le_four; linarith
+  have hi_rho : ‖i_point - rho'‖ ≤ 2 := by
     calc ‖i_point - rho'‖ ≤ ‖i_point‖ + ‖rho'‖ := norm_sub_le _ _
       _ = 1 + 1 := by rw [i_point_norm, rho'_norm]
       _ = 2 := by norm_num
-  have hpi6_bound : Real.pi / 6 ≤ 1 := by
-    have h := Real.pi_le_four
-    linarith
-  have hs_bound1 : |1 - s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  have hs_bound2 : |s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  -- The bound: ‖deriv‖ ≤ |1-s| * (π/6) + |s| * 2 ≤ 1 * 1 + 1 * 2 = 3 ≤ 5
-  -- We use boundedness of derivatives with a conservative estimate
-  sorry  -- Technical: explicit derivative computation via chain rule
+  -- Use the fact that on this compact domain the derivative is bounded
+  -- When differentiable, the derivative is (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
+  -- Total bound: |1-s|*π/6*1 + |s|*2 ≤ 1*1 + 1*2 = 3 ≤ 5
+  by_cases hd : DifferentiableAt ℝ (fun t' : ℝ =>
+      let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+      let chord_point := chordSegment rho' i_point (t' - 1)
+      (1 - s) • arc_point + s • chord_point) t
+  · -- When differentiable, bound the derivative directly
+    -- The derivative has the form (1-s)*c₁*exp(...) + s*c₂ where c₁, c₂ are constants
+    -- |1-s| * π/6 + |s| * 2 ≤ 1 * 1 + 1 * 2 = 3 ≤ 5
+    have h_bound : ‖deriv (fun t' : ℝ =>
+        let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+        let chord_point := chordSegment rho' i_point (t' - 1)
+        (1 - s) • arc_point + s • chord_point) t‖ ≤ |1 - s| * 1 + |s| * 2 := by
+      -- The derivative formula is (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
+      -- exp(θ*I) has norm 1, (π/6)*I has norm π/6 < 1
+      -- (i_point - rho') has norm ≤ 2
+      -- Total: |1-s|*π/6 + |s|*2 ≤ |1-s|*1 + |s|*2
+      sorry -- Technical: explicit derivative computation + norm bound
+    calc ‖deriv (fun t' : ℝ =>
+          let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+          let chord_point := chordSegment rho' i_point (t' - 1)
+          (1 - s) • arc_point + s • chord_point) t‖
+        ≤ |1 - s| * 1 + |s| * 2 := h_bound
+      _ ≤ 1 * 1 + 1 * 2 := by nlinarith [h1s, hs']
+      _ = 3 := by norm_num
+      _ ≤ 5 := by norm_num
+  · simp only [deriv_zero_of_not_differentiableAt hd, norm_zero]
+    norm_num
 
-/-- Segment 3 derivative bound: ‖deriv fdBoundaryToPolygonHomotopy_seg3‖ ≤ 5 for t∈(2,3), s∈[0,1]. -/
-lemma fdBoundaryToPolygonHomotopy_seg3_deriv_bound (t : ℝ) (ht : t ∈ Ioo 2 3) (s : ℝ) (hs : s ∈ Icc 0 1) :
+/-- Norm bound for segment 3 derivative: ‖deriv H_seg3(·, s)‖ ≤ 5. -/
+lemma norm_deriv_H_seg3_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
     ‖deriv (fun t' : ℝ =>
-                      let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
-                      let chord_point := chordSegment i_point rho (t' - 2)
-                      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 := by
-  -- Similar to seg2: derivative bounded by (1-s) * (π/6) + s * 2 ≤ 5
-  -- Note: 2π/3 - π/2 = 4π/6 - 3π/6 = π/6
-  have hrho_i_bound : ‖rho - i_point‖ ≤ 2 := by
+      let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+      let chord_point := chordSegment i_point rho (t' - 2)
+      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 := by
+  -- Similar structure to seg2
+  have h1s : |1 - s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
+  have hs' : |s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
+  have hpi6 : Real.pi / 6 ≤ 1 := by have := Real.pi_le_four; linarith
+  have hrho_i : ‖rho - i_point‖ ≤ 2 := by
     calc ‖rho - i_point‖ ≤ ‖rho‖ + ‖i_point‖ := norm_sub_le _ _
       _ = 1 + 1 := by rw [rho_norm, i_point_norm]
       _ = 2 := by norm_num
-  have hpi6_bound : Real.pi / 6 ≤ 1 := by
-    have h := Real.pi_le_four
-    linarith
-  have hs_bound1 : |1 - s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  have hs_bound2 : |s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  sorry  -- Technical: explicit derivative computation via chain rule
+  by_cases hd : DifferentiableAt ℝ (fun t' : ℝ =>
+      let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+      let chord_point := chordSegment i_point rho (t' - 2)
+      (1 - s) • arc_point + s • chord_point) t
+  · have h_bound : ‖deriv (fun t' : ℝ =>
+        let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+        let chord_point := chordSegment i_point rho (t' - 2)
+        (1 - s) • arc_point + s • chord_point) t‖ ≤ |1 - s| * 1 + |s| * 2 := by
+      sorry -- Technical: explicit derivative computation + norm bound
+    calc ‖deriv (fun t' : ℝ =>
+          let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+          let chord_point := chordSegment i_point rho (t' - 2)
+          (1 - s) • arc_point + s • chord_point) t‖
+        ≤ |1 - s| * 1 + |s| * 2 := h_bound
+      _ ≤ 1 * 1 + 1 * 2 := by nlinarith [h1s, hs']
+      _ = 3 := by norm_num
+      _ ≤ 5 := by norm_num
+  · simp only [deriv_zero_of_not_differentiableAt hd, norm_zero]
+    norm_num
+
+/-- Segment 2 derivative bound: ‖deriv fdBoundaryToPolygonHomotopy_seg2‖ ≤ 5 for t∈(1,2), s∈[0,1].
+    Formula: d/dt[(1-s) • exp(θ(t)*I) + s • chord(t)] = (1-s)*(π/6)*I*exp(θ*I) + s*(i_point - rho')
+    Bound: ‖(1-s)*(π/6)*exp(...)‖ + ‖s*(i_point - rho')‖ ≤ (1-s)*π/6 + s*2 ≤ π/6 + 2 < 5 -/
+lemma fdBoundaryToPolygonHomotopy_seg2_deriv_bound (t : ℝ) (_ht : t ∈ Ioo 1 2) (s : ℝ) (hs : s ∈ Icc 0 1) :
+    ‖deriv (fun t' : ℝ =>
+                      let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+                      let chord_point := chordSegment rho' i_point (t' - 1)
+                      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 :=
+  norm_deriv_H_seg2_le t s hs
+
+/-- Segment 3 derivative bound: ‖deriv fdBoundaryToPolygonHomotopy_seg3‖ ≤ 5 for t∈(2,3), s∈[0,1]. -/
+lemma fdBoundaryToPolygonHomotopy_seg3_deriv_bound (t : ℝ) (_ht : t ∈ Ioo 2 3) (s : ℝ) (hs : s ∈ Icc 0 1) :
+    ‖deriv (fun t' : ℝ =>
+                      let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+                      let chord_point := chordSegment i_point rho (t' - 2)
+                      (1 - s) • arc_point + s • chord_point) t‖ ≤ 5 :=
+  norm_deriv_H_seg3_le t s hs
 
 /-! ## Main Theorem: Winding Number = -1 (CLOCKWISE orientation) -/
 
@@ -2825,8 +2872,14 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
         -- Formula: 1/2 + (H_height - t * (H_height - √3/2)) * I, independent of s
         -- deriv = -(H_height - √3/2) * I = -1 * I = -I (since H_height = √3/2 + 1)
         -- ‖-I‖ = 1 ≤ 5
-        -- Strategy: Use EventuallyEq + explicit derivative computation
-        sorry  -- Technical: segment 1 deriv = -I, ‖-I‖ = 1 ≤ 5
+        have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
+            (fun t' : ℝ => (1/2 : ℂ) + (H_height - (↑t' : ℂ) * (H_height - Real.sqrt 3 / 2)) * I) := by
+          filter_upwards [eventually_lt_nhds h1] with t' ht'
+          simp only [fdBoundaryToPolygonHomotopy, le_of_lt ht', ite_true]
+        -- The derivative is -(H_height - √3/2) * I = -I (since H_height - √3/2 = 1)
+        -- and ‖-I‖ = 1 ≤ 5
+        -- Technical: need HasDerivAt chain rule computation
+        sorry
       · by_cases h2 : t < 2
         · -- Segment 2: t ∈ [1, 2)
           by_cases h1' : t = 1
@@ -2835,13 +2888,34 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
             sorry  -- fdBoundaryToPolygonHomotopy not diff at t=1
           · -- t ∈ (1, 2), use seg2_deriv_bound
             have ht2' : t ∈ Ioo 1 2 := ⟨lt_of_le_of_ne (not_lt.mp h1) (Ne.symm h1'), h2⟩
-            sorry  -- Apply fdBoundaryToPolygonHomotopy_seg2_deriv_bound
+            -- Rewrite to segment 2 formula using EventuallyEq
+            have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
+                (fun t' : ℝ =>
+                  let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+                  let chord_point := chordSegment rho' i_point (t' - 1)
+                  (1 - s) • arc_point + s • chord_point) := by
+              filter_upwards [eventually_gt_nhds ht2'.1, eventually_lt_nhds ht2'.2] with t' ht1' ht2''
+              simp only [fdBoundaryToPolygonHomotopy]
+              simp only [not_le.mpr ht1', ite_false, le_of_lt ht2'', ite_true]
+            rw [heq.deriv_eq]
+            exact fdBoundaryToPolygonHomotopy_seg2_deriv_bound t ht2' s hs
         · by_cases h3 : t < 3
           · -- Segment 3: t ∈ [2, 3)
             by_cases h2' : t = 2
             · exfalso; sorry  -- Not diff at t=2
             · have ht3' : t ∈ Ioo 2 3 := ⟨lt_of_le_of_ne (not_lt.mp h2) (Ne.symm h2'), h3⟩
-              sorry  -- Apply fdBoundaryToPolygonHomotopy_seg3_deriv_bound
+              -- Rewrite to segment 3 formula using EventuallyEq
+              have heq : (fun t' => fdBoundaryToPolygonHomotopy (t', s)) =ᶠ[𝓝 t]
+                  (fun t' : ℝ =>
+                    let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+                    let chord_point := chordSegment i_point rho (t' - 2)
+                    (1 - s) • arc_point + s • chord_point) := by
+                filter_upwards [eventually_gt_nhds ht3'.1, eventually_lt_nhds ht3'.2] with t' ht2'' ht3''
+                simp only [fdBoundaryToPolygonHomotopy]
+                simp only [not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) ht2''), ite_false,
+                           not_le.mpr ht2'', le_of_lt ht3'', ite_true]
+              rw [heq.deriv_eq]
+              exact fdBoundaryToPolygonHomotopy_seg3_deriv_bound t ht3' s hs
           · by_cases h4 : t < 4
             · -- Segment 4: t ∈ [3, 4)
               -- Formula: -1/2 + (√3/2 + (t-3)*(H_height - √3/2)) * I
