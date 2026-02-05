@@ -1628,7 +1628,18 @@ lemma fdPolygonRadialCircle_dist (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.r
   -- fdPolygonRadialCircle p t = p + (fdPolygon t - p) / ‖fdPolygon t - p‖
   -- So fdPolygonRadialCircle p t - p = (fdPolygon t - p) / ‖fdPolygon t - p‖
   -- And ‖(fdPolygon t - p) / ‖fdPolygon t - p‖‖ = 1 (normalized to unit length)
-  sorry -- Technical: norm of normalized vector = 1
+  have hz_ne : fdPolygon t ≠ p := fdPolygon_avoids_interior p hp_norm hp_re hp_im t ht
+  have hdir_ne : fdPolygon t - p ≠ 0 := sub_ne_zero.mpr hz_ne
+  have hnorm_pos : ‖fdPolygon t - p‖ > 0 := norm_pos_iff.mpr hdir_ne
+  -- Unfold definition: at s=1, coeff = 0*‖dir‖ + 1 = 1, so result = p + 1 • (dir/‖dir‖)
+  simp only [fdPolygonRadialCircle, polygonToCircleRadial, sub_self, zero_mul, zero_add, one_smul,
+    add_sub_cancel_left]
+  -- Goal: ‖(fdPolygon t - p) / ↑‖fdPolygon t - p‖‖ = 1
+  rw [norm_div]
+  -- ‖↑r‖ = |r| for r : ℝ → ℂ
+  have h_norm_real : ‖(‖fdPolygon t - p‖ : ℂ)‖ = |‖fdPolygon t - p‖| :=
+    RCLike.norm_ofReal ‖fdPolygon t - p‖
+  rw [h_norm_real, abs_norm, div_self (ne_of_gt hnorm_pos)]
 
 /-- fdPolygonRadialCircle avoids p. -/
 lemma fdPolygonRadialCircle_avoids (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
@@ -1639,21 +1650,102 @@ lemma fdPolygonRadialCircle_avoids (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p
 
 /-! ### Step 2: Radial homotopy micro-lemmas (8 conditions) -/
 
+/-- Helper: fdPolygon t ≠ p for all t ∈ ℝ under interior hypotheses. -/
+lemma fdPolygon_ne_p_everywhere (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im : p.im < H_height) (t : ℝ) : fdPolygon t ≠ p := by
+  -- Case split by segment. Key observations:
+  -- Segments 2,3: on/near unit circle, but ‖p‖ > 1
+  -- Segments 1,4: real part is ±1/2, but |p.re| < 1/2
+  -- Segments 5, t>5: imaginary part is H_height, but p.im < H_height
+  -- t < 0: imaginary part > H_height > p.im
+  intro heq
+  by_cases ht1 : t ≤ 1
+  · -- Segment 1: re = 1/2
+    simp only [fdPolygon, ht1, ↓reduceIte] at heq
+    have hre : p.re = 1/2 := by rw [← heq]; simp [Complex.add_re, Complex.mul_re]
+    linarith [abs_lt.mp hp_re]
+  · push_neg at ht1
+    by_cases ht2 : t ≤ 2
+    · -- Segment 2: on line from rho' to i, inside unit disk
+      simp only [fdPolygon, not_le.mpr ht1, ht2, ↓reduceIte] at heq
+      -- The chord from rho' to i stays inside the closed unit disk
+      -- For t ∈ (1, 2], t - 1 ∈ (0, 1]
+      have ht_range : t - 1 ∈ Icc 0 1 := ⟨by linarith, by linarith⟩
+      have hin_ball : chordSegment rho' i_point (t - 1) ∈ closedBall (0 : ℂ) 1 :=
+        chord_in_closed_unit_ball rho' i_point rho'_norm i_point_norm (t - 1) ht_range
+      rw [mem_closedBall, dist_zero_right] at hin_ball
+      -- Now heq says p = chordSegment..., so ‖p‖ ≤ 1
+      rw [heq] at hin_ball
+      linarith -- ‖p‖ ≤ 1 contradicts hp_norm : ‖p‖ > 1
+    · push_neg at ht2
+      by_cases ht3 : t ≤ 3
+      · -- Segment 3: on line from i to rho, inside unit disk
+        simp only [fdPolygon, not_le.mpr ht1, not_le.mpr ht2, ht3, ↓reduceIte] at heq
+        have ht_range : t - 2 ∈ Icc 0 1 := ⟨by linarith, by linarith⟩
+        have hin_ball : chordSegment i_point rho (t - 2) ∈ closedBall (0 : ℂ) 1 :=
+          chord_in_closed_unit_ball i_point rho i_point_norm rho_norm (t - 2) ht_range
+        rw [mem_closedBall, dist_zero_right] at hin_ball
+        rw [heq] at hin_ball
+        linarith
+      · push_neg at ht3
+        by_cases ht4 : t ≤ 4
+        · -- Segment 4: re = -1/2
+          simp only [fdPolygon, not_le.mpr ht1, not_le.mpr ht2, not_le.mpr ht3, ht4, ↓reduceIte] at heq
+          have hre : p.re = -1/2 := by rw [← heq]; simp [Complex.add_re, Complex.mul_re]
+          have hp_re' : p.re > -1/2 := by linarith [abs_lt.mp hp_re]
+          linarith
+        · -- Segment 5 or beyond: im = H_height
+          push_neg at ht4
+          simp only [fdPolygon, not_le.mpr ht1, not_le.mpr ht2, not_le.mpr ht3,
+            not_le.mpr ht4, ↓reduceIte] at heq
+          have him : p.im = H_height := by rw [← heq]; simp [Complex.add_im, Complex.mul_im]
+          linarith
+
 /-- Condition 1: Radial homotopy is continuous. -/
 lemma polygonToCircleRadial_continuous (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
     (hp_im : p.im < H_height) :
     Continuous (polygonToCircleRadial p) := by
   -- polygonToCircleRadial p (t, s) = p + ((1-s)*‖z-p‖ + s) • (z-p)/‖z-p‖
   -- where z = fdPolygon t
-  -- This is continuous because fdPolygon is continuous and z ≠ p on [0,5]
-  sorry -- Technical: continuity of radial projection (division by nonzero norm)
+  unfold polygonToCircleRadial
+  -- Key: ‖fdPolygon t - p‖ ≠ 0 for all t
+  have hne : ∀ t, fdPolygon t - p ≠ 0 := fun t =>
+    sub_ne_zero.mpr (fdPolygon_ne_p_everywhere p hp_norm hp_re hp_im t)
+  have hnorm_ne : ∀ t, (‖fdPolygon t - p‖ : ℂ) ≠ 0 := fun t =>
+    Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr (hne t))
+  -- Continuity follows from fdPolygon_continuous and arithmetic on nonzero division
+  -- First, establish continuity of key components
+  have h_dir : Continuous (fun (ts : ℝ × ℝ) => fdPolygon ts.1 - p) :=
+    (fdPolygon_continuous.comp continuous_fst).sub continuous_const
+  have h_norm_dir : Continuous (fun (ts : ℝ × ℝ) => ‖fdPolygon ts.1 - p‖) :=
+    continuous_norm.comp h_dir
+  apply Continuous.add continuous_const
+  apply Continuous.smul
+  · -- Coefficient: (1 - s) * ‖z - p‖ + s
+    apply Continuous.add
+    · exact (continuous_const.sub continuous_snd).mul h_norm_dir
+    · exact continuous_snd
+  · -- Direction: (z - p) / ↑‖z - p‖
+    apply Continuous.div h_dir (continuous_ofReal.comp h_norm_dir)
+    intro ⟨t, s⟩; exact hnorm_ne t
 
 /-- Condition 2: At s=0, radial homotopy equals fdPolygon. -/
 lemma polygonToCircleRadial_at_s_zero (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
     (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Icc 0 5) :
     polygonToCircleRadial p (t, 0) = fdPolygon t := by
   -- At s=0: H(t,0) = p + ((1-0)*‖z-p‖ + 0) • (z-p)/‖z-p‖ = p + ‖z-p‖ • (z-p)/‖z-p‖ = p + (z-p) = z
-  sorry -- Technical: radial homotopy at s=0 equals original curve
+  have hz_ne : fdPolygon t ≠ p := fdPolygon_avoids_interior p hp_norm hp_re hp_im t ht
+  have hdir_ne : fdPolygon t - p ≠ 0 := sub_ne_zero.mpr hz_ne
+  have hnorm_pos : ‖fdPolygon t - p‖ > 0 := norm_pos_iff.mpr hdir_ne
+  have hnorm_ne : (‖fdPolygon t - p‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hnorm_pos)
+  simp only [polygonToCircleRadial, sub_zero, one_mul, add_zero]
+  -- Goal: p + ‖fdPolygon t - p‖ • ((fdPolygon t - p) / ↑‖fdPolygon t - p‖) = fdPolygon t
+  -- ‖dir‖ • (dir / ↑‖dir‖) = dir (after converting smul to mul)
+  calc p + ‖fdPolygon t - p‖ • ((fdPolygon t - p) / ↑‖fdPolygon t - p‖)
+      = p + (↑‖fdPolygon t - p‖ : ℂ) * ((fdPolygon t - p) / ↑‖fdPolygon t - p‖) := by
+          simp only [Algebra.smul_def]; rfl
+    _ = p + (fdPolygon t - p) := by rw [mul_div_cancel₀ _ hnorm_ne]
+    _ = fdPolygon t := by ring
 
 /-- Condition 3: At s=1, radial homotopy equals fdPolygonRadialCircle. -/
 lemma polygonToCircleRadial_at_s_one (p : ℂ) (t : ℝ) :
@@ -1760,20 +1852,164 @@ noncomputable def angleHomotopy (p : ℂ) : ℝ × ℝ → ℂ := fun (t, s) =>
   let θ₂ := circleParamCW_angle t
   p + Complex.exp (I * ((1 - s) * θ₁ + s * θ₂))
 
-/-- WRAP COUNT LEMMA: fdPolygon makes exactly one clockwise loop around p.
-    This means the total angle change is -2π.
+/-! #### WRAP COUNT MICRO-LEMMAS: Quadrant analysis at vertices -/
 
-    The angle starts at some θ₀ and ends at θ₀ - 2π after going around once clockwise.
-    This is the core mathematical content - without this, the S¹ homotopy would fail
-    Condition 4 (closedness for all s). -/
+/-- Polygon vertex at t=0: top-right corner (1/2 + H_height·i) -/
+lemma fdPolygon_at_zero : fdPolygon 0 = 1/2 + H_height * I := by
+  simp only [fdPolygon]
+  norm_num
+
+/-- Polygon vertex at t=1: rho' = 1/2 + √3/2·i -/
+lemma fdPolygon_at_one : fdPolygon 1 = rho' := by
+  simp only [fdPolygon, H_height, rho', chordSegment]
+  norm_num
+
+/-- Polygon vertex at t=4: top-left corner (-1/2 + H_height·i) -/
+lemma fdPolygon_at_four : fdPolygon 4 = -1/2 + H_height * I := by
+  simp only [fdPolygon, H_height]
+  norm_num
+
+/-- Direction from p to z0: v0 = fdPolygon 0 - p. Quadrant: re > 0, im > 0 (Q1). -/
+lemma v0_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (fdPolygon 0 - p).re > 0 ∧ (fdPolygon 0 - p).im > 0 := by
+  rw [fdPolygon_at_zero]
+  have hpre : p.re < 1/2 := (abs_lt.mp hp_re).2
+  have hre : (1/2 + H_height * I - p).re = 1/2 - p.re := by simp
+  have him : (1/2 + H_height * I - p).im = H_height - p.im := by simp
+  constructor
+  · rw [hre]; linarith
+  · rw [him]; linarith
+
+/-- Key bound: for interior points with ‖p‖ > 1, |p.re| < 1/2, 0 < p.im, we have p.im > √3/2. -/
+lemma interior_point_im_bound (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) : p.im > Real.sqrt 3 / 2 := by
+  -- Since |p.re| < 1/2, we have p.re² < 1/4
+  have hpre_sq : p.re ^ 2 < 1/4 := by
+    have h := abs_lt.mp hp_re
+    nlinarith [sq_abs p.re]
+  -- Since ‖p‖ > 1, use norm_eq_sqrt_sq_add_sq
+  have hnorm_sq : p.re ^ 2 + p.im ^ 2 > 1 := by
+    rw [Complex.norm_eq_sqrt_sq_add_sq] at hp_norm
+    have h_sum_nonneg : 0 ≤ p.re^2 + p.im^2 := by positivity
+    calc p.re^2 + p.im^2 = (Real.sqrt (p.re^2 + p.im^2))^2 := (Real.sq_sqrt h_sum_nonneg).symm
+      _ > 1^2 := by nlinarith
+      _ = 1 := by ring
+  -- So p.im² > 3/4, and since p.im > 0, we have p.im > √3/2
+  have hp_im_sq : p.im ^ 2 > 3/4 := by linarith
+  have h4 : Real.sqrt 4 = 2 := by
+    rw [show (4 : ℝ) = 2^2 by norm_num, Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 2)]
+  have h3 : Real.sqrt (3/4) = Real.sqrt 3 / 2 := by
+    rw [Real.sqrt_div (by norm_num : (3 : ℝ) ≥ 0), h4]
+  rw [← h3, gt_iff_lt, Real.sqrt_lt' hp_im_pos]
+  linarith
+
+/-- Direction from p to fdPolygon 1 (= rho'). Quadrant: re > 0, im < 0 (Q4). -/
+lemma v1_quadrant (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) :
+    (fdPolygon 1 - p).re > 0 ∧ (fdPolygon 1 - p).im < 0 := by
+  rw [fdPolygon_at_one]
+  have hpre : p.re < 1/2 := (abs_lt.mp hp_re).2
+  have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
+  have hre : (rho' - p).re = 1/2 - p.re := by simp [rho']
+  have him : (rho' - p).im = Real.sqrt 3 / 2 - p.im := by simp [rho']
+  constructor
+  · rw [hre]; linarith
+  · rw [him]; linarith
+
+/-- Polygon vertex at t=3: rho = -1/2 + √3/2·i -/
+lemma fdPolygon_at_three : fdPolygon 3 = rho := by
+  simp only [fdPolygon, chordSegment, i_point, rho]
+  norm_num
+
+/-- Direction from p to fdPolygon 3 (= rho). Quadrant: re < 0, im < 0 (Q3). -/
+lemma v3_quadrant (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) :
+    (fdPolygon 3 - p).re < 0 ∧ (fdPolygon 3 - p).im < 0 := by
+  rw [fdPolygon_at_three]
+  have hpre_neg : -(1/2) < p.re := (abs_lt.mp hp_re).1
+  have hpre : -1/2 < p.re := by linarith
+  have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
+  have hre : (rho - p).re = -1/2 - p.re := by simp [rho]
+  have him : (rho - p).im = Real.sqrt 3 / 2 - p.im := by simp [rho]
+  constructor
+  · rw [hre]; linarith
+  · rw [him]; linarith
+
+/-- Direction from p to fdPolygon 4 (= -1/2 + H_height·i). Quadrant: re < 0, im > 0 (Q2). -/
+lemma v4_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (fdPolygon 4 - p).re < 0 ∧ (fdPolygon 4 - p).im > 0 := by
+  rw [fdPolygon_at_four]
+  have hpre_neg : -(1/2) < p.re := (abs_lt.mp hp_re).1
+  have hpre : -1/2 < p.re := by linarith
+  have hre : (-1/2 + H_height * I - p).re = -1/2 - p.re := by simp
+  have him : (-1/2 + H_height * I - p).im = H_height - p.im := by simp
+  constructor
+  · rw [hre]; linarith
+  · rw [him]; linarith
+
+/-! #### ARG INTERVAL LEMMAS: Quadrant → arg bounds
+
+These use mathlib lemmas:
+- `Complex.arg_nonneg_iff : 0 ≤ z.arg ↔ 0 ≤ z.im`
+- `Complex.arg_neg_iff : z.arg < 0 ↔ z.im < 0`
+- `Complex.arg_lt_pi_div_two_iff : z.arg < π/2 ↔ 0 < z.re ∨ z.im < 0 ∨ z = 0`
+- `Complex.neg_pi_div_two_lt_arg_iff : -π/2 < z.arg ↔ 0 < z.re ∨ 0 ≤ z.im`
+- `Complex.arg_mem_Ioc : z.arg ∈ Ioc (-π) π`
+-/
+
+/-- Q1: re > 0, im > 0 → 0 < arg < π/2 -/
+lemma arg_Q1 (z : ℂ) (hz_re : 0 < z.re) (hz_im : 0 < z.im) :
+    0 < z.arg ∧ z.arg < Real.pi / 2 := by
+  constructor
+  · have h_nonneg : 0 ≤ z.arg := Complex.arg_nonneg_iff.mpr hz_im.le
+    have h_ne : z.arg ≠ 0 := by
+      intro h_eq
+      rw [Complex.arg_eq_zero_iff] at h_eq
+      linarith [h_eq.2]
+    exact lt_of_le_of_ne h_nonneg (Ne.symm h_ne)
+  · rw [Complex.arg_lt_pi_div_two_iff]
+    left; exact hz_re
+
+/-- Q4: re > 0, im < 0 → -π/2 < arg < 0 -/
+lemma arg_Q4 (z : ℂ) (hz_re : 0 < z.re) (hz_im : z.im < 0) :
+    -(Real.pi / 2) < z.arg ∧ z.arg < 0 := by
+  constructor
+  · rw [Complex.neg_pi_div_two_lt_arg_iff]
+    left; exact hz_re
+  · rw [Complex.arg_neg_iff]
+    exact hz_im
+
+/-- Q3: re < 0, im < 0 → -π < arg < 0 -/
+lemma arg_Q3 (z : ℂ) (hz_im : z.im < 0) :
+    -Real.pi < z.arg ∧ z.arg < 0 := by
+  constructor
+  · have h := Complex.arg_mem_Ioc z
+    exact h.1
+  · rw [Complex.arg_neg_iff]
+    exact hz_im
+
+/-- Q2: re < 0, im > 0 → π/2 < arg ≤ π -/
+lemma arg_Q2 (z : ℂ) (hz_re : z.re < 0) (hz_im : 0 < z.im) :
+    Real.pi / 2 < z.arg ∧ z.arg ≤ Real.pi := by
+  constructor
+  · -- arg > π/2 iff re < 0 and im ≥ 0 (negation of arg ≤ π/2)
+    by_contra h
+    push_neg at h
+    rw [Complex.arg_le_pi_div_two_iff] at h
+    cases h with
+    | inl h_re_pos => linarith
+    | inr h_im_neg => linarith
+  · have h := Complex.arg_mem_Ioc z
+    exact h.2
+
 lemma fdPolygonRadialCircle_wrapCount (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     ∃ θ₀ : ℝ, fdPolygonRadialCircle_angle p 0 = θ₀ ∧
               fdPolygonRadialCircle_angle p 5 = θ₀ - 2 * Real.pi := by
   -- The polygon starts and ends at the same point (closed curve)
   -- Going around the FD boundary clockwise means angle decreases by 2π
-  -- This requires analyzing the angle change along each segment
-  sorry -- CORE MATHEMATICAL CONTENT: wrap count analysis
+  -- Use quadrant analysis: Q1 → Q4 → Q3 → Q2 → Q1, crossing -π exactly once
+  sorry -- CORE MATHEMATICAL CONTENT: wrap count analysis using quadrant lemmas
 
 /-- circleParamCW also makes exactly one clockwise loop.
     angle(0) = 2π, angle(5) = 0, so change = -2π. -/
@@ -2088,7 +2324,8 @@ lemma fdBoundaryToPolygonHomotopy_seg3_differentiable (t s : ℝ) :
     Interior points are enclosed once (clockwise) by the fundamental domain boundary.
 -/
 theorem generalizedWindingNumber_fdBoundary_eq_neg_one
-    (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     generalizedWindingNumber' fdBoundary 0 5 p = -1 := by
   -- Setup
   have hab : (0 : ℝ) < 5 := by norm_num
