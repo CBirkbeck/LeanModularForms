@@ -1261,9 +1261,36 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ## Ticket B – PV Infrastructure
 **Owner:** Claude Opus 4.6
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-10 (session 56)
+**Last update:** 2026-02-10 (session 58, commit `b05faca`)
 
-**Status:** CRITICAL PATH COMPLETE (**12 dead-code sorries** - main theorem sorry-free!)
+**Status:** TICKET B CLOSED (**12 dead-code sorries** - main theorem sorry-free, axiom-checked)
+
+### Session 58 Gate Check (2026-02-10, commit `b05faca`)
+
+**GATE PASSED:**
+```
+#print axioms pv_integral_eq_modular_transformation → [propext, Classical.choice, Quot.sound]
+#print axioms pv_integral_decompose_segments       → [propext, Classical.choice, Quot.sound]
+#print axioms arc_contribution_is_k_div_12         → [propext, Classical.choice, Quot.sound]
+#print axioms seg5_integral_eq_cusp_order          → [propext, Classical.choice, Quot.sound]
+```
+Zero `sorryAx`. Zero build errors. Synced to `origin/valence_tests` and "New project" workspace.
+
+**12 dead-code sorries (NOT on critical path, NOT blocking Ticket C):**
+1. Line 1924: `cauchy_on_subseq` — old PV limit approach, unused
+2. Line 1936: `cauchy_on_subseq` — same, second sorry
+3. Line 3759: `singular_annulus_bound` — old approach, unused
+4. Line 4436: `pv_limit_exists` — old Cauchy technique, unused
+5. Line 4442: `pv_limit_exists` — same, second sorry
+6. Line 4740: `cauchy_cutoff_of_linear_approx'` — helper for unused chain
+7. Line 4810: `smooth_crossing_cauchy` — not used by main theorem
+8. Line 4883: `smooth_crossing_cauchy` — same, second sorry
+9. Line 4983: `immersion_crossing_cauchy` — not used by main theorem
+10. Line 5032: `immersion_crossing_cauchy` — same, second sorry
+11. Line 5213: `pv_integral_exists_f'_over_f` — not used by main theorem
+12. Line 6426: `horizontal_contribution_is_cusp` — explicitly dead code
+
+**Ticket B closed.** Proceed to Ticket C.
 
 ### Session 58 Progress (2026-02-10, MAIN THEOREM SORRY-FREE)
 
