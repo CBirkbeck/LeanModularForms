@@ -14,9 +14,58 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 43)
+**Last update:** 2026-02-05 (session 44, all piecewise non-diff sorries filled)
 **Target:** `generalizedWindingNumber' fdBoundary 0 5 p = -1` (CLOCKWISE orientation)
-**Status:** IN-PROGRESS - 14 sorries remaining
+**Status:** IN-PROGRESS - 10 sorries remaining
+
+### Session 44 Progress (2026-02-05, filling all 3 piecewise non-differentiability sorries)
+
+**Major accomplishments:**
+1. **FILLED t=1 right slope convergence** (formerly line 3377)
+   - HasDerivAt for seg2 arc `exp((π/3 + (t-1)*π/6)*I)` at t=1 via chain rule
+   - HasDerivAt for seg2 chord `chordSegment rho' i_point (t-1)` at t=1
+   - Combined derivative: `(1-s)*(π/6)*I*exp(π/3*I) + s*(i_point - rho')`
+   - Simplified to `(1-s)*(-π√3/12 + π/12*I) + s*(-1/2 + (1-√3/2)*I)`
+   - Used `hasDerivAt_iff_tendsto_slope` + `Tendsto.congr'` on `Ioo 1 2`
+   - Contradiction: Re(left slope) = 0, Re(right slope) < 0
+
+2. **FILLED t=3 case** (formerly line 3550)
+   - Mirrored t=1 structure with seg3 (left) and seg4 (right)
+   - Right slope from seg4: constant `(H_height-√3/2)*I = I` (Re = 0)
+   - Left slope from seg3 via HasDerivAt: `(1-s)*(π/6)*I*rho + s*(rho-i_point)`
+   - Simplified: Re of left slope = `(1-s)*(-π√3/12) + s*(-1/2) < 0`
+   - Contradiction: Re(right) = 0 ≠ Re(left) < 0
+
+3. **FILLED t=2 s≠0 case** (formerly line 4534)
+   - Left slope from seg2: `(1-s)*(π/6)*I*I + s*(i_point - rho')`
+   - Right slope from seg3: `(1-s)*(π/6)*I*I + s*(rho - i_point)`
+   - Arc terms identical (both `(π/6)*I*exp(π/2*I)`), chord terms differ
+   - Contradiction: `i_point - rho' = rho - i_point` implies `√3 = 2`, but `√3² = 3 ≠ 4`
+
+**Fresh `rg -n "\\bsorry\\b"` output (10 sorries):**
+```
+2134:  sorry -- Technical: composition of differentiable functions (radial homotopy)
+2144:  sorry -- Technical: continuity of derivative formula (radial homotopy)
+2155:  sorry -- Technical: explicit bound computation (radial homotopy)
+2627:  sorry -- Technical: mod 2π arithmetic (angle homotopy)
+2652:  sorry -- Technical: continuity of angle functions (angle homotopy)
+2666:  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction (angle homotopy)
+2689:  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1 (angle homotopy)
+2746:  sorry -- Technical: differentiability of angle interpolation (angle homotopy)
+2756:  sorry -- Technical: continuity of derivative (angle homotopy)
+2763:  sorry -- Technical: bounded derivative on compact domain (angle homotopy)
+```
+
+**Sorry count: 13 → 10**
+
+**`fdBoundaryToPolygonHomotopy_not_diffAt_134` is now SORRY-FREE!**
+All 3 non-differentiability cases (t=1, t=3, t=4) are fully proven.
+
+**Remaining sorry breakdown:**
+- Radial homotopy (2134, 2144, 2155): 3 sorries - `polygonToCircleRadialHomotopy_spec`
+- Angle homotopy (2627-2763): 7 sorries - `circleToConstantAngleHomotopy_spec`
+
+---
 
 ### Session 43 Progress (2026-02-05, fixing fdBoundaryToPolygonHomotopy_not_diffAt_134)
 
@@ -38,7 +87,65 @@ Each AI must update this file when returning results.
 4129:                  sorry  -- Technical: showing left/right derivatives differ for s≠0
 ```
 
-**Task 1.1:** Adding `hs : s ∈ Icc 0 1` hypothesis to `fdBoundaryToPolygonHomotopy_not_diffAt_134` - the "s ≈ 9" contradiction requires `s ∈ [0,1]` to derive a contradiction.
+**Task 1.1 (COMPLETE):** Added `hs : s ∈ Icc 0 1` hypothesis to `fdBoundaryToPolygonHomotopy_not_diffAt_134` and updated all 3 call sites.
+
+**Task 1.2 (COMPLETE):** Filled the "s ≈ 9" arithmetic proof at t=1 (formerly line 3370):
+- Showed LHS Re = 0 using `H_height - √3/2 = 1` and `Re(-I) = 0`
+- Showed RHS Re = `(1-s)*(-π√3/12) + s*(-1/2) < 0` for s ∈ [0,1]
+- Used `mul_pos hpi hsqrt3_pos` to provide `π*√3 > 0` to nlinarith
+- Key lemmas: `neg_one_mul`, `neg_zero`, `Complex.I_re`
+
+**Updated `rg -n "\\bsorry\\b"` output (13 sorries):**
+```
+2134:  sorry -- Technical: composition of differentiable functions
+2144:  sorry -- Technical: continuity of derivative formula
+2155:  sorry -- Technical: explicit bound computation
+2627:  sorry -- Technical: mod 2π arithmetic
+2652:  sorry -- Technical: continuity of angle functions
+2666:  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction vector
+2689:  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1
+2746:  sorry -- Technical: differentiability of angle interpolation
+2756:  sorry -- Technical: continuity of derivative
+2763:  sorry -- Technical: bounded derivative on compact domain
+3375:      sorry -- Technical: need hasDerivAt for exp and combine with chord contribution
+3432:    sorry -- Technical: slope computation showing left ≠ right at t=3
+4184:                  sorry  -- Technical: showing left/right derivatives differ for s≠0
+```
+
+**Sorry count: 14 → 13**
+
+**Partial progress on h_right_val (line 3382):**
+- `h_at_one : fdBoundaryToPolygonHomotopy (1, s) = rho'` ✓ PROVEN
+  - Uses `H_height - 1*(H_height - √3/2) = √3/2` and `1/2 + (√3/2)*I = rho'`
+  - Key lemmas: `Complex.exp_mul_I`, `Real.cos_pi_div_three`, `Real.sin_pi_div_three`
+- `h_chord_slope : ∀ t' ∈ Ioo 1 2, (chord(t') - rho')/(t'-1) = i_point - rho'` ✓ PROVEN
+  - Uses `chordSegment` definition and `field_simp`, `push_cast`, `ring`
+- `h_chord_val : i_point - rho' = -1/2 + (1 - √3/2)*I` ✓ PROVEN
+  - Uses `simp only [i_point, rho']` then `ring`
+- **Remaining:** arc slope convergence to derivative (π/6)*I*exp(π/3*I)
+  - Need `HasDerivAt` for `exp((π/3 + u*π/6)*I)` at u=0
+
+**Corrected `rg -n "\\bsorry\\b"` output (13 sorries, after h_at_one fix):**
+```
+2134:  sorry -- Technical: composition of differentiable functions (radial homotopy)
+2144:  sorry -- Technical: continuity of derivative formula (radial homotopy)
+2155:  sorry -- Technical: explicit bound computation (radial homotopy)
+2627:  sorry -- Technical: mod 2π arithmetic (angle homotopy)
+2652:  sorry -- Technical: continuity of angle functions (angle homotopy)
+2666:  sorry -- Technical: need to show exp(I * lifted_angle) = normalized direction (angle homotopy)
+2689:  sorry -- TODO: Direct computation showing winding(H(·, 1)) = -1 (angle homotopy)
+2746:  sorry -- Technical: differentiability of angle interpolation (angle homotopy)
+2756:  sorry -- Technical: continuity of derivative (angle homotopy)
+2763:  sorry -- Technical: bounded derivative on compact domain (angle homotopy)
+3377:      sorry -- Technical: arc slope convergence requires HasDerivAt composition
+3434:    sorry -- Technical: slope computation showing left ≠ right at t=3
+4186:                  sorry  -- Technical: showing left/right derivatives differ for s≠0
+```
+
+**Remaining in `fdBoundaryToPolygonHomotopy_not_diffAt_134`:**
+- Line 3377: h_right_val tendsto (arc slope convergence) - PARTIAL (3 helpers proven)
+- Line 3434: t=3 case (similar structure to t=1)
+- Line 4186: t=2 s≠0 non-differentiability
 
 ---
 
@@ -1152,11 +1259,471 @@ angle θ(t) = arg(fdPolygon t - p) changes by exactly 2π as t goes from 0 to 5.
 ---
 
 ## Ticket B – PV Infrastructure
-**Owner:** Claude Opus 4.5
+**Owner:** Claude Opus 4.6
 **Target file:** `ValenceFormula_PV.lean`
-**Last update:** 2026-02-05 (session 44)
+**Last update:** 2026-02-10 (session 56)
 
-**Status:** IN-PROGRESS (**36 sorries** - LOCALIZED sets, hProper removed)
+**Status:** CRITICAL PATH COMPLETE (**12 dead-code sorries** - main theorem sorry-free!)
+
+### Session 58 Progress (2026-02-10, MAIN THEOREM SORRY-FREE)
+
+**MILESTONE: `pv_integral_eq_modular_transformation` is now COMPLETELY SORRY-FREE!**
+
+**COMPLETED:**
+
+1. **`logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv` — NOW SORRY-FREE**
+   - Fixed coercion mismatch: `periodic_comp_ofComplex (1:ℕ)` gives `↑(1:ℕ)` not `(1:ℝ)`
+   - Solution: `simp only [modularFormCompOfComplex, ...]` + `convert this.symm using 2; norm_cast`
+   - Fixed `set_option` parse error: docstring `/-- -/` expects declaration immediately after, not `set_option ... in`
+   - Derivative of qParam: `ext w; simp [Function.Periodic.qParam, div_one]` + `HasDerivAt.cexp.deriv`
+
+2. **`seg5_integral_eq_circleIntegral` — NOW SORRY-FREE** (from subagent a5fca77)
+   - Change of variables `θ = 2π(t - 9/2)`: `[4,5] → [-π,π]`
+   - Periodicity shift: `∫ in -π..π = ∫ in 0..2π` via `Function.Periodic.intervalIntegral_add_eq`
+   - Chain: `h_integrand → qParam_seg5_eq_circleMap → substitution → periodicity → rfl`
+
+3. **`cuspFunction_factored` and `qExpFMS_order_eq` — NOW SORRY-FREE** (from subagent a85f3d3)
+   - `qExpFMS_order_eq`: `‖p n‖ = ‖ps.coeff n‖` via `qExpansionFormalMultilinearSeries_apply_norm`
+   - Then `p n = 0 ↔ ps.coeff n = 0`, so `p.order = ps.order.toNat`
+   - `cuspFunction_factored`: `iterate_dslope` + identity theorem for global extension
+
+4. **New sorry-free helper lemmas:**
+   - `im_fdBoundary_seg5_pos`: imaginary part of seg5 is H_height > 0
+   - `qParam_seg5_eq_circleMap`: qParam along seg5 = circleMap with radius exp(-2πH)
+
+**SORRY COUNT:** 12 actual sorry statements (all DEAD CODE)
+- `cauchy_on_subseq` (2 sorries): old PV limit approach, unused
+- `singular_annulus_bound` (1 sorry): old approach, unused
+- `pv_limit_exists` (2 sorries): old Cauchy technique, unused
+- `near_part_cauchy` (1 sorry): old near-part analysis, unused
+- `smooth_crossing_cauchy` (2 sorries): unused by main theorem
+- `immersion_crossing_cauchy` (2 sorries): unused by main theorem
+- `pv_integral_exists_f'_over_f` (1 sorry): unused by main theorem
+- `horizontal_contribution_is_cusp` (1 sorry): explicitly dead code
+
+**CRITICAL PATH STATUS (ALL GREEN):**
+```
+pv_integral_eq_modular_transformation    ✅ SORRY-FREE
+├── pv_integral_decompose_segments       ✅ SORRY-FREE
+├── pv_integral_vertical_cancel          ✅ SORRY-FREE
+├── nonvanishing_on_seg2_of_integrable   ✅ SORRY-FREE
+├── nonvanishing_on_seg3_of_integrable   ✅ SORRY-FREE
+├── arc_contribution_is_k_div_12         ✅ SORRY-FREE
+└── seg5_integral_eq_cusp_order          ✅ SORRY-FREE
+    └── seg5_logDeriv_integral_eq        ✅ SORRY-FREE
+        ├── seg5_integral_eq_circleIntegral            ✅ (session 58)
+        │   └── logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv  ✅ (session 58)
+        └── circleIntegral_logDeriv_cuspFunction       ✅ SORRY-FREE
+            └── cuspFunction_factored                  ✅ (session 58)
+                └── qExpFMS_order_eq                   ✅ (session 58)
+```
+
+**TICKET B IS COMPLETE.** Ready for Ticket C (Core assembly).
+
+---
+
+### Session 50 Progress (2026-02-09, sign correction + architectural analysis)
+
+**COMPLETED:**
+
+1. **SIGN CORRECTION throughout PV and ModularSide files**
+   - Fixed `arc_contribution_is_k_div_12`: `= 2πik/12` → `= -(2πik/12)` (line 5846)
+   - Fixed `pv_integral_eq_modular_transformation`: `= 2πi(k/12 - ord_∞)` → `= -(2πi(k/12 - ord_∞))` (line 5938)
+   - Fixed proof body of main theorem (ring still closes)
+   - Fixed `ValenceFormula_ModularSide.lean`:
+     - `s_transformation_contribution`: `= k/12` → `= -(k/12)`
+     - `cusp_contribution`: `= -(ord_∞')` → `= ord_∞'` (positive!)
+     - `modular_side_equals_pv_integral`: `= k/12 - ord_∞'` → `= ord_∞' - k/12`
+     - `modular_side_mult_form`: `= 2πi(k/12 - ord_∞')` → `= -(2πi(k/12 - ord_∞'))`
+   - Updated all docstrings with correct derivation: `2I = -J` (not `+J`)
+   - **All files compile cleanly** (only expected sorry warnings)
+
+2. **Mathematical verification of sign fix:**
+   - S-transformation: `f(Sz) = z^k f(z)` → `logDeriv(f)(z) = logDeriv(f)(Sz)·S'(z) - k/z`
+   - Arc integral: `I = -I - J` where `J = k·iπ/3`, so `I = -kiπ/6 = -(2πik/12)`
+   - Contour is CW: ∮_CW f'/f = -(2πi·(k/12 - ord_∞))
+   - Consistency check: equating with residue side gives standard valence formula ✓
+   - Verified with E₄ (k=4), E₆ (k=6), Δ₁₂ (k=12) — all consistent
+
+3. **Dead code analysis: 11 of 13 sorries are DEAD CODE**
+   - `singular_annulus_bound` (3757): only used by unused `pv_step_bound_ratio_two`
+   - `pv_limit_exists` (4434, 4440): only used by unused `cauchy_integral_difference_bound`
+   - `immersion_crossing_cauchy` chain (1922, 1934, 4738, 4808, 4881, 4981, 5030, 5211): unused
+   - **Only 2 sorries on critical path:** `arc_contribution_is_k_div_12` + `h_seg5_placeholder`
+
+**REMAINING BLOCKERS (session 50):**
+
+- `arc_contribution_is_k_div_12` (line 5868): Statement now CORRECT but proof requires
+  formalizing the S-transformation argument (modular form identity + chain rule for logDeriv
+  + change of variables). This is ~50-100 lines of deep formalization.
+- `h_seg5_placeholder` (line 5990): Requires `orderAtCusp` implementation or proof that
+  f has no zeros at height H_height (which holds for level 1 forms but isn't formalized).
+
+**SORRY COUNT (session 50):** 13
+
+---
+
+### Session 51 Progress (2026-02-05, arc_integral_split_one_seg proved)
+
+**COMPLETED:**
+
+1. **`arc_integral_split_one_seg` is now SORRY-FREE**
+   - Added 3 hypotheses: `hg_ne` (nonvanishing), `hI₁` (S-integrand integrability), `hI₂` (1/z integrability)
+   - Chain rule: `deriv(-1/γ)(t) = γ'(t)/γ(t)²` via `hasDerivAt_inv.scomp`
+   - Pointwise identity via `integrand_S_identity` (from session 50)
+   - Splitting via `intervalIntegral.integral_sub` + `integral_const_mul`
+   - Full proof is ~20 lines, no sorry
+
+2. **Caller `arc_logDeriv_modform_split` updated:**
+   - 2 hg_ne sorries: "nonvanishing of f on arc segment" (standard generic position)
+   - 2 hI₁ sorries: "S-composed integrand integrability" (follows from hg_ne + holomorphicity)
+   - 2 hI₂ conditions PROVED: the 1/z integrand is constant `(π/6)*I` → `continuous_const.intervalIntegrable`
+
+3. **New sorry-free helper lemmas (from session 50 subagent):**
+   - `modform_comp_ofComplex_S_identity`: f(-1/z) = z^k · f(z) on ℂ
+   - `logDeriv_congr_of_eventuallyEq`: logDeriv respects EventuallyEq
+   - `logDeriv_modform_S_transform`: pointwise logDeriv identity
+   - `integrand_S_identity`: integrand version of S-identity
+   - `arc_logDeriv_modform_split`: arc integral decomposition (uses sorry'd base)
+
+**REMAINING BLOCKERS:**
+
+- 4 sorries in `arc_logDeriv_modform_split` (lines 6147-6159):
+  - 2× hg_ne: nonvanishing of f on arc (standard assumption, could be added as hypothesis)
+  - 2× hI₁: integrability (follows from hg_ne + holomorphicity of modular forms)
+- 1 sorry: `h_seg5_placeholder` (line 6430): cusp contribution (requires q-expansion theory)
+
+**SORRY COUNT:** 16 total (11 dead code + 4 arc-caller + 1 cusp placeholder)
+
+---
+
+### Session 53 Progress (2026-02-10, seg5 micro-lemmas + orderAtCusp fix)
+
+**COMPLETED:**
+
+1. **Step 0: Pushed hg_ne back down from pv_integral_eq_modular_transformation**
+   - Removed `h_arc_seg2_gne` / `h_arc_seg3_gne` from (d)'s signature
+   - Made them local `have` statements with sorry inside (d)'s proof body
+   - (d) now has original signature: only `hint` hypothesis
+
+2. **Fixed `orderAtCusp` to use proper q-expansion**
+   - Changed from placeholder `0` to `(ModularFormClass.qExpansion 1 f).order.toNat`
+   - Uses Mathlib's `ModularFormClass.qExpansion` (imported via QExpansion)
+   - Updated main theorem body: now uses `seg5_integral_eq_cusp_order` instead of placeholder
+
+3. **Implemented C1-C7 micro-lemmas for seg5**
+   - **C1 `deriv_fdBoundary_seg5_eq_one`**: deriv z(t) = 1 — SORRY-FREE
+   - **C2 `q_modulus_on_seg5`**: ‖q(t)‖ = exp(-2πH) — SORRY-FREE
+     - Used `I_sq` + `linear_combination` for I²=-1 in push_cast
+   - **C3 `qexp_factor_at_cusp`**: f(τ) = Σ aₙ qⁿ via hasSum_qExpansion — SORRY-FREE
+   - **C4 `logDeriv_seg5_remainder_integral_zero`**: ∫ remainder = 0 — **SORRY**
+     (winding number of u on small q-circle; needs argument principle / Rouché)
+   - **C5 `seg5_ord_part_integral_exact`**: ∫ 2πi·m dt = 2πi·m — SORRY-FREE
+   - **C7 `seg5_integral_eq_cusp_order`**: seg5 = 2πi·orderAtCusp(f) — **SORRY**
+     (depends on C4; proof outline uses C1+C4+C5)
+
+4. **Main theorem restructured**
+   - Steps: decompose → vertical cancel → arc contribution → seg5 contribution
+   - `rw [seg5_integral_eq_cusp_order f]; ring` closes the goal
+
+**SORRY COUNT:** 15 actual sorry statements
+- 11 dead code sorries (unchanged)
+- 2 hg_ne local sorries (inside pv_integral_eq_modular_transformation, NOT in signature)
+- 1 C4 sorry (remainder integral vanishes — winding number argument)
+- 1 C7 sorry (seg5 = 2πi·m — depends on C4)
+
+**CRITICAL PATH STATUS:**
+```
+arc_contribution_is_k_div_12        ✅ SORRY-FREE (hypotheses on callers)
+seg5_integral_eq_cusp_order         ❌ SORRY (C7, depends on winding number argument)
+logDeriv_seg5_remainder_integral_zero ❌ SORRY (C4, key analytic step)
+hg_ne (local, 2×)                   ❌ SORRY (integrability → nonvanishing)
+pv_integral_eq_modular_transformation ⚠️  3 independent sorry chains
+```
+
+**KEY SIGNATURES (verified clean):**
+- (a) `arc_logDeriv_modform_split (h_arc_seg2_gne) (h_arc_seg3_gne)` — 2 hyps
+- (b) `arc_integral_S_symmetry (h_arc_seg2_gne) (h_arc_seg3_gne)` — 2 hyps
+- (c) `arc_contribution_is_k_div_12 (h_arc_seg2_gne) (h_arc_seg3_gne)` — 2 hyps
+- (d) `pv_integral_eq_modular_transformation (hint)` — 1 hyp (original strength)
+
+**NEXT STEPS:**
+1. Prove C4 (`logDeriv_seg5_remainder_integral_zero`): needs argument principle for
+   holomorphic function u with u(0)≠0 on small circle |q|=exp(-2πH)
+2. Then C7 follows mechanically from C4 + C5
+3. Prove hg_ne: integrability of logDeriv implies nonvanishing
+   (needs: zero → simple pole → non-integrable singularity)
+4. All 3 sorries are genuine analytic facts needing complex analysis infrastructure
+
+---
+
+### Session 54 Progress (2026-02-10, C7 sorry-free + arc im_pos lemmas)
+
+**COMPLETED:**
+
+1. **C7 `seg5_integral_eq_cusp_order` — NOW SORRY-FREE**
+   - Replaced C4 with `seg5_logDeriv_integral_eq` (direct integral value, still sorry)
+   - C7 now unfolds `pv_integral`, uses `deriv_fdBoundary_seg5_eq_one` (C1), then delegates to C4
+   - Clean 3-line proof: `unfold pv_integral; simp_rw [deriv_fdBoundary_seg5_eq_one, mul_one]; exact seg5_logDeriv_integral_eq f`
+
+2. **Arc imaginary part lemmas — SORRY-FREE**
+   - `fdBoundary_seg2_im_pos`: im(seg2(t)) > 0 for t ∈ [1,2] (sin on [π/3,π/2] > 0)
+   - `fdBoundary_seg3_im_pos`: im(seg3(t)) > 0 for t ∈ [2,3] (sin on [π/2,2π/3] > 0)
+   - Used `Complex.exp_ofReal_mul_I_im` + `Real.sin_pos_of_pos_of_lt_pi` + `nlinarith`
+   - These are building blocks for the hg_ne proof
+
+3. **Improved hg_ne documentation**
+   - Added detailed proof strategy comments referencing:
+     - `fdBoundary_seg2_im_pos` / `fdBoundary_seg3_im_pos`
+     - `hasSimplePoleAt_logDeriv_of_zero`
+     - `not_intervalIntegrable_of_sub_inv_isBigO_punctured`
+     - `fdBoundary_eq_seg2_on` / `fdBoundary_eq_seg3_on`
+
+**SORRY COUNT:** 14 actual sorry statements (down from 15)
+- 11 infrastructure sorries (not on critical path)
+- 1 C4 sorry (`seg5_logDeriv_integral_eq` — cusp integral via argument principle)
+- 2 hg_ne local sorries (integrability → nonvanishing)
+
+**CRITICAL PATH STATUS:**
+```
+arc_contribution_is_k_div_12        ✅ SORRY-FREE
+seg5_integral_eq_cusp_order (C7)    ✅ SORRY-FREE (delegates to C4)
+seg5_logDeriv_integral_eq (C4)      ❌ SORRY (cusp integral = 2πi·m)
+hg_ne (local, 2×)                   ❌ SORRY (integrability → nonvanishing)
+pv_integral_eq_modular_transformation ⚠️  3 independent sorry chains
+```
+
+**KEY INSIGHT:** Only 3 sorries on the critical path from the main theorem
+`pv_integral_eq_modular_transformation`. All 11 infrastructure sorries
+(pv_limit_exists, smooth_crossing_cauchy, etc.) are NOT on this critical path.
+
+**NEXT STEPS:**
+1. C4 (`seg5_logDeriv_integral_eq`): needs argument principle (Mathlib gap)
+2. hg_ne: needs Big-O composition proof (pole → non-integrability)
+3. Both are deep analytic facts; architecture is fully connected
+
+---
+
+### Session 55-56 Progress (2026-02-10, isBigO_sub_inv_logDeriv_arc SORRY-FREE + hg_ne chain complete)
+
+**COMPLETED:**
+
+1. **`isBigO_sub_inv_logDeriv_arc` — NOW SORRY-FREE** (was ~250 lines of comment block + sorry)
+   - Full proof: steps 1-6 covering slope limit, nonzero punctured neighborhood,
+     formula pullback, reciprocal limit, product limit, Big-O extraction
+   - Key techniques: `Tendsto.inv₀` for 0/0 limits, `Tendsto.congr'` for eventual equality,
+     `Complex.real_smul` for smul→mul, `Ioi_mem_nhds` for norm bound neighborhoods
+   - Added `hγ_deriv_cont : ContinuousAt (deriv γ) t₀` and `hg_ne : g_reg z₀ ≠ 0` to signature
+
+2. **Both callers updated and SORRY-FREE:**
+   - `nonvanishing_on_seg2_of_integrable`: added `ContDiff ℝ ⊤ fdBoundary_seg2` for derivative continuity
+   - `nonvanishing_on_seg3_of_integrable`: same pattern for seg3
+   - Both pass `hg_ne_zero` from `hasSimplePoleAt_logDeriv_of_zero` obtain pattern
+
+3. **Main theorem `pv_integral_eq_modular_transformation` — hg_ne chain now fully resolved:**
+   - `nonvanishing_on_seg2_of_integrable` → `isBigO_sub_inv_logDeriv_arc` → `not_intervalIntegrable_of_sub_inv_isBigO_punctured` — ALL sorry-free
+   - No more "local hg_ne sorries" in the main theorem
+   - Only remaining sorry on critical path: `seg5_logDeriv_integral_eq` (line 6507)
+
+**SORRY COUNT:** 13 actual sorry statements (down from 14)
+- 12 dead code sorries (not on critical path, in unused lemmas)
+- 1 critical-path sorry: `seg5_logDeriv_integral_eq` (cusp integral = 2πi·m)
+
+**CRITICAL PATH STATUS:**
+```
+pv_integral_eq_modular_transformation    ⚠️  1 sorry chain remaining
+├── pv_integral_decompose_segments       ✅ SORRY-FREE
+├── pv_integral_vertical_cancel          ✅ SORRY-FREE
+├── nonvanishing_on_seg2_of_integrable   ✅ SORRY-FREE (session 55-56)
+│   └── isBigO_sub_inv_logDeriv_arc     ✅ SORRY-FREE (session 55-56)
+├── nonvanishing_on_seg3_of_integrable   ✅ SORRY-FREE (session 55-56)
+│   └── isBigO_sub_inv_logDeriv_arc     ✅ SORRY-FREE (session 55-56)
+├── arc_contribution_is_k_div_12         ✅ SORRY-FREE (session 52)
+└── seg5_integral_eq_cusp_order          ✅ SORRY-FREE (delegates to C4)
+    └── seg5_logDeriv_integral_eq (C4)   ❌ SORRY (cusp integral via q-expansion)
+```
+
+**NEXT STEPS:**
+1. `seg5_logDeriv_integral_eq`: Needs q-expansion logDeriv decomposition + argument principle for winding number of u(q) on small circle. This is the LAST critical-path sorry.
+
+---
+
+### Session 52 Progress (2026-02-10, arc_contribution_is_k_div_12 SORRY-FREE)
+
+**COMPLETED:**
+
+1. **`h_deriv_eq2` and `h_deriv_eq3` — compilation errors fixed**
+   - `simp [smul_eq_mul]` left unsolved goal: `π/6 * I * seg(t) * (seg(t)^2)⁻¹ = π/6 * I / seg(t)`
+   - Fix: append `have hne := h_seg*_ne t; field_simp` after `simp [smul_eq_mul]`
+
+2. **`h_seg2_I1` and `h_seg3_I1` integrability — SORRY-FREE**
+   - Strategy: `ContinuousOn.intervalIntegrable` + pointwise `ContinuousAt`
+   - logDeriv g is `ContinuousAt` via `analyticAt_logDeriv_off_zeros` (Mathlib)
+   - S∘seg is `ContinuousAt` via `ContinuousAt.div₀`
+   - Derivative term: `ContinuousAt.div₀ ... .continuousWithinAt |>.congr`
+   - Key: `ContinuousAt.comp (f := inner_fn)` (f is INNER function in Mathlib convention)
+
+3. **Nonvanishing hypotheses added to chain**
+   - `h_seg2_gne` / `h_seg3_gne` sorries → hypotheses on `arc_logDeriv_modform_split`
+   - Propagated to: `arc_integral_S_symmetry`, `arc_contribution_is_k_div_12`, `pv_integral_eq_modular_transformation`
+   - Standard "generic position" assumption: f has no zeros on ∂𝒟 arc
+
+4. **`arc_logDeriv_modform_split` — SORRY-FREE** (modulo hypotheses)
+5. **`arc_integral_S_symmetry` — SORRY-FREE**
+6. **`arc_contribution_is_k_div_12` — SORRY-FREE**
+
+**SORRY COUNT:** 12 actual sorry statements (down from 14)
+- 11 dead code sorries (unchanged)
+- 1 active blocker: `h_seg5_placeholder` (cusp contribution, line 6535)
+
+**CRITICAL PATH STATUS:**
+```
+arc_contribution_is_k_div_12  ✅ SORRY-FREE (with nonvanishing hypotheses)
+h_seg5_placeholder            ❌ SORRY (cusp = 0 placeholder, needs q-expansion)
+pv_integral_eq_modular_transformation  ⚠️  Only blocked by h_seg5_placeholder
+```
+
+**NEXT STEPS:**
+1. Address `h_seg5_placeholder` (requires q-expansion theory or additional hypothesis)
+2. Consider adding no-zeros hypothesis for cusp: `∀ x ∈ Icc (-1/2) (1/2), modularFormCompOfComplex f (x + H_height * I) ≠ 0`
+3. Clean up unused simp args warnings (lines 6156, 6165)
+
+---
+
+### Session 49 Progress (2026-02-09, Phase I complete + sign analysis)
+
+**COMPLETED:**
+
+1. **Phase I: 5 integrability sorries CLEARED** (lines 5427-5436)
+   - Added `IntervalIntegrable` hypothesis to `pv_integral_decompose_segments` and `pv_integral_eq_modular_transformation`
+   - Replaced 5 sorries with `hint.mono_set (Set.uIcc_subset_uIcc ...)` — clean, ≤3 lines each
+   - Used `Set.mem_uIcc_of_le` for membership proofs + `norm_num`
+
+**BLOCKED:**
+
+2. **Phase II: `arc_contribution_is_k_div_12` — SIGN ISSUE DISCOVERED**
+   - Exhaustive mathematical analysis via S-transformation: `f(Sz) = z^k f(z)` gives
+     `logDeriv f(z) = logDeriv f(Sz)·S'(z) - k/z`
+   - Change of variables `w = S(z)` reverses the arc: `∫ logDeriv(Sz)·S'(z) dz = -J`
+   - Result: `2J = -k·iπ/3`, so `J = -k·iπ/6 = -2πi·k/12` (NEGATIVE)
+   - But theorem claims `J = +2πi·k/12` (POSITIVE)
+   - **The contour is CLOCKWISE** (seg1 DOWN, seg2+3 LEFT, seg4 UP, seg5 RIGHT)
+   - Verified by tracing: (1/2,H)→ρ'→i→ρ→(-1/2,H)→(1/2,H) = DOWN-LEFT-UP-RIGHT = CW
+   - Ticket A's `generalizedWindingNumber_fdBoundary_eq_one` (sorry'd) claims winding=+1,
+     but CW contour should give winding=-1
+   - **Correct main theorem should be:**
+     `pv_integral f fdBoundary 0 5 = -2πi·(k/12 - ord_∞)`
+   - Verified consistency: `-k·iπ/6 + 2πi·ord_∞ = -2πi·(Σ + ½ord_i + ⅓ord_ρ)` gives valence formula ✓
+   - **ACTION NEEDED:** Fix sign in `arc_contribution_is_k_div_12` and `pv_integral_eq_modular_transformation`
+
+3. **Phase III: `h_seg5_placeholder` — MISSING HYPOTHESIS**
+   - Statement `pv_integral f fdBoundary_seg5 4 5 = 0` requires f has no zeros at height H_height
+   - By T-periodicity: `∫ logDeriv f dx = [log f]₀¹ = 2πi·n` (winding number)
+   - For ord_∞ = 0, winding = 0 iff f(x+Hi) ≠ 0 for all x ∈ [0,1]
+   - This holds for H large enough, but code uses fixed `H_height` without hypothesis
+   - **ACTION NEEDED:** Add hypothesis `∀ x ∈ Icc (-1/2) (1/2), modularFormCompOfComplex f (x + H_height * I) ≠ 0`
+
+**SORRY COUNT:** 13 actual non-comment sorry statements (down from 18)
+- 5 integrability sorries eliminated
+- 11 dead code sorries remain (unchanged)
+- 2 active blockers remain: `arc_contribution_is_k_div_12` + `h_seg5_placeholder`
+
+**NEXT STEPS (requires coordinator decision):**
+1. Fix signs in `arc_contribution_is_k_div_12` and `pv_integral_eq_modular_transformation`
+2. Add no-zeros hypothesis for `h_seg5_placeholder`
+3. Coordinate with Ticket A on winding number sign (CW → -1, not +1)
+
+---
+
+### Session 47-48 Progress (2026-02-05, singular_annulus_bound_explicit + arc computation sorries filled)
+
+**COMPLETED:**
+
+1. **`singular_annulus_bound_explicit` — SORRY-FREE** (session 47)
+   - Fixed 6 compilation errors in `h_diff_bound` proof block (lines 3200-3601)
+   - Fixed `isOpen_preimage`/`isClosed_preimage` → `measurableSet_Ioi`/`measurableSet_Iic`
+   - Fixed `intervalIntegrable_iff` uIoc rewrite via `Set.uIoc_of_le hab.le`
+   - Fixed `inv_ne_zero` proof and `if_neg` predicate mismatch
+   - Filled 95-line proof for `‖∫ d'‖ ≤ Csing * ε₁`:
+     - symmDiff triangle inequality + ae-equality + norm_integral_le_of_norm_le
+     - setIntegral_indicator + measureReal_mono + ENNReal.toReal_le_of_le_ofReal
+     - field_simp + nlinarith for arithmetic closure
+
+2. **`pv_step_bound_ratio_two_uniform` — VERIFIED SORRY-FREE** (session 48)
+   - Was already complete from session 46; verified no sorry remains
+
+3. **Arc computation sorries — ALL 5 FILLED** (session 48)
+   - `norm_fdBoundary_seg2_eq_one`: `push_cast; ring` + `Complex.norm_exp_ofReal_mul_I`
+   - `norm_fdBoundary_seg3_eq_one`: Same pattern
+   - `deriv_fdBoundary_seg2_arc_eq`: Chain rule via `HasDerivAt.ofReal_comp.mul_const.cexp`
+   - `deriv_fdBoundary_seg3_arc_eq`: Same pattern
+   - `arc_integral_one_over_z`: `z⁻¹ * (π/6)Iz = (π/6)I` + constant integral + arithmetic
+
+**SORRY-FREE CHAIN NOW COMPLETE:**
+```
+annulus_symmDiff_measure_bound → singular_annulus_bound_explicit
+  → pv_step_bound_ratio_two_uniform → pv_limit_via_dyadic
+```
+Plus: `pv_integral_vertical_cancel`, all arc norms/derivs, `arc_integral_one_over_z`
+
+**SORRY COUNT:** 18 actual sorry statements (down from 28)
+
+**REMAINING SORRIES (18 total, only 7 block main theorem):**
+
+**ACTIVE (block `pv_integral_eq_modular_transformation`):**
+- Lines 5426-5434: 5 integrability sorries for `pv_integral_decompose_segments`
+- Line 5856: `arc_contribution_is_k_div_12` (deep: S-transformation law)
+- Line 5976: `h_seg5_placeholder` (cusp contribution, placeholder)
+
+**DEAD CODE (not in any active call chain — 11 sorries):**
+- Lines 1922, 1934: `cauchy_on_subseq` (never called)
+- Line 3757: `singular_annulus_bound` (superseded, only used by unused `pv_step_bound_ratio_two`)
+- Lines 4434, 4440: `pv_limit_exists` (only used by unused `cauchy_integral_difference_bound`)
+- Line 4738: `near_part_cauchy_detailed` (only used by unused `immersion_crossing_cauchy`)
+- Line 4808: `Measurable γ.toFun` (only in unused `smooth_crossing_cauchy`)
+- Line 4881: boundary partition continuity (only in unused helper)
+- Lines 4981, 5030: `immersion_crossing_cauchy` smooth/corner cases (unused)
+- Line 5211: `pv_integral_exists_f'_over_f` (never called by main theorem)
+
+**NEXT STEPS:**
+1. Fill 5 integrability sorries (require logDeriv∘γ integrability, likely needs ContinuousOn)
+2. Work on `arc_contribution_is_k_div_12` (S-transformation + modular form identity)
+3. `h_seg5_placeholder` needs cusp contribution theory (q-expansion)
+
+---
+
+### Session 45-46 Progress (2026-02-05, pv_limit_via_dyadic refactored, 3 sorries eliminated)
+
+**Context:** annulus_symmDiff_measure_bound completed in session 45. Session 46 refactored pv_limit_via_dyadic.
+
+**COMPLETED:**
+
+1. **`annulus_symmDiff_measure_bound` (lines 2630-2871) — SORRY-FREE** (session 45)
+   - Key structural lemma for the entire PV argument
+   - Uses localized sets with `t ∈ Set.Icc a b ∧ |t - t₀| < δ₀'`
+   - Output: 6-tuple `⟨K, hK_pos, δ₀', hδ₀'_pos, δ, hδ_pos, h_bound⟩`
+
+2. **`pv_limit_via_dyadic` refactored (lines 3283-3434) — 3 sorries eliminated** (session 46)
+   - OLD: 260 lines, 3 sorries (h_localize_δ, K'≤K ×2)
+   - NEW: ~140 lines, 0 new sorries
+   - Key insight: use P1 (`pv_step_bound_ratio_two_uniform`) directly with `δ = δ_P1/2`
+   - All dyadic points δ/2^n ≤ δ = δ_P1/2 < δ_P1, satisfying P1's `ε₁ < δ` requirement
+   - Fixed `CompleteSpace.complete` Filter.le vs Tendsto form issue
+
+**SORRY COUNT:** 28 actual sorry statements (down from 31)
+
+**REMAINING BLOCKERS:**
+- `singular_annulus_bound_explicit` (S5, line 2954): needs localization gap argument
+- `pv_step_bound_ratio_two_uniform` (P1, line 3190): depends on S5
+- "Localization gap": between δ_lo (C² radius) and δ_loc (no-return radius),
+  need to show γ(t) ≠ γ(t₀) via continuity+compactness
+
+**NEXT STEPS:**
+1. Fill S5 sorry (singular_annulus_bound_explicit)
+2. Fill P1 sorry (pv_step_bound_ratio_two_uniform)
+3. Work on integrability sorries in pv_step_bound_ratio_two (lines 3107, 3114)
+
+---
 
 ### Session 42 Progress (2026-02-05, Path A decision + remaining sorries plan)
 
@@ -3186,3 +3753,75 @@ have h_shell₁_vol : volume shell₁ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) := b
 1. Fill `h_shell₁_vol` and `h_shell₂_vol` sorries with the annulus measure argument
 2. Or extract as separate lemma `annulus_measure_le` to avoid scope issues
 
+
+---
+
+## Session 45 - annulus_symmDiff_measure_bound SORRY-FREE
+
+**Date:** 2026-02-05
+
+### Major Achievement
+
+**`annulus_symmDiff_measure_bound` is now completely sorry-free!**
+
+This was the key structural lemma that had been blocking progress. The proof is now complete at lines 2630-2871.
+
+### Key Changes
+
+1. **Option A + δ-shrinking implemented:**
+   - Set definitions now include `|t - t₀| < δ₀'` (local zone restriction)
+   - `δ₁ = min(δ₀, ‖L‖/(4K₀))` ensures quadratic error is well-controlled
+
+2. **Output `δ₁` as `δ₀'` (not `δ₀`):**
+   - This makes `h_localize_γAnn` trivial: from `t ∈ γAnn` we get `|t - t₀| < δ₁` directly
+   - C² still applies since `δ₁ ≤ δ₀`
+
+3. **Updated destructuring patterns:**
+   - Sets now have 4 components: `(Icc_mem, local_bound, lower_bound, upper_bound)`
+   - All destructuring patterns updated from 3 to 4 components
+
+4. **Derived `hδ₁_le_L_over_2K` from `hδ₁_le_L_over_4K`:**
+   - Since `‖L‖/(4K₀) ≤ ‖L‖/(2K₀)`, the weaker bound follows
+
+### Lemma Signature (Updated)
+
+```lean
+lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
+    (hab : a < b) (ht₀ : t₀ ∈ Set.Ioo a b)
+    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L) (hL : L ≠ 0) :
+    ∃ K > 0, ∃ δ₀' > 0, ∃ δ > 0, ∀ ε₁ ε₂ : ℝ, 0 < ε₂ → ε₂ ≤ ε₁ → ε₁ < δ →
+      -- Option A: Sets include |t - t₀| < δ₀' to eliminate far-field issues
+      let γAnn := {t : ℝ | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+      let tAnnLin := {t : ℝ | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}
+      volume (symmDiff γAnn tAnnLin) ≤ ENNReal.ofReal (K * ε₁^2 / ‖L‖^3)
+```
+
+Key outputs:
+- `K = 32 * K₀` (absorbs shell volume factors)
+- `δ₀' = δ₁ = min(δ₀, ‖L‖/(4K₀))` (local zone)
+- `δ = ‖L‖ * δ₁ / 2` (threshold for ε₁)
+
+### Why This Works
+
+The fundamental insight is that **outputting `δ₁` as `δ₀'`** makes the localization trivial:
+- From `t ∈ γAnn` we get `|t - t₀| < δ₁` directly from set membership
+- No need for complex C² lower bound arguments for localization
+- The far-field case is eliminated by definition
+- C² approximation still applies since `δ₁ ≤ δ₀`
+
+### Remaining Work
+
+Call sites (`singular_annulus_bound`, `pv_step_bound_ratio_two_uniform`) may need updates to:
+1. Handle the new `δ₀'` output
+2. Use the localized sets in their proofs
+
+### Files Modified
+
+- `ValenceFormula_PV.lean`: Completed `annulus_symmDiff_measure_bound`
+
+### Sorry Count
+
+The file still has sorries in other lemmas, but the key measure-theoretic infrastructure is now complete:
+- `annulus_symmDiff_measure_bound` - ✅ SORRY-FREE
+- `singular_annulus_bound` - has sorry
+- `pv_step_bound_ratio_two_uniform` - has sorry
