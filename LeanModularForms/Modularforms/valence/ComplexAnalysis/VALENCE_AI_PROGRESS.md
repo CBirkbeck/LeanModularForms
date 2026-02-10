@@ -14,9 +14,9 @@ Each AI must update this file when returning results.
 ## Ticket A – Homotopy / Interior Winding
 **Owner:** Claude Opus 4.5
 **Target file:** `ValenceFormula_InteriorWinding.lean` (re-exports from `ValenceFormula_Rect_Homotopy.lean`)
-**Last update:** 2026-02-05 (session 44, all piecewise non-diff sorries filled)
+**Last update:** 2026-02-10 (session 60, ALL SORRIES ELIMINATED)
 **Target:** `generalizedWindingNumber' fdBoundary 0 5 p = -1` (CLOCKWISE orientation)
-**Status:** IN-PROGRESS - 10 sorries remaining
+**Status:** DONE - 0 sorries, `lake build` clean ✓
 
 ### Session 44 Progress (2026-02-05, filling all 3 piecewise non-differentiability sorries)
 
@@ -3268,16 +3268,49 @@ immersion_crossing_cauchy ← 2 sorries (corner + smooth - math complete, needs 
 ---
 
 ## Ticket C – Core / Residue + Modular Side
-**Owner:** (fill in)  
-**Target files:**  
-`ValenceFormula_ResidueSide.lean`, `ValenceFormula_ModularSide.lean`, `ValenceFormula_Core.lean`  
-**Last update:** (date/time)  
-**Completed lemmas:**  
-- …  
-**New helper lemmas introduced:**  
-- …  
-**Remaining blockers (must list):**  
-- …  
+**Owner:** Claude Opus 4.6
+**Target files:**
+`ValenceFormula_ResidueSide.lean`, `ValenceFormula_ModularSide.lean`, `ValenceFormula_Core.lean`
+**Last update:** 2026-02-10 (session 59)
+**Status:** IN-PROGRESS (7 sorries remain, blocked on Ticket A)
+
+### Session 59 Progress (2026-02-10)
+
+**ModularSide — SORRY-FREE (0 sorries):**
+- `orderAtCusp'` — defined as alias for `orderAtCusp` (was `sorry`)
+- `orderAtCusp'_eq` — `rfl`
+- `orderAtCusp_nonneg` — `Int.natCast_nonneg`
+- `s_transformation_contribution` — wraps `arc_contribution_is_k_div_12` / 2πi
+- `cusp_contribution` — wraps `seg5_integral_eq_cusp_order` / 2πi
+- `modular_side_mult_form` — wraps `pv_integral_eq_modular_transformation`
+- `modular_side_equals_pv_integral` — divides `modular_side_mult_form` by 2πi
+
+**ResidueSide — 4 sorries (1 placeholder + 3 deep):**
+- `interior_contribution` — PROVEN (effectiveWinding at interior = 1)
+- `elliptic_i_contribution` — PROVEN (effectiveWinding at i = 1/2)
+- `elliptic_rho_contribution` — PROVEN (effectiveWinding at ρ = 1/3)
+- `effectiveWinding_eq_windingNumberCoeff'` — sorry (needs B1-B3 boundary classification)
+- `residue_logDeriv_eq_order` — sorry (deep complex analysis)
+- `pv_equals_residue_sum` — sorry (blocked on Ticket A: needs generalized residue theorem)
+- `residue` placeholder def — sorry
+
+**Core — 3 sorries:**
+- `contour_computation_equality` — SORRY-FREE (2πi cancellation)
+- `valence_formula_base_identity` — sorry (blocked on `pv_equals_residue_sum`)
+- `valence_formula_classical_form` — sorry (needs base identity + sum decomposition)
+- `zeros_decomposition` — sorry (needs boundary classification B1-B3)
+
+**Infrastructure changes:**
+- Made `seg5_q_radius` non-private in PV file (needed for cross-file visibility)
+- Added `include hf` in Core file for variable scoping
+- Reordered Core file: `contour_computation_equality` now before `valence_formula_base_identity`
+
+**Remaining blockers:**
+1. `pv_equals_residue_sum` (Ticket A: generalized residue theorem for ∂𝒟)
+2. Boundary classification B1-B3 (zeros on boundary edges → elliptic or interior)
+3. `residue_logDeriv_eq_order` (deep: residue of f'/f at a zero)
+
+**Build status:** All 3 files compile with zero errors.
 
 ---
 

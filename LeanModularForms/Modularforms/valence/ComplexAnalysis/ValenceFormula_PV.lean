@@ -6519,14 +6519,14 @@ applied to `logDeriv(U)`, which is analytic on the disk since U is analytic and 
 -/
 
 /-- The q-radius along seg5: `R = exp(-2π · H_height)`, which is positive and < 1. -/
-private noncomputable def seg5_q_radius : ℝ := Real.exp (-2 * Real.pi * H_height)
+noncomputable def seg5_q_radius : ℝ := Real.exp (-2 * Real.pi * H_height)
 
-private lemma seg5_q_radius_pos : 0 < seg5_q_radius := Real.exp_pos _
+lemma seg5_q_radius_pos : 0 < seg5_q_radius := Real.exp_pos _
 
-private lemma seg5_q_radius_lt_one : seg5_q_radius < 1 :=
+lemma seg5_q_radius_lt_one : seg5_q_radius < 1 :=
   Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos, H_height_gt_one])
 
-private lemma seg5_q_radius_ne_zero : seg5_q_radius ≠ 0 := ne_of_gt seg5_q_radius_pos
+lemma seg5_q_radius_ne_zero : seg5_q_radius ≠ 0 := ne_of_gt seg5_q_radius_pos
 
 /-! ### Helper Lemmas for the Circle Integral Computation -/
 

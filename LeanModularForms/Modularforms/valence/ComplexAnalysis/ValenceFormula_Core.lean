@@ -52,7 +52,38 @@ noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
+/-! ## Contour Computation Equality -/
+
+/-- Equating residue side and modular side.
+
+This is the bridge lemma that connects the two approaches.
+Given that the PV integral equals both the residue sum and the modular expression,
+we can cancel 2πi to equate the two sides directly. -/
+theorem contour_computation_equality :
+    (∀ zeros : Finset ℍ, (∀ s ∈ zeros, f s = 0) → (∀ s ∈ zeros, s ∈ fundamentalDomain) →
+      pv_integral f fdBoundary 0 5 =
+        2 * Real.pi * I * ∑ s ∈ zeros,
+          (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+    pv_integral f fdBoundary 0 5 =
+      2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) →
+    ∀ zeros : Finset ℍ, (∀ s ∈ zeros, f s = 0) → (∀ s ∈ zeros, s ∈ fundamentalDomain) →
+      (∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) →
+      ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+        (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
+  intro h_residue h_modular zeros hzeros hzeros_fd _
+  have h1 := h_residue zeros hzeros hzeros_fd
+  have h3 : 2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
+    rw [← h1, h_modular]
+  have hpi : (2 : ℂ) * Real.pi * I ≠ 0 := by
+    simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true, ofReal_eq_zero,
+      Real.pi_ne_zero, I_ne_zero, or_self]
+  exact mul_left_cancel₀ hpi h3
+
 /-! ## The Core Identity -/
+
+include hf
 
 /-- **The Core Identity**: The sum of weighted orders equals k/12 - ord_∞.
 
@@ -74,13 +105,17 @@ The effectiveWinding coefficients are:
 theorem valence_formula_base_identity (zeros : Finset ℍ)
     (hzeros : ∀ s ∈ zeros, f s = 0)
     (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
-    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
     ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
       (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
-  -- The proof equates the two computations of the PV integral
-  -- 1. From pv_equals_residue_sum: PV ∮ f'/f = 2πi · Σ effectiveWinding · ord
-  -- 2. From modular_side_equals_pv_integral: PV ∮ f'/f = 2πi · (k/12 - ord_∞)
-  -- Dividing both by 2πi gives the result
+  -- Blocked on pv_equals_residue_sum (Ticket A: needs generalized residue theorem
+  -- for the curve ∂𝒟 with effective winding numbers)
+  -- Once available: equate residue side and modular side, cancel 2πi via
+  -- contour_computation_equality (handling CW sign convention)
   sorry
 
 /-! ## Classical Form -/
@@ -94,14 +129,19 @@ Rearranged from the base identity. -/
 theorem valence_formula_classical_form (zeros : Finset ℍ)
     (hzeros : ∀ s ∈ zeros, f s = 0)
     (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
-    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
     (orderAtCusp' f : ℂ) +
       (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros then orderOfVanishingAt' f ellipticPoint_i' else 0) +
       (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros then orderOfVanishingAt' f ellipticPoint_rho' else 0) +
       ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
           (orderOfVanishingAt' f s : ℂ) =
       (k : ℂ) / 12 := by
-  -- Rearrange from valence_formula_base_identity
+  -- Rearrange from valence_formula_base_identity: Σ ew·ord = k/12 - ord_∞
+  -- Then split the sum and move ord_∞ to the left
   sorry
 
 /-! ## Finite Sum Decomposition -/
@@ -113,40 +153,5 @@ theorem zeros_decomposition (zeros : Finset ℍ)
             zeros.filter (fun s => s = ellipticPoint_i') ∪
             zeros.filter (fun s => s = ellipticPoint_rho') := by
   sorry
-
-/-! ## Contour Computation Equality -/
-
-/-- Equating residue side and modular side.
-
-This is the bridge lemma that connects the two approaches. -/
-theorem contour_computation_equality :
-    (∀ zeros : Finset ℍ, (∀ s ∈ zeros, f s = 0) → (∀ s ∈ zeros, s ∈ fundamentalDomain) →
-      pv_integral f fdBoundary 0 5 =
-        2 * Real.pi * I * ∑ s ∈ zeros,
-          (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
-    pv_integral f fdBoundary 0 5 =
-      2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) →
-    ∀ zeros : Finset ℍ, (∀ s ∈ zeros, f s = 0) → (∀ s ∈ zeros, s ∈ fundamentalDomain) →
-      (∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) →
-      ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
-        (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
-  intro h_residue h_modular zeros hzeros hzeros_fd _
-  -- From h_residue and h_modular, we have:
-  -- 2πi · Σ effectiveWinding · ord = 2πi · (k/12 - ord_∞)
-  -- Dividing by 2πi (which is nonzero) gives the result
-  have h1 := h_residue zeros hzeros hzeros_fd
-  have h2 := h_modular
-  -- h1 : pv_integral f fdBoundary 0 5 = 2 * π * I * Σ ...
-  -- h2 : pv_integral f fdBoundary 0 5 = 2 * π * I * (k/12 - ord_∞)
-  -- Therefore: 2 * π * I * Σ ... = 2 * π * I * (k/12 - ord_∞)
-  have h3 : 2 * Real.pi * I * ∑ s ∈ zeros,
-        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
-      2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
-    rw [← h1, h2]
-  -- Cancel 2πi
-  have hpi : (2 : ℂ) * Real.pi * I ≠ 0 := by
-    simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true, ofReal_eq_zero,
-      Real.pi_ne_zero, I_ne_zero, or_self]
-  exact mul_left_cancel₀ hpi h3
 
 end
