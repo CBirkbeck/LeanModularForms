@@ -139,7 +139,19 @@ theorem interior_contribution (p : ℍ) (hp_int : isInteriorPoint p)
     (hp_zero : f p = 0) :
     (effectiveWinding p : ℂ) * (orderOfVanishingAt' f p : ℂ) =
       (orderOfVanishingAt' f p : ℂ) := by
-  sorry  -- Need to show effectiveWinding p = 1
+  have h_classify : classifyPoint p = .interior := by
+    unfold classifyPoint
+    have hp_norm : ‖(p : ℂ)‖ > 1 := hp_int.1
+    have h_ne_i : p ≠ ellipticPoint_i' := by
+      intro heq; subst heq; simp [ellipticPoint_i'] at hp_norm
+    have h_ne_rho : p ≠ ellipticPoint_rho' := by
+      intro heq; subst heq; simp [ellipticPoint_rho'] at hp_norm
+      have h_sq : ‖-(1 / 2 : ℂ) + ↑(Real.sqrt 3) / 2 * I‖ ^ 2 ≤ 1 := by
+        rw [Complex.sq_norm]; simp [normSq_apply]
+        nlinarith [Real.sq_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
+      nlinarith [norm_nonneg (-(1 / 2 : ℂ) + ↑(Real.sqrt 3) / 2 * I)]
+    simp only [h_ne_i, ↓reduceIte, h_ne_rho, hp_int.1, hp_int.2.1, and_self]
+  simp [effectiveWinding, h_classify]
 
 /-! ## Elliptic Contributions -/
 
@@ -147,12 +159,16 @@ theorem interior_contribution (p : ℍ) (hp_int : isInteriorPoint p)
 theorem elliptic_i_contribution (hi : f ellipticPoint_i' = 0) :
     (effectiveWinding ellipticPoint_i' : ℂ) * (orderOfVanishingAt' f ellipticPoint_i' : ℂ) =
       (1/2 : ℂ) * (orderOfVanishingAt' f ellipticPoint_i' : ℂ) := by
-  sorry  -- Need to show effectiveWinding ellipticPoint_i' = 1/2
+  congr 1
+  show (effectiveWinding ellipticPoint_i' : ℂ) = 1/2
+  simp [effectiveWinding, classifyPoint]
 
 /-- At ρ, the contribution is (1/3) · ord_ρ(f). -/
 theorem elliptic_rho_contribution (hr : f ellipticPoint_rho' = 0) :
     (effectiveWinding ellipticPoint_rho' : ℂ) * (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) =
       (1/3 : ℂ) * (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) := by
-  sorry  -- Need to show effectiveWinding ellipticPoint_rho' = 1/3
+  congr 1
+  show (effectiveWinding ellipticPoint_rho' : ℂ) = 1/3
+  simp [effectiveWinding, classifyPoint, ellipticPoint_i_ne_rho.symm]
 
 end

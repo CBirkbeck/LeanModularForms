@@ -18,25 +18,10 @@ the PV integral using modular transformation properties.
 
 ## Main Result
 
-* `modular_side_equals_pv_integral`: The modular transformation gives
-  PV ∮_{CW ∂𝒟} f'/f dz = -(2πi · (k/12 - ord_∞(f))) = 2πi · (ord_∞(f) - k/12)
+* `modular_side_mult_form`: The modular transformation gives
+  PV ∮_{CW ∂𝒟} f'/f dz = -(2πi · (k/12 - ord_∞(f)))
 
-This is a wrapper around `pv_integral_eq_modular_transformation` from the PV file,
-providing the modular side in the form needed for the core identity.
-
-## The Modular Side
-
-The CW contour integral yields:
-  -(k/12 - ord_∞(f)) = ord_∞(f) - k/12
-
-This arises from:
-1. **The -k/12 term**: From the modular transformation law under S: z ↦ -1/z.
-   The identity (f'/f)(Sz)·S'(z) = k/z + (f'/f)(z) gives (f'/f)(z) = (f'/f)(Sz)·S'(z) - k/z.
-   The S-symmetry argument gives I = -I - J where J = k·i·π/3, hence I = -k·i·π/6 = -(2πik/12).
-
-2. **The +ord_∞ term**: From the q-expansion f(z) = q^m · (c_m + c_{m+1}q + ...)
-   where m = ord_∞(f). The horizontal edge at height H contributes
-   +ord_∞ as H → ∞ (the winding number of the q-expansion).
+This is a thin wrapper around `pv_integral_eq_modular_transformation` from the PV file.
 
 ## References
 
@@ -50,67 +35,83 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
-variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+variable {k : ℤ} (f : ModularForm (Gamma 1) k)
 
 /-! ## Order at Cusp -/
 
-/-- The order at the cusp (order of vanishing in the q-expansion). -/
-def orderAtCusp' (f : ModularForm (Gamma 1) k) : ℤ := sorry  -- from q-expansion
+/-- The order at the cusp (order of vanishing in the q-expansion).
+This is an alias for `orderAtCusp` from `ValenceFormula_PV`. -/
+def orderAtCusp' (f : ModularForm (Gamma 1) k) : ℤ := orderAtCusp f
+
+/-- `orderAtCusp'` equals `orderAtCusp`. -/
+theorem orderAtCusp'_eq : orderAtCusp' f = orderAtCusp f := rfl
 
 /-- The order at cusp is non-negative for modular forms. -/
 theorem orderAtCusp_nonneg : 0 ≤ orderAtCusp' f := by
-  sorry
+  unfold orderAtCusp' orderAtCusp
+  exact Int.natCast_nonneg _
 
 /-! ## Modular Transformation Contribution -/
 
 /-- The S-transformation contribution is -k/12 (CW orientation).
 
-When we integrate f'/f along the arc |z| = 1 from ρ' through i to ρ,
-the transformation law f(-1/z) = z^k f(z) gives a contribution of -k/12.
-
-**Derivation**:
-Taking log derivatives: (f'/f)(-1/z) · (1/z²) = k/z + (f'/f)(z), so
-(f'/f)(z) = (f'/f)(-1/z)/z² - k/z. The S-symmetry gives 2I = -J where
-J = k·∫dz/z = k·iπ/3, hence I = -kiπ/6 = -(2πik/12).
-Dividing by 2πi gives -k/12. -/
-theorem s_transformation_contribution :
+Divides `arc_contribution_is_k_div_12` by 2πi. -/
+theorem s_transformation_contribution
+    (h_arc_seg2_gne : ∀ t ∈ Set.uIcc 1 2,
+      modularFormCompOfComplex f (fdBoundary_seg2 t) ≠ 0)
+    (h_arc_seg3_gne : ∀ t ∈ Set.uIcc 2 3,
+      modularFormCompOfComplex f (fdBoundary_seg3 t) ≠ 0) :
     (1 / (2 * Real.pi * I)) * (pv_integral f fdBoundary_seg2 1 2 +
         pv_integral f fdBoundary_seg3 2 3) = -((k : ℂ) / 12) := by
-  -- This follows from arc_contribution_is_k_div_12 divided by 2πi
-  sorry
+  rw [arc_contribution_is_k_div_12 f h_arc_seg2_gne h_arc_seg3_gne]
+  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
+    simp [ne_eq, mul_eq_zero, ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  field_simp
 
 /-! ## Cusp Contribution -/
 
 /-- The q-expansion contribution is +ord_∞(f).
 
-The horizontal edge integral approaches +2πi · ord_∞(f) as the height H → ∞.
-
-**Derivation**:
-f(z) = q^m · g(q) where q = e^{2πiz}, m = ord_∞(f), g(0) ≠ 0.
-Then f'/f = 2πi · m + (holomorphic in q).
-Integrating from -1/2 + iH to 1/2 + iH gives 2πi · m (the winding number
-of the q-expansion around q = 0 on the circle |q| = e^{-2πH}). -/
-theorem cusp_contribution :
-    (1 / (2 * Real.pi * I)) * pv_integral f fdBoundary_seg5 4 5 = (orderAtCusp' f : ℂ) := by
-  sorry
+Divides `seg5_integral_eq_cusp_order` by 2πi. -/
+theorem cusp_contribution (hf : f ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (1 / (2 * Real.pi * I)) * pv_integral f fdBoundary_seg5 4 5 =
+        (orderAtCusp' f : ℂ) := by
+  rw [orderAtCusp'_eq, seg5_integral_eq_cusp_order f hf hcusp_nonvan]
+  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
+    simp [ne_eq, mul_eq_zero, ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  field_simp
 
 /-! ## Main Modular Side Result -/
 
-/-- **Main Result**: The CW PV integral equals -(2πi · (k/12 - ord_∞)).
+/-- The modular side in multiplicative form (CW orientation).
 
-This wraps `pv_integral_eq_modular_transformation` in the form needed for
-the core identity. Equivalently: (1/(2πi)) · ∮ = -(k/12 - ord_∞) = ord_∞ - k/12. -/
-theorem modular_side_equals_pv_integral :
+Thin wrapper around `pv_integral_eq_modular_transformation`. -/
+theorem modular_side_mult_form (hf : f ≠ 0)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    pv_integral f fdBoundary 0 5 =
+        -(2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) := by
+  rw [orderAtCusp'_eq]
+  exact pv_integral_eq_modular_transformation f hf hint hcusp_nonvan
+
+/-- **Main Result**: (1/(2πi)) · ∮ = ord_∞ - k/12.
+
+Divides `modular_side_mult_form` by 2πi. -/
+theorem modular_side_equals_pv_integral (hf : f ≠ 0)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
     (1 / (2 * Real.pi * I)) * pv_integral f fdBoundary 0 5 =
       (orderAtCusp' f : ℂ) - (k : ℂ) / 12 := by
-  -- Use pv_integral_eq_modular_transformation and divide by 2πi
-  sorry
-
-/-! ## Alternative Forms -/
-
-/-- The modular side in multiplicative form (CW orientation). -/
-theorem modular_side_mult_form :
-    pv_integral f fdBoundary 0 5 = -(2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) := by
-  sorry
+  rw [modular_side_mult_form f hf hint hcusp_nonvan]
+  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
+    simp [ne_eq, mul_eq_zero, ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  field_simp
+  ring
 
 end
