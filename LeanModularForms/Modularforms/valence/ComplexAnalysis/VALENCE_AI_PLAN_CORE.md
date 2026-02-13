@@ -25,8 +25,10 @@ You must assume the following external lemmas will be proven in their files:
 
 **From homotopy file** (`ValenceFormula_InteriorWinding.lean`):
 ```
-generalizedWindingNumber_fdBoundary_eq_one
+generalizedWindingNumber_fdBoundary_eq_neg_one  -- DONE (Session 92, sorry-free)
 ```
+Also available: `..._eq_neg_one_uhp` (for `s : ℍ`) and
+`..._eq_neg_windingCoeff_interior` (non-elliptic interior → `-(windingNumberCoeff' s : ℂ)`).
 
 **From PV file** (`ValenceFormula_PV.lean`):
 ```
@@ -134,7 +136,7 @@ effectiveWinding_eq_windingNumberCoeff'
 should be straightforward:
 - If `p = i` or `p = ρ`, `effectiveWinding` is by definition `1/2` or `1/3`.
 - If not elliptic, B1/B2/B3 show `p` is interior, so `generalizedWindingNumber'` = 1
-  (use `generalizedWindingNumber_fdBoundary_eq_one` from Rect Homotopy).
+  (use `generalizedWindingNumber_fdBoundary_eq_neg_one` from InteriorWinding/Rect Homotopy).
 
 **Helper lemma to add (if helpful):**
 ```

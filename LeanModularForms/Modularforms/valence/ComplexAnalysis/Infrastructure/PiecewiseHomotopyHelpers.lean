@@ -569,22 +569,12 @@ theorem windingNumber_continuousOn_param_piecewise
       DifferentiableAt ℝ (fun t' => H (t', s)) t)
     (hH_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ → (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo a b →
       ContinuousOn (fun (p : ℝ × ℝ) => deriv (fun t' => H (t', p.2)) p.1)
-        (Ioo p₁ p₂ ×ˢ Icc 0 1)) :
+        (Ioo p₁ p₂ ×ˢ Icc 0 1))
+    (hH_deriv_bound_ex : ∃ M, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
+      ‖deriv (fun t' => H (t', s)) t‖ ≤ M) :
     ContinuousOn (fun s => generalizedWindingNumber' (fun t => H (t, s)) a b z₀) (Icc 0 1) := by
-  -- The proof uses `windingNumber_continuousOn_param_piecewise_with_bound`.
-  -- We need to derive an a.e. bound on the derivative.
-  --
-  -- The bound exists mathematically by:
-  -- 1. Uniform avoidance: ∃ δ > 0, ∀ (t,s), δ ≤ ‖H(t,s) - z₀‖ (from compactness)
-  -- 2. Derivative bounded on each piece: by continuity + compactness
-  --
-  -- TECHNICAL GAP: Same as in PiecewiseHomotopy.lean - the hypothesis hH_deriv_cont
-  -- gives continuity on OPEN pieces, not on closures. To get a bound, we need either:
-  -- - Explicit bound hypothesis (use with_bound version)
-  -- - Additional hypothesis that derivative extends continuously to piece closures
-  --
-  -- In applications, the bound is often known explicitly from the construction.
-  -- For example, linear homotopy (1-s)γ₀ + sγ₁ has bounded derivative if γ₀, γ₁ do.
-  sorry
+  obtain ⟨M, hM⟩ := hH_deriv_bound_ex
+  exact windingNumber_continuousOn_param_piecewise_with_bound hab hH_cont hH_avoid hH_diff
+    hH_deriv_cont hM
 
 end
