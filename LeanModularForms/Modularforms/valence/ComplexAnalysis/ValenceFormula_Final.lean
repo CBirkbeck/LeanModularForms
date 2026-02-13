@@ -3,36 +3,25 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_Core
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula
 
 /-!
-# The Valence Formula - Final Theorems
+# The Valence Formula — Canonical Public API (Legacy Route)
 
-This file contains the final, user-facing theorems of the valence formula for
-modular forms of level 1.
+This file provides the canonical user-facing theorems of the valence formula for
+modular forms of level 1. The signatures use `ℚ`-typed coefficients, the orbifold
+winding number `windingNumberCoeff'`, and require only the minimal set of hypotheses:
+`f ≠ 0`, a finset `S ⊆ 𝒟'`, and completeness of `S`.
+
+These forward to the monolithic `ValenceFormula.lean` and inherit its `sorryAx`.
+For axiom-clean versions, see `ValenceFormula_Final_Split.lean`.
 
 ## Main Theorems
 
-* `valenceFormula`: The valence formula with rational coefficients
-* `valenceFormula_classical`: The classical form with explicit 1/2 and 1/3
-
-## The Valence Formula
-
-For a nonzero modular form f of weight k for SL₂(ℤ):
-
-  ord_∞(f) + (1/2) · ord_i(f) + (1/3) · ord_ρ(f) + Σ_{p ∈ 𝒟°} ord_p(f) = k/12
-
-where:
-- ord_∞(f) is the order of vanishing at the cusp
-- ord_i(f) is the order of vanishing at the elliptic point i
-- ord_ρ(f) is the order of vanishing at the elliptic point ρ
-- 𝒟° denotes the interior of the fundamental domain
-
-## Corollaries
-
-* `modularForm_k_bounds`: Constraints on k from non-negativity of orders
-* `cusp_form_k_bounds`: Constraints for cusp forms (ord_∞ ≥ 1)
-* `dimension_formula_weight_k`: Dimension of M_k(SL₂(ℤ))
+* `valenceFormula` — The general (orbifold) form:
+    `ord_∞(f) + Σ_{p ∈ S} windingNumberCoeff'(p) · ord_p(f) = k/12`
+* `valenceFormula_classical` — The classical form with explicit coefficients:
+    `ord_∞(f) + (1/2)·ord_i(f) + (1/3)·ord_ρ(f) + Σ_{p ∈ S} ord_p(f) = k/12`
 
 ## References
 
@@ -44,115 +33,45 @@ where:
 open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
 open scoped Real Interval UpperHalfPlane ModularForm
 
-attribute [local instance] Classical.propDecidable
-
 noncomputable section
 
-/-! ## Placeholder Definitions -/
+/-! ## The Valence Formula — Canonical Public Theorems -/
 
-/-- The interior zeros of f in the fundamental domain. -/
-def interior_zeros' {k : ℤ} (f : ModularForm (Gamma 1) k) : Finset ℍ := sorry
+/-- **The Valence Formula** (orbifold form).
 
-/-- Order at cusp (placeholder, reusing the one from PV file). -/
-def orderAtCusp'' {k : ℤ} (f : ModularForm (Gamma 1) k) : ℤ := sorry
+For a nonzero modular form `f` of weight `k` for SL₂(ℤ), and any finset `S`
+of points in the fundamental domain `𝒟'` that contains all zeros of `f`:
 
-/-! ## The Valence Formula -/
+  `ord_∞(f) + Σ_{p ∈ S} windingNumberCoeff'(p) · ord_p(f) = k/12`
 
-/-- **The Valence Formula** (with rational coefficients).
+where `windingNumberCoeff'` is `1` at interior points, `1/2` at `i`, `1/3` at `ρ`. -/
+theorem valenceFormula {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    (orderAtCusp' f : ℚ) +
+    ∑ p ∈ S, windingNumberCoeff' p * (orderOfVanishingAt' (⇑f) p : ℚ) = k / 12 :=
+  valenceFormula' k f hf S hS hS_complete
 
-For a nonzero modular form f of weight k:
-  Σ_p windingNumberCoeff'(p) · ord_p(f) + ord_∞(f) = k/12
 
-where windingNumberCoeff' is:
-- 1 at interior points
-- 1/2 at i
-- 1/3 at ρ
-
-This is equivalent to the classical form:
-  ord_∞(f) + (1/2) · ord_i(f) + (1/3) · ord_ρ(f) + Σ_{p ∈ 𝒟°} ord_p(f) = k/12
--/
-theorem valenceFormula {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0) :
-    (orderAtCusp'' f : ℚ) +
-      (windingNumberCoeff' ellipticPoint_i') * (orderOfVanishingAt' f ellipticPoint_i') +
-      (windingNumberCoeff' ellipticPoint_rho') * (orderOfVanishingAt' f ellipticPoint_rho') +
-      ∑ p ∈ (interior_zeros' f), (orderOfVanishingAt' f p : ℚ) =
-    (k : ℚ) / 12 := by
-  -- This follows from valence_formula_base_identity
-  sorry
 
 /-- **The Classical Valence Formula**.
 
-For a nonzero modular form f of weight k:
-  ord_∞(f) + (1/2) · ord_i(f) + (1/3) · ord_ρ(f) + Σ_{p ∈ 𝒟°} ord_p(f) = k/12
+For a nonzero modular form `f` of weight `k` for SL₂(ℤ):
 
-with explicit coefficients. -/
-theorem valenceFormula_classical {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0) :
-    (orderAtCusp'' f : ℚ) +
-      (1/2 : ℚ) * (orderOfVanishingAt' f ellipticPoint_i') +
-      (1/3 : ℚ) * (orderOfVanishingAt' f ellipticPoint_rho') +
-      ∑ p ∈ (interior_zeros' f), (orderOfVanishingAt' f p : ℚ) =
-    (k : ℚ) / 12 := by
-  sorry
+  `ord_∞(f) + (1/2) · ord_i(f) + (1/3) · ord_ρ(f) + Σ_{p ∈ S} ord_p(f) = k/12`
 
-/-! ## Corollaries -/
-
-/-- Weight constraints: the valence formula implies constraints on k.
-
-Since all orders are non-negative for modular forms:
-  k/12 ≥ 0, hence k ≥ 0
-
-(Stronger constraints come from specific forms.) -/
-theorem modularForm_k_nonneg {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0) :
-    0 ≤ k := by
-  -- From the valence formula, k/12 = sum of non-negative terms
-  sorry
-
-/-- For cusp forms, k ≥ 12.
-
-A cusp form has ord_∞(f) ≥ 1. By the valence formula:
-  k/12 ≥ 1, hence k ≥ 12 -/
-theorem cuspForm_k_ge_twelve {k : ℤ} (f : CuspForm (Gamma 1) k) (hf : f ≠ 0) :
-    12 ≤ k := by
-  -- From the valence formula with ord_∞ ≥ 1
-  sorry
-
-/-- The Eisenstein series E_k for k ≥ 4 even is a modular form with:
-- ord_∞(E_k) = 0 (it's not a cusp form)
-- ord_i(E_k) = 0 unless k ≡ 2 (mod 4)
-- ord_ρ(E_k) = 0 unless k ≡ 0 (mod 6)
-
-These give k/12 with appropriate adjustments. -/
-theorem eisenstein_orders {k : ℤ} (hk : 4 ≤ k) (hk_even : Even k) :
-    -- The orders satisfy the valence formula
-    True := trivial
-
-/-! ## Dimension Formula -/
-
-/-- The dimension of the space of modular forms of weight k.
-
-For k ≥ 0:
-- dim M_k = ⌊k/12⌋ if k ≡ 2 (mod 12)
-- dim M_k = ⌊k/12⌋ + 1 otherwise
-
-For k < 0: dim M_k = 0 -/
-theorem dimension_formula (k : ℤ) (hk : 0 ≤ k) :
-    -- FiniteDimensional.finrank ℂ (ModularForm (Gamma 1) k) = ...
-    True := trivial
-
-/-! ## Uniqueness Results -/
-
-/-- A modular form of weight 0 is constant.
-
-By the valence formula, k = 0 implies Σ orders = 0.
-Since all orders are non-negative and f ≠ 0, the only zero-free
-holomorphic function on ℍ that transforms with weight 0 is constant. -/
-theorem modularForm_weight_zero_const {f : ModularForm (Gamma 1) 0} :
-    ∃ (c : ℂ), ∀ z : ℍ, f z = c := by
-  sorry
-
-/-- The j-invariant is the unique modular function of weight 0 with
-a simple pole at ∞ (up to additive constant). -/
-theorem j_invariant_unique :
-    True := trivial
+where the sum is over non-elliptic zeros in the fundamental domain.
+The coefficients `1/2` and `1/3` arise because `i` and `ρ` are elliptic points
+of order 2 and 3 respectively in SL₂(ℤ)\ℍ. -/
+theorem valenceFormula_classical {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟' ∧ p ≠ ellipticPoint_i' ∧ p ≠ ellipticPoint_rho')
+    (hS_complete : ∀ p, p ∈ 𝒟' → p ≠ ellipticPoint_i' → p ≠ ellipticPoint_rho' →
+                    orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    (orderAtCusp' f : ℚ) +
+    (1/2 : ℚ) * orderOfVanishingAt' (⇑f) ellipticPoint_i' +
+    (1/3 : ℚ) * orderOfVanishingAt' (⇑f) ellipticPoint_rho' +
+    ∑ p ∈ S, (orderOfVanishingAt' (⇑f) p : ℚ) = k / 12 :=
+  valenceFormula_classical' k f hf S hS hS_complete
 
 end

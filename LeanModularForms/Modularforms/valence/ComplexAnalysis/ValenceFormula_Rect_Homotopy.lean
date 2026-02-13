@@ -48,13 +48,15 @@ open scoped Real Interval
 
 noncomputable section
 
+namespace RectHomotopyProof
+
 /-! ## Fundamental Domain Definition -/
 
 /-- The standard fundamental domain for SL₂(ℤ) in the upper half-plane. -/
 def fundamentalDomain' : Set UpperHalfPlane :=
   {z : UpperHalfPlane | |(z : ℂ).re| ≤ 1/2 ∧ ‖(z : ℂ)‖ ≥ 1}
 
-notation "𝒟'" => fundamentalDomain'
+local notation "𝒟'" => fundamentalDomain'
 
 /-! ## Geometric Facts about Interior Points -/
 
@@ -3659,7 +3661,7 @@ lemma rc_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
           unfold rho'; simp [add_im, ofReal_im, mul_im, I_re, I_im, div_ofNat_im]
         have hi : i_point.im = 1 := by unfold i_point; simp
         rw [hrho', hi]
-        nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+        nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num), sq_nonneg (2 - Real.sqrt 3)]
       intro h_eq; linarith [ref_Y₀_gt_one]
     · push_neg at ht2
       by_cases ht3 : t ≤ 3
@@ -3678,7 +3680,7 @@ lemma rc_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
           have hrho : rho.im = Real.sqrt 3 / 2 := by
             unfold rho; simp [add_im, neg_im, ofReal_im, mul_im, I_re, I_im, div_ofNat_im]
           rw [hi, hrho]
-          nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+          nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num), sq_nonneg (2 - Real.sqrt 3)]
         intro h_eq; linarith [ref_Y₀_gt_one]
       · push_neg at ht3
         by_cases ht4 : t ≤ 4
@@ -3686,10 +3688,13 @@ lemma rc_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
           right; rw [hw_im]
           have hfd_im : (fdPolygon t).im =
               Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) := by
-            simp only [fdPolygon, not_le.mpr ht1, not_le.mpr ht2, not_le.mpr ht3, ht4,
-              ↓reduceIte, add_im, neg_im, ofReal_im, mul_im, I_re, mul_zero,
-              I_im, mul_one, add_zero, one_im, div_ofNat_im, ofReal_re]
-            push_cast; ring
+            simp only [fdPolygon, not_le.mpr ht1, not_le.mpr ht2, not_le.mpr ht3, ht4, ↓reduceIte]
+            have heq : (-1/2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) *
+                (↑H_height - ↑(Real.sqrt 3) / 2)) * I) =
+              ↑(-1/2 : ℝ) + ↑(Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I := by
+              push_cast; ring
+            rw [heq, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im,
+              mul_one, mul_zero, add_zero, zero_add]
           have hdenom_pos : H_height - Real.sqrt 3 / 2 > 0 := by unfold H_height; linarith
           intro h_eq
           have him_eq : (fdPolygon t).im = ref_Y₀ := by linarith
@@ -3704,21 +3709,201 @@ lemma rc_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
           right; rw [hw_im]
           have hfd_im : (fdPolygon t).im = H_height := by
             simp only [fdPolygon, not_le.mpr ht1, not_le.mpr ht2, not_le.mpr ht3,
-              not_le.mpr ht4, ↓reduceIte, add_im, ofReal_im, mul_im,
-              I_re, mul_zero, I_im, mul_one, add_zero, sub_im, ofReal_re, div_ofNat_im]
-            push_cast; ring
+              not_le.mpr ht4, ↓reduceIte]
+            have heq : ((↑t - 9/2) + ↑H_height * I) = ↑(t - 9/2 : ℝ) + ↑H_height * I := by
+              push_cast; ring
+            rw [heq, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im,
+              mul_one, mul_zero, add_zero, zero_add]
           linarith [ref_Y₀_lt_H]
+
+/-- fdPolygon t - ref_p₀ is in slitPlane for t ∈ [0, 5] with t ≠ tL ref_p₀.
+    Extracted from the proof of rc_sub_ref_p₀_mem_slitPlane. -/
+lemma fdPolygon_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
+    (htL : t ≠ tL ref_p₀) :
+    fdPolygon t - ref_p₀ ∈ Complex.slitPlane := by
+  have hw := rc_sub_ref_p₀_mem_slitPlane t ht htL
+  set w := fdPolygon t - ref_p₀ with hw_def
+  have hz_ne : fdPolygon t ≠ ref_p₀ :=
+    fdPolygon_avoids_interior ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t ht
+  have hw_ne : w ≠ 0 := sub_ne_zero.mpr hz_ne
+  have hnorm_pos : (0 : ℝ) < ‖w‖ := norm_pos_iff.mpr hw_ne
+  have hrc_eq : fdPolygonRadialCircle ref_p₀ t - ref_p₀ = w / ↑‖w‖ := by
+    unfold fdPolygonRadialCircle polygonToCircleRadial
+    simp only [sub_self, zero_mul, zero_add, one_smul]; ring
+  rw [hrc_eq] at hw
+  simp only [Complex.slitPlane, Set.mem_setOf_eq] at hw ⊢
+  rcases hw with hre | him
+  · left
+    rw [Complex.div_ofReal_re] at hre
+    exact (div_pos_iff.mp hre).elim (fun h => h.1)
+      (fun h => absurd h.2 (not_lt.mpr (le_of_lt hnorm_pos)))
+  · right
+    rw [Complex.div_ofReal_im] at him
+    exact fun h => him (div_eq_zero_iff.mpr (Or.inl h))
+
+/-- w = fdPolygon · - ref_p₀ is continuous. -/
+private lemma continuous_w : Continuous (fun t => fdPolygon t - ref_p₀) :=
+  fdPolygon_continuous.sub continuous_const
+
+/-- arg ∘ w is continuous on Icc 0 5 \ {tL ref_p₀}. -/
+private lemma continuousOn_arg_w :
+    ContinuousOn (fun t => Complex.arg (fdPolygon t - ref_p₀))
+      (Icc 0 5 \ {tL ref_p₀}) :=
+  ContinuousOn.comp Complex.continuousOn_arg continuous_w.continuousOn
+    (fun t ht => fdPolygon_sub_ref_p₀_mem_slitPlane t ht.1
+      (Set.not_mem_singleton_iff.mp ht.2))
+
+/-- At tL: w has re < 0 and im = 0. -/
+private lemma w_tL_re_neg : (fdPolygon (tL ref_p₀) - ref_p₀).re < 0 :=
+  (seg4_vec_at_tL ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im).1
+
+private lemma w_tL_im_zero : (fdPolygon (tL ref_p₀) - ref_p₀).im = 0 :=
+  (seg4_vec_at_tL ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im).2
+
+/-- For t near tL from below, w(t).im < 0. -/
+private lemma w_im_neg_near_tL_left :
+    ∀ᶠ t in 𝓝[Iio (tL ref_p₀)] (tL ref_p₀),
+      (fdPolygon t - ref_p₀).im < 0 := by
+  have htL := tL_mem_Ioo ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
+  exact Filter.mem_of_superset (Ioo_mem_nhdsLT htL.1) fun t ht =>
+    (seg4_vec_im_sign ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im t
+      ⟨ht.1, by linarith [ht.2, htL.2]⟩).1 ht.2
+
+/-- For t near tL from above, w(t).im > 0. -/
+private lemma w_im_pos_near_tL_right :
+    ∀ᶠ t in 𝓝[Ioi (tL ref_p₀)] (tL ref_p₀),
+      0 < (fdPolygon t - ref_p₀).im := by
+  have htL := tL_mem_Ioo ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
+  apply Filter.mem_of_superset (Ioo_mem_nhdsGT htL.2)
+  intro t ht
+  have ht_Ioc : t ∈ Set.Ioc (3:ℝ) 4 := ⟨by linarith [ht.1, htL.1], by linarith [ht.2]⟩
+  exact (seg4_vec_im_sign ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
+    t ht_Ioc).2.2 ht.1
+
+/-- Tendsto arg(w(t)) from the left of tL to -π. -/
+private lemma tendsto_arg_w_left :
+    Tendsto (fun t => Complex.arg (fdPolygon t - ref_p₀))
+      (𝓝[Iio (tL ref_p₀)] (tL ref_p₀)) (𝓝 (-Real.pi)) := by
+  exact (Complex.tendsto_arg_nhdsWithin_im_neg_of_re_neg_of_im_zero
+    w_tL_re_neg w_tL_im_zero).comp
+    (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+      continuous_w.continuousAt.continuousWithinAt w_im_neg_near_tL_left)
+
+/-- Tendsto arg(w(t)) from the right of tL to π. -/
+private lemma tendsto_arg_w_right :
+    Tendsto (fun t => Complex.arg (fdPolygon t - ref_p₀))
+      (𝓝[Ioi (tL ref_p₀)] (tL ref_p₀)) (𝓝 Real.pi) := by
+  exact (Complex.tendsto_arg_nhdsWithin_im_nonneg_of_re_neg_of_im_zero
+    w_tL_re_neg w_tL_im_zero).comp
+    (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+      continuous_w.continuousAt.continuousWithinAt
+      (w_im_pos_near_tL_right.mono (fun t ht => le_of_lt ht)))
 
 /-- The lifted angle function θ_L is continuous on [0, 5] for the reference point ref_p₀.
     This is the KEY lemma enabling the FTC approach.
     At the branch cut crossing tL, θ_L(tL) = -π, and both left/right limits are -π. -/
 lemma angle_lifted_ref_p₀_continuousOn :
     ContinuousOn (fun t => (fdPolygonRadialCircle_angle_lifted ref_p₀ t : ℂ)) (Icc 0 5) := by
-  -- θ_L(t) = if t < tL then arg(w(t)) else arg(w(t)) - 2π
-  -- where w(t) = fdPolygon(t) - ref_p₀
-  -- Continuous on [0, tL) and (tL, 5] since arg is continuous on slitPlane.
-  -- Continuous at tL: left limit = -π, value = π - 2π = -π, right limit = π - 2π = -π.
-  sorry
+  set T := tL ref_p₀
+  have htL := tL_mem_Ioo ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
+  -- Rewrite as an if-then-else
+  have hfun_eq : (fun t => (fdPolygonRadialCircle_angle_lifted ref_p₀ t : ℂ)) =
+      fun t => if t < T then ↑(Complex.arg (fdPolygon t - ref_p₀))
+        else ↑(Complex.arg (fdPolygon t - ref_p₀) - 2 * Real.pi) := by
+    ext t; simp only [fdPolygonRadialCircle_angle_lifted]; split_ifs <;> rfl
+  rw [hfun_eq]
+  -- The target value at the boundary tL is -π
+  have hval_at_T : ↑(Complex.arg (fdPolygon T - ref_p₀) - 2 * Real.pi) = (↑(-Real.pi) : ℂ) := by
+    congr 1
+    rw [arg_at_tL_eq_pi ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im]; ring
+  -- Use ContinuousOn.if' with predicate (· < T)
+  apply ContinuousOn.if'
+  · -- At tL: f (= arg(w)) tends to -π from the left
+    intro a ha
+    have ha_eq : a = T := by
+      have h := ha.2; change a ∈ frontier (Iio T) at h
+      rw [frontier_Iio, Set.mem_singleton_iff] at h; exact h
+    subst ha_eq
+    rw [if_neg (lt_irrefl T), hval_at_T]
+    apply Filter.Tendsto.mono_left _ (nhdsWithin_mono _ Set.inter_subset_right)
+    exact Complex.continuous_ofReal.continuousAt.tendsto.comp tendsto_arg_w_left
+  · -- At tL: g (= arg(w) - 2π) tends to -π from the right
+    intro a ha
+    have ha_eq : a = T := by
+      have h := ha.2; change a ∈ frontier (Iio T) at h
+      rw [frontier_Iio, Set.mem_singleton_iff] at h; exact h
+    subst ha_eq
+    rw [if_neg (lt_irrefl T), hval_at_T]
+    apply Filter.Tendsto.mono_left _ (nhdsWithin_mono _ Set.inter_subset_right)
+    have hset_eq : {t : ℝ | ¬t < T} = Ici T := by ext; simp [not_lt]
+    rw [hset_eq]
+    -- Build h_arg_right: arg(w(t)) → π within Ici T
+    have hIci_eq : Ici T = {T} ∪ Ioi T := by ext; simp [le_iff_lt_or_eq, or_comm]
+    have h_arg_right : Tendsto (fun t => Complex.arg (fdPolygon t - ref_p₀))
+        (𝓝[Ici T] T) (𝓝 Real.pi) := by
+      rw [hIci_eq, nhdsWithin_union]
+      exact Filter.tendsto_sup.mpr ⟨by
+        rw [nhdsWithin_singleton, Filter.tendsto_pure_left]
+        intro s hs
+        rw [arg_at_tL_eq_pi ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im]
+        exact mem_of_mem_nhds hs, tendsto_arg_w_right⟩
+    -- Compose: ofReal(arg(w(t)) - 2π) → ofReal(π - 2π) = ofReal(-π)
+    have hcomp_fun : (fun t => (↑(Complex.arg (fdPolygon t - ref_p₀) - 2 * Real.pi) : ℂ)) =
+        (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ)) ∘
+        (fun t => Complex.arg (fdPolygon t - ref_p₀)) := by ext; simp
+    rw [hcomp_fun]
+    have h_outer : Tendsto (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ))
+        (𝓝 Real.pi) (𝓝 ↑(-Real.pi : ℝ)) := by
+      have : ↑(-Real.pi : ℝ) = (↑(Real.pi - 2 * Real.pi) : ℂ) := by push_cast; ring
+      rw [this]
+      exact (Complex.continuous_ofReal.comp (continuous_sub_right (2 * Real.pi))).continuousAt.tendsto
+    exact h_outer.comp h_arg_right
+  · -- f = ↑(arg(w)) is continuous on Icc 0 5 ∩ Iio T
+    apply ContinuousOn.comp Complex.continuous_ofReal.continuousOn
+    · exact continuousOn_arg_w.mono (fun t ⟨ht, htT⟩ =>
+        ⟨ht, fun h => (ne_of_lt htT) (Set.mem_singleton_iff.mp h)⟩)
+    · exact Set.mapsTo_image _ _
+  · -- g = ↑(arg(w) - 2π) is continuous on Icc 0 5 ∩ {t | ¬t < T}
+    show ContinuousOn (fun t => (↑(Complex.arg (fdPolygon t - ref_p₀) - 2 * Real.pi) : ℂ))
+        (Icc 0 5 ∩ {t | ¬t < T})
+    intro t ⟨ht, ht_ge⟩
+    simp only [not_lt] at ht_ge  -- ht_ge : T ≤ t
+    by_cases htT : t = T
+    · -- At t = T: use the right limit
+      subst htT
+      rw [ContinuousWithinAt, hval_at_T]
+      apply Filter.Tendsto.mono_left _ (nhdsWithin_mono _ (fun x hx => hx.2))
+      have hset_eq : {t : ℝ | ¬t < T} = Ici T := by ext; simp [not_lt]
+      rw [hset_eq]
+      have hIci_eq : Ici T = {T} ∪ Ioi T := by ext; simp [le_iff_lt_or_eq, or_comm]
+      have h_arg_right : Tendsto (fun t => Complex.arg (fdPolygon t - ref_p₀))
+          (𝓝[Ici T] T) (𝓝 Real.pi) := by
+        rw [hIci_eq, nhdsWithin_union]
+        exact Filter.tendsto_sup.mpr ⟨by
+          rw [nhdsWithin_singleton, Filter.tendsto_pure_left]
+          intro s hs
+          rw [arg_at_tL_eq_pi ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im]
+          exact mem_of_mem_nhds hs, tendsto_arg_w_right⟩
+      have hcomp_fun : (fun t => (↑(Complex.arg (fdPolygon t - ref_p₀) - 2 * Real.pi) : ℂ)) =
+          (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ)) ∘
+          (fun t => Complex.arg (fdPolygon t - ref_p₀)) := by ext; simp
+      rw [hcomp_fun]
+      have h_outer : Tendsto (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ))
+          (𝓝 Real.pi) (𝓝 ↑(-Real.pi : ℝ)) := by
+        have : ↑(-Real.pi : ℝ) = (↑(Real.pi - 2 * Real.pi) : ℂ) := by push_cast; ring
+        rw [this]
+        exact (Complex.continuous_ofReal.comp (continuous_sub_right (2 * Real.pi))).continuousAt.tendsto
+      exact h_outer.comp h_arg_right
+    · -- At t ≠ T (so t > T): arg(w(t)) is continuous since w(t) ∈ slitPlane
+      have h_slit : fdPolygon t - ref_p₀ ∈ Complex.slitPlane :=
+        fdPolygon_sub_ref_p₀_mem_slitPlane t ht htT
+      apply ContinuousWithinAt.mono _ Set.inter_subset_left
+      have h_w_cont : ContinuousAt (fun t => fdPolygon t - ref_p₀) t :=
+        continuous_w.continuousAt
+      have h_arg_cont : ContinuousAt (fun t => Complex.arg (fdPolygon t - ref_p₀)) t :=
+        (Complex.continuousAt_arg h_slit).comp h_w_cont (f := fun t => fdPolygon t - ref_p₀)
+      exact Complex.continuous_ofReal.continuousAt.comp_continuousWithinAt
+        (h_arg_cont.continuousWithinAt.sub continuousWithinAt_const)
 
 /-- The S¹ integral for the radial circle around ref_p₀ equals -2πI.
     Uses FTC with countable exceptions via Complex.log chain rule. -/
@@ -3755,11 +3940,127 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
     -- HasDerivAt (log ∘ (rc - ref)) ((rc - ref)⁻¹ * deriv rc) t
     -- Since F differs from log(rc - ref) by a constant in a neighborhood of t,
     -- HasDerivAt F = HasDerivAt (log ∘ (rc - ref)) = (rc - ref)⁻¹ * deriv rc
-    sorry
+    -- Step A: rc is differentiable at t (off partition points)
+    have ht_not_P : t ∉ ({1, 2, 3, 4} : Finset ℝ) := by
+      simp only [Finset.mem_insert, Finset.mem_singleton, not_or]
+      exact ⟨ht1, ht2, ht3, ht4⟩
+    have hrc_diff : DifferentiableAt ℝ rc t := by
+      show DifferentiableAt ℝ (fun t' => polygonToCircleRadial ref_p₀ (t', 1)) t
+      exact polygonToCircleRadial_differentiable_off_partition ref_p₀ ref_p₀_norm ref_p₀_re
+        ref_p₀_im t ht ht_not_P 1 ⟨by norm_num, le_refl 1⟩
+    -- Step B: HasDerivAt for (rc · - ref_p₀) with derivative = deriv rc t
+    have hrc_hasderiv : HasDerivAt (fun t' => rc t' - ref_p₀) (deriv rc t) t := by
+      exact hrc_diff.hasDerivAt.sub_const ref_p₀
+    -- Step C: rc t - ref_p₀ ∈ slitPlane
+    have ht_Icc : t ∈ Icc (0:ℝ) 5 := Ioo_subset_Icc_self ht
+    have h_slit : rc t - ref_p₀ ∈ Complex.slitPlane :=
+      rc_sub_ref_p₀_mem_slitPlane t ht_Icc htL
+    -- Step D: Chain rule: HasDerivAt (Complex.log ∘ (rc · - ref_p₀)) ((rc t - ref_p₀)⁻¹ * deriv rc t) t
+    have h_log_deriv : HasDerivAt (fun t' => Complex.log (rc t' - ref_p₀))
+        ((rc t - ref_p₀)⁻¹ * deriv rc t) t := by
+      have h_comp := (Complex.hasDerivAt_log h_slit).scomp t hrc_hasderiv
+      rw [Function.comp_def] at h_comp
+      exact h_comp.congr_deriv (by rw [smul_eq_mul, mul_comm])
+    -- Step E: Show F =ᶠ[𝓝 t] (fun t' => Complex.log(rc t' - ref_p₀) + C)
+    -- where C = 0 if t < tL, C = -2πI if t > tL
+    -- Key relationships:
+    -- (i) ‖rc t' - ref_p₀‖ = 1 for t' ∈ [0,5] (unit circle)
+    -- (ii) Complex.log(rc t' - ref_p₀) = I * arg(fdPolygon t' - ref_p₀) (from ‖·‖ = 1)
+    -- (iii) θ_L(t') = arg(fdPolygon t' - ref_p₀) or arg(fdPolygon t' - ref_p₀) - 2π
+    -- (iv) F(t') = I * θ_L(t') = Complex.log(rc t' - ref_p₀) + 0 or - 2πI
+    -- First, establish the log = I * arg identity for points on [0,5] \ {tL}
+    have log_eq_I_arg : ∀ t' ∈ Icc (0:ℝ) 5, fdPolygon t' ≠ ref_p₀ →
+        Complex.log (rc t' - ref_p₀) =
+        I * ↑(Complex.arg (fdPolygon t' - ref_p₀)) := by
+      intro t' ht' hne
+      have hw_ne : fdPolygon t' - ref_p₀ ≠ 0 := sub_ne_zero.mpr hne
+      have hnorm_pos : (0 : ℝ) < ‖fdPolygon t' - ref_p₀‖ := norm_pos_iff.mpr hw_ne
+      -- rc t' - ref_p₀ = (fdPolygon t' - ref_p₀) / ‖fdPolygon t' - ref_p₀‖
+      have hrc_sub : rc t' - ref_p₀ = (fdPolygon t' - ref_p₀) / ↑‖fdPolygon t' - ref_p₀‖ := by
+        simp only [hrc, fdPolygonRadialCircle, polygonToCircleRadial]
+        simp only [sub_self, zero_mul, zero_add, one_smul, add_sub_cancel_left]
+      -- ‖rc t' - ref_p₀‖ = 1
+      have hnorm_one : ‖rc t' - ref_p₀‖ = 1 :=
+        fdPolygonRadialCircle_dist ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t' ht'
+      -- Complex.log z = ↑(Real.log ‖z‖) + ↑(arg z) * I
+      rw [Complex.log]
+      -- With ‖rc t' - ref_p₀‖ = 1: Real.log 1 = 0
+      rw [hnorm_one, Real.log_one, Complex.ofReal_zero, zero_add]
+      -- arg(rc t' - ref_p₀) = arg(fdPolygon t' - ref_p₀) (normalization preserves arg)
+      rw [hrc_sub, arg_normalize_eq _ hw_ne]
+      ring
+    -- Now split on whether t < tL or t > tL
+    have htL_Ioo := tL_mem_Ioo ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
+    by_cases h_lt_tL : t < tL ref_p₀
+    · -- Case t < tL: θ_L(t') = arg(fdPolygon t' - ref_p₀), so F = log(rc · - ref_p₀)
+      have hF_eq_log : F =ᶠ[𝓝 t] (fun t' => Complex.log (rc t' - ref_p₀)) := by
+        -- In a neighborhood of t: t' < tL and t' ∈ (0, 5)
+        have h_ev_lt : ∀ᶠ t' in 𝓝 t, t' < tL ref_p₀ := eventually_lt_nhds h_lt_tL
+        have h_ev_pos : ∀ᶠ t' in 𝓝 t, 0 < t' := eventually_gt_nhds ht.1
+        have h_ev_lt5 : ∀ᶠ t' in 𝓝 t, t' < 5 := eventually_lt_nhds ht.2
+        filter_upwards [h_ev_lt, h_ev_pos, h_ev_lt5] with t' ht'_lt ht'_pos ht'_lt5
+        have ht'_Icc : t' ∈ Icc (0:ℝ) 5 := ⟨le_of_lt ht'_pos, le_of_lt ht'_lt5⟩
+        have hne : fdPolygon t' ≠ ref_p₀ :=
+          fdPolygon_avoids_interior ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t' ht'_Icc
+        show I * ↑(θ_L t') = Complex.log (rc t' - ref_p₀)
+        simp only [hθ_L, fdPolygonRadialCircle_angle_lifted, ht'_lt, ↓reduceIte]
+        exact (log_eq_I_arg t' ht'_Icc hne).symm
+      exact h_log_deriv.congr_of_eventuallyEq hF_eq_log
+    · -- Case t ≥ tL (and t ≠ tL, so t > tL): F = log(rc · - ref_p₀) - 2πI
+      push_neg at h_lt_tL -- h_lt_tL : tL ref_p₀ ≤ t
+      have h_gt_tL : tL ref_p₀ < t := lt_of_le_of_ne h_lt_tL (Ne.symm htL)
+      -- F = (log ∘ (rc · - ref_p₀)) + (-2πI), so HasDerivAt F = HasDerivAt (log ∘ ...)
+      have h_log_const : HasDerivAt (fun t' => Complex.log (rc t' - ref_p₀) +
+          (-2 * ↑Real.pi * I)) ((rc t - ref_p₀)⁻¹ * deriv rc t) t :=
+        h_log_deriv.add_const _
+      have hF_eq_log_shift : F =ᶠ[𝓝 t] (fun t' => Complex.log (rc t' - ref_p₀) +
+          (-2 * ↑Real.pi * I)) := by
+        have h_ev_gt : ∀ᶠ t' in 𝓝 t, tL ref_p₀ < t' := eventually_gt_nhds h_gt_tL
+        have h_ev_pos : ∀ᶠ t' in 𝓝 t, 0 < t' := eventually_gt_nhds ht.1
+        have h_ev_lt5 : ∀ᶠ t' in 𝓝 t, t' < 5 := eventually_lt_nhds ht.2
+        filter_upwards [h_ev_gt, h_ev_pos, h_ev_lt5] with t' ht'_gt ht'_pos ht'_lt5
+        have ht'_Icc : t' ∈ Icc (0:ℝ) 5 := ⟨le_of_lt ht'_pos, le_of_lt ht'_lt5⟩
+        have hne : fdPolygon t' ≠ ref_p₀ :=
+          fdPolygon_avoids_interior ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t' ht'_Icc
+        show I * ↑(θ_L t') = Complex.log (rc t' - ref_p₀) + (-2 * ↑Real.pi * I)
+        simp only [hθ_L, fdPolygonRadialCircle_angle_lifted, show ¬t' < tL ref_p₀ from not_lt.mpr (le_of_lt ht'_gt), ↓reduceIte]
+        rw [log_eq_I_arg t' ht'_Icc hne]
+        push_cast; ring
+      exact h_log_const.congr_of_eventuallyEq hF_eq_log_shift
   -- Step 4: Integrand is interval-integrable
   have h_int : IntervalIntegrable
       (fun t => (rc t - ref_p₀)⁻¹ * deriv rc t) volume 0 5 := by
-    sorry
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+    -- Get bound M on ‖deriv rc t‖ for all t ∈ [0,5]
+    obtain ⟨M, hM⟩ := polygonToCircleRadial_deriv_bounded ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im
+    -- The integrand is bounded by M on Icc 0 5
+    have h_bound : ∀ t ∈ Icc (0:ℝ) 5,
+        ‖(rc t - ref_p₀)⁻¹ * deriv rc t‖ ≤ M := by
+      intro t ht
+      have h1 : ‖rc t - ref_p₀‖ = 1 :=
+        fdPolygonRadialCircle_dist ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t ht
+      rw [norm_mul, norm_inv, h1, inv_one, one_mul]
+      exact hM t ht 1 (right_mem_Icc.mpr zero_le_one)
+    -- Show the integrand is AEStronglyMeasurable on Ioc 0 5
+    have h_meas : AEStronglyMeasurable (fun t => (rc t - ref_p₀)⁻¹ * deriv rc t)
+        (volume.restrict (Ioc 0 5)) := by
+      -- Factor 1: (rc · - ref_p₀)⁻¹ is measurable (rc is continuous, inv is measurable)
+      have hrc_cont : Continuous rc := by
+        show Continuous (fun t => polygonToCircleRadial ref_p₀ (t, 1))
+        exact (polygonToCircleRadial_continuous ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im).comp
+          (continuous_id.prodMk continuous_const)
+      have h_inv_factor : AEStronglyMeasurable (fun t => (rc t - ref_p₀)⁻¹)
+          (volume.restrict (Ioc 0 5)) :=
+        (((measurable_inv.comp (hrc_cont.sub continuous_const).measurable).stronglyMeasurable).aestronglyMeasurable).restrict
+      -- Factor 2: deriv rc is AEStronglyMeasurable
+      have h_deriv_factor : AEStronglyMeasurable (fun t => deriv rc t)
+          (volume.restrict (Ioc 0 5)) :=
+        (aestronglyMeasurable_deriv rc volume).restrict
+      exact h_inv_factor.mul h_deriv_factor
+    -- Apply IntegrableOn.of_bound with the uniform bound M
+    exact IntegrableOn.of_bound measure_Ioc_lt_top h_meas M
+      (by filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+          exact h_bound t (Ioc_subset_Icc_self ht))
   -- Step 5: Apply FTC with countable exceptions
   have h_countable : ({1, 2, 3, tL ref_p₀, 4} : Set ℝ).Countable :=
     Set.Finite.countable (Set.Finite.insert _ (Set.Finite.insert _ (Set.Finite.insert _
@@ -5946,6 +6247,11 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
 
   -- Combine: winding(fdBoundary) = winding(fdPolygon) = winding(circleParamCW) = -1
   rw [h_wind_eq1, h_wind_eq2, h_circle]
+
+#print axioms generalizedWindingNumber_fdBoundary_eq_neg_one
+
+end RectHomotopyProof
+
 
 /-!
 ## CURRENT STATUS (2026-02-05, updated for CLOCKWISE orientation)

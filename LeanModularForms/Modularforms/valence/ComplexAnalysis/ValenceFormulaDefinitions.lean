@@ -32,6 +32,19 @@ def fundamentalDomain : Set UpperHalfPlane :=
 
 notation "𝒟'" => fundamentalDomain
 
+/-- The canonical fundamental domain with half-open edges.
+    Left edge included (Re = -1/2), right edge excluded (Re = 1/2).
+    Avoids T-equivalent duplicates: ρ ∈ 𝒟c but ρ+1 ∉ 𝒟c. -/
+def fundamentalDomainCanonical : Set UpperHalfPlane :=
+  {z : UpperHalfPlane | (-1/2 ≤ z.re ∧ z.re < 1/2) ∧ ‖(z : ℂ)‖ ≥ 1}
+
+notation "𝒟c" => fundamentalDomainCanonical
+
+/-- The canonical FD is a subset of the standard FD. -/
+theorem fundamentalDomainCanonical_subset_fundamentalDomain : 𝒟c ⊆ 𝒟' :=
+  fun _ ⟨⟨hre_left, hre_right⟩, hnorm⟩ =>
+    ⟨abs_le.mpr ⟨by linarith, le_of_lt hre_right⟩, hnorm⟩
+
 /-! ## Elliptic Points -/
 
 /-- The elliptic point i as an element of ℍ. -/
@@ -110,6 +123,43 @@ theorem ellipticPoint_rho_mem_fd' : ellipticPoint_rho' ∈ 𝒟' := by
       show Real.sqrt (Complex.normSq _) = 1; rw [h_normSq, Real.sqrt_one]
     show ‖(-1/2 + (Real.sqrt 3 / 2) * I : ℂ)‖ ≥ 1
     rw [h_norm]
+
+/-! ## Canonical FD Membership -/
+
+/-- The elliptic point i is in the canonical fundamental domain. -/
+theorem ellipticPoint_i_mem_fundamentalDomainCanonical : ellipticPoint_i' ∈ 𝒟c := by
+  simp only [fundamentalDomainCanonical, ellipticPoint_i', mem_setOf_eq]
+  constructor
+  · constructor <;> simp only [UpperHalfPlane.re] <;> norm_num
+  · simp
+
+/-- The elliptic point ρ is in the canonical fundamental domain. -/
+theorem ellipticPoint_rho_mem_fundamentalDomainCanonical : ellipticPoint_rho' ∈ 𝒟c := by
+  simp only [fundamentalDomainCanonical, ellipticPoint_rho', mem_setOf_eq]
+  constructor
+  · constructor <;> simp only [UpperHalfPlane.re] <;> norm_num
+  · -- ‖ρ‖ = 1 ≥ 1 (reuse normSq computation)
+    have h_normSq : Complex.normSq (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1 := by
+      have h1 : (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
+          ((-1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
+      rw [h1, Complex.normSq_add_mul_I]
+      have h2 : (-1/2 : ℝ)^2 = 1/4 := by ring
+      have h3 : (Real.sqrt 3 / 2)^2 = 3/4 := by
+        rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]; norm_num
+      rw [h2, h3]; ring
+    have h_norm : ‖(-1/2 + (Real.sqrt 3 / 2) * I : ℂ)‖ = 1 := by
+      show Real.sqrt (Complex.normSq _) = 1; rw [h_normSq, Real.sqrt_one]
+    show ‖(-1/2 + (Real.sqrt 3 / 2) * I : ℂ)‖ ≥ 1
+    rw [h_norm]
+
+/-- The elliptic point ρ+1 is NOT in the canonical fundamental domain
+    (its real part is 1/2, which violates the strict upper bound). -/
+theorem ellipticPoint_rho_plus_one_not_mem_fundamentalDomainCanonical :
+    ellipticPoint_rho_plus_one' ∉ 𝒟c := by
+  simp only [fundamentalDomainCanonical, ellipticPoint_rho_plus_one', mem_setOf_eq, not_and]
+  intro ⟨_, hre_right⟩
+  simp only [UpperHalfPlane.re] at hre_right
+  norm_num at hre_right
 
 /-! ## Orbifold Coefficients -/
 

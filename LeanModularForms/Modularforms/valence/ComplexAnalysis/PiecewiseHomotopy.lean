@@ -661,258 +661,12 @@ lemma windingNumber_integer_of_piecewise_closed_avoiding
     (hγ_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ γ t)
     (hγ_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ → (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo a b →
       ContinuousOn (deriv γ) (Ioo p₁ p₂))
-    (hγ_avoids : ∀ t ∈ Icc a b, γ t ≠ z₀) :
+    (hγ_avoids : ∀ t ∈ Icc a b, γ t ≠ z₀)
+    (hγ_deriv_bound_ex : ∃ M, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M) :
     ∃ n : ℤ, generalizedWindingNumber' γ a b z₀ = n := by
-  -- INTEGER-VALUEDNESS FOR PIECEWISE CLOSED CURVES (EXP TRICK)
-  --
-  -- The mathematical argument:
-  -- 1. Define F(t) = ∫ₐᵗ γ'(s)/(γ(s)-z₀) ds
-  -- 2. Define G(t) = (γ(t) - z₀) · exp(-F(t))
-  -- 3. Show G' = 0 on (a, b) \ P (where P is the finite partition set)
-  -- 4. G is continuous everywhere (γ continuous, F continuous as integral)
-  -- 5. Continuous + G' = 0 on each open piece ⇒ G constant on each piece
-  -- 6. By continuity at partition points, G is globally constant
-  -- 7. G(a) = G(b), and since γ(a) = γ(b), we get exp(-F(b)) = 1
-  -- 8. Hence F(b) = 2πi·n for some integer n
-  --
-  -- Step 1: Define the integrand and show it's integrable
-  let integrand : ℝ → ℂ := fun t => deriv γ t / (γ t - z₀)
-  -- The integrand is bounded since γ avoids z₀ (continuous on compact ⇒ bounded away)
-  have h_bound_away : ∃ δ > 0, ∀ t ∈ Icc a b, δ ≤ ‖γ t - z₀‖ := by
-    -- Image of γ is compact and doesn't contain z₀
-    have h_compact : IsCompact (γ '' Icc a b) := isCompact_Icc.image_of_continuousOn hγ_cont
-    have h_nonempty : (γ '' Icc a b).Nonempty := Set.image_nonempty.mpr (nonempty_Icc.mpr (le_of_lt hab))
-    have hz₀_notin : z₀ ∉ γ '' Icc a b := by
-      intro ⟨t, ht, heq⟩
-      exact hγ_avoids t ht heq
-    have hδ : 0 < Metric.infDist z₀ (γ '' Icc a b) :=
-      (h_compact.isClosed.notMem_iff_infDist_pos h_nonempty).mp hz₀_notin
-    use Metric.infDist z₀ (γ '' Icc a b), hδ
-    intro t ht
-    have hmem : γ t ∈ γ '' Icc a b := mem_image_of_mem γ ht
-    calc Metric.infDist z₀ (γ '' Icc a b) ≤ dist z₀ (γ t) := Metric.infDist_le_dist_of_mem hmem
-      _ = ‖γ t - z₀‖ := by rw [Complex.dist_eq, norm_sub_rev]
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ := h_bound_away
-  -- Step 2: Define F(t) = ∫ₐᵗ γ'(s)/(γ(s)-z₀) ds
-  let F : ℝ → ℂ := fun t => ∫ s in a..t, integrand s
-  -- Step 3: Define G(t) = (γ(t) - z₀) · exp(-F(t))
-  let G : ℝ → ℂ := fun t => (γ t - z₀) * Complex.exp (-F t)
-  -- Step 4: Show F(a) = 0
-  have hFa : F a = 0 := intervalIntegral.integral_same
-  -- Step 5: Show G(a) = γ(a) - z₀
-  have hGa : G a = γ a - z₀ := by
-    simp only [G, hFa, neg_zero, Complex.exp_zero, mul_one]
-  -- Step 6: The key claim: G is constant on [a, b]
-  -- We prove this using: G continuous + G' = 0 on each open piece ⇒ G constant
-  have hG_const : ∀ t ∈ Icc a b, G t = G a := by
-    -- PROOF STRATEGY:
-    -- G is continuous on [a, b] and G' = 0 on (a, b) \ P where P is a finite set.
-    -- We use constant_of_has_deriv_right_zero combined with hasDerivWithinAt_zero_of_deriv_zero_off_finite.
-    --
-    -- Step 1: Show G is continuous on [a, b]
-    -- G = (γ - z₀) * exp(-F) where F is the integral of a bounded function
-    have hG_cont : ContinuousOn G (Icc a b) := by
-      -- G = (γ - z₀) * exp(-F)
-      -- γ is continuous by hypothesis
-      -- exp(-F) is continuous if F is continuous
-      -- F is continuous because the integrand is integrable and bounded a.e.
-      --
-      -- For the integrand: γ'/(γ-z₀)
-      -- - γ' is bounded on each piece (continuous on each open piece)
-      -- - |γ-z₀| ≥ δ by h_bound_away
-      -- So integrand is bounded a.e. on [a, b], hence integrable, hence F is continuous.
-      --
-      -- Technical proof: We need to show IntervalIntegrable and apply continuity_primitive.
-      -- For now, we use the fact that on each piece, the integrand is continuous,
-      -- and F is obtained by summing integrals over pieces.
-      apply ContinuousOn.mul
-      · exact hγ_cont.sub continuousOn_const
-      · -- exp(-F) is continuous if F is continuous
-        apply Continuous.comp_continuousOn Complex.continuous_exp
-        apply ContinuousOn.neg
-        -- F(t) = ∫_a^t integrand is continuous
-        -- This follows from `intervalIntegral.continuousOn_primitive_interval` which requires
-        -- `IntegrableOn integrand (Icc a b)`.
-        --
-        -- The integrability requires showing the integrand is bounded. We have:
-        -- - |γ(t) - z₀| ≥ δ for all t (by h_bound_away)
-        -- - deriv γ is continuous on each open piece (by hγ_deriv_cont)
-        --
-        -- TECHNICAL GAP: To get a global bound on |integrand|, we need deriv γ bounded.
-        -- The hypothesis hγ_deriv_cont only gives continuity on OPEN pieces, not on their
-        -- closures. At partition points, deriv γ might be undefined or unbounded.
-        --
-        -- Resolution: Either add explicit bound hypothesis (use with_bound version),
-        -- or add hypothesis that deriv γ extends continuously to piece closures.
-        sorry
-    -- Step 2: Show G is differentiable on (a, b) \ P with G' = 0
-    have hG_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ G t := by
-      intro t ht ht_not_P
-      -- G = (γ - z₀) * exp(-F)
-      -- At points outside P, γ is differentiable and F is differentiable (FTC)
-      have hγ_diff_t := hγ_diff t ht ht_not_P
-      -- F'(t) = integrand(t) = γ'(t)/(γ(t)-z₀) by FTC
-      -- Need: exp(-F) is differentiable, which it is since F is differentiable
-      -- G is product of two differentiable functions
-      apply DifferentiableAt.mul
-      · exact hγ_diff_t.sub (differentiableAt_const z₀)
-      · apply DifferentiableAt.cexp
-        apply DifferentiableAt.neg
-        -- F is differentiable at t by FTC (since integrand is continuous at t)
-        -- This follows from `intervalIntegral.integral_hasDerivAt_right` which requires:
-        -- 1. IntervalIntegrable integrand volume a t
-        -- 2. ContinuousAt integrand t
-        --
-        -- Condition (2) holds: at t ∉ P, the integrand is continuous (see hγ_deriv_cont).
-        -- Condition (1) requires the same integrability as the F continuity sorry above.
-        --
-        -- TECHNICAL GAP: Same as F continuity - need integrability of integrand.
-        -- HasDerivAt implies DifferentiableAt, so this follows from the next sorry.
-        sorry
-    have hG_deriv : ∀ t ∈ Ioo a b, t ∉ P → deriv G t = 0 := by
-      intro t ht ht_not_P
-      -- G'(t) = γ'(t) * exp(-F(t)) + (γ(t)-z₀) * d/dt[exp(-F(t))]
-      --       = γ'(t) * exp(-F(t)) + (γ(t)-z₀) * (-F'(t)) * exp(-F(t))
-      --       = γ'(t) * exp(-F(t)) - (γ(t)-z₀) * (γ'(t)/(γ(t)-z₀)) * exp(-F(t))
-      --       = γ'(t) * exp(-F(t)) - γ'(t) * exp(-F(t))
-      --       = 0
-      -- This is the standard exp trick calculation.
-      --
-      -- The proof requires:
-      -- 1. F is differentiable at t with F'(t) = integrand(t) = γ'(t)/(γ(t)-z₀)  [FTC]
-      -- 2. G = (γ-z₀) * exp(-F) has derivative by product/chain rule
-      -- 3. Algebraic cancellation shows the derivative is 0
-      have hγ_diff_t := hγ_diff t ht ht_not_P
-      have hne : γ t - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids t (Ioo_subset_Icc_self ht))
-      -- F'(t) = integrand(t) by FTC (requires integrand continuous at t)
-      have hF_deriv : HasDerivAt F (integrand t) t := by
-        -- The integrand γ'/(γ-z₀) is continuous at t since t ∉ P
-        -- Apply FTC: integral_hasDerivAt_right
-        --
-        -- Requirements:
-        -- 1. IntervalIntegrable integrand volume a t
-        -- 2. StronglyMeasurableAtFilter integrand (nhds t) volume
-        -- 3. ContinuousAt integrand t
-        --
-        -- The integrand is continuous at t because:
-        -- - γ is differentiable at t, so deriv γ is defined
-        -- - By hγ_deriv_cont, deriv γ is continuous on a neighborhood of t (t ∉ P)
-        -- - γ - z₀ is continuous and nonzero at t
-        -- - So integrand = deriv γ / (γ - z₀) is continuous at t
-        --
-        -- The IntervalIntegrable part requires the integrand to be integrable on [a, t].
-        -- This follows from: integrand is bounded a.e. (continuous on each piece,
-        -- finitely many pieces, compact domain).
-        --
-        -- TECHNICAL GAP: FTC application requires `IntervalIntegrable integrand volume a t`.
-        -- This is the same integrability condition as the F continuity sorry.
-        --
-        -- To fill this sorry, use `intervalIntegral.integral_hasDerivAt_right` with:
-        -- - IntervalIntegrable: needs bound on integrand (technical gap)
-        -- - StronglyMeasurableAtFilter: follows from continuity at t
-        -- - ContinuousAt: the integrand is continuous at t since t ∉ P
-        --
-        -- Once integrability is established, this sorry can be filled using:
-        -- `exact intervalIntegral.integral_hasDerivAt_right h_int h_meas h_cont`
-        sorry
-      -- G = (γ-z₀) * exp(-F)
-      -- c = γ - z₀, c' = γ'
-      -- d = exp(-F), d' = -integrand * exp(-F)
-      have hc : HasDerivAt (fun t => γ t - z₀) (deriv γ t) t :=
-        hγ_diff_t.hasDerivAt.sub_const z₀
-      have hd : HasDerivAt (fun t => Complex.exp (-F t)) (Complex.exp (-F t) * (-integrand t)) t := by
-        apply HasDerivAt.cexp
-        exact hF_deriv.neg
-      -- G' = c' * d + c * d'
-      --    = (deriv γ t) * exp(-F t) + (γ t - z₀) * (exp(-F t) * (-integrand t))
-      have hG : HasDerivAt G (deriv γ t * Complex.exp (-F t) + (γ t - z₀) * (Complex.exp (-F t) * (-integrand t))) t := by
-        have := hc.mul hd
-        convert this using 1
-      -- The derivative simplifies to 0
-      have h_deriv_zero : deriv γ t * Complex.exp (-F t) + (γ t - z₀) * (Complex.exp (-F t) * (-integrand t)) = 0 := by
-        -- integrand t = deriv γ t / (γ t - z₀)
-        simp only [integrand]
-        -- (γ t - z₀) * (exp(-F t) * (-(deriv γ t / (γ t - z₀))))
-        -- = -(γ t - z₀) * (deriv γ t / (γ t - z₀)) * exp(-F t)
-        -- = -deriv γ t * exp(-F t)
-        field_simp [hne]
-        ring
-      rw [hG.deriv]
-      exact h_deriv_zero
-    -- Step 3: Apply helper lemma + constant_of_has_deriv_right_zero
-    have hG_right_deriv := hasDerivWithinAt_zero_of_deriv_zero_off_finite G a b P hab hG_cont hG_diff hG_deriv
-    exact constant_of_has_deriv_right_zero hG_cont hG_right_deriv
-  -- Step 7: From G constant, derive exp(F(b)) = (γ(b) - z₀)/(γ(a) - z₀) = 1
-  have hGeq : G b = G a := hG_const b (right_mem_Icc.mpr (le_of_lt hab))
-  have hne_a : γ a - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids a (left_mem_Icc.mpr (le_of_lt hab)))
-  have hne_b : γ b - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids b (right_mem_Icc.mpr (le_of_lt hab)))
-  -- From G(b) = G(a): (γ(b) - z₀) * exp(-F(b)) = γ(a) - z₀
-  -- Using γ(a) = γ(b): (γ(a) - z₀) * exp(-F(b)) = γ(a) - z₀
-  -- So exp(-F(b)) = 1, hence F(b) = 2πi·n for some integer n
-  have h_exp_neg : Complex.exp (-F b) = 1 := by
-    -- G b = (γ b - z₀) * exp(-F b) and G a = γ a - z₀
-    -- Since G b = G a and γ a = γ b, we get:
-    -- (γ a - z₀) * exp(-F b) = γ a - z₀
-    have h1 : (γ a - z₀) * Complex.exp (-F b) = γ a - z₀ := by
-      calc (γ a - z₀) * Complex.exp (-F b)
-          = (γ b - z₀) * Complex.exp (-F b) := by rw [hγ_closed]
-        _ = G b := rfl
-        _ = G a := hGeq
-        _ = γ a - z₀ := hGa
-    -- h1 : (γ a - z₀) * exp(-F b) = γ a - z₀
-    -- Since γ a - z₀ ≠ 0, we can divide both sides
-    have h2 : (γ a - z₀) * Complex.exp (-F b) = (γ a - z₀) * 1 := by rw [h1, mul_one]
-    exact mul_left_cancel₀ hne_a h2
-  -- exp(-F(b)) = 1 means -F(b) = 2πi·n, so F(b) = -2πi·n = 2πi·(-n)
-  rw [Complex.exp_eq_one_iff] at h_exp_neg
-  obtain ⟨n, hn⟩ := h_exp_neg
-  -- hn : -F b = n * (2 * π * I)
-  -- So F b = -n * (2 * π * I) = (-n) * (2 * π * I)
-  -- Step 8: The winding number is (2πi)⁻¹ · F(b) = -n
-  use -n
-  unfold generalizedWindingNumber'
-  -- We need to show cauchyPrincipalValue' equals (2πi)⁻¹ · F(b)
-  -- Since γ avoids z₀, the PV integral equals the ordinary integral
-  have h_pv_eq_int : cauchyPrincipalValue' (·⁻¹) (fun t => γ t - z₀) a b 0 =
-      ∫ t in a..b, (γ t - z₀)⁻¹ * deriv γ t := by
-    unfold cauchyPrincipalValue'
-    apply limUnder_eventually_eq_const
-    filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
-    apply intervalIntegral.integral_congr_ae
-    filter_upwards with t
-    intro ht
-    simp only [sub_zero]
-    have ht' : t ∈ Icc a b := by
-      rw [Set.uIoc_of_le (le_of_lt hab)] at ht
-      exact Ioc_subset_Icc_self ht
-    have h_cond : ε < ‖γ t - z₀‖ := by
-      calc ε < δ := (mem_Ioo.mp hε).2
-        _ ≤ ‖γ t - z₀‖ := hδ_bound t ht'
-    simp only [h_cond, ↓reduceIte, deriv_sub_const]
-  rw [h_pv_eq_int]
-  -- The integral equals F(b)
-  have h_int_eq_F : ∫ t in a..b, (γ t - z₀)⁻¹ * deriv γ t = F b := by
-    simp only [F, integrand]
-    congr 1
-    ext t
-    rw [mul_comm, div_eq_mul_inv]
-  rw [h_int_eq_F]
-  -- hn : -F b = n * (2 * π * I)
-  -- So F b = -(n * (2 * π * I))
-  -- And (2πi)⁻¹ * F(b) = (2πi)⁻¹ * (-(n * 2πi)) = -n
-  have hFb : F b = -(↑n * (2 * Real.pi * I)) := by
-    have h := hn  -- -F b = n * (2 * π * I)
-    -- From -F b = n * (2πI), we get F b = -(n * (2πI))
-    calc F b = -(-F b) := by ring
-      _ = -(↑n * (2 * Real.pi * I)) := by rw [h]
-  calc (2 * Real.pi * I)⁻¹ * F b
-      = (2 * Real.pi * I)⁻¹ * (-(↑n * (2 * Real.pi * I))) := by rw [hFb]
-    _ = -(↑n : ℂ) := by
-        have hne : (2 : ℂ) * Real.pi * I ≠ 0 := by
-          simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero,
-            Complex.I_ne_zero, or_self, not_false_eq_true]
-        field_simp
-    _ = ↑(-n) := by simp only [Int.cast_neg]
+  obtain ⟨M, hM⟩ := hγ_deriv_bound_ex
+  exact windingNumber_integer_of_piecewise_closed_avoiding_with_bound
+    γ a b z₀ P M hab hγ_closed hγ_cont hγ_diff hγ_deriv_cont hM hγ_avoids
 
 /-! ## Winding Number Continuity for Piecewise Homotopies -/
 
@@ -955,19 +709,14 @@ lemma windingNumber_continuous_in_param_piecewise
     (H : ℝ × ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (P : Finset ℝ) (hab : a < b)
     (hH_cont : Continuous H)
     (hH_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, H (t, s) ≠ z₀)
-    (_hH_diff : ∀ t ∈ Ioo a b, t ∉ P → ∀ s ∈ Icc (0:ℝ) 1, DifferentiableAt ℝ (fun t' => H (t', s)) t)
-    (_hH_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ → (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo a b →
-      ContinuousOn (fun (p : ℝ × ℝ) => deriv (fun t' => H (t', p.2)) p.1) (Ioo p₁ p₂ ×ˢ Icc 0 1)) :
-    ContinuousOn (fun s => generalizedWindingNumber' (fun t => H (t, s)) a b z₀) (Icc 0 1) := by
-  -- Without an explicit derivative bound, we cannot directly apply
-  -- windingNumber_continuous_in_param_piecewise_with_bound.
-  --
-  -- The bound can be derived from _hH_deriv_cont + compactness, but this requires
-  -- additional work on extending the derivative to the closure.
-  --
-  -- For now, use windingNumber_continuousOn_param_piecewise from the helpers file
-  -- which has the same signature.
-  exact windingNumber_continuousOn_param_piecewise hab hH_cont hH_avoid _hH_diff _hH_deriv_cont
+    (hH_diff : ∀ t ∈ Ioo a b, t ∉ P → ∀ s ∈ Icc (0:ℝ) 1, DifferentiableAt ℝ (fun t' => H (t', s)) t)
+    (hH_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ → (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo a b →
+      ContinuousOn (fun (p : ℝ × ℝ) => deriv (fun t' => H (t', p.2)) p.1) (Ioo p₁ p₂ ×ˢ Icc 0 1))
+    (hH_deriv_bound_ex : ∃ M, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
+      ‖deriv (fun t' => H (t', s)) t‖ ≤ M) :
+    ContinuousOn (fun s => generalizedWindingNumber' (fun t => H (t, s)) a b z₀) (Icc 0 1) :=
+  windingNumber_continuousOn_param_piecewise hab hH_cont hH_avoid hH_diff hH_deriv_cont
+    hH_deriv_bound_ex
 
 /-! ## Homotopy Invariance for Piecewise Curves -/
 
@@ -1029,6 +778,8 @@ theorem windingNumber_eq_of_piecewise_homotopic
       convert h_comp using 1
     · -- Avoids z₀
       exact fun t ht => hH_avoid t ht s hs
+    · -- Derivative bound existence (from homotopy field hM_bound)
+      exact ⟨M, fun t ht => hM_bound t ht s hs⟩
   -- Step 5: Apply continuous_integer_valued_constant
   have heq : n 0 = n 1 := continuous_integer_valued_constant n hn_cont hn_int
   -- Step 6: Relate n(0) and n(1) to the original winding numbers

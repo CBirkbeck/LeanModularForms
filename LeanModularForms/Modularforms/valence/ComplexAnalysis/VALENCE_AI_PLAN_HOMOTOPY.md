@@ -1,19 +1,26 @@
 # Valence Formula – Homotopy Work Plan (Rect/Polygon Path)
 
-**Scope for AI:** finish the homotopy proof used to show
-`generalizedWindingNumber_fdBoundary_eq_one` in
-`ValenceFormula_InteriorWinding.lean` (the split successor of
-`ValenceFormula_Rect_Homotopy.lean`).
+**Status: COMPLETE (Session 92).** The homotopy proof is done.
 
-**Target deliverable (no sorries in this file):**
+`generalizedWindingNumber_fdBoundary_eq_neg_one` is proven sorry-free in
+`ValenceFormula_Rect_Homotopy.lean` (namespaced as `RectHomotopyProof`), bridged
+via `ValenceFormula_InteriorWinding.lean`.
+
+**Delivered theorem (sorry-free, no sorryAx):**
 ```
-theorem generalizedWindingNumber_fdBoundary_eq_one
-  (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
-  generalizedWindingNumber' fdBoundary 0 5 p = 1
+theorem generalizedWindingNumber_fdBoundary_eq_neg_one
+  (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+  (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
+  generalizedWindingNumber' fdBoundary 0 5 p = -1
 ```
 
-**Critical-path note:** this lemma feeds the **core** valence formula via
-`effectiveWinding_eq_windingNumberCoeff'`. Finish this file first.
+**Sign convention:** the result is `-1` (not `+1`) because `fdBoundary` traverses
+the fundamental domain **clockwise** (DOWN-LEFT-UP-RIGHT). This is consistent with
+the downstream `h_winding = -(effectiveWinding ...)` convention.
+
+**Convenience variants (also in InteriorWinding):**
+- `..._eq_neg_one_uhp` for `s : ℍ` (derives `hp_im_pos` from `s.im_pos`)
+- `..._eq_neg_windingCoeff_interior` for non-elliptic interior points
 
 ---
 
@@ -243,7 +250,7 @@ When all Group A/B/C sorries are resolved:
 1. `hH1_deriv_cont` + `hH1_bound` → finish `hhom₁`.
 2. `polygonToCircleRadial_deriv_continuousOn_piece` + bound → finish `hhom₂`.
 3. `h_circle` → get `winding(circleFromPolygon)=1`.
-4. `generalizedWindingNumber_fdBoundary_eq_one` completes.
+4. `generalizedWindingNumber_fdBoundary_eq_neg_one` completes. (**DONE** — Session 92)
 
 ---
 

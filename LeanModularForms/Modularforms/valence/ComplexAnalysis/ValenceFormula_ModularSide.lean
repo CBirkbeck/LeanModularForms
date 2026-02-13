@@ -114,4 +114,26 @@ theorem modular_side_equals_pv_integral (hf : f ≠ 0)
   field_simp
   ring
 
+/-! ## Height Witness Bridge
+
+Infrastructure for passing a generic nonvanishing radius (from CuspHeight) to the
+fixed-radius PV layer. Used when the cusp nonvanishing radius comes from an
+existential choice rather than the fixed `seg5_q_radius`. -/
+
+/-- Bridge from a larger nonvanishing radius to the modular-side identity.
+
+If the cusp function is nonvanishing on `closedBall(0, r)` with `r ≥ seg5_q_radius`,
+the modular-side identity holds. This allows plugging in the existential radius
+from `exists_radius_cusp_nonvanishing` or `exists_height_cusp_nonvanishing`. -/
+theorem modular_side_of_larger_radius (hf : f ≠ 0)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    pv_integral f fdBoundary 0 5 =
+        -(2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) :=
+  modular_side_mult_form f hf hint
+    (fun q hq hq_ne => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq_ne)
+
 end
