@@ -454,6 +454,94 @@ theorem fdPolygon_continuous : Continuous fdPolygon := by
         · apply Continuous.add _ continuous_const
           exact continuous_ofReal.sub continuous_const
 
+/-! ## Imaginary Part Bounds -/
+
+/-- The imaginary part of `fdBoundary t` is positive for all `t ∈ [0, 5]`.
+Each segment maps into the upper half-plane:
+- seg1/seg4: imaginary part is a convex combination of √3/2 and H_height
+- seg2/seg3: imaginary part is sin(θ) for θ ∈ (0, π)
+- seg5: imaginary part is H_height -/
+theorem fdBoundary_im_pos (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    0 < (fdBoundary t).im := by
+  simp only [fdBoundary]
+  split_ifs with h1 h2 h3 h4
+  · -- Seg1: convert to ↑(real) + ↑(real)*I form, then extract .im
+    rw [show (1 / 2 + (↑H_height - ↑t * (↑H_height - ↑(Real.sqrt 3) / 2)) * I : ℂ) =
+        ↑(1/2 : ℝ) + ↑(H_height - t * (H_height - Real.sqrt 3 / 2)) * I from by push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    have : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
+    rw [this, mul_one]
+    linarith [H_height_gt_one]
+  · -- Seg2: im = sin(θ), θ ∈ [π/3, π/2]
+    rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
+        ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
+    rw [Complex.exp_ofReal_mul_I_im]
+    exact Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+  · -- Seg3: im = sin(θ), θ ∈ [π/2, 2π/3]
+    rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
+        ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
+    rw [Complex.exp_ofReal_mul_I_im]
+    exact Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+  · -- Seg4: convert to ↑(real) + ↑(real)*I form, then extract .im
+    rw [show (-1 / 2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) * (↑H_height - ↑(Real.sqrt 3) / 2)) * I : ℂ) =
+        ↑(-1/2 : ℝ) + ↑(Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I from by
+          push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    have hsub : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
+    rw [hsub, mul_one]
+    have : Real.sqrt 3 / 2 > 0 := by positivity
+    linarith [not_le.mp h3]
+  · -- Seg5: convert to ↑(real) + ↑(real)*I form, then extract .im
+    rw [show (↑t - 9 / 2 + ↑H_height * I : ℂ) =
+        ↑(t - 9/2 : ℝ) + ↑H_height * I from by push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    linarith [H_height_gt_one]
+
+/-- The imaginary part of `fdBoundary t` is at most `H_height` for all `t ∈ [0, 5]`.
+This is the upper bound companion to `fdBoundary_im_pos`. -/
+theorem fdBoundary_im_le_H_height (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    (fdBoundary t).im ≤ H_height := by
+  simp only [fdBoundary]
+  split_ifs with h1 h2 h3 h4
+  · -- Seg1: convert to ↑(real) + ↑(real)*I form
+    rw [show (1 / 2 + (↑H_height - ↑t * (↑H_height - ↑(Real.sqrt 3) / 2)) * I : ℂ) =
+        ↑(1/2 : ℝ) + ↑(H_height - t * (H_height - Real.sqrt 3 / 2)) * I from by push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    have : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
+    rw [this, mul_one]
+    linarith [ht.1]
+  · -- Seg2: im = sin(θ) ≤ 1 < H
+    rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
+        ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
+    rw [Complex.exp_ofReal_mul_I_im]
+    linarith [Real.sin_le_one (Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)),
+              H_height_gt_one]
+  · -- Seg3: im = sin(θ) ≤ 1 < H
+    rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
+        ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
+    rw [Complex.exp_ofReal_mul_I_im]
+    linarith [Real.sin_le_one (Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)),
+              H_height_gt_one]
+  · -- Seg4: convert to ↑(real) + ↑(real)*I form
+    rw [show (-1 / 2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) * (↑H_height - ↑(Real.sqrt 3) / 2)) * I : ℂ) =
+        ↑(-1/2 : ℝ) + ↑(Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I from by
+          push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    have : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
+    rw [this, mul_one]
+    linarith
+  · -- Seg5: convert to ↑(real) + ↑(real)*I form
+    rw [show (↑t - 9 / 2 + ↑H_height * I : ℂ) =
+        ↑(t - 9/2 : ℝ) + ↑H_height * I from by push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    exact le_refl _
+
 /-! ## Segment Definitions (for decomposition) -/
 
 /-- Segment 1: right vertical from (1/2 + Hi) down to ρ' -/

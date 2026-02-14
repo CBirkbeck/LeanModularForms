@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "mathlib-quality@mathlib-quality-plugins": true
+  }
+}

@@ -328,4 +328,436 @@ theorem valenceFormula_classical_split_from_S {k : ℤ}
   valenceFormula_classical_split_from_S_of_larger_radius f hf S hS hS_complete hint
     le_rfl hcusp_nonvan
 
+/-! ## Nonvanishing Forms (replace `hint` with `h_nv`)
+
+These accept a boundary nonvanishing hypothesis `h_nv` instead of `hint`.
+Integrability is derived internally via `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing`.
+
+The larger-radius variants additionally accept `closedBall(0, r)` with `r ≥ seg5_q_radius`.
+The fixed-radius variants specialize with `r := seg5_q_radius`. -/
+
+/-- **The Valence Formula** (superset form, nonvanishing boundary, larger radius).
+
+Most general nonvanishing orbifold form: accepts `S ⊇ {zeros in 𝒟'}`,
+`h_nv` (boundary nonvanishing), and `closedBall(0, r)` with `r ≥ seg5_q_radius`. -/
+theorem valenceFormula_split_from_S_of_nonvanishing_of_larger_radius {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+      (k : ℚ) / 12 := by
+  set zeros := S.filter (fun p => f p = 0)
+  have hzeros : ∀ s ∈ zeros, f s = 0 := fun s hs => (Finset.mem_filter.mp hs).2
+  have hzeros_fd : ∀ s ∈ zeros, s ∈ 𝒟' :=
+    fun s hs => hS s (Finset.mem_filter.mp hs).1
+  have hzeros_complete : ∀ s, s ∈ 𝒟' → f s = 0 → s ∈ zeros := by
+    intro s hs_fd hs_zero; rw [Finset.mem_filter]
+    exact ⟨hS_complete s hs_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf s hs_zero), hs_zero⟩
+  rw [sum_ew_S_eq_sum_ew_zeros f S]
+  have h := valence_formula_base_identity_of_nonvanishing_rat f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv
+    (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+  linarith
+
+/-- **The Classical Valence Formula** (superset form, nonvanishing boundary, larger radius).
+
+Most general nonvanishing classical form: accepts `S ⊇ {zeros in 𝒟'}`,
+`h_nv` (boundary nonvanishing), and `closedBall(0, r)` with `r ≥ seg5_q_radius`. -/
+theorem valenceFormula_classical_split_from_S_of_nonvanishing_of_larger_radius {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+  set zeros := S.filter (fun p => f p = 0)
+  have hzeros : ∀ s ∈ zeros, f s = 0 := fun s hs => (Finset.mem_filter.mp hs).2
+  have hzeros_fd : ∀ s ∈ zeros, s ∈ 𝒟' :=
+    fun s hs => hS s (Finset.mem_filter.mp hs).1
+  have hzeros_complete : ∀ s, s ∈ 𝒟' → f s = 0 → s ∈ zeros := by
+    intro s hs_fd hs_zero; rw [Finset.mem_filter]
+    exact ⟨hS_complete s hs_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf s hs_zero), hs_zero⟩
+  have h := valence_formula_classical_form_of_nonvanishing_rat f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv
+    (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_i'] at h
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_rho'] at h
+  rw [sum_interior_zeros_eq_sum_interior_S f S] at h
+  exact h
+
+/-- **The Valence Formula** (superset form, nonvanishing boundary, fixed radius).
+
+Specialization of `valenceFormula_split_from_S_of_nonvanishing_of_larger_radius`
+with `r := seg5_q_radius`. -/
+theorem valenceFormula_split_from_S_of_nonvanishing {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+      (k : ℚ) / 12 :=
+  valenceFormula_split_from_S_of_nonvanishing_of_larger_radius f hf S hS hS_complete
+    h_nv le_rfl hcusp_nonvan
+
+/-- **The Classical Valence Formula** (superset form, nonvanishing boundary, fixed radius).
+
+Specialization of `valenceFormula_classical_split_from_S_of_nonvanishing_of_larger_radius`
+with `r := seg5_q_radius`. -/
+theorem valenceFormula_classical_split_from_S_of_nonvanishing {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 :=
+  valenceFormula_classical_split_from_S_of_nonvanishing_of_larger_radius f hf S hS hS_complete
+    h_nv le_rfl hcusp_nonvan
+
+/-! ## Superset Crossing-Cauchy Forms (Larger Radius)
+
+These accept `S ⊇ {zeros in 𝒟'}`, `hint`, `h_pv_eq_residue` (the pre-composed
+residue-side result), and `closedBall(0, r)` with `r ≥ seg5_q_radius`.
+
+The `h_pv_eq_residue` references the sum over `S.filter (fun p => f p = 0)` (the zero
+locus within `S`). Non-zero points contribute 0 to the `S`-indexed sum. -/
+
+/-- **The Valence Formula** (superset form, crossing-Cauchy, larger radius).
+
+Most general crossing-Cauchy orbifold form: accepts `S ⊇ {zeros in 𝒟'}`,
+`h_pv_eq_residue`, and `closedBall(0, r)` with `r ≥ seg5_q_radius`.
+
+  `ord_∞(f) + Σ_{p ∈ S} effectiveWinding(p) · ord_p(f) = k/12` -/
+theorem valenceFormula_split_from_S_of_crossingCauchy_of_larger_radius {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    (orderAtCusp' f : ℚ) +
+      ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+      (k : ℚ) / 12 := by
+  rw [sum_ew_S_eq_sum_ew_zeros f S]
+  have h := valence_formula_base_identity_of_crossingCauchy_rat f hf
+    (S.filter (fun p => f p = 0)) hint
+    (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+    h_pv_eq_residue
+  linarith
+
+/-- **The Classical Valence Formula** (superset form, crossing-Cauchy, larger radius).
+
+Most general crossing-Cauchy classical form: accepts `S ⊇ {zeros in 𝒟'}`,
+`h_pv_eq_residue`, and `closedBall(0, r)` with `r ≥ seg5_q_radius`. -/
+theorem valenceFormula_classical_split_from_S_of_crossingCauchy_of_larger_radius {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+  have h := valence_formula_classical_form_of_crossingCauchy_rat f hf
+    (S.filter (fun p => f p = 0)) hint
+    (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+    h_pv_eq_residue
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_i'] at h
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_rho'] at h
+  rw [sum_interior_zeros_eq_sum_interior_S f S] at h
+  exact h
+
+/-! ## Fixed-Radius Superset Crossing-Cauchy Forms (Specializations)
+
+These specialize the larger-radius crossing-Cauchy forms with
+`r := seg5_q_radius`, providing backward-compatible API. -/
+
+/-- **The Valence Formula** (superset form, crossing-Cauchy, fixed radius).
+
+Specialization of `valenceFormula_split_from_S_of_crossingCauchy_of_larger_radius` with
+`r := seg5_q_radius`. -/
+theorem valenceFormula_split_from_S_of_crossingCauchy {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    (orderAtCusp' f : ℚ) +
+      ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+      (k : ℚ) / 12 :=
+  valenceFormula_split_from_S_of_crossingCauchy_of_larger_radius f hf S hS hS_complete hint
+    le_rfl hcusp_nonvan h_pv_eq_residue
+
+/-- **The Classical Valence Formula** (superset form, crossing-Cauchy, fixed radius).
+
+Specialization of `valenceFormula_classical_split_from_S_of_crossingCauchy_of_larger_radius`
+with `r := seg5_q_radius`. -/
+theorem valenceFormula_classical_split_from_S_of_crossingCauchy {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 :=
+  valenceFormula_classical_split_from_S_of_crossingCauchy_of_larger_radius f hf S hS hS_complete
+    hint le_rfl hcusp_nonvan h_pv_eq_residue
+
+/-! ## Superset Crossing-Cauchy Auto Forms (No h_cc, No h_pv_eq_residue)
+
+These accept `S ⊇ {zeros in 𝒟'}`, `hint`, `hcusp_nonvan`, and derive everything
+internally. When `hint` holds, the boundary avoids all zeros, so the crossing-Cauchy
+condition is vacuously satisfied. No `h_cc` or `h_pv_eq_residue` needed.
+
+The larger-radius variants additionally accept `closedBall(0, r)` with `r ≥ seg5_q_radius`.
+The fixed-radius variants specialize with `r := seg5_q_radius`. -/
+
+/-- **The Valence Formula** (superset form, auto integrability, larger radius, no `h_cc`).
+
+Most general auto orbifold form: derives PV residue identity from `hint` internally. -/
+theorem valenceFormula_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+      (k : ℚ) / 12 := by
+  set zeros := S.filter (fun p => f p = 0)
+  have hzeros : ∀ s ∈ zeros, f s = 0 := fun s hs => (Finset.mem_filter.mp hs).2
+  have hzeros_fd : ∀ s ∈ zeros, s ∈ 𝒟' :=
+    fun s hs => hS s (Finset.mem_filter.mp hs).1
+  have hzeros_complete : ∀ s, s ∈ 𝒟' → f s = 0 → s ∈ zeros := by
+    intro s hs_fd hs_zero; rw [Finset.mem_filter]
+    exact ⟨hS_complete s hs_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf s hs_zero), hs_zero⟩
+  rw [sum_ew_S_eq_sum_ew_zeros f S]
+  have h := valence_formula_base_identity_of_crossingCauchy_auto_of_integrable_rat f hf zeros
+    hzeros hzeros_fd hzeros_complete hint
+    (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+  linarith
+
+/-- **The Classical Valence Formula** (superset form, auto integrability, larger radius, no `h_cc`). -/
+theorem valenceFormula_classical_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius
+    {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+  set zeros := S.filter (fun p => f p = 0)
+  have hzeros : ∀ s ∈ zeros, f s = 0 := fun s hs => (Finset.mem_filter.mp hs).2
+  have hzeros_fd : ∀ s ∈ zeros, s ∈ 𝒟' :=
+    fun s hs => hS s (Finset.mem_filter.mp hs).1
+  have hzeros_complete : ∀ s, s ∈ 𝒟' → f s = 0 → s ∈ zeros := by
+    intro s hs_fd hs_zero; rw [Finset.mem_filter]
+    exact ⟨hS_complete s hs_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf s hs_zero), hs_zero⟩
+  have h := valence_formula_classical_form_of_crossingCauchy_auto_of_integrable_rat f hf zeros
+    hzeros hzeros_fd hzeros_complete hint
+    (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_i'] at h
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_rho'] at h
+  rw [sum_interior_zeros_eq_sum_interior_S f S] at h
+  exact h
+
+/-- **The Valence Formula** (superset form, auto integrability, fixed radius, no `h_cc`). -/
+theorem valenceFormula_split_from_S_of_crossingCauchy_auto_of_integrable {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+      (k : ℚ) / 12 :=
+  valenceFormula_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius f hf S hS
+    hS_complete hint le_rfl hcusp_nonvan
+
+/-- **The Classical Valence Formula** (superset form, auto integrability, fixed radius, no `h_cc`). -/
+theorem valenceFormula_classical_split_from_S_of_crossingCauchy_auto_of_integrable {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 :=
+  valenceFormula_classical_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius f hf
+    S hS hS_complete hint le_rfl hcusp_nonvan
+
+/-! ## Auto-Cusp Superset Forms (No `hcusp_nonvan`)
+
+These derive cusp nonvanishing from `hf : f ≠ 0` via `modular_side_auto_cusp_of_integrable`.
+The result is existential: `∃ H₀ > √3/2`, for `H ≥ H₀`, given integrability and the
+residue-side result at height H, the valence formula identity holds in ℚ.
+
+Unlike the variants above which require `hcusp_nonvan`, these operate on the parameterized
+boundary curve `fdBoundary_H H` (not the fixed `fdBoundary`). The algebraic conclusion
+(`ord_∞ + Σ ew·ord = k/12`) is curve-independent. -/
+
+/-- **The Valence Formula** (superset form, auto-cusp, no `hcusp_nonvan`).
+
+From `hf : f ≠ 0`, cusp nonvanishing is derived automatically for heights `H ≥ H₀`.
+The caller provides integrability at height H and the residue-side result
+`h_pv_eq_residue` (at height H, over `S.filter (f = 0)`). -/
+theorem valenceFormula_split_from_S_auto_cusp {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+          (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5 →
+        pv_integral f (fdBoundary_H H) 0 5 =
+          -(2 * Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        (orderAtCusp' f : ℚ) +
+          ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ := valence_formula_base_identity_auto_cusp f hf
+    (S.filter (fun p => f p = 0))
+  refine ⟨H₀, hH₀_gt, fun {H} hH hint_H h_pv => ?_⟩
+  rw [sum_ew_S_eq_sum_ew_zeros f S]
+  have h_base := h_auto hH hint_H h_pv
+  have h_rat : ∑ s ∈ S.filter (fun p => f p = 0),
+      effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by exact_mod_cast h_base
+  linarith
+
+/-- **The Classical Valence Formula** (superset form, auto-cusp, no `hcusp_nonvan`).
+
+From `hf : f ≠ 0`, cusp nonvanishing is derived automatically for heights `H ≥ H₀`.
+The caller provides integrability at height H and the residue-side result. -/
+theorem valenceFormula_classical_split_from_S_auto_cusp {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+          (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5 →
+        pv_integral f (fdBoundary_H H) 0 5 =
+          -(2 * Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        (orderAtCusp' f : ℚ) +
+          (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+            then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+          (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+            then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+          ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+              (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ := valence_formula_classical_form_auto_cusp f hf
+    (S.filter (fun p => f p = 0))
+  refine ⟨H₀, hH₀_gt, fun {H} hH hint_H h_pv => ?_⟩
+  have h_C := h_auto hH hint_H h_pv
+  have h : (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S.filter (fun p => f p = 0)
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S.filter (fun p => f p = 0)
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ (S.filter (fun p => f p = 0)).filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+    apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+    push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+    exact h_C
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_i'] at h
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_rho'] at h
+  rw [sum_interior_zeros_eq_sum_interior_S f S] at h
+  exact h
+
 end

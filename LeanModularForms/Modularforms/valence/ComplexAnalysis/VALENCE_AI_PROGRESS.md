@@ -8,16 +8,57 @@ Each AI must update this file when returning results.
 ## Global Status
 - **Migration to split files:** DONE
 - **Current phase:** Critical-path sorry-free. Split-chain core path is axiom-clean.
-  - 0 sorry: InteriorWinding, FD_Boundary, EllipticContrib, ResidueSide, ModularSide, Core, Discharge, WithData
-  - 12 sorry: `ValenceFormula_PV.lean` (non-critical-path infrastructure — `pv_integral_eq_modular_transformation` IS axiom-clean)
+  - 0 sorry: Definitions, FD_Boundary, FD_Boundary_Param, InteriorWinding, EllipticContrib, ResidueSide, ModularSide, Core, Discharge, WithData, Final_Split, Final_AxiomClean, CuspHeight, Rect_Homotopy
+  - 0 sorry: `ValenceFormula_PV.lean` — dead code deleted (session 101)
   - Legacy `ValenceFormula.lean` still has sorries (monolithic file, not on split chain)
 - **Split-chain Core path:** axiom-clean (`[propext, Classical.choice, Quot.sound]`)
-- **Split public API:** `valenceFormula_split`, `valenceFormula_classical_split`, `valenceFormula_split_from_S`, `valenceFormula_classical_split_from_S`, `valenceFormula_split_from_S_of_larger_radius`, `valenceFormula_classical_split_from_S_of_larger_radius` (all axiom-clean)
+- **Full build:** 7457 jobs, success (verified 2026-02-13)
+- **Axiom-clean public API** (30 theorems in `ValenceFormula_Final_AxiomClean.lean`):
+  - `valenceFormula_axiomClean_from_S` — orbifold form, fixed radius
+  - `valenceFormula_classical_axiomClean_from_S` — classical form, fixed radius
+  - `valenceFormula_axiomClean_from_S_of_larger_radius` — orbifold, variable radius
+  - `valenceFormula_classical_axiomClean_from_S_of_larger_radius` — classical, variable radius
+  - `valenceFormula_axiomClean_with_data_of_nonvanishing` — explicit zeros, nonvanishing boundary
+  - `valenceFormula_classical_axiomClean_with_data_of_nonvanishing` — classical, explicit zeros
+  - `valenceFormula_axiomClean_with_data_of_nonvanishing_of_larger_radius` — explicit zeros, variable radius
+  - `valenceFormula_classical_axiomClean_with_data_of_nonvanishing_of_larger_radius` — classical, variable radius
+  - `valenceFormula_axiomClean_with_data_of_crossingCauchy` — explicit zeros, crossing-Cauchy
+  - `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy` — classical, crossing-Cauchy
+  - `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_larger_radius` — explicit zeros, crossing-Cauchy, variable radius
+  - `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_larger_radius` — classical, crossing-Cauchy, variable radius
+  - `valenceFormula_axiomClean_from_S_of_nonvanishing` — superset, nonvanishing, fixed radius
+  - `valenceFormula_classical_axiomClean_from_S_of_nonvanishing` — classical, superset, nonvanishing, fixed radius
+  - `valenceFormula_axiomClean_from_S_of_nonvanishing_of_larger_radius` — superset, nonvanishing, variable radius
+  - `valenceFormula_classical_axiomClean_from_S_of_nonvanishing_of_larger_radius` — classical, superset, nonvanishing, variable radius
+  - `valenceFormula_axiomClean_from_S_of_crossingCauchy_of_larger_radius` — superset, crossing-Cauchy, variable radius
+  - `valenceFormula_classical_axiomClean_from_S_of_crossingCauchy_of_larger_radius` — classical, superset, crossing-Cauchy, variable radius
+  - `valenceFormula_axiomClean_from_S_of_crossingCauchy` — superset, crossing-Cauchy, fixed radius
+  - `valenceFormula_classical_axiomClean_from_S_of_crossingCauchy` — classical, superset, crossing-Cauchy, fixed radius
+  - `valenceFormula_axiomClean_with_data_of_crossingCauchy_auto_of_integrable` — explicit zeros, auto integrability, no h_cc, fixed radius
+  - `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_auto_of_integrable` — classical, auto integrability, no h_cc, fixed radius
+  - `valenceFormula_axiomClean_with_data_of_crossingCauchy_auto_of_integrable_of_larger_radius` — explicit zeros, auto integrability, no h_cc, variable radius
+  - `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_auto_of_integrable_of_larger_radius` — classical, auto integrability, no h_cc, variable radius
+  - `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_integrable` — compatibility wrapper (accepts h_cc, forwards to auto), fixed radius
+  - `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_integrable` — compatibility wrapper (accepts h_cc, forwards to auto), fixed radius
+  - `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_integrable_of_larger_radius` — compatibility wrapper (accepts h_cc, forwards to auto), variable radius
+  - `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_integrable_of_larger_radius` — compatibility wrapper (accepts h_cc, forwards to auto), variable radius
+  - `valenceFormula_axiomClean_from_S_auto_cusp` — orbifold, auto-cusp (no hcusp_nonvan), existential height
+  - `valenceFormula_classical_axiomClean_from_S_auto_cusp` — classical, auto-cusp (no hcusp_nonvan), existential height
+- **Split public API** (in `ValenceFormula_Final_Split.lean`, all axiom-clean):
+  - `valenceFormula_split`, `valenceFormula_classical_split`
+  - `valenceFormula_split_from_S`, `valenceFormula_classical_split_from_S`
+  - `valenceFormula_split_from_S_of_larger_radius`, `valenceFormula_classical_split_from_S_of_larger_radius`
+  - `valenceFormula_split_from_S_of_nonvanishing`, `valenceFormula_classical_split_from_S_of_nonvanishing`
+  - `valenceFormula_split_from_S_of_crossingCauchy_of_larger_radius`, `valenceFormula_classical_split_from_S_of_crossingCauchy_of_larger_radius`
+  - `valenceFormula_split_from_S_of_crossingCauchy`, `valenceFormula_classical_split_from_S_of_crossingCauchy`
+  - `valenceFormula_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius`, `valenceFormula_classical_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius`
+  - `valenceFormula_split_from_S_of_crossingCauchy_auto_of_integrable`, `valenceFormula_classical_split_from_S_of_crossingCauchy_auto_of_integrable`
+  - `valenceFormula_split_from_S_auto_cusp`, `valenceFormula_classical_split_from_S_auto_cusp`
 - **Legacy Final path:** forwards to monolithic `ValenceFormula.lean` (has `sorryAx`)
 
 ---
 
-## Completed Worker-H Tickets (2026-02-11)
+## Completed Worker-H Tickets (2026-02-11 – 2026-02-13)
 
 | Ticket | Session | Files Modified | Theorems Added |
 |--------|---------|----------------|----------------|
@@ -25,8 +66,29 @@ Each AI must update this file when returning results.
 | H-PARAM-SYNC | 85 | Discharge | synced 5 theorems with Core API |
 | H-RADIUS-BRIDGE | 86 | Core, Discharge | 2 + 2 `_of_larger_radius` variants |
 | H-WITHDATA-RADIUS-SYNC | 87 | WithData, Discharge | 2 + 1 `_of_larger_radius` variants |
+| **F3-PV-HEIGHT-PARAM** | 107 | PV, ModularSide_Param | 3 main + 7 helper theorems |
 
 All Worker-H theorems: **0 sorry, axiom-clean** (`[propext, Classical.choice, Quot.sound]`).
+
+### F3-PV-HEIGHT-PARAM Details (Session 107, 2026-02-13)
+
+**Files modified:**
+- `ValenceFormula_PV.lean` — added ~520 lines of height-parameterized infrastructure
+- `ValenceFormula_ModularSide_Param.lean` — added `modular_side_of_height` wrapper
+
+**New public theorems (all sorry-free, axiom-clean):**
+1. `seg5_integral_eq_cusp_order_H` — seg5 integral at height H = 2πi · orderAtCusp
+2. `pv_integral_eq_modular_transformation_H` — full PV result at height H
+3. `modular_side_of_height` — public wrapper in ModularSide_Param.lean
+
+**New helper theorems/lemmas:**
+- `circleIntegral_logDeriv_cuspFunction_of_radius` — generic circle integral for any R ∈ (0,1)
+- `seg5_integral_eq_circleIntegral_H` — parametric → circle at height H
+- `seg5_logDeriv_integral_eq_H` — combines stages 1+2 at height H
+- `pv_integral_vertical_cancel_H` — vertical edges cancel at any H
+- `pv_integral_decompose_segments_H` — 5-segment decomposition at height H
+- `nonvanishing_on_seg2_of_integrable_H` — arc nonvanishing from hint_H
+- `nonvanishing_on_seg3_of_integrable_H` — arc nonvanishing from hint_H
 
 ---
 
@@ -105,6 +167,659 @@ Two options (mutually exclusive):
 lake env lean -c 'import ...ValenceFormula_Final; #print axioms valenceFormula'
 ```
 Expected: `[propext, Classical.choice, Quot.sound]` — NO `sorryAx`.
+
+---
+
+## Session 118 (2026-02-13) — F3 Milestone M3: Auto-Cusp (Remove hcusp_nonvan)
+
+**Worker:** F3
+**Files:** `ValenceFormula_Core.lean`, `ValenceFormula_Final_Split.lean`, `ValenceFormula_Final_AxiomClean.lean`
+**Build:** Success (2982 jobs), 0 sorry
+**Axioms:** All 6 new theorems `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Summary
+
+Removed `hcusp_nonvan` from the public API by threading auto-cusp through Core → Final_Split → Final_AxiomClean. From `hf : f ≠ 0`, cusp nonvanishing is derived automatically via `exists_height_cusp_nonvanishing` + `cusp_nonvanishing_seg5_q_radius_H_mono` (monotonicity). New theorems are existential in H₀: `∃ H₀ > √3/2, ∀ H ≥ H₀, hint_H → h_pv_eq_residue → conclusion`.
+
+### Key Design Decision
+
+The auto-cusp route gives `∃ H₀ > √3/2` where H₀ may exceed `H_height` (the fixed boundary height). Therefore new theorems use parameterized `fdBoundary_H H`, not fixed `fdBoundary`. The algebraic conclusion `Σ ew·ord = k/12 - ord_∞` is curve-independent.
+
+### New declarations
+
+**Core.lean:**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_auto_cusp` | theorem | 674 | Base identity, no hcusp_nonvan |
+| `valence_formula_classical_form_auto_cusp` | theorem | 700 | Classical form, no hcusp_nonvan |
+
+**Final_Split.lean:**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_split_from_S_auto_cusp` | theorem | 694 | Orbifold superset, no hcusp_nonvan |
+| `valenceFormula_classical_split_from_S_auto_cusp` | theorem | 723 | Classical superset, no hcusp_nonvan |
+
+**Final_AxiomClean.lean:**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_axiomClean_from_S_auto_cusp` | theorem | 790 | Orbifold, forwarding |
+| `valenceFormula_classical_axiomClean_from_S_auto_cusp` | theorem | 811 | Classical, forwarding |
+
+### Notes
+- All 6 theorems take `hint_H` (integrability at height H) and `h_pv_eq_residue` (residue-side result at height H), but NOT `hcusp_nonvan`
+- ℂ-to-ℚ conversion done inline in Final_Split (Discharge.lean not in editable file list): `exact_mod_cast` for orbifold, `apply_fun Rat.cast using Rat.cast_injective; push_cast [apply_ite ...]` for classical
+- Zeros-to-superset rewriting uses existing `if_mem_zeros_eq_if_mem_S` and `sum_interior_zeros_eq_sum_interior_S`
+- Public API count: 28 → 30 theorems in AxiomClean.lean
+
+---
+
+## Session 116 (2026-02-13) — Ticket F2 Milestone M15: Remove h_cc from Crossing-Cauchy Route
+
+**Worker:** F2
+**Files:** `ValenceFormula_ResidueSide.lean`, `ValenceFormula_Core.lean`
+**Build:** Both files compile cleanly (0 errors, pre-existing warnings only), 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Key Insight
+
+When `hint` (integrability) holds, `nonvanishing_on_fdBoundary_of_integrable` gives `h_nv`,
+which means `fdBoundary` avoids all zeros in `allZerosInFdBox`. Therefore `S_onCurve` is
+empty and the crossing-Cauchy condition `h_cc` holds vacuously. The auto theorems forward
+directly to the nonvanishing path — no PrincipalValue.lean bridge needed.
+
+### New declarations
+
+**ResidueSide.lean:**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `pv_equals_residue_sum_of_crossingCauchy_auto_of_integrable` | theorem | 3749 | PV residue identity with only `hint`, no `h_cc` |
+
+**Core.lean:**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_of_crossingCauchy_auto_of_integrable` | theorem | 576 | Base identity, no `h_cc` |
+| `valence_formula_classical_form_of_crossingCauchy_auto_of_integrable` | theorem | 594 | Classical form, no `h_cc` |
+
+### Notes
+- PrincipalValue.lean not modified — `fdBoundary` not visible there, and vacuous truth approach doesn't need a general bridge
+- All 3 theorems are 1–3 line proofs forwarding to existing nonvanishing path
+- These are the first theorems in the crossing-Cauchy route that require ONLY `hint` + zero data + cusp nonvanishing (no `h_cc`, no `h_nv`)
+
+---
+
+## Session 117 (2026-02-13) — Ticket F2 Milestone M16: Propagate No-h_cc Through Public Wrappers
+
+**Worker:** F2
+**Files:** `ValenceFormula_Final_Discharge.lean`, `ValenceFormula_Final_Split.lean`, `ValenceFormula_Final_AxiomClean.lean`
+**Build:** All 3 files compile cleanly (0 errors, 0 warnings), 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+**Public API count:** 24 → 28 (4 new auto theorems in AxiomClean; 4 existing become compatibility wrappers)
+
+### Summary
+
+Propagated M15's no-`h_cc` API through the Discharge → Split → AxiomClean public wrapper layers.
+Added `_auto_of_integrable` variants at all three levels. Existing `_of_crossingCauchy_of_integrable`
+theorems kept as backward-compatible wrappers that accept but ignore `h_cc`.
+
+### New declarations
+
+**Discharge.lean (ℚ-cast auto):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_of_crossingCauchy_auto_of_integrable_rat` | theorem | 260 | Base identity, no h_cc, ℚ |
+| `valence_formula_classical_form_of_crossingCauchy_auto_of_integrable_rat` | theorem | 276 | Classical form, no h_cc, ℚ |
+
+**Split.lean (superset auto):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius` | theorem | 582 | Orbifold, larger radius, no h_cc |
+| `valenceFormula_classical_split_from_S_of_crossingCauchy_auto_of_integrable_of_larger_radius` | theorem | 609 | Classical, larger radius, no h_cc |
+| `valenceFormula_split_from_S_of_crossingCauchy_auto_of_integrable` | theorem | 643 | Orbifold, fixed radius, no h_cc |
+| `valenceFormula_classical_split_from_S_of_crossingCauchy_auto_of_integrable` | theorem | 659 | Classical, fixed radius, no h_cc |
+
+**AxiomClean.lean (public API auto):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_axiomClean_with_data_of_crossingCauchy_auto_of_integrable` | theorem | 382 | Orbifold, fixed radius, no h_cc |
+| `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_auto_of_integrable` | theorem | 400 | Classical, fixed radius, no h_cc |
+| `valenceFormula_axiomClean_with_data_of_crossingCauchy_auto_of_integrable_of_larger_radius` | theorem | 427 | Orbifold, variable radius, no h_cc |
+| `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_auto_of_integrable_of_larger_radius` | theorem | 447 | Classical, variable radius, no h_cc |
+
+**Compatibility wrappers (rewired to forward to auto, ignoring h_cc):**
+- `valence_formula_base_identity_of_crossingCauchy_of_integrable_rat` (Discharge:300)
+- `valence_formula_classical_form_of_crossingCauchy_of_integrable_rat` (Discharge:323)
+- `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_integrable` (AxiomClean:475)
+- `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_integrable` (AxiomClean:500)
+- `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_integrable_of_larger_radius` (AxiomClean:534)
+- `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_integrable_of_larger_radius` (AxiomClean:560)
+
+### Notes
+- `h_cc` appears in codebase ONLY in: (a) older theorems that genuinely use it, (b) compatibility wrapper signatures (renamed `_h_cc`), (c) docstrings/comments
+- No `h_cc` in any new `_auto_of_integrable` theorem signature
+- All 10 new theorems + 6 compatibility wrappers = 16 total, all sorry-free, all axiom-clean
+
+---
+
+## Session 113 (2026-02-13) — Ticket F2 Milestone M11: Superset Crossing-Cauchy Wrappers
+
+**Worker:** F2
+**Files:** `ValenceFormula_Final_Split.lean`, `ValenceFormula_Final_AxiomClean.lean`
+**Build:** Both files compile cleanly (0 errors, 0 warnings), 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_Final_Split.lean ValenceFormula_Final_AxiomClean.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+**Final_Split.lean (superset crossing-Cauchy):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_split_from_S_of_crossingCauchy_of_larger_radius` | theorem | 459 | Orbifold superset, larger radius |
+| `valenceFormula_classical_split_from_S_of_crossingCauchy_of_larger_radius` | theorem | 486 | Classical superset, larger radius |
+| `valenceFormula_split_from_S_of_crossingCauchy` | theorem | 525 | Orbifold superset, fixed radius (1-line forward) |
+| `valenceFormula_classical_split_from_S_of_crossingCauchy` | theorem | 547 | Classical superset, fixed radius (1-line forward) |
+
+**AxiomClean.lean (public API):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_axiomClean_from_S_of_crossingCauchy_of_larger_radius` | theorem | 450 | Orbifold superset, larger radius |
+| `valenceFormula_classical_axiomClean_from_S_of_crossingCauchy_of_larger_radius` | theorem | 473 | Classical superset, larger radius |
+| `valenceFormula_axiomClean_from_S_of_crossingCauchy` | theorem | 503 | Orbifold superset, fixed radius |
+| `valenceFormula_classical_axiomClean_from_S_of_crossingCauchy` | theorem | 525 | Classical superset, fixed radius |
+
+### Notes
+- All superset crossing-Cauchy variants take `h_pv_eq_residue` with sum over `S.filter (fun p => f p = 0)` (the zero locus within S)
+- `_hS` and `_hS_complete` kept in signatures for API consistency with other superset forms (prefixed with `_` in larger-radius proofs where unused)
+- Non-zero points contribute 0 via `orderOfVanishingAt'_eq_zero_of_ne_zero`; sum conversion by `sum_ew_S_eq_sum_ew_zeros`
+- Classical forms use `if_mem_zeros_eq_if_mem_S` and `sum_interior_zeros_eq_sum_interior_S` bridge lemmas
+- Fixed `Complex.I` disambiguation (Final_Split opens `UpperHalfPlane`, creating ambiguity)
+
+## Session 115 (2026-02-13) — Ticket F2 Milestone M13: CrossingCauchy_of_integrable Public Wrappers
+
+**Worker:** F2
+**Files:** `ValenceFormula_Final_Discharge.lean`, `ValenceFormula_Final_AxiomClean.lean`
+**Build:** Both files compile cleanly (0 errors, 0 warnings), 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_Final_Discharge.lean ValenceFormula_Final_AxiomClean.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+**Final_Discharge.lean (crossing-Cauchy-of-integrable ℚ variants):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_of_crossingCauchy_of_integrable_rat` | theorem | 260 | Base identity, hint + h_cc, ℚ cast |
+| `valence_formula_classical_form_of_crossingCauchy_of_integrable_rat` | theorem | 284 | Classical form, hint + h_cc, ℚ cast |
+
+**Final_AxiomClean.lean (public API wrappers):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_integrable` | theorem | 376 | Orbifold, fixed radius |
+| `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_integrable` | theorem | 402 | Classical, fixed radius |
+| `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_integrable_of_larger_radius` | theorem | 437 | Orbifold, variable radius |
+| `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_integrable_of_larger_radius` | theorem | 468 | Classical, variable radius |
+
+### Notes
+- Discharge theorems cast from Core's `_of_crossingCauchy_of_integrable` via `exact_mod_cast` (base) and `apply_fun Rat.cast; push_cast; exact` (classical)
+- AxiomClean fixed-radius wrappers forward to Discharge `_rat` theorems
+- AxiomClean larger-radius wrappers reduce cusp nonvanishing via `Metric.closedBall_subset_closedBall hr` then forward to fixed-radius
+- All take `h_cc` (crossing-Cauchy on `S_onCurve`) directly — not `h_pv_eq_residue`
+- Public API count: 20 → 24 theorems in AxiomClean.lean
+
+---
+
+## Session 114 (2026-02-13) — Ticket F2 Milestone M12: Crossing-Cauchy-of-Integrable
+
+**Worker:** F2
+**Files:** `ValenceFormula_ResidueSide.lean`, `ValenceFormula_Core.lean`
+**Build:** Both files compile cleanly (0 errors, pre-existing warnings only), 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_ResidueSide.lean ValenceFormula_Core.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+**ResidueSide.lean (crossing-Cauchy-of-integrable):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `pv_equals_residue_sum_of_crossingCauchy_of_integrable` | theorem | 3691 | Derives h_nv from hint, then forwards to crossing-Cauchy |
+| `pv_equals_residue_sum_of_crossingCauchy_of_integrable_eq_hint` | theorem | 3718 | Consistency: agrees with `pv_equals_residue_sum` (by rfl) |
+
+**Core.lean (crossing-Cauchy-of-integrable):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_of_crossingCauchy_of_integrable` | theorem | 509 | Base identity via hint + h_cc |
+| `valence_formula_classical_form_of_crossingCauchy_of_integrable` | theorem | 535 | Classical form via hint + h_cc |
+
+### Notes
+- The ResidueSide theorem derives `h_nv` from `nonvanishing_on_fdBoundary_of_integrable`, then derives `h_sum_bridge` and `hcpv_eq_pv` from `h_nv`
+- Core theorems compose `pv_equals_residue_sum_of_crossingCauchy_of_integrable` with existing `valence_formula_base_identity_of_crossingCauchy` / classical form
+- `S_onCurve f hf zeros` referenced in `h_cc` hypothesis type; visible from Core.lean since `S_onCurve` is non-private
+- Consistency lemma uses `rfl` (proof irrelevance for Props)
+- All existing theorems unchanged (additive only)
+
+---
+
+## Session 112 (2026-02-13) — Ticket F2 Milestone M10: Crossing-Cauchy Public Wrappers
+
+**Worker:** F2
+**Files:** `ValenceFormula_Final_Discharge.lean`, `ValenceFormula_Final_AxiomClean.lean`
+**Build:** Both files compile cleanly (0 errors, 0 warnings), 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_Final_Discharge.lean ValenceFormula_Final_AxiomClean.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+**Discharge.lean (ℚ casts):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_of_crossingCauchy_rat` | theorem | 214 | Base identity via crossing-Cauchy, cast to ℚ |
+| `valence_formula_classical_form_of_crossingCauchy_rat` | theorem | 230 | Classical form via crossing-Cauchy, cast to ℚ |
+
+**AxiomClean.lean (public API):**
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valenceFormula_axiomClean_with_data_of_crossingCauchy` | theorem | 256 | Orbifold form, fixed radius |
+| `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy` | theorem | 274 | Classical form, fixed radius |
+| `valenceFormula_axiomClean_with_data_of_crossingCauchy_of_larger_radius` | theorem | 301 | Orbifold form, variable radius |
+| `valenceFormula_classical_axiomClean_with_data_of_crossingCauchy_of_larger_radius` | theorem | 323 | Classical form, variable radius |
+
+### Notes
+- All crossing-Cauchy variants take `h_pv_eq_residue` (pre-composed residue result) instead of `h_nv`
+- Zero-data hypotheses (`hzeros`, `hzeros_fd`, `hzeros_complete`) absorbed into `h_pv_eq_residue` at ResidueSide level
+- Larger-radius variants reduce `closedBall(0, r)` to `closedBall(0, seg5_q_radius)` via `Metric.closedBall_subset_closedBall`
+- Stale olean issue: needed to compile Discharge → Final_Split → AxiomClean sequentially to update oleans
+
+---
+
+## Session 111 (2026-02-13) — Ticket F2 Milestone M9: Core Crossing-Cauchy Wrappers
+
+**Worker:** F2
+**File:** `ValenceFormula_Core.lean`
+**Build:** Core.lean compiles cleanly (0 errors, 0 warnings), Final_Split.lean compiles cleanly, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_Core.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_of_crossingCauchy` | theorem | 432 | M9-T1: Base identity taking `h_pv_eq_residue` (result of M8-T1) |
+| `valence_formula_classical_form_of_crossingCauchy` | theorem | 456 | M9-T2: Classical form forwarding through T1 + `sum_ew_ord_decompose_unconditional` |
+| `valence_formula_base_identity_of_crossingCauchy_of_nonvanishing` | theorem | 479 | M9-T3: Compatibility — under `h_nv`, forwards to `valence_formula_base_identity_of_nonvanishing` |
+
+### Design notes
+- T1/T2 take `h_pv_eq_residue : pv_integral = -(2πi Σ ew·ord)` instead of raw `h_cc`/`h_sum_bridge`/`hcpv_eq_pv`
+  - **Reason**: `allZerosInFdBox` and `fdBox_M_half_lt` are `private` in ResidueSide.lean, so cannot be named in Core.lean types
+  - Callers compose `pv_equals_residue_sum_of_crossingCauchy` (M8-T1) at the ResidueSide level and pass the result
+- T1/T2 don't take `hzeros`/`hzeros_fd`/`hzeros_complete` — these are absorbed into `h_pv_eq_residue` by the caller
+- T3 keeps `hzeros`/`hzeros_fd`/`hzeros_complete` since they're forwarded to `_of_nonvanishing`
+- Proof of T1: inline the logic of `contour_computation_equality` (equate residue and modular sides, cancel 2πi)
+
+### Call chain (crossing-Cauchy path)
+```
+valence_formula_base_identity_of_crossingCauchy
+  takes h_pv_eq_residue (caller supplies from:
+    pv_equals_residue_sum_of_crossingCauchy  (M8, ResidueSide)
+      → pv_residue_sum_bridge_onCurve_of_crossingCauchy  (M5, ResidueSide)
+        → cauchyPrincipalValueOn  (generalized residue theorem infrastructure))
+  + modular_side_mult_form
+  → equate & cancel -(2πi)
+```
+
+---
+
+## Session 110 (2026-02-13) — Ticket F2 Milestone M8: CrossingCauchy pv-integral Wrappers
+
+**Worker:** F2
+**File:** `ValenceFormula_ResidueSide.lean`
+**Build:** `lake env lean` compiles cleanly (0 errors), 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_ResidueSide.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `pv_equals_residue_sum_of_crossingCauchy` | theorem | 3625 | M8-T1: `pv_integral = −(2πi Σ ew·ord)` without `h_nv`, using crossing-Cauchy + sum-bridge + CPV=pv bridge |
+| `pv_equals_residue_sum_of_crossingCauchy_of_nonvanishing` | theorem | 3657 | M8-T2: Compatibility wrapper — under `h_nv`, forwards to `_of_ne_zero` (no `h_cc` needed) |
+| `pv_equals_residue_sum_crossingCauchy_eq_nonvanishing` | theorem | 3670 | M8-T3: Consistency — proof irrelevance `rfl` between T2 and `_of_ne_zero` |
+
+### Notes
+- T1 takes explicit `hcpv_eq_pv` bridge hypothesis (CPV = pv_integral), composed with `pv_residue_sum_bridge_onCurve_of_crossingCauchy`
+- T2 is a 1-line forward to `pv_equals_residue_sum_of_nonvanishing_of_ne_zero`
+- All three use `include hf in` (proofs need `hf` but types don't mention it through `allZerosInFdBox`)
+
+---
+
+## Session 109 (2026-02-13) — Ticket F2 Milestone M7: Core GeneralizedPV Wiring
+
+**Worker:** F2
+**File:** `ValenceFormula_Core.lean`
+**Build:** Core.lean compiles cleanly (0 errors), Final_Split.lean compiles cleanly, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_Core.lean
+(no output — 0 matches)
+```
+
+### New/refactored declarations
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `valence_formula_base_identity_of_nonvanishing_via_generalizedPV` | theorem | 340 | M7-T1: Base identity using `pv_equals_residue_sum_of_nonvanishing_of_ne_zero` (M6 path) |
+| `valence_formula_classical_form_of_nonvanishing_via_generalizedPV` | theorem | 359 | M7-T2: Classical form forwarding through T1 + `sum_ew_ord_decompose_unconditional` |
+| `valence_formula_base_identity_of_nonvanishing` | theorem | 382 | M7-T3a: REFACTORED to 1-line forward to `_via_generalizedPV` |
+| `valence_formula_classical_form_of_nonvanishing` | theorem | 397 | M7-T3b: REFACTORED to 1-line forward to `_via_generalizedPV` |
+
+### Key changes
+- `_via_generalizedPV` theorems placed before existing `_of_nonvanishing` theorems (declaration order)
+- Existing `_of_nonvanishing` refactored to 1-line term-mode forwards (no `by` tactic block)
+- Statements of refactored theorems: **EXACTLY unchanged**
+- Downstream `ValenceFormula_Final_Split.lean` verified to compile
+- Note: `lake build` fails on pre-existing PV.lean errors (unrelated); used `lake env lean` for direct compilation
+
+### Call chain (generalizedPV live path)
+```
+valence_formula_base_identity_of_nonvanishing
+  → valence_formula_base_identity_of_nonvanishing_via_generalizedPV
+    → pv_equals_residue_sum_of_nonvanishing_of_ne_zero  (M6, ResidueSide)
+      → pv_equals_residue_sum_of_nonvanishing_via_generalizedPV  (M5, ResidueSide)
+        → pv_residue_sum_bridge_onCurve_of_nonvanishing  (M4, ResidueSide)
+          → cauchyPrincipalValueOn  (generalized residue theorem infrastructure)
+```
+
+---
+
+## Session 108 (2026-02-13) — Ticket F2 Milestone M6: GeneralizedPV Live-Path Refactor
+
+**Worker:** F2
+**File:** `ValenceFormula_ResidueSide.lean`
+**Build:** 2971 jobs (ResidueSide) + 2973 jobs (Core downstream), success, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_ResidueSide.lean
+(no output — 0 matches)
+```
+
+### New/refactored declarations
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `pv_equals_residue_sum_of_nonvanishing_of_ne_zero` | theorem | 3513 | M6-T1: Micro-wrapper with explicit `hf : f ≠ 0`, 1-line forward to `_via_generalizedPV` |
+| `pv_equals_residue_sum_of_nonvanishing` | theorem | 3530 | M6-T2: MOVED from line 2649, `f ≠ 0` branch now calls `_of_ne_zero` (routes through generalizedPV) |
+| `pv_equals_residue_sum` | theorem | 3570 | M6-T3: MOVED from line 2690, same proof structure (derives `h_nv` from `hint`, calls refactored `_of_nonvanishing`) |
+| `pv_equals_residue_sum_of_nonvanishing_eq_via_generalizedPV` | theorem | 3608 | M6-T4: Consistency — proof irrelevance `rfl` |
+
+### Key changes
+- **Moved** `pv_equals_residue_sum_of_nonvanishing` and `pv_equals_residue_sum` from lines 2649/2690 to after M5 section (~3530/3570) to resolve declaration-order constraint (T1 forwards to `_via_generalizedPV` which was declared at line 3495)
+- Downstream compatibility verified: `ValenceFormula_Core.lean` builds (2973 jobs, success)
+- Statements of moved theorems: **EXACTLY unchanged**
+- `f = 0` branches: **unchanged**
+- `f ≠ 0` branch of `_of_nonvanishing` now routes through `_of_ne_zero` → `_via_generalizedPV` → generalizedPV infrastructure
+- T1 needed `include hf in` + explicit `hf` in forward call (same pattern as M5-T3)
+
+---
+
+## Session 107 (2026-02-13) — Ticket F2 Milestone M5: Crossing-Cauchy Route + Live Endpoint
+
+**Worker:** F2
+**File:** `ValenceFormula_ResidueSide.lean`
+**Build:** 2971 jobs, success, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_ResidueSide.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `hPV_onCurve_of_crossingCauchy` | theorem | ~3518 | M5-T1: Converts crossing-Cauchy filter conditions to `CauchyPrincipalValueExists'` via `cauchyPrincipalValueExists_of_singular_pole` |
+| `pv_residue_sum_bridge_onCurve_of_crossingCauchy` | theorem | ~3549 | M5-T2: Full bridge from crossing-Cauchy to CPV = −(2πi Σ ew·ord) (forwards through T1 + M4-T3) |
+| `pv_equals_residue_sum_of_nonvanishing_via_generalizedPV` | theorem | ~3581 | M5-T3: Live endpoint — `pv_integral = −(2πi Σ ew·ord)` via generalized-PV route (combines M4-T5 bridge + M3-T1 CPV↔pv_integral) |
+
+### Notes
+- T3 needed `include hf in` because `hf` doesn't appear in the theorem's type (only in the proof body via `pv_residue_sum_bridge_onCurve_of_nonvanishing` and `cauchyPrincipalValueOn_eq_pv_integral_of_nonvanishing`)
+- No declarations reordered (T4 constraint)
+- All three declarations axiom-clean: `[propext, Classical.choice, Quot.sound]`
+
+---
+
+## Session 106 (2026-02-13) — Dead Code Cleanup + On-Curve Nonvanishing Wrapper
+
+**Worker:** F1/F2
+**Files:** `ValenceFormula_InteriorWinding.lean`, `ValenceFormula_ResidueSide.lean`
+**Build:** 2979 jobs, success, 0 sorry across entire chain
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Completed tasks
+
+1. **Deleted dead gWN block** from `ValenceFormula_InteriorWinding.lean`:
+   - Removed `log_ratio_tendsto_neg_pi_I_of_ratio_tendsto_neg_one` (private, dead)
+   - Removed `pv_fdBoundary_at_i` (private, sorry, dead — no external refs)
+   - Removed `gWN_fdBoundary_at_i` (sorry via pv_fdBoundary_at_i, dead)
+   - Removed `gWN_fdBoundary_rho_pair` (sorry, dead)
+   - Removed `gWN_fdBoundary_above_H_eq_zero` (proved but dead)
+   - **Result:** InteriorWinding.lean now has 0 executable sorry
+
+2. **Added nonvanishing wrapper** to `ValenceFormula_ResidueSide.lean`:
+   - `S_onCurve_eq_empty_of_nonvanishing` — under `h_nv`, `S_onCurve = ∅`
+   - `pv_residue_sum_bridge_onCurve_of_nonvanishing` — full wrapper, does NOT require `hPV_onCurve`
+
+### Verification
+```
+rg '^\s*sorry\b' ValenceFormula_InteriorWinding.lean ValenceFormula_ResidueSide.lean
+  → (no output — 0 executable sorry)
+
+lake build ValenceFormula_Final_AxiomClean → 2979 jobs, success
+
+#print axioms valenceFormula_axiomClean_from_S → [propext, Classical.choice, Quot.sound]
+#print axioms S_onCurve_eq_empty_of_nonvanishing → [propext, Classical.choice, Quot.sound]
+#print axioms pv_residue_sum_bridge_onCurve_of_nonvanishing → [propext, Classical.choice, Quot.sound]
+```
+
+### Chain sorry summary (all files, executable only)
+| File | Executable sorry |
+|------|-----------------|
+| ValenceFormula_InteriorWinding.lean | **0** |
+| ValenceFormula_ResidueSide.lean | **0** |
+| ValenceFormula_ModularSide.lean | **0** |
+| ValenceFormula_Core.lean | **0** |
+| ValenceFormula_Final_Discharge.lean | **0** |
+| ValenceFormula_Final_WithData.lean | **0** |
+| ValenceFormula_Final_Split.lean | **0** |
+| ValenceFormula_Final_AxiomClean.lean | **0** |
+
+---
+
+## Session 105 (2026-02-13) — Ticket F2 Milestone M4: On-Curve Dispatch Variants
+
+**Worker:** F2
+**File:** `ValenceFormula_ResidueSide.lean`
+**Build:** 2971 jobs, success, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### Sorry grep
+```
+rg -n "^\s*sorry\b|\(sorry\)" ValenceFormula_ResidueSide.lean
+(no output — 0 matches)
+```
+
+### New declarations
+
+| Declaration | Kind | Line | Purpose |
+|-------------|------|------|---------|
+| `hPV_singular_of_onCurve` | private lemma | 3377 | Dispatch: constructs full `hPV_singular` from `hPV_onCurve` (on-curve from hypothesis, off-curve from avoidance) |
+| `pv_residue_reduced_orders_onCurve` | theorem | 3427 | M4-T2: On-curve variant of `pv_residue_reduced_orders` (1-line forward) |
+| `pv_residue_sum_bridge_onCurve` | theorem | 3446 | M4-T3: On-curve variant of `pv_residue_sum_bridge` (1-line forward) |
+| `pv_residue_generalizedPV_consistent_onCurve_of_nonvanishing` | theorem | 3470 | M4-T4: On-curve variant of `pv_residue_generalizedPV_consistent_of_nonvanishing` (1-line forward) |
+| `S_onCurve_eq_empty_of_nonvanishing` | lemma | 3488 | Under `h_nv`, `S_onCurve = ∅` (no zeros on curve) |
+| `pv_residue_sum_bridge_onCurve_of_nonvanishing` | theorem | 3502 | Full nonvanishing wrapper — does NOT require `hPV_onCurve` (vacuous via empty `S_onCurve`) |
+
+### Axiom check output
+```
+'pv_residue_reduced_orders_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound]
+'pv_residue_sum_bridge_onCurve' depends on axioms: [propext, Classical.choice, Quot.sound]
+'pv_residue_generalizedPV_consistent_onCurve_of_nonvanishing' depends on axioms: [propext, Classical.choice, Quot.sound]
+'S_onCurve_eq_empty_of_nonvanishing' depends on axioms: [propext, Classical.choice, Quot.sound]
+'pv_residue_sum_bridge_onCurve_of_nonvanishing' depends on axioms: [propext, Classical.choice, Quot.sound]
+```
+
+### Design notes
+- `hPV_singular_of_onCurve` centralizes the on/off-curve dispatch (used by all 4 onCurve theorems)
+- `pv_residue_identity_generalizedPV_onCurve` (M3-T2) refactored to use `hPV_singular_of_onCurve` (was inline dispatch)
+- All 3 new onCurve variants are 1-line forwards to their M2 counterparts
+- M2-T3 refactoring to forward through onCurve was NOT possible (declaration order: M2-T3 precedes M4-T4 in file). Docstring updated with cross-reference instead.
+- `pv_residue_sum_bridge_onCurve_of_nonvanishing` eliminates `hPV_onCurve` entirely under `h_nv`
+- No new pointwise winding claims
+
+### Next steps
+- F1: Supply winding evaluations for unconditional `h_sum_bridge` discharge
+- F2 future: extend to general `S_onCurve` discharge via immersion crossing analysis
+
+---
+
+## Session 104 (2026-02-13) — Ticket F2 Milestone M3: Bridge and On-Curve Variants
+
+**Worker:** F2
+**File:** `ValenceFormula_ResidueSide.lean`
+**Build:** 2971 jobs, success, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### New theorems
+
+| Theorem | Purpose |
+|---------|---------|
+| `cauchyPrincipalValueOn_eq_pv_integral_of_nonvanishing` | M3-T1: Bridge — under `h_nv`, `cauchyPrincipalValueOn` equals classical `pv_integral` |
+| `S_onCurve` | M3-T2: Definition — singular points in `allZerosInFdBox` actually on `fdBoundary` |
+| `cpv_exists_of_curve_avoids_point` | Helper — single-point PV exists trivially when curve avoids the point |
+| `pv_residue_identity_generalizedPV_onCurve` | M3-T2: PV residue identity requiring `hPV_onCurve` only for `S_onCurve` |
+
+### Design notes
+- Bridge theorem uses `cauchyPrincipalValueOn_avoids` + `fdBoundary_avoids_allZeros`
+- `S_onCurve` = `allZerosInFdBox.filter (∃ t ∈ [0,5], fdBoundary t = s)`, uses `open Classical`
+- `cpv_exists_of_curve_avoids_point` uses compact-image distance argument (infDist > 0)
+- `pv_residue_identity_generalizedPV_onCurve` splits on/off curve cases: on-curve from hypothesis, off-curve from avoidance
+- All existing M1/M2 theorems unchanged
+- No new pointwise winding claims
+
+### Next steps
+- F1: Supply winding evaluations for `h_sum_bridge` discharge
+- F2 M4: Discharge `hPV_onCurve` using immersion crossing analysis (if scope allows)
+
+---
+
+## Session 103 (2026-02-13) — Ticket F2 Milestone M2: Orders and Sum Bridge
+
+**Worker:** F2
+**File:** `ValenceFormula_ResidueSide.lean`
+**Build:** 2971 jobs, success, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### New theorems
+
+| Theorem | Purpose |
+|---------|---------|
+| `pv_residue_reduced_orders` | M2-T1: Converts residues to orders via `residue_logDeriv_eq_order`, reindexes sum from Sfd (ℂ) to zeros (ℍ) |
+| `pv_residue_sum_bridge` | M2-T2: F1 handoff — takes sum-level `h_sum_bridge` hypothesis, gives PV = -(2πi Σ ew·ord) |
+| `pv_residue_generalizedPV_consistent_of_nonvanishing` | M2-T3: Under h_nv, generalizedPV route gives same RHS as existing `pv_equals_residue_sum_of_nonvanishing` |
+
+### Design notes
+- `pv_residue_sum_bridge` takes a SUM-LEVEL identity (no pointwise gWN = -ew claims)
+- Consistency theorem discharges `h_sum_bridge` via existing `h_sum_winding_eq_neg_ew`
+- All proofs are short and compositional (≤5 tactic lines each)
+- No changes to existing theorem signatures
+
+### Next steps
+- F1: Supply pointwise/sum-level winding evaluations to discharge `h_sum_bridge` unconditionally
+- F2 M3: Discharge `hPV_singular` hypothesis
+
+---
+
+## Session 102 (2026-02-13) — Ticket F2 Milestone M1: Unconditional PV Residue Identity
+
+**Worker:** F2
+**File:** `ValenceFormula_ResidueSide.lean`
+**Build:** 2971 jobs, success, 0 sorry
+**Axioms:** `[propext, Classical.choice, Quot.sound]` — standard only
+
+### What was done
+
+Added 3 new theorems that use `generalizedResidueTheorem'` + `cauchyPrincipalValueOn` without
+requiring `h_nv` (boundary nonvanishing) or `hint` (integrability). Existing theorems untouched.
+
+**New theorems:**
+
+| Theorem | Purpose |
+|---------|---------|
+| `winding_zero_for_non_fd_point_geo` (private) | Geometric proof: winding = 0 for points in fdBox \ FD, without h_nv |
+| `pv_residue_identity_generalizedPV` | Full PV residue identity via `generalizedResidueTheorem'`, parameterized by `hPV_singular` |
+| `pv_residue_reduced_onCurve` | Reduced sum: only Sfd zeros contribute (non-FD terms have winding = 0) |
+
+**Key design decisions:**
+- `hPV_singular` (PV existence at each singular point) retained as explicit hypothesis per plan
+- Geometric winding proof uses 3 cases: |re| > 1/2 (left/right), ‖z‖ < 1 (inside arc)
+- Uses patched integrand `Fp` internally, converts to raw `F` via `Tendsto.congr'`
+
+**Also fixed:** Removed 114-line pre-existing duplicate declarations (`fdBoundary_im_pos`,
+`fdBoundary_im_le_H_height`) that were private copies of theorems from `ValenceFormula_FD_Boundary.lean`.
+
+### Next steps (F2 M2+)
+
+- F1: Supply winding number evaluations (`generalizedWindingNumber'` at i = 1/2, at interior = 1, at ρ = 1/6)
+- F2 M2: Discharge `hPV_singular` hypothesis (show PV exists at each crossing point)
+- E2: Remove `h_nv`/`hcusp_nonvan` from public API using unconditional PV identity
 
 ---
 
@@ -251,7 +966,416 @@ $ #print axioms valenceFormula_classical_split_from_S
 
 ---
 
-## Session 95 (2026-02-13) — E1.8: Larger-radius superset wrappers
+## Session 100 (2026-02-13) — E1.12: Nonvanishing-from-S AxiomClean wrappers
+
+**Worker:** E1.12
+**Goal:** Add 4 missing AxiomClean wrappers for the nonvanishing-from-S API.
+
+### Completed
+
+**ValenceFormula_Final_AxiomClean.lean** (4 theorems added, 0 sorry):
+
+| Name | Line | Forwards to |
+|------|------|-------------|
+| `valenceFormula_axiomClean_from_S_of_nonvanishing` | 253 | `valenceFormula_split_from_S_of_nonvanishing` |
+| `valenceFormula_classical_axiomClean_from_S_of_nonvanishing` | 267 | `valenceFormula_classical_split_from_S_of_nonvanishing` |
+| `valenceFormula_axiomClean_from_S_of_nonvanishing_of_larger_radius` | 291 | `valenceFormula_split_from_S_of_nonvanishing_of_larger_radius` |
+| `valenceFormula_classical_axiomClean_from_S_of_nonvanishing_of_larger_radius` | 310 | `valenceFormula_classical_split_from_S_of_nonvanishing_of_larger_radius` |
+
+All 4 are 1-line forwards to the corresponding Split theorems.
+
+### Verification
+
+```
+$ lake build ValenceFormula_Final_AxiomClean
+Build completed successfully (2979 jobs)
+
+$ #print axioms valenceFormula_axiomClean_from_S_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_axiomClean_from_S_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_axiomClean_from_S_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_axiomClean_from_S_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+```
+
+Total public API: **12 axiom-clean theorems** in `ValenceFormula_Final_AxiomClean.lean`.
+
+---
+
+## Session 99 (2026-02-13) — E2.8: Larger-radius nonvanishing split wrappers
+
+**Worker:** E2.8
+**Goal:** Add larger-radius + nonvanishing superset wrappers in `ValenceFormula_Final_Split.lean`.
+Refactor fixed-radius nonvanishing forms to 1-line specializations.
+
+### Completed
+
+**ValenceFormula_Final_Split.lean** (2 new theorems + 2 refactored, 0 sorry):
+
+| Name | Line | Type |
+|------|------|------|
+| `valenceFormula_split_from_S_of_nonvanishing_of_larger_radius` | 343 | NEW, axiom-clean |
+| `valenceFormula_classical_split_from_S_of_nonvanishing_of_larger_radius` | 372 | NEW, axiom-clean |
+| `valenceFormula_split_from_S_of_nonvanishing` | 406 | REFACTORED → 1-line forward with `le_rfl` |
+| `valenceFormula_classical_split_from_S_of_nonvanishing` | 425 | REFACTORED → 1-line forward with `le_rfl` |
+
+### Verification
+
+```
+$ lake build ValenceFormula_Final_Split
+Build completed successfully (2978 jobs)
+
+$ #print axioms valenceFormula_split_from_S_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_split_from_S_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+```
+
+---
+
+## Session 98 (2026-02-13) — E2.7: WithData nonvanishing wrappers
+
+**Worker:** E2.7
+**Goal:** Add nonvanishing-parameterized ℂ-typed with-data wrappers to
+`ValenceFormula_Final_WithData.lean`.
+
+### Completed
+
+**ValenceFormula_Final_WithData.lean** (4 theorems added, 0 sorry):
+
+| Name | Line | Forwards to |
+|------|------|-------------|
+| `valenceFormula_with_data_of_nonvanishing` | 116 | `valence_formula_base_identity_of_nonvanishing` |
+| `valenceFormula_classical_with_data_of_nonvanishing` | 131 | `valence_formula_classical_form_of_nonvanishing` |
+| `valenceFormula_with_data_of_nonvanishing_of_larger_radius` | 154 | `_of_nonvanishing` + `closedBall_subset_closedBall` |
+| `valenceFormula_classical_with_data_of_nonvanishing_of_larger_radius` | 172 | `_of_nonvanishing` + `closedBall_subset_closedBall` |
+
+### Verification
+
+```
+$ lake build ValenceFormula_Final_WithData
+Build completed successfully (2974 jobs)
+
+$ #print axioms valenceFormula_with_data_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_with_data_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_with_data_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_with_data_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+```
+
+---
+
+## Session 99 (2026-02-13) — E1.11: Larger-radius nonvanishing with-data wrappers
+
+**Worker:** E1.11
+**Goal:** Add `valenceFormula_axiomClean_with_data_of_nonvanishing_of_larger_radius` and
+`valenceFormula_classical_axiomClean_with_data_of_nonvanishing_of_larger_radius` to
+`ValenceFormula_Final_AxiomClean.lean`.
+
+### Completed
+
+**ValenceFormula_Final_AxiomClean.lean** (2 theorems added, 0 sorry):
+
+| Name | Line | Forwards to |
+|------|------|-------------|
+| `valenceFormula_axiomClean_with_data_of_nonvanishing_of_larger_radius` | 197 | `valenceFormula_axiomClean_with_data_of_nonvanishing` + ball restriction |
+| `valenceFormula_classical_axiomClean_with_data_of_nonvanishing_of_larger_radius` | 218 | `valenceFormula_classical_axiomClean_with_data_of_nonvanishing` + ball restriction |
+
+Both forward to fixed-radius versions with `Metric.closedBall_subset_closedBall hr` to restrict
+`closedBall(0, r)` to `closedBall(0, seg5_q_radius)`.
+
+### Verification
+
+```
+$ lake build ValenceFormula_Final_AxiomClean
+Build completed successfully (2979 jobs)
+
+$ #print axioms valenceFormula_axiomClean_with_data_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_axiomClean_with_data_of_nonvanishing_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+```
+
+Total public API: **8 axiom-clean theorems** in `ValenceFormula_Final_AxiomClean.lean`.
+
+---
+
+## Session 98 (2026-02-13) — Comprehensive audit: all PV sorries confirmed dead code
+
+**Worker:** Audit
+**Goal:** Comprehensive sorry and axiom audit of the complete split chain.
+
+### Full Build Status
+
+```
+$ lake build
+Build completed successfully (7457 jobs)
+```
+
+### Split-Chain File Audit (15 files, 0 sorry on critical path)
+
+| File | Executable Sorry | Status |
+|------|-----------------|--------|
+| ValenceFormulaDefinitions | 0 | Clean |
+| ValenceFormula_FD_Boundary | 0 | Clean |
+| ValenceFormula_FD_Boundary_Param | 0 | Clean |
+| ValenceFormula_InteriorWinding | 0 | Clean |
+| ValenceFormula_EllipticContrib | 0 | Clean |
+| ValenceFormula_PV | **12** | All dead code (see below) |
+| ValenceFormula_ResidueSide | 0 | Clean |
+| ValenceFormula_ModularSide | 0 | Clean |
+| ValenceFormula_Core | 0 | Clean |
+| ValenceFormula_Final_Discharge | 0 | Clean |
+| ValenceFormula_Final_WithData | 0 | Clean |
+| ValenceFormula_Final_Split | 0 | Clean |
+| ValenceFormula_Final_AxiomClean | 0 | Clean |
+| ValenceFormula_CuspHeight | 0 | Clean |
+| ValenceFormula_Rect_Homotopy | 0 | Clean |
+
+### PV Dead Code Analysis (12 sorry, all non-critical)
+
+All 12 sorry in `ValenceFormula_PV.lean` are in dead code chains. None are used by any
+axiom-clean theorem. Verified via `#print axioms` for each declaration.
+
+**Dead chain 1: `cauchy_on_subseq` (2 sorry: lines 1924, 1936)**
+- Old PV limit approach, superseded by `pv_limit_via_dyadic`
+- Not referenced by any code (only comments)
+- `#print axioms cauchy_on_subseq` → `[propext, sorryAx, ...]`
+
+**Dead chain 2: `singular_annulus_bound` (1 sorry: line 3759)**
+- Superseded by `singular_annulus_bound_explicit` (axiom-clean)
+- Only used by `pv_step_bound_ratio_two` (inherits sorryAx)
+- `pv_step_bound_ratio_two_uniform` uses `singular_annulus_bound_explicit` instead (axiom-clean)
+
+**Dead chain 3: `pv_limit_exists` → `cauchy_integral_difference_bound` → `cauchy_cutoff_of_linear_approx'` → `smooth_crossing_cauchy` → `immersion_crossing_cauchy` → `pv_integral_exists_f'_over_f` (7 sorry total)**
+- `pv_limit_exists`: 2 sorry (lines 4436, 4442) — old approach, superseded
+- `near_part_cauchy`: 1 sorry (line 4740) — not referenced
+- `smooth_crossing_cauchy`: 2 sorry (lines 4810, 4883) — measurability gap + boundary partition
+- `immersion_crossing_cauchy`: 2 sorry (lines 4983, 5032) — smooth/corner cases
+- `pv_integral_exists_f'_over_f`: 1 sorry (line 5213) — blocked by chain
+
+**Dead code: `horizontal_contribution_is_cusp` (1 sorry: line 6426)**
+- Dead code (old approach using non-parameterized H)
+- Not referenced by any code
+
+**Axiom verification (all axiom-clean):**
+```
+pv_limit_via_dyadic: [propext, Classical.choice, Quot.sound]
+pv_step_bound_ratio_two_uniform: [propext, Classical.choice, Quot.sound]
+singular_annulus_bound_explicit: [propext, Classical.choice, Quot.sound]
+pv_integral_eq_modular_transformation: [propext, Classical.choice, Quot.sound]
+```
+
+### Public API Axiom Verification (6 theorems, all clean)
+
+```
+valenceFormula_axiomClean_from_S: [propext, Classical.choice, Quot.sound]
+valenceFormula_classical_axiomClean_from_S: [propext, Classical.choice, Quot.sound]
+valenceFormula_axiomClean_from_S_of_larger_radius: [propext, Classical.choice, Quot.sound]
+valenceFormula_classical_axiomClean_from_S_of_larger_radius: [propext, Classical.choice, Quot.sound]
+valenceFormula_axiomClean_with_data_of_nonvanishing: [propext, Classical.choice, Quot.sound]
+valenceFormula_classical_axiomClean_with_data_of_nonvanishing: [propext, Classical.choice, Quot.sound]
+```
+
+### Remaining Work (Optional)
+
+1. **PV dead code cleanup:** Delete or fill the 12 dead-code sorry. Low priority — no impact on axiom cleanliness.
+2. **E2 auto-derive:** Remove `h_nv`/`hcusp_nonvan` hypotheses from public API by proving boundary nonvanishing from `hf`. Requires:
+   - E2-1: `cuspFunction` meromorphicity + identity theorem
+   - E2-2: Parameterized boundary avoids zeros
+   - E2-3: Auto-deriving wrapper
+
+---
+
+## Session 97c (2026-02-13) — E1.10: Explicit-zeros nonvanishing public wrappers
+
+**Worker:** E1.10
+**Goal:** Add `valenceFormula_axiomClean_with_data_of_nonvanishing` and
+`valenceFormula_classical_axiomClean_with_data_of_nonvanishing` to
+`ValenceFormula_Final_AxiomClean.lean`.
+
+### Completed
+
+**ValenceFormula_Final_AxiomClean.lean** (2 theorems added, 0 sorry):
+
+| Name | Line | Forwards to |
+|------|------|-------------|
+| `valenceFormula_axiomClean_with_data_of_nonvanishing` | 148 | `valence_formula_base_identity_of_nonvanishing_rat` + `linarith` |
+| `valenceFormula_classical_axiomClean_with_data_of_nonvanishing` | 167 | `valence_formula_classical_form_of_nonvanishing_rat` |
+
+### Verification
+
+```
+$ lake build ValenceFormula_Final_AxiomClean
+Build completed successfully (2979 jobs)
+
+$ #print axioms valenceFormula_axiomClean_with_data_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_axiomClean_with_data_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+```
+
+---
+
+## Session 97b (2026-02-13) — E2.6: Nonvanishing public split wrappers (already present)
+
+**Worker:** E2.6
+**Goal:** Add `valenceFormula_split_from_S_of_nonvanishing` and
+`valenceFormula_classical_split_from_S_of_nonvanishing` to `ValenceFormula_Final_Split.lean`.
+
+### Result: ALREADY DONE (added by concurrent E2.4 session)
+
+Both theorems already exist in `ValenceFormula_Final_Split.lean`:
+
+| Name | Line | Status |
+|------|------|--------|
+| `valenceFormula_split_from_S_of_nonvanishing` | 340 | axiom-clean |
+| `valenceFormula_classical_split_from_S_of_nonvanishing` | 367 | axiom-clean |
+
+### Verification
+
+```
+$ lake build ValenceFormula_Final_Split
+Build completed successfully (2978 jobs)
+
+$ #print axioms valenceFormula_split_from_S_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_split_from_S_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+```
+
+---
+
+## Session 97 (2026-02-13) — E2.5: Fill core nonvanishing sorry (h_nv → hint)
+
+**Worker:** E2.5
+**Goal:** Remove the executable `sorry` in `valence_formula_base_identity_of_nonvanishing`
+by proving integrability from boundary nonvanishing.
+
+### Completed
+
+**ValenceFormula_ResidueSide.lean** (2 lemmas added, 0 sorry added):
+
+| Name | Line | Status | Notes |
+|------|------|--------|-------|
+| `logDeriv_continuousOn_fdBoundary_image_of_nonvanishing` (private) | 2712 | NEW | ContinuousOn via `analyticAt_logDeriv_off_zeros` + `fdBoundary_im_pos` + `h_nv` |
+| `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing` | 2721 | NEW | Via `intervalIntegrable_pv_integrand_piecewiseC1` |
+
+**ValenceFormula_Core.lean** (1 sorry removed, 0 sorry remaining):
+
+| Name | Status | Notes |
+|------|--------|-------|
+| `valence_formula_base_identity_of_nonvanishing` | SORRY ELIMINATED | `have hint := intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing f h_nv` |
+| `valence_formula_classical_form_of_nonvanishing` | SORRY-FREE (inherited) | Forwards to base identity |
+
+### Proof strategy
+
+1. `logDeriv (modularFormCompOfComplex f)` is analytic at each `fdBoundary t` because:
+   - `fdBoundary_im_pos t ht` gives `0 < (fdBoundary t).im` (in UHP)
+   - `h_nv t ht` gives `modularFormCompOfComplex f (fdBoundary t) ≠ 0`
+   - `analyticAt_logDeriv_off_zeros` combines both
+2. Analyticity → ContinuousAt → ContinuousOn on image
+3. `intervalIntegrable_pv_integrand_piecewiseC1` with:
+   - `hg` = continuousOn from step 2
+   - `hγ` = `fdBoundary_continuous.continuousOn`
+   - `hγ'_cont` = `fdBoundaryCurve.deriv_continuous_off_partition`
+   - `hg_bound` = `continuousOn_image_bounded`
+   - `hγ'_bound` = `fdBoundaryImmersion.deriv_bounded`
+
+### Verification
+
+```
+$ lake build ValenceFormula_ResidueSide
+Build completed successfully (2971 jobs)
+
+$ lake build ValenceFormula_Core
+Build completed successfully (2973 jobs)
+
+$ #print axioms intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valence_formula_base_identity_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valence_formula_classical_form_of_nonvanishing
+[propext, Classical.choice, Quot.sound]
+
+$ rg -n "\bsorry\b" ValenceFormula_Core.lean
+(0 executable sorry — only comment references)
+```
+
+---
+
+## Session 95b (2026-02-13) — E1.9/E1.9B: Axiom-clean Final entrypoint
+
+**Worker:** E1.9 → E1.9B
+**Goal:** Expose axiom-clean `valenceFormula_axiomClean_from_S` wrappers.
+
+### E1.9 — BLOCKED by import conflict
+
+Cannot add `import ValenceFormula_Final_Split` to `ValenceFormula_Final.lean`:
+both `ValenceFormula.lean` and `ValenceFormulaDefinitions.lean` define
+`orbifoldCoeff_at_i`, `fundamentalDomain`, etc. Updated docstring in
+`ValenceFormula_Final.lean` to direct users to split chain.
+
+### E1.9B — Resolved via new `ValenceFormula_Final_AxiomClean.lean`
+
+Created `ValenceFormula_Final_AxiomClean.lean` (NEW file, imports only
+`ValenceFormula_Final_Split`). Contains 4 axiom-clean 1-line forwards:
+
+| Name | Line | Forwards to |
+|------|------|-------------|
+| `valenceFormula_axiomClean_from_S` | 53 | `valenceFormula_split_from_S` |
+| `valenceFormula_classical_axiomClean_from_S` | 71 | `valenceFormula_classical_split_from_S` |
+| `valenceFormula_axiomClean_from_S_of_larger_radius` | 96 | `valenceFormula_split_from_S_of_larger_radius` |
+| `valenceFormula_classical_axiomClean_from_S_of_larger_radius` | 115 | `valenceFormula_classical_split_from_S_of_larger_radius` |
+
+### Verification
+
+```
+$ rg -n "theorem valenceFormula_axiomClean" .../ValenceFormula_Final_AxiomClean.lean
+53:theorem valenceFormula_axiomClean_from_S
+71:theorem valenceFormula_classical_axiomClean_from_S
+96:theorem valenceFormula_axiomClean_from_S_of_larger_radius
+115:theorem valenceFormula_classical_axiomClean_from_S_of_larger_radius
+
+$ rg -n "sorry" .../ValenceFormula_Final_AxiomClean.lean
+(0 sorry)
+
+$ lake build ValenceFormula_Final_AxiomClean
+Build completed successfully (2979 jobs)
+
+$ #print axioms valenceFormula_axiomClean_from_S
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_axiomClean_from_S
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_axiomClean_from_S_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+
+$ #print axioms valenceFormula_classical_axiomClean_from_S_of_larger_radius
+[propext, Classical.choice, Quot.sound]
+```
+
+---
+
+## Session 95a (2026-02-13) — E1.8: Larger-radius superset wrappers
 
 **Worker:** E1.8
 **Goal:** Add `valenceFormula_split_from_S_of_larger_radius` and
@@ -403,6 +1527,61 @@ $ #print axioms fdBoundary_H_not_differentiableAt_1
 | B4: Non-differentiability | DONE | not_differentiableAt_{1,3,4} + EventuallyEq helpers |
 | C: ContinuousOn deriv | DONE | Ioo_{01,13,34,45} continuousOn |
 | D: Bridge to canonical | DONE | fdBoundary_H_eq_fdBoundary, height_eq, endpoint/closure |
+
+---
+
+## Session 97 (2026-02-13) — E2.4: HINT DECOUPLING LAYER
+
+**Worker:** E2.4
+**Goal:** Add `_of_nonvanishing` theorem variants parameterized by boundary nonvanishing (`h_nv`)
+instead of integrability (`hint`), without changing existing public signatures.
+
+### Completed
+
+**ValenceFormula_ResidueSide.lean** (1 new public theorem, 1 existing proof refactored):
+
+| Name | Status | Notes |
+|------|--------|-------|
+| `pv_equals_residue_sum_of_nonvanishing` | NEW (0 sorry) | Takes `h_nv` directly; reuses `pv_equals_residue_sum_from_assumptions` + `argument_principle_on_fdBoundary` + `h_sum_winding_eq_neg_ew` |
+| `pv_equals_residue_sum` | REFACTORED | f≠0 branch now forwards to `_of_nonvanishing` via `nonvanishing_on_fdBoundary_of_integrable`; signature unchanged |
+
+**ValenceFormula_Core.lean** (2 new public theorems):
+
+| Name | Status | Notes |
+|------|--------|-------|
+| `valence_formula_base_identity_of_nonvanishing` | NEW | Takes `h_nv` + `hcusp_nonvan`; derives `hint` via `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing` |
+| `valence_formula_classical_form_of_nonvanishing` | NEW | Forwards to base identity + `sum_ew_ord_decompose_unconditional` + `linear_combination` |
+
+**ValenceFormula_Final_Discharge.lean** (2 new public theorems):
+
+| Name | Status | Notes |
+|------|--------|-------|
+| `valence_formula_base_identity_of_nonvanishing_rat` | NEW | ℚ cast via `exact_mod_cast` |
+| `valence_formula_classical_form_of_nonvanishing_rat` | NEW | ℚ cast via `apply_fun Rat.cast` + `push_cast` |
+
+### Architecture
+
+```
+ResidueSide:
+  pv_equals_residue_sum_of_nonvanishing  (h_nv → PV = -(2πi·Σ ew·ord))  [0 sorry]
+  pv_equals_residue_sum                  (hint → h_nv → forward)          [unchanged signature]
+
+Core:
+  valence_formula_base_identity_of_nonvanishing   (h_nv → Σ ew·ord = k/12 - ord_∞)
+  valence_formula_classical_form_of_nonvanishing  (h_nv → classical form)
+
+Discharge:
+  _of_nonvanishing_rat variants          (ℚ casts)
+```
+
+### Verification (pending build completion)
+
+New theorems added:
+- `pv_equals_residue_sum_of_nonvanishing` (ResidueSide)
+- `valence_formula_base_identity_of_nonvanishing` (Core)
+- `valence_formula_classical_form_of_nonvanishing` (Core)
+- `valence_formula_base_identity_of_nonvanishing_rat` (Discharge)
+- `valence_formula_classical_form_of_nonvanishing_rat` (Discharge)
 
 ---
 
@@ -6021,3 +7200,53 @@ piecewise homotopy infrastructure.
 - no executable `sorry` in `PiecewiseHomotopy.lean` and `Infrastructure/PiecewiseHomotopyHelpers.lean`,
 - `#print axioms windingNumber_eq_of_piecewise_homotopic` has no `sorryAx`,
 - `#print axioms generalizedWindingNumber_fdBoundary_eq_neg_one` has no `sorryAx`.
+
+---
+
+## Session 101 — E2.9 PV Dead-Code Cleanup + E2-UNCONDITIONAL Hard-Stop (2026-02-13)
+
+### E2.9: PV Dead-Code Cleanup — DONE
+
+Deleted ~2000 lines of dead code from `ValenceFormula_PV.lean`:
+- 15+ dead declarations removed (all contained sorry, none on critical path)
+- `cutoff_integrand_intervalIntegrable` restored (was incorrectly deleted — used by living `pv_step_bound_ratio_two_uniform`)
+- **0 sorry remaining in PV.lean** (was 12, all in deleted dead code)
+- Full build: 7457 jobs, success
+
+### E2-UNCONDITIONAL: HARD STOP — Mathematically False
+
+**Goal was:** Remove `h_nv`/`hint`/`hcusp_nonvan` from the public API, exposing theorems
+with signature `(f hf S hS hS_complete)` only.
+
+**Verdict:** The unconditional theorem is **mathematically false** under current definitions.
+
+**Root cause:** `effectiveWinding` assigns 0 to all boundary points except `i` and `ρ`.
+A holomorphic modular form can have zeros at generic arc points on `|z| = 1`
+(e.g., weight-12 forms of the shape `E₄³ - c·Δ` with suitable `c`). At such a zero `z₀`:
+- `z₀` and its S-image `-1/z₀` are both in `fundamentalDomain` with `effectiveWinding = 0`
+- They represent ONE orbifold interior zero that should contribute `1 × ord`
+- The formula gives `0` instead of `ord` — **contradiction**
+
+The `h_nv` hypothesis excludes this by requiring no zeros on the boundary curve.
+This is mathematically necessary: boundary zeros create non-integrable poles in `logDeriv f`,
+making the PV integral `∮ f'/f` undefined. In standard treatments, one always
+chooses the fundamental domain boundary to avoid zeros.
+
+**Note:** The claim `hint ↔ h_nv` is formalized as the public theorem
+`hint_iff_nonvanishing_fdBoundary` (ResidueSide.lean), combining both proven directions:
+- `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing` (h_nv → hint)
+- `nonvanishing_on_fdBoundary_of_integrable` (hint → h_nv, made public this session)
+
+**Conclusion:** `_of_nonvanishing` theorems are the mathematically correct primary API.
+No further work on unconditional versions under current definitions.
+
+### Bridge Theorems Added
+
+| Theorem | File | Status |
+|---------|------|--------|
+| `nonvanishing_on_fdBoundary_of_integrable` | ResidueSide | Made public (was private) |
+| `hint_iff_nonvanishing_fdBoundary` | ResidueSide | NEW, axiom-clean |
+
+### Files Modified
+- `ValenceFormula_PV.lean` — dead code deleted, `cutoff_integrand_intervalIntegrable` restored
+- `ValenceFormula_ResidueSide.lean` — made `nonvanishing_on_fdBoundary_of_integrable` public, added `hint_iff_nonvanishing_fdBoundary`

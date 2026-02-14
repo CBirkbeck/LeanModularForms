@@ -54,6 +54,21 @@ The split-chain path (Core → Discharge → WithData) is fully axiom-clean, but
 
 ---
 
+### E1.9: Re-export axiom-clean theorems — DONE (via Final_AxiomClean.lean)
+
+**E1.9 (original):** BLOCKED — import conflict prevents adding split-chain import to
+`ValenceFormula_Final.lean`. Both chains define `orbifoldCoeff_at_i` etc.
+
+**E1.9B (pivot):** DONE — Created `ValenceFormula_Final_AxiomClean.lean` as a separate
+axiom-clean entrypoint. Imports only `ValenceFormula_Final_Split`. Contains 4 theorems:
+
+| Name | Status |
+|------|--------|
+| `valenceFormula_axiomClean_from_S` | DONE, axiom-clean |
+| `valenceFormula_classical_axiomClean_from_S` | DONE, axiom-clean |
+| `valenceFormula_axiomClean_from_S_of_larger_radius` | DONE, axiom-clean |
+| `valenceFormula_classical_axiomClean_from_S_of_larger_radius` | DONE, axiom-clean |
+
 ### E1.8: Larger-radius superset wrappers — DONE (Session 95)
 
 | Name | Status |
@@ -117,6 +132,78 @@ continuity, HasDerivAt, deriv, nonvanishing derivative, and norm lemmas.
 - `ValenceFormula_CuspHeight.lean` has height monotonicity lemmas
 - `_of_larger_radius` variants in Core/Discharge/WithData handle variable radius
 
+### E2.4: HINT DECOUPLING LAYER — DONE (Session 97)
+
+Added `_of_nonvanishing` theorem variants at every level of the chain:
+
+| File | Theorem | Status |
+|------|---------|--------|
+| ResidueSide | `pv_equals_residue_sum_of_nonvanishing` | DONE, 0 sorry |
+| Core | `valence_formula_base_identity_of_nonvanishing` | DONE |
+| Core | `valence_formula_classical_form_of_nonvanishing` | DONE |
+| Discharge | `valence_formula_base_identity_of_nonvanishing_rat` | DONE |
+| Discharge | `valence_formula_classical_form_of_nonvanishing_rat` | DONE |
+
+Also refactored `pv_equals_residue_sum` to route through `_of_nonvanishing` in the f≠0 case.
+
+Integrability derived from nonvanishing via `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing`.
+
+### E2.5: FILL CORE NONVANISHING SORRY — DONE (Session 97)
+
+Eliminated the single executable `sorry` in `valence_formula_base_identity_of_nonvanishing`
+(Core.lean line 349). Replaced with:
+```lean
+have hint := intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing f h_nv
+```
+
+New lemmas in ResidueSide.lean:
+- `logDeriv_continuousOn_fdBoundary_image_of_nonvanishing` (private)
+- `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing` (public)
+
+All three `_of_nonvanishing` theorems now axiom-clean: `[propext, Classical.choice, Quot.sound]`.
+
+### E2.6: Nonvanishing public split wrappers — DONE (Session 97/97b)
+
+Both theorems already present in `ValenceFormula_Final_Split.lean` (added during E2.4):
+
+| Name | Status |
+|------|--------|
+| `valenceFormula_split_from_S_of_nonvanishing` | DONE, axiom-clean |
+| `valenceFormula_classical_split_from_S_of_nonvanishing` | DONE, axiom-clean |
+
+### E2.7: WithData nonvanishing wrappers — DONE (Session 98)
+
+4 theorems added to `ValenceFormula_Final_WithData.lean`:
+
+| Name | Status |
+|------|--------|
+| `valenceFormula_with_data_of_nonvanishing` | DONE, axiom-clean |
+| `valenceFormula_classical_with_data_of_nonvanishing` | DONE, axiom-clean |
+| `valenceFormula_with_data_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
+| `valenceFormula_classical_with_data_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
+
+### E1.12: Nonvanishing-from-S AxiomClean wrappers — DONE (Session 100)
+
+4 theorems added to `ValenceFormula_Final_AxiomClean.lean`:
+
+| Name | Status |
+|------|--------|
+| `valenceFormula_axiomClean_from_S_of_nonvanishing` | DONE, axiom-clean |
+| `valenceFormula_classical_axiomClean_from_S_of_nonvanishing` | DONE, axiom-clean |
+| `valenceFormula_axiomClean_from_S_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
+| `valenceFormula_classical_axiomClean_from_S_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
+
+### E2.8: Larger-radius nonvanishing split wrappers — DONE (Session 99)
+
+2 new theorems + 2 refactored in `ValenceFormula_Final_Split.lean`:
+
+| Name | Status |
+|------|--------|
+| `valenceFormula_split_from_S_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
+| `valenceFormula_classical_split_from_S_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
+| `valenceFormula_split_from_S_of_nonvanishing` | REFACTORED → 1-line forward with `le_rfl` |
+| `valenceFormula_classical_split_from_S_of_nonvanishing` | REFACTORED → 1-line forward with `le_rfl` |
+
 ### E2-3: Combine into auto-deriving wrapper
 
 | Micro-task | Description | Blocker |
@@ -141,32 +228,104 @@ E1-1 (decision) → E1-2a → E1-2b → E1-2c → E1-2d → E1-3
 
 ---
 
-## PV Non-Critical Sorries (for reference)
+### E1.10: Explicit-zeros nonvanishing wrappers — DONE (Session 97c)
 
-These 12 sorry in `ValenceFormula_PV.lean` are NOT on the critical path
-(`pv_integral_eq_modular_transformation` is axiom-clean). Cleanup is optional.
+| Name | Status |
+|------|--------|
+| `valenceFormula_axiomClean_with_data_of_nonvanishing` | DONE, axiom-clean |
+| `valenceFormula_classical_axiomClean_with_data_of_nonvanishing` | DONE, axiom-clean |
 
-| Sorry Line | Enclosing Declaration | Type |
-|------------|----------------------|------|
-| 1924, 1936 | `cauchy_on_subseq` (line 1722) | PV Cauchy bound |
-| 3759 | `singular_annulus_bound` (line 3725) | Annulus integral bound |
-| 4436, 4442 | `pv_limit_exists` (line 4352) | PV convergence |
-| 4740 | `near_part_cauchy` (line 4582) | Near-part Cauchy bound |
-| 4810, 4883 | `smooth_crossing_cauchy` (line 4766) | Smooth crossing Cauchy |
-| 4983, 5032 | `immersion_crossing_cauchy` (line 4935) | Corner crossing Cauchy |
-| 5213 | `pv_integral_exists_f'_over_f` (line 5142) | PV existence |
-| 6426 | `horizontal_contribution_is_cusp` (line 6421) | Dead code (parameterized H) |
+### E1.11: Larger-radius nonvanishing with-data wrappers — DONE (Session 99)
+
+| Name | Status |
+|------|--------|
+| `valenceFormula_axiomClean_with_data_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
+| `valenceFormula_classical_axiomClean_with_data_of_nonvanishing_of_larger_radius` | DONE, axiom-clean |
 
 ---
 
-## Recommended Execution Order
+## PV Non-Critical Sorries — CONFIRMED ALL DEAD CODE (Session 98 audit)
 
-1. **E1 Option A** (immediate, ~1 session): Rewire Final.lean to split chain, retain hypotheses.
-   This gives `sorryAx`-free public API right away.
+These 12 sorry in `ValenceFormula_PV.lean` are NOT on the critical path
+(`pv_integral_eq_modular_transformation` is axiom-clean). ALL are in dead code chains
+not referenced by any axiom-clean theorem. Cleanup is optional.
 
-2. **E2** (medium effort, ~3-5 sessions): Derive `hint` + `hcusp_nonvan` from `hf`.
-   Major new infrastructure needed (parameterized H, cuspFunction meromorphicity).
+| Sorry Line | Enclosing Declaration | Type | Dead Code? |
+|------------|----------------------|------|------------|
+| 1924, 1936 | `cauchy_on_subseq` (line 1722) | PV Cauchy bound | Yes (no callers) |
+| 3759 | `singular_annulus_bound` (line 3725) | Annulus integral bound | Yes (superseded by `_explicit`) |
+| 4436, 4442 | `pv_limit_exists` (line 4352) | PV convergence | Yes (superseded by `pv_limit_via_dyadic`) |
+| 4740 | `near_part_cauchy` (line 4582) | Near-part Cauchy bound | Yes (no callers) |
+| 4810, 4883 | `smooth_crossing_cauchy` (line 4766) | Smooth crossing Cauchy | Yes (only in sorry chain) |
+| 4983, 5032 | `immersion_crossing_cauchy` (line 4935) | Corner crossing Cauchy | Yes (only in sorry chain) |
+| 5213 | `pv_integral_exists_f'_over_f` (line 5142) | PV existence | Yes (blocked + no callers) |
+| 6426 | `horizontal_contribution_is_cusp` (line 6421) | Dead code (parameterized H) | Yes (no callers) |
 
-3. **E1 Option B** (after E2): Switch Final.lean to auto-deriving wrapper.
+---
 
-4. **PV sorry cleanup** (optional, low priority): Fill the 12 non-critical sorries.
+## Completed Track Summary
+
+| Track | Status | Sessions |
+|-------|--------|----------|
+| E1.6-E1.7 | DONE — superset-form theorems | 93 |
+| E1.8 | DONE — larger-radius wrappers | 95a |
+| E1.9 | BLOCKED → E1.9B DONE — AxiomClean.lean | 95b |
+| E1.10 | DONE — explicit-zeros nonvanishing wrappers | 97c |
+| E2.4 | DONE — `_of_nonvanishing` chain | 97 |
+| E2.5 | DONE — core sorry filled | 97 |
+| E2.6 | DONE — split wrappers (already present) | 97b |
+| Session 98 | DONE — comprehensive dead code audit | 98 |
+| E1.11 | DONE — larger-radius nonvanishing with-data wrappers | 99 |
+| E1.12 | DONE — nonvanishing-from-S AxiomClean wrappers (4 theorems) | 100 |
+| E2.8 | DONE — larger-radius nonvanishing split wrappers | 99 |
+
+### E2.9: PV Dead-Code Cleanup — DONE (Session 101)
+
+Deleted ~2000 lines of dead code from `ValenceFormula_PV.lean`. 0 sorry remaining.
+Restored `cutoff_integrand_intervalIntegrable` (incorrectly deleted, used by living code).
+
+### E2-UNCONDITIONAL: BLOCKED — Mathematically False (Session 101)
+
+**Goal was:** Remove `h_nv`/`hint`/`hcusp_nonvan` entirely, exposing `(f hf S hS hS_complete)`.
+
+**Status:** HARD STOP. The theorem is **false** under current `effectiveWinding` definitions.
+Boundary-arc zeros get `effectiveWinding = 0` but represent orbifold-interior points needing
+contribution 1. Holomorphic modular forms CAN have such zeros (e.g., `E₄³ - c·Δ` for suitable `c`).
+
+**Bridge theorems added:** `hint_iff_nonvanishing_fdBoundary` (public iff, both directions proven).
+
+This is a **definition-level mathematical obstruction**, not a Lean plumbing issue.
+Fixing would require redefining `effectiveWinding` to handle orbifold identification
+on the arc boundary, which is out of scope.
+
+**Conclusion:** `_of_nonvanishing` theorems are the mathematically correct primary API.
+
+---
+
+### F3-PV-HEIGHT-PARAM — DONE (Session 107)
+
+Height-parameterized PV infrastructure: `pv_integral_eq_modular_transformation_H` and wrappers.
+
+| Name | File | Status |
+|------|------|--------|
+| `circleIntegral_logDeriv_cuspFunction_of_radius` | PV | DONE, axiom-clean |
+| `seg5_integral_eq_circleIntegral_H` | PV | DONE, axiom-clean |
+| `seg5_logDeriv_integral_eq_H` | PV | DONE, axiom-clean |
+| `seg5_integral_eq_cusp_order_H` | PV | DONE, axiom-clean |
+| `pv_integral_vertical_cancel_H` | PV | DONE, axiom-clean |
+| `pv_integral_decompose_segments_H` | PV | DONE, axiom-clean |
+| `nonvanishing_on_seg2_of_integrable_H` | PV | DONE, axiom-clean |
+| `nonvanishing_on_seg3_of_integrable_H` | PV | DONE, axiom-clean |
+| `pv_integral_eq_modular_transformation_H` | PV | DONE, axiom-clean |
+| `modular_side_of_height` | ModularSide_Param | DONE, axiom-clean |
+
+---
+
+## Remaining Work
+
+1. ~~**E2 auto-derive**: Remove `h_nv`/`hcusp_nonvan` from public API~~ — **BLOCKED** by
+   definition-level mathematics (see E2-UNCONDITIONAL above). Not a Lean plumbing issue.
+
+2. ~~**PV dead code cleanup**~~ — **DONE** (Session 101). 0 sorry in PV.lean.
+
+3. ~~**F3-PV-HEIGHT-PARAM**~~ — **DONE** (Session 107). Height-parameterized PV/modular-side.

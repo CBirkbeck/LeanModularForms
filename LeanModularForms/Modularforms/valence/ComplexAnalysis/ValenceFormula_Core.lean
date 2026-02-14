@@ -5,6 +5,7 @@ Authors:
 -/
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_ResidueSide
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_ModularSide
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_ModularSide_Param
 
 /-!
 # Core Identity of the Valence Formula
@@ -325,6 +326,293 @@ All these are unnecessary because `valence_formula_classical_form` uses
 (high-altitude, left/right edge, arc non-elliptic, right-edge/ρ+1) by
 noting that `effectiveWinding = 0` for non-interior/non-elliptic points. -/
 
+/-! ## Nonvanishing-Parameterized Variants
+
+These variants replace `hint` (integrability) with `h_nv` (boundary nonvanishing),
+giving a cleaner API that doesn't expose internal curve constants.
+
+Integrability is derived from nonvanishing via
+`intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing`. -/
+
+/-- M7-T1: Base identity via generalizedPV residue path.
+
+Uses `pv_equals_residue_sum_of_nonvanishing_of_ne_zero` (M6) which routes through
+the generalized Cauchy PV infrastructure rather than `pv_equals_residue_sum_from_assumptions`. -/
+theorem valence_formula_base_identity_of_nonvanishing_via_generalizedPV (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
+  have hint := intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing f h_nv
+  exact contour_computation_equality f
+    (pv_equals_residue_sum_of_nonvanishing_of_ne_zero f hf h_nv)
+    (modular_side_mult_form f hf hint hcusp_nonvan)
+    zeros hzeros hzeros_fd hzeros_complete
+
+/-- M7-T2: Classical form via generalizedPV residue path.
+
+Forwards to `valence_formula_base_identity_of_nonvanishing_via_generalizedPV`
++ `sum_ew_ord_decompose_unconditional`. -/
+theorem valence_formula_classical_form_of_nonvanishing_via_generalizedPV (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℂ) +
+      (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+      (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 := by
+  have h_base := valence_formula_base_identity_of_nonvanishing_via_generalizedPV f hf zeros
+    hzeros hzeros_fd hzeros_complete h_nv hcusp_nonvan
+  rw [sum_ew_ord_decompose_unconditional f zeros] at h_base
+  linear_combination h_base
+
+/-- M7-T3a: Base identity parameterized by boundary nonvanishing (`h_nv`).
+
+Now routes through the generalizedPV path. -/
+theorem valence_formula_base_identity_of_nonvanishing (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) :=
+  valence_formula_base_identity_of_nonvanishing_via_generalizedPV f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv hcusp_nonvan
+
+/-- M7-T3b: Classical form parameterized by boundary nonvanishing (`h_nv`).
+
+Now routes through the generalizedPV path. -/
+theorem valence_formula_classical_form_of_nonvanishing (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℂ) +
+      (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+      (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 :=
+  valence_formula_classical_form_of_nonvanishing_via_generalizedPV f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv hcusp_nonvan
+
+/-! ## Crossing-Cauchy Variants
+
+These variants take `h_pv_eq_residue` — the result of composing the crossing-Cauchy
+CPV residue computation (M8's `pv_equals_residue_sum_of_crossingCauchy`) — rather
+than requiring boundary nonvanishing (`h_nv`).
+
+**Design note**: The Core level takes the *result* (`pv_integral = -(2πi Σ ew·ord)`)
+rather than the internal crossing-Cauchy pieces (`h_cc`, `h_sum_bridge`, `hcpv_eq_pv`),
+because `allZerosInFdBox` and `fdBox_M_half_lt` are private to `ResidueSide.lean`.
+Callers compose `pv_equals_residue_sum_of_crossingCauchy` at the ResidueSide level
+and pass the result here. -/
+
+/-- M9-T1: Base identity via crossing-Cauchy residue path.
+
+Takes the residue-side result `h_pv_eq_residue : pv_integral = -(2πi Σ ew·ord)`
+(produced by `pv_equals_residue_sum_of_crossingCauchy` from M8) and equates it with
+the modular side to derive the valence formula identity. -/
+theorem valence_formula_base_identity_of_crossingCauchy (zeros : Finset ℍ)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
+  have h_mod := modular_side_mult_form f hf hint hcusp_nonvan
+  have h3 : -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) =
+      -(2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) := by
+    rw [← h_pv_eq_residue, h_mod]
+  have hpi : (2 : ℂ) * Real.pi * I ≠ 0 := by
+    simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true, ofReal_eq_zero,
+      Real.pi_ne_zero, I_ne_zero, or_self]
+  exact mul_left_cancel₀ hpi (neg_inj.mp h3)
+
+/-- M9-T2: Classical form via crossing-Cauchy residue path.
+
+Forwards from `valence_formula_base_identity_of_crossingCauchy`
++ `sum_ew_ord_decompose_unconditional`. -/
+theorem valence_formula_classical_form_of_crossingCauchy (zeros : Finset ℍ)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    (orderAtCusp' f : ℂ) +
+      (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+      (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 := by
+  have h_base := valence_formula_base_identity_of_crossingCauchy f hf zeros
+    hint hcusp_nonvan h_pv_eq_residue
+  rw [sum_ew_ord_decompose_unconditional f zeros] at h_base
+  linear_combination h_base
+
+/-- M9-T3: Compatibility — under boundary nonvanishing, the crossing-Cauchy base identity
+reduces to the standard `valence_formula_base_identity_of_nonvanishing`. -/
+theorem valence_formula_base_identity_of_crossingCauchy_of_nonvanishing (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) :=
+  valence_formula_base_identity_of_nonvanishing f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv hcusp_nonvan
+
+/-! ## Larger-Radius Variants
+
+These variants allow the cusp nonvanishing hypothesis to be stated on a larger
+closed ball `closedBall(0, r)` with `r ≥ seg5_q_radius`. Useful when the
+nonvanishing radius comes from an existential choice rather than the fixed
+`seg5_q_radius`. -/
+
+/-! ## Crossing-Cauchy-of-Integrable Variants
+
+These compose `pv_equals_residue_sum_of_crossingCauchy_of_integrable` (from ResidueSide)
+with the crossing-Cauchy core theorems. The caller provides `hint` + `h_cc` + zero data +
+cusp nonvanishing; the residue identity is derived internally. -/
+
+/-- M12-T3a: Base identity via crossing-Cauchy + integrability.
+
+Derives the PV residue identity from `hint` + `h_cc` via
+`pv_equals_residue_sum_of_crossingCauchy_of_integrable`, then forwards to
+`valence_formula_base_identity_of_crossingCauchy`. -/
+theorem valence_formula_base_identity_of_crossingCauchy_of_integrable (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_cc : ∀ s ∈ S_onCurve f hf zeros,
+      (∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s) →
+        Cauchy (Filter.map (fun ε =>
+          ∫ t in (0:ℝ)..5,
+            if ε < ‖fdBoundary t - s‖ then
+              (fdBoundary t - s)⁻¹ * deriv fdBoundary t
+            else 0)
+          (𝓝[>] 0))) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
+  have h_pv := pv_equals_residue_sum_of_crossingCauchy_of_integrable f hf zeros
+    hzeros hzeros_fd hzeros_complete hint h_cc
+  exact valence_formula_base_identity_of_crossingCauchy f hf zeros hint hcusp_nonvan h_pv
+
+/-- M12-T3b: Classical form via crossing-Cauchy + integrability.
+
+Forwards from `valence_formula_base_identity_of_crossingCauchy_of_integrable`
++ `sum_ew_ord_decompose_unconditional`. -/
+theorem valence_formula_classical_form_of_crossingCauchy_of_integrable (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_cc : ∀ s ∈ S_onCurve f hf zeros,
+      (∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s) →
+        Cauchy (Filter.map (fun ε =>
+          ∫ t in (0:ℝ)..5,
+            if ε < ‖fdBoundary t - s‖ then
+              (fdBoundary t - s)⁻¹ * deriv fdBoundary t
+            else 0)
+          (𝓝[>] 0))) :
+    (orderAtCusp' f : ℂ) +
+      (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+      (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 := by
+  have h_base := valence_formula_base_identity_of_crossingCauchy_of_integrable f hf zeros
+    hzeros hzeros_fd hzeros_complete hint hcusp_nonvan h_cc
+  rw [sum_ew_ord_decompose_unconditional f zeros] at h_base
+  linear_combination h_base
+
+/-! ## Crossing-Cauchy-Auto Variants (No h_cc)
+
+These compose `pv_equals_residue_sum_of_crossingCauchy_auto_of_integrable` (from ResidueSide)
+with the crossing-Cauchy core theorems. The caller provides `hint` + zero data +
+cusp nonvanishing; no `h_cc` is needed. When `hint` holds, the boundary avoids all
+zeros, so the crossing-Cauchy condition is vacuously satisfied. -/
+
+/-- M15-T2a: Base identity via integrability — no `h_cc` needed.
+
+Derives the PV residue identity from `hint` via
+`pv_equals_residue_sum_of_crossingCauchy_auto_of_integrable`, then forwards to
+`valence_formula_base_identity_of_crossingCauchy`. -/
+theorem valence_formula_base_identity_of_crossingCauchy_auto_of_integrable (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
+  have h_pv := pv_equals_residue_sum_of_crossingCauchy_auto_of_integrable f hf zeros
+    hzeros hzeros_fd hzeros_complete hint
+  exact valence_formula_base_identity_of_crossingCauchy f hf zeros hint hcusp_nonvan h_pv
+
+/-- M15-T2b: Classical form via integrability — no `h_cc` needed.
+
+Forwards from `valence_formula_base_identity_of_crossingCauchy_auto_of_integrable`
++ `sum_ew_ord_decompose_unconditional`. -/
+theorem valence_formula_classical_form_of_crossingCauchy_auto_of_integrable (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℂ) +
+      (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+      (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 := by
+  have h_base := valence_formula_base_identity_of_crossingCauchy_auto_of_integrable f hf zeros
+    hzeros hzeros_fd hzeros_complete hint hcusp_nonvan
+  rw [sum_ew_ord_decompose_unconditional f zeros] at h_base
+  linear_combination h_base
+
 /-! ## Larger-Radius Variants
 
 These variants allow the cusp nonvanishing hypothesis to be stated on a larger
@@ -365,5 +653,70 @@ theorem valence_formula_classical_form_of_larger_radius (zeros : Finset ℍ)
       (k : ℂ) / 12 :=
   valence_formula_classical_form f hf zeros hzeros hzeros_fd hzeros_complete hint
     (fun q hq hq_ne => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq_ne)
+
+/-! ## Auto-Cusp Variants (No `hcusp_nonvan`)
+
+These variants use `modular_side_auto_cusp_of_integrable` to derive cusp nonvanishing
+from `hf : f ≠ 0`, eliminating the `hcusp_nonvan` parameter entirely.
+
+The result is existential: `∃ H₀ > √3/2`, for any `H ≥ H₀`, given integrability and
+the residue-side result at height H, the valence formula identity holds.
+
+Unlike the fixed-boundary variants above, these operate on the parameterized boundary
+curve `fdBoundary_H H`, not the fixed `fdBoundary`. The conclusion (the algebraic
+identity `Σ ew·ord = k/12 - ord_∞`) is curve-independent. -/
+
+/-- Base identity via auto-cusp: no `hcusp_nonvan` needed.
+
+From `hf : f ≠ 0`, cusp nonvanishing holds for sufficiently large height H.
+The caller provides the residue-side result `h_pv_eq_residue` and integrability
+`hint_H`, both at height H. The modular side is derived automatically. -/
+theorem valence_formula_base_identity_auto_cusp (zeros : Finset ℍ) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+          (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5 →
+        pv_integral f (fdBoundary_H H) 0 5 =
+          -(2 * Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+          (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ := modular_side_auto_cusp_of_integrable f hf
+  refine ⟨H₀, hH₀_gt, fun {H} hH hint_H h_pv_eq_residue => ?_⟩
+  have h_mod := h_auto hH hint_H
+  have h3 : -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) =
+      -(2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) := by
+    rw [← h_pv_eq_residue, h_mod]
+  have hpi : (2 : ℂ) * Real.pi * I ≠ 0 := by
+    simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true, ofReal_eq_zero,
+      Real.pi_ne_zero, I_ne_zero, or_self]
+  exact mul_left_cancel₀ hpi (neg_inj.mp h3)
+
+/-- Classical form via auto-cusp: no `hcusp_nonvan` needed.
+
+Forwards from `valence_formula_base_identity_auto_cusp`
++ `sum_ew_ord_decompose_unconditional`. -/
+theorem valence_formula_classical_form_auto_cusp (zeros : Finset ℍ) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+          (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5 →
+        pv_integral f (fdBoundary_H H) 0 5 =
+          -(2 * Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        (orderAtCusp' f : ℂ) +
+          (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+            then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+          (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+            then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+          ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+              (orderOfVanishingAt' f s : ℂ) =
+          (k : ℂ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ := valence_formula_base_identity_auto_cusp f hf zeros
+  refine ⟨H₀, hH₀_gt, fun {H} hH hint_H h_pv_eq_residue => ?_⟩
+  have h_base := h_auto hH hint_H h_pv_eq_residue
+  rw [sum_ew_ord_decompose_unconditional f zeros] at h_base
+  linear_combination h_base
 
 end
