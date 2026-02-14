@@ -159,6 +159,195 @@ theorem valence_formula_classical_form_of_larger_radius_rat (hf : f ≠ 0)
   push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
   exact h_base
 
+/-! ## Nonvanishing-Parameterized ℚ Variants
+
+These accept `h_nv` (boundary nonvanishing) instead of `hint` (integrability),
+forwarding to the `_of_nonvanishing` Core theorems. Integrability is derived from
+nonvanishing via `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing`. -/
+
+/-- Base identity with `h_nv` instead of `hint`, cast to ℚ. -/
+theorem valence_formula_base_identity_of_nonvanishing_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by
+  have h_base := valence_formula_base_identity_of_nonvanishing f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv hcusp_nonvan
+  exact_mod_cast h_base
+
+/-- Classical form with `h_nv` instead of `hint`, cast to ℚ. -/
+theorem valence_formula_classical_form_of_nonvanishing_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+  have h_base := valence_formula_classical_form_of_nonvanishing f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv hcusp_nonvan
+  apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+  push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+  exact h_base
+
+/-! ## Crossing-Cauchy ℚ Variants
+
+These accept `h_pv_eq_residue` (the pre-composed residue-side result from M8's
+`pv_equals_residue_sum_of_crossingCauchy`) instead of `h_nv` (boundary nonvanishing)
+or `hint` alone. The zero data (`hzeros`, `hzeros_fd`, `hzeros_complete`) is absorbed
+into `h_pv_eq_residue` at the ResidueSide level. -/
+
+/-- Base identity via crossing-Cauchy, cast to ℚ. -/
+theorem valence_formula_base_identity_of_crossingCauchy_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by
+  have h_base := valence_formula_base_identity_of_crossingCauchy f hf zeros hint
+    hcusp_nonvan h_pv_eq_residue
+  exact_mod_cast h_base
+
+/-- Classical form via crossing-Cauchy, cast to ℚ. -/
+theorem valence_formula_classical_form_of_crossingCauchy_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (h_pv_eq_residue : pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+  have h_base := valence_formula_classical_form_of_crossingCauchy f hf zeros hint
+    hcusp_nonvan h_pv_eq_residue
+  apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+  push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+  exact h_base
+
+/-! ## Crossing-Cauchy-of-Integrable ℚ Variants
+
+These accept `hint` (integrability) + `h_cc` (crossing-Cauchy condition on `S_onCurve`),
+forwarding to Core's `_of_crossingCauchy_of_integrable` theorems. Nonvanishing (`h_nv`)
+is derived from `hint` internally at the ResidueSide level. -/
+
+/-- M16-T1a: Base identity via auto integrability, cast to ℚ. No `h_cc` needed. -/
+theorem valence_formula_base_identity_of_crossingCauchy_auto_of_integrable_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by
+  have h_base := valence_formula_base_identity_of_crossingCauchy_auto_of_integrable f hf zeros
+    hzeros hzeros_fd hzeros_complete hint hcusp_nonvan
+  exact_mod_cast h_base
+
+/-- M16-T1b: Classical form via auto integrability, cast to ℚ. No `h_cc` needed. -/
+theorem valence_formula_classical_form_of_crossingCauchy_auto_of_integrable_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+  have h_base := valence_formula_classical_form_of_crossingCauchy_auto_of_integrable f hf zeros
+    hzeros hzeros_fd hzeros_complete hint hcusp_nonvan
+  apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+  push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+  exact h_base
+
+/-- M13-T1a: Compatibility wrapper — base identity with `h_cc` (now ignored, forwards to auto). -/
+theorem valence_formula_base_identity_of_crossingCauchy_of_integrable_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (_h_cc : ∀ s ∈ S_onCurve f hf zeros,
+      (∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s) →
+        Cauchy (Filter.map (fun ε =>
+          ∫ t in (0:ℝ)..5,
+            if ε < ‖fdBoundary t - s‖ then
+              (fdBoundary t - s)⁻¹ * deriv fdBoundary t
+            else 0)
+          (𝓝[>] 0))) :
+    ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 - (orderAtCusp' f : ℚ) :=
+  valence_formula_base_identity_of_crossingCauchy_auto_of_integrable_rat f hf zeros
+    hzeros hzeros_fd hzeros_complete hint hcusp_nonvan
+
+/-- M13-T1b: Compatibility wrapper — classical form with `h_cc` (now ignored, forwards to auto). -/
+theorem valence_formula_classical_form_of_crossingCauchy_of_integrable_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+    (_h_cc : ∀ s ∈ S_onCurve f hf zeros,
+      (∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s) →
+        Cauchy (Filter.map (fun ε =>
+          ∫ t in (0:ℝ)..5,
+            if ε < ‖fdBoundary t - s‖ then
+              (fdBoundary t - s)⁻¹ * deriv fdBoundary t
+            else 0)
+          (𝓝[>] 0))) :
+    (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 :=
+  valence_formula_classical_form_of_crossingCauchy_auto_of_integrable_rat f hf zeros
+    hzeros hzeros_fd hzeros_complete hint hcusp_nonvan
+
 /-! ## effectiveWinding → windingNumberCoeff' Bridge
 
 These lemmas require `hclass` because `effectiveWinding` and `windingNumberCoeff'`

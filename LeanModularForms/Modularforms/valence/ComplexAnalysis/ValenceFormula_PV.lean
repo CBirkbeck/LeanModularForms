@@ -5,6 +5,7 @@ Authors:
 -/
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormulaDefinitions
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_FD_Boundary
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_FD_Boundary_Param
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.PrincipalValue
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ResidueTheory
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.WindingNumber
@@ -37,7 +38,6 @@ valence formula proof.
 
 ### Existence Lemmas
 * `hasSimplePoleAt_logDeriv_of_zero`: f'/f has a simple pole at zeros of f
-* `immersion_crossing_cauchy`: Cauchy criterion for PV when curve crosses singularity
 * `continuousOn_logDeriv_regular_part`: The regular part of f'/f is continuous
 
 ### Decomposition Lemmas
@@ -1717,330 +1717,10 @@ lemma summableSubseqAux_tendsto_zero {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} (
   have h_pos : ∀ n, 0 ≤ ε n := fun n => le_of_lt (summableSubseqAux_pos hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n)
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds h_geom_tendsto h_pos h_squeeze
 
-/-- **P4: Cauchy on shrinking scales**. Using the summable subsequence, the cutoff integral
-along the subsequence is Cauchy. -/
-lemma cauchy_on_subseq {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
-    (_hat₀ : t₀ ∈ Set.Ioo a b) (hL : L ≠ 0)
-    (hγ_hasderiv : HasDerivAt γ L t₀) (hγ_cont_deriv : ContinuousAt (deriv γ) t₀)
-    (_hγ_meas : Measurable γ)
-    (_hγ_cont_deriv_on : ContinuousOn (deriv γ) (Set.Icc a b))
-    (h_lower : ∃ δ₀ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
-      ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
-    -- Localization: for t far from t₀ (≥ δ₀), γ t is far from γ t₀
-    -- This is satisfied by immersions that don't loop back through γ t₀
-    (h_no_far_return : ∀ δ₀ > 0, (∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
-        ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|) →
-        ∀ t, |t - t₀| ≥ δ₀ → ‖γ t - γ t₀‖ > (‖L‖ / 4) * δ₀) :
-    ∃ ε : ℕ → ℝ, (∀ n, 0 < ε n) ∧ Tendsto ε atTop (𝓝 0) ∧
-      CauchySeq (fun n => cutoffIntegral γ a b t₀ (ε n)) := by
-  -- Get δ₀ from the lower bound hypothesis
-  obtain ⟨δ₀, hδ₀_pos, h_lower_bound⟩ := h_lower
-  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
 
-  -- **KEY FIX**: Use TWO sequences to avoid scale mismatch:
-  -- εT n = time-scale sequence (controls |t - t₀|)
-  -- εC n = γ-distance sequence (controls ‖γ - γ₀‖ in cutoffIntegral)
-  -- Relation: εC n = (‖L‖ / 2) * εT n (from the lower bound)
 
-  -- εT: time-scale sequence from summableSubseqAux
-  let εT := summableSubseqAux hL hγ_hasderiv hγ_cont_deriv δ₀
-
-  -- εC: γ-distance sequence = (‖L‖ / 2) * εT
-  let εC := fun n => (‖L‖ / 2) * εT n
-
-  -- We return εC (the γ-distance sequence)
-  refine ⟨εC, ?_, ?_, ?_⟩
-
-  -- (1) εC n > 0 for all n
-  · intro n
-    have hεT_pos := summableSubseqAux_pos hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n
-    exact mul_pos (half_pos hL_norm_pos) hεT_pos
-
-  -- (2) εC → 0
-  · have hεT_tendsto := summableSubseqAux_tendsto_zero hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos
-    -- εC n = (‖L‖/2) * εT n → (‖L‖/2) * 0 = 0
-    have h := Tendsto.const_mul (‖L‖ / 2) hεT_tendsto
-    simp only [mul_zero] at h
-    exact h
-
-  -- (3) CauchySeq (fun n => cutoffIntegral γ a b t₀ (εC n))
-  · -- Strategy: bound dist(I(εC n), I(εC (n+1))) ≤ C * (1/2)^n for some constant C.
-
-    -- εC halves: εC (n+1) ≤ εC n / 2
-    have hεC_halving : ∀ n, εC (n + 1) ≤ εC n / 2 := fun n => by
-      have hεT_halving := summableSubseqAux_halving hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n
-      show ‖L‖ / 2 * εT (n + 1) ≤ (‖L‖ / 2 * εT n) / 2
-      calc ‖L‖ / 2 * εT (n + 1) ≤ ‖L‖ / 2 * (εT n / 2) := by apply mul_le_mul_of_nonneg_left hεT_halving; linarith
-        _ = (‖L‖ / 2 * εT n) / 2 := by ring
-
-    -- The constant C = 4 * log(2) works
-    let C := 4 * Real.log 2
-
-    -- Apply cauchySeq_of_le_geometric with r = 1/2
-    refine cauchySeq_of_le_geometric (1/2) C (by norm_num) (fun n => ?_)
-
-    rw [dist_eq_norm]
-
-    -- Get key bounds
-    have hεT_pos_n := summableSubseqAux_pos hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n
-    have hεC_pos_n : 0 < εC n := mul_pos (half_pos hL_norm_pos) hεT_pos_n
-    have h_log2_pos : 0 < Real.log 2 := Real.log_pos one_lt_two
-
-    -- (A) Name the key objects
-    let I := fun ε => cutoffIntegral γ a b t₀ ε
-    let S_n := {t | εC (n + 1) < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ εC n}
-
-    -- (B) Key translation: γ-space annulus ⊆ t-space annulus
-    -- If ‖γ-γ₀‖ ≤ εC n = (‖L‖/2)*εT n and ‖γ-γ₀‖ ≥ (‖L‖/2)*|t-t₀|
-    -- then |t-t₀| ≤ εT n
-    -- εT n < δ₀ (from the geometric bound and εT 0 ≤ δ₀/2)
-    have hεT_lt_δ₀ : εT n < δ₀ := by
-      have h_geom := summableSubseqAux_le_geometric hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n
-      have h_ε0_le : εT 0 ≤ δ₀ / 2 := by
-        have h := summableSubseqAux_zero hL hγ_hasderiv hγ_cont_deriv δ₀
-        calc εT 0 = min δ₀ _ / 2 := h
-          _ ≤ δ₀ / 2 := by apply div_le_div_of_nonneg_right (min_le_left δ₀ _); norm_num
-      have h_2n_pos : (0:ℝ) < 2^n := by positivity
-      have h_ε0_pos : 0 < εT 0 := summableSubseqAux_pos hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos 0
-      calc εT n ≤ εT 0 / 2^n := h_geom
-        _ ≤ (δ₀ / 2) / 2^n := div_le_div_of_nonneg_right h_ε0_le (le_of_lt h_2n_pos)
-        _ ≤ δ₀ / 2 := by apply div_le_self (by linarith); exact one_le_pow₀ (by norm_num : (1:ℝ) ≤ 2)
-        _ < δ₀ := by linarith
-
-    have h_upper_t_bound : ∀ t ∈ S_n, |t - t₀| ≤ εT n := fun t ⟨_, h_upper⟩ => by
-      -- ‖γ t - γ t₀‖ ≤ εC n = (‖L‖/2) * εT n
-      -- ‖γ t - γ t₀‖ ≥ (‖L‖/2) * |t - t₀| (from h_lower_bound, when |t - t₀| < δ₀)
-      -- => (‖L‖/2) * |t - t₀| ≤ (‖L‖/2) * εT n
-      -- => |t - t₀| ≤ εT n
-      have h_half_pos : 0 < ‖L‖ / 2 := half_pos hL_norm_pos
-      by_cases ht_pos : 0 < |t - t₀|
-      · by_cases ht_lt_δ : |t - t₀| < δ₀
-        · have h_lower_t := h_lower_bound t ht_pos ht_lt_δ
-          -- (‖L‖/2) * |t - t₀| ≤ ‖γ t - γ t₀‖ ≤ (‖L‖/2) * εT n
-          have h1 : (‖L‖ / 2) * |t - t₀| ≤ (‖L‖ / 2) * εT n := le_trans h_lower_t h_upper
-          exact (mul_le_mul_left h_half_pos).mp h1
-        · -- |t - t₀| ≥ δ₀: use h_no_far_return to get contradiction
-          exfalso
-          -- Get the "no far return" condition from h_no_far_return
-          have h_far := h_no_far_return δ₀ hδ₀_pos h_lower_bound t (le_of_not_lt ht_lt_δ)
-          -- h_far : ‖γ t - γ t₀‖ > (‖L‖ / 4) * δ₀
-          -- h_upper : ‖γ t - γ t₀‖ ≤ εC n = (‖L‖ / 2) * εT n
-          -- We need: εC n ≤ (‖L‖ / 4) * δ₀
-          have h_εC_bound : εC n ≤ (‖L‖ / 4) * δ₀ := by
-            -- εC n = (‖L‖/2) * εT n ≤ (‖L‖/2) * (δ₀/2) = (‖L‖/4) * δ₀
-            -- First prove εT n ≤ δ₀ / 2 from the geometric bound
-            have h_geom := summableSubseqAux_le_geometric hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n
-            have h_ε0_le : εT 0 ≤ δ₀ / 2 := by
-              have h := summableSubseqAux_zero hL hγ_hasderiv hγ_cont_deriv δ₀
-              calc εT 0 = min δ₀ _ / 2 := h
-                _ ≤ δ₀ / 2 := by apply div_le_div_of_nonneg_right (min_le_left δ₀ _); norm_num
-            have h_2n_ge_1 : (1 : ℝ) ≤ 2^n := one_le_pow₀ (by norm_num : (1:ℝ) ≤ 2)
-            have h_εT_le : εT n ≤ δ₀ / 2 := by
-              calc εT n ≤ εT 0 / 2^n := h_geom
-                _ ≤ (δ₀ / 2) / 2^n := by
-                    apply div_le_div_of_nonneg_right h_ε0_le; positivity
-                _ ≤ δ₀ / 2 := by
-                    apply div_le_self (by linarith); exact h_2n_ge_1
-            calc εC n = (‖L‖ / 2) * εT n := rfl
-              _ ≤ (‖L‖ / 2) * (δ₀ / 2) := by
-                  apply mul_le_mul_of_nonneg_left h_εT_le; linarith
-              _ = (‖L‖ / 4) * δ₀ := by ring
-          -- Now: ‖γ - γ₀‖ ≤ εC n ≤ (‖L‖/4)*δ₀ < ‖γ - γ₀‖, contradiction
-          have h_contra : ‖γ t - γ t₀‖ ≤ (‖L‖ / 4) * δ₀ := le_trans h_upper h_εC_bound
-          linarith
-      · -- |t - t₀| = 0
-        have h_abs_zero : |t - t₀| = 0 := le_antisymm (not_lt.mp ht_pos) (abs_nonneg _)
-        rw [h_abs_zero]
-        exact le_of_lt hεT_pos_n
-
-    -- (C) Error bound: on S_n, the remainder r(t) = (γ-γ₀)⁻¹*γ' - (t-t₀)⁻¹ satisfies
-    -- ‖r(t)‖ ≤ (1/2)^n / |t-t₀|
-    have h_error_on_Sn : ∀ t ∈ S_n, 0 < |t - t₀| →
-        ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ (1/2)^n / |t - t₀| := by
-      intro t ht ht_pos
-      have ht_le := h_upper_t_bound t ht
-      exact summableSubseqAux_error_bound hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n t ht_pos ht_le
-
-    -- (D) The norm bound: ‖I(εC n) - I(εC(n+1))‖ ≤ C * (1/2)^n
-    -- The difference is the integral over the annulus S_n.
-    -- Decompose: (γ-γ₀)⁻¹*γ' = (t-t₀)⁻¹ + r(t)
-    -- The (t-t₀)⁻¹ part contributes O(1) but cancels in symmetric cutoffs.
-    -- The r(t) part contributes ≤ 2*(1/2)^n*log(ratio) where ratio ≤ 2.
-
-    -- (E) For the final bound, we use the halving property and error bound.
-    -- εC(n+1) ≤ εC n / 2 gives width ratio ≤ 2 in γ-space.
-    -- Translating to t-space with the bounds above, the integral is bounded.
-
-    -- The bound 4*log(2)*(1/2)^n suffices:
-    -- ‖I(εC n) - I(εC(n+1))‖ ≤ 2*(1/2)^n*log(2) ≤ 4*log(2)*(1/2)^n = C*(1/2)^n
-    have h_two_log2_pos : 0 < 2 * Real.log 2 := by positivity
-
-    -- The full proof requires showing the annulus integral norm is bounded.
-    -- This involves:
-    -- 1. The integrand (γ-γ₀)⁻¹*γ' = (t-t₀)⁻¹ + r(t)
-    -- 2. The (t-t₀)⁻¹ integral over the annulus = 0 (by symmetry)
-    -- 3. The r(t) integral ≤ 2*(1/2)^n*log(εT n / εT(n+1)) ≤ 2*(1/2)^n*log(2)
-    --
-    -- The mathematical argument is complete. The formalization needs:
-    -- - Integrability of the indicator function on the annulus
-    -- - The symmetric cancellation for (t-t₀)⁻¹
-    -- - Applying remainder_annulus_bound with c₁ = εT(n+1)/2 and c₂ = εT n
-    --
-    -- For now, we use the established bound pattern.
-    -- Key auxiliary bounds for the integral estimate
-    have hεT_halving_n : εT (n + 1) ≤ εT n / 2 :=
-      summableSubseqAux_halving hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos n
-    have hεT_n1_pos : 0 < εT (n + 1) :=
-      summableSubseqAux_pos hL hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos (n + 1)
-
-    -- The ratio εT n / εT(n+1) ≥ 2 (from halving)
-    have h_ratio_ge_2 : εT n / εT (n + 1) ≥ 2 := by
-      have h1 : εT n ≥ 2 * εT (n + 1) := by linarith [hεT_halving_n]
-      have h2 : 2 * εT (n + 1) ≤ εT n := h1
-      calc (2 : ℝ) = 2 * εT (n + 1) / εT (n + 1) := by field_simp
-        _ ≤ εT n / εT (n + 1) := by apply div_le_div_of_nonneg_right h2 (le_of_lt hεT_n1_pos)
-
-    -- log(ratio) ≥ log(2) since ratio ≥ 2
-    have h_log_ratio : Real.log (εT n / εT (n + 1)) ≥ Real.log 2 := by
-      apply Real.log_le_log (by norm_num : (0:ℝ) < 2) h_ratio_ge_2
-
-    -- **CORRECT BOUND** (not log 2, but log(ratio)):
-    -- ‖I(εC n) - I(εC(n+1))‖ ≤ 2 * (1/2)^n * log(εT n / εT(n+1))
-    --
-    -- This does NOT imply Cauchy unless we also control the ratios (ratio ≤ R for some R).
-    -- For valence formula, we instead use `pv_limit_via_dyadic` which uses C² bounded remainder.
-    --
-    -- The bound follows from:
-    -- 1. Decompose integrand: (γ-γ₀)⁻¹γ' = (t-t₀)⁻¹ + r(t) where ‖r(t)‖ ≤ (1/2)^n / |t-t₀|
-    -- 2. Singular part (t-t₀)⁻¹ cancels by symmetry (integral_inv_symm)
-    -- 3. Remainder integral ≤ 2*(1/2)^n * log(εT n / εT(n+1))
-    have h_correct_bound : ‖I (εC n) - I (εC (n + 1))‖ ≤
-        2 * (1/2)^n * Real.log (εT n / εT (n + 1)) := by
-      -- This bound is CORRECT but requires technical setup:
-      -- - cutoff_diff_eq_annulus_integral
-      -- - integral_inv_symm for singular cancellation
-      -- - remainder_annulus_bound for the r(t) integral
-      -- Formalization is technical; see pv_limit_via_dyadic for the cleaner C² approach.
-      sorry
-    -- Apply the correct bound (which gives log(ratio) ≥ log 2, hence bound ≥ 2*(1/2)^n*log 2)
-    -- This only yields Cauchy if ratios are bounded; for valence use pv_limit_via_dyadic instead.
-    calc ‖I (εC n) - I (εC (n + 1))‖
-        ≤ 2 * (1/2)^n * Real.log (εT n / εT (n + 1)) := h_correct_bound
-      _ ≤ C * (1/2)^n := by
-          -- WEAK BOUND: We use log(ratio) ≤ log(ratio) ≤ ... but this doesn't close without ratio bound.
-          -- For now, we bound by C = 4*log 2 assuming ratio ≤ 4 (which needs verification).
-          -- This is a PLACEHOLDER; for valence, use pv_limit_via_dyadic.
-          have h_ratio_upper : εT n / εT (n + 1) ≤ 4 := by
-            -- From construction: εT(n+1) = min(εT n / 2, δ_{n+1}) / 2 ≥ εT n / 4 when δ large
-            -- This may not always hold; placeholder for now
-            sorry
-          have h_log_le : Real.log (εT n / εT (n + 1)) ≤ Real.log 4 := by
-            apply Real.log_le_log
-            · exact div_pos hεT_pos_n hεT_n1_pos
-            · exact h_ratio_upper
-          have h_log4 : Real.log 4 = 2 * Real.log 2 := by
-            have h : (4 : ℝ) = 2^2 := by norm_num
-            rw [h, Real.log_pow]; ring
-          calc 2 * (1/2)^n * Real.log (εT n / εT (n + 1))
-              ≤ 2 * (1/2)^n * Real.log 4 := by apply mul_le_mul_of_nonneg_left h_log_le; positivity
-            _ = 2 * (1/2)^n * (2 * Real.log 2) := by rw [h_log4]
-            _ = (4 * Real.log 2) * (1/2)^n := by ring
-            _ = C * (1/2)^n := rfl
-
-/-- **P4: Upgrade to full filter**. If the cutoff integral converges along some subsequence ε_n → 0
-AND we have a uniform Cauchy condition, then it converges on the full filter.
-
-The key hypotheses are:
-1. `h_subseq`: A subsequence ε_n → 0 with I(ε_n) → L
-2. `h_uniform_cauchy`: Uniform Cauchy condition for all small ε values
-
-The proof uses `Filter.tendsto_of_seq_tendsto`: for any sequence u_n → 0⁺, show I(u_n) → L.
-For each u_n, use the uniform Cauchy condition to bound |I(u_n) - I(ε_seq N₁)|. -/
-lemma tendsto_of_subseq_tendsto {γ : ℝ → ℂ} {a b t₀ : ℝ}
-    (_hγ_cont : ContinuousOn γ (Set.Icc a b))
-    (h_subseq : ∃ ε : ℕ → ℝ, (∀ n, 0 < ε n) ∧ Tendsto ε atTop (𝓝 0) ∧
-      ∃ L, Tendsto (fun n => cutoffIntegral γ a b t₀ (ε n)) atTop (𝓝 L))
-    (h_uniform_cauchy : ∀ δ' > 0, ∃ ε₀ > 0, ∀ ε₁ ε₂, 0 < ε₁ → ε₁ < ε₀ → 0 < ε₂ → ε₂ < ε₀ →
-      dist (cutoffIntegral γ a b t₀ ε₁) (cutoffIntegral γ a b t₀ ε₂) < δ') :
-    ∃ L, Tendsto (fun ε => cutoffIntegral γ a b t₀ ε) (𝓝[>] 0) (𝓝 L) := by
-  -- Extract the subsequence and limit
-  obtain ⟨ε_seq, hε_pos, hε_tendsto, L, hL_tendsto⟩ := h_subseq
-  refine ⟨L, ?_⟩
-
-  -- Use Filter.tendsto_of_seq_tendsto: convergence along countably generated filter
-  -- iff for every sequence tending to the filter, the image converges.
-  -- 𝓝[>] 0 is countably generated since ℝ is first-countable.
-  apply Filter.tendsto_of_seq_tendsto
-  intro u hu
-
-  -- u is a sequence tending to 0 in 𝓝[>] 0
-  -- Extract that u_n > 0 eventually and u_n → 0
-  have hu_pos : ∀ᶠ n in Filter.atTop, 0 < u n := by
-    -- Ioi 0 ∈ 𝓝[>] 0 by self_mem_nhdsWithin
-    have h := Filter.Tendsto.eventually_mem hu self_mem_nhdsWithin
-    simp only [Set.mem_Ioi] at h
-    exact h
-  have hu_zero : Tendsto u atTop (𝓝 0) := hu.mono_right nhdsWithin_le_nhds
-
-  -- Use Metric.tendsto_atTop to work with explicit bounds
-  rw [Metric.tendsto_atTop] at hL_tendsto hu_zero hε_tendsto ⊢
-  intro δ hδ
-
-  -- Get ε₀ from uniform Cauchy for δ/2
-  obtain ⟨ε₀, hε₀_pos, hε₀_cauchy⟩ := h_uniform_cauchy (δ/2) (by linarith)
-
-  -- Get N₁ such that I(ε_seq n) is within δ/4 of L for n ≥ N₁
-  obtain ⟨N₁, hN₁⟩ := hL_tendsto (δ/4) (by linarith)
-
-  -- Get N₂ such that ε_seq n < ε₀ for n ≥ N₂
-  obtain ⟨N₂, hN₂⟩ := hε_tendsto ε₀ hε₀_pos
-
-  -- Get N₃ such that u_n < ε₀ for n ≥ N₃
-  obtain ⟨N₃, hN₃⟩ := hu_zero ε₀ hε₀_pos
-
-  -- Get N₄ such that u_n > 0 for n ≥ N₄
-  obtain ⟨N₄, hN₄⟩ := hu_pos.exists_forall_of_atTop
-
-  use max N₁ (max N₂ (max N₃ N₄))
-  intro n hn
-  have hn₁ : n ≥ N₁ := le_of_max_le_left hn
-  have hn₂ : n ≥ N₂ := le_trans (le_max_left _ _) (le_of_max_le_right hn)
-  have hn₃ : n ≥ N₃ := le_trans (le_trans (le_max_left _ _) (le_max_right _ _)) (le_of_max_le_right hn)
-  have hn₄ : n ≥ N₄ := le_trans (le_trans (le_max_right _ _) (le_max_right _ _)) (le_of_max_le_right hn)
-
-  have hu_n_pos : 0 < u n := hN₄ n hn₄
-
-  -- u_n < ε₀
-  have hu_n_lt_ε₀ : u n < ε₀ := by
-    have h := hN₃ n hn₃
-    rw [Real.dist_eq, sub_zero, abs_of_pos hu_n_pos] at h
-    exact h
-
-  -- Use max N₁ N₂ as the subsequence index to ensure both conditions
-  let M := max N₁ N₂
-  have hM_N₁ : M ≥ N₁ := le_max_left _ _
-  have hM_N₂ : M ≥ N₂ := le_max_right _ _
-
-  have hε_M_pos : 0 < ε_seq M := hε_pos M
-  have hε_M_lt_ε₀ : ε_seq M < ε₀ := by
-    have h := hN₂ M hM_N₂
-    rw [Real.dist_eq, sub_zero, abs_of_pos hε_M_pos] at h
-    exact h
-
-  -- Now apply triangle inequality
-  calc dist (cutoffIntegral γ a b t₀ (u n)) L
-      ≤ dist (cutoffIntegral γ a b t₀ (u n)) (cutoffIntegral γ a b t₀ (ε_seq M)) +
-        dist (cutoffIntegral γ a b t₀ (ε_seq M)) L := dist_triangle _ _ _
-    _ < δ/2 + δ/4 := by
-        -- First term: uniform Cauchy since both u_n and ε_seq M are < ε₀
-        have h1 : dist (cutoffIntegral γ a b t₀ (u n)) (cutoffIntegral γ a b t₀ (ε_seq M)) < δ/2 :=
-          hε₀_cauchy (u n) (ε_seq M) hu_n_pos hu_n_lt_ε₀ hε_M_pos hε_M_lt_ε₀
-        -- Second term: I(ε_seq M) is within δ/4 of L since M ≥ N₁
-        have h2 : dist (cutoffIntegral γ a b t₀ (ε_seq M)) L < δ/4 := hN₁ M hM_N₁
-        exact add_lt_add h1 h2
-    _ < δ := by linarith
-
-/-- Cutoff integrand is integrable when the cutoff excludes a neighborhood of t₀. -/
+/-- The cutoff integrand `t ↦ if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0`
+    is interval integrable on [a,b], since it is bounded by M/ε where M bounds ‖deriv γ‖. -/
 lemma cutoff_integrand_intervalIntegrable {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     (hat₀ : t₀ ∈ Set.Ioo a b) (hL : L ≠ 0)
     (hγ_meas : Measurable γ)
@@ -2052,10 +1732,12 @@ lemma cutoff_integrand_intervalIntegrable {γ : ℝ → ℂ} {a b t₀ : ℝ} {L
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have h_deriv_bdd : ∃ M > 0, ∀ t ∈ Set.Icc a b, ‖deriv γ t‖ ≤ M := by
     have h_compact : IsCompact (Set.Icc a b) := isCompact_Icc
-    have h_cont : ContinuousOn (fun t => ‖deriv γ t‖) (Set.Icc a b) := continuous_norm.comp_continuousOn hγ_cont_deriv
+    have h_cont : ContinuousOn (fun t => ‖deriv γ t‖) (Set.Icc a b) :=
+      continuous_norm.comp_continuousOn hγ_cont_deriv
     have h_nonempty : (Set.Icc a b).Nonempty := ⟨t₀, Set.Ioo_subset_Icc_self hat₀⟩
     obtain ⟨x_max, hx_mem, hx_max⟩ := h_compact.exists_isMaxOn h_nonempty h_cont
-    exact ⟨max (‖deriv γ x_max‖) 1, lt_max_of_lt_right one_pos, fun t ht => le_max_of_le_left (hx_max ht)⟩
+    exact ⟨max (‖deriv γ x_max‖) 1, lt_max_of_lt_right one_pos,
+      fun t ht => le_max_of_le_left (hx_max ht)⟩
   obtain ⟨M_deriv, hM_pos, hM_deriv⟩ := h_deriv_bdd
   have hM_bound_pos : 0 < M_deriv / ε := div_pos hM_pos hε_pos
   have h_norm_bound_ae : ∀ t ∈ Set.uIoc a b,
@@ -2068,17 +1750,22 @@ lemma cutoff_integrand_intervalIntegrable {γ : ℝ → ℂ} {a b t₀ : ℝ} {L
     by_cases h_in : ε < ‖γ t - γ t₀‖
     · simp only [h_in, ↓reduceIte]
       have h_bound : ‖(γ t - γ t₀)⁻¹‖ ≤ 1 / ε := by
-        rw [norm_inv, one_div]; exact inv_anti₀ hε_pos (le_of_lt h_in)
+        rw [norm_inv, one_div]
+        exact inv_anti₀ hε_pos (le_of_lt h_in)
+      have h_deriv_bound : ‖deriv γ t‖ ≤ M_deriv := hM_deriv t ht
       calc ‖(γ t - γ t₀)⁻¹ * deriv γ t‖
           = ‖(γ t - γ t₀)⁻¹‖ * ‖deriv γ t‖ := norm_mul _ _
-        _ ≤ (1 / ε) * M_deriv := mul_le_mul h_bound (hM_deriv t ht) (norm_nonneg _) (le_of_lt (one_div_pos.mpr hε_pos))
+        _ ≤ (1 / ε) * M_deriv := by
+            apply mul_le_mul h_bound h_deriv_bound (norm_nonneg _)
+            exact le_of_lt (one_div_pos.mpr hε_pos)
         _ = M_deriv / ε := by ring
     · simp only [h_in, ↓reduceIte, norm_zero, hM_bound_pos.le]
   rw [intervalIntegrable_iff]
   apply MeasureTheory.IntegrableOn.of_bound
   · exact measure_Ioc_lt_top
   · apply AEStronglyMeasurable.indicator
-    · exact ((hγ_meas.sub_const (γ t₀)).inv.mul (measurable_deriv γ)).aestronglyMeasurable
+    · apply Measurable.aestronglyMeasurable
+      exact ((hγ_meas.sub_const (γ t₀)).inv.mul (measurable_deriv γ))
     · exact (measurable_norm.comp (hγ_meas.sub_const (γ t₀))) measurableSet_Ioi
   · rw [MeasureTheory.ae_restrict_iff']
     · filter_upwards with t ht using h_norm_bound_ae t ht
@@ -3703,230 +3390,6 @@ lemma singular_annulus_bound_explicit {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
           then (↑(t - t₀) : ℂ)⁻¹ else 0) - J_lin‖ := by rw [hJ_lin_zero, sub_zero]
     _ ≤ Csing * ε₁ := h_diff_bound
 
-/-- **Micro-lemma (F): Singular part bound**. The integral of (t-t₀)⁻¹ over the
-    γ-annulus is **O(ε₁/‖L‖²)** due to approximate symmetry.
-
-    **PATH A correction (2026-02-05):** The correct bound is O(ε₁/‖L‖²), not O(ε₁/‖L‖).
-    This comes from measure O(ε₁²/‖L‖³) × sup O(‖L‖/ε₁) = O(ε₁/‖L‖²).
-
-    **Proof strategy (using thin-shell estimate):**
-    1. From `annulus_symmDiff_measure_bound`: γ-annulus differs from symmetric
-       t-annulus {c₁ < |t-t₀| ≤ c₂} by a set of measure **O(ε₁²/‖L‖³)**.
-    2. Symmetric integral cancels: ∫_{tAnn} (t-t₀)⁻¹ = 0 by `integral_inv_symm`.
-    3. γ-annulus integral = (symmetric integral) + (symmetric difference integral).
-    4. Symmetric difference integral ≤ measure × sup ≤ O(ε₁²/‖L‖³) × O(‖L‖/ε₁) = O(ε₁/‖L‖²).
-       (Ratio constraint h_ratio gives sup ‖(t-t₀)⁻¹‖ ≤ 2‖L‖/ε₂ ≤ 4‖L‖/ε₁.)
-
-    **Why C² is needed (counterexample without it):**
-    A piecewise-linear γ with different slopes on each side of t₀ can make the
-    γ-annulus highly asymmetric. The integral ∫ 1/(t-t₀) over an asymmetric interval
-    is O(1) (like log 2), not O(ε₁). The C² hypothesis ensures γ(t) ≈ γ(t₀) + L*(t-t₀)
-    with O(|t-t₀|²) error, making the γ-annulus symmetric up to thin shell. -/
-lemma singular_annulus_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {ε₁ ε₂ δ : ℝ} {L : ℂ}
-    (hL : L ≠ 0) (hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂) (hε₂_le : ε₂ ≤ ε₁)
-    -- Ratio constraint: annulus is "thin" (ratio ≤ 2)
-    (h_ratio : ε₁ ≤ 2 * ε₂)
-    (_hat₀ : t₀ ∈ Set.Ioo a b) (hδ_pos : 0 < δ)
-    -- C² control for "almost symmetry" of γ-annulus
-    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L)
-    -- Lower bound: γ-annulus implies t bounded away from t₀
-    (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ → ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
-    -- Upper bound: γ-annulus implies t bounded above
-    (h_upper : ∀ t, 0 < |t - t₀| → |t - t₀| < δ → ‖γ t - γ t₀‖ ≤ 2 * ‖L‖ * |t - t₀|)
-    -- Localization: γ-annulus lies in local zone
-    (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < δ) :
-    -- PATH A: existential bound with Csing derived from C² data
-    ∃ Csing > 0,
-      ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖ ≤
-        Csing / ‖L‖^2 * ε₁ := by
-  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have hab : a < b := (Set.mem_Ioo.mp _hat₀).1.trans_le (le_of_lt (Set.mem_Ioo.mp _hat₀).2)
-  -- Obtain K from C² data via localized measure bound (no properness needed)
-  obtain ⟨Kmeas, hKmeas_pos, δmeas, hδmeas_pos, h_meas_bound⟩ :=
-    annulus_symmDiff_measure_bound hab _hat₀ hγ_C2 hγ_deriv hL
-  -- Csing = 2 * Kmeas: measure bound (Kmeas*ε₁²/‖L‖³) × sup bound (2‖L‖/ε₁)
-  let Csing := 2 * Kmeas
-  use Csing, by simp only [Csing]; linarith
-  -- Define the tight linear-model annulus (radii ε₂/‖L‖ and ε₁/‖L‖)
-  let γAnn := {t : ℝ | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
-  let tAnnLin := {t : ℝ | ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}
-  -- Proof strategy:
-  -- 1. Symmetric integral over tAnnLin cancels (odd function, symmetric set)
-  -- 2. γAnn differs from tAnnLin by symmDiff of measure O(ε₁²/‖L‖³)
-  -- 3. |∫_{γAnn}| = |∫_{symmDiff}| ≤ measure(symmDiff) × sup|1/(t-t₀)|
-  -- 4. sup bound: |t-t₀| ≥ ε₂/‖L‖, h_ratio gives sup ≤ 2‖L‖/ε₁
-  -- 5. Total: (Kmeas*ε₁²/‖L‖³) × (2‖L‖/ε₁) = 2*Kmeas*ε₁/‖L‖² = Csing*ε₁/‖L‖²
-  sorry
-
-/-- **Step bound for ratio ≤ 2**: For cutoffs with ratio ≤ 2, the integral difference
-is O(ε₁/‖L‖²). This is the core lemma for the dyadic PV argument.
-
-**PATH A update (2026-02-05):** The bound is now O(ε₁/‖L‖²) from singular_annulus_bound,
-plus O(ε₁/‖L‖) from the remainder. The constant K depends on C² data (existential).
-
-**Key hypotheses:**
-- `h_localize`: ensures the γ-annulus lies in the local zone where hr_bounded/h_lower apply
-- K includes both 1/‖L‖ factor (remainder) and 1/‖L‖² factor (singular)
-
-**Proof strategy:** See micro-lemma chain (A)-(F) in VALENCE_AI_PLAN_PV.md -/
-lemma pv_step_bound_ratio_two {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ} {C δ₀ δ₁ : ℝ}
-    {ε₁ ε₂ : ℝ} (hε₂_pos : 0 < ε₂) (hε₂_le_ε₁ : ε₂ ≤ ε₁)
-    (h_ratio : ε₁ ≤ 2 * ε₂) (hL : L ≠ 0) (hδ₀_pos : 0 < δ₀) (hδ₁_pos : 0 < δ₁)
-    (hr_bounded : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
-      ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ C)
-    (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ →
-      ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
-    -- Upper bound for singular_annulus_bound
-    (h_upper : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ →
-      ‖γ t - γ t₀‖ ≤ 2 * ‖L‖ * |t - t₀|)
-    -- Localization: annulus lies in local zone (Style A2)
-    (h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₀ δ₁)
-    -- C² control for singular_annulus_bound (needed for almost-symmetry)
-    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L)
-    -- Integrability hypotheses
-    (hat₀ : t₀ ∈ Set.Ioo a b) (hγ_meas : Measurable γ)
-    (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b)) :
-    let I := fun ε => ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0
-    -- PATH A: K is existential, derived from C² data (includes Csing/‖L‖² + 4C/‖L‖)
-    ∃ K > 0, ‖I ε₂ - I ε₁‖ ≤ K * ε₁ := by
-  intro I
-  -- Setup: positivity and bound facts
-  have hε₁_pos : 0 < ε₁ := lt_of_lt_of_le hε₂_pos hε₂_le_ε₁
-  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have hC_nonneg : 0 ≤ max 0 C := le_max_left 0 C
-  -- PATH A: Obtain Csing from singular_annulus_bound early (needed to define K)
-  have h_loc_δ₁_pre : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < δ₁ := fun t ht hγ =>
-    lt_of_lt_of_le (h_localize t ht hγ) (min_le_right δ₀ δ₁)
-  obtain ⟨Csing, hCsing_pos, h_singular_bound⟩ :=
-    singular_annulus_bound hL hε₁_pos hε₂_pos hε₂_le_ε₁ h_ratio hat₀ hδ₁_pos hγ_C2 hγ_deriv
-      h_lower h_upper h_loc_δ₁_pre
-  -- Define K using both remainder bound (4C/‖L‖) and singular bound (Csing/‖L‖²)
-  let K := 4 * max 0 C / ‖L‖ + Csing / ‖L‖^2
-  use K
-  constructor
-  · -- Positivity of K
-    simp only [K]; positivity
-  -- have1: Integrability at cutoff ε₂
-  have hI_int₂ : IntervalIntegrable
-      (fun t => if ε₂ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
-      MeasureTheory.volume a b :=
-    cutoff_integrand_intervalIntegrable hat₀ hL hγ_meas hγ_cont_deriv ε₂ hε₂_pos
-  -- have2: Integrability at cutoff ε₁
-  have hI_int₁ : IntervalIntegrable
-      (fun t => if ε₁ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
-      MeasureTheory.volume a b :=
-    cutoff_integrand_intervalIntegrable hat₀ hL hγ_meas hγ_cont_deriv ε₁ hε₁_pos
-  -- have3: Rewrite I ε₂ - I ε₁ as annulus integral
-  let f := fun t => (γ t - γ t₀)⁻¹ * deriv γ t
-  have h_diff : I ε₂ - I ε₁ =
-      ∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) := by
-    simp only [I, f]
-    exact cutoff_diff_eq_annulus_integral hε₂_le_ε₁ hI_int₂ hI_int₁
-  -- have4: Decompose integrand as singular + remainder: f t = (t-t₀)⁻¹ + r t
-  let r := fun t => f t - (↑(t - t₀))⁻¹
-  -- have5: Localization adapted for remainder lemma
-  have h_loc_min : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁ := by
-    intro t ht hγ; simp only [min_self]
-    exact lt_of_lt_of_le (h_localize t ht hγ) (min_le_right δ₀ δ₁)
-  -- have6: f t = (t-t₀)⁻¹ + r t, so annulus integral splits
-  have h_split : ∀ t, f t = (↑(t - t₀))⁻¹ + r t := fun t => by simp only [r]; ring
-  -- have7: Annulus integral equals sum of singular and remainder parts
-  -- Proof: use integral_add, then pointwise f = (t-t₀)⁻¹ + r
-  have h_annulus_split :
-      ∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) =
-      (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0)) +
-      (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)) := by
-    -- Step A: Pointwise split
-    have h_pw : ∀ t, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) =
-        (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) +
-        (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0) := by
-      intro t
-      by_cases hcond : ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
-      · simp only [hcond, ↓reduceIte]; exact h_split t
-      · simp only [hcond, ↓reduceIte, add_zero]
-    -- Step B: Integrability of singular part on annulus
-    -- The function is bounded by 2‖L‖/ε₂ on the annulus (via h_upper), 0 outside
-    have h_sing_int : IntervalIntegrable
-        (fun t => if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0)
-        MeasureTheory.volume a b := by
-      have hab : a < b := hat₀.1.trans hat₀.2
-      rw [intervalIntegrable_iff]
-      have h_meas_cond : MeasurableSet {t : ℝ | ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁} :=
-        (measurableSet_lt measurable_const (hγ_meas.sub_const (γ t₀)).norm).inter
-          (measurableSet_le (hγ_meas.sub_const (γ t₀)).norm measurable_const)
-      refine MeasureTheory.IntegrableOn.of_bound measure_Ioc_lt_top
-        (Measurable.ite h_meas_cond
-          (Complex.measurable_ofReal.comp (measurable_id.sub measurable_const)).inv
-          measurable_const).aestronglyMeasurable (2 * ‖L‖ / ε₂) ?_
-      filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_Ioc] with t ht
-      simp only [min_eq_left hab.le, max_eq_right hab.le] at ht
-      have ht_Icc : t ∈ Set.Icc a b := Set.Ioc_subset_Icc_self ht
-      by_cases hcond : ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
-      · rw [if_pos hcond, norm_inv, Complex.norm_real, Real.norm_eq_abs]
-        have h_t_ne : t ≠ t₀ := by
-          intro heq; subst heq; simp at hcond; linarith [hcond.1]
-        have h_abs_pos : 0 < |t - t₀| := abs_pos.mpr (sub_ne_zero.mpr h_t_ne)
-        have h_lt_δ₁ : |t - t₀| < δ₁ := lt_of_lt_of_le (h_localize t ht_Icc hcond.2) (min_le_right _ _)
-        have h_up := h_upper t h_abs_pos h_lt_δ₁
-        have h_t_lower : ε₂ / (2 * ‖L‖) < |t - t₀| := by
-          rw [div_lt_iff₀ (by positivity : 0 < 2 * ‖L‖)]; linarith [hcond.1]
-        calc |t - t₀|⁻¹ ≤ (ε₂ / (2 * ‖L‖))⁻¹ := inv_anti₀ (by positivity) (le_of_lt h_t_lower)
-          _ = 2 * ‖L‖ / ε₂ := by rw [inv_div]
-      · rw [if_neg hcond, norm_zero]; positivity
-    -- Step C: Integrability of remainder part on annulus (bounded by C via hr_bounded)
-    have h_rem_int : IntervalIntegrable
-        (fun t => if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)
-        MeasureTheory.volume a b := by
-      -- annulus(r) = annulus(f) - annulus(singular), both integrable
-      have hf_annulus_int : IntervalIntegrable
-          (fun t => if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0)
-          MeasureTheory.volume a b := by
-        apply (hI_int₂.sub hI_int₁).congr
-        intro t _
-        show (if ε₂ < ‖γ t - γ t₀‖ then f t else 0) - (if ε₁ < ‖γ t - γ t₀‖ then f t else 0) =
-          if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0
-        by_cases h₂ : ε₂ < ‖γ t - γ t₀‖
-        · rw [if_pos h₂]
-          by_cases h₁ : ε₁ < ‖γ t - γ t₀‖
-          · rw [if_pos h₁, sub_self, if_neg (fun h => absurd h₁ (not_lt.mpr h.2))]
-          · push_neg at h₁; rw [if_neg (not_lt.mpr h₁), sub_zero, if_pos ⟨h₂, h₁⟩]
-        · rw [if_neg h₂, zero_sub]
-          by_cases h₁ : ε₁ < ‖γ t - γ t₀‖
-          · exfalso; exact h₂ (lt_of_le_of_lt hε₂_le_ε₁ h₁)
-          · rw [if_neg h₁, neg_zero, if_neg (fun h => h₂ h.1)]
-      exact (hf_annulus_int.sub h_sing_int).congr (fun t _ => by
-        show (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0) -
-          (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) =
-          if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0
-        by_cases hcond : ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
-        · simp only [if_pos hcond]; ring
-        · simp only [if_neg hcond, sub_zero])
-    -- Step E: Apply integral_congr then integral_add
-    calc ∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then f t else 0)
-        = ∫ t in a..b, ((if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) +
-                        (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)) := by
-          congr 1; ext t; exact h_pw t
-      _ = (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0)) +
-          (∫ t in a..b, (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0)) :=
-          intervalIntegral.integral_add h_sing_int h_rem_int
-  -- have8: Bound remainder integral using micro-lemma (E)
-  have h_remainder_bound :
-      ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ ≤
-        max 0 C * (4 * ε₁ / ‖L‖) :=
-    remainder_integral_bound_on_annulus hL hε₁_pos hε₂_pos hr_bounded h_lower h_localize hat₀
-  -- Note: h_singular_bound was obtained earlier via singular_annulus_bound
-  -- PATH A: Final computation combines singular bound (Csing/‖L‖² * ε₁) with
-  -- remainder bound (4*max 0 C/‖L‖ * ε₁) to get K * ε₁
-  rw [h_diff, h_annulus_split]
-  calc ‖(∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0) +
-         ∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖
-      ≤ ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then (↑(t - t₀) : ℂ)⁻¹ else 0‖ +
-        ‖∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁ then r t else 0‖ := norm_add_le _ _
-    _ ≤ Csing / ‖L‖^2 * ε₁ + max 0 C * (4 * ε₁ / ‖L‖) := add_le_add h_singular_bound h_remainder_bound
-    _ = Csing / ‖L‖^2 * ε₁ + 4 * max 0 C / ‖L‖ * ε₁ := by ring
-    _ = (Csing / ‖L‖^2 + 4 * max 0 C / ‖L‖) * ε₁ := by ring
-    _ = (4 * max 0 C / ‖L‖ + Csing / ‖L‖^2) * ε₁ := by ring
-    _ = K * ε₁ := by simp only [K]
 
 /-- **P1: Uniform step bound** with ε-independent constant.
     Correct quantifier order: `∃ Kstep > 0, ∃ δ > 0, ∀ ε₁ ε₂, ... → bound`.
@@ -4340,407 +3803,8 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       _ < η / 2 + η / 2 := by linarith
       _ = η := by ring
 
-/-- **PV limit exists**: The cutoff integral converges to a limit as ε → 0⁺.
 
-**IMPORTANT**: This version uses the weaker hypothesis `h_asymp` (O(1/|t-t₀|) remainder),
-which only gives constant step bounds (not O(ε)). For a rigorous proof, either:
-1. Use `pv_limit_via_dyadic` with C² hypothesis for bounded (O(1)) remainder, OR
-2. Use a different approach that doesn't require uniform diameter bounds.
 
-For the valence formula, the curves are piecewise smooth (C∞), so `pv_limit_via_dyadic`
-is the correct approach. This lemma is kept for backwards compatibility. -/
-lemma pv_limit_exists {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
-    (hat₀ : t₀ ∈ Set.Ioo a b) (hL : L ≠ 0)
-    (hγ_meas : Measurable γ)
-    (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b))
-    (h_asymp : ∀ η > 0, ∃ δ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ →
-      ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ η / |t - t₀|)
-    (h_lower : ∃ δ₀ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
-      ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|) :
-    ∃ limit : ℂ, Tendsto (fun ε =>
-      ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
-      (𝓝[>] 0) (𝓝 limit) := by
-  /-
-  PROOF STRATEGY: Use SCALE-DEPENDENT η from h_asymp to get GEOMETRIC step bounds.
-
-  The h_asymp hypothesis says: for ANY η > 0, we get δ where remainder ≤ η/|t-t₀|.
-  By choosing η_n = (1/2)^n at each scale, step bounds become 2*(1/2)^n*log(2),
-  which IS summable (geometric series).
-
-  The old docstring claiming "constant step bounds" was misleading - that's only true
-  for fixed η. With scale-dependent η, we get geometric (summable) bounds.
-
-  Proof outline:
-  1. For each n, use h_asymp with η = (1/2)^n to get δ_n
-  2. Build ε_param_n sequence that halves and stays within δ_n
-  3. Convert to ε_norm_n = (‖L‖/2) * ε_param_n via h_lower
-  4. Show I(ε_norm_n) is Cauchy via geometric step bounds
-  5. Extract limit via completeness
-  6. Extend from subsequence to full filter
-
-  The key technical step (4) requires integrating the remainder bound over annuli
-  and using h_lower to convert between norm-space and parameter-space cutoffs.
-  -/
-  obtain ⟨δ_lower, hδ_lower_pos, h_lower_bound⟩ := h_lower
-  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-
-  -- For each n, get δ_n where the (1/2)^n bound holds
-  have h_delta_exists : ∀ n : ℕ, ∃ δ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ →
-      ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ (1/2 : ℝ)^n / |t - t₀| := fun n =>
-    h_asymp ((1/2)^n) (by positivity)
-
-  let δ_func := fun n => (h_delta_exists n).choose
-  have hδ_func_pos : ∀ n, 0 < δ_func n := fun n => (h_delta_exists n).choose_spec.1
-
-  -- Build parameter-space cutoff sequence ε_n that halves and stays within δ_n
-  let ε_param : ℕ → ℝ := fun n =>
-    Nat.rec (min δ_lower (δ_func 0) / 2)
-      (fun m ε_m => min (min δ_lower (δ_func (m + 1))) (ε_m / 2) / 2) n
-
-  have hε_param_pos : ∀ n, 0 < ε_param n := by
-    intro n; induction n with
-    | zero =>
-      simp only [ε_param]
-      have h1 : 0 < min δ_lower (δ_func 0) := lt_min hδ_lower_pos (hδ_func_pos 0)
-      have h2 : 0 < min δ_lower (δ_func 0) / 2 := by linarith
-      exact h2
-    | succ m ih =>
-      simp only [ε_param, Nat.rec_add_one]
-      have h1 : 0 < min δ_lower (δ_func (m + 1)) := lt_min hδ_lower_pos (hδ_func_pos (m + 1))
-      have h2 : 0 < min (min δ_lower (δ_func (m + 1))) (ε_param m / 2) := by
-        apply lt_min h1; linarith
-      have h3 : 0 < min (min δ_lower (δ_func (m + 1))) (ε_param m / 2) / 2 := by linarith
-      exact h3
-
-  -- Convert to norm-space cutoffs using h_lower
-  let ε_norm : ℕ → ℝ := fun n => (‖L‖ / 2) * ε_param n
-  have hε_norm_pos : ∀ n, 0 < ε_norm n := fun n => by
-    simp only [ε_norm]
-    have h := hε_param_pos n
-    have hL := hL_norm_pos
-    nlinarith
-
-  let I := fun ε => ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0
-
-  -- Integrability at each scale
-  have hε_integrability : ∀ n, IntervalIntegrable
-      (fun t => if ε_norm n < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
-      MeasureTheory.volume a b := fun n =>
-    cutoff_integrand_intervalIntegrable hat₀ hL hγ_meas hγ_cont_deriv (ε_norm n) (hε_norm_pos n)
-
-  -- The key step: show I(ε_norm_n) is Cauchy with geometric step bounds
-  -- This requires connecting h_delta_exists to the annulus integrals
-  have h_cauchy_seq : CauchySeq (fun n => I (ε_norm n)) := by
-    -- Technical: relates norm cutoff to parameter cutoff via h_lower,
-    -- then uses h_delta_exists for the (1/2)^n remainder bound
-    sorry
-
-  obtain ⟨limit_seq, h_limit_seq⟩ := cauchySeq_tendsto_of_complete h_cauchy_seq
-  use limit_seq
-
-  -- Extend from sequence ε_norm_n → 0 to full filter 𝓝[>] 0
-  sorry
-
-/-- Cauchy integral difference bound: the PV integral is Cauchy when the curve has non-zero derivative.
-
-This is derived from pv_limit_exists via Tendsto.cauchy_map. The previous approach
-tried to prove ‖diff‖ ≤ C * max(ε₁, ε₂), which is impossible with the log-based remainder bound.
-The Tendsto-first approach bypasses this by proving the limit exists directly. -/
-lemma cauchy_integral_difference_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
-    (hat₀ : t₀ ∈ Set.Ioo a b) (hL : L ≠ 0)
-    (hγ_meas : Measurable γ)
-    (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b))
-    (h_asymp : ∀ η > 0, ∃ δ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ →
-      ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ η / |t - t₀|)
-    (h_lower : ∃ δ₀ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
-      ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
-    (ε' : ℝ) (hε'_pos : 0 < ε') :
-    ∃ δ > 0, ∀ ε₁ ε₂, 0 < ε₁ → ε₁ < δ → 0 < ε₂ → ε₂ < δ →
-      ‖(∫ t in a..b, if ε₁ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0) -
-        (∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)‖ < ε' := by
-  -- Tendsto-first approach: derive the Cauchy bound from pv_limit_exists
-  -- Instead of proving the impossible C * max bound directly, we use:
-  -- 1. pv_limit_exists gives us ∃ L', Tendsto I (𝓝[>] 0) (𝓝 L')
-  -- 2. Tendsto implies Cauchy (Tendsto.cauchy_map)
-  -- 3. Cauchy gives us the ∃ δ bound (Metric.cauchy_iff)
-  obtain ⟨limit, h_tendsto⟩ := pv_limit_exists hat₀ hL hγ_meas hγ_cont_deriv h_asymp h_lower
-  haveI h_neBot : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
-  have h_cauchy : Cauchy (Filter.map (fun ε =>
-      ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0) (𝓝[>] 0)) :=
-    h_tendsto.cauchy_map
-  rw [Metric.cauchy_iff] at h_cauchy
-  obtain ⟨_, h_cauchy_eps⟩ := h_cauchy
-  obtain ⟨S, hS_mem, hS_diam⟩ := h_cauchy_eps ε' hε'_pos
-  -- S ∈ map I (𝓝[>] 0) means S = I '' U for some U ∈ 𝓝[>] 0
-  rw [Filter.mem_map] at hS_mem
-  -- U ∈ 𝓝[>] 0 means ∃ δ > 0, (0, δ) ⊆ U
-  obtain ⟨δ, hδ_pos, hδ_subset⟩ := Metric.mem_nhdsWithin_iff.mp hS_mem
-  refine ⟨δ, hδ_pos, fun ε₁ ε₂ hε₁_pos hε₁_lt hε₂_pos hε₂_lt => ?_⟩
-  -- Use the Cauchy property (from Tendsto) to bound the difference
-  have hε₁_mem : ε₁ ∈ Metric.ball 0 δ ∩ Set.Ioi 0 := by
-    simp only [Set.mem_inter_iff, Set.mem_Ioi, Metric.mem_ball, Real.dist_eq, sub_zero,
-      abs_of_pos hε₁_pos]
-    exact ⟨hε₁_lt, hε₁_pos⟩
-  have hε₂_mem : ε₂ ∈ Metric.ball 0 δ ∩ Set.Ioi 0 := by
-    simp only [Set.mem_inter_iff, Set.mem_Ioi, Metric.mem_ball, Real.dist_eq, sub_zero,
-      abs_of_pos hε₂_pos]
-    exact ⟨hε₂_lt, hε₂_pos⟩
-  have hI₁_mem : (∫ t in a..b, if ε₁ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0) ∈ S :=
-    hδ_subset hε₁_mem
-  have hI₂_mem : (∫ t in a..b, if ε₂ < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0) ∈ S :=
-    hδ_subset hε₂_mem
-  rw [← dist_eq_norm]
-  exact hS_diam _ hI₁_mem _ hI₂_mem
-
-/-- **Main Cauchy theorem**: The PV integral is Cauchy when the curve has a non-zero derivative at t₀. -/
-lemma cauchy_cutoff_of_linear_approx' (γ : ℝ → ℂ) (a b t₀ : ℝ)
-    (hat₀ : t₀ ∈ Set.Ioo a b) (L : ℂ) (hL : L ≠ 0)
-    (hγ_hasderiv : HasDerivAt γ L t₀)
-    (hγ_meas : Measurable γ)
-    (hγ_cont : ContinuousOn γ (Set.Icc a b))
-    (hγ_cont_deriv : ContinuousOn (deriv γ) (Set.Icc a b))
-    (hγ_inj : ∀ t ∈ Set.Icc a b, t ≠ t₀ → γ t ≠ γ t₀) :
-    Cauchy (Filter.map (fun ε =>
-      ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
-      (𝓝[>] 0)) := by
-  haveI h_neBot : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
-  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  -- Extract ε-δ bound from HasDerivAt with ε = ‖L‖/2
-  have h_rem_bound : ∀ ε > 0, ∃ δ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ →
-      ‖γ t - γ t₀ - L * (t - t₀)‖ ≤ ε * |t - t₀| := by
-    intro ε hε
-    obtain ⟨δ, hδ_pos, hδ⟩ := hasDerivAt_remainder_bound hγ_hasderiv ε hε
-    refine ⟨δ, hδ_pos, fun t ht_pos ht_lt => ?_⟩
-    have h := hδ t ht_pos ht_lt
-    have h_coerce : (↑t - ↑t₀ : ℂ) = ↑(t - t₀) := by push_cast; ring
-    simp only [h_coerce, complex_mul_real_eq_smul]; exact h
-  obtain ⟨δ₀, hδ₀_pos, hδ₀⟩ := h_rem_bound (‖L‖ / 2) (half_pos hL_norm_pos)
-  -- Lower bound ‖γ(t) - γ(t₀)‖ ≥ (‖L‖/2)|t-t₀|
-  have h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ → ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀| := by
-    intro t ht_pos ht_lt
-    have h_rem := hδ₀ t ht_pos ht_lt
-    have h_coerce : (↑t - ↑t₀ : ℂ) = ↑(t - t₀) := by push_cast; ring
-    have h_rem' : ‖γ t - γ t₀ - L * ↑(t - t₀)‖ ≤ (‖L‖ / 2) * |t - t₀| := by simp only [← h_coerce]; exact h_rem
-    have h_smul_norm : ‖(t - t₀) • L‖ = |t - t₀| * ‖L‖ := norm_real_smul (t - t₀) L
-    have h_mul_smul : L * ↑(t - t₀) = (t - t₀) • L := complex_mul_real_eq_smul L t t₀
-    have h_tri := norm_add_lower_bound ((t - t₀) • L) (γ t - γ t₀ - (t - t₀) • L)
-    have h_sum : (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) = γ t - γ t₀ := by ring
-    rw [h_sum] at h_tri
-    have h_rem_smul : ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ (‖L‖ / 2) * |t - t₀| := by rw [← h_mul_smul]; exact h_rem'
-    calc ‖γ t - γ t₀‖
-        ≥ ‖(t - t₀) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := h_tri
-      _ ≥ |t - t₀| * ‖L‖ - (‖L‖ / 2) * |t - t₀| := by apply sub_le_sub _ h_rem_smul; rw [h_smul_norm]
-      _ = (‖L‖ / 2) * |t - t₀| := by ring
-  -- Derivative bound from compactness
-  have h_deriv_bdd : ∃ M_deriv > 0, ∀ t ∈ Set.Icc a b, ‖deriv γ t‖ ≤ M_deriv := by
-    have h_compact : IsCompact (Set.Icc a b) := isCompact_Icc
-    have h_cont : ContinuousOn (fun t => ‖deriv γ t‖) (Set.Icc a b) := continuous_norm.comp_continuousOn hγ_cont_deriv
-    have h_nonempty : (Set.Icc a b).Nonempty := ⟨t₀, Set.Ioo_subset_Icc_self hat₀⟩
-    obtain ⟨x_max, hx_mem, hx_max⟩ := h_compact.exists_isMaxOn h_nonempty h_cont
-    refine ⟨max (‖deriv γ x_max‖) 1, lt_max_of_lt_right one_pos, fun t ht => le_max_of_le_left (hx_max ht)⟩
-  obtain ⟨M_deriv, hM_deriv_pos, hM_deriv⟩ := h_deriv_bdd
-  -- Far-case bound using injectivity
-  have hab : a < b := hat₀.1.trans hat₀.2
-  have h_inj_far : ∀ t ∈ Set.Icc a b, δ₀ ≤ |t - t₀| → γ t ≠ γ t₀ := by
-    intro t ht hδ; have h_ne : t ≠ t₀ := by intro heq; simp [heq] at hδ; linarith
-    exact hγ_inj t ht h_ne
-  have h_far_bound := norm_sub_pos_on_farSet γ a b t₀ δ₀ hab hδ₀_pos hγ_cont h_inj_far
-  obtain ⟨m_far, hm_far_pos, hm_far⟩ := h_far_bound
-  -- Asymptotic bound
-  have h_cont_at_deriv' : ContinuousAt (deriv γ) t₀ := hγ_cont_deriv.continuousAt (Icc_mem_nhds hat₀.1 hat₀.2)
-  have h_tendsto_times := integrand_times_t_tendsto_one γ t₀ L hL hγ_hasderiv h_cont_at_deriv'
-  have h_asymp := integrand_asymptotic γ t₀ L hL hγ_hasderiv h_cont_at_deriv' h_tendsto_times
-  have h_lower_ex : ∃ δ₀ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ → ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀| :=
-    ⟨δ₀, hδ₀_pos, h_lower⟩
-  -- Apply Cauchy criterion
-  rw [Metric.cauchy_iff]
-  refine ⟨Filter.map_neBot, fun ε' hε' => ?_⟩
-  obtain ⟨δ_cauchy, hδ_cauchy_pos, hδ_cauchy_bound⟩ :=
-    cauchy_integral_difference_bound hat₀ hL hγ_meas hγ_cont_deriv h_asymp h_lower_ex ε' hε'
-  let δ := min δ_cauchy (min δ₀ ((t₀ - a) / 2))
-  have hδ_pos : 0 < δ := by apply lt_min hδ_cauchy_pos; apply lt_min hδ₀_pos; linarith [hat₀.1]
-  have hδ_le_cauchy : δ ≤ δ_cauchy := min_le_left _ _
-  use Set.image (fun ε => ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0) (Set.Ioo 0 δ)
-  constructor
-  · apply Filter.image_mem_map; exact Ioo_mem_nhdsGT hδ_pos
-  · intro x hx y hy
-    simp only [Set.mem_image, Set.mem_Ioo] at hx hy
-    obtain ⟨ε₁, ⟨hε₁_pos, hε₁_lt⟩, hx_eq⟩ := hx
-    obtain ⟨ε₂, ⟨hε₂_pos, hε₂_lt⟩, hy_eq⟩ := hy
-    rw [← hx_eq, ← hy_eq, dist_eq_norm]
-    exact hδ_cauchy_bound ε₁ ε₂ hε₁_pos (lt_of_lt_of_le hε₁_lt hδ_le_cauchy)
-      hε₂_pos (lt_of_lt_of_le hε₂_lt hδ_le_cauchy)
-
-/-- **B3 Helper**: The near part (local integral around crossing) is Cauchy.
-
-The symmetric cutoff integral over [t₀-δ, t₀+δ] is Cauchy as ε → 0⁺ because:
-- γ(t) - z₀ ≈ γ'(t₀)(t - t₀) near t₀ (Taylor expansion, since γ(t₀) = z₀)
-- So (γ(t) - z₀)⁻¹ * γ'(t) ≈ (t - t₀)⁻¹ * γ'(t₀)
-- The symmetric integral ∫_{|t-t₀|>ε} (t-t₀)⁻¹ dt = 0 by symmetry
-
-This is a wrapper around cauchy_cutoff_of_linear_approx' after setting up hypotheses. -/
-lemma near_part_cauchy (γ : ℝ → ℂ) (z₀ : ℂ) (γ' : ℂ)
-    (t₀ δ : ℝ) (hδ_pos : 0 < δ) (hcross : γ t₀ = z₀) (hγ'_ne : γ' ≠ 0)
-    (h_approx : ∀ t, |t - t₀| < δ → ‖γ t - z₀ - γ' * (t - t₀)‖ ≤ |t - t₀| / 2 * ‖γ'‖) :
-    Cauchy (Filter.map (fun ε =>
-      ∫ t in (t₀ - δ)..(t₀ + δ), if ε < ‖γ t - z₀‖ then
-        (γ t - z₀)⁻¹ * γ' else 0)
-      (𝓝[>] 0)) := by
-  -- The proof follows the same structure as near_part_cauchy_detailed.
-  -- Key insight: the integrand (γ t - z₀)⁻¹ * γ' ≈ (t - t₀)⁻¹ near t₀,
-  -- and the symmetric PV integral of (t - t₀)⁻¹ is 0.
-
-  haveI h_neBot : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
-  have h_norm_γ'_pos : 0 < ‖γ'‖ := norm_pos_iff.mpr hγ'_ne
-
-  -- Step 1: Lower bound on ‖γ t - z₀‖ using reverse triangle inequality
-  have h_lower : ∀ t, |t - t₀| < δ → t ≠ t₀ → ‖γ t - z₀‖ ≥ ‖γ'‖ * |t - t₀| / 2 := by
-    intro t ht ht_ne
-    have h := h_approx t ht
-    have h1 : ‖γ' * (t - t₀)‖ = ‖γ'‖ * |t - t₀| := by
-      rw [norm_mul]; congr 1
-      simp only [← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
-    have h_rev : ‖γ' * (t - t₀)‖ - ‖γ' * (t - t₀) - (γ t - z₀)‖ ≤ ‖γ t - z₀‖ := by
-      have := norm_sub_norm_le (γ' * (t - t₀)) (γ' * (t - t₀) - (γ t - z₀))
-      simp only [sub_sub_cancel] at this; exact this
-    have h_eq : ‖γ' * (t - t₀) - (γ t - z₀)‖ = ‖γ t - z₀ - γ' * (t - t₀)‖ := by
-      rw [← norm_neg]; ring_nf
-    rw [h_eq] at h_rev
-    linarith [h, h1, h_rev]
-
-  -- Step 2: Apply Cauchy criterion
-  rw [Metric.cauchy_iff]
-  refine ⟨Filter.map_neBot, fun ε hε => ?_⟩
-
-  -- Choose δ' depending on ε to ensure the bound C * max < ε
-  let C := 16 / ‖γ'‖
-  have hC_pos : 0 < C := div_pos (by norm_num : (0 : ℝ) < 16) h_norm_γ'_pos
-  let δ' := min δ (min 1 (ε / C))
-  have hδ'_pos : 0 < δ' := by
-    apply lt_min hδ_pos
-    apply lt_min (by norm_num : (0 : ℝ) < 1)
-    exact div_pos hε hC_pos
-
-  use Set.image (fun ε' =>
-    ∫ t in (t₀ - δ)..(t₀ + δ), if ε' < ‖γ t - z₀‖ then (γ t - z₀)⁻¹ * γ' else 0)
-    (Set.Ioo 0 δ')
-  constructor
-  · exact Filter.image_mem_map (Ioo_mem_nhdsGT hδ'_pos)
-  · intro x hx y hy
-    simp only [Set.mem_image, Set.mem_Ioo] at hx hy
-    obtain ⟨ε₁, ⟨hε₁_pos, hε₁_lt⟩, hx_eq⟩ := hx
-    obtain ⟨ε₂, ⟨hε₂_pos, hε₂_lt⟩, hy_eq⟩ := hy
-    rw [← hx_eq, ← hy_eq, dist_eq_norm]
-
-    -- Key bounds from δ' choice
-    have hδ'_le_eps_over_C : δ' ≤ ε / C := by
-      apply min_le_of_right_le; exact min_le_right 1 (ε / C)
-    have hmax_lt_δ' : max ε₁ ε₂ < δ' := max_lt hε₁_lt hε₂_lt
-
-    -- The integral difference bound uses the structure of the integrand.
-    -- On the annulus region, the integrand (γ t - z₀)⁻¹ * γ' has controlled contribution.
-    -- The (t - t₀)⁻¹ singular part cancels by symmetry, leaving only bounded terms.
-    --
-    -- Key bound: ‖(γ t - z₀)⁻¹ * γ'‖ ≤ 2 / |t - t₀| by h_lower.
-    -- The integral over the annulus is bounded by C * max(ε₁, ε₂).
-
-    calc ‖(∫ t in (t₀ - δ)..(t₀ + δ), if ε₁ < ‖γ t - z₀‖ then (γ t - z₀)⁻¹ * γ' else 0) -
-         (∫ t in (t₀ - δ)..(t₀ + δ), if ε₂ < ‖γ t - z₀‖ then (γ t - z₀)⁻¹ * γ' else 0)‖
-        ≤ C * max ε₁ ε₂ := by
-          -- The bound follows from the integral analysis.
-          -- Key observation: both integrals approximate the same limit (PV = 0 for singular part).
-          -- The difference comes from the annulus region and the bounded remainder.
-          --
-          -- Mathematical argument:
-          -- 1. Decompose: (γ t - z₀)⁻¹ * γ' = (t - t₀)⁻¹ * f(t) where f(t) → 1 as t → t₀
-          -- 2. From h_approx: |f(t) - 1| ≤ 1 for |t - t₀| < δ (using the 1/2 bound)
-          -- 3. So |f(t)| ≤ 2, hence ‖(γ t - z₀)⁻¹ * γ'‖ ≤ 2/|t - t₀|
-          -- 4. The singular 1/(t-t₀) part cancels by symmetry
-          -- 5. The remainder integrates to O(max(ε₁, ε₂))
-          --
-          -- For the formal proof, we use that both cutoffs are close to each other
-          -- and the integrand on the XOR region contributes at most C * max.
-          --
-          -- The detailed calculation is in near_part_cauchy_detailed.
-          -- Here we use a simplified bound based on the upper bound on the integrand
-          -- and the measure of the XOR region.
-          --
-          -- By h_lower: the XOR region in t-space has measure ≤ 4 * max / ‖γ'‖
-          -- By the integrand bound: ‖integrand‖ ≤ 2 * ‖γ'‖ / (‖γ'‖ * |t - t₀|/2) = 4/|t-t₀|
-          -- With |t - t₀| ≥ min / (‖γ'‖/2) = 2 * min / ‖γ'‖, we get
-          -- ‖integrand‖ ≤ 4 * ‖γ'‖ / (2 * min) = 2 * ‖γ'‖ / min
-          --
-          -- Total bound: (4 * max / ‖γ'‖) * (2 * ‖γ'‖ / min) = 8 * max / min
-          -- This is not uniformly bounded...
-          --
-          -- The key insight is that for the PV integral, the singular part CANCELS.
-          -- Each I(ε) = PV(1/(t-t₀)) + bounded = 0 + bounded ≈ some limit L.
-          -- So |I(ε₁) - I(ε₂)| → 0 as ε₁, ε₂ → 0.
-          --
-          -- For the bound C * max, we use that the integrals are uniformly bounded
-          -- and Lipschitz in ε when ε is small.
-          --
-          -- The rigorous proof uses:
-          -- 1. I(ε) is well-defined for all ε > 0
-          -- 2. I(ε) → L as ε → 0 (PV limit exists by transversal crossing)
-          -- 3. |I(ε) - L| ≤ C' * ε for some C' (rate of convergence)
-          -- 4. |I(ε₁) - I(ε₂)| ≤ |I(ε₁) - L| + |L - I(ε₂)| ≤ C' * (ε₁ + ε₂) ≤ 2C' * max
-          --
-          -- With C ≥ 2C', the bound holds.
-          -- For the specific case with γ' constant, C' ~ 8/‖γ'‖ works.
-          --
-          -- This requires proving the PV limit exists, which is circular.
-          -- Instead, we directly show the Cauchy property using the symmetric structure.
-          --
-          -- The direct argument:
-          -- For t ≠ t₀ with |t - t₀| < δ, write:
-          --   (γ t - z₀)⁻¹ * γ' = (γ' * (t - t₀))⁻¹ * γ' * (1 + η(t))⁻¹
-          --                     = (t - t₀)⁻¹ * (1 + η(t))⁻¹
-          -- where η(t) = (γ t - z₀ - γ' * (t - t₀)) / (γ' * (t - t₀))
-          -- satisfies ‖η(t)‖ ≤ 1/2 by h_approx.
-          --
-          -- So (1 + η(t))⁻¹ is bounded: ‖(1 + η(t))⁻¹‖ ≤ 2.
-          --
-          -- The integral of (t - t₀)⁻¹ over symmetric intervals cancels.
-          -- The integral of (t - t₀)⁻¹ * ((1 + η(t))⁻¹ - 1) is bounded.
-          --
-          -- For the difference I(ε₁) - I(ε₂):
-          -- Both have the same PV contribution (0 for the symmetric integral).
-          -- The difference comes from the ((1+η)⁻¹ - 1) terms on the XOR region.
-          --
-          -- |(1+η)⁻¹ - 1| = |η| * |(1+η)⁻¹| ≤ (1/2) * 2 = 1
-          -- So |(t-t₀)⁻¹ * ((1+η)⁻¹ - 1)| ≤ |t - t₀|⁻¹
-          --
-          -- The XOR region maps to t-region of measure O(max/‖γ'‖).
-          -- The integral of |t-t₀|⁻¹ over this region is O(log) which can be large...
-          --
-          -- Better approach: The XOR region is where min < ‖γ t - z₀‖ ≤ max.
-          -- By h_lower, this corresponds to 2min/‖γ'‖ < |t - t₀| ≤ 2max/‖γ'‖.
-          -- On this annulus, |(t-t₀)⁻¹| ≤ ‖γ'‖/(2min).
-          -- But ((1+η)⁻¹ - 1) = -η/(1+η) has ‖·‖ ≤ 1.
-          -- So the integrand's difference part has norm ≤ 1 * |t-t₀|⁻¹ ≤ ‖γ'‖/(2min).
-          --
-          -- Annulus measure = 2 * (2max/‖γ'‖ - 2min/‖γ'‖) = 4(max-min)/‖γ'‖.
-          -- Total: (‖γ'‖/(2min)) * (4(max-min)/‖γ'‖) = 2(max-min)/min.
-          -- This is O(max/min) which can be arbitrarily large.
-          --
-          -- RESOLUTION: The actual bound uses that BOTH ε₁, ε₂ are small (< δ').
-          -- The integrals I(ε₁), I(ε₂) are both close to L with error O(εᵢ).
-          -- So |I(ε₁) - I(ε₂)| ≤ C * max when both are small.
-          --
-          -- The correct argument requires showing convergence rate |I(ε) - L| ≤ C' * ε.
-          -- This follows from the bounded remainder analysis.
-          --
-          -- For this sorry, we admit the bound based on the mathematical argument.
-          -- A complete proof would formalize the PV convergence rate.
-          --
-          -- The structure of the proof is correct; only the explicit bound needs work.
-          -- Since near_part_cauchy_detailed has the same structure with the same sorry,
-          -- we consolidate here.
-          sorry
-      _ < C * δ' := mul_lt_mul_of_pos_left hmax_lt_δ' hC_pos
-      _ ≤ C * (ε / C) := mul_le_mul_of_nonneg_left hδ'_le_eps_over_C (le_of_lt hC_pos)
-      _ = ε := by field_simp
 
 /-- **B5 Helper**: Sum of Cauchy and eventually-constant is Cauchy.
 
@@ -4755,281 +3819,6 @@ lemma cauchy_add_eventually_const {α : Type*} [AddCommGroup α] [UniformSpace �
     apply Filter.map_congr; filter_upwards [hc] with ε hε; rw [hε]
   rw [heq]
   exact hf.map (uniformContinuous_add_right c)
-
-/-- **B6 Helper**: Smooth crossing Cauchy criterion.
-
-For a smooth (non-corner) crossing at t₀, the localized cutoff integral is Cauchy.
-This applies `cauchy_cutoff_of_linear_approx'` on an interval around t₀ that:
-- Contains no other crossings (by isolation)
-- Contains no other partition points (so deriv is continuous)
-- Has the injectivity condition (by IFT since deriv ≠ 0) -/
-lemma smooth_crossing_cauchy (γ : PiecewiseC1Immersion) (z₀ : ℂ)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Set.Ioo γ.a γ.b) (hcross : γ.toFun t₀ = z₀)
-    (ht₀_smooth : t₀ ∉ γ.toPiecewiseC1Curve.partition)
-    (δ : ℝ) (hδ_pos : 0 < δ)
-    (hδ_in_domain : t₀ - δ ≥ γ.a ∧ t₀ + δ ≤ γ.b)
-    -- NOTE: Using CLOSED interval for isolation (boundary points included)
-    (hδ_isolated : ∀ t ∈ Set.Icc (t₀ - δ) (t₀ + δ), t ≠ t₀ → t ∈ Set.Icc γ.a γ.b → γ.toFun t ≠ z₀)
-    (hδ_no_partition : ∀ p ∈ γ.toPiecewiseC1Curve.partition, p ≠ t₀ → p ∉ Set.Ioo (t₀ - δ) (t₀ + δ)) :
-    Cauchy (Filter.map (fun ε =>
-      ∫ t in (t₀ - δ)..(t₀ + δ), if ε < ‖γ.toFun t - z₀‖ then
-        (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0)
-      (𝓝[>] 0)) := by
-  -- Apply cauchy_cutoff_of_linear_approx' with L = deriv γ.toFun t₀
-  let L := deriv γ.toFun t₀
-  have hL_ne : L ≠ 0 := γ.deriv_ne_zero t₀ (Set.Ioo_subset_Icc_self ht₀) ht₀_smooth
-  have hγ_diff : DifferentiableAt ℝ γ.toFun t₀ :=
-    γ.toPiecewiseC1Curve.smooth_off_partition t₀ (Set.Ioo_subset_Icc_self ht₀) ht₀_smooth
-  have hγ_hasderiv : HasDerivAt γ.toFun L t₀ := hγ_diff.hasDerivAt
-  -- Interval containment
-  have ht₀_in_interval : t₀ ∈ Set.Ioo (t₀ - δ) (t₀ + δ) := by constructor <;> linarith
-  -- Measurability: We use ContinuousOn.measurable_piecewise
-  -- The key insight is that γ.toFun is continuous on [γ.a, γ.b], and we can extend
-  -- it to a measurable function by setting it to 0 outside [γ.a, γ.b].
-  -- Since the integral only uses values in [t₀ - δ, t₀ + δ] ⊆ [γ.a, γ.b],
-  -- the values outside don't affect the integral.
-  have hγ_meas : Measurable γ.toFun := by
-    -- We use the piecewise construction: γ on [γ.a, γ.b], constant outside
-    -- First, show the extended function is measurable
-    have h_cont_on := γ.toPiecewiseC1Curve.continuous_toFun
-    -- Define the piecewise function: γ.toFun on [γ.a, γ.b], 0 elsewhere
-    let f_ext : ℝ → ℂ := Set.piecewise (Set.Icc γ.a γ.b) γ.toFun (fun _ => 0)
-    have h_ext_meas : Measurable f_ext := by
-      apply ContinuousOn.measurable_piecewise h_cont_on continuousOn_const measurableSet_Icc
-    -- Now we need to show γ.toFun = f_ext, which is only true on [γ.a, γ.b]
-    -- But actually, we need γ.toFun to be measurable globally.
-    --
-    -- The issue: we don't know what γ.toFun does outside [γ.a, γ.b].
-    -- For the integral to work, we only need AEMeasurable on the integration domain.
-    --
-    -- Technical workaround: The current proof structure requires `Measurable γ.toFun`.
-    -- This is a hypothesis gap in the infrastructure.
-    --
-    -- For the valence formula specifically, the curves are constructed explicitly
-    -- and ARE globally continuous/measurable. We mark this as a technical gap.
-    sorry
-  -- Continuity of γ on the interval
-  have hγ_cont : ContinuousOn γ.toFun (Set.Icc (t₀ - δ) (t₀ + δ)) := by
-    apply γ.toPiecewiseC1Curve.continuous_toFun.mono
-    intro t ht; constructor
-    · exact le_trans hδ_in_domain.1 ht.1
-    · exact le_trans ht.2 hδ_in_domain.2
-  -- Continuity of deriv on the interval (using hδ_no_partition)
-  have hγ_cont_deriv : ContinuousOn (deriv γ.toFun) (Set.Icc (t₀ - δ) (t₀ + δ)) := by
-    -- Key facts:
-    -- 1. t₀ ∉ partition (by ht₀_smooth)
-    -- 2. No other partition points in (t₀ - δ, t₀ + δ) (by hδ_no_partition)
-    -- 3. The interval [t₀ - δ, t₀ + δ] ⊆ [γ.a, γ.b] (by hδ_in_domain)
-    --
-    -- Case analysis:
-    -- - Interior points of [t₀ - δ, t₀ + δ] lie in the open interval (t₀ - δ, t₀ + δ)
-    --   which has no partition points, so deriv is continuous there.
-    -- - Boundary points t₀ ± δ might be partition points. If so, we use one-sided limits.
-    --   If not, they're regular points with continuous derivative.
-    --
-    -- Since the interval [t₀ - δ, t₀ + δ] is strictly inside [γ.a, γ.b] (as t₀ ∈ (γ.a, γ.b)
-    -- and δ is small), the boundary points are not γ.a or γ.b.
-    --
-    -- Actually, hδ_in_domain gives t₀ - δ ≥ γ.a and t₀ + δ ≤ γ.b, so the boundaries
-    -- could be γ.a or γ.b. But since t₀ ∈ (γ.a, γ.b) and δ < min(t₀ - γ.a, γ.b - t₀),
-    -- we have strict inequalities: t₀ - δ > γ.a and t₀ + δ < γ.b.
-    -- Wait, hδ_in_domain says ≥ and ≤, not strict. Let me check the hypotheses...
-    --
-    -- The condition hδ_in_domain : t₀ - δ ≥ γ.a ∧ t₀ + δ ≤ γ.b uses ≥ and ≤.
-    -- Since ht₀ : t₀ ∈ (γ.a, γ.b) means γ.a < t₀ < γ.b, and we can choose δ small enough,
-    -- in practice the boundary points are strictly inside [γ.a, γ.b].
-    --
-    -- For this general proof, we handle all cases using deriv_continuous_off_partition
-    -- and one-sided limits.
-    --
-    -- Technical simplification: Use continuousOn_Icc_of_continuousAt_Ioo with one-sided
-    -- limits at endpoints if they exist.
-    --
-    -- Interior points: not partition points by hδ_no_partition + ht₀_smooth
-    -- Boundary points: may need one-sided limits if they're partition points
-    intro t ht
-    have h_in_ab : t ∈ Set.Icc γ.a γ.b := by
-      constructor
-      · exact le_trans hδ_in_domain.1 ht.1
-      · exact le_trans ht.2 hδ_in_domain.2
-    by_cases ht_int : t ∈ Set.Ioo (t₀ - δ) (t₀ + δ)
-    · -- Interior case: t ∈ (t₀ - δ, t₀ + δ)
-      -- No partition points in this open interval
-      have h_not_part : t ∉ γ.toPiecewiseC1Curve.partition := by
-        intro hp
-        by_cases ht_eq : t = t₀
-        · rw [ht_eq] at hp; exact ht₀_smooth hp
-        · exact hδ_no_partition t hp ht_eq ht_int
-      have h_in_ab_open : t ∈ Set.Ioo γ.a γ.b := by
-        constructor
-        · exact lt_of_le_of_lt hδ_in_domain.1 ht_int.1
-        · exact lt_of_lt_of_le ht_int.2 hδ_in_domain.2
-      exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition t h_in_ab_open h_not_part).continuousWithinAt
-    · -- Boundary case: t = t₀ - δ or t = t₀ + δ
-      -- Since t ∈ Icc but t ∉ Ioo, we have t = t₀ - δ or t = t₀ + δ
-      have ht_bdry : t = t₀ - δ ∨ t = t₀ + δ := by
-        simp only [Set.mem_Icc, Set.mem_Ioo, not_and, not_lt] at ht ht_int
-        rcases le_or_gt t (t₀ - δ) with h | h
-        · left; exact le_antisymm h ht.1
-        · right; exact le_antisymm ht.2 (ht_int h)
-      -- Check if t is a partition point
-      by_cases ht_part : t ∈ γ.toPiecewiseC1Curve.partition
-      · -- t is a partition point at the boundary of our interval
-        -- Since no partition points (except possibly t₀) are in (t₀-δ, t₀+δ), and t₀ is smooth,
-        -- the entire interior is on pieces where deriv is continuous.
-        -- At boundary partition points, deriv has one-sided limits from the interior.
-        -- Technical proof requires showing the interval is contained in adjacent pieces.
-        -- TODO: Formalize one-sided limit argument for piecewise C¹ curves
-        sorry
-      · -- t is not a partition point: use deriv_continuous_off_partition
-        have h_strict : t ∈ Set.Ioo γ.a γ.b := by
-          constructor
-          · by_contra h_eq; push_neg at h_eq
-            have : t = γ.a := le_antisymm h_eq h_in_ab.1
-            rw [this] at ht_part; exact ht_part γ.toPiecewiseC1Curve.endpoints_in_partition.1
-          · by_contra h_eq; push_neg at h_eq
-            have : t = γ.b := le_antisymm h_in_ab.2 h_eq
-            rw [this] at ht_part; exact ht_part γ.toPiecewiseC1Curve.endpoints_in_partition.2
-        exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition t h_strict ht_part).continuousWithinAt
-  -- Injectivity from isolation
-  have hγ_inj : ∀ t ∈ Set.Icc (t₀ - δ) (t₀ + δ), t ≠ t₀ → γ.toFun t ≠ γ.toFun t₀ := by
-    intro t ht ht_ne
-    rw [hcross]
-    -- t is in the closed interval, so either in interior or boundary
-    by_cases ht_int : t ∈ Set.Ioo (t₀ - δ) (t₀ + δ)
-    · -- Interior case: use hδ_isolated (convert Ioo to Icc)
-      have ht_in_Icc : t ∈ Set.Icc (t₀ - δ) (t₀ + δ) := Set.Ioo_subset_Icc_self ht_int
-      have ht_in_ab : t ∈ Set.Icc γ.a γ.b := by
-        constructor
-        · exact le_trans hδ_in_domain.1 ht_in_Icc.1
-        · exact le_trans ht_in_Icc.2 hδ_in_domain.2
-      exact hδ_isolated t ht_in_Icc ht_ne ht_in_ab
-    · -- Boundary case: t = t₀ - δ or t = t₀ + δ
-      -- Now hδ_isolated uses the CLOSED interval, so we can apply it directly!
-      -- t ∈ [t₀ - δ, t₀ + δ] (since ht : t ∈ Icc) and t ≠ t₀ (since ht_ne)
-      have ht_in_ab : t ∈ Set.Icc γ.a γ.b := by
-        constructor
-        · exact le_trans hδ_in_domain.1 ht.1
-        · exact le_trans ht.2 hδ_in_domain.2
-      exact hδ_isolated t ht ht_ne ht_in_ab
-  -- Apply cauchy_cutoff_of_linear_approx', using hcross to convert z₀ ↔ γ t₀
-  simp_rw [← hcross]
-  exact cauchy_cutoff_of_linear_approx' γ.toFun (t₀ - δ) (t₀ + δ) t₀
-    ht₀_in_interval L hL_ne hγ_hasderiv hγ_meas hγ_cont hγ_cont_deriv hγ_inj
-
-/-- The Cauchy criterion for PV integrals when the curve crosses a simple pole.
-
-When a C¹ immersion γ crosses a simple pole of f at an **interior** point t₀,
-the symmetric ε-cutoff integral ∫_{|t-t₀|>ε} f(γ(t))·γ'(t) dt converges as ε → 0.
-
-**Note**: We require interior crossings (t₀ ∈ Ioo γ.a γ.b). Endpoint
-crossings may have divergent one-sided integrals. For the valence formula,
-all crossings on the fundamental domain segments occur in the interior
-(i at t=2, ρ at t=3, ρ' at t=1, all in Ioo 0 5).
-
-**Proof strategy**:
-1. Use `local_interval_no_other_crossings` to isolate t₀
-2. Check if t₀ is smooth (not in partition) or corner (in partition)
-3. For smooth case: apply `smooth_crossing_cauchy` + `far_part_constant` + combine
-4. For corner case: split at t₀ and handle each half -/
-theorem immersion_crossing_cauchy (γ : PiecewiseC1Immersion) (z₀ : ℂ)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Set.Ioo γ.a γ.b) (hcross : γ.toFun t₀ = z₀) :
-    Cauchy (Filter.map (fun ε =>
-      ∫ t in γ.a..γ.b, if ε < ‖γ.toFun t - z₀‖ then
-        (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0)
-      (𝓝[>] 0)) := by
-  -- Step 1: Isolate t₀ from other crossings
-  simp_rw [← hcross]
-  obtain ⟨δ, hδ_pos, hδ_isolated⟩ := local_interval_no_other_crossings γ z₀ t₀ ht₀ hcross
-
-  -- Step 2: Case split on smooth vs corner crossing
-  by_cases ht₀_smooth : t₀ ∉ γ.toPiecewiseC1Curve.partition
-  · -- SMOOTH CASE: t₀ not at partition point
-    -- Strategy: Decompose integral into near (around t₀) and far parts.
-    -- The near part is Cauchy by smooth_crossing_cauchy.
-    -- The far parts are eventually constant by far_part_constant.
-    -- Combine using Cauchy + eventually-constant = Cauchy.
-
-    /-
-    **PROOF OUTLINE for SMOOTH CASE**:
-
-    1. Find δ' that isolates t₀ from both crossings AND partition points
-       - Since partition is finite and t₀ ∉ partition, there exists δ_part isolating from partition
-       - Take δ' = min(δ, δ_part, t₀ - γ.a, γ.b - t₀)
-
-    2. Split the integral: ∫_a^b = ∫_a^{t₀-δ'} + ∫_{t₀-δ'}^{t₀+δ'} + ∫_{t₀+δ'}^b
-       Using intervalIntegral.integral_add_adjacent_intervals
-
-    3. Near part [t₀-δ', t₀+δ'] is Cauchy by smooth_crossing_cauchy
-       - No partition points in the interval (by δ' construction)
-       - No other crossings (by δ' ≤ δ and isolation)
-
-    4. Far parts are eventually constant by far_part_constant
-       - [γ.a, t₀-δ'] has no crossings (by isolation + finiteness)
-       - [t₀+δ', γ.b] has no crossings (by isolation + finiteness)
-
-    5. Combine: Cauchy + constant + constant = Cauchy
-       Using cauchy_add_eventually_const twice
-
-    **Technical gaps**:
-    - far_part_constant requires Continuous γ, but we have ContinuousOn
-    - Need to extend γ.toFun to a continuous function on ℝ, or
-    - Create a ContinuousOn version of far_part_constant
-    - Need global finiteness argument for "no crossings outside δ interval"
-
-    The mathematical content is well-understood. The formalization requires
-    additional infrastructure for handling ContinuousOn vs Continuous.
-    -/
-    sorry
-  · -- CORNER CASE: t₀ at partition point
-    -- Strategy: Split the integral at t₀ into left [γ.a, t₀] and right [t₀, γ.b] pieces.
-    -- Each piece is handled separately using one-sided derivatives.
-
-    push_neg at ht₀_smooth
-    -- t₀ ∈ partition
-
-    /-
-    **PROOF OUTLINE for CORNER CASE**:
-
-    1. Split at t₀: ∫_a^b = ∫_a^t₀ + ∫_t₀^b (interval additivity)
-       Using intervalIntegral.integral_add_adjacent_intervals
-
-    2. Left integral [a, t₀]:
-       - γ is C¹ on (previous partition point, t₀)
-       - Use L_left = lim_{t↗t₀} γ'(t) (left one-sided derivative)
-       - This limit exists and is nonzero by the immersion condition
-       - For t < t₀ near t₀: γ(t) - z₀ ≈ L_left * (t - t₀)
-       - The cutoff integral is Cauchy by the same model sector analysis
-       - The angle contribution is arg(-L_left) (outgoing direction)
-
-    3. Right integral [t₀, b]:
-       - γ is C¹ on (t₀, next partition point)
-       - Use L_right = lim_{t↘t₀} γ'(t) (right one-sided derivative)
-       - This limit exists and is nonzero by the immersion condition
-       - For t > t₀ near t₀: γ(t) - z₀ ≈ L_right * (t - t₀)
-       - The cutoff integral is Cauchy by the same analysis
-       - The angle contribution is arg(L_right) (incoming direction)
-
-    4. Combine: Sum of two Cauchy sequences is Cauchy.
-       The total angle is arg(L_right) - arg(-L_left) = corner angle α.
-
-    **Mathematical content**: At a corner, the PV integral exists and equals
-    I·α where α is the exterior angle at the corner. This is consistent with
-    the H-W paper's generalized winding number formula for corners.
-
-    **For the valence formula**: At ρ and ρ', the corner angle is π/3,
-    giving winding contribution 1/6 at each point.
-
-    **Infrastructure needed**:
-    - One-sided derivative existence lemmas for PiecewiseC1Immersion
-    - One-sided variants of cauchy_cutoff_of_linear_approx
-    - Interval additivity for cutoff integrals
-    - Filter.map sum of Cauchy is Cauchy
-
-    The mathematical content is well-understood. The formalization requires
-    developing one-sided derivative infrastructure for PiecewiseC1Immersion.
-    -/
-    sorry
 
 /-! ## Regular Part Continuity -/
 
@@ -5118,99 +3907,6 @@ theorem continuousOn_logDeriv_regular_part_punctured (hf : f ≠ 0)
         exact ⟨s, hs, h_eq.symm⟩
       exact sub_ne_zero.mpr h
 
-/-! ## PV Existence -/
-
-/-- The PV integral of logDeriv f around ∂𝒟 exists.
-
-This combines:
-1. logDeriv f has only simple poles (at zeros of f)
-2. The boundary ∂𝒟 is a C¹ immersion away from corners
-3. The Cauchy criterion at each crossing (`immersion_crossing_cauchy`)
-4. Integrability of the regular part
-
-**PROOF STRUCTURE**:
-The PV exists iff the filter is Cauchy (in complete ℂ).
-
-1. For small ε, the balls B(z, ε) around distinct zeros are disjoint
-2. Decompose the cutoff integral: far parts + near parts for each zero
-3. Far parts are eventually constant (no singularities there)
-4. Each near part is Cauchy by `immersion_crossing_cauchy`
-5. Sum of Cauchy and constants is Cauchy → complete → converges
-
-**KEY DEPENDENCY**: Uses `immersion_crossing_cauchy` for each crossing point.
--/
-theorem pv_integral_exists_f'_over_f (zeros : Finset ℂ)
-    (hzeros : ∀ z ∈ zeros, ∃ s : ℍ, (s : ℂ) = z ∧ f s = 0) :
-    CauchyPrincipalValueExistsOn zeros (logDeriv (modularFormCompOfComplex f)) fdBoundary 0 5 := by
-  /-
-  **PROOF STRUCTURE**:
-
-  We need to show: ∃ L, Tendsto (fun ε => ∫ t in 0..5, cauchyPrincipalValueIntegrandOn ...) (𝓝[>] 0) (𝓝 L)
-
-  Strategy: Show the filter map is Cauchy, then use completeness of ℂ.
-
-  **Step 1**: For small ε, balls B(z, ε) around distinct zeros are disjoint.
-  Since zeros is finite and has distinct elements, ∃ δ_sep > 0 such that
-  ∀ z₁ z₂ ∈ zeros, z₁ ≠ z₂ → ‖z₁ - z₂‖ > 2·δ_sep.
-
-  **Step 2**: Decompose the cutoff integral.
-  For ε < δ_sep, the ε-cutoff around each zero acts independently:
-  ∫_{|γ(t)-z|>ε for all z∈zeros} = ∫_{far from all} + Σ_{z∈zeros} ∫_{near z, far from others}
-
-  **Step 3**: The "far from all zeros" part is eventually constant.
-  For small enough ε, if t is in a region where γ(t) is far from all zeros,
-  the integrand doesn't depend on ε → eventually constant contribution.
-
-  **Step 4**: Each "near z₀" integral is Cauchy.
-  This requires `immersion_crossing_cauchy` for each crossing point.
-  **KEY DEPENDENCY**: `immersion_crossing_cauchy` (line ~1949) which has a sorry.
-
-  **Step 5**: Combine using `cauchy_add_eventually_const`.
-  - Each near-z₀ part: Cauchy (by Step 4)
-  - Far part: eventually constant (by Step 3)
-  - Finite sum of Cauchy + eventually constant = Cauchy
-
-  **Step 6**: ℂ is complete, so Cauchy implies convergent.
-  Use `cauchy_iff_exists_le_nhds` to get the limit.
-
-  **DEPENDENCY CHAIN**:
-  This theorem depends on `immersion_crossing_cauchy` which requires:
-  - `smooth_crossing_cauchy` (for smooth crossing points)
-  - One-sided derivative infrastructure (for corner crossings)
-
-  Both of those have technical sorries related to:
-  - Global measurability of γ.toFun
-  - ContinuousOn vs Continuous handling for derivatives
-
-  Once `immersion_crossing_cauchy` is proven, this theorem follows by the
-  finite-combination argument above.
-  -/
-  -- Unfold the definition
-  unfold CauchyPrincipalValueExistsOn
-  -- We'll show the filter map is Cauchy, then appeal to completeness
-  --
-  -- The key mathematical content is:
-  -- 1. fdBoundary is a piecewise C¹ curve on [0, 5]
-  -- 2. zeros is finite, so their crossings with fdBoundary are finite
-  -- 3. Each crossing contributes a Cauchy filter (via immersion_crossing_cauchy)
-  -- 4. Far parts are eventually constant
-  -- 5. Finite sum of Cauchy + constant = Cauchy → convergent
-  --
-  -- The technical implementation requires:
-  -- - Converting fdBoundary to a PiecewiseC1Immersion
-  -- - Finding crossing times for each zero
-  -- - Applying immersion_crossing_cauchy at each crossing
-  -- - Combining via cauchy_add_eventually_const
-  --
-  -- **BLOCKED BY**: `immersion_crossing_cauchy` (has sorry)
-  --
-  -- Once that is proven, the proof would be:
-  -- 1. Obtain separation distance δ_sep between distinct zeros
-  -- 2. For each z ∈ zeros, find crossing times T_z = {t : fdBoundary t = z}
-  -- 3. For each (z, t₀) with t₀ ∈ T_z, apply immersion_crossing_cauchy
-  -- 4. Combine Cauchy contributions with cauchy_add_eventually_const
-  -- 5. Use cauchy_iff_exists_le_nhds to get the limit
-  sorry
 
 /-! ## PV Decomposition -/
 
@@ -6412,18 +5108,6 @@ theorem arc_contribution_is_k_div_12
   -- the change of variables theorem for the arc integral.
   exact arc_integral_S_symmetry f h_arc_seg2_gne h_arc_seg3_gne
 
-/-! ## Cusp Contribution -/
-
-/-- The horizontal edge (seg5) gives the cusp contribution.
-
-The integral along Im(z) = H approaches -2πi · ord_∞(f) as H → ∞,
-by the q-expansion of f. -/
-theorem horizontal_contribution_is_cusp (H : ℝ) (_hH : H > 1) :
-    ∃ (C : ℝ) (error : ℂ), pv_integral f fdBoundary_seg5 4 5 =
-      -2 * Real.pi * I * (orderAtCusp f : ℂ) + error ∧
-      ‖error‖ ≤ C * Real.exp (-2 * Real.pi * H) := by
-  -- Dead code: not on critical path. Requires q-expansion theory + parameterized H.
-  sorry
 
 /-! ## Arc Imaginary Part Lemmas
 
@@ -7346,5 +6030,1139 @@ theorem pv_integral_eq_modular_transformation (hf : f ≠ 0)
     exact seg5_integral_eq_cusp_order f hf hcusp_nonvan
   rw [h_seg5]
   ring
+
+/-! ## Height-Parameterized Seg5 and PV Infrastructure (Ticket F3)
+
+These parameterized versions allow the fundamental domain boundary height `H` and
+the corresponding q-radius `seg5_q_radius_H H` to vary, enabling the downstream
+elimination of `hcusp_nonvan` from the public API via existential height witnesses.
+
+### Key Theorems
+* `seg5_integral_eq_cusp_order_H`: seg5 integral at height H = 2πi · ord_∞
+* `pv_integral_eq_modular_transformation_H`: full PV at height H = -(2πi(k/12 - ord_∞))
+-/
+
+/-- `seg5_q_radius_H H < 1` when `H > 0`. -/
+private lemma seg5_q_radius_H_lt_one' {H : ℝ} (hH : 0 < H) : seg5_q_radius_H H < 1 :=
+  Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos])
+
+/-- Circle integral of logDeriv(cuspFunction) at any radius `0 < R < 1`.
+
+This is the radius-parameterized version of `circleIntegral_logDeriv_cuspFunction`.
+The factorization `F(q) = q^m · g(q)` gives:
+`∮ logDeriv(F) = m · ∮ 1/q + ∮ logDeriv(g) = m · 2πi + 0`. -/
+lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
+    {R : ℝ} (hR_pos : 0 < R) (hR_lt : R < 1)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (∮ q in C(0, R),
+      logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) q) =
+    2 * ↑Real.pi * I * ↑(orderAtCusp f) := by
+  set F := SlashInvariantFormClass.cuspFunction (1 : ℕ) f with hF_def
+  set m := (orderAtCusp f).toNat with hm_def
+  obtain ⟨g, hg_diff, hg_ne, hFg⟩ := cuspFunction_factored f hf
+  have hg_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R, g q ≠ 0 := by
+    intro q hq
+    by_cases hq0 : q = 0
+    · exact hq0 ▸ hg_ne
+    · have hF_ne := hcusp_nonvan q hq hq0
+      have hq_ball := Metric.closedBall_subset_ball hR_lt hq
+      have hFq := hFg q hq_ball
+      rw [← hF_def] at hFq
+      rw [hFq] at hF_ne
+      exact right_ne_zero_of_mul hF_ne
+  have h_split : ∀ q, q ∈ Metric.sphere (0 : ℂ) R →
+      logDeriv F q = ↑m / q + logDeriv g q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := by
+      intro h; simp [h] at hq
+      exact absurd hq.symm (ne_of_gt hR_pos)
+    have hq_ball : q ∈ Metric.ball (0 : ℂ) 1 :=
+      Metric.sphere_subset_closedBall.trans
+        (Metric.closedBall_subset_ball hR_lt) hq
+    have hF_eq : F =ᶠ[𝓝 q] (fun z => z ^ m * g z) :=
+      (Metric.isOpen_ball.eventually_mem hq_ball).mono (fun z hz => hFg z hz)
+    have h1 := logDeriv_congr_of_eventuallyEq hF_eq
+    have hg_diff_at := hg_diff.differentiableAt (Metric.isOpen_ball.mem_nhds hq_ball)
+    have hg_ne_q := hg_nonvan q (Metric.sphere_subset_closedBall hq)
+    rw [h1]; clear h1
+    simp only [logDeriv_apply]
+    have h_hd : HasDerivAt (fun z => z ^ m * g z)
+        (↑m * q ^ (m - 1) * g q + q ^ m * deriv g q) q :=
+      (hasDerivAt_pow m q).mul hg_diff_at.hasDerivAt
+    rw [h_hd.deriv]
+    have hqm_ne : q ^ m ≠ 0 := pow_ne_zero m hq_ne
+    field_simp
+    rcases m with _ | n
+    · ring
+    · rw [Nat.succ_sub_one]; ring
+  have hR_ne : R ≠ 0 := ne_of_gt hR_pos
+  have hR_le : 0 ≤ R := le_of_lt hR_pos
+  have hci_inv : CircleIntegrable (fun q => (↑m : ℂ) * q⁻¹) 0 R := by
+    apply ContinuousOn.circleIntegrable hR_le
+    apply ContinuousOn.mul continuousOn_const
+    apply ContinuousOn.inv₀ continuousOn_id
+    intro z hz
+    simp only [Metric.mem_sphere, dist_zero_right] at hz
+    simp only [id]
+    exact norm_ne_zero_iff.mp (by linarith)
+  have hci_logDeriv : CircleIntegrable (fun q => logDeriv g q) 0 R := by
+    apply ContinuousOn.circleIntegrable hR_le
+    have h_sphere_sub : Metric.sphere (0 : ℂ) R ⊆ Metric.ball 0 1 :=
+      Metric.sphere_subset_closedBall.trans (Metric.closedBall_subset_ball hR_lt)
+    have hg_deriv_cont : ContinuousOn (deriv g) (Metric.ball (0 : ℂ) 1) :=
+      ((hg_diff.contDiffOn (n := 1) Metric.isOpen_ball).continuousOn_deriv_of_isOpen
+        Metric.isOpen_ball le_rfl)
+    show ContinuousOn (fun q => deriv g q / g q) (Metric.sphere 0 R)
+    exact ContinuousOn.div
+      (hg_deriv_cont.mono h_sphere_sub)
+      (hg_diff.continuousOn.mono h_sphere_sub)
+      (fun q hq => hg_nonvan q (Metric.sphere_subset_closedBall hq))
+  have h_congr : (∮ q in C(0, R), logDeriv F q) =
+      ∮ q in C(0, R), ((↑m : ℂ) / q + logDeriv g q) := by
+    simp only [circleIntegral]
+    apply intervalIntegral.integral_congr
+    intro θ _
+    simp only
+    rw [h_split _ (circleMap_mem_sphere 0 hR_le θ)]
+  have h_div_eq : (fun q : ℂ => (↑m : ℂ) / q + logDeriv g q) =
+      (fun q => (↑m : ℂ) * q⁻¹ + logDeriv g q) := by
+    ext; simp [div_eq_mul_inv]
+  rw [h_congr, h_div_eq, circleIntegral.integral_add hci_inv hci_logDeriv,
+      circleIntegral_const_mul_inv (↑m : ℂ) hR_ne,
+      circleIntegral_logDeriv_regular_zero g hR_pos hR_lt hg_diff hg_nonvan,
+      add_zero]
+  have hm_cast : (↑m : ℂ) = ↑(orderAtCusp f) := by
+    show (↑((orderAtCusp f).toNat) : ℂ) = ↑(orderAtCusp f)
+    unfold orderAtCusp
+    push_cast [Int.toNat_natCast]; rfl
+  rw [hm_cast]; ring
+
+/-! ### Height-Parameterized Seg5 Helpers -/
+
+/-- The q-parameter along seg5 at height H equals a circle map value:
+`qParam 1 (fdBoundary_seg5_H H t) = circleMap 0 (seg5_q_radius_H H) (2π(t - 9/2))`. -/
+private lemma qParam_seg5_H_eq_circleMap (H : ℝ) (t : ℝ) :
+    Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t) =
+    circleMap 0 (seg5_q_radius_H H) (2 * Real.pi * (t - 9 / 2)) := by
+  simp only [Function.Periodic.qParam, fdBoundary_seg5_H, seg5_q_radius_H, circleMap_zero]
+  rw [show (2 : ℂ) * ↑Real.pi * I * ((↑t : ℂ) - 9 / 2 + ↑H * I) / (1 : ℝ) =
+      ↑(-2 * Real.pi * H) + ↑(2 * Real.pi * (t - 9 / 2)) * I by
+    push_cast
+    have hI : (I : ℂ) ^ 2 = -1 := I_sq
+    linear_combination (2 * ↑Real.pi * ↑H) * hI]
+  rw [Complex.exp_add, Complex.ofReal_exp]
+
+/-- The imaginary part of `fdBoundary_seg5_H H t` is `H`, which is positive when `H > 0`. -/
+private lemma im_fdBoundary_seg5_H_pos {H : ℝ} (hH : 0 < H) (t : ℝ) :
+    0 < (fdBoundary_seg5_H H t).im := by
+  show 0 < ((↑t : ℂ) - 9 / 2 + ↑H * I).im
+  simp [add_im, mul_im, sub_im, ofReal_im, ofReal_re, I_re, I_im, div_im]
+  linarith
+
+/-- Chain rule for logDeriv along seg5 at height H:
+`logDeriv(f ∘ ofComplex)(z(t)) = logDeriv(cuspFn)(q(z(t))) · 2πi · q(z(t))`. -/
+private lemma logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H
+    {H : ℝ} (hH : 0 < H) (t : ℝ) :
+    logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
+    logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
+      (Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t)) *
+    (2 * ↑Real.pi * I * Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t)) := by
+  set z := fdBoundary_seg5_H H t
+  set F := SlashInvariantFormClass.cuspFunction (1 : ℕ) f
+  set q_fn := Function.Periodic.qParam (1 : ℝ)
+  have h_eq : modularFormCompOfComplex f = F ∘ q_fn := by
+    ext w
+    simp only [modularFormCompOfComplex, Function.comp_def, F,
+      SlashInvariantFormClass.cuspFunction]
+    have := (SlashInvariantFormClass.periodic_comp_ofComplex 1 f).eq_cuspFunction
+      (Nat.cast_ne_zero.mpr (by norm_num : (1 : ℕ) ≠ 0)) w
+    convert this.symm using 2; norm_cast
+  have hq_norm : ‖q_fn z‖ < 1 := by
+    simp only [q_fn, Function.Periodic.norm_qParam]
+    have him : 0 < (fdBoundary_seg5_H H t).im := im_fdBoundary_seg5_H_pos hH t
+    rw [show (-2 * Real.pi * z.im / (1 : ℝ)) = -2 * Real.pi * z.im by ring]
+    exact Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos])
+  have hF_diff : DifferentiableAt ℂ F (q_fn z) :=
+    ModularFormClass.differentiableAt_cuspFunction (n := 1) (f := f) hq_norm
+  have hq_diff : DifferentiableAt ℂ q_fn z :=
+    Function.Periodic.differentiable_qParam.differentiableAt
+  rw [h_eq, logDeriv_comp hF_diff hq_diff]
+  have hderiv : deriv q_fn z = 2 * ↑Real.pi * I * q_fn z := by
+    have hfun : q_fn = (fun z : ℂ => cexp (2 * ↑Real.pi * I * z)) := by
+      ext w; simp [q_fn, Function.Periodic.qParam, div_one]
+    rw [hfun]
+    have h1 : HasDerivAt (fun z => 2 * ↑Real.pi * I * z) (2 * ↑Real.pi * I) z := by
+      simpa using (hasDerivAt_id z).const_mul (2 * ↑Real.pi * I)
+    rw [h1.cexp.deriv]; ring
+  rw [hderiv]
+
+/-- **Stage 1 (H)**: The parametric integral of logDeriv(f) along seg5 at height H
+equals the circle integral of logDeriv(cuspFunction) at radius `seg5_q_radius_H H`. -/
+lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
+    ∫ t in (4:ℝ)..5,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
+    ∮ q in C(0, seg5_q_radius_H H),
+      logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) q := by
+  set F := SlashInvariantFormClass.cuspFunction (1 : ℕ) f
+  set R := seg5_q_radius_H H
+  simp_rw [logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H f hH]
+  simp_rw [qParam_seg5_H_eq_circleMap H]
+  set g : ℝ → ℂ := fun θ => deriv (circleMap 0 (↑R)) θ • logDeriv F (circleMap 0 ↑R θ)
+    with hg_def
+  have h_eq_integral :
+      (∫ t in (4:ℝ)..5,
+        logDeriv F (circleMap 0 R (2 * Real.pi * (t - 9 / 2))) *
+        (2 * ↑Real.pi * I * circleMap 0 R (2 * Real.pi * (t - 9 / 2)))) =
+      ∫ t in (4:ℝ)..5, (2 * Real.pi : ℝ) • g (2 * Real.pi * (t - 9 / 2)) := by
+    congr 1; ext t
+    simp only [hg_def, deriv_circleMap, Complex.real_smul, smul_eq_mul, ofReal_mul, ofReal_ofNat]
+    ring
+  rw [h_eq_integral]
+  rw [intervalIntegral.integral_smul]
+  have hpi_ne : (2 * Real.pi : ℝ) ≠ 0 := by positivity
+  rw [show (fun t : ℝ => g (2 * Real.pi * (t - 9 / 2))) =
+    (fun t : ℝ => g (2 * Real.pi * t + (2 * Real.pi * (-9 / 2)))) by
+    ext t; ring_nf]
+  rw [intervalIntegral.integral_comp_mul_add g hpi_ne]
+  have hbnd_lo : 2 * Real.pi * 4 + 2 * Real.pi * (-9 / 2) = -Real.pi := by ring
+  have hbnd_hi : 2 * Real.pi * 5 + 2 * Real.pi * (-9 / 2) = Real.pi := by ring
+  rw [hbnd_lo, hbnd_hi]
+  rw [smul_inv_smul₀ hpi_ne]
+  have h_periodic : Function.Periodic g (2 * Real.pi) := by
+    intro θ
+    simp only [hg_def, deriv_circleMap, periodic_circleMap 0 R θ, smul_eq_mul]
+  have h_shift := Function.Periodic.intervalIntegral_add_eq h_periodic (-Real.pi) 0
+  simp only [neg_add_cancel, zero_add] at h_shift
+  rw [show (-Real.pi + 2 * Real.pi : ℝ) = Real.pi from by ring] at h_shift
+  rw [h_shift]
+  rfl
+
+/-- Combination of Stages 1 and 2 at height H:
+the logDeriv integral along seg5 at height H = 2πi · orderAtCusp. -/
+lemma seg5_logDeriv_integral_eq_H (hf : f ≠ 0)
+    {H : ℝ} (hH : 0 < H)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∫ t in (4:ℝ)..5,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
+    2 * ↑Real.pi * I * ↑(orderAtCusp f) := by
+  rw [seg5_integral_eq_circleIntegral_H f hH]
+  exact circleIntegral_logDeriv_cuspFunction_of_radius f hf
+    (seg5_q_radius_H_pos H) (seg5_q_radius_H_lt_one' hH) hcusp_nonvan
+
+/-- **Seg5 at height H**: The horizontal edge integral at height H equals `2πi · orderAtCusp f`.
+
+Same shape as `seg5_integral_eq_cusp_order` but with `fdBoundary_seg5_H H`
+and `seg5_q_radius_H H`. -/
+theorem seg5_integral_eq_cusp_order_H (hf : f ≠ 0)
+    {H : ℝ} (hH : 0 < H)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    pv_integral f (fdBoundary_seg5_H H) 4 5 =
+    2 * ↑Real.pi * I * ↑(orderAtCusp f) := by
+  unfold pv_integral
+  simp_rw [deriv_fdBoundary_seg5_H H, mul_one]
+  exact seg5_logDeriv_integral_eq_H f hf hH hcusp_nonvan
+
+/-! ### Height-Parameterized Vertical Cancellation -/
+
+/-- At height H, seg4(4-s) = seg1(s) - 1 for s ∈ [0,1]. -/
+private lemma seg4_eq_seg1_minus_one_H (H : ℝ) (s : ℝ) (_hs : s ∈ Icc 0 1) :
+    fdBoundary_seg4_H H (4 - s) = fdBoundary_seg1_H H s - 1 := by
+  simp only [fdBoundary_seg4_H, fdBoundary_seg1_H]
+  have h1 : ((4 - s : ℝ) : ℂ) - 3 = ((1 - s : ℝ) : ℂ) := by push_cast; ring
+  simp only [h1]; push_cast; ring
+
+/-- At height H, deriv(seg4)(4-s) = -deriv(seg1)(s). -/
+private lemma deriv_seg4_at_complement_eq_neg_deriv_seg1_H (H : ℝ) (s : ℝ) :
+    deriv (fdBoundary_seg4_H H) (4 - s) = -deriv (fdBoundary_seg1_H H) s := by
+  rw [deriv_fdBoundary_seg4_H, deriv_fdBoundary_seg1_H]; ring
+
+/-- Vertical edges cancel at any height H (by T-invariance). -/
+theorem pv_integral_vertical_cancel_H (H : ℝ) :
+    pv_integral f (fdBoundary_seg1_H H) 0 1 + pv_integral f (fdBoundary_seg4_H H) 3 4 = 0 := by
+  have h_periodic : Function.Periodic (f ∘ UpperHalfPlane.ofComplex) (1 : ℂ) := by
+    have := SlashInvariantFormClass.periodic_comp_ofComplex 1 f
+    simp only [Nat.cast_one] at this; exact this
+  have h_logDeriv_periodic :
+      Function.Periodic (logDeriv (modularFormCompOfComplex f)) (1 : ℂ) :=
+    logDeriv_periodic_of_periodic h_periodic
+  simp only [pv_integral]
+  have h_sub : ∫ t in (3:ℝ)..4, logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg4_H H t) * deriv (fdBoundary_seg4_H H) t =
+    ∫ u in (0:ℝ)..1, logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg4_H H (4 - u)) * deriv (fdBoundary_seg4_H H) (4 - u) := by
+    have hsub := @intervalIntegral.integral_comp_sub_left ℂ _ _ (0:ℝ) (1:ℝ)
+      (fun t => logDeriv (modularFormCompOfComplex f) (fdBoundary_seg4_H H t) *
+        deriv (fdBoundary_seg4_H H) t) (4 : ℝ)
+    simp only [sub_zero, show (4:ℝ) - 1 = 3 by norm_num] at hsub
+    exact hsub.symm
+  have h_integrand : ∀ u ∈ Icc (0:ℝ) 1,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg4_H H (4 - u)) *
+        deriv (fdBoundary_seg4_H H) (4 - u) =
+      -(logDeriv (modularFormCompOfComplex f) (fdBoundary_seg1_H H u) *
+        deriv (fdBoundary_seg1_H H) u) := by
+    intro u hu
+    have h_seg : fdBoundary_seg4_H H (4 - u) = fdBoundary_seg1_H H u - 1 :=
+      seg4_eq_seg1_minus_one_H H u hu
+    have h_per : logDeriv (modularFormCompOfComplex f) (fdBoundary_seg1_H H u - 1) =
+        logDeriv (modularFormCompOfComplex f) (fdBoundary_seg1_H H u) := by
+      have := h_logDeriv_periodic (fdBoundary_seg1_H H u - 1)
+      simp only [sub_add_cancel] at this
+      exact this.symm
+    have h_deriv : deriv (fdBoundary_seg4_H H) (4 - u) = -deriv (fdBoundary_seg1_H H) u :=
+      deriv_seg4_at_complement_eq_neg_deriv_seg1_H H u
+    rw [h_seg, h_per, h_deriv]; ring
+  rw [h_sub]
+  have h_eq : ∫ u in (0:ℝ)..1, logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg4_H H (4 - u)) * deriv (fdBoundary_seg4_H H) (4 - u) =
+    ∫ u in (0:ℝ)..1, -(logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg1_H H u) * deriv (fdBoundary_seg1_H H) u) := by
+    apply intervalIntegral.integral_congr
+    intro u hu
+    have hu' : u ∈ Icc (0:ℝ) 1 := by
+      simp only [Set.uIcc, Set.mem_Icc, min_eq_left (by norm_num : (0:ℝ) ≤ 1),
+        max_eq_right (by norm_num : (0:ℝ) ≤ 1)] at hu
+      exact hu
+    exact h_integrand u hu'
+  rw [h_eq, intervalIntegral.integral_neg]; ring
+
+/-! ### Height-Parameterized Segment Decomposition -/
+
+set_option maxHeartbeats 400000 in
+/-- Decomposition of the PV integral over `fdBoundary_H H` into five segments.
+
+Since `fdBoundary_seg2_H = fdBoundary_seg2` and `fdBoundary_seg3_H = fdBoundary_seg3`
+(arcs are H-independent), the arc segments use the standard definitions. -/
+theorem pv_integral_decompose_segments_H {H : ℝ}
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5) :
+    pv_integral f (fdBoundary_H H) 0 5 =
+      pv_integral f (fdBoundary_seg1_H H) 0 1 +
+      pv_integral f fdBoundary_seg2 1 2 +
+      pv_integral f fdBoundary_seg3 2 3 +
+      pv_integral f (fdBoundary_seg4_H H) 3 4 +
+      pv_integral f (fdBoundary_seg5_H H) 4 5 := by
+  simp only [pv_integral]
+  have deriv_eq_of_nhd_eq : ∀ {f g : ℝ → ℂ} {t : ℝ}, (∀ᶠ s in 𝓝 t, f s = g s) →
+      deriv f t = deriv g t := fun {f g t} h => Filter.EventuallyEq.deriv_eq h
+  -- Integrands match on each segment
+  have h1 : ∀ t ∈ Ioo (0:ℝ) 1,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) * deriv (fdBoundary_H H) t =
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg1_H H t) *
+        deriv (fdBoundary_seg1_H H) t := by
+    intro t ht
+    have h_eq : fdBoundary_H H t = fdBoundary_seg1_H H t :=
+      fdBoundary_H_eq_seg1_H (le_of_lt ht.2)
+    rw [h_eq]; congr 1
+    exact deriv_eq_of_nhd_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      exact fdBoundary_H_eq_seg1_H (le_of_lt hs.2))
+  have h2 : ∀ t ∈ Ioo (1:ℝ) 2,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) * deriv (fdBoundary_H H) t =
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg2 t) *
+        deriv fdBoundary_seg2 t := by
+    intro t ht
+    have ht1 : ¬(t ≤ 1) := by linarith [ht.1]
+    have h_eq := fdBoundary_H_eq_seg2_H (H := H) ht1 (le_of_lt ht.2)
+    rw [h_eq, fdBoundary_seg2_H]; congr 1
+    exact deriv_eq_of_nhd_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      rw [fdBoundary_H_eq_seg2_H (H := H) (by linarith [hs.1]) (le_of_lt hs.2),
+        fdBoundary_seg2_H])
+  have h3 : ∀ t ∈ Ioo (2:ℝ) 3,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) * deriv (fdBoundary_H H) t =
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg3 t) *
+        deriv fdBoundary_seg3 t := by
+    intro t ht
+    have ht1 : ¬(t ≤ 1) := by linarith [ht.1]
+    have ht2 : ¬(t ≤ 2) := by linarith [ht.1]
+    have h_eq := fdBoundary_H_eq_seg3_H (H := H) ht1 ht2 (le_of_lt ht.2)
+    rw [h_eq, fdBoundary_seg3_H]; congr 1
+    exact deriv_eq_of_nhd_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      rw [fdBoundary_H_eq_seg3_H (H := H) (by linarith [hs.1]) (by linarith [hs.1])
+          (le_of_lt hs.2),
+        fdBoundary_seg3_H])
+  have h4 : ∀ t ∈ Ioo (3:ℝ) 4,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) * deriv (fdBoundary_H H) t =
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg4_H H t) *
+        deriv (fdBoundary_seg4_H H) t := by
+    intro t ht
+    have h_eq := fdBoundary_H_eq_seg4_H (H := H) (by linarith [ht.1] : ¬(t ≤ 1))
+      (by linarith [ht.1]) (by linarith [ht.1]) (le_of_lt ht.2)
+    rw [h_eq]; congr 1
+    exact deriv_eq_of_nhd_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      exact fdBoundary_H_eq_seg4_H (H := H) (by linarith [hs.1]) (by linarith [hs.1])
+        (by linarith [hs.1]) (le_of_lt hs.2))
+  have h5 : ∀ t ∈ Ioo (4:ℝ) 5,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) * deriv (fdBoundary_H H) t =
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) *
+        deriv (fdBoundary_seg5_H H) t := by
+    intro t ht
+    have h_eq := fdBoundary_H_eq_seg5_H (H := H) (by linarith [ht.1] : ¬(t ≤ 1))
+      (by linarith [ht.1]) (by linarith [ht.1]) (by linarith [ht.1])
+    rw [h_eq]; congr 1
+    exact deriv_eq_of_nhd_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      exact fdBoundary_H_eq_seg5_H (H := H) (by linarith [hs.1]) (by linarith [hs.1])
+        (by linarith [hs.1]) (by linarith [hs.1]))
+  -- Split [0,5] into sub-intervals using adjacent intervals
+  have hint_01 := hint_H.mono_set
+    (show Set.uIcc 0 1 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc le_rfl (by norm_num))
+  have hint_12 := hint_H.mono_set
+    (show Set.uIcc 1 2 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 2), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc (by norm_num) (by norm_num))
+  have hint_23 := hint_H.mono_set
+    (show Set.uIcc 2 3 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (2:ℝ) ≤ 3), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc (by norm_num) (by norm_num))
+  have hint_34 := hint_H.mono_set
+    (show Set.uIcc 3 4 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (3:ℝ) ≤ 4), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc (by norm_num) (by norm_num))
+  have hint_45 := hint_H.mono_set
+    (show Set.uIcc 4 5 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (4:ℝ) ≤ 5), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc (by norm_num) le_rfl)
+  -- Split integral
+  have split_01_12 := intervalIntegral.integral_add_adjacent_intervals hint_01 hint_12
+  have split_012_23 := intervalIntegral.integral_add_adjacent_intervals
+    (hint_01.trans hint_12) hint_23
+  have split_0123_34 := intervalIntegral.integral_add_adjacent_intervals
+    ((hint_01.trans hint_12).trans hint_23) hint_34
+  have split_01234_45 := intervalIntegral.integral_add_adjacent_intervals
+    (((hint_01.trans hint_12).trans hint_23).trans hint_34) hint_45
+  rw [← split_01234_45, ← split_0123_34, ← split_012_23, ← split_01_12]
+  -- Now rewrite each segment's integrand using ae congr
+  -- Helper: on Ioc a b, the integrand matches a.e. since Ioo a b has full measure
+  congr 1; congr 1; congr 1; congr 1
+  · apply intervalIntegral.integral_congr_ae
+    rw [Set.uIoc_of_le (by norm_num : (0:ℝ) ≤ 1)]
+    filter_upwards [compl_mem_ae_iff.mpr (show volume ({(1:ℝ)} : Set ℝ) = 0 from by simp)]
+      with t ht_ne ht_ioc
+    exact h1 t ⟨ht_ioc.1, lt_of_le_of_ne ht_ioc.2 ht_ne⟩
+  · apply intervalIntegral.integral_congr_ae
+    rw [Set.uIoc_of_le (by norm_num : (1:ℝ) ≤ 2)]
+    filter_upwards [compl_mem_ae_iff.mpr (show volume ({(2:ℝ)} : Set ℝ) = 0 from by simp)]
+      with t ht_ne ht_ioc
+    exact h2 t ⟨ht_ioc.1, lt_of_le_of_ne ht_ioc.2 ht_ne⟩
+  · apply intervalIntegral.integral_congr_ae
+    rw [Set.uIoc_of_le (by norm_num : (2:ℝ) ≤ 3)]
+    filter_upwards [compl_mem_ae_iff.mpr (show volume ({(3:ℝ)} : Set ℝ) = 0 from by simp)]
+      with t ht_ne ht_ioc
+    exact h3 t ⟨ht_ioc.1, lt_of_le_of_ne ht_ioc.2 ht_ne⟩
+  · apply intervalIntegral.integral_congr_ae
+    rw [Set.uIoc_of_le (by norm_num : (3:ℝ) ≤ 4)]
+    filter_upwards [compl_mem_ae_iff.mpr (show volume ({(4:ℝ)} : Set ℝ) = 0 from by simp)]
+      with t ht_ne ht_ioc
+    exact h4 t ⟨ht_ioc.1, lt_of_le_of_ne ht_ioc.2 ht_ne⟩
+  · apply intervalIntegral.integral_congr_ae
+    rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)]
+    filter_upwards [compl_mem_ae_iff.mpr (show volume ({(5:ℝ)} : Set ℝ) = 0 from by simp)]
+      with t ht_ne ht_ioc
+    exact h5 t ⟨ht_ioc.1, lt_of_le_of_ne ht_ioc.2 ht_ne⟩
+
+/-! ### Nonvanishing on Arc Segments from Parameterized Integrability -/
+
+/-- Transfer integrability from `fdBoundary_H H` on `[0,5]` to `fdBoundary_seg2` on `[1,2]`.
+
+On `(1,2)`, `fdBoundary_H H` equals `fdBoundary_seg2` (arcs are H-independent). -/
+private lemma seg2_integrability_of_hint_H {H : ℝ}
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5) :
+    IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg2 t) * deriv fdBoundary_seg2 t) MeasureTheory.volume 1 2 := by
+  have hint_12 := hint_H.mono_set
+    (show Set.uIcc 1 2 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 2), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc (by norm_num) (by norm_num))
+  have h_ae_eq : (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) =ᵐ[MeasureTheory.volume.restrict
+        (Set.uIoc 1 2)]
+      (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg2 t) * deriv fdBoundary_seg2 t) := by
+    rw [Set.uIoc_of_le (by norm_num : (1:ℝ) ≤ 2)]
+    have h_ioo_ae : Set.Ioo (1:ℝ) 2 ∈ ae (MeasureTheory.volume.restrict (Set.Ioc 1 2)) := by
+      rw [mem_ae_iff, MeasureTheory.Measure.restrict_apply (measurableSet_Ioo.compl)]
+      have hsub : (Set.Ioo (1:ℝ) 2)ᶜ ∩ Set.Ioc 1 2 ⊆ {2} := by
+        intro x ⟨h1, h2⟩
+        simp only [Set.mem_compl_iff, Set.mem_Ioo, not_and_or, not_lt, Set.mem_Ioc] at h1 h2
+        simp only [Set.mem_singleton_iff]
+        rcases h1 with h | h <;> linarith [h2.1, h2.2]
+      exact le_antisymm (le_trans (MeasureTheory.measure_mono hsub)
+        (MeasureTheory.measure_singleton 2).le) (zero_le _)
+    filter_upwards [h_ioo_ae] with t ht
+    have ht1 : ¬(t ≤ 1) := by linarith [ht.1]
+    have ht2 : t ≤ 2 := le_of_lt ht.2
+    have h_eq := fdBoundary_H_eq_seg2_H (H := H) ht1 ht2
+    rw [h_eq, fdBoundary_seg2_H]; congr 1
+    exact Filter.EventuallyEq.deriv_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      rw [fdBoundary_H_eq_seg2_H (H := H) (by linarith [hs.1]) (le_of_lt hs.2),
+        fdBoundary_seg2_H])
+  exact hint_12.congr_ae h_ae_eq
+
+/-- Transfer integrability from `fdBoundary_H H` on `[0,5]` to `fdBoundary_seg3` on `[2,3]`. -/
+private lemma seg3_integrability_of_hint_H {H : ℝ}
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5) :
+    IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg3 t) * deriv fdBoundary_seg3 t) MeasureTheory.volume 2 3 := by
+  have hint_23 := hint_H.mono_set
+    (show Set.uIcc 2 3 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (2:ℝ) ≤ 3), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc (by norm_num) (by norm_num))
+  have h_ae_eq : (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) =ᵐ[MeasureTheory.volume.restrict
+        (Set.uIoc 2 3)]
+      (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg3 t) * deriv fdBoundary_seg3 t) := by
+    rw [Set.uIoc_of_le (by norm_num : (2:ℝ) ≤ 3)]
+    have h_ioo_ae : Set.Ioo (2:ℝ) 3 ∈ ae (MeasureTheory.volume.restrict (Set.Ioc 2 3)) := by
+      rw [mem_ae_iff, MeasureTheory.Measure.restrict_apply (measurableSet_Ioo.compl)]
+      have hsub : (Set.Ioo (2:ℝ) 3)ᶜ ∩ Set.Ioc 2 3 ⊆ {3} := by
+        intro x ⟨h1, h2⟩
+        simp only [Set.mem_compl_iff, Set.mem_Ioo, not_and_or, not_lt, Set.mem_Ioc] at h1 h2
+        simp only [Set.mem_singleton_iff]
+        rcases h1 with h | h <;> linarith [h2.1, h2.2]
+      exact le_antisymm (le_trans (MeasureTheory.measure_mono hsub)
+        (MeasureTheory.measure_singleton 3).le) (zero_le _)
+    filter_upwards [h_ioo_ae] with t ht
+    have ht1 : ¬(t ≤ 1) := by linarith [ht.1]
+    have ht2 : ¬(t ≤ 2) := by linarith [ht.1]
+    have ht3 : t ≤ 3 := le_of_lt ht.2
+    have h_eq := fdBoundary_H_eq_seg3_H (H := H) ht1 ht2 ht3
+    rw [h_eq, fdBoundary_seg3_H]; congr 1
+    exact Filter.EventuallyEq.deriv_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      rw [fdBoundary_H_eq_seg3_H (H := H) (by linarith [hs.1]) (by linarith [hs.1])
+          (le_of_lt hs.2),
+        fdBoundary_seg3_H])
+  exact hint_23.congr_ae h_ae_eq
+
+/-- Nonvanishing on seg2 from parameterized integrability.
+
+Same as `nonvanishing_on_seg2_of_integrable` but uses `hint_H` for `fdBoundary_H H`. -/
+lemma nonvanishing_on_seg2_of_integrable_H (hf : f ≠ 0) {H : ℝ}
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5) :
+    ∀ t ∈ Set.uIcc 1 2, modularFormCompOfComplex f (fdBoundary_seg2 t) ≠ 0 := by
+  intro t₀ ht₀ h_zero
+  have h_im_pos := fdBoundary_seg2_im_pos t₀ ht₀
+  let z₀ := fdBoundary_seg2 t₀
+  let s : UpperHalfPlane := ⟨z₀, h_im_pos⟩
+  have h_fs_zero : f s = 0 := by
+    have : modularFormCompOfComplex f z₀ = 0 := h_zero
+    simp only [modularFormCompOfComplex, Function.comp_apply] at this
+    rwa [UpperHalfPlane.ofComplex_apply_of_im_pos h_im_pos] at this
+  obtain ⟨n, g_reg, hn_pos, hg_analytic, hg_ne_zero, _hn_eq, h_formula⟩ :=
+    hasSimplePoleAt_logDeriv_of_zero f hf s h_fs_zero
+  have h_seg2_diff : DifferentiableAt ℝ fdBoundary_seg2 t₀ := by
+    unfold fdBoundary_seg2
+    apply DifferentiableAt.cexp
+    apply DifferentiableAt.mul_const
+    exact (DifferentiableAt.add (differentiableAt_const _)
+      ((Complex.ofRealCLM.differentiableAt.sub_const _).mul (differentiableAt_const _)))
+  have h_seg2_deriv_ne : deriv fdBoundary_seg2 t₀ ≠ 0 := by
+    rw [deriv_fdBoundary_seg2_arc_eq]
+    apply mul_ne_zero
+    · apply mul_ne_zero
+      · exact_mod_cast (ne_of_gt (div_pos Real.pi_pos (by norm_num : (6:ℝ) > 0)))
+      · exact Complex.I_ne_zero
+    · exact exp_ne_zero _
+  have h_seg2_deriv_cont : ContinuousAt (deriv fdBoundary_seg2) t₀ := by
+    have : ContDiff ℝ ⊤ fdBoundary_seg2 := by
+      unfold fdBoundary_seg2
+      exact ContDiff.cexp ((contDiff_const.add ((Complex.ofRealCLM.contDiff.sub
+        contDiff_const).mul contDiff_const)).mul contDiff_const)
+    exact (this.continuous_deriv le_top).continuousAt
+  have h_bigO := isBigO_sub_inv_logDeriv_arc f fdBoundary_seg2 t₀ z₀ rfl
+    h_seg2_diff h_seg2_deriv_ne h_seg2_deriv_cont n hn_pos g_reg hg_analytic hg_ne_zero h_formula
+  have hint_seg2 := seg2_integrability_of_hint_H f hint_H
+  have h_not_int := not_intervalIntegrable_of_sub_inv_isBigO_punctured h_bigO
+    (by norm_num : (1:ℝ) ≠ 2) (by
+      rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 2)]
+      exact ⟨(Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 2) ▸ ht₀).1,
+             (Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 2) ▸ ht₀).2⟩)
+  exact h_not_int hint_seg2
+
+/-- Nonvanishing on seg3 from parameterized integrability. -/
+lemma nonvanishing_on_seg3_of_integrable_H (hf : f ≠ 0) {H : ℝ}
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5) :
+    ∀ t ∈ Set.uIcc 2 3, modularFormCompOfComplex f (fdBoundary_seg3 t) ≠ 0 := by
+  intro t₀ ht₀ h_zero
+  have h_im_pos := fdBoundary_seg3_im_pos t₀ ht₀
+  let z₀ := fdBoundary_seg3 t₀
+  let s : UpperHalfPlane := ⟨z₀, h_im_pos⟩
+  have h_fs_zero : f s = 0 := by
+    have : modularFormCompOfComplex f z₀ = 0 := h_zero
+    simp only [modularFormCompOfComplex, Function.comp_apply] at this
+    rwa [UpperHalfPlane.ofComplex_apply_of_im_pos h_im_pos] at this
+  obtain ⟨n, g_reg, hn_pos, hg_analytic, hg_ne_zero, _hn_eq, h_formula⟩ :=
+    hasSimplePoleAt_logDeriv_of_zero f hf s h_fs_zero
+  have h_seg3_diff : DifferentiableAt ℝ fdBoundary_seg3 t₀ := by
+    unfold fdBoundary_seg3
+    apply DifferentiableAt.cexp
+    apply DifferentiableAt.mul_const
+    exact (DifferentiableAt.add (differentiableAt_const _)
+      ((Complex.ofRealCLM.differentiableAt.sub_const _).mul (differentiableAt_const _)))
+  have h_seg3_deriv_ne : deriv fdBoundary_seg3 t₀ ≠ 0 := by
+    rw [deriv_fdBoundary_seg3_arc_eq]
+    apply mul_ne_zero
+    · apply mul_ne_zero
+      · exact_mod_cast (ne_of_gt (div_pos Real.pi_pos (by norm_num : (6:ℝ) > 0)))
+      · exact Complex.I_ne_zero
+    · exact exp_ne_zero _
+  have h_seg3_deriv_cont : ContinuousAt (deriv fdBoundary_seg3) t₀ := by
+    have : ContDiff ℝ ⊤ fdBoundary_seg3 := by
+      unfold fdBoundary_seg3
+      exact ContDiff.cexp ((contDiff_const.add ((Complex.ofRealCLM.contDiff.sub
+        contDiff_const).mul contDiff_const)).mul contDiff_const)
+    exact (this.continuous_deriv le_top).continuousAt
+  have h_bigO := isBigO_sub_inv_logDeriv_arc f fdBoundary_seg3 t₀ z₀ rfl
+    h_seg3_diff h_seg3_deriv_ne h_seg3_deriv_cont n hn_pos g_reg hg_analytic hg_ne_zero h_formula
+  have hint_seg3 := seg3_integrability_of_hint_H f hint_H
+  have h_not_int := not_intervalIntegrable_of_sub_inv_isBigO_punctured h_bigO
+    (by norm_num : (2:ℝ) ≠ 3) (by
+      rw [Set.uIcc_of_le (by norm_num : (2:ℝ) ≤ 3)]
+      exact ⟨(Set.uIcc_of_le (by norm_num : (2:ℝ) ≤ 3) ▸ ht₀).1,
+             (Set.uIcc_of_le (by norm_num : (2:ℝ) ≤ 3) ▸ ht₀).2⟩)
+  exact h_not_int hint_seg3
+
+/-! ### Main Height-Parameterized PV Theorem -/
+
+/-- **Main PV Result at height H**: The CW contour integral of f'/f around `∂𝒟_H`.
+
+Same as `pv_integral_eq_modular_transformation` but with `fdBoundary_H H`
+and `seg5_q_radius_H H`. The proof decomposes into:
+1. Vertical edges cancel by T-invariance (works for any H)
+2. Arc gives -k/12 by S-transformation (arcs are H-independent)
+3. Horizontal edge gives +ord_∞ by q-expansion at radius `seg5_q_radius_H H` -/
+theorem pv_integral_eq_modular_transformation_H (hf : f ≠ 0)
+    {H : ℝ} (hH : 0 < H)
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    pv_integral f (fdBoundary_H H) 0 5 =
+      -(2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp f : ℂ))) := by
+  -- Step 1: Decompose into segments
+  rw [show pv_integral f (fdBoundary_H H) 0 5 = _ from
+    pv_integral_decompose_segments_H f hint_H]
+  -- Step 2: Rearrange
+  have h_rearrange :
+    pv_integral f (fdBoundary_seg1_H H) 0 1 +
+    pv_integral f fdBoundary_seg2 1 2 +
+    pv_integral f fdBoundary_seg3 2 3 +
+    pv_integral f (fdBoundary_seg4_H H) 3 4 +
+    pv_integral f (fdBoundary_seg5_H H) 4 5 =
+    (pv_integral f (fdBoundary_seg1_H H) 0 1 + pv_integral f (fdBoundary_seg4_H H) 3 4) +
+    (pv_integral f fdBoundary_seg2 1 2 + pv_integral f fdBoundary_seg3 2 3) +
+    pv_integral f (fdBoundary_seg5_H H) 4 5 := by ring
+  rw [h_rearrange]
+  -- Step 3: Vertical cancellation
+  rw [pv_integral_vertical_cancel_H f H]
+  -- Step 4: Arc nonvanishing (from parameterized integrability)
+  have h_arc_seg2_gne : ∀ t ∈ Set.uIcc 1 2,
+      modularFormCompOfComplex f (fdBoundary_seg2 t) ≠ 0 :=
+    nonvanishing_on_seg2_of_integrable_H f hf hint_H
+  have h_arc_seg3_gne : ∀ t ∈ Set.uIcc 2 3,
+      modularFormCompOfComplex f (fdBoundary_seg3 t) ≠ 0 :=
+    nonvanishing_on_seg3_of_integrable_H f hf hint_H
+  -- Step 5: Arc contribution (same arcs regardless of H)
+  rw [arc_contribution_is_k_div_12 f h_arc_seg2_gne h_arc_seg3_gne]
+  -- Step 6: Seg5 contribution at height H
+  have h_seg5 : pv_integral f (fdBoundary_seg5_H H) 4 5 =
+      2 * ↑Real.pi * I * ↑(orderAtCusp f) := by
+    exact seg5_integral_eq_cusp_order_H f hf hH hcusp_nonvan
+  rw [h_seg5]
+  ring
+
+/-! ### F3-M2: Nonvanishing Wrapper Infrastructure
+
+These lemmas derive `IntervalIntegrable` from nonvanishing on `fdBoundary_H H`,
+and conversely, nonvanishing from integrability (for `H > √3/2`). -/
+
+/-! #### Im Positivity for fdBoundary_H -/
+
+/-- The imaginary part of `fdBoundary_H H t` is positive for all `t ∈ [0, 5]` when `H > 0`. -/
+private lemma fdBoundary_H_im_pos {H : ℝ} (hH : 0 < H) (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    0 < (fdBoundary_H H t).im := by
+  simp only [fdBoundary_H]
+  split_ifs with h1 h2 h3 h4
+  · -- Seg1: im = H - t*(H - √3/2) = H(1-t) + t*(√3/2)
+    rw [show (1 / 2 + (↑H - ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I : ℂ) =
+        ↑(1/2 : ℝ) + ↑(H - t * (H - Real.sqrt 3 / 2)) * I from by push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    have hsqrt3 : Real.sqrt 3 / 2 > 0 := by positivity
+    by_cases ht0 : t = 0
+    · subst ht0; linarith
+    · nlinarith [mul_pos (lt_of_le_of_ne ht.1 (Ne.symm ht0)) hsqrt3,
+        mul_nonneg (show 0 ≤ 1 - t from by linarith) hH.le]
+  · -- Seg2: im = sin(θ), θ ∈ [π/3, π/2]
+    rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
+        ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
+    rw [Complex.exp_ofReal_mul_I_im]
+    exact Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+  · -- Seg3: im = sin(θ), θ ∈ [π/2, 2π/3]
+    rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
+        ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
+    rw [Complex.exp_ofReal_mul_I_im]
+    exact Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+  · -- Seg4: im = √3/2 + (t-3)*(H - √3/2) = √3/2*(4-t) + H*(t-3)
+    rw [show (-1 / 2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I : ℂ) =
+        ↑(-1/2 : ℝ) + ↑(Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2)) * I from by
+          push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    have hsqrt3 : Real.sqrt 3 / 2 > 0 := by positivity
+    nlinarith [not_le.mp h3, h4]
+  · -- Seg5: im = H > 0
+    rw [show (↑t - 9 / 2 + ↑H * I : ℂ) =
+        ↑(t - 9/2 : ℝ) + ↑H * I from by push_cast; ring]
+    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+               mul_one, mul_zero, add_zero, zero_add]
+    linarith
+
+/-! #### HasDerivWithinAt Uniqueness Helper -/
+
+/-- Extract derivative equality from two `HasDerivWithinAt` via `UniqueDiffWithinAt`. -/
+private lemma hasDerivWithinAt_unique' {f : ℝ → ℂ} {f' g' : ℂ} {s : Set ℝ} {x : ℝ}
+    (h1 : HasDerivWithinAt f f' s x) (h2 : HasDerivWithinAt f g' s x)
+    (hu : UniqueDiffWithinAt ℝ s x) : f' = g' := by
+  have h := hu.eq h1.hasFDerivWithinAt h2.hasFDerivWithinAt
+  have : (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) f') 1 =
+         (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) g') 1 := by rw [h]
+  simpa using this
+
+/-! #### Local Reproduction of hasDerivAt_arc -/
+
+/-- Derivative of the arc parameterization `t ↦ exp(π(1+t)/6 · I)`.
+This reproduces the private `hasDerivAt_arc` from `FD_Boundary_Param.lean`. -/
+private theorem hasDerivAt_arc_local (t : ℝ) :
+    HasDerivAt (fun s => Complex.exp (↑(Real.pi * (1 + s) / 6) * I))
+      (↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + t) / 6) * I)) t := by
+  have hfun : (fun s : ℝ => Complex.exp (↑(Real.pi * (1 + s) / 6) * I)) =
+      (fun s : ℝ => Complex.exp (↑(Real.pi / 6) * I + ↑(Real.pi / 6) * I * ↑s)) := by
+    ext s; congr 1; push_cast; ring
+  rw [hfun]
+  have hinner : HasDerivAt (fun s : ℝ => ↑(Real.pi / 6) * I + ↑(Real.pi / 6) * I * (↑s : ℂ))
+      (↑(Real.pi / 6) * I) t :=
+    ((hasDerivAt_id (𝕜 := ℝ) t).ofReal_comp.const_mul (↑(Real.pi / 6) * I)).const_add _
+      |>.congr_deriv (by simp only [Complex.ofReal_one, mul_one])
+  exact hinner.cexp.congr_deriv (by rw [mul_comm]; congr 1; congr 1; push_cast; ring)
+
+/-! #### Derivative Bound for fdBoundary_H -/
+
+/-- The derivative of `fdBoundary_H H` is bounded on `[0, 5]`, including at partition points.
+
+At partition points where `fdBoundary_H` is not differentiable, `deriv` returns `0`.
+At partition points where it IS differentiable (hypothetically), we extract the derivative
+value via the right-segment `HasDerivWithinAt` and `UniqueDiffWithinAt`. -/
+private lemma fdBoundary_H_deriv_bound_all (H : ℝ) :
+    ∃ M : ℝ, ∀ t ∈ Icc (0:ℝ) 5, ‖deriv (fdBoundary_H H) t‖ ≤ M := by
+  refine ⟨|H - Real.sqrt 3 / 2| + 1, fun t ht => ?_⟩
+  by_cases ht_part : t ∉ fdBoundary_H_partition
+  · -- Off partition: compute derivative from HasDerivAt
+    simp only [fdBoundary_H_partition, Finset.mem_insert, Finset.mem_singleton] at ht_part
+    push_neg at ht_part
+    obtain ⟨h1, h3, h4⟩ := ht_part
+    by_cases ht1 : t < 1
+    · rw [(fdBoundary_H_hasDerivAt_seg1 H ht1).deriv,
+          show -(↑(H - Real.sqrt 3 / 2) : ℂ) * I = -(↑(H - Real.sqrt 3 / 2) * I) from by ring,
+          norm_neg, norm_mul, Complex.norm_real, Real.norm_eq_abs, Complex.norm_I, mul_one]
+      linarith [le_abs_self (H - Real.sqrt 3 / 2)]
+    · push_neg at ht1
+      by_cases ht3 : t < 3
+      · have ht1' : 1 < t := lt_of_le_of_ne ht1 (Ne.symm h1)
+        rw [(fdBoundary_H_hasDerivAt_arc H ht1' ht3).deriv, norm_mul, norm_mul,
+            Complex.norm_real, Real.norm_eq_abs, Complex.norm_I, mul_one,
+            Complex.norm_exp_ofReal_mul_I, mul_one,
+            abs_of_pos (show (0:ℝ) < Real.pi / 6 by positivity)]
+        linarith [Real.pi_le_four, abs_nonneg (H - Real.sqrt 3 / 2)]
+      · push_neg at ht3
+        by_cases ht4 : t < 4
+        · have ht3' : 3 < t := lt_of_le_of_ne ht3 (Ne.symm h3)
+          rw [(fdBoundary_H_hasDerivAt_seg4 H ht3' ht4).deriv, norm_mul,
+              Complex.norm_real, Real.norm_eq_abs, Complex.norm_I, mul_one]
+          linarith [le_abs_self (H - Real.sqrt 3 / 2)]
+        · push_neg at ht4
+          have ht4' : 4 < t := lt_of_le_of_ne ht4 (Ne.symm h4)
+          rw [(fdBoundary_H_hasDerivAt_seg5 H ht4').deriv, norm_one]
+          linarith [abs_nonneg (H - Real.sqrt 3 / 2)]
+  · -- At partition points {1, 3, 4}
+    push_neg at ht_part
+    simp only [fdBoundary_H_partition, Finset.mem_insert, Finset.mem_singleton] at ht_part
+    -- Case split: DifferentiableAt or not
+    by_cases hdiff : DifferentiableAt ℝ (fdBoundary_H H) t
+    · -- DifferentiableAt: deriv = right-side derivative (extracted via uniqueness)
+      rcases ht_part with rfl | rfl | rfl
+      · -- t = 1: right = arc derivative at 1, norm = π/6 ≤ 1
+        have h_arc_eq : (fun s => exp (↑(Real.pi * (1 + s) / 6) * I)) =ᶠ[nhdsWithin (1:ℝ) (Ici 1)]
+            fdBoundary_H H := by
+          filter_upwards [nhdsWithin_le_nhds (Iio_mem_nhds (show (1:ℝ) < 3 by norm_num)),
+              self_mem_nhdsWithin] with s hs1 (hs2 : (1:ℝ) ≤ s)
+          rcases eq_or_lt_of_le hs2 with rfl | h
+          · -- s = 1: exp(π/3*I) = fdBoundary_H H 1
+            simp only [fdBoundary_H, show (1:ℝ) ≤ 1 from le_refl 1, ↓reduceIte]
+            rw [show (↑(Real.pi * (1 + 1) / 6 : ℝ) : ℂ) * I = ↑(Real.pi / 3 : ℝ) * I
+              from by push_cast; ring, Complex.exp_mul_I,
+              show (↑(Real.pi / 3 : ℝ) : ℂ) = ↑(Real.pi / 3) from rfl,
+              ← Complex.ofReal_cos, ← Complex.ofReal_sin,
+              Real.cos_pi_div_three, Real.sin_pi_div_three]
+            push_cast; ring
+          · exact (fdBoundary_H_eq_arc h (show s < 3 from hs1)).symm
+        have h_arc_val : (fun s => exp (↑(Real.pi * (1 + s) / 6) * I)) 1 = fdBoundary_H H 1 := by
+          simp only [fdBoundary_H, show (1:ℝ) ≤ 1 from le_refl 1, ↓reduceIte]
+          rw [show (↑(Real.pi * (1 + 1) / 6 : ℝ) : ℂ) * I = ↑(Real.pi / 3 : ℝ) * I
+            from by push_cast; ring, Complex.exp_mul_I,
+            show (↑(Real.pi / 3 : ℝ) : ℂ) = ↑(Real.pi / 3) from rfl,
+            ← Complex.ofReal_cos, ← Complex.ofReal_sin,
+            Real.cos_pi_div_three, Real.sin_pi_div_three]
+          push_cast; ring
+        have h_right : HasDerivWithinAt (fdBoundary_H H)
+            (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + 1) / 6) * I)) (Ici 1) 1 :=
+          (h_arc_eq.hasDerivWithinAt_iff h_arc_val).mp
+            (hasDerivAt_arc_local 1).hasDerivWithinAt
+        have h_full := hdiff.hasDerivAt.hasDerivWithinAt (s := Ici 1)
+        rw [hasDerivWithinAt_unique' h_full h_right (uniqueDiffWithinAt_Ici (1:ℝ)),
+            norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs, Complex.norm_I, mul_one,
+            Complex.norm_exp_ofReal_mul_I, mul_one,
+            abs_of_pos (show (0:ℝ) < Real.pi / 6 by positivity)]
+        linarith [Real.pi_le_four, abs_nonneg (H - Real.sqrt 3 / 2)]
+      · -- t = 3: right = seg4 at 3, norm = |H - √3/2|
+        have h_seg4_eq : fdBoundary_seg4_H H =ᶠ[nhdsWithin (3:ℝ) (Ici 3)]
+            fdBoundary_H H := by
+          filter_upwards [nhdsWithin_le_nhds (Iio_mem_nhds (show (3:ℝ) < 4 by norm_num)),
+              self_mem_nhdsWithin] with s hs1 (hs2 : (3:ℝ) ≤ s)
+          rcases eq_or_lt_of_le hs2 with rfl | h
+          · -- s = 3: seg4(3) = fdBoundary_H H 3, both equal ρ
+            rw [show fdBoundary_H H 3 = fdBoundary 3 from fdBoundary_H_at_three H,
+                fdBoundary_at_three]
+            simp only [fdBoundary_seg4_H, ellipticPoint_rho, ellipticPoint_rho']
+            simp only [UpperHalfPlane.coe_mk_subtype]; push_cast; ring
+          · have hs1' : s < 4 := hs1
+            exact (fdBoundary_H_eq_seg4_H (by linarith) (by linarith)
+              (by linarith) (le_of_lt hs1')).symm
+        have h_seg4_val : fdBoundary_seg4_H H 3 = fdBoundary_H H 3 := by
+          rw [show fdBoundary_H H 3 = fdBoundary 3 from fdBoundary_H_at_three H,
+              fdBoundary_at_three]
+          simp only [fdBoundary_seg4_H, ellipticPoint_rho, ellipticPoint_rho']
+          simp only [UpperHalfPlane.coe_mk_subtype]; push_cast; ring
+        have h_right : HasDerivWithinAt (fdBoundary_H H)
+            ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) (Ici 3) 3 :=
+          (h_seg4_eq.hasDerivWithinAt_iff h_seg4_val).mp
+            (hasDerivAt_fdBoundary_seg4_H H 3).hasDerivWithinAt
+        have h_full := hdiff.hasDerivAt.hasDerivWithinAt (s := Ici 3)
+        rw [hasDerivWithinAt_unique' h_full h_right (uniqueDiffWithinAt_Ici (3:ℝ)),
+            norm_mul, Complex.norm_real, Real.norm_eq_abs, Complex.norm_I, mul_one]
+        linarith [le_abs_self (H - Real.sqrt 3 / 2)]
+      · -- t = 4: right = seg5, norm = 1
+        have h_seg5_eq : fdBoundary_seg5_H H =ᶠ[nhdsWithin (4:ℝ) (Ici 4)]
+            fdBoundary_H H := by
+          filter_upwards [nhdsWithin_le_nhds (Ioo_mem_nhds (show (3:ℝ) < 4 by norm_num)
+              (show (4:ℝ) < 5 by norm_num)), self_mem_nhdsWithin]
+            with s hs1 (hs2 : (4:ℝ) ≤ s)
+          rcases eq_or_lt_of_le hs2 with rfl | h
+          · simp [fdBoundary_seg5_H, fdBoundary_H_at_four]; ring
+          · exact (fdBoundary_H_eq_seg5_H (by linarith) (by linarith)
+              (by linarith) (by linarith)).symm
+        have h_seg5_val : fdBoundary_seg5_H H 4 = fdBoundary_H H 4 := by
+          simp [fdBoundary_seg5_H, fdBoundary_H_at_four]; ring
+        have h_right : HasDerivWithinAt (fdBoundary_H H) 1 (Ici 4) 4 :=
+          (h_seg5_eq.hasDerivWithinAt_iff h_seg5_val).mp
+            (hasDerivAt_fdBoundary_seg5_H H 4).hasDerivWithinAt
+        have h_full := hdiff.hasDerivAt.hasDerivWithinAt (s := Ici 4)
+        rw [hasDerivWithinAt_unique' h_full h_right (uniqueDiffWithinAt_Ici (4:ℝ)), norm_one]
+        linarith [abs_nonneg (H - Real.sqrt 3 / 2)]
+    · -- Not differentiable: deriv = 0
+      rw [deriv_zero_of_not_differentiableAt hdiff, norm_zero]
+      linarith [abs_nonneg (H - Real.sqrt 3 / 2)]
+
+/-! #### Derivative ContinuousOn off Partition -/
+
+/-- The derivative of `fdBoundary_H H` is continuous on `Icc 0 5 \ fdBoundary_H_partition`. -/
+private lemma fdBoundary_H_deriv_continuousOn_off_partition' (H : ℝ) :
+    ContinuousOn (deriv (fdBoundary_H H)) (Icc (0:ℝ) 5 \ ↑fdBoundary_H_partition) := by
+  intro t ⟨ht_icc, ht_not_P⟩
+  simp only [fdBoundary_H_partition, Finset.coe_insert, Finset.coe_singleton,
+    Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at ht_not_P
+  obtain ⟨h1, h3, h4⟩ := ht_not_P
+  by_cases ht1 : t < 1
+  · -- t ∈ [0, 1): deriv is eventually constant -(H-√3/2)*I
+    have hev : deriv (fdBoundary_H H) =ᶠ[𝓝 t]
+        fun _ => -(↑(H - Real.sqrt 3 / 2) : ℂ) * I :=
+      Filter.eventuallyEq_iff_exists_mem.mpr ⟨Iio 1, Iio_mem_nhds ht1,
+        fun s hs => (fdBoundary_H_hasDerivAt_seg1 H hs).deriv⟩
+    exact hev.continuousAt.continuousWithinAt
+  · push_neg at ht1
+    by_cases ht3 : t < 3
+    · -- t ∈ (1, 3): arc derivative (smooth)
+      have ht1' : 1 < t := lt_of_le_of_ne ht1 (Ne.symm h1)
+      have hev : deriv (fdBoundary_H H) =ᶠ[𝓝 t]
+          fun s => ↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + s) / 6) * I) :=
+        Filter.eventuallyEq_iff_exists_mem.mpr ⟨Ioo 1 3, Ioo_mem_nhds ht1' ht3,
+          fun s hs => (fdBoundary_H_hasDerivAt_arc H hs.1 hs.2).deriv⟩
+      have hcont : Continuous
+          (fun s : ℝ => ↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + s) / 6) * I)) := by
+        apply Continuous.mul continuous_const
+        apply Continuous.cexp
+        apply Continuous.mul _ continuous_const
+        exact continuous_ofReal.comp (by fun_prop)
+      exact (hcont.continuousAt.congr hev.symm).continuousWithinAt
+    · push_neg at ht3
+      by_cases ht4 : t < 4
+      · -- t ∈ (3, 4): seg4 derivative (constant)
+        have ht3' : 3 < t := lt_of_le_of_ne ht3 (Ne.symm h3)
+        have hev : deriv (fdBoundary_H H) =ᶠ[𝓝 t]
+            fun _ => (↑(H - Real.sqrt 3 / 2) : ℂ) * I :=
+          Filter.eventuallyEq_iff_exists_mem.mpr ⟨Ioo 3 4, Ioo_mem_nhds ht3' ht4,
+            fun s hs => (fdBoundary_H_hasDerivAt_seg4 H hs.1 hs.2).deriv⟩
+        exact hev.continuousAt.continuousWithinAt
+      · -- t ∈ (4, 5]: seg5 derivative (constant 1)
+        push_neg at ht4
+        have ht4' : 4 < t := lt_of_le_of_ne ht4 (Ne.symm h4)
+        have hev : deriv (fdBoundary_H H) =ᶠ[𝓝 t]
+            fun _ => (1 : ℂ) :=
+          Filter.eventuallyEq_iff_exists_mem.mpr ⟨Ioi 4, Ioi_mem_nhds ht4',
+            fun s hs => (fdBoundary_H_hasDerivAt_seg5 H (show 4 < s from hs)).deriv⟩
+        exact hev.continuousAt.continuousWithinAt
+
+/-! #### ContinuousOn logDeriv on Image -/
+
+omit hf in
+/-- `logDeriv (modularFormCompOfComplex f)` is continuous on `fdBoundary_H H '' [0,5]`
+when `f` is nonvanishing on the curve and `H > 0`. -/
+private lemma logDeriv_continuousOn_fdBoundary_H_image_of_nonvanishing {H : ℝ} (hH : 0 < H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) :
+    ContinuousOn (logDeriv (modularFormCompOfComplex f)) (fdBoundary_H H '' Icc (0:ℝ) 5) := by
+  intro z ⟨t, ht, hzt⟩
+  rw [← hzt]
+  exact (analyticAt_logDeriv_off_zeros f (fdBoundary_H H t)
+    (fdBoundary_H_im_pos hH t ht) (h_nv t ht)).continuousAt.continuousWithinAt
+
+/-! #### Main Integrability from Nonvanishing -/
+
+omit hf in
+/-- If `f` is nonvanishing on `fdBoundary_H H` and `H > 0`, then the logDeriv integrand
+is interval-integrable on `[0, 5]`.
+
+**Proof**: Uses `intervalIntegrable_pv_integrand_piecewiseC1` with partition `{1, 3, 4}`. -/
+theorem intervalIntegrable_logDeriv_fdBoundary_H_of_nonvanishing {H : ℝ} (hH : 0 < H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) :
+    IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5 := by
+  apply intervalIntegrable_pv_integrand_piecewiseC1
+    (P := fdBoundary_H_partition) (by norm_num : (0:ℝ) ≤ 5)
+  · exact logDeriv_continuousOn_fdBoundary_H_image_of_nonvanishing f hH h_nv
+  · exact (fdBoundary_H_continuous H).continuousOn
+  · exact fdBoundary_H_deriv_continuousOn_off_partition' H
+  · exact continuousOn_image_bounded (fdBoundary_H_continuous H).continuousOn
+      (logDeriv_continuousOn_fdBoundary_H_image_of_nonvanishing f hH h_nv)
+  · exact fdBoundary_H_deriv_bound_all H
+
+/-! #### Iff Characterization: Integrability ↔ Nonvanishing on FD Boundary -/
+
+/-- Transfer integrability from `fdBoundary_H H` on `[0,5]` to `fdBoundary_seg5_H` on `[4,5]`.
+
+On `(4,5)`, `fdBoundary_H H` equals `fdBoundary_seg5_H H` (horizontal edge is H-independent). -/
+private lemma seg5_integrability_of_hint_H {H : ℝ}
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5) :
+    IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg5_H H t) * deriv (fdBoundary_seg5_H H) t) MeasureTheory.volume 4 5 := by
+  have hint_45 := hint_H.mono_set
+    (show Set.uIcc 4 5 ⊆ Set.uIcc 0 5 from by
+      rw [Set.uIcc_of_le (by norm_num : (4:ℝ) ≤ 5), Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
+      exact Set.Icc_subset_Icc (by norm_num) (by norm_num))
+  have h_ae_eq : (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) =ᵐ[MeasureTheory.volume.restrict
+        (Set.uIoc 4 5)]
+      (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_seg5_H H t) * deriv (fdBoundary_seg5_H H) t) := by
+    rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)]
+    have h_ioo_ae : Set.Ioo (4:ℝ) 5 ∈ ae (MeasureTheory.volume.restrict (Set.Ioc 4 5)) := by
+      rw [mem_ae_iff, MeasureTheory.Measure.restrict_apply (measurableSet_Ioo.compl)]
+      have hsub : (Set.Ioo (4:ℝ) 5)ᶜ ∩ Set.Ioc 4 5 ⊆ {5} := by
+        intro x ⟨h1, h2⟩
+        simp only [Set.mem_compl_iff, Set.mem_Ioo, not_and_or, not_lt, Set.mem_Ioc] at h1 h2
+        simp only [Set.mem_singleton_iff]
+        rcases h1 with h | h <;> linarith [h2.1, h2.2]
+      exact le_antisymm (le_trans (MeasureTheory.measure_mono hsub)
+        (MeasureTheory.measure_singleton 5).le) (zero_le _)
+    filter_upwards [h_ioo_ae] with t ht
+    have ht1 : ¬(t ≤ 1) := by linarith [ht.1]
+    have ht2 : ¬(t ≤ 2) := by linarith [ht.1]
+    have ht3 : ¬(t ≤ 3) := by linarith [ht.1]
+    have ht4 : ¬(t ≤ 4) := by linarith [ht.1]
+    have h_eq := fdBoundary_H_eq_seg5_H (H := H) ht1 ht2 ht3 ht4
+    rw [h_eq, fdBoundary_seg5_H]; congr 1
+    exact Filter.EventuallyEq.deriv_eq (by
+      filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
+      rw [fdBoundary_H_eq_seg5_H (H := H) (by linarith [hs.1]) (by linarith [hs.1])
+          (by linarith [hs.1]) (by linarith [hs.1]),
+        fdBoundary_seg5_H])
+  exact hint_45.congr_ae h_ae_eq
+
+/-- Forward direction: if logDeriv is integrable on `fdBoundary_H H`, then `f` is nonvanishing on the curve.
+
+Requires `H > √3/2` to ensure all segments have positive imaginary part. -/
+private lemma nonvanishing_on_fdBoundary_H_of_integrable (hf : f ≠ 0) {H : ℝ}
+    (hH : Real.sqrt 3 / 2 < H)
+    (hint_H : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5) :
+    ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0 := by
+  intro t₀ ht₀ h_zero
+  have hH_pos : 0 < H := by linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
+  have h_im := fdBoundary_H_im_pos hH_pos t₀ ht₀
+  let z₀ := fdBoundary_H H t₀
+  let s : UpperHalfPlane := ⟨z₀, h_im⟩
+  have h_fs_zero : f s = 0 := by
+    simp only [modularFormCompOfComplex, Function.comp_apply] at h_zero
+    rwa [UpperHalfPlane.ofComplex_apply_of_im_pos h_im] at h_zero
+  obtain ⟨n, g_reg, hn_pos, hg_analytic, hg_ne_zero, _hn_eq, h_formula⟩ :=
+    hasSimplePoleAt_logDeriv_of_zero f hf s h_fs_zero
+  by_cases h_part : t₀ ∈ (fdBoundary_H_partition : Set ℝ)
+  · -- Partition points: {1, 3, 4} — delegate to segment-specific nonvanishing lemmas
+    simp only [fdBoundary_H_partition, Finset.coe_insert, Finset.coe_singleton,
+      Set.mem_insert_iff, Set.mem_singleton_iff] at h_part
+    rcases h_part with rfl | rfl | rfl
+    · -- t₀ = 1: convert to seg2 and delegate
+      have h_val : fdBoundary_H H 1 = fdBoundary_seg2 1 := by
+        rw [fdBoundary_H_at_one, fdBoundary_at_one]; symm
+        simp only [fdBoundary_seg2, ellipticPoint_rho_plus_one, ellipticPoint_rho_plus_one']
+        have h_angle : (↑Real.pi / 3 + (↑(1:ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ) =
+            ↑Real.pi / 3 := by push_cast; ring
+        rw [h_angle, Complex.exp_mul_I]
+        have hπ3 : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3 : ℝ) := by push_cast; ring
+        rw [hπ3, ← Complex.ofReal_cos, ← Complex.ofReal_sin,
+            Real.cos_pi_div_three, Real.sin_pi_div_three]
+        simp only [Complex.ofReal_div, Complex.ofReal_one, Complex.ofReal_ofNat]; rfl
+      rw [h_val] at h_zero
+      exact nonvanishing_on_seg2_of_integrable_H f hf hint_H 1
+        (by rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 2)]; exact ⟨le_refl _, by norm_num⟩) h_zero
+    · -- t₀ = 3: convert to seg3 and delegate
+      have h_val : fdBoundary_H H 3 = fdBoundary_seg3 3 := by
+        rw [fdBoundary_H_at_three, fdBoundary_at_three]; symm
+        simp only [fdBoundary_seg3, ellipticPoint_rho, ellipticPoint_rho']
+        have h_angle : (↑Real.pi / 2 + (↑(3:ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ) =
+            2 * ↑Real.pi / 3 := by push_cast; ring
+        rw [h_angle, Complex.exp_mul_I]
+        have h_cos : Real.cos (2 * Real.pi / 3) = -1/2 := by
+          rw [show 2 * Real.pi / 3 = Real.pi - Real.pi / 3 from by ring,
+              Real.cos_pi_sub, Real.cos_pi_div_three]; ring
+        have h_sin : Real.sin (2 * Real.pi / 3) = Real.sqrt 3 / 2 := by
+          rw [show 2 * Real.pi / 3 = Real.pi - Real.pi / 3 from by ring,
+              Real.sin_pi_sub, Real.sin_pi_div_three]
+        have h2π3 : (2 * ↑Real.pi / 3 : ℂ) = ↑(2 * Real.pi / 3 : ℝ) := by push_cast; ring
+        rw [h2π3, ← Complex.ofReal_cos, ← Complex.ofReal_sin, h_cos, h_sin]
+        simp only [Complex.ofReal_neg, Complex.ofReal_div, Complex.ofReal_one, Complex.ofReal_ofNat]
+        rfl
+      rw [h_val] at h_zero
+      exact nonvanishing_on_seg3_of_integrable_H f hf hint_H 3
+        (by rw [Set.uIcc_of_le (by norm_num : (2:ℝ) ≤ 3)]; exact ⟨by norm_num, le_refl _⟩) h_zero
+    · -- t₀ = 4: BigO approach with seg5
+      have h_seg5_diff : DifferentiableAt ℝ (fdBoundary_seg5_H H) 4 :=
+        (hasDerivAt_fdBoundary_seg5_H H 4).differentiableAt
+      have h_seg5_deriv_ne : deriv (fdBoundary_seg5_H H) 4 ≠ 0 := by
+        rw [(hasDerivAt_fdBoundary_seg5_H H 4).deriv]
+        exact one_ne_zero
+      have h_seg5_deriv_cont : ContinuousAt (deriv (fdBoundary_seg5_H H)) 4 := by
+        have h_eq : deriv (fdBoundary_seg5_H H) = fun _ => (1 : ℂ) :=
+          funext fun s => (hasDerivAt_fdBoundary_seg5_H H s).deriv
+        rw [h_eq]; exact continuousAt_const
+      have h_seg5_val : fdBoundary_seg5_H H 4 = z₀ := by
+        show fdBoundary_seg5_H H 4 = fdBoundary_H H 4
+        simp [fdBoundary_seg5_H, fdBoundary_H_at_four]; ring
+      have h_bigO := isBigO_sub_inv_logDeriv_arc f (fdBoundary_seg5_H H) 4 z₀ h_seg5_val
+        h_seg5_diff h_seg5_deriv_ne h_seg5_deriv_cont n hn_pos g_reg hg_analytic hg_ne_zero h_formula
+      have hint_seg5 := seg5_integrability_of_hint_H f hint_H
+      exact absurd hint_seg5 (not_intervalIntegrable_of_sub_inv_isBigO_punctured h_bigO
+        (by norm_num : (4:ℝ) ≠ 5) (by
+          rw [Set.uIcc_of_le (by norm_num : (4:ℝ) ≤ 5)]
+          exact ⟨by norm_num, by norm_num⟩))
+  · -- Off-partition points: use BigO approach directly
+    have h_not_part : t₀ ∉ (fdBoundary_H_partition : Set ℝ) := h_part
+    simp only [fdBoundary_H_partition, Finset.coe_insert, Finset.coe_singleton,
+      Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at h_part
+    obtain ⟨h1, h3, h4⟩ := h_part
+    have h_diff_off := fdBoundary_H_differentiableAt_off_partition H h_not_part
+    have h_deriv_ne : deriv (fdBoundary_H H) t₀ ≠ 0 := by
+      by_cases ht1 : t₀ < 1
+      · rw [(fdBoundary_H_hasDerivAt_seg1 H ht1).deriv]
+        exact mul_ne_zero (neg_ne_zero.mpr (Complex.ofReal_ne_zero.mpr
+          (sub_ne_zero.mpr (ne_of_gt hH)))) Complex.I_ne_zero
+      · push_neg at ht1
+        by_cases ht3 : t₀ < 3
+        · rw [(fdBoundary_H_hasDerivAt_arc H (lt_of_le_of_ne ht1 (Ne.symm h1)) ht3).deriv]
+          exact mul_ne_zero (mul_ne_zero (Complex.ofReal_ne_zero.mpr
+            (ne_of_gt (div_pos Real.pi_pos (by norm_num)))) Complex.I_ne_zero) (exp_ne_zero _)
+        · push_neg at ht3
+          by_cases ht4 : t₀ < 4
+          · rw [(fdBoundary_H_hasDerivAt_seg4 H (lt_of_le_of_ne ht3 (Ne.symm h3)) ht4).deriv]
+            exact mul_ne_zero (Complex.ofReal_ne_zero.mpr
+              (sub_ne_zero.mpr (ne_of_gt hH))) Complex.I_ne_zero
+          · push_neg at ht4
+            rw [(fdBoundary_H_hasDerivAt_seg5 H (lt_of_le_of_ne ht4 (Ne.symm h4))).deriv]
+            exact one_ne_zero
+    have h_deriv_cont : ContinuousAt (deriv (fdBoundary_H H)) t₀ := by
+      by_cases ht1 : t₀ < 1
+      · exact continuousAt_const.congr (Filter.eventuallyEq_iff_exists_mem.mpr
+          ⟨Iio 1, Iio_mem_nhds ht1,
+            fun s hs => (fdBoundary_H_hasDerivAt_seg1 H hs).deriv⟩).symm
+      · push_neg at ht1
+        by_cases ht3 : t₀ < 3
+        · have ht1' : 1 < t₀ := lt_of_le_of_ne ht1 (Ne.symm h1)
+          have hev : deriv (fdBoundary_H H) =ᶠ[𝓝 t₀]
+              fun s => ↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + s) / 6) * I) :=
+            Filter.eventuallyEq_iff_exists_mem.mpr ⟨Ioo 1 3, Ioo_mem_nhds ht1' ht3,
+              fun s hs => (fdBoundary_H_hasDerivAt_arc H hs.1 hs.2).deriv⟩
+          have hcont : Continuous
+              (fun s : ℝ => ↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + s) / 6) * I)) := by
+            apply Continuous.mul continuous_const
+            apply Continuous.cexp
+            apply Continuous.mul _ continuous_const
+            exact continuous_ofReal.comp (by fun_prop)
+          exact hcont.continuousAt.congr hev.symm
+        · push_neg at ht3
+          by_cases ht4 : t₀ < 4
+          · have ht3' : 3 < t₀ := lt_of_le_of_ne ht3 (Ne.symm h3)
+            exact continuousAt_const.congr (Filter.eventuallyEq_iff_exists_mem.mpr
+              ⟨Ioo 3 4, Ioo_mem_nhds ht3' ht4,
+                fun s hs => (fdBoundary_H_hasDerivAt_seg4 H hs.1 hs.2).deriv⟩).symm
+          · push_neg at ht4
+            have ht4' : 4 < t₀ := lt_of_le_of_ne ht4 (Ne.symm h4)
+            exact continuousAt_const.congr (Filter.eventuallyEq_iff_exists_mem.mpr
+              ⟨Ioi 4, Ioi_mem_nhds ht4',
+                fun s hs => (fdBoundary_H_hasDerivAt_seg5 H (show 4 < s from hs)).deriv⟩).symm
+    have h_bigO := isBigO_sub_inv_logDeriv_arc f (fdBoundary_H H) t₀ z₀ rfl
+      h_diff_off h_deriv_ne h_deriv_cont n hn_pos g_reg hg_analytic hg_ne_zero h_formula
+    exact absurd hint_H (not_intervalIntegrable_of_sub_inv_isBigO_punctured h_bigO
+      (by norm_num : (0:ℝ) ≠ 5)
+      (by rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]; exact ht₀))
+
+/-- Characterization: logDeriv is integrable on `fdBoundary_H H` iff `f` is nonvanishing on the curve.
+
+This combines the forward direction (integrability implies nonvanishing) with the backward
+direction (nonvanishing implies integrability, which follows from continuity of logDeriv
+on the curve image). Requires `H > √3/2` for positivity on the full contour. -/
+theorem hint_H_iff_nonvanishing_fdBoundary_H (hf : f ≠ 0) {H : ℝ}
+    (hH : Real.sqrt 3 / 2 < H) :
+    IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary_H H t) * deriv (fdBoundary_H H) t) MeasureTheory.volume 0 5 ↔
+    ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0 := by
+  constructor
+  · exact nonvanishing_on_fdBoundary_H_of_integrable f hf hH
+  · intro h_nv
+    have hH_pos : 0 < H := by linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
+    exact intervalIntegrable_logDeriv_fdBoundary_H_of_nonvanishing f hH_pos h_nv
 
 end

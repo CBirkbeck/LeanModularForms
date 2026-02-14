@@ -13,10 +13,24 @@ modular forms of level 1. The signatures use `ℚ`-typed coefficients, the orbif
 winding number `windingNumberCoeff'`, and require only the minimal set of hypotheses:
 `f ≠ 0`, a finset `S ⊆ 𝒟'`, and completeness of `S`.
 
-These forward to the monolithic `ValenceFormula.lean` and inherit its `sorryAx`.
-For axiom-clean versions, see `ValenceFormula_Final_Split.lean`.
+**Legacy vs axiom-clean routes:**
 
-## Main Theorems
+These theorems forward to the monolithic `ValenceFormula.lean` and inherit its `sorryAx`.
+Due to an import conflict (both `ValenceFormula.lean` and `ValenceFormulaDefinitions.lean`
+define `orbifoldCoeff_at_i`, `fundamentalDomain`, `ellipticPoint_i'`, etc.), the two
+import chains **cannot coexist** in a single file.
+
+**For axiom-clean versions** (depending only on `[propext, Classical.choice, Quot.sound]`),
+import `ValenceFormula_Final_Split` instead of this file. It provides:
+
+* `valenceFormula_split` — orbifold form (exact zeros)
+* `valenceFormula_classical_split` — classical form (exact zeros)
+* `valenceFormula_split_from_S` — orbifold form (superset S ⊇ zeros)
+* `valenceFormula_classical_split_from_S` — classical form (superset S ⊇ zeros)
+* `valenceFormula_split_from_S_of_larger_radius` — orbifold form (variable cusp radius)
+* `valenceFormula_classical_split_from_S_of_larger_radius` — classical form (variable cusp radius)
+
+## Main Theorems (this file, legacy route)
 
 * `valenceFormula` — The general (orbifold) form:
     `ord_∞(f) + Σ_{p ∈ S} windingNumberCoeff'(p) · ord_p(f) = k/12`

@@ -505,120 +505,6 @@ independently-provable pieces:
 5. `h_integral_residue_of_generalizedResidueTheorem` — main result (proved from 2 + 4)
 -/
 
-/-- The imaginary part of `fdBoundary t` is positive for all `t ∈ [0, 5]`.
-Each segment maps into the upper half-plane:
-- seg1/seg4: imaginary part is a convex combination of √3/2 and H_height
-- seg2/seg3: imaginary part is sin(θ) for θ ∈ (0, π)
-- seg5: imaginary part is H_height -/
-private lemma fdBoundary_im_pos (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
-    0 < (fdBoundary t).im := by
-  -- Use the segment decomposition: for each segment, compute im directly
-  by_cases h1 : t ≤ 1
-  · -- Segment 1: fdBoundary t = 1/2 + (H - t*(H - √3/2))*I, im = H - t*(H - √3/2)
-    have : fdBoundary t = fdBoundary_seg1 t := fdBoundary_eq_seg1_on t ⟨ht.1, h1⟩
-    rw [this]; show 0 < (fdBoundary_seg1 t).im
-    -- im(seg1(t)) = H - t*(H - √3/2) = (1-t)*H + t*√3/2
-    have h_im_val : (fdBoundary_seg1 t).im = H_height - t * (H_height - Real.sqrt 3 / 2) := by
-      unfold fdBoundary_seg1
-      simp [add_im, mul_im, ofReal_re, I_re, ofReal_im, I_im]
-    rw [h_im_val]
-    have hH : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
-    rw [hH]
-    have hH2 : H_height > 1 := H_height_gt_one
-    linarith
-  · push_neg at h1
-    by_cases h2 : t ≤ 2
-    · -- Segment 2: exp(θ*I), θ ∈ [π/3, π/2], im = sin(θ) > 0
-      have : fdBoundary t = fdBoundary_seg2 t := fdBoundary_eq_seg2_on t ⟨h1, h2⟩
-      rw [this]
-      exact fdBoundary_seg2_im_pos t (by rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 2)]; exact ⟨h1.le, h2⟩)
-    · push_neg at h2
-      by_cases h3 : t ≤ 3
-      · -- Segment 3: exp(θ*I), θ ∈ [π/2, 2π/3], im = sin(θ) > 0
-        have : fdBoundary t = fdBoundary_seg3 t := fdBoundary_eq_seg3_on t ⟨h2, h3⟩
-        rw [this]
-        exact fdBoundary_seg3_im_pos t (by rw [Set.uIcc_of_le (by norm_num : (2:ℝ) ≤ 3)]; exact ⟨h2.le, h3⟩)
-      · push_neg at h3
-        by_cases h4 : t ≤ 4
-        · -- Segment 4: -1/2 + (√3/2 + (t-3)*(H - √3/2))*I, im > 0
-          have : fdBoundary t = fdBoundary_seg4 t := fdBoundary_eq_seg4_on t ⟨h3, h4⟩
-          rw [this]; show 0 < (fdBoundary_seg4 t).im
-          -- im(seg4(t)) = √3/2 + (t-3)*(H - √3/2)
-          have h_im_val : (fdBoundary_seg4 t).im = Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) := by
-            unfold fdBoundary_seg4
-            simp [add_im, mul_im, ofReal_re, I_re, ofReal_im, I_im, neg_im]
-          rw [h_im_val]
-          have hH : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
-          rw [hH]
-          have hH2 : Real.sqrt 3 / 2 > 0 := by positivity
-          linarith
-        · -- Segment 5: (t - 9/2) + H*I, im = H > 0
-          push_neg at h4
-          have : fdBoundary t = fdBoundary_seg5 t :=
-            fdBoundary_eq_seg5_on t ⟨h4, ht.2⟩
-          rw [this]; show 0 < (fdBoundary_seg5 t).im
-          -- im(seg5(t)) = H_height
-          have h_im_val : (fdBoundary_seg5 t).im = H_height := by
-            unfold fdBoundary_seg5
-            simp [add_im, sub_im, ofReal_im, mul_im, ofReal_re, I_re, I_im]
-          rw [h_im_val]
-          linarith [H_height_gt_one]
-
-/-- The imaginary part of `fdBoundary t` is at most `H_height` for all `t ∈ [0, 5]`.
-This is the upper bound companion to `fdBoundary_im_pos`. -/
-private lemma fdBoundary_im_le_H_height (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
-    (fdBoundary t).im ≤ H_height := by
-  by_cases h1 : t ≤ 1
-  · have : fdBoundary t = fdBoundary_seg1 t := fdBoundary_eq_seg1_on t ⟨ht.1, h1⟩
-    rw [this]
-    have h_im_val : (fdBoundary_seg1 t).im = H_height - t * (H_height - Real.sqrt 3 / 2) := by
-      unfold fdBoundary_seg1
-      simp [add_im, mul_im, ofReal_re, I_re, ofReal_im, I_im]
-    rw [h_im_val]
-    have hH : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
-    rw [hH]; linarith [ht.1]
-  · push_neg at h1
-    by_cases h2 : t ≤ 2
-    · have : fdBoundary t = fdBoundary_seg2 t := fdBoundary_eq_seg2_on t ⟨h1, h2⟩
-      rw [this]
-      have h_im_le_1 : (fdBoundary_seg2 t).im ≤ 1 := by
-        unfold fdBoundary_seg2
-        rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-            ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
-        rw [Complex.exp_ofReal_mul_I_im]
-        exact Real.sin_le_one _
-      linarith [H_height_gt_one]
-    · push_neg at h2
-      by_cases h3 : t ≤ 3
-      · have : fdBoundary t = fdBoundary_seg3 t := fdBoundary_eq_seg3_on t ⟨h2, h3⟩
-        rw [this]
-        have h_im_le_1 : (fdBoundary_seg3 t).im ≤ 1 := by
-          unfold fdBoundary_seg3
-          rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-              ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
-          rw [Complex.exp_ofReal_mul_I_im]
-          exact Real.sin_le_one _
-        linarith [H_height_gt_one]
-      · push_neg at h3
-        by_cases h4 : t ≤ 4
-        · have : fdBoundary t = fdBoundary_seg4 t := fdBoundary_eq_seg4_on t ⟨h3, h4⟩
-          rw [this]
-          have h_im_val : (fdBoundary_seg4 t).im =
-              Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) := by
-            unfold fdBoundary_seg4
-            simp [add_im, mul_im, ofReal_re, I_re, ofReal_im, I_im, neg_im]
-          rw [h_im_val]
-          have hH : H_height - Real.sqrt 3 / 2 = 1 := by unfold H_height; ring
-          rw [hH]; linarith
-        · push_neg at h4
-          have : fdBoundary t = fdBoundary_seg5 t :=
-            fdBoundary_eq_seg5_on t ⟨h4, ht.2⟩
-          rw [this]
-          have h_im_val : (fdBoundary_seg5 t).im = H_height := by
-            unfold fdBoundary_seg5
-            simp [add_im, sub_im, ofReal_im, mul_im, ofReal_re, I_re, I_im]
-          linarith [h_im_val]
-
 /-- At any `t₀ ∈ [0,5]` where `fdBoundary(t₀)` has positive imaginary part,
 we can lift `fdBoundary(t₀)` to an element of ℍ. -/
 private def fdBoundary_uhp (t₀ : ℝ) (ht₀ : t₀ ∈ Icc (0:ℝ) 5) : ℍ :=
@@ -2800,5 +2686,203 @@ theorem elliptic_rho_contribution (hr : f ellipticPoint_rho' = 0) :
   congr 1
   show (effectiveWinding ellipticPoint_rho' : ℂ) = 1/3
   simp [effectiveWinding, classifyPoint, ellipticPoint_i_ne_rho.symm]
+
+/-! ### M15: Crossing-Cauchy Infrastructure
+
+Core.lean expects these API functions from ResidueSide:
+- `S_onCurve`: the zeros whose images lie on fdBoundary
+- `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing`: nonvanishing → integrable
+- `pv_equals_residue_sum_of_nonvanishing_of_ne_zero`: PV identity via nonvanishing
+- `pv_equals_residue_sum_of_crossingCauchy_of_integrable`: PV identity with h_cc + hint
+- `pv_equals_residue_sum_of_crossingCauchy_auto_of_integrable`: PV identity with hint only -/
+
+/-- The set of zeros (as ℂ values) that lie on the fdBoundary curve.
+Under nonvanishing, this set is empty (no zero can lie on the boundary). -/
+noncomputable def S_onCurve (f : ModularForm (Gamma 1) k) (_hf : f ≠ 0)
+    (zeros : Finset ℍ) : Finset ℂ :=
+  (zeros.image (fun s : ℍ => (s : ℂ))).filter
+    (fun s => ∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s)
+
+omit hf in
+/-- Nonvanishing of the modular form on fdBoundary implies integrability of the
+logDeriv integrand. Derives from the parameterized version at H = H_height. -/
+theorem intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0) :
+    IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5 :=
+  intervalIntegrable_logDeriv_fdBoundary_H_of_nonvanishing f
+    (by linarith [H_height_gt_one] : (0 : ℝ) < H_height) h_nv
+
+include hf in
+/-- PV residue identity under nonvanishing + f ≠ 0. Derives integrability from
+nonvanishing, then forwards to `pv_equals_residue_sum`. -/
+theorem pv_equals_residue_sum_of_nonvanishing_of_ne_zero
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  exact pv_equals_residue_sum f
+    (intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing f h_nv)
+    zeros hzeros hzeros_fd hzeros_complete
+
+include hf in
+/-- PV residue identity with crossing-Cauchy + integrability. Since integrability implies
+nonvanishing on the boundary, the h_cc condition is vacuously satisfied and unused. -/
+theorem pv_equals_residue_sum_of_crossingCauchy_of_integrable
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5)
+    (_h_cc : ∀ s ∈ S_onCurve f hf zeros,
+      (∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s) →
+        Cauchy (Filter.map (fun ε =>
+          ∫ t in (0:ℝ)..5,
+            if ε < ‖fdBoundary t - s‖ then
+              (fdBoundary t - s)⁻¹ * deriv fdBoundary t
+            else 0)
+          (𝓝[>] 0))) :
+    pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) :=
+  pv_equals_residue_sum f hint zeros hzeros hzeros_fd hzeros_complete
+
+include hf in
+/-- PV residue identity with only integrability — no crossing-Cauchy hypothesis needed.
+Under integrability, the boundary avoids all zeros, so the crossing-Cauchy condition
+is vacuously satisfied. -/
+theorem pv_equals_residue_sum_of_crossingCauchy_auto_of_integrable
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hint : IntervalIntegrable (fun t => logDeriv (modularFormCompOfComplex f)
+      (fdBoundary t) * deriv fdBoundary t) MeasureTheory.volume 0 5) :
+    pv_integral f fdBoundary 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) :=
+  pv_equals_residue_sum f hint zeros hzeros hzeros_fd hzeros_complete
+
+/-! ### M16: Auto-discharge of crossing-Cauchy hypothesis
+
+The key theorem `fdBoundary_crossing_cauchy` shows that fdBoundary, being a
+PiecewiseC1Immersion, automatically satisfies the Cauchy filter condition for the
+ε-cutoff Cauchy kernel integral. -/
+
+omit hf in
+/-- Helper: if fdBoundary never hits s on [0,5], the cutoff integral is eventually
+constant (and equals the unconditional integral). -/
+private lemma fdBoundary_cutoff_integral_eventually_constant_of_avoids (s : ℂ)
+    (h_avoids : ∀ t ∈ Icc (0:ℝ) 5, fdBoundary t ≠ s) :
+    ∃ L : ℂ, Filter.Tendsto (fun ε =>
+      ∫ t in (0:ℝ)..5,
+        if ε < ‖fdBoundary t - s‖ then
+          (fdBoundary t - s)⁻¹ * deriv fdBoundary t
+        else 0)
+      (𝓝[>] 0) (𝓝 L) := by
+  obtain ⟨δ', hδ', hc⟩ := far_part_constant fdBoundary s
+    (fun t => (fdBoundary t - s)⁻¹ * deriv fdBoundary t)
+    (by norm_num : (0:ℝ) ≤ 5) h_avoids fdBoundary_continuous
+  exact ⟨∫ t in (0:ℝ)..5, (fdBoundary t - s)⁻¹ * deriv fdBoundary t,
+    (Filter.Tendsto.congr' (f₁ := fun _ =>
+      ∫ t in (0:ℝ)..5, (fdBoundary t - s)⁻¹ * deriv fdBoundary t)
+      (by rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
+          exact ⟨Ioo 0 δ', Ioo_mem_nhdsGT hδ', fun ε hε => (hc ε hε).symm⟩)
+      tendsto_const_nhds)⟩
+
+omit hf in
+/-- PV limit exists for a C^∞ segment function γ_seg on [a, b] around a crossing t₀.
+Each segment function is C^∞ on all of ℝ with nonzero derivative everywhere,
+so pv_limit_via_dyadic applies directly. -/
+private lemma pv_limit_seg_function
+    (γ_seg : ℝ → ℂ) (a b t₀ : ℝ) (s : ℂ)
+    (_hab : a < b) (ht₀ : t₀ ∈ Ioo a b)
+    (hγ_smooth : ContDiff ℝ ⊤ γ_seg)
+    (hγ_deriv_ne : ∀ t : ℝ, deriv γ_seg t ≠ 0)
+    (hγ_eq : γ_seg t₀ = s)
+    (h_inj : ∀ t ∈ Icc a b, γ_seg t = s → t = t₀) :
+    ∃ L : ℂ, Tendsto (fun ε =>
+      ∫ t in a..b, if ε < ‖γ_seg t - s‖ then
+        (γ_seg t - s)⁻¹ * deriv γ_seg t else 0)
+      (𝓝[>] 0) (𝓝 L) := by
+  rw [← hγ_eq]
+  exact pv_limit_via_dyadic ht₀ (hγ_deriv_ne t₀)
+    (hγ_smooth.contDiffAt.of_le le_top)
+    rfl
+    (hγ_smooth.continuous_deriv le_top |>.continuousOn)
+    hγ_smooth.continuous.measurable
+    hγ_smooth.continuous.continuousOn
+    (fun t ht heq => h_inj t ht (by rw [heq, hγ_eq]))
+
+omit hf in
+/-- The ε-cutoff integral of `(γ(t)-s)⁻¹ · γ'(t)` along fdBoundary is Cauchy as ε → 0⁺,
+for any point s on the curve.
+
+**Proof**: fdBoundary is a PiecewiseC1Immersion, so the crossing set
+`{t ∈ [0,5] | fdBoundary(t) = s}` is finite. Near each crossing t₀, the integrand
+decomposes as `1/(t-t₀) + r(t)` where r is bounded (since γ'(t₀) ≠ 0). The model
+integral `∫_{|t-t₀|>δ} 1/(t-t₀) dt` is constant in δ (log terms cancel symmetrically).
+The remainder integral converges by DCT. Away from crossings, the integrand is bounded
+and the cutoff integral is eventually constant. -/
+theorem fdBoundary_crossing_cauchy (s : ℂ)
+    (h_on : ∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s) :
+    Cauchy (Filter.map (fun ε =>
+      ∫ t in (0:ℝ)..5,
+        if ε < ‖fdBoundary t - s‖ then
+          (fdBoundary t - s)⁻¹ * deriv fdBoundary t
+        else 0)
+      (𝓝[>] 0)) := by
+  -- Strategy: Cauchy ↔ convergent in complete ℂ. We show the limit exists.
+  rw [cauchy_map_iff_exists_tendsto]
+  -- The crossing set is finite (fdBoundary is a PiecewiseC1Immersion)
+  have h_finite : Set.Finite {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s} :=
+    piecewiseC1Immersion_finite_zeros fdBoundaryImmersion s
+  -- If there are no crossings, contradiction with h_on
+  by_cases h_empty : {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s} = ∅
+  · exfalso
+    obtain ⟨t, ht, hts⟩ := h_on
+    exact Set.notMem_empty t (h_empty ▸ (⟨ht, hts⟩ : t ∈ {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s}))
+  · -- There exists at least one crossing. Use the PiecewiseC1 structure.
+    -- The crossing set is finite and nonempty.
+    have h_ne : {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s}.Nonempty :=
+      nonempty_iff_ne_empty.mpr h_empty
+    obtain ⟨t₀, ht₀_mem⟩ := h_ne
+    obtain ⟨ht₀_Icc, ht₀_eq⟩ := ht₀_mem
+    -- Step 1: Determine which segment contains t₀.
+    -- fdBoundary = seg_j on (j-1, j) for j ∈ {1,...,5}.
+    -- t₀ ∈ [0, 5], so t₀ is either in an open segment interior or at a
+    -- partition point {0, 1, 2, 3, 4, 5}.
+    --
+    -- Step 2: Pick a segment function γ_ext that passes through s at t₀.
+    -- For t₀ ∈ (k, k+1): γ_ext = seg_{k+1}, which is C^∞ and equals fdBoundary
+    --   on (k, k+1). The crossing is in the interior of a smooth segment.
+    -- For t₀ = k (partition point): pick seg_k (the left segment function).
+    --   γ_ext(k) = fdBoundary(k) = s, and γ_ext is C^∞ on all of ℝ.
+    --
+    -- Step 3: Apply pv_limit_seg_function to γ_ext on a suitable interval
+    --   containing t₀ in its interior. This gives convergence of the
+    --   ε-cutoff integral for γ_ext.
+    --
+    -- Step 4: Relate the fdBoundary integral to the γ_ext integral.
+    --   On segments where fdBoundary = γ_ext: equal a.e.
+    --   On other segments: the correction is bounded (the 1/(t-t₀)
+    --   singularities cancel when two smooth functions share a zero).
+    --
+    -- Step 5: Combine: fdBoundary integral = γ_ext integral + correction,
+    --   both convergent, so the fdBoundary integral converges.
+    --
+    -- This argument handles both interior and corner crossings uniformly.
+    -- The key mathematical fact is that the symmetric ε-cutoff of 1/(t-t₀)
+    -- produces a constant (log terms cancel), regardless of whether the
+    -- curve is smooth at t₀ or has a corner there.
+    --
+    -- Full formalization blocked on: proving correction convergence at corners.
+    -- The correction integrand at a corner involves two smooth functions
+    -- whose leading 1/(t-k) terms cancel, giving a bounded difference.
+    -- The cutoff-region mismatch (different ε-balls for different segments)
+    -- contributes O(log(|d₁|/|d₂|)) which is constant in ε.
+    sorry
 
 end

@@ -107,4 +107,87 @@ theorem valenceFormula_classical_with_data_of_larger_radius {k : ℤ}
   valence_formula_classical_form_of_larger_radius f hf zeros hzeros hzeros_fd
     hzeros_complete hint hr hcusp_nonvan
 
+/-! ## Nonvanishing-Parameterized Wrappers (replace `hint` with `h_nv`)
+
+These accept a boundary nonvanishing hypothesis instead of integrability.
+Integrability is derived internally via `intervalIntegrable_logDeriv_fdBoundary_of_nonvanishing`. -/
+
+/-- Internal: base identity with nonvanishing boundary (ℂ-typed). -/
+theorem valenceFormula_with_data_of_nonvanishing {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) :=
+  valence_formula_base_identity_of_nonvanishing f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv hcusp_nonvan
+
+/-- Internal: classical form with nonvanishing boundary (ℂ-typed). -/
+theorem valenceFormula_classical_with_data_of_nonvanishing {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) seg5_q_radius,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℂ) +
+      (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+      (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 :=
+  valence_formula_classical_form_of_nonvanishing f hf zeros hzeros hzeros_fd
+    hzeros_complete h_nv hcusp_nonvan
+
+/-- Internal: base identity with nonvanishing boundary and larger radius (ℂ-typed).
+
+Accepts `closedBall(0, r)` with `r ≥ seg5_q_radius`. -/
+theorem valenceFormula_with_data_of_nonvanishing_of_larger_radius {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∑ s ∈ zeros, (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) :=
+  valenceFormula_with_data_of_nonvanishing f hf zeros hzeros hzeros_fd hzeros_complete h_nv
+    (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+
+/-- Internal: classical form with nonvanishing boundary and larger radius (ℂ-typed).
+
+Accepts `closedBall(0, r)` with `r ≥ seg5_q_radius`. -/
+theorem valenceFormula_classical_with_data_of_nonvanishing_of_larger_radius {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary t) ≠ 0)
+    {r : ℝ} (hr : seg5_q_radius ≤ r)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) r,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (orderAtCusp' f : ℂ) +
+      (1/2 : ℂ) * (if ellipticPoint_i' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℂ) else 0) +
+      (1/3 : ℂ) * (if ellipticPoint_rho' ∈ zeros
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℂ) else 0) +
+      ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 :=
+  valenceFormula_classical_with_data_of_nonvanishing f hf zeros hzeros hzeros_fd hzeros_complete
+    h_nv (fun q hq hq0 => hcusp_nonvan q (Metric.closedBall_subset_closedBall hr hq) hq0)
+
 end

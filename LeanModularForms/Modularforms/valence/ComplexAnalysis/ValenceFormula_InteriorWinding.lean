@@ -6,6 +6,7 @@ Authors:
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormulaDefinitions
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_FD_Boundary
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_Rect_Homotopy
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.ResidueTheory
 
 /-!
 # Interior Winding Number for Fundamental Domain Boundary
