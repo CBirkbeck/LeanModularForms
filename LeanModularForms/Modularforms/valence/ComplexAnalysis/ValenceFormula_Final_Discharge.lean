@@ -416,4 +416,163 @@ theorem valence_formula_windingCoeff_of_larger_radius_rat (hf : f ≠ 0)
     hzeros_complete hint hr hcusp_nonvan
   linarith
 
+/-! ## Auto-Cusp Generalized PV ℚ Variants
+
+These are ℚ-cast wrappers for the generalized PV Core theorems that use
+`pv_integral_logDeriv` with `fdBoundaryArcSingularSet` instead of `pv_integral`. -/
+
+/-- Base identity via auto-cusp generalized PV, cast to ℚ. -/
+theorem valence_formula_base_identity_auto_cusp_generalizedPV_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_base_identity_auto_cusp_generalizedPV f hf zeros h_arc_nv
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv h_cpv => ?_⟩
+  exact_mod_cast h_auto hH h_vert_nv h_cpv
+
+/-- Rearranged base identity via auto-cusp generalized PV: `ord_∞ + Σ ew·ord = k/12`, in ℚ. -/
+theorem valence_formula_rearranged_auto_cusp_generalizedPV_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        (orderAtCusp' f : ℚ) +
+          ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_base_identity_auto_cusp_generalizedPV_rat f hf zeros h_arc_nv
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv h_cpv => ?_⟩
+  linarith [h_auto hH h_vert_nv h_cpv]
+
+/-- Classical form via auto-cusp generalized PV, cast to ℚ. -/
+theorem valence_formula_classical_form_auto_cusp_generalizedPV_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        (orderAtCusp' f : ℚ) +
+          (1/2 : ℚ) * (if ellipticPoint_i' ∈ zeros
+            then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+          (1/3 : ℚ) * (if ellipticPoint_rho' ∈ zeros
+            then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+          ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+              (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_classical_form_auto_cusp_generalizedPV f hf zeros h_arc_nv
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv h_cpv => ?_⟩
+  have h_base := h_auto hH h_vert_nv h_cpv
+  apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+  push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+  exact h_base
+
+/-! ## Auto-Cusp Generalized PV + Residue-Auto ℚ Variants
+
+These compose the modular-side with a residue-auto provider, removing
+`h_cpv_eq_residue` from the per-height API. -/
+
+/-- Base identity with residue-auto provider, cast to ℚ. -/
+theorem valence_formula_base_identity_auto_cusp_generalizedPV_of_residue_auto_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (h_residue_auto : ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_base_identity_auto_cusp_generalizedPV_of_residue_auto f hf zeros
+      h_arc_nv h_residue_auto
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv => ?_⟩
+  exact_mod_cast h_auto hH h_vert_nv
+
+/-- Rearranged base identity with residue-auto provider: `ord_∞ + Σ ew·ord = k/12`, in ℚ. -/
+theorem valence_formula_rearranged_auto_cusp_generalizedPV_of_residue_auto_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (h_residue_auto : ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        (orderAtCusp' f : ℚ) +
+          ∑ s ∈ zeros, effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_base_identity_auto_cusp_generalizedPV_of_residue_auto_rat f hf zeros
+      h_arc_nv h_residue_auto
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv => ?_⟩
+  linarith [h_auto hH h_vert_nv]
+
+/-- Classical form with residue-auto provider, cast to ℚ. -/
+theorem valence_formula_classical_form_auto_cusp_generalizedPV_of_residue_auto_rat (hf : f ≠ 0)
+    (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (h_residue_auto : ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        (orderAtCusp' f : ℚ) +
+          (1/2 : ℚ) * (if ellipticPoint_i' ∈ zeros
+            then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+          (1/3 : ℚ) * (if ellipticPoint_rho' ∈ zeros
+            then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+          ∑ s ∈ zeros.filter (fun s => isInteriorPoint s),
+              (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_classical_form_auto_cusp_generalizedPV_of_residue_auto f hf zeros
+      h_arc_nv h_residue_auto
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv => ?_⟩
+  have h_base := h_auto hH h_vert_nv
+  apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+  push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+  exact h_base
+
 end

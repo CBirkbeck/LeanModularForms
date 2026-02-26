@@ -58,6 +58,19 @@ Each AI must update this file when returning results.
 
 ---
 
+## Milestone A1 COMPLETE: OnCurvePVProvider sorry-free (Session 122, 2026-02-25)
+
+**File**: `ValenceFormula_FD_OnCurvePVProvider.lean`
+- **0 sorries, 0 errors, axiom-clean** (`[propext, Classical.choice, Quot.sound]`)
+- **Key theorem**: `fdBoundary_H_OnCurvePVProvider` — proves `OnCurvePVProvider` for `fdBoundary_H H`
+- **Key helper lemmas proven**:
+  - `cpv_at_endpoint` — CPV for s = 1/2 + H*I (endpoint crossing at t=0,5)
+  - `cpv_at_corner` — CPV for s = -1/2 + H*I (corner crossing at t=4)
+  - Both use "eventually constant" argument with log cancellation
+- **Build**: `lake build` success (2982 jobs)
+
+---
+
 ## Completed Worker-H Tickets (2026-02-11 – 2026-02-13)
 
 | Ticket | Session | Files Modified | Theorems Added |

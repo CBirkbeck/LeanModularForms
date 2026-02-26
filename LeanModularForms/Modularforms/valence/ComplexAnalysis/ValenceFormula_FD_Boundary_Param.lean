@@ -843,4 +843,211 @@ theorem fdBoundary_H_not_differentiableAt_1 {H : ℝ} (_hH : Real.sqrt 3 / 2 < H
   -- hre : 0 = -(π/6) * (√3/2), contradiction since π > 0 and √3 > 0
   nlinarith [Real.pi_pos, Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
 
+/-! ## PiecewiseC1 Adapter for Parameterized Boundary -/
+
+section PiecewiseC1Adapter_H
+
+/-- The derivative of `fdBoundary_H H` is continuous away from the full partition `{0,1,2,3,4,5}`. -/
+private theorem fdBoundary_H_deriv_continuousAt_off_fullPartition (H : ℝ)
+    (t : ℝ) (ht : t ∈ Ioo (0:ℝ) 5) (htp : t ∉ fdBoundaryFullPartition) :
+    ContinuousAt (deriv (fdBoundary_H H)) t := by
+  simp only [fdBoundaryFullPartition, Finset.mem_insert, Finset.mem_singleton, not_or] at htp
+  obtain ⟨_, h1, _, h3, h4, _⟩ := htp
+  by_cases ht1 : t < 1
+  · exact (fdBoundary_H_deriv_continuousOn_Ioo_01 H).continuousAt (Ioo_mem_nhds ht.1 ht1)
+  · push_neg at ht1
+    by_cases ht3 : t < 3
+    · exact (fdBoundary_H_deriv_continuousOn_Ioo_13 H).continuousAt
+        (Ioo_mem_nhds (lt_of_le_of_ne ht1 (Ne.symm h1)) ht3)
+    · push_neg at ht3
+      by_cases ht4 : t < 4
+      · exact (fdBoundary_H_deriv_continuousOn_Ioo_34 H).continuousAt
+          (Ioo_mem_nhds (lt_of_le_of_ne ht3 (Ne.symm h3)) ht4)
+      · push_neg at ht4
+        exact (fdBoundary_H_deriv_continuousOn_Ioo_45 H).continuousAt
+          (Ioo_mem_nhds (lt_of_le_of_ne ht4 (Ne.symm h4)) ht.2)
+
+/-- The parameterized boundary `fdBoundary_H H` as a `PiecewiseC1Curve`. -/
+noncomputable def fdBoundary_HCurve (H : ℝ) : PiecewiseC1Curve where
+  toFun := fdBoundary_H H
+  a := 0
+  b := 5
+  hab := by norm_num
+  partition := fdBoundaryFullPartition
+  partition_subset := by
+    intro x hx
+    have : x = 0 ∨ x = 1 ∨ x = 2 ∨ x = 3 ∨ x = 4 ∨ x = 5 := by
+      simp only [fdBoundaryFullPartition, Finset.mem_coe,
+        Finset.mem_insert, Finset.mem_singleton] at hx
+      exact hx
+    rcases this with rfl | rfl | rfl | rfl | rfl | rfl <;> exact ⟨by norm_num, by norm_num⟩
+  endpoints_in_partition := by
+    constructor <;> simp [fdBoundaryFullPartition]
+  continuous_toFun := (fdBoundary_H_continuous H).continuousOn
+  smooth_off_partition := by
+    intro t ht htp
+    have htp' : t ∉ fdBoundary_H_partition := by
+      simp only [fdBoundaryFullPartition, fdBoundary_H_partition,
+        Finset.mem_insert, Finset.mem_singleton, not_or] at htp ⊢
+      exact ⟨htp.2.1, htp.2.2.2.1, htp.2.2.2.2.1⟩
+    exact fdBoundary_H_differentiableAt_off_partition H htp'
+  deriv_continuous_off_partition := fdBoundary_H_deriv_continuousAt_off_fullPartition H
+
+set_option maxHeartbeats 400000 in
+/-- The derivative of `fdBoundary_H H` is nonzero off the full partition when `H > √3/2`. -/
+private theorem fdBoundary_H_deriv_ne_zero_off_fullPartition (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+    (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) (ht_not_P : t ∉ fdBoundaryFullPartition) :
+    deriv (fdBoundary_H H) t ≠ 0 := by
+  simp only [fdBoundaryFullPartition, Finset.mem_insert, Finset.mem_singleton, not_or]
+    at ht_not_P
+  obtain ⟨hne0, hne1, _, hne3, hne4, hne5⟩ := ht_not_P
+  by_cases h1 : t < 1
+  · rw [(fdBoundary_H_hasDerivAt_seg1 H h1).deriv]
+    exact mul_ne_zero (neg_ne_zero.mpr
+      (Complex.ofReal_ne_zero.mpr (ne_of_gt (sub_pos.mpr hH)))) Complex.I_ne_zero
+  · push_neg at h1
+    have h1' : 1 < t := lt_of_le_of_ne h1 (Ne.symm hne1)
+    by_cases h3 : t < 3
+    · rw [(fdBoundary_H_hasDerivAt_arc H h1' h3).deriv]
+      exact mul_ne_zero (mul_ne_zero
+        (Complex.ofReal_ne_zero.mpr (by positivity)) Complex.I_ne_zero)
+        (exp_ne_zero _)
+    · push_neg at h3
+      have h3' : 3 < t := lt_of_le_of_ne h3 (Ne.symm hne3)
+      by_cases h4 : t < 4
+      · rw [(fdBoundary_H_hasDerivAt_seg4 H h3' h4).deriv]
+        exact mul_ne_zero
+          (Complex.ofReal_ne_zero.mpr (ne_of_gt (sub_pos.mpr hH))) Complex.I_ne_zero
+      · push_neg at h4
+        have h4' : 4 < t := lt_of_le_of_ne h4 (Ne.symm hne4)
+        rw [(fdBoundary_H_hasDerivAt_seg5 H h4').deriv]
+        exact one_ne_zero
+
+/-- Helper: the arc derivative is a continuous function. -/
+private theorem continuousAt_arc_deriv_H (p : ℝ) :
+    ContinuousAt (fun s : ℝ => (↑(Real.pi / 6) : ℂ) * I *
+      Complex.exp (↑(Real.pi * (1 + s) / 6) * I)) p := by
+  apply ContinuousAt.mul continuousAt_const
+  exact Complex.continuous_exp.continuousAt.comp
+    (ContinuousAt.mul (Complex.continuous_ofReal.continuousAt.comp (by fun_prop))
+      continuousAt_const)
+
+set_option maxHeartbeats 400000 in
+/-- Left derivative limits at full partition points for the H-parameterized boundary. -/
+private theorem fdBoundary_H_left_deriv_limit (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+    (p : ℝ) (hp : p ∈ fdBoundaryFullPartition) (hap : (0:ℝ) < p) :
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv (fdBoundary_H H)) (𝓝[<] p) (𝓝 L) := by
+  simp only [fdBoundaryFullPartition, Finset.mem_insert, Finset.mem_singleton] at hp
+  rcases hp with rfl | rfl | rfl | rfl | rfl | rfl
+  · exact absurd hap (lt_irrefl _)
+  · -- p = 1, left from seg1: constant -(H-√3/2)*I
+    refine ⟨-(↑(H - Real.sqrt 3 / 2) : ℂ) * I,
+      mul_ne_zero (neg_ne_zero.mpr (Complex.ofReal_ne_zero.mpr
+        (ne_of_gt (sub_pos.mpr hH)))) Complex.I_ne_zero, ?_⟩
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsLT (show (0:ℝ) < 1 by norm_num)] with s hs
+      exact (fdBoundary_H_hasDerivAt_seg1 H (mem_Ioo.mp hs).2).deriv.symm)
+  · -- p = 2, left from arc
+    refine ⟨↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + 2) / 6) * I), ?_, ?_⟩
+    · exact mul_ne_zero (mul_ne_zero (Complex.ofReal_ne_zero.mpr (by positivity))
+        Complex.I_ne_zero) (exp_ne_zero _)
+    · have h_ee : (fun s => (↑(Real.pi / 6) : ℂ) * I *
+          Complex.exp (↑(Real.pi * (1 + s) / 6) * I)) =ᶠ[𝓝[<] 2]
+          deriv (fdBoundary_H H) := by
+        filter_upwards [Ioo_mem_nhdsLT (show (1:ℝ) < 2 by norm_num)] with s hs
+        exact (fdBoundary_H_hasDerivAt_arc H (mem_Ioo.mp hs).1
+          (by linarith [(mem_Ioo.mp hs).2])).deriv.symm
+      exact ((continuousAt_arc_deriv_H 2).mono_left nhdsWithin_le_nhds).congr' h_ee
+  · -- p = 3, left from arc
+    refine ⟨↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + 3) / 6) * I), ?_, ?_⟩
+    · exact mul_ne_zero (mul_ne_zero (Complex.ofReal_ne_zero.mpr (by positivity))
+        Complex.I_ne_zero) (exp_ne_zero _)
+    · have h_ee : (fun s => (↑(Real.pi / 6) : ℂ) * I *
+          Complex.exp (↑(Real.pi * (1 + s) / 6) * I)) =ᶠ[𝓝[<] 3]
+          deriv (fdBoundary_H H) := by
+        filter_upwards [Ioo_mem_nhdsLT (show (1:ℝ) < 3 by norm_num)] with s hs
+        exact (fdBoundary_H_hasDerivAt_arc H (mem_Ioo.mp hs).1
+          (mem_Ioo.mp hs).2).deriv.symm
+      exact ((continuousAt_arc_deriv_H 3).mono_left nhdsWithin_le_nhds).congr' h_ee
+  · -- p = 4, left from seg4: constant (H-√3/2)*I
+    refine ⟨(↑(H - Real.sqrt 3 / 2) : ℂ) * I,
+      mul_ne_zero (Complex.ofReal_ne_zero.mpr (ne_of_gt (sub_pos.mpr hH)))
+        Complex.I_ne_zero, ?_⟩
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsLT (show (3:ℝ) < 4 by norm_num)] with s hs
+      exact (fdBoundary_H_hasDerivAt_seg4 H (mem_Ioo.mp hs).1
+        (mem_Ioo.mp hs).2).deriv.symm)
+  · -- p = 5, left from seg5: constant 1
+    refine ⟨1, one_ne_zero, ?_⟩
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsLT (show (4:ℝ) < 5 by norm_num)] with s hs
+      exact (fdBoundary_H_hasDerivAt_seg5 H (by linarith [(mem_Ioo.mp hs).1])).deriv.symm)
+
+set_option maxHeartbeats 400000 in
+/-- Right derivative limits at full partition points for the H-parameterized boundary. -/
+private theorem fdBoundary_H_right_deriv_limit (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+    (p : ℝ) (hp : p ∈ fdBoundaryFullPartition) (hpb : p < (5:ℝ)) :
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv (fdBoundary_H H)) (𝓝[>] p) (𝓝 L) := by
+  simp only [fdBoundaryFullPartition, Finset.mem_insert, Finset.mem_singleton] at hp
+  rcases hp with rfl | rfl | rfl | rfl | rfl | rfl
+  · -- p = 0, right from seg1
+    refine ⟨-(↑(H - Real.sqrt 3 / 2) : ℂ) * I,
+      mul_ne_zero (neg_ne_zero.mpr (Complex.ofReal_ne_zero.mpr
+        (ne_of_gt (sub_pos.mpr hH)))) Complex.I_ne_zero, ?_⟩
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)] with s hs
+      exact (fdBoundary_H_hasDerivAt_seg1 H (mem_Ioo.mp hs).2).deriv.symm)
+  · -- p = 1, right from arc
+    refine ⟨↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + 1) / 6) * I), ?_, ?_⟩
+    · exact mul_ne_zero (mul_ne_zero (Complex.ofReal_ne_zero.mpr (by positivity))
+        Complex.I_ne_zero) (exp_ne_zero _)
+    · have h_ee : (fun s => (↑(Real.pi / 6) : ℂ) * I *
+          Complex.exp (↑(Real.pi * (1 + s) / 6) * I)) =ᶠ[𝓝[>] 1]
+          deriv (fdBoundary_H H) := by
+        filter_upwards [Ioo_mem_nhdsGT (show (1:ℝ) < 3 by norm_num)] with s hs
+        exact (fdBoundary_H_hasDerivAt_arc H (mem_Ioo.mp hs).1
+          (mem_Ioo.mp hs).2).deriv.symm
+      exact ((continuousAt_arc_deriv_H 1).mono_left nhdsWithin_le_nhds).congr' h_ee
+  · -- p = 2, right from arc
+    refine ⟨↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + 2) / 6) * I), ?_, ?_⟩
+    · exact mul_ne_zero (mul_ne_zero (Complex.ofReal_ne_zero.mpr (by positivity))
+        Complex.I_ne_zero) (exp_ne_zero _)
+    · have h_ee : (fun s => (↑(Real.pi / 6) : ℂ) * I *
+          Complex.exp (↑(Real.pi * (1 + s) / 6) * I)) =ᶠ[𝓝[>] 2]
+          deriv (fdBoundary_H H) := by
+        filter_upwards [Ioo_mem_nhdsGT (show (2:ℝ) < 3 by norm_num)] with s hs
+        exact (fdBoundary_H_hasDerivAt_arc H (by linarith [(mem_Ioo.mp hs).1])
+          (mem_Ioo.mp hs).2).deriv.symm
+      exact ((continuousAt_arc_deriv_H 2).mono_left nhdsWithin_le_nhds).congr' h_ee
+  · -- p = 3, right from seg4
+    refine ⟨(↑(H - Real.sqrt 3 / 2) : ℂ) * I,
+      mul_ne_zero (Complex.ofReal_ne_zero.mpr (ne_of_gt (sub_pos.mpr hH)))
+        Complex.I_ne_zero, ?_⟩
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT (show (3:ℝ) < 4 by norm_num)] with s hs
+      exact (fdBoundary_H_hasDerivAt_seg4 H (mem_Ioo.mp hs).1
+        (mem_Ioo.mp hs).2).deriv.symm)
+  · -- p = 4, right from seg5
+    refine ⟨1, one_ne_zero, ?_⟩
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT (show (4:ℝ) < 5 by norm_num)] with s hs
+      exact (fdBoundary_H_hasDerivAt_seg5 H (mem_Ioo.mp hs).1).deriv.symm)
+  · exact absurd hpb (lt_irrefl _)
+
+/-- The parameterized boundary `fdBoundary_H H` as a `PiecewiseC1Immersion` (needs `H > √3/2`). -/
+noncomputable def fdBoundary_HImmersion (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    PiecewiseC1Immersion where
+  toPiecewiseC1Curve := fdBoundary_HCurve H
+  deriv_ne_zero := fdBoundary_H_deriv_ne_zero_off_fullPartition H hH
+  left_deriv_limit := fdBoundary_H_left_deriv_limit H hH
+  right_deriv_limit := fdBoundary_H_right_deriv_limit H hH
+
+/-- The parameterized boundary immersion is a closed curve. -/
+theorem fdBoundary_HImmersion_closed (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    (fdBoundary_HImmersion H hH).toPiecewiseC1Curve.IsClosed := by
+  show fdBoundary_H H 0 = fdBoundary_H H 5
+  exact fdBoundary_H_closed H
+
+end PiecewiseC1Adapter_H
+
 end

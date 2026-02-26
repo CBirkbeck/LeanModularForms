@@ -760,4 +760,277 @@ theorem valenceFormula_classical_split_from_S_auto_cusp {k : ℤ}
   rw [sum_interior_zeros_eq_sum_interior_S f S] at h
   exact h
 
+/-! ## Auto-Cusp Generalized PV Superset Forms (via CPV modular side)
+
+These use `pv_integral_logDeriv` with `fdBoundaryArcSingularSet` instead of `pv_integral`,
+replacing `IntervalIntegrable` with local nonvanishing hypotheses. -/
+
+/-- **The Valence Formula** (superset form, auto-cusp, generalized PV).
+
+From `hf : f ≠ 0`, cusp nonvanishing is derived automatically for heights `H ≥ H₀`.
+The caller provides arc nonvanishing, vertical nonvanishing, and the CPV residue-side
+result `h_cpv` (at height H, over `S.filter (f = 0)`). -/
+theorem valenceFormula_split_from_S_auto_cusp_generalizedPV {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        (orderAtCusp' f : ℚ) +
+          ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ := valence_formula_base_identity_auto_cusp_generalizedPV f hf
+    (S.filter (fun p => f p = 0)) h_arc_nv
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv h_cpv => ?_⟩
+  rw [sum_ew_S_eq_sum_ew_zeros f S]
+  have h_base := h_auto hH h_vert_nv h_cpv
+  have h_rat : ∑ s ∈ S.filter (fun p => f p = 0),
+      effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by exact_mod_cast h_base
+  linarith
+
+/-- **The Classical Valence Formula** (superset form, auto-cusp, generalized PV).
+
+From `hf : f ≠ 0`, cusp nonvanishing is derived automatically for heights `H ≥ H₀`.
+Uses `pv_integral_logDeriv` with `fdBoundaryArcSingularSet`. -/
+theorem valenceFormula_classical_split_from_S_auto_cusp_generalizedPV {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) →
+        (orderAtCusp' f : ℚ) +
+          (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+            then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+          (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+            then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+          ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+              (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ := valence_formula_classical_form_auto_cusp_generalizedPV f hf
+    (S.filter (fun p => f p = 0)) h_arc_nv
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv h_cpv => ?_⟩
+  have h_C := h_auto hH h_vert_nv h_cpv
+  have h : (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S.filter (fun p => f p = 0)
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S.filter (fun p => f p = 0)
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ (S.filter (fun p => f p = 0)).filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+    apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+    push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+    exact h_C
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_i'] at h
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_rho'] at h
+  rw [sum_interior_zeros_eq_sum_interior_S f S] at h
+  exact h
+
+/-! ## Auto-Cusp Generalized PV + Residue-Auto Superset Forms
+
+These compose the modular-side with a residue-auto provider, removing
+`h_cpv_eq_residue` from the per-height API. Only `h_vert_nv` remains per height. -/
+
+/-- **The Valence Formula** (superset form, auto-cusp, generalizedPV, residue-auto).
+
+No `h_cpv_eq_residue` at each height — the residue-auto provider is consumed once. -/
+theorem valenceFormula_split_from_S_auto_cusp_generalizedPV_of_residue_auto {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (h_residue_auto : ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        (orderAtCusp' f : ℚ) +
+          ∑ p ∈ S, effectiveWinding p * (orderOfVanishingAt' f p : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_base_identity_auto_cusp_generalizedPV_of_residue_auto f hf
+      (S.filter (fun p => f p = 0)) h_arc_nv h_residue_auto
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv => ?_⟩
+  rw [sum_ew_S_eq_sum_ew_zeros f S]
+  have h_base := h_auto hH h_vert_nv
+  have h_rat : ∑ s ∈ S.filter (fun p => f p = 0),
+      effectiveWinding s * (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 - (orderAtCusp' f : ℚ) := by exact_mod_cast h_base
+  linarith
+
+/-- **The Classical Valence Formula** (superset form, auto-cusp, generalizedPV, residue-auto).
+
+No `h_cpv_eq_residue` at each height. -/
+theorem valenceFormula_classical_split_from_S_auto_cusp_generalizedPV_of_residue_auto {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟')
+    (_hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (h_residue_auto : ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ))) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        (orderAtCusp' f : ℚ) +
+          (1/2 : ℚ) * (if ellipticPoint_i' ∈ S
+            then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+          (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S
+            then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+          ∑ s ∈ S.filter (fun s => isInteriorPoint s),
+              (orderOfVanishingAt' f s : ℚ) =
+          (k : ℚ) / 12 := by
+  obtain ⟨H₀, hH₀_gt, h_auto⟩ :=
+    valence_formula_classical_form_auto_cusp_generalizedPV_of_residue_auto f hf
+      (S.filter (fun p => f p = 0)) h_arc_nv h_residue_auto
+  refine ⟨H₀, hH₀_gt, fun {H} hH h_vert_nv => ?_⟩
+  have h_C := h_auto hH h_vert_nv
+  have h : (orderAtCusp' f : ℚ) +
+      (1/2 : ℚ) * (if ellipticPoint_i' ∈ S.filter (fun p => f p = 0)
+        then (orderOfVanishingAt' f ellipticPoint_i' : ℚ) else 0) +
+      (1/3 : ℚ) * (if ellipticPoint_rho' ∈ S.filter (fun p => f p = 0)
+        then (orderOfVanishingAt' f ellipticPoint_rho' : ℚ) else 0) +
+      ∑ s ∈ (S.filter (fun p => f p = 0)).filter (fun s => isInteriorPoint s),
+          (orderOfVanishingAt' f s : ℚ) =
+      (k : ℚ) / 12 := by
+    apply_fun (Rat.cast : ℚ → ℂ) using Rat.cast_injective
+    push_cast [apply_ite (Rat.cast : ℚ → ℂ)]
+    exact h_C
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_i'] at h
+  rw [if_mem_zeros_eq_if_mem_S f S ellipticPoint_rho'] at h
+  rw [sum_interior_zeros_eq_sum_interior_S f S] at h
+  exact h
+
+/-! ## Generalized Winding Number Valence Formula via CPV (Superset Form)
+
+These are the gWN variants from the F7-B assembly chain. The sum is over `S`
+(not `S.filter (f = 0)`), using the fact that `orderOfVanishingAt' f p = 0`
+when `f p ≠ 0`. -/
+
+private lemma sum_gWN_S_eq_sum_gWN_zeros {k : ℤ} (f : ModularForm (Gamma 1) k)
+    (S : Finset UpperHalfPlane) (H : ℝ) :
+    ∑ p ∈ S,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑p : ℂ) *
+        (orderOfVanishingAt' f p : ℂ) =
+    ∑ p ∈ S.filter (fun p => f p = 0),
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑p : ℂ) *
+        (orderOfVanishingAt' f p : ℂ) := by
+  rw [Finset.sum_filter]
+  apply Finset.sum_congr rfl; intro p _
+  split_ifs with h
+  · rfl
+  · simp [orderOfVanishingAt'_eq_zero_of_ne_zero f p h]
+
+/-- **Generalized Winding Number Valence Formula via CPV** (superset form).
+
+Same as `valence_formula_gWN_cpv_from_S` but sums over `S` instead of
+`S.filter (f = 0)`. For non-zero points the term vanishes because
+`orderOfVanishingAt' f p = 0`. -/
+theorem valenceFormula_split_gWN_cpv_from_S {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_oncurve_arc : ∀ t ∈ Set.Ioo (1:ℝ) 3,
+        modularFormCompOfComplex f (fdBoundary_H 1 t) = 0 →
+        fdBoundary_H 1 t ∈ (↑(S_arc_of_S S) : Set ℂ))
+    (h_oncurve_vert : ∀ (H' : ℝ), Real.sqrt 3 / 2 < H' → ∀ t ∈ Set.Ioo (0:ℝ) 1,
+        modularFormCompOfComplex f (fdBoundary_H H' t) = 0 →
+        (fdBoundary_H H' t : ℂ) ∈ (↑(S_vert_of_S S) : Set ℂ))
+    (h_residue_provider : ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 (S_arc_of_S S ∪ S_vert_of_S S) =
+          2 * ↑Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+              (orderOfVanishingAt' f s : ℂ)) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        ∑ s ∈ S,
+          generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+            (orderOfVanishingAt' f s : ℂ) =
+          -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
+  obtain ⟨H₀, hH₀, h⟩ := valence_formula_gWN_cpv_from_S f hf S hS hS_complete
+    h_oncurve_arc h_oncurve_vert h_residue_provider
+  exact ⟨H₀, hH₀, fun hH => by rw [sum_gWN_S_eq_sum_gWN_zeros]; exact h hH⟩
+
+/-- **Generalized Winding Number Valence Formula via CPV — Auto Capture** (superset form).
+
+Same as `valenceFormula_split_gWN_cpv_from_S` but without `h_oncurve_arc` or `h_oncurve_vert`.
+These are derived automatically from `hS_complete` and the geometry of the fundamental domain.
+
+Sums over `S` instead of `S.filter (f = 0)`. -/
+theorem valenceFormula_split_gWN_cpv_from_S_auto_capture {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_residue_provider : ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 (S_arc_of_S S ∪ S_vert_of_S S) =
+          2 * ↑Real.pi * Complex.I * ∑ s ∈ S.filter (fun p => f p = 0),
+            generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+              (orderOfVanishingAt' f s : ℂ)) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        ∑ s ∈ S,
+          generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+            (orderOfVanishingAt' f s : ℂ) =
+          -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
+  obtain ⟨H₀, hH₀, h⟩ := valence_formula_gWN_cpv_from_S_auto_capture f hf S hS hS_complete
+    h_residue_provider
+  exact ⟨H₀, hH₀, fun hH => by rw [sum_gWN_S_eq_sum_gWN_zeros]; exact h hH⟩
+
+/-- **Generalized Winding Number Valence Formula — OnCurvePVProvider** (superset form).
+
+Same as `valenceFormula_split_gWN_cpv_from_S_auto_capture` but takes `OnCurvePVProvider`
+instead of `h_residue_provider`. The residue identity is derived internally from
+the CPV existence hypotheses. Sums over `S` instead of `S.filter (f = 0)`. -/
+theorem valenceFormula_split_gWN_cpv_from_S_auto_capture_of_OnCurvePVProvider {k : ℤ}
+    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hPV : OnCurvePVProvider f S) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
+      ∀ {H : ℝ}, H₀ ≤ H →
+        ∑ s ∈ S,
+          generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+            (orderOfVanishingAt' f s : ℂ) =
+          -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
+  obtain ⟨H₀, hH₀, h⟩ := valence_formula_gWN_cpv_from_S_auto_capture_of_OnCurvePVProvider
+    f hf S hS hS_complete hPV
+  exact ⟨H₀, hH₀, fun hH => by rw [sum_gWN_S_eq_sum_gWN_zeros]; exact h hH⟩
+
 end
