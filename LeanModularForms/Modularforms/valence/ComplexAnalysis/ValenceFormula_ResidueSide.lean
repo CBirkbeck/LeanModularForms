@@ -5,12 +5,14 @@ Authors:
 -/
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormulaDefinitions
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_FD_Boundary
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_FD_Boundary_Param
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_InteriorWinding
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_EllipticContrib
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_PV
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ResidueTheory
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.WindingNumber
 import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_Rect_Homotopy
+import LeanModularForms.Modularforms.valence.ComplexAnalysis.ValenceFormula_CPV_ModularSide
 import Mathlib.NumberTheory.ModularForms.Basic
 import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 import Mathlib.NumberTheory.ModularForms.Identities
@@ -249,11 +251,78 @@ private lemma meromorphicOrderAt_comp_sub_const (g : ℂ → ℂ) (x c : ℂ) :
     exact (hmap hh_eq).mono fun z hz => by
       simp only [smul_eq_mul] at hz ⊢; rw [hz]; congr 1; congr 1; ring
 
+set_option maxRecDepth 1024 in
+set_option maxHeartbeats 1200000 in
+/-- Composition invariance of meromorphicOrderAt for the map `z ↦ -z⁻¹`.
+
+`meromorphicOrderAt (fun z => g (-z⁻¹)) p = meromorphicOrderAt g (-p⁻¹)` when `p ≠ 0`.
+
+This is needed for S-invariance of vanishing orders. -/
+private lemma meromorphicOrderAt_comp_neg_inv (g : ℂ → ℂ) (p : ℂ) (hp : p ≠ 0) :
+    meromorphicOrderAt (fun z => g (-z⁻¹)) p = meromorphicOrderAt g (-p⁻¹) := by
+  have hp_inv_ne : p⁻¹ ≠ 0 := inv_ne_zero hp
+  have hφp_ne : -p⁻¹ ≠ 0 := neg_ne_zero.mpr hp_inv_ne
+  have hφ_an : AnalyticAt ℂ (fun z : ℂ => -z⁻¹) p := (analyticAt_inv hp).neg
+  -- Forward MeromorphicAt: decompose (fun z => g(-z⁻¹)) as (g ∘ Neg.neg) ∘ Inv.inv
+  have h_mero_fwd : MeromorphicAt g (-p⁻¹) → MeromorphicAt (fun z => g (-z⁻¹)) p := by
+    intro hg
+    exact ((hg.comp_analyticAt analyticAt_id.neg).comp_analyticAt (analyticAt_inv hp)).congr
+      (by filter_upwards with _; rfl)
+  -- Backward MeromorphicAt: compose with involution φ ∘ φ = id
+  have h_mero_bwd : MeromorphicAt (fun z => g (-z⁻¹)) p → MeromorphicAt g (-p⁻¹) := by
+    intro hgφ
+    change MeromorphicAt ((g ∘ Neg.neg) ∘ Inv.inv) p at hgφ
+    rw [show p = p⁻¹⁻¹ from (inv_inv p).symm] at hgφ
+    have s1 := (hgφ.comp_analyticAt (analyticAt_inv hp_inv_ne)).congr
+      (by filter_upwards with z; show g (-((z⁻¹)⁻¹)) = g (-z); rw [inv_inv])
+    rw [show p⁻¹ = (- -p⁻¹) from (neg_neg p⁻¹).symm] at s1
+    exact (s1.comp_analyticAt analyticAt_id.neg).congr
+      (by filter_upwards with z; show g (- -z) = g z; rw [neg_neg])
+  -- Filter transport via Tendsto
+  have hmap : ∀ {Q : ℂ → Prop}, (∀ᶠ z in 𝓝[≠] (-p⁻¹), Q z) →
+      ∀ᶠ w in 𝓝[≠] p, Q (-w⁻¹) := by
+    intro Q hQ
+    exact (tendsto_nhdsWithin_iff.mpr
+      ⟨hφ_an.continuousAt.continuousWithinAt,
+        by rw [eventually_nhdsWithin_iff]
+           filter_upwards [univ_mem] with z _ hz
+           simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz
+           exact fun h => hz (inv_injective (neg_inj.mp h))⟩).eventually hQ
+  -- Case 1: not meromorphic
+  by_cases hg_mero : MeromorphicAt g (-p⁻¹)
+  swap
+  · rw [meromorphicOrderAt_of_not_meromorphicAt hg_mero,
+        meromorphicOrderAt_of_not_meromorphicAt (mt h_mero_bwd hg_mero)]
+  -- Case 2: order ⊤
+  by_cases htop : meromorphicOrderAt g (-p⁻¹) = ⊤
+  · rw [htop, meromorphicOrderAt_eq_top_iff]
+    rw [meromorphicOrderAt_eq_top_iff] at htop
+    exact hmap htop
+  -- Case 3: finite order
+  obtain ⟨n, hn⟩ := WithTop.ne_top_iff_exists.mp htop
+  obtain ⟨h, hh_an, hh_ne, hh_eq⟩ := (meromorphicOrderAt_eq_int_iff hg_mero).mp hn.symm
+  rw [hn.symm, meromorphicOrderAt_eq_int_iff (h_mero_fwd hg_mero)]
+  refine ⟨fun z => (z * p) ^ (-n) * h (-z⁻¹), ?_, ?_, ?_⟩
+  · -- Analyticity
+    exact (((analyticAt_id (𝕜 := ℂ) (z := p)).mul analyticAt_const).zpow
+      (mul_ne_zero hp hp)).mul (hh_an.comp_of_eq ((analyticAt_inv hp).neg) rfl)
+  · -- Nonvanishing
+    exact mul_ne_zero (zpow_ne_zero _ (mul_ne_zero hp hp)) hh_ne
+  · -- Factored identity
+    have hp_near : ∀ᶠ z in 𝓝[≠] p, z ≠ 0 := by
+      rw [eventually_nhdsWithin_iff]; filter_upwards [isOpen_ne.mem_nhds hp] with z hz _; exact hz
+    exact ((hmap hh_eq).and hp_near).mono fun z ⟨hz_eq, hz_ne⟩ => by
+      simp only [smul_eq_mul] at hz_eq ⊢
+      rw [hz_eq, show -z⁻¹ - -p⁻¹ = (z - p) * (z * p)⁻¹ from by field_simp; ring, mul_zpow]
+      calc (z - p) ^ n * (z * p)⁻¹ ^ n * h (-z⁻¹)
+          = (z - p) ^ n * ((z * p) ^ (-n) * h (-z⁻¹)) := by
+            rw [inv_zpow, zpow_neg]; ring
+
 /-- T-invariance of vanishing order: ord(ρ+1) = ord(ρ) for modular forms of Γ(1).
 
 For f ∈ M_k(Γ(1)), T-periodicity gives f(z+1) = f(z), hence
 meromorphicOrderAt at ρ+1 equals meromorphicOrderAt at ρ. -/
-private lemma ord_rho_plus_one_eq_ord_rho :
+lemma ord_rho_plus_one_eq_ord_rho :
     orderOfVanishingAt' f ellipticPoint_rho_plus_one' =
     orderOfVanishingAt' f ellipticPoint_rho' := by
   unfold orderOfVanishingAt'
@@ -307,6 +376,140 @@ private lemma ord_rho_plus_one_eq_ord_rho :
   -- Combine
   show (meromorphicOrderAt G ρ1_cplx).untop₀ = (meromorphicOrderAt G ρ_cplx).untop₀
   rw [step3, hρ1_eq, step4]
+
+/-- T-invariance of vanishing order (general): for any `p : ℍ`,
+`orderOfVanishingAt' f ((1:ℝ) +ᵥ p) = orderOfVanishingAt' f p`.
+
+This generalizes `ord_rho_plus_one_eq_ord_rho` from `ρ` to arbitrary `p`. -/
+lemma ord_add_one_eq (p : ℍ) :
+    orderOfVanishingAt' f ((1 : ℝ) +ᵥ p) = orderOfVanishingAt' f p := by
+  unfold orderOfVanishingAt'
+  -- Define the extended function G
+  set G : ℂ → ℂ := fun w => if h : 0 < w.im then f ⟨w, h⟩ else 0 with hG_def
+  set p_cplx : ℂ := (p : ℂ) with hp_def
+  -- Rewrite ↑(1 +ᵥ p) to p_cplx + 1
+  have hp1_eq : ((1 : ℝ) +ᵥ p : ℍ).val = p_cplx + 1 := by
+    show ((1 : ℝ) : ℂ) + (p : ℂ) = p_cplx + 1
+    simp only [hp_def]; push_cast; ring
+  conv_lhs => rw [show (((1 : ℝ) +ᵥ p : ℍ) : ℂ) = p_cplx + 1 from hp1_eq]
+  -- Step 1: G(w) = G(w - 1) for all w with positive imaginary part (T-periodicity)
+  have hG_periodic : ∀ w : ℂ, 0 < w.im → G w = G (w - 1) := by
+    intro w hw
+    simp only [hG_def]
+    have hw_sub : 0 < (w - 1).im := by simp [sub_im, hw]
+    rw [dif_pos hw, dif_pos hw_sub]
+    set z₀ : ℍ := ⟨w - 1, hw_sub⟩
+    have h_period := SlashInvariantForm.vAdd_width_periodic 1 k 1
+      f.toSlashInvariantForm z₀
+    simp only [Nat.cast_one, mul_one, Int.cast_one] at h_period
+    have h_vadd_coe : ((1 : ℝ) +ᵥ z₀ : ℍ) = ⟨w, hw⟩ := by
+      apply Subtype.ext
+      show ((1 : ℝ) : ℂ) + (z₀ : ℍ).val = w
+      simp only [z₀]; push_cast; ring
+    rw [h_vadd_coe] at h_period
+    simp only [ModularForm.toSlashInvariantForm_coe] at h_period
+    exact h_period
+  -- Step 2: G =ᶠ[𝓝[≠] (p+1)] (fun w => G(w - 1))
+  have hG_eq_near : G =ᶠ[𝓝[≠] (p_cplx + 1)] (fun w => G (w - 1)) := by
+    have hp1_im : 0 < (p_cplx + 1).im := by
+      simp only [hp_def, add_im, one_im, add_zero]; exact p.im_pos
+    rw [Filter.EventuallyEq, eventually_nhdsWithin_iff]
+    filter_upwards [isOpen_lt continuous_const continuous_im |>.mem_nhds hp1_im] with z hz _
+    exact hG_periodic z hz
+  -- Step 3: meromorphicOrderAt G (p+1) = meromorphicOrderAt (G ∘ (·-1)) (p+1)
+  have step3 : meromorphicOrderAt G (p_cplx + 1) =
+      meromorphicOrderAt (fun w => G (w - 1)) (p_cplx + 1) :=
+    meromorphicOrderAt_congr hG_eq_near
+  -- Step 4: meromorphicOrderAt (G ∘ (·-1)) (p+1) = meromorphicOrderAt G p
+  have step4 : meromorphicOrderAt (fun w => G (w - 1)) (p_cplx + 1) =
+      meromorphicOrderAt G p_cplx :=
+    meromorphicOrderAt_comp_sub_const G p_cplx 1
+  rw [step3, step4]
+
+set_option maxRecDepth 1024 in
+set_option maxHeartbeats 1600000 in
+/-- S-invariance of vanishing order (general): for any `p : ℍ`,
+`orderOfVanishingAt' f (S • p) = orderOfVanishingAt' f p`.
+
+This uses the modular S-transformation identity `f(S·z) = z^k · f(z)`:
+the factor `z^k` is analytic and nonvanishing on ℍ, so it doesn't affect
+the meromorphic order. -/
+lemma ord_S_eq (p : ℍ) :
+    orderOfVanishingAt' f (ModularGroup.S • p) = orderOfVanishingAt' f p := by
+  unfold orderOfVanishingAt'
+  set G : ℂ → ℂ := fun w => if h : 0 < w.im then f ⟨w, h⟩ else 0 with hG_def
+  set p_cplx : ℂ := (p : ℂ) with hp_def
+  -- S • p coercion: (S • p : ℂ) = -p⁻¹
+  have hSp_eq : ((ModularGroup.S • p : ℍ) : ℂ) = -p_cplx⁻¹ := by
+    rw [UpperHalfPlane.modular_S_smul, UpperHalfPlane.coe_mk, neg_inv]
+  conv_lhs => rw [hSp_eq]
+  have hp_ne : p_cplx ≠ 0 := by
+    intro h; have him := p.im_pos
+    have : p_cplx.im = 0 := by rw [h]; simp
+    linarith [show p.im = p_cplx.im from rfl]
+  -- Step 1: G(-z⁻¹) = z^k * G(z) for z with z.im > 0 (modular S-identity)
+  have hG_S_ident : ∀ z : ℂ, 0 < z.im → G (-z⁻¹) = z ^ k * G z := by
+    intro z hz
+    simp only [hG_def]
+    have hz_ne : z ≠ 0 := by intro h; simp [h] at hz
+    have h_neg_inv_im : 0 < (-z⁻¹).im := by
+      have : -z⁻¹ = (-z)⁻¹ := neg_inv
+      rw [this]
+      rw [Complex.inv_im]; apply div_pos; · simp [hz]
+      · exact Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne)
+    rw [dif_pos h_neg_inv_im, dif_pos hz]
+    have h_eq := modform_comp_ofComplex_S_identity f z hz
+    rw [show -(1:ℂ)/z = -z⁻¹ from by field_simp] at h_eq
+    rw [show f (↑(UpperHalfPlane.ofComplex (-z⁻¹))) = f ⟨-z⁻¹, h_neg_inv_im⟩ from by
+      congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos h_neg_inv_im] at h_eq
+    rw [show f (↑(UpperHalfPlane.ofComplex z)) = f ⟨z, hz⟩ from by
+      congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos hz] at h_eq
+    exact h_eq
+  -- Step 2: G(-z⁻¹) =ᶠ[𝓝[≠] p] z^k * G(z)
+  have hG_eq_near : (fun z => G (-z⁻¹)) =ᶠ[𝓝[≠] p_cplx] (fun z => z ^ k * G z) := by
+    rw [Filter.EventuallyEq, eventually_nhdsWithin_iff]
+    filter_upwards [isOpen_lt continuous_const continuous_im |>.mem_nhds p.im_pos] with z hz _
+    exact hG_S_ident z hz
+  -- Step 3: Use composition lemma + congr + mul to relate orders
+  -- meromorphicOrderAt G (-p⁻¹) = meromorphicOrderAt (fun z => G(-z⁻¹)) p  (composition)
+  --                               = meromorphicOrderAt (fun z => z^k * G z) p  (congr)
+  --                               = meromorphicOrderAt (·^k) p + meromorphicOrderAt G p  (mul)
+  --                               = 0 + meromorphicOrderAt G p  (zpow analytic nonvanishing)
+  have step_comp : meromorphicOrderAt (fun z => G (-z⁻¹)) p_cplx =
+      meromorphicOrderAt G (-p_cplx⁻¹) :=
+    meromorphicOrderAt_comp_neg_inv G p_cplx hp_ne
+  have step_congr : meromorphicOrderAt (fun z => G (-z⁻¹)) p_cplx =
+      meromorphicOrderAt (fun z => z ^ k * G z) p_cplx :=
+    meromorphicOrderAt_congr hG_eq_near
+  have step_zpow_order : meromorphicOrderAt (fun z : ℂ => z ^ k) p_cplx = 0 := by
+    have h_an : AnalyticAt ℂ (fun z : ℂ => z ^ k) p_cplx := analyticAt_id.zpow hp_ne
+    rw [h_an.meromorphicOrderAt_eq,
+        show analyticOrderAt (fun z : ℂ => z ^ k) p_cplx = 0 from
+          analyticOrderAt_eq_zero.mpr (Or.inr (zpow_ne_zero k hp_ne))]
+    simp
+  -- Combine: meromorphicOrderAt G (-p⁻¹) = meromorphicOrderAt G p
+  suffices h : meromorphicOrderAt G (-p_cplx⁻¹) = meromorphicOrderAt G p_cplx by
+    exact congr_arg WithTop.untop₀ h
+  calc meromorphicOrderAt G (-p_cplx⁻¹)
+      = meromorphicOrderAt (fun z => G (-z⁻¹)) p_cplx := step_comp.symm
+    _ = meromorphicOrderAt (fun z => z ^ k * G z) p_cplx := step_congr
+    _ = meromorphicOrderAt (fun z : ℂ => z ^ k) p_cplx + meromorphicOrderAt G p_cplx := by
+        exact meromorphicOrderAt_mul
+          ((analyticAt_id.zpow hp_ne).meromorphicAt)
+          (by -- MeromorphicAt G p_cplx
+            apply AnalyticAt.meromorphicAt
+            apply analyticAt_iff_eventually_differentiableAt.mpr
+            have h_diffOn : DifferentiableOn ℂ (f ∘ UpperHalfPlane.ofComplex) {w | 0 < w.im} :=
+              UpperHalfPlane.mdifferentiable_iff.mp f.holo'
+            filter_upwards [UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds p.im_pos] with w hw
+            have h_eq : ∀ᶠ u in 𝓝 w, G u = (f ∘ UpperHalfPlane.ofComplex) u := by
+              filter_upwards [UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hw] with u hu
+              simp only [hG_def, Function.comp_apply, dif_pos hu,
+                UpperHalfPlane.ofComplex_apply_of_im_pos hu]
+            exact ((h_diffOn w hw).differentiableAt
+              (UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hw)).congr_of_eventuallyEq h_eq)
+    _ = 0 + meromorphicOrderAt G p_cplx := by rw [step_zpow_order]
+    _ = meromorphicOrderAt G p_cplx := zero_add _
 
 /-! ## Residue of f'/f -/
 
@@ -1184,6 +1387,192 @@ private lemma fdBoundary_mem_fdBox {M : ℝ} (hM : H_height < M)
     exact Real.sqrt_lt_sqrt (by norm_num) (by norm_num)
   exact ⟨by linarith [abs_le.mp h_re], by linarith [abs_le.mp h_re],
          by linarith, by linarith⟩
+
+/-! ## H-Parameterized Boundary Lemma (Bridge)
+
+The following lemma is essential for working with the height-parameterized boundary `fdBoundary_H`.
+It shows that on the arc segments (when 1 < t < 3), the parameterized boundary equals the fixed boundary.
+-/
+
+/-- Bridge: fdBoundary_H H equals fdBoundary on the arc segments (1,3). -/
+private lemma fdBoundary_H_eq_fdBoundary_on_13 (H : ℝ) {t : ℝ}
+    (ht1 : ¬(t ≤ 1)) (ht3 : t ≤ 3) :
+    fdBoundary_H H t = fdBoundary t := by
+  unfold fdBoundary_H fdBoundary
+  simp only [ht1, ↓reduceIte, ht3]
+
+/-- |Re(fdBoundary_H H t)| ≤ 1/2 for t ∈ [0, 5]. -/
+private lemma fdBoundary_H_re_abs_le_half' (H : ℝ) (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    |(fdBoundary_H H t).re| ≤ 1/2 := by
+  by_cases h1 : t ≤ 1
+  · rw [fdBoundary_H_eq_seg1_H h1]
+    show |(fdBoundary_seg1_H H t).re| ≤ 1/2
+    simp [fdBoundary_seg1_H, add_re, mul_re, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+  · push_neg at h1; by_cases h3 : t ≤ 3
+    · rw [fdBoundary_H_eq_fdBoundary_on_13 H (by linarith) h3]
+      exact fdBoundary_re_abs_le_half t ht
+    · push_neg at h3; by_cases h4 : t ≤ 4
+      · rw [fdBoundary_H_eq_seg4_H (by linarith) (by linarith) (by linarith) h4]
+        show |(fdBoundary_seg4_H H t).re| ≤ 1/2
+        simp [fdBoundary_seg4_H, add_re, neg_re, mul_re, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+        ring_nf; norm_num
+      · push_neg at h4
+        rw [fdBoundary_H_eq_seg5_H (by linarith) (by linarith) (by linarith) (by linarith)]
+        show |(fdBoundary_seg5_H H t).re| ≤ 1/2
+        have hre : (fdBoundary_seg5_H H t).re = t - 9/2 := by
+          simp [fdBoundary_seg5_H, add_re, sub_re, mul_re, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+        rw [hre, abs_le]; constructor <;> linarith [ht.2]
+
+set_option maxHeartbeats 400000 in
+/-- Im(fdBoundary_H H t) ≥ √3/2 for t ∈ [0, 5] when H ≥ √3/2. -/
+private lemma fdBoundary_H_im_ge_sqrt3_div_2' {H : ℝ} (hH : Real.sqrt 3 / 2 ≤ H)
+    (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    (fdBoundary_H H t).im ≥ Real.sqrt 3 / 2 := by
+  by_cases h1 : t ≤ 1
+  · rw [fdBoundary_H_eq_seg1_H h1]
+    have him : (fdBoundary_seg1_H H t).im = H - t * (H - Real.sqrt 3 / 2) := by
+      simp [fdBoundary_seg1_H, add_im, mul_im, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+    rw [him]; nlinarith [ht.1]
+  · push_neg at h1; by_cases h3 : t ≤ 3
+    · rw [fdBoundary_H_eq_fdBoundary_on_13 H (by linarith) h3]
+      exact fdBoundary_im_ge_sqrt3_div_2 t ht
+    · push_neg at h3; by_cases h4 : t ≤ 4
+      · rw [fdBoundary_H_eq_seg4_H (by linarith) (by linarith) (by linarith) h4]
+        have him : (fdBoundary_seg4_H H t).im = Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2) := by
+          simp [fdBoundary_seg4_H, add_im, neg_im, mul_im, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+        rw [him]; nlinarith
+      · push_neg at h4
+        rw [fdBoundary_H_eq_seg5_H (by linarith) (by linarith) (by linarith) (by linarith)]
+        have him : (fdBoundary_seg5_H H t).im = H := by
+          simp [fdBoundary_seg5_H, add_im, sub_im, mul_im, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+        rw [him]; linarith
+
+/-- Im(fdBoundary_H H t) > 0 for t ∈ [0, 5] when H > √3/2. -/
+private lemma fdBoundary_H_im_pos' {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
+    (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    0 < (fdBoundary_H H t).im := by
+  have h1 := fdBoundary_H_im_ge_sqrt3_div_2' hH.le t ht
+  have h2 : 0 < Real.sqrt 3 / 2 := by positivity
+  linarith
+
+set_option maxHeartbeats 400000 in
+/-- Im(fdBoundary_H H t) ≤ H for t ∈ [0, 5] when H ≥ 1. -/
+private lemma fdBoundary_H_im_le_H' {H : ℝ} (hH : 1 ≤ H)
+    (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    (fdBoundary_H H t).im ≤ H := by
+  by_cases h1 : t ≤ 1
+  · rw [fdBoundary_H_eq_seg1_H h1]
+    have him : (fdBoundary_seg1_H H t).im = H - t * (H - Real.sqrt 3 / 2) := by
+      simp [fdBoundary_seg1_H, add_im, mul_im, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+    rw [him]
+    nlinarith [mul_nonneg ht.1 (show (0:ℝ) ≤ H - Real.sqrt 3 / 2 from by
+      nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)])]
+  · push_neg at h1; by_cases h3 : t ≤ 3
+    · -- Arc: im = sin(θ) ≤ 1 ≤ H
+      rw [fdBoundary_H_eq_fdBoundary_on_13 H (by linarith) h3]
+      suffices h_im1 : (fdBoundary t).im ≤ 1 by linarith
+      simp only [fdBoundary, show ¬(t ≤ 1) from by linarith, ↓reduceIte]
+      split_ifs with h2
+      · show (fdBoundary_seg2 t).im ≤ 1
+        unfold fdBoundary_seg2
+        rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
+            ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
+        rw [exp_ofReal_mul_I_im]; exact Real.sin_le_one _
+      · show (fdBoundary_seg3 t).im ≤ 1
+        unfold fdBoundary_seg3
+        rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
+            ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
+        rw [exp_ofReal_mul_I_im]; exact Real.sin_le_one _
+    · push_neg at h3; by_cases h4 : t ≤ 4
+      · rw [fdBoundary_H_eq_seg4_H (by linarith) (by linarith) (by linarith) h4]
+        have him : (fdBoundary_seg4_H H t).im = Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2) := by
+          simp [fdBoundary_seg4_H, add_im, neg_im, mul_im, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+        rw [him]
+        nlinarith [mul_nonneg (show (0:ℝ) ≤ 4 - t from by linarith)
+          (show (0:ℝ) ≤ H - Real.sqrt 3 / 2 from by
+            nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)])]
+      · push_neg at h4
+        rw [fdBoundary_H_eq_seg5_H (by linarith) (by linarith) (by linarith) (by linarith)]
+        have him : (fdBoundary_seg5_H H t).im = H := by
+          simp [fdBoundary_seg5_H, add_im, sub_im, mul_im, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+        rw [him]
+
+set_option maxHeartbeats 400000 in
+/-- ‖fdBoundary_H H t‖ ≥ 1 for t ∈ [0, 5] when H ≥ 1. -/
+private lemma fdBoundary_H_norm_ge_one' {H : ℝ} (hH : 1 ≤ H)
+    (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
+    ‖fdBoundary_H H t‖ ≥ 1 := by
+  have hH_sqrt3 : Real.sqrt 3 / 2 ≤ H := by
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+  by_cases h1 : t ≤ 1
+  · rw [fdBoundary_H_eq_seg1_H h1]
+    have hre : (fdBoundary_seg1_H H t).re = 1/2 := by
+      simp [fdBoundary_seg1_H, add_re, mul_re, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+    have him : (fdBoundary_seg1_H H t).im ≥ Real.sqrt 3 / 2 := by
+      have := fdBoundary_H_im_ge_sqrt3_div_2' hH_sqrt3 t ht
+      rwa [fdBoundary_H_eq_seg1_H h1] at this
+    have h_nsq : normSq (fdBoundary_seg1_H H t) ≥ 1 := by
+      rw [normSq_apply, hre]
+      nlinarith [mul_self_le_mul_self (by positivity : (0:ℝ) ≤ Real.sqrt 3 / 2) him,
+                 Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
+    calc ‖fdBoundary_seg1_H H t‖ = Real.sqrt (normSq (fdBoundary_seg1_H H t)) := rfl
+      _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
+      _ = 1 := by simp
+  · push_neg at h1; by_cases h3 : t ≤ 3
+    · -- Arc: fdBoundary_H = fdBoundary = exp(θI), ‖exp(θI)‖ = 1
+      rw [fdBoundary_H_eq_fdBoundary_on_13 H (by linarith) h3]
+      suffices ‖fdBoundary t‖ = 1 by linarith
+      simp only [fdBoundary, show ¬(t ≤ 1) from by linarith, ↓reduceIte]
+      split_ifs with h2
+      · show ‖fdBoundary_seg2 t‖ = 1
+        unfold fdBoundary_seg2
+        rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
+            ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
+        exact Complex.norm_exp_ofReal_mul_I _
+      · show ‖fdBoundary_seg3 t‖ = 1
+        unfold fdBoundary_seg3
+        rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
+            ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
+        exact Complex.norm_exp_ofReal_mul_I _
+    · push_neg at h3; by_cases h4 : t ≤ 4
+      · rw [fdBoundary_H_eq_seg4_H (by linarith) (by linarith) (by linarith) h4]
+        have hre : (fdBoundary_seg4_H H t).re = -(1/2) := by
+          simp [fdBoundary_seg4_H, add_re, neg_re, mul_re, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+          ring
+        have him : (fdBoundary_seg4_H H t).im ≥ Real.sqrt 3 / 2 := by
+          have := fdBoundary_H_im_ge_sqrt3_div_2' hH_sqrt3 t ht
+          rwa [fdBoundary_H_eq_seg4_H (by linarith) (by linarith) (by linarith) h4] at this
+        have h_nsq : normSq (fdBoundary_seg4_H H t) ≥ 1 := by
+          rw [normSq_apply, hre]
+          nlinarith [mul_self_le_mul_self (by positivity : (0:ℝ) ≤ Real.sqrt 3 / 2) him,
+                     Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
+        calc ‖fdBoundary_seg4_H H t‖ = Real.sqrt (normSq (fdBoundary_seg4_H H t)) := rfl
+          _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
+          _ = 1 := by simp
+      · push_neg at h4
+        rw [fdBoundary_H_eq_seg5_H (by linarith) (by linarith) (by linarith) (by linarith)]
+        have him : (fdBoundary_seg5_H H t).im = H := by
+          simp [fdBoundary_seg5_H, add_im, sub_im, mul_im, I_re, I_im, ofReal_re, ofReal_im, div_ofNat]
+        have h_nsq : normSq (fdBoundary_seg5_H H t) ≥ 1 := by
+          rw [normSq_apply]
+          have him_ge : (fdBoundary_seg5_H H t).im ≥ 1 := by rw [him]; linarith
+          nlinarith [mul_self_nonneg (fdBoundary_seg5_H H t).re,
+            mul_self_le_mul_self (by linarith : (0:ℝ) ≤ 1) him_ge]
+        calc ‖fdBoundary_seg5_H H t‖ = Real.sqrt (normSq (fdBoundary_seg5_H H t)) := rfl
+          _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
+          _ = 1 := by simp
+
+/-- fdBoundary_H H image lies in fdBox M when 1 ≤ H < M. -/
+private lemma fdBoundary_H_mem_fdBox' {H M : ℝ} (hH : 1 ≤ H) (hM : H < M)
+    (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) : fdBoundary_H H t ∈ fdBox M := by
+  have hH_sqrt3 : Real.sqrt 3 / 2 ≤ H := by
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+  have h_re := fdBoundary_H_re_abs_le_half' H t ht
+  have h_im_lo := fdBoundary_H_im_ge_sqrt3_div_2' hH_sqrt3 t ht
+  have h_im_hi := fdBoundary_H_im_le_H' hH t ht
+  exact ⟨by linarith [abs_le.mp h_re], by linarith [abs_le.mp h_re],
+         by nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num), Real.sqrt_nonneg 3],
+         by linarith⟩
 
 /-- FD zeros projected to ℂ. -/
 private def Sfd (zeros : Finset ℍ) : Finset ℂ := zeros.image (fun s : ℍ => (s : ℂ))
@@ -2765,124 +3154,1451 @@ theorem pv_equals_residue_sum_of_crossingCauchy_auto_of_integrable
         (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) :=
   pv_equals_residue_sum f hint zeros hzeros hzeros_fd hzeros_complete
 
-/-! ### M16: Auto-discharge of crossing-Cauchy hypothesis
+/-! ## Parameterized-H Residue Theorem (M3)
 
-The key theorem `fdBoundary_crossing_cauchy` shows that fdBoundary, being a
-PiecewiseC1Immersion, automatically satisfies the Cauchy filter condition for the
-ε-cutoff Cauchy kernel integral. -/
+The **parameterized-H** versions of the residue theorem work with `fdBoundary_H H`
+instead of the fixed-height `fdBoundary`. This allows choosing any `H ≥ 1` for the
+truncation height, which is essential for composing with the modular side. -/
+
+/-! ### fdBox height for parameterized boundary -/
+
+omit f hf in
+/-- fdBox height for the H-parameterized boundary: large enough to contain both
+    the curve `fdBoundary_H H` and all zeros in `zeros`. -/
+private noncomputable def fdBox_M_H (H : ℝ) (zeros : Finset ℍ) : ℝ :=
+  max (H + 1) (fdBox_M zeros)
+
+omit f hf in
+private lemma fdBox_M_H_half_lt (H : ℝ) (zeros : Finset ℍ) :
+    (1:ℝ)/2 < fdBox_M_H H zeros :=
+  lt_of_lt_of_le (fdBox_M_half_lt zeros) (le_max_right _ _)
+
+omit f hf in
+private lemma fdBox_M_H_gt_H (H : ℝ) (zeros : Finset ℍ) :
+    H < fdBox_M_H H zeros :=
+  lt_of_lt_of_le (by linarith) (le_max_left _ _)
+
+omit f hf in
+private lemma fdBox_M_H_gt_zeros (H : ℝ) {zeros : Finset ℍ} :
+    ∀ s ∈ zeros, (s : ℂ).im < fdBox_M_H H zeros := fun s hs =>
+  lt_of_lt_of_le (fdBox_M_gt_zeros s hs) (le_max_right _ _)
+
+/-- FD zeros (Sfd) are contained in allZerosInFdBox for the H-parameterized box. -/
+private lemma Sfd_sub_allZeros_H (H : ℝ) {zeros : Finset ℍ}
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain) :
+    ∀ s ∈ Sfd zeros, s ∈ allZerosInFdBox f hf (fdBox_M_H_half_lt H zeros) := by
+  intro z hz
+  rw [mem_allZerosInFdBox_iff]
+  constructor
+  · exact Sfd_in_fdBox hzeros_fd (fdBox_M_H_gt_zeros H) z hz
+  · simp only [Sfd, Finset.mem_image] at hz
+    obtain ⟨s, hs, rfl⟩ := hz
+    show modularFormCompOfComplex f (s : ℂ) = 0
+    change (f ∘ UpperHalfPlane.ofComplex) (s : ℂ) = 0
+    rw [Function.comp_apply, UpperHalfPlane.ofComplex_apply_of_im_pos s.im_pos]
+    exact hzeros s hs
+
+/-! ### FTC helper for closed curves in slit plane -/
+
+/-- FTC integral-zero helper: if `γ` is closed on `[0,5]`, avoids `z₀`,
+    `ω*(γ(t)-z₀) ∈ slitPlane` for some `ω ≠ 0`, and `γ` is differentiable
+    off `fdBoundaryFullPartition` with bounded derivative,
+    then `∫₀⁵ (γ(t)-z₀)⁻¹ * γ'(t) dt = 0`.
+
+    This factors out the common FTC pattern from all three slit-plane cases
+    (‖z₀‖ < 1, Re z₀ > 1/2, Re z₀ < -1/2). -/
+lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ} (hω : ω ≠ 0)
+    (hγ_cont : Continuous γ) (hγ_closed : γ 0 = γ 5)
+    (h_off : ∀ t ∈ Icc (0:ℝ) 5, γ t ≠ z₀)
+    (h_slit : ∀ t ∈ Icc (0:ℝ) 5, ω * (γ t - z₀) ∈ Complex.slitPlane)
+    (hγ_diff : ∀ t, t ∉ (fdBoundaryFullPartition : Finset ℝ) →
+      DifferentiableAt ℝ γ t)
+    (hγ_deriv_cont : ∀ t ∈ Ioo (0:ℝ) 5, t ∉ (fdBoundaryFullPartition : Finset ℝ) →
+      ContinuousAt (deriv γ) t)
+    (hγ_deriv_bdd : ∃ Mγ : ℝ, ∀ t ∈ Icc (0:ℝ) 5, ‖deriv γ t‖ ≤ Mγ) :
+    ∫ t in (0:ℝ)..5, (γ t - z₀)⁻¹ * deriv γ t = 0 := by
+  set F : ℝ → ℂ := fun t => Complex.log (ω * (γ t - z₀)) with hF_def
+  set F' : ℝ → ℂ := fun t => (γ t - z₀)⁻¹ * deriv γ t with hF'_def
+  -- (a) F is continuous on [0, 5]
+  have hF_cont : ContinuousOn F (Icc 0 5) :=
+    ContinuousOn.clog (continuousOn_const.mul
+      (hγ_cont.continuousOn.sub continuousOn_const)) h_slit
+  -- (b) HasDerivAt for t ∈ (0,5) \ partition
+  have hF_deriv : ∀ t ∈ Ioo (0:ℝ) 5 \ (↑fdBoundaryFullPartition : Set ℝ),
+      HasDerivAt F (F' t) t := by
+    intro t ⟨ht_ioo, ht_not_P⟩
+    have h_diff := hγ_diff t (Finset.mem_coe.not.mp ht_not_P)
+    have h_slit_t := h_slit t (Ioo_subset_Icc_self ht_ioo)
+    have h_log := Complex.hasDerivAt_log h_slit_t
+    have h_inner : HasDerivAt (fun u => ω * (γ u - z₀)) (ω * deriv γ t) t := by
+      convert (h_diff.hasDerivAt.sub_const z₀).const_mul ω using 1
+    have h_comp := h_log.scomp t h_inner
+    convert h_comp using 1
+    rw [smul_eq_mul]
+    have hne := sub_ne_zero.mpr (h_off t (Ioo_subset_Icc_self ht_ioo))
+    have hωne : ω * (γ t - z₀) ≠ 0 := mul_ne_zero hω hne
+    simp only [hF'_def]
+    field_simp
+  -- (c) F' integrable (direct proof avoids expensive HO unification)
+  have hF'_int : IntervalIntegrable F' volume 0 5 := by
+    obtain ⟨Mγ, hMγ⟩ := hγ_deriv_bdd
+    have hg_cont : ContinuousOn (fun z => (z - z₀)⁻¹) (γ '' Icc 0 5) :=
+      (continuousOn_id.sub continuousOn_const).inv₀
+        (fun z ⟨t, ht, hzt⟩ => by rw [← hzt]; exact sub_ne_zero.mpr (h_off t ht))
+    obtain ⟨Mg, hMg⟩ := continuousOn_image_bounded hγ_cont.continuousOn hg_cont
+    refine intervalIntegrable_of_continuousOn_off_finite
+      (P := fdBoundaryFullPartition) (Mg * Mγ) (by norm_num) ?_ ?_
+    · -- ContinuousOn F' off partition
+      intro t ⟨ht_Icc, ht_not_P⟩
+      show ContinuousWithinAt (fun t => (γ t - z₀)⁻¹ * deriv γ t) _ t
+      have ht_Ioo : t ∈ Ioo (0:ℝ) 5 := by
+        refine ⟨lt_of_le_of_ne ht_Icc.1 ?_, lt_of_le_of_ne ht_Icc.2 ?_⟩
+        · intro h; exact ht_not_P (by rw [← h]; simp [fdBoundaryFullPartition])
+        · intro h; exact ht_not_P (by rw [h]; simp [fdBoundaryFullPartition])
+      exact ((hγ_cont.continuousAt.sub continuousAt_const).inv₀
+        (sub_ne_zero.mpr (h_off t ht_Icc))).continuousWithinAt.mul
+        (hγ_deriv_cont t ht_Ioo (Finset.mem_coe.not.mp ht_not_P)).continuousWithinAt
+    · -- Bounded
+      intro t ht
+      show ‖(γ t - z₀)⁻¹ * deriv γ t‖ ≤ Mg * Mγ
+      rw [norm_mul]
+      exact mul_le_mul (hMg _ ⟨t, ht, rfl⟩) (hMγ t ht) (norm_nonneg _)
+        (le_trans (norm_nonneg _) (hMg _ ⟨t, ht, rfl⟩))
+  -- (d) Apply FTC
+  have hFTC := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le F F'
+    (by norm_num : (0:ℝ) ≤ 5) fdBoundaryFullPartition.countable_toSet
+    hF_cont hF_deriv hF'_int
+  rw [hFTC]; show F 5 - F 0 = 0
+  simp only [hF_def, hγ_closed]; ring
+
+/-! ### Winding zero for non-FD points (H-parameterized) -/
+
+/-- Winding number = 0 for points in fdBox that are NOT in the fundamental domain,
+using the parameterized boundary `fdBoundary_H H`. Same 3-case proof structure
+as `winding_zero_for_non_fd_point` but via the `ftc_integral_zero_of_closed_slit` helper. -/
+private lemma winding_zero_for_non_fd_point_H {H : ℝ} (hH : 1 ≤ H)
+    {zeros : Finset ℍ} (z₀ : ℂ)
+    (hz₀_zero : z₀ ∈ allZerosInFdBox f hf (fdBox_M_H_half_lt H zeros))
+    (hz₀_not_sfd : z₀ ∉ Sfd zeros)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    generalizedWindingNumber' (fdBoundary_H H) 0 5 z₀ = 0 := by
+  -- Extract z₀ properties
+  rw [mem_allZerosInFdBox_iff] at hz₀_zero
+  have hz₀_box : z₀ ∈ fdBox (fdBox_M_H H zeros) := hz₀_zero.1
+  have hz₀_zero_f : modularFormCompOfComplex f z₀ = 0 := hz₀_zero.2
+  have hz₀_im_pos : 0 < z₀.im := fdBox_im_pos hz₀_box
+  -- Step 1: z₀ is not on the curve
+  have h_off : ∀ t ∈ Icc (0:ℝ) 5, fdBoundary_H H t ≠ z₀ := by
+    intro t ht heq; exact h_nv t ht (heq ▸ hz₀_zero_f)
+  -- Step 2: z₀ ∉ fundamentalDomain
+  have hz₀_not_fd : ¬ (|z₀.re| ≤ 1/2 ∧ ‖z₀‖ ≥ 1) := by
+    intro ⟨h_re, h_norm⟩
+    set s : ℍ := ⟨z₀, hz₀_im_pos⟩
+    have h_fs : f s = 0 := by
+      have := hz₀_zero_f
+      change (f ∘ UpperHalfPlane.ofComplex) z₀ = 0 at this
+      rw [Function.comp_apply, UpperHalfPlane.ofComplex_apply_of_im_pos hz₀_im_pos] at this
+      exact this
+    have h_fd : s ∈ fundamentalDomain := by
+      simp only [fundamentalDomain, mem_setOf_eq]
+      exact ⟨by show |s.re| ≤ 1/2; exact h_re, h_norm⟩
+    exact hz₀_not_sfd (by
+      simp only [Sfd, Finset.mem_image]
+      exact ⟨s, hzeros_complete s h_fd h_fs, rfl⟩)
+  -- Step 3: |Re z₀| > 1/2 or ‖z₀‖ < 1
+  push_neg at hz₀_not_fd
+  -- Step 4: Convert PV winding number to classical integral
+  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+  have h_classical := generalizedWindingNumber_eq_classical_away (fdBoundary_HCurve H) z₀
+    (by intro t ht; exact h_off t ht)
+  rw [show (fdBoundary_HCurve H).toFun = fdBoundary_H H from rfl,
+      show (fdBoundary_HCurve H).a = (0:ℝ) from rfl,
+      show (fdBoundary_HCurve H).b = (5:ℝ) from rfl] at h_classical
+  rw [h_classical]
+  -- Step 5: ∫ = 0
+  suffices h_int : ∫ t in (0:ℝ)..5,
+      (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t = 0 by
+    rw [h_int]; simp
+  -- Common curve properties for all cases
+  have hγ_diff : ∀ t, t ∉ (fdBoundaryFullPartition : Finset ℝ) →
+      DifferentiableAt ℝ (fdBoundary_H H) t := by
+    intro t ht
+    apply fdBoundary_H_differentiableAt_off_partition H
+    intro habs; exact ht (by
+      simp only [fdBoundaryFullPartition, fdBoundary_H_partition,
+        Finset.mem_insert, Finset.mem_singleton] at habs ⊢; tauto)
+  have hγ_deriv_cont : ∀ t ∈ Ioo (0:ℝ) 5,
+      t ∉ (fdBoundaryFullPartition : Finset ℝ) →
+      ContinuousAt (deriv (fdBoundary_H H)) t :=
+    (fdBoundary_HCurve H).deriv_continuous_off_partition
+  have hγ_deriv_bdd : ∃ Mγ : ℝ, ∀ t ∈ Icc (0:ℝ) 5,
+      ‖deriv (fdBoundary_H H) t‖ ≤ Mγ :=
+    piecewiseC1Immersion_deriv_bounded (fdBoundary_HImmersion H hH_sqrt3)
+  -- Case split
+  by_cases h_re_half : |z₀.re| ≤ 1/2
+  · -- Case C: |z₀.re| ≤ 1/2 and ‖z₀‖ < 1, use ω = -I
+    have h_norm_lt : ‖z₀‖ < 1 := hz₀_not_fd h_re_half
+    apply ftc_integral_zero_of_closed_slit (ω := -I)
+      (by simp [Complex.ext_iff, I_re, I_im])
+      (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_off
+    · -- h_slit: (-I) * (fdBoundary_H H t - z₀) ∈ slitPlane
+      intro t ht
+      rw [Complex.mem_slitPlane_iff]
+      by_contra h_not_slit; push_neg at h_not_slit
+      have h_re_neg_I : ((-I) * (fdBoundary_H H t - z₀)).re =
+          (fdBoundary_H H t).im - z₀.im := by
+        simp [mul_re, neg_re, I_re, I_im, sub_re, sub_im]
+      have h_im_neg_I : ((-I) * (fdBoundary_H H t - z₀)).im =
+          -((fdBoundary_H H t).re - z₀.re) := by
+        simp [mul_im, neg_im, I_re, I_im, sub_re, sub_im]
+      have h1 : (fdBoundary_H H t).im ≤ z₀.im := by
+        linarith [h_re_neg_I ▸ h_not_slit.1]
+      have h2 : (fdBoundary_H H t).re = z₀.re := by
+        have := h_not_slit.2; rw [h_im_neg_I] at this; linarith
+      have h_norm_curve : ‖fdBoundary_H H t‖ ≥ 1 := fdBoundary_H_norm_ge_one' hH t ht
+      have h_sq_norm_z₀ := Complex.sq_norm z₀
+      rw [Complex.normSq_apply] at h_sq_norm_z₀
+      have h_sq_norm_curve := Complex.sq_norm (fdBoundary_H H t)
+      rw [Complex.normSq_apply] at h_sq_norm_curve
+      rw [h2] at h_sq_norm_curve
+      have h_z₀_sq_lt : ‖z₀‖ ^ 2 < 1 := by nlinarith [norm_nonneg z₀]
+      have h_curve_sq_ge : ‖fdBoundary_H H t‖ ^ 2 ≥ 1 := by
+        nlinarith [norm_nonneg (fdBoundary_H H t)]
+      have h_im_pos : 0 < (fdBoundary_H H t).im := fdBoundary_H_im_pos' hH_sqrt3 t ht
+      have h_prod : (z₀.im - (fdBoundary_H H t).im) *
+          (z₀.im + (fdBoundary_H H t).im) ≥ 0 :=
+        mul_nonneg (by linarith) (by linarith)
+      nlinarith
+    · exact hγ_diff
+    · exact hγ_deriv_cont
+    · exact hγ_deriv_bdd
+  · -- Cases A/B: |z₀.re| > 1/2
+    push_neg at h_re_half
+    by_cases h_re_pos : z₀.re > 1/2
+    · -- Case A: z₀.re > 1/2, use ω = -1
+      apply ftc_integral_zero_of_closed_slit (ω := -1) (by norm_num)
+        (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_off
+      · intro t ht; rw [Complex.mem_slitPlane_iff]; left
+        show 0 < ((-1 : ℂ) * (fdBoundary_H H t - z₀)).re
+        simp only [neg_one_mul, neg_re, sub_re]
+        linarith [abs_le.mp (fdBoundary_H_re_abs_le_half' H t ht)]
+      · exact hγ_diff
+      · exact hγ_deriv_cont
+      · exact hγ_deriv_bdd
+    · -- Case B: z₀.re < -1/2, use ω = 1
+      have h_re_neg : z₀.re < -1/2 := by
+        cases abs_cases z₀.re with
+        | inl h => linarith [h.1]
+        | inr h => linarith [h.1, h_re_pos]
+      apply ftc_integral_zero_of_closed_slit (ω := 1) one_ne_zero
+        (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_off
+      · intro t ht; rw [Complex.mem_slitPlane_iff]; left
+        simp only [one_mul, sub_re]
+        linarith [abs_le.mp (fdBoundary_H_re_abs_le_half' H t ht)]
+      · exact hγ_diff
+      · exact hγ_deriv_cont
+      · exact hγ_deriv_bdd
+
+/-! ### Residue theorem for fdBoundary_H -/
+
+include hf in
+/-- The residue theorem applied to `logDeriv F` along `fdBoundary_H H`.
+    Parameterized-H version of `integral_logDeriv_eq_sum_winding_residue`. -/
+private lemma integral_logDeriv_eq_sum_winding_residue_H {H : ℝ} (hH : 1 ≤ H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    pv_integral f (fdBoundary_H H) 0 5 =
+      2 * Real.pi * I * ∑ s ∈ zeros,
+        generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) *
+          residueSimplePole (logDeriv (modularFormCompOfComplex f)) (s : ℂ) := by
+  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+  set M := fdBox_M_H H zeros with hM_def
+  set U := fdBox M with hU_def
+  set Sbox := allZerosInFdBox f hf (fdBox_M_H_half_lt H zeros) with hSbox_def
+  set F := logDeriv (modularFormCompOfComplex f) with hF_def
+  have hU_open : IsOpen U := fdBox_isOpen M
+  have hU_convex : Convex ℝ U := fdBox_convex M
+  have hSbox_in_U : ∀ s ∈ Sbox, s ∈ U := by
+    intro s hs; rw [mem_allZerosInFdBox_iff] at hs; exact hs.1
+  have hγ_closed : (fdBoundary_HCurve H).IsClosed := fdBoundary_HImmersion_closed H hH_sqrt3
+  have hγ_in_U : ∀ t ∈ Icc (fdBoundary_HCurve H).a (fdBoundary_HCurve H).b,
+      (fdBoundary_HCurve H).toFun t ∈ U := by
+    intro t ht; show fdBoundary_H H t ∈ fdBox M
+    exact fdBoundary_H_mem_fdBox' hH (fdBox_M_H_gt_H H zeros) t ht
+  have hγ_avoids : ∀ s ∈ Sbox,
+      ∀ t ∈ Icc (fdBoundary_HCurve H).a (fdBoundary_HCurve H).b,
+      (fdBoundary_HCurve H).toFun t ≠ s := by
+    intro s hs t ht heq
+    rw [mem_allZerosInFdBox_iff] at hs
+    have heq' : fdBoundary_H H t = s := heq
+    exact h_nv t ht (heq' ▸ hs.2)
+  have hSimplePoles : ∀ s ∈ Sbox, HasSimplePoleAt F s :=
+    hasSimplePoleAt_at_allZero f hf (fdBox_M_H_half_lt H zeros)
+  have hγ'_bdd := piecewiseC1Immersion_deriv_bounded (fdBoundary_HImmersion H hH_sqrt3)
+  -- Patched integrand
+  set Fp := logDeriv_patched F Sbox hSimplePoles with hFp_def
+  -- DifferentiableOn Fp on U \ Sbox
+  have hFp_diff : DifferentiableOn ℂ Fp (U \ Sbox) := by
+    intro z hz
+    have h_ev : Fp =ᶠ[𝓝 z] F := by
+      have h_open : IsOpen ((↑Sbox : Set ℂ)ᶜ) := Sbox.finite_toSet.isClosed.isOpen_compl
+      filter_upwards [h_open.mem_nhds hz.2] with w hw
+      exact logDeriv_patched_eq_raw_off_S0 F Sbox hSimplePoles hw
+    have hz_not_zero : modularFormCompOfComplex f z ≠ 0 := by
+      intro h_zero
+      exact hz.2 (Finset.mem_coe.mpr
+        (by rw [hSbox_def, mem_allZerosInFdBox_iff]; exact ⟨hz.1, h_zero⟩))
+    exact (h_ev.differentiableAt_iff.mpr
+      (analyticAt_logDeriv_off_zeros f z (fdBox_im_pos hz.1)
+        hz_not_zero).differentiableAt).differentiableWithinAt
+  -- Apply residue theorem
+  have h_res := integral_eq_sum_residues_of_avoids U hU_open hU_convex Sbox hSbox_in_U
+    Fp hFp_diff (fdBoundary_HCurve H) hγ_closed hγ_in_U hγ_avoids
+    (fun s hs => hasSimplePoleAt_logDeriv_patched F Sbox hSimplePoles s hs)
+    (logDeriv_patched_hf_ext F Sbox hSimplePoles) hγ'_bdd
+  rw [show (fdBoundary_HCurve H).a = (0:ℝ) from rfl,
+      show (fdBoundary_HCurve H).b = (5:ℝ) from rfl] at h_res
+  rw [show (fdBoundary_HCurve H).toFun = fdBoundary_H H from rfl] at h_res
+  -- Rewrite LHS: Fp(γ(t)) = F(γ(t))
+  have h_lhs : Set.EqOn (fun t => Fp (fdBoundary_H H t) * deriv (fdBoundary_H H) t)
+      (fun t => F (fdBoundary_H H t) * deriv (fdBoundary_H H) t) (Set.uIcc 0 5) := by
+    intro t ht
+    rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)] at ht
+    show Fp (fdBoundary_H H t) * _ = F (fdBoundary_H H t) * _
+    rw [show Fp (fdBoundary_H H t) = F (fdBoundary_H H t) from
+      logDeriv_patched_eq_raw_off_S0 F Sbox hSimplePoles
+        (fun habs => hγ_avoids (fdBoundary_H H t) habs t ht rfl)]
+  rw [intervalIntegral.integral_congr h_lhs] at h_res
+  -- Rewrite RHS: residueSimplePole(Fp) = residueSimplePole(F)
+  have h_rhs : ∑ s ∈ Sbox,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 s * residueSimplePole Fp s =
+    ∑ s ∈ Sbox,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 s * residueSimplePole F s :=
+    Finset.sum_congr rfl fun s hs => by
+      congr 1; exact residue_logDeriv_patched_eq_raw F Sbox hSimplePoles s hs
+  rw [h_rhs] at h_res
+  -- Split Sbox = Sfd ∪ (Sbox \ Sfd)
+  have h_Sfd_sub_Sbox : Sfd zeros ⊆ Sbox :=
+    Sfd_sub_allZeros_H f hf H hzeros hzeros_fd
+  rw [show (∑ s ∈ Sbox,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 s * residueSimplePole F s) =
+    (∑ s ∈ Sfd zeros,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 s * residueSimplePole F s) +
+    (∑ s ∈ Sbox \ Sfd zeros,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 s * residueSimplePole F s) by
+    rw [← Finset.sum_sdiff h_Sfd_sub_Sbox]; ac_rfl] at h_res
+  -- Show (Sbox \ Sfd) term = 0
+  have h_diff_zero : ∑ s ∈ Sbox \ Sfd zeros,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 s *
+        residueSimplePole F s = 0 := by
+    apply Finset.sum_eq_zero; intro s hs
+    rw [winding_zero_for_non_fd_point_H f hf hH s
+        (Finset.mem_sdiff.mp hs).1 (Finset.mem_sdiff.mp hs).2 h_nv hzeros_complete,
+      zero_mul]
+  rw [h_diff_zero, add_zero] at h_res
+  show pv_integral f (fdBoundary_H H) 0 5 = _
+  unfold pv_integral; rw [h_res, sum_Sfd_eq_sum_zeros]
+
+/-! ### Main parameterized CPV theorem -/
+
+include hf in
+/-- **Main M3 theorem**: The argument principle for `f'/f` on `fdBoundary_H H`.
+
+    `pv_integral f (fdBoundary_H H) 0 5 = 2πi · Σ_s gWN_H(s) · ord_s(f)`
+
+    where the sum is over all zeros of `f` in the fundamental domain. -/
+theorem cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_generalizedPV
+    {H : ℝ} (hH : 1 ≤ H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    pv_integral f (fdBoundary_H H) 0 5 =
+      2 * Real.pi * I * ∑ s ∈ zeros,
+        generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) *
+          (orderOfVanishingAt' f s : ℂ) := by
+  have h_rt := integral_logDeriv_eq_sum_winding_residue_H f hf hH h_nv zeros hzeros
+    hzeros_fd hzeros_complete
+  rw [h_rt]; congr 1
+  apply Finset.sum_congr rfl
+  intro s hs; congr 1
+  exact residue_logDeriv_eq_order f s (hzeros s hs)
+
+/-! ### H-parameterized winding-to-effectiveWinding bridge
+
+The bridge converts the gWN-based sum from `cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_generalizedPV`
+into an `effectiveWinding`-based sum suitable for the Core identity.
+
+At `H = H_height`, this is a direct rewrite using `fdBoundary_H_eq_fdBoundary` and
+the existing `h_sum_winding_eq_neg_ew`. For general `H`, a hypothesis
+`h_winding_match` is required to match gWN_H to effectiveWinding at each zero.
+
+Key helper: `gWN_H_eq_zero_of_im_gt_H` shows that zeros above the curve have
+gWN_H = 0, handling the "high zeros" case uniformly. -/
+
+/-- gWN_H(s) = 0 when Im(s) > H: the point is above the curve.
+Since `fdBoundary_H H` has `Im ≤ H < Im(s)`, the function `γ(t) - s`
+has strictly negative imaginary part → lies in the slit plane → `Complex.log`
+is an antiderivative → FTC on the closed curve gives 0. -/
+private lemma gWN_H_eq_zero_of_im_gt_H {H : ℝ} (hH : 1 ≤ H)
+    (s : ℍ) (h_im : H < (s : ℂ).im)
+    (h_nv_s : ∀ t ∈ Icc (0:ℝ) 5, fdBoundary_H H t ≠ (s : ℂ)) :
+    generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) = 0 := by
+  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+  have h_classical := generalizedWindingNumber_eq_classical_away (fdBoundary_HCurve H) (s : ℂ)
+    (by intro t ht; exact h_nv_s t ht)
+  rw [show (fdBoundary_HCurve H).toFun = fdBoundary_H H from rfl,
+      show (fdBoundary_HCurve H).a = (0:ℝ) from rfl,
+      show (fdBoundary_HCurve H).b = (5:ℝ) from rfl] at h_classical
+  rw [h_classical]
+  suffices h_int : ∫ t in (0:ℝ)..5,
+      (fdBoundary_H H t - (s : ℂ))⁻¹ * deriv (fdBoundary_H H) t = 0 by
+    rw [h_int]; simp
+  apply ftc_integral_zero_of_closed_slit (ω := 1) one_ne_zero
+    (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_nv_s
+  · intro t ht; rw [Complex.mem_slitPlane_iff]; right
+    simp only [one_mul, sub_im]
+    intro h_abs
+    linarith [fdBoundary_H_im_le_H' hH t ht]
+  · intro t ht
+    apply fdBoundary_H_differentiableAt_off_partition H
+    intro habs; exact ht (by
+      simp only [fdBoundaryFullPartition, fdBoundary_H_partition,
+        Finset.mem_insert, Finset.mem_singleton] at habs ⊢; tauto)
+  · exact (fdBoundary_HCurve H).deriv_continuous_off_partition
+  · exact piecewiseC1Immersion_deriv_bounded (fdBoundary_HImmersion H hH_sqrt3)
+
+/-- Sum bridge at `H_height`: `Σ gWN_{H_height}(s) · ord(s) = -Σ ew(s) · ord(s)`.
+
+Since `fdBoundary_H H_height = fdBoundary` (definitionally), this forwards directly
+to the existing `h_sum_winding_eq_neg_ew`. -/
+private lemma h_sum_winding_eq_neg_ew_at_H_height
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H_height t) ≠ 0)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    ∑ s ∈ zeros,
+        generalizedWindingNumber' (fdBoundary_H H_height) 0 5 (s : ℂ) *
+          (orderOfVanishingAt' f s : ℂ) =
+      -(∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) :=
+  -- fdBoundary_H H_height = fdBoundary by rfl, so types match definitionally
+  h_sum_winding_eq_neg_ew f h_nv zeros hzeros hzeros_fd hzeros_complete
+
+include hf in
+/-- Derived residue theorem at `H_height`:
+`pv_integral f (fdBoundary_H H_height) 0 5 = -(2πi · Σ ew(s) · ord(s))`.
+
+Combines `cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_generalizedPV` at
+`H = H_height` with the sum bridge `h_sum_winding_eq_neg_ew_at_H_height`. -/
+theorem pv_equals_residue_sum_H_height
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H_height t) ≠ 0)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    pv_integral f (fdBoundary_H H_height) 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  have h_cpv := cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_generalizedPV f hf
+    (le_of_lt H_height_gt_one) h_nv zeros hzeros hzeros_fd hzeros_complete
+  have h_bridge := h_sum_winding_eq_neg_ew_at_H_height f h_nv zeros hzeros hzeros_fd
+    hzeros_complete
+  rw [h_cpv, h_bridge]; ring
+
+/-! ### General-H bridge with winding hypothesis
+
+For `H ≠ H_height`, the correspondence `gWN_H(s) = -(effectiveWinding s)` may
+fail for zeros with `H_height ≤ Im(s) < H` (inside `fdBoundary_H H` but classified
+as `.boundary` by `classifyPoint`). The general bridge therefore takes an explicit
+`h_winding_match` hypothesis. -/
 
 omit hf in
-/-- Helper: if fdBoundary never hits s on [0,5], the cutoff integral is eventually
-constant (and equals the unconditional integral). -/
-private lemma fdBoundary_cutoff_integral_eventually_constant_of_avoids (s : ℂ)
-    (h_avoids : ∀ t ∈ Icc (0:ℝ) 5, fdBoundary t ≠ s) :
-    ∃ L : ℂ, Filter.Tendsto (fun ε =>
-      ∫ t in (0:ℝ)..5,
-        if ε < ‖fdBoundary t - s‖ then
-          (fdBoundary t - s)⁻¹ * deriv fdBoundary t
-        else 0)
-      (𝓝[>] 0) (𝓝 L) := by
-  obtain ⟨δ', hδ', hc⟩ := far_part_constant fdBoundary s
-    (fun t => (fdBoundary t - s)⁻¹ * deriv fdBoundary t)
-    (by norm_num : (0:ℝ) ≤ 5) h_avoids fdBoundary_continuous
-  exact ⟨∫ t in (0:ℝ)..5, (fdBoundary t - s)⁻¹ * deriv fdBoundary t,
-    (Filter.Tendsto.congr' (f₁ := fun _ =>
-      ∫ t in (0:ℝ)..5, (fdBoundary t - s)⁻¹ * deriv fdBoundary t)
-      (by rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
-          exact ⟨Ioo 0 δ', Ioo_mem_nhdsGT hδ', fun ε hε => (hc ε hε).symm⟩)
-      tendsto_const_nhds)⟩
+/-- Sum bridge at general H with explicit winding hypothesis.
+
+The hypothesis `h_winding_match` asserts that for each zero,
+the H-parameterized generalized winding number equals the negation
+of the effective winding coefficient. This is automatically satisfied
+at `H = H_height` via `h_sum_winding_eq_neg_ew_at_H_height`. -/
+private lemma h_sum_winding_eq_neg_ew_H {H : ℝ}
+    (zeros : Finset ℍ)
+    (h_winding_match : ∀ s ∈ zeros,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) =
+        -(effectiveWinding s : ℂ)) :
+    ∑ s ∈ zeros,
+        generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) *
+          (orderOfVanishingAt' f s : ℂ) =
+      -(∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  rw [eq_neg_iff_add_eq_zero, ← Finset.sum_add_distrib]
+  simp_rw [← add_mul]
+  apply Finset.sum_eq_zero
+  intro s hs
+  rw [h_winding_match s hs, neg_add_cancel, zero_mul]
+
+include hf in
+/-- Derived residue theorem at general `H ≥ 1` with winding hypothesis.
+
+`pv_integral f (fdBoundary_H H) 0 5 = -(2πi · Σ ew(s) · ord(s))`
+
+Combines `cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_generalizedPV` with
+`h_sum_winding_eq_neg_ew_H`. The `h_winding_match` hypothesis is dischargeable
+at `H = H_height` from existing infrastructure. -/
+theorem pv_equals_residue_sum_H {H : ℝ} (hH : 1 ≤ H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_winding_match : ∀ s ∈ zeros,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) =
+        -(effectiveWinding s : ℂ)) :
+    pv_integral f (fdBoundary_H H) 0 5 =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  have h_cpv := cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_generalizedPV f hf
+    hH h_nv zeros hzeros hzeros_fd hzeros_complete
+  have h_bridge := h_sum_winding_eq_neg_ew_H f zeros h_winding_match
+  rw [h_cpv, h_bridge]; ring
+
+/-! ## F5-D1: CPV Residue-Side Bridge
+
+Residue-side theorems whose LHS is `pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc`
+(the same CPV object used by the modular side), enabling direct equating in Core.
+
+### M1: Geometric Off-Curve Lemma
+Non-FD points are geometrically off fdBoundary_H without using h_nv.
+
+### M2: CPV Residue Theorem with CPV LHS
+Composes a CPV=standard bridge (under h_nv) with the existing residue theorem.
+
+### M3: CPV→effectiveWinding Bridge
+Combines M2 with the gWN→ew bridge. -/
+
+/-! ### M1: Geometric Off-Curve Lemma -/
+
+omit f hf in
+/-- Points not in the fundamental domain are geometrically off `fdBoundary_H H`.
+
+If z₀ satisfies |Re z₀| > 1/2 or ‖z₀‖ < 1, then z₀ ∉ image(fdBoundary_H H).
+This uses only curve geometry (|Re γ(t)| ≤ 1/2, ‖γ(t)‖ ≥ 1), no h_nv needed. -/
+private lemma off_curve_of_not_in_fd_H {H : ℝ} (hH : 1 ≤ H) (z₀ : ℂ)
+    (hz₀_not_fd : ¬ (|z₀.re| ≤ 1/2 ∧ ‖z₀‖ ≥ 1)) :
+    ∀ t ∈ Icc (0:ℝ) 5, fdBoundary_H H t ≠ z₀ := by
+  push_neg at hz₀_not_fd
+  intro t ht heq
+  by_cases h_re : |z₀.re| ≤ 1/2
+  · -- Case: ‖z₀‖ < 1
+    have h_norm_lt : ‖z₀‖ < 1 := hz₀_not_fd h_re
+    have h_norm_ge : ‖fdBoundary_H H t‖ ≥ 1 := fdBoundary_H_norm_ge_one' hH t ht
+    linarith [heq ▸ h_norm_ge]
+  · -- Case: |Re z₀| > 1/2
+    push_neg at h_re
+    have h_re_le := fdBoundary_H_re_abs_le_half' H t ht
+    linarith [heq ▸ h_re_le]
+
+include hf in
+/-- Winding number = 0 for non-FD points, using geometry only (no `h_nv` needed).
+
+Same conclusion as `winding_zero_for_non_fd_point_H` but derives `h_off` geometrically
+from the off-curve lemma instead of from boundary nonvanishing. -/
+private lemma winding_zero_for_non_fd_point_H_geo {H : ℝ} (hH : 1 ≤ H)
+    {zeros : Finset ℍ} (z₀ : ℂ)
+    (hz₀_zero : z₀ ∈ allZerosInFdBox f hf (fdBox_M_H_half_lt H zeros))
+    (hz₀_not_sfd : z₀ ∉ Sfd zeros)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    generalizedWindingNumber' (fdBoundary_H H) 0 5 z₀ = 0 := by
+  -- Extract z₀ properties
+  rw [mem_allZerosInFdBox_iff] at hz₀_zero
+  have hz₀_im_pos : 0 < z₀.im := fdBox_im_pos hz₀_zero.1
+  -- Step 1: z₀ ∉ FD (same as winding_zero_for_non_fd_point_H)
+  have hz₀_not_fd : ¬ (|z₀.re| ≤ 1/2 ∧ ‖z₀‖ ≥ 1) := by
+    intro ⟨h_re, h_norm⟩
+    set s : ℍ := ⟨z₀, hz₀_im_pos⟩
+    have h_fs : f s = 0 := by
+      have := hz₀_zero.2
+      change (f ∘ UpperHalfPlane.ofComplex) z₀ = 0 at this
+      rw [Function.comp_apply, UpperHalfPlane.ofComplex_apply_of_im_pos hz₀_im_pos] at this
+      exact this
+    have h_fd : s ∈ fundamentalDomain := by
+      simp only [fundamentalDomain, mem_setOf_eq]
+      exact ⟨by show |s.re| ≤ 1/2; exact h_re, h_norm⟩
+    exact hz₀_not_sfd (by
+      simp only [Sfd, Finset.mem_image]
+      exact ⟨s, hzeros_complete s h_fd h_fs, rfl⟩)
+  -- Step 2: h_off from geometry (no h_nv!)
+  have h_off : ∀ t ∈ Icc (0:ℝ) 5, fdBoundary_H H t ≠ z₀ :=
+    off_curve_of_not_in_fd_H hH z₀ hz₀_not_fd
+  -- Step 3: Winding = 0 via FTC on closed slit (same proof as existing)
+  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+  have h_classical := generalizedWindingNumber_eq_classical_away (fdBoundary_HCurve H) z₀
+    (by intro t ht; exact h_off t ht)
+  rw [show (fdBoundary_HCurve H).toFun = fdBoundary_H H from rfl,
+      show (fdBoundary_HCurve H).a = (0:ℝ) from rfl,
+      show (fdBoundary_HCurve H).b = (5:ℝ) from rfl] at h_classical
+  rw [h_classical]
+  suffices h_int : ∫ t in (0:ℝ)..5,
+      (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t = 0 by
+    rw [h_int]; simp
+  push_neg at hz₀_not_fd
+  have hγ_diff : ∀ t, t ∉ (fdBoundaryFullPartition : Finset ℝ) →
+      DifferentiableAt ℝ (fdBoundary_H H) t := by
+    intro t ht
+    apply fdBoundary_H_differentiableAt_off_partition H
+    intro habs; exact ht (by
+      simp only [fdBoundaryFullPartition, fdBoundary_H_partition,
+        Finset.mem_insert, Finset.mem_singleton] at habs ⊢; tauto)
+  have hγ_deriv_cont := (fdBoundary_HCurve H).deriv_continuous_off_partition
+  have hγ_deriv_bdd := piecewiseC1Immersion_deriv_bounded (fdBoundary_HImmersion H hH_sqrt3)
+  by_cases h_re_half : |z₀.re| ≤ 1/2
+  · have h_norm_lt : ‖z₀‖ < 1 := hz₀_not_fd h_re_half
+    apply ftc_integral_zero_of_closed_slit (ω := -I)
+      (by simp [Complex.ext_iff, I_re, I_im])
+      (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_off
+    · intro t ht
+      rw [Complex.mem_slitPlane_iff]
+      by_contra h_not_slit; push_neg at h_not_slit
+      have h_re_neg_I : ((-I) * (fdBoundary_H H t - z₀)).re =
+          (fdBoundary_H H t).im - z₀.im := by
+        simp [mul_re, neg_re, I_re, I_im, sub_re, sub_im]
+      have h_im_neg_I : ((-I) * (fdBoundary_H H t - z₀)).im =
+          -((fdBoundary_H H t).re - z₀.re) := by
+        simp [mul_im, neg_im, I_re, I_im, sub_re, sub_im]
+      have h1 : (fdBoundary_H H t).im ≤ z₀.im := by
+        linarith [h_re_neg_I ▸ h_not_slit.1]
+      have h2 : (fdBoundary_H H t).re = z₀.re := by
+        have := h_not_slit.2; rw [h_im_neg_I] at this; linarith
+      have h_norm_curve : ‖fdBoundary_H H t‖ ≥ 1 := fdBoundary_H_norm_ge_one' hH t ht
+      have h_sq_norm_z₀ := Complex.sq_norm z₀
+      rw [Complex.normSq_apply] at h_sq_norm_z₀
+      have h_sq_norm_curve := Complex.sq_norm (fdBoundary_H H t)
+      rw [Complex.normSq_apply] at h_sq_norm_curve
+      rw [h2] at h_sq_norm_curve
+      have h_z₀_sq_lt : ‖z₀‖ ^ 2 < 1 := by nlinarith [norm_nonneg z₀]
+      have h_curve_sq_ge : ‖fdBoundary_H H t‖ ^ 2 ≥ 1 := by
+        nlinarith [norm_nonneg (fdBoundary_H H t)]
+      have h_im_pos : 0 < (fdBoundary_H H t).im := fdBoundary_H_im_pos' hH_sqrt3 t ht
+      have h_prod : (z₀.im - (fdBoundary_H H t).im) *
+          (z₀.im + (fdBoundary_H H t).im) ≥ 0 :=
+        mul_nonneg (by linarith) (by linarith)
+      nlinarith
+    · exact hγ_diff
+    · exact hγ_deriv_cont
+    · exact hγ_deriv_bdd
+  · push_neg at h_re_half
+    by_cases h_re_pos : z₀.re > 1/2
+    · apply ftc_integral_zero_of_closed_slit (ω := -1) (by norm_num)
+        (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_off
+      · intro t ht; rw [Complex.mem_slitPlane_iff]; left
+        show 0 < ((-1 : ℂ) * (fdBoundary_H H t - z₀)).re
+        simp only [neg_one_mul, neg_re, sub_re]
+        linarith [abs_le.mp (fdBoundary_H_re_abs_le_half' H t ht)]
+      · exact hγ_diff
+      · exact hγ_deriv_cont
+      · exact hγ_deriv_bdd
+    · have h_re_neg : z₀.re < -1/2 := by
+        cases abs_cases z₀.re with
+        | inl h => linarith [h.1]
+        | inr h => linarith [h.1, h_re_pos]
+      apply ftc_integral_zero_of_closed_slit (ω := 1) one_ne_zero
+        (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_off
+      · intro t ht; rw [Complex.mem_slitPlane_iff]; left
+        simp only [one_mul, sub_re]
+        linarith [abs_le.mp (fdBoundary_H_re_abs_le_half' H t ht)]
+      · exact hγ_diff
+      · exact hγ_deriv_cont
+      · exact hγ_deriv_bdd
+
+/-! ### CPV-Standard Bridge
+
+Under nonvanishing, `pv_integral_logDeriv` (CPV integral) equals `pv_integral`
+(standard integral) for any singular set `S_arc`. The CPV truncation removes
+ε-neighborhoods of S_arc points on the curve, but since the integrand is bounded
+(logDeriv is continuous under h_nv), the removed contribution vanishes as ε → 0. -/
+
+omit f hf in
+/-- The fiber `{t : ℝ | fdBoundary_H H t = s}` is finite for any `s : ℂ` and `H > √3/2`.
+
+On each of the 5 piecewise segments, the parameterization is injective:
+- Segments 1, 4: the imaginary part is affine with nonzero slope `±(H - √3/2)`.
+- Segments 2, 3: the curve is `exp(θ(t)*I)` where `θ` is strictly monotone
+  on an interval within `[0, π]` where `cos` is strictly decreasing.
+- Segment 5: the real part is `t - 9/2`, slope 1. -/
+private lemma fdBoundary_H_fiber_finite {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
+    (s : ℂ) : Set.Finite {t : ℝ | fdBoundary_H H t = s} := by
+  -- The fiber is contained in the union of fibers restricted to each piece
+  have hslope : H - Real.sqrt 3 / 2 ≠ 0 := by
+    have := hH; linarith
+  -- On each piece, the fiber is a subsingleton (at most one element)
+  -- Strategy: show the full fiber is contained in a finite set
+  -- We split into 5 subsets and show each is finite
+  suffices h : Set.Finite
+      ({t : ℝ | fdBoundary_H H t = s ∧ t ≤ 1} ∪
+       {t : ℝ | fdBoundary_H H t = s ∧ 1 < t ∧ t ≤ 2} ∪
+       {t : ℝ | fdBoundary_H H t = s ∧ 2 < t ∧ t ≤ 3} ∪
+       {t : ℝ | fdBoundary_H H t = s ∧ 3 < t ∧ t ≤ 4} ∪
+       {t : ℝ | fdBoundary_H H t = s ∧ 4 < t}) by
+    apply Set.Finite.subset h
+    intro t ht
+    simp only [Set.mem_union, Set.mem_setOf_eq]
+    by_cases h1 : t ≤ 1
+    · left; left; left; left; exact ⟨ht, h1⟩
+    · push_neg at h1
+      by_cases h2 : t ≤ 2
+      · left; left; left; right; exact ⟨ht, h1, h2⟩
+      · push_neg at h2
+        by_cases h3 : t ≤ 3
+        · left; left; right; exact ⟨ht, h2, h3⟩
+        · push_neg at h3
+          by_cases h4 : t ≤ 4
+          · left; right; exact ⟨ht, h3, h4⟩
+          · push_neg at h4; right; exact ⟨ht, h4⟩
+  apply Set.Finite.union
+  apply Set.Finite.union
+  apply Set.Finite.union
+  apply Set.Finite.union
+  -- Piece 1: t ≤ 1. Affine with slope -(H - √3/2) in imaginary direction.
+  · apply Set.Subsingleton.finite
+    intro t₁ ⟨ht₁_eq, ht₁_le⟩ t₂ ⟨ht₂_eq, ht₂_le⟩
+    have h1 : fdBoundary_H H t₁ = fdBoundary_H H t₂ := by rw [ht₁_eq, ht₂_eq]
+    simp only [fdBoundary_H, if_pos ht₁_le, if_pos ht₂_le] at h1
+    have h2 := add_left_cancel h1
+    have h3 := mul_right_cancel₀ Complex.I_ne_zero h2
+    have hX : (↑H : ℂ) - ↑(Real.sqrt 3) / 2 ≠ 0 := by
+      rw [show (↑H : ℂ) - ↑(Real.sqrt 3) / 2 = ↑(H - Real.sqrt 3 / 2) from by push_cast; ring]
+      exact Complex.ofReal_ne_zero.mpr hslope
+    have h4 : (↑t₁ : ℂ) * (↑H - ↑(Real.sqrt 3) / 2) = ↑t₂ * (↑H - ↑(Real.sqrt 3) / 2) := by
+      linear_combination -h3
+    exact Complex.ofReal_inj.mp (mul_right_cancel₀ hX h4)
+  -- Piece 2: 1 < t ≤ 2. exp(θ*I) where θ = π/3 + (t-1)*π/6.
+  · apply Set.Subsingleton.finite
+    intro t₁ ⟨ht₁_eq, ht₁_lo, ht₁_hi⟩ t₂ ⟨ht₂_eq, ht₂_lo, ht₂_hi⟩
+    have h1 : fdBoundary_H H t₁ = fdBoundary_H H t₂ := by rw [ht₁_eq, ht₂_eq]
+    simp only [fdBoundary_H, if_neg (not_le.mpr ht₁_lo), if_pos ht₁_hi,
+      if_neg (not_le.mpr ht₂_lo), if_pos ht₂_hi] at h1
+    -- Recombine distributed casts into single ofReal for exp_ofReal_mul_I_re
+    rw [show (↑Real.pi / 3 + (↑t₁ - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * Complex.I =
+      (↑(Real.pi / 3 + (t₁ - 1) * (Real.pi / 2 - Real.pi / 3)) : ℂ) * Complex.I
+      from by push_cast; ring,
+      show (↑Real.pi / 3 + (↑t₂ - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * Complex.I =
+      (↑(Real.pi / 3 + (t₂ - 1) * (Real.pi / 2 - Real.pi / 3)) : ℂ) * Complex.I
+      from by push_cast; ring] at h1
+    have hre := congr_arg Complex.re h1
+    rw [Complex.exp_ofReal_mul_I_re, Complex.exp_ofReal_mul_I_re] at hre
+    -- cos is injective on [π/3, π/2] ⊂ [0, π]
+    have hθ₁_mem : Real.pi / 3 + (t₁ - 1) * (Real.pi / 2 - Real.pi / 3) ∈ Icc 0 Real.pi :=
+      ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
+    have hθ₂_mem : Real.pi / 3 + (t₂ - 1) * (Real.pi / 2 - Real.pi / 3) ∈ Icc 0 Real.pi :=
+      ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
+    have hθ_eq := Real.strictAntiOn_cos.injOn hθ₁_mem hθ₂_mem hre
+    nlinarith [Real.pi_pos]
+  -- Piece 3: 2 < t ≤ 3. exp(θ*I) where θ = π/2 + (t-2)*π/6.
+  · apply Set.Subsingleton.finite
+    intro t₁ ⟨ht₁_eq, ht₁_lo, ht₁_hi⟩ t₂ ⟨ht₂_eq, ht₂_lo, ht₂_hi⟩
+    have h1 : fdBoundary_H H t₁ = fdBoundary_H H t₂ := by rw [ht₁_eq, ht₂_eq]
+    simp only [fdBoundary_H, if_neg (show ¬ t₁ ≤ 1 from by linarith),
+      if_neg (show ¬ t₁ ≤ 2 from by linarith), if_pos ht₁_hi,
+      if_neg (show ¬ t₂ ≤ 1 from by linarith),
+      if_neg (show ¬ t₂ ≤ 2 from by linarith), if_pos ht₂_hi] at h1
+    -- Recombine distributed casts
+    rw [show (↑Real.pi / 2 + (↑t₁ - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * Complex.I =
+      (↑(Real.pi / 2 + (t₁ - 2) * (2 * Real.pi / 3 - Real.pi / 2)) : ℂ) * Complex.I
+      from by push_cast; ring,
+      show (↑Real.pi / 2 + (↑t₂ - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * Complex.I =
+      (↑(Real.pi / 2 + (t₂ - 2) * (2 * Real.pi / 3 - Real.pi / 2)) : ℂ) * Complex.I
+      from by push_cast; ring] at h1
+    have hre := congr_arg Complex.re h1
+    rw [Complex.exp_ofReal_mul_I_re, Complex.exp_ofReal_mul_I_re] at hre
+    have hθ₁_mem : Real.pi / 2 + (t₁ - 2) * (2 * Real.pi / 3 - Real.pi / 2) ∈ Icc 0 Real.pi :=
+      ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
+    have hθ₂_mem : Real.pi / 2 + (t₂ - 2) * (2 * Real.pi / 3 - Real.pi / 2) ∈ Icc 0 Real.pi :=
+      ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
+    have hθ_eq := Real.strictAntiOn_cos.injOn hθ₁_mem hθ₂_mem hre
+    nlinarith [Real.pi_pos]
+  -- Piece 4: 3 < t ≤ 4. Affine with slope (H - √3/2) in imaginary direction.
+  · apply Set.Subsingleton.finite
+    intro t₁ ⟨ht₁_eq, ht₁_lo, ht₁_hi⟩ t₂ ⟨ht₂_eq, ht₂_lo, ht₂_hi⟩
+    have h1 : fdBoundary_H H t₁ = fdBoundary_H H t₂ := by rw [ht₁_eq, ht₂_eq]
+    simp only [fdBoundary_H, if_neg (show ¬ t₁ ≤ 1 from by linarith),
+      if_neg (show ¬ t₁ ≤ 2 from by linarith), if_neg (show ¬ t₁ ≤ 3 from by linarith),
+      if_pos ht₁_hi, if_neg (show ¬ t₂ ≤ 1 from by linarith),
+      if_neg (show ¬ t₂ ≤ 2 from by linarith), if_neg (show ¬ t₂ ≤ 3 from by linarith),
+      if_pos ht₂_hi] at h1
+    have h2 := mul_right_cancel₀ Complex.I_ne_zero (add_left_cancel h1)
+    have h3 := add_left_cancel h2
+    have hX : (↑H : ℂ) - ↑(Real.sqrt 3) / 2 ≠ 0 := by
+      rw [show (↑H : ℂ) - ↑(Real.sqrt 3) / 2 = ↑(H - Real.sqrt 3 / 2) from by push_cast; ring]
+      exact Complex.ofReal_ne_zero.mpr hslope
+    have h4 := mul_right_cancel₀ hX h3
+    have h5 : (↑t₁ : ℂ) = ↑t₂ := by linear_combination h4
+    exact Complex.ofReal_inj.mp h5
+  -- Piece 5: 4 < t. Real part is t - 9/2, slope 1.
+  · apply Set.Subsingleton.finite
+    intro t₁ ⟨ht₁_eq, ht₁_lo⟩ t₂ ⟨ht₂_eq, ht₂_lo⟩
+    have h1 : fdBoundary_H H t₁ = fdBoundary_H H t₂ := by rw [ht₁_eq, ht₂_eq]
+    simp only [fdBoundary_H, if_neg (show ¬ t₁ ≤ 1 from by linarith),
+      if_neg (show ¬ t₁ ≤ 2 from by linarith), if_neg (show ¬ t₁ ≤ 3 from by linarith),
+      if_neg (show ¬ t₁ ≤ 4 from by linarith),
+      if_neg (show ¬ t₂ ≤ 1 from by linarith),
+      if_neg (show ¬ t₂ ≤ 2 from by linarith), if_neg (show ¬ t₂ ≤ 3 from by linarith),
+      if_neg (show ¬ t₂ ≤ 4 from by linarith)] at h1
+    have h2 := add_right_cancel h1
+    exact Complex.ofReal_inj.mp (by linear_combination h2)
 
 omit hf in
-/-- PV limit exists for a C^∞ segment function γ_seg on [a, b] around a crossing t₀.
-Each segment function is C^∞ on all of ℝ with nonzero derivative everywhere,
-so pv_limit_via_dyadic applies directly. -/
-private lemma pv_limit_seg_function
-    (γ_seg : ℝ → ℂ) (a b t₀ : ℝ) (s : ℂ)
-    (_hab : a < b) (ht₀ : t₀ ∈ Ioo a b)
-    (hγ_smooth : ContDiff ℝ ⊤ γ_seg)
-    (hγ_deriv_ne : ∀ t : ℝ, deriv γ_seg t ≠ 0)
-    (hγ_eq : γ_seg t₀ = s)
-    (h_inj : ∀ t ∈ Icc a b, γ_seg t = s → t = t₀) :
-    ∃ L : ℂ, Tendsto (fun ε =>
-      ∫ t in a..b, if ε < ‖γ_seg t - s‖ then
-        (γ_seg t - s)⁻¹ * deriv γ_seg t else 0)
-      (𝓝[>] 0) (𝓝 L) := by
-  rw [← hγ_eq]
-  exact pv_limit_via_dyadic ht₀ (hγ_deriv_ne t₀)
-    (hγ_smooth.contDiffAt.of_le le_top)
-    rfl
-    (hγ_smooth.continuous_deriv le_top |>.continuousOn)
-    hγ_smooth.continuous.measurable
-    hγ_smooth.continuous.continuousOn
-    (fun t ht heq => h_inj t ht (by rw [heq, hγ_eq]))
+/-- Under boundary nonvanishing, the CPV integral equals the standard integral.
 
-omit hf in
-/-- The ε-cutoff integral of `(γ(t)-s)⁻¹ · γ'(t)` along fdBoundary is Cauchy as ε → 0⁺,
-for any point s on the curve.
+`pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc = pv_integral f (fdBoundary_H H) 0 5`
 
-**Proof**: fdBoundary is a PiecewiseC1Immersion, so the crossing set
-`{t ∈ [0,5] | fdBoundary(t) = s}` is finite. Near each crossing t₀, the integrand
-decomposes as `1/(t-t₀) + r(t)` where r is bounded (since γ'(t₀) ≠ 0). The model
-integral `∫_{|t-t₀|>δ} 1/(t-t₀) dt` is constant in δ (log terms cancel symmetrically).
-The remainder integral converges by DCT. Away from crossings, the integrand is bounded
-and the cutoff integral is eventually constant. -/
-theorem fdBoundary_crossing_cauchy (s : ℂ)
-    (h_on : ∃ t ∈ Icc (0:ℝ) 5, fdBoundary t = s) :
-    Cauchy (Filter.map (fun ε =>
-      ∫ t in (0:ℝ)..5,
-        if ε < ‖fdBoundary t - s‖ then
-          (fdBoundary t - s)⁻¹ * deriv fdBoundary t
-        else 0)
-      (𝓝[>] 0)) := by
-  -- Strategy: Cauchy ↔ convergent in complete ℂ. We show the limit exists.
-  rw [cauchy_map_iff_exists_tendsto]
-  -- The crossing set is finite (fdBoundary is a PiecewiseC1Immersion)
-  have h_finite : Set.Finite {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s} :=
-    piecewiseC1Immersion_finite_zeros fdBoundaryImmersion s
-  -- If there are no crossings, contradiction with h_on
-  by_cases h_empty : {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s} = ∅
-  · exfalso
-    obtain ⟨t, ht, hts⟩ := h_on
-    exact Set.notMem_empty t (h_empty ▸ (⟨ht, hts⟩ : t ∈ {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s}))
-  · -- There exists at least one crossing. Use the PiecewiseC1 structure.
-    -- The crossing set is finite and nonempty.
-    have h_ne : {t ∈ Icc (0:ℝ) 5 | fdBoundary t = s}.Nonempty :=
-      nonempty_iff_ne_empty.mpr h_empty
-    obtain ⟨t₀, ht₀_mem⟩ := h_ne
-    obtain ⟨ht₀_Icc, ht₀_eq⟩ := ht₀_mem
-    -- Step 1: Determine which segment contains t₀.
-    -- fdBoundary = seg_j on (j-1, j) for j ∈ {1,...,5}.
-    -- t₀ ∈ [0, 5], so t₀ is either in an open segment interior or at a
-    -- partition point {0, 1, 2, 3, 4, 5}.
-    --
-    -- Step 2: Pick a segment function γ_ext that passes through s at t₀.
-    -- For t₀ ∈ (k, k+1): γ_ext = seg_{k+1}, which is C^∞ and equals fdBoundary
-    --   on (k, k+1). The crossing is in the interior of a smooth segment.
-    -- For t₀ = k (partition point): pick seg_k (the left segment function).
-    --   γ_ext(k) = fdBoundary(k) = s, and γ_ext is C^∞ on all of ℝ.
-    --
-    -- Step 3: Apply pv_limit_seg_function to γ_ext on a suitable interval
-    --   containing t₀ in its interior. This gives convergence of the
-    --   ε-cutoff integral for γ_ext.
-    --
-    -- Step 4: Relate the fdBoundary integral to the γ_ext integral.
-    --   On segments where fdBoundary = γ_ext: equal a.e.
-    --   On other segments: the correction is bounded (the 1/(t-t₀)
-    --   singularities cancel when two smooth functions share a zero).
-    --
-    -- Step 5: Combine: fdBoundary integral = γ_ext integral + correction,
-    --   both convergent, so the fdBoundary integral converges.
-    --
-    -- This argument handles both interior and corner crossings uniformly.
-    -- The key mathematical fact is that the symmetric ε-cutoff of 1/(t-t₀)
-    -- produces a constant (log terms cancel), regardless of whether the
-    -- curve is smooth at t₀ or has a corner there.
-    --
-    -- Full formalization blocked on: proving correction convergence at corners.
-    -- The correction integrand at a corner involves two smooth functions
-    -- whose leading 1/(t-k) terms cancel, giving a bounded difference.
-    -- The cutoff-region mismatch (different ε-balls for different segments)
-    -- contributes O(log(|d₁|/|d₂|)) which is constant in ε.
-    sorry
+Proof: Under h_nv, logDeriv(g . γ) * γ' is bounded. The CPV truncation zeroes out
+ε-neighborhoods whose measure tends to 0, so by dominated convergence the CPV limit
+equals the standard integral. -/
+private lemma pv_integral_logDeriv_eq_pv_integral_of_nonvanishing_H
+    {H : ℝ} (hH : 1 ≤ H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (S_arc : Finset ℂ) :
+    pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc =
+      pv_integral f (fdBoundary_H H) 0 5 := by
+  unfold pv_integral_logDeriv pv_integral cauchyPrincipalValueOn
+  set g := logDeriv (modularFormCompOfComplex f) with hg_def
+  set γ := fdBoundary_H H with hγ_def
+  set f_std := fun t => g (γ t) * deriv γ t with hf_std_def
+  -- The standard integrand is interval integrable
+  have hint : IntervalIntegrable f_std MeasureTheory.volume 0 5 :=
+    intervalIntegrable_logDeriv_fdBoundary_H_of_nonvanishing f
+      (by linarith [hH] : (0 : ℝ) < H) h_nv
+  -- limUnder = limit when the limit exists
+  apply Filter.Tendsto.limUnder_eq
+  -- Apply dominated convergence
+  apply tendsto_integral_of_dominated'
+  · -- hF_meas: AEStronglyMeasurable (CPV integrand) (volume.restrict (Ι 0 5))
+    intro ε hε
+    have h_std_meas : AEStronglyMeasurable f_std (volume.restrict (Ι 0 5)) :=
+      hint.def'.integrable.aestronglyMeasurable
+    -- The "far from S_arc" set is open
+    have h_far_open : IsOpen {t : ℝ | ∀ s ∈ S_arc, ε < ‖γ t - ↑s‖} := by
+      have : {t : ℝ | ∀ s ∈ S_arc, ε < ‖γ t - ↑s‖} = ⋂ s ∈ S_arc, {t | ε < ‖γ t - ↑s‖} := by
+        ext t; simp only [Set.mem_setOf_eq, Set.mem_iInter]
+      rw [this]
+      apply isOpen_biInter_finset
+      intro s _
+      exact isOpen_lt continuous_const
+        (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
+    -- CPV integrand = indicator of far set times standard integrand (a.e.)
+    apply AEStronglyMeasurable.congr (h_std_meas.indicator h_far_open.measurableSet)
+    filter_upwards with t
+    simp only [cauchyPrincipalValueIntegrandOn, Set.indicator, Set.mem_setOf_eq]
+    -- The CPV condition (∃ s, ‖γ t - s‖ ≤ ε) is the negation of the far condition (∀ s, ε < ‖γ t - s‖)
+    by_cases hex : ∃ s ∈ S_arc, ‖γ t - ↑s‖ ≤ ε
+    · -- Near some s: CPV integrand = 0, indicator = 0 (t not in far set)
+      have h_not_far : ¬ ∀ s ∈ S_arc, ε < ‖γ t - ↑s‖ := by
+        push_neg; obtain ⟨s, hs, hle⟩ := hex; exact ⟨s, hs, hle⟩
+      rw [if_pos hex, if_neg h_not_far]
+    · -- Far from all s: CPV integrand = f_std, indicator = f_std
+      have h_far : ∀ s ∈ S_arc, ε < ‖γ t - ↑s‖ := by
+        intro s hs; by_contra hle; push_neg at hle; exact hex ⟨s, hs, hle⟩
+      rw [if_neg hex, if_pos h_far]
+  · -- hF_le: ‖CPV integrand‖ ≤ ‖standard integrand‖
+    intro ε hε
+    filter_upwards with t _ht
+    show ‖cauchyPrincipalValueIntegrandOn S_arc (logDeriv (modularFormCompOfComplex f))
+      (fdBoundary_H H) ε t‖ ≤ ‖f_std t‖
+    simp only [cauchyPrincipalValueIntegrandOn]
+    split_ifs with hex
+    · simp only [norm_zero]; exact norm_nonneg _
+    · exact le_refl _
+  · -- hg_int: IntervalIntegrable ‖standard integrand‖
+    exact hint.norm
+  · -- hF_lim: a.e. pointwise convergence to f_std
+    -- For t with γ(t) ∉ S_arc, the CPV integrand eventually equals f_std(t).
+    -- The exceptional set {t | ∃ s ∈ S_arc, γ(t) = s} has measure 0.
+    rw [ae_iff]
+    -- Show the bad set is contained in ⋃ s ∈ S_arc, {t | γ t = s}
+    apply measure_mono_null (t := ⋃ s ∈ S_arc, {t : ℝ | γ t = s})
+    · -- Inclusion: if convergence fails, then γ(t) ∈ S_arc
+      intro t ht
+      simp only [Set.mem_setOf_eq, _root_.not_imp] at ht
+      obtain ⟨_, ht_bad⟩ := ht
+      -- Contrapositive: if γ(t) ≠ s for all s, then convergence holds
+      by_contra h_not_on_S
+      simp only [Set.mem_iUnion, Set.mem_setOf_eq, not_exists] at h_not_on_S
+      -- Extract: γ(t) ≠ s for all s ∈ S_arc
+      have h_ne : ∀ s ∈ S_arc, γ t ≠ s := fun s hs => h_not_on_S s hs
+      -- min distance from γ(t) to S_arc is positive
+      have h_pos : ∀ s ∈ S_arc, 0 < ‖γ t - ↑s‖ := by
+        intro s hs
+        exact norm_pos_iff.mpr (sub_ne_zero.mpr (h_ne s hs))
+      -- CPV integrand → f_std t: use filter-based argument
+      -- For each s ∈ S_arc, {ε | ε < ‖γ t - s‖} ∈ 𝓝 0, and the finite intersection
+      -- is in 𝓝[>] 0. On this set, the if-condition is false, so cpvIntegrand = f_std.
+      apply ht_bad
+      exact (tendsto_const_nhds (x := g (γ t) * deriv γ t)).congr' (by
+        have h_inter : (⋂ s ∈ (S_arc : Set ℂ), {ε : ℝ | ε < ‖γ t - s‖}) ∈
+            𝓝[>] (0:ℝ) :=
+          (Filter.biInter_mem S_arc.finite_toSet).mpr (fun s hs =>
+            nhdsWithin_le_nhds (Iio_mem_nhds (h_pos s (Finset.mem_coe.mp hs))))
+        filter_upwards [h_inter] with ε hε
+        simp only [cauchyPrincipalValueIntegrandOn]
+        rw [if_neg]
+        push_neg
+        intro s hs
+        exact Set.mem_iInter₂.mp hε s (Finset.mem_coe.mpr hs))
+    · -- The exceptional set has measure 0 (finite preimage)
+      have h_sqrt3 : Real.sqrt 3 / 2 < H := by
+        nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+      apply le_antisymm _ (zero_le _)
+      calc volume (⋃ s ∈ S_arc, {t : ℝ | γ t = s})
+          ≤ ∑ s ∈ S_arc, volume {t : ℝ | γ t = s} :=
+            measure_biUnion_finset_le S_arc _
+        _ = 0 := by
+            apply Finset.sum_eq_zero; intro s _
+            exact (fdBoundary_H_fiber_finite h_sqrt3 s).measure_zero volume
+
+/-! ### M2: CPV Residue Theorem with CPV LHS -/
+
+include hf in
+/-- **M2**: The argument principle for `f'/f` on `fdBoundary_H H` with CPV LHS.
+
+    `pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc
+      = 2πi · Σ_{s∈zeros} gWN_H(s) · ord_s(f)`
+
+This has the SAME LHS as the modular-side CPV theorems, enabling direct
+equating in Core. Under `h_nv`, the CPV equals the standard integral,
+which equals the gWN sum by the existing residue theorem. -/
+theorem cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_arc
+    {H : ℝ} (hH : 1 ≤ H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (S_arc : Finset ℂ)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc =
+      2 * Real.pi * I * ∑ s ∈ zeros,
+        generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) *
+          (orderOfVanishingAt' f s : ℂ) := by
+  rw [pv_integral_logDeriv_eq_pv_integral_of_nonvanishing_H f hH h_nv S_arc]
+  exact cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_generalizedPV f hf hH h_nv
+    zeros hzeros hzeros_fd hzeros_complete
+
+/-! ### M3: CPV→effectiveWinding Bridge -/
+
+include hf in
+/-- **M3**: The CPV integral equals `-(2πi · Σ ew(s) · ord_s(f))`.
+
+    `pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc
+      = -(2πi · Σ_{s∈zeros} effectiveWinding(s) · ord_s(f))`
+
+Combines M2 with the gWN→effectiveWinding bridge. Requires `h_winding_match`
+for general H; at `H = H_height` this is automatically satisfied. -/
+theorem cpv_logDeriv_fdBoundary_H_eq_neg_sum_ew_arc
+    {H : ℝ} (hH : 1 ≤ H)
+    (h_nv : ∀ t ∈ Icc (0:ℝ) 5, modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (S_arc : Finset ℂ)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_winding_match : ∀ s ∈ zeros,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) =
+        -(effectiveWinding s : ℂ)) :
+    pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  have h_cpv := cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_arc f hf hH h_nv S_arc
+    zeros hzeros hzeros_fd hzeros_complete
+  have h_bridge := h_sum_winding_eq_neg_ew_H f zeros h_winding_match
+  rw [h_cpv, h_bridge]; ring
+
+/-! ### D1.1: CPV Residue Bridge WITHOUT h_nv
+
+These theorems apply `generalizedResidueTheorem'` directly to `logDeriv(f)` along
+`fdBoundary_H H` using Cauchy principal value, bypassing the need for `h_nv`
+(full boundary nonvanishing).
+
+The key hypothesis `h_oncurve_in_S_arc` replaces `h_nv`: instead of requiring f ≠ 0
+on the ENTIRE boundary, it only requires that all on-curve zeros are captured by the
+CPV singular set `S_arc`. This accommodates modular forms like E₆ that vanish at
+elliptic points on the boundary. -/
+
+include hf in
+/-- At points where f doesn't vanish, `logDeriv f` has a trivial simple pole
+(with residue coefficient c = 0). -/
+private lemma hasSimplePoleAt_logDeriv_at_nonzero (z : ℂ) (hz_im : 0 < z.im)
+    (hz_nz : modularFormCompOfComplex f z ≠ 0) :
+    HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) z :=
+  ⟨0, logDeriv (modularFormCompOfComplex f),
+    analyticAt_logDeriv_off_zeros f z hz_im hz_nz,
+    by filter_upwards with z'; simp [zero_div, zero_add]⟩
+
+include hf in
+/-- `residueSimplePole` of `logDeriv f` is 0 where f doesn't vanish. -/
+private lemma residueSimplePole_logDeriv_eq_zero_at_nonzero (z : ℂ) (hz_im : 0 < z.im)
+    (hz_nz : modularFormCompOfComplex f z ≠ 0) :
+    residueSimplePole (logDeriv (modularFormCompOfComplex f)) z = 0 := by
+  simp only [residueSimplePole]
+  have h_cont := (analyticAt_logDeriv_off_zeros f z hz_im hz_nz).continuousAt
+  have h1 : Tendsto (· - z) (𝓝[≠] z) (𝓝 0) := by
+    rw [show (0 : ℂ) = z - z from (sub_self z).symm]
+    exact (continuous_id.sub continuous_const).continuousAt.tendsto.mono_left
+      nhdsWithin_le_nhds
+  have h_prod : Tendsto (fun w => (w - z) * logDeriv (modularFormCompOfComplex f) w)
+      (𝓝[≠] z) (𝓝 (0 * logDeriv (modularFormCompOfComplex f) z)) :=
+    h1.mul (h_cont.tendsto.mono_left nhdsWithin_le_nhds)
+  rw [zero_mul] at h_prod
+  exact h_prod.limUnder_eq
+
+include hf in
+/-- **D1.1 Main**: The argument principle for `f'/f` on `fdBoundary_H H` with CPV LHS,
+WITHOUT requiring full boundary nonvanishing `h_nv`.
+
+Applies `generalizedResidueTheorem'` with `S0 = S_arc ∪ Sbox`, then converts
+the CPV from `S_combined` back to `S_arc`. -/
+theorem cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_arc_of_hPV
+    {H : ℝ} (hH : 1 ≤ H)
+    (zeros : Finset ℍ)
+    (S_arc : Finset ℂ)
+    (hS_arc_im_pos : ∀ s ∈ S_arc, 0 < s.im)
+    (hS_arc_in_fdBox : ∀ s ∈ S_arc, s ∈ fdBox (fdBox_M_H H zeros))
+    (h_oncurve_in_S_arc : ∀ t ∈ Icc (0:ℝ) 5,
+        modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
+        fdBoundary_H H t ∈ (S_arc : Set ℂ))
+    (hPV_onCurve : ∀ s ∈ S_arc,
+        CauchyPrincipalValueExists'
+          (fun z => residueSimplePole (logDeriv (modularFormCompOfComplex f)) s / (z - s))
+          (fdBoundary_H H) 0 5 s)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros) :
+    pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc =
+      2 * Real.pi * I * ∑ s ∈ zeros,
+        generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) *
+          (orderOfVanishingAt' f s : ℂ) := by
+  -- ===== Phase 1: Setup =====
+  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
+    nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+  set M := fdBox_M_H H zeros with hM_def
+  set U := fdBox M with hU_def
+  set Sbox := allZerosInFdBox f hf (fdBox_M_H_half_lt H zeros) with hSbox_def
+  set F := logDeriv (modularFormCompOfComplex f) with hF_def
+  set γ := fdBoundary_H H with hγ_def
+  set S0 := Sbox ∪ S_arc with hS0_def
+  -- HasSimplePoleAt for all of S0
+  have hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt F s := by
+    intro s hs; rw [hS0_def, Finset.mem_union] at hs
+    rcases hs with h | h
+    · exact hasSimplePoleAt_at_allZero f hf (fdBox_M_H_half_lt H zeros) s h
+    · by_cases hz : modularFormCompOfComplex f s = 0
+      · exact hasSimplePoleAt_at_allZero f hf (fdBox_M_H_half_lt H zeros) s
+          (by rw [mem_allZerosInFdBox_iff]; exact ⟨hS_arc_in_fdBox s h, hz⟩)
+      · exact hasSimplePoleAt_logDeriv_at_nonzero f hf s (hS_arc_im_pos s h) hz
+  set Fp := logDeriv_patched F S0 hSimplePoles with hFp_def
+  -- ===== Phase 2: gRT' hypotheses =====
+  have hU_open : IsOpen U := fdBox_isOpen M
+  have hU_convex : Convex ℝ U := fdBox_convex M
+  have hFp_diff : DifferentiableOn ℂ Fp (U \ ↑S0) := by
+    intro z hz
+    have hz_not_S0 : z ∉ (S0 : Finset ℂ) := fun h => hz.2 (Finset.mem_coe.mpr h)
+    have h_ev : Fp =ᶠ[𝓝 z] F := by
+      filter_upwards [S0.finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_S0]
+        with w hw
+      exact logDeriv_patched_eq_raw_off_S0 F S0 hSimplePoles hw
+    have hz_not_zero : modularFormCompOfComplex f z ≠ 0 := by
+      intro h_zero
+      exact hz_not_S0 (Finset.mem_union_left S_arc
+        (by rw [hSbox_def, mem_allZerosInFdBox_iff]; exact ⟨hz.1, h_zero⟩))
+    exact (h_ev.differentiableAt_iff.mpr
+      (analyticAt_logDeriv_off_zeros f z (fdBox_im_pos hz.1)
+        hz_not_zero).differentiableAt).differentiableWithinAt
+  have hS0_in_U : ∀ s ∈ (↑S0 : Set ℂ), s ∈ U := by
+    intro s hs; rw [Finset.mem_coe, hS0_def, Finset.mem_union] at hs
+    rcases hs with h | h
+    · rw [hSbox_def, mem_allZerosInFdBox_iff] at h; exact h.1
+    · exact hS_arc_in_fdBox s h
+  have hS0_closed : IsClosed (↑S0 : Set ℂ) := S0.finite_toSet.isClosed
+  have hS0_discrete : ∀ s ∈ (↑S0 : Set ℂ), ∃ ε > 0,
+      ∀ s' ∈ (↑S0 : Set ℂ), s' ≠ s → ε ≤ ‖s' - s‖ := by
+    intro s hs
+    rcases (S0.erase s).eq_empty_or_nonempty with h_empty | h_ne
+    · exact ⟨1, one_pos, fun s' hs' hne => absurd
+        (h_empty ▸ Finset.mem_erase.mpr ⟨hne, Finset.mem_coe.mp hs'⟩ :
+          s' ∈ (∅ : Finset ℂ)) (Finset.notMem_empty _)⟩
+    · set img := (S0.erase s).image (fun s' => ‖s' - s‖) with himg_def
+      have h_ne_img : img.Nonempty := h_ne.image _
+      refine ⟨img.min' h_ne_img, ?_, ?_⟩
+      · have hmin_mem := Finset.min'_mem img h_ne_img
+        obtain ⟨s', hs', hs'_eq⟩ := Finset.mem_image.mp hmin_mem
+        rw [← hs'_eq]
+        exact norm_pos_iff.mpr (sub_ne_zero.mpr (Finset.mem_erase.mp hs').1)
+      · intro s' hs' hne
+        exact Finset.min'_le _ _
+          (Finset.mem_image.mpr ⟨s', Finset.mem_erase.mpr ⟨hne, Finset.mem_coe.mp hs'⟩, rfl⟩)
+  set γ_imm := fdBoundary_HImmersion H hH_sqrt3 with hγ_imm_def
+  have hγ_closed : γ_imm.toPiecewiseC1Curve.IsClosed :=
+    fdBoundary_HImmersion_closed H hH_sqrt3
+  have hγ_in_U : ∀ t ∈ Icc γ_imm.a γ_imm.b, γ_imm.toFun t ∈ U := fun t ht =>
+    fdBoundary_H_mem_fdBox' hH (fdBox_M_H_gt_H H zeros) t ht
+  -- PV existence for each s ∈ S0
+  have hPV : ∀ s ∈ S0, CauchyPrincipalValueExists'
+      (fun z => residueSimplePole Fp s / (z - s))
+      γ_imm.toFun γ_imm.a γ_imm.b s := by
+    intro s hs
+    have h_s_in : s ∈ S0 := hs
+    rw [hS0_def, Finset.mem_union] at hs
+    -- res(Fp, s) = res(F, s)
+    have h_res_eq : residueSimplePole Fp s = residueSimplePole F s :=
+      residue_logDeriv_patched_eq_raw F S0 hSimplePoles s h_s_in
+    rw [show γ_imm.toFun = γ from rfl,
+        show γ_imm.a = (0:ℝ) from rfl,
+        show γ_imm.b = (5:ℝ) from rfl, h_res_eq]
+    rcases hs with h_box | h_arc
+    · by_cases hs_arc : s ∈ S_arc
+      · exact hPV_onCurve s hs_arc
+      · -- s ∈ Sbox \ S_arc: off-curve, CPV trivially exists
+        have h_off : ∀ t ∈ Icc (0:ℝ) 5, γ t ≠ s := by
+          intro t ht heq
+          rw [hSbox_def, mem_allZerosInFdBox_iff] at h_box
+          exact hs_arc (Finset.mem_coe.mp
+            (heq ▸ h_oncurve_in_S_arc t ht (heq ▸ h_box.2)))
+        -- Minimum distance from s to curve is positive
+        have h_cont : ContinuousOn (fun t => ‖γ t - s‖) (Icc 0 5) :=
+          ((fdBoundary_H_continuous H).continuousOn.sub continuousOn_const).norm
+        obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn
+          ⟨0, left_mem_Icc.mpr (by norm_num : (0:ℝ) ≤ 5)⟩ h_cont
+        have hδ_pos : 0 < ‖γ t₀ - s‖ :=
+          norm_pos_iff.mpr (sub_ne_zero.mpr (h_off t₀ ht₀))
+        refine ⟨∫ t in (0:ℝ)..5, (residueSimplePole F s / (γ t - s)) * deriv γ t, ?_⟩
+        apply Filter.Tendsto.congr'
+        swap; exact tendsto_const_nhds
+        rw [Filter.EventuallyEq]
+        filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
+        apply intervalIntegral.integral_congr
+        intro t ht
+        rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)] at ht
+        exact (if_pos (show ‖γ t - s‖ > ε from
+          lt_of_lt_of_le hε.2 (ht₀_min ht))).symm
+    · exact hPV_onCurve s h_arc
+  -- ===== Phase 3: Apply gRT' =====
+  have h_grt := (generalizedResidueTheorem' U hU_open hU_convex (↑S0) hS0_in_U
+    hS0_discrete hS0_closed S0 (fun s hs => Finset.mem_coe.mpr hs)
+    Fp hFp_diff γ_imm hγ_closed hγ_in_U
+    (fun _ _ h => Finset.mem_coe.mp h)
+    (fun s hs => hasSimplePoleAt_logDeriv_patched F S0 hSimplePoles s hs)
+    (logDeriv_patched_hf_ext F S0 hSimplePoles) hPV).2
+  rw [show γ_imm.a = (0:ℝ) from rfl,
+      show γ_imm.b = (5:ℝ) from rfl,
+      show γ_imm.toFun = γ from rfl] at h_grt
+  -- ===== Phase 4: LHS Conversion =====
+  -- Step 1: cpvOn S0 Fp γ = cpvOn S0 F γ (pointwise for ε > 0)
+  have h_lhs1 : cauchyPrincipalValueOn S0 Fp γ 0 5 =
+      cauchyPrincipalValueOn S0 F γ 0 5 := by
+    unfold cauchyPrincipalValueOn limUnder; congr 1
+    apply Filter.map_congr
+    filter_upwards [self_mem_nhdsWithin (s := Ioi 0)] with ε hε
+    apply intervalIntegral.integral_congr; intro t ht
+    show cauchyPrincipalValueIntegrandOn S0 Fp γ ε t =
+      cauchyPrincipalValueIntegrandOn S0 F γ ε t
+    unfold cauchyPrincipalValueIntegrandOn; split_ifs with h
+    · rfl
+    · push_neg at h; congr 1
+      exact logDeriv_patched_eq_raw_off_S0 F S0 hSimplePoles (fun habs => by
+        have h1 := h (γ t) habs; simp only [sub_self, norm_zero] at h1
+        exact absurd (le_of_lt (mem_Ioi.mp hε)) (not_le.mpr h1))
+  -- Step 2: cpvOn S0 F γ = cpvOn S_arc F γ (for small ε, off-curve extras vanish)
+  have h_lhs2 : cauchyPrincipalValueOn S0 F γ 0 5 =
+      cauchyPrincipalValueOn S_arc F γ 0 5 := by
+    -- Each s ∈ Sbox \ S_arc is off-curve (on-curve zeros ⊆ S_arc by hypothesis)
+    have h_off : ∀ s ∈ Sbox \ S_arc, ∀ t ∈ Icc (0:ℝ) 5, γ t ≠ s := by
+      intro s hs t ht heq
+      have hs_box := (Finset.mem_sdiff.mp hs).1
+      have hs_narc := (Finset.mem_sdiff.mp hs).2
+      rw [hSbox_def, mem_allZerosInFdBox_iff] at hs_box
+      exact hs_narc (Finset.mem_coe.mp (heq ▸ h_oncurve_in_S_arc t ht (heq ▸ hs_box.2)))
+    -- Per off-curve s: compactness gives eventually ε < dist(γ, s)
+    have h_per : ∀ s ∈ Sbox \ S_arc, ∀ᶠ ε in 𝓝[>] (0:ℝ),
+        ∀ t ∈ Icc (0:ℝ) 5, ε < ‖γ t - s‖ := by
+      intro s hs
+      have h_cont : ContinuousOn (fun t => ‖γ t - s‖) (Icc 0 5) :=
+        ((fdBoundary_H_continuous H).continuousOn.sub continuousOn_const).norm
+      obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn
+        ⟨0, left_mem_Icc.mpr (by norm_num)⟩ h_cont
+      filter_upwards [Ioo_mem_nhdsGT
+        (norm_pos_iff.mpr (sub_ne_zero.mpr (h_off s hs t₀ ht₀)))] with ε hε
+      intro t ht; exact lt_of_lt_of_le hε.2 (ht₀_min ht)
+    -- Combine finite family via Filter.eventually_all
+    have h_comb : ∀ᶠ ε in 𝓝[>] (0:ℝ),
+        ∀ s ∈ Sbox \ S_arc, ∀ t ∈ Icc (0:ℝ) 5, ε < ‖γ t - s‖ := by
+      have : ∀ᶠ ε in 𝓝[>] (0:ℝ), ∀ (s : ((Sbox \ S_arc : Finset ℂ) : Set ℂ)),
+          ∀ t ∈ Icc (0:ℝ) 5, ε < ‖γ t - (s : ℂ)‖ := by
+        rw [Filter.eventually_all]; intro ⟨s, hs⟩; exact h_per s hs
+      exact this.mono (fun ε hε s hs => hε ⟨s, hs⟩)
+    -- CPV limits agree because integrands agree for small ε
+    unfold cauchyPrincipalValueOn limUnder; congr 1; apply Filter.map_congr
+    filter_upwards [h_comb] with ε hε
+    apply intervalIntegral.integral_congr; intro t ht
+    unfold cauchyPrincipalValueIntegrandOn
+    rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)] at ht
+    -- Indicator conditions are equivalent: off-curve Sbox points are too far
+    have h_iff : (∃ s ∈ S0, ‖γ t - s‖ ≤ ε) ↔ (∃ s ∈ S_arc, ‖γ t - s‖ ≤ ε) := by
+      constructor
+      · rintro ⟨s, hs, h_norm⟩
+        rw [hS0_def, Finset.mem_union] at hs
+        rcases hs with h_box | h_arc
+        · by_cases h_arc2 : s ∈ S_arc
+          · exact ⟨s, h_arc2, h_norm⟩
+          · exact absurd h_norm
+              (not_le.mpr (hε s (Finset.mem_sdiff.mpr ⟨h_box, h_arc2⟩) t ht))
+        · exact ⟨s, h_arc, h_norm⟩
+      · rintro ⟨s, hs, h_norm⟩
+        exact ⟨s, Finset.mem_union.mpr (Or.inr hs), h_norm⟩
+    split_ifs with h1 h2 h2
+    · rfl
+    · exact absurd (h_iff.mp h1) h2
+    · exact absurd (h_iff.mpr h2) h1
+    · rfl
+  -- Combine LHS
+  show pv_integral_logDeriv f γ 0 5 S_arc = _
+  unfold pv_integral_logDeriv
+  rw [← h_lhs2, ← h_lhs1, h_grt]
+  -- ===== Phase 5: RHS Simplification =====
+  congr 1
+  -- Need: Σ_{S0} gWN * res(Fp) = Σ_{zeros} gWN * ord
+  -- Step 1: res(Fp) → res(F)
+  have h_rhs1 : ∑ s ∈ S0, generalizedWindingNumber' γ 0 5 s * residueSimplePole Fp s =
+      ∑ s ∈ S0, generalizedWindingNumber' γ 0 5 s * residueSimplePole F s :=
+    Finset.sum_congr rfl (fun s hs => by
+      congr 1
+      exact residue_logDeriv_patched_eq_raw F S0 hSimplePoles s hs)
+  rw [h_rhs1]
+  -- Step 2: Decompose S0 = Sbox ∪ (S_arc \ Sbox)
+  rw [show S0 = Sbox ∪ (S_arc \ Sbox) from by
+    rw [hS0_def]; exact (Finset.union_sdiff_self_eq_union).symm]
+  rw [Finset.sum_union Finset.disjoint_sdiff]
+  -- Step 3: S_arc \ Sbox terms vanish (non-zeros have res = 0)
+  have h_sarc_zero : ∑ s ∈ S_arc \ Sbox,
+      generalizedWindingNumber' γ 0 5 s * residueSimplePole F s = 0 := by
+    apply Finset.sum_eq_zero; intro s hs
+    have hs_narc := (Finset.mem_sdiff.mp hs).1
+    have hs_nbox := (Finset.mem_sdiff.mp hs).2
+    have h_nz : modularFormCompOfComplex f s ≠ 0 := by
+      intro h_zero
+      exact hs_nbox (by rw [mem_allZerosInFdBox_iff]; exact ⟨hS_arc_in_fdBox s hs_narc, h_zero⟩)
+    rw [residueSimplePole_logDeriv_eq_zero_at_nonzero f hf s
+      (hS_arc_im_pos s hs_narc) h_nz, mul_zero]
+  rw [h_sarc_zero, add_zero]
+  -- Step 4: Split Sbox = Sfd ∪ (Sbox \ Sfd)
+  have h_Sfd_sub : Sfd zeros ⊆ Sbox :=
+    Sfd_sub_allZeros_H f hf H hzeros hzeros_fd
+  rw [show ∑ s ∈ Sbox, generalizedWindingNumber' γ 0 5 s * residueSimplePole F s =
+    (∑ s ∈ Sfd zeros, generalizedWindingNumber' γ 0 5 s * residueSimplePole F s) +
+    (∑ s ∈ Sbox \ Sfd zeros,
+      generalizedWindingNumber' γ 0 5 s * residueSimplePole F s) by
+    rw [← Finset.sum_sdiff h_Sfd_sub]; ac_rfl]
+  -- Step 5: Kill Sbox \ Sfd with winding = 0
+  have h_diff_zero : ∑ s ∈ Sbox \ Sfd zeros,
+      generalizedWindingNumber' γ 0 5 s * residueSimplePole F s = 0 := by
+    apply Finset.sum_eq_zero; intro s hs
+    rw [winding_zero_for_non_fd_point_H_geo f hf hH s
+      (Finset.mem_sdiff.mp hs).1 (Finset.mem_sdiff.mp hs).2 hzeros_complete, zero_mul]
+  rw [h_diff_zero, add_zero]
+  -- Step 6: Convert Sfd sum to zeros sum, res → ord
+  rw [sum_Sfd_eq_sum_zeros]
+  apply Finset.sum_congr rfl; intro s hs; congr 1
+  exact residue_logDeriv_eq_order f s (hzeros s hs)
+
+include hf in
+/-- **D1.1 Bridge**: CPV → effectiveWinding form without h_nv. -/
+theorem cpv_logDeriv_fdBoundary_H_eq_neg_sum_ew_arc_of_hPV
+    {H : ℝ} (hH : 1 ≤ H)
+    (zeros : Finset ℍ)
+    (S_arc : Finset ℂ)
+    (hS_arc_im_pos : ∀ s ∈ S_arc, 0 < s.im)
+    (hS_arc_in_fdBox : ∀ s ∈ S_arc, s ∈ fdBox (fdBox_M_H H zeros))
+    (h_oncurve_in_S_arc : ∀ t ∈ Icc (0:ℝ) 5,
+        modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
+        fdBoundary_H H t ∈ (S_arc : Set ℂ))
+    (hPV_onCurve : ∀ s ∈ S_arc,
+        CauchyPrincipalValueExists'
+          (fun z => residueSimplePole (logDeriv (modularFormCompOfComplex f)) s / (z - s))
+          (fdBoundary_H H) 0 5 s)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_winding_match : ∀ s ∈ zeros,
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) =
+        -(effectiveWinding s : ℂ)) :
+    pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc =
+      -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  have h_cpv := cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_arc_of_hPV f hf hH
+    zeros S_arc hS_arc_im_pos hS_arc_in_fdBox h_oncurve_in_S_arc hPV_onCurve
+    hzeros hzeros_fd hzeros_complete
+  have h_bridge := h_sum_winding_eq_neg_ew_H f zeros h_winding_match
+  rw [h_cpv, h_bridge]; ring
+
+/-! ### Residue-Auto Provider (Generalized PV)
+
+This theorem provides the `h_residue_auto` existential consumed by the auto-bridge
+chain in `ValenceFormula_Core.lean`. It proves:
+
+  `∃ H₁ > √3/2, ∀ H ≥ H₁, h_vert_nv →
+      CPV(H) = -(2πi · Σ ew(s) · ord(s))`
+
+The proof works in two stages:
+1. At the reference height `H_height`, equate the standard residue theorem
+   (`pv_equals_residue_sum_H_height`) with the standard modular side
+   (`pv_integral_eq_modular_transformation_H`) to derive the algebraic identity
+   `Σ ew·ord = k/12 - ord_∞`.
+2. For general H, the CPV modular side (`modular_side_auto_cusp_generalizedPV`)
+   gives `CPV(H) = -(2πi·(k/12 - ord_∞))`. Substitute the algebraic identity
+   to rewrite this as `CPV(H) = -(2πi·Σ ew·ord)`.
+
+**Hypotheses**: Requires `h_nv_ref` (full boundary nonvanishing at `H_height`)
+and `hcusp_ref` (cusp nonvanishing at `H_height`). These hold for modular forms
+that do not vanish at any elliptic point on `fdBoundary_H H_height`. -/
+
+include hf in
+theorem exists_height_residue_auto_generalizedPV (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (h_nv_ref : ∀ t ∈ Icc (0:ℝ) 5,
+        modularFormCompOfComplex f (fdBoundary_H H_height t) ≠ 0)
+    (hcusp_ref : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H_height),
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  -- Stage 1: Algebraic identity at H_height
+  -- A1: Residue theorem gives standard(H_height) = -(2πi · Σ ew·ord)
+  have h_res_HH := pv_equals_residue_sum_H_height f hf h_nv_ref zeros
+    hzeros hzeros_fd hzeros_complete
+  -- A2: Standard modular side gives standard(H_height) = -(2πi · (k/12 - ord_∞))
+  have h_pos_HH : (0 : ℝ) < H_height := by linarith [H_height_gt_one]
+  have hint_HH := intervalIntegrable_logDeriv_fdBoundary_H_of_nonvanishing f h_pos_HH h_nv_ref
+  have h_mod_HH := pv_integral_eq_modular_transformation_H f hf h_pos_HH hint_HH hcusp_ref
+  -- A3: Equate to get Σ ew·ord = k/12 - ord_∞
+  have h_alg : ∑ s ∈ zeros,
+      (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+      (k : ℂ) / 12 - (orderAtCusp' f : ℂ) := by
+    have h3 : -(2 * Real.pi * I * ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) =
+      -(2 * Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp f : ℂ))) := by
+      rw [← h_res_HH, h_mod_HH]
+    have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
+      simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
+        ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero, or_self]
+    have h4 := neg_inj.mp h3
+    -- Cancel the common factor 2πi
+    have h5 : ∑ s ∈ zeros,
+        (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ) =
+        (k : ℂ) / 12 - (orderAtCusp f : ℂ) := mul_left_cancel₀ hpi h4
+    exact h5
+  -- Stage 2: General H via CPV modular side
+  obtain ⟨H_mod, hH_mod_gt, h_mod⟩ := modular_side_auto_cusp_generalizedPV f hf h_arc_nv
+  refine ⟨H_mod, hH_mod_gt, fun {H} hH h_vert_nv => ?_⟩
+  -- CPV(H) = -(2πi · (k/12 - orderAtCusp' f))
+  have h_cpv_H := h_mod hH h_vert_nv
+  -- Rewrite using algebraic identity: k/12 - orderAtCusp' f = Σ ew·ord
+  rw [h_cpv_H, ← h_alg]
+
+include hf in
+/-- Decomposed-hypothesis variant of the residue-auto provider.
+
+Replaces the monolithic `h_nv_ref` (full boundary nonvanishing at `H_height`)
+with three separate, more verifiable conditions:
+- `h_arc_nv`: arc nonvanishing (H-independent, verifiable from zeros analysis)
+- `h_elliptic_nv`: form nonzero at i, ρ', ρ (verifiable from q-expansion)
+- `h_vert_nv_ref`: vertical segment nonvanishing at `H_height` (verifiable from isolation)
+
+The monolithic `h_nv_ref` is reconstructed internally via
+`oncurve_zero_in_fdBoundaryArcSingularSet_of_nonvanishing`. -/
+theorem exists_height_residue_auto_of_decomposed_nv (zeros : Finset ℍ)
+    (h_arc_nv : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+        modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0)
+    (h_elliptic_nv :
+        modularFormCompOfComplex f (ellipticPoint_i : ℂ) ≠ 0 ∧
+        modularFormCompOfComplex f (ellipticPoint_rho_plus_one : ℂ) ≠ 0 ∧
+        modularFormCompOfComplex f (ellipticPoint_rho : ℂ) ≠ 0)
+    (h_vert_nv_ref : ∀ t ∈ Set.Ioo (0:ℝ) 1,
+        modularFormCompOfComplex f (fdBoundary_H H_height t) ≠ 0)
+    (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (hcusp_ref : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H_height),
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∃ H₁ : ℝ, Real.sqrt 3 / 2 < H₁ ∧
+      ∀ {H : ℝ}, H₁ ≤ H →
+        (∀ t ∈ Set.Ioo (0:ℝ) 1,
+            modularFormCompOfComplex f (fdBoundary_H H t) ≠ 0) →
+        pv_integral_logDeriv f (fdBoundary_H H) 0 5 fdBoundaryArcSingularSet =
+          -(2 * ↑Real.pi * I * ∑ s ∈ zeros,
+            (effectiveWinding s : ℂ) * (orderOfVanishingAt' f s : ℂ)) := by
+  -- Step 1: Convert h_arc_nv from generic H to H_height (arc is H-independent)
+  have h_arc_nv_HH : ∀ t ∈ Set.Ioo (1:ℝ) 3, t ≠ 2 →
+      modularFormCompOfComplex f (fdBoundary_H H_height t) ≠ 0 := by
+    intro t ht hne
+    have := h_arc_nv t ht hne
+    rw [fdBoundary_H_eq_arc ht.1 ht.2] at this ⊢; exact this
+  -- Step 2: Reconstruct h_nv_ref from decomposed components
+  have h_nv_ref : ∀ t ∈ Icc (0:ℝ) 5,
+      modularFormCompOfComplex f (fdBoundary_H H_height t) ≠ 0 := by
+    intro t ht h_zero
+    have h_mem := oncurve_zero_in_fdBoundaryArcSingularSet_of_nonvanishing f
+      H_height_gt_rho_height h_arc_nv_HH h_vert_nv_ref hcusp_ref ht h_zero
+    simp only [fdBoundaryArcSingularSet, Finset.mem_coe, Finset.mem_insert,
+      Finset.mem_singleton] at h_mem
+    rcases h_mem with h | h | h
+    · rw [h] at h_zero; exact h_elliptic_nv.1 h_zero
+    · rw [h] at h_zero; exact h_elliptic_nv.2.1 h_zero
+    · rw [h] at h_zero; exact h_elliptic_nv.2.2 h_zero
+  -- Step 3: Forward to the existing provider
+  exact exists_height_residue_auto_generalizedPV f hf zeros h_arc_nv hzeros hzeros_fd
+    hzeros_complete h_nv_ref hcusp_ref
+
+/-! ### Public Wrapper Hiding fdBox Internals
+
+This theorem wraps `cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_arc_of_hPV` with
+geometric hypotheses that avoid referencing the private `fdBox_M_H`. Callers provide
+`-1 < s.re < 1`, `1/2 < s.im`, `s.im < H + 1` for each s ∈ S_arc, and this wrapper
+constructs the fdBox containment internally. -/
+
+include hf in
+theorem cpv_logDeriv_eq_winding_public
+    {H : ℝ} (hH : 1 ≤ H)
+    (zeros : Finset ℍ) (hzeros : ∀ s ∈ zeros, f s = 0)
+    (hzeros_fd : ∀ s ∈ zeros, s ∈ fundamentalDomain)
+    (hzeros_complete : ∀ s, s ∈ fundamentalDomain → f s = 0 → s ∈ zeros)
+    (S_arc : Finset ℂ)
+    (hS_arc_im_pos : ∀ s ∈ S_arc, 0 < s.im)
+    (hS_arc_geom : ∀ s ∈ S_arc, -1 < s.re ∧ s.re < 1 ∧ (1:ℝ)/2 < s.im ∧ s.im < H + 1)
+    (h_oncurve : ∀ t ∈ Icc (0:ℝ) 5,
+        modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
+        fdBoundary_H H t ∈ (S_arc : Set ℂ))
+    (hPV_onCurve : ∀ s ∈ S_arc,
+        CauchyPrincipalValueExists'
+          (fun z => residueSimplePole (logDeriv (modularFormCompOfComplex f)) s / (z - s))
+          (fdBoundary_H H) 0 5 s) :
+    pv_integral_logDeriv f (fdBoundary_H H) 0 5 S_arc =
+      2 * Real.pi * I * ∑ s ∈ zeros,
+        generalizedWindingNumber' (fdBoundary_H H) 0 5 (s : ℂ) *
+          (orderOfVanishingAt' f s : ℂ) := by
+  have hS_arc_in_fdBox : ∀ s ∈ S_arc, s ∈ fdBox (fdBox_M_H H zeros) := by
+    intro s hs
+    obtain ⟨h1, h2, h3, h4⟩ := hS_arc_geom s hs
+    exact ⟨h1, h2, h3, lt_of_lt_of_le h4 (le_max_left _ _)⟩
+  exact cpv_logDeriv_fdBoundary_H_eq_sum_winding_order_arc_of_hPV f hf hH zeros S_arc
+    hS_arc_im_pos hS_arc_in_fdBox h_oncurve hPV_onCurve hzeros hzeros_fd hzeros_complete
 
 end
+
