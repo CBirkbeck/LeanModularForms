@@ -257,4 +257,165 @@ theorem sum_ord_leftVert_eq_sum_T_image (S : Finset ℍ) :
     ∑ p ∈ S_leftVert S, (orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ p) : ℂ) :=
   Finset.sum_congr rfl fun p _ => by rw [ord_add_one_eq f p]
 
+/-! ## T⁻¹-invariance of Order -/
+
+/-- T⁻¹-invariance of vanishing order: `ord(f, (-1)+ᵥp) = ord(f, p)`. -/
+lemma ord_vAdd_neg_one_eq (p : ℍ) :
+    orderOfVanishingAt' (⇑f) ((-1 : ℝ) +ᵥ p) = orderOfVanishingAt' (⇑f) p := by
+  have h := ord_add_one_eq f ((-1 : ℝ) +ᵥ p)
+  rw [show (1 : ℝ) +ᵥ ((-1 : ℝ) +ᵥ p) = p from by
+    ext; show ((1 : ℝ) : ℂ) + (((-1 : ℝ) : ℂ) + (p : ℂ)) = (p : ℂ); push_cast; ring] at h
+  exact h.symm
+
+/-! ## Arc Filters -/
+
+/-- The left-arc filter: points on the unit circle with negative real part. -/
+def S_leftArc (S : Finset ℍ) : Finset ℍ :=
+  S.filter (fun p => ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
+
+/-- The right-arc filter: points on the unit circle with positive real part. -/
+def S_rightArc (S : Finset ℍ) : Finset ℍ :=
+  S.filter (fun p => ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0)
+
+/-! ## S² = id on ℍ -/
+
+/-- S² = -1 in SL(2,ℤ). -/
+private lemma S_mul_S : ModularGroup.S * ModularGroup.S = -1 := by
+  ext i j; fin_cases i <;> fin_cases j <;> simp [ModularGroup.S]
+
+/-- S² acts as the identity on ℍ (since -I acts trivially). -/
+lemma S_smul_S_smul (p : ℍ) : ModularGroup.S • (ModularGroup.S • p) = p := by
+  rw [← mul_smul, S_mul_S]; apply Subtype.ext; simp
+
+/-- The S-action is injective on ℍ. -/
+lemma S_smul_injective : Function.Injective (ModularGroup.S • · : ℍ → ℍ) :=
+  Function.HasLeftInverse.injective ⟨(ModularGroup.S • ·), S_smul_S_smul⟩
+
+/-! ## Vertical Pairing: ∑ rightVert = ∑ leftVert -/
+
+private lemma ord_ne_zero_of_cast_ne_zero {p : ℍ} {f : ℍ → ℂ}
+    (h : (orderOfVanishingAt' f p : ℂ) ≠ 0) : orderOfVanishingAt' f p ≠ 0 := by
+  exact_mod_cast h
+
+/-- The sum of orders on the right vertical edge equals the sum on the left vertical edge.
+This uses T⁻¹ as a bijection from nonzero-order right-vert points to left-vert points. -/
+theorem sum_ord_rightVert_eq_sum_ord_leftVert (S : Finset ℍ)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    ∑ p ∈ S_rightVert S, (orderOfVanishingAt' (⇑f) p : ℂ) =
+    ∑ p ∈ S_leftVert S, (orderOfVanishingAt' (⇑f) p : ℂ) := by
+  -- Filter to nonzero-order points (zero-order terms contribute 0)
+  rw [← Finset.sum_filter_ne_zero, ← Finset.sum_filter_ne_zero (s := S_leftVert S)]
+  -- Build bijection (-1:ℝ) +ᵥ · from rightVert∩{ord≠0} to leftVert∩{ord≠0}
+  apply Finset.sum_nbij ((-1 : ℝ) +ᵥ ·)
+  · -- Maps rightVert∩{ord≠0} → leftVert∩{ord≠0}
+    intro p hp
+    simp only [Finset.mem_filter, S_rightVert, S_leftVert] at hp ⊢
+    obtain ⟨⟨hp_S, hre, hnorm⟩, hord⟩ := hp
+    have hp_fd := hS p hp_S
+    have hp_fd' := vAdd_neg_one_mem_fd_of_right_vert p hp_fd hre
+    have hord_int := ord_ne_zero_of_cast_ne_zero hord
+    have hord' : orderOfVanishingAt' (⇑f) ((-1 : ℝ) +ᵥ p) ≠ 0 := by
+      rw [ord_vAdd_neg_one_eq f p]; exact hord_int
+    refine ⟨⟨hS_complete _ hp_fd' hord', ?_, ?_⟩, ?_⟩
+    · show ((-1 : ℝ) +ᵥ p : ℍ).val.re = -1 / 2
+      rw [vAdd_neg_one_coe, sub_re, one_re, hre]; norm_num
+    · show ‖((-1 : ℝ) +ᵥ p : ℍ).val‖ > 1
+      rw [vAdd_neg_one_norm_eq_of_re_half p hre]; exact hnorm
+    · show (orderOfVanishingAt' (⇑f) ((-1 : ℝ) +ᵥ p) : ℂ) ≠ 0
+      rw [show orderOfVanishingAt' (⇑f) ((-1 : ℝ) +ᵥ p) =
+        orderOfVanishingAt' (⇑f) p from ord_vAdd_neg_one_eq f p]; exact hord
+  · -- Injective
+    intro a _ b _ h; exact vadd_left_cancel (-1 : ℝ) h
+  · -- Surjective
+    intro q hq
+    rw [Finset.mem_coe] at hq
+    simp only [Finset.mem_filter, S_leftVert] at hq
+    obtain ⟨⟨hq_S, hre, hnorm⟩, hord⟩ := hq
+    have hq_fd := hS q hq_S
+    have hord_int := ord_ne_zero_of_cast_ne_zero hord
+    refine ⟨(1 : ℝ) +ᵥ q, ?_, ?_⟩
+    · rw [Finset.mem_coe]; simp only [Finset.mem_filter, S_rightVert]
+      have hq_fd' := vAdd_one_mem_fd_of_left_vert q hq_fd hre
+      have hord' : orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ q) ≠ 0 := by
+        rw [ord_add_one_eq f q]; exact hord_int
+      refine ⟨⟨hS_complete _ hq_fd' hord', ?_, ?_⟩, ?_⟩
+      · show ((1 : ℝ) +ᵥ q : ℍ).val.re = 1 / 2
+        rw [vAdd_one_coe, add_re, one_re, hre]; norm_num
+      · show ‖((1 : ℝ) +ᵥ q : ℍ).val‖ > 1
+        rw [vAdd_one_norm_eq_of_re_neg_half q hre]; exact hnorm
+      · show (orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ q) : ℂ) ≠ 0
+        rw [show orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ q) =
+          orderOfVanishingAt' (⇑f) q from ord_add_one_eq f q]; exact hord
+    · -- (-1) +ᵥ ((1) +ᵥ q) = q
+      change (-1 : ℝ) +ᵥ ((1 : ℝ) +ᵥ q) = q
+      rw [← add_vadd, show (-1 : ℝ) + 1 = 0 from by ring, zero_vadd]
+  · -- Values equal: ord(p) = ord((-1)+ᵥp)
+    intro p _
+    show (orderOfVanishingAt' (⇑f) p : ℂ) = (orderOfVanishingAt' (⇑f) ((-1 : ℝ) +ᵥ p) : ℂ)
+    rw [ord_vAdd_neg_one_eq f p]
+
+/-! ## Arc Pairing: ∑ rightArc = ∑ leftArc -/
+
+/-- The sum of orders on the right arc equals the sum on the left arc.
+This uses S as a bijection from nonzero-order right-arc points to left-arc points. -/
+theorem sum_ord_rightArc_eq_sum_ord_leftArc (S : Finset ℍ)
+    (hS : ∀ p ∈ S, p ∈ 𝒟')
+    (hS_complete : ∀ p, p ∈ 𝒟' → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    ∑ p ∈ S_rightArc S, (orderOfVanishingAt' (⇑f) p : ℂ) =
+    ∑ p ∈ S_leftArc S, (orderOfVanishingAt' (⇑f) p : ℂ) := by
+  rw [← Finset.sum_filter_ne_zero, ← Finset.sum_filter_ne_zero (s := S_leftArc S)]
+  apply Finset.sum_nbij (ModularGroup.S • ·)
+  · -- Maps rightArc∩{ord≠0} → leftArc∩{ord≠0}
+    intro p hp
+    simp only [Finset.mem_filter, S_rightArc, S_leftArc] at hp ⊢
+    obtain ⟨⟨hp_S, hnorm, hre_pos⟩, hord⟩ := hp
+    have hp_fd := hS p hp_S
+    have hord_int := ord_ne_zero_of_cast_ne_zero hord
+    have hSp_fd := S_smul_mem_fd_of_unit p hp_fd hnorm
+    have hSp_norm := S_smul_norm_of_unit p hnorm
+    have hSp_re := S_smul_re_neg_of_unit p hnorm
+    have hord' : orderOfVanishingAt' (⇑f) (ModularGroup.S • p) ≠ 0 := by
+      rw [ord_S_eq f p]; exact hord_int
+    refine ⟨⟨hS_complete _ hSp_fd hord', hSp_norm, ?_⟩, ?_⟩
+    · have hre_pos' : (↑p : ℂ).re > 0 := hre_pos
+      have : (↑(ModularGroup.S • p) : ℂ).re = -(↑p : ℂ).re := by
+        show (ModularGroup.S • p : ℍ).val.re = _
+        rw [show (ModularGroup.S • p : ℍ).val.re = (ModularGroup.S • p : ℍ).re from rfl,
+          hSp_re]; rfl
+      linarith
+    · show (orderOfVanishingAt' (⇑f) (ModularGroup.S • p) : ℂ) ≠ 0
+      rw [show orderOfVanishingAt' (⇑f) (ModularGroup.S • p) =
+        orderOfVanishingAt' (⇑f) p from ord_S_eq f p]; exact hord
+  · -- Injective
+    exact S_smul_injective.injOn
+  · -- Surjective
+    intro q hq
+    rw [Finset.mem_coe] at hq
+    simp only [Finset.mem_filter, S_leftArc] at hq
+    obtain ⟨⟨hq_S, hnorm, hre_neg⟩, hord⟩ := hq
+    have hq_fd := hS q hq_S
+    have hord_int := ord_ne_zero_of_cast_ne_zero hord
+    refine ⟨ModularGroup.S • q, ?_, S_smul_S_smul q⟩
+    rw [Finset.mem_coe]; simp only [Finset.mem_filter, S_rightArc]
+    have hSq_fd := S_smul_mem_fd_of_unit q hq_fd hnorm
+    have hSq_norm := S_smul_norm_of_unit q hnorm
+    have hSq_re := S_smul_re_neg_of_unit q hnorm
+    have hord' : orderOfVanishingAt' (⇑f) (ModularGroup.S • q) ≠ 0 := by
+      rw [ord_S_eq f q]; exact hord_int
+    refine ⟨⟨hS_complete _ hSq_fd hord', hSq_norm, ?_⟩, ?_⟩
+    · have hre_neg' : (↑q : ℂ).re < 0 := hre_neg
+      have : (↑(ModularGroup.S • q) : ℂ).re = -(↑q : ℂ).re := by
+        show (ModularGroup.S • q : ℍ).val.re = _
+        rw [show (ModularGroup.S • q : ℍ).val.re = (ModularGroup.S • q : ℍ).re from rfl,
+          hSq_re]; rfl
+      linarith
+    · show (orderOfVanishingAt' (⇑f) (ModularGroup.S • q) : ℂ) ≠ 0
+      rw [show orderOfVanishingAt' (⇑f) (ModularGroup.S • q) =
+        orderOfVanishingAt' (⇑f) q from ord_S_eq f q]; exact hord
+  · -- Values equal: ord(p) = ord(S·p)
+    intro p _
+    show (orderOfVanishingAt' (⇑f) p : ℂ) = (orderOfVanishingAt' (⇑f) (ModularGroup.S • p) : ℂ)
+    rw [ord_S_eq f p]
+
 end
