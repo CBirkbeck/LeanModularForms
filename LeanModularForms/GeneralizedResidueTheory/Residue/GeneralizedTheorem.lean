@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.Residue.MultipointPV
+import LeanModularForms.GeneralizedResidueTheory.WindingNumber.Proposition2_2
 
 /-!
 # Generalized Residue Theorem
@@ -541,5 +542,77 @@ theorem generalizedResidueTheorem'
             rw [Finset.mul_sum]
             apply Finset.sum_congr rfl
             intro s _; ring
+
+/-- If PV of f exists, then PV of c * f exists (scaling by constant). -/
+lemma CauchyPrincipalValueExists'.const_mul
+    {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} (c : ℂ)
+    (h : CauchyPrincipalValueExists' f γ a b z₀) :
+    CauchyPrincipalValueExists' (fun z => c * f z) γ a b z₀ := by
+  obtain ⟨L, hL⟩ := h
+  refine ⟨c * L, ?_⟩
+  have h_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+      (∫ t in a..b, if ‖γ t - z₀‖ > ε then (c * f (γ t)) * deriv γ t else 0) =
+      c * (∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) := by
+    filter_upwards with ε
+    rw [← intervalIntegral.integral_const_mul]
+    congr 1; ext t
+    split_ifs <;> ring
+  exact (hL.const_mul c).congr h_eq.symm
+
+/-- **Generalized Residue Theorem** (Hungerbühler-Wasem, Theorem 3.3).
+
+CPV of `f` along a piecewise C¹ immersion equals `2πi · Σ winding · residue`,
+even when the curve passes through simple poles. Unlike `generalizedResidueTheorem'`,
+this version does NOT require `CauchyPrincipalValueExists'` as a hypothesis —
+PV existence is proved from the immersion structure + C² regularity at crossings.
+
+The hypotheses `hγ_meas`, `h_no_endpt_cross`, `hC2_cross`, and `h_cont_deriv_cross`
+replace the old `hPV_singular`. These are satisfied by any "reasonable" curve:
+- Measurability follows from global continuity
+- No endpoint crossings holds when poles are interior to the curve
+- C² at crossings holds for piecewise smooth curves
+- Continuous derivative near crossings follows from C² -/
+theorem generalizedResidueTheorem
+    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
+    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+    (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
+    (hS_closed : IsClosed S)
+    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion)
+    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
+    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
+    (hf_ext : ∀ s ∈ S0, ContinuousAt (fun z => f z - residueSimplePole f s / (z - s)) s)
+    -- New regularity hypotheses (replace hPV_singular):
+    (hγ_meas : Measurable γ.toFun)
+    (h_no_endpt_cross : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
+    (hC2_cross : ∀ s ∈ S0, ∀ t ∈ Ioo γ.a γ.b, γ.toFun t = s →
+      ContDiffAt ℝ 2 γ.toFun t)
+    (h_cont_deriv_cross : ∀ s ∈ S0, ∀ t ∈ Ioo γ.a γ.b, γ.toFun t = s →
+      ∃ a' b', t ∈ Ioo a' b' ∧ Icc a' b' ⊆ Icc γ.a γ.b ∧
+        ContinuousOn (deriv γ.toFun) (Icc a' b')) :
+    CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b ∧
+    cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
+      2 * Real.pi * I * ∑ s ∈ S0,
+        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueSimplePole f s := by
+  -- Derive hPV_singular: PV of c/(z-s) exists for each s ∈ S0
+  have hPV_singular : ∀ s ∈ S0, CauchyPrincipalValueExists'
+      (fun z => residueSimplePole f s / (z - s)) γ.toFun γ.a γ.b s := by
+    intro s hs
+    -- PV of (z - s)⁻¹ exists by cpv_exists_inv_sub
+    have h_inv := cpv_exists_inv_sub γ s hγ_meas
+      (h_no_endpt_cross s hs)
+      (hC2_cross s hs) (h_cont_deriv_cross s hs)
+    -- Scale by residue constant: c/(z-s) = c * (z-s)⁻¹
+    have h_eq : (fun z => residueSimplePole f s / (z - s)) =
+        (fun z => residueSimplePole f s * (fun z => (z - s)⁻¹) z) := by
+      ext z; simp [div_eq_mul_inv]
+    rw [h_eq]
+    exact h_inv.const_mul (residueSimplePole f s)
+  -- Apply existing theorem
+  exact generalizedResidueTheorem' U hU hU_convex S hS_in_U hS_discrete hS_closed
+    S0 hS0_subset f hf γ hγ_closed hγ_in_U hS_on_curve hSimplePoles hf_ext hPV_singular
 
 end
