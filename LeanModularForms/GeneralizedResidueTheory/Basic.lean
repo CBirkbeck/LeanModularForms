@@ -1,0 +1,281 @@
+/-
+Copyright (c) 2024. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors:
+-/
+import Mathlib.Analysis.Asymptotics.Defs
+import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Complex.CauchyIntegral
+import Mathlib.Analysis.Complex.LocallyUniformLimit
+import Mathlib.Analysis.SpecialFunctions.Complex.Log
+import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+import Mathlib.MeasureTheory.Integral.CircleIntegral
+import Mathlib.RingTheory.LaurentSeries
+import Mathlib.Topology.Homotopy.Basic
+
+/-!
+# Basic Definitions for Complex Analysis with Principal Values
+
+Core definitions for piecewise C¹ curves, Cauchy principal value integrals,
+and generalized winding numbers following Hungerbühler–Wasem.
+-/
+
+open Complex MeasureTheory Set Filter Topology
+open scoped Real Interval
+
+noncomputable section
+
+/-- A piecewise continuously differentiable curve γ : [a,b] → ℂ.
+The curve is C¹ on each subinterval between partition points. -/
+structure PiecewiseC1Curve where
+  toFun : ℝ → ℂ
+  a : ℝ
+  b : ℝ
+  hab : a < b
+  partition : Finset ℝ
+  partition_subset : ↑partition ⊆ Icc a b
+  endpoints_in_partition : a ∈ partition ∧ b ∈ partition
+  continuous_toFun : ContinuousOn toFun (Icc a b)
+  smooth_off_partition : ∀ t ∈ Icc a b, t ∉ partition → DifferentiableAt ℝ toFun t
+  deriv_continuous_off_partition : ∀ t ∈ Ioo a b, t ∉ partition →
+    ContinuousAt (deriv toFun) t
+
+instance : CoeFun PiecewiseC1Curve fun _ => ℝ → ℂ where
+  coe := PiecewiseC1Curve.toFun
+
+/-- A closed curve has γ(a) = γ(b). -/
+def PiecewiseC1Curve.IsClosed (γ : PiecewiseC1Curve) : Prop :=
+  γ.toFun γ.a = γ.toFun γ.b
+
+/-- A piecewise C¹ immersion: a piecewise C¹ curve with nonzero derivative. -/
+structure PiecewiseC1Immersion extends PiecewiseC1Curve where
+  deriv_ne_zero : ∀ t ∈ Icc a b, t ∉ partition → deriv toFun t ≠ 0
+  left_deriv_limit : ∀ p ∈ partition, a < p →
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv toFun) (𝓝[<] p) (𝓝 L)
+  right_deriv_limit : ∀ p ∈ partition, p < b →
+    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv toFun) (𝓝[>] p) (𝓝 L)
+
+/-- The Cauchy principal value integrand at cutoff ε. -/
+def cauchyPrincipalValueIntegrand' (f : ℂ → ℂ) (γ : ℝ → ℂ)
+    (z₀ : ℂ) (ε : ℝ) (t : ℝ) : ℂ :=
+  if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0
+
+/-- The Cauchy principal value of ∮_γ f(z) dz, excluding ε-neighborhoods of z₀. -/
+def cauchyPrincipalValue' (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
+  limUnder (𝓝[>] (0 : ℝ)) fun ε =>
+    ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0
+
+/-- The Cauchy principal value exists if the limit exists. -/
+def CauchyPrincipalValueExists' (f : ℂ → ℂ) (γ : ℝ → ℂ)
+    (a b : ℝ) (z₀ : ℂ) : Prop :=
+  ∃ L : ℂ, Tendsto (fun ε =>
+    ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0)
+    (𝓝[>] 0) (𝓝 L)
+
+/-- The generalized winding number of γ around z₀, defined via principal value.
+`n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
+def generalizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
+  (2 * Real.pi * I)⁻¹ * cauchyPrincipalValue' (·⁻¹) (fun t => γ t - z₀) a b 0
+
+/-- A model sector curve for computing angle contributions. -/
+structure ModelSectorCurve where
+  r : ℝ
+  hr : 0 < r
+  α : ℝ
+  hα_nonneg : 0 ≤ α
+  hα_le : α ≤ 2 * Real.pi
+
+/-- The radial ray along the positive real axis. -/
+def ModelSectorCurve.γ₁ (_C : ModelSectorCurve) : ℝ → ℂ := fun t => t
+
+/-- The circular arc of radius `r`. -/
+def ModelSectorCurve.γ₂ (C : ModelSectorCurve) : ℝ → ℂ :=
+  fun t => C.r * exp (I * t)
+
+/-- The radial ray along the direction `e^{iα}`. -/
+def ModelSectorCurve.γ₃ (C : ModelSectorCurve) : ℝ → ℂ :=
+  fun t => t * exp (I * C.α)
+
+/-- The residue of f at z₀ via the limit definition for simple poles. -/
+def residue' (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
+  limUnder (𝓝[≠] z₀) fun z => (z - z₀) * f z
+
+/-- Residue via contour integral: `(1/2πi) ∮_{|z-z₀|=1} f(z) dz`. -/
+def residueIntegral' (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
+  (2 * Real.pi * I)⁻¹ * ∮ z in C(z₀, 1), f z
+
+/-- Two curves are homotopic relative to endpoints. -/
+def CurvesHomotopic (Γ γ : ℝ → ℂ) (a b : ℝ) : Prop :=
+  ∃ H : ℝ × ℝ → ℂ,
+    Continuous H ∧
+    (∀ t ∈ Icc a b, H (t, 0) = Γ t) ∧
+    (∀ t ∈ Icc a b, H (t, 1) = γ t) ∧
+    (∀ s ∈ Icc (0 : ℝ) 1, H (a, s) = H (a, 0) ∧ H (b, s) = H (b, 0))
+
+/-- Homotopy avoiding a point z₀. -/
+def CurvesHomotopicAvoiding (Γ γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : Prop :=
+  ∃ H : ℝ × ℝ → ℂ,
+    Continuous H ∧
+    (∀ t ∈ Icc a b, H (t, 0) = Γ t) ∧
+    (∀ t ∈ Icc a b, H (t, 1) = γ t) ∧
+    (∀ s ∈ Icc (0 : ℝ) 1, H (a, s) = z₀ ∧ H (b, s) = z₀) ∧
+    (∀ t ∈ Ioo a b, ∀ s ∈ Icc (0 : ℝ) 1, H (t, s) ≠ z₀)
+
+private theorem aestronglyMeasurable_of_continuousOn_off_finite
+    {f : ℝ → ℂ} {a b : ℝ} {P : Finset ℝ}
+    (hf_cont : ContinuousOn f ((Icc a b) \ P)) :
+    AEStronglyMeasurable f (volume.restrict (Icc a b)) := by
+  have h_union : Icc a b =
+      (Icc a b \ (P : Set ℝ)) ∪ ((P : Set ℝ) ∩ Icc a b) := by
+    ext x; simp [and_comm]; tauto
+  rw [h_union, aestronglyMeasurable_union_iff]
+  constructor
+  · exact hf_cont.aestronglyMeasurable
+      (measurableSet_Icc.diff (Finset.measurableSet P))
+  · have h_null : volume ((P : Set ℝ) ∩ Icc a b) = 0 :=
+      (Finset.finite_toSet P |>.inter_of_left
+        (Icc a b)).measure_zero _
+    rw [Measure.restrict_zero_set h_null]
+    exact aestronglyMeasurable_zero_measure f
+
+/-- A piecewise continuous bounded function is interval integrable. -/
+theorem intervalIntegrable_of_piecewise_continuousOn_bounded
+    {f : ℝ → ℂ} {a b : ℝ} {P : Finset ℝ} (M : ℝ)
+    (hab : a ≤ b)
+    (hf_cont : ContinuousOn f ((Icc a b) \ P))
+    (hf_bound : ∀ t ∈ Icc a b, ‖f t‖ ≤ M) :
+    IntervalIntegrable f volume a b := by
+  have hf_int : IntegrableOn f (Icc a b) volume :=
+    ⟨aestronglyMeasurable_of_continuousOn_off_finite hf_cont,
+     MeasureTheory.HasFiniteIntegral.restrict_of_bounded M
+       (by rw [Real.volume_Icc]; exact ENNReal.ofReal_lt_top)
+       (by filter_upwards [ae_restrict_mem measurableSet_Icc]
+           with t ht; exact hf_bound t ht)⟩
+  rw [← uIcc_of_le hab] at hf_int
+  exact hf_int.intervalIntegrable
+
+/-- If f is continuous on [a,b], differentiable on (a,b)\P with f'=0 there,
+then f has zero right derivative at every point of [a,b). -/
+theorem hasDerivWithinAt_zero_of_deriv_zero_off_finite
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (f : ℝ → E) (a b : ℝ) (P : Finset ℝ) (_hab : a < b)
+    (hf_cont : ContinuousOn f (Icc a b))
+    (hf_diff : ∀ t ∈ Ioo a b, t ∉ P →
+      DifferentiableAt ℝ f t)
+    (hf_deriv_zero : ∀ t ∈ Ioo a b, t ∉ P →
+      deriv f t = 0) :
+    ∀ t ∈ Ico a b, HasDerivWithinAt f 0 (Ici t) t := by
+  intro t ht
+  have ht_lt_b : t < b := ht.2
+  let S : Set ℝ := {b} ∪ (P : Set ℝ)
+  have hS_finite : S.Finite :=
+    (Set.finite_singleton b).union (Finset.finite_toSet P)
+  let S_above : Set ℝ := {s ∈ S | t < s}
+  have hS_above_nonempty : S_above.Nonempty :=
+    ⟨b, by simp only [S_above, S, Set.mem_setOf_eq,
+      Set.mem_union, Set.mem_singleton_iff, true_or,
+      ht_lt_b, and_self]⟩
+  have hS_above_finite : S_above.Finite :=
+    hS_finite.subset (fun s hs => hs.1)
+  have hne : hS_above_finite.toFinset.Nonempty := by
+    rwa [Set.Finite.toFinset_nonempty]
+  set s_min := hS_above_finite.toFinset.min' hne
+    with hs_min_def
+  have hs_min_in : s_min ∈ S_above := by
+    have := Finset.min'_mem _ hne
+    rwa [Set.Finite.mem_toFinset hS_above_finite] at this
+  have hs_min_le : ∀ s ∈ S_above, s_min ≤ s := by
+    intro s hs
+    exact Finset.min'_le _ s
+      ((Set.Finite.mem_toFinset hS_above_finite).mpr hs)
+  have ht_lt_smin : t < s_min := hs_min_in.2
+  have h_avoid : ∀ x ∈ Ioo t s_min, x ∉ S := by
+    intro x hx hxS
+    linarith [(hs_min_le x ⟨hxS, hx.1⟩), hx.2]
+  have h_Ioo_sub : Ioo t s_min ⊆ Ioo a b := by
+    intro x hx
+    exact ⟨lt_of_le_of_lt ht.1 hx.1,
+      lt_of_lt_of_le hx.2
+        (hs_min_le b ⟨by simp [S], ht_lt_b⟩)⟩
+  have h_not_P : ∀ x ∈ Ioo t s_min, x ∉ P := by
+    intro x hx
+    have := h_avoid x hx
+    simp only [S, Set.mem_union, Set.mem_singleton_iff,
+      not_or] at this
+    exact this.2
+  have h_deriv_zero_piece :
+      ∀ x ∈ Ioo t s_min, deriv f x = 0 :=
+    fun x hx => hf_deriv_zero x (h_Ioo_sub hx)
+      (h_not_P x hx)
+  have h_diff_piece : DifferentiableOn ℝ f (Ioo t s_min) :=
+    fun x hx => (hf_diff x (h_Ioo_sub hx)
+      (h_not_P x hx)).differentiableWithinAt
+  have h_const_piece :
+      ∀ x ∈ Ioo t s_min, ∀ y ∈ Ioo t s_min, f x = f y :=
+    fun x hx y hy => IsOpen.is_const_of_deriv_eq_zero
+      isOpen_Ioo isPreconnected_Ioo h_diff_piece
+      h_deriv_zero_piece hx hy
+  have h_mid : (t + s_min) / 2 ∈ Ioo t s_min :=
+    ⟨by linarith, by linarith⟩
+  set x₀ := (t + s_min) / 2
+  have h_f_eq_x₀ :
+      ∀ x ∈ Ioo t s_min, f x = f x₀ :=
+    fun x hx => h_const_piece x hx x₀ h_mid
+  have h_f_t_eq : f t = f x₀ := by
+    have h_cont_Ioo : ContinuousWithinAt f
+        (Ioo t s_min) t :=
+      (hf_cont.continuousWithinAt
+        (Ico_subset_Icc_self ht)).mono
+        (fun x hx => ⟨le_of_lt (lt_of_le_of_lt ht.1 hx.1),
+          le_of_lt (lt_of_lt_of_le hx.2
+            (hs_min_le b ⟨by simp [S], ht_lt_b⟩))⟩)
+    haveI : (𝓝[Ioo t s_min] t).NeBot := by
+      rw [← mem_closure_iff_nhdsWithin_neBot,
+        closure_Ioo (ne_of_lt ht_lt_smin)]
+      exact ⟨le_refl t, le_of_lt ht_lt_smin⟩
+    exact tendsto_nhds_unique
+      (h_cont_Ioo.tendsto.congr' (by
+        filter_upwards [self_mem_nhdsWithin]
+          with x hx; exact h_f_eq_x₀ x hx))
+      tendsto_const_nhds
+  rw [hasDerivWithinAt_iff_tendsto_slope]
+  exact tendsto_nhds_of_eventually_eq (by
+    filter_upwards [show Ioo t s_min ∈
+        𝓝[Ici t \ {t}] t from by
+      rw [mem_nhdsWithin]
+      exact ⟨Iio s_min, isOpen_Iio, ht_lt_smin,
+        fun x ⟨hx_Iio, hx_Ici_diff⟩ =>
+          ⟨lt_of_le_of_ne hx_Ici_diff.1
+            (Ne.symm hx_Ici_diff.2), hx_Iio⟩⟩]
+      with x hx
+    simp only [slope, h_f_eq_x₀ x hx, ← h_f_t_eq,
+      vsub_self, smul_zero])
+
+theorem continuousWithinAt_integral_of_dominated_piecewise
+    {X : Type*} [TopologicalSpace X] [FirstCountableTopology X]
+    {F : X → ℝ → ℂ} {x₀ : X} {a b : ℝ} {S : Set X} {M : ℝ}
+    (hab : a ≤ b)
+    (hF_meas : ∀ x ∈ S, AEStronglyMeasurable (F x) (volume.restrict (Icc a b)))
+    (hF_bound : ∀ x ∈ S, ∀ t ∈ Icc a b, ‖F x t‖ ≤ M)
+    (hF_cont : ∀ᵐ t ∂volume.restrict (Icc a b), ContinuousWithinAt (fun x => F x t) S x₀) :
+    ContinuousWithinAt (fun x => ∫ t in a..b, F x t) S x₀ := by
+  let bound : ℝ → ℝ := fun _ => M
+  have h_uIoc_sub : Set.uIoc a b ⊆ Icc a b := by
+    rw [uIoc_of_le hab]
+    exact Ioc_subset_Icc_self
+  apply intervalIntegral.continuousWithinAt_of_dominated_interval (bound := bound)
+  · apply Filter.eventually_of_mem (self_mem_nhdsWithin (s := S))
+    intro x hx
+    exact (hF_meas x hx).mono_set h_uIoc_sub
+  · apply Filter.eventually_of_mem (self_mem_nhdsWithin (s := S))
+    intro x hx
+    apply Filter.Eventually.of_forall
+    intro t ht
+    exact hF_bound x hx t (h_uIoc_sub ht)
+  · exact intervalIntegrable_const
+  · have h_ae_uIoc : ∀ᵐ t ∂volume.restrict (uIoc a b),
+        ContinuousWithinAt (fun x => F x t) S x₀ :=
+      MeasureTheory.ae_restrict_of_ae_restrict_of_subset h_uIoc_sub hF_cont
+    exact MeasureTheory.ae_imp_of_ae_restrict h_ae_uIoc
+
+end

@@ -1,0 +1,481 @@
+/-
+Copyright (c) 2024. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors:
+-/
+import LeanModularForms.ValenceFormula.PVChain.Helpers
+import LeanModularForms.ValenceFormula.ModularInvariance
+import LeanModularForms.ValenceFormula.Boundary.Smooth
+import LeanModularForms.ValenceFormula.Boundary.Bounds
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.Periodic
+
+/-!
+# Seg5 Cusp Integral
+
+This file contains the cusp-function infrastructure needed to prove that the
+horizontal edge integral (seg5) of `logDeriv(f)` equals `2πi · orderAtCusp'(f)`.
+
+The argument proceeds in two stages:
+
+**Stage 1** (`seg5_integral_eq_circleIntegral_H`): Change of variables from the
+parametric integral along seg5 to a circle integral in the q-plane.
+
+**Stage 2** (`circleIntegral_logDeriv_cuspFunction_of_radius`): Compute the
+circle integral using the factorization `F(q) = q^m · g(q)`:
+- `∮ m/q dq = m · 2πi` from `circleIntegral_const_mul_inv`
+- `∮ logDeriv(g) dq = 0` from `circleIntegral_logDeriv_regular_zero`
+
+## Main Results
+
+* `seg5_logDeriv_integral_eq_H` — the logDeriv integral along seg5 at height H
+    equals `2πi · orderAtCusp' f`.
+* `seg5_logDeriv_integral_value_bridge` — bridge to the form used in
+    `PVChain.Assembly`.
+-/
+
+open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
+open scoped Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
+
+attribute [local instance] Classical.propDecidable
+
+noncomputable section
+
+variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
+
+/-! ### Cusp function factorization helpers -/
+
+private lemma qExpFMS_ne_zero (hf : f ≠ 0) :
+    ModularFormClass.qExpansionFormalMultilinearSeries 1 f ≠ 0 := by
+  intro h
+  have hp := ModularFormClass.hasFPowerSeries_cuspFunction (n := 1) (F := ModularForm (Gamma 1) k) (f := f)
+  -- Rewrite hp to use 0 as the series
+  have hp0 : HasFPowerSeriesOnBall (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
+      (0 : FormalMultilinearSeries ℂ ℂ ℂ) 0 1 := h ▸ hp
+  -- cuspFunction 1 f = 0 near 0
+  have hF_ev := hp0.eventually_eq_zero
+  -- F is analytic, so if it vanishes near 0, it vanishes on the connected ball
+  have hF_analytic : AnalyticOnNhd ℂ (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
+      (Metric.ball 0 1) := hp.analyticOnNhd
+  have hF_eq_zero : Set.EqOn (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) 0
+      (Metric.ball 0 1) :=
+    hF_analytic.eqOn_zero_of_preconnected_of_eventuallyEq_zero
+      (Convex.isPreconnected (convex_ball 0 1)) (Metric.mem_ball_self one_pos) hF_ev
+  -- f(τ) = cuspFunction(qParam(τ)) = 0 for all τ
+  have : ∀ τ : UpperHalfPlane, f τ = 0 := by
+    intro τ
+    have := SlashInvariantFormClass.eq_cuspFunction (n := 1) (f := f) τ
+    rw [← this]
+    exact hF_eq_zero (by simpa using τ.norm_qParam_lt_one 1)
+  exact hf (ModularForm.ext (fun τ => this τ))
+
+/-- Auxiliary: the FMS order equals `(orderAtCusp' f).toNat`. -/
+private lemma qExpFMS_order_eq (hf : f ≠ 0) :
+    (ModularFormClass.qExpansionFormalMultilinearSeries 1 f).order =
+    (orderAtCusp' f).toNat := by
+  set p := ModularFormClass.qExpansionFormalMultilinearSeries 1 f
+  set ps := ModularFormClass.qExpansion 1 f
+  have hp_ne := qExpFMS_ne_zero f hf
+  -- Key: ‖p n‖ = ‖ps.coeff n‖ via qExpansionFormalMultilinearSeries_apply_norm
+  have h_norm : ∀ n, ‖p n‖ = ‖ps.coeff n‖ :=
+    ModularFormClass.qExpansionFormalMultilinearSeries_apply_norm 1 f
+  -- So p n = 0 ↔ ps.coeff n = 0
+  have h_zero_iff : ∀ n, p n = 0 ↔ ps.coeff n = 0 := by
+    intro n; rw [← norm_eq_zero, h_norm, norm_eq_zero]
+  -- {n | p n ≠ 0} = {n | ps.coeff n ≠ 0}
+  have h_sets : {n | p n ≠ 0} = {n | ps.coeff n ≠ 0} :=
+    Set.ext fun n => (h_zero_iff n).not
+  have hps_ne : ps ≠ 0 := by
+    intro h; apply hp_ne
+    exact FormalMultilinearSeries.ext fun n => (h_zero_iff n).mpr (by rw [h]; simp)
+  -- Strategy: show p.order satisfies the characterization of ps.order.toNat
+  -- Both are the smallest n with nonzero n-th coefficient
+  show p.order = (orderAtCusp' f).toNat
+  unfold orderAtCusp'
+  simp only [Int.toNat_natCast]
+  -- Goal: p.order = ps.order.toNat
+  -- Use order_eq_nat: ps.order = n ↔ ps.coeff n ≠ 0 ∧ ∀ i < n, ps.coeff i = 0
+  have hps_order : ps.order = ↑ps.order.toNat :=
+    (ENat.coe_toNat_eq_self.mpr (PowerSeries.order_eq_top.not.mpr hps_ne)).symm
+  set m := ps.order.toNat
+  have hm := (PowerSeries.order_eq_nat.mp (by exact_mod_cast hps_order) :
+    ps.coeff m ≠ 0 ∧ ∀ i, i < m → ps.coeff i = 0)
+  -- p.order = sInf {n | p n ≠ 0} by definition
+  -- We show p.order = m by showing m is the smallest index with p m ≠ 0
+  have hp_m_ne : p m ≠ 0 := (h_zero_iff m).not.mpr hm.1
+  have hp_lt : ∀ i, i < m → p i = 0 := fun i hi => (h_zero_iff i).mpr (hm.2 i hi)
+  -- p.order is sInf {n | p n ≠ 0}, and m is the min of this set
+  show p.order = m
+  unfold FormalMultilinearSeries.order
+  have hm_mem : m ∈ {n | p n ≠ 0} := hp_m_ne
+  apply le_antisymm
+  · exact Nat.sInf_le hm_mem
+  · -- m ≤ sInf {n | p n ≠ 0}: if sInf < m, then p (sInf) ≠ 0 but also = 0
+    by_contra h_lt
+    push_neg at h_lt
+    have h_sInf_mem := Nat.sInf_mem ⟨m, hm_mem⟩
+    -- h_sInf_mem : sInf {n | p n ≠ 0} ∈ {n | p n ≠ 0}, i.e., p (sInf ..) ≠ 0
+    -- hp_lt _ h_lt : p (sInf ..) = 0
+    exact h_sInf_mem (hp_lt _ h_lt)
+
+/-- The cuspFunction factors as `q^m * g(q)` on the open unit ball,
+where `m = orderAtCusp' f` and `g` is differentiable with `g(0) ≠ 0`. -/
+private lemma cuspFunction_factored (hf : f ≠ 0) :
+    ∃ g : ℂ → ℂ,
+      DifferentiableOn ℂ g (Metric.ball 0 1) ∧
+      g 0 ≠ 0 ∧
+      ∀ q ∈ Metric.ball (0 : ℂ) 1,
+        SlashInvariantFormClass.cuspFunction (1 : ℕ) f q =
+        q ^ (orderAtCusp' f).toNat * g q := by
+  set F := SlashInvariantFormClass.cuspFunction (1 : ℕ) f
+  set p := ModularFormClass.qExpansionFormalMultilinearSeries 1 f
+  have hp : HasFPowerSeriesOnBall F p 0 1 :=
+    ModularFormClass.hasFPowerSeries_cuspFunction 1 f
+  have hp_ne : p ≠ 0 := qExpFMS_ne_zero f hf
+  have hp_order : p.order = (orderAtCusp' f).toNat := qExpFMS_order_eq f hf
+  -- g₀ := (swap dslope 0)^[p.order] F
+  set g₀ := (Function.swap dslope 0)^[p.order] F
+  -- g₀ is differentiable on ball(0,1) via Complex.differentiableOn_dslope
+  have hF_diff : DifferentiableOn ℂ F (Metric.ball 0 1) :=
+    hp.analyticOnNhd.differentiableOn
+  have hball_nhds : Metric.ball (0 : ℂ) 1 ∈ 𝓝 (0 : ℂ) :=
+    Metric.ball_mem_nhds 0 one_pos
+  have hg_diff : DifferentiableOn ℂ g₀ (Metric.ball 0 1) := by
+    -- Iterate: dslope preserves differentiability on ball for ℂ
+    suffices ∀ (k : ℕ), DifferentiableOn ℂ ((Function.swap dslope 0)^[k] F)
+        (Metric.ball 0 1) from this p.order
+    intro k
+    induction k with
+    | zero => simpa using hF_diff
+    | succ j ih =>
+      simp only [Function.iterate_succ', Function.comp_def]
+      exact (Complex.differentiableOn_dslope hball_nhds).mpr ih
+  -- g₀ 0 ≠ 0
+  have hg_ne : g₀ 0 ≠ 0 :=
+    hp.hasFPowerSeriesAt.iterate_dslope_fslope_ne_zero hp_ne
+  -- F =ᶠ[𝓝 0] fun z => z^n • g₀ z (local factorization)
+  have hF_local : ∀ᶠ z in 𝓝 (0 : ℂ),
+      F z = (z - 0) ^ p.order • g₀ z :=
+    hp.hasFPowerSeriesAt.eq_pow_order_mul_iterate_dslope
+  -- Both sides are analytic on ball(0,1), so they agree everywhere
+  have hF_analytic : AnalyticOnNhd ℂ F (Metric.ball 0 1) := hp.analyticOnNhd
+  have hg_analytic : AnalyticOnNhd ℂ g₀ (Metric.ball 0 1) :=
+    fun z hz => hg_diff.analyticAt (IsOpen.mem_nhds Metric.isOpen_ball hz)
+  have hRHS_analytic : AnalyticOnNhd ℂ (fun z => (z - 0) ^ p.order • g₀ z) (Metric.ball 0 1) :=
+    fun z hz => ((analyticAt_id.sub analyticAt_const).pow p.order).smul (hg_analytic z hz)
+  have h0_mem : (0 : ℂ) ∈ Metric.ball (0 : ℂ) 1 := Metric.mem_ball_self one_pos
+  have hF_eq : Set.EqOn F (fun z => (z - 0) ^ p.order • g₀ z) (Metric.ball 0 1) :=
+    hF_analytic.eqOn_of_preconnected_of_eventuallyEq hRHS_analytic
+      (Convex.isPreconnected (convex_ball 0 1)) h0_mem hF_local
+  -- Now produce the witness
+  refine ⟨g₀, hg_diff, hg_ne, fun q hq => ?_⟩
+  have := hF_eq hq
+  simp only [sub_zero, smul_eq_mul] at this
+  rw [this, hp_order]
+
+/-! ### Circle integral helpers -/
+
+omit f hf in
+/-- `∮ (m : ℂ) * q⁻¹ dq = m * 2πi` for nonzero radius. -/
+private lemma circleIntegral_const_mul_inv (m : ℂ) {R : ℝ} (hR : R ≠ 0) :
+    (∮ q in C(0, R), m * q⁻¹) = m * (2 * ↑Real.pi * I) := by
+  rw [circleIntegral.integral_const_mul]
+  congr 1
+  have : (fun q : ℂ => q⁻¹) = (fun q => (q - 0)⁻¹) := by ext; simp
+  rw [this]
+  exact circleIntegral.integral_sub_center_inv 0 hR
+
+omit f hf in
+/-- `∮ logDeriv(g) dq = 0` when `g` is differentiable on ball(0,1) and nonvanishing
+on closedBall(0,R), where `0 < R < 1`. Uses Cauchy-Goursat: `logDeriv(g) = g'/g`
+is holomorphic on ball(0,R) since `g` is differentiable and nonvanishing there. -/
+private lemma circleIntegral_logDeriv_regular_zero
+    (g : ℂ → ℂ) {R : ℝ} (hR_pos : 0 < R) (hR_lt : R < 1)
+    (hg_diff : DifferentiableOn ℂ g (Metric.ball 0 1))
+    (hg_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R, g q ≠ 0) :
+    (∮ q in C(0, R), logDeriv g q) = 0 := by
+  have hR_le : 0 ≤ R := le_of_lt hR_pos
+  have h_cb_sub : Metric.closedBall (0 : ℂ) R ⊆ Metric.ball 0 1 :=
+    Metric.closedBall_subset_ball hR_lt
+  have h_ball_sub : Metric.ball (0 : ℂ) R ⊆ Metric.ball 0 1 :=
+    Metric.ball_subset_ball (le_of_lt hR_lt)
+  have hg_cont : ContinuousOn (logDeriv g) (Metric.closedBall (0 : ℂ) R) := by
+    show ContinuousOn (fun q => deriv g q / g q) (Metric.closedBall (0 : ℂ) R)
+    exact ContinuousOn.div
+      (((hg_diff.contDiffOn (n := 1) Metric.isOpen_ball).continuousOn_deriv_of_isOpen
+        Metric.isOpen_ball le_rfl).mono h_cb_sub)
+      (hg_diff.continuousOn.mono h_cb_sub)
+      hg_nonvan
+  have hg_logDeriv_diff : ∀ z ∈ Metric.ball (0 : ℂ) R, DifferentiableAt ℂ (logDeriv g) z := by
+    intro z hz
+    have hz1 := h_ball_sub hz
+    exact ((hg_diff.deriv Metric.isOpen_ball).differentiableAt
+      (Metric.isOpen_ball.mem_nhds hz1)).div
+      (hg_diff.differentiableAt (Metric.isOpen_ball.mem_nhds hz1))
+      (hg_nonvan z (Metric.ball_subset_closedBall hz))
+  exact Complex.circleIntegral_eq_zero_of_differentiable_on_off_countable hR_le
+    Set.countable_empty hg_cont (fun z hz => hg_logDeriv_diff z hz.1)
+
+/-! ### q-radius positivity -/
+
+omit f hf in
+/-- `seg5_q_radius_H H > 0` for any `H`. -/
+lemma seg5_q_radius_H_pos (H : ℝ) : 0 < seg5_q_radius_H H :=
+  Real.exp_pos _
+
+omit f hf in
+/-- `seg5_q_radius_H H < 1` when `H > 0`. -/
+private lemma seg5_q_radius_H_lt_one' {H : ℝ} (hH : 0 < H) : seg5_q_radius_H H < 1 :=
+  Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos])
+
+/-! ### Circle integral of logDeriv(cuspFunction) -/
+
+/-- Circle integral of logDeriv(cuspFunction) at any radius `0 < R < 1`.
+
+This is the radius-parameterized version. The factorization `F(q) = q^m · g(q)` gives:
+`∮ logDeriv(F) = m · ∮ 1/q + ∮ logDeriv(g) = m · 2πi + 0`. -/
+lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
+    {R : ℝ} (hR_pos : 0 < R) (hR_lt : R < 1)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R,
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    (∮ q in C(0, R),
+      logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) q) =
+    2 * ↑Real.pi * I * ↑(orderAtCusp' f) := by
+  set F := SlashInvariantFormClass.cuspFunction (1 : ℕ) f with hF_def
+  set m := (orderAtCusp' f).toNat with hm_def
+  obtain ⟨g, hg_diff, hg_ne, hFg⟩ := cuspFunction_factored f hf
+  have hg_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R, g q ≠ 0 := by
+    intro q hq
+    by_cases hq0 : q = 0
+    · exact hq0 ▸ hg_ne
+    · have hF_ne := hcusp_nonvan q hq hq0
+      have hq_ball := Metric.closedBall_subset_ball hR_lt hq
+      have hFq := hFg q hq_ball
+      rw [← hF_def] at hFq
+      rw [hFq] at hF_ne
+      exact right_ne_zero_of_mul hF_ne
+  have h_split : ∀ q, q ∈ Metric.sphere (0 : ℂ) R →
+      logDeriv F q = ↑m / q + logDeriv g q := by
+    intro q hq
+    have hq_ne : q ≠ 0 := by
+      intro h; simp [h] at hq
+      exact absurd hq.symm (ne_of_gt hR_pos)
+    have hq_ball : q ∈ Metric.ball (0 : ℂ) 1 :=
+      Metric.sphere_subset_closedBall.trans
+        (Metric.closedBall_subset_ball hR_lt) hq
+    have hF_eq : F =ᶠ[𝓝 q] (fun z => z ^ m * g z) :=
+      (Metric.isOpen_ball.eventually_mem hq_ball).mono (fun z hz => hFg z hz)
+    have hg_diff_at := hg_diff.differentiableAt (Metric.isOpen_ball.mem_nhds hq_ball)
+    have hg_ne_q := hg_nonvan q (Metric.sphere_subset_closedBall hq)
+    simp only [logDeriv_apply, hF_eq.eq_of_nhds, hF_eq.deriv.eq_of_nhds]
+    have h_hd : HasDerivAt (fun z => z ^ m * g z)
+        (↑m * q ^ (m - 1) * g q + q ^ m * deriv g q) q :=
+      (hasDerivAt_pow m q).mul hg_diff_at.hasDerivAt
+    rw [h_hd.deriv]
+    have hqm_ne : q ^ m ≠ 0 := pow_ne_zero m hq_ne
+    field_simp
+    rcases m with _ | n
+    · ring
+    · rw [Nat.succ_sub_one]; ring
+  have hR_ne : R ≠ 0 := ne_of_gt hR_pos
+  have hR_le : 0 ≤ R := le_of_lt hR_pos
+  have hci_inv : CircleIntegrable (fun q => (↑m : ℂ) * q⁻¹) 0 R := by
+    apply ContinuousOn.circleIntegrable hR_le
+    apply ContinuousOn.mul continuousOn_const
+    apply ContinuousOn.inv₀ continuousOn_id
+    intro z hz
+    simp only [Metric.mem_sphere, dist_zero_right] at hz
+    simp only [id]
+    exact norm_ne_zero_iff.mp (by linarith)
+  have hci_logDeriv : CircleIntegrable (fun q => logDeriv g q) 0 R := by
+    apply ContinuousOn.circleIntegrable hR_le
+    have h_sphere_sub : Metric.sphere (0 : ℂ) R ⊆ Metric.ball 0 1 :=
+      Metric.sphere_subset_closedBall.trans (Metric.closedBall_subset_ball hR_lt)
+    have hg_deriv_cont : ContinuousOn (deriv g) (Metric.ball (0 : ℂ) 1) :=
+      ((hg_diff.contDiffOn (n := 1) Metric.isOpen_ball).continuousOn_deriv_of_isOpen
+        Metric.isOpen_ball le_rfl)
+    show ContinuousOn (fun q => deriv g q / g q) (Metric.sphere 0 R)
+    exact ContinuousOn.div
+      (hg_deriv_cont.mono h_sphere_sub)
+      (hg_diff.continuousOn.mono h_sphere_sub)
+      (fun q hq => hg_nonvan q (Metric.sphere_subset_closedBall hq))
+  have h_congr : (∮ q in C(0, R), logDeriv F q) =
+      ∮ q in C(0, R), ((↑m : ℂ) / q + logDeriv g q) := by
+    simp only [circleIntegral]
+    apply intervalIntegral.integral_congr
+    intro θ _
+    simp only
+    rw [h_split _ (circleMap_mem_sphere 0 hR_le θ)]
+  have h_div_eq : (fun q : ℂ => (↑m : ℂ) / q + logDeriv g q) =
+      (fun q => (↑m : ℂ) * q⁻¹ + logDeriv g q) := by
+    ext; simp [div_eq_mul_inv]
+  rw [h_congr, h_div_eq, circleIntegral.integral_add hci_inv hci_logDeriv,
+      circleIntegral_const_mul_inv (↑m : ℂ) hR_ne,
+      circleIntegral_logDeriv_regular_zero g hR_pos hR_lt hg_diff hg_nonvan,
+      add_zero]
+  have hm_cast : (↑m : ℂ) = ↑(orderAtCusp' f) := by
+    show (↑((orderAtCusp' f).toNat) : ℂ) = ↑(orderAtCusp' f)
+    unfold orderAtCusp'
+    push_cast [Int.toNat_natCast]; rfl
+  rw [hm_cast]; ring
+
+/-! ### Height-Parameterized Seg5 Helpers -/
+
+omit f hf in
+/-- The q-parameter along seg5 at height H equals a circle map value:
+`qParam 1 (fdBoundary_seg5_H H t) = circleMap 0 (seg5_q_radius_H H) (2π(t - 9/2))`. -/
+private lemma qParam_seg5_H_eq_circleMap (H : ℝ) (t : ℝ) :
+    Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t) =
+    circleMap 0 (seg5_q_radius_H H) (2 * Real.pi * (t - 9 / 2)) := by
+  simp only [Function.Periodic.qParam, fdBoundary_seg5_H, seg5_q_radius_H, circleMap_zero]
+  rw [show (2 : ℂ) * ↑Real.pi * I * ((↑t : ℂ) - 9 / 2 + ↑H * I) / (1 : ℝ) =
+      ↑(-2 * Real.pi * H) + ↑(2 * Real.pi * (t - 9 / 2)) * I by
+    push_cast
+    have hI : (I : ℂ) ^ 2 = -1 := I_sq
+    linear_combination (2 * ↑Real.pi * ↑H) * hI]
+  rw [Complex.exp_add, Complex.ofReal_exp]
+
+omit f hf in
+/-- The imaginary part of `fdBoundary_seg5_H H t` is `H`, which is positive when `H > 0`. -/
+private lemma im_fdBoundary_seg5_H_pos {H : ℝ} (hH : 0 < H) (t : ℝ) :
+    0 < (fdBoundary_seg5_H H t).im := by
+  show 0 < ((↑t : ℂ) - 9 / 2 + ↑H * I).im
+  simp [add_im, mul_im, sub_im, ofReal_im, ofReal_re, I_re, I_im]
+  linarith
+
+omit hf in
+/-- Chain rule for logDeriv along seg5 at height H:
+`logDeriv(f ∘ ofComplex)(z(t)) = logDeriv(cuspFn)(q(z(t))) · 2πi · q(z(t))`. -/
+private lemma logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H
+    {H : ℝ} (hH : 0 < H) (t : ℝ) :
+    logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
+    logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
+      (Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t)) *
+    (2 * ↑Real.pi * I * Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t)) := by
+  set z := fdBoundary_seg5_H H t
+  set F := SlashInvariantFormClass.cuspFunction (1 : ℕ) f
+  set q_fn := Function.Periodic.qParam (1 : ℝ)
+  have h_eq : modularFormCompOfComplex f = F ∘ q_fn := by
+    ext w
+    simp only [modularFormCompOfComplex, Function.comp_def, F,
+      SlashInvariantFormClass.cuspFunction]
+    have := (SlashInvariantFormClass.periodic_comp_ofComplex 1 f).eq_cuspFunction
+      (Nat.cast_ne_zero.mpr (by norm_num : (1 : ℕ) ≠ 0)) w
+    convert this.symm using 2; norm_cast
+  have hq_norm : ‖q_fn z‖ < 1 := by
+    simp only [q_fn, Function.Periodic.norm_qParam]
+    have him : 0 < (fdBoundary_seg5_H H t).im := im_fdBoundary_seg5_H_pos hH t
+    rw [show (-2 * Real.pi * z.im / (1 : ℝ)) = -2 * Real.pi * z.im by ring]
+    exact Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos])
+  have hF_diff : DifferentiableAt ℂ F (q_fn z) :=
+    ModularFormClass.differentiableAt_cuspFunction (n := 1) (f := f) hq_norm
+  have hq_diff : DifferentiableAt ℂ q_fn z :=
+    Function.Periodic.differentiable_qParam.differentiableAt
+  rw [h_eq, logDeriv_comp hF_diff hq_diff]
+  have hderiv : deriv q_fn z = 2 * ↑Real.pi * I * q_fn z := by
+    have hfun : q_fn = (fun z : ℂ => cexp (2 * ↑Real.pi * I * z)) := by
+      ext w; simp [q_fn, Function.Periodic.qParam, div_one]
+    rw [hfun]
+    have h1 : HasDerivAt (fun z => 2 * ↑Real.pi * I * z) (2 * ↑Real.pi * I) z := by
+      simpa using (hasDerivAt_id z).const_mul (2 * ↑Real.pi * I)
+    rw [h1.cexp.deriv]; ring
+  rw [hderiv]
+
+omit hf in
+/-- **Stage 1 (H)**: The parametric integral of logDeriv(f) along seg5 at height H
+equals the circle integral of logDeriv(cuspFunction) at radius `seg5_q_radius_H H`. -/
+lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
+    ∫ t in (4:ℝ)..5,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
+    ∮ q in C(0, seg5_q_radius_H H),
+      logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) q := by
+  set F := SlashInvariantFormClass.cuspFunction (1 : ℕ) f
+  set R := seg5_q_radius_H H
+  simp_rw [logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H f hH]
+  simp_rw [qParam_seg5_H_eq_circleMap H]
+  set g : ℝ → ℂ := fun θ => deriv (circleMap 0 (↑R)) θ • logDeriv F (circleMap 0 ↑R θ)
+    with hg_def
+  have h_eq_integral :
+      (∫ t in (4:ℝ)..5,
+        logDeriv F (circleMap 0 R (2 * Real.pi * (t - 9 / 2))) *
+        (2 * ↑Real.pi * I * circleMap 0 R (2 * Real.pi * (t - 9 / 2)))) =
+      ∫ t in (4:ℝ)..5, (2 * Real.pi : ℝ) • g (2 * Real.pi * (t - 9 / 2)) := by
+    congr 1; ext t
+    simp only [hg_def, deriv_circleMap, Complex.real_smul, smul_eq_mul, ofReal_mul, ofReal_ofNat]
+    ring
+  rw [h_eq_integral]
+  rw [intervalIntegral.integral_smul]
+  have hpi_ne : (2 * Real.pi : ℝ) ≠ 0 := by positivity
+  rw [show (fun t : ℝ => g (2 * Real.pi * (t - 9 / 2))) =
+    (fun t : ℝ => g (2 * Real.pi * t + (2 * Real.pi * (-9 / 2)))) by
+    ext t; ring_nf]
+  rw [intervalIntegral.integral_comp_mul_add g hpi_ne]
+  have hbnd_lo : 2 * Real.pi * 4 + 2 * Real.pi * (-9 / 2) = -Real.pi := by ring
+  have hbnd_hi : 2 * Real.pi * 5 + 2 * Real.pi * (-9 / 2) = Real.pi := by ring
+  rw [hbnd_lo, hbnd_hi]
+  rw [smul_inv_smul₀ hpi_ne]
+  have h_periodic : Function.Periodic g (2 * Real.pi) := by
+    intro θ
+    simp only [hg_def, deriv_circleMap, periodic_circleMap 0 R θ, smul_eq_mul]
+  have h_shift := Function.Periodic.intervalIntegral_add_eq h_periodic (-Real.pi) 0
+  simp only [zero_add] at h_shift
+  rw [show (-Real.pi + 2 * Real.pi : ℝ) = Real.pi from by ring] at h_shift
+  rw [h_shift]
+  simp only [circleIntegral, hg_def]
+
+/-- Combination of Stages 1 and 2 at height H:
+the logDeriv integral along seg5 at height H = 2πi · orderAtCusp'. -/
+lemma seg5_logDeriv_integral_eq_H (hf : f ≠ 0)
+    {H : ℝ} (hH : 0 < H)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∫ t in (4:ℝ)..5,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
+    2 * ↑Real.pi * I * ↑(orderAtCusp' f) := by
+  rw [seg5_integral_eq_circleIntegral_H f hH]
+  exact circleIntegral_logDeriv_cuspFunction_of_radius f hf
+    (seg5_q_radius_H_pos H) (seg5_q_radius_H_lt_one' hH) hcusp_nonvan
+
+/-! ### Bridge lemma for Assembly.lean -/
+
+include hf in
+/-- Bridge lemma: the logDeriv integral along seg5 (with `deriv (fdBoundary_H H) t`)
+equals `2πi · orderAtCusp' f`.
+
+This connects `seg5_logDeriv_integral_eq_H` (which integrates just `logDeriv f(z(t))`)
+to the form used in `PVChain.Assembly`, which integrates `logDeriv f(z(t)) * z'(t)`.
+
+For `t > 4`, `fdBoundary_H H t = fdBoundary_seg5_H H t` and `deriv (fdBoundary_H H) t = 1`,
+so the integrand with `* deriv ...` equals the integrand without. -/
+theorem seg5_logDeriv_integral_value_bridge
+    {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
+    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
+      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+    ∫ t in (4:ℝ)..5,
+      logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
+        deriv (fdBoundary_H H) t =
+      2 * ↑Real.pi * I * (orderAtCusp' f : ℂ) := by
+  -- Step 1: For t ∈ (4, 5], fdBoundary_H H t = fdBoundary_seg5_H H t
+  -- and deriv (fdBoundary_H H) t = 1.
+  have hH_pos : 0 < H := by
+    calc (0 : ℝ) < Real.sqrt 3 / 2 := by positivity
+      _ < H := hH
+  -- The integrands agree a.e. on (4, 5)
+  have h_eq_ae : ∀ᵐ t ∂MeasureTheory.volume,
+      t ∈ Set.uIoc 4 5 →
+        logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
+          deriv (fdBoundary_H H) t =
+        logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) := by
+    filter_upwards with t ht
+    rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)] at ht
+    have ht4 : (4 : ℝ) < t := ht.1
+    rw [fdBoundary_H_eq_seg5_H ht4, (fdBoundary_H_hasDerivAt_seg5 H ht4).deriv, mul_one]
+  calc ∫ t in (4:ℝ)..5,
+        logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
+          deriv (fdBoundary_H H) t
+      = ∫ t in (4:ℝ)..5,
+        logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) := by
+        exact intervalIntegral.integral_congr_ae h_eq_ae
+    _ = 2 * ↑Real.pi * I * (orderAtCusp' f : ℂ) :=
+        seg5_logDeriv_integral_eq_H f hf hH_pos hcusp_nonvan
+
+end
