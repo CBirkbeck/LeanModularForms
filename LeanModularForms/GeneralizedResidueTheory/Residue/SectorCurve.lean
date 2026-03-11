@@ -618,7 +618,7 @@ from 0 to 3 equals `I * alpha`.
 
 The divergences from the radial segments cancel, leaving only the arc contribution. -/
 theorem pv_sector_dz_over_z (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (hα_nonneg : 0 ≤ α) (hα_le : α ≤ 2 * Real.pi) :
+    (_hα_nonneg : 0 ≤ α) (_hα_le : α ≤ 2 * Real.pi) :
     CauchyPrincipalValueExists' (fun z => z⁻¹) (sectorCurve r α) 0 3 0 ∧
     cauchyPrincipalValue' (fun z => z⁻¹) (sectorCurve r α) 0 3 0 = I * ↑α := by
   -- The PV integral is eventually constant = I * α for ε < r
@@ -647,9 +647,9 @@ theorem pv_sector_dz_over_z (r : ℝ) (hr : 0 < r) (α : ℝ)
 
 /-- For `n >= 1`, the integral of `z^(n-1) dz` along the sector curve is 0
 when `n * alpha` is a multiple of `2 * pi`. -/
-theorem pv_sector_higher_power (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (hα_nonneg : 0 ≤ α) (hα_le : α ≤ 2 * Real.pi)
-    (n : ℕ) (hn : 1 ≤ n) (h_angle : ∃ k : ℤ, n * α = k * (2 * Real.pi)) :
+theorem pv_sector_higher_power (r : ℝ) (_hr : 0 < r) (α : ℝ)
+    (_hα_nonneg : 0 ≤ α) (_hα_le : α ≤ 2 * Real.pi)
+    (n : ℕ) (hn : 1 ≤ n) (_h_angle : ∃ k : ℤ, n * α = k * (2 * Real.pi)) :
     ∫ t in (0 : ℝ)..3,
       (sectorCurve r α t) ^ (n - 1) * deriv (sectorCurve r α) t = 0 := by
   -- By FTC: the integrand is d/dt[γ(t)^n / n], so the integral telescopes to
@@ -783,11 +783,11 @@ private theorem integral_analytic_sectorCurve_eq_zero (r : ℝ) (hr : 0 < r) (α
   have hγ_in_ball : ∀ t ∈ Icc (0 : ℝ) 3, sectorCurve r α t ∈ Metric.ball (0 : ℂ) (↑r + 1) := by
     intro t ⟨ht0, ht3⟩
     simp only [Metric.mem_ball, dist_zero_right]
-    rcases le_or_lt t 1 with h1 | h1
+    rcases le_or_gt t 1 with h1 | h1
     · rw [sectorCurve_seg1 r α t ⟨ht0, h1⟩, Complex.norm_real,
         Real.norm_eq_abs, abs_of_nonneg (mul_nonneg ht0 hr.le)]
       nlinarith
-    · rcases le_or_lt t 2 with h2 | h2
+    · rcases le_or_gt t 2 with h2 | h2
       · rw [sectorCurve_seg2 r α t ⟨le_of_lt h1, h2⟩, norm_mul,
           Complex.norm_real, Real.norm_eq_abs, abs_of_pos hr,
           norm_exp_I, mul_one]
@@ -938,11 +938,11 @@ theorem lemma_3_1_simple_pole (r : ℝ) (hr : 0 < r) (α : ℝ)
       sectorCurve r α t ∈ Metric.ball (0 : ℂ) (↑r + 1) := by
     intro t ⟨ht0, ht3⟩
     simp only [Metric.mem_ball, dist_zero_right]
-    rcases le_or_lt t 1 with h1 | h1
+    rcases le_or_gt t 1 with h1 | h1
     · rw [sectorCurve_seg1 r α t ⟨ht0, h1⟩, Complex.norm_real,
         Real.norm_eq_abs, abs_of_nonneg (mul_nonneg ht0 hr.le)]
       nlinarith
-    · rcases le_or_lt t 2 with h2 | h2
+    · rcases le_or_gt t 2 with h2 | h2
       · rw [sectorCurve_seg2 r α t ⟨le_of_lt h1, h2⟩, norm_mul,
           Complex.norm_real, Real.norm_eq_abs, abs_of_pos hr,
           norm_exp_I, mul_one]
@@ -1015,11 +1015,11 @@ theorem lemma_3_1_simple_pole (r : ℝ) (hr : 0 < r) (α : ℝ)
   have h_zero_set : Set.Finite ({t ∈ Icc (0:ℝ) 3 | sectorCurve r α t = 0}) := by
     apply Set.Finite.subset (Set.toFinite {(0:ℝ), 3})
     intro t ⟨⟨ht0, ht3⟩, h0⟩
-    rcases le_or_lt t 1 with h1 | h1
+    rcases le_or_gt t 1 with h1 | h1
     · rw [sectorCurve_seg1 r α t ⟨ht0, h1⟩] at h0
       simp only [Complex.ofReal_eq_zero] at h0
       simp [(mul_eq_zero.mp h0).resolve_right hr.ne']
-    · rcases le_or_lt t 2 with h2 | h2
+    · rcases le_or_gt t 2 with h2 | h2
       · exfalso; rw [sectorCurve_seg2 r α t ⟨le_of_lt h1, h2⟩] at h0
         simp only [mul_eq_zero, Complex.ofReal_eq_zero] at h0
         exact h0.elim (fun h => by linarith) (Complex.exp_ne_zero _)
@@ -1278,7 +1278,7 @@ theorem lemma_3_1_residue (r : ℝ) (hr : 0 < r) (α : ℝ)
 equals `alpha / (2 * pi)`. -/
 theorem generalizedWindingNumber_sectorCurve (r : ℝ) (hr : 0 < r) (α : ℝ)
     (hα_nonneg : 0 ≤ α) (hα_le : α ≤ 2 * Real.pi)
-    (hPV : CauchyPrincipalValueExists' (fun z => z⁻¹) (sectorCurve r α) 0 3 0) :
+    (_hPV : CauchyPrincipalValueExists' (fun z => z⁻¹) (sectorCurve r α) 0 3 0) :
     generalizedWindingNumber' (sectorCurve r α) 0 3 0 = ↑α / (2 * ↑Real.pi) := by
   unfold generalizedWindingNumber'
   -- The PV of dz/z along the sector curve equals I * α
