@@ -17,7 +17,7 @@
 | Ticket | Name | Status | Assignee | Dependencies | Files |
 |--------|------|--------|----------|--------------|-------|
 | **1** | Abstract Ring: Degree Map | Not Started | - | None | `AbstractHeckeRing/Degree.lean` |
-| **2** | Abstract Ring: Anti-Involution Commutativity | Not Started | - | None | `AbstractHeckeRing/Commutativity.lean` |
+| **2** | Abstract Ring: Anti-Involution Commutativity | In Progress | Claude | None | `AbstractHeckeRing/Commutativity.lean` |
 | **3** | GL_n ArithmeticGroupPair | Not Started | - | None | `GLn/Basic.lean` |
 | **4** | Diagonal Representatives & T(a₁,...,aₙ) | Not Started | - | 3 | `GLn/DiagonalCosets.lean` |
 | **5** | Commutativity of R(Γ,Δ) via Transpose | Not Started | - | 2, 3 | `GLn/Commutativity.lean` |
@@ -222,13 +222,13 @@ lemma AntiInvolution.onT'_eq_of_same_set (ι : AntiInvolution P) (D : T' P)
 
 ### Tasks
 
-- [ ] **Step 1:** Create `Commutativity.lean`. Define `AntiInvolution` structure.
-- [ ] **Step 2:** Define `AntiInvolution.onT'` — sends `T_mk g` to `T_mk (ι g).unop`. Prove it's well-defined (independent of double coset representative).
-- [ ] **Step 3:** Define `AntiInvolution.ringMap : 𝕋 P ℤ →+ 𝕋 P ℤ` by mapping `Finsupp.mapDomain onT'`. Prove it reverses multiplication: `ringMap(f * g) = ringMap(g) * ringMap(f)`.
-- [ ] **Step 4:** Prove `commRing_of_antiInvolution`: if `onT'` is the identity on all double cosets, then `f * g = ringMap(f * g) = ringMap(g) * ringMap(f) = g * f`.
-- [ ] **Step 5:** Package as `CommRing` instance.
-- [ ] **Step 6:** Add import. Run `lake build`. Verify sorry-free.
-- [ ] **Step 7:** Commit.
+- [x] **Step 1:** Create `Commutativity.lean`. Define `AntiInvolution` structure.
+- [x] **Step 2:** Define `AntiInvolution.onT'` — sends `T_mk g` to `T_mk (ι g).unop`. Prove it's well-defined (`bar_doubleCoset_eq`), involutive (`onT'_involutive`).
+- [ ] **Step 3:** ~~Define `AntiInvolution.ringMap`~~ (skipped: direct proof via `m_comm` is cleaner). Prove `m'_comm_of_onT'_eq` — **1 sorry remaining** (bijection between counting sets).
+- [x] **Step 4:** Prove `mul_comm_of_antiInvolution` via `𝕋.induction_linear` + `m_comm_of_onT'_eq` + `smul_comm`.
+- [x] **Step 5:** Package as `instCommRing_of_antiInvolution`.
+- [x] **Step 6:** Add import. `lake build` passes (1 sorry in `m'_comm_of_onT'_eq`).
+- [ ] **Step 7:** Fill `m'_comm_of_onT'_eq` sorry, then commit.
 
 ---
 
