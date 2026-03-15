@@ -217,9 +217,17 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
       simp [mk2, pow_one]
     rw [hd_o2] at h_deg; push_cast at h_deg ⊢
     have hp2 : (2 : ℤ) ≤ p := by exact_mod_cast hp.two_le
-    -- h_deg : m1 * (p * (p + 1)) + m2 = (p + 1) * (p + 1)  [roughly]
-    -- From m1 ≥ 1, m2 ≥ 0, p ≥ 2: m1 = 1 and m2 = p + 1
-    constructor <;> sorry
+    -- Goal: m1 = 1 ∧ m2 = ↑(p + 1)
+    -- h_deg after push_cast should give m1 * (p * (p + 1)) + m2 * 1 = (p + 1) * (p + 1)
+    -- i.e., m1 * p * (p+1) + m2 = (p+1)^2
+    -- With m1 ≥ 1, m2 ≥ 0, p ≥ 2: m1*p*(p+1) ≥ p*(p+1) ≥ 2*3 = 6 and (p+1)^2 ≥ 9
+    -- If m1 ≥ 2: m1*p*(p+1) ≥ 2*p*(p+1) = 2p^2+2p > p^2+2p+1 = (p+1)^2 when p ≥ 2
+    -- So m1 = 1, m2 = (p+1)^2 - p*(p+1) = (p+1)(p+1-p) = p+1
+    have h_m1_le : m1 * ((p : ℤ) * (↑p + 1)) ≤ (↑p + 1) * (↑p + 1) := by linarith
+    have h_m1_eq : m1 = 1 := by nlinarith [mul_self_nonneg ((p : ℤ) - 1)]
+    constructor
+    · exact h_m1_eq
+    · linarith [h_m1_eq]
   · simp only [show k ≠ 1 from hk1, ite_false]; have hk2 : 2 ≤ k := by omega
     have hd_o2 : T'_deg (GL_pair 2) D_out2 = ↑(p ^ (k - 2) * (p + 1)) :=
       T'_deg_T_diag_two_prime p hp _ _ (k - 1) (by omega)
@@ -227,12 +235,55 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
             have : p ^ k = p ^ (k - 1) * p := by
               rw [← pow_succ]; congr 1; omega
             rw [this, Nat.mul_div_cancel _ hp.pos])
-    rw [hd_o2] at h_deg; push_cast at h_deg ⊢
+    rw [hd_o2] at h_deg
     have hp2 : (2 : ℤ) ≤ p := by exact_mod_cast hp.two_le
-    have hpk : (0 : ℤ) < p ^ k := by positivity
-    have hpk1 : (0 : ℤ) < p ^ (k - 1) := by positivity
-    have hpk2 : (0 : ℤ) < p ^ (k - 2) := by positivity
-    constructor <;> sorry
+    -- Direct nlinarith approach: the h_deg equation involves ℤ casts of ℕ products.
+    -- After push_cast, these become products of ℤ-cast p-powers.
+    -- Use explicit power relationships as nlinarith hints.
+    have hpk : (p : ℤ) ^ k = (p : ℤ) ^ (k - 2) * (p : ℤ) ^ 2 := by
+      have : (p : ℕ) ^ k = p ^ (k - 2) * p ^ 2 := by rw [← pow_add]; congr 1; omega
+      exact_mod_cast this
+    have hpk1 : (p : ℤ) ^ (k - 1) = (p : ℤ) ^ (k - 2) * (p : ℤ) ^ 1 := by
+      have : (p : ℕ) ^ (k - 1) = p ^ (k - 2) * p ^ 1 := by rw [← pow_add]; congr 1; omega
+      exact_mod_cast this
+    have hpk2_pos : (0 : ℤ) < (p : ℤ) ^ (k - 2) := by positivity
+    push_cast at h_deg ⊢
+    rw [pow_one] at hpk1
+    -- h_deg : m1 * (p^k * (p + 1)) + m2 * (p^(k-2) * (p + 1)) = (p + 1) * (p^(k-1) * (p + 1))
+    -- hpk : p^k = p^(k-2) * p^2
+    -- hpk1 : p^(k-1) = p^(k-2) * p
+    -- From these, m1 * p^(k-2) * p^2 * (p+1) + m2 * p^(k-2) * (p+1) = p^(k-2) * p * (p+1)^2
+    -- Cancel p^(k-2)*(p+1): m1 * p^2 + m2 = p * (p+1) = p^2 + p
+    -- m1 ≥ 1 → m1*p^2 ≥ p^2 → m2 ≤ p → m1*p^2 ≤ p^2+p < 2p^2 → m1 = 1 → m2 = p
+    -- Factor out p^(k-2)*(p+1) from h_deg:
+    -- h_deg = p^(k-2) * (p+1) * [m1*p^2 + m2 - p*(p+1)] = 0
+    -- Since p^(k-2)*(p+1) > 0: m1*p^2 + m2 = p*(p+1)
+    have h_eq : m1 * (p : ℤ) ^ 2 + m2 = (p : ℤ) * ((p : ℤ) + 1) := by
+      have h := h_deg
+      rw [hpk, hpk1] at h
+      have key : (p : ℤ) ^ (k - 2) * ((p : ℤ) + 1) ≠ 0 := by positivity
+      have := mul_right_cancel₀ key (show
+        (m1 * (p : ℤ) ^ 2 + m2) * ((p : ℤ) ^ (k - 2) * ((p : ℤ) + 1)) =
+        ((p : ℤ) * ((p : ℤ) + 1)) * ((p : ℤ) ^ (k - 2) * ((p : ℤ) + 1)) by nlinarith)
+      linarith
+    have hp2 := hp.two_le
+    have h_m1_eq : m1 = 1 := by
+      -- From h_eq and m2 ≥ 0: m1 * p^2 ≤ p^2 + p
+      -- From m1 ≥ 1: if m1 ≥ 2 then 2p^2 ≤ p^2 + p → p^2 ≤ p → p ≤ 1, contradiction.
+      have h_le : m1 * (p : ℤ) ^ 2 ≤ (p : ℤ) ^ 2 + p := by linarith [h_eq]
+      -- m1 ≤ 1 since p^2 > 0 and m1 * p^2 ≤ p^2 + p < 2*p^2 (for p ≥ 2)
+      have h_lt_2 : m1 < 2 := by
+        by_contra h
+        push_neg at h
+        have : 2 * (p : ℤ) ^ 2 ≤ m1 * (p : ℤ) ^ 2 := by nlinarith
+        nlinarith [show (p : ℤ) ^ 2 ≥ 4 by nlinarith [show (2 : ℤ) ≤ p by exact_mod_cast hp2]]
+      have hm1_le : m1 ≤ 1 := by
+        rcases le_or_lt m1 1 with h | h
+        · exact h
+        · exfalso; linarith [show m1 ≥ 2 from h]
+      exact le_antisymm hm1_le hm1_pos
+    refine ⟨h_m1_eq, ?_⟩
+    have := h_eq; rw [h_m1_eq] at this; linarith [this]
 
 /-- Theorem 3.24(5): `T(p) · T(1, pᵏ) = T(1, p^{k+1}) + m · T(p, pᵏ)` -/
 theorem thm324_5 (k : ℕ) (hk : 0 < k) :
