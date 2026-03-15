@@ -188,7 +188,19 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
     -- Since m'(A) = 0 for A ∉ {D_out1, D_out2}, only two terms contribute
     have h2 : HeckeRing.deg (GL_pair 2) (HeckeRing.m (GL_pair 2) D1 D2) =
         m1 * T'_deg (GL_pair 2) D_out1 + m2 * T'_deg (GL_pair 2) D_out2 := by
-      sorry
+      -- deg(f) = f.sum (deg_fun) by definition
+      -- Use Finsupp.sum_of_support_subset to reduce to two terms
+      open Classical in
+      simp only [HeckeRing.deg, RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk, HeckeRing.deg_fun]
+      have hsub : (HeckeRing.m (GL_pair 2) D1 D2).support ⊆
+          ({D_out1, D_out2} : Finset _) := by
+        intro A hA; simp only [Finset.mem_insert, Finset.mem_singleton]
+        rw [Finsupp.mem_support_iff] at hA
+        exact (or_iff_not_imp_left.mpr fun h1 =>
+          (Classical.em (A = D_out2)).elim id fun h2 => absurd (h_zero A h1 h2) hA)
+      exact Finset.sum_subset hsub (by
+        intro A _ hA; rw [Finsupp.notMem_support_iff.mp hA]; simp) |>.trans
+        (Finset.sum_pair h_ne)
     linarith
   have hm1_nn := HeckeRing.m'_nonneg (GL_pair 2) D1 D2 D_out1
   have hm2_nn := HeckeRing.m'_nonneg (GL_pair 2) D1 D2 D_out2
@@ -227,7 +239,7 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
     have h_m1_eq : m1 = 1 := by nlinarith [mul_self_nonneg ((p : ℤ) - 1)]
     constructor
     · exact h_m1_eq
-    · linarith [h_m1_eq]
+    · have := h_deg; rw [h_m1_eq] at this; push_cast; linarith
   · simp only [show k ≠ 1 from hk1, ite_false]; have hk2 : 2 ≤ k := by omega
     have hd_o2 : T'_deg (GL_pair 2) D_out2 = ↑(p ^ (k - 2) * (p + 1)) :=
       T'_deg_T_diag_two_prime p hp _ _ (k - 1) (by omega)
