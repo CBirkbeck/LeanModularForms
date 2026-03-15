@@ -117,12 +117,124 @@ end Telescoping
 
 /-! ### Identity 5: The key recursion -/
 
-/-- Theorem 3.24(5): `T(p) · T(1, pᵏ) = T(1, p^{k+1}) + m · T(p, pᵏ)`
-    where m = p for k ≥ 2 and m = p + 1 for k = 1.
+-- Sub-lemma A: SNF support restriction
+private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
+    (hA : A ∈ HeckeRing.mulSupport (GL_pair 2)
+      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+        (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _)))) :
+    A = T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+        (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∨
+    A = T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+        (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega))) := by
+  sorry
 
-    **Proof**: Uses the Hecke ring multiplication formula, SNF support restriction,
-    degree pinning, and explicit construction for the lower bound. -/
+-- Sub-lemma B: Witness construction
+private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
+    T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+      (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∈
+    HeckeRing.mulSupport (GL_pair 2)
+      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+        (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))) := by
+  sorry
 
+-- Sub-lemma C: Degree pinning (combined m'(D_out1) = 1 and m'(D_out2) = c)
+set_option maxHeartbeats 800000 in
+private lemma m'_values (k : ℕ) (hk : 0 < k) :
+    HeckeRing.m' (GL_pair 2)
+      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+        (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _)))
+      (T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+        (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))) = 1 ∧
+    HeckeRing.m' (GL_pair 2)
+      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+        (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _)))
+      (T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+        (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩
+          (dvd_pow_self p (by omega)))) =
+      if k = 1 then ↑(p + 1) else ↑p := by
+  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
+  set D_out1 := T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+    (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))
+  set D_out2 := T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+    (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega)))
+  set m1 := HeckeRing.m' (GL_pair 2) D1 D2 D_out1
+  set m2 := HeckeRing.m' (GL_pair 2) D1 D2 D_out2
+  have h_ne : D_out1 ≠ D_out2 := by
+    intro heq
+    have := diagonal_representative_unique 2 _ _ _ _ heq
+    have := congr_fun this 0; simp only [mk2_zero] at this
+    exact absurd (congr_arg PNat.val this).symm (Nat.Prime.one_lt hp).ne'
+  -- Zero outside support
+  have h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 → HeckeRing.m' (GL_pair 2) D1 D2 A = 0 := by
+    intro A h1 h2; apply HeckeRing.m'_eq_zero_of_nmem_mulSupport
+    intro hmem; exact (mulSupport_pp_subset p hp k hk A hmem).elim h1 h2
+  -- Degree equation via Finsupp.sum directly
+  -- Since m'(A) = 0 for A ∉ {D_out1, D_out2}, the sum reduces to two terms.
+  -- Degree equation via deg ring homomorphism
+  have h_deg : m1 * T'_deg (GL_pair 2) D_out1 + m2 * T'_deg (GL_pair 2) D_out2 =
+      T'_deg (GL_pair 2) D1 * T'_deg (GL_pair 2) D2 := by
+    -- deg(m(D1,D2)) = deg(D1) * deg(D2) since deg is a ring hom
+    have h1 : HeckeRing.deg (GL_pair 2) (HeckeRing.m (GL_pair 2) D1 D2) =
+        T'_deg (GL_pair 2) D1 * T'_deg (GL_pair 2) D2 := by
+      rw [← HeckeRing.T_single_one_mul_T_single_one, HeckeRing.deg_mul,
+          HeckeRing.deg_T_single, HeckeRing.deg_T_single]; ring
+    -- deg(m(D1,D2)) = Σ_A m'(A) * deg(A)
+    -- Since m'(A) = 0 for A ∉ {D_out1, D_out2}, only two terms contribute
+    have h2 : HeckeRing.deg (GL_pair 2) (HeckeRing.m (GL_pair 2) D1 D2) =
+        m1 * T'_deg (GL_pair 2) D_out1 + m2 * T'_deg (GL_pair 2) D_out2 := by
+      sorry
+    linarith
+  have hm1_nn := HeckeRing.m'_nonneg (GL_pair 2) D1 D2 D_out1
+  have hm2_nn := HeckeRing.m'_nonneg (GL_pair 2) D1 D2 D_out2
+  have hm1_pos : 1 ≤ m1 := by
+    have hne : (HeckeRing.m (GL_pair 2) D1 D2) D_out1 ≠ 0 := by
+      rw [← Finsupp.mem_support_iff, HeckeRing.m_support]
+      exact D_out1_pp_in_mulSupport p hp k hk
+    exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne hm1_nn (Ne.symm hne))
+  -- Degree values
+  have hd1 : T'_deg (GL_pair 2) D1 = ↑(p + 1) := by
+    have := T'_deg_T_diag_two_prime p hp (mk2 1 ⟨p, hp.pos⟩)
+      (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)) 1 one_pos (by simp [mk2_one, mk2_zero, pow_one])
+    simpa using this
+  have hd2 : T'_deg (GL_pair 2) D2 = ↑(p ^ (k - 1) * (p + 1)) :=
+    T'_deg_T_diag_two_prime p hp _ _ k hk (by show p ^ k / 1 = p ^ k; simp)
+  have hd_o1 : T'_deg (GL_pair 2) D_out1 = ↑(p ^ k * (p + 1)) :=
+    T'_deg_T_diag_two_prime p hp _ _ (k + 1) (by omega)
+      (by show p ^ (k + 1) / 1 = p ^ (k + 1); simp)
+  rw [hd1, hd2, hd_o1] at h_deg
+  by_cases hk1 : k = 1
+  · subst hk1; simp only [ite_true, show 1 - 1 = 0 from rfl, pow_zero, one_mul] at h_deg ⊢
+    have hd_o2 : T'_deg (GL_pair 2) D_out2 = 1 := by
+      apply T'_deg_T_diag_two_scalar
+      show (mk2 ⟨p, hp.pos⟩ ⟨p ^ 1, pow_pos hp.pos 1⟩) 0 =
+        (mk2 ⟨p, hp.pos⟩ ⟨p ^ 1, pow_pos hp.pos 1⟩) 1
+      simp [mk2, pow_one]
+    rw [hd_o2] at h_deg; push_cast at h_deg ⊢
+    have hp2 : (2 : ℤ) ≤ p := by exact_mod_cast hp.two_le
+    -- h_deg : m1 * (p * (p + 1)) + m2 = (p + 1) * (p + 1)  [roughly]
+    -- From m1 ≥ 1, m2 ≥ 0, p ≥ 2: m1 = 1 and m2 = p + 1
+    constructor <;> sorry
+  · simp only [show k ≠ 1 from hk1, ite_false]; have hk2 : 2 ≤ k := by omega
+    have hd_o2 : T'_deg (GL_pair 2) D_out2 = ↑(p ^ (k - 2) * (p + 1)) :=
+      T'_deg_T_diag_two_prime p hp _ _ (k - 1) (by omega)
+        (by show p ^ k / p = p ^ (k - 1)
+            have : p ^ k = p ^ (k - 1) * p := by
+              rw [← pow_succ]; congr 1; omega
+            rw [this, Nat.mul_div_cancel _ hp.pos])
+    rw [hd_o2] at h_deg; push_cast at h_deg ⊢
+    have hp2 : (2 : ℤ) ≤ p := by exact_mod_cast hp.two_le
+    have hpk : (0 : ℤ) < p ^ k := by positivity
+    have hpk1 : (0 : ℤ) < p ^ (k - 1) := by positivity
+    have hpk2 : (0 : ℤ) < p ^ (k - 2) := by positivity
+    constructor <;> sorry
+
+/-- Theorem 3.24(5): `T(p) · T(1, pᵏ) = T(1, p^{k+1}) + m · T(p, pᵏ)` -/
 theorem thm324_5 (k : ℕ) (hk : 0 < k) :
     T_sum ⟨p, hp.pos⟩ *
     T_ad 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _) =
@@ -130,8 +242,46 @@ theorem thm324_5 (k : ℕ) (hk : 0 < k) :
     (if k = 1 then (↑(p + 1) : ℤ) else (↑p : ℤ)) •
       T_ad ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩
         (dvd_pow_self p (by omega)) := by
-  -- TODO: prove via SNF support restriction + degree pinning + explicit construction
-  sorry
+  rw [T_sum_prime p hp]
+  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
+  set D_out1 := T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+    (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))
+  set D_out2 := T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+    (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega)))
+  set c := (if k = 1 then (↑(p + 1) : ℤ) else (↑p : ℤ))
+  have h_ne : D_out1 ≠ D_out2 := by
+    intro heq
+    have := diagonal_representative_unique 2 _ _ _ _ heq
+    have h0 : (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ : Fin 2 → ℕ+) 0 = 1 := rfl
+    have h0' : (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ : Fin 2 → ℕ+) 0 = ⟨p, hp.pos⟩ := rfl
+    have := congr_fun this 0; rw [h0, h0'] at this
+    exact absurd (congr_arg PNat.val this).symm (Nat.Prime.one_lt hp).ne'
+  have h_mul : T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) *
+      T_ad 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _) =
+      HeckeRing.m (GL_pair 2) D1 D2 :=
+    HeckeRing.T_single_one_mul_T_single_one (GL_pair 2) D1 D2
+  have h_rhs : T_ad 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _) +
+      c • T_ad ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega)) =
+      Finsupp.single D_out1 1 + c • Finsupp.single D_out2 1 := rfl
+  rw [h_mul, h_rhs, Finsupp.smul_single', mul_one]
+  apply Finsupp.ext; intro A
+  show HeckeRing.m' (GL_pair 2) D1 D2 A =
+    (Finsupp.single D_out1 (1 : ℤ) + Finsupp.single D_out2 c) A
+  rw [Finsupp.add_apply]
+  by_cases h1 : A = D_out1
+  · subst h1
+    rw [Finsupp.single_eq_same, Finsupp.single_eq_of_ne h_ne, add_zero]
+    exact (m'_values p hp k hk).1
+  · by_cases h2 : A = D_out2
+    · subst h2
+      rw [Finsupp.single_eq_of_ne (Ne.symm h_ne), Finsupp.single_eq_same, zero_add]
+      exact (m'_values p hp k hk).2
+    · rw [Finsupp.single_eq_of_ne h1, Finsupp.single_eq_of_ne h2, add_zero]
+      apply HeckeRing.m'_eq_zero_of_nmem_mulSupport
+      intro hmem
+      exact (mulSupport_pp_subset p hp k hk A hmem).elim h1 h2
 /-- `T_sum(1) = 1`: the sum over divisor pairs of 1 is the identity. -/
 private lemma T_sum_one : T_sum 1 = (1 : HeckeAlgebra 2) := by
   show ∑ a ∈ Nat.divisors 1, T_ad' a (1 / a) = 1
