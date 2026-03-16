@@ -43,13 +43,9 @@ namespace HeckeRing.GLn
 
 variable (n : ℕ) [NeZero n]
 
-/-! ### Diagonal matrices in GL_n(ℚ) -/
-
 section Diagonal
 
-/-- The diagonal matrix `diag[a₁,...,aₙ]` as an element of `GL_n(ℚ)`,
-    given positive integers `aᵢ`. The matrix is invertible since all
-    diagonal entries are positive (hence nonzero). -/
+/-- The diagonal matrix `diag[a₁,...,aₙ]` as an element of `GL_n(ℚ)`. -/
 noncomputable def diagMat (a : Fin n → ℕ+) : GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     (Matrix.diagonal (fun i => (a i : ℚ)))
@@ -58,14 +54,13 @@ noncomputable def diagMat (a : Fin n → ℕ+) : GL (Fin n) ℚ :=
       exact ne_of_gt (Finset.prod_pos (fun i _ => by positivity)))
 
 omit [NeZero n] in
-/-- The matrix underlying `diagMat a` is `Matrix.diagonal (↑a)`. -/
+/-- The underlying matrix of `diagMat a`. -/
 @[simp]
 lemma diagMat_val (a : Fin n → ℕ+) :
     (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ) =
     Matrix.diagonal (fun i => (a i : ℚ)) := rfl
 
 omit [NeZero n] in
-/-- `diagMat a` has integer entries. -/
 lemma diagMat_hasIntEntries (a : Fin n → ℕ+) :
     HasIntEntries n (diagMat n a) :=
   ⟨Matrix.diagonal (fun i => (a i : ℤ)), by
@@ -73,7 +68,6 @@ lemma diagMat_hasIntEntries (a : Fin n → ℕ+) :
     ext i j; simp [Matrix.diagonal_apply, Matrix.map_apply]⟩
 
 omit [NeZero n] in
-/-- `diagMat a` has positive determinant. -/
 lemma diagMat_det_pos (a : Fin n → ℕ+) :
     0 < (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ).det := by
   change 0 < (Matrix.diagonal (fun i => (a i : ℚ))).det
@@ -81,40 +75,32 @@ lemma diagMat_det_pos (a : Fin n → ℕ+) :
   exact Finset.prod_pos (fun i _ => by positivity)
 
 omit [NeZero n] in
-/-- `diagMat a` is in `Δ` (positive-determinant integer matrices). -/
 lemma diagMat_mem_posDetInt (a : Fin n → ℕ+) :
     diagMat n a ∈ posDetInt_submonoid n :=
   ⟨diagMat_hasIntEntries n a, diagMat_det_pos n a⟩
 
-/-- `diagMat a` as an element of `Δ`. -/
 noncomputable def diagMat_delta (a : Fin n → ℕ+) : (GL_pair n).Δ :=
   ⟨diagMat n a, diagMat_mem_posDetInt n a⟩
 
 omit [NeZero n] in
-/-- The determinant of `diagMat a` is the product of the `aᵢ`. -/
 lemma diagMat_det (a : Fin n → ℕ+) :
     (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ).det = ∏ i, (a i : ℚ) := by
   change (Matrix.diagonal (fun i => (a i : ℚ))).det = _
   exact Matrix.det_diagonal
 
 omit [NeZero n] in
-/-- `diagMat (fun _ => 1)` is the identity matrix. -/
 lemma diagMat_one : diagMat n (fun _ => 1) = 1 := by
   apply Units.ext
   show Matrix.diagonal (fun (_ : Fin n) => ((1 : ℕ+) : ℚ)) = ↑(1 : GL (Fin n) ℚ)
   ext i j; simp [Matrix.diagonal_apply, Matrix.one_apply]
 
-/-- The coercion of `diagMat_delta a` to `GL_n(ℚ)` is `diagMat a`. -/
 @[simp]
 lemma diagMat_delta_val (a : Fin n → ℕ+) :
     (↑(diagMat_delta n a) : GL (Fin n) ℚ) = diagMat n a := rfl
 
 end Diagonal
 
-/-! ### Divisibility chain condition -/
-
-/-- The divisibility chain condition `a₁ | a₂ | ⋯ | aₙ` for positive integer sequences.
-    Each entry divides the next. -/
+/-- The divisibility chain condition `a₁ | a₂ | ... | aₙ` for positive integer sequences. -/
 def DivChain (a : Fin n → ℕ+) : Prop :=
   ∀ (i : ℕ) (hi : i + 1 < n), (a ⟨i, by omega⟩ : ℕ) ∣ (a ⟨i + 1, hi⟩ : ℕ)
 
@@ -122,22 +108,18 @@ omit [NeZero n] in
 lemma divChain_const (c : ℕ+) : DivChain n (fun _ => c) :=
   fun _ _ => dvd_refl _
 
-/-! ### Double cosets of diagonal matrices -/
-
 section TDiag
 
-/-- `T(a₁,...,aₙ) = Γ · diag[a₁,...,aₙ] · Γ` as a double coset,
-    given positive integers with the divisibility chain `a₁ | a₂ | ⋯ | aₙ`. -/
+/-- `T(a₁,...,aₙ) = Γ · diag[a₁,...,aₙ] · Γ` as a double coset. -/
 noncomputable def T_diag (a : Fin n → ℕ+) (_hdiv : DivChain n a) :
     T' (GL_pair n) :=
   T_mk (GL_pair n) (diagMat_delta n a)
 
-/-- `T(a₁,...,aₙ)` as a Hecke ring element with coefficient 1. -/
+/-- `T(a₁,...,aₙ)` as a Hecke ring element with coefficient `1`. -/
 noncomputable def T_elem (a : Fin n → ℕ+) (hdiv : DivChain n a) :
     HeckeAlgebra n :=
   Finsupp.single (T_diag n a hdiv) 1
 
-/-- `T(1,1,...,1)` is the identity double coset. -/
 lemma T_diag_ones :
     T_diag n (fun _ => 1) (divChain_const n 1) = T_one (GL_pair n) := by
   apply T'_ext
@@ -145,7 +127,6 @@ lemma T_diag_ones :
   congr 1
   exact diagMat_one n
 
-/-- Two `T_diag`s are equal iff they have the same underlying double coset. -/
 lemma T_diag_eq_iff (a b : Fin n → ℕ+)
     (ha : DivChain n a) (hb : DivChain n b) :
     T_diag n a ha = T_diag n b hb ↔
@@ -156,12 +137,6 @@ lemma T_diag_eq_iff (a b : Fin n → ℕ+)
   · intro h; exact T'_ext _ _ _ h
 
 end TDiag
-
-/-! ### Transvections and SL_n(ℤ)
-
-Transvection matrices (elementary row/column operations) have determinant 1
-and integer entries, so they lie in `SL_n(ℤ)`. Products of transvections
-therefore give elements of `SL_n(ℤ)`, which act on double cosets. -/
 
 section Transvections
 
@@ -178,20 +153,17 @@ private lemma transvection_det_ne_zero {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
   rw [intMat_det_cast, (Matrix.TransvectionStruct.mk i j hij c).det]
   exact one_ne_zero
 
-/-- A transvection matrix (I + c · E_{ij} for i ≠ j) over ℤ, embedded in GL_n(ℚ). -/
 noncomputable def transvectionGL {i j : Fin n} (hij : i ≠ j) (c : ℤ) : GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     ((Matrix.TransvectionStruct.mk i j hij c).toMatrix.map (Int.cast : ℤ → ℚ))
     (transvection_det_ne_zero n hij c)
 
 omit [NeZero n] in
-/-- A transvection matrix over ℤ has integer entries when viewed in GL_n(ℚ). -/
 lemma transvectionGL_hasIntEntries {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
     HasIntEntries n (transvectionGL n hij c) :=
   ⟨(Matrix.TransvectionStruct.mk i j hij c).toMatrix, rfl⟩
 
 omit [NeZero n] in
-/-- A transvection matrix over ℤ is in SL_n(ℤ) (viewed inside GL_n(ℚ)). -/
 lemma transvectionGL_mem_SLnZ {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
     transvectionGL n hij c ∈ SLnZ_subgroup n := by
   rw [SLnZ_subgroup, MonoidHom.mem_range]
@@ -202,16 +174,9 @@ lemma transvectionGL_mem_SLnZ {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
 
 end Transvections
 
-/-! ### Smith Normal Form (Elementary Divisor Theorem)
-
-Every integer matrix with positive determinant can be reduced to diagonal form
-by left and right multiplication by elements of SL_n(ℤ). The diagonal entries
-(elementary divisors) satisfy a₁ | a₂ | ⋯ | aₙ and are uniquely determined. -/
-
 section SmithNormalForm
 
 omit [NeZero n] in
-/-- An integer matrix with nonzero determinant gives an injective `mulVecLin`. -/
 private lemma mulVecLin_injective_of_det_ne_zero
     (A : Matrix (Fin n) (Fin n) ℤ) (hdet : A.det ≠ 0) :
     Function.Injective A.mulVecLin := by
@@ -226,15 +191,13 @@ private lemma mulVecLin_injective_of_det_ne_zero
   exact (mul_eq_zero.mp this).resolve_left hdet
 
 omit [NeZero n] in
-/-- The range of `mulVecLin A` has full finrank when A has nonzero determinant. -/
 private lemma finrank_range_mulVecLin
     (A : Matrix (Fin n) (Fin n) ℤ) (hdet : A.det ≠ 0) :
     Module.finrank ℤ (LinearMap.range A.mulVecLin) = Module.finrank ℤ (Fin n → ℤ) := by
   exact LinearMap.finrank_range_of_inj (mulVecLin_injective_of_det_ne_zero (n := n) A hdet)
 
 omit [NeZero n] in
-/-- Every integer matrix with positive determinant is equivalent under SL_n(ℤ)
-    to a diagonal matrix with positive entries (Smith normal form). -/
+/-- Every integer matrix with positive determinant is `SL_n(ℤ)`-equivalent to a positive diagonal. -/
 theorem exists_diagonal_of_posdet
     (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i),
@@ -408,15 +371,6 @@ theorem exists_diagonal_of_posdet
       rw [step1, hL_eq, hflip_diag]
     exact ⟨⟨flip * L_mat, hflip_L_det⟩, ⟨Q_mat * flip, hflip_Q_det⟩, hflip_eq⟩
 
-/-! ### Divisibility chain reduction
-
-Given a diagonal matrix `diag(d)` with positive entries, there exist SL_n(Z) matrices
-L, R such that L * diag(d) * R = diag(d') where d' satisfies the divisibility chain
-d'_1 | d'_2 | ... | d'_n. This is achieved by iterating GCD pair reductions using
-the extended Euclidean algorithm (Bezout's identity). -/
-
-/-! #### Helper: equivalence between Fin (n + 2) and Fin 2 ⊕ Fin n -/
-
 private noncomputable def finEquivSum (k : ℕ) : Fin (k + 2) ≃ Fin 2 ⊕ Fin k :=
   (Fin.castOrderIso (by omega : k + 2 = 2 + k)).toEquiv.trans finSumFinEquiv.symm
 
@@ -424,8 +378,6 @@ private lemma diagonal_submatrix_finEquivSum (k : ℕ) (d : Fin (k + 2) → ℤ)
     (Matrix.diagonal (d ∘ (finEquivSum k).symm)).submatrix
       (finEquivSum k) (finEquivSum k) = Matrix.diagonal d := by
   ext i j; simp [submatrix_apply, diagonal_apply]
-
-/-! #### Helper: the 2×2 GCD step -/
 
 private lemma gcd_2x2_det_L (a b : ℤ) (ha : 0 < a) :
     let g : ℤ := ↑(a.gcd b)
@@ -485,11 +437,6 @@ private lemma gcd_2x2_mul (a b : ℤ) :
   · rw [← hpg, ← hqg]; ring
   · rw [← hpg, ← hqg]; ring
 
-/-! #### The GCD step for Fin (k + 2)
-
-Applies the 2×2 GCD reduction at positions (0, 1), embedded into dimension k + 2
-via `fromBlocks` and the equivalence `Fin (k + 2) ≃ Fin 2 ⊕ Fin k`. -/
-
 omit [NeZero n] in
 private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
     let a := d ⟨0, by omega⟩
@@ -507,12 +454,10 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
       (L : Matrix _ _ ℤ) * Matrix.diagonal d * (R : Matrix _ _ ℤ) = Matrix.diagonal d' := by
   intro a b g p q
   set e := finEquivSum k
-  -- Build d'
   set d' : Fin (k + 2) → ℤ := fun i =>
     if i.val = 0 then g
     else if i.val = 1 then p * q * g
     else d i
-  -- Positivity
   have ha : 0 < a := hd ⟨0, by omega⟩
   have hb : 0 < b := hd ⟨1, by omega⟩
   have hg_pos : (0 : ℤ) < g := Int.natCast_pos.mpr
@@ -522,7 +467,6 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
   have hd'_pos : ∀ i, 0 < d' i := by
     intro i; simp only [d']
     split_ifs <;> [exact hg_pos; positivity; exact hd i]
-  -- Build SL matrices
   have hL_det := gcd_2x2_det_L a b ha
   have hR_det := gcd_2x2_det_R a b
   set L22 := !![a.gcdA b, a.gcdB b; -(b / g), a / g]
@@ -540,52 +484,40 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
   refine ⟨⟨L_big, hL_det_big⟩, ⟨R_big, hR_det_big⟩, d', hd'_pos,
     by simp [d'], by simp [d'], ?_, dvd_mul_left g (p * q), ?_, ?_, ?_⟩
   · intro j; simp [d', show j.val + 2 ≠ 0 from by omega, show j.val + 2 ≠ 1 from by omega]
-  · -- g.natAbs ≤ a.natAbs: g divides a
-    exact Nat.le_of_dvd (Int.natAbs_pos.mpr (ne_of_gt ha))
+  · exact Nat.le_of_dvd (Int.natAbs_pos.mpr (ne_of_gt ha))
       (Int.natAbs_dvd_natAbs.mpr (Int.gcd_dvd_left a b))
-  · -- ¬(a ∣ b) → g.natAbs < a.natAbs
-    intro hndvd
+  · intro hndvd
     have hle : g.natAbs ≤ a.natAbs := Nat.le_of_dvd (Int.natAbs_pos.mpr (ne_of_gt ha))
       (Int.natAbs_dvd_natAbs.mpr (Int.gcd_dvd_left a b))
     exact lt_of_le_of_ne hle (fun heq => hndvd (by
       have h1 : g.natAbs = a.gcd b := by simp [g]
       have h2 : a.gcd b = a.natAbs := by omega
       exact Int.natAbs_dvd_natAbs.mp (h2 ▸ Nat.gcd_dvd_right a.natAbs b.natAbs)))
-  · -- Matrix equation
-    show L_big * Matrix.diagonal d * R_big = Matrix.diagonal d'
+  · show L_big * Matrix.diagonal d * R_big = Matrix.diagonal d'
     rw [show Matrix.diagonal d =
       (Matrix.diagonal (d ∘ e.symm)).submatrix e e from
       (diagonal_submatrix_finEquivSum k d).symm]
-    -- Combine using submatrix_mul_equiv
     simp only [L_big, R_big, Matrix.submatrix_mul_equiv]
-    -- Now we need to show the fromBlocks product equals diagonal(d' ∘ e.symm)
     rw [show Matrix.diagonal d' =
       (Matrix.diagonal (d' ∘ e.symm)).submatrix e e from
       (diagonal_submatrix_finEquivSum k d').symm]
     congr 1
-    -- Decompose diagonal(d ∘ e.symm) as fromBlocks of two diagonals
     have h_diag_decomp : Matrix.diagonal (d ∘ e.symm) =
         fromBlocks (Matrix.diagonal (fun i : Fin 2 => (d ∘ e.symm) (Sum.inl i)))
           0 0 (Matrix.diagonal (fun i : Fin k => (d ∘ e.symm) (Sum.inr i))) := by
       ext (i | i) (j | j) <;> simp [fromBlocks, diagonal_apply, Sum.elim, Function.comp]
     rw [h_diag_decomp]
-    -- Use fromBlocks_multiply twice
     rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
       Matrix.mul_one, Matrix.one_mul]
     rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
       Matrix.mul_one, Matrix.one_mul]
-    -- Now need: L22 * diag([a_e, b_e]) * R22 = diag([g_e, pqg_e])
-    -- and diag(rest) stays the same
-    -- The LHS is fromBlocks (L22 * diag_head * R22) 0 0 (diag_rest)
-    -- The RHS is diagonal(d' ∘ e.symm) decomposed similarly
     have h_diag'_decomp : Matrix.diagonal (d' ∘ e.symm) =
         fromBlocks (Matrix.diagonal (fun i : Fin 2 => (d' ∘ e.symm) (Sum.inl i)))
           0 0 (Matrix.diagonal (fun i : Fin k => (d' ∘ e.symm) (Sum.inr i))) := by
       ext (i | i) (j | j) <;> simp [fromBlocks, diagonal_apply, Sum.elim, Function.comp]
     rw [h_diag'_decomp]
     congr 1
-    · -- The 2×2 block: L22 * diag_head * R22 = diag_head'
-      have he0 : e.symm (Sum.inl (0 : Fin 2)) = (0 : Fin (k + 2)) := by
+    · have he0 : e.symm (Sum.inl (0 : Fin 2)) = (0 : Fin (k + 2)) := by
         apply e.injective; rw [Equiv.apply_symm_apply]
         show finEquivSum k ⟨0, by omega⟩ = _
         unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
@@ -603,8 +535,7 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
           simp [Function.comp, he0, he1, d', g, p, q]
       rw [h_head, h_head']
       exact gcd_2x2_mul a b
-    · -- The rest: diag_rest' = diag_rest (entries ≥ 2 unchanged)
-      congr 1; ext i; simp only [Function.comp, d']
+    · congr 1; ext i; simp only [Function.comp, d']
       have h1 : e.symm (Sum.inr i) ≠ ⟨0, by omega⟩ := by
         intro h
         have h_ap := Equiv.apply_symm_apply e (Sum.inr i)
@@ -624,11 +555,6 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
       have hv1 : (e.symm (Sum.inr i)).val ≠ 0 := fun h => h1 (Fin.ext h)
       have hv2 : (e.symm (Sum.inr i)).val ≠ 1 := fun h => h2 (Fin.ext h)
       simp [hv1, hv2]
-
-/-! #### Generalized GCD step at positions (0, j)
-
-For j ≠ 0, embed the 2×2 GCD step at positions {0, j} in dimension k + 2.
-Uses `Equiv.swap` to bring position j to position 1, then `finEquivSum`. -/
 
 private noncomputable def genEquiv (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) :
     Fin (k + 2) ≃ Fin 2 ⊕ Fin k :=
@@ -677,9 +603,6 @@ private lemma genEquiv_symm_inr_ne_j (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠
   rw [h, genEquiv_j] at this; exact Sum.noConfusion this
 
 omit [NeZero n] in
-/-- GCD step at positions (0, j) for j ≠ 0 in dimension k + 2.
-    Replaces d(0) with gcd(d(0), d(j)) and d(j) with p*q*g,
-    leaving all other entries unchanged. -/
 private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i)
     (j : Fin (k + 2)) (hj : j.val ≠ 0) :
     let a := d ⟨0, by omega⟩
@@ -782,10 +705,7 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
         simp only [e]; exact genEquiv_symm_inr_ne_j k j hj i
       rw [if_neg h1, if_neg h2]
 
-/-! #### Divisibility preservation under SL transforms -/
-
 omit [NeZero n] in
-/-- If c divides every diagonal entry, it divides every entry after SL transform. -/
 private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ)
     (hc : ∀ i, c ∣ d i)
     (L R : Matrix (Fin m) (Fin m) ℤ)
@@ -801,8 +721,6 @@ private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ
   simp only [diagonal_apply]; split_ifs with h
   · subst h; exact dvd_mul_of_dvd_right (hc l) _
   · simp
-
-/-! #### Equivalence Fin (k+1) ≃ Fin 1 ⊕ Fin k for tail embedding -/
 
 omit [NeZero n] in
 private noncomputable def fin1Sum (k : ℕ) : Fin (k + 1) ≃ Fin 1 ⊕ Fin k :=
@@ -839,29 +757,21 @@ private lemma diagonal_submatrix_fin1Sum (k : ℕ) (d : Fin (k + 1) → ℤ) :
       (fin1Sum k) (fin1Sum k) = Matrix.diagonal d := by
   ext i m; simp [submatrix_apply, diagonal_apply]
 
-/-! #### Make first entry divide all others -/
-
 omit [NeZero n] in
-/-- By iterating GCD steps, make d(0) divide all other entries.
-    Uses well-founded induction on d(0).natAbs. -/
 private lemma make_first_divide_all (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
     ∃ (d' : Fin (k + 2) → ℤ) (_ : ∀ i, 0 < d' i)
       (_ : ∀ j, d' (0 : Fin (k + 2)) ∣ d' j),
     ∃ (L R : SpecialLinearGroup (Fin (k + 2)) ℤ),
       (L : Matrix _ _ ℤ) * Matrix.diagonal d * (R : Matrix _ _ ℤ) = Matrix.diagonal d' := by
-  -- Well-founded induction on d(0).natAbs
   have ha_pos : 0 < d (0 : Fin (k + 2)) := hd 0
   obtain ⟨N, hN⟩ : ∃ N, (d (0 : Fin (k + 2))).natAbs = N := ⟨_, rfl⟩
   revert d hd ha_pos
   induction N using Nat.strongRecOn with
   | _ N ih =>
     intro d hd ha_pos hN
-    -- Check if d(0) already divides all entries
     by_cases hall : ∀ j, d (0 : Fin (k + 2)) ∣ d j
-    · -- Done: identity transform
-      exact ⟨d, hd, hall, 1, 1, by simp⟩
-    · -- Find some j where d(0) ∤ d(j)
-      push_neg at hall
+    · exact ⟨d, hd, hall, 1, 1, by simp⟩
+    · push_neg at hall
       obtain ⟨j, hj_ndvd⟩ := hall
       have hj_ne : j.val ≠ 0 := by
         intro h; apply hj_ndvd; have : j = 0 := Fin.ext h; subst this; exact dvd_refl _
@@ -883,10 +793,7 @@ private lemma make_first_divide_all (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : �
         (R₁ : Matrix _ _ ℤ)) * (R₂ : Matrix _ _ ℤ) by simp [Matrix.mul_assoc]]
       rw [hmul₁, hmul₂]
 
-/-! #### Tail embedding for dimension induction -/
-
 omit [NeZero n] in
-/-- Embed an SL_{k+1} matrix into SL_{k+2} as [1 0; 0 M] -/
 private noncomputable def slSuccEmbed {k : ℕ} (M : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     SpecialLinearGroup (Fin (k + 2)) ℤ := by
   let e := fin1Sum (k + 1)
@@ -895,8 +802,6 @@ private noncomputable def slSuccEmbed {k : ℕ} (M : SpecialLinearGroup (Fin (k 
   rw [det_submatrix_equiv_self, det_fromBlocks_zero₂₁, det_one, one_mul, M.prop]
 
 omit [NeZero n] in
-/-- Block diagonal [1; L] * diag(d) * [1; R] = diag(d(0), d'₁, ..., d'ₖ)
-    when L * diag(tail) * R = diag(d'). -/
 private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
     (L R : SpecialLinearGroup (Fin (k + 1)) ℤ) (d'_tail : Fin (k + 1) → ℤ)
     (hmul : (L : Matrix _ _ ℤ) * Matrix.diagonal (fun i : Fin (k + 1) =>
@@ -922,14 +827,10 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
       fromBlocks (Matrix.diagonal (fun _ : Fin 1 => d 0))
         0 0 (Matrix.diagonal (fun i : Fin (k + 1) => d ⟨i.val + 1, by omega⟩)) := by
     ext (i | i) (j | j)
-    · -- inl, inl
-      fin_cases i <;> fin_cases j <;> simp [fromBlocks, diagonal_apply, Function.comp, he_inl]
-    · -- inl, inr
-      simp [fromBlocks, diagonal_apply, Function.comp]
-    · -- inr, inl
-      simp [fromBlocks, diagonal_apply, Function.comp]
-    · -- inr, inr
-      simp [fromBlocks, diagonal_apply, Function.comp, he_inr]
+    · fin_cases i <;> fin_cases j <;> simp [fromBlocks, diagonal_apply, Function.comp, he_inl]
+    · simp [fromBlocks, diagonal_apply, Function.comp]
+    · simp [fromBlocks, diagonal_apply, Function.comp]
+    · simp [fromBlocks, diagonal_apply, Function.comp, he_inr]
   rw [h_decomp]
   rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
     Matrix.mul_one, Matrix.one_mul]
@@ -950,8 +851,6 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
   rw [h_out_decomp, hmul]
 
 omit [NeZero n] in
-/-- Given a diagonal matrix with positive entries, there exist SL_n(ℤ) matrices
-    L, R such that L * diag(d) * R = diag(d') where d' satisfies the divisibility chain. -/
 private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d i) :
     ∃ (d' : Fin n → ℤ) (_ : ∀ i, 0 < d' i)
       (_ : ∀ (i : ℕ) (hi : i + 1 < n), d' ⟨i, by omega⟩ ∣ d' ⟨i + 1, hi⟩),
@@ -1023,8 +922,6 @@ private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d 
       rw [hmul₁, hmul_embed]
 
 omit [NeZero n] in
-/-- Every integer matrix with positive determinant is equivalent under SL_n(ℤ) to a
-    diagonal matrix with positive entries satisfying the divisibility chain. -/
 private theorem exists_divchain_diagonal_of_posdet
     (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i)
@@ -1043,9 +940,6 @@ private theorem exists_divchain_diagonal_of_posdet
     _ = ↑L₁ * Matrix.diagonal d₀ * ↑R₁ := by rw [hLR₀]
     _ = Matrix.diagonal d' := hLR₁
 
-/-- Lift an integer matrix equation L * A * R = diag(d) to a double coset equality
-    in GL_n(Q). If L, R are in SL_n(Z) and A has integer entries with positive det,
-    then the double cosets of A and diag(d) are equal. -/
 private lemma double_coset_eq_of_SLnZ_equiv
     (α : (GL_pair n).Δ) (A : Matrix (Fin n) (Fin n) ℤ)
     (hA : (↑(↑α : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ) = A.map (Int.cast : ℤ → ℚ))
@@ -1072,8 +966,6 @@ private lemma double_coset_eq_of_SLnZ_equiv
       X.map (Int.cast : ℤ → ℚ) * Y.map (Int.cast : ℤ → ℚ) = (X * Y).map (Int.cast : ℤ → ℚ) := by
     intro X Y; ext i j; simp [Matrix.mul_apply, Matrix.map_apply]
   apply Units.ext
-  -- Compute RHS directly: (L_gl * α * R_gl).val = L.map * α.val * R.map
-  -- = L.map * A.map * R.map = (L * A * R).map = (diagonal d).map = diag_GL.val
   show (diag_GL : Matrix (Fin n) (Fin n) ℚ) =
     ((SLnZ_to_GLnQ n L * ↑α * SLnZ_to_GLnQ n R : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ)
   simp only [Units.val_mul, SLnZ_to_GLnQ_val, hA]
@@ -1086,30 +978,22 @@ private lemma double_coset_eq_of_SLnZ_equiv
         rw [h_map_mul]
     _ = (Matrix.diagonal d).map (Int.cast : ℤ → ℚ) := by rw [hLR]
 
-/-- Smith normal form: every `alpha` in `Delta` is equivalent (under left and right
-    `SL_n(Z)` multiplication) to a diagonal matrix `diag[a_1,...,a_n]`
-    with `a_1 | a_2 | ... | a_n` and all `a_i > 0`.
-    This is the elementary divisor theorem. -/
+/-- Every element of `Delta` has a diagonal representative with divisibility chain (Smith normal form). -/
 theorem exists_diagonal_representative
     (α : (GL_pair n).Δ) :
     ∃ (a : Fin n → ℕ+) (hdiv : DivChain n a),
       T_mk (GL_pair n) α = T_diag n a hdiv := by
-  -- Extract integer matrix from alpha
   obtain ⟨A, hA⟩ : HasIntEntries n (↑α : GL (Fin n) ℚ) := α.2.1
   have h_det : (0 : ℚ) < (↑(↑α : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ).det := α.2.2
   have hdet_pos : 0 < A.det := by
     have h1 : (A.det : ℚ) = (↑(↑α : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ).det := by
       rw [hA]; exact (intMat_det_cast (n := n) A).symm
     exact_mod_cast h1 ▸ h_det
-  -- Get diagonal form with divisibility chain
   obtain ⟨d, hd_pos, hd_div, L, R, hLR⟩ :=
     exists_divchain_diagonal_of_posdet n A hdet_pos
-  -- Convert d to PNat values
   have hd_pos_nat : ∀ i, 0 < (d i).toNat := by
     intro i
     have h := hd_pos i
-    -- 0 < d i (Int) implies 0 < (d i).toNat (Nat)
-    -- Since d i > 0, we have d i ≥ 1, so d i = ↑(d i).toNat and (d i).toNat ≥ 1
     have h_nn : 0 ≤ d i := le_of_lt h
     have h_cast : (d i) = ↑((d i).toNat) := (Int.toNat_of_nonneg h_nn).symm
     linarith [h_cast]
@@ -1122,7 +1006,6 @@ theorem exists_diagonal_representative
     rw [hd_eq ⟨i, by omega⟩, hd_eq ⟨i + 1, hi⟩] at h1
     exact_mod_cast h1
   refine ⟨a, hdiv, ?_⟩
-  -- Show T_mk alpha = T_diag a hdiv via double coset equality
   apply T'_ext
   show DoubleCoset.doubleCoset (↑α : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) =
     DoubleCoset.doubleCoset (↑(diagMat_delta n a) : GL (Fin n) ℚ)
@@ -1141,7 +1024,6 @@ theorem exists_diagonal_representative
   · simp
 
 omit [NeZero n] in
-/-- The DivChain condition gives transitive divisibility: `a i ∣ a j` when `i ≤ j`. -/
 private lemma divChain_dvd_of_le {a : Fin n → ℕ+} (ha : DivChain n a)
     {i j : Fin n} (hij : i ≤ j) : (a i : ℕ) ∣ (a j : ℕ) := by
   suffices h : ∀ (d : ℕ) (hd : i.val + d < n),
@@ -1158,8 +1040,6 @@ private lemma divChain_dvd_of_le {a : Fin n → ℕ+} (ha : DivChain n a)
     exact dvd_trans (ih (by omega)) (ha (i.val + m) hd)
 
 omit [NeZero n] in
-/-- For injective `f : Fin k → Fin n` and DivChain `a`, the product of the first `k`
-    entries divides the product along `f`. -/
 private lemma divChain_prod_dvd_of_injective
     {a : Fin n → ℕ+} (ha : DivChain n a)
     (k : ℕ) (hk : k ≤ n) (f : Fin k → Fin n) (hf : Function.Injective f) :
@@ -1183,7 +1063,6 @@ private lemma divChain_prod_dvd_of_injective
       (ih (by omega) (f ∘ j₀.succAbove) (hf.comp Fin.succAbove_right_injective))
       (divChain_dvd_of_le (n := n) ha (by exact hge))
 
-/-- The partial product `∏_{j<k} a_j` is invariant under SL_n(ℤ) equivalence. -/
 private lemma partialProd_eq_of_SLnZ_equiv
     {a b : Fin n → ℕ+} (ha : DivChain n a) (hb : DivChain n b)
     (L R : SpecialLinearGroup (Fin n) ℤ)
@@ -1246,13 +1125,10 @@ private lemma partialProd_eq_of_SLnZ_equiv
         simp only [Matrix.submatrix_apply, hgeq])
     simp [this]
 
-/-- The diagonal representative is unique: the elementary divisors are invariants
-    of the double coset. The proof extracts SL_n(ℤ) equivalence from the double coset
-    equality and uses partial product invariance to recover each diagonal entry. -/
+/-- The elementary divisors are uniquely determined by the double coset. -/
 theorem diagonal_representative_unique
     (a b : Fin n → ℕ+) (ha : DivChain n a) (hb : DivChain n b)
     (heq : T_diag n a ha = T_diag n b hb) : a = b := by
-  -- Step 1: Extract SL_n(ℤ) equivalence from double coset equality
   rw [T_diag_eq_iff] at heq
   have hmem : (diagMat n b : GL (Fin n) ℚ) ∈
       DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ)
@@ -1260,13 +1136,9 @@ theorem diagonal_representative_unique
     heq ▸ DoubleCoset.mem_doubleCoset_self _ _ _
   rw [DoubleCoset.mem_doubleCoset] at hmem
   obtain ⟨_, ⟨L, rfl⟩, _, ⟨R, rfl⟩, hmat⟩ := hmem
-  -- Step 2: Show a i = b i for each i using partial product invariance
   funext i; apply PNat.eq
-  -- Partial products for k = i+1 and k = i agree
   have hprod₁ := partialProd_eq_of_SLnZ_equiv (n := n) ha hb L R hmat (i.val + 1) (by omega)
   have hprod₂ := partialProd_eq_of_SLnZ_equiv (n := n) ha hb L R hmat i.val (by omega)
-  -- Split: ∏_{j : Fin (i+1)} f = (∏_{j : Fin i} f ∘ castSucc) * f (last i)
-  -- Using Fin.prod_univ_castSucc and simplifying Fin coercions
   have split_eq : ∀ (c : Fin n → ℕ+),
       ∏ j : Fin (i.val + 1), (c ⟨j.val, by omega⟩ : ℕ) =
       (∏ j : Fin i.val, (c ⟨j.val, by omega⟩ : ℕ)) * (c i : ℕ) := by
@@ -1275,12 +1147,7 @@ theorem diagonal_representative_unique
   exact Nat.eq_of_mul_eq_mul_left
     (Finset.prod_pos (fun j _ => PNat.pos (b ⟨j.val, by omega⟩))) hprod₁
 
-/-- The Hecke ring is spanned by `T(a_1,...,a_n)` elements over `Z`.
-
-    Every element `f` of the Hecke algebra is a finite linear combination
-    `sum c_i * T(a_i)` where each `T(a_i)` is a diagonal double coset.
-    This follows from `exists_diagonal_representative`: each double coset
-    in the support of `f` has a unique diagonal representative. -/
+/-- The Hecke algebra is spanned by diagonal double coset elements `T(a₁,...,aₙ)`. -/
 theorem T_diag_span (f : HeckeAlgebra n) :
     ∃ (S : Finset { p : Fin n → ℕ+ // DivChain n p })
       (c : S → ℤ),

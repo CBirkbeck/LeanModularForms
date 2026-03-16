@@ -20,7 +20,7 @@ Computes the index `[SL₂(ℤ) : Γ₀(pᵏ)] = pᵏ⁻¹(p + 1)` for prime `p`
 
 ## References
 
-* Shimura, §3.2, Theorem 3.24
+* Shimura, Theorem 3.24
 -/
 
 open Matrix.SpecialLinearGroup Matrix ModularGroup CongruenceSubgroup
@@ -29,8 +29,6 @@ open scoped MatrixGroups
 
 namespace HeckeRing.GLn
 
-/-- `ZMod.instInv` satisfies `a⁻¹ * a = 1` when `a ≠ 0` and `p` is prime.
-    Uses `ZMod.coe_int_inv_mul_eq_one` to avoid the `GroupWithZero` diamond. -/
 private lemma ZMod_inv_mul_cancel (p : ℕ) (hp : Nat.Prime p) (a : ℤ)
     (h : (a : ZMod p) ≠ 0) : (a : ZMod p)⁻¹ * (a : ZMod p) = 1 := by
   haveI : NeZero p := ⟨hp.ne_zero⟩
@@ -41,8 +39,6 @@ private lemma ZMod_inv_mul_cancel (p : ℕ) (hp : Nat.Prime p) (a : ℤ)
   intro hdvd
   exact h ((ZMod.intCast_zmod_eq_zero_iff_dvd a p).mpr
     (dvd_trans (Int.natCast_dvd_natCast.mpr hdvd) (Int.natAbs_dvd.mpr (dvd_refl a))))
-
-/-! ### Matrix entry helpers for SL₂(ℤ) -/
 
 private lemma SL2_entry_mul (A B : SL(2, ℤ)) (i j : Fin 2) :
     (A * B).1 i j = A.1 i 0 * B.1 0 j + A.1 i 1 * B.1 1 j := by
@@ -60,24 +56,19 @@ private lemma TjS_00 (j : ℤ) : (T ^ j * S).1 0 0 = j := by
 private lemma TjS_10 (j : ℤ) : (T ^ j * S).1 1 0 = 1 := by
   simp [coe_S]
 
-/-- The (1,0) entry of `(T^j · S)⁻¹ · σ` is `j · σ₁₀ - σ₀₀`. -/
 private lemma TjS_inv_mul_10 (j : ℤ) (σ : SL(2, ℤ)) :
     ((T ^ j * S)⁻¹ * σ).1 1 0 = j * σ.1 1 0 - σ.1 0 0 := by
   rw [SL2_entry_mul, TjS_inv_10, TjS_inv_11]; ring
 
-/-- The (1,0) entry of `(T^j · S)⁻¹ · (T^i · S)` is `j - i`. -/
 private lemma rep_diff_10 (i j : ℤ) :
     ((T ^ j * S)⁻¹ * (T ^ i * S)).1 1 0 = j - i := by
   rw [TjS_inv_mul_10, TjS_10, TjS_00]; ring
-
-/-! ### Base case: [SL₂(ℤ) : Γ₀(p)] = p + 1 -/
 
 section BaseCase
 
 variable (p : ℕ) (hp : Nat.Prime p)
 include hp
 
-/-- Left coset representative for Γ₀(p): maps j to `T^j · S` for j < p, and to `1` for j = p. -/
 private noncomputable def Gamma0Rep (j : Fin (p + 1)) : SL(2, ℤ) :=
   if j.val < p then T ^ (j.val : ℤ) * S else 1
 
@@ -87,15 +78,13 @@ theorem Gamma0_prime_index : (Gamma0 p).index = p + 1 := by
   let rep := @Gamma0Rep p
   set f : Fin (p + 1) → SL(2, ℤ) ⧸ (Gamma0 p) :=
     fun j => QuotientGroup.mk (rep j) with hf_def
-  -- Step 1: Injectivity
   have h_inj : Function.Injective f := by
     intro ⟨j₁, hj₁⟩ ⟨j₂, hj₂⟩ hf
     simp only [hf_def] at hf
     rw [QuotientGroup.eq, Gamma0_mem] at hf
     simp only [rep, Gamma0Rep] at hf
     split_ifs at hf with h1 h2
-    · -- Both < p: entry = j₁ - j₂, divisible by p iff j₁ = j₂
-      rw [rep_diff_10, ZMod.intCast_zmod_eq_zero_iff_dvd] at hf
+    · rw [rep_diff_10, ZMod.intCast_zmod_eq_zero_iff_dvd] at hf
       obtain ⟨k, hk⟩ := hf
       have hk0 : k = 0 := by
         by_contra hk_ne
@@ -105,31 +94,25 @@ theorem Gamma0_prime_index : (Gamma0 p).index = p + 1 := by
         · have : (p : ℤ) ≤ (p : ℤ) * k := by nlinarith [hp.pos]
           linarith [show (j₂ : ℤ) < p from by exact_mod_cast h2]
       subst hk0; simp only [Fin.mk.injEq]; omega
-    · -- j₁ < p, j₂ ≥ p: (T^j₁S)⁻¹·1 has entry -1
-      simp only [mul_one] at hf
+    · simp only [mul_one] at hf
       rw [TjS_inv_10] at hf
       simp only [Int.cast_neg, Int.cast_one, neg_eq_zero] at hf
       exact absurd hf one_ne_zero
-    · -- j₁ ≥ p, j₂ < p: 1⁻¹·(T^j₂S) has entry 1
-      simp only [inv_one, one_mul] at hf
+    · simp only [inv_one, one_mul] at hf
       rw [TjS_10] at hf
       simp only [Int.cast_one] at hf
       exact absurd hf one_ne_zero
-    · -- Both ≥ p: j₁ = p = j₂ since p ≤ jᵢ < p + 1
-      simp only [Fin.mk.injEq]; omega
-  -- Step 2: Surjectivity
+    · simp only [Fin.mk.injEq]; omega
   have h_surj : Function.Surjective f := by
     intro x
     obtain ⟨σ, rfl⟩ := QuotientGroup.mk_surjective x
     by_cases h : ((σ 1 0 : ℤ) : ZMod p) = 0
-    · -- σ ∈ Gamma0(p), use j = p
-      refine ⟨⟨p, Nat.lt_succ_iff.mpr le_rfl⟩, ?_⟩
+    · refine ⟨⟨p, Nat.lt_succ_iff.mpr le_rfl⟩, ?_⟩
       simp only [hf_def]
       rw [QuotientGroup.eq, Gamma0_mem]
       simp only [rep, Gamma0Rep, show ¬(p < p) from lt_irrefl p, ite_false, inv_one, one_mul]
       exact h
-    · -- σ₁₀ is a unit mod p
-      set j₀ := ((σ.1 0 0 : ℤ) : ZMod p) * ((σ.1 1 0 : ℤ) : ZMod p)⁻¹ with hj₀_def
+    · set j₀ := ((σ.1 0 0 : ℤ) : ZMod p) * ((σ.1 1 0 : ℤ) : ZMod p)⁻¹ with hj₀_def
       set j := ZMod.val j₀ with hj_def
       have hj_lt : j < p := ZMod.val_lt j₀
       refine ⟨⟨j, by omega⟩, ?_⟩
@@ -137,26 +120,21 @@ theorem Gamma0_prime_index : (Gamma0 p).index = p + 1 := by
       rw [QuotientGroup.eq, Gamma0_mem]
       simp only [rep, Gamma0Rep, show j < p from hj_lt, ite_true]
       rw [TjS_inv_mul_10]
-      -- Goal: (((j : ℤ) * σ₁₀ - σ₀₀ : ℤ) : ZMod p) = 0
       push_cast
       simp only [hj_def]
       rw [ZMod.natCast_zmod_val, hj₀_def]
       have h_inv := ZMod_inv_mul_cancel p hp (σ.1 1 0) h
       simp only [mul_assoc, h_inv, mul_one, sub_self]
-  -- Conclude
   unfold Subgroup.index
   rw [← Nat.card_congr (Equiv.ofBijective f ⟨h_inj, h_surj⟩), Nat.card_fin]
 
 end BaseCase
-
-/-! ### Inductive step: [Γ₀(pᵏ) : Γ₀(p^{k+1})] = p -/
 
 section InductiveStep
 
 variable (p : ℕ) (hp : Nat.Prime p)
 include hp
 
-/-- Lower-triangular representative: `[[1, 0], [c · pᵏ, 1]]` for the inductive step. -/
 private def lowerTriRep (k : ℕ) (c : Fin p) : SL(2, ℤ) :=
   ⟨!![1, 0; (c : ℤ) * (p : ℤ) ^ k, 1], by simp [det_fin_two_of]⟩
 
@@ -176,7 +154,6 @@ private lemma lowerTriRep_diff_entry (k : ℕ) (c₁ c₂ : Fin p) :
   ring
 
 omit hp in
-/-- The (1,0) entry of `(lowerTriRep c)⁻¹ · σ` is `σ₁₀ - c · pᵏ · σ₀₀`. -/
 private lemma lowerTriRep_inv_mul_10 (k : ℕ) (c : Fin p) (σ : SL(2, ℤ)) :
     ((lowerTriRep p k c)⁻¹ * σ).1 1 0 =
     σ.1 1 0 - (c : ℤ) * (p : ℤ) ^ k * σ.1 0 0 := by
@@ -184,7 +161,7 @@ private lemma lowerTriRep_inv_mul_10 (k : ℕ) (c : Fin p) (σ : SL(2, ℤ)) :
   simp [lowerTriRep, Matrix.SpecialLinearGroup.coe_inv, adjugate_fin_two_of]
   ring
 
-/-- `[Γ₀(pᵏ) : Γ₀(p^{k+1})] = p` for `k ≥ 1`. -/
+/-- `[Γ₀(pᵏ) : Γ₀(p^{k+1})] = p` for `k >= 1`. -/
 theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
     (Gamma0 (p ^ (k + 1))).relIndex (Gamma0 (p ^ k)) = p := by
   haveI : Fact (Nat.Prime p) := ⟨hp⟩
@@ -196,7 +173,6 @@ theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
     fun c => lowerTriRep_mem_Gamma0 p k hk c
   set f : Fin p → ↥K ⧸ Hsub :=
     fun c => QuotientGroup.mk ⟨lowerTriRep p k c, h_mem c⟩ with hf_def
-  -- Step 1: Injectivity
   have h_inj : Function.Injective f := by
     intro ⟨c₁, hc₁⟩ ⟨c₂, hc₂⟩ hf
     simp only [hf_def] at hf
@@ -209,7 +185,6 @@ theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
     have hpk1 : (↑(p ^ (k + 1)) : ℤ) = (p : ℤ) ^ k * (p : ℤ) := by push_cast; rw [pow_succ]
     rw [hpk1, show ((↑c₂ : ℤ) - ↑c₁) * (p : ℤ) ^ k = (p : ℤ) ^ k * ((↑c₂ : ℤ) - ↑c₁) from
         mul_comm _ _, mul_dvd_mul_iff_left hpk_ne] at hf
-    -- hf : (p : ℤ) ∣ ((↑c₂ : ℤ) - ↑c₁)
     obtain ⟨m, hm⟩ := hf
     have hm0 : m = 0 := by
       by_contra hm_ne
@@ -220,16 +195,13 @@ theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
           Int.natCast_nonneg c₁, show (c₂ : ℤ) < p from by exact_mod_cast hc₂]
     subst hm0; simp only [mul_zero, sub_eq_zero] at hm
     simp only [Fin.mk.injEq]; exact_mod_cast hm.symm
-  -- Step 2: Surjectivity
   have h_surj : Function.Surjective f := by
     intro x
     obtain ⟨⟨σ, hσ_K⟩, rfl⟩ := QuotientGroup.mk_surjective x
-    -- σ ∈ Gamma0(p^k): extract q with p^k | σ₁₀
     have h_dvd : (↑(p ^ k) : ℤ) ∣ σ.1 1 0 := by
       rwa [← ZMod.intCast_zmod_eq_zero_iff_dvd, ← Gamma0_mem]
     obtain ⟨q, hq⟩ := h_dvd
     have hq' : σ.1 1 0 = (p : ℤ) ^ k * q := by push_cast at hq; exact hq
-    -- σ₀₀ is invertible mod p (from det = 1 and p^k | σ₁₀)
     have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 := by
       have h := σ.2; rwa [Matrix.det_fin_two] at h
     have h00_ne : ((σ.1 0 0 : ℤ) : ZMod p) ≠ 0 := by
@@ -241,7 +213,6 @@ theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
       have h1_dvd : (p : ℤ) ∣ 1 :=
         hdet ▸ dvd_sub (dvd_mul_of_dvd_left h00_dvd _) (dvd_mul_of_dvd_right h10_dvd _)
       linarith [Int.le_of_dvd one_pos h1_dvd, show (1 : ℤ) < p from by exact_mod_cast hp.one_lt]
-    -- Choose c ≡ q · σ₀₀⁻¹ (mod p)
     set c₀ := ((q : ℤ) : ZMod p) * ((σ.1 0 0 : ℤ) : ZMod p)⁻¹ with hc₀_def
     set c := ZMod.val c₀ with hc_def
     have hc_lt : c < p := ZMod.val_lt c₀
@@ -250,7 +221,6 @@ theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
     rw [QuotientGroup.eq, Subgroup.mem_subgroupOf]
     simp only [InvMemClass.coe_inv, MulMemClass.coe_mul]
     rw [Gamma0_mem]
-    -- p | (q - c · σ₀₀) via ZMod p arithmetic
     have h_p_dvd : (p : ℤ) ∣ (q - ↑c * σ.1 0 0) := by
       rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
       push_cast
@@ -258,7 +228,6 @@ theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
       rw [ZMod.natCast_zmod_val, hc₀_def]
       have h_inv := ZMod_inv_mul_cancel p hp (σ.1 0 0) h00_ne
       simp only [mul_assoc, h_inv, mul_one, sub_self]
-    -- Entry = (q - c · σ₀₀) · p^k, divisible by p^{k+1}
     show (((lowerTriRep p k ⟨c, hc_lt⟩)⁻¹ * σ).1 1 0 : ZMod (p ^ (k + 1))) = 0
     rw [lowerTriRep_inv_mul_10 p k ⟨c, hc_lt⟩ σ, hq', ZMod.intCast_zmod_eq_zero_iff_dvd]
     push_cast
@@ -266,14 +235,11 @@ theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
     calc (p : ℤ) ^ k * (p : ℤ)
         ∣ (p : ℤ) ^ k * (q - ↑c * σ.1 0 0) := mul_dvd_mul_left _ h_p_dvd
       _ = ((p : ℤ) ^ k * q - ↑c * (p : ℤ) ^ k * σ.1 0 0) := by ring
-  -- Conclude
   rw [← Nat.card_congr (Equiv.ofBijective f ⟨h_inj, h_surj⟩), Nat.card_fin]
 
 end InductiveStep
 
-/-! ### Full index formula -/
-
-/-- `[SL₂(ℤ) : Γ₀(pᵏ)] = pᵏ⁻¹(p + 1)` for prime `p` and `k ≥ 1`. -/
+/-- `[SL₂(ℤ) : Γ₀(pᵏ)] = p^(k-1) * (p + 1)` for prime `p` and `k >= 1`. -/
 theorem Gamma0_prime_power_index (p : ℕ) (hp : Nat.Prime p) (k : ℕ) (hk : 0 < k) :
     (Gamma0 (p ^ k)).index = p ^ (k - 1) * (p + 1) := by
   induction k with

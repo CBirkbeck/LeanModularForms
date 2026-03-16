@@ -22,8 +22,7 @@ namespace HeckeRing
 variable {G : Type*} [Group G] (P : ArithmeticGroupPair G)
 
 /-- An anti-involution of an ArithmeticGroupPair is an anti-automorphism `ι : G →* Gᵐᵒᵖ`
-    that is involutive and preserves both H and Δ. The prototypical example is matrix
-    transpose for GL_n. -/
+    that is involutive and preserves both H and Δ. -/
 structure AntiInvolution where
   toFun : G →* MulOpposite G
   involutive : ∀ g, (toFun (toFun g).unop).unop = g
@@ -58,15 +57,13 @@ lemma bar_mem_H {g : G} (hg : g ∈ P.H) : ι.bar g ∈ P.H := ι.map_H g hg
 
 lemma bar_mem_Δ {g : G} (hg : g ∈ P.Δ) : ι.bar g ∈ P.Δ := ι.map_Δ g hg
 
-/-- `bar` preserves double cosets: if two elements represent the same double coset,
-    then their images under `bar` also represent the same double coset. -/
+/-- `bar` preserves double cosets. -/
 lemma bar_doubleCoset_eq (g₁ g₂ : G) (h : DoubleCoset.doubleCoset g₁ P.H P.H =
     DoubleCoset.doubleCoset g₂ P.H P.H) :
     DoubleCoset.doubleCoset (ι.bar g₁) P.H P.H =
     DoubleCoset.doubleCoset (ι.bar g₂) P.H P.H := by
   have hmem := (DoubleCoset.eq P.H P.H _ _).mp (DoubleCoset.mk_eq_of_doubleCoset_eq h)
   obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := hmem
-  -- g₂ = h₁ * g₁ * h₂, so bar(g₂) = bar(h₂) * bar(g₁) * bar(h₁)
   have hbar : ι.bar g₂ = ι.bar h₂ * ι.bar g₁ * ι.bar h₁ := by
     rw [hprod, bar_mul, bar_mul, mul_assoc]
   rw [hbar]; symm; rw [mul_assoc]
@@ -85,26 +82,14 @@ lemma onT'_involutive : Function.Involutive ι.onT' := by
   intro D
   apply T'_ext P
   simp only [onT', T_mk]
-  -- (onT' (onT' D)).set = doubleCoset (bar (choose of onT' D)) H H
-  -- We need: this = D.set
-  -- Step 1: (onT' D).eql.choose_spec gives:
-  --   (onT' D).set = doubleCoset (choose of onT' D) H H
-  -- Step 2: by definition, (onT' D).set = doubleCoset (bar (choose of D)) H H
-  -- So: doubleCoset (choose of onT' D) H H = doubleCoset (bar (choose of D)) H H
-  -- Step 3: by bar_doubleCoset_eq:
-  --   doubleCoset (bar (choose of onT' D)) H H = doubleCoset (bar (bar (choose of D))) H H
-  --                                              = doubleCoset (choose of D) H H  [by bar_bar]
-  --                                              = D.set  [by D.eql.choose_spec]
   have h_onT'_spec := (ι.onT' D).eql.choose_spec
   rw [onT', T_mk] at h_onT'_spec
   simp only at h_onT'_spec
-  -- h_onT'_spec : doubleCoset (bar (choose of D)) H H = doubleCoset (choose of onT' D) H H
   have h3 := ι.bar_doubleCoset_eq _ _ h_onT'_spec.symm
   simp only [bar_bar] at h3
   rw [h3]
   exact D.eql.choose_spec.symm
 
-/-- Bar maps elements of a double coset into the same double coset (given h_fix). -/
 private lemma bar_mem_doubleCoset (h_fix : ∀ D : T' P, ι.onT' D = D)
     (D₀ : T' P) (x : G) (hx : x ∈ D₀.set) : ι.bar x ∈ D₀.set := by
   have h_set : (ι.onT' D₀).set = D₀.set := congr_arg T'.set (h_fix D₀)
@@ -115,7 +100,6 @@ private lemma bar_mem_doubleCoset (h_fix : ∀ D : T' P, ι.onT' D = D)
   exact ⟨ι.bar h₂, ι.bar_mem_H hh₂, ι.bar h₁, ι.bar_mem_H hh₁, by
     simp [bar_mul, mul_assoc]⟩
 
-/-- Under h_fix, bar(g) ∈ HgH for any representative g of a double coset. -/
 private lemma bar_choose_mem_doubleCoset (h_fix : ∀ D : T' P, ι.onT' D = D)
     (D : T' P) : ∃ h₁ h₂ : P.H,
     ι.bar (D.eql.choose : G) = h₁ * (D.eql.choose : G) * h₂ := by
@@ -145,7 +129,6 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
   rw [← m'_uniform P D₂ D₁ D q₀]
   norm_cast
   have bar_mem_dc := bar_mem_doubleCoset ι h_fix
-  -- Forward map (transparent `let`)
   let fwd : {⟨i, j⟩ : decompQuot P D₁ × decompQuot P D₂ |
       ({(i.out : G) * g₁} : Set G) * {(j.out : G) * g₂} * P.H =
       {g_D} * (P.H : Set G)} →
@@ -283,33 +266,17 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
       ⟩ : {p : decompQuot P D₂ × decompQuot P D₁ |
       ({(p.1.out : G) * g₂} : Set G) * {(p.2.out : G) * g₁} * P.H =
       {(q₀.out : G) * g_D} * (P.H : Set G)})
-  -- Injectivity of fwd.
-  -- Strategy: extract components from heq using congr_arg (no unfolding),
-  -- then use `change` to state what those components definitionally are.
-  -- Since fwd is a `let`-binding, Lean can check def-eq without expanding in context.
   apply Nat.card_le_card_of_injective fwd
   intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ heq
-  -- Extract the two component equalities from heq via Subtype.ext + Prod.ext
   have heq_val := congr_arg Subtype.val heq
   have hj'_eq := congr_arg Prod.fst heq_val
   have hi'_eq := congr_arg Prod.snd heq_val
-  -- Clear heq to prevent it from bloating the context
   clear heq heq_val
-  -- The first components of the output are the j' values (decompQuot P D₂).
-  -- By definition of fwd, j' = ⟦a⟧ where a = ⟨(bar x).dc.choose, ...⟩
-  -- and x = g₁⁻¹ * i.out⁻¹ * g_D.
-  -- We use `change` to tell Lean what hj'_eq actually says.
-  -- Since fwd is transparent (let-bound), Lean verifies this is definitionally equal.
   have h₁' : ({(i₁.out : G) * g₁} : Set G) * {(j₁.out : G) * g₂} * ↑P.H =
       {g_D} * ↑P.H := h₁
   have h₂' : ({(i₂.out : G) * g₁} : Set G) * {(j₂.out : G) * g₂} * ↑P.H =
       {g_D} * ↑P.H := h₂
-  -- Now prove i₁ = i₂ using the bar-based argument.
-  -- We work with x₁, x₂ directly via `have` (not `set`, to avoid context traversal).
   have hi₁₂ : i₁ = i₂ := by
-    -- The j' components are equal. By construction, j' depends on i through
-    -- bar(g₁⁻¹ * i.out⁻¹ * g_D). Equal j' means a₁ and a₂ are in the same coset.
-    -- We'll re-derive the key facts for x₁ and x₂ without using `set`.
     let x₁ : G := g₁⁻¹ * (i₁.out : G)⁻¹ * g_D
     let x₂ : G := g₁⁻¹ * (i₂.out : G)⁻¹ * g_D
     have hx₁_D₂ : x₁ ∈ D₂.set := by
@@ -366,13 +333,6 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
     have hb₂ : b₂_val ∈ (P.H : Set G) := hbarx₂_dc.choose_spec.2.choose_spec.1
     have hbarx₂_eq : ι.bar x₂ = (a₂ : G) * g₂ * b₂_val :=
       hbarx₂_dc.choose_spec.2.choose_spec.2
-    -- The key step: hj'_eq says the j' outputs are equal.
-    -- By construction, fwd maps (i,j) to (j', i') where j' = ⟦a⟧ with a from bar(x).
-    -- So hj'_eq tells us ⟦a₁⟧ = ⟦a₂⟧ in decompQuot P D₂.
-    -- We extract the coset membership from hj'_eq.
-    -- Since fwd is let-bound, (fwd ...).val.fst is definitionally ⟦a⟧.
-    -- hj'_eq : (fwd src₁).val.fst = (fwd src₂).val.fst
-    -- We use `change` to tell Lean this is an equality of quotient elements.
     change (⟦⟨hbarx₁_dc.choose, hbarx₁_dc.choose_spec.1⟩⟧ : decompQuot P D₂) =
       ⟦⟨hbarx₂_dc.choose, hbarx₂_dc.choose_spec.1⟩⟧ at hj'_eq
     rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at hj'_eq
@@ -403,8 +363,6 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
       group
     have hconj_H : g₁⁻¹ * (i₂.out : G)⁻¹ * (i₁.out : G) * g₁ ∈ P.H :=
       hxx_calc ▸ hxx_H
-    -- We need (i₁.out)⁻¹ * i₂.out in the conjugated subgroup, but hconj_H
-    -- has i₂⁻¹ * i₁. Take the inverse.
     have hconj_H' : g₁⁻¹ * (i₁.out : G)⁻¹ * (i₂.out : G) * g₁ ∈ P.H := by
       have := P.H.inv_mem hconj_H
       convert this using 1; group
@@ -428,8 +386,7 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
     exact hcancel
   subst hj₁₂; rfl
 
-/-- Shimura Proposition 3.8: m'(D₁, D₂, D) = m'(D₂, D₁, D) when bar fixes all double cosets.
-    Proved by applying `m'_le_comm` in both directions and using `le_antisymm`. -/
+/-- Shimura Proposition 3.8: `m'(D₁, D₂, D) = m'(D₂, D₁, D)` when bar fixes all double cosets. -/
 lemma m'_comm_of_onT'_eq (h_fix : ∀ D : T' P, ι.onT' D = D)
     (D₁ D₂ D : T' P) : m' P D₁ D₂ D = m' P D₂ D₁ D :=
   le_antisymm (ι.m'_le_comm h_fix D₁ D₂ D) (ι.m'_le_comm h_fix D₂ D₁ D)
@@ -459,8 +416,7 @@ theorem mul_comm_of_antiInvolution (h_fix : ∀ D : T' P, ι.onT' D = D)
 
 end AntiInvolution
 
-/-- Shimura Proposition 3.8: if the arithmetic group pair admits an anti-involution
-    fixing every double coset, then the Hecke ring is a commutative ring. -/
+/-- Shimura Proposition 3.8: the Hecke ring is commutative given an anti-involution fixing every double coset. -/
 noncomputable def instCommRing_of_antiInvolution (ι : AntiInvolution P)
     (h_fix : ∀ D : T' P, ι.onT' D = D) :
     CommRing (𝕋 P ℤ) :=
