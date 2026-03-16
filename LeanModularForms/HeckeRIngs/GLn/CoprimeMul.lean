@@ -188,7 +188,7 @@ private lemma slTransvecG_inv {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ) 
   apply mul_left_cancel (a := slTransvecG i j hij c)
   rw [mul_inv_cancel, slTransvecG_mul, add_neg_cancel, slTransvecG_zero]
 
-private lemma IsTransvec_inv {m : ℕ} {E : Matrix.SpecialLinearGroup (Fin m) ℤ}
+private lemma isTransvec_inv {m : ℕ} {E : Matrix.SpecialLinearGroup (Fin m) ℤ}
     (hE : IsTransvec E) : IsTransvec E⁻¹ := by
   obtain ⟨i, j, hij, c, rfl⟩ := hE; rw [slTransvecG_inv]; exact ⟨i, j, hij, -c, rfl⟩
 
@@ -198,7 +198,7 @@ private lemma transvec_list_inv {m : ℕ} (L : List (Matrix.SpecialLinearGroup (
       (∀ E ∈ L', IsTransvec E) ∧ L.prod⁻¹ = L'.prod := by
   refine ⟨(L.map (·⁻¹)).reverse, fun E hE => ?_, List.prod_inv_reverse L⟩
   rw [List.mem_reverse, List.mem_map] at hE
-  obtain ⟨F, hF, rfl⟩ := hE; exact IsTransvec_inv (hL F hF)
+  obtain ⟨F, hF, rfl⟩ := hE; exact isTransvec_inv (hL F hF)
 
 private def blockLift {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ) :
     Matrix.SpecialLinearGroup (Fin (m + 1)) ℤ :=
@@ -955,8 +955,6 @@ private lemma one_in_CRTProd (d d' : ℕ) :
       congMod n d p ∧ congMod n d' q :=
   ⟨1, 1, (one_mul 1).symm, congMod_one n d, congMod_one n d'⟩
 
-
-
 private lemma slTransvecG_eq_slTransvec (i j : Fin n) (hij : i ≠ j) (c : ℤ) :
     slTransvecG i j hij c = slTransvec n i j hij c := by
   apply Subtype.ext; rfl
@@ -1255,12 +1253,10 @@ private lemma diagConj_scaling (a : Fin n → ℕ+)
     Finset.dvd_prod_of_mem _ (Finset.mem_univ i)
   refine ⟨(∏ k, (a k : ℤ)) / (a i : ℤ) * σ.val i j * (a j : ℤ), ?_⟩
   have hai_ne : (a i : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (PNat.ne_zero _)
-  -- ∏a * C_{ij} = (∏a / a_i) * a_i * C_{ij} = (∏a / a_i) * (σ_{ij} * a_j)
   have : (∏ k, (a k : ℚ)) * (↑C : Matrix _ _ ℚ) i j =
       (∏ k, (a k : ℚ)) / (a i : ℚ) * ((a i : ℚ) * (↑C : Matrix _ _ ℚ) i j) := by
     field_simp
   rw [this, h_entry]
-  -- Goal: ∏a / a_i * (↑(σ i j) * ↑(a j)) = ↑((∏ a_k / a_i) * σ_{ij} * a_j)
   have hai_pos : (0 : ℤ) < (a i : ℤ) := Int.natCast_pos.mpr (a i).pos
   have hai_ne_int : (a i : ℤ) ≠ 0 := ne_of_gt hai_pos
   rw [show ((∏ k, (a k : ℤ)) / (a i : ℤ) * σ.val i j * (a j : ℤ) : ℤ) =
@@ -1268,24 +1264,17 @@ private lemma diagConj_scaling (a : Fin n → ℕ+)
   push_cast [Int.cast_div h_dvd (show ((a i : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hai_ne_int)]
   ring
 
-/-- The entries of `F * diag(b) * G * diag(b)⁻¹ * E` satisfy `∏b * entry_{ij} ∈ ℤ`
-    for F, G, E ∈ SL_n(ℤ). Uses diagConj_scaling on the inner conjugation. -/
 private lemma diagSandwich_scaling (b : Fin n → ℕ+)
     (F G E : SpecialLinearGroup (Fin n) ℤ) (i j : Fin n) :
     ∃ z : ℤ, (∏ k, (b k : ℚ)) *
       ((↑(SLnZ_to_GLnQ n F * diagMat n b * SLnZ_to_GLnQ n G *
         (diagMat n b)⁻¹ * SLnZ_to_GLnQ n E) :
         Matrix (Fin n) (Fin n) ℚ) i j) = z := by
-  -- Rewrite: C = F * (diag(b) * G * diag(b)⁻¹) * E
-  -- where diag(b) * G * diag(b)⁻¹ =: D has ∏b * D_{pq} ∈ ℤ (by inv_conjugate variant of diagConj)
-  -- Then ∏b * C_{ij} = ∑_{p,q} F_{ip} * (∏b * D_{pq}) * E_{qj} ∈ ℤ
   set C := SLnZ_to_GLnQ n F * diagMat n b * SLnZ_to_GLnQ n G *
     (diagMat n b)⁻¹ * SLnZ_to_GLnQ n E
   set D := diagMat n b * SLnZ_to_GLnQ n G * (diagMat n b)⁻¹
-  -- C = F * D * E
   have h_C_eq : C = SLnZ_to_GLnQ n F * D * SLnZ_to_GLnQ n E := by
     simp only [C, D, mul_assoc]
-  -- Entry-level: C_{ij} = ∑_p ∑_q F_{ip} * D_{pq} * E_{qj}
   set F_GL := SLnZ_to_GLnQ n F
   set E_GL := SLnZ_to_GLnQ n E
   have h_C_entry : (↑C : Matrix (Fin n) (Fin n) ℚ) i j = ∑ p, ∑ q,
@@ -1296,25 +1285,17 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ+)
     simp only [Units.val_mul, Matrix.mul_apply] at this
     rw [this]; simp only [Finset.sum_mul, mul_assoc]
     rw [Finset.sum_comm]
-  -- ∏b * D_{pq} ∈ ℤ: D = diag(b) * G * diag(b)⁻¹, entry (p,q) = b_p * G_{pq} / b_q
   set D_mat := (↑D : Matrix (Fin n) (Fin n) ℚ)
   have h_D_scale : ∀ p q, ∃ z : ℤ, (∏ k, (b k : ℚ)) * D_mat p q = z := by
     intro p q
-    -- D entry: (diag(b) * G_GL * diag(b)⁻¹)_{pq} = b_p * G_{pq} * (1/b_q)
-    -- ∏b * b_p * G_{pq} / b_q = (∏b / b_q) * b_p * G_{pq}
     have h_D_entry : D_mat p q =
         (b p : ℚ) * (↑(G.val p q) : ℚ) * ((b q : ℚ)⁻¹) := by
-      -- D = diagMat b * G_GL * (diagMat b)⁻¹
-      -- Compute: D * diagMat b = diagMat b * G_GL, so D_{pq} * b_q = b_p * G_{pq}
-      -- hence D_{pq} = b_p * G_{pq} / b_q
       have h_Db : D * diagMat n b = diagMat n b * SLnZ_to_GLnQ n G := by
         simp only [D, mul_assoc, inv_mul_cancel, mul_one]
       have h_entry := congr_arg
         (fun (g : GL (Fin n) ℚ) => (↑g : Matrix (Fin n) (Fin n) ℚ) p q) h_Db
       simp only [Units.val_mul, diagMat_val, SLnZ_to_GLnQ_val,
         Matrix.mul_diagonal, Matrix.diagonal_mul, Matrix.map_apply] at h_entry
-      -- h_entry : D_mat p q * (b q : ℚ) = (b p : ℚ) * (G.val p q : ℚ)
-      -- From this: D_mat p q = b_p * G_{pq} / b_q
       have hbq_ne : (b q : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (PNat.ne_zero _)
       field_simp at h_entry ⊢
       linarith
@@ -1323,42 +1304,26 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ+)
     have hbq_ne : (b q : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (PNat.ne_zero _)
     have hbq_ne_int : (b q : ℤ) ≠ 0 := Int.natCast_ne_zero.mpr (PNat.ne_zero _)
     refine ⟨(∏ k, (b k : ℤ)) / (b q : ℤ) * (b p : ℤ) * G.val p q, ?_⟩
-    -- ∏b * (b_p * G_{pq} * b_q⁻¹) = (∏b / b_q) * b_p * G_{pq}
     have h_div_eq : (∏ k, (b k : ℚ)) * ((b p : ℚ) * ↑(G.val p q) * ((b q : ℚ)⁻¹)) =
         (∏ k, (b k : ℚ)) / (b q : ℚ) * ((b p : ℚ) * ↑(G.val p q)) := by
       rw [div_eq_mul_inv]; ring
     rw [h_div_eq]
     push_cast [Int.cast_div h_dvd (show ((b q : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hbq_ne_int)]
     ring
-  -- Assemble: ∏b * C_{ij} = ∑_{p,q} F_{ip} * (∏b * D_{pq}) * E_{qj} ∈ ℤ
   rw [h_C_entry, Finset.mul_sum]
   simp_rw [Finset.mul_sum, mul_assoc]
-  -- Each summand: ∏b * (F_{ip} * D_{pq} * E_{qj}) = F_{ip} * (∏b * D_{pq}) * E_{qj} ∈ ℤ
   refine ⟨∑ p, ∑ q, (F.val i p) * (h_D_scale p q).choose * (E.val q j), ?_⟩
   push_cast
   apply Finset.sum_congr rfl; intro p _
   apply Finset.sum_congr rfl; intro q _
   have hDpq := (h_D_scale p q).choose_spec
-  -- After simp, the goal is:
-  -- ∏b * (↑(F i p) * (D_mat p q * ↑(E q j))) = ↑(F i p) * ↑choose * ↑(E q j)
-  -- Approach: directly compute using hDpq
-  -- ∏b * (f * (d * e)) = f * (∏b * d) * e  [by ring in ℚ]
-  --                     = f * choose * e     [by hDpq]
-  -- But after simp, the entry types are ↑(F.val i p) etc from SLnZ coercion.
-  -- Just use `have` to establish the chain.
   simp only [F_GL, E_GL, SLnZ_to_GLnQ_val, Matrix.map_apply]
-  -- Goal: ∏b * (↑F_{ip} * (D_{pq} * ↑E_{qj})) = ↑(F_{ip} * choose * E_{qj})
-  -- Use hDpq to substitute ∏b * D_{pq} = ↑choose, then close by ring
-  -- Avoid rw on choose (motive-not-type-correct) by computing directly
   set z := (h_D_scale p q).choose with hz_def
   have hDpq' : (∏ k, (b k : ℚ)) * D_mat p q = (z : ℚ) := hDpq
-  -- Now z is a simple variable, safe to rw
   have h1 : (∏ k, (b k : ℚ)) * ((↑(F.val i p) : ℚ) * (D_mat p q * (↑(E.val q j) : ℚ))) =
       (↑(F.val i p) : ℚ) * ((∏ k, (b k : ℚ)) * D_mat p q) * (↑(E.val q j) : ℚ) := by ring
   rw [h1, hDpq']
 
-/-- If `β := δ_a⁻¹ · σ · δ_a` and the coupling equation holds, then β ∈ H.
-    This encapsulates the Bezout/coupling argument in the coprime multiplicity proof. -/
 private lemma coprime_coupling_mem_H
     (a b : Fin n → ℕ+)
     (ha : DivChain n a) (hb : DivChain n b)
@@ -1369,13 +1334,11 @@ private lemma coprime_coupling_mem_H
       (diagMat n b)⁻¹ * SLnZ_to_GLnQ n E) :
     (diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a ∈ SLnZ_subgroup n := by
   set C := (diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a
-  -- det(C) = 1
   have h_det : (↑C : Matrix (Fin n) (Fin n) ℚ).det = 1 := by
     simp only [C, Units.val_mul, Matrix.det_mul]
     rw [SLnZ_to_GLnQ_det, mul_one]
     rw [← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel]
     simp only [Units.val_one, Matrix.det_one]
-  -- Representation 1: ∏a * C_{ij} ∈ ℤ (via diagConj_scaling)
   have h_scale_a : ∀ i j, ∃ z : ℤ,
       (↑(diagDet n a) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by
     intro i j
@@ -1383,7 +1346,6 @@ private lemma coprime_coupling_mem_H
     simp only [C, diagDet]
     convert this using 2
     push_cast; ring
-  -- Representation 2: ∏b * C_{ij} ∈ ℤ (via diagSandwich_scaling)
   have h_scale_b : ∀ i j, ∃ z : ℤ,
       (↑(diagDet n b) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by
     intro i j
@@ -1397,8 +1359,7 @@ private lemma coprime_coupling_mem_H
   exact GLnQ_mem_SLnZ_of_coprime_scaling n C (diagDet n a) (diagDet n b) hcop h_det
     h_scale_a h_scale_b
 
-/-- Coprime product: `T(a₁,...,aₙ) · T(b₁,...,bₙ) = T(a₁b₁,...,aₙbₙ)`
-    when `gcd(∏aᵢ, ∏bᵢ) = 1`. Shimura Proposition 3.16. -/
+/-- Coprime product in the Hecke ring (Shimura Proposition 3.16). -/
 theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
     (ha : DivChain n a) (hb : DivChain n b)
     (hcop : Nat.Coprime (diagDet n a) (diagDet n b)) :
@@ -1414,12 +1375,8 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
   apply Finsupp.ext; intro A
   simp only [HeckeRing.m, Finsupp.coe_mk, Finsupp.single_apply]
   split_ifs with h1
-  · -- m'(D_a, D_b, D_ab) = 1: upper bound from coprime subsingleton, lower from mulSupport
-    rw [← h1]
+  · rw [← h1]
     have h_le : HeckeRing.m' (GL_pair n) D_a D_b D_ab ≤ 1 := by
-      -- Strategy: show the m' subtype is Subsingleton.
-      -- Given two pairs (i₁,j₁),(i₂,j₂) satisfying the right-coset condition,
-      -- show i₁ = i₂ (via CRT + Bezout coupling), then j₁ = j₂.
       classical
       simp only [HeckeRing.m']; norm_cast; rw [Nat.card_eq_fintype_card]
       apply Fintype.card_le_one_iff_subsingleton.mpr
@@ -1428,13 +1385,10 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
       set H := (GL_pair n).H
       set δ_a' := (D_a.eql.choose : GL (Fin n) ℚ) with hδ_a_def
       set δ_b' := (D_b.eql.choose : GL (Fin n) ℚ) with hδ_b_def
-      -- From h₁ and h₂ combined: the two products are in the same right H-coset
       have h12 := h₁.trans h₂.symm
-      -- Step 1: Show i₁ = i₂ using the coprime structure
       have hi : i₁ = i₂ := by
         by_contra hne
         apply HeckeRing.decompQuot_coset_diff (GL_pair n) D_a i₁ i₂ hne
-        -- Extract δ_a' = h₁a * diag(a) * h₂a, δ_b' = h₁b * diag(b) * h₂b
         have hδa_mem : δ_a' ∈ DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ) H H := by
           have h_spec := D_a.eql.choose_spec
           simp only [D_a, T_diag, T_mk, diagMat_delta] at h_spec
@@ -1447,23 +1401,14 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
           rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
         rw [DoubleCoset.mem_doubleCoset] at hδb_mem
         obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb_mem
-        -- Extract σ' ∈ SLn from the diff i₂⁻¹ * i₁
         have hσ'_mem : h₁a⁻¹ * ((i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ)) *
             h₁a ∈ (SLnZ_to_GLnQ n).range :=
           show _ ∈ H from H.mul_mem (H.mul_mem (H.inv_mem hh₁a)
             (H.mul_mem (H.inv_mem (SetLike.coe_mem i₂.out)) (SetLike.coe_mem i₁.out))) hh₁a
         obtain ⟨σ', hσ'⟩ := hσ'_mem
-        -- Extract κ ∈ H from h12 (the right-coset equation)
-        -- Show i₁ * δ_a' * (j₁ * δ_b') ∈ {i₂ * δ_a' * (j₂ * δ_b')} * H
-        -- Strategy: i₁ * δ_a' * (j₁ * δ_b') ∈ {i₁ * δ_a'} * ({j₁ * δ_b'} * H)
-        --         ⊆ {i₁ * δ_a'} * ({j₁ * δ_b'} * H) = (part of {i₁ * δ_a'} * {j₁ * δ_b'} * H)
-        -- and h12 gives {i₁ * δ_a'} * {j₁ * δ_b'} * H = {i₂ * δ_a'} * {j₂ * δ_b'} * H
-        -- Then {i₂ * δ_a'} * {j₂ * δ_b'} * H = {i₂ * δ_a' * (j₂ * δ_b')} * H
         have hmem12 : (i₁.out : GL (Fin n) ℚ) * δ_a' * ((j₁.out : GL (Fin n) ℚ) * δ_b') ∈
             ({(i₂.out : GL (Fin n) ℚ) * δ_a' * ((j₂.out : GL (Fin n) ℚ) * δ_b')} : Set _) *
             (H : Set _) := by
-          -- h12 : {i₁ * δ_a'} * {j₁ * δ_b'} * H = {i₂ * δ_a'} * {j₂ * δ_b'} * H
-          -- Rewrite both sides: {a} * {b} * S = {a * b} * S
           have h12' : ({(i₁.out : GL (Fin n) ℚ) * δ_a' *
               ((j₁.out : GL (Fin n) ℚ) * δ_b')} : Set _) * (H : Set _) =
               ({(i₂.out : GL (Fin n) ℚ) * δ_a' *
@@ -1475,13 +1420,8 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
           exact ⟨_, Set.mem_singleton _, 1, H.one_mem, by simp⟩
         obtain ⟨_, h_sing, κ, hκ, hκ_eq⟩ := hmem12
         rw [Set.mem_singleton_iff] at h_sing; subst h_sing
-        -- hκ_eq : i₂ * δ_a' * (j₂ * δ_b') * κ = i₁ * δ_a' * (j₁ * δ_b')
-        -- Rearrange to coupling equation:
-        -- δ_a'⁻¹ * i₂⁻¹ * i₁ * δ_a' = j₂ * δ_b' * κ * δ_b'⁻¹ * j₁⁻¹
         have h_beta_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ) * δ_a' =
             (j₂.out : GL (Fin n) ℚ) * δ_b' * κ * δ_b'⁻¹ * (j₁.out : GL (Fin n) ℚ)⁻¹ := by
-          -- hκ_eq has form: (fun x1 x2 => x1 * x2) (...) κ = ...
-          -- Simplify to get a clean multiplication
           have hκ_eq' : (i₂.out : GL (Fin n) ℚ) * δ_a' * ((j₂.out : GL (Fin n) ℚ) * δ_b') * κ =
               (i₁.out : GL (Fin n) ℚ) * δ_a' * ((j₁.out : GL (Fin n) ℚ) * δ_b') := by
             exact hκ_eq
@@ -1491,18 +1431,11 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
             mul_one, one_mul]
           simp only [mul_assoc] at hκ_eq'
           exact hκ_eq'.symm
-        -- Rewrite LHS: δ_a' = h₁a * diagMat a * h₂a, and σ'_GL = h₁a⁻¹ * i₂⁻¹ * i₁ * h₁a
-        -- So δ_a'⁻¹ * i₂⁻¹ * i₁ * δ_a'
-        --  = (h₁a * diag(a) * h₂a)⁻¹ * i₂⁻¹ * i₁ * (h₁a * diag(a) * h₂a)
-        --  = h₂a⁻¹ * diag(a)⁻¹ * h₁a⁻¹ * i₂⁻¹ * i₁ * h₁a * diag(a) * h₂a
-        --  = h₂a⁻¹ * diag(a)⁻¹ * σ'_GL * diag(a) * h₂a
         have h_lhs_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ) * δ_a' =
             h₂a⁻¹ * ((diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ' * diagMat n a) * h₂a := by
-          -- δ_a' = h₁a * diag(a) * h₂a and σ'_GL = h₁a⁻¹ * i₂⁻¹ * i₁ * h₁a
           rw [hσ', hδa_eq]
           simp only [_root_.mul_inv_rev, mul_assoc, inv_mul_cancel_left,
             mul_inv_cancel_left]
-        -- Extract F, G, E ∈ SLn from the coupling RHS
         have hF_mem : (j₂.out : GL (Fin n) ℚ) * h₁b ∈ (SLnZ_to_GLnQ n).range :=
           show _ ∈ H from H.mul_mem (SetLike.coe_mem j₂.out) hh₁b
         obtain ⟨F_pre, hF_pre⟩ := hF_mem
@@ -1512,18 +1445,12 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
         have hE_mem : h₁b⁻¹ * (j₁.out : GL (Fin n) ℚ)⁻¹ ∈ (SLnZ_to_GLnQ n).range :=
           show _ ∈ H from H.mul_mem (H.inv_mem hh₁b) (H.inv_mem (SetLike.coe_mem j₁.out))
         obtain ⟨E_pre, hE_pre⟩ := hE_mem
-        -- Rewrite RHS: j₂ * δ_b' * κ * δ_b'⁻¹ * j₁⁻¹
-        --  = j₂ * (h₁b * diag(b) * h₂b) * κ * (h₁b * diag(b) * h₂b)⁻¹ * j₁⁻¹
-        --  = (j₂ * h₁b) * diag(b) * (h₂b * κ * h₂b⁻¹) * diag(b)⁻¹ * (h₁b⁻¹ * j₁⁻¹)
-        --  = F_pre_GL * diag(b) * G_pre_GL * diag(b)⁻¹ * E_pre_GL
         have h_rhs_eq : (j₂.out : GL (Fin n) ℚ) * δ_b' * κ * δ_b'⁻¹ *
             (j₁.out : GL (Fin n) ℚ)⁻¹ =
             SLnZ_to_GLnQ n F_pre * diagMat n b * SLnZ_to_GLnQ n G_pre *
             (diagMat n b)⁻¹ * SLnZ_to_GLnQ n E_pre := by
           rw [hF_pre, hG_pre, hE_pre, hδb_eq]
           simp only [_root_.mul_inv_rev, mul_assoc]
-        -- Combine: h₂a⁻¹ * C * h₂a = F * diag(b) * G * diag(b)⁻¹ * E
-        -- So C = (h₂a * F) * diag(b) * G * diag(b)⁻¹ * (E * h₂a⁻¹)
         have hFF_mem : h₂a * SLnZ_to_GLnQ n F_pre ∈ (SLnZ_to_GLnQ n).range :=
           show _ ∈ H from H.mul_mem hh₂a ⟨F_pre, rfl⟩
         obtain ⟨FF, hFF⟩ := hFF_mem
@@ -1533,25 +1460,8 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
         have h_C_eq : (diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ' * diagMat n a =
             SLnZ_to_GLnQ n FF * diagMat n b * SLnZ_to_GLnQ n G_pre *
             (diagMat n b)⁻¹ * SLnZ_to_GLnQ n EE := by
-          -- From h_beta_eq + h_lhs_eq + h_rhs_eq:
-          -- h₂a⁻¹ * (diag(a)⁻¹ * σ' * diag(a)) * h₂a = F * diag(b) * G * diag(b)⁻¹ * E
           have h_combined := h_beta_eq
           rw [h_lhs_eq, h_rhs_eq] at h_combined
-          -- h_combined : h₂a⁻¹ * C_inner * h₂a = F * diag(b) * G * diag(b)⁻¹ * E
-          -- Extract C_inner from h₂a conjugation
-          -- h_combined : h₂a⁻¹ * C_inner * h₂a = F_pre * diag(b) * G_pre * diag(b)⁻¹ * E_pre
-          -- Goal: C_inner = FF * diag(b) * G_pre * diag(b)⁻¹ * EE
-          -- where FF = h₂a * F_pre and EE = E_pre * h₂a⁻¹
-          -- So: h₂a * C_inner * h₂a⁻¹ = h₂a * F_pre * diag * G_pre * diag⁻¹ * E_pre * h₂a⁻¹
-          --   = (h₂a * F_pre) * diag * G_pre * diag⁻¹ * (E_pre * h₂a⁻¹)
-          --   = FF * diag * G_pre * diag⁻¹ * EE
-          -- So C_inner = h₂a⁻¹ * h₂a * C_inner = C_inner, and the h₂a conjugation
-          -- is removed by multiplying both sides.
-          -- h_combined : h₂a⁻¹ * (diag⁻¹ * σ' * diag) * h₂a = F_pre * diag(b) * G * diag(b)⁻¹ * E_pre
-          -- Goal: diag⁻¹ * σ' * diag = FF * diag(b) * G * diag(b)⁻¹ * EE
-          -- where hFF : SLnZ_to_GLnQ n FF = h₂a * SLnZ_to_GLnQ n F_pre
-          -- and hEE : SLnZ_to_GLnQ n EE = SLnZ_to_GLnQ n E_pre * h₂a⁻¹
-          -- Strategy: solve by mul_left_cancel/mul_right_cancel with h₂a
           apply mul_left_cancel (a := h₂a⁻¹)
           apply mul_right_cancel (b := h₂a)
           rw [hFF, hEE]
@@ -1559,14 +1469,11 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
             mul_inv_cancel, mul_inv_cancel_left, inv_mul_cancel_left]
           simp only [mul_assoc] at h_combined
           exact h_combined
-        -- Apply coprime_coupling_mem_H
         have h_C_in_H := coprime_coupling_mem_H n a b ha hb hcop σ' FF G_pre EE h_C_eq
-        -- β = h₂a⁻¹ * C * h₂a ∈ H
         have h_beta_in_H : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
             (i₁.out : GL (Fin n) ℚ) * δ_a' ∈ H := by
           rw [h_lhs_eq]
           exact H.mul_mem (H.mul_mem (H.inv_mem hh₂a) h_C_in_H) hh₂a
-        -- h_beta_in_H gives the two right cosets are equal
         exact HeckeRing.leftCoset_eq_of_not_disjoint (H := (GL_pair n).H) _ _ (by
           rw [Set.not_disjoint_iff]
           exact ⟨(i₁.out : GL (Fin n) ℚ) * δ_a',
@@ -1575,7 +1482,6 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
               (i₁.out : GL (Fin n) ℚ) * δ_a', h_beta_in_H, by
                 simp only [smul_eq_mul, ← hδ_a_def]; group⟩⟩)
       subst hi
-      -- Step 2: Show j₁ = j₂ (same as scalar case, using set_singleton_mul_left_cancel)
       have hj : j₁ = j₂ := by
         by_contra hne
         exact HeckeRing.decompQuot_coset_diff (GL_pair n) D_b j₁ j₂ hne
@@ -1600,8 +1506,7 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
         simp only [HeckeRing.m']; exact Nat.cast_nonneg _
       omega
     omega
-  · -- m'(D_a, D_b, A) = 0 for A ≠ D_ab: A ∉ mulSupport since all pairs map to D_ab
-    apply HeckeRing.m'_eq_zero_of_nmem_mulSupport
+  · apply HeckeRing.m'_eq_zero_of_nmem_mulSupport
     intro h_mem
     simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
       true_and] at h_mem
