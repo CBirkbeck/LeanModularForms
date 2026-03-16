@@ -117,6 +117,158 @@ end Telescoping
 
 /-! ### Identity 5: The key recursion -/
 
+private lemma first_invariant_dvd_p_of_product
+    (S : Matrix.SpecialLinearGroup (Fin 2) ℤ)
+    (a : Fin 2 → ℕ+) (hdiv : DivChain 2 a)
+    (L R : Matrix.SpecialLinearGroup (Fin 2) ℤ)
+    (k : ℕ) (_hk : 0 < k)
+    (heq : (L : Matrix (Fin 2) (Fin 2) ℤ) *
+      Matrix.diagonal (fun m => (mk2 1 ⟨p, hp.pos⟩ m : ℤ)) *
+      (S : Matrix (Fin 2) (Fin 2) ℤ) *
+      Matrix.diagonal (fun m => (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ m : ℤ)) *
+      (R : Matrix (Fin 2) (Fin 2) ℤ) =
+      Matrix.diagonal (fun i => (a i : ℤ))) :
+    (a 0 : ℕ) ∣ p := by
+  set dp := Matrix.diagonal (fun m => (mk2 1 ⟨p, hp.pos⟩ m : ℤ))
+  set dpk := Matrix.diagonal (fun m => (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ m : ℤ))
+  set S_ℤ := (↑S : Matrix (Fin 2) (Fin 2) ℤ)
+  set M := dp * S_ℤ * dpk
+  set L_ℤ := (↑L : Matrix (Fin 2) (Fin 2) ℤ)
+  set R_ℤ := (↑R : Matrix (Fin 2) (Fin 2) ℤ)
+  have hLadj : L_ℤ.adjugate * L_ℤ = 1 := by rw [Matrix.adjugate_mul, L.prop, one_smul]
+  have hRadj : R_ℤ * R_ℤ.adjugate = 1 := by rw [Matrix.mul_adjugate, R.prop, one_smul]
+  have heq_LMR : L_ℤ * M * R_ℤ = Matrix.diagonal (fun i => (a i : ℤ)) := by
+    have : L_ℤ * M * R_ℤ = L_ℤ * dp * S_ℤ * dpk * R_ℤ := by
+      ext i j; simp only [M, S_ℤ, Matrix.mul_apply, Fin.sum_univ_two]; ring
+    rw [this]; exact heq
+  have hM_eq : M = L_ℤ.adjugate * Matrix.diagonal (fun i => (a i : ℤ)) * R_ℤ.adjugate := by
+    ext i j
+    have h1 := congr_arg (L_ℤ.adjugate * · * R_ℤ.adjugate) heq_LMR; simp only at h1
+    have h2 : L_ℤ.adjugate * (L_ℤ * M * R_ℤ) * R_ℤ.adjugate = M := by
+      have : L_ℤ.adjugate * (L_ℤ * M * R_ℤ) * R_ℤ.adjugate =
+          (L_ℤ.adjugate * L_ℤ) * M * (R_ℤ * R_ℤ.adjugate) := by
+        ext r s; simp only [Matrix.mul_apply, Fin.sum_univ_two]; ring
+      rw [this, hLadj, hRadj, one_mul, mul_one]
+    exact congr_arg (· i j) (h2 ▸ h1)
+  have h_dvd_entry : ∀ i j : Fin 2, (a 0 : ℤ) ∣ M i j := by
+    intro i j; rw [hM_eq]
+    simp only [Matrix.mul_apply, Matrix.diagonal_apply, Fin.sum_univ_two,
+      mul_ite, mul_zero, ite_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
+    apply dvd_add
+    · exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (dvd_refl _) _) _
+    · exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right
+        (show (a 0 : ℤ) ∣ (a 1 : ℤ) from by exact_mod_cast hdiv 0 (by omega)) _) _
+  have hfin10 : (1 : Fin 2) ≠ 0 := by decide
+  have hfin01 : (0 : Fin 2) ≠ 1 := by decide
+  have h_M00 : M 0 0 = S_ℤ 0 0 := by
+    simp only [M, S_ℤ, dp, dpk, mk2, Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
+      hfin10, hfin01, if_false, if_true,
+      mul_zero, zero_mul, add_zero, zero_add, mul_one, one_mul]; norm_num
+  have h_M10 : M 1 0 = (p : ℤ) * S_ℤ 1 0 := by
+    simp only [M, S_ℤ, dp, dpk, mk2, Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
+      hfin10, hfin01, if_false, if_true,
+      mul_zero, zero_mul, add_zero, zero_add, mul_one, one_mul]; norm_num
+  have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) :=
+    ⟨S.val 1 1, -(S.val 0 1), by
+      have := S.prop; rw [Matrix.det_fin_two] at this; linarith⟩
+  have h1 : (a 0 : ℤ) ∣ S_ℤ 0 0 := h_M00 ▸ h_dvd_entry 0 0
+  have h2 : (a 0 : ℤ) ∣ (p : ℤ) * S_ℤ 1 0 := h_M10 ▸ h_dvd_entry 1 0
+  have h_cop2 : IsCoprime (↑(a 0) : ℤ) (S_ℤ 1 0) := by
+    obtain ⟨u, v, huv⟩ := h_cop; obtain ⟨t, ht⟩ := h1
+    exact ⟨u * t, v, by
+      rw [show u * t * ↑(a 0) = u * (↑(a 0) * t) from by ring, ← ht]; exact huv⟩
+  exact_mod_cast h_cop2.dvd_of_dvd_mul_right h2
+
+private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ+)
+    (g₁ g₂ g₃ g₄ : GL (Fin 2) ℚ)
+    (h1 : (↑g₁ : Matrix (Fin 2) (Fin 2) ℚ).det = 1)
+    (h2 : (↑g₂ : Matrix (Fin 2) (Fin 2) ℚ).det = (p : ℚ))
+    (h3 : (↑g₃ : Matrix (Fin 2) (Fin 2) ℚ).det = 1)
+    (h4 : (↑g₄ : Matrix (Fin 2) (Fin 2) ℚ).det = (p : ℚ) ^ k)
+    (SL_La SL_Ra : Matrix.SpecialLinearGroup (Fin 2) ℤ)
+    (h_eq : g₁ * g₂ * (g₃ * g₄) =
+        SLnZ_to_GLnQ 2 SL_La * diagMat 2 a * SLnZ_to_GLnQ 2 SL_Ra) :
+    (a 0 : ℕ) * (a 1 : ℕ) = p ^ (k + 1) := by
+  have h_lhs : (↑(g₁ * g₂ * (g₃ * g₄)) : Matrix (Fin 2) (Fin 2) ℚ).det =
+      (p : ℚ) ^ (k + 1) := by
+    simp only [Units.val_mul, Matrix.det_mul, h1, h2, h3, h4]; ring
+  have h_rhs : (↑(g₁ * g₂ * (g₃ * g₄)) : Matrix (Fin 2) (Fin 2) ℚ).det =
+      (a 0 : ℚ) * (a 1 : ℚ) := by
+    rw [h_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
+      SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]; simp [Fin.prod_univ_two]
+  exact_mod_cast show (a 0 : ℚ) * (a 1 : ℚ) = (p : ℚ) ^ (k + 1) by linarith
+
+private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
+    (a : Fin 2 → ℕ+) (hdiv : DivChain 2 a)
+    (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
+    (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
+        Matrix.SpecialLinearGroup (Fin 2) ℤ)
+    (hD1_eq : D1c = SLnZ_to_GLnQ 2 SL_L₁ * diagMat 2 (mk2 1 ⟨p, hp.pos⟩) *
+        SLnZ_to_GLnQ 2 SL_R₁)
+    (hD2_eq : D2c = SLnZ_to_GLnQ 2 SL_L₂ * diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) *
+        SLnZ_to_GLnQ 2 SL_R₂)
+    (hi₀ : i₀_gl = SLnZ_to_GLnQ 2 SL_i₀)
+    (hj₀ : j₀_gl = SLnZ_to_GLnQ 2 SL_j₀)
+    (h_prod_eq_a : i₀_gl * D1c * (j₀_gl * D2c) =
+        SLnZ_to_GLnQ 2 SL_La * diagMat 2 a * SLnZ_to_GLnQ 2 SL_Ra) :
+    (a 0 : ℕ) ∣ p := by
+  set S_mid := SL_R₁ * SL_j₀ * SL_L₂
+  set L' := SL_La⁻¹ * SL_i₀ * SL_L₁
+  set R' := SL_R₂ * SL_Ra⁻¹
+  have h_gl : SLnZ_to_GLnQ 2 L' * diagMat 2 (mk2 1 ⟨p, hp.pos⟩) *
+      SLnZ_to_GLnQ 2 S_mid * diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) *
+      SLnZ_to_GLnQ 2 R' = diagMat 2 a := by
+    set dp := diagMat 2 (mk2 1 ⟨p, hp.pos⟩)
+    set dpk := diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    set da := diagMat 2 a
+    have hprod : SLnZ_to_GLnQ 2 SL_i₀ * (SLnZ_to_GLnQ 2 SL_L₁ * dp *
+        SLnZ_to_GLnQ 2 SL_R₁) * (SLnZ_to_GLnQ 2 SL_j₀ *
+        (SLnZ_to_GLnQ 2 SL_L₂ * dpk * SLnZ_to_GLnQ 2 SL_R₂)) =
+        SLnZ_to_GLnQ 2 SL_La * da * SLnZ_to_GLnQ 2 SL_Ra := by
+      rw [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]; exact h_prod_eq_a
+    have := congr_arg₂ (· * ·) (congr_arg ((SLnZ_to_GLnQ 2 SL_La)⁻¹ * ·) hprod)
+      (show (SLnZ_to_GLnQ 2 SL_Ra)⁻¹ = (SLnZ_to_GLnQ 2 SL_Ra)⁻¹ from rfl)
+    simp only [mul_assoc, inv_mul_cancel_left, mul_inv_cancel_right] at this
+    simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
+    convert this using 1; group
+  have h_int_5 : (↑L' : Matrix (Fin 2) (Fin 2) ℤ) *
+      Matrix.diagonal (fun m => (mk2 1 ⟨p, hp.pos⟩ m : ℤ)) *
+      (↑S_mid : Matrix (Fin 2) (Fin 2) ℤ) *
+      Matrix.diagonal (fun m => (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ m : ℤ)) *
+      (↑R' : Matrix (Fin 2) (Fin 2) ℤ) =
+      Matrix.diagonal (fun i => (a i : ℤ)) := by
+    ext i j
+    have h := congr_arg (fun (g : GL (Fin 2) ℚ) => (↑g : Matrix _ _ ℚ) i j) h_gl
+    simp only [diagMat_val, Matrix.diagonal_apply, Units.val_mul, SLnZ_to_GLnQ_val,
+      Matrix.mul_apply, Matrix.map_apply] at h
+    simp only [Matrix.diagonal_apply, Matrix.mul_apply]
+    exact_mod_cast h
+  exact first_invariant_dvd_p_of_product p hp S_mid a hdiv L' R' k _hk h_int_5
+
+private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k)
+    (a : Fin 2 → ℕ+) (hdiv : DivChain 2 a)
+    (h_det_prod : (a 0 : ℕ) * (a 1 : ℕ) = p ^ (k + 1))
+    (h_dvd_p : (a 0 : ℕ) ∣ p) :
+    T_diag 2 a hdiv =
+      T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+        (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∨
+    T_diag 2 a hdiv =
+      T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+        (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩
+          (dvd_pow_self p (by omega))) := by
+  rcases Nat.Prime.eq_one_or_self_of_dvd hp (a 0) h_dvd_p with ha0_1 | ha0_p
+  · left; congr 1; ext i; fin_cases i
+    · exact PNat.eq ha0_1
+    · exact PNat.eq (by rw [ha0_1, one_mul] at h_det_prod; exact h_det_prod)
+  · right; congr 1; ext i; fin_cases i
+    · exact PNat.eq ha0_p
+    · apply PNat.eq; show (a 1 : ℕ) = _; dsimp [mk2]
+      have h1 : p * (a 1 : ℕ) = p ^ (k + 1) := by rwa [ha0_p] at h_det_prod
+      exact Nat.eq_of_mul_eq_mul_left hp.pos (by rw [h1, pow_succ]; ring)
+
+
 -- Sub-lemma A: SNF support restriction
 private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
     (hA : A ∈ HeckeRing.mulSupport (GL_pair 2)
@@ -127,9 +279,57 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
         (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∨
     A = T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
         (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega))) := by
-  sorry
+  obtain ⟨a, hdiv, hrep⟩ := exists_diagonal_representative 2 A.eql.choose
+  have hA_eq : A = T_diag 2 a hdiv := by
+    rw [← hrep]; exact (T'_ext _ _ _ A.eql.choose_spec.symm).symm
+  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
+  rw [HeckeRing.mulSupport] at hA
+  simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and,
+    Prod.exists] at hA
+  obtain ⟨i₀, j₀, hmap⟩ := hA
+  have hD1_spec := D1.eql.choose_spec
+  simp only [D1, T_diag, HeckeRing.T_mk, diagMat_delta] at hD1_spec
+  have hD1_mem := hD1_spec ▸ DoubleCoset.mem_doubleCoset_self (GL_pair 2).H
+    (GL_pair 2).H (D1.eql.choose : GL (Fin 2) ℚ)
+  rw [DoubleCoset.mem_doubleCoset] at hD1_mem
+  obtain ⟨L₁, ⟨SL_L₁, rfl⟩, R₁, ⟨SL_R₁, rfl⟩, hD1_eq⟩ := hD1_mem
+  have hD2_spec := D2.eql.choose_spec
+  simp only [D2, T_diag, HeckeRing.T_mk, diagMat_delta] at hD2_spec
+  have hD2_mem := hD2_spec ▸ DoubleCoset.mem_doubleCoset_self (GL_pair 2).H
+    (GL_pair 2).H (D2.eql.choose : GL (Fin 2) ℚ)
+  rw [DoubleCoset.mem_doubleCoset] at hD2_mem
+  obtain ⟨L₂, ⟨SL_L₂, rfl⟩, R₂, ⟨SL_R₂, rfl⟩, hD2_eq⟩ := hD2_mem
+  have h_prod_in_A : (↑i₀.out : GL (Fin 2) ℚ) * D1.eql.choose *
+      ((↑j₀.out : GL (Fin 2) ℚ) * D2.eql.choose) ∈ A.set := by
+    rw [← hmap]; simp only [HeckeRing.mulMap, HeckeRing.T_mk]
+    exact DoubleCoset.mem_doubleCoset_self _ _ _
+  rw [hA_eq] at h_prod_in_A
+  simp only [T_diag, HeckeRing.T_mk, diagMat_delta] at h_prod_in_A
+  rw [DoubleCoset.mem_doubleCoset] at h_prod_in_A
+  obtain ⟨L_a, ⟨SL_La, rfl⟩, R_a, ⟨SL_Ra, rfl⟩, h_prod_eq⟩ := h_prod_in_A
+  obtain ⟨SL_i₀, hSL_i₀⟩ := (i₀.out : ↥(GL_pair 2).H).2
+  obtain ⟨SL_j₀, hSL_j₀⟩ := (j₀.out : ↥(GL_pair 2).H).2
+  have h_det := mulSupport_pp_det_eq p k a (↑i₀.out) D1.eql.choose (↑j₀.out)
+    D2.eql.choose
+    (by rw [show (↑i₀.out : GL _ ℚ) = SLnZ_to_GLnQ 2 SL_i₀ from hSL_i₀.symm]
+        exact SLnZ_to_GLnQ_det 2 SL_i₀)
+    (by rw [hD1_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
+          SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]
+        simp [Fin.prod_univ_two, mk2])
+    (by rw [show (↑j₀.out : GL _ ℚ) = SLnZ_to_GLnQ 2 SL_j₀ from hSL_j₀.symm]
+        exact SLnZ_to_GLnQ_det 2 SL_j₀)
+    (by rw [hD2_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
+          SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]
+        simp [Fin.prod_univ_two, mk2])
+    SL_La SL_Ra h_prod_eq
+  have h_dvd := mulSupport_pp_dvd_p p hp k _hk a hdiv D1.eql.choose D2.eql.choose
+    (↑i₀.out) (↑j₀.out) SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀
+    hD1_eq hD2_eq hSL_i₀.symm hSL_j₀.symm h_prod_eq
+  rw [hA_eq]; exact mulSupport_pp_case_split p hp k _hk a hdiv h_det h_dvd
 
--- Sub-lemma B: Witness construction
+set_option maxHeartbeats 1600000 in
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
       (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∈
@@ -137,7 +337,90 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
       (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
       (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
         (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))) := by
-  sorry
+  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
+  set D_out1 := T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+    (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))
+  set α := (D1.eql.choose : GL (Fin 2) ℚ)
+  set β := (D2.eql.choose : GL (Fin 2) ℚ)
+  have hα_mem : α ∈ DoubleCoset.doubleCoset (diagMat 2 (mk2 1 ⟨p, hp.pos⟩) : GL (Fin 2) ℚ)
+      (GL_pair 2).H (GL_pair 2).H := by
+    have := D1.eql.choose_spec
+    simp only [D1, T_diag, HeckeRing.T_mk, diagMat_delta] at this
+    rw [this]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+  rw [DoubleCoset.mem_doubleCoset] at hα_mem
+  obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ := hα_mem
+  have hβ_mem : β ∈ DoubleCoset.doubleCoset
+      (diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) : GL (Fin 2) ℚ)
+      (GL_pair 2).H (GL_pair 2).H := by
+    have := D2.eql.choose_spec
+    simp only [D2, T_diag, HeckeRing.T_mk, diagMat_delta] at this
+    rw [this]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+  rw [DoubleCoset.mem_doubleCoset] at hβ_mem
+  obtain ⟨L₂, hL₂, R₂, hR₂, hβ_eq⟩ := hβ_mem
+  set i₀ : decompQuot (GL_pair 2) D1 := ⟦⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩⟧
+  open scoped Pointwise in
+  obtain ⟨κ₁, hκ₁_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (D1.eql.choose : GL (Fin 2) ℚ) • (GL_pair 2).H).subgroupOf (GL_pair 2).H)
+    ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩
+  have hi₀ : (↑i₀.out : GL (Fin 2) ℚ) = L₁⁻¹ * (κ₁ : (GL_pair 2).H) := by
+    have h := hκ₁_eq; apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at h
+    simp only [Subgroup.coe_mul] at h; exact h
+  have hκ₁_conj : α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α ∈ (GL_pair 2).H := by
+    have := κ₁.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this
+    simpa [ConjAct.ofConjAct_toConjAct] using this
+  set τ₀ : GL (Fin 2) ℚ := (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹
+  have hτ₀_mem : τ₀ ∈ (GL_pair 2).H :=
+    (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hκ₁_conj)
+      ((GL_pair 2).H.inv_mem hR₁)) ((GL_pair 2).H.inv_mem hL₂)
+  set j₀ : decompQuot (GL_pair 2) D2 := ⟦⟨τ₀, hτ₀_mem⟩⟧
+  open scoped Pointwise in
+  obtain ⟨κ₂, hκ₂_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (D2.eql.choose : GL (Fin 2) ℚ) • (GL_pair 2).H).subgroupOf (GL_pair 2).H)
+    ⟨τ₀, hτ₀_mem⟩
+  have hj₀ : (↑j₀.out : GL (Fin 2) ℚ) = τ₀ * (κ₂ : (GL_pair 2).H) := by
+    have h := hκ₂_eq; apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at h
+    simp only [Subgroup.coe_mul] at h; exact h
+  have hκ₂_conj : β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β ∈ (GL_pair 2).H := by
+    have := κ₂.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this
+    simpa [ConjAct.ofConjAct_toConjAct] using this
+  have h_product_mem : (↑i₀.out : GL (Fin 2) ℚ) * α *
+      ((↑j₀.out : GL (Fin 2) ℚ) * β) ∈
+      DoubleCoset.doubleCoset
+        (diagMat 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩) : GL (Fin 2) ℚ)
+        (GL_pair 2).H (GL_pair 2).H := by
+    rw [DoubleCoset.mem_doubleCoset]
+    refine ⟨1, (GL_pair 2).H.one_mem, R₂ * (β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β),
+            (GL_pair 2).H.mul_mem hR₂ hκ₂_conj, ?_⟩
+    rw [hi₀, hj₀, show α = L₁ * diagMat 2 (mk2 1 ⟨p, hp.pos⟩) * R₁ from hα_eq,
+        show β = L₂ * diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) * R₂ from hβ_eq]
+    set D₁_mat := diagMat 2 (mk2 1 ⟨p, hp.pos⟩)
+    set D₂_mat := diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    have h_D_mul : D₁_mat * D₂_mat =
+        diagMat 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩) := by
+      apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
+        simp [D₁_mat, D₂_mat, diagMat, Matrix.diagonal_apply, mk2, pow_succ, mul_comm]
+    rw [one_mul, ← h_D_mul]
+    simp only [show τ₀ =
+      (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹ from rfl,
+               show α = L₁ * D₁_mat * R₁ from hα_eq,
+               show β = L₂ * D₂_mat * R₂ from hβ_eq]
+    group
+  rw [HeckeRing.mulSupport]
+  simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and, Prod.exists]
+  exact ⟨i₀, j₀, by
+    apply HeckeRing.T'_ext (GL_pair 2)
+    show (HeckeRing.mulMap (GL_pair 2) D1 D2 (i₀, j₀)).set = D_out1.set
+    rw [HeckeRing.mulMap, HeckeRing.T_mk]
+    simp only
+    conv_rhs => rw [show D_out1 = HeckeRing.T_mk (GL_pair 2)
+        (diagMat_delta 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)) from rfl,
+      HeckeRing.T_mk]
+    simp only
+    exact DoubleCoset.doubleCoset_eq_of_mem h_product_mem⟩
 
 -- Sub-lemma C: Degree pinning (combined m'(D_out1) = 1 and m'(D_out2) = c)
 set_option maxHeartbeats 800000 in
@@ -861,13 +1144,264 @@ private noncomputable def T_sum_nat (k : ℕ) : HeckeAlgebra 2 :=
 
 private lemma T_sum_nat_eq (k : ℕ+) : T_sum_nat (k : ℕ) = T_sum k := rfl
 
+private lemma T_ad'_one_one : T_ad' 1 1 = 1 := by
+  unfold T_ad'; rw [dif_pos ⟨one_pos, one_pos, dvd_refl 1⟩]
+  exact T_ad_one_one
+
+private lemma T_ad'_self_eq_T_ad (c : ℕ) (hc : 0 < c) :
+    T_ad' c c = T_ad ⟨c, hc⟩ ⟨c, hc⟩ (dvd_refl _) := by
+  unfold T_ad'; rw [dif_pos ⟨hc, hc, dvd_refl c⟩]
+
+private lemma T_ad_self_eq_T_elem (c : ℕ+) :
+    T_ad c c (dvd_refl _) =
+    T_elem 2 (fun _ => c) (divChain_const 2 c) := by
+  unfold T_ad
+  have hmk2 : mk2 c c = (fun (_ : Fin 2) => c) := funext fun j => by fin_cases j <;> rfl
+  exact T_elem_congr_diag 2 hmk2 _ _
+
+private lemma T_pp_pow_eq_T_ad' (q : ℕ) (hq : q.Prime) (i : ℕ) :
+    T_pp q hq ^ i = T_ad' (q ^ i) (q ^ i) := by
+  rw [T_ad'_self_eq_T_ad _ (pow_pos hq.pos i), T_ad_self_eq_T_elem, T_pp_pow q hq i]
+
+private lemma gcd_pow_pow_of_le (q : ℕ) (r s : ℕ) (hrs : r ≤ s) :
+    Nat.gcd (q ^ r) (q ^ s) = q ^ r := by
+  apply Nat.dvd_antisymm (Nat.gcd_dvd_left _ _)
+  exact Nat.dvd_gcd (dvd_refl _) (Nat.pow_dvd_pow q hrs)
+
+/-- Prime-power product in divisor-sum form. -/
+private lemma T_sum_mul_prime_pow_aux (q : ℕ) (hq : q.Prime) (r s : ℕ) (hrs : r ≤ s) :
+    T_sum ⟨q ^ r, pow_pos hq.pos r⟩ * T_sum ⟨q ^ s, pow_pos hq.pos s⟩ =
+    ∑ d ∈ (Nat.gcd (q ^ r) (q ^ s)).divisors,
+      (d : ℤ) • (T_ad' d d * T_sum_nat (q ^ r * q ^ s / (d * d))) := by
+  rw [thm324_4 q hq r s hrs, gcd_pow_pow_of_le q r s hrs, Nat.sum_divisors_prime_pow hq]
+  apply Finset.sum_congr rfl; intro i hi; rw [Finset.mem_range] at hi
+  congr 1
+  · push_cast; ring
+  · congr 1
+    · rw [T_pp_pow_eq_T_ad' q hq i]
+    · rw [← pow_add, ← pow_add, show i + i = 2 * i from by ring, Nat.pow_div (by omega) hq.pos]
+      rfl
+
+/-- Coprime base case for the divisor sum formula. -/
+private lemma T_sum_mul_of_coprime_aux (m n : ℕ+) (hcop : Nat.Coprime m n) :
+    T_sum m * T_sum n =
+    ∑ d ∈ (Nat.gcd m n).divisors,
+      (d : ℤ) • (T_ad' d d * T_sum_nat (↑m * ↑n / (d * d))) := by
+  have hg : Nat.gcd m n = 1 := hcop
+  rw [hg, Nat.divisors_one, Finset.sum_singleton]
+  simp only [Nat.cast_one, one_smul, one_mul, T_ad'_one_one, one_mul, Nat.div_one]
+  rw [T_sum_mul_coprime m n hcop]; rfl
+
+/-- GCD factoring: `gcd(q^a * m', q^b * n') = q^(min a b) * gcd(m', n')`. -/
+private lemma gcd_factor_prime_pow (q : ℕ) (hq : q.Prime)
+    (a b : ℕ) (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ)) :
+    Nat.gcd (q ^ a * m') (q ^ b * n') = q ^ min a b * Nat.gcd m' n' := by
+  have hcop_qm : Nat.Coprime (q ^ a) m' := (Nat.Prime.coprime_pow_of_not_dvd hq hqm).symm
+  have hcop_qn : Nat.Coprime (q ^ b) n' := (Nat.Prime.coprime_pow_of_not_dvd hq hqn).symm
+  have hcop_rg : Nat.Coprime (q ^ min a b) (Nat.gcd m' n') :=
+    (Nat.Prime.coprime_pow_of_not_dvd hq
+      (fun h => hqm (dvd_trans h (Nat.gcd_dvd_left _ _)))).symm
+  apply Nat.eq_of_factorization_eq
+    (Nat.gcd_pos_of_pos_left _ (Nat.mul_pos (pow_pos hq.pos a) m'.pos)).ne'
+    (Nat.mul_pos (pow_pos hq.pos (min a b)) (Nat.gcd_pos_of_pos_left _ m'.pos)).ne'
+  intro p'
+  rw [Nat.factorization_gcd (Nat.mul_pos (pow_pos hq.pos a) m'.pos).ne'
+      (Nat.mul_pos (pow_pos hq.pos b) n'.pos).ne',
+    Nat.factorization_mul_of_coprime hcop_qm, Nat.factorization_mul_of_coprime hcop_qn,
+    Nat.factorization_mul_of_coprime hcop_rg,
+    Nat.factorization_gcd m'.pos.ne' n'.pos.ne']
+  simp only [Finsupp.inf_apply, Finsupp.add_apply]
+  by_cases hpq : p' = q
+  · subst hpq
+    rw [Nat.Prime.factorization_pow hq, Nat.Prime.factorization_pow hq,
+        Nat.Prime.factorization_pow hq]
+    simp only [Finsupp.single_apply, if_pos rfl,
+      Nat.factorization_eq_zero_of_not_dvd hqm,
+      Nat.factorization_eq_zero_of_not_dvd hqn]
+    simp only [mul_one, add_zero, Nat.min_zero, min_zero, zero_min]; rfl
+  · rw [Nat.Prime.factorization_pow hq, Nat.Prime.factorization_pow hq,
+      Nat.Prime.factorization_pow hq]
+    simp only [Finsupp.single_apply, show q ≠ p' from Ne.symm hpq, if_false, zero_add]
+
+/-- RHS computation for the inner summand: T_sum_nat product equals the combined quotient. -/
+private lemma T_sum_mul_peel_prime_summand_rhs (q : ℕ) (hq : q.Prime)
+    (a b : ℕ) (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
+    (r s : ℕ) (hr : r = min a b) (hs : s = max a b)
+    (i : ℕ) (hi : i < r + 1) (d' : ℕ)
+    (hd'_dvd : d' ∣ Nat.gcd (m' : ℕ) n')
+    (hqd' : ¬ q ∣ d') (hcop_qi_d' : Nat.Coprime (q ^ i) d') (hd'_pos : 0 < d') :
+    T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
+      T_sum_nat (↑m' * ↑n' / (d' * d')) =
+    T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d'))) := by
+  have hq_ndvd_mn : ¬ q ∣ ↑m' * ↑n' :=
+    fun h => hqm ((hq.dvd_mul.mp h).elim id (fun h' => absurd h' hqn))
+  have hq_ndvd_quot : ¬ q ∣ ↑m' * ↑n' / (d' * d') :=
+    fun h => hq_ndvd_mn (dvd_trans h (Nat.div_dvd_of_dvd (Nat.mul_dvd_mul
+      (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)) (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))))
+  have h_quot_pos : 0 < ↑m' * ↑n' / (d' * d') :=
+    Nat.div_pos (Nat.le_of_dvd (Nat.mul_pos m'.pos n'.pos) (Nat.mul_dvd_mul
+      (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)) (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _))))
+      (Nat.mul_pos hd'_pos hd'_pos)
+  change T_sum_nat ↑(⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ : ℕ+) *
+    T_sum_nat (↑m' * ↑n' / (d' * d')) =
+    T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d')))
+  rw [show (⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ : ℕ+).val = q ^ (r + s - 2 * i) from rfl]
+  rw [show T_sum_nat (q ^ (r + s - 2 * i)) * T_sum_nat (↑m' * ↑n' / (d' * d')) =
+    T_sum_nat (q ^ (r + s - 2 * i) * (↑m' * ↑n' / (d' * d'))) from by
+      change T_sum ⟨_, pow_pos hq.pos _⟩ * T_sum ⟨_, h_quot_pos⟩ = _
+      rw [T_sum_mul_coprime _ _ ((Nat.Prime.coprime_pow_of_not_dvd hq hq_ndvd_quot).symm)]
+      rfl]
+  congr 1
+  have hrs_eq : r + s = a + b := by subst hr; subst hs; simp [min_def, max_def]; split <;> ring
+  rw [hrs_eq, show q ^ i * d' * (q ^ i * d') = q ^ (2 * i) * (d' * d') from by ring,
+    show q ^ a * ↑m' * (q ^ b * ↑n') = q ^ (a + b) * (↑m' * ↑n') from by ring,
+    show q ^ (a + b) = q ^ (a + b - 2 * i) * q ^ (2 * i) from by
+      rw [← pow_add]; congr 1; omega,
+    show q ^ (a + b - 2 * i) * q ^ (2 * i) * (↑m' * ↑n') =
+      q ^ (2 * i) * (q ^ (a + b - 2 * i) * (↑m' * ↑n')) from by ring,
+    show q ^ (2 * i) * (d' * d') = q ^ (2 * i) * (d' * d') from rfl,
+    Nat.mul_div_mul_left _ _ (pow_pos hq.pos (2 * i)),
+    Nat.mul_div_assoc _ (Nat.mul_dvd_mul
+      (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)) (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))]
+
+/-- Inner summand factoring for the peel-off-a-prime step. -/
+private lemma T_sum_mul_peel_prime_summand (q : ℕ) (hq : q.Prime)
+    (a b : ℕ) (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
+    (r s : ℕ) (hr : r = min a b) (hs : s = max a b)
+    (i : ℕ) (hi : i < r + 1) (d' : ℕ) (hd' : d' ∈ (Nat.gcd (m' : ℕ) n').divisors) :
+    (↑(q ^ i) : ℤ) • ((T_pp q hq ^ i *
+      T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩) *
+      ((d' : ℤ) • (T_ad' d' d' * T_sum_nat (↑m' * ↑n' / (d' * d'))))) =
+    (↑(q ^ i * d') : ℤ) • (T_ad' (q ^ i * d') (q ^ i * d') *
+      T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d')))) := by
+  have hd'_dvd : d' ∣ Nat.gcd (m' : ℕ) n' := (Nat.mem_divisors.mp hd').1
+  have hqd' : ¬ q ∣ d' :=
+    fun h => hqm (dvd_trans h (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)))
+  have hcop_qi_d' : Nat.Coprime (q ^ i) d' :=
+    (Nat.Prime.coprime_pow_of_not_dvd hq hqd').symm
+  have hd'_pos : 0 < d' := by
+    rcases Nat.eq_zero_or_pos d' with rfl | h
+    · exact absurd (Nat.eq_zero_of_zero_dvd hd'_dvd) (Nat.gcd_pos_of_pos_left _ m'.pos).ne'
+    · exact h
+  rw [mul_smul_comm, smul_smul, show (↑(q ^ i) : ℤ) * ↑d' = ↑(q ^ i * d') from by push_cast; ring]
+  congr 1
+  rw [T_pp_pow_eq_T_ad' q hq i]
+  rw [show T_ad' (q ^ i) (q ^ i) * T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
+    (T_ad' d' d' * T_sum_nat (↑m' * ↑n' / (d' * d'))) =
+    (T_ad' (q ^ i) (q ^ i) * T_ad' d' d') *
+    (T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
+      T_sum_nat (↑m' * ↑n' / (d' * d')))
+    from by ring]
+  have hcop_sq : Nat.Coprime (q ^ i * (q ^ i)) (d' * d') :=
+    (hcop_qi_d'.mul_right hcop_qi_d').mul_left (hcop_qi_d'.mul_right hcop_qi_d')
+  congr 1
+  · rw [T_ad'_mul_of_coprime _ d' _ d' (pow_pos hq.pos i) hd'_pos (pow_pos hq.pos i) hd'_pos
+      (dvd_refl _) (dvd_refl _) hcop_sq]
+  · exact T_sum_mul_peel_prime_summand_rhs q hq a b m' n' hqm hqn r s hr hs i hi d'
+      hd'_dvd hqd' hcop_qi_d' hd'_pos
+
+/-- Peel-off-a-prime step for the divisor sum formula. -/
+private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime)
+    (a b : ℕ) (ha : 0 < a) (hb : 0 < b)
+    (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
+    (ih : T_sum m' * T_sum n' = ∑ d ∈ (Nat.gcd m' n').divisors,
+      (d : ℤ) • (T_ad' d d * T_sum_nat (↑m' * ↑n' / (d * d)))) :
+    T_sum ⟨q ^ a * m', Nat.mul_pos (pow_pos hq.pos a) m'.pos⟩ *
+    T_sum ⟨q ^ b * n', Nat.mul_pos (pow_pos hq.pos b) n'.pos⟩ =
+    ∑ d ∈ (Nat.gcd (q ^ a * m') (q ^ b * n')).divisors,
+      (d : ℤ) • (T_ad' d d *
+        T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (d * d))) := by
+  have hcop_qm : Nat.Coprime (q ^ a) m' := (Nat.Prime.coprime_pow_of_not_dvd hq hqm).symm
+  have hcop_qn : Nat.Coprime (q ^ b) n' := (Nat.Prime.coprime_pow_of_not_dvd hq hqn).symm
+  set qa : ℕ+ := ⟨q ^ a, pow_pos hq.pos a⟩; set qb : ℕ+ := ⟨q ^ b, pow_pos hq.pos b⟩
+  rw [show T_sum ⟨q ^ a * m', _⟩ = T_sum qa * T_sum m' from
+    (T_sum_mul_coprime qa m' hcop_qm).symm,
+    show T_sum ⟨q ^ b * n', _⟩ = T_sum qb * T_sum n' from
+    (T_sum_mul_coprime qb n' hcop_qn).symm,
+    show T_sum qa * T_sum m' * (T_sum qb * T_sum n') =
+      (T_sum qa * T_sum qb) * (T_sum m' * T_sum n') from by ring]
+  set r := min a b with hr_def; set g := Nat.gcd (m' : ℕ) n' with hg_def
+  have hcop_rg : Nat.Coprime (q ^ r) g :=
+    (Nat.Prime.coprime_pow_of_not_dvd hq (fun h => hqm (dvd_trans h (Nat.gcd_dvd_left _ _)))).symm
+  rw [gcd_factor_prime_pow q hq a b m' n' hqm hqn]
+  open scoped Pointwise in
+  rw [Nat.divisors_mul]
+  rw [show (Nat.divisors (q ^ r) * Nat.divisors g) =
+    (Nat.divisors (q ^ r) ×ˢ Nat.divisors g).image (fun p => p.1 * p.2) from rfl]
+  rw [ih]; set s := max a b with hs_def; have hrs : r ≤ s := min_le_max
+  rw [show T_sum qa * T_sum qb =
+    T_sum ⟨q ^ r, pow_pos hq.pos r⟩ * T_sum ⟨q ^ s, pow_pos hq.pos s⟩
+    from by simp only [r, s, min_def, max_def]; split <;> [rfl; rw [mul_comm]]]
+  rw [thm324_4 q hq r s hrs, Finset.sum_mul]
+  simp_rw [smul_mul_assoc, Finset.mul_sum]
+  -- After smul_mul_assoc + Finset.mul_sum, each term is:
+  --   (↑q)^i • ((T_pp^i * T_sum(...)) * ((↑d') • (T_ad' * T_sum_nat)))
+  -- which matches T_sum_mul_peel_prime_summand's LHS after cast normalization
+  rw [Finset.sum_image (mul_injOn_coprime_divisors _ _ hcop_rg)]
+  rw [show ∑ x ∈ (q ^ r).divisors ×ˢ g.divisors,
+    (↑(x.1 * x.2) : ℤ) • (T_ad' (x.1 * x.2) (x.1 * x.2) *
+      T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (x.1 * x.2 * (x.1 * x.2)))) =
+    ∑ d₁ ∈ (q ^ r).divisors, ∑ d₂ ∈ g.divisors,
+      (↑(d₁ * d₂) : ℤ) • (T_ad' (d₁ * d₂) (d₁ * d₂) *
+        T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (d₁ * d₂ * (d₁ * d₂)))) from
+    by rw [← Finset.sum_product']]
+  rw [Nat.sum_divisors_prime_pow hq]
+  apply Finset.sum_congr rfl; intro i hi; rw [Finset.mem_range] at hi
+  rw [Finset.smul_sum]; apply Finset.sum_congr rfl; intro d' hd'
+  -- Normalize cast: (↑q : ℤ) ^ i = (↑(q ^ i) : ℤ)
+  rw [show (↑q : ℤ) ^ i = (↑(q ^ i) : ℤ) from by push_cast; ring]
+  exact T_sum_mul_peel_prime_summand q hq a b m' n' hqm hqn r s hr_def hs_def i hi d' hd'
+
 /-- Theorem 3.24(3): `T(m) · T(n) = Σ_{d∣gcd(m,n)} d · T(d,d) · T(mn/d²)`.
     From Identity 4 at each prime + coprime multiplicativity. -/
 theorem thm324_3 (m n : ℕ+) :
     T_sum m * T_sum n =
     ∑ d ∈ (Nat.gcd m n).divisors,
       (d : ℤ) • (T_ad' d d * T_sum_nat (↑m * ↑n / (d * d))) := by
-  sorry
+  suffices h_ind : ∀ (g : ℕ) (m n : ℕ+), Nat.gcd m n = g →
+    T_sum m * T_sum n =
+    ∑ d ∈ g.divisors, (d : ℤ) • (T_ad' d d * T_sum_nat (↑m * ↑n / (d * d))) from
+    h_ind _ m n rfl
+  intro g; induction g using Nat.strongRecOn with | _ g ih =>
+  intro m n h_gcd
+  by_cases hg1 : g = 1
+  · subst hg1; rw [Nat.divisors_one, Finset.sum_singleton]
+    have := T_sum_mul_of_coprime_aux m n h_gcd
+    rw [h_gcd, Nat.divisors_one, Finset.sum_singleton] at this; exact this
+  · obtain ⟨q, hq, hq_dvd_g⟩ := Nat.exists_prime_and_dvd (by omega : g ≠ 1)
+    have hq_dvd_m : q ∣ (m : ℕ) := dvd_trans hq_dvd_g (h_gcd ▸ Nat.gcd_dvd_left m n)
+    have hq_dvd_n : q ∣ (n : ℕ) := dvd_trans hq_dvd_g (h_gcd ▸ Nat.gcd_dvd_right m n)
+    set a_ord := m.val.factorization q; set b_ord := n.val.factorization q
+    set m' : ℕ+ := ⟨ordCompl[q] m, Nat.ordCompl_pos q m.pos.ne'⟩
+    set n' : ℕ+ := ⟨ordCompl[q] n, Nat.ordCompl_pos q n.pos.ne'⟩
+    have hm_eq : (m : ℕ) = q ^ a_ord * m' := (Nat.ordProj_mul_ordCompl_eq_self m q).symm
+    have hn_eq : (n : ℕ) = q ^ b_ord * n' := (Nat.ordProj_mul_ordCompl_eq_self n q).symm
+    have ha : 0 < a_ord := (Nat.Prime.dvd_iff_one_le_factorization hq m.pos.ne').mp hq_dvd_m
+    have hb : 0 < b_ord := (Nat.Prime.dvd_iff_one_le_factorization hq n.pos.ne').mp hq_dvd_n
+    have hqm' : ¬ q ∣ (m' : ℕ) := Nat.not_dvd_ordCompl hq m.pos.ne'
+    have hqn' : ¬ q ∣ (n' : ℕ) := Nat.not_dvd_ordCompl hq n.pos.ne'
+    have h_smaller : Nat.gcd m' n' < g := by
+      have hg_pos : 0 < g := h_gcd ▸ Nat.gcd_pos_of_pos_left _ m.pos
+      have h1 : Nat.gcd (m' : ℕ) (n' : ℕ) ∣ g := h_gcd ▸ Nat.dvd_gcd
+        ((Nat.gcd_dvd_left _ _).trans (Nat.ordCompl_dvd m q))
+        ((Nat.gcd_dvd_right _ _).trans (Nat.ordCompl_dvd n q))
+      have h2 : ¬ q ∣ Nat.gcd (m' : ℕ) (n' : ℕ) :=
+        fun h => hqm' (h.trans (Nat.gcd_dvd_left _ _))
+      exact lt_of_le_of_lt
+        (Nat.le_of_dvd (Nat.div_pos (Nat.le_of_dvd hg_pos hq_dvd_g) hq.pos)
+          (((Nat.Prime.coprime_iff_not_dvd hq).mpr h2).symm.dvd_of_dvd_mul_right
+            ((Nat.div_mul_cancel hq_dvd_g).symm ▸ h1)))
+        (Nat.div_lt_self hg_pos hq.one_lt)
+    have ih_mn' := ih _ h_smaller m' n' rfl
+    have h_peel := T_sum_mul_peel_prime_aux q hq a_ord b_ord ha hb m' n' hqm' hqn' ih_mn'
+    have hm_pnat : m = ⟨q ^ a_ord * m', Nat.mul_pos (pow_pos hq.pos a_ord) m'.pos⟩ :=
+      Subtype.ext hm_eq
+    have hn_pnat : n = ⟨q ^ b_ord * n', Nat.mul_pos (pow_pos hq.pos b_ord) n'.pos⟩ :=
+      Subtype.ext hn_eq
+    rw [hm_pnat, hn_pnat,
+      show g = Nat.gcd (q ^ a_ord * ↑m') (q ^ b_ord * ↑n') from by
+        rw [← h_gcd, ← hm_eq, ← hn_eq]]
+    convert h_peel using 2
 
 /-! ### Identity 6: Degree formulas (wrapping existing results) -/
 
