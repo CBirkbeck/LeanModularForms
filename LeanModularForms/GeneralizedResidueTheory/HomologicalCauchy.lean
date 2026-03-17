@@ -469,17 +469,46 @@ theorem cauchyIntegralFormula_nullHomologous (hU : IsOpen U) (hf : Differentiabl
   -- h_eq : 0 = dixonH2 f γ w - 2 * ↑π * I * n * f w
   linear_combination -h_eq
 
-/-- **The Homological Cauchy Theorem**: if f is holomorphic on open U and γ is
-null-homologous in U, then ∮_γ f = 0.
+/-- The image of a piecewise C¹ immersion has empty interior in ℂ.
+This follows from the fact that a Lipschitz map from ℝ to ℂ has image with
+Hausdorff dimension at most 1, hence Lebesgue measure 0 in ℂ. -/
+private lemma piecewiseC1_image_interior_empty (γ : PiecewiseC1Immersion) :
+    interior (γ.toFun '' Icc γ.a γ.b) = ∅ := by
+  sorry
 
-Proof: Pick w₀ ∈ U \ image(γ). Apply CIF to F(z) = f(z)(z - w₀):
-∮_γ f(z) dz = ∮_γ F(z)/(z-w₀) dz = 2πi · n(γ,w₀) · F(w₀) = 0
-since F(w₀) = f(w₀)(w₀ - w₀) = 0. -/
 theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
-  sorry
+  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+  -- Step 1: Find w₀ ∈ U \ image(γ)
+  have hU_ne : U.Nonempty :=
+    ⟨γ.toFun γ.a, h_null.image_subset γ.a (left_mem_Icc.mpr hab)⟩
+  have h_im_int_empty := piecewiseC1_image_interior_empty γ
+  obtain ⟨w₀, hw₀U, hw₀_off⟩ : ∃ w₀ ∈ U, w₀ ∉ γ.toFun '' Icc γ.a γ.b := by
+    by_contra h; push_neg at h
+    have : U ⊆ interior (γ.toFun '' Icc γ.a γ.b) := hU.subset_interior_iff.mpr h
+    rw [h_im_int_empty] at this
+    exact Set.not_nonempty_empty (hU_ne.mono this)
+  have hw₀_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w₀ :=
+    fun t ht heq => hw₀_off ⟨t, ht, heq⟩
+  -- Step 2: Define F(z) = f(z) * (z - w₀), holomorphic on U
+  set F := fun z => f z * (z - w₀) with hF_def
+  have hF_diff : DifferentiableOn ℂ F U :=
+    hf.mul (differentiableOn_id.sub (differentiableOn_const w₀))
+  -- Step 3: Rewrite ∫ f·γ' = ∫ F/(·-w₀)·γ' (since F(z)/(z-w₀) = f(z) for z ≠ w₀)
+  have h_eq : ∀ t ∈ Set.uIcc γ.a γ.b,
+      f (γ.toFun t) * deriv γ.toFun t =
+      F (γ.toFun t) / (γ.toFun t - w₀) * deriv γ.toFun t := by
+    intro t ht
+    have ht_Icc : t ∈ Icc γ.a γ.b := Set.uIcc_of_le hab ▸ ht
+    have hne : γ.toFun t - w₀ ≠ 0 := sub_ne_zero.mpr (hw₀_avoids t ht_Icc)
+    simp only [hF_def, mul_div_assoc, div_self hne, mul_one]
+  rw [intervalIntegral.integral_congr h_eq]
+  -- Step 4: Apply CIF to F at w₀: ∫ F/(·-w₀)·γ' = 2πi·n·F(w₀) = 0
+  have hCIF := cauchyIntegralFormula_nullHomologous hU hF_diff γ h_null w₀ hw₀U hw₀_avoids
+  rw [show F w₀ = 0 from by simp [hF_def, sub_self, mul_zero], mul_zero] at hCIF
+  exact hCIF
 
 end DixonProof
 
