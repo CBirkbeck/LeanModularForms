@@ -1192,8 +1192,7 @@ lemma mulMap_coprime_eq (a b : Fin n → ℕ+)
       ((SLnZ_to_GLnQ n).range.mul_mem hh₂a (SetLike.coe_mem p.2.out)) hh₁b
   obtain ⟨σ, hσ⟩ := hσ_mem
   have h_cop := doubleCoset_mul_coprime_mem n a b ha hb hcop σ
-  rw [hσ] at h_cop
-  rw [DoubleCoset.mem_doubleCoset] at h_cop
+  rw [hσ, DoubleCoset.mem_doubleCoset] at h_cop
   obtain ⟨hc₁, hhc₁, hc₂, hhc₂, h_eq⟩ := h_cop
   have h_product_mem : (p.1.out : GL (Fin n) ℚ) *
       ((T_diag n a ha).eql.choose : GL (Fin n) ℚ) *
@@ -1363,8 +1362,7 @@ private lemma coprime_coupling_mem_H
   set C := (diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a
   have h_det : (↑C : Matrix (Fin n) (Fin n) ℚ).det = 1 := by
     simp only [C, Units.val_mul, Matrix.det_mul]
-    rw [SLnZ_to_GLnQ_det, mul_one]
-    rw [← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel]
+    rw [SLnZ_to_GLnQ_det, mul_one, ← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel]
     simp only [Units.val_one, Matrix.det_one]
   have h_scale_a : ∀ i j, ∃ z : ℤ,
       (↑(diagDet n a) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by

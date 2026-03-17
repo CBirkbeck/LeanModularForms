@@ -99,15 +99,13 @@ private lemma sum_single_eq_zero {α : Type*} (s : Finset α) (fs : α → Z)
     simp only [Finset.sum_empty, Finset.notMem_empty, false_implies, implies_true] at *
   | insert i s hi hs =>
   have hfin := h
-  rw [Finset.sum_insert hi] at h hfin
-  rw [@add_eq_zero_iff_eq_neg] at h hfin
+  rw [Finset.sum_insert hi, @add_eq_zero_iff_eq_neg] at h hfin
   rw [← @Finset.sum_neg_distrib] at h
   conv at h =>
     enter [2,2]
     ext r
     rw [← @single_neg]
-  rw [eq_comm] at h
-  rw [eq_single_iff] at h
+  rw [eq_comm, eq_single_iff] at h
   simp at h
   rcases h.1 with hl | hr
   · intro j hj
@@ -264,8 +262,7 @@ private lemma eq_of_sum_single_sdiff_eq_zero
   have s2 := sum_single_eq_zero Z (t \ s) (fun _ => y) h.2
   rw [← Finset.sdiff_eq_empty_iff_subset] at hst hts
   simp [Finset.mem_sdiff, and_imp] at s1 s2
-  rw [← @Finset.not_nonempty_iff_eq_empty] at hst hts
-  rw [not_not] at hst hts
+  rw [← @Finset.not_nonempty_iff_eq_empty, not_not] at hst hts
   have c1 : ∃ i ∈ s, i ∉ t := by
     have := Finset.Nonempty.exists_mem hst
     simpa using this
@@ -302,11 +299,9 @@ private lemma sum_single_toFun_eq_indicator (s : Finset (M P)) (x : Z):
     | insert i s hi hs =>
     simp_rw [Finset.sum_insert hi]
     ext u
-    rw [@Pi.add_apply]
-    rw [finsupp_toFun_add]
+    rw [@Pi.add_apply, finsupp_toFun_add]
     simp [hs]
-  rw [this]
-  rw [@Finset.sum_apply]
+  rw [this, @Finset.sum_apply]
   conv =>
     enter [1,2]
     ext r
@@ -450,8 +445,7 @@ private lemma sum_finset_single_indep2
   have D : Disjoint s t := Finset.disjoint_iff_inter_eq_empty.mpr h1
   have : ∑ i ∈ s, single i (x) - ∑ i ∈ t, single i (y) = 0 := by
     rw [h, sub_self]
-  rw [sub_eq_add_neg] at this
-  rw [← @Finset.sum_neg_distrib] at this
+  rw [sub_eq_add_neg, ← @Finset.sum_neg_distrib] at this
   have hr := sum_disj P Z s t (fun _ => x) (fun _ => -y) D
   simp only [single_neg] at hr
   have tt := hr.mp this
@@ -473,16 +467,13 @@ private lemma sum_finset_single_indep2
       ∑ i ∈ (s ∩ t), single i x +
       ∑ i ∈ s \ (s ∩ t), single i x := by
     have hss : (s ∩ t) ⊆ s := Finset.inter_subset_left
-    rw [← Finset.sum_sdiff hss]
-    rw [add_comm]
+    rw [← Finset.sum_sdiff hss, add_comm]
   have hr : ∑ j ∈ t, single j y =
       ∑ j ∈ (s ∩ t), single j y +
       ∑ j ∈ t \ (s ∩ t), single j y := by
     have hss : (s ∩ t) ⊆ t := Finset.inter_subset_right
-    rw [← Finset.sum_sdiff hss]
-    rw [add_comm]
-  rw [hr, hl] at h
-  rw [← @add_neg_eq_iff_eq_add, ← sub_eq_zero] at h
+    rw [← Finset.sum_sdiff hss, add_comm]
+  rw [hr, hl, ← @add_neg_eq_iff_eq_add, ← sub_eq_zero] at h
   simp at h
   have e1 : ∑ i ∈ s ∩ t, single i x + ∑ i ∈ s \ t, single i x +
     -∑ x ∈ t \ s, single x y - ∑ x ∈ s ∩ t, single x y = (∑ i ∈ s ∩ t, single i x

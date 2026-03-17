@@ -64,8 +64,7 @@ private lemma smulOrbit_sum_eq (D : T' P) (m₀ : M P) (f : M P → (M P) →₀
         (D.eql.choose : G)),
         delta_mul_mem P.H P.Δ q.out
           m₀.eql.choose D.eql.choose P.h₀⟩) := by
-  rw [smulOrbit]
-  rw [Finset.sum_image (fun a _ b _ hab => smulOrbit_map_injective P D m₀ hab)]
+  rw [smulOrbit, Finset.sum_image (fun a _ b _ hab => smulOrbit_map_injective P D m₀ hab)]
   rfl
 
 /-- Key lemma: m'(D₂, D₁, D) counts the pairs whose

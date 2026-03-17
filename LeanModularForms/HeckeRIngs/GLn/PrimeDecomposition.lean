@@ -257,8 +257,7 @@ theorem T_elem_mem_closure_ppow (a : Fin n → ℕ+) (ha : DivChain n a) :
           rw [Finsupp.mem_support_iff] at hp_in
           apply hp_in
           simp only [diagDet]
-          rw [Nat.factorization_prod fun i _ => (removePrime n p hp a i).pos.ne']
-          rw [Finset.sum_apply']
+          rw [Nat.factorization_prod fun i _ => (removePrime n p hp a i).pos.ne', Finset.sum_apply']
           apply Finset.sum_eq_zero
           intro i _
           simp only [removePrime_val]
