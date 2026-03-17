@@ -30,6 +30,7 @@ The 7 multiplication identities for the n=2 Hecke algebra.
 -/
 
 open HeckeRing HeckeRing.GLn HeckeRing.GL2
+open scoped ArithmeticFunction.sigma
 
 namespace HeckeRing.GL2
 
@@ -66,13 +67,13 @@ private lemma T_pp_mul_T_ad'_ppow (j d : ℕ) (hjd : j ≤ d) :
     T_ad' (p ^ (j + 1)) (p ^ (d + 1)) := by
   rw [T_ad'_ppow p hp j d hjd, T_ad'_ppow p hp (j + 1) (d + 1) (by omega)]
   unfold T_ad
-  rw [T_pp_comm_T_elem p hp (mk2 ⟨p ^ j, pow_pos hp.pos j⟩ ⟨p ^ d, pow_pos hp.pos d⟩)
+  rw [T_pp_comm_T_elem p hp (![⟨p ^ j, pow_pos hp.pos j⟩, ⟨p ^ d, pow_pos hp.pos d⟩])
     (divChain_mk2 _ _ (Nat.pow_dvd_pow p hjd))]
   unfold T_pp
-  rw [T_elem_mul_scalar (mk2 ⟨p ^ j, pow_pos hp.pos j⟩ ⟨p ^ d, pow_pos hp.pos d⟩)
+  rw [T_elem_mul_scalar (![⟨p ^ j, pow_pos hp.pos j⟩, ⟨p ^ d, pow_pos hp.pos d⟩])
     (divChain_mk2 _ _ (Nat.pow_dvd_pow p hjd)) ⟨p, hp.pos⟩]
   apply T_elem_congr_diag
-  ext i; fin_cases i <;> simp [pnatMul, mk2, pow_succ, mul_comm]
+  ext i; fin_cases i <;> simp [pnatMul, pow_succ, mul_comm]
 
 /-- Theorem 3.24(2): `T(1, pᵏ) = T(pᵏ) − T(p,p) · T(p^{k−2})` for k ≥ 2.
     Proof strategy: T(pᵏ) = Σ T(pⁱ,p^{k-i}) and T(p,p)·T(p^{k-2}) shifts
@@ -112,14 +113,14 @@ private lemma first_invariant_dvd_p_of_product
     (L R : Matrix.SpecialLinearGroup (Fin 2) ℤ)
     (k : ℕ) (_hk : 0 < k)
     (heq : (L : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => (mk2 1 ⟨p, hp.pos⟩ m : ℤ)) *
+      Matrix.diagonal (fun m => ((![1, ⟨p, hp.pos⟩] : Fin 2 → ℕ+) m : ℤ)) *
       (S : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ m : ℤ)) *
+      Matrix.diagonal (fun m => ((![1, ⟨p ^ k, pow_pos hp.pos k⟩] : Fin 2 → ℕ+) m : ℤ)) *
       (R : Matrix (Fin 2) (Fin 2) ℤ) =
       Matrix.diagonal (fun i => (a i : ℤ))) :
     (a 0 : ℕ) ∣ p := by
-  set dp := Matrix.diagonal (fun m => (mk2 1 ⟨p, hp.pos⟩ m : ℤ))
-  set dpk := Matrix.diagonal (fun m => (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ m : ℤ))
+  set dp := Matrix.diagonal (fun m => ((![1, ⟨p, hp.pos⟩] : Fin 2 → ℕ+) m : ℤ))
+  set dpk := Matrix.diagonal (fun m => ((![1, ⟨p ^ k, pow_pos hp.pos k⟩] : Fin 2 → ℕ+) m : ℤ))
   set S_ℤ := (↑S : Matrix (Fin 2) (Fin 2) ℤ)
   set M := dp * S_ℤ * dpk
   set L_ℤ := (↑L : Matrix (Fin 2) (Fin 2) ℤ)
@@ -150,15 +151,15 @@ private lemma first_invariant_dvd_p_of_product
   have hfin10 : (1 : Fin 2) ≠ 0 := by decide
   have hfin01 : (0 : Fin 2) ≠ 1 := by decide
   have h_M00 : M 0 0 = S_ℤ 0 0 := by
-    simp only [M, S_ℤ, dp, dpk, mk2, Matrix.mul_apply, Fin.sum_univ_two,
+    simp only [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
       hfin10, if_false, if_true,
-      mul_zero, add_zero]; norm_num
+      mul_zero, add_zero, Matrix.cons_val_fin_one]; norm_num
   have h_M10 : M 1 0 = (p : ℤ) * S_ℤ 1 0 := by
-    simp only [M, S_ℤ, dp, dpk, mk2, Matrix.mul_apply, Fin.sum_univ_two,
+    simp only [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
       hfin10, if_false, if_true,
-      mul_zero, zero_mul, add_zero]; norm_num
+      mul_zero, zero_mul, add_zero, Matrix.cons_val_fin_one]; norm_num
   have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) :=
     ⟨S.val 1 1, -(S.val 0 1), by
       have := S.prop; rw [Matrix.det_fin_two] at this; linarith⟩
@@ -194,9 +195,9 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
     (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
         Matrix.SpecialLinearGroup (Fin 2) ℤ)
-    (hD1_eq : D1c = SLnZ_to_GLnQ 2 SL_L₁ * diagMat 2 (mk2 1 ⟨p, hp.pos⟩) *
+    (hD1_eq : D1c = SLnZ_to_GLnQ 2 SL_L₁ * diagMat 2 (![1, ⟨p, hp.pos⟩]) *
         SLnZ_to_GLnQ 2 SL_R₁)
-    (hD2_eq : D2c = SLnZ_to_GLnQ 2 SL_L₂ * diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) *
+    (hD2_eq : D2c = SLnZ_to_GLnQ 2 SL_L₂ * diagMat 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩]) *
         SLnZ_to_GLnQ 2 SL_R₂)
     (hi₀ : i₀_gl = SLnZ_to_GLnQ 2 SL_i₀)
     (hj₀ : j₀_gl = SLnZ_to_GLnQ 2 SL_j₀)
@@ -206,11 +207,11 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
   set S_mid := SL_R₁ * SL_j₀ * SL_L₂
   set L' := SL_La⁻¹ * SL_i₀ * SL_L₁
   set R' := SL_R₂ * SL_Ra⁻¹
-  have h_gl : SLnZ_to_GLnQ 2 L' * diagMat 2 (mk2 1 ⟨p, hp.pos⟩) *
-      SLnZ_to_GLnQ 2 S_mid * diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) *
+  have h_gl : SLnZ_to_GLnQ 2 L' * diagMat 2 (![1, ⟨p, hp.pos⟩]) *
+      SLnZ_to_GLnQ 2 S_mid * diagMat 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩]) *
       SLnZ_to_GLnQ 2 R' = diagMat 2 a := by
-    set dp := diagMat 2 (mk2 1 ⟨p, hp.pos⟩)
-    set dpk := diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    set dp := diagMat 2 (![1, ⟨p, hp.pos⟩])
+    set dpk := diagMat 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
     set da := diagMat 2 a
     have hprod : SLnZ_to_GLnQ 2 SL_i₀ * (SLnZ_to_GLnQ 2 SL_L₁ * dp *
         SLnZ_to_GLnQ 2 SL_R₁) * (SLnZ_to_GLnQ 2 SL_j₀ *
@@ -223,9 +224,9 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
     convert this using 1; group
   have h_int_5 : (↑L' : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => (mk2 1 ⟨p, hp.pos⟩ m : ℤ)) *
+      Matrix.diagonal (fun m => ((![1, ⟨p, hp.pos⟩] : Fin 2 → ℕ+) m : ℤ)) *
       (↑S_mid : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ m : ℤ)) *
+      Matrix.diagonal (fun m => ((![1, ⟨p ^ k, pow_pos hp.pos k⟩] : Fin 2 → ℕ+) m : ℤ)) *
       (↑R' : Matrix (Fin 2) (Fin 2) ℤ) =
       Matrix.diagonal (fun i => (a i : ℤ)) := by
     ext i j
@@ -241,10 +242,10 @@ private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k)
     (h_det_prod : (a 0 : ℕ) * (a 1 : ℕ) = p ^ (k + 1))
     (h_dvd_p : (a 0 : ℕ) ∣ p) :
     T_diag 2 a hdiv =
-      T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+      T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
         (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∨
     T_diag 2 a hdiv =
-      T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+      T_diag 2 (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩])
         (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩
           (dvd_pow_self p (by omega))) := by
   rcases Nat.Prime.eq_one_or_self_of_dvd hp (a 0) h_dvd_p with ha0_1 | ha0_p
@@ -253,24 +254,24 @@ private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k)
     · exact PNat.eq (by rw [ha0_1, one_mul] at h_det_prod; exact h_det_prod)
   · right; congr 1; ext i; fin_cases i
     · exact PNat.eq ha0_p
-    · apply PNat.eq; show (a 1 : ℕ) = _; dsimp [mk2]
+    · apply PNat.eq; show (a 1 : ℕ) = _; dsimp
       have h1 : p * (a 1 : ℕ) = p ^ (k + 1) := by rwa [ha0_p] at h_det_prod
       exact Nat.eq_of_mul_eq_mul_left hp.pos (by rw [h1, pow_succ]; ring)
 
 private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
     (hA : A ∈ HeckeRing.mulSupport (GL_pair 2)
-      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
-      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+      (T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
         (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _)))) :
-    A = T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+    A = T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
         (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∨
-    A = T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+    A = T_diag 2 (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩])
         (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega))) := by
   obtain ⟨a, hdiv, hrep⟩ := exists_diagonal_representative 2 A.eql.choose
   have hA_eq : A = T_diag 2 a hdiv := by
     rw [← hrep]; exact (T'_ext _ _ _ A.eql.choose_spec.symm).symm
-  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
-  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+  set D1 := T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
     (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
   rw [HeckeRing.mulSupport] at hA
   simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and,
@@ -304,12 +305,12 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
         exact SLnZ_to_GLnQ_det 2 SL_i₀)
     (by rw [hD1_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
           SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]
-        simp [Fin.prod_univ_two, mk2])
+        simp [Fin.prod_univ_two])
     (by rw [show (↑j₀.out : GL _ ℚ) = SLnZ_to_GLnQ 2 SL_j₀ from hSL_j₀.symm]
         exact SLnZ_to_GLnQ_det 2 SL_j₀)
     (by rw [hD2_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
           SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]
-        simp [Fin.prod_univ_two, mk2])
+        simp [Fin.prod_univ_two])
     SL_La SL_Ra h_prod_eq
   have h_dvd := mulSupport_pp_dvd_p p hp k _hk a hdiv D1.eql.choose D2.eql.choose
     (↑i₀.out) (↑j₀.out) SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀
@@ -317,20 +318,20 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
   rw [hA_eq]; exact mulSupport_pp_case_split p hp k _hk a hdiv h_det h_dvd
 
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
-    T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+    T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
       (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∈
     HeckeRing.mulSupport (GL_pair 2)
-      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
-      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+      (T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
         (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))) := by
-  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
-  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+  set D1 := T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
     (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
-  set D_out1 := T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+  set D_out1 := T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
     (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))
   set α := (D1.eql.choose : GL (Fin 2) ℚ)
   set β := (D2.eql.choose : GL (Fin 2) ℚ)
-  have hα_mem : α ∈ DoubleCoset.doubleCoset (diagMat 2 (mk2 1 ⟨p, hp.pos⟩) : GL (Fin 2) ℚ)
+  have hα_mem : α ∈ DoubleCoset.doubleCoset (diagMat 2 (![1, ⟨p, hp.pos⟩]) : GL (Fin 2) ℚ)
       (GL_pair 2).H (GL_pair 2).H := by
     have := D1.eql.choose_spec
     simp only [D1, T_diag, HeckeRing.T_mk, diagMat_delta] at this
@@ -338,7 +339,7 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   rw [DoubleCoset.mem_doubleCoset] at hα_mem
   obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ := hα_mem
   have hβ_mem : β ∈ DoubleCoset.doubleCoset
-      (diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) : GL (Fin 2) ℚ)
+      (diagMat 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩]) : GL (Fin 2) ℚ)
       (GL_pair 2).H (GL_pair 2).H := by
     have := D2.eql.choose_spec
     simp only [D2, T_diag, HeckeRing.T_mk, diagMat_delta] at this
@@ -376,19 +377,19 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   have h_product_mem : (↑i₀.out : GL (Fin 2) ℚ) * α *
       ((↑j₀.out : GL (Fin 2) ℚ) * β) ∈
       DoubleCoset.doubleCoset
-        (diagMat 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩) : GL (Fin 2) ℚ)
+        (diagMat 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩]) : GL (Fin 2) ℚ)
         (GL_pair 2).H (GL_pair 2).H := by
     rw [DoubleCoset.mem_doubleCoset]
     refine ⟨1, (GL_pair 2).H.one_mem, R₂ * (β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β),
             (GL_pair 2).H.mul_mem hR₂ hκ₂_conj, ?_⟩
-    rw [hi₀, hj₀, show α = L₁ * diagMat 2 (mk2 1 ⟨p, hp.pos⟩) * R₁ from hα_eq,
-        show β = L₂ * diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩) * R₂ from hβ_eq]
-    set D₁_mat := diagMat 2 (mk2 1 ⟨p, hp.pos⟩)
-    set D₂_mat := diagMat 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+    rw [hi₀, hj₀, show α = L₁ * diagMat 2 (![1, ⟨p, hp.pos⟩]) * R₁ from hα_eq,
+        show β = L₂ * diagMat 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩]) * R₂ from hβ_eq]
+    set D₁_mat := diagMat 2 (![1, ⟨p, hp.pos⟩])
+    set D₂_mat := diagMat 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
     have h_D_mul : D₁_mat * D₂_mat =
-        diagMat 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩) := by
+        diagMat 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩]) := by
       apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
-        simp [D₁_mat, D₂_mat, diagMat, mk2, pow_succ, mul_comm]
+        simp [D₁_mat, D₂_mat, diagMat, pow_succ, mul_comm]
     rw [one_mul, ← h_D_mul]
     simp only [show τ₀ =
       (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹ from rfl,
@@ -402,39 +403,39 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     rw [HeckeRing.mulMap, HeckeRing.T_mk]
     simp only
     conv_rhs => rw [show D_out1 = HeckeRing.T_mk (GL_pair 2)
-        (diagMat_delta 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)) from rfl,
+        (diagMat_delta 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])) from rfl,
       HeckeRing.T_mk]
     simp only
     exact DoubleCoset.doubleCoset_eq_of_mem h_product_mem⟩
 
 private lemma m'_values (k : ℕ) (hk : 0 < k) :
     HeckeRing.m' (GL_pair 2)
-      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
-      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+      (T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
         (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _)))
-      (T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+      (T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
         (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))) = 1 ∧
     HeckeRing.m' (GL_pair 2)
-      (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
-      (T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+      (T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
+      (T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
         (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _)))
-      (T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+      (T_diag 2 (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩])
         (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩
           (dvd_pow_self p (by omega)))) =
       if k = 1 then ↑(p + 1) else ↑p := by
-  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
-  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+  set D1 := T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
     (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
-  set D_out1 := T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+  set D_out1 := T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
     (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))
-  set D_out2 := T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+  set D_out2 := T_diag 2 (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩])
     (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega)))
   set m1 := HeckeRing.m' (GL_pair 2) D1 D2 D_out1
   set m2 := HeckeRing.m' (GL_pair 2) D1 D2 D_out2
   have h_ne : D_out1 ≠ D_out2 := by
     intro heq
     have := diagonal_representative_unique 2 _ _ _ _ heq
-    have := congr_fun this 0; simp only [mk2_zero] at this
+    have := congr_fun this 0; simp only [Matrix.cons_val_zero] at this
     exact absurd (congr_arg PNat.val this).symm (Nat.Prime.one_lt hp).ne'
   have h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 → HeckeRing.m' (GL_pair 2) D1 D2 A = 0 := by
     intro A h1 h2; apply HeckeRing.m'_eq_zero_of_nmem_mulSupport
@@ -467,8 +468,8 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
       exact D_out1_pp_in_mulSupport p hp k hk
     exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne hm1_nn (Ne.symm hne))
   have hd1 : T'_deg (GL_pair 2) D1 = ↑(p + 1) := by
-    have := T'_deg_T_diag_two_prime p hp (mk2 1 ⟨p, hp.pos⟩)
-      (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)) 1 one_pos (by simp [mk2_one, mk2_zero, pow_one])
+    have := T'_deg_T_diag_two_prime p hp (![1, ⟨p, hp.pos⟩])
+      (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)) 1 one_pos (by simp [pow_one])
     simpa using this
   have hd2 : T'_deg (GL_pair 2) D2 = ↑(p ^ (k - 1) * (p + 1)) :=
     T'_deg_T_diag_two_prime p hp _ _ k hk (by show p ^ k / 1 = p ^ k; simp)
@@ -480,9 +481,9 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
   · subst hk1; simp only [ite_true, show 1 - 1 = 0 from rfl, pow_zero, one_mul] at h_deg ⊢
     have hd_o2 : T'_deg (GL_pair 2) D_out2 = 1 := by
       apply T'_deg_T_diag_two_scalar
-      show (mk2 ⟨p, hp.pos⟩ ⟨p ^ 1, pow_pos hp.pos 1⟩) 0 =
-        (mk2 ⟨p, hp.pos⟩ ⟨p ^ 1, pow_pos hp.pos 1⟩) 1
-      simp [mk2, pow_one]
+      show (![⟨p, hp.pos⟩, ⟨p ^ 1, pow_pos hp.pos 1⟩] : Fin 2 → ℕ+) 0 =
+        (![⟨p, hp.pos⟩, ⟨p ^ 1, pow_pos hp.pos 1⟩] : Fin 2 → ℕ+) 1
+      simp [pow_one]
     rw [hd_o2] at h_deg; push_cast at h_deg ⊢
     have hp2 : (2 : ℤ) ≤ p := by exact_mod_cast hp.two_le
     have h_m1_le : m1 * ((p : ℤ) * (↑p + 1)) ≤ (↑p + 1) * (↑p + 1) := by linarith
@@ -541,19 +542,19 @@ theorem thm324_5 (k : ℕ) (hk : 0 < k) :
       T_ad ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩
         (dvd_pow_self p (by omega)) := by
   rw [T_sum_prime p hp]
-  set D1 := T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
-  set D2 := T_diag 2 (mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩)
+  set D1 := T_diag 2 (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  set D2 := T_diag 2 (![1, ⟨p ^ k, pow_pos hp.pos k⟩])
     (divChain_mk2 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _))
-  set D_out1 := T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
+  set D_out1 := T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
     (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _))
-  set D_out2 := T_diag 2 (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩)
+  set D_out2 := T_diag 2 (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩])
     (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega)))
   set c := (if k = 1 then (↑(p + 1) : ℤ) else (↑p : ℤ))
   have h_ne : D_out1 ≠ D_out2 := by
     intro heq
     have := diagonal_representative_unique 2 _ _ _ _ heq
-    have h0 : (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ : Fin 2 → ℕ+) 0 = 1 := rfl
-    have h0' : (mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ : Fin 2 → ℕ+) 0 = ⟨p, hp.pos⟩ := rfl
+    have h0 : (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩] : Fin 2 → ℕ+) 0 = 1 := rfl
+    have h0' : (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩] : Fin 2 → ℕ+) 0 = ⟨p, hp.pos⟩ := rfl
     have := congr_fun this 0; rw [h0, h0'] at this
     exact absurd (congr_arg PNat.val this).symm (Nat.Prime.one_lt hp).ne'
   have h_mul : T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) *
@@ -601,7 +602,7 @@ private lemma T_ad_p_ppow_eq (k : ℕ) (hk : 0 < k) :
   have h_rhs_congr : T_ad ⟨p ^ 1, pow_pos hp.pos 1⟩ ⟨p ^ k, pow_pos hp.pos k⟩
     (Nat.pow_dvd_pow p (by omega : 1 ≤ k)) =
     T_ad ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega)) := by
-      unfold T_ad; exact T_elem_congr_diag 2 (by ext i; fin_cases i <;> simp [mk2, pow_one]) _ _
+      unfold T_ad; exact T_elem_congr_diag 2 (by ext i; fin_cases i <;> simp [pow_one]) _ _
   rw [h_rhs_congr] at h0
   exact h0.symm
 
@@ -611,7 +612,7 @@ private lemma T_ad_p_ppow_eq (k : ℕ) (hk : 0 < k) :
 private lemma T_pp_comm_T_ad_one_p :
     T_pp p hp * T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) =
     T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) * T_pp p hp :=
-  T_pp_comm_T_elem p hp (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
+  T_pp_comm_T_elem p hp (![1, ⟨p, hp.pos⟩]) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _))
 
 theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
     T_sum ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ =
@@ -631,8 +632,8 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
     exact T_ad_one_one
   have h_p1_tad : T_ad 1 ⟨p ^ 1, pow_pos hp.pos 1⟩ (one_dvd _) =
       T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) := by
-    show T_elem 2 (mk2 1 ⟨p ^ 1, pow_pos hp.pos 1⟩) _ = T_elem 2 (mk2 1 ⟨p, hp.pos⟩) _
-    exact T_elem_congr_diag 2 (by ext i; fin_cases i <;> simp [mk2, pow_one]) _ _
+    show T_elem 2 (![1, ⟨p ^ 1, pow_pos hp.pos 1⟩]) _ = T_elem 2 (![1, ⟨p, hp.pos⟩]) _
+    exact T_elem_congr_diag 2 (by ext i; fin_cases i <;> simp [pow_one]) _ _
   have h5 := thm324_5 p hp k hk
   rw [T_ad_p_ppow_eq p hp k hk] at h5
   have h2 := thm324_2 p hp (k + 1) (by omega)
@@ -867,10 +868,10 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
 section CoprimeMultiplicativity
 
 open Finset in
-/-- `diagDet 2 (mk2 a d) = a * d`. -/
+/-- `diagDet 2 (![a, d]) = a * d`. -/
 private lemma diagDet_mk2 (a d : ℕ+) :
-    diagDet 2 (mk2 a d) = a * d := by
-  simp [diagDet, Fin.prod_univ_two, mk2]
+    diagDet 2 (![a, d]) = a * d := by
+  simp [diagDet, Fin.prod_univ_two]
 
 /-- For coprime divisor pairs, the `T_ad'` product equals `T_ad'` of the products. -/
 private lemma T_ad'_mul_of_coprime (a b da db : ℕ)
@@ -889,11 +890,11 @@ private lemma T_ad'_mul_of_coprime (a b da db : ℕ)
     unfold T_ad'; rw [dif_pos ⟨hab_pos, dab_pos, hdvab⟩]
   rw [lhs_a, lhs_b, rhs]
   unfold T_ad
-  rw [T_diag_mul_coprime 2 (mk2 ⟨a, ha⟩ ⟨da, hda⟩) (mk2 ⟨b, hb⟩ ⟨db, hdb⟩)
+  rw [T_diag_mul_coprime 2 (![⟨a, ha⟩, ⟨da, hda⟩]) (![⟨b, hb⟩, ⟨db, hdb⟩])
     (divChain_mk2 _ _ hdva) (divChain_mk2 _ _ hdvb)
     (by rw [diagDet_mk2, diagDet_mk2]; exact hcop)]
   apply T_elem_congr_diag
-  ext i; fin_cases i <;> simp [pnatMul, mk2]
+  ext i; fin_cases i <;> simp [pnatMul]
 
 /-- When `T_ad'` conditions fail, the product is zero and so is the RHS. -/
 private lemma T_ad'_mul_zero_of_not_dvd (a da : ℕ) (h : ¬(0 < a ∧ 0 < da ∧ a ∣ da)) (x : HeckeAlgebra 2) :
@@ -1003,7 +1004,7 @@ private lemma T_ad_self_eq_T_elem (c : ℕ+) :
     T_ad c c (dvd_refl _) =
     T_elem 2 (fun _ => c) (divChain_const 2 c) := by
   unfold T_ad
-  have hmk2 : mk2 c c = (fun (_ : Fin 2) => c) := funext fun j => by fin_cases j <;> rfl
+  have hmk2 : ![c, c] = (fun (_ : Fin 2) => c) := funext fun j => by fin_cases j <;> rfl
   exact T_elem_congr_diag 2 hmk2 _ _
 
 private lemma T_pp_pow_eq_T_ad' (q : ℕ) (hq : q.Prime) (i : ℕ) :
@@ -1250,8 +1251,8 @@ theorem thm324_3 (m n : ℕ+) :
 
 /-- Theorem 3.24(6): `deg(T(pⁱ, p^{i+k})) = p^{k-1}(p+1)` for k > 0. -/
 theorem thm324_6 (i k : ℕ) (hk : 0 < k) :
-    T'_deg (GL_pair 2) (T_diag 2 (mk2 ⟨p ^ i, pow_pos hp.pos i⟩
-      ⟨p ^ (i + k), pow_pos hp.pos (i + k)⟩)
+    T'_deg (GL_pair 2) (T_diag 2 (![⟨p ^ i, pow_pos hp.pos i⟩,
+      ⟨p ^ (i + k), pow_pos hp.pos (i + k)⟩])
       (divChain_mk2 _ _ (Nat.pow_dvd_pow p (by omega)))) =
     ↑(p ^ (k - 1) * (p + 1)) := by
   exact T'_deg_T_diag_two_prime p hp _ _ k hk (by
@@ -1265,14 +1266,11 @@ theorem thm324_6_scalar (c : ℕ+) :
 
 /-! ### Identity 7: Degree of T(m) -/
 
-/-- The divisor sum function σ₁(m) = Σ_{d∣m} d. -/
-noncomputable def sigma1 (m : ℕ+) : ℕ := ∑ d ∈ (m : ℕ).divisors, d
-
 /-- `deg` of a `T_ad` equals the `T'_deg` of its underlying double coset. -/
 private lemma deg_T_ad' (a d : ℕ+) (h : (a : ℕ) ∣ (d : ℕ)) :
     deg (GL_pair 2) (T_ad a d h) =
-    T'_deg (GL_pair 2) (T_diag 2 (mk2 a d) (divChain_mk2 a d h)) := by
-  show deg (GL_pair 2) (Finsupp.single (T_diag 2 (mk2 a d) (divChain_mk2 a d h)) 1) = _
+    T'_deg (GL_pair 2) (T_diag 2 (![a, d]) (divChain_mk2 a d h)) := by
+  show deg (GL_pair 2) (Finsupp.single (T_diag 2 (![a, d]) (divChain_mk2 a d h)) 1) = _
   rw [HeckeRing.deg_T_single]; ring
 
 /-- `deg` of `T_ad'` when conditions hold. -/
@@ -1289,11 +1287,11 @@ private lemma deg_ppow_term_lt' (i k : ℕ) (h2i : 2 * i < k) :
   have h_exp_eq : k - i = i + (k - 2 * i) := by omega
   rw [deg_T_ad'_of_pos' _ _ (pow_pos hp.pos i) (pow_pos hp.pos (k - i))
     (Nat.pow_dvd_pow p (by omega)), deg_T_ad']
-  show T'_deg (GL_pair 2) (T_diag 2 (mk2 ⟨p ^ i, pow_pos hp.pos i⟩ ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩)
+  show T'_deg (GL_pair 2) (T_diag 2 (![⟨p ^ i, pow_pos hp.pos i⟩, ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩] : Fin 2 → ℕ+)
     (divChain_mk2 _ _ (Nat.pow_dvd_pow p (by omega)))) = ↑(p ^ (k - 2 * i - 1) * (p + 1))
-  have h_mk2_eq : mk2 ⟨p ^ i, pow_pos hp.pos i⟩ ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩ =
-      mk2 ⟨p ^ i, pow_pos hp.pos i⟩ ⟨p ^ (i + (k - 2 * i)), pow_pos hp.pos (i + (k - 2 * i))⟩ := by
-    ext j; fin_cases j <;> simp only [mk2, h_exp_eq]
+  have h_mk2_eq : (![⟨p ^ i, pow_pos hp.pos i⟩, ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩] : Fin 2 → ℕ+) =
+      (![⟨p ^ i, pow_pos hp.pos i⟩, ⟨p ^ (i + (k - 2 * i)), pow_pos hp.pos (i + (k - 2 * i))⟩] : Fin 2 → ℕ+) := by
+    ext j; fin_cases j <;> simp only [h_exp_eq]
   simp only [h_mk2_eq]
   exact thm324_6 p hp i (k - 2 * i) (by omega)
 
@@ -1304,9 +1302,9 @@ private lemma deg_ppow_term_eq' (i k : ℕ) (h2i : 2 * i = k) :
   have hki : k - i = i := by omega
   rw [hki, deg_T_ad'_of_pos' _ _ (pow_pos hp.pos i) (pow_pos hp.pos i) (dvd_refl _), deg_T_ad']
   set c : ℕ+ := ⟨p ^ i, pow_pos hp.pos i⟩
-  show T'_deg (GL_pair 2) (T_diag 2 (mk2 c c) (divChain_mk2 c c (dvd_refl _))) = 1
-  have hmk2 : mk2 c c = (fun (_ : Fin 2) => c) := funext fun j => by fin_cases j <;> rfl
-  have h_diag_eq : T_diag 2 (mk2 c c) (divChain_mk2 c c (dvd_refl _)) =
+  show T'_deg (GL_pair 2) (T_diag 2 (![c, c]) (divChain_mk2 c c (dvd_refl _))) = 1
+  have hmk2 : ![c, c] = (fun (_ : Fin 2) => c) := funext fun j => by fin_cases j <;> rfl
+  have h_diag_eq : T_diag 2 (![c, c]) (divChain_mk2 c c (dvd_refl _)) =
       T_diag 2 (fun _ => c) (divChain_const 2 c) := by simp [hmk2]
   rw [h_diag_eq]
   exact thm324_6_scalar c
@@ -1384,9 +1382,9 @@ private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
   simp only [Nat.divisors_one, Finset.sum_singleton, Nat.div_self one_pos]
   rw [deg_T_ad'_of_pos' 1 1 one_pos one_pos (dvd_refl 1), deg_T_ad']
   set c : ℕ+ := ⟨1, one_pos⟩
-  show T'_deg (GL_pair 2) (T_diag 2 (mk2 c c) (divChain_mk2 c c (dvd_refl _))) = 1
-  have hmk2 : mk2 c c = (fun (_ : Fin 2) => c) := funext fun j => by fin_cases j <;> rfl
-  have h_diag_eq : T_diag 2 (mk2 c c) (divChain_mk2 c c (dvd_refl _)) =
+  show T'_deg (GL_pair 2) (T_diag 2 (![c, c]) (divChain_mk2 c c (dvd_refl _))) = 1
+  have hmk2 : ![c, c] = (fun (_ : Fin 2) => c) := funext fun j => by fin_cases j <;> rfl
+  have h_diag_eq : T_diag 2 (![c, c]) (divChain_mk2 c c (dvd_refl _)) =
       T_diag 2 (fun _ => c) (divChain_const 2 c) := by simp [hmk2]
   rw [h_diag_eq]
   exact thm324_6_scalar c
@@ -1394,7 +1392,7 @@ private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
 /-- Theorem 3.24(7): `deg(T(m)) = σ₁(m)`.
     By prime factorization + coprime multiplicativity + prime-power case. -/
 theorem thm324_7 (m : ℕ+) :
-    deg (GL_pair 2) (T_sum m) = sigma1 m := by
+    deg (GL_pair 2) (T_sum m) = (σ 1) (m : ℕ) := by
   obtain ⟨n, hn⟩ := m
   revert hn
   induction n using Nat.recOnPosPrimePosCoprime with
@@ -1402,11 +1400,11 @@ theorem thm324_7 (m : ℕ+) :
   | one =>
     intro hn
     rw [show (⟨1, hn⟩ : ℕ+) = (1 : ℕ+) from rfl, deg_T_sum_one]
-    simp [sigma1, Nat.divisors_one]
+    simp
   | @prime_pow p k hp hk =>
     intro hn
     rw [deg_T_sum_prime_pow p hp k]
-    simp only [sigma1]
+    simp only [ArithmeticFunction.sigma_one_apply]
     have h := @Nat.sum_divisors_prime_pow ℕ _ k p id hp
     simp only [id] at h
     exact_mod_cast h.symm
@@ -1417,7 +1415,7 @@ theorem thm324_7 (m : ℕ+) :
     rw [show T_sum ⟨a * b, hn⟩ = T_sum ⟨a, ha_pos⟩ * T_sum ⟨b, hb_pos⟩ from
       (T_sum_mul_coprime ⟨a, ha_pos⟩ ⟨b, hb_pos⟩ hcop).symm]
     rw [map_mul, iha ha_pos, ihb hb_pos]
-    simp only [sigma1]
+    simp only [ArithmeticFunction.sigma_one_apply]
     exact_mod_cast (Nat.Coprime.sum_divisors_mul hcop).symm
 
 end HeckeRing.GL2
