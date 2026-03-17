@@ -186,7 +186,7 @@ private theorem higherOrderCancel_assembly
           apply Filter.Eventually.mono
             ((hV_open.inter h_compl_open).mem_nhds ⟨hz_V, hz_in_compl⟩)
           intro w ⟨hw_V, hw_compl⟩
-          show (fun w => g_corr z hz_S w -
+          change (fun w => g_corr z hz_S w -
             ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) w = h_reg_nf w
           simp only [h_reg_nf]
           by_cases hw_S : w ∈ S0
@@ -270,8 +270,10 @@ private theorem higherOrderCancel_assembly
     have h_agree : ∀ z ∈ U \ (↑S0 : Set ℂ), h z = h_reg_nf z + h_pol z := by
       intro z ⟨hz_U, hz_not_S0⟩
       have hz_not_S : z ∉ S0 := fun hh => hz_not_S0 (Finset.mem_coe.mpr hh)
-      have h_nf_eq : h_reg_nf z = h_reg z := by simp [h_reg_nf, hz_not_S]
-      have h_decomp : h z = h_reg z + h_pol z := by simp [h_reg, h_pol, h]; ring
+      have h_nf_eq : h_reg_nf z = h_reg z := dif_neg hz_not_S
+      have h_decomp : h z = h_reg z + h_pol z := by
+        simp only [h, h_reg, h_pol, total_pp]
+        rw [Finset.sum_sub_distrib]; ring
       rw [h_nf_eq]; exact h_decomp
     have h_fun_eq_off_S0 : ∀ z, z ∉ (↑S0 : Set ℂ) →
         h z = h_reg_nf z + h_pol z := by
@@ -279,7 +281,7 @@ private theorem higherOrderCancel_assembly
       have hz_not_S : z ∉ S0 := fun hh => hz_not_S0 (Finset.mem_coe.mpr hh)
       have h_nf_eq : h_reg_nf z = h_reg z := dif_neg hz_not_S
       have h_decomp : h z = h_reg z + h_pol z := by
-        show f z - ∑ s ∈ S0, residueAt f s / (z - s) =
+        change f z - ∑ s ∈ S0, residueAt f s / (z - s) =
           (f z - ∑ s ∈ S0, meromorphicPrincipalPart f s z) +
           ∑ s ∈ S0, (meromorphicPrincipalPart f s z - residueAt f s / (z - s))
         rw [Finset.sum_sub_distrib]; ring
@@ -369,8 +371,11 @@ private theorem higherOrderCancel_assembly
             have hf_tends : Tendsto f (𝓝[≠] s) (𝓝 (g_loc s)) := by
               apply Filter.Tendsto.congr'
               · filter_upwards [hf_eq_loc] with z hz
-                simp [Finset.univ_eq_empty] at hz; exact hz.symm
-              · exact hg_loc_an.continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+                simp only [Finset.univ_eq_empty, Finset.sum_empty,
+                  add_zero] at hz
+                exact hz.symm
+              · exact hg_loc_an.continuousAt.tendsto.mono_left
+                  nhdsWithin_le_nhds
             have h_ord_nn : 0 ≤ meromorphicOrderAt f s :=
               (tendsto_nhds_iff_meromorphicOrderAt_nonneg (hMero s hs)).mp
                 ⟨g_loc s, hf_tends⟩
@@ -397,7 +402,10 @@ private theorem higherOrderCancel_assembly
                 have h_in : z ∈ Metric.ball s rf ∩ {s}ᶜ :=
                   ⟨Metric.mem_ball.mpr (by rw [Metric.mem_sphere.mp hz]; exact hr_lt_rf),
                    Set.mem_compl_singleton_iff.mpr hne⟩
-                have := hrf_eq h_in; simp [Finset.univ_eq_empty] at this; exact this
+                have := hrf_eq h_in
+                simp only [Finset.univ_eq_empty, Finset.sum_empty,
+                  add_zero] at this
+                exact this
               have hg_cont : ContinuousOn g_loc (Metric.closedBall s r) :=
                 hg_ball.continuousOn.mono (Metric.closedBall_subset_ball hr_lt_rg)
               have hg_diff : DifferentiableOn ℂ g_loc (Metric.ball s r) := by
@@ -485,8 +493,9 @@ private theorem higherOrderCancel_assembly
                           have hk_gt : m_idx < k :=
                             lt_of_le_of_ne (Fin.mk_le_mk.mpr hkm) (Ne.symm hk)
                           have := hm_max k
-                          simp [not_le.mpr hk_gt] at this
-                          simp [this]
+                          have hk_eq : a_s k = 0 := by
+                            by_contra ha; exact absurd (this ha) (not_le.mpr hk_gt)
+                          simp only [hk_eq, zero_mul]
                       · intro h; exact absurd (Finset.mem_univ m_idx) h
                     rw [this]; exact hm_ne
                   · filter_upwards [hf_eq_loc, self_mem_nhdsWithin] with z hfz hz
@@ -573,7 +582,7 @@ private theorem higherOrderCancel_assembly
                     a_s k / (z - s) ^ (k.val + 1) := hr1_eq hz_in_1
                 have hgrpz : f z - meromorphicPrincipalPart f s z = g_rp z :=
                   hr2_eq hz_in_2
-                show meromorphicPrincipalPart f s z - residueAt f s / (z - s) -
+                change meromorphicPrincipalPart f s z - residueAt f s / (z - s) -
                   (∑ k : Fin N_s, if k.val ≥ 1 then
                     a_s k / (z - s) ^ (k.val + 1) else 0) = g_loc z - g_rp z
                 have hpp : meromorphicPrincipalPart f s z = f z - g_rp z := by
@@ -821,14 +830,16 @@ private theorem higherOrderCancel_assembly
                      Set.mem_compl_singleton_iff.mpr hne⟩
                   have hfpp := hrp_eq h_in
                   simp only [Set.mem_setOf_eq] at hfpp
-                  show meromorphicPrincipalPart f s z - residueAt f s / (z - s) =
+                  change meromorphicPrincipalPart f s z - residueAt f s / (z - s) =
                     f z - residueAt f s / (z - s) - g_rp z
                   linear_combination -hfpp
                 have hg_cont : ContinuousOn g_rp (Metric.closedBall s r) :=
                   hg_ball.continuousOn.mono (Metric.closedBall_subset_ball hr_lt_rg)
                 have hg_diff : DifferentiableOn ℂ g_rp (Metric.ball s r) := by
                   intro z hz
-                  exact (hg_ball z (Metric.ball_subset_ball hr_lt_rg.le hz)).differentiableAt.differentiableWithinAt
+                  have := hg_ball z
+                    (Metric.ball_subset_ball hr_lt_rg.le hz)
+                  exact this.differentiableAt.differentiableWithinAt
                 have hg_ci_zero : (∮ z in C(s, r), g_rp z) = 0 :=
                   Complex.circleIntegral_eq_zero_of_differentiable_on_off_countable
                     hr_pos.le Set.countable_empty hg_cont
@@ -869,7 +880,7 @@ private theorem higherOrderCancel_assembly
                   _ = (∮ z in C(s, r), (fun z => f z - residueAt f s / (z - s)) z) := h_int_eq
               rw [show residueAt term_s s =
                 residueAt (fun z => f z - residueAt f s / (z - s)) s from by
-                show limUnder (𝓝[>] (0 : ℝ))
+                change limUnder (𝓝[>] (0 : ℝ))
                     (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), term_s z) =
                   limUnder (𝓝[>] (0 : ℝ))
                     (fun r => (2 * ↑Real.pi * I)⁻¹ *
@@ -976,7 +987,8 @@ theorem conditionsAB_imply_higherOrderCancel
     symm
     have h_int_f : IntervalIntegrable
         (cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε) volume γ.a γ.b :=
-      intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 f hf.continuousOn γ hγ_in_U ε hε
+      intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
+        U S0 f hf.continuousOn γ hγ_in_U ε hε
     have h_int_fres : IntervalIntegrable
         (cauchyPrincipalValueIntegrandOn S0
           (fun z => ∑ s ∈ S0, residueAt f s / (z - s)) γ.toFun ε)
@@ -986,8 +998,10 @@ theorem conditionsAB_imply_higherOrderCancel
         apply continuousOn_finset_sum; intro s _
         apply ContinuousOn.div continuousOn_const (continuousOn_id.sub continuousOn_const)
         intro z ⟨_, hz_not_S0⟩
-        exact sub_ne_zero.mpr (fun heq => by subst heq; exact hz_not_S0 (Finset.mem_coe.mpr ‹_›))
-      exact intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 _ hfres_cont γ hγ_in_U ε hε
+        exact sub_ne_zero.mpr
+          (fun heq => by subst heq; exact hz_not_S0 (Finset.mem_coe.mpr ‹_›))
+      exact intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
+        U S0 _ hfres_cont γ hγ_in_U ε hε
     rw [← intervalIntegral.integral_sub h_int_f h_int_fres]
     congr 1; ext t
     exact h_integrand_eq ε t
