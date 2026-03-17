@@ -230,6 +230,86 @@ theorem upperTriGL_mem_doubleCoset (a : Fin n → ℕ+) (hdiv : DivChain n a)
   · intro h; exact absurd (Finset.mem_univ i) h
 
 omit [NeZero n] in
+/-- For `k ≠ j` and columns `< j` already identity-like, the product `σ i k * M₂ k j`
+    contributes only from the `k = i, i < j` case. -/
+private lemma coset_sum_eq {a : Fin n → ℕ+} {hdiv : DivChain n a}
+    {B₂ : UpperTriRep n a hdiv}
+    {σ : SpecialLinearGroup (Fin n) ℤ}
+    {i j : Fin n}
+    (ih : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n),
+      σ.val i k = if i = k then 1 else 0) :
+    ∑ k : Fin n, σ.val i k * upperTriMat n a hdiv B₂ k j =
+      σ.val i j * (a j : ℤ) + (if i < j then upperTriMat n a hdiv B₂ i j else 0) := by
+  set M₂ := upperTriMat n a hdiv B₂
+  have h_sum_rest : ∀ k : Fin n, k ≠ j →
+      σ.val i k * M₂ k j =
+      if k = i ∧ i < j then M₂ i j else 0 := by
+    intro k hkj
+    rcases lt_or_ge k j with hkj' | hkj'
+    · rw [ih k (by exact_mod_cast hkj') i]
+      rcases eq_or_ne i k with rfl | hik
+      · simp [hkj']
+      · simp [hik, show k ≠ i from fun h => hik h.symm]
+    · have hjk : j < k := lt_of_le_of_ne hkj' (Ne.symm hkj)
+      have hM₂ : M₂ k j = 0 := upperTriMat_apply_gt n a hdiv B₂ hjk
+      simp [hM₂, show ¬(k = i ∧ i < j) from
+        fun ⟨hki, hilj⟩ => not_lt.mpr (le_of_lt (hki ▸ hjk)) hilj]
+  rw [← Finset.sum_erase_add (f := fun k => σ.val i k * M₂ k j)
+    Finset.univ (Finset.mem_univ j),
+    show M₂ j j = (a j : ℤ) from upperTriMat_apply_diag n a hdiv B₂ j]
+  suffices h_rest : ∑ x ∈ Finset.univ.erase j, σ.val i x * M₂ x j =
+      if i < j then M₂ i j else 0 by linarith
+  by_cases hij : i < j
+  · simp only [hij, ite_true]
+    rw [Finset.sum_eq_single_of_mem i
+        (Finset.mem_erase.mpr ⟨Fin.ne_of_lt hij, Finset.mem_univ i⟩)]
+    · rw [h_sum_rest i (Fin.ne_of_lt hij)]; simp [hij]
+    · intro k hk hki
+      rw [Finset.mem_erase] at hk; rw [h_sum_rest k hk.1]
+      simp [show ¬(k = i ∧ i < j) from fun ⟨h, _⟩ => hki h]
+  · simp only [hij, ite_false]
+    apply Finset.sum_eq_zero; intro k hk
+    rw [Finset.mem_erase] at hk; rw [h_sum_rest k hk.1]
+    simp [show ¬(k = i ∧ i < j) from fun ⟨_, h⟩ => hij h]
+
+omit [NeZero n] in
+/-- When `i < j`, the entry `σ i j` must be zero: the bounded difference of `B₁` and `B₂`
+    cannot absorb a nonzero integer multiple of `a_j / a_i`. -/
+private lemma coset_entry_zero_of_lt {a : Fin n → ℕ+} {hdiv : DivChain n a}
+    {B₁ B₂ : UpperTriRep n a hdiv}
+    {σ : SpecialLinearGroup (Fin n) ℤ}
+    {i j : Fin n} (hij : i < j)
+    (h_eq : upperTriMat n a hdiv B₁ i j =
+      σ.val i j * (a j : ℤ) + upperTriMat n a hdiv B₂ i j) :
+    σ.val i j = 0 := by
+  simp only [upperTriMat_apply_lt _ _ _ _ hij] at h_eq
+  have h_dvd : (a i : ℕ) ∣ (a j : ℕ) := divChain_dvd n hdiv (le_of_lt hij)
+  set q := (a j : ℕ) / (a i : ℕ)
+  have hq_pos : 0 < q := divChain_div_pos n hdiv (le_of_lt hij)
+  have h_aj_eq : (a j : ℤ) = (a i : ℤ) * (q : ℤ) := by
+    have h := Nat.div_mul_cancel h_dvd
+    have : (q : ℤ) * (a i : ℤ) = (a j : ℤ) := by exact_mod_cast h
+    linarith
+  have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (a i).ne_zero
+  have h_cancel : σ.val i j * (q : ℤ) =
+      ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) - ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) := by
+    apply mul_left_cancel₀ h_ai_ne
+    rw [← mul_assoc, mul_comm (a i : ℤ) (σ.val i j), mul_assoc, ← h_aj_eq]
+    linarith
+  have h1 : ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) < (q : ℤ) := by
+    exact_mod_cast (B₁ ⟨(i, j), hij⟩).isLt
+  have h2 : ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) < (q : ℤ) := by
+    exact_mod_cast (B₂ ⟨(i, j), hij⟩).isLt
+  by_contra hσ_ne
+  have h_abs : (q : ℤ) ≤ |σ.val i j * (q : ℤ)| := by
+    rw [abs_mul, abs_of_nonneg (by omega : (q : ℤ) ≥ 0)]
+    exact le_mul_of_one_le_left (by omega) (Int.one_le_abs hσ_ne)
+  rw [h_cancel] at h_abs
+  rcases le_or_gt ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) with h | h
+  · rw [abs_of_nonpos (by omega)] at h_abs; omega
+  · rw [abs_of_pos (by omega)] at h_abs; omega
+
+omit [NeZero n] in
 /-- Distinct entry assignments give distinct left cosets of `SL_n(ℤ)`. -/
 theorem upperTriMat_distinct_cosets (a : Fin n → ℕ+) (hdiv : DivChain n a)
     (B₁ B₂ : UpperTriRep n a hdiv) (hne : B₁ ≠ B₂) :
@@ -259,67 +339,15 @@ theorem upperTriMat_distinct_cosets (a : Fin n → ℕ+) (hdiv : DivChain n a)
     · exact ih j hlt i
     · have h_eq : M₁ i j = ∑ k : Fin n, σ.val i k * M₂ k j := by
         rw [hmat]; simp [Matrix.mul_apply]
-      have h_sum_rest : ∀ k : Fin n, k ≠ j →
-          σ.val i k * M₂ k j =
-          if k = i ∧ i < j then M₂ i j else 0 := by
-        intro k hkj
-        rcases lt_or_ge k j with hkj' | hkj'
-        · rw [ih k (hjeq ▸ hkj') i]
-          rcases eq_or_ne i k with rfl | hik
-          · simp [hkj']
-          · simp [hik, show k ≠ i from fun h => hik h.symm]
-        · have hjk : j < k := lt_of_le_of_ne hkj' (Ne.symm hkj)
-          have hM₂ : M₂ k j = 0 := upperTriMat_apply_gt n a hdiv B₂ hjk
-          simp [hM₂, show ¬(k = i ∧ i < j) from
-            fun ⟨hki, hilj⟩ => not_lt.mpr (le_of_lt (hki ▸ hjk)) hilj]
-      have h_sum : ∑ k : Fin n, σ.val i k * M₂ k j =
-          σ.val i j * (a j : ℤ) + (if i < j then M₂ i j else 0) := by
-        rw [← Finset.sum_erase_add (f := fun k => σ.val i k * M₂ k j)
-          Finset.univ (Finset.mem_univ j),
-          show M₂ j j = (a j : ℤ) from upperTriMat_apply_diag n a hdiv B₂ j]
-        suffices h_rest : ∑ x ∈ Finset.univ.erase j, σ.val i x * M₂ x j =
-            if i < j then M₂ i j else 0 by linarith
-        by_cases hij : i < j
-        · simp only [hij, ite_true]
-          rw [Finset.sum_eq_single_of_mem i
-              (Finset.mem_erase.mpr ⟨Fin.ne_of_lt hij, Finset.mem_univ i⟩)]
-          · rw [h_sum_rest i (Fin.ne_of_lt hij)]; simp [hij]
-          · intro k hk hki
-            rw [Finset.mem_erase] at hk; rw [h_sum_rest k hk.1]
-            simp [show ¬(k = i ∧ i < j) from fun ⟨h, _⟩ => hki h]
-        · simp only [hij, ite_false]
-          apply Finset.sum_eq_zero; intro k hk
-          rw [Finset.mem_erase] at hk; rw [h_sum_rest k hk.1]
-          simp [show ¬(k = i ∧ i < j) from fun ⟨_, h⟩ => hij h]
+      have ih' : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n),
+          σ.val i k = if i = k then 1 else 0 :=
+        fun k hk => ih k (hjeq ▸ hk)
+      have h_sum := @coset_sum_eq n a hdiv B₂ σ i j ih'
       rw [h_sum] at h_eq
       rcases lt_trichotomy i j with hij | rfl | hij
       · rw [if_neg (Fin.ne_of_lt hij)]
-        simp only [hij, ↓reduceIte, M₁, M₂, upperTriMat_apply_lt _ _ _ _ hij] at h_eq
-        have h_dvd : (a i : ℕ) ∣ (a j : ℕ) := divChain_dvd n hdiv (le_of_lt hij)
-        set q := (a j : ℕ) / (a i : ℕ)
-        have hq_pos : 0 < q := divChain_div_pos n hdiv (le_of_lt hij)
-        have h_aj_eq : (a j : ℤ) = (a i : ℤ) * (q : ℤ) := by
-          have h := Nat.div_mul_cancel h_dvd
-          have : (q : ℤ) * (a i : ℤ) = (a j : ℤ) := by exact_mod_cast h
-          linarith
-        have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (a i).ne_zero
-        have h_cancel : σ.val i j * (q : ℤ) =
-            ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) - ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) := by
-          apply mul_left_cancel₀ h_ai_ne
-          rw [← mul_assoc, mul_comm (a i : ℤ) (σ.val i j), mul_assoc, ← h_aj_eq]
-          linarith
-        have h1 : ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) < (q : ℤ) := by
-          exact_mod_cast (B₁ ⟨(i, j), hij⟩).isLt
-        have h2 : ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) < (q : ℤ) := by
-          exact_mod_cast (B₂ ⟨(i, j), hij⟩).isLt
-        by_contra hσ_ne
-        have h_abs : (q : ℤ) ≤ |σ.val i j * (q : ℤ)| := by
-          rw [abs_mul, abs_of_nonneg (by omega : (q : ℤ) ≥ 0)]
-          exact le_mul_of_one_le_left (by omega) (Int.one_le_abs hσ_ne)
-        rw [h_cancel] at h_abs
-        rcases le_or_gt ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) with h | h
-        · rw [abs_of_nonpos (by omega)] at h_abs; omega
-        · rw [abs_of_pos (by omega)] at h_abs; omega
+        exact @coset_entry_zero_of_lt n a hdiv B₁ B₂ σ i j hij
+          (by simp only [hij, ↓reduceIte] at h_eq; exact h_eq)
       · simp only [lt_irrefl, ↓reduceIte, M₁, upperTriMat_apply_diag] at h_eq ⊢
         have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (a i).ne_zero
         exact mul_right_cancel₀ h_ai_ne (by linarith)

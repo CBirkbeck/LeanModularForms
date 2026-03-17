@@ -743,6 +743,83 @@ private lemma T_sum_p_comm_T_pp_pow_T_sum (i k : ℕ) :
     T_pp p hp ^ i * (T_sum ⟨p, hp.pos⟩ * T_sum ⟨p ^ k, pow_pos hp.pos k⟩) := by
   rw [← mul_assoc, T_sum_p_comm_T_pp_pow p hp i, mul_assoc]
 
+/-- Each summand of `Tp * S1` splits into two terms via the recurrence. -/
+private lemma thm324_4_summand_split (r s i : ℕ) (hi : i ≤ r) (hrs : r ≤ s) :
+    (p : ℤ) ^ i • (T_pp p hp ^ i *
+      (T_sum ⟨p, hp.pos⟩ * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
+    (p : ℤ) ^ i • (T_pp p hp ^ i *
+      T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩) +
+    (p : ℤ) ^ (i + 1) • (T_pp p hp ^ (i + 1) *
+      T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) := by
+  have h_pos : 0 < r + 1 + s - 2 * i := by omega
+  have h_rec_i := T_sum_ppow_recurrence p hp (r + 1 + s - 2 * i) h_pos
+  rw [show (r + 1 + s - 2 * i) + 1 = r + 2 + s - 2 * i from by omega,
+      show r + 1 + s - 2 * i - 1 = r + s - 2 * i from by omega] at h_rec_i
+  have h_eq : T_sum ⟨p, hp.pos⟩ * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩ =
+      T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩ +
+      (p : ℤ) • (T_pp p hp * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) := by
+    rw [eq_sub_iff_add_eq] at h_rec_i; exact h_rec_i.symm
+  rw [h_eq, mul_add, smul_add]
+  congr 1
+  rw [mul_smul_comm, smul_smul, show (p : ℤ) ^ i * (p : ℤ) = (p : ℤ) ^ (i + 1) from by ring]
+  congr 1
+  rw [← mul_assoc, ← pow_succ]
+
+/-- Distribute `T(p)` into each summand of S1 using commutativity. -/
+private lemma thm324_4_lhs1_distrib (r s : ℕ) :
+    T_sum ⟨p, hp.pos⟩ *
+      (∑ i ∈ Finset.range (r + 1 + 1),
+        (p : ℤ) ^ i • (T_pp p hp ^ i *
+          T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
+    ∑ i ∈ Finset.range (r + 1 + 1),
+      (p : ℤ) ^ i • (T_pp p hp ^ i *
+        (T_sum ⟨p, hp.pos⟩ *
+          T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) := by
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl; intro i _
+  rw [mul_smul_comm, T_sum_p_comm_T_pp_pow_T_sum p hp i _, ← mul_assoc]
+
+/-- Distribute `p • (Tpp * S2)` into a shifted-index sum. -/
+private lemma thm324_4_lhs2_shift (r s : ℕ) :
+    (p : ℤ) • (T_pp p hp *
+      ∑ i ∈ Finset.range (r + 1),
+        (p : ℤ) ^ i • (T_pp p hp ^ i *
+          T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) =
+    ∑ i ∈ Finset.range (r + 1),
+      (p : ℤ) ^ (i + 1) • (T_pp p hp ^ (i + 1) *
+        T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) := by
+  rw [Finset.mul_sum, Finset.smul_sum]
+  apply Finset.sum_congr rfl; intro i _
+  rw [mul_smul_comm, smul_smul, mul_comm ((p : ℤ)) ((p : ℤ) ^ i), ← pow_succ]
+  congr 1; rw [← mul_assoc, ← pow_succ']
+
+/-- The last two summands of `thm324_4` for the `r + 2` case: expand the top-index term
+    using the recurrence for `T(p^{s-r-1})`. -/
+private lemma thm324_4_last_two_terms (r s : ℕ) (hrs : r + 2 ≤ s) :
+    (p : ℤ) ^ (r + 1) • (T_pp p hp ^ (r + 1) *
+      (T_sum ⟨p, hp.pos⟩ * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩)) =
+    (p : ℤ) ^ (r + 1) • (T_pp p hp ^ (r + 1) *
+      T_sum ⟨p ^ (r + 2 + s - 2 * (r + 1)), pow_pos hp.pos _⟩) +
+    (p : ℤ) ^ (r + 2) • (T_pp p hp ^ (r + 2) *
+      T_sum ⟨p ^ (r + 2 + s - 2 * (r + 2)), pow_pos hp.pos _⟩) := by
+  have hexp_C : r + 1 + s - 2 * (r + 1) = s - r - 1 := by omega
+  have h_sr_pos : 0 < s - r - 1 := by omega
+  have h_rec_final := T_sum_ppow_recurrence p hp (s - r - 1) h_sr_pos
+  rw [show (s - r - 1) + 1 = s - r from by omega,
+      show s - r - 1 - 1 = s - r - 2 from by omega] at h_rec_final
+  have h_expand : T_sum ⟨p, hp.pos⟩ * T_sum ⟨p ^ (s - r - 1), pow_pos hp.pos _⟩ =
+      T_sum ⟨p ^ (s - r), pow_pos hp.pos _⟩ +
+      (p : ℤ) • (T_pp p hp * T_sum ⟨p ^ (s - r - 2), pow_pos hp.pos _⟩) := by
+    rw [eq_sub_iff_add_eq] at h_rec_final; exact h_rec_final.symm
+  rw [hexp_C, h_expand, mul_add, smul_add, mul_smul_comm, smul_smul,
+      show (p : ℤ) ^ (r + 1) * (p : ℤ) = (p : ℤ) ^ (r + 2) from by ring,
+      ← mul_assoc,
+      show T_pp p hp ^ (r + 1) * T_pp p hp = T_pp p hp ^ (r + 2) from
+        (pow_succ (T_pp p hp) (r + 1)).symm]
+  have hnat2 : s - r - 2 = r + 2 + s - 2 * (r + 2) := by omega
+  have hnat1 : s - r = r + 2 + s - 2 * (r + 1) := by omega
+  rw [hnat2, hnat1]
+
 theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
     T_sum ⟨p ^ r, pow_pos hp.pos r⟩ * T_sum ⟨p ^ s, pow_pos hp.pos s⟩ =
     ∑ i ∈ Finset.range (r + 1),
@@ -788,40 +865,17 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
     set S2 := ∑ i ∈ Finset.range (r + 1),
       (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)
     have h_lhs1 : Tp * S1 = ∑ i ∈ Finset.range (r + 1 + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) := by
-      rw [Finset.mul_sum]
-      apply Finset.sum_congr rfl; intro i _
-      rw [mul_smul_comm, T_sum_p_comm_T_pp_pow_T_sum p hp i _, ← mul_assoc]
+        (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) :=
+      thm324_4_lhs1_distrib p hp r s
     have h_lhs2 : (p : ℤ) • (Tpp * S2) = ∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) := by
-      rw [Finset.mul_sum, Finset.smul_sum]
-      apply Finset.sum_congr rfl; intro i _
-      rw [mul_smul_comm, smul_smul, mul_comm ((p : ℤ)) ((p : ℤ) ^ i), ← pow_succ]
-      congr 1; rw [← mul_assoc, ← pow_succ']
+        (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) :=
+      thm324_4_lhs2_shift p hp r s
     have h_peel1 : ∑ i ∈ Finset.range (r + 1 + 1),
         (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
       (∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩))) +
       (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩)) :=
       Finset.sum_range_succ _ _
-    have h_split : ∀ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
-        (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩) +
-        (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) := by
-      intro i hi; rw [Finset.mem_range] at hi
-      have h_pos : 0 < r + 1 + s - 2 * i := by omega
-      have h_rec_i := T_sum_ppow_recurrence p hp (r + 1 + s - 2 * i) h_pos
-      rw [show (r + 1 + s - 2 * i) + 1 = r + 2 + s - 2 * i from by omega,
-          show r + 1 + s - 2 * i - 1 = r + s - 2 * i from by omega] at h_rec_i
-      have h_eq : Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩ =
-          T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩ +
-          (p : ℤ) • (Tpp * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) := by
-        rw [eq_sub_iff_add_eq] at h_rec_i; exact h_rec_i.symm
-      rw [h_eq, mul_add, smul_add]
-      congr 1
-      rw [mul_smul_comm, smul_smul, show (p : ℤ) ^ i * (p : ℤ) = (p : ℤ) ^ (i + 1) from by ring]
-      congr 1
-      rw [← mul_assoc, ← pow_succ]
     have h_sum_split :
       ∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
@@ -830,7 +884,9 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
       (∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) := by
       rw [← Finset.sum_add_distrib]
-      exact Finset.sum_congr rfl h_split
+      exact Finset.sum_congr rfl fun i hi => by
+        rw [Finset.mem_range] at hi
+        exact thm324_4_summand_split p hp r s i (by omega) (by omega)
     rw [h_lhs1, h_peel1, h_sum_split, h_lhs2]
     set A := ∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)
@@ -840,28 +896,9 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
     show A + B + C - B = _
     rw [add_assoc, add_comm B C, ← add_assoc, add_sub_cancel_right]
     rw [show r + 2 + 1 = (r + 1) + 1 + 1 from by omega]
-    rw [Finset.sum_range_succ, Finset.sum_range_succ]
-    rw [add_assoc]
+    rw [Finset.sum_range_succ, Finset.sum_range_succ, add_assoc]
     congr 1
-    have hexp_C : r + 1 + s - 2 * (r + 1) = s - r - 1 := by omega
-    have hexp1 : r + 2 + s - 2 * (r + 1) = s - r := by omega
-    have hexp2 : r + 2 + s - 2 * (r + 2) = s - r - 2 := by omega
-    have h_sr_pos : 0 < s - r - 1 := by omega
-    have h_rec_final := T_sum_ppow_recurrence p hp (s - r - 1) h_sr_pos
-    rw [show (s - r - 1) + 1 = s - r from by omega,
-        show s - r - 1 - 1 = s - r - 2 from by omega] at h_rec_final
-    have h_expand : Tp * T_sum ⟨p ^ (s - r - 1), pow_pos hp.pos _⟩ =
-        T_sum ⟨p ^ (s - r), pow_pos hp.pos _⟩ +
-        (p : ℤ) • (Tpp * T_sum ⟨p ^ (s - r - 2), pow_pos hp.pos _⟩) := by
-      rw [eq_sub_iff_add_eq] at h_rec_final; exact h_rec_final.symm
-    have hC_def : C = (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
-        (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩)) := rfl
-    rw [hC_def, hexp_C, h_expand, mul_add, smul_add, mul_smul_comm, smul_smul,
-        show (p : ℤ) ^ (r + 1) * (p : ℤ) = (p : ℤ) ^ (r + 2) from by ring,
-        ← mul_assoc, show Tpp ^ (r + 1) * Tpp = Tpp ^ (r + 2) from (pow_succ Tpp (r + 1)).symm]
-    have hnat2 : s - r - 2 = r + 2 + s - 2 * (r + 2) := by omega
-    have hnat1 : s - r = r + 2 + s - 2 * (r + 1) := by omega
-    rw [hnat2, hnat1]
+    exact thm324_4_last_two_terms p hp r s hrs
 
 /-! ### Identity 3: General multiplicativity -/
 
