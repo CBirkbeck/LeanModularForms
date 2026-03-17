@@ -239,6 +239,76 @@ private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ+) :
     exact (ConjAct.toConjAct α • H).inv_mem
       (transpose_mem_conj_of_mem_conj_inv n a τ hτ)
 
+omit [NeZero n] in
+/-- The map sending each upper-triangular representative `B` to the coset of
+`(f(unipSL B))⁻¹` in the quotient `H ⧸ (α⁻¹-conjugate of H)` is injective.
+
+This is the core injectivity argument: if two representatives map to the same coset,
+then their ratio lies in `H`, contradicting `upperTriMat_distinct_cosets`. -/
+private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ+) (hdiv : DivChain n a)
+    (α : GL (Fin n) ℚ) (hα : α = diagMat n a) (H : Subgroup (GL (Fin n) ℚ))
+    (hH : H = SLnZ_subgroup n) (f : SL(n, ℤ) →* GL (Fin n) ℚ)
+    (hf : f = SLnZ_to_GLnQ n)
+    [Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H)] :
+    Function.Injective
+      (fun B : UpperTriRep n a hdiv =>
+        (⟦⟨(f (unipSL n a hdiv B))⁻¹,
+          H.inv_mem (show f (unipSL n a hdiv B) ∈ H from
+            hH ▸ hf ▸ ⟨unipSL n a hdiv B, rfl⟩)⟩⟧ :
+          H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H)) := by
+  subst hα hH hf
+  intro B₁ B₂ heq
+  by_contra hne
+  have hq := QuotientGroup.eq.mp heq
+  rw [Subgroup.mem_subgroupOf] at hq
+  simp only [Subgroup.coe_mul, InvMemClass.coe_inv, inv_inv] at hq
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hq
+  set α := (diagMat n a : GL (Fin n) ℚ)
+  set f := SLnZ_to_GLnQ n
+  have h1 : upperTriGL n a hdiv B₁ = α * f (unipSL n a hdiv B₁) :=
+    upperTriGL_eq_diagMat_mul n a hdiv B₁
+  have h2 : upperTriGL n a hdiv B₂ = α * f (unipSL n a hdiv B₂) :=
+    upperTriGL_eq_diagMat_mul n a hdiv B₂
+  have hmem : upperTriGL n a hdiv B₁ * (upperTriGL n a hdiv B₂)⁻¹ ∈
+      SLnZ_subgroup n := by
+    suffices upperTriGL n a hdiv B₁ * (upperTriGL n a hdiv B₂)⁻¹ =
+        α * (f (unipSL n a hdiv B₁) * (f (unipSL n a hdiv B₂))⁻¹) * α⁻¹ by
+      rw [this]; exact hq
+    rw [h1, h2]; group
+  obtain ⟨γ, hγ⟩ := (MonoidHom.mem_range.mp (show _ ∈ f.range from hmem))
+  have h_eq : upperTriGL n a hdiv B₁ = f γ * upperTriGL n a hdiv B₂ := by
+    have hγ' : f γ = upperTriGL n a hdiv B₁ * (upperTriGL n a hdiv B₂)⁻¹ := hγ
+    rw [hγ', mul_assoc, inv_mul_cancel, mul_one]
+  exact upperTriMat_distinct_cosets n a hdiv B₁ B₂ hne (f γ) ⟨γ, rfl⟩ h_eq
+
+/-- The cardinality of `UpperTriRep` is at most the relative index
+`[H : α⁻¹ H α⁻¹]`, where `α = diagMat a` and `H = SLnZ_subgroup n`.
+
+Proved by constructing an injection from `UpperTriRep` into the quotient
+`H / (α⁻¹-conjugate ∩ H)` and applying `Fintype.card_le_of_injective`. -/
+private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ+) (hdiv : DivChain n a)
+    (h_rel_ne : (ConjAct.toConjAct (diagMat n a : GL (Fin n) ℚ)⁻¹ •
+      (GL_pair n).H).relIndex (GL_pair n).H ≠ 0) :
+    Fintype.card (UpperTriRep n a hdiv) ≤
+      (ConjAct.toConjAct (diagMat n a : GL (Fin n) ℚ)⁻¹ •
+        (GL_pair n).H).relIndex (GL_pair n).H := by
+  set H := (GL_pair n).H
+  set α := (diagMat n a : GL (Fin n) ℚ)
+  set f := SLnZ_to_GLnQ n
+  haveI : Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
+    Subgroup.fintypeOfIndexNeZero h_rel_ne
+  set injMap : UpperTriRep n a hdiv → H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H :=
+    fun B => ⟦⟨(f (unipSL n a hdiv B))⁻¹,
+      H.inv_mem (show f (unipSL n a hdiv B) ∈ H from ⟨unipSL n a hdiv B, rfl⟩)⟩⟧
+  have h_inj : Function.Injective injMap :=
+    upperTriRep_injective_to_quotient n a hdiv α rfl H rfl f rfl
+  calc Fintype.card (UpperTriRep n a hdiv)
+      ≤ Fintype.card (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
+        Fintype.card_le_of_injective injMap h_inj
+    _ = (ConjAct.toConjAct α⁻¹ • H).relIndex H := by
+        simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
+
 /-- The number of upper-triangular representatives is a lower bound on the degree. -/
 theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ+) (hdiv : DivChain n a) :
     (Fintype.card (UpperTriRep n a hdiv) : ℤ) ≤
@@ -247,48 +317,19 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ+) (hdiv : DivChain n a) :
   set D := T_diag n a hdiv
   set δ := (D.eql.choose : GL (Fin n) ℚ) with hδ_def
   set α := (diagMat n a : GL (Fin n) ℚ) with hα_def
-  set f := SLnZ_to_GLnQ n
   have h_α_comm : α ∈ Subgroup.Commensurable.commensurator H :=
     (GL_pair n).h₁ (diagMat_mem_posDetInt n a)
   have h_α_inv_comm : α⁻¹ ∈ Subgroup.Commensurable.commensurator H :=
     (Subgroup.Commensurable.commensurator H).inv_mem h_α_comm
   have h_rel_ne : (ConjAct.toConjAct α⁻¹ • H).relIndex H ≠ 0 :=
     ((Subgroup.Commensurable.commensurator_mem_iff H α⁻¹).mp h_α_inv_comm).1
-  haveI : Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
-    Subgroup.fintypeOfIndexNeZero h_rel_ne
+  -- Step 1: card(UpperTriRep) ≤ relIndex of α⁻¹-conjugate
   have h_card_le : Fintype.card (UpperTriRep n a hdiv) ≤
-      (ConjAct.toConjAct α⁻¹ • H).relIndex H := by
-    have h_unip_mem : ∀ B, f (unipSL n a hdiv B) ∈ H := fun B => ⟨unipSL n a hdiv B, rfl⟩
-    set injMap : UpperTriRep n a hdiv → H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H :=
-      fun B => ⟦⟨(f (unipSL n a hdiv B))⁻¹, H.inv_mem (h_unip_mem B)⟩⟧
-    have h_inj : Function.Injective injMap := by
-      intro B₁ B₂ heq
-      by_contra hne
-      have hq := QuotientGroup.eq.mp heq
-      rw [Subgroup.mem_subgroupOf] at hq
-      simp only [Subgroup.coe_mul, InvMemClass.coe_inv, inv_inv] at hq
-      rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-        ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hq
-      have h1 : upperTriGL n a hdiv B₁ = α * f (unipSL n a hdiv B₁) :=
-        upperTriGL_eq_diagMat_mul n a hdiv B₁
-      have h2 : upperTriGL n a hdiv B₂ = α * f (unipSL n a hdiv B₂) :=
-        upperTriGL_eq_diagMat_mul n a hdiv B₂
-      have hmem : upperTriGL n a hdiv B₁ * (upperTriGL n a hdiv B₂)⁻¹ ∈ H := by
-        suffices upperTriGL n a hdiv B₁ * (upperTriGL n a hdiv B₂)⁻¹ =
-            α * (f (unipSL n a hdiv B₁) * (f (unipSL n a hdiv B₂))⁻¹) * α⁻¹ by
-          rw [this]; exact hq
-        rw [h1, h2]; group
-      obtain ⟨γ, hγ⟩ := (MonoidHom.mem_range.mp (show _ ∈ f.range from hmem))
-      have h_eq : upperTriGL n a hdiv B₁ = f γ * upperTriGL n a hdiv B₂ := by
-        have hγ' : f γ = upperTriGL n a hdiv B₁ * (upperTriGL n a hdiv B₂)⁻¹ := hγ
-        rw [hγ', mul_assoc, inv_mul_cancel, mul_one]
-      exact upperTriMat_distinct_cosets n a hdiv B₁ B₂ hne (f γ) ⟨γ, rfl⟩ h_eq
-    calc Fintype.card (UpperTriRep n a hdiv)
-        ≤ Fintype.card (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
-          Fintype.card_le_of_injective injMap h_inj
-      _ = (ConjAct.toConjAct α⁻¹ • H).relIndex H := by
-          simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
+      (ConjAct.toConjAct α⁻¹ • H).relIndex H :=
+    upperTriRep_card_le_relIndex n a hdiv h_rel_ne
+  -- Step 2: relIndex of α⁻¹-conjugate = relIndex of α-conjugate (transpose symmetry)
   have h_S2 := relIndex_conj_inv_eq_conj_diag n a
+  -- Step 3: relIndex of α-conjugate = relIndex of δ-conjugate (δ = σ₁ · α · σ₂)
   have h_in_set : δ ∈ D.set := by
     rw [D.eql.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
   rw [show D.set = DoubleCoset.doubleCoset α ↑H ↑H from rfl,
@@ -306,9 +347,11 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ+) (hdiv : DivChain n a) :
     have := Subgroup.relIndex_pointwise_smul
       (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
     rw [h_smul_σ₁] at this; exact this.symm
+  -- Step 4: relIndex of δ-conjugate = T'_deg
   have h_def : T'_deg (GL_pair n) D =
       ↑((ConjAct.toConjAct δ • H).relIndex H) := by
     simp only [T'_deg]; rw [← Nat.card_eq_fintype_card]; rfl
+  -- Chain the inequalities
   calc (Fintype.card (UpperTriRep n a hdiv) : ℤ)
       ≤ ↑((ConjAct.toConjAct α⁻¹ • H).relIndex H) := by exact_mod_cast h_card_le
     _ = ↑((ConjAct.toConjAct α • H).relIndex H) := by exact_mod_cast h_S2
