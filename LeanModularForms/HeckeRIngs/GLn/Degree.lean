@@ -323,13 +323,10 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ+) (hdiv : DivChain n a) :
     (Subgroup.Commensurable.commensurator H).inv_mem h_α_comm
   have h_rel_ne : (ConjAct.toConjAct α⁻¹ • H).relIndex H ≠ 0 :=
     ((Subgroup.Commensurable.commensurator_mem_iff H α⁻¹).mp h_α_inv_comm).1
-  -- Step 1: card(UpperTriRep) ≤ relIndex of α⁻¹-conjugate
   have h_card_le : Fintype.card (UpperTriRep n a hdiv) ≤
       (ConjAct.toConjAct α⁻¹ • H).relIndex H :=
     upperTriRep_card_le_relIndex n a hdiv h_rel_ne
-  -- Step 2: relIndex of α⁻¹-conjugate = relIndex of α-conjugate (transpose symmetry)
   have h_S2 := relIndex_conj_inv_eq_conj_diag n a
-  -- Step 3: relIndex of α-conjugate = relIndex of δ-conjugate (δ = σ₁ · α · σ₂)
   have h_in_set : δ ∈ D.set := by
     rw [D.eql.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
   rw [show D.set = DoubleCoset.doubleCoset α ↑H ↑H from rfl,
@@ -347,11 +344,9 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ+) (hdiv : DivChain n a) :
     have := Subgroup.relIndex_pointwise_smul
       (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
     rw [h_smul_σ₁] at this; exact this.symm
-  -- Step 4: relIndex of δ-conjugate = T'_deg
   have h_def : T'_deg (GL_pair n) D =
       ↑((ConjAct.toConjAct δ • H).relIndex H) := by
     simp only [T'_deg]; rw [← Nat.card_eq_fintype_card]; rfl
-  -- Chain the inequalities
   calc (Fintype.card (UpperTriRep n a hdiv) : ℤ)
       ≤ ↑((ConjAct.toConjAct α⁻¹ • H).relIndex H) := by exact_mod_cast h_card_le
     _ = ↑((ConjAct.toConjAct α • H).relIndex H) := by exact_mod_cast h_S2
