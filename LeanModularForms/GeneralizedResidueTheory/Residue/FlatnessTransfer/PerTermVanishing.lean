@@ -50,11 +50,8 @@ theorem pv_higher_order_term_tendsto_zero
     (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ) (hm : 2 ≤ m)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hcross : γ.toFun t₀ = s)
     (h_unique : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = s → t = t₀)
-    -- Closed curve (needed: FTC boundary terms at a,b cancel)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
-    -- Flatness of order m at the crossing (from condition A)
     (h_flat : IsFlatOfOrder γ.toFun t₀ m)
-    -- Angle condition: (m-1) · α ∈ 2πℤ (from condition B)
     (h_angle : ∃ k : ℤ, ((m - 1 : ℕ) : ℝ) * _root_.angleAtCrossing γ t₀ ht₀ =
       ↑k * (2 * Real.pi)) :
     Tendsto (fun ε =>
@@ -62,30 +59,9 @@ theorem pv_higher_order_term_tendsto_zero
         (if ‖γ.toFun t - s‖ > ε
          then (γ.toFun t - s) ^ (-(m : ℤ)) * deriv γ.toFun t else 0))
     (𝓝[>] 0) (𝓝 0) := by
-  -- Proof roadmap (3 sub-goals):
-  --
-  -- SUB-GOAL A (exit time construction):
-  --   ∀ᶠ ε in 𝓝[>] 0, ∃ t_R ∈ Ioo t₀ γ.b, ∃ t_L ∈ Ioo γ.a t₀,
-  --     ‖γ(t_R) - s‖ = ε ∧ ‖γ(t_L) - s‖ = ε ∧
-  --     ∀ t ∈ Icc t_L t_R, ‖γ(t) - s‖ ≤ ε
-  --   Proof: IVT on ‖γ - s‖ (continuous, equals 0 at t₀, positive away from t₀)
-  --   + immersion ⇒ local injectivity ⇒ ‖γ - s‖ strictly monotone near t₀
-  --
-  -- SUB-GOAL B (FTC + closed curve):
-  --   cutoff integral = [(γ(t_L)-s)^{1-m} - (γ(t_R)-s)^{1-m}] / (1-m)
-  --   Proof: integral_zpow_comp_sub_mul_deriv (L1) on [a, t_L] and [t_R, b],
-  --   then hγ_closed gives F(a) = F(b), so exterior terms cancel.
-  --
-  -- SUB-GOAL C (boundary vanishing via L3):
-  --   zpow_boundary_diff_tendsto_zero with k = 1-m, n = m
-  --   - Angle condition: h_angle gives uR^{1-m} = uL^{1-m}
-  --   - Rate: IsFlatOfOrder → norm_sub_le_tangentDeviation_of_unit → L3 rate
-  --   - Exponent check: m + (1-m) = 1 ≥ 1 ✓
-  -- Step 1: Get infrastructure (exit times, directions, FTC reduction)
   obtain ⟨wR, wL, uR, uL, h_nR, h_nL, h_neR, h_neL, huR, huL,
     h_arg, h_rate_R, h_rate_L, h_eq⟩ :=
     cutoff_zpow_infrastructure γ s m hm t₀ ht₀ hcross h_unique hγ_closed h_flat
-  -- Step 2: Angle condition → zpow equality uR^{1-m} = uL^{1-m}
   have h_zpow : uR ^ (1 - (m : ℤ)) = uL ^ (1 - (m : ℤ)) := by
     apply unit_zpow_eq_of_angle_multiple _ _ _ huR huL
     obtain ⟨n_a, h_n_a⟩ := h_arg
@@ -93,18 +69,15 @@ theorem pv_higher_order_term_tendsto_zero
     have h1m : 1 ≤ m := by omega
     refine ⟨-j + (1 - (m : ℤ)) * n_a, ?_⟩
     push_cast [Nat.cast_sub h1m] at hj h_n_a ⊢
-    -- Expand (1-m)*(angle + n_a*2π) using h_n_a, then use hj for the angle term
     have h_expand : (1 - (m : ℝ)) * (arg uR - arg uL) =
         (1 - (m : ℝ)) * _root_.angleAtCrossing γ t₀ ht₀ +
         (1 - (m : ℝ)) * ((n_a : ℝ) * (2 * Real.pi)) := by
       rw [h_n_a]; ring
     linarith
-  -- Step 3: L3 → boundary zpow diff → 0
   have h_L3 : Tendsto (fun ε => wR ε ^ (1 - (m : ℤ)) - wL ε ^ (1 - (m : ℤ)))
       (𝓝[>] 0) (𝓝 0) :=
     zpow_boundary_diff_tendsto_zero (1 - (m : ℤ)) (by omega) wR wL
       h_nR h_nL h_neR h_neL uR uL huR huL h_zpow m (by omega) h_rate_R h_rate_L
-  -- Step 4: Divide by (1-m) → boundary terms / (1-m) → 0
   have h_bdy : Tendsto
       (fun ε => (wL ε ^ (1 - (m : ℤ)) - wR ε ^ (1 - (m : ℤ))) /
         ((1 : ℂ) - ↑(m : ℤ)))
@@ -112,7 +85,6 @@ theorem pv_higher_order_term_tendsto_zero
     have h1 := h_L3.neg.div_const ((1 : ℂ) - ↑(m : ℤ))
     simp only [neg_zero, zero_div] at h1
     exact Tendsto.congr (fun ε => by ring) h1
-  -- Step 5: Transfer via eventual equality from infrastructure
   exact Tendsto.congr' (h_eq.mono fun ε h => h.symm) h_bdy
 
 /-- The CPV integrand of any function is pointwise bounded by
@@ -145,7 +117,6 @@ private theorem circleIntegral_laurent_term (s : ℂ) (r : ℝ) (hr_pos : 0 < r)
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
   have hs_not : s ∉ Metric.sphere s r := by
     simp [hr_ne.symm]
-  -- Rewrite as c * ∮ (z-s)^{-(k+1)}
   have h_eq : Set.EqOn (fun z => c / (z - s) ^ (k + 1))
       (fun z => c * (z - s) ^ (-(↑(k + 1) : ℤ))) (Metric.sphere s r) := by
     intro z _
@@ -174,7 +145,6 @@ private theorem circleIntegral_laurent_sum (s : ℂ) (r : ℝ) (hr_pos : 0 < r)
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
   have hs_not : s ∉ Metric.sphere s r := by
     simp [hr_ne.symm]
-  -- Each term is circle-integrable (continuous on sphere, since s ∉ sphere)
   have h_ci_term : ∀ k : Fin N,
       CircleIntegrable (fun z => a k / (z - s) ^ (k.val + 1)) s r := by
     intro k
@@ -183,7 +153,6 @@ private theorem circleIntegral_laurent_sum (s : ℂ) (r : ℝ) (hr_pos : 0 < r)
     · exact (continuousOn_id.sub continuousOn_const).pow _
     · intro z hz
       exact pow_ne_zero _ (sub_ne_zero.mpr (ne_of_mem_of_not_mem hz hs_not))
-  -- Push the integral through the sum
   have h_push : (∮ z in C(s, r), ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) =
       ∑ k : Fin N, (∮ z in C(s, r), a k / (z - s) ^ (k.val + 1)) := by
     unfold circleIntegral
@@ -202,7 +171,6 @@ private theorem circleIntegral_laurent_sum (s : ℂ) (r : ℝ) (hr_pos : 0 < r)
     intro i _
     exact (h_ci_term i).out
   rw [h_push]
-  -- Evaluate each term using circleIntegral_laurent_term
   rw [show (∑ k : Fin N, (∮ z in C(s, r), a k / (z - s) ^ (k.val + 1))) =
       ∑ k : Fin N, if k.val = 0 then a k * (2 * ↑Real.pi * I) else 0
     from Finset.sum_congr rfl (fun k _ => circleIntegral_laurent_term s r hr_pos (a k) k.val)]
@@ -232,12 +200,9 @@ theorem residueAt_eq_laurent_head_coeff (f : ℂ → ℂ) (s : ℂ)
     residueAt f s = a ⟨0, hN⟩ := by
   unfold residueAt
   apply Filter.Tendsto.limUnder_eq
-  -- Get a ball where g is analytic (hence differentiable and continuous)
   obtain ⟨rg, hrg_pos, hg_ball⟩ := hg.exists_ball_analyticOnNhd
-  -- Get a punctured ball where hf_eq holds
   rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hf_eq
   obtain ⟨rf, hrf_pos, hrf_eq⟩ := hf_eq
-  -- For r < min(rg, rf), the circle is inside both balls
   have hr₀_pos : 0 < min rg rf := lt_min hrg_pos hrf_pos
   apply tendsto_nhds_of_eventually_eq
   rw [eventually_nhdsWithin_iff]
@@ -247,7 +212,6 @@ theorem residueAt_eq_laurent_head_coeff (f : ℂ → ℂ) (s : ℂ)
   have hr_lt_rg : r < rg := lt_of_lt_of_le hr_lt (min_le_left _ _)
   have hr_lt_rf : r < rf := lt_of_lt_of_le hr_lt (min_le_right _ _)
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
-  -- f = g + Σ_k a(k)/(z-s)^{k+1} on sphere s r (all points ≠ s)
   have h_eq_on : Set.EqOn f
       (fun z => g z + ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) (Metric.sphere s r) := by
     intro z hz
@@ -256,12 +220,10 @@ theorem residueAt_eq_laurent_head_coeff (f : ℂ → ℂ) (s : ℂ)
     have h_in : dist z s < rf := by
       rw [Metric.mem_sphere.mp hz]; exact hr_lt_rf
     exact hrf_eq ⟨Metric.mem_ball.mpr h_in, Set.mem_compl_singleton_iff.mpr h_ne⟩
-  -- CircleIntegrable for g
   have h_g_cont : ContinuousOn g (Metric.closedBall s r) :=
     hg_ball.continuousOn.mono (Metric.closedBall_subset_ball hr_lt_rg)
   have h_ci_g : CircleIntegrable g s r :=
     (h_g_cont.mono Metric.sphere_subset_closedBall).circleIntegrable hr_pos.le
-  -- CircleIntegrable for the sum (each term is continuous on sphere since s ∉ sphere)
   have hs_not : s ∉ Metric.sphere s r := by simp [hr_ne.symm]
   have h_ci_sum : CircleIntegrable
       (fun z => ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) s r := by
@@ -272,18 +234,15 @@ theorem residueAt_eq_laurent_head_coeff (f : ℂ → ℂ) (s : ℂ)
     · exact (continuousOn_id.sub continuousOn_const).pow _
     · intro z hz
       exact pow_ne_zero _ (sub_ne_zero.mpr (ne_of_mem_of_not_mem hz hs_not))
-  -- ∮ f = ∮ g + ∮ Σ_k a(k)/(z-s)^{k+1}
   have h_int_eq : (∮ z in C(s, r), f z) =
       (∮ z in C(s, r), g z) +
       (∮ z in C(s, r), ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) := by
     rw [circleIntegral.integral_congr hr_pos.le h_eq_on,
       circleIntegral.integral_add h_ci_g h_ci_sum]
-  -- ∮ g = 0 by Cauchy
   have h_g_zero : (∮ z in C(s, r), g z) = 0 :=
     circleIntegral_eq_zero_of_differentiable_on_off_countable hr_pos.le
       Set.countable_empty h_g_cont
       (fun z ⟨hz, _⟩ => (hg_ball z (Metric.ball_subset_ball hr_lt_rg.le hz)).differentiableAt)
-  -- Combine: (2πi)⁻¹ * ∮ f = (2πi)⁻¹ * (a₀ * 2πi) = a₀
   rw [h_int_eq, h_g_zero, zero_add, circleIntegral_laurent_sum s r hr_pos N hN a]
   have h2pi_ne : (2 : ℂ) * ↑Real.pi * I ≠ 0 :=
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero)) I_ne_zero
@@ -433,17 +392,11 @@ private lemma aesm_diff_single_multi_cpv_zpow
       (volume.restrict (({t | ε < ‖γ.toFun t - s‖} \
         {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b)) :=
     h_base_aesm.mono_measure (Measure.restrict_mono hSG_sub le_rfl)
-  -- indicator of AESm function; the indicator is 0 outside diff ∩ Icc.
-  -- Use StronglyMeasurable zero + piecewise.
-  -- On diff ∩ Icc, base function is AESm (from h1).
-  -- Outside, indicator = 0, which is strongly measurable.
-  -- So the indicator is AESm on any measure.
   have h_zero : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
       (volume.restrict (({t | ε < ‖γ.toFun t - s‖} \
         {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b)ᶜ) :=
     aestronglyMeasurable_const
   have h_pw := AEStronglyMeasurable.piecewise hSG_meas h1 h_zero
-  -- h_pw is AESm on volume, beta-reducing the lambda
   apply (h_pw.mono_measure Measure.restrict_le_self).congr
   filter_upwards with t
   simp only [Set.piecewise, Set.indicator]
@@ -470,12 +423,7 @@ theorem multipoint_pv_zpow_tendsto_zero
       ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t)
     (𝓝[>] 0) (𝓝 0) := by
-  -- =========================================================================
-  -- Strategy: The single-point CPV integral → 0 is proved. We show the multi-
-  -- point integral differs by a term that also → 0 (by DCT on the difference).
-  -- =========================================================================
   set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
-  -- The single-point CPV → 0
   have h_single : Tendsto (fun ε =>
       ∫ t in γ.a..γ.b,
         (if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0))
@@ -483,10 +431,6 @@ theorem multipoint_pv_zpow_tendsto_zero
     pv_higher_order_term_tendsto_zero γ s m hm t₀ ht₀ hcross h_unique
       hγ_closed h_flat h_angle
   obtain ⟨Mγ', hMγ'⟩ := piecewiseC1Immersion_deriv_bounded γ
-  -- =========================================================================
-  -- Integrability helper: both integrands are bounded for fixed ε > 0.
-  -- =========================================================================
-  -- Helper: zpow norm bound for ‖γ(t)-s‖ > ε with t ∈ Icc
   have h_zpow_bound : ∀ ε : ℝ, 0 < ε → ∀ t ∈ Icc γ.a γ.b,
       ‖γ.toFun t - s‖ > ε →
       ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖ ≤ ε⁻¹ ^ m * (|Mγ'| + 1) := by
@@ -503,18 +447,11 @@ theorem multipoint_pv_zpow_tendsto_zero
               (le_add_of_nonneg_right one_pos.le)
           · exact norm_nonneg _
           · positivity
-  -- Integrability: for fixed ε > 0, both integrands are bounded on [a,b]
-  -- and piecewise continuous (hence AEStronglyMeasurable), so integrable.
-  -- Integrability: for fixed ε > 0, the CPV integrand of f_zpow is bounded and
-  -- piecewise continuous (off the finite partition ∪ crossing boundary), hence
-  -- interval integrable. The bound is ε⁻¹^m * (|Mγ'| + 1).
-  -- (The AEStronglyMeasurable argument uses piecewise continuity off a finite set.)
   have h_single_int : ∀ ε : ℝ, 0 < ε →
       IntervalIntegrable
         (fun t => if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)
         volume γ.a γ.b := by
     intro ε hε
-    -- Rewrite as CPV integrand for the singleton {s}
     have h_eq : (fun t => if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
         (fun t => cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) := by
       ext t; rw [cauchyPrincipalValueIntegrandOn_singleton]
@@ -522,17 +459,12 @@ theorem multipoint_pv_zpow_tendsto_zero
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
     refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
     refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
-    · -- The CPV integrand is 0 inside the ε-ball around s (where f_zpow has a pole),
-      -- and equals f_zpow(γ(t)) * γ'(t) outside. Off the partition, both f_zpow ∘ γ
-      -- and γ' are continuous, making the integrand piecewise continuous hence measurable.
-      have h_aesm_if : AEStronglyMeasurable
+    · have h_aesm_if : AEStronglyMeasurable
           (fun t => if ε < ‖γ.toFun t - s‖ then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)
           (volume.restrict (Icc γ.a γ.b)) := by
         apply aEStronglyMeasurable_pv_integrand_piecewiseC1
           (P := γ.partition) (z₀ := s)
-        · -- f_zpow = (z-s)^{-m} is continuous on image \ ball s ε
-          -- since on image \ ball s ε, z ≠ s (as ‖z-s‖ ≥ ε > 0), so z-s ≠ 0
-          intro z ⟨_, hz_not_ball⟩
+        · intro z ⟨_, hz_not_ball⟩
           have hz_ne : z ≠ s := by
             intro heq; exact hz_not_ball (by rw [Metric.mem_ball, heq, dist_self]; exact hε)
           exact ((continuousAt_id.sub continuousAt_const).zpow₀ (-(m : ℤ))
@@ -561,9 +493,7 @@ theorem multipoint_pv_zpow_tendsto_zero
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
     refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
     refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
-    · -- Multi-point CPV integrand: piecewise 0 / f_zpow*γ' on measurable partition
-      -- GoodSet = {t | ∀ s' ∈ S0, ε < ‖γ t - s'‖}
-      let GoodSet := {t : ℝ | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}
+    · let GoodSet := {t : ℝ | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}
       have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc γ.a γ.b) := by
         have h_eq : GoodSet ∩ Icc γ.a γ.b =
             Icc γ.a γ.b \ ({t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b) := by
@@ -586,14 +516,11 @@ theorem multipoint_pv_zpow_tendsto_zero
           · intro ⟨ht, h_not⟩; exact ⟨not_lt.mp (fun h => (h_not h) ht), ht⟩
         rw [this]; exact isClosed_Icc.measurableSet.diff
           (measurableSet_norm_gt_Icc ε (γ.toPiecewiseC1Curve.continuous_toFun.sub continuousOn_const))
-      -- f_zpow ∘ γ is continuous on GoodSet ∩ Icc (γ(t) avoids s there)
       have hfγ_cont_good : ContinuousOn (fun t => f_zpow (γ.toFun t))
           (GoodSet ∩ Icc γ.a γ.b) := by
-        -- f_zpow = (z-s)^{-m} is continuous on {z | z ≠ s}
         have hf_cont : ContinuousOn f_zpow {z : ℂ | z - s ≠ 0} :=
           ContinuousOn.zpow₀ (continuousOn_id.sub continuousOn_const) (-(m : ℤ))
             (fun z hz => Or.inl hz)
-        -- On GoodSet ∩ Icc, γ(t) is far from s (dist > ε > 0), hence z - s ≠ 0
         have h_maps : Set.MapsTo γ.toFun (GoodSet ∩ Icc γ.a γ.b) {z | z - s ≠ 0} := by
           intro t ⟨ht_good, _⟩
           exact sub_ne_zero.mpr (fun heq => by
@@ -632,15 +559,11 @@ theorem multipoint_pv_zpow_tendsto_zero
       split_ifs with h
       · simp only [norm_zero]; positivity
       · push_neg at h; exact h_zpow_bound ε hε t ht (h s hs)
-  -- =========================================================================
-  -- Reduce to showing the difference integral → 0
-  -- =========================================================================
   suffices h_diff : Tendsto (fun ε =>
       ∫ t in γ.a..γ.b,
         ((if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) -
          cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t))
       (𝓝[>] 0) (𝓝 0) by
-    -- ∫ multi = ∫ single - ∫ (single - multi), and both → 0
     have h_eventually_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
         ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t =
         (∫ t in γ.a..γ.b,
@@ -655,14 +578,10 @@ theorem multipoint_pv_zpow_tendsto_zero
     have h_sub := h_single.sub h_diff
     simp only [sub_self] at h_sub
     exact h_sub.congr' (h_eventually_eq.mono fun ε h => h.symm)
-  -- =========================================================================
-  -- Show the difference integral → 0 by DCT.
-  -- =========================================================================
   have h_int_zero : ∫ t in γ.a..γ.b, (0 : ℂ) = 0 := by simp
   rw [← h_int_zero]
   by_cases hS0_single : S0 = {s}
-  · -- Case 1: S0 = {s}. Difference is identically 0.
-    apply tendsto_const_nhds.congr'
+  · apply tendsto_const_nhds.congr'
     filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
     rw [h_int_zero]; symm
     calc ∫ t in γ.a..γ.b,
@@ -672,8 +591,7 @@ theorem multipoint_pv_zpow_tendsto_zero
           congr 1; ext t
           rw [hS0_single, cauchyPrincipalValueIntegrandOn_singleton]; ring_nf
       _ = 0 := by simp
-  · -- Case 2: S0 has other points.
-    have hS0_ne : S0.Nonempty := ⟨s, hs⟩
+  · have hS0_ne : S0.Nonempty := ⟨s, hs⟩
     let δ_sep := (S0.erase s).inf' (by
       exact (Finset.erase_nonempty hs).mpr
         ((Finset.nontrivial_iff_ne_singleton hs).mpr hS0_single))
@@ -684,11 +602,9 @@ theorem multipoint_pv_zpow_tendsto_zero
       exact norm_pos_iff.mpr (sub_ne_zero.mpr (ne_of_mem_erase hs').symm)
     set Bd : ℝ := (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) with hBd_def
     apply intervalIntegral.tendsto_integral_filter_of_dominated_convergence (fun _ => Bd)
-    -- (a) AEStronglyMeasurable for the difference function
     · filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
       simp only [intervalIntegral.integral_zero]
       exact aesm_diff_single_multi_cpv_zpow S0 γ s m hs ε hε
-    -- (b) Domination
     · filter_upwards [Ioo_mem_nhdsGT (show (0 : ℝ) < δ_sep / 2 by linarith)]
         with ε hε
       apply ae_of_all; intro t ht
@@ -726,12 +642,9 @@ theorem multipoint_pv_zpow_tendsto_zero
       · rw [if_neg h_multi_cut]
         by_cases h_single_cut : ‖γ.toFun t - s‖ > ε
         · rw [if_pos h_single_cut]; norm_num; positivity
-        · -- Impossible: no s'∈S0 is ε-close, but s∈S0 and ‖γ(t)-s‖ ≤ ε
-          push_neg at h_single_cut h_multi_cut
+        · push_neg at h_single_cut h_multi_cut
           exact absurd (h_multi_cut s hs) (not_lt.mpr h_single_cut)
-    -- (c) Constant bound is integrable
     · exact intervalIntegrable_const
-    -- (d) Pointwise a.e. convergence to 0
     · have h_preimage_finite : (⋃ s' ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s'}).Finite :=
         Set.Finite.biUnion S0.finite_toSet (fun s' _ => finite_crossings γ s')
       have h_preimage_null :
@@ -784,9 +697,6 @@ theorem holomorphic_cpv_tendsto_zero_on_convex
       ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t)
     (𝓝[>] 0) (𝓝 0) := by
-  -- ===================================================================
-  -- Infrastructure: continuity, integrability, bounds
-  -- ===================================================================
   have hγ_cont := γ.toPiecewiseC1Curve.continuous_toFun
   have hγ'_bdd := piecewiseC1Immersion_deriv_bounded γ
   have hg_cont_U : ContinuousOn g U := hg.continuousOn
@@ -812,9 +722,6 @@ theorem holomorphic_cpv_tendsto_zero_on_convex
       rcases ht_endpoint with rfl | rfl
       · exact (ht_notP γ.toPiecewiseC1Curve.endpoints_in_partition.1).elim
       · exact (ht_notP γ.toPiecewiseC1Curve.endpoints_in_partition.2).elim
-  -- ===================================================================
-  -- Step 1: Ordinary contour integral = 0 (Cauchy on convex U)
-  -- ===================================================================
   have hU_ne : U.Nonempty :=
     ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr (le_of_lt γ.hab))⟩
   obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne hg
@@ -836,22 +743,13 @@ theorem holomorphic_cpv_tendsto_zero_on_convex
       h_countable h_Fγ_cont h_deriv' h_ord_int
     rw [h_ftc, Function.comp_apply, Function.comp_apply,
       (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self]
-  -- ===================================================================
-  -- Step 2: DCT — CPV integrand → ordinary integrand a.e., limit = 0.
-  -- The preimage γ⁻¹(S0) ∩ [a,b] is finite (finite_crossings), hence null.
-  -- For a.e. t, γ(t) ∉ S0, so the CPV integrand eventually equals the ordinary one.
-  -- ===================================================================
   rw [← h_ord_zero]
-  -- The preimage of S0 under γ in [a,b] is finite.
   have h_preimage_finite : (⋃ s ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s}).Finite :=
     Set.Finite.biUnion S0.finite_toSet (fun s _ => finite_crossings γ s)
   have h_preimage_null : volume (⋃ s ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s}) = 0 :=
     h_preimage_finite.measure_zero _
-  -- For a.e. t, γ(t) ∉ S0 (the bad set has measure zero)
   have h_ae_not_in_S0 : ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
       ∀ s ∈ S0, γ.toFun t ≠ s := by
-    have h_bad_null : volume (⋃ s ∈ S0,
-        {t ∈ Icc γ.a γ.b | γ.toFun t = s}) = 0 := h_preimage_null
     rw [Filter.eventually_iff, mem_ae_iff]
     refine le_antisymm ?_ (zero_le _)
     calc volume {t | ¬(t ∈ Ι γ.a γ.b → ∀ s ∈ S0, γ.toFun t ≠ s)}
@@ -862,32 +760,26 @@ theorem holomorphic_cpv_tendsto_zero_on_convex
             have h1 := Set.uIoc_of_le γ.hab.le ▸ ht_in
             exact Set.Ioc_subset_Icc_self h1
           exact Set.mem_biUnion hs ⟨ht_Icc, hts⟩
-      _ = 0 := h_bad_null
+      _ = 0 := h_preimage_null
   exact intervalIntegral.tendsto_integral_filter_of_dominated_convergence
     (fun t => ‖g (γ.toFun t) * deriv γ.toFun t‖)
-    -- (a) AEStronglyMeasurable for each ε > 0 (from integrability)
     (by filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
         have h_int := intervalIntegrable_cauchyPrincipalValueIntegrandOn (S0 := S0)
           hε hg_cont_image
         rw [intervalIntegrable_iff] at h_int
         exact h_int.aestronglyMeasurable)
-    -- (b) Domination: ‖CPV integrand‖ ≤ ‖g(γ(t)) * γ'(t)‖
     (by filter_upwards [self_mem_nhdsWithin] with ε (_hε : (0 : ℝ) < ε)
         apply ae_of_all; intro t ht
         simp only [cauchyPrincipalValueIntegrandOn]
         split_ifs
         · simp only [norm_zero]; exact norm_nonneg _
         · exact le_refl _)
-    -- (c) Dominating function is integrable
     h_ord_int.norm
-    -- (d) Pointwise a.e. convergence: for a.e. t, CPV → ordinary.
     (by filter_upwards [h_ae_not_in_S0] with t h_not_in ht_in
         simp only [cauchyPrincipalValueIntegrandOn]
         have h_not_in' := h_not_in ht_in
-        -- γ(t) ≠ s for all s ∈ S0, so for small enough ε, condition is false.
         by_cases hS0_empty : S0 = ∅
-        · -- S0 empty: condition is vacuously false.
-          have : ∀ ε, ¬∃ s ∈ S0, ‖γ.toFun t - s‖ ≤ ε := by
+        · have : ∀ ε, ¬∃ s ∈ S0, ‖γ.toFun t - s‖ ≤ ε := by
             intro ε h_ex; obtain ⟨s, hs, _⟩ := h_ex
             exact absurd hs (hS0_empty ▸ Finset.notMem_empty s)
           apply tendsto_const_nhds.congr'
@@ -947,10 +839,8 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
     (ε : ℝ) (hε : 0 < ε) :
     IntervalIntegrable
       (cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε) volume γ.a γ.b := by
-  -- Step 1: Set up the safe zone and bounds
   have hγ_cont := γ.toPiecewiseC1Curve.continuous_toFun
   obtain ⟨Mγ', hMγ'⟩ := piecewiseC1Immersion_deriv_bounded γ
-  -- The safe image: γ(Icc) ∩ {z | ∀ s ∈ S0, ε ≤ ‖z-s‖}
   have h_compact_image : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
     isCompact_Icc.image_of_continuousOn hγ_cont
   have h_safe_closed : IsClosed ({z : ℂ | ∀ s ∈ S0, ε ≤ ‖z - s‖}) := by
@@ -968,7 +858,6 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
       have h1 := hz_safe (γ.toFun t) (Finset.mem_coe.mp hzS0)
       simp only [sub_self, norm_zero] at h1; linarith⟩
   obtain ⟨Mg, hMg⟩ := h_safe_compact.exists_bound_of_continuousOn (hg_cont.mono h_safe_sub)
-  -- Step 2: Bound the CPV integrand
   have h_bound : ∀ t ∈ Icc γ.a γ.b,
       ‖cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t‖ ≤ |Mg| * |Mγ'| + 1 := by
     intro t ht
@@ -985,15 +874,8 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
             · exact norm_nonneg _
             · positivity
         _ ≤ |Mg| * |Mγ'| + 1 := le_add_of_nonneg_right one_pos.le
-  -- Step 3: AEStronglyMeasurable + IntegrableOn → IntervalIntegrable
-  -- The CPV integrand is piecewise: 0 on the closed condition set, and
-  -- g(γ(t))*γ'(t) on its complement. The product g(γ(·))*γ'(·) is continuous
-  -- on Icc \ (partition ∪ crossings) (a finite set), hence ae strongly measurable.
-  -- The piecewise of 0 and this product on a measurable partition is ae measurable.
-  -- This follows the pattern of Proposition2_2.lean (intervalIntegrable_cutoff_inv_mul).
   set cpv_fn := cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε
   have h_cpv_aesm : AEStronglyMeasurable cpv_fn (volume.restrict (Icc γ.a γ.b)) := by
-    -- Piecewise measurability: GoodSet = {t | ∀ s ∈ S0, ε < ‖γ t - s‖}
     let GoodSet := {t : ℝ | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}
     have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc γ.a γ.b) := by
       have h_eq : GoodSet ∩ Icc γ.a γ.b =
@@ -1017,7 +899,6 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
         · intro ⟨ht, h_not⟩; exact ⟨not_lt.mp (fun h => (h_not h) ht), ht⟩
       rw [this]; exact isClosed_Icc.measurableSet.diff
         (measurableSet_norm_gt_Icc ε (hγ_cont.sub continuousOn_const))
-    -- g ∘ γ is continuous on GoodSet ∩ Icc (γ(t) ∈ U \ S0 there)
     have hgγ_cont_good : ContinuousOn (fun t => g (γ.toFun t))
         (GoodSet ∩ Icc γ.a γ.b) := by
       apply ContinuousOn.comp (hg_cont.mono h_safe_sub) (hγ_cont.mono inter_subset_right)
@@ -1076,9 +957,6 @@ theorem tendsto_cpv_of_continuousOn_zero_integral
     (h_integral_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0) :
     Tendsto (fun ε => ∫ t in γ.a..γ.b,
       cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
-  -- ===================================================================
-  -- Infrastructure
-  -- ===================================================================
   have hγ_cont := γ.toPiecewiseC1Curve.continuous_toFun
   have hγ'_bdd := piecewiseC1Immersion_deriv_bounded γ
   have hgγ_cont : ContinuousOn (fun t => g (γ.toFun t)) (Set.uIcc γ.a γ.b) := by
@@ -1088,13 +966,7 @@ theorem tendsto_cpv_of_continuousOn_zero_integral
       MeasureTheory.volume γ.a γ.b :=
     (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ'_bdd).continuousOn_mul
       hgγ_cont
-  -- ===================================================================
-  -- The ordinary integral = 0
-  -- ===================================================================
   rw [← h_integral_zero]
-  -- ===================================================================
-  -- DCT argument: CPV integrand → ordinary integrand a.e.
-  -- ===================================================================
   have h_preimage_finite : (⋃ s ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s}).Finite :=
     Set.Finite.biUnion S0.finite_toSet (fun s _ => finite_crossings γ s)
   have h_preimage_null : volume (⋃ s ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s}) = 0 :=
@@ -1111,21 +983,17 @@ theorem tendsto_cpv_of_continuousOn_zero_integral
       _ = 0 := h_preimage_null
   exact intervalIntegral.tendsto_integral_filter_of_dominated_convergence
     (fun t => ‖g (γ.toFun t) * deriv γ.toFun t‖)
-    -- (a) AEStronglyMeasurable
     (by filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
         have h_int := intervalIntegrable_cauchyPrincipalValueIntegrandOn (S0 := S0) hε hg_cont
         rw [intervalIntegrable_iff] at h_int
         exact h_int.aestronglyMeasurable)
-    -- (b) Domination
     (by filter_upwards [self_mem_nhdsWithin] with ε (_hε : (0 : ℝ) < ε)
         apply ae_of_all; intro t ht
         simp only [cauchyPrincipalValueIntegrandOn]
         split_ifs
         · simp only [norm_zero]; exact norm_nonneg _
         · exact le_refl _)
-    -- (c) Dominating function integrable
     h_ord_int.norm
-    -- (d) Pointwise a.e. convergence
     (by filter_upwards [h_ae_not_in_S0] with t h_not_in ht_in
         simp only [cauchyPrincipalValueIntegrandOn]
         have h_not_in' := h_not_in ht_in
@@ -1166,12 +1034,9 @@ This is because `residueAt` is defined via circle integrals, and two functions t
 agree on a punctured neighborhood have the same circle integrals for small radii. -/
 private lemma residueAt_congr {f g : ℂ → ℂ} {s : ℂ}
     (h : f =ᶠ[𝓝[≠] s] g) : residueAt f s = residueAt g s := by
-  -- f and g agree on a punctured ball B(s,δ)\{s}. For 0 < r < δ, f = g on sphere(s,r).
-  -- So ∮ f = ∮ g on C(s,r) for small r. Hence the limUnder (residueAt) values agree.
   have h_mem : {z | f z = g z} ∈ 𝓝[≠] s := h
   rw [Metric.mem_nhdsWithin_iff] at h_mem
   obtain ⟨δ, hδ_pos, hδ_eq⟩ := h_mem
-  -- Circle integrals of f and g agree for r < δ.
   have h_ci_eq : ∀ r, 0 < r → r < δ →
       (∮ z in C(s, r), f z) = (∮ z in C(s, r), g z) := by
     intro r hr_pos hr_lt
@@ -1181,14 +1046,11 @@ private lemma residueAt_congr {f g : ℂ → ℂ} {s : ℂ}
       intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; linarith
     exact hδ_eq ⟨Metric.mem_ball.mpr (by rw [Metric.mem_sphere.mp hz]; exact hr_lt),
       Set.mem_compl_singleton_iff.mpr hne⟩
-  -- residueAt = limUnder = lim ∘ map. Use congr_arg lim (Filter.map_congr ...).
   show limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
     limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), g z)
   unfold limUnder
   congr 1
   apply Filter.map_congr
-  -- Need: eventually on 𝓝[>] 0, the two expressions agree.
-  -- They agree for r ∈ (0, δ), and Ioo 0 δ ∈ 𝓝[>] 0.
   apply Filter.Eventually.mono (Ioo_mem_nhdsGT hδ_pos)
   intro r ⟨hr_pos, hr_lt⟩
   simp only
@@ -1209,13 +1071,8 @@ lemma residueAt_sub_residueSum_eq_zero
     (S0 : Finset ℂ) (f : ℂ → ℂ) (s : ℂ) (hs : s ∈ S0)
     (hMero : MeromorphicAt f s) :
     residueAt (fun z => f z - ∑ s' ∈ S0, residueAt f s' / (z - s')) s = 0 := by
-  -- Strategy overview:
-  -- 1. For small r, show ∮ (f - sum) = ∮ f - res(f,s)*2πi using linearity + Cauchy.
-  -- 2. Show ∮ f is constant for small r using the annulus homotopy.
-  -- 3. Conclude (2πi)⁻¹ * ∮ f - res(f,s) = 0 eventually, hence the limit is 0.
   unfold residueAt
   apply Filter.Tendsto.limUnder_eq
-  -- Minimum distance from s to other points in S0.
   have h_min_dist : ∃ δ > 0, ∀ s' ∈ S0, s' ≠ s → δ ≤ dist s' s := by
     by_cases h_other : ∃ s' ∈ S0, s' ≠ s
     · obtain ⟨s', hs', hne⟩ := h_other
@@ -1227,7 +1084,6 @@ lemma residueAt_sub_residueSum_eq_zero
     · push_neg at h_other
       exact ⟨1, one_pos, fun s' hs' hne' => absurd (h_other s' hs') hne'⟩
   obtain ⟨δ, hδ_pos, hδ_sep⟩ := h_min_dist
-  -- f is analytic in a punctured neighborhood of s.
   have hf_ev_analytic := hMero.eventually_analyticAt
   rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hf_ev_analytic
   obtain ⟨rf, hrf_pos, hrf_analytic⟩ := hf_ev_analytic
@@ -1235,59 +1091,37 @@ lemma residueAt_sub_residueSum_eq_zero
   have hρ_pos : 0 < ρ := lt_min hδ_pos hrf_pos
   have h2piI_ne : (2 : ℂ) * ↑Real.pi * I ≠ 0 :=
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero)) I_ne_zero
-  -- Key fact: ∮ f is constant for 0 < r < rf, by the annulus homotopy.
-  -- Define F(z) := (z-s) * f(z). On any annulus {r < |z-s| < R} within ball(s,rf),
-  -- F is analytic (f is analytic away from s). The annulus homotopy gives
-  -- ∮_{C(s,r)} (z-s)⁻¹ • F = ∮_{C(s,R)} (z-s)⁻¹ • F, i.e., ∮_{C(s,r)} f = ∮_{C(s,R)} f.
-  -- So ∮ f is constant, and the limit defining residueAt equals that constant.
-  --
-  -- We show: for small r, (2πi)⁻¹ * ∮ (f - sum) = (2πi)⁻¹ * ∮ f - res(f,s), and
-  -- this is eventually 0 (since ∮ f is eventually equal to res(f,s) * 2πi).
-  --
-  -- Concretely, fix R₀ = ρ/2. For r < R₀, ∮_{C(s,r)} f = ∮_{C(s,R₀)} f by homotopy.
-  -- Hence (2πi)⁻¹ * ∮ f = (2πi)⁻¹ * ∮_{C(s,R₀)} f =: C (a constant).
-  -- residueAt f s = limUnder(nhds>0)(fun r => C) = C.
-  -- So our expression = C - C = 0.
   set R₀ := ρ / 2 with hR₀_def
   have hR₀_pos : 0 < R₀ := by positivity
   have hR₀_lt_ρ : R₀ < ρ := by linarith
   have hR₀_lt_δ : R₀ < δ := lt_of_lt_of_le hR₀_lt_ρ (min_le_left _ _)
   have hR₀_lt_rf : R₀ < rf := lt_of_lt_of_le hR₀_lt_ρ (min_le_right _ _)
   have hR₀_ne : R₀ ≠ 0 := ne_of_gt hR₀_pos
-  -- Helper: f analytic at z ∈ ball(s, rf) \ {s}
   have hf_analytic_at : ∀ z, z ∈ Metric.ball s rf → z ≠ s → AnalyticAt ℂ f z := by
     intro z hz hne
     exact hrf_analytic ⟨hz, Set.mem_compl_singleton_iff.mpr hne⟩
-  -- Helper: f continuous on sphere(s, r) for 0 < r < rf
   have hf_cont_sphere : ∀ r, 0 < r → r < rf → ContinuousOn f (Metric.sphere s r) := by
     intro r hr_pos hr_lt z hz
     exact (hf_analytic_at z (by rwa [Metric.mem_ball, Metric.mem_sphere.mp hz])
       (by intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; linarith)).continuousAt.continuousWithinAt
-  -- Helper: (z-s)⁻¹ • [(z-s) * f(z)] = f(z) on sphere (z ≠ s)
   have h_inv_smul : ∀ r (hr_ne : r ≠ 0),
       Set.EqOn (fun z => (z - s)⁻¹ • ((z - s) * f z)) f (Metric.sphere s r) := by
     intro r hr_ne z hz
     have h_ne : z ≠ s := by intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; exact hr_ne hz.symm
     simp only [smul_eq_mul, inv_mul_cancel_left₀ (sub_ne_zero.mpr h_ne)]
-  -- Annulus homotopy: ∮_{C(s,r)} f = ∮_{C(s,R₀)} f for 0 < r ≤ R₀
   have h_const_integral : ∀ r, 0 < r → r ≤ R₀ →
       (∮ z in C(s, r), f z) = (∮ z in C(s, R₀), f z) := by
     intro r hr_pos hr_le
-    -- Use circleIntegral_sub_center_inv_smul_eq_of_differentiable_on_annulus_off_countable
-    -- with F(z) = (z-s) * f(z) on the annulus r ≤ |z-s| ≤ R₀.
     set F : ℂ → ℂ := fun z => (z - s) * f z with hF_def
-    -- F is analytic at z ≠ s in ball(s, rf)
     have hF_analytic : ∀ z, z ∈ Metric.ball s rf → z ≠ s → AnalyticAt ℂ F z := by
       intro z hz hne
       exact (analyticAt_id.sub analyticAt_const).mul (hf_analytic_at z hz hne)
-    -- F continuous on closedBall(s, R₀) \ ball(s, r)
     have hF_cont : ContinuousOn F (Metric.closedBall s R₀ \ Metric.ball s r) := by
       intro z ⟨hz_cb, hz_not_ball⟩
       have h_ne : z ≠ s := by
         intro heq; rw [heq, Metric.mem_ball, dist_self, not_lt] at hz_not_ball; linarith
       exact (hF_analytic z (Metric.mem_ball.mpr (lt_of_le_of_lt
         (Metric.mem_closedBall.mp hz_cb) hR₀_lt_rf)) h_ne).continuousAt.continuousWithinAt
-    -- F differentiable on ball(s, R₀) \ closedBall(s, r)
     have hF_diff : ∀ z ∈ (Metric.ball s R₀ \ Metric.closedBall s r) \ (∅ : Set ℂ),
         DifferentiableAt ℂ F z := by
       intro z ⟨⟨hz_ball, hz_not_cb⟩, _⟩
@@ -1297,17 +1131,11 @@ lemma residueAt_sub_residueSum_eq_zero
       have hz_rf : z ∈ Metric.ball s rf :=
         Metric.mem_ball.mpr (lt_trans (Metric.mem_ball.mp hz_ball) hR₀_lt_rf)
       exact (hF_analytic z hz_rf h_ne).differentiableAt
-    -- Apply annulus homotopy
     have h_annulus := Complex.circleIntegral_sub_center_inv_smul_eq_of_differentiable_on_annulus_off_countable
       hr_pos hr_le Set.countable_empty hF_cont hF_diff
-    -- Convert: ∮ (z-s)⁻¹ • F = ∮ f on each circle
     rw [circleIntegral.integral_congr hr_pos.le (h_inv_smul r (ne_of_gt hr_pos)),
       circleIntegral.integral_congr hR₀_pos.le (h_inv_smul R₀ hR₀_ne)] at h_annulus
     exact h_annulus.symm
-  -- The normalized integral is eventually equal to 0.
-  -- Step A: show (2πi)⁻¹ * ∮(f-sum) is eventually equal to (2πi)⁻¹ * ∮f - res(f,s).
-  -- Step B: show (2πi)⁻¹ * ∮f is eventually constant, equal to residueAt f s.
-  -- Then the difference = 0 eventually, so the limit is 0.
   apply tendsto_nhds_of_eventually_eq
   rw [eventually_nhdsWithin_iff]
   filter_upwards [Iio_mem_nhds hR₀_pos] with r hr_lt hr_pos
@@ -1316,10 +1144,8 @@ lemma residueAt_sub_residueSum_eq_zero
   have hr_lt_rf : r < rf := lt_trans hr_lt hR₀_lt_rf
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
   have hs_not : s ∉ Metric.sphere s r := by simp [hr_ne.symm]
-  -- f is CircleIntegrable
   have hf_ci : CircleIntegrable f s r :=
     (hf_cont_sphere r hr_pos hr_lt_rf).circleIntegrable hr_pos.le
-  -- Helper: no pole of the sum lies on the sphere
   have h_no_pole_on_sphere : ∀ p ∈ S0, ∀ z ∈ Metric.sphere s r, z - ↑p ≠ 0 := by
     intro p hp z hz
     apply sub_ne_zero.mpr; intro heq
@@ -1328,15 +1154,12 @@ lemma residueAt_sub_residueSum_eq_zero
     · exact hs_not (h_eq ▸ hz)
     · have h_dist := hδ_sep p hp h_eq
       rw [Metric.mem_sphere] at hz; linarith
-  -- The sum is CircleIntegrable
   have hsum_ci : CircleIntegrable (fun z => ∑ s' ∈ S0, residueAt f s' / (z - s')) s r := by
     apply ContinuousOn.circleIntegrable hr_pos.le
     apply continuousOn_finset_sum; intro p hp
     exact ContinuousOn.div continuousOn_const (continuousOn_id.sub continuousOn_const)
       (fun z hz => h_no_pole_on_sphere p hp z hz)
-  -- ∮ (f - sum) = ∮ f - ∮ sum
   have h_int_sub := circleIntegral.integral_sub hf_ci hsum_ci
-  -- ∮ sum = res(f,s) * 2πi
   have h_int_sum : (∮ z in C(s, r), ∑ s' ∈ S0, residueAt f s' / (z - s')) =
       residueAt f s * (2 * ↑Real.pi * I) := by
     rw [show (fun z => ∑ s' ∈ S0, residueAt f s' / (z - s')) =
@@ -1356,11 +1179,8 @@ lemma residueAt_sub_residueSum_eq_zero
       show (fun z => residueAt f s / (z - s)) = (fun z => residueAt f s * (z - s)⁻¹)
         from funext (fun z => div_eq_mul_inv _ _),
       circleIntegral.integral_const_mul, circleIntegral.integral_sub_center_inv s hr_ne]
-    -- ∮ rest = 0 by Cauchy: the rest is analytic on closedBall s r
-    -- (all poles s' ≠ s are outside ball s δ ⊇ ball s r)
     suffices h_rest : (∮ z in C(s, r), ∑ s' ∈ S0.erase s, residueAt f s' / (z - s')) = 0 by
       rw [h_rest, add_zero]
-    -- Helper: no erase-pole lies in closedBall s r
     have h_no_pole_in_cb : ∀ p ∈ S0.erase s, ∀ z ∈ Metric.closedBall s r, z - ↑p ≠ 0 := by
       intro p hp z hz
       apply sub_ne_zero.mpr; intro heq
@@ -1381,19 +1201,12 @@ lemma residueAt_sub_residueSum_eq_zero
         (h_no_pole_in_cb p hp z (Metric.ball_subset_closedBall hz))
     exact Complex.circleIntegral_eq_zero_of_differentiable_on_off_countable hr_pos.le
       Set.countable_empty h_rest_cont h_rest_diff
-  -- (2πi)⁻¹ * ∮(f-sum) = (2πi)⁻¹ * ∮f - res(f,s)
-  -- Fold residueAt back (it was unfolded in the goal by limUnder_eq)
   simp only [show ∀ s' : ℂ, (limUnder (𝓝[>] (0:ℝ)) fun r =>
     (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s', r), f z) = residueAt f s' from
     fun _ => rfl]
   rw [h_int_sub, h_int_sum, mul_sub, mul_comm (residueAt f s) _, ← mul_assoc,
     inv_mul_cancel₀ h2piI_ne, one_mul]
-  -- ∮_{C(s,r)} f = ∮_{C(s,R₀)} f by homotopy (since r < R₀)
   rw [h_const_integral r hr_pos hr_lt.le]
-  -- residueAt f s = (2πi)⁻¹ * ∮_{C(s,R₀)} f (by definition, since the integral is constant)
-  -- Unfolding: residueAt f s = limUnder (nhds>0) (fun r => (2πi)⁻¹ * ∮ f)
-  -- Since the function is constant (= (2πi)⁻¹ * ∮_{C(s,R₀)} f) for r ≤ R₀,
-  -- the limUnder equals that constant.
   have h_res_eq : residueAt f s = (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, R₀), f z := by
     unfold residueAt
     apply Filter.Tendsto.limUnder_eq
@@ -1423,25 +1236,17 @@ private theorem cpv_tendsto_zero_of_add_decomposition
       cauchyPrincipalValueIntegrandOn S0 g_pol γ.toFun ε t) (𝓝[>] 0) (𝓝 0)) :
     Tendsto (fun ε => ∫ t in γ.a..γ.b,
       cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
-  -- g = g_reg + g_pol pointwise, so CPV(g) = CPV(g_reg + g_pol) pointwise.
-  -- Step 1: Show the CPV integrand of g equals that of (fun z => g_reg z + g_pol z).
   have hg_eq_fun : g = fun z => g_reg z + g_pol z := funext hg_eq
-  -- Step 2: CPV(g_reg + g_pol) = CPV(g_reg) + CPV(g_pol) pointwise by cpvIntegrandOn_add.
   have h_integrand_eq : ∀ ε t,
       cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t =
       cauchyPrincipalValueIntegrandOn S0 g_reg γ.toFun ε t +
       cauchyPrincipalValueIntegrandOn S0 g_pol γ.toFun ε t := by
     intro ε t; rw [hg_eq_fun]; exact cpvIntegrandOn_add S0 g_reg g_pol γ.toFun ε t
-  -- Step 3: The integral splits for ε > 0 (both parts are integrable).
-  -- CPV(g_reg) → 0 by tendsto_cpv_of_continuousOn_zero_integral.
   have h_reg_tendsto := tendsto_cpv_of_continuousOn_zero_integral S0 g_reg γ
     hg_reg_cont hg_reg_int_zero
-  -- Step 4: Combine CPV(g_reg) → 0 and CPV(g_pol) → 0.
-  -- Show CPV(g) → 0 using eventual equality with CPV(g_reg) + CPV(g_pol).
   have h_zero_eq : (0 : ℂ) = 0 + 0 := (add_zero 0).symm
   rw [h_zero_eq]
   apply Filter.Tendsto.congr' _ (h_reg_tendsto.add hg_pol_tendsto)
-  -- Show ∫ cpv(g) =ᶠ ∫ cpv(g_reg) + ∫ cpv(g_pol) near 0⁺.
   filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
   rw [show (fun t => cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t) =
       (fun t => cauchyPrincipalValueIntegrandOn S0 g_reg γ.toFun ε t +
@@ -1451,6 +1256,5 @@ private theorem cpv_tendsto_zero_of_add_decomposition
     (intervalIntegrable_cauchyPrincipalValueIntegrandOn (S0 := S0) hε hg_reg_cont)
     (intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 g_pol
       hg_pol_cont γ hγ_in_U ε hε)).symm
-
 
 end GeneralizedResidueTheory

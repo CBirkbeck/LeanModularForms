@@ -994,5 +994,4 @@ theorem conditionsAB_imply_higherOrderCancel
   exact higherOrderCancel_assembly U hU hU_convex S0 f hf γ hγ_closed hγ_in_U
     hMero hCondA hCondB hγ_meas h_no_endpt h_unique_cross hS0_in_U
 
-
 end GeneralizedResidueTheory
