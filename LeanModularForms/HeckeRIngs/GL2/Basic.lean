@@ -173,6 +173,104 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c
   apply HeckeRing.T'_ext (GL_pair 2)
   exact doubleCoset_eq_of_mem' _ _ h_product_mem
 
+/-- When D_c is a scalar coset, its representative normalizes H, so coset
+    representatives for D_b that map to the same product coset must be equal. -/
+private lemma scalar_coset_rep_normalizes (c : ℕ+) :
+    let D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
+    let H' := (GL_pair 2).H
+    let δ_c := (D_c.eql.choose : GL (Fin 2) ℚ)
+    ({δ_c} : Set (GL (Fin 2) ℚ)) * (H' : Set (GL (Fin 2) ℚ)) =
+    (H' : Set (GL (Fin 2) ℚ)) * {δ_c} := by
+  intro D_c H' δ_c
+  have hδc_mem : δ_c ∈
+      DoubleCoset.doubleCoset (diagMat 2 (fun _ => c) : GL (Fin 2) ℚ) H' H' := by
+    have h_spec := D_c.eql.choose_spec
+    simp only [D_c, T_diag, T_mk, diagMat_delta] at h_spec
+    rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H' H' _
+  rw [DoubleCoset.mem_doubleCoset] at hδc_mem
+  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc_mem
+  have hδc_simp : δ_c = (h₁c * h₂c) * diagMat 2 (fun _ => c) := by
+    rw [hδc_eq, mul_assoc, diagMat_scalar_comm 2 c h₂c, ← mul_assoc]
+  have hδc_norm : ConjAct.toConjAct δ_c • H' = H' := by
+    rw [hδc_simp, map_mul, MulAction.mul_smul, conjAct_scalar_smul_eq]
+    exact HeckeRing.conjAct_smul_elt_eq H' ⟨h₁c * h₂c, H'.mul_mem hh₁c hh₂c⟩
+  have h_norm_coe : ({δ_c} : Set (GL (Fin 2) ℚ)) * (H' : Set (GL (Fin 2) ℚ)) * {δ_c⁻¹} =
+      (H' : Set (GL (Fin 2) ℚ)) := by
+    have h1 : (ConjAct.toConjAct δ_c • H' : Set (GL (Fin 2) ℚ)) =
+        (H' : Set (GL (Fin 2) ℚ)) := by
+      rw [show (ConjAct.toConjAct δ_c • H' : Set (GL (Fin 2) ℚ)) =
+          ((ConjAct.toConjAct δ_c • H' : Subgroup _) : Set (GL (Fin 2) ℚ)) by rfl]
+      congr 1
+    rw [conjAct_smul_coe_eq] at h1
+    exact h1
+  have := congrFun (congrArg HMul.hMul h_norm_coe) {δ_c}
+  simp_rw [mul_assoc, Set.singleton_mul_singleton] at this
+  simpa using this
+
+/-- When D_c is scalar, distinct coset reps for D_b cannot map to the same product.
+    Takes the raw right-coset equality that arises from membership in the m' fiber. -/
+private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ+) (hb : DivChain 2 b)
+    (c : ℕ+) :
+    let D_b := T_diag 2 b hb
+    let D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
+    let H' := (GL_pair 2).H
+    ∀ (i₁ i₂ : decompQuot (GL_pair 2) D_b)
+      (j₁ : decompQuot (GL_pair 2) D_c),
+    ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+      {(j₁.out : GL (Fin 2) ℚ) * D_c.eql.choose} * H' =
+    ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+      {(j₁.out : GL (Fin 2) ℚ) * D_c.eql.choose} * H' →
+    i₁ = i₂ := by
+  intro D_b D_c H' i₁ i₂ j₁ h_eq
+  by_contra hne
+  apply HeckeRing.decompQuot_coset_diff (GL_pair 2) D_b i₁ i₂ hne
+  set δ_c := (D_c.eql.choose : GL (Fin 2) ℚ)
+  have hδc_comm_H := scalar_coset_rep_normalizes c
+  have hτ_mem : (j₁.out : GL (Fin 2) ℚ) ∈ H' := SetLike.coe_mem j₁.out
+  have h_coset : ({(j₁.out : GL (Fin 2) ℚ) * δ_c} : Set _) * (H' : Set _) =
+      (H' : Set _) * {δ_c} := by
+    rw [← Set.singleton_mul_singleton, mul_assoc, hδc_comm_H, ← mul_assoc,
+      Subgroup.singleton_mul_subgroup hτ_mem]
+  have h12' : ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+      ((H' : Set _) * {δ_c}) =
+      ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+      ((H' : Set _) * {δ_c}) := by
+    have lhs_eq : ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+        {(j₁.out : GL (Fin 2) ℚ) * δ_c} * (H' : Set _) =
+        ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+        ((H' : Set _) * {δ_c}) := by
+      rw [mul_assoc, h_coset]
+    have rhs_eq : ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+        {(j₁.out : GL (Fin 2) ℚ) * δ_c} * (H' : Set _) =
+        ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
+        ((H' : Set _) * {δ_c}) := by
+      rw [mul_assoc, h_coset]
+    rw [← lhs_eq, ← rhs_eq]
+    exact h_eq
+  rw [← mul_assoc, ← mul_assoc] at h12'
+  exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
+
+/-- D_bc is in the mulSupport of D_b * D_c when D_c is scalar. -/
+private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+)
+    (hbc : DivChain 2 (pnatMul 2 b (fun _ => c))) :
+    let D_b := T_diag 2 b hb
+    let D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
+    let D_bc := T_diag 2 (pnatMul 2 b (fun _ => c)) hbc
+    D_bc ∈ HeckeRing.mulSupport (GL_pair 2) D_b D_c := by
+  intro D_b D_c D_bc
+  simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
+    true_and, Prod.exists]
+  have ⟨i₀⟩ : Nonempty (decompQuot (GL_pair 2) D_b) :=
+    Fintype.card_pos_iff.mp (by
+      have := HeckeRing.T'_deg_pos (GL_pair 2) D_b
+      simp only [HeckeRing.T'_deg] at this; omega)
+  have h_card : Fintype.card (decompQuot (GL_pair 2) D_c) = 1 := by
+    have := T'_deg_scalar 2 c
+    simp only [HeckeRing.T'_deg] at this; exact_mod_cast this
+  have ⟨j₀⟩ : Nonempty (decompQuot (GL_pair 2) D_c) :=
+    Fintype.card_pos_iff.mp (by rw [h_card]; exact Nat.one_pos)
+  exact ⟨i₀, j₀, mulMap_right_scalar_eq b hb c hbc (i₀, j₀)⟩
+
 private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+)
     (hbc : DivChain 2 (pnatMul 2 b (fun _ => c))) :
     HeckeRing.m' (GL_pair 2)
@@ -193,72 +291,10 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c
     constructor; intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
     have hj : j₁ = j₂ := Subsingleton.elim j₁ j₂; subst hj
     simp only [Set.mem_setOf_eq] at h₁ h₂
-    have hi : i₁ = i₂ := by
-      by_contra hne
-      apply HeckeRing.decompQuot_coset_diff (GL_pair 2) D_b i₁ i₂ hne
-      set H' := (GL_pair 2).H with H'_def
-      set δ_c := (D_c.eql.choose : GL (Fin 2) ℚ) with δ_c_def
-      have hδc_mem : δ_c ∈
-          DoubleCoset.doubleCoset (diagMat 2 (fun _ => c) : GL (Fin 2) ℚ) H' H' := by
-        have h_spec := D_c.eql.choose_spec
-        simp only [D_c, T_diag, T_mk, diagMat_delta] at h_spec
-        rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H' H' _
-      rw [DoubleCoset.mem_doubleCoset] at hδc_mem
-      obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc_mem
-      have hδc_simp : δ_c = (h₁c * h₂c) * diagMat 2 (fun _ => c) := by
-        rw [hδc_eq, mul_assoc, diagMat_scalar_comm 2 c h₂c, ← mul_assoc]
-      have hδc_norm : ConjAct.toConjAct δ_c • H' = H' := by
-        rw [hδc_simp, map_mul, MulAction.mul_smul, conjAct_scalar_smul_eq]
-        exact HeckeRing.conjAct_smul_elt_eq H' ⟨h₁c * h₂c, H'.mul_mem hh₁c hh₂c⟩
-      have hδc_comm_H : ({δ_c} : Set (GL (Fin 2) ℚ)) * (H' : Set (GL (Fin 2) ℚ)) =
-          (H' : Set (GL (Fin 2) ℚ)) * {δ_c} := by
-        have h_norm_coe : ({δ_c} : Set (GL (Fin 2) ℚ)) * (H' : Set (GL (Fin 2) ℚ)) * {δ_c⁻¹} =
-            (H' : Set (GL (Fin 2) ℚ)) := by
-          have h1 : (ConjAct.toConjAct δ_c • H' : Set (GL (Fin 2) ℚ)) = (H' : Set (GL (Fin 2) ℚ)) := by
-            rw [show (ConjAct.toConjAct δ_c • H' : Set (GL (Fin 2) ℚ)) =
-                ((ConjAct.toConjAct δ_c • H' : Subgroup _) : Set (GL (Fin 2) ℚ)) by rfl]
-            congr 1
-          rw [conjAct_smul_coe_eq] at h1
-          exact h1
-        have := congrFun (congrArg HMul.hMul h_norm_coe) {δ_c}
-        simp_rw [mul_assoc, Set.singleton_mul_singleton] at this
-        simpa using this
-      have hτ_mem : (j₁.out : GL (Fin 2) ℚ) ∈ H' := SetLike.coe_mem j₁.out
-      have h_coset : ({(j₁.out : GL (Fin 2) ℚ) * δ_c} : Set _) * (H' : Set _) =
-          (H' : Set _) * {δ_c} := by
-        rw [← Set.singleton_mul_singleton, mul_assoc, hδc_comm_H, ← mul_assoc,
-          Subgroup.singleton_mul_subgroup hτ_mem]
-      have h12 := h₁.trans h₂.symm
-      have h12' : ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-          ((H' : Set _) * {δ_c}) =
-          ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-          ((H' : Set _) * {δ_c}) := by
-        have lhs_eq : ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-            {(j₁.out : GL (Fin 2) ℚ) * δ_c} * (H' : Set _) =
-            ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-            ((H' : Set _) * {δ_c}) := by
-          rw [mul_assoc, h_coset]
-        have rhs_eq : ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-            {(j₁.out : GL (Fin 2) ℚ) * δ_c} * (H' : Set _) =
-            ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-            ((H' : Set _) * {δ_c}) := by
-          rw [mul_assoc, h_coset]
-        rw [← lhs_eq, ← rhs_eq]
-        convert h12 using 2
-      rw [← mul_assoc, ← mul_assoc] at h12'
-      exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
+    have hi : i₁ = i₂ := decompQuot_eq_of_scalar_fiber b hb c i₁ i₂ j₁ (h₁.trans h₂.symm)
     subst hi; rfl
   have h_pos : 0 < HeckeRing.m' (GL_pair 2) D_b D_c D_bc := by
-    have h_mem : D_bc ∈ HeckeRing.mulSupport (GL_pair 2) D_b D_c := by
-      simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
-        true_and, Prod.exists]
-      have ⟨i₀⟩ : Nonempty (decompQuot (GL_pair 2) D_b) :=
-        Fintype.card_pos_iff.mp (by
-          have := HeckeRing.T'_deg_pos (GL_pair 2) D_b
-          simp only [HeckeRing.T'_deg] at this; omega)
-      have ⟨j₀⟩ : Nonempty (decompQuot (GL_pair 2) D_c) :=
-        Fintype.card_pos_iff.mp (by rw [h_card]; exact Nat.one_pos)
-      exact ⟨i₀, j₀, mulMap_right_scalar_eq b hb c hbc (i₀, j₀)⟩
+    have h_mem := mem_mulSupport_right_scalar b hb c hbc
     have h_ne := HeckeRing.m'_pos_of_mem_mulSupport (GL_pair 2) D_b D_c D_bc h_mem
     have : (0 : ℤ) ≤ HeckeRing.m' (GL_pair 2) D_b D_c D_bc := by
       simp only [HeckeRing.m']; exact Nat.cast_nonneg _
