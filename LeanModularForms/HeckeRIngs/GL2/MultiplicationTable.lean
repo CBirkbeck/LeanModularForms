@@ -58,7 +58,7 @@ private lemma T_ad'_one_ppow (k : ℕ) :
     T_ad 1 ⟨p ^ k, pow_pos hp.pos k⟩ (one_dvd _) := by
   have := T_ad'_ppow p hp 0 k (Nat.zero_le k)
   simp only [pow_zero] at this
-  convert this using 2 <;> exact (PNat.eq rfl).symm
+  convert this using 2
 
 /-- Key shift: `T_pp(p) * T_ad'(p^j, p^d) = T_ad'(p^{j+1}, p^{d+1})` when `j ≤ d`. -/
 private lemma T_pp_mul_T_ad'_ppow (j d : ℕ) (hjd : j ≤ d) :
@@ -96,7 +96,7 @@ theorem thm324_2 (k : ℕ) (hk : 2 ≤ k) :
     have hjk : j ≤ k - 2 - j := by omega
     have : k - 2 - j + 1 = k - (j + 1) := by omega
     rw [T_pp_mul_T_ad'_ppow p hp j (k - 2 - j) hjk]
-    congr 2 <;> omega
+    congr 1; omega
   rw [Finset.sum_congr rfl shift]
   rw [show Finset.range ((k - 2) / 2 + 1) = Finset.range (k / 2) from by
     simp only [show (k - 2) / 2 + 1 = k / 2 from by omega]]
@@ -145,7 +145,7 @@ private lemma first_invariant_dvd_p_of_product
   have h_dvd_entry : ∀ i j : Fin 2, (a 0 : ℤ) ∣ M i j := by
     intro i j; rw [hM_eq]
     simp only [Matrix.mul_apply, Matrix.diagonal_apply, Fin.sum_univ_two,
-      mul_ite, mul_zero, ite_mul, zero_mul, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
+      mul_ite, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ite_true]
     apply dvd_add
     · exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (dvd_refl _) _) _
     · exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right
@@ -154,14 +154,14 @@ private lemma first_invariant_dvd_p_of_product
   have hfin01 : (0 : Fin 2) ≠ 1 := by decide
   have h_M00 : M 0 0 = S_ℤ 0 0 := by
     simp only [M, S_ℤ, dp, dpk, mk2, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
-      hfin10, hfin01, if_false, if_true,
-      mul_zero, zero_mul, add_zero, zero_add, mul_one, one_mul]; norm_num
+      Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+      hfin10, if_false, if_true,
+      mul_zero, add_zero]; norm_num
   have h_M10 : M 1 0 = (p : ℤ) * S_ℤ 1 0 := by
     simp only [M, S_ℤ, dp, dpk, mk2, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
-      hfin10, hfin01, if_false, if_true,
-      mul_zero, zero_mul, add_zero, zero_add, mul_one, one_mul]; norm_num
+      Matrix.diagonal_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+      hfin10, if_false, if_true,
+      mul_zero, zero_mul, add_zero]; norm_num
   have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) :=
     ⟨S.val 1 1, -(S.val 0 1), by
       have := S.prop; rw [Matrix.det_fin_two] at this; linarith⟩
@@ -222,7 +222,7 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
       rw [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]; exact h_prod_eq_a
     have := congr_arg₂ (· * ·) (congr_arg ((SLnZ_to_GLnQ 2 SL_La)⁻¹ * ·) hprod)
       (show (SLnZ_to_GLnQ 2 SL_Ra)⁻¹ = (SLnZ_to_GLnQ 2 SL_Ra)⁻¹ from rfl)
-    simp only [mul_assoc, inv_mul_cancel_left, mul_inv_cancel_right] at this
+    simp only [mul_assoc, inv_mul_cancel_left] at this
     simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
     convert this using 1; group
   have h_int_5 : (↑L' : Matrix (Fin 2) (Fin 2) ℤ) *
@@ -392,12 +392,11 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     have h_D_mul : D₁_mat * D₂_mat =
         diagMat 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩) := by
       apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
-        simp [D₁_mat, D₂_mat, diagMat, Matrix.diagonal_apply, mk2, pow_succ, mul_comm]
+        simp [D₁_mat, D₂_mat, diagMat, mk2, pow_succ, mul_comm]
     rw [one_mul, ← h_D_mul]
     simp only [show τ₀ =
       (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹ from rfl,
-               show α = L₁ * D₁_mat * R₁ from hα_eq,
-               show β = L₂ * D₂_mat * R₂ from hβ_eq]
+               show α = L₁ * D₁_mat * R₁ from hα_eq]
     group
   rw [HeckeRing.mulSupport]
   simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and, Prod.exists]
@@ -495,7 +494,7 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
     have h_m1_eq : m1 = 1 := by nlinarith [mul_self_nonneg ((p : ℤ) - 1)]
     constructor
     · exact h_m1_eq
-    · have := h_deg; rw [h_m1_eq] at this; push_cast; linarith
+    · have := h_deg; rw [h_m1_eq] at this; linarith
   · simp only [show k ≠ 1 from hk1, ite_false]; have hk2 : 2 ≤ k := by omega
     have hd_o2 : T'_deg (GL_pair 2) D_out2 = ↑(p ^ (k - 2) * (p + 1)) :=
       T'_deg_T_diag_two_prime p hp _ _ (k - 1) (by omega)
@@ -531,7 +530,7 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
         have : 2 * (p : ℤ) ^ 2 ≤ m1 * (p : ℤ) ^ 2 := by nlinarith
         nlinarith [show (p : ℤ) ^ 2 ≥ 4 by nlinarith [show (2 : ℤ) ≤ p by exact_mod_cast hp2]]
       have hm1_le : m1 ≤ 1 := by
-        rcases le_or_lt m1 1 with h | h
+        rcases le_or_gt m1 1 with h | h
         · exact h
         · exfalso; linarith [show m1 ≥ 2 from h]
       exact le_antisymm hm1_le hm1_pos
@@ -985,7 +984,7 @@ theorem T_sum_mul_coprime (m n : ℕ+) (hcop : Nat.Coprime m n) :
       rw [T_ad'_mul_zero_of_not_dvd' b (N / b)
         (by push_neg; intro _ _; exact hcb) (T_ad' a (M / a))]
       symm; unfold T_ad'; rw [dif_neg]; push_neg
-      intro _ _; intro hdvd; apply hcb
+      intro _ _ hdvd; apply hcb
       have hb_dvd_prod : b ∣ M / a * (N / b) := dvd_trans (dvd_mul_left b a) hdvd
       have hcop_b_ma : Nat.Coprime b (M / a) :=
         Nat.Coprime.coprime_dvd_left hb_dvd (hcop.symm.coprime_dvd_right (Nat.div_dvd_of_dvd ha_dvd))
@@ -994,7 +993,7 @@ theorem T_sum_mul_coprime (m n : ℕ+) (hcop : Nat.Coprime m n) :
     rw [T_ad'_mul_zero_of_not_dvd a (M / a)
       (by push_neg; intro _ _; exact hca)]
     symm; unfold T_ad'; rw [dif_neg]; push_neg
-    intro _ _; intro hdvd; apply hca
+    intro _ _ hdvd; apply hca
     have ha_dvd_prod : a ∣ M / a * (N / b) := dvd_trans (dvd_mul_right a b) hdvd
     have hcop_a_nb : Nat.Coprime a (N / b) :=
       Nat.Coprime.coprime_dvd_left ha_dvd (hcop.coprime_dvd_right (Nat.div_dvd_of_dvd hb_dvd))
@@ -1079,10 +1078,10 @@ private lemma gcd_factor_prime_pow (q : ℕ) (hq : q.Prime)
   · subst hpq
     rw [Nat.Prime.factorization_pow hq, Nat.Prime.factorization_pow hq,
         Nat.Prime.factorization_pow hq]
-    simp only [Finsupp.single_apply, if_pos rfl,
+    simp only [Finsupp.single_apply,
       Nat.factorization_eq_zero_of_not_dvd hqm,
       Nat.factorization_eq_zero_of_not_dvd hqn]
-    simp only [mul_one, add_zero, Nat.min_zero, min_zero, zero_min]; rfl
+    simp only [add_zero, min_zero]; rfl
   · rw [Nat.Prime.factorization_pow hq, Nat.Prime.factorization_pow hq,
       Nat.Prime.factorization_pow hq]
     simp only [Finsupp.single_apply, show q ≠ p' from Ne.symm hpq, if_false, zero_add]
@@ -1093,7 +1092,7 @@ private lemma T_sum_mul_peel_prime_summand_rhs (q : ℕ) (hq : q.Prime)
     (r s : ℕ) (hr : r = min a b) (hs : s = max a b)
     (i : ℕ) (hi : i < r + 1) (d' : ℕ)
     (hd'_dvd : d' ∣ Nat.gcd (m' : ℕ) n')
-    (hqd' : ¬ q ∣ d') (hcop_qi_d' : Nat.Coprime (q ^ i) d') (hd'_pos : 0 < d') :
+    (_hqd' : ¬ q ∣ d') (_hcop_qi_d' : Nat.Coprime (q ^ i) d') (hd'_pos : 0 < d') :
     T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
       T_sum_nat (↑m' * ↑n' / (d' * d')) =
     T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d'))) := by
@@ -1166,7 +1165,7 @@ private lemma T_sum_mul_peel_prime_summand (q : ℕ) (hq : q.Prime)
 
 /-- Peel-off-a-prime step for the divisor sum formula. -/
 private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime)
-    (a b : ℕ) (ha : 0 < a) (hb : 0 < b)
+    (a b : ℕ) (_ha : 0 < a) (_hb : 0 < b)
     (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
     (ih : T_sum m' * T_sum n' = ∑ d ∈ (Nat.gcd m' n').divisors,
       (d : ℤ) • (T_ad' d d * T_sum_nat (↑m' * ↑n' / (d * d)))) :
@@ -1387,7 +1386,7 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
     rw [h_tail, h_i0]
     have ih_k := ih k (by omega)
     rw [T_sum_ppow_expansion p hp k, map_sum] at ih_k
-    simp only [Nat.zero_div, Nat.zero_add] at ih_k
+    simp only [] at ih_k
     rw [ih_k]
     conv_rhs =>
       rw [show k + 2 + 1 = (k + 1 + 1) + 1 from by omega]
