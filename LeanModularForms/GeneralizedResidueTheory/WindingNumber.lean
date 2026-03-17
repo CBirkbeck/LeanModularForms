@@ -226,7 +226,7 @@ def externalWindingContribution (γ : PiecewiseC1Immersion)
 /-- Helper: g = ‖γ(·) - z₀‖ is strictly decreasing on a left neighborhood of t₀ and
 strictly increasing on a right neighborhood, when γ is an immersion at t₀.
 This is the key "local monotonicity" fact that makes the cutoff boundary well-defined. -/
-private lemma piecewiseC1Immersion_norm_strictMono_near_crossing
+lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     (γ : PiecewiseC1Immersion) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
     (hcross : γ.toFun t₀ = z₀) :
@@ -423,7 +423,7 @@ private lemma piecewiseC1Immersion_norm_strictMono_near_crossing
       rw [(hasDerivAt_norm_sub γ.toFun t _ hdiff.hasDerivAt hne).deriv]
       exact hpos_R t ht
 
-private lemma exists_cutoff_boundary_times
+lemma exists_cutoff_boundary_times
     (γ : PiecewiseC1Immersion) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
     (hcross : γ.toFun t₀ = z₀)
@@ -572,10 +572,42 @@ private lemma exists_cutoff_boundary_times
       · exact le_of_eq hσ₂_val
       · exact le_of_lt (h_t₀_σ₂_lt t ⟨le_of_lt ht₀t, hlt⟩)
 
+/-- Extended version of `exists_cutoff_boundary_times` that also exposes the
+strict monotonicity interval and the bounds `δ ≤ ‖γ(l) - z₀‖`, `δ ≤ ‖γ(r) - z₀‖`. -/
+lemma exists_cutoff_boundary_times_with_mono
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (hcross : γ.toFun t₀ = z₀)
+    (honly : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t = t₀) :
+    ∃ δ > 0, ∃ l r : ℝ, l < t₀ ∧ t₀ < r ∧ γ.a ≤ l ∧ r ≤ γ.b ∧
+      StrictAntiOn (fun t => ‖γ.toFun t - z₀‖) (Icc l t₀) ∧
+      StrictMonoOn (fun t => ‖γ.toFun t - z₀‖) (Icc t₀ r) ∧
+      δ ≤ ‖γ.toFun l - z₀‖ ∧ δ ≤ ‖γ.toFun r - z₀‖ ∧
+      (∀ ε ∈ Ioo 0 δ, ∃ σ₁ σ₂ : ℝ, γ.a ≤ σ₁ ∧ σ₁ < t₀ ∧ t₀ < σ₂ ∧ σ₂ ≤ γ.b ∧
+        ‖γ.toFun σ₁ - z₀‖ = ε ∧ ‖γ.toFun σ₂ - z₀‖ = ε ∧
+        (∀ t ∈ Ico γ.a σ₁, ε < ‖γ.toFun t - z₀‖) ∧
+        (∀ t ∈ Ioc σ₂ γ.b, ε < ‖γ.toFun t - z₀‖) ∧
+        (∀ t ∈ Icc σ₁ σ₂, ‖γ.toFun t - z₀‖ ≤ ε)) := by
+  obtain ⟨l, r, hl_lt, hr_gt, hl_ge_a, hr_le_b, hg_anti, hg_mono⟩ :=
+    piecewiseC1Immersion_norm_strictMono_near_crossing γ z₀ t₀ ht₀ hcross
+  obtain ⟨δ₁, hδ₁, hbnd₁⟩ := exists_cutoff_boundary_times γ z₀ t₀ ht₀ hcross honly
+  have hg_l_pos : 0 < ‖γ.toFun l - z₀‖ := by
+    apply norm_pos_iff.mpr; apply sub_ne_zero.mpr
+    intro heq; have := honly l ⟨hl_ge_a, le_trans hl_lt.le (le_of_lt ht₀.2)⟩ heq; linarith
+  have hg_r_pos : 0 < ‖γ.toFun r - z₀‖ := by
+    apply norm_pos_iff.mpr; apply sub_ne_zero.mpr
+    intro heq; have := honly r ⟨le_trans (le_of_lt ht₀.1) hr_gt.le, hr_le_b⟩ heq; linarith
+  exact ⟨min δ₁ (min ‖γ.toFun l - z₀‖ ‖γ.toFun r - z₀‖),
+    lt_min hδ₁ (lt_min hg_l_pos hg_r_pos),
+    l, r, hl_lt, hr_gt, hl_ge_a, hr_le_b, hg_anti, hg_mono,
+    le_trans (min_le_right _ _) (min_le_left _ _),
+    le_trans (min_le_right _ _) (min_le_right _ _),
+    fun ε hε => hbnd₁ ε ⟨hε.1, lt_of_lt_of_le hε.2 (min_le_left _ _)⟩⟩
+
 /-- For a closed piecewise C¹ immersion, when the cutoff integral is split
 at boundary times where ‖γ-z₀‖ = ε with strict inequality outside, the
 exponential equals the ratio (γ(σ₁)-z₀)/(γ(σ₂)-z₀) by FTC + closedness. -/
-private lemma exp_cutoff_integral_eq_ratio
+lemma exp_cutoff_integral_eq_ratio
     (γ : PiecewiseC1Immersion) (hclosed : γ.toPiecewiseC1Curve.IsClosed)
     (z₀ : ℂ) (σ₁ σ₂ ε : ℝ)
     (hσ₁ : γ.a ≤ σ₁) (hσ₁₂ : σ₁ < σ₂) (hσ₂ : σ₂ ≤ γ.b)
@@ -846,7 +878,7 @@ converges to exp(-i·angleAtCrossing). This follows from the immersion property:
 γ(σ₁)-z₀ ≈ L_left·(σ₁-t₀) with σ₁-t₀ < 0, so direction → -L_left/|L_left|,
 and γ(σ₂)-z₀ ≈ L_right·(σ₂-t₀) with σ₂-t₀ > 0, so direction → L_right/|L_right|.
 The ratio of directions is exp(-i·α) where α = arg(L_right) - arg(-L_left). -/
-private lemma crossing_ratio_tendsto
+lemma crossing_ratio_tendsto
     (γ : PiecewiseC1Immersion) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
     (hcross : γ.toFun t₀ = z₀)
@@ -989,8 +1021,14 @@ private lemma crossing_ratio_tendsto
   have hσ₂_Icc : ∀ᶠ ε in 𝓝[>] (0:ℝ), σ₂ ε ∈ Icc γ.a γ.b := by
     filter_upwards [hσ₂_in, hσ₂_gt] with ε hb hgt
     exact ⟨le_of_lt (lt_trans ht₀.1 hgt), hb⟩
-  -- σ₁(ε) → t₀ using compactness + uniqueness of zero
-  have hσ₁_tendsto : Filter.Tendsto σ₁ (𝓝[>] (0:ℝ)) (𝓝 t₀) := by
+  -- Helper: σ → t₀ using compactness + uniqueness of zero
+  -- (used for both σ₁ and σ₂)
+  have tendsto_of_Icc_and_val :
+      ∀ σ : ℝ → ℝ,
+        (∀ᶠ ε in 𝓝[>] (0:ℝ), σ ε ∈ Icc γ.a γ.b) →
+        (∀ᶠ ε in 𝓝[>] (0:ℝ), ‖γ.toFun (σ ε) - z₀‖ = ε) →
+        Filter.Tendsto σ (𝓝[>] (0:ℝ)) (𝓝 t₀) := by
+    intro σ hσ_Icc hσ_val
     rw [Metric.tendsto_nhds]
     intro δ hδ
     let K := Icc γ.a γ.b \ Metric.ball t₀ (δ/2)
@@ -1008,63 +1046,27 @@ private lemma crossing_ratio_tendsto
       obtain ⟨tm, htm, htm_min⟩ := hK_compact.exists_isMinOn hK_ne hcont_norm
       have hm_pos : 0 < ‖γ.toFun tm - z₀‖ :=
         norm_pos_iff.mpr (sub_ne_zero.mpr (hK_nonzero tm htm))
-      filter_upwards [hσ₁_Icc, hσ₁_val, Ioo_mem_nhdsGT hm_pos] with ε hε_in hε_norm hε_lt
+      filter_upwards [hσ_Icc, hσ_val, Ioo_mem_nhdsGT hm_pos] with ε hε_in hε_norm hε_lt
       simp only [Real.dist_eq]
       by_contra h; push_neg at h
-      have hσK : σ₁ ε ∈ K := by
+      have hσK : σ ε ∈ K := by
         refine ⟨hε_in, ?_⟩
         simp only [Metric.mem_ball, Real.dist_eq]
         push_neg
         linarith
-      have hmle : ‖γ.toFun tm - z₀‖ ≤ ‖γ.toFun (σ₁ ε) - z₀‖ := htm_min hσK
+      have hmle : ‖γ.toFun tm - z₀‖ ≤ ‖γ.toFun (σ ε) - z₀‖ := htm_min hσK
       linarith [hε_lt.2, hmle.trans_eq hε_norm]
     · rw [not_nonempty_iff_eq_empty] at hK_ne
-      filter_upwards [hσ₁_Icc] with ε hε_in
+      filter_upwards [hσ_Icc] with ε hε_in
       simp only [Real.dist_eq]
-      have hσ_ball : σ₁ ε ∈ Metric.ball t₀ (δ/2) := by
+      have hσ_ball : σ ε ∈ Metric.ball t₀ (δ/2) := by
         by_contra hball
-        exact absurd (show σ₁ ε ∈ (∅ : Set ℝ) from hK_ne ▸ ⟨hε_in, hball⟩)
+        exact absurd (show σ ε ∈ (∅ : Set ℝ) from hK_ne ▸ ⟨hε_in, hball⟩)
           (Set.notMem_empty _)
       simp only [Metric.mem_ball, Real.dist_eq] at hσ_ball
       linarith
-  -- σ₂(ε) → t₀ similarly
-  have hσ₂_tendsto : Filter.Tendsto σ₂ (𝓝[>] (0:ℝ)) (𝓝 t₀) := by
-    rw [Metric.tendsto_nhds]
-    intro δ hδ
-    let K := Icc γ.a γ.b \ Metric.ball t₀ (δ/2)
-    have hK_compact : IsCompact K := isCompact_Icc.diff Metric.isOpen_ball
-    have hK_nonzero : ∀ t ∈ K, γ.toFun t ≠ z₀ := by
-      intro t ⟨ht_Icc, ht_ball⟩ hγt
-      have heq := honly t ht_Icc hγt
-      simp only [Metric.mem_ball, Real.dist_eq] at ht_ball
-      push_neg at ht_ball
-      subst heq; simp at ht_ball; linarith
-    by_cases hK_ne : K.Nonempty
-    · have hcont_norm : ContinuousOn (fun t => ‖γ.toFun t - z₀‖) K :=
-        continuous_norm.comp_continuousOn
-          (γ.continuous_toFun.mono diff_subset |>.sub continuousOn_const)
-      obtain ⟨tm, htm, htm_min⟩ := hK_compact.exists_isMinOn hK_ne hcont_norm
-      have hm_pos : 0 < ‖γ.toFun tm - z₀‖ :=
-        norm_pos_iff.mpr (sub_ne_zero.mpr (hK_nonzero tm htm))
-      filter_upwards [hσ₂_Icc, hσ₂_val, Ioo_mem_nhdsGT hm_pos] with ε hε_in hε_norm hε_lt
-      simp only [Real.dist_eq]
-      by_contra h; push_neg at h
-      have hσK : σ₂ ε ∈ K := by
-        refine ⟨hε_in, ?_⟩
-        simp only [Metric.mem_ball, Real.dist_eq]
-        push_neg
-        linarith
-      have hmle : ‖γ.toFun tm - z₀‖ ≤ ‖γ.toFun (σ₂ ε) - z₀‖ := htm_min hσK
-      linarith [hε_lt.2, hmle.trans_eq hε_norm]
-    · rw [not_nonempty_iff_eq_empty] at hK_ne
-      filter_upwards [hσ₂_Icc] with ε hε_in
-      simp only [Real.dist_eq]
-      have hσ_ball : σ₂ ε ∈ Metric.ball t₀ (δ/2) := by
-        by_contra hball
-        exact absurd (show σ₂ ε ∈ (∅ : Set ℝ) from hK_ne ▸ ⟨hε_in, hball⟩)
-          (Set.notMem_empty _)
-      simp only [Metric.mem_ball, Real.dist_eq] at hσ_ball
-      linarith
+  have hσ₁_tendsto := tendsto_of_Icc_and_val σ₁ hσ₁_Icc hσ₁_val
+  have hσ₂_tendsto := tendsto_of_Icc_and_val σ₂ hσ₂_Icc hσ₂_val
   -- σ₁(ε) → t₀⁻ (i.e., in 𝓝[<] t₀)
   have hσ₁_nhds_lt : Filter.Tendsto σ₁ (𝓝[>] (0:ℝ)) (𝓝[<] t₀) :=
     tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within σ₁
@@ -1197,17 +1199,12 @@ cutoff integral `∫ 1_{‖γ-z₀‖>ε} (γ-z₀)⁻¹ γ'` and `α` is the cr
 5. By the immersion property: as `ε → 0`, `σ₁ → t₀⁻` and `σ₂ → t₀⁺`, and
    `arg(γ(σ₁)-z₀) → arg(-L_left)`, `arg(γ(σ₂)-z₀) → arg(L_right)`.
 6. Therefore `exp(R(ε)) → exp(i(arg(-L_left) - arg(L_right))) = exp(-iα)`. -/
-private lemma tendsto_exp_cutoff_integral_crossing
+lemma tendsto_exp_cutoff_integral_crossing
     (γ : PiecewiseC1Immersion)
     (hclosed : γ.toPiecewiseC1Curve.IsClosed) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
     (hcross : γ.toFun t₀ = z₀)
-    (honly : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t = t₀)
-    (hγ_meas : Measurable γ.toFun)
-    (hC2 : ContDiffAt ℝ 2 γ.toFun t₀)
-    (h_cont_deriv : ∃ a' b', t₀ ∈ Ioo a' b' ∧
-      Icc a' b' ⊆ Icc γ.a γ.b ∧
-      ContinuousOn (deriv γ.toFun) (Icc a' b')) :
+    (honly : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t = t₀) :
     Tendsto (fun ε => Complex.exp (∫ t in γ.a..γ.b,
       if ‖γ.toFun t - z₀‖ > ε
       then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0))
@@ -1266,7 +1263,7 @@ Proved by combining:
 - Continuity of `exp` composed with the PV limit
 - The core analysis (`tendsto_exp_cutoff_integral_crossing`)
 - Uniqueness of limits in a T₂ space -/
-private theorem exp_pv_eq_exp_neg_crossing_angle
+theorem exp_pv_eq_exp_neg_crossing_angle
     (γ : PiecewiseC1Immersion)
     (hclosed : γ.toPiecewiseC1Curve.IsClosed) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
@@ -1301,7 +1298,7 @@ private theorem exp_pv_eq_exp_neg_crossing_angle
     Complex.continuous_exp.continuousAt.tendsto.comp hL
   -- Step 4: exp(R(ε)) → exp(-iα) by the core analysis
   have h_exp_target := tendsto_exp_cutoff_integral_crossing γ hclosed z₀ t₀ ht₀
-    hcross honly hγ_meas hC2 h_cont_deriv
+    hcross honly
   -- Step 5: By uniqueness of limits: exp(L) = exp(-iα)
   have h_exp_eq : Complex.exp L =
       Complex.exp (-(I * ↑(angleAtCrossing γ t₀ ht₀))) :=
