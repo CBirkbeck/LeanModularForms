@@ -243,7 +243,7 @@ private lemma det_lowerRight {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m +
 
 private def extractBlock {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m + 1)) ℤ)
     (h00 : τ.1 0 0 = 1) (h0j : ∀ j : Fin (m + 1), j ≠ 0 → τ.1 0 j = 0)
-    (hi0 : ∀ i : Fin (m + 1), i ≠ 0 → τ.1 i 0 = 0) :
+    (_hi0 : ∀ i : Fin (m + 1), i ≠ 0 → τ.1 i 0 = 0) :
     Matrix.SpecialLinearGroup (Fin m) ℤ :=
   ⟨Matrix.of fun i j => τ.1 i.succ j.succ, det_lowerRight τ h00 h0j⟩
 
@@ -373,7 +373,7 @@ private lemma to_block_form {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)
     · rcases m with _ | m'
       · exact absurd (show τ.1.det = -1 by simp [Matrix.det_unique, h_neg1])
           (by rw [τ.2]; norm_num)
-      · have h10 : (1 : Fin (m' + 2)) ≠ 0 := by simp [Fin.ext_iff]
+      · have h10 : (1 : Fin (m' + 2)) ≠ 0 := by simp
         have h01 : (0 : Fin (m' + 2)) ≠ 1 := h10.symm
         set σ₁ := slTransvecG (1 : Fin (m' + 2)) 0 h10 1 * τ
         have hσ₁_00 : σ₁.1 0 0 = -1 := by
@@ -440,7 +440,7 @@ private lemma to_block_form {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)
       show (slTransvecG i₀ 0 hi₀_zero (-v) * σ₁).1 i 0 = 0
       rw [slTransvecG_mul_entry]
       rcases eq_or_ne i i₀ with rfl | hne
-      · simp [hσ₁_i₀0, hσ₁_00, neg_mul, add_neg_cancel]
+      · simp [hσ₁_i₀0, hσ₁_00, add_neg_cancel]
       · simp [hne, hσ₁_other i hi hne]
     have hprod : [slTransvecG i₀ 0 hi₀_zero (-v),
         slTransvecG 0 i₀ hi₀0 v].prod * τ = σ₂ := by
@@ -462,7 +462,7 @@ private theorem SLnZ_transvec_gen (m : ℕ) (σ : Matrix.SpecialLinearGroup (Fin
   | succ m ih =>
     obtain ⟨L_col, hL_col, h_nz⟩ := col0_reduce σ
     set τ := L_col.prod * σ with hτ_def
-    have hσ_eq : σ = L_col.prod⁻¹ * τ := by rw [hτ_def]; simp [mul_assoc]
+    have hσ_eq : σ = L_col.prod⁻¹ * τ := by rw [hτ_def]; simp
     obtain ⟨L_inv, hL_inv_tv, hL_inv_eq⟩ := transvec_list_inv L_col hL_col
     obtain ⟨i₀, hi₀⟩ := col0_ne_zero τ
     have h_others : ∀ k, k ≠ i₀ → τ.1 k 0 = 0 := by
@@ -518,7 +518,7 @@ private theorem SLnZ_transvec_gen (m : ℕ) (σ : Matrix.SpecialLinearGroup (Fin
             obtain ⟨b', rfl⟩ := Fin.exists_succ_eq.mpr hb
             have h := congr_fun (congr_fun (congr_arg Subtype.val hL_eq) a') b'
             simp only [extractBlock, Matrix.of_apply, Matrix.SpecialLinearGroup.coe_one,
-              Matrix.one_apply, Fin.succ_inj] at h
+              Matrix.one_apply] at h
             simpa using h
       | cons E L' ihL' =>
         simp only [List.prod_cons] at hL_eq
@@ -571,12 +571,14 @@ omit [NeZero n] in
 @[simp] lemma pnatMul_val (a b : Fin n → ℕ+) (i : Fin n) :
     (pnatMul n a b i : ℕ) = a i * b i := rfl
 
+omit [NeZero n] in
 lemma DivChain_mul (a b : Fin n → ℕ+) (ha : DivChain n a) (hb : DivChain n b) :
     DivChain n (pnatMul n a b) := by
   intro i hi
   simp only [pnatMul_val]
   exact Nat.mul_dvd_mul (ha i hi) (hb i hi)
 
+omit [NeZero n] in
 lemma diagMat_mul (a b : Fin n → ℕ+) :
     diagMat n a * diagMat n b = diagMat n (pnatMul n a b) := by
   apply Units.ext
@@ -621,15 +623,18 @@ private lemma doubleCoset_eq_of_mem' (g δ : GL (Fin n) ℚ)
 section Scalar
 open Classical
 
+omit [NeZero n] in
 lemma diagMat_scalar_eq (c : ℕ+) :
     (↑(diagMat n (fun _ => c)) : Matrix (Fin n) (Fin n) ℚ) = (c : ℚ) • 1 := by
   simp only [diagMat_val, ← Matrix.smul_one_eq_diagonal]
 
+omit [NeZero n] in
 lemma diagMat_scalar_comm (c : ℕ+) (g : GL (Fin n) ℚ) :
     diagMat n (fun _ => c) * g = g * diagMat n (fun _ => c) := by
   apply Units.ext
   simp only [Units.val_mul, diagMat_scalar_eq, smul_one_mul, mul_smul_one]
 
+omit [NeZero n] in
 lemma diagMat_scalar_conj_eq (c : ℕ+) (x : GL (Fin n) ℚ) :
     (diagMat n (fun _ => c))⁻¹ * x * diagMat n (fun _ => c) = x := by
   have := diagMat_scalar_comm n c x
@@ -824,6 +829,7 @@ private def slTransvec (i j : Fin n) (hij : i ≠ j) (c : ℤ) :
   ⟨(Matrix.TransvectionStruct.mk i j hij c).toMatrix,
    (Matrix.TransvectionStruct.mk i j hij c).det⟩
 
+omit [NeZero n] in
 private lemma slTransvec_mul (i j : Fin n) (hij : i ≠ j) (a b : ℤ) :
     slTransvec n i j hij a * slTransvec n i j hij b =
     slTransvec n i j hij (a + b) := by
@@ -834,6 +840,7 @@ private lemma slTransvec_mul (i j : Fin n) (hij : i ≠ j) (a b : ℤ) :
   simp only [Matrix.TransvectionStruct.toMatrix]
   exact Matrix.transvection_mul_transvection_same (n := Fin n) (i := i) (j := j) hij a b
 
+omit [NeZero n] in
 private lemma slTransvec_congMod (d : ℕ) (i j : Fin n) (hij : i ≠ j) (c : ℤ)
     (hdc : (d : ℤ) ∣ c) : congMod n d (slTransvec n i j hij c) := by
   intro k l
@@ -843,6 +850,7 @@ private lemma slTransvec_congMod (d : ℕ) (i j : Fin n) (hij : i ≠ j) (c : �
   · exact hdc
   · exact dvd_zero _
 
+omit [NeZero n] in
 private lemma slTransvec_CRT (d d' : ℕ) (hcop : Nat.Coprime d d')
     (i j : Fin n) (hij : i ≠ j) (c : ℤ) :
     ∃ τ₁ τ₂ : SpecialLinearGroup (Fin n) ℤ,
@@ -857,15 +865,17 @@ private lemma slTransvec_CRT (d d' : ℕ) (hcop : Nat.Coprime d d')
   · exact slTransvec_congMod n d i j hij _ ⟨c * Nat.gcdA d d', by ring⟩
   · exact slTransvec_congMod n d' i j hij _ ⟨c * Nat.gcdB d d', by ring⟩
 
+omit [NeZero n] in
 private lemma congMod_one (d : ℕ) : congMod n d 1 := by
   intro i j; simp [SpecialLinearGroup.coe_one, Matrix.one_apply]
 
+omit [NeZero n] in
 private lemma congMod_mul (d : ℕ) (a b : SpecialLinearGroup (Fin n) ℤ)
     (ha : congMod n d a) (hb : congMod n d b) : congMod n d (a * b) := by
   intro i j
   simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
   have h1 : ∑ k : Fin n, (if i = k then (1 : ℤ) else 0) * b.1 k j = b.1 i j := by
-    simp [Finset.sum_ite_eq', Finset.mem_univ]
+    simp [Finset.mem_univ]
   have h2 : ∑ k, (a.1 i k - if i = k then 1 else 0) * b.1 k j =
       (∑ k, a.1 i k * b.1 k j) - b.1 i j := by
     rw [← h1, ← Finset.sum_sub_distrib]; congr 1; ext k; ring
@@ -875,6 +885,7 @@ private lemma congMod_mul (d : ℕ) (a b : SpecialLinearGroup (Fin n) ℤ)
   rw [h_decomp]
   exact dvd_add (Finset.dvd_sum (fun k _ => dvd_mul_of_dvd_left (ha i k) _)) (hb i j)
 
+omit [NeZero n] in
 private lemma congMod_inv (d : ℕ) (a : SpecialLinearGroup (Fin n) ℤ)
     (ha : congMod n d a) : congMod n d a⁻¹ := by
   intro i j
@@ -891,12 +902,13 @@ private lemma congMod_inv (d : ℕ) (a : SpecialLinearGroup (Fin n) ℤ)
     trans (∑ k, a.1 i k * (a⁻¹).1 k j) -
         (∑ k, (if i = k then (1 : ℤ) else 0) * (a⁻¹).1 k j)
     · rw [← Finset.sum_sub_distrib]; congr 1; ext k; ring
-    · rw [h_entry]; simp [Finset.sum_ite_eq', Finset.mem_univ]
+    · rw [h_entry]; simp [Finset.mem_univ]
   rw [show (a⁻¹).1 i j - (if i = j then 1 else 0) =
       -(∑ k : Fin n, (a.1 i k - if i = k then 1 else 0) * (a⁻¹).1 k j) from by
     linarith [h_sum_eq]]
   exact dvd_neg.mpr h_div
 
+omit [NeZero n] in
 private lemma congMod_conj (d : ℕ) (σ τ : SpecialLinearGroup (Fin n) ℤ)
     (hτ : congMod n d τ) : congMod n d (σ⁻¹ * τ * σ) := by
   intro i j
@@ -913,7 +925,7 @@ private lemma congMod_conj (d : ℕ) (σ τ : SpecialLinearGroup (Fin n) ℤ)
       (∑ l, (τ.1 k l - if k = l then 1 else 0) * σ.1 l j) + σ.1 k j := by
     intro k
     have h1 : ∑ l : Fin n, (if k = l then (1 : ℤ) else 0) * σ.1 l j = σ.1 k j := by
-      simp [Finset.sum_ite_eq', Finset.mem_univ]
+      simp [Finset.mem_univ]
     have h2 : ∑ l, (τ.1 k l - if k = l then 1 else 0) * σ.1 l j =
         (∑ l, τ.1 k l * σ.1 l j) - σ.1 k j := by
       rw [← h1, ← Finset.sum_sub_distrib]; congr 1; ext l; ring
@@ -930,6 +942,7 @@ private lemma congMod_conj (d : ℕ) (σ τ : SpecialLinearGroup (Fin n) ℤ)
   exact Finset.dvd_sum (fun k _ => dvd_mul_of_dvd_right
     (Finset.dvd_sum (fun l _ => dvd_mul_of_dvd_left (hτ k l) _)) _)
 
+omit [NeZero n] in
 private lemma CRTProd_mul' (d d' : ℕ)
     (a b : SpecialLinearGroup (Fin n) ℤ)
     (ha : ∃ p q, a = p * q ∧ congMod n d p ∧ congMod n d' q)
@@ -943,22 +956,26 @@ private lemma CRTProd_mul' (d d' : ℕ)
     exact congMod_mul n d _ _ hp₁ h
   · exact congMod_mul n d' _ _ hq₁ hq₂
 
+omit [NeZero n] in
 private lemma slTransvec_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
     (i j : Fin n) (hij : i ≠ j) (c : ℤ) :
     ∃ p q : SpecialLinearGroup (Fin n) ℤ,
       slTransvec n i j hij c = p * q ∧ congMod n d p ∧ congMod n d' q :=
   slTransvec_CRT n d d' hcop i j hij c
 
+omit [NeZero n] in
 private lemma one_in_CRTProd (d d' : ℕ) :
     ∃ p q : SpecialLinearGroup (Fin n) ℤ,
       (1 : SpecialLinearGroup (Fin n) ℤ) = p * q ∧
       congMod n d p ∧ congMod n d' q :=
   ⟨1, 1, (one_mul 1).symm, congMod_one n d, congMod_one n d'⟩
 
+omit [NeZero n] in
 private lemma slTransvecG_eq_slTransvec (i j : Fin n) (hij : i ≠ j) (c : ℤ) :
     slTransvecG i j hij c = slTransvec n i j hij c := by
   apply Subtype.ext; rfl
 
+omit [NeZero n] in
 private lemma isTransvec_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
     (E : SpecialLinearGroup (Fin n) ℤ) (hE : IsTransvec E) :
     ∃ p q : SpecialLinearGroup (Fin n) ℤ,
@@ -967,7 +984,8 @@ private lemma isTransvec_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
   rw [slTransvecG_eq_slTransvec]
   exact slTransvec_in_CRTProd n d d' hcop i j hij c
 
-private lemma list_prod_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
+omit [NeZero n] in
+private lemma list_prod_in_CRTProd (d d' : ℕ) (_hcop : Nat.Coprime d d')
     (L : List (SpecialLinearGroup (Fin n) ℤ))
     (hL : ∀ E ∈ L, ∃ p q : SpecialLinearGroup (Fin n) ℤ,
       E = p * q ∧ congMod n d p ∧ congMod n d' q) :
@@ -983,7 +1001,8 @@ private lemma list_prod_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
       ihL (fun F hF => hL F (by simp [hF]))
     exact CRTProd_mul' n d d' E L.prod hE hprod
 
-private lemma SLnZ_in_CRTProd (d d' : ℕ) (hd : 0 < d) (hd' : 0 < d')
+omit [NeZero n] in
+private lemma SLnZ_in_CRTProd (d d' : ℕ) (_hd : 0 < d) (_hd' : 0 < d')
     (hcop : Nat.Coprime d d')
     (σ : SpecialLinearGroup (Fin n) ℤ) :
     ∃ p q : SpecialLinearGroup (Fin n) ℤ,
@@ -996,6 +1015,7 @@ private lemma SLnZ_in_CRTProd (d d' : ℕ) (hd : 0 < d) (hd' : 0 < d')
   rw [hL_prod]
   exact list_prod_in_CRTProd n d d' hcop L hL_CRT
 
+omit [NeZero n] in
 /-- Chinese Remainder Theorem for `SL_n(ℤ)`: every element decomposes as a product of congruence classes when gcd(d, d') = 1. -/
 lemma SLnZ_CRT_decomposition (d d' : ℕ) (hd : 0 < d) (hd' : 0 < d')
     (hcop : Nat.Coprime d d')
@@ -1006,7 +1026,8 @@ lemma SLnZ_CRT_decomposition (d d' : ℕ) (hd : 0 < d) (hd' : 0 < d')
       (∀ i j, (d' : ℤ) ∣ ((τ₂ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :=
   SLnZ_in_CRTProd n d d' hd hd' hcop τ
 
-lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ+) (hdiv : DivChain n a)
+omit [NeZero n] in
+lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ+) (_hdiv : DivChain n a)
     (τ : SpecialLinearGroup (Fin n) ℤ)
     (hcong : ∀ i j, (∏ k, (a k : ℤ)) ∣
       ((τ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :
@@ -1048,7 +1069,8 @@ lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ+) (hdiv : DivChain n a)
     rw [← h_diag_map, ← h_mul_map, ← h_mul_map, h_int_eq]
   exact eq_mul_inv_iff_mul_eq.mpr h_Q_eq.symm
 
-lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ+) (hdiv : DivChain n b)
+omit [NeZero n] in
+lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ+) (_hdiv : DivChain n b)
     (τ : SpecialLinearGroup (Fin n) ℤ)
     (hcong : ∀ i j, (∏ k, (b k : ℤ)) ∣
       ((τ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :
@@ -1098,6 +1120,7 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ+) (hdiv : DivChain n b
     _ = (diagMat n b)⁻¹ * (SLnZ_to_GLnQ n τ * diagMat n b) := by rw [h_Q_eq]
     _ = (diagMat n b)⁻¹ * SLnZ_to_GLnQ n τ * diagMat n b := by rw [mul_assoc]
 
+omit [NeZero n] in
 /-- Set-level coprime product (Shimura Proposition 3.16, key step). -/
 lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ+)
     (ha : DivChain n a) (hb : DivChain n b)
@@ -1196,6 +1219,7 @@ lemma mulMap_coprime_eq (a b : Fin n → ℕ+)
   apply HeckeRing.T'_ext (GL_pair n)
   exact doubleCoset_eq_of_mem' n _ _ h_product_mem
 
+omit [NeZero n] in
 private lemma GLnQ_mem_SLnZ_of_coprime_scaling
     (C : GL (Fin n) ℚ)
     (pa pb : ℕ) (hcop : Nat.Coprime pa pb)
@@ -1238,6 +1262,7 @@ private lemma GLnQ_mem_SLnZ_of_coprime_scaling
   simp only [Matrix.map_apply]
   exact (hN_eq i j).symm
 
+omit [NeZero n] in
 private lemma diagConj_scaling (a : Fin n → ℕ+)
     (σ : SpecialLinearGroup (Fin n) ℤ) (i j : Fin n) :
     ∃ z : ℤ, (∏ k, (a k : ℚ)) *
@@ -1264,6 +1289,7 @@ private lemma diagConj_scaling (a : Fin n → ℕ+)
   push_cast [Int.cast_div h_dvd (show ((a i : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hai_ne_int)]
   ring
 
+omit [NeZero n] in
 private lemma diagSandwich_scaling (b : Fin n → ℕ+)
     (F G E : SpecialLinearGroup (Fin n) ℤ) (i j : Fin n) :
     ∃ z : ℤ, (∏ k, (b k : ℚ)) *
@@ -1324,9 +1350,10 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ+)
       (↑(F.val i p) : ℚ) * ((∏ k, (b k : ℚ)) * D_mat p q) * (↑(E.val q j) : ℚ) := by ring
   rw [h1, hDpq']
 
+omit [NeZero n] in
 private lemma coprime_coupling_mem_H
     (a b : Fin n → ℕ+)
-    (ha : DivChain n a) (hb : DivChain n b)
+    (_ha : DivChain n a) (_hb : DivChain n b)
     (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
     (σ F G E : SpecialLinearGroup (Fin n) ℤ)
     (h_eq : (diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a =
@@ -1428,14 +1455,13 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
           apply mul_left_cancel (a := (i₂.out : GL (Fin n) ℚ) * δ_a')
           apply mul_right_cancel (b := (j₁.out : GL (Fin n) ℚ) * δ_b')
           simp only [mul_assoc, mul_inv_cancel_left, inv_mul_cancel_left, inv_mul_cancel,
-            mul_one, one_mul]
+            mul_one]
           simp only [mul_assoc] at hκ_eq'
           exact hκ_eq'.symm
         have h_lhs_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ) * δ_a' =
             h₂a⁻¹ * ((diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ' * diagMat n a) * h₂a := by
           rw [hσ', hδa_eq]
-          simp only [_root_.mul_inv_rev, mul_assoc, inv_mul_cancel_left,
-            mul_inv_cancel_left]
+          simp only [_root_.mul_inv_rev, mul_assoc]
         have hF_mem : (j₂.out : GL (Fin n) ℚ) * h₁b ∈ (SLnZ_to_GLnQ n).range :=
           show _ ∈ H from H.mul_mem (SetLike.coe_mem j₂.out) hh₁b
         obtain ⟨F_pre, hF_pre⟩ := hF_mem
@@ -1465,8 +1491,8 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
           apply mul_left_cancel (a := h₂a⁻¹)
           apply mul_right_cancel (b := h₂a)
           rw [hFF, hEE]
-          simp only [mul_assoc, inv_mul_cancel, mul_one, one_mul,
-            mul_inv_cancel, mul_inv_cancel_left, inv_mul_cancel_left]
+          simp only [mul_assoc, inv_mul_cancel, mul_one,
+            inv_mul_cancel_left]
           simp only [mul_assoc] at h_combined
           exact h_combined
         have h_C_in_H := coprime_coupling_mem_H n a b ha hb hcop σ' FF G_pre EE h_C_eq
