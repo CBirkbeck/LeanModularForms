@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GLn.PrimeDecomposition
+import LeanModularForms.HeckeRIngs.GLn.TransposeAntiInvolution
 import Mathlib.RingTheory.MvPolynomial.Basic
 
 /-!
@@ -25,12 +26,6 @@ ring `ℤ[X₁,...,Xₙ]` in `n` variables.
 * `T_gen_generates_R_p` — the generators generate `R_p` (surjectivity)
 * `T_gen_algebraically_independent` — the generators are algebraically independent (injectivity)
 * `R_p_isPolynomialRing` — Theorem 3.20: `R_p ≅ ℤ[X₁,...,Xₙ]`
-
-## Blocker
-
-`MvPolynomial.eval₂Hom` requires `CommRing` on the target. Ticket 5 provides this via
-the transpose anti-involution. Until then, the evaluation homomorphism and isomorphism
-use a sorry-based `CommRing` instance.
 
 ## References
 
@@ -56,6 +51,7 @@ variable (p : ℕ) (hp : p.Prime)
 def T_gen_diag (k : Fin n) : Fin n → ℕ+ :=
   fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 1 else ⟨p, hp.pos⟩
 
+omit [NeZero n] in
 @[simp]
 lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     (T_gen_diag n p hp k i : ℕ) =
@@ -71,7 +67,7 @@ lemma divChain_T_gen (k : Fin n) :
   by_cases h1 : i < n - 1 - (k : ℕ)
   · by_cases h2 : i + 1 < n - 1 - (k : ℕ)
     · simp [h1, h2]
-    · simp [h1, h2, one_dvd]
+    · simp [h1, h2]
   · have h2 : ¬ (i + 1 < n - 1 - (k : ℕ)) := by omega
     simp [h1, h2]
 
@@ -88,6 +84,7 @@ lemma T_gen_diag_is_ppow (k : Fin n) :
   simp only [T_gen_diag_val, ppowDiag_val]
   split_ifs <;> simp
 
+omit [NeZero n] in
 /-- The exponent function for T_gen is monotone. -/
 lemma T_gen_exp_monotone (k : Fin n) :
     Monotone (fun i : Fin n => if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
@@ -126,43 +123,24 @@ lemma ppowWeight_eq_zero_iff (e : Fin n → ℕ) :
 
 end Weight
 
-/-! ### Polynomial ring isomorphism (Theorem 3.20)
-
-The following results require `CommRing (HeckeAlgebra n)`, which is provided by
-Ticket 5 (transpose anti-involution → commutativity). The proofs here use a
-sorry-based `CommRing` instance until Ticket 5 is complete. -/
+/-! ### Polynomial ring isomorphism (Theorem 3.20) -/
 
 section PolynomialRing
-
-/-- CommRing instance for HeckeAlgebra.
-    **Blocked on Ticket 5**: this requires the transpose anti-involution proof.
-    Once Ticket 5 provides `∀ f g, f * g = g * f`, replace with
-    `instCommRing_of_antiInvolution`. -/
-noncomputable def commRingHecke : CommRing (HeckeAlgebra n) :=
-  { HeckeRing.instRing (GL_pair n) with
-    mul_comm := by
-      intro f g
-      sorry }
 
 variable (p : ℕ) (hp : p.Prime)
 
 /-- Evaluation homomorphism: `Xₖ ↦ T_gen k`.
-    Maps `ℤ[X₁,...,Xₙ]` into the Hecke algebra.
-    Requires `CommRing (HeckeAlgebra n)` from Ticket 5. -/
+    Maps `ℤ[X₁,...,Xₙ]` into the Hecke algebra. -/
 noncomputable def evalHom : MvPolynomial (Fin n) ℤ →+* HeckeAlgebra n :=
-  letI := commRingHecke n
   MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra n)) (fun k => T_gen n p hp k)
 
-/-- Every element of R_p is in the image of evalHom (surjectivity).
-    **Blocked**: requires CommRing (Ticket 5) + detailed multiplication analysis. -/
+/-- Every element of R_p is in the image of evalHom (surjectivity). -/
 theorem T_gen_generates_R_p :
     ∀ f ∈ R_p n p hp, f ∈ (evalHom n p hp).range := by
   sorry
 
 /-- Shimura Theorem 3.20: the p-local Hecke ring is isomorphic to a polynomial ring.
-    `R_p^{(n)} ≅ ℤ[X₁,...,Xₙ]`.
-    **Blocked**: requires surjectivity (T_gen_generates_R_p) and injectivity
-    (T_gen_algebraically_independent), both of which need CommRing (Ticket 5). -/
+    `R_p^{(n)} ≅ ℤ[X₁,...,Xₙ]`. -/
 noncomputable def R_p_isPolynomialRing :
     MvPolynomial (Fin n) ℤ ≃+* R_p n p hp := by
   sorry

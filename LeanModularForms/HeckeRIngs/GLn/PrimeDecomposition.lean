@@ -48,10 +48,12 @@ section PPow
 def ppowDiag (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) : Fin n → ℕ+ :=
   fun i => ⟨p ^ e i, pow_pos hp.pos _⟩
 
+omit [NeZero n] in
 @[simp]
 lemma ppowDiag_val (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) (i : Fin n) :
     (ppowDiag n p hp e i : ℕ) = p ^ e i := rfl
 
+omit [NeZero n] in
 /-- DivChain for p-power diagonals when exponents are monotone. -/
 lemma divChain_ppow (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) (hmono : Monotone e) :
     DivChain n (ppowDiag n p hp e) := by
@@ -64,6 +66,7 @@ lemma divChain_ppow (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) (hmono : Monoto
 def pComponent (p : ℕ) (a : Fin n → ℕ+) : Fin n → ℕ :=
   fun i => (a i : ℕ).factorization p
 
+omit [NeZero n] in
 /-- The p-component of a divisibility chain is monotone. -/
 lemma pComponent_monotone (a : Fin n → ℕ+) (ha : DivChain n a) (p : ℕ) :
     Monotone (pComponent n p a) := by
@@ -80,14 +83,16 @@ section RemovePrime
 
 /-- Remove the p-component from each entry: `a_i ↦ a_i / p^{v_p(a_i)}`.
     This is the p-free part (ordCompl) of each diagonal entry. -/
-noncomputable def removePrime (p : ℕ) (hp : p.Prime) (a : Fin n → ℕ+) : Fin n → ℕ+ :=
+noncomputable def removePrime (p : ℕ) (_hp : p.Prime) (a : Fin n → ℕ+) : Fin n → ℕ+ :=
   fun i => ⟨(a i : ℕ) / p ^ ((a i : ℕ).factorization p),
     Nat.ordCompl_pos p (a i).pos.ne'⟩
 
+omit [NeZero n] in
 @[simp]
 lemma removePrime_val (p : ℕ) (hp : p.Prime) (a : Fin n → ℕ+) (i : Fin n) :
     (removePrime n p hp a i : ℕ) = (a i : ℕ) / p ^ ((a i : ℕ).factorization p) := rfl
 
+omit [NeZero n] in
 /-- The p-free part preserves divisibility chains. -/
 lemma removePrime_divChain (p : ℕ) (hp : p.Prime) (a : Fin n → ℕ+) (ha : DivChain n a) :
     DivChain n (removePrime n p hp a) := by
@@ -98,6 +103,7 @@ lemma removePrime_divChain (p : ℕ) (hp : p.Prime) (a : Fin n → ℕ+) (ha : D
   rw [Nat.ordCompl_mul]
   exact dvd_mul_right _ _
 
+omit [NeZero n] in
 /-- Recovery: the pointwise product of p-part and p-free part equals the original. -/
 lemma pnatMul_ppow_remove_eq (p : ℕ) (hp : p.Prime) (a : Fin n → ℕ+) :
     pnatMul n (ppowDiag n p hp (pComponent n p a)) (removePrime n p hp a) = a := by
@@ -112,6 +118,7 @@ end RemovePrime
 
 section Coprimality
 
+omit [NeZero n] in
 /-- The determinant of a p-power diagonal is a power of `p`. -/
 lemma diagDet_ppow (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) :
     diagDet n (ppowDiag n p hp e) = p ^ (∑ i, e i) := by
@@ -191,6 +198,7 @@ private def ppowClosureSet (n : ℕ) [NeZero n] : Set (HeckeAlgebra n) :=
   { f | ∃ (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) (hmono : Monotone e),
     f = T_elem n (ppowDiag n p hp e) (divChain_ppow n p hp e hmono) }
 
+omit [NeZero n] in
 private lemma diagDet_pos (a : Fin n → ℕ+) : 0 < diagDet n a :=
   Finset.prod_pos (fun i _ => (a i).pos)
 

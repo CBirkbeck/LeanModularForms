@@ -30,40 +30,47 @@ noncomputable def GL_transposeEquiv :
     GL (Fin n) ℚ ≃* (GL (Fin n) ℚ)ᵐᵒᵖ :=
   (Units.mapEquiv (transposeRingEquiv (Fin n) ℚ).toMulEquiv).trans Units.opEquiv
 
+omit [NeZero n] in
 lemma GL_transposeEquiv_val (g : GL (Fin n) ℚ) :
     ((GL_transposeEquiv n g).unop : Matrix (Fin n) (Fin n) ℚ) =
     (↑g : Matrix (Fin n) (Fin n) ℚ)ᵀ := by
   simp [GL_transposeEquiv, Units.opEquiv, Units.mapEquiv, transposeRingEquiv]
 
+omit [NeZero n] in
 lemma GL_transposeEquiv_involutive (g : GL (Fin n) ℚ) :
     (GL_transposeEquiv n (GL_transposeEquiv n g).unop).unop = g := by
   apply Units.ext; ext i j
   simp [GL_transposeEquiv_val]
 
+omit [NeZero n] in
 lemma SLnZ_to_GLnQ_transpose (σ : SpecialLinearGroup (Fin n) ℤ) :
     (GL_transposeEquiv n (SLnZ_to_GLnQ n σ)).unop = SLnZ_to_GLnQ n σ.transpose := by
   apply Units.ext; ext i j
   rw [GL_transposeEquiv_val, SLnZ_to_GLnQ_val, SLnZ_to_GLnQ_val]
-  simp [SpecialLinearGroup.coe_transpose, Matrix.transpose_map]
+  simp [SpecialLinearGroup.coe_transpose]
 
+omit [NeZero n] in
 lemma GL_transpose_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ_subgroup n) :
     (GL_transposeEquiv n g).unop ∈ SLnZ_subgroup n := by
   rw [SLnZ_subgroup, MonoidHom.mem_range] at hg ⊢
   obtain ⟨σ, rfl⟩ := hg
   exact ⟨σ.transpose, (SLnZ_to_GLnQ_transpose n σ).symm⟩
 
+omit [NeZero n] in
 lemma HasIntEntries.transpose {g : GL (Fin n) ℚ} (hg : HasIntEntries n g) :
     HasIntEntries n (GL_transposeEquiv n g).unop := by
   obtain ⟨A, hA⟩ := hg
   refine ⟨Aᵀ, ?_⟩
   rw [GL_transposeEquiv_val, hA, Matrix.transpose_map]
 
+omit [NeZero n] in
 lemma GL_transpose_mem_posDetInt {g : GL (Fin n) ℚ} (hg : g ∈ posDetInt_submonoid n) :
     (GL_transposeEquiv n g).unop ∈ posDetInt_submonoid n := by
   refine ⟨hg.1.transpose, ?_⟩
   rw [GL_transposeEquiv_val, Matrix.det_transpose]
   exact hg.2
 
+omit [NeZero n] in
 lemma diagMat_GL_transpose_eq (a : Fin n → ℕ+) :
     (GL_transposeEquiv n (diagMat n a)).unop = diagMat n a := by
   apply Units.ext
@@ -74,8 +81,8 @@ lemma diagMat_GL_transpose_eq (a : Fin n → ℕ+) :
 noncomputable def GL_pair_antiInvolution : AntiInvolution (GL_pair n) where
   toFun := (GL_transposeEquiv n).toMonoidHom
   involutive := GL_transposeEquiv_involutive n
-  map_H := fun g hg => GL_transpose_mem_SLnZ n hg
-  map_Δ := fun g hg => GL_transpose_mem_posDetInt n hg
+  map_H := fun _g hg => GL_transpose_mem_SLnZ n hg
+  map_Δ := fun _g hg => GL_transpose_mem_posDetInt n hg
 
 /-- Transpose fixes every double coset of `GL_pair n`. -/
 lemma GL_pair_onT'_eq (D : T' (GL_pair n)) :
@@ -100,20 +107,9 @@ lemma GL_pair_onT'_eq (D : T' (GL_pair n)) :
     rw [DoubleCoset.mem_doubleCoset]
     refine ⟨(GL_transposeEquiv n R).unop, GL_transpose_mem_SLnZ n hR,
            (GL_transposeEquiv n L).unop, GL_transpose_mem_SLnZ n hL, ?_⟩
-    have h_mat : g.val.transpose =
-        R.val.transpose * (diagMat n a).val * L.val.transpose := by
-      rw [hg_eq]; simp only [Units.val_mul, Matrix.transpose_mul]
-      rw [show (diagMat n a).val.transpose = (diagMat n a).val from by
-            rw [diagMat_val]; exact Matrix.diagonal_transpose _]
-      rw [Matrix.mul_assoc]
-    have h1 : (GL_transposeEquiv n g).unop.val = g.val.transpose :=
-      GL_transposeEquiv_val n g
-    have h2 : ((GL_transposeEquiv n R).unop).val = R.val.transpose :=
-      GL_transposeEquiv_val n R
-    have h3 : ((GL_transposeEquiv n L).unop).val = L.val.transpose :=
-      GL_transposeEquiv_val n L
-    apply Units.ext; show (GL_transposeEquiv n g).unop.val = _
-    rw [h1, h_mat, Units.val_mul, Units.val_mul, h2, h3]
+    apply Units.ext
+    simp only [GL_transposeEquiv_val, Units.val_mul, hg_eq, Matrix.transpose_mul,
+      diagMat_val, Matrix.diagonal_transpose, Matrix.mul_assoc]
   conv_lhs => rw [AntiInvolution.onT'_set]
   conv_rhs => rw [hD_set]
   exact DoubleCoset.doubleCoset_eq_of_mem hbar_mem
