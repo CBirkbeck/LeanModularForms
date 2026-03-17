@@ -325,7 +325,6 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
   set q₀ : decompQuot P D := ⟦⟨(h1D : G), h1D.2⟩⟧
   unfold m'; push_cast; rw [← m'_uniform P D₂ D₁ D q₀]; norm_cast
   have bar_mem_dc := bar_mem_doubleCoset ι h_fix
-  -- Forward map: (i,j) ↦ (j', i') where j' comes from bar(g₁⁻¹ i⁻¹ g_D) ∈ D₂
   let fwd : {⟨i, j⟩ : decompQuot P D₁ × decompQuot P D₂ |
       ({(i.out : G) * g₁} : Set G) * {(j.out : G) * g₂} * P.H =
       {g_D} * (P.H : Set G)} →
@@ -372,7 +371,6 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
       {p : decompQuot P D₂ × decompQuot P D₁ |
       ({(p.1.out : G) * g₂} : Set G) * {(p.2.out : G) * g₁} * P.H =
       {(q₀.out : G) * g_D} * (P.H : Set G)})
-  -- Injectivity
   apply Nat.card_le_card_of_injective fwd
   intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ heq
   have hj'_eq := congr_arg Prod.fst (congr_arg Subtype.val heq)

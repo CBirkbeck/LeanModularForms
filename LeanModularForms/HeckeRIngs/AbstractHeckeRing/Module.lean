@@ -41,7 +41,8 @@ lemma smulOrbit_nonempty (t : T' P) (m : M P) : (smulOrbit P t m).Nonempty := by
   rw [smulOrbit]
   simp
 
-/-- Module action of `𝕋 P Z` on `𝕄 P Z`: `HgH • vH = ∑ᵢ v·σᵢ·g H`, extended bilinearly. -/
+/-- Module action of `𝕋 P Z` on `𝕄 P Z`:
+    `HgH • vH = ∑ᵢ v·σᵢ·g H`, extended bilinearly. -/
 noncomputable instance instSMul𝕄 : SMul (𝕋 P Z) (𝕄 P Z) where
   smul := fun t => fun mm => Finsupp.sum t (fun D1 b₁ => mm.sum fun m b₂ =>
     ((∑ i ∈ smulOrbit P D1 m, Finsupp.single (i) (b₁*b₂ : Z) : (M P) →₀ Z)))

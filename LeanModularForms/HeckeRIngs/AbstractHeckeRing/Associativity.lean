@@ -147,7 +147,8 @@ private lemma smulOrbit_sum_left_H_eq (D : T' P) (β : P.Δ) (h : P.H) (c : ℤ)
 
 /-- If `n ∈ (ConjAct g • H).subgroupOf H`, then `g⁻¹ * n⁻¹ * g ∈ H`.
     This extracts the conjugation membership that appears throughout the associativity proof. -/
-private lemma conjAct_inv_mem_of_subgroupOf (g : G) (n : (ConjAct.toConjAct g • P.H).subgroupOf P.H) :
+private lemma conjAct_inv_mem_of_subgroupOf (g : G)
+    (n : (ConjAct.toConjAct g • P.H).subgroupOf P.H) :
     g⁻¹ * (n : G)⁻¹ * g ∈ P.H := by
   have hn := n.2
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
@@ -184,8 +185,9 @@ private lemma decompQuot_eq_of_conjAct_rel (D : T' P) (i₁ i₂ : decompQuot P 
   simp only [Quotient.out_eq'] at h; exact h
 
 /-- Shifted coset condition: if `a * g₂ * (b * g₁) ∈ (q * g_D) · H` and the group elements
-    `a', b'` are related to `a, b` by `a' = q⁻¹ * a * n₁` and `b' = (g₂⁻¹ * n₁⁻¹ * g₂) * b * n₂`
-    where `n₁, n₂` conjugate into H, then `a' * g₂ * (b' * g₁) ∈ g_D · H`. -/
+    `a', b'` are related to `a, b` by `a' = q⁻¹ * a * n₁` and
+    `b' = (g₂⁻¹ * n₁⁻¹ * g₂) * b * n₂` where `n₁, n₂` conjugate into H,
+    then `a' * g₂ * (b' * g₁) ∈ g_D · H`. -/
 private lemma coset_shift_fwd (q a b a' b' g₁ g₂ g_D n₁ n₂ : G)
     (hcond : ({a * g₂ * (b * g₁)} : Set G) * ↑P.H = {q * g_D} * ↑P.H)
     (ha' : a' = q⁻¹ * a * n₁) (hb' : b' = g₂⁻¹ * n₁⁻¹ * g₂ * b * n₂)
@@ -207,9 +209,10 @@ private lemma coset_shift_fwd (q a b a' b' g₁ g₂ g_D n₁ n₂ : G)
         have hprod' : q * g_D * h₀ = a * g₂ * (b * g₁) := hprod
         rw [← hprod']; group
 
-/-- Inverse-shifted coset condition: if `a' * g₂ * (b' * g₁) ∈ g_D · H` and the group elements
-    `a, b` are related to `a', b'` by `a = q * a' * m₁` and `b = (g₂⁻¹ * m₁⁻¹ * g₂) * b' * m₂`
-    where `m₂` conjugates into H, then `a * g₂ * (b * g₁) ∈ (q * g_D) · H`. -/
+/-- Inverse-shifted coset condition: if `a' * g₂ * (b' * g₁) ∈ g_D · H` and
+    the group elements `a, b` are related to `a', b'` by `a = q * a' * m₁`
+    and `b = (g₂⁻¹ * m₁⁻¹ * g₂) * b' * m₂` where `m₂` conjugates into H,
+    then `a * g₂ * (b * g₁) ∈ (q * g_D) · H`. -/
 private lemma coset_shift_inv (q a b a' b' g₁ g₂ g_D m₁ m₂ : G)
     (hcond : ({a' * g₂ * (b' * g₁)} : Set G) * ↑P.H = {g_D} * ↑P.H)
     (ha : a = q * a' * m₁) (hb : b = g₂⁻¹ * m₁⁻¹ * g₂ * b' * m₂)
@@ -276,8 +279,7 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
       ({(p.1.out : G) * g₂} : Set G) * {(p.2.out : G) * g₁} * P.H =
       {g_D} * P.H})) ?_
   constructor
-  · -- Injectivity
-    intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ heq
+  · intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ heq
     simp only [Subtype.mk.injEq, Prod.mk.injEq] at heq
     obtain ⟨hi, hj⟩ := heq
     have hi₁₂ : i₁ = i₂ := by
@@ -290,15 +292,13 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
       exact decompQuot_eq_of_conjAct_rel P D₁ j₁ j₂
         (by convert hj using 1; ext; simp [Subgroup.coe_mul]; group)
     subst hj₁₂; rfl
-  · -- Surjectivity: construct preimage (i₀, j₀) for target (i', j')
-    intro ⟨⟨i', j'⟩, (hcond'_tgt : _ = _)⟩
+  · intro ⟨⟨i', j'⟩, (hcond'_tgt : _ = _)⟩
     let i₀ : decompQuot P D₂ :=
       ⟦⟨(q₀.out : G) * i'.out, P.H.mul_mem q₀.out.2 i'.out.2⟩⟧
     let n₀ := get_n i₀
     have hn₀_conj : g₂⁻¹ * (n₀ : G) * g₂ ∈ P.H := conjAct_mem_of_subgroupOf P g₂ n₀
     let j₀ : decompQuot P D₁ := ⟦⟨g₂⁻¹ * (n₀ : G) * g₂ * j'.out,
       P.H.mul_mem hn₀_conj j'.out.2⟩⟧
-    -- Extract representative coercions
     obtain ⟨m_i, hmi_eq⟩ := QuotientGroup.mk_out_eq_mul
       ((ConjAct.toConjAct g₂ • P.H).subgroupOf P.H)
       ⟨(q₀.out : G) * i'.out, P.H.mul_mem q₀.out.2 i'.out.2⟩
@@ -309,7 +309,6 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
       mk_out_coe_eq_mul P hmi_eq
     have hmj_coe : (j₀.out : G) = g₂⁻¹ * (n₀ : G) * g₂ * (j'.out : G) * (m_j : G) :=
       mk_out_coe_eq_mul P hmj_eq
-    -- Quotient recovery: ⟦q₀⁻¹ * i₀.out⟧ = i'
     have h_quot_eq : (⟦⟨(q₀.out : G)⁻¹ * (i₀.out : G),
         P.H.mul_mem (P.H.inv_mem q₀.out.2) i₀.out.2⟩⟧ : decompQuot P D₂) = i' := by
       rw [show i' = ⟦i'.out⟧ from (Quotient.out_eq' i').symm, @Quotient.eq'',
@@ -317,7 +316,6 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
       have h := Quotient.out_eq' i₀
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at h
       convert h using 1; ext; simp [Subgroup.coe_mul]; group
-    -- Correction n₀ = m_i⁻¹
     have h_n₀_mi : (n₀ : G) = (m_i : G)⁻¹ := by
       have hn₀_spec := (QuotientGroup.mk_out_eq_mul
         ((ConjAct.toConjAct g₂ • P.H).subgroupOf P.H)
@@ -336,7 +334,6 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
         have := congr_arg ((i'.out : G)⁻¹ * ·) h1
         simp only [inv_mul_cancel] at this; group at this; exact this.symm
       exact eq_inv_of_mul_eq_one_right h2
-    -- Source coset condition via coset_shift_inv
     have hcond₀ : ({(i₀.out : G) * g₂} : Set G) * {(j₀.out : G) * g₁} * P.H =
         {(q₀.out : G) * g_D} * P.H := by
       rw [Set.singleton_mul_singleton]
@@ -344,7 +341,6 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
         (j'.out : G) g₁ g₂ g_D (m_i : G) (m_j : G)
         (by rw [← Set.singleton_mul_singleton]; exact hcond'_tgt)
         hmi_coe (by rw [hmj_coe, h_n₀_mi]) (conjAct_mem_of_subgroupOf P g₁ m_j)
-    -- Assembly: (i₀, j₀) maps to (i', j')
     refine ⟨⟨⟨i₀, j₀⟩, hcond₀⟩, ?_⟩
     apply Subtype.ext; simp only [Prod.mk.injEq]; exact ⟨h_quot_eq, by
       rw [show j' = ⟦j'.out⟧ from (Quotient.out_eq' j').symm, @Quotient.eq'',

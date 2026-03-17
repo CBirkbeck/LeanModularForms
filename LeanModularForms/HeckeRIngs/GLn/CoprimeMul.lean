@@ -52,8 +52,10 @@ private lemma slTransvecG_mul_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i 
   · subst hai; simp [Matrix.transvection, Matrix.add_mul]
   · simp [Matrix.transvection, Matrix.add_mul, hai]
 
-private lemma slTransvecG_mul_right_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
-    (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
+private lemma slTransvecG_mul_right_entry {m : ℕ}
+    [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
+    (σ : Matrix.SpecialLinearGroup (Fin m) ℤ)
+    (a b : Fin m) :
     (σ * slTransvecG i j hij c).1 a b =
     if b = j then σ.1 a j + c * σ.1 a i else σ.1 a b := by
   have hcoe : (σ * slTransvecG i j hij c).1 = σ.1 * Matrix.transvection i j c := by
@@ -140,10 +142,13 @@ private lemma col0_euclidean_step {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin
   · push_neg at hge
     refine ⟨j₀, i₀, Ne.symm hij₀, -(σ.1 j₀ 0 / σ.1 i₀ 0), ?_⟩
     set q := σ.1 j₀ 0 / σ.1 i₀ 0
-    have h_new : (slTransvecG j₀ i₀ (Ne.symm hij₀) (-q) * σ).1 j₀ 0 = σ.1 j₀ 0 % σ.1 i₀ 0 := by
+    have h_new : (slTransvecG j₀ i₀ (Ne.symm hij₀) (-q) * σ).1 j₀ 0 =
+        σ.1 j₀ 0 % σ.1 i₀ 0 := by
       rw [slTransvecG_col0]; simp only [ite_true]
       linarith [(Int.mul_ediv_add_emod (σ.1 j₀ 0) (σ.1 i₀ 0)).symm]
-    have h_oth : ∀ a, a ≠ j₀ → (slTransvecG j₀ i₀ (Ne.symm hij₀) (-q) * σ).1 a 0 = σ.1 a 0 :=
+    have h_oth : ∀ a, a ≠ j₀ →
+        (slTransvecG j₀ i₀ (Ne.symm hij₀) (-q) * σ).1 a 0 =
+        σ.1 a 0 :=
       fun a ha => by rw [slTransvecG_col0]; simp [ha]
     have h_rem : (σ.1 j₀ 0 % σ.1 i₀ 0).natAbs < (σ.1 i₀ 0).natAbs := by
       have h1 := Int.emod_nonneg (σ.1 j₀ 0) hi₀
@@ -290,7 +295,9 @@ private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) �
       fun i hi => by simp [hσi0 i hi]⟩
     simp only [List.prod_nil, mul_one]
     have h_le : (if (j : ℕ) = 0 then 0 else (σ.1 0 j).natAbs) ≤ row0Sum σ :=
-      Finset.single_le_sum (f := fun (j : Fin (m + 1)) => if (j : ℕ) = 0 then 0 else (σ.1 0 j).natAbs)
+      Finset.single_le_sum
+        (f := fun (j : Fin (m + 1)) =>
+          if (j : ℕ) = 0 then 0 else (σ.1 0 j).natAbs)
         (fun _ _ => Nat.zero_le _) (Finset.mem_univ j)
     simp only [hzero, show ¬(j : ℕ) = 0 from fun h₀ => hj (Fin.ext h₀), ↓reduceIte] at h_le
     exact Int.natAbs_eq_zero.mp (Nat.eq_zero_of_le_zero h_le)
@@ -307,8 +314,11 @@ private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) �
     set σ' := σ * E with hσ'_def
     haveI : NeZero (m + 1) := ⟨Nat.succ_ne_zero m⟩
     have hσ'00 : σ'.1 0 0 = 1 := by
-      rw [hσ'_def, show (σ * E).1 0 0 = (σ * slTransvecG 0 j₀ (Ne.symm hj₀) (-σ.1 0 j₀)).1 0 0
-        from rfl, slTransvecG_mul_right_entry]
+      rw [hσ'_def,
+        show (σ * E).1 0 0 =
+          (σ * slTransvecG 0 j₀ (Ne.symm hj₀) (-σ.1 0 j₀)).1 0 0
+          from rfl,
+        slTransvecG_mul_right_entry]
       simp [hj₀.symm, hσ00]
     have hσ'i0 : ∀ i, i ≠ 0 → σ'.1 i 0 = 0 := by
       intro i hi; rw [hσ'_def]
@@ -336,9 +346,11 @@ private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) �
         Finset.sum_congr rfl fun k hk => h_eq k (Finset.mem_erase.mp hk).1
       rw [h_rest, hσ'_clear, show (if (j₀ : ℕ) = 0 then 0 else (0 : ℤ).natAbs) = 0 from by
         simp]
-      simp only [show ¬(j₀ : ℕ) = 0 from fun h₀ => hj₀ (Fin.ext h₀), ↓reduceIte, zero_add]
+      simp only [show ¬(j₀ : ℕ) = 0 from fun h₀ => hj₀ (Fin.ext h₀),
+        ↓reduceIte, zero_add]
       omega
-    obtain ⟨L', hL'_tv, hL'_00, hL'_0j, hL'_i0⟩ := ihk (row0Sum σ') (by omega) σ' hσ'00 hσ'i0 le_rfl
+    obtain ⟨L', hL'_tv, hL'_00, hL'_0j, hL'_i0⟩ :=
+      ihk (row0Sum σ') (by omega) σ' hσ'00 hσ'i0 le_rfl
     refine ⟨E :: L', fun F hF => ?_, ?_, ?_, ?_⟩
     · simp only [List.mem_cons] at hF
       exact hF.elim (fun h => h ▸ ⟨0, j₀, Ne.symm hj₀, _, rfl⟩) (hL'_tv F)
@@ -443,7 +455,8 @@ private lemma to_block_form {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)
       (L₁.prod * τ).1 0 0 = 1 ∧
       (∀ i, i ≠ 0 → (L₁.prod * τ).1 i 0 = 0) by
     obtain ⟨L₁, hL₁, h₁_00, h₁_i0⟩ := h_col
-    obtain ⟨L₂, hL₂, h₂_00, h₂_0j, h₂_i0⟩ := row0_clear (L₁.prod * τ) h₁_00 h₁_i0
+    obtain ⟨L₂, hL₂, h₂_00, h₂_0j, h₂_i0⟩ :=
+      row0_clear (L₁.prod * τ) h₁_00 h₁_i0
     exact ⟨L₁, L₂, hL₁, hL₂, h₂_00,
       fun j hj => h₂_0j j hj,
       fun i hi => h₂_i0 i hi⟩
@@ -699,7 +712,9 @@ lemma T'_deg_scalar (c : ℕ+) :
   rw [DoubleCoset.mem_doubleCoset] at hδ_mem
   obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
   have hδ_simp : (δ : GL (Fin n) ℚ) = (h₁ * h₂) * diagMat n (fun _ => c) := by
-    rw [hδ_eq, show (↑(diagMat_delta n (fun _ => c)) : GL (Fin n) ℚ) = diagMat n (fun _ => c) from rfl]
+    rw [hδ_eq,
+      show (↑(diagMat_delta n (fun _ => c)) : GL (Fin n) ℚ) =
+        diagMat n (fun _ => c) from rfl]
     rw [mul_assoc, diagMat_scalar_comm n c h₂, ← mul_assoc]
   rw [hδ_simp, map_mul, MulAction.mul_smul, conjAct_scalar_smul_eq]
   exact conjAct_mem_smul_eq n (h₁ * h₂) (H.mul_mem hh₁ hh₂)
@@ -1029,14 +1044,20 @@ private lemma SLnZ_in_CRTProd (d d' : ℕ) (_hd : 0 < d) (_hd' : 0 < d')
   exact list_prod_in_CRTProd n d d' hcop L hL_CRT
 
 omit [NeZero n] in
-/-- Chinese Remainder Theorem for `SL_n(ℤ)`: every element decomposes as a product of congruence classes when gcd(d, d') = 1. -/
+/-- Chinese Remainder Theorem for `SL_n(ℤ)`: every element
+decomposes as a product of congruence classes
+when gcd(d, d') = 1. -/
 lemma SLnZ_CRT_decomposition (d d' : ℕ) (hd : 0 < d) (hd' : 0 < d')
     (hcop : Nat.Coprime d d')
     (τ : SpecialLinearGroup (Fin n) ℤ) :
     ∃ (τ₁ τ₂ : SpecialLinearGroup (Fin n) ℤ),
       τ = τ₁ * τ₂ ∧
-      (∀ i j, (d : ℤ) ∣ ((τ₁ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) ∧
-      (∀ i j, (d' : ℤ) ∣ ((τ₂ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :=
+      (∀ i j, (d : ℤ) ∣
+        ((τ₁ : Matrix (Fin n) (Fin n) ℤ) i j -
+          if i = j then 1 else 0)) ∧
+      (∀ i j, (d' : ℤ) ∣
+        ((τ₂ : Matrix (Fin n) (Fin n) ℤ) i j -
+          if i = j then 1 else 0)) :=
   SLnZ_in_CRTProd n d d' hd hd' hcop τ
 
 omit [NeZero n] in
@@ -1298,7 +1319,8 @@ private lemma diagConj_scaling (a : Fin n → ℕ+)
   have hai_ne_int : (a i : ℤ) ≠ 0 := ne_of_gt hai_pos
   rw [show ((∏ k, (a k : ℤ)) / (a i : ℤ) * σ.val i j * (a j : ℤ) : ℤ) =
       (∏ k, (a k : ℤ)) / (a i : ℤ) * ((σ.val i j : ℤ) * (a j : ℤ)) from by ring]
-  push_cast [Int.cast_div h_dvd (show ((a i : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hai_ne_int)]
+  push_cast [Int.cast_div h_dvd
+    (show ((a i : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hai_ne_int)]
   ring
 
 omit [NeZero n] in
@@ -1346,7 +1368,9 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ+)
         (∏ k, (b k : ℚ)) / (b q : ℚ) * ((b p : ℚ) * ↑(G.val p q)) := by
       rw [div_eq_mul_inv]; ring
     rw [h_div_eq]
-    push_cast [Int.cast_div h_dvd (show ((b q : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hbq_ne_int)]
+    push_cast [Int.cast_div h_dvd
+      (show ((b q : ℤ) : ℚ) ≠ 0 from
+        Int.cast_ne_zero.mpr hbq_ne_int)]
     ring
   rw [h_C_entry, Finset.mul_sum]
   simp_rw [Finset.mul_sum, mul_assoc]
@@ -1358,8 +1382,10 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ+)
   simp only [F_GL, E_GL, SLnZ_to_GLnQ_val, Matrix.map_apply]
   set z := (h_D_scale p q).choose with hz_def
   have hDpq' : (∏ k, (b k : ℚ)) * D_mat p q = (z : ℚ) := hDpq
-  have h1 : (∏ k, (b k : ℚ)) * ((↑(F.val i p) : ℚ) * (D_mat p q * (↑(E.val q j) : ℚ))) =
-      (↑(F.val i p) : ℚ) * ((∏ k, (b k : ℚ)) * D_mat p q) * (↑(E.val q j) : ℚ) := by ring
+  have h1 : (∏ k, (b k : ℚ)) *
+      ((↑(F.val i p) : ℚ) * (D_mat p q * (↑(E.val q j) : ℚ))) =
+      (↑(F.val i p) : ℚ) * ((∏ k, (b k : ℚ)) * D_mat p q) *
+      (↑(E.val q j) : ℚ) := by ring
   rw [h1, hDpq']
 
 omit [NeZero n] in
@@ -1439,13 +1465,18 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
           rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
         rw [DoubleCoset.mem_doubleCoset] at hδb_mem
         obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb_mem
-        have hσ'_mem : h₁a⁻¹ * ((i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ)) *
+        have hσ'_mem :
+            h₁a⁻¹ * ((i₂.out : GL (Fin n) ℚ)⁻¹ *
+            (i₁.out : GL (Fin n) ℚ)) *
             h₁a ∈ (SLnZ_to_GLnQ n).range :=
           show _ ∈ H from H.mul_mem (H.mul_mem (H.inv_mem hh₁a)
             (H.mul_mem (H.inv_mem (SetLike.coe_mem i₂.out)) (SetLike.coe_mem i₁.out))) hh₁a
         obtain ⟨σ', hσ'⟩ := hσ'_mem
-        have hmem12 : (i₁.out : GL (Fin n) ℚ) * δ_a' * ((j₁.out : GL (Fin n) ℚ) * δ_b') ∈
-            ({(i₂.out : GL (Fin n) ℚ) * δ_a' * ((j₂.out : GL (Fin n) ℚ) * δ_b')} : Set _) *
+        have hmem12 :
+            (i₁.out : GL (Fin n) ℚ) * δ_a' *
+            ((j₁.out : GL (Fin n) ℚ) * δ_b') ∈
+            ({(i₂.out : GL (Fin n) ℚ) * δ_a' *
+            ((j₂.out : GL (Fin n) ℚ) * δ_b')} : Set _) *
             (H : Set _) := by
           have h12' : ({(i₁.out : GL (Fin n) ℚ) * δ_a' *
               ((j₁.out : GL (Fin n) ℚ) * δ_b')} : Set _) * (H : Set _) =
@@ -1458,10 +1489,16 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
           exact ⟨_, Set.mem_singleton _, 1, H.one_mem, by simp⟩
         obtain ⟨_, h_sing, κ, hκ, hκ_eq⟩ := hmem12
         rw [Set.mem_singleton_iff] at h_sing; subst h_sing
-        have h_beta_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ) * δ_a' =
-            (j₂.out : GL (Fin n) ℚ) * δ_b' * κ * δ_b'⁻¹ * (j₁.out : GL (Fin n) ℚ)⁻¹ := by
-          have hκ_eq' : (i₂.out : GL (Fin n) ℚ) * δ_a' * ((j₂.out : GL (Fin n) ℚ) * δ_b') * κ =
-              (i₁.out : GL (Fin n) ℚ) * δ_a' * ((j₁.out : GL (Fin n) ℚ) * δ_b') := by
+        have h_beta_eq :
+            δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
+            (i₁.out : GL (Fin n) ℚ) * δ_a' =
+            (j₂.out : GL (Fin n) ℚ) * δ_b' * κ *
+            δ_b'⁻¹ * (j₁.out : GL (Fin n) ℚ)⁻¹ := by
+          have hκ_eq' :
+              (i₂.out : GL (Fin n) ℚ) * δ_a' *
+              ((j₂.out : GL (Fin n) ℚ) * δ_b') * κ =
+              (i₁.out : GL (Fin n) ℚ) * δ_a' *
+              ((j₁.out : GL (Fin n) ℚ) * δ_b') := by
             exact hκ_eq
           apply mul_left_cancel (a := (i₂.out : GL (Fin n) ℚ) * δ_a')
           apply mul_right_cancel (b := (j₁.out : GL (Fin n) ℚ) * δ_b')
@@ -1469,8 +1506,11 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ+)
             mul_one]
           simp only [mul_assoc] at hκ_eq'
           exact hκ_eq'.symm
-        have h_lhs_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ) * δ_a' =
-            h₂a⁻¹ * ((diagMat n a)⁻¹ * SLnZ_to_GLnQ n σ' * diagMat n a) * h₂a := by
+        have h_lhs_eq :
+            δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
+            (i₁.out : GL (Fin n) ℚ) * δ_a' =
+            h₂a⁻¹ * ((diagMat n a)⁻¹ *
+            SLnZ_to_GLnQ n σ' * diagMat n a) * h₂a := by
           rw [hσ', hδa_eq]
           simp only [_root_.mul_inv_rev, mul_assoc]
         have hF_mem : (j₂.out : GL (Fin n) ℚ) * h₁b ∈ (SLnZ_to_GLnQ n).range :=
