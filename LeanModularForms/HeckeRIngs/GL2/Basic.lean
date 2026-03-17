@@ -134,7 +134,9 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c
   obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc_mem
   have h_product_mem : (p.1.out : GL (Fin 2) ℚ) *
       ((T_diag 2 b hb).eql.choose : GL (Fin 2) ℚ) *
-      ((p.2.out : GL (Fin 2) ℚ) * ((T_diag 2 (fun _ => c) (divChain_const 2 c)).eql.choose : GL (Fin 2) ℚ)) ∈
+      ((p.2.out : GL (Fin 2) ℚ) *
+        ((T_diag 2 (fun _ => c) (divChain_const 2 c)).eql.choose :
+          GL (Fin 2) ℚ)) ∈
       DoubleCoset.doubleCoset (diagMat 2 (pnatMul 2 b (fun _ => c)) : GL (Fin 2) ℚ) H H := by
     rw [DoubleCoset.mem_doubleCoset]
     set x1 := (↑(Quotient.out p.1) : GL (Fin 2) ℚ)
@@ -169,7 +171,8 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c
             h₂c := by rw [diagMat_mul]
     calc x1 * (h₁b * diagMat 2 b * h₂b) * (x2 * (h₁c * diagMat 2 (fun _ => c) * h₂c))
         = x1 * h₁b * (diagMat 2 (pnatMul 2 b (fun _ => c)) * (h₂b * x2 * h₁c)) * h₂c := key
-      _ = x1 * h₁b * diagMat 2 (pnatMul 2 b (fun _ => c)) * (h₂b * x2 * h₁c * h₂c) := by group
+      _ = x1 * h₁b * diagMat 2 (pnatMul 2 b (fun _ => c)) *
+            (h₂b * x2 * h₁c * h₂c) := by group
   apply HeckeRing.T'_ext (GL_pair 2)
   exact doubleCoset_eq_of_mem' _ _ h_product_mem
 
@@ -291,7 +294,9 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c
     constructor; intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
     have hj : j₁ = j₂ := Subsingleton.elim j₁ j₂; subst hj
     simp only [Set.mem_setOf_eq] at h₁ h₂
-    have hi : i₁ = i₂ := decompQuot_eq_of_scalar_fiber b hb c i₁ i₂ j₁ (h₁.trans h₂.symm)
+    have hi : i₁ = i₂ :=
+      decompQuot_eq_of_scalar_fiber b hb c i₁ i₂ j₁
+        (h₁.trans h₂.symm)
     subst hi; rfl
   have h_pos : 0 < HeckeRing.m' (GL_pair 2) D_b D_c D_bc := by
     have h_mem := mem_mulSupport_right_scalar b hb c hbc
