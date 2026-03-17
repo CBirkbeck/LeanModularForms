@@ -32,8 +32,7 @@ lemma 𝕋_mul_assoc (f g h : 𝕋 P ℤ) : (f * g) * h = f * (g * h) := by
   have e3 := (instIsScalarTower P).smul_assoc (g * h) f a
   have e4 := (instIsScalarTower P).smul_assoc h (f * g) a
   simp only [smul_def] at e1 e2 e3 e4
-  rw [e1] at e4
-  rw [← e2] at e4
+  rw [e1, ← e2] at e4
   rwa [← e3] at e4
 
 noncomputable instance instNonUnitalSemiring : NonUnitalSemiring (𝕋 P ℤ) :=
@@ -65,8 +64,7 @@ noncomputable instance instNonAssocSemiring : NonAssocSemiring (𝕋 P ℤ) :=
       ext D z v
       have := 𝕋_one_mul_singleton P D z
       simp_rw [T_single] at *
-      rw [← this]
-      rw [𝕋_mul_singleton]
+      rw [← this, 𝕋_mul_singleton]
       simp only [one_smul]
     mul_one :=fun f => by
       simp only [one_def, mul_def, zero_smul, smul_zero, sum_single_index, one_smul]
@@ -76,8 +74,7 @@ noncomputable instance instNonAssocSemiring : NonAssocSemiring (𝕋 P ℤ) :=
       ext D z v
       have := 𝕋_singleton_one_mul P D z
       simp_rw [T_single] at this
-      rw [← this]
-      rw [𝕋_mul_singleton]
+      rw [← this, 𝕋_mul_singleton]
       simp only [one_smul] }
 
 noncomputable instance instSemiring : Semiring (𝕋 P ℤ) :=

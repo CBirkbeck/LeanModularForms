@@ -85,8 +85,7 @@ theorem thm324_2 (k : ℕ) (hk : 2 ≤ k) :
       T_pp p hp * T_sum ⟨p ^ (k - 2), pow_pos hp.pos (k - 2)⟩ =
       T_sum ⟨p ^ k, pow_pos hp.pos k⟩ by
     rw [eq_sub_iff_add_eq]; exact h
-  rw [T_sum_ppow_expansion p hp k, T_sum_ppow_expansion p hp (k - 2)]
-  rw [Finset.mul_sum]
+  rw [T_sum_ppow_expansion p hp k, T_sum_ppow_expansion p hp (k - 2), Finset.mul_sum]
   have h_range_eq : (k - 2) / 2 + 1 = k / 2 := by omega
   have shift : ∀ j ∈ Finset.range ((k - 2) / 2 + 1),
       T_pp p hp * T_ad' (p ^ j) (p ^ (k - 2 - j)) =
@@ -95,13 +94,11 @@ theorem thm324_2 (k : ℕ) (hk : 2 ≤ k) :
     rw [Finset.mem_range] at hj
     have hjk : j ≤ k - 2 - j := by omega
     have : k - 2 - j + 1 = k - (j + 1) := by omega
-    rw [T_pp_mul_T_ad'_ppow p hp j (k - 2 - j) hjk]
-    rw [this]
+    rw [T_pp_mul_T_ad'_ppow p hp j (k - 2 - j) hjk, this]
   rw [Finset.sum_congr rfl shift]
   rw [show Finset.range ((k - 2) / 2 + 1) = Finset.range (k / 2) from by
     simp only [show (k - 2) / 2 + 1 = k / 2 from by omega]]
-  rw [← T_ad'_one_ppow p hp k]
-  rw [Finset.sum_range_succ']
+  rw [← T_ad'_one_ppow p hp k, Finset.sum_range_succ']
   simp only [pow_zero, Nat.sub_zero]
   abel
 
@@ -599,9 +596,7 @@ private lemma T_ad_p_ppow_eq (k : ℕ) (hk : 0 < k) :
   have h0 := T_pp_mul_T_ad'_ppow p hp 0 (k - 1) (Nat.zero_le _)
   simp only [pow_zero, zero_add] at h0
   have hk1 : k - 1 + 1 = k := Nat.succ_pred_eq_of_pos hk
-  rw [hk1] at h0
-  rw [T_ad'_one_ppow p hp (k - 1)] at h0
-  rw [T_ad'_ppow p hp 1 k (by omega)] at h0
+  rw [hk1, T_ad'_one_ppow p hp (k - 1), T_ad'_ppow p hp 1 k (by omega)] at h0
   have h_p1 : (⟨p ^ 1, pow_pos hp.pos 1⟩ : ℕ+) = ⟨p, hp.pos⟩ := PNat.eq (pow_one p)
   have h_rhs_congr : T_ad ⟨p ^ 1, pow_pos hp.pos 1⟩ ⟨p ^ k, pow_pos hp.pos k⟩
     (Nat.pow_dvd_pow p (by omega : 1 ≤ k)) =
@@ -662,8 +657,7 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
     rw [h2k] at h5; rw [mul_sub] at h5
     by_cases hk0 : k = 0
     · subst hk0; simp only [Nat.zero_add] at h5 ⊢
-      rw [h_tsum_0, mul_one] at h5
-      rw [h_p1_tad, T_sum_prime p hp] at h5
+      rw [h_tsum_0, mul_one, h_p1_tad, T_sum_prime p hp] at h5
       have h_p1_pnat : (⟨p ^ 1, pow_pos hp.pos 1⟩ : ℕ+) = ⟨p, hp.pos⟩ := by ext; simp [pow_one]
       rw [show T_sum ⟨p ^ 1, pow_pos hp.pos 1⟩ = T_sum ⟨p, hp.pos⟩ from
         by rw [h_p1_pnat]] at h5 ⊢
@@ -734,10 +728,7 @@ private lemma T_pp_pow_comm_T_sum_ppow (i k : ℕ) :
   induction i with
   | zero => simp
   | succ i ih =>
-    rw [pow_succ']
-    rw [mul_assoc, ih, ← mul_assoc]
-    rw [T_pp_comm_T_sum_ppow p hp k]
-    rw [mul_assoc, ← pow_succ']
+    rw [pow_succ', mul_assoc, ih, ← mul_assoc, T_pp_comm_T_sum_ppow p hp k, mul_assoc, ← pow_succ']
 
 private lemma T_sum_p_comm_T_pp_pow (i : ℕ) :
     T_sum ⟨p, hp.pos⟩ * T_pp p hp ^ i =
@@ -788,8 +779,7 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
     rw [h_rec, sub_mul]
     have ih1 := ih (r + 1) (by omega) s (by omega)
     have ih0 := ih r (by omega) s (by omega)
-    rw [mul_assoc, ih1]
-    rw [smul_mul_assoc, mul_assoc (T_pp p hp), ih0]
+    rw [mul_assoc, ih1, smul_mul_assoc, mul_assoc (T_pp p hp), ih0]
     set Tp := T_sum ⟨p, hp.pos⟩ with Tp_def
     set Tpp := T_pp p hp with Tpp_def
     set S1 := ∑ i ∈ Finset.range (r + 1 + 1),
@@ -828,8 +818,7 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
         rw [eq_sub_iff_add_eq] at h_rec_i; exact h_rec_i.symm
       rw [h_eq, mul_add, smul_add]
       congr 1
-      rw [mul_smul_comm, smul_smul]
-      rw [show (p : ℤ) ^ i * (p : ℤ) = (p : ℤ) ^ (i + 1) from by ring]
+      rw [mul_smul_comm, smul_smul, show (p : ℤ) ^ i * (p : ℤ) = (p : ℤ) ^ (i + 1) from by ring]
       congr 1
       rw [← mul_assoc, ← pow_succ]
     have h_sum_split :
@@ -841,8 +830,7 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
         (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) := by
       rw [← Finset.sum_add_distrib]
       exact Finset.sum_congr rfl h_split
-    rw [h_lhs1, h_peel1, h_sum_split]
-    rw [h_lhs2]
+    rw [h_lhs1, h_peel1, h_sum_split, h_lhs2]
     set A := ∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)
     set B := ∑ i ∈ Finset.range (r + 1),
@@ -958,8 +946,7 @@ theorem T_sum_mul_coprime (m n : ℕ+) (hcop : Nat.Coprime m n) :
   open scoped Pointwise in
   rw [show (Nat.divisors M * Nat.divisors N) =
     (Nat.divisors M ×ˢ Nat.divisors N).image (fun p => p.1 * p.2) from rfl]
-  rw [Finset.sum_image (mul_injOn_coprime_divisors M N hcop)]
-  rw [← Finset.sum_product']
+  rw [Finset.sum_image (mul_injOn_coprime_divisors M N hcop), ← Finset.sum_product']
   apply Finset.sum_congr rfl
   intro ⟨a, b⟩ hab
   simp only [Finset.mem_product, Nat.mem_divisors] at hab

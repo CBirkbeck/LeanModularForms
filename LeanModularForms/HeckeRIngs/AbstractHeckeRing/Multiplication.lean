@@ -51,8 +51,7 @@ private lemma conjAct_mem_of_leftCoset_eq (d : Δ) (h h' : H)
   have h_mem_lhs : (h : G) * (d : G) ∈ {(h : G)} * {(d : G)} * (H : Set G) := by
     rw [Set.singleton_mul_singleton]
     exact ⟨(h : G) * (d : G), Set.mem_singleton _, 1, H.one_mem, by simp⟩
-  rw [hyp] at h_mem_lhs
-  rw [Set.singleton_mul_singleton] at h_mem_lhs
+  rw [hyp, Set.singleton_mul_singleton] at h_mem_lhs
   obtain ⟨_, rfl, k, hk, hkk⟩ := h_mem_lhs
   have hkk' : ↑h' * ↑d * k = ↑h * ↑d := hkk
   have key : (h' : G)⁻¹ * (h : G) = (d : G) * k * (d : G)⁻¹ := by
