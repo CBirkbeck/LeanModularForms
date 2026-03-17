@@ -13,7 +13,6 @@ structural lemmas for Shimura's Theorem 3.24.
 
 ## Main definitions
 
-* `mk2` -- construct a `Fin 2 → ℕ+` diagonal
 * `T_ad` -- `T(a,d)` basis element
 * `T_pp` -- scalar double coset `T(p,p)`
 * `T_sum` -- Shimura's `T(m) = Σ T(a,d)` over divisor pairs
@@ -29,28 +28,21 @@ open scoped Pointwise
 
 namespace HeckeRing.GL2
 
-def mk2 (a d : ℕ+) : Fin 2 → ℕ+ :=
-  ![a, d]
-
-@[simp] lemma mk2_zero (a d : ℕ+) : mk2 a d 0 = a := rfl
-
-@[simp] lemma mk2_one (a d : ℕ+) : mk2 a d 1 = d := rfl
-
 /-- DivChain for n=2 reduces to `a | d`. -/
 lemma divChain_mk2 (a d : ℕ+) (h : (a : ℕ) ∣ (d : ℕ)) :
-    DivChain 2 (mk2 a d) := by
+    DivChain 2 ![a, d] := by
   intro i hi
   have : i = 0 := by omega
   subst this
-  simpa [mk2] using h
+  simpa using h
 
-lemma const_eq_mk2 (c : ℕ+) : (fun (_ : Fin 2) => c) = mk2 c c :=
+lemma const_eq_mk2 (c : ℕ+) : (fun (_ : Fin 2) => c) = ![c, c] :=
   funext fun i => by fin_cases i <;> rfl
 
 /-- `T(a,d)` for n=2: the Hecke basis element for diagonal `(a,d)` with `a | d`. -/
 noncomputable def T_ad (a d : ℕ+) (h : (a : ℕ) ∣ (d : ℕ)) :
     HeckeAlgebra 2 :=
-  T_elem 2 (mk2 a d) (divChain_mk2 a d h)
+  T_elem 2 ![a, d] (divChain_mk2 a d h)
 
 /-- `T(p,p)` -- the scalar double coset. -/
 noncomputable def T_pp (p : ℕ) (hp : p.Prime) : HeckeAlgebra 2 :=
@@ -252,7 +244,7 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c
             ((H' : Set _) * {δ_c}) := by
           rw [mul_assoc, h_coset]
         rw [← lhs_eq, ← rhs_eq]
-        convert h12 using 2 <;> simp [H'_def, δ_c_def]
+        convert h12 using 2
       rw [← mul_assoc, ← mul_assoc] at h12'
       exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
     subst hi; rfl
@@ -354,7 +346,7 @@ lemma T_sum_ppow_expansion (k : ℕ) :
     rw [dif_neg (by
       intro ⟨_, _, hdvd⟩
       exact absurd (Nat.le_of_dvd (pow_pos hp.pos _) hdvd)
-        (not_le_of_lt (Nat.pow_lt_pow_right hp.one_lt (by omega))))])).symm
+        (not_le_of_gt (Nat.pow_lt_pow_right hp.one_lt (by omega))))])).symm
 
 end Structural
 
