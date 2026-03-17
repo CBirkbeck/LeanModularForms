@@ -183,6 +183,50 @@ private lemma decompQuot_eq_of_conjAct_rel (D : T' P) (i₁ i₂ : decompQuot P 
   rw [← @QuotientGroup.leftRel_apply, ← @Quotient.eq''] at h
   simp only [Quotient.out_eq'] at h; exact h
 
+/-- Shifted coset condition: if `a * g₂ * (b * g₁) ∈ (q * g_D) · H` and the group elements
+    `a', b'` are related to `a, b` by `a' = q⁻¹ * a * n₁` and `b' = (g₂⁻¹ * n₁⁻¹ * g₂) * b * n₂`
+    where `n₁, n₂` conjugate into H, then `a' * g₂ * (b' * g₁) ∈ g_D · H`. -/
+private lemma coset_shift_fwd (q a b a' b' g₁ g₂ g_D n₁ n₂ : G)
+    (hcond : ({a * g₂ * (b * g₁)} : Set G) * ↑P.H = {q * g_D} * ↑P.H)
+    (ha' : a' = q⁻¹ * a * n₁) (hb' : b' = g₂⁻¹ * n₁⁻¹ * g₂ * b * n₂)
+    (hn₂_conj : g₁⁻¹ * n₂ * g₁ ∈ P.H) :
+    ({a' * g₂ * (b' * g₁)} : Set G) * ↑P.H = {g_D} * ↑P.H := by
+  subst ha' hb'
+  apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
+  refine ⟨q⁻¹ * a * n₁ * g₂ * (g₂⁻¹ * n₁⁻¹ * g₂ * b * n₂ * g₁),
+    ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩, ?_⟩
+  have hmem : a * g₂ * (b * g₁) ∈ ({q * g_D} : Set G) * ↑P.H := by
+    rw [← hcond]; exact ⟨_, rfl, 1, P.H.one_mem, by group⟩
+  obtain ⟨_, h_eq, h₀, hh₀, hprod⟩ := hmem
+  simp only [Set.mem_singleton_iff] at h_eq; subst h_eq
+  refine ⟨h₀ * (g₁⁻¹ * n₂ * g₁), P.H.mul_mem hh₀ hn₂_conj, ?_⟩
+  simp only [smul_eq_mul]; symm
+  calc q⁻¹ * a * n₁ * g₂ * (g₂⁻¹ * n₁⁻¹ * g₂ * b * n₂ * g₁)
+      = q⁻¹ * (a * g₂ * (b * g₁)) * (g₁⁻¹ * n₂ * g₁) := by group
+    _ = g_D * (h₀ * (g₁⁻¹ * n₂ * g₁)) := by
+        have hprod' : q * g_D * h₀ = a * g₂ * (b * g₁) := hprod
+        rw [← hprod']; group
+
+/-- Inverse-shifted coset condition: if `a' * g₂ * (b' * g₁) ∈ g_D · H` and the group elements
+    `a, b` are related to `a', b'` by `a = q * a' * m₁` and `b = (g₂⁻¹ * m₁⁻¹ * g₂) * b' * m₂`
+    where `m₂` conjugates into H, then `a * g₂ * (b * g₁) ∈ (q * g_D) · H`. -/
+private lemma coset_shift_inv (q a b a' b' g₁ g₂ g_D m₁ m₂ : G)
+    (hcond : ({a' * g₂ * (b' * g₁)} : Set G) * ↑P.H = {g_D} * ↑P.H)
+    (ha : a = q * a' * m₁) (hb : b = g₂⁻¹ * m₁⁻¹ * g₂ * b' * m₂)
+    (hm₂_conj : g₁⁻¹ * m₂ * g₁ ∈ P.H) :
+    ({a * g₂ * (b * g₁)} : Set G) * ↑P.H = {q * g_D} * ↑P.H := by
+  apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
+  refine ⟨a * g₂ * (b * g₁), ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩, ?_⟩
+  have hmem : a' * g₂ * (b' * g₁) ∈ ({g_D} : Set G) * ↑P.H := by
+    rw [← hcond]; exact ⟨_, rfl, 1, P.H.one_mem, by group⟩
+  obtain ⟨_, hd_eq, h₀, hh₀, hprod⟩ := hmem
+  simp only [Set.mem_singleton_iff] at hd_eq
+  refine ⟨h₀ * (g₁⁻¹ * m₂ * g₁), P.H.mul_mem hh₀ hm₂_conj, ?_⟩
+  simp only [smul_eq_mul]; symm
+  calc a * g₂ * (b * g₁)
+      = q * (a' * g₂ * (b' * g₁)) * (g₁⁻¹ * m₂ * g₁) := by subst ha hb; group
+    _ = q * g_D * (h₀ * (g₁⁻¹ * m₂ * g₁)) := by subst hd_eq; rw [← hprod]; group
+
 /-- Uniform distribution: the count m'(D₂, D₁, D) is the same whether we count pairs
     landing in g_D·H or in q₀.out·g_D·H (any right coset within double coset D).
     This is the key to Shimura's Proposition 3.4 (associativity of the Hecke product). -/
@@ -206,18 +250,17 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
   refine Equiv.ofBijective (fun ⟨⟨i, j⟩, (hcond : _ = _)⟩ =>
     let i' : decompQuot P D₂ :=
       ⟦⟨(q₀.out : G)⁻¹ * i.out,
-        P.H.mul_mem (P.H.inv_mem q₀.out.2)
-          i.out.2⟩⟧
+        P.H.mul_mem (P.H.inv_mem q₀.out.2) i.out.2⟩⟧
     let n := get_n i
     let hn_conj : g₂⁻¹ * (n : G)⁻¹ * g₂ ∈ P.H := conjAct_inv_mem_of_subgroupOf P g₂ n
     let h_n : G := g₂⁻¹ * (n : G)⁻¹ * g₂
     let j' : decompQuot P D₁ := ⟦⟨h_n * j.out, P.H.mul_mem hn_conj j.out.2⟩⟧
     (⟨⟨i', j'⟩, by
       show ({(i'.out : G) * g₂} : Set G) * {(j'.out : G) * g₁} * P.H = {g_D} * P.H
-      have hcond' : ({(i.out : G) * g₂} : Set G) * {(j.out : G) * g₁} * ↑P.H =
-          {(q₀.out : G) * g_D} * ↑P.H := hcond
-      rw [Set.singleton_mul_singleton] at hcond'
       rw [Set.singleton_mul_singleton]
+      have hcond' : ({(i.out : G) * g₂ * ((j.out : G) * g₁)} : Set G) * ↑P.H =
+          {(q₀.out : G) * g_D} * ↑P.H := by
+        rw [← Set.singleton_mul_singleton]; exact hcond
       have hn_coe : (i'.out : G) = (q₀.out : G)⁻¹ * (i.out : G) * (n : G) :=
         mk_out_coe_eq_mul P (QuotientGroup.mk_out_eq_mul
           ((ConjAct.toConjAct g₂ • P.H).subgroupOf P.H)
@@ -226,34 +269,15 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
       obtain ⟨n', hn'_eq⟩ := QuotientGroup.mk_out_eq_mul
         ((ConjAct.toConjAct g₁ • P.H).subgroupOf P.H)
         ⟨h_n * j.out, P.H.mul_mem hn_conj j.out.2⟩
-      have hn'_coe : (j'.out : G) = h_n * (j.out : G) * (n' : G) :=
-        mk_out_coe_eq_mul P hn'_eq
-      have hn'_conj : g₁⁻¹ * (n' : G) * g₁ ∈ P.H := conjAct_mem_of_subgroupOf P g₁ n'
-      apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
-      refine ⟨(i'.out : G) * g₂ * ((j'.out : G) * g₁),
-        ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩, ?_⟩
-      have hmem0 : (i.out : G) * g₂ * ((j.out : G) * g₁) ∈
-          ({(q₀.out : G) * g_D} : Set G) * ↑P.H := by
-        rw [← hcond']
-        exact ⟨_, rfl, 1, P.H.one_mem, by group⟩
-      obtain ⟨_, h_eq, h₀, hh₀, hprod⟩ := hmem0
-      simp only [Set.mem_singleton_iff] at h_eq; subst h_eq
-      refine ⟨h₀ * (g₁⁻¹ * (n' : G) * g₁),
-        P.H.mul_mem hh₀ hn'_conj, ?_⟩
-      simp only [smul_eq_mul]; symm
-      calc (i'.out : G) * g₂ * ((j'.out : G) * g₁)
-          = (q₀.out : G)⁻¹ * ((i.out : G) * g₂ * ((j.out : G) * g₁)) *
-            (g₁⁻¹ * (n' : G) * g₁) := by
-              rw [hn_coe, hn'_coe, show h_n = g₂⁻¹ * (↑↑n)⁻¹ * g₂ from rfl]; group
-        _ = g_D * (h₀ * (g₁⁻¹ * (n' : G) * g₁)) := by
-            have hprod' : (q₀.out : G) * g_D * h₀ =
-                (i.out : G) * g₂ * ((j.out : G) * g₁) := hprod
-            rw [← hprod']; group
+      exact coset_shift_fwd P (q₀.out : G) (i.out : G) (j.out : G) (i'.out : G)
+        (j'.out : G) g₁ g₂ g_D (n : G) (n' : G) hcond' hn_coe
+        (mk_out_coe_eq_mul P hn'_eq) (conjAct_mem_of_subgroupOf P g₁ n')
     ⟩ : {p : decompQuot P D₂ × decompQuot P D₁ |
       ({(p.1.out : G) * g₂} : Set G) * {(p.2.out : G) * g₁} * P.H =
       {g_D} * P.H})) ?_
   constructor
-  · intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ heq
+  · -- Injectivity
+    intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ heq
     simp only [Subtype.mk.injEq, Prod.mk.injEq] at heq
     obtain ⟨hi, hj⟩ := heq
     have hi₁₂ : i₁ = i₂ := by
@@ -266,41 +290,45 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
       exact decompQuot_eq_of_conjAct_rel P D₁ j₁ j₂
         (by convert hj using 1; ext; simp [Subgroup.coe_mul]; group)
     subst hj₁₂; rfl
-  · intro ⟨⟨i', j'⟩, (hcond'_tgt : _ = _)⟩
+  · -- Surjectivity: construct preimage (i₀, j₀) for target (i', j')
+    intro ⟨⟨i', j'⟩, (hcond'_tgt : _ = _)⟩
     let i₀ : decompQuot P D₂ :=
       ⟦⟨(q₀.out : G) * i'.out, P.H.mul_mem q₀.out.2 i'.out.2⟩⟧
     let n₀ := get_n i₀
-    have hn₀_spec := (QuotientGroup.mk_out_eq_mul
-      ((ConjAct.toConjAct g₂ • P.H).subgroupOf P.H)
-      ⟨(q₀.out : G)⁻¹ * i₀.out,
-        P.H.mul_mem (P.H.inv_mem q₀.out.2) i₀.out.2⟩).choose_spec
     have hn₀_conj : g₂⁻¹ * (n₀ : G) * g₂ ∈ P.H := conjAct_mem_of_subgroupOf P g₂ n₀
     let j₀ : decompQuot P D₁ := ⟦⟨g₂⁻¹ * (n₀ : G) * g₂ * j'.out,
       P.H.mul_mem hn₀_conj j'.out.2⟩⟧
+    -- Extract representative coercions
     obtain ⟨m_i, hmi_eq⟩ := QuotientGroup.mk_out_eq_mul
       ((ConjAct.toConjAct g₂ • P.H).subgroupOf P.H)
       ⟨(q₀.out : G) * i'.out, P.H.mul_mem q₀.out.2 i'.out.2⟩
-    have hmi_coe : (i₀.out : G) = (q₀.out : G) * (i'.out : G) * (m_i : G) :=
-      mk_out_coe_eq_mul P hmi_eq
     obtain ⟨m_j, hmj_eq⟩ := QuotientGroup.mk_out_eq_mul
       ((ConjAct.toConjAct g₁ • P.H).subgroupOf P.H)
       ⟨g₂⁻¹ * (n₀ : G) * g₂ * j'.out, P.H.mul_mem hn₀_conj j'.out.2⟩
+    have hmi_coe : (i₀.out : G) = (q₀.out : G) * (i'.out : G) * (m_i : G) :=
+      mk_out_coe_eq_mul P hmi_eq
     have hmj_coe : (j₀.out : G) = g₂⁻¹ * (n₀ : G) * g₂ * (j'.out : G) * (m_j : G) :=
       mk_out_coe_eq_mul P hmj_eq
+    -- Quotient recovery: ⟦q₀⁻¹ * i₀.out⟧ = i'
     have h_quot_eq : (⟦⟨(q₀.out : G)⁻¹ * (i₀.out : G),
         P.H.mul_mem (P.H.inv_mem q₀.out.2) i₀.out.2⟩⟧ : decompQuot P D₂) = i' := by
-      rw [show i' = ⟦i'.out⟧ from (Quotient.out_eq' i').symm]
-      rw [@Quotient.eq'', QuotientGroup.leftRel_apply]
+      rw [show i' = ⟦i'.out⟧ from (Quotient.out_eq' i').symm, @Quotient.eq'',
+        QuotientGroup.leftRel_apply]
       have h := Quotient.out_eq' i₀
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at h
       convert h using 1; ext; simp [Subgroup.coe_mul]; group
-    have hn₀_val : (i'.out : G) = (q₀.out : G)⁻¹ * (i₀.out : G) * (n₀ : G) := by
-      have h1 := congr_arg (Subtype.val : ↥P.H → G) hn₀_spec
-      simp only [Subgroup.coe_mul] at h1
-      rwa [show ((⟦⟨(q₀.out : G)⁻¹ * (i₀.out : G),
-        P.H.mul_mem (P.H.inv_mem q₀.out.2) i₀.out.2⟩⟧ : decompQuot P D₂).out : G) =
-        (i'.out : G) from by congr 1; simp [h_quot_eq]] at h1
+    -- Correction n₀ = m_i⁻¹
     have h_n₀_mi : (n₀ : G) = (m_i : G)⁻¹ := by
+      have hn₀_spec := (QuotientGroup.mk_out_eq_mul
+        ((ConjAct.toConjAct g₂ • P.H).subgroupOf P.H)
+        ⟨(q₀.out : G)⁻¹ * i₀.out,
+          P.H.mul_mem (P.H.inv_mem q₀.out.2) i₀.out.2⟩).choose_spec
+      have hn₀_val : (i'.out : G) = (q₀.out : G)⁻¹ * (i₀.out : G) * (n₀ : G) := by
+        have h1 := congr_arg (Subtype.val : ↥P.H → G) hn₀_spec
+        simp only [Subgroup.coe_mul] at h1
+        rwa [show ((⟦⟨(q₀.out : G)⁻¹ * (i₀.out : G),
+          P.H.mul_mem (P.H.inv_mem q₀.out.2) i₀.out.2⟩⟧ : decompQuot P D₂).out : G) =
+          (i'.out : G) from by congr 1; simp [h_quot_eq]] at h1
       have h1 : (i'.out : G) = (i'.out : G) * (m_i : G) * (n₀ : G) := by
         conv_lhs => rw [hn₀_val]; rw [hmi_coe]
         group
@@ -308,36 +336,22 @@ lemma m'_uniform (D₂ D₁ D : T' P) (q₀ : decompQuot P D) :
         have := congr_arg ((i'.out : G)⁻¹ * ·) h1
         simp only [inv_mul_cancel] at this; group at this; exact this.symm
       exact eq_inv_of_mul_eq_one_right h2
-    have hmj_conj : g₁⁻¹ * (m_j : G) * g₁ ∈ P.H := conjAct_mem_of_subgroupOf P g₁ m_j
+    -- Source coset condition via coset_shift_inv
     have hcond₀ : ({(i₀.out : G) * g₂} : Set G) * {(j₀.out : G) * g₁} * P.H =
         {(q₀.out : G) * g_D} * P.H := by
       rw [Set.singleton_mul_singleton]
-      have hcond'_sg : ({(i'.out : G) * g₂ * ((j'.out : G) * g₁)} : Set G) * ↑P.H =
-          {g_D} * ↑P.H := by rw [← Set.singleton_mul_singleton]; exact hcond'_tgt
-      apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
-      refine ⟨(i₀.out : G) * g₂ * ((j₀.out : G) * g₁),
-        ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩, ?_⟩
-      have hmem₀ : (i'.out : G) * g₂ * ((j'.out : G) * g₁) ∈
-          ({g_D} : Set G) * ↑P.H := by
-        rw [← hcond'_sg]; exact ⟨_, rfl, 1, P.H.one_mem, by group⟩
-      obtain ⟨_, hd_eq, h₀, hh₀, hprod₀⟩ := hmem₀
-      simp only [Set.mem_singleton_iff] at hd_eq; subst hd_eq
-      refine ⟨h₀ * (g₁⁻¹ * (m_j : G) * g₁), P.H.mul_mem hh₀ hmj_conj, ?_⟩
-      simp only [smul_eq_mul]; symm
-      calc (i₀.out : G) * g₂ * ((j₀.out : G) * g₁)
-          = (q₀.out : G) * ((i'.out : G) * g₂ * ((j'.out : G) * g₁)) *
-            (g₁⁻¹ * (m_j : G) * g₁) := by
-              rw [hmi_coe, hmj_coe, h_n₀_mi]; group
-        _ = (q₀.out : G) * g_D * (h₀ * (g₁⁻¹ * (m_j : G) * g₁)) := by
-              rw [← hprod₀]; group
+      exact coset_shift_inv P (q₀.out : G) (i₀.out : G) (j₀.out : G) (i'.out : G)
+        (j'.out : G) g₁ g₂ g_D (m_i : G) (m_j : G)
+        (by rw [← Set.singleton_mul_singleton]; exact hcond'_tgt)
+        hmi_coe (by rw [hmj_coe, h_n₀_mi]) (conjAct_mem_of_subgroupOf P g₁ m_j)
+    -- Assembly: (i₀, j₀) maps to (i', j')
     refine ⟨⟨⟨i₀, j₀⟩, hcond₀⟩, ?_⟩
-    apply Subtype.ext; simp only [Prod.mk.injEq]; constructor
-    · exact h_quot_eq
-    · rw [show j' = ⟦j'.out⟧ from (Quotient.out_eq' j').symm]
-      rw [@Quotient.eq'', QuotientGroup.leftRel_apply]
+    apply Subtype.ext; simp only [Prod.mk.injEq]; exact ⟨h_quot_eq, by
+      rw [show j' = ⟦j'.out⟧ from (Quotient.out_eq' j').symm, @Quotient.eq'',
+        QuotientGroup.leftRel_apply]
       have h_j₀ := Quotient.out_eq' j₀
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at h_j₀
-      convert h_j₀ using 1; ext; simp [Subgroup.coe_mul]; group; rfl
+      convert h_j₀ using 1; ext; simp [Subgroup.coe_mul]; group; rfl⟩
 
 /-- The iterated product M_mk(α * i * g₂ * j * g₁) lies in
     smulOrbit(mulMap(D₂,D₁,(i,j)), m₀).
