@@ -20,7 +20,8 @@ Basic definitions for Hecke rings following Shimura Ch. 3: `ArithmeticGroupPair`
 spaces `T'` and `M`, the Hecke ring type `𝕋`, and foundational double coset lemmas.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable
+open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup
+  Subgroup.Commensurable
 
 open scoped Pointwise
 
@@ -323,13 +324,9 @@ noncomputable instance (P : ArithmeticGroupPair G) (D : T' P) :
     Fintype (P.H ⧸ ((ConjAct.toConjAct (D.eql.choose : G)) • P.H).subgroupOf P.H) :=
   Subgroup.fintypeOfIndexNeZero (P.h₁ D.eql.choose.2).1
 
-noncomputable instance (P : ArithmeticGroupPair G) (D : T' P) :
-  Finite (P.H ⧸ ((ConjAct.toConjAct (D.eql.choose : G)) • P.H).subgroupOf P.H) :=
-  inferInstance
-
 lemma delta_mul_mem (i : H) (a b : Δ) (h₀ : H.toSubmonoid ≤ Δ) : a * (i : G) * b ∈ Δ := by
- rw [mul_assoc]
- apply Submonoid.mul_mem _ (a.2) (Submonoid.mul_mem _ (h₀ i.2) b.2)
+  rw [mul_assoc]
+  exact Submonoid.mul_mem _ a.2 (Submonoid.mul_mem _ (h₀ i.2) b.2)
 
 noncomputable instance instAddCommGroup𝕋 : AddCommGroup (𝕋 P Z) :=
   inferInstanceAs (AddCommGroup ((T' P) →₀ Z))

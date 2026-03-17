@@ -24,7 +24,8 @@ coefficients for the prime-power case.
 ## Important note on degree formulas
 
 The degree of `T(a₁,...,aₙ)` is **not** simply `∏_{i<j} (aⱼ/aᵢ)`. The upper-triangular
-representatives with fixed diagonal `(a₁,...,aₙ)` account for `∏_{i<j}(aⱼ/aᵢ)` left cosets,
+representatives with fixed diagonal `(a₁,...,aₙ)` account for
+`∏_{i<j}(aⱼ/aᵢ)` left cosets,
 but the double coset also contains representatives with permuted diagonals (those whose
 Hermite Normal Form has a different diagonal but the same Smith Normal Form).
 
@@ -53,10 +54,11 @@ def gaussianBinom (q : ℕ) (m k : ℕ) : ℕ :=
   else 0
 
 lemma gaussianBinom_zero_right (q m : ℕ) : gaussianBinom q m 0 = 1 := by
-  simp [gaussianBinom]
+  simp only [gaussianBinom, Nat.zero_le, ↓reduceIte,
+    Finset.range_zero, Finset.prod_empty]
 
 lemma gaussianBinom_gt (q m k : ℕ) (h : m < k) : gaussianBinom q m k = 0 := by
-  simp [gaussianBinom, Nat.not_le.mpr h]
+  simp only [gaussianBinom, Nat.not_le.mpr h, ↓reduceIte]
 
 private lemma conjAct_smul_eq_of_mem {G : Type*} [Group G] (H : Subgroup G)
     {h : G} (hh : h ∈ H) :
@@ -82,6 +84,7 @@ private def unipSL (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n
     SL(n, ℤ) :=
   ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
 
+omit [NeZero n] in
 private lemma upperTriGL_eq_diagMat_mul (a : Fin n → ℕ+) (hdiv : DivChain n a)
     (B : UpperTriRep n a hdiv) :
     upperTriGL n a hdiv B = diagMat n a * SLnZ_to_GLnQ n (unipSL n a hdiv B) := by
@@ -90,7 +93,7 @@ private lemma upperTriGL_eq_diagMat_mul (a : Fin n → ℕ+) (hdiv : DivChain n 
   ext i j
   simp only [Matrix.map_apply, Matrix.mul_apply, Matrix.diagonal_apply]
   rw [Finset.sum_eq_single i]
-  · simp only [ite_mul, one_mul, zero_mul]
+  · simp only [ite_mul, zero_mul]
     simp only [unipSL, unipMat, upperTriMat]
     split_ifs <;> push_cast <;> ring
   · intro k _ hk; simp [Ne.symm hk]
@@ -115,6 +118,7 @@ private def invTransposeEquiv : SL(n, ℤ) ≃* SL(n, ℤ) where
         Matrix.transpose_mul]
     rw [h, _root_.mul_inv_rev]
 
+omit [NeZero n] in
 private lemma SL_transpose_inv_eq (σ : SL(n, ℤ)) :
     σ.transpose⁻¹ = σ⁻¹.transpose := by
   apply Subtype.ext
@@ -128,6 +132,7 @@ private lemma invTransposeEquiv_invol (σ : SL(n, ℤ)) :
     exact SL_transpose_inv_eq n σ
   rw [this]; exact (invTransposeEquiv n).apply_symm_apply σ
 
+omit [NeZero n] in
 private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
     K.relIndex (SLnZ_subgroup n) = (K.comap (SLnZ_to_GLnQ n)).index := by
   set f := SLnZ_to_GLnQ n
@@ -146,6 +151,7 @@ private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
     _ = (K.comap f).relIndex ⊤ := Subgroup.relIndex_map_map_of_injective _ _ h_inj
     _ = (K.comap f).index := (K.comap f).relIndex_top_right
 
+omit [NeZero n] in
 private lemma transpose_mul_diagMat (a : Fin n → ℕ+) (σ ρ : SL(n, ℤ))
     (h : SLnZ_to_GLnQ n σ * diagMat n a = diagMat n a * SLnZ_to_GLnQ n ρ) :
     diagMat n a * SLnZ_to_GLnQ n σ.transpose =
@@ -159,71 +165,79 @@ private lemma transpose_mul_diagMat (a : Fin n → ℕ+) (σ ρ : SL(n, ℤ))
   simp only [Matrix.transpose_mul, Matrix.diagonal_transpose] at h1
   exact h1
 
+private lemma transpose_mem_conj_inv_of_mem_conj
+    (a : Fin n → ℕ+) (σ : SL(n, ℤ))
+    (hσ : SLnZ_to_GLnQ n σ ∈
+      ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n) :
+    SLnZ_to_GLnQ n σ.transpose ∈
+      ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n := by
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct] at hσ
+  simp only [inv_inv] at hσ
+  obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp
+    (show _ ∈ (SLnZ_to_GLnQ n).range from hσ)
+  have h_eq : SLnZ_to_GLnQ n σ * diagMat n a =
+      diagMat n a * SLnZ_to_GLnQ n ρ := by rw [hρ]; group
+  have h_trans := transpose_mul_diagMat n a σ ρ h_eq
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
+  have : diagMat n a * SLnZ_to_GLnQ n σ.transpose *
+      (diagMat n a)⁻¹ = SLnZ_to_GLnQ n ρ.transpose := by
+    have h := congr_arg (· * (diagMat n a)⁻¹) h_trans
+    simp only [mul_assoc, mul_inv_cancel, mul_one] at h
+    rwa [← mul_assoc] at h
+  rw [this]; exact ⟨ρ.transpose, rfl⟩
+
+private lemma transpose_mem_conj_of_mem_conj_inv
+    (a : Fin n → ℕ+) (τ : SL(n, ℤ))
+    (hτ : SLnZ_to_GLnQ n τ ∈
+      ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n) :
+    SLnZ_to_GLnQ n τ.transpose ∈
+      ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n := by
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hτ
+  obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp
+    (show _ ∈ (SLnZ_to_GLnQ n).range from hτ)
+  have h_eq : SLnZ_to_GLnQ n ρ * diagMat n a =
+      diagMat n a * SLnZ_to_GLnQ n τ := by rw [hρ]; group
+  have h_trans := transpose_mul_diagMat n a ρ τ h_eq
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]; simp only [inv_inv]
+  have : (diagMat n a)⁻¹ * SLnZ_to_GLnQ n τ.transpose *
+      diagMat n a = SLnZ_to_GLnQ n ρ.transpose := by
+    have := congr_arg ((diagMat n a)⁻¹ * ·) h_trans.symm
+    simp only [← mul_assoc, inv_mul_cancel, one_mul] at this
+    exact this
+  rw [this]; exact ⟨ρ.transpose, rfl⟩
+
 private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ+) :
-    (ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n).relIndex (SLnZ_subgroup n) =
-    (ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n).relIndex (SLnZ_subgroup n) := by
+    (ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n).relIndex
+      (SLnZ_subgroup n) =
+    (ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n).relIndex
+      (SLnZ_subgroup n) := by
   rw [relIndex_eq_comap_index, relIndex_eq_comap_index]
-  set H := SLnZ_subgroup n
-  set α := diagMat n a
-  set f := SLnZ_to_GLnQ n
-  set GammaMinus := (ConjAct.toConjAct α⁻¹ • H).comap f
-  set GammaPlus := (ConjAct.toConjAct α • H).comap f
+  set H := SLnZ_subgroup n; set α := diagMat n a; set f := SLnZ_to_GLnQ n
   set φ := invTransposeEquiv n
-  suffices h_map : GammaPlus = GammaMinus.map φ.toMonoidHom by
-    rw [h_map]; simp [Subgroup.index_map_equiv]
-  have h_transpose_fwd : ∀ σ : SL(n, ℤ),
-      f σ ∈ ConjAct.toConjAct α • H →
-      f σ.transpose ∈ ConjAct.toConjAct α⁻¹ • H := by
-    intro σ hσ
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-      ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct] at hσ
-    simp only [inv_inv] at hσ
-    obtain ⟨ρ, hρ⟩ := (MonoidHom.mem_range.mp (show _ ∈ f.range from hσ))
-    have h_eq : f σ * α = α * f ρ := by rw [hρ]; group
-    have h_trans : α * f σ.transpose = f ρ.transpose * α :=
-      transpose_mul_diagMat n a σ ρ h_eq
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-      ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-    have : α * f σ.transpose * α⁻¹ = f ρ.transpose := by
-      have h := congr_arg (· * α⁻¹) h_trans
-      simp only [mul_assoc, mul_inv_cancel, mul_one] at h
-      rwa [← mul_assoc] at h
-    rw [this]; exact ⟨ρ.transpose, rfl⟩
-  have h_transpose_bwd : ∀ τ : SL(n, ℤ),
-      f τ ∈ ConjAct.toConjAct α⁻¹ • H →
-      f τ.transpose ∈ ConjAct.toConjAct α • H := by
-    intro τ hτ
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-      ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hτ
-    obtain ⟨ρ, hρ⟩ := (MonoidHom.mem_range.mp (show _ ∈ f.range from hτ))
-    have h_eq : f ρ * α = α * f τ := by rw [hρ]; group
-    have h_trans : α * f ρ.transpose = f τ.transpose * α :=
-      transpose_mul_diagMat n a ρ τ h_eq
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-      ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]
-    simp only [inv_inv]
-    have : α⁻¹ * f τ.transpose * α = f ρ.transpose := by
-      have := congr_arg (α⁻¹ * ·) h_trans.symm
-      simp only [← mul_assoc, inv_mul_cancel, one_mul] at this; exact this
-    rw [this]; exact ⟨ρ.transpose, rfl⟩
-  ext σ
-  simp only [Subgroup.mem_map, Subgroup.mem_comap, MulEquiv.coe_toMonoidHom]
+  suffices h : (ConjAct.toConjAct α • H).comap f =
+      ((ConjAct.toConjAct α⁻¹ • H).comap f).map φ.toMonoidHom by
+    rw [h]; simp [Subgroup.index_map_equiv]
+  ext σ; simp only [Subgroup.mem_map, MulEquiv.coe_toMonoidHom]
   constructor
   · intro hσ
     refine ⟨φ σ, ?_, invTransposeEquiv_invol n σ⟩
     show f (φ σ) ∈ ConjAct.toConjAct α⁻¹ • H
-    have h_mem := h_transpose_fwd σ hσ
     have : f (φ σ) = (f σ.transpose)⁻¹ := by
       show f (σ.transpose⁻¹) = _; exact map_inv f _
     rw [this]
-    exact (ConjAct.toConjAct α⁻¹ • H).inv_mem h_mem
+    exact (ConjAct.toConjAct α⁻¹ • H).inv_mem
+      (transpose_mem_conj_inv_of_mem_conj n a σ hσ)
   · rintro ⟨τ, hτ, rfl⟩
     show f (φ τ) ∈ ConjAct.toConjAct α • H
-    have h_mem := h_transpose_bwd τ hτ
     have : f (φ τ) = (f τ.transpose)⁻¹ := by
       show f (τ.transpose⁻¹) = _; exact map_inv f _
     rw [this]
-    exact (ConjAct.toConjAct α • H).inv_mem h_mem
+    exact (ConjAct.toConjAct α • H).inv_mem
+      (transpose_mem_conj_of_mem_conj_inv n a τ hτ)
 
 /-- The number of upper-triangular representatives is a lower bound on the degree. -/
 theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ+) (hdiv : DivChain n a) :
@@ -282,12 +296,15 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ+) (hdiv : DivChain n a) :
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
   have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
   have h_smul_σ₂ : ConjAct.toConjAct σ₂ • H = H := conjAct_smul_eq_of_mem H hσ₂
-  have h_δ_smul : ConjAct.toConjAct δ • H = ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
-    rw [hδ_eq, map_mul, map_mul, MulAction.mul_smul, MulAction.mul_smul, h_smul_σ₂]
+  have h_δ_smul : ConjAct.toConjAct δ • H =
+      ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
+    rw [hδ_eq, map_mul, map_mul, MulAction.mul_smul,
+      MulAction.mul_smul, h_smul_σ₂]
   have h_S1 : (ConjAct.toConjAct α • H).relIndex H =
       (ConjAct.toConjAct δ • H).relIndex H := by
     rw [h_δ_smul]
-    have := Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
+    have := Subgroup.relIndex_pointwise_smul
+      (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
     rw [h_smul_σ₁] at this; exact this.symm
   have h_def : T'_deg (GL_pair n) D =
       ↑((ConjAct.toConjAct δ • H).relIndex H) := by
@@ -483,7 +500,8 @@ theorem T'_deg_T_diag_two_scalar (a : Fin 2 → ℕ+) (hdiv : DivChain 2 a)
         ((GL_pair 2).H.mul_mem hσ₁ hσ₂)
     calc δ⁻¹ * x * δ
         = (σ₁ * diagMat 2 a * σ₂)⁻¹ * x * (σ₁ * diagMat 2 a * σ₂) := by rw [hδ_eq]
-      _ = σ₂⁻¹ * ((diagMat 2 a)⁻¹ * (σ₁⁻¹ * x * σ₁) * diagMat 2 a) * σ₂ := by group
+      _ = σ₂⁻¹ * ((diagMat 2 a)⁻¹ * (σ₁⁻¹ * x * σ₁) *
+          diagMat 2 a) * σ₂ := by group
       _ = σ₂⁻¹ * (σ₁⁻¹ * x * σ₁) * σ₂ := by rw [h_conj_triv]
       _ = (σ₁ * σ₂)⁻¹ * x * (σ₁ * σ₂) := by group
   simp only [T'_deg]

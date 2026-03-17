@@ -112,7 +112,107 @@ private lemma bar_choose_mem_doubleCoset (h_fix : ∀ D : T' P, ι.onT' D = D)
   exact ⟨⟨h₁, hh₁⟩, ⟨h₂, hh₂⟩, heq⟩
 
 
-set_option maxHeartbeats 800000 in
+/-- Given a right-coset product condition `{rep * g₁} * {j_rep * g₂} * H = {g_D} * H`,
+    the element `g₁⁻¹ * rep⁻¹ * g_D` lies in the double coset of `D₂`. -/
+private lemma inverse_product_mem_doubleCoset
+    (g₁ g₂ g_D : G) (D₂ : T' P)
+    (hg₂ : g₂ = (D₂.eql.choose : G))
+    (rep : P.H) (j_rep : P.H)
+    (hcond : ({(rep : G) * g₁} : Set G) * {(j_rep : G) * g₂} * P.H =
+        {g_D} * (P.H : Set G)) :
+    g₁⁻¹ * (rep : G)⁻¹ * g_D ∈ D₂.set := by
+  rw [D₂.eql.choose_spec, DoubleCoset.mem_doubleCoset]
+  rw [hg₂] at hcond
+  have hmem : (rep : G) * g₁ * ((j_rep : G) * (D₂.eql.choose : G)) ∈
+      ({g_D} : Set G) * ↑P.H := by
+    have h1 : (rep : G) * g₁ * ((j_rep : G) * (D₂.eql.choose : G)) ∈
+        ({(rep : G) * g₁} : Set G) * {(j_rep : G) * (D₂.eql.choose : G)} * ↑P.H :=
+      ⟨_, ⟨_, rfl, _, rfl, rfl⟩, 1, P.H.one_mem, mul_one _⟩
+    rwa [hcond] at h1
+  obtain ⟨w, hw, k, hk, hprod⟩ := hmem
+  rw [Set.mem_singleton_iff] at hw
+  have hprod' : g_D * k = (rep : G) * g₁ * ((j_rep : G) * (D₂.eql.choose : G)) := by
+    rw [← hw]; exact hprod
+  refine ⟨(j_rep : G), j_rep.2, k⁻¹, P.H.inv_mem hk, ?_⟩
+  calc g₁⁻¹ * (rep : G)⁻¹ * g_D
+      = g₁⁻¹ * (rep : G)⁻¹ *
+          ((rep : G) * g₁ * ((j_rep : G) * (D₂.eql.choose : G)) * k⁻¹) := by
+        rw [show g_D = (rep : G) * g₁ * ((j_rep : G) * (D₂.eql.choose : G)) * k⁻¹ from by
+          calc g_D = g_D * k * k⁻¹ := by group
+            _ = _ := by rw [hprod']]
+    _ = (j_rep : G) * (D₂.eql.choose : G) * k⁻¹ := by group
+
+/-- Conjugation membership: if `n` lies in the `ConjAct`-stabilizer subgroup of `H`,
+    then `g⁻¹ * n * g ∈ H`. -/
+private lemma conj_mem_of_stabilizer (g : G)
+    (n : ((ConjAct.toConjAct g • P.H).subgroupOf P.H)) :
+    g⁻¹ * (n : G) * g ∈ P.H := by
+  have := n.2
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def] at this
+  simpa [ConjAct.ofConjAct_toConjAct] using this
+
+/-- If `bar(x₁) = a₁ * g₂ * b₁` and
+    `bar(x₂) = a₂ * g₂ * b₂` with `a₁, a₂, b₁, b₂ ∈ H`,
+    and `g₂⁻¹ * a₁⁻¹ * a₂ * g₂ ∈ H`
+    (i.e., a₁ and a₂ are in the same quotient class),
+    then `x₂ * x₁⁻¹ ∈ H`. -/
+private lemma bar_quotient_diff_mem_H
+    (x₁ x₂ : G) (g₂ a₁ b₁ a₂ b₂ : G)
+    (_ : a₁ ∈ (P.H : Set G)) (hb₁ : b₁ ∈ (P.H : Set G))
+    (_ : a₂ ∈ (P.H : Set G)) (hb₂ : b₂ ∈ (P.H : Set G))
+    (hbarx₁ : ι.bar x₁ = a₁ * g₂ * b₁)
+    (hbarx₂ : ι.bar x₂ = a₂ * g₂ * b₂)
+    (hconj : g₂⁻¹ * a₁⁻¹ * a₂ * g₂ ∈ P.H) :
+    x₂ * x₁⁻¹ ∈ P.H := by
+  have hbar_diff : (ι.bar x₁)⁻¹ * ι.bar x₂ =
+      b₁⁻¹ * (g₂⁻¹ * a₁⁻¹ * a₂ * g₂) * b₂ := by rw [hbarx₁, hbarx₂]; group
+  have hbar_diff_H : (ι.bar x₁)⁻¹ * ι.bar x₂ ∈ P.H := by
+    rw [hbar_diff]; exact P.H.mul_mem (P.H.mul_mem (P.H.inv_mem hb₁) hconj) hb₂
+  have hbar_factor : (ι.bar x₁)⁻¹ * ι.bar x₂ = ι.bar (x₂ * x₁⁻¹) := by
+    rw [← ι.bar_inv, ← ι.bar_mul]
+  have hbar_mem := hbar_factor ▸ hbar_diff_H
+  have := ι.bar_bar (x₂ * x₁⁻¹); rw [← this]; exact ι.bar_mem_H hbar_mem
+
+/-- From `x₂ * x₁⁻¹ ∈ H` where `xₖ = g₁⁻¹ * iₖ⁻¹ * g_D`,
+    conclude that `i₁` and `i₂` are in the same
+    quotient class of `decompQuot P D₁`. -/
+private lemma decompQuot_eq_of_conj_mem (D₁ : T' P)
+    (i₁ i₂ : decompQuot P D₁) (g₁ g_D : G)
+    (hg₁ : g₁ = (D₁.eql.choose : G))
+    (hxx_H : (g₁⁻¹ * (i₂.out : G)⁻¹ * g_D) *
+      (g₁⁻¹ * (i₁.out : G)⁻¹ * g_D)⁻¹ ∈ P.H) :
+    i₁ = i₂ := by
+  have hxx_calc : (g₁⁻¹ * (i₂.out : G)⁻¹ * g_D) *
+      (g₁⁻¹ * (i₁.out : G)⁻¹ * g_D)⁻¹ =
+      g₁⁻¹ * (i₂.out : G)⁻¹ * (i₁.out : G) * g₁ := by group
+  have hconj_H : g₁⁻¹ * (i₂.out : G)⁻¹ * (i₁.out : G) *
+      g₁ ∈ P.H := hxx_calc ▸ hxx_H
+  have hconj_H' : g₁⁻¹ * (i₁.out : G)⁻¹ * (i₂.out : G) * g₁ ∈ P.H := by
+    have := P.H.inv_mem hconj_H; convert this using 1; group
+  subst hg₁
+  rw [show i₁ = ⟦i₁.out⟧ from (Quotient.out_eq' i₁).symm,
+      show i₂ = ⟦i₂.out⟧ from (Quotient.out_eq' i₂).symm]
+  rw [@Quotient.eq'', QuotientGroup.leftRel_apply,
+    Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def]
+  simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
+  convert hconj_H' using 1; simp [Subgroup.coe_mul]; group
+
+/-- The `ha_kernel` step: if `a₁⁻¹ * a₂` is in the conjugation-stabilizer of `H` by `g₂`,
+    then `g₂⁻¹ * a₁⁻¹ * a₂ * g₂ ∈ H`. -/
+private lemma conj_kernel_mem_of_stabilizer_mem
+    (a₁ a₂ : P.H) (g₂ : G)
+    (hrel : (a₁ : P.H)⁻¹ * a₂ ∈ (ConjAct.toConjAct g₂ • P.H).subgroupOf P.H) :
+    g₂⁻¹ * (a₁ : G)⁻¹ * (a₂ : G) * g₂ ∈ P.H := by
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def] at hrel
+  simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv,
+    Subgroup.coe_mul, Subgroup.coe_inv] at hrel
+  have : g₂⁻¹ * (a₁ : G)⁻¹ * (a₂ : G) * g₂ =
+      g₂⁻¹ * ((a₁ : G)⁻¹ * (a₂ : G)) * g₂ := by group
+  rw [this]; exact hrel
+
+
 private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
     (D₁ D₂ D : T' P) : m' P D₁ D₂ D ≤ m' P D₂ D₁ D := by
   set g₁ := (D₁.eql.choose : G)
@@ -137,25 +237,8 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
       {(q₀.out : G) * g_D} * (P.H : Set G)} :=
     fun ⟨⟨i, j⟩, (hcond : _ = _)⟩ =>
     let x : G := g₁⁻¹ * (i.out : G)⁻¹ * g_D
-    have hx_mem_D₂ : x ∈ D₂.set := by
-      rw [D₂.eql.choose_spec, DoubleCoset.mem_doubleCoset]
-      have hcond' : ({(i.out : G) * g₁} : Set G) * {(j.out : G) * g₂} * ↑P.H =
-          {g_D} * ↑P.H := hcond
-      have hmem : (i.out : G) * g₁ * ((j.out : G) * g₂) ∈ ({g_D} : Set G) * ↑P.H := by
-        have h1 : (i.out : G) * g₁ * ((j.out : G) * g₂) ∈
-            ({(i.out : G) * g₁} : Set G) * {(j.out : G) * g₂} * ↑P.H :=
-          ⟨_, ⟨_, rfl, _, rfl, rfl⟩, 1, P.H.one_mem, mul_one _⟩
-        rwa [hcond'] at h1
-      obtain ⟨_, hd, k, hk, hprod⟩ := hmem
-      rw [Set.mem_singleton_iff] at hd; subst hd
-      have hprod' : g_D * k = (i.out : G) * g₁ * ((j.out : G) * g₂) := hprod
-      refine ⟨(j.out : G), j.out.2, k⁻¹, P.H.inv_mem hk, ?_⟩
-      calc g₁⁻¹ * (i.out : G)⁻¹ * g_D
-          = g₁⁻¹ * (i.out : G)⁻¹ * ((i.out : G) * g₁ * ((j.out : G) * g₂) * k⁻¹) := by
-            rw [show g_D = (i.out : G) * g₁ * ((j.out : G) * g₂) * k⁻¹ from by
-              calc g_D = g_D * k * k⁻¹ := by group
-                _ = _ := by rw [hprod']]
-        _ = (j.out : G) * g₂ * k⁻¹ := by group
+    have hx_mem_D₂ : x ∈ D₂.set :=
+      inverse_product_mem_doubleCoset g₁ g₂ g_D D₂ rfl i.out j.out hcond
     have hbarx_mem_D₂ : ι.bar x ∈ D₂.set := bar_mem_dc D₂ x hx_mem_D₂
     have hbarx_dc : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
         ι.bar x = h₁ * g₂ * h₂ := by
@@ -170,28 +253,28 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
       rw [D₁.eql.choose_spec]
       change y ∈ DoubleCoset.doubleCoset g₁ (P.H : Set G) P.H
       rw [DoubleCoset.mem_doubleCoset]
-      have hbar_x_eq : ι.bar x = ι.bar g_D * (ι.bar (i.out : G))⁻¹ * (ι.bar g₁)⁻¹ := by
-        show ι.bar (g₁⁻¹ * (i.out : G)⁻¹ * g_D) = _
-        rw [ι.bar_mul, ι.bar_mul, ι.bar_inv, ι.bar_inv]; group
-      have hab_eq : (a : G) * g₂ * b_val = ι.bar g_D * (ι.bar (i.out : G))⁻¹ * (ι.bar g₁)⁻¹ := by
-        rw [← hbar_x_eq]; exact hbarx_eq.symm
-      have key1 : g₂⁻¹ * (a : G)⁻¹ * ι.bar g_D = b_val * ι.bar g₁ * ι.bar (i.out : G) := by
+      have hab_eq : (a : G) * g₂ * b_val =
+          ι.bar g_D * (ι.bar (i.out : G))⁻¹ * (ι.bar g₁)⁻¹ := by
+        have : ι.bar x = ι.bar g_D * (ι.bar (i.out : G))⁻¹ * (ι.bar g₁)⁻¹ := by
+          show ι.bar (g₁⁻¹ * (i.out : G)⁻¹ * g_D) = _
+          rw [ι.bar_mul, ι.bar_mul, ι.bar_inv, ι.bar_inv]; group
+        rw [← this]; exact hbarx_eq.symm
+      have key1 : g₂⁻¹ * (a : G)⁻¹ * ι.bar g_D =
+          b_val * ι.bar g₁ * ι.bar (i.out : G) := by
         have := hab_eq
         calc g₂⁻¹ * (a : G)⁻¹ * ι.bar g_D
-            = g₂⁻¹ * (a : G)⁻¹ * ((a : G) * g₂ * b_val * (ι.bar g₁ * ι.bar (i.out : G))) := by
+            = g₂⁻¹ * (a : G)⁻¹ *
+              ((a : G) * g₂ * b_val *
+              (ι.bar g₁ * ι.bar (i.out : G))) := by
               rw [this]; group
-          _ = b_val * ι.bar g₁ * ι.bar (i.out : G) := by group
+          _ = _ := by group
       have hq₀_coset : ∃ h' : P.H, (q₀.out : G) * g_D = ι.bar g_D * (h' : G) := by
         obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
           ((ConjAct.toConjAct g_D • P.H).subgroupOf P.H) ⟨(h1D : G), h1D.2⟩
         have hn_coe : (q₀.out : G) = (h1D : G) * (n : G) := by
           have := congr_arg (Subtype.val : ↥P.H → G) hn_eq
           simpa [Subgroup.coe_mul] using this
-        have hn_conj : g_D⁻¹ * (n : G) * g_D ∈ P.H := by
-          have := n.2
-          rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-            ConjAct.smul_def] at this
-          simpa [ConjAct.ofConjAct_toConjAct] using this
+        have hn_conj : g_D⁻¹ * (n : G) * g_D ∈ P.H := conj_mem_of_stabilizer g_D n
         exact ⟨⟨(h2D : G)⁻¹ * (g_D⁻¹ * (n : G) * g_D),
           P.H.mul_mem (P.H.inv_mem h2D.2) hn_conj⟩, by
           rw [hn_coe, hbarD']; group⟩
@@ -201,11 +284,7 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
       have hn₂_coe : (j'.out : G) = (a : G) * (n₂ : G) := by
         have := congr_arg (Subtype.val : ↥P.H → G) hn₂_eq
         simpa [Subgroup.coe_mul] using this
-      have hn₂_conj : g₂⁻¹ * (n₂ : G) * g₂ ∈ P.H := by
-        have := n₂.2
-        rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-          ConjAct.smul_def] at this
-        simpa [ConjAct.ofConjAct_toConjAct] using this
+      have hn₂_conj : g₂⁻¹ * (n₂ : G) * g₂ ∈ P.H := conj_mem_of_stabilizer g₂ n₂
       have hy_calc : y = (g₂⁻¹ * (n₂ : G)⁻¹ * g₂) *
           (b_val * ι.bar g₁ * ι.bar (i.out : G)) * (h' : G) := by
         show g₂⁻¹ * (j'.out : G)⁻¹ * (q₀.out : G) * g_D = _
@@ -237,31 +316,24 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
       have hn₁_coe : (i'.out : G) = (c : G) * (n₁ : G) := by
         have := congr_arg (Subtype.val : ↥P.H → G) hn₁_eq
         simpa [Subgroup.coe_mul] using this
-      have hn₁_conj : g₁⁻¹ * (n₁ : G) * g₁ ∈ P.H := by
-        have := n₁.2
-        rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-          ConjAct.smul_def] at this
-        simpa [ConjAct.ofConjAct_toConjAct] using this
+      have hn₁_conj : g₁⁻¹ * (n₁ : G) * g₁ ∈ P.H := conj_mem_of_stabilizer g₁ n₁
       apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
       refine ⟨(j'.out : G) * g₂ * ((i'.out : G) * g₁),
         ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩, ?_⟩
       have h_prod_eq : (j'.out : G) * g₂ * ((c : G) * g₁ * d_val) = (q₀.out : G) * g_D := by
-        have : y = (c : G) * g₁ * d_val := hy_eq
-        show (j'.out : G) * g₂ * ((c : G) * g₁ * d_val) = (q₀.out : G) * g_D
         have hy_def : y = g₂⁻¹ * (j'.out : G)⁻¹ * (q₀.out : G) * g_D := rfl
-        rw [← this, hy_def]; group
+        rw [← hy_eq, hy_def]; group
       refine ⟨d_val⁻¹ * (g₁⁻¹ * (n₁ : G) * g₁),
         P.H.mul_mem (P.H.inv_mem hd) hn₁_conj, ?_⟩
-      simp only [smul_eq_mul]
-      rw [hn₁_coe]
+      simp only [smul_eq_mul]; rw [hn₁_coe]
+      have : (q₀.out : G) * g_D * d_val⁻¹ = (j'.out : G) * g₂ * ((c : G) * g₁) := by
+        have := h_prod_eq
+        calc (q₀.out : G) * g_D * d_val⁻¹
+            = (j'.out : G) * g₂ * ((c : G) * g₁ * d_val) * d_val⁻¹ := by rw [← this]
+          _ = _ := by group
       calc (q₀.out : G) * g_D * (d_val⁻¹ * (g₁⁻¹ * (n₁ : G) * g₁))
           = ((q₀.out : G) * g_D * d_val⁻¹) * (g₁⁻¹ * (n₁ : G) * g₁) := by group
-        _ = ((j'.out : G) * g₂ * ((c : G) * g₁)) * (g₁⁻¹ * (n₁ : G) * g₁) := by
-            congr 1
-            calc (q₀.out : G) * g_D * d_val⁻¹
-                = (j'.out : G) * g₂ * ((c : G) * g₁ * d_val) * d_val⁻¹ := by
-                  rw [h_prod_eq.symm]
-              _ = (j'.out : G) * g₂ * ((c : G) * g₁) := by group
+        _ = (j'.out : G) * g₂ * ((c : G) * g₁) * (g₁⁻¹ * (n₁ : G) * g₁) := by rw [this]
         _ = (j'.out : G) * g₂ * ((c : G) * (n₁ : G) * g₁) := by group
       ⟩ : {p : decompQuot P D₂ × decompQuot P D₁ |
       ({(p.1.out : G) * g₂} : Set G) * {(p.2.out : G) * g₁} * P.H =
@@ -279,101 +351,34 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
   have hi₁₂ : i₁ = i₂ := by
     let x₁ : G := g₁⁻¹ * (i₁.out : G)⁻¹ * g_D
     let x₂ : G := g₁⁻¹ * (i₂.out : G)⁻¹ * g_D
-    have hx₁_D₂ : x₁ ∈ D₂.set := by
-      rw [D₂.eql.choose_spec, DoubleCoset.mem_doubleCoset]
-      have hmem : (i₁.out : G) * g₁ * ((j₁.out : G) * g₂) ∈ ({g_D} : Set G) * ↑P.H := by
-        have h1 : (i₁.out : G) * g₁ * ((j₁.out : G) * g₂) ∈
-            ({(i₁.out : G) * g₁} : Set G) * {(j₁.out : G) * g₂} * ↑P.H :=
-          ⟨_, ⟨_, rfl, _, rfl, rfl⟩, 1, P.H.one_mem, mul_one _⟩
-        rwa [h₁'] at h1
-      obtain ⟨_, hd, k, hk, hprod⟩ := hmem
-      rw [Set.mem_singleton_iff] at hd; subst hd
-      have hprod' : g_D * k = (i₁.out : G) * g₁ * ((j₁.out : G) * g₂) := hprod
-      refine ⟨(j₁.out : G), j₁.out.2, k⁻¹, P.H.inv_mem hk, ?_⟩
-      show g₁⁻¹ * (i₁.out : G)⁻¹ * g_D = _
-      calc g₁⁻¹ * (i₁.out : G)⁻¹ * g_D
-          = g₁⁻¹ * (i₁.out : G)⁻¹ * ((i₁.out : G) * g₁ * ((j₁.out : G) * g₂) * k⁻¹) := by
-            rw [show g_D = (i₁.out : G) * g₁ * ((j₁.out : G) * g₂) * k⁻¹ from by
-              calc g_D = g_D * k * k⁻¹ := by group
-                _ = _ := by rw [hprod']]
-        _ = (j₁.out : G) * g₂ * k⁻¹ := by group
-    have hbarx₁_D₂ : ι.bar x₁ ∈ D₂.set := bar_mem_dc D₂ x₁ hx₁_D₂
+    have hbarx₁_D₂ : ι.bar x₁ ∈ D₂.set :=
+      bar_mem_dc D₂ x₁
+        (inverse_product_mem_doubleCoset
+          g₁ g₂ g_D D₂ rfl i₁.out j₁.out h₁')
     have hbarx₁_dc : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
         ι.bar x₁ = h₁ * g₂ * h₂ := by
       rwa [D₂.eql.choose_spec, DoubleCoset.mem_doubleCoset] at hbarx₁_D₂
-    let a₁ : P.H := ⟨hbarx₁_dc.choose, hbarx₁_dc.choose_spec.1⟩
-    let b₁_val : G := hbarx₁_dc.choose_spec.2.choose
-    have hb₁ : b₁_val ∈ (P.H : Set G) := hbarx₁_dc.choose_spec.2.choose_spec.1
-    have hbarx₁_eq : ι.bar x₁ = (a₁ : G) * g₂ * b₁_val :=
-      hbarx₁_dc.choose_spec.2.choose_spec.2
-    have hx₂_D₂ : x₂ ∈ D₂.set := by
-      rw [D₂.eql.choose_spec, DoubleCoset.mem_doubleCoset]
-      have hmem : (i₂.out : G) * g₁ * ((j₂.out : G) * g₂) ∈ ({g_D} : Set G) * ↑P.H := by
-        have h1 : (i₂.out : G) * g₁ * ((j₂.out : G) * g₂) ∈
-            ({(i₂.out : G) * g₁} : Set G) * {(j₂.out : G) * g₂} * ↑P.H :=
-          ⟨_, ⟨_, rfl, _, rfl, rfl⟩, 1, P.H.one_mem, mul_one _⟩
-        rwa [h₂'] at h1
-      obtain ⟨_, hd, k, hk, hprod⟩ := hmem
-      rw [Set.mem_singleton_iff] at hd; subst hd
-      have hprod' : g_D * k = (i₂.out : G) * g₁ * ((j₂.out : G) * g₂) := hprod
-      refine ⟨(j₂.out : G), j₂.out.2, k⁻¹, P.H.inv_mem hk, ?_⟩
-      show g₁⁻¹ * (i₂.out : G)⁻¹ * g_D = _
-      calc g₁⁻¹ * (i₂.out : G)⁻¹ * g_D
-          = g₁⁻¹ * (i₂.out : G)⁻¹ * ((i₂.out : G) * g₁ * ((j₂.out : G) * g₂) * k⁻¹) := by
-            rw [show g_D = (i₂.out : G) * g₁ * ((j₂.out : G) * g₂) * k⁻¹ from by
-              calc g_D = g_D * k * k⁻¹ := by group
-                _ = _ := by rw [hprod']]
-        _ = (j₂.out : G) * g₂ * k⁻¹ := by group
-    have hbarx₂_D₂ : ι.bar x₂ ∈ D₂.set := bar_mem_dc D₂ x₂ hx₂_D₂
+    have hbarx₂_D₂ : ι.bar x₂ ∈ D₂.set :=
+      bar_mem_dc D₂ x₂
+        (inverse_product_mem_doubleCoset
+          g₁ g₂ g_D D₂ rfl i₂.out j₂.out h₂')
     have hbarx₂_dc : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
         ι.bar x₂ = h₁ * g₂ * h₂ := by
       rwa [D₂.eql.choose_spec, DoubleCoset.mem_doubleCoset] at hbarx₂_D₂
+    let a₁ : P.H := ⟨hbarx₁_dc.choose, hbarx₁_dc.choose_spec.1⟩
     let a₂ : P.H := ⟨hbarx₂_dc.choose, hbarx₂_dc.choose_spec.1⟩
-    let b₂_val : G := hbarx₂_dc.choose_spec.2.choose
-    have hb₂ : b₂_val ∈ (P.H : Set G) := hbarx₂_dc.choose_spec.2.choose_spec.1
-    have hbarx₂_eq : ι.bar x₂ = (a₂ : G) * g₂ * b₂_val :=
-      hbarx₂_dc.choose_spec.2.choose_spec.2
     change (⟦⟨hbarx₁_dc.choose, hbarx₁_dc.choose_spec.1⟩⟧ : decompQuot P D₂) =
       ⟦⟨hbarx₂_dc.choose, hbarx₂_dc.choose_spec.1⟩⟧ at hj'_eq
     rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at hj'_eq
-    have ha_kernel : g₂⁻¹ * (a₁ : G)⁻¹ * (a₂ : G) * g₂ ∈ P.H := by
-      have hmem := hj'_eq
-      rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-        ConjAct.smul_def] at hmem
-      simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv,
-        Subgroup.coe_mul, Subgroup.coe_inv] at hmem
-      have : g₂⁻¹ * (a₁ : G)⁻¹ * (a₂ : G) * g₂ =
-          g₂⁻¹ * ((a₁ : G)⁻¹ * (a₂ : G)) * g₂ := by group
-      rw [this]; exact hmem
-    have hbar_diff : (ι.bar x₁)⁻¹ * ι.bar x₂ =
-        b₁_val⁻¹ * (g₂⁻¹ * (a₁ : G)⁻¹ * (a₂ : G) * g₂) * b₂_val := by
-      rw [hbarx₁_eq, hbarx₂_eq]; group
-    have hbar_diff_H : (ι.bar x₁)⁻¹ * ι.bar x₂ ∈ P.H := by
-      rw [hbar_diff]
-      exact P.H.mul_mem (P.H.mul_mem (P.H.inv_mem hb₁) ha_kernel) hb₂
-    have hbar_factor : (ι.bar x₁)⁻¹ * ι.bar x₂ = ι.bar (x₂ * x₁⁻¹) := by
-      rw [← ι.bar_inv, ← ι.bar_mul]
-    have hxx_H : x₂ * x₁⁻¹ ∈ P.H := by
-      have hbar_mem := hbar_factor ▸ hbar_diff_H
-      have := ι.bar_bar (x₂ * x₁⁻¹)
-      rw [← this]
-      exact ι.bar_mem_H hbar_mem
-    have hxx_calc : x₂ * x₁⁻¹ = g₁⁻¹ * (i₂.out : G)⁻¹ * (i₁.out : G) * g₁ := by
-      show (g₁⁻¹ * (i₂.out : G)⁻¹ * g_D) * (g₁⁻¹ * (i₁.out : G)⁻¹ * g_D)⁻¹ = _
-      group
-    have hconj_H : g₁⁻¹ * (i₂.out : G)⁻¹ * (i₁.out : G) * g₁ ∈ P.H :=
-      hxx_calc ▸ hxx_H
-    have hconj_H' : g₁⁻¹ * (i₁.out : G)⁻¹ * (i₂.out : G) * g₁ ∈ P.H := by
-      have := P.H.inv_mem hconj_H
-      convert this using 1; group
-    rw [show i₁ = ⟦i₁.out⟧ from (Quotient.out_eq' i₁).symm,
-        show i₂ = ⟦i₂.out⟧ from (Quotient.out_eq' i₂).symm]
-    rw [@Quotient.eq'', QuotientGroup.leftRel_apply]
-    show (i₁.out : ↥P.H)⁻¹ * i₂.out ∈ (ConjAct.toConjAct g₁ • P.H).subgroupOf P.H
-    rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def]
-    simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-    convert hconj_H' using 1
-    simp [Subgroup.coe_mul]; group
+    have ha_kernel := conj_kernel_mem_of_stabilizer_mem a₁ a₂ g₂ hj'_eq
+    have hxx_H : x₂ * x₁⁻¹ ∈ P.H := bar_quotient_diff_mem_H ι x₁ x₂ g₂
+      hbarx₁_dc.choose hbarx₁_dc.choose_spec.2.choose
+      hbarx₂_dc.choose hbarx₂_dc.choose_spec.2.choose
+      hbarx₁_dc.choose_spec.1 hbarx₁_dc.choose_spec.2.choose_spec.1
+      hbarx₂_dc.choose_spec.1 hbarx₂_dc.choose_spec.2.choose_spec.1
+      hbarx₁_dc.choose_spec.2.choose_spec.2 hbarx₂_dc.choose_spec.2.choose_spec.2
+      ha_kernel
+    exact decompQuot_eq_of_conj_mem D₁ i₁ i₂ g₁ g_D rfl hxx_H
   subst hi₁₂
   have hj₁₂ : j₁ = j₂ := by
     by_contra hne
@@ -386,7 +391,9 @@ private lemma m'_le_comm (h_fix : ∀ D : T' P, ι.onT' D = D)
     exact hcancel
   subst hj₁₂; rfl
 
-/-- Shimura Proposition 3.8: `m'(D₁, D₂, D) = m'(D₂, D₁, D)` when bar fixes all double cosets. -/
+/-- Shimura Proposition 3.8:
+    `m'(D₁, D₂, D) = m'(D₂, D₁, D)` when bar fixes
+    all double cosets. -/
 lemma m'_comm_of_onT'_eq (h_fix : ∀ D : T' P, ι.onT' D = D)
     (D₁ D₂ D : T' P) : m' P D₁ D₂ D = m' P D₂ D₁ D :=
   le_antisymm (ι.m'_le_comm h_fix D₁ D₂ D) (ι.m'_le_comm h_fix D₂ D₁ D)
@@ -416,7 +423,9 @@ theorem mul_comm_of_antiInvolution (h_fix : ∀ D : T' P, ι.onT' D = D)
 
 end AntiInvolution
 
-/-- Shimura Proposition 3.8: the Hecke ring is commutative given an anti-involution fixing every double coset. -/
+/-- Shimura Proposition 3.8: the Hecke ring is
+    commutative given an anti-involution fixing
+    every double coset. -/
 noncomputable def instCommRing_of_antiInvolution (ι : AntiInvolution P)
     (h_fix : ∀ D : T' P, ι.onT' D = D) :
     CommRing (𝕋 P ℤ) :=
