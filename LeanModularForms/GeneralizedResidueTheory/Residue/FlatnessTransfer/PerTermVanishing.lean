@@ -111,7 +111,8 @@ lemma cpvIntegrandOn_sub (S0 : Finset ℂ) (f g : ℂ → ℂ)
 /-! ### Sublemma 1: Residue equals leading Laurent coefficient -/
 
 /-- Helper: circle integral of a single Laurent term `a / (z - s)^{k+1}`. -/
-private theorem circleIntegral_laurent_term (s : ℂ) (r : ℝ) (hr_pos : 0 < r) (c : ℂ) (k : ℕ) :
+private theorem circleIntegral_laurent_term
+    (s : ℂ) (r : ℝ) (hr_pos : 0 < r) (c : ℂ) (k : ℕ) :
     (∮ z in C(s, r), c / (z - s) ^ (k + 1)) =
       if k = 0 then c * (2 * ↑Real.pi * I) else 0 := by
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
@@ -265,34 +266,52 @@ private lemma ae_eq_indicator_diff_cpv_zpow
   filter_upwards [ae_restrict_mem (measurableSet_uIoc)] with t ht
   have ht_Icc : t ∈ Icc γ.a γ.b := hIoc_sub ht
   simp only [cauchyPrincipalValueIntegrandOn, Set.indicator, hf_zpow]
-  by_cases h1 : ε < ‖γ.toFun t - s‖ <;> by_cases h2 : ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖
-  · have h_not_mem : ¬(t ∈ ({t | ε < ‖γ.toFun t - s‖} \ {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b) :=
+  by_cases h1 : ε < ‖γ.toFun t - s‖ <;>
+    by_cases h2 : ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖
+  · have h_not_mem :
+        ¬(t ∈ ({t | ε < ‖γ.toFun t - s‖} \
+          {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩
+          Icc γ.a γ.b) :=
       fun ⟨⟨_, h_nG⟩, _⟩ => h_nG h2
     simp only [h_not_mem, ite_false, if_pos h1,
       if_neg (show ¬∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε from by push_neg; exact h2)]
     ring
   · push_neg at h2
     obtain ⟨s', hs', hs'_le⟩ := h2
-    have h_mem : t ∈ ({t | ε < ‖γ.toFun t - s‖} \ {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b :=
-      ⟨⟨h1, fun h_all => absurd (h_all s' hs') (not_lt.mpr hs'_le)⟩, ht_Icc⟩
+    have h_mem : t ∈ ({t | ε < ‖γ.toFun t - s‖} \
+        {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩
+        Icc γ.a γ.b :=
+      ⟨⟨h1, fun h_all =>
+        absurd (h_all s' hs') (not_lt.mpr hs'_le)⟩, ht_Icc⟩
     simp only [h_mem, ite_true, if_pos h1,
       if_pos (show ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε from ⟨s', hs', hs'_le⟩)]
     ring
   · push_neg at h1
-    have h_not_mem : ¬(t ∈ ({t | ε < ‖γ.toFun t - s‖} \ {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b) :=
+    have h_not_mem :
+        ¬(t ∈ ({t | ε < ‖γ.toFun t - s‖} \
+          {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩
+          Icc γ.a γ.b) :=
       fun ⟨⟨h_far, _⟩, _⟩ => absurd h_far (not_lt.mpr h1)
-    simp only [h_not_mem, ite_false, if_neg (show ¬‖γ.toFun t - s‖ > ε from not_lt.mpr h1),
-      if_pos (show ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε from ⟨s, hs, h1⟩)]
+    simp only [h_not_mem, ite_false,
+      if_neg (show ¬‖γ.toFun t - s‖ > ε from not_lt.mpr h1),
+      if_pos (show ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε
+        from ⟨s, hs, h1⟩)]
     ring
   · push_neg at h1 h2
-    have h_not_mem : ¬(t ∈ ({t | ε < ‖γ.toFun t - s‖} \ {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b) :=
+    have h_not_mem :
+        ¬(t ∈ ({t | ε < ‖γ.toFun t - s‖} \
+          {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩
+          Icc γ.a γ.b) :=
       fun ⟨⟨h_far, _⟩, _⟩ => absurd h_far (not_lt.mpr h1)
     obtain ⟨s', hs', hs'_le⟩ := h2
-    simp only [h_not_mem, ite_false, if_neg (show ¬‖γ.toFun t - s‖ > ε from not_lt.mpr h1),
-      if_pos (show ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε from ⟨s', hs', hs'_le⟩)]
+    simp only [h_not_mem, ite_false,
+      if_neg (show ¬‖γ.toFun t - s‖ > ε from not_lt.mpr h1),
+      if_pos (show ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε
+        from ⟨s', hs', hs'_le⟩)]
     ring
 
-/-- Helper 2a: The multi-point "good set" `{t | ∀ s' ∈ S0, ε < ‖γ(t)-s'‖} ∩ Icc` is measurable. -/
+/-- Helper 2a: The multi-point "good set"
+`{t | ∀ s' ∈ S0, ε < ‖γ(t)-s'‖} ∩ Icc` is measurable. -/
 private lemma measurableSet_goodSet_Icc
     (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (ε : ℝ) :
     MeasurableSet ({t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖} ∩ Icc γ.a γ.b) := by
@@ -337,7 +356,7 @@ private lemma aesm_zpow_on_singleFar
     have h_maps : Set.MapsTo γ.toFun
         ({t | ε < ‖γ.toFun t - s‖} ∩ Icc γ.a γ.b) {z | z - s ≠ 0} := by
       intro t ⟨ht_far, _⟩
-      show γ.toFun t - s ≠ 0
+      change γ.toFun t - s ≠ 0
       exact sub_ne_zero.mpr (fun heq => by
         have : ε < ‖γ.toFun t - s‖ := ht_far
         rw [heq, sub_self, norm_zero] at this; linarith)
@@ -352,7 +371,8 @@ private lemma aesm_zpow_on_singleFar
               ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1)),
              lt_of_le_of_ne ht_Icc.2 fun h =>
               ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.2)⟩
-          exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition t ht_Ioo ht_nP).continuousWithinAt)
+          exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
+            t ht_Ioo ht_nP).continuousWithinAt)
   exact (hf_cont.aestronglyMeasurable hSF_meas).mul
     (hγ'_aesm.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
 
@@ -374,8 +394,11 @@ private lemma aesm_diff_single_multi_cpv_zpow
   apply AEStronglyMeasurable.congr _ h_diff_ae.symm
   have hSF_meas : MeasurableSet ({t | ε < ‖γ.toFun t - s‖} ∩ Icc γ.a γ.b) :=
     measurableSet_norm_gt_Icc ε (γ.toPiecewiseC1Curve.continuous_toFun.sub continuousOn_const)
-  have hSG_sub : ({t | ε < ‖γ.toFun t - s‖} \ {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩
-      Icc γ.a γ.b ⊆ {t | ε < ‖γ.toFun t - s‖} ∩ Icc γ.a γ.b :=
+  have hSG_sub :
+      ({t | ε < ‖γ.toFun t - s‖} \
+        {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩
+        Icc γ.a γ.b ⊆
+      {t | ε < ‖γ.toFun t - s‖} ∩ Icc γ.a γ.b :=
     Set.inter_subset_inter_left _ Set.diff_subset
   have hGoodSet_Icc_meas := measurableSet_goodSet_Icc S0 γ ε
   have hSG_meas : MeasurableSet (({t | ε < ‖γ.toFun t - s‖} \
@@ -439,11 +462,13 @@ theorem multipoint_pv_zpow_tendsto_zero
         ≤ ‖f_zpow (γ.toFun t)‖ * ‖deriv γ.toFun t‖ := norm_mul_le _ _
       _ ≤ ε⁻¹ ^ m * (|Mγ'| + 1) := by
           apply mul_le_mul
-          · show ‖f_zpow (γ.toFun t)‖ ≤ ε⁻¹ ^ m
+          · change ‖f_zpow (γ.toFun t)‖ ≤ ε⁻¹ ^ m
             simp only [f_zpow]
             rw [norm_zpow, zpow_neg, zpow_natCast, inv_pow]
-            exact inv_anti₀ (by positivity) (pow_le_pow_left₀ hε.le h_far.le m)
-          · exact le_trans ((hMγ' t ht).trans (le_abs_self _))
+            exact inv_anti₀ (by positivity)
+              (pow_le_pow_left₀ hε.le h_far.le m)
+          · exact le_trans
+              ((hMγ' t ht).trans (le_abs_self _))
               (le_add_of_nonneg_right one_pos.le)
           · exact norm_nonneg _
           · positivity
@@ -452,8 +477,11 @@ theorem multipoint_pv_zpow_tendsto_zero
         (fun t => if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)
         volume γ.a γ.b := by
     intro ε hε
-    have h_eq : (fun t => if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
-        (fun t => cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) := by
+    have h_eq :
+        (fun t => if ‖γ.toFun t - s‖ > ε then
+          f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
+        (fun t =>
+          cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) := by
       ext t; rw [cauchyPrincipalValueIntegrandOn_singleton]
     rw [h_eq]
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
@@ -476,7 +504,8 @@ theorem multipoint_pv_zpow_tendsto_zero
               ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1)), ?_⟩
             exact lt_of_le_of_ne ht_Icc.2 fun h =>
               ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.2)
-          exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition t ht_Ioo ht_nP).continuousWithinAt
+          exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
+            t ht_Ioo ht_nP).continuousWithinAt
       exact h_aesm_if.congr (by
         filter_upwards [ae_restrict_mem measurableSet_Icc] with t _
         exact (cauchyPrincipalValueIntegrandOn_singleton f_zpow γ.toFun s ε t).symm)
@@ -496,18 +525,31 @@ theorem multipoint_pv_zpow_tendsto_zero
     · let GoodSet := {t : ℝ | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}
       have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc γ.a γ.b) := by
         have h_eq : GoodSet ∩ Icc γ.a γ.b =
-            Icc γ.a γ.b \ ({t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b) := by
+            Icc γ.a γ.b \
+              ({t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩
+                Icc γ.a γ.b) := by
           ext t; constructor
-          · intro ⟨h_good, ht⟩; exact ⟨ht, fun ⟨⟨s', hs', h_le⟩, _⟩ => absurd (h_good s' hs') (not_lt.mpr h_le)⟩
-          · intro ⟨ht, h_not⟩; exact ⟨fun s' hs' => by
-              by_contra h_le; push_neg at h_le; exact h_not ⟨⟨s', hs', h_le⟩, ht⟩, ht⟩
+          · intro ⟨h_good, ht⟩
+            exact ⟨ht, fun ⟨⟨s', hs', h_le⟩, _⟩ =>
+              absurd (h_good s' hs') (not_lt.mpr h_le)⟩
+          · intro ⟨ht, h_not⟩
+            exact ⟨fun s' hs' => by
+              by_contra h_le; push_neg at h_le
+              exact h_not ⟨⟨s', hs', h_le⟩, ht⟩, ht⟩
         rw [h_eq]
         apply MeasurableSet.diff isClosed_Icc.measurableSet
-        have h_eq2 : {t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b =
-            ⋃ s' ∈ S0, ({t | ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b) := by
-          ext t; simp only [mem_inter_iff, mem_setOf_eq, mem_iUnion, exists_prop]
-          exact ⟨fun ⟨⟨s', hs', h⟩, ht⟩ => ⟨s', hs', h, ht⟩,
-                 fun ⟨s', hs', h, ht⟩ => ⟨⟨s', hs', h⟩, ht⟩⟩
+        have h_eq2 :
+            {t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩
+              Icc γ.a γ.b =
+            ⋃ s' ∈ S0,
+              ({t | ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b) := by
+          ext t
+          simp only [mem_inter_iff, mem_setOf_eq,
+            mem_iUnion, exists_prop]
+          exact ⟨fun ⟨⟨s', hs', h⟩, ht⟩ =>
+                  ⟨s', hs', h, ht⟩,
+                 fun ⟨s', hs', h, ht⟩ =>
+                  ⟨⟨s', hs', h⟩, ht⟩⟩
         rw [h_eq2]; apply Finset.measurableSet_biUnion; intro s' _
         have : {t | ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b =
             Icc γ.a γ.b \ ({t | ε < ‖γ.toFun t - s'‖} ∩ Icc γ.a γ.b) := by
@@ -515,7 +557,9 @@ theorem multipoint_pv_zpow_tendsto_zero
           · intro ⟨h_le, ht⟩; exact ⟨ht, fun h_gt => absurd h_gt (not_lt.mpr h_le)⟩
           · intro ⟨ht, h_not⟩; exact ⟨not_lt.mp (fun h => (h_not h) ht), ht⟩
         rw [this]; exact isClosed_Icc.measurableSet.diff
-          (measurableSet_norm_gt_Icc ε (γ.toPiecewiseC1Curve.continuous_toFun.sub continuousOn_const))
+          (measurableSet_norm_gt_Icc ε
+            (γ.toPiecewiseC1Curve.continuous_toFun.sub
+              continuousOn_const))
       have hfγ_cont_good : ContinuousOn (fun t => f_zpow (γ.toFun t))
           (GoodSet ∩ Icc γ.a γ.b) := by
         have hf_cont : ContinuousOn f_zpow {z : ℂ | z - s ≠ 0} :=
@@ -535,7 +579,8 @@ theorem multipoint_pv_zpow_tendsto_zero
               ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1)),
              lt_of_le_of_ne ht_Icc.2 fun h =>
               ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.2)⟩
-          exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition t ht_Ioo ht_nP).continuousWithinAt)
+          exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
+            t ht_Ioo ht_nP).continuousWithinAt)
       have h_prod_meas : AEStronglyMeasurable (fun t => f_zpow (γ.toFun t) * deriv γ.toFun t)
           (volume.restrict (GoodSet ∩ Icc γ.a γ.b)) :=
         (hfγ_cont_good.aestronglyMeasurable hGoodSet_meas).mul
@@ -629,10 +674,11 @@ theorem multipoint_pv_zpow_tendsto_zero
               ≤ ‖f_zpow (γ.toFun t)‖ * ‖deriv γ.toFun t‖ := norm_mul_le _ _
             _ ≤ (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) := by
                 apply mul_le_mul
-                · show ‖f_zpow (γ.toFun t)‖ ≤ (δ_sep / 2)⁻¹ ^ m
+                · change ‖f_zpow (γ.toFun t)‖ ≤ (δ_sep / 2)⁻¹ ^ m
                   simp only [f_zpow]
                   rw [norm_zpow, zpow_neg, zpow_natCast, inv_pow]
-                  exact inv_anti₀ (by positivity) (pow_le_pow_left₀ (by linarith) h_far m)
+                  exact inv_anti₀ (by positivity)
+                    (pow_le_pow_left₀ (by linarith) h_far m)
                 · exact le_trans ((hMγ' t ht_Icc).trans (le_abs_self _))
                     (le_add_of_nonneg_right one_pos.le)
                 · exact norm_nonneg _
@@ -844,14 +890,17 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
   have h_compact_image : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
     isCompact_Icc.image_of_continuousOn hγ_cont
   have h_safe_closed : IsClosed ({z : ℂ | ∀ s ∈ S0, ε ≤ ‖z - s‖}) := by
-    have : {z : ℂ | ∀ s ∈ S0, ε ≤ ‖z - s‖} = ⋂ s ∈ (↑S0 : Set ℂ), {z | ε ≤ ‖z - s‖} := by
+    have : {z : ℂ | ∀ s ∈ S0, ε ≤ ‖z - s‖} =
+        ⋂ s ∈ (↑S0 : Set ℂ), {z | ε ≤ ‖z - s‖} := by
       ext z; simp [Set.mem_iInter]
     rw [this]; exact isClosed_biInter fun s _ =>
       isClosed_le continuous_const (continuous_norm.comp (continuous_id.sub continuous_const))
   have h_safe_compact : IsCompact
       ((γ.toFun '' Icc γ.a γ.b) ∩ {z | ∀ s ∈ S0, ε ≤ ‖z - s‖}) :=
     h_compact_image.inter_right h_safe_closed
-  have h_safe_sub : (γ.toFun '' Icc γ.a γ.b) ∩ {z | ∀ s ∈ S0, ε ≤ ‖z - s‖} ⊆ U \ ↑S0 := by
+  have h_safe_sub :
+      (γ.toFun '' Icc γ.a γ.b) ∩
+        {z | ∀ s ∈ S0, ε ≤ ‖z - s‖} ⊆ U \ ↑S0 := by
     intro z hz
     obtain ⟨⟨t, ht, rfl⟩, hz_safe⟩ := hz
     exact ⟨hγ_in_U t ht, fun hzS0 => by
@@ -869,7 +918,10 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
           = ‖g (γ.toFun t)‖ * ‖deriv γ.toFun t‖ := norm_mul _ _
         _ ≤ |Mg| * |Mγ'| := by
             apply mul_le_mul
-            · exact (hMg _ ⟨⟨t, ht, rfl⟩, fun s hs => le_of_lt (h s hs)⟩).trans (le_abs_self _)
+            · exact (hMg _
+                ⟨⟨t, ht, rfl⟩,
+                  fun s hs => le_of_lt (h s hs)⟩).trans
+                (le_abs_self _)
             · exact (hMγ' t ht).trans (le_abs_self _)
             · exact norm_nonneg _
             · positivity
@@ -879,11 +931,17 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
     let GoodSet := {t : ℝ | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}
     have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc γ.a γ.b) := by
       have h_eq : GoodSet ∩ Icc γ.a γ.b =
-          Icc γ.a γ.b \ ({t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b) := by
+          Icc γ.a γ.b \
+            ({t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩
+              Icc γ.a γ.b) := by
         ext t; constructor
-        · intro ⟨h_good, ht⟩; exact ⟨ht, fun ⟨⟨s', hs', h_le⟩, _⟩ => absurd (h_good s' hs') (not_lt.mpr h_le)⟩
-        · intro ⟨ht, h_not⟩; exact ⟨fun s' hs' => by
-            by_contra h_le; push_neg at h_le; exact h_not ⟨⟨s', hs', h_le⟩, ht⟩, ht⟩
+        · intro ⟨h_good, ht⟩
+          exact ⟨ht, fun ⟨⟨s', hs', h_le⟩, _⟩ =>
+            absurd (h_good s' hs') (not_lt.mpr h_le)⟩
+        · intro ⟨ht, h_not⟩
+          exact ⟨fun s' hs' => by
+            by_contra h_le; push_neg at h_le
+            exact h_not ⟨⟨s', hs', h_le⟩, ht⟩, ht⟩
       rw [h_eq]
       apply MeasurableSet.diff isClosed_Icc.measurableSet
       have h_eq2 : {t | ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε} ∩ Icc γ.a γ.b =
@@ -912,7 +970,8 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
             ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1)),
            lt_of_le_of_ne ht_Icc.2 fun h =>
             ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.2)⟩
-        exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition t ht_Ioo ht_nP).continuousWithinAt)
+        exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
+          t ht_Ioo ht_nP).continuousWithinAt)
     have h_prod_meas : AEStronglyMeasurable (fun t => g (γ.toFun t) * deriv γ.toFun t)
         (volume.restrict (GoodSet ∩ Icc γ.a γ.b)) :=
       (hgγ_cont_good.aestronglyMeasurable hGoodSet_meas).mul
@@ -924,7 +983,7 @@ lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
         (GoodSet ∩ Icc γ.a γ.b).piecewise
           (fun t => g (γ.toFun t) * deriv γ.toFun t) (fun _ => (0 : ℂ)) := by
       filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
-      show cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t = _
+      change cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t = _
       simp only [cauchyPrincipalValueIntegrandOn]
       by_cases ht_good : t ∈ GoodSet ∩ Icc γ.a γ.b
       · rw [Set.piecewise_eq_of_mem _ _ _ ht_good, if_neg]
@@ -971,7 +1030,9 @@ theorem tendsto_cpv_of_continuousOn_zero_integral
     Set.Finite.biUnion S0.finite_toSet (fun s _ => finite_crossings γ s)
   have h_preimage_null : volume (⋃ s ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s}) = 0 :=
     h_preimage_finite.measure_zero _
-  have h_ae_not_in_S0 : ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b → ∀ s ∈ S0, γ.toFun t ≠ s := by
+  have h_ae_not_in_S0 :
+      ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
+        ∀ s ∈ S0, γ.toFun t ≠ s := by
     rw [Filter.eventually_iff, mem_ae_iff]
     refine le_antisymm ?_ (zero_le _)
     calc volume {t | ¬(t ∈ Ι γ.a γ.b → ∀ s ∈ S0, γ.toFun t ≠ s)}
@@ -1046,8 +1107,10 @@ private lemma residueAt_congr {f g : ℂ → ℂ} {s : ℂ}
       intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; linarith
     exact hδ_eq ⟨Metric.mem_ball.mpr (by rw [Metric.mem_sphere.mp hz]; exact hr_lt),
       Set.mem_compl_singleton_iff.mpr hne⟩
-  show limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
-    limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), g z)
+  change limUnder (𝓝[>] (0 : ℝ))
+      (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
+    limUnder (𝓝[>] (0 : ℝ))
+      (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), g z)
   unfold limUnder
   congr 1
   apply Filter.map_congr
@@ -1102,12 +1165,17 @@ lemma residueAt_sub_residueSum_eq_zero
     exact hrf_analytic ⟨hz, Set.mem_compl_singleton_iff.mpr hne⟩
   have hf_cont_sphere : ∀ r, 0 < r → r < rf → ContinuousOn f (Metric.sphere s r) := by
     intro r hr_pos hr_lt z hz
-    exact (hf_analytic_at z (by rwa [Metric.mem_ball, Metric.mem_sphere.mp hz])
-      (by intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; linarith)).continuousAt.continuousWithinAt
+    exact (hf_analytic_at z
+      (by rwa [Metric.mem_ball, Metric.mem_sphere.mp hz])
+      (by intro heq
+          rw [heq, Metric.mem_sphere, dist_self] at hz
+          linarith)).continuousAt.continuousWithinAt
   have h_inv_smul : ∀ r (hr_ne : r ≠ 0),
       Set.EqOn (fun z => (z - s)⁻¹ • ((z - s) * f z)) f (Metric.sphere s r) := by
     intro r hr_ne z hz
-    have h_ne : z ≠ s := by intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; exact hr_ne hz.symm
+    have h_ne : z ≠ s := by
+      intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz
+      exact hr_ne hz.symm
     simp only [smul_eq_mul, inv_mul_cancel_left₀ (sub_ne_zero.mpr h_ne)]
   have h_const_integral : ∀ r, 0 < r → r ≤ R₀ →
       (∮ z in C(s, r), f z) = (∮ z in C(s, R₀), f z) := by
@@ -1131,8 +1199,9 @@ lemma residueAt_sub_residueSum_eq_zero
       have hz_rf : z ∈ Metric.ball s rf :=
         Metric.mem_ball.mpr (lt_trans (Metric.mem_ball.mp hz_ball) hR₀_lt_rf)
       exact (hF_analytic z hz_rf h_ne).differentiableAt
-    have h_annulus := Complex.circleIntegral_sub_center_inv_smul_eq_of_differentiable_on_annulus_off_countable
-      hr_pos hr_le Set.countable_empty hF_cont hF_diff
+    have h_annulus :=
+      Complex.circleIntegral_sub_center_inv_smul_eq_of_differentiable_on_annulus_off_countable
+        hr_pos hr_le Set.countable_empty hF_cont hF_diff
     rw [circleIntegral.integral_congr hr_pos.le (h_inv_smul r (ne_of_gt hr_pos)),
       circleIntegral.integral_congr hR₀_pos.le (h_inv_smul R₀ hR₀_ne)] at h_annulus
     exact h_annulus.symm
@@ -1165,7 +1234,8 @@ lemma residueAt_sub_residueSum_eq_zero
     rw [show (fun z => ∑ s' ∈ S0, residueAt f s' / (z - s')) =
         (fun z => residueAt f s / (z - s) +
           ∑ s' ∈ S0.erase s, residueAt f s' / (z - s'))
-      from funext (fun z => (Finset.add_sum_erase S0 (fun s' => residueAt f s' / (z - s')) hs).symm)]
+      from funext (fun z => (Finset.add_sum_erase S0
+        (fun s' => residueAt f s' / (z - s')) hs).symm)]
     have hci_s : CircleIntegrable (fun z => residueAt f s / (z - s)) s r :=
       (ContinuousOn.div continuousOn_const (continuousOn_id.sub continuousOn_const)
         (fun z hz => sub_ne_zero.mpr (ne_of_mem_of_not_mem hz hs_not))).circleIntegrable hr_pos.le
@@ -1181,7 +1251,9 @@ lemma residueAt_sub_residueSum_eq_zero
       circleIntegral.integral_const_mul, circleIntegral.integral_sub_center_inv s hr_ne]
     suffices h_rest : (∮ z in C(s, r), ∑ s' ∈ S0.erase s, residueAt f s' / (z - s')) = 0 by
       rw [h_rest, add_zero]
-    have h_no_pole_in_cb : ∀ p ∈ S0.erase s, ∀ z ∈ Metric.closedBall s r, z - ↑p ≠ 0 := by
+    have h_no_pole_in_cb :
+        ∀ p ∈ S0.erase s,
+          ∀ z ∈ Metric.closedBall s r, z - ↑p ≠ 0 := by
       intro p hp z hz
       apply sub_ne_zero.mpr; intro heq
       rw [heq] at hz

@@ -88,7 +88,7 @@ theorem integral_zpow_comp_sub_mul_deriv
     have hne : γ t ≠ s := hγ_ne t (Ioo_subset_Icc_self ht)
     have h_zpow := hasDerivAt_zpow_comp_sub (n := n + 1) hγ_da hne
     have h_div := h_zpow.div_const (↑(n + 1) : ℂ)
-    show HasDerivAt F ((γ t - s) ^ n * ↑(deriv γ t)) t
+    change HasDerivAt F ((γ t - s) ^ n * ↑(deriv γ t)) t
     have : (↑(n + 1) : ℂ) * (γ t - s) ^ (n + 1 - 1) * ↑(deriv γ t) / (↑(n + 1) : ℂ)
         = (γ t - s) ^ n * ↑(deriv γ t) := by
       rw [show (n + 1 : ℤ) - 1 = n from by ring]
@@ -180,10 +180,7 @@ theorem crossing_direction_right_tendsto
       exact Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hL)
     exact (h_norm_cont.comp h_slope).congr' (h_eq.mono fun ε h => h.symm)
   filter_upwards [self_mem_nhdsWithin (s := Ioi (0 : ℝ))] with ε (hε : (0 : ℝ) < ε)
-  show (γ.toFun (t₀ + ε) - s) / ↑‖γ.toFun (t₀ + ε) - s‖ =
-    (ε⁻¹ • (γ.toFun (t₀ + ε) - s)) / ↑‖ε⁻¹ • (γ.toFun (t₀ + ε) - s)‖
   set w := γ.toFun (t₀ + ε) - s
-  show w / ↑‖w‖ = (ε⁻¹ • w) / ↑‖ε⁻¹ • w‖
   rcases eq_or_ne w 0 with hw | hw
   · simp [hw]
   · have h_inv_pos : (0 : ℝ) < ε⁻¹ := inv_pos_of_pos hε
@@ -262,10 +259,7 @@ theorem crossing_direction_left_tendsto
     rw [h_norm_neg] at h_norm_cont
     exact (h_norm_cont.comp h_slope).congr' (h_eq.mono fun ε h => h.symm)
   filter_upwards [self_mem_nhdsWithin (s := Ioi (0 : ℝ))] with ε (hε : (0 : ℝ) < ε)
-  show (γ.toFun (t₀ - ε) - s) / ↑‖γ.toFun (t₀ - ε) - s‖ =
-    (ε⁻¹ • (γ.toFun (t₀ - ε) - s)) / ↑‖ε⁻¹ • (γ.toFun (t₀ - ε) - s)‖
   set w := γ.toFun (t₀ - ε) - s
-  show w / ↑‖w‖ = (ε⁻¹ • w) / ↑‖ε⁻¹ • w‖
   rcases eq_or_ne w 0 with hw | hw
   · simp [hw]
   · have h_inv_pos : (0 : ℝ) < ε⁻¹ := inv_pos_of_pos hε
@@ -350,7 +344,8 @@ theorem zpow_boundary_diff_tendsto_zero
   have huL_ne : uL ≠ 0 := norm_ne_zero_iff.mp (by rw [huL]; exact one_ne_zero)
   have h_oR := direction_zpow_diff_isLittleO k uR huR_ne wR n hn2 h_rate_R
   have h_oL := direction_zpow_diff_isLittleO k uL huL_ne wL n hn2 h_rate_L
-  have h_diff : (fun ε => (wR ε / (↑‖wR ε‖ : ℂ)) ^ k - (wL ε / (↑‖wL ε‖ : ℂ)) ^ k)
+  have h_diff : (fun ε =>
+      (wR ε / (↑‖wR ε‖ : ℂ)) ^ k - (wL ε / (↑‖wL ε‖ : ℂ)) ^ k)
       =o[𝓝[>] 0] (fun ε => (ε : ℝ) ^ (n - 1 : ℕ)) := by
     have h_eq : (fun ε => (wR ε / ↑‖wR ε‖) ^ k - (wL ε / ↑‖wL ε‖) ^ k) =
         fun ε => ((wR ε / ↑‖wR ε‖) ^ k - uR ^ k) -
@@ -462,8 +457,10 @@ lemma unit_zpow_eq_of_angle_multiple
   obtain ⟨n, hn⟩ := h
   refine ⟨n, ?_⟩
   rw [← sub_eq_zero]
-  have h_eq : ↑k * (↑(arg z₁) * I) - (↑k * (↑(arg z₂) * I) + ↑n * (2 * ↑Real.pi * I)) =
-      ↑((↑k : ℝ) * (arg z₁ - arg z₂) - (↑n : ℝ) * (2 * Real.pi)) * I := by
+  have h_eq : ↑k * (↑(arg z₁) * I) -
+      (↑k * (↑(arg z₂) * I) + ↑n * (2 * ↑Real.pi * I)) =
+      ↑((↑k : ℝ) * (arg z₁ - arg z₂) -
+        (↑n : ℝ) * (2 * Real.pi)) * I := by
     push_cast; ring
   rw [h_eq, mul_eq_zero]
   left
@@ -534,9 +531,12 @@ private lemma direction_rate_from_flatness_right
   have hdiff_right : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ.toFun t := by
     have hcl : IsClosed ((↑γ.partition : Set ℝ) \ {t₀}) :=
       (γ.partition.finite_toSet.subset Set.diff_subset).isClosed
-    filter_upwards [nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
-      nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2), self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
-    exact γ.smooth_off_partition t ht₂ fun hm => ht₁ ⟨hm, ne_of_gt (Set.mem_Ioi.mp ht₃)⟩
+    filter_upwards [nhdsWithin_le_nhds
+        (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
+      nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2),
+      self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
+    exact γ.smooth_off_partition t ht₂
+      fun hm => ht₁ ⟨hm, ne_of_gt (Set.mem_Ioi.mp ht₃)⟩
   obtain ⟨s_set, hs_mem, hs_diff⟩ := hdiff_right.exists_mem
   have hderiv : HasDerivWithinAt γ.toFun L_R (Ioi t₀) t₀ :=
     hasDerivWithinAt_Ioi_iff_Ici.mpr (hasDerivWithinAt_Ici_of_tendsto_deriv
@@ -582,11 +582,11 @@ private lemma direction_rate_from_flatness_right
   have hε_pos : 0 < ε := by rw [← hε_norm]; exact norm_pos_iff.mpr hw_ne
   set u := w / (↑‖w‖ : ℂ)
   have hu_norm : ‖u‖ = 1 := by
-    show ‖w / (↑‖w‖ : ℂ)‖ = 1
+    change ‖w / (↑‖w‖ : ℂ)‖ = 1
     rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
       div_self hw_ne']
   have h_td_scale : ‖tangentDeviation u v₀‖ = ‖tangentDeviation w L_R‖ / ‖w‖ := by
-    show ‖tangentDeviation (w / (↑‖w‖ : ℂ)) (L_R / (↑‖L_R‖ : ℂ))‖ = _
+    change ‖tangentDeviation (w / (↑‖w‖ : ℂ)) (L_R / (↑‖L_R‖ : ℂ))‖ = _
     have h1 : (w / (↑‖w‖ : ℂ) : ℂ) = (‖w‖⁻¹ : ℝ) • w := by
       simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div]
     have h2 : (L_R / (↑‖L_R‖ : ℂ) : ℂ) = (‖L_R‖⁻¹ : ℝ) • L_R := by
@@ -596,7 +596,7 @@ private lemma direction_rate_from_flatness_right
       abs_of_nonneg (inv_nonneg.mpr (norm_nonneg _)), inv_mul_eq_div]
   set R := (u * starRingEnd ℂ v₀).re
   have hR_pos : 0 < R := by
-    show 0 < (w / (↑‖w‖ : ℂ) * starRingEnd ℂ (L_R / (↑‖L_R‖ : ℂ))).re
+    change 0 < (w / (↑‖w‖ : ℂ) * starRingEnd ℂ (L_R / (↑‖L_R‖ : ℂ))).re
     rw [map_div₀ (starRingEnd ℂ), Complex.conj_ofReal,
       div_mul_div_comm, ← Complex.ofReal_mul, Complex.div_ofReal_re]
     exact div_pos h_re (mul_pos (by rw [hε_norm]; exact hε_pos) hL_pos)
@@ -679,9 +679,12 @@ private lemma direction_rate_from_flatness_left
   have hdiff_left : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ.toFun t := by
     have hcl : IsClosed ((↑γ.partition : Set ℝ) \ {t₀}) :=
       (γ.partition.finite_toSet.subset Set.diff_subset).isClosed
-    filter_upwards [nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
-      nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2), self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
-    exact γ.smooth_off_partition t ht₂ fun hm => ht₁ ⟨hm, ne_of_lt (Set.mem_Iio.mp ht₃)⟩
+    filter_upwards [nhdsWithin_le_nhds
+        (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
+      nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2),
+      self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
+    exact γ.smooth_off_partition t ht₂
+      fun hm => ht₁ ⟨hm, ne_of_lt (Set.mem_Iio.mp ht₃)⟩
   obtain ⟨s_set, hs_mem, hs_diff⟩ := hdiff_left.exists_mem
   have hderiv : HasDerivWithinAt γ.toFun L_L (Iio t₀) t₀ :=
     hasDerivWithinAt_Iio_iff_Iic.mpr (hasDerivWithinAt_Iic_of_tendsto_deriv
@@ -727,11 +730,11 @@ private lemma direction_rate_from_flatness_left
   have hε_pos : 0 < ε := by rw [← hε_norm]; exact norm_pos_iff.mpr hw_ne
   set u := w / (↑‖w‖ : ℂ)
   have hu_norm : ‖u‖ = 1 := by
-    show ‖w / (↑‖w‖ : ℂ)‖ = 1
+    change ‖w / (↑‖w‖ : ℂ)‖ = 1
     rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
       div_self hw_ne']
   have h_td_scale : ‖tangentDeviation u v₀‖ = ‖tangentDeviation w (-L_L)‖ / ‖w‖ := by
-    show ‖tangentDeviation (w / (↑‖w‖ : ℂ)) (-L_L / (↑‖L_L‖ : ℂ))‖ = _
+    change ‖tangentDeviation (w / (↑‖w‖ : ℂ)) (-L_L / (↑‖L_L‖ : ℂ))‖ = _
     have h1 : (w / (↑‖w‖ : ℂ) : ℂ) = (‖w‖⁻¹ : ℝ) • w := by
       simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div]
     have h_negL : -L_L / (↑‖L_L‖ : ℂ) = (‖L_L‖⁻¹ : ℝ) • (-L_L) := by
@@ -741,7 +744,7 @@ private lemma direction_rate_from_flatness_left
       abs_of_nonneg (inv_nonneg.mpr (norm_nonneg _)), inv_mul_eq_div]
   set R := (u * starRingEnd ℂ v₀).re
   have hR_pos : 0 < R := by
-    show 0 < (w / (↑‖w‖ : ℂ) * starRingEnd ℂ (-L_L / (↑‖L_L‖ : ℂ))).re
+    change 0 < (w / (↑‖w‖ : ℂ) * starRingEnd ℂ (-L_L / (↑‖L_L‖ : ℂ))).re
     rw [map_div₀ (starRingEnd ℂ), map_neg, Complex.conj_ofReal,
       div_mul_div_comm, show w * -(starRingEnd ℂ L_L) = w * starRingEnd ℂ (-L_L) from by
         rw [map_neg], ← Complex.ofReal_mul, Complex.div_ofReal_re]
@@ -841,10 +844,10 @@ private lemma cutoff_zpow_integral_eq_boundary
     intro t ht
     rw [Set.uIcc_of_le hσ₁_lt.le] at ht
     simp [show ¬(‖γ.toFun t - s‖ > ε) from not_lt.mpr (h_middle t ht)]
-  have hae_left_eq : (fun t => if ‖γ.toFun t - s‖ > ε then F t else 0) =ᶠ[ae (volume.restrict (Ι γ.a σ₁))] F :=
-    hae_left
-  have hae_right_eq : (fun t => if ‖γ.toFun t - s‖ > ε then F t else 0) =ᶠ[ae (volume.restrict (Ι σ₂ γ.b))] F :=
-    hae_right
+  have hae_left_eq : (fun t => if ‖γ.toFun t - s‖ > ε then F t else 0)
+      =ᶠ[ae (volume.restrict (Ι γ.a σ₁))] F := hae_left
+  have hae_right_eq : (fun t => if ‖γ.toFun t - s‖ > ε then F t else 0)
+      =ᶠ[ae (volume.restrict (Ι σ₂ γ.b))] F := hae_right
   have hint_l : IntervalIntegrable
       (fun t => if ‖γ.toFun t - s‖ > ε then F t else 0)
       volume γ.a σ₁ :=
@@ -1071,25 +1074,25 @@ lemma cutoff_zpow_infrastructure
   · exact hIoo_ev.mono fun ε hε => (hprops ε hε).2.2.2.2.2.1
   · exact hIoo_ev.mono fun ε hε => (hprops ε hε).2.2.2.2.1
   · filter_upwards [hIoo_ev] with ε hε
-    show γ.toFun (σ₂ ε) - s ≠ 0
+    change γ.toFun (σ₂ ε) - s ≠ 0
     have h_norm := (hprops ε hε).2.2.2.2.2.1
     exact sub_ne_zero.mpr (fun h => by rw [h, sub_self, norm_zero] at h_norm; linarith [hε.1])
   · filter_upwards [hIoo_ev] with ε hε
-    show γ.toFun (σ₁ ε) - s ≠ 0
+    change γ.toFun (σ₁ ε) - s ≠ 0
     have h_norm := (hprops ε hε).2.2.2.2.1
     exact sub_ne_zero.mpr (fun h => by rw [h, sub_self, norm_zero] at h_norm; linarith [hε.1])
-  · show ‖L_R / ↑‖L_R‖‖ = 1
+  · change ‖L_R / ↑‖L_R‖‖ = 1
     rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (norm_pos_iff.mpr hL_R_ne),
       div_self (norm_ne_zero_iff.mpr hL_R_ne)]
-  · show ‖-L_L / ↑‖L_L‖‖ = 1
+  · change ‖-L_L / ↑‖L_L‖‖ = 1
     rw [norm_div, norm_neg, Complex.norm_real, Real.norm_eq_abs,
       abs_of_pos (norm_pos_iff.mpr hL_L_ne), div_self (norm_ne_zero_iff.mpr hL_L_ne)]
   · have h_arg_uR : uR.arg = L_R.arg := by
-      show (L_R / ↑‖L_R‖).arg = L_R.arg
+      change (L_R / ↑‖L_R‖).arg = L_R.arg
       rw [div_eq_inv_mul, ← Complex.ofReal_inv,
         Complex.arg_real_mul L_R (inv_pos.mpr (norm_pos_iff.mpr hL_R_ne))]
     have h_arg_uL : uL.arg = (-L_L).arg := by
-      show (-L_L / ↑‖L_L‖).arg = (-L_L).arg
+      change (-L_L / ↑‖L_L‖).arg = (-L_L).arg
       rw [div_eq_inv_mul, ← Complex.ofReal_inv,
         Complex.arg_real_mul (-L_L) (inv_pos.mpr (norm_pos_iff.mpr hL_L_ne))]
     rw [h_arg_uR, h_arg_uL]
@@ -1148,7 +1151,7 @@ lemma cutoff_zpow_infrastructure
       hσ₁_tendsto
   · filter_upwards [hIoo_ev] with ε hε
     obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ := hprops ε hε
-    show ∫ t in γ.a..γ.b,
+    change ∫ t in γ.a..γ.b,
       (if ‖γ.toFun t - s‖ > ε
        then (γ.toFun t - s) ^ (-(m : ℤ)) * deriv γ.toFun t else 0) =
       ((γ.toFun (σ₁ ε) - s) ^ (1 - (m : ℤ)) - (γ.toFun (σ₂ ε) - s) ^ (1 - (m : ℤ))) /

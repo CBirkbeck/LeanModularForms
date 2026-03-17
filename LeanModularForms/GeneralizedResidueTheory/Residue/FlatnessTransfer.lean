@@ -37,12 +37,14 @@ private lemma continuousOn_cutoff_integral
     (_hcross : γ.toFun t₀ = z₀)
     (_honly : ∀ t ∈ Set.Icc γ.a γ.b, γ.toFun t = z₀ → t = t₀)
     (δ : ℝ) (_hδ : δ > 0)
-    (hbnd : ∀ ε ∈ Set.Ioo 0 δ, ∃ σ₁ σ₂, γ.a ≤ σ₁ ∧ σ₁ < t₀ ∧ t₀ < σ₂ ∧ σ₂ ≤ γ.b ∧
+    (hbnd : ∀ ε ∈ Set.Ioo 0 δ, ∃ σ₁ σ₂,
+      γ.a ≤ σ₁ ∧ σ₁ < t₀ ∧ t₀ < σ₂ ∧ σ₂ ≤ γ.b ∧
       ‖γ.toFun σ₁ - z₀‖ = ε ∧ ‖γ.toFun σ₂ - z₀‖ = ε ∧
       (∀ t ∈ Set.Ico γ.a σ₁, ε < ‖γ.toFun t - z₀‖) ∧
       (∀ t ∈ Set.Ioc σ₂ γ.b, ε < ‖γ.toFun t - z₀‖) ∧
       ∀ t ∈ Set.Icc σ₁ σ₂, ‖γ.toFun t - z₀‖ ≤ ε)
-    (l r : ℝ) (hl_lt : l < t₀) (hr_gt : t₀ < r) (_hl_ge_a : γ.a ≤ l) (_hr_le_b : r ≤ γ.b)
+    (l r : ℝ) (hl_lt : l < t₀) (hr_gt : t₀ < r)
+    (_hl_ge_a : γ.a ≤ l) (_hr_le_b : r ≤ γ.b)
     (hg_anti : StrictAntiOn (fun t => ‖γ.toFun t - z₀‖) (Set.Icc l t₀))
     (hg_mono : StrictMonoOn (fun t => ‖γ.toFun t - z₀‖) (Set.Icc t₀ r))
     (hδ_le_l : δ ≤ ‖γ.toFun l - z₀‖) (hδ_le_r : δ ≤ ‖γ.toFun r - z₀‖) :
@@ -64,7 +66,8 @@ private lemma continuousOn_cutoff_integral
       exact absurd (h_mid l hl_in) (not_le.mpr (by linarith [hδ_le_l, hε₀.2]))
     have hσ₂_le_r : σ₂ ≤ r := by
       by_contra h_gt; push_neg at h_gt
-      have hr_in : r ∈ Icc σ₁ σ₂ := ⟨le_trans hσ₁_lt.le (le_trans (le_of_lt hr_gt) (le_refl r)), h_gt.le⟩
+      have hr_in : r ∈ Icc σ₁ σ₂ :=
+        ⟨le_trans hσ₁_lt.le (le_trans (le_of_lt hr_gt) (le_refl r)), h_gt.le⟩
       exact absurd (h_mid r hr_in) (not_le.mpr (by linarith [hδ_le_r, hε₀.2]))
     apply measure_mono_null (t := ({σ₁, σ₂} : Set ℝ))
     · intro t ⟨ht_Icc, ht_eq⟩
@@ -230,7 +233,8 @@ lemma cpv_exists_inv_sub_of_closed_unique
       obtain ⟨U, hU_open, h0_mem, hU_sub⟩ := h_sp_ev
       obtain ⟨r, hr, hr_ball⟩ := Metric.isOpen_iff.mp hU_open 0 h0_mem
       exact ⟨min r δ, by positivity, min_le_right _ _, fun ε hε => hU_sub ⟨hr_ball (by
-        simp [Metric.mem_ball, abs_of_pos hε.1]
+        simp only [Metric.mem_ball, Real.dist_eq]
+        rw [abs_of_pos hε.1]
         exact lt_of_lt_of_le hε.2 (min_le_left _ _)), hε.1⟩⟩
     have h_logexp_cont : ContinuousOn (fun ε => Complex.log (Complex.exp (R ε))) (Ioo 0 η) :=
       (Complex.continuous_exp.comp_continuousOn
@@ -243,7 +247,8 @@ lemma cpv_exists_inv_sub_of_closed_unique
         R ε₁ - Complex.log (Complex.exp (R ε₁)) =
         R ε₂ - Complex.log (Complex.exp (R ε₂)) := by
       set T : Set ℂ := Set.range (fun n : ℤ => ↑n * (2 * ↑Real.pi * I)) with hT_def
-      have h_maps : Set.MapsTo (fun ε => R ε - Complex.log (Complex.exp (R ε))) (Ioo 0 η) T := by
+      have h_maps : Set.MapsTo
+          (fun ε => R ε - Complex.log (Complex.exp (R ε))) (Ioo 0 η) T := by
         intro ε hε
         have h_exp_eq : Complex.exp (R ε - Complex.log (Complex.exp (R ε))) = 1 := by
           rw [Complex.exp_sub, Complex.exp_log (Complex.exp_ne_zero _), div_self
@@ -267,7 +272,9 @@ lemma cpv_exists_inv_sub_of_closed_unique
           have h_sub : (↑n : ℂ) * (2 * ↑Real.pi * I) - ↑m * (2 * ↑Real.pi * I) =
               ↑(n - m) * (2 * ↑Real.pi * I) := by push_cast; ring
           have h_norm_2piI : ‖(2 * ↑Real.pi * I : ℂ)‖ = 2 * Real.pi := by
-            simp [Complex.norm_I, Complex.norm_real, abs_of_pos Real.pi_pos, mul_comm]
+            simp only [norm_mul, Complex.norm_ofNat,
+              Complex.norm_real, abs_of_pos Real.pi_pos,
+              Complex.norm_I, mul_one]
           have h_dist : dist (↑n * (2 * ↑Real.pi * I)) (↑m * (2 * ↑Real.pi * I)) =
               ‖(↑(n - m) : ℂ)‖ * (2 * Real.pi) := by
             rw [dist_eq_norm, h_sub, norm_mul, h_norm_2piI]
@@ -277,7 +284,9 @@ lemma cpv_exists_inv_sub_of_closed_unique
             rw [← Int.cast_abs] at hz_ball ⊢
             exact_mod_cast h1
           linarith [mul_le_mul_of_nonneg_right h_int_pos (le_of_lt h2pi_pos)]
-        · intro heq; exact ⟨by rw [heq]; exact Metric.mem_ball_self h2pi_pos, by rw [heq]; exact hy⟩
+        · intro heq
+          exact ⟨by rw [heq]; exact Metric.mem_ball_self h2pi_pos,
+            by rw [heq]; exact hy⟩
       intro ε₁ hε₁ ε₂ hε₂
       exact isPreconnected_Ioo.constant_of_mapsTo h_phi_cont h_maps hε₁ hε₂
     have hη2 : η / 2 ∈ Ioo (0:ℝ) η := ⟨by linarith, by linarith⟩
@@ -293,7 +302,8 @@ lemma cpv_exists_inv_sub_of_closed_unique
       (h_exp : Tendsto (fun ε => Complex.exp (R ε)) (𝓝[>] 0) (𝓝 L₀))
       (hR_cont : ContinuousOn R (Ioo 0 δ)) :
       ∃ L, Tendsto R (𝓝[>] 0) (𝓝 L) := by
-    have h_shift : Tendsto (fun ε => Complex.exp (R ε + ↑Real.pi * I)) (𝓝[>] 0) (𝓝 (-L₀)) := by
+    have h_shift : Tendsto (fun ε => Complex.exp (R ε + ↑Real.pi * I))
+        (𝓝[>] 0) (𝓝 (-L₀)) := by
       have : (fun ε => Complex.exp (R ε + ↑Real.pi * I)) =
           (fun ε => -(Complex.exp (R ε))) := by
         ext ε; rw [Complex.exp_add, Complex.exp_pi_mul_I]; ring
@@ -343,7 +353,7 @@ lemma pv_res_tendsto_of_immersion
     intro s hs
     have h_eq : (fun z => residueSimplePole f_res s / (z - s)) =
         (fun z => residueSimplePole f_res s * (fun z => (z - s)⁻¹) z) := by
-      ext z; simp [div_eq_mul_inv]
+      ext z; simp only [div_eq_mul_inv]
     rw [h_eq]
     apply CauchyPrincipalValueExists'.const_mul
     apply cauchyPrincipalValueExists_of_singular_inv γ s
@@ -361,7 +371,8 @@ lemma pv_res_tendsto_of_immersion
     suffices ∃ M, Tendsto (fun ε => ∫ (t : ℝ) in γ.a..γ.b,
         if ε < ‖γ.toFun t - s‖ then (γ.toFun t - s)⁻¹ * deriv γ.toFun t else 0)
         (𝓝[>] 0) (𝓝 M) from this.choose_spec.cauchy_map
-    exact cpv_exists_inv_sub_of_closed_unique γ s hγ_closed (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross honly
+    exact cpv_exists_inv_sub_of_closed_unique γ s hγ_closed
+      (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross honly
   have h_thm := generalizedResidueTheorem' U hU hU_convex S hS_in_U hS_discrete
     hS_closed S0 hS0_subset f_res hf_res_diff γ hγ_closed hγ_in_U hS_on_curve
     hSimple_res hf_ext_res hPV_singular
