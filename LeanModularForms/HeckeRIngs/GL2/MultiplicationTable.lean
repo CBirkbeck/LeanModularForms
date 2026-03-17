@@ -120,7 +120,8 @@ private lemma first_invariant_dvd_p_of_product
       Matrix.diagonal (fun i => (a i : ℤ))) :
     (a 0 : ℕ) ∣ p := by
   set dp := Matrix.diagonal (fun m => ((![1, ⟨p, hp.pos⟩] : Fin 2 → ℕ+) m : ℤ))
-  set dpk := Matrix.diagonal (fun m => ((![1, ⟨p ^ k, pow_pos hp.pos k⟩] : Fin 2 → ℕ+) m : ℤ))
+  set dpk := Matrix.diagonal
+    (fun m => ((![1, ⟨p ^ k, pow_pos hp.pos k⟩] : Fin 2 → ℕ+) m : ℤ))
   set S_ℤ := (↑S : Matrix (Fin 2) (Fin 2) ℤ)
   set M := dp * S_ℤ * dpk
   set L_ℤ := (↑L : Matrix (Fin 2) (Fin 2) ℤ)
@@ -266,7 +267,8 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
     A = T_diag 2 (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩])
         (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∨
     A = T_diag 2 (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩])
-        (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩ (dvd_pow_self p (by omega))) := by
+        (divChain_mk2 ⟨p, hp.pos⟩ ⟨p ^ k, pow_pos hp.pos k⟩
+          (dvd_pow_self p (by omega))) := by
   obtain ⟨a, hdiv, hrep⟩ := exists_diagonal_representative 2 A.eql.choose
   have hA_eq : A = T_diag 2 a hdiv := by
     rw [← hrep]; exact (T'_ext _ _ _ A.eql.choose_spec.symm).symm
@@ -349,7 +351,8 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   set i₀ : decompQuot (GL_pair 2) D1 := ⟦⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩⟧
   open scoped Pointwise in
   obtain ⟨κ₁, hκ₁_eq⟩ := QuotientGroup.mk_out_eq_mul
-    ((ConjAct.toConjAct (D1.eql.choose : GL (Fin 2) ℚ) • (GL_pair 2).H).subgroupOf (GL_pair 2).H)
+    ((ConjAct.toConjAct (D1.eql.choose : GL (Fin 2) ℚ) •
+      (GL_pair 2).H).subgroupOf (GL_pair 2).H)
     ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩
   have hi₀ : (↑i₀.out : GL (Fin 2) ℚ) = L₁⁻¹ * (κ₁ : (GL_pair 2).H) := by
     have h := hκ₁_eq; apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at h
@@ -358,14 +361,16 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     have := κ₁.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def] at this
     simpa [ConjAct.ofConjAct_toConjAct] using this
-  set τ₀ : GL (Fin 2) ℚ := (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹
+  set τ₀ : GL (Fin 2) ℚ :=
+    (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹
   have hτ₀_mem : τ₀ ∈ (GL_pair 2).H :=
     (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hκ₁_conj)
       ((GL_pair 2).H.inv_mem hR₁)) ((GL_pair 2).H.inv_mem hL₂)
   set j₀ : decompQuot (GL_pair 2) D2 := ⟦⟨τ₀, hτ₀_mem⟩⟧
   open scoped Pointwise in
   obtain ⟨κ₂, hκ₂_eq⟩ := QuotientGroup.mk_out_eq_mul
-    ((ConjAct.toConjAct (D2.eql.choose : GL (Fin 2) ℚ) • (GL_pair 2).H).subgroupOf (GL_pair 2).H)
+    ((ConjAct.toConjAct (D2.eql.choose : GL (Fin 2) ℚ) •
+      (GL_pair 2).H).subgroupOf (GL_pair 2).H)
     ⟨τ₀, hτ₀_mem⟩
   have hj₀ : (↑j₀.out : GL (Fin 2) ℚ) = τ₀ * (κ₂ : (GL_pair 2).H) := by
     have h := hκ₂_eq; apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at h
@@ -524,7 +529,8 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
         by_contra h
         push_neg at h
         have : 2 * (p : ℤ) ^ 2 ≤ m1 * (p : ℤ) ^ 2 := by nlinarith
-        nlinarith [show (p : ℤ) ^ 2 ≥ 4 by nlinarith [show (2 : ℤ) ≤ p by exact_mod_cast hp2]]
+        nlinarith [show (p : ℤ) ^ 2 ≥ 4 by
+          nlinarith [show (2 : ℤ) ≤ p by exact_mod_cast hp2]]
       have hm1_le : m1 ≤ 1 := by
         rcases le_or_gt m1 1 with h | h
         · exact h
@@ -554,7 +560,8 @@ theorem thm324_5 (k : ℕ) (hk : 0 < k) :
     intro heq
     have := diagonal_representative_unique 2 _ _ _ _ heq
     have h0 : (![1, ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩] : Fin 2 → ℕ+) 0 = 1 := rfl
-    have h0' : (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩] : Fin 2 → ℕ+) 0 = ⟨p, hp.pos⟩ := rfl
+    have h0' : (![⟨p, hp.pos⟩, ⟨p ^ k, pow_pos hp.pos k⟩] :
+        Fin 2 → ℕ+) 0 = ⟨p, hp.pos⟩ := rfl
     have := congr_fun this 0; rw [h0, h0'] at this
     exact absurd (congr_arg PNat.val this).symm (Nat.Prime.one_lt hp).ne'
   have h_mul : T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) *
@@ -649,7 +656,8 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
     have hp1 := T_sum_prime p hp
     rw [hp1] at h5 ⊢
     rw [show (↑(p + 1) : ℤ) • T_pp p hp = (↑p : ℤ) • T_pp p hp + T_pp p hp from by
-      rw [show (↑(p + 1) : ℤ) = (↑p : ℤ) + 1 from by push_cast; ring, add_smul, one_smul]] at h5
+      rw [show (↑(p + 1) : ℤ) = (↑p : ℤ) + 1 from by push_cast; ring,
+        add_smul, one_smul]] at h5
     rw [eq_sub_iff_add_eq]; have h5' := h5; abel_nf at h5' ⊢; exact h5'.symm
   | k + 2, _, ih =>
     simp only [show k + 2 ≠ 1 from by omega, ite_false,
@@ -659,7 +667,8 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
     by_cases hk0 : k = 0
     · subst hk0; simp only [Nat.zero_add] at h5 ⊢
       rw [h_tsum_0, mul_one, h_p1_tad, T_sum_prime p hp] at h5
-      have h_p1_pnat : (⟨p ^ 1, pow_pos hp.pos 1⟩ : ℕ+) = ⟨p, hp.pos⟩ := by ext; simp [pow_one]
+      have h_p1_pnat : (⟨p ^ 1, pow_pos hp.pos 1⟩ : ℕ+) = ⟨p, hp.pos⟩ :=
+        by ext; simp [pow_one]
       rw [show T_sum ⟨p ^ 1, pow_pos hp.pos 1⟩ = T_sum ⟨p, hp.pos⟩ from
         by rw [h_p1_pnat]] at h5 ⊢
       rw [T_sum_prime p hp] at h5 ⊢
@@ -729,13 +738,15 @@ private lemma T_pp_pow_comm_T_sum_ppow (i k : ℕ) :
   induction i with
   | zero => simp
   | succ i ih =>
-    rw [pow_succ', mul_assoc, ih, ← mul_assoc, T_pp_comm_T_sum_ppow p hp k, mul_assoc, ← pow_succ']
+    rw [pow_succ', mul_assoc, ih, ← mul_assoc,
+      T_pp_comm_T_sum_ppow p hp k, mul_assoc, ← pow_succ']
 
 private lemma T_sum_p_comm_T_pp_pow (i : ℕ) :
     T_sum ⟨p, hp.pos⟩ * T_pp p hp ^ i =
     T_pp p hp ^ i * T_sum ⟨p, hp.pos⟩ := by
   have h1 : (⟨p ^ 1, pow_pos hp.pos 1⟩ : ℕ+) = ⟨p, hp.pos⟩ := PNat.eq (pow_one p)
-  rw [show T_sum ⟨p, hp.pos⟩ = T_sum ⟨p ^ 1, pow_pos hp.pos 1⟩ from by congr 1; exact h1.symm]
+  rw [show T_sum ⟨p, hp.pos⟩ =
+    T_sum ⟨p ^ 1, pow_pos hp.pos 1⟩ from by congr 1; exact h1.symm]
   exact (T_pp_pow_comm_T_sum_ppow p hp i 1).symm
 
 private lemma T_sum_p_comm_T_pp_pow_T_sum (i k : ℕ) :
@@ -865,24 +876,41 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
     set S2 := ∑ i ∈ Finset.range (r + 1),
       (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)
     have h_lhs1 : Tp * S1 = ∑ i ∈ Finset.range (r + 1 + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) :=
+        (p : ℤ) ^ i • (Tpp ^ i *
+          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i),
+            pow_pos hp.pos _⟩)) :=
       thm324_4_lhs1_distrib p hp r s
-    have h_lhs2 : (p : ℤ) • (Tpp * S2) = ∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) :=
+    have h_lhs2 : (p : ℤ) • (Tpp * S2) =
+        ∑ i ∈ Finset.range (r + 1),
+          (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
+            T_sum ⟨p ^ (r + s - 2 * i),
+              pow_pos hp.pos _⟩) :=
       thm324_4_lhs2_shift p hp r s
     have h_peel1 : ∑ i ∈ Finset.range (r + 1 + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
+        (p : ℤ) ^ i • (Tpp ^ i *
+          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i),
+            pow_pos hp.pos _⟩)) =
       (∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩))) +
-      (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩)) :=
+        (p : ℤ) ^ i • (Tpp ^ i *
+          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i),
+            pow_pos hp.pos _⟩))) +
+      (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
+        (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)),
+          pow_pos hp.pos _⟩)) :=
       Finset.sum_range_succ _ _
     have h_sum_split :
       ∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
+        (p : ℤ) ^ i • (Tpp ^ i *
+          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i),
+            pow_pos hp.pos _⟩)) =
       (∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)) +
+        (p : ℤ) ^ i • (Tpp ^ i *
+          T_sum ⟨p ^ (r + 2 + s - 2 * i),
+            pow_pos hp.pos _⟩)) +
       (∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) := by
+        (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
+          T_sum ⟨p ^ (r + s - 2 * i),
+            pow_pos hp.pos _⟩)) := by
       rw [← Finset.sum_add_distrib]
       exact Finset.sum_congr rfl fun i hi => by
         rw [Finset.mem_range] at hi
@@ -892,7 +920,9 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
         (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)
     set B := ∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)
-    set C := (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) * (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩))
+    set C := (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
+      (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)),
+        pow_pos hp.pos _⟩))
     show A + B + C - B = _
     rw [add_assoc, add_comm B C, ← add_assoc, add_sub_cancel_right]
     rw [show r + 2 + 1 = (r + 1) + 1 + 1 from by omega]
@@ -934,12 +964,14 @@ private lemma T_ad'_mul_of_coprime (a b da db : ℕ)
   ext i; fin_cases i <;> simp [pnatMul]
 
 /-- When `T_ad'` conditions fail, the product is zero and so is the RHS. -/
-private lemma T_ad'_mul_zero_of_not_dvd (a da : ℕ) (h : ¬(0 < a ∧ 0 < da ∧ a ∣ da)) (x : HeckeAlgebra 2) :
+private lemma T_ad'_mul_zero_of_not_dvd (a da : ℕ)
+    (h : ¬(0 < a ∧ 0 < da ∧ a ∣ da)) (x : HeckeAlgebra 2) :
     T_ad' a da * x = 0 := by
   have : T_ad' a da = 0 := by unfold T_ad'; rw [dif_neg h]
   rw [this, zero_mul]
 
-private lemma T_ad'_mul_zero_of_not_dvd' (b db : ℕ) (h : ¬(0 < b ∧ 0 < db ∧ b ∣ db)) (x : HeckeAlgebra 2) :
+private lemma T_ad'_mul_zero_of_not_dvd' (b db : ℕ)
+    (h : ¬(0 < b ∧ 0 < db ∧ b ∣ db)) (x : HeckeAlgebra 2) :
     x * T_ad' b db = 0 := by
   have : T_ad' b db = 0 := by unfold T_ad'; rw [dif_neg h]
   rw [this, mul_zero]
@@ -1009,7 +1041,8 @@ theorem T_sum_mul_coprime (m n : ℕ+) (hcop : Nat.Coprime m n) :
       intro _ _ hdvd; apply hcb
       have hb_dvd_prod : b ∣ M / a * (N / b) := dvd_trans (dvd_mul_left b a) hdvd
       have hcop_b_ma : Nat.Coprime b (M / a) :=
-        Nat.Coprime.coprime_dvd_left hb_dvd (hcop.symm.coprime_dvd_right (Nat.div_dvd_of_dvd ha_dvd))
+        Nat.Coprime.coprime_dvd_left hb_dvd
+          (hcop.symm.coprime_dvd_right (Nat.div_dvd_of_dvd ha_dvd))
       exact hcop_b_ma.dvd_of_dvd_mul_left hb_dvd_prod
   ·
     rw [T_ad'_mul_zero_of_not_dvd a (M / a)
@@ -1168,7 +1201,8 @@ private lemma T_sum_mul_peel_prime_summand (q : ℕ) (hq : q.Prime)
     rcases Nat.eq_zero_or_pos d' with rfl | h
     · exact absurd (Nat.eq_zero_of_zero_dvd hd'_dvd) (Nat.gcd_pos_of_pos_left _ m'.pos).ne'
     · exact h
-  rw [mul_smul_comm, smul_smul, show (↑(q ^ i) : ℤ) * ↑d' = ↑(q ^ i * d') from by push_cast; ring]
+  rw [mul_smul_comm, smul_smul,
+    show (↑(q ^ i) : ℤ) * ↑d' = ↑(q ^ i * d') from by push_cast; ring]
   congr 1
   rw [T_pp_pow_eq_T_ad' q hq i]
   rw [show T_ad' (q ^ i) (q ^ i) * T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
@@ -1324,10 +1358,19 @@ private lemma deg_ppow_term_lt' (i k : ℕ) (h2i : 2 * i < k) :
   have h_exp_eq : k - i = i + (k - 2 * i) := by omega
   rw [deg_T_ad'_of_pos' _ _ (pow_pos hp.pos i) (pow_pos hp.pos (k - i))
     (Nat.pow_dvd_pow p (by omega)), deg_T_ad']
-  show T'_deg (GL_pair 2) (T_diag 2 (![⟨p ^ i, pow_pos hp.pos i⟩, ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩] : Fin 2 → ℕ+)
-    (divChain_mk2 _ _ (Nat.pow_dvd_pow p (by omega)))) = ↑(p ^ (k - 2 * i - 1) * (p + 1))
-  have h_mk2_eq : (![⟨p ^ i, pow_pos hp.pos i⟩, ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩] : Fin 2 → ℕ+) =
-      (![⟨p ^ i, pow_pos hp.pos i⟩, ⟨p ^ (i + (k - 2 * i)), pow_pos hp.pos (i + (k - 2 * i))⟩] : Fin 2 → ℕ+) := by
+  show T'_deg (GL_pair 2) (T_diag 2
+    (![⟨p ^ i, pow_pos hp.pos i⟩,
+      ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩] : Fin 2 → ℕ+)
+    (divChain_mk2 _ _ (Nat.pow_dvd_pow p (by omega)))) =
+    ↑(p ^ (k - 2 * i - 1) * (p + 1))
+  have h_mk2_eq :
+      (![⟨p ^ i, pow_pos hp.pos i⟩,
+        ⟨p ^ (k - i), pow_pos hp.pos (k - i)⟩] :
+        Fin 2 → ℕ+) =
+      (![⟨p ^ i, pow_pos hp.pos i⟩,
+        ⟨p ^ (i + (k - 2 * i)),
+          pow_pos hp.pos (i + (k - 2 * i))⟩] :
+        Fin 2 → ℕ+) := by
     ext j; fin_cases j <;> simp only [h_exp_eq]
   simp only [h_mk2_eq]
   exact thm324_6 p hp i (k - 2 * i) (by omega)

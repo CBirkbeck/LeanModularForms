@@ -181,8 +181,10 @@ private lemma Gamma0_relindex_step_inj (k : ℕ) (hk : 0 < k) :
     lowerTriRep_diff_entry p, ZMod.intCast_zmod_eq_zero_iff_dvd] at hf
   have hpk_ne : (p : ℤ) ^ k ≠ 0 := pow_ne_zero k (by exact_mod_cast hp.ne_zero)
   have hpk1 : (↑(p ^ (k + 1)) : ℤ) = (p : ℤ) ^ k * (p : ℤ) := by push_cast; rw [pow_succ]
-  rw [hpk1, show ((↑c₂ : ℤ) - ↑c₁) * (p : ℤ) ^ k = (p : ℤ) ^ k * ((↑c₂ : ℤ) - ↑c₁) from
-      mul_comm _ _, mul_dvd_mul_iff_left hpk_ne] at hf
+  rw [hpk1,
+    show ((↑c₂ : ℤ) - ↑c₁) * (p : ℤ) ^ k =
+      (p : ℤ) ^ k * ((↑c₂ : ℤ) - ↑c₁) from mul_comm _ _,
+    mul_dvd_mul_iff_left hpk_ne] at hf
   obtain ⟨m, hm⟩ := hf
   have hm0 : m = 0 := by
     by_contra hm_ne

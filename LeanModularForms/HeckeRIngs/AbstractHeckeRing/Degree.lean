@@ -8,8 +8,9 @@ import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Ring
 /-!
 # Hecke Rings: Degree Map
 
-The degree ring homomorphism `deg : 𝕋 P ℤ →+* ℤ`, which sends each double coset `HgH` to the
-number of left cosets it contains: `deg(HgH) = [H : H ∩ gHg⁻¹]`.
+The degree ring homomorphism `deg : 𝕋 P ℤ →+* ℤ`, which sends each
+double coset `HgH` to the number of left cosets it contains:
+`deg(HgH) = [H : H ∩ gHg⁻¹]`.
 
 This is Shimura §3.1, Proposition 3.3.
 

@@ -305,7 +305,8 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ+} {hdiv : DivChain n a}
     rw [abs_mul, abs_of_nonneg (by omega : (q : ℤ) ≥ 0)]
     exact le_mul_of_one_le_left (by omega) (Int.one_le_abs hσ_ne)
   rw [h_cancel] at h_abs
-  rcases le_or_gt ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) with h | h
+  rcases le_or_gt ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ)
+    ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) with h | h
   · rw [abs_of_nonpos (by omega)] at h_abs; omega
   · rw [abs_of_pos (by omega)] at h_abs; omega
 
