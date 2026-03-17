@@ -96,7 +96,7 @@ theorem thm324_2 (k : ℕ) (hk : 2 ≤ k) :
     have hjk : j ≤ k - 2 - j := by omega
     have : k - 2 - j + 1 = k - (j + 1) := by omega
     rw [T_pp_mul_T_ad'_ppow p hp j (k - 2 - j) hjk]
-    congr 1; omega
+    rw [this]
   rw [Finset.sum_congr rfl shift]
   rw [show Finset.range ((k - 2) / 2 + 1) = Finset.range (k / 2) from by
     simp only [show (k - 2) / 2 + 1 = k / 2 from by omega]]
@@ -319,7 +319,6 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
     hD1_eq hD2_eq hSL_i₀.symm hSL_j₀.symm h_prod_eq
   rw [hA_eq]; exact mulSupport_pp_case_split p hp k _hk a hdiv h_det h_dvd
 
-set_option maxHeartbeats 1600000 in
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag 2 (mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩)
       (divChain_mk2 1 ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩ (one_dvd _)) ∈
@@ -411,7 +410,6 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     simp only
     exact DoubleCoset.doubleCoset_eq_of_mem h_product_mem⟩
 
-set_option maxHeartbeats 800000 in
 private lemma m'_values (k : ℕ) (hk : 0 < k) :
     HeckeRing.m' (GL_pair 2)
       (T_diag 2 (mk2 1 ⟨p, hp.pos⟩) (divChain_mk2 1 ⟨p, hp.pos⟩ (one_dvd _)))
@@ -753,7 +751,6 @@ private lemma T_sum_p_comm_T_pp_pow_T_sum (i k : ℕ) :
     T_pp p hp ^ i * (T_sum ⟨p, hp.pos⟩ * T_sum ⟨p ^ k, pow_pos hp.pos k⟩) := by
   rw [← mul_assoc, T_sum_p_comm_T_pp_pow p hp i, mul_assoc]
 
-set_option maxHeartbeats 800000 in
 theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
     T_sum ⟨p ^ r, pow_pos hp.pos r⟩ * T_sum ⟨p ^ s, pow_pos hp.pos s⟩ =
     ∑ i ∈ Finset.range (r + 1),
