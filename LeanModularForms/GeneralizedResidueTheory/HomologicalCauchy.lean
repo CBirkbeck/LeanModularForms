@@ -7,6 +7,9 @@ import LeanModularForms.GeneralizedResidueTheory.Basic
 import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.GeneralizedResidueTheory.PrincipalValue
 import LeanModularForms.GeneralizedResidueTheory.Homotopy.Invariance
+import Mathlib.Analysis.Complex.Liouville
+import Mathlib.Analysis.Calculus.DSlope
+import Mathlib.Analysis.Complex.RemovableSingularity
 
 /-!
 # Null-Homologous Curves and the Cauchy Integral Theorem
@@ -26,6 +29,7 @@ condition required by the generalized residue theorem of Hungerbuhler-Wasem.
 -/
 
 open Complex Set Filter Topology MeasureTheory intervalIntegral
+open scoped Classical
 
 noncomputable section
 
@@ -166,5 +170,120 @@ theorem isNullHomologous_of_convex
     have h_closed_val : F (γ.toFun γ.b) = F (γ.toFun γ.a) :=
       congrArg F hγ_closed.symm
     rw [h_ftc, h_closed_val, sub_self, mul_zero]
+
+/-! ## Dixon's Proof of the Homological Cauchy Theorem
+
+The Dixon kernel `g(z, w) = (f(z) - f(w))/(z - w)` (extended to `f'(w)` at `z = w`)
+is exactly mathlib's `dslope f z w`. We use this identification throughout.
+
+Key mathlib facts:
+- `dslope_same f z = deriv f z`
+- `dslope_of_ne f h z = (f z - f c)/(z - c)` for `z ≠ c`
+- `continuousOn_dslope`: for fixed `c`, `z ↦ dslope f c z` is continuous iff `f` is continuous and differentiable at `c`
+- `Complex.differentiableOn_dslope`: for fixed `c`, `z ↦ dslope f c z` is differentiable iff `f` is differentiable
+-/
+
+section DixonProof
+
+variable {U : Set ℂ} {f : ℂ → ℂ}
+
+/-- The Dixon kernel is exactly `dslope`: `dixonKernel f z w = dslope f z w`.
+We use `dslope` directly rather than a custom definition. -/
+abbrev dixonKernel (f : ℂ → ℂ) (z w : ℂ) : ℂ := dslope f z w
+
+/-- h₁(w) = ∮_γ dslope(f, γ(t), w) · γ'(t) dt — the Dixon integral.
+Holomorphic on all of U including image(γ). -/
+noncomputable def dixonH1 (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
+  ∫ t in γ.a..γ.b, dslope f (γ.toFun t) w * deriv γ.toFun t
+
+/-- h₂(w) = ∮_γ f(z)/(z-w) · γ'(t) dt — the Cauchy-type integral.
+Holomorphic on ℂ \ image(γ). -/
+noncomputable def dixonH2 (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
+  ∫ t in γ.a..γ.b, f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t
+
+/-- Key identity: h₁(w) = h₂(w) - 2πi · n(γ,w) · f(w) for w off the curve.
+This follows from expanding dslope and splitting the integral. -/
+theorem dixonH1_eq (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (w : ℂ) (hw : w ∈ U) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
+    dixonH1 f γ w = dixonH2 f γ w -
+      2 * ↑Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b w * f w := by
+  sorry
+
+/-- h₂ is differentiable at every point off the curve. -/
+theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
+    (w : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
+    DifferentiableAt ℂ (dixonH2 f γ) w := by
+  sorry
+
+/-- h₁ is differentiable on all of U, including across the curve.
+Uses `Complex.differentiableOn_dslope`: for each fixed γ(t), w ↦ dslope f (γ(t)) w
+is differentiable on U iff f is differentiable on U. Combined with parametric
+differentiation, the integral inherits differentiability. -/
+theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
+    DifferentiableOn ℂ (dixonH1 f γ) U := by
+  sorry
+
+/-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
+noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
+  if h : w ∈ U then dixonH1 f γ w else dixonH2 f γ w
+
+/-- The Dixon function is entire (differentiable on all of ℂ).
+On U: it's h₁, holomorphic by dixonH1_differentiableOn.
+On ℂ \ U: it's h₂, holomorphic by dixonH2_differentiableAt.
+Patching at ∂U: null-homologous gives n(γ,w) = 0 near ∂U, so h₁ = h₂ there. -/
+theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U) :
+    Differentiable ℂ (dixonFunction f U γ) := by
+  sorry
+
+/-- The Dixon function tends to 0 at infinity. -/
+theorem dixonFunction_tendsto_zero (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
+    (h_null : IsNullHomologous γ U) :
+    Tendsto (dixonFunction f U γ) (Filter.cocompact ℂ) (𝓝 0) := by
+  sorry
+
+/-- h ≡ 0 by Liouville's theorem. -/
+theorem dixonFunction_eq_zero (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U) :
+    ∀ w, dixonFunction f U γ w = 0 := by
+  intro w
+  have h_diff := dixonFunction_differentiable hU hf γ h_null
+  have h_tend := dixonFunction_tendsto_zero f γ h_null
+  exact Differentiable.apply_eq_of_tendsto_cocompact h_diff w h_tend
+
+/-- Cauchy integral formula for null-homologous curves:
+∮_γ f(z)/(z-w) dz = 2πi · n(γ,w) · f(w) for w ∈ U off the curve. -/
+theorem cauchyIntegralFormula_nullHomologous (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+    (w : ℂ) (hw : w ∈ U) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
+    dixonH2 f γ w =
+      2 * ↑Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b w * f w := by
+  have h_zero := dixonFunction_eq_zero hU hf γ h_null w
+  simp only [dixonFunction, dif_pos hw] at h_zero
+  -- h_zero : dixonH1 f γ w = 0
+  -- By dixonH1_eq: h₁ = h₂ - 2πi·n·f(w), so 0 = h₂ - 2πi·n·f(w)
+  have h_eq := dixonH1_eq hU hf γ h_null.image_subset w hw hoff
+  -- h_eq : dixonH1 f γ w = dixonH2 f γ w - 2πi·n·f(w)
+  rw [h_zero] at h_eq
+  -- h_eq : 0 = dixonH2 f γ w - 2 * ↑π * I * n * f w
+  linear_combination -h_eq
+
+/-- **The Homological Cauchy Theorem**: if f is holomorphic on open U and γ is
+null-homologous in U, then ∮_γ f = 0.
+
+Proof: Pick w₀ ∈ U \ image(γ). Apply CIF to F(z) = f(z)(z - w₀):
+∮_γ f(z) dz = ∮_γ F(z)/(z-w₀) dz = 2πi · n(γ,w₀) · F(w₀) = 0
+since F(w₀) = f(w₀)(w₀ - w₀) = 0. -/
+theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U) :
+    ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
+  sorry
+
+end DixonProof
 
 end
