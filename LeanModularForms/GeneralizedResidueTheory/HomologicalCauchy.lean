@@ -839,11 +839,19 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
             exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
             by_contra h; push_neg at h
             exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
-          -- ContinuousWithinAt in t: dslope f (γ t) w * deriv γ t
-          -- = (f w - f(γ t))/(w - γ t) * deriv γ t off partition
-          -- γ continuous off partition, c ↦ (f w - f c)/(w-c) continuous for c ≠ w
-          -- deriv γ continuous off partition
-          sorry)
+          apply ContinuousWithinAt.mul
+          · -- t ↦ dslope f (γ t) w: composition of γ (continuous) and c ↦ dslope f c w
+            -- For fixed w, c ↦ dslope f c w is continuous on U (it equals
+            -- (f w - f c)/(w - c) for c ≠ w and deriv f w for c = w).
+            -- This is dslope (fun c => f c) w evaluated at c = γ(t), but with swapped args.
+            -- We use: dslope f c w = (f w - f c) / (w - c) is continuous in c on U.
+            have hf_cont : ContinuousOn f U := hf.continuousOn
+            have hγ_cont : ContinuousWithinAt γ.toFun (Icc γ.a γ.b \ ↑γ.partition) t :=
+              (γ.continuous_toFun t ht_Icc).mono diff_subset
+            -- c ↦ (f w - f c) / (w - c) is continuous at γ(t) ∈ U
+            -- (quotient of continuous functions with nonzero denominator, or limit at c=w)
+            sorry
+          · exact (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt)
         (fun t ht => by
           rw [norm_mul]
           exact mul_le_mul (hBd' _ ⟨t, ht, rfl⟩ w hw) (hM_d t ht)
