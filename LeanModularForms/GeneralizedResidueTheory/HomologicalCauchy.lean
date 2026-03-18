@@ -1710,7 +1710,28 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     -- ∮ g_corr = 0 by Dixon. ∮ g = ∮ g_corr.
     have ⟨g_corr, h_corr_diff, h_agree⟩ : ∃ g_corr : ℂ → ℂ,
         DifferentiableOn ℂ g_corr U ∧ ∀ z ∈ U \ (S : Set ℂ), g_corr z = g z := by
-      sorry -- Finset.induction + Function.update at each pole
+      -- Define g_corr: correct g at each s ∈ S.
+      refine ⟨fun z => if z ∈ (S : Set ℂ) then limUnder (𝓝[≠] z) g else g z, ?_, ?_⟩
+      · -- DifferentiableOn U
+        intro z hz
+        by_cases hzS : z ∈ (S : Set ℂ)
+        · -- z ∈ S: removable singularity.
+          -- Near z, the only pole of g in S is z itself (S finite).
+          -- g is bounded near z (poles removed by principal parts).
+          -- Apply differentiableOn_update_limUnder_of_bddAbove on a ball around z.
+          -- In the ball, g_corr = Function.update g z (limUnder ...).
+          sorry -- needs: g bounded near z + differentiableOn_update_limUnder_of_bddAbove
+        · -- z ∉ S: g_corr = g near z
+          have h_ev : (fun w => if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) =ᶠ[𝓝 z] g := by
+            apply Filter.Eventually.mono (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
+            intro w hw
+            have : w ∉ (S : Set ℂ) := hw
+            simp only [this, if_false]
+          exact (h_ev.differentiableAt_iff.mpr
+            ((h_g_diff_off z ⟨hz, hzS⟩).differentiableAt
+              ((hU.sdiff S.finite_toSet.isClosed).mem_nhds ⟨hz, hzS⟩))).differentiableWithinAt
+      · -- Agreement on U \ S
+        intro z ⟨_, hzS⟩; simp only [if_neg hzS]
     have h_corr_zero : ∫ t in γ.a..γ.b, g_corr (γ.toFun t) * deriv γ.toFun t = 0 :=
       contourIntegral_eq_zero_of_nullHomologous hU h_corr_diff γ h_null
     have h_eq : ∀ t ∈ Set.uIcc γ.a γ.b,
