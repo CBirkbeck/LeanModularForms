@@ -1593,8 +1593,17 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
-  -- Induction on S: remove one pole at a time using the single-pole version
-  sorry
+  -- Apply the single-pole version iteratively via Finset.induction
+  induction S using Finset.induction with
+  | empty =>
+    -- S = ∅: f holomorphic on U → ∮ f = 0
+    simp only [Finset.coe_empty, Set.diff_empty] at hf_diff
+    exact contourIntegral_eq_zero_of_nullHomologous hU hf_diff γ h_null
+  | insert s S' hs ih =>
+    -- insert s S': apply single-pole version for s
+    -- Need DifferentiableOn f (U \ {s}), but only have U \ (insert s S').
+    -- Must subtract principal parts at S' to extend differentiability.
+    sorry
 
 -- Null-homologous version of higherOrderCancel_assembly.
 -- Copied from HigherOrderAssembly.lean with Convex ℝ U replaced by IsNullHomologous γ U
