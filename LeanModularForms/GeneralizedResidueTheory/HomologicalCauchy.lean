@@ -845,12 +845,23 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
             -- (f w - f c)/(w - c) for c ≠ w and deriv f w for c = w).
             -- This is dslope (fun c => f c) w evaluated at c = γ(t), but with swapped args.
             -- We use: dslope f c w = (f w - f c) / (w - c) is continuous in c on U.
-            have hf_cont : ContinuousOn f U := hf.continuousOn
+            have hw_U : w ∈ U := hδ_U hw
             have hγ_cont : ContinuousWithinAt γ.toFun (Icc γ.a γ.b \ ↑γ.partition) t :=
               (γ.continuous_toFun t ht_Icc).mono diff_subset
-            -- c ↦ (f w - f c) / (w - c) is continuous at γ(t) ∈ U
-            -- (quotient of continuous functions with nonzero denominator, or limit at c=w)
-            sorry
+            -- Key: dslope f c w = dslope f w c (slope symmetry)
+            have h_eq : ∀ c, dslope f c w = dslope f w c := by
+              intro c; by_cases hcw : c = w
+              · subst hcw; rfl
+              · simp only [dslope_of_ne _ (Ne.symm hcw), dslope_of_ne _ hcw]
+                exact slope_comm f c w
+            simp_rw [h_eq]
+            -- c ↦ dslope f w c is continuous on U by continuousOn_dslope
+            have h_dslope_cont : ContinuousOn (dslope f w) U :=
+              (continuousOn_dslope (hU.mem_nhds hw_U)).mpr
+                ⟨hf.continuousOn.mono (fun _ h => h),
+                 (hf w hw_U).differentiableAt (hU.mem_nhds hw_U)⟩
+            exact (h_dslope_cont (γ.toFun t) (hγ_in_U t ht_Icc)).comp
+              hγ_cont (fun s hs => hγ_in_U s (diff_subset hs))
           · exact (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt)
         (fun t ht => by
           rw [norm_mul]
