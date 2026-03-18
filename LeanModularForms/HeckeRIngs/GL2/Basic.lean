@@ -29,46 +29,53 @@ open scoped Pointwise
 namespace HeckeRing.GL2
 
 /-- DivChain for n=2 reduces to `a | d`. -/
-lemma divChain_mk2 (a d : ℕ+) (h : (a : ℕ) ∣ (d : ℕ)) :
+lemma divChain_mk2 (a d : ℕ) (h : a ∣ d) :
     DivChain 2 ![a, d] := by
   intro i hi
   have : i = 0 := by omega
   subst this
   simpa using h
 
-lemma const_eq_mk2 (c : ℕ+) : (fun (_ : Fin 2) => c) = ![c, c] :=
+lemma mk2_pos (a d : ℕ) (ha : 0 < a) (hd : 0 < d) : ∀ i, 0 < (![a, d]) i := by
+  intro i; fin_cases i <;> simp [*]
+
+lemma const_eq_mk2 (c : ℕ) : (fun (_ : Fin 2) => c) = ![c, c] :=
   funext fun i => by fin_cases i <;> rfl
 
 /-- `T(a,d)` for n=2: the Hecke basis element for diagonal `(a,d)` with `a | d`. -/
-noncomputable def T_ad (a d : ℕ+) (h : (a : ℕ) ∣ (d : ℕ)) :
+noncomputable def T_ad (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (h : a ∣ d) :
     HeckeAlgebra 2 :=
-  T_elem 2 ![a, d] (divChain_mk2 a d h)
+  T_elem 2 ![a, d] (mk2_pos a d ha hd) (divChain_mk2 a d h)
 
 /-- `T(p,p)` -- the scalar double coset. -/
 noncomputable def T_pp (p : ℕ) (hp : p.Prime) : HeckeAlgebra 2 :=
-  T_elem 2 (fun _ => ⟨p, hp.pos⟩) (divChain_const 2 ⟨p, hp.pos⟩)
+  T_elem 2 (fun _ => p) (fun _ => hp.pos) (divChain_const 2 p)
 
 lemma T_pp_eq_T_ad (p : ℕ) (hp : p.Prime) :
-    T_pp p hp = T_ad ⟨p, hp.pos⟩ ⟨p, hp.pos⟩ (dvd_refl _) := by
+    T_pp p hp = T_ad p p hp.pos hp.pos (dvd_refl _) := by
   unfold T_pp T_ad
-  exact T_elem_congr_diag 2 (const_eq_mk2 ⟨p, hp.pos⟩) _ _
+  exact T_elem_congr_diag 2 (const_eq_mk2 p) (fun _ => hp.pos) (mk2_pos p p hp.pos hp.pos)
+    (divChain_const 2 p) (divChain_mk2 p p (dvd_refl _))
 
-lemma T_elem_ones_eq : T_elem 2 (fun _ => (1 : ℕ+)) (divChain_const 2 1) = 1 := by
-  show T_single (GL_pair 2) ℤ (T_diag 2 (fun _ => 1) (divChain_const 2 1)) 1 = 1
+lemma T_elem_ones_eq :
+    T_elem 2 (fun _ => 1) (fun _ => Nat.one_pos) (divChain_const 2 1) = 1 := by
+  show T_single (GL_pair 2) ℤ
+    (T_diag 2 (fun _ => 1) (fun _ => Nat.one_pos) (divChain_const 2 1)) 1 = 1
   rw [T_diag_ones 2]
   exact (one_eq_T_single (GL_pair 2)).symm
 
 /-- T(1,1) is the identity element. -/
-lemma T_ad_one_one : T_ad 1 1 (dvd_refl _) = 1 := by
+lemma T_ad_one_one : T_ad 1 1 Nat.one_pos Nat.one_pos (dvd_refl _) = 1 := by
   unfold T_ad
-  have h := T_elem_congr_diag 2 (const_eq_mk2 1).symm (divChain_mk2 1 1 (dvd_refl _))
-    (divChain_const 2 1)
+  have h := T_elem_congr_diag 2 (const_eq_mk2 1).symm
+    (mk2_pos 1 1 Nat.one_pos Nat.one_pos) (fun _ => Nat.one_pos)
+    (divChain_mk2 1 1 (dvd_refl _)) (divChain_const 2 1)
   rw [h]
   exact T_elem_ones_eq
 
 noncomputable def T_ad' (a d : ℕ) : HeckeAlgebra 2 :=
   if h : 0 < a ∧ 0 < d ∧ a ∣ d then
-    T_ad ⟨a, h.1⟩ ⟨d, h.2.1⟩ h.2.2
+    T_ad a d h.1 h.2.1 h.2.2
   else 0
 
 /-- `T(m) = Σ_{a | m} T_ad'(a, m/a)`. -/
@@ -91,7 +98,7 @@ private lemma doubleCoset_eq_of_mem' (g δ : GL (Fin 2) ℚ)
 
 /-- For p prime, T(p) = T_ad(1,p). -/
 lemma T_sum_prime :
-    T_sum ⟨p, hp.pos⟩ = T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) := by
+    T_sum ⟨p, hp.pos⟩ = T_ad 1 p Nat.one_pos hp.pos (one_dvd _) := by
   show ∑ a ∈ p.divisors, T_ad' a (p / a) = _
   rw [hp.sum_divisors, Nat.div_self hp.pos, Nat.div_one]
   have h1 : T_ad' p 1 = 0 := by
@@ -100,100 +107,120 @@ lemma T_sum_prime :
     push_neg
     intro _ _
     exact fun hdvd => hp.one_lt.not_ge (Nat.le_of_dvd Nat.one_pos hdvd)
-  have h2 : T_ad' 1 p = T_ad 1 ⟨p, hp.pos⟩ (one_dvd _) := by
+  have h2 : T_ad' 1 p = T_ad 1 p Nat.one_pos hp.pos (one_dvd _) := by
     unfold T_ad'
     rw [dif_pos ⟨Nat.one_pos, hp.pos, one_dvd p⟩]
-    rfl
   rw [h1, h2, zero_add]
 
-private lemma pnatMul_scalar_comm (b : Fin 2 → ℕ+) (c : ℕ+) :
-    pnatMul 2 b (fun _ => c) = pnatMul 2 (fun _ => c) b := by
-  ext i; exact Subtype.ext (Nat.mul_comm _ _)
+private lemma diagMul_scalar_comm (b : Fin 2 → ℕ) (c : ℕ) :
+    diagMul 2 b (fun _ => c) = diagMul 2 (fun _ => c) b := by
+  ext i; exact Nat.mul_comm _ _
 
-private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+)
-    (hbc : DivChain 2 (pnatMul 2 b (fun _ => c)))
-    (p : decompQuot (GL_pair 2) (T_diag 2 b hb) ×
-         decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (divChain_const 2 c))) :
-    mulMap (GL_pair 2) (T_diag 2 b hb)
-      (T_diag 2 (fun _ => c) (divChain_const 2 c)) p =
-    T_diag 2 (pnatMul 2 b (fun _ => c)) hbc := by
+private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
+    (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
+    (p : decompQuot (GL_pair 2) (T_diag 2 b hb_pos hb) ×
+         decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))) :
+    mulMap (GL_pair 2) (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)) p =
+    T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc := by
   set H := (GL_pair 2).H
-  have hδb_mem : ((T_diag 2 b hb).eql.choose : GL (Fin 2) ℚ) ∈
-      DoubleCoset.doubleCoset (diagMat 2 b : GL (Fin 2) ℚ) H H := by
-    have h_spec := (T_diag 2 b hb).eql.choose_spec
+  have hδb_mem : ((T_diag 2 b hb_pos hb).eql.choose : GL (Fin 2) ℚ) ∈
+      DoubleCoset.doubleCoset (diagMat 2 b hb_pos : GL (Fin 2) ℚ) H H := by
+    have h_spec := (T_diag 2 b hb_pos hb).eql.choose_spec
     simp only [T_diag, T_mk, diagMat_delta] at h_spec
     rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
   rw [DoubleCoset.mem_doubleCoset] at hδb_mem
   obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb_mem
-  have hδc_mem : ((T_diag 2 (fun _ => c) (divChain_const 2 c)).eql.choose : GL (Fin 2) ℚ) ∈
-      DoubleCoset.doubleCoset (diagMat 2 (fun _ => c) : GL (Fin 2) ℚ) H H := by
-    have h_spec := (T_diag 2 (fun _ => c) (divChain_const 2 c)).eql.choose_spec
+  have hδc_mem : ((T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose :
+      GL (Fin 2) ℚ) ∈
+      DoubleCoset.doubleCoset (diagMat 2 (fun _ => c) (fun _ => hc) : GL (Fin 2) ℚ) H H := by
+    have h_spec := (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose_spec
     simp only [T_diag, T_mk, diagMat_delta] at h_spec
     rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
   rw [DoubleCoset.mem_doubleCoset] at hδc_mem
   obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc_mem
   have h_product_mem : (p.1.out : GL (Fin 2) ℚ) *
-      ((T_diag 2 b hb).eql.choose : GL (Fin 2) ℚ) *
+      ((T_diag 2 b hb_pos hb).eql.choose : GL (Fin 2) ℚ) *
       ((p.2.out : GL (Fin 2) ℚ) *
-        ((T_diag 2 (fun _ => c) (divChain_const 2 c)).eql.choose :
+        ((T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose :
           GL (Fin 2) ℚ)) ∈
-      DoubleCoset.doubleCoset (diagMat 2 (pnatMul 2 b (fun _ => c)) : GL (Fin 2) ℚ) H H := by
+      DoubleCoset.doubleCoset
+        (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) :
+          GL (Fin 2) ℚ) H H := by
     rw [DoubleCoset.mem_doubleCoset]
     set x1 := (↑(Quotient.out p.1) : GL (Fin 2) ℚ)
-    set db := ((T_diag 2 b hb).eql.choose : GL (Fin 2) ℚ)
+    set db := ((T_diag 2 b hb_pos hb).eql.choose : GL (Fin 2) ℚ)
     set x2 := (↑(Quotient.out p.2) : GL (Fin 2) ℚ)
-    set dc := ((T_diag 2 (fun _ => c) (divChain_const 2 c)).eql.choose : GL (Fin 2) ℚ)
+    set dc := ((T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose :
+      GL (Fin 2) ℚ)
     refine ⟨(p.1.out : GL (Fin 2) ℚ) * h₁b,
             H.mul_mem (SetLike.coe_mem p.1.out) hh₁b,
             h₂b * p.2.out * h₁c * h₂c,
             H.mul_mem (H.mul_mem (H.mul_mem hh₂b (SetLike.coe_mem p.2.out)) hh₁c) hh₂c,
             ?_⟩
-    rw [show db = h₁b * diagMat 2 b * h₂b from hδb_eq,
-        show dc = h₁c * diagMat 2 (fun _ => c) * h₂c from hδc_eq]
-    have h_comm : diagMat 2 (fun _ => c) * (h₂b * x2 * h₁c) =
-        (h₂b * x2 * h₁c) * diagMat 2 (fun _ => c) :=
-      diagMat_scalar_comm 2 c (h₂b * x2 * h₁c)
-    have key : x1 * (h₁b * diagMat 2 b * h₂b) *
-        (x2 * (h₁c * diagMat 2 (fun _ => c) * h₂c)) =
-        x1 * h₁b * (diagMat 2 (pnatMul 2 b (fun _ => c)) * (h₂b * x2 * h₁c)) *
+    rw [show db = h₁b * diagMat 2 b hb_pos * h₂b from hδb_eq,
+        show dc = h₁c * diagMat 2 (fun _ => c) (fun _ => hc) * h₂c from hδc_eq]
+    have h_comm : diagMat 2 (fun _ => c) (fun _ => hc) * (h₂b * x2 * h₁c) =
+        (h₂b * x2 * h₁c) * diagMat 2 (fun _ => c) (fun _ => hc) :=
+      diagMat_scalar_comm 2 c hc (h₂b * x2 * h₁c)
+    have key : x1 * (h₁b * diagMat 2 b hb_pos * h₂b) *
+        (x2 * (h₁c * diagMat 2 (fun _ => c) (fun _ => hc) * h₂c)) =
+        x1 * h₁b *
+          (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
+            (h₂b * x2 * h₁c)) *
         h₂c := by
-      calc x1 * (h₁b * diagMat 2 b * h₂b) *
-          (x2 * (h₁c * diagMat 2 (fun _ => c) * h₂c))
-          = x1 * h₁b * (diagMat 2 b * (h₂b * x2 * h₁c)) *
-            (diagMat 2 (fun _ => c) * h₂c) := by group
-        _ = x1 * h₁b * (diagMat 2 b * ((h₂b * x2 * h₁c) * diagMat 2 (fun _ => c))) *
+      calc x1 * (h₁b * diagMat 2 b hb_pos * h₂b) *
+          (x2 * (h₁c * diagMat 2 (fun _ => c) (fun _ => hc) * h₂c))
+          = x1 * h₁b * (diagMat 2 b hb_pos * (h₂b * x2 * h₁c)) *
+            (diagMat 2 (fun _ => c) (fun _ => hc) * h₂c) := by group
+        _ = x1 * h₁b *
+            (diagMat 2 b hb_pos *
+              ((h₂b * x2 * h₁c) * diagMat 2 (fun _ => c) (fun _ => hc))) *
             h₂c := by group
-        _ = x1 * h₁b * (diagMat 2 b * (diagMat 2 (fun _ => c) * (h₂b * x2 * h₁c))) *
+        _ = x1 * h₁b *
+            (diagMat 2 b hb_pos *
+              (diagMat 2 (fun _ => c) (fun _ => hc) * (h₂b * x2 * h₁c))) *
             h₂c := by rw [h_comm.symm]
-        _ = x1 * h₁b * ((diagMat 2 b * diagMat 2 (fun _ => c)) * (h₂b * x2 * h₁c)) *
+        _ = x1 * h₁b *
+            ((diagMat 2 b hb_pos * diagMat 2 (fun _ => c) (fun _ => hc)) *
+              (h₂b * x2 * h₁c)) *
             h₂c := by group
-        _ = x1 * h₁b * (diagMat 2 (pnatMul 2 b (fun _ => c)) * (h₂b * x2 * h₁c)) *
+        _ = x1 * h₁b *
+            (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
+              (h₂b * x2 * h₁c)) *
             h₂c := by rw [diagMat_mul]
-    calc x1 * (h₁b * diagMat 2 b * h₂b) * (x2 * (h₁c * diagMat 2 (fun _ => c) * h₂c))
-        = x1 * h₁b * (diagMat 2 (pnatMul 2 b (fun _ => c)) * (h₂b * x2 * h₁c)) * h₂c := key
-      _ = x1 * h₁b * diagMat 2 (pnatMul 2 b (fun _ => c)) *
+    calc x1 * (h₁b * diagMat 2 b hb_pos * h₂b) *
+        (x2 * (h₁c * diagMat 2 (fun _ => c) (fun _ => hc) * h₂c))
+        = x1 * h₁b *
+          (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
+            (h₂b * x2 * h₁c)) *
+          h₂c := key
+      _ = x1 * h₁b *
+          diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
             (h₂b * x2 * h₁c * h₂c) := by group
   apply HeckeRing.T'_ext (GL_pair 2)
   exact doubleCoset_eq_of_mem' _ _ h_product_mem
 
 /-- When D_c is a scalar coset, its representative normalizes H, so coset
     representatives for D_b that map to the same product coset must be equal. -/
-private lemma scalar_coset_rep_normalizes (c : ℕ+) :
-    let D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
+private lemma scalar_coset_rep_normalizes (c : ℕ) (hc : 0 < c) :
+    let D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
     let H' := (GL_pair 2).H
     let δ_c := (D_c.eql.choose : GL (Fin 2) ℚ)
     ({δ_c} : Set (GL (Fin 2) ℚ)) * (H' : Set (GL (Fin 2) ℚ)) =
     (H' : Set (GL (Fin 2) ℚ)) * {δ_c} := by
   intro D_c H' δ_c
   have hδc_mem : δ_c ∈
-      DoubleCoset.doubleCoset (diagMat 2 (fun _ => c) : GL (Fin 2) ℚ) H' H' := by
+      DoubleCoset.doubleCoset (diagMat 2 (fun _ => c) (fun _ => hc) : GL (Fin 2) ℚ)
+        H' H' := by
     have h_spec := D_c.eql.choose_spec
     simp only [D_c, T_diag, T_mk, diagMat_delta] at h_spec
     rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H' H' _
   rw [DoubleCoset.mem_doubleCoset] at hδc_mem
   obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc_mem
-  have hδc_simp : δ_c = (h₁c * h₂c) * diagMat 2 (fun _ => c) := by
-    rw [hδc_eq, mul_assoc, diagMat_scalar_comm 2 c h₂c, ← mul_assoc]
+  have hδc_simp : δ_c = (h₁c * h₂c) * diagMat 2 (fun _ => c) (fun _ => hc) := by
+    rw [hδc_eq, mul_assoc, diagMat_scalar_comm 2 c hc h₂c, ← mul_assoc]
   have hδc_norm : ConjAct.toConjAct δ_c • H' = H' := by
     rw [hδc_simp, map_mul, MulAction.mul_smul, conjAct_scalar_smul_eq]
     exact HeckeRing.conjAct_smul_elt_eq H' ⟨h₁c * h₂c, H'.mul_mem hh₁c hh₂c⟩
@@ -212,10 +239,10 @@ private lemma scalar_coset_rep_normalizes (c : ℕ+) :
 
 /-- When D_c is scalar, distinct coset reps for D_b cannot map to the same product.
     Takes the raw right-coset equality that arises from membership in the m' fiber. -/
-private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ+) (hb : DivChain 2 b)
-    (c : ℕ+) :
-    let D_b := T_diag 2 b hb
-    let D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
+private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) :
+    let D_b := T_diag 2 b hb_pos hb
+    let D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
     let H' := (GL_pair 2).H
     ∀ (i₁ i₂ : decompQuot (GL_pair 2) D_b)
       (j₁ : decompQuot (GL_pair 2) D_c),
@@ -228,7 +255,7 @@ private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ+) (hb : DivChain 
   by_contra hne
   apply HeckeRing.decompQuot_coset_diff (GL_pair 2) D_b i₁ i₂ hne
   set δ_c := (D_c.eql.choose : GL (Fin 2) ℚ)
-  have hδc_comm_H := scalar_coset_rep_normalizes c
+  have hδc_comm_H := scalar_coset_rep_normalizes c hc
   have hτ_mem : (j₁.out : GL (Fin 2) ℚ) ∈ H' := SetLike.coe_mem j₁.out
   have h_coset : ({(j₁.out : GL (Fin 2) ℚ) * δ_c} : Set _) * (H' : Set _) =
       (H' : Set _) * {δ_c} := by
@@ -254,11 +281,12 @@ private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ+) (hb : DivChain 
   exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
 
 /-- D_bc is in the mulSupport of D_b * D_c when D_c is scalar. -/
-private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+)
-    (hbc : DivChain 2 (pnatMul 2 b (fun _ => c))) :
-    let D_b := T_diag 2 b hb
-    let D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
-    let D_bc := T_diag 2 (pnatMul 2 b (fun _ => c)) hbc
+private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
+    (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
+    let D_b := T_diag 2 b hb_pos hb
+    let D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
+    let D_bc := T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc
     D_bc ∈ HeckeRing.mulSupport (GL_pair 2) D_b D_c := by
   intro D_b D_c D_bc
   simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
@@ -268,22 +296,24 @@ private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ+) (hb : DivChain 2 
       have := HeckeRing.T'_deg_pos (GL_pair 2) D_b
       simp only [HeckeRing.T'_deg] at this; omega)
   have h_card : Fintype.card (decompQuot (GL_pair 2) D_c) = 1 := by
-    have := T'_deg_scalar 2 c
+    have := T'_deg_scalar 2 c hc
     simp only [HeckeRing.T'_deg] at this; exact_mod_cast this
   have ⟨j₀⟩ : Nonempty (decompQuot (GL_pair 2) D_c) :=
     Fintype.card_pos_iff.mp (by rw [h_card]; exact Nat.one_pos)
-  exact ⟨i₀, j₀, mulMap_right_scalar_eq b hb c hbc (i₀, j₀)⟩
+  exact ⟨i₀, j₀, mulMap_right_scalar_eq b hb_pos hb c hc hbc (i₀, j₀)⟩
 
-private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+)
-    (hbc : DivChain 2 (pnatMul 2 b (fun _ => c))) :
+private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
+    (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
     HeckeRing.m' (GL_pair 2)
-      (T_diag 2 b hb) (T_diag 2 (fun _ => c) (divChain_const 2 c))
-      (T_diag 2 (pnatMul 2 b (fun _ => c)) hbc) = 1 := by
-  set D_b := T_diag 2 b hb
-  set D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
-  set D_bc := T_diag 2 (pnatMul 2 b (fun _ => c)) hbc
+      (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
+      (T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) = 1 := by
+  set D_b := T_diag 2 b hb_pos hb
+  set D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
+  set D_bc := T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc
   have h_card : Fintype.card (decompQuot (GL_pair 2) D_c) = 1 := by
-    have := T'_deg_scalar 2 c
+    have := T'_deg_scalar 2 c hc
     simp only [HeckeRing.T'_deg] at this; exact_mod_cast this
   haveI : Subsingleton (decompQuot (GL_pair 2) D_c) :=
     Fintype.card_le_one_iff_subsingleton.mp (le_of_eq h_card)
@@ -295,38 +325,42 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c
     have hj : j₁ = j₂ := Subsingleton.elim j₁ j₂; subst hj
     simp only [Set.mem_setOf_eq] at h₁ h₂
     have hi : i₁ = i₂ :=
-      decompQuot_eq_of_scalar_fiber b hb c i₁ i₂ j₁
+      decompQuot_eq_of_scalar_fiber b hb_pos hb c hc i₁ i₂ j₁
         (h₁.trans h₂.symm)
     subst hi; rfl
   have h_pos : 0 < HeckeRing.m' (GL_pair 2) D_b D_c D_bc := by
-    have h_mem := mem_mulSupport_right_scalar b hb c hbc
+    have h_mem := mem_mulSupport_right_scalar b hb_pos hb c hc hbc
     have h_ne := HeckeRing.m'_pos_of_mem_mulSupport (GL_pair 2) D_b D_c D_bc h_mem
     have : (0 : ℤ) ≤ HeckeRing.m' (GL_pair 2) D_b D_c D_bc := by
       simp only [HeckeRing.m']; exact Nat.cast_nonneg _
     omega
   omega
 
-private lemma m'_right_scalar_eq_zero (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+)
-    (hbc : DivChain 2 (pnatMul 2 b (fun _ => c)))
+private lemma m'_right_scalar_eq_zero (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
+    (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
     (A : T' (GL_pair 2))
-    (hA : A ≠ T_diag 2 (pnatMul 2 b (fun _ => c)) hbc) :
+    (hA : A ≠ T_diag 2 (diagMul 2 b (fun _ => c))
+      (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) :
     HeckeRing.m' (GL_pair 2)
-      (T_diag 2 b hb) (T_diag 2 (fun _ => c) (divChain_const 2 c)) A = 0 := by
+      (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)) A = 0 := by
   apply HeckeRing.m'_eq_zero_of_nmem_mulSupport
   intro h_mem
   simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
     true_and] at h_mem
   obtain ⟨⟨i, j⟩, heq⟩ := h_mem
-  exact hA (heq.symm.trans (mulMap_right_scalar_eq b hb c hbc (i, j)))
+  exact hA (heq.symm.trans (mulMap_right_scalar_eq b hb_pos hb c hc hbc (i, j)))
 
 /-- Right scalar multiplication: `T_elem(b) * T_elem(c,...,c) = T_elem(b*c)`. -/
-theorem T_elem_mul_scalar (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+) :
-    T_elem 2 b hb * T_elem 2 (fun _ => c) (divChain_const 2 c) =
-    T_elem 2 (pnatMul 2 b (fun _ => c))
+theorem T_elem_mul_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) :
+    T_elem 2 b hb_pos hb * T_elem 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c) =
+    T_elem 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc))
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c)) := by
-  set D_b := T_diag 2 b hb
-  set D_c := T_diag 2 (fun _ => c) (divChain_const 2 c)
-  set D_bc := T_diag 2 (pnatMul 2 b (fun _ => c))
+  set D_b := T_diag 2 b hb_pos hb
+  set D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
+  set D_bc := T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc))
     (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c))
   change HeckeRing.T_single (GL_pair 2) ℤ D_b 1 *
     HeckeRing.T_single (GL_pair 2) ℤ D_c 1 =
@@ -337,38 +371,46 @@ theorem T_elem_mul_scalar (b : Fin 2 → ℕ+) (hb : DivChain 2 b) (c : ℕ+) :
   by_cases h1 : A = D_bc
   · subst h1
     norm_num [Finsupp.single_apply]
-    exact m'_right_scalar_eq_one b hb c
+    exact m'_right_scalar_eq_one b hb_pos hb c hc
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c))
   · norm_num [Finsupp.single_apply, h1]
-    exact m'_right_scalar_eq_zero b hb c
+    exact m'_right_scalar_eq_zero b hb_pos hb c hc
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c)) A h1
 
 /-- T(p,p) commutes with every T_elem. -/
-lemma T_pp_comm_T_elem (a : Fin 2 → ℕ+) (ha : DivChain 2 a) :
-    T_pp p hp * T_elem 2 a ha = T_elem 2 a ha * T_pp p hp := by
+lemma T_pp_comm_T_elem (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (ha : DivChain 2 a) :
+    T_pp p hp * T_elem 2 a ha_pos ha = T_elem 2 a ha_pos ha * T_pp p hp := by
   unfold T_pp
-  rw [T_diag_scalar_mul 2 ⟨p, hp.pos⟩ a ha, T_elem_mul_scalar a ha ⟨p, hp.pos⟩]
-  exact (T_elem_congr_diag 2 (pnatMul_scalar_comm a ⟨p, hp.pos⟩) _ _).symm
+  rw [T_diag_scalar_mul 2 p hp.pos a ha_pos ha,
+      T_elem_mul_scalar a ha_pos ha p hp.pos]
+  exact (T_elem_congr_diag 2 (diagMul_scalar_comm a p)
+    (diagMul_pos 2 a _ ha_pos (fun _ => hp.pos))
+    (diagMul_pos 2 _ a (fun _ => hp.pos) ha_pos)
+    (DivChain_mul 2 a _ ha (divChain_const 2 p))
+    (DivChain_mul 2 _ _ (divChain_const 2 p) ha)).symm
 
 /-- Powers of T(p,p): `T(p,p)^i = T(p^i, p^i)`. -/
 lemma T_pp_pow (i : ℕ) :
     T_pp p hp ^ i =
-    T_elem 2 (fun _ => ⟨p ^ i, pow_pos hp.pos i⟩) (divChain_const 2 _) := by
+    T_elem 2 (fun _ => p ^ i) (fun _ => pow_pos hp.pos i) (divChain_const 2 _) := by
   induction i with
   | zero =>
     simp only [pow_zero]
     symm
-    have heq : (fun (_ : Fin 2) => (⟨p ^ 0, pow_pos hp.pos 0⟩ : ℕ+)) =
-        fun _ => (1 : ℕ+) :=
-      funext fun _ => PNat.eq (by simp)
-    exact (T_elem_congr_diag 2 heq _ _).trans T_elem_ones_eq
+    have heq : (fun (_ : Fin 2) => p ^ 0) = fun _ => 1 :=
+      funext fun _ => by simp
+    exact (T_elem_congr_diag 2 heq (fun _ => pow_pos hp.pos 0) (fun _ => Nat.one_pos)
+      (divChain_const 2 _) (divChain_const 2 1)).trans T_elem_ones_eq
   | succ i ih =>
     rw [pow_succ', ih, T_pp]
-    rw [T_diag_scalar_mul 2 ⟨p, hp.pos⟩ (fun _ => ⟨p ^ i, pow_pos hp.pos i⟩)
+    rw [T_diag_scalar_mul 2 p hp.pos (fun _ => p ^ i) (fun _ => pow_pos hp.pos i)
       (divChain_const 2 _)]
     exact T_elem_congr_diag 2
-      (funext fun _ => PNat.eq (by simp [pnatMul_val, pow_succ, mul_comm]))
-      _ _
+      (funext fun _ => by simp [diagMul, pow_succ, mul_comm])
+      (diagMul_pos 2 _ _ (fun _ => hp.pos) (fun _ => pow_pos hp.pos i))
+      (fun _ => pow_pos hp.pos (i + 1))
+      (DivChain_mul 2 _ _ (divChain_const 2 p) (divChain_const 2 _))
+      (divChain_const 2 _)
 
 /-- The divisor pairs of p^k with a|d are (p^i, p^(k-i)) for i <= k/2. -/
 lemma T_sum_ppow_expansion (k : ℕ) :
