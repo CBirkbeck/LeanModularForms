@@ -1715,12 +1715,17 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
       · -- DifferentiableOn U
         intro z hz
         by_cases hzS : z ∈ (S : Set ℂ)
-        · -- z ∈ S: removable singularity.
-          -- Near z, the only pole of g in S is z itself (S finite).
-          -- g is bounded near z (poles removed by principal parts).
-          -- Apply differentiableOn_update_limUnder_of_bddAbove on a ball around z.
-          -- In the ball, g_corr = Function.update g z (limUnder ...).
-          sorry -- needs: g bounded near z + differentiableOn_update_limUnder_of_bddAbove
+        · -- z ∈ S: removable singularity via the single-pole version's proof.
+          -- g_corr at z = limUnder g, and g_corr = g off S.
+          -- Near z (excluding z and other poles in S), g_corr = g is holomorphic.
+          -- g is bounded near z (f - pp_z is analytic, other pp_s' are bounded).
+          -- So g_corr is differentiable at z by removable singularity.
+          -- Use: DifferentiableWithinAt follows from DifferentiableAt.
+          -- Get DifferentiableAt by: g_corr eventually equals g near z (off S),
+          -- g is meromorphic at z with order ≥ 0, hence g_corr is analytic at z.
+          -- This is exactly the single-pole argument, applied to z.
+          -- For the formal proof, sorry this last step (needs meromorphicOrderAt analysis).
+          sorry
         · -- z ∉ S: g_corr = g near z
           have h_ev : (fun w => if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) =ᶠ[𝓝 z] g := by
             apply Filter.Eventually.mono (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
