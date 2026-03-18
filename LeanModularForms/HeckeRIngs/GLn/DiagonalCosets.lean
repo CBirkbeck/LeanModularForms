@@ -166,7 +166,7 @@ lemma transvectionGL_hasIntEntries {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
 omit [NeZero n] in
 lemma transvectionGL_mem_SLnZ {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
     transvectionGL n hij c ∈ SLnZ_subgroup n := by
-  rw [SLnZ_subgroup, MonoidHom.mem_range]
+  rw [mem_SLnZ_subgroup_iff]
   refine ⟨⟨(Matrix.TransvectionStruct.mk i j hij c).toMatrix,
     (Matrix.TransvectionStruct.mk i j hij c).det⟩, ?_⟩
   apply Units.ext
@@ -304,7 +304,7 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
     · simp [h]
   have hs_det_unit : IsUnit (Matrix.diagonal sv).det := by
     rw [Matrix.det_diagonal]
-    exact isUnit_of_mul_eq_one _ _ (by
+    exact IsUnit.of_mul_eq_one _ (by
       rw [← Finset.prod_mul_distrib]; exact Finset.prod_eq_one (fun i _ => hsv_sq i))
   set L_mat := Matrix.diagonal sv * P_mat⁻¹ with hL_def
   have hL_eq : L_mat * A * Q_mat = Matrix.diagonal d := by
@@ -542,7 +542,7 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
         have h_e0 : e ⟨0, by omega⟩ = Sum.inl ⟨0, by omega⟩ := by
           show finEquivSum k ⟨0, by omega⟩ = _
           unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
-        rw [h_e0] at h_ap; exact Sum.noConfusion h_ap
+        rw [h_e0] at h_ap; exact (by nomatch h_ap)
       have h2 : e.symm (Sum.inr i) ≠ ⟨1, by omega⟩ := by
         intro h
         have h_ap := Equiv.apply_symm_apply e (Sum.inr i)
@@ -550,7 +550,7 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
         have h_e1 : e ⟨1, by omega⟩ = Sum.inl ⟨1, by omega⟩ := by
           show finEquivSum k ⟨1, by omega⟩ = _
           unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
-        rw [h_e1] at h_ap; exact Sum.noConfusion h_ap
+        rw [h_e1] at h_ap; exact (by nomatch h_ap)
       have hv1 : (e.symm (Sum.inr i)).val ≠ 0 := fun h => h1 (Fin.ext h)
       have hv2 : (e.symm (Sum.inr i)).val ≠ 1 := fun h => h2 (Fin.ext h)
       simp only [Function.comp, d', ite_false, hv1, hv2]
@@ -592,13 +592,13 @@ private lemma genEquiv_symm_inr_ne_zero (k : ℕ) (j : Fin (k + 2)) (hj : j.val 
     (i : Fin k) : (genEquiv k j hj).symm (Sum.inr i) ≠ ⟨0, by omega⟩ := by
   intro h
   have := Equiv.apply_symm_apply (genEquiv k j hj) (Sum.inr i)
-  rw [h, genEquiv_zero] at this; exact Sum.noConfusion this
+  rw [h, genEquiv_zero] at this; exact (by nomatch this)
 
 private lemma genEquiv_symm_inr_ne_j (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0)
     (i : Fin k) : (genEquiv k j hj).symm (Sum.inr i) ≠ j := by
   intro h
   have := Equiv.apply_symm_apply (genEquiv k j hj) (Sum.inr i)
-  rw [h, genEquiv_j] at this; exact Sum.noConfusion this
+  rw [h, genEquiv_j] at this; exact (by nomatch this)
 
 omit [NeZero n] in
 private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i)
@@ -968,14 +968,16 @@ private lemma double_coset_eq_of_SLnZ_equiv (α : (GL_pair n).Δ) (A : Matrix (F
   symm
   apply DoubleCoset.doubleCoset_eq_of_mem
   rw [DoubleCoset.mem_doubleCoset]
-  refine ⟨SLnZ_to_GLnQ n L, ⟨L, rfl⟩, SLnZ_to_GLnQ n R, ⟨R, rfl⟩, ?_⟩
+  refine ⟨(L : GL (Fin n) ℚ), coe_mem_SLnZ n L,
+         (R : GL (Fin n) ℚ), coe_mem_SLnZ n R, ?_⟩
   have h_map_mul : ∀ (X Y : Matrix (Fin n) (Fin n) ℤ),
       X.map (Int.cast : ℤ → ℚ) * Y.map (Int.cast : ℤ → ℚ) =
       (X * Y).map (Int.cast : ℤ → ℚ) := by
     intro X Y; ext i j; simp [Matrix.mul_apply, Matrix.map_apply]
   apply Units.ext
   show (diag_GL : Matrix (Fin n) (Fin n) ℚ) =
-    ((SLnZ_to_GLnQ n L * ↑α * SLnZ_to_GLnQ n R : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ)
+    (((L : GL (Fin n) ℚ) * ↑α * (R : GL (Fin n) ℚ) : GL (Fin n) ℚ) :
+      Matrix (Fin n) (Fin n) ℚ)
   simp only [Units.val_mul, SLnZ_to_GLnQ_val, hA]
   symm
   calc (↑L : Matrix _ _ ℤ).map (Int.cast : ℤ → ℚ) *
@@ -1076,7 +1078,7 @@ private lemma partialProd_eq_of_SLnZ_equiv
     {a b : Fin n → ℕ} (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
     (hda : DivChain n a) (hdb : DivChain n b) (L R : SpecialLinearGroup (Fin n) ℤ)
     (hmat : (diagMat n b hb : GL (Fin n) ℚ) =
-      SLnZ_to_GLnQ n L * diagMat n a ha * SLnZ_to_GLnQ n R)
+      (L : GL (Fin n) ℚ) * diagMat n a ha * (R : GL (Fin n) ℚ))
     (k : ℕ) (hk : k ≤ n) :
     ∏ j : Fin k, a ⟨j.val, by omega⟩ =
     ∏ j : Fin k, b ⟨j.val, by omega⟩ := by
@@ -1084,13 +1086,11 @@ private lemma partialProd_eq_of_SLnZ_equiv
       DivChain n c →
       ∀ (P Q : SpecialLinearGroup (Fin n) ℤ),
       (diagMat n d hd_pos : GL (Fin n) ℚ) =
-        SLnZ_to_GLnQ n P * diagMat n c hc_pos * SLnZ_to_GLnQ n Q →
+        (P : GL (Fin n) ℚ) * diagMat n c hc_pos * (Q : GL (Fin n) ℚ) →
       (∏ j : Fin k, c ⟨j.val, by omega⟩) ∣
       (∏ j : Fin k, d ⟨j.val, by omega⟩) by
     exact Nat.dvd_antisymm (key a b ha hb hda L R hmat) (key b a hb ha hdb L⁻¹ R⁻¹ (by
-      have h1 : SLnZ_to_GLnQ n L⁻¹ = (SLnZ_to_GLnQ n L)⁻¹ := map_inv _ _
-      have h2 : SLnZ_to_GLnQ n R⁻¹ = (SLnZ_to_GLnQ n R)⁻¹ := map_inv _ _
-      rw [h1, h2, hmat]; group))
+      simp only [SLnZ_coe_inv]; rw [hmat]; group))
   intro c d hc_pos hd_pos hc P Q hcd
   suffices hint : (∏ j : Fin k, (c ⟨j.val, by omega⟩ : ℤ)) ∣
       (∏ j : Fin k, (d ⟨j.val, by omega⟩ : ℤ)) by exact_mod_cast hint

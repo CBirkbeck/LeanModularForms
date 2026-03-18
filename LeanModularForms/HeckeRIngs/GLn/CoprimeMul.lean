@@ -711,7 +711,7 @@ lemma T'_deg_scalar (c : ℕ) (hc : 0 < c) :
       show (↑(diagMat_delta n (fun _ => c) (fun _ => hc)) : GL (Fin n) ℚ) =
         diagMat n (fun _ => c) (fun _ => hc) from rfl]
     rw [mul_assoc, diagMat_scalar_comm n c hc h₂, ← mul_assoc]
-  rw [hδ_simp, map_mul, MulAction.mul_smul, conjAct_scalar_smul_eq]
+  rw [hδ_simp, map_mul, ← smul_smul, conjAct_scalar_smul_eq]
   exact conjAct_mem_smul_eq n (h₁ * h₂) (H.mul_mem hh₁ hh₂)
 
 private lemma mulMap_scalar_eq (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_pos : ∀ i, 0 < b i)

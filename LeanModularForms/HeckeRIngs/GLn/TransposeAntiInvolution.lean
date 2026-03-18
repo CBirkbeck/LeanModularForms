@@ -44,7 +44,7 @@ lemma GL_transposeEquiv_involutive (g : GL (Fin n) ℚ) :
 
 omit [NeZero n] in
 lemma SLnZ_to_GLnQ_transpose (σ : SpecialLinearGroup (Fin n) ℤ) :
-    (GL_transposeEquiv n (SLnZ_to_GLnQ n σ)).unop = SLnZ_to_GLnQ n σ.transpose := by
+    (GL_transposeEquiv n (σ : GL (Fin n) ℚ)).unop = (σ.transpose : GL (Fin n) ℚ) := by
   apply Units.ext; ext i j
   rw [GL_transposeEquiv_val, SLnZ_to_GLnQ_val, SLnZ_to_GLnQ_val]
   simp [SpecialLinearGroup.coe_transpose]
@@ -52,7 +52,7 @@ lemma SLnZ_to_GLnQ_transpose (σ : SpecialLinearGroup (Fin n) ℤ) :
 omit [NeZero n] in
 lemma GL_transpose_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ_subgroup n) :
     (GL_transposeEquiv n g).unop ∈ SLnZ_subgroup n := by
-  rw [SLnZ_subgroup, MonoidHom.mem_range] at hg ⊢
+  rw [mem_SLnZ_subgroup_iff] at hg ⊢
   obtain ⟨σ, rfl⟩ := hg
   exact ⟨σ.transpose, (SLnZ_to_GLnQ_transpose n σ).symm⟩
 

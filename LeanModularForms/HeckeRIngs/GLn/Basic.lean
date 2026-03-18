@@ -65,6 +65,44 @@ lemma SLnZ_to_GLnQ_det (A : SpecialLinearGroup (Fin n) ℤ) :
   rw [h1, ← RingHom.map_det, Int.coe_castRingHom]
   simp [A.prop]
 
+/-! ### Coercion and membership API -/
+
+noncomputable scoped instance SLnZ_coe :
+    Coe (SpecialLinearGroup (Fin n) ℤ) (GL (Fin n) ℚ) :=
+  ⟨SLnZ_to_GLnQ n⟩
+
+@[simp] lemma SLnZ_coe_def (σ : SpecialLinearGroup (Fin n) ℤ) :
+    (σ : GL (Fin n) ℚ) = SLnZ_to_GLnQ n σ := rfl
+
+@[simp] lemma SLnZ_coe_mul (σ τ : SpecialLinearGroup (Fin n) ℤ) :
+    ((σ * τ : SpecialLinearGroup (Fin n) ℤ) : GL (Fin n) ℚ) =
+    (σ : GL (Fin n) ℚ) * (τ : GL (Fin n) ℚ) :=
+  map_mul (SLnZ_to_GLnQ n) σ τ
+
+@[simp] lemma SLnZ_coe_inv (σ : SpecialLinearGroup (Fin n) ℤ) :
+    ((σ⁻¹ : SpecialLinearGroup (Fin n) ℤ) : GL (Fin n) ℚ) =
+    (σ : GL (Fin n) ℚ)⁻¹ :=
+  map_inv (SLnZ_to_GLnQ n) σ
+
+@[simp] lemma SLnZ_coe_one :
+    ((1 : SpecialLinearGroup (Fin n) ℤ) : GL (Fin n) ℚ) = 1 :=
+  map_one (SLnZ_to_GLnQ n)
+
+lemma coe_mem_SLnZ (σ : SpecialLinearGroup (Fin n) ℤ) :
+    (σ : GL (Fin n) ℚ) ∈ SLnZ_subgroup n :=
+  ⟨σ, rfl⟩
+
+lemma mem_SLnZ_subgroup_iff (g : GL (Fin n) ℚ) :
+    g ∈ SLnZ_subgroup n ↔
+    ∃ σ : SpecialLinearGroup (Fin n) ℤ, (σ : GL (Fin n) ℚ) = g := by
+  simp [SLnZ_subgroup, MonoidHom.mem_range]
+
+lemma SLnZ_subgroup_det_eq_one {g : GL (Fin n) ℚ}
+    (hg : g ∈ SLnZ_subgroup n) :
+    (↑g : Matrix (Fin n) (Fin n) ℚ).det = 1 := by
+  rw [SLnZ_subgroup, MonoidHom.mem_range] at hg
+  obtain ⟨σ, rfl⟩ := hg; exact SLnZ_to_GLnQ_det n σ
+
 end Embedding
 
 section PosDetInt
@@ -74,6 +112,11 @@ section PosDetInt
 def HasIntEntries (g : GL (Fin n) ℚ) : Prop :=
   ∃ A : Matrix (Fin n) (Fin n) ℤ,
     (↑g : Matrix (Fin n) (Fin n) ℚ) = A.map (Int.cast : ℤ → ℚ)
+
+lemma SLnZ_subgroup_hasIntEntries {g : GL (Fin n) ℚ}
+    (hg : g ∈ SLnZ_subgroup n) : HasIntEntries n g := by
+  rw [SLnZ_subgroup, MonoidHom.mem_range] at hg
+  obtain ⟨σ, rfl⟩ := hg; exact ⟨σ.val, SLnZ_to_GLnQ_val n σ⟩
 
 /-- The identity matrix has integer entries. -/
 @[simp]
@@ -368,7 +411,7 @@ lemma posDetInt_le_commensurator :
   · rw [show H.relIndex (ConjAct.toConjAct g • H) =
         (ConjAct.toConjAct g⁻¹ • H).relIndex H from by
       have h1 : ConjAct.toConjAct g⁻¹ • (ConjAct.toConjAct g • H) = H := by
-        rw [← MulAction.mul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
+        rw [smul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
       have := Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct g⁻¹) H
         (ConjAct.toConjAct g • H)
       rw [h1] at this; exact this.symm]

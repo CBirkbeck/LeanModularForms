@@ -332,8 +332,8 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hd
   have h_smul_σ₂ : ConjAct.toConjAct σ₂ • H = H := conjAct_smul_eq_of_mem H hσ₂
   have h_δ_smul : ConjAct.toConjAct δ • H =
       ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
-    rw [hδ_eq, map_mul, map_mul, MulAction.mul_smul,
-      MulAction.mul_smul, h_smul_σ₂]
+    rw [hδ_eq, map_mul, map_mul, ← smul_smul,
+      ← smul_smul, h_smul_σ₂]
   have h_S1 : (ConjAct.toConjAct α • H).relIndex H =
       (ConjAct.toConjAct δ • H).relIndex H := by
     rw [h_δ_smul]
@@ -472,7 +472,7 @@ theorem T'_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p)
   have h_smul_σ₂ : ConjAct.toConjAct σ₂ • H = H := conjAct_smul_eq_of_mem H hσ₂
   have h_δ_smul : ConjAct.toConjAct δ • H =
       ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
-    rw [hδ_eq, map_mul, map_mul, MulAction.mul_smul, MulAction.mul_smul, h_smul_σ₂]
+    rw [hδ_eq, map_mul, map_mul, ← smul_smul, ← smul_smul, h_smul_σ₂]
   have h_relIndex : (ConjAct.toConjAct δ • H).relIndex H =
       (ConjAct.toConjAct α • H).relIndex H := by
     rw [h_δ_smul]
