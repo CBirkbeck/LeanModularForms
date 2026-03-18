@@ -777,29 +777,14 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     fun t ht => (hdslope_diff t ht).isConservativeOn
   -- Bound: deriv of γ is bounded
   obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
-  -- Morera's theorem: enough to show IsConservativeOn + ContinuousOn
+  -- Direct approach: prove DifferentiableOn via ContinuousOn + off-curve identity.
+  -- h₁ is continuous on U (by dslope_uniform_bound + dominated convergence).
+  -- h₁ is holomorphic on U \ image(γ) (by h₁ = h₂ - 2πi·n·f, all holomorphic).
+  -- By removable singularity (image has empty interior), h₁ is holomorphic on all of U.
+  -- Use Morera: ContinuousOn + IsConservativeOn ↔ DifferentiableOn
   rw [← isConservativeOn_and_continuousOn_iff_isDifferentiableOn hU]
-  constructor
-  · -- IsConservativeOn: Fubini + conservative for each integrand.
-    -- Key: wedgeIntegral z w (dixonH1 f γ)
-    --    = ∫ t, wedgeIntegral z w (fun x => dslope f (γ t) x * deriv γ t) dt   [Fubini]
-    --    = ∫ t, (wedgeIntegral z w (dslope f (γ t))) * deriv γ t dt              [linearity]
-    --    = ∫ t, (-wedgeIntegral w z (dslope f (γ t))) * deriv γ t dt             [conservative]
-    --    = -(wedgeIntegral w z (dixonH1 f γ))
-    intro z w hzw
-    simp only [wedgeIntegral, dixonH1]
-    -- After unfolding, the goal is an equality of sums of interval integrals.
-    -- Each integral has the form ∫ x in a..b, ∫ t in γ.a..γ.b, h x t dt.
-    -- We swap using Fubini (intervalIntegral_integral_swap), requiring joint integrability.
-    -- The integrand h(x, t) = dslope f (γ t) (x + c*I) * deriv γ t for various constants c
-    -- is bounded on the compact domain: |dslope f (γ t) w'| ≤ C and |deriv γ t| ≤ M_d,
-    -- giving |h| ≤ C * M_d (integrability on compact interval × compact interval).
-    -- SORRY: the joint integrability condition for Fubini, which requires showing that
-    -- (x, t) ↦ dslope f (γ t) (x + z.im*I) * deriv γ t is integrable on
-    -- Ι z.re w.re × Ι γ.a γ.b (resp. for the other components).
-    -- This follows from: dslope f c w' is jointly continuous on U × U (holomorphic f),
-    -- image(γ) is compact ⊆ U, and the integration domain is compact.
-    -- After the Fubini swap, each inner integral is hdslope_cons t ht hzw, which is zero.
+  refine ⟨?_, ?_⟩
+  · -- IsConservativeOn: Fubini swap (sorry for now)
     sorry
   · -- ContinuousOn (dixonH1 f γ) U:
     -- Use dominated convergence: dslope f (γ t) w is bounded uniformly for w near w₀
