@@ -161,7 +161,8 @@ private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (�
   simp only [Matrix.transpose_mul, Matrix.diagonal_transpose] at h1
   exact h1
 
-private lemma transpose_mem_conj_inv_of_mem_conj (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
+private lemma transpose_mem_conj_inv_of_mem_conj
+    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
     (hσ : SLnZ_to_GLnQ n σ ∈
       ConjAct.toConjAct (diagMat n a ha) • SLnZ_subgroup n) :
     SLnZ_to_GLnQ n σ.transpose ∈
@@ -183,7 +184,8 @@ private lemma transpose_mem_conj_inv_of_mem_conj (a : Fin n → ℕ) (ha : ∀ i
     rwa [← mul_assoc] at h
   rw [this]; exact ⟨ρ.transpose, rfl⟩
 
-private lemma transpose_mem_conj_of_mem_conj_inv (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
+private lemma transpose_mem_conj_of_mem_conj_inv
+    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
     (hτ : SLnZ_to_GLnQ n τ ∈
       ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n) :
     SLnZ_to_GLnQ n τ.transpose ∈
@@ -407,7 +409,8 @@ private lemma Gamma0_of_conj_diagMat_mem (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
   exact ⟨τ.1 1 0, by exact_mod_cast h_σ₁₀⟩
 
 omit [NeZero n] in
-private lemma conjDiag_relIndex_eq_Gamma0_index (p : ℕ) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
+private lemma conjDiag_relIndex_eq_Gamma0_index
+    (p : ℕ) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :
     (ConjAct.toConjAct (diagMat 2 a ha) • SLnZ_subgroup 2).relIndex (SLnZ_subgroup 2) =
     (Gamma0 (p ^ k)).index := by
