@@ -81,8 +81,7 @@ lemma hasIntEntries_one : HasIntEntries n (1 : GL (Fin n) ℚ) :=
   ⟨1, by ext i j; simp [Matrix.map_apply, Matrix.one_apply]⟩
 
 /-- Product of integer-entry matrices has integer entries. -/
-lemma HasIntEntries.mul {a b : GL (Fin n) ℚ}
-    (ha : HasIntEntries n a) (hb : HasIntEntries n b) :
+lemma HasIntEntries.mul {a b : GL (Fin n) ℚ} (ha : HasIntEntries n a) (hb : HasIntEntries n b) :
     HasIntEntries n (a * b) := by
   obtain ⟨A, hA⟩ := ha
   obtain ⟨B, hB⟩ := hb
@@ -97,8 +96,7 @@ private lemma det_intMat_cast (A : Matrix (Fin n) (Fin n) ℤ) :
 
 /-- `(A.map cast) * (B.map cast) = (A * B).map cast` for integer matrices cast to `ℚ`. -/
 private lemma intMat_map_mul (A B : Matrix (Fin n) (Fin n) ℤ) :
-    (A.map (Int.cast : ℤ → ℚ)) * (B.map (Int.cast : ℤ → ℚ)) =
-    (A * B).map (Int.cast : ℤ → ℚ) := by
+    (A.map (Int.cast : ℤ → ℚ)) * (B.map (Int.cast : ℤ → ℚ)) = (A * B).map (Int.cast : ℤ → ℚ) := by
   ext i j; simp [Matrix.mul_apply, Matrix.map_apply]
 
 /-- The submonoid of `GL_n(ℚ)` consisting of invertible matrices with integer entries
@@ -119,8 +117,7 @@ variable [NeZero n]
 
 omit [NeZero n] in
 /-- `SL_n(ℤ) ⊆ Δ`: elements of `SL_n(ℤ)` have integer entries and det = 1 > 0. -/
-lemma SLnZ_le_posDetInt :
-    (SLnZ_subgroup n).toSubmonoid ≤ posDetInt_submonoid n := by
+lemma SLnZ_le_posDetInt : (SLnZ_subgroup n).toSubmonoid ≤ posDetInt_submonoid n := by
   intro g hg
   rw [SLnZ_subgroup, Subgroup.mem_toSubmonoid, MonoidHom.mem_range] at hg
   obtain ⟨A, rfl⟩ := hg
@@ -139,10 +136,8 @@ private lemma SLnZ_to_GLnQ_injective : Function.Injective (SLnZ_to_GLnQ n) := by
 
 omit [NeZero n] in
 /-- Kernel element of `SL_n(ℤ) → SL_n(ℤ/dℤ)` has entries congruent to identity mod d. -/
-private lemma ker_entry_dvd (d : ℕ) [NeZero d]
-    (γ : SpecialLinearGroup (Fin n) ℤ)
-    (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod d))).ker)
-    (i j : Fin n) :
+private lemma ker_entry_dvd (d : ℕ) [NeZero d] (γ : SpecialLinearGroup (Fin n) ℤ)
+    (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod d))).ker) (i j : Fin n) :
     (d : ℤ) ∣ (γ.val i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j) := by
   rw [MonoidHom.mem_ker] at hγ
   have h := congr_fun₂ (congr_arg Subtype.val hγ) i j
@@ -154,8 +149,7 @@ private lemma ker_entry_dvd (d : ℕ) [NeZero d]
 
 omit [NeZero n] in
 /-- When `d | (gamma - I)` entry-wise, decompose `gamma = I + d * M`. -/
-private lemma gamma_decompose
-    (d : ℤ) (gamma : Matrix (Fin n) (Fin n) ℤ)
+private lemma gamma_decompose (d : ℤ) (gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, d ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j)) :
     gamma = 1 + d • Matrix.of fun i j => (gamma i j - (1 : Matrix _ _ ℤ) i j) / d := by
   ext i j; simp only [Matrix.add_apply, Matrix.one_apply, Matrix.smul_apply, smul_eq_mul,
@@ -166,8 +160,7 @@ private lemma gamma_decompose
 omit [NeZero n] in
 /-- If `d | (γ - I)` entry-wise, then `d | (adj(A) * γ * A)` entry-wise.
     Key: `adj(A) * (I + dM) * A = d·I + d·(adj(A)·M·A)`. -/
-private lemma adjugate_conj_dvd
-    (A gamma : Matrix (Fin n) (Fin n) ℤ)
+private lemma adjugate_conj_dvd (A gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, A.det ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j))
     (i j : Fin n) :
     A.det ∣ (A.adjugate * gamma * A) i j := by
@@ -183,10 +176,8 @@ private lemma adjugate_conj_dvd
 omit [NeZero n] in
 /-- If `d | P i j` for all entries and `det(P) = d ^ n`, then
     `det(P / d) = 1`, where the division is entry-wise integer division. -/
-private lemma det_entrywise_div_eq_one
-    (d : ℤ) (P : Matrix (Fin n) (Fin n) ℤ)
-    (hdvd : ∀ i j : Fin n, d ∣ P i j) (hd : d ≠ 0)
-    (hdet : (P.det : ℚ) = (d : ℚ) ^ n) :
+private lemma det_entrywise_div_eq_one (d : ℤ) (P : Matrix (Fin n) (Fin n) ℤ)
+    (hdvd : ∀ i j : Fin n, d ∣ P i j) (hd : d ≠ 0) (hdet : (P.det : ℚ) = (d : ℚ) ^ n) :
     (Matrix.of fun i j => P i j / d).det = 1 := by
   suffices h : ((Matrix.of fun i j => P i j / d).det : ℚ) = 1 by exact_mod_cast h
   have h_mat_eq : (Matrix.of fun i j => P i j / d).map (Int.cast : ℤ → ℚ) =
@@ -199,10 +190,8 @@ private lemma det_entrywise_div_eq_one
 
 /-- The integer matrix `(adj(A) * γ * A) / det(A)` has determinant 1
     when `det(γ) = 1`. -/
-private lemma conj_mat_det_one
-    (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_det : gamma.det = 1)
-    (hdvd : ∀ i j : Fin n, A.det ∣ (A.adjugate * gamma * A) i j)
-    (hAdet : A.det ≠ 0) :
+private lemma conj_mat_det_one (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_det : gamma.det = 1)
+    (hdvd : ∀ i j : Fin n, A.det ∣ (A.adjugate * gamma * A) i j) (hAdet : A.det ≠ 0) :
     (Matrix.of fun i j => (A.adjugate * gamma * A) i j / A.det).det = 1 := by
   apply det_entrywise_div_eq_one n A.det _ hdvd hAdet
   simp only [Matrix.det_mul, det_adjugate, hgamma_det]
@@ -212,8 +201,7 @@ private lemma conj_mat_det_one
 omit [NeZero n] in
 /-- If `A * δ = γ * A` at the integer level, then `g * δ_GL = γ_GL * g` at the GL level,
     so `δ_GL = g⁻¹ * γ_GL * g`. -/
-private lemma int_mul_eq
-    (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
+private lemma int_mul_eq (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
     (hdvd : ∀ i j : Fin n, A.det ∣ (A.adjugate * gamma * A) i j) :
     A * (Matrix.of fun i j => (A.adjugate * gamma * A) i j / A.det) = gamma * A := by
   set delta := Matrix.of fun i j => (A.adjugate * gamma * A) i j / A.det
@@ -229,10 +217,8 @@ private lemma int_mul_eq
 /-- Main step: for `g` with integer matrix `A` and `det(A) > 0`,
     kernel elements of `SL_n(ℤ) → SL_n(ℤ/dℤ)` conjugated by `g⁻¹` remain in `SL_n(ℤ)`.
     This is the mathematical heart of Shimura's Lemma 3.10. -/
-private lemma conj_ker_mem_SLnZ
-    (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
-    (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ))
-    (hAdet : A.det ≠ 0)
+private lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) (hAdet : A.det ≠ 0)
     (γ : SpecialLinearGroup (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
     g⁻¹ * SLnZ_to_GLnQ n γ * g ∈ SLnZ_subgroup n := by
@@ -261,8 +247,7 @@ private lemma conj_ker_mem_SLnZ
 omit [NeZero n] in
 /-- Reverse direction of `adjugate_conj_dvd`: `d | (γ - I)` entry-wise implies
     `d | (A * γ * adj(A))` entry-wise. -/
-private lemma conj_dvd_reverse
-    (A gamma : Matrix (Fin n) (Fin n) ℤ)
+private lemma conj_dvd_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, A.det ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j))
     (i j : Fin n) :
     A.det ∣ (A * gamma * A.adjugate) i j := by
@@ -279,8 +264,7 @@ private lemma conj_dvd_reverse
     when `det(γ) = 1`. -/
 private lemma conj_mat_det_one_reverse
     (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_det : gamma.det = 1)
-    (hdvd : ∀ i j : Fin n, A.det ∣ (A * gamma * A.adjugate) i j)
-    (hAdet : A.det ≠ 0) :
+    (hdvd : ∀ i j : Fin n, A.det ∣ (A * gamma * A.adjugate) i j) (hAdet : A.det ≠ 0) :
     (Matrix.of fun i j => (A * gamma * A.adjugate) i j / A.det).det = 1 := by
   apply det_entrywise_div_eq_one n A.det _ hdvd hAdet
   simp only [Matrix.det_mul, det_adjugate, hgamma_det, Fintype.card_fin]
@@ -291,8 +275,7 @@ private lemma conj_mat_det_one_reverse
 omit [NeZero n] in
 /-- Reverse direction of `int_mul_eq`: `δ * A = A * γ` where
     `δ = (A * γ * adj(A)) / det(A)`. -/
-private lemma int_mul_eq_reverse
-    (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
+private lemma int_mul_eq_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
     (hdvd : ∀ i j : Fin n, A.det ∣ (A * gamma * A.adjugate) i j) :
     (Matrix.of fun i j => (A * gamma * A.adjugate) i j / A.det) * A = A * gamma := by
   set delta := Matrix.of fun i j => (A * gamma * A.adjugate) i j / A.det
@@ -306,10 +289,8 @@ private lemma int_mul_eq_reverse
 
 /-- Reverse direction of `conj_ker_mem_SLnZ`: kernel elements conjugated by `g`
     (rather than `g⁻¹`) remain in `SL_n(ℤ)`. -/
-private lemma conj_ker_mem_SLnZ_inv
-    (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
-    (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ))
-    (hAdet : A.det ≠ 0)
+private lemma conj_ker_mem_SLnZ_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) (hAdet : A.det ≠ 0)
     (γ : SpecialLinearGroup (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
     g * SLnZ_to_GLnQ n γ * g⁻¹ ∈ SLnZ_subgroup n := by

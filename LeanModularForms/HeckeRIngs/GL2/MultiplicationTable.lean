@@ -106,12 +106,9 @@ end Telescoping
 /-! ### Identity 5: The key recursion -/
 
 /-- If `L * M * R = D` with `L`, `R` having determinant 1, then `M = L.adj * D * R.adj`. -/
-private lemma matrix_isolate_middle
-    (L_ℤ M R_ℤ : Matrix (Fin 2) (Fin 2) ℤ)
-    (D : Matrix (Fin 2) (Fin 2) ℤ)
-    (hLadj : L_ℤ.adjugate * L_ℤ = 1)
-    (hRadj : R_ℤ * R_ℤ.adjugate = 1)
-    (heq_LMR : L_ℤ * M * R_ℤ = D) :
+private lemma matrix_isolate_middle (L_ℤ M R_ℤ : Matrix (Fin 2) (Fin 2) ℤ)
+    (D : Matrix (Fin 2) (Fin 2) ℤ) (hLadj : L_ℤ.adjugate * L_ℤ = 1)
+    (hRadj : R_ℤ * R_ℤ.adjugate = 1) (heq_LMR : L_ℤ * M * R_ℤ = D) :
     M = L_ℤ.adjugate * D * R_ℤ.adjugate := by
   ext i j
   have h1 := congr_arg (L_ℤ.adjugate * · * R_ℤ.adjugate) heq_LMR; simp only at h1
@@ -122,11 +119,9 @@ private lemma matrix_isolate_middle
     rw [this, hLadj, hRadj, one_mul, mul_one]
   exact congr_arg (· i j) (h2 ▸ h1)
 
-private lemma first_invariant_dvd_p_of_product
-    (S : Matrix.SpecialLinearGroup (Fin 2) ℤ)
+private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (Fin 2) ℤ)
     (a : Fin 2 → ℕ) (_ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
-    (L R : Matrix.SpecialLinearGroup (Fin 2) ℤ)
-    (k : ℕ) (_hk : 0 < k)
+    (L R : Matrix.SpecialLinearGroup (Fin 2) ℤ) (k : ℕ) (_hk : 0 < k)
     (heq : (L : Matrix (Fin 2) (Fin 2) ℤ) *
       Matrix.diagonal (fun m => ((![1, p] : Fin 2 → ℕ) m : ℤ)) *
       (S : Matrix (Fin 2) (Fin 2) ℤ) *
@@ -178,13 +173,11 @@ private lemma first_invariant_dvd_p_of_product
     : IsCoprime (↑(a 0) : ℤ) (S_ℤ 1 0)).dvd_of_dvd_mul_right h2
 
 private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i)
-    (g₁ g₂ g₃ g₄ : GL (Fin 2) ℚ)
-    (h1 : (↑g₁ : Matrix (Fin 2) (Fin 2) ℚ).det = 1)
+    (g₁ g₂ g₃ g₄ : GL (Fin 2) ℚ) (h1 : (↑g₁ : Matrix (Fin 2) (Fin 2) ℚ).det = 1)
     (h2 : (↑g₂ : Matrix (Fin 2) (Fin 2) ℚ).det = (p : ℚ))
     (h3 : (↑g₃ : Matrix (Fin 2) (Fin 2) ℚ).det = 1)
     (h4 : (↑g₄ : Matrix (Fin 2) (Fin 2) ℚ).det = (p : ℚ) ^ k)
-    (SL_La SL_Ra : Matrix.SpecialLinearGroup (Fin 2) ℤ)
-    (h_eq : g₁ * g₂ * (g₃ * g₄) =
+    (SL_La SL_Ra : Matrix.SpecialLinearGroup (Fin 2) ℤ) (h_eq : g₁ * g₂ * (g₃ * g₄) =
         SLnZ_to_GLnQ 2 SL_La * diagMat 2 a ha_pos * SLnZ_to_GLnQ 2 SL_Ra) :
     a 0 * a 1 = p ^ (k + 1) := by
   have h_lhs : (↑(g₁ * g₂ * (g₃ * g₄)) : Matrix (Fin 2) (Fin 2) ℚ).det =
@@ -198,8 +191,7 @@ private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i
 
 private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
-    (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
-    (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
+    (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ) (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
         Matrix.SpecialLinearGroup (Fin 2) ℤ)
     (hD1_eq : D1c = SLnZ_to_GLnQ 2 SL_L₁ *
         diagMat 2 (![1, p]) (mk2_pos 1 p Nat.one_pos hp.pos) *
@@ -249,8 +241,7 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
 
 private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k)
     (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
-    (h_det_prod : a 0 * a 1 = p ^ (k + 1))
-    (h_dvd_p : a 0 ∣ p) :
+    (h_det_prod : a 0 * a 1 = p ^ (k + 1)) (h_dvd_p : a 0 ∣ p) :
     T_diag 2 a ha_pos hdiv =
       T_diag 2 (![1, p ^ (k + 1)])
         (mk2_pos 1 _ Nat.one_pos (pow_pos hp.pos (k + 1)))
@@ -385,7 +376,8 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   have hκ₁_conj : α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α ∈ (GL_pair 2).H := by
     have := κ₁.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct] using this
-  set τ₀ : GL (Fin 2) ℚ := (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹
+  set τ₀ : GL (Fin 2) ℚ :=
+    (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹
   have hτ₀_mem : τ₀ ∈ (GL_pair 2).H :=
     (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hκ₁_conj)
       ((GL_pair 2).H.inv_mem hR₁)) ((GL_pair 2).H.inv_mem hL₂)
@@ -442,10 +434,8 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
 
 /-- The degree sum `m1 * deg(D_out1) + m2 * deg(D_out2) = deg(D1) * deg(D2)` when
     the mulSupport of `D1 * D2` is contained in `{D_out1, D_out2}`. -/
-private lemma m'_deg_sum_eq
-    (D1 D2 D_out1 D_out2 : T' (GL_pair 2))
-    (h_ne : D_out1 ≠ D_out2)
-    (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
+private lemma m'_deg_sum_eq (D1 D2 D_out1 D_out2 : T' (GL_pair 2))
+    (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
       HeckeRing.m' (GL_pair 2) D1 D2 A = 0) :
     HeckeRing.m' (GL_pair 2) D1 D2 D_out1 * T'_deg (GL_pair 2) D_out1 +
     HeckeRing.m' (GL_pair 2) D1 D2 D_out2 * T'_deg (GL_pair 2) D_out2 =
@@ -534,7 +524,8 @@ private lemma m'_values (k : ℕ) (hk : 0 < k) :
       simp [pow_one]
     rw [hd_o2] at h_deg; push_cast at h_deg ⊢
     have h_m1_eq : m1 = 1 := by
-      nlinarith [mul_self_nonneg ((p : ℤ) - 1), show (2 : ℤ) ≤ p from by exact_mod_cast hp.two_le]
+      nlinarith [mul_self_nonneg ((p : ℤ) - 1),
+        show (2 : ℤ) ≤ p from by exact_mod_cast hp.two_le]
     exact ⟨h_m1_eq, by rw [h_m1_eq] at h_deg; linarith⟩
   · simp only [show k ≠ 1 from hk1, ite_false]; have hk2 : 2 ≤ k := by omega
     have hd_o2 : T'_deg (GL_pair 2) D_out2 = ↑(p ^ (k - 2) * (p + 1)) :=
@@ -631,7 +622,9 @@ private lemma T_ad_p_ppow_eq (k : ℕ) (hk : 0 < k) :
     show T_ad (p ^ 1) (p ^ k) (pow_pos hp.pos 1) (pow_pos hp.pos k)
     (Nat.pow_dvd_pow p (by omega : 1 ≤ k)) =
     T_ad p (p ^ k) hp.pos (pow_pos hp.pos k) (dvd_pow_self p (by omega)) from by
-      unfold T_ad; exact T_elem_congr_diag 2 (by ext i; fin_cases i <;> simp [pow_one]) _ _ _ _] at h0
+      unfold T_ad
+      exact T_elem_congr_diag 2
+        (by ext i; fin_cases i <;> simp [pow_one]) _ _ _ _] at h0
   exact h0.symm
 
 private lemma T_pp_comm_T_ad_one_p :
@@ -816,8 +809,7 @@ private lemma thm324_4_lhs1_distrib (r s : ℕ) :
   rw [mul_smul_comm, T_sum_p_comm_T_pp_pow_T_sum p hp i _, ← mul_assoc]
 
 /-- Distribute `p • (Tpp * S2)` into a shifted-index sum. -/
-private lemma thm324_4_lhs2_shift (r s : ℕ) :
-    (p : ℤ) • (T_pp p hp *
+private lemma thm324_4_lhs2_shift (r s : ℕ) : (p : ℤ) • (T_pp p hp *
       ∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ i • (T_pp p hp ^ i *
           T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) =
@@ -871,8 +863,8 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
     rw [Finset.sum_range_one]
     simp only [Nat.zero_add, pow_zero, one_smul, one_mul]
     rw [show T_sum (⟨1, pow_pos hp.pos 0⟩ : ℕ+) = 1 from by
-      rw [show (⟨1, pow_pos hp.pos 0⟩ : ℕ+) = (1 : ℕ+) from Subtype.ext rfl]; exact T_sum_one,
-      one_mul]; simp
+      rw [show (⟨1, pow_pos hp.pos 0⟩ : ℕ+) = (1 : ℕ+) from
+        Subtype.ext rfl]; exact T_sum_one, one_mul]; simp
   | 1 =>
     rw [Finset.sum_range_succ, Finset.sum_range_one]
     simp only [pow_zero, one_smul, one_mul, pow_one]
@@ -961,8 +953,7 @@ private lemma diagDet_mk2 (a d : ℕ) :
 
 /-- For coprime divisor pairs, the `T_ad'` product equals `T_ad'` of the products. -/
 private lemma T_ad'_mul_of_coprime (a b da db : ℕ)
-    (ha : 0 < a) (hb : 0 < b) (hda : 0 < da) (hdb : 0 < db)
-    (hdva : a ∣ da) (hdvb : b ∣ db)
+    (ha : 0 < a) (hb : 0 < b) (hda : 0 < da) (hdb : 0 < db) (hdva : a ∣ da) (hdvb : b ∣ db)
     (hcop : Nat.Coprime (a * da) (b * db)) :
     T_ad' a da * T_ad' b db = T_ad' (a * b) (da * db) := by
   simp only [show T_ad' a da = T_ad a da ha hda hdva from dif_pos ⟨ha, hda, hdva⟩,
@@ -1135,8 +1126,7 @@ private lemma gcd_factor_prime_pow (q : ℕ) (hq : q.Prime)
 /-- RHS computation for the inner summand: T_sum_nat product equals the combined quotient. -/
 private lemma T_sum_mul_peel_prime_summand_rhs (q : ℕ) (hq : q.Prime)
     (a b : ℕ) (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
-    (r s : ℕ) (hr : r = min a b) (hs : s = max a b)
-    (i : ℕ) (hi : i < r + 1) (d' : ℕ)
+    (r s : ℕ) (hr : r = min a b) (hs : s = max a b) (i : ℕ) (hi : i < r + 1) (d' : ℕ)
     (hd'_dvd : d' ∣ Nat.gcd (m' : ℕ) n')
     (_hqd' : ¬ q ∣ d') (_hcop_qi_d' : Nat.Coprime (q ^ i) d') (hd'_pos : 0 < d') :
     T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
@@ -1208,8 +1198,7 @@ private lemma T_sum_mul_peel_prime_summand (q : ℕ) (hq : q.Prime)
       hd'_dvd hqd' hcop_qi_d' hd'_pos
 
 /-- Peel-off-a-prime step for the divisor sum formula. -/
-private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime)
-    (a b : ℕ) (_ha : 0 < a) (_hb : 0 < b)
+private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime) (a b : ℕ) (_ha : 0 < a) (_hb : 0 < b)
     (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
     (ih : T_sum m' * T_sum n' = ∑ d ∈ (Nat.gcd m' n').divisors,
       (d : ℤ) • (T_ad' d d * T_sum_nat (↑m' * ↑n' / (d * d)))) :

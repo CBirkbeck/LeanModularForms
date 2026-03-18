@@ -117,8 +117,7 @@ private lemma diagMul_scalar_comm (b : Fin 2 → ℕ) (c : ℕ) :
   ext i; exact Nat.mul_comm _ _
 
 private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
-    (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
     (p : decompQuot (GL_pair 2) (T_diag 2 b hb_pos hb) ×
          decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))) :
     mulMap (GL_pair 2) (T_diag 2 b hb_pos hb)
@@ -282,8 +281,7 @@ private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ) (hb_pos : ∀ i,
 
 /-- D_bc is in the mulSupport of D_b * D_c when D_c is scalar. -/
 private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
-    (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
     let D_b := T_diag 2 b hb_pos hb
     let D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
     let D_bc := T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc
@@ -303,8 +301,7 @@ private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0
   exact ⟨i₀, j₀, mulMap_right_scalar_eq b hb_pos hb c hc hbc (i₀, j₀)⟩
 
 private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
-    (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
     HeckeRing.m' (GL_pair 2)
       (T_diag 2 b hb_pos hb)
       (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
@@ -337,10 +334,8 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b 
   omega
 
 private lemma m'_right_scalar_eq_zero (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
-    (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
-    (A : T' (GL_pair 2))
-    (hA : A ≠ T_diag 2 (diagMul 2 b (fun _ => c))
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
+    (A : T' (GL_pair 2)) (hA : A ≠ T_diag 2 (diagMul 2 b (fun _ => c))
       (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) :
     HeckeRing.m' (GL_pair 2)
       (T_diag 2 b hb_pos hb)
