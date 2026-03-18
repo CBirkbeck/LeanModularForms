@@ -752,7 +752,10 @@ private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
         div_le_div_of_nonneg_left (by linarith) (by linarith) h_sep
       have h_eq : 2 * M_f / (r / 4) = 8 * M_f / r := by ring
       have h_le : 8 * M_f / r ≤ 8 * (|M_f| + 1) / r + 1 := by
-        rw [abs_of_nonneg hM_f_nn]; nlinarith [div_nonneg (by norm_num : (0:ℝ) ≤ 8) hr_pos.le]
+        rw [abs_of_nonneg hM_f_nn]
+        have hr_nn : (0 : ℝ) < r := hr_pos
+        have : 8 * M_f / r + 8 / r + 1 = 8 * (M_f + 1) / r + 1 := by ring
+        linarith [div_nonneg (show (0:ℝ) ≤ 8 by norm_num) hr_pos.le]
       exact le_trans (le_trans h_step1 h_step2) (le_trans (h_eq ▸ le_refl _)
         (le_trans h_le (le_max_right _ _)))
 
@@ -827,11 +830,26 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     · -- AEStronglyMeasurable: piecewise continuous bounded function on bounded interval
       -- The integrand is continuous off the finite partition (dslope continuous in t, deriv
       -- continuous off partition) and bounded by C * M_d. Hence interval integrable.
-      apply Filter.eventually_of_mem (Metric.ball_mem_nhds w₀ hδ_pos)
-      intro w hw; sorry
+      filter_upwards [Metric.ball_mem_nhds w₀ hδ_pos] with w hw
+      exact (intervalIntegrable_of_piecewise_continuousOn_bounded
+        (P := γ.partition) (C * M_d) hab
+        (fun t ⟨ht_Icc, ht_np⟩ => by
+          have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
+            by_contra h; push_neg at h
+            exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
+            by_contra h; push_neg at h
+            exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
+          -- ContinuousWithinAt in t: dslope f (γ t) w * deriv γ t
+          -- = (f w - f(γ t))/(w - γ t) * deriv γ t off partition
+          -- γ continuous off partition, c ↦ (f w - f c)/(w-c) continuous for c ≠ w
+          -- deriv γ continuous off partition
+          sorry)
+        (fun t ht => by
+          rw [norm_mul]
+          exact mul_le_mul (hBd' _ ⟨t, ht, rfl⟩ w hw) (hM_d t ht)
+            (norm_nonneg _) hC_pos.le)).def'.aestronglyMeasurable
     · -- Uniform bound on ‖F w t‖ for w near w₀
-      apply Filter.eventually_of_mem (Metric.ball_mem_nhds w₀ hδ_pos)
-      intro w hw; filter_upwards with t; intro ht
+      filter_upwards [Metric.ball_mem_nhds w₀ hδ_pos] with w hw; filter_upwards with t; intro ht
       rw [Set.uIoc_of_le hab] at ht; rw [norm_mul]
       exact mul_le_mul (hBd' _ ⟨t, Ioc_subset_Icc_self ht, rfl⟩ w hw)
         (hM_d t (Ioc_subset_Icc_self ht)) (norm_nonneg _) hC_pos.le
