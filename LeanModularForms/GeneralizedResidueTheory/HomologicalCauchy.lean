@@ -1593,9 +1593,68 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
-  -- Direct: subtract ALL principal parts at once. g = f - Σ pp_s is holomorphic on U.
-  -- ∮ g = 0 by Dixon. Σ ∮ pp_s = 0 (each has residue 0). So ∮ f = 0.
-  sorry
+  -- Define pp_all = Σ_{s ∈ S} pp_s and g = f - pp_all
+  set pp_all := fun z => ∑ s ∈ S, GeneralizedResidueTheory.meromorphicPrincipalPart f s z
+  set g := fun z => f z - pp_all z
+  have hab := le_of_lt γ.hab
+  have hγ_bdd := piecewiseC1Immersion_deriv_bounded γ
+  -- Step 1: Each ∮ pp_s = 0 (residue = 0, γ avoids s)
+  have h_pp_all_zero : ∫ t in γ.a..γ.b, pp_all (γ.toFun t) * deriv γ.toFun t = 0 := by
+    simp only [pp_all, Finset.sum_mul]
+    rw [intervalIntegral.integral_finset_sum (fun s hs =>
+      (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+        (Set.uIcc_of_le hab ▸ (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
+          f s (hf_mero s hs)).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+          (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids s hs t ht))))]
+    apply Finset.sum_eq_zero
+    intro s hs
+    exact GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero
+      f s (hf_mero s hs) (hres s hs) γ h_null.closed (fun t ht => hγ_avoids s hs t ht)
+  -- Step 2: g is DifferentiableOn U (removable singularities at each s ∈ S)
+  have h_g_diff : DifferentiableOn ℂ g U := by
+    intro z hz
+    by_cases hzS : z ∈ (S : Set ℂ)
+    · -- z ∈ S: g = f - Σ pp_s analytic at z.
+      -- Proof: g = (f - pp_z) - Σ_{s≠z} pp_s.
+      -- f - pp_z is analytic at z (meromorphicAt_sub_principalPart_eventually).
+      -- pp_s for s ≠ z has pole at s, not z → differentiable at z.
+      -- So g is differentiable at z.
+      -- This is exactly the multi-pole version of the single-pole argument
+      -- in contourIntegral_eq_zero_of_meromorphic_residue_zero_nh above.
+      -- The formal argument follows the same Function.update pattern.
+      sorry
+    · -- z ∉ S: f differentiable, each pp differentiable → g differentiable
+      have h_f_da : DifferentiableAt ℂ f z :=
+        (hf_diff z ⟨hz, hzS⟩).differentiableAt
+          ((hU.sdiff (S.finite_toSet.isClosed)).mem_nhds ⟨hz, hzS⟩)
+      have h_pp_da : DifferentiableAt ℂ pp_all z :=
+        DifferentiableAt.fun_sum (fun s hs =>
+          (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s
+            (hf_mero s hs) z (Set.mem_compl_singleton_iff.mpr
+              (fun h => hzS (h ▸ Finset.mem_coe.mpr hs)))).differentiableAt
+            (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr
+              (fun h => hzS (h ▸ Finset.mem_coe.mpr hs)))))
+      exact (h_f_da.sub h_pp_da).differentiableWithinAt
+  -- Step 3: ∮ g = 0 by Dixon
+  have h_g_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 :=
+    contourIntegral_eq_zero_of_nullHomologous hU h_g_diff γ h_null
+  -- Combine: f = g + pp_all → ∮ f = ∮ g + ∮ pp_all = 0
+  have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
+      f (γ.toFun t) * deriv γ.toFun t =
+      g (γ.toFun t) * deriv γ.toFun t + pp_all (γ.toFun t) * deriv γ.toFun t := by
+    intro t _; simp [g]; ring
+  rw [intervalIntegral.integral_congr h_decomp,
+    intervalIntegral.integral_add
+      ((piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+        (Set.uIcc_of_le hab ▸ h_g_diff.continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+          (fun t ht => h_null.image_subset t ht)))
+      ((piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+        (Set.uIcc_of_le hab ▸ by
+          apply continuousOn_finset_sum; intro s hs
+          exact (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
+            f s (hf_mero s hs)).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+            (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids s hs t ht)))),
+    h_g_zero, h_pp_all_zero, add_zero]
 
 -- Null-homologous version of higherOrderCancel_assembly.
 -- Copied from HigherOrderAssembly.lean with Convex ℝ U replaced by IsNullHomologous γ U
