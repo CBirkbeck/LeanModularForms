@@ -694,25 +694,48 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
   -- Morera's theorem: enough to show IsConservativeOn + ContinuousOn
   rw [← isConservativeOn_and_continuousOn_iff_isDifferentiableOn hU]
   constructor
-  · -- IsConservativeOn: Fubini + conservative for each integrand
+  · -- IsConservativeOn: Fubini + conservative for each integrand.
+    -- Key: wedgeIntegral z w (dixonH1 f γ)
+    --    = ∫ t, wedgeIntegral z w (fun x => dslope f (γ t) x * deriv γ t) dt   [Fubini]
+    --    = ∫ t, (wedgeIntegral z w (dslope f (γ t))) * deriv γ t dt              [linearity]
+    --    = ∫ t, (-wedgeIntegral w z (dslope f (γ t))) * deriv γ t dt             [conservative]
+    --    = -(wedgeIntegral w z (dixonH1 f γ))
     intro z w hzw
     simp only [wedgeIntegral, dixonH1]
-    -- Each of the four integrals: swap order using Fubini
-    -- We need integrability of the product
-    -- The key: for c = γ(t) ∈ U and x' ∈ Rectangle z w ⊆ U, dslope f c x' is bounded
-    -- Since Rectangle z w is compact and ⊆ U, dslope f c is bounded on it for each fixed c
-    -- and c varies over compact image(γ) ⊆ U
-    -- Uniform bound via joint continuity on image(γ) × cl(Rectangle z w)
-    -- For now, use conservative property of each integrand
-    -- wedgeIntegral z w (fun x' => ∫ t, dslope f (γ t) x' * γ'(t) dt)
-    -- Swap: = ∫ t, (wedgeIntegral z w (dslope f (γ t))) * γ'(t) dt
-    -- = ∫ t, (-wedgeIntegral w z (dslope f (γ t))) * γ'(t) dt
-    -- = -(wedgeIntegral w z (fun x' => ∫ t, dslope f (γ t) x' * γ'(t) dt))
+    -- After unfolding, the goal is an equality of sums of interval integrals.
+    -- Each integral has the form ∫ x in a..b, ∫ t in γ.a..γ.b, h x t dt.
+    -- We swap using Fubini (intervalIntegral_integral_swap), requiring joint integrability.
+    -- The integrand h(x, t) = dslope f (γ t) (x + c*I) * deriv γ t for various constants c
+    -- is bounded on the compact domain: |dslope f (γ t) w'| ≤ C and |deriv γ t| ≤ M_d,
+    -- giving |h| ≤ C * M_d (integrability on compact interval × compact interval).
+    -- SORRY: the joint integrability condition for Fubini, which requires showing that
+    -- (x, t) ↦ dslope f (γ t) (x + z.im*I) * deriv γ t is integrable on
+    -- Ι z.re w.re × Ι γ.a γ.b (resp. for the other components).
+    -- This follows from: dslope f c w' is jointly continuous on U × U (holomorphic f),
+    -- image(γ) is compact ⊆ U, and the integration domain is compact.
+    -- After the Fubini swap, each inner integral is hdslope_cons t ht hzw, which is zero.
     sorry
-  · -- ContinuousOn: DCT with uniform bound on dslope
+  · -- ContinuousOn (dixonH1 f γ) U:
+    -- For w₀ ∈ U, use continuousAt_of_dominated_interval.
+    -- The integrand F(w, t) = dslope f (γ t) w * deriv γ t is:
+    -- (a) AE measurable in t for w near w₀
+    -- (b) Bounded: |F(w, t)| ≤ C * M_d for w in a ball B(w₀, ε) ⊆ U
+    --     where C = max |dslope f c w'| over (c, w') ∈ image(γ) × closure(B(w₀, ε))
+    --     (joint continuity of dslope on compact set)
+    -- (c) Continuous in w at w₀ for each fixed t (dslope f c is holomorphic hence continuous)
+    -- SORRY: the uniform bound C (requires joint continuity of (c, w) ↦ dslope f c w
+    -- on the compact set image(γ) × closure(B(w₀, ε)), which holds since f is holomorphic).
     intro w₀ hw₀
-    -- Apply continuousAt_of_dominated_interval
-    -- Need bound: ‖dslope f (γ t) w‖ * ‖γ'(t)‖ ≤ C uniformly for w near w₀
+    -- Strategy: use continuousAt_of_dominated_interval with:
+    -- F(w, t) = dslope f (γ t) w * deriv γ t
+    -- bound(t) = C * M_d where C is max of ‖dslope f c w‖ on image(γ) × closure(B(w₀, ε))
+    -- Continuity in w: for each t, w ↦ dslope f (γ t) w is continuous
+    --   (from hdslope_diff t ht applied via DifferentiableOn.continuousOn)
+    -- SORRY: the uniform bound C requires joint continuity of (c, w) ↦ dslope f c w
+    -- on the compact set image(γ) × closure(B(w₀, ε)) ⊆ U × U, which holds since
+    -- f is holomorphic: off the diagonal dslope = (f w - f c)/(w - c) is smooth,
+    -- and at the diagonal dslope = f'(c) = lim_{w→c} (f w - f c)/(w - c), giving
+    -- continuity everywhere on U × U.
     sorry
 
 /-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
