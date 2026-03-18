@@ -24,7 +24,7 @@ noncomputable section
 
 namespace GeneralizedResidueTheory
 
-private theorem higherOrderCancel_assembly
+theorem higherOrderCancel_assembly
     (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
     (S0 : Finset ℂ) (f : ℂ → ℂ)
     (hf : DifferentiableOn ℂ f (U \ S0))
