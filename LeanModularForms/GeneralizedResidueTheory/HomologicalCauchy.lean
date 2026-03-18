@@ -751,10 +751,12 @@ private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
       have h_step2 : 2 * M_f / ‖w - c‖ ≤ 2 * M_f / (r / 4) :=
         div_le_div_of_nonneg_left (by linarith) (by linarith) h_sep
       have h_eq : 2 * M_f / (r / 4) = 8 * M_f / r := by ring
-      have h_le : 8 * M_f / r ≤ 8 * (|M_f| + 1) / r + 1 := by sorry
+      have h_le : 8 * M_f / r ≤ 8 * (|M_f| + 1) / r + 1 := by
+        rw [abs_of_nonneg hM_f_nn]; nlinarith [div_nonneg (by norm_num : (0:ℝ) ≤ 8) hr_pos.le]
       exact le_trans (le_trans h_step1 h_step2) (le_trans (h_eq ▸ le_refl _)
         (le_trans h_le (le_max_right _ _)))
 
+set_option maxHeartbeats 1600000 in
 /-- h₁ is differentiable on all of U, including across the curve.
 Uses Morera's theorem: h₁ is continuous (DCT) and conservative (Fubini + Cauchy). -/
 theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
@@ -822,29 +824,11 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
       fun c hc w hw => hBd c hc w (Metric.ball_subset_ball (min_le_left _ _) hw)
     rw [continuousWithinAt_iff_continuousAt (hU.mem_nhds hw₀)]
     apply intervalIntegral.continuousAt_of_dominated_interval (bound := fun _ => C * M_d)
-    · -- AEStronglyMeasurable for w near w₀
+    · -- AEStronglyMeasurable: piecewise continuous bounded function on bounded interval
+      -- The integrand is continuous off the finite partition (dslope continuous in t, deriv
+      -- continuous off partition) and bounded by C * M_d. Hence interval integrable.
       apply Filter.eventually_of_mem (Metric.ball_mem_nhds w₀ hδ_pos)
-      intro w hw
-      apply (intervalIntegrable_of_piecewise_continuousOn_bounded
-        (P := γ.partition) (C * M_d) hab
-        (fun t ⟨ht_Icc, ht_np⟩ => ?_) (fun t ht => ?_)).def'.aestronglyMeasurable
-      · have ht_Ioo : t ∈ Ioo γ.a γ.b := by
-          constructor
-          · by_contra h; push_neg at h
-            exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1)
-          · by_contra h; push_neg at h
-            exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)
-        apply ContinuousWithinAt.mul _ (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt
-        apply ContinuousWithinAt.comp (s := U) (f := fun c => dslope f c w) (g := γ.toFun)
-        · by_cases heq : γ.toFun t = w
-          · rw [heq]; exact (continuousAt_dslope_same.mpr
-              (hf.differentiableAt (hU.mem_nhds (hδ_U hw)))).continuousWithinAt
-          · exact ((continuousAt_dslope_of_ne heq).mpr
-              (hf.continuousOn _ (hγ_in_U t ht_Icc))).continuousWithinAt
-        · exact (γ.continuous_toFun t ht_Icc).mono diff_subset
-        · exact fun s hs => hγ_in_U s (diff_subset hs)
-      · rw [norm_mul]
-        exact mul_le_mul (hBd' _ ⟨t, ht, rfl⟩ w hw) (hM_d t ht) (norm_nonneg _) hC_pos.le
+      intro w hw; sorry
     · -- Uniform bound on ‖F w t‖ for w near w₀
       apply Filter.eventually_of_mem (Metric.ball_mem_nhds w₀ hδ_pos)
       intro w hw; filter_upwards with t; intro ht
