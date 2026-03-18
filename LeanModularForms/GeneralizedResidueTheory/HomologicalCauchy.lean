@@ -1610,20 +1610,59 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     intro s hs
     exact GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero
       f s (hf_mero s hs) (hres s hs) γ h_null.closed (fun t ht => hγ_avoids s hs t ht)
-  -- Step 2-3: ∮ g = 0 (g holomorphic on U after Function.update correction at each pole)
-  have h_g_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
-    -- Define g_corr by correcting g's value at each s ∈ S
-    -- g_corr is DifferentiableOn U (analytic at each pole after correction)
-    -- ∮ g = ∮ g_corr since γ avoids S (values agree on γ's image)
-    -- ∮ g_corr = 0 by contourIntegral_eq_zero_of_nullHomologous
-    sorry
-  -- Combine: f = g + pp_all → ∮ f = ∮ g + ∮ pp_all = 0
+  -- Step 2-3: ∮ g = 0.
+  -- g = f - Σ pp_s. On γ's image (in U \ S), g is holomorphic.
+  -- Since γ avoids S, the integral of g only depends on g's values on U \ S.
+  -- On U \ S, g equals the holomorphic function f - Σ pp_s.
+  -- We need ∮ g = 0. Use: g is holomorphic on U \ S, and also holomorphic
+  -- at each s ∈ S (after value correction). The corrected g is holomorphic on U.
+  -- ∮ corrected_g = 0 by Dixon. ∮ g = ∮ corrected_g since γ avoids S.
+  have h_g_diff_off : DifferentiableOn ℂ g (U \ ↑S) := by
+    intro z hz
+    have h_f_d := hf_diff z hz
+    have h_pp_d : DifferentiableWithinAt ℂ pp_all (U \ ↑S) z := by
+      apply DifferentiableWithinAt.fun_sum
+      intro s hs
+      exact ((GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s
+        (hf_mero s hs)).mono (fun w hw =>
+          Set.mem_compl_singleton_iff.mpr (fun h =>
+            (hw).2 (h ▸ Finset.mem_coe.mpr hs)))) z hz
+    exact h_f_d.sub h_pp_d
+  -- γ's image is in U \ S
+  have h_image_off : γ.toFun '' Icc γ.a γ.b ⊆ U \ ↑S :=
+    fun z ⟨t, ht, htz⟩ => ⟨htz ▸ h_null.image_subset t ht,
+      fun hs => hγ_avoids _ (Finset.mem_coe.mp hs) t ht (htz ▸ rfl)⟩
+  -- g continuous on γ's image
+  have h_g_cont_image : ContinuousOn g (γ.toFun '' Icc γ.a γ.b) :=
+    h_g_diff_off.continuousOn.mono h_image_off
+  -- g * γ' is integrable (bounded piecewise continuous)
+  have h_g_int : IntervalIntegrable (fun t => g (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+      (Set.uIcc_of_le hab ▸ h_g_diff_off.continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+        (fun t ht => h_image_off ⟨t, ht, rfl⟩))
+  -- pp_all * γ' is integrable
+  have h_pp_int : IntervalIntegrable (fun t => pp_all (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+      (Set.uIcc_of_le hab ▸ by
+        apply continuousOn_finset_sum; intro s hs
+        exact (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s
+          (hf_mero s hs)).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+          (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids s hs t ht)))
+  -- ∮ g = 0: use convex version on univ (g holomorphic on ℂ \ S, but γ avoids S)
+  -- Actually: g holomorphic on U \ S. To get ∮ g = 0, use the CONVEX version
+  -- of contourIntegral_eq_zero_of_meromorphic_residue_zero_finset on Set.univ.
+  -- Wait, g is NOT defined on univ \ S. g = f - Σ pp_s and f only on U.
+  -- Instead: use tendsto_cpv_of_continuousOn_zero_integral backwards.
+  -- Since γ avoids S, ∮ g is a classical integral (no PV needed).
+  -- ∮ g = 0 ← sorry (needs multi-pole Function.update + Dixon)
+  have h_g_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by sorry
+  -- Combine
   have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
       f (γ.toFun t) * deriv γ.toFun t =
       g (γ.toFun t) * deriv γ.toFun t + pp_all (γ.toFun t) * deriv γ.toFun t := by
     intro t _; simp [g]; ring
   rw [intervalIntegral.integral_congr h_decomp,
-    intervalIntegral.integral_add sorry sorry, -- integrability of g and pp_all (bounded piecewise continuous)
+    intervalIntegral.integral_add h_g_int h_pp_int,
     h_g_zero, h_pp_all_zero, add_zero]
 
 -- Null-homologous version of higherOrderCancel_assembly.
