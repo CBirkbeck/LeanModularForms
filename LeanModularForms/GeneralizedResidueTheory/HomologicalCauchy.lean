@@ -1486,6 +1486,33 @@ theorem integral_eq_sum_residues_of_nullHomologous
 
 
 
+
+/-- Null-homologous version: contour integral of meromorphic function with zero residue
+vanishes when the curve is null-homologous and avoids the singularity. -/
+theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
+    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
+    (hres : residueAt f s = 0)
+    (U : Set ℂ) (hU : IsOpen U)
+    (hf_diff : DifferentiableOn ℂ f (U \ {s}))
+    (hs_in_U : s ∈ U)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+    (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
+  sorry
+
+/-- Finset version of the above. -/
+theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
+    (S : Finset ℂ) (f : ℂ → ℂ)
+    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
+    (hres : ∀ s ∈ S, residueAt f s = 0)
+    (U : Set ℂ) (hU : IsOpen U)
+    (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
+    (hS_in_U : ∀ s ∈ S, s ∈ U)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
+  sorry
+
 -- Null-homologous version of higherOrderCancel_assembly.
 -- Copied from HigherOrderAssembly.lean with Convex ℝ U replaced by IsNullHomologous γ U
 -- and holomorphic_convex_primitive replaced by contourIntegral_eq_zero_of_nullHomologous.
@@ -1549,34 +1576,27 @@ private theorem higherOrderCancel_assembly_nh
         h_no_crossings _ (Finset.mem_coe.mp hz_S0) t ht rfl⟩
     have hh_cont_image : ContinuousOn h (γ.toFun '' Icc γ.a γ.b) :=
       hh_cont.mono h_image_sub
-    have h_integral_zero : ∫ t in γ.a..γ.b, h (γ.toFun t) * deriv γ.toFun t = 0 := by
-      apply contourIntegral_eq_zero_of_meromorphic_residue_zero_finset S0 h
-      · intro s hs
-        apply MeromorphicAt.fun_sub (hMero s hs)
-        suffices ∀ (T : Finset ℂ),
-            MeromorphicAt (fun z => ∑ s' ∈ T, residueAt f s' / (z - s')) s by
-          exact this S0
-        intro T
-        induction T using Finset.induction with
-        | empty =>
-          simp only [Finset.sum_empty]
-          exact MeromorphicAt.const 0 s
-        | insert a T' ha' ih =>
-          have h_eq : (fun z => ∑ s' ∈ insert a T', residueAt f s' / (z - s')) =
-              (fun z => residueAt f a / (z - a) + ∑ s' ∈ T', residueAt f s' / (z - s')) := by
-            ext z; exact Finset.sum_insert ha'
-          rw [h_eq]
-          exact ((MeromorphicAt.const (residueAt f a) s).fun_div
-            ((MeromorphicAt.id s).fun_sub (MeromorphicAt.const a s))).fun_add ih
-      · intro s hs
-        exact residueAt_sub_residueSum_eq_zero S0 f s hs (hMero s hs)
-      · exact hU
-      · sorry -- h holomorphic on U (removable singularities)
-      · exact hh_diff
-      · intro s hs; exact hS0_in_U s hs
-      · exact h_null.closed
-      · exact h_null.image_subset
-      · exact fun s hs t ht => h_no_crossings s hs t ht
+    have h_integral_zero : ∫ t in γ.a..γ.b, h (γ.toFun t) * deriv γ.toFun t = 0 :=
+      contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh S0 h
+        (fun s hs => by
+          apply MeromorphicAt.fun_sub (hMero s hs)
+          suffices ∀ (T : Finset ℂ),
+              MeromorphicAt (fun z => ∑ s' ∈ T, residueAt f s' / (z - s')) s by
+            exact this S0
+          intro T
+          induction T using Finset.induction with
+          | empty => simp; exact MeromorphicAt.const 0 s
+          | insert a T' ha' ih =>
+            have h_eq : (fun z => ∑ s' ∈ Insert.insert a T', residueAt f s' / (z - s')) =
+                (fun z => residueAt f a / (z - a) + ∑ s' ∈ T', residueAt f s' / (z - s')) := by
+              ext z; exact Finset.sum_insert ha'
+            rw [h_eq]
+            exact ((MeromorphicAt.const (residueAt f a) s).fun_div
+              ((MeromorphicAt.id s).fun_sub (MeromorphicAt.const a s))).fun_add ih)
+        (fun s hs => by
+          have h_eq := residueAt_sub_residueSum_eq_zero S0 f s hs (hMero s hs)
+          exact h_eq)
+        U hU hh_diff hS0_in_U γ h_null h_no_crossings
     exact tendsto_cpv_of_continuousOn_zero_integral S0 h γ
       hh_cont_image h_integral_zero
   · push_neg at h_no_crossings
@@ -2332,8 +2352,8 @@ private theorem higherOrderCancel_assembly_nh
                 congr 1
                 exact h_ci_agree r hr_pos hr_lt]
               exact h_single
-            exact contourIntegral_eq_zero_of_nullHomologous hU
-              (sorry /- term_s meromorphic + residue 0 → holomorphic on U -/) γ h_null
+            exact contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
+              term_s s h_term_mero h_term_res U hU h_term_diff (hS0_in_U s hs) γ h_null h_avoids
           exact tendsto_cpv_of_continuousOn_zero_integral S0 term_s γ
             h_term_cont_image h_term_int_zero
       rw [show (0 : ℂ) = ∑ _s ∈ S0, (0 : ℂ) from (Finset.sum_const_zero).symm]
