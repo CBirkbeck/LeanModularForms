@@ -265,7 +265,7 @@ private lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n)
     (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) (hAdet : A.det ≠ 0)
     (γ : SpecialLinearGroup (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
-    g⁻¹ * SLnZ_to_GLnQ n γ * g ∈ SLnZ_subgroup n := by
+    g⁻¹ * (γ : GL (Fin n) ℚ) * g ∈ SLnZ_subgroup n := by
   have hnatAbs_ne : NeZero A.det.natAbs := ⟨Int.natAbs_ne_zero.mpr hAdet⟩
   have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) := by
     intro i j; exact Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
@@ -276,17 +276,17 @@ private lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n)
   rw [SLnZ_subgroup, MonoidHom.mem_range]
   refine ⟨delta, ?_⟩
   have h_int_eq : A * delta_mat = γ.val * A := int_mul_eq n A γ.val hAdet hdvd
-  have h_mat_eq : (g * SLnZ_to_GLnQ n delta).val =
-      (SLnZ_to_GLnQ n γ * g).val := by
-    show (g.val * (SLnZ_to_GLnQ n delta).val : Matrix _ _ ℚ) =
-         ((SLnZ_to_GLnQ n γ).val * g.val : Matrix _ _ ℚ)
+  have h_mat_eq : (g * (delta : GL (Fin n) ℚ)).val =
+      ((γ : GL (Fin n) ℚ) * g).val := by
+    show (g.val * (delta : GL (Fin n) ℚ).val : Matrix _ _ ℚ) =
+         ((γ : GL (Fin n) ℚ).val * g.val : Matrix _ _ ℚ)
     rw [SLnZ_to_GLnQ_val, SLnZ_to_GLnQ_val, hA,
       intMat_map_mul, intMat_map_mul, h_int_eq]
-  have h_unit_eq : g * SLnZ_to_GLnQ n delta = SLnZ_to_GLnQ n γ * g := Units.ext h_mat_eq
-  calc SLnZ_to_GLnQ n delta
-      = g⁻¹ * (g * SLnZ_to_GLnQ n delta) := by rw [inv_mul_cancel_left]
-    _ = g⁻¹ * (SLnZ_to_GLnQ n γ * g) := by rw [h_unit_eq]
-    _ = g⁻¹ * SLnZ_to_GLnQ n γ * g := by rw [mul_assoc]
+  have h_unit_eq : g * (delta : GL (Fin n) ℚ) = (γ : GL (Fin n) ℚ) * g := Units.ext h_mat_eq
+  calc (delta : GL (Fin n) ℚ)
+      = g⁻¹ * (g * (delta : GL (Fin n) ℚ)) := by rw [inv_mul_cancel_left]
+    _ = g⁻¹ * ((γ : GL (Fin n) ℚ) * g) := by rw [h_unit_eq]
+    _ = g⁻¹ * (γ : GL (Fin n) ℚ) * g := by rw [mul_assoc]
 
 omit [NeZero n] in
 /-- Reverse direction of `adjugate_conj_dvd`: `d | (γ - I)` entry-wise implies
@@ -337,7 +337,7 @@ private lemma conj_ker_mem_SLnZ_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fi
     (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) (hAdet : A.det ≠ 0)
     (γ : SpecialLinearGroup (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
-    g * SLnZ_to_GLnQ n γ * g⁻¹ ∈ SLnZ_subgroup n := by
+    g * (γ : GL (Fin n) ℚ) * g⁻¹ ∈ SLnZ_subgroup n := by
   have hnatAbs_ne : NeZero A.det.natAbs := ⟨Int.natAbs_ne_zero.mpr hAdet⟩
   have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) := by
     intro i j; exact Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
@@ -347,13 +347,13 @@ private lemma conj_ker_mem_SLnZ_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fi
     conj_mat_det_one_reverse n A γ.val γ.prop hdvd hAdet
   set delta : SpecialLinearGroup (Fin n) ℤ := ⟨delta_mat, hdelta_det⟩
   have h_int_eq : delta_mat * A = A * γ.val := int_mul_eq_reverse n A γ.val hAdet hdvd
-  have h_mat_eq : (SLnZ_to_GLnQ n delta * g).val =
-      (g * SLnZ_to_GLnQ n γ).val := by
-    show ((SLnZ_to_GLnQ n delta).val * g.val : Matrix _ _ ℚ) =
-         (g.val * (SLnZ_to_GLnQ n γ).val : Matrix _ _ ℚ)
+  have h_mat_eq : ((delta : GL (Fin n) ℚ) * g).val =
+      (g * (γ : GL (Fin n) ℚ)).val := by
+    show ((delta : GL (Fin n) ℚ).val * g.val : Matrix _ _ ℚ) =
+         (g.val * (γ : GL (Fin n) ℚ).val : Matrix _ _ ℚ)
     rw [SLnZ_to_GLnQ_val, SLnZ_to_GLnQ_val, hA,
       intMat_map_mul, intMat_map_mul, h_int_eq]
-  have h_unit_eq : SLnZ_to_GLnQ n delta * g = g * SLnZ_to_GLnQ n γ := Units.ext h_mat_eq
+  have h_unit_eq : (delta : GL (Fin n) ℚ) * g = g * (γ : GL (Fin n) ℚ) := Units.ext h_mat_eq
   rw [SLnZ_subgroup, MonoidHom.mem_range]
   exact ⟨delta, by rw [← h_unit_eq]; group⟩
 
@@ -393,7 +393,7 @@ lemma posDetInt_le_commensurator :
     rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
     simp only [K, Subgroup.mem_map] at hx
     obtain ⟨γ, hγ_ker, rfl⟩ := hx
-    show (ConjAct.toConjAct g)⁻¹ • SLnZ_to_GLnQ n γ ∈ H
+    show (ConjAct.toConjAct g)⁻¹ • (γ : GL (Fin n) ℚ) ∈ H
     rw [ConjAct.smul_def, ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]
     exact conj_ker_mem_SLnZ n g A hA hAdet_ne γ hγ_ker
   have hK_le_ginvH : K ≤ ConjAct.toConjAct g⁻¹ • H := by
@@ -402,7 +402,7 @@ lemma posDetInt_le_commensurator :
     simp only [ConjAct.toConjAct_inv, inv_inv]
     simp only [K, Subgroup.mem_map] at hx
     obtain ⟨γ, hγ_ker, rfl⟩ := hx
-    show ConjAct.toConjAct g • SLnZ_to_GLnQ n γ ∈ H
+    show ConjAct.toConjAct g • (γ : GL (Fin n) ℚ) ∈ H
     rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]
     exact conj_ker_mem_SLnZ_inv n g A hA hAdet_ne γ hγ_ker
   constructor

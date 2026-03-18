@@ -87,7 +87,7 @@ private def unipSL (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n 
 omit [NeZero n] in
 private lemma upperTriGL_eq_diagMat_mul (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
-    upperTriGL n a ha hdiv B = diagMat n a ha * SLnZ_to_GLnQ n (unipSL n a hdiv B) := by
+    upperTriGL n a ha hdiv B = diagMat n a ha * (unipSL n a hdiv B : GL (Fin n) ℚ) := by
   apply Units.ext
   simp only [upperTriGL_val, Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val]
   ext i j
@@ -149,9 +149,9 @@ private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
 
 omit [NeZero n] in
 private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ ρ : SL(n, ℤ))
-    (h : SLnZ_to_GLnQ n σ * diagMat n a ha = diagMat n a ha * SLnZ_to_GLnQ n ρ) :
-    diagMat n a ha * SLnZ_to_GLnQ n σ.transpose =
-    SLnZ_to_GLnQ n ρ.transpose * diagMat n a ha := by
+    (h : (σ : GL (Fin n) ℚ) * diagMat n a ha = diagMat n a ha * (ρ : GL (Fin n) ℚ)) :
+    diagMat n a ha * (σ.transpose : GL (Fin n) ℚ) =
+    (ρ.transpose : GL (Fin n) ℚ) * diagMat n a ha := by
   apply Units.ext
   simp only [Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val,
     SpecialLinearGroup.coe_transpose, Matrix.transpose_map]
@@ -163,48 +163,48 @@ private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (�
 
 private lemma transpose_mem_conj_inv_of_mem_conj
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
-    (hσ : SLnZ_to_GLnQ n σ ∈
+    (hσ : (σ : GL (Fin n) ℚ) ∈
       ConjAct.toConjAct (diagMat n a ha) • SLnZ_subgroup n) :
-    SLnZ_to_GLnQ n σ.transpose ∈
+    (σ.transpose : GL (Fin n) ℚ) ∈
       ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n := by
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct] at hσ
   simp only [inv_inv] at hσ
   obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp
-    (show _ ∈ (SLnZ_to_GLnQ n).range from hσ)
-  have h_eq : SLnZ_to_GLnQ n σ * diagMat n a ha =
-      diagMat n a ha * SLnZ_to_GLnQ n ρ := by rw [hρ]; group
+    (show _ ∈ SLnZ_subgroup n from hσ)
+  have h_eq : (σ : GL (Fin n) ℚ) * diagMat n a ha =
+      diagMat n a ha * (ρ : GL (Fin n) ℚ) := by rw [hρ]; group
   have h_trans := transpose_mul_diagMat n a ha σ ρ h_eq
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-  have : diagMat n a ha * SLnZ_to_GLnQ n σ.transpose *
-      (diagMat n a ha)⁻¹ = SLnZ_to_GLnQ n ρ.transpose := by
+  have : diagMat n a ha * (σ.transpose : GL (Fin n) ℚ) *
+      (diagMat n a ha)⁻¹ = (ρ.transpose : GL (Fin n) ℚ) := by
     have h := congr_arg (· * (diagMat n a ha)⁻¹) h_trans
     simp only [mul_assoc, mul_inv_cancel, mul_one] at h
     rwa [← mul_assoc] at h
-  rw [this]; exact ⟨ρ.transpose, rfl⟩
+  rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
 private lemma transpose_mem_conj_of_mem_conj_inv
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
-    (hτ : SLnZ_to_GLnQ n τ ∈
+    (hτ : (τ : GL (Fin n) ℚ) ∈
       ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n) :
-    SLnZ_to_GLnQ n τ.transpose ∈
+    (τ.transpose : GL (Fin n) ℚ) ∈
       ConjAct.toConjAct (diagMat n a ha) • SLnZ_subgroup n := by
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hτ
   obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp
-    (show _ ∈ (SLnZ_to_GLnQ n).range from hτ)
-  have h_eq : SLnZ_to_GLnQ n ρ * diagMat n a ha =
-      diagMat n a ha * SLnZ_to_GLnQ n τ := by rw [hρ]; group
+    (show _ ∈ SLnZ_subgroup n from hτ)
+  have h_eq : (ρ : GL (Fin n) ℚ) * diagMat n a ha =
+      diagMat n a ha * (τ : GL (Fin n) ℚ) := by rw [hρ]; group
   have h_trans := transpose_mul_diagMat n a ha ρ τ h_eq
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]; simp only [inv_inv]
-  have : (diagMat n a ha)⁻¹ * SLnZ_to_GLnQ n τ.transpose *
-      diagMat n a ha = SLnZ_to_GLnQ n ρ.transpose := by
+  have : (diagMat n a ha)⁻¹ * (τ.transpose : GL (Fin n) ℚ) *
+      diagMat n a ha = (ρ.transpose : GL (Fin n) ℚ) := by
     have := congr_arg ((diagMat n a ha)⁻¹ * ·) h_trans.symm
     simp only [← mul_assoc, inv_mul_cancel, one_mul] at this
     exact this
-  rw [this]; exact ⟨ρ.transpose, rfl⟩
+  rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
 private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n).relIndex
@@ -272,7 +272,7 @@ private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i,
         α * (f (unipSL n a hdiv B₁) * (f (unipSL n a hdiv B₂))⁻¹) * α⁻¹ by
       rw [this]; exact hq
     rw [h1, h2]; group
-  obtain ⟨γ, hγ⟩ := (MonoidHom.mem_range.mp (show _ ∈ f.range from hmem))
+  obtain ⟨γ, hγ⟩ := (MonoidHom.mem_range.mp (show _ ∈ SLnZ_subgroup n from hmem))
   have h_eq : upperTriGL n a ha hdiv B₁ = f γ * upperTriGL n a ha hdiv B₂ := by
     have hγ' : f γ = upperTriGL n a ha hdiv B₁ * (upperTriGL n a ha hdiv B₂)⁻¹ := hγ
     rw [hγ', mul_assoc, inv_mul_cancel, mul_one]
@@ -359,7 +359,7 @@ private lemma a1_eq_a0_mul_pk {p : ℕ} {a : Fin 2 → ℕ} {k : ℕ}
 private lemma conj_diagMat_mem_of_Gamma0 (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1)
     (σ : SL(2, ℤ)) (hσ : (↑(p ^ k) : ℤ) ∣ σ.1 1 0) :
-    (diagMat 2 a ha)⁻¹ * SLnZ_to_GLnQ 2 σ * diagMat 2 a ha ∈ SLnZ_subgroup 2 := by
+    (diagMat 2 a ha)⁻¹ * (σ : GL (Fin 2) ℚ) * diagMat 2 a ha ∈ SLnZ_subgroup 2 := by
   obtain ⟨c, hc⟩ := hσ
   let τ_mat : Matrix (Fin 2) (Fin 2) ℤ :=
     !![σ.1 0 0, ↑(p ^ k) * σ.1 0 1; c, σ.1 1 1]
@@ -369,12 +369,12 @@ private lemma conj_diagMat_mem_of_Gamma0 (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
     have hσ_det := σ.prop; simp only [Matrix.det_fin_two] at hσ_det
     rw [hc] at hσ_det; linarith
   let τ : SL(2, ℤ) := ⟨τ_mat, h_det⟩
-  rw [SLnZ_subgroup, MonoidHom.mem_range]
+  rw [mem_SLnZ_subgroup_iff]
   refine ⟨τ, ?_⟩
   have ha1 := a1_eq_a0_mul_pk h_ratio h_dvd_a
   have hcQ : (σ.1 1 0 : ℚ) = (↑(p ^ k) : ℚ) * (c : ℚ) := by exact_mod_cast hc
   push_cast at ha1 hcQ
-  suffices h : diagMat 2 a ha * SLnZ_to_GLnQ 2 τ = SLnZ_to_GLnQ 2 σ * diagMat 2 a ha by
+  suffices h : diagMat 2 a ha * (τ : GL (Fin 2) ℚ) = (σ : GL (Fin 2) ℚ) * diagMat 2 a ha by
     have h' := congr_arg ((diagMat 2 a ha)⁻¹ * ·) h
     simp only [← mul_assoc, inv_mul_cancel, one_mul] at h'; exact h'
   apply Units.ext; simp only [Units.val_mul, SLnZ_to_GLnQ_val]
@@ -386,19 +386,19 @@ private lemma conj_diagMat_mem_of_Gamma0 (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
 
 private lemma Gamma0_of_conj_diagMat_mem (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) (σ : SL(2, ℤ))
-    (hmem : (diagMat 2 a ha)⁻¹ * SLnZ_to_GLnQ 2 σ * diagMat 2 a ha ∈ SLnZ_subgroup 2) :
+    (hmem : (diagMat 2 a ha)⁻¹ * (σ : GL (Fin 2) ℚ) * diagMat 2 a ha ∈ SLnZ_subgroup 2) :
     (↑(p ^ k) : ℤ) ∣ σ.1 1 0 := by
-  rw [SLnZ_subgroup, MonoidHom.mem_range] at hmem
+  rw [mem_SLnZ_subgroup_iff] at hmem
   obtain ⟨τ, hτ⟩ := hmem
   have ha1 := a1_eq_a0_mul_pk h_ratio h_dvd_a
   have ha0_ne : (a 0 : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (ha 0).ne'
-  have h_mul : diagMat 2 a ha * SLnZ_to_GLnQ 2 τ = SLnZ_to_GLnQ 2 σ * diagMat 2 a ha := by
+  have h_mul : diagMat 2 a ha * (τ : GL (Fin 2) ℚ) = (σ : GL (Fin 2) ℚ) * diagMat 2 a ha := by
     have := congr_arg (diagMat 2 a ha * ·) hτ
     simp only [← mul_assoc, mul_inv_cancel, one_mul] at this; exact this
   have h_entry : (a 1 : ℚ) * (τ.1 1 0 : ℚ) = (σ.1 1 0 : ℚ) * (a 0 : ℚ) := by
-    have h10 : ∀ i j, (↑(diagMat 2 a ha * SLnZ_to_GLnQ 2 τ) :
+    have h10 : ∀ i j, (↑(diagMat 2 a ha * (τ : GL (Fin 2) ℚ)) :
         Matrix (Fin 2) (Fin 2) ℚ) i j =
-      (↑(SLnZ_to_GLnQ 2 σ * diagMat 2 a ha) : Matrix (Fin 2) (Fin 2) ℚ) i j := by
+      (↑((σ : GL (Fin 2) ℚ) * diagMat 2 a ha) : Matrix (Fin 2) (Fin 2) ℚ) i j := by
       intro i j; rw [Units.ext_iff.mp h_mul]
     have := h10 1 0
     simp only [Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val,
