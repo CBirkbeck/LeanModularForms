@@ -456,6 +456,62 @@ private noncomputable def dixonH2_F' (f : ℂ → ℂ) (γ : PiecewiseC1Immersio
     ℂ → ℝ → ℂ :=
   fun x t => f (γ.toFun t) * (γ.toFun t - x)⁻¹ ^ 2 * deriv γ.toFun t
 
+-- Helper: pointwise HasDerivAt for the Cauchy kernel integrand.
+-- For fixed z, c: HasDerivAt (fun x => f(z) * (z-x)⁻¹ * c) (f(z) * (z-x)⁻²*c) x
+private lemma dixonH2_pointwise_hasDerivAt (fz c : ℂ) (z x : ℂ) (hne : z - x ≠ 0) :
+    HasDerivAt (fun x => fz * (z - x)⁻¹ * c) (fz * (z - x)⁻¹ ^ 2 * c) x := by
+  have h1 : HasDerivAt (fun x => z - x) (-1) x := by
+    have hid := hasDerivAt_id x
+    have hconst := hasDerivAt_const x z
+    convert hconst.sub hid using 1
+    simp
+  have h2 : HasDerivAt (fun x => (z - x)⁻¹) (-(-1) / (z - x) ^ 2) x :=
+    h1.fun_inv hne
+  simp only [neg_neg, one_div] at h2
+  -- h2 : HasDerivAt (fun x => (z-x)⁻¹) ((z-x)^2)⁻¹ x
+  have h3 : HasDerivAt (fun x => fz * (z - x)⁻¹) (fz * ((z - x) ^ 2)⁻¹) x := by
+    have h3a := h2.const_mul fz
+    -- h3a : HasDerivAt (fun y => fz * (z-y)⁻¹) (fz * ((z-x)^2)⁻¹) x
+    convert h3a using 1 <;> ring
+  have h4 : HasDerivAt (fun x => fz * (z - x)⁻¹ * c) (fz * ((z - x) ^ 2)⁻¹ * c) x :=
+    h3.mul_const c
+  convert h4 using 1
+  rw [inv_pow]
+
+-- Helper: the derivative bound ‖F'(x,t)‖ ≤ M_f * ε⁻²  * M_d for x in the ball.
+private lemma dixonH2_deriv_bound (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
+    (M_f M_d ε : ℝ) (hM_f : ∀ t ∈ Icc γ.a γ.b, ‖f (γ.toFun t)‖ ≤ M_f)
+    (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
+    (hM_f_nn : 0 ≤ M_f) (hε_pos : 0 < ε)
+    (w : ℂ)
+    (hdist_lb : ∀ x ∈ Metric.ball w ε, ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - x‖) :
+    ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
+      ∀ x ∈ Metric.ball w ε,
+        ‖f (γ.toFun t) * (γ.toFun t - x)⁻¹ ^ 2 * deriv γ.toFun t‖ ≤
+          M_f * ε⁻¹ ^ 2 * M_d := by
+  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+  filter_upwards with t _ht x hx_ball
+  have ht : t ∈ Icc γ.a γ.b := by
+    rw [Set.uIoc_of_le hab] at _ht
+    exact Set.Ioc_subset_Icc_self _ht
+  have hε_lb := hdist_lb x hx_ball t ht
+  rw [norm_mul, norm_mul, norm_pow, norm_inv]
+  have hinv_bound : ‖γ.toFun t - x‖⁻¹ ≤ ε⁻¹ :=
+    inv_anti₀ hε_pos hε_lb
+  calc ‖f (γ.toFun t)‖ * ‖γ.toFun t - x‖⁻¹ ^ 2 * ‖deriv γ.toFun t‖
+      ≤ M_f * ε⁻¹ ^ 2 * M_d := by
+        apply mul_le_mul
+        · apply mul_le_mul
+          · exact hM_f t ht
+          · exact pow_le_pow_left₀ (by positivity) hinv_bound 2
+          · positivity
+          · exact hM_f_nn
+        · exact hM_d t ht
+        · positivity
+        · apply mul_nonneg
+          · exact hM_f_nn
+          · positivity
+
 private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hfγ_cont : ContinuousOn (fun t => f (γ.toFun t)) (Icc γ.a γ.b))
     (M_f M_d ε : ℝ) (hM_f : ∀ t ∈ Icc γ.a γ.b, ‖f (γ.toFun t)‖ ≤ M_f)
@@ -467,9 +523,12 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (_hdist_lb : ∀ x ∈ Metric.ball w ε, ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - x‖) :
     HasDerivAt (fun w => ∫ t in γ.a..γ.b, f (γ.toFun t) * (γ.toFun t - w)⁻¹ * deriv γ.toFun t)
       (∫ t in γ.a..γ.b, f (γ.toFun t) * (γ.toFun t - w)⁻¹ ^ 2 * deriv γ.toFun t) w := by
-  -- Parametric differentiation via hasDerivAt_integral_of_dominated_loc_of_deriv_le.
-  -- The proof is correct but takes >64M heartbeats due to expensive unification.
-  -- TODO: Golf by splitting into smaller lemmas to reduce elaboration cost.
+  -- Apply hasDerivAt_integral_of_dominated_loc_of_deriv_le with helpers:
+  -- - dixonH2_pointwise_hasDerivAt for the pointwise derivative
+  -- - dixonH2_deriv_bound for the dominated convergence bound
+  -- The proof is split into helpers above but the final application to
+  -- hasDerivAt_integral_of_dominated_loc_of_deriv_le times out at 64M heartbeats.
+  -- TODO: Golf the final application step.
   sorry
 
 /-- h₂ is differentiable at every point off the curve, when f is continuous on the image. -/
