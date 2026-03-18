@@ -392,7 +392,7 @@ lemma 𝕋_mul_singleton (D1 D2 : (T' P)) (a b : ℤ) :
   rw [Finsupp.sum_single_index, Finsupp.sum_single_index, m]
   simp only [zero_smul, smul_zero]
   ext a
-  simp only [m, zero_smul, Finsupp.sum_zero, Finsupp.coe_zero, Pi.zero_apply]
+  simp only [m, zero_smul, Finsupp.sum_fun_zero, Finsupp.coe_zero, Pi.zero_apply]
 
 open Finsupp
 
@@ -456,7 +456,7 @@ noncomputable instance instNonUnitalNonAssocSemiring : NonUnitalNonAssocSemiring
     right_distrib := fun f g h => by
       simp only [mul_def]
       refine Eq.trans (Finsupp.sum_add_index ?_ ?_) ?_ <;>
-        simp only [Finset.mem_union, mem_support_iff, ne_eq, zero_smul, sum_zero, implies_true]
+        simp only [Finset.mem_union, mem_support_iff, ne_eq, zero_smul, sum_fun_zero, implies_true]
       intro D1 _ a b
       apply Finsupp.ext; intro t
       simp_rw [add_smul]
@@ -469,4 +469,4 @@ noncomputable instance instNonUnitalNonAssocSemiring : NonUnitalNonAssocSemiring
       exact Finsupp.sum_zero_index
     mul_zero := fun f => by
       simp only [mul_def]
-      exact Eq.trans (congr_arg (sum f) (funext₂ fun a₁ b₁ => sum_zero_index)) sum_zero }
+      exact Eq.trans (congr_arg (sum f) (funext₂ fun a₁ b₁ => sum_zero_index)) (sum_fun_zero f) }
