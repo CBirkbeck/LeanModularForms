@@ -8,6 +8,7 @@ import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.GeneralizedResidueTheory.PrincipalValue
 import LeanModularForms.GeneralizedResidueTheory.Homotopy.Invariance
 import LeanModularForms.GeneralizedResidueTheory.Residue
+import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer
 import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Calculus.DSlope
 import Mathlib.Analysis.Complex.RemovableSingularity
@@ -591,7 +592,7 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     dixonH2_deriv_bound f γ M_f M_d ε hM_f hM_d _hM_f_nn hε_pos w _hdist_lb
   -- Step 5: Bound is interval integrable
   have hbound_int : IntervalIntegrable (fun _ => M_f * ε⁻¹ ^ 2 * M_d) volume γ.a γ.b :=
-    intervalIntegrable_const
+    intervalIntegral.intervalIntegrable_const
   -- Step 6: Pointwise HasDerivAt (via dixonH2_pointwise_hasDerivAt)
   have h_diff : ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
       ∀ x ∈ Metric.ball w ε,
@@ -955,7 +956,7 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     exact ((hdslope_diff t ht_Icc).differentiableAt (hU.mem_nhds hx_U) |>.hasDerivAt).mul_const _
   -- Apply Leibniz rule (dixonH1 f γ = fun w => ∫ ... by definition)
   exact ((intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
-    hε_pos hF_meas hF_int hF'_meas h_bound intervalIntegrable_const h_diff).2).differentiableAt
+    hε_pos hF_meas hF_int hF'_meas h_bound intervalIntegral.intervalIntegrable_const h_diff).2).differentiableAt
 
 /-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
 noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
@@ -1416,47 +1417,34 @@ theorem integral_eq_sum_residues_of_nullHomologous
         ∑ s ∈ S0,
           generalizedWindingNumber' γ.toFun γ.a γ.b s *
             residueSimplePole f s := by
-  set g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s) with hg_def
-  have ⟨hg_diff, _⟩ :=
-    simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext
-  -- g is holomorphic on U, γ is null-homologous → ∫ g ∘ γ = 0
-  have hg_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 :=
-    contourIntegral_eq_zero_of_nullHomologous hU hg_diff γ h_null
-  -- f = g + ∑ residues/(z-s), so ∫ f = ∫ g + ∫ ∑ = 0 + ∑ winding*residue
-  have h_expand : ∀ t,
-      f (γ.toFun t) * deriv γ.toFun t =
-      ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t +
-        g (γ.toFun t) * deriv γ.toFun t := by
-    intro t; rw [add_mul, Finset.sum_mul]; simp_rw [hg_def]; ring
-  simp_rw [h_expand]
-  have hγ′_bdd := piecewiseC1Immersion_deriv_bounded γ
-  have h_singular_sum :
-      ∫ t in γ.a..γ.b,
-        ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t =
-      ∑ s ∈ S0, 2 * Real.pi * I *
-        generalizedWindingNumber′ γ.toFun γ.a γ.b s * residueSimplePole f s := by
-    rw [intervalIntegral.integral_finset_sum (fun s _ =>
-      singular_term_intervalIntegrable_of_avoids γ.toPiecewiseC1Curve s
-        (fun t ht => hγ_avoids s ‹_› t ht) hγ′_bdd (residueSimplePole f s))]
-    apply Finset.sum_congr rfl
-    intro s hs
-    exact integral_singular_term_eq_winding_times_coeff γ.toPiecewiseC1Curve s
-      (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)
-  calc ∫ t in γ.a..γ.b,
-        ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t +
-          g (γ.toFun t) * deriv γ.toFun t
-      = (∫ t in γ.a..γ.b,
-          ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
-        (∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t) := by
-          exact intervalIntegral.integral_add
-            (singular_sum_intervalIntegrable f S0 γ.toPiecewiseC1Curve hγ_avoids hγ′_bdd)
-            sorry -- g * γ' integrable
-    _ = (∑ s ∈ S0, 2 * Real.pi * I *
-          generalizedWindingNumber′ γ.toFun γ.a γ.b s *
-            residueSimplePole f s) + 0 := by
-          rw [h_singular_sum, hg_zero]
-    _ = 2 * Real.pi * I * ∑ s ∈ S0,
-          generalizedWindingNumber′ γ.toFun γ.a γ.b s *
-            residueSimplePole f s := by
-          rw [add_zero, Finset.mul_sum]
-          apply Finset.sum_congr rfl; intro s _; ring
+  -- Decompose f = Σ res/(z-s) + g where g is holomorphic.
+  -- By contourIntegral_eq_zero_of_nullHomologous, ∫ g = 0.
+  -- The singular sum ∫ Σ res/(z-s) = Σ winding * res by winding number computation.
+  sorry
+
+/-- **Theorem 3.3 of Hungerbühler-Wasem (arXiv:1808.00997v2)** for null-homologous curves.
+
+Generalized residue theorem with conditions (A')+(B) for a null-homologous
+immersed piecewise C¹ curve in an open set U, replacing the convexity hypothesis. -/
+theorem generalizedResidueTheorem_3_3_nullHomologous
+    (U : Set ℂ) (hU : IsOpen U)
+    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+    (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
+    (hS_closed : IsClosed S)
+    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion)
+    (h_null : IsNullHomologous γ U)
+    (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
+    (hCondB : SatisfiesConditionB γ f S0)
+    (hγ_meas : Measurable γ.toFun)
+    (h_no_endpt_cross : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
+    (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
+      γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 (2 * Real.pi * I * ∑ s ∈ S0,
+        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s)) := by
+  sorry

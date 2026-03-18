@@ -234,7 +234,7 @@ lemma cpv_exists_inv_sub_of_closed_unique
       obtain ⟨r, hr, hr_ball⟩ := Metric.isOpen_iff.mp hU_open 0 h0_mem
       exact ⟨min r δ, by positivity, min_le_right _ _, fun ε hε => hU_sub ⟨hr_ball (by
         simp only [Metric.mem_ball, Real.dist_eq]
-        rw [abs_of_pos hε.1]
+        rw [sub_zero, abs_of_pos hε.1]
         exact lt_of_lt_of_le hε.2 (min_le_left _ _)), hε.1⟩⟩
     have h_logexp_cont : ContinuousOn (fun ε => Complex.log (Complex.exp (R ε))) (Ioo 0 η) :=
       (Complex.continuous_exp.comp_continuousOn
@@ -273,7 +273,7 @@ lemma cpv_exists_inv_sub_of_closed_unique
               ↑(n - m) * (2 * ↑Real.pi * I) := by push_cast; ring
           have h_norm_2piI : ‖(2 * ↑Real.pi * I : ℂ)‖ = 2 * Real.pi := by
             simp only [norm_mul, Complex.norm_ofNat,
-              Complex.norm_real, abs_of_pos Real.pi_pos,
+              Complex.norm_real, Real.norm_eq_abs, abs_of_pos Real.pi_pos,
               Complex.norm_I, mul_one]
           have h_dist : dist (↑n * (2 * ↑Real.pi * I)) (↑m * (2 * ↑Real.pi * I)) =
               ‖(↑(n - m) : ℂ)‖ * (2 * Real.pi) := by
