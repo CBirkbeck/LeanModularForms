@@ -1541,14 +1541,14 @@ lemma pv_res_tendsto_of_immersion_nullHomologous
         (𝓝[>] 0) (𝓝 M) from this.choose_spec.cauchy_map
     exact cpv_exists_inv_sub_of_closed_unique γ s h_null.closed
       (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross honly
-  -- Instead of calling generalizedResidueTheorem' (which needs Convex ℝ U),
-  -- construct the CPV result directly from the null-homologous residue theorem.
-  -- The CPV existence comes from hPV_singular (local near each crossing).
-  -- The CPV value comes from integral_eq_sum_residues_of_nullHomologous.
-  -- For the detailed CPV decomposition, we use the convex version on a sorry.
-  -- TODO: Replace with a direct CPV construction from the null-homologous residue theorem.
-  have h_thm := generalizedResidueTheorem' U hU sorry S hS_in_U hS_discrete
-    hS_closed S0 hS0_subset f_res hf_res_diff γ h_null.closed h_null.image_subset hS_on_curve
+  -- f_res = Σ res/(z-s) is differentiable on ℂ \ S0 = univ \ S0.
+  -- univ is convex, so generalizedResidueTheorem' applies with U = univ.
+  have hf_res_diff_univ : DifferentiableOn ℂ f_res (Set.univ \ ↑S0) :=
+    differentiableOn_sum_div_sub S0 (residueAt f) Set.univ
+  have h_thm := generalizedResidueTheorem' Set.univ isOpen_univ convex_univ
+    S (fun s _ => Set.mem_univ s) hS_discrete hS_closed S0 hS0_subset
+    f_res hf_res_diff_univ γ h_null.closed (fun t _ => Set.mem_univ _)
+    (fun t ht h_mem => hS_on_curve t ht h_mem)
     hSimple_res hf_ext_res hPV_singular
   obtain ⟨h_exists, h_value⟩ := h_thm
   obtain ⟨L, hL⟩ := h_exists
