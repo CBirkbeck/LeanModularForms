@@ -1619,10 +1619,54 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
       -- f - pp_z is analytic at z (meromorphicAt_sub_principalPart_eventually).
       -- pp_s for s ≠ z has pole at s, not z → differentiable at z.
       -- So g is differentiable at z.
-      -- This is exactly the multi-pole version of the single-pole argument
-      -- in contourIntegral_eq_zero_of_meromorphic_residue_zero_nh above.
-      -- The formal argument follows the same Function.update pattern.
-      sorry
+      -- g = (f - pp_z) - Σ_{s≠z} pp_s. Both parts differentiable at z.
+      have hzS' := Finset.mem_coe.mp hzS
+      -- Part 1: f - pp_z differentiable at z (removable singularity)
+      -- Use meromorphicAt_sub_principalPart_eventually → analytic → differentiable
+      obtain ⟨g_an, hg_an, hg_eq⟩ :=
+        GeneralizedResidueTheory.meromorphicAt_sub_principalPart_eventually f z (hf_mero z hzS')
+      have h1 : DifferentiableAt ℂ (fun w => f w -
+          GeneralizedResidueTheory.meromorphicPrincipalPart f z w) z := by
+        -- g_an is analytic at z. f - pp_z =ᶠ g_an near z (on 𝓝[≠] z).
+        -- At z itself, we use Function.update to correct the value.
+        -- Since we only need DifferentiableAt, and g_an is analytic,
+        -- and f - pp_z = g_an on a punctured nhd, we get DifferentiableAt
+        -- (the value at z doesn't matter for differentiability if it matches the limit).
+        -- Same as single-pole version: correct value at z via Function.update
+        set rp := fun w => f w - GeneralizedResidueTheory.meromorphicPrincipalPart f z w
+        set rp_nf := Function.update rp z (g_an z)
+        have h_an : AnalyticAt ℂ rp_nf z := by
+          apply hg_an.congr
+          rw [Filter.Eventually, mem_nhdsWithin] at hg_eq
+          obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_eq
+          apply Filter.Eventually.mono (hV_open.mem_nhds hz_V)
+          intro w hw
+          by_cases hwz : w = z
+          · simp [hwz, rp_nf, Function.update_self]
+          · simp only [rp_nf]; rw [Function.update_of_ne hwz]
+            exact (hV_eq ⟨hw, hwz⟩).symm
+        -- rp_nf is differentiable at z (analytic → differentiable)
+        -- rp =ᶠ rp_nf near z (agree away from z)
+        have h_ev' : rp =ᶠ[𝓝 z] rp_nf := sorry
+        exact h_ev'.differentiableAt_iff.mpr h_an.differentiableAt
+      -- Part 2: Σ_{s≠z} pp_s differentiable at z
+      have h2 : DifferentiableAt ℂ (fun w =>
+          ∑ s ∈ S.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s w) z := by
+        apply DifferentiableAt.fun_sum; intro s hs
+        have hsz : s ≠ z := Finset.ne_of_mem_erase hs
+        exact (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s
+          (hf_mero s (Finset.mem_of_mem_erase hs)) z
+          (Set.mem_compl_singleton_iff.mpr hsz.symm)).differentiableAt
+          (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hsz.symm))
+      -- g z = (f z - pp_z z) - Σ_{s≠z} pp_s z
+      have h_eq : g =ᶠ[𝓝 z]
+          (fun w => (f w - GeneralizedResidueTheory.meromorphicPrincipalPart f z w) -
+            ∑ s ∈ S.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s w) := by
+        filter_upwards with w
+        simp only [g, pp_all]
+        rw [Finset.sum_erase_eq_sub hzS']
+        ring
+      exact (h_eq.differentiableAt_iff.mpr (h1.sub h2)).differentiableWithinAt
     · -- z ∉ S: f differentiable, each pp differentiable → g differentiable
       have h_f_da : DifferentiableAt ℂ f z :=
         (hf_diff z ⟨hz, hzS⟩).differentiableAt
