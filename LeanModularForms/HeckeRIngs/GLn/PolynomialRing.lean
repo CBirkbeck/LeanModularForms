@@ -57,11 +57,13 @@ lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     T_gen_diag n p k i =
     if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
 
+omit [NeZero n] in
 lemma T_gen_diag_pos (hp : p.Prime) (k : Fin n) : ∀ i, 0 < T_gen_diag n p k i := by
   intro i; simp only [T_gen_diag]; split_ifs with h
   · omega
   · exact hp.pos
 
+omit [NeZero n] in
 /-- The T_gen diagonal satisfies the divisibility chain condition. -/
 lemma divChain_T_gen (k : Fin n) :
     DivChain n (T_gen_diag n p k) := by
@@ -78,6 +80,7 @@ lemma divChain_T_gen (k : Fin n) :
 noncomputable def T_gen (k : Fin n) : HeckeAlgebra n :=
   T_elem n (T_gen_diag n p k) (T_gen_diag_pos n p hp k) (divChain_T_gen n p k)
 
+omit [NeZero n] in
 /-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
 lemma T_gen_diag_is_ppow (k : Fin n) :
     T_gen_diag n p k =

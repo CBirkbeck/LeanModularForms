@@ -123,6 +123,7 @@ private lemma SL_transpose_inv_eq (σ : SL(n, ℤ)) :
   Subtype.ext (by simp only [SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_transpose,
     Matrix.adjugate_transpose])
 
+omit [NeZero n] in
 private lemma invTransposeEquiv_invol (σ : SL(n, ℤ)) :
     invTransposeEquiv n (invTransposeEquiv n σ) = σ := by
   rw [show invTransposeEquiv n σ = (invTransposeEquiv n).symm σ from SL_transpose_inv_eq n σ]
@@ -161,6 +162,7 @@ private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (�
   simp only [Matrix.transpose_mul, Matrix.diagonal_transpose] at h1
   exact h1
 
+omit [NeZero n] in
 private lemma transpose_mem_conj_inv_of_mem_conj
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
     (hσ : (σ : GL (Fin n) ℚ) ∈
@@ -184,6 +186,7 @@ private lemma transpose_mem_conj_inv_of_mem_conj
     rwa [← mul_assoc] at h
   rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
+omit [NeZero n] in
 private lemma transpose_mem_conj_of_mem_conj_inv
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
     (hτ : (τ : GL (Fin n) ℚ) ∈
@@ -206,6 +209,7 @@ private lemma transpose_mem_conj_of_mem_conj_inv
     exact this
   rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
+omit [NeZero n] in
 private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n).relIndex
       (SLnZ_subgroup n) =
