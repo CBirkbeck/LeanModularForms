@@ -1498,9 +1498,32 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
-  sorry
+  -- Use the convex version on Set.univ (which is convex).
+  -- f is differentiable on U \ {s}. Since s might not be in U... wait, hs_in_U says s ∈ U.
+  -- But we need DifferentiableOn f (univ \ {s}), and we only have U \ {s}.
+  -- Instead, call the convex version on a ball B(s, r) ⊂ U... but γ might not be in B.
+  -- Alternative: decompose f = pp + rp, show ∮ pp = 0 and ∮ rp = 0 separately.
+  -- ∮ pp = 0: by GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero (no convexity needed)
+  -- ∮ rp = 0: rp is holomorphic on U, use contourIntegral_eq_zero_of_nullHomologous
+  set pp := GeneralizedResidueTheory.meromorphicPrincipalPart f s
+  set rp := fun z => f z - pp z
+  have h_pp_zero : ∫ t in γ.a..γ.b, pp (γ.toFun t) * deriv γ.toFun t = 0 :=
+    GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero f s hf hres γ h_null.closed hγ_avoids
+  -- rp is DifferentiableOn U (by meromorphicAt_sub_principalPart + removable singularity)
+  have h_rp_diff_U : DifferentiableOn ℂ rp U := by
+    sorry -- meromorphicAt_sub_principalPart gives analyticity at s, diff on U\{s} elsewhere
+  have h_rp_zero : ∫ t in γ.a..γ.b, rp (γ.toFun t) * deriv γ.toFun t = 0 := by
+    -- rp might differ from the "clean" version at s (Function.update issue)
+    -- But γ avoids s, so the integral only sees rp away from s, where rp = f - pp is holomorphic
+    -- Use contourIntegral_eq_zero_of_nullHomologous on the corrected version
+    sorry -- need rp DifferentiableOn U + Dixon
+  -- Combine: ∮ f = ∮ pp + ∮ rp = 0 + 0 = 0
+  have h_decomp : (fun t => f (γ.toFun t) * deriv γ.toFun t) =
+      (fun t => pp (γ.toFun t) * deriv γ.toFun t + rp (γ.toFun t) * deriv γ.toFun t) := by
+    ext t; simp [rp]; ring
+  rw [h_decomp, intervalIntegral.integral_add sorry sorry, h_pp_zero, h_rp_zero, add_zero]
 
-/-- Finset version of the above. -/
+/-- Finset version: induction on |S| using the single-pole version. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     (S : Finset ℂ) (f : ℂ → ℂ)
     (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
@@ -1511,6 +1534,7 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
+  -- Induction on S: remove one pole at a time using the single-pole version
   sorry
 
 -- Null-homologous version of higherOrderCancel_assembly.
@@ -1613,16 +1637,16 @@ private theorem higherOrderCancel_assembly_nh
         · exact h
         · exact absurd (h ▸ hcross) h_endpt.2
     have h_correction : ∀ s ∈ S0, ∃ (g_s : ℂ → ℂ), AnalyticAt ℂ g_s s ∧
-        (∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g_s z) := by
+        (∀ᶠ z in 𝓝[≠] s, f z - GeneralizedResidueTheory.meromorphicPrincipalPart f s z = g_s z) := by
       intro s hs; exact meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
     choose g_corr hg_corr_an hg_corr_eq using h_correction
-    let total_pp : ℂ → ℂ := fun z => ∑ s ∈ S0, meromorphicPrincipalPart f s z
+    let total_pp : ℂ → ℂ := fun z => ∑ s ∈ S0, GeneralizedResidueTheory.meromorphicPrincipalPart f s z
     let h_reg : ℂ → ℂ := fun z => f z - total_pp z
     let h_pol : ℂ → ℂ := fun z =>
-      ∑ s ∈ S0, (meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+      ∑ s ∈ S0, (GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
     let h_reg_nf : ℂ → ℂ := fun z =>
       if hz : z ∈ S0 then
-        g_corr z hz z - ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' z
+        g_corr z hz z - ∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s' z
       else h_reg z
     have h_pol_cont : ContinuousOn h_pol (U \ ↑S0) := by
       apply continuousOn_finset_sum
@@ -1639,9 +1663,9 @@ private theorem higherOrderCancel_assembly_nh
       intro z hz
       by_cases hz_S : z ∈ S0
       · have h_other_pp_diff : DifferentiableAt ℂ
-            (fun w => ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) z := by
+            (fun w => ∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s' w) z := by
           have h_each : ∀ s' ∈ S0.erase z,
-              DifferentiableAt ℂ (meromorphicPrincipalPart f s') z := by
+              DifferentiableAt ℂ (GeneralizedResidueTheory.meromorphicPrincipalPart f s') z := by
             intro s' hs'
             have hne : z ≠ s' := (Finset.ne_of_mem_erase hs').symm
             exact (meromorphicPrincipalPart_differentiableOn f s'
@@ -1649,12 +1673,12 @@ private theorem higherOrderCancel_assembly_nh
               (Set.mem_compl_singleton_iff.mpr hne)).differentiableAt
               (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne))
           have h_sum := DifferentiableAt.sum h_each
-          rwa [show (fun w => ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) =
-              (∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s') from
+          rwa [show (fun w => ∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s' w) =
+              (∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s') from
             funext (fun w => (Finset.sum_apply w _ _).symm)]
         have h_corr_diff : DifferentiableAt ℂ
             (fun w => g_corr z hz_S w -
-              ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) z :=
+              ∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s' w) z :=
           (hg_corr_an z hz_S).differentiableAt.sub h_other_pp_diff
         have h_S_minus_z_closed : IsClosed ((↑(S0.erase z) : Set ℂ)) :=
           (S0.erase z).finite_toSet.isClosed
@@ -1665,7 +1689,7 @@ private theorem higherOrderCancel_assembly_nh
         have hz_in_compl : z ∈ (↑(S0.erase z) : Set ℂ)ᶜ :=
           Set.mem_compl hz_not_erase
         have h_ev : (fun w => g_corr z hz_S w -
-            ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) =ᶠ[𝓝 z] h_reg_nf := by
+            ∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s' w) =ᶠ[𝓝 z] h_reg_nf := by
           have hg_corr_eq_z := hg_corr_eq z hz_S
           rw [Filter.Eventually, mem_nhdsWithin] at hg_corr_eq_z
           obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_corr_eq_z
@@ -1673,7 +1697,7 @@ private theorem higherOrderCancel_assembly_nh
             ((hV_open.inter h_compl_open).mem_nhds ⟨hz_V, hz_in_compl⟩)
           intro w ⟨hw_V, hw_compl⟩
           change (fun w => g_corr z hz_S w -
-            ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) w = h_reg_nf w
+            ∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s' w) w = h_reg_nf w
           simp only [h_reg_nf]
           by_cases hw_S : w ∈ S0
           · have hw_eq : w = z := by
@@ -1684,9 +1708,9 @@ private theorem higherOrderCancel_assembly_nh
             have h_fw : f w - meromorphicPrincipalPart f z w = g_corr z hz_S w :=
               hV_eq ⟨hw_V, hw_ne_z⟩
             simp only [dif_neg hw_S, h_reg, total_pp]
-            rw [show (∑ s ∈ S0, meromorphicPrincipalPart f s w) =
+            rw [show (∑ s ∈ S0, GeneralizedResidueTheory.meromorphicPrincipalPart f s w) =
                 meromorphicPrincipalPart f z w +
-                ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w from
+                ∑ s' ∈ S0.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s' w from
               (Finset.add_sum_erase S0 _ hz_S).symm,
               ← h_fw]
             ring
@@ -1697,14 +1721,14 @@ private theorem higherOrderCancel_assembly_nh
           (hf z hz_punct).differentiableAt (hU_S_open.mem_nhds hz_punct)
         have htp_da : DifferentiableAt ℂ total_pp z := by
           have h_each : ∀ s ∈ S0,
-              DifferentiableAt ℂ (meromorphicPrincipalPart f s) z := by
+              DifferentiableAt ℂ (GeneralizedResidueTheory.meromorphicPrincipalPart f s) z := by
             intro s hs
             have hne : z ≠ s := fun heq => hz_S (heq ▸ hs)
             exact (meromorphicPrincipalPart_differentiableOn f s (hMero s hs) z
               (Set.mem_compl_singleton_iff.mpr hne)).differentiableAt
               (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne))
           have h_sum := DifferentiableAt.sum h_each
-          rwa [show total_pp = (∑ s ∈ S0, meromorphicPrincipalPart f s) from
+          rwa [show total_pp = (∑ s ∈ S0, GeneralizedResidueTheory.meromorphicPrincipalPart f s) from
             funext (fun z => (Finset.sum_apply z _ _).symm)]
         have h_reg_diff : DifferentiableAt ℂ h_reg z := hf_da.sub htp_da
         have h_ev : h_reg =ᶠ[𝓝 z] h_reg_nf := by
@@ -1738,8 +1762,8 @@ private theorem higherOrderCancel_assembly_nh
       have h_nf_eq : h_reg_nf z = h_reg z := dif_neg hz_not_S
       have h_decomp : h z = h_reg z + h_pol z := by
         change f z - ∑ s ∈ S0, residueAt f s / (z - s) =
-          (f z - ∑ s ∈ S0, meromorphicPrincipalPart f s z) +
-          ∑ s ∈ S0, (meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+          (f z - ∑ s ∈ S0, GeneralizedResidueTheory.meromorphicPrincipalPart f s z) +
+          ∑ s ∈ S0, (GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
         rw [Finset.sum_sub_distrib]; ring
       rw [h_nf_eq]; exact h_decomp
     have h_cpv_eq : ∀ ε > 0, ∀ t,
@@ -1764,13 +1788,13 @@ private theorem higherOrderCancel_assembly_nh
       have h_cpv_sum : ∀ ε t,
           cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t =
           ∑ s ∈ S0, cauchyPrincipalValueIntegrandOn S0
-            (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+            (fun z => GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
             γ.toFun ε t :=
         fun ε t => cpvIntegrandOn_finset_sum S0 S0
-          (fun s z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+          (fun s z => GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
           γ.toFun ε t
       have h_per_s_cont : ∀ s ∈ S0,
-          ContinuousOn (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+          ContinuousOn (fun z => GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
             (U \ ↑S0) := by
         intro s hs
         apply ContinuousOn.sub
@@ -1784,7 +1808,7 @@ private theorem higherOrderCancel_assembly_nh
       have h_per_s_int : ∀ s ∈ S0, ∀ ε > 0,
           IntervalIntegrable
             (cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+              (fun z => GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
               γ.toFun ε)
             volume γ.a γ.b := by
         intro s hs ε hε
@@ -1795,24 +1819,24 @@ private theorem higherOrderCancel_assembly_nh
             cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t =
           ∑ s ∈ S0, ∫ t in γ.a..γ.b,
             cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+              (fun z => GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
               γ.toFun ε t := by
         intro ε hε
         rw [show (fun t => cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t) =
             (fun t => ∑ s ∈ S0, cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+              (fun z => GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
               γ.toFun ε t) from funext (h_cpv_sum ε)]
         exact intervalIntegral.integral_finset_sum
           (fun s _hs => h_per_s_int s _hs ε hε)
       have h_per_s_tendsto : ∀ s ∈ S0,
           Tendsto (fun ε => ∫ t in γ.a..γ.b,
             cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+              (fun z => GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s))
               γ.toFun ε t)
           (𝓝[>] 0) (𝓝 0) := by
         intro s hs
         set term_s : ℂ → ℂ := fun z =>
-          meromorphicPrincipalPart f s z - residueAt f s / (z - s) with hterm_s_def
+          GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s) with hterm_s_def
         by_cases h_crossed : ∃ t ∈ Icc γ.a γ.b, γ.toFun t = s
         · obtain ⟨t₁, ht₁, hcross₁⟩ := h_crossed
           have ht₁_Ioo := h_crossed_in_Ioo s hs t₁ ht₁ hcross₁
@@ -1835,7 +1859,7 @@ private theorem higherOrderCancel_assembly_nh
             have h_ord_nn : 0 ≤ meromorphicOrderAt f s :=
               (tendsto_nhds_iff_meromorphicOrderAt_nonneg (hMero s hs)).mp
                 ⟨g_loc s, hf_tends⟩
-            have h_pp_zero : meromorphicPrincipalPart f s = fun _ => 0 := by
+            have h_pp_zero : GeneralizedResidueTheory.meromorphicPrincipalPart f s = fun _ => 0 := by
               unfold meromorphicPrincipalPart
               exact dif_neg (fun h => absurd h.2 (not_lt.mpr h_ord_nn))
             have h_res_zero : residueAt f s = 0 := by
@@ -2036,12 +2060,12 @@ private theorem higherOrderCancel_assembly_nh
                    Set.mem_compl_singleton_iff.mpr hzs⟩
                 have hfz : f z = g_loc z + ∑ k : Fin N_s,
                     a_s k / (z - s) ^ (k.val + 1) := hr1_eq hz_in_1
-                have hgrpz : f z - meromorphicPrincipalPart f s z = g_rp z :=
+                have hgrpz : f z - GeneralizedResidueTheory.meromorphicPrincipalPart f s z = g_rp z :=
                   hr2_eq hz_in_2
-                change meromorphicPrincipalPart f s z - residueAt f s / (z - s) -
+                change GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s) -
                   (∑ k : Fin N_s, if k.val ≥ 1 then
                     a_s k / (z - s) ^ (k.val + 1) else 0) = g_loc z - g_rp z
-                have hpp : meromorphicPrincipalPart f s z = f z - g_rp z := by
+                have hpp : GeneralizedResidueTheory.meromorphicPrincipalPart f s z = f z - g_rp z := by
                   linear_combination -hgrpz
                 rw [hpp, hfz]
                 have h_sum_split : ∑ k : Fin N_s, a_s k / (z - s) ^ (k.val + 1) -
@@ -2251,10 +2275,10 @@ private theorem higherOrderCancel_assembly_nh
               obtain ⟨g_rp, hg_rp_an, hg_rp_eq⟩ :=
                 meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
               have h_pp_eq : (fun z => f z - g_rp z) =ᶠ[𝓝[≠] s]
-                  meromorphicPrincipalPart f s := by
+                  GeneralizedResidueTheory.meromorphicPrincipalPart f s := by
                 filter_upwards [hg_rp_eq] with z hz
                 linear_combination hz
-              have h_pp_mero : MeromorphicAt (meromorphicPrincipalPart f s) s :=
+              have h_pp_mero : MeromorphicAt (GeneralizedResidueTheory.meromorphicPrincipalPart f s) s :=
                 ((hMero s hs).fun_sub hg_rp_an.meromorphicAt).congr h_pp_eq
               exact h_pp_mero.fun_sub
                 ((MeromorphicAt.const (residueAt f s) s).fun_div
@@ -2266,7 +2290,7 @@ private theorem higherOrderCancel_assembly_nh
               obtain ⟨g_rp, hg_rp_an, hg_rp_eq⟩ :=
                 meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
               obtain ⟨rg, hrg_pos, hg_ball⟩ := hg_rp_an.exists_ball_analyticOnNhd
-              have h_ev_mem : {z | f z - meromorphicPrincipalPart f s z = g_rp z} ∈ 𝓝[≠] s :=
+              have h_ev_mem : {z | f z - GeneralizedResidueTheory.meromorphicPrincipalPart f s z = g_rp z} ∈ 𝓝[≠] s :=
                 hg_rp_eq
               rw [Metric.mem_nhdsWithin_iff] at h_ev_mem
               obtain ⟨rp, hrp_pos, hrp_eq⟩ := h_ev_mem
@@ -2288,7 +2312,7 @@ private theorem higherOrderCancel_assembly_nh
                      Set.mem_compl_singleton_iff.mpr hne⟩
                   have hfpp := hrp_eq h_in
                   simp only [Set.mem_setOf_eq] at hfpp
-                  change meromorphicPrincipalPart f s z - residueAt f s / (z - s) =
+                  change GeneralizedResidueTheory.meromorphicPrincipalPart f s z - residueAt f s / (z - s) =
                     f z - residueAt f s / (z - s) - g_rp z
                   linear_combination -hfpp
                 have hg_cont : ContinuousOn g_rp (Metric.closedBall s r) :=
