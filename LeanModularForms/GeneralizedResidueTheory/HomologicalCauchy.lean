@@ -12,6 +12,10 @@ import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Calculus.DSlope
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.Normed.Group.ZeroAtInfty
+import Mathlib.Analysis.Complex.HasPrimitives
+import Mathlib.MeasureTheory.Measure.OpenPos
+import Mathlib.Topology.MetricSpace.HausdorffDimension
+import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 
 /-!
 # Null-Homologous Curves and the Cauchy Integral Theorem
@@ -881,7 +885,62 @@ This follows from the fact that a Lipschitz map from ℝ to ℂ has image with
 Hausdorff dimension at most 1, hence Lebesgue measure 0 in ℂ. -/
 private lemma piecewiseC1_image_interior_empty (γ : PiecewiseC1Immersion) :
     interior (γ.toFun '' Icc γ.a γ.b) = ∅ := by
-  sorry
+  rw [interior_eq_empty_iff_dense_compl]
+  apply dense_compl_of_dimH_lt_finrank
+  -- Split image into off-partition part (locally Lipschitz) and partition part (finite)
+  have hsplit : γ.toFun '' Icc γ.a γ.b =
+      γ.toFun '' (Icc γ.a γ.b \ ↑γ.partition) ∪ γ.toFun '' ↑γ.partition := by
+    rw [← Set.image_union]
+    congr 1
+    exact (Set.diff_union_of_subset γ.partition_subset).symm
+  rw [hsplit, dimH_union]
+  apply max_lt
+  · -- Off-partition part: dimH ≤ dimH(ℝ) = 1 < finrank ℝ ℂ = 2
+    apply lt_of_le_of_lt
+    · apply dimH_image_le_of_locally_lipschitzOn
+      -- For each t ∉ partition, build local Lipschitz from differentiability
+      intro t ⟨ht_Icc, ht_npart⟩
+      -- t is in the open interval (endpoints are in partition)
+      have ht_Ioo : t ∈ Ioo γ.a γ.b := by
+        constructor
+        · by_contra h; push_neg at h
+          exact ht_npart (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1)
+        · by_contra h; push_neg at h
+          exact ht_npart (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)
+      -- ContinuousAt (deriv γ.toFun) at t (from deriv_continuous_off_partition)
+      have hcont : ContinuousAt (deriv γ.toFun) t :=
+        γ.deriv_continuous_off_partition t ht_Ioo ht_npart
+      -- In a neighborhood of t avoiding partition, all points in Icc have HasDerivAt
+      have hevt : ∀ᶠ y in 𝓝 t, HasDerivAt γ.toFun (deriv γ.toFun y) y := by
+        have h_open_compl : IsOpen (↑γ.partition : Set ℝ)ᶜ :=
+          γ.partition.finite_toSet.isClosed.isOpen_compl
+        have h_open_Ioo : IsOpen (Ioo γ.a γ.b) := isOpen_Ioo
+        -- t is in both open sets: compl(partition) and Ioo(a,b)
+        have ht_mem1 : t ∈ (↑γ.partition : Set ℝ)ᶜ := ht_npart
+        have ht_mem2 : t ∈ Ioo γ.a γ.b := ht_Ioo
+        filter_upwards [(h_open_compl.inter h_open_Ioo).mem_nhds ⟨ht_mem1, ht_mem2⟩]
+          with y ⟨hy_compl, hy_Ioo⟩
+        exact (γ.smooth_off_partition y (Ioo_subset_Icc_self hy_Ioo) hy_compl).hasDerivAt
+      -- Build HasStrictDerivAt from HasDerivAt + ContinuousAt of derivative
+      have hstrict : HasStrictDerivAt γ.toFun (deriv γ.toFun t) t :=
+        hasStrictDerivAt_of_hasDerivAt_of_continuousAt hevt hcont
+      -- Get local Lipschitz from strict differentiability
+      obtain ⟨K, v, hv, hLip⟩ := hstrict.hasStrictFDerivAt.exists_lipschitzOnWith
+      -- Restrict to within s = Icc γ.a γ.b \ ↑γ.partition
+      refine ⟨K, (Icc γ.a γ.b \ ↑γ.partition) ∩ v,
+        inter_mem_nhdsWithin _ hv,
+        hLip.mono Set.inter_subset_right⟩
+    · -- dimH(Icc γ.a γ.b \ partition : Set ℝ) ≤ dimH(univ : Set ℝ) = 1 < 2
+      apply lt_of_le_of_lt (dimH_mono (Set.subset_univ _))
+      simp only [Real.dimH_univ]
+      rw [Complex.finrank_real_complex]
+      norm_cast
+  · -- Partition part: finite set → dimH = 0 < finrank ℝ ℂ = 2
+    have hfin : (γ.toFun '' ↑γ.partition).Finite :=
+      γ.partition.finite_toSet.image γ.toFun
+    rw [hfin.dimH_zero]
+    rw [Complex.finrank_real_complex]
+    norm_cast
 
 theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U)
