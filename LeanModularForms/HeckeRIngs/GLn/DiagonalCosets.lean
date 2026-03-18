@@ -132,9 +132,7 @@ lemma T_diag_eq_iff (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 <
     T_diag n a ha hda = T_diag n b hb hdb ↔
     DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) =
     DoubleCoset.doubleCoset (diagMat n b hb : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) := by
-  constructor
-  · intro h; exact congr_arg T'.set h
-  · intro h; exact T'_ext _ _ _ h
+  exact ⟨congr_arg T'.set, fun h => T'_ext _ _ _ h⟩
 
 end TDiag
 
@@ -571,7 +569,7 @@ private lemma genEquiv_zero (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) :
     genEquiv k j hj ⟨0, by omega⟩ = Sum.inl ⟨0, by omega⟩ := by
   simp only [genEquiv, Equiv.trans_apply]
   rw [Equiv.swap_apply_of_ne_of_ne (by intro h; simp at h)
-    (by intro h; exact hj (by rw [← h]))]
+    (fun h => hj (by rw [← h]))]
   show finEquivSum k ⟨0, by omega⟩ = _
   unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
 
@@ -648,7 +646,7 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
     simp only [R_big]
     rw [det_submatrix_equiv_self, det_fromBlocks_zero₂₁,
       det_one, mul_one, hR_det]
-  have hj_ne_zero : j ≠ (0 : Fin (k + 2)) := by intro h; exact hj (by rw [h]; rfl)
+  have hj_ne_zero : j ≠ (0 : Fin (k + 2)) := fun h => hj (by rw [h]; rfl)
   refine ⟨⟨L_big, hL_det_big⟩, ⟨R_big, hR_det_big⟩, d', hd'_pos,
     by show d' ⟨0, _⟩ = g; simp [d'], ?_, ?_, ?_, ?_⟩
   · intro i hi1 hi2; show d' i = d i
@@ -903,7 +901,7 @@ private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d 
           simp only [d₂]
           simp only [show (⟨0, by omega⟩ : Fin (k + 2)) = (0 : Fin (k + 2)) from rfl, if_true]
           have h1ne : (⟨1, hi⟩ : Fin (k + 2)) ≠ (0 : Fin (k + 2)) := by
-            intro h; exact absurd (Fin.ext_iff.mp h) (by simp)
+            exact fun h => absurd (Fin.ext_iff.mp h) (by simp)
           rw [if_neg h1ne]
           have hdvd_tail : ∀ (i : Fin (k + 1)), d₁ 0 ∣ d₁ ⟨i.val + 1, by omega⟩ := by
             intro i; exact hd₁_div ⟨i.val + 1, by omega⟩
@@ -914,9 +912,9 @@ private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d 
         | succ i =>
           simp only [d₂]
           have h1ne : (⟨i + 1, by omega⟩ : Fin (k + 2)) ≠ (0 : Fin (k + 2)) := by
-            intro h; exact absurd (Fin.ext_iff.mp h) (by simp)
+            exact fun h => absurd (Fin.ext_iff.mp h) (by simp)
           have h2ne : (⟨i + 2, hi⟩ : Fin (k + 2)) ≠ (0 : Fin (k + 2)) := by
-            intro h; exact absurd (Fin.ext_iff.mp h) (by simp)
+            exact fun h => absurd (Fin.ext_iff.mp h) (by simp)
           rw [if_neg h1ne, if_neg h2ne]
           show d_tail' ⟨i, by omega⟩ ∣ d_tail' ⟨i + 1, by omega⟩
           exact hd_tail'_chain i (by omega)

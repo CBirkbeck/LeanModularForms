@@ -33,13 +33,12 @@ private def IsTransvec {m : ℕ} (E : Matrix.SpecialLinearGroup (Fin m) ℤ) : P
   ∃ (i j : Fin m) (hij : i ≠ j) (c : ℤ), E = slTransvecG i j hij c
 
 private lemma slTransvecG_mul {m : ℕ} (i j : Fin m) (hij : i ≠ j) (a b : ℤ) :
-    slTransvecG i j hij a * slTransvecG i j hij b = slTransvecG i j hij (a + b) := by
-  apply Subtype.ext
-  exact Matrix.transvection_mul_transvection_same i j hij a b
+    slTransvecG i j hij a * slTransvecG i j hij b = slTransvecG i j hij (a + b) :=
+  Subtype.ext (Matrix.transvection_mul_transvection_same i j hij a b)
 
 private lemma slTransvecG_zero {m : ℕ} (i j : Fin m) (hij : i ≠ j) :
-    slTransvecG i j hij 0 = 1 := by
-  apply Subtype.ext; simp [slTransvecG, Matrix.transvection_zero]
+    slTransvecG i j hij 0 = 1 :=
+  Subtype.ext (by simp [slTransvecG, Matrix.transvection_zero])
 
 private lemma slTransvecG_mul_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
     (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
@@ -68,10 +67,8 @@ private lemma slTransvecG_mul_right_entry {m : ℕ}
 private lemma isTransvec_append {m : ℕ}
     (L₁ L₂ : List (Matrix.SpecialLinearGroup (Fin m) ℤ))
     (h₁ : ∀ E ∈ L₁, IsTransvec E) (h₂ : ∀ E ∈ L₂, IsTransvec E) :
-    ∀ E ∈ L₁ ++ L₂, IsTransvec E := by
-  intro E hE
-  simp only [List.mem_append] at hE
-  exact hE.elim (h₁ E) (h₂ E)
+    ∀ E ∈ L₁ ++ L₂, IsTransvec E :=
+  fun E hE => (List.mem_append.mp hE).elim (h₁ E) (h₂ E)
 
 private def liftTransvec {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ) :
     Matrix.SpecialLinearGroup (Fin (m + 1)) ℤ :=
@@ -177,7 +174,7 @@ private lemma col0_reduce {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) 
   | _ k ihk =>
   intro τ hk
   by_cases hn : nzCount τ ≤ 1
-  · exact ⟨[], fun _ h => by simp at h, by simp; exact hn⟩
+  · exact ⟨[], fun _ h => absurd h (by simp), by simp; exact hn⟩
   · push_neg at hn
     obtain ⟨i, j, hij, c, hlt⟩ := col0_euclidean_step τ hn
     set τ' := slTransvecG i j hij c * τ with hτ'_def
@@ -291,7 +288,7 @@ private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) �
   | _ k ihk =>
   intro σ hσ00 hσi0 hk
   by_cases hzero : row0Sum σ = 0
-  · refine ⟨[], fun _ h => by simp at h, by simp [hσ00], fun j hj => ?_,
+  · refine ⟨[], fun _ h => absurd h (by simp), by simp [hσ00], fun j hj => ?_,
       fun i hi => by simp [hσi0 i hi]⟩
     simp only [List.prod_nil, mul_one]
     have h_le : (if (j : ℕ) = 0 then 0 else (σ.1 0 j).natAbs) ≤ row0Sum σ :=
@@ -403,7 +400,7 @@ private lemma block_form_transvec_lift {m : ℕ}
       (∀ E ∈ L', IsTransvec E) ∧ M = L'.prod := by
   induction L generalizing M with
   | nil =>
-    refine ⟨[], fun _ h => by simp at h, ?_⟩
+    refine ⟨[], fun _ h => absurd h (by simp), ?_⟩
     simp only [List.prod_nil] at hL_eq ⊢
     apply Subtype.ext; ext a b
     simp only [Matrix.SpecialLinearGroup.coe_one, Matrix.one_apply]
@@ -463,7 +460,7 @@ private lemma to_block_form {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)
   by_cases hi₀_zero : i₀ = 0
   · subst hi₀_zero
     rcases h_unit with h1 | h_neg1
-    · exact ⟨[], fun _ h => by simp at h, by simp [h1],
+    · exact ⟨[], fun _ h => absurd h (by simp), by simp [h1],
         fun i hi => by simp [h_others i hi]⟩
     · rcases m with _ | m'
       · exact absurd (show τ.1.det = -1 by simp [Matrix.det_unique, h_neg1])
@@ -552,7 +549,7 @@ private theorem SLnZ_transvec_gen (m : ℕ) (σ : Matrix.SpecialLinearGroup (Fin
       (∀ E ∈ L, IsTransvec E) ∧ σ = L.prod := by
   induction m with
   | zero =>
-    refine ⟨[], fun _ h => by simp at h, ?_⟩
+    refine ⟨[], fun _ h => absurd h (by simp), ?_⟩
     apply Subtype.ext; ext i; exact i.elim0
   | succ m ih =>
     obtain ⟨L_col, hL_col, h_nz⟩ := col0_reduce σ
@@ -671,13 +668,7 @@ omit [NeZero n] in
 lemma diagMat_scalar_conj_eq (c : ℕ) (hc : 0 < c) (x : GL (Fin n) ℚ) :
     (diagMat n (fun _ => c) (fun _ => hc))⁻¹ * x *
       diagMat n (fun _ => c) (fun _ => hc) = x := by
-  have := diagMat_scalar_comm n c hc x
-  calc (diagMat n (fun _ => c) (fun _ => hc))⁻¹ * x *
-        diagMat n (fun _ => c) (fun _ => hc)
-      = (diagMat n (fun _ => c) (fun _ => hc))⁻¹ *
-        (diagMat n (fun _ => c) (fun _ => hc) * x) := by
-        rw [this, mul_assoc]
-    _ = x := by rw [← mul_assoc, inv_mul_cancel, one_mul]
+  rw [mul_assoc, ← diagMat_scalar_comm n c hc x, ← mul_assoc, inv_mul_cancel, one_mul]
 
 lemma conjAct_scalar_smul_eq (c : ℕ) (hc : 0 < c) :
     ConjAct.toConjAct (diagMat n (fun _ => c) (fun _ => hc)) • (GL_pair n).H =
@@ -893,8 +884,7 @@ omit [NeZero n] in
 private lemma slTransvec_mul (i j : Fin n) (hij : i ≠ j) (a b : ℤ) :
     slTransvec n i j hij a * slTransvec n i j hij b =
     slTransvec n i j hij (a + b) := by
-  apply Subtype.ext
-  show (Matrix.TransvectionStruct.mk i j hij a).toMatrix *
+  apply Subtype.ext; show (Matrix.TransvectionStruct.mk i j hij a).toMatrix *
     (Matrix.TransvectionStruct.mk i j hij b).toMatrix =
     (Matrix.TransvectionStruct.mk i j hij (a + b)).toMatrix
   simp only [Matrix.TransvectionStruct.toMatrix]
@@ -926,8 +916,8 @@ private lemma slTransvec_CRT (d d' : ℕ) (hcop : Nat.Coprime d d')
   · exact slTransvec_congMod n d' i j hij _ ⟨c * Nat.gcdB d d', by ring⟩
 
 omit [NeZero n] in
-private lemma congMod_one (d : ℕ) : congMod n d 1 := by
-  intro i j; simp [SpecialLinearGroup.coe_one, Matrix.one_apply]
+private lemma congMod_one (d : ℕ) : congMod n d 1 :=
+  fun i j => by simp [SpecialLinearGroup.coe_one, Matrix.one_apply]
 
 omit [NeZero n] in
 private lemma congMod_mul (d : ℕ) (a b : SpecialLinearGroup (Fin n) ℤ)
@@ -1032,8 +1022,8 @@ private lemma one_in_CRTProd (d d' : ℕ) :
 
 omit [NeZero n] in
 private lemma slTransvecG_eq_slTransvec (i j : Fin n) (hij : i ≠ j) (c : ℤ) :
-    slTransvecG i j hij c = slTransvec n i j hij c := by
-  apply Subtype.ext; rfl
+    slTransvecG i j hij c = slTransvec n i j hij c :=
+  Subtype.ext rfl
 
 omit [NeZero n] in
 private lemma isTransvec_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
