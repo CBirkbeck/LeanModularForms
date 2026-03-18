@@ -5,7 +5,7 @@ import Mathlib.Tactic
 
 
 
-open  TopologicalSpace Set
+open TopologicalSpace Set
   Metric Filter Function Complex
 
 
@@ -54,30 +54,31 @@ def mapdiv (n : ℕ+) : Nat.divisorsAntidiagonal n → ℕ+ × ℕ+ :=
   use n2
   exact h222
 
-/- def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ ℕ+ × ℕ+
+def sigmaAntidiagonalEquivProd : (Σ n : ℕ+, Nat.divisorsAntidiagonal n) ≃ ℕ+ × ℕ+
     where
   toFun x := mapdiv x.1 x.2
   invFun x :=
     ⟨⟨x.1.1 * x.2.1, by apply mul_pos x.1.2 x.2.2⟩, ⟨x.1, x.2⟩, by
-      rw [Nat.mem_divisorsAntidiagonal]; simp; constructor; rfl; constructor;
-        linarith [x.1.2]; linarith [x.2.2] ⟩
+      rw [Nat.mem_divisorsAntidiagonal]
+      simp
+      refine ⟨rfl, ?_, ?_⟩
+      · linarith [x.1.2]
+      · linarith [x.2.2]⟩
   left_inv := by
     rintro ⟨n, ⟨k, l⟩, h⟩
     rw [Nat.mem_divisorsAntidiagonal] at h
     simp_rw [mapdiv]
     simp only [PNat.mk_coe]
     ext
-    simp at *
-    simp_rw [h]
-    norm_cast
-    simp only
+    · simp at *
+      simp_rw [h]
+      norm_cast
+    · simp only
     simp only
   right_inv := by
     rintro ⟨n, ⟨k, l⟩, h⟩
+    · simp_rw [mapdiv]
+      exfalso
+      simp at *
     simp_rw [mapdiv]
-    exfalso
-
-    simp at *
-    simp_rw [mapdiv]
-    simp
-    norm_cast -/
+    norm_cast

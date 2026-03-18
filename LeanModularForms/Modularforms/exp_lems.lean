@@ -5,7 +5,7 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 open UpperHalfPlane TopologicalSpace Set
   Metric Filter Function Complex
 
-open scoped Interval Real NNReal ENNReal Topology BigOperators Nat Classical
+open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
 
 theorem exp_upperHalfPlane_lt_one (z : ℍ) :
     ‖(Complex.exp (2 * ↑π * Complex.I * z))‖ < 1 := by
@@ -24,7 +24,7 @@ theorem exp_upperHalfPlane_lt_one_nat (z : ℍ) (n : ℕ) :
 lemma exp_periodo (z : ℍ) (n : ℕ) :
   cexp (2 * ↑π * Complex.I * ↑↑n * (1 + ↑z)) = cexp (2 * ↑π * Complex.I * ↑↑n * ↑z) := by
   rw [mul_add]
-  have :=  exp_periodic.nat_mul n
+  have := exp_periodic.nat_mul n
   rw [Periodic] at this
   have ht := this (2 * π * Complex.I * n * z)
   rw [← ht]
