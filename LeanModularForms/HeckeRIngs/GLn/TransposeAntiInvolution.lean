@@ -71,10 +71,10 @@ lemma GL_transpose_mem_posDetInt {g : GL (Fin n) ℚ} (hg : g ∈ posDetInt_subm
   exact hg.2
 
 omit [NeZero n] in
-lemma diagMat_GL_transpose_eq (a : Fin n → ℕ+) :
-    (GL_transposeEquiv n (diagMat n a)).unop = diagMat n a := by
+lemma diagMat_GL_transpose_eq (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+    (GL_transposeEquiv n (diagMat n a ha)).unop = diagMat n a ha := by
   apply Units.ext
-  change (diagMat n a).val.transpose = (diagMat n a).val
+  change (diagMat n a ha).val.transpose = (diagMat n a ha).val
   rw [diagMat_val, Matrix.diagonal_transpose]
 
 /-- The transpose as an `AntiInvolution` for `GL_pair n`. -/
@@ -89,20 +89,20 @@ lemma GL_pair_onT'_eq (D : T' (GL_pair n)) :
     (GL_pair_antiInvolution n).onT' D = D := by
   apply T'_ext (GL_pair n)
   set g := (D.eql.choose : GL (Fin n) ℚ)
-  obtain ⟨a, hdiv, hrep⟩ := exists_diagonal_representative n D.eql.choose
-  have hD_set : D.set = DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ)
+  obtain ⟨a, ha, hdiv, hrep⟩ := exists_diagonal_representative n D.eql.choose
+  have hD_set : D.set = DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ)
       (GL_pair n).H (GL_pair n).H := by
     have h1 := D.eql.choose_spec
     have h2 := congr_arg T'.set hrep
     simp only [T_mk, T_diag, diagMat_delta] at h2
     rw [h1, h2]
-  have hg_mem : g ∈ DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ)
+  have hg_mem : g ∈ DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ)
       (GL_pair n).H (GL_pair n).H := by
     rw [← hD_set]; rw [D.eql.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
   rw [DoubleCoset.mem_doubleCoset] at hg_mem
   obtain ⟨L, hL, R, hR, hg_eq⟩ := hg_mem
   have hbar_mem : (GL_pair_antiInvolution n).bar g ∈
-      DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ) (GL_pair n).H (GL_pair n).H := by
+      DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ) (GL_pair n).H (GL_pair n).H := by
     show (GL_transposeEquiv n g).unop ∈ _
     rw [DoubleCoset.mem_doubleCoset]
     refine ⟨(GL_transposeEquiv n R).unop, GL_transpose_mem_SLnZ n hR,

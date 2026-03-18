@@ -68,34 +68,34 @@ private lemma det_upper_tri {k : ℕ} {M : Matrix (Fin k) (Fin k) ℤ}
 variable (n : ℕ) [NeZero n]
 
 omit [NeZero n] in
-lemma divChain_dvd {a : Fin n → ℕ+} (ha : DivChain n a)
-    {i j : Fin n} (hij : i ≤ j) : (a i : ℕ) ∣ (a j : ℕ) := by
+lemma divChain_dvd {a : Fin n → ℕ} (ha : DivChain n a)
+    {i j : Fin n} (hij : i ≤ j) : a i ∣ a j := by
   suffices h : ∀ (d : ℕ) (hd : i.val + d < n),
-      (a i : ℕ) ∣ (a ⟨i.val + d, hd⟩ : ℕ) by
+      a i ∣ a ⟨i.val + d, hd⟩ by
     have := h (j.val - i.val) (by omega)
     simp only [Nat.add_sub_cancel' (Fin.val_le_of_le hij)] at this
     exact this
   intro d
   induction d with
   | zero =>
-    intro hd; show _ ∣ (a ⟨i.val, hd⟩ : ℕ); rfl
+    intro hd; show _ ∣ a ⟨i.val, hd⟩; rfl
   | succ m ih =>
     intro hd
     exact dvd_trans (ih (by omega)) (ha (i.val + m) hd)
 
 omit [NeZero n] in
-lemma divChain_div_pos {a : Fin n → ℕ+} (ha : DivChain n a)
-    {i j : Fin n} (hij : i ≤ j) : 0 < (a j : ℕ) / (a i : ℕ) :=
-  Nat.div_pos (Nat.le_of_dvd (a j).pos (divChain_dvd n ha hij)) (a i).pos
+lemma divChain_div_pos {a : Fin n → ℕ} (hpos : ∀ i, 0 < a i) (ha : DivChain n a)
+    {i j : Fin n} (hij : i ≤ j) : 0 < a j / a i :=
+  Nat.div_pos (Nat.le_of_dvd (hpos j) (divChain_dvd n ha hij)) (hpos i)
 
 omit [NeZero n] in
 @[reducible]
-def UpperTriRep (a : Fin n → ℕ+) (_hdiv : DivChain n a) :=
-  (p : { ij : Fin n × Fin n // ij.1 < ij.2 }) → Fin ((a p.val.2 : ℕ) / (a p.val.1 : ℕ))
+def UpperTriRep (a : Fin n → ℕ) (_hdiv : DivChain n a) :=
+  (p : { ij : Fin n × Fin n // ij.1 < ij.2 }) → Fin (a p.val.2 / a p.val.1)
 
 omit [NeZero n] in
 /-- Upper-triangular matrix with diagonal `a` and off-diagonal `M_{ij} = a_i * B_{ij}`. -/
-def upperTriMat (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+def upperTriMat (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     Matrix (Fin n) (Fin n) ℤ :=
   fun i j =>
     if h : i < j then (a i : ℤ) * (B ⟨(i, j), h⟩ : ℕ)
@@ -104,44 +104,46 @@ def upperTriMat (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a 
 
 omit [NeZero n] in
 @[simp]
-lemma upperTriMat_apply_lt (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv)
+lemma upperTriMat_apply_lt (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv)
     {i j : Fin n} (h : i < j) :
     upperTriMat n a hdiv B i j = (a i : ℤ) * (B ⟨(i, j), h⟩ : ℕ) := by
   simp [upperTriMat, h]
 
 omit [NeZero n] in
 @[simp]
-lemma upperTriMat_apply_diag (a : Fin n → ℕ+) (hdiv : DivChain n a)
+lemma upperTriMat_apply_diag (a : Fin n → ℕ) (hdiv : DivChain n a)
     (B : UpperTriRep n a hdiv) (i : Fin n) :
     upperTriMat n a hdiv B i i = (a i : ℤ) := by
   simp [upperTriMat]
 
 omit [NeZero n] in
-lemma upperTriMat_apply_gt (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv)
+lemma upperTriMat_apply_gt (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv)
     {i j : Fin n} (h : j < i) :
     upperTriMat n a hdiv B i j = 0 := by
   simp [upperTriMat, not_lt.mpr (le_of_lt h), ne_of_gt h]
 
 omit [NeZero n] in
-lemma upperTriMat_det (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+lemma upperTriMat_det (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     (upperTriMat n a hdiv B).det = ∏ i, (a i : ℤ) := by
   rw [det_upper_tri (fun i j h => upperTriMat_apply_gt n a hdiv B h)]
   congr 1; ext i; simp
 
 omit [NeZero n] in
-lemma upperTriMat_det_pos (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+lemma upperTriMat_det_pos (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
+    (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     0 < (upperTriMat n a hdiv B).det := by
   rw [upperTriMat_det]
-  exact Finset.prod_pos fun i _ => by exact_mod_cast (a i).pos
+  exact Finset.prod_pos fun i _ => by exact_mod_cast hpos i
 
 omit [NeZero n] in
-lemma upperTriMat_injective (a : Fin n → ℕ+) (hdiv : DivChain n a) :
+lemma upperTriMat_injective (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
+    (hdiv : DivChain n a) :
     Function.Injective (upperTriMat n a hdiv) := by
   intro B₁ B₂ h
   funext ⟨⟨i, j⟩, hij⟩
   have h_eq := congr_fun₂ h i j
   simp only [upperTriMat_apply_lt, hij] at h_eq
-  have h_ai_pos : (a i : ℤ) ≠ 0 := by exact_mod_cast (a i).ne_zero
+  have h_ai_pos : (a i : ℤ) ≠ 0 := by exact_mod_cast (hpos i).ne'
   have := mul_left_cancel₀ h_ai_pos h_eq
   exact Fin.ext (by exact_mod_cast this)
 
@@ -153,41 +155,43 @@ private lemma intMat_det_cast' (A : Matrix (Fin n) (Fin n) ℤ) :
   rw [h, ← RingHom.map_det, Int.coe_castRingHom]
 
 /-- The upper-triangular representative as a `GL_n(ℚ)` element. -/
-noncomputable def upperTriGL (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+noncomputable def upperTriGL (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
+    (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     ((upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ))
     (by
       rw [intMat_det_cast', upperTriMat_det]
-      have := upperTriMat_det_pos n a hdiv B
+      have := upperTriMat_det_pos n a hpos hdiv B
       rw [upperTriMat_det] at this
       exact_mod_cast this.ne')
 
 omit [NeZero n] in
 @[simp]
-lemma upperTriGL_val (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
-    (↑(upperTriGL n a hdiv B) : Matrix (Fin n) (Fin n) ℚ) =
+lemma upperTriGL_val (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
+    (B : UpperTriRep n a hdiv) :
+    (↑(upperTriGL n a hpos hdiv B) : Matrix (Fin n) (Fin n) ℚ) =
     (upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ) := rfl
 
 omit [NeZero n] in
-lemma upperTriGL_hasIntEntries (a : Fin n → ℕ+) (hdiv : DivChain n a)
-    (B : UpperTriRep n a hdiv) :
-    HasIntEntries n (upperTriGL n a hdiv B) :=
+lemma upperTriGL_hasIntEntries (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
+    (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+    HasIntEntries n (upperTriGL n a hpos hdiv B) :=
   ⟨upperTriMat n a hdiv B, rfl⟩
 
 omit [NeZero n] in
-lemma upperTriGL_mem_posDetInt (a : Fin n → ℕ+) (hdiv : DivChain n a)
-    (B : UpperTriRep n a hdiv) :
-    upperTriGL n a hdiv B ∈ posDetInt_submonoid n :=
-  ⟨upperTriGL_hasIntEntries n a hdiv B, by
+lemma upperTriGL_mem_posDetInt (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
+    (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+    upperTriGL n a hpos hdiv B ∈ posDetInt_submonoid n :=
+  ⟨upperTriGL_hasIntEntries n a hpos hdiv B, by
     show 0 < ((upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ)).det
     rw [intMat_det_cast', upperTriMat_det]
-    have := upperTriMat_det_pos n a hdiv B
+    have := upperTriMat_det_pos n a hpos hdiv B
     rw [upperTriMat_det] at this
     exact_mod_cast this⟩
 
 omit [NeZero n] in
-def unipMat (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+def unipMat (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     Matrix (Fin n) (Fin n) ℤ :=
   fun i j =>
     if h : i < j then (B ⟨(i, j), h⟩ : ℕ)
@@ -195,17 +199,17 @@ def unipMat (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv
     else 0
 
 omit [NeZero n] in
-lemma unipMat_det (a : Fin n → ℕ+) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+lemma unipMat_det (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     (unipMat n a hdiv B).det = 1 := by
   rw [det_upper_tri (fun i j h => by simp [unipMat, not_lt.mpr (le_of_lt h), ne_of_gt h])]
   simp [unipMat]
 
 omit [NeZero n] in
 /-- Each upper-triangular representative lies in `Γ · diag(a) · Γ`. -/
-theorem upperTriGL_mem_doubleCoset (a : Fin n → ℕ+) (hdiv : DivChain n a)
-    (B : UpperTriRep n a hdiv) :
-    (upperTriGL n a hdiv B : GL (Fin n) ℚ) ∈
-    DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ)
+theorem upperTriGL_mem_doubleCoset (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
+    (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
+    (upperTriGL n a hpos hdiv B : GL (Fin n) ℚ) ∈
+    DoubleCoset.doubleCoset (diagMat n a hpos : GL (Fin n) ℚ)
       (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   rw [DoubleCoset.mem_doubleCoset]
   set γ_SL : SpecialLinearGroup (Fin n) ℤ := ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
@@ -214,7 +218,7 @@ theorem upperTriGL_mem_doubleCoset (a : Fin n → ℕ+) (hdiv : DivChain n a)
   rw [one_mul]
   apply Units.ext
   show (upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ) =
-    (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ) *
+    (↑(diagMat n a hpos) : Matrix (Fin n) (Fin n) ℚ) *
     (↑(SLnZ_to_GLnQ n γ_SL) : Matrix (Fin n) (Fin n) ℚ)
   rw [SLnZ_to_GLnQ_val, diagMat_val]
   ext i j
@@ -232,7 +236,7 @@ theorem upperTriGL_mem_doubleCoset (a : Fin n → ℕ+) (hdiv : DivChain n a)
 omit [NeZero n] in
 /-- For `k ≠ j` and columns `< j` already identity-like, the product `σ i k * M₂ k j`
     contributes only from the `k = i, i < j` case. -/
-private lemma coset_sum_eq {a : Fin n → ℕ+} {hdiv : DivChain n a}
+private lemma coset_sum_eq {a : Fin n → ℕ} {hdiv : DivChain n a}
     {B₂ : UpperTriRep n a hdiv}
     {σ : SpecialLinearGroup (Fin n) ℤ}
     {i j : Fin n}
@@ -275,7 +279,8 @@ private lemma coset_sum_eq {a : Fin n → ℕ+} {hdiv : DivChain n a}
 omit [NeZero n] in
 /-- When `i < j`, the entry `σ i j` must be zero: the bounded difference of `B₁` and `B₂`
     cannot absorb a nonzero integer multiple of `a_j / a_i`. -/
-private lemma coset_entry_zero_of_lt {a : Fin n → ℕ+} {hdiv : DivChain n a}
+private lemma coset_entry_zero_of_lt {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
+    {hdiv : DivChain n a}
     {B₁ B₂ : UpperTriRep n a hdiv}
     {σ : SpecialLinearGroup (Fin n) ℤ}
     {i j : Fin n} (hij : i < j)
@@ -283,14 +288,14 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ+} {hdiv : DivChain n a}
       σ.val i j * (a j : ℤ) + upperTriMat n a hdiv B₂ i j) :
     σ.val i j = 0 := by
   simp only [upperTriMat_apply_lt _ _ _ _ hij] at h_eq
-  have h_dvd : (a i : ℕ) ∣ (a j : ℕ) := divChain_dvd n hdiv (le_of_lt hij)
-  set q := (a j : ℕ) / (a i : ℕ)
-  have hq_pos : 0 < q := divChain_div_pos n hdiv (le_of_lt hij)
+  have h_dvd : a i ∣ a j := divChain_dvd n hdiv (le_of_lt hij)
+  set q := a j / a i
+  have hq_pos : 0 < q := divChain_div_pos n hpos hdiv (le_of_lt hij)
   have h_aj_eq : (a j : ℤ) = (a i : ℤ) * (q : ℤ) := by
     have h := Nat.div_mul_cancel h_dvd
     have : (q : ℤ) * (a i : ℤ) = (a j : ℤ) := by exact_mod_cast h
     linarith
-  have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (a i).ne_zero
+  have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (hpos i).ne'
   have h_cancel : σ.val i j * (q : ℤ) =
       ((B₁ ⟨(i, j), hij⟩ : ℕ) : ℤ) - ((B₂ ⟨(i, j), hij⟩ : ℕ) : ℤ) := by
     apply mul_left_cancel₀ h_ai_ne
@@ -312,10 +317,11 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ+} {hdiv : DivChain n a}
 
 omit [NeZero n] in
 /-- Distinct entry assignments give distinct left cosets of `SL_n(ℤ)`. -/
-theorem upperTriMat_distinct_cosets (a : Fin n → ℕ+) (hdiv : DivChain n a)
+theorem upperTriMat_distinct_cosets (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
+    (hdiv : DivChain n a)
     (B₁ B₂ : UpperTriRep n a hdiv) (hne : B₁ ≠ B₂) :
     ∀ (γ : GL (Fin n) ℚ), γ ∈ SLnZ_subgroup n →
-      upperTriGL n a hdiv B₁ ≠ γ * upperTriGL n a hdiv B₂ := by
+      upperTriGL n a hpos hdiv B₁ ≠ γ * upperTriGL n a hpos hdiv B₂ := by
   intro γ ⟨σ, hσ⟩ heq; subst hσ; apply hne; clear hne
   have hmat : upperTriMat n a hdiv B₁ = σ.val * upperTriMat n a hdiv B₂ := by
     have h := congr_arg Units.val heq
@@ -330,7 +336,8 @@ theorem upperTriMat_distinct_cosets (a : Fin n → ℕ+) (hdiv : DivChain n a)
       ∀ (i : Fin n), σ.val i j = if i = j then 1 else 0 by
     have hσ_one : σ.val = 1 := by
       ext i j; rw [hσ_cols (j.val + 1) j (by omega) i, Matrix.one_apply]
-    exact upperTriMat_injective n a hdiv (show M₁ = M₂ by rw [hmat, hσ_one, Matrix.one_mul])
+    exact upperTriMat_injective n a hpos hdiv
+      (show M₁ = M₂ by rw [hmat, hσ_one, Matrix.one_mul])
   intro m
   induction m with
   | zero => intro j hj; omega
@@ -347,22 +354,22 @@ theorem upperTriMat_distinct_cosets (a : Fin n → ℕ+) (hdiv : DivChain n a)
       rw [h_sum] at h_eq
       rcases lt_trichotomy i j with hij | rfl | hij
       · rw [if_neg (Fin.ne_of_lt hij)]
-        exact @coset_entry_zero_of_lt n a hdiv B₁ B₂ σ i j hij
+        exact @coset_entry_zero_of_lt n a hpos hdiv B₁ B₂ σ i j hij
           (by simp only [hij, ↓reduceIte] at h_eq; exact h_eq)
       · simp only [lt_irrefl, ↓reduceIte, M₁, upperTriMat_apply_diag] at h_eq ⊢
-        have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (a i).ne_zero
+        have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (hpos i).ne'
         exact mul_right_cancel₀ h_ai_ne (by linarith)
       · rw [if_neg (Fin.ne_of_gt hij)]
         simp only [show ¬(i < j) from not_lt.mpr (le_of_lt hij), ↓reduceIte,
           M₁, upperTriMat_apply_gt _ _ _ _ hij] at h_eq
-        have : (a j : ℤ) ≠ 0 := by exact_mod_cast (a j).ne_zero
+        have : (a j : ℤ) ≠ 0 := by exact_mod_cast (hpos j).ne'
         exact (mul_eq_zero.mp (by linarith)).resolve_right this
 
 omit [NeZero n] in
 /-- The number of upper-triangular representatives equals `∏_{i<j} (a_j / a_i)`. -/
-lemma upperTriRep_card (a : Fin n → ℕ+) (hdiv : DivChain n a) :
+lemma upperTriRep_card (a : Fin n → ℕ) (hdiv : DivChain n a) :
     Fintype.card (UpperTriRep n a hdiv) =
-    ∏ p : { ij : Fin n × Fin n // ij.1 < ij.2 }, ((a p.val.2 : ℕ) / (a p.val.1 : ℕ)) := by
+    ∏ p : { ij : Fin n × Fin n // ij.1 < ij.2 }, (a p.val.2 / a p.val.1) := by
   unfold UpperTriRep
   rw [Fintype.card_pi]
   congr 1; ext p; exact Fintype.card_fin _

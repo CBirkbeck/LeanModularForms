@@ -48,20 +48,23 @@ variable (p : ℕ) (hp : p.Prime)
 
 /-- The diagonal for the k-th generator: `(1,...,1,p,...,p)` with `n-1-k` ones
     followed by `k+1` entries of `p`. Here `k : Fin n`, giving `n` generators. -/
-def T_gen_diag (k : Fin n) : Fin n → ℕ+ :=
-  fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 1 else ⟨p, hp.pos⟩
+def T_gen_diag (k : Fin n) : Fin n → ℕ :=
+  fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p
 
 omit [NeZero n] in
 @[simp]
 lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
-    (T_gen_diag n p hp k i : ℕ) =
-    if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := by
-  simp only [T_gen_diag]
-  split_ifs <;> simp
+    T_gen_diag n p k i =
+    if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
+
+lemma T_gen_diag_pos (hp : p.Prime) (k : Fin n) : ∀ i, 0 < T_gen_diag n p k i := by
+  intro i; simp only [T_gen_diag]; split_ifs with h
+  · omega
+  · exact hp.pos
 
 /-- The T_gen diagonal satisfies the divisibility chain condition. -/
 lemma divChain_T_gen (k : Fin n) :
-    DivChain n (T_gen_diag n p hp k) := by
+    DivChain n (T_gen_diag n p k) := by
   intro i hi
   simp only [T_gen_diag_val]
   by_cases h1 : i < n - 1 - (k : ℕ)
@@ -73,15 +76,14 @@ lemma divChain_T_gen (k : Fin n) :
 
 /-- The k-th generator of R_p: `T(1,...,1,p,...,p)` with `k+1` entries of `p`. -/
 noncomputable def T_gen (k : Fin n) : HeckeAlgebra n :=
-  T_elem n (T_gen_diag n p hp k) (divChain_T_gen n p hp k)
+  T_elem n (T_gen_diag n p k) (T_gen_diag_pos n p hp k) (divChain_T_gen n p k)
 
 /-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
 lemma T_gen_diag_is_ppow (k : Fin n) :
-    T_gen_diag n p hp k =
-    ppowDiag n p hp (fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
+    T_gen_diag n p k =
+    ppowDiag n p (fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
   funext i
-  apply PNat.eq
-  simp only [T_gen_diag_val, ppowDiag_val]
+  simp only [T_gen_diag, ppowDiag]
   split_ifs <;> simp
 
 omit [NeZero n] in
@@ -99,9 +101,10 @@ lemma T_gen_exp_monotone (k : Fin n) :
 /-- Each T_gen lies in R_p. -/
 lemma T_gen_mem_R_p (k : Fin n) : T_gen n p hp k ∈ R_p n p hp := by
   have h_eq : T_gen n p hp k =
-      T_elem n (ppowDiag n p hp (fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1))
-        (divChain_ppow n p hp _ (T_gen_exp_monotone n k)) :=
-    T_elem_congr_diag n (T_gen_diag_is_ppow n p hp k) _ _
+      T_elem n (ppowDiag n p (fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1))
+        (ppowDiag_pos n p hp _)
+        (divChain_ppow n p _ (T_gen_exp_monotone n k)) :=
+    T_elem_congr_diag n (T_gen_diag_is_ppow n p k) _ _ _ _
   rw [h_eq]
   exact T_elem_ppow_mem_R_p n p hp _ (T_gen_exp_monotone n k)
 
