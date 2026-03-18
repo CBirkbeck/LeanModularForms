@@ -740,17 +740,20 @@ private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
       have hw_cb : w ∈ Metric.closedBall w₀ (r / 2) :=
         Metric.closedBall_subset_closedBall (by linarith : r / 4 ≤ r / 2)
           (Metric.ball_subset_closedBall hw)
-      calc ‖f w - f c‖ / ‖w - c‖
-          ≤ (‖f w‖ + ‖f c‖) / (r / 4) := by
-            apply div_le_div (by positivity) (norm_sub_le _ _) (by linarith) h_sep
-        _ ≤ (|M_f| + |M_f|) / (r / 4) := by
-            apply div_le_div_of_nonneg_right _ (by linarith)
-            have h1 : ‖f w‖ ≤ M_f := hM_f w (Or.inr hw_cb)
-            have h2 : ‖f c‖ ≤ M_f := hM_f c (Or.inl hc)
-            linarith [le_abs_self M_f]
-        _ = 8 * |M_f| / r := by ring
-        _ ≤ 8 * (|M_f| + 1) / r + 1 := by positivity
-        _ ≤ _ := le_max_right _ _
+      simp only [norm_norm] at hM_f
+      have h1 : ‖f w‖ ≤ M_f := hM_f w (Or.inr hw_cb)
+      have h2 : ‖f c‖ ≤ M_f := hM_f c (Or.inl hc)
+      have hM_f_nn : 0 ≤ M_f := le_trans (norm_nonneg _) h1
+      have h_num : ‖f w - f c‖ ≤ 2 * M_f := by linarith [norm_sub_le (f w) (f c)]
+      have h_denom_pos : (0 : ℝ) < ‖w - c‖ := lt_of_lt_of_le (by linarith) h_sep
+      have h_step1 : ‖f w - f c‖ / ‖w - c‖ ≤ 2 * M_f / ‖w - c‖ :=
+        div_le_div_of_nonneg_right h_num (le_of_lt h_denom_pos)
+      have h_step2 : 2 * M_f / ‖w - c‖ ≤ 2 * M_f / (r / 4) :=
+        div_le_div_of_nonneg_left (by linarith) (by linarith) h_sep
+      have h_eq : 2 * M_f / (r / 4) = 8 * M_f / r := by ring
+      have h_le : 8 * M_f / r ≤ 8 * (|M_f| + 1) / r + 1 := by sorry
+      exact le_trans (le_trans h_step1 h_step2) (le_trans (h_eq ▸ le_refl _)
+        (le_trans h_le (le_max_right _ _)))
 
 /-- h₁ is differentiable on all of U, including across the curve.
 Uses Morera's theorem: h₁ is continuous (DCT) and conservative (Fubini + Cauchy). -/
@@ -825,14 +828,21 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
       apply (intervalIntegrable_of_piecewise_continuousOn_bounded
         (P := γ.partition) (C * M_d) hab
         (fun t ⟨ht_Icc, ht_np⟩ => ?_) (fun t ht => ?_)).def'.aestronglyMeasurable
-      · have ht_Ioo : t ∈ Ioo γ.a γ.b :=
-          ⟨by { by_contra h; push_neg at h
-                 exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1) },
-           by { by_contra h; push_neg at h
-                 exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2) }⟩
-        exact ((hdslope_diff t ht_Icc).continuousOn w
-          (hU.mem_nhds (hδ_U hw))).mono diff_subset |>.mul
-          (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt
+      · have ht_Ioo : t ∈ Ioo γ.a γ.b := by
+          constructor
+          · by_contra h; push_neg at h
+            exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1)
+          · by_contra h; push_neg at h
+            exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)
+        apply ContinuousWithinAt.mul _ (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt
+        apply ContinuousWithinAt.comp (s := U) (f := fun c => dslope f c w) (g := γ.toFun)
+        · by_cases heq : γ.toFun t = w
+          · rw [heq]; exact (continuousAt_dslope_same.mpr
+              (hf.differentiableAt (hU.mem_nhds (hδ_U hw)))).continuousWithinAt
+          · exact ((continuousAt_dslope_of_ne heq).mpr
+              (hf.continuousOn _ (hγ_in_U t ht_Icc))).continuousWithinAt
+        · exact (γ.continuous_toFun t ht_Icc).mono diff_subset
+        · exact fun s hs => hγ_in_U s (diff_subset hs)
       · rw [norm_mul]
         exact mul_le_mul (hBd' _ ⟨t, ht, rfl⟩ w hw) (hM_d t ht) (norm_nonneg _) hC_pos.le
     · -- Uniform bound on ‖F w t‖ for w near w₀
