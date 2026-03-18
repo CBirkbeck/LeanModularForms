@@ -507,9 +507,9 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
       ext (i | i) (j | j) <;> simp [fromBlocks, diagonal_apply, Sum.elim, Function.comp]
     rw [h_diag_decomp]
     rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
-      Matrix.mul_one, Matrix.one_mul]
+      Matrix.one_mul]
     rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
-      Matrix.mul_one, Matrix.one_mul]
+      Matrix.mul_one]
     have h_diag'_decomp : Matrix.diagonal (d' ∘ e.symm) =
         fromBlocks (Matrix.diagonal (fun i : Fin 2 => (d' ∘ e.symm) (Sum.inl i)))
           0 0 (Matrix.diagonal (fun i : Fin k => (d' ∘ e.symm) (Sum.inr i))) := by
@@ -676,9 +676,9 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
       ext (i | i) (j | j) <;> simp [fromBlocks, diagonal_apply, Sum.elim, Function.comp]
     rw [h_diag_decomp]
     rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
-      Matrix.mul_one, Matrix.one_mul]
+      Matrix.one_mul]
     rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
-      Matrix.mul_one, Matrix.one_mul]
+      Matrix.mul_one]
     have h_diag'_decomp : Matrix.diagonal (d' ∘ e.symm) =
         fromBlocks (Matrix.diagonal (fun i : Fin 2 => (d' ∘ e.symm) (Sum.inl i)))
           0 0 (Matrix.diagonal (fun i : Fin k => (d' ∘ e.symm) (Sum.inr i))) := by
@@ -831,15 +831,16 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
       fromBlocks (Matrix.diagonal (fun _ : Fin 1 => d 0))
         0 0 (Matrix.diagonal (fun i : Fin (k + 1) => d ⟨i.val + 1, by omega⟩)) := by
     ext (i | i) (j | j)
-    · fin_cases i; fin_cases j; simp [fromBlocks, diagonal_apply, Function.comp, he_inl]
-    · simp [fromBlocks, diagonal_apply, Function.comp]
-    · simp [fromBlocks, diagonal_apply, Function.comp]
-    · simp [fromBlocks, diagonal_apply, Function.comp, he_inr]
+    · fin_cases i; fin_cases j; simp [fromBlocks, Function.comp, he_inl]
+    · simp [fromBlocks]
+    · simp [fromBlocks]
+    · set_option linter.unusedSimpArgs false in
+      simp [fromBlocks, diagonal_apply, Function.comp, he_inr]
   rw [h_decomp]
   rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
-    Matrix.mul_one, Matrix.one_mul]
+    Matrix.one_mul]
   rw [fromBlocks_multiply]; simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
-    Matrix.mul_one, Matrix.one_mul]
+    Matrix.mul_one]
   rw [show Matrix.diagonal d_out = (Matrix.diagonal (d_out ∘ e.symm)).submatrix e e
       from (diagonal_submatrix_fin1Sum (k + 1) d_out).symm]
   congr 1
@@ -848,10 +849,11 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
         0 0 (Matrix.diagonal d'_tail) := by
     ext (i | i) (j | j)
     · fin_cases i; fin_cases j;
-        simp [fromBlocks, diagonal_apply, Function.comp, d_out, he_inl]
-    · simp [fromBlocks, diagonal_apply, Function.comp]
-    · simp [fromBlocks, diagonal_apply, Function.comp]
-    · simp [fromBlocks, diagonal_apply, Function.comp, d_out, he_inr]
+        simp [fromBlocks, Function.comp, d_out, he_inl]
+    · simp [fromBlocks]
+    · simp [fromBlocks]
+    · set_option linter.unusedSimpArgs false in
+      simp [fromBlocks, diagonal_apply, Function.comp, d_out, he_inr]
   rw [h_out_decomp, hmul]
 
 omit [NeZero n] in
