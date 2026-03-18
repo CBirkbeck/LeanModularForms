@@ -211,13 +211,13 @@ theorem upperTriGL_mem_doubleCoset (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
       (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   rw [DoubleCoset.mem_doubleCoset]
   set γ_SL : SpecialLinearGroup (Fin n) ℤ := ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
-  set γ_GL := SLnZ_to_GLnQ n γ_SL
-  refine ⟨1, (SLnZ_subgroup n).one_mem, γ_GL, ⟨γ_SL, rfl⟩, ?_⟩
+  set γ_GL := (γ_SL : GL (Fin n) ℚ)
+  refine ⟨1, (SLnZ_subgroup n).one_mem, γ_GL, coe_mem_SLnZ n γ_SL, ?_⟩
   rw [one_mul]
   apply Units.ext
   show (upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ) =
     (↑(diagMat n a hpos) : Matrix (Fin n) (Fin n) ℚ) *
-    (↑(SLnZ_to_GLnQ n γ_SL) : Matrix (Fin n) (Fin n) ℚ)
+    (↑(γ_SL : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ)
   rw [SLnZ_to_GLnQ_val, diagMat_val]
   ext i j
   simp only [Matrix.mul_apply, Matrix.diagonal_apply, Matrix.map_apply]
