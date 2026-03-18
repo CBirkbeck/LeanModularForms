@@ -523,13 +523,85 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (_hdist_lb : ∀ x ∈ Metric.ball w ε, ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - x‖) :
     HasDerivAt (fun w => ∫ t in γ.a..γ.b, f (γ.toFun t) * (γ.toFun t - w)⁻¹ * deriv γ.toFun t)
       (∫ t in γ.a..γ.b, f (γ.toFun t) * (γ.toFun t - w)⁻¹ ^ 2 * deriv γ.toFun t) w := by
-  -- Apply hasDerivAt_integral_of_dominated_loc_of_deriv_le with helpers:
-  -- - dixonH2_pointwise_hasDerivAt for the pointwise derivative
-  -- - dixonH2_deriv_bound for the dominated convergence bound
-  -- The proof is split into helpers above but the final application to
-  -- hasDerivAt_integral_of_dominated_loc_of_deriv_le times out at 64M heartbeats.
-  -- TODO: Golf the final application step.
-  sorry
+  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+  -- Build all hypotheses for hasDerivAt_integral_of_dominated_loc_of_deriv_le separately
+  -- to avoid expensive unification in one monolithic call.
+  -- Step 1: integrand F(w,·) is interval integrable
+  have hav_w : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w :=
+    fun t ht => _hball_avoids w (Metric.mem_ball_self hε_pos) t ht
+  have hF_int : IntervalIntegrable (dixonH2_F f γ w) volume γ.a γ.b := by
+    have heq : dixonH2_F f γ w =
+        fun t => f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t := by
+      ext t; simp [dixonH2_F, div_eq_mul_inv]
+    rw [heq]
+    exact dixonH2_integrand_integrable f γ hfγ_cont M_f M_d ε
+      hM_f hM_d _hM_f_nn hε_pos w _hdist_lb_w hav_w
+  -- Step 2: F(x,·) is AE strongly measurable for x near w
+  have hF_meas : ∀ᶠ x in 𝓝 w,
+      AEStronglyMeasurable (dixonH2_F f γ x) (volume.restrict (Set.uIoc γ.a γ.b)) := by
+    apply Filter.eventually_of_mem (Metric.ball_mem_nhds w hε_pos)
+    intro x hx
+    have hint_x : IntervalIntegrable (dixonH2_F f γ x) volume γ.a γ.b := by
+      have heq : dixonH2_F f γ x =
+          fun t => f (γ.toFun t) / (γ.toFun t - x) * deriv γ.toFun t := by
+        ext t; simp [dixonH2_F, div_eq_mul_inv]
+      rw [heq]
+      exact dixonH2_integrand_integrable f γ hfγ_cont M_f M_d ε
+        hM_f hM_d _hM_f_nn hε_pos x (fun t ht => _hdist_lb x hx t ht)
+        (fun t ht => _hball_avoids x hx t ht)
+    exact hint_x.def'.aestronglyMeasurable
+  -- Step 3: F'(w,·) is interval integrable and hence AE strongly measurable
+  have hF'_int : IntervalIntegrable (dixonH2_F' f γ w) volume γ.a γ.b := by
+    apply intervalIntegrable_of_piecewise_continuousOn_bounded
+        (P := γ.partition) (M_f * ε⁻¹ ^ 2 * M_d) hab
+    · intro t ⟨ht_Icc, ht_npart⟩
+      -- dixonH2_F' unfolds to the lambda by rfl
+      change ContinuousWithinAt
+          (fun t => f (γ.toFun t) * (γ.toFun t - w)⁻¹ ^ 2 * deriv γ.toFun t)
+          (Icc γ.a γ.b \ γ.partition) t
+      have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
+        by_contra h; push_neg at h
+        exact ht_npart (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
+        by_contra h; push_neg at h
+        exact ht_npart (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
+      exact ((hfγ_cont t ht_Icc).mul
+          (((γ.continuous_toFun t ht_Icc).sub continuousWithinAt_const |>.inv₀
+            (sub_ne_zero.mpr (hav_w t ht_Icc))).pow 2)
+          |>.mono diff_subset).mul
+        (γ.deriv_continuous_off_partition t ht_Ioo ht_npart).continuousWithinAt
+    · intro t ht
+      -- dixonH2_F' w t unfolds to the lambda by rfl
+      change ‖f (γ.toFun t) * (γ.toFun t - w)⁻¹ ^ 2 * deriv γ.toFun t‖ ≤ M_f * ε⁻¹ ^ 2 * M_d
+      rw [norm_mul, norm_mul, norm_pow, norm_inv]
+      exact mul_le_mul
+        (mul_le_mul (hM_f t ht)
+          (pow_le_pow_left₀ (by positivity) (inv_anti₀ hε_pos (_hdist_lb_w t ht)) 2)
+          (by positivity) _hM_f_nn)
+        (hM_d t ht) (by positivity) (mul_nonneg _hM_f_nn (by positivity))
+  have hF'_meas : AEStronglyMeasurable (dixonH2_F' f γ w) (volume.restrict (Set.uIoc γ.a γ.b)) :=
+    hF'_int.def'.aestronglyMeasurable
+  -- Step 4: Derivative bound (via dixonH2_deriv_bound)
+  have h_bound : ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
+      ∀ x ∈ Metric.ball w ε, ‖dixonH2_F' f γ x t‖ ≤ M_f * ε⁻¹ ^ 2 * M_d :=
+    dixonH2_deriv_bound f γ M_f M_d ε hM_f hM_d _hM_f_nn hε_pos w _hdist_lb
+  -- Step 5: Bound is interval integrable
+  have hbound_int : IntervalIntegrable (fun _ => M_f * ε⁻¹ ^ 2 * M_d) volume γ.a γ.b :=
+    intervalIntegrable_const
+  -- Step 6: Pointwise HasDerivAt (via dixonH2_pointwise_hasDerivAt)
+  have h_diff : ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
+      ∀ x ∈ Metric.ball w ε,
+        HasDerivAt (fun x => dixonH2_F f γ x t) (dixonH2_F' f γ x t) x := by
+    filter_upwards with t _ht x hx_ball
+    have ht' : t ∈ Icc γ.a γ.b := by
+      rw [Set.uIoc_of_le hab] at _ht; exact Set.Ioc_subset_Icc_self _ht
+    simp only [dixonH2_F, dixonH2_F']
+    exact dixonH2_pointwise_hasDerivAt (f (γ.toFun t)) (deriv γ.toFun t) (γ.toFun t) x
+      (sub_ne_zero.mpr (_hball_avoids x hx_ball t ht'))
+  -- Step 7: Apply the parametric differentiation theorem
+  have hmain := (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+    hε_pos hF_meas hF_int hF'_meas h_bound hbound_int h_diff).2
+  convert hmain using 2 <;>
+  · congr 1; ext t; simp [dixonH2_F, dixonH2_F', div_eq_mul_inv]
 
 /-- h₂ is differentiable at every point off the curve, when f is continuous on the image. -/
 theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
