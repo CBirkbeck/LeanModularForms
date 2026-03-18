@@ -1073,7 +1073,7 @@ lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (_h
     (τ : SpecialLinearGroup (Fin n) ℤ) (hcong : ∀ i j, (∏ k, (a k : ℤ)) ∣
       ((τ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :
     ∃ σ : SpecialLinearGroup (Fin n) ℤ,
-      SLnZ_to_GLnQ n σ = diagMat n a ha * SLnZ_to_GLnQ n τ * (diagMat n a ha)⁻¹ := by
+      (σ : GL (Fin n) ℚ) = diagMat n a ha * (τ : GL (Fin n) ℚ) * (diagMat n a ha)⁻¹ := by
   have hdvd : ∀ i j, (a j : ℤ) ∣ (a i : ℤ) * τ.val i j := by
     intro i j
     by_cases hij : i = j
@@ -1097,7 +1097,7 @@ lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (_h
     have h' : diag_a.det * 1 = diag_a.det * M.det := by rw [mul_one, mul_comm]; exact h
     exact (mul_left_cancel₀ h_det_ne h').symm
   refine ⟨⟨M, hM_det⟩, ?_⟩
-  have h_Q_eq : (diagMat n a ha : GL (Fin n) ℚ) * SLnZ_to_GLnQ n τ =
+  have h_Q_eq : (diagMat n a ha : GL (Fin n) ℚ) * (τ : GL (Fin n) ℚ) =
       SLnZ_to_GLnQ n ⟨M, hM_det⟩ * diagMat n a ha := by
     apply Units.ext
     simp only [Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val]
@@ -1116,7 +1116,7 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ)
     (τ : SpecialLinearGroup (Fin n) ℤ) (hcong : ∀ i j, (∏ k, (b k : ℤ)) ∣
       ((τ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :
     ∃ σ : SpecialLinearGroup (Fin n) ℤ,
-      SLnZ_to_GLnQ n σ = (diagMat n b hb)⁻¹ * SLnZ_to_GLnQ n τ * diagMat n b hb := by
+      (σ : GL (Fin n) ℚ) = (diagMat n b hb)⁻¹ * (τ : GL (Fin n) ℚ) * diagMat n b hb := by
   have hdvd : ∀ i j, (b i : ℤ) ∣ (b j : ℤ) * τ.val i j := by
     intro i j
     by_cases hij : i = j
@@ -1145,7 +1145,7 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ)
     exact (mul_left_cancel₀ h_det_ne h').symm
   refine ⟨⟨N, hN_det⟩, ?_⟩
   have h_Q_eq : (diagMat n b hb : GL (Fin n) ℚ) * SLnZ_to_GLnQ n ⟨N, hN_det⟩ =
-      SLnZ_to_GLnQ n τ * diagMat n b hb := by
+      (τ : GL (Fin n) ℚ) * diagMat n b hb := by
     apply Units.ext
     simp only [Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val]
     have h_mul_map : ∀ (A B : Matrix (Fin n) (Fin n) ℤ),
@@ -1158,8 +1158,8 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ)
   calc SLnZ_to_GLnQ n ⟨N, hN_det⟩
       = (diagMat n b hb)⁻¹ * (diagMat n b hb * SLnZ_to_GLnQ n ⟨N, hN_det⟩) := by
         rw [inv_mul_cancel_left]
-    _ = (diagMat n b hb)⁻¹ * (SLnZ_to_GLnQ n τ * diagMat n b hb) := by rw [h_Q_eq]
-    _ = (diagMat n b hb)⁻¹ * SLnZ_to_GLnQ n τ * diagMat n b hb := by rw [mul_assoc]
+    _ = (diagMat n b hb)⁻¹ * ((τ : GL (Fin n) ℚ) * diagMat n b hb) := by rw [h_Q_eq]
+    _ = (diagMat n b hb)⁻¹ * (τ : GL (Fin n) ℚ) * diagMat n b hb := by rw [mul_assoc]
 
 omit [NeZero n] in
 /-- Set-level coprime product (Shimura Proposition 3.16, key step). -/
@@ -1167,7 +1167,7 @@ lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
     (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
     (ha : DivChain n a) (hb : DivChain n b) (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
     (τ : SpecialLinearGroup (Fin n) ℤ) :
-    diagMat n a ha_pos * SLnZ_to_GLnQ n τ * diagMat n b hb_pos ∈
+    diagMat n a ha_pos * (τ : GL (Fin n) ℚ) * diagMat n b hb_pos ∈
     DoubleCoset.doubleCoset (diagMat n (diagMul n a b)
       (diagMul_pos n a b ha_pos hb_pos) : GL (Fin n) ℚ)
       (SLnZ_subgroup n) (SLnZ_subgroup n) := by
@@ -1189,29 +1189,29 @@ lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
     simp [diagDet]
   obtain ⟨σ₂, hσ₂⟩ := inv_conjugate_congruent_mem_SLnZ n b hb_pos hb τ₂ hτ₂_cong
   rw [DoubleCoset.mem_doubleCoset]
-  refine ⟨SLnZ_to_GLnQ n σ₁, ⟨σ₁, rfl⟩,
-          SLnZ_to_GLnQ n σ₂, ⟨σ₂, rfl⟩, ?_⟩
-  have hσ₁' : diagMat n a ha_pos * SLnZ_to_GLnQ n τ₁ =
-      SLnZ_to_GLnQ n σ₁ * diagMat n a ha_pos := by
+  refine ⟨(σ₁ : GL (Fin n) ℚ), coe_mem_SLnZ n σ₁,
+          (σ₂ : GL (Fin n) ℚ), coe_mem_SLnZ n σ₂, ?_⟩
+  have hσ₁' : diagMat n a ha_pos * (τ₁ : GL (Fin n) ℚ) =
+      (σ₁ : GL (Fin n) ℚ) * diagMat n a ha_pos := by
     rw [hσ₁]; group
-  have hσ₂' : SLnZ_to_GLnQ n τ₂ * diagMat n b hb_pos =
-      diagMat n b hb_pos * SLnZ_to_GLnQ n σ₂ := by
+  have hσ₂' : (τ₂ : GL (Fin n) ℚ) * diagMat n b hb_pos =
+      diagMat n b hb_pos * (σ₂ : GL (Fin n) ℚ) := by
     rw [hσ₂]; group
-  rw [hτ, map_mul]
-  calc diagMat n a ha_pos * (SLnZ_to_GLnQ n τ₁ * SLnZ_to_GLnQ n τ₂) *
+  rw [hτ, SLnZ_coe_mul]
+  calc diagMat n a ha_pos * ((τ₁ : GL (Fin n) ℚ) * (τ₂ : GL (Fin n) ℚ)) *
         diagMat n b hb_pos
-      = diagMat n a ha_pos * SLnZ_to_GLnQ n τ₁ *
-        (SLnZ_to_GLnQ n τ₂ * diagMat n b hb_pos) := by group
-    _ = diagMat n a ha_pos * SLnZ_to_GLnQ n τ₁ *
-        (diagMat n b hb_pos * SLnZ_to_GLnQ n σ₂) := by
+      = diagMat n a ha_pos * (τ₁ : GL (Fin n) ℚ) *
+        ((τ₂ : GL (Fin n) ℚ) * diagMat n b hb_pos) := by group
+    _ = diagMat n a ha_pos * (τ₁ : GL (Fin n) ℚ) *
+        (diagMat n b hb_pos * (σ₂ : GL (Fin n) ℚ)) := by
         rw [hσ₂']
-    _ = SLnZ_to_GLnQ n σ₁ * diagMat n a ha_pos *
-        (diagMat n b hb_pos * SLnZ_to_GLnQ n σ₂) := by
+    _ = (σ₁ : GL (Fin n) ℚ) * diagMat n a ha_pos *
+        (diagMat n b hb_pos * (σ₂ : GL (Fin n) ℚ)) := by
         rw [hσ₁']
-    _ = SLnZ_to_GLnQ n σ₁ * (diagMat n a ha_pos * diagMat n b hb_pos) *
-        SLnZ_to_GLnQ n σ₂ := by group
-    _ = SLnZ_to_GLnQ n σ₁ * diagMat n (diagMul n a b)
-        (diagMul_pos n a b ha_pos hb_pos) * SLnZ_to_GLnQ n σ₂ := by
+    _ = (σ₁ : GL (Fin n) ℚ) * (diagMat n a ha_pos * diagMat n b hb_pos) *
+        (σ₂ : GL (Fin n) ℚ) := by group
+    _ = (σ₁ : GL (Fin n) ℚ) * diagMat n (diagMul n a b)
+        (diagMul_pos n a b ha_pos hb_pos) * (σ₂ : GL (Fin n) ℚ) := by
         rw [diagMat_mul]
 
 lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
@@ -1236,9 +1236,9 @@ lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos 
     rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
   rw [DoubleCoset.mem_doubleCoset] at hδb_mem
   obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb_mem
-  have hσ_mem : h₂a * (p.2.out : GL (Fin n) ℚ) * h₁b ∈ (SLnZ_to_GLnQ n).range :=
-    (SLnZ_to_GLnQ n).range.mul_mem
-      ((SLnZ_to_GLnQ n).range.mul_mem hh₂a (SetLike.coe_mem p.2.out)) hh₁b
+  have hσ_mem : h₂a * (p.2.out : GL (Fin n) ℚ) * h₁b ∈ SLnZ_subgroup n :=
+    (SLnZ_subgroup n).mul_mem
+      ((SLnZ_subgroup n).mul_mem hh₂a (SetLike.coe_mem p.2.out)) hh₁b
   obtain ⟨σ, hσ⟩ := hσ_mem
   have h_cop := doubleCoset_mul_coprime_mem n a b ha_pos hb_pos ha hb hcop σ
   rw [hσ, DoubleCoset.mem_doubleCoset] at h_cop
@@ -1302,7 +1302,7 @@ private lemma GLnQ_mem_SLnZ_of_coprime_scaling (C : GL (Fin n) ℚ)
         exact (Int.cast_det N).symm
       rw [← h1, ← hN_cast, h_det]
     exact_mod_cast this
-  rw [SLnZ_subgroup, MonoidHom.mem_range]
+  rw [mem_SLnZ_subgroup_iff]
   refine ⟨⟨N, hN_det⟩, ?_⟩
   apply Units.ext
   simp only [SLnZ_to_GLnQ_val]
@@ -1314,10 +1314,10 @@ omit [NeZero n] in
 private lemma diagConj_scaling (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (σ : SpecialLinearGroup (Fin n) ℤ) (i j : Fin n) :
     ∃ z : ℤ, (∏ k, (a k : ℚ)) *
-      ((↑((diagMat n a ha)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a ha) :
+      ((↑((diagMat n a ha)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a ha) :
         Matrix (Fin n) (Fin n) ℚ) i j) = z := by
-  set C := (diagMat n a ha)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a ha
-  have h_mul : diagMat n a ha * C = SLnZ_to_GLnQ n σ * diagMat n a ha := by
+  set C := (diagMat n a ha)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a ha
+  have h_mul : diagMat n a ha * C = (σ : GL (Fin n) ℚ) * diagMat n a ha := by
     simp only [C, mul_assoc]; rw [mul_inv_cancel_left]
   have h_entry := congr_arg (fun (g : GL (Fin n) ℚ) => (↑g : Matrix _ _ ℚ) i j) h_mul
   simp only [Units.val_mul, diagMat_val, SLnZ_to_GLnQ_val,
@@ -1342,16 +1342,16 @@ omit [NeZero n] in
 private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
     (F G E : SpecialLinearGroup (Fin n) ℤ) (i j : Fin n) :
     ∃ z : ℤ, (∏ k, (b k : ℚ)) *
-      ((↑(SLnZ_to_GLnQ n F * diagMat n b hb * SLnZ_to_GLnQ n G *
-        (diagMat n b hb)⁻¹ * SLnZ_to_GLnQ n E) :
+      ((↑((F : GL (Fin n) ℚ) * diagMat n b hb * (G : GL (Fin n) ℚ) *
+        (diagMat n b hb)⁻¹ * (E : GL (Fin n) ℚ)) :
         Matrix (Fin n) (Fin n) ℚ) i j) = z := by
-  set C := SLnZ_to_GLnQ n F * diagMat n b hb * SLnZ_to_GLnQ n G *
-    (diagMat n b hb)⁻¹ * SLnZ_to_GLnQ n E
-  set D := diagMat n b hb * SLnZ_to_GLnQ n G * (diagMat n b hb)⁻¹
-  have h_C_eq : C = SLnZ_to_GLnQ n F * D * SLnZ_to_GLnQ n E := by
+  set C := (F : GL (Fin n) ℚ) * diagMat n b hb * (G : GL (Fin n) ℚ) *
+    (diagMat n b hb)⁻¹ * (E : GL (Fin n) ℚ)
+  set D := diagMat n b hb * (G : GL (Fin n) ℚ) * (diagMat n b hb)⁻¹
+  have h_C_eq : C = (F : GL (Fin n) ℚ) * D * (E : GL (Fin n) ℚ) := by
     simp only [C, D, mul_assoc]
-  set F_GL := SLnZ_to_GLnQ n F
-  set E_GL := SLnZ_to_GLnQ n E
+  set F_GL := (F : GL (Fin n) ℚ)
+  set E_GL := (E : GL (Fin n) ℚ)
   have h_C_entry : (↑C : Matrix (Fin n) (Fin n) ℚ) i j = ∑ p, ∑ q,
       (↑F_GL : Matrix (Fin n) (Fin n) ℚ) i p *
       (↑D : Matrix (Fin n) (Fin n) ℚ) p q *
@@ -1365,7 +1365,7 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
     intro p q
     have h_D_entry : D_mat p q =
         (b p : ℚ) * (↑(G.val p q) : ℚ) * ((b q : ℚ)⁻¹) := by
-      have h_Db : D * diagMat n b hb = diagMat n b hb * SLnZ_to_GLnQ n G := by
+      have h_Db : D * diagMat n b hb = diagMat n b hb * (G : GL (Fin n) ℚ) := by
         simp only [D, mul_assoc, inv_mul_cancel, mul_one]
       have h_entry := congr_arg
         (fun (g : GL (Fin n) ℚ) => (↑g : Matrix (Fin n) (Fin n) ℚ) p q) h_Db
@@ -1408,11 +1408,11 @@ private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
     (_hda : DivChain n a) (_hdb : DivChain n b) (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
     (σ F G E : SpecialLinearGroup (Fin n) ℤ)
-    (h_eq : (diagMat n a ha)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a ha =
-      SLnZ_to_GLnQ n F * diagMat n b hb * SLnZ_to_GLnQ n G *
-      (diagMat n b hb)⁻¹ * SLnZ_to_GLnQ n E) :
-    (diagMat n a ha)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a ha ∈ SLnZ_subgroup n := by
-  set C := (diagMat n a ha)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a ha
+    (h_eq : (diagMat n a ha)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a ha =
+      (F : GL (Fin n) ℚ) * diagMat n b hb * (G : GL (Fin n) ℚ) *
+      (diagMat n b hb)⁻¹ * (E : GL (Fin n) ℚ)) :
+    (diagMat n a ha)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a ha ∈ SLnZ_subgroup n := by
+  set C := (diagMat n a ha)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a ha
   have h_det : (↑C : Matrix (Fin n) (Fin n) ℚ).det = 1 := by
     simp only [C, Units.val_mul, Matrix.det_mul]
     rw [SLnZ_to_GLnQ_det, mul_one, ← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel]
@@ -1427,8 +1427,8 @@ private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
   have h_scale_b : ∀ i j, ∃ z : ℤ,
       (↑(diagDet n b) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by
     intro i j
-    have h_C_rhs : C = SLnZ_to_GLnQ n F * diagMat n b hb * SLnZ_to_GLnQ n G *
-      (diagMat n b hb)⁻¹ * SLnZ_to_GLnQ n E := h_eq
+    have h_C_rhs : C = (F : GL (Fin n) ℚ) * diagMat n b hb * (G : GL (Fin n) ℚ) *
+      (diagMat n b hb)⁻¹ * (E : GL (Fin n) ℚ) := h_eq
     rw [h_C_rhs]
     have := diagSandwich_scaling n b hb F G E i j
     simp only [diagDet]
@@ -1484,7 +1484,7 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_p
         have hσ'_mem :
             h₁a⁻¹ * ((i₂.out : GL (Fin n) ℚ)⁻¹ *
             (i₁.out : GL (Fin n) ℚ)) *
-            h₁a ∈ (SLnZ_to_GLnQ n).range :=
+            h₁a ∈ SLnZ_subgroup n :=
           show _ ∈ H from H.mul_mem (H.mul_mem (H.inv_mem hh₁a)
             (H.mul_mem (H.inv_mem (SetLike.coe_mem i₂.out)) (SetLike.coe_mem i₁.out))) hh₁a
         obtain ⟨σ', hσ'⟩ := hσ'_mem
@@ -1526,34 +1526,34 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_p
             δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
             (i₁.out : GL (Fin n) ℚ) * δ_a' =
             h₂a⁻¹ * ((diagMat n a ha_pos)⁻¹ *
-            SLnZ_to_GLnQ n σ' * diagMat n a ha_pos) * h₂a := by
+            (σ' : GL (Fin n) ℚ) * diagMat n a ha_pos) * h₂a := by
           rw [hσ', hδa_eq]
           simp only [_root_.mul_inv_rev, mul_assoc]
-        have hF_mem : (j₂.out : GL (Fin n) ℚ) * h₁b ∈ (SLnZ_to_GLnQ n).range :=
+        have hF_mem : (j₂.out : GL (Fin n) ℚ) * h₁b ∈ SLnZ_subgroup n :=
           show _ ∈ H from H.mul_mem (SetLike.coe_mem j₂.out) hh₁b
         obtain ⟨F_pre, hF_pre⟩ := hF_mem
-        have hG_mem : h₂b * κ * h₂b⁻¹ ∈ (SLnZ_to_GLnQ n).range :=
+        have hG_mem : h₂b * κ * h₂b⁻¹ ∈ SLnZ_subgroup n :=
           show _ ∈ H from H.mul_mem (H.mul_mem hh₂b hκ) (H.inv_mem hh₂b)
         obtain ⟨G_pre, hG_pre⟩ := hG_mem
-        have hE_mem : h₁b⁻¹ * (j₁.out : GL (Fin n) ℚ)⁻¹ ∈ (SLnZ_to_GLnQ n).range :=
+        have hE_mem : h₁b⁻¹ * (j₁.out : GL (Fin n) ℚ)⁻¹ ∈ SLnZ_subgroup n :=
           show _ ∈ H from H.mul_mem (H.inv_mem hh₁b) (H.inv_mem (SetLike.coe_mem j₁.out))
         obtain ⟨E_pre, hE_pre⟩ := hE_mem
         have h_rhs_eq : (j₂.out : GL (Fin n) ℚ) * δ_b' * κ * δ_b'⁻¹ *
             (j₁.out : GL (Fin n) ℚ)⁻¹ =
-            SLnZ_to_GLnQ n F_pre * diagMat n b hb_pos * SLnZ_to_GLnQ n G_pre *
-            (diagMat n b hb_pos)⁻¹ * SLnZ_to_GLnQ n E_pre := by
+            (F_pre : GL (Fin n) ℚ) * diagMat n b hb_pos * (G_pre : GL (Fin n) ℚ) *
+            (diagMat n b hb_pos)⁻¹ * (E_pre : GL (Fin n) ℚ) := by
           rw [hF_pre, hG_pre, hE_pre, hδb_eq]
           simp only [_root_.mul_inv_rev, mul_assoc]
-        have hFF_mem : h₂a * SLnZ_to_GLnQ n F_pre ∈ (SLnZ_to_GLnQ n).range :=
-          show _ ∈ H from H.mul_mem hh₂a ⟨F_pre, rfl⟩
+        have hFF_mem : h₂a * (F_pre : GL (Fin n) ℚ) ∈ SLnZ_subgroup n :=
+          show _ ∈ H from H.mul_mem hh₂a (coe_mem_SLnZ n F_pre)
         obtain ⟨FF, hFF⟩ := hFF_mem
-        have hEE_mem : SLnZ_to_GLnQ n E_pre * h₂a⁻¹ ∈ (SLnZ_to_GLnQ n).range :=
-          show _ ∈ H from H.mul_mem ⟨E_pre, rfl⟩ (H.inv_mem hh₂a)
+        have hEE_mem : (E_pre : GL (Fin n) ℚ) * h₂a⁻¹ ∈ SLnZ_subgroup n :=
+          show _ ∈ H from H.mul_mem (coe_mem_SLnZ n E_pre) (H.inv_mem hh₂a)
         obtain ⟨EE, hEE⟩ := hEE_mem
-        have h_C_eq : (diagMat n a ha_pos)⁻¹ * SLnZ_to_GLnQ n σ' *
+        have h_C_eq : (diagMat n a ha_pos)⁻¹ * (σ' : GL (Fin n) ℚ) *
             diagMat n a ha_pos =
-            SLnZ_to_GLnQ n FF * diagMat n b hb_pos * SLnZ_to_GLnQ n G_pre *
-            (diagMat n b hb_pos)⁻¹ * SLnZ_to_GLnQ n EE := by
+            (FF : GL (Fin n) ℚ) * diagMat n b hb_pos * (G_pre : GL (Fin n) ℚ) *
+            (diagMat n b hb_pos)⁻¹ * (EE : GL (Fin n) ℚ) := by
           have h_combined := h_beta_eq
           rw [h_lhs_eq, h_rhs_eq] at h_combined
           apply mul_left_cancel (a := h₂a⁻¹)

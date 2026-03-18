@@ -180,7 +180,7 @@ private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i
     (h3 : g₃.val.det = 1)
     (h4 : g₄.val.det = (p : ℚ) ^ k)
     (SL_La SL_Ra : Matrix.SpecialLinearGroup (Fin 2) ℤ) (h_eq : g₁ * g₂ * (g₃ * g₄) =
-        SLnZ_to_GLnQ 2 SL_La * diagMat 2 a ha_pos * SLnZ_to_GLnQ 2 SL_Ra) :
+        (SL_La : GL (Fin 2) ℚ) * diagMat 2 a ha_pos * (SL_Ra : GL (Fin 2) ℚ)) :
     a 0 * a 1 = p ^ (k + 1) := by
   have h_lhs : (g₁ * g₂ * (g₃ * g₄)).val.det =
       (p : ℚ) ^ (k + 1) := by
@@ -196,33 +196,33 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
     (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
         Matrix.SpecialLinearGroup (Fin 2) ℤ)
-    (hD1_eq : D1c = SLnZ_to_GLnQ 2 SL_L₁ *
+    (hD1_eq : D1c = (SL_L₁ : GL (Fin 2) ℚ) *
         diagMat 2 (![1, p])
           (fun i => by fin_cases i <;>
             first | exact Nat.one_pos | exact hp.pos) *
-        SLnZ_to_GLnQ 2 SL_R₁)
-    (hD2_eq : D2c = SLnZ_to_GLnQ 2 SL_L₂ *
+        (SL_R₁ : GL (Fin 2) ℚ))
+    (hD2_eq : D2c = (SL_L₂ : GL (Fin 2) ℚ) *
         diagMat 2 (![1, p ^ k])
           (fun i => by fin_cases i <;>
             first | exact Nat.one_pos | exact pow_pos hp.pos k) *
-        SLnZ_to_GLnQ 2 SL_R₂)
-    (hi₀ : i₀_gl = SLnZ_to_GLnQ 2 SL_i₀)
-    (hj₀ : j₀_gl = SLnZ_to_GLnQ 2 SL_j₀)
+        (SL_R₂ : GL (Fin 2) ℚ))
+    (hi₀ : i₀_gl = (SL_i₀ : GL (Fin 2) ℚ))
+    (hj₀ : j₀_gl = (SL_j₀ : GL (Fin 2) ℚ))
     (h_prod_eq_a : i₀_gl * D1c * (j₀_gl * D2c) =
-        SLnZ_to_GLnQ 2 SL_La * diagMat 2 a ha_pos * SLnZ_to_GLnQ 2 SL_Ra) :
+        (SL_La : GL (Fin 2) ℚ) * diagMat 2 a ha_pos * (SL_Ra : GL (Fin 2) ℚ)) :
     a 0 ∣ p := by
   set S_mid := SL_R₁ * SL_j₀ * SL_L₂
   set L' := SL_La⁻¹ * SL_i₀ * SL_L₁
   set R' := SL_R₂ * SL_Ra⁻¹
-  have h_gl : SLnZ_to_GLnQ 2 L' *
+  have h_gl : (L' : GL (Fin 2) ℚ) *
       diagMat 2 (![1, p])
         (fun i => by fin_cases i <;>
           first | exact Nat.one_pos | exact hp.pos) *
-      SLnZ_to_GLnQ 2 S_mid *
+      (S_mid : GL (Fin 2) ℚ) *
       diagMat 2 (![1, p ^ k])
         (fun i => by fin_cases i <;>
           first | exact Nat.one_pos | exact pow_pos hp.pos k) *
-      SLnZ_to_GLnQ 2 R' = diagMat 2 a ha_pos := by
+      (R' : GL (Fin 2) ℚ) = diagMat 2 a ha_pos := by
     set dp := diagMat 2 (![1, p])
       (fun i => by fin_cases i <;>
         first | exact Nat.one_pos | exact hp.pos)
@@ -230,13 +230,13 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
       (fun i => by fin_cases i <;>
         first | exact Nat.one_pos | exact pow_pos hp.pos k)
     set da := diagMat 2 a ha_pos
-    have hprod : SLnZ_to_GLnQ 2 SL_i₀ * (SLnZ_to_GLnQ 2 SL_L₁ * dp *
-        SLnZ_to_GLnQ 2 SL_R₁) * (SLnZ_to_GLnQ 2 SL_j₀ *
-        (SLnZ_to_GLnQ 2 SL_L₂ * dpk * SLnZ_to_GLnQ 2 SL_R₂)) =
-        SLnZ_to_GLnQ 2 SL_La * da * SLnZ_to_GLnQ 2 SL_Ra := by
+    have hprod : (SL_i₀ : GL (Fin 2) ℚ) * ((SL_L₁ : GL (Fin 2) ℚ) * dp *
+        (SL_R₁ : GL (Fin 2) ℚ)) * ((SL_j₀ : GL (Fin 2) ℚ) *
+        ((SL_L₂ : GL (Fin 2) ℚ) * dpk * (SL_R₂ : GL (Fin 2) ℚ))) =
+        (SL_La : GL (Fin 2) ℚ) * da * (SL_Ra : GL (Fin 2) ℚ) := by
       rw [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]; exact h_prod_eq_a
-    have := congr_arg₂ (· * ·) (congr_arg ((SLnZ_to_GLnQ 2 SL_La)⁻¹ * ·) hprod)
-      (show (SLnZ_to_GLnQ 2 SL_Ra)⁻¹ = (SLnZ_to_GLnQ 2 SL_Ra)⁻¹ from rfl)
+    have := congr_arg₂ (· * ·) (congr_arg ((SL_La : GL (Fin 2) ℚ)⁻¹ * ·) hprod)
+      (show (SL_Ra : GL (Fin 2) ℚ)⁻¹ = (SL_Ra : GL (Fin 2) ℚ)⁻¹ from rfl)
     simp only [mul_assoc, inv_mul_cancel_left] at this
     simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
     convert this using 1; group
@@ -344,12 +344,12 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k)
   obtain ⟨SL_j₀, hSL_j₀⟩ := (j₀.out : ↥(GL_pair 2).H).2
   have h_det := mulSupport_pp_det_eq p k a ha_pos (↑i₀.out) D1.eql.choose (↑j₀.out)
     D2.eql.choose
-    (by rw [show (↑i₀.out : GL _ ℚ) = SLnZ_to_GLnQ 2 SL_i₀ from hSL_i₀.symm]
+    (by rw [show (↑i₀.out : GL _ ℚ) = (SL_i₀ : GL (Fin 2) ℚ) from hSL_i₀.symm]
         exact SLnZ_to_GLnQ_det 2 SL_i₀)
     (by rw [hD1_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
           SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]
         simp [Fin.prod_univ_two])
-    (by rw [show (↑j₀.out : GL _ ℚ) = SLnZ_to_GLnQ 2 SL_j₀ from hSL_j₀.symm]
+    (by rw [show (↑j₀.out : GL _ ℚ) = (SL_j₀ : GL (Fin 2) ℚ) from hSL_j₀.symm]
         exact SLnZ_to_GLnQ_det 2 SL_j₀)
     (by rw [hD2_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
           SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]
