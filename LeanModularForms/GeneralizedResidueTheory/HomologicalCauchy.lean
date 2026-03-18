@@ -1705,45 +1705,21 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     -- Actually: the corrections don't change the integral (γ avoids S).
     -- So just correct all values and apply Dixon directly.
     --
-    -- g agrees with a holomorphic function on γ's image.
-    -- The corrected g_corr is holomorphic on U. ∮ g = ∮ g_corr = 0.
-    -- Use MeromorphicOn.differentiableOn from mathlib if available.
-    -- Otherwise: build g_corr via toMeromorphicNFAt at each pole.
-    -- Since g is meromorphic at each s with order ≥ 0, toMeromorphicNFAt
-    -- gives an analytic function at s. Iterated over S, this gives DifferentiableOn U.
-    -- For now: use the CONVEX version on U = univ.
-    -- Wait: g is only on U, not univ. But g IS defined on univ (f is defined on U \ S,
-    -- pp_s is defined everywhere). The value of g outside U is junk but that's fine
-    -- for showing ∮ = 0.
-    -- g is DifferentiableOn (U \ S) and has removable singularities at S.
-    -- After correction: DifferentiableOn U.
-    -- ∮ g_corr = 0 by Dixon.
-    -- Correction doesn't change integral (γ avoids S).
-    -- PROOF: use integral_congr to replace g by g on U\S (which equals g_corr on U\S).
-    -- Then bound: g_corr cont on image(γ) ⊂ U\S, g_corr DifferentiableOn U.
-    -- ∮ g_corr = 0.
-    -- Need g_corr. But constructing it explicitly requires 50+ lines.
-    -- Instead: γ avoids S, so ∫ g*γ' uses g on image(γ) ⊂ U\S only.
-    -- g|_{U\S} is holomorphic. If U\S were open and γ null-homologous in U\S, done.
-    -- U\S IS open (S finite → closed). But γ might not be null-homologous in U\S.
-    -- ∮_γ g = ∮_γ g|_{U\S}. Need ∮_γ g|_{U\S} = 0.
-    -- Use contourIntegral_eq_zero_of_nullHomologous on U\S IF γ null-homologous in U\S.
-    -- IsNullHomologous γ (U\S) means n(γ,z) = 0 for z ∉ U\S = z ∉ U ∨ z ∈ S.
-    -- n(γ,z) = 0 for z ∉ U: by h_null.
-    -- n(γ,z) for z ∈ S: this is the winding number around each pole.
-    -- We DON'T know n(γ,z) = 0 for z ∈ S! γ might wind around the poles.
-    -- So γ is NOT null-homologous in U\S in general.
-    -- This is why we need the residue to be 0 — the winding number contribution
-    -- is n(γ,z) * residue(z) = n(γ,z) * 0 = 0.
-    -- But contourIntegral_eq_zero_of_nullHomologous needs holomorphic (no poles).
-    -- So this approach fails for U\S.
-    -- BACK TO: Function.update correction is the only way.
-    -- I'll implement it using Finset.induction.
-    -- The key helper: for g MeromorphicAt s with order ≥ 0 (poles fully removed),
-    -- Function.update g s (limUnder ... g) is DifferentiableAt at s.
-    -- This is differentiableOn_update_limUnder_of_bddAbove from mathlib.
-    -- g is bounded near each s (order ≥ 0 → bounded → removable).
-    sorry
+    -- g_corr: correct g at each pole to make it DifferentiableOn U.
+    -- g_corr agrees with g on U \ S (where γ lives).
+    -- ∮ g_corr = 0 by Dixon. ∮ g = ∮ g_corr.
+    have ⟨g_corr, h_corr_diff, h_agree⟩ : ∃ g_corr : ℂ → ℂ,
+        DifferentiableOn ℂ g_corr U ∧ ∀ z ∈ U \ (S : Set ℂ), g_corr z = g z := by
+      sorry -- Finset.induction + Function.update at each pole
+    have h_corr_zero : ∫ t in γ.a..γ.b, g_corr (γ.toFun t) * deriv γ.toFun t = 0 :=
+      contourIntegral_eq_zero_of_nullHomologous hU h_corr_diff γ h_null
+    have h_eq : ∀ t ∈ Set.uIcc γ.a γ.b,
+        g (γ.toFun t) * deriv γ.toFun t = g_corr (γ.toFun t) * deriv γ.toFun t := by
+      intro t ht
+      rw [Set.uIcc_of_le hab] at ht
+      rw [h_agree (γ.toFun t) (h_image_off ⟨t, ht, rfl⟩)]
+    rw [intervalIntegral.integral_congr h_eq]
+    exact h_corr_zero
   -- Combine
   have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
       f (γ.toFun t) * deriv γ.toFun t =
