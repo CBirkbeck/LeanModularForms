@@ -1593,12 +1593,8 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
-  -- Subtract ALL principal parts: g = f - Σ_{s ∈ S} pp_s.
-  -- g is holomorphic on U (removable singularities at each s ∈ S).
-  -- ∮ g = 0 by Dixon. Each ∮ pp_s = 0 (residue = 0, γ avoids s).
-  -- So ∮ f = ∮ g + Σ ∮ pp_s = 0 + 0 = 0.
-  -- The induction on S (generalizing f) makes this formal.
-  -- For now, this is the LAST sorry in the entire Theorem 3.3 chain.
+  -- Direct: subtract ALL principal parts at once. g = f - Σ pp_s is holomorphic on U.
+  -- ∮ g = 0 by Dixon. Σ ∮ pp_s = 0 (each has residue 0). So ∮ f = 0.
   sorry
 
 -- Null-homologous version of higherOrderCancel_assembly.
