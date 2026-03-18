@@ -1610,94 +1610,20 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     intro s hs
     exact GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero
       f s (hf_mero s hs) (hres s hs) γ h_null.closed (fun t ht => hγ_avoids s hs t ht)
-  -- Step 2: g is DifferentiableOn U (removable singularities at each s ∈ S)
-  have h_g_diff : DifferentiableOn ℂ g U := by
-    intro z hz
-    by_cases hzS : z ∈ (S : Set ℂ)
-    · -- z ∈ S: g = f - Σ pp_s analytic at z.
-      -- Proof: g = (f - pp_z) - Σ_{s≠z} pp_s.
-      -- f - pp_z is analytic at z (meromorphicAt_sub_principalPart_eventually).
-      -- pp_s for s ≠ z has pole at s, not z → differentiable at z.
-      -- So g is differentiable at z.
-      -- g = (f - pp_z) - Σ_{s≠z} pp_s. Both parts differentiable at z.
-      have hzS' := Finset.mem_coe.mp hzS
-      -- Part 1: f - pp_z differentiable at z (removable singularity)
-      -- Use meromorphicAt_sub_principalPart_eventually → analytic → differentiable
-      obtain ⟨g_an, hg_an, hg_eq⟩ :=
-        GeneralizedResidueTheory.meromorphicAt_sub_principalPart_eventually f z (hf_mero z hzS')
-      have h1 : DifferentiableAt ℂ (fun w => f w -
-          GeneralizedResidueTheory.meromorphicPrincipalPart f z w) z := by
-        -- g_an is analytic at z. f - pp_z =ᶠ g_an near z (on 𝓝[≠] z).
-        -- At z itself, we use Function.update to correct the value.
-        -- Since we only need DifferentiableAt, and g_an is analytic,
-        -- and f - pp_z = g_an on a punctured nhd, we get DifferentiableAt
-        -- (the value at z doesn't matter for differentiability if it matches the limit).
-        -- Same as single-pole version: correct value at z via Function.update
-        set rp := fun w => f w - GeneralizedResidueTheory.meromorphicPrincipalPart f z w
-        set rp_nf := Function.update rp z (g_an z)
-        have h_an : AnalyticAt ℂ rp_nf z := by
-          apply hg_an.congr
-          rw [Filter.Eventually, mem_nhdsWithin] at hg_eq
-          obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_eq
-          apply Filter.Eventually.mono (hV_open.mem_nhds hz_V)
-          intro w hw
-          by_cases hwz : w = z
-          · simp [hwz, rp_nf, Function.update_self]
-          · simp only [rp_nf]; rw [Function.update_of_ne hwz]
-            exact (hV_eq ⟨hw, hwz⟩).symm
-        -- rp_nf is differentiable at z (analytic → differentiable)
-        -- rp =ᶠ rp_nf near z (agree away from z)
-        have h_ev' : rp =ᶠ[𝓝 z] rp_nf := sorry
-        exact h_ev'.differentiableAt_iff.mpr h_an.differentiableAt
-      -- Part 2: Σ_{s≠z} pp_s differentiable at z
-      have h2 : DifferentiableAt ℂ (fun w =>
-          ∑ s ∈ S.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s w) z := by
-        apply DifferentiableAt.fun_sum; intro s hs
-        have hsz : s ≠ z := Finset.ne_of_mem_erase hs
-        exact (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s
-          (hf_mero s (Finset.mem_of_mem_erase hs)) z
-          (Set.mem_compl_singleton_iff.mpr hsz.symm)).differentiableAt
-          (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hsz.symm))
-      -- g z = (f z - pp_z z) - Σ_{s≠z} pp_s z
-      have h_eq : g =ᶠ[𝓝 z]
-          (fun w => (f w - GeneralizedResidueTheory.meromorphicPrincipalPart f z w) -
-            ∑ s ∈ S.erase z, GeneralizedResidueTheory.meromorphicPrincipalPart f s w) := by
-        filter_upwards with w
-        simp only [g, pp_all]
-        rw [Finset.sum_erase_eq_sub hzS']
-        ring
-      exact (h_eq.differentiableAt_iff.mpr (h1.sub h2)).differentiableWithinAt
-    · -- z ∉ S: f differentiable, each pp differentiable → g differentiable
-      have h_f_da : DifferentiableAt ℂ f z :=
-        (hf_diff z ⟨hz, hzS⟩).differentiableAt
-          ((hU.sdiff (S.finite_toSet.isClosed)).mem_nhds ⟨hz, hzS⟩)
-      have h_pp_da : DifferentiableAt ℂ pp_all z :=
-        DifferentiableAt.fun_sum (fun s hs =>
-          (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s
-            (hf_mero s hs) z (Set.mem_compl_singleton_iff.mpr
-              (fun h => hzS (h ▸ Finset.mem_coe.mpr hs)))).differentiableAt
-            (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr
-              (fun h => hzS (h ▸ Finset.mem_coe.mpr hs)))))
-      exact (h_f_da.sub h_pp_da).differentiableWithinAt
-  -- Step 3: ∮ g = 0 by Dixon
-  have h_g_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 :=
-    contourIntegral_eq_zero_of_nullHomologous hU h_g_diff γ h_null
+  -- Step 2-3: ∮ g = 0 (g holomorphic on U after Function.update correction at each pole)
+  have h_g_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
+    -- Define g_corr by correcting g's value at each s ∈ S
+    -- g_corr is DifferentiableOn U (analytic at each pole after correction)
+    -- ∮ g = ∮ g_corr since γ avoids S (values agree on γ's image)
+    -- ∮ g_corr = 0 by contourIntegral_eq_zero_of_nullHomologous
+    sorry
   -- Combine: f = g + pp_all → ∮ f = ∮ g + ∮ pp_all = 0
   have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
       f (γ.toFun t) * deriv γ.toFun t =
       g (γ.toFun t) * deriv γ.toFun t + pp_all (γ.toFun t) * deriv γ.toFun t := by
     intro t _; simp [g]; ring
   rw [intervalIntegral.integral_congr h_decomp,
-    intervalIntegral.integral_add
-      ((piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
-        (Set.uIcc_of_le hab ▸ h_g_diff.continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
-          (fun t ht => h_null.image_subset t ht)))
-      ((piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
-        (Set.uIcc_of_le hab ▸ by
-          apply continuousOn_finset_sum; intro s hs
-          exact (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
-            f s (hf_mero s hs)).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
-            (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids s hs t ht)))),
+    intervalIntegral.integral_add sorry sorry, -- integrability of g and pp_all (bounded piecewise continuous)
     h_g_zero, h_pp_all_zero, add_zero]
 
 -- Null-homologous version of higherOrderCancel_assembly.
