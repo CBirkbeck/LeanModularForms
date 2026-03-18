@@ -34,7 +34,7 @@ result is `coeffSum(f • m) = deg(f) * coeffSum(m)`, which follows from the orb
 lemma `smulOrbit_card`.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable
+open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
 
 open scoped Pointwise
 

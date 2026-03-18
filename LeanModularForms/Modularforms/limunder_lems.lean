@@ -1,5 +1,9 @@
-import Mathlib.Analysis.CStarAlgebra.Classes
-import LeanModularForms.Modularforms.Icc_Ico_lems
+module
+
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import LeanModularForms.Modularforms.Icc_Ico_lems
+
+@[expose] public section
 
 open TopologicalSpace Set
   Metric Filter Function Complex

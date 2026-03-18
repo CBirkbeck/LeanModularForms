@@ -12,7 +12,7 @@ Shimura's multiplicity `m'`, the multiplication finsupp `m`, the `Mul` instance 
 and the `NonUnitalNonAssocSemiring` instance. Proves that `T_one` is the identity element.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable
+open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
 
 open scoped Pointwise
 

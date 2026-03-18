@@ -13,7 +13,7 @@ Shimura Proposition 3.8: if an arithmetic group pair admits an anti-automorphism
 Hecke ring `𝕋 P ℤ` is commutative.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable Finsupp
+open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable Finsupp
 
 open scoped Pointwise
 

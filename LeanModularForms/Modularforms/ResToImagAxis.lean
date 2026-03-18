@@ -1,7 +1,12 @@
-import Mathlib.NumberTheory.ModularForms.QExpansion
+module
 
-import LeanModularForms.Modularforms.AtImInfty
-import LeanModularForms.Modularforms.SlashActionAuxil
+public import Mathlib.Geometry.Manifold.Notation
+public import Mathlib.NumberTheory.ModularForms.QExpansion
+
+public import LeanModularForms.Modularforms.AtImInfty
+public import LeanModularForms.Modularforms.SlashActionAuxil
+
+@[expose] public section
 
 open UpperHalfPlane hiding I
 
@@ -53,7 +58,7 @@ noncomputable def ResToImagAxis.EventuallyPos (F : ℍ → ℂ) : Prop :=
   ResToImagAxis.Real F ∧ ∃ t₀ : ℝ, 0 < t₀ ∧ ∀ t : ℝ, t₀ ≤ t → 0 < (F.resToImagAxis t).re
 
 @[fun_prop]
-theorem ResToImagAxis.Differentiable (F : ℍ → ℂ) (hF : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) F) (t : ℝ)
+theorem ResToImagAxis.Differentiable (F : ℍ → ℂ) (hF : MDiff F) (t : ℝ)
     (ht : 0 < t) : DifferentiableAt ℝ F.resToImagAxis t := by
   rw [Function.resToImagAxis_eq_resToImagAxis]
   have := hF ⟨Complex.I * t, by norm_num [Complex.I_re, ht]⟩
@@ -64,7 +69,7 @@ theorem ResToImagAxis.Differentiable (F : ℍ → ℂ) (hF : MDifferentiable �
       DifferentiableAt.const_mul ofRealCLM.differentiableAt _ using 1
   apply h_diff.congr_of_eventuallyEq
   filter_upwards [lt_mem_nhds ht] with t ht
-  simp_all only [coe_mk_subtype, ResToImagAxis, ↓reduceDIte]
+  simp_all only [ResToImagAxis, ↓reduceDIte]
   rw [ofComplex_apply_of_im_pos]
 
 /--

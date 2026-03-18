@@ -21,7 +21,6 @@ import LeanModularForms.Modularforms.IsCuspForm
 import LeanModularForms.Modularforms.iteratedderivs
 import LeanModularForms.Modularforms.JacobiTheta
 import LeanModularForms.Modularforms.limunder_lems
-import LeanModularForms.Modularforms.logDeriv_lems
 import LeanModularForms.Modularforms.MDifferentiableFunProp
 import LeanModularForms.Modularforms.multipliable_lems
 import LeanModularForms.Modularforms.NormNumI
