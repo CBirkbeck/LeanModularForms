@@ -12,7 +12,7 @@ The module action of `𝕋 P ℤ` on `𝕄 P ℤ` (formal sums of left cosets), 
 theorem `𝕋_eq_of_smul_eq_smul`, and auxiliary Finsupp algebra helpers.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable
+open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
 
 open scoped Pointwise
 
@@ -510,7 +510,7 @@ lemma smul_add_left (T₁ T₂ : 𝕋 P Z) (m : 𝕄 P Z) :
   simp only [smul_eq_sum]
   rw [Finsupp.sum_add_index]
   · intro D1 _
-    simp only [zero_mul, Finsupp.single_zero, Finset.sum_const_zero, Finsupp.sum_zero]
+    simp only [zero_mul, Finsupp.single_zero, Finset.sum_const_zero, Finsupp.sum_fun_zero]
   · intro D1 _ y b₂
     simp only [Finsupp.sum, ← Finset.sum_add_distrib]
     apply Finset.sum_congr rfl; intro m _
@@ -520,16 +520,16 @@ omit [IsDomain Z] in
 private lemma smul_add (s : Finset (T' P)) (r : T' P → Z) (a : 𝕄 P Z) :
   (∑ i ∈ s, (T_single P Z i (r i))) • a = (∑ i ∈ s, (T_single P Z i (r i)) • a) := by
   induction s using Finset.induction_on with
-  | empty => simp [smul_eq_sum, Finsupp.sum_zero_index]
+  | empty => simp [smul_eq_sum, Finsupp.sum_fun_zero_index]
   | @insert x s hni ih => rw [Finset.sum_insert hni, smul_add_left, ih, Finset.sum_insert hni]
 
 omit [IsDomain Z] in
 lemma zero_smul_𝕄 (z : 𝕄 P Z) : (0 : 𝕋 P Z) • z = 0 := by
-  simp only [smul_eq_sum]; exact Finsupp.sum_zero_index
+  simp only [smul_eq_sum]; exact Finsupp.sum_fun_zero_index
 
 omit [IsDomain Z] in
 lemma smul_zero_𝕄 (T : 𝕋 P Z) : T • (0 : 𝕄 P Z) = 0 := by
-  simp only [smul_eq_sum, Finsupp.sum_zero_index, Finsupp.sum_zero]
+  simp only [smul_eq_sum, Finsupp.sum_fun_zero_index, Finsupp.sum_fun_zero]
 
 omit [IsDomain Z] in
 lemma smul_add_right (T : 𝕋 P Z) (m₁ m₂ : 𝕄 P Z) :

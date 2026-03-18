@@ -1,4 +1,8 @@
-import LeanModularForms.Modularforms.summable_lems
+module
+
+public import LeanModularForms.Modularforms.summable_lems
+
+@[expose] public section
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex
@@ -94,7 +98,6 @@ lemma Multipliable_pow {ι : Type*} (f : ι → ℂ) (hf : Multipliable f) (n : 
   induction n with
   | zero =>
     simp
-    apply multipliable_one
   | succ n hn =>
     conv =>
       enter [1]

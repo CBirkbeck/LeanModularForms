@@ -11,7 +11,7 @@ import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Associativity
 The `Ring (𝕋 P ℤ)` instance and user-facing API lemmas for working with Hecke rings.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable
+open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
 
 open scoped Pointwise
 

@@ -20,7 +20,7 @@ Basic definitions for Hecke rings following Shimura Ch. 3: `ArithmeticGroupPair`
 spaces `T'` and `M`, the Hecke ring type `𝕋`, and foundational double coset lemmas.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup
+open Commensurable Classical MulOpposite Set DoubleCoset Subgroup
   Subgroup.Commensurable
 
 open scoped Pointwise
@@ -33,13 +33,13 @@ variable {G α : Type*} [Group G] (H : Subgroup G) (Δ : Submonoid G) (h₀ : H.
 lemma conjAct_smul_coe_eq (g : G) : ((ConjAct.toConjAct g • H) : Set G) = {g} * H * {g⁻¹} := by
   ext x
   refine ⟨?_, ?_⟩ <;> intro h
-  · rw [mem_smul_set] at h
+  · rw [Set.mem_smul_set] at h
     obtain ⟨a, ha⟩ := h
     rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct] at ha
     rw [← ha.2]
     simp only [singleton_mul, image_mul_left, mul_singleton, image_mul_right, inv_inv, mem_preimage,
       inv_mul_cancel_right, inv_mul_cancel_left, ha.1]
-  · rw [mem_smul_set]
+  · rw [Set.mem_smul_set]
     use g⁻¹ * x * g
     rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]
     group
@@ -136,7 +136,7 @@ lemma doset_mul_left_eq_self (P : ArithmeticGroupPair G)
     (h : P.H) (g : G) :
     DoubleCoset.doubleCoset ((h : G) * g) P.H P.H =
     DoubleCoset.doubleCoset g P.H P.H := by
-  simp_rw [DoubleCoset.doubleCoset, ← singleton_mul_singleton, ← mul_assoc]
+  simp_rw [DoubleCoset.doubleCoset, ← Set.singleton_mul_singleton, ← mul_assoc]
   conv =>
     enter [1,1,1]
     rw [Subgroup.subgroup_mul_singleton h.2]
@@ -145,7 +145,7 @@ lemma DoubleCoset.doubleCoset_mul_right_eq_self
     (P : ArithmeticGroupPair G) (h : P.H) (g : G) :
     DoubleCoset.doubleCoset (g * h) P.H P.H =
     DoubleCoset.doubleCoset g P.H P.H := by
-  simp_rw [DoubleCoset.doubleCoset, ← singleton_mul_singleton, ← mul_assoc]
+  simp_rw [DoubleCoset.doubleCoset, ← Set.singleton_mul_singleton, ← mul_assoc]
   conv =>
     enter [1]
     rw [mul_assoc]
@@ -154,7 +154,7 @@ lemma DoubleCoset.doubleCoset_mul_right_eq_self
 lemma DoubleCoset.doubleCoset_mul_assoc (f g h : G) :
     DoubleCoset.doubleCoset ((f * g) * h) H H =
     DoubleCoset.doubleCoset (f * (g * h)) H H := by
-  simp_rw [DoubleCoset.doubleCoset, ← singleton_mul_singleton, ← mul_assoc]
+  simp_rw [DoubleCoset.doubleCoset, ← Set.singleton_mul_singleton, ← mul_assoc]
 
 /-- The identity left coset `1 · H = H`. -/
 def M_one (P : ArithmeticGroupPair G) : M P := M_mk P (1 : P.Δ)
@@ -169,13 +169,13 @@ lemma set_eq_iUnion_leftCosets (K : Subgroup G)
   ext a
   constructor
   · intro ha
-    simp only [mem_iUnion]
+    simp only [Set.mem_iUnion]
     use (⟨a, ha⟩ : H)
     have := QuotientGroup.mk_out_eq_mul (K.subgroupOf H) (⟨a, ha⟩ : H)
     obtain ⟨h, hh⟩ := this
     rw [hh]
     simp
-    refine mem_smul_set.mpr ?h.intro.a
+    refine Set.mem_smul_set.mpr ?h.intro.a
     have : (h : H) • (K : Set G) = K := by
       apply smul_coe_set
       refine Subgroup.mem_subgroupOf.mp ?ha.a
@@ -185,11 +185,11 @@ lemma set_eq_iUnion_leftCosets (K : Subgroup G)
     refine Subgroup.mem_subgroupOf.mp ?h.a
     exact SetLike.coe_mem h
   · intro ha
-    simp only [mem_iUnion] at ha
+    simp only [Set.mem_iUnion] at ha
     obtain ⟨i, hi⟩ := ha
     have : Quotient.out i • (K : Set G) ⊆ (H : Set G) := by
       intro a ha
-      rw [mem_smul_set] at ha
+      rw [Set.mem_smul_set] at ha
       obtain ⟨h, hh⟩ := ha
       rw [← hh.2]
       simp
@@ -217,7 +217,7 @@ lemma inter_mul_conjAct_eq_conjAct (g : G) : ((H : Set G) ∩ (ConjAct.toConjAct
     (ConjAct.toConjAct g • H) = (ConjAct.toConjAct g • H) := by
   have := Set.inter_mul_subset (s₁ := (H : Set G)) (s₂ := (ConjAct.toConjAct g • H))
     (t := (ConjAct.toConjAct g • H))
-  apply Subset.antisymm
+  refine Subset.antisymm ?_ ?_
   · apply le_trans this
     simp only [conjAct_mul_self_eq_self, le_eq_subset, inter_subset_right]
   · refine subset_mul_right (ConjAct.toConjAct g • (H : Set G)) ?h₂.hs
@@ -236,7 +236,7 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) : DoubleCoset.doubleC
   simp only [Subgroup.subgroupOf_map_subtype, inf_le_right, Subgroup.coe_inf,
     Subgroup.coe_pointwise_smul, true_implies] at this
   have h2 := congrFun (congrArg HMul.hMul this) ((ConjAct.toConjAct g • H) : Set G)
-  rw [iUnion_mul, inter_comm] at h2
+  rw [Set.iUnion_mul, inter_comm] at h2
   apply mul_singleton_right_cancel g⁻¹
   rw [conjAct_smul_coe_eq ] at *
   simp_rw [← mul_assoc] at h2
@@ -259,10 +259,10 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) : DoubleCoset.doubleC
     conv =>
       enter [1,2]
       rw [this]
-    simp_rw [smul_eq_singleton_mul, ← singleton_mul_singleton, ← mul_assoc]
-  have := iUnion_congr h1
+    simp_rw [smul_eq_singleton_mul, ← Set.singleton_mul_singleton, ← mul_assoc]
+  have := Set.iUnion_congr h1
   convert this
-  rw [iUnion_mul]
+  rw [Set.iUnion_mul]
 
 lemma doubleCoset_mul_doubleCoset_left (g h : G) :
     (DoubleCoset.doubleCoset g H H) *
@@ -305,13 +305,13 @@ lemma doubleCoset_mul_eq_iUnion_doubleCoset (g h : G) :
         ← Set.singleton_mul_singleton,
         ← Set.singleton_mul_singleton]
     simp_rw [← mul_assoc]
-  apply iUnion_congr h1
+  apply Set.iUnion_congr h1
 
 lemma DoubleCoset.doubleCoset_one_mul (h : G) :
     DoubleCoset.doubleCoset (h : G) (H : Set G) H =
     ⋃ (_ : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H),
       DoubleCoset.doubleCoset (h : G) H H := by
-  simp [iUnion_const]
+  simp [Set.iUnion_const]
 
 /-- Finite linear combinations of double cosets `HgH` with `g` in the commensurator of `H`. -/
 def 𝕋 (P : ArithmeticGroupPair G) (Z : Type*) [CommRing Z] := Finsupp (T' P) Z

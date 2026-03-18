@@ -13,7 +13,7 @@ which is equivalent to associativity of multiplication in the Hecke ring. This i
 Proposition 3.4.
 -/
 
-open Commensurable Classical Doset MulOpposite Set DoubleCoset Subgroup Commensurable
+open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
 
 open scoped Pointwise
 
