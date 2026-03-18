@@ -28,24 +28,11 @@ open scoped Pointwise
 
 namespace HeckeRing.GL2
 
-/-- DivChain for n=2 reduces to `a | d`. -/
-lemma divChain_mk2 (a d : ℕ) (h : a ∣ d) :
-    DivChain 2 ![a, d] := by
-  intro i hi
-  have : i = 0 := by omega
-  subst this
-  simpa using h
-
-lemma mk2_pos (a d : ℕ) (ha : 0 < a) (hd : 0 < d) : ∀ i, 0 < (![a, d]) i := by
-  intro i; fin_cases i <;> simp [*]
-
-lemma const_eq_mk2 (c : ℕ) : (fun (_ : Fin 2) => c) = ![c, c] :=
-  funext fun i => by fin_cases i <;> rfl
-
 /-- `T(a,d)` for n=2: the Hecke basis element for diagonal `(a,d)` with `a | d`. -/
 noncomputable def T_ad (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (h : a ∣ d) :
     HeckeAlgebra 2 :=
-  T_elem 2 ![a, d] (mk2_pos a d ha hd) (divChain_mk2 a d h)
+  T_elem 2 ![a, d] (fun i => by fin_cases i <;> simp [*])
+    (fun i hi => by (have : i = 0 := by omega); subst this; simpa using h)
 
 /-- `T(p,p)` -- the scalar double coset. -/
 noncomputable def T_pp (p : ℕ) (hp : p.Prime) : HeckeAlgebra 2 :=
@@ -54,8 +41,10 @@ noncomputable def T_pp (p : ℕ) (hp : p.Prime) : HeckeAlgebra 2 :=
 lemma T_pp_eq_T_ad (p : ℕ) (hp : p.Prime) :
     T_pp p hp = T_ad p p hp.pos hp.pos (dvd_refl _) := by
   unfold T_pp T_ad
-  exact T_elem_congr_diag 2 (const_eq_mk2 p) (fun _ => hp.pos) (mk2_pos p p hp.pos hp.pos)
-    (divChain_const 2 p) (divChain_mk2 p p (dvd_refl _))
+  exact T_elem_congr_diag 2 (funext fun i => by fin_cases i <;> rfl)
+    (fun _ => hp.pos) (fun i => by fin_cases i <;> simp [hp.pos])
+    (divChain_const 2 p)
+    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
 
 lemma T_elem_ones_eq :
     T_elem 2 (fun _ => 1) (fun _ => Nat.one_pos) (divChain_const 2 1) = 1 := by
@@ -67,9 +56,11 @@ lemma T_elem_ones_eq :
 /-- T(1,1) is the identity element. -/
 lemma T_ad_one_one : T_ad 1 1 Nat.one_pos Nat.one_pos (dvd_refl _) = 1 := by
   unfold T_ad
-  have h := T_elem_congr_diag 2 (const_eq_mk2 1).symm
-    (mk2_pos 1 1 Nat.one_pos Nat.one_pos) (fun _ => Nat.one_pos)
-    (divChain_mk2 1 1 (dvd_refl _)) (divChain_const 2 1)
+  have heq : (![1, 1] : Fin 2 → ℕ) = fun _ => 1 := funext fun i => by fin_cases i <;> rfl
+  have h := T_elem_congr_diag 2 heq
+    (fun i => by fin_cases i <;> exact Nat.one_pos) (fun _ => Nat.one_pos)
+    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+    (divChain_const 2 1)
   rw [h]
   exact T_elem_ones_eq
 
