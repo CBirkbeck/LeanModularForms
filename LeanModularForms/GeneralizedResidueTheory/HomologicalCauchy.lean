@@ -716,26 +716,17 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     -- After the Fubini swap, each inner integral is hdslope_cons t ht hzw, which is zero.
     sorry
   · -- ContinuousOn (dixonH1 f γ) U:
-    -- For w₀ ∈ U, use continuousAt_of_dominated_interval.
-    -- The integrand F(w, t) = dslope f (γ t) w * deriv γ t is:
-    -- (a) AE measurable in t for w near w₀
-    -- (b) Bounded: |F(w, t)| ≤ C * M_d for w in a ball B(w₀, ε) ⊆ U
-    --     where C = max |dslope f c w'| over (c, w') ∈ image(γ) × closure(B(w₀, ε))
-    --     (joint continuity of dslope on compact set)
-    -- (c) Continuous in w at w₀ for each fixed t (dslope f c is holomorphic hence continuous)
-    -- SORRY: the uniform bound C (requires joint continuity of (c, w) ↦ dslope f c w
-    -- on the compact set image(γ) × closure(B(w₀, ε)), which holds since f is holomorphic).
+    -- Use dominated convergence: dslope f (γ t) w is bounded uniformly for w near w₀
+    -- by the MVT: ‖dslope f c w‖ = ‖(f w - f c)/(w - c)‖ ≤ sup ‖f'‖ on convex ball.
     intro w₀ hw₀
-    -- Strategy: use continuousAt_of_dominated_interval with:
-    -- F(w, t) = dslope f (γ t) w * deriv γ t
-    -- bound(t) = C * M_d where C is max of ‖dslope f c w‖ on image(γ) × closure(B(w₀, ε))
-    -- Continuity in w: for each t, w ↦ dslope f (γ t) w is continuous
-    --   (from hdslope_diff t ht applied via DifferentiableOn.continuousOn)
-    -- SORRY: the uniform bound C requires joint continuity of (c, w) ↦ dslope f c w
-    -- on the compact set image(γ) × closure(B(w₀, ε)) ⊆ U × U, which holds since
-    -- f is holomorphic: off the diagonal dslope = (f w - f c)/(w - c) is smooth,
-    -- and at the diagonal dslope = f'(c) = lim_{w→c} (f w - f c)/(w - c), giving
-    -- continuity everywhere on U × U.
+    -- Choose ball B(w₀, r) ⊂ U
+    obtain ⟨r, hr_pos, hr_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
+    -- f is holomorphic on B(w₀, r) ⊂ U → deriv f is continuous on B(w₀, r)
+    -- → bounded on B(w₀, r/2)
+    -- For c ∈ image(γ) and w ∈ B(w₀, r/4):
+    --   if c ∈ B(w₀, r/2): segment c-w in B(w₀, r) ⊂ U, MVT gives ‖dslope f c w‖ ≤ C
+    --   if c ∉ B(w₀, r/2): ‖w-c‖ ≥ r/4, so ‖dslope‖ ≤ 2M_f/(r/4)
+    -- Either way bounded, so dominated convergence gives continuity.
     sorry
 
 /-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
