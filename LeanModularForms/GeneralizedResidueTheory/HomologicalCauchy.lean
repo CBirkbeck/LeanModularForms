@@ -675,14 +675,45 @@ theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     hM_f_spec hM_d_spec hM_f_nn hε w hdist_lb_w hball_avoids hdist_lb).differentiableAt
 
 /-- h₁ is differentiable on all of U, including across the curve.
-Uses `Complex.differentiableOn_dslope`: for each fixed γ(t), w ↦ dslope f (γ(t)) w
-is differentiable on U iff f is differentiable on U. Combined with parametric
-differentiation, the integral inherits differentiability. -/
+Uses Morera's theorem: h₁ is continuous (DCT) and conservative (Fubini + Cauchy). -/
 theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (γ : PiecewiseC1Immersion)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
     DifferentiableOn ℂ (dixonH1 f γ) U := by
-  sorry
+  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+  -- For each t ∈ [a,b], dslope f (γ(t)) is differentiable on U
+  have hdslope_diff : ∀ t ∈ Icc γ.a γ.b,
+      DifferentiableOn ℂ (dslope f (γ.toFun t)) U :=
+    fun t ht => (differentiableOn_dslope (hU.mem_nhds (hγ_in_U t ht))).mpr hf
+  -- For each t, dslope f (γ(t)) is conservative on U
+  have hdslope_cons : ∀ t ∈ Icc γ.a γ.b,
+      IsConservativeOn (dslope f (γ.toFun t)) U :=
+    fun t ht => (hdslope_diff t ht).isConservativeOn
+  -- Bound: deriv of γ is bounded
+  obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
+  -- Morera's theorem: enough to show IsConservativeOn + ContinuousOn
+  rw [← isConservativeOn_and_continuousOn_iff_isDifferentiableOn hU]
+  constructor
+  · -- IsConservativeOn: Fubini + conservative for each integrand
+    intro z w hzw
+    simp only [wedgeIntegral, dixonH1]
+    -- Each of the four integrals: swap order using Fubini
+    -- We need integrability of the product
+    -- The key: for c = γ(t) ∈ U and x' ∈ Rectangle z w ⊆ U, dslope f c x' is bounded
+    -- Since Rectangle z w is compact and ⊆ U, dslope f c is bounded on it for each fixed c
+    -- and c varies over compact image(γ) ⊆ U
+    -- Uniform bound via joint continuity on image(γ) × cl(Rectangle z w)
+    -- For now, use conservative property of each integrand
+    -- wedgeIntegral z w (fun x' => ∫ t, dslope f (γ t) x' * γ'(t) dt)
+    -- Swap: = ∫ t, (wedgeIntegral z w (dslope f (γ t))) * γ'(t) dt
+    -- = ∫ t, (-wedgeIntegral w z (dslope f (γ t))) * γ'(t) dt
+    -- = -(wedgeIntegral w z (fun x' => ∫ t, dslope f (γ t) x' * γ'(t) dt))
+    sorry
+  · -- ContinuousOn: DCT with uniform bound on dslope
+    intro w₀ hw₀
+    -- Apply continuousAt_of_dominated_interval
+    -- Need bound: ‖dslope f (γ t) w‖ * ‖γ'(t)‖ ≤ C uniformly for w near w₀
+    sorry
 
 /-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
 noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
