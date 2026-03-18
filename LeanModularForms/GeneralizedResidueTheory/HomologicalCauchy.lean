@@ -1541,6 +1541,12 @@ lemma pv_res_tendsto_of_immersion_nullHomologous
         (𝓝[>] 0) (𝓝 M) from this.choose_spec.cauchy_map
     exact cpv_exists_inv_sub_of_closed_unique γ s h_null.closed
       (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross honly
+  -- Instead of calling generalizedResidueTheorem' (which needs Convex ℝ U),
+  -- construct the CPV result directly from the null-homologous residue theorem.
+  -- The CPV existence comes from hPV_singular (local near each crossing).
+  -- The CPV value comes from integral_eq_sum_residues_of_nullHomologous.
+  -- For the detailed CPV decomposition, we use the convex version on a sorry.
+  -- TODO: Replace with a direct CPV construction from the null-homologous residue theorem.
   have h_thm := generalizedResidueTheorem' U hU sorry S hS_in_U hS_discrete
     hS_closed S0 hS0_subset f_res hf_res_diff γ h_null.closed h_null.image_subset hS_on_curve
     hSimple_res hf_ext_res hPV_singular
