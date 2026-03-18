@@ -682,7 +682,75 @@ private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
     (w₀ : ℂ) (hw₀ : w₀ ∈ U) :
     ∃ C > 0, ∃ δ > 0, ∀ c ∈ K, ∀ w ∈ Metric.ball w₀ δ,
       ‖dslope f c w‖ ≤ C := by
-  sorry
+  -- Choose r with ball(w₀, r) ⊂ U
+  obtain ⟨r, hr_pos, hr_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
+  -- Bound ‖f‖ on K ∪ closedBall(w₀, r/2)
+  have hcb_sub : Metric.closedBall w₀ (r / 2) ⊆ U :=
+    (Metric.closedBall_subset_ball (by linarith)).trans hr_sub
+  obtain ⟨M_f, hM_f⟩ := (hK_compact.union (isCompact_closedBall w₀ (r / 2))).exists_bound_of_continuousOn
+    (hf.continuousOn.mono (Set.union_subset hK_sub hcb_sub) |>.norm)
+  -- Bound ‖deriv f‖ on closedBall(w₀, r/2)
+  have hderiv_cont : ContinuousOn (deriv f) (Metric.closedBall w₀ (r / 2)) :=
+    ((hf.mono hr_sub).deriv Metric.isOpen_ball).continuousOn.mono
+      (Metric.closedBall_subset_ball (by linarith))
+  obtain ⟨C_d, hC_d⟩ := (isCompact_closedBall w₀ (r / 2)).exists_bound_of_continuousOn hderiv_cont
+  -- Set δ = r/4, C = max(C_d+1, 8*M_f/r + 1)
+  have hr4_pos : (0 : ℝ) < r / 4 := by linarith
+  refine ⟨max (C_d + 1) (8 * (|M_f| + 1) / r + 1), by positivity,
+    r / 4, hr4_pos, fun c hc w hw => ?_⟩
+  by_cases hcw : c = w
+  · -- c = w: dslope = deriv f c
+    subst hcw; rw [dslope_same]
+    have hc_cb : c ∈ Metric.closedBall w₀ (r / 2) :=
+      Metric.closedBall_subset_closedBall (by linarith : r / 4 ≤ r / 2)
+        (Metric.ball_subset_closedBall hw)
+    calc ‖deriv f c‖ ≤ C_d := hC_d c hc_cb
+      _ ≤ C_d + 1 := by linarith
+      _ ≤ _ := le_max_left _ _
+  · -- c ≠ w: dslope = slope = (f w - f c)/(w - c)
+    have hne : w ≠ c := fun h => hcw h.symm
+    rw [dslope_of_ne _ hne, slope_def_field, norm_div]
+    by_cases hc_near : c ∈ Metric.closedBall w₀ (r / 2)
+    · -- Both in convex ball → MVT
+      have hw_cb : w ∈ Metric.closedBall w₀ (r / 2) :=
+        Metric.closedBall_subset_closedBall (by linarith : r / 4 ≤ r / 2)
+          (Metric.ball_subset_closedBall hw)
+      have h_mvt := (convex_closedBall w₀ (r / 2)).norm_image_sub_le_of_norm_deriv_le
+        (fun z hz => (hf z (hcb_sub hz)).differentiableAt (hU.mem_nhds (hcb_sub hz)))
+        hC_d hc_near hw_cb
+      calc ‖f w - f c‖ / ‖w - c‖
+          ≤ C_d * ‖w - c‖ / ‖w - c‖ :=
+            div_le_div_of_nonneg_right h_mvt (norm_nonneg _)
+        _ = C_d := mul_div_cancel_right₀ C_d (norm_ne_zero_iff.mpr (sub_ne_zero.mpr hne))
+        _ ≤ C_d + 1 := by linarith
+        _ ≤ _ := le_max_left _ _
+    · -- c far from w₀ → ‖w - c‖ ≥ r/4
+      have hc_far : r / 2 < dist c w₀ := by
+        rwa [Metric.mem_closedBall, not_le] at hc_near
+      have hw_dist := Metric.mem_ball.mp hw
+      have h_sep : r / 4 ≤ ‖w - c‖ := by
+        have : r / 2 < dist c w₀ := hc_far
+        rw [dist_comm] at this
+        calc r / 4 = r / 2 - r / 4 := by ring
+          _ ≤ dist w₀ c - dist w w₀ := by linarith [hw_dist]
+          _ ≤ dist w c := by
+              have := dist_triangle_left c w₀ w
+              rw [dist_comm w₀ c]; linarith
+          _ = ‖w - c‖ := by rw [dist_eq_norm]
+      have hw_cb : w ∈ Metric.closedBall w₀ (r / 2) :=
+        Metric.closedBall_subset_closedBall (by linarith : r / 4 ≤ r / 2)
+          (Metric.ball_subset_closedBall hw)
+      calc ‖f w - f c‖ / ‖w - c‖
+          ≤ (‖f w‖ + ‖f c‖) / (r / 4) := by
+            apply div_le_div (by positivity) (norm_sub_le _ _) (by linarith) h_sep
+        _ ≤ (|M_f| + |M_f|) / (r / 4) := by
+            apply div_le_div_of_nonneg_right _ (by linarith)
+            have h1 : ‖f w‖ ≤ M_f := hM_f w (Or.inr hw_cb)
+            have h2 : ‖f c‖ ≤ M_f := hM_f c (Or.inl hc)
+            linarith [le_abs_self M_f]
+        _ = 8 * |M_f| / r := by ring
+        _ ≤ 8 * (|M_f| + 1) / r + 1 := by positivity
+        _ ≤ _ := le_max_right _ _
 
 /-- h₁ is differentiable on all of U, including across the curve.
 Uses Morera's theorem: h₁ is continuous (DCT) and conservative (Fubini + Cauchy). -/
@@ -737,7 +805,48 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     --   if c ∈ B(w₀, r/2): segment c-w in B(w₀, r) ⊂ U, MVT gives ‖dslope f c w‖ ≤ C
     --   if c ∉ B(w₀, r/2): ‖w-c‖ ≥ r/4, so ‖dslope‖ ≤ 2M_f/(r/4)
     -- Either way bounded, so dominated convergence gives continuity.
-    sorry
+    have hγ_compact := isCompact_Icc.image_of_continuousOn γ.continuous_toFun
+    have hγ_sub : γ.toFun '' Icc γ.a γ.b ⊆ U :=
+      fun _ ⟨t, ht, he⟩ => he ▸ hγ_in_U t ht
+    obtain ⟨C, hC_pos, δ₀, hδ₀_pos, hBd⟩ :=
+      dslope_uniform_bound hU hf _ hγ_compact hγ_sub w₀ hw₀
+    set δ := min δ₀ r
+    have hδ_pos : 0 < δ := lt_min hδ₀_pos hr_pos
+    have hδ_U : Metric.ball w₀ δ ⊆ U :=
+      (Metric.ball_subset_ball (min_le_right _ _)).trans hr_sub
+    have hBd' : ∀ c ∈ γ.toFun '' Icc γ.a γ.b, ∀ w ∈ Metric.ball w₀ δ,
+        ‖dslope f c w‖ ≤ C :=
+      fun c hc w hw => hBd c hc w (Metric.ball_subset_ball (min_le_left _ _) hw)
+    rw [continuousWithinAt_iff_continuousAt (hU.mem_nhds hw₀)]
+    apply intervalIntegral.continuousAt_of_dominated_interval (bound := fun _ => C * M_d)
+    · -- AEStronglyMeasurable for w near w₀
+      apply Filter.eventually_of_mem (Metric.ball_mem_nhds w₀ hδ_pos)
+      intro w hw
+      apply (intervalIntegrable_of_piecewise_continuousOn_bounded
+        (P := γ.partition) (C * M_d) hab
+        (fun t ⟨ht_Icc, ht_np⟩ => ?_) (fun t ht => ?_)).def'.aestronglyMeasurable
+      · have ht_Ioo : t ∈ Ioo γ.a γ.b :=
+          ⟨by { by_contra h; push_neg at h
+                 exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1) },
+           by { by_contra h; push_neg at h
+                 exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2) }⟩
+        exact ((hdslope_diff t ht_Icc).continuousOn w
+          (hU.mem_nhds (hδ_U hw))).mono diff_subset |>.mul
+          (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt
+      · rw [norm_mul]
+        exact mul_le_mul (hBd' _ ⟨t, ht, rfl⟩ w hw) (hM_d t ht) (norm_nonneg _) hC_pos.le
+    · -- Uniform bound on ‖F w t‖ for w near w₀
+      apply Filter.eventually_of_mem (Metric.ball_mem_nhds w₀ hδ_pos)
+      intro w hw; filter_upwards with t; intro ht
+      rw [Set.uIoc_of_le hab] at ht; rw [norm_mul]
+      exact mul_le_mul (hBd' _ ⟨t, Ioc_subset_Icc_self ht, rfl⟩ w hw)
+        (hM_d t (Ioc_subset_Icc_self ht)) (norm_nonneg _) hC_pos.le
+    · exact intervalIntegrable_const
+    · -- Pointwise continuity
+      filter_upwards with t; intro ht
+      rw [Set.uIoc_of_le hab] at ht
+      exact ((hdslope_diff t (Ioc_subset_Icc_self ht)).continuousOn.continuousAt
+        (hU.mem_nhds hw₀)).mul continuousAt_const
 
 /-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
 noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
