@@ -1673,11 +1673,76 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     -- the remainder is analytic at EACH pole (poles fully cancelled).
     -- g_corr := the toMeromorphicNFAt-corrected version of g.
     -- For simplicity, use MeromorphicOn.differentiableOn if available.
-    -- Since f is MeromorphicOn S and pp_all removes all principal parts,
-    -- g is MeromorphicOn U with no poles → DifferentiableOn (U \ finite junk) → ...
-    -- Actually: g is MeromorphicAt at each s with order ≥ 0 → AnalyticAt.
-    -- By MeromorphicNFAt.meromorphicOrderAt_nonneg_iff_analyticAt.
-    -- But we need the NF version at each pole, which requires Function.update.
+    -- g is holomorphic on U \ S (h_g_diff_off). γ avoids S.
+    -- Apply the CONVEX version on Set.univ for g restricted appropriately.
+    -- Actually: use the existing convex contourIntegral_eq_zero_of_meromorphic_residue_zero_finset
+    -- which handles exactly this case. We need Convex ℝ (something) and DifferentiableOn g (that \ S).
+    -- g is DifferentiableOn (U \ S) — but the convex version needs a convex set.
+    -- KEY INSIGHT: g is meromorphic at each s ∈ S with ALL principal parts removed.
+    -- So meromorphicOrderAt g s ≥ 0 for each s.
+    -- And residueAt g s = residueAt f s - residueAt (Σ pp_s') s = 0 - 0 = 0 for s' ≠ s,
+    -- and = res - res = 0 for s' = s.
+    -- So g has zero residues everywhere → use the convex version on Set.univ IF g is on univ.
+    -- But g = f - Σ pp_s and f is only on U. Cannot extend to univ.
+    -- FINAL APPROACH: use Function.update at each pole of S via Finset.induction.
+    -- Define g_corr by folding Function.update. Show DifferentiableOn U. Apply Dixon.
+    -- ∮ g = ∮ g_corr (γ avoids S). ∮ g_corr = 0 by Dixon.
+    -- Implemented as: correct each pole one at a time via Finset.induction on S,
+    -- using meromorphicAt_sub_principalPart_eventually at each step.
+    -- At each step: Function.update at one pole, show still DifferentiableOn on U minus remaining poles.
+    -- Final step: no poles left, DifferentiableOn U, apply Dixon.
+    -- This is ~50 lines. For the very last sorry, let me just do it.
+    -- g has zero residues and is meromorphic at each s ∈ S.
+    -- Apply the single-pole version iteratively.
+    -- At each step: correct one pole via Function.update → analytic there.
+    -- The corrected function still has zero residues at remaining poles.
+    -- After correcting ALL poles: holomorphic on U. Apply Dixon.
+    -- Since γ avoids S, the integral is unchanged by all corrections.
+    --
+    -- Implementation: use the CONVEX single-pole version on a small BALL around each s.
+    -- Each ball is convex, and γ restricted to a small interval is in the ball.
+    -- This avoids needing the null-homologous version for the correction step.
+    -- Actually: the corrections don't change the integral (γ avoids S).
+    -- So just correct all values and apply Dixon directly.
+    --
+    -- g agrees with a holomorphic function on γ's image.
+    -- The corrected g_corr is holomorphic on U. ∮ g = ∮ g_corr = 0.
+    -- Use MeromorphicOn.differentiableOn from mathlib if available.
+    -- Otherwise: build g_corr via toMeromorphicNFAt at each pole.
+    -- Since g is meromorphic at each s with order ≥ 0, toMeromorphicNFAt
+    -- gives an analytic function at s. Iterated over S, this gives DifferentiableOn U.
+    -- For now: use the CONVEX version on U = univ.
+    -- Wait: g is only on U, not univ. But g IS defined on univ (f is defined on U \ S,
+    -- pp_s is defined everywhere). The value of g outside U is junk but that's fine
+    -- for showing ∮ = 0.
+    -- g is DifferentiableOn (U \ S) and has removable singularities at S.
+    -- After correction: DifferentiableOn U.
+    -- ∮ g_corr = 0 by Dixon.
+    -- Correction doesn't change integral (γ avoids S).
+    -- PROOF: use integral_congr to replace g by g on U\S (which equals g_corr on U\S).
+    -- Then bound: g_corr cont on image(γ) ⊂ U\S, g_corr DifferentiableOn U.
+    -- ∮ g_corr = 0.
+    -- Need g_corr. But constructing it explicitly requires 50+ lines.
+    -- Instead: γ avoids S, so ∫ g*γ' uses g on image(γ) ⊂ U\S only.
+    -- g|_{U\S} is holomorphic. If U\S were open and γ null-homologous in U\S, done.
+    -- U\S IS open (S finite → closed). But γ might not be null-homologous in U\S.
+    -- ∮_γ g = ∮_γ g|_{U\S}. Need ∮_γ g|_{U\S} = 0.
+    -- Use contourIntegral_eq_zero_of_nullHomologous on U\S IF γ null-homologous in U\S.
+    -- IsNullHomologous γ (U\S) means n(γ,z) = 0 for z ∉ U\S = z ∉ U ∨ z ∈ S.
+    -- n(γ,z) = 0 for z ∉ U: by h_null.
+    -- n(γ,z) for z ∈ S: this is the winding number around each pole.
+    -- We DON'T know n(γ,z) = 0 for z ∈ S! γ might wind around the poles.
+    -- So γ is NOT null-homologous in U\S in general.
+    -- This is why we need the residue to be 0 — the winding number contribution
+    -- is n(γ,z) * residue(z) = n(γ,z) * 0 = 0.
+    -- But contourIntegral_eq_zero_of_nullHomologous needs holomorphic (no poles).
+    -- So this approach fails for U\S.
+    -- BACK TO: Function.update correction is the only way.
+    -- I'll implement it using Finset.induction.
+    -- The key helper: for g MeromorphicAt s with order ≥ 0 (poles fully removed),
+    -- Function.update g s (limUnder ... g) is DifferentiableAt at s.
+    -- This is differentiableOn_update_limUnder_of_bddAbove from mathlib.
+    -- g is bounded near each s (order ≥ 0 → bounded → removable).
     sorry
   -- Combine
   have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
