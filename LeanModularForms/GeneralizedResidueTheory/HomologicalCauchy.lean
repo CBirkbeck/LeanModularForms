@@ -1484,6 +1484,78 @@ theorem integral_eq_sum_residues_of_nullHomologous
     (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)]
   ring
 
+
+open GeneralizedResidueTheory in
+lemma pv_res_tendsto_of_immersion_nullHomologous
+    (U : Set ℂ) (hU : IsOpen U)
+    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+    (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
+    (hS_closed : IsClosed S)
+    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion)
+    (h_null : IsNullHomologous γ U)
+    (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
+    (_hγ_meas : Measurable γ.toFun)
+    (h_no_endpt_cross : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
+    (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
+      γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0
+          (fun z => ∑ s ∈ S0, residueAt f s / (z - s)) γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 (2 * Real.pi * I * ∑ s ∈ S0,
+        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s)) := by
+  set f_res := fun z => ∑ s ∈ S0, residueAt f s / (z - s) with hf_res_def
+  have hSimple_res : ∀ s ∈ S0, HasSimplePoleAt f_res s :=
+    fun s hs => hasSimplePoleAt_sum_div_sub S0 (residueAt f) s hs
+  have hf_res_diff : DifferentiableOn ℂ f_res (U \ ↑S0) :=
+    differentiableOn_sum_div_sub S0 (residueAt f) U
+  have hf_ext_res : ∀ s ∈ S0, ContinuousAt
+      (fun z => f_res z - residueSimplePole f_res s / (z - s)) s :=
+    fun s hs => continuousAt_sum_remainder S0 (residueAt f) s hs
+  have h_res_eq : ∀ s ∈ S0,
+      residueSimplePole f_res s = residueAt f s :=
+    fun s hs => residueSimplePole_sum_div_sub S0 (residueAt f) s hs
+  have hPV_singular : ∀ s ∈ S0, CauchyPrincipalValueExists'
+      (fun z => residueSimplePole f_res s / (z - s)) γ.toFun γ.a γ.b s := by
+    intro s hs
+    have h_eq : (fun z => residueSimplePole f_res s / (z - s)) =
+        (fun z => residueSimplePole f_res s * (fun z => (z - s)⁻¹) z) := by
+      ext z; simp only [div_eq_mul_inv]
+    rw [h_eq]
+    apply CauchyPrincipalValueExists'.const_mul
+    apply cauchyPrincipalValueExists_of_singular_inv γ s
+    intro ⟨t₀, ht₀, hcross⟩
+    have h_fin := finite_crossings γ s
+    have ht₀_Ioo : t₀ ∈ Ioo γ.a γ.b := by
+      refine ⟨lt_of_le_of_ne ht₀.1 (fun h => ?_), lt_of_le_of_ne ht₀.2 (fun h => ?_)⟩
+      · exact (h_no_endpt_cross s hs).1 (h ▸ hcross)
+      · exact (h_no_endpt_cross s hs).2 (h ▸ hcross)
+    obtain ⟨a', b', ha't₀, ht₀b', ha'b'_sub, honly', _⟩ :=
+      exists_isolated_crossing_interval γ s t₀ ht₀_Ioo hcross
+    have honly : ∀ t ∈ Set.Icc γ.a γ.b, γ.toFun t = s → t = t₀ :=
+      fun t ht hgt => h_unique_cross s hs t ht t₀ ht₀ hgt hcross
+    have h_exp := tendsto_exp_cutoff_integral_crossing γ h_null.closed s t₀ ht₀_Ioo hcross honly
+    suffices ∃ M, Tendsto (fun ε => ∫ (t : ℝ) in γ.a..γ.b,
+        if ε < ‖γ.toFun t - s‖ then (γ.toFun t - s)⁻¹ * deriv γ.toFun t else 0)
+        (𝓝[>] 0) (𝓝 M) from this.choose_spec.cauchy_map
+    exact cpv_exists_inv_sub_of_closed_unique γ s h_null.closed
+      (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross honly
+  have h_thm := generalizedResidueTheorem' U hU sorry S hS_in_U hS_discrete
+    hS_closed S0 hS0_subset f_res hf_res_diff γ h_null.closed h_null.image_subset hS_on_curve
+    hSimple_res hf_ext_res hPV_singular
+  obtain ⟨h_exists, h_value⟩ := h_thm
+  obtain ⟨L, hL⟩ := h_exists
+  have h_limit_eq : L = 2 * Real.pi * I * ∑ s ∈ S0,
+      generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s := by
+    have hL_eq : L = cauchyPrincipalValueOn S0 f_res γ.toFun γ.a γ.b :=
+      (hL.limUnder_eq).symm
+    rw [hL_eq, h_value]
+    congr 1; apply Finset.sum_congr rfl
+    intro s hs; rw [h_res_eq s hs]
+  rw [← h_limit_eq]
+  exact hL
+
 /-- **Theorem 3.3 of Hungerbühler-Wasem (arXiv:1808.00997v2)** for null-homologous curves.
 
 Generalized residue theorem with conditions (A')+(B) for a null-homologous
@@ -1515,6 +1587,6 @@ theorem generalizedResidueTheorem_3_3_nullHomologous
     (GeneralizedResidueTheory.conditionsAB_imply_higherOrderCancel U hU sorry S0 f hf γ
       h_null.closed h_null.image_subset hMero hCondA hCondB hγ_meas h_no_endpt_cross
       h_unique_cross (fun s hs => hS_in_U s (hS0_subset s hs)))
-    (GeneralizedResidueTheory.pv_res_tendsto_of_immersion U hU sorry S hS_in_U hS_discrete
-      hS_closed S0 hS0_subset f γ h_null.closed h_null.image_subset hS_on_curve hγ_meas
+    (pv_res_tendsto_of_immersion_nullHomologous U hU S hS_in_U hS_discrete
+      hS_closed S0 hS0_subset f γ h_null hS_on_curve hγ_meas
       h_no_endpt_cross h_unique_cross)
