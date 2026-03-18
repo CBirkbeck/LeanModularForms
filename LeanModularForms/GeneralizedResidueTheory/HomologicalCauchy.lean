@@ -630,7 +630,7 @@ theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
   have hfγ_cont : ContinuousOn (fun t => f (γ.toFun t)) (Icc γ.a γ.b) :=
     hf_cont.comp γ.continuous_toFun (fun t ht => ⟨t, ht, rfl⟩)
   obtain ⟨M_f, hM_f_spec⟩ := isCompact_Icc.exists_bound_of_continuousOn hfγ_cont.norm
-  simp only [Function.comp_def, norm_norm] at hM_f_spec
+  simp only [norm_norm] at hM_f_spec
   obtain ⟨M_d, hM_d_spec⟩ := piecewiseC1Immersion_deriv_bounded γ
   have hM_f_nn : 0 ≤ M_f := le_trans (norm_nonneg _) (hM_f_spec γ.a (left_mem_Icc.mpr hab))
   have hε : Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2 > 0 := by linarith
@@ -887,11 +887,10 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
             exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
             by_contra h; push_neg at h
             exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
-          sorry)
-
-
-
-
+          exact (continuousWithinAt_const.mul
+            ((hdslope_t_cont _ t ht_Icc |>.mono diff_subset).sub
+              (hdslope_t_cont _ t ht_Icc |>.mono diff_subset))).mul
+            (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt)
         (fun t ht => by
           simp only [norm_mul]
           have h1 : ‖dslope f (γ.toFun t) (w₀ + 1 / ((n : ℂ) + 1)) -
@@ -916,12 +915,12 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
             tendsto_one_div_add_atTop_nhds_zero_nat
           have hC : Filter.Tendsto (fun n : ℕ => (1 : ℂ) / ((n : ℂ) + 1)) Filter.atTop (𝓝 0) := by
             have := Complex.continuous_ofReal.continuousAt.tendsto.comp hR
-            simp only [Function.comp_def, map_zero] at this
+            simp only [Function.comp_def] at this
             exact this.congr (fun n => by push_cast; ring)
           exact hC
         · exact Filter.Eventually.of_forall (fun n => by
             apply div_ne_zero one_ne_zero
-            norm_cast; omega)
+            norm_cast)
       -- Gn n t = (1/(n+1))⁻¹ • (dslope f (γt) (w₀ + 1/(n+1)) - dslope f (γt) w₀) * γ'(t)
       have hGn_eq : ∀ n : ℕ, ((↑n + 1 : ℂ)) *
               (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) - dslope f (γ.toFun t) w₀) *
@@ -929,7 +928,9 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
           ((1 : ℂ) / (↑n + 1))⁻¹ •
             (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) - dslope f (γ.toFun t) w₀) *
           deriv γ.toFun t := by
-        intro n; simp only [smul_eq_mul]; ring
+        intro n; simp only [smul_eq_mul]
+        have hn1 : (↑n + 1 : ℂ) ≠ 0 := by norm_cast
+        field_simp [hn1]
       simp_rw [hGn_eq]
       exact (hderiv.tendsto_slope_zero.comp h_tendsto_zero).mul_const _
   -- Step 4: Derivative bound ‖F'‖ ≤ C/ε * M_d
@@ -958,7 +959,7 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
 
 /-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
 noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
-  if h : w ∈ U then dixonH1 f γ w else dixonH2 f γ w
+  if _h : w ∈ U then dixonH1 f γ w else dixonH2 f γ w
 
 set_option maxHeartbeats 800000 in
 /-- The Dixon function is entire (differentiable on all of ℂ).
