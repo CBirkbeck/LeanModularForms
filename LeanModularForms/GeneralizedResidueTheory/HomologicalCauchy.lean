@@ -674,6 +674,16 @@ theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2)
     hM_f_spec hM_d_spec hM_f_nn hε w hdist_lb_w hball_avoids hdist_lb).differentiableAt
 
+/-- Uniform bound on dslope: for c in a compact set K ⊂ U and w in a ball B ⊂ U,
+‖dslope f c w‖ is bounded. Uses MVT on convex balls for nearby points and
+triangle inequality for distant points. -/
+private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (K : Set ℂ) (hK_compact : IsCompact K) (hK_sub : K ⊆ U)
+    (w₀ : ℂ) (hw₀ : w₀ ∈ U) :
+    ∃ C > 0, ∃ δ > 0, ∀ c ∈ K, ∀ w ∈ Metric.ball w₀ δ,
+      ‖dslope f c w‖ ≤ C := by
+  sorry
+
 /-- h₁ is differentiable on all of U, including across the curve.
 Uses Morera's theorem: h₁ is continuous (DCT) and conservative (Fubini + Cauchy). -/
 theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
