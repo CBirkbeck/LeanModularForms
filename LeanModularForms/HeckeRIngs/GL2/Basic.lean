@@ -212,7 +212,7 @@ private lemma scalar_coset_rep_normalizes (c : ℕ) (hc : 0 < c) :
   have hδc_simp : δ_c = (h₁c * h₂c) * diagMat 2 (fun _ => c) (fun _ => hc) := by
     rw [hδc_eq, mul_assoc, diagMat_scalar_comm 2 c hc h₂c, ← mul_assoc]
   have hδc_norm : ConjAct.toConjAct δ_c • H' = H' := by
-    rw [hδc_simp, map_mul, MulAction.mul_smul, conjAct_scalar_smul_eq]
+    rw [hδc_simp, map_mul, ← smul_smul, conjAct_scalar_smul_eq]
     exact HeckeRing.conjAct_smul_elt_eq H' ⟨h₁c * h₂c, H'.mul_mem hh₁c hh₂c⟩
   have h_norm_coe : ({δ_c} : Set (GL (Fin 2) ℚ)) * (H' : Set (GL (Fin 2) ℚ)) * {δ_c⁻¹} =
       (H' : Set (GL (Fin 2) ℚ)) := by
@@ -227,48 +227,62 @@ private lemma scalar_coset_rep_normalizes (c : ℕ) (hc : 0 < c) :
   simp_rw [mul_assoc, Set.singleton_mul_singleton] at this
   simpa using this
 
-/-- When D_c is scalar, distinct coset reps for D_b cannot map to the same product.
-    Takes the raw right-coset equality that arises from membership in the m' fiber. -/
-private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) :
-    let D_b := T_diag 2 b hb_pos hb
-    let D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
-    let H' := (GL_pair 2).H
-    ∀ (i₁ i₂ : decompQuot (GL_pair 2) D_b)
-      (j₁ : decompQuot (GL_pair 2) D_c),
-    ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-      {(j₁.out : GL (Fin 2) ℚ) * D_c.eql.choose} * H' =
-    ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-      {(j₁.out : GL (Fin 2) ℚ) * D_c.eql.choose} * H' →
+private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ)
+    (hb_pos : ∀ i, 0 < b i) (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
+    (i₁ i₂ : decompQuot (GL_pair 2) (T_diag 2 b hb_pos hb))
+    (j₁ : decompQuot (GL_pair 2)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)))
+    (h_eq : ({(i₁.out : GL (Fin 2) ℚ) *
+        (T_diag 2 b hb_pos hb).eql.choose} : Set _) *
+      {(j₁.out : GL (Fin 2) ℚ) *
+        (T_diag 2 (fun _ => c) (fun _ => hc)
+          (divChain_const 2 c)).eql.choose} *
+      ({x | x ∈ (GL_pair 2).H} : Set _) =
+    ({(i₂.out : GL (Fin 2) ℚ) *
+        (T_diag 2 b hb_pos hb).eql.choose} : Set _) *
+      {(j₁.out : GL (Fin 2) ℚ) *
+        (T_diag 2 (fun _ => c) (fun _ => hc)
+          (divChain_const 2 c)).eql.choose} *
+      ({x | x ∈ (GL_pair 2).H} : Set _)) :
     i₁ = i₂ := by
-  intro D_b D_c H' i₁ i₂ j₁ h_eq
   by_contra hne
-  apply HeckeRing.decompQuot_coset_diff (GL_pair 2) D_b i₁ i₂ hne
-  set δ_c := (D_c.eql.choose : GL (Fin 2) ℚ)
+  apply HeckeRing.decompQuot_coset_diff (GL_pair 2) (T_diag 2 b hb_pos hb) i₁ i₂ hne
   have hδc_comm_H := scalar_coset_rep_normalizes c hc
-  have hτ_mem : (j₁.out : GL (Fin 2) ℚ) ∈ H' := SetLike.coe_mem j₁.out
-  have h_coset : ({(j₁.out : GL (Fin 2) ℚ) * δ_c} : Set _) * (H' : Set _) =
-      (H' : Set _) * {δ_c} := by
+  have hτ_mem : (j₁.out : GL (Fin 2) ℚ) ∈ (GL_pair 2).H := SetLike.coe_mem j₁.out
+  have h_coset : (Set.singleton ((j₁.out : GL (Fin 2) ℚ) *
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose) : Set _) *
+      ({x | x ∈ (GL_pair 2).H} : Set _) =
+      ({x | x ∈ (GL_pair 2).H} : Set _) *
+      (Set.singleton (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose : Set _) := by
     rw [← Set.singleton_mul_singleton, mul_assoc, hδc_comm_H, ← mul_assoc,
       Subgroup.singleton_mul_subgroup hτ_mem]
-  have h12' : ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-      ((H' : Set _) * {δ_c}) =
-      ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-      ((H' : Set _) * {δ_c}) := by
-    have lhs_eq : ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-        {(j₁.out : GL (Fin 2) ℚ) * δ_c} * (H' : Set _) =
-        ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-        ((H' : Set _) * {δ_c}) := by
+  have h12' : (Set.singleton ((i₁.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose) : Set _) *
+      (({x | x ∈ (GL_pair 2).H} : Set _) *
+        (Set.singleton (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose : Set _)) =
+      (Set.singleton ((i₂.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose) : Set _) *
+      (({x | x ∈ (GL_pair 2).H} : Set _) *
+        (Set.singleton (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose : Set _)) := by
+    have lhs_eq : (Set.singleton ((i₁.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose) : Set _) *
+        {(j₁.out : GL (Fin 2) ℚ) *
+          (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose} *
+        ({x | x ∈ (GL_pair 2).H} : Set _) =
+        (Set.singleton ((i₁.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose) : Set _) *
+        (({x | x ∈ (GL_pair 2).H} : Set _) *
+          (Set.singleton (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose : Set _) := by
       rw [mul_assoc, h_coset]
-    have rhs_eq : ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-        {(j₁.out : GL (Fin 2) ℚ) * δ_c} * (H' : Set _) =
-        ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} : Set _) *
-        ((H' : Set _) * {δ_c}) := by
+    have rhs_eq : (Set.singleton ((i₂.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose) : Set _) *
+        {(j₁.out : GL (Fin 2) ℚ) *
+          (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose} *
+        ({x | x ∈ (GL_pair 2).H} : Set _) =
+        (Set.singleton ((i₂.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose) : Set _) *
+        (({x | x ∈ (GL_pair 2).H} : Set _) *
+          (Set.singleton (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose : Set _) := by
       rw [mul_assoc, h_coset]
     rw [← lhs_eq, ← rhs_eq]
     exact h_eq
   rw [← mul_assoc, ← mul_assoc] at h12'
-  exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
+  exact HeckeRing.mul_singleton_right_cancel
+    (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose _ _ h12'
 
 /-- D_bc is in the mulSupport of D_b * D_c when D_c is scalar. -/
 private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
