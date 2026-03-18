@@ -9,6 +9,7 @@ import LeanModularForms.GeneralizedResidueTheory.PrincipalValue
 import LeanModularForms.GeneralizedResidueTheory.Homotopy.Invariance
 import LeanModularForms.GeneralizedResidueTheory.Residue
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer
+import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem
 import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Calculus.DSlope
 import Mathlib.Analysis.Complex.RemovableSingularity
@@ -1444,16 +1445,44 @@ theorem integral_eq_sum_residues_of_nullHomologous
       (fun t => (∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
         g (γ.toFun t) * deriv γ.toFun t) := by
     funext t; simp only [g, div_eq_mul_inv, Finset.sum_mul, sub_mul, add_sub_cancel]
-  -- Integrability: both parts are bounded piecewise continuous on compact interval
-  have h_sing_int : IntervalIntegrable
-      (fun t => ∑ s ∈ S0, residueSimplePole f s * (γ.toFun t - s)⁻¹ * deriv γ.toFun t)
-      MeasureTheory.volume γ.a γ.b := by sorry
+  -- Integrability of g ∘ γ * γ' (holomorphic g, piecewise C¹ γ)
   have h_g_int : IntervalIntegrable
       (fun t => g (γ.toFun t) * deriv γ.toFun t)
-      MeasureTheory.volume γ.a γ.b := by sorry
-  -- Split integral: ∫ (sum + g) = ∫ sum + ∫ g, then ∫ g = 0
-  -- Compute ∫ sum = Σ winding * residue
-  sorry
+      MeasureTheory.volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve ⟨M_d, hM_d⟩).continuousOn_mul
+      (Set.uIcc_of_le hab ▸ hg_diff.continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+        (fun t ht => h_null.image_subset t ht))
+  -- Integrability of each singular term
+  have h_sing_term_int : ∀ s ∈ S0, IntervalIntegrable
+      (fun t => residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t)
+      MeasureTheory.volume γ.a γ.b := by
+    intro s hs
+    exact (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve ⟨M_d, hM_d⟩).continuousOn_mul
+      (Set.uIcc_of_le hab ▸ (ContinuousOn.div continuousOn_const
+        (γ.toPiecewiseC1Curve.continuous_toFun.sub continuousOn_const)
+        (fun t ht => sub_ne_zero.mpr (hγ_avoids s hs t ht))))
+  -- Integrability of the singular sum
+  have h_sing_int : IntervalIntegrable
+      (fun t => ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t)
+      MeasureTheory.volume γ.a γ.b := by
+    have h := IntervalIntegrable.sum S0 h_sing_term_int
+    rwa [show (∑ i ∈ S0, fun t => residueSimplePole f i / (γ.toFun t - ↑i) * deriv γ.toFun t) =
+      (fun t => ∑ i ∈ S0, residueSimplePole f i / (γ.toFun t - ↑i) * deriv γ.toFun t) from
+      funext fun t => by simp [Finset.sum_apply]] at h
+  -- Split integral and compute
+  rw [h_eq, intervalIntegral.integral_add h_sing_int h_g_int, hg_zero, add_zero]
+  -- ∫ Σ res/(z-s) * γ' = Σ 2πi * winding * res
+  rw [intervalIntegral.integral_finset_sum (fun s hs =>
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve ⟨M_d, hM_d⟩).continuousOn_mul
+      (Set.uIcc_of_le hab ▸ (ContinuousOn.div continuousOn_const
+        (γ.toPiecewiseC1Curve.continuous_toFun.sub continuousOn_const)
+        (fun t ht => sub_ne_zero.mpr (hγ_avoids s hs t ht)))))]
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro s hs
+  rw [integral_singular_term_eq_winding_times_coeff γ.toPiecewiseC1Curve s
+    (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)]
+  ring
 
 /-- **Theorem 3.3 of Hungerbühler-Wasem (arXiv:1808.00997v2)** for null-homologous curves.
 
@@ -1479,5 +1508,13 @@ theorem generalizedResidueTheorem_3_3_nullHomologous
     Tendsto (fun ε => ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
       (𝓝[>] 0) (𝓝 (2 * Real.pi * I * ∑ s ∈ S0,
-        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s)) := by
-  sorry
+        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s)) :=
+  -- Apply generalizedResidueTheorem_higher_order_tendsto (which doesn't use convexity)
+  -- with two Tendsto inputs that use contourIntegral_eq_zero_of_nullHomologous.
+  generalizedResidueTheorem_higher_order_tendsto S0 f γ
+    (GeneralizedResidueTheory.conditionsAB_imply_higherOrderCancel U hU sorry S0 f hf γ
+      h_null.closed h_null.image_subset hMero hCondA hCondB hγ_meas h_no_endpt_cross
+      h_unique_cross (fun s hs => hS_in_U s (hS0_subset s hs)))
+    (GeneralizedResidueTheory.pv_res_tendsto_of_immersion U hU sorry S hS_in_U hS_discrete
+      hS_closed S0 hS0_subset f γ h_null.closed h_null.image_subset hS_on_curve hγ_meas
+      h_no_endpt_cross h_unique_cross)
