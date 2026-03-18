@@ -1397,3 +1397,66 @@ theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U)
 end DixonProof
 
 end
+
+/-! ## Downstream theorems with null-homologous hypothesis -/
+
+/-- Null-homologous version of `integral_eq_sum_residues_of_avoids`. -/
+theorem integral_eq_sum_residues_of_nullHomologous
+    (U : Set ℂ) (hU : IsOpen U)
+    (S0 : Finset ℂ) (hS0_in_U : ∀ s ∈ S0, s ∈ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+    (hγ_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
+    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
+    (hf_ext : ∀ s ∈ S0, ContinuousAt
+      (fun z => f z - residueSimplePole f s / (z - s)) s) :
+    ∫ t in γ.a..γ.b,
+        f (γ.toFun t) * deriv γ.toFun t =
+      2 * Real.pi * I *
+        ∑ s ∈ S0,
+          generalizedWindingNumber' γ.toFun γ.a γ.b s *
+            residueSimplePole f s := by
+  set g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s) with hg_def
+  have ⟨hg_diff, _⟩ :=
+    simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext
+  -- g is holomorphic on U, γ is null-homologous → ∫ g ∘ γ = 0
+  have hg_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 :=
+    contourIntegral_eq_zero_of_nullHomologous hU hg_diff γ h_null
+  -- f = g + ∑ residues/(z-s), so ∫ f = ∫ g + ∫ ∑ = 0 + ∑ winding*residue
+  have h_expand : ∀ t,
+      f (γ.toFun t) * deriv γ.toFun t =
+      ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t +
+        g (γ.toFun t) * deriv γ.toFun t := by
+    intro t; rw [add_mul, Finset.sum_mul]; simp_rw [hg_def]; ring
+  simp_rw [h_expand]
+  have hγ′_bdd := piecewiseC1Immersion_deriv_bounded γ
+  have h_singular_sum :
+      ∫ t in γ.a..γ.b,
+        ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t =
+      ∑ s ∈ S0, 2 * Real.pi * I *
+        generalizedWindingNumber′ γ.toFun γ.a γ.b s * residueSimplePole f s := by
+    rw [intervalIntegral.integral_finset_sum (fun s _ =>
+      singular_term_intervalIntegrable_of_avoids γ.toPiecewiseC1Curve s
+        (fun t ht => hγ_avoids s ‹_› t ht) hγ′_bdd (residueSimplePole f s))]
+    apply Finset.sum_congr rfl
+    intro s hs
+    exact integral_singular_term_eq_winding_times_coeff γ.toPiecewiseC1Curve s
+      (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)
+  calc ∫ t in γ.a..γ.b,
+        ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t +
+          g (γ.toFun t) * deriv γ.toFun t
+      = (∫ t in γ.a..γ.b,
+          ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
+        (∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t) := by
+          exact intervalIntegral.integral_add
+            (singular_sum_intervalIntegrable f S0 γ.toPiecewiseC1Curve hγ_avoids hγ′_bdd)
+            sorry -- g * γ' integrable
+    _ = (∑ s ∈ S0, 2 * Real.pi * I *
+          generalizedWindingNumber′ γ.toFun γ.a γ.b s *
+            residueSimplePole f s) + 0 := by
+          rw [h_singular_sum, hg_zero]
+    _ = 2 * Real.pi * I * ∑ s ∈ S0,
+          generalizedWindingNumber′ γ.toFun γ.a γ.b s *
+            residueSimplePole f s := by
+          rw [add_zero, Finset.mul_sum]
+          apply Finset.sum_congr rfl; intro s _; ring
