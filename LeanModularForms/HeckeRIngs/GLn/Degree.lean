@@ -112,25 +112,21 @@ private def invTransposeEquiv : SL(n, ℤ) ≃* SL(n, ℤ) where
     rw [this, inv_inv]
   map_mul' σ τ := by
     show (σ * τ).transpose⁻¹ = σ.transpose⁻¹ * τ.transpose⁻¹
-    have h : (σ * τ).transpose = τ.transpose * σ.transpose := by
-      apply Subtype.ext
-      simp only [SpecialLinearGroup.coe_mul, SpecialLinearGroup.coe_transpose,
-        Matrix.transpose_mul]
+    have h : (σ * τ).transpose = τ.transpose * σ.transpose :=
+      Subtype.ext (by simp only [SpecialLinearGroup.coe_mul, SpecialLinearGroup.coe_transpose,
+        Matrix.transpose_mul])
     rw [h, _root_.mul_inv_rev]
 
 omit [NeZero n] in
 private lemma SL_transpose_inv_eq (σ : SL(n, ℤ)) :
-    σ.transpose⁻¹ = σ⁻¹.transpose := by
-  apply Subtype.ext
-  simp only [SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_transpose,
-    Matrix.adjugate_transpose]
+    σ.transpose⁻¹ = σ⁻¹.transpose :=
+  Subtype.ext (by simp only [SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_transpose,
+    Matrix.adjugate_transpose])
 
 private lemma invTransposeEquiv_invol (σ : SL(n, ℤ)) :
     invTransposeEquiv n (invTransposeEquiv n σ) = σ := by
-  have : invTransposeEquiv n σ = (invTransposeEquiv n).symm σ := by
-    show σ.transpose⁻¹ = σ⁻¹.transpose
-    exact SL_transpose_inv_eq n σ
-  rw [this]; exact (invTransposeEquiv n).apply_symm_apply σ
+  rw [show invTransposeEquiv n σ = (invTransposeEquiv n).symm σ from SL_transpose_inv_eq n σ]
+  exact (invTransposeEquiv n).apply_symm_apply σ
 
 omit [NeZero n] in
 private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
@@ -523,12 +519,8 @@ theorem T'_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     DoubleCoset.mem_doubleCoset] at h_in_set
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
   have h_comm := diagMat_comm_of_const 2 a ha h_const
-  have h_conj_triv : ∀ y : GL (Fin 2) ℚ, (diagMat 2 a ha)⁻¹ * y * diagMat 2 a ha = y := by
-    intro y
-    calc (diagMat 2 a ha)⁻¹ * y * diagMat 2 a ha
-        = (diagMat 2 a ha)⁻¹ * (y * diagMat 2 a ha) := by group
-      _ = (diagMat 2 a ha)⁻¹ * (diagMat 2 a ha * y) := by rw [← h_comm y]
-      _ = y := by group
+  have h_conj_triv : ∀ y : GL (Fin 2) ℚ, (diagMat 2 a ha)⁻¹ * y * diagMat 2 a ha = y :=
+    fun y => by rw [mul_assoc, ← h_comm y, ← mul_assoc, inv_mul_cancel, one_mul]
   have hconj : (ConjAct.toConjAct δ • (GL_pair 2).H).subgroupOf (GL_pair 2).H = ⊤ := by
     rw [Subgroup.subgroupOf_eq_top]
     intro x hx
