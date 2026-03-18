@@ -1567,8 +1567,20 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
       pp (γ.toFun t) * deriv γ.toFun t + rp (γ.toFun t) * deriv γ.toFun t := by
     intro t _; simp [rp]; ring
   rw [intervalIntegral.integral_congr h_decomp]
-  rw [intervalIntegral.integral_add sorry sorry, -- integrability of pp and rp (bounded piecewise continuous)
-    h_pp_zero, h_rp_zero, add_zero]
+  have hab := le_of_lt γ.hab
+  have hγ_bdd := piecewiseC1Immersion_deriv_bounded γ
+  have h_pp_int : IntervalIntegrable (fun t => pp (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+      (Set.uIcc_of_le hab ▸ (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
+        f s hf).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+        (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids t ht)))
+  have h_rp_int : IntervalIntegrable (fun t => rp (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+      (Set.uIcc_of_le hab ▸ (hf_diff.sub ((GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
+        f s hf).mono (fun z hz => (Set.mem_diff_singleton.mp hz).2))).continuousOn.comp
+        γ.toPiecewiseC1Curve.continuous_toFun
+        (fun t ht => ⟨h_null.image_subset t ht, Set.mem_compl_singleton_iff.mpr (hγ_avoids t ht)⟩))
+  rw [intervalIntegral.integral_add h_pp_int h_rp_int, h_pp_zero, h_rp_zero, add_zero]
 
 /-- Finset version: induction on |S| using the single-pole version. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
