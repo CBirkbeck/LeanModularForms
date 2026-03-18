@@ -1509,19 +1509,31 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
   set rp := fun z => f z - pp z
   have h_pp_zero : ∫ t in γ.a..γ.b, pp (γ.toFun t) * deriv γ.toFun t = 0 :=
     GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero f s hf hres γ h_null.closed hγ_avoids
-  -- rp is DifferentiableOn U (by meromorphicAt_sub_principalPart + removable singularity)
-  have h_rp_diff_U : DifferentiableOn ℂ rp U := by
-    sorry -- meromorphicAt_sub_principalPart gives analyticity at s, diff on U\{s} elsewhere
+  -- γ avoids s, so rp is holomorphic on γ's image. Use Function.update for analyticity at s.
+  obtain ⟨g_an, hg_an_at, hg_eq⟩ :=
+    GeneralizedResidueTheory.meromorphicAt_sub_principalPart_eventually f s hf
+  set rp_nf := Function.update rp s (g_an s)
+  -- rp_nf is DifferentiableOn U (same as convex version)
+  have h_rp_nf_diff_U : DifferentiableOn ℂ rp_nf U := by sorry
+  -- ∮ rp_nf = 0 by Dixon
+  have h_rp_nf_zero : ∫ t in γ.a..γ.b, rp_nf (γ.toFun t) * deriv γ.toFun t = 0 :=
+    contourIntegral_eq_zero_of_nullHomologous hU h_rp_nf_diff_U γ h_null
+  -- rp = rp_nf on γ's image (γ avoids s)
+  have h_agree : ∀ t ∈ Icc γ.a γ.b, rp (γ.toFun t) = rp_nf (γ.toFun t) :=
+    fun t ht => (Function.update_of_ne (hγ_avoids t ht) (g_an s) rp).symm
+  -- ∮ rp = ∮ rp_nf = 0
   have h_rp_zero : ∫ t in γ.a..γ.b, rp (γ.toFun t) * deriv γ.toFun t = 0 := by
-    -- rp might differ from the "clean" version at s (Function.update issue)
-    -- But γ avoids s, so the integral only sees rp away from s, where rp = f - pp is holomorphic
-    -- Use contourIntegral_eq_zero_of_nullHomologous on the corrected version
-    sorry -- need rp DifferentiableOn U + Dixon
+    have : ∀ t ∈ Set.uIcc γ.a γ.b,
+        rp (γ.toFun t) * deriv γ.toFun t = rp_nf (γ.toFun t) * deriv γ.toFun t := by
+      intro t ht; rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht; rw [h_agree t ht]
+    rw [intervalIntegral.integral_congr this]; exact h_rp_nf_zero
   -- Combine: ∮ f = ∮ pp + ∮ rp = 0 + 0 = 0
-  have h_decomp : (fun t => f (γ.toFun t) * deriv γ.toFun t) =
-      (fun t => pp (γ.toFun t) * deriv γ.toFun t + rp (γ.toFun t) * deriv γ.toFun t) := by
-    ext t; simp [rp]; ring
-  rw [h_decomp, intervalIntegral.integral_add sorry sorry, h_pp_zero, h_rp_zero, add_zero]
+  have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
+      f (γ.toFun t) * deriv γ.toFun t =
+      pp (γ.toFun t) * deriv γ.toFun t + rp (γ.toFun t) * deriv γ.toFun t := by
+    intro t _; simp [rp]; ring
+  rw [intervalIntegral.integral_congr h_decomp]
+  rw [intervalIntegral.integral_add sorry sorry, h_pp_zero, h_rp_zero, add_zero]
 
 /-- Finset version: induction on |S| using the single-pole version. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
