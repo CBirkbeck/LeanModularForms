@@ -1655,7 +1655,30 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
   -- Instead: use tendsto_cpv_of_continuousOn_zero_integral backwards.
   -- Since γ avoids S, ∮ g is a classical integral (no PV needed).
   -- ∮ g = 0 ← sorry (needs multi-pole Function.update + Dixon)
-  have h_g_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by sorry
+  have h_g_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
+    -- g is holomorphic on U \ S. γ avoids S.
+    -- On γ's image, g = g on U \ S (holomorphic). ∮ g = 0.
+    -- Use Finset.induction on S, applying single-pole version at each step,
+    -- generalizing g at each step.
+    -- At each step: subtract pp at one pole → remainder analytic at that pole.
+    -- But we already subtracted ALL pp's. So g = f - Σ pp_s is the full remainder.
+    -- Each pole has been removed. g is holomorphic on U (after value correction).
+    -- Use Function.update at each pole to correct, then Dixon.
+    -- Since γ avoids S, the integral is unchanged by correction.
+    -- Since γ avoids S, g agrees with any correction of g on γ's image.
+    -- Define g_corr by Finset.fold of Function.update to correct each pole.
+    -- g_corr is DifferentiableOn U. ∮ g = ∮ g_corr = 0.
+    -- Correctness at each pole: meromorphicAt_sub_principalPart_eventually
+    -- gives the analytic continuation value. After subtracting ALL principal parts,
+    -- the remainder is analytic at EACH pole (poles fully cancelled).
+    -- g_corr := the toMeromorphicNFAt-corrected version of g.
+    -- For simplicity, use MeromorphicOn.differentiableOn if available.
+    -- Since f is MeromorphicOn S and pp_all removes all principal parts,
+    -- g is MeromorphicOn U with no poles → DifferentiableOn (U \ finite junk) → ...
+    -- Actually: g is MeromorphicAt at each s with order ≥ 0 → AnalyticAt.
+    -- By MeromorphicNFAt.meromorphicOrderAt_nonneg_iff_analyticAt.
+    -- But we need the NF version at each pole, which requires Function.update.
+    sorry
   -- Combine
   have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
       f (γ.toFun t) * deriv γ.toFun t =
