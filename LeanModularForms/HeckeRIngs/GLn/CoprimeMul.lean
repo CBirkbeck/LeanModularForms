@@ -41,7 +41,8 @@ private lemma slTransvecG_zero {m : ℕ} (i j : Fin m) (hij : i ≠ j) :
   Subtype.ext (by simp [slTransvecG, Matrix.transvection_zero])
 
 private lemma slTransvecG_mul_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
-    (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) : (slTransvecG i j hij c * σ).1 a b =
+    (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
+    (slTransvecG i j hij c * σ).1 a b =
     if a = i then σ.1 i b + c * σ.1 j b else σ.1 a b := by
   have hcoe : (slTransvecG i j hij c * σ).1 = Matrix.transvection i j c * σ.1 := by
     simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
@@ -247,7 +248,8 @@ private def extractBlock {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m + 1))
 
 private lemma extractBlock_blockLift {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ)
     (τ : Matrix.SpecialLinearGroup (Fin (m + 1)) ℤ)
-    (h00 : τ.1 0 0 = 1) (h0j : ∀ j, j ≠ 0 → τ.1 0 j = 0) (hi0 : ∀ i, i ≠ 0 → τ.1 i 0 = 0) :
+    (h00 : τ.1 0 0 = 1) (h0j : ∀ j, j ≠ 0 → τ.1 0 j = 0)
+    (hi0 : ∀ i, i ≠ 0 → τ.1 i 0 = 0) :
     extractBlock (blockLift i j hij c * τ)
       (by rw [blockLift_row0]; exact h00)
       (by intro k hk; rw [blockLift_row0]; exact h0j k hk)
@@ -350,7 +352,8 @@ private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) �
     · intro j hj; simp only [List.prod_cons, ← mul_assoc]; exact hL'_0j j hj
     · intro i hi; simp only [List.prod_cons, ← mul_assoc]; exact hL'_i0 i hi
 
-private lemma nzCount_le_one_unique_nonzero {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
+private lemma nzCount_le_one_unique_nonzero {m : ℕ}
+    (τ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
     (i₀ : Fin (m+1)) (hi₀ : τ.1 i₀ 0 ≠ 0) (h_nz : nzCount τ ≤ 1) :
     ∀ k, k ≠ i₀ → τ.1 k 0 = 0 := by
   intro k hk; by_contra hne
@@ -381,7 +384,8 @@ private lemma sole_nonzero_col0_is_unit {m : ℕ} (τ : Matrix.SpecialLinearGrou
     exact dvd_zero _
 
 private lemma block_form_transvec_lift {m : ℕ} (M : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
-    (H00 : M.1 0 0 = 1) (H0j : ∀ j, j ≠ 0 → M.1 0 j = 0) (Hi0 : ∀ i, i ≠ 0 → M.1 i 0 = 0)
+    (H00 : M.1 0 0 = 1) (H0j : ∀ j, j ≠ 0 → M.1 0 j = 0)
+    (Hi0 : ∀ i, i ≠ 0 → M.1 i 0 = 0)
     (L : List (Matrix.SpecialLinearGroup (Fin m) ℤ)) (hL : ∀ E ∈ L, IsTransvec E)
     (hL_eq : extractBlock M H00 H0j Hi0 = L.prod) :
     ∃ (L' : List (Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)),
@@ -1020,7 +1024,8 @@ private lemma isTransvec_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
 
 omit [NeZero n] in
 private lemma list_prod_in_CRTProd (d d' : ℕ) (_hcop : Nat.Coprime d d')
-    (L : List (SpecialLinearGroup (Fin n) ℤ)) (hL : ∀ E ∈ L, ∃ p q : SpecialLinearGroup (Fin n) ℤ,
+    (L : List (SpecialLinearGroup (Fin n) ℤ))
+    (hL : ∀ E ∈ L, ∃ p q : SpecialLinearGroup (Fin n) ℤ,
       E = p * q ∧ congMod n d p ∧ congMod n d' q) :
     ∃ p q : SpecialLinearGroup (Fin n) ℤ,
       L.prod = p * q ∧ congMod n d p ∧ congMod n d' q := by
@@ -1106,7 +1111,8 @@ lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (_h
   exact eq_mul_inv_iff_mul_eq.mpr h_Q_eq.symm
 
 omit [NeZero n] in
-lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i) (_hdiv : DivChain n b)
+lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ)
+    (hb : ∀ i, 0 < b i) (_hdiv : DivChain n b)
     (τ : SpecialLinearGroup (Fin n) ℤ) (hcong : ∀ i j, (∏ k, (b k : ℤ)) ∣
       ((τ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :
     ∃ σ : SpecialLinearGroup (Fin n) ℤ,
@@ -1157,7 +1163,8 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
 
 omit [NeZero n] in
 /-- Set-level coprime product (Shimura Proposition 3.16, key step). -/
-lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
+lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
+    (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
     (ha : DivChain n a) (hb : DivChain n b) (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
     (τ : SpecialLinearGroup (Fin n) ℤ) :
     diagMat n a ha_pos * SLnZ_to_GLnQ n τ * diagMat n b hb_pos ∈
@@ -1397,7 +1404,8 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
   rw [h1, hDpq']
 
 omit [NeZero n] in
-private lemma coprime_coupling_mem_H (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
+private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
     (_hda : DivChain n a) (_hdb : DivChain n b) (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
     (σ F G E : SpecialLinearGroup (Fin n) ℤ)
     (h_eq : (diagMat n a ha)⁻¹ * SLnZ_to_GLnQ n σ * diagMat n a ha =

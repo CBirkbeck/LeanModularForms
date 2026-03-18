@@ -313,10 +313,12 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
 
 omit [NeZero n] in
 /-- Distinct entry assignments give distinct left cosets of `SL_n(ℤ)`. -/
-theorem upperTriMat_distinct_cosets (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
+theorem upperTriMat_distinct_cosets (a : Fin n → ℕ)
+    (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
     (B₁ B₂ : UpperTriRep n a hdiv) (hne : B₁ ≠ B₂) :
     ∀ (γ : GL (Fin n) ℚ), γ ∈ SLnZ_subgroup n →
-      upperTriGL n a hpos hdiv B₁ ≠ γ * upperTriGL n a hpos hdiv B₂ := by
+      upperTriGL n a hpos hdiv B₁ ≠
+        γ * upperTriGL n a hpos hdiv B₂ := by
   intro γ ⟨σ, hσ⟩ heq; subst hσ; apply hne; clear hne
   have hmat : upperTriMat n a hdiv B₁ = σ.val * upperTriMat n a hdiv B₂ := by
     have h := congr_arg Units.val heq

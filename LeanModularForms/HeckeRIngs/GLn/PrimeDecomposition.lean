@@ -68,7 +68,8 @@ def pComponent (p : ℕ) (a : Fin n → ℕ) : Fin n → ℕ :=
 
 omit [NeZero n] in
 /-- The p-component of a divisibility chain is monotone. -/
-lemma pComponent_monotone (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (ha : DivChain n a) (p : ℕ) :
+lemma pComponent_monotone (a : Fin n → ℕ)
+    (ha_pos : ∀ i, 0 < a i) (ha : DivChain n a) (p : ℕ) :
     Monotone (pComponent n p a) := by
   intro i j hij
   simp only [pComponent]
@@ -124,7 +125,8 @@ lemma diagDet_ppow (p : ℕ) (e : Fin n → ℕ) :
 
 omit [NeZero n] in
 /-- The p-part and p-free part determinants are coprime. -/
-lemma diagDet_ppow_remove_coprime (p : ℕ) (hp : p.Prime) (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
+lemma diagDet_ppow_remove_coprime (p : ℕ) (hp : p.Prime)
+    (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     Nat.Coprime (diagDet n (ppowDiag n p (pComponent n p a)))
                (diagDet n (removePrime n p a)) := by
   rw [diagDet_ppow]

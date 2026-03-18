@@ -708,7 +708,8 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
       rw [if_neg h1, if_neg h2]
 
 omit [NeZero n] in
-private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
+private lemma dvd_diag_of_SL_transform (m : ℕ)
+    (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
     (L R : Matrix (Fin m) (Fin m) ℤ) (heq : L * Matrix.diagonal d * R = Matrix.diagonal d') :
     ∀ i, c ∣ d' i := by
   intro i
@@ -1137,7 +1138,8 @@ private lemma partialProd_eq_of_SLnZ_equiv
     simp [this]
 
 /-- The elementary divisors are uniquely determined by the double coset. -/
-theorem diagonal_representative_unique (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
+theorem diagonal_representative_unique (a b : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
     (hda : DivChain n a) (hdb : DivChain n b)
     (heq : T_diag n a ha hda = T_diag n b hb hdb) : a = b := by
   rw [T_diag_eq_iff] at heq

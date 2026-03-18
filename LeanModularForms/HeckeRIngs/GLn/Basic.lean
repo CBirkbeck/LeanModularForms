@@ -96,7 +96,8 @@ private lemma det_intMat_cast (A : Matrix (Fin n) (Fin n) ℤ) :
 
 /-- `(A.map cast) * (B.map cast) = (A * B).map cast` for integer matrices cast to `ℚ`. -/
 private lemma intMat_map_mul (A B : Matrix (Fin n) (Fin n) ℤ) :
-    (A.map (Int.cast : ℤ → ℚ)) * (B.map (Int.cast : ℤ → ℚ)) = (A * B).map (Int.cast : ℤ → ℚ) := by
+    (A.map (Int.cast : ℤ → ℚ)) * (B.map (Int.cast : ℤ → ℚ)) =
+    (A * B).map (Int.cast : ℤ → ℚ) := by
   ext i j; simp [Matrix.mul_apply, Matrix.map_apply]
 
 /-- The submonoid of `GL_n(ℚ)` consisting of invertible matrices with integer entries

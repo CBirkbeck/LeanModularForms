@@ -73,7 +73,9 @@ private lemma T_pp_mul_T_ad'_ppow (j d : ℕ) (hjd : j ≤ d) :
   unfold T_pp
   rw [T_elem_mul_scalar (![p ^ j, p ^ d])
     (fun i => by fin_cases i <;> first | exact pow_pos hp.pos j | exact pow_pos hp.pos d)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simpa using Nat.pow_dvd_pow p hjd) p hp.pos]
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this
+      simpa using Nat.pow_dvd_pow p hjd) p hp.pos]
   apply T_elem_congr_diag
   ext i; fin_cases i <;> simp [diagMul, pow_succ, mul_comm]
 
@@ -191,13 +193,18 @@ private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i
 
 private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
-    (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ) (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
+    (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
+    (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
         Matrix.SpecialLinearGroup (Fin 2) ℤ)
     (hD1_eq : D1c = SLnZ_to_GLnQ 2 SL_L₁ *
-        diagMat 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos) *
+        diagMat 2 (![1, p])
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos | exact hp.pos) *
         SLnZ_to_GLnQ 2 SL_R₁)
     (hD2_eq : D2c = SLnZ_to_GLnQ 2 SL_L₂ *
-        diagMat 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k) *
+        diagMat 2 (![1, p ^ k])
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos | exact pow_pos hp.pos k) *
         SLnZ_to_GLnQ 2 SL_R₂)
     (hi₀ : i₀_gl = SLnZ_to_GLnQ 2 SL_i₀)
     (hj₀ : j₀_gl = SLnZ_to_GLnQ 2 SL_j₀)
@@ -208,12 +215,20 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
   set L' := SL_La⁻¹ * SL_i₀ * SL_L₁
   set R' := SL_R₂ * SL_Ra⁻¹
   have h_gl : SLnZ_to_GLnQ 2 L' *
-      diagMat 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos) *
+      diagMat 2 (![1, p])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact hp.pos) *
       SLnZ_to_GLnQ 2 S_mid *
-      diagMat 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k) *
+      diagMat 2 (![1, p ^ k])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact pow_pos hp.pos k) *
       SLnZ_to_GLnQ 2 R' = diagMat 2 a ha_pos := by
-    set dp := diagMat 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-    set dpk := diagMat 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
+    set dp := diagMat 2 (![1, p])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact hp.pos)
+    set dpk := diagMat 2 (![1, p ^ k])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact pow_pos hp.pos k)
     set da := diagMat 2 a ha_pos
     have hprod : SLnZ_to_GLnQ 2 SL_i₀ * (SLnZ_to_GLnQ 2 SL_L₁ * dp *
         SLnZ_to_GLnQ 2 SL_R₁) * (SLnZ_to_GLnQ 2 SL_j₀ *
@@ -249,7 +264,9 @@ private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k)
     T_diag 2 a ha_pos hdiv =
       T_diag 2 (![p, p ^ k])
         (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simpa using dvd_pow_self p (by omega)) := by
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this
+          simpa using dvd_pow_self p (by omega)) := by
   rcases Nat.Prime.eq_one_or_self_of_dvd hp (a 0) h_dvd_p with ha0_1 | ha0_p
   · left; congr 1; ext i; fin_cases i
     · exact ha0_1
@@ -260,25 +277,45 @@ private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k)
       have h1 : p * a 1 = p ^ (k + 1) := by rwa [ha0_p] at h_det_prod
       exact Nat.eq_of_mul_eq_mul_left hp.pos (by rw [h1, pow_succ]; ring)
 
-private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
+private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k)
+    (A : T' (GL_pair 2))
     (hA : A ∈ HeckeRing.mulSupport (GL_pair 2)
-      (T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp))
-      (T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp))) :
+      (T_diag 2 (![1, p])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact hp.pos)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp))
+      (T_diag 2 (![1, p ^ k])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact pow_pos hp.pos k)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp))) :
     A = T_diag 2 (![1, p ^ (k + 1)])
-        (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp) ∨
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp) ∨
     A = T_diag 2 (![p, p ^ k])
-        (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simpa using dvd_pow_self p (by omega)) := by
-  obtain ⟨a, ha_pos, hdiv, hrep⟩ := exists_diagonal_representative 2 A.eql.choose
+        (fun i => by fin_cases i <;>
+          first | exact hp.pos | exact pow_pos hp.pos k)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this
+          simpa using dvd_pow_self p (by omega)) := by
+  obtain ⟨a, ha_pos, hdiv, hrep⟩ :=
+    exists_diagonal_representative 2 A.eql.choose
   have hA_eq : A = T_diag 2 a ha_pos hdiv := by
-    rw [← hrep]; exact (T'_ext _ _ _ A.eql.choose_spec.symm).symm
-  set D1 := T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
-  set D2 := T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+    rw [← hrep]
+    exact (T'_ext _ _ _ A.eql.choose_spec.symm).symm
+  set D1 := T_diag 2 (![1, p])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact hp.pos)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
+  set D2 := T_diag 2 (![1, p ^ k])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact pow_pos hp.pos k)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
   rw [HeckeRing.mulSupport] at hA
   simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and,
     Prod.exists] at hA
@@ -325,25 +362,47 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : T' (GL_pair 2))
 
 /-- `diagMat 2 (![1, p]) * diagMat 2 (![1, p^k]) = diagMat 2 (![1, p^{k+1}])` -/
 private lemma diagMat_mul_ppow (k : ℕ) :
-    (diagMat 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos) : GL (Fin 2) ℚ) *
-    diagMat 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k) =
-    diagMat 2 (![1, p ^ (k + 1)]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1)) := by
+    (diagMat 2 (![1, p])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact hp.pos) :
+      GL (Fin 2) ℚ) *
+    diagMat 2 (![1, p ^ k])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact pow_pos hp.pos k) =
+    diagMat 2 (![1, p ^ (k + 1)])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos
+               | exact pow_pos hp.pos (k + 1)) := by
   apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
     simp [diagMat, pow_succ, mul_comm]
 
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag 2 (![1, p ^ (k + 1)])
-      (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
-      (fun i hi => by (have : i = 0 := by omega); subst this; simp) ∈
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
+      (fun i hi => by
+        (have : i = 0 := by omega); subst this; simp) ∈
     HeckeRing.mulSupport (GL_pair 2)
-      (T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp))
-      (T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp)) := by
-  set D1 := T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
-  set D2 := T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+      (T_diag 2 (![1, p])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact hp.pos)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp))
+      (T_diag 2 (![1, p ^ k])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact pow_pos hp.pos k)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp)) := by
+  set D1 := T_diag 2 (![1, p])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact hp.pos)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
+  set D2 := T_diag 2 (![1, p ^ k])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact pow_pos hp.pos k)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
   set D_out1 := T_diag 2 (![1, p ^ (k + 1)])
     (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
     (fun i hi => by (have : i = 0 := by omega); subst this; simp)
@@ -351,13 +410,21 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   set β := (D2.eql.choose : GL (Fin 2) ℚ)
   -- Decompose α and β into L * diag * R form
   have hα_mem : α ∈ DoubleCoset.doubleCoset
-      (diagMat 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos) : GL (Fin 2) ℚ)
+      (diagMat 2 (![1, p])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact hp.pos) :
+        GL (Fin 2) ℚ)
       (GL_pair 2).H (GL_pair 2).H := by
-    have := D1.eql.choose_spec; simp only [D1, T_diag, HeckeRing.T_mk, diagMat_delta] at this
+    have := D1.eql.choose_spec
+    simp only [D1, T_diag, HeckeRing.T_mk, diagMat_delta] at this
     rw [this]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ := (DoubleCoset.mem_doubleCoset ..).mp hα_mem
+  obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ :=
+    (DoubleCoset.mem_doubleCoset ..).mp hα_mem
   have hβ_mem : β ∈ DoubleCoset.doubleCoset
-      (diagMat 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k) :
+      (diagMat 2 (![1, p ^ k])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos
+                 | exact pow_pos hp.pos k) :
         GL (Fin 2) ℚ)
       (GL_pair 2).H (GL_pair 2).H := by
     have := D2.eql.choose_spec; simp only [D2, T_diag, HeckeRing.T_mk, diagMat_delta] at this
@@ -397,16 +464,28 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
       ((↑j₀.out : GL (Fin 2) ℚ) * β) ∈
       DoubleCoset.doubleCoset
         (diagMat 2 (![1, p ^ (k + 1)])
-          (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1)) : GL (Fin 2) ℚ)
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos
+                   | exact pow_pos hp.pos (k + 1)) :
+          GL (Fin 2) ℚ)
         (GL_pair 2).H (GL_pair 2).H := by
     rw [DoubleCoset.mem_doubleCoset]
-    refine ⟨1, (GL_pair 2).H.one_mem, R₂ * (β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β),
-            (GL_pair 2).H.mul_mem hR₂ hκ₂_conj, ?_⟩
+    refine ⟨1, (GL_pair 2).H.one_mem,
+      R₂ * (β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β),
+      (GL_pair 2).H.mul_mem hR₂ hκ₂_conj, ?_⟩
     rw [hi₀, hj₀,
-        show α = L₁ * diagMat 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos) * R₁ from hα_eq,
+        show α = L₁ * diagMat 2 (![1, p])
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos | exact hp.pos) *
+          R₁ from hα_eq,
         show β = L₂ * diagMat 2 (![1, p ^ k])
-          (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k) * R₂ from hβ_eq]
-    set D₁_mat := diagMat 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos
+                   | exact pow_pos hp.pos k) *
+          R₂ from hβ_eq]
+    set D₁_mat := diagMat 2 (![1, p])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact hp.pos)
     set D₂_mat := diagMat 2 (![1, p ^ k])
       (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
     have h_D_mul : D₁_mat * D₂_mat =
@@ -427,7 +506,9 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     simp only
     conv_rhs => rw [show D_out1 = HeckeRing.T_mk (GL_pair 2)
         (diagMat_delta 2 (![1, p ^ (k + 1)])
-          (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))) from rfl,
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos
+                   | exact pow_pos hp.pos (k + 1))) from rfl,
       HeckeRing.T_mk]
     simp only
     exact DoubleCoset.doubleCoset_eq_of_mem h_product_mem⟩
@@ -462,26 +543,51 @@ private lemma m'_deg_sum_eq (D1 D2 D_out1 D_out2 : T' (GL_pair 2))
 
 private lemma m'_values (k : ℕ) (hk : 0 < k) :
     HeckeRing.m' (GL_pair 2)
-      (T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp))
-      (T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp))
+      (T_diag 2 (![1, p])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact hp.pos)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp))
+      (T_diag 2 (![1, p ^ k])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact pow_pos hp.pos k)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp))
       (T_diag 2 (![1, p ^ (k + 1)])
-        (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp)) = 1 ∧
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos
+                 | exact pow_pos hp.pos (k + 1))
+        (fun i hi => by
+          (have : i = 0 := by omega)
+          subst this; simp)) = 1 ∧
     HeckeRing.m' (GL_pair 2)
-      (T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp))
-      (T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp))
+      (T_diag 2 (![1, p])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact hp.pos)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp))
+      (T_diag 2 (![1, p ^ k])
+        (fun i => by fin_cases i <;>
+          first | exact Nat.one_pos | exact pow_pos hp.pos k)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this; simp))
       (T_diag 2 (![p, p ^ k])
-        (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simpa using dvd_pow_self p (by omega))) =
+        (fun i => by fin_cases i <;>
+          first | exact hp.pos | exact pow_pos hp.pos k)
+        (fun i hi => by
+          (have : i = 0 := by omega); subst this
+          simpa using dvd_pow_self p (by omega))) =
       if k = 1 then ↑(p + 1) else ↑p := by
-  set D1 := T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
-  set D2 := T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+  set D1 := T_diag 2 (![1, p])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact hp.pos)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
+  set D2 := T_diag 2 (![1, p ^ k])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact pow_pos hp.pos k)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
   set D_out1 := T_diag 2 (![1, p ^ (k + 1)])
     (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
     (fun i hi => by (have : i = 0 := by omega); subst this; simp)
@@ -563,16 +669,28 @@ theorem thm324_5 (k : ℕ) (hk : 0 < k) :
       T_ad p (p ^ k) hp.pos (pow_pos hp.pos k)
         (dvd_pow_self p (by omega)) := by
   rw [T_sum_prime p hp]
-  set D1 := T_diag 2 (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
-  set D2 := T_diag 2 (![1, p ^ k]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+  set D1 := T_diag 2 (![1, p])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact hp.pos)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
+  set D2 := T_diag 2 (![1, p ^ k])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact pow_pos hp.pos k)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
   set D_out1 := T_diag 2 (![1, p ^ (k + 1)])
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos
+             | exact pow_pos hp.pos (k + 1))
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
   set D_out2 := T_diag 2 (![p, p ^ k])
-    (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos k)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simpa using dvd_pow_self p (by omega))
+    (fun i => by fin_cases i <;>
+      first | exact hp.pos | exact pow_pos hp.pos k)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this
+      simpa using dvd_pow_self p (by omega))
   set c := (if k = 1 then (↑(p + 1) : ℤ) else (↑p : ℤ))
   have h_ne : D_out1 ≠ D_out2 := by
     intro heq
@@ -630,8 +748,11 @@ private lemma T_ad_p_ppow_eq (k : ℕ) (hk : 0 < k) :
 private lemma T_pp_comm_T_ad_one_p :
     T_pp p hp * T_ad 1 p Nat.one_pos hp.pos (one_dvd _) =
     T_ad 1 p Nat.one_pos hp.pos (one_dvd _) * T_pp p hp :=
-  T_pp_comm_T_elem p hp (![1, p]) (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+  T_pp_comm_T_elem p hp (![1, p])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact hp.pos)
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this; simp)
 
 /-- `T_sum(p^0) = 1`. -/
 private lemma T_sum_ppow_zero : T_sum ⟨p ^ 0, pow_pos hp.pos 0⟩ = 1 := by
@@ -1200,7 +1321,8 @@ private lemma T_sum_mul_peel_prime_summand (q : ℕ) (hq : q.Prime)
       hd'_dvd hqd' hcop_qi_d' hd'_pos
 
 /-- Peel-off-a-prime step for the divisor sum formula. -/
-private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime) (a b : ℕ) (_ha : 0 < a) (_hb : 0 < b)
+private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime)
+    (a b : ℕ) (_ha : 0 < a) (_hb : 0 < b)
     (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
     (ih : T_sum m' * T_sum n' = ∑ d ∈ (Nat.gcd m' n').divisors,
       (d : ℤ) • (T_ad' d d * T_sum_nat (↑m' * ↑n' / (d * d)))) :
@@ -1300,8 +1422,12 @@ theorem thm324_3 (m n : ℕ+) :
 /-- Theorem 3.24(6): `deg(T(pⁱ, p^{i+k})) = p^{k-1}(p+1)` for k > 0. -/
 theorem thm324_6 (i k : ℕ) (hk : 0 < k) :
     T'_deg (GL_pair 2) (T_diag 2 (![p ^ i, p ^ (i + k)])
-      (fun i' => by fin_cases i' <;> first | exact pow_pos hp.pos i | exact pow_pos hp.pos (i + k))
-      (fun i hi => by (have : i = 0 := by omega); subst this; simpa using Nat.pow_dvd_pow p (by omega))) =
+      (fun i' => by fin_cases i' <;>
+        first | exact pow_pos hp.pos i
+               | exact pow_pos hp.pos (i + k))
+      (fun i hi => by
+        (have : i = 0 := by omega); subst this
+        simpa using Nat.pow_dvd_pow p (by omega))) =
     ↑(p ^ (k - 1) * (p + 1)) :=
   T'_deg_T_diag_two_prime p hp _ _ _ k hk (by
     change p ^ (i + k) / p ^ i = p ^ k
@@ -1337,8 +1463,12 @@ private lemma deg_ppow_term_lt' (i k : ℕ) (h2i : 2 * i < k) :
     (Nat.pow_dvd_pow p (by omega)), deg_T_ad']
   show T'_deg (GL_pair 2) (T_diag 2
     (![p ^ i, p ^ (k - i)])
-    (fun i' => by fin_cases i' <;> first | exact pow_pos hp.pos i | exact pow_pos hp.pos (k - i))
-    (fun i hi => by (have : i = 0 := by omega); subst this; simpa using Nat.pow_dvd_pow p (by omega))) =
+    (fun i' => by fin_cases i' <;>
+      first | exact pow_pos hp.pos i
+             | exact pow_pos hp.pos (k - i))
+    (fun i hi => by
+      (have : i = 0 := by omega); subst this
+      simpa using Nat.pow_dvd_pow p (by omega))) =
     ↑(p ^ (k - 2 * i - 1) * (p + 1))
   have h_mk2_eq :
       (![p ^ i, p ^ (k - i)] : Fin 2 → ℕ) =
@@ -1355,9 +1485,14 @@ private lemma deg_ppow_term_eq' (i k : ℕ) (h2i : 2 * i = k) :
     deg_T_ad'_of_pos' _ _ (pow_pos hp.pos i) (pow_pos hp.pos i) (dvd_refl _), deg_T_ad']
   set c := p ^ i with hc_def
   have hc : 0 < c := pow_pos hp.pos i
-  rw [show T_diag 2 (![c, c]) (fun i => by fin_cases i <;> exact hc) (fun i hi => by (have : i = 0 := by omega); subst this; simp) =
-      T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c) from by
-    simp [show ![c, c] = (fun (_ : Fin 2) => c) from funext fun j => by fin_cases j <;> rfl]]
+  rw [show T_diag 2 (![c, c])
+      (fun i => by fin_cases i <;> exact hc)
+      (fun i hi => by
+        (have : i = 0 := by omega); subst this; simp) =
+      T_diag 2 (fun _ => c) (fun _ => hc)
+        (divChain_const 2 c) from by
+    simp [show ![c, c] = (fun (_ : Fin 2) => c) from
+      funext fun j => by fin_cases j <;> rfl]]
   exact thm324_6_scalar c hc
 
 include hp in
@@ -1420,9 +1555,14 @@ private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
   rw [deg_T_ad'_of_pos' 1 1 one_pos one_pos (dvd_refl 1), deg_T_ad']
   set c : ℕ := 1 with hc_def
   have hc : 0 < c := Nat.one_pos
-  rw [show T_diag 2 (![c, c]) (fun i => by fin_cases i <;> exact hc) (fun i hi => by (have : i = 0 := by omega); subst this; simp) =
-      T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c) from by
-    simp [show ![c, c] = (fun (_ : Fin 2) => c) from funext fun j => by fin_cases j <;> rfl]]
+  rw [show T_diag 2 (![c, c])
+      (fun i => by fin_cases i <;> exact hc)
+      (fun i hi => by
+        (have : i = 0 := by omega); subst this; simp) =
+      T_diag 2 (fun _ => c) (fun _ => hc)
+        (divChain_const 2 c) from by
+    simp [show ![c, c] = (fun (_ : Fin 2) => c) from
+      funext fun j => by fin_cases j <;> rfl]]
   exact thm324_6_scalar c hc
 
 /-- Theorem 3.24(7): `deg(T(m)) = σ₁(m)`.
