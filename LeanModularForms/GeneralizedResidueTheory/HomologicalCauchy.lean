@@ -1514,7 +1514,41 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
     GeneralizedResidueTheory.meromorphicAt_sub_principalPart_eventually f s hf
   set rp_nf := Function.update rp s (g_an s)
   -- rp_nf is DifferentiableOn U (same as convex version)
-  have h_rp_nf_diff_U : DifferentiableOn ℂ rp_nf U := by sorry
+  have h_rp_nf_diff_U : DifferentiableOn ℂ rp_nf U := by
+    -- Same as convex version: analytic at s (from g_an), diff on U \ {s} (from f - pp diff)
+    intro z hz
+    by_cases h : z = s
+    · -- At s: rp_nf is analytic (agrees with g_an near s)
+      subst h
+      have h_an : AnalyticAt ℂ rp_nf z := by
+        apply hg_an_at.congr
+        -- Show g_an =ᶠ[𝓝 z] rp_nf
+        rw [Filter.eventuallyEq_iff_exists_mem]
+        -- hg_eq : ∀ᶠ z' in 𝓝[≠] z, rp z' = g_an z'
+        rw [Filter.Eventually, mem_nhdsWithin] at hg_eq
+        obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_eq
+        exact ⟨V, hV_open.mem_nhds hz_V, fun w hw => by
+          by_cases hwz : w = z
+          · simp [hwz, rp_nf, Function.update_self]
+          · simp only [rp_nf]
+            rw [Function.update_of_ne hwz]
+            exact (hV_eq ⟨hw, hwz⟩).symm⟩
+      exact h_an.differentiableAt.differentiableWithinAt
+    · -- At z ≠ s: rp = f - pp is differentiable, rp_nf = rp near z
+      have h_f_diff : DifferentiableAt ℂ f z :=
+        (hf_diff z ⟨hz, Set.mem_compl_singleton_iff.mpr h⟩).differentiableAt
+          ((hU.sdiff isClosed_singleton).mem_nhds ⟨hz, Set.mem_compl_singleton_iff.mpr h⟩)
+      have h_pp_diff : DifferentiableAt ℂ pp z :=
+        (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s hf z
+          (Set.mem_compl_singleton_iff.mpr h)).differentiableAt
+          (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr h))
+      have h_rp_diff : DifferentiableAt ℂ rp z := h_f_diff.sub h_pp_diff
+      have h_ev : rp =ᶠ[𝓝 z] rp_nf := by
+        apply Filter.Eventually.mono (isOpen_compl_singleton.mem_nhds
+          (Set.mem_compl_singleton_iff.mpr h))
+        intro w hw
+        exact (Function.update_of_ne (Set.mem_compl_singleton_iff.mp hw) (g_an s) rp).symm
+      exact (h_ev.differentiableAt_iff.mp h_rp_diff).differentiableWithinAt
   -- ∮ rp_nf = 0 by Dixon
   have h_rp_nf_zero : ∫ t in γ.a..γ.b, rp_nf (γ.toFun t) * deriv γ.toFun t = 0 :=
     contourIntegral_eq_zero_of_nullHomologous hU h_rp_nf_diff_U γ h_null
@@ -1533,7 +1567,8 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
       pp (γ.toFun t) * deriv γ.toFun t + rp (γ.toFun t) * deriv γ.toFun t := by
     intro t _; simp [rp]; ring
   rw [intervalIntegral.integral_congr h_decomp]
-  rw [intervalIntegral.integral_add sorry sorry, h_pp_zero, h_rp_zero, add_zero]
+  rw [intervalIntegral.integral_add sorry sorry, -- integrability of pp and rp (bounded piecewise continuous)
+    h_pp_zero, h_rp_zero, add_zero]
 
 /-- Finset version: induction on |S| using the single-pole version. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
