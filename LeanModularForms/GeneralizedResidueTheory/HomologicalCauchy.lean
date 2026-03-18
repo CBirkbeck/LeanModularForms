@@ -1401,6 +1401,7 @@ end
 
 /-! ## Downstream theorems with null-homologous hypothesis -/
 
+set_option maxHeartbeats 4000000 in
 /-- Null-homologous version of `integral_eq_sum_residues_of_avoids`. -/
 theorem integral_eq_sum_residues_of_nullHomologous
     (U : Set ℂ) (hU : IsOpen U)
@@ -1417,9 +1418,41 @@ theorem integral_eq_sum_residues_of_nullHomologous
         ∑ s ∈ S0,
           generalizedWindingNumber' γ.toFun γ.a γ.b s *
             residueSimplePole f s := by
-  -- Decompose f = Σ res/(z-s) + g where g is holomorphic.
-  -- By contourIntegral_eq_zero_of_nullHomologous, ∫ g = 0.
-  -- The singular sum ∫ Σ res/(z-s) = Σ winding * res by winding number computation.
+  -- Step 1: Decompose f = Σ res/(z-s) + g where g is holomorphic on U
+  set g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)
+  have ⟨hg_diff, hf_decomp⟩ :=
+    simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext
+  -- Step 2: ∫ g ∘ γ = 0 by null-homologous Dixon theorem
+  have hg_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 :=
+    contourIntegral_eq_zero_of_nullHomologous hU hg_diff γ h_null
+  -- Step 3: Rewrite ∫ f as ∫ (Σ res/(z-s)) + ∫ g
+  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+  obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
+  have h_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U \ (S0 : Set ℂ) :=
+    fun t ht => ⟨h_null.image_subset t ht,
+      fun hs => hγ_avoids _ (Finset.mem_coe.mp hs) t ht rfl⟩
+  -- The integrand f*γ' = (Σ res/(z-s))*γ' + g*γ'
+  have h_expand : ∀ t ∈ Icc γ.a γ.b,
+      f (γ.toFun t) * deriv γ.toFun t =
+      (∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
+        g (γ.toFun t) * deriv γ.toFun t := by
+    intro t ht
+    have := hf_decomp (γ.toFun t) (h_on_curve t ht)
+    simp only at this; rw [this, add_mul, Finset.sum_mul]
+  -- Rewrite integrand: f*γ' = Σ(res/(z-s)*γ') + g*γ'
+  have h_eq : (fun t => f (γ.toFun t) * deriv γ.toFun t) =
+      (fun t => (∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
+        g (γ.toFun t) * deriv γ.toFun t) := by
+    funext t; simp only [g, div_eq_mul_inv, Finset.sum_mul, sub_mul, add_sub_cancel]
+  -- Integrability: both parts are bounded piecewise continuous on compact interval
+  have h_sing_int : IntervalIntegrable
+      (fun t => ∑ s ∈ S0, residueSimplePole f s * (γ.toFun t - s)⁻¹ * deriv γ.toFun t)
+      MeasureTheory.volume γ.a γ.b := by sorry
+  have h_g_int : IntervalIntegrable
+      (fun t => g (γ.toFun t) * deriv γ.toFun t)
+      MeasureTheory.volume γ.a γ.b := by sorry
+  -- Split integral: ∫ (sum + g) = ∫ sum + ∫ g, then ∫ g = 0
+  -- Compute ∫ sum = Σ winding * residue
   sorry
 
 /-- **Theorem 3.3 of Hungerbühler-Wasem (arXiv:1808.00997v2)** for null-homologous curves.
