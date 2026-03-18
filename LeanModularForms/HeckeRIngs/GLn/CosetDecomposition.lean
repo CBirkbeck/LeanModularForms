@@ -136,8 +136,7 @@ lemma upperTriMat_det_pos (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
   exact Finset.prod_pos fun i _ => by exact_mod_cast hpos i
 
 omit [NeZero n] in
-lemma upperTriMat_injective (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
-    (hdiv : DivChain n a) :
+lemma upperTriMat_injective (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a) :
     Function.Injective (upperTriMat n a hdiv) := by
   intro B₁ B₂ h
   funext ⟨⟨i, j⟩, hij⟩
@@ -169,8 +168,7 @@ noncomputable def upperTriGL (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
 omit [NeZero n] in
 @[simp]
 lemma upperTriGL_val (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
-    (B : UpperTriRep n a hdiv) :
-    (↑(upperTriGL n a hpos hdiv B) : Matrix (Fin n) (Fin n) ℚ) =
+    (B : UpperTriRep n a hdiv) : (↑(upperTriGL n a hpos hdiv B) : Matrix (Fin n) (Fin n) ℚ) =
     (upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ) := rfl
 
 omit [NeZero n] in
@@ -239,8 +237,7 @@ omit [NeZero n] in
 private lemma coset_sum_eq {a : Fin n → ℕ} {hdiv : DivChain n a}
     {B₂ : UpperTriRep n a hdiv}
     {σ : SpecialLinearGroup (Fin n) ℤ}
-    {i j : Fin n}
-    (ih : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n),
+    {i j : Fin n} (ih : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n),
       σ.val i k = if i = k then 1 else 0) :
     ∑ k : Fin n, σ.val i k * upperTriMat n a hdiv B₂ k j =
       σ.val i j * (a j : ℤ) + (if i < j then upperTriMat n a hdiv B₂ i j else 0) := by
@@ -283,8 +280,7 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
     {hdiv : DivChain n a}
     {B₁ B₂ : UpperTriRep n a hdiv}
     {σ : SpecialLinearGroup (Fin n) ℤ}
-    {i j : Fin n} (hij : i < j)
-    (h_eq : upperTriMat n a hdiv B₁ i j =
+    {i j : Fin n} (hij : i < j) (h_eq : upperTriMat n a hdiv B₁ i j =
       σ.val i j * (a j : ℤ) + upperTriMat n a hdiv B₂ i j) :
     σ.val i j = 0 := by
   simp only [upperTriMat_apply_lt _ _ _ _ hij] at h_eq
@@ -317,8 +313,7 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
 
 omit [NeZero n] in
 /-- Distinct entry assignments give distinct left cosets of `SL_n(ℤ)`. -/
-theorem upperTriMat_distinct_cosets (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
-    (hdiv : DivChain n a)
+theorem upperTriMat_distinct_cosets (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
     (B₁ B₂ : UpperTriRep n a hdiv) (hne : B₁ ≠ B₂) :
     ∀ (γ : GL (Fin n) ℚ), γ ∈ SLnZ_subgroup n →
       upperTriGL n a hpos hdiv B₁ ≠ γ * upperTriGL n a hpos hdiv B₂ := by

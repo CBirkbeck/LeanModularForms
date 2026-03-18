@@ -161,8 +161,7 @@ private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (�
   simp only [Matrix.transpose_mul, Matrix.diagonal_transpose] at h1
   exact h1
 
-private lemma transpose_mem_conj_inv_of_mem_conj
-    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
+private lemma transpose_mem_conj_inv_of_mem_conj (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
     (hσ : SLnZ_to_GLnQ n σ ∈
       ConjAct.toConjAct (diagMat n a ha) • SLnZ_subgroup n) :
     SLnZ_to_GLnQ n σ.transpose ∈
@@ -184,8 +183,7 @@ private lemma transpose_mem_conj_inv_of_mem_conj
     rwa [← mul_assoc] at h
   rw [this]; exact ⟨ρ.transpose, rfl⟩
 
-private lemma transpose_mem_conj_of_mem_conj_inv
-    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
+private lemma transpose_mem_conj_of_mem_conj_inv (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
     (hτ : SLnZ_to_GLnQ n τ ∈
       ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n) :
     SLnZ_to_GLnQ n τ.transpose ∈
@@ -244,8 +242,7 @@ then their ratio lies in `H`, contradicting `upperTriMat_distinct_cosets`. -/
 private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (hdiv : DivChain n a)
     (α : GL (Fin n) ℚ) (hα : α = diagMat n a ha) (H : Subgroup (GL (Fin n) ℚ))
-    (hH : H = SLnZ_subgroup n) (f : SL(n, ℤ) →* GL (Fin n) ℚ)
-    (hf : f = SLnZ_to_GLnQ n)
+    (hH : H = SLnZ_subgroup n) (f : SL(n, ℤ) →* GL (Fin n) ℚ) (hf : f = SLnZ_to_GLnQ n)
     [Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H)] :
     Function.Injective
       (fun B : UpperTriRep n a hdiv =>
@@ -285,8 +282,7 @@ private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i,
 Proved by constructing an injection from `UpperTriRep` into the quotient
 `H / (α⁻¹-conjugate ∩ H)` and applying `Fintype.card_le_of_injective`. -/
 private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain n a)
-    (h_rel_ne : (ConjAct.toConjAct (diagMat n a ha : GL (Fin n) ℚ)⁻¹ •
+    (hdiv : DivChain n a) (h_rel_ne : (ConjAct.toConjAct (diagMat n a ha : GL (Fin n) ℚ)⁻¹ •
       (GL_pair n).H).relIndex (GL_pair n).H ≠ 0) :
     Fintype.card (UpperTriRep n a hdiv) ≤
       (ConjAct.toConjAct (diagMat n a ha : GL (Fin n) ℚ)⁻¹ •
@@ -308,8 +304,7 @@ private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < 
         simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
 
 /-- The number of upper-triangular representatives is a lower bound on the degree. -/
-theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain n a) :
+theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
     (Fintype.card (UpperTriRep n a hdiv) : ℤ) ≤
     T'_deg (GL_pair n) (T_diag n a ha hdiv) := by
   set H := (GL_pair n).H
@@ -388,8 +383,7 @@ private lemma conj_diagMat_mem_of_Gamma0 (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
     push_cast <;> (try rw [hcQ]) <;> (try rw [ha1]) <;> ring
 
 private lemma Gamma0_of_conj_diagMat_mem (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
-    (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1)
-    (σ : SL(2, ℤ))
+    (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) (σ : SL(2, ℤ))
     (hmem : (diagMat 2 a ha)⁻¹ * SLnZ_to_GLnQ 2 σ * diagMat 2 a ha ∈ SLnZ_subgroup 2) :
     (↑(p ^ k) : ℤ) ∣ σ.1 1 0 := by
   rw [SLnZ_subgroup, MonoidHom.mem_range] at hmem
@@ -413,8 +407,7 @@ private lemma Gamma0_of_conj_diagMat_mem (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
   exact ⟨τ.1 1 0, by exact_mod_cast h_σ₁₀⟩
 
 omit [NeZero n] in
-private lemma conjDiag_relIndex_eq_Gamma0_index (p : ℕ)
-    (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
+private lemma conjDiag_relIndex_eq_Gamma0_index (p : ℕ) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :
     (ConjAct.toConjAct (diagMat 2 a ha) • SLnZ_subgroup 2).relIndex (SLnZ_subgroup 2) =
     (Gamma0 (p ^ k)).index := by
@@ -532,7 +525,8 @@ theorem T'_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
         ((GL_pair 2).H.inv_mem ((GL_pair 2).H.mul_mem hσ₁ hσ₂)) hx)
         ((GL_pair 2).H.mul_mem hσ₁ hσ₂)
     calc δ⁻¹ * x * δ
-        = (σ₁ * diagMat 2 a ha * σ₂)⁻¹ * x * (σ₁ * diagMat 2 a ha * σ₂) := by rw [hδ_eq]
+        = (σ₁ * diagMat 2 a ha * σ₂)⁻¹ * x *
+          (σ₁ * diagMat 2 a ha * σ₂) := by rw [hδ_eq]
       _ = σ₂⁻¹ * ((diagMat 2 a ha)⁻¹ * (σ₁⁻¹ * x * σ₁) *
           diagMat 2 a ha) * σ₂ := by group
       _ = σ₂⁻¹ * (σ₁⁻¹ * x * σ₁) * σ₂ := by rw [h_conj_triv]

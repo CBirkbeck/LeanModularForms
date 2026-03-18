@@ -130,8 +130,10 @@ lemma T_diag_ones :
 lemma T_diag_eq_iff (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
     (hda : DivChain n a) (hdb : DivChain n b) :
     T_diag n a ha hda = T_diag n b hb hdb ↔
-    DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) =
-    DoubleCoset.doubleCoset (diagMat n b hb : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) := by
+    DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ)
+      (SLnZ_subgroup n) (SLnZ_subgroup n) =
+    DoubleCoset.doubleCoset (diagMat n b hb : GL (Fin n) ℚ)
+      (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   exact ⟨congr_arg T'.set, fun h => T'_ext _ _ _ h⟩
 
 end TDiag
@@ -189,16 +191,14 @@ private lemma mulVecLin_injective_of_det_ne_zero
   exact (mul_eq_zero.mp this).resolve_left hdet
 
 omit [NeZero n] in
-private lemma finrank_range_mulVecLin
-    (A : Matrix (Fin n) (Fin n) ℤ) (hdet : A.det ≠ 0) :
+private lemma finrank_range_mulVecLin (A : Matrix (Fin n) (Fin n) ℤ) (hdet : A.det ≠ 0) :
     Module.finrank ℤ (LinearMap.range A.mulVecLin) = Module.finrank ℤ (Fin n → ℤ) := by
   exact LinearMap.finrank_range_of_inj (mulVecLin_injective_of_det_ne_zero (n := n) A hdet)
 
 omit [NeZero n] in
 /-- Every integer matrix with positive determinant
 is `SL_n(ℤ)`-equivalent to a positive diagonal. -/
-theorem exists_diagonal_of_posdet
-    (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
+theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i),
     ∃ (L R : SpecialLinearGroup (Fin n) ℤ),
       (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
@@ -560,8 +560,7 @@ private noncomputable def genEquiv (k : ℕ) (j : Fin (k + 2)) (_hj : j.val ≠ 
   (Equiv.swap (⟨1, by omega⟩ : Fin (k + 2)) j).trans (finEquivSum k)
 
 private lemma diagonal_submatrix_genEquiv (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0)
-    (d : Fin (k + 2) → ℤ) :
-    (Matrix.diagonal (d ∘ (genEquiv k j hj).symm)).submatrix
+    (d : Fin (k + 2) → ℤ) : (Matrix.diagonal (d ∘ (genEquiv k j hj).symm)).submatrix
       (genEquiv k j hj) (genEquiv k j hj) = Matrix.diagonal d := by
   ext i m; simp [submatrix_apply, diagonal_apply]
 
@@ -709,10 +708,8 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
       rw [if_neg h1, if_neg h2]
 
 omit [NeZero n] in
-private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ)
-    (hc : ∀ i, c ∣ d i)
-    (L R : Matrix (Fin m) (Fin m) ℤ)
-    (heq : L * Matrix.diagonal d * R = Matrix.diagonal d') :
+private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
+    (L R : Matrix (Fin m) (Fin m) ℤ) (heq : L * Matrix.diagonal d * R = Matrix.diagonal d') :
     ∀ i, c ∣ d' i := by
   intro i
   have h1 : d' i = (Matrix.diagonal d') i i := by simp
@@ -949,8 +946,7 @@ private theorem exists_divchain_diagonal_of_posdet
     _ = ↑L₁ * Matrix.diagonal d₀ * ↑R₁ := by rw [hLR₀]
     _ = Matrix.diagonal d' := hLR₁
 
-private lemma double_coset_eq_of_SLnZ_equiv
-    (α : (GL_pair n).Δ) (A : Matrix (Fin n) (Fin n) ℤ)
+private lemma double_coset_eq_of_SLnZ_equiv (α : (GL_pair n).Δ) (A : Matrix (Fin n) (Fin n) ℤ)
     (hA : (↑(↑α : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ) =
       A.map (Int.cast : ℤ → ℚ))
     (d : Fin n → ℤ) (hd_pos : ∀ i, 0 < d i)
@@ -991,8 +987,7 @@ private lemma double_coset_eq_of_SLnZ_equiv
 
 /-- Every element of `Delta` has a diagonal representative
 with divisibility chain (Smith normal form). -/
-theorem exists_diagonal_representative
-    (α : (GL_pair n).Δ) :
+theorem exists_diagonal_representative (α : (GL_pair n).Δ) :
     ∃ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a),
       T_mk (GL_pair n) α = T_diag n a ha hdiv := by
   obtain ⟨A, hA⟩ : HasIntEntries n (↑α : GL (Fin n) ℚ) := α.2.1
@@ -1078,8 +1073,7 @@ private lemma divChain_prod_dvd_of_injective
 omit [NeZero n] in
 private lemma partialProd_eq_of_SLnZ_equiv
     {a b : Fin n → ℕ} (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
-    (hda : DivChain n a) (hdb : DivChain n b)
-    (L R : SpecialLinearGroup (Fin n) ℤ)
+    (hda : DivChain n a) (hdb : DivChain n b) (L R : SpecialLinearGroup (Fin n) ℤ)
     (hmat : (diagMat n b hb : GL (Fin n) ℚ) =
       SLnZ_to_GLnQ n L * diagMat n a ha * SLnZ_to_GLnQ n R)
     (k : ℕ) (hk : k ≤ n) :
@@ -1143,8 +1137,7 @@ private lemma partialProd_eq_of_SLnZ_equiv
     simp [this]
 
 /-- The elementary divisors are uniquely determined by the double coset. -/
-theorem diagonal_representative_unique
-    (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
+theorem diagonal_representative_unique (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
     (hda : DivChain n a) (hdb : DivChain n b)
     (heq : T_diag n a ha hda = T_diag n b hb hdb) : a = b := by
   rw [T_diag_eq_iff] at heq
