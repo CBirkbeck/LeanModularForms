@@ -54,6 +54,125 @@ structure IsNullHomologous (γ : PiecewiseC1Immersion) (U : Set ℂ) : Prop wher
   winding_zero : ∀ z, z ∉ U →
     generalizedWindingNumber' γ.toFun γ.a γ.b z = 0
 
+private lemma ftc_no_interior_partition
+    {F : ℂ → ℂ} {f : ℂ → ℂ}
+    (γ : PiecewiseC1Curve) (a' b' : ℝ)
+    (h_int : IntervalIntegrable
+      (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b)
+    (hFγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b))
+    (hFγ_deriv_off : ∀ t ∈ Ioo γ.a γ.b, t ∉ (↑γ.partition : Set ℝ) →
+      HasDerivAt (F ∘ γ.toFun) (f (γ.toFun t) * deriv γ.toFun t) t)
+    (ha'b' : a' ≤ b') (hsub : Icc a' b' ⊆ Icc γ.a γ.b)
+    (hempty : γ.partition.filter (fun t => a' < t ∧ t < b') = ∅) :
+    ∫ t in a'..b', f (γ.toFun t) * deriv γ.toFun t =
+      F (γ.toFun b') - F (γ.toFun a') := by
+  have ha'_bds := hsub (left_mem_Icc.mpr ha'b')
+  have hb'_bds := hsub (right_mem_Icc.mpr ha'b')
+  apply intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le ha'b'
+    (hFγ_cont.mono hsub)
+  · intro t ht
+    apply hFγ_deriv_off t
+      ⟨lt_of_le_of_lt ha'_bds.1 ht.1, lt_of_lt_of_le ht.2 hb'_bds.2⟩
+    intro ht_P
+    exact Finset.notMem_empty t (hempty ▸ Finset.mem_filter.mpr ⟨ht_P, ht.1, ht.2⟩)
+  · exact h_int.mono_set (uIcc_subset_uIcc
+      (Set.mem_uIcc_of_le ha'_bds.1 ha'_bds.2)
+      (Set.mem_uIcc_of_le hb'_bds.1 hb'_bds.2))
+
+private lemma partition_filter_card_lt_left
+    (P : Finset ℝ) {a' b' c : ℝ}
+    (hc_part : c ∈ P) (hac : a' < c) (hcb : c < b') :
+    (P.filter (fun t => a' < t ∧ t < c)).card
+      < (P.filter (fun t => a' < t ∧ t < b')).card := by
+  apply Finset.card_lt_card
+  constructor
+  · intro t ht
+    simp only [Finset.mem_filter] at ht ⊢
+    exact ⟨ht.1, ht.2.1, lt_trans ht.2.2 hcb⟩
+  · intro hsub
+    have hcmem := hsub (Finset.mem_filter.mpr ⟨hc_part, hac, hcb⟩)
+    simp only [Finset.mem_filter] at hcmem
+    exact lt_irrefl c hcmem.2.2
+
+private lemma partition_filter_card_lt_right
+    (P : Finset ℝ) {a' b' c : ℝ}
+    (hc_part : c ∈ P) (hac : a' < c) (hcb : c < b') :
+    (P.filter (fun t => c < t ∧ t < b')).card
+      < (P.filter (fun t => a' < t ∧ t < b')).card := by
+  apply Finset.card_lt_card
+  constructor
+  · intro t ht
+    simp only [Finset.mem_filter] at ht ⊢
+    exact ⟨ht.1, lt_trans hac ht.2.1, ht.2.2⟩
+  · intro hsub
+    have hcmem := hsub (Finset.mem_filter.mpr ⟨hc_part, hac, hcb⟩)
+    simp only [Finset.mem_filter] at hcmem
+    exact lt_irrefl c hcmem.2.1
+
+private lemma ftc_inductive_step
+    {F : ℂ → ℂ} {f : ℂ → ℂ}
+    (γ : PiecewiseC1Curve) (m : ℕ) (a' b' c : ℝ)
+    (h_int : IntervalIntegrable
+      (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b)
+    (ih : ∀ (a' b' : ℝ),
+      (γ.partition.filter (fun t => a' < t ∧ t < b')).card ≤ m →
+      a' ≤ b' → Icc a' b' ⊆ Icc γ.a γ.b →
+      a' ∈ γ.partition → b' ∈ γ.partition →
+      ∫ t in a'..b', f (γ.toFun t) * deriv γ.toFun t =
+        F (γ.toFun b') - F (γ.toFun a'))
+    (hcard : (γ.partition.filter (fun t => a' < t ∧ t < b')).card ≤ m + 1)
+    (ha'b' : a' ≤ b') (hsub : Icc a' b' ⊆ Icc γ.a γ.b)
+    (ha'P : a' ∈ γ.partition) (hb'P : b' ∈ γ.partition)
+    (hc_part : c ∈ γ.partition) (hac : a' < c) (hcb : c < b') :
+    ∫ t in a'..b', f (γ.toFun t) * deriv γ.toFun t =
+      F (γ.toFun b') - F (γ.toFun a') := by
+  have hc_bds : c ∈ Icc γ.a γ.b := hsub ⟨le_of_lt hac, le_of_lt hcb⟩
+  have h_int_ac := h_int.mono_set (uIcc_subset_uIcc
+    (Set.mem_uIcc_of_le (hsub (left_mem_Icc.mpr ha'b')).1
+      (hsub (left_mem_Icc.mpr ha'b')).2)
+    (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2))
+  have h_int_cb := h_int.mono_set (uIcc_subset_uIcc
+    (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2)
+    (Set.mem_uIcc_of_le (hsub (right_mem_Icc.mpr ha'b')).1
+      (hsub (right_mem_Icc.mpr ha'b')).2))
+  have hcard_ac : (γ.partition.filter (fun t => a' < t ∧ t < c)).card ≤ m := by
+    have := partition_filter_card_lt_left γ.partition hc_part hac hcb; omega
+  have hcard_cb : (γ.partition.filter (fun t => c < t ∧ t < b')).card ≤ m := by
+    have := partition_filter_card_lt_right γ.partition hc_part hac hcb; omega
+  have h_ac := ih a' c hcard_ac (le_of_lt hac)
+    (fun t ht => hsub ⟨ht.1, le_trans ht.2 (le_of_lt hcb)⟩) ha'P hc_part
+  have h_cb := ih c b' hcard_cb (le_of_lt hcb)
+    (fun t ht => hsub ⟨le_trans (le_of_lt hac) ht.1, ht.2⟩) hc_part hb'P
+  rw [← intervalIntegral.integral_add_adjacent_intervals h_int_ac h_int_cb, h_ac, h_cb]
+  ring
+
+private lemma ftc_piecewise_contour_induction
+    {F : ℂ → ℂ} {f : ℂ → ℂ}
+    (γ : PiecewiseC1Curve) (n : ℕ) (a' b' : ℝ)
+    (h_int : IntervalIntegrable
+      (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b)
+    (hFγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b))
+    (hFγ_deriv_off : ∀ t ∈ Ioo γ.a γ.b, t ∉ (↑γ.partition : Set ℝ) →
+      HasDerivAt (F ∘ γ.toFun) (f (γ.toFun t) * deriv γ.toFun t) t)
+    (hcard : (γ.partition.filter (fun t => a' < t ∧ t < b')).card ≤ n)
+    (ha'b' : a' ≤ b') (hsub : Icc a' b' ⊆ Icc γ.a γ.b)
+    (ha'P : a' ∈ γ.partition) (hb'P : b' ∈ γ.partition) :
+    ∫ t in a'..b', f (γ.toFun t) * deriv γ.toFun t =
+      F (γ.toFun b') - F (γ.toFun a') := by
+  induction n generalizing a' b' with
+  | zero =>
+    exact ftc_no_interior_partition γ a' b' h_int hFγ_cont
+      hFγ_deriv_off ha'b' hsub (Finset.card_eq_zero.mp (Nat.le_zero.mp hcard))
+  | succ m ih =>
+    by_cases hempty : γ.partition.filter (fun t => a' < t ∧ t < b') = ∅
+    · exact ftc_no_interior_partition γ a' b' h_int hFγ_cont hFγ_deriv_off ha'b' hsub hempty
+    · obtain ⟨c, hc_filt⟩ := Finset.nonempty_iff_ne_empty.mpr hempty
+      simp only [Finset.mem_filter] at hc_filt
+      exact ftc_inductive_step γ m a' b' c h_int
+        (fun a'' b'' hc' hab'' hsub'' haP'' hbP'' =>
+          ih a'' b'' hc' hab'' hsub'' haP'' hbP'')
+        hcard ha'b' hsub ha'P hb'P hc_filt.1 hc_filt.2.1 hc_filt.2.2
+
 /-- The contour integral of a derivative of a composition F circ gamma over a
 piecewise C^1 curve equals F(gamma(b)) - F(gamma(a)), when F is holomorphic
 on a set containing the image of gamma.
@@ -72,130 +191,16 @@ private theorem ftc_piecewise_contour
       (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t =
       F (γ.toFun γ.b) - F (γ.toFun γ.a) := by
-  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
-  -- F ∘ γ is continuous on [a,b]: chain rule for continuity
-  have hF_contOn : ContinuousOn F U :=
-    fun z hz => (hF_prim z hz).continuousAt.continuousWithinAt
   have hFγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) :=
-    hF_contOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)
-  -- The chain rule gives HasDerivAt (F ∘ γ) off partition
+    (ContinuousOn.comp (fun z hz => (hF_prim z hz).continuousAt.continuousWithinAt)
+      γ.continuous_toFun (fun t ht => hγ_in_U t ht))
   have hFγ_deriv_off : ∀ t ∈ Ioo γ.a γ.b, t ∉ (↑γ.partition : Set ℝ) →
       HasDerivAt (F ∘ γ.toFun) (f (γ.toFun t) * deriv γ.toFun t) t := by
     intro t ht_Ioo ht_nP
-    have ht_Icc : t ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht_Ioo
-    convert (hF_prim (γ.toFun t) (hγ_in_U t ht_Icc)).comp_of_eq t
-      (γ.smooth_off_partition t ht_Icc ht_nP).hasDerivAt rfl using 1
-  -- Key helper: prove by induction on the number of interior partition points
-  -- that FTC holds for any sub-interval [a', b'] ⊆ [γ.a, γ.b] with endpoints in partition
-  have h_gen : ∀ (n : ℕ) (a' b' : ℝ),
-      (γ.partition.filter (fun t => a' < t ∧ t < b')).card ≤ n →
-      a' ≤ b' → Icc a' b' ⊆ Icc γ.a γ.b →
-      a' ∈ γ.partition → b' ∈ γ.partition →
-      ∫ t in a'..b', f (γ.toFun t) * deriv γ.toFun t =
-        F (γ.toFun b') - F (γ.toFun a') := by
-    intro n
-    induction n with
-    | zero =>
-      intro a' b' hcard ha'b' hsub ha'P hb'P
-      have ha'_bds := hsub (left_mem_Icc.mpr ha'b')
-      have hb'_bds := hsub (right_mem_Icc.mpr ha'b')
-      -- No interior partition points
-      apply intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le ha'b'
-        (hFγ_cont.mono hsub)
-      · intro t ht
-        have ht_Ioo_full : t ∈ Ioo γ.a γ.b :=
-          ⟨lt_of_le_of_lt ha'_bds.1 ht.1, lt_of_lt_of_le ht.2 hb'_bds.2⟩
-        apply hFγ_deriv_off t ht_Ioo_full
-        intro ht_P
-        have hmem : t ∈ γ.partition.filter (fun s => a' < s ∧ s < b') := by
-          simp only [Finset.mem_filter]; exact ⟨ht_P, ht.1, ht.2⟩
-        exact Finset.notMem_empty t (Finset.card_eq_zero.mp (Nat.le_zero.mp hcard) ▸ hmem)
-      · exact h_int.mono_set (uIcc_subset_uIcc
-          (Set.mem_uIcc_of_le ha'_bds.1 ha'_bds.2)
-          (Set.mem_uIcc_of_le hb'_bds.1 hb'_bds.2))
-    | succ m ih =>
-      intro a' b' hcard ha'b' hsub ha'P hb'P
-      have ha'_bds := hsub (left_mem_Icc.mpr ha'b')
-      have hb'_bds := hsub (right_mem_Icc.mpr ha'b')
-      by_cases hempty : γ.partition.filter (fun t => a' < t ∧ t < b') = ∅
-      · -- No interior points: apply FTC directly
-        apply intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le ha'b'
-          (hFγ_cont.mono hsub)
-        · intro t ht
-          have ht_Ioo_full : t ∈ Ioo γ.a γ.b :=
-            ⟨lt_of_le_of_lt ha'_bds.1 ht.1, lt_of_lt_of_le ht.2 hb'_bds.2⟩
-          apply hFγ_deriv_off t ht_Ioo_full
-          intro ht_P
-          have hmem : t ∈ γ.partition.filter (fun s => a' < s ∧ s < b') := by
-            simp only [Finset.mem_filter]; exact ⟨ht_P, ht.1, ht.2⟩
-          exact Finset.notMem_empty t (hempty ▸ hmem)
-        · exact h_int.mono_set (uIcc_subset_uIcc
-            (Set.mem_uIcc_of_le ha'_bds.1 ha'_bds.2)
-            (Set.mem_uIcc_of_le hb'_bds.1 hb'_bds.2))
-      · -- Pick an interior partition point c
-        obtain ⟨c, hc_filt⟩ := Finset.nonempty_iff_ne_empty.mpr hempty
-        simp only [Finset.mem_filter] at hc_filt
-        obtain ⟨hc_part, hac, hcb⟩ := hc_filt
-        -- Split ∫_a'^b' = ∫_a'^c + ∫_c^b'
-        have hac' : a' ≤ c := le_of_lt hac
-        have hcb' : c ≤ b' := le_of_lt hcb
-        have hc_bds : c ∈ Icc γ.a γ.b := hsub ⟨hac', hcb'⟩
-        -- Integrabilities
-        have h_int_ac : IntervalIntegrable
-            (fun t => f (γ.toFun t) * deriv γ.toFun t) volume a' c :=
-          h_int.mono_set (uIcc_subset_uIcc
-            (Set.mem_uIcc_of_le ha'_bds.1 ha'_bds.2)
-            (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2))
-        have h_int_cb : IntervalIntegrable
-            (fun t => f (γ.toFun t) * deriv γ.toFun t) volume c b' :=
-          h_int.mono_set (uIcc_subset_uIcc
-            (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2)
-            (Set.mem_uIcc_of_le hb'_bds.1 hb'_bds.2))
-        -- Cards for sub-intervals are ≤ m
-        -- c is in filter(a' < · < b') and not in filter(a' < · < c), so strict subset
-        have hcard_ac : (γ.partition.filter (fun t => a' < t ∧ t < c)).card ≤ m := by
-          have hstrict : γ.partition.filter (fun t => a' < t ∧ t < c) ⊂
-              γ.partition.filter (fun t => a' < t ∧ t < b') := by
-            constructor
-            · intro t ht; simp only [Finset.mem_filter] at ht ⊢
-              exact ⟨ht.1, ht.2.1, lt_trans ht.2.2 hcb⟩
-            · intro hsub2
-              have hcmem : c ∈ γ.partition.filter (fun t => a' < t ∧ t < b') := by
-                simp only [Finset.mem_filter]; exact ⟨hc_part, hac, hcb⟩
-              have hcmem2 := hsub2 hcmem
-              simp only [Finset.mem_filter] at hcmem2
-              exact lt_irrefl c hcmem2.2.2
-          have hlt : (γ.partition.filter (fun t => a' < t ∧ t < c)).card
-              < (γ.partition.filter (fun t => a' < t ∧ t < b')).card :=
-            Finset.card_lt_card hstrict
-          omega
-        have hcard_cb : (γ.partition.filter (fun t => c < t ∧ t < b')).card ≤ m := by
-          have hstrict : γ.partition.filter (fun t => c < t ∧ t < b') ⊂
-              γ.partition.filter (fun t => a' < t ∧ t < b') := by
-            constructor
-            · intro t ht; simp only [Finset.mem_filter] at ht ⊢
-              exact ⟨ht.1, lt_trans hac ht.2.1, ht.2.2⟩
-            · intro hsub2
-              have hcmem : c ∈ γ.partition.filter (fun t => a' < t ∧ t < b') := by
-                simp only [Finset.mem_filter]; exact ⟨hc_part, hac, hcb⟩
-              have hcmem2 := hsub2 hcmem
-              simp only [Finset.mem_filter] at hcmem2
-              exact lt_irrefl c hcmem2.2.1
-          have hlt : (γ.partition.filter (fun t => c < t ∧ t < b')).card
-              < (γ.partition.filter (fun t => a' < t ∧ t < b')).card :=
-            Finset.card_lt_card hstrict
-          omega
-        -- Apply IH
-        have h_ac := ih a' c hcard_ac hac'
-          (fun t ht => hsub ⟨ht.1, le_trans ht.2 (le_of_lt hcb)⟩)
-          ha'P hc_part
-        have h_cb := ih c b' hcard_cb hcb'
-          (fun t ht => hsub ⟨le_trans (le_of_lt hac) ht.1, ht.2⟩)
-          hc_part hb'P
-        rw [← intervalIntegral.integral_add_adjacent_intervals h_int_ac h_int_cb,
-            h_ac, h_cb]; ring
-  -- Apply h_gen to the full interval
-  exact h_gen _ γ.a γ.b le_rfl hab (Subset.refl _)
+    convert (hF_prim (γ.toFun t) (hγ_in_U t (Ioo_subset_Icc_self ht_Ioo))).comp_of_eq t
+      (γ.smooth_off_partition t (Ioo_subset_Icc_self ht_Ioo) ht_nP).hasDerivAt rfl using 1
+  exact ftc_piecewise_contour_induction γ _ γ.a γ.b h_int hFγ_cont hFγ_deriv_off
+    le_rfl (le_of_lt γ.hab) (Subset.refl _)
     γ.endpoints_in_partition.1 γ.endpoints_in_partition.2
 
 /-- The integrand (gamma(t) - z)^{-1} * gamma'(t) is interval integrable when z
@@ -1487,6 +1492,104 @@ theorem integral_eq_sum_residues_of_nullHomologous
 
 
 
+private lemma regularPart_update_differentiableOn
+    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
+    (U : Set ℂ) (hU : IsOpen U)
+    (hf_diff : DifferentiableOn ℂ f (U \ {s}))
+    (hs_in_U : s ∈ U)
+    (g_an : ℂ → ℂ) (hg_an_at : AnalyticAt ℂ g_an s)
+    (hg_eq : ∀ᶠ z in 𝓝[≠] s,
+      f z - GeneralizedResidueTheory.meromorphicPrincipalPart f s z = g_an z) :
+    DifferentiableOn ℂ
+      (Function.update (fun z => f z - GeneralizedResidueTheory.meromorphicPrincipalPart f s z)
+        s (g_an s)) U := by
+  set pp := GeneralizedResidueTheory.meromorphicPrincipalPart f s
+  set rp := fun z => f z - pp z
+  set rp_nf := Function.update rp s (g_an s)
+  intro z hz
+  by_cases h : z = s
+  · subst h
+    have h_an : AnalyticAt ℂ rp_nf z := by
+      apply hg_an_at.congr
+      rw [Filter.eventuallyEq_iff_exists_mem]
+      rw [Filter.Eventually, mem_nhdsWithin] at hg_eq
+      obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_eq
+      exact ⟨V, hV_open.mem_nhds hz_V, fun w hw => by
+        by_cases hwz : w = z
+        · simp [hwz, rp_nf, Function.update_self]
+        · simp only [rp_nf]
+          rw [Function.update_of_ne hwz]
+          exact (hV_eq ⟨hw, hwz⟩).symm⟩
+    exact h_an.differentiableAt.differentiableWithinAt
+  · have h_f_diff : DifferentiableAt ℂ f z :=
+      (hf_diff z ⟨hz, Set.mem_compl_singleton_iff.mpr h⟩).differentiableAt
+        ((hU.sdiff isClosed_singleton).mem_nhds ⟨hz, Set.mem_compl_singleton_iff.mpr h⟩)
+    have h_pp_diff : DifferentiableAt ℂ pp z :=
+      (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s hf z
+        (Set.mem_compl_singleton_iff.mpr h)).differentiableAt
+        (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr h))
+    have h_rp_diff : DifferentiableAt ℂ rp z := h_f_diff.sub h_pp_diff
+    have h_ev : rp =ᶠ[𝓝 z] rp_nf := by
+      apply Filter.Eventually.mono (isOpen_compl_singleton.mem_nhds
+        (Set.mem_compl_singleton_iff.mpr h))
+      intro w hw
+      exact (Function.update_of_ne (Set.mem_compl_singleton_iff.mp hw) (g_an s) rp).symm
+    exact (h_ev.differentiableAt_iff.mp h_rp_diff).differentiableWithinAt
+
+private lemma contourIntegral_eq_of_agree_on_curve
+    (f g : ℂ → ℂ) (γ : PiecewiseC1Immersion)
+    (h_agree : ∀ t ∈ Icc γ.a γ.b, f (γ.toFun t) = g (γ.toFun t)) :
+    ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t =
+    ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t := by
+  apply intervalIntegral.integral_congr
+  intro t ht
+  rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht
+  dsimp only
+  rw [h_agree t ht]
+
+private lemma contourIntegral_add_principalPart_regularPart
+    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
+    (U : Set ℂ)
+    (hf_diff : DifferentiableOn ℂ f (U \ {s}))
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+    (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t =
+    (∫ t in γ.a..γ.b,
+      GeneralizedResidueTheory.meromorphicPrincipalPart f s (γ.toFun t) *
+        deriv γ.toFun t) +
+    ∫ t in γ.a..γ.b,
+      (f (γ.toFun t) - GeneralizedResidueTheory.meromorphicPrincipalPart f s (γ.toFun t)) *
+        deriv γ.toFun t := by
+  set pp := GeneralizedResidueTheory.meromorphicPrincipalPart f s
+  have hab := le_of_lt γ.hab
+  have hγ_bdd := piecewiseC1Immersion_deriv_bounded γ
+  have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
+      f (γ.toFun t) * deriv γ.toFun t =
+      pp (γ.toFun t) * deriv γ.toFun t +
+        (f (γ.toFun t) - pp (γ.toFun t)) * deriv γ.toFun t := by
+    intro t _; ring
+  rw [intervalIntegral.integral_congr h_decomp]
+  have h_pp_int : IntervalIntegrable
+      (fun t => pp (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+      (Set.uIcc_of_le hab ▸
+        (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
+          f s hf).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
+          (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids t ht)))
+  have h_rp_int : IntervalIntegrable
+      (fun t => (f (γ.toFun t) - pp (γ.toFun t)) * deriv γ.toFun t) volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
+      (Set.uIcc_of_le hab ▸
+        (hf_diff.sub
+          ((GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
+            f s hf).mono
+            (fun z hz => (Set.mem_diff_singleton.mp hz).2))).continuousOn.comp
+          γ.toPiecewiseC1Curve.continuous_toFun
+          (fun t ht =>
+            ⟨h_null.image_subset t ht,
+             Set.mem_compl_singleton_iff.mpr (hγ_avoids t ht)⟩))
+  convert intervalIntegral.integral_add h_pp_int h_rp_int using 1
+
 /-- Null-homologous version: contour integral of meromorphic function with zero residue
 vanishes when the curve is null-homologous and avoids the singularity. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
@@ -1498,89 +1601,28 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
-  -- Use the convex version on Set.univ (which is convex).
-  -- f is differentiable on U \ {s}. Since s might not be in U... wait, hs_in_U says s ∈ U.
-  -- But we need DifferentiableOn f (univ \ {s}), and we only have U \ {s}.
-  -- Instead, call the convex version on a ball B(s, r) ⊂ U... but γ might not be in B.
-  -- Alternative: decompose f = pp + rp, show ∮ pp = 0 and ∮ rp = 0 separately.
-  -- ∮ pp = 0: by GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero (no convexity needed)
-  -- ∮ rp = 0: rp is holomorphic on U, use contourIntegral_eq_zero_of_nullHomologous
-  set pp := GeneralizedResidueTheory.meromorphicPrincipalPart f s
-  set rp := fun z => f z - pp z
-  have h_pp_zero : ∫ t in γ.a..γ.b, pp (γ.toFun t) * deriv γ.toFun t = 0 :=
-    GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero f s hf hres γ h_null.closed hγ_avoids
-  -- γ avoids s, so rp is holomorphic on γ's image. Use Function.update for analyticity at s.
   obtain ⟨g_an, hg_an_at, hg_eq⟩ :=
     GeneralizedResidueTheory.meromorphicAt_sub_principalPart_eventually f s hf
-  set rp_nf := Function.update rp s (g_an s)
-  -- rp_nf is DifferentiableOn U (same as convex version)
-  have h_rp_nf_diff_U : DifferentiableOn ℂ rp_nf U := by
-    -- Same as convex version: analytic at s (from g_an), diff on U \ {s} (from f - pp diff)
-    intro z hz
-    by_cases h : z = s
-    · -- At s: rp_nf is analytic (agrees with g_an near s)
-      subst h
-      have h_an : AnalyticAt ℂ rp_nf z := by
-        apply hg_an_at.congr
-        -- Show g_an =ᶠ[𝓝 z] rp_nf
-        rw [Filter.eventuallyEq_iff_exists_mem]
-        -- hg_eq : ∀ᶠ z' in 𝓝[≠] z, rp z' = g_an z'
-        rw [Filter.Eventually, mem_nhdsWithin] at hg_eq
-        obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_eq
-        exact ⟨V, hV_open.mem_nhds hz_V, fun w hw => by
-          by_cases hwz : w = z
-          · simp [hwz, rp_nf, Function.update_self]
-          · simp only [rp_nf]
-            rw [Function.update_of_ne hwz]
-            exact (hV_eq ⟨hw, hwz⟩).symm⟩
-      exact h_an.differentiableAt.differentiableWithinAt
-    · -- At z ≠ s: rp = f - pp is differentiable, rp_nf = rp near z
-      have h_f_diff : DifferentiableAt ℂ f z :=
-        (hf_diff z ⟨hz, Set.mem_compl_singleton_iff.mpr h⟩).differentiableAt
-          ((hU.sdiff isClosed_singleton).mem_nhds ⟨hz, Set.mem_compl_singleton_iff.mpr h⟩)
-      have h_pp_diff : DifferentiableAt ℂ pp z :=
-        (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s hf z
-          (Set.mem_compl_singleton_iff.mpr h)).differentiableAt
-          (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr h))
-      have h_rp_diff : DifferentiableAt ℂ rp z := h_f_diff.sub h_pp_diff
-      have h_ev : rp =ᶠ[𝓝 z] rp_nf := by
-        apply Filter.Eventually.mono (isOpen_compl_singleton.mem_nhds
-          (Set.mem_compl_singleton_iff.mpr h))
-        intro w hw
-        exact (Function.update_of_ne (Set.mem_compl_singleton_iff.mp hw) (g_an s) rp).symm
-      exact (h_ev.differentiableAt_iff.mp h_rp_diff).differentiableWithinAt
-  -- ∮ rp_nf = 0 by Dixon
-  have h_rp_nf_zero : ∫ t in γ.a..γ.b, rp_nf (γ.toFun t) * deriv γ.toFun t = 0 :=
-    contourIntegral_eq_zero_of_nullHomologous hU h_rp_nf_diff_U γ h_null
-  -- rp = rp_nf on γ's image (γ avoids s)
-  have h_agree : ∀ t ∈ Icc γ.a γ.b, rp (γ.toFun t) = rp_nf (γ.toFun t) :=
-    fun t ht => (Function.update_of_ne (hγ_avoids t ht) (g_an s) rp).symm
-  -- ∮ rp = ∮ rp_nf = 0
-  have h_rp_zero : ∫ t in γ.a..γ.b, rp (γ.toFun t) * deriv γ.toFun t = 0 := by
-    have : ∀ t ∈ Set.uIcc γ.a γ.b,
-        rp (γ.toFun t) * deriv γ.toFun t = rp_nf (γ.toFun t) * deriv γ.toFun t := by
-      intro t ht; rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht; rw [h_agree t ht]
-    rw [intervalIntegral.integral_congr this]; exact h_rp_nf_zero
-  -- Combine: ∮ f = ∮ pp + ∮ rp = 0 + 0 = 0
-  have h_decomp : ∀ t ∈ Set.uIcc γ.a γ.b,
-      f (γ.toFun t) * deriv γ.toFun t =
-      pp (γ.toFun t) * deriv γ.toFun t + rp (γ.toFun t) * deriv γ.toFun t := by
-    intro t _; simp [rp]; ring
-  rw [intervalIntegral.integral_congr h_decomp]
-  have hab := le_of_lt γ.hab
-  have hγ_bdd := piecewiseC1Immersion_deriv_bounded γ
-  have h_pp_int : IntervalIntegrable (fun t => pp (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
-    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
-      (Set.uIcc_of_le hab ▸ (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
-        f s hf).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
-        (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids t ht)))
-  have h_rp_int : IntervalIntegrable (fun t => rp (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
-    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve hγ_bdd).continuousOn_mul
-      (Set.uIcc_of_le hab ▸ (hf_diff.sub ((GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn
-        f s hf).mono (fun z hz => (Set.mem_diff_singleton.mp hz).2))).continuousOn.comp
-        γ.toPiecewiseC1Curve.continuous_toFun
-        (fun t ht => ⟨h_null.image_subset t ht, Set.mem_compl_singleton_iff.mpr (hγ_avoids t ht)⟩))
-  rw [intervalIntegral.integral_add h_pp_int h_rp_int, h_pp_zero, h_rp_zero, add_zero]
+  have h_pp_zero :=
+    GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero
+      f s hf hres γ h_null.closed hγ_avoids
+  have h_rp_nf_zero := contourIntegral_eq_zero_of_nullHomologous hU
+    (regularPart_update_differentiableOn f s hf U hU hf_diff hs_in_U g_an hg_an_at hg_eq)
+    γ h_null
+  have h_rp_zero : ∫ t in γ.a..γ.b,
+      (f (γ.toFun t) -
+        GeneralizedResidueTheory.meromorphicPrincipalPart f s (γ.toFun t)) *
+        deriv γ.toFun t = 0 :=
+    by
+      set rp : ℂ → ℂ := fun z => f z -
+        GeneralizedResidueTheory.meromorphicPrincipalPart f s z
+      have := (contourIntegral_eq_of_agree_on_curve rp
+        (Function.update rp s (g_an s)) γ
+        (fun t ht => (Function.update_of_ne (hγ_avoids t ht) (g_an s) rp).symm)).trans
+        h_rp_nf_zero
+      convert this using 2
+  rw [contourIntegral_add_principalPart_regularPart f s hf U hf_diff γ h_null hγ_avoids,
+    h_pp_zero, h_rp_zero, add_zero]
 
 private theorem contourIntegral_sum_principalParts_eq_zero
     (S : Finset ℂ) (f : ℂ → ℂ)
