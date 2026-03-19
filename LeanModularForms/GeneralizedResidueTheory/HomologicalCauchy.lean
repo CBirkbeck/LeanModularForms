@@ -211,6 +211,15 @@ Proof strategy: gamma is continuous on [a,b] and avoids z, so
 is bounded on [a,b] off the finite partition (piecewise continuous and
 bounded on the compact interval). The product is therefore bounded and
 piecewise continuous, hence integrable. -/
+private lemma mem_Ioo_of_Icc_not_partition (γ : PiecewiseC1Curve) (t : ℝ)
+    (ht_Icc : t ∈ Icc γ.a γ.b) (ht_not_part : t ∉ (γ.partition : Set ℝ)) :
+    t ∈ Ioo γ.a γ.b := by
+  constructor
+  · by_contra h; push_neg at h
+    exact ht_not_part (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1)
+  · by_contra h; push_neg at h
+    exact ht_not_part (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)
+
 private theorem integrand_intervalIntegrable_of_avoids
     (γ : PiecewiseC1Immersion) (z : ℂ)
     (h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z) :
@@ -233,19 +242,9 @@ private theorem integrand_intervalIntegrable_of_avoids
     intro t ⟨ht_Icc, ht_not_part⟩
     apply ContinuousWithinAt.mul
     · exact (h_inv_cont t ht_Icc).mono diff_subset
-    · have ht_Ioo : t ∈ Ioo γ.a γ.b := by
-        refine ⟨?_, ?_⟩
-        · by_contra h_not_lt
-          push_neg at h_not_lt
-          have : t = γ.a := le_antisymm h_not_lt ht_Icc.1
-          rw [this] at ht_not_part
-          exact ht_not_part (γ.endpoints_in_partition.1)
-        · by_contra h_not_lt
-          push_neg at h_not_lt
-          have : t = γ.b := le_antisymm ht_Icc.2 h_not_lt
-          rw [this] at ht_not_part
-          exact ht_not_part (γ.endpoints_in_partition.2)
-      exact (γ.deriv_continuous_off_partition t ht_Ioo ht_not_part).continuousWithinAt
+    · exact (γ.deriv_continuous_off_partition t
+        (mem_Ioo_of_Icc_not_partition γ.toPiecewiseC1Curve t ht_Icc ht_not_part)
+        ht_not_part).continuousWithinAt
   · -- Bound
     intro t ht
     have h1 : ‖(γ.toFun t - z)⁻¹‖ ≤ M_inv := by
