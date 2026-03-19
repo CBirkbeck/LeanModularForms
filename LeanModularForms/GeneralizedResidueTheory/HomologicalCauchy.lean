@@ -1724,7 +1724,7 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
             obtain ⟨r₁, hr₁, hr₁_U⟩ := Metric.isOpen_iff.mp hU z hz
             by_cases hother : (S.erase z).Nonempty
             · set d := (S.erase z).inf' hother (fun s' => dist s' z)
-              have hd_pos : 0 < d := by sorry
+              have hd_pos : 0 < d := by sorry -- inf' of positive values is positive
               exact ⟨min r₁ (d / 2), by positivity,
                 (Metric.ball_subset_ball (min_le_left _ _)).trans hr₁_U,
                 fun s' hs' hne hball => by
@@ -1756,7 +1756,7 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
           -- Step 5: apply removable singularity
           have h_update_diff := Complex.differentiableOn_update_limUnder_of_bddAbove
             (Metric.ball_mem_nhds z hr_pos) h_g_diff_ball h_g_bdd
-          -- Step 6-7: g_corr agrees with update on ball → DifferentiableWithinAt
+          -- g_corr = update on ball → DifferentiableWithinAt
           sorry
         · -- z ∉ S: g_corr = g near z
           have h_ev : (fun w => if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) =ᶠ[𝓝 z] g := by
