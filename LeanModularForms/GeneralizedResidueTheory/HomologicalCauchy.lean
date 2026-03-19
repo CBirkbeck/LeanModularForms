@@ -65,7 +65,7 @@ F circ gamma has derivative f(gamma(t)) * gamma'(t) by the chain rule, and
 the sum telescopes to F(gamma(b)) - F(gamma(a)). -/
 private theorem ftc_piecewise_contour
     {F : ℂ → ℂ} {f : ℂ → ℂ}
-    (γ : PiecewiseC1Curve) (U : Set ℂ) (hU : IsOpen U)
+    (γ : PiecewiseC1Curve) (U : Set ℂ)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hF_prim : ∀ z ∈ U, HasDerivAt F (f z) z)
     (h_int : IntervalIntegrable
@@ -291,7 +291,7 @@ theorem isNullHomologous_of_convex
     -- Step 5: Integrability (the integrand is bounded piecewise continuous)
     have h_int := integrand_intervalIntegrable_of_avoids γ z h_avoids
     -- Step 6: By FTC, integral = F(gamma(b)) - F(gamma(a))
-    have h_ftc := ftc_piecewise_contour γ.toPiecewiseC1Curve U hU
+    have h_ftc := ftc_piecewise_contour γ.toPiecewiseC1Curve U
       hγ_in_U hF h_int
     -- Step 7: gamma is closed, so F(gamma(b)) = F(gamma(a))
     have h_closed_val : F (γ.toFun γ.b) = F (γ.toFun γ.a) :=
@@ -333,7 +333,7 @@ This follows from expanding dslope and splitting the integral. -/
 theorem dixonH1_eq (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (γ : PiecewiseC1Immersion)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (w : ℂ) (hw : w ∈ U) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
+    (w : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
     dixonH1 f γ w = dixonH2 f γ w -
       2 * ↑Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b w * f w := by
   simp only [dixonH1, dixonH2]
@@ -372,7 +372,7 @@ theorem dixonH1_eq (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
       ContinuousOn.inv₀ (γ.continuous_toFun.sub continuousOn_const)
         (fun t ht => sub_ne_zero.mpr (hoff t ht))
     obtain ⟨M_inv, hM_inv⟩ := isCompact_Icc.exists_bound_of_continuousOn h_inv_cont.norm
-    simp only [Function.comp_def, norm_norm] at hM_inv
+    simp only [norm_norm] at hM_inv
     -- Obtain bound for f(γ(t)) on [a,b]
     have hf_contOn_U : ContinuousOn f U :=
       fun z hz => ((hf z hz).differentiableAt (hU.mem_nhds hz)).continuousAt.continuousWithinAt
@@ -479,7 +479,7 @@ private lemma dixonH2_pointwise_hasDerivAt (fz c : ℂ) (z x : ℂ) (hne : z - x
   have h3 : HasDerivAt (fun x => fz * (z - x)⁻¹) (fz * ((z - x) ^ 2)⁻¹) x := by
     have h3a := h2.const_mul fz
     -- h3a : HasDerivAt (fun y => fz * (z-y)⁻¹) (fz * ((z-x)^2)⁻¹) x
-    convert h3a using 1 <;> ring
+    convert h3a using 1
   have h4 : HasDerivAt (fun x => fz * (z - x)⁻¹ * c) (fz * ((z - x) ^ 2)⁻¹ * c) x :=
     h3.mul_const c
   convert h4 using 1
@@ -607,8 +607,7 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
   -- Step 7: Apply the parametric differentiation theorem
   have hmain := (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
     hε_pos hF_meas hF_int hF'_meas h_bound hbound_int h_diff).2
-  convert hmain using 2 <;>
-  · congr 1; ext t; simp [dixonH2_F, dixonH2_F', div_eq_mul_inv]
+  convert hmain using 2
 
 /-- h₂ is differentiable at every point off the curve, when f is continuous on the image. -/
 theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
@@ -1108,7 +1107,7 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
       · -- w' ∈ U: dixonH1 = dixonH2 since n = 0
         have hoff' : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w' :=
           fun t ht heq => hball_avoids t ht w' hw' heq
-        rw [dixonH1_eq hU hf γ h_null.image_subset w' hw'U hoff', hwn_zero_ball w' hw']
+        rw [dixonH1_eq hU hf γ h_null.image_subset w' hoff', hwn_zero_ball w' hw']
         ring
       · rfl
     -- DifferentiableAt ℂ (dixonFunction f U γ) w via dixonH2
@@ -1267,7 +1266,7 @@ theorem dixonFunction_tendsto_zero (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
   · -- w ∈ U: dixonFunction = dixonH1 = dixonH2 (since n = 0)
     simp only [dixonFunction, dif_pos hwin]
     have hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w := hoff_of_large w hR_lt
-    rw [dixonH1_eq hU hf γ h_null.image_subset w hwin hoff, hwn_eq_zero]
+    rw [dixonH1_eq hU hf γ h_null.image_subset w hoff, hwn_eq_zero]
     simp only [mul_zero, zero_mul, sub_zero]
     exact lt_of_le_of_lt (h_h2_bound w hR_lt) h_bound_lt_ε
   · -- w ∉ U: dixonFunction = dixonH2
@@ -1294,7 +1293,7 @@ theorem cauchyIntegralFormula_nullHomologous (hU : IsOpen U) (hf : Differentiabl
   simp only [dixonFunction, dif_pos hw] at h_zero
   -- h_zero : dixonH1 f γ w = 0
   -- By dixonH1_eq: h₁ = h₂ - 2πi·n·f(w), so 0 = h₂ - 2πi·n·f(w)
-  have h_eq := dixonH1_eq hU hf γ h_null.image_subset w hw hoff
+  have h_eq := dixonH1_eq hU hf γ h_null.image_subset w hoff
   -- h_eq : dixonH1 f γ w = dixonH2 f γ w - 2πi·n·f(w)
   rw [h_zero] at h_eq
   -- h_eq : 0 = dixonH2 f γ w - 2 * ↑π * I * n * f w
@@ -1589,7 +1588,6 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     (hres : ∀ s ∈ S, residueAt f s = 0)
     (U : Set ℂ) (hU : IsOpen U)
     (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
-    (hS_in_U : ∀ s ∈ S, s ∈ U)
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
@@ -1895,7 +1893,7 @@ private theorem higherOrderCancel_assembly_nh
         (fun s hs => by
           have h_eq := residueAt_sub_residueSum_eq_zero S0 f s hs (hMero s hs)
           exact h_eq)
-        U hU hh_diff hS0_in_U γ h_null h_no_crossings
+        U hU hh_diff γ h_null h_no_crossings
     exact tendsto_cpv_of_continuousOn_zero_integral S0 h γ
       hh_cont_image h_integral_zero
   · push_neg at h_no_crossings
@@ -2756,8 +2754,8 @@ theorem conditionsAB_imply_higherOrderCancel_nh
 
 open GeneralizedResidueTheory in
 lemma pv_res_tendsto_of_immersion_nullHomologous
-    (U : Set ℂ) (hU : IsOpen U)
-    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+    (U : Set ℂ)
+    (S : Set ℂ)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
     (hS_closed : IsClosed S)
     (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
@@ -2862,6 +2860,6 @@ theorem generalizedResidueTheorem_3_3_nullHomologous
     (conditionsAB_imply_higherOrderCancel_nh U hU S0 f hf γ
       h_null hMero hCondA hCondB hγ_meas h_no_endpt_cross
       h_unique_cross (fun s hs => hS_in_U s (hS0_subset s hs)))
-    (pv_res_tendsto_of_immersion_nullHomologous U hU S hS_in_U hS_discrete
+    (pv_res_tendsto_of_immersion_nullHomologous U S hS_discrete
       hS_closed S0 hS0_subset f γ h_null hS_on_curve hγ_meas
       h_no_endpt_cross h_unique_cross)
