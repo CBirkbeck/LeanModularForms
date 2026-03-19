@@ -1199,12 +1199,13 @@ private lemma T_sum_mul_prime_pow_aux (q : ℕ) (hq : q.Prime) (r s : ℕ) (hrs 
       (d : ℤ) • (T_ad' d d * T_sum_nat (q ^ r * q ^ s / (d * d))) := by
   rw [thm324_4 q hq r s hrs, gcd_pow_pow_of_le q r s hrs, Nat.sum_divisors_prime_pow hq]
   apply Finset.sum_congr rfl; intro i hi; rw [Finset.mem_range] at hi
-  congr 1
-  · push_cast; ring
-  · congr 1
-    · rw [T_pp_pow_eq_T_ad' q hq i]
-    · rw [← pow_add, ← pow_add, show i + i = 2 * i from by ring, Nat.pow_div (by omega) hq.pos]
-      rfl
+  have h1 : (q ^ i : ℤ) = (↑(q ^ i) : ℤ) := by push_cast; ring
+  rw [h1, T_pp_pow_eq_T_ad' q hq i]
+  congr 2
+  rw [← pow_add, ← pow_add,
+    show i + i = 2 * i from by ring,
+    Nat.pow_div (by omega) hq.pos]
+  exact (T_sum_nat_eq ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩).symm
 
 /-- Coprime base case for the divisor sum formula. -/
 private lemma T_sum_mul_of_coprime_aux (m n : ℕ+) (hcop : Nat.Coprime m n) :
