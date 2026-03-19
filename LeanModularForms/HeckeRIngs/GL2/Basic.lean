@@ -227,75 +227,6 @@ private lemma scalar_coset_rep_normalizes (c : ℕ) (hc : 0 < c) :
   simp_rw [mul_assoc, Set.singleton_mul_singleton] at this
   simpa using this
 
-set_option maxHeartbeats 16000000 in
-private lemma decompQuot_eq_of_scalar_fiber (b : Fin 2 → ℕ)
-    (hb_pos : ∀ i, 0 < b i) (hb : DivChain 2 b)
-    (c : ℕ) (hc : 0 < c)
-    (i₁ i₂ : decompQuot (GL_pair 2) (T_diag 2 b hb_pos hb))
-    (j₁ : decompQuot (GL_pair 2)
-      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)))
-    (h_eq :
-      mulMap (GL_pair 2) (T_diag 2 b hb_pos hb)
-        (T_diag 2 (fun _ => c) (fun _ => hc)
-          (divChain_const 2 c)) (i₁, j₁) =
-      mulMap (GL_pair 2) (T_diag 2 b hb_pos hb)
-        (T_diag 2 (fun _ => c) (fun _ => hc)
-          (divChain_const 2 c)) (i₂, j₁)) :
-    i₁ = i₂ := by
-  by_contra hne
-  apply HeckeRing.decompQuot_coset_diff (GL_pair 2)
-    (T_diag 2 b hb_pos hb) i₁ i₂ hne
-  have h_eq' : ({(i₁.out : GL (Fin 2) ℚ) *
-      (T_diag 2 b hb_pos hb).eql.choose} : Set _) *
-    {(j₁.out : GL (Fin 2) ℚ) *
-      (T_diag 2 (fun _ => c) (fun _ => hc)
-        (divChain_const 2 c)).eql.choose} *
-    ((GL_pair 2).H : Set _) =
-    ({(i₂.out : GL (Fin 2) ℚ) *
-      (T_diag 2 b hb_pos hb).eql.choose} : Set _) *
-    {(j₁.out : GL (Fin 2) ℚ) *
-      (T_diag 2 (fun _ => c) (fun _ => hc)
-        (divChain_const 2 c)).eql.choose} *
-    ((GL_pair 2).H : Set _) := by
-    have := congr_arg T'.set h_eq; simp [mulMap] at this; exact this
-  set δ_c := (T_diag 2 (fun _ => c) (fun _ => hc)
-    (divChain_const 2 c)).eql.choose
-  set H' := (GL_pair 2).H
-  have hδc_comm_H := scalar_coset_rep_normalizes c hc
-  have hτ_mem : (j₁.out : GL (Fin 2) ℚ) ∈ H' :=
-    SetLike.coe_mem j₁.out
-  have h_coset :
-      ({(j₁.out : GL (Fin 2) ℚ) * δ_c} : Set _) *
-        (H' : Set _) =
-      (H' : Set _) * {δ_c} := by
-    rw [← Set.singleton_mul_singleton, mul_assoc,
-      hδc_comm_H, ← mul_assoc,
-      Subgroup.singleton_mul_subgroup hτ_mem]
-  have h12' :
-      ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} :
-        Set _) * ((H' : Set _) * {δ_c}) =
-      ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} :
-        Set _) * ((H' : Set _) * {δ_c}) := by
-    have lhs_eq :
-        ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} :
-          Set _) *
-        {(j₁.out : GL (Fin 2) ℚ) * δ_c} *
-        (H' : Set _) =
-        ({(i₁.out : GL (Fin 2) ℚ) * D_b.eql.choose} :
-          Set _) * ((H' : Set _) * {δ_c}) := by
-      rw [mul_assoc, h_coset]
-    have rhs_eq :
-        ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} :
-          Set _) *
-        {(j₁.out : GL (Fin 2) ℚ) * δ_c} *
-        (H' : Set _) =
-        ({(i₂.out : GL (Fin 2) ℚ) * D_b.eql.choose} :
-          Set _) * ((H' : Set _) * {δ_c}) := by
-      rw [mul_assoc, h_coset]
-    rw [← lhs_eq, ← rhs_eq]; exact h_eq
-  rw [← mul_assoc, ← mul_assoc] at h12'
-  exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
-
 /-- D_bc is in the mulSupport of D_b * D_c when D_c is scalar. -/
 private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
     (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
@@ -317,37 +248,95 @@ private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0
     Fintype.card_pos_iff.mp (by rw [h_card]; exact Nat.one_pos)
   exact ⟨i₀, j₀, mulMap_right_scalar_eq b hb_pos hb c hc hbc (i₀, j₀)⟩
 
-private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
-    HeckeRing.m' (GL_pair 2)
-      (T_diag 2 b hb_pos hb)
-      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
-      (T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) = 1 := by
-  set D_b := T_diag 2 b hb_pos hb
-  set D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
-  set D_bc := T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc
-  have h_card : Fintype.card (decompQuot (GL_pair 2) D_c) = 1 := by
+private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ)
+    (hb_pos : ∀ i, 0 < b i) (hb : DivChain 2 b)
+    (c : ℕ) (hc : 0 < c)
+    (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
+    (D_b : T' (GL_pair 2)) (hDb : D_b = T_diag 2 b hb_pos hb)
+    (D_c : T' (GL_pair 2))
+    (hDc : D_c = T_diag 2 (fun _ => c) (fun _ => hc)
+      (divChain_const 2 c))
+    (D_bc : T' (GL_pair 2))
+    (hDbc : D_bc = T_diag 2 (diagMul 2 b (fun _ => c))
+      (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) :
+    HeckeRing.m' (GL_pair 2) D_b D_c D_bc = 1 := by
+  -- Work with concrete forms throughout the proof to avoid whnf divergence
+  have h_card : Fintype.card (decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))) = 1 := by
     have := T'_deg_scalar 2 c hc
     simp only [HeckeRing.T'_deg] at this; exact_mod_cast this
-  haveI : Subsingleton (decompQuot (GL_pair 2) D_c) :=
+  haveI : Subsingleton (decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))) :=
     Fintype.card_le_one_iff_subsingleton.mp (le_of_eq h_card)
-  have h_le : HeckeRing.m' (GL_pair 2) D_b D_c D_bc ≤ 1 := by
+  have h_le : HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
+      (T_diag 2 (diagMul 2 b (fun _ => c))
+        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) ≤ 1 := by
     classical
     simp only [HeckeRing.m']; norm_cast; rw [Nat.card_eq_fintype_card]
     apply Fintype.card_le_one_iff_subsingleton.mpr
     constructor; intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
     have hj : j₁ = j₂ := Subsingleton.elim j₁ j₂; subst hj
     simp only [Set.mem_setOf_eq] at h₁ h₂
-    have hi : i₁ = i₂ :=
-      decompQuot_eq_of_scalar_fiber b hb_pos hb c hc i₁ i₂ j₁
-        (h₁.trans h₂.symm)
+    have hi : i₁ = i₂ := by
+      by_contra hne
+      apply HeckeRing.decompQuot_coset_diff (GL_pair 2) (T_diag 2 b hb_pos hb) i₁ i₂ hne
+      have hδc_comm_H := scalar_coset_rep_normalizes c hc
+      have hτ_mem : (j₁.out : GL (Fin 2) ℚ) ∈ (GL_pair 2).H :=
+        SetLike.coe_mem j₁.out
+      let δ_c := ((T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose :
+                   GL (Fin 2) ℚ)
+      have h_coset :
+          ({(j₁.out : GL (Fin 2) ℚ) * δ_c} : Set _) *
+            ((GL_pair 2).H : Set _) =
+          ((GL_pair 2).H : Set _) * {δ_c} := by
+        rw [← Set.singleton_mul_singleton, mul_assoc,
+          hδc_comm_H, ← mul_assoc,
+          Subgroup.singleton_mul_subgroup hτ_mem]
+      have h12' :
+          ({(i₁.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose} :
+            Set _) * (((GL_pair 2).H : Set _) * {δ_c}) =
+          ({(i₂.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose} :
+            Set _) * (((GL_pair 2).H : Set _) * {δ_c}) := by
+        have lhs_eq :
+            ({(i₁.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose} :
+              Set _) *
+            {(j₁.out : GL (Fin 2) ℚ) * δ_c} *
+            ((GL_pair 2).H : Set _) =
+            ({(i₁.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose} :
+              Set _) *
+              (((GL_pair 2).H : Set _) * {δ_c}) := by
+          rw [mul_assoc, h_coset]
+        have rhs_eq :
+            ({(i₂.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose} :
+              Set _) *
+            {(j₁.out : GL (Fin 2) ℚ) * δ_c} *
+            ((GL_pair 2).H : Set _) =
+            ({(i₂.out : GL (Fin 2) ℚ) * (T_diag 2 b hb_pos hb).eql.choose} :
+              Set _) *
+              (((GL_pair 2).H : Set _) * {δ_c}) := by
+          rw [mul_assoc, h_coset]
+        rw [← lhs_eq, ← rhs_eq]
+        exact h₁.trans h₂.symm
+      rw [← mul_assoc, ← mul_assoc] at h12'
+      exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
     subst hi; rfl
-  have h_pos : 0 < HeckeRing.m' (GL_pair 2) D_b D_c D_bc := by
+  have h_pos : 0 < HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
+      (T_diag 2 (diagMul 2 b (fun _ => c))
+        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) := by
     have h_mem := mem_mulSupport_right_scalar b hb_pos hb c hc hbc
-    have h_ne := HeckeRing.m'_pos_of_mem_mulSupport (GL_pair 2) D_b D_c D_bc h_mem
-    have : (0 : ℤ) ≤ HeckeRing.m' (GL_pair 2) D_b D_c D_bc := by
+    simp only at h_mem
+    have h_ne := HeckeRing.m'_pos_of_mem_mulSupport (GL_pair 2) (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
+      (T_diag 2 (diagMul 2 b (fun _ => c))
+        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) h_mem
+    have : (0 : ℤ) ≤ HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
+      (T_diag 2 (diagMul 2 b (fun _ => c))
+        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) := by
       simp only [HeckeRing.m']; exact Nat.cast_nonneg _
     omega
+  -- Now rewrite back to abstract D_b, D_c, D_bc using the equality hypotheses
+  rw [← hDb, ← hDc, ← hDbc] at h_le h_pos
   omega
 
 private lemma m'_right_scalar_eq_zero (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
@@ -385,6 +374,7 @@ theorem T_elem_mul_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
     norm_num [Finsupp.single_apply]
     exact m'_right_scalar_eq_one b hb_pos hb c hc
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c))
+      D_b rfl D_c rfl D_bc rfl
   · norm_num [Finsupp.single_apply, h1]
     exact m'_right_scalar_eq_zero b hb_pos hb c hc
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c)) A h1
