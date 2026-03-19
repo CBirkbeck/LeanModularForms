@@ -1715,49 +1715,74 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
       · -- DifferentiableOn U
         intro z hz
         by_cases hzS : z ∈ (S : Set ℂ)
-        · -- z ∈ S: removable singularity.
+        · -- z ∈ S: removable singularity via analytic extension
           have hzS' := Finset.mem_coe.mp hzS
-          -- Step 1: ball around z with no other S-poles
-          have hS_fin := S.finite_toSet
-          obtain ⟨r, hr_pos, hr_U, hr_no_other⟩ : ∃ r > 0,
-              Metric.ball z r ⊆ U ∧ ∀ s' ∈ S, s' ≠ z → s' ∉ Metric.ball z r := by
-            obtain ⟨r₁, hr₁, hr₁_U⟩ := Metric.isOpen_iff.mp hU z hz
-            by_cases hother : (S.erase z).Nonempty
-            · set d := (S.erase z).inf' hother (fun s' => dist s' z)
-              have hd_pos : 0 < d := by sorry -- inf' of positive values is positive
-              exact ⟨min r₁ (d / 2), by positivity,
-                (Metric.ball_subset_ball (min_le_left _ _)).trans hr₁_U,
-                fun s' hs' hne hball => by
-                  have := Metric.mem_ball.mp hball
-                  have h1 := Finset.inf'_le (fun s' => dist s' z) (Finset.mem_erase.mpr ⟨hne, hs'⟩)
-                  have h2 := min_le_right r₁ (d / 2)
-                  linarith⟩
-            · rw [Finset.not_nonempty_iff_eq_empty] at hother
-              exact ⟨r₁, hr₁, hr₁_U, fun s' hs' hne _ => by
-                have : s' ∈ S.erase z := Finset.mem_erase.mpr ⟨hne, hs'⟩
-                rw [hother] at this; exact absurd this (Finset.not_mem_empty _)⟩
-          -- Step 2: on ball \ {z}, g_corr = g (no other S-poles in ball)
-          have h_gcorr_eq_g : ∀ w ∈ Metric.ball z r \ {z},
-              (fun w => if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) w = g w := by
-            intro w ⟨hw_ball, hw_ne⟩
-            have hw_ne' : w ≠ z := Set.mem_compl_singleton_iff.mp hw_ne
-            by_cases hwS : w ∈ (S : Set ℂ)
-            · -- w ∈ S but w ≠ z and w ∈ ball → contradiction (no other poles in ball)
-              exact absurd hw_ball (hr_no_other w (Finset.mem_coe.mp hwS) hw_ne')
-            · simp [hwS]
-          -- Step 3: g DifferentiableOn ball \ {z}
-          have h_g_diff_ball : DifferentiableOn ℂ g (Metric.ball z r \ {z}) :=
-            h_g_diff_off.mono (fun w ⟨hw_ball, hw_ne⟩ =>
-              ⟨hr_U hw_ball, fun hwS =>
-                if h : w = z then hw_ne (Set.mem_singleton_iff.mpr h)
-                else (hr_no_other w (Finset.mem_coe.mp hwS) h) hw_ball⟩)
-          -- Step 4: g bounded on ball \ {z} (analytic at z after removing pp_z)
-          have h_g_bdd : BddAbove (norm ∘ g '' (Metric.ball z r \ {z})) := by sorry
-          -- Step 5: apply removable singularity
-          have h_update_diff := Complex.differentiableOn_update_limUnder_of_bddAbove
-            (Metric.ball_mem_nhds z hr_pos) h_g_diff_ball h_g_bdd
-          -- g_corr = update on ball → DifferentiableWithinAt
-          sorry
+          -- f - pp_z extends analytically at z
+          obtain ⟨g_an, hg_an_at, hg_an_eq⟩ :=
+            GeneralizedResidueTheory.meromorphicAt_sub_principalPart_eventually
+              f z (hf_mero z hzS')
+          -- Each pp_{s'} for s' ≠ z is differentiable at z
+          have h_each_diff : ∀ s' ∈ S.erase z,
+              DifferentiableAt ℂ (fun w =>
+                GeneralizedResidueTheory.meromorphicPrincipalPart f s' w) z := by
+            intro s' hs'
+            have hne : z ≠ s' := (Finset.ne_of_mem_erase hs').symm
+            exact (GeneralizedResidueTheory.meromorphicPrincipalPart_differentiableOn f s'
+              (hf_mero s' (Finset.mem_of_mem_erase hs')) z
+              (Set.mem_compl_singleton_iff.mpr hne)).differentiableAt
+              (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne))
+          -- Define g_ext; differentiable at z
+          set g_ext : ℂ → ℂ := fun w => g_an w - ∑ s' ∈ S.erase z,
+              GeneralizedResidueTheory.meromorphicPrincipalPart f s' w with g_ext_def
+          have hg_ext_diff : DifferentiableAt ℂ g_ext z := by
+            apply DifferentiableAt.sub hg_an_at.differentiableAt
+            convert DifferentiableAt.sum h_each_diff using 1
+            ext w; exact (Finset.sum_apply w _ _).symm
+          -- g =ᶠ[𝓝[≠] z] g_ext
+          have hg_eq_ext : g =ᶠ[𝓝[≠] z] g_ext := by
+            apply hg_an_eq.mono; intro w hw
+            show f w - ∑ s ∈ S,
+                GeneralizedResidueTheory.meromorphicPrincipalPart f s w = g_ext w
+            simp only [g_ext_def]
+            rw [show ∑ s ∈ S,
+                  GeneralizedResidueTheory.meromorphicPrincipalPart f s w =
+                GeneralizedResidueTheory.meromorphicPrincipalPart f z w +
+                  ∑ s' ∈ S.erase z,
+                    GeneralizedResidueTheory.meromorphicPrincipalPart f s' w from
+                (Finset.add_sum_erase S (fun s =>
+                  GeneralizedResidueTheory.meromorphicPrincipalPart f s w) hzS').symm,
+              ← sub_sub, hw]
+          -- Tendsto g → g_ext z
+          have h_tendsto : Tendsto g (𝓝[≠] z) (𝓝 (g_ext z)) :=
+            (hg_ext_diff.continuousAt.tendsto.mono_left nhdsWithin_le_nhds).congr'
+              hg_eq_ext.symm
+          have h_lim : limUnder (𝓝[≠] z) g = g_ext z := h_tendsto.limUnder_eq
+          -- No other S-elements near z (S is finite)
+          have h_no_S_near : ∀ᶠ w in 𝓝[≠] z, w ∉ (S : Set ℂ) := by
+            rw [eventually_nhdsWithin_iff]
+            have h_cl : IsClosed (↑(S.erase z) : Set ℂ) := (S.erase z).finite_toSet.isClosed
+            have h_op := h_cl.isOpen_compl
+            have h_mem : z ∉ (↑(S.erase z) : Set ℂ) :=
+              mt Finset.mem_coe.mp (Finset.notMem_erase z S)
+            exact Filter.Eventually.mono (h_op.mem_nhds h_mem) fun w hw hwne hwS =>
+                hw (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwne, Finset.mem_coe.mp hwS⟩))
+          -- g_corr =ᶠ[𝓝[≠] z] g_ext
+          have h_punc : ∀ᶠ w in 𝓝[≠] z,
+              (if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) = g_ext w :=
+            (h_no_S_near.and hg_eq_ext).mono fun w ⟨hw1, hw2⟩ => by simp [hw1, hw2]
+          -- g_corr = g_ext at z
+          have h_at_z :
+              (if z ∈ (S : Set ℂ) then limUnder (𝓝[≠] z) g else g z) = g_ext z := by
+            simp [hzS, h_lim]
+          -- Combine: g_corr =ᶠ[𝓝 z] g_ext
+          rw [eventually_nhdsWithin_iff] at h_punc
+          have h_ev : (fun w => if w ∈ (S : Set ℂ) then
+              limUnder (𝓝[≠] w) g else g w) =ᶠ[𝓝 z] g_ext :=
+            h_punc.mono fun w hw => by
+              by_cases hwz : w = z
+              · subst hwz; exact h_at_z
+              · exact hw hwz
+          exact (h_ev.differentiableAt_iff.mpr hg_ext_diff).differentiableWithinAt
         · -- z ∉ S: g_corr = g near z
           have h_ev : (fun w => if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) =ᶠ[𝓝 z] g := by
             apply Filter.Eventually.mono (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
