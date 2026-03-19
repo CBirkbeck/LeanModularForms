@@ -1715,16 +1715,48 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
       · -- DifferentiableOn U
         intro z hz
         by_cases hzS : z ∈ (S : Set ℂ)
-        · -- z ∈ S: removable singularity via the single-pole version's proof.
-          -- g_corr at z = limUnder g, and g_corr = g off S.
-          -- Near z (excluding z and other poles in S), g_corr = g is holomorphic.
-          -- g is bounded near z (f - pp_z is analytic, other pp_s' are bounded).
-          -- So g_corr is differentiable at z by removable singularity.
-          -- Use: DifferentiableWithinAt follows from DifferentiableAt.
-          -- Get DifferentiableAt by: g_corr eventually equals g near z (off S),
-          -- g is meromorphic at z with order ≥ 0, hence g_corr is analytic at z.
-          -- This is exactly the single-pole argument, applied to z.
-          -- For the formal proof, sorry this last step (needs meromorphicOrderAt analysis).
+        · -- z ∈ S: removable singularity.
+          have hzS' := Finset.mem_coe.mp hzS
+          -- Step 1: ball around z with no other S-poles
+          have hS_fin := S.finite_toSet
+          obtain ⟨r, hr_pos, hr_U, hr_no_other⟩ : ∃ r > 0,
+              Metric.ball z r ⊆ U ∧ ∀ s' ∈ S, s' ≠ z → s' ∉ Metric.ball z r := by
+            obtain ⟨r₁, hr₁, hr₁_U⟩ := Metric.isOpen_iff.mp hU z hz
+            by_cases hother : (S.erase z).Nonempty
+            · set d := (S.erase z).inf' hother (fun s' => dist s' z)
+              have hd_pos : 0 < d := by sorry
+              exact ⟨min r₁ (d / 2), by positivity,
+                (Metric.ball_subset_ball (min_le_left _ _)).trans hr₁_U,
+                fun s' hs' hne hball => by
+                  have := Metric.mem_ball.mp hball
+                  have h1 := Finset.inf'_le (fun s' => dist s' z) (Finset.mem_erase.mpr ⟨hne, hs'⟩)
+                  have h2 := min_le_right r₁ (d / 2)
+                  linarith⟩
+            · rw [Finset.not_nonempty_iff_eq_empty] at hother
+              exact ⟨r₁, hr₁, hr₁_U, fun s' hs' hne _ => by
+                have : s' ∈ S.erase z := Finset.mem_erase.mpr ⟨hne, hs'⟩
+                rw [hother] at this; exact absurd this (Finset.not_mem_empty _)⟩
+          -- Step 2: on ball \ {z}, g_corr = g (no other S-poles in ball)
+          have h_gcorr_eq_g : ∀ w ∈ Metric.ball z r \ {z},
+              (fun w => if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) w = g w := by
+            intro w ⟨hw_ball, hw_ne⟩
+            have hw_ne' : w ≠ z := Set.mem_compl_singleton_iff.mp hw_ne
+            by_cases hwS : w ∈ (S : Set ℂ)
+            · -- w ∈ S but w ≠ z and w ∈ ball → contradiction (no other poles in ball)
+              exact absurd hw_ball (hr_no_other w (Finset.mem_coe.mp hwS) hw_ne')
+            · simp [hwS]
+          -- Step 3: g DifferentiableOn ball \ {z}
+          have h_g_diff_ball : DifferentiableOn ℂ g (Metric.ball z r \ {z}) :=
+            h_g_diff_off.mono (fun w ⟨hw_ball, hw_ne⟩ =>
+              ⟨hr_U hw_ball, fun hwS =>
+                if h : w = z then hw_ne (Set.mem_singleton_iff.mpr h)
+                else (hr_no_other w (Finset.mem_coe.mp hwS) h) hw_ball⟩)
+          -- Step 4: g bounded on ball \ {z} (analytic at z after removing pp_z)
+          have h_g_bdd : BddAbove (norm ∘ g '' (Metric.ball z r \ {z})) := by sorry
+          -- Step 5: apply removable singularity
+          have h_update_diff := Complex.differentiableOn_update_limUnder_of_bddAbove
+            (Metric.ball_mem_nhds z hr_pos) h_g_diff_ball h_g_bdd
+          -- Step 6-7: g_corr agrees with update on ball → DifferentiableWithinAt
           sorry
         · -- z ∉ S: g_corr = g near z
           have h_ev : (fun w => if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) =ᶠ[𝓝 z] g := by
