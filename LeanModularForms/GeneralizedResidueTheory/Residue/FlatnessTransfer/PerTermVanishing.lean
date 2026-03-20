@@ -449,6 +449,264 @@ private lemma ae_forall_ne_of_finite_crossings
 
 /-! ### Sublemma 2: Multi-point CPV of higher-order pole term → 0 -/
 
+/-- Norm bound for the zpow integrand: if `‖γ(t) - s‖ > ε` then
+`‖(γ(t)-s)^{-m} · γ'(t)‖ ≤ ε⁻¹^m · (|Mγ'| + 1)`. -/
+private lemma zpow_deriv_norm_bound
+    (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
+    (Mγ' : ℝ) (hMγ' : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ Mγ')
+    (ε : ℝ) (hε : 0 < ε) (t : ℝ) (ht : t ∈ Icc γ.a γ.b)
+    (h_far : ‖γ.toFun t - s‖ > ε) :
+    ‖(fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t‖ ≤
+      ε⁻¹ ^ m * (|Mγ'| + 1) := by
+  calc ‖(fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t‖
+      ≤ ‖(fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t)‖ * ‖deriv γ.toFun t‖ :=
+        norm_mul_le _ _
+    _ ≤ ε⁻¹ ^ m * (|Mγ'| + 1) := by
+        apply mul_le_mul
+        · simp only []
+          rw [norm_zpow, zpow_neg, zpow_natCast, inv_pow]
+          exact inv_anti₀ (by positivity)
+            (pow_le_pow_left₀ hε.le h_far.le m)
+        · exact le_trans
+            ((hMγ' t ht).trans (le_abs_self _))
+            (le_add_of_nonneg_right one_pos.le)
+        · exact norm_nonneg _
+        · positivity
+
+/-- The single-point cutoff integrand of `(z-s)^{-m} · γ'` is interval integrable. -/
+private lemma single_cutoff_zpow_intervalIntegrable
+    (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
+    (Mγ' : ℝ) (hMγ' : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ Mγ')
+    (ε : ℝ) (hε : 0 < ε) :
+    IntervalIntegrable
+      (fun t => if ‖γ.toFun t - s‖ > ε then
+        (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0)
+      volume γ.a γ.b := by
+  set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
+  have h_eq :
+      (fun t => if ‖γ.toFun t - s‖ > ε then
+        f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
+      (fun t =>
+        cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) := by
+    ext t; rw [cauchyPrincipalValueIntegrandOn_singleton]
+  rw [h_eq]
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
+  refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
+  refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
+  · have h_aesm_if : AEStronglyMeasurable
+        (fun t => if ε < ‖γ.toFun t - s‖ then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)
+        (volume.restrict (Icc γ.a γ.b)) := by
+      apply aEStronglyMeasurable_pv_integrand_piecewiseC1
+        (P := γ.partition) (z₀ := s)
+      · intro z ⟨_, hz_not_ball⟩
+        have hz_ne : z ≠ s := by
+          intro heq; exact hz_not_ball (by rw [Metric.mem_ball, heq, dist_self]; exact hε)
+        exact ((continuousAt_id.sub continuousAt_const).zpow₀ (-(m : ℤ))
+          (Or.inl (sub_ne_zero.mpr hz_ne))).continuousWithinAt
+      · exact γ.toPiecewiseC1Curve.continuous_toFun
+      · intro t ⟨ht_Icc, ht_nP⟩
+        have ht_Ioo : t ∈ Ioo γ.a γ.b := by
+          refine ⟨lt_of_le_of_ne ht_Icc.1 (Ne.symm fun h =>
+            ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1)), ?_⟩
+          exact lt_of_le_of_ne ht_Icc.2 fun h =>
+            ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.2)
+        exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
+          t ht_Ioo ht_nP).continuousWithinAt
+    exact h_aesm_if.congr (by
+      filter_upwards [ae_restrict_mem measurableSet_Icc] with t _
+      exact (cauchyPrincipalValueIntegrandOn_singleton f_zpow γ.toFun s ε t).symm)
+  · intro t ht
+    rw [cauchyPrincipalValueIntegrandOn_singleton]
+    split_ifs with h
+    · exact zpow_deriv_norm_bound γ s m Mγ' hMγ' ε hε t ht h
+    · simp only [norm_zero]; positivity
+
+/-- The multi-point cutoff integrand of `(z-s)^{-m} · γ'` is interval integrable. -/
+private lemma multi_cutoff_zpow_intervalIntegrable
+    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
+    (hs : s ∈ S0)
+    (Mγ' : ℝ) (hMγ' : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ Mγ')
+    (ε : ℝ) (hε : 0 < ε) :
+    IntervalIntegrable
+      (fun t => cauchyPrincipalValueIntegrandOn S0
+        (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t)
+      volume γ.a γ.b := by
+  set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
+  refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
+  refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
+  · let GoodSet := {t : ℝ | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}
+    have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc γ.a γ.b) :=
+      measurableSet_goodSet_Icc S0 γ ε
+    have hfγ_cont_good : ContinuousOn (fun t => f_zpow (γ.toFun t))
+        (GoodSet ∩ Icc γ.a γ.b) := by
+      have hf_cont : ContinuousOn f_zpow {z : ℂ | z - s ≠ 0} :=
+        ContinuousOn.zpow₀ (continuousOn_id.sub continuousOn_const) (-(m : ℤ))
+          (fun z hz => Or.inl hz)
+      have h_maps : Set.MapsTo γ.toFun (GoodSet ∩ Icc γ.a γ.b) {z | z - s ≠ 0} := by
+        intro t ⟨ht_good, _⟩
+        exact sub_ne_zero.mpr (fun heq => by
+          have := ht_good s hs; rw [heq, sub_self, norm_zero] at this; linarith)
+      exact hf_cont.comp
+        (γ.toPiecewiseC1Curve.continuous_toFun.mono Set.inter_subset_right) h_maps
+    have hγ'_meas := aesm_deriv_on_Icc γ
+    have h_prod_meas : AEStronglyMeasurable (fun t => f_zpow (γ.toFun t) * deriv γ.toFun t)
+        (volume.restrict (GoodSet ∩ Icc γ.a γ.b)) :=
+      (hfγ_cont_good.aestronglyMeasurable hGoodSet_meas).mul
+        (hγ'_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
+    have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
+        (volume.restrict (GoodSet ∩ Icc γ.a γ.b)ᶜ) := aestronglyMeasurable_const
+    have h_pw := AEStronglyMeasurable.piecewise hGoodSet_meas h_prod_meas h_zero_meas
+    exact (h_pw.mono_measure Measure.restrict_le_self).congr (by
+      filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
+      simp only [cauchyPrincipalValueIntegrandOn]
+      by_cases ht_good : t ∈ GoodSet ∩ Icc γ.a γ.b
+      · rw [Set.piecewise_eq_of_mem _ _ _ ht_good]
+        have : ¬∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε := by push_neg; exact ht_good.1
+        rw [if_neg this]
+      · rw [Set.piecewise_eq_of_notMem _ _ _ ht_good]
+        have : ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε := by
+          by_contra h; push_neg at h; exact ht_good ⟨h, ht⟩
+        rw [if_pos this])
+  · intro t ht
+    simp only [cauchyPrincipalValueIntegrandOn]
+    split_ifs with h
+    · simp only [norm_zero]; positivity
+    · push_neg at h; exact zpow_deriv_norm_bound γ s m Mγ' hMγ' ε hε t ht (h s hs)
+
+/-- DCT bound for the difference between single-point and multi-point CPV
+integrands: when `ε < δ_sep / 2`, the difference is bounded by
+`(δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1)`. -/
+private lemma dct_bound_diff_cpv_zpow
+    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
+    (hs : s ∈ S0) (hS0_single : S0 ≠ {s})
+    (Mγ' : ℝ) (hMγ' : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ Mγ')
+    (δ_sep : ℝ) (hδ_pos : 0 < δ_sep)
+    (hδ_sep_le : ∀ s' ∈ S0.erase s, δ_sep ≤ ‖s - s'‖)
+    (ε : ℝ) (hε : ε ∈ Ioo 0 (δ_sep / 2)) :
+    ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
+      ‖(if ‖γ.toFun t - s‖ > ε then
+          (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0) -
+        cauchyPrincipalValueIntegrandOn S0
+          (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t‖ ≤
+      (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) := by
+  set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
+  apply ae_of_all; intro t ht
+  simp only [cauchyPrincipalValueIntegrandOn]
+  by_cases h_multi_cut : ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε
+  · rw [if_pos h_multi_cut]
+    by_cases h_single_cut : ‖γ.toFun t - s‖ > ε
+    · rw [if_pos h_single_cut]; simp only [sub_zero]
+      obtain ⟨s', hs', hs'_close⟩ := h_multi_cut
+      have hs'_ne : s' ≠ s := by intro heq; rw [heq] at hs'_close; linarith
+      have h_sep_s' : δ_sep ≤ ‖s - s'‖ :=
+        hδ_sep_le s' (Finset.mem_erase.mpr ⟨hs'_ne, hs'⟩)
+      have h_far : ‖γ.toFun t - s‖ ≥ δ_sep / 2 := by
+        have h1 : ‖s - s'‖ ≤ ‖γ.toFun t - s‖ + ‖γ.toFun t - s'‖ := by
+          calc ‖s - s'‖ = ‖(s - γ.toFun t) + (γ.toFun t - s')‖ := by ring_nf
+            _ ≤ ‖s - γ.toFun t‖ + ‖γ.toFun t - s'‖ := norm_add_le _ _
+            _ = ‖γ.toFun t - s‖ + ‖γ.toFun t - s'‖ := by rw [norm_sub_rev]
+        linarith [hε.2]
+      have ht_Icc : t ∈ Icc γ.a γ.b :=
+        Ioc_subset_Icc_self (Set.uIoc_of_le γ.hab.le ▸ ht)
+      calc ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖
+          ≤ ‖f_zpow (γ.toFun t)‖ * ‖deriv γ.toFun t‖ := norm_mul_le _ _
+        _ ≤ (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) := by
+            apply mul_le_mul
+            · change ‖f_zpow (γ.toFun t)‖ ≤ (δ_sep / 2)⁻¹ ^ m
+              simp only [f_zpow]
+              rw [norm_zpow, zpow_neg, zpow_natCast, inv_pow]
+              exact inv_anti₀ (by positivity)
+                (pow_le_pow_left₀ (by linarith) h_far m)
+            · exact le_trans ((hMγ' t ht_Icc).trans (le_abs_self _))
+                (le_add_of_nonneg_right one_pos.le)
+            · exact norm_nonneg _
+            · positivity
+    · push_neg at h_single_cut; rw [if_neg (not_lt.mpr h_single_cut)]
+      norm_num; positivity
+  · rw [if_neg h_multi_cut]
+    by_cases h_single_cut : ‖γ.toFun t - s‖ > ε
+    · rw [if_pos h_single_cut]; norm_num; positivity
+    · push_neg at h_single_cut h_multi_cut
+      exact absurd (h_multi_cut s hs) (not_lt.mpr h_single_cut)
+
+/-- A.e. pointwise limit of the single-multi CPV difference is 0 when `t` does
+not land on any point of `S0`. -/
+private lemma ae_limit_diff_cpv_zpow
+    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
+    (hs : s ∈ S0) (hS0_ne : S0.Nonempty) :
+    ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
+      Tendsto (fun ε =>
+        (if ‖γ.toFun t - s‖ > ε then
+          (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0) -
+        cauchyPrincipalValueIntegrandOn S0
+          (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
+  filter_upwards [ae_forall_ne_of_finite_crossings S0 γ] with t h_not_cross ht_in
+  have h_nc := h_not_cross ht_in
+  apply tendsto_const_nhds.congr'
+  let δ_t := S0.inf' hS0_ne (fun s' => ‖γ.toFun t - s'‖)
+  have hδ_t_pos : 0 < δ_t := by
+    apply (Finset.lt_inf'_iff _).mpr
+    intro s' hs'; exact norm_pos_iff.mpr (sub_ne_zero.mpr (h_nc s' hs'))
+  filter_upwards [Ioo_mem_nhdsGT hδ_t_pos] with ε hε
+  simp only [cauchyPrincipalValueIntegrandOn]
+  have h_no_near : ¬∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε := by
+    push_neg; intro s' hs'
+    exact lt_of_lt_of_le hε.2 (Finset.inf'_le _ hs')
+  rw [if_neg h_no_near]
+  have h_far_s : ‖γ.toFun t - s‖ > ε :=
+    lt_of_lt_of_le hε.2 (Finset.inf'_le _ hs)
+  rw [if_pos h_far_s]; ring
+
+/-- Reduce the multi-point CPV goal to showing the single-multi difference
+tends to 0, using `Tendsto.sub` and `integral_sub`. -/
+private lemma reduce_to_diff_tendsto_zero
+    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
+    (hs : s ∈ S0)
+    (Mγ' : ℝ) (hMγ' : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ Mγ')
+    (h_single : Tendsto (fun ε =>
+      ∫ t in γ.a..γ.b,
+        (if ‖γ.toFun t - s‖ > ε then
+          (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0))
+      (𝓝[>] 0) (𝓝 0))
+    (h_diff : Tendsto (fun ε =>
+      ∫ t in γ.a..γ.b,
+        ((if ‖γ.toFun t - s‖ > ε then
+            (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0) -
+         cauchyPrincipalValueIntegrandOn S0
+           (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t))
+      (𝓝[>] 0) (𝓝 0)) :
+    Tendsto (fun ε =>
+      ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0
+          (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 0) := by
+  set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
+  have h_single_int : ∀ ε : ℝ, 0 < ε →
+      IntervalIntegrable
+        (fun t => if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)
+        volume γ.a γ.b :=
+    fun ε hε => single_cutoff_zpow_intervalIntegrable γ s m Mγ' hMγ' ε hε
+  have h_multi_int : ∀ ε : ℝ, 0 < ε →
+      IntervalIntegrable
+        (fun t => cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t)
+        volume γ.a γ.b :=
+    fun ε hε => multi_cutoff_zpow_intervalIntegrable S0 γ s m hs Mγ' hMγ' ε hε
+  have h_eventually_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+      ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t =
+      (∫ t in γ.a..γ.b,
+        (if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)) -
+      ∫ t in γ.a..γ.b,
+        ((if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) -
+         cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t) := by
+    filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
+    rw [← intervalIntegral.integral_sub (h_single_int ε hε)
+      ((h_single_int ε hε).sub (h_multi_int ε hε))]
+    congr 1; ext t; ring
+  have h_sub := h_single.sub h_diff
+  simp only [sub_self] at h_sub
+  exact h_sub.congr' (h_eventually_eq.mono fun ε h => h.symm)
+
 /-- **Sublemma 2**: The multi-point CPV integral of `(z-s)^{-m}` tends to 0
 for `m ≥ 2`, given flatness of order `m` and the angle condition.
 
@@ -469,152 +727,28 @@ theorem multipoint_pv_zpow_tendsto_zero
       ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t)
     (𝓝[>] 0) (𝓝 0) := by
-  set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
+  obtain ⟨Mγ', hMγ'⟩ := piecewiseC1Immersion_deriv_bounded γ
   have h_single : Tendsto (fun ε =>
       ∫ t in γ.a..γ.b,
-        (if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0))
+        (if ‖γ.toFun t - s‖ > ε then
+          (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0))
       (𝓝[>] 0) (𝓝 0) :=
     pv_higher_order_term_tendsto_zero γ s m hm t₀ ht₀ hcross h_unique
       hγ_closed h_flat h_angle
-  obtain ⟨Mγ', hMγ'⟩ := piecewiseC1Immersion_deriv_bounded γ
-  have h_zpow_bound : ∀ ε : ℝ, 0 < ε → ∀ t ∈ Icc γ.a γ.b,
-      ‖γ.toFun t - s‖ > ε →
-      ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖ ≤ ε⁻¹ ^ m * (|Mγ'| + 1) := by
-    intro ε hε t ht h_far
-    calc ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖
-        ≤ ‖f_zpow (γ.toFun t)‖ * ‖deriv γ.toFun t‖ := norm_mul_le _ _
-      _ ≤ ε⁻¹ ^ m * (|Mγ'| + 1) := by
-          apply mul_le_mul
-          · change ‖f_zpow (γ.toFun t)‖ ≤ ε⁻¹ ^ m
-            simp only [f_zpow]
-            rw [norm_zpow, zpow_neg, zpow_natCast, inv_pow]
-            exact inv_anti₀ (by positivity)
-              (pow_le_pow_left₀ hε.le h_far.le m)
-          · exact le_trans
-              ((hMγ' t ht).trans (le_abs_self _))
-              (le_add_of_nonneg_right one_pos.le)
-          · exact norm_nonneg _
-          · positivity
-  have h_single_int : ∀ ε : ℝ, 0 < ε →
-      IntervalIntegrable
-        (fun t => if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)
-        volume γ.a γ.b := by
-    intro ε hε
-    have h_eq :
-        (fun t => if ‖γ.toFun t - s‖ > ε then
-          f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
-        (fun t =>
-          cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) := by
-      ext t; rw [cauchyPrincipalValueIntegrandOn_singleton]
-    rw [h_eq]
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
-    refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
-    refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
-    · have h_aesm_if : AEStronglyMeasurable
-          (fun t => if ε < ‖γ.toFun t - s‖ then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)
-          (volume.restrict (Icc γ.a γ.b)) := by
-        apply aEStronglyMeasurable_pv_integrand_piecewiseC1
-          (P := γ.partition) (z₀ := s)
-        · intro z ⟨_, hz_not_ball⟩
-          have hz_ne : z ≠ s := by
-            intro heq; exact hz_not_ball (by rw [Metric.mem_ball, heq, dist_self]; exact hε)
-          exact ((continuousAt_id.sub continuousAt_const).zpow₀ (-(m : ℤ))
-            (Or.inl (sub_ne_zero.mpr hz_ne))).continuousWithinAt
-        · exact γ.toPiecewiseC1Curve.continuous_toFun
-        · intro t ⟨ht_Icc, ht_nP⟩
-          have ht_Ioo : t ∈ Ioo γ.a γ.b := by
-            refine ⟨lt_of_le_of_ne ht_Icc.1 (Ne.symm fun h =>
-              ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1)), ?_⟩
-            exact lt_of_le_of_ne ht_Icc.2 fun h =>
-              ht_nP (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.2)
-          exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
-            t ht_Ioo ht_nP).continuousWithinAt
-      exact h_aesm_if.congr (by
-        filter_upwards [ae_restrict_mem measurableSet_Icc] with t _
-        exact (cauchyPrincipalValueIntegrandOn_singleton f_zpow γ.toFun s ε t).symm)
-    · intro t ht
-      rw [cauchyPrincipalValueIntegrandOn_singleton]
-      split_ifs with h
-      · exact h_zpow_bound ε hε t ht h
-      · simp only [norm_zero]; positivity
-  have h_multi_int : ∀ ε : ℝ, 0 < ε →
-      IntervalIntegrable
-        (fun t => cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t)
-        volume γ.a γ.b := by
-    intro ε hε
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
-    refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
-    refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
-    · let GoodSet := {t : ℝ | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}
-      have hGoodSet_meas : MeasurableSet (GoodSet ∩ Icc γ.a γ.b) :=
-        measurableSet_goodSet_Icc S0 γ ε
-      have hfγ_cont_good : ContinuousOn (fun t => f_zpow (γ.toFun t))
-          (GoodSet ∩ Icc γ.a γ.b) := by
-        have hf_cont : ContinuousOn f_zpow {z : ℂ | z - s ≠ 0} :=
-          ContinuousOn.zpow₀ (continuousOn_id.sub continuousOn_const) (-(m : ℤ))
-            (fun z hz => Or.inl hz)
-        have h_maps : Set.MapsTo γ.toFun (GoodSet ∩ Icc γ.a γ.b) {z | z - s ≠ 0} := by
-          intro t ⟨ht_good, _⟩
-          exact sub_ne_zero.mpr (fun heq => by
-            have := ht_good s hs; rw [heq, sub_self, norm_zero] at this; linarith)
-        exact hf_cont.comp
-          (γ.toPiecewiseC1Curve.continuous_toFun.mono Set.inter_subset_right) h_maps
-      have hγ'_meas := aesm_deriv_on_Icc γ
-      have h_prod_meas : AEStronglyMeasurable (fun t => f_zpow (γ.toFun t) * deriv γ.toFun t)
-          (volume.restrict (GoodSet ∩ Icc γ.a γ.b)) :=
-        (hfγ_cont_good.aestronglyMeasurable hGoodSet_meas).mul
-          (hγ'_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
-      have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
-          (volume.restrict (GoodSet ∩ Icc γ.a γ.b)ᶜ) := aestronglyMeasurable_const
-      have h_pw := AEStronglyMeasurable.piecewise hGoodSet_meas h_prod_meas h_zero_meas
-      exact (h_pw.mono_measure Measure.restrict_le_self).congr (by
-        filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
-        simp only [cauchyPrincipalValueIntegrandOn]
-        by_cases ht_good : t ∈ GoodSet ∩ Icc γ.a γ.b
-        · rw [Set.piecewise_eq_of_mem _ _ _ ht_good]
-          have : ¬∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε := by push_neg; exact ht_good.1
-          rw [if_neg this]
-        · rw [Set.piecewise_eq_of_notMem _ _ _ ht_good]
-          have : ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε := by
-            by_contra h; push_neg at h; exact ht_good ⟨h, ht⟩
-          rw [if_pos this])
-    · intro t ht
-      simp only [cauchyPrincipalValueIntegrandOn]
-      split_ifs with h
-      · simp only [norm_zero]; positivity
-      · push_neg at h; exact h_zpow_bound ε hε t ht (h s hs)
-  suffices h_diff : Tendsto (fun ε =>
-      ∫ t in γ.a..γ.b,
-        ((if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) -
-         cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t))
-      (𝓝[>] 0) (𝓝 0) by
-    have h_eventually_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-        ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t =
-        (∫ t in γ.a..γ.b,
-          (if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0)) -
-        ∫ t in γ.a..γ.b,
-          ((if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) -
-           cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t) := by
-      filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
-      rw [← intervalIntegral.integral_sub (h_single_int ε hε)
-        ((h_single_int ε hε).sub (h_multi_int ε hε))]
-      congr 1; ext t; ring
-    have h_sub := h_single.sub h_diff
-    simp only [sub_self] at h_sub
-    exact h_sub.congr' (h_eventually_eq.mono fun ε h => h.symm)
-  have h_int_zero : ∫ t in γ.a..γ.b, (0 : ℂ) = 0 := by simp
-  rw [← h_int_zero]
+  apply reduce_to_diff_tendsto_zero S0 γ s m hs Mγ' hMγ' h_single
   by_cases hS0_single : S0 = {s}
   · apply tendsto_const_nhds.congr'
     filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
-    rw [h_int_zero]; symm
-    calc ∫ t in γ.a..γ.b,
-          ((if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) -
-           cauchyPrincipalValueIntegrandOn S0 f_zpow γ.toFun ε t)
-        = ∫ t in γ.a..γ.b, (0 : ℂ) := by
-          congr 1; ext t
-          rw [hS0_single, cauchyPrincipalValueIntegrandOn_singleton]; ring_nf
-      _ = 0 := by simp
+    show 0 = _
+    rw [show (∫ t in γ.a..γ.b,
+          ((if ‖γ.toFun t - s‖ > ε then
+              (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0) -
+           cauchyPrincipalValueIntegrandOn S0
+             (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t)) =
+        ∫ t in γ.a..γ.b, (0 : ℂ) from by
+      congr 1; ext t
+      rw [hS0_single, cauchyPrincipalValueIntegrandOn_singleton]; ring_nf]
+    simp
   · have hS0_ne : S0.Nonempty := ⟨s, hs⟩
     let δ_sep := (S0.erase s).inf' (by
       exact (Finset.erase_nonempty hs).mpr
@@ -624,68 +758,20 @@ theorem multipoint_pv_zpow_tendsto_zero
       apply (Finset.lt_inf'_iff _).mpr
       intro s' hs'
       exact norm_pos_iff.mpr (sub_ne_zero.mpr (ne_of_mem_erase hs').symm)
-    set Bd : ℝ := (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) with hBd_def
-    apply intervalIntegral.tendsto_integral_filter_of_dominated_convergence (fun _ => Bd)
-    · filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
-      simp only [intervalIntegral.integral_zero]
-      exact aesm_diff_single_multi_cpv_zpow S0 γ s m hs ε hε
-    · filter_upwards [Ioo_mem_nhdsGT (show (0 : ℝ) < δ_sep / 2 by linarith)]
-        with ε hε
-      apply ae_of_all; intro t ht
-      simp only [cauchyPrincipalValueIntegrandOn]
-      by_cases h_multi_cut : ∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε
-      · rw [if_pos h_multi_cut]
-        by_cases h_single_cut : ‖γ.toFun t - s‖ > ε
-        · rw [if_pos h_single_cut]; simp only [sub_zero]
-          obtain ⟨s', hs', hs'_close⟩ := h_multi_cut
-          have hs'_ne : s' ≠ s := by intro heq; rw [heq] at hs'_close; linarith
-          have h_sep_s' : δ_sep ≤ ‖s - s'‖ :=
-            Finset.inf'_le _ (Finset.mem_erase.mpr ⟨hs'_ne, hs'⟩)
-          have h_far : ‖γ.toFun t - s‖ ≥ δ_sep / 2 := by
-            have h1 : ‖s - s'‖ ≤ ‖γ.toFun t - s‖ + ‖γ.toFun t - s'‖ := by
-              calc ‖s - s'‖ = ‖(s - γ.toFun t) + (γ.toFun t - s')‖ := by ring_nf
-                _ ≤ ‖s - γ.toFun t‖ + ‖γ.toFun t - s'‖ := norm_add_le _ _
-                _ = ‖γ.toFun t - s‖ + ‖γ.toFun t - s'‖ := by rw [norm_sub_rev]
-            linarith [hε.2]
-          have ht_Icc : t ∈ Icc γ.a γ.b :=
-            Ioc_subset_Icc_self (Set.uIoc_of_le γ.hab.le ▸ ht)
-          calc ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖
-              ≤ ‖f_zpow (γ.toFun t)‖ * ‖deriv γ.toFun t‖ := norm_mul_le _ _
-            _ ≤ (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) := by
-                apply mul_le_mul
-                · change ‖f_zpow (γ.toFun t)‖ ≤ (δ_sep / 2)⁻¹ ^ m
-                  simp only [f_zpow]
-                  rw [norm_zpow, zpow_neg, zpow_natCast, inv_pow]
-                  exact inv_anti₀ (by positivity)
-                    (pow_le_pow_left₀ (by linarith) h_far m)
-                · exact le_trans ((hMγ' t ht_Icc).trans (le_abs_self _))
-                    (le_add_of_nonneg_right one_pos.le)
-                · exact norm_nonneg _
-                · positivity
-        · push_neg at h_single_cut; rw [if_neg (not_lt.mpr h_single_cut)]
-          norm_num; positivity
-      · rw [if_neg h_multi_cut]
-        by_cases h_single_cut : ‖γ.toFun t - s‖ > ε
-        · rw [if_pos h_single_cut]; norm_num; positivity
-        · push_neg at h_single_cut h_multi_cut
-          exact absurd (h_multi_cut s hs) (not_lt.mpr h_single_cut)
-    · exact intervalIntegrable_const
-    · filter_upwards [ae_forall_ne_of_finite_crossings S0 γ] with t h_not_cross ht_in
-      have h_nc := h_not_cross ht_in
-      apply tendsto_const_nhds.congr'
-      let δ_t := S0.inf' hS0_ne (fun s' => ‖γ.toFun t - s'‖)
-      have hδ_t_pos : 0 < δ_t := by
-        apply (Finset.lt_inf'_iff _).mpr
-        intro s' hs'; exact norm_pos_iff.mpr (sub_ne_zero.mpr (h_nc s' hs'))
-      filter_upwards [Ioo_mem_nhdsGT hδ_t_pos] with ε hε
-      simp only [cauchyPrincipalValueIntegrandOn]
-      have h_no_near : ¬∃ s' ∈ S0, ‖γ.toFun t - s'‖ ≤ ε := by
-        push_neg; intro s' hs'
-        exact lt_of_lt_of_le hε.2 (Finset.inf'_le _ hs')
-      rw [if_neg h_no_near]
-      have h_far_s : ‖γ.toFun t - s‖ > ε :=
-        lt_of_lt_of_le hε.2 (Finset.inf'_le _ hs)
-      rw [if_pos h_far_s]; ring
+    have hδ_sep_le : ∀ s' ∈ S0.erase s, δ_sep ≤ ‖s - s'‖ :=
+      fun s' hs' => Finset.inf'_le _ hs'
+    have h_dct := intervalIntegral.tendsto_integral_filter_of_dominated_convergence
+      (fun _ => (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1))
+      (by filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
+          exact aesm_diff_single_multi_cpv_zpow S0 γ s m hs ε hε)
+      (by filter_upwards [Ioo_mem_nhdsGT (show (0 : ℝ) < δ_sep / 2 by linarith)]
+            with ε hε
+          exact dct_bound_diff_cpv_zpow S0 γ s m hs hS0_single Mγ' hMγ'
+            δ_sep hδ_pos hδ_sep_le ε hε)
+      intervalIntegrable_const
+      (ae_limit_diff_cpv_zpow S0 γ s m hs hS0_ne)
+    simp only [intervalIntegral.integral_zero] at h_dct
+    exact h_dct
 /-! ### Helper: CPV of a function continuous along γ with zero contour integral
 
 If g is continuous on γ's image and ∮_γ g dz = 0, then cpv(S0, g, ε) → 0.
