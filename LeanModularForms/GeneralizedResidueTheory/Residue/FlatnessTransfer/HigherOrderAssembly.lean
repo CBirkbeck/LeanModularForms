@@ -24,8 +24,8 @@ noncomputable section
 
 namespace GeneralizedResidueTheory
 
-theorem higherOrderCancel_assembly
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
+theorem higherOrderCancel_assembly_abstract
+    (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (f : ℂ → ℂ)
     (hf : DifferentiableOn ℂ f (U \ S0))
     (γ : PiecewiseC1Immersion)
@@ -38,7 +38,14 @@ theorem higherOrderCancel_assembly
     (h_no_endpt : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
     (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂)
-    (hS0_in_U : ∀ s ∈ S0, s ∈ U) :
+    (hS0_in_U : ∀ s ∈ S0, s ∈ U)
+    (h_holo_vanish : ∀ g : ℂ → ℂ, DifferentiableOn ℂ g U →
+      ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0)
+    (h_finset_vanish : ∀ (T : Finset ℂ) (g : ℂ → ℂ),
+      (∀ s ∈ T, MeromorphicAt g s) → (∀ s ∈ T, residueAt g s = 0) →
+      DifferentiableOn ℂ g (U \ ↑T) → (∀ s ∈ T, s ∈ U) →
+      (∀ s ∈ T, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) →
+      ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0) :
     let h : ℂ → ℂ := fun z => f z - ∑ s ∈ S0, residueAt f s / (z - s)
     Tendsto (fun ε => ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 h γ.toFun ε t)
@@ -84,8 +91,8 @@ theorem higherOrderCancel_assembly
     have hh_cont_image : ContinuousOn h (γ.toFun '' Icc γ.a γ.b) :=
       hh_cont.mono h_image_sub
     have h_integral_zero : ∫ t in γ.a..γ.b, h (γ.toFun t) * deriv γ.toFun t = 0 := by
-      apply contourIntegral_eq_zero_of_meromorphic_residue_zero_finset S0 h
-      · intro s hs
+      have h_mero_sum : ∀ s ∈ S0, MeromorphicAt h s := by
+        intro s hs
         apply MeromorphicAt.fun_sub (hMero s hs)
         suffices ∀ (T : Finset ℂ),
             MeromorphicAt (fun z => ∑ s' ∈ T, residueAt f s' / (z - s')) s by
@@ -102,15 +109,9 @@ theorem higherOrderCancel_assembly
           rw [h_eq]
           exact ((MeromorphicAt.const (residueAt f a) s).fun_div
             ((MeromorphicAt.id s).fun_sub (MeromorphicAt.const a s))).fun_add ih
-      · intro s hs
-        exact residueAt_sub_residueSum_eq_zero S0 f s hs (hMero s hs)
-      · exact hU
-      · exact hU_convex
-      · exact hh_diff
-      · intro s hs; exact hS0_in_U s hs
-      · exact hγ_closed
-      · exact hγ_in_U
-      · exact fun s hs t ht => h_no_crossings s hs t ht
+      have h_res_zero : ∀ s ∈ S0, residueAt h s = 0 :=
+        fun s hs => residueAt_sub_residueSum_eq_zero S0 f s hs (hMero s hs)
+      exact h_finset_vanish S0 h h_mero_sum h_res_zero hh_diff hS0_in_U h_no_crossings
     exact tendsto_cpv_of_continuousOn_zero_integral S0 h γ
       hh_cont_image h_integral_zero
   · push_neg at h_no_crossings
@@ -230,39 +231,9 @@ theorem higherOrderCancel_assembly
     have h_reg_nf_cont : ContinuousOn h_reg_nf (γ.toFun '' Icc γ.a γ.b) :=
       h_reg_nf_diff_U.continuousOn.mono
         (fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht)
-    have hU_ne : U.Nonempty := ⟨s₀, hS0_in_U s₀ hs₀⟩
-    obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne h_reg_nf_diff_U
-    have h_Fγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) := by
-      intro t ht
-      exact ((hF (γ.toFun t) (hγ_in_U t ht)).continuousAt.continuousWithinAt.comp
-        (γ.continuous_toFun t ht) (fun t' ht' => hγ_in_U t' ht'))
-    have h_countable : (↑γ.partition ∩ Ioo γ.a γ.b : Set ℝ).Countable :=
-      (γ.partition.finite_toSet.inter_of_left _).countable
-    have h_deriv : ∀ t ∈ Ioo γ.a γ.b \ (↑γ.partition ∩ Ioo γ.a γ.b),
-        HasDerivAt (F ∘ γ.toFun)
-          (h_reg_nf (γ.toFun t) * deriv γ.toFun t) t := by
-      intro t ⟨ht, hp⟩
-      have ht' : t ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht
-      have hp' : t ∉ γ.partition := fun hh => hp ⟨hh, ht⟩
-      exact (hF (γ.toFun t) (hγ_in_U t ht')).comp_of_eq t
-        ((γ.smooth_off_partition t ht' hp').hasDerivAt) rfl
-    have h_nf_int : IntervalIntegrable
-        (fun t => h_reg_nf (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b := by
-      have hrγ_cont : ContinuousOn (fun t => h_reg_nf (γ.toFun t))
-          (Set.uIcc γ.a γ.b) := by
-        rw [Set.uIcc_of_le (le_of_lt γ.hab)]
-        exact h_reg_nf_diff_U.continuousOn.comp γ.continuous_toFun
-          (fun t ht => hγ_in_U t ht)
-      exact IntervalIntegrable.continuousOn_mul
-        (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
-          (piecewiseC1Immersion_deriv_bounded γ)) hrγ_cont
     have h_nf_zero : ∫ t in γ.a..γ.b,
-        h_reg_nf (γ.toFun t) * deriv γ.toFun t = 0 := by
-      have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-        (F ∘ γ.toFun) (fun t => h_reg_nf (γ.toFun t) * deriv γ.toFun t)
-        (le_of_lt γ.hab) h_countable h_Fγ_cont h_deriv h_nf_int
-      rw [h_ftc, Function.comp_apply, Function.comp_apply,
-        (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self]
+        h_reg_nf (γ.toFun t) * deriv γ.toFun t = 0 :=
+      h_holo_vanish h_reg_nf h_reg_nf_diff_U
     have h_reg_nf_cpv_zero : Tendsto (fun ε => ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 h_reg_nf γ.toFun ε t)
       (𝓝[>] 0) (𝓝 0) :=
@@ -650,8 +621,10 @@ theorem higherOrderCancel_assembly
             have h_err_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
                 cauchyPrincipalValueIntegrandOn S0 err_nf γ.toFun ε t)
               (𝓝[>] 0) (𝓝 0) :=
-              holomorphic_cpv_tendsto_zero_on_convex U hU hU_convex S0
-                err_nf h_err_nf_diff γ hγ_closed hγ_in_U
+              tendsto_cpv_of_continuousOn_zero_integral S0
+                err_nf γ (h_err_nf_diff.continuousOn.mono
+                  (fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht))
+                (h_holo_vanish err_nf h_err_nf_diff)
             have h_polar_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
                 cauchyPrincipalValueIntegrandOn S0 polarHigher γ.toFun ε t)
               (𝓝[>] 0) (𝓝 0) := by
@@ -894,9 +867,12 @@ theorem higherOrderCancel_assembly
                 congr 1
                 exact h_ci_agree r hr_pos hr_lt]
               exact h_single
-            exact contourIntegral_eq_zero_of_meromorphic_residue_zero
-              term_s s h_term_mero h_term_res U hU hU_convex
-              h_term_diff (hS0_in_U s hs) γ hγ_closed hγ_in_U h_avoids
+            exact h_finset_vanish {s} term_s
+              (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact h_term_mero)
+              (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact h_term_res)
+              (by rwa [Finset.coe_singleton])
+              (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact hS0_in_U s hs)
+              (fun s' hs' t ht => by rw [Finset.mem_singleton.mp hs']; exact h_avoids t ht)
           exact tendsto_cpv_of_continuousOn_zero_integral S0 term_s γ
             h_term_cont_image h_term_int_zero
       rw [show (0 : ℂ) = ∑ _s ∈ S0, (0 : ℂ) from (Finset.sum_const_zero).symm]
@@ -926,6 +902,63 @@ theorem higherOrderCancel_assembly
         h_pol_cont γ hγ_in_U ε hε
     rw [h_eq_sum, h_split]
     exact (intervalIntegral.integral_add h_int_nf h_int_pol).symm
+
+/-- Convex-set specialization of `higherOrderCancel_assembly_abstract`. -/
+theorem higherOrderCancel_assembly
+    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
+    (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion)
+    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
+    (hCondB : SatisfiesConditionB γ f S0)
+    (_hγ_meas : Measurable γ.toFun)
+    (h_no_endpt : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
+    (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
+      γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂)
+    (hS0_in_U : ∀ s ∈ S0, s ∈ U) :
+    let h : ℂ → ℂ := fun z => f z - ∑ s ∈ S0, residueAt f s / (z - s)
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0 h γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 0) :=
+  higherOrderCancel_assembly_abstract U hU S0 f hf γ hγ_closed hγ_in_U
+    hMero hCondA hCondB _hγ_meas h_no_endpt h_unique_cross hS0_in_U
+    (fun g hg => by
+      have hU_ne : U.Nonempty :=
+        ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr (le_of_lt γ.hab))⟩
+      obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne hg
+      have h_Fγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) := by
+        intro t ht
+        exact ((hF (γ.toFun t) (hγ_in_U t ht)).continuousAt.continuousWithinAt.comp
+          (γ.continuous_toFun t ht) (fun t' ht' => hγ_in_U t' ht'))
+      have h_countable : (↑γ.partition ∩ Ioo γ.a γ.b : Set ℝ).Countable :=
+        (γ.partition.finite_toSet.inter_of_left _).countable
+      have h_deriv : ∀ t ∈ Ioo γ.a γ.b \ (↑γ.partition ∩ Ioo γ.a γ.b),
+          HasDerivAt (F ∘ γ.toFun) (g (γ.toFun t) * deriv γ.toFun t) t := by
+        intro t ⟨ht, hp⟩
+        have ht' : t ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht
+        have hp' : t ∉ γ.partition := fun hh => hp ⟨hh, ht⟩
+        exact (hF (γ.toFun t) (hγ_in_U t ht')).comp_of_eq t
+          ((γ.smooth_off_partition t ht' hp').hasDerivAt) rfl
+      have h_int : IntervalIntegrable
+          (fun t => g (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b := by
+        have hrγ_cont : ContinuousOn (fun t => g (γ.toFun t))
+            (Set.uIcc γ.a γ.b) := by
+          rw [Set.uIcc_of_le (le_of_lt γ.hab)]
+          exact hg.continuousOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)
+        exact IntervalIntegrable.continuousOn_mul
+          (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
+            (piecewiseC1Immersion_deriv_bounded γ)) hrγ_cont
+      have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+        (F ∘ γ.toFun) (fun t => g (γ.toFun t) * deriv γ.toFun t)
+        (le_of_lt γ.hab) h_countable h_Fγ_cont h_deriv h_int
+      rw [h_ftc, Function.comp_apply, Function.comp_apply,
+        (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self])
+    (fun T g hg_mero hg_res hg_diff hT_in_U hg_avoids =>
+      contourIntegral_eq_zero_of_meromorphic_residue_zero_finset T g
+        hg_mero hg_res U hU hU_convex hg_diff hT_in_U γ hγ_closed hγ_in_U hg_avoids)
 
 /-! ## L5: Assembly — conditions (A')+(B) imply higher-order cancellation
 
