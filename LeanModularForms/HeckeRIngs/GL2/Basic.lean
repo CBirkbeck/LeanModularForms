@@ -123,16 +123,16 @@ lemma T_sum_prime :
   rw [h1, h2, zero_add]
 
 private lemma diagMul_scalar_comm (b : Fin 2 → ℕ) (c : ℕ) :
-    diagMul 2 b (fun _ => c) = diagMul 2 (fun _ => c) b := by
+    b * (fun _ => c) = (fun _ => c) * b := by
   ext i; exact Nat.mul_comm _ _
 
 private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (b * (fun _ => c)))
     (p : decompQuot (GL_pair 2) (T_diag 2 b hb_pos hb) ×
          decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))) :
     mulMap (GL_pair 2) (T_diag 2 b hb_pos hb)
       (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)) p =
-    T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc := by
+    T_diag 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc := by
   set H := (GL_pair 2).H
   have hδb_mem : ((T_diag 2 b hb_pos hb).eql.choose : GL (Fin 2) ℚ) ∈
       DoubleCoset.doubleCoset (diagMat 2 b hb_pos : GL (Fin 2) ℚ) H H := by
@@ -155,7 +155,7 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b 
         ((T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)).eql.choose :
           GL (Fin 2) ℚ)) ∈
       DoubleCoset.doubleCoset
-        (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) :
+        (diagMat 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) :
           GL (Fin 2) ℚ) H H := by
     rw [DoubleCoset.mem_doubleCoset]
     set x1 := (↑(Quotient.out p.1) : GL (Fin 2) ℚ)
@@ -176,7 +176,7 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b 
     have key : x1 * (h₁b * diagMat 2 b hb_pos * h₂b) *
         (x2 * (h₁c * diagMat 2 (fun _ => c) (fun _ => hc) * h₂c)) =
         x1 * h₁b *
-          (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
+          (diagMat 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
             (h₂b * x2 * h₁c)) *
         h₂c := by
       calc x1 * (h₁b * diagMat 2 b hb_pos * h₂b) *
@@ -196,17 +196,17 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b 
               (h₂b * x2 * h₁c)) *
             h₂c := by group
         _ = x1 * h₁b *
-            (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
+            (diagMat 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
               (h₂b * x2 * h₁c)) *
             h₂c := by rw [diagMat_mul]
     calc x1 * (h₁b * diagMat 2 b hb_pos * h₂b) *
         (x2 * (h₁c * diagMat 2 (fun _ => c) (fun _ => hc) * h₂c))
         = x1 * h₁b *
-          (diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
+          (diagMat 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
             (h₂b * x2 * h₁c)) *
           h₂c := key
       _ = x1 * h₁b *
-          diagMat 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
+          diagMat 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) *
             (h₂b * x2 * h₁c * h₂c) := by group
   apply HeckeRing.T'_ext (GL_pair 2)
   exact doubleCoset_eq_of_mem' _ _ h_product_mem
@@ -248,10 +248,10 @@ private lemma scalar_coset_rep_normalizes (c : ℕ) (hc : 0 < c) :
 
 /-- D_bc is in the mulSupport of D_b * D_c when D_c is scalar. -/
 private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c))) :
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (b * (fun _ => c))) :
     let D_b := T_diag 2 b hb_pos hb
     let D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
-    let D_bc := T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc
+    let D_bc := T_diag 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc
     D_bc ∈ HeckeRing.mulSupport (GL_pair 2) D_b D_c := by
   intro D_b D_c D_bc
   simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
@@ -270,13 +270,13 @@ private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0
 private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ)
     (hb_pos : ∀ i, 0 < b i) (hb : DivChain 2 b)
     (c : ℕ) (hc : 0 < c)
-    (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
+    (hbc : DivChain 2 (b * (fun _ => c)))
     (D_b : T' (GL_pair 2)) (hDb : D_b = T_diag 2 b hb_pos hb)
     (D_c : T' (GL_pair 2))
     (hDc : D_c = T_diag 2 (fun _ => c) (fun _ => hc)
       (divChain_const 2 c))
     (D_bc : T' (GL_pair 2))
-    (hDbc : D_bc = T_diag 2 (diagMul 2 b (fun _ => c))
+    (hDbc : D_bc = T_diag 2 (b * (fun _ => c))
       (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) :
     HeckeRing.m' (GL_pair 2) D_b D_c D_bc = 1 := by
   -- Work with concrete forms throughout the proof to avoid whnf divergence
@@ -287,7 +287,7 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ)
     Fintype.card_le_one_iff_subsingleton.mp (le_of_eq h_card)
   have h_le : HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
       (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
-      (T_diag 2 (diagMul 2 b (fun _ => c))
+      (T_diag 2 (b * (fun _ => c))
         (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) ≤ 1 := by
     classical
     simp only [HeckeRing.m']; norm_cast; rw [Nat.card_eq_fintype_card]
@@ -340,17 +340,17 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ)
     subst hi; rfl
   have h_pos : 0 < HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
       (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
-      (T_diag 2 (diagMul 2 b (fun _ => c))
+      (T_diag 2 (b * (fun _ => c))
         (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) := by
     have h_mem := mem_mulSupport_right_scalar b hb_pos hb c hc hbc
     simp only at h_mem
     have h_ne := HeckeRing.m'_pos_of_mem_mulSupport (GL_pair 2) (T_diag 2 b hb_pos hb)
       (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
-      (T_diag 2 (diagMul 2 b (fun _ => c))
+      (T_diag 2 (b * (fun _ => c))
         (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) h_mem
     have : (0 : ℤ) ≤ HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
       (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
-      (T_diag 2 (diagMul 2 b (fun _ => c))
+      (T_diag 2 (b * (fun _ => c))
         (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) := by
       simp only [HeckeRing.m']; exact Nat.cast_nonneg _
     omega
@@ -359,8 +359,8 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ)
   omega
 
 private lemma m'_right_scalar_eq_zero (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (diagMul 2 b (fun _ => c)))
-    (A : T' (GL_pair 2)) (hA : A ≠ T_diag 2 (diagMul 2 b (fun _ => c))
+    (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (b * (fun _ => c)))
+    (A : T' (GL_pair 2)) (hA : A ≠ T_diag 2 (b * (fun _ => c))
       (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) :
     HeckeRing.m' (GL_pair 2)
       (T_diag 2 b hb_pos hb)
@@ -376,11 +376,11 @@ private lemma m'_right_scalar_eq_zero (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b
 theorem T_elem_mul_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
     (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) :
     T_elem 2 b hb_pos hb * T_elem 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c) =
-    T_elem 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc))
+    T_elem 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc))
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c)) := by
   set D_b := T_diag 2 b hb_pos hb
   set D_c := T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c)
-  set D_bc := T_diag 2 (diagMul 2 b (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc))
+  set D_bc := T_diag 2 (b * (fun _ => c)) (diagMul_pos 2 b _ hb_pos (fun _ => hc))
     (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c))
   change HeckeRing.T_single (GL_pair 2) ℤ D_b 1 *
     HeckeRing.T_single (GL_pair 2) ℤ D_c 1 =

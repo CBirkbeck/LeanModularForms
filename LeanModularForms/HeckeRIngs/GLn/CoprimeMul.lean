@@ -578,29 +578,24 @@ variable (n : ℕ) [NeZero n]
 
 section DiagMul
 
-/-- Pointwise multiplication of two positive-valued sequences. -/
-def diagMul (a b : Fin n → ℕ) : Fin n → ℕ :=
-  fun i => a i * b i
-
 omit [NeZero n] in
-lemma diagMul_pos (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) :
-    ∀ i, 0 < diagMul n a b i :=
+lemma pi_mul_pos (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i)
+    (hb : ∀ i, 0 < b i) : ∀ i, 0 < (a * b) i :=
   fun i => Nat.mul_pos (ha i) (hb i)
 
-omit [NeZero n] in
-@[simp] lemma diagMul_apply (a b : Fin n → ℕ) (i : Fin n) :
-    diagMul n a b i = a i * b i := rfl
+/-- Deprecated alias. -/
+abbrev diagMul_pos := @pi_mul_pos
 
 omit [NeZero n] in
 lemma DivChain_mul (a b : Fin n → ℕ) (ha : DivChain n a) (hb : DivChain n b) :
-    DivChain n (diagMul n a b) := by
+    DivChain n (a * b) := by
   intro i hi
   simp only [diagMul_apply]
   exact Nat.mul_dvd_mul (ha i hi) (hb i hi)
 
 omit [NeZero n] in
 lemma diagMat_mul (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) :
-    diagMat n a ha * diagMat n b hb = diagMat n (diagMul n a b) (diagMul_pos n a b ha hb) := by
+    diagMat n a ha * diagMat n b hb = diagMat n (a * b) (diagMul_pos n a b ha hb) := by
   apply Units.ext
   simp only [Units.val_mul, diagMat_val, diagMul_apply]
   ext i j
@@ -619,10 +614,10 @@ lemma diagMat_mul (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b
     · simp [hik]
 
 lemma T_diag_eq_T_mk_mul (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
-    (hab : DivChain n (diagMul n a b)) :
-    T_diag n (diagMul n a b) (diagMul_pos n a b ha hb) hab =
+    (hab : DivChain n (a * b)) :
+    T_diag n (a * b) (diagMul_pos n a b ha hb) hab =
     T_mk (GL_pair n) ⟨diagMat n a ha * diagMat n b hb,
-      (diagMat_mul n a b ha hb).symm ▸ diagMat_mem_posDetInt n (diagMul n a b)
+      (diagMat_mul n a b ha hb).symm ▸ diagMat_mem_posDetInt n (a * b)
         (diagMul_pos n a b ha hb)⟩ := by
   apply T'_ext
   simp only [T_diag, T_mk, diagMat_delta]
@@ -715,12 +710,12 @@ lemma T'_deg_scalar (c : ℕ) (hc : 0 < c) :
   exact conjAct_mem_smul_eq n (h₁ * h₂) (H.mul_mem hh₁ hh₂)
 
 private lemma mulMap_scalar_eq (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_pos : ∀ i, 0 < b i)
-    (hb : DivChain n b) (hcb : DivChain n (diagMul n (fun _ => c) b))
+    (hb : DivChain n b) (hcb : DivChain n ((fun _ => c) * b))
     (p : decompQuot (GL_pair n) (T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)) ×
          decompQuot (GL_pair n) (T_diag n b hb_pos hb)) :
     mulMap (GL_pair n) (T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c))
       (T_diag n b hb_pos hb) p =
-    T_diag n (diagMul n (fun _ => c) b) (diagMul_pos n _ b (fun _ => hc) hb_pos) hcb := by
+    T_diag n ((fun _ => c) * b) (diagMul_pos n _ b (fun _ => hc) hb_pos) hcb := by
   set H := (GL_pair n).H
   have hδc_mem : ((T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)).eql.choose :
       GL (Fin n) ℚ) ∈
@@ -741,7 +736,7 @@ private lemma mulMap_scalar_eq (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_po
       ((T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)).eql.choose :
         GL (Fin n) ℚ) *
       ((p.2.out : GL (Fin n) ℚ) * ((T_diag n b hb_pos hb).eql.choose : GL (Fin n) ℚ)) ∈
-      DoubleCoset.doubleCoset (diagMat n (diagMul n (fun _ => c) b)
+      DoubleCoset.doubleCoset (diagMat n ((fun _ => c) * b)
         (diagMul_pos n _ b (fun _ => hc) hb_pos) : GL (Fin n) ℚ) H H := by
     rw [DoubleCoset.mem_doubleCoset]
     refine ⟨(p.1.out : GL (Fin n) ℚ) * h₁c * h₂c * p.2.out * h₁b,
@@ -767,21 +762,21 @@ private lemma mulMap_scalar_eq (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_po
       _ = x1 * h₁c * h₂c * x2 * h₁b *
           (diagMat n (fun _ => c) (fun _ => hc) * diagMat n b hb_pos) * h₂b := by group
       _ = x1 * h₁c * h₂c * x2 * h₁b *
-          diagMat n (diagMul n (fun _ => c) b)
+          diagMat n ((fun _ => c) * b)
             (diagMul_pos n _ b (fun _ => hc) hb_pos) * h₂b := by
           rw [diagMat_mul]
   apply HeckeRing.T'_ext (GL_pair n)
   exact doubleCoset_eq_of_mem' n _ _ h_product_mem
 
 private lemma m'_scalar_eq_one (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ)
-    (hb_pos : ∀ i, 0 < b i) (hb : DivChain n b) (hab : DivChain n (diagMul n (fun _ => c) b)) :
+    (hb_pos : ∀ i, 0 < b i) (hb : DivChain n b) (hab : DivChain n ((fun _ => c) * b)) :
     HeckeRing.m' (GL_pair n)
       (T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c))
       (T_diag n b hb_pos hb)
-      (T_diag n (diagMul n (fun _ => c) b) (diagMul_pos n _ b (fun _ => hc) hb_pos) hab) = 1 := by
+      (T_diag n ((fun _ => c) * b) (diagMul_pos n _ b (fun _ => hc) hb_pos) hab) = 1 := by
   set D_c := T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)
   set D_b := T_diag n b hb_pos hb
-  set D_cb := T_diag n (diagMul n (fun _ => c) b) (diagMul_pos n _ b (fun _ => hc) hb_pos) hab
+  set D_cb := T_diag n ((fun _ => c) * b) (diagMul_pos n _ b (fun _ => hc) hb_pos) hab
   have h_card : Fintype.card (decompQuot (GL_pair n) D_c) = 1 := by
     have := T'_deg_scalar n c hc; simp only [HeckeRing.T'_deg] at this; exact_mod_cast this
   haveI : Subsingleton (decompQuot (GL_pair n) D_c) :=
@@ -818,8 +813,8 @@ private lemma m'_scalar_eq_one (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ)
 
 private lemma m'_scalar_eq_zero (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ)
     (hb_pos : ∀ i, 0 < b i) (hb : DivChain n b)
-    (hab : DivChain n (diagMul n (fun _ => c) b)) (A : T' (GL_pair n))
-    (hA : A ≠ T_diag n (diagMul n (fun _ => c) b)
+    (hab : DivChain n ((fun _ => c) * b)) (A : T' (GL_pair n))
+    (hA : A ≠ T_diag n ((fun _ => c) * b)
       (diagMul_pos n _ b (fun _ => hc) hb_pos) hab) :
     HeckeRing.m' (GL_pair n)
       (T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c))
@@ -836,13 +831,13 @@ theorem T_diag_scalar_mul (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_pos : �
     (hb : DivChain n b) :
     T_elem n (fun _ => c) (fun _ => hc) (divChain_const n c) *
       T_elem n b hb_pos hb =
-    T_elem n (diagMul n (fun _ => c) b) (diagMul_pos n _ b (fun _ => hc) hb_pos)
+    T_elem n ((fun _ => c) * b) (diagMul_pos n _ b (fun _ => hc) hb_pos)
       (DivChain_mul n _ _ (divChain_const n c) hb) := by
   change HeckeRing.T_single (GL_pair n) ℤ
       (T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)) 1 *
     HeckeRing.T_single (GL_pair n) ℤ (T_diag n b hb_pos hb) 1 =
     HeckeRing.T_single (GL_pair n) ℤ
-      (T_diag n (diagMul n (fun _ => c) b) (diagMul_pos n _ b (fun _ => hc) hb_pos)
+      (T_diag n ((fun _ => c) * b) (diagMul_pos n _ b (fun _ => hc) hb_pos)
         (DivChain_mul n _ _ (divChain_const n c) hb)) 1
   rw [HeckeRing.T_single_one_mul_T_single_one]
   apply Finsupp.ext; intro A
@@ -859,7 +854,6 @@ end Scalar
 section Coprime
 open Classical
 
-noncomputable def diagDet (a : Fin n → ℕ) : ℕ := ∏ i, a i
 
 private def congMod (d : ℕ) (σ : SpecialLinearGroup (Fin n) ℤ) : Prop :=
   ∀ i j, (d : ℤ) ∣ (σ.1 i j - if i = j then 1 else 0)
@@ -1165,14 +1159,14 @@ omit [NeZero n] in
 /-- Set-level coprime product (Shimura Proposition 3.16, key step). -/
 lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
     (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
-    (ha : DivChain n a) (hb : DivChain n b) (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
+    (ha : DivChain n a) (hb : DivChain n b) (hcop : Nat.Coprime (∏ i, a i) (∏ i, b i))
     (τ : SpecialLinearGroup (Fin n) ℤ) :
     diagMat n a ha_pos * (τ : GL (Fin n) ℚ) * diagMat n b hb_pos ∈
-    DoubleCoset.doubleCoset (diagMat n (diagMul n a b)
+    DoubleCoset.doubleCoset (diagMat n (a * b)
       (diagMul_pos n a b ha_pos hb_pos) : GL (Fin n) ℚ)
       (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   obtain ⟨τ₁, τ₂, hτ, hτ₁, hτ₂⟩ := SLnZ_CRT_decomposition n
-    (diagDet n a) (diagDet n b)
+    (∏ i, a i) (∏ i, b i)
     (Finset.prod_pos (fun i _ => ha_pos i))
     (Finset.prod_pos (fun i _ => hb_pos i))
     hcop τ
@@ -1180,13 +1174,13 @@ lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
       ((τ₁ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0) := by
     intro i j
     convert hτ₁ i j using 1
-    simp [diagDet]
+    simp
   obtain ⟨σ₁, hσ₁⟩ := conjugate_congruent_mem_SLnZ n a ha_pos ha τ₁ hτ₁_cong
   have hτ₂_cong : ∀ i j, (∏ k, (b k : ℤ)) ∣
       ((τ₂ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0) := by
     intro i j
     convert hτ₂ i j using 1
-    simp [diagDet]
+    simp
   obtain ⟨σ₂, hσ₂⟩ := inv_conjugate_congruent_mem_SLnZ n b hb_pos hb τ₂ hτ₂_cong
   rw [DoubleCoset.mem_doubleCoset]
   refine ⟨(σ₁ : GL (Fin n) ℚ), coe_mem_SLnZ n σ₁,
@@ -1210,17 +1204,17 @@ lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
         rw [hσ₁']
     _ = (σ₁ : GL (Fin n) ℚ) * (diagMat n a ha_pos * diagMat n b hb_pos) *
         (σ₂ : GL (Fin n) ℚ) := by group
-    _ = (σ₁ : GL (Fin n) ℚ) * diagMat n (diagMul n a b)
+    _ = (σ₁ : GL (Fin n) ℚ) * diagMat n (a * b)
         (diagMul_pos n a b ha_pos hb_pos) * (σ₂ : GL (Fin n) ℚ) := by
         rw [diagMat_mul]
 
 lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
-    (ha : DivChain n a) (hb : DivChain n b) (hab : DivChain n (diagMul n a b))
-    (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
+    (ha : DivChain n a) (hb : DivChain n b) (hab : DivChain n (a * b))
+    (hcop : Nat.Coprime (∏ i, a i) (∏ i, b i))
     (p : decompQuot (GL_pair n) (T_diag n a ha_pos ha) ×
          decompQuot (GL_pair n) (T_diag n b hb_pos hb)) :
     mulMap (GL_pair n) (T_diag n a ha_pos ha) (T_diag n b hb_pos hb) p =
-    T_diag n (diagMul n a b) (diagMul_pos n a b ha_pos hb_pos) hab := by
+    T_diag n (a * b) (diagMul_pos n a b ha_pos hb_pos) hab := by
   set H := (GL_pair n).H
   have hδa_mem : ((T_diag n a ha_pos ha).eql.choose : GL (Fin n) ℚ) ∈
       DoubleCoset.doubleCoset (diagMat n a ha_pos : GL (Fin n) ℚ) H H := by
@@ -1246,7 +1240,7 @@ lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos 
   have h_product_mem : (p.1.out : GL (Fin n) ℚ) *
       ((T_diag n a ha_pos ha).eql.choose : GL (Fin n) ℚ) *
       ((p.2.out : GL (Fin n) ℚ) * ((T_diag n b hb_pos hb).eql.choose : GL (Fin n) ℚ)) ∈
-      DoubleCoset.doubleCoset (diagMat n (diagMul n a b)
+      DoubleCoset.doubleCoset (diagMat n (a * b)
         (diagMul_pos n a b ha_pos hb_pos) : GL (Fin n) ℚ) H H := by
     rw [DoubleCoset.mem_doubleCoset]
     refine ⟨(p.1.out : GL (Fin n) ℚ) * h₁a * hc₁,
@@ -1406,7 +1400,7 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
 omit [NeZero n] in
 private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
-    (_hda : DivChain n a) (_hdb : DivChain n b) (hcop : Nat.Coprime (diagDet n a) (diagDet n b))
+    (_hda : DivChain n a) (_hdb : DivChain n b) (hcop : Nat.Coprime (∏ i, a i) (∏ i, b i))
     (σ F G E : SpecialLinearGroup (Fin n) ℤ)
     (h_eq : (diagMat n a ha)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a ha =
       (F : GL (Fin n) ℚ) * diagMat n b hb * (G : GL (Fin n) ℚ) *
@@ -1418,35 +1412,35 @@ private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
     rw [SLnZ_to_GLnQ_det, mul_one, ← Matrix.det_mul, ← Units.val_mul, inv_mul_cancel]
     simp only [Units.val_one, Matrix.det_one]
   have h_scale_a : ∀ i j, ∃ z : ℤ,
-      (↑(diagDet n a) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by
+      (↑(∏ i, a i) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by
     intro i j
     have := diagConj_scaling n a ha σ i j
-    simp only [C, diagDet]
+    simp only [C]
     convert this using 2
     push_cast; ring
   have h_scale_b : ∀ i j, ∃ z : ℤ,
-      (↑(diagDet n b) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by
+      (↑(∏ i, b i) : ℚ) * (↑C : Matrix (Fin n) (Fin n) ℚ) i j = z := by
     intro i j
     have h_C_rhs : C = (F : GL (Fin n) ℚ) * diagMat n b hb * (G : GL (Fin n) ℚ) *
       (diagMat n b hb)⁻¹ * (E : GL (Fin n) ℚ) := h_eq
     rw [h_C_rhs]
     have := diagSandwich_scaling n b hb F G E i j
-    simp only [diagDet]
+    simp only []
     convert this using 2
     push_cast; ring
-  exact GLnQ_mem_SLnZ_of_coprime_scaling n C (diagDet n a) (diagDet n b) hcop h_det
+  exact GLnQ_mem_SLnZ_of_coprime_scaling n C (∏ i, a i) (∏ i, b i) hcop h_det
     h_scale_a h_scale_b
 
 /-- Coprime product in the Hecke ring (Shimura Proposition 3.16). -/
 theorem T_diag_mul_coprime (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
-    (ha : DivChain n a) (hb : DivChain n b) (hcop : Nat.Coprime (diagDet n a) (diagDet n b)) :
+    (ha : DivChain n a) (hb : DivChain n b) (hcop : Nat.Coprime (∏ i, a i) (∏ i, b i)) :
     T_elem n a ha_pos ha * T_elem n b hb_pos hb =
-    T_elem n (diagMul n a b) (diagMul_pos n a b ha_pos hb_pos)
+    T_elem n (a * b) (diagMul_pos n a b ha_pos hb_pos)
       (DivChain_mul n a b ha hb) := by
   set D_a := T_diag n a ha_pos ha
   set D_b := T_diag n b hb_pos hb
   set hab := DivChain_mul n a b ha hb
-  set D_ab := T_diag n (diagMul n a b) (diagMul_pos n a b ha_pos hb_pos) hab
+  set D_ab := T_diag n (a * b) (diagMul_pos n a b ha_pos hb_pos) hab
   change HeckeRing.T_single (GL_pair n) ℤ D_a 1 * HeckeRing.T_single (GL_pair n) ℤ D_b 1 =
     HeckeRing.T_single (GL_pair n) ℤ D_ab 1
   rw [HeckeRing.T_single_one_mul_T_single_one]
