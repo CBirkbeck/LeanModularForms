@@ -330,6 +330,96 @@ lemma integral_singular_term_eq_winding_times_coeff
     _ = c * (2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b s) := by rw [h_integral]
     _ = 2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b s * c := by ring
 
+private lemma differentiableAt_singular_sum
+    (f : ℂ → ℂ) (S0 : Finset ℂ) (w : ℂ)
+    (hw_not_in_S0 : w ∉ (S0 : Set ℂ)) :
+    DifferentiableAt ℂ (fun v => ∑ s ∈ S0, residueSimplePole f s / (v - s)) w := by
+  have hh : DifferentiableAt ℂ
+      (∑ s ∈ S0, fun v => residueSimplePole f s / (v - s)) w := by
+    apply DifferentiableAt.sum
+    intro s hs'
+    have hw_ne_s : w ≠ s := fun heq => hw_not_in_S0 (heq ▸ Finset.mem_coe.mpr hs')
+    exact (differentiableAt_const _).div
+      (differentiableAt_id.sub (differentiableAt_const s))
+      (sub_ne_zero.mpr hw_ne_s)
+  convert hh using 1; ext v; simp only [Finset.sum_apply]
+
+private lemma differentiableAt_g_off_poles
+    (U : Set ℂ) (hU : IsOpen U) (S0 : Finset ℂ)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (w : ℂ) (hw_in_U : w ∈ U) (hw_not_in_S0 : w ∉ (S0 : Set ℂ)) :
+    DifferentiableAt ℂ (fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)) w := by
+  have hw' : w ∈ U \ (S0 : Set ℂ) := ⟨hw_in_U, hw_not_in_S0⟩
+  have h_nhds : U \ (S0 : Set ℂ) ∈ 𝓝 w :=
+    (hU.sdiff S0.finite_toSet.isClosed).mem_nhds hw'
+  exact ((hf w hw').differentiableAt h_nhds).sub
+    (differentiableAt_singular_sum f S0 w hw_not_in_S0)
+
+private lemma continuousAt_g_at_pole
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (z : ℂ) (hs : z ∈ S0)
+    (hf_ext : ContinuousAt (fun w => f w - residueSimplePole f z / (w - z)) z) :
+    ContinuousAt (fun w => f w - ∑ s ∈ S0, residueSimplePole f s / (w - s)) z := by
+  have h2 : ContinuousAt
+      (fun w => ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s)) z :=
+    (tendsto_finset_sum _ fun s hs' => by
+      simp only [Finset.mem_filter] at hs'
+      exact (continuousAt_const.div (continuousAt_id.sub continuousAt_const)
+        (sub_ne_zero.mpr (Ne.symm hs'.2))).tendsto)
+  have hg_eq_at : ∀ w, f w - ∑ s ∈ S0, residueSimplePole f s / (w - s) =
+      (f w - residueSimplePole f z / (w - z)) -
+      ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s) := by
+    intro w
+    have hsum_split : ∑ s ∈ S0, residueSimplePole f s / (w - s) =
+        ∑ s ∈ S0.filter (· = z), residueSimplePole f s / (w - s) +
+        ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s) := by
+      rw [← Finset.sum_union]
+      · congr 1; ext x; simp only [Finset.mem_union, Finset.mem_filter]
+        exact ⟨fun hx => by by_cases hxz : x = z <;> tauto,
+               fun hx => by rcases hx with ⟨hx1, _⟩ | ⟨hx1, _⟩ <;> exact hx1⟩
+      · exact Finset.disjoint_filter.mpr fun x _ hxz hx_ne_z => hx_ne_z hxz
+    have hfilter_eq : S0.filter (· = z) = {z} := by
+      ext x; simp only [Finset.mem_filter, Finset.mem_singleton]
+      exact ⟨fun ⟨_, hxz⟩ => hxz, fun hxz => ⟨hxz ▸ hs, hxz⟩⟩
+    have hsingleton : ∑ s ∈ S0.filter (· = z), residueSimplePole f s / (w - s) =
+        residueSimplePole f z / (w - z) := by
+      rw [hfilter_eq, Finset.sum_singleton]
+    rw [hsum_split, hsingleton]; ring
+  exact (funext hg_eq_at ▸ hf_ext.sub h2 : _)
+
+private lemma diff_punctured_of_diff_off_poles
+    (U : Set ℂ) (hU : IsOpen U) (S0 : Finset ℂ)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0)) (z : ℂ) (hz : z ∈ U) :
+    ∀ᶠ w in 𝓝[≠] z,
+      DifferentiableAt ℂ (fun v => f v - ∑ s ∈ S0, residueSimplePole f s / (v - s)) w := by
+  rw [eventually_nhdsWithin_iff, Metric.eventually_nhds_iff]
+  obtain ⟨ε₁, hε₁_pos, hε₁_subset⟩ := Metric.mem_nhds_iff.mp (hU.mem_nhds hz)
+  by_cases h_S0_singleton : (S0 : Set ℂ) ⊆ {z}
+  · exact ⟨ε₁, hε₁_pos, fun w hw hw_ne => differentiableAt_g_off_poles U hU S0 f hf w
+      (hε₁_subset hw)
+      (fun h => (Set.mem_compl_singleton_iff.mp hw_ne)
+        (Set.mem_singleton_iff.mp (h_S0_singleton h)))⟩
+  · have h_S0_non : ∃ s' ∈ S0, s' ≠ z := by
+      by_contra h_all; push_neg at h_all
+      exact h_S0_singleton fun x hx => by
+        rw [Set.mem_singleton_iff]; exact h_all x (Finset.mem_coe.mp hx)
+    obtain ⟨s', hs'_in, hs'_ne⟩ := h_S0_non
+    have h_ne : (S0.filter (· ≠ z)).Nonempty :=
+      ⟨s', Finset.mem_filter.mpr ⟨hs'_in, hs'_ne⟩⟩
+    let δ := (S0.filter (· ≠ z)).inf' h_ne (fun s => ‖s - z‖)
+    have hδ_pos : 0 < δ := (Finset.lt_inf'_iff h_ne).mpr fun s hs =>
+      norm_pos_iff.mpr (sub_ne_zero.mpr (Finset.mem_filter.mp hs).2)
+    refine ⟨min ε₁ δ, lt_min hε₁_pos hδ_pos, fun w hw hw_ne => ?_⟩
+    have hw_ne_z : w ≠ z := Set.mem_compl_singleton_iff.mp hw_ne
+    apply differentiableAt_g_off_poles U hU S0 f hf w
+      (hε₁_subset (lt_of_lt_of_le hw (min_le_left _ _)))
+    intro hw_in_S0
+    rcases eq_or_ne w z with rfl | hw_eq
+    · exact hw_ne_z rfl
+    · linarith [Finset.inf'_le (fun s => ‖s - z‖) (show w ∈ S0.filter (· ≠ z) from
+        Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hw_in_S0, hw_eq⟩),
+        (dist_eq_norm w z ▸ show dist w z < δ from
+          lt_of_lt_of_le hw (min_le_right _ _) : ‖w - z‖ < δ)]
+
 lemma simple_poles_decomposition
     (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (_hS0_in_U : ∀ s ∈ S0, s ∈ U)
@@ -340,162 +430,67 @@ lemma simple_poles_decomposition
     DifferentiableOn ℂ g U ∧
     ∀ z ∈ U \ (S0 : Set ℂ), f z = (∑ s ∈ S0, residueSimplePole f s / (z - s)) + g z := by
   intro g
-  constructor
-  · intro z hz
-    by_cases hz_S0 : z ∈ (S0 : Set ℂ)
-    · have hs : z ∈ S0 := Finset.mem_coe.mp hz_S0
-      obtain ⟨c, h, hh_analytic, hf_eq⟩ := hSimplePoles z hs
-      have hc_eq : residueSimplePole f z = c :=
-        residue_simple_pole_eq_laurent f z c h hh_analytic hf_eq
-      have hg_cont_at_z : ContinuousAt g z := by
-        have h1 : ContinuousAt (fun w => f w - residueSimplePole f z / (w - z)) z :=
-          hf_ext z hs
-        have h2 : ContinuousAt
-            (fun w => ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s)) z := by
-          have h_each_cont : ∀ s ∈ S0.filter (· ≠ z),
-              ContinuousAt (fun w => residueSimplePole f s / (w - s)) z := by
-            intro s hs'
-            simp only [Finset.mem_filter] at hs'
-            exact continuousAt_const.div (continuousAt_id.sub continuousAt_const)
-              (sub_ne_zero.mpr (Ne.symm hs'.2))
-          have : Tendsto
-              (fun w => ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s))
-              (𝓝 z)
-              (𝓝 (∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (z - s))) := by
-            apply tendsto_finset_sum
-            intro s hs'
-            exact (h_each_cont s hs').tendsto
-          exact this
-        have hg_eq_at : ∀ w, g w = (f w - residueSimplePole f z / (w - z)) -
-            ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s) := by
-          intro w
-          simp only [g]
-          have hsum_split : ∑ s ∈ S0, residueSimplePole f s / (w - s) =
-              ∑ s ∈ S0.filter (· = z), residueSimplePole f s / (w - s) +
-              ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s) := by
-            rw [← Finset.sum_union]
-            · congr 1
-              ext x
-              simp only [Finset.mem_union, Finset.mem_filter]
-              constructor
-              · intro hx; by_cases hxz : x = z <;> tauto
-              · intro hx; rcases hx with ⟨hx1, _⟩ | ⟨hx1, _⟩ <;> exact hx1
-            · simp only [Finset.disjoint_filter]
-              intro x _ hxz hx_ne_z
-              exact hx_ne_z hxz
-          rw [hsum_split]
-          have hsingleton : ∑ s ∈ S0.filter (· = z), residueSimplePole f s / (w - s) =
-              residueSimplePole f z / (w - z) := by
-            have hfilter_eq : S0.filter (· = z) = {z} := by
-              ext x
-              simp only [Finset.mem_filter, Finset.mem_singleton]
-              constructor
-              · intro ⟨_, hxz⟩; exact hxz
-              · intro hxz; exact ⟨hxz ▸ hs, hxz⟩
-            rw [hfilter_eq, Finset.sum_singleton]
-          rw [hsingleton]
-          ring
-        have hg_eq_fun : g = fun w => (f w - residueSimplePole f z / (w - z)) -
-            ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s) := funext hg_eq_at
-        rw [hg_eq_fun]
-        exact h1.sub h2
-      have hg_diff_punctured : ∀ᶠ w in 𝓝[≠] z, DifferentiableAt ℂ g w := by
-        rw [eventually_nhdsWithin_iff, Metric.eventually_nhds_iff]
-        have hU_nhds : U ∈ 𝓝 z := hU.mem_nhds hz
-        rw [Metric.mem_nhds_iff] at hU_nhds
-        obtain ⟨ε₁, hε₁_pos, hε₁_subset⟩ := hU_nhds
-        by_cases h_S0_singleton : (S0 : Set ℂ) ⊆ {z}
-        · use ε₁
-          refine ⟨hε₁_pos, ?_⟩
-          intro w hw_in_ball hw_ne_z
-          have hw_in_U : w ∈ U := hε₁_subset hw_in_ball
-          have hw_actually_ne_z : w ≠ z := Set.mem_compl_singleton_iff.mp hw_ne_z
-          have hw_not_in_S0 : w ∉ (S0 : Set ℂ) :=
-            fun hw_in_S0 =>
-              hw_actually_ne_z (Set.mem_singleton_iff.mp (h_S0_singleton hw_in_S0))
-          have hw' : w ∈ U \ (S0 : Set ℂ) := ⟨hw_in_U, hw_not_in_S0⟩
-          have hU_diff_open : IsOpen (U \ (S0 : Set ℂ)) :=
-            hU.sdiff S0.finite_toSet.isClosed
-          have h_nhds : U \ (S0 : Set ℂ) ∈ 𝓝 w := hU_diff_open.mem_nhds hw'
-          have hf_at_w : DifferentiableAt ℂ f w := (hf w hw').differentiableAt h_nhds
-          have hsum_at_w : DifferentiableAt ℂ
-              (fun v => ∑ s ∈ S0, residueSimplePole f s / (v - s)) w := by
-            have hh : DifferentiableAt ℂ
-                (∑ s ∈ S0, fun v => residueSimplePole f s / (v - s)) w := by
-              apply DifferentiableAt.sum
-              intro s hs'
-              have hw_ne_s : w ≠ s :=
-                fun heq => hw_not_in_S0 (heq ▸ Finset.mem_coe.mpr hs')
-              exact (differentiableAt_const _).div
-                (differentiableAt_id.sub (differentiableAt_const s))
-                (sub_ne_zero.mpr hw_ne_s)
-            convert hh using 1; ext v; simp only [Finset.sum_apply]
-          exact hf_at_w.sub hsum_at_w
-        · simp only [Set.subset_singleton_iff, Finset.mem_coe] at h_S0_singleton
-          push_neg at h_S0_singleton
-          obtain ⟨s', hs'_in_S0, hs'_ne_z⟩ := h_S0_singleton
-          have h_nonempty : (S0.filter (· ≠ z)).Nonempty :=
-            ⟨s', Finset.mem_filter.mpr ⟨hs'_in_S0, hs'_ne_z⟩⟩
-          let δ := (S0.filter (· ≠ z)).inf' h_nonempty (fun s => ‖s - z‖)
-          have hδ_pos : 0 < δ := (Finset.lt_inf'_iff h_nonempty).mpr fun s hs =>
-            norm_pos_iff.mpr (sub_ne_zero.mpr (Finset.mem_filter.mp hs).2)
-          use min ε₁ δ
-          refine ⟨lt_min hε₁_pos hδ_pos, ?_⟩
-          intro w hw_in_ball hw_ne_z
-          have hw_dist_z : dist w z < min ε₁ δ := hw_in_ball
-          have hw_actually_ne_z : w ≠ z := Set.mem_compl_singleton_iff.mp hw_ne_z
-          have hw_in_U : w ∈ U :=
-            hε₁_subset (lt_of_lt_of_le hw_dist_z (min_le_left _ _))
-          have hw_not_in_S0 : w ∉ (S0 : Set ℂ) := by
-            intro hw_in_S0
-            by_cases hw_eq_z : w = z
-            · exact hw_actually_ne_z hw_eq_z
-            · have hw_in_filter : w ∈ S0.filter (· ≠ z) :=
-                Finset.mem_filter.mpr ⟨hw_in_S0, hw_eq_z⟩
-              have : δ ≤ ‖w - z‖ := Finset.inf'_le _ hw_in_filter
-              have : dist w z < δ := lt_of_lt_of_le hw_dist_z (min_le_right _ _)
-              rw [dist_eq_norm] at this
-              linarith
-          have hw' : w ∈ U \ (S0 : Set ℂ) := ⟨hw_in_U, hw_not_in_S0⟩
-          have hU_diff_open : IsOpen (U \ (S0 : Set ℂ)) :=
-            hU.sdiff S0.finite_toSet.isClosed
-          have h_nhds : U \ (S0 : Set ℂ) ∈ 𝓝 w := hU_diff_open.mem_nhds hw'
-          have hf_at_w : DifferentiableAt ℂ f w := (hf w hw').differentiableAt h_nhds
-          have hsum_at_w : DifferentiableAt ℂ
-              (fun v => ∑ s ∈ S0, residueSimplePole f s / (v - s)) w := by
-            have hh : DifferentiableAt ℂ
-                (∑ s ∈ S0, fun v => residueSimplePole f s / (v - s)) w := by
-              apply DifferentiableAt.sum
-              intro s hs'
-              have hw_ne_s : w ≠ s :=
-                fun heq => hw_not_in_S0 (heq ▸ Finset.mem_coe.mpr hs')
-              exact (differentiableAt_const _).div
-                (differentiableAt_id.sub (differentiableAt_const s))
-                (sub_ne_zero.mpr hw_ne_s)
-            convert hh using 1; ext v; simp only [Finset.sum_apply]
-          exact hf_at_w.sub hsum_at_w
-      have hg_analytic : AnalyticAt ℂ g z :=
-        Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
-          hg_diff_punctured hg_cont_at_z
-      exact hg_analytic.differentiableAt.differentiableWithinAt
-    · have hz' : z ∈ U \ (S0 : Set ℂ) := ⟨hz, hz_S0⟩
-      have hU_diff_open : IsOpen (U \ (S0 : Set ℂ)) := hU.sdiff S0.finite_toSet.isClosed
-      have h_nhds : U \ (S0 : Set ℂ) ∈ 𝓝 z := hU_diff_open.mem_nhds hz'
-      have hf_at_z : DifferentiableAt ℂ f z := (hf z hz').differentiableAt h_nhds
-      have hsum_at_z : DifferentiableAt ℂ
-          (fun w => ∑ s ∈ S0, residueSimplePole f s / (w - s)) z := by
-        have h : DifferentiableAt ℂ
-            (∑ s ∈ S0, fun w => residueSimplePole f s / (w - s)) z := by
-          apply DifferentiableAt.sum
-          intro s hs
-          have hz_ne_s : z ≠ s := fun heq => hz_S0 (heq ▸ Finset.mem_coe.mpr hs)
-          exact (differentiableAt_const _).div
-            (differentiableAt_id.sub (differentiableAt_const s))
-            (sub_ne_zero.mpr hz_ne_s)
-        convert h using 1; ext w; simp only [Finset.sum_apply]
-      exact (hf_at_z.sub hsum_at_z).differentiableWithinAt
-  · intro z ⟨_, _⟩
-    ring
+  refine ⟨fun z hz => ?_, fun z ⟨_, _⟩ => by ring⟩
+  by_cases hz_S0 : z ∈ (S0 : Set ℂ)
+  · have hs : z ∈ S0 := Finset.mem_coe.mp hz_S0
+    have hg_cont_at_z : ContinuousAt g z :=
+      continuousAt_g_at_pole S0 f z hs (hf_ext z hs)
+    have hg_diff_punctured : ∀ᶠ w in 𝓝[≠] z, DifferentiableAt ℂ g w :=
+      diff_punctured_of_diff_off_poles U hU S0 f hf z hz
+    exact (Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
+      hg_diff_punctured hg_cont_at_z).differentiableAt.differentiableWithinAt
+  · exact (differentiableAt_g_off_poles U hU S0 f hf z hz hz_S0).differentiableWithinAt
+
+private lemma holomorphic_closed_integral_zero
+    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
+    (g : ℂ → ℂ) (hg_diff : DifferentiableOn ℂ g U)
+    (γ : PiecewiseC1Curve) (hγ_closed : γ.IsClosed)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (hγ'_bdd : ∃ M : ℝ, ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M) :
+    ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
+  have hU_ne : U.Nonempty :=
+    ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr (le_of_lt γ.hab))⟩
+  obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne hg_diff
+  have h_Fγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) := fun t ht =>
+    ((hF (γ.toFun t) (hγ_in_U t ht)).continuousAt).continuousWithinAt.comp
+      (γ.continuous_toFun t ht) (mapsTo_image γ.toFun _)
+  have h_countable : (↑γ.partition ∩ Ioo γ.a γ.b : Set ℝ).Countable :=
+    (γ.partition.finite_toSet.inter_of_left _).countable
+  have h_deriv' : ∀ t ∈ Ioo γ.a γ.b \ (↑γ.partition ∩ Ioo γ.a γ.b),
+      HasDerivAt (F ∘ γ.toFun) (g (γ.toFun t) * deriv γ.toFun t) t := by
+    intro t ⟨ht, hp⟩
+    exact (hF (γ.toFun t) (hγ_in_U t (Ioo_subset_Icc_self ht))).comp_of_eq t
+      (γ.smooth_off_partition t (Ioo_subset_Icc_self ht) (fun h => hp ⟨h, ht⟩)).hasDerivAt rfl
+  have h_int : IntervalIntegrable (fun t => g (γ.toFun t) * deriv γ.toFun t)
+      MeasureTheory.volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
+      (Set.uIcc_of_le (le_of_lt γ.hab) ▸
+        hg_diff.continuousOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht))
+  rw [MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+    (F ∘ γ.toFun) _ (le_of_lt γ.hab) h_countable h_Fγ_cont h_deriv' h_int,
+    Function.comp_apply, Function.comp_apply, hγ_closed, sub_self]
+
+private lemma singular_sum_eq_winding_residues
+    (f : ℂ → ℂ) (S0 : Finset ℂ)
+    (γ : PiecewiseC1Curve)
+    (hγ_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
+    (hγ'_bdd : ∃ M : ℝ, ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M) :
+    ∫ t in γ.a..γ.b,
+      ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t =
+    ∑ s ∈ S0, 2 * Real.pi * I *
+      generalizedWindingNumber' γ.toFun γ.a γ.b s * residueSimplePole f s := by
+  rw [show ∫ t in γ.a..γ.b,
+      ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t =
+    ∑ s ∈ S0, ∫ t in γ.a..γ.b,
+      residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t from by
+    rw [intervalIntegral.integral_finset_sum]; intro s hs
+    exact (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
+      (Set.uIcc_of_le (le_of_lt γ.hab) ▸
+        (continuousOn_const.div (γ.continuous_toFun.sub continuousOn_const)
+          fun t ht => sub_ne_zero.mpr (hγ_avoids s hs t ht)))]
+  exact Finset.sum_congr rfl fun s hs =>
+    integral_singular_term_eq_winding_times_coeff γ s
+      (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)
 
 /-- Classical residue theorem: when γ avoids all poles,
 the contour integral equals `2πi · Σ winding · residue`. -/
@@ -505,144 +500,44 @@ theorem integral_eq_sum_residues_of_avoids
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
     (γ : PiecewiseC1Curve) (hγ_closed : γ.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (hγ_avoids : ∀ s ∈ S0,
-      ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
-    (hSimplePoles : ∀ s ∈ S0,
-      HasSimplePoleAt f s)
+    (hγ_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
+    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
     (hf_ext : ∀ s ∈ S0, ContinuousAt
-      (fun z => f z - residueSimplePole f s / (z - s))
-      s)
-    (hγ'_bdd : ∃ M : ℝ,
-      ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M) :
-    ∫ t in γ.a..γ.b,
-        f (γ.toFun t) * deriv γ.toFun t =
+      (fun z => f z - residueSimplePole f s / (z - s)) s)
+    (hγ'_bdd : ∃ M : ℝ, ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M) :
+    ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t =
       2 * Real.pi * I *
-        ∑ s ∈ S0,
-          generalizedWindingNumber' γ.toFun γ.a γ.b s *
+        ∑ s ∈ S0, generalizedWindingNumber' γ.toFun γ.a γ.b s *
             residueSimplePole f s := by
-  set g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s) with hg_def
+  set g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)
   have ⟨hg_diff, hf_decomp⟩ :=
     simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext
-  have h_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U \ (S0 : Set ℂ) := by
-    intro t ht
-    exact ⟨hγ_in_U t ht, fun hs => by
-      simp only [Finset.mem_coe] at hs
-      exact hγ_avoids (γ.toFun t) hs t ht rfl⟩
-  have h_integrand : ∀ t ∈ Icc γ.a γ.b,
-      f (γ.toFun t) =
-        (∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s)) + g (γ.toFun t) :=
-    fun t ht => hf_decomp (γ.toFun t) (h_on_curve t ht)
   have h_rewrite : ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t =
       ∫ t in γ.a..γ.b,
         ((∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s)) + g (γ.toFun t)) *
           deriv γ.toFun t := by
-    apply intervalIntegral.integral_congr
-    intro t ht
-    have ht' : t ∈ Icc γ.a γ.b := by
-      rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht; exact ht
-    simp only
-    rw [h_integrand t ht']
+    apply intervalIntegral.integral_congr; intro t ht
+    rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht
+    simp only; rw [hf_decomp (γ.toFun t) ⟨hγ_in_U t ht, fun hs => by
+      simp only [Finset.mem_coe] at hs; exact hγ_avoids _ hs t ht rfl⟩]
   rw [h_rewrite]
   have h_expand : ∀ t,
       ((∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s)) + g (γ.toFun t)) *
         deriv γ.toFun t =
       (∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
-        g (γ.toFun t) * deriv γ.toFun t := by
-    intro t; rw [add_mul, Finset.sum_mul]
+        g (γ.toFun t) * deriv γ.toFun t := fun t => by rw [add_mul, Finset.sum_mul]
   simp_rw [h_expand]
-  have hU_ne : U.Nonempty :=
-    ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr (le_of_lt γ.hab))⟩
-  obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne hg_diff
-  have hg_integral_zero :
-      ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
-    have h_Fγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) := by
-      intro t ht
-      have hFcont : ContinuousAt F (γ.toFun t) :=
-        (hF (γ.toFun t) (hγ_in_U t ht)).continuousAt
-      exact hFcont.continuousWithinAt.comp
-        (γ.continuous_toFun t ht) (mapsTo_image γ.toFun _)
-    have h_deriv : ∀ t ∈ Ioo γ.a γ.b, t ∉ γ.partition →
-        HasDerivAt (F ∘ γ.toFun) (g (γ.toFun t) * deriv γ.toFun t) t := by
-      intro t ht hp
-      have ht' : t ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht
-      have hγt_in_U : γ.toFun t ∈ U := hγ_in_U t ht'
-      have hγ_diff_at : DifferentiableAt ℝ γ.toFun t :=
-        γ.smooth_off_partition t ht' hp
-      exact (hF (γ.toFun t) hγt_in_U).comp_of_eq t hγ_diff_at.hasDerivAt rfl
-    have h_countable : (↑γ.partition ∩ Ioo γ.a γ.b : Set ℝ).Countable :=
-      (γ.partition.finite_toSet.inter_of_left _).countable
-    have h_deriv' : ∀ t ∈ Ioo γ.a γ.b \ (↑γ.partition ∩ Ioo γ.a γ.b),
-        HasDerivAt (F ∘ γ.toFun) (g (γ.toFun t) * deriv γ.toFun t) t := by
-      intro t ⟨ht, hp⟩
-      exact h_deriv t ht (fun h => hp ⟨h, ht⟩)
-    have h_int : IntervalIntegrable (fun t => g (γ.toFun t) * deriv γ.toFun t)
-        MeasureTheory.volume γ.a γ.b := by
-      have hg_cont : ContinuousOn (fun t => g (γ.toFun t))
-          (Set.uIcc γ.a γ.b) := by
-        rw [Set.uIcc_of_le (le_of_lt γ.hab)]
-        exact hg_diff.continuousOn.comp γ.continuous_toFun
-          (fun t ht => hγ_in_U t ht)
-      exact (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
-        hg_cont
-    have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-      (F ∘ γ.toFun) (fun t => g (γ.toFun t) * deriv γ.toFun t) (le_of_lt γ.hab)
-      h_countable h_Fγ_cont h_deriv' h_int
-    rw [h_ftc, Function.comp_apply, Function.comp_apply, hγ_closed, sub_self]
-  have h_singular_sum :
-      ∫ t in γ.a..γ.b,
-        ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t =
-      ∑ s ∈ S0, 2 * Real.pi * I *
-        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueSimplePole f s := by
-    have h_sum_int :
-        ∫ t in γ.a..γ.b,
-          ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t =
-        ∑ s ∈ S0, ∫ t in γ.a..γ.b,
-          residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t := by
-      rw [intervalIntegral.integral_finset_sum]
-      intro s hs
-      have h_cont : ContinuousOn
-          (fun t => residueSimplePole f s / (γ.toFun t - s))
-          (Set.uIcc γ.a γ.b) := by
-        rw [Set.uIcc_of_le (le_of_lt γ.hab)]
-        apply ContinuousOn.div continuousOn_const
-        · exact γ.continuous_toFun.sub continuousOn_const
-        · intro t ht; exact sub_ne_zero.mpr (hγ_avoids s hs t ht)
-      exact (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
-        h_cont
-    rw [h_sum_int]
-    apply Finset.sum_congr rfl
-    intro s hs
-    exact integral_singular_term_eq_winding_times_coeff γ s
-      (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)
-  calc ∫ t in γ.a..γ.b,
-        ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t +
-          g (γ.toFun t) * deriv γ.toFun t
-      = (∫ t in γ.a..γ.b,
-          ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
-        (∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t) := by
-          have h_g_int : IntervalIntegrable
-              (fun t => g (γ.toFun t) * deriv γ.toFun t)
-              MeasureTheory.volume γ.a γ.b := by
-            have hg_cont : ContinuousOn (fun t => g (γ.toFun t))
-                (Set.uIcc γ.a γ.b) := by
-              rw [Set.uIcc_of_le (le_of_lt γ.hab)]
-              exact hg_diff.continuousOn.comp γ.continuous_toFun
-                (fun t ht => hγ_in_U t ht)
-            exact (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
-              hg_cont
-          exact intervalIntegral.integral_add
-            (singular_sum_intervalIntegrable f S0 γ hγ_avoids hγ'_bdd) h_g_int
-    _ = (∑ s ∈ S0, 2 * Real.pi * I *
-          generalizedWindingNumber' γ.toFun γ.a γ.b s *
-            residueSimplePole f s) + 0 := by
-          rw [h_singular_sum, hg_integral_zero]
-    _ = 2 * Real.pi * I * ∑ s ∈ S0,
-          generalizedWindingNumber' γ.toFun γ.a γ.b s *
-            residueSimplePole f s := by
-          rw [add_zero, Finset.mul_sum]
-          apply Finset.sum_congr rfl
-          intro s _
-          ring
+  have h_g_int : IntervalIntegrable (fun t => g (γ.toFun t) * deriv γ.toFun t)
+      MeasureTheory.volume γ.a γ.b :=
+    (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
+      (Set.uIcc_of_le (le_of_lt γ.hab) ▸
+        hg_diff.continuousOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht))
+  rw [intervalIntegral.integral_add
+      (singular_sum_intervalIntegrable f S0 γ hγ_avoids hγ'_bdd) h_g_int,
+    holomorphic_closed_integral_zero U hU hU_convex g hg_diff γ hγ_closed hγ_in_U hγ'_bdd,
+    singular_sum_eq_winding_residues f S0 γ hγ_avoids hγ'_bdd, add_zero,
+    Finset.mul_sum]
+  exact Finset.sum_congr rfl fun _ _ => by ring
 
 lemma cauchyPrincipalValueIntegrandOn_eq_of_far
     (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ)
@@ -717,136 +612,75 @@ lemma cauchyPrincipalValueOn_empty
   apply intervalIntegral.integral_congr; intro t _
   exact cauchyPrincipalValueIntegrandOn_empty f γ ε t
 
-/-- PV exists when curve avoids all singularities. -/
-lemma cauchyPrincipalValueExistsOn_avoids
+private lemma cpv_eq_classical_eventually_of_avoids
     (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Curve)
-    (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b,
-      γ.toFun t ≠ s) :
-    CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b := by
-  unfold CauchyPrincipalValueExistsOn
-  use ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t
+    (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
+    (hS0_ne : S0.Nonempty) :
+    ∃ δ > 0, ∀ ε ∈ Ioo 0 δ, ∀ t ∈ Set.uIcc γ.a γ.b,
+      cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t =
+        f (γ.toFun t) * deriv γ.toFun t := by
   have h_cpt : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
     isCompact_Icc.image_of_continuousOn γ.continuous_toFun
   have h_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
-    ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr (le_of_lt γ.hab),
-      rfl⟩
+    ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr (le_of_lt γ.hab), rfl⟩
+  let δ_fun : ℂ → ℝ := fun s => Metric.infDist s (γ.toFun '' Icc γ.a γ.b)
+  let δ := Finset.min' (S0.image δ_fun) (Finset.image_nonempty.mpr hS0_ne)
+  have hδ_pos : 0 < δ := by
+    obtain ⟨s, hs, hδ_eq⟩ := Finset.mem_image.mp
+      (Finset.min'_mem (S0.image δ_fun) (Finset.image_nonempty.mpr hS0_ne))
+    calc (0 : ℝ) < δ_fun s := (h_cpt.isClosed.notMem_iff_infDist_pos h_ne).mp
+          (fun ⟨t, ht, hts⟩ => h_avoids s hs t ht hts)
+      _ = δ := hδ_eq
+  refine ⟨δ, hδ_pos, fun ε ⟨_, hε_lt_δ⟩ t ht => ?_⟩
+  have ht' : t ∈ Icc γ.a γ.b := by
+    rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht; exact ht
+  exact cauchyPrincipalValueIntegrandOn_eq_of_far S0 f γ.toFun ε t fun s hs =>
+    calc ε < δ := hε_lt_δ
+      _ ≤ Metric.infDist s (γ.toFun '' Icc γ.a γ.b) :=
+        Finset.min'_le _ _ (Finset.mem_image_of_mem δ_fun hs)
+      _ ≤ dist s (γ.toFun t) := Metric.infDist_le_dist_of_mem ⟨t, ht', rfl⟩
+      _ = ‖s - γ.toFun t‖ := dist_eq_norm s (γ.toFun t)
+      _ = ‖γ.toFun t - s‖ := norm_sub_rev s (γ.toFun t)
+
+/-- PV exists when curve avoids all singularities. -/
+lemma cauchyPrincipalValueExistsOn_avoids
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Curve)
+    (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b := by
+  unfold CauchyPrincipalValueExistsOn
+  use ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t
   by_cases hS0_empty : S0 = ∅
   · subst hS0_empty
-    apply Filter.Tendsto.congr'; swap; exact tendsto_const_nhds
-    filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)]
-      with ε _
-    apply intervalIntegral.integral_congr; intro t _
-    exact cauchyPrincipalValueIntegrandOn_empty f γ.toFun ε t
-  · have hS0_ne : S0.Nonempty :=
-      Finset.nonempty_of_ne_empty hS0_empty
-    have h_dist_pos : ∀ s ∈ S0,
-        0 < Metric.infDist s (γ.toFun '' Icc γ.a γ.b) := by
-      intro s hs
-      exact (h_cpt.isClosed.notMem_iff_infDist_pos h_ne).mp
-        (fun ⟨t, ht, hts⟩ => h_avoids s hs t ht hts)
-    let δ_fun : ℂ → ℝ := fun s =>
-      Metric.infDist s (γ.toFun '' Icc γ.a γ.b)
-    let δ := Finset.min' (S0.image δ_fun)
-      (Finset.image_nonempty.mpr hS0_ne)
-    have hδ_pos : 0 < δ := by
-      obtain ⟨s, hs, hδ_eq⟩ :=
-        Finset.mem_image.mp
-          (Finset.min'_mem (S0.image δ_fun)
-            (Finset.image_nonempty.mpr hS0_ne))
-      calc (0 : ℝ) < δ_fun s := h_dist_pos s hs
-        _ = δ := hδ_eq
-    have hδ_le : ∀ s ∈ S0,
-        δ ≤ Metric.infDist s
-          (γ.toFun '' Icc γ.a γ.b) := by
-      intro s hs
-      exact Finset.min'_le _ _
-        (Finset.mem_image_of_mem δ_fun hs)
-    apply Filter.Tendsto.congr'; swap; exact tendsto_const_nhds
-    rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
-    refine ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, ?_⟩
-    intro ε ⟨_, hε_lt_δ⟩
-    apply intervalIntegral.integral_congr; intro t ht
-    have ht' : t ∈ Icc γ.a γ.b := by
-      rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht; exact ht
-    exact (cauchyPrincipalValueIntegrandOn_eq_of_far
-      S0 f γ.toFun ε t (fun s hs => by
-        calc ε < δ := hε_lt_δ
-          _ ≤ Metric.infDist s (γ.toFun '' Icc γ.a γ.b) :=
-            hδ_le s hs
-          _ ≤ dist s (γ.toFun t) :=
-            Metric.infDist_le_dist_of_mem ⟨t, ht', rfl⟩
-          _ = ‖s - γ.toFun t‖ :=
-            dist_eq_norm s (γ.toFun t)
-          _ = ‖γ.toFun t - s‖ :=
-            norm_sub_rev s (γ.toFun t))).symm
+    exact (Filter.Tendsto.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)] with ε _
+      exact intervalIntegral.integral_congr fun t _ =>
+        cauchyPrincipalValueIntegrandOn_empty f γ.toFun ε t)
+      tendsto_const_nhds)
+  · obtain ⟨δ, hδ_pos, hδ⟩ := cpv_eq_classical_eventually_of_avoids
+      S0 f γ h_avoids (Finset.nonempty_of_ne_empty hS0_empty)
+    exact (Filter.Tendsto.congr' (by
+      rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
+      exact ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, fun ε hε =>
+        intervalIntegral.integral_congr fun t ht => (hδ ε hε t ht).symm⟩)
+      tendsto_const_nhds)
 
 /-- PV value equals classical integral when avoiding. -/
 lemma cauchyPrincipalValueOn_avoids
     (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Curve)
-    (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b,
-      γ.toFun t ≠ s) :
+    (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
-      ∫ t in γ.a..γ.b,
-        f (γ.toFun t) * deriv γ.toFun t := by
+      ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t := by
   unfold cauchyPrincipalValueOn
-  haveI : (𝓝[>] (0 : ℝ)).NeBot :=
-    nhdsWithin_Ioi_neBot (le_refl 0)
+  haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
   by_cases hS0_empty : S0 = ∅
   · subst hS0_empty
-    exact cauchyPrincipalValueOn_empty f γ.toFun γ.a γ.b
-      |>.symm ▸ rfl
-  · have hS0_ne : S0.Nonempty :=
-      Finset.nonempty_of_ne_empty hS0_empty
-    have h_cpt : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
-      isCompact_Icc.image_of_continuousOn γ.continuous_toFun
-    have h_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
-      ⟨γ.toFun γ.a, γ.a,
-        left_mem_Icc.mpr (le_of_lt γ.hab), rfl⟩
-    have h_dist_pos : ∀ s ∈ S0,
-        0 < Metric.infDist s
-          (γ.toFun '' Icc γ.a γ.b) := by
-      intro s hs
-      exact (h_cpt.isClosed.notMem_iff_infDist_pos
-        h_ne).mp
-        (fun ⟨t, ht, hts⟩ => h_avoids s hs t ht hts)
-    let δ_fun : ℂ → ℝ := fun s =>
-      Metric.infDist s (γ.toFun '' Icc γ.a γ.b)
-    let δ := Finset.min' (S0.image δ_fun)
-      (Finset.image_nonempty.mpr hS0_ne)
-    have hδ_pos : 0 < δ := by
-      have h_mem := Finset.min'_mem (S0.image δ_fun)
-        (Finset.image_nonempty.mpr hS0_ne)
-      simp only [Finset.mem_image] at h_mem
-      obtain ⟨s, hs, hδ_eq⟩ := h_mem
-      calc δ = δ_fun s := hδ_eq.symm
-        _ > 0 := h_dist_pos s hs
-    have hδ_le : ∀ s ∈ S0,
-        δ ≤ Metric.infDist s
-          (γ.toFun '' Icc γ.a γ.b) :=
-      fun s hs => Finset.min'_le _ _
-        (Finset.mem_image_of_mem δ_fun hs)
+    exact cauchyPrincipalValueOn_empty f γ.toFun γ.a γ.b |>.symm ▸ rfl
+  · obtain ⟨δ, hδ_pos, hδ⟩ := cpv_eq_classical_eventually_of_avoids
+      S0 f γ h_avoids (Finset.nonempty_of_ne_empty hS0_empty)
     apply limUnder_eventually_eq_const
     rw [Filter.eventually_iff_exists_mem]
-    refine ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, ?_⟩
-    intro ε ⟨_, hε_lt_δ⟩
-    apply intervalIntegral.integral_congr
-    intro t ht
-    have ht' : t ∈ Icc γ.a γ.b := by
-      rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht
-      exact ht
-    rw [cauchyPrincipalValueIntegrandOn_eq_of_far
-      S0 f γ.toFun ε t (fun s hs => by
-        calc ε < δ := hε_lt_δ
-          _ ≤ Metric.infDist s
-              (γ.toFun '' Icc γ.a γ.b) :=
-            hδ_le s hs
-          _ ≤ dist s (γ.toFun t) :=
-            Metric.infDist_le_dist_of_mem
-              ⟨t, ht', rfl⟩
-          _ = ‖s - γ.toFun t‖ :=
-            dist_eq_norm s (γ.toFun t)
-          _ = ‖γ.toFun t - s‖ :=
-            norm_sub_rev s (γ.toFun t))]
+    exact ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, fun ε hε =>
+      intervalIntegral.integral_congr fun t ht => hδ ε hε t ht⟩
 
 /-- PV of 1/z equals 2πi times winding number. -/
 theorem pv_integral_inverse
