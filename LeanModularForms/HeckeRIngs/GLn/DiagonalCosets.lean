@@ -138,13 +138,12 @@ lemma T_diag_rep_mem_doubleCoset (a : Fin n → ℕ)
 /-- Decompose the T_diag representative as L * diagMat * R with L, R ∈ H. -/
 lemma T_diag_rep_decompose (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
-    ∃ (L R : GL (Fin n) ℚ),
-      L ∈ (GL_pair n).H ∧ R ∈ (GL_pair n).H ∧
+    ∃ (L : GL (Fin n) ℚ), L ∈ (GL_pair n).H ∧
+    ∃ (R : GL (Fin n) ℚ), R ∈ (GL_pair n).H ∧
       ((T_diag n a ha hdiv).eql.choose : GL (Fin n) ℚ) =
-        L * diagMat n a ha * R := by
-  have h := T_diag_rep_mem_doubleCoset n a ha hdiv
-  rw [DoubleCoset.mem_doubleCoset] at h
-  exact h
+        L * diagMat n a ha * R :=
+  (DoubleCoset.mem_doubleCoset _ _).mp
+    (T_diag_rep_mem_doubleCoset n a ha hdiv)
 
 lemma T_diag_ones :
     T_diag n (fun _ => 1) (fun _ => Nat.one_pos) (divChain_const n 1) = T_one (GL_pair n) := by

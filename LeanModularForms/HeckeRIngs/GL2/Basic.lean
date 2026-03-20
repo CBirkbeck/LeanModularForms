@@ -130,15 +130,6 @@ private lemma diagMul_scalar_comm (b : Fin 2 → ℕ) (c : ℕ) :
     b * (fun _ => c) = (fun _ => c) * b := by
   ext i; exact Nat.mul_comm _ _
 
-private lemma T_diag_choose_mem_doubleCoset [NeZero n]
-    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
-    ((T_diag n a ha hdiv).eql.choose : GL (Fin n) ℚ) ∈
-    DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ)
-      (GL_pair n).H (GL_pair n).H := by
-  have h_spec := (T_diag n a ha hdiv).eql.choose_spec
-  simp only [T_diag, T_mk, diagMat_delta] at h_spec
-  rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-
 private lemma scalar_product_mem_doubleCoset
     (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
     (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c)
@@ -210,13 +201,11 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ)
     T_diag 2 (b * (fun _ => c))
       (pi_mul_pos 2 b _ hb_pos (fun _ => hc)) hbc := by
   set H := (GL_pair 2).H
-  have hδb := T_diag_choose_mem_doubleCoset (n := 2) b hb_pos hb
-  rw [DoubleCoset.mem_doubleCoset] at hδb
-  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb
-  have hδc := T_diag_choose_mem_doubleCoset (n := 2)
-    (fun _ => c) (fun _ => hc) (divChain_const 2 c)
-  rw [DoubleCoset.mem_doubleCoset] at hδc
-  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc
+  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ :=
+    T_diag_rep_decompose 2 b hb_pos hb
+  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ :=
+    T_diag_rep_decompose 2 (fun _ => c) (fun _ => hc)
+      (divChain_const 2 c)
   apply HeckeRing.T'_ext (GL_pair 2)
   exact doubleCoset_eq_of_mem' _ _
     (scalar_product_mem_doubleCoset b hb_pos hb c hc
@@ -234,14 +223,9 @@ private lemma scalar_coset_rep_normalizes (c : ℕ) (hc : 0 < c) :
     ({δ_c} : Set (GL (Fin 2) ℚ)) * (H' : Set (GL (Fin 2) ℚ)) =
     (H' : Set (GL (Fin 2) ℚ)) * {δ_c} := by
   intro D_c H' δ_c
-  have hδc_mem : δ_c ∈
-      DoubleCoset.doubleCoset (diagMat 2 (fun _ => c) (fun _ => hc) : GL (Fin 2) ℚ)
-        H' H' := by
-    have h_spec := D_c.eql.choose_spec
-    simp only [D_c, T_diag, T_mk, diagMat_delta] at h_spec
-    rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H' H' _
-  rw [DoubleCoset.mem_doubleCoset] at hδc_mem
-  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc_mem
+  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ :=
+    T_diag_rep_decompose 2 (fun _ => c) (fun _ => hc)
+      (divChain_const 2 c)
   have hδc_simp : δ_c = (h₁c * h₂c) * diagMat 2 (fun _ => c) (fun _ => hc) := by
     rw [hδc_eq, mul_assoc, diagMat_scalar_comm 2 c hc h₂c, ← mul_assoc]
   have hδc_norm : ConjAct.toConjAct δ_c • H' = H' := by
