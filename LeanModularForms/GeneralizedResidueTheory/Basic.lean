@@ -154,6 +154,66 @@ theorem intervalIntegrable_of_piecewise_continuousOn_bounded
   rw [← uIcc_of_le hab] at hf_int
   exact hf_int.intervalIntegrable
 
+/-- Given a finite set `{b} ∪ P` and `t < b`, find the minimum element above `t`
+and show the open interval `(t, s_min)` avoids the set entirely. -/
+private theorem exists_min_above_in_finite_union
+    (P : Finset ℝ) (t b : ℝ) (ht_lt_b : t < b) :
+    ∃ s_min : ℝ, t < s_min ∧ s_min ≤ b ∧
+      (∀ x ∈ Ioo t s_min, x ∉ ({b} ∪ (P : Set ℝ))) := by
+  let S : Set ℝ := {b} ∪ (P : Set ℝ)
+  have hS_finite : S.Finite :=
+    (Set.finite_singleton b).union (Finset.finite_toSet P)
+  let S_above : Set ℝ := {s ∈ S | t < s}
+  have hS_above_finite : S_above.Finite :=
+    hS_finite.subset (fun s hs => hs.1)
+  have hne : hS_above_finite.toFinset.Nonempty := by
+    rw [Set.Finite.toFinset_nonempty]
+    exact ⟨b, by simp [S_above, S, ht_lt_b]⟩
+  set s_min := hS_above_finite.toFinset.min' hne
+  have hs_min_in : s_min ∈ S_above := by
+    have := Finset.min'_mem _ hne
+    rwa [Set.Finite.mem_toFinset] at this
+  have hs_min_le : ∀ s ∈ S_above, s_min ≤ s :=
+    fun s hs => Finset.min'_le _ s
+      ((Set.Finite.mem_toFinset hS_above_finite).mpr hs)
+  exact ⟨s_min, hs_min_in.2,
+    hs_min_le b ⟨Set.mem_union_left _ rfl, ht_lt_b⟩,
+    fun x hx hxS => by linarith [hs_min_le x ⟨hxS, hx.1⟩, hx.2]⟩
+
+/-- On an open interval where `f` is differentiable with `deriv f = 0`,
+`f` equals `f t` by constancy on the interval and left-continuity at `t`. -/
+private theorem eq_on_Ioo_of_deriv_zero
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    {f : ℝ → E} {a b t s_min : ℝ}
+    (ht : t ∈ Ico a b) (ht_lt_s : t < s_min)
+    (hf_cont : ContinuousOn f (Icc a b))
+    (h_diff : DifferentiableOn ℝ f (Ioo t s_min))
+    (h_dz : ∀ x ∈ Ioo t s_min, deriv f x = 0)
+    (h_smin_le_b : s_min ≤ b) :
+    ∀ x ∈ Ioo t s_min, f x = f t := by
+  have h_const : ∀ x ∈ Ioo t s_min, ∀ y ∈ Ioo t s_min,
+      f x = f y :=
+    fun x hx y hy => IsOpen.is_const_of_deriv_eq_zero
+      isOpen_Ioo isPreconnected_Ioo h_diff h_dz hx hy
+  have h_mid : (t + s_min) / 2 ∈ Ioo t s_min := by
+    constructor <;> linarith
+  have h_eq_mid : ∀ x ∈ Ioo t s_min, f x = f ((t + s_min) / 2) :=
+    fun x hx => h_const x hx _ h_mid
+  have h_cont_Ioo : ContinuousWithinAt f (Ioo t s_min) t :=
+    (hf_cont.continuousWithinAt (Ico_subset_Icc_self ht)).mono
+      (fun x hx => ⟨le_of_lt (lt_of_le_of_lt ht.1 hx.1),
+        le_of_lt (lt_of_lt_of_le hx.2 h_smin_le_b)⟩)
+  haveI : (𝓝[Ioo t s_min] t).NeBot := by
+    rw [← mem_closure_iff_nhdsWithin_neBot,
+      closure_Ioo (ne_of_lt ht_lt_s)]
+    exact ⟨le_refl t, le_of_lt ht_lt_s⟩
+  have h_ft : f t = f ((t + s_min) / 2) := tendsto_nhds_unique
+    (h_cont_Ioo.tendsto.congr' (by
+      filter_upwards [self_mem_nhdsWithin]
+        with y hy; exact h_eq_mid y hy))
+    tendsto_const_nhds
+  intro x hx; rw [h_ft]; exact h_eq_mid x hx
+
 /-- If f is continuous on [a,b], differentiable on (a,b)\P with f'=0 there,
 then f has zero right derivative at every point of [a,b). -/
 theorem hasDerivWithinAt_zero_of_deriv_zero_off_finite
@@ -166,90 +226,28 @@ theorem hasDerivWithinAt_zero_of_deriv_zero_off_finite
       deriv f t = 0) :
     ∀ t ∈ Ico a b, HasDerivWithinAt f 0 (Ici t) t := by
   intro t ht
-  have ht_lt_b : t < b := ht.2
-  let S : Set ℝ := {b} ∪ (P : Set ℝ)
-  have hS_finite : S.Finite :=
-    (Set.finite_singleton b).union (Finset.finite_toSet P)
-  let S_above : Set ℝ := {s ∈ S | t < s}
-  have hS_above_nonempty : S_above.Nonempty :=
-    ⟨b, by simp only [S_above, S, Set.mem_setOf_eq,
-      Set.mem_union, Set.mem_singleton_iff, true_or,
-      ht_lt_b, and_self]⟩
-  have hS_above_finite : S_above.Finite :=
-    hS_finite.subset (fun s hs => hs.1)
-  have hne : hS_above_finite.toFinset.Nonempty := by
-    rwa [Set.Finite.toFinset_nonempty]
-  set s_min := hS_above_finite.toFinset.min' hne
-    with hs_min_def
-  have hs_min_in : s_min ∈ S_above := by
-    have := Finset.min'_mem _ hne
-    rwa [Set.Finite.mem_toFinset hS_above_finite] at this
-  have hs_min_le : ∀ s ∈ S_above, s_min ≤ s := by
-    intro s hs
-    exact Finset.min'_le _ s
-      ((Set.Finite.mem_toFinset hS_above_finite).mpr hs)
-  have ht_lt_smin : t < s_min := hs_min_in.2
-  have h_avoid : ∀ x ∈ Ioo t s_min, x ∉ S := by
-    intro x hx hxS
-    linarith [(hs_min_le x ⟨hxS, hx.1⟩), hx.2]
-  have h_Ioo_sub : Ioo t s_min ⊆ Ioo a b := by
-    intro x hx
-    exact ⟨lt_of_le_of_lt ht.1 hx.1,
-      lt_of_lt_of_le hx.2
-        (hs_min_le b ⟨by simp [S], ht_lt_b⟩)⟩
-  have h_not_P : ∀ x ∈ Ioo t s_min, x ∉ P := by
-    intro x hx
-    have := h_avoid x hx
-    simp only [S, Set.mem_union, Set.mem_singleton_iff,
-      not_or] at this
-    exact this.2
-  have h_deriv_zero_piece :
-      ∀ x ∈ Ioo t s_min, deriv f x = 0 :=
-    fun x hx => hf_deriv_zero x (h_Ioo_sub hx)
-      (h_not_P x hx)
-  have h_diff_piece : DifferentiableOn ℝ f (Ioo t s_min) :=
-    fun x hx => (hf_diff x (h_Ioo_sub hx)
-      (h_not_P x hx)).differentiableWithinAt
-  have h_const_piece :
-      ∀ x ∈ Ioo t s_min, ∀ y ∈ Ioo t s_min, f x = f y :=
-    fun x hx y hy => IsOpen.is_const_of_deriv_eq_zero
-      isOpen_Ioo isPreconnected_Ioo h_diff_piece
-      h_deriv_zero_piece hx hy
-  have h_mid : (t + s_min) / 2 ∈ Ioo t s_min :=
-    ⟨by linarith, by linarith⟩
-  set x₀ := (t + s_min) / 2
-  have h_f_eq_x₀ :
-      ∀ x ∈ Ioo t s_min, f x = f x₀ :=
-    fun x hx => h_const_piece x hx x₀ h_mid
-  have h_f_t_eq : f t = f x₀ := by
-    have h_cont_Ioo : ContinuousWithinAt f
-        (Ioo t s_min) t :=
-      (hf_cont.continuousWithinAt
-        (Ico_subset_Icc_self ht)).mono
-        (fun x hx => ⟨le_of_lt (lt_of_le_of_lt ht.1 hx.1),
-          le_of_lt (lt_of_lt_of_le hx.2
-            (hs_min_le b ⟨by simp [S], ht_lt_b⟩))⟩)
-    haveI : (𝓝[Ioo t s_min] t).NeBot := by
-      rw [← mem_closure_iff_nhdsWithin_neBot,
-        closure_Ioo (ne_of_lt ht_lt_smin)]
-      exact ⟨le_refl t, le_of_lt ht_lt_smin⟩
-    exact tendsto_nhds_unique
-      (h_cont_Ioo.tendsto.congr' (by
-        filter_upwards [self_mem_nhdsWithin]
-          with x hx; exact h_f_eq_x₀ x hx))
-      tendsto_const_nhds
+  obtain ⟨s_min, ht_lt_s, h_smin_le_b, h_avoid⟩ :=
+    exists_min_above_in_finite_union P t b ht.2
+  have h_Ioo_sub : Ioo t s_min ⊆ Ioo a b := fun x hx =>
+    ⟨lt_of_le_of_lt ht.1 hx.1, lt_of_lt_of_le hx.2 h_smin_le_b⟩
+  have h_not_P : ∀ x ∈ Ioo t s_min, x ∉ (P : Set ℝ) :=
+    fun x hx hxP => h_avoid x hx (Set.mem_union_right _ hxP)
+  have h_eq : ∀ x ∈ Ioo t s_min, f x = f t :=
+    eq_on_Ioo_of_deriv_zero ht ht_lt_s hf_cont
+      (fun x hx => (hf_diff x (h_Ioo_sub hx)
+        (h_not_P x hx)).differentiableWithinAt)
+      (fun x hx => hf_deriv_zero x (h_Ioo_sub hx) (h_not_P x hx))
+      h_smin_le_b
   rw [hasDerivWithinAt_iff_tendsto_slope]
   exact tendsto_nhds_of_eventually_eq (by
-    filter_upwards [show Ioo t s_min ∈
-        𝓝[Ici t \ {t}] t from by
+    filter_upwards [show Ioo t s_min ∈ 𝓝[Ici t \ {t}] t from by
       rw [mem_nhdsWithin]
-      exact ⟨Iio s_min, isOpen_Iio, ht_lt_smin,
+      exact ⟨Iio s_min, isOpen_Iio, ht_lt_s,
         fun x ⟨hx_Iio, hx_Ici_diff⟩ =>
           ⟨lt_of_le_of_ne hx_Ici_diff.1
             (Ne.symm hx_Ici_diff.2), hx_Iio⟩⟩]
       with x hx
-    simp only [slope, h_f_eq_x₀ x hx, ← h_f_t_eq,
-      vsub_self, smul_zero])
+    simp only [slope, h_eq x hx, vsub_self, smul_zero])
 
 theorem continuousWithinAt_integral_of_dominated_piecewise
     {X : Type*} [TopologicalSpace X] [FirstCountableTopology X]
