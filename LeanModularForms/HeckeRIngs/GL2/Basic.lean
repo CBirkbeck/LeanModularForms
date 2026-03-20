@@ -28,46 +28,62 @@ open scoped Pointwise
 
 namespace HeckeRing.GL2
 
-/-- `T(a,d)` for n=2: the Hecke basis element for diagonal `(a,d)` with `a | d`. -/
-noncomputable def T_ad (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (h : a ∣ d) :
-    HeckeAlgebra 2 :=
-  T_elem 2 ![a, d] (fun i => by fin_cases i <;> simp [*])
-    (fun i hi => by (have : i = 0 := by omega); subst this; simpa using h)
+/-- `T(a,d)` for n=2: the Hecke basis element for diagonal `(a,d)` with `a | d`.
+    Returns 0 when `a = 0` or `d = 0` or `a ∤ d`. -/
+noncomputable def T_ad (a d : ℕ) : HeckeAlgebra 2 :=
+  if h : 0 < a ∧ 0 < d ∧ a ∣ d then
+    T_elem 2 ![a, d] (fun i => by fin_cases i <;> simp [*])
+      (fun i hi => by (have : i = 0 := by omega); subst this; simpa using h.2.2)
+  else 0
+
+/-- Unfold `T_ad` when positivity and divisibility hold. -/
+lemma T_ad_of_pos (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (h : a ∣ d) :
+    T_ad a d = T_elem 2 ![a, d]
+      (fun i => by fin_cases i <;> simp [*])
+      (fun i hi => by (have : i = 0 := by omega); subst this; simpa using h) := by
+  simp [T_ad, ha, hd, h]
+
+/-- `T_ad` returns 0 when the conditions fail. -/
+lemma T_ad_eq_zero {a d : ℕ} (h : ¬(0 < a ∧ 0 < d ∧ a ∣ d)) :
+    T_ad a d = 0 := by
+  simp [T_ad, h]
 
 /-- `T(p,p)` -- the scalar double coset. -/
-noncomputable def T_pp (p : ℕ) (hp : p.Prime) : HeckeAlgebra 2 :=
-  T_elem 2 (fun _ => p) (fun _ => hp.pos) (divChain_const 2 p)
+noncomputable def T_pp (p : ℕ) : HeckeAlgebra 2 := T_ad p p
 
-lemma T_pp_eq_T_ad (p : ℕ) (hp : p.Prime) :
-    T_pp p hp = T_ad p p hp.pos hp.pos (dvd_refl _) := by
-  unfold T_pp T_ad
+/-- Unfold `T_pp` when `p` is prime. -/
+lemma T_pp_of_pos (p : ℕ) (hp : p.Prime) :
+    T_pp p = T_elem 2 (fun _ => p) (fun _ => hp.pos)
+      (divChain_const 2 p) := by
+  simp only [T_pp, T_ad_of_pos p p hp.pos hp.pos (dvd_refl _)]
   exact T_elem_congr_diag 2 (funext fun i => by fin_cases i <;> rfl)
-    (fun _ => hp.pos) (fun i => by fin_cases i <;> simp [hp.pos])
-    (divChain_const 2 p)
+    (fun i => by fin_cases i <;> simp [hp.pos]) (fun _ => hp.pos)
     (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+    (divChain_const 2 p)
+
+lemma T_pp_eq_T_ad (p : ℕ) : T_pp p = T_ad p p := rfl
 
 lemma T_elem_ones_eq :
-    T_elem 2 (fun _ => 1) (fun _ => Nat.one_pos) (divChain_const 2 1) = 1 := by
+    T_elem 2 (fun _ => 1) (fun _ => Nat.one_pos)
+      (divChain_const 2 1) = 1 := by
   show T_single (GL_pair 2) ℤ
-    (T_diag 2 (fun _ => 1) (fun _ => Nat.one_pos) (divChain_const 2 1)) 1 = 1
+    (T_diag 2 (fun _ => 1) (fun _ => Nat.one_pos)
+      (divChain_const 2 1)) 1 = 1
   rw [T_diag_ones 2]
   exact (one_eq_T_single (GL_pair 2)).symm
 
 /-- T(1,1) is the identity element. -/
-lemma T_ad_one_one : T_ad 1 1 Nat.one_pos Nat.one_pos (dvd_refl _) = 1 := by
-  unfold T_ad
-  have heq : (![1, 1] : Fin 2 → ℕ) = fun _ => 1 := funext fun i => by fin_cases i <;> rfl
-  have h := T_elem_congr_diag 2 heq
+lemma T_ad_one_one : T_ad 1 1 = 1 := by
+  rw [T_ad_of_pos 1 1 Nat.one_pos Nat.one_pos (dvd_refl _)]
+  have heq : (![1, 1] : Fin 2 → ℕ) = fun _ => 1 :=
+    funext fun i => by fin_cases i <;> rfl
+  exact (T_elem_congr_diag 2 heq
     (fun i => by fin_cases i <;> exact Nat.one_pos) (fun _ => Nat.one_pos)
     (fun i hi => by (have : i = 0 := by omega); subst this; simp)
-    (divChain_const 2 1)
-  rw [h]
-  exact T_elem_ones_eq
+    (divChain_const 2 1)).trans T_elem_ones_eq
 
-noncomputable def T_ad' (a d : ℕ) : HeckeAlgebra 2 :=
-  if h : 0 < a ∧ 0 < d ∧ a ∣ d then
-    T_ad a d h.1 h.2.1 h.2.2
-  else 0
+/-- Deprecated alias for `T_ad`. -/
+noncomputable abbrev T_ad' := @T_ad
 
 /-- `T(m) = Σ_{a | m} T_ad'(a, m/a)`. -/
 noncomputable def T_sum (m : ℕ+) : HeckeAlgebra 2 :=
@@ -89,18 +105,15 @@ private lemma doubleCoset_eq_of_mem' (g δ : GL (Fin 2) ℚ)
 
 /-- For p prime, T(p) = T_ad(1,p). -/
 lemma T_sum_prime :
-    T_sum ⟨p, hp.pos⟩ = T_ad 1 p Nat.one_pos hp.pos (one_dvd _) := by
+    T_sum ⟨p, hp.pos⟩ = T_ad 1 p := by
   show ∑ a ∈ p.divisors, T_ad' a (p / a) = _
   rw [hp.sum_divisors, Nat.div_self hp.pos, Nat.div_one]
   have h1 : T_ad' p 1 = 0 := by
-    unfold T_ad'
-    rw [dif_neg]
+    apply T_ad_eq_zero
     push_neg
     intro _ _
     exact fun hdvd => hp.one_lt.not_ge (Nat.le_of_dvd Nat.one_pos hdvd)
-  have h2 : T_ad' 1 p = T_ad 1 p Nat.one_pos hp.pos (one_dvd _) := by
-    unfold T_ad'
-    rw [dif_pos ⟨Nat.one_pos, hp.pos, one_dvd p⟩]
+  have h2 : T_ad' 1 p = T_ad 1 p := rfl
   rw [h1, h2, zero_add]
 
 private lemma diagMul_scalar_comm (b : Fin 2 → ℕ) (c : ℕ) :
@@ -380,11 +393,10 @@ theorem T_elem_mul_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c)) A h1
 
 /-- T(p,p) commutes with every T_elem. -/
-lemma T_pp_comm_T_elem (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (ha : DivChain 2 a) :
-    T_pp p hp * T_elem 2 a ha_pos ha = T_elem 2 a ha_pos ha * T_pp p hp := by
-  unfold T_pp
-  rw [T_diag_scalar_mul 2 p hp.pos a ha_pos ha,
-      T_elem_mul_scalar a ha_pos ha p hp.pos]
+lemma T_pp_comm_T_elem (p : ℕ) (hp : p.Prime) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (ha : DivChain 2 a) :
+    T_pp p * T_elem 2 a ha_pos ha = T_elem 2 a ha_pos ha * T_pp p := by
+  rw [T_pp_of_pos p hp]
+  rw [T_diag_scalar_mul 2 p hp.pos a ha_pos ha, T_elem_mul_scalar a ha_pos ha p hp.pos]
   exact (T_elem_congr_diag 2 (diagMul_scalar_comm a p)
     (diagMul_pos 2 a _ ha_pos (fun _ => hp.pos))
     (diagMul_pos 2 _ a (fun _ => hp.pos) ha_pos)
@@ -393,7 +405,7 @@ lemma T_pp_comm_T_elem (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (ha : DivCh
 
 /-- Powers of T(p,p): `T(p,p)^i = T(p^i, p^i)`. -/
 lemma T_pp_pow (i : ℕ) :
-    T_pp p hp ^ i =
+    T_pp p ^ i =
     T_elem 2 (fun _ => p ^ i) (fun _ => pow_pos hp.pos i) (divChain_const 2 _) := by
   induction i with
   | zero =>
@@ -404,7 +416,8 @@ lemma T_pp_pow (i : ℕ) :
     exact (T_elem_congr_diag 2 heq (fun _ => pow_pos hp.pos 0) (fun _ => Nat.one_pos)
       (divChain_const 2 _) (divChain_const 2 1)).trans T_elem_ones_eq
   | succ i ih =>
-    rw [pow_succ', ih, T_pp]
+    rw [pow_succ', ih]
+    rw [T_pp_of_pos p hp]
     rw [T_diag_scalar_mul 2 p hp.pos (fun _ => p ^ i) (fun _ => pow_pos hp.pos i)
       (divChain_const 2 _)]
     exact T_elem_congr_diag 2
@@ -427,11 +440,11 @@ lemma T_sum_ppow_expansion (k : ℕ) :
   rw [Finset.sum_congr rfl h_div]
   exact (Finset.sum_subset (Finset.range_mono (by omega)) (fun j hj hnj => by
     simp only [Finset.mem_range] at hj hnj
-    simp only [T_ad']
-    rw [dif_neg (by
-      intro ⟨_, _, hdvd⟩
-      exact absurd (Nat.le_of_dvd (pow_pos hp.pos _) hdvd)
-        (not_le_of_gt (Nat.pow_lt_pow_right hp.one_lt (by omega))))])).symm
+    apply T_ad_eq_zero
+    push_neg
+    intro _ _
+    exact fun hdvd => absurd (Nat.le_of_dvd (pow_pos hp.pos _) hdvd)
+      (not_le_of_gt (Nat.pow_lt_pow_right hp.one_lt (by omega))))).symm
 
 end Structural
 
