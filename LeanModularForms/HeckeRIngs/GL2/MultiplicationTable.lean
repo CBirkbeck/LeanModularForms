@@ -1497,7 +1497,11 @@ private lemma deg_T_ad (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (h : a ∣ d) :
 /-- `deg` of `T_ad` when conditions hold. -/
 private lemma deg_T_ad_of_pos' (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (hdvd : a ∣ d) :
     deg (GL_pair 2) (T_ad a d) =
-    deg (GL_pair 2) (T_ad a d) := rfl
+    T'_deg (GL_pair 2) (T_diag 2 ![a, d]
+      (fun i => by fin_cases i <;> simp [*])
+      (fun i hi => by (have : i = 0 := by omega); subst this; simpa using hdvd)) := by
+  unfold deg; rw [T_ad_of_pos a d ha hd hdvd]
+  unfold T_elem; simp
 
 include hp in
 /-- Non-scalar case: `deg(T_ad(pⁱ, p^{k-i})) = p^{k-2i-1}(p+1)` when `2i < k`. -/
@@ -1505,7 +1509,8 @@ private lemma deg_ppow_term_lt' (i k : ℕ) (h2i : 2 * i < k) :
     deg (GL_pair 2) (T⦃p ^ i, p ^ (k - i)⦄) =
     ↑(p ^ (k - 2 * i - 1) * (p + 1)) := by
   have h_exp_eq : k - i = i + (k - 2 * i) := by omega
-  rw [deg_T⦃p ^ i, p ^ (k - i)⦄
+  rw [deg_T_ad_of_pos' (p ^ i) (p ^ (k - i))
+    (pow_pos hp.pos i) (pow_pos hp.pos (k - i))
     (Nat.pow_dvd_pow p (by omega))]
   show T'_deg (GL_pair 2) (T_diag 2
     (![p ^ i, p ^ (k - i)])
@@ -1528,7 +1533,8 @@ include hp in
 private lemma deg_ppow_term_eq' (i k : ℕ) (h2i : 2 * i = k) :
     deg (GL_pair 2) (T⦃p ^ i, p ^ (k - i)⦄) = 1 := by
   rw [show k - i = i from by omega,
-    deg_T⦃p ^ i, p ^ i⦄]
+    deg_T_ad_of_pos' (p ^ i) (p ^ i) (pow_pos hp.pos i)
+      (pow_pos hp.pos i) (dvd_refl _)]
   set c := p ^ i with hc_def
   have hc : 0 < c := pow_pos hp.pos i
   rw [show T_diag 2 (![c, c])
@@ -1582,7 +1588,7 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
         ∑ i ∈ Finset.range (k / 2 + 1), (deg (GL_pair 2)) (T⦃p ^ i, p ^ (k - i)⦄) :=
       Finset.sum_congr rfl fun i hi => by
         rw [Finset.mem_range] at hi; exact deg_ppow_shift' p hp i k hi
-    rw [h_tail, show deg (GL_pair 2) (T⦃p ^ 0, p ^ (k + 2 - 0)⦄) =
+    rw [h_tail, show deg (GL_pair 2) (T_ad (p ^ 0) (p ^ (k + 2 - 0))) =
         ↑(p ^ (k + 1) * (p + 1)) from by
       simpa [show k + 2 - 0 - 1 = k + 1 from by omega] using
         deg_ppow_term_lt' p hp 0 (k + 2) (by omega)]
@@ -1598,7 +1604,7 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
 private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
   change deg (GL_pair 2) (∑ a ∈ Nat.divisors 1, T_ad a (1 / a)) = 1
   simp only [Nat.divisors_one, Finset.sum_singleton, Nat.div_self one_pos]
-  rw [deg_T⦃1, 1⦄ one_pos one_pos (dvd_refl 1)]
+  rw [deg_T_ad_of_pos' 1 1 one_pos one_pos (dvd_refl 1)]
   set c : ℕ := 1 with hc_def
   have hc : 0 < c := Nat.one_pos
   rw [show T_diag 2 (![c, c])
