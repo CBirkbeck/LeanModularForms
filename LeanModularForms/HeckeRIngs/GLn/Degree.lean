@@ -84,7 +84,6 @@ private def unipSL (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n 
     SL(n, ℤ) :=
   ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
 
-omit [NeZero n] in
 private lemma upperTriGL_eq_diagMat_mul (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     upperTriGL n a ha hdiv B = diagMat n a ha * (unipSL n a hdiv B : GL (Fin n) ℚ) := by
@@ -117,19 +116,16 @@ private def invTransposeEquiv : SL(n, ℤ) ≃* SL(n, ℤ) where
         Matrix.transpose_mul])
     rw [h, _root_.mul_inv_rev]
 
-omit [NeZero n] in
 private lemma SL_transpose_inv_eq (σ : SL(n, ℤ)) :
     σ.transpose⁻¹ = σ⁻¹.transpose :=
   Subtype.ext (by simp only [SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_transpose,
     Matrix.adjugate_transpose])
 
-omit [NeZero n] in
 private lemma invTransposeEquiv_invol (σ : SL(n, ℤ)) :
     invTransposeEquiv n (invTransposeEquiv n σ) = σ := by
   rw [show invTransposeEquiv n σ = (invTransposeEquiv n).symm σ from SL_transpose_inv_eq n σ]
   exact (invTransposeEquiv n).apply_symm_apply σ
 
-omit [NeZero n] in
 private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
     K.relIndex (SLnZ_subgroup n) = (K.comap (SLnZ_to_GLnQ n)).index := by
   set f := SLnZ_to_GLnQ n
@@ -148,7 +144,6 @@ private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
     _ = (K.comap f).relIndex ⊤ := Subgroup.relIndex_map_map_of_injective _ _ h_inj
     _ = (K.comap f).index := (K.comap f).relIndex_top_right
 
-omit [NeZero n] in
 private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ ρ : SL(n, ℤ))
     (h : (σ : GL (Fin n) ℚ) * diagMat n a ha = diagMat n a ha * (ρ : GL (Fin n) ℚ)) :
     diagMat n a ha * (σ.transpose : GL (Fin n) ℚ) =
@@ -162,7 +157,6 @@ private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (�
   simp only [Matrix.transpose_mul, Matrix.diagonal_transpose] at h1
   exact h1
 
-omit [NeZero n] in
 private lemma transpose_mem_conj_inv_of_mem_conj
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
     (hσ : (σ : GL (Fin n) ℚ) ∈
@@ -186,7 +180,6 @@ private lemma transpose_mem_conj_inv_of_mem_conj
     rwa [← mul_assoc] at h
   rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
-omit [NeZero n] in
 private lemma transpose_mem_conj_of_mem_conj_inv
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
     (hτ : (τ : GL (Fin n) ℚ) ∈
@@ -209,7 +202,6 @@ private lemma transpose_mem_conj_of_mem_conj_inv
     exact this
   rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
-omit [NeZero n] in
 private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n).relIndex
       (SLnZ_subgroup n) =
@@ -239,7 +231,6 @@ private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 
     exact (ConjAct.toConjAct α • H).inv_mem
       (transpose_mem_conj_of_mem_conj_inv n a ha τ hτ)
 
-omit [NeZero n] in
 /-- The map sending each upper-triangular representative `B` to the coset of
 `(f(unipSL B))⁻¹` in the quotient `H ⧸ (α⁻¹-conjugate of H)` is injective.
 
@@ -412,7 +403,6 @@ private lemma Gamma0_of_conj_diagMat_mem (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
     rw [ha1] at h_entry; field_simp at h_entry ⊢; linarith
   exact ⟨τ.1 1 0, by exact_mod_cast h_σ₁₀⟩
 
-omit [NeZero n] in
 private lemma conjDiag_relIndex_eq_Gamma0_index
     (p : ℕ) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :

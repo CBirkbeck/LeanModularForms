@@ -30,47 +30,40 @@ noncomputable def GL_transposeEquiv :
     GL (Fin n) ℚ ≃* (GL (Fin n) ℚ)ᵐᵒᵖ :=
   (Units.mapEquiv (transposeRingEquiv (Fin n) ℚ).toMulEquiv).trans Units.opEquiv
 
-omit [NeZero n] in
 lemma GL_transposeEquiv_val (g : GL (Fin n) ℚ) :
     ((GL_transposeEquiv n g).unop : Matrix (Fin n) (Fin n) ℚ) =
     (↑g : Matrix (Fin n) (Fin n) ℚ)ᵀ := by
   simp [GL_transposeEquiv, Units.opEquiv, Units.mapEquiv, transposeRingEquiv]
 
-omit [NeZero n] in
 lemma GL_transposeEquiv_involutive (g : GL (Fin n) ℚ) :
     (GL_transposeEquiv n (GL_transposeEquiv n g).unop).unop = g := by
   apply Units.ext; ext i j
   simp [GL_transposeEquiv_val]
 
-omit [NeZero n] in
 lemma SLnZ_to_GLnQ_transpose (σ : SpecialLinearGroup (Fin n) ℤ) :
     (GL_transposeEquiv n (σ : GL (Fin n) ℚ)).unop = (σ.transpose : GL (Fin n) ℚ) := by
   apply Units.ext; ext i j
   rw [GL_transposeEquiv_val, SLnZ_to_GLnQ_val, SLnZ_to_GLnQ_val]
   simp [SpecialLinearGroup.coe_transpose]
 
-omit [NeZero n] in
 lemma GL_transpose_mem_SLnZ {g : GL (Fin n) ℚ} (hg : g ∈ SLnZ_subgroup n) :
     (GL_transposeEquiv n g).unop ∈ SLnZ_subgroup n := by
   rw [mem_SLnZ_subgroup_iff] at hg ⊢
   obtain ⟨σ, rfl⟩ := hg
   exact ⟨σ.transpose, (SLnZ_to_GLnQ_transpose n σ).symm⟩
 
-omit [NeZero n] in
 lemma HasIntEntries.transpose {g : GL (Fin n) ℚ} (hg : HasIntEntries n g) :
     HasIntEntries n (GL_transposeEquiv n g).unop := by
   obtain ⟨A, hA⟩ := hg
   refine ⟨Aᵀ, ?_⟩
   rw [GL_transposeEquiv_val, hA, Matrix.transpose_map]
 
-omit [NeZero n] in
 lemma GL_transpose_mem_posDetInt {g : GL (Fin n) ℚ} (hg : g ∈ posDetInt_submonoid n) :
     (GL_transposeEquiv n g).unop ∈ posDetInt_submonoid n := by
   refine ⟨hg.1.transpose, ?_⟩
   rw [GL_transposeEquiv_val, Matrix.det_transpose]
   exact hg.2
 
-omit [NeZero n] in
 lemma diagMat_GL_transpose_eq (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (GL_transposeEquiv n (diagMat n a ha)).unop = diagMat n a ha := by
   apply Units.ext

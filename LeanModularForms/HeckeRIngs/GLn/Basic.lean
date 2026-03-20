@@ -159,7 +159,6 @@ section Pair
 
 variable [NeZero n]
 
-omit [NeZero n] in
 /-- `SL_n(ℤ) ⊆ Δ`: elements of `SL_n(ℤ)` have integer entries and det = 1 > 0. -/
 lemma SLnZ_le_posDetInt : (SLnZ_subgroup n).toSubmonoid ≤ posDetInt_submonoid n := by
   intro g hg
@@ -171,14 +170,12 @@ lemma SLnZ_le_posDetInt : (SLnZ_subgroup n).toSubmonoid ≤ posDetInt_submonoid 
 
 /-! ### Helper lemmas for the commensurator proof (Shimura Lemma 3.10) -/
 
-omit [NeZero n] in
 /-- `SLnZ_to_GLnQ` is injective. -/
 private lemma SLnZ_to_GLnQ_injective : Function.Injective (SLnZ_to_GLnQ n) := by
   intro x y hxy; ext i j
   have h := congr_arg (fun (g : GL (Fin n) ℚ) => (g : Matrix (Fin n) (Fin n) ℚ) i j) hxy
   simp only [SLnZ_to_GLnQ_val, Matrix.map_apply] at h; exact_mod_cast h
 
-omit [NeZero n] in
 /-- Kernel element of `SL_n(ℤ) → SL_n(ℤ/dℤ)` has entries congruent to identity mod d. -/
 private lemma ker_entry_dvd (d : ℕ) [NeZero d] (γ : SpecialLinearGroup (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod d))).ker) (i j : Fin n) :
@@ -191,7 +188,6 @@ private lemma ker_entry_dvd (d : ℕ) [NeZero d] (γ : SpecialLinearGroup (Fin n
   · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by push_cast; simp [h])
   · rw [sub_zero]; exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h
 
-omit [NeZero n] in
 /-- When `d | (gamma - I)` entry-wise, decompose `gamma = I + d * M`. -/
 private lemma gamma_decompose (d : ℤ) (gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, d ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j)) :
@@ -201,7 +197,6 @@ private lemma gamma_decompose (d : ℤ) (gamma : Matrix (Fin n) (Fin n) ℤ)
   nlinarith [mul_comm ((gamma i j - if i = j then 1 else 0) / d) d,
              Int.ediv_mul_cancel (hgamma i j)]
 
-omit [NeZero n] in
 /-- If `d | (γ - I)` entry-wise, then `d | (adj(A) * γ * A)` entry-wise.
     Key: `adj(A) * (I + dM) * A = d·I + d·(adj(A)·M·A)`. -/
 private lemma adjugate_conj_dvd (A gamma : Matrix (Fin n) (Fin n) ℤ)
@@ -217,7 +212,6 @@ private lemma adjugate_conj_dvd (A gamma : Matrix (Fin n) (Fin n) ℤ)
   simp only [Matrix.add_apply, Matrix.smul_apply, smul_eq_mul]
   exact dvd_add (dvd_mul_right _ _) (dvd_mul_right _ _)
 
-omit [NeZero n] in
 /-- If `d | P i j` for all entries and `det(P) = d ^ n`, then
     `det(P / d) = 1`, where the division is entry-wise integer division. -/
 private lemma det_entrywise_div_eq_one (d : ℤ) (P : Matrix (Fin n) (Fin n) ℤ)
@@ -242,7 +236,6 @@ private lemma conj_mat_det_one (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_de
   push_cast; rw [mul_one, Fintype.card_fin, ← pow_succ,
     Nat.sub_one_add_one_eq_of_pos (NeZero.pos n)]
 
-omit [NeZero n] in
 /-- If `A * δ = γ * A` at the integer level, then `g * δ_GL = γ_GL * g` at the GL level,
     so `δ_GL = g⁻¹ * γ_GL * g`. -/
 private lemma int_mul_eq (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
@@ -288,7 +281,6 @@ private lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n)
     _ = g⁻¹ * ((γ : GL (Fin n) ℚ) * g) := by rw [h_unit_eq]
     _ = g⁻¹ * (γ : GL (Fin n) ℚ) * g := by rw [mul_assoc]
 
-omit [NeZero n] in
 /-- Reverse direction of `adjugate_conj_dvd`: `d | (γ - I)` entry-wise implies
     `d | (A * γ * adj(A))` entry-wise. -/
 private lemma conj_dvd_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ)
@@ -316,7 +308,6 @@ private lemma conj_mat_det_one_reverse
     show (A.det : ℚ) * (A.det : ℚ) ^ (n - 1) = (A.det : ℚ) ^ n from by
       rw [← pow_succ']; congr 1; exact Nat.succ_pred_eq_of_pos (NeZero.pos n)]
 
-omit [NeZero n] in
 /-- Reverse direction of `int_mul_eq`: `δ * A = A * γ` where
     `δ = (A * γ * adj(A)) / det(A)`. -/
 private lemma int_mul_eq_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
