@@ -193,7 +193,37 @@ private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i
       SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]; simp [Fin.prod_univ_two]
   exact_mod_cast show (a 0 : ℚ) * (a 1 : ℚ) = (p : ℚ) ^ (k + 1) by linarith
 
-set_option maxHeartbeats 1600000 in
+private lemma mulSupport_pp_dvd_p_aux
+    (S_mid L' R' : Matrix.SpecialLinearGroup (Fin 2) ℤ)
+    (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
+    (k : ℕ) (_hk : 0 < k)
+    (h_gl : (L' : GL (Fin 2) ℚ) *
+        diagMat 2 (![1, p])
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos | exact hp.pos) *
+        (S_mid : GL (Fin 2) ℚ) *
+        diagMat 2 (![1, p ^ k])
+          (fun i => by fin_cases i <;>
+            first | exact Nat.one_pos | exact pow_pos hp.pos k) *
+        (R' : GL (Fin 2) ℚ) = diagMat 2 a ha_pos) :
+    a 0 ∣ p := by
+  have h_int_5 : (↑L' : Matrix (Fin 2) (Fin 2) ℤ) *
+      Diag((1 : ℤ), (p : ℤ)) *
+      (↑S_mid : Matrix (Fin 2) (Fin 2) ℤ) *
+      Diag((1 : ℤ), (p ^ k : ℤ)) *
+      (↑R' : Matrix (Fin 2) (Fin 2) ℤ) =
+      Matrix.diagonal (fun i => (a i : ℤ)) := by
+    ext i j
+    have h := congr_arg
+      (fun (g : GL (Fin 2) ℚ) => (↑g : Matrix _ _ ℚ) i j) h_gl
+    simp only [diagMat_val, Matrix.diagonal_apply,
+      Units.val_mul, SLnZ_to_GLnQ_val,
+      Matrix.mul_apply, Matrix.map_apply] at h
+    simp only [Matrix.diagonal_apply, Matrix.mul_apply]
+    exact_mod_cast h
+  exact first_invariant_dvd_p_of_product p S_mid a ha_pos
+    hdiv L' R' k _hk h_int_5
+
 private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
     (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
@@ -212,50 +242,38 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     (hi₀ : i₀_gl = (SL_i₀ : GL (Fin 2) ℚ))
     (hj₀ : j₀_gl = (SL_j₀ : GL (Fin 2) ℚ))
     (h_prod_eq_a : i₀_gl * D1c * (j₀_gl * D2c) =
-        (SL_La : GL (Fin 2) ℚ) * diagMat 2 a ha_pos * (SL_Ra : GL (Fin 2) ℚ)) :
+        (SL_La : GL (Fin 2) ℚ) * diagMat 2 a ha_pos *
+        (SL_Ra : GL (Fin 2) ℚ)) :
     a 0 ∣ p := by
   set S_mid := SL_R₁ * SL_j₀ * SL_L₂
   set L' := SL_La⁻¹ * SL_i₀ * SL_L₁
   set R' := SL_R₂ * SL_Ra⁻¹
-  have h_gl : (L' : GL (Fin 2) ℚ) *
-      diagMat 2 (![1, p])
-        (fun i => by fin_cases i <;>
-          first | exact Nat.one_pos | exact hp.pos) *
-      (S_mid : GL (Fin 2) ℚ) *
-      diagMat 2 (![1, p ^ k])
-        (fun i => by fin_cases i <;>
-          first | exact Nat.one_pos | exact pow_pos hp.pos k) *
-      (R' : GL (Fin 2) ℚ) = diagMat 2 a ha_pos := by
-    set dp := diagMat 2 (![1, p])
-      (fun i => by fin_cases i <;>
-        first | exact Nat.one_pos | exact hp.pos)
-    set dpk := diagMat 2 (![1, p ^ k])
-      (fun i => by fin_cases i <;>
-        first | exact Nat.one_pos | exact pow_pos hp.pos k)
-    set da := diagMat 2 a ha_pos
-    have hprod : (SL_i₀ : GL (Fin 2) ℚ) * ((SL_L₁ : GL (Fin 2) ℚ) * dp *
-        (SL_R₁ : GL (Fin 2) ℚ)) * ((SL_j₀ : GL (Fin 2) ℚ) *
-        ((SL_L₂ : GL (Fin 2) ℚ) * dpk * (SL_R₂ : GL (Fin 2) ℚ))) =
-        (SL_La : GL (Fin 2) ℚ) * da * (SL_Ra : GL (Fin 2) ℚ) := by
-      rw [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]; exact h_prod_eq_a
-    have := congr_arg₂ (· * ·) (congr_arg ((SL_La : GL (Fin 2) ℚ)⁻¹ * ·) hprod)
-      (show (SL_Ra : GL (Fin 2) ℚ)⁻¹ = (SL_Ra : GL (Fin 2) ℚ)⁻¹ from rfl)
-    simp only [mul_assoc, inv_mul_cancel_left] at this
-    simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
-    convert this using 1; group
-  have h_int_5 : (↑L' : Matrix (Fin 2) (Fin 2) ℤ) *
-      Diag((1 : ℤ), (p : ℤ)) *
-      (↑S_mid : Matrix (Fin 2) (Fin 2) ℤ) *
-      Diag((1 : ℤ), (p ^ k : ℤ)) *
-      (↑R' : Matrix (Fin 2) (Fin 2) ℤ) =
-      Matrix.diagonal (fun i => (a i : ℤ)) := by
-    ext i j
-    have h := congr_arg (fun (g : GL (Fin 2) ℚ) => (↑g : Matrix _ _ ℚ) i j) h_gl
-    simp only [diagMat_val, Matrix.diagonal_apply, Units.val_mul, SLnZ_to_GLnQ_val,
-      Matrix.mul_apply, Matrix.map_apply] at h
-    simp only [Matrix.diagonal_apply, Matrix.mul_apply]
-    exact_mod_cast h
-  exact first_invariant_dvd_p_of_product p S_mid a ha_pos hdiv L' R' k _hk h_int_5
+  apply mulSupport_pp_dvd_p_aux p hp S_mid L' R' a ha_pos
+    hdiv k _hk
+  set dp := diagMat 2 (![1, p])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact hp.pos)
+  set dpk := diagMat 2 (![1, p ^ k])
+    (fun i => by fin_cases i <;>
+      first | exact Nat.one_pos | exact pow_pos hp.pos k)
+  set da := diagMat 2 a ha_pos
+  have hprod : (SL_i₀ : GL (Fin 2) ℚ) *
+      ((SL_L₁ : GL (Fin 2) ℚ) * dp *
+        (SL_R₁ : GL (Fin 2) ℚ)) *
+      ((SL_j₀ : GL (Fin 2) ℚ) *
+        ((SL_L₂ : GL (Fin 2) ℚ) * dpk *
+          (SL_R₂ : GL (Fin 2) ℚ))) =
+      (SL_La : GL (Fin 2) ℚ) * da *
+        (SL_Ra : GL (Fin 2) ℚ) := by
+    rw [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]
+    exact h_prod_eq_a
+  have := congr_arg₂ (· * ·)
+    (congr_arg ((SL_La : GL (Fin 2) ℚ)⁻¹ * ·) hprod)
+    (show (SL_Ra : GL (Fin 2) ℚ)⁻¹ =
+      (SL_Ra : GL (Fin 2) ℚ)⁻¹ from rfl)
+  simp only [mul_assoc, inv_mul_cancel_left] at this
+  simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
+  convert this using 1; group
 
 private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k)
     (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
