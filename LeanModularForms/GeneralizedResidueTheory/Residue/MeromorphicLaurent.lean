@@ -128,9 +128,60 @@ theorem meromorphicPrincipalPart_differentiableOn (f : ℂ → ℂ) (s : ℂ)
   · rw [dif_neg (not_and_of_not_right _ h_neg)]
     exact differentiableOn_const 0
 
+/-- When the meromorphic order is negative, `poleOrderNat` is positive. -/
+private theorem poleOrderNat_pos_of_neg_order (f : ℂ → ℂ) (s : ℂ)
+    (h_neg : meromorphicOrderAt f s < 0) : 0 < poleOrderNat f s := by
+  show 0 < (-(meromorphicOrderAt f s).untop₀).toNat
+  have h_neg' : (meromorphicOrderAt f s).untop₀ < 0 := by
+    cases h : (meromorphicOrderAt f s) with
+    | top => exact absurd h h_neg.ne_top
+    | coe v =>
+      simp only [WithTop.untop₀, WithTop.untopD, WithTop.recTopCoe]
+      rw [h] at h_neg; exact_mod_cast h_neg
+  omega
+
 /-! ### The regular part is analytic
 
 f minus its principal part extends analytically to the pole. -/
+
+/-- Taylor remainder factorization: if `G` is analytic at `s` and `P` is the
+truncated Taylor polynomial `Σ_{k<N} (G^(k)(s)/k!) * (z-s)^k`, then
+`G - P = (z-s)^N • H` near `s` for some analytic `H`. -/
+private theorem taylor_remainder_factored (G : ℂ → ℂ) (s : ℂ) (N : ℕ)
+    (hG_an : AnalyticAt ℂ G s)
+    (P : ℂ → ℂ)
+    (hP_def : P = fun z => ∑ k ∈ Finset.range N,
+      (iteratedDeriv k G s / ↑(k.factorial)) * (z - s) ^ (k : ℕ))
+    (hP_an : AnalyticAt ℂ P s) :
+    ∃ H : ℂ → ℂ, AnalyticAt ℂ H s ∧
+      ∀ᶠ z in 𝓝 s, G z - P z = (z - s) ^ N • H z := by
+  exact (natCast_le_analyticOrderAt (hG_an.sub hP_an)).mp (by
+    rw [natCast_le_analyticOrderAt (hG_an.sub hP_an)]
+    have hG_fps := hG_an.hasFPowerSeriesAt
+    set pG := FormalMultilinearSeries.ofScalars ℂ
+      (fun n => iteratedDeriv n G s / ↑(n.factorial)) with hpG_def
+    have hH_fps := HasFPowerSeriesAt.has_fpower_series_iterate_dslope_fslope N hG_fps
+    set H := (Function.swap dslope s)^[N] G
+    refine ⟨H, hH_fps.analyticAt, ?_⟩
+    have hG_sum := hasFPowerSeriesAt_iff'.mp hG_fps
+    have hH_sum := hasFPowerSeriesAt_iff'.mp hH_fps
+    filter_upwards [hG_sum, hH_sum] with z hG_z hH_z
+    simp only [FormalMultilinearSeries.coeff_iterate_fslope, smul_eq_mul] at hG_z hH_z
+    show G z - P z = (z - s) ^ N * H z
+    set c := fun k => (z - s) ^ k * pG.coeff k with hc_def
+    have hG_tail : HasSum (fun j => c (j + N))
+        (G z - ∑ i ∈ Finset.range N, c i) :=
+      (hasSum_nat_add_iff' N).mpr hG_z
+    have hP_eq : P z = ∑ i ∈ Finset.range N, c i := by
+      rw [hP_def]
+      simp only [c, pG, FormalMultilinearSeries.coeff_ofScalars]
+      congr 1; ext k; ring
+    rw [hP_eq]
+    rw [← hG_tail.tsum_eq]
+    rw [← hH_z.tsum_eq, ← tsum_mul_left]
+    congr 1; ext j
+    simp only [c]
+    ring)
 
 /-- If `f` is meromorphic at `s`, then `f - meromorphicPrincipalPart f s` agrees
 with an analytic function near `s` (away from `s`). Since the principal part
@@ -150,13 +201,7 @@ theorem meromorphicAt_sub_principalPart_eventually (f : ℂ → ℂ) (s : ℂ)
     have hf_ev : f =ᶠ[𝓝[≠] s] fun z =>
         (z - s) ^ (meromorphicOrderAt f s).untop₀ • G z := hG_spec.2.2
     -- The order is -(N : ℤ)
-    have hN_pos : 0 < N := by
-      show 0 < (-(meromorphicOrderAt f s).untop₀).toNat
-      have : (meromorphicOrderAt f s).untop₀ < 0 := by
-        cases h : meromorphicOrderAt f s with
-        | top => exact absurd h h_neg.ne_top
-        | coe v => simp [WithTop.untop₀]; rw [h] at h_neg; exact_mod_cast h_neg
-      omega
+    have hN_pos : 0 < N := poleOrderNat_pos_of_neg_order f s h_neg
     have h_ord_neg : (meromorphicOrderAt f s).untop₀ < 0 := by
       cases h : meromorphicOrderAt f s with
       | top => exact absurd h h_neg.ne_top
@@ -186,106 +231,9 @@ theorem meromorphicAt_sub_principalPart_eventually (f : ℂ → ℂ) (s : ℂ)
         rw [← zpow_natCast (z - s) k, ← zpow_add₀ hne]; congr 1; omega]
       ring
     -- Taylor remainder: G(z) - P(z) = (z-s)^N • H(z) near s for some analytic H.
-    -- This uses: P is the Taylor polynomial of G matching the first N derivatives.
-    -- The difference G - P has analytic order ≥ N at s.
     have h_taylor : ∃ H : ℂ → ℂ, AnalyticAt ℂ H s ∧
-        ∀ᶠ z in 𝓝 s, G z - P z = (z - s) ^ N • H z := by
-      -- Use natCast_le_analyticOrderAt: N ≤ analyticOrderAt (G-P) s gives the factored form.
-      -- The order bound follows because G-P is analytic and its power series at s has
-      -- first N coefficients zero (P matches G's first N Taylor coefficients).
-      -- Key tool: AnalyticAt.hasFPowerSeriesAt gives G's power series with coefficients
-      -- c_k = iteratedDeriv k G s / k!. P is exactly the partial sum of this series.
-      -- So (G - P) has power series with c_k = 0 for k < N.
-      -- The iterated dslope extracts the tail sum.
-      exact (natCast_le_analyticOrderAt (hG_an.sub hP_an)).mp (by
-        -- Goal: N ≤ analyticOrderAt (fun z => G z - P z) s
-        -- We show this by providing the factored form and using the iff backwards.
-        -- First establish: G-P has power series with first N coefficients = 0.
-        -- This means analyticOrderAt (G-P) s ≥ N.
-        --
-        -- Use the definition of analyticOrderAt: for analytic functions, it equals
-        -- the order of the power series, which is the min k with nonzero coefficient.
-        -- If all k < N have zero coefficient, then order ≥ N.
-        --
-        -- Approach: use analyticOrderAt_congr to relate G-P to a function built from
-        -- the tail of G's power series.
-        --
-        -- G(z) = Σ_k (z-s)^k • c_k near s (from hasFPowerSeriesAt_iff')
-        -- P(z) = Σ_{k<N} c_k • (z-s)^k (finite sum, agrees pointwise)
-        -- (G-P)(z) = (Σ_k (z-s)^k • c_k) - (Σ_{k<N} c_k • (z-s)^k)
-        --          = Σ_{k≥N} (z-s)^k • c_k                    near s
-        --          = (z-s)^N • Σ_{j≥0} (z-s)^j • c_{j+N}      near s (if z ≠ s or z = s)
-        --
-        -- The tail sum Σ_{j≥0} (z-s)^j • c_{j+N} is analytic (convergent sub-series).
-        --
-        -- Instead of computing iteratedDeriv, show G-P agrees with the tail near s.
-        -- Use analyticOrderAt_congr + the fact that the tail has order ≥ N.
-        --
-        -- Actually simplest: just use natCast_le_analyticOrderAt in the mpr direction:
-        -- provide g = tail sum, show it's analytic, show (G-P) =ᶠ (z-s)^N • g.
-        rw [natCast_le_analyticOrderAt (hG_an.sub hP_an)]
-        -- Goal: ∃ g, AnalyticAt ℂ g s ∧ ∀ᶠ z in 𝓝 s, (G-P) z = (z-s)^N • g z
-        have hG_fps := hG_an.hasFPowerSeriesAt
-        set pG := FormalMultilinearSeries.ofScalars ℂ
-          (fun n => iteratedDeriv n G s / ↑(n.factorial)) with hpG_def
-        -- The iterated dslope of G, N times, is analytic at s.
-        have hH_fps := HasFPowerSeriesAt.has_fpower_series_iterate_dslope_fslope N hG_fps
-        set H := (Function.swap dslope s)^[N] G
-        refine ⟨H, hH_fps.analyticAt, ?_⟩
-        -- Goal: ∀ᶠ z in 𝓝 s, (G-P) z = (z-s)^N • H z
-        -- From hG_fps: G z = Σ_k (z-s)^k • pG.coeff k near s
-        -- From hH_fps: H z = Σ_j (z-s)^j • (fslope^[N] pG).coeff j near s
-        -- coeff_iterate_fslope: (fslope^[N] pG).coeff j = pG.coeff (j + N)
-        -- So H z = Σ_j (z-s)^j • pG.coeff (j+N) near s.
-        -- And (z-s)^N • H z = Σ_j (z-s)^{j+N} • pG.coeff (j+N) near s.
-        --
-        -- G z = Σ_{k<N} (z-s)^k • pG.coeff k + Σ_{k≥N} (z-s)^k • pG.coeff k
-        -- P z = Σ_{k<N} pG.coeff k • (z-s)^k = Σ_{k<N} (z-s)^k • pG.coeff k
-        --   (since smul = mul for ℂ and mul is commutative)
-        -- So G z - P z = Σ_{k≥N} (z-s)^k • pG.coeff k = (z-s)^N • H z.
-        --
-        -- We show this using the HasSum representations.
-        have hG_sum := hasFPowerSeriesAt_iff'.mp hG_fps
-        have hH_sum := hasFPowerSeriesAt_iff'.mp hH_fps
-        filter_upwards [hG_sum, hH_sum] with z hG_z hH_z
-        -- hG_z : HasSum (fun k => (z-s)^k • pG.coeff k) (G z)
-        -- hH_z : HasSum (fun j => (z-s)^j • (fslope^[N] pG).coeff j) (H z)
-        simp only [FormalMultilinearSeries.coeff_iterate_fslope, smul_eq_mul] at hG_z hH_z
-        -- hG_z : HasSum (fun k => (z-s)^k * pG.coeff k) (G z)
-        -- hH_z : HasSum (fun j => (z-s)^j * pG.coeff (j+N)) (H z)
-        -- Need: (G - P) z = (z-s)^N • H z, i.e., G z - P z = (z-s)^N * H z
-        show G z - P z = (z - s) ^ N * H z
-        -- Step 1: Split G's HasSum at index N using hasSum_nat_add_iff'
-        -- hasSum_nat_add_iff' N says:
-        -- HasSum (fun j => f (j+N)) a ↔ HasSum f (a + Σ_{i<N} f i)
-        -- So (.mpr hG_z) gives HasSum (fun j => (z-s)^(j+N) * pG.coeff (j+N))
-        --   (G z - Σ_{i<N} (z-s)^i * pG.coeff i)
-        set c := fun k => (z - s) ^ k * pG.coeff k with hc_def
-        have hG_tail : HasSum (fun j => c (j + N))
-            (G z - ∑ i ∈ Finset.range N, c i) :=
-          (hasSum_nat_add_iff' N).mpr hG_z
-        -- Step 2: P z = Σ_{i<N} c i = Σ_{i<N} (z-s)^i * pG.coeff i
-        -- P z = Σ_{k<N} (iteratedDeriv k G s / k!) * (z-s)^k
-        -- c i = (z-s)^i * pG.coeff i = (z-s)^i * (iteratedDeriv i G s / i!)
-        -- These are the same up to commutativity of multiplication.
-        have hP_eq : P z = ∑ i ∈ Finset.range N, c i := by
-          simp only [P, c, pG, FormalMultilinearSeries.coeff_ofScalars]
-          congr 1; ext k; ring
-        -- Step 3: G z - P z = tsum of (fun j => c (j+N))
-        rw [hP_eq]
-        -- Goal: G z - Σ_{i<N} c i = (z-s)^N * H z
-        -- LHS = tsum of (fun j => c(j+N)) by hG_tail
-        rw [← hG_tail.tsum_eq]
-        -- Goal: tsum (fun j => c(j+N)) = (z-s)^N * H z
-        -- Step 4: show tsum (fun j => c(j+N)) = (z-s)^N * H z
-        -- H z = Σ_j (z-s)^j * pG.coeff(j+N) by hH_z
-        -- (z-s)^N * H z = (z-s)^N * Σ_j (z-s)^j * pG.coeff(j+N)
-        --               = Σ_j (z-s)^(j+N) * pG.coeff(j+N) = Σ_j c(j+N)
-        rw [← hH_z.tsum_eq, ← tsum_mul_left]
-        congr 1; ext j
-        -- Goal: c (j + N) = (z - s) ^ N * ((z - s) ^ j * pG.coeff (j + N))
-        simp only [c]
-        ring)
+        ∀ᶠ z in 𝓝 s, G z - P z = (z - s) ^ N • H z :=
+      taylor_remainder_factored G s N hG_an P rfl hP_an
     obtain ⟨H, hH_an, hH_eq⟩ := h_taylor
     -- Combine: f - pp =ᶠ (z-s)^{-N} • G - (z-s)^{-N} * P = (z-s)^{-N} * (G-P) = H
     refine ⟨H, hH_an, ?_⟩
@@ -529,6 +477,74 @@ The principal part is a finite sum of terms `c_k * (z - s)^{k - N}` for k = 0..N
 The term with k = N-1 gives exponent -1 (the residue term), which vanishes by assumption.
 All other terms have exponent ≤ -2, so they vanish by `contourIntegral_zpow_eq_zero`. -/
 
+/-- The residue of `f` equals the residue of its principal part sum. Since `f - pp` is
+analytic near `s`, the circle integrals of `f` and `pp` agree for small radius, so
+the residues (defined as limits of circle integrals) are equal. -/
+private theorem residueAt_eq_residueAt_principalPart_sum
+    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
+    (N : ℕ) (g : ℂ → ℂ)
+    (h_pp_eq : meromorphicPrincipalPart f s = fun z =>
+        (Finset.range N).sum fun k =>
+          (iteratedDeriv k g s / ↑(Nat.factorial k)) * (z - s) ^ ((k : ℤ) - (N : ℤ))) :
+    residueAt f s = residueAt (fun z =>
+        ∑ k ∈ Finset.range N,
+          iteratedDeriv k g s / ↑(k.factorial) * (z - s) ^ ((k : ℤ) - (N : ℤ))) s := by
+  set pp := fun z => ∑ k ∈ Finset.range N,
+    iteratedDeriv k g s / ↑(k.factorial) * (z - s) ^ ((k : ℤ) - (N : ℤ))
+  have h_pp_is : pp = meromorphicPrincipalPart f s := by
+    ext z; rw [h_pp_eq]
+  obtain ⟨g_an, hg_an_at, hg_eq⟩ :=
+    meromorphicAt_sub_principalPart_eventually f s hf
+  have hg_eq' : ∀ᶠ z in 𝓝[≠] s, f z - pp z = g_an z := by
+    rw [h_pp_is]; exact hg_eq
+  obtain ⟨rg, hrg_pos, hg_ball⟩ := hg_an_at.exists_ball_analyticOnNhd
+  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hg_eq'
+  obtain ⟨rf, hrf_pos, hrf_eq⟩ := hg_eq'
+  have hr₀_pos : 0 < min rg rf := lt_min hrg_pos hrf_pos
+  unfold residueAt
+  show limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
+    limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), pp z)
+  unfold limUnder; congr 1; apply Filter.map_congr
+  apply Filter.Eventually.mono (Ioo_mem_nhdsGT hr₀_pos)
+  intro r ⟨hr_pos, hr_lt⟩
+  have hr_lt_rg : r < rg := lt_of_lt_of_le hr_lt (min_le_left _ _)
+  have hr_lt_rf : r < rf := lt_of_lt_of_le hr_lt (min_le_right _ _)
+  have hr_ne : r ≠ 0 := ne_of_gt hr_pos
+  suffices h_circ : (∮ z in C(s, r), f z) = (∮ z in C(s, r), pp z) by
+    simp only; rw [h_circ]
+  have h_eq_on : Set.EqOn f (fun z => pp z + g_an z) (Metric.sphere s r) := by
+    intro z hz
+    have h_ne : z ≠ s := by
+      intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; linarith
+    have h_in : dist z s < rf := by
+      rw [Metric.mem_sphere.mp hz]; exact hr_lt_rf
+    have h_mem : z ∈ Metric.ball s rf ∩ {s}ᶜ :=
+      ⟨Metric.mem_ball.mpr h_in, Set.mem_compl_singleton_iff.mpr h_ne⟩
+    have h_sub := hrf_eq h_mem
+    simp only [Set.mem_setOf_eq] at h_sub
+    rw [show f z = pp z + (f z - pp z) from (add_sub_cancel _ _).symm, h_sub]
+  have h_g_cont : ContinuousOn g_an (Metric.closedBall s r) :=
+    hg_ball.continuousOn.mono (Metric.closedBall_subset_ball hr_lt_rg)
+  have h_ci_g : CircleIntegrable g_an s r :=
+    (h_g_cont.mono Metric.sphere_subset_closedBall).circleIntegrable hr_pos.le
+  have hs_not : s ∉ Metric.sphere s r := by simp [hr_ne.symm]
+  have h_pp_cont : ContinuousOn pp (Metric.sphere s r) := by
+    apply continuousOn_finset_sum
+    intro k _
+    apply ContinuousOn.mul continuousOn_const
+    apply ContinuousOn.zpow₀ (continuousOn_id.sub continuousOn_const)
+    intro z hz
+    exact Or.inl (sub_ne_zero.mpr (ne_of_mem_of_not_mem hz hs_not))
+  have h_ci_pp : CircleIntegrable pp s r :=
+    h_pp_cont.circleIntegrable hr_pos.le
+  rw [circleIntegral.integral_congr hr_pos.le h_eq_on,
+    circleIntegral.integral_add h_ci_pp h_ci_g]
+  have h_g_zero : (∮ z in C(s, r), g_an z) = 0 :=
+    circleIntegral_eq_zero_of_differentiable_on_off_countable hr_pos.le
+      Set.countable_empty h_g_cont
+      (fun z ⟨hz, _⟩ => (hg_ball z (Metric.ball_subset_ball hr_lt_rg.le hz)).differentiableAt)
+  rw [h_g_zero, add_zero]
+
 /-- The contour integral of the principal part vanishes when the residue is zero. -/
 theorem contourIntegral_principalPart_eq_zero_of_residue_zero
     (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
@@ -538,152 +554,27 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
     ∫ t in γ.a..γ.b, meromorphicPrincipalPart f s (γ.toFun t) * deriv γ.toFun t = 0 := by
   -- If order >= 0, principal part is 0, integral is trivially 0
   by_cases h_neg : meromorphicOrderAt f s < 0
-  · -- The principal part is a finite sum of terms c_k * (z-s)^{k-N} for k=0..N-1.
-    -- The integral is a corresponding sum of integrals.
-    -- For k ≤ N-2: exponent k-N ≤ -2, integral = 0 by contourIntegral_const_mul_zpow_eq_zero.
-    -- For k = N-1: exponent = -1, coefficient = residueAt f s = 0 (by hres), integral = 0.
-    --
-    -- We first reduce to showing each term's integral is 0.
+  · -- Genuine pole case: pp is a finite sum, each term integrates to 0
     set N := poleOrderNat f s with hN_def
     set g := meromorphicFactor f s hf h_neg.ne_top with hg_def
-    -- N > 0 since the order is negative
-    have hN_pos : 0 < N := by
-      show 0 < (-(meromorphicOrderAt f s).untop₀).toNat
-      have h_neg' : (meromorphicOrderAt f s).untop₀ < 0 := by
-        have hne_top : meromorphicOrderAt f s ≠ ⊤ := h_neg.ne_top
-        cases h : (meromorphicOrderAt f s) with
-        | top => exact absurd h hne_top
-        | coe v =>
-          simp only [WithTop.untop₀, WithTop.untopD, WithTop.recTopCoe]
-          rw [h] at h_neg; exact_mod_cast h_neg
-      omega
-    -- Unfold pp
+    have hN_pos : 0 < N := poleOrderNat_pos_of_neg_order f s h_neg
     have h_pp_eq : meromorphicPrincipalPart f s = fun z =>
         (Finset.range N).sum fun k =>
           (iteratedDeriv k g s / ↑(Nat.factorial k)) * (z - s) ^ ((k : ℤ) - (N : ℤ)) := by
       unfold meromorphicPrincipalPart
       rw [dif_pos ⟨hf, h_neg⟩]
     rw [h_pp_eq]
-    -- Push the integral through the sum
     simp_rw [Finset.sum_mul]
-    -- Each term c_k * (z-s)^{k-N} * γ'(t) integrates to 0:
-    -- For k ≤ N-2: exponent k-N ≤ -2, by contourIntegral_const_mul_zpow_eq_zero
-    -- For k = N-1: exponent = -1, coefficient involves residueAt = 0
-    -- We show all terms integrate to 0 using contourIntegral_const_mul_zpow_eq_zero
-    -- for terms with exponent ≤ -2, and the fact that the closed curve avoids s
-    -- gives vanishing for the remaining term.
-    --
-    -- Technical: the (z-s)^{-1} term integrates to c * 2πi * winding_number(γ,s).
-    -- We need c = 0, i.e., the N-1 coefficient = residueAt f s = 0.
-    -- This requires relating the principal part's coefficient to the residue,
-    -- which involves computing the circle integral of the Mathlib decomposition.
-    -- The sum ∫ Σ c_k (γ-s)^{k-N} γ' = Σ c_k ∫ (γ-s)^{k-N} γ'.
-    -- Each term with k-N ≤ -2: integral = 0 by contourIntegral_const_mul_zpow_eq_zero.
-    -- The k = N-1 term (exponent = -1): integral = c * ∮ (γ-s)^{-1} * γ'.
-    -- We need c * (integral of 1/(γ-s) * γ') = 0.
-    -- c = g^{(N-1)}(s)/(N-1)! which should equal residueAt f s = 0.
-    -- By residueAt_zpow_sum: residueAt(pp, s) = c_{N-1}.
-    -- By meromorphicAt_sub_principalPart_eventually: f - pp =ᶠ analytic near s.
-    -- So residueAt(f, s) = residueAt(pp, s) + residueAt(analytic, s) = c_{N-1} + 0 = c_{N-1}.
-    -- By hres: c_{N-1} = 0.
-    -- With c_{N-1} = 0, the k=N-1 term is 0, and all other terms have exponent ≤ -2.
-    -- Therefore each term integrates to 0 by contourIntegral_const_mul_zpow_eq_zero.
-    --
-    -- We need the coefficient c_{N-1} = 0. This follows from:
-    -- residueAt f s = c_{N-1} (by residueAt_zpow_sum applied to pp)
-    -- + the fact that f - pp is analytic (has residue 0).
+    -- The coefficient c_{N-1} = 0 because residueAt f s = residueAt pp s = c_{N-1}
     have h_coeff_zero : iteratedDeriv (N - 1) g s / ↑((N - 1).factorial) = 0 := by
       have h_res_pp := residueAt_zpow_sum s N hN_pos
         (fun k => iteratedDeriv k g s / ↑(k.factorial))
-      -- residueAt f s = residueAt pp s (since f - pp is analytic near s)
-      -- This is a standard result: the residue depends only on the behavior near s,
-      -- and f =ᶠ[nhds_ne s] pp + (analytic). The analytic part has residue 0.
-      -- Proving this formally requires working through the definition of residueAt
-      -- as a limit of circle integrals and showing ∮ f = ∮ pp for small r
-      -- (using Cauchy to show ∮ (analytic) = 0).
       have h_res_eq : residueAt f s = residueAt (fun z =>
           ∑ k ∈ Finset.range N,
-            iteratedDeriv k g s / ↑(k.factorial) * (z - s) ^ ((k : ℤ) - (N : ℤ))) s := by
-        -- Both sides are limUnder (𝓝[>] 0) of (2πi)⁻¹ * ∮ ... .
-        -- Show the circle integrals are eventually equal, so the limUnders are equal.
-        set pp := fun z => ∑ k ∈ Finset.range N,
-          iteratedDeriv k g s / ↑(k.factorial) * (z - s) ^ ((k : ℤ) - (N : ℤ))
-        -- f - pp is analytic near s
-        have h_pp_is : pp = meromorphicPrincipalPart f s := by
-          ext z; rw [h_pp_eq]
-        obtain ⟨g_an, hg_an_at, hg_eq⟩ :=
-          meromorphicAt_sub_principalPart_eventually f s hf
-        -- g_an is analytic at s and f z - pp z = g_an z for z near s (z ≠ s)
-        have hg_eq' : ∀ᶠ z in 𝓝[≠] s, f z - pp z = g_an z := by
-          rw [h_pp_is]; exact hg_eq
-        -- Get a ball where g_an is analytic
-        obtain ⟨rg, hrg_pos, hg_ball⟩ := hg_an_at.exists_ball_analyticOnNhd
-        -- Get a punctured ball where the eventual equality holds
-        rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hg_eq'
-        obtain ⟨rf, hrf_pos, hrf_eq⟩ := hg_eq'
-        have hr₀_pos : 0 < min rg rf := lt_min hrg_pos hrf_pos
-        -- Show both residueAt are equal by showing the limUnder functions are eventually equal
-        unfold residueAt
-        show limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
-          limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), pp z)
-        unfold limUnder; congr 1; apply Filter.map_congr
-        -- Show the two functions are eventually equal on 𝓝[>] 0
-        -- Suffices to show ∮ f = ∮ pp for r ∈ Ioo 0 (min rg rf)
-        apply Filter.Eventually.mono (Ioo_mem_nhdsGT hr₀_pos)
-        intro r ⟨hr_pos, hr_lt⟩
-        have hr_lt_rg : r < rg := lt_of_lt_of_le hr_lt (min_le_left _ _)
-        have hr_lt_rf : r < rf := lt_of_lt_of_le hr_lt (min_le_right _ _)
-        have hr_ne : r ≠ 0 := ne_of_gt hr_pos
-        -- The goal (after beta reduction) is:
-        -- (2πi)⁻¹ * ∮ f = (2πi)⁻¹ * ∮ pp
-        -- Suffices to show ∮ f = ∮ pp
-        suffices h_circ : (∮ z in C(s, r), f z) = (∮ z in C(s, r), pp z) by
-          simp only; rw [h_circ]
-        -- f = pp + g_an on sphere(s, r) (all points ≠ s, within ball(s, rf))
-        have h_eq_on : Set.EqOn f (fun z => pp z + g_an z) (Metric.sphere s r) := by
-          intro z hz
-          have h_ne : z ≠ s := by
-            intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; linarith
-          have h_in : dist z s < rf := by
-            rw [Metric.mem_sphere.mp hz]; exact hr_lt_rf
-          have h_mem : z ∈ Metric.ball s rf ∩ {s}ᶜ :=
-            ⟨Metric.mem_ball.mpr h_in, Set.mem_compl_singleton_iff.mpr h_ne⟩
-          have h_sub := hrf_eq h_mem
-          simp only [Set.mem_setOf_eq] at h_sub
-          -- h_sub : f z - pp z = g_an z, need: f z = pp z + g_an z
-          rw [show f z = pp z + (f z - pp z) from (add_sub_cancel _ _).symm, h_sub]
-        -- g_an continuous on closed ball
-        have h_g_cont : ContinuousOn g_an (Metric.closedBall s r) :=
-          hg_ball.continuousOn.mono (Metric.closedBall_subset_ball hr_lt_rg)
-        -- CircleIntegrable for g_an
-        have h_ci_g : CircleIntegrable g_an s r :=
-          (h_g_cont.mono Metric.sphere_subset_closedBall).circleIntegrable hr_pos.le
-        -- pp is continuous on sphere (s not on sphere since r > 0)
-        have hs_not : s ∉ Metric.sphere s r := by simp [hr_ne.symm]
-        have h_pp_cont : ContinuousOn pp (Metric.sphere s r) := by
-          apply continuousOn_finset_sum
-          intro k _
-          apply ContinuousOn.mul continuousOn_const
-          apply ContinuousOn.zpow₀ (continuousOn_id.sub continuousOn_const)
-          intro z hz
-          exact Or.inl (sub_ne_zero.mpr (ne_of_mem_of_not_mem hz hs_not))
-        -- CircleIntegrable for pp
-        have h_ci_pp : CircleIntegrable pp s r :=
-          h_pp_cont.circleIntegrable hr_pos.le
-        -- ∮ f = ∮ pp + ∮ g_an
-        rw [circleIntegral.integral_congr hr_pos.le h_eq_on,
-          circleIntegral.integral_add h_ci_pp h_ci_g]
-        -- ∮ g_an = 0 by Cauchy
-        have h_g_zero : (∮ z in C(s, r), g_an z) = 0 :=
-          circleIntegral_eq_zero_of_differentiable_on_off_countable hr_pos.le
-            Set.countable_empty h_g_cont
-            (fun z ⟨hz, _⟩ => (hg_ball z (Metric.ball_subset_ball hr_lt_rg.le hz)).differentiableAt)
-        rw [h_g_zero, add_zero]
+            iteratedDeriv k g s / ↑(k.factorial) * (z - s) ^ ((k : ℤ) - (N : ℤ))) s :=
+        residueAt_eq_residueAt_principalPart_sum f s hf N g h_pp_eq
       rw [hres] at h_res_eq; rw [← h_res_pp]; exact h_res_eq.symm
-    -- Now show each term's contour integral is 0.
-    -- After simp_rw [Finset.sum_mul], the goal is:
-    -- ∫ t in a..b, Σ_{k<N} (c_k * (γ(t)-s)^{k-N} * γ'(t)) = 0
-    -- Split the integral over the sum using intervalIntegral.integral_finset_sum.
+    -- Each term integrates to 0: k=N-1 has zero coefficient, k<N-1 has exponent ≤ -2
     have h_int : ∀ k ∈ Finset.range N, IntervalIntegrable
         (fun t => iteratedDeriv k g s / ↑(k.factorial) * (γ.toFun t - s) ^
           ((k : ℤ) - (N : ℤ)) * deriv γ.toFun t) MeasureTheory.volume γ.a γ.b := by
@@ -718,6 +609,42 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
       unfold meromorphicPrincipalPart
       rw [dif_neg (not_and_of_not_right _ h_neg)]
     simp only [h_pp, zero_mul, intervalIntegral.integral_zero]
+
+/-- If `g` is differentiable on a convex open `U`, and `γ` is a closed piecewise C^1
+immersion with image in `U`, then `∮_γ g = 0` (by Cauchy via holomorphic primitive + FTC). -/
+private theorem contourIntegral_eq_zero_of_differentiableOn_convex
+    (g : ℂ → ℂ) (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U) (hU_ne : U.Nonempty)
+    (hg_diff : DifferentiableOn ℂ g U)
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
+    ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
+  obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne hg_diff
+  have h_Fγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) := by
+    intro t ht
+    exact ((hF (γ.toFun t) (hγ_in_U t ht)).continuousAt.continuousWithinAt.comp
+      (γ.continuous_toFun t ht) (fun t' ht' => hγ_in_U t' ht'))
+  have h_countable : (↑γ.partition ∩ Ioo γ.a γ.b : Set ℝ).Countable :=
+    (γ.partition.finite_toSet.inter_of_left _).countable
+  have h_deriv : ∀ t ∈ Ioo γ.a γ.b \ (↑γ.partition ∩ Ioo γ.a γ.b),
+      HasDerivAt (F ∘ γ.toFun) (g (γ.toFun t) * deriv γ.toFun t) t := by
+    intro t ⟨ht, hp⟩
+    have ht' : t ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht
+    have hp' : t ∉ γ.partition := fun h => hp ⟨h, ht⟩
+    exact (hF (γ.toFun t) (hγ_in_U t ht')).comp_of_eq t
+      ((γ.smooth_off_partition t ht' hp').hasDerivAt) rfl
+  have h_int : IntervalIntegrable
+      (fun t => g (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b := by
+    have hg_cont : ContinuousOn g U := hg_diff.continuousOn
+    exact IntervalIntegrable.continuousOn_mul
+      (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
+        (piecewiseC1Immersion_deriv_bounded γ))
+      ((hg_cont.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)).mono
+        (by rw [Set.uIcc_of_le (le_of_lt γ.hab)]))
+  have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+    (F ∘ γ.toFun) (fun t => g (γ.toFun t) * deriv γ.toFun t)
+    (le_of_lt γ.hab) h_countable h_Fγ_cont h_deriv h_int
+  rw [h_ftc, Function.comp_apply, Function.comp_apply,
+    (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self]
 
 /-! ### Single-point vanishing theorem
 
@@ -802,36 +729,9 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero
           exact (Function.update_of_ne (Set.mem_compl_singleton_iff.mp hw) (g_an s) rp).symm
         exact (h_ev.differentiableAt_iff.mp h_rp_diff).differentiableWithinAt
     -- Step D: ∮ rp_nf = 0 by Cauchy on convex U
-    have hU_ne : U.Nonempty := ⟨s, hs_in_U⟩
-    obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne h_rp_nf_diff_U
-    have h_Fγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) := by
-      intro t ht
-      exact ((hF (γ.toFun t) (hγ_in_U t ht)).continuousAt.continuousWithinAt.comp
-        (γ.continuous_toFun t ht) (fun t' ht' => hγ_in_U t' ht'))
-    have h_countable : (↑γ.partition ∩ Ioo γ.a γ.b : Set ℝ).Countable :=
-      (γ.partition.finite_toSet.inter_of_left _).countable
-    have h_deriv_nf : ∀ t ∈ Ioo γ.a γ.b \ (↑γ.partition ∩ Ioo γ.a γ.b),
-        HasDerivAt (F ∘ γ.toFun) (rp_nf (γ.toFun t) * deriv γ.toFun t) t := by
-      intro t ⟨ht, hp⟩
-      have ht' : t ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht
-      have hp' : t ∉ γ.partition := fun h => hp ⟨h, ht⟩
-      exact (hF (γ.toFun t) (hγ_in_U t ht')).comp_of_eq t
-        ((γ.smooth_off_partition t ht' hp').hasDerivAt) rfl
-    -- Integrability of rp_nf ∘ γ * γ'
-    have h_int_nf : IntervalIntegrable
-        (fun t => rp_nf (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b := by
-      have hrpnf_cont : ContinuousOn rp_nf U := h_rp_nf_diff_U.continuousOn
-      exact IntervalIntegrable.continuousOn_mul
-        (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
-          (piecewiseC1Immersion_deriv_bounded γ))
-        ((hrpnf_cont.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)).mono
-          (by rw [Set.uIcc_of_le (le_of_lt γ.hab)]))
-    have h_nf_zero : ∫ t in γ.a..γ.b, rp_nf (γ.toFun t) * deriv γ.toFun t = 0 := by
-      have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-        (F ∘ γ.toFun) (fun t => rp_nf (γ.toFun t) * deriv γ.toFun t)
-        (le_of_lt γ.hab) h_countable h_Fγ_cont h_deriv_nf h_int_nf
-      rw [h_ftc, Function.comp_apply, Function.comp_apply,
-        (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self]
+    have h_nf_zero : ∫ t in γ.a..γ.b, rp_nf (γ.toFun t) * deriv γ.toFun t = 0 :=
+      contourIntegral_eq_zero_of_differentiableOn_convex rp_nf U hU hU_convex
+        ⟨s, hs_in_U⟩ h_rp_nf_diff_U γ hγ_closed hγ_in_U
     -- Step E: rp = rp_nf on γ's image (γ avoids s), transfer integral
     rw [show (∫ t in γ.a..γ.b, rp (γ.toFun t) * deriv γ.toFun t) =
         (∫ t in γ.a..γ.b, rp_nf (γ.toFun t) * deriv γ.toFun t) from by
@@ -873,6 +773,26 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero
         (by rw [Set.uIcc_of_le (le_of_lt γ.hab)]))
   simp_rw [h_eq]
   rw [intervalIntegral.integral_add h_int_rp h_int_pp, h_rp_zero, h_pp_zero, add_zero]
+
+/-- The principal part `meromorphicPrincipalPart f s` composed with a piecewise C^1
+immersion `γ` that avoids `s` is interval-integrable against `γ'`. -/
+private theorem intervalIntegrable_principalPart_mul_deriv
+    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
+    (γ : PiecewiseC1Immersion)
+    (hγ_avoids_s : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    IntervalIntegrable
+      (fun t => meromorphicPrincipalPart f s (γ.toFun t) * deriv γ.toFun t)
+      volume γ.a γ.b := by
+  have hpp_cont : ContinuousOn (fun t => meromorphicPrincipalPart f s (γ.toFun t))
+      (Set.uIcc γ.a γ.b) := by
+    rw [Set.uIcc_of_le (le_of_lt γ.hab)]
+    apply ((meromorphicPrincipalPart_differentiableOn f s hf).continuousOn.mono _).comp
+      γ.continuous_toFun (Set.mapsTo_image _ _)
+    intro z hz; obtain ⟨t, ht, rfl⟩ := hz
+    exact Set.mem_compl_singleton_iff.mpr (hγ_avoids_s t ht)
+  exact IntervalIntegrable.continuousOn_mul
+    (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
+      (piecewiseC1Immersion_deriv_bounded γ)) hpp_cont
 
 /-! ### Multi-point vanishing theorem
 
@@ -1032,36 +952,9 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset
       rcases S.eq_empty_or_nonempty with rfl | ⟨s, hs⟩
       · exact ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr (le_of_lt γ.hab))⟩
       · exact ⟨s, hS_in_U s hs⟩
-    obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne h_r_nf_diff_U
-    have h_Fγ_cont : ContinuousOn (F ∘ γ.toFun) (Icc γ.a γ.b) := by
-      intro t ht
-      exact ((hF (γ.toFun t) (hγ_in_U t ht)).continuousAt.continuousWithinAt.comp
-        (γ.continuous_toFun t ht) (fun t' ht' => hγ_in_U t' ht'))
-    have h_countable : (↑γ.partition ∩ Ioo γ.a γ.b : Set ℝ).Countable :=
-      (γ.partition.finite_toSet.inter_of_left _).countable
-    have h_deriv : ∀ t ∈ Ioo γ.a γ.b \ (↑γ.partition ∩ Ioo γ.a γ.b),
-        HasDerivAt (F ∘ γ.toFun) (r_nf (γ.toFun t) * deriv γ.toFun t) t := by
-      intro t ⟨ht, hp⟩
-      have ht' : t ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht
-      have hp' : t ∉ γ.partition := fun h => hp ⟨h, ht⟩
-      exact (hF (γ.toFun t) (hγ_in_U t ht')).comp_of_eq t
-        ((γ.smooth_off_partition t ht' hp').hasDerivAt) rfl
-    have h_int : IntervalIntegrable
-        (fun t => r_nf (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b := by
-      have hr_cont : ContinuousOn r_nf U := h_r_nf_diff_U.continuousOn
-      have hrγ_cont : ContinuousOn (fun t => r_nf (γ.toFun t))
-          (Set.uIcc γ.a γ.b) := by
-        rw [Set.uIcc_of_le (le_of_lt γ.hab)]
-        exact hr_cont.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)
-      exact IntervalIntegrable.continuousOn_mul
-        (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
-          (piecewiseC1Immersion_deriv_bounded γ)) hrγ_cont
-    have h_nf_zero : ∫ t in γ.a..γ.b, r_nf (γ.toFun t) * deriv γ.toFun t = 0 := by
-      have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-        (F ∘ γ.toFun) (fun t => r_nf (γ.toFun t) * deriv γ.toFun t)
-        (le_of_lt γ.hab) h_countable h_Fγ_cont h_deriv h_int
-      rw [h_ftc, Function.comp_apply, Function.comp_apply,
-        (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self]
+    have h_nf_zero : ∫ t in γ.a..γ.b, r_nf (γ.toFun t) * deriv γ.toFun t = 0 :=
+      contourIntegral_eq_zero_of_differentiableOn_convex r_nf U hU hU_convex hU_ne
+        h_r_nf_diff_U γ hγ_closed hγ_in_U
     -- r = r_nf on γ's image (γ avoids all of S)
     have h_integrals_eq : (∫ t in γ.a..γ.b, r (γ.toFun t) * deriv γ.toFun t) =
         (∫ t in γ.a..γ.b, r_nf (γ.toFun t) * deriv γ.toFun t) := by
@@ -1103,18 +996,8 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset
         (piecewiseC1Immersion_deriv_bounded γ)) hrγ_cont
   -- Integrability of each pp_s ∘ γ * γ' (needed for both total_pp and finset_sum)
   have h_int_each_pp : ∀ s ∈ S, IntervalIntegrable
-      (fun t => meromorphicPrincipalPart f s (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b := by
-    intro s hs
-    have hppγ_cont : ContinuousOn (fun t => meromorphicPrincipalPart f s (γ.toFun t))
-        (Set.uIcc γ.a γ.b) := by
-      rw [Set.uIcc_of_le (le_of_lt γ.hab)]
-      apply ((meromorphicPrincipalPart_differentiableOn f s (hf_mero s hs)).continuousOn.mono _).comp
-        γ.continuous_toFun (Set.mapsTo_image _ _)
-      intro z hz; obtain ⟨t, ht, rfl⟩ := hz
-      exact Set.mem_compl_singleton_iff.mpr (hγ_avoids s hs t ht)
-    exact IntervalIntegrable.continuousOn_mul
-      (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
-        (piecewiseC1Immersion_deriv_bounded γ)) hppγ_cont
+      (fun t => meromorphicPrincipalPart f s (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b :=
+    fun s hs => intervalIntegrable_principalPart_mul_deriv f s (hf_mero s hs) γ (hγ_avoids s hs)
   -- Integrability of total_pp part:
   have h_int_tp : IntervalIntegrable
       (fun t => total_pp (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b := by
