@@ -148,8 +148,7 @@ f minus its principal part extends analytically to the pole. -/
 truncated Taylor polynomial `Σ_{k<N} (G^(k)(s)/k!) * (z-s)^k`, then
 `G - P = (z-s)^N • H` near `s` for some analytic `H`. -/
 private theorem taylor_remainder_factored (G : ℂ → ℂ) (s : ℂ) (N : ℕ)
-    (hG_an : AnalyticAt ℂ G s)
-    (P : ℂ → ℂ)
+    (hG_an : AnalyticAt ℂ G s) (P : ℂ → ℂ)
     (hP_def : P = fun z => ∑ k ∈ Finset.range N,
       (iteratedDeriv k G s / ↑(k.factorial)) * (z - s) ^ (k : ℕ))
     (hP_an : AnalyticAt ℂ P s) :
@@ -480,9 +479,8 @@ All other terms have exponent ≤ -2, so they vanish by `contourIntegral_zpow_eq
 /-- The residue of `f` equals the residue of its principal part sum. Since `f - pp` is
 analytic near `s`, the circle integrals of `f` and `pp` agree for small radius, so
 the residues (defined as limits of circle integrals) are equal. -/
-private theorem residueAt_eq_residueAt_principalPart_sum
-    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
-    (N : ℕ) (g : ℂ → ℂ)
+private theorem residueAt_eq_residueAt_principalPart_sum (f : ℂ → ℂ) (s : ℂ)
+    (hf : MeromorphicAt f s) (N : ℕ) (g : ℂ → ℂ)
     (h_pp_eq : meromorphicPrincipalPart f s = fun z =>
         (Finset.range N).sum fun k =>
           (iteratedDeriv k g s / ↑(Nat.factorial k)) * (z - s) ^ ((k : ℤ) - (N : ℤ))) :
@@ -661,11 +659,9 @@ curve in `U` avoiding `s`.
   on all of `U` by Riemann's removable singularity theorem
 - `∮ rp = 0` by Cauchy's theorem on convex `U` (`holomorphic_convex_primitive`) -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero
-    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
-    (hres : residueAt f s = 0)
+    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s) (hres : residueAt f s = 0)
     (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (hf_diff : DifferentiableOn ℂ f (U \ {s}))
-    (hs_in_U : s ∈ U)
+    (hf_diff : DifferentiableOn ℂ f (U \ {s})) (hs_in_U : s ∈ U)
     (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
@@ -809,11 +805,9 @@ closed curve in `U` avoiding all of `S`.
 is already analytic at `s`). So `r` is differentiable on all of `U`. By Cauchy,
 `∮ r = 0`. By linearity, `∮ f = Σ ∮ pp_s = 0` (each vanishes by zero residue). -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset
-    (S : Finset ℂ) (f : ℂ → ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
-    (hres : ∀ s ∈ S, residueAt f s = 0)
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
+    (S : Finset ℂ) (f : ℂ → ℂ) (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
+    (hres : ∀ s ∈ S, residueAt f s = 0) (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
     (hS_in_U : ∀ s ∈ S, s ∈ U)
     (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
