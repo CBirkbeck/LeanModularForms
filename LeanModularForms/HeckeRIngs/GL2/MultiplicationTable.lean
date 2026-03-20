@@ -127,13 +127,13 @@ private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (F
     (a : Fin 2 → ℕ) (_ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
     (L R : Matrix.SpecialLinearGroup (Fin 2) ℤ) (k : ℕ) (_hk : 0 < k)
     (heq : (L : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => ((![1, p] : Fin 2 → ℕ) m : ℤ)) *
+      Diag((1 : ℤ), (p : ℤ)) *
       (S : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => ((![1, p ^ k] : Fin 2 → ℕ) m : ℤ)) *
+      Diag((1 : ℤ), (p ^ k : ℤ)) *
       (R : Matrix (Fin 2) (Fin 2) ℤ) =
       Matrix.diagonal (fun i => (a i : ℤ))) :
     a 0 ∣ p := by
-  set dp := Matrix.diagonal (fun m => ((![1, p] : Fin 2 → ℕ) m : ℤ))
+  set dp := Diag((1 : ℤ), (p : ℤ))
   set dpk := Matrix.diagonal
     (fun m => ((![1, p ^ k] : Fin 2 → ℕ) m : ℤ))
   set S_ℤ := (↑S : Matrix (Fin 2) (Fin 2) ℤ)
@@ -243,9 +243,9 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
     convert this using 1; group
   have h_int_5 : (↑L' : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => ((![1, p] : Fin 2 → ℕ) m : ℤ)) *
+      Diag((1 : ℤ), (p : ℤ)) *
       (↑S_mid : Matrix (Fin 2) (Fin 2) ℤ) *
-      Matrix.diagonal (fun m => ((![1, p ^ k] : Fin 2 → ℕ) m : ℤ)) *
+      Diag((1 : ℤ), (p ^ k : ℤ)) *
       (↑R' : Matrix (Fin 2) (Fin 2) ℤ) =
       Matrix.diagonal (fun i => (a i : ℤ)) := by
     ext i j
