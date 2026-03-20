@@ -182,8 +182,7 @@ standard FTC (`integral_eq_sub_of_hasDerivAt_of_le`) on each smooth subinterval.
 On each subinterval [p_i, p_{i+1}], gamma is C^1 hence differentiable, so
 F circ gamma has derivative f(gamma(t)) * gamma'(t) by the chain rule, and
 the sum telescopes to F(gamma(b)) - F(gamma(a)). -/
-private theorem ftc_piecewise_contour
-    {F : ℂ → ℂ} {f : ℂ → ℂ}
+private theorem ftc_piecewise_contour {F : ℂ → ℂ} {f : ℂ → ℂ}
     (γ : PiecewiseC1Curve) (U : Set ℂ)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hF_prim : ∀ z ∈ U, HasDerivAt F (f z) z)
@@ -266,9 +265,8 @@ The proof uses:
    on the convex set U.
 3. The fundamental theorem of calculus to evaluate the integral as
    F(gamma(b)) - F(gamma(a)) = 0 (since gamma is closed). -/
-theorem isNullHomologous_of_convex
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U) (hU_ne : U.Nonempty)
-    (γ : PiecewiseC1Immersion)
+theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (hU_ne : U.Nonempty) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
     IsNullHomologous γ U where
@@ -1412,8 +1410,7 @@ end
 
 set_option maxHeartbeats 4000000 in
 /-- Null-homologous version of `integral_eq_sum_residues_of_avoids`. -/
-theorem integral_eq_sum_residues_of_nullHomologous
-    (U : Set ℂ) (hU : IsOpen U)
+theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (hS0_in_U : ∀ s ∈ S0, s ∈ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
@@ -1596,10 +1593,8 @@ private lemma contourIntegral_add_principalPart_regularPart
 /-- Null-homologous version: contour integral of meromorphic function with zero residue
 vanishes when the curve is null-homologous and avoids the singularity. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
-    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
-    (hres : residueAt f s = 0)
-    (U : Set ℂ) (hU : IsOpen U)
-    (hf_diff : DifferentiableOn ℂ f (U \ {s}))
+    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s) (hres : residueAt f s = 0)
+    (U : Set ℂ) (hU : IsOpen U) (hf_diff : DifferentiableOn ℂ f (U \ {s}))
     (hs_in_U : s ∈ U)
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
@@ -1616,9 +1611,8 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
   rw [contourIntegral_add_principalPart_regularPart f s hf U hf_diff γ h_null hγ_avoids,
     h_pp_zero, h_rp_zero, add_zero]
 
-private theorem contourIntegral_sum_principalParts_eq_zero
-    (S : Finset ℂ) (f : ℂ → ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
+private theorem contourIntegral_sum_principalParts_eq_zero (S : Finset ℂ)
+    (f : ℂ → ℂ) (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
     (hres : ∀ s ∈ S, residueAt f s = 0)
     (γ : PiecewiseC1Immersion) (h_closed : γ.toFun γ.a = γ.toFun γ.b)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
@@ -1651,10 +1645,8 @@ private theorem diff_sub_principalParts_differentiableOn
         Set.mem_compl_singleton_iff.mpr (fun h =>
           hw.2 (h ▸ Finset.mem_coe.mpr hs)))) z hz)
 
-private theorem analytic_correction_at_pole
-    (S : Finset ℂ) (f : ℂ → ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
-    (g : ℂ → ℂ)
+private theorem analytic_correction_at_pole (S : Finset ℂ) (f : ℂ → ℂ)
+    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (g : ℂ → ℂ)
     (hg_def : g = fun z => f z -
       ∑ s ∈ S, GeneralizedResidueTheory.meromorphicPrincipalPart f s z)
     (z : ℂ) (hzS : z ∈ (S : Set ℂ)) :
@@ -1696,10 +1688,9 @@ private theorem analytic_correction_at_pole
     (hg_ext_diff.continuousAt.tendsto.mono_left nhdsWithin_le_nhds).congr'
       hg_eq_ext.symm⟩
 
-private theorem analytic_correction_differentiableOn
-    (S : Finset ℂ) (f : ℂ → ℂ) (U : Set ℂ) (hU : IsOpen U)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
-    (g : ℂ → ℂ)
+private theorem analytic_correction_differentiableOn (S : Finset ℂ)
+    (f : ℂ → ℂ) (U : Set ℂ) (hU : IsOpen U)
+    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (g : ℂ → ℂ)
     (hg_def : g = fun z => f z -
       ∑ s ∈ S, GeneralizedResidueTheory.meromorphicPrincipalPart f s z)
     (h_g_diff_off : DifferentiableOn ℂ g (U \ ↑S)) :
@@ -1802,10 +1793,8 @@ private theorem contourIntegral_correction_eq
 
 /-- Finset version: induction on |S| using the single-pole version. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
-    (S : Finset ℂ) (f : ℂ → ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
-    (hres : ∀ s ∈ S, residueAt f s = 0)
-    (U : Set ℂ) (hU : IsOpen U)
+    (S : Finset ℂ) (f : ℂ → ℂ) (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
+    (hres : ∀ s ∈ S, residueAt f s = 0) (U : Set ℂ) (hU : IsOpen U)
     (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
@@ -1829,16 +1818,12 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
 -- Null-homologous version of higherOrderCancel_assembly, now a thin wrapper
 -- around the abstract version in HigherOrderAssembly.lean.
 open GeneralizedResidueTheory in
-private theorem higherOrderCancel_assembly_nh
-    (U : Set ℂ) (hU : IsOpen U)
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (h_null : IsNullHomologous γ U)
+private theorem higherOrderCancel_assembly_nh (U : Set ℂ) (hU : IsOpen U)
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
-    (hCondB : SatisfiesConditionB γ f S0)
-    (_hγ_meas : Measurable γ.toFun)
+    (hCondB : SatisfiesConditionB γ f S0) (_hγ_meas : Measurable γ.toFun)
     (h_no_endpt : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
     (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂)
@@ -1867,16 +1852,12 @@ flatness of order 1 for higher-order poles. -/
 
 open GeneralizedResidueTheory in
 /-- Null-homologous version of conditionsAB_imply_higherOrderCancel. -/
-theorem conditionsAB_imply_higherOrderCancel_nh
-    (U : Set ℂ) (hU : IsOpen U)
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (h_null : IsNullHomologous γ U)
+theorem conditionsAB_imply_higherOrderCancel_nh (U : Set ℂ) (hU : IsOpen U)
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
-    (hCondB : SatisfiesConditionB γ f S0)
-    (hγ_meas : Measurable γ.toFun)
+    (hCondB : SatisfiesConditionB γ f S0) (hγ_meas : Measurable γ.toFun)
     (h_no_endpt : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
     (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂)
@@ -1926,12 +1907,9 @@ theorem conditionsAB_imply_higherOrderCancel_nh
     hMero hCondA hCondB hγ_meas h_no_endpt h_unique_cross hS0_in_U
 
 open GeneralizedResidueTheory in
-lemma pv_res_tendsto_of_immersion_nullHomologous
-    (U : Set ℂ)
-    (S : Set ℂ)
+lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (hS_closed : IsClosed S)
-    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
     (f : ℂ → ℂ)
     (γ : PiecewiseC1Immersion)
     (h_null : IsNullHomologous γ U)
@@ -2006,15 +1984,12 @@ lemma pv_res_tendsto_of_immersion_nullHomologous
 
 Generalized residue theorem with conditions (A')+(B) for a null-homologous
 immersed piecewise C¹ curve in an open set U, replacing the convexity hypothesis. -/
-theorem generalizedResidueTheorem_3_3_nullHomologous
-    (U : Set ℂ) (hU : IsOpen U)
-    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+theorem generalizedResidueTheorem_3_3_nullHomologous (U : Set ℂ)
+    (hU : IsOpen U) (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (hS_closed : IsClosed S)
-    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (h_null : IsNullHomologous γ U)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))

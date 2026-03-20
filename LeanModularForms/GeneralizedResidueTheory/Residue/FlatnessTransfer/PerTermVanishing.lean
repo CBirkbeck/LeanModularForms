@@ -193,9 +193,8 @@ Proof strategy: On a small circle of radius `r` around `s`:
 - `∮ (z-s)^{-(k+1)} = 0` for `k ≥ 1` (by `integral_sub_zpow_of_ne`, exponent ≠ -1)
 - `∮ (z-s)⁻¹ = 2πi` (by `integral_sub_center_inv`)
 - So `∮ f = a₀ · 2πi`, hence `residueAt f s = (2πi)⁻¹ · a₀ · 2πi = a₀`. -/
-theorem residueAt_eq_laurent_head_coeff (f : ℂ → ℂ) (s : ℂ)
-    (N : ℕ) (hN : 0 < N) (a : Fin N → ℂ) (g : ℂ → ℂ)
-    (hg : AnalyticAt ℂ g s)
+theorem residueAt_eq_laurent_head_coeff (f : ℂ → ℂ) (s : ℂ) (N : ℕ)
+    (hN : 0 < N) (a : Fin N → ℂ) (g : ℂ → ℂ) (hg : AnalyticAt ℂ g s)
     (hf_eq : ∀ᶠ z in 𝓝[≠] s,
       f z = g z + ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) :
     residueAt f s = a ⟨0, hN⟩ := by
@@ -252,8 +251,7 @@ theorem residueAt_eq_laurent_head_coeff (f : ℂ → ℂ) (s : ℂ)
 /-- Helper 1: The difference between single-point and multi-point CPV integrands
 equals an indicator function a.e. on `Ι γ.a γ.b`. -/
 private lemma ae_eq_indicator_diff_cpv_zpow
-    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
-    (hs : s ∈ S0)
+    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ) (hs : s ∈ S0)
     (f_zpow : ℂ → ℂ) (hf_zpow : f_zpow = fun z => (z - s) ^ (-(m : ℤ)))
     (ε : ℝ) :
     (fun t => (if ‖γ.toFun t - s‖ > ε then f_zpow (γ.toFun t) * deriv γ.toFun t else 0) -
@@ -714,9 +712,8 @@ This extends `pv_higher_order_term_tendsto_zero` from single-point to
 multi-point cutoff. The difference between multi-point and single-point
 cutoffs is supported on a set where `(z-s)^{-m}` is bounded (far from `s`,
 near some other `s' ∈ S0`) and whose measure tends to 0. -/
-theorem multipoint_pv_zpow_tendsto_zero
-    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ) (hm : 2 ≤ m)
-    (hs : s ∈ S0)
+theorem multipoint_pv_zpow_tendsto_zero (S0 : Finset ℂ)
+    (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ) (hm : 2 ≤ m) (hs : s ∈ S0)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hcross : γ.toFun t₀ = s)
     (h_unique : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = s → t = t₀)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
@@ -843,11 +840,9 @@ to `g(γ(t)) · γ'(t)` as `ε → 0` (the cutout set shrinks to a null set), an
 is dominated by `‖g(γ(t))‖ · ‖γ'(t)‖` (bounded since `g` is continuous on
 the compact image of `γ`). By DCT, the CPV integral converges to the ordinary
 integral `∮_γ g dz`, which is 0 by Cauchy's integral theorem on convex `U`. -/
-theorem holomorphic_cpv_tendsto_zero_on_convex
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (S0 : Finset ℂ)
-    (g : ℂ → ℂ) (hg : DifferentiableOn ℂ g U)
-    (γ : PiecewiseC1Immersion)
+theorem holomorphic_cpv_tendsto_zero_on_convex (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (S0 : Finset ℂ) (g : ℂ → ℂ)
+    (hg : DifferentiableOn ℂ g U) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
     Tendsto (fun ε =>
@@ -926,10 +921,8 @@ is that the CPV integrand is bounded (it's either 0 or g(γ(t)) * γ'(t) where
 set within [a,b]). -/
 lemma intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
     (U : Set ℂ) (S0 : Finset ℂ) (g : ℂ → ℂ)
-    (hg_cont : ContinuousOn g (U \ ↑S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (ε : ℝ) (hε : 0 < ε) :
+    (hg_cont : ContinuousOn g (U \ ↑S0)) (γ : PiecewiseC1Immersion)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) (ε : ℝ) (hε : 0 < ε) :
     IntervalIntegrable
       (cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε) volume γ.a γ.b := by
   have hγ_cont := γ.toPiecewiseC1Curve.continuous_toFun
@@ -1257,8 +1250,7 @@ The proof splits `CPV(g) = CPV(g_reg) + CPV(g_pol)` using CPV linearity
 (both are interval integrable for fixed ε > 0), then combines the limits. -/
 private theorem cpv_tendsto_zero_of_add_decomposition
     (U : Set ℂ) (S0 : Finset ℂ) (g g_reg g_pol : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (γ : PiecewiseC1Immersion) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hg_eq : ∀ z, g z = g_reg z + g_pol z)
     (hg_reg_cont : ContinuousOn g_reg (γ.toFun '' Icc γ.a γ.b))
     (hg_reg_int_zero : ∫ t in γ.a..γ.b, g_reg (γ.toFun t) * deriv γ.toFun t = 0)

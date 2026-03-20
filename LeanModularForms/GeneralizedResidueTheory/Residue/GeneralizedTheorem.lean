@@ -112,9 +112,8 @@ private lemma finset_min_sep (S0 : Finset ℂ)
 
 /-- The Cauchy filter argument: if the sum of PV terms converges and the regular part
 tends to its integral, then the full CPV filter is Cauchy (hence converges). -/
-private lemma cpv_cauchy_of_sum_and_regular
-    (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
-    (hS0_nonempty : S0.Nonempty)
+private lemma cpv_cauchy_of_sum_and_regular (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion) (hS0_nonempty : S0.Nonempty)
     (hPV_each : ∀ s ∈ S0, CauchyPrincipalValueExists'
       (fun z => residueSimplePole f s / (z - s)) γ.toFun γ.a γ.b s)
     (hg_reg_cont : ContinuousOn
@@ -167,21 +166,14 @@ private lemma cpv_cauchy_of_sum_and_regular
   exact h_M_tendsto.cauchy_map
 
 /-- Multi-point PV exists when each singular term has PV. -/
-lemma cauchyPrincipalValueOn_singular_sum
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
-    (_hSimplePoles : ∀ s ∈ S0,
-      HasSimplePoleAt f s)
-    (hPV_each : ∀ s ∈ S0,
-      CauchyPrincipalValueExists'
-        (fun z => residueSimplePole f s / (z - s))
-        γ.toFun γ.a γ.b s)
+lemma cauchyPrincipalValueOn_singular_sum (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion) (_hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
+    (hPV_each : ∀ s ∈ S0, CauchyPrincipalValueExists'
+      (fun z => residueSimplePole f s / (z - s)) γ.toFun γ.a γ.b s)
     (hg_reg_cont : ContinuousOn
-      (fun z => f z - ∑ s ∈ S0,
-        residueSimplePole f s / (z - s))
+      (fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s))
       (γ.toFun '' Icc γ.a γ.b)) :
-    CauchyPrincipalValueExistsOn S0 f
-      γ.toFun γ.a γ.b := by
+    CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b := by
   by_cases hS0_empty : S0 = ∅
   · subst hS0_empty
     unfold CauchyPrincipalValueExistsOn
@@ -203,11 +195,9 @@ lemma cauchyPrincipalValueOn_singular_sum
 
 /-- The integral of a holomorphic function along a closed piecewise C¹ immersion
 vanishes, via the fundamental theorem of calculus. -/
-private lemma holomorphic_closed_integral_zero
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (g : ℂ → ℂ) (hg_diff : DifferentiableOn ℂ g U)
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+private lemma holomorphic_closed_integral_zero (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (g : ℂ → ℂ) (hg_diff : DifferentiableOn ℂ g U)
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hg_cont_on_image : ContinuousOn g (γ.toFun '' Icc γ.a γ.b)) :
     ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
@@ -423,36 +413,22 @@ private lemma generalizedResidueTheorem'_crossing_formula
 /-- Generalized residue theorem: CPV equals `2πi · Σ winding ·
 residue` even when γ crosses poles. -/
 theorem generalizedResidueTheorem'
-    (U : Set ℂ) (hU : IsOpen U)
-    (hU_convex : Convex ℝ U)
+    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
     (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
-    (hS_discrete : ∀ s ∈ S, ∃ ε > 0,
-      ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (_hS_closed : IsClosed S)
-    (S0 : Finset ℂ)
+    (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
+    (_hS_closed : IsClosed S) (S0 : Finset ℂ)
     (hS0_subset : ∀ s ∈ S0, s ∈ S)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (_hS_on_curve : ∀ t ∈ Icc γ.a γ.b,
-      γ.toFun t ∈ S → γ.toFun t ∈ S0)
-    (hSimplePoles : ∀ s ∈ S0,
-      HasSimplePoleAt f s)
-    (hf_ext : ∀ s ∈ S0, ContinuousAt
-      (fun z =>
-        f z - residueSimplePole f s / (z - s))
-      s)
-    (hPV_singular : ∀ s ∈ S0,
-      CauchyPrincipalValueExists'
-        (fun z =>
-          residueSimplePole f s / (z - s))
-        γ.toFun γ.a γ.b s) :
-    CauchyPrincipalValueExistsOn S0 f
-      γ.toFun γ.a γ.b ∧
-    cauchyPrincipalValueOn S0 f
-      γ.toFun γ.a γ.b =
-      2 * Real.pi * I *
+    (_hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
+    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
+    (hf_ext : ∀ s ∈ S0,
+      ContinuousAt (fun z => f z - residueSimplePole f s / (z - s)) s)
+    (hPV_singular : ∀ s ∈ S0, CauchyPrincipalValueExists'
+      (fun z => residueSimplePole f s / (z - s)) γ.toFun γ.a γ.b s) :
+    CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b ∧
+    cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b = 2 * Real.pi * I *
         ∑ s ∈ S0,
           generalizedWindingNumber' γ.toFun
             γ.a γ.b s *
@@ -532,15 +508,12 @@ replace the old `hPV_singular`. These are satisfied by any "reasonable" curve:
 - No endpoint crossings holds when poles are interior to the curve
 - C² at crossings holds for piecewise smooth curves
 - Continuous derivative near crossings follows from C² -/
-theorem generalizedResidueTheorem
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+theorem generalizedResidueTheorem (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (hS_closed : IsClosed S)
-    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
     (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
@@ -774,15 +747,12 @@ and (B) (angle/Laurent compatibility) from the paper:
 
 For simple poles, the cancellation is automatic since `f - f_res` extends
 holomorphically, recovering `generalizedResidueTheorem` as a special case. -/
-theorem generalizedResidueTheorem_higher_order
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+theorem generalizedResidueTheorem_higher_order (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (hS_closed : IsClosed S)
-    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
     -- Meromorphic at each pole (replaces HasSimplePoleAt):
@@ -916,15 +886,13 @@ theorem generalizedResidueTheorem_higher_order_tendsto
 When all singularities are simple poles, `generalizedResidueTheorem_higher_order`
 reduces to `generalizedResidueTheorem` (conditions A and B are automatic,
 and `residueAt = residueSimplePole`). -/
-theorem generalizedResidueTheorem_higher_order_simple
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
+theorem generalizedResidueTheorem_higher_order_simple (U : Set ℂ)
+    (hU : IsOpen U) (hU_convex : Convex ℝ U) (S : Set ℂ)
+    (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (hS_closed : IsClosed S)
-    (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
+    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
     (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)

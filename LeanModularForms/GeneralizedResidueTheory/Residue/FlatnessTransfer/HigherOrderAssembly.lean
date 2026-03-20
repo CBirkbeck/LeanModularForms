@@ -33,8 +33,7 @@ private theorem differentiableOn_ppMinusRes (f : ℂ → ℂ) (s : ℂ) (hMero_s
       (differentiableOn_id.sub (differentiableOn_const _))
       (fun _ hz => sub_ne_zero.mpr (Set.mem_compl_singleton_iff.mp hz)))
 
-private theorem residueAt_eq_zero_of_analyticExpansion
-    (f : ℂ → ℂ) (s : ℂ)
+private theorem residueAt_eq_zero_of_analyticExpansion (f : ℂ → ℂ) (s : ℂ)
     (g_loc : ℂ → ℂ) (hg_loc_an : AnalyticAt ℂ g_loc s)
     (hf_eq_loc : ∀ᶠ (z : ℂ) in 𝓝[≠] s, f z = g_loc z) :
     residueAt f s = 0 := by
@@ -87,9 +86,9 @@ private theorem meromorphicAt_ppMinusRes (f : ℂ → ℂ) (s : ℂ) (hMero_s : 
     ((MeromorphicAt.const (residueAt f s) s).fun_div
       ((MeromorphicAt.id s).fun_sub (MeromorphicAt.const s s)))
 
-private theorem laurent_coeff_le_poleOrder
-    (f : ℂ → ℂ) (s : ℂ) (hMero_s : MeromorphicAt f s)
-    {N_s : ℕ} (a_s : Fin N_s → ℂ) (g_loc : ℂ → ℂ) (hg_loc_an : AnalyticAt ℂ g_loc s)
+private theorem laurent_coeff_le_poleOrder (f : ℂ → ℂ) (s : ℂ)
+    (hMero_s : MeromorphicAt f s) {N_s : ℕ} (a_s : Fin N_s → ℂ)
+    (g_loc : ℂ → ℂ) (hg_loc_an : AnalyticAt ℂ g_loc s)
     (hf_eq_loc : ∀ᶠ (z : ℂ) in 𝓝[≠] s,
       f z = g_loc z + ∑ k : Fin N_s, a_s k / (z - s) ^ (k.val + 1))
     {kv : ℕ} {hkv : kv < N_s} (ha_zero : a_s ⟨kv, hkv⟩ ≠ 0) :
@@ -273,8 +272,8 @@ private noncomputable def assembly_pol (S0 : Finset ℂ) (f : ℂ → ℂ) : ℂ
 
 /-- The normalized regular part: at poles `s ∈ S0`, uses the correction function
 `g_corr` minus other principal parts; away from `S0`, equals `assembly_reg`. -/
-private noncomputable def assembly_regNF (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (g_corr : ∀ s ∈ S0, ℂ → ℂ) : ℂ → ℂ :=
+private noncomputable def assembly_regNF
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (g_corr : ∀ s ∈ S0, ℂ → ℂ) : ℂ → ℂ :=
   fun z => if hz : z ∈ S0 then
     g_corr z hz z - ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' z
   else assembly_reg S0 f z
@@ -282,8 +281,7 @@ private noncomputable def assembly_regNF (S0 : Finset ℂ) (f : ℂ → ℂ)
 /-- At a pole `z ∈ S0`, `assembly_regNF` is differentiable within `U` because
 it agrees in a neighbourhood with the analytic correction minus other principal parts. -/
 private theorem assembly_regNF_differentiableWithinAt_pole
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (g_corr : ∀ s ∈ S0, ℂ → ℂ)
     (hg_corr_an : ∀ (s : ℂ) (hs : s ∈ S0), AnalyticAt ℂ (g_corr s hs) s)
     (hg_corr_eq : ∀ (s : ℂ) (hs : s ∈ S0),
@@ -349,11 +347,9 @@ private theorem assembly_regNF_differentiableWithinAt_pole
 /-- Away from `S0`, `assembly_regNF` equals `assembly_reg`, so it is differentiable
 because `f` and the principal parts are. -/
 private theorem assembly_regNF_differentiableWithinAt_regular
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hU : IsOpen U) (hf : DifferentiableOn ℂ f (U \ S0))
-    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
-    (g_corr : ∀ s ∈ S0, ℂ → ℂ)
-    (z : ℂ) (hz : z ∈ U) (hz_S : z ∉ S0) :
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (hU : IsOpen U)
+    (hf : DifferentiableOn ℂ f (U \ S0)) (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (g_corr : ∀ s ∈ S0, ℂ → ℂ) (z : ℂ) (hz : z ∈ U) (hz_S : z ∉ S0) :
     DifferentiableWithinAt ℂ (assembly_regNF S0 f g_corr) U z := by
   have hz_punct : z ∈ U \ ↑S0 := ⟨hz, fun hh => hz_S (Finset.mem_coe.mp hh)⟩
   have hU_S_open : IsOpen (U \ ↑S0) := hU.sdiff (S0.finite_toSet.isClosed)
@@ -379,11 +375,9 @@ private theorem assembly_regNF_differentiableWithinAt_regular
   exact (h_ev.differentiableAt_iff.mp h_reg_diff).differentiableWithinAt
 
 /-- The normalized regular part `assembly_regNF` is differentiable on all of `U`. -/
-private theorem assembly_regNF_differentiableOn
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
+private theorem assembly_regNF_differentiableOn (S0 : Finset ℂ) (f : ℂ → ℂ)
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f (U \ S0))
-    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
-    (g_corr : ∀ s ∈ S0, ℂ → ℂ)
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s) (g_corr : ∀ s ∈ S0, ℂ → ℂ)
     (hg_corr_an : ∀ (s : ℂ) (hs : s ∈ S0), AnalyticAt ℂ (g_corr s hs) s)
     (hg_corr_eq : ∀ (s : ℂ) (hs : s ∈ S0),
       ∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g_corr s hs z) :
@@ -398,10 +392,8 @@ private theorem assembly_regNF_differentiableOn
 /-- Variant of `cpv_tendsto_zero_of_add_split` where the function agrees with `g₁ + g₂`
 off the entire set `S0`, rather than off a single point. -/
 private theorem cpv_tendsto_zero_of_add_split_set
-    (U : Set ℂ) (S0 : Finset ℂ)
-    (γ : PiecewiseC1Immersion)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (g g₁ g₂ : ℂ → ℂ)
+    (U : Set ℂ) (S0 : Finset ℂ) (γ : PiecewiseC1Immersion)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) (g g₁ g₂ : ℂ → ℂ)
     (h_off_S0 : ∀ z, z ∉ (↑S0 : Set ℂ) → g z = g₁ z + g₂ z)
     (h_g₁_cont : ContinuousOn g₁ (U \ ↑S0))
     (h_g₂_cont : ContinuousOn g₂ (U \ ↑S0))
@@ -442,10 +434,9 @@ private theorem cpv_tendsto_zero_of_add_split_set
 
 /-- If CPV of each per-pole `g s` tends to 0, then CPV of `∑ s ∈ S0, g s`
 also tends to 0. Variant for `Finset` sums (vs. `Fin N` sums). -/
-private theorem cpv_tendsto_zero_of_finset_sum
-    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (U : Set ℂ)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (g : ℂ → ℂ → ℂ)
+private theorem cpv_tendsto_zero_of_finset_sum (S0 : Finset ℂ)
+    (γ : PiecewiseC1Immersion) (U : Set ℂ)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) (g : ℂ → ℂ → ℂ)
     (h_cont : ∀ s ∈ S0, ContinuousOn (g s) (U \ ↑S0))
     (h_tendsto : ∀ s ∈ S0, Tendsto (fun ε => ∫ t in γ.a..γ.b,
       cauchyPrincipalValueIntegrandOn S0 (g s) γ.toFun ε t) (𝓝[>] 0) (𝓝 0)) :
@@ -480,11 +471,9 @@ private theorem cpv_tendsto_zero_of_finset_sum
 
 /-- If CPV of each `gₖ` tends to 0, and `gₖ` is CPV-integrable, then CPV of `∑ k, gₖ`
 also tends to 0 (for a `Finset.univ` sum over `Fin N`). -/
-private theorem cpv_tendsto_zero_of_fin_sum
-    {N : ℕ} (S0 : Finset ℂ)
+private theorem cpv_tendsto_zero_of_fin_sum {N : ℕ} (S0 : Finset ℂ)
     (γ : PiecewiseC1Immersion) (U : Set ℂ)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (g : Fin N → ℂ → ℂ)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) (g : Fin N → ℂ → ℂ)
     (h_cont : ∀ k : Fin N, ContinuousOn (g k) (U \ ↑S0))
     (h_tendsto : ∀ k : Fin N, Tendsto (fun ε => ∫ t in γ.a..γ.b,
       cauchyPrincipalValueIntegrandOn S0 (g k) γ.toFun ε t) (𝓝[>] 0) (𝓝 0)) :
@@ -525,8 +514,7 @@ private theorem cpv_tendsto_zero_of_fin_sum
 that agrees with their sum off `S0`, the CPV integral of the third also tends to 0.
 Used to combine the error and polar-higher parts. -/
 private theorem cpv_tendsto_zero_of_add_split
-    (U : Set ℂ) (S0 : Finset ℂ)
-    (γ : PiecewiseC1Immersion)
+    (U : Set ℂ) (S0 : Finset ℂ) (γ : PiecewiseC1Immersion)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (g g₁ g₂ : ℂ → ℂ) (s : ℂ) (hs : s ∈ S0)
     (h_off_s : ∀ z, z ≠ s → g z = g₁ z + g₂ z)
@@ -567,8 +555,7 @@ private theorem cpv_tendsto_zero_of_add_split
 /-- A function that agrees with an analytic function near `s` and equals
 `g₁ - g₂` away from `s` (where both are differentiable off `{s}`) is differentiable on `U`. -/
 private theorem differentiableOn_of_eventuallyEq_analytic_off_sub
-    (U : Set ℂ) (s : ℂ)
-    (err_nf err_loc g₁ g₂ : ℂ → ℂ)
+    (U : Set ℂ) (s : ℂ) (err_nf err_loc g₁ g₂ : ℂ → ℂ)
     (h_ev : err_nf =ᶠ[𝓝 s] err_loc)
     (h_err_loc_an : AnalyticAt ℂ err_loc s)
     (h_off_s : ∀ w, w ≠ s → err_nf w = g₁ w - g₂ w)
@@ -595,10 +582,8 @@ private theorem differentiableOn_of_eventuallyEq_analytic_off_sub
 /-- When N_s = 0, the Laurent expansion `f = g_loc + 0` means `f` is analytic at `s`,
 so both the principal part and residue vanish, making the per-term function identically 0.
 The CPV integral of the zero function trivially tends to 0. -/
-private theorem cpv_perTerm_crossed_zero_order
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
-    (hMero_s : MeromorphicAt f s)
+private theorem cpv_perTerm_crossed_zero_order (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion) (hMero_s : MeromorphicAt f s)
     (g_loc : ℂ → ℂ) (hg_loc_an : AnalyticAt ℂ g_loc s)
     (hf_eq_loc : ∀ᶠ z in 𝓝[≠] s,
       f z = g_loc z + ∑ k : Fin 0, (default : Fin 0 → ℂ) k / (z - s) ^ (k.val + 1)) :
@@ -634,12 +619,10 @@ private theorem cpv_perTerm_crossed_zero_order
 /-- When the curve does not cross `s`, the per-term CPV integral of
 `pp_s - res_s/(z-s)` tends to 0: the term is continuous on the image, has
 zero integral by the finset-vanishing hypothesis, so the CPV converges. -/
-private theorem cpv_perTerm_uncrossed
-    (U : Set ℂ) (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
+private theorem cpv_perTerm_uncrossed (U : Set ℂ) (S0 : Finset ℂ)
+    (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
-    (hS0_in_U : ∀ s ∈ S0, s ∈ U)
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s) (hS0_in_U : ∀ s ∈ S0, s ∈ U)
     (h_finset_vanish : ∀ (T : Finset ℂ) (g : ℂ → ℂ),
       (∀ s ∈ T, MeromorphicAt g s) → (∀ s ∈ T, residueAt g s = 0) →
       DifferentiableOn ℂ g (U \ ↑T) → (∀ s ∈ T, s ∈ U) →
@@ -701,14 +684,10 @@ private theorem cpv_div_pow_eq_const_mul_zpow (S0 : Finset ℂ) (γ : PiecewiseC
       rw [this]; exact cpvIntegrandOn_const_smul S0 _ _ γ.toFun ε t]
   exact intervalIntegral.integral_const_mul _ _
 
-private theorem cpv_polar_term_tendsto
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
-    (s : ℂ) (hs : s ∈ S0)
-    (hMero_s : MeromorphicAt f s)
-    {N_s : ℕ} (hN_s_pos : 0 < N_s)
-    (a_s : Fin N_s → ℂ)
+private theorem cpv_polar_term_tendsto (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (s : ℂ) (hs : s ∈ S0) (hMero_s : MeromorphicAt f s)
+    {N_s : ℕ} (hN_s_pos : 0 < N_s) (a_s : Fin N_s → ℂ)
     (g_loc : ℂ → ℂ) (hg_loc_an : AnalyticAt ℂ g_loc s)
     (hf_eq_loc : ∀ᶠ z in 𝓝[≠] s,
       f z = g_loc z + ∑ k : Fin N_s, a_s k / (z - s) ^ (k.val + 1))
@@ -772,10 +751,8 @@ private noncomputable def assembly_errNF
     else (meromorphicPrincipalPart f s z - residueAt f s / (z - s)) -
       assembly_polarHigher a_s s z
 
-private theorem assembly_errNF_eventuallyEq
-    (f : ℂ → ℂ) (s : ℂ)
-    {N_s : ℕ} (hN_s_pos : 0 < N_s) (a_s : Fin N_s → ℂ)
-    (g_loc g_rp : ℂ → ℂ)
+private theorem assembly_errNF_eventuallyEq (f : ℂ → ℂ) (s : ℂ)
+    {N_s : ℕ} (hN_s_pos : 0 < N_s) (a_s : Fin N_s → ℂ) (g_loc g_rp : ℂ → ℂ)
     (hf_eq_loc : ∀ᶠ z in 𝓝[≠] s,
       f z = g_loc z + ∑ k : Fin N_s, a_s k / (z - s) ^ (k.val + 1))
     (hg_rp_eq : ∀ᶠ z in 𝓝[≠] s,
@@ -846,12 +823,10 @@ private theorem assembly_polarHigher_differentiableOn
   rw [h_eq_sum]
   exact (DifferentiableAt.sum fun k _ => h_each k).differentiableWithinAt
 
-private theorem cpv_polarHigher_tendsto
-    (U : Set ℂ) (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
+private theorem cpv_polarHigher_tendsto (U : Set ℂ) (S0 : Finset ℂ)
+    (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (s : ℂ) (hs : s ∈ S0)
-    {N_s : ℕ} (a_s : Fin N_s → ℂ)
+    (s : ℂ) (hs : s ∈ S0) {N_s : ℕ} (a_s : Fin N_s → ℂ)
     (h_polar_term_tendsto : ∀ (k : Fin N_s), k.val ≥ 1 →
       Tendsto (fun ε => ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0
@@ -885,8 +860,7 @@ private theorem cpv_polarHigher_tendsto
         exact tendsto_const_nhds)
 
 private theorem cpv_perTerm_crossed_positive_order
-    (U : Set ℂ) (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
+    (U : Set ℂ) (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
@@ -969,9 +943,8 @@ private theorem assembly_ppMinusRes_continuousOn (S0 : Finset ℂ) (f : ℂ → 
     exact sub_ne_zero.mpr (fun heq => by
       subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs))
 
-private theorem cpv_perTerm_dispatch
-    (U : Set ℂ) (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
+private theorem cpv_perTerm_dispatch (U : Set ℂ) (S0 : Finset ℂ)
+    (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
@@ -1010,12 +983,9 @@ private theorem cpv_perTerm_dispatch
     exact cpv_perTerm_uncrossed U S0 f γ hγ_in_U hMero hS0_in_U h_finset_vanish
       s hs (fun t ht => h_crossed t ht)
 
-private theorem assembly_abstract_crossings_case
-    (U : Set ℂ) (hU : IsOpen U)
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+private theorem assembly_abstract_crossings_case (U : Set ℂ) (hU : IsOpen U)
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
@@ -1099,17 +1069,13 @@ private theorem meromorphicAt_f_sub_residueSum (S0 : Finset ℂ) (f : ℂ → �
     exact ((MeromorphicAt.const (residueAt f a) s).fun_div
       ((MeromorphicAt.id s).fun_sub (MeromorphicAt.const a s))).fun_add ih
 
-theorem higherOrderCancel_assembly_abstract
-    (U : Set ℂ) (hU : IsOpen U)
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+theorem higherOrderCancel_assembly_abstract (U : Set ℂ) (hU : IsOpen U)
+    (S0 : Finset ℂ) (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
+    (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
-    (hCondB : SatisfiesConditionB γ f S0)
-    (_hγ_meas : Measurable γ.toFun)
+    (hCondB : SatisfiesConditionB γ f S0) (_hγ_meas : Measurable γ.toFun)
     (h_no_endpt : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
     (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂)
@@ -1161,9 +1127,8 @@ theorem higherOrderCancel_assembly_abstract
       hMero hCondA hCondB h_no_endpt h_unique_cross hS0_in_U h_holo_vanish
       h_finset_vanish h rfl
 
-private theorem holomorphic_integral_vanish_convex
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (γ : PiecewiseC1Immersion)
+private theorem holomorphic_integral_vanish_convex (U : Set ℂ)
+    (hU : IsOpen U) (hU_convex : Convex ℝ U) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (g : ℂ → ℂ) (hg : DifferentiableOn ℂ g U) :
@@ -1195,17 +1160,14 @@ private theorem holomorphic_integral_vanish_convex
     (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self]
 
 /-- Convex-set specialization of `higherOrderCancel_assembly_abstract`. -/
-theorem higherOrderCancel_assembly
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
+theorem higherOrderCancel_assembly (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (hf : DifferentiableOn ℂ f (U \ S0)) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
-    (hCondB : SatisfiesConditionB γ f S0)
-    (_hγ_meas : Measurable γ.toFun)
+    (hCondB : SatisfiesConditionB γ f S0) (_hγ_meas : Measurable γ.toFun)
     (h_no_endpt : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
     (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂)
@@ -1243,17 +1205,14 @@ The proof decomposes `f - f_res` near each crossing `s` into:
   by `pv_higher_order_term_tendsto_zero`, using flatness of order `≥ k+1`
   (from condition A') and the angle condition `k · α ∈ 2πℤ` (from condition B).
 Then sums over the finitely many crossings in `S0`. -/
-theorem conditionsAB_imply_higherOrderCancel
-    (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
-    (S0 : Finset ℂ) (f : ℂ → ℂ)
-    (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
+theorem conditionsAB_imply_higherOrderCancel (U : Set ℂ) (hU : IsOpen U)
+    (hU_convex : Convex ℝ U) (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (hf : DifferentiableOn ℂ f (U \ S0)) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
-    (hCondB : SatisfiesConditionB γ f S0)
-    (hγ_meas : Measurable γ.toFun)
+    (hCondB : SatisfiesConditionB γ f S0) (hγ_meas : Measurable γ.toFun)
     (h_no_endpt : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
     (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂)
