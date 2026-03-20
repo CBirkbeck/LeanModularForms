@@ -556,6 +556,7 @@ private theorem pv_cutoff_integral_seg2_eq_Ialpha (r : ℝ) (hr : 0 < r) (α : �
     filter_upwards [(Filter.eventuallyEq_set.mp Ioo_ae_eq_Ioc)] with t ht
     rw [Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 2)]
     exact fun ht_mem => h_on_Ioo t (ht.mpr ht_mem)
+  show ∫ (t : ℝ) in (1 : ℝ)..2, F t = I * ↑α
   rw [intervalIntegral.integral_congr_ae h_ae, intervalIntegral.integral_const]; norm_num
 
 private theorem pv_cutoff_integral_seg3_eq_neg_inv (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
@@ -633,7 +634,7 @@ theorem pv_sector_cutoff_eq (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ) (hε : 
         ← intervalIntegral.integral_add_adjacent_intervals hFint_01 hFint_12,
         ← intervalIntegral.integral_add_adjacent_intervals hFint_0δ hFint_δ1]
   rw [h_split, hI1, hI2, hI3, hI4, hI5, zero_add, add_zero]
-  linarith [log_cancellation r hr ε hε hεr]
+  have := log_cancellation r hr ε hε hεr; linear_combination this
 
 /-- **Lemma 3.1 (dz/z part)**: The principal value of `dz/z` along the sector curve
 from 0 to 3 equals `I * alpha`.
