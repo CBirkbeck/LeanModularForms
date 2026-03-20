@@ -79,7 +79,7 @@ private lemma T_pp_mul_T_ad_ppow (j d : ℕ) (hjd : j ≤ d) :
       (have : i = 0 := by omega); subst this
       simpa using Nat.pow_dvd_pow p hjd) p hp.pos]
   apply T_elem_congr_diag
-  ext i; fin_cases i <;> simp [diagMul, pow_succ, mul_comm]
+  ext i; fin_cases i <;> simp [Pi.mul_apply, pow_succ, mul_comm]
 
 /-- Theorem 3.24(2): `T(1, pᵏ) = T(pᵏ) − T(p,p) · T(p^{k−2})` for k ≥ 2.
     Proof strategy: T(pᵏ) = Σ T(pⁱ,p^{k-i}) and T(p,p)·T(p^{k-2}) shifts
@@ -193,6 +193,7 @@ private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i
       SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det]; simp [Fin.prod_univ_two]
   exact_mod_cast show (a 0 : ℚ) * (a 1 : ℚ) = (p : ℚ) ^ (k + 1) by linarith
 
+set_option maxHeartbeats 1600000 in
 private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k)
     (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
     (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
@@ -1098,7 +1099,7 @@ section CoprimeMultiplicativity
 open Finset in
 /-- `∏ i, (![a, d]) i (![a, d]) = a * d`. -/
 private lemma prod_mk2 (a d : ℕ) :
-    ∏ i, (![a, d]) i (![a, d]) = a * d := by
+    ∏ i, (![a, d]) i = a * d := by
   simp [Fin.prod_univ_two]
 
 /-- For coprime divisor pairs, the `T_ad` product equals `T_ad` of the products. -/
@@ -1116,8 +1117,8 @@ private lemma T_ad_mul_of_coprime (a b da db : ℕ)
     (have : i = 0 := by omega); subst this; simpa using hdvb
   have hab_pos : ∀ i, 0 < ![a * b, da * db] i := fun i => by
     fin_cases i <;> first | exact Nat.mul_pos ha hb | exact Nat.mul_pos hda hdb
-  have hab_div_mul : DivChain 2 (diagMul 2 (![a, da]) (![b, db])) := fun i hi => by
-    simp only [diagMul_apply]
+  have hab_div_mul : DivChain 2 ((![a, da]) * (![b, db])) := fun i hi => by
+    simp only [Pi.mul_apply]
     have : i = 0 := by omega
     subst this
     exact Nat.mul_dvd_mul hdva hdvb
@@ -1125,14 +1126,14 @@ private lemma T_ad_mul_of_coprime (a b da db : ℕ)
     have : i = 0 := by omega
     subst this
     exact Nat.mul_dvd_mul hdva hdvb
-  have diagMul_eq : diagMul 2 (![a, da]) (![b, db]) = ![a * b, da * db] := by
+  have mul_eq : (![a, da]) * (![b, db]) = ![a * b, da * db] := by
     ext i
-    fin_cases i <;> simp [diagMul]
-  have h_diag_mul : T_elem 2 (diagMul 2 (![a, da]) (![b, db]))
+    fin_cases i <;> simp [Pi.mul_apply]
+  have h_diag_mul : T_elem 2 ((![a, da]) * (![b, db]))
       (fun i => by fin_cases i <;> first | exact Nat.mul_pos ha hb | exact Nat.mul_pos hda hdb)
       hab_div_mul =
       T_elem 2 ![a * b, da * db] hab_pos hab_div := by
-    simp only [diagMul_eq]
+    simp only [mul_eq]
   rw [← h_diag_mul]
   exact T_diag_mul_coprime 2 (![a, da]) (![b, db])
     ha_pos hb_pos ha_div hb_div

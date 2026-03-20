@@ -105,10 +105,10 @@ lemma removePrime_divChain (p : ℕ) (a : Fin n → ℕ) (ha : DivChain n a) :
 
 omit [NeZero n] in
 /-- Recovery: the pointwise product of p-part and p-free part equals the original. -/
-lemma diagMul_ppow_remove_eq (p : ℕ) (a : Fin n → ℕ) :
-    diagMul n (ppowDiag n p (pComponent n p a)) (removePrime n p a) = a := by
+lemma mul_ppow_remove_eq (p : ℕ) (a : Fin n → ℕ) :
+    ppowDiag n p (pComponent n p a) * removePrime n p a = a := by
   funext i
-  simp only [diagMul, ppowDiag, removePrime, pComponent]
+  simp only [Pi.mul_apply, ppowDiag, removePrime, pComponent]
   exact Nat.ordProj_mul_ordCompl_eq_self (a i) p
 
 end RemovePrime
@@ -131,7 +131,6 @@ lemma prod_ppow_remove_coprime (p : ℕ) (hp : p.Prime)
                (∏ i, (removePrime n p a) i) := by
   rw [prod_ppow]
   apply Nat.Coprime.pow_left
-  simp only []
   exact Nat.Coprime.prod_right fun i _ => (Nat.coprime_ordCompl hp (ha_pos i).ne')
 
 end Coprimality
@@ -165,7 +164,7 @@ theorem T_elem_split_prime (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i)
     (divChain_ppow n p _ (pComponent_monotone n a ha_pos ha p))
     (removePrime_divChain n p a ha)
     (prod_ppow_remove_coprime n p hp a ha_pos)
-  rw [T_elem_congr_diag n (diagMul_ppow_remove_eq n p a).symm ha_pos
+  rw [T_elem_congr_diag n (mul_ppow_remove_eq n p a).symm ha_pos
     (diagMul_pos n _ _ (ppowDiag_pos n p hp _) (removePrime_pos n p a ha_pos)) ha _]
   exact h_mul.symm
 
@@ -277,7 +276,6 @@ theorem T_elem_mem_closure_ppow (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (h
             h_sup hp_mem
           rw [Finsupp.mem_support_iff] at hp_in
           apply hp_in
-          simp only []
           rw [Nat.factorization_prod (fun i _ => (removePrime_pos n p a ha_pos i).ne'),
             Finset.sum_apply']
           apply Finset.sum_eq_zero

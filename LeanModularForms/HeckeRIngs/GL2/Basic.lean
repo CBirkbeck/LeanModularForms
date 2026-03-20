@@ -130,9 +130,9 @@ private lemma diagMul_scalar_comm (b : Fin 2 → ℕ) (c : ℕ) :
     b * (fun _ => c) = (fun _ => c) * b := by
   ext i; exact Nat.mul_comm _ _
 
-private lemma T_diag_choose_mem_doubleCoset (a : Fin n → ℕ)
-    (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
-    (T_diag n a ha hdiv).eql.choose ∈
+private lemma T_diag_choose_mem_doubleCoset [NeZero n]
+    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
+    ((T_diag n a ha hdiv).eql.choose : GL (Fin n) ℚ) ∈
     DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ)
       (GL_pair n).H (GL_pair n).H := by
   have h_spec := (T_diag n a ha hdiv).eql.choose_spec
@@ -169,13 +169,17 @@ private lemma scalar_product_mem_doubleCoset
     _ = x1 * h₁b * (diagMat 2 b hb_pos *
           (diagMat 2 (fun _ => c) (fun _ => hc) *
             (h₂b * x2 * h₁c))) * h₂c := by
-        rw [show diagMat 2 b hb_pos *
-            ((h₂b * x2 * h₁c) *
-              diagMat 2 (fun _ => c) (fun _ => hc)) =
-            diagMat 2 b hb_pos *
-              (diagMat 2 (fun _ => c) (fun _ => hc) *
-                (h₂b * x2 * h₁c)) from by
-          rw [h_comm.symm]]; group
+        have : (h₂b * x2 * h₁c) * diagMat 2 (fun _ => c) (fun _ => hc) =
+            diagMat 2 (fun _ => c) (fun _ => hc) * (h₂b * x2 * h₁c) :=
+          h_comm.symm
+        calc x1 * h₁b * (diagMat 2 b hb_pos * (h₂b * x2 * h₁c)) *
+            (diagMat 2 (fun _ => c) (fun _ => hc) * h₂c)
+            = x1 * h₁b * (diagMat 2 b hb_pos *
+                ((h₂b * x2 * h₁c) *
+                  diagMat 2 (fun _ => c) (fun _ => hc))) * h₂c := by group
+          _ = x1 * h₁b * (diagMat 2 b hb_pos *
+                (diagMat 2 (fun _ => c) (fun _ => hc) *
+                  (h₂b * x2 * h₁c))) * h₂c := by rw [this]
     _ = x1 * h₁b *
         (diagMat 2 (b * (fun _ => c))
           (pi_mul_pos 2 b _ hb_pos (fun _ => hc)) *
@@ -206,13 +210,13 @@ private lemma mulMap_right_scalar_eq (b : Fin 2 → ℕ)
     T_diag 2 (b * (fun _ => c))
       (pi_mul_pos 2 b _ hb_pos (fun _ => hc)) hbc := by
   set H := (GL_pair 2).H
-  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ :=
-    (DoubleCoset.mem_doubleCoset H H _).mp
-      (T_diag_choose_mem_doubleCoset 2 b hb_pos hb)
-  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ :=
-    (DoubleCoset.mem_doubleCoset H H _).mp
-      (T_diag_choose_mem_doubleCoset 2
-        (fun _ => c) (fun _ => hc) (divChain_const 2 c))
+  have hδb := T_diag_choose_mem_doubleCoset (n := 2) b hb_pos hb
+  rw [DoubleCoset.mem_doubleCoset] at hδb
+  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb
+  have hδc := T_diag_choose_mem_doubleCoset (n := 2)
+    (fun _ => c) (fun _ => hc) (divChain_const 2 c)
+  rw [DoubleCoset.mem_doubleCoset] at hδc
+  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc
   apply HeckeRing.T'_ext (GL_pair 2)
   exact doubleCoset_eq_of_mem' _ _
     (scalar_product_mem_doubleCoset b hb_pos hb c hc
@@ -437,7 +441,7 @@ lemma T_pp_pow (i : ℕ) :
     rw [T_diag_scalar_mul 2 p hp.pos (fun _ => p ^ i) (fun _ => pow_pos hp.pos i)
       (divChain_const 2 _)]
     exact T_elem_congr_diag 2
-      (funext fun _ => by simp [diagMul, pow_succ, mul_comm])
+      (funext fun _ => by simp [Pi.mul_apply, pow_succ, mul_comm])
       (diagMul_pos 2 _ _ (fun _ => hp.pos) (fun _ => pow_pos hp.pos i))
       (fun _ => pow_pos hp.pos (i + 1))
       (DivChain_mul 2 _ _ (divChain_const 2 p) (divChain_const 2 _))
