@@ -51,16 +51,19 @@ variable (p : ℕ) (hp : p.Prime)
 def T_gen_diag (k : Fin n) : Fin n → ℕ :=
   fun i => if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p
 
+omit [NeZero n] in
 @[simp]
 lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     T_gen_diag n p k i =
     if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
 
+omit [NeZero n] in
 lemma T_gen_diag_pos (hp : p.Prime) (k : Fin n) : ∀ i, 0 < T_gen_diag n p k i := by
   intro i; simp only [T_gen_diag]; split_ifs with h
   · omega
   · exact hp.pos
 
+omit [NeZero n] in
 /-- The T_gen diagonal satisfies the divisibility chain condition. -/
 lemma divChain_T_gen (k : Fin n) :
     DivChain n (T_gen_diag n p k) := by
@@ -77,6 +80,7 @@ lemma divChain_T_gen (k : Fin n) :
 noncomputable def T_gen (k : Fin n) : HeckeAlgebra n :=
   T_elem n (T_gen_diag n p k) (T_gen_diag_pos n p hp k) (divChain_T_gen n p k)
 
+omit [NeZero n] in
 /-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
 lemma T_gen_diag_is_ppow (k : Fin n) :
     T_gen_diag n p k =
@@ -85,6 +89,7 @@ lemma T_gen_diag_is_ppow (k : Fin n) :
   simp only [T_gen_diag, ppowDiag]
   split_ifs <;> simp
 
+omit [NeZero n] in
 /-- The exponent function for T_gen is monotone. -/
 lemma T_gen_exp_monotone (k : Fin n) :
     Monotone (fun i : Fin n => if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
@@ -112,9 +117,11 @@ end TGen
 
 section Weight
 
+omit [NeZero n] in
 /-- Weight of a p-power diagonal: the sum of all exponents. -/
 def ppowWeight (e : Fin n → ℕ) : ℕ := ∑ i, e i
 
+omit [NeZero n] in
 /-- Weight is zero iff all exponents are zero. -/
 lemma ppowWeight_eq_zero_iff (e : Fin n → ℕ) :
     ppowWeight n e = 0 ↔ ∀ i, e i = 0 := by
