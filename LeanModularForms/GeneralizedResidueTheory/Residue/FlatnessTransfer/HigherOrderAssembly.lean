@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.PerTermVanishing
-import LeanModularForms.GeneralizedResidueTheory.Residue.MeromorphicLaurent
+import LeanModularForms.GeneralizedResidueTheory.Residue.MeromorphicPrincipalPart
 
 /-!
 # Higher-Order Cancellation Assembly
@@ -1159,6 +1159,124 @@ private theorem holomorphic_integral_vanish_convex (U : Set ℂ)
     h_deriv h_int, Function.comp_apply, Function.comp_apply,
     (hγ_closed : γ.toFun γ.a = γ.toFun γ.b), sub_self]
 
+/-- Local finset vanishing: for meromorphic `g` with zero residues on convex `U`,
+the contour integral vanishes. Uses `assembly_regNF_differentiableOn` +
+`holomorphic_integral_vanish_convex` + principal-part vanishing. -/
+private theorem finset_vanish_convex (U : Set ℂ)
+    (hU : IsOpen U) (hU_convex : Convex ℝ U)
+    (γ : PiecewiseC1Immersion)
+    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (T : Finset ℂ) (g : ℂ → ℂ)
+    (hg_mero : ∀ s ∈ T, MeromorphicAt g s)
+    (hg_res : ∀ s ∈ T, residueAt g s = 0)
+    (hg_diff : DifferentiableOn ℂ g (U \ ↑T))
+    (_hT_in_U : ∀ s ∈ T, s ∈ U)
+    (hg_avoids : ∀ s ∈ T, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 := by
+  -- Get correction data for each pole
+  have h_corr : ∀ s ∈ T, ∃ (g_s : ℂ → ℂ), AnalyticAt ℂ g_s s ∧
+      (∀ᶠ z in 𝓝[≠] s, g z - meromorphicPrincipalPart g s z = g_s z) :=
+    fun s hs => meromorphicAt_sub_principalPart_eventually g s (hg_mero s hs)
+  choose g_corr hg_corr_an hg_corr_eq using h_corr
+  -- The corrected remainder is DifferentiableOn U
+  have h_nf_diff : DifferentiableOn ℂ (assembly_regNF T g g_corr) U :=
+    assembly_regNF_differentiableOn T g hU hg_diff hg_mero g_corr hg_corr_an hg_corr_eq
+  -- Step 1: ∮ r_nf = 0 by Cauchy on convex U
+  have h_nf_zero : ∫ t in γ.a..γ.b,
+      assembly_regNF T g g_corr (γ.toFun t) * deriv γ.toFun t = 0 :=
+    holomorphic_integral_vanish_convex U hU hU_convex γ hγ_closed hγ_in_U _ h_nf_diff
+  -- Step 2: r = r_nf on curve (curve avoids all poles)
+  have hab := le_of_lt γ.hab
+  have h_r_eq_nf : ∀ t ∈ Set.uIcc γ.a γ.b,
+      assembly_reg T g (γ.toFun t) = assembly_regNF T g g_corr (γ.toFun t) := by
+    intro t ht
+    rw [Set.uIcc_of_le hab] at ht
+    have hgt_not_T : γ.toFun t ∉ T :=
+      fun hmem => hg_avoids (γ.toFun t) hmem t ht rfl
+    simp only [assembly_regNF, hgt_not_T, dite_false]
+  -- Step 3: ∮ Σ pp_s = 0 (each pp_s integrates to 0)
+  have h_pp_zero : ∫ t in γ.a..γ.b,
+      assembly_totalPP T g (γ.toFun t) * deriv γ.toFun t = 0 := by
+    show ∫ t in γ.a..γ.b,
+      (∑ s ∈ T, meromorphicPrincipalPart g s (γ.toFun t)) * deriv γ.toFun t = 0
+    simp_rw [Finset.sum_mul]
+    have h_each_int : ∀ s ∈ T, IntervalIntegrable
+        (fun t => meromorphicPrincipalPart g s (γ.toFun t) * deriv γ.toFun t)
+        volume γ.a γ.b := by
+      intro s hs
+      have hpp_cont : ContinuousOn (fun t => meromorphicPrincipalPart g s (γ.toFun t))
+          (Set.uIcc γ.a γ.b) := by
+        rw [Set.uIcc_of_le hab]
+        exact ((meromorphicPrincipalPart_differentiableOn g s (hg_mero s hs)).continuousOn.mono
+          (fun z hz => by
+            obtain ⟨t', ht', rfl⟩ := hz
+            exact Set.mem_compl_singleton_iff.mpr (hg_avoids s hs t' ht'))).comp
+          γ.continuous_toFun (Set.mapsTo_image _ _)
+      exact IntervalIntegrable.continuousOn_mul
+        (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
+          (piecewiseC1Immersion_deriv_bounded γ)) hpp_cont
+    rw [intervalIntegral.integral_finset_sum h_each_int]
+    exact Finset.sum_eq_zero fun s hs =>
+      contourIntegral_principalPart_eq_zero_of_residue_zero g s
+        (hg_mero s hs) (hg_res s hs) γ hγ_closed (hg_avoids s hs)
+  -- Step 4: ∮ g = ∮ r + ∮ Σ pp = 0 + 0 = 0
+  -- Integrability
+  have h_int_r : IntervalIntegrable
+      (fun t => assembly_reg T g (γ.toFun t) * deriv γ.toFun t)
+      volume γ.a γ.b := by
+    have hr_cont : ContinuousOn (fun t => assembly_reg T g (γ.toFun t))
+        (Set.uIcc γ.a γ.b) := by
+      rw [Set.uIcc_of_le hab]
+      apply ContinuousOn.sub
+      · exact hg_diff.continuousOn.comp γ.continuous_toFun (fun t ht =>
+          ⟨hγ_in_U t ht, fun hmem =>
+            hg_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩)
+      · exact (continuousOn_finset_sum _ fun s hs =>
+          (meromorphicPrincipalPart_differentiableOn g s (hg_mero s hs)).continuousOn.mono
+            (fun z hz => by
+              obtain ⟨t', ht', rfl⟩ := hz
+              exact Set.mem_compl_singleton_iff.mpr (hg_avoids s hs t' ht'))).comp
+          γ.continuous_toFun (Set.mapsTo_image _ _)
+    exact IntervalIntegrable.continuousOn_mul
+      (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
+        (piecewiseC1Immersion_deriv_bounded γ)) hr_cont
+  have h_int_pp : IntervalIntegrable
+      (fun t => assembly_totalPP T g (γ.toFun t) * deriv γ.toFun t)
+      volume γ.a γ.b := by
+    have htp_cont : ContinuousOn (fun t => assembly_totalPP T g (γ.toFun t))
+        (Set.uIcc γ.a γ.b) := by
+      rw [Set.uIcc_of_le hab]
+      exact (continuousOn_finset_sum _ fun s hs =>
+        (meromorphicPrincipalPart_differentiableOn g s (hg_mero s hs)).continuousOn.mono
+          (fun z hz => by
+            obtain ⟨t', ht', rfl⟩ := hz
+            exact Set.mem_compl_singleton_iff.mpr (hg_avoids s hs t' ht'))).comp
+        γ.continuous_toFun (Set.mapsTo_image _ _)
+    exact IntervalIntegrable.continuousOn_mul
+      (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
+        (piecewiseC1Immersion_deriv_bounded γ)) htp_cont
+  -- g = r + Σ pp pointwise
+  have h_eq : ∀ t, g (γ.toFun t) * deriv γ.toFun t =
+      assembly_reg T g (γ.toFun t) * deriv γ.toFun t +
+      assembly_totalPP T g (γ.toFun t) * deriv γ.toFun t := by
+    intro t; show g _ * _ = (g _ - assembly_totalPP T g _) * _ + assembly_totalPP T g _ * _; ring
+  simp_rw [h_eq]
+  rw [intervalIntegral.integral_add h_int_r h_int_pp, h_pp_zero, add_zero]
+  -- ∮ r = ∮ r_nf = 0
+  have h_integrals_eq : (∫ t in γ.a..γ.b,
+      assembly_reg T g (γ.toFun t) * deriv γ.toFun t) =
+      (∫ t in γ.a..γ.b,
+      assembly_regNF T g g_corr (γ.toFun t) * deriv γ.toFun t) := by
+    apply intervalIntegral.integral_congr_ae
+    apply ae_of_all
+    intro t ht
+    rw [Set.uIoc_of_le hab] at ht
+    congr 1
+    exact h_r_eq_nf t (Set.uIcc_of_le hab ▸ Ioc_subset_Icc_self ht)
+  rw [h_integrals_eq]
+  exact h_nf_zero
+
 /-- Convex-set specialization of `higherOrderCancel_assembly_abstract`. -/
 theorem higherOrderCancel_assembly (U : Set ℂ) (hU : IsOpen U)
     (hU_convex : Convex ℝ U) (S0 : Finset ℂ) (f : ℂ → ℂ)
@@ -1180,8 +1298,8 @@ theorem higherOrderCancel_assembly (U : Set ℂ) (hU : IsOpen U)
     hMero hCondA hCondB _hγ_meas h_no_endpt h_unique_cross hS0_in_U
     (fun g hg => holomorphic_integral_vanish_convex U hU hU_convex γ hγ_closed hγ_in_U g hg)
     (fun T g hg_mero hg_res hg_diff hT_in_U hg_avoids =>
-      contourIntegral_eq_zero_of_meromorphic_residue_zero_finset T g
-        hg_mero hg_res U hU hU_convex hg_diff hT_in_U γ hγ_closed hγ_in_U hg_avoids)
+      finset_vanish_convex U hU hU_convex γ hγ_closed hγ_in_U T g
+        hg_mero hg_res hg_diff hT_in_U hg_avoids)
 
 /-! ## L5: Assembly — conditions (A')+(B) imply higher-order cancellation
 
