@@ -715,9 +715,6 @@ theorem pv_integral_simple_pole
   have h_deriv_eq : ∀ t,
       deriv (fun s => γ.toFun s - z₀) t =
         deriv γ.toFun t := fun t => deriv_sub_const _
-  have h_simp_norm : ∀ t,
-      ‖(fun s => γ.toFun s - z₀) t - 0‖ =
-        ‖γ.toFun t - z₀‖ := fun t => by simp
   have h_integrand' : ∀ ε t,
       (if ‖γ.toFun t - z₀‖ > ε
         then (fun z => c / (z - z₀)) (γ.toFun t) *
