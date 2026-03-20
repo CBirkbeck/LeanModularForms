@@ -341,18 +341,18 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k)
   simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and,
     Prod.exists] at hA
   obtain ⟨i₀, j₀, hmap⟩ := hA
-  have hD1_spec := D1.eql.choose_spec
-  simp only [D1, T_diag, HeckeRing.T_mk, diagMat_delta] at hD1_spec
-  have hD1_mem := hD1_spec ▸ DoubleCoset.mem_doubleCoset_self (GL_pair 2).H
-    (GL_pair 2).H (D1.eql.choose : GL (Fin 2) ℚ)
-  rw [DoubleCoset.mem_doubleCoset] at hD1_mem
-  obtain ⟨L₁, ⟨SL_L₁, rfl⟩, R₁, ⟨SL_R₁, rfl⟩, hD1_eq⟩ := hD1_mem
-  have hD2_spec := D2.eql.choose_spec
-  simp only [D2, T_diag, HeckeRing.T_mk, diagMat_delta] at hD2_spec
-  have hD2_mem := hD2_spec ▸ DoubleCoset.mem_doubleCoset_self (GL_pair 2).H
-    (GL_pair 2).H (D2.eql.choose : GL (Fin 2) ℚ)
-  rw [DoubleCoset.mem_doubleCoset] at hD2_mem
-  obtain ⟨L₂, ⟨SL_L₂, rfl⟩, R₂, ⟨SL_R₂, rfl⟩, hD2_eq⟩ := hD2_mem
+  obtain ⟨L₁, ⟨SL_L₁, rfl⟩, R₁, ⟨SL_R₁, rfl⟩, hD1_eq⟩ :=
+    T_diag_rep_decompose 2 (![1, p])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact hp.pos)
+      (fun i hi => by (have : i = 0 := by omega)
+        subst this; simpa using one_dvd p)
+  obtain ⟨L₂, ⟨SL_L₂, rfl⟩, R₂, ⟨SL_R₂, rfl⟩, hD2_eq⟩ :=
+    T_diag_rep_decompose 2 (![1, p ^ k])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact pow_pos hp.pos k)
+      (fun i hi => by (have : i = 0 := by omega)
+        subst this; simpa using one_dvd (p ^ k))
   have h_prod_in_A : (↑i₀.out : GL (Fin 2) ℚ) * D1.eql.choose *
       ((↑j₀.out : GL (Fin 2) ℚ) * D2.eql.choose) ∈ A.set := by
     rw [← hmap]; simp only [HeckeRing.mulMap, HeckeRing.T_mk]
@@ -430,27 +430,18 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   set α := (D1.eql.choose : GL (Fin 2) ℚ)
   set β := (D2.eql.choose : GL (Fin 2) ℚ)
   -- Decompose α and β into L * diag * R form
-  have hα_mem : α ∈ DoubleCoset.doubleCoset
-      (diagMat 2 (![1, p])
-        (fun i => by fin_cases i <;>
-          first | exact Nat.one_pos | exact hp.pos) :
-        GL (Fin 2) ℚ)
-      (GL_pair 2).H (GL_pair 2).H := by
-    have := D1.eql.choose_spec
-    simp only [D1, T_diag, HeckeRing.T_mk, diagMat_delta] at this
-    rw [this]; exact DoubleCoset.mem_doubleCoset_self _ _ _
   obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ :=
-    (DoubleCoset.mem_doubleCoset ..).mp hα_mem
-  have hβ_mem : β ∈ DoubleCoset.doubleCoset
-      (diagMat 2 (![1, p ^ k])
-        (fun i => by fin_cases i <;>
-          first | exact Nat.one_pos
-                 | exact pow_pos hp.pos k) :
-        GL (Fin 2) ℚ)
-      (GL_pair 2).H (GL_pair 2).H := by
-    have := D2.eql.choose_spec; simp only [D2, T_diag, HeckeRing.T_mk, diagMat_delta] at this
-    rw [this]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  obtain ⟨L₂, hL₂, R₂, hR₂, hβ_eq⟩ := (DoubleCoset.mem_doubleCoset ..).mp hβ_mem
+    T_diag_rep_decompose 2 (![1, p])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact hp.pos)
+      (fun i hi => by (have : i = 0 := by omega)
+        subst this; simpa using one_dvd p)
+  obtain ⟨L₂, hL₂, R₂, hR₂, hβ_eq⟩ :=
+    T_diag_rep_decompose 2 (![1, p ^ k])
+      (fun i => by fin_cases i <;>
+        first | exact Nat.one_pos | exact pow_pos hp.pos k)
+      (fun i hi => by (have : i = 0 := by omega)
+        subst this; simpa using one_dvd (p ^ k))
   -- Construct quotient representatives i₀, j₀ with kappas
   set i₀ : decompQuot (GL_pair 2) D1 := ⟦⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩⟧
   open scoped Pointwise in

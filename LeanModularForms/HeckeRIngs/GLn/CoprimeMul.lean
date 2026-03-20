@@ -717,21 +717,11 @@ private lemma mulMap_scalar_eq (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_po
       (T_diag n b hb_pos hb) p =
     T_diag n ((fun _ => c) * b) (diagMul_pos n _ b (fun _ => hc) hb_pos) hcb := by
   set H := (GL_pair n).H
-  have hδc_mem : ((T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)).eql.choose :
-      GL (Fin n) ℚ) ∈
-      DoubleCoset.doubleCoset (diagMat n (fun _ => c) (fun _ => hc) : GL (Fin n) ℚ) H H := by
-    have h_spec := (T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)).eql.choose_spec
-    simp only [T_diag, T_mk, diagMat_delta] at h_spec
-    rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
-  rw [DoubleCoset.mem_doubleCoset] at hδc_mem
-  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ := hδc_mem
-  have hδb_mem : ((T_diag n b hb_pos hb).eql.choose : GL (Fin n) ℚ) ∈
-      DoubleCoset.doubleCoset (diagMat n b hb_pos : GL (Fin n) ℚ) H H := by
-    have h_spec := (T_diag n b hb_pos hb).eql.choose_spec
-    simp only [T_diag, T_mk, diagMat_delta] at h_spec
-    rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
-  rw [DoubleCoset.mem_doubleCoset] at hδb_mem
-  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb_mem
+  obtain ⟨h₁c, hh₁c, h₂c, hh₂c, hδc_eq⟩ :=
+    T_diag_rep_decompose n (fun _ => c) (fun _ => hc)
+      (divChain_const n c)
+  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ :=
+    T_diag_rep_decompose n b hb_pos hb
   have h_product_mem : (p.1.out : GL (Fin n) ℚ) *
       ((T_diag n (fun _ => c) (fun _ => hc) (divChain_const n c)).eql.choose :
         GL (Fin n) ℚ) *
@@ -1216,20 +1206,10 @@ lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos 
     mulMap (GL_pair n) (T_diag n a ha_pos ha) (T_diag n b hb_pos hb) p =
     T_diag n (a * b) (diagMul_pos n a b ha_pos hb_pos) hab := by
   set H := (GL_pair n).H
-  have hδa_mem : ((T_diag n a ha_pos ha).eql.choose : GL (Fin n) ℚ) ∈
-      DoubleCoset.doubleCoset (diagMat n a ha_pos : GL (Fin n) ℚ) H H := by
-    have h_spec := (T_diag n a ha_pos ha).eql.choose_spec
-    simp only [T_diag, T_mk, diagMat_delta] at h_spec
-    rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
-  rw [DoubleCoset.mem_doubleCoset] at hδa_mem
-  obtain ⟨h₁a, hh₁a, h₂a, hh₂a, hδa_eq⟩ := hδa_mem
-  have hδb_mem : ((T_diag n b hb_pos hb).eql.choose : GL (Fin n) ℚ) ∈
-      DoubleCoset.doubleCoset (diagMat n b hb_pos : GL (Fin n) ℚ) H H := by
-    have h_spec := (T_diag n b hb_pos hb).eql.choose_spec
-    simp only [T_diag, T_mk, diagMat_delta] at h_spec
-    rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
-  rw [DoubleCoset.mem_doubleCoset] at hδb_mem
-  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb_mem
+  obtain ⟨h₁a, hh₁a, h₂a, hh₂a, hδa_eq⟩ :=
+    T_diag_rep_decompose n a ha_pos ha
+  obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ :=
+    T_diag_rep_decompose n b hb_pos hb
   have hσ_mem : h₂a * (p.2.out : GL (Fin n) ℚ) * h₁b ∈ SLnZ_subgroup n :=
     (SLnZ_subgroup n).mul_mem
       ((SLnZ_subgroup n).mul_mem hh₂a (SetLike.coe_mem p.2.out)) hh₁b
@@ -1460,20 +1440,10 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_p
       have hi : i₁ = i₂ := by
         by_contra hne
         apply HeckeRing.decompQuot_coset_diff (GL_pair n) D_a i₁ i₂ hne
-        have hδa_mem : δ_a' ∈ DoubleCoset.doubleCoset
-            (diagMat n a ha_pos : GL (Fin n) ℚ) H H := by
-          have h_spec := D_a.eql.choose_spec
-          simp only [D_a, T_diag, T_mk, diagMat_delta] at h_spec
-          rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
-        rw [DoubleCoset.mem_doubleCoset] at hδa_mem
-        obtain ⟨h₁a, hh₁a, h₂a, hh₂a, hδa_eq⟩ := hδa_mem
-        have hδb_mem : δ_b' ∈ DoubleCoset.doubleCoset
-            (diagMat n b hb_pos : GL (Fin n) ℚ) H H := by
-          have h_spec := D_b.eql.choose_spec
-          simp only [D_b, T_diag, T_mk, diagMat_delta] at h_spec
-          rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self H H _
-        rw [DoubleCoset.mem_doubleCoset] at hδb_mem
-        obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := hδb_mem
+        obtain ⟨h₁a, hh₁a, h₂a, hh₂a, hδa_eq⟩ :=
+          T_diag_rep_decompose n a ha_pos ha
+        obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ :=
+          T_diag_rep_decompose n b hb_pos hb
         have hσ'_mem :
             h₁a⁻¹ * ((i₂.out : GL (Fin n) ℚ)⁻¹ *
             (i₁.out : GL (Fin n) ℚ)) *
