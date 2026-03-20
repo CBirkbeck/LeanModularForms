@@ -47,47 +47,48 @@ section Diagonal
 
 /-- The diagonal `GL_n(ℚ)` matrix with natural number entries.
     Positivity is needed to ensure the determinant is nonzero. -/
-private lemma diagMat_det_ne_zero (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
-    (Matrix.diagonal (fun i => (a i : ℚ))).det ≠ 0 := by
-  rw [Matrix.det_diagonal]
-  exact ne_of_gt (Finset.prod_pos fun i _ => by exact_mod_cast ha i)
-
-noncomputable def diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+noncomputable abbrev diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     (Matrix.diagonal (fun i => (a i : ℚ)))
-    (diagMat_det_ne_zero n a ha)
+    (by rw [Matrix.det_diagonal]; positivity)
 
+omit [NeZero n] in
 @[simp] lemma diagMat_val (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ) =
     Matrix.diagonal (fun i => (a i : ℚ)) := rfl
 
 /-! ### API for diagonal matrices in GL_n -/
 
+omit [NeZero n] in
 lemma diagMat_hasIntEntries (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) : HasIntEntries n (diagMat n a ha) :=
   ⟨Matrix.diagonal (fun i => (a i : ℤ)), by
     ext i j; simp [Matrix.diagonal_apply, Matrix.map_apply]⟩
 
+omit [NeZero n] in
 lemma diagMat_det_pos (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     0 < (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ).det := by
   simp [Matrix.det_diagonal]
   exact Finset.prod_pos (fun i _ => by positivity [ha i])
 
+omit [NeZero n] in
 lemma diagMat_mem_posDetInt (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) :
     diagMat n a ha ∈ posDetInt_submonoid n :=
   ⟨diagMat_hasIntEntries n a ha, diagMat_det_pos n a ha⟩
 
-noncomputable def diagMat_delta (a : Fin n → ℕ)
+noncomputable abbrev diagMat_delta (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) : (GL_pair n).Δ :=
   ⟨diagMat n a ha, diagMat_mem_posDetInt n a ha⟩
 
+omit [NeZero n] in
 @[simp] lemma diagMat_det (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) :
     (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ).det =
     ∏ i, (a i : ℚ) := by simp [Matrix.det_diagonal]
 
+omit [NeZero n] in
 lemma diagMat_one :
     diagMat n (fun _ => 1) (fun _ => Nat.one_pos) = 1 := by
   apply Units.ext
@@ -103,6 +104,7 @@ end Diagonal
 def DivChain (a : Fin n → ℕ) : Prop :=
   ∀ (i : ℕ) (hi : i + 1 < n), a ⟨i, by omega⟩ ∣ a ⟨i + 1, hi⟩
 
+omit [NeZero n] in
 lemma divChain_const (c : ℕ) : DivChain n (fun _ => c) :=
   fun _ _ => dvd_refl _
 
@@ -138,12 +140,14 @@ end TDiag
 
 section Transvections
 
+omit [NeZero n] in
 private lemma intMat_det_cast (A : Matrix (Fin n) (Fin n) ℤ) :
     (A.map (Int.cast : ℤ → ℚ)).det = (A.det : ℚ) := by
   have h : A.map (Int.cast : ℤ → ℚ) = (Int.castRingHom ℚ).mapMatrix A := by
     ext i j; simp [RingHom.mapMatrix_apply, Matrix.map_apply]
   rw [h, ← RingHom.map_det, Int.coe_castRingHom]
 
+omit [NeZero n] in
 private lemma transvection_det_ne_zero {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
     ((Matrix.TransvectionStruct.mk i j hij c).toMatrix.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
   rw [intMat_det_cast, (Matrix.TransvectionStruct.mk i j hij c).det]
@@ -154,10 +158,12 @@ noncomputable def transvectionGL {i j : Fin n} (hij : i ≠ j) (c : ℤ) : GL (F
     ((Matrix.TransvectionStruct.mk i j hij c).toMatrix.map (Int.cast : ℤ → ℚ))
     (transvection_det_ne_zero n hij c)
 
+omit [NeZero n] in
 lemma transvectionGL_hasIntEntries {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
     HasIntEntries n (transvectionGL n hij c) :=
   ⟨(Matrix.TransvectionStruct.mk i j hij c).toMatrix, rfl⟩
 
+omit [NeZero n] in
 lemma transvectionGL_mem_SLnZ {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
     transvectionGL n hij c ∈ SLnZ_subgroup n := by
   rw [mem_SLnZ_subgroup_iff]
@@ -170,6 +176,7 @@ end Transvections
 
 section SmithNormalForm
 
+omit [NeZero n] in
 private lemma mulVecLin_injective_of_det_ne_zero
     (A : Matrix (Fin n) (Fin n) ℤ) (hdet : A.det ≠ 0) :
     Function.Injective A.mulVecLin := by
@@ -183,10 +190,12 @@ private lemma mulVecLin_injective_of_det_ne_zero
   simp only [Pi.smul_apply, smul_eq_mul, Pi.zero_apply] at this
   exact (mul_eq_zero.mp this).resolve_left hdet
 
+omit [NeZero n] in
 private lemma finrank_range_mulVecLin (A : Matrix (Fin n) (Fin n) ℤ) (hdet : A.det ≠ 0) :
     Module.finrank ℤ (LinearMap.range A.mulVecLin) = Module.finrank ℤ (Fin n → ℤ) := by
   exact LinearMap.finrank_range_of_inj (mulVecLin_injective_of_det_ne_zero (n := n) A hdet)
 
+omit [NeZero n] in
 /-- Every integer matrix with positive determinant
 is `SL_n(ℤ)`-equivalent to a positive diagonal. -/
 theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
@@ -427,6 +436,7 @@ private lemma gcd_2x2_mul (a b : ℤ) :
   · rw [← hpg, ← hqg]; ring
   · rw [← hpg, ← hqg]; ring
 
+omit [NeZero n] in
 private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
     let a := d ⟨0, by omega⟩
     let b := d ⟨1, by omega⟩
@@ -590,6 +600,7 @@ private lemma genEquiv_symm_inr_ne_j (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠
   have := Equiv.apply_symm_apply (genEquiv k j hj) (Sum.inr i)
   rw [h, genEquiv_j] at this; exact (by nomatch this)
 
+omit [NeZero n] in
 private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i)
     (j : Fin (k + 2)) (hj : j.val ≠ 0) :
     let a := d ⟨0, by omega⟩
@@ -696,6 +707,7 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
         simp only [e]; exact genEquiv_symm_inr_ne_j k j hj i
       rw [if_neg h1, if_neg h2]
 
+omit [NeZero n] in
 private lemma dvd_diag_of_SL_transform (m : ℕ)
     (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
     (L R : Matrix (Fin m) (Fin m) ℤ) (heq : L * Matrix.diagonal d * R = Matrix.diagonal d') :
@@ -711,13 +723,16 @@ private lemma dvd_diag_of_SL_transform (m : ℕ)
   · subst h; exact dvd_mul_of_dvd_right (hc l) _
   · simp
 
+omit [NeZero n] in
 private noncomputable def fin1Sum (k : ℕ) : Fin (k + 1) ≃ Fin 1 ⊕ Fin k :=
   (Fin.castOrderIso (show k + 1 = 1 + k by omega)).toEquiv.trans finSumFinEquiv.symm
 
+omit [NeZero n] in
 private lemma fin1Sum_zero (k : ℕ) :
     fin1Sum k (0 : Fin (k + 1)) = Sum.inl (0 : Fin 1) := by
   unfold fin1Sum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
 
+omit [NeZero n] in
 private lemma fin1Sum_succ (k : ℕ) (i : Fin k) :
     fin1Sum k ⟨i.val + 1, by omega⟩ = Sum.inr i := by
   unfold fin1Sum
@@ -725,21 +740,25 @@ private lemma fin1Sum_succ (k : ℕ) (i : Fin k) :
   rw [Equiv.symm_apply_eq]
   simp [finSumFinEquiv, Fin.addCases]; ext; simp; omega
 
+omit [NeZero n] in
 private lemma fin1Sum_symm_inl (k : ℕ) :
     (fin1Sum k).symm (Sum.inl (0 : Fin 1)) = (0 : Fin (k + 1)) := by
   apply (fin1Sum k).injective
   rw [Equiv.apply_symm_apply]; exact (fin1Sum_zero k).symm
 
+omit [NeZero n] in
 private lemma fin1Sum_symm_inr (k : ℕ) (i : Fin k) :
     (fin1Sum k).symm (Sum.inr i) = ⟨i.val + 1, by omega⟩ := by
   apply (fin1Sum k).injective
   rw [Equiv.apply_symm_apply]; exact (fin1Sum_succ k i).symm
 
+omit [NeZero n] in
 private lemma diagonal_submatrix_fin1Sum (k : ℕ) (d : Fin (k + 1) → ℤ) :
     (Matrix.diagonal (d ∘ (fin1Sum k).symm)).submatrix
       (fin1Sum k) (fin1Sum k) = Matrix.diagonal d := by
   ext i m; simp [submatrix_apply, diagonal_apply]
 
+omit [NeZero n] in
 private lemma make_first_divide_all (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
     ∃ (d' : Fin (k + 2) → ℤ) (_ : ∀ i, 0 < d' i)
       (_ : ∀ j, d' (0 : Fin (k + 2)) ∣ d' j),
@@ -778,6 +797,7 @@ private lemma make_first_divide_all (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : �
         (R₁ : Matrix _ _ ℤ)) * (R₂ : Matrix _ _ ℤ) by simp [Matrix.mul_assoc]]
       rw [hmul₁, hmul₂]
 
+omit [NeZero n] in
 private noncomputable def slSuccEmbed {k : ℕ} (M : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     SpecialLinearGroup (Fin (k + 2)) ℤ := by
   let e := fin1Sum (k + 1)
@@ -785,6 +805,7 @@ private noncomputable def slSuccEmbed {k : ℕ} (M : SpecialLinearGroup (Fin (k 
     (M : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ)).submatrix e e, ?_⟩
   rw [det_submatrix_equiv_self, det_fromBlocks_zero₂₁, det_one, one_mul, M.prop]
 
+omit [NeZero n] in
 private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
     (L R : SpecialLinearGroup (Fin (k + 1)) ℤ) (d'_tail : Fin (k + 1) → ℤ)
     (hmul : (L : Matrix _ _ ℤ) * Matrix.diagonal (fun i : Fin (k + 1) =>
@@ -835,6 +856,7 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
       simp [fromBlocks, diagonal_apply, Function.comp, d_out, he_inr]
   rw [h_out_decomp, hmul]
 
+omit [NeZero n] in
 private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d i) :
     ∃ (d' : Fin n → ℤ) (_ : ∀ i, 0 < d' i)
       (_ : ∀ (i : ℕ) (hi : i + 1 < n), d' ⟨i, by omega⟩ ∣ d' ⟨i + 1, hi⟩),
@@ -907,6 +929,7 @@ private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d 
         (slSuccEmbed R_tail : Matrix _ _ ℤ) by simp [Matrix.mul_assoc]]
       rw [hmul₁, hmul_embed]
 
+omit [NeZero n] in
 private theorem exists_divchain_diagonal_of_posdet
     (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i)
@@ -1012,6 +1035,7 @@ theorem exists_diagonal_representative (α : (GL_pair n).Δ) :
   · rw [hd_eq i]; push_cast; rfl
   · simp
 
+omit [NeZero n] in
 private lemma divChain_dvd_of_le {a : Fin n → ℕ} (hda : DivChain n a)
     {i j : Fin n} (hij : i ≤ j) : a i ∣ a j := by
   suffices h : ∀ (d : ℕ) (hd : i.val + d < n),
@@ -1027,6 +1051,7 @@ private lemma divChain_dvd_of_le {a : Fin n → ℕ} (hda : DivChain n a)
     intro hd
     exact dvd_trans (ih (by omega)) (hda (i.val + m) hd)
 
+omit [NeZero n] in
 private lemma divChain_prod_dvd_of_injective
     {a : Fin n → ℕ} (hda : DivChain n a)
     (k : ℕ) (hk : k ≤ n) (f : Fin k → Fin n) (hf : Function.Injective f) :
@@ -1050,6 +1075,7 @@ private lemma divChain_prod_dvd_of_injective
       (ih (by omega) (f ∘ j₀.succAbove) (hf.comp Fin.succAbove_right_injective))
       (divChain_dvd_of_le (n := n) hda (by exact hge))
 
+omit [NeZero n] in
 private lemma partialProd_eq_of_SLnZ_equiv
     {a b : Fin n → ℕ} (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
     (hda : DivChain n a) (hdb : DivChain n b) (L R : SpecialLinearGroup (Fin n) ℤ)
