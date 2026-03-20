@@ -564,6 +564,55 @@ theorem epsilon_cutoff_trivial_on_compact
     ∀ t ∈ K, ε < ‖γ t - z₀‖ :=
   fun t ht => lt_of_lt_of_le hε (h_avoid t ht)
 
+private theorem pv_piecewise_measurable
+    (g : ℂ → ℂ) (γ : PiecewiseC1Curve) (z₀ : ℂ)
+    (h_integrable : IntervalIntegrable
+      (fun t => g (γ.toFun t) * deriv γ.toFun t)
+      volume γ.a γ.b) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), AEStronglyMeasurable
+      (fun t => if ε < ‖γ.toFun t - z₀‖
+        then g (γ.toFun t) * deriv γ.toFun t else 0)
+      (volume.restrict (Ι γ.a γ.b)) := by
+  filter_upwards [self_mem_nhdsWithin] with ε _
+  rw [show Ι γ.a γ.b = Ioc γ.a γ.b from uIoc_of_le γ.hab.le]
+  exact (h_integrable.aestronglyMeasurable.indicator
+    (measurableSet_pv_support γ.toFun γ.a γ.b z₀ ε
+      γ.continuous_toFun)).congr (by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    by_cases h : ε < ‖γ.toFun t - z₀‖
+    · rw [indicator_of_mem (show t ∈ {t | ε < ‖γ.toFun t - z₀‖} ∩
+        Icc γ.a γ.b from ⟨h, Ioc_subset_Icc_self ht⟩), if_pos h]
+    · rw [indicator_of_notMem (fun hmem => h hmem.1), if_neg h])
+
+private theorem pv_piecewise_bound (γ : PiecewiseC1Curve) (z₀ : ℂ)
+    (g : ℂ → ℂ) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
+      ‖(if ε < ‖γ.toFun t - z₀‖
+        then g (γ.toFun t) * deriv γ.toFun t else 0)‖ ≤
+      ‖g (γ.toFun t) * deriv γ.toFun t‖ := by
+  filter_upwards [self_mem_nhdsWithin] with ε _
+  exact Eventually.of_forall fun t _ => by
+    split_ifs with h
+    · exact le_refl _
+    · simp only [norm_zero]; exact norm_nonneg _
+
+private theorem pv_piecewise_pointwise
+    (γ : PiecewiseC1Curve) (z₀ : ℂ) (g : ℂ → ℂ)
+    (h_finite_preimage :
+      Set.Finite {t ∈ Icc γ.a γ.b | γ.toFun t = z₀}) :
+    ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
+      Tendsto (fun ε => if ε < ‖γ.toFun t - z₀‖
+        then g (γ.toFun t) * deriv γ.toFun t else 0)
+        (𝓝[>] 0) (𝓝 (g (γ.toFun t) * deriv γ.toFun t)) := by
+  filter_upwards [h_finite_preimage.countable.ae_notMem _]
+      with t ht ht_uIoc
+  have h_ne : γ.toFun t ≠ z₀ := fun heq =>
+    ht ⟨Ioc_subset_Icc_self (uIoc_of_le γ.hab.le ▸ ht_uIoc), heq⟩
+  exact tendsto_const_nhds.congr' (by
+    filter_upwards [Ioo_mem_nhdsGT
+      (norm_pos_iff.mpr (sub_ne_zero.mpr h_ne))] with ε hε
+    simp only [gt_iff_lt, hε.2, ite_true])
+
 /-- PV exists for continuous integrands when the full integrand is integrable
 and the preimage of z₀ is finite. -/
 theorem cauchyPrincipalValueExists_of_continuous_piecewise
@@ -585,38 +634,57 @@ theorem cauchyPrincipalValueExists_of_continuous_piecewise
       filter_upwards [Ioo_mem_nhdsGT hδ] with ε hε
       symm; apply intervalIntegral.integral_congr
       intro t ht; rw [uIcc_of_le γ.hab.le] at ht
-      have : ε < ‖γ.toFun t - z₀‖ :=
-        lt_of_lt_of_le hε.2 (hδ_le t ht)
-      simp only [gt_iff_lt, this, ite_true])
-  · push_neg at h_avoids
-    refine ⟨∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t,
+      simp only [gt_iff_lt, lt_of_lt_of_le hε.2 (hδ_le t ht), ite_true])
+  · exact ⟨∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t,
       intervalIntegral.tendsto_integral_filter_of_dominated_convergence
-        (fun t => ‖g (γ.toFun t) * deriv γ.toFun t‖) ?_ ?_
-        h_integrable.norm ?_⟩
-    · filter_upwards [self_mem_nhdsWithin] with ε _
-      rw [show Ι γ.a γ.b = Ioc γ.a γ.b from uIoc_of_le γ.hab.le]
-      exact (h_integrable.aestronglyMeasurable.indicator
-        (measurableSet_pv_support γ.toFun γ.a γ.b z₀ ε
-          γ.continuous_toFun)).congr (by
-        filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
-        by_cases h : ε < ‖γ.toFun t - z₀‖
-        · have hmem : t ∈ {t | ε < ‖γ.toFun t - z₀‖} ∩ Icc γ.a γ.b :=
-            ⟨h, Ioc_subset_Icc_self ht⟩
-          rw [indicator_of_mem hmem, if_pos h]
-        · rw [indicator_of_notMem (fun hmem => h hmem.1), if_neg h])
-    · filter_upwards [self_mem_nhdsWithin] with ε _
-      exact Eventually.of_forall fun t _ => by
-        split_ifs with h
-        · exact le_refl _
-        · simp only [norm_zero]; exact norm_nonneg _
-    · filter_upwards [h_finite_preimage.countable.ae_notMem _]
-        with t ht ht_uIoc
-      have h_ne : γ.toFun t ≠ z₀ := fun heq =>
-        ht ⟨Ioc_subset_Icc_self (uIoc_of_le γ.hab.le ▸ ht_uIoc), heq⟩
-      exact tendsto_const_nhds.congr' (by
-        filter_upwards [Ioo_mem_nhdsGT
-          (norm_pos_iff.mpr (sub_ne_zero.mpr h_ne))] with ε hε
-        simp only [gt_iff_lt, hε.2, ite_true])
+        (fun t => ‖g (γ.toFun t) * deriv γ.toFun t‖)
+        (pv_piecewise_measurable g γ z₀ h_integrable)
+        (pv_piecewise_bound γ z₀ g)
+        h_integrable.norm
+        (pv_piecewise_pointwise γ z₀ g h_finite_preimage)⟩
+
+private theorem pv_simple_pole_integrand_split
+    (γ_fun : ℝ → ℂ) (z₀ c : ℂ) (g : ℂ → ℂ) (ε : ℝ) (t : ℝ) :
+    (if ε < ‖γ_fun t - z₀‖
+    then (c / (γ_fun t - z₀) + g (γ_fun t)) *
+      deriv γ_fun t else 0) =
+    (if ε < ‖γ_fun t - z₀‖
+    then c / (γ_fun t - z₀) * deriv γ_fun t else 0) +
+    (if ε < ‖γ_fun t - z₀‖
+    then g (γ_fun t) * deriv γ_fun t else 0) := by
+  split_ifs <;> ring
+
+private theorem pv_simple_pole_tendsto
+    (γ : PiecewiseC1Immersion) (z₀ c : ℂ) (g : ℂ → ℂ)
+    (Ls Lg : ℂ)
+    (hLs : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      if ε < ‖γ.toFun t - z₀‖
+      then c / (γ.toFun t - z₀) * deriv γ.toFun t
+      else 0) (𝓝[>] 0) (𝓝 Ls))
+    (hLg : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      if ε < ‖γ.toFun t - z₀‖
+      then g (γ.toFun t) * deriv γ.toFun t
+      else 0) (𝓝[>] 0) (𝓝 Lg))
+    (h_int : ∀ ε > 0,
+      IntervalIntegrable (fun t =>
+        if ε < ‖γ.toFun t - z₀‖
+        then c / (γ.toFun t - z₀) * deriv γ.toFun t
+        else 0) volume γ.a γ.b ∧
+      IntervalIntegrable (fun t =>
+        if ε < ‖γ.toFun t - z₀‖
+        then g (γ.toFun t) * deriv γ.toFun t
+        else 0) volume γ.a γ.b) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      (if ε < ‖γ.toFun t - z₀‖
+      then c / (γ.toFun t - z₀) * deriv γ.toFun t
+      else 0) + (if ε < ‖γ.toFun t - z₀‖
+      then g (γ.toFun t) * deriv γ.toFun t
+      else 0)) (𝓝[>] 0) (𝓝 (Ls + Lg)) := by
+  refine Tendsto.congr' ?_ (Tendsto.add hLs hLg)
+  filter_upwards [self_mem_nhdsWithin] with ε hε
+  symm
+  exact intervalIntegral.integral_add
+    (h_int ε (mem_Ioi.mp hε)).1 (h_int ε (mem_Ioi.mp hε)).2
 
 /-- PV exists for c/(z-z₀) + g(z) when the regular part g has PV. -/
 theorem cauchyPrincipalValueExists_of_simple_pole
@@ -648,32 +716,7 @@ theorem cauchyPrincipalValueExists_of_simple_pole
       γ z₀ c h_crossing_cauchy
   obtain ⟨Lg, hLg⟩ := h_g_exists
   refine ⟨Ls + Lg, ?_⟩
-  have h_split : ∀ ε t,
-      (if ε < ‖γ.toFun t - z₀‖
-      then (c / (γ.toFun t - z₀) + g (γ.toFun t)) *
-        deriv γ.toFun t else 0) =
-      (if ε < ‖γ.toFun t - z₀‖
-      then c / (γ.toFun t - z₀) * deriv γ.toFun t
-      else 0) +
-      (if ε < ‖γ.toFun t - z₀‖
-      then g (γ.toFun t) * deriv γ.toFun t
-      else 0) := by
-    intros ε t; split_ifs <;> ring
-  simp_rw [h_split]
-  have h_tendsto : Tendsto (fun ε =>
-      (∫ t in γ.a..γ.b,
-        if ε < ‖γ.toFun t - z₀‖
-        then c / (γ.toFun t - z₀) * deriv γ.toFun t
-        else 0) +
-      (∫ t in γ.a..γ.b,
-        if ε < ‖γ.toFun t - z₀‖
-        then g (γ.toFun t) * deriv γ.toFun t
-        else 0)) (𝓝[>] 0) (𝓝 (Ls + Lg)) :=
-    Tendsto.add hLs hLg
-  refine Tendsto.congr' ?_ h_tendsto
-  filter_upwards [self_mem_nhdsWithin] with ε hε
-  symm
-  exact intervalIntegral.integral_add
-    (h_int ε (mem_Ioi.mp hε)).1 (h_int ε (mem_Ioi.mp hε)).2
+  simp_rw [pv_simple_pole_integrand_split]
+  exact pv_simple_pole_tendsto γ z₀ c g Ls Lg hLs hLg h_int
 
 end
