@@ -395,6 +395,293 @@ private theorem assembly_regNF_differentiableOn
     · exact assembly_regNF_differentiableWithinAt_regular S0 f hU hf hMero
         g_corr z hz hz_S
 
+/-- Variant of `cpv_tendsto_zero_of_add_split` where the function agrees with `g₁ + g₂`
+off the entire set `S0`, rather than off a single point. -/
+private theorem cpv_tendsto_zero_of_add_split_set
+    (U : Set ℂ) (S0 : Finset ℂ)
+    (γ : PiecewiseC1Immersion)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (g g₁ g₂ : ℂ → ℂ)
+    (h_off_S0 : ∀ z, z ∉ (↑S0 : Set ℂ) → g z = g₁ z + g₂ z)
+    (h_g₁_cont : ContinuousOn g₁ (U \ ↑S0))
+    (h_g₂_cont : ContinuousOn g₂ (U \ ↑S0))
+    (h_g₁_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 g₁ γ.toFun ε t) (𝓝[>] 0) (𝓝 0))
+    (h_g₂_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 g₂ γ.toFun ε t) (𝓝[>] 0) (𝓝 0)) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
+  rw [show (0 : ℂ) = 0 + 0 from (add_zero 0).symm]
+  apply Filter.Tendsto.congr' _ (h_g₁_cpv.add h_g₂_cpv)
+  filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
+  have h_pw_eq : ∀ t, cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t =
+      cauchyPrincipalValueIntegrandOn S0 (fun z => g₁ z + g₂ z) γ.toFun ε t := by
+    intro t; simp only [cauchyPrincipalValueIntegrandOn]
+    split_ifs with h_near
+    · rfl
+    · push_neg at h_near
+      have hγt_not_S0 : (γ.toFun t) ∉ (↑S0 : Set ℂ) := by
+        intro hmem
+        have hmem' := Finset.mem_coe.mp hmem
+        have := h_near (γ.toFun t) hmem'
+        rw [sub_self, norm_zero] at this; linarith
+      congr 1; exact h_off_S0 (γ.toFun t) hγt_not_S0
+  rw [show (fun t => cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t) =
+      fun t => cauchyPrincipalValueIntegrandOn S0
+        (fun z => g₁ z + g₂ z) γ.toFun ε t from funext h_pw_eq]
+  rw [show (fun t => cauchyPrincipalValueIntegrandOn S0
+        (fun z => g₁ z + g₂ z) γ.toFun ε t) =
+      fun t => cauchyPrincipalValueIntegrandOn S0 g₁ γ.toFun ε t +
+        cauchyPrincipalValueIntegrandOn S0 g₂ γ.toFun ε t from
+    funext (fun t => cpvIntegrandOn_add S0 g₁ g₂ γ.toFun ε t)]
+  exact (intervalIntegral.integral_add
+    (intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 g₁
+      h_g₁_cont γ hγ_in_U ε hε)
+    (intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 g₂
+      h_g₂_cont γ hγ_in_U ε hε)).symm
+
+/-- If CPV of each per-pole `g s` tends to 0, then CPV of `∑ s ∈ S0, g s`
+also tends to 0. Variant for `Finset` sums (vs. `Fin N` sums). -/
+private theorem cpv_tendsto_zero_of_finset_sum
+    (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (U : Set ℂ)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (g : ℂ → ℂ → ℂ)
+    (h_cont : ∀ s ∈ S0, ContinuousOn (g s) (U \ ↑S0))
+    (h_tendsto : ∀ s ∈ S0, Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 (g s) γ.toFun ε t) (𝓝[>] 0) (𝓝 0)) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0
+        (fun z => ∑ s ∈ S0, g s z) γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
+  have h_cpv_sum : ∀ ε t,
+      cauchyPrincipalValueIntegrandOn S0 (fun z => ∑ s ∈ S0, g s z) γ.toFun ε t =
+      ∑ s ∈ S0, cauchyPrincipalValueIntegrandOn S0 (g s) γ.toFun ε t :=
+    fun ε t => cpvIntegrandOn_finset_sum S0 S0 (fun s z => g s z) γ.toFun ε t
+  have h_per_s_int : ∀ s ∈ S0, ∀ ε > 0,
+      IntervalIntegrable (cauchyPrincipalValueIntegrandOn S0 (g s) γ.toFun ε)
+        volume γ.a γ.b :=
+    fun s hs ε hε => intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0
+      (g s) (h_cont s hs) γ hγ_in_U ε hε
+  have h_int_sum : ∀ ε > 0,
+      ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0 (fun z => ∑ s ∈ S0, g s z) γ.toFun ε t =
+      ∑ s ∈ S0, ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0 (g s) γ.toFun ε t := by
+    intro ε hε
+    rw [show (fun t => cauchyPrincipalValueIntegrandOn S0
+        (fun z => ∑ s ∈ S0, g s z) γ.toFun ε t) = fun t => ∑ s ∈ S0,
+        cauchyPrincipalValueIntegrandOn S0 (g s) γ.toFun ε t from
+      funext (h_cpv_sum ε)]
+    exact intervalIntegral.integral_finset_sum (fun s hs => h_per_s_int s hs ε hε)
+  rw [show (0 : ℂ) = ∑ _s ∈ S0, (0 : ℂ) from (Finset.sum_const_zero).symm]
+  apply Filter.Tendsto.congr'
+  · filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
+    exact (h_int_sum ε hε).symm
+  · exact tendsto_finset_sum S0 (fun s hs => h_tendsto s hs)
+
+/-- If CPV of each `gₖ` tends to 0, and `gₖ` is CPV-integrable, then CPV of `∑ k, gₖ`
+also tends to 0 (for a `Finset.univ` sum over `Fin N`). -/
+private theorem cpv_tendsto_zero_of_fin_sum
+    {N : ℕ} (S0 : Finset ℂ)
+    (γ : PiecewiseC1Immersion) (U : Set ℂ)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (g : Fin N → ℂ → ℂ)
+    (h_cont : ∀ k : Fin N, ContinuousOn (g k) (U \ ↑S0))
+    (h_tendsto : ∀ k : Fin N, Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 (g k) γ.toFun ε t) (𝓝[>] 0) (𝓝 0)) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0
+        (fun z => ∑ k : Fin N, g k z) γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
+  have h_cpv_decomp : ∀ ε t,
+      cauchyPrincipalValueIntegrandOn S0 (fun z => ∑ k : Fin N, g k z) γ.toFun ε t =
+      ∑ k : Fin N, cauchyPrincipalValueIntegrandOn S0 (g k) γ.toFun ε t :=
+    fun ε t => cpvIntegrandOn_finset_sum S0 Finset.univ (fun k z => g k z) γ.toFun ε t
+  have h_per_k_int : ∀ (k : Fin N), ∀ ε > 0,
+      IntervalIntegrable (cauchyPrincipalValueIntegrandOn S0 (g k) γ.toFun ε)
+        volume γ.a γ.b :=
+    fun k ε hε => intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0
+      (g k) (h_cont k) γ hγ_in_U ε hε
+  have h_int_eq : ∀ ε > 0,
+      ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0 (fun z => ∑ k : Fin N, g k z) γ.toFun ε t =
+      ∑ k : Fin N, ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0 (g k) γ.toFun ε t := by
+    intro ε hε
+    rw [show (fun t => cauchyPrincipalValueIntegrandOn S0
+        (fun z => ∑ k : Fin N, g k z) γ.toFun ε t) = fun t => ∑ k : Fin N,
+        cauchyPrincipalValueIntegrandOn S0 (g k) γ.toFun ε t from
+      funext (h_cpv_decomp ε)]
+    exact intervalIntegral.integral_finset_sum (fun k _ => h_per_k_int k ε hε)
+  have h_sum_tendsto : Tendsto (fun ε => ∑ k : Fin N,
+      ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 (g k) γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 0) := by
+    have h0 : (0 : ℂ) = ∑ _k : Fin N, (0 : ℂ) := Finset.sum_const_zero.symm
+    conv_rhs => rw [h0]
+    exact tendsto_finset_sum Finset.univ (fun k _ => h_tendsto k)
+  apply h_sum_tendsto.congr'
+  filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
+  exact (h_int_eq ε hε).symm
+
+/-- Given two functions whose CPV integrals each tend to 0, and a third function
+that agrees with their sum off `S0`, the CPV integral of the third also tends to 0.
+Used to combine the error and polar-higher parts. -/
+private theorem cpv_tendsto_zero_of_add_split
+    (U : Set ℂ) (S0 : Finset ℂ)
+    (γ : PiecewiseC1Immersion)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (g g₁ g₂ : ℂ → ℂ) (s : ℂ) (hs : s ∈ S0)
+    (h_off_s : ∀ z, z ≠ s → g z = g₁ z + g₂ z)
+    (h_g₁_cont : ContinuousOn g₁ (U \ ↑S0))
+    (h_g₂_cont : ContinuousOn g₂ (U \ ↑S0))
+    (h_g₁_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 g₁ γ.toFun ε t) (𝓝[>] 0) (𝓝 0))
+    (h_g₂_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 g₂ γ.toFun ε t) (𝓝[>] 0) (𝓝 0)) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
+  rw [show (0 : ℂ) = 0 + 0 from (add_zero 0).symm]
+  apply Filter.Tendsto.congr' _ (h_g₁_cpv.add h_g₂_cpv)
+  filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
+  have h_pw_eq : ∀ t, cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t =
+      cauchyPrincipalValueIntegrandOn S0 (fun z => g₁ z + g₂ z) γ.toFun ε t := by
+    intro t; simp only [cauchyPrincipalValueIntegrandOn]
+    split_ifs with h_near
+    · rfl
+    · push_neg at h_near
+      have hne : γ.toFun t ≠ s := fun heq => by
+        have := h_near s hs; rw [heq, sub_self, norm_zero] at this; linarith
+      congr 1; exact h_off_s (γ.toFun t) hne
+  rw [show (fun t => cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t) =
+      fun t => cauchyPrincipalValueIntegrandOn S0
+        (fun z => g₁ z + g₂ z) γ.toFun ε t from funext h_pw_eq]
+  rw [show (fun t => cauchyPrincipalValueIntegrandOn S0
+        (fun z => g₁ z + g₂ z) γ.toFun ε t) =
+      fun t => cauchyPrincipalValueIntegrandOn S0 g₁ γ.toFun ε t +
+        cauchyPrincipalValueIntegrandOn S0 g₂ γ.toFun ε t from
+    funext (fun t => cpvIntegrandOn_add S0 g₁ g₂ γ.toFun ε t)]
+  exact (intervalIntegral.integral_add
+    (intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 g₁
+      h_g₁_cont γ hγ_in_U ε hε)
+    (intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 g₂
+      h_g₂_cont γ hγ_in_U ε hε)).symm
+
+/-- A function that agrees with an analytic function near `s` and equals
+`g₁ - g₂` away from `s` (where both are differentiable off `{s}`) is differentiable on `U`. -/
+private theorem differentiableOn_of_eventuallyEq_analytic_off_sub
+    (U : Set ℂ) (s : ℂ)
+    (err_nf err_loc g₁ g₂ : ℂ → ℂ)
+    (h_ev : err_nf =ᶠ[𝓝 s] err_loc)
+    (h_err_loc_an : AnalyticAt ℂ err_loc s)
+    (h_off_s : ∀ w, w ≠ s → err_nf w = g₁ w - g₂ w)
+    (h_g₁_diff : DifferentiableOn ℂ g₁ ({s}ᶜ : Set ℂ))
+    (h_g₂_diff : DifferentiableOn ℂ g₂ ({s}ᶜ : Set ℂ)) :
+    DifferentiableOn ℂ err_nf U := by
+  intro z _hz
+  by_cases hzs : z = s
+  · rw [hzs]
+    exact ((h_ev.differentiableAt_iff (𝕜 := ℂ)).mpr
+      h_err_loc_an.differentiableAt).differentiableWithinAt
+  · have h_ev_z : err_nf =ᶠ[𝓝 z] fun w => g₁ w - g₂ w := by
+      rw [Filter.eventuallyEq_iff_exists_mem]
+      exact ⟨{s}ᶜ, IsOpen.mem_nhds isOpen_compl_singleton
+        (Set.mem_compl_singleton_iff.mpr hzs),
+        fun w hw => h_off_s w (Set.mem_compl_singleton_iff.mp hw)⟩
+    apply DifferentiableAt.differentiableWithinAt
+    rw [h_ev_z.differentiableAt_iff]
+    exact ((h_g₁_diff z (Set.mem_compl_singleton_iff.mpr hzs)).differentiableAt
+        (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hzs))).sub
+      ((h_g₂_diff z (Set.mem_compl_singleton_iff.mpr hzs)).differentiableAt
+        (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hzs)))
+
+/-- When N_s = 0, the Laurent expansion `f = g_loc + 0` means `f` is analytic at `s`,
+so both the principal part and residue vanish, making the per-term function identically 0.
+The CPV integral of the zero function trivially tends to 0. -/
+private theorem cpv_perTerm_crossed_zero_order
+    (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion)
+    (hMero_s : MeromorphicAt f s)
+    (g_loc : ℂ → ℂ) (hg_loc_an : AnalyticAt ℂ g_loc s)
+    (hf_eq_loc : ∀ᶠ z in 𝓝[≠] s,
+      f z = g_loc z + ∑ k : Fin 0, (default : Fin 0 → ℂ) k / (z - s) ^ (k.val + 1)) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0
+        (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+        γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 0) := by
+  have hf_tends : Tendsto f (𝓝[≠] s) (𝓝 (g_loc s)) := by
+    apply Filter.Tendsto.congr'
+    · filter_upwards [hf_eq_loc] with z hz
+      simp only [Finset.univ_eq_empty, Finset.sum_empty, add_zero] at hz
+      exact hz.symm
+    · exact hg_loc_an.continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+  have h_ord_nn : 0 ≤ meromorphicOrderAt f s :=
+    (tendsto_nhds_iff_meromorphicOrderAt_nonneg hMero_s).mp ⟨g_loc s, hf_tends⟩
+  have h_pp_zero : meromorphicPrincipalPart f s = fun _ => 0 := by
+    unfold meromorphicPrincipalPart
+    exact dif_neg (fun h => absurd h.2 (not_lt.mpr h_ord_nn))
+  have h_res_zero : residueAt f s = 0 := by
+    have hf_eq_g : ∀ᶠ (z : ℂ) in 𝓝[≠] s, f z = g_loc z := by
+      filter_upwards [hf_eq_loc] with z hz
+      simp only [Finset.univ_eq_empty, Finset.sum_empty, add_zero] at hz
+      exact hz
+    exact residueAt_eq_zero_of_analyticExpansion f s g_loc hg_loc_an hf_eq_g
+  have h_term_eq_zero : (fun z => meromorphicPrincipalPart f s z -
+      residueAt f s / (z - s)) = fun _ => 0 := by
+    ext z; simp only [h_pp_zero, h_res_zero]; simp [zero_div]
+  rw [h_term_eq_zero]
+  simp only [cauchyPrincipalValueIntegrandOn, zero_mul, ite_self]
+  simp [intervalIntegral.integral_zero]
+
+/-- When the curve does not cross `s`, the per-term CPV integral of
+`pp_s - res_s/(z-s)` tends to 0: the term is continuous on the image, has
+zero integral by the finset-vanishing hypothesis, so the CPV converges. -/
+private theorem cpv_perTerm_uncrossed
+    (U : Set ℂ) (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (hS0_in_U : ∀ s ∈ S0, s ∈ U)
+    (h_finset_vanish : ∀ (T : Finset ℂ) (g : ℂ → ℂ),
+      (∀ s ∈ T, MeromorphicAt g s) → (∀ s ∈ T, residueAt g s = 0) →
+      DifferentiableOn ℂ g (U \ ↑T) → (∀ s ∈ T, s ∈ U) →
+      (∀ s ∈ T, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) →
+      ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0)
+    (s : ℂ) (hs : s ∈ S0)
+    (h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      cauchyPrincipalValueIntegrandOn S0
+        (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+        γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 0) := by
+  set term_s : ℂ → ℂ := fun z =>
+    meromorphicPrincipalPart f s z - residueAt f s / (z - s) with hterm_s_def
+  have h_term_cont_image : ContinuousOn term_s (γ.toFun '' Icc γ.a γ.b) := by
+    apply ContinuousOn.sub
+    · exact (meromorphicPrincipalPart_differentiableOn f s
+        (hMero s hs)).continuousOn.mono
+        (fun z ⟨t, ht, htz⟩ =>
+          Set.mem_compl_singleton_iff.mpr (htz ▸ h_avoids t ht))
+    · apply ContinuousOn.div continuousOn_const
+        (continuousOn_id.sub continuousOn_const)
+      intro z ⟨t, ht, htz⟩
+      exact sub_ne_zero.mpr (htz ▸ h_avoids t ht)
+  have h_term_int_zero : ∫ t in γ.a..γ.b,
+      term_s (γ.toFun t) * deriv γ.toFun t = 0 := by
+    have h_term_diff : DifferentiableOn ℂ term_s (U \ {s}) :=
+      (differentiableOn_ppMinusRes f s (hMero s hs)).mono
+        (fun z hz => Set.mem_compl_singleton_iff.mpr hz.2)
+    have h_term_mero : MeromorphicAt term_s s :=
+      meromorphicAt_ppMinusRes f s (hMero s hs)
+    have h_term_res : residueAt term_s s = 0 :=
+      residueAt_ppMinusRes_eq_zero f s (hMero s hs)
+    exact h_finset_vanish {s} term_s
+      (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact h_term_mero)
+      (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact h_term_res)
+      (by rwa [Finset.coe_singleton])
+      (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact hS0_in_U s hs)
+      (fun s' hs' t ht => by rw [Finset.mem_singleton.mp hs']; exact h_avoids t ht)
+  exact tendsto_cpv_of_continuousOn_zero_integral S0 term_s γ
+    h_term_cont_image h_term_int_zero
+
 theorem higherOrderCancel_assembly_abstract
     (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (f : ℂ → ℂ)
@@ -428,20 +715,6 @@ theorem higherOrderCancel_assembly_abstract
     apply ContinuousOn.div continuousOn_const (continuousOn_id.sub continuousOn_const)
     intro z ⟨_, hz_not_S0⟩
     exact sub_ne_zero.mpr (fun heq => by subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs))
-  have h_uncrossed_pos_dist : ∀ s ∈ S0,
-      (∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) →
-      ∃ d > 0, ∀ t ∈ Icc γ.a γ.b, d ≤ ‖γ.toFun t - s‖ := by
-    intro s _ h_ne
-    have h_ne_zero : ∀ t ∈ Icc γ.a γ.b, (0 : ℝ) < ‖γ.toFun t - s‖ :=
-      fun t ht => norm_pos_iff.mpr (sub_ne_zero.mpr (h_ne t ht))
-    have h_cont : ContinuousOn (fun t => ‖γ.toFun t - s‖) (Icc γ.a γ.b) :=
-      (γ.continuous_toFun.sub continuousOn_const).norm
-    have h_ne_empty : (Icc γ.a γ.b).Nonempty :=
-      ⟨γ.a, left_mem_Icc.mpr (le_of_lt γ.hab)⟩
-    have h_compact : IsCompact (Icc γ.a γ.b) := isCompact_Icc
-    obtain ⟨t_min, ht_min, h_min⟩ := h_compact.exists_isMinOn h_ne_empty h_cont
-    exact ⟨‖γ.toFun t_min - s‖, h_ne_zero t_min ht_min,
-      fun t ht => h_min ht⟩
   have hfres_diff : DifferentiableOn ℂ
       (fun z => ∑ s ∈ S0, residueAt f s / (z - s)) (U \ ↑S0) := by
     have h_eq : (fun z => ∑ s ∈ S0, residueAt f s / (z - s)) =
@@ -502,7 +775,6 @@ theorem higherOrderCancel_assembly_abstract
         (∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g_s z) := by
       intro s hs; exact meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
     choose g_corr hg_corr_an hg_corr_eq using h_correction
-    let total_pp : ℂ → ℂ := assembly_totalPP S0 f
     let h_reg : ℂ → ℂ := assembly_reg S0 f
     let h_pol : ℂ → ℂ := assembly_pol S0 f
     let h_reg_nf : ℂ → ℂ := assembly_regNF S0 f g_corr
@@ -529,14 +801,6 @@ theorem higherOrderCancel_assembly_abstract
         cauchyPrincipalValueIntegrandOn S0 h_reg_nf γ.toFun ε t)
       (𝓝[>] 0) (𝓝 0) :=
       tendsto_cpv_of_continuousOn_zero_integral S0 h_reg_nf γ h_reg_nf_cont h_nf_zero
-    have h_agree : ∀ z ∈ U \ (↑S0 : Set ℂ), h z = h_reg_nf z + h_pol z := by
-      intro z ⟨hz_U, hz_not_S0⟩
-      have hz_not_S : z ∉ S0 := fun hh => hz_not_S0 (Finset.mem_coe.mpr hh)
-      have h_nf_eq : h_reg_nf z = h_reg z := dif_neg hz_not_S
-      have h_decomp : h z = h_reg z + h_pol z := by
-        simp only [h, h_reg, assembly_reg, h_pol, assembly_pol, assembly_totalPP]
-        rw [Finset.sum_sub_distrib]; ring
-      rw [h_nf_eq]; exact h_decomp
     have h_fun_eq_off_S0 : ∀ z, z ∉ (↑S0 : Set ℂ) →
         h z = h_reg_nf z + h_pol z := by
       intro z hz_not_S0
@@ -546,75 +810,23 @@ theorem higherOrderCancel_assembly_abstract
         simp only [h, h_reg, assembly_reg, h_pol, assembly_pol, assembly_totalPP]
         rw [Finset.sum_sub_distrib]; ring
       rw [h_nf_eq]; exact h_decomp
-    have h_cpv_eq : ∀ ε > 0, ∀ t,
-        cauchyPrincipalValueIntegrandOn S0 h γ.toFun ε t =
-        cauchyPrincipalValueIntegrandOn S0 (fun z => h_reg_nf z + h_pol z) γ.toFun ε t := by
-      intro ε hε t
-      simp only [cauchyPrincipalValueIntegrandOn]
-      split_ifs with h_near
-      · rfl
-      · push_neg at h_near
-        have hγt_not_S0 : (γ.toFun t) ∉ (↑S0 : Set ℂ) := by
-          intro hmem
-          have hmem' := Finset.mem_coe.mp hmem
-          have := h_near (γ.toFun t) hmem'
-          rw [sub_self, norm_zero] at this
-          linarith
-        congr 1
-        exact h_fun_eq_off_S0 (γ.toFun t) hγt_not_S0
     have h_pol_tendsto : Tendsto (fun ε => ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t)
-      (𝓝[>] 0) (𝓝 0) := by
-      have h_cpv_sum : ∀ ε t,
-          cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t =
-          ∑ s ∈ S0, cauchyPrincipalValueIntegrandOn S0
-            (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-            γ.toFun ε t :=
-        fun ε t => cpvIntegrandOn_finset_sum S0 S0
-          (fun s z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-          γ.toFun ε t
-      have h_per_s_cont : ∀ s ∈ S0,
-          ContinuousOn (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-            (U \ ↑S0) := by
-        intro s hs
-        apply ContinuousOn.sub
-        · exact (meromorphicPrincipalPart_differentiableOn f s (hMero s hs)).continuousOn.mono
-            (fun z hz => Set.mem_compl_singleton_iff.mpr
-              (fun heq => by subst heq; exact hz.2 (Finset.mem_coe.mpr hs)))
-        · apply ContinuousOn.div continuousOn_const (continuousOn_id.sub continuousOn_const)
-          intro z ⟨_, hz_not_S0⟩
-          exact sub_ne_zero.mpr (fun heq => by
-            subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs))
-      have h_per_s_int : ∀ s ∈ S0, ∀ ε > 0,
-          IntervalIntegrable
-            (cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-              γ.toFun ε)
-            volume γ.a γ.b := by
-        intro s hs ε hε
-        exact intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 _
-          (h_per_s_cont s hs) γ hγ_in_U ε hε
-      have h_int_sum : ∀ ε > 0,
-          ∫ t in γ.a..γ.b,
-            cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t =
-          ∑ s ∈ S0, ∫ t in γ.a..γ.b,
-            cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-              γ.toFun ε t := by
-        intro ε hε
-        rw [show (fun t => cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t) =
-            (fun t => ∑ s ∈ S0, cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-              γ.toFun ε t) from funext (h_cpv_sum ε)]
-        exact intervalIntegral.integral_finset_sum
-          (fun s _hs => h_per_s_int s _hs ε hε)
-      have h_per_s_tendsto : ∀ s ∈ S0,
-          Tendsto (fun ε => ∫ t in γ.a..γ.b,
-            cauchyPrincipalValueIntegrandOn S0
-              (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-              γ.toFun ε t)
-          (𝓝[>] 0) (𝓝 0) := by
-        intro s hs
+      (𝓝[>] 0) (𝓝 0) :=
+      cpv_tendsto_zero_of_finset_sum S0 γ U hγ_in_U
+        (fun s z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+        (fun s hs => by
+          apply ContinuousOn.sub
+          · exact (meromorphicPrincipalPart_differentiableOn f s
+              (hMero s hs)).continuousOn.mono
+              (fun z hz => Set.mem_compl_singleton_iff.mpr
+                (fun heq => by subst heq; exact hz.2 (Finset.mem_coe.mpr hs)))
+          · apply ContinuousOn.div continuousOn_const
+              (continuousOn_id.sub continuousOn_const)
+            intro z ⟨_, hz_not_S0⟩
+            exact sub_ne_zero.mpr (fun heq => by
+              subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs)))
+        (fun s hs => by
         set term_s : ℂ → ℂ := fun z =>
           meromorphicPrincipalPart f s z - residueAt f s / (z - s) with hterm_s_def
         by_cases h_crossed : ∃ t ∈ Icc γ.a γ.b, γ.toFun t = s
@@ -628,32 +840,8 @@ theorem higherOrderCancel_assembly_abstract
             fun t ht hc => h_unique_cross s hs t ht t₁ ht₁ hc hcross₁
           rcases Nat.eq_zero_or_pos N_s with hN_s_zero | hN_s_pos
           · subst hN_s_zero
-            have hf_tends : Tendsto f (𝓝[≠] s) (𝓝 (g_loc s)) := by
-              apply Filter.Tendsto.congr'
-              · filter_upwards [hf_eq_loc] with z hz
-                simp only [Finset.univ_eq_empty, Finset.sum_empty,
-                  add_zero] at hz
-                exact hz.symm
-              · exact hg_loc_an.continuousAt.tendsto.mono_left
-                  nhdsWithin_le_nhds
-            have h_ord_nn : 0 ≤ meromorphicOrderAt f s :=
-              (tendsto_nhds_iff_meromorphicOrderAt_nonneg (hMero s hs)).mp
-                ⟨g_loc s, hf_tends⟩
-            have h_pp_zero : meromorphicPrincipalPart f s = fun _ => 0 := by
-              unfold meromorphicPrincipalPart
-              exact dif_neg (fun h => absurd h.2 (not_lt.mpr h_ord_nn))
-            have h_res_zero : residueAt f s = 0 := by
-              have hf_eq_g : ∀ᶠ (z : ℂ) in 𝓝[≠] s, f z = g_loc z := by
-                filter_upwards [hf_eq_loc] with z hz
-                simp only [Finset.univ_eq_empty, Finset.sum_empty, add_zero] at hz
-                exact hz
-              exact residueAt_eq_zero_of_analyticExpansion f s g_loc hg_loc_an hf_eq_g
-            have h_term_eq_zero : term_s = fun _ => 0 := by
-              ext z; simp only [hterm_s_def, h_pp_zero, h_res_zero]
-              simp [zero_div]
-            rw [h_term_eq_zero]
-            simp only [cauchyPrincipalValueIntegrandOn, zero_mul, ite_self]
-            simp [intervalIntegral.integral_zero]
+            exact cpv_perTerm_crossed_zero_order S0 f γ (hMero s hs)
+              g_loc hg_loc_an hf_eq_loc
           · have h_a0_eq : a_s ⟨0, hN_s_pos⟩ = residueAt f s :=
               (residueAt_eq_laurent_head_coeff f s N_s hN_s_pos a_s g_loc
                 hg_loc_an hf_eq_loc).symm
@@ -770,45 +958,33 @@ theorem higherOrderCancel_assembly_abstract
                   · intro h; exact absurd (Finset.mem_univ _) h
                 rw [h_a0_eq] at h_sum_split
                 linear_combination h_sum_split
-            have h_err_nf_diff : DifferentiableOn ℂ err_nf U := by
-              intro z hz
-              by_cases hzs : z = s
-              · rw [hzs]
-                exact ((h_ev.differentiableAt_iff (𝕜 := ℂ)).mpr
-                  h_err_loc_an.differentiableAt).differentiableWithinAt
-              · have h_ev_z : err_nf =ᶠ[𝓝 z] fun w => term_s w - polarHigher w := by
-                  rw [Filter.eventuallyEq_iff_exists_mem]
-                  refine ⟨{s}ᶜ, IsOpen.mem_nhds isOpen_compl_singleton
-                    (Set.mem_compl_singleton_iff.mpr hzs), fun w hw => ?_⟩
-                  simp only [err_nf, if_neg (Set.mem_compl_singleton_iff.mp hw)]
-                apply DifferentiableAt.differentiableWithinAt
-                rw [h_ev_z.differentiableAt_iff]
-                have h_term_diff : DifferentiableAt ℂ term_s z :=
-                  (differentiableOn_ppMinusRes f s (hMero s hs) z
-                    (Set.mem_compl_singleton_iff.mpr hzs)).differentiableAt
-                    (isOpen_compl_singleton.mem_nhds
-                      (Set.mem_compl_singleton_iff.mpr hzs))
-                have h_polar_diff : DifferentiableAt ℂ polarHigher z := by
-                  have h_each : ∀ k : Fin N_s, DifferentiableAt ℂ
-                      (fun w => if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) z := by
-                    intro k
-                    by_cases hk : k.val ≥ 1
-                    · simp only [hk, ite_true]
-                      exact (differentiableAt_const _).div
-                        ((differentiableAt_id.sub (differentiableAt_const _)).pow _)
-                        (pow_ne_zero _ (sub_ne_zero.mpr hzs))
-                    · simp only [hk, ite_false]
-                      exact differentiableAt_const 0
-                  change DifferentiableAt ℂ (fun w => ∑ k : Fin N_s,
-                    if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) z
-                  have h_eq_sum : (fun w => ∑ k : Fin N_s,
-                      if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) =
-                    ∑ k : Fin N_s, fun w =>
-                      if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0 := by
-                    ext w; simp [Finset.sum_apply]
-                  rw [h_eq_sum]
-                  exact DifferentiableAt.sum fun k _ => h_each k
-                exact h_term_diff.sub h_polar_diff
+            have h_polar_diffOn : DifferentiableOn ℂ polarHigher ({s}ᶜ : Set ℂ) := by
+              intro z hzs'
+              have hzs : z ≠ s := Set.mem_compl_singleton_iff.mp hzs'
+              have h_each : ∀ k : Fin N_s, DifferentiableAt ℂ
+                  (fun w => if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) z := by
+                intro k
+                by_cases hk : k.val ≥ 1
+                · simp only [hk, ite_true]
+                  exact (differentiableAt_const _).div
+                    ((differentiableAt_id.sub (differentiableAt_const _)).pow _)
+                    (pow_ne_zero _ (sub_ne_zero.mpr hzs))
+                · simp only [hk, ite_false]; exact differentiableAt_const 0
+              change DifferentiableWithinAt ℂ (fun w => ∑ k : Fin N_s,
+                if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) _ z
+              have h_eq_sum : (fun w => ∑ k : Fin N_s,
+                  if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) =
+                ∑ k : Fin N_s, fun w =>
+                  if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0 := by
+                ext w; simp [Finset.sum_apply]
+              rw [h_eq_sum]
+              exact (DifferentiableAt.sum fun k _ => h_each k).differentiableWithinAt
+            have h_err_nf_diff : DifferentiableOn ℂ err_nf U :=
+              differentiableOn_of_eventuallyEq_analytic_off_sub U s
+                err_nf err_loc term_s polarHigher h_ev h_err_loc_an
+                (fun w hw => by simp only [err_nf, if_neg hw])
+                (differentiableOn_ppMinusRes f s (hMero s hs))
+                h_polar_diffOn
             have h_err_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
                 cauchyPrincipalValueIntegrandOn S0 err_nf γ.toFun ε t)
               (𝓝[>] 0) (𝓝 0) :=
@@ -818,108 +994,10 @@ theorem higherOrderCancel_assembly_abstract
                 (h_holo_vanish err_nf h_err_nf_diff)
             have h_polar_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
                 cauchyPrincipalValueIntegrandOn S0 polarHigher γ.toFun ε t)
-              (𝓝[>] 0) (𝓝 0) := by
-              have h_cpv_decomp : ∀ ε t,
-                  cauchyPrincipalValueIntegrandOn S0 polarHigher γ.toFun ε t =
-                  ∑ k : Fin N_s, cauchyPrincipalValueIntegrandOn S0
-                    (fun z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
-                    γ.toFun ε t :=
-                fun ε t => cpvIntegrandOn_finset_sum S0 Finset.univ
-                  (fun k z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
-                  γ.toFun ε t
-              have h_per_k_tendsto : ∀ k : Fin N_s,
-                  Tendsto (fun ε => ∫ t in γ.a..γ.b,
-                    cauchyPrincipalValueIntegrandOn S0
-                      (fun z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
-                      γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
-                intro k
-                by_cases hk : k.val ≥ 1
-                · have h_eq : (fun z => if k.val ≥ 1 then
-                      a_s k / (z - s) ^ (k.val + 1) else 0) =
-                    fun z => a_s k / (z - s) ^ (k.val + 1) := by
-                    ext z; simp [hk]
-                  simp_rw [h_eq]
-                  exact h_polar_term_tendsto k hk
-                · have h_eq : (fun z => if k.val ≥ 1 then
-                      a_s k / (z - s) ^ (k.val + 1) else 0) =
-                    fun _ => (0 : ℂ) := by
-                    ext z; simp [hk]
-                  simp_rw [h_eq, cauchyPrincipalValueIntegrandOn, zero_mul, ite_self,
-                    intervalIntegral.integral_zero]
-                  exact tendsto_const_nhds
-              have h_per_k_int : ∀ (k : Fin N_s), ∀ ε > 0,
-                  IntervalIntegrable
-                    (cauchyPrincipalValueIntegrandOn S0
-                      (fun z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
-                      γ.toFun ε) volume γ.a γ.b := by
-                intro k ε hε
-                apply intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0
-                · by_cases hk : k.val ≥ 1
-                  · simp only [hk, ite_true]
-                    apply ContinuousOn.div continuousOn_const
-                      ((continuousOn_id.sub continuousOn_const).pow _)
-                    intro z ⟨_, hz_not_S0⟩
-                    exact pow_ne_zero _ (sub_ne_zero.mpr
-                      (fun heq => by subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs)))
-                  · simp only [hk, ite_false]
-                    exact continuousOn_const
-                · exact hγ_in_U
-                · exact hε
-              have h_int_eq : ∀ ε > 0,
-                  ∫ t in γ.a..γ.b,
-                    cauchyPrincipalValueIntegrandOn S0 polarHigher γ.toFun ε t =
-                  ∑ k : Fin N_s, ∫ t in γ.a..γ.b,
-                    cauchyPrincipalValueIntegrandOn S0
-                      (fun z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
-                      γ.toFun ε t := by
-                intro ε hε
-                rw [show (fun t => cauchyPrincipalValueIntegrandOn S0 polarHigher
-                    γ.toFun ε t) = fun t => ∑ k : Fin N_s,
-                    cauchyPrincipalValueIntegrandOn S0
-                      (fun z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
-                      γ.toFun ε t from funext (h_cpv_decomp ε)]
-                exact intervalIntegral.integral_finset_sum
-                  (fun k _ => h_per_k_int k ε hε)
-              have h_sum_tendsto : Tendsto (fun ε => ∑ k : Fin N_s,
-                  ∫ t in γ.a..γ.b,
-                    cauchyPrincipalValueIntegrandOn S0
-                      (fun z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
-                      γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
-                have h0 : (0 : ℂ) = ∑ _k : Fin N_s, (0 : ℂ) :=
-                  Finset.sum_const_zero.symm
-                conv_rhs => rw [h0]
-                exact tendsto_finset_sum Finset.univ (fun k _ => h_per_k_tendsto k)
-              apply h_sum_tendsto.congr'
-              filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-              exact (h_int_eq ε hε).symm
-            rw [show (0 : ℂ) = 0 + 0 from (add_zero 0).symm]
-            apply Filter.Tendsto.congr' _ (h_err_cpv.add h_polar_cpv)
-            filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
-            have h_pw_eq : ∀ t, cauchyPrincipalValueIntegrandOn S0 term_s γ.toFun ε t =
-                cauchyPrincipalValueIntegrandOn S0 (fun z => err_nf z + polarHigher z)
-                  γ.toFun ε t := by
-              intro t; simp only [cauchyPrincipalValueIntegrandOn]
-              split_ifs with h_near
-              · rfl
-              · push_neg at h_near
-                have hne : γ.toFun t ≠ s := fun heq => by
-                  have := h_near s hs; rw [heq, sub_self, norm_zero] at this; linarith
-                congr 1; exact h_off_s (γ.toFun t) hne
-            rw [show (fun t => cauchyPrincipalValueIntegrandOn S0 term_s γ.toFun ε t) =
-                fun t => cauchyPrincipalValueIntegrandOn S0
-                  (fun z => err_nf z + polarHigher z) γ.toFun ε t from funext h_pw_eq]
-            rw [show (fun t => cauchyPrincipalValueIntegrandOn S0
-                  (fun z => err_nf z + polarHigher z) γ.toFun ε t) =
-                fun t => cauchyPrincipalValueIntegrandOn S0 err_nf γ.toFun ε t +
-                  cauchyPrincipalValueIntegrandOn S0 polarHigher γ.toFun ε t from
-              funext (fun t => cpvIntegrandOn_add S0 err_nf polarHigher γ.toFun ε t)]
-            exact (intervalIntegral.integral_add
-              (intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 err_nf
-                (h_err_nf_diff.continuousOn.mono Set.diff_subset) γ hγ_in_U ε hε)
-              (intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 polarHigher
-                (by
-                  apply continuousOn_finset_sum
-                  intro k _
+              (𝓝[>] 0) (𝓝 0) :=
+              cpv_tendsto_zero_of_fin_sum S0 γ U hγ_in_U
+                (fun k z => if k.val ≥ 1 then a_s k / (z - s) ^ (k.val + 1) else 0)
+                (fun k => by
                   by_cases hk : k.val ≥ 1
                   · simp only [hk, ite_true]
                     apply ContinuousOn.div continuousOn_const
@@ -927,65 +1005,32 @@ theorem higherOrderCancel_assembly_abstract
                     intro z ⟨_, hz_not_S0⟩
                     exact pow_ne_zero _ (sub_ne_zero.mpr
                       (fun heq => by subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs)))
-                  · simp only [hk, ite_false]
-                    exact continuousOn_const) γ hγ_in_U ε hε)).symm
+                  · simp only [hk, ite_false]; exact continuousOn_const)
+                (fun k => by
+                  by_cases hk : k.val ≥ 1
+                  · have h_eq : (fun z => if k.val ≥ 1 then
+                        a_s k / (z - s) ^ (k.val + 1) else 0) =
+                      fun z => a_s k / (z - s) ^ (k.val + 1) := by ext z; simp [hk]
+                    simp_rw [h_eq]; exact h_polar_term_tendsto k hk
+                  · have h_eq : (fun z => if k.val ≥ 1 then
+                        a_s k / (z - s) ^ (k.val + 1) else 0) =
+                      fun _ => (0 : ℂ) := by ext z; simp [hk]
+                    simp_rw [h_eq, cauchyPrincipalValueIntegrandOn, zero_mul, ite_self,
+                      intervalIntegral.integral_zero]
+                    exact tendsto_const_nhds)
+            exact cpv_tendsto_zero_of_add_split U S0 γ hγ_in_U
+              term_s err_nf polarHigher s hs h_off_s
+              (h_err_nf_diff.continuousOn.mono Set.diff_subset)
+              (h_polar_diffOn.continuousOn.mono (fun z ⟨_, hz⟩ =>
+                Set.mem_compl_singleton_iff.mpr (fun heq =>
+                  hz (Finset.mem_coe.mpr (heq ▸ hs)))))
+              h_err_cpv h_polar_cpv
         · push_neg at h_crossed
-          have h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s :=
-            fun t ht => h_crossed t ht
-          have h_term_cont_image : ContinuousOn term_s (γ.toFun '' Icc γ.a γ.b) := by
-            apply ContinuousOn.sub
-            · exact (meromorphicPrincipalPart_differentiableOn f s
-                (hMero s hs)).continuousOn.mono
-                (fun z ⟨t, ht, htz⟩ =>
-                  Set.mem_compl_singleton_iff.mpr (htz ▸ h_avoids t ht))
-            · apply ContinuousOn.div continuousOn_const
-                (continuousOn_id.sub continuousOn_const)
-              intro z ⟨t, ht, htz⟩
-              exact sub_ne_zero.mpr (htz ▸ h_avoids t ht)
-          have h_term_int_zero : ∫ t in γ.a..γ.b,
-              term_s (γ.toFun t) * deriv γ.toFun t = 0 := by
-            have h_term_diff : DifferentiableOn ℂ term_s (U \ {s}) :=
-              (differentiableOn_ppMinusRes f s (hMero s hs)).mono
-                (fun z hz => Set.mem_compl_singleton_iff.mpr hz.2)
-            have h_term_mero : MeromorphicAt term_s s :=
-              meromorphicAt_ppMinusRes f s (hMero s hs)
-            have h_term_res : residueAt term_s s = 0 :=
-              residueAt_ppMinusRes_eq_zero f s (hMero s hs)
-            exact h_finset_vanish {s} term_s
-              (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact h_term_mero)
-              (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact h_term_res)
-              (by rwa [Finset.coe_singleton])
-              (fun s' hs' => by rw [Finset.mem_singleton.mp hs']; exact hS0_in_U s hs)
-              (fun s' hs' t ht => by rw [Finset.mem_singleton.mp hs']; exact h_avoids t ht)
-          exact tendsto_cpv_of_continuousOn_zero_integral S0 term_s γ
-            h_term_cont_image h_term_int_zero
-      rw [show (0 : ℂ) = ∑ _s ∈ S0, (0 : ℂ) from (Finset.sum_const_zero).symm]
-      apply Filter.Tendsto.congr'
-      · filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-        exact (h_int_sum ε hε).symm
-      · exact tendsto_finset_sum S0 (fun s hs => h_per_s_tendsto s hs)
-    rw [show (0 : ℂ) = 0 + 0 from (add_zero 0).symm]
-    apply Filter.Tendsto.congr' _ (h_reg_nf_cpv_zero.add h_pol_tendsto)
-    filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
-    have h_eq_sum : (fun t => cauchyPrincipalValueIntegrandOn S0 h γ.toFun ε t) =
-        (fun t => cauchyPrincipalValueIntegrandOn S0
-          (fun z => h_reg_nf z + h_pol z) γ.toFun ε t) :=
-      funext (fun t => h_cpv_eq ε hε t)
-    have h_split : (fun t => cauchyPrincipalValueIntegrandOn S0
-        (fun z => h_reg_nf z + h_pol z) γ.toFun ε t) =
-        (fun t => cauchyPrincipalValueIntegrandOn S0 h_reg_nf γ.toFun ε t +
-          cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t) :=
-      funext (fun t => cpvIntegrandOn_add S0 h_reg_nf h_pol γ.toFun ε t)
-    have h_int_nf : IntervalIntegrable
-        (cauchyPrincipalValueIntegrandOn S0 h_reg_nf γ.toFun ε) volume γ.a γ.b :=
-      intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 h_reg_nf
-        (h_reg_nf_diff_U.continuousOn.mono Set.diff_subset) γ hγ_in_U ε hε
-    have h_int_pol : IntervalIntegrable
-        (cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε) volume γ.a γ.b :=
-      intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff U S0 h_pol
-        h_pol_cont γ hγ_in_U ε hε
-    rw [h_eq_sum, h_split]
-    exact (intervalIntegral.integral_add h_int_nf h_int_pol).symm
+          exact cpv_perTerm_uncrossed U S0 f γ hγ_in_U hMero hS0_in_U h_finset_vanish
+            s hs (fun t ht => h_crossed t ht))
+    exact cpv_tendsto_zero_of_add_split_set U S0 γ hγ_in_U h h_reg_nf h_pol
+      h_fun_eq_off_S0 (h_reg_nf_diff_U.continuousOn.mono Set.diff_subset) h_pol_cont
+      h_reg_nf_cpv_zero h_pol_tendsto
 
 /-- Convex-set specialization of `higherOrderCancel_assembly_abstract`. -/
 theorem higherOrderCancel_assembly
