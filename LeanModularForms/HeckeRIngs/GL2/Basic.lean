@@ -51,6 +51,12 @@ lemma T_ad_eq_zero {a d : ℕ} (h : ¬(0 < a ∧ 0 < d ∧ a ∣ d)) :
 /-- `T(p,p)` -- the scalar double coset. -/
 noncomputable def T_pp (p : ℕ) : HeckeAlgebra 2 := T_ad p p
 
+/-- Hecke operator `T⦃a, d⦄`. -/
+scoped notation "T⦃" a ", " d "⦄" => T_ad a d
+
+/-- Diamond operator `◇n = T(n,n)`. -/
+scoped prefix:max "◇" => T_pp
+
 /-- Unfold `T_pp` when `p` is prime. -/
 lemma T_pp_of_pos (p : ℕ) (hp : p.Prime) :
     T_pp p = T_elem 2 (fun _ => p) (fun _ => hp.pos)
@@ -61,7 +67,7 @@ lemma T_pp_of_pos (p : ℕ) (hp : p.Prime) :
     (fun i hi => by (have : i = 0 := by omega); subst this; simp)
     (divChain_const 2 p)
 
-lemma T_pp_eq_T_ad (p : ℕ) : T_pp p = T_ad p p := rfl
+lemma T_pp_eq_T_ad (p : ℕ) : ◇ p = T⦃p, p⦄ := rfl
 
 lemma T_elem_ones_eq :
     T_elem 2 (fun _ => 1) (fun _ => Nat.one_pos)
@@ -73,7 +79,7 @@ lemma T_elem_ones_eq :
   exact (one_eq_T_single (GL_pair 2)).symm
 
 /-- T(1,1) is the identity element. -/
-lemma T_ad_one_one : T_ad 1 1 = 1 := by
+lemma T_ad_one_one : T⦃1, 1⦄ = 1 := by
   rw [T_ad_of_pos 1 1 Nat.one_pos Nat.one_pos (dvd_refl _)]
   have heq : (![1, 1] : Fin 2 → ℕ) = fun _ => 1 :=
     funext fun i => by fin_cases i <;> rfl
@@ -88,17 +94,6 @@ noncomputable abbrev T_ad' := @T_ad
 /-- `T(m) = Σ_{a | m} T(a, m/a)`. -/
 noncomputable def T_sum (m : ℕ+) : HeckeAlgebra 2 :=
   ∑ a ∈ (m : ℕ).divisors, T_ad a ((m : ℕ) / a)
-
-/-! ### Notation -/
-
-/-- Hecke operator `T(a,d)`. -/
-scoped notation "T(" a "," d ")" => T_ad a d
-
-/-- Hecke operator `T(n) = T(1,n)`. -/
-scoped notation "T(" n ")" => T_ad 1 n
-
-/-- Diamond operator `⟨n⟩ = T(n,n)`. -/
-scoped notation "⟨" n "⟩ₕ" => T_pp n
 
 section Structural
 
@@ -116,7 +111,7 @@ private lemma doubleCoset_eq_of_mem' (g δ : GL (Fin 2) ℚ)
 
 /-- For p prime, T(p) = T_ad(1,p). -/
 lemma T_sum_prime :
-    T_sum ⟨p, hp.pos⟩ = T_ad 1 p := by
+    T_sum ⟨p, hp.pos⟩ = T⦃1, p⦄ := by
   show ∑ a ∈ p.divisors, T_ad' a (p / a) = _
   rw [hp.sum_divisors, Nat.div_self hp.pos, Nat.div_one]
   have h1 : T_ad' p 1 = 0 := by
@@ -405,7 +400,7 @@ theorem T_elem_mul_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
 
 /-- T(p,p) commutes with every T_elem. -/
 lemma T_pp_comm_T_elem (p : ℕ) (hp : p.Prime) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (ha : DivChain 2 a) :
-    T_pp p * T_elem 2 a ha_pos ha = T_elem 2 a ha_pos ha * T_pp p := by
+    ◇ p * T_elem 2 a ha_pos ha = T_elem 2 a ha_pos ha * ◇ p := by
   rw [T_pp_of_pos p hp]
   rw [T_diag_scalar_mul 2 p hp.pos a ha_pos ha, T_elem_mul_scalar a ha_pos ha p hp.pos]
   exact (T_elem_congr_diag 2 (diagMul_scalar_comm a p)
@@ -416,7 +411,7 @@ lemma T_pp_comm_T_elem (p : ℕ) (hp : p.Prime) (a : Fin 2 → ℕ) (ha_pos : �
 
 /-- Powers of T(p,p): `T(p,p)^i = T(p^i, p^i)`. -/
 lemma T_pp_pow (i : ℕ) :
-    T_pp p ^ i =
+    ◇ p ^ i =
     T_elem 2 (fun _ => p ^ i) (fun _ => pow_pos hp.pos i) (divChain_const 2 _) := by
   induction i with
   | zero =>
