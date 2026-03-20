@@ -57,6 +57,10 @@ scoped notation "T⦃" a ", " d "⦄" => T_ad a d
 /-- Diamond operator `◇n = T(n,n)`. -/
 scoped prefix:max "◇" => T_pp
 
+/-- Integer diagonal matrix `Diag(a, d)` for 2×2. -/
+scoped notation "Diag(" a ", " d ")" =>
+  Matrix.diagonal (![a, d] : Fin 2 → ℤ)
+
 /-- Unfold `T_pp` when `p` is prime. -/
 lemma T_pp_of_pos (p : ℕ) (hp : p.Prime) :
     T_pp p = T_elem 2 (fun _ => p) (fun _ => hp.pos)

@@ -51,8 +51,7 @@ noncomputable abbrev diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     (Matrix.diagonal (fun i => (a i : ℚ)))
-    (by rw [Matrix.det_diagonal]
-      exact ne_of_gt (Finset.prod_pos (fun i _ => by positivity [ha i])))
+    (by rw [Matrix.det_diagonal]; positivity)
 
 omit [NeZero n] in
 @[simp] lemma diagMat_val (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
