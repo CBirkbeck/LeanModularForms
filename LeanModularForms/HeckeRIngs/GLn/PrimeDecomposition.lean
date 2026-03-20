@@ -48,12 +48,10 @@ section PPow
 def ppowDiag (p : ℕ) (e : Fin n → ℕ) : Fin n → ℕ :=
   fun i => p ^ e i
 
-omit [NeZero n] in
 lemma ppowDiag_pos (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) :
     ∀ i, 0 < ppowDiag n p e i :=
   fun _ => pow_pos hp.pos _
 
-omit [NeZero n] in
 /-- DivChain for p-power diagonals when exponents are monotone. -/
 lemma divChain_ppow (p : ℕ) (e : Fin n → ℕ) (hmono : Monotone e) :
     DivChain n (ppowDiag n p e) := by
@@ -66,7 +64,6 @@ lemma divChain_ppow (p : ℕ) (e : Fin n → ℕ) (hmono : Monotone e) :
 def pComponent (p : ℕ) (a : Fin n → ℕ) : Fin n → ℕ :=
   fun i => (a i).factorization p
 
-omit [NeZero n] in
 /-- The p-component of a divisibility chain is monotone. -/
 lemma pComponent_monotone (a : Fin n → ℕ)
     (ha_pos : ∀ i, 0 < a i) (ha : DivChain n a) (p : ℕ) :
@@ -87,12 +84,10 @@ section RemovePrime
 noncomputable def removePrime (p : ℕ) (a : Fin n → ℕ) : Fin n → ℕ :=
   fun i => (a i) / p ^ ((a i).factorization p)
 
-omit [NeZero n] in
 lemma removePrime_pos (p : ℕ) (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     ∀ i, 0 < removePrime n p a i :=
   fun i => Nat.ordCompl_pos p (ha_pos i).ne'
 
-omit [NeZero n] in
 /-- The p-free part preserves divisibility chains. -/
 lemma removePrime_divChain (p : ℕ) (a : Fin n → ℕ) (ha : DivChain n a) :
     DivChain n (removePrime n p a) := by
@@ -103,12 +98,11 @@ lemma removePrime_divChain (p : ℕ) (a : Fin n → ℕ) (ha : DivChain n a) :
   rw [Nat.ordCompl_mul]
   exact dvd_mul_right _ _
 
-omit [NeZero n] in
 /-- Recovery: the pointwise product of p-part and p-free part equals the original. -/
-lemma diagMul_ppow_remove_eq (p : ℕ) (a : Fin n → ℕ) :
-    diagMul n (ppowDiag n p (pComponent n p a)) (removePrime n p a) = a := by
+lemma mul_ppow_remove_eq (p : ℕ) (a : Fin n → ℕ) :
+    ppowDiag n p (pComponent n p a) * removePrime n p a = a := by
   funext i
-  simp only [diagMul, ppowDiag, removePrime, pComponent]
+  simp only [Pi.mul_apply, ppowDiag, removePrime, pComponent]
   exact Nat.ordProj_mul_ordCompl_eq_self (a i) p
 
 end RemovePrime
@@ -117,13 +111,11 @@ end RemovePrime
 
 section Coprimality
 
-omit [NeZero n] in
 /-- The determinant of a p-power diagonal is a power of `p`. -/
 lemma prod_ppow (p : ℕ) (e : Fin n → ℕ) :
     ∏ i, (ppowDiag n p e) i = p ^ (∑ i, e i) := by
   simp only [ppowDiag, Finset.prod_pow_eq_pow_sum]
 
-omit [NeZero n] in
 /-- The p-part and p-free part determinants are coprime. -/
 lemma prod_ppow_remove_coprime (p : ℕ) (hp : p.Prime)
     (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
@@ -131,7 +123,6 @@ lemma prod_ppow_remove_coprime (p : ℕ) (hp : p.Prime)
                (∏ i, (removePrime n p a) i) := by
   rw [prod_ppow]
   apply Nat.Coprime.pow_left
-  simp only []
   exact Nat.Coprime.prod_right fun i _ => (Nat.coprime_ordCompl hp (ha_pos i).ne')
 
 end Coprimality
@@ -165,8 +156,8 @@ theorem T_elem_split_prime (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i)
     (divChain_ppow n p _ (pComponent_monotone n a ha_pos ha p))
     (removePrime_divChain n p a ha)
     (prod_ppow_remove_coprime n p hp a ha_pos)
-  rw [T_elem_congr_diag n (diagMul_ppow_remove_eq n p a).symm ha_pos
-    (diagMul_pos n _ _ (ppowDiag_pos n p hp _) (removePrime_pos n p a ha_pos)) ha _]
+  rw [T_elem_congr_diag n (mul_ppow_remove_eq n p a).symm ha_pos
+    (pi_mul_pos n _ _ (ppowDiag_pos n p hp _) (removePrime_pos n p a ha_pos)) ha _]
   exact h_mul.symm
 
 end Splitting
@@ -210,7 +201,6 @@ private def ppowClosureSet (n : ℕ) [NeZero n] : Set (HeckeAlgebra n) :=
     f = T_elem n (ppowDiag n p e) (ppowDiag_pos n p hp e)
       (divChain_ppow n p e hmono) }
 
-omit [NeZero n] in
 private lemma prod_pos_of_pos (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     0 < ∏ i, a i :=
   Finset.prod_pos (fun i _ => ha_pos i)
@@ -277,7 +267,6 @@ theorem T_elem_mem_closure_ppow (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (h
             h_sup hp_mem
           rw [Finsupp.mem_support_iff] at hp_in
           apply hp_in
-          simp only []
           rw [Nat.factorization_prod (fun i _ => (removePrime_pos n p a ha_pos i).ne'),
             Finset.sum_apply']
           apply Finset.sum_eq_zero
