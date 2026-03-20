@@ -54,7 +54,7 @@ private def natDiagDetNeZero (a : Fin n → ℕ)
   exact ne_of_gt (Finset.prod_pos fun i _ =>
     Nat.cast_pos.mpr (ha i))
 
-noncomputable abbrev diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+noncomputable def diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     (Matrix.diagonal (fun i => (a i : ℚ)))
