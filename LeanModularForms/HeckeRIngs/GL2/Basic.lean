@@ -293,11 +293,14 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ)
     (hDbc : D_bc = T_diag 2 (b * (fun _ => c))
       (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) :
     HeckeRing.m' (GL_pair 2) D_b D_c D_bc = 1 := by
-  -- Work with concrete forms throughout the proof to avoid whnf divergence
-  have h_card : Fintype.card (decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))) = 1 := by
+  have h_card : Fintype.card (decompQuot (GL_pair 2)
+      (T_diag 2 (fun _ => c) (fun _ => hc)
+        (divChain_const 2 c))) = 1 := by
     have := T'_deg_scalar 2 c hc
     simp only [HeckeRing.T'_deg] at this; exact_mod_cast this
-  haveI : Subsingleton (decompQuot (GL_pair 2) (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))) :=
+  haveI : Subsingleton (decompQuot (GL_pair 2)
+      (T_diag 2 (fun _ => c) (fun _ => hc)
+        (divChain_const 2 c))) :=
     Fintype.card_le_one_iff_subsingleton.mp (le_of_eq h_card)
   have h_le : HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
       (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
@@ -413,7 +416,9 @@ theorem T_elem_mul_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
       (DivChain_mul 2 b (fun _ => c) hb (divChain_const 2 c)) A h1
 
 /-- T(p,p) commutes with every T_elem. -/
-lemma T_pp_comm_T_elem (p : ℕ) (hp : p.Prime) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (ha : DivChain 2 a) :
+lemma T_pp_comm_T_elem (p : ℕ) (hp : p.Prime)
+    (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i)
+    (ha : DivChain 2 a) :
     ◇ p * T_elem 2 a ha_pos ha = T_elem 2 a ha_pos ha * ◇ p := by
   rw [T_pp_of_pos p hp]
   rw [T_diag_scalar_mul 2 p hp.pos a ha_pos ha, T_elem_mul_scalar a ha_pos ha p hp.pos]

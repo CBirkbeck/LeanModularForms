@@ -295,8 +295,10 @@ private lemma conj_dvd_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, A.det ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j))
     (i j : Fin n) :
     A.det ∣ (A * gamma * A.adjugate) i j := by
-  set M := Matrix.of fun i j => (gamma i j - (1 : Matrix _ _ ℤ) i j) / A.det
-  have : A * gamma * A.adjugate = A * A.adjugate + A.det • (A * M * A.adjugate) := by
+  set M := Matrix.of fun i j =>
+    (gamma i j - (1 : Matrix _ _ ℤ) i j) / A.det
+  have : A * gamma * A.adjugate =
+      A * A.adjugate + A.det • (A * M * A.adjugate) := by
     rw [gamma_decompose n A.det gamma hgamma]
     conv_lhs => rw [mul_add, Matrix.mul_one, mul_smul_comm]
     rw [add_mul, smul_mul_assoc]

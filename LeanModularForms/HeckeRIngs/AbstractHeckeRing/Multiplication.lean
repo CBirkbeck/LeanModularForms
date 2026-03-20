@@ -469,4 +469,5 @@ noncomputable instance instNonUnitalNonAssocSemiring : NonUnitalNonAssocSemiring
       exact Finsupp.sum_zero_index
     mul_zero := fun f => by
       simp only [mul_def]
-      exact Eq.trans (congr_arg (sum f) (funext₂ fun a₁ b₁ => sum_zero_index)) (sum_fun_zero f) }
+      exact Eq.trans (congr_arg (sum f)
+        (funext₂ fun a₁ b₁ => sum_zero_index)) (sum_fun_zero f) }

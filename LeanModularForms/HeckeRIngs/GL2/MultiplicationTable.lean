@@ -1126,7 +1126,8 @@ private lemma T_ad_mul_of_coprime (a b da db : ℕ)
     (hcop : Nat.Coprime (a * da) (b * db)) :
     T⦃a, da⦄ * T⦃b, db⦄ = T⦃a * b, da * db⦄ := by
   rw [T_ad_of_pos a da ha hda hdva, T_ad_of_pos b db hb hdb hdvb,
-      T_ad_of_pos (a * b) (da * db) (Nat.mul_pos ha hb) (Nat.mul_pos hda hdb) (Nat.mul_dvd_mul hdva hdvb)]
+      T_ad_of_pos (a * b) (da * db) (Nat.mul_pos ha hb)
+        (Nat.mul_pos hda hdb) (Nat.mul_dvd_mul hdva hdvb)]
   have ha_pos : ∀ i, 0 < ![a, da] i := fun i => by fin_cases i <;> first | exact ha | exact hda
   have hb_pos : ∀ i, 0 < ![b, db] i := fun i => by fin_cases i <;> first | exact hb | exact hdb
   have ha_div : DivChain 2 (![a, da]) := fun i hi => by
