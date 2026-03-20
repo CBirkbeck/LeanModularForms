@@ -1096,10 +1096,10 @@ theorem thm324_4 : ∀ r s : ℕ, r ≤ s →
 section CoprimeMultiplicativity
 
 open Finset in
-/-- `diagDet 2 (![a, d]) = a * d`. -/
-private lemma diagDet_mk2 (a d : ℕ) :
-    diagDet 2 (![a, d]) = a * d := by
-  simp [diagDet, Fin.prod_univ_two]
+/-- `∏ i, (![a, d]) i (![a, d]) = a * d`. -/
+private lemma prod_mk2 (a d : ℕ) :
+    ∏ i, (![a, d]) i (![a, d]) = a * d := by
+  simp [Fin.prod_univ_two]
 
 /-- For coprime divisor pairs, the `T_ad` product equals `T_ad` of the products. -/
 private lemma T_ad_mul_of_coprime (a b da db : ℕ)
@@ -1136,7 +1136,7 @@ private lemma T_ad_mul_of_coprime (a b da db : ℕ)
   rw [← h_diag_mul]
   exact T_diag_mul_coprime 2 (![a, da]) (![b, db])
     ha_pos hb_pos ha_div hb_div
-    (by rw [diagDet_mk2, diagDet_mk2]; exact hcop)
+    (by rw [prod_mk2, prod_mk2]; exact hcop)
 
 /-- When `T_ad` conditions fail, the product is zero and so is the RHS. -/
 private lemma T_ad_mul_zero_of_not_dvd (a da : ℕ)
