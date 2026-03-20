@@ -279,6 +279,122 @@ private noncomputable def assembly_regNF (S0 : Finset ℂ) (f : ℂ → ℂ)
     g_corr z hz z - ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' z
   else assembly_reg S0 f z
 
+/-- At a pole `z ∈ S0`, `assembly_regNF` is differentiable within `U` because
+it agrees in a neighbourhood with the analytic correction minus other principal parts. -/
+private theorem assembly_regNF_differentiableWithinAt_pole
+    (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (g_corr : ∀ s ∈ S0, ℂ → ℂ)
+    (hg_corr_an : ∀ (s : ℂ) (hs : s ∈ S0), AnalyticAt ℂ (g_corr s hs) s)
+    (hg_corr_eq : ∀ (s : ℂ) (hs : s ∈ S0),
+      ∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g_corr s hs z)
+    (U : Set ℂ) (z : ℂ) (_hz : z ∈ U) (hz_S : z ∈ S0) :
+    DifferentiableWithinAt ℂ (assembly_regNF S0 f g_corr) U z := by
+  have h_other_pp_diff : DifferentiableAt ℂ
+      (fun w => ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) z := by
+    have h_each : ∀ s' ∈ S0.erase z,
+        DifferentiableAt ℂ (meromorphicPrincipalPart f s') z := by
+      intro s' hs'
+      have hne : z ≠ s' := (Finset.ne_of_mem_erase hs').symm
+      exact (meromorphicPrincipalPart_differentiableOn f s'
+        (hMero s' (Finset.mem_of_mem_erase hs')) z
+        (Set.mem_compl_singleton_iff.mpr hne)).differentiableAt
+        (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne))
+    have h_sum := DifferentiableAt.sum h_each
+    rwa [show (fun w => ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) =
+        (∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s') from
+      funext (fun w => (Finset.sum_apply w _ _).symm)]
+  have h_corr_diff : DifferentiableAt ℂ
+      (fun w => g_corr z hz_S w -
+        ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) z :=
+    (hg_corr_an z hz_S).differentiableAt.sub h_other_pp_diff
+  have h_S_minus_z_closed : IsClosed ((↑(S0.erase z) : Set ℂ)) :=
+    (S0.erase z).finite_toSet.isClosed
+  have hz_not_erase : z ∉ (↑(S0.erase z) : Set ℂ) :=
+    fun hh => (Finset.notMem_erase z S0) (Finset.mem_coe.mp hh)
+  have h_compl_open : IsOpen (↑(S0.erase z) : Set ℂ)ᶜ :=
+    h_S_minus_z_closed.isOpen_compl
+  have hz_in_compl : z ∈ (↑(S0.erase z) : Set ℂ)ᶜ :=
+    Set.mem_compl hz_not_erase
+  have h_ev : (fun w => g_corr z hz_S w -
+      ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) =ᶠ[𝓝 z]
+      assembly_regNF S0 f g_corr := by
+    have hg_corr_eq_z := hg_corr_eq z hz_S
+    rw [Filter.Eventually, mem_nhdsWithin] at hg_corr_eq_z
+    obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_corr_eq_z
+    apply Filter.Eventually.mono
+      ((hV_open.inter h_compl_open).mem_nhds ⟨hz_V, hz_in_compl⟩)
+    intro w ⟨hw_V, hw_compl⟩
+    show (fun w => g_corr z hz_S w -
+      ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) w =
+      assembly_regNF S0 f g_corr w
+    simp only [assembly_regNF]
+    by_cases hw_S : w ∈ S0
+    · have hw_eq : w = z := by
+        by_contra hne
+        exact hw_compl (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hne, hw_S⟩))
+      rw [hw_eq]; simp [hz_S]
+    · have hw_ne_z : w ≠ z := fun heq => hw_S (heq ▸ hz_S)
+      have h_fw : f w - meromorphicPrincipalPart f z w = g_corr z hz_S w :=
+        hV_eq ⟨hw_V, hw_ne_z⟩
+      simp only [dif_neg hw_S, assembly_reg, assembly_totalPP]
+      rw [show (∑ s ∈ S0, meromorphicPrincipalPart f s w) =
+          meromorphicPrincipalPart f z w +
+          ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w from
+        (Finset.add_sum_erase S0 _ hz_S).symm,
+        ← h_fw]
+      ring
+  exact (h_ev.differentiableAt_iff.mp h_corr_diff).differentiableWithinAt
+
+/-- Away from `S0`, `assembly_regNF` equals `assembly_reg`, so it is differentiable
+because `f` and the principal parts are. -/
+private theorem assembly_regNF_differentiableWithinAt_regular
+    (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (hU : IsOpen U) (hf : DifferentiableOn ℂ f (U \ S0))
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (g_corr : ∀ s ∈ S0, ℂ → ℂ)
+    (z : ℂ) (hz : z ∈ U) (hz_S : z ∉ S0) :
+    DifferentiableWithinAt ℂ (assembly_regNF S0 f g_corr) U z := by
+  have hz_punct : z ∈ U \ ↑S0 := ⟨hz, fun hh => hz_S (Finset.mem_coe.mp hh)⟩
+  have hU_S_open : IsOpen (U \ ↑S0) := hU.sdiff (S0.finite_toSet.isClosed)
+  have hf_da : DifferentiableAt ℂ f z :=
+    (hf z hz_punct).differentiableAt (hU_S_open.mem_nhds hz_punct)
+  have htp_da : DifferentiableAt ℂ (assembly_totalPP S0 f) z := by
+    have h_each : ∀ s ∈ S0,
+        DifferentiableAt ℂ (meromorphicPrincipalPart f s) z := by
+      intro s hs
+      have hne : z ≠ s := fun heq => hz_S (heq ▸ hs)
+      exact (meromorphicPrincipalPart_differentiableOn f s (hMero s hs) z
+        (Set.mem_compl_singleton_iff.mpr hne)).differentiableAt
+        (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne))
+    have h_sum := DifferentiableAt.sum h_each
+    rwa [show assembly_totalPP S0 f = (∑ s ∈ S0, meromorphicPrincipalPart f s) from
+      funext (fun z => (Finset.sum_apply z _ _).symm)]
+  have h_reg_diff : DifferentiableAt ℂ (assembly_reg S0 f) z := hf_da.sub htp_da
+  have h_ev : assembly_reg S0 f =ᶠ[𝓝 z] assembly_regNF S0 f g_corr := by
+    apply Filter.Eventually.mono (hU_S_open.mem_nhds hz_punct)
+    intro w ⟨_, hw_not_S⟩
+    have hw_not_S' : w ∉ S0 := fun hh => hw_not_S (Finset.mem_coe.mpr hh)
+    simp only [assembly_regNF, hw_not_S', dite_false]
+  exact (h_ev.differentiableAt_iff.mp h_reg_diff).differentiableWithinAt
+
+/-- The normalized regular part `assembly_regNF` is differentiable on all of `U`. -/
+private theorem assembly_regNF_differentiableOn
+    (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (hU : IsOpen U) (hf : DifferentiableOn ℂ f (U \ S0))
+    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
+    (g_corr : ∀ s ∈ S0, ℂ → ℂ)
+    (hg_corr_an : ∀ (s : ℂ) (hs : s ∈ S0), AnalyticAt ℂ (g_corr s hs) s)
+    (hg_corr_eq : ∀ (s : ℂ) (hs : s ∈ S0),
+      ∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g_corr s hs z) :
+    DifferentiableOn ℂ (assembly_regNF S0 f g_corr) U :=
+  fun z hz => by
+    by_cases hz_S : z ∈ S0
+    · exact assembly_regNF_differentiableWithinAt_pole S0 f hMero g_corr
+        hg_corr_an hg_corr_eq U z hz hz_S
+    · exact assembly_regNF_differentiableWithinAt_regular S0 f hU hf hMero
+        g_corr z hz hz_S
+
 theorem higherOrderCancel_assembly_abstract
     (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (f : ℂ → ℂ)
@@ -401,84 +517,8 @@ theorem higherOrderCancel_assembly_abstract
         intro z ⟨_, hz_not_S0⟩
         exact sub_ne_zero.mpr (fun heq => by
           subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs))
-    have h_reg_nf_diff_U : DifferentiableOn ℂ h_reg_nf U := by
-      intro z hz
-      by_cases hz_S : z ∈ S0
-      · have h_other_pp_diff : DifferentiableAt ℂ
-            (fun w => ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) z := by
-          have h_each : ∀ s' ∈ S0.erase z,
-              DifferentiableAt ℂ (meromorphicPrincipalPart f s') z := by
-            intro s' hs'
-            have hne : z ≠ s' := (Finset.ne_of_mem_erase hs').symm
-            exact (meromorphicPrincipalPart_differentiableOn f s'
-              (hMero s' (Finset.mem_of_mem_erase hs')) z
-              (Set.mem_compl_singleton_iff.mpr hne)).differentiableAt
-              (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne))
-          have h_sum := DifferentiableAt.sum h_each
-          rwa [show (fun w => ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) =
-              (∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s') from
-            funext (fun w => (Finset.sum_apply w _ _).symm)]
-        have h_corr_diff : DifferentiableAt ℂ
-            (fun w => g_corr z hz_S w -
-              ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) z :=
-          (hg_corr_an z hz_S).differentiableAt.sub h_other_pp_diff
-        have h_S_minus_z_closed : IsClosed ((↑(S0.erase z) : Set ℂ)) :=
-          (S0.erase z).finite_toSet.isClosed
-        have hz_not_erase : z ∉ (↑(S0.erase z) : Set ℂ) :=
-          fun hh => (Finset.notMem_erase z S0) (Finset.mem_coe.mp hh)
-        have h_compl_open : IsOpen (↑(S0.erase z) : Set ℂ)ᶜ :=
-          h_S_minus_z_closed.isOpen_compl
-        have hz_in_compl : z ∈ (↑(S0.erase z) : Set ℂ)ᶜ :=
-          Set.mem_compl hz_not_erase
-        have h_ev : (fun w => g_corr z hz_S w -
-            ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) =ᶠ[𝓝 z] h_reg_nf := by
-          have hg_corr_eq_z := hg_corr_eq z hz_S
-          rw [Filter.Eventually, mem_nhdsWithin] at hg_corr_eq_z
-          obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_corr_eq_z
-          apply Filter.Eventually.mono
-            ((hV_open.inter h_compl_open).mem_nhds ⟨hz_V, hz_in_compl⟩)
-          intro w ⟨hw_V, hw_compl⟩
-          change (fun w => g_corr z hz_S w -
-            ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) w = h_reg_nf w
-          simp only [h_reg_nf, assembly_regNF]
-          by_cases hw_S : w ∈ S0
-          · have hw_eq : w = z := by
-              by_contra hne
-              exact hw_compl (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hne, hw_S⟩))
-            rw [hw_eq]; simp [hz_S]
-          · have hw_ne_z : w ≠ z := fun heq => hw_S (heq ▸ hz_S)
-            have h_fw : f w - meromorphicPrincipalPart f z w = g_corr z hz_S w :=
-              hV_eq ⟨hw_V, hw_ne_z⟩
-            simp only [dif_neg hw_S, assembly_reg, assembly_totalPP]
-            rw [show (∑ s ∈ S0, meromorphicPrincipalPart f s w) =
-                meromorphicPrincipalPart f z w +
-                ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w from
-              (Finset.add_sum_erase S0 _ hz_S).symm,
-              ← h_fw]
-            ring
-        exact (h_ev.differentiableAt_iff.mp h_corr_diff).differentiableWithinAt
-      · have hz_punct : z ∈ U \ ↑S0 := ⟨hz, fun hh => hz_S (Finset.mem_coe.mp hh)⟩
-        have hU_S_open : IsOpen (U \ ↑S0) := hU.sdiff (S0.finite_toSet.isClosed)
-        have hf_da : DifferentiableAt ℂ f z :=
-          (hf z hz_punct).differentiableAt (hU_S_open.mem_nhds hz_punct)
-        have htp_da : DifferentiableAt ℂ total_pp z := by
-          have h_each : ∀ s ∈ S0,
-              DifferentiableAt ℂ (meromorphicPrincipalPart f s) z := by
-            intro s hs
-            have hne : z ≠ s := fun heq => hz_S (heq ▸ hs)
-            exact (meromorphicPrincipalPart_differentiableOn f s (hMero s hs) z
-              (Set.mem_compl_singleton_iff.mpr hne)).differentiableAt
-              (isOpen_compl_singleton.mem_nhds (Set.mem_compl_singleton_iff.mpr hne))
-          have h_sum := DifferentiableAt.sum h_each
-          rwa [show total_pp = (∑ s ∈ S0, meromorphicPrincipalPart f s) from
-            funext (fun z => (Finset.sum_apply z _ _).symm)]
-        have h_reg_diff : DifferentiableAt ℂ h_reg z := hf_da.sub htp_da
-        have h_ev : h_reg =ᶠ[𝓝 z] h_reg_nf := by
-          apply Filter.Eventually.mono (hU_S_open.mem_nhds hz_punct)
-          intro w ⟨_, hw_not_S⟩
-          have hw_not_S' : w ∉ S0 := fun hh => hw_not_S (Finset.mem_coe.mpr hh)
-          simp only [h_reg_nf, assembly_regNF, hw_not_S', dite_false, h_reg]
-        exact (h_ev.differentiableAt_iff.mp h_reg_diff).differentiableWithinAt
+    have h_reg_nf_diff_U : DifferentiableOn ℂ h_reg_nf U :=
+      assembly_regNF_differentiableOn S0 f hU hf hMero g_corr hg_corr_an hg_corr_eq
     have h_reg_nf_cont : ContinuousOn h_reg_nf (γ.toFun '' Icc γ.a γ.b) :=
       h_reg_nf_diff_U.continuousOn.mono
         (fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht)
