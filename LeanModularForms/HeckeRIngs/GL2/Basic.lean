@@ -85,9 +85,20 @@ lemma T_ad_one_one : T_ad 1 1 = 1 := by
 /-- Deprecated alias for `T_ad`. -/
 noncomputable abbrev T_ad' := @T_ad
 
-/-- `T(m) = Σ_{a | m} T_ad'(a, m/a)`. -/
+/-- `T(m) = Σ_{a | m} T(a, m/a)`. -/
 noncomputable def T_sum (m : ℕ+) : HeckeAlgebra 2 :=
-  ∑ a ∈ (m : ℕ).divisors, T_ad' a ((m : ℕ) / a)
+  ∑ a ∈ (m : ℕ).divisors, T_ad a ((m : ℕ) / a)
+
+/-! ### Notation -/
+
+/-- Hecke operator `T(a,d)`. -/
+scoped notation "T(" a "," d ")" => T_ad a d
+
+/-- Hecke operator `T(n) = T(1,n)`. -/
+scoped notation "T(" n ")" => T_ad 1 n
+
+/-- Diamond operator `⟨n⟩ = T(n,n)`. -/
+scoped notation "⟨" n "⟩ₕ" => T_pp n
 
 section Structural
 
