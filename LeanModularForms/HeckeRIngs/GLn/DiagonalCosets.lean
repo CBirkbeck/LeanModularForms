@@ -45,53 +45,54 @@ variable (n : ℕ) [NeZero n]
 
 section Diagonal
 
-/-- The diagonal matrix `diag[a₁,...,aₙ]` as an element of `GL_n(ℚ)`. -/
-noncomputable def diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) : GL (Fin n) ℚ :=
+/-- The diagonal `GL_n(ℚ)` matrix with natural number entries.
+    Positivity is needed to ensure the determinant is nonzero. -/
+noncomputable abbrev diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+    GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     (Matrix.diagonal (fun i => (a i : ℚ)))
-    (by
-      rw [Matrix.det_diagonal]
-      exact ne_of_gt (Finset.prod_pos (fun i _ => by positivity [ha i])))
+    (ne_of_gt (by rw [Matrix.det_diagonal]
+      exact Finset.prod_pos (fun i _ => by positivity [ha i])))
 
 omit [NeZero n] in
-/-- The underlying matrix of `diagMat a`. -/
-@[simp]
-lemma diagMat_val (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+@[simp] lemma diagMat_val (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ) =
     Matrix.diagonal (fun i => (a i : ℚ)) := rfl
 
+/-! ### API for diagonal matrices in GL_n -/
+
 omit [NeZero n] in
-lemma diagMat_hasIntEntries (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
-    HasIntEntries n (diagMat n a ha) :=
+lemma diagMat_hasIntEntries (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) : HasIntEntries n (diagMat n a ha) :=
   ⟨Matrix.diagonal (fun i => (a i : ℤ)), by
-    change Matrix.diagonal (fun i => (a i : ℚ)) = _
     ext i j; simp [Matrix.diagonal_apply, Matrix.map_apply]⟩
 
 omit [NeZero n] in
 lemma diagMat_det_pos (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     0 < (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ).det := by
-  change 0 < (Matrix.diagonal (fun i => (a i : ℚ))).det
-  rw [Matrix.det_diagonal]
+  simp [Matrix.det_diagonal]
   exact Finset.prod_pos (fun i _ => by positivity [ha i])
 
 omit [NeZero n] in
-lemma diagMat_mem_posDetInt (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+lemma diagMat_mem_posDetInt (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) :
     diagMat n a ha ∈ posDetInt_submonoid n :=
   ⟨diagMat_hasIntEntries n a ha, diagMat_det_pos n a ha⟩
 
-noncomputable def diagMat_delta (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) : (GL_pair n).Δ :=
+noncomputable abbrev diagMat_delta (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) : (GL_pair n).Δ :=
   ⟨diagMat n a ha, diagMat_mem_posDetInt n a ha⟩
 
 omit [NeZero n] in
-lemma diagMat_det (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
-    (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ).det = ∏ i, (a i : ℚ) := by
-  change (Matrix.diagonal (fun i => (a i : ℚ))).det = _
-  exact Matrix.det_diagonal
+@[simp] lemma diagMat_det (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) :
+    (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ).det =
+    ∏ i, (a i : ℚ) := by simp [Matrix.det_diagonal]
 
 omit [NeZero n] in
-lemma diagMat_one : diagMat n (fun _ => 1) (fun _ => Nat.one_pos) = 1 := by
+lemma diagMat_one :
+    diagMat n (fun _ => 1) (fun _ => Nat.one_pos) = 1 := by
   apply Units.ext
-  show Matrix.diagonal (fun (_ : Fin n) => ((1 : ℕ) : ℚ)) = ↑(1 : GL (Fin n) ℚ)
   ext i j; simp [Matrix.diagonal_apply, Matrix.one_apply]
 
 @[simp]
