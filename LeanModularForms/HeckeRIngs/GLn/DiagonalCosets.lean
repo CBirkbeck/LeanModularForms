@@ -41,64 +41,69 @@ open Matrix Subgroup.Commensurable Pointwise HeckeRing
 
 namespace HeckeRing.GLn
 
-variable (n : ℕ) [NeZero n]
-
 section Diagonal
+
+variable (n : ℕ)
 
 /-- The diagonal `GL_n(ℚ)` matrix with natural number entries.
     Positivity is needed to ensure the determinant is nonzero. -/
+private def natDiagDetNeZero (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) :
+    (Matrix.diagonal (fun i => (a i : ℚ))).det ≠ 0 := by
+  rw [Matrix.det_diagonal]
+  exact ne_of_gt (Finset.prod_pos fun i _ =>
+    Nat.cast_pos.mpr (ha i))
+
 noncomputable abbrev diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     GL (Fin n) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero
     (Matrix.diagonal (fun i => (a i : ℚ)))
-    (by rw [Matrix.det_diagonal]; positivity)
+    (natDiagDetNeZero n a ha)
 
-omit [NeZero n] in
 @[simp] lemma diagMat_val (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ) =
     Matrix.diagonal (fun i => (a i : ℚ)) := rfl
 
-/-! ### API for diagonal matrices in GL_n -/
-
-omit [NeZero n] in
 lemma diagMat_hasIntEntries (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) : HasIntEntries n (diagMat n a ha) :=
   ⟨Matrix.diagonal (fun i => (a i : ℤ)), by
     ext i j; simp [Matrix.diagonal_apply, Matrix.map_apply]⟩
 
-omit [NeZero n] in
 lemma diagMat_det_pos (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     0 < (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ).det := by
   simp [Matrix.det_diagonal]
   exact Finset.prod_pos (fun i _ => by positivity [ha i])
 
-omit [NeZero n] in
 lemma diagMat_mem_posDetInt (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) :
     diagMat n a ha ∈ posDetInt_submonoid n :=
   ⟨diagMat_hasIntEntries n a ha, diagMat_det_pos n a ha⟩
 
-noncomputable abbrev diagMat_delta (a : Fin n → ℕ)
-    (ha : ∀ i, 0 < a i) : (GL_pair n).Δ :=
-  ⟨diagMat n a ha, diagMat_mem_posDetInt n a ha⟩
-
-omit [NeZero n] in
 @[simp] lemma diagMat_det (a : Fin n → ℕ)
     (ha : ∀ i, 0 < a i) :
     (↑(diagMat n a ha) : Matrix (Fin n) (Fin n) ℚ).det =
     ∏ i, (a i : ℚ) := by simp [Matrix.det_diagonal]
 
-omit [NeZero n] in
 lemma diagMat_one :
     diagMat n (fun _ => 1) (fun _ => Nat.one_pos) = 1 := by
   apply Units.ext
   ext i j; simp [Matrix.diagonal_apply, Matrix.one_apply]
 
+end Diagonal
+
+variable (n : ℕ) [NeZero n]
+
+section HeckeDiagonal
+
+noncomputable def diagMat_delta (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) : (GL_pair n).Δ :=
+  ⟨diagMat n a ha, diagMat_mem_posDetInt n a ha⟩
+
 @[simp]
 lemma diagMat_delta_val (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(diagMat_delta n a ha) : GL (Fin n) ℚ) = diagMat n a ha := rfl
 
-end Diagonal
+end HeckeDiagonal
 
 /-- The divisibility chain condition `a₁ | a₂ | ... | aₙ` for positive integer sequences. -/
 def DivChain (a : Fin n → ℕ) : Prop :=

@@ -590,14 +590,14 @@ omit [NeZero n] in
 lemma DivChain_mul (a b : Fin n → ℕ) (ha : DivChain n a) (hb : DivChain n b) :
     DivChain n (a * b) := by
   intro i hi
-  simp only [diagMul_apply]
+  simp only [Pi.mul_apply]
   exact Nat.mul_dvd_mul (ha i hi) (hb i hi)
 
 omit [NeZero n] in
 lemma diagMat_mul (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) :
     diagMat n a ha * diagMat n b hb = diagMat n (a * b) (diagMul_pos n a b ha hb) := by
   apply Units.ext
-  simp only [Units.val_mul, diagMat_val, diagMul_apply]
+  simp only [Units.val_mul, diagMat_val, Pi.mul_apply]
   ext i j
   simp only [Matrix.mul_apply, Matrix.diagonal_apply]
   by_cases hij : i = j
@@ -1425,7 +1425,6 @@ private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
       (diagMat n b hb)⁻¹ * (E : GL (Fin n) ℚ) := h_eq
     rw [h_C_rhs]
     have := diagSandwich_scaling n b hb F G E i j
-    simp only []
     convert this using 2
     push_cast; ring
   exact GLnQ_mem_SLnZ_of_coprime_scaling n C (∏ i, a i) (∏ i, b i) hcop h_det
