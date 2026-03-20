@@ -142,7 +142,7 @@ lemma T_diag_rep_decompose (a : Fin n → ℕ)
     ∃ (R : GL (Fin n) ℚ), R ∈ (GL_pair n).H ∧
       ((T_diag n a ha hdiv).eql.choose : GL (Fin n) ℚ) =
         L * diagMat n a ha * R :=
-  (DoubleCoset.mem_doubleCoset _ _).mp
+  (DoubleCoset.mem_doubleCoset (GL_pair n).H (GL_pair n).H _).mp
     (T_diag_rep_mem_doubleCoset n a ha hdiv)
 
 lemma T_diag_ones :
