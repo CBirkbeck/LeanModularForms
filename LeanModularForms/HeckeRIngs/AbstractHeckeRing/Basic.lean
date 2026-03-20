@@ -93,6 +93,23 @@ structure M (P : ArithmeticGroupPair G) where
 lemma T'_ext (P : ArithmeticGroupPair G) (D1 D2 : T' P) (h : D1.set = D2.set): D1 = D2 := by
   cases D1; cases D2; simp_all
 
+/-- The chosen Δ-representative of a double coset. -/
+noncomputable def T'_rep {P : ArithmeticGroupPair G}
+    (D : T' P) : P.Δ := D.eql.choose
+
+/-- The double coset equals `H · rep · H`. -/
+lemma T'_set_eq_doubleCoset {P : ArithmeticGroupPair G}
+    (D : T' P) :
+    D.set = DoubleCoset.doubleCoset
+      (T'_rep D : G) P.H P.H :=
+  D.eql.choose_spec
+
+/-- The representative lies in its own double coset. -/
+lemma T'_rep_mem {P : ArithmeticGroupPair G}
+    (D : T' P) : (T'_rep D : G) ∈ D.set := by
+  rw [T'_set_eq_doubleCoset]
+  exact DoubleCoset.mem_doubleCoset_self P.H P.H _
+
 /-- Make an element of `T' P` given an element `g : P.Δ`, i.e make `HgH`. -/
 def T_mk (P : ArithmeticGroupPair G) (g : P.Δ) : T' P :=
   ⟨DoubleCoset.doubleCoset g P.H P.H, g, rfl⟩

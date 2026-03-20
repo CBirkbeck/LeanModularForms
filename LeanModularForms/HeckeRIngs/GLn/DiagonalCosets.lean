@@ -125,6 +125,27 @@ noncomputable def T_elem (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivCh
     HeckeAlgebra n :=
   Finsupp.single (T_diag n a ha hdiv) 1
 
+/-- The representative of T_diag lies in the double coset of diagMat. -/
+lemma T_diag_rep_mem_doubleCoset (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
+    ((T_diag n a ha hdiv).eql.choose : GL (Fin n) ℚ) ∈
+    DoubleCoset.doubleCoset (diagMat n a ha : GL (Fin n) ℚ)
+      (GL_pair n).H (GL_pair n).H := by
+  have h_spec := (T_diag n a ha hdiv).eql.choose_spec
+  simp only [T_diag, T_mk, diagMat_delta] at h_spec
+  rw [h_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+
+/-- Decompose the T_diag representative as L * diagMat * R with L, R ∈ H. -/
+lemma T_diag_rep_decompose (a : Fin n → ℕ)
+    (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
+    ∃ (L R : GL (Fin n) ℚ),
+      L ∈ (GL_pair n).H ∧ R ∈ (GL_pair n).H ∧
+      ((T_diag n a ha hdiv).eql.choose : GL (Fin n) ℚ) =
+        L * diagMat n a ha * R := by
+  have h := T_diag_rep_mem_doubleCoset n a ha hdiv
+  rw [DoubleCoset.mem_doubleCoset] at h
+  exact h
+
 lemma T_diag_ones :
     T_diag n (fun _ => 1) (fun _ => Nat.one_pos) (divChain_const n 1) = T_one (GL_pair n) := by
   apply T'_ext
