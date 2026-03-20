@@ -259,6 +259,26 @@ private theorem residueAt_ppMinusRes_eq_zero (f : ℂ → ℂ) (s : ℂ) (hMero_
     exact h_ci_agree r hr_pos hr_lt]
   exact h_single
 
+/-- Sum of all meromorphic principal parts over `S0`. -/
+private noncomputable def assembly_totalPP (S0 : Finset ℂ) (f : ℂ → ℂ) : ℂ → ℂ :=
+  fun z => ∑ s ∈ S0, meromorphicPrincipalPart f s z
+
+/-- The regular part: `f` minus the sum of all principal parts. -/
+private noncomputable def assembly_reg (S0 : Finset ℂ) (f : ℂ → ℂ) : ℂ → ℂ :=
+  fun z => f z - assembly_totalPP S0 f z
+
+/-- The polar correction: sum of `(pp_s - res_s/(z-s))` over all `s ∈ S0`. -/
+private noncomputable def assembly_pol (S0 : Finset ℂ) (f : ℂ → ℂ) : ℂ → ℂ :=
+  fun z => ∑ s ∈ S0, (meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+
+/-- The normalized regular part: at poles `s ∈ S0`, uses the correction function
+`g_corr` minus other principal parts; away from `S0`, equals `assembly_reg`. -/
+private noncomputable def assembly_regNF (S0 : Finset ℂ) (f : ℂ → ℂ)
+    (g_corr : ∀ s ∈ S0, ℂ → ℂ) : ℂ → ℂ :=
+  fun z => if hz : z ∈ S0 then
+    g_corr z hz z - ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' z
+  else assembly_reg S0 f z
+
 theorem higherOrderCancel_assembly_abstract
     (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (f : ℂ → ℂ)
@@ -366,14 +386,10 @@ theorem higherOrderCancel_assembly_abstract
         (∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g_s z) := by
       intro s hs; exact meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
     choose g_corr hg_corr_an hg_corr_eq using h_correction
-    let total_pp : ℂ → ℂ := fun z => ∑ s ∈ S0, meromorphicPrincipalPart f s z
-    let h_reg : ℂ → ℂ := fun z => f z - total_pp z
-    let h_pol : ℂ → ℂ := fun z =>
-      ∑ s ∈ S0, (meromorphicPrincipalPart f s z - residueAt f s / (z - s))
-    let h_reg_nf : ℂ → ℂ := fun z =>
-      if hz : z ∈ S0 then
-        g_corr z hz z - ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' z
-      else h_reg z
+    let total_pp : ℂ → ℂ := assembly_totalPP S0 f
+    let h_reg : ℂ → ℂ := assembly_reg S0 f
+    let h_pol : ℂ → ℂ := assembly_pol S0 f
+    let h_reg_nf : ℂ → ℂ := assembly_regNF S0 f g_corr
     have h_pol_cont : ContinuousOn h_pol (U \ ↑S0) := by
       apply continuousOn_finset_sum
       intro s hs
@@ -424,7 +440,7 @@ theorem higherOrderCancel_assembly_abstract
           intro w ⟨hw_V, hw_compl⟩
           change (fun w => g_corr z hz_S w -
             ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) w = h_reg_nf w
-          simp only [h_reg_nf]
+          simp only [h_reg_nf, assembly_regNF]
           by_cases hw_S : w ∈ S0
           · have hw_eq : w = z := by
               by_contra hne
@@ -433,7 +449,7 @@ theorem higherOrderCancel_assembly_abstract
           · have hw_ne_z : w ≠ z := fun heq => hw_S (heq ▸ hz_S)
             have h_fw : f w - meromorphicPrincipalPart f z w = g_corr z hz_S w :=
               hV_eq ⟨hw_V, hw_ne_z⟩
-            simp only [dif_neg hw_S, h_reg, total_pp]
+            simp only [dif_neg hw_S, assembly_reg, assembly_totalPP]
             rw [show (∑ s ∈ S0, meromorphicPrincipalPart f s w) =
                 meromorphicPrincipalPart f z w +
                 ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w from
@@ -461,7 +477,7 @@ theorem higherOrderCancel_assembly_abstract
           apply Filter.Eventually.mono (hU_S_open.mem_nhds hz_punct)
           intro w ⟨_, hw_not_S⟩
           have hw_not_S' : w ∉ S0 := fun hh => hw_not_S (Finset.mem_coe.mpr hh)
-          simp only [h_reg_nf, hw_not_S', dite_false]
+          simp only [h_reg_nf, assembly_regNF, hw_not_S', dite_false, h_reg]
         exact (h_ev.differentiableAt_iff.mp h_reg_diff).differentiableWithinAt
     have h_reg_nf_cont : ContinuousOn h_reg_nf (γ.toFun '' Icc γ.a γ.b) :=
       h_reg_nf_diff_U.continuousOn.mono
@@ -478,7 +494,7 @@ theorem higherOrderCancel_assembly_abstract
       have hz_not_S : z ∉ S0 := fun hh => hz_not_S0 (Finset.mem_coe.mpr hh)
       have h_nf_eq : h_reg_nf z = h_reg z := dif_neg hz_not_S
       have h_decomp : h z = h_reg z + h_pol z := by
-        simp only [h, h_reg, h_pol, total_pp]
+        simp only [h, h_reg, assembly_reg, h_pol, assembly_pol, assembly_totalPP]
         rw [Finset.sum_sub_distrib]; ring
       rw [h_nf_eq]; exact h_decomp
     have h_fun_eq_off_S0 : ∀ z, z ∉ (↑S0 : Set ℂ) →
@@ -487,9 +503,7 @@ theorem higherOrderCancel_assembly_abstract
       have hz_not_S : z ∉ S0 := fun hh => hz_not_S0 (Finset.mem_coe.mpr hh)
       have h_nf_eq : h_reg_nf z = h_reg z := dif_neg hz_not_S
       have h_decomp : h z = h_reg z + h_pol z := by
-        change f z - ∑ s ∈ S0, residueAt f s / (z - s) =
-          (f z - ∑ s ∈ S0, meromorphicPrincipalPart f s z) +
-          ∑ s ∈ S0, (meromorphicPrincipalPart f s z - residueAt f s / (z - s))
+        simp only [h, h_reg, assembly_reg, h_pol, assembly_pol, assembly_totalPP]
         rw [Finset.sum_sub_distrib]; ring
       rw [h_nf_eq]; exact h_decomp
     have h_cpv_eq : ∀ ε > 0, ∀ t,
