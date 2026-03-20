@@ -1254,6 +1254,53 @@ lemma tendsto_exp_cutoff_integral_crossing
   exact Filter.Tendsto.congr'
     (Filter.Eventually.mono h_eq fun _ h => h.symm) h_lim
 
+/-- Endpoints of the curve do not cross `z₀` when the unique crossing is in the interior. -/
+private lemma no_endpoint_crossing_of_unique_interior
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (honly : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t = t₀) :
+    γ.toFun γ.a ≠ z₀ ∧ γ.toFun γ.b ≠ z₀ := by
+  constructor
+  · intro h; have := honly γ.a (left_mem_Icc.mpr γ.hab.le) h; linarith [ht₀.1]
+  · intro h; have := honly γ.b (right_mem_Icc.mpr γ.hab.le) h; linarith [ht₀.2]
+
+/-- CPV of `(z - z₀)⁻¹` exists when there is a unique crossing at `t₀`. -/
+private lemma cpv_exists_of_unique_crossing
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (honly : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t = t₀)
+    (hγ_meas : Measurable γ.toFun)
+    (hC2 : ContDiffAt ℝ 2 γ.toFun t₀)
+    (h_cont_deriv : ∃ a' b', t₀ ∈ Ioo a' b' ∧
+      Icc a' b' ⊆ Icc γ.a γ.b ∧
+      ContinuousOn (deriv γ.toFun) (Icc a' b')) :
+    CauchyPrincipalValueExists'
+      (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ := by
+  have hne := no_endpoint_crossing_of_unique_interior γ z₀ t₀ ht₀ honly
+  exact cpv_exists_inv_sub γ z₀ hγ_meas hne
+    (fun t ht hγt => by rw [honly t (Ioo_subset_Icc_self ht) hγt]; exact hC2)
+    (fun t ht hγt => by rw [honly t (Ioo_subset_Icc_self ht) hγt]; exact h_cont_deriv)
+
+/-- The Cauchy PV in canonical form equals the limit of the cutoff integrals. -/
+private lemma cpv_inv_sub_eq_limit
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ) (L : ℂ)
+    (hL : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      if ‖γ.toFun t - z₀‖ > ε
+      then (fun z => (z - z₀)⁻¹) (γ.toFun t) * deriv γ.toFun t
+      else 0) (𝓝[>] 0) (𝓝 L)) :
+    cauchyPrincipalValue' (·⁻¹)
+      (fun t => γ.toFun t - z₀) γ.a γ.b 0 = L := by
+  have h_eq : cauchyPrincipalValue' (·⁻¹)
+      (fun t => γ.toFun t - z₀) γ.a γ.b 0 =
+    limUnder (𝓝[>] 0) (fun ε => ∫ t in γ.a..γ.b,
+      if ‖γ.toFun t - z₀‖ > ε
+      then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0) := by
+    unfold cauchyPrincipalValue'
+    congr 1; ext ε
+    apply intervalIntegral.integral_congr; intro t _
+    simp [sub_zero, deriv_sub_const]
+  rw [h_eq]; exact hL.limUnder_eq
+
 /-- **FTC + direction limit**: For a closed piecewise C¹ immersion with unique crossing
 at t₀ through z₀, the exponential of the Cauchy PV integral equals `exp(-i · α)` where
 `α` is the crossing angle.
@@ -1277,46 +1324,31 @@ theorem exp_pv_eq_exp_neg_crossing_angle
     Complex.exp (cauchyPrincipalValue' (·⁻¹)
       (fun t => γ.toFun t - z₀) γ.a γ.b 0) =
     Complex.exp (-(I * angleAtCrossing γ t₀ ht₀)) := by
-  -- Step 1: Derive that endpoints don't cross z₀
-  have h_no_endpt_a : γ.toFun γ.a ≠ z₀ := by
-    intro h; have := honly γ.a (left_mem_Icc.mpr γ.hab.le) h; linarith [ht₀.1]
-  have h_no_endpt_b : γ.toFun γ.b ≠ z₀ := by
-    intro h; have := honly γ.b (right_mem_Icc.mpr γ.hab.le) h; linarith [ht₀.2]
-  -- Step 2: PV of (z-z₀)⁻¹ exists
-  have hPV_exists : CauchyPrincipalValueExists'
-      (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ :=
-    cpv_exists_inv_sub γ z₀ hγ_meas ⟨h_no_endpt_a, h_no_endpt_b⟩
-      (fun t ht hγt => by rw [honly t (Ioo_subset_Icc_self ht) hγt]; exact hC2)
-      (fun t ht hγt => by rw [honly t (Ioo_subset_Icc_self ht) hγt]; exact h_cont_deriv)
-  obtain ⟨L, hL⟩ := hPV_exists
-  -- hL : Tendsto (fun ε => ∫ ... (γ t - z₀)⁻¹ * deriv γ t ...) (𝓝[>] 0) (𝓝 L)
-  -- Step 3: exp(R(ε)) → exp(L) by continuity of exp
-  have h_exp_lim : Tendsto (fun ε => Complex.exp (∫ t in γ.a..γ.b,
-      if ‖γ.toFun t - z₀‖ > ε
-      then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0))
-      (𝓝[>] 0) (𝓝 (Complex.exp L)) :=
-    Complex.continuous_exp.continuousAt.tendsto.comp hL
-  -- Step 4: exp(R(ε)) → exp(-iα) by the core analysis
+  obtain ⟨L, hL⟩ := cpv_exists_of_unique_crossing γ z₀ t₀ ht₀ honly hγ_meas hC2 h_cont_deriv
+  -- exp(R(ε)) → exp(L) by continuity; exp(R(ε)) → exp(-iα) by core analysis
+  have h_exp_lim := Complex.continuous_exp.continuousAt.tendsto.comp hL
   have h_exp_target := tendsto_exp_cutoff_integral_crossing γ hclosed z₀ t₀ ht₀
     hcross honly
-  -- Step 5: By uniqueness of limits: exp(L) = exp(-iα)
-  have h_exp_eq : Complex.exp L =
-      Complex.exp (-(I * ↑(angleAtCrossing γ t₀ ht₀))) :=
-    tendsto_nhds_unique h_exp_lim h_exp_target
-  -- Step 6: cauchyPrincipalValue' = L (form conversion)
-  have h_pv_eq : cauchyPrincipalValue' (·⁻¹)
-      (fun t => γ.toFun t - z₀) γ.a γ.b 0 = L := by
-    have h_eq : cauchyPrincipalValue' (·⁻¹)
-        (fun t => γ.toFun t - z₀) γ.a γ.b 0 =
-      limUnder (𝓝[>] 0) (fun ε => ∫ t in γ.a..γ.b,
-        if ‖γ.toFun t - z₀‖ > ε
-        then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0) := by
-      unfold cauchyPrincipalValue'
-      congr 1; ext ε
-      apply intervalIntegral.integral_congr; intro t _
-      simp [sub_zero, deriv_sub_const]
-    rw [h_eq]; exact hL.limUnder_eq
-  rw [h_pv_eq]; exact h_exp_eq
+  have h_exp_eq := tendsto_nhds_unique h_exp_lim h_exp_target
+  rw [cpv_inv_sub_eq_limit γ z₀ L hL]; exact h_exp_eq
+
+/-- The external winding contribution equals an integer when `exp(L) = exp(-iα)`.
+Given that the CPV equals `L` and `L = -iα + n·(2πi)`, the external winding is `n`. -/
+private lemma externalWindingContribution_eq_int_of_cpv_eq
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (L : ℂ) (n : ℤ)
+    (hPV_eq : cauchyPrincipalValue' (·⁻¹)
+      (fun t => γ.toFun t - z₀) γ.a γ.b 0 = L)
+    (hn : L = -(I * ↑(angleAtCrossing γ t₀ ht₀)) + ↑n * (2 * ↑Real.pi * I)) :
+    externalWindingContribution γ z₀ t₀ ht₀ = n := by
+  unfold externalWindingContribution generalizedWindingNumber'
+  rw [hPV_eq, hn]
+  have hpi_ne : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+  have h2pi_ne : (2 : ℂ) * Real.pi ≠ 0 := mul_ne_zero two_ne_zero hpi_ne
+  have h2pii_ne : 2 * Real.pi * I ≠ 0 := mul_ne_zero h2pi_ne I_ne_zero
+  field_simp
+  ring
 
 /-- The external winding contribution is always an integer.
 This is the key structural result from H-W Proposition 2.2:
@@ -1340,64 +1372,16 @@ theorem externalWindingContribution_isInt
       Icc a' b' ⊆ Icc γ.a γ.b ∧
       ContinuousOn (deriv γ.toFun) (Icc a' b')) :
     ∃ N : ℤ, externalWindingContribution γ z₀ t₀ ht₀ = N := by
-  -- Step 0: Derive that endpoints don't cross z₀
-  have h_no_endpt_a : γ.toFun γ.a ≠ z₀ := by
-    intro h; have := honly γ.a (left_mem_Icc.mpr γ.hab.le) h; linarith [ht₀.1]
-  have h_no_endpt_b : γ.toFun γ.b ≠ z₀ := by
-    intro h; have := honly γ.b (right_mem_Icc.mpr γ.hab.le) h; linarith [ht₀.2]
-  -- Step 1: The CPV of (z-z₀)⁻¹ exists
-  have hPV_exists : CauchyPrincipalValueExists'
-      (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ := by
-    apply cpv_exists_inv_sub γ z₀ hγ_meas ⟨h_no_endpt_a, h_no_endpt_b⟩
-    · intro t ht hγt
-      have heq := honly t (Ioo_subset_Icc_self ht) hγt
-      rw [heq]; exact hC2
-    · intro t ht hγt
-      have heq := honly t (Ioo_subset_Icc_self ht) hγt
-      rw [heq]; exact h_cont_deriv
-  -- Step 2: Get the actual PV limit value
-  obtain ⟨L, hL⟩ := hPV_exists
-  -- Step 3: exp(PV) = exp(-i·α) by the FTC + direction limit
+  obtain ⟨L, hL⟩ := cpv_exists_of_unique_crossing γ z₀ t₀ ht₀ honly hγ_meas hC2 h_cont_deriv
+  have hPV_eq := cpv_inv_sub_eq_limit γ z₀ L hL
+  -- exp(PV) = exp(-i·α) by FTC + direction limit, so exp(L) = exp(-iα)
   have h_exp := exp_pv_eq_exp_neg_crossing_angle γ hclosed z₀ t₀ ht₀
     hcross honly hγ_meas hC2 h_cont_deriv
-  -- Step 4: The cauchyPrincipalValue' matches our PV limit L
-  -- We need to show that the CPV in generalizedWindingNumber' equals L
-  have hPV_match : ∀ ε, (∫ t in γ.a..γ.b,
-      if ‖(fun t => γ.toFun t - z₀) t - 0‖ > ε
-      then (fun x => x⁻¹) ((fun t => γ.toFun t - z₀) t) *
-        deriv (fun t => γ.toFun t - z₀) t
-      else 0) =
-    (∫ t in γ.a..γ.b,
-      if ‖γ.toFun t - z₀‖ > ε
-      then (fun z => (z - z₀)⁻¹) (γ.toFun t) * deriv γ.toFun t
-      else 0) := by
-    intro ε
-    apply intervalIntegral.integral_congr
-    intro t _
-    simp [sub_zero, deriv_sub_const]
-  have hL' : Filter.Tendsto (fun ε => ∫ t in γ.a..γ.b,
-      if ‖(fun t => γ.toFun t - z₀) t - 0‖ > ε
-      then (fun x => x⁻¹) ((fun t => γ.toFun t - z₀) t) *
-        deriv (fun t => γ.toFun t - z₀) t
-      else 0) (𝓝[>] 0) (𝓝 L) := by
-    convert hL using 1; ext ε; exact hPV_match ε
-  have hPV_eq : cauchyPrincipalValue' (·⁻¹)
-      (fun t => γ.toFun t - z₀) γ.a γ.b 0 = L := by
-    unfold cauchyPrincipalValue'
-    exact hL'.limUnder_eq
   rw [hPV_eq] at h_exp
-  -- Step 5: From exp(L) = exp(-iα), get L = -iα + n·(2πi)
+  -- From exp(L) = exp(-iα), get L = -iα + n·(2πi)
   rw [Complex.exp_eq_exp_iff_exists_int] at h_exp
   obtain ⟨n, hn⟩ := h_exp
-  -- Step 6: Compute external = (2πi)⁻¹ · L + α/(2π) = n
-  use n
-  unfold externalWindingContribution generalizedWindingNumber'
-  rw [hPV_eq, hn]
-  have hpi_ne : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  have h2pi_ne : (2 : ℂ) * Real.pi ≠ 0 := mul_ne_zero two_ne_zero hpi_ne
-  have h2pii_ne : 2 * Real.pi * I ≠ 0 := mul_ne_zero h2pi_ne I_ne_zero
-  field_simp
-  ring
+  exact ⟨n, externalWindingContribution_eq_int_of_cpv_eq γ z₀ t₀ ht₀ L n hPV_eq hn⟩
 
 /-- H-W Proposition 2.2: The generalized winding number decomposes as
 the external winding integer minus the crossing angle contribution.
