@@ -339,25 +339,17 @@ private lemma m'_right_scalar_eq_one (b : Fin 2 → ℕ)
       rw [← mul_assoc, ← mul_assoc] at h12'
       exact HeckeRing.mul_singleton_right_cancel δ_c _ _ h12'
     subst hi; rfl
-  have h_pos : 0 < HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
-      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
+  have h_pos : 0 < HeckeRing.m' (GL_pair 2)
+      (T_diag 2 b hb_pos hb)
+      (T_diag 2 (fun _ => c) (fun _ => hc)
+        (divChain_const 2 c))
       (T_diag 2 (b * (fun _ => c))
-        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) := by
-    have h_mem := mem_mulSupport_right_scalar b hb_pos hb c hc hbc
-    simp only at h_mem
-    have h_ne := HeckeRing.m'_pos_of_mem_mulSupport (GL_pair 2) (T_diag 2 b hb_pos hb)
-      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
-      (T_diag 2 (b * (fun _ => c))
-        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) h_mem
-    have : (0 : ℤ) ≤ HeckeRing.m' (GL_pair 2) (T_diag 2 b hb_pos hb)
-      (T_diag 2 (fun _ => c) (fun _ => hc) (divChain_const 2 c))
-      (T_diag 2 (b * (fun _ => c))
-        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) := by
-      simp only [HeckeRing.m']; exact Nat.cast_nonneg _
-    omega
-  -- Now rewrite back to abstract D_b, D_c, D_bc using the equality hypotheses
+        (diagMul_pos 2 b _ hb_pos (fun _ => hc)) hbc) :=
+    HeckeRing.m'_pos_of_mem (GL_pair 2) _ _ _
+      (mem_mulSupport_right_scalar b hb_pos hb c hc hbc)
   rw [← hDb, ← hDc, ← hDbc] at h_le h_pos
-  omega
+  exact HeckeRing.m'_eq_one_of_le_one_and_pos
+    (GL_pair 2) D_b D_c D_bc h_le h_pos
 
 private lemma m'_right_scalar_eq_zero (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i)
     (hb : DivChain 2 b) (c : ℕ) (hc : 0 < c) (hbc : DivChain 2 (b * (fun _ => c)))

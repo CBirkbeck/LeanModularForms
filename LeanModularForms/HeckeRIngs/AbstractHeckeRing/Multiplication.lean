@@ -324,6 +324,18 @@ lemma m'_eq_zero_of_nmem_mulSupport (D1 D2 d : T' P) (hd : d ∉ mulSupport P D1
   simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and, Prod.exists]
   exact ⟨i, j, doubleCoset_eq_of_rightCoset_eq P D1 D2 d _ hij⟩
 
+lemma m'_eq_one_of_le_one_and_pos (D1 D2 d : T' P)
+    (h_le : m' P D1 D2 d ≤ 1)
+    (h_pos : 0 < m' P D1 D2 d) :
+    m' P D1 D2 d = 1 := by omega
+
+lemma m'_pos_of_mem (D1 D2 d : T' P) (hd : d ∈ mulSupport P D1 D2) :
+    0 < m' P D1 D2 d := by
+  have h_ne := m'_pos_of_mem_mulSupport P D1 D2 d hd
+  have : (0 : ℤ) ≤ m' P D1 D2 d := by
+    simp only [m']; exact Nat.cast_nonneg _
+  omega
+
 lemma m'_one_T (D1 d : T' P) : D1 = d ↔ m' P (T_one P) D1 d = 1 := by
   constructor
   · intro h; subst h
