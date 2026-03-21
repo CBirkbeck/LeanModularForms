@@ -61,7 +61,7 @@ omit f hf in
 private lemma elliptic_finset_sum_eq_three
     (S : Finset UpperHalfPlane)
     (g : UpperHalfPlane → ℂ)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (_hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete_zero : ∀ p, p ∈ 𝒟 → p ∉ S → g p = 0) :
     let P := fun (p : UpperHalfPlane) =>
       p = ellipticPointI' ∨ p = ellipticPointRho' ∨
