@@ -545,7 +545,7 @@ theorem valence_formula_textbook_orbit_finsum :
     (k : ℂ) / 12 := by
   rw [finsum_nonell_eq_repCanon_sum f hf, repCanon_sum_split f hf]
   unfold repStrict repLeftVert repLeftArc
-  linear_combination valence_formula_orbit_sum_s₀ f hf
+  linear_combination valence_formula_orbit_sum f hf (s₀ f hf) (s₀_mem_fd f hf) (s₀_complete f hf)
 
 
 end
