@@ -233,6 +233,8 @@ theorem generalizedResidueTheorem_convex (U : Set ℂ) (hU : IsOpen U)
 
 /-! ### Simple-pole corollary -/
 
+open GeneralizedResidueTheory in
+set_option maxHeartbeats 800000 in
 /-- **Generalized Residue Theorem for simple poles** (null-homologous).
 
 When every singularity in `S0` is a simple pole, conditions (A') and (B) are
@@ -241,6 +243,11 @@ is flat of order 1 (`isFlatOfOrder_one`), and the Laurent compatibility in
 condition (B) is vacuously satisfied (no higher-order terms). The conclusion
 is an equality (CPV exists), not just `Tendsto`, and uses `residueAt` in place
 of `residueSimplePole`.
+
+**Self-contained proof.** Decomposes `f = g + Σ res/(z-s)` where `g` is
+holomorphic on `U`. Dixon gives `∮ g dz = 0`, so `CPV(g) → 0`. The convex
+theorem on `(univ, convex_univ)` gives `CPV(f_sing) = 2πi · Σ n · Res`.
+Adding the two yields `CPV(f) = CPV(f_sing)`.
 
 **Hypotheses compared to `generalizedResidueTheorem`:**
 - Replaces `hCondA`, `hCondB` with `hSimplePoles` (simple pole at each `s`)
@@ -256,13 +263,149 @@ theorem generalizedResidueTheorem_simplePoles (U : Set ℂ) (hU : IsOpen U)
     (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
     (hf_ext : ∀ s ∈ S0,
       ContinuousAt (fun z => f z - residueSimplePole f s / (z - s)) s)
-    (hγ_meas : Measurable γ.toFun)
+    (_hγ_meas : Measurable γ.toFun)
     (h_no_endpt_cross : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
     (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂) :
     cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
       2 * Real.pi * I * ∑ s ∈ S0,
-        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s :=
-  generalizedResidueTheorem_higher_order_simple_nullHomologous U hU S hS_in_U
-    hS_discrete hS_closed S0 hS0_subset f hf γ h_null hS_on_curve
-    hSimplePoles hf_ext hγ_meas h_no_endpt_cross h_unique_cross
+        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s := by
+  have hS0_in_U : ∀ s ∈ S0, s ∈ U := fun s hs => hS_in_U s (hS0_subset s hs)
+  -- ════════════════════════════════════════════════════════════════════════
+  -- Step 1: Decompose f = g + f_sing where g is holomorphic on U
+  -- ════════════════════════════════════════════════════════════════════════
+  set f_sing := fun z => ∑ s ∈ S0, residueSimplePole f s / (z - s) with hf_sing_def
+  set g := fun z => f z - f_sing z with hg_def
+  have h_decomp := simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext
+  have hg_diff : DifferentiableOn ℂ g U := h_decomp.1
+  have hg_cont_on_image : ContinuousOn g (γ.toFun '' Icc γ.a γ.b) := by
+    apply hg_diff.continuousOn.mono
+    intro z ⟨t, ht, htz⟩; rw [← htz]; exact h_null.image_subset t ht
+  -- ════════════════════════════════════════════════════════════════════════
+  -- Step 2: Dixon gives ∮_γ g dz = 0, hence CPV(g, ε) → 0
+  -- ════════════════════════════════════════════════════════════════════════
+  have hg_integral_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 :=
+    contourIntegral_eq_zero_of_nullHomologous hU hg_diff γ h_null
+  have hg_cpv_zero : Tendsto
+      (fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 g γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 0) :=
+    tendsto_cpv_of_continuousOn_zero_integral S0 g γ hg_cont_on_image hg_integral_zero
+  -- ════════════════════════════════════════════════════════════════════════
+  -- Step 3: CPV(f_sing) = 2πi · Σ n(γ,s) · Res_simplePole(f,s)
+  --
+  -- f_sing has simple poles, is holomorphic on univ \ S0.
+  -- Apply generalizedResidueTheorem' on (univ, convex_univ).
+  -- ════════════════════════════════════════════════════════════════════════
+  have hSimple_sing : ∀ s ∈ S0, HasSimplePoleAt f_sing s :=
+    fun s hs => hasSimplePoleAt_sum_div_sub S0 (residueSimplePole f) s hs
+  have hf_sing_diff : DifferentiableOn ℂ f_sing (Set.univ \ ↑S0) :=
+    differentiableOn_sum_div_sub S0 (residueSimplePole f) Set.univ
+  have hf_sing_ext : ∀ s ∈ S0,
+      ContinuousAt (fun z => f_sing z - residueSimplePole f_sing s / (z - s)) s :=
+    fun s hs => continuousAt_sum_remainder S0 (residueSimplePole f) s hs
+  have h_res_sing_eq : ∀ s ∈ S0,
+      residueSimplePole f_sing s = residueSimplePole f s :=
+    fun s hs => residueSimplePole_sum_div_sub S0 (residueSimplePole f) s hs
+  -- PV of each singular term Res(f,s)/(z-s) exists (from closedness + unique crossings)
+  have hPV_singular_sing : ∀ s ∈ S0, CauchyPrincipalValueExists'
+      (fun z => residueSimplePole f_sing s / (z - s)) γ.toFun γ.a γ.b s := by
+    intro s hs
+    rw [h_res_sing_eq s hs]
+    have h_eq : (fun z => residueSimplePole f s / (z - s)) =
+        (fun z => residueSimplePole f s * (fun z => (z - s)⁻¹) z) := by
+      ext z; simp [div_eq_mul_inv]
+    rw [h_eq]
+    apply CauchyPrincipalValueExists'.const_mul
+    apply cauchyPrincipalValueExists_of_singular_inv γ s
+    intro ⟨t₀, ht₀, hcross⟩
+    have ht₀_Ioo : t₀ ∈ Ioo γ.a γ.b := by
+      refine ⟨lt_of_le_of_ne ht₀.1 (fun h => ?_), lt_of_le_of_ne ht₀.2 (fun h => ?_)⟩
+      · exact (h_no_endpt_cross s hs).1 (h ▸ hcross)
+      · exact (h_no_endpt_cross s hs).2 (h ▸ hcross)
+    have honly : ∀ t ∈ Set.Icc γ.a γ.b, γ.toFun t = s → t = t₀ :=
+      fun t ht hgt => h_unique_cross s hs t ht t₀ ht₀ hgt hcross
+    suffices ∃ M, Tendsto (fun ε => ∫ (t : ℝ) in γ.a..γ.b,
+        if ε < ‖γ.toFun t - s‖ then (γ.toFun t - s)⁻¹ * deriv γ.toFun t else 0)
+        (𝓝[>] 0) (𝓝 M) from this.choose_spec.cauchy_map
+    exact cpv_exists_inv_sub_of_closed_unique γ s h_null.closed
+      (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross honly
+  -- Apply the convex-domain simple-pole theorem to f_sing on (univ, convex_univ)
+  have h_sing_thm := generalizedResidueTheorem' Set.univ isOpen_univ convex_univ
+    S (fun s _ => Set.mem_univ s) hS_discrete hS_closed S0 hS0_subset
+    f_sing hf_sing_diff γ h_null.closed (fun t _ => Set.mem_univ _)
+    (fun t ht h_mem => hS_on_curve t ht h_mem) hSimple_sing hf_sing_ext
+    hPV_singular_sing
+  -- Rewrite residueSimplePole(f_sing) to residueSimplePole(f)
+  have h_sing_formula : cauchyPrincipalValueOn S0 f_sing γ.toFun γ.a γ.b =
+      2 * Real.pi * I * ∑ s ∈ S0,
+        generalizedWindingNumber' γ.toFun γ.a γ.b s *
+          residueSimplePole f s := by
+    rw [h_sing_thm.2]; congr 1; apply Finset.sum_congr rfl
+    intro s hs; rw [h_res_sing_eq s hs]
+  -- ════════════════════════════════════════════════════════════════════════
+  -- Step 4: CPV(f) - CPV(f_sing) → 0, because the difference is CPV(g) → 0
+  -- ════════════════════════════════════════════════════════════════════════
+  have hCancel : Tendsto
+      (fun ε =>
+        (∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) -
+        (∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f_sing γ.toFun ε t))
+      (𝓝[>] 0) (𝓝 0) := by
+    apply hg_cpv_zero.congr'
+    filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
+    symm
+    have h_int_f := intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
+      U S0 f hf.continuousOn γ h_null.image_subset ε hε
+    have h_int_sing := intervalIntegrable_cpvIntegrandOn_of_continuousOn_diff
+      Set.univ S0 f_sing hf_sing_diff.continuousOn γ
+      (fun t _ => Set.mem_univ _) ε hε
+    rw [← intervalIntegral.integral_sub h_int_f h_int_sing]
+    congr 1; ext t
+    exact cpvIntegrandOn_sub S0 f f_sing γ.toFun ε t
+  -- ════════════════════════════════════════════════════════════════════════
+  -- Step 5: Combine — CPV(f) exists and equals CPV(f_sing) = formula
+  -- ════════════════════════════════════════════════════════════════════════
+  obtain ⟨L_sing, hL_sing⟩ := h_sing_thm.1
+  -- CPV(f) → L_sing (write CPV(f) = (CPV(f) - CPV(f_sing)) + CPV(f_sing), limits 0 + L_sing)
+  have h_f_tendsto : Tendsto (fun ε =>
+      ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
+      (𝓝[>] 0) (𝓝 L_sing) := by
+    have h_eq : (fun ε => ∫ t in γ.a..γ.b,
+        cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) =
+      (fun ε =>
+        ((∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) -
+         (∫ t in γ.a..γ.b,
+            cauchyPrincipalValueIntegrandOn S0 f_sing γ.toFun ε t)) +
+        (∫ t in γ.a..γ.b,
+            cauchyPrincipalValueIntegrandOn S0 f_sing γ.toFun ε t)) := by
+      ext ε; ring
+    rw [h_eq, show L_sing = 0 + L_sing from (zero_add _).symm]
+    exact hCancel.add hL_sing
+  -- CPV(f) = limUnder = L_sing = limUnder(f_sing) = CPV(f_sing) = formula
+  have h1 : cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b = L_sing :=
+    h_f_tendsto.limUnder_eq
+  have h2 : cauchyPrincipalValueOn S0 f_sing γ.toFun γ.a γ.b = L_sing :=
+    hL_sing.limUnder_eq
+  -- ════════════════════════════════════════════════════════════════════════
+  -- Step 6: Translate residueSimplePole → residueAt
+  -- ════════════════════════════════════════════════════════════════════════
+  rw [h1, ← h2, h_sing_formula]
+  congr 1; apply Finset.sum_congr rfl
+  intro s hs; rw [residueAt_eq_residueSimplePole f s (hSimplePoles s hs)]
+
+/-! ### API bridge lemmas -/
+
+/-- A simple pole is meromorphic.
+
+`HasSimplePoleAt f z₀` decomposes `f` as `c/(z-z₀) + g` with `g` analytic.
+Multiplying by `(z-z₀)` yields the analytic function `c + (z-z₀)·g`, which
+witnesses `MeromorphicAt f z₀` via the zpow characterization with `n = -1`. -/
+theorem HasSimplePoleAt.meromorphicAt {f : ℂ → ℂ} {z₀ : ℂ}
+    (hf : HasSimplePoleAt f z₀) : MeromorphicAt f z₀ := by
+  obtain ⟨c, g, hg_an, hf_eq⟩ := hf
+  rw [MeromorphicAt.iff_eventuallyEq_zpow_smul_analyticAt]
+  refine ⟨-1, fun z => c + (z - z₀) * g z, ?_, ?_⟩
+  · exact analyticAt_const.add ((analyticAt_id.sub analyticAt_const).mul hg_an)
+  · filter_upwards [hf_eq, self_mem_nhdsWithin] with z hfz hne
+    rw [Set.mem_compl_singleton_iff] at hne
+    have hsub_ne : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
+    rw [hfz, zpow_neg_one, smul_eq_mul]; field_simp [hsub_ne]
