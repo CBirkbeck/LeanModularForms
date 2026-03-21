@@ -888,8 +888,6 @@ lemma crossing_ratio_tendsto
     (hσ₂_gt : ∀ᶠ ε in 𝓝[>] (0:ℝ), t₀ < σ₂ ε)
     (hσ₁_val : ∀ᶠ ε in 𝓝[>] (0:ℝ), ‖γ.toFun (σ₁ ε) - z₀‖ = ε)
     (hσ₂_val : ∀ᶠ ε in 𝓝[>] (0:ℝ), ‖γ.toFun (σ₂ ε) - z₀‖ = ε)
-    (hσ₁_mid : ∀ᶠ ε in 𝓝[>] (0:ℝ), ∀ t ∈ Icc (σ₁ ε) (σ₂ ε),
-      ‖γ.toFun t - z₀‖ ≤ ε)
     (hσ₁_in : ∀ᶠ ε in 𝓝[>] (0:ℝ), γ.a ≤ σ₁ ε)
     (hσ₂_in : ∀ᶠ ε in 𝓝[>] (0:ℝ), σ₂ ε ≤ γ.b) :
     Tendsto (fun ε => (γ.toFun (σ₁ ε) - z₀) / (γ.toFun (σ₂ ε) - z₀))
@@ -1247,7 +1245,6 @@ lemma tendsto_exp_cutoff_integral_crossing
       (hIoo_ev.mono fun ε hε => (hprops ε hε).2.2.1)
       (hIoo_ev.mono fun ε hε => (hprops ε hε).2.2.2.2.1)
       (hIoo_ev.mono fun ε hε => (hprops ε hε).2.2.2.2.2.1)
-      (hIoo_ev.mono fun ε hε => (hprops ε hε).2.2.2.2.2.2.2.2)
       (hIoo_ev.mono fun ε hε => (hprops ε hε).1)
       (hIoo_ev.mono fun ε hε => (hprops ε hε).2.2.2.1)
   -- Step 5: Conclude by Tendsto.congr'

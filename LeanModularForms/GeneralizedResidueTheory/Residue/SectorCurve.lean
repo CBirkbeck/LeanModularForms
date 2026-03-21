@@ -388,7 +388,7 @@ private theorem pv_cutoff_F_integrable_delta_1 (r : ℝ) (hr : 0 < r) (α : ℝ)
   rw [IntegrableOn, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]; exact h_F_Ioo
 
 private theorem pv_cutoff_F_integrable_1_2 (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
-    (hε : 0 < ε) (hεr : ε < r) :
+    (_hε : 0 < ε) (hεr : ε < r) :
     let F : ℝ → ℂ := fun t => if ‖sectorCurve r α t - 0‖ > ε
         then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t else 0
     IntervalIntegrable F volume 1 2 := by
@@ -535,7 +535,7 @@ private theorem pv_cutoff_integral_seg1_eq_inv (r : ℝ) (hr : 0 < r) (α : ℝ)
   exact fun ht_mem => h_on_Ioo t (ht.mpr ht_mem)
 
 private theorem pv_cutoff_integral_seg2_eq_Ialpha (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
-    (hε : 0 < ε) (hεr : ε < r) :
+    (_hε : 0 < ε) (hεr : ε < r) :
     let F : ℝ → ℂ := fun t => if ‖sectorCurve r α t - 0‖ > ε
         then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t else 0
     ∫ t in (1 : ℝ)..2, F t = I * ↑α := by

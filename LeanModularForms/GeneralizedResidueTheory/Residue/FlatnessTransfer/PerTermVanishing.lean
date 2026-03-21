@@ -577,7 +577,7 @@ integrands: when `ε < δ_sep / 2`, the difference is bounded by
 `(δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1)`. -/
 private lemma dct_bound_diff_cpv_zpow
     (S0 : Finset ℂ) (γ : PiecewiseC1Immersion) (s : ℂ) (m : ℕ)
-    (hs : s ∈ S0) (hS0_single : S0 ≠ {s})
+    (hs : s ∈ S0) (_hS0_single : S0 ≠ {s})
     (Mγ' : ℝ) (hMγ' : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ Mγ')
     (δ_sep : ℝ) (hδ_pos : 0 < δ_sep)
     (hδ_sep_le : ∀ s' ∈ S0.erase s, δ_sep ≤ ‖s - s'‖)
@@ -588,6 +588,7 @@ private lemma dct_bound_diff_cpv_zpow
         cauchyPrincipalValueIntegrandOn S0
           (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t‖ ≤
       (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) := by
+  have hε_lt := hε.2
   set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
   apply ae_of_all; intro t ht
   simp only [cauchyPrincipalValueIntegrandOn]
@@ -604,7 +605,7 @@ private lemma dct_bound_diff_cpv_zpow
           calc ‖s - s'‖ = ‖(s - γ.toFun t) + (γ.toFun t - s')‖ := by ring_nf
             _ ≤ ‖s - γ.toFun t‖ + ‖γ.toFun t - s'‖ := norm_add_le _ _
             _ = ‖γ.toFun t - s‖ + ‖γ.toFun t - s'‖ := by rw [norm_sub_rev]
-        linarith [hε.2]
+        linarith [hε_lt]
       have ht_Icc : t ∈ Icc γ.a γ.b :=
         Ioc_subset_Icc_self (Set.uIoc_of_le γ.hab.le ▸ ht)
       calc ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖

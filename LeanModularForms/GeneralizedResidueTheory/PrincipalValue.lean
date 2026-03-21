@@ -611,7 +611,7 @@ private theorem pv_piecewise_pointwise
   exact tendsto_const_nhds.congr' (by
     filter_upwards [Ioo_mem_nhdsGT
       (norm_pos_iff.mpr (sub_ne_zero.mpr h_ne))] with ε hε
-    simp only [gt_iff_lt, hε.2, ite_true])
+    simp only [hε.2, ite_true])
 
 /-- PV exists for continuous integrands when the full integrand is integrable
 and the preimage of z₀ is finite. -/
