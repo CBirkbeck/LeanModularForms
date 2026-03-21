@@ -8,8 +8,8 @@ import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.GeneralizedResidueTheory.PrincipalValue
 import LeanModularForms.GeneralizedResidueTheory.Homotopy.Invariance
 import LeanModularForms.GeneralizedResidueTheory.Residue
-import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer
-import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem
+import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.CPVExistence
+import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheoremBase
 import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Calculus.DSlope
 import Mathlib.Analysis.Complex.RemovableSingularity

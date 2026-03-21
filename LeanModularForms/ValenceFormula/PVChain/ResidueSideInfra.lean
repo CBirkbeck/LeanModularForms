@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.PVChain.OnCurveCapture
-import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem
+import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheoremBase
 import LeanModularForms.ValenceFormula.ModularInvariance
 import LeanModularForms.ValenceFormula.Boundary.Smooth
 
