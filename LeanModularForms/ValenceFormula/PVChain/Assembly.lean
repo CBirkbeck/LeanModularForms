@@ -216,7 +216,7 @@ private lemma integral_seg4_cov (G : ℝ → ℂ) :
 
 omit hf in
 private lemma pvIntegrand_seg4_eq_neg_seg1
-    (S : Finset UpperHalfPlane)
+    (_S : Finset UpperHalfPlane)
     (Sx : Finset ℂ)
     {H : ℝ}
     {ε : ℝ}
@@ -436,7 +436,7 @@ private lemma pvIntegrand_measurableSet_trunc
 omit f hf in
 private lemma norm_deriv_fdBoundary_H_le
     {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
-    {t : ℝ} (ht : t ∈ Icc (0:ℝ) 5)
+    {t : ℝ} (_ht : t ∈ Icc (0:ℝ) 5)
     (ht_ne1 : t ≠ 1) (ht_ne3 : t ≠ 3) (ht_ne4 : t ≠ 4) :
     ‖deriv (fdBoundary_H H) t‖ ≤ max H 1 := by
   have h_norm_cast : ‖(↑H - ↑(Real.sqrt 3) / 2 : ℂ)‖ = H - Real.sqrt 3 / 2 := by
@@ -669,7 +669,7 @@ private lemma modular_side_h_capture
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H)
     (hH_gt_one : 1 < H)
-    (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
+    (_hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     (hcusp : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
       q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
     ∀ t ∈ Icc (0 : ℝ) 5,
