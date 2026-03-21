@@ -30,6 +30,76 @@ noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
+omit f hf in
+private lemma ellipticPointRho_re_neg :
+    (ellipticPointRho' : ℂ).re < 0 := by
+  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0
+  simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
+
+omit f hf in
+private lemma ellipticPointRhoPlusOne_re_pos :
+    (ellipticPointRhoPlusOne' : ℂ).re > 0 := by
+  change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re > 0
+  simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
+
+omit f hf in
+private lemma ellipticPoint_ne_iρ1 :
+    ellipticPointI' ≠ ellipticPointRhoPlusOne' := by
+  intro h
+  have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
+  simp [ellipticPointI', ellipticPointRhoPlusOne'] at this
+
+omit f hf in
+private lemma ellipticPoint_ne_ρρ1 :
+    ellipticPointRho' ≠ ellipticPointRhoPlusOne' := by
+  intro h
+  have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
+  simp [ellipticPointRho', ellipticPointRhoPlusOne'] at this
+  norm_num at this
+
+omit f hf in
+private lemma elliptic_finset_sum_eq_three
+    (S : Finset UpperHalfPlane)
+    (g : UpperHalfPlane → ℂ)
+    (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete_zero : ∀ p, p ∈ 𝒟 → p ∉ S → g p = 0) :
+    let P := fun (p : UpperHalfPlane) =>
+      p = ellipticPointI' ∨ p = ellipticPointRho' ∨
+      p = ellipticPointRhoPlusOne'
+    ∑ s ∈ S.filter P, g s =
+      g ellipticPointI' + g ellipticPointRho' +
+      g ellipticPointRhoPlusOne' := by
+  intro P
+  have h_ne_iρ := ellipticPointI_ne_rho
+  have h_ne_iρ1 := ellipticPoint_ne_iρ1
+  have h_ne_ρρ1 := ellipticPoint_ne_ρρ1
+  have h_ell_sub : S.filter P ⊆
+      ({ellipticPointI', ellipticPointRho',
+        ellipticPointRhoPlusOne'} : Finset UpperHalfPlane) := by
+    intro x hx
+    have := (Finset.mem_filter.mp hx).2
+    simp only [Finset.mem_insert, Finset.mem_singleton]
+    exact this
+  have h_zero_outside : ∀ x ∈
+      ({ellipticPointI', ellipticPointRho',
+        ellipticPointRhoPlusOne'} : Finset UpperHalfPlane),
+      x ∉ S.filter P → g x = 0 := by
+    intro x hx hx_not
+    simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+    have hx_not_S : x ∉ S := by
+      intro hx_S; exact hx_not (Finset.mem_filter.mpr ⟨hx_S, hx⟩)
+    have hx_fd : x ∈ 𝒟 := by
+      rcases hx with rfl | rfl | rfl
+      · exact ellipticPointI_mem_fd
+      · exact ellipticPointRho_mem_fd
+      · exact ellipticPointRhoPlusOne_mem_fd
+    exact hS_complete_zero x hx_fd hx_not_S
+  rw [Finset.sum_subset h_ell_sub h_zero_outside]
+  rw [Finset.sum_insert (by simp [h_ne_iρ, h_ne_iρ1]),
+      Finset.sum_insert (by simp [h_ne_ρρ1]),
+      Finset.sum_singleton]
+  ring
+
 include hf in
 set_option maxHeartbeats 800000 in
 private theorem explicit_coefficients
@@ -77,65 +147,18 @@ private theorem explicit_coefficients
         orderOfVanishingAt' (⇑f) p = 0 :=
     fun p hp hp_not =>
       by_contra fun h_ne => hp_not (hS_complete _ hp h_ne)
-  have h_ne_iρ := ellipticPointI_ne_rho
-  have h_ne_iρ1 :
-      ellipticPointI' ≠ ellipticPointRhoPlusOne' := by
-    intro h
-    have := congr_arg
-      (fun z : UpperHalfPlane => (z : ℂ).re) h
-    simp [ellipticPointI',
-      ellipticPointRhoPlusOne'] at this
-  have h_ne_ρρ1 :
-      ellipticPointRho' ≠ ellipticPointRhoPlusOne' := by
-    intro h
-    have := congr_arg
-      (fun z : UpperHalfPlane => (z : ℂ).re) h
-    simp [ellipticPointRho',
-      ellipticPointRhoPlusOne'] at this
-    norm_num at this
   set P := fun (p : UpperHalfPlane) =>
     p = ellipticPointI' ∨ p = ellipticPointRho' ∨
     p = ellipticPointRhoPlusOne'
   have h_split :=
     (Finset.sum_filter_add_sum_filter_not S P g).symm
-  have h_ell_sub : S.filter P ⊆
-      ({ellipticPointI', ellipticPointRho',
-        ellipticPointRhoPlusOne'} :
-        Finset UpperHalfPlane) := by
-    intro x hx
-    have := (Finset.mem_filter.mp hx).2
-    simp only [Finset.mem_insert,
-      Finset.mem_singleton]
-    exact this
-  have h_zero_outside : ∀ x ∈
-      ({ellipticPointI', ellipticPointRho',
-        ellipticPointRhoPlusOne'} :
-        Finset UpperHalfPlane),
-      x ∉ S.filter P → g x = 0 := by
-    intro x hx hx_not
-    simp only [Finset.mem_insert,
-      Finset.mem_singleton] at hx
-    have hx_not_S : x ∉ S := by
-      intro hx_S
-      exact hx_not
-        (Finset.mem_filter.mpr ⟨hx_S, hx⟩)
-    have hx_fd : x ∈ 𝒟 := by
-      rcases hx with rfl | rfl | rfl
-      · exact ellipticPointI_mem_fd
-      · exact ellipticPointRho_mem_fd
-      · exact ellipticPointRhoPlusOne_mem_fd
-    simp [hg_def, h_ord_zero x hx_fd hx_not_S,
-      Int.cast_zero, mul_zero]
   have h_ell_sum : ∑ s ∈ S.filter P, g s =
       g ellipticPointI' + g ellipticPointRho' +
-      g ellipticPointRhoPlusOne' := by
-    rw [Finset.sum_subset h_ell_sub h_zero_outside]
-    rw [Finset.sum_insert
-          (by simp [h_ne_iρ, h_ne_iρ1]),
-        Finset.sum_insert
-          (by simp [h_ne_ρρ1]),
-        Finset.sum_singleton]
-    ring
+      g ellipticPointRhoPlusOne' :=
+    elliptic_finset_sum_eq_three S g hS
+      (fun p hp hp_not => by
+        simp [hg_def, h_ord_zero p hp hp_not,
+          Int.cast_zero, mul_zero])
   have h_gWN_i :=
     gWN_fdBoundary_H_at_i H hH_gt_1
   have h_gWN_ρ :=
@@ -389,6 +412,30 @@ private theorem boundary_weight_auto
         H hH_sqrt (↑s) (by linarith) h_gt
         h_im_sqrt h_im_lt_H
 
+private lemma rho_singleton_sum_eq
+    (S : Finset UpperHalfPlane)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_ord : orderOfVanishingAt' (⇑f) ellipticPointRho' ≠ 0) :
+    ∑ s ∈ (if ellipticPointRhoPlusOne' ∈ sRightArc S
+      then {ellipticPointRhoPlusOne'} else ∅),
+      (orderOfVanishingAt' (⇑f) s : ℂ) =
+    ∑ s ∈ (if ellipticPointRho' ∈ sLeftArc S
+      then {ellipticPointRho'} else ∅),
+      (orderOfVanishingAt' (⇑f) s : ℂ) := by
+  have hρ_in_S := hS_complete _ ellipticPointRho_mem_fd h_ord
+  have hρ1_in_S := hS_complete _ ellipticPointRhoPlusOne_mem_fd
+    (by rwa [ord_rho_plus_one_eq_ord_rho_via_vAdd])
+  have hρ_in_LA : ellipticPointRho' ∈ sLeftArc S := by
+    simp only [sLeftArc, Finset.mem_filter]
+    exact ⟨hρ_in_S, ellipticPointRho_norm, ellipticPointRho_re_neg⟩
+  have hρ1_in_RA : ellipticPointRhoPlusOne' ∈ sRightArc S := by
+    simp only [sRightArc, Finset.mem_filter]
+    exact ⟨hρ1_in_S, ellipticPointRhoPlusOne_norm, ellipticPointRhoPlusOne_re_pos⟩
+  rw [if_pos hρ1_in_RA, if_pos hρ_in_LA,
+    Finset.sum_singleton, Finset.sum_singleton]
+  exact_mod_cast congr_arg (Int.cast (R := ℂ))
+    (ord_rho_plus_one_eq_ord_rho_via_vAdd f)
+
 /-- Non-elliptic right-arc ord sum equals non-elliptic left-arc ord sum. -/
 private theorem sum_nonEllArc_right_eq_left
     (S : Finset UpperHalfPlane)
@@ -453,36 +500,8 @@ private theorem sum_nonEllArc_right_eq_left
     split_ifs <;>
       simp [Finset.sum_singleton, Finset.sum_empty,
         hf1, hf2]
-  · have h_rho_norm : ‖(ellipticPointRho' : ℂ)‖ = 1 :=
-      ellipticPointRho_norm
-    have h_rho_re_neg : (ellipticPointRho' : ℂ).re < 0 := by
-      change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0
-      simp only [add_re, mul_re, I_re, I_im,
-        mul_zero, mul_one]; norm_num
-    have h_rho1_norm : ‖(ellipticPointRhoPlusOne' : ℂ)‖ = 1 :=
-      ellipticPointRhoPlusOne_norm
-    have h_rho1_re_pos :
-        (ellipticPointRhoPlusOne' : ℂ).re > 0 := by
-      change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re > 0
-      simp only [add_re, mul_re, I_re, I_im,
-        mul_zero, mul_one]; norm_num
-    have hρ_in_S :=
-      hS_complete _ ellipticPointRho_mem_fd h_ord
-    have hρ1_in_S := hS_complete _
-      ellipticPointRhoPlusOne_mem_fd
-      (by rwa [ord_rho_plus_one_eq_ord_rho_via_vAdd])
-    have hρ_in_LA : ellipticPointRho' ∈ sLeftArc S := by
-      simp only [sLeftArc, Finset.mem_filter]
-      exact ⟨hρ_in_S, h_rho_norm, h_rho_re_neg⟩
-    have hρ1_in_RA :
-        ellipticPointRhoPlusOne' ∈ sRightArc S := by
-      simp only [sRightArc, Finset.mem_filter]
-      exact ⟨hρ1_in_S, h_rho1_norm, h_rho1_re_pos⟩
-    rw [if_pos hρ1_in_RA, if_pos hρ_in_LA,
-      Finset.sum_singleton, Finset.sum_singleton]
-    simp only [hf_ord_def]
-    exact_mod_cast congr_arg (Int.cast (R := ℂ))
-      (ord_rho_plus_one_eq_ord_rho_via_vAdd f)
+  · simp only [hf_ord_def]
+    exact rho_singleton_sum_eq f S hS_complete h_ord
 
 /-- Forward: a non-elliptic, non-interior boundary point of 𝒟 lies in one of
 the four boundary subsets (right vert, left vert, right arc, left arc). -/
@@ -542,15 +561,8 @@ private theorem bdry_ne_eq_union
   intro S_NE
   have h_rho_norm := ellipticPointRho_norm
   have h_rho1_norm := ellipticPointRhoPlusOne_norm
-  have h_rho_re_neg : (ellipticPointRho' : ℂ).re < 0 := by
-    change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0
-    simp only [add_re, mul_re, I_re, I_im,
-      mul_zero, mul_one]; norm_num
-  have h_rho1_re_pos :
-      (ellipticPointRhoPlusOne' : ℂ).re > 0 := by
-    change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re > 0
-    simp only [add_re, mul_re, I_re, I_im,
-      mul_zero, mul_one]; norm_num
+  have h_rho_re_neg := ellipticPointRho_re_neg
+  have h_rho1_re_pos := ellipticPointRhoPlusOne_re_pos
   ext s
   simp only [S_NE, sRightVert, sLeftVert,
     Finset.mem_union, Finset.mem_filter]
