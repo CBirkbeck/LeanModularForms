@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.BoundaryVanishing
-import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem
+import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheoremBase
 
 /-!
 # Per-Term PV Vanishing and CPV Helpers

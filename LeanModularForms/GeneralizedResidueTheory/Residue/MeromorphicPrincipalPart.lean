@@ -3,7 +3,7 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem
+import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheoremBase
 import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
 -- Note: Does NOT import FlatnessTransfer to avoid circular dependencies.
 -- The zpow FTC lemmas used here are reproved locally.
