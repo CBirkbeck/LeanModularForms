@@ -626,7 +626,7 @@ private theorem cpv_perTerm_crossed_zero_order (S0 : Finset ℂ) (f : ℂ → �
 zero integral by the finset-vanishing hypothesis, so the CPV converges. -/
 private theorem cpv_perTerm_uncrossed (U : Set ℂ) (S0 : Finset ℂ)
     (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (_hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s) (hS0_in_U : ∀ s ∈ S0, s ∈ U)
     (h_finset_vanish : ∀ (T : Finset ℂ) (g : ℂ → ℂ),
       (∀ s ∈ T, MeromorphicAt g s) → (∀ s ∈ T, residueAt g s = 0) →
@@ -692,7 +692,7 @@ private theorem cpv_div_pow_eq_const_mul_zpow (S0 : Finset ℂ) (γ : PiecewiseC
 private theorem cpv_polar_term_tendsto (S0 : Finset ℂ) (f : ℂ → ℂ)
     (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (s : ℂ) (hs : s ∈ S0) (hMero_s : MeromorphicAt f s)
-    {N_s : ℕ} (hN_s_pos : 0 < N_s) (a_s : Fin N_s → ℂ)
+    {N_s : ℕ} (_hN_s_pos : 0 < N_s) (a_s : Fin N_s → ℂ)
     (g_loc : ℂ → ℂ) (hg_loc_an : AnalyticAt ℂ g_loc s)
     (hf_eq_loc : ∀ᶠ z in 𝓝[≠] s,
       f z = g_loc z + ∑ k : Fin N_s, a_s k / (z - s) ^ (k.val + 1))
@@ -829,7 +829,7 @@ private theorem assembly_polarHigher_differentiableOn
   exact (DifferentiableAt.sum fun k _ => h_each k).differentiableWithinAt
 
 private theorem cpv_polarHigher_tendsto (U : Set ℂ) (S0 : Finset ℂ)
-    (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
+    (_f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (s : ℂ) (hs : s ∈ S0) {N_s : ℕ} (a_s : Fin N_s → ℂ)
     (h_polar_term_tendsto : ∀ (k : Fin N_s), k.val ≥ 1 →

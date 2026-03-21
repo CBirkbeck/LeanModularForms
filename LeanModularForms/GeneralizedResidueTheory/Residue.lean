@@ -424,7 +424,7 @@ lemma simple_poles_decomposition
     (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (_hS0_in_U : ∀ s ∈ S0, s ∈ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
+    (_hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
     (hf_ext : ∀ s ∈ S0, ContinuousAt (fun z => f z - residueSimplePole f s / (z - s)) s) :
     let g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)
     DifferentiableOn ℂ g U ∧
