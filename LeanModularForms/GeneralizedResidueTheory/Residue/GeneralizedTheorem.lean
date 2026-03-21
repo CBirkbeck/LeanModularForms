@@ -33,8 +33,8 @@ even when the curve passes through simple poles. Unlike `generalizedResidueTheor
 this version does NOT require `CauchyPrincipalValueExists'` as a hypothesis --
 PV existence is proved from the immersion structure + C2 regularity at crossings.
 
-Proved as a corollary of `generalizedResidueTheorem_nullHomologous` via the bridge
-lemma `isNullHomologous_of_convex`. -/
+Proved via `generalizedResidueTheorem'` on a convex domain, deriving PV
+existence from C2 regularity at crossings. -/
 theorem generalizedResidueTheorem (U : Set ℂ) (hU : IsOpen U)
     (hU_convex : Convex ℝ U) (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
@@ -77,8 +77,8 @@ piecewise C1 immersion, the Cauchy principal value equals
 `2 pi i . Sigma n(gamma, z_l) . Res(f, z_l)`, provided the higher-order cancellation
 hypothesis holds.
 
-Proved as a corollary of `generalizedResidueTheorem_higher_order_nullHomologous`
-via the bridge lemma `isNullHomologous_of_convex`. -/
+Proved via `generalizedResidueTheorem` on a convex domain, with the
+higher-order cancellation hypothesis as input. -/
 theorem generalizedResidueTheorem_higher_order (U : Set ℂ) (hU : IsOpen U)
     (hU_convex : Convex ℝ U) (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
