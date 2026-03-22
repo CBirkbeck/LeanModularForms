@@ -191,6 +191,34 @@ private lemma measurableSet_multipoint_goodset
   exact isClosed_Icc.measurableSet.diff
     (measurableSet_multipoint_condition S hγ)
 
+private lemma goodset_piecewise_ae_eq_multipoint
+    {g : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ}
+    (S : Finset ℂ) :
+    (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε
+      then (0 : ℂ)
+      else g (γ t) * deriv γ t)
+      =ᵐ[volume.restrict (Icc a b)]
+    ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩
+      Icc a b).piecewise
+      (fun t => g (γ t) * deriv γ t)
+      (fun _ => 0) := by
+  filter_upwards [ae_restrict_mem
+    isClosed_Icc.measurableSet] with t ht
+  simp only [Set.piecewise, Set.mem_inter_iff,
+    Set.mem_setOf_eq]
+  by_cases ht_good :
+      (∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b
+  · rw [if_pos ht_good]
+    have : ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+      push_neg; exact ht_good.1
+    simp only [this, ↓reduceIte]
+  · rw [if_neg ht_good]
+    have : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+      by_contra h_not
+      push_neg at h_not
+      exact ht_good ⟨h_not, ht⟩
+    simp only [this, ↓reduceIte]
+
 private theorem
     aEStronglyMeasurable_pv_integrand_multipoint
     {g : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ}
@@ -203,69 +231,62 @@ private theorem
       (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε
         then 0 else g (γ t) * deriv γ t)
       (volume.restrict (Icc a b)) := by
-  let GoodSet := {t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖}
-  have hGoodSet_meas :
-      MeasurableSet (GoodSet ∩ Icc a b) :=
-    measurableSet_multipoint_goodset S hγ
   have h_base_meas :
       AEStronglyMeasurable
         (fun t => g (γ t) * deriv γ t)
-        (volume.restrict (Icc a b)) := by
-    have hgγ_cont :
-        ContinuousOn (fun t => g (γ t))
-          (Icc a b) := by
-      apply ContinuousOn.comp hg hγ
-      intro t ht
-      exact Set.mem_image_of_mem _ ht
-    have hγ'_meas :
-        AEStronglyMeasurable (deriv γ)
-          (volume.restrict (Icc a b)) :=
-      aEStronglyMeasurable_of_continuousOn_off_finite
-        hγ'_off_P
-    exact (hgγ_cont.aestronglyMeasurable
-      isClosed_Icc.measurableSet).mul hγ'_meas
+        (volume.restrict (Icc a b)) :=
+    ((hg.comp hγ (fun t ht =>
+        Set.mem_image_of_mem _ ht)).aestronglyMeasurable
+      isClosed_Icc.measurableSet).mul
+      (aEStronglyMeasurable_of_continuousOn_off_finite
+        hγ'_off_P)
   have h_zero_meas :
       AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
-        (volume.restrict (GoodSet ∩ Icc a b)ᶜ) :=
+        (volume.restrict
+          ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩
+            Icc a b)ᶜ) :=
     aestronglyMeasurable_const
-  have h_base_meas' :
-      AEStronglyMeasurable
-        (fun t => g (γ t) * deriv γ t)
-        (volume.restrict (GoodSet ∩ Icc a b)) :=
-    h_base_meas.mono_measure
-      (Measure.restrict_mono Set.inter_subset_right
-        le_rfl)
   have h_piecewise :=
-    AEStronglyMeasurable.piecewise hGoodSet_meas
-      h_base_meas' h_zero_meas
-  have h_eq :
-      (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε
-        then (0 : ℂ)
-        else g (γ t) * deriv γ t)
-        =ᵐ[volume.restrict (Icc a b)]
-      (GoodSet ∩ Icc a b).piecewise
-        (fun t => g (γ t) * deriv γ t)
-        (fun _ => 0) := by
-    filter_upwards [ae_restrict_mem
-      isClosed_Icc.measurableSet] with t ht
-    simp only [Set.piecewise]
-    by_cases ht_good : t ∈ GoodSet ∩ Icc a b
-    · simp only [ht_good, ↓reduceIte]
-      have ht_not_excl :
-          ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
-        push_neg; exact ht_good.1
-      simp only [ht_not_excl, ↓reduceIte]
-    · simp only [ht_good, ↓reduceIte]
-      have h_notGood : t ∉ GoodSet :=
-        fun h_in => ht_good ⟨h_in, ht⟩
-      have h_excl : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
-        simp only [GoodSet,
-          Set.mem_setOf_eq] at h_notGood
-        push_neg at h_notGood
-        exact h_notGood
-      simp only [h_excl, ↓reduceIte]
-  exact h_piecewise.mono_measure
-    Measure.restrict_le_self |>.congr h_eq.symm
+    AEStronglyMeasurable.piecewise
+      (measurableSet_multipoint_goodset S hγ)
+      (h_base_meas.mono_measure
+        (Measure.restrict_mono
+          Set.inter_subset_right le_rfl))
+      h_zero_meas
+  exact (h_piecewise.mono_measure
+    Measure.restrict_le_self).congr
+    (goodset_piecewise_ae_eq_multipoint S).symm
+
+private lemma aEStronglyMeasurable_residueProd_on_goodset
+    {γ : ℝ → ℂ} {a b ε : ℝ} {P : Finset ℝ}
+    {s c : ℂ}
+    (hε : 0 < ε)
+    (hγ : ContinuousOn γ (Icc a b))
+    (hγ'_off_P : ContinuousOn (deriv γ)
+      (Icc a b \ P)) :
+    AEStronglyMeasurable
+      (fun t => (c / (γ t - s)) * deriv γ t)
+      (volume.restrict
+        ({t : ℝ | ε < ‖γ t - s‖} ∩
+          Icc a b)) := by
+  have h_ratio : AEStronglyMeasurable
+      (fun t => c / (γ t - s))
+      (volume.restrict
+        ({t : ℝ | ε < ‖γ t - s‖} ∩ Icc a b)) := by
+    apply ContinuousOn.aestronglyMeasurable _
+      (measurableSet_norm_gt_Icc ε
+        (hγ.sub continuousOn_const))
+    apply ContinuousOn.div continuousOn_const
+    · exact (hγ.mono Set.inter_subset_right).sub
+        continuousOn_const
+    · intro t ⟨ht_good, _⟩
+      exact norm_ne_zero_iff.mp
+        (ne_of_gt (lt_trans hε ht_good))
+  exact h_ratio.mul
+    ((aEStronglyMeasurable_of_continuousOn_off_finite
+      hγ'_off_P).mono_measure
+      (Measure.restrict_mono
+        Set.inter_subset_right le_rfl))
 
 private theorem
     aEStronglyMeasurable_pv_integrand_residue
@@ -280,39 +301,24 @@ private theorem
         then (c / (γ t - s)) * deriv γ t
         else 0)
       (volume.restrict (Icc a b)) := by
-  let GoodSet := {t : ℝ | ε < ‖γ t - s‖}
   have hGoodSet_meas :
-      MeasurableSet (GoodSet ∩ Icc a b) :=
+      MeasurableSet
+        ({t | ε < ‖γ t - s‖} ∩ Icc a b) :=
     measurableSet_norm_gt_Icc ε
       (hγ.sub continuousOn_const)
-  have hγ'_meas :
-      AEStronglyMeasurable (deriv γ)
-        (volume.restrict (Icc a b)) :=
-    aEStronglyMeasurable_of_continuousOn_off_finite
-      hγ'_off_P
-  have h_ratio_meas :
-      AEStronglyMeasurable (fun t => c / (γ t - s))
-        (volume.restrict (GoodSet ∩ Icc a b)) := by
-    apply ContinuousOn.aestronglyMeasurable _
-      hGoodSet_meas
-    apply ContinuousOn.div continuousOn_const
-    · exact (hγ.mono Set.inter_subset_right).sub
-        continuousOn_const
-    · intro t ⟨ht_good, _⟩
-      exact norm_ne_zero_iff.mp
-        (ne_of_gt (lt_trans _hε ht_good))
+  have h_zero_meas :
+      AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
+        (volume.restrict
+          ({t : ℝ | ε < ‖γ t - s‖} ∩
+            Icc a b)ᶜ) :=
+    aestronglyMeasurable_const
   have h_prod_meas :
       AEStronglyMeasurable
         (fun t => (c / (γ t - s)) * deriv γ t)
-        (volume.restrict (GoodSet ∩ Icc a b)) :=
-    h_ratio_meas.mul
-      (hγ'_meas.mono_measure
-        (Measure.restrict_mono Set.inter_subset_right
-          le_rfl))
-  have h_zero_meas :
-      AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
-        (volume.restrict (GoodSet ∩ Icc a b)ᶜ) :=
-    aestronglyMeasurable_const
+        (volume.restrict
+          ({t | ε < ‖γ t - s‖} ∩ Icc a b)) :=
+    aEStronglyMeasurable_residueProd_on_goodset
+      _hε hγ hγ'_off_P
   have h_piecewise :=
     AEStronglyMeasurable.piecewise hGoodSet_meas
       h_prod_meas h_zero_meas
@@ -320,13 +326,100 @@ private theorem
     Measure.restrict_le_self).congr ?_
   filter_upwards [ae_restrict_mem
     isClosed_Icc.measurableSet] with t ht
-  simp only [Set.piecewise, GoodSet,
-    Set.mem_inter_iff, Set.mem_setOf_eq, gt_iff_lt]
+  simp only [Set.piecewise, Set.mem_inter_iff,
+    Set.mem_setOf_eq, gt_iff_lt]
   by_cases h1 : ε < ‖γ t - s‖
   · simp only [h1, ht, and_self, ↓reduceIte]
   · push_neg at h1
     simp only [not_lt.mpr h1, ht, and_true,
       ↓reduceIte]
+
+private lemma aEStronglyMeasurable_singularSum_on_goodset
+    {γ : ℝ → ℂ} {a b ε : ℝ}
+    (S : Finset ℂ) (coeffs : ℂ → ℂ)
+    (hε : 0 < ε)
+    (hγ : ContinuousOn γ (Icc a b)) :
+    AEStronglyMeasurable
+      (fun t => ∑ s ∈ S, coeffs s / (γ t - s))
+      (volume.restrict
+        ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩
+          Icc a b)) := by
+  apply Finset.aestronglyMeasurable_fun_sum S
+  intro s hs
+  apply ContinuousOn.aestronglyMeasurable _
+    (measurableSet_multipoint_goodset S hγ)
+  apply ContinuousOn.div continuousOn_const
+  · exact (hγ.mono Set.inter_subset_right).sub
+      continuousOn_const
+  · intro t ⟨ht_good, _⟩
+    exact norm_ne_zero_iff.mp
+      (ne_of_gt (lt_trans hε (ht_good s hs)))
+
+private lemma aEStronglyMeasurable_decomposed_on_goodset
+    {g_reg : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ}
+    {P : Finset ℝ} (S : Finset ℂ) (coeffs : ℂ → ℂ)
+    (hε : 0 < ε)
+    (hg : ContinuousOn g_reg (γ '' Icc a b))
+    (hγ : ContinuousOn γ (Icc a b))
+    (hγ'_off_P : ContinuousOn (deriv γ)
+      (Icc a b \ P)) :
+    AEStronglyMeasurable
+      (fun t => (g_reg (γ t) +
+        ∑ s ∈ S, coeffs s / (γ t - s)) *
+          deriv γ t)
+      (volume.restrict
+        ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩
+          Icc a b)) := by
+  have hgγ_cont : ContinuousOn (fun t => g_reg (γ t))
+      (Icc a b) :=
+    hg.comp hγ (fun t ht => Set.mem_image_of_mem _ ht)
+  have hgγ_meas : AEStronglyMeasurable
+      (fun t => g_reg (γ t))
+      (volume.restrict (Icc a b)) :=
+    hgγ_cont.aestronglyMeasurable
+      isClosed_Icc.measurableSet
+  have h_f_meas := (hgγ_meas.mono_measure
+    (Measure.restrict_mono Set.inter_subset_right
+      le_rfl)).add
+    (aEStronglyMeasurable_singularSum_on_goodset
+      S coeffs hε hγ)
+  exact h_f_meas.mul
+    ((aEStronglyMeasurable_of_continuousOn_off_finite
+      hγ'_off_P).mono_measure
+      (Measure.restrict_mono Set.inter_subset_right
+        le_rfl))
+
+private lemma goodset_piecewise_ae_eq_decomposed
+    {g_reg : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ}
+    (S : Finset ℂ) (coeffs : ℂ → ℂ) :
+    (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0
+      else (g_reg (γ t) +
+        ∑ s ∈ S, coeffs s / (γ t - s)) *
+          deriv γ t)
+      =ᵐ[volume.restrict (Icc a b)]
+    ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩
+      Icc a b).piecewise
+      (fun t => (g_reg (γ t) +
+        ∑ s ∈ S, coeffs s / (γ t - s)) *
+          deriv γ t)
+      (fun _ => 0) := by
+  filter_upwards [ae_restrict_mem
+    isClosed_Icc.measurableSet] with t ht
+  simp only [Set.piecewise, Set.mem_inter_iff,
+    Set.mem_setOf_eq]
+  by_cases ht_good :
+      (∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b
+  · rw [if_pos ht_good]
+    have h_not_excl :
+        ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+      push_neg; exact ht_good.1
+    simp only [h_not_excl, if_false]
+  · rw [if_neg ht_good]
+    have h_excl : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
+      by_contra h_not
+      push_neg at h_not
+      exact ht_good ⟨h_not, ht⟩
+    simp only [h_excl, if_true]
 
 theorem
     aEStronglyMeasurable_pv_integrand_decomposed
@@ -344,91 +437,23 @@ theorem
           ∑ s ∈ S, coeffs s / (γ t - s)) *
             deriv γ t)
       (volume.restrict (Icc a b)) := by
-  let GoodSet :=
-    {t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖}
-  have hGoodSet_meas :
-      MeasurableSet (GoodSet ∩ Icc a b) :=
-    measurableSet_multipoint_goodset S hγ
-  have hγ'_meas :
-      AEStronglyMeasurable (deriv γ)
-        (volume.restrict (Icc a b)) :=
-    aEStronglyMeasurable_of_continuousOn_off_finite
-      hγ'_off_P
-  have hgγ_cont :
-      ContinuousOn (fun t => g_reg (γ t))
-        (Icc a b) := by
-    apply ContinuousOn.comp hg hγ
-    intro t ht; exact Set.mem_image_of_mem _ ht
-  have hgγ_meas :
-      AEStronglyMeasurable (fun t => g_reg (γ t))
-        (volume.restrict (Icc a b)) :=
-    hgγ_cont.aestronglyMeasurable
-      isClosed_Icc.measurableSet
-  have h_sing_meas :
-      ∀ s ∈ S, AEStronglyMeasurable
-        (fun t => coeffs s / (γ t - s))
-        (volume.restrict (GoodSet ∩ Icc a b)) := by
-    intro s hs
-    apply ContinuousOn.aestronglyMeasurable _
-      hGoodSet_meas
-    apply ContinuousOn.div continuousOn_const
-    · exact (hγ.mono Set.inter_subset_right).sub
-        continuousOn_const
-    · intro t ⟨ht_good, _⟩
-      have h_dist := ht_good s hs
-      exact norm_ne_zero_iff.mp
-        (ne_of_gt (lt_trans hε h_dist))
-  have h_sum_meas :
-      AEStronglyMeasurable
-        (fun t => ∑ s ∈ S, coeffs s / (γ t - s))
-        (volume.restrict (GoodSet ∩ Icc a b)) :=
-    Finset.aestronglyMeasurable_fun_sum S
-      h_sing_meas
-  have h_f_meas :
-      AEStronglyMeasurable
-        (fun t => g_reg (γ t) +
-          ∑ s ∈ S, coeffs s / (γ t - s))
-        (volume.restrict (GoodSet ∩ Icc a b)) :=
-    (hgγ_meas.mono_measure
-      (Measure.restrict_mono Set.inter_subset_right
-        le_rfl)).add h_sum_meas
-  have h_prod_meas :
-      AEStronglyMeasurable
-        (fun t => (g_reg (γ t) +
-          ∑ s ∈ S, coeffs s / (γ t - s)) *
-            deriv γ t)
-        (volume.restrict (GoodSet ∩ Icc a b)) :=
-    h_f_meas.mul
-      (hγ'_meas.mono_measure
-        (Measure.restrict_mono Set.inter_subset_right
-          le_rfl))
+  have h_prod_meas :=
+    aEStronglyMeasurable_decomposed_on_goodset
+      S coeffs hε hg hγ hγ'_off_P
   have h_zero_meas :
       AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
         (volume.restrict
-          (GoodSet ∩ Icc a b)ᶜ) :=
+          ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩
+            Icc a b)ᶜ) :=
     aestronglyMeasurable_const
   have h_piecewise :=
-    AEStronglyMeasurable.piecewise hGoodSet_meas
+    AEStronglyMeasurable.piecewise
+      (measurableSet_multipoint_goodset S hγ)
       h_prod_meas h_zero_meas
-  refine (h_piecewise.mono_measure
-    Measure.restrict_le_self).congr ?_
-  filter_upwards [ae_restrict_mem
-    isClosed_Icc.measurableSet] with t ht
-  simp only [Set.piecewise, GoodSet,
-    Set.mem_inter_iff, Set.mem_setOf_eq]
-  by_cases ht_good :
-      (∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b
-  · rw [if_pos ht_good]
-    have h_not_excl :
-        ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
-      push_neg; exact ht_good.1
-    simp only [h_not_excl, if_false]
-  · rw [if_neg ht_good]
-    have h_excl : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
-      by_contra h_not
-      push_neg at h_not
-      exact ht_good ⟨h_not, ht⟩
-    simp only [h_excl, if_true]
+  exact (h_piecewise.mono_measure
+    Measure.restrict_le_self).congr
+    (goodset_piecewise_ae_eq_decomposed
+      S coeffs).symm
 
 theorem integrableOn_of_bounded_aeMeasurable
     {f : ℝ → ℂ} {a b : ℝ} (M : ℝ)
