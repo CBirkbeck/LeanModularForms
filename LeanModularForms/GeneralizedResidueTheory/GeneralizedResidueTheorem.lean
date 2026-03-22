@@ -276,8 +276,8 @@ theorem generalizedResidueTheorem_simplePoles (U : Set ℂ) (hU : IsOpen U)
   -- ════════════════════════════════════════════════════════════════════════
   set f_sing := fun z => ∑ s ∈ S0, residueSimplePole f s / (z - s) with hf_sing_def
   set g := fun z => f z - f_sing z with hg_def
-  have h_decomp := simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext
-  have hg_diff : DifferentiableOn ℂ g U := h_decomp.1
+  have hg_diff : DifferentiableOn ℂ g U :=
+    (simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext).1
   have hg_cont_on_image : ContinuousOn g (γ.toFun '' Icc γ.a γ.b) := by
     apply hg_diff.continuousOn.mono
     intro z ⟨t, ht, htz⟩; rw [← htz]; exact h_null.image_subset t ht

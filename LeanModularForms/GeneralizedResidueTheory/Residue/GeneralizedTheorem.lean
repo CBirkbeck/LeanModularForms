@@ -104,8 +104,6 @@ theorem generalizedResidueTheorem_higher_order (U : Set ℂ) (hU : IsOpen U)
     cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
       2 * Real.pi * I * ∑ s ∈ S0,
         generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s := by
-  have h_null := isNullHomologous_of_convex U hU hU_convex
-    ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr (le_of_lt γ.hab))⟩ γ hγ_closed hγ_in_U
   -- The NH version uses unique_cross instead of C2_cross.
   -- Derive unique_cross from C2_cross + immersion (deriv ne zero):
   -- Actually the NH version signature is different; we need to map the hypotheses.

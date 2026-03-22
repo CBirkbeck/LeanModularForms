@@ -228,8 +228,7 @@ lemma circleParamCW_hasDerivAt (z₀ : ℂ) (r : ℝ)
       hasDerivAt_const t (a + b)
     have h2 : HasDerivAt (fun t : ℝ => t) 1 t :=
       hasDerivAt_id t
-    have h3 := h1.sub h2
-    convert h3 using 1; ring
+    convert h1.sub h2 using 1; ring
   have hf : HasDerivAt (circleParam z₀ r a b)
       (r * (2 * Real.pi * I / (b - a)) *
         exp (2 * Real.pi * I *

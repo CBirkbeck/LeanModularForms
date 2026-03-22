@@ -1273,8 +1273,8 @@ private lemma cpv_exists_of_unique_crossing
       ContinuousOn (deriv γ.toFun) (Icc a' b')) :
     CauchyPrincipalValueExists'
       (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ := by
-  have hne := no_endpoint_crossing_of_unique_interior γ z₀ t₀ ht₀ honly
-  exact cpv_exists_inv_sub γ z₀ hγ_meas hne
+  exact cpv_exists_inv_sub γ z₀ hγ_meas
+    (no_endpoint_crossing_of_unique_interior γ z₀ t₀ ht₀ honly)
     (fun t ht hγt => by rw [honly t (Ioo_subset_Icc_self ht) hγt]; exact hC2)
     (fun t ht hγt => by rw [honly t (Ioo_subset_Icc_self ht) hγt]; exact h_cont_deriv)
 
@@ -1323,11 +1323,10 @@ theorem exp_pv_eq_exp_neg_crossing_angle
     Complex.exp (-(I * angleAtCrossing γ t₀ ht₀)) := by
   obtain ⟨L, hL⟩ := cpv_exists_of_unique_crossing γ z₀ t₀ ht₀ honly hγ_meas hC2 h_cont_deriv
   -- exp(R(ε)) → exp(L) by continuity; exp(R(ε)) → exp(-iα) by core analysis
-  have h_exp_lim := Complex.continuous_exp.continuousAt.tendsto.comp hL
   have h_exp_target := tendsto_exp_cutoff_integral_crossing γ hclosed z₀ t₀ ht₀
     hcross honly
-  have h_exp_eq := tendsto_nhds_unique h_exp_lim h_exp_target
-  rw [cpv_inv_sub_eq_limit γ z₀ L hL]; exact h_exp_eq
+  rw [cpv_inv_sub_eq_limit γ z₀ L hL]
+  exact tendsto_nhds_unique (Complex.continuous_exp.continuousAt.tendsto.comp hL) h_exp_target
 
 /-- The external winding contribution equals an integer when `exp(L) = exp(-iα)`.
 Given that the CPV equals `L` and `L = -iα + n·(2πi)`, the external winding is `n`. -/
