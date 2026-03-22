@@ -24,10 +24,8 @@ noncomputable section
 
 private lemma unitArc_log_ratio_tendsto (s : ℂ)
     (_hs_norm : ‖s‖ = 1) (_hs_re : |s.re| < 1/2) (_hs_im_pos : 0 < s.im)
-    (t₀ : ℝ) (_ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
-    (_h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I)) :
-    Tendsto (fun δ => Complex.log (
-      (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s) /
+    (t₀ : ℝ) (_ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3) (_h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I)) :
+    Tendsto (fun δ => Complex.log ( (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s) /
       (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s))))
     (𝓝[>] 0) (𝓝 0) := by
   have h_ev : ∀ᶠ δ in nhdsWithin (0:ℝ) (Ioi 0), 0 < δ ∧ δ < 6 := by
@@ -41,8 +39,7 @@ private lemma unitArc_log_ratio_tendsto (s : ℂ)
     exact Tendsto.mono_left (by fun_prop : Continuous _).continuousAt.tendsto nhdsWithin_le_nhds
   have h_agree : ∀ᶠ δ in nhdsWithin (0:ℝ) (Ioi 0),
       Complex.log (cexp (↑(-(Real.pi * δ / 6)) * I)) =
-      Complex.log (
-        (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s) /
+      Complex.log ( (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s) /
         (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s))) := by
     apply h_ev.mono
     intro δ ⟨hδ_pos, hδ_small⟩
@@ -53,8 +50,7 @@ private lemma unitArc_log_ratio_tendsto (s : ℂ)
 
 private lemma unitArc_log_diff_tendsto (s : ℂ)
     (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (hs_im_pos : 0 < s.im)
-    (t₀ : ℝ) (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
-    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I)) :
+    (t₀ : ℝ) (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3) (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I)) :
     Tendsto (fun δ =>
       Complex.log (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s) -
       Complex.log (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s)))
@@ -132,10 +128,8 @@ private lemma unitArc_norm_offset_symm (s : ℂ) (H : ℝ) (t₀ δ : ℝ)
   congr 1; congr 1; rw [show Real.pi * (-δ) / 6 = -(Real.pi * δ / 6) from by ring, Real.cos_neg]
 
 private lemma unitArc_norm_strict_mono (s : ℂ) (H : ℝ) (t₀ : ℝ)
-    (_ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
-    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
-    (δ₁ δ₂ : ℝ) (hδ₁_nn : 0 ≤ δ₁) (hδ₁₂ : δ₁ < δ₂)
-    (hδ₂ : δ₂ < min (t₀ - 1) (3 - t₀)) :
+    (_ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3) (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (δ₁ δ₂ : ℝ) (hδ₁_nn : 0 ≤ δ₁) (hδ₁₂ : δ₁ < δ₂) (hδ₂ : δ₂ < min (t₀ - 1) (3 - t₀)) :
     ‖fdBoundary_H H (t₀ + δ₁) - s‖ < ‖fdBoundary_H H (t₀ + δ₂) - s‖ := by
   have hδ₂_left : δ₂ < t₀ - 1 := lt_of_lt_of_le hδ₂ (min_le_left _ _)
   have hδ₂_right : δ₂ < 3 - t₀ := lt_of_lt_of_le hδ₂ (min_le_right _ _)
@@ -158,10 +152,8 @@ private lemma unitArc_norm_strict_mono (s : ℂ) (H : ℝ) (t₀ : ℝ)
   exact Real.sqrt_lt_sqrt (Complex.normSq_nonneg _) hns_lt
 
 private lemma unitArc_norm_lt_of_abs_lt (s : ℂ) (H : ℝ) (t₀ : ℝ)
-    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
-    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
-    (t₁ t₂ : ℝ) (ht₁_arc : 1 < t₁) (ht₁_arc' : t₁ < 3)
-    (ht₂_arc : 1 < t₂) (ht₂_arc' : t₂ < 3)
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3) (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (t₁ t₂ : ℝ) (ht₁_arc : 1 < t₁) (ht₁_arc' : t₁ < 3) (ht₂_arc : 1 < t₂) (ht₂_arc' : t₂ < 3)
     (habs : |t₁ - t₀| < |t₂ - t₀|) :
     ‖fdBoundary_H H t₁ - s‖ < ‖fdBoundary_H H t₂ - s‖ := by
   rw [show t₁ = t₀ + (t₁ - t₀) from by ring, show t₂ = t₀ + (t₂ - t₀) from by ring]
@@ -193,8 +185,7 @@ private lemma unitArc_norm_lt_of_abs_lt (s : ℂ) (H : ℝ) (t₀ : ℝ)
   rw [hns₁, hns₂, hcos₁, hcos₂]; linarith
 
 private lemma unitArc_norm_pos_at_offset (s : ℂ) (H : ℝ) (t₀ δ : ℝ)
-    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
-    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3) (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
     (hδ_pos : 0 < δ) (hδ_small : δ < min (t₀ - 1) (3 - t₀)) :
     0 < ‖fdBoundary_H H (t₀ + δ) - s‖ := by
   have h0 : ‖fdBoundary_H H (t₀ + 0) - s‖ = 0 := by
@@ -273,8 +264,7 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     rw [unitArc_norm_offset_symm s H t₀ δ' h_s_arc
       (by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_left _ _)])
       (by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_right _ _)])
-      (by linarith [ht₀_Ioo.1])
-      (by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_right _ _)])]
+      (by linarith [ht₀_Ioo.1]) (by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_right _ _)])]
     exact hδ'_eq
   have hδ'_left : 1 < t₀ - δ' := by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_left _ _)]
   have hδ'_right : t₀ + δ' < 3 := by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_right _ _)]
@@ -301,8 +291,7 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
   have h_arc_inside : ∀ t, 1 < t → t < 3 → |t - t₀| ≤ δ' → ‖g t‖ ≤ ε := by
     intro t ht1 ht3 habs
     rcases eq_or_lt_of_le habs with heq | hlt
-    ·
-      have hε_eq : ε = ‖g (t₀ + δ')‖ := by
+    · have hε_eq : ε = ‖g (t₀ + δ')‖ := by
         change _ = ‖g (t₀ + δ')‖; exact hδ'_eq.symm
       rw [hε_eq]; simp only [hg_def]
       rw [show t = t₀ + (t - t₀) from by ring, Complex.norm_def, Complex.norm_def]
@@ -314,8 +303,7 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
       · have h_neg : t - t₀ = -δ' := by rw [abs_of_nonpos h] at heq; linarith
         rw [h_neg, show Real.pi * (-δ') / 6 = -(Real.pi * δ' / 6) from by ring, Real.cos_neg]
       · rw [abs_of_pos h] at heq; rw [heq]
-    ·
-      have hε_eq : ε = ‖g (t₀ + δ')‖ := by
+    · have hε_eq : ε = ‖g (t₀ + δ')‖ := by
         change _ = ‖g (t₀ + δ')‖; exact hδ'_eq.symm
       rw [hε_eq]; simp only [hg_def]
       exact le_of_lt (unitArc_norm_lt_of_abs_lt s H t₀ ht₀_Ioo h_s_arc t (t₀ + δ')
@@ -359,8 +347,7 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     simp only [hF_def]
     have hgt : ‖g t‖ > ε := by
       by_cases h3 : t < 3
-      · exact h_arc_outside t (by linarith) h3
-          (by rw [abs_of_pos (by linarith)]; linarith)
+      · exact h_arc_outside t (by linarith) h3 (by rw [abs_of_pos (by linarith)]; linarith)
       · push_neg at h3
         calc ε < d_min := hε_lt_d
           _ ≤ ‖g t‖ := h_off_arc_right t h3 ht_mem.2

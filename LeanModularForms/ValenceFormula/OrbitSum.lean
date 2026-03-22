@@ -58,8 +58,7 @@ def orb (p : ℍ) : Orbit := Quotient.mk'' p
 
 /-- The order of vanishing lifted to orbits. Well-defined by `ord_smul_eq`. -/
 def ordOrbit (q : Orbit) : ℤ :=
-  Quotient.liftOn' q (fun p => orderOfVanishingAt' (⇑f) p)
-    (fun a b hab => by
+  Quotient.liftOn' q (fun p => orderOfVanishingAt' (⇑f) p) (fun a b hab => by
       rw [MulAction.orbitRel_apply] at hab
       obtain ⟨g, hg⟩ := hab
       rw [← hg]; exact ord_smul_eq f g b)
@@ -90,8 +89,7 @@ private theorem G_analyticAt (p : ℍ) :
     UpperHalfPlane.mdifferentiable_iff.mp f.holo'
   apply analyticAt_iff_eventually_differentiableAt.mpr
   filter_upwards [UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds p.im_pos] with w hw
-  have h_eq : ∀ᶠ u in 𝓝 w,
-      (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) u =
+  have h_eq : ∀ᶠ u in 𝓝 w, (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) u =
         (f ∘ UpperHalfPlane.ofComplex) u := by
     filter_upwards [UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hw] with u hu
     simp only [Function.comp_apply, dif_pos hu, UpperHalfPlane.ofComplex_apply_of_im_pos hu]
@@ -223,8 +221,7 @@ theorem finite_support_ordOrbit (hf : f ≠ 0) :
 /-- The set of non-elliptic orbits with nonzero `ordOrbit` is finite. -/
 theorem finite_support_ordOrbit_nonEll (hf : f ≠ 0) :
     Set.Finite {q : NonEllOrbit | ordOrbit f q.val ≠ 0} := by
-  apply Set.Finite.subset
-    ((finite_support_ordOrbit f hf).preimage
+  apply Set.Finite.subset ((finite_support_ordOrbit f hf).preimage
       (fun (a : NonEllOrbit) _ (b : NonEllOrbit) _ h =>
         Subtype.val_injective h))
   intro ⟨q, hq_ne⟩ hq_ord
@@ -232,8 +229,7 @@ theorem finite_support_ordOrbit_nonEll (hf : f ≠ 0) :
   exact hq_ord
 
 /-- The canonical finite set of zeros (with nonzero order) in `𝒟`. -/
-noncomputable def s₀ (hf : f ≠ 0) : Finset ℍ :=
-  (finite_zeros_in_fd f hf).toFinset
+noncomputable def s₀ (hf : f ≠ 0) : Finset ℍ := (finite_zeros_in_fd f hf).toFinset
 
 /-- Every point in `s₀` lies in the fundamental domain `𝒟`. -/
 theorem s₀_mem_fd (hf : f ≠ 0) : ∀ p ∈ s₀ f hf, p ∈ 𝒟 := by

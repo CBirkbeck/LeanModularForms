@@ -33,8 +33,7 @@ lemma angle_lifted_ref_p₀_continuousOn :
     ext t; simp only [fdPolygonRadialCircle_angle_lifted]; split_ifs <;> rfl
   rw [hfun_eq]
   have hval_at_T :
-      ↑(Complex.arg (fdPolygon T - ref_p₀) - 2 * Real.pi) =
-      (↑(-Real.pi) : ℂ) := by
+      ↑(Complex.arg (fdPolygon T - ref_p₀) - 2 * Real.pi) = (↑(-Real.pi) : ℂ) := by
     congr 1
     rw [arg_at_tL_eq_pi ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im]; ring
   apply ContinuousOn.if'
@@ -131,8 +130,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
     have h := fdPolygonRadialCircle_angle_lifted_change ref_p₀
       ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
     rw [← mul_sub]
-    have hsub : (θ_L 5 : ℂ) - (θ_L 0 : ℂ) =
-        ((θ_L 5 - θ_L 0 : ℝ) : ℂ) := by push_cast; ring
+    have hsub : (θ_L 5 : ℂ) - (θ_L 0 : ℂ) = ((θ_L 5 - θ_L 0 : ℝ) : ℂ) := by push_cast; ring
     rw [hsub]
     have hval : θ_L 5 - θ_L 0 = -(2 * Real.pi) := by linarith
     rw [hval]; push_cast; ring
@@ -167,8 +165,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
       intro t' ht' hne
       have hw_ne : fdPolygon t' - ref_p₀ ≠ 0 := sub_ne_zero.mpr hne
       have hnorm_pos : (0 : ℝ) < ‖fdPolygon t' - ref_p₀‖ := norm_pos_iff.mpr hw_ne
-      have hrc_sub : rc t' - ref_p₀ =
-          (fdPolygon t' - ref_p₀) / ↑‖fdPolygon t' - ref_p₀‖ := by
+      have hrc_sub : rc t' - ref_p₀ = (fdPolygon t' - ref_p₀) / ↑‖fdPolygon t' - ref_p₀‖ := by
         simp only [hrc, fdPolygonRadialCircle, polygonToCircleRadial]
         simp only [sub_self, zero_mul, zero_add, one_smul, add_sub_cancel_left]
       have hnorm_one : ‖rc t' - ref_p₀‖ = 1 :=
@@ -212,8 +209,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
         rw [log_eq_I_arg t' ht'_Icc hne]
         push_cast; ring
       exact h_log_const.congr_of_eventuallyEq hF_eq_log_shift
-  have h_int : IntervalIntegrable
-      (fun t => (rc t - ref_p₀)⁻¹ * deriv rc t) volume 0 5 := by
+  have h_int : IntervalIntegrable (fun t => (rc t - ref_p₀)⁻¹ * deriv rc t) volume 0 5 := by
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num : (0:ℝ) ≤ 5)]
     obtain ⟨M, hM⟩ :=
       polygonToCircleRadial_deriv_bounded ref_p₀
@@ -233,8 +229,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
           (continuous_id.prodMk continuous_const)
       have h_inv_factor : AEStronglyMeasurable (fun t => (rc t - ref_p₀)⁻¹)
           (volume.restrict (Ioc 0 5)) :=
-        (((measurable_inv.comp
-          (hrc_cont.sub continuous_const).measurable
+        (((measurable_inv.comp (hrc_cont.sub continuous_const).measurable
           ).stronglyMeasurable).aestronglyMeasurable
           ).restrict
       have h_deriv_factor : AEStronglyMeasurable (fun t => deriv rc t)
@@ -279,8 +274,7 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
     have hθ_change : θ_target 5 - θ_target 0 = 2 * Real.pi * (-1 : ℤ) := by
       show (θ₀ - 2 * Real.pi * 5 / 5) - (θ₀ - 2 * Real.pi * 0 / 5) = _
       push_cast; ring
-    exact winding_of_S1_curve_eq_degree ref_p₀ 0 5 hab
-      (-1) θ_target hθ_diff hθ_deriv_cont hθ_change
+    exact winding_of_S1_curve_eq_degree ref_p₀ 0 5 hab (-1) θ_target hθ_diff hθ_deriv_cont hθ_change
   set rc := fdPolygonRadialCircle ref_p₀ with hrc_def
   have h_dist_one : ∀ t ∈ Icc (0:ℝ) 5, ‖rc t - ref_p₀‖ = 1 := by
     intro t ht; exact fdPolygonRadialCircle_dist ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t ht
@@ -290,27 +284,23 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
   have h_neg_one : (-1 : ℤ) = (-1 : ℂ) := by norm_cast
   rw [h_neg_one] at h_target_winding
   unfold generalizedWindingNumber' cauchyPrincipalValue'
-  have h_match_rc :
-      (fun ε => ∫ t in (0:ℝ)..5,
+  have h_match_rc : (fun ε => ∫ t in (0:ℝ)..5,
         if ‖(fun t => rc t - ref_p₀) t - 0‖ > ε then
           (fun x => x⁻¹) ((fun t => rc t - ref_p₀) t) * deriv (fun t => rc t - ref_p₀) t
         else 0) =
       (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖rc t - ref_p₀‖ > ε then
-          (rc t - ref_p₀)⁻¹ * deriv rc t
+        if ‖rc t - ref_p₀‖ > ε then (rc t - ref_p₀)⁻¹ * deriv rc t
         else 0) := by
     ext ε; congr 1 with t; simp only [sub_zero, deriv_sub_const]
   simp only [h_match_rc]
   unfold generalizedWindingNumber' cauchyPrincipalValue' at h_target_winding
-  have h_match_target :
-      (fun ε => ∫ t in (0:ℝ)..5,
+  have h_match_target : (fun ε => ∫ t in (0:ℝ)..5,
         if ‖(fun t => γ_target t - ref_p₀) t - 0‖ > ε then
           (fun x => x⁻¹) ((fun t => γ_target t - ref_p₀) t) *
             deriv (fun t => γ_target t - ref_p₀) t
         else 0) =
       (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖γ_target t - ref_p₀‖ > ε then
-          (γ_target t - ref_p₀)⁻¹ * deriv γ_target t
+        if ‖γ_target t - ref_p₀‖ > ε then (γ_target t - ref_p₀)⁻¹ * deriv γ_target t
         else 0) := by
     ext ε; congr 1 with t; simp only [sub_zero, deriv_sub_const]
   simp only [h_match_target] at h_target_winding
@@ -319,10 +309,8 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
     show ‖(ref_p₀ + exp (I * (θ_target t : ℂ))) - ref_p₀‖ = 1
     simp only [add_sub_cancel_left, mul_comm I]
     exact norm_exp_ofReal_mul_I _
-  have h_target_integral : ∀ ε > 0, ε < 1 →
-      (∫ t in (0:ℝ)..5,
-        if ‖γ_target t - ref_p₀‖ > ε then
-          (γ_target t - ref_p₀)⁻¹ * deriv γ_target t else 0) =
+  have h_target_integral : ∀ ε > 0, ε < 1 → (∫ t in (0:ℝ)..5,
+        if ‖γ_target t - ref_p₀‖ > ε then (γ_target t - ref_p₀)⁻¹ * deriv γ_target t else 0) =
       -2 * Real.pi * I := by
     intro ε _hε hε1
     have h_triv : ∀ t, ‖γ_target t - ref_p₀‖ > ε :=
@@ -340,16 +328,13 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
       simp only [add_sub_cancel_left]
       have h_deriv : deriv (fun t =>
           ref_p₀ + exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ))) t =
-          exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)) *
-            (I * (-(2 * Real.pi / 5) : ℝ)) := by
-        have h1 : HasDerivAt (fun t : ℝ =>
-            (θ₀ - 2 * Real.pi * t / 5 : ℝ))
+          exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)) * (I * (-(2 * Real.pi / 5) : ℝ)) := by
+        have h1 : HasDerivAt (fun t : ℝ => (θ₀ - 2 * Real.pi * t / 5 : ℝ))
             (-(2 * Real.pi / 5)) t := by
           have := ((hasDerivAt_const t θ₀).sub
             ((hasDerivAt_id t).const_mul (2 * Real.pi) |>.div_const 5))
           convert this using 1; ring
-        have h2 : HasDerivAt
-            (fun t : ℝ => ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ))
+        have h2 : HasDerivAt (fun t : ℝ => ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ))
             ((-(2 * Real.pi / 5) : ℝ) : ℂ) t := by
           have :=
             Complex.ofRealCLM.hasFDerivAt.comp_hasDerivAt t h1
@@ -357,19 +342,16 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
             map_neg] at this
           convert this using 1
           simp [Complex.ofReal_div, Complex.ofReal_mul]
-        have h3 : HasDerivAt
-            (fun t : ℝ => I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ))
+        have h3 : HasDerivAt (fun t : ℝ => I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ))
             (I * ((-(2 * Real.pi / 5) : ℝ) : ℂ)) t :=
           h2.const_mul I
-        have h4 : HasDerivAt
-            (fun t : ℝ =>
+        have h4 : HasDerivAt (fun t : ℝ =>
               exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)))
             (exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)) *
               (I * ((-(2 * Real.pi / 5) : ℝ) : ℂ))) t := by
           have := (hasDerivAt_exp _).comp t h3
           exact this
-        have h5 : HasDerivAt
-            (fun t : ℝ =>
+        have h5 : HasDerivAt (fun t : ℝ =>
               ref_p₀ +
                 exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)))
             (exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)) *
@@ -389,16 +371,14 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
     ring
   have h_target_limit : limUnder (𝓝[>] (0:ℝ)) (fun ε =>
       ∫ t in (0:ℝ)..5,
-        if ‖γ_target t - ref_p₀‖ > ε then
-          (γ_target t - ref_p₀)⁻¹ * deriv γ_target t else 0) =
+        if ‖γ_target t - ref_p₀‖ > ε then (γ_target t - ref_p₀)⁻¹ * deriv γ_target t else 0) =
       -2 * Real.pi * I := by
     apply limUnder_eventually_eq_const
     filter_upwards [Ioo_mem_nhdsGT (by norm_num : (0:ℝ) < 1)] with ε hε
     exact h_target_integral ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2
   suffices h_rc_limit_eq : limUnder (𝓝[>] (0:ℝ)) (fun ε =>
       ∫ t in (0:ℝ)..5,
-        if ‖rc t - ref_p₀‖ > ε then
-          (rc t - ref_p₀)⁻¹ * deriv rc t else 0) =
+        if ‖rc t - ref_p₀‖ > ε then (rc t - ref_p₀)⁻¹ * deriv rc t else 0) =
       -2 * ↑Real.pi * I by
     rw [h_rc_limit_eq]
     rw [h_target_limit] at h_target_winding
@@ -440,8 +420,7 @@ lemma winding_radialCircle_eq_circleParamCW (p : ℂ) (hp_norm : ‖p‖ > 1)
     generalizedWindingNumber' (fdPolygonRadialCircle p) 0 5 p =
     generalizedWindingNumber' (circleParamCW p 1 0 5) 0 5 p := by
   rw [winding_radialCircle_eq_neg_one p hp_norm hp_re hp_im_pos hp_im,
-      circleParamCW_winding_eq_neg_one p 1
-        (by norm_num : (0:ℝ) < 1) 0 5
+      circleParamCW_winding_eq_neg_one p 1 (by norm_num : (0:ℝ) < 1) 0 5
         (by norm_num : (0:ℝ) < 5)]
 
 /-- Winding number of fdPolygon equals winding number of circleParamCW. -/

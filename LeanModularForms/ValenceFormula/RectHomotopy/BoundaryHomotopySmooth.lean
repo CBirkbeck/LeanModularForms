@@ -43,22 +43,16 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
         (𝓝 ((1 - s) * (-Real.pi * Real.sqrt 3 / 12 + Real.pi / 12 * I) +
             s * (-1/2 + (1 - Real.sqrt 3 / 2) * I))) := by
       have h_mem : Ioo 1 2 ∈ 𝓝[>] (1 : ℝ) := Ioo_mem_nhdsGT (by norm_num : (1 : ℝ) < 2)
-      let g : ℝ → ℂ := fun t' =>
-        (1 - s) • Complex.exp
-          (((Real.pi : ℝ) / 3 +
-            (t' - 1) *
+      let g : ℝ → ℂ := fun t' => (1 - s) • Complex.exp
+          (((Real.pi : ℝ) / 3 + (t' - 1) *
               ((Real.pi : ℝ) / 6)) * I) +
         s • chordSegment rho' i_point (t' - 1)
-      have h_arc : HasDerivAt
-          (fun t' : ℝ =>
-            Complex.exp
-              (((Real.pi : ℝ) / 3 +
+      have h_arc : HasDerivAt (fun t' : ℝ =>
+            Complex.exp (((Real.pi : ℝ) / 3 +
                 (t' - 1) * ((Real.pi : ℝ) / 6)) * I))
           (((Real.pi : ℝ) / 6) * I * rho') (1 : ℝ) := by
-        have h_inner : HasDerivAt
-            (fun t' : ℝ =>
-              (Real.pi : ℂ) / 3 +
-                ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
+        have h_inner : HasDerivAt (fun t' : ℝ =>
+              (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
             ((Real.pi : ℂ) / 6) (1 : ℝ) := by
           have h_shift :
               HasDerivAt (fun t' : ℝ => (t' : ℂ) - 1)
@@ -68,8 +62,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
                 ℝ _ ℂ _ _ (1 : ℝ) Complex.ofRealCLM
             simp only [Complex.ofRealCLM_apply] at h
             exact h.sub_const 1
-          have h_mul : HasDerivAt
-              (fun t' : ℝ =>
+          have h_mul : HasDerivAt (fun t' : ℝ =>
                 ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
               ((Real.pi : ℂ) / 6) (1 : ℝ) := by
             have := h_shift.mul_const ((Real.pi : ℂ) / 6)
@@ -77,29 +70,22 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
             exact this
           have := h_mul.const_add ((Real.pi : ℂ) / 3)
           convert this using 1
-        have h_times_I : HasDerivAt
-            (fun t' : ℝ =>
-              ((Real.pi : ℂ) / 3 +
-                ((t' : ℂ) - 1) *
+        have h_times_I : HasDerivAt (fun t' : ℝ =>
+              ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) *
                   ((Real.pi : ℂ) / 6)) * I)
             (((Real.pi : ℂ) / 6) * I) (1 : ℝ) :=
           h_inner.mul_const I
-        have h_exp : HasDerivAt Complex.exp
-            (Complex.exp
-              (((Real.pi : ℂ) / 3 +
-                (((1 : ℝ) : ℂ) - 1) *
+        have h_exp : HasDerivAt Complex.exp (Complex.exp
+              (((Real.pi : ℂ) / 3 + (((1 : ℝ) : ℂ) - 1) *
                   ((Real.pi : ℂ) / 6)) * I))
-            (((Real.pi : ℂ) / 3 +
-              (((1 : ℝ) : ℂ) - 1) *
+            (((Real.pi : ℂ) / 3 + (((1 : ℝ) : ℂ) - 1) *
                 ((Real.pi : ℂ) / 6)) * I) :=
           Complex.hasDerivAt_exp _
         have h_raw := h_exp.comp (1 : ℝ) h_times_I
         simp only [mul_comm (Complex.exp _)] at h_raw
         have h_exp_val :
-            Complex.exp
-              (((Real.pi : ℂ) / 3 +
-                (((1 : ℝ) : ℂ) - 1) *
-                  ((Real.pi : ℂ) / 6)) * I) =
+            Complex.exp (((Real.pi : ℂ) / 3 +
+                (((1 : ℝ) : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I) =
               rho' := by
           have : (((1 : ℝ) : ℂ) - 1) = 0 := by push_cast; ring
           rw [this, zero_mul, add_zero]
@@ -110,14 +96,11 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           (i_point - rho') (1 : ℝ) := by
         simp only [chordSegment]
         have h_shift :
-            HasDerivAt (fun t' : ℝ => t' - 1)
-              (1 : ℝ) (1 : ℝ) :=
+            HasDerivAt (fun t' : ℝ => t' - 1) (1 : ℝ) (1 : ℝ) :=
           (hasDerivAt_id (1 : ℝ)).sub_const 1
-        have h1 : HasDerivAt
-            (fun t' : ℝ => (1 - (t' - 1)) • rho')
+        have h1 : HasDerivAt (fun t' : ℝ => (1 - (t' - 1)) • rho')
             (-rho') (1 : ℝ) := by
-          have h_coef : HasDerivAt
-              (fun t' : ℝ => (1 - (t' - 1) : ℝ))
+          have h_coef : HasDerivAt (fun t' : ℝ => (1 - (t' - 1) : ℝ))
               (-1 : ℝ) (1 : ℝ) := by
             have := (hasDerivAt_const (1 : ℝ) (1 : ℝ)).sub h_shift
             simp only [zero_sub] at this
@@ -125,8 +108,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           have := h_coef.smul_const rho'
           simp only [neg_one_smul] at this
           exact this
-        have h2 : HasDerivAt
-            (fun t' : ℝ => (t' - 1) • i_point)
+        have h2 : HasDerivAt (fun t' : ℝ => (t' - 1) • i_point)
             i_point (1 : ℝ) := by
           have := h_shift.smul_const i_point
           simp only [one_smul] at this
@@ -153,8 +135,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
       rw [h_deriv_eq] at h_combined
       have h_slope_g := hasDerivAt_iff_tendsto_slope.mp h_combined
       have h_ioi_subset : Set.Ioi (1 : ℝ) ⊆ {1}ᶜ := fun y hy => ne_of_gt hy
-      have h_slope_right := h_slope_g.mono_left
-        (nhdsWithin_mono (1 : ℝ) h_ioi_subset)
+      have h_slope_right := h_slope_g.mono_left (nhdsWithin_mono (1 : ℝ) h_ioi_subset)
       refine h_slope_right.congr' ?_
       filter_upwards [h_mem] with t' ht'
       simp only [slope_def_module]
@@ -165,14 +146,11 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           simp only [rho', H_height]; push_cast; ring
         have h_rhs : g 1 = rho' := by
           have h_exp :
-              Complex.exp
-                (((Real.pi : ℝ) / 3 +
-                  ((1:ℝ) - 1) *
-                    ((Real.pi : ℝ) / 6)) * I) =
+              Complex.exp (((Real.pi : ℝ) / 3 +
+                  ((1:ℝ) - 1) * ((Real.pi : ℝ) / 6)) * I) =
                 rho' := by
             conv_lhs =>
-              rw [show (↑(Real.pi : ℝ) / 3 +
-                    (↑(1 : ℝ) - 1) *
+              rw [show (↑(Real.pi : ℝ) / 3 + (↑(1 : ℝ) - 1) *
                       (↑(Real.pi : ℝ) / 6) : ℂ) =
                   ↑(Real.pi / 3)
                 from by push_cast; ring]
@@ -181,12 +159,9 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
             simp only [chordSegment, show ((1:ℝ) - 1) = (0 : ℝ) from by ring]
             simp [zero_smul, one_smul, sub_zero]
           calc g 1 = (1 - s) •
-                Complex.exp
-                  (((Real.pi : ℝ) / 3 +
-                    ((1:ℝ) - 1) *
-                      ((Real.pi : ℝ) / 6)) * I) +
-                s • chordSegment rho' i_point
-                  ((1:ℝ) - 1) := rfl
+                Complex.exp (((Real.pi : ℝ) / 3 +
+                    ((1:ℝ) - 1) * ((Real.pi : ℝ) / 6)) * I) +
+                s • chordSegment rho' i_point ((1:ℝ) - 1) := rfl
             _ = (1 - s) • rho' + s • rho' := by rw [h_exp, h_chord]
             _ = rho' := by simp only [Complex.real_smul]; push_cast; ring
         rw [h_lhs, h_rhs]
@@ -220,15 +195,12 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           Complex.one_im, Complex.I_im,
           mul_zero, mul_one, neg_zero, sub_self]
       have h_rhs_re :
-          Complex.re
-            ((1 - (s:ℂ)) *
+          Complex.re ((1 - (s:ℂ)) *
               (-Real.pi * Real.sqrt 3 / 12 +
                 Real.pi / 12 * I) +
-              (s:ℂ) *
-                (-1/2 +
+              (s:ℂ) * (-1/2 +
                   (1 - Real.sqrt 3 / 2) * I)) =
-            (1 - s) *
-              (-Real.pi * Real.sqrt 3 / 12) +
+            (1 - s) * (-Real.pi * Real.sqrt 3 / 12) +
               s * (-1/2) := by
         have h_im_s :
             Complex.im (s:ℂ) = 0 :=
@@ -238,9 +210,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           simp only [Complex.sub_im,
             Complex.one_im, h_im_s, sub_zero]
         have h_im_coeff :
-            Complex.im
-              ((1 : ℂ) - Real.sqrt 3 / 2) = 0 :=
-          by simp
+            Complex.im ((1 : ℂ) - Real.sqrt 3 / 2) = 0 := by simp
         simp only [Complex.add_re,
           Complex.mul_re, Complex.sub_re,
           Complex.ofReal_re, Complex.one_re,
@@ -276,32 +246,22 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
         (𝓝 ((1 - s) * (-Real.pi * Real.sqrt 3 / 12 - Real.pi / 12 * I) +
             s * (-1/2 + (Real.sqrt 3 / 2 - 1) * I))) := by
       have h_mem : Ioo 2 3 ∈ 𝓝[<] (3 : ℝ) := Ioo_mem_nhdsLT (by norm_num : (2 : ℝ) < 3)
-      let g : ℝ → ℂ := fun t' =>
-        (1 - s) • Complex.exp
-          (((Real.pi : ℝ) / 2 +
-            (t' - 2) *
+      let g : ℝ → ℂ := fun t' => (1 - s) • Complex.exp
+          (((Real.pi : ℝ) / 2 + (t' - 2) *
               ((Real.pi : ℝ) / 6)) * I) +
         s • chordSegment i_point rho (t' - 2)
-      have h_arc : HasDerivAt
-          (fun t' : ℝ =>
-            Complex.exp
-              (((Real.pi : ℝ) / 2 +
-                (t' - 2) *
-                  ((Real.pi : ℝ) / 6)) * I))
+      have h_arc : HasDerivAt (fun t' : ℝ =>
+            Complex.exp (((Real.pi : ℝ) / 2 +
+                (t' - 2) * ((Real.pi : ℝ) / 6)) * I))
           (((Real.pi : ℝ) / 6) * I *
-            Complex.exp
-              (((Real.pi : ℝ) / 2 +
-                ((3 : ℝ) - 2) *
-                  ((Real.pi : ℝ) / 6)) * I))
+            Complex.exp (((Real.pi : ℝ) / 2 +
+                ((3 : ℝ) - 2) * ((Real.pi : ℝ) / 6)) * I))
           (3 : ℝ) := by
-        have h_inner : HasDerivAt
-            (fun t' : ℝ =>
-              (Real.pi : ℂ) / 2 +
-                ((t' : ℂ) - 2) *
+        have h_inner : HasDerivAt (fun t' : ℝ =>
+              (Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) *
                   ((Real.pi : ℂ) / 6))
             ((Real.pi : ℂ) / 6) (3 : ℝ) := by
-          have h_shift : HasDerivAt
-              (fun t' : ℝ => (t' : ℂ) - 2)
+          have h_shift : HasDerivAt (fun t' : ℝ => (t' : ℂ) - 2)
               1 (3 : ℝ) := by
             have h :=
               @ContinuousLinearMap.hasDerivAt
@@ -309,49 +269,35 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
                 Complex.ofRealCLM
             simp only [Complex.ofRealCLM_apply] at h
             exact h.sub_const 2
-          have h_mul : HasDerivAt
-              (fun t' : ℝ =>
-                ((t' : ℂ) - 2) *
-                  ((Real.pi : ℂ) / 6))
+          have h_mul : HasDerivAt (fun t' : ℝ =>
+                ((t' : ℂ) - 2) * ((Real.pi : ℂ) / 6))
               ((Real.pi : ℂ) / 6) (3 : ℝ) := by
             have := h_shift.mul_const ((Real.pi : ℂ) / 6)
             simp only [one_mul] at this; exact this
           have := h_mul.const_add ((Real.pi : ℂ) / 2)
           convert this using 1
-        have h_times_I : HasDerivAt
-            (fun t' : ℝ =>
-              ((Real.pi : ℂ) / 2 +
-                ((t' : ℂ) - 2) *
+        have h_times_I : HasDerivAt (fun t' : ℝ =>
+              ((Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) *
                   ((Real.pi : ℂ) / 6)) * I)
             (((Real.pi : ℂ) / 6) * I) (3 : ℝ) :=
           h_inner.mul_const I
-        have h_exp : HasDerivAt Complex.exp
-            (Complex.exp
-              (((Real.pi : ℂ) / 2 +
-                (((3 : ℝ) : ℂ) - 2) *
+        have h_exp : HasDerivAt Complex.exp (Complex.exp
+              (((Real.pi : ℂ) / 2 + (((3 : ℝ) : ℂ) - 2) *
                   ((Real.pi : ℂ) / 6)) * I))
-            (((Real.pi : ℂ) / 2 +
-              (((3 : ℝ) : ℂ) - 2) *
+            (((Real.pi : ℂ) / 2 + (((3 : ℝ) : ℂ) - 2) *
                 ((Real.pi : ℂ) / 6)) * I) :=
           Complex.hasDerivAt_exp _
         have := h_exp.comp (3 : ℝ) h_times_I
         simp only [mul_comm (Complex.exp _)] at this
         exact this
-      have h_arc_rho : HasDerivAt
-          (fun t' : ℝ =>
-            Complex.exp
-              (((Real.pi : ℝ) / 2 +
-                (t' - 2) *
-                  ((Real.pi : ℝ) / 6)) * I))
-          (((Real.pi : ℝ) / 6) * I * rho)
-          (3 : ℝ) := by
+      have h_arc_rho : HasDerivAt (fun t' : ℝ =>
+            Complex.exp (((Real.pi : ℝ) / 2 +
+                (t' - 2) * ((Real.pi : ℝ) / 6)) * I))
+          (((Real.pi : ℝ) / 6) * I * rho) (3 : ℝ) := by
         convert h_arc using 2
-        show rho = Complex.exp
-          (((Real.pi : ℝ) / 2 +
-            ((3 : ℝ) - 2) *
-              ((Real.pi : ℝ) / 6) : ℂ) * I)
-        rw [show ((Real.pi : ℝ) / 2 +
-              ((3 : ℝ) - 2) *
+        show rho = Complex.exp (((Real.pi : ℝ) / 2 +
+            ((3 : ℝ) - 2) * ((Real.pi : ℝ) / 6) : ℂ) * I)
+        rw [show ((Real.pi : ℝ) / 2 + ((3 : ℝ) - 2) *
                 ((Real.pi : ℝ) / 6) : ℂ) * I =
               ↑(2 * Real.pi / 3) * I
           from by push_cast; ring]
@@ -361,8 +307,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           (rho - i_point) (3 : ℝ) := by
         simp only [chordSegment]
         have h_shift :
-            HasDerivAt (fun t' : ℝ => t' - 2)
-              (1 : ℝ) (3 : ℝ) :=
+            HasDerivAt (fun t' : ℝ => t' - 2) (1 : ℝ) (3 : ℝ) :=
           (hasDerivAt_id (3 : ℝ)).sub_const 2
         have h1 : HasDerivAt (fun t' : ℝ => (1 - (t' - 2)) • i_point) (-i_point) (3 : ℝ) := by
           have h_coef : HasDerivAt (fun t' : ℝ => (1 - (t' - 2) : ℝ)) (-1 : ℝ) (3 : ℝ) := by
@@ -392,8 +337,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
       rw [h_deriv_eq] at h_combined
       have h_slope_g := hasDerivAt_iff_tendsto_slope.mp h_combined
       have h_iio_ss : Set.Iio (3 : ℝ) ⊆ {3}ᶜ := fun y hy => ne_of_lt hy
-      have h_slope_left := h_slope_g.mono_left
-        (nhdsWithin_mono (3 : ℝ) h_iio_ss)
+      have h_slope_left := h_slope_g.mono_left (nhdsWithin_mono (3 : ℝ) h_iio_ss)
       refine h_slope_left.congr' ?_
       filter_upwards [h_mem] with t' ht'
       simp only [slope_def_module]
@@ -410,10 +354,8 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           fdBoundaryToPolygonHomotopy (t', s) =
             g t' := by
         have ht'_not_le_1 : ¬(t' ≤ 1) :=
-          not_le.mpr
-            (lt_of_lt_of_le
-              (by norm_num : (1:ℝ) < 2)
-              (le_of_lt ht'.1))
+          not_le.mpr (lt_of_lt_of_le
+              (by norm_num : (1:ℝ) < 2) (le_of_lt ht'.1))
         have ht'_not_le_2 : ¬(t' ≤ 2) :=
           not_le.mpr ht'.1
         have ht'_le_3 : t' ≤ 3 :=
@@ -428,62 +370,46 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
         (𝓝 ((H_height - Real.sqrt 3 / 2) * I)) := by
       have h_mem : Ioo 3 4 ∈ 𝓝[>] (3 : ℝ) := Ioo_mem_nhdsGT (by norm_num : (3 : ℝ) < 4)
       let f4 : ℝ → ℂ := fun t' =>
-        -1/2 +
-          (Real.sqrt 3 / 2 +
-            (t' - 3) *
-              (H_height - Real.sqrt 3 / 2)) * I
-      have h_seg4_deriv : HasDerivAt f4
-          (((H_height : ℂ) - Real.sqrt 3 / 2) * I)
+        -1/2 + (Real.sqrt 3 / 2 +
+            (t' - 3) * (H_height - Real.sqrt 3 / 2)) * I
+      have h_seg4_deriv : HasDerivAt f4 (((H_height : ℂ) - Real.sqrt 3 / 2) * I)
           (3 : ℝ) := by
         have h1 :
             HasDerivAt (fun t' : ℝ => (t' : ℂ))
               1 (3 : ℝ) :=
           Complex.ofRealCLM.hasDerivAt
         have h2 :
-            HasDerivAt
-              (fun t' : ℝ => (t' : ℂ) - 3)
+            HasDerivAt (fun t' : ℝ => (t' : ℂ) - 3)
               1 (3 : ℝ) := h1.sub_const 3
-        have h3 : HasDerivAt
-            (fun t' : ℝ =>
-              ((t' : ℂ) - 3) *
-                ((H_height : ℂ) -
+        have h3 : HasDerivAt (fun t' : ℝ =>
+              ((t' : ℂ) - 3) * ((H_height : ℂ) -
                   Real.sqrt 3 / 2))
-            ((H_height : ℂ) - Real.sqrt 3 / 2)
-            (3 : ℝ) := by
-          have := h2.mul_const
-            ((H_height : ℂ) - Real.sqrt 3 / 2)
+            ((H_height : ℂ) - Real.sqrt 3 / 2) (3 : ℝ) := by
+          have := h2.mul_const ((H_height : ℂ) - Real.sqrt 3 / 2)
           simp only [one_mul] at this
           exact this
-        have h4 : HasDerivAt
-            (fun t' : ℝ =>
-              (Real.sqrt 3 / 2 : ℂ) +
-                ((t' : ℂ) - 3) *
+        have h4 : HasDerivAt (fun t' : ℝ =>
+              (Real.sqrt 3 / 2 : ℂ) + ((t' : ℂ) - 3) *
                   ((H_height : ℂ) -
                     Real.sqrt 3 / 2))
-            ((H_height : ℂ) - Real.sqrt 3 / 2)
-            (3 : ℝ) := by
-          have :=
-            (hasDerivAt_const (3 : ℝ)
+            ((H_height : ℂ) - Real.sqrt 3 / 2) (3 : ℝ) := by
+          have := (hasDerivAt_const (3 : ℝ)
               (Real.sqrt 3 / 2 : ℂ)).add h3
           simp only [zero_add] at this
           exact this
-        have h5 : HasDerivAt
-            (fun t' : ℝ =>
-              ((Real.sqrt 3 / 2 : ℂ) +
-                ((t' : ℂ) - 3) *
+        have h5 : HasDerivAt (fun t' : ℝ =>
+              ((Real.sqrt 3 / 2 : ℂ) + ((t' : ℂ) - 3) *
                   ((H_height : ℂ) -
                     Real.sqrt 3 / 2)) * I)
             (((H_height : ℂ) -
               Real.sqrt 3 / 2) * I)
             (3 : ℝ) := h4.mul_const I
-        have :=
-          (hasDerivAt_const (3 : ℝ)
+        have := (hasDerivAt_const (3 : ℝ)
             ((-1/2 : ℂ))).add h5
         simp only [zero_add] at this; exact this
       have h_slope_f4 := hasDerivAt_iff_tendsto_slope.mp h_seg4_deriv
       have h_ioi_ss : Set.Ioi (3 : ℝ) ⊆ {3}ᶜ := fun y hy => ne_of_gt hy
-      have h_slope_right := h_slope_f4.mono_left
-        (nhdsWithin_mono (3 : ℝ) h_ioi_ss)
+      have h_slope_right := h_slope_f4.mono_left (nhdsWithin_mono (3 : ℝ) h_ioi_ss)
       refine h_slope_right.congr' ?_
       filter_upwards [h_mem] with t' ht'
       simp only [slope_def_module]
@@ -495,14 +421,11 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           show (3 : ℝ) ≤ 3 from le_refl 3,
           ite_false, ite_true]
         have h_exp :
-            Complex.exp
-              ((↑Real.pi / 2 +
-                (↑(3:ℝ) - 2) *
-                  (2 * ↑Real.pi / 3 -
+            Complex.exp ((↑Real.pi / 2 +
+                (↑(3:ℝ) - 2) * (2 * ↑Real.pi / 3 -
                     ↑Real.pi / 2)) * I) =
               rho := by
-          rw [show (↑Real.pi / 2 +
-                (↑(3:ℝ) - 2) *
+          rw [show (↑Real.pi / 2 + (↑(3:ℝ) - 2) *
                   (2 * ↑Real.pi / 3 -
                     ↑Real.pi / 2) : ℂ) * I =
             ↑(2 * Real.pi / 3) * I from by push_cast; ring]
@@ -516,12 +439,10 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
         rw [h_fbd_eq_rho, h_f4_eq_rho]
       have h_at_t' : fdBoundaryToPolygonHomotopy (t', s) = f4 t' := by
         have ht'1 : ¬(t' ≤ 1) :=
-          not_le.mpr (lt_of_lt_of_le
-            (by norm_num : (1:ℝ) < 3)
+          not_le.mpr (lt_of_lt_of_le (by norm_num : (1:ℝ) < 3)
             (le_of_lt ht'.1))
         have ht'2 : ¬(t' ≤ 2) :=
-          not_le.mpr (lt_of_lt_of_le
-            (by norm_num : (2:ℝ) < 3)
+          not_le.mpr (lt_of_lt_of_le (by norm_num : (2:ℝ) < 3)
             (le_of_lt ht'.1))
         have ht'3 : ¬(t' ≤ 3) := not_le.mpr ht'.1
         have ht'4 : t' ≤ 4 := le_of_lt ht'.2
@@ -536,23 +457,19 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
     have h_eq_right := tendsto_nhds_unique h_right_slope h_right_val
     rw [h_eq_right] at h_eq_left
     have h_ne : ((1 - s) * (-Real.pi * Real.sqrt 3 / 12 - Real.pi / 12 * I) +
-        s * (-1/2 + (Real.sqrt 3 / 2 - 1) * I)) ≠
-        ((H_height : ℂ) - Real.sqrt 3 / 2) * I := by
+        s * (-1/2 + (Real.sqrt 3 / 2 - 1) * I)) ≠ ((H_height : ℂ) - Real.sqrt 3 / 2) * I := by
       intro heq
       have h_rhs_re : Complex.re (((H_height : ℂ) - Real.sqrt 3 / 2) * I) = 0 := by
         have h1 : (H_height : ℂ) - Real.sqrt 3 / 2 = (1 : ℂ) := by
           simp only [H_height]; push_cast; ring
         rw [h1, one_mul]; exact Complex.I_re
       have h_lhs_re :
-          Complex.re
-            ((1 - (s:ℂ)) *
+          Complex.re ((1 - (s:ℂ)) *
               (-Real.pi * Real.sqrt 3 / 12 -
                 Real.pi / 12 * I) +
-              (s:ℂ) *
-                (-1/2 +
+              (s:ℂ) * (-1/2 +
                   (Real.sqrt 3 / 2 - 1) * I)) =
-            (1 - s) *
-              (-Real.pi * Real.sqrt 3 / 12) +
+            (1 - s) * (-Real.pi * Real.sqrt 3 / 12) +
               s * (-1/2) := by
         have h_im_s :
             Complex.im (s:ℂ) = 0 :=
@@ -562,9 +479,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           simp only [Complex.sub_im,
             Complex.one_im, h_im_s, sub_zero]
         have h_im_coeff :
-            Complex.im
-              ((Real.sqrt 3 : ℂ) / 2 - 1) = 0 :=
-          by simp
+            Complex.im ((Real.sqrt 3 : ℂ) / 2 - 1) = 0 := by simp
         simp only [Complex.add_re,
           Complex.mul_re, Complex.sub_re,
           Complex.ofReal_re, Complex.one_re,
@@ -596,12 +511,10 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
       apply Tendsto.congr' (f₁ := fun _ => (H_height - Real.sqrt 3 / 2) * I)
       · filter_upwards [h_mem] with t ht
         have ht1 : ¬(t ≤ 1) :=
-          not_le.mpr (lt_of_lt_of_le
-            (by norm_num : (1:ℝ) < 3)
+          not_le.mpr (lt_of_lt_of_le (by norm_num : (1:ℝ) < 3)
             (le_of_lt ht.1))
         have ht2 : ¬(t ≤ 2) :=
-          not_le.mpr (lt_of_lt_of_le
-            (by norm_num : (2:ℝ) < 3)
+          not_le.mpr (lt_of_lt_of_le (by norm_num : (2:ℝ) < 3)
             (le_of_lt ht.1))
         have ht3 : ¬(t ≤ 3) := not_le.mpr ht.1
         have ht4 : t ≤ 4 := le_of_lt ht.2
@@ -624,26 +537,21 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
         simp only [H_height]; push_cast; ring
       · exact tendsto_const_nhds
     have h_right_val :
-        Tendsto
-          (slope (fun t' =>
+        Tendsto (slope (fun t' =>
             fdBoundaryToPolygonHomotopy (t', s))
             4) (𝓝[>] 4) (𝓝 1) := by
       have h_mem : Ioo 4 5 ∈ 𝓝[>] (4 : ℝ) :=
         Ioo_mem_nhdsGT (by norm_num : (4 : ℝ) < 5)
-      apply Tendsto.congr'
-        (f₁ := fun _ => (1 : ℂ))
+      apply Tendsto.congr' (f₁ := fun _ => (1 : ℂ))
       · filter_upwards [h_mem] with t ht
         have ht1 : ¬(t ≤ 1) :=
-          not_le.mpr (lt_of_lt_of_le
-            (by norm_num : (1:ℝ) < 4)
+          not_le.mpr (lt_of_lt_of_le (by norm_num : (1:ℝ) < 4)
             (le_of_lt ht.1))
         have ht2 : ¬(t ≤ 2) :=
-          not_le.mpr (lt_of_lt_of_le
-            (by norm_num : (2:ℝ) < 4)
+          not_le.mpr (lt_of_lt_of_le (by norm_num : (2:ℝ) < 4)
             (le_of_lt ht.1))
         have ht3 : ¬(t ≤ 3) :=
-          not_le.mpr (lt_of_lt_of_le
-            (by norm_num : (3:ℝ) < 4)
+          not_le.mpr (lt_of_lt_of_le (by norm_num : (3:ℝ) < 4)
             (le_of_lt ht.1))
         have ht4 : ¬(t ≤ 4) := not_le.mpr ht.1
         have h4_1 : ¬(4 : ℝ) ≤ 1 := by norm_num
@@ -691,19 +599,15 @@ lemma deriv_seg4_continuousOn : ContinuousOn
   continuousOn_const
 
 /-- Segment 5 derivative continuity: constant function is continuous. -/
-lemma deriv_seg5_continuousOn : ContinuousOn
-    (fun (_q : ℝ × ℝ) => (1 : ℂ)) (Set.univ) :=
+lemma deriv_seg5_continuousOn : ContinuousOn (fun (_q : ℝ × ℝ) => (1 : ℂ)) (Set.univ) :=
   continuousOn_const
 
 /-- An interval (p1, p2) avoiding {1,2,3,4} and inside (0,5) lies in exactly one segment. -/
-lemma interval_in_segment (p₁ p₂ : ℝ)
-    (_hp : p₁ < p₂)
+lemma interval_in_segment (p₁ p₂ : ℝ) (_hp : p₁ < p₂)
     (h_avoid : ∀ t ∈ Set.Ioo p₁ p₂,
       t ∉ ({1, 2, 3, 4} : Finset ℝ))
-    (_h_sub : Set.Ioo p₁ p₂ ⊆ Set.Ioo 0 5) :
-    (p₂ ≤ 1) ∨ (p₁ ≥ 1 ∧ p₂ ≤ 2) ∨
-    (p₁ ≥ 2 ∧ p₂ ≤ 3) ∨ (p₁ ≥ 3 ∧ p₂ ≤ 4) ∨
-    (p₁ ≥ 4) := by
+    (_h_sub : Set.Ioo p₁ p₂ ⊆ Set.Ioo 0 5) : (p₂ ≤ 1) ∨ (p₁ ≥ 1 ∧ p₂ ≤ 2) ∨
+    (p₁ ≥ 2 ∧ p₂ ≤ 3) ∨ (p₁ ≥ 3 ∧ p₂ ≤ 4) ∨ (p₁ ≥ 4) := by
   by_cases h1 : p₂ ≤ 1
   · left; exact h1
   · right

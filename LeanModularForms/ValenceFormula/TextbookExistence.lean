@@ -69,8 +69,7 @@ lemma orb_vAdd_neg_one_eq (p : ℍ) :
     have h1 : ModularGroup.T • (ModularGroup.T⁻¹ • p) = p :=
       smul_inv_smul _ p
     rw [UpperHalfPlane.modular_T_smul] at h1
-    have h2 : ModularGroup.T⁻¹ • p =
-        (-1 : ℝ) +ᵥ ((1 : ℝ) +ᵥ (ModularGroup.T⁻¹ • p)) := by
+    have h2 : ModularGroup.T⁻¹ • p = (-1 : ℝ) +ᵥ ((1 : ℝ) +ᵥ (ModularGroup.T⁻¹ • p)) := by
       rw [← add_vadd, show (-1 : ℝ) + 1 = 0 from by ring,
         zero_vadd]
     rwa [h1] at h2
@@ -87,21 +86,18 @@ lemma orb_S_smul_eq (p : ℍ) :
     MulAction.mem_orbit_iff]
   exact ⟨ModularGroup.S, rfl⟩
 
-private lemma uhp_norm_one_re_zero_eq_i (p : ℍ)
-    (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = 0) :
+private lemma uhp_norm_one_re_zero_eq_i (p : ℍ) (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = 0) :
     p = ellipticPointI' := by
   apply Subtype.ext; show (p : ℂ) = I
   have h_nsq : Complex.normSq (p : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hn, one_pow]
   rw [Complex.normSq_apply, hr] at h_nsq
   have h_im : (p : ℂ).im = 1 := by
-    have h_prod : ((p : ℂ).im - 1) * ((p : ℂ).im + 1) = 0 :=
-      by nlinarith
+    have h_prod : ((p : ℂ).im - 1) * ((p : ℂ).im + 1) = 0 := by nlinarith
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos p.2 one_pos))
-  exact Complex.ext (hr.trans Complex.I_re.symm)
-    (h_im.trans Complex.I_im.symm)
+  exact Complex.ext (hr.trans Complex.I_re.symm) (h_im.trans Complex.I_im.symm)
 
 private lemma uhp_norm_one_re_neg_half_eq_rho (p : ℍ)
     (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = -1/2) :
@@ -146,15 +142,12 @@ private lemma uhp_norm_one_re_half_eq_rho_plus_one (p : ℍ)
   · simp [ellipticPointRhoPlusOne']; have : p.im = (↑p : ℂ).im := rfl; linarith
 
 private lemma case_right_vertical_via_tInv (q : NonEllOrbit) (p0 : ℍ)
-    (hp0_fd : p0 ∈ 𝒟)
-    (hp0_ord : orderOfVanishingAt' (⇑f) p0 ≠ 0)
-    (h_half : (↑p0 : ℂ).re = 1/2)
-    (h_gt : ‖(↑p0 : ℂ)‖ > 1)
+    (hp0_fd : p0 ∈ 𝒟) (hp0_ord : orderOfVanishingAt' (⇑f) p0 ≠ 0)
+    (h_half : (↑p0 : ℂ).re = 1/2) (h_gt : ‖(↑p0 : ℂ)‖ > 1)
     (hp0_orb : orb p0 = q.val) :
     ∃ p1 ∈ repCanon f hf, orb p1 = q.val := by
   set p1 := (-1 : ℝ) +ᵥ p0
-  have hp1_ord : orderOfVanishingAt' (⇑f) p1 ≠ 0 :=
-    (ord_vAdd_neg_one_eq f p0).symm ▸ hp0_ord
+  have hp1_ord : orderOfVanishingAt' (⇑f) p1 ≠ 0 := (ord_vAdd_neg_one_eq f p0).symm ▸ hp0_ord
   have hp1_s₀ : p1 ∈ s₀ f hf :=
     s₀_complete f hf p1 (vAdd_neg_one_mem_fd_of_right_vert p0 hp0_fd h_half) hp1_ord
   have hp1_re : (↑p1 : ℂ).re = -1/2 := by
@@ -168,16 +161,12 @@ private lemma case_right_vertical_via_tInv (q : NonEllOrbit) (p0 : ℍ)
   exact Finset.mem_filter.mpr ⟨hp1_s₀, hp1_re, hp1_norm⟩
 
 private lemma case_right_arc_via_S (q : NonEllOrbit) (p0 : ℍ)
-    (hp0_fd : p0 ∈ 𝒟)
-    (hp0_ord : orderOfVanishingAt' (⇑f) p0 ≠ 0)
-    (h_norm_eq : ‖(↑p0 : ℂ)‖ = 1)
-    (h_pos : (↑p0 : ℂ).re > 0)
-    (hp0_orb : orb p0 = q.val)
-    (hq_ne_rho : orb (ellipticPointRho' : ℍ) ≠ q.val) :
+    (hp0_fd : p0 ∈ 𝒟) (hp0_ord : orderOfVanishingAt' (⇑f) p0 ≠ 0)
+    (h_norm_eq : ‖(↑p0 : ℂ)‖ = 1) (h_pos : (↑p0 : ℂ).re > 0)
+    (hp0_orb : orb p0 = q.val) (hq_ne_rho : orb (ellipticPointRho' : ℍ) ≠ q.val) :
     ∃ p1 ∈ repCanon f hf, orb p1 = q.val := by
   set p1 := ModularGroup.S • p0
-  have hp1_ord : orderOfVanishingAt' (⇑f) p1 ≠ 0 :=
-    (ord_S_eq f p0).symm ▸ hp0_ord
+  have hp1_ord : orderOfVanishingAt' (⇑f) p1 ≠ 0 := (ord_S_eq f p0).symm ▸ hp0_ord
   have hp1_s₀ : p1 ∈ s₀ f hf :=
     s₀_complete f hf p1 (S_smul_mem_fd_of_unit p0 hp0_fd h_norm_eq) hp1_ord
   have h_re_S : (ModularGroup.S • p0 : ℍ).re = -p0.re :=

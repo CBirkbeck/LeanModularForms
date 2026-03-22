@@ -55,8 +55,7 @@ lemma fdPolygon_at_four : fdPolygon 4 = -1/2 + H_height * I := by
   norm_num
 
 /-- Direction from p to z0 is in Q1 (re > 0, im > 0). -/
-lemma v0_quadrant (p : ℂ) (hp_re : |p.re| < 1/2)
-    (hp_im : p.im < H_height) :
+lemma v0_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
     (fdPolygon 0 - p).re > 0 ∧ (fdPolygon 0 - p).im > 0 := by
   rw [fdPolygon_at_zero]
   have hpre : p.re < 1/2 := (abs_lt.mp hp_re).2
@@ -76,8 +75,7 @@ lemma interior_point_im_bound (p : ℂ) (hp_norm : ‖p‖ > 1)
   have hnorm_sq : p.re ^ 2 + p.im ^ 2 > 1 := by
     rw [Complex.norm_eq_sqrt_sq_add_sq] at hp_norm
     have h_sum_nonneg : 0 ≤ p.re^2 + p.im^2 := by positivity
-    calc p.re^2 + p.im^2
-        = (Real.sqrt (p.re^2 + p.im^2))^2 := (Real.sq_sqrt h_sum_nonneg).symm
+    calc p.re^2 + p.im^2 = (Real.sqrt (p.re^2 + p.im^2))^2 := (Real.sq_sqrt h_sum_nonneg).symm
       _ > 1^2 := by nlinarith
       _ = 1 := by ring
   have hp_im_sq : p.im ^ 2 > 3/4 := by linarith
@@ -90,8 +88,7 @@ lemma interior_point_im_bound (p : ℂ) (hp_norm : ‖p‖ > 1)
 
 /-- Direction from p to fdPolygon 1 (= rho') is in Q4 (re > 0, im < 0). -/
 lemma v1_quadrant (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
-    (hp_im_pos : 0 < p.im) :
-    (fdPolygon 1 - p).re > 0 ∧ (fdPolygon 1 - p).im < 0 := by
+    (hp_im_pos : 0 < p.im) : (fdPolygon 1 - p).re > 0 ∧ (fdPolygon 1 - p).im < 0 := by
   rw [fdPolygon_at_one]
   have hpre : p.re < 1/2 := (abs_lt.mp hp_re).2
   have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
@@ -108,8 +105,7 @@ lemma fdPolygon_at_three : fdPolygon 3 = rho := by
 
 /-- Direction from p to fdPolygon 3 (= rho) is in Q3 (re < 0, im < 0). -/
 lemma v3_quadrant (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
-    (hp_im_pos : 0 < p.im) :
-    (fdPolygon 3 - p).re < 0 ∧ (fdPolygon 3 - p).im < 0 := by
+    (hp_im_pos : 0 < p.im) : (fdPolygon 3 - p).re < 0 ∧ (fdPolygon 3 - p).im < 0 := by
   rw [fdPolygon_at_three]
   have hpre_neg : -(1/2) < p.re := (abs_lt.mp hp_re).1
   have hpre : -1/2 < p.re := by linarith
@@ -121,8 +117,7 @@ lemma v3_quadrant (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
   · rw [him]; linarith
 
 /-- Direction from p to fdPolygon 4 is in Q2 (re < 0, im > 0). -/
-lemma v4_quadrant (p : ℂ) (hp_re : |p.re| < 1/2)
-    (hp_im : p.im < H_height) :
+lemma v4_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
     (fdPolygon 4 - p).re < 0 ∧ (fdPolygon 4 - p).im > 0 := by
   rw [fdPolygon_at_four]
   have hpre_neg : -(1/2) < p.re := (abs_lt.mp hp_re).1
@@ -196,8 +191,7 @@ lemma tL_mem_Ioo (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
 
 /-- On seg4, (fdPolygon t - p).re < 0. -/
 lemma seg4_vec_re_neg (p : ℂ) (hp_re : |p.re| < 1/2) (t : ℝ)
-    (ht : t ∈ Set.Ioc (3:ℝ) 4) :
-    (fdPolygon t - p).re < 0 := by
+    (ht : t ∈ Set.Ioc (3:ℝ) 4) : (fdPolygon t - p).re < 0 := by
   have hpre : -1/2 < p.re := by linarith [(abs_lt.mp hp_re).1]
   have hseg4_re : (fdPolygon t).re = -1/2 := by
     simp only [fdPolygon]
@@ -211,18 +205,15 @@ lemma seg4_vec_re_neg (p : ℂ) (hp_re : |p.re| < 1/2) (t : ℝ)
   linarith
 
 /-- On seg4, the imaginary part of fdPolygon t. -/
-lemma seg4_im_formula (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) :
-    (fdPolygon t).im =
+lemma seg4_im_formula (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) : (fdPolygon t).im =
       Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) := by
   simp only [fdPolygon]
   split_ifs with h1 h2 h3 h4
   · linarith [ht.1]
   · linarith [ht.1]
   · linarith [ht.1]
-  · have h : (-1/2 + (Real.sqrt 3 / 2 +
-        (t - 3) * (H_height - Real.sqrt 3 / 2)) * I).im =
-        Real.sqrt 3 / 2 +
-          (t - 3) * (H_height - Real.sqrt 3 / 2) := by
+  · have h : (-1/2 + (Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I).im =
+        Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) := by
       simp [Complex.add_im, Complex.mul_im, Complex.I_re,
         Complex.I_im, Complex.ofReal_im]
     exact h
@@ -230,11 +221,9 @@ lemma seg4_im_formula (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) :
 
 /-- Sign of (fdPolygon t - p).im on seg4: negative before tL, zero at tL,
     positive after. -/
-lemma seg4_vec_im_sign (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+lemma seg4_vec_im_sign (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
     (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) :
-    (t < tL p → (fdPolygon t - p).im < 0) ∧
-    (t = tL p → (fdPolygon t - p).im = 0) ∧
+    (t < tL p → (fdPolygon t - p).im < 0) ∧ (t = tL p → (fdPolygon t - p).im = 0) ∧
     (tL p < t → 0 < (fdPolygon t - p).im) := by
   have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
   have hH : H_height = Real.sqrt 3 / 2 + 1 := rfl
@@ -244,18 +233,13 @@ lemma seg4_vec_im_sign (p : ℂ) (hp_norm : ‖p‖ > 1)
   set D := H_height - Real.sqrt 3 / 2 with hD_def
   have him_eq : (fdPolygon t - p).im = D * (t - tL p) := by
     rw [Complex.sub_im, him, tL, hD_def]
-    have h1 : Real.sqrt 3 / 2 +
-        (t - 3) * (H_height - Real.sqrt 3 / 2) - p.im =
-        (H_height - Real.sqrt 3 / 2) * (t - 3) +
-          (Real.sqrt 3 / 2 - p.im) := by ring
+    have h1 : Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2) - p.im =
+        (H_height - Real.sqrt 3 / 2) * (t - 3) + (Real.sqrt 3 / 2 - p.im) := by ring
     rw [h1]
-    have h2 : (H_height - Real.sqrt 3 / 2) *
-        (t - (3 + (p.im - Real.sqrt 3 / 2) /
+    have h2 : (H_height - Real.sqrt 3 / 2) * (t - (3 + (p.im - Real.sqrt 3 / 2) /
           (H_height - Real.sqrt 3 / 2))) =
-        (H_height - Real.sqrt 3 / 2) * (t - 3) -
-          (H_height - Real.sqrt 3 / 2) *
-            ((p.im - Real.sqrt 3 / 2) /
-              (H_height - Real.sqrt 3 / 2)) := by ring
+        (H_height - Real.sqrt 3 / 2) * (t - 3) - (H_height - Real.sqrt 3 / 2) *
+            ((p.im - Real.sqrt 3 / 2) / (H_height - Real.sqrt 3 / 2)) := by ring
     rw [h2, mul_div_cancel₀ _ hdenom_ne]
     ring
   refine ⟨?_, ?_, ?_⟩
@@ -265,10 +249,8 @@ lemma seg4_vec_im_sign (p : ℂ) (hp_norm : ‖p‖ > 1)
   · intro hgt; rw [him_eq]; exact mul_pos hdenom_pos (by linarith)
 
 /-- At tL, the vector fdPolygon t - p is a nonzero negative real. -/
-lemma seg4_vec_at_tL (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
-    (hp_im : p.im < H_height) :
-    (fdPolygon (tL p) - p).re < 0 ∧ (fdPolygon (tL p) - p).im = 0 := by
+lemma seg4_vec_at_tL (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+    (hp_im : p.im < H_height) : (fdPolygon (tL p) - p).re < 0 ∧ (fdPolygon (tL p) - p).im = 0 := by
   have htL := tL_mem_Ioo p hp_norm hp_re hp_im_pos hp_im
   have htL_Ioc : tL p ∈ Set.Ioc (3:ℝ) 4 :=
     ⟨htL.1, le_of_lt htL.2⟩
@@ -277,8 +259,7 @@ lemma seg4_vec_at_tL (p : ℂ) (hp_norm : ‖p‖ > 1)
       ).2.1 rfl⟩
 
 /-- arg at tL equals π (negative real). -/
-lemma arg_at_tL_eq_pi (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+lemma arg_at_tL_eq_pi (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
     (hp_im : p.im < H_height) :
     Complex.arg (fdPolygon (tL p) - p) = Real.pi := by
   have hvec := seg4_vec_at_tL p hp_norm hp_re hp_im_pos hp_im
@@ -286,24 +267,18 @@ lemma arg_at_tL_eq_pi (p : ℂ) (hp_norm : ‖p‖ > 1)
   exact ⟨hvec.1, hvec.2⟩
 
 /-- Before tL on seg4: arg < 0. -/
-lemma arg_seg4_before (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
-    (hp_im : p.im < H_height) (t : ℝ)
-    (ht : t ∈ Set.Ioc (3:ℝ) 4) (htL : t < tL p) :
+lemma arg_seg4_before (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+    (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) (htL : t < tL p) :
     Complex.arg (fdPolygon t - p) < 0 := by
-  have him :=
-    (seg4_vec_im_sign p hp_norm hp_re hp_im_pos hp_im t ht).1 htL
+  have him := (seg4_vec_im_sign p hp_norm hp_re hp_im_pos hp_im t ht).1 htL
   exact (arg_Q3 (fdPolygon t - p) him).2
 
 /-- After tL on seg4: arg > 0. -/
-lemma arg_seg4_after (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
-    (hp_im : p.im < H_height) (t : ℝ)
-    (ht : t ∈ Set.Ioc (3:ℝ) 4) (htL : tL p < t) :
+lemma arg_seg4_after (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+    (hp_im : p.im < H_height) (t : ℝ) (ht : t ∈ Set.Ioc (3:ℝ) 4) (htL : tL p < t) :
     0 < Complex.arg (fdPolygon t - p) := by
   have hre := seg4_vec_re_neg p hp_re t ht
-  have him :=
-    (seg4_vec_im_sign p hp_norm hp_re hp_im_pos hp_im t ht).2.2 htL
+  have him := (seg4_vec_im_sign p hp_norm hp_re hp_im_pos hp_im t ht).2.2 htL
   linarith [(arg_Q2 (fdPolygon t - p) hre him).1, Real.pi_pos]
 
 /-- arg is preserved under normalization. -/
@@ -319,8 +294,7 @@ lemma arg_normalize_eq (z : ℂ) (hz : z ≠ 0) :
   exact Complex.arg_mul_real hinv_pos z
 
 /-- fdPolygonRadialCircle_angle equals arg(fdPolygon t - p). -/
-lemma fdPolygonRadialCircle_angle_eq_arg (p : ℂ) (t : ℝ)
-    (hne : fdPolygon t ≠ p) :
+lemma fdPolygonRadialCircle_angle_eq_arg (p : ℂ) (t : ℝ) (hne : fdPolygon t ≠ p) :
     fdPolygonRadialCircle_angle p t =
       Complex.arg (fdPolygon t - p) := by
   simp only [fdPolygonRadialCircle_angle, angleOnCircle,
@@ -338,8 +312,7 @@ noncomputable def fdPolygonRadialCircle_angle_lifted (p : ℂ) :
   else Complex.arg (fdPolygon t - p) - 2 * Real.pi
 
 /-- fdPolygon 0 ≠ p for interior points. -/
-lemma fdPolygon_zero_ne_interior (p : ℂ)
-    (hp_im : p.im < H_height) : fdPolygon 0 ≠ p := by
+lemma fdPolygon_zero_ne_interior (p : ℂ) (hp_im : p.im < H_height) : fdPolygon 0 ≠ p := by
   rw [fdPolygon_at_zero]
   intro heq
   have him : (1/2 + H_height * I).im = H_height := by simp
@@ -347,36 +320,31 @@ lemma fdPolygon_zero_ne_interior (p : ℂ)
   linarith
 
 /-- fdPolygon 5 ≠ p for interior points. -/
-lemma fdPolygon_five_ne_interior (p : ℂ)
-    (hp_im : p.im < H_height) : fdPolygon 5 ≠ p := by
+lemma fdPolygon_five_ne_interior (p : ℂ) (hp_im : p.im < H_height) : fdPolygon 5 ≠ p := by
   have h : fdPolygon 5 = fdPolygon 0 := by
     simp only [fdPolygon]; norm_num
   rw [h]
   exact fdPolygon_zero_ne_interior p hp_im
 
 /-- At t=0, the lifted angle equals the raw angle (0 < tL). -/
-lemma lifted_angle_at_zero (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+lemma lifted_angle_at_zero (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
     (hp_im : p.im < H_height) :
     fdPolygonRadialCircle_angle_lifted p 0 =
       fdPolygonRadialCircle_angle p 0 := by
   have htL := tL_mem_Ioo p hp_norm hp_re hp_im_pos hp_im
   simp only [fdPolygonRadialCircle_angle_lifted]
   rw [if_pos (by linarith [htL.1] : (0 : ℝ) < tL p)]
-  rw [← fdPolygonRadialCircle_angle_eq_arg p 0
-    (fdPolygon_zero_ne_interior p hp_im)]
+  rw [← fdPolygonRadialCircle_angle_eq_arg p 0 (fdPolygon_zero_ne_interior p hp_im)]
 
 /-- At t=5, the lifted angle is raw angle minus 2π (5 > tL). -/
-lemma lifted_angle_at_five (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+lemma lifted_angle_at_five (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
     (hp_im : p.im < H_height) :
     fdPolygonRadialCircle_angle_lifted p 5 =
       fdPolygonRadialCircle_angle p 5 - 2 * Real.pi := by
   have htL := tL_mem_Ioo p hp_norm hp_re hp_im_pos hp_im
   simp only [fdPolygonRadialCircle_angle_lifted]
   rw [if_neg (by linarith [htL.2] : ¬(5 : ℝ) < tL p)]
-  rw [← fdPolygonRadialCircle_angle_eq_arg p 5
-    (fdPolygon_five_ne_interior p hp_im)]
+  rw [← fdPolygonRadialCircle_angle_eq_arg p 5 (fdPolygon_five_ne_interior p hp_im)]
 
 /-- fdPolygon is periodic with period 5. -/
 lemma fdPolygon_periodic : fdPolygon 5 = fdPolygon 0 := by
@@ -392,8 +360,7 @@ lemma fdPolygonRadialCircle_angle_periodic (p : ℂ) :
   rw [show fdPolygon 5 = fdPolygon 0 by simp only [fdPolygon]; norm_num]
 
 /-- The lifted angle total change is -2π. -/
-lemma fdPolygonRadialCircle_angle_lifted_change (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+lemma fdPolygonRadialCircle_angle_lifted_change (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
     (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     fdPolygonRadialCircle_angle_lifted p 5 =
       fdPolygonRadialCircle_angle_lifted p 0 - 2 * Real.pi := by
@@ -402,8 +369,7 @@ lemma fdPolygonRadialCircle_angle_lifted_change (p : ℂ)
   rw [fdPolygonRadialCircle_angle_periodic]
 
 /-- Equality form of wrap count. -/
-lemma fdPolygonRadialCircle_angle_change (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+lemma fdPolygonRadialCircle_angle_change (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
     (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     fdPolygonRadialCircle_angle_lifted p 5 =
       fdPolygonRadialCircle_angle_lifted p 0 - 2 * Real.pi :=
@@ -411,8 +377,7 @@ lemma fdPolygonRadialCircle_angle_change (p : ℂ)
     hp_im_pos hp_im
 
 /-- Wrap count for the lifted angle function. -/
-lemma fdPolygonRadialCircle_wrapCount (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+lemma fdPolygonRadialCircle_wrapCount (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
     (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     ∃ θ₀ : ℝ,
       fdPolygonRadialCircle_angle_lifted p 0 = θ₀ ∧
@@ -472,10 +437,8 @@ lemma ref_p₀_im : ref_p₀.im < H_height := by
 
 /-- Center-translation homotopy invariance of winding number. -/
 lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
-    (_hp₁_norm : ‖p₁‖ > 1) (_hp₁_re : |p₁.re| < 1/2)
-    (_hp₁_im : p₁.im < H_height)
-    (_hp₂_norm : ‖p₂‖ > 1) (_hp₂_re : |p₂.re| < 1/2)
-    (_hp₂_im : p₂.im < H_height)
+    (_hp₁_norm : ‖p₁‖ > 1) (_hp₁_re : |p₁.re| < 1/2) (_hp₁_im : p₁.im < H_height)
+    (_hp₂_norm : ‖p₂‖ > 1) (_hp₂_re : |p₂.re| < 1/2) (_hp₂_im : p₂.im < H_height)
     (havoid : ∀ s ∈ Icc (0:ℝ) 1, ∀ t ∈ Icc (0:ℝ) 5,
       fdPolygon t ≠ (1 - (s : ℂ)) * p₁ + (s : ℂ) * p₂) :
     generalizedWindingNumber' fdPolygon 0 5 p₁ =
@@ -499,8 +462,7 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
       ← winding_translate fdPolygon p₂]
     exact h_eq
   refine ⟨H, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · exact fdPolygon_continuous.comp continuous_fst |>.sub
-      ((continuous_const.sub
+  · exact fdPolygon_continuous.comp continuous_fst |>.sub ((continuous_const.sub
         (Complex.continuous_ofReal.comp continuous_snd)).mul
           continuous_const |>.add
         ((Complex.continuous_ofReal.comp continuous_snd).mul
@@ -517,11 +479,9 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
     have h_deriv_eq : ∀ q ∈ Ioo q₁ q₂ ×ˢ Icc (0:ℝ) 1,
         deriv (fun t' => H (t', q.2)) q.1 = deriv fdPolygon q.1 := by
       intro ⟨t, s⟩ ⟨ht, _hs⟩
-      show deriv (fun t' => fdPolygon t' -
-        ((1 - ↑s) * p₁ + ↑s * p₂)) t = deriv fdPolygon t
+      show deriv (fun t' => fdPolygon t' - ((1 - ↑s) * p₁ + ↑s * p₂)) t = deriv fdPolygon t
       exact deriv_sub_const _
-    suffices h_cont : ContinuousOn
-        (fun q : ℝ × ℝ => deriv fdPolygon q.1)
+    suffices h_cont : ContinuousOn (fun q : ℝ × ℝ => deriv fdPolygon q.1)
         (Ioo q₁ q₂ ×ˢ Icc 0 1) by
       exact h_cont.congr (fun q hq => h_deriv_eq q hq)
     have h_deriv_fdPolygon_cont :
@@ -536,14 +496,12 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
       by_cases h1 : t < 1
       · have h_eq_nhds : deriv fdPolygon =ᶠ[𝓝 t]
             fun _ => -(H_height - Real.sqrt 3 / 2) * I := by
-          have heq : fdPolygon =ᶠ[𝓝 t] fdPolygon_seg1 :=
-            (eventually_lt_nhds h1).and
+          have heq : fdPolygon =ᶠ[𝓝 t] fdPolygon_seg1 := (eventually_lt_nhds h1).and
               (eventually_gt_nhds ht_Ioo.1) |>.mono
               fun u ⟨hu1, hu2⟩ => by
                 simp [fdPolygon, show u ≤ 1 from le_of_lt hu1,
                   fdPolygon_seg1]
-          exact heq.deriv.trans
-            (by filter_upwards with u; rw [fdPolygon_deriv_seg1])
+          exact heq.deriv.trans (by filter_upwards with u; rw [fdPolygon_deriv_seg1])
         exact continuousAt_const.congr h_eq_nhds.symm
       · push_neg at h1
         by_cases h2 : t < 2
@@ -551,15 +509,13 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
             lt_of_le_of_ne h1 (Ne.symm ht_ne1)
           have h_eq_nhds : deriv fdPolygon =ᶠ[𝓝 t]
               fun _ => i_point - rho' := by
-            have heq : fdPolygon =ᶠ[𝓝 t] fdPolygon_seg2 :=
-              (eventually_gt_nhds h1').and
+            have heq : fdPolygon =ᶠ[𝓝 t] fdPolygon_seg2 := (eventually_gt_nhds h1').and
                 (eventually_lt_nhds h2) |>.mono
                 fun u ⟨hu1, hu2⟩ => by
                   simp [fdPolygon, not_le.mpr hu1,
                     le_of_lt hu2, fdPolygon_seg2]
             exact heq.deriv.trans
-              (by filter_upwards with u;
-                  rw [fdPolygon_deriv_seg2])
+              (by filter_upwards with u; rw [fdPolygon_deriv_seg2])
           exact continuousAt_const.congr h_eq_nhds.symm
         · push_neg at h2
           by_cases h3 : t < 3
@@ -568,40 +524,32 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
             have h_eq_nhds : deriv fdPolygon =ᶠ[𝓝 t]
                 fun _ => rho - i_point := by
               have heq : fdPolygon =ᶠ[𝓝 t] fdPolygon_seg3 :=
-                (eventually_gt_nhds h2').and
-                  (eventually_lt_nhds h3) |>.mono
+                (eventually_gt_nhds h2').and (eventually_lt_nhds h3) |>.mono
                   fun u ⟨hu1, hu2⟩ => by
                     simp [fdPolygon,
-                      not_le.mpr (lt_trans
-                        (by norm_num : (1:ℝ) < 2) hu1),
+                      not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) hu1),
                       not_le.mpr hu1, le_of_lt hu2,
                       fdPolygon_seg3]
               exact heq.deriv.trans
-                (by filter_upwards with u;
-                    rw [fdPolygon_deriv_seg3])
+                (by filter_upwards with u; rw [fdPolygon_deriv_seg3])
             exact continuousAt_const.congr h_eq_nhds.symm
           · push_neg at h3
             by_cases h4 : t < 4
             · have h3' : t > 3 :=
                 lt_of_le_of_ne h3 (Ne.symm ht_ne3)
               have h_eq_nhds : deriv fdPolygon =ᶠ[𝓝 t]
-                  fun _ =>
-                    (H_height - Real.sqrt 3 / 2) * I := by
+                  fun _ => (H_height - Real.sqrt 3 / 2) * I := by
                 have heq : fdPolygon =ᶠ[𝓝 t]
                     fdPolygon_seg4 :=
-                  (eventually_gt_nhds h3').and
-                    (eventually_lt_nhds h4) |>.mono
+                  (eventually_gt_nhds h3').and (eventually_lt_nhds h4) |>.mono
                     fun u ⟨hu1, hu2⟩ => by
                       simp [fdPolygon,
-                        not_le.mpr (lt_trans
-                          (by norm_num : (1:ℝ) < 3) hu1),
-                        not_le.mpr (lt_trans
-                          (by norm_num : (2:ℝ) < 3) hu1),
+                        not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 3) hu1),
+                        not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 3) hu1),
                         not_le.mpr hu1, le_of_lt hu2,
                         fdPolygon_seg4]
                 exact heq.deriv.trans
-                  (by filter_upwards with u;
-                      rw [fdPolygon_deriv_seg4])
+                  (by filter_upwards with u; rw [fdPolygon_deriv_seg4])
               exact continuousAt_const.congr h_eq_nhds.symm
             · push_neg at h4
               have h4' : t > 4 :=
@@ -610,28 +558,22 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
                   fun _ => (1 : ℂ) := by
                 have heq : fdPolygon =ᶠ[𝓝 t]
                     fdPolygon_seg5 :=
-                  (eventually_gt_nhds h4').and
-                    (eventually_lt_nhds ht_Ioo.2) |>.mono
+                  (eventually_gt_nhds h4').and (eventually_lt_nhds ht_Ioo.2) |>.mono
                     fun u ⟨hu1, hu2⟩ => by
                       simp [fdPolygon,
-                        not_le.mpr (lt_trans
-                          (by norm_num : (1:ℝ) < 4) hu1),
-                        not_le.mpr (lt_trans
-                          (by norm_num : (2:ℝ) < 4) hu1),
-                        not_le.mpr (lt_trans
-                          (by norm_num : (3:ℝ) < 4) hu1),
+                        not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 4) hu1),
+                        not_le.mpr (lt_trans (by norm_num : (2:ℝ) < 4) hu1),
+                        not_le.mpr (lt_trans (by norm_num : (3:ℝ) < 4) hu1),
                         not_le.mpr hu1, fdPolygon_seg5]
                 exact heq.deriv.trans
-                  (by filter_upwards with u;
-                      rw [fdPolygon_deriv_seg5])
+                  (by filter_upwards with u; rw [fdPolygon_deriv_seg5])
               exact continuousAt_const.congr h_eq_nhds.symm
     exact h_deriv_fdPolygon_cont.comp continuous_fst.continuousOn
       (fun ⟨t, _s⟩ ⟨ht, _hs⟩ => ht)
   · obtain ⟨M, hM⟩ := fdPolygon_deriv_bounded
     exact ⟨M, fun t ht _s _hs => by
       rw [show (fun t' => H (t', _s)) =
-        fun t' => fdPolygon t' -
-          ((1 - ↑_s) * p₁ + ↑_s * p₂) from rfl,
+        fun t' => fdPolygon t' - ((1 - ↑_s) * p₁ + ↑_s * p₂) from rfl,
         deriv_sub_const]
       exact hM t ht⟩
 

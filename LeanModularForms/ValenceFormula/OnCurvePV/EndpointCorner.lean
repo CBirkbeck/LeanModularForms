@@ -139,8 +139,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑t : ℂ)⁻¹ := by
     intro t ht0 ht1
     rw [h_diff_seg1 t ht0.le ht1.le, (fdBoundary_H_hasDerivAt_seg1 H ht1).deriv]
-    have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 →
-        (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
+    have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 → (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
       rw [mul_inv_rev, mul_assoc, mul_comm a⁻¹ b,
         ← mul_assoc, inv_mul_cancel₀ hb, one_mul]
     have hc_eq : (↑H - ↑(Real.sqrt 3) / 2 : ℂ) = ↑c := by
@@ -149,8 +148,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       rw [hc_eq]
     have hrw2 : (↑(-t * c) : ℂ) * I = ↑t * (-(↑c : ℂ) * I) := by push_cast; ring
     rw [hrw1, hrw2]
-    exact key ↑t _ (Complex.ofReal_ne_zero.mpr ht0.ne')
-      (mul_ne_zero (neg_ne_zero.mpr
+    exact key ↑t _ (Complex.ofReal_ne_zero.mpr ht0.ne') (mul_ne_zero (neg_ne_zero.mpr
         (Complex.ofReal_ne_zero.mpr hc.ne')) I_ne_zero)
   have h_integrand_seg5 : ∀ t, 4 < t →
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 5) : ℂ)⁻¹ := by
@@ -163,8 +161,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) +
     (∫ t in (1:ℝ)..5, if η < ‖fdBoundary_H H t - s‖
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) :=
-    (intervalIntegral.integral_add_adjacent_intervals
-      (hii.mono_set (by
+    (intervalIntegral.integral_add_adjacent_intervals (hii.mono_set (by
         rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 1),
           Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
         exact Set.Icc_subset_Icc_right (by norm_num)))
@@ -178,8 +175,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) +
     (∫ t in (4:ℝ)..5, if η < ‖fdBoundary_H H t - s‖
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) :=
-    (intervalIntegral.integral_add_adjacent_intervals
-      (hii.mono_set (by
+    (intervalIntegral.integral_add_adjacent_intervals (hii.mono_set (by
         rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 4),
           Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
         exact Set.Icc_subset_Icc (by norm_num) (by norm_num)))
@@ -203,8 +199,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   have h_I01 : (∫ t in (0:ℝ)..1, if η < ‖fdBoundary_H H t - s‖
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) =
     ∫ t in (η / c)..1, (↑t : ℂ)⁻¹ := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals
-      (hii.mono_set (by
+    rw [← intervalIntegral.integral_add_adjacent_intervals (hii.mono_set (by
         rw [Set.uIcc_of_le (by linarith : (0:ℝ) ≤ η / c),
           Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
         exact Set.Icc_subset_Icc_right (by linarith)))
@@ -233,8 +228,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       with t ht_ne_low ht_ne_high
     intro ht
     have ht_low : η / c < t := ht.1
-    have ht_high : t < 1 := lt_of_le_of_ne ht.2
-      (fun h => ht_ne_high (Set.mem_singleton_iff.mpr h))
+    have ht_high : t < 1 := lt_of_le_of_ne ht.2 (fun h => ht_ne_high (Set.mem_singleton_iff.mpr h))
     have ht_pos : 0 < t := lt_of_lt_of_le hη_div_c_pos ht_low.le
     rw [if_pos, h_integrand_seg1 t ht_pos ht_high]
     rw [h_norm_seg1 t ht_pos.le ht_high.le]
@@ -243,8 +237,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   have h_I45 : (∫ t in (4:ℝ)..5, if η < ‖fdBoundary_H H t - s‖
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) =
     ∫ t in (4:ℝ)..(5 - η), (↑(t - 5) : ℂ)⁻¹ := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals
-      (hii.mono_set (by
+    rw [← intervalIntegral.integral_add_adjacent_intervals (hii.mono_set (by
         rw [Set.uIcc_of_le (by linarith : (4:ℝ) ≤ 5 - η),
           Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
         exact Set.Icc_subset_Icc (by norm_num) (by linarith)))
@@ -335,16 +328,14 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     intro t ht habs
     rw [Set.mem_Icc] at ht
     by_cases ht1 : t ≤ 1
-    ·
-      have hre := fdBoundary_H_seg1_re' H ht.1 ht1
+    · have hre := fdBoundary_H_seg1_re' H ht.1 ht1
       rw [habs, hs_def] at hre
       simp only [Complex.add_re, Complex.neg_re, Complex.ofReal_re, Complex.mul_re,
         Complex.I_re, Complex.I_im, Complex.ofReal_im, Complex.one_re, Complex.div_ofNat] at hre
       linarith
     · push_neg at ht1
       by_cases ht3 : t < 3
-      ·
-        have h_norm : ‖fdBoundary_H H t‖ = 1 := by
+      · have h_norm : ‖fdBoundary_H H t‖ = 1 := by
           rw [fdBoundary_H_eq_arc (H := H) ht1 ht3, Complex.norm_exp_ofReal_mul_I]
         rw [habs] at h_norm
         have : 1 < ‖s‖ := by
@@ -361,8 +352,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
             _ < Real.sqrt (Complex.normSq s) := Real.sqrt_lt_sqrt (by norm_num) h_nsq
             _ = ‖s‖ := rfl
         linarith
-      ·
-        have ht3_eq : t = 3 := le_antisymm ht.2 (by linarith)
+      · have ht3_eq : t = 3 := le_antisymm ht.2 (by linarith)
         subst ht3_eq
         have hγ3_eq : fdBoundary_H H 3 = fdBoundary 3 := by
           rw [fdBoundary_H_at_three]
@@ -432,8 +422,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
         (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 4) : ℂ)⁻¹ := by
       intro t ht3 ht4
       rw [h_diff_seg4 t ht3 ht4.le, (fdBoundary_H_hasDerivAt_seg4 H ht3 ht4).deriv]
-      have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 →
-          (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
+      have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 → (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
         rw [mul_inv_rev, mul_assoc, mul_comm a⁻¹ b,
           ← mul_assoc, inv_mul_cancel₀ hb, one_mul]
       have hc_eq : (↑H - ↑(Real.sqrt 3) / 2 : ℂ) = ↑c := by
@@ -441,8 +430,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       have hrw1 : (↑H - ↑(Real.sqrt 3) / 2 : ℂ) * I = (↑c : ℂ) * I := by rw [hc_eq]
       have hrw2 : (↑((t - 4) * c) : ℂ) * I = ↑(t - 4) * (↑c * I) := by push_cast; ring
       rw [hrw1, hrw2]
-      exact key ↑(t - 4) _
-        (Complex.ofReal_ne_zero.mpr (by linarith : (t - 4 : ℝ) ≠ 0))
+      exact key ↑(t - 4) _ (Complex.ofReal_ne_zero.mpr (by linarith : (t - 4 : ℝ) ≠ 0))
         (mul_ne_zero (Complex.ofReal_ne_zero.mpr hc.ne') I_ne_zero)
     have h_integrand_seg5 : ∀ t, 4 < t →
         (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 4) : ℂ)⁻¹ := by
@@ -552,8 +540,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       simp_rw [← Complex.ofReal_inv]
       rw [intervalIntegral.integral_ofReal, intervalIntegral.integral_ofReal]
       congr 1
-      have key := intervalIntegral.integral_comp_sub_right
-        (fun u : ℝ => u⁻¹) (4 : ℝ)
+      have key := intervalIntegral.integral_comp_sub_right (fun u : ℝ => u⁻¹) (4 : ℝ)
         (a := (3:ℝ)) (b := 4 - η / c)
       simp only [show (3:ℝ) - 4 = -1 from by ring,
         show (4 - η / c) - 4 = -(η / c) from by ring] at key
@@ -564,8 +551,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       simp_rw [← Complex.ofReal_inv]
       rw [intervalIntegral.integral_ofReal, intervalIntegral.integral_ofReal]
       congr 1
-      have key := intervalIntegral.integral_comp_sub_right
-        (fun u : ℝ => u⁻¹) (4 : ℝ)
+      have key := intervalIntegral.integral_comp_sub_right (fun u : ℝ => u⁻¹) (4 : ℝ)
         (a := 4 + η) (b := (5:ℝ))
       simp only [show (4 + η) - 4 = η from by ring,
         show (5:ℝ) - 4 = 1 from by ring] at key

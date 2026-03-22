@@ -60,8 +60,7 @@ private lemma arg_approach_i_left (hδ : 0 < δ) (hδ_small : δ < 1) :
       Complex.cos ↑(-(δ * Real.pi / 12)) + Complex.sin ↑(-(δ * Real.pi / 12)) * I := by
     rw [← Complex.ofReal_cos, ← Complex.ofReal_sin, Real.cos_neg, Real.sin_neg, ofReal_neg]
   rw [h_trig]
-  exact Complex.arg_mul_cos_add_sin_mul_I
-    (mul_pos (by norm_num : (0:ℝ) < 2) h_sin_pos)
+  exact Complex.arg_mul_cos_add_sin_mul_I (mul_pos (by norm_num : (0:ℝ) < 2) h_sin_pos)
     ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
 
 private lemma arg_approach_i_right (hδ : 0 < δ) (hδ_small : δ < 1) :
@@ -189,8 +188,7 @@ private lemma g_i_norm_ge_seg0 {t : ℝ} (_ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
     _ = |(fdBoundary_H H t - I).re| := by rw [hre]
     _ ≤ ‖fdBoundary_H H t - I‖ := Complex.abs_re_le_norm _
 
-private lemma g_i_norm_ge_seg4 (H : ℝ) (hH : 1 < H)
-    {t : ℝ} (ht4 : 4 ≤ t) (ht5 : t ≤ 5) :
+private lemma g_i_norm_ge_seg4 (H : ℝ) (hH : 1 < H) {t : ℝ} (ht4 : 4 ≤ t) (ht5 : t ≤ 5) :
     H - 1 ≤ ‖fdBoundary_H H t - I‖ := by
   have him : (fdBoundary_H H t - I).im = H - 1 := by
     rcases eq_or_lt_of_le ht4 with rfl | ht4'
@@ -387,13 +385,11 @@ private lemma log_neg_eq_add_pi_I {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : z.im < 0
   push_cast; ring
 
 set_option maxHeartbeats 16000000 in
-private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H)
-    {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
+private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     let g := fun t => fdBoundary_H H t - I
     IntervalIntegrable (fun t => deriv g t / g t) volume 0 (2 - δ) ∧
     IntervalIntegrable (fun t => deriv g t / g t) volume (2 + δ) 5 ∧
-    ((∫ t in (0:ℝ)..(2 - δ), deriv g t / g t) +
-    (∫ t in (2 + δ)..(5:ℝ), deriv g t / g t) =
+    ((∫ t in (0:ℝ)..(2 - δ), deriv g t / g t) + (∫ t in (2 + δ)..(5:ℝ), deriv g t / g t) =
     Complex.log (g (2 - δ)) - Complex.log (g (2 + δ)) - 2 * ↑Real.pi * I) := by
   intro g
   have hH_sqrt : Real.sqrt 3 / 2 < H := by
@@ -489,8 +485,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H)
   have heq_01 : ∀ t ∈ Ioo (0:ℝ) 1, g t = h₀ t ∧ deriv g t = deriv h₀ t := by
     intro t ⟨_, ht1⟩
     refine ⟨hg_eq_h₀ t (le_of_lt ht1), ?_⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Iio_mem_nhds ht1)
+    exact Filter.EventuallyEq.deriv_eq (Filter.eventually_of_mem (Iio_mem_nhds ht1)
       (fun s hs => hg_eq_h₀ s (le_of_lt hs)))
   have heq_1_2mδ : ∀ t ∈ Ioo (1:ℝ) (2 - δ), g t = h₁ t ∧ deriv g t = deriv h₁ t := by
     intro t ⟨ht1, ht2⟩
@@ -594,8 +589,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H)
                 sq_nonneg (2 - Real.sqrt 3)]
     · rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
       · show (h₂ t₀).im ≤ 0
-        rw [← hg_eq_h₂ t₀ (by linarith [t₀_i_gt_three hH])
-              (by linarith [t₀_i_lt_four hH]),
+        rw [← hg_eq_h₂ t₀ (by linarith [t₀_i_gt_three hH]) (by linarith [t₀_i_lt_four hH]),
           hgt₀_val]
         simp
       · show (h₂ t).im ≤ 0
@@ -691,8 +685,7 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - I‖ > ε
       then (fdBoundary_H H t - I)⁻¹ *
            deriv (fun s => fdBoundary_H H s - I) t
-      else 0)
-      (𝓝[>] 0) (𝓝 (-(I * ↑Real.pi))) := by
+      else 0) (𝓝[>] 0) (𝓝 (-(I * ↑Real.pi))) := by
   rw [Metric.tendsto_nhdsWithin_nhds]
   intro r hr
   set ε₀ := min (min (min (1/2) (H - 1)) (2 * Real.sin (Real.pi / 12))) (r / 2) with hε₀_def
@@ -832,8 +825,7 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
     rw [intervalIntegral.integral_congr_ae (ae_of_all _ (fun t ht => hF_eq_mid t ht))]
     simp [intervalIntegral.integral_zero]
   have h_int_eq : (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) =
-      (∫ t in (0:ℝ)..(2 - δ), deriv g t / g t) +
-      (∫ t in (2 + δ)..(5:ℝ), deriv g t / g t) := by
+      (∫ t in (0:ℝ)..(2 - δ), deriv g t / g t) + (∫ t in (2 + δ)..(5:ℝ), deriv g t / g t) := by
     calc (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0)
         = ∫ t in (0:ℝ)..5, F t := rfl
       _ = _ + _ + _ := h_split

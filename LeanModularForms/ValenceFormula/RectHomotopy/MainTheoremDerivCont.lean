@@ -12,16 +12,13 @@ open Complex Set Metric Filter Topology
 
 namespace RectHomotopyProof
 
-lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
-    (p₁ p₂ : ℝ) (hp₁p₂ : p₁ < p₂)
+lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces (p₁ p₂ : ℝ) (hp₁p₂ : p₁ < p₂)
     (hpiece : ∀ t ∈ Ioo p₁ p₂,
       t ∉ ({1, 2, 3, 4} : Finset ℝ))
     (h_sub : Ioo p₁ p₂ ⊆ Ioo 0 5) :
-    ContinuousOn
-      (fun (q : ℝ × ℝ) =>
+    ContinuousOn (fun (q : ℝ × ℝ) =>
         deriv (fun t' =>
-          fdBoundaryToPolygonHomotopy
-            (t', q.2)) q.1)
+          fdBoundaryToPolygonHomotopy (t', q.2)) q.1)
       (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
   have hseg :=
     interval_in_segment p₁ p₂ hp₁p₂ hpiece h_sub
@@ -32,21 +29,16 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
   · have hconst :
         ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
           deriv (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) q.1 =
+            fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
           -((H_height : ℂ) -
             Real.sqrt 3 / 2) * I := by
       intro q ⟨hq1, _hq2⟩
       have ht_lt1 : q.1 < 1 :=
         lt_of_lt_of_le hq1.2 h_seg1
-      have heq :
-          (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) =ᶠ[𝓝 q.1]
-          (fun t' : ℝ =>
-            (1/2 : ℂ) +
-              (H_height - (↑t' : ℂ) *
-                (H_height -
+      have heq : (fun t' =>
+            fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
+          (fun t' : ℝ => (1/2 : ℂ) +
+              (H_height - (↑t' : ℂ) * (H_height -
                   Real.sqrt 3 / 2)) * I) := by
         filter_upwards [
           eventually_lt_nhds ht_lt1] with t' ht'
@@ -58,40 +50,32 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
             1 q.1 :=
         Complex.ofRealCLM.hasDerivAt
       have h2 :
-          HasDerivAt
-            (fun t' : ℝ => (↑t' : ℂ) *
+          HasDerivAt (fun t' : ℝ => (↑t' : ℂ) *
               ((H_height : ℂ) -
                 Real.sqrt 3 / 2))
             ((H_height : ℂ) -
               Real.sqrt 3 / 2) q.1 := by
-        have := h1.mul_const
-          ((H_height : ℂ) - Real.sqrt 3 / 2)
+        have := h1.mul_const ((H_height : ℂ) - Real.sqrt 3 / 2)
         simp only [one_mul] at this; exact this
       have h3 :
-          HasDerivAt
-            (fun t' : ℝ =>
-              (H_height : ℂ) - (↑t' : ℂ) *
-                ((H_height : ℂ) -
+          HasDerivAt (fun t' : ℝ =>
+              (H_height : ℂ) - (↑t' : ℂ) * ((H_height : ℂ) -
                   Real.sqrt 3 / 2))
             (-((H_height : ℂ) -
               Real.sqrt 3 / 2)) q.1 := by
-        have :=
-          (hasDerivAt_const q.1
+        have := (hasDerivAt_const q.1
             (H_height : ℂ)).sub h2
         simp only [zero_sub] at this
         exact this
       have h4 :
-          HasDerivAt
-            (fun t' : ℝ =>
-              ((H_height : ℂ) - (↑t' : ℂ) *
-                ((H_height : ℂ) -
+          HasDerivAt (fun t' : ℝ =>
+              ((H_height : ℂ) - (↑t' : ℂ) * ((H_height : ℂ) -
                   Real.sqrt 3 / 2)) * I)
             (-((H_height : ℂ) -
               Real.sqrt 3 / 2) * I)
             q.1 :=
         h3.mul_const I
-      have h5 :=
-        (hasDerivAt_const q.1
+      have h5 := (hasDerivAt_const q.1
           ((1/2 : ℂ))).add h4
       simp only [zero_add] at h5
       convert h5.deriv using 2
@@ -105,28 +89,19 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
       lt_of_lt_of_le hq1.2 h_seg2_hi
     have hderiv_eq :
         deriv (fun t' =>
-          fdBoundaryToPolygonHomotopy
-            (t', q.2)) q.1 =
-        (1 - q.2) •
-          ((Real.pi / 6) * I *
-            Complex.exp
-              ((Real.pi / 3 +
-                (q.1 - 1) *
-                  (Real.pi / 6)) * I)) +
+          fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
+        (1 - q.2) • ((Real.pi / 6) * I *
+            Complex.exp ((Real.pi / 3 +
+                (q.1 - 1) * (Real.pi / 6)) * I)) +
         q.2 • (i_point - rho') := by
-      have heq :
-          (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) =ᶠ[𝓝 q.1]
+      have heq : (fun t' =>
+            fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
           (fun t' : ℝ =>
             let arc_point :=
-              Complex.exp
-                ((Real.pi / 3 +
-                  (t' - 1) *
-                    (Real.pi / 6)) * I)
+              Complex.exp ((Real.pi / 3 +
+                  (t' - 1) * (Real.pi / 6)) * I)
             let chord_point :=
-              chordSegment rho' i_point
-                (t' - 1)
+              chordSegment rho' i_point (t' - 1)
             (1 - q.2) • arc_point +
               q.2 • chord_point) := by
         filter_upwards [
@@ -139,89 +114,66 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
         congr 2; ring_nf
       rw [heq.deriv_eq]
       have h_ofReal :
-          HasDerivAt
-            (fun t' : ℝ => (t' : ℂ)) 1 q.1 :=
+          HasDerivAt (fun t' : ℝ => (t' : ℂ)) 1 q.1 :=
         Complex.ofRealCLM.hasDerivAt
       have h_inner :
-          HasDerivAt
-            (fun t' : ℝ =>
-              (Real.pi : ℂ) / 3 +
-                ((t' : ℂ) - 1) *
+          HasDerivAt (fun t' : ℝ =>
+              (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) *
                   ((Real.pi : ℂ) / 6))
             ((Real.pi : ℂ) / 6) q.1 := by
         have h_shift :
-            HasDerivAt
-              (fun t' : ℝ => (t' : ℂ) - 1)
+            HasDerivAt (fun t' : ℝ => (t' : ℂ) - 1)
               1 q.1 :=
           h_ofReal.sub_const 1
         have h_mul :
-            HasDerivAt
-              (fun t' : ℝ =>
-                ((t' : ℂ) - 1) *
-                  ((Real.pi : ℂ) / 6))
+            HasDerivAt (fun t' : ℝ =>
+                ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
               ((Real.pi : ℂ) / 6) q.1 := by
-          have := h_shift.mul_const
-            ((Real.pi : ℂ) / 6)
+          have := h_shift.mul_const ((Real.pi : ℂ) / 6)
           simp only [one_mul] at this
           exact this
-        have := h_mul.const_add
-          ((Real.pi : ℂ) / 3)
+        have := h_mul.const_add ((Real.pi : ℂ) / 3)
         simp only at this; exact this
       have h_times_I :
-          HasDerivAt
-            (fun t' : ℝ =>
-              ((Real.pi : ℂ) / 3 +
-                ((t' : ℂ) - 1) *
+          HasDerivAt (fun t' : ℝ =>
+              ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) *
                   ((Real.pi : ℂ) / 6)) * I)
             (((Real.pi : ℂ) / 6) * I) q.1 :=
         h_inner.mul_const I
       have h_arc :
-          HasDerivAt
-            (fun t' : ℝ =>
-              Complex.exp
-                ((Real.pi / 3 +
-                  (t' - 1) *
-                    (Real.pi / 6)) * I))
+          HasDerivAt (fun t' : ℝ =>
+              Complex.exp ((Real.pi / 3 +
+                  (t' - 1) * (Real.pi / 6)) * I))
             ((Real.pi / 6) * I *
-              Complex.exp
-                ((Real.pi / 3 +
-                  (q.1 - 1) *
-                    (Real.pi / 6)) * I))
+              Complex.exp ((Real.pi / 3 +
+                  (q.1 - 1) * (Real.pi / 6)) * I))
             q.1 := by
         have h_exp :=
-          Complex.hasDerivAt_exp
-            (((Real.pi : ℂ) / 3 +
-              ((q.1 : ℂ) - 1) *
-                ((Real.pi : ℂ) / 6)) * I)
+          Complex.hasDerivAt_exp (((Real.pi : ℂ) / 3 +
+              ((q.1 : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
         have h_comp :=
           h_exp.comp q.1 h_times_I
         simp only [mul_comm (Complex.exp _)]
           at h_comp
         exact h_comp
       have h_chord :
-          HasDerivAt
-            (fun t' : ℝ =>
-              chordSegment rho' i_point
-                (t' - 1))
+          HasDerivAt (fun t' : ℝ =>
+              chordSegment rho' i_point (t' - 1))
             (i_point - rho') q.1 := by
         simp only [chordSegment]
         have h_shift :
-            HasDerivAt
-              (fun t' : ℝ => t' - 1)
+            HasDerivAt (fun t' : ℝ => t' - 1)
               (1 : ℝ) q.1 :=
           (hasDerivAt_id q.1).sub_const 1
         have h1 :
-            HasDerivAt
-              (fun t' : ℝ =>
+            HasDerivAt (fun t' : ℝ =>
                 (1 - (t' - 1)) • rho')
               (-rho') q.1 := by
           have h_coef :
-              HasDerivAt
-                (fun t' : ℝ =>
+              HasDerivAt (fun t' : ℝ =>
                   (1 - (t' - 1) : ℝ))
                 (-1 : ℝ) q.1 := by
-            have :=
-              (hasDerivAt_const q.1
+            have := (hasDerivAt_const q.1
                 (1 : ℝ)).sub h_shift
             simp only [zero_sub]
               at this
@@ -230,8 +182,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
           simp only [neg_one_smul] at this
           exact this
         have h2 :
-            HasDerivAt
-              (fun t' : ℝ =>
+            HasDerivAt (fun t' : ℝ =>
                 (t' - 1) • i_point)
               i_point q.1 := by
           have := h_shift.smul_const i_point
@@ -241,21 +192,15 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
       have h_combined :
           HasDerivAt (fun t' : ℝ =>
             let arc_point :=
-              Complex.exp
-                ((Real.pi / 3 +
-                  (t' - 1) *
-                    (Real.pi / 6)) * I)
+              Complex.exp ((Real.pi / 3 +
+                  (t' - 1) * (Real.pi / 6)) * I)
             let chord_point :=
-              chordSegment rho' i_point
-                (t' - 1)
+              chordSegment rho' i_point (t' - 1)
             (1 - q.2) • arc_point +
               q.2 • chord_point)
-          ((1 - q.2) •
-            ((Real.pi / 6) * I *
-              Complex.exp
-                ((Real.pi / 3 +
-                  (q.1 - 1) *
-                    (Real.pi / 6)) * I)) +
+          ((1 - q.2) • ((Real.pi / 6) * I *
+              Complex.exp ((Real.pi / 3 +
+                  (q.1 - 1) * (Real.pi / 6)) * I)) +
            q.2 • (i_point - rho')) q.1 := by
         have h1 :=
           h_arc.const_smul (1 - q.2)
@@ -264,13 +209,10 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
         exact h1.add h2
       exact h_combined.deriv
     have h_formula_cont :
-        ContinuousAt (fun r : ℝ × ℝ =>
-          (1 - r.2) •
+        ContinuousAt (fun r : ℝ × ℝ => (1 - r.2) •
             ((Real.pi / 6) * I *
-              Complex.exp
-                ((Real.pi / 3 +
-                  (r.1 - 1) *
-                    (Real.pi / 6)) * I)) +
+              Complex.exp ((Real.pi / 3 +
+                  (r.1 - 1) * (Real.pi / 6)) * I)) +
           r.2 • (i_point - rho')) q := by
       apply ContinuousAt.add
       · apply ContinuousAt.smul
@@ -285,13 +227,11 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
             · apply ContinuousAt.add
               · exact continuousAt_const
               · apply ContinuousAt.mul
-                · have h1 : Continuous
-                      (fun r : ℝ × ℝ =>
+                · have h1 : Continuous (fun r : ℝ × ℝ =>
                         (r.1 : ℂ)) :=
                     Complex.continuous_ofReal.comp
                       continuous_fst
-                  have h2 : Continuous
-                      (fun _ : ℝ × ℝ =>
+                  have h2 : Continuous (fun _ : ℝ × ℝ =>
                         (1 : ℂ)) :=
                     continuous_const
                   exact (h1.sub h2).continuousAt
@@ -312,19 +252,14 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
       lt_of_le_of_lt h_seg2_lo hr1.1
     have ht_lt2' : r.1 < 2 :=
       lt_of_lt_of_le hr1.2 h_seg2_hi
-    have heq :
-        (fun t' =>
-          fdBoundaryToPolygonHomotopy
-            (t', r.2)) =ᶠ[𝓝 r.1]
+    have heq : (fun t' =>
+          fdBoundaryToPolygonHomotopy (t', r.2)) =ᶠ[𝓝 r.1]
         (fun t' : ℝ =>
           let arc_point :=
-            Complex.exp
-              ((Real.pi / 3 +
-                (t' - 1) *
-                  (Real.pi / 6)) * I)
+            Complex.exp ((Real.pi / 3 +
+                (t' - 1) * (Real.pi / 6)) * I)
           let chord_point :=
-            chordSegment rho' i_point
-              (t' - 1)
+            chordSegment rho' i_point (t' - 1)
           (1 - r.2) • arc_point +
             r.2 • chord_point) := by
       filter_upwards [
@@ -337,89 +272,66 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
       congr 2; ring_nf
     rw [heq.deriv_eq]
     have h_ofReal :
-        HasDerivAt
-          (fun t' : ℝ => (t' : ℂ)) 1 r.1 :=
+        HasDerivAt (fun t' : ℝ => (t' : ℂ)) 1 r.1 :=
       Complex.ofRealCLM.hasDerivAt
     have h_inner :
-        HasDerivAt
-          (fun t' : ℝ =>
-            (Real.pi : ℂ) / 3 +
-              ((t' : ℂ) - 1) *
+        HasDerivAt (fun t' : ℝ =>
+            (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) *
                 ((Real.pi : ℂ) / 6))
           ((Real.pi : ℂ) / 6) r.1 := by
       have h_shift :
-          HasDerivAt
-            (fun t' : ℝ => (t' : ℂ) - 1)
+          HasDerivAt (fun t' : ℝ => (t' : ℂ) - 1)
             1 r.1 :=
         h_ofReal.sub_const 1
       have h_mul :
-          HasDerivAt
-            (fun t' : ℝ =>
-              ((t' : ℂ) - 1) *
-                ((Real.pi : ℂ) / 6))
+          HasDerivAt (fun t' : ℝ =>
+              ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
             ((Real.pi : ℂ) / 6) r.1 := by
-        have := h_shift.mul_const
-          ((Real.pi : ℂ) / 6)
+        have := h_shift.mul_const ((Real.pi : ℂ) / 6)
         simp only [one_mul] at this
         exact this
-      have := h_mul.const_add
-        ((Real.pi : ℂ) / 3)
+      have := h_mul.const_add ((Real.pi : ℂ) / 3)
       simp only at this; exact this
     have h_times_I :
-        HasDerivAt
-          (fun t' : ℝ =>
-            ((Real.pi : ℂ) / 3 +
-              ((t' : ℂ) - 1) *
+        HasDerivAt (fun t' : ℝ =>
+            ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) *
                 ((Real.pi : ℂ) / 6)) * I)
           (((Real.pi : ℂ) / 6) * I) r.1 :=
       h_inner.mul_const I
     have h_arc :
-        HasDerivAt
-          (fun t' : ℝ =>
-            Complex.exp
-              ((Real.pi / 3 +
-                (t' - 1) *
-                  (Real.pi / 6)) * I))
+        HasDerivAt (fun t' : ℝ =>
+            Complex.exp ((Real.pi / 3 +
+                (t' - 1) * (Real.pi / 6)) * I))
           ((Real.pi / 6) * I *
-            Complex.exp
-              ((Real.pi / 3 +
-                (r.1 - 1) *
-                  (Real.pi / 6)) * I))
+            Complex.exp ((Real.pi / 3 +
+                (r.1 - 1) * (Real.pi / 6)) * I))
           r.1 := by
       have h_exp :=
-        Complex.hasDerivAt_exp
-          (((Real.pi : ℂ) / 3 +
-            ((r.1 : ℂ) - 1) *
-              ((Real.pi : ℂ) / 6)) * I)
+        Complex.hasDerivAt_exp (((Real.pi : ℂ) / 3 +
+            ((r.1 : ℂ) - 1) * ((Real.pi : ℂ) / 6)) * I)
       have h_comp :=
         h_exp.comp r.1 h_times_I
       simp only [mul_comm (Complex.exp _)]
         at h_comp
       exact h_comp
     have h_chord :
-        HasDerivAt
-          (fun t' : ℝ =>
-            chordSegment rho' i_point
-              (t' - 1))
+        HasDerivAt (fun t' : ℝ =>
+            chordSegment rho' i_point (t' - 1))
           (i_point - rho') r.1 := by
       simp only [chordSegment]
       have h_shift :
-          HasDerivAt
-            (fun t' : ℝ => t' - 1)
+          HasDerivAt (fun t' : ℝ => t' - 1)
             (1 : ℝ) r.1 :=
         (hasDerivAt_id r.1).sub_const 1
       have h1 :
-          HasDerivAt
-            (fun t' : ℝ =>
+          HasDerivAt (fun t' : ℝ =>
               (1 - (t' - 1)) • rho')
             (-rho') r.1 := by
         have h_coef :
-            HasDerivAt
-              (fun t' : ℝ =>
+            HasDerivAt (fun t' : ℝ =>
                 (1 - (t' - 1) : ℝ))
               (-1 : ℝ) r.1 := by
-          have :=
-            (hasDerivAt_const r.1
+          have := (hasDerivAt_const r.1
               (1 : ℝ)).sub h_shift
           simp only [zero_sub]
             at this
@@ -428,8 +340,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
         simp only [neg_one_smul] at this
         exact this
       have h2 :
-          HasDerivAt
-            (fun t' : ℝ =>
+          HasDerivAt (fun t' : ℝ =>
               (t' - 1) • i_point)
             i_point r.1 := by
         have := h_shift.smul_const i_point
@@ -439,21 +350,15 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
     have h_combined :
         HasDerivAt (fun t' : ℝ =>
           let arc_point :=
-            Complex.exp
-              ((Real.pi / 3 +
-                (t' - 1) *
-                  (Real.pi / 6)) * I)
+            Complex.exp ((Real.pi / 3 +
+                (t' - 1) * (Real.pi / 6)) * I)
           let chord_point :=
-            chordSegment rho' i_point
-              (t' - 1)
+            chordSegment rho' i_point (t' - 1)
           (1 - r.2) • arc_point +
             r.2 • chord_point)
-        ((1 - r.2) •
-          ((Real.pi / 6) * I *
-            Complex.exp
-              ((Real.pi / 3 +
-                (r.1 - 1) *
-                  (Real.pi / 6)) * I)) +
+        ((1 - r.2) • ((Real.pi / 6) * I *
+            Complex.exp ((Real.pi / 3 +
+                (r.1 - 1) * (Real.pi / 6)) * I)) +
          r.2 • (i_point - rho')) r.1 := by
       have h1 :=
         h_arc.const_smul (1 - r.2)
@@ -468,13 +373,10 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
     have ht_lt3 : q.1 < 3 :=
       lt_of_lt_of_le hq1.2 h_seg3_hi
     have h_formula_cont :
-        ContinuousAt (fun r : ℝ × ℝ =>
-          (1 - r.2) •
+        ContinuousAt (fun r : ℝ × ℝ => (1 - r.2) •
             ((Real.pi / 6) * I *
-              Complex.exp
-                ((Real.pi / 2 +
-                  (r.1 - 2) *
-                    (Real.pi / 6)) * I)) +
+              Complex.exp ((Real.pi / 2 +
+                  (r.1 - 2) * (Real.pi / 6)) * I)) +
           r.2 • (rho - i_point)) q := by
       apply ContinuousAt.add
       · apply ContinuousAt.smul
@@ -489,13 +391,11 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
             · apply ContinuousAt.add
               · exact continuousAt_const
               · apply ContinuousAt.mul
-                · have h1 : Continuous
-                      (fun r : ℝ × ℝ =>
+                · have h1 : Continuous (fun r : ℝ × ℝ =>
                         (r.1 : ℂ)) :=
                     Complex.continuous_ofReal.comp
                       continuous_fst
-                  have h2 : Continuous
-                      (fun _ : ℝ × ℝ =>
+                  have h2 : Continuous (fun _ : ℝ × ℝ =>
                         (2 : ℂ)) :=
                     continuous_const
                   exact (h1.sub h2).continuousAt
@@ -515,19 +415,14 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
       lt_of_le_of_lt h_seg3_lo hr1.1
     have ht_lt3' : r.1 < 3 :=
       lt_of_lt_of_le hr1.2 h_seg3_hi
-    have heq :
-        (fun t' =>
-          fdBoundaryToPolygonHomotopy
-            (t', r.2)) =ᶠ[𝓝 r.1]
+    have heq : (fun t' =>
+          fdBoundaryToPolygonHomotopy (t', r.2)) =ᶠ[𝓝 r.1]
         (fun t' : ℝ =>
           let arc_point :=
-            Complex.exp
-              ((Real.pi / 2 +
-                (t' - 2) *
-                  (Real.pi / 6)) * I)
+            Complex.exp ((Real.pi / 2 +
+                (t' - 2) * (Real.pi / 6)) * I)
           let chord_point :=
-            chordSegment i_point rho
-              (t' - 2)
+            chordSegment i_point rho (t' - 2)
           (1 - r.2) • arc_point +
             r.2 • chord_point) := by
       filter_upwards [
@@ -536,96 +431,72 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
         with t' ht2'' ht3''
       simp only [fdBoundaryToPolygonHomotopy]
       simp only [
-        not_le.mpr (lt_trans
-          (by norm_num : (1:ℝ) < 2) ht2''),
+        not_le.mpr (lt_trans (by norm_num : (1:ℝ) < 2) ht2''),
         not_le.mpr ht2'',
         le_of_lt ht3'', ite_false, ite_true]
       congr 2; ring_nf
     rw [heq.deriv_eq]
     have h_ofReal :
-        HasDerivAt
-          (fun t' : ℝ => (t' : ℂ)) 1 r.1 :=
+        HasDerivAt (fun t' : ℝ => (t' : ℂ)) 1 r.1 :=
       Complex.ofRealCLM.hasDerivAt
     have h_inner :
-        HasDerivAt
-          (fun t' : ℝ =>
-            (Real.pi : ℂ) / 2 +
-              ((t' : ℂ) - 2) *
+        HasDerivAt (fun t' : ℝ =>
+            (Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) *
                 ((Real.pi : ℂ) / 6))
           ((Real.pi : ℂ) / 6) r.1 := by
       have h_shift :
-          HasDerivAt
-            (fun t' : ℝ => (t' : ℂ) - 2)
+          HasDerivAt (fun t' : ℝ => (t' : ℂ) - 2)
             1 r.1 :=
         h_ofReal.sub_const 2
       have h_mul :
-          HasDerivAt
-            (fun t' : ℝ =>
-              ((t' : ℂ) - 2) *
-                ((Real.pi : ℂ) / 6))
+          HasDerivAt (fun t' : ℝ =>
+              ((t' : ℂ) - 2) * ((Real.pi : ℂ) / 6))
             ((Real.pi : ℂ) / 6) r.1 := by
-        have := h_shift.mul_const
-          ((Real.pi : ℂ) / 6)
+        have := h_shift.mul_const ((Real.pi : ℂ) / 6)
         simp only [one_mul] at this
         exact this
-      have := h_mul.const_add
-        ((Real.pi : ℂ) / 2)
+      have := h_mul.const_add ((Real.pi : ℂ) / 2)
       simp only at this; exact this
     have h_times_I :
-        HasDerivAt
-          (fun t' : ℝ =>
-            ((Real.pi : ℂ) / 2 +
-              ((t' : ℂ) - 2) *
+        HasDerivAt (fun t' : ℝ =>
+            ((Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) *
                 ((Real.pi : ℂ) / 6)) * I)
           (((Real.pi : ℂ) / 6) * I) r.1 :=
       h_inner.mul_const I
     have h_arc :
-        HasDerivAt
-          (fun t' : ℝ =>
-            Complex.exp
-              ((Real.pi / 2 +
-                (t' - 2) *
-                  (Real.pi / 6)) * I))
+        HasDerivAt (fun t' : ℝ =>
+            Complex.exp ((Real.pi / 2 +
+                (t' - 2) * (Real.pi / 6)) * I))
           ((Real.pi / 6) * I *
-            Complex.exp
-              ((Real.pi / 2 +
-                (r.1 - 2) *
-                  (Real.pi / 6)) * I))
+            Complex.exp ((Real.pi / 2 +
+                (r.1 - 2) * (Real.pi / 6)) * I))
           r.1 := by
       have h_exp :=
-        Complex.hasDerivAt_exp
-          (((Real.pi : ℂ) / 2 +
-            ((r.1 : ℂ) - 2) *
-              ((Real.pi : ℂ) / 6)) * I)
+        Complex.hasDerivAt_exp (((Real.pi : ℂ) / 2 +
+            ((r.1 : ℂ) - 2) * ((Real.pi : ℂ) / 6)) * I)
       have h_comp :=
         h_exp.comp r.1 h_times_I
       simp only [mul_comm (Complex.exp _)]
         at h_comp
       exact h_comp
     have h_chord :
-        HasDerivAt
-          (fun t' : ℝ =>
-            chordSegment i_point rho
-              (t' - 2))
+        HasDerivAt (fun t' : ℝ =>
+            chordSegment i_point rho (t' - 2))
           (rho - i_point) r.1 := by
       simp only [chordSegment]
       have h_shift :
-          HasDerivAt
-            (fun t' : ℝ => t' - 2)
+          HasDerivAt (fun t' : ℝ => t' - 2)
             (1 : ℝ) r.1 :=
         (hasDerivAt_id r.1).sub_const 2
       have h1 :
-          HasDerivAt
-            (fun t' : ℝ =>
+          HasDerivAt (fun t' : ℝ =>
               (1 - (t' - 2)) • i_point)
             (-i_point) r.1 := by
         have h_coef :
-            HasDerivAt
-              (fun t' : ℝ =>
+            HasDerivAt (fun t' : ℝ =>
                 (1 - (t' - 2) : ℝ))
               (-1 : ℝ) r.1 := by
-          have :=
-            (hasDerivAt_const r.1
+          have := (hasDerivAt_const r.1
               (1 : ℝ)).sub h_shift
           simp only [zero_sub]
             at this
@@ -634,8 +505,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
         simp only [neg_one_smul] at this
         exact this
       have h2 :
-          HasDerivAt
-            (fun t' : ℝ =>
+          HasDerivAt (fun t' : ℝ =>
               (t' - 2) • rho)
             rho r.1 := by
         have := h_shift.smul_const rho
@@ -645,21 +515,15 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
     have h_combined :
         HasDerivAt (fun t' : ℝ =>
           let arc_point :=
-            Complex.exp
-              ((Real.pi / 2 +
-                (t' - 2) *
-                  (Real.pi / 6)) * I)
+            Complex.exp ((Real.pi / 2 +
+                (t' - 2) * (Real.pi / 6)) * I)
           let chord_point :=
-            chordSegment i_point rho
-              (t' - 2)
+            chordSegment i_point rho (t' - 2)
           (1 - r.2) • arc_point +
             r.2 • chord_point)
-        ((1 - r.2) •
-          ((Real.pi / 6) * I *
-            Complex.exp
-              ((Real.pi / 2 +
-                (r.1 - 2) *
-                  (Real.pi / 6)) * I)) +
+        ((1 - r.2) • ((Real.pi / 6) * I *
+            Complex.exp ((Real.pi / 2 +
+                (r.1 - 2) * (Real.pi / 6)) * I)) +
          r.2 • (rho - i_point)) r.1 := by
       have h1 :=
         h_arc.const_smul (1 - r.2)
@@ -670,8 +534,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
   · have hconst :
         ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
           deriv (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) q.1 =
+            fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
           (((H_height : ℂ) -
             Real.sqrt 3 / 2) * I) := by
       intro q ⟨hq1, _hq2⟩
@@ -679,14 +542,10 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
         lt_of_le_of_lt h_seg4_lo hq1.1
       have ht_lt4 : q.1 < 4 :=
         lt_of_lt_of_le hq1.2 h_seg4_hi
-      have heq :
-          (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) =ᶠ[𝓝 q.1]
-          (fun t' : ℝ =>
-            (-1/2 : ℂ) +
-              ((Real.sqrt 3 / 2 : ℂ) +
-                ((↑t' : ℂ) - 3) *
+      have heq : (fun t' =>
+            fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
+          (fun t' : ℝ => (-1/2 : ℂ) +
+              ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) *
                   ((H_height : ℂ) -
                     Real.sqrt 3 / 2)) *
                 I) := by
@@ -707,54 +566,43 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
           ite_false, ite_true]
       rw [heq.deriv_eq]
       have h1 :
-          HasDerivAt
-            (fun t' : ℝ => (↑t' : ℂ))
+          HasDerivAt (fun t' : ℝ => (↑t' : ℂ))
             1 q.1 :=
         Complex.ofRealCLM.hasDerivAt
       have h2 :
-          HasDerivAt
-            (fun t' : ℝ => (↑t' : ℂ) - 3)
+          HasDerivAt (fun t' : ℝ => (↑t' : ℂ) - 3)
             1 q.1 :=
         h1.sub_const 3
       have h3 :
-          HasDerivAt
-            (fun t' : ℝ =>
-              ((↑t' : ℂ) - 3) *
-                ((H_height : ℂ) -
+          HasDerivAt (fun t' : ℝ =>
+              ((↑t' : ℂ) - 3) * ((H_height : ℂ) -
                   Real.sqrt 3 / 2))
             ((H_height : ℂ) -
               Real.sqrt 3 / 2) q.1 := by
-        have := h2.mul_const
-          ((H_height : ℂ) - Real.sqrt 3 / 2)
+        have := h2.mul_const ((H_height : ℂ) - Real.sqrt 3 / 2)
         simp only [one_mul] at this
         exact this
       have h4 :
-          HasDerivAt
-            (fun t' : ℝ =>
-              (Real.sqrt 3 / 2 : ℂ) +
-                ((↑t' : ℂ) - 3) *
+          HasDerivAt (fun t' : ℝ =>
+              (Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) *
                   ((H_height : ℂ) -
                     Real.sqrt 3 / 2))
             ((H_height : ℂ) -
               Real.sqrt 3 / 2) q.1 := by
-        have :=
-          (hasDerivAt_const q.1
+        have := (hasDerivAt_const q.1
             (Real.sqrt 3 / 2 : ℂ)).add h3
         simp only [zero_add] at this
         exact this
       have h5 :
-          HasDerivAt
-            (fun t' : ℝ =>
-              ((Real.sqrt 3 / 2 : ℂ) +
-                ((↑t' : ℂ) - 3) *
+          HasDerivAt (fun t' : ℝ =>
+              ((Real.sqrt 3 / 2 : ℂ) + ((↑t' : ℂ) - 3) *
                   ((H_height : ℂ) -
                     Real.sqrt 3 / 2)) * I)
             (((H_height : ℂ) -
               Real.sqrt 3 / 2) * I)
             q.1 :=
         h4.mul_const I
-      have h6 :=
-        (hasDerivAt_const q.1
+      have h6 := (hasDerivAt_const q.1
           ((-1/2 : ℂ))).add h5
       simp only [zero_add] at h6
       exact h6.deriv
@@ -763,18 +611,14 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
   · have hconst :
         ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0:ℝ) 1,
           deriv (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) q.1 =
+            fdBoundaryToPolygonHomotopy (t', q.2)) q.1 =
           (1 : ℂ) := by
       intro q ⟨hq1, _hq2⟩
       have ht_gt4 : q.1 > 4 :=
         lt_of_le_of_lt h_seg5 hq1.1
-      have heq :
-          (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) =ᶠ[𝓝 q.1]
-          (fun t' : ℝ =>
-            ((↑t' : ℂ) - 9/2) +
+      have heq : (fun t' =>
+            fdBoundaryToPolygonHomotopy (t', q.2)) =ᶠ[𝓝 q.1]
+          (fun t' : ℝ => ((↑t' : ℂ) - 9/2) +
               (H_height : ℂ) * I) := by
         filter_upwards [
           eventually_gt_nhds ht_gt4]
@@ -792,13 +636,11 @@ lemma fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
           ite_false]
       rw [heq.deriv_eq]
       have h1 :
-          HasDerivAt
-            (fun t' : ℝ => (↑t' : ℂ))
+          HasDerivAt (fun t' : ℝ => (↑t' : ℂ))
             1 q.1 :=
         Complex.ofRealCLM.hasDerivAt
       have h2 :
-          HasDerivAt
-            (fun t' : ℝ => (↑t' : ℂ) - 9/2)
+          HasDerivAt (fun t' : ℝ => (↑t' : ℂ) - 9/2)
             1 q.1 :=
         h1.sub_const (9/2)
       have h3 :=

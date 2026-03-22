@@ -51,8 +51,7 @@ lemma polygonToCircleRadial_avoids (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p
       exact hnorm_pos
   intro heq
   rw [add_eq_left] at heq
-  have hsmul_zero :
-      ((1 - s) * ‖fdPolygon t - p‖ + s) •
+  have hsmul_zero : ((1 - s) * ‖fdPolygon t - p‖ + s) •
         ((fdPolygon t - p) / ‖fdPolygon t - p‖) = 0 := heq
   rw [smul_eq_zero] at hsmul_zero
   rcases hsmul_zero with hcoeff_zero | hdir_zero
@@ -192,8 +191,7 @@ lemma polygonToCircleRadial_differentiable_off_partition (p : ℂ) (hp_norm : �
   have hdir_ne : fdPolygon t - p ≠ 0 := sub_ne_zero.mpr hz_ne
   have h_norm_diff : DifferentiableAt ℝ (fun t' => ‖fdPolygon t' - p‖) t :=
     DifferentiableAt.norm ℂ h_diff_sub hdir_ne
-  have h_coeff_diff : DifferentiableAt ℝ
-      (fun t' => (1 - s) * ‖fdPolygon t' - p‖ + s) t :=
+  have h_coeff_diff : DifferentiableAt ℝ (fun t' => (1 - s) * ‖fdPolygon t' - p‖ + s) t :=
     ((differentiableAt_const (1 - s)).mul h_norm_diff).add (differentiableAt_const s)
   have h_norm_C_diff : DifferentiableAt ℝ (fun t' => (‖fdPolygon t' - p‖ : ℂ)) t :=
     Complex.ofRealCLM.differentiableAt.comp t h_norm_diff
@@ -207,12 +205,10 @@ lemma polygonToCircleRadial_differentiable_off_partition (p : ℂ) (hp_norm : �
 
 /-- t-derivative is continuous on each piece. -/
 lemma polygonToCircleRadial_deriv_cont_on_piece (p : ℂ) (hp_norm : ‖p‖ > 1)
-    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height)
-    (p₁ p₂ : ℝ) (_hp₁p₂ : p₁ < p₂)
+    (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) (p₁ p₂ : ℝ) (_hp₁p₂ : p₁ < p₂)
     (hpiece : ∀ t ∈ Ioo p₁ p₂, t ∉ ({1, 2, 3, 4} : Finset ℝ))
     (h_sub : Ioo p₁ p₂ ⊆ Ioo 0 5) :
-    ContinuousOn
-      (fun (q : ℝ × ℝ) => deriv (fun t' => polygonToCircleRadial p (t', q.2)) q.1)
+    ContinuousOn (fun (q : ℝ × ℝ) => deriv (fun t' => polygonToCircleRadial p (t', q.2)) q.1)
       (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
   apply continuousOn_of_forall_continuousAt
   intro ⟨t, s⟩ ⟨ht_mem, hs_mem⟩
@@ -292,38 +288,31 @@ lemma polygonToCircleRadial_deriv_cont_on_piece (p : ℂ) (hp_norm : ‖p‖ > 1
   have hdir_ne : fdPolygon t - p ≠ 0 := sub_ne_zero.mpr hz_ne
   have h_fd_joint : ContDiffAt ℝ 1 (fun q : ℝ × ℝ => fdPolygon q.1) (t, s) :=
     h_fdPolygon_contDiff.comp (t, s) contDiffAt_fst
-  have h_dir_joint : ContDiffAt ℝ 1
-      (fun q : ℝ × ℝ => fdPolygon q.1 - p) (t, s) :=
+  have h_dir_joint : ContDiffAt ℝ 1 (fun q : ℝ × ℝ => fdPolygon q.1 - p) (t, s) :=
     h_fd_joint.sub contDiffAt_const
-  have h_norm_joint : ContDiffAt ℝ 1
-      (fun q : ℝ × ℝ => ‖fdPolygon q.1 - p‖) (t, s) :=
+  have h_norm_joint : ContDiffAt ℝ 1 (fun q : ℝ × ℝ => ‖fdPolygon q.1 - p‖) (t, s) :=
     h_dir_joint.norm ℝ hdir_ne
-  have h_norm_C_joint : ContDiffAt ℝ 1
-      (fun q : ℝ × ℝ => (‖fdPolygon q.1 - p‖ : ℂ)) (t, s) :=
+  have h_norm_C_joint : ContDiffAt ℝ 1 (fun q : ℝ × ℝ => (‖fdPolygon q.1 - p‖ : ℂ)) (t, s) :=
     Complex.ofRealCLM.contDiff.contDiffAt.comp (t, s) h_norm_joint
   have h_coeff_joint : ContDiffAt ℝ 1
       (fun q : ℝ × ℝ => (1 - q.2) * ‖fdPolygon q.1 - p‖ + q.2) (t, s) :=
     ((contDiffAt_const.sub contDiffAt_snd).mul h_norm_joint).add contDiffAt_snd
   have h_norm_C_ne : (‖fdPolygon t - p‖ : ℂ) ≠ 0 :=
     Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hdir_ne)
-  have h_inv_norm_C : ContDiffAt ℝ 1
-      (fun q : ℝ × ℝ => ((‖fdPolygon q.1 - p‖ : ℂ))⁻¹) (t, s) :=
+  have h_inv_norm_C : ContDiffAt ℝ 1 (fun q : ℝ × ℝ => ((‖fdPolygon q.1 - p‖ : ℂ))⁻¹) (t, s) :=
     h_norm_C_joint.inv h_norm_C_ne
-  have h_unit_joint : ContDiffAt ℝ 1
-      (fun q : ℝ × ℝ => (fdPolygon q.1 - p) *
+  have h_unit_joint : ContDiffAt ℝ 1 (fun q : ℝ × ℝ => (fdPolygon q.1 - p) *
         ((‖fdPolygon q.1 - p‖ : ℂ))⁻¹) (t, s) :=
     h_dir_joint.mul h_inv_norm_C
   have h_explicit_c1 : ContDiffAt ℝ 1 (fun q : ℝ × ℝ =>
-      p + ((1 - q.2) * ‖fdPolygon q.1 - p‖ + q.2) •
-        ((fdPolygon q.1 - p) *
+      p + ((1 - q.2) * ‖fdPolygon q.1 - p‖ + q.2) • ((fdPolygon q.1 - p) *
           ((‖fdPolygon q.1 - p‖ : ℂ))⁻¹)) (t, s) :=
     contDiffAt_const.add (h_coeff_joint.smul h_unit_joint)
   have h_joint_c1 : ContDiffAt ℝ 1 (polygonToCircleRadial p) (t, s) := by
     apply h_explicit_c1.congr_of_eventuallyEq
     filter_upwards with q
     simp only [polygonToCircleRadial, div_eq_mul_inv]
-  have h_fderiv_cont : ContinuousAt
-      (fderiv ℝ (polygonToCircleRadial p)) (t, s) :=
+  have h_fderiv_cont : ContinuousAt (fderiv ℝ (polygonToCircleRadial p)) (t, s) :=
     (h_joint_c1.of_le (by norm_num : (0 : WithTop ℕ∞) + 1 ≤ 1)).fderiv_right_succ.continuousAt
   have h_eventually_diff : ∀ᶠ q : ℝ × ℝ in 𝓝 (t, s),
       DifferentiableAt ℝ (polygonToCircleRadial p) q := by
@@ -353,10 +342,8 @@ lemma norm_normalize_sub_le {w₁ w₂ : ℂ} {δ : ℝ} (hδ : 0 < δ)
     ‖w₁ / (‖w₁‖ : ℂ) - w₂ / (‖w₂‖ : ℂ)‖ ≤ 2 * ‖w₁ - w₂‖ / δ := by
   have h1_pos : (0 : ℝ) < ‖w₁‖ := lt_of_lt_of_le hδ hw₁
   have h2_pos : (0 : ℝ) < ‖w₂‖ := lt_of_lt_of_le hδ hw₂
-  have hdecomp : w₁ / (‖w₁‖ : ℂ) - w₂ / (‖w₂‖ : ℂ) =
-      (w₁ - w₂) / (‖w₁‖ : ℂ) +
-        w₂ * ((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ)) /
-          ((‖w₁‖ : ℂ) * (‖w₂‖ : ℂ)) := by
+  have hdecomp : w₁ / (‖w₁‖ : ℂ) - w₂ / (‖w₂‖ : ℂ) = (w₁ - w₂) / (‖w₁‖ : ℂ) +
+        w₂ * ((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ)) / ((‖w₁‖ : ℂ) * (‖w₂‖ : ℂ)) := by
     have h1c : (‖w₁‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt h1_pos)
     have h2c : (‖w₂‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt h2_pos)
     field_simp
@@ -366,12 +353,9 @@ lemma norm_normalize_sub_le {w₁ w₂ : ℂ} {δ : ℝ} (hδ : 0 < δ)
       rw [norm_div, norm_real, Real.norm_eq_abs, abs_of_nonneg (le_of_lt h1_pos)]
     rw [h_eq]
     exact div_le_div_of_nonneg_left (norm_nonneg _) hδ hw₁
-  have hterm2 : ‖w₂ * ((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ)) /
-      ((‖w₁‖ : ℂ) * (‖w₂‖ : ℂ))‖ ≤ ‖w₁ - w₂‖ / δ := by
-    have h_eq : ‖w₂ * ((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ)) /
-        ((‖w₁‖ : ℂ) * (‖w₂‖ : ℂ))‖ =
-        ‖w₂‖ * ‖((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ))‖ /
-          (‖w₁‖ * ‖w₂‖) := by
+  have hterm2 : ‖w₂ * ((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ)) / ((‖w₁‖ : ℂ) * (‖w₂‖ : ℂ))‖ ≤ ‖w₁ - w₂‖ / δ := by
+    have h_eq : ‖w₂ * ((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ)) / ((‖w₁‖ : ℂ) * (‖w₂‖ : ℂ))‖ =
+        ‖w₂‖ * ‖((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ))‖ / (‖w₁‖ * ‖w₂‖) := by
       rw [norm_div, norm_mul, norm_mul, norm_real, norm_real,
           Real.norm_eq_abs, Real.norm_eq_abs,
           abs_of_nonneg (le_of_lt h1_pos), abs_of_nonneg (le_of_lt h2_pos)]
@@ -383,15 +367,13 @@ lemma norm_normalize_sub_le {w₁ w₂ : ℂ} {δ : ℝ} (hδ : 0 < δ)
         ‖((‖w₂‖ : ℂ) - (‖w₁‖ : ℂ))‖ ≤ ‖w₁ - w₂‖ := by
       rw [← Complex.ofReal_sub, norm_real, Real.norm_eq_abs, abs_sub_comm]
       exact abs_norm_sub_norm_le w₁ w₂
-    exact le_trans
-      (div_le_div_of_nonneg_right h_norm_sub_bound (le_of_lt h1_pos))
+    exact le_trans (div_le_div_of_nonneg_right h_norm_sub_bound (le_of_lt h1_pos))
       (div_le_div_of_nonneg_left (norm_nonneg _) hδ hw₁)
   rw [hdecomp]
   calc ‖(w₁ - w₂) / ↑‖w₁‖ +
         w₂ * (↑‖w₂‖ - ↑‖w₁‖) / (↑‖w₁‖ * ↑‖w₂‖)‖
       ≤ ‖(w₁ - w₂) / ↑‖w₁‖‖ +
-        ‖w₂ * (↑‖w₂‖ - ↑‖w₁‖) /
-          (↑‖w₁‖ * ↑‖w₂‖)‖ := norm_add_le _ _
+        ‖w₂ * (↑‖w₂‖ - ↑‖w₁‖) / (↑‖w₁‖ * ↑‖w₂‖)‖ := norm_add_le _ _
     _ ≤ ‖w₁ - w₂‖ / δ + ‖w₁ - w₂‖ / δ := add_le_add hterm1 hterm2
     _ = 2 * ‖w₁ - w₂‖ / δ := by ring
 
@@ -529,8 +511,7 @@ lemma fdPolygon_norm_sub_le (a b : ℝ) :
   · rw [norm_sub_rev, abs_sub_comm]; exact H b a (le_of_not_ge h)
   rw [abs_of_nonneg (sub_nonneg.mpr h)]
   have := norm_image_sub_le_of_norm_deriv_right_le_segment
-    fdPolygon_continuous.continuousOn
-    (fun x _ => fdPolygon_hasDerivWithinAt_Ici x)
+    fdPolygon_continuous.continuousOn (fun x _ => fdPolygon_hasDerivWithinAt_Ici x)
     (fun x _ => fdPolygon_right_deriv_norm_le x) b (right_mem_Icc.mpr h)
   linarith
 
@@ -543,11 +524,9 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
     continuous_norm.comp (fdPolygon_continuous.sub continuous_const)
   have h_dist_pos : ∀ t ∈ Icc (0:ℝ) 5, 0 < ‖fdPolygon t - p‖ := by
     intro t ht
-    exact norm_pos_iff.mpr
-      (sub_ne_zero.mpr (fdPolygon_avoids_interior p hp_norm hp_re hp_im t ht))
+    exact norm_pos_iff.mpr (sub_ne_zero.mpr (fdPolygon_avoids_interior p hp_norm hp_re hp_im t ht))
   obtain ⟨t_min, ht_min_mem, ht_min_le⟩ :=
-    isCompact_Icc.exists_isMinOn
-      (Set.nonempty_Icc.mpr (by norm_num : (0:ℝ) ≤ 5))
+    isCompact_Icc.exists_isMinOn (Set.nonempty_Icc.mpr (by norm_num : (0:ℝ) ≤ 5))
       h_dist_cont.continuousOn
   set δ := ‖fdPolygon t_min - p‖ with hδ_def
   have hδ_pos : 0 < δ := h_dist_pos t_min ht_min_mem
@@ -555,10 +534,8 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
     fun t ht => ht_min_le ht
   use (3 + 4 / δ) * 3
   intro t ht s hs
-  by_cases hd : DifferentiableAt ℝ
-      (fun t' => polygonToCircleRadial p (t', s)) t
-  · apply norm_deriv_le_of_lip'
-      (by positivity : 0 ≤ (3 + 4 / δ) * 3)
+  by_cases hd : DifferentiableAt ℝ (fun t' => polygonToCircleRadial p (t', s)) t
+  · apply norm_deriv_le_of_lip' (by positivity : 0 ≤ (3 + 4 / δ) * 3)
     have hg_eq : ∀ t', polygonToCircleRadial p (t', s) =
         p + (1 - s) • (fdPolygon t' - p) +
           s • ((fdPolygon t' - p) / (‖fdPolygon t' - p‖ : ℂ)) := by
@@ -595,16 +572,13 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
             polygonToCircleRadial p (t, s)‖ := rfl
       _ = ‖(1 - s) • (fdPolygon t' - fdPolygon t) +
           s • ((fdPolygon t' - p) / (‖fdPolygon t' - p‖ : ℂ) -
-               (fdPolygon t - p) /
-                (‖fdPolygon t - p‖ : ℂ))‖ := by rw [hg_diff t']
+               (fdPolygon t - p) / (‖fdPolygon t - p‖ : ℂ))‖ := by rw [hg_diff t']
       _ ≤ ‖(1 - s) • (fdPolygon t' - fdPolygon t)‖ +
           ‖s • ((fdPolygon t' - p) / (‖fdPolygon t' - p‖ : ℂ) -
-               (fdPolygon t - p) /
-                (‖fdPolygon t - p‖ : ℂ))‖ := norm_add_le _ _
+               (fdPolygon t - p) / (‖fdPolygon t - p‖ : ℂ))‖ := norm_add_le _ _
       _ = |1 - s| * ‖fdPolygon t' - fdPolygon t‖ +
           |s| * ‖(fdPolygon t' - p) / (‖fdPolygon t' - p‖ : ℂ) -
-               (fdPolygon t - p) /
-                (‖fdPolygon t - p‖ : ℂ)‖ := by
+               (fdPolygon t - p) / (‖fdPolygon t - p‖ : ℂ)‖ := by
           rw [norm_smul, norm_smul, Real.norm_eq_abs,
             Real.norm_eq_abs]
       _ ≤ |1 - s| * ‖fdPolygon t' - fdPolygon t‖ +
@@ -612,8 +586,7 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
           apply add_le_add_left
           apply mul_le_mul_of_nonneg_left
           · have h_nsub := norm_normalize_sub_le (half_pos hδ_pos)
-              ht'_delta
-              (le_trans (by linarith : δ / 2 ≤ δ) (hδ_le t ht))
+              ht'_delta (le_trans (by linarith : δ / 2 ≤ δ) (hδ_le t ht))
             rw [show fdPolygon t' - p - (fdPolygon t - p) =
               fdPolygon t' - fdPolygon t from by ring] at h_nsub
             calc ‖(fdPolygon t' - p) / ↑‖fdPolygon t' - p‖ -
@@ -647,10 +620,8 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
 
 /-- Radial homotopy satisfies PiecewiseCurvesHomotopicAvoiding. -/
 lemma fdPolygon_piecewise_homotopic_to_radialCircle (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
-    (hp_im : p.im < H_height) :
-    PiecewiseCurvesHomotopicAvoiding fdPolygon
-      (fdPolygonRadialCircle p) 0 5 p
+    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
+    PiecewiseCurvesHomotopicAvoiding fdPolygon (fdPolygonRadialCircle p) 0 5 p
       ({1, 2, 3, 4} : Finset ℝ) := by
   refine ⟨polygonToCircleRadial p,
     polygonToCircleRadial_continuous p hp_norm hp_re hp_im,
@@ -675,10 +646,8 @@ lemma winding_fdPolygon_eq_radialCircle (p : ℂ) (hp_norm : ‖p‖ > 1)
     generalizedWindingNumber' fdPolygon 0 5 p =
     generalizedWindingNumber' (fdPolygonRadialCircle p) 0 5 p := by
   have hab : (0 : ℝ) < 5 := by norm_num
-  exact windingNumber_eq_of_piecewise_homotopic fdPolygon
-    (fdPolygonRadialCircle p) 0 5 p
-    ({1, 2, 3, 4} : Finset ℝ) hab
-    (fdPolygon_piecewise_homotopic_to_radialCircle p hp_norm hp_re
+  exact windingNumber_eq_of_piecewise_homotopic fdPolygon (fdPolygonRadialCircle p) 0 5 p
+    ({1, 2, 3, 4} : Finset ℝ) hab (fdPolygon_piecewise_homotopic_to_radialCircle p hp_norm hp_re
       hp_im)
 
 end RectHomotopyProof
