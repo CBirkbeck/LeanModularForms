@@ -54,8 +54,7 @@ structure IsNullHomologous (γ : PiecewiseC1Immersion) (U : Set ℂ) : Prop wher
   winding_zero : ∀ z, z ∉ U →
     generalizedWindingNumber' γ.toFun γ.a γ.b z = 0
 
-private lemma ftc_no_interior_partition
-    {F : ℂ → ℂ} {f : ℂ → ℂ}
+private lemma ftc_no_interior_partition {F : ℂ → ℂ} {f : ℂ → ℂ}
     (γ : PiecewiseC1Curve) (a' b' : ℝ)
     (h_int : IntervalIntegrable
       (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b)
@@ -79,8 +78,7 @@ private lemma ftc_no_interior_partition
       (Set.mem_uIcc_of_le ha'_bds.1 ha'_bds.2)
       (Set.mem_uIcc_of_le hb'_bds.1 hb'_bds.2))
 
-private lemma partition_filter_card_lt_left
-    (P : Finset ℝ) {a' b' c : ℝ}
+private lemma partition_filter_card_lt_left (P : Finset ℝ) {a' b' c : ℝ}
     (hc_part : c ∈ P) (hac : a' < c) (hcb : c < b') :
     (P.filter (fun t => a' < t ∧ t < c)).card
       < (P.filter (fun t => a' < t ∧ t < b')).card := by
@@ -94,8 +92,7 @@ private lemma partition_filter_card_lt_left
     simp only [Finset.mem_filter] at hcmem
     exact lt_irrefl c hcmem.2.2
 
-private lemma partition_filter_card_lt_right
-    (P : Finset ℝ) {a' b' c : ℝ}
+private lemma partition_filter_card_lt_right (P : Finset ℝ) {a' b' c : ℝ}
     (hc_part : c ∈ P) (hac : a' < c) (hcb : c < b') :
     (P.filter (fun t => c < t ∧ t < b')).card
       < (P.filter (fun t => a' < t ∧ t < b')).card := by
@@ -109,8 +106,7 @@ private lemma partition_filter_card_lt_right
     simp only [Finset.mem_filter] at hcmem
     exact lt_irrefl c hcmem.2.1
 
-private lemma ftc_inductive_step
-    {F : ℂ → ℂ} {f : ℂ → ℂ}
+private lemma ftc_inductive_step {F : ℂ → ℂ} {f : ℂ → ℂ}
     (γ : PiecewiseC1Curve) (m : ℕ) (a' b' c : ℝ)
     (h_int : IntervalIntegrable
       (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b)
@@ -146,8 +142,7 @@ private lemma ftc_inductive_step
   rw [← intervalIntegral.integral_add_adjacent_intervals h_int_ac h_int_cb, h_ac, h_cb]
   ring
 
-private lemma ftc_piecewise_contour_induction
-    {F : ℂ → ℂ} {f : ℂ → ℂ}
+private lemma ftc_piecewise_contour_induction {F : ℂ → ℂ} {f : ℂ → ℂ}
     (γ : PiecewiseC1Curve) (n : ℕ) (a' b' : ℝ)
     (h_int : IntervalIntegrable
       (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b)
@@ -183,8 +178,7 @@ On each subinterval [p_i, p_{i+1}], gamma is C^1 hence differentiable, so
 F circ gamma has derivative f(gamma(t)) * gamma'(t) by the chain rule, and
 the sum telescopes to F(gamma(b)) - F(gamma(a)). -/
 private theorem ftc_piecewise_contour {F : ℂ → ℂ} {f : ℂ → ℂ}
-    (γ : PiecewiseC1Curve) (U : Set ℂ)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (γ : PiecewiseC1Curve) (U : Set ℂ) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hF_prim : ∀ z ∈ U, HasDerivAt F (f z) z)
     (h_int : IntervalIntegrable
       (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b) :
@@ -210,8 +204,8 @@ Proof strategy: gamma is continuous on [a,b] and avoids z, so
 is bounded on [a,b] off the finite partition (piecewise continuous and
 bounded on the compact interval). The product is therefore bounded and
 piecewise continuous, hence integrable. -/
-private lemma mem_Ioo_of_Icc_not_partition (γ : PiecewiseC1Curve) (t : ℝ)
-    (ht_Icc : t ∈ Icc γ.a γ.b) (ht_not_part : t ∉ (γ.partition : Set ℝ)) :
+private lemma mem_Ioo_of_Icc_not_partition (γ : PiecewiseC1Curve)
+    (t : ℝ) (ht_Icc : t ∈ Icc γ.a γ.b) (ht_not_part : t ∉ (γ.partition : Set ℝ)) :
     t ∈ Ioo γ.a γ.b := by
   constructor
   · by_contra h; push_neg at h
@@ -219,9 +213,8 @@ private lemma mem_Ioo_of_Icc_not_partition (γ : PiecewiseC1Curve) (t : ℝ)
   · by_contra h; push_neg at h
     exact ht_not_part (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)
 
-private theorem integrand_intervalIntegrable_of_avoids
-    (γ : PiecewiseC1Immersion) (z : ℂ)
-    (h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z) :
+private theorem integrand_intervalIntegrable_of_avoids (γ : PiecewiseC1Immersion)
+    (z : ℂ) (h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z) :
     IntervalIntegrable
       (fun t => (γ.toFun t - z)⁻¹ * deriv γ.toFun t) volume γ.a γ.b := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
@@ -265,8 +258,8 @@ The proof uses:
    on the convex set U.
 3. The fundamental theorem of calculus to evaluate the integral as
    F(gamma(b)) - F(gamma(a)) = 0 (since gamma is closed). -/
-theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U)
-    (hU_convex : Convex ℝ U) (hU_ne : U.Nonempty) (γ : PiecewiseC1Immersion)
+theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U) (hU_convex : Convex ℝ U)
+    (hU_ne : U.Nonempty) (γ : PiecewiseC1Immersion)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
     IsNullHomologous γ U where
@@ -274,26 +267,17 @@ theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U)
   image_subset := hγ_in_U
   winding_zero := by
     intro z hz
-    -- Step 1: z is not on the curve (since the curve is in U and z is not in U)
     have h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z :=
       fun t ht heq => hz (heq ▸ hγ_in_U t ht)
-    -- Step 2: Reduce PV winding number to classical integral
     rw [generalizedWindingNumber_eq_classical_away γ.toPiecewiseC1Curve z h_avoids]
-    -- Step 3: The function w -> (w - z)^{-1} is holomorphic on U
     have h_ne_z : ∀ w ∈ U, w - z ≠ 0 :=
       fun w hw => sub_ne_zero.mpr (fun heq => hz (heq ▸ hw))
-    have h_holo : DifferentiableOn ℂ (fun w => (w - z)⁻¹) U := by
-      intro w hw
-      exact ((differentiableAt_id.sub (differentiableAt_const z)).inv
+    have h_holo : DifferentiableOn ℂ (fun w => (w - z)⁻¹) U := fun w hw =>
+      ((differentiableAt_id.sub (differentiableAt_const z)).inv
         (h_ne_z w hw)).differentiableWithinAt
-    -- Step 4: Get a primitive F on U via convexity
     obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne h_holo
-    -- Step 5: Integrability (the integrand is bounded piecewise continuous)
     have h_int := integrand_intervalIntegrable_of_avoids γ z h_avoids
-    -- Step 6: By FTC, integral = F(gamma(b)) - F(gamma(a))
-    have h_ftc := ftc_piecewise_contour γ.toPiecewiseC1Curve U
-      hγ_in_U hF h_int
-    -- Step 7: gamma is closed, so F(gamma(b)) = F(gamma(a))
+    have h_ftc := ftc_piecewise_contour γ.toPiecewiseC1Curve U hγ_in_U hF h_int
     rw [h_ftc, congrArg F hγ_closed.symm, sub_self, mul_zero]
 
 /-! ## Dixon's Proof of the Homological Cauchy Theorem
@@ -326,8 +310,8 @@ Holomorphic on ℂ \ image(γ). -/
 noncomputable def dixonH2 (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
   ∫ t in γ.a..γ.b, f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t
 
-private lemma dixonH1_dslope_expansion (γ : PiecewiseC1Immersion)
-    (w : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
+private lemma dixonH1_dslope_expansion (γ : PiecewiseC1Immersion) (w : ℂ)
+    (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
     ∀ t ∈ Set.uIcc γ.a γ.b,
       dslope f (γ.toFun t) w * deriv γ.toFun t =
         f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t -
@@ -344,8 +328,8 @@ private lemma dixonH1_dslope_expansion (γ : PiecewiseC1Immersion)
 
 private lemma dixonH1_cauchyIntegrand_integrable (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U) (γ : PiecewiseC1Immersion)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (w : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) (w : ℂ)
+    (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
     IntervalIntegrable
       (fun t => f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t) volume γ.a γ.b := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
@@ -354,15 +338,15 @@ private lemma dixonH1_cauchyIntegrand_integrable (hU : IsOpen U)
       (fun t ht => sub_ne_zero.mpr (hoff t ht))
   obtain ⟨M_inv, hM_inv⟩ := isCompact_Icc.exists_bound_of_continuousOn h_inv_cont.norm
   simp only [norm_norm] at hM_inv
-  have hf_contOn_U : ContinuousOn f U :=
-    fun z hz => ((hf z hz).differentiableAt (hU.mem_nhds hz)).continuousAt.continuousWithinAt
+  have hf_contOn_U : ContinuousOn f U := fun z hz =>
+    ((hf z hz).differentiableAt (hU.mem_nhds hz)).continuousAt.continuousWithinAt
   have hf_cont_on : ContinuousOn (f ∘ γ.toFun) (Icc γ.a γ.b) :=
-    hf_contOn_U.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)
+    hf_contOn_U.comp γ.continuous_toFun fun t ht => hγ_in_U t ht
   obtain ⟨M_f, hM_f⟩ := isCompact_Icc.exists_bound_of_continuousOn hf_cont_on.norm
   simp only [Function.comp_def, norm_norm] at hM_f
   obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
-  apply intervalIntegrable_of_piecewise_continuousOn_bounded (P := γ.partition)
-      (M_f * M_inv * M_d) hab
+  apply intervalIntegrable_of_piecewise_continuousOn_bounded
+    (P := γ.partition) (M_f * M_inv * M_d) hab
   · intro t ⟨ht_Icc, ht_npart⟩
     have ht_Ioo : t ∈ Ioo γ.a γ.b := by
       constructor
@@ -391,8 +375,7 @@ private lemma dixonH1_cauchyIntegrand_integrable (hU : IsOpen U)
 /-- Key identity: h₁(w) = h₂(w) - 2πi · n(γ,w) · f(w) for w off the curve.
 This follows from expanding dslope and splitting the integral. -/
 theorem dixonH1_eq (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (γ : PiecewiseC1Immersion)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (γ : PiecewiseC1Immersion) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (w : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
     dixonH1 f γ w = dixonH2 f γ w -
       2 * ↑Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b w * f w := by
@@ -412,19 +395,18 @@ theorem dixonH1_eq (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
   congr 1
   exact integral_singular_term_eq_winding_times_coeff γ.toPiecewiseC1Curve w (f w) hoff
 
--- Helper: the Cauchy integrand f(γt)/(γt-x)*γ'(t) is interval integrable when x avoids γ
 private lemma dixonH2_integrand_integrable (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hfγ_cont : ContinuousOn (fun t => f (γ.toFun t)) (Icc γ.a γ.b))
     (M_f M_d ε : ℝ) (hM_f : ∀ t ∈ Icc γ.a γ.b, ‖f (γ.toFun t)‖ ≤ M_f)
     (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
-    (hM_f_nn : 0 ≤ M_f) (hε_pos : 0 < ε)
-    (x : ℂ) (hdist_lb : ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - x‖)
+    (hM_f_nn : 0 ≤ M_f) (hε_pos : 0 < ε) (x : ℂ)
+    (hdist_lb : ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - x‖)
     (hball_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x) :
     IntervalIntegrable
       (fun t => f (γ.toFun t) / (γ.toFun t - x) * deriv γ.toFun t) volume γ.a γ.b := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   apply intervalIntegrable_of_piecewise_continuousOn_bounded
-      (P := γ.partition) (M_f * ε⁻¹ * M_d) hab
+    (P := γ.partition) (M_f * ε⁻¹ * M_d) hab
   · intro t ⟨ht_Icc, ht_npart⟩
     have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
       by_contra h; push_neg at h
@@ -447,20 +429,13 @@ private lemma dixonH2_integrand_integrable (f : ℂ → ℂ) (γ : PiecewiseC1Im
           mul_le_mul hbound1 (hM_d t ht) (norm_nonneg _) (div_nonneg hM_f_nn hε_pos.le)
       _ = M_f * ε⁻¹ * M_d := by rw [div_eq_mul_inv]
 
--- Auxiliary: the Cauchy-type integral is holomorphic off the curve.
--- Uses let-bound F, F' so the kernel's whnf can stop at the abbreviation
--- rather than fully reducing the lambda expressions.
-private noncomputable def dixonH2_F (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) :
-    ℂ → ℝ → ℂ :=
+private noncomputable def dixonH2_F (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) : ℂ → ℝ → ℂ :=
   fun x t => f (γ.toFun t) * (γ.toFun t - x)⁻¹ * deriv γ.toFun t
 
-private noncomputable def dixonH2_F' (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) :
-    ℂ → ℝ → ℂ :=
+private noncomputable def dixonH2_F' (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) : ℂ → ℝ → ℂ :=
   fun x t => f (γ.toFun t) * (γ.toFun t - x)⁻¹ ^ 2 * deriv γ.toFun t
 
--- Helper: pointwise HasDerivAt for the Cauchy kernel integrand.
--- For fixed z, c: HasDerivAt (fun x => f(z) * (z-x)⁻¹ * c) (f(z) * (z-x)⁻²*c) x
-private lemma dixonH2_pointwise_hasDerivAt (fz c : ℂ) (z x : ℂ) (hne : z - x ≠ 0) :
+private lemma dixonH2_pointwise_hasDerivAt (fz c z x : ℂ) (hne : z - x ≠ 0) :
     HasDerivAt (fun x => fz * (z - x)⁻¹ * c) (fz * (z - x)⁻¹ ^ 2 * c) x := by
   have h1 : HasDerivAt (fun x => z - x) (-1) x := by
     convert (hasDerivAt_const x z).sub (hasDerivAt_id x) using 1
@@ -476,12 +451,10 @@ private lemma dixonH2_pointwise_hasDerivAt (fz c : ℂ) (z x : ℂ) (hne : z - x
   convert h4 using 1
   rw [inv_pow]
 
--- Helper: the derivative bound ‖F'(x,t)‖ ≤ M_f * ε⁻²  * M_d for x in the ball.
 private lemma dixonH2_deriv_bound (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (M_f M_d ε : ℝ) (hM_f : ∀ t ∈ Icc γ.a γ.b, ‖f (γ.toFun t)‖ ≤ M_f)
     (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
-    (hM_f_nn : 0 ≤ M_f) (hε_pos : 0 < ε)
-    (w : ℂ)
+    (hM_f_nn : 0 ≤ M_f) (hε_pos : 0 < ε) (w : ℂ)
     (hdist_lb : ∀ x ∈ Metric.ball w ε, ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - x‖) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
       ∀ x ∈ Metric.ball w ε,
@@ -490,8 +463,7 @@ private lemma dixonH2_deriv_bound (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   filter_upwards with t _ht x hx_ball
   have ht : t ∈ Icc γ.a γ.b := by
-    rw [Set.uIoc_of_le hab] at _ht
-    exact Set.Ioc_subset_Icc_self _ht
+    rw [Set.uIoc_of_le hab] at _ht; exact Set.Ioc_subset_Icc_self _ht
   rw [norm_mul, norm_mul, norm_pow, norm_inv]
   have hinv_bound : ‖γ.toFun t - x‖⁻¹ ≤ ε⁻¹ :=
     inv_anti₀ hε_pos (hdist_lb x hx_ball t ht)
@@ -513,8 +485,7 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hfγ_cont : ContinuousOn (fun t => f (γ.toFun t)) (Icc γ.a γ.b))
     (M_f M_d ε : ℝ) (hM_f : ∀ t ∈ Icc γ.a γ.b, ‖f (γ.toFun t)‖ ≤ M_f)
     (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
-    (_hM_f_nn : 0 ≤ M_f) (hε_pos : 0 < ε)
-    (w : ℂ)
+    (_hM_f_nn : 0 ≤ M_f) (hε_pos : 0 < ε) (w : ℂ)
     (_hdist_lb_w : ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - w‖)
     (_hball_avoids : ∀ x ∈ Metric.ball w ε, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x)
     (_hdist_lb : ∀ x ∈ Metric.ball w ε, ∀ t ∈ Icc γ.a γ.b, ε ≤ ‖γ.toFun t - x‖) :
@@ -524,8 +495,8 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
   -- Build all hypotheses for hasDerivAt_integral_of_dominated_loc_of_deriv_le separately
   -- to avoid expensive unification in one monolithic call.
   -- Step 1: integrand F(w,·) is interval integrable
-  have hav_w : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w :=
-    fun t ht => _hball_avoids w (Metric.mem_ball_self hε_pos) t ht
+  have hav_w : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w := fun t ht =>
+    _hball_avoids w (Metric.mem_ball_self hε_pos) t ht
   have hF_int : IntervalIntegrable (dixonH2_F f γ w) volume γ.a γ.b := by
     have heq : dixonH2_F f γ w =
         fun t => f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t := by
@@ -533,7 +504,6 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     rw [heq]
     exact dixonH2_integrand_integrable f γ hfγ_cont M_f M_d ε
       hM_f hM_d _hM_f_nn hε_pos w _hdist_lb_w hav_w
-  -- Step 2: F(x,·) is AE strongly measurable for x near w
   have hF_meas : ∀ᶠ x in 𝓝 w,
       AEStronglyMeasurable (dixonH2_F f γ x) (volume.restrict (Set.uIoc γ.a γ.b)) := by
     apply Filter.eventually_of_mem (Metric.ball_mem_nhds w hε_pos)
@@ -547,10 +517,9 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
         hM_f hM_d _hM_f_nn hε_pos x (fun t ht => _hdist_lb x hx t ht)
         (fun t ht => _hball_avoids x hx t ht)
     exact hint_x.def'.aestronglyMeasurable
-  -- Step 3: F'(w,·) is interval integrable and hence AE strongly measurable
   have hF'_int : IntervalIntegrable (dixonH2_F' f γ w) volume γ.a γ.b := by
     apply intervalIntegrable_of_piecewise_continuousOn_bounded
-        (P := γ.partition) (M_f * ε⁻¹ ^ 2 * M_d) hab
+      (P := γ.partition) (M_f * ε⁻¹ ^ 2 * M_d) hab
     · intro t ⟨ht_Icc, ht_npart⟩
       -- dixonH2_F' unfolds to the lambda by rfl
       change ContinuousWithinAt
@@ -575,41 +544,34 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
           (pow_le_pow_left₀ (by positivity) (inv_anti₀ hε_pos (_hdist_lb_w t ht)) 2)
           (by positivity) _hM_f_nn)
         (hM_d t ht) (by positivity) (mul_nonneg _hM_f_nn (by positivity))
-  have hF'_meas : AEStronglyMeasurable (dixonH2_F' f γ w) (volume.restrict (Set.uIoc γ.a γ.b)) :=
-    hF'_int.def'.aestronglyMeasurable
-  -- Step 4: Derivative bound (via dixonH2_deriv_bound)
+  have hF'_meas : AEStronglyMeasurable (dixonH2_F' f γ w)
+      (volume.restrict (Set.uIoc γ.a γ.b)) := hF'_int.def'.aestronglyMeasurable
   have h_bound : ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
       ∀ x ∈ Metric.ball w ε, ‖dixonH2_F' f γ x t‖ ≤ M_f * ε⁻¹ ^ 2 * M_d :=
     dixonH2_deriv_bound f γ M_f M_d ε hM_f hM_d _hM_f_nn hε_pos w _hdist_lb
-  -- Step 5: Bound is interval integrable
-  have hbound_int : IntervalIntegrable (fun _ => M_f * ε⁻¹ ^ 2 * M_d) volume γ.a γ.b :=
-    intervalIntegral.intervalIntegrable_const
-  -- Step 6: Pointwise HasDerivAt (via dixonH2_pointwise_hasDerivAt)
+  have hbound_int : IntervalIntegrable (fun _ => M_f * ε⁻¹ ^ 2 * M_d)
+      volume γ.a γ.b := intervalIntegral.intervalIntegrable_const
   have h_diff : ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
       ∀ x ∈ Metric.ball w ε,
         HasDerivAt (fun x => dixonH2_F f γ x t) (dixonH2_F' f γ x t) x := by
     filter_upwards with t _ht x hx_ball
     have ht' : t ∈ Icc γ.a γ.b := by
-      rw [Set.uIoc_of_le hab] at _ht; exact Set.Ioc_subset_Icc_self _ht
+      rw [Set.uIoc_of_le hab] at _ht; exact Ioc_subset_Icc_self _ht
     simp only [dixonH2_F, dixonH2_F']
     exact dixonH2_pointwise_hasDerivAt (f (γ.toFun t)) (deriv γ.toFun t) (γ.toFun t) x
       (sub_ne_zero.mpr (_hball_avoids x hx_ball t ht'))
-  -- Step 7: Apply the parametric differentiation theorem
   have hmain := (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
     hε_pos hF_meas hF_int hF'_meas h_bound hbound_int h_diff).2
   convert hmain using 2
 
-private lemma ball_avoids_curve_of_infDist_pos (γ : PiecewiseC1Immersion) (w : ℂ)
-    (hinfDist_pos : 0 < Metric.infDist w (γ.toFun '' Icc γ.a γ.b)) :
+private lemma ball_avoids_curve_of_infDist_pos (γ : PiecewiseC1Immersion)
+    (w : ℂ) (hinfDist_pos : 0 < Metric.infDist w (γ.toFun '' Icc γ.a γ.b)) :
     ∀ x ∈ Metric.ball w (Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2),
       ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x := by
   intro x hx t ht heq
   have hmem : x ∈ γ.toFun '' Icc γ.a γ.b := ⟨t, ht, heq⟩
-  have h1 : Metric.infDist w (γ.toFun '' Icc γ.a γ.b) ≤ dist w x :=
-    Metric.infDist_le_dist_of_mem hmem
-  have h3 : dist w x < Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2 := by
-    rw [dist_comm]; exact Metric.mem_ball.mp hx
-  linarith
+  have h1 := Metric.infDist_le_dist_of_mem (x := w) hmem
+  linarith [show dist w x < _ / 2 from by rw [dist_comm]; exact Metric.mem_ball.mp hx]
 
 private lemma dist_lower_bound_at_center (γ : PiecewiseC1Immersion) (w : ℂ) :
     ∀ t ∈ Icc γ.a γ.b,
@@ -637,76 +599,65 @@ private lemma dist_lower_bound_on_ball (γ : PiecewiseC1Immersion) (w : ℂ) :
   rw [Complex.dist_eq, ← norm_neg (x - γ.toFun t), neg_sub] at h1
   exact h1
 
-private lemma dixonH2_differentiableAt_infDist_pos (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
-    (hf_cont : ContinuousOn f (γ.toFun '' Icc γ.a γ.b))
+private lemma dixonH2_differentiableAt_infDist_pos (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion) (hf_cont : ContinuousOn f (γ.toFun '' Icc γ.a γ.b))
     (w : ℂ) (hinfDist_pos : 0 < Metric.infDist w (γ.toFun '' Icc γ.a γ.b)) :
     DifferentiableAt ℂ
       (fun w => ∫ t in γ.a..γ.b, f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t) w := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   have hfγ_cont : ContinuousOn (fun t => f (γ.toFun t)) (Icc γ.a γ.b) :=
-    hf_cont.comp γ.continuous_toFun (fun t ht => ⟨t, ht, rfl⟩)
+    hf_cont.comp γ.continuous_toFun fun t ht => ⟨t, ht, rfl⟩
   obtain ⟨M_f, hM_f_spec⟩ := isCompact_Icc.exists_bound_of_continuousOn hfγ_cont.norm
   simp only [norm_norm] at hM_f_spec
   obtain ⟨M_d, hM_d_spec⟩ := piecewiseC1Immersion_deriv_bounded γ
   exact (dixonH2_hasDerivAt f γ hfγ_cont M_f M_d
-    (Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2)
-    hM_f_spec hM_d_spec
-    (le_trans (norm_nonneg _) (hM_f_spec γ.a (left_mem_Icc.mpr hab)))
-    (by linarith) w
-    (dist_lower_bound_at_center γ w)
-    (ball_avoids_curve_of_infDist_pos γ w hinfDist_pos)
+    (Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2) hM_f_spec hM_d_spec
+    (le_trans (norm_nonneg _) (hM_f_spec γ.a (left_mem_Icc.mpr hab))) (by linarith) w
+    (dist_lower_bound_at_center γ w) (ball_avoids_curve_of_infDist_pos γ w hinfDist_pos)
     (dist_lower_bound_on_ball γ w)).differentiableAt
 
 /-- h₂ is differentiable at every point off the curve, when f is continuous on the image. -/
 theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
-    (hf_cont : ContinuousOn f (γ.toFun '' Icc γ.a γ.b))
-    (w : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
+    (hf_cont : ContinuousOn f (γ.toFun '' Icc γ.a γ.b)) (w : ℂ)
+    (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
     DifferentiableAt ℂ (dixonH2 f γ) w := by
   show DifferentiableAt ℂ
       (fun w => ∫ t in γ.a..γ.b, f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t) w
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
-  have himage_closed : IsClosed (γ.toFun '' Icc γ.a γ.b) :=
-    (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed
-  have himage_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
-    ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr hab, rfl⟩
+  have himage_closed := (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed
+  have himage_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty := ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr hab, rfl⟩
   exact dixonH2_differentiableAt_infDist_pos f γ hf_cont w
-    ((himage_closed.notMem_iff_infDist_pos himage_ne).mp (fun ⟨t, ht, heq⟩ => hoff t ht heq))
+    ((himage_closed.notMem_iff_infDist_pos himage_ne).mp fun ⟨t, ht, heq⟩ => hoff t ht heq)
 
 /-- Uniform bound on dslope: for c in a compact set K ⊂ U and w in a ball B ⊂ U,
 ‖dslope f c w‖ is bounded. Uses MVT on convex balls for nearby points and
 triangle inequality for distant points. -/
 private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (K : Set ℂ) (hK_compact : IsCompact K) (hK_sub : K ⊆ U)
-    (w₀ : ℂ) (hw₀ : w₀ ∈ U) :
+    (K : Set ℂ) (hK_compact : IsCompact K) (hK_sub : K ⊆ U) (w₀ : ℂ) (hw₀ : w₀ ∈ U) :
     ∃ C > 0, ∃ δ > 0, ∀ c ∈ K, ∀ w ∈ Metric.ball w₀ δ,
       ‖dslope f c w‖ ≤ C := by
-  -- Choose r with ball(w₀, r) ⊂ U
   obtain ⟨r, hr_pos, hr_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
-  -- Bound ‖f‖ on K ∪ closedBall(w₀, r/2)
   have hcb_sub : Metric.closedBall w₀ (r / 2) ⊆ U :=
     (Metric.closedBall_subset_ball (by linarith)).trans hr_sub
-  obtain ⟨M_f, hM_f⟩ := (hK_compact.union (isCompact_closedBall w₀ (r / 2))).exists_bound_of_continuousOn
-    (hf.continuousOn.mono (Set.union_subset hK_sub hcb_sub) |>.norm)
-  -- Bound ‖deriv f‖ on closedBall(w₀, r/2)
+  obtain ⟨M_f, hM_f⟩ :=
+    (hK_compact.union (isCompact_closedBall w₀ (r / 2))).exists_bound_of_continuousOn
+      (hf.continuousOn.mono (Set.union_subset hK_sub hcb_sub) |>.norm)
   have hderiv_cont : ContinuousOn (deriv f) (Metric.closedBall w₀ (r / 2)) :=
     ((hf.mono hr_sub).deriv Metric.isOpen_ball).continuousOn.mono
       (Metric.closedBall_subset_ball (by linarith))
-  obtain ⟨C_d, hC_d⟩ := (isCompact_closedBall w₀ (r / 2)).exists_bound_of_continuousOn hderiv_cont
-  -- Set δ = r/4, C = max(C_d+1, 8*M_f/r + 1)
-  have hr4_pos : (0 : ℝ) < r / 4 := by linarith
+  obtain ⟨C_d, hC_d⟩ :=
+    (isCompact_closedBall w₀ (r / 2)).exists_bound_of_continuousOn hderiv_cont
   refine ⟨max (C_d + 1) (8 * (|M_f| + 1) / r + 1), by positivity,
-    r / 4, hr4_pos, fun c hc w hw => ?_⟩
+    r / 4, by linarith, fun c hc w hw => ?_⟩
   by_cases hcw : c = w
-  · -- c = w: dslope = deriv f c
-    subst hcw; rw [dslope_same]
+  · subst hcw; rw [dslope_same]
     have hc_cb : c ∈ Metric.closedBall w₀ (r / 2) :=
       Metric.closedBall_subset_closedBall (by linarith : r / 4 ≤ r / 2)
         (Metric.ball_subset_closedBall hw)
     calc ‖deriv f c‖ ≤ C_d := hC_d c hc_cb
       _ ≤ C_d + 1 := by linarith
       _ ≤ _ := le_max_left _ _
-  · -- c ≠ w: dslope = slope = (f w - f c)/(w - c)
-    have hne : w ≠ c := fun h => hcw h.symm
+  · have hne : w ≠ c := fun h => hcw h.symm
     rw [dslope_of_ne _ hne, slope_def_field, norm_div]
     by_cases hc_near : c ∈ Metric.closedBall w₀ (r / 2)
     · -- Both in convex ball → MVT
@@ -761,18 +712,14 @@ set_option maxHeartbeats 8000000 in
 /-- h₁ is differentiable on all of U, including across the curve.
 Uses the Leibniz rule (parametric differentiation of the dslope integral). -/
 theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (γ : PiecewiseC1Immersion)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
+    (γ : PiecewiseC1Immersion) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) :
     DifferentiableOn ℂ (dixonH1 f γ) U := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
-  have hdslope_diff : ∀ t ∈ Icc γ.a γ.b,
-      DifferentiableOn ℂ (dslope f (γ.toFun t)) U :=
+  have hdslope_diff : ∀ t ∈ Icc γ.a γ.b, DifferentiableOn ℂ (dslope f (γ.toFun t)) U :=
     fun t ht => (differentiableOn_dslope (hU.mem_nhds (hγ_in_U t ht))).mpr hf
   obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
   have hγ_compact := isCompact_Icc.image_of_continuousOn γ.continuous_toFun
-  have hγ_sub : γ.toFun '' Icc γ.a γ.b ⊆ U :=
-    fun _ ⟨t, ht, he⟩ => he ▸ hγ_in_U t ht
-  -- t ↦ dslope f (γ t) x is continuous on [a,b] for any fixed x : ℂ
+  have hγ_sub : γ.toFun '' Icc γ.a γ.b ⊆ U := fun _ ⟨t, ht, he⟩ => he ▸ hγ_in_U t ht
   have hdslope_t_cont : ∀ x : ℂ,
       ContinuousOn (fun t => dslope f (γ.toFun t) x) (Icc γ.a γ.b) := by
     intro x
@@ -788,8 +735,8 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
         (continuousOn_dslope (hU.mem_nhds hx)).mpr
           ⟨hf.continuousOn, (hf x hx).differentiableAt (hU.mem_nhds hx)⟩
       exact h_dslope_cont.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)
-    · have hne : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x :=
-        fun t ht heq => hx (heq ▸ hγ_in_U t ht)
+    · have hne : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x := fun t ht heq =>
+        hx (heq ▸ hγ_in_U t ht)
       have h_eq : ∀ t ∈ Icc γ.a γ.b,
           dslope f (γ.toFun t) x = (f x - f (γ.toFun t)) / (x - γ.toFun t) := by
         intro t ht
@@ -954,8 +901,9 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
   exact ((intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
     hε_pos hF_meas hF_int hF'_meas h_bound intervalIntegral.intervalIntegrable_const h_diff).2).differentiableAt
 
-/-- The Dixon function: h₁ on U, h₂ on ℂ \ U. -/
-noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ) (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
+/-- The Dixon function: h1 on U, h2 on C \ U. -/
+noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ)
+    (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
   if _h : w ∈ U then dixonH1 f γ w else dixonH2 f γ w
 
 set_option maxHeartbeats 800000 in
@@ -968,29 +916,23 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
     Differentiable ℂ (dixonFunction f U γ) := by
   intro w
   by_cases hw : w ∈ U
-  · -- w ∈ U: dixonFunction agrees with dixonH1 on U, holomorphic by dixonH1_differentiableOn
-    have h_eq : ∀ᶠ w' in 𝓝 w, dixonFunction f U γ w' = dixonH1 f γ w' :=
+  · have h_eq : ∀ᶠ w' in 𝓝 w, dixonFunction f U γ w' = dixonH1 f γ w' :=
       Filter.Eventually.mono (hU.mem_nhds hw)
         (fun w' hw' => by simp only [dixonFunction]; exact if_pos hw')
     exact ((dixonH1_differentiableOn hU hf γ h_null.image_subset).differentiableAt
       (hU.mem_nhds hw)).congr_of_eventuallyEq h_eq
-  · -- w ∉ U: w is off the curve (since image(γ) ⊆ U)
-    have hab : γ.a ≤ γ.b := le_of_lt γ.hab
-    have hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w :=
-      fun t ht heq => hw (heq ▸ h_null.image_subset t ht)
-    -- Get ε > 0 with ball(w, ε) disjoint from image(γ)
-    have himage_compact : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
-      isCompact_Icc.image_of_continuousOn γ.continuous_toFun
-    have himage_closed : IsClosed (γ.toFun '' Icc γ.a γ.b) := himage_compact.isClosed
+  · have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+    have hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w := fun t ht heq =>
+      hw (heq ▸ h_null.image_subset t ht)
+    have himage_compact := isCompact_Icc.image_of_continuousOn γ.continuous_toFun
+    have himage_closed := himage_compact.isClosed
     have himage_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
       ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr hab, rfl⟩
-    have hw_notmem : w ∉ γ.toFun '' Icc γ.a γ.b :=
-      fun ⟨t, ht, heq⟩ => hoff t ht heq
+    have hw_notmem : w ∉ γ.toFun '' Icc γ.a γ.b := fun ⟨t, ht, heq⟩ => hoff t ht heq
     have hinfDist_pos : 0 < Metric.infDist w (γ.toFun '' Icc γ.a γ.b) :=
       (himage_closed.notMem_iff_infDist_pos himage_ne).mp hw_notmem
     set ε := Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2 with hε_def
     have hε_pos : 0 < ε := by positivity
-    -- ball(w, ε) avoids the curve
     have hball_avoids : ∀ t ∈ Icc γ.a γ.b, ∀ w' ∈ Metric.ball w ε, γ.toFun t ≠ w' := by
       intro t ht w' hw' heq
       have hmem : w' ∈ γ.toFun '' Icc γ.a γ.b := ⟨t, ht, heq⟩
@@ -999,7 +941,6 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
       have h2 : dist w' w < ε := Metric.mem_ball.mp hw'
       rw [dist_comm] at h2
       linarith
-    -- Winding number on ball(w, ε) is continuous (via classical integral formula)
     have hwn_cts : ContinuousOn (fun w' => generalizedWindingNumber' γ.toFun γ.a γ.b w')
         (Metric.ball w ε) := by
       apply ContinuousOn.congr
@@ -1018,9 +959,7 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
         have hoff' : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w' :=
           fun t ht heq => hball_avoids t ht w' hw' heq
         exact generalizedWindingNumber_eq_classical_away γ.toPiecewiseC1Curve w' hoff'
-    -- Winding number at w is 0 by h_null
-    have hwn_w : generalizedWindingNumber' γ.toFun γ.a γ.b w = 0 := h_null.winding_zero w hw
-    -- Winding number is ℤ-valued on the ball
+    have hwn_w := h_null.winding_zero w hw
     have hwn_int : ∀ w' ∈ Metric.ball w ε, ∃ n : ℤ,
         generalizedWindingNumber' γ.toFun γ.a γ.b w' = n := by
       intro w' hw'
@@ -1031,21 +970,19 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
           (γ.deriv_continuous_off_partition t (hsub ht) (hnoP t ht)).continuousWithinAt)
         (fun t ht => hball_avoids t ht w' hw')
         ⟨_, fun t ht => (piecewiseC1Immersion_deriv_bounded γ).choose_spec t ht⟩
-    -- Winding number = 0 on all of ball(w, ε): integer-valued + continuous + connected + 0 at w
     have hwn_zero_ball : ∀ w' ∈ Metric.ball w ε,
         generalizedWindingNumber' γ.toFun γ.a γ.b w' = 0 := by
       haveI hpreconn : PreconnectedSpace (Metric.ball w ε) :=
-        isPreconnected_iff_preconnectedSpace.mp (Metric.isConnected_ball hε_pos).isPreconnected
+        isPreconnected_iff_preconnectedSpace.mp
+          (Metric.isConnected_ball hε_pos).isPreconnected
       have hwn_cts_sub : Continuous
           (fun w'' : Metric.ball w ε =>
             generalizedWindingNumber' γ.toFun γ.a γ.b w''.val) :=
         hwn_cts.comp_continuous continuous_subtype_val (fun w'' => w''.2)
-      -- Define ℤ-valued winding number on the subtype
       let wn_Z : Metric.ball w ε → ℤ := fun w'' => (hwn_int w'' w''.2).choose
       have wn_Z_cast : ∀ w'' : Metric.ball w ε,
           (wn_Z w'' : ℂ) = generalizedWindingNumber' γ.toFun γ.a γ.b w''.val :=
         fun w'' => (hwn_int w'' w''.2).choose_spec.symm
-      -- wn_Z is locally constant, hence continuous (ℤ discrete)
       have wn_Z_cont : Continuous wn_Z := by
         rw [← IsLocallyConstant.iff_continuous, IsLocallyConstant.iff_eventually_eq]
         intro ⟨w'', hw''⟩
@@ -1053,7 +990,6 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
             (fun w''' : Metric.ball w ε =>
               generalizedWindingNumber' γ.toFun γ.a γ.b w'''.val) ⟨w'', hw''⟩ :=
           hwn_cts_sub.continuousAt
-        -- On a neighborhood, wn is within 1/2 of wn(w'')
         have hev : ∀ᶠ w''' : Metric.ball w ε in 𝓝 ⟨w'', hw''⟩,
             ‖generalizedWindingNumber' γ.toFun γ.a γ.b w'''.val -
               generalizedWindingNumber' γ.toFun γ.a γ.b w''‖ < 1 / 2 := by
@@ -1063,7 +999,6 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
             hwn_cts_at (Metric.ball_mem_nhds _ (by norm_num : (0 : ℝ) < 1 / 2))
           exact h_nbhd.mono fun w''' h_mem =>
             (Complex.dist_eq _ _).symm ▸ Metric.mem_ball.mp h_mem
-        -- Integer difference has norm < 1/2, so must be 0
         apply hev.mono; intro ⟨w''', hw'''⟩ h_lt
         apply Int.cast_injective (α := ℂ); rw [wn_Z_cast, wn_Z_cast]
         obtain ⟨n1, hn1⟩ := hwn_int w''' hw'''
@@ -1080,10 +1015,8 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
             linarith [abs_nonneg ((n1 : ℝ) - n2)]
           exact_mod_cast Int.abs_lt_one_iff.mp (by exact_mod_cast key)
         exact sub_eq_zero.mp (hm ▸ (by exact_mod_cast h_zero))
-      -- wn_Z at w is 0
       have hwn_Z_w : wn_Z ⟨w, Metric.mem_ball_self hε_pos⟩ = 0 := by
         apply Int.cast_injective (α := ℂ); push_cast; rw [wn_Z_cast]; exact hwn_w
-      -- By preconnectedness, wn_Z is constant
       intro w' hw'
       obtain ⟨n, hn⟩ := hwn_int w' hw'
       have h_wn_Z : wn_Z ⟨w', hw'⟩ = 0 :=
@@ -1094,34 +1027,28 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
         have h2 : (wn_Z ⟨w', hw'⟩ : ℂ) = 0 := by exact_mod_cast h_wn_Z
         exact_mod_cast h1.symm.trans h2
       simp [hn, h_n_zero]
-    -- On ball(w, ε): dixonFunction agrees with dixonH2
     have heq_on_ball : ∀ᶠ w' in 𝓝 w, dixonFunction f U γ w' = dixonH2 f γ w' := by
       apply Filter.Eventually.mono (Metric.ball_mem_nhds w hε_pos)
       intro w' hw'
       simp only [dixonFunction]
       split_ifs with hw'U
-      · -- w' ∈ U: dixonH1 = dixonH2 since n = 0
-        have hoff' : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w' :=
-          fun t ht heq => hball_avoids t ht w' hw' heq
-        rw [dixonH1_eq hU hf γ h_null.image_subset w' hoff', hwn_zero_ball w' hw']
-        ring
+      · have hoff' : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w' := fun t ht heq =>
+          hball_avoids t ht w' hw' heq
+        rw [dixonH1_eq hU hf γ h_null.image_subset w' hoff', hwn_zero_ball w' hw']; ring
       · rfl
-    -- DifferentiableAt ℂ (dixonFunction f U γ) w via dixonH2
-    have h2_diff : DifferentiableAt ℂ (dixonH2 f γ) w :=
-      dixonH2_differentiableAt f γ
-        (hf.continuousOn.mono (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)) w hoff
+    have h2_diff : DifferentiableAt ℂ (dixonH2 f γ) w := dixonH2_differentiableAt f γ
+      (hf.continuousOn.mono fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht) w hoff
     exact h2_diff.congr_of_eventuallyEq heq_on_ball
 
 private lemma curveImage_dist_lower_bound (γ : PiecewiseC1Immersion) {R : ℝ}
-    (hR : ∀ x ∈ γ.toFun '' Icc γ.a γ.b, ‖x‖ ≤ R) (w : ℂ)
-    {t : ℝ} (ht : t ∈ Icc γ.a γ.b) : ‖w‖ - R ≤ ‖γ.toFun t - w‖ := by
+    (hR : ∀ x ∈ γ.toFun '' Icc γ.a γ.b, ‖x‖ ≤ R) (w : ℂ) {t : ℝ}
+    (ht : t ∈ Icc γ.a γ.b) : ‖w‖ - R ≤ ‖γ.toFun t - w‖ := by
   have h1 : ‖w‖ - ‖γ.toFun t‖ ≤ ‖w - γ.toFun t‖ := norm_sub_norm_le w (γ.toFun t)
   rw [norm_sub_rev] at h1
   linarith [hR (γ.toFun t) ⟨t, ht, rfl⟩]
 
-private lemma dixonH2_norm_bound (γ : PiecewiseC1Immersion)
-    {R M_f M_d : ℝ} (hM_f_nn : 0 ≤ M_f)
-    (hR : ∀ x ∈ γ.toFun '' Icc γ.a γ.b, ‖x‖ ≤ R)
+private lemma dixonH2_norm_bound (γ : PiecewiseC1Immersion) {R M_f M_d : ℝ}
+    (hM_f_nn : 0 ≤ M_f) (hR : ∀ x ∈ γ.toFun '' Icc γ.a γ.b, ‖x‖ ≤ R)
     (hM_f : ∀ t ∈ Icc γ.a γ.b, ‖f (γ.toFun t)‖ ≤ M_f)
     (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
     {w : ℂ} (hw : R < ‖w‖) :
@@ -1146,8 +1073,7 @@ private lemma dixonH2_norm_bound (γ : PiecewiseC1Immersion)
     _ = M_f * M_d * (γ.b - γ.a) / (‖w‖ - R) := by
         rw [abs_of_nonneg (by linarith : 0 ≤ γ.b - γ.a)]; ring
 
-private lemma windingNumber_norm_lt_one (γ : PiecewiseC1Immersion)
-    {R M_d : ℝ} {w : ℂ}
+private lemma windingNumber_norm_lt_one (γ : PiecewiseC1Immersion) {R M_d : ℝ} {w : ℂ}
     (hR : ∀ x ∈ γ.toFun '' Icc γ.a γ.b, ‖x‖ ≤ R)
     (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
     (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w)
@@ -1158,9 +1084,9 @@ private lemma windingNumber_norm_lt_one (γ : PiecewiseC1Immersion)
   have hba_nn : 0 ≤ γ.b - γ.a := by linarith
   have h2pi_pos : 0 < 2 * Real.pi := Real.two_pi_pos
   have hpos : 0 < ‖w‖ - R := by linarith
-  rw [generalizedWindingNumber_eq_classical_away γ.toPiecewiseC1Curve w hoff,
-      norm_mul, norm_inv, norm_mul, norm_mul, Complex.norm_two, Complex.norm_real,
-      Real.norm_of_nonneg Real.pi_pos.le, Complex.norm_I, mul_one]
+  rw [generalizedWindingNumber_eq_classical_away γ.toPiecewiseC1Curve w hoff, norm_mul,
+    norm_inv, norm_mul, norm_mul, Complex.norm_two, Complex.norm_real,
+    Real.norm_of_nonneg Real.pi_pos.le, Complex.norm_I, mul_one]
   have h_ptwise : ∀ t ∈ Set.uIoc γ.a γ.b,
       ‖(γ.toFun t - w)⁻¹ * deriv γ.toFun t‖ ≤ M_d / (‖w‖ - R) := by
     intro t ht_ui
@@ -1186,19 +1112,18 @@ private lemma windingNumber_norm_lt_one (γ : PiecewiseC1Immersion)
         rw [div_lt_one (mul_pos hpos h2pi_pos)]
         linarith [(div_lt_iff₀ h2pi_pos).mp hw]
 
-private lemma windingNumber_zero_of_large_norm (γ : PiecewiseC1Immersion)
-    {R M_d : ℝ} (hM_d_nn : 0 ≤ M_d)
-    (hR : ∀ x ∈ γ.toFun '' Icc γ.a γ.b, ‖x‖ ≤ R)
+private lemma windingNumber_zero_of_large_norm (γ : PiecewiseC1Immersion) {R M_d : ℝ}
+    (hM_d_nn : 0 ≤ M_d) (hR : ∀ x ∈ γ.toFun '' Icc γ.a γ.b, ‖x‖ ≤ R)
     (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
     (hclosed : γ.toFun γ.a = γ.toFun γ.b)
     {w : ℂ} (hw : R + M_d * (γ.b - γ.a) / (2 * Real.pi) < ‖w‖) :
     generalizedWindingNumber' γ.toFun γ.a γ.b w = 0 := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   have h2pi_pos : 0 < 2 * Real.pi := Real.two_pi_pos
-  have hR_lt : R < ‖w‖ := by
-    linarith [div_nonneg (mul_nonneg hM_d_nn (by linarith : 0 ≤ γ.b - γ.a)) h2pi_pos.le]
-  have hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w := by
-    intro t ht heq; linarith [hR (γ.toFun t) ⟨t, ht, rfl⟩, heq ▸ hR_lt]
+  have hR_lt : R < ‖w‖ := by linarith [div_nonneg (mul_nonneg hM_d_nn
+    (by linarith : 0 ≤ γ.b - γ.a)) h2pi_pos.le]
+  have hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w := fun t ht heq => by
+    linarith [hR (γ.toFun t) ⟨t, ht, rfl⟩, heq ▸ hR_lt]
   obtain ⟨n, hn_eq⟩ := windingNumber_integer_of_piecewise_closed_avoiding γ.toFun γ.a γ.b w
     γ.partition γ.hab hclosed γ.continuous_toFun
     (fun t ht hP => γ.smooth_off_partition t (Ioo_subset_Icc_self ht) hP)
@@ -1251,8 +1176,7 @@ private lemma dixonFunction_norm_lt_of_large (hU : IsOpen U) (hf : Differentiabl
       (dixonH2_norm_bound γ hM_f_nn hR hM_f hM_d hR_lt) h_bound_lt_ε
 
 theorem dixonFunction_tendsto_zero (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (γ : PiecewiseC1Immersion)
-    (h_null : IsNullHomologous γ U) :
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U) :
     Tendsto (dixonFunction f U γ) (Filter.cocompact ℂ) (𝓝 0) := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   obtain ⟨R, hR⟩ :=
@@ -1262,13 +1186,12 @@ theorem dixonFunction_tendsto_zero (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
   obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
   have hM_d_nn : 0 ≤ M_d := le_trans (norm_nonneg _) (hM_d γ.a (left_mem_Icc.mpr hab))
   have hfγ_cont : ContinuousOn (fun t => f (γ.toFun t)) (Icc γ.a γ.b) :=
-    hf.continuousOn.comp γ.continuous_toFun (fun t ht => h_null.image_subset t ht)
+    hf.continuousOn.comp γ.continuous_toFun fun t ht => h_null.image_subset t ht
   obtain ⟨M_f, hM_f⟩ := isCompact_Icc.exists_bound_of_continuousOn hfγ_cont.norm
   simp only [norm_norm] at hM_f
   have hM_f_nn : 0 ≤ M_f := le_trans (norm_nonneg _) (hM_f γ.a (left_mem_Icc.mpr hab))
-  exact zero_at_infty_of_norm_le _ fun ε hε =>
-    ⟨_, fun w hw => dixonFunction_norm_lt_of_large hU hf γ h_null
-      hM_f_nn hM_d_nn hR hM_f hM_d hε hw⟩
+  exact zero_at_infty_of_norm_le _ fun ε hε => ⟨_, fun w hw =>
+    dixonFunction_norm_lt_of_large hU hf γ h_null hM_f_nn hM_d_nn hR hM_f hM_d hε hw⟩
 
 /-- h ≡ 0 by Liouville's theorem. -/
 theorem dixonFunction_eq_zero (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
@@ -1288,13 +1211,8 @@ theorem cauchyIntegralFormula_nullHomologous (hU : IsOpen U) (hf : Differentiabl
       2 * ↑Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b w * f w := by
   have h_zero := dixonFunction_eq_zero hU hf γ h_null w
   simp only [dixonFunction, dif_pos hw] at h_zero
-  -- h_zero : dixonH1 f γ w = 0
-  -- By dixonH1_eq: h₁ = h₂ - 2πi·n·f(w), so 0 = h₂ - 2πi·n·f(w)
   have h_eq := dixonH1_eq hU hf γ h_null.image_subset w hoff
-  -- h_eq : dixonH1 f γ w = dixonH2 f γ w - 2πi·n·f(w)
-  rw [h_zero] at h_eq
-  -- h_eq : 0 = dixonH2 f γ w - 2 * ↑π * I * n * f w
-  linear_combination -h_eq
+  rw [h_zero] at h_eq; linear_combination -h_eq
 
 /-- The image of a piecewise C¹ immersion has empty interior in ℂ.
 This follows from the fact that a Lipschitz map from ℝ to ℂ has image with
@@ -1358,27 +1276,22 @@ private lemma piecewiseC1_image_interior_empty (γ : PiecewiseC1Immersion) :
     rw [Complex.finrank_real_complex]
     norm_cast
 
-theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U)
-    (hf : DifferentiableOn ℂ f U)
+theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
-  -- Step 1: Find w₀ ∈ U \ image(γ)
-  have hU_ne : U.Nonempty :=
-    ⟨γ.toFun γ.a, h_null.image_subset γ.a (left_mem_Icc.mpr hab)⟩
+  have hU_ne : U.Nonempty := ⟨γ.toFun γ.a, h_null.image_subset γ.a (left_mem_Icc.mpr hab)⟩
   have h_im_int_empty := piecewiseC1_image_interior_empty γ
   obtain ⟨w₀, hw₀U, hw₀_off⟩ : ∃ w₀ ∈ U, w₀ ∉ γ.toFun '' Icc γ.a γ.b := by
     by_contra h; push_neg at h
     have : U ⊆ interior (γ.toFun '' Icc γ.a γ.b) := hU.subset_interior_iff.mpr h
     rw [h_im_int_empty] at this
     exact Set.not_nonempty_empty (hU_ne.mono this)
-  have hw₀_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w₀ :=
-    fun t ht heq => hw₀_off ⟨t, ht, heq⟩
-  -- Step 2: Define F(z) = f(z) * (z - w₀), holomorphic on U
+  have hw₀_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w₀ := fun t ht heq =>
+    hw₀_off ⟨t, ht, heq⟩
   set F := fun z => f z * (z - w₀) with hF_def
   have hF_diff : DifferentiableOn ℂ F U :=
     hf.mul (differentiableOn_id.sub (differentiableOn_const w₀))
-  -- Step 3: Rewrite ∫ f·γ' = ∫ F/(·-w₀)·γ' (since F(z)/(z-w₀) = f(z) for z ≠ w₀)
   have h_eq : ∀ t ∈ Set.uIcc γ.a γ.b,
       f (γ.toFun t) * deriv γ.toFun t =
       F (γ.toFun t) / (γ.toFun t - w₀) * deriv γ.toFun t := by
@@ -1387,7 +1300,6 @@ theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U)
     have hne : γ.toFun t - w₀ ≠ 0 := sub_ne_zero.mpr (hw₀_avoids t ht_Icc)
     simp only [hF_def, mul_div_assoc, div_self hne, mul_one]
   rw [intervalIntegral.integral_congr h_eq]
-  -- Step 4: Apply CIF to F at w₀: ∫ F/(·-w₀)·γ' = 2πi·n·F(w₀) = 0
   have hCIF := cauchyIntegralFormula_nullHomologous hU hF_diff γ h_null w₀ hw₀U hw₀_avoids
   rw [show F w₀ = 0 from by simp [hF_def, sub_self, mul_zero], mul_zero] at hCIF
   exact hCIF
@@ -1401,9 +1313,9 @@ end
 set_option maxHeartbeats 4000000 in
 /-- Null-homologous version of `integral_eq_sum_residues_of_avoids`. -/
 theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
-    (S0 : Finset ℂ) (hS0_in_U : ∀ s ∈ S0, s ∈ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+    (S0 : Finset ℂ) (hS0_in_U : ∀ s ∈ S0, s ∈ U) (f : ℂ → ℂ)
+    (hf : DifferentiableOn ℂ f (U \ S0)) (γ : PiecewiseC1Immersion)
+    (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
     (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
     (hf_ext : ∀ s ∈ S0, ContinuousAt
@@ -1414,20 +1326,15 @@ theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
         ∑ s ∈ S0,
           generalizedWindingNumber' γ.toFun γ.a γ.b s *
             residueSimplePole f s := by
-  -- Step 1: Decompose f = Σ res/(z-s) + g where g is holomorphic on U
   set g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)
   have ⟨hg_diff, hf_decomp⟩ :=
     simple_poles_decomposition U hU S0 hS0_in_U f hf hSimplePoles hf_ext
-  -- Step 2: ∫ g ∘ γ = 0 by null-homologous Dixon theorem
   have hg_zero : ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 :=
     contourIntegral_eq_zero_of_nullHomologous hU hg_diff γ h_null
-  -- Step 3: Rewrite ∫ f as ∫ (Σ res/(z-s)) + ∫ g
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
-  have h_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U \ (S0 : Set ℂ) :=
-    fun t ht => ⟨h_null.image_subset t ht,
-      fun hs => hγ_avoids _ (Finset.mem_coe.mp hs) t ht rfl⟩
-  -- The integrand f*γ' = (Σ res/(z-s))*γ' + g*γ'
+  have h_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U \ (S0 : Set ℂ) := fun t ht =>
+    ⟨h_null.image_subset t ht, fun hs => hγ_avoids _ (Finset.mem_coe.mp hs) t ht rfl⟩
   have h_expand : ∀ t ∈ Icc γ.a γ.b,
       f (γ.toFun t) * deriv γ.toFun t =
       (∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
@@ -1435,19 +1342,16 @@ theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
     intro t ht
     have := hf_decomp (γ.toFun t) (h_on_curve t ht)
     simp only at this; rw [this, add_mul, Finset.sum_mul]
-  -- Rewrite integrand: f*γ' = Σ(res/(z-s)*γ') + g*γ'
   have h_eq : (fun t => f (γ.toFun t) * deriv γ.toFun t) =
       (fun t => (∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t) +
         g (γ.toFun t) * deriv γ.toFun t) := by
     funext t; simp only [g, div_eq_mul_inv, Finset.sum_mul, sub_mul, add_sub_cancel]
-  -- Integrability of g ∘ γ * γ' (holomorphic g, piecewise C¹ γ)
   have h_g_int : IntervalIntegrable
       (fun t => g (γ.toFun t) * deriv γ.toFun t)
       MeasureTheory.volume γ.a γ.b :=
     (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve ⟨M_d, hM_d⟩).continuousOn_mul
       (Set.uIcc_of_le hab ▸ hg_diff.continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
         (fun t ht => h_null.image_subset t ht))
-  -- Integrability of each singular term
   have h_sing_term_int : ∀ s ∈ S0, IntervalIntegrable
       (fun t => residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t)
       MeasureTheory.volume γ.a γ.b := by
@@ -1456,7 +1360,6 @@ theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
       (Set.uIcc_of_le hab ▸ (ContinuousOn.div continuousOn_const
         (γ.toPiecewiseC1Curve.continuous_toFun.sub continuousOn_const)
         (fun t ht => sub_ne_zero.mpr (hγ_avoids s hs t ht))))
-  -- Integrability of the singular sum
   have h_sing_int : IntervalIntegrable
       (fun t => ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t)
       MeasureTheory.volume γ.a γ.b := by
@@ -1464,29 +1367,20 @@ theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
     rwa [show (∑ i ∈ S0, fun t => residueSimplePole f i / (γ.toFun t - ↑i) * deriv γ.toFun t) =
       (fun t => ∑ i ∈ S0, residueSimplePole f i / (γ.toFun t - ↑i) * deriv γ.toFun t) from
       funext fun t => by simp [Finset.sum_apply]] at h
-  -- Split integral and compute
-  rw [h_eq, intervalIntegral.integral_add h_sing_int h_g_int, hg_zero, add_zero]
-  -- ∫ Σ res/(z-s) * γ' = Σ 2πi * winding * res
-  rw [intervalIntegral.integral_finset_sum (fun s hs =>
+  rw [h_eq, intervalIntegral.integral_add h_sing_int h_g_int, hg_zero, add_zero,
+    intervalIntegral.integral_finset_sum (fun s hs =>
     (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve ⟨M_d, hM_d⟩).continuousOn_mul
       (Set.uIcc_of_le hab ▸ (ContinuousOn.div continuousOn_const
         (γ.toPiecewiseC1Curve.continuous_toFun.sub continuousOn_const)
-        (fun t ht => sub_ne_zero.mpr (hγ_avoids s hs t ht)))))]
-  rw [Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro s hs
+        (fun t ht => sub_ne_zero.mpr (hγ_avoids s hs t ht))))), Finset.mul_sum]
+  apply Finset.sum_congr rfl; intro s hs
   rw [integral_singular_term_eq_winding_times_coeff γ.toPiecewiseC1Curve s
     (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)]
   ring
 
-
-
-
-private lemma regularPart_update_differentiableOn
-    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
-    (U : Set ℂ) (hU : IsOpen U)
-    (hf_diff : DifferentiableOn ℂ f (U \ {s}))
-    (hs_in_U : s ∈ U)
+private lemma regularPart_update_differentiableOn (f : ℂ → ℂ) (s : ℂ)
+    (hf : MeromorphicAt f s) (U : Set ℂ) (hU : IsOpen U)
+    (hf_diff : DifferentiableOn ℂ f (U \ {s})) (hs_in_U : s ∈ U)
     (g_an : ℂ → ℂ) (hg_an_at : AnalyticAt ℂ g_an s)
     (hg_eq : ∀ᶠ z in 𝓝[≠] s,
       f z - GeneralizedResidueTheory.meromorphicPrincipalPart f s z = g_an z) :
@@ -1526,8 +1420,8 @@ private lemma regularPart_update_differentiableOn
       exact (Function.update_of_ne (Set.mem_compl_singleton_iff.mp hw) (g_an s) rp).symm
     exact (h_ev.differentiableAt_iff.mp h_rp_diff).differentiableWithinAt
 
-private lemma contourIntegral_eq_of_agree_on_curve
-    (f g : ℂ → ℂ) (γ : PiecewiseC1Immersion)
+private lemma contourIntegral_eq_of_agree_on_curve (f g : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion)
     (h_agree : ∀ t ∈ Icc γ.a γ.b, f (γ.toFun t) = g (γ.toFun t)) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t =
     ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t := by
@@ -1537,10 +1431,8 @@ private lemma contourIntegral_eq_of_agree_on_curve
   dsimp only
   rw [h_agree t ht]
 
-private lemma contourIntegral_add_principalPart_regularPart
-    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s)
-    (U : Set ℂ)
-    (hf_diff : DifferentiableOn ℂ f (U \ {s}))
+private lemma contourIntegral_add_principalPart_regularPart (f : ℂ → ℂ) (s : ℂ)
+    (hf : MeromorphicAt f s) (U : Set ℂ) (hf_diff : DifferentiableOn ℂ f (U \ {s}))
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t =
@@ -1582,10 +1474,9 @@ private lemma contourIntegral_add_principalPart_regularPart
 
 /-- Null-homologous version: contour integral of meromorphic function with zero residue
 vanishes when the curve is null-homologous and avoids the singularity. -/
-theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
-    (f : ℂ → ℂ) (s : ℂ) (hf : MeromorphicAt f s) (hres : residueAt f s = 0)
-    (U : Set ℂ) (hU : IsOpen U) (hf_diff : DifferentiableOn ℂ f (U \ {s}))
-    (hs_in_U : s ∈ U)
+theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh (f : ℂ → ℂ) (s : ℂ)
+    (hf : MeromorphicAt f s) (hres : residueAt f s = 0) (U : Set ℂ) (hU : IsOpen U)
+    (hf_diff : DifferentiableOn ℂ f (U \ {s})) (hs_in_U : s ∈ U)
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
@@ -1601,9 +1492,8 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
   rw [contourIntegral_add_principalPart_regularPart f s hf U hf_diff γ h_null hγ_avoids,
     h_pp_zero, h_rp_zero, add_zero]
 
-private theorem contourIntegral_sum_principalParts_eq_zero (S : Finset ℂ)
-    (f : ℂ → ℂ) (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
-    (hres : ∀ s ∈ S, residueAt f s = 0)
+private theorem contourIntegral_sum_principalParts_eq_zero (S : Finset ℂ) (f : ℂ → ℂ)
+    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (hres : ∀ s ∈ S, residueAt f s = 0)
     (γ : PiecewiseC1Immersion) (h_closed : γ.toFun γ.a = γ.toFun γ.b)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, (∑ s ∈ S,
@@ -1622,9 +1512,8 @@ private theorem contourIntegral_sum_principalParts_eq_zero (S : Finset ℂ)
     GeneralizedResidueTheory.contourIntegral_principalPart_eq_zero_of_residue_zero
       f s (hf_mero s hs) (hres s hs) γ h_closed (fun t ht => hγ_avoids s hs t ht)
 
-private theorem diff_sub_principalParts_differentiableOn
-    (S : Finset ℂ) (f : ℂ → ℂ) (U : Set ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
+private theorem diff_sub_principalParts_differentiableOn (S : Finset ℂ) (f : ℂ → ℂ)
+    (U : Set ℂ) (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
     (hf_diff : DifferentiableOn ℂ f (U \ ↑S)) :
     DifferentiableOn ℂ (fun z => f z -
       ∑ s ∈ S, GeneralizedResidueTheory.meromorphicPrincipalPart f s z) (U \ ↑S) := by
@@ -1636,8 +1525,7 @@ private theorem diff_sub_principalParts_differentiableOn
           hw.2 (h ▸ Finset.mem_coe.mpr hs)))) z hz)
 
 private theorem analytic_correction_at_pole (S : Finset ℂ) (f : ℂ → ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (g : ℂ → ℂ)
-    (hg_def : g = fun z => f z -
+    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (g : ℂ → ℂ) (hg_def : g = fun z => f z -
       ∑ s ∈ S, GeneralizedResidueTheory.meromorphicPrincipalPart f s z)
     (z : ℂ) (hzS : z ∈ (S : Set ℂ)) :
     ∃ g_ext : ℂ → ℂ, DifferentiableAt ℂ g_ext z ∧
@@ -1678,9 +1566,8 @@ private theorem analytic_correction_at_pole (S : Finset ℂ) (f : ℂ → ℂ)
     (hg_ext_diff.continuousAt.tendsto.mono_left nhdsWithin_le_nhds).congr'
       hg_eq_ext.symm⟩
 
-private theorem analytic_correction_differentiableOn (S : Finset ℂ)
-    (f : ℂ → ℂ) (U : Set ℂ) (hU : IsOpen U)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (g : ℂ → ℂ)
+private theorem analytic_correction_differentiableOn (S : Finset ℂ) (f : ℂ → ℂ)
+    (U : Set ℂ) (hU : IsOpen U) (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (g : ℂ → ℂ)
     (hg_def : g = fun z => f z -
       ∑ s ∈ S, GeneralizedResidueTheory.meromorphicPrincipalPart f s z)
     (h_g_diff_off : DifferentiableOn ℂ g (U \ ↑S)) :
@@ -1725,18 +1612,15 @@ private theorem analytic_correction_differentiableOn (S : Finset ℂ)
           ((hU.sdiff S.finite_toSet.isClosed).mem_nhds ⟨hz, hzS⟩))).differentiableWithinAt
   · intro z ⟨_, hzS⟩; simp only [if_neg hzS]
 
-private theorem image_subset_diff_of_avoids
-    (S : Finset ℂ) (U : Set ℂ)
+private theorem image_subset_diff_of_avoids (S : Finset ℂ) (U : Set ℂ)
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     γ.toFun '' Icc γ.a γ.b ⊆ U \ ↑S :=
   fun _ ⟨t, ht, htz⟩ => ⟨htz ▸ h_null.image_subset t ht,
     fun hs => hγ_avoids _ (Finset.mem_coe.mp hs) t ht (htz ▸ rfl)⟩
 
-private theorem remainder_integrable
-    (S : Finset ℂ) (f : ℂ → ℂ) (U : Set ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
-    (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
+private theorem remainder_integrable (S : Finset ℂ) (f : ℂ → ℂ) (U : Set ℂ)
+    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     IntervalIntegrable (fun t => (f (γ.toFun t) -
@@ -1750,10 +1634,8 @@ private theorem remainder_integrable
     (Set.uIcc_of_le hab ▸ h_g_diff_off.continuousOn.comp
       γ.toPiecewiseC1Curve.continuous_toFun (fun t ht => h_image_off ⟨t, ht, rfl⟩))
 
-private theorem principalParts_integrable
-    (S : Finset ℂ) (f : ℂ → ℂ)
-    (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
-    (γ : PiecewiseC1Immersion)
+private theorem principalParts_integrable (S : Finset ℂ) (f : ℂ → ℂ)
+    (hf_mero : ∀ s ∈ S, MeromorphicAt f s) (γ : PiecewiseC1Immersion)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     IntervalIntegrable (fun t => (∑ s ∈ S,
       GeneralizedResidueTheory.meromorphicPrincipalPart f s (γ.toFun t)) *
@@ -1767,9 +1649,8 @@ private theorem principalParts_integrable
         (hf_mero s hs)).continuousOn.comp γ.toPiecewiseC1Curve.continuous_toFun
         (fun t ht => Set.mem_compl_singleton_iff.mpr (hγ_avoids s hs t ht)))
 
-private theorem contourIntegral_correction_eq
-    (S : Finset ℂ) (g g_corr : ℂ → ℂ) (U : Set ℂ)
-    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+private theorem contourIntegral_correction_eq (S : Finset ℂ) (g g_corr : ℂ → ℂ)
+    (U : Set ℂ) (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
     (h_agree : ∀ z ∈ U \ (S : Set ℂ), g_corr z = g z) :
     ∀ t ∈ Set.uIcc γ.a γ.b,
@@ -1782,11 +1663,11 @@ private theorem contourIntegral_correction_eq
   rw [h_agree (γ.toFun t) (h_image_off ⟨t, ht, rfl⟩)]
 
 /-- Finset version: induction on |S| using the single-pole version. -/
-theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
-    (S : Finset ℂ) (f : ℂ → ℂ) (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
+theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh (S : Finset ℂ)
+    (f : ℂ → ℂ) (hf_mero : ∀ s ∈ S, MeromorphicAt f s)
     (hres : ∀ s ∈ S, residueAt f s = 0) (U : Set ℂ) (hU : IsOpen U)
-    (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
+    (hf_diff : DifferentiableOn ℂ f (U \ ↑S)) (γ : PiecewiseC1Immersion)
+    (h_null : IsNullHomologous γ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
   set pp := fun z => ∑ s ∈ S, GeneralizedResidueTheory.meromorphicPrincipalPart f s z
@@ -1805,8 +1686,6 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
     contourIntegral_sum_principalParts_eq_zero S f hf_mero hres γ h_null.closed hγ_avoids,
     add_zero]
 
--- Null-homologous version of higherOrderCancel_assembly, now a thin wrapper
--- around the abstract version in HigherOrderAssembly.lean.
 open GeneralizedResidueTheory in
 private theorem higherOrderCancel_assembly_nh (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
@@ -1899,10 +1778,8 @@ theorem conditionsAB_imply_higherOrderCancel_nh (U : Set ℂ) (hU : IsOpen U)
 open GeneralizedResidueTheory in
 lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
-    (f : ℂ → ℂ)
-    (γ : PiecewiseC1Immersion)
-    (h_null : IsNullHomologous γ U)
+    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S) (f : ℂ → ℂ)
+    (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U)
     (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
     (_hγ_meas : Measurable γ.toFun)
     (h_no_endpt_cross : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
@@ -1916,14 +1793,12 @@ lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
   set f_res := fun z => ∑ s ∈ S0, residueAt f s / (z - s) with hf_res_def
   have hSimple_res : ∀ s ∈ S0, HasSimplePoleAt f_res s :=
     fun s hs => hasSimplePoleAt_sum_div_sub S0 (residueAt f) s hs
-  have hf_res_diff : DifferentiableOn ℂ f_res (U \ ↑S0) :=
-    differentiableOn_sum_div_sub S0 (residueAt f) U
+  have hf_res_diff := differentiableOn_sum_div_sub S0 (residueAt f) U
   have hf_ext_res : ∀ s ∈ S0, ContinuousAt
-      (fun z => f_res z - residueSimplePole f_res s / (z - s)) s :=
-    fun s hs => continuousAt_sum_remainder S0 (residueAt f) s hs
-  have h_res_eq : ∀ s ∈ S0,
-      residueSimplePole f_res s = residueAt f s :=
-    fun s hs => residueSimplePole_sum_div_sub S0 (residueAt f) s hs
+      (fun z => f_res z - residueSimplePole f_res s / (z - s)) s := fun s hs =>
+    continuousAt_sum_remainder S0 (residueAt f) s hs
+  have h_res_eq : ∀ s ∈ S0, residueSimplePole f_res s = residueAt f s := fun s hs =>
+    residueSimplePole_sum_div_sub S0 (residueAt f) s hs
   have hPV_singular : ∀ s ∈ S0, CauchyPrincipalValueExists'
       (fun z => residueSimplePole f_res s / (z - s)) γ.toFun γ.a γ.b s := by
     intro s hs
@@ -1947,8 +1822,6 @@ lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
         (𝓝[>] 0) (𝓝 M) from this.choose_spec.cauchy_map
     exact cpv_exists_inv_sub_of_closed_unique γ s h_null.closed
       (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross honly
-  -- f_res = Σ res/(z-s) is differentiable on ℂ \ S0 = univ \ S0.
-  -- univ is convex, so generalizedResidueTheorem' applies with U = univ.
   have hf_res_diff_univ : DifferentiableOn ℂ f_res (Set.univ \ ↑S0) :=
     differentiableOn_sum_div_sub S0 (residueAt f) Set.univ
   have h_thm := generalizedResidueTheorem' Set.univ isOpen_univ convex_univ
@@ -1961,9 +1834,8 @@ lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
   have h_limit_eq : L = 2 * Real.pi * I * ∑ s ∈ S0,
       generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s := by
     have hL_eq : L = cauchyPrincipalValueOn S0 f_res γ.toFun γ.a γ.b :=
-      (hL.limUnder_eq).symm
-    rw [hL_eq, h_value]
-    congr 1; apply Finset.sum_congr rfl
+      hL.limUnder_eq.symm
+    rw [hL_eq, h_value]; congr 1; apply Finset.sum_congr rfl
     intro s hs; rw [h_res_eq s hs]
   rw [← h_limit_eq]
   exact hL
