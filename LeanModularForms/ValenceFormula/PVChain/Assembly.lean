@@ -327,10 +327,9 @@ private theorem pvIntegral_vertical_cancel_union
     have h_re_u : (fdBoundary_H H u).re = 1/2 := by
       rw [h_seg1]; simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
     rw [h_shift]; exact (truncation_iff_shift_union S (fdBoundary_H H u) h_re_u ε).symm
-  have h_pw := fun u hu =>
-    pvIntegrand_seg4_eq_neg_seg1 f S (sArcOfS S ∪ sVertOfS S) h_trunc_iff u hu
-  have h_neg := integral_neg_of_pw_neg _ h_pw
-  rw [h_neg, intervalIntegral.integral_neg]; ring
+  rw [integral_neg_of_pw_neg _ (fun u hu =>
+    pvIntegrand_seg4_eq_neg_seg1 f S (sArcOfS S ∪ sVertOfS S) h_trunc_iff u hu),
+    intervalIntegral.integral_neg]; ring
 
 omit hf in
 private theorem tendsto_pvIntegral_arc
@@ -584,17 +583,15 @@ private lemma pvIntegrand_intervalIntegrable
     apply measurableSet_uIoc.inter
     apply MeasurableSet.compl
     suffices h : IsClosed (⋃ s ∈ (S₀ : Set ℂ), {t : ℝ | ‖γ t - s‖ ≤ ε}) by
-      have hm := h.measurableSet
-      convert hm using 1
+      convert h.measurableSet using 1
       ext t; simp only [mem_iUnion, mem_setOf_eq, Finset.mem_coe, exists_prop]; exact Iff.rfl
     exact S₀.finite_toSet.isClosed_biUnion fun s _ =>
       isClosed_le (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
         continuous_const
   have h_int_K : IntegrableOn F K :=
     (h_int_K'.mono_set hK_subset_K').congr_fun hF_K.symm hK_meas
-  have hcompl_meas : MeasurableSet (uIoc a b \ K) := measurableSet_uIoc.diff hK_meas
   have h_int_compl : IntegrableOn F (uIoc a b \ K) :=
-    integrableOn_zero.congr_fun h_compl_zero.symm hcompl_meas
+    integrableOn_zero.congr_fun h_compl_zero.symm (measurableSet_uIoc.diff hK_meas)
   have h_union : K ∪ (uIoc a b \ K) = uIoc a b := union_diff_cancel (fun t ht => ht.1)
   rw [intervalIntegrable_iff]
   have := h_int_K.union h_int_compl; rwa [h_union] at this
@@ -618,7 +615,6 @@ private theorem tendsto_pvIntegral_split
       (∫ t in (4:ℝ)..5,
         pvIntegrand f (fdBoundary_H H) (sArcOfS S ∪ sVertOfS S) ε t) := by
   filter_upwards [self_mem_nhdsWithin] with ε hε
-  have hε_pos : 0 < ε := Set.mem_Ioi.mp hε
   have mem0 : (0:ℝ) ∈ Icc (0:ℝ) 5 := ⟨le_refl _, by norm_num⟩
   have mem1 : (1:ℝ) ∈ Icc (0:ℝ) 5 := ⟨by norm_num, by norm_num⟩
   have mem3 : (3:ℝ) ∈ Icc (0:ℝ) 5 := ⟨by norm_num, by norm_num⟩
@@ -628,7 +624,7 @@ private theorem tendsto_pvIntegral_split
       IntervalIntegrable
         (pvIntegrand f (fdBoundary_H H) (sArcOfS S ∪ sVertOfS S) ε)
         MeasureTheory.volume a b :=
-    fun ha hb => pvIntegrand_intervalIntegrable f S hH hε_pos h_capture ha hb
+    fun ha hb => pvIntegrand_intervalIntegrable f S hH (Set.mem_Ioi.mp hε) h_capture ha hb
   have h1 := (intervalIntegral.integral_add_adjacent_intervals
     (hi mem0 mem1) (hi mem1 mem3)).symm
   have h2 := (intervalIntegral.integral_add_adjacent_intervals
@@ -836,7 +832,6 @@ theorem cpv_modular_side_tendsto
     tendsto_const_nhds.congr' <| by
       filter_upwards [self_mem_nhdsWithin] with ε hε
       exact (h_vert ε (Set.mem_Ioi.mp hε)).symm
-  have h_combined := h_vert_tendsto.add (h_arc.add h_seg5)
   have h_sum : Tendsto (fun ε =>
       (((∫ t in (0:ℝ)..1,
           pvIntegrand f (fdBoundary_H H)
@@ -856,7 +851,8 @@ theorem cpv_modular_side_tendsto
     rw [show -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - ↑(orderAtCusp' f))) =
       0 + (-(2 * ↑Real.pi * I * (↑k / 12)) +
         2 * ↑Real.pi * I * ↑(orderAtCusp' f)) from by ring]
-    exact Filter.Tendsto.congr (fun ε => by ring) h_combined
+    exact Filter.Tendsto.congr (fun ε => by ring)
+      (h_vert_tendsto.add (h_arc.add h_seg5))
   exact h_sum.congr' (h_split.mono (fun ε h => h.symm))
 
 /-! ### Residue side -/
@@ -1103,12 +1099,12 @@ private lemma cpv_residue_side_sum_convert
         residueSimplePole F s = 0 := by
     apply Finset.sum_eq_zero; intro s hs
     have hs_on := (Finset.mem_sdiff.mp hs).1
-    have hs_nbox := (Finset.mem_sdiff.mp hs).2
     have h_nz : modularFormCompOfComplex f s ≠ 0 := by
       intro h_zero
-      exact hs_nbox ((mem_allZerosInFdBox_iff f hf hM_half).mpr
-        ⟨fdBox_of_on_curve S hS hH_sqrt3 hHM hH_ge1 hH_bound s
-          (hS_on ▸ hs_on), h_zero⟩)
+      exact (Finset.mem_sdiff.mp hs).2
+        ((mem_allZerosInFdBox_iff f hf hM_half).mpr
+          ⟨fdBox_of_on_curve S hS hH_sqrt3 hHM hH_ge1 hH_bound s
+            (hS_on ▸ hs_on), h_zero⟩)
     have h_im : 0 < s.im := by
       rw [hS_on] at hs_on
       rcases Finset.mem_union.mp hs_on with h | h
@@ -1268,10 +1264,9 @@ theorem cpv_residue_side_tendsto
           residueSimplePole F s = 0 := by
       apply Finset.sum_eq_zero; intro s hs
       have hs_on := (Finset.mem_sdiff.mp hs).1
-      have hs_nbox := (Finset.mem_sdiff.mp hs).2
       have h_nz : modularFormCompOfComplex f s ≠ 0 := by
         intro h_zero
-        exact hs_nbox (hSbox_def ▸
+        exact (Finset.mem_sdiff.mp hs).2 (hSbox_def ▸
           (mem_allZerosInFdBox_iff f hf hM_half).mpr
             ⟨fdBox_of_on_curve S hS hH_sqrt3 hHM hH_ge1 hH_bound s
               (hS_on_def ▸ hs_on), h_zero⟩)

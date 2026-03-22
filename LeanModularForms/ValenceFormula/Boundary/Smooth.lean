@@ -281,8 +281,7 @@ private lemma arc_tendsto_left {H : ℝ} (p : ℝ) (h1p : 1 < p) (hp3 : p ≤ 3)
     Tendsto (deriv (fdBoundary_H H)) (𝓝[<] p) (𝓝 (exp ((↑Real.pi * (↑p + 1) / 6) * I) *
       (↑Real.pi / 6 * I))) := by
   set F := fun s : ℝ => exp ((↑Real.pi * (↑s + 1) / 6) * I) * (↑Real.pi / 6 * I) with hF_def
-  have hF_cont : ContinuousAt F p := arc_deriv_continuous.continuousAt
-  apply hF_cont.tendsto.mono_left nhdsWithin_le_nhds |>.congr'
+  apply arc_deriv_continuous.continuousAt.tendsto.mono_left nhdsWithin_le_nhds |>.congr'
   filter_upwards [Ioo_mem_nhdsLT h1p] with s hs
   have hs1 : 1 < s := hs.1
   have hs3 : s < 3 := lt_of_lt_of_le hs.2 hp3
@@ -293,8 +292,7 @@ private lemma arc_tendsto_right {H : ℝ} (p : ℝ) (hp1 : 1 ≤ p) (hp3 : p < 3
     Tendsto (deriv (fdBoundary_H H)) (𝓝[>] p) (𝓝 (exp ((↑Real.pi * (↑p + 1) / 6) * I) *
       (↑Real.pi / 6 * I))) := by
   set F := fun s : ℝ => exp ((↑Real.pi * (↑s + 1) / 6) * I) * (↑Real.pi / 6 * I) with hF_def
-  have hF_cont : ContinuousAt F p := arc_deriv_continuous.continuousAt
-  apply hF_cont.tendsto.mono_left nhdsWithin_le_nhds |>.congr'
+  apply arc_deriv_continuous.continuousAt.tendsto.mono_left nhdsWithin_le_nhds |>.congr'
   filter_upwards [Ioo_mem_nhdsGT hp3] with s hs
   have hs1 : 1 < s := lt_of_le_of_lt hp1 hs.1
   have hs3 : s < 3 := hs.2
@@ -410,8 +408,7 @@ private lemma seg4_eventuallyEq_left_4 (H : ℝ) :
   refine ⟨Ioo 3 5 ∩ Iic 4, Filter.inter_mem
     (nhdsWithin_le_nhds (Ioo_mem_nhds (by norm_num) (by norm_num)))
     self_mem_nhdsWithin, fun s hs => ?_⟩
-  have hs_iic : s ≤ 4 := hs.2
-  rcases eq_or_lt_of_le hs_iic with rfl | h
+  rcases eq_or_lt_of_le (show s ≤ 4 from hs.2) with rfl | h
   · simp only [fdBoundary_seg4_H, fdBoundary_H_at_four]; push_cast; ring
   · exact (fdBoundary_H_eq_seg4_H (by linarith [hs.1.1]) (le_of_lt h)).symm
 
@@ -573,10 +570,10 @@ lemma fdBoundary_H_not_differentiableAt_1 {H : ℝ} (_hH : Real.sqrt 3 / 2 < H) 
         have h2 : (↑Real.pi / 6 : ℂ) = ↑(Real.pi / 6) := by push_cast; ring
         rw [h1, h2]; ring))
   have hd := hdiff.hasDerivAt
-  have eq1 := (uniqueDiffWithinAt_Iic (1 : ℝ)).eq_deriv _ hleft hd.hasDerivWithinAt
-  have eq2 := (uniqueDiffWithinAt_Ici (1 : ℝ)).eq_deriv _ hright hd.hasDerivWithinAt
   have heq : -(↑(H - Real.sqrt 3 / 2) : ℂ) * I =
-      ↑(Real.pi / 6) * I * exp (↑(Real.pi * 2 / 6) * I) := eq1.trans eq2.symm
+      ↑(Real.pi / 6) * I * exp (↑(Real.pi * 2 / 6) * I) :=
+    ((uniqueDiffWithinAt_Iic (1 : ℝ)).eq_deriv _ hleft hd.hasDerivWithinAt).trans
+      ((uniqueDiffWithinAt_Ici (1 : ℝ)).eq_deriv _ hright hd.hasDerivWithinAt).symm
   have hre := congr_arg Complex.re heq
   have hre_lhs : (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I).re = 0 := by simp [mul_re]
   have hre_rhs : (↑(Real.pi / 6) * I * exp (↑(Real.pi * 2 / 6) * I)).re =
@@ -774,9 +771,7 @@ lemma fdBoundary_H_hasDerivAt_arc (H : ℝ) {t : ℝ}
 
 lemma fdBoundary_H_deriv_continuousOn_Ioo_01 (H : ℝ) :
     ContinuousOn (deriv (fdBoundary_H H)) (Ioo 0 1) := by
-  intro t ht
-  have h0 : 0 < t := ht.1
-  have h1 : t < 1 := ht.2
+  intro t ⟨h0, h1⟩
   exact (fdBoundary_H_deriv_continuousAt_off_fullPartition
     H t ⟨h0, by linarith⟩ (by
       simp only [fdBoundaryFullPartition,
@@ -793,8 +788,8 @@ lemma fdBoundary_H_deriv_continuousOn_Ioo_13 (H : ℝ) :
       fun s => exp ((↑Real.pi * (↑s + 1) / 6) * I) *
         (↑Real.pi / 6 * I) := by
     filter_upwards [Ioo_mem_nhds ht.1 ht.2] with s hs
-    have heq := fdBoundary_H_eq_arc_near (H := H) hs.1 hs.2
-    exact (Filter.EventuallyEq.deriv_eq heq).trans
+    exact (Filter.EventuallyEq.deriv_eq
+      (fdBoundary_H_eq_arc_near (H := H) hs.1 hs.2)).trans
       (arc_hasDerivAt s).deriv
   exact (continuousAt_congr hderiv_eq).mpr
     arc_deriv_continuous.continuousAt |>.continuousWithinAt

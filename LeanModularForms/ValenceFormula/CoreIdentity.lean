@@ -70,9 +70,6 @@ private lemma elliptic_finset_sum_eq_three
       g ellipticPointI' + g ellipticPointRho' +
       g ellipticPointRhoPlusOne' := by
   intro P
-  have h_ne_iρ := ellipticPointI_ne_rho
-  have h_ne_iρ1 := ellipticPoint_ne_iρ1
-  have h_ne_ρρ1 := ellipticPoint_ne_ρρ1
   have h_ell_sub : S.filter P ⊆
       ({ellipticPointI', ellipticPointRho',
         ellipticPointRhoPlusOne'} : Finset UpperHalfPlane) := by
@@ -95,8 +92,8 @@ private lemma elliptic_finset_sum_eq_three
       · exact ellipticPointRhoPlusOne_mem_fd
     exact hS_complete_zero x hx_fd hx_not_S
   rw [Finset.sum_subset h_ell_sub h_zero_outside]
-  rw [Finset.sum_insert (by simp [h_ne_iρ, h_ne_iρ1]),
-      Finset.sum_insert (by simp [h_ne_ρρ1]),
+  rw [Finset.sum_insert (by simp [ellipticPointI_ne_rho, ellipticPoint_ne_iρ1]),
+      Finset.sum_insert (by simp [ellipticPoint_ne_ρρ1]),
       Finset.sum_singleton]
   ring
 
@@ -422,15 +419,15 @@ private lemma rho_singleton_sum_eq
     ∑ s ∈ (if ellipticPointRho' ∈ sLeftArc S
       then {ellipticPointRho'} else ∅),
       (orderOfVanishingAt' (⇑f) s : ℂ) := by
-  have hρ_in_S := hS_complete _ ellipticPointRho_mem_fd h_ord
-  have hρ1_in_S := hS_complete _ ellipticPointRhoPlusOne_mem_fd
-    (by rwa [ord_rho_plus_one_eq_ord_rho_via_vAdd])
   have hρ_in_LA : ellipticPointRho' ∈ sLeftArc S := by
     simp only [sLeftArc, Finset.mem_filter]
-    exact ⟨hρ_in_S, ellipticPointRho_norm, ellipticPointRho_re_neg⟩
+    exact ⟨hS_complete _ ellipticPointRho_mem_fd h_ord,
+      ellipticPointRho_norm, ellipticPointRho_re_neg⟩
   have hρ1_in_RA : ellipticPointRhoPlusOne' ∈ sRightArc S := by
     simp only [sRightArc, Finset.mem_filter]
-    exact ⟨hρ1_in_S, ellipticPointRhoPlusOne_norm, ellipticPointRhoPlusOne_re_pos⟩
+    exact ⟨hS_complete _ ellipticPointRhoPlusOne_mem_fd
+      (by rwa [ord_rho_plus_one_eq_ord_rho_via_vAdd]),
+      ellipticPointRhoPlusOne_norm, ellipticPointRhoPlusOne_re_pos⟩
   rw [if_pos hρ1_in_RA, if_pos hρ_in_LA,
     Finset.sum_singleton, Finset.sum_singleton]
   exact_mod_cast congr_arg (Int.cast (R := ℂ))
@@ -453,8 +450,6 @@ private theorem sum_nonEllArc_right_eq_left
     ∑ p ∈ LA_ne,
       (orderOfVanishingAt' (⇑f) p : ℂ) := by
   intro RA_ne LA_ne
-  have h_arc := sum_ord_rightArc_eq_sum_ord_leftArc
-    f S hS hS_complete
   have h_ra_ne : RA_ne =
       (sRightArc S).filter
         (· ≠ ellipticPointRhoPlusOne') := by
@@ -481,7 +476,8 @@ private theorem sum_nonEllArc_right_eq_left
           (fun x => ¬(x ≠ ellipticPointRho')),
         f_ord p by
     linear_combination
-      h_arc + h_ra_split - h_la_split - h_sing
+      sum_ord_rightArc_eq_sum_ord_leftArc f S hS hS_complete +
+        h_ra_split - h_la_split - h_sing
   simp_rw [not_not]
   conv_lhs => rw [Finset.filter_eq' (sRightArc S)
     ellipticPointRhoPlusOne']
@@ -518,7 +514,6 @@ private theorem bdry_ne_mem_union
     (s ∈ S ∧ s ≠ ellipticPointRho' ∧
       ‖(s : ℂ)‖ = 1 ∧ (s : ℂ).re < 0) := by
   have hs_fd := hS s hs_S
-  have habs_re := hs_fd.2
   have hnorm_ge : 1 ≤ ‖(s : ℂ)‖ := by
     rw [Complex.norm_def]
     exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
@@ -533,7 +528,7 @@ private theorem bdry_ne_mem_union
         ⟨hs_S, hsρ1, h_eq.symm, hre_pos⟩))
   · have h_abs_eq : |(s : ℂ).re| = 1/2 := by
       by_contra h_ne
-      exact h_not_int ⟨h_gt, lt_of_le_of_ne habs_re h_ne⟩
+      exact h_not_int ⟨h_gt, lt_of_le_of_ne hs_fd.2 h_ne⟩
     rcases abs_cases (s : ℂ).re
       with ⟨_, h_sign⟩ | ⟨_, h_sign⟩
     · exact Or.inl (Finset.mem_filter.mpr
@@ -561,8 +556,6 @@ private theorem bdry_ne_eq_union
   intro S_NE
   have h_rho_norm := ellipticPointRho_norm
   have h_rho1_norm := ellipticPointRhoPlusOne_norm
-  have h_rho_re_neg := ellipticPointRho_re_neg
-  have h_rho1_re_pos := ellipticPointRhoPlusOne_re_pos
   ext s
   simp only [S_NE, sRightVert, sLeftVert,
     Finset.mem_union, Finset.mem_filter]
@@ -588,13 +581,13 @@ private theorem bdry_ne_eq_union
         fun ⟨_, h⟩ => by have := (abs_lt.mp h).1; linarith⟩
     · exact ⟨⟨hs,
         fun h => by rw [h] at hre; simp [ellipticPointI'] at hre,
-        fun h => by rw [h] at hre; linarith [h_rho_re_neg],
+        fun h => by rw [h] at hre; linarith [ellipticPointRho_re_neg],
         hne⟩,
         fun ⟨h, _⟩ => by linarith⟩
     · exact ⟨⟨hs,
         fun h => by rw [h] at hre; simp [ellipticPointI'] at hre,
         hne,
-        fun h => by rw [h] at hre; linarith [h_rho1_re_pos]⟩,
+        fun h => by rw [h] at hre; linarith [ellipticPointRhoPlusOne_re_pos]⟩,
         fun ⟨h, _⟩ => by linarith⟩
 
 omit f hf in
@@ -649,7 +642,6 @@ private theorem half_bdry_sum_eq_leftVert_plus_leftArc
           fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith,
         Finset.disjoint_filter.mpr
           fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith⟩
-  have h123 := bdry_four_disjoint S RA_ne LA_ne hRA_ne_def rfl
   have h_sum_decomp :
       ∑ s ∈ BDRY,
         (orderOfVanishingAt' (⇑f) s : ℂ) =
@@ -665,7 +657,8 @@ private theorem half_bdry_sum_eq_leftVert_plus_leftArc
         sRightVert S ∪ sLeftVert S ∪ RA_ne ∪ LA_ne :=
       bdry_ne_eq_union S hS
     rw [h_bdry_decomp,
-      Finset.sum_union h123, Finset.sum_union h12,
+      Finset.sum_union (bdry_four_disjoint S RA_ne LA_ne hRA_ne_def rfl),
+      Finset.sum_union h12,
       Finset.sum_union h_disj_RV_LV]
   rw [h_sum_decomp, sum_ord_rightVert_eq_sum_ord_leftVert f S hS hS_complete,
     sum_nonEllArc_right_eq_left f S hS hS_complete]; ring
