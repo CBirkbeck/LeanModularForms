@@ -128,8 +128,11 @@ private lemma homotopy_integrand_continuousWithinAt_s
   have h_deriv_joint := hH_deriv_cont _ _ (by linarith : t - ε' < t + ε') h_avoid_P h_sub_ab
   exact ContinuousWithinAt.mul
     ((hH_cont.comp (continuous_const.prodMk continuous_id)).continuousAt.sub
-      continuousAt_const |>.inv₀ (sub_ne_zero.mpr (hH_avoid t ht_Icc s₀ hs₀)) |>.continuousWithinAt)
-    ((h_deriv_joint.comp (continuous_const.prodMk continuous_id).continuousOn
+      continuousAt_const |>.inv₀
+        (sub_ne_zero.mpr (hH_avoid t ht_Icc s₀ hs₀))
+      |>.continuousWithinAt)
+    ((h_deriv_joint.comp
+      (continuous_const.prodMk continuous_id).continuousOn
       (fun s hs => ⟨ht_in, hs⟩)) s₀ hs₀)
 
 private lemma homotopy_pv_eq_integral
@@ -192,8 +195,10 @@ private theorem windingNumber_continuousOn_param_piecewise_with_bound
     ContinuousOn (fun s => generalizedWindingNumber' (fun t => H (t, s)) a b z₀) (Icc 0 1) := by
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := homotopy_uniform_avoidance H a b z₀ hab hH_cont hH_avoid
   let f : ℝ → ℝ → ℂ := fun t s => (H (t, s) - z₀)⁻¹ * deriv (fun t' => H (t', s)) t
-  have hf_bound : ∀ s ∈ Icc (0:ℝ) 1, ∀ t ∈ Icc a b, ‖f t s‖ ≤ M / δ := fun s hs t ht =>
-    winding_integrand_bounded_of_uniform_avoidance hδ_pos hδ_bound hM_bound t ht s hs
+  have hf_bound : ∀ s ∈ Icc (0:ℝ) 1, ∀ t ∈ Icc a b,
+      ‖f t s‖ ≤ M / δ := fun s hs t ht =>
+    winding_integrand_bounded_of_uniform_avoidance
+      hδ_pos hδ_bound hM_bound t ht s hs
   have h_pv := fun s hs => homotopy_pv_eq_integral hab hδ_pos hδ_bound s hs
   intro s₀ hs₀
   apply ContinuousWithinAt.congr_of_eventuallyEq _
@@ -204,7 +209,8 @@ private theorem windingNumber_continuousOn_param_piecewise_with_bound
   · exact fun s hs t ht => hf_bound s hs t ht
   · let B : Set ℝ := {a, b} ∪ (P : Set ℝ)
     have hB_null : volume B = 0 :=
-      ((Set.finite_insert.mpr (Set.finite_singleton b)).union (Finset.finite_toSet P)).measure_zero _
+      ((Set.finite_insert.mpr (Set.finite_singleton b)).union
+        (Finset.finite_toSet P)).measure_zero _
     have h_cont_off_B : ∀ t ∈ Icc a b, t ∉ B →
         ContinuousWithinAt (fun s => f t s) (Icc 0 1) s₀ := by
       intro t ht_Icc ht_notB
@@ -412,12 +418,17 @@ private theorem windingNumber_continuous_in_param
       deriv (fun t' => γ (t', p.2)) p.1)) :
     ContinuousOn (fun s =>
       generalizedWindingNumber' (fun t => γ (t, s)) a b z₀) (Icc 0 1) := by
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ := homotopy_uniform_avoidance γ a b z₀ hab hγ_cont hγ_avoid
-  let f : ℝ → ℝ → ℂ := fun t s => (γ (t, s) - z₀)⁻¹ * deriv (fun t' => γ (t', s)) t
-  have hf_cont_on : ContinuousOn (fun p : ℝ × ℝ => f p.1 p.2) (Icc a b ×ˢ Icc 0 1) :=
+  obtain ⟨δ, hδ_pos, hδ_bound⟩ :=
+    homotopy_uniform_avoidance γ a b z₀ hab hγ_cont hγ_avoid
+  let f : ℝ → ℝ → ℂ := fun t s =>
+    (γ (t, s) - z₀)⁻¹ * deriv (fun t' => γ (t', s)) t
+  have hf_cont_on : ContinuousOn
+      (fun p : ℝ × ℝ => f p.1 p.2) (Icc a b ×ˢ Icc 0 1) :=
     ContinuousOn.mul
-      (ContinuousOn.inv₀ (hγ_cont.sub continuous_const).continuousOn
-        (fun ⟨t, s⟩ ⟨ht, hs⟩ => by simp only [ne_eq, sub_eq_zero]; exact hγ_avoid t ht s hs))
+      (ContinuousOn.inv₀
+        (hγ_cont.sub continuous_const).continuousOn
+        (fun ⟨t, s⟩ ⟨ht, hs⟩ => by
+          simp only [ne_eq, sub_eq_zero]; exact hγ_avoid t ht s hs))
       hγ_deriv_cont.continuousOn
   obtain ⟨M, hM⟩ : ∃ M, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, ‖f t s‖ ≤ M := by
     obtain ⟨M, hM⟩ := (isCompact_Icc.prod isCompact_Icc).exists_bound_of_continuousOn hf_cont_on
@@ -427,8 +438,8 @@ private theorem windingNumber_continuous_in_param
   apply ContinuousWithinAt.congr_of_eventuallyEq _
     (eventually_of_mem self_mem_nhdsWithin h_pv) (h_pv s₀ hs₀)
   exact continuousWithinAt_const.mul
-    ((smooth_winding_integral_continuousOn hab hγ_cont hγ_avoid hγ_deriv_cont hM).continuousWithinAt
-      hs₀)
+    ((smooth_winding_integral_continuousOn hab hγ_cont hγ_avoid
+      hγ_deriv_cont hM).continuousWithinAt hs₀)
 
 /-- Winding number is invariant under smooth homotopy. -/
 theorem windingNumber_eq_of_homotopic_closed

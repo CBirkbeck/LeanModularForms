@@ -29,7 +29,8 @@ noncomputable section
 
 namespace GeneralizedResidueTheory
 
-private theorem differentiableOn_ppMinusRes (f : ℂ → ℂ) (s : ℂ) (hMero_s : MeromorphicAt f s) :
+private theorem differentiableOn_ppMinusRes (f : ℂ → ℂ) (s : ℂ)
+    (hMero_s : MeromorphicAt f s) :
     DifferentiableOn ℂ (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
       ({s}ᶜ : Set ℂ) :=
   DifferentiableOn.sub
@@ -162,7 +163,8 @@ private theorem laurent_coeff_le_poleOrder (f : ℂ → ℂ) (s : ℂ)
       · simp [ha_k]
       · exact absurd (hm_max k ha_k) (not_le.mpr hk_le)
 
-private theorem residueAt_ppMinusRes_eq_zero (f : ℂ → ℂ) (s : ℂ) (hMero_s : MeromorphicAt f s) :
+private theorem residueAt_ppMinusRes_eq_zero (f : ℂ → ℂ) (s : ℂ)
+    (hMero_s : MeromorphicAt f s) :
     residueAt (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s)) s = 0 := by
   have h_single := residueAt_sub_residueSum_eq_zero {s} f s
     (Finset.mem_singleton.mpr rfl) hMero_s
@@ -238,12 +240,19 @@ private theorem residueAt_ppMinusRes_eq_zero (f : ℂ → ℂ) (s : ℂ) (hMero_
         (fun z => (meromorphicPrincipalPart f s z - residueAt f s / (z - s)) + g_rp z) z) =
       (∮ z in C(s, r), (fun z => f z - residueAt f s / (z - s)) z) :=
       circleIntegral.integral_congr hr_pos.le h_sum_eq
-    calc (∮ z in C(s, r), (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s)) z)
-        = (∮ z in C(s, r), (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s)) z) + 0 := (add_zero _).symm
-      _ = (∮ z in C(s, r), (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s)) z) + (∮ z in C(s, r), g_rp z) := by
-          rw [hg_ci_zero]
-      _ = (∮ z in C(s, r),
-          (fun z => (meromorphicPrincipalPart f s z - residueAt f s / (z - s)) + g_rp z) z) := h_split.symm
+    calc (∮ z in C(s, r), (fun z =>
+            meromorphicPrincipalPart f s z - residueAt f s / (z - s)) z)
+        = (∮ z in C(s, r), (fun z =>
+            meromorphicPrincipalPart f s z -
+              residueAt f s / (z - s)) z) + 0 := (add_zero _).symm
+      _ = (∮ z in C(s, r), (fun z =>
+            meromorphicPrincipalPart f s z -
+              residueAt f s / (z - s)) z) +
+          (∮ z in C(s, r), g_rp z) := by rw [hg_ci_zero]
+      _ = (∮ z in C(s, r), (fun z =>
+            (meromorphicPrincipalPart f s z -
+              residueAt f s / (z - s)) + g_rp z) z) :=
+          h_split.symm
       _ = (∮ z in C(s, r), (fun z => f z - residueAt f s / (z - s)) z) := h_int_eq
   rw [show residueAt (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s)) s =
     residueAt (fun z => f z - residueAt f s / (z - s)) s from by
@@ -701,7 +710,8 @@ private theorem cpv_polar_term_tendsto (S0 : Finset ℂ) (f : ℂ → ℂ)
     (h_unique_s : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = s → t = t₁)
     (h_flat_s : IsFlatOfOrder γ.toFun t₁ (poleOrderAt f s))
     (h_angle : ∀ (k : Fin N_s), a_s k ≠ 0 → k.val ≥ 1 →
-      ∃ n : ℤ, (↑k.val : ℝ) * _root_.angleAtCrossing γ t₁ ht₁_Ioo = ↑n * (2 * Real.pi))
+      ∃ n : ℤ, (↑k.val : ℝ) * _root_.angleAtCrossing γ t₁ ht₁_Ioo =
+        ↑n * (2 * Real.pi))
     (k : Fin N_s) (hk_ge : k.val ≥ 1) :
     Tendsto (fun ε => ∫ t in γ.a..γ.b,
       cauchyPrincipalValueIntegrandOn S0
@@ -750,8 +760,8 @@ private noncomputable def assembly_errLoc (g_loc g_rp : ℂ → ℂ) : ℂ → �
   fun z => g_loc z - g_rp z
 
 /-- Normalized error: equals `err_loc s` at `s`, equals `term_s - polarHigher` away from `s`. -/
-private noncomputable def assembly_errNF
-    (f : ℂ → ℂ) (s : ℂ) (g_loc g_rp : ℂ → ℂ) {N_s : ℕ} (a_s : Fin N_s → ℂ) : ℂ → ℂ :=
+private noncomputable def assembly_errNF (f : ℂ → ℂ) (s : ℂ)
+    (g_loc g_rp : ℂ → ℂ) {N_s : ℕ} (a_s : Fin N_s → ℂ) : ℂ → ℂ :=
   fun z => if z = s then assembly_errLoc g_loc g_rp s
     else (meromorphicPrincipalPart f s z - residueAt f s / (z - s)) -
       assembly_polarHigher a_s s z
@@ -892,7 +902,8 @@ private theorem cpv_perTerm_crossed_positive_order
   set term_s := fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s) with hterm_s
   have h_unique_s := fun t ht hc => h_unique_cross s hs t ht t₁ ht₁ hc hcross₁
   have h_a0 := (residueAt_eq_laurent_head_coeff f s N_s hN_s_pos a_s g_loc hg_loc_an hf_eq_loc).symm
-  obtain ⟨g_rp, hg_rp_an, hg_rp_eq⟩ := meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
+  obtain ⟨g_rp, hg_rp_an, hg_rp_eq⟩ :=
+    meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
   let err_nf := assembly_errNF f s g_loc g_rp a_s
   have hD : DifferentiableOn ℂ err_nf U :=
     differentiableOn_of_eventuallyEq_analytic_off_sub U s err_nf (assembly_errLoc g_loc g_rp)
@@ -909,10 +920,12 @@ private theorem cpv_perTerm_crossed_positive_order
     ((assembly_polarHigher_differentiableOn a_s s).continuousOn.mono fun z ⟨_, hz⟩ =>
       Set.mem_compl_singleton_iff.mpr fun heq => hz (Finset.mem_coe.mpr (heq ▸ hs)))
     (tendsto_cpv_of_continuousOn_zero_integral S0 err_nf γ
-      (hD.continuousOn.mono fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht) (h_holo_vanish err_nf hD))
+      (hD.continuousOn.mono fun z ⟨t, ht, htz⟩ =>
+        htz ▸ hγ_in_U t ht) (h_holo_vanish err_nf hD))
     (cpv_polarHigher_tendsto U S0 f γ hγ_in_U s hs a_s fun k hk =>
       cpv_polar_term_tendsto S0 f γ hγ_closed s hs (hMero s hs) hN_s_pos a_s g_loc hg_loc_an
-        hf_eq_loc t₁ ht₁_Ioo hcross₁ h_unique_s (hCondA s hs t₁ ht₁ hcross₁ ht₁_Ioo) h_angle k hk)
+        hf_eq_loc t₁ ht₁_Ioo hcross₁ h_unique_s
+          (hCondA s hs t₁ ht₁ hcross₁ ht₁_Ioo) h_angle k hk)
 
 private theorem assembly_ppMinusRes_continuousOn (S0 : Finset ℂ) (f : ℂ → ℂ) (U : Set ℂ)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s) (s : ℂ) (hs : s ∈ S0) :

@@ -336,9 +336,12 @@ private lemma exp_neg_integral_eq_one_of_closed
     Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))) = 1 := by
   have hG_const := gFunc_constant_piecewise hab hγ_cont hγ_diff hγ_deriv_cont hγ_avoids h_int
   have hne_a : γ a - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids a (left_mem_Icc.mpr hab.le))
-  have hGb : (γ a - z₀) * Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))) = γ a - z₀ := by
+  have hGb : (γ a - z₀) *
+      Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))) = γ a - z₀ := by
     calc (γ a - z₀) * Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀)))
-        = (γ b - z₀) * Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) := by rw [hγ_closed]
+        = (γ b - z₀) *
+          Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) := by
+          rw [hγ_closed]
       _ = (γ a - z₀) * Complex.exp (-(∫ s in a..a, deriv γ s / (γ s - z₀))) :=
           hG_const b (right_mem_Icc.mpr hab.le)
       _ = γ a - z₀ := by simp [intervalIntegral.integral_same]
@@ -429,7 +432,8 @@ theorem exp_integral_eq_endpoint_ratio_piecewise
   have hG_const := gFunc_constant_piecewise hab hγ_cont hγ_diff hγ_deriv_cont hγ_avoids h_int
   have hne_a : γ a - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids a (left_mem_Icc.mpr hab.le))
   have hne_b : γ b - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids b (right_mem_Icc.mpr hab.le))
-  have hGb' : (γ b - z₀) * Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) = γ a - z₀ := by
+  have hGb' : (γ b - z₀) *
+      Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) = γ a - z₀ := by
     have := hG_const b (right_mem_Icc.mpr hab.le)
     simp [intervalIntegral.integral_same] at this
     exact this
@@ -531,7 +535,8 @@ private lemma exp_endpoint_ratio_from_gFunc
       (γ a - z₀) * Complex.exp (-(∫ s in a..a, deriv γ s / (γ s - z₀)))) :
     Complex.exp (∫ t in a..b, deriv γ t / (γ t - z₀)) = (γ b - z₀) / (γ a - z₀) := by
   have hne_b : γ b - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoid b (right_mem_Icc.mpr hab.le))
-  have hGb' : (γ b - z₀) * Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) = γ a - z₀ := by
+  have hGb' : (γ b - z₀) *
+      Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) = γ a - z₀ := by
     have := hG_const b (right_mem_Icc.mpr hab.le)
     simp [intervalIntegral.integral_same] at this
     exact this

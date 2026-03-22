@@ -28,7 +28,7 @@ attribute [local instance] Classical.propDecidable
 noncomputable section
 
 private theorem sectorCurve_differentiableAt_off_knots (r : ℝ) (α : ℝ)
-    (t : ℝ) (ht : t ∈ Ioo (0 : ℝ) 3) (ht_not : t ∉ ({1, 2} : Set ℝ)) :
+    (t : ℝ) (_ht : t ∈ Ioo (0 : ℝ) 3) (ht_not : t ∉ ({1, 2} : Set ℝ)) :
     DifferentiableAt ℝ (sectorCurve r α) t := by
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at ht_not
   rcases lt_or_gt_of_ne ht_not.1 with h1 | h1
@@ -45,7 +45,8 @@ private theorem sectorCurve_differentiableAt_off_knots (r : ℝ) (α : ℝ)
       refine h_eq.differentiableAt_iff.mpr ?_
       apply DifferentiableAt.const_mul; apply DifferentiableAt.cexp
       apply DifferentiableAt.const_mul
-      exact (((hasDerivAt_id t).sub (hasDerivAt_const t (1 : ℝ))).mul_const α).ofReal_comp.differentiableAt
+      exact (((hasDerivAt_id t).sub
+        (hasDerivAt_const t (1 : ℝ))).mul_const α).ofReal_comp.differentiableAt
     · have h_eq : sectorCurve r α =ᶠ[𝓝 t]
           fun s => (↑((3 - s) * r) : ℂ) * exp (I * ↑α) := by
         filter_upwards [Ioi_mem_nhds h2] with s hs
@@ -54,7 +55,8 @@ private theorem sectorCurve_differentiableAt_off_knots (r : ℝ) (α : ℝ)
           if_neg (not_le.mpr (mem_Ioi.mp hs))]
       refine h_eq.differentiableAt_iff.mpr ?_
       apply DifferentiableAt.mul_const
-      exact (((hasDerivAt_const t (3 : ℝ)).sub (hasDerivAt_id t)).mul_const r).ofReal_comp.differentiableAt
+      exact (((hasDerivAt_const t (3 : ℝ)).sub
+        (hasDerivAt_id t)).mul_const r).ofReal_comp.differentiableAt
 
 private theorem pow_integrableOn_01 (r : ℝ) (α : ℝ) (n : ℕ) :
     IntervalIntegrable (fun t => (sectorCurve r α t) ^ (n - 1) *
@@ -236,7 +238,8 @@ private theorem integral_analytic_sectorCurve_eq_zero (r : ℝ) (hr : 0 < r) (α
   have hF_contOn : ContinuousOn F (Metric.ball (0 : ℂ) (↑r + 1)) :=
     fun z hz => (hF z hz).continuousAt.continuousWithinAt
   have hF_deriv : ∀ t ∈ Ioo (0 : ℝ) 3 \ ({1, 2} ∩ Ioo 0 3),
-      HasDerivAt (F ∘ sectorCurve r α) (g (sectorCurve r α t) * deriv (sectorCurve r α) t) t := by
+      HasDerivAt (F ∘ sectorCurve r α)
+        (g (sectorCurve r α t) * deriv (sectorCurve r α) t) t := by
     intro t ⟨ht, ht_not⟩
     have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
     exact (hF _ (hγ_in_ball t (Ioo_subset_Icc_self ht))).comp_of_eq t
@@ -541,8 +544,13 @@ theorem cauchyPV_sectorCurve_eq_mul_residueSimplePole (r : ℝ) (hr : 0 < r) (α
     CauchyPrincipalValueExists' f (sectorCurve r α) 0 3 0 ∧
     cauchyPrincipalValue' f (sectorCurve r α) 0 3 0 = I * ↑α * residueSimplePole f 0 := by
   have h_eq : ∀ ε > 0, ∀ t,
-      (if ε < ‖sectorCurve r α t - 0‖ then f (sectorCurve r α t) * deriv (sectorCurve r α) t else 0) =
-      (if ε < ‖sectorCurve r α t - 0‖ then (c / sectorCurve r α t + g (sectorCurve r α t)) * deriv (sectorCurve r α) t else 0) := by
+      (if ε < ‖sectorCurve r α t - 0‖
+        then f (sectorCurve r α t) * deriv (sectorCurve r α) t
+        else 0) =
+      (if ε < ‖sectorCurve r α t - 0‖
+        then (c / sectorCurve r α t + g (sectorCurve r α t)) *
+          deriv (sectorCurve r α) t
+        else 0) := by
     intro ε hε t; split_ifs with h
     · have hne : sectorCurve r α t ≠ 0 := by
         intro heq; simp [heq] at h; linarith
@@ -564,7 +572,7 @@ theorem cauchyPV_sectorCurve_eq_mul_residueSimplePole (r : ℝ) (hr : 0 < r) (α
   rw [hpv_f, ← hpv_cg, h_sp.2, hc]
 
 private theorem sectorCurve_ne_zero_of_Icc_δ (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (δ : ℝ) (hδ_pos : 0 < δ) (hδ_lt_1 : δ < 1) :
+    (δ : ℝ) (hδ_pos : 0 < δ) (_hδ_lt_1 : δ < 1) :
     ∀ t ∈ Icc δ (3 - δ), sectorCurve r α t ≠ 0 := by
   intro t ht h0
   rcases le_or_gt t 1 with h1 | h1
@@ -587,7 +595,7 @@ private theorem sectorCurve_ne_zero_of_Icc_δ (r : ℝ) (hr : 0 < r) (α : ℝ)
       · exact absurd hexp0 (Complex.exp_ne_zero _)
 
 private theorem sectorCurve_norm_le_near_zero (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (δ : ℝ) (hδ_pos : 0 < δ) (hδ_lt_1 : δ < 1) (ε : ℝ) (hδr_eq : δ * r = ε) :
+    (δ : ℝ) (_hδ_pos : 0 < δ) (hδ_lt_1 : δ < 1) (ε : ℝ) (hδr_eq : δ * r = ε) :
     ∀ t ∈ Icc 0 δ, ‖sectorCurve r α t‖ ≤ ε := by
   intro t ht
   rw [sectorCurve_norm_seg1 r hr α t ⟨ht.1, le_trans ht.2 hδ_lt_1.le⟩]
@@ -604,7 +612,7 @@ private theorem sectorCurve_norm_le_near_three (r : ℝ) (hr : 0 < r) (α : ℝ)
     _ = ε := hδr_eq
 
 private theorem sectorCurve_norm_gt_mid (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (δ : ℝ) (hδ_pos : 0 < δ) (hδ_lt_1 : δ < 1) (ε : ℝ) (hε_lt_r : ε < r)
+    (δ : ℝ) (hδ_pos : 0 < δ) (_hδ_lt_1 : δ < 1) (ε : ℝ) (hε_lt_r : ε < r)
     (hδr_eq : δ * r = ε) :
     ∀ t ∈ Ioo δ (3 - δ), ε < ‖sectorCurve r α t‖ := by
   intro t ht
@@ -613,7 +621,8 @@ private theorem sectorCurve_norm_gt_mid (r : ℝ) (hr : 0 < r) (α : ℝ)
     calc ε = δ * r := hδr_eq.symm
       _ < t * r := mul_lt_mul_of_pos_right ht.1 hr
   · rcases le_or_gt t 2 with h2 | h2
-    · have : ‖sectorCurve r α t‖ = r := sectorCurve_norm_on_arc r hr α t ⟨le_of_lt h1, h2⟩
+    · have : ‖sectorCurve r α t‖ = r :=
+        sectorCurve_norm_on_arc r hr α t ⟨le_of_lt h1, h2⟩
       rw [this]; exact hε_lt_r
     · rw [sectorCurve_norm_seg3' r hr α t ⟨le_of_lt h2, by linarith [ht.2]⟩]
       calc ε = δ * r := hδr_eq.symm
@@ -690,7 +699,8 @@ private theorem zpow_primitive_hasDerivAt (r : ℝ) (hr : 0 < r) (α : ℝ) (n :
     have : m ≠ 0 := by simp [m]; omega
     exact_mod_cast this
   have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
-  have hγ_ne := sectorCurve_ne_zero_of_Icc_δ r hr α δ hδ_pos hδ_lt_1 t (Ioo_subset_Icc_self ht)
+  have hγ_ne := sectorCurve_ne_zero_of_Icc_δ r hr α δ hδ_pos
+    hδ_lt_1 t (Ioo_subset_Icc_self ht)
   have hγ_diff := sectorCurve_differentiableAt_off_knots r α t
     ⟨lt_trans hδ_pos ht.1, lt_of_lt_of_le ht.2 (by linarith)⟩ ht_not'
   have h_zpow : HasDerivAt (fun s => (γ s) ^ m)
@@ -702,7 +712,7 @@ private theorem zpow_primitive_hasDerivAt (r : ℝ) (hr : 0 < r) (α : ℝ) (n :
   convert h_div using 1
   rw [smul_eq_mul, mul_assoc, mul_div_cancel_left₀ _ hm_ne, hm_sub]
 
-private theorem zpow_ftc_vanishes (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2 ≤ n)
+private theorem zpow_ftc_vanishes (r : ℝ) (_hr : 0 < r) (α : ℝ) (n : ℕ) (_hn : 2 ≤ n)
     (δ : ℝ) (hδ_pos : 0 < δ) (hδ_lt_1 : δ < 1)
     (h_exp_one : exp (I * ↑((1 - (↑(n : ℤ) : ℤ)) * α)) = 1) :
     let m : ℤ := 1 - ↑n
@@ -842,7 +852,8 @@ theorem pv_sector_negative_power (r : ℝ) (hr : 0 < r) (α : ℝ)
       · exact (sectorCurve_continuousOn r α).mono (by
           intro t ht; constructor <;> linarith [ht.1, ht.2, hδ_pos])
       · intro t ht; exact Or.inl (hγ_ne t ht)
-    have hf_int : IntervalIntegrable (fun t => (γ t) ^ (-(↑n : ℤ)) * deriv γ t) volume δ (3 - δ) :=
+    have hf_int : IntervalIntegrable
+        (fun t => (γ t) ^ (-(↑n : ℤ)) * deriv γ t) volume δ (3 - δ) :=
       (zpow_integrableOn_δ1 r hr α n δ hδ_pos hδ_lt_1).trans
         (zpow_integrableOn_12 r hr α n) |>.trans
         (zpow_integrableOn_23δ r hr α n δ hδ_pos hδ_lt_1)

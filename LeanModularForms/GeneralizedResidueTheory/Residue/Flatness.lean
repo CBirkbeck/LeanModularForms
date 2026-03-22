@@ -141,7 +141,8 @@ theorem IsFlatOfOrder.of_le {γ : ℝ → ℂ} {t₀ : ℝ} {m n : ℕ}
     (h : IsFlatOfOrder γ t₀ m) (hmn : n ≤ m)
     (hγ_cont : ContinuousAt γ t₀) :
     IsFlatOfOrder γ t₀ n := by
-  -- Key: ‖γ t - γ t₀‖ → 0 as t → t₀, so ‖γ t - γ t₀‖ ^ m ≤ ‖γ t - γ t₀‖ ^ n eventually
+  -- Key: ‖γ t - γ t₀‖ → 0 as t → t₀, so
+  -- ‖γ t - γ t₀‖ ^ m ≤ ‖γ t - γ t₀‖ ^ n eventually
   have h_le_one : ∀ᶠ t in 𝓝 t₀, ‖γ t - γ t₀‖ ≤ 1 := by
     have : Tendsto (fun t => ‖γ t - γ t₀‖) (𝓝 t₀) (𝓝 0) := by
       rw [← norm_zero (E := ℂ), ← sub_self (γ t₀)]
