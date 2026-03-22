@@ -169,6 +169,32 @@ private lemma fdBoundaryToPolygonHomotopy_diffAt_off_partition
             (fdBoundaryToPolygonHomotopy_seg5_differentiable
               t s)
 
+private lemma fdBoundaryToPolygonHomotopy_piecewise
+    (p : ℂ) (hp_norm : ‖p‖ > 1)
+    (hp_re : |p.re| < 1/2)
+    (hp_im : p.im < H_height) :
+    let P : Finset ℝ := {1, 2, 3, 4}
+    PiecewiseCurvesHomotopicAvoiding
+      fdBoundary fdPolygon 0 5 p P :=
+  ⟨fdBoundaryToPolygonHomotopy,
+   fdBoundaryToPolygonHomotopy_continuous,
+   fun t ht =>
+    fdBoundaryToPolygonHomotopy_at_zero t ht,
+   fun t ht =>
+    fdBoundaryToPolygonHomotopy_at_one t ht,
+   fun s hs =>
+    fdBoundaryToPolygonHomotopy_closed s hs,
+   fun t ht s hs =>
+    fdBoundaryToPolygonHomotopy_avoids p
+      hp_norm hp_re hp_im t ht s hs,
+   fun t ht ht_not_P s hs =>
+    fdBoundaryToPolygonHomotopy_diffAt_off_partition
+      t ht ht_not_P s hs,
+   fun p₁ p₂ hp hpiece hsub =>
+    fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
+      p₁ p₂ hp hpiece hsub,
+   fdBoundaryToPolygonHomotopy_deriv_bound⟩
+
 /-- For interior points p in the fundamental domain,
     the generalized winding number of the FD boundary
     around p equals -1 (clockwise orientation). -/
@@ -179,108 +205,21 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
     (hp_im : p.im < H_height) :
     generalizedWindingNumber' fdBoundary 0 5 p
       = -1 := by
-  have hab : (0 : ℝ) < 5 := by norm_num
-  have hγ_cont :
-      ContinuousOn fdBoundary (Icc 0 5) := by
-    have hcomp : Continuous
-        (fun t : ℝ =>
-          fdBoundaryToPolygonHomotopy (t, 0)) := by
-      exact fdBoundaryToPolygonHomotopy_continuous.comp
-        (continuous_id.prodMk continuous_const)
-    apply hcomp.continuousOn.congr
-    intro t ht
-    exact (fdBoundaryToPolygonHomotopy_at_zero
-      t ht).symm
-  have hγ_ne :
-      ∀ t ∈ Icc 0 5, fdBoundary t ≠ p := by
-    intro t ht
-    have hs : (0 : ℝ) ∈ Icc 0 1 :=
-      ⟨le_refl _, by norm_num⟩
-    have h :=
-      fdBoundaryToPolygonHomotopy_avoids p
-        hp_norm hp_re hp_im t ht 0 hs
-    rw [fdBoundaryToPolygonHomotopy_at_zero
-      t ht] at h
-    exact h
-  have hγ_closed :
-      fdBoundary 0 = fdBoundary 5 :=
-    fdBoundary_at_zero.trans
-      fdBoundary_at_five.symm
-  let P : Finset ℝ := {1, 2, 3, 4}
-  have hP_subset : (P : Set ℝ) ⊆ Icc 0 5 := by
-    intro t ht
-    simp only [P, Finset.coe_insert,
-      Finset.coe_singleton,
-      Set.mem_insert_iff,
-      Set.mem_singleton_iff] at ht
-    rcases ht with rfl | rfl | rfl | rfl
-      <;> constructor <;> norm_num
-  have hH1_diff :
-      ∀ t ∈ Ioo 0 5, t ∉ P →
-        ∀ s ∈ Icc (0:ℝ) 1,
-          DifferentiableAt ℝ
-            (fun t' =>
-              fdBoundaryToPolygonHomotopy (t', s))
-            t := by
-    intro t ht ht_not_P s hs
-    exact fdBoundaryToPolygonHomotopy_diffAt_off_partition
-      t ht ht_not_P s hs
-  have hH1_deriv_cont :
-      ∀ p₁ p₂ : ℝ, p₁ < p₂ →
-        (∀ t ∈ Ioo p₁ p₂, t ∉ P) →
-        Ioo p₁ p₂ ⊆ Ioo 0 5 →
-      ContinuousOn
-        (fun (q : ℝ × ℝ) =>
-          deriv (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', q.2)) q.1)
-        (Ioo p₁ p₂ ×ˢ Icc 0 1) :=
-    fun p₁ p₂ hp hpiece hsub =>
-      fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces
-        p₁ p₂ hp hpiece hsub
-  have hH1_bound :
-      ∃ M : ℝ, ∀ t ∈ Icc 0 5,
-        ∀ s ∈ Icc (0:ℝ) 1,
-          ‖deriv (fun t' =>
-            fdBoundaryToPolygonHomotopy
-              (t', s)) t‖ ≤ M :=
-    fdBoundaryToPolygonHomotopy_deriv_bound
-  have hhom₁ :
-      PiecewiseCurvesHomotopicAvoiding
-        fdBoundary fdPolygon 0 5 p P :=
-    ⟨fdBoundaryToPolygonHomotopy,
-     fdBoundaryToPolygonHomotopy_continuous,
-     fun t ht =>
-      fdBoundaryToPolygonHomotopy_at_zero t ht,
-     fun t ht =>
-      fdBoundaryToPolygonHomotopy_at_one t ht,
-     fun s hs =>
-      fdBoundaryToPolygonHomotopy_closed s hs,
-     fun t ht s hs =>
-      fdBoundaryToPolygonHomotopy_avoids p
-        hp_norm hp_re hp_im t ht s hs,
-     hH1_diff,
-     hH1_deriv_cont,
-     hH1_bound⟩
   have h_wind_eq1 :
-      generalizedWindingNumber' fdBoundary
-        0 5 p =
-      generalizedWindingNumber' fdPolygon
-        0 5 p :=
+      generalizedWindingNumber' fdBoundary 0 5 p =
+      generalizedWindingNumber' fdPolygon 0 5 p :=
     windingNumber_eq_of_piecewise_homotopic
-      fdBoundary fdPolygon 0 5 p P hab hhom₁
+      fdBoundary fdPolygon 0 5 p {1, 2, 3, 4}
+      (by norm_num)
+      (fdBoundaryToPolygonHomotopy_piecewise p hp_norm hp_re hp_im)
   have h_wind_eq2 :
-      generalizedWindingNumber' fdPolygon
-        0 5 p =
+      generalizedWindingNumber' fdPolygon 0 5 p =
       generalizedWindingNumber'
         (circleParamCW p 1 0 5) 0 5 p :=
     winding_fdPolygon_eq_circleParamCW p
       hp_norm hp_re hp_im_pos hp_im
-  have h_circle :
-      generalizedWindingNumber'
-        (circleParamCW p 1 0 5) 0 5 p = -1 :=
+  rw [h_wind_eq1, h_wind_eq2,
     circleParamCW_winding_eq_neg_one p 1
-      (by norm_num : (0:ℝ) < 1) 0 5 hab
-  rw [h_wind_eq1, h_wind_eq2, h_circle]
+      (by norm_num : (0:ℝ) < 1) 0 5 (by norm_num)]
 
 end RectHomotopyProof
