@@ -839,7 +839,8 @@ private lemma cutoff_integral_split_to_sides
     have h_a_b := intervalIntegral.integral_add_adjacent_intervals hint_l (hint_m.trans hint_r)
     rw [← h_σ₁_b] at h_a_b; rw [← h_a_b, add_assoc]
   rw [hsplit]
-  have h_mid_zero : ∫ t in σ₁..σ₂, (fun t => if ‖γ.toFun t - s‖ > ε then F t else 0) t = 0 := by
+  have h_mid_zero : ∫ t in σ₁..σ₂,
+      (fun t => if ‖γ.toFun t - s‖ > ε then F t else 0) t = 0 := by
     rw [intervalIntegral.integral_congr heq_mid, intervalIntegral.integral_zero]
   rw [h_mid_zero, add_zero,
     intervalIntegral.integral_congr_ae_restrict hae_left,
@@ -1078,7 +1079,8 @@ private lemma cutoff_zpow_direction_and_ftc
       ∫ t in γ.a..γ.b,
         (if ‖γ.toFun t - s‖ > ε
          then (γ.toFun t - s) ^ (-(m : ℤ)) * deriv γ.toFun t else 0) =
-        ((γ.toFun (σ₁ ε) - s) ^ (1 - (m : ℤ)) - (γ.toFun (σ₂ ε) - s) ^ (1 - (m : ℤ))) /
+        ((γ.toFun (σ₁ ε) - s) ^ (1 - (m : ℤ)) -
+          (γ.toFun (σ₂ ε) - s) ^ (1 - (m : ℤ))) /
           ((1 : ℂ) - ↑(m : ℤ))) := by
   have hσ₂_tendsto : Tendsto σ₂ (𝓝[>] 0) (𝓝[>] t₀) :=
     exit_time_tendsto_right γ s t₀ ht₀ hcross h_unique σ₂ δ hδ_pos
@@ -1156,7 +1158,8 @@ lemma cutoff_zpow_infrastructure
             ((1 : ℂ) - ↑(m : ℤ))) := by
   obtain ⟨L_R, hL_R_ne, htend_R⟩ := immersion_right_deriv_limit γ t₀ ht₀
   obtain ⟨L_L, hL_L_ne, htend_L⟩ := immersion_left_deriv_limit γ t₀ ht₀
-  obtain ⟨δ, hδ_pos, h_exit⟩ := _root_.exists_cutoff_boundary_times γ s t₀ ht₀ hcross h_unique
+  obtain ⟨δ, hδ_pos, h_exit⟩ :=
+    _root_.exists_cutoff_boundary_times γ s t₀ ht₀ hcross h_unique
   let σ₁ := fun ε => if h : ε ∈ Ioo 0 δ then (h_exit ε h).choose else t₀
   let σ₂ := fun ε => if h : ε ∈ Ioo 0 δ then (h_exit ε h).choose_spec.choose else t₀
   have hprops : ∀ ε (hε : ε ∈ Ioo 0 δ),
@@ -1173,7 +1176,8 @@ lemma cutoff_zpow_infrastructure
   let wL : ℝ → ℂ := fun ε => γ.toFun (σ₁ ε) - s
   let uR : ℂ := L_R / ↑‖L_R‖
   let uL : ℂ := -L_L / ↑‖L_L‖
-  obtain ⟨h_rate_R, h_rate_L, h_ftc⟩ := cutoff_zpow_direction_and_ftc γ s m hm t₀ ht₀ hcross
+  obtain ⟨h_rate_R, h_rate_L, h_ftc⟩ :=
+    cutoff_zpow_direction_and_ftc γ s m hm t₀ ht₀ hcross
     h_unique hγ_closed h_flat L_R L_L hL_R_ne hL_L_ne htend_R htend_L σ₁ σ₂ δ hδ_pos
     hprops hIoo_ev
   refine ⟨wR, wL, uR, uL, ?_, ?_, ?_, ?_, ?_, ?_, ?_, h_rate_R, h_rate_L, h_ftc⟩

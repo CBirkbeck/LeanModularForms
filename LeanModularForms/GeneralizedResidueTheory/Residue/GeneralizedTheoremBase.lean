@@ -165,7 +165,8 @@ private lemma cpv_cauchy_of_sum_and_regular (S0 : Finset ℂ) (f : ℂ → ℂ)
       intro z _; simp only [g_reg]; ring
     have hS0_sep : ∃ δ' > 0, ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ' ≤ ‖s' - s‖ :=
       ⟨δ, hδ_pos, hδ_sep⟩
-    exact multipointPV_diff_tendsto S0 f γ (cpv_crossing_null S0 γ) g_reg hg_decomp hg_reg_cont hS0_sep
+    exact multipointPV_diff_tendsto S0 f γ (cpv_crossing_null S0 γ)
+      g_reg hg_decomp hg_reg_cont hS0_sep
   have h_M_tendsto : Tendsto M (𝓝[>] 0) (𝓝 (L + G)) := by
     have h_eq : M = fun ε => S' ε + A ε := by
       ext ε; simp [M, A, S']
@@ -493,8 +494,11 @@ lemma CauchyPrincipalValueExists'.const_mul
     CauchyPrincipalValueExists' (fun z => c * f z) γ a b z₀ := by
   obtain ⟨L, hL⟩ := h
   refine ⟨c * L, ?_⟩
-  have h_eq : ∀ ε, (∫ t in a..b, if ‖γ t - z₀‖ > ε then (c * f (γ t)) * deriv γ t else 0) =
-      c * (∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) := by
+  have h_eq : ∀ ε,
+      (∫ t in a..b, if ‖γ t - z₀‖ > ε
+        then (c * f (γ t)) * deriv γ t else 0) =
+      c * (∫ t in a..b, if ‖γ t - z₀‖ > ε
+        then f (γ t) * deriv γ t else 0) := by
     intro ε
     rw [← intervalIntegral.integral_const_mul]
     congr 1; ext t

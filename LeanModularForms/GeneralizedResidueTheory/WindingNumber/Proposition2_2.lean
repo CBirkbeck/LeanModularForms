@@ -445,12 +445,14 @@ theorem cpv_integrand_intervalIntegrable
     (h_sub : Icc c d ⊆ Icc γ.a γ.b)
     (ε : ℝ) (hε : 0 < ε) :
     IntervalIntegrable
-      (fun t => if ε < ‖γ.toFun t - z₀‖ then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0)
+      (fun t => if ε < ‖γ.toFun t - z₀‖
+        then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0)
       volume c d := by
   -- Step 1: Derivative bound on [γ.a, γ.b] (hence on [c, d]).
   obtain ⟨D, hD⟩ := piecewiseC1Immersion_deriv_bounded γ
   have hD_nn : 0 ≤ D := (norm_nonneg _).trans (hD γ.a (left_mem_Icc.mpr γ.hab.le))
-  -- Step 2: Bound + continuity off partition → intervalIntegrable_of_piecewise_continuousOn_bounded.
+  -- Step 2: Bound + continuity off partition →
+  -- intervalIntegrable_of_piecewise_continuousOn_bounded.
   -- The integrand is bounded by ε⁻¹ * D everywhere.
   -- It is continuous on (Icc c d) \ (γ.partition ∪ {t | ‖γ t - z₀‖ = ε}).
   -- Since continuity off a finite set is needed, we use AEStronglyMeasurable + bound instead.
@@ -637,8 +639,8 @@ private theorem cpv_exists_on_subinterval
       -- CPV on [α, β] via cpv_exists_single_crossing
       have h_cpv_mid : CauchyPrincipalValueExists'
           (fun z => (z - z₀)⁻¹) γ.toFun α β z₀ :=
-        cpv_exists_single_crossing γ z₀ α β t₁
-          ⟨hα_lt_t₁, ht₁_lt_β⟩ hγt₁ hαβ_sub_ab h_unique_αβ hC2_t₁ h_cont_αβ hγ_meas
+        cpv_exists_single_crossing γ z₀ α β t₁ ⟨hα_lt_t₁, ht₁_lt_β⟩
+          hγt₁ hαβ_sub_ab h_unique_αβ hC2_t₁ h_cont_αβ hγ_meas
       -- [c, α] and [β, d] have strictly fewer crossings
       have hcα : c ≤ α := le_max_right _ _
       have hβd : β ≤ d := min_le_right _ _
@@ -649,9 +651,13 @@ private theorem cpv_exists_on_subinterval
       -- Crossings in [c, α]: subset of [c, d] crossings minus t₁
       -- (since t₁ > α, t₁ ∉ [c, α])
       have h_fin_cα : Set.Finite {t ∈ Icc c α | γ.toFun t = z₀} :=
-        h_fin_cd.subset (fun t ⟨ht, hγt⟩ => ⟨⟨ht.1, ht.2.trans (hαβ_sub_cd (left_mem_Icc.mpr hαβ_lt.le)).2⟩, hγt⟩)
+        h_fin_cd.subset (fun t ⟨ht, hγt⟩ =>
+          ⟨⟨ht.1, ht.2.trans
+            (hαβ_sub_cd (left_mem_Icc.mpr hαβ_lt.le)).2⟩, hγt⟩)
       have h_fin_βd : Set.Finite {t ∈ Icc β d | γ.toFun t = z₀} :=
-        h_fin_cd.subset (fun t ⟨ht, hγt⟩ => ⟨⟨(hαβ_sub_cd (right_mem_Icc.mpr hαβ_lt.le)).1.trans ht.1, ht.2⟩, hγt⟩)
+        h_fin_cd.subset (fun t ⟨ht, hγt⟩ =>
+          ⟨⟨(hαβ_sub_cd (right_mem_Icc.mpr hαβ_lt.le)).1.trans
+            ht.1, ht.2⟩, hγt⟩)
       -- t₁ is in the [c,d] crossing set but not in either sub-crossing set
       have ht₁_not_cα : t₁ ∉ {t ∈ Icc c α | γ.toFun t = z₀} :=
         fun ⟨ht, _⟩ => absurd ht.2 (not_le.mpr hα_lt_t₁)
@@ -662,8 +668,9 @@ private theorem cpv_exists_on_subinterval
         have h_sub_finset : h_fin_cα.toFinset ⊆ h_fin_cd.toFinset.erase t₁ := by
           intro t ht_mem
           have ht_cd := h_fin_cd.mem_toFinset.mpr
-            ((fun ⟨ht_Icc, hγt⟩ => ⟨⟨ht_Icc.1, ht_Icc.2.trans (hαβ_sub_cd (left_mem_Icc.mpr hαβ_lt.le)).2⟩, hγt⟩)
-            (h_fin_cα.mem_toFinset.mp ht_mem))
+            ((fun ⟨ht_Icc, hγt⟩ => ⟨⟨ht_Icc.1, ht_Icc.2.trans
+              (hαβ_sub_cd (left_mem_Icc.mpr hαβ_lt.le)).2⟩, hγt⟩)
+              (h_fin_cα.mem_toFinset.mp ht_mem))
           refine Finset.mem_erase.mpr ⟨?_, ht_cd⟩
           intro heq; subst heq
           exact ht₁_not_cα (h_fin_cα.mem_toFinset.mp ht_mem)
@@ -675,8 +682,10 @@ private theorem cpv_exists_on_subinterval
         have h_sub_finset : h_fin_βd.toFinset ⊆ h_fin_cd.toFinset.erase t₁ := by
           intro t ht_mem
           have ht_cd := h_fin_cd.mem_toFinset.mpr
-            ((fun ⟨ht_Icc, hγt⟩ => ⟨⟨(hαβ_sub_cd (right_mem_Icc.mpr hαβ_lt.le)).1.trans ht_Icc.1, ht_Icc.2⟩, hγt⟩)
-            (h_fin_βd.mem_toFinset.mp ht_mem))
+            ((fun ⟨ht_Icc, hγt⟩ => ⟨⟨(hαβ_sub_cd
+              (right_mem_Icc.mpr hαβ_lt.le)).1.trans ht_Icc.1,
+              ht_Icc.2⟩, hγt⟩)
+              (h_fin_βd.mem_toFinset.mp ht_mem))
           refine Finset.mem_erase.mpr ⟨?_, ht_cd⟩
           intro heq; subst heq
           exact ht₁_not_βd (h_fin_βd.mem_toFinset.mp ht_mem)

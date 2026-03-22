@@ -33,7 +33,8 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       (𝓝[>] 0) (𝓝 limit) := by
   have hab : a < b := lt_trans (Set.mem_Ioo.mp hat₀).1 (Set.mem_Ioo.mp hat₀).2
   obtain ⟨K, hK_pos, δ_P1, hδ_P1_pos, h_step_uniform⟩ :=
-    pv_step_bound_ratio_two_uniform hab hat₀ hγ_C2 hγ_deriv hL hγ_meas hγ_cont_deriv hγ_cont h_inj
+    pv_step_bound_ratio_two_uniform hab hat₀ hγ_C2 hγ_deriv hL
+      hγ_meas hγ_cont_deriv hγ_cont h_inj
   let δ := δ_P1 / 2
   have hδ_pos : 0 < δ := by positivity
   have h_dyadic_lt : ∀ n : ℕ, δ / 2 ^ n < δ_P1 := fun n =>
@@ -75,7 +76,8 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     obtain ⟨N₂, hN₂⟩ := this (η / 4) (by linarith)
     refine ⟨N₂, ?_⟩
     specialize hN₂ N₂ le_rfl
-    rw [Real.dist_eq, sub_zero, abs_of_pos (div_pos (mul_pos hK_pos hδ_pos) (by positivity))] at hN₂
+    rw [Real.dist_eq, sub_zero,
+      abs_of_pos (div_pos (mul_pos hK_pos hδ_pos) (by positivity))] at hN₂
     exact hN₂
   obtain ⟨N₂, hN₂⟩ := h_pow_unbounded
   let N := max N₁ N₂

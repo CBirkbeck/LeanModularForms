@@ -564,7 +564,8 @@ private theorem pv_cutoff_integral_seg3_eq_neg_inv (r : ℝ) (hr : 0 < r) (α : 
     let F : ℝ → ℂ := fun t => if ‖sectorCurve r α t - 0‖ > ε
         then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t else 0
     let δ := ε / r
-    ∫ t in (2 : ℝ)..(3 - δ), F t = ∫ t in (2 : ℝ)..(3 - δ), -(↑((3 - t)⁻¹) : ℂ) := by
+    ∫ t in (2 : ℝ)..(3 - δ), F t =
+      ∫ t in (2 : ℝ)..(3 - δ), -(↑((3 - t)⁻¹) : ℂ) := by
   set F : ℝ → ℂ := fun t => if ‖sectorCurve r α t - 0‖ > ε
       then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t else 0
   set δ := ε / r with hδ_def
@@ -592,10 +593,12 @@ private theorem pv_cutoff_integral_seg3_eq_neg_inv (r : ℝ) (hr : 0 < r) (α : 
 
 /-- For `0 < ε < r`, the PV cutoff integral of `dz/z` along the sector curve equals `I * α`.
 This is the key cancellation lemma: the logarithmic divergences from segments 1 and 3 cancel. -/
-theorem pv_sector_cutoff_eq (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ) (hε : 0 < ε) (hεr : ε < r) :
+theorem pv_sector_cutoff_eq (r : ℝ) (hr : 0 < r) (α : ℝ)
+    (ε : ℝ) (hε : 0 < ε) (hεr : ε < r) :
     ∫ t in (0 : ℝ)..3,
-      (if ‖sectorCurve r α t - 0‖ > ε then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t
-       else 0) = I * ↑α := by
+      (if ‖sectorCurve r α t - 0‖ > ε
+        then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t
+        else 0) = I * ↑α := by
   set F : ℝ → ℂ := fun t => if ‖sectorCurve r α t - 0‖ > ε
       then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t else 0
   set δ := ε / r with hδ_def
@@ -646,16 +649,18 @@ theorem pv_sector_dz_over_z (r : ℝ) (hr : 0 < r) (α : ℝ)
     cauchyPrincipalValue' (fun z => z⁻¹) (sectorCurve r α) 0 3 0 = I * ↑α := by
   have h_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ∫ t in (0 : ℝ)..3,
-        (if ‖sectorCurve r α t - 0‖ > ε then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t
-         else 0) = I * ↑α := by
+        (if ‖sectorCurve r α t - 0‖ > ε
+          then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t
+          else 0) = I * ↑α := by
     rw [eventually_nhdsWithin_iff]
     filter_upwards [Iio_mem_nhds hr] with ε hε hε_pos
     simp only [mem_Ioi] at hε_pos
     exact pv_sector_cutoff_eq r hr α ε hε_pos (mem_Iio.mp hε)
   have h_tendsto : Tendsto (fun ε =>
       ∫ t in (0 : ℝ)..3,
-        if ‖sectorCurve r α t - 0‖ > ε then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t
-        else 0)
+        if ‖sectorCurve r α t - 0‖ > ε
+          then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t
+          else 0)
       (𝓝[>] 0) (𝓝 (I * ↑α)) :=
     tendsto_const_nhds.congr' (h_ev.mono (fun ε h => h.symm))
   constructor
