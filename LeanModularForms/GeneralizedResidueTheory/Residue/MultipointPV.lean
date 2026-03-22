@@ -697,13 +697,12 @@ lemma A_int_bound_good_set
     have := h_all_far t ht (γ t) h_mem
     simp only [sub_self, norm_zero] at this
     linarith
-  have h_decomp := hg_decomp (γ t) h_not_in_S0
   have h_sub :
       f (γ t) -
         ∑ s ∈ S0,
           residueSimplePole f s / (γ t - s) =
         g_reg (γ t) := by
-    rw [h_decomp]; ring
+    rw [hg_decomp (γ t) h_not_in_S0]; ring
   rw [h_sub]
   calc ‖g_reg (γ t) * deriv γ t‖
       = ‖g_reg (γ t)‖ * ‖deriv γ t‖ :=

@@ -56,10 +56,9 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero
     (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t = 0 := by
-  have h_null := isNullHomologous_of_convex U hU hU_convex
-    ⟨s, hs_in_U⟩ γ hγ_closed hγ_in_U
   exact contourIntegral_eq_zero_of_meromorphic_residue_zero_nh
-    f s hf hres U hU hf_diff hs_in_U γ h_null hγ_avoids
+    f s hf hres U hU hf_diff hs_in_U γ
+    (isNullHomologous_of_convex U hU hU_convex ⟨s, hs_in_U⟩ γ hγ_closed hγ_in_U) hγ_avoids
 
 /-! ### Multi-point vanishing theorem (convex corollary)
 
@@ -85,10 +84,9 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset
     rcases S.eq_empty_or_nonempty with rfl | ⟨s, hs⟩
     · exact ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr (le_of_lt γ.hab))⟩
     · exact ⟨s, hS_in_U s hs⟩
-  have h_null := isNullHomologous_of_convex U hU hU_convex
-    hU_ne γ hγ_closed hγ_in_U
   exact contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh
-    S f hf_mero hres U hU hf_diff γ h_null hγ_avoids
+    S f hf_mero hres U hU hf_diff γ
+    (isNullHomologous_of_convex U hU hU_convex hU_ne γ hγ_closed hγ_in_U) hγ_avoids
 
 end GeneralizedResidueTheory
 

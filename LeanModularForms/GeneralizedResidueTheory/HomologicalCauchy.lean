@@ -278,9 +278,7 @@ theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U)
     have h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z :=
       fun t ht heq => hz (heq ▸ hγ_in_U t ht)
     -- Step 2: Reduce PV winding number to classical integral
-    have h_classical := generalizedWindingNumber_eq_classical_away
-      γ.toPiecewiseC1Curve z h_avoids
-    rw [h_classical]
+    rw [generalizedWindingNumber_eq_classical_away γ.toPiecewiseC1Curve z h_avoids]
     -- Step 3: The function w -> (w - z)^{-1} is holomorphic on U
     have h_ne_z : ∀ w ∈ U, w - z ≠ 0 :=
       fun w hw => sub_ne_zero.mpr (fun heq => hz (heq ▸ hw))
@@ -296,9 +294,7 @@ theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U)
     have h_ftc := ftc_piecewise_contour γ.toPiecewiseC1Curve U
       hγ_in_U hF h_int
     -- Step 7: gamma is closed, so F(gamma(b)) = F(gamma(a))
-    have h_closed_val : F (γ.toFun γ.b) = F (γ.toFun γ.a) :=
-      congrArg F hγ_closed.symm
-    rw [h_ftc, h_closed_val, sub_self, mul_zero]
+    rw [h_ftc, congrArg F hγ_closed.symm, sub_self, mul_zero]
 
 /-! ## Dixon's Proof of the Homological Cauchy Theorem
 
@@ -440,12 +436,11 @@ private lemma dixonH2_integrand_integrable (f : ℂ → ℂ) (γ : PiecewiseC1Im
         (sub_ne_zero.mpr (hball_avoids t ht_Icc)) |>.mono diff_subset).mul
       (γ.deriv_continuous_off_partition t ht_Ioo ht_npart).continuousWithinAt
   · intro t ht
-    have hε_lb := hdist_lb t ht
     rw [norm_mul, norm_div]
     have hbound1 : ‖f (γ.toFun t)‖ / ‖γ.toFun t - x‖ ≤ M_f / ε :=
       calc ‖f (γ.toFun t)‖ / ‖γ.toFun t - x‖
           ≤ ‖f (γ.toFun t)‖ / ε :=
-            div_le_div_of_nonneg_left (norm_nonneg _) hε_pos hε_lb
+            div_le_div_of_nonneg_left (norm_nonneg _) hε_pos (hdist_lb t ht)
         _ ≤ M_f / ε := by gcongr; exact hM_f t ht
     calc ‖f (γ.toFun t)‖ / ‖γ.toFun t - x‖ * ‖deriv γ.toFun t‖
         ≤ (M_f / ε) * M_d :=
@@ -468,18 +463,14 @@ private noncomputable def dixonH2_F' (f : ℂ → ℂ) (γ : PiecewiseC1Immersio
 private lemma dixonH2_pointwise_hasDerivAt (fz c : ℂ) (z x : ℂ) (hne : z - x ≠ 0) :
     HasDerivAt (fun x => fz * (z - x)⁻¹ * c) (fz * (z - x)⁻¹ ^ 2 * c) x := by
   have h1 : HasDerivAt (fun x => z - x) (-1) x := by
-    have hid := hasDerivAt_id x
-    have hconst := hasDerivAt_const x z
-    convert hconst.sub hid using 1
+    convert (hasDerivAt_const x z).sub (hasDerivAt_id x) using 1
     simp
   have h2 : HasDerivAt (fun x => (z - x)⁻¹) (-(-1) / (z - x) ^ 2) x :=
     h1.fun_inv hne
   simp only [neg_neg, one_div] at h2
   -- h2 : HasDerivAt (fun x => (z-x)⁻¹) ((z-x)^2)⁻¹ x
   have h3 : HasDerivAt (fun x => fz * (z - x)⁻¹) (fz * ((z - x) ^ 2)⁻¹) x := by
-    have h3a := h2.const_mul fz
-    -- h3a : HasDerivAt (fun y => fz * (z-y)⁻¹) (fz * ((z-x)^2)⁻¹) x
-    convert h3a using 1
+    convert h2.const_mul fz using 1
   have h4 : HasDerivAt (fun x => fz * (z - x)⁻¹ * c) (fz * ((z - x) ^ 2)⁻¹ * c) x :=
     h3.mul_const c
   convert h4 using 1
@@ -501,10 +492,9 @@ private lemma dixonH2_deriv_bound (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
   have ht : t ∈ Icc γ.a γ.b := by
     rw [Set.uIoc_of_le hab] at _ht
     exact Set.Ioc_subset_Icc_self _ht
-  have hε_lb := hdist_lb x hx_ball t ht
   rw [norm_mul, norm_mul, norm_pow, norm_inv]
   have hinv_bound : ‖γ.toFun t - x‖⁻¹ ≤ ε⁻¹ :=
-    inv_anti₀ hε_pos hε_lb
+    inv_anti₀ hε_pos (hdist_lb x hx_ball t ht)
   calc ‖f (γ.toFun t)‖ * ‖γ.toFun t - x‖⁻¹ ^ 2 * ‖deriv γ.toFun t‖
       ≤ M_f * ε⁻¹ ^ 2 * M_d := by
         apply mul_le_mul
@@ -1144,10 +1134,10 @@ private lemma dixonH2_norm_bound (γ : PiecewiseC1Immersion)
     intro t ht_ui
     have ht : t ∈ Icc γ.a γ.b := Ioc_subset_Icc_self (Set.uIoc_of_le hab ▸ ht_ui)
     rw [norm_mul, norm_div]
-    have hd_lb := curveImage_dist_lower_bound γ hR w ht
     calc ‖f (γ.toFun t)‖ / ‖γ.toFun t - w‖ * ‖deriv γ.toFun t‖
         ≤ (M_f / (‖w‖ - R)) * M_d :=
-          mul_le_mul (div_le_div₀ hM_f_nn (hM_f t ht) hpos hd_lb)
+          mul_le_mul (div_le_div₀ hM_f_nn (hM_f t ht) hpos
+            (curveImage_dist_lower_bound γ hR w ht))
             (hM_d t ht) (norm_nonneg _) (div_nonneg hM_f_nn hpos.le)
       _ = M_f * M_d / (‖w‖ - R) := by ring
   calc ‖∫ t in γ.a..γ.b, f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t‖
@@ -1285,9 +1275,9 @@ theorem dixonFunction_eq_zero (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (γ : PiecewiseC1Immersion) (h_null : IsNullHomologous γ U) :
     ∀ w, dixonFunction f U γ w = 0 := by
   intro w
-  have h_diff := dixonFunction_differentiable hU hf γ h_null
-  have h_tend := dixonFunction_tendsto_zero hU hf γ h_null
-  exact Differentiable.apply_eq_of_tendsto_cocompact h_diff w h_tend
+  exact Differentiable.apply_eq_of_tendsto_cocompact
+    (dixonFunction_differentiable hU hf γ h_null) w
+    (dixonFunction_tendsto_zero hU hf γ h_null)
 
 /-- Cauchy integral formula for null-homologous curves:
 ∮_γ f(z)/(z-w) dz = 2πi · n(γ,w) · f(w) for w ∈ U off the curve. -/
@@ -1944,7 +1934,6 @@ lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
     apply CauchyPrincipalValueExists'.const_mul
     apply cauchyPrincipalValueExists_of_singular_inv γ s
     intro ⟨t₀, ht₀, hcross⟩
-    have h_fin := finite_crossings γ s
     have ht₀_Ioo : t₀ ∈ Ioo γ.a γ.b := by
       refine ⟨lt_of_le_of_ne ht₀.1 (fun h => ?_), lt_of_le_of_ne ht₀.2 (fun h => ?_)⟩
       · exact (h_no_endpt_cross s hs).1 (h ▸ hcross)
@@ -1953,7 +1942,6 @@ lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
       exists_isolated_crossing_interval γ s t₀ ht₀_Ioo hcross
     have honly : ∀ t ∈ Set.Icc γ.a γ.b, γ.toFun t = s → t = t₀ :=
       fun t ht hgt => h_unique_cross s hs t ht t₀ ht₀ hgt hcross
-    have h_exp := tendsto_exp_cutoff_integral_crossing γ h_null.closed s t₀ ht₀_Ioo hcross honly
     suffices ∃ M, Tendsto (fun ε => ∫ (t : ℝ) in γ.a..γ.b,
         if ε < ‖γ.toFun t - s‖ then (γ.toFun t - s)⁻¹ * deriv γ.toFun t else 0)
         (𝓝[>] 0) (𝓝 M) from this.choose_spec.cauchy_map

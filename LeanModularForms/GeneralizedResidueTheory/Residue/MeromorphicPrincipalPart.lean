@@ -302,10 +302,9 @@ private theorem integral_zpow_comp_sub_mul_deriv'
       HasDerivAt F (f t) t := by
     intro t ⟨ht, ht_not⟩
     have ht_not_E : t ∉ E := fun hE_mem => ht_not ⟨hE_mem, ht⟩
-    have hγ_da := (hγ_diff t ht ht_not_E).hasDerivAt
     have hne : γ t ≠ s := hγ_ne t (Ioo_subset_Icc_self ht)
-    have h_zpow := hasDerivAt_zpow_comp_sub' (n := n + 1) hγ_da hne
-    have h_div := h_zpow.div_const (↑(n + 1) : ℂ)
+    have h_div := (hasDerivAt_zpow_comp_sub' (n := n + 1)
+      (hγ_diff t ht ht_not_E).hasDerivAt hne).div_const (↑(n + 1) : ℂ)
     show HasDerivAt F ((γ t - s) ^ n * ↑(deriv γ t)) t
     have : (↑(n + 1) : ℂ) * (γ t - s) ^ (n + 1 - 1) * ↑(deriv γ t) / (↑(n + 1) : ℂ)
         = (γ t - s) ^ n * ↑(deriv γ t) := by

@@ -311,13 +311,12 @@ lemma integral_singular_term_eq_winding_times_coeff
     (h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, c / (γ.toFun t - s) * deriv γ.toFun t =
       2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b s * c := by
-  have h_winding := generalizedWindingNumber_eq_classical_away γ s h_avoids
   have h_ne : (2 * Real.pi * I : ℂ) ≠ 0 := by
     simp only [ne_eq, mul_eq_zero, not_or]
     exact ⟨⟨by norm_num, by exact_mod_cast Real.pi_ne_zero⟩, Complex.I_ne_zero⟩
   have h_integral : ∫ t in γ.a..γ.b, (γ.toFun t - s)⁻¹ * deriv γ.toFun t =
       2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b s := by
-    rw [h_winding]
+    rw [generalizedWindingNumber_eq_classical_away γ s h_avoids]
     field_simp [h_ne]
   have h_integrand : ∀ t, c / (γ.toFun t - s) * deriv γ.toFun t =
       c * ((γ.toFun t - s)⁻¹ * deriv γ.toFun t) := by

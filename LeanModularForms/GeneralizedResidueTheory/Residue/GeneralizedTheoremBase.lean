@@ -160,13 +160,12 @@ private lemma cpv_cauchy_of_sum_and_regular (S0 : Finset ℂ) (f : ℂ → ℂ)
   let g_reg := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)
   let G := ∫ t in γ.a..γ.b, g_reg (γ.toFun t) * deriv γ.toFun t
   have h_A_tendsto : Tendsto A (𝓝[>] 0) (𝓝 G) := by
-    have h_crossing_null := cpv_crossing_null S0 γ
     have hg_decomp : ∀ z, z ∉ (S0 : Set ℂ) →
         f z = g_reg z + ∑ s ∈ S0, residueSimplePole f s / (z - s) := by
       intro z _; simp only [g_reg]; ring
     have hS0_sep : ∃ δ' > 0, ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ' ≤ ‖s' - s‖ :=
       ⟨δ, hδ_pos, hδ_sep⟩
-    exact multipointPV_diff_tendsto S0 f γ h_crossing_null g_reg hg_decomp hg_reg_cont hS0_sep
+    exact multipointPV_diff_tendsto S0 f γ (cpv_crossing_null S0 γ) g_reg hg_decomp hg_reg_cont hS0_sep
   have h_M_tendsto : Tendsto M (𝓝[>] 0) (𝓝 (L + G)) := by
     have h_eq : M = fun ε => S' ε + A ε := by
       ext ε; simp [M, A, S']
@@ -299,8 +298,7 @@ private lemma single_pole_pv_base_exists
       if ‖γ.toFun t - s‖ > ε then (γ.toFun t - s)⁻¹ * deriv γ.toFun t else 0)
       (𝓝[>] 0) (𝓝 L) := by
     convert hL using 1; ext ε; exact (cpv_integral_factor_const γ s c ε).symm
-  have h_scaled := hL'.const_mul c⁻¹
-  convert h_scaled using 1
+  convert hL'.const_mul c⁻¹ using 1
   · ext ε; simp only [inv_mul_cancel_left₀ hc]
   · congr 1; field_simp [hc]
 
@@ -323,7 +321,6 @@ private lemma cpv_eq_sum_single_pole_cpvs
       ∑ s ∈ S0, cauchyPrincipalValue'
         (fun z => residueSimplePole f s / (z - s)) γ.toFun γ.a γ.b s := by
   let g := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)
-  have h_crossing_null := cpv_crossing_null S0 γ
   have hPV_exists : CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b :=
     cauchyPrincipalValueOn_singular_sum S0 f γ hSimplePoles hPV_singular hg_cont_on_image
   have hPV_each_tendsto :
@@ -357,7 +354,7 @@ private lemma cpv_eq_sum_single_pole_cpvs
     · push_neg at hS0_card
       exact finset_min_sep S0 (Finset.card_pos.mp (by omega))
   exact multipointPV_eq_sum_of_integral_zero
-    S0 f γ h_crossing_null g hg_decomp
+    S0 f γ (cpv_crossing_null S0 γ) g hg_decomp
     hg_cont_on_image hS0_sep hg_integral_zero
     hPV_exists hPV_each_tendsto
 

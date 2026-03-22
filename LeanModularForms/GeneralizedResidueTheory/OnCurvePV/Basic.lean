@@ -326,8 +326,7 @@ lemma cpv_concat (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
   obtain ⟨L₁, hL₁⟩ := h_ab
   obtain ⟨L₂, hL₂⟩ := h_bc
   refine ⟨L₁ + L₂, ?_⟩
-  have h_sum := hL₁.add hL₂
-  apply Tendsto.congr' _ h_sum
+  apply Tendsto.congr' _ (hL₁.add hL₂)
   rw [Filter.EventuallyEq]
   filter_upwards [self_mem_nhdsWithin] with ε hε
   simp only [Set.mem_Ioi] at hε
