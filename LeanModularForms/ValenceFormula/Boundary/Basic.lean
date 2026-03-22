@@ -45,20 +45,15 @@ def fdBoundary_seg1 : ℝ → ℂ := fun t =>
 
 /-- Segment 2: arc from ρ+1 to i (angle π/3 → π/2). -/
 def fdBoundary_seg2 : ℝ → ℂ := fun t =>
-  Complex.exp
-    ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+  Complex.exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
 
 /-- Segment 3: arc from i to ρ (angle π/2 → 2π/3). -/
 def fdBoundary_seg3 : ℝ → ℂ := fun t =>
-  Complex.exp
-    ((Real.pi / 2 +
-      (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+  Complex.exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
 
 /-- Segment 4: left vertical from ρ up to (-1/2 + H·i). -/
 def fdBoundary_seg4 : ℝ → ℂ := fun t =>
-  -1 / 2 +
-    (Real.sqrt 3 / 2 +
-      (t - 3) * (heightCutoff - Real.sqrt 3 / 2)) * I
+  -1 / 2 + (Real.sqrt 3 / 2 + (t - 3) * (heightCutoff - Real.sqrt 3 / 2)) * I
 
 /-- Segment 5: horizontal from (-1/2 + H·i) to (1/2 + H·i). -/
 def fdBoundary_seg5 : ℝ → ℂ := fun t =>
@@ -154,20 +149,15 @@ def fdBoundary_seg2_H : ℝ → ℂ := fdBoundary_seg2
 /-- Segment 3 at height H (H-independent): arc from i to ρ. -/
 def fdBoundary_seg3_H : ℝ → ℂ := fdBoundary_seg3
 
-/-- Segment 4 at height H: left vertical from ρ up to
-(-1/2 + H·i). -/
+/-- Segment 4 at height H: left vertical from ρ up to (-1/2 + H·i). -/
 def fdBoundary_seg4_H (H : ℝ) : ℝ → ℂ := fun t =>
-  -1 / 2 +
-    (Real.sqrt 3 / 2 +
-      (t - 3) * (H - Real.sqrt 3 / 2)) * I
+  -1 / 2 + (Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2)) * I
 
-/-- Segment 5 at height H: horizontal from (-1/2 + H·i) to
-(1/2 + H·i). -/
-def fdBoundary_seg5_H (H : ℝ) : ℝ → ℂ := fun t =>
-  (t - 9 / 2) + H * I
+/-- Segment 5 at height H: horizontal from (-1/2 + H·i) to (1/2 + H·i). -/
+def fdBoundary_seg5_H (H : ℝ) : ℝ → ℂ := fun t => (t - 9 / 2) + H * I
 
-/-- Boundary of the standard fundamental domain at variable
-height H, parameterized over [0, 5]. -/
+/-- Boundary of the standard fundamental domain at variable height H,
+parameterized over [0, 5]. -/
 def fdBoundary_H (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 1 then
     1 / 2 + (H - t * (H - Real.sqrt 3 / 2)) * I
@@ -186,8 +176,8 @@ def fdBoundary_H (H : ℝ) : ℝ → ℂ := fun t =>
   else
     (t - 9 / 2) + H * I
 
-/-- Non-differentiable corner points of fdBoundary_H (excluding
-smooth transitions at t = 2). -/
+/-- Non-differentiable corner points of fdBoundary_H (excluding smooth
+transitions at t = 2). -/
 def fdBoundary_H_partition : Finset ℝ := {1, 3, 4}
 
 /-- The q-expansion radius at height H: e^(-2πH). -/

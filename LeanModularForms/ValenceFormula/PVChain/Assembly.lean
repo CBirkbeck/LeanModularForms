@@ -215,17 +215,14 @@ private lemma integral_seg4_cov (G : ℝ → ℂ) :
   exact h.symm
 
 omit hf in
-private lemma pvIntegrand_seg4_eq_neg_seg1
-    (_S : Finset UpperHalfPlane)
-    (Sx : Finset ℂ)
-    {H : ℝ}
-    {ε : ℝ}
+private lemma pvIntegrand_seg4_eq_neg_seg1 (_S : Finset UpperHalfPlane) (Sx : Finset ℂ)
+    {H : ℝ} {ε : ℝ}
     (h_trunc_iff : ∀ u ∈ Set.Ioo (0:ℝ) 1,
       (∃ s ∈ Sx, ‖fdBoundary_H H (4 - u) - s‖ ≤ ε) ↔
       (∃ s ∈ Sx, ‖fdBoundary_H H u - s‖ ≤ ε))
     (u : ℝ) (hu : u ∈ Set.Ioo (0:ℝ) 1) :
     pvIntegrand f (fdBoundary_H H) Sx ε (4 - u) =
-    -(pvIntegrand f (fdBoundary_H H) Sx ε u) := by
+      -(pvIntegrand f (fdBoundary_H H) Sx ε u) := by
   have hu_le1 : u ≤ 1 := le_of_lt hu.2
   have h4u_gt3 : (3:ℝ) < 4 - u := by linarith [hu.2]
   have h4u_lt4 : 4 - u < 4 := by linarith [hu.1]
@@ -253,8 +250,7 @@ private lemma pvIntegrand_seg4_eq_neg_seg1
     ring
 
 omit hf in
-private lemma integral_neg_of_pw_neg
-    (g : ℝ → ℂ)
+private lemma integral_neg_of_pw_neg (g : ℝ → ℂ)
     (h_pw : ∀ u ∈ Set.Ioo (0:ℝ) 1, g (4 - u) = -(g u)) :
     ∫ u in (0:ℝ)..1, g (4 - u) = ∫ u in (0:ℝ)..1, -(g u) := by
   apply intervalIntegral.integral_congr_ae
@@ -270,17 +266,14 @@ private lemma integral_neg_of_pw_neg
   · exact MeasureTheory.measure_singleton _
 
 omit hf in
-private theorem pvIntegral_vertical_cancel
-    (S : Finset UpperHalfPlane)
+private theorem pvIntegral_vertical_cancel (S : Finset UpperHalfPlane)
     {H : ℝ} (_hH : Real.sqrt 3 / 2 < H)
     (_h_oncurve_vert : ∀ t ∈ Set.Ioo (0 : ℝ) 1,
       modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
       (fdBoundary_H H t : ℂ) ∈ (↑(sVertOfS S) : Set ℂ)) :
     ∀ ε > 0,
-      (∫ t in (0:ℝ)..1,
-        pvIntegrand f (fdBoundary_H H) (sVertOfS S) ε t) +
-      (∫ t in (3:ℝ)..4,
-        pvIntegrand f (fdBoundary_H H) (sVertOfS S) ε t) = 0 := by
+      (∫ t in (0:ℝ)..1, pvIntegrand f (fdBoundary_H H) (sVertOfS S) ε t) +
+      (∫ t in (3:ℝ)..4, pvIntegrand f (fdBoundary_H H) (sVertOfS S) ε t) = 0 := by
   intro ε hε
   rw [integral_seg4_cov]
   have h_trunc_iff : ∀ u ∈ Set.Ioo (0:ℝ) 1,
@@ -301,8 +294,7 @@ private theorem pvIntegral_vertical_cancel
   rw [h_neg, intervalIntegral.integral_neg]; ring
 
 omit hf in
-private theorem pvIntegral_vertical_cancel_union
-    (S : Finset UpperHalfPlane)
+private theorem pvIntegral_vertical_cancel_union (S : Finset UpperHalfPlane)
     {H : ℝ} (_hH : Real.sqrt 3 / 2 < H)
     (_h_oncurve_vert : ∀ t ∈ Set.Ioo (0 : ℝ) 1,
       modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
@@ -332,17 +324,14 @@ private theorem pvIntegral_vertical_cancel_union
     intervalIntegral.integral_neg]; ring
 
 omit hf in
-private theorem tendsto_pvIntegral_arc
-    (S : Finset UpperHalfPlane)
+private theorem tendsto_pvIntegral_arc (S : Finset UpperHalfPlane)
     {H : ℝ} (_hH : Real.sqrt 3 / 2 < H)
     (_h_oncurve_arc : ∀ t ∈ Set.Ioo (1 : ℝ) 3,
       modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
       fdBoundary_H H t ∈ (↑(sArcOfS S) : Set ℂ)) :
-    Tendsto (fun ε =>
-      ∫ t in (1:ℝ)..3,
+    Tendsto (fun ε => ∫ t in (1:ℝ)..3,
         pvIntegrand f (fdBoundary_H H) (sArcOfS S ∪ sVertOfS S) ε t)
-      (𝓝[>] 0)
-      (𝓝 (-(2 * ↑Real.pi * I * ((k : ℂ) / 12)))) :=
+      (𝓝[>] 0) (𝓝 (-(2 * ↑Real.pi * I * ((k : ℂ) / 12)))) :=
   tendsto_pvIntegral_arc_bridge f S _hH _h_oncurve_arc
 
 include hf in
