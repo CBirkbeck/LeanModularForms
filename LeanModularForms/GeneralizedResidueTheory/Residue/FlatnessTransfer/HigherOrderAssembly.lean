@@ -889,51 +889,30 @@ private theorem cpv_perTerm_crossed_positive_order
         (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
         γ.toFun ε t)
       (𝓝[>] 0) (𝓝 0) := by
-  set term_s : ℂ → ℂ := fun z =>
-    meromorphicPrincipalPart f s z - residueAt f s / (z - s) with hterm_s_def
-  have h_unique_s : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = s → t = t₁ :=
-    fun t ht hc => h_unique_cross s hs t ht t₁ ht₁ hc hcross₁
-  have h_a0_eq : a_s ⟨0, hN_s_pos⟩ = residueAt f s :=
-    (residueAt_eq_laurent_head_coeff f s N_s hN_s_pos a_s g_loc hg_loc_an hf_eq_loc).symm
-  have h_polar_term_tendsto := fun k hk => cpv_polar_term_tendsto S0 f γ hγ_closed
-    s hs (hMero s hs) hN_s_pos a_s g_loc hg_loc_an hf_eq_loc t₁ ht₁_Ioo hcross₁
-    h_unique_s (hCondA s hs t₁ ht₁ hcross₁ ht₁_Ioo) h_angle k hk
-  obtain ⟨g_rp, hg_rp_an, hg_rp_eq⟩ :=
-    meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
-  let polarHigher := assembly_polarHigher a_s s
-  let err_loc := assembly_errLoc g_loc g_rp
+  set term_s := fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s) with hterm_s
+  have h_unique_s := fun t ht hc => h_unique_cross s hs t ht t₁ ht₁ hc hcross₁
+  have h_a0 := (residueAt_eq_laurent_head_coeff f s N_s hN_s_pos a_s g_loc hg_loc_an hf_eq_loc).symm
+  obtain ⟨g_rp, hg_rp_an, hg_rp_eq⟩ := meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
   let err_nf := assembly_errNF f s g_loc g_rp a_s
-  have h_off_s : ∀ z, z ≠ s → term_s z = err_nf z + polarHigher z := by
-    intro z hz; simp only [err_nf, assembly_errNF, if_neg hz,
-      polarHigher, assembly_polarHigher]; ring
-  have h_polar_diffOn := assembly_polarHigher_differentiableOn a_s s
-  have h_err_nf_diff : DifferentiableOn ℂ err_nf U :=
-    differentiableOn_of_eventuallyEq_analytic_off_sub U s err_nf err_loc term_s
-      polarHigher (assembly_errNF_eventuallyEq f s hN_s_pos a_s g_loc g_rp
-        hf_eq_loc hg_rp_eq h_a0_eq) (hg_loc_an.sub hg_rp_an)
-      (fun w hw => by
-        show assembly_errNF f s g_loc g_rp a_s w =
-          term_s w - assembly_polarHigher a_s s w
-        simp only [assembly_errNF, if_neg hw, assembly_polarHigher, hterm_s_def])
-      (differentiableOn_ppMinusRes f s (hMero s hs)) h_polar_diffOn
-  have h_err_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
-      cauchyPrincipalValueIntegrandOn S0 err_nf γ.toFun ε t)
-    (𝓝[>] 0) (𝓝 0) :=
-    tendsto_cpv_of_continuousOn_zero_integral S0
-      err_nf γ (h_err_nf_diff.continuousOn.mono
-        (fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht))
-      (h_holo_vanish err_nf h_err_nf_diff)
-  have h_polar_cpv : Tendsto (fun ε => ∫ t in γ.a..γ.b,
-      cauchyPrincipalValueIntegrandOn S0 polarHigher γ.toFun ε t)
-    (𝓝[>] 0) (𝓝 0) :=
-    cpv_polarHigher_tendsto U S0 f γ hγ_in_U s hs a_s h_polar_term_tendsto
-  exact cpv_tendsto_zero_of_add_split U S0 γ hγ_in_U
-    term_s err_nf polarHigher s hs h_off_s
-    (h_err_nf_diff.continuousOn.mono Set.diff_subset)
-    (h_polar_diffOn.continuousOn.mono (fun z ⟨_, hz⟩ =>
-      Set.mem_compl_singleton_iff.mpr (fun heq =>
-        hz (Finset.mem_coe.mpr (heq ▸ hs)))))
-    h_err_cpv h_polar_cpv
+  have hD : DifferentiableOn ℂ err_nf U :=
+    differentiableOn_of_eventuallyEq_analytic_off_sub U s err_nf (assembly_errLoc g_loc g_rp)
+      term_s (assembly_polarHigher a_s s)
+      (assembly_errNF_eventuallyEq f s hN_s_pos a_s g_loc g_rp hf_eq_loc hg_rp_eq h_a0)
+      (hg_loc_an.sub hg_rp_an) (fun w hw => by
+        show assembly_errNF f s g_loc g_rp a_s w = term_s w - _
+        simp only [assembly_errNF, if_neg hw, assembly_polarHigher, hterm_s])
+      (differentiableOn_ppMinusRes f s (hMero s hs)) (assembly_polarHigher_differentiableOn a_s s)
+  exact cpv_tendsto_zero_of_add_split U S0 γ hγ_in_U term_s err_nf
+    (assembly_polarHigher a_s s) s hs (fun z hz => by
+      simp only [err_nf, assembly_errNF, if_neg hz, assembly_polarHigher]; ring)
+    (hD.continuousOn.mono Set.diff_subset)
+    ((assembly_polarHigher_differentiableOn a_s s).continuousOn.mono fun z ⟨_, hz⟩ =>
+      Set.mem_compl_singleton_iff.mpr fun heq => hz (Finset.mem_coe.mpr (heq ▸ hs)))
+    (tendsto_cpv_of_continuousOn_zero_integral S0 err_nf γ
+      (hD.continuousOn.mono fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht) (h_holo_vanish err_nf hD))
+    (cpv_polarHigher_tendsto U S0 f γ hγ_in_U s hs a_s fun k hk =>
+      cpv_polar_term_tendsto S0 f γ hγ_closed s hs (hMero s hs) hN_s_pos a_s g_loc hg_loc_an
+        hf_eq_loc t₁ ht₁_Ioo hcross₁ h_unique_s (hCondA s hs t₁ ht₁ hcross₁ ht₁_Ioo) h_angle k hk)
 
 private theorem assembly_ppMinusRes_continuousOn (S0 : Finset ℂ) (f : ℂ → ℂ) (U : Set ℂ)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s) (s : ℂ) (hs : s ∈ S0) :
@@ -1011,51 +990,32 @@ private theorem assembly_abstract_crossings_case (U : Set ℂ) (hU : IsOpen U)
         cauchyPrincipalValueIntegrandOn S0 h γ.toFun ε t)
       (𝓝[>] 0) (𝓝 0) := by
   have h_crossed_in_Ioo : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t = s →
-      t ∈ Ioo γ.a γ.b := by
-    intro s hs t ht hcross
-    have h_endpt := h_no_endpt s hs
-    constructor
-    · rcases lt_or_eq_of_le ht.1 with h | h
-      · exact h
-      · exact absurd (h ▸ hcross) h_endpt.1
-    · rcases lt_or_eq_of_le ht.2 with h | h
-      · exact h
-      · exact absurd (h ▸ hcross) h_endpt.2
-  have h_correction : ∀ s ∈ S0, ∃ (g_s : ℂ → ℂ), AnalyticAt ℂ g_s s ∧
-      (∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g_s z) := by
-    intro s hs; exact meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
-  choose g_corr hg_corr_an hg_corr_eq using h_correction
-  let h_reg : ℂ → ℂ := assembly_reg S0 f
-  let h_pol : ℂ → ℂ := assembly_pol S0 f
+      t ∈ Ioo γ.a γ.b := fun s hs t ht hcross =>
+    ⟨ht.1.lt_or_eq.elim id fun h => absurd (h ▸ hcross) (h_no_endpt s hs).1,
+     ht.2.lt_or_eq.elim id fun h => absurd (h ▸ hcross) (h_no_endpt s hs).2⟩
+  choose g_corr hg_corr_an hg_corr_eq using
+    fun s (hs : s ∈ S0) => meromorphicAt_sub_principalPart_eventually f s (hMero s hs)
   let h_reg_nf : ℂ → ℂ := assembly_regNF S0 f g_corr
-  have h_pol_cont : ContinuousOn h_pol (U \ ↑S0) :=
-    continuousOn_finset_sum _ (fun s hs => assembly_ppMinusRes_continuousOn S0 f U hMero s hs)
   have h_reg_nf_diff_U : DifferentiableOn ℂ h_reg_nf U :=
     assembly_regNF_differentiableOn S0 f hU hf hMero g_corr hg_corr_an hg_corr_eq
-  have h_reg_nf_cpv_zero := tendsto_cpv_of_continuousOn_zero_integral S0 h_reg_nf γ
-    (h_reg_nf_diff_U.continuousOn.mono (fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht))
-    (h_holo_vanish h_reg_nf h_reg_nf_diff_U)
   have h_fun_eq_off_S0 : ∀ z, z ∉ (↑S0 : Set ℂ) →
-      h z = h_reg_nf z + h_pol z := by
+      h z = h_reg_nf z + assembly_pol S0 f z := by
     intro z hz_not_S0
     have hz_not_S : z ∉ S0 := fun hh => hz_not_S0 (Finset.mem_coe.mpr hh)
-    have h_nf_eq : h_reg_nf z = h_reg z := dif_neg hz_not_S
-    have h_decomp : h z = h_reg z + h_pol z := by
-      simp only [hh_eq, h_reg, assembly_reg, h_pol, assembly_pol, assembly_totalPP]
-      rw [Finset.sum_sub_distrib]; ring
-    rw [h_nf_eq]; exact h_decomp
-  have h_pol_tendsto : Tendsto (fun ε => ∫ t in γ.a..γ.b,
-      cauchyPrincipalValueIntegrandOn S0 h_pol γ.toFun ε t)
-    (𝓝[>] 0) (𝓝 0) :=
-    cpv_tendsto_zero_of_finset_sum S0 γ U hγ_in_U
+    show h z = (if _ : z ∈ S0 then _ else assembly_reg S0 f z) + assembly_pol S0 f z
+    rw [dif_neg hz_not_S]
+    simp only [hh_eq, assembly_reg, assembly_pol, assembly_totalPP, Finset.sum_sub_distrib]; ring
+  exact cpv_tendsto_zero_of_add_split_set U S0 γ hγ_in_U h h_reg_nf (assembly_pol S0 f)
+    h_fun_eq_off_S0 (h_reg_nf_diff_U.continuousOn.mono Set.diff_subset)
+    (continuousOn_finset_sum _ fun s hs => assembly_ppMinusRes_continuousOn S0 f U hMero s hs)
+    (tendsto_cpv_of_continuousOn_zero_integral S0 h_reg_nf γ
+      (h_reg_nf_diff_U.continuousOn.mono fun z ⟨t, ht, htz⟩ => htz ▸ hγ_in_U t ht)
+      (h_holo_vanish h_reg_nf h_reg_nf_diff_U))
+    (cpv_tendsto_zero_of_finset_sum S0 γ U hγ_in_U
       (fun s z => meromorphicPrincipalPart f s z - residueAt f s / (z - s))
       (fun s hs => assembly_ppMinusRes_continuousOn S0 f U hMero s hs)
-      (fun s hs => cpv_perTerm_dispatch U S0 f γ hγ_closed hγ_in_U hMero hCondA
-        hCondB hS0_in_U h_unique_cross h_holo_vanish h_finset_vanish
-        h_crossed_in_Ioo s hs)
-  exact cpv_tendsto_zero_of_add_split_set U S0 γ hγ_in_U h h_reg_nf h_pol
-    h_fun_eq_off_S0 (h_reg_nf_diff_U.continuousOn.mono Set.diff_subset) h_pol_cont
-    h_reg_nf_cpv_zero h_pol_tendsto
+      fun s hs => cpv_perTerm_dispatch U S0 f γ hγ_closed hγ_in_U hMero hCondA
+        hCondB hS0_in_U h_unique_cross h_holo_vanish h_finset_vanish h_crossed_in_Ioo s hs)
 
 private theorem meromorphicAt_f_sub_residueSum (S0 : Finset ℂ) (f : ℂ → ℂ)
     (hMero : ∀ s ∈ S0, MeromorphicAt f s) (s : ℂ) (hs : s ∈ S0) :
@@ -1097,37 +1057,23 @@ theorem higherOrderCancel_assembly_abstract (U : Set ℂ) (hU : IsOpen U)
         cauchyPrincipalValueIntegrandOn S0 h γ.toFun ε t)
       (𝓝[>] 0) (𝓝 0) := by
   intro h
-  have hh_cont : ContinuousOn h (U \ ↑S0) := by
-    apply ContinuousOn.sub (hf.continuousOn)
-    apply continuousOn_finset_sum; intro s hs
-    apply ContinuousOn.div continuousOn_const (continuousOn_id.sub continuousOn_const)
-    intro z ⟨_, hz_not_S0⟩
-    exact sub_ne_zero.mpr (fun heq => by subst heq; exact hz_not_S0 (Finset.mem_coe.mpr hs))
   have hfres_diff : DifferentiableOn ℂ
       (fun z => ∑ s ∈ S0, residueAt f s / (z - s)) (U \ ↑S0) := by
     have h_eq : (fun z => ∑ s ∈ S0, residueAt f s / (z - s)) =
-        (∑ s ∈ S0, fun z => residueAt f s / (z - s)) := by
-      ext z; simp [Finset.sum_apply]
-    rw [h_eq]
-    apply DifferentiableOn.sum; intro s _
-    apply DifferentiableOn.div (differentiableOn_const _)
-      (differentiableOn_id.sub (differentiableOn_const _))
-    intro z ⟨_, hz_not_S0⟩
-    exact sub_ne_zero.mpr (fun heq => by subst heq; exact hz_not_S0 (Finset.mem_coe.mpr ‹_›))
+        (∑ s ∈ S0, fun z => residueAt f s / (z - s)) := funext fun z => by
+      simp only [Finset.sum_apply]
+    rw [h_eq]; exact DifferentiableOn.sum fun s _ =>
+      DifferentiableOn.div (differentiableOn_const _)
+        (differentiableOn_id.sub (differentiableOn_const _)) fun z ⟨_, hz⟩ =>
+        sub_ne_zero.mpr fun heq => by subst heq; exact hz (Finset.mem_coe.mpr ‹_›)
   have hh_diff : DifferentiableOn ℂ h (U \ ↑S0) := hf.sub hfres_diff
   by_cases h_no_crossings : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s
-  · have h_image_sub : γ.toFun '' Icc γ.a γ.b ⊆ U \ ↑S0 := by
-      intro z ⟨t, ht, htz⟩; subst htz
-      exact ⟨hγ_in_U t ht, fun hz_S0 =>
-        h_no_crossings _ (Finset.mem_coe.mp hz_S0) t ht rfl⟩
-    have hh_cont_image : ContinuousOn h (γ.toFun '' Icc γ.a γ.b) :=
-      hh_cont.mono h_image_sub
-    have h_integral_zero : ∫ t in γ.a..γ.b, h (γ.toFun t) * deriv γ.toFun t = 0 :=
-      h_finset_vanish S0 h (fun s hs => meromorphicAt_f_sub_residueSum S0 f hMero s hs)
+  · exact tendsto_cpv_of_continuousOn_zero_integral S0 h γ
+      (hh_diff.continuousOn.mono fun z ⟨t, ht, htz⟩ => htz ▸
+        ⟨hγ_in_U t ht, fun hz => h_no_crossings _ (Finset.mem_coe.mp hz) t ht rfl⟩)
+      (h_finset_vanish S0 h (fun s hs => meromorphicAt_f_sub_residueSum S0 f hMero s hs)
         (fun s hs => residueAt_sub_residueSum_eq_zero S0 f s hs (hMero s hs))
-        hh_diff hS0_in_U h_no_crossings
-    exact tendsto_cpv_of_continuousOn_zero_integral S0 h γ
-      hh_cont_image h_integral_zero
+        hh_diff hS0_in_U h_no_crossings)
   · exact assembly_abstract_crossings_case U hU S0 f hf γ hγ_closed hγ_in_U
       hMero hCondA hCondB h_no_endpt h_unique_cross hS0_in_U h_holo_vanish
       h_finset_vanish h rfl
