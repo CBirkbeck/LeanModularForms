@@ -569,8 +569,7 @@ private theorem bdry_ne_eq_union
   constructor
   · intro ⟨⟨hs_S, hsi, hsρ, hsρ1⟩, h_not_int⟩
     have := bdry_ne_mem_union S s hS hs_S hsi hsρ hsρ1 h_not_int
-    simp only [sRightVert, sLeftVert,
-      Finset.mem_filter] at this
+    simp only [sRightVert, sLeftVert, Finset.mem_filter] at this
     tauto
   · intro h
     rcases h with
@@ -598,6 +597,24 @@ private theorem bdry_ne_eq_union
         fun h => by rw [h] at hre; linarith [h_rho1_re_pos]⟩,
         fun ⟨h, _⟩ => by linarith⟩
 
+omit f hf in
+private lemma bdry_four_disjoint (S : Finset UpperHalfPlane)
+    (RA_ne LA_ne : Finset UpperHalfPlane)
+    (hRA : RA_ne = S.filter (fun p =>
+      p ≠ ellipticPointRhoPlusOne' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0))
+    (hLA : LA_ne = S.filter (fun p =>
+      p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)) :
+    Disjoint (sRightVert S ∪ sLeftVert S ∪ RA_ne) LA_ne := by
+  subst hRA; subst hLA
+  apply Finset.disjoint_union_left.mpr
+  exact ⟨Finset.disjoint_union_left.mpr
+    ⟨Finset.disjoint_filter.mpr
+        fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith,
+      Finset.disjoint_filter.mpr
+        fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith⟩,
+    Finset.disjoint_filter.mpr
+      fun s _ ⟨_, _, hre1⟩ ⟨_, _, hre2⟩ => by linarith⟩
+
 /-- Half the boundary-sum equals the left-vert sum plus the left-arc sum. -/
 private theorem half_bdry_sum_eq_leftVert_plus_leftArc
     (S : Finset UpperHalfPlane)
@@ -623,36 +640,16 @@ private theorem half_bdry_sum_eq_leftVert_plus_leftArc
   set RA_ne := S.filter (fun p =>
     p ≠ ellipticPointRhoPlusOne' ∧
     ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0) with hRA_ne_def
-  have h_bdry_decomp : BDRY =
-      (sRightVert S) ∪ (sLeftVert S) ∪ RA_ne ∪ LA_ne :=
-    bdry_ne_eq_union S hS
   have h_disj_RV_LV : Disjoint (sRightVert S) (sLeftVert S) :=
     Finset.disjoint_filter.mpr
       fun s _ ⟨hre1, _⟩ ⟨hre2, _⟩ => by linarith
-  have h_disj_RV_RA : Disjoint (sRightVert S) RA_ne :=
-    Finset.disjoint_filter.mpr
-      fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith
-  have h_disj_RV_LA : Disjoint (sRightVert S) LA_ne :=
-    Finset.disjoint_filter.mpr
-      fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith
-  have h_disj_LV_RA : Disjoint (sLeftVert S) RA_ne :=
-    Finset.disjoint_filter.mpr
-      fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith
-  have h_disj_LV_LA : Disjoint (sLeftVert S) LA_ne :=
-    Finset.disjoint_filter.mpr
-      fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith
-  have h_disj_RA_LA : Disjoint RA_ne LA_ne :=
-    Finset.disjoint_filter.mpr
-      fun s _ ⟨_, _, hre1⟩ ⟨_, _, hre2⟩ => by linarith
-  have h12 : Disjoint
-      (sRightVert S ∪ sLeftVert S) RA_ne :=
+  have h12 : Disjoint (sRightVert S ∪ sLeftVert S) RA_ne :=
     Finset.disjoint_union_left.mpr
-      ⟨h_disj_RV_RA, h_disj_LV_RA⟩
-  have h123 : Disjoint
-      (sRightVert S ∪ sLeftVert S ∪ RA_ne) LA_ne :=
-    Finset.disjoint_union_left.mpr
-      ⟨Finset.disjoint_union_left.mpr
-        ⟨h_disj_RV_LA, h_disj_LV_LA⟩, h_disj_RA_LA⟩
+      ⟨Finset.disjoint_filter.mpr
+          fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith,
+        Finset.disjoint_filter.mpr
+          fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith⟩
+  have h123 := bdry_four_disjoint S RA_ne LA_ne hRA_ne_def rfl
   have h_sum_decomp :
       ∑ s ∈ BDRY,
         (orderOfVanishingAt' (⇑f) s : ℂ) =
@@ -664,14 +661,14 @@ private theorem half_bdry_sum_eq_leftVert_plus_leftArc
         (orderOfVanishingAt' (⇑f) s : ℂ) +
       ∑ s ∈ LA_ne,
         (orderOfVanishingAt' (⇑f) s : ℂ) := by
+    have h_bdry_decomp : BDRY =
+        sRightVert S ∪ sLeftVert S ∪ RA_ne ∪ LA_ne :=
+      bdry_ne_eq_union S hS
     rw [h_bdry_decomp,
       Finset.sum_union h123, Finset.sum_union h12,
       Finset.sum_union h_disj_RV_LV]
-  have h_vert := sum_ord_rightVert_eq_sum_ord_leftVert
-    f S hS hS_complete
-  have h_ne_arc :=
-    sum_nonEllArc_right_eq_left f S hS hS_complete
-  rw [h_sum_decomp, h_vert, h_ne_arc]; ring
+  rw [h_sum_decomp, sum_ord_rightVert_eq_sum_ord_leftVert f S hS hS_complete,
+    sum_nonEllArc_right_eq_left f S hS hS_complete]; ring
 
 include hf in
 set_option maxHeartbeats 800000 in
