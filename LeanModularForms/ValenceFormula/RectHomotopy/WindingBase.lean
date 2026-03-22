@@ -43,8 +43,7 @@ private lemma sqrt_one_minus_sq_plus_linear_ge_one (x : ℝ) (hx0 : 0 ≤ x) (hx
   nlinarith [sq_nonneg (1 - 2*x), sq_nonneg (Real.sqrt 3 * (1 - 2*x)), sq_nonneg x, hsq3, key]
 
 private lemma convex_combo_gt_one' (s A Y₀ : ℝ) (hs0 : 0 ≤ s) (hs1 : s ≤ 1)
-    (hY₀ : Y₀ > 1) (hA : A > 1) :
-    (1 - s) * A + s * Y₀ > 1 := by
+    (hY₀ : Y₀ > 1) (hA : A > 1) : (1 - s) * A + s * Y₀ > 1 := by
   rcases eq_or_lt_of_le hs0 with rfl | hs_pos
   · simp; linarith
   rcases eq_or_lt_of_le hs1 with rfl | hs_lt1
@@ -148,8 +147,7 @@ lemma fdPolygon_avoids_line_to_ref (p : ℂ) (hp_norm : ‖p‖ > 1)
       · rw [hfd_re] at heq_re
         have h_lhs_nn : (1 - u) / 2 ≥ 0 := div_nonneg (by linarith) (by norm_num)
         have h_rhs_le : (1 - s) * p.re ≤ 0 :=
-          mul_nonpos_of_nonneg_of_nonpos h1s_nn
-            (le_of_lt hp_re_neg)
+          mul_nonpos_of_nonneg_of_nonpos h1s_nn (le_of_lt hp_re_neg)
         have h_both_zero : (1 - s) * p.re = 0 ∧ (1 - u) / 2 = 0 := by
           constructor <;> linarith
         have hs_eq : s = 1 := by
@@ -184,8 +182,7 @@ lemma fdPolygon_avoids_line_to_ref (p : ℂ) (hp_norm : ‖p‖ > 1)
             sub_zero, zero_mul, one_re, one_im,
             div_ofNat_re, div_ofNat_im, neg_re, neg_im]
           ring
-        have hfd_im :
-            (fdPolygon t).im = 1 - v * (1 - Real.sqrt 3 / 2) := by
+        have hfd_im : (fdPolygon t).im = 1 - v * (1 - Real.sqrt 3 / 2) := by
           rw [hfd]
           simp only [chordSegment, i_point, rho, smul_add,
             real_smul, add_im, mul_im, ofReal_re, ofReal_im,
@@ -358,8 +355,7 @@ lemma rc_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
             have heq : (-1/2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) *
                 (↑H_height - ↑(Real.sqrt 3) / 2)) * I) =
               ↑(-1/2 : ℝ) +
-              ↑(Real.sqrt 3 / 2 + (t - 3) *
-                (H_height - Real.sqrt 3 / 2)) * I := by
+              ↑(Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I := by
               push_cast; ring
             rw [heq, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im,
               mul_one, mul_zero, add_zero, zero_add]
@@ -416,8 +412,7 @@ lemma continuousOn_arg_w :
     ContinuousOn (fun t => Complex.arg (fdPolygon t - ref_p₀))
       (Icc 0 5 \ {tL ref_p₀}) :=
   ContinuousOn.comp Complex.continuousOn_arg continuous_w.continuousOn
-    (fun t ht => fdPolygon_sub_ref_p₀_mem_slitPlane t ht.1
-      (Set.notMem_singleton_iff.mp ht.2))
+    (fun t ht => fdPolygon_sub_ref_p₀_mem_slitPlane t ht.1 (Set.notMem_singleton_iff.mp ht.2))
 
 /-- At tL: w has re < 0 and im = 0. -/
 lemma w_tL_re_neg : (fdPolygon (tL ref_p₀) - ref_p₀).re < 0 :=
@@ -428,8 +423,7 @@ lemma w_tL_im_zero : (fdPolygon (tL ref_p₀) - ref_p₀).im = 0 :=
 
 /-- For t near tL from below, w(t).im < 0. -/
 lemma w_im_neg_near_tL_left :
-    ∀ᶠ t in 𝓝[Iio (tL ref_p₀)] (tL ref_p₀),
-      (fdPolygon t - ref_p₀).im < 0 := by
+    ∀ᶠ t in 𝓝[Iio (tL ref_p₀)] (tL ref_p₀), (fdPolygon t - ref_p₀).im < 0 := by
   have htL := tL_mem_Ioo ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
   exact Filter.mem_of_superset (Ioo_mem_nhdsLT htL.1) fun t ht =>
     (seg4_vec_im_sign ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im t
@@ -451,8 +445,7 @@ lemma tendsto_arg_w_left :
     Tendsto (fun t => Complex.arg (fdPolygon t - ref_p₀))
       (𝓝[Iio (tL ref_p₀)] (tL ref_p₀)) (𝓝 (-Real.pi)) := by
   exact (Complex.tendsto_arg_nhdsWithin_im_neg_of_re_neg_of_im_zero
-    w_tL_re_neg w_tL_im_zero).comp
-    (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+    w_tL_re_neg w_tL_im_zero).comp (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
       continuous_w.continuousAt.continuousWithinAt w_im_neg_near_tL_left)
 
 /-- Tendsto arg(w(t)) from the right of tL to π. -/
@@ -460,8 +453,7 @@ lemma tendsto_arg_w_right :
     Tendsto (fun t => Complex.arg (fdPolygon t - ref_p₀))
       (𝓝[Ioi (tL ref_p₀)] (tL ref_p₀)) (𝓝 Real.pi) := by
   exact (Complex.tendsto_arg_nhdsWithin_im_nonneg_of_re_neg_of_im_zero
-    w_tL_re_neg w_tL_im_zero).comp
-    (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+    w_tL_re_neg w_tL_im_zero).comp (tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
       continuous_w.continuousAt.continuousWithinAt
       (w_im_pos_near_tL_right.mono (fun t ht => le_of_lt ht)))
 

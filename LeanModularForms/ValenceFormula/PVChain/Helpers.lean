@@ -38,47 +38,36 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 /-- The ε-truncated integrand for the PV integral of `f'/f` along `γ`,
 with singular set `S₀`. Zero when `γ(t)` is within `ε` of any `s ∈ S₀`,
 otherwise `logDeriv f (γ t) * γ'(t)`. -/
-noncomputable def pvIntegrand
-    {k : ℤ} (f : ModularForm (Gamma 1) k) (γ : ℝ → ℂ)
+noncomputable def pvIntegrand {k : ℤ} (f : ModularForm (Gamma 1) k) (γ : ℝ → ℂ)
     (S₀ : Finset ℂ) (ε : ℝ) (t : ℝ) : ℂ :=
-  cauchyPrincipalValueIntegrandOn S₀
-    (logDeriv (modularFormCompOfComplex f)) γ ε t
+  cauchyPrincipalValueIntegrandOn S₀ (logDeriv (modularFormCompOfComplex f)) γ ε t
 
 /-- Arc singular set: unit-circle zeros (and S-transforms) plus ρ, ρ+1. -/
 noncomputable def sArcOfS (S : Finset UpperHalfPlane) : Finset ℂ :=
-  (S.filter (fun (p : ℍ) => ‖(↑p : ℂ)‖ = 1)).image
-    (↑· : ℍ → ℂ) ∪
-  (S.filter (fun (p : ℍ) => ‖(↑p : ℂ)‖ = 1)).image
-    (fun (p : ℍ) => -(1 : ℂ) / (↑p : ℂ)) ∪
+  (S.filter (fun (p : ℍ) => ‖(↑p : ℂ)‖ = 1)).image (↑· : ℍ → ℂ) ∪
+  (S.filter (fun (p : ℍ) => ‖(↑p : ℂ)‖ = 1)).image (fun (p : ℍ) => -(1 : ℂ) / (↑p : ℂ)) ∪
   {ellipticPointRho, ellipticPointRhoPlusOne}
 
 /-- Vertical singular set: re = ±1/2, ‖z‖ > 1 zeros, plus T-shifts. -/
 noncomputable def sVertOfS (S : Finset UpperHalfPlane) : Finset ℂ :=
-  (S.filter (fun p : ℍ =>
-    (↑p : ℂ).re = 1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
+  (S.filter (fun p : ℍ => (↑p : ℂ).re = 1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
     (↑· : ℍ → ℂ) ∪
-  (S.filter (fun p : ℍ =>
-    (↑p : ℂ).re = 1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
+  (S.filter (fun p : ℍ => (↑p : ℂ).re = 1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
     (fun p : ℍ => (↑p : ℂ) - 1) ∪
-  (S.filter (fun p : ℍ =>
-    (↑p : ℂ).re = -1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
+  (S.filter (fun p : ℍ => (↑p : ℂ).re = -1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
     (↑· : ℍ → ℂ) ∪
-  (S.filter (fun p : ℍ =>
-    (↑p : ℂ).re = -1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
+  (S.filter (fun p : ℍ => (↑p : ℂ).re = -1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
     (fun p : ℍ => (↑p : ℂ) + 1)
 
 /-- CPV existence at all on-curve singular points of `fdBoundary_H H`. -/
 def onCurvePVProvider (S : Finset UpperHalfPlane) : Prop :=
   ∀ (H : ℝ), Real.sqrt 3 / 2 < H →
-    ∀ s ∈ sArcOfS S ∪ sVertOfS S,
-      (∃ t ∈ Icc (0 : ℝ) 5, fdBoundary_H H t = s) →
-      CauchyPrincipalValueExists'
-        (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s
+    ∀ s ∈ sArcOfS S ∪ sVertOfS S, (∃ t ∈ Icc (0 : ℝ) 5, fdBoundary_H H t = s) →
+      CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s
 
 omit f hf in
 /-- CPV exists at every on-curve singular point. -/
-theorem fdBoundary_H_onCurvePVProvider
-    (S : Finset UpperHalfPlane) :
+theorem fdBoundary_H_onCurvePVProvider (S : Finset UpperHalfPlane) :
     onCurvePVProvider S := by
   intro H hH s _ h_on
   exact fdBoundary_H_cpv_exists_of_onCurve H hH s h_on
@@ -139,8 +128,7 @@ private lemma neg_inv_rho_plus_one_eq_rho :
     simp [ellipticPointRho, ellipticPointRho']
   have him2 : (ellipticPointRho : ℂ).im = Real.sqrt 3 / 2 := by
     simp [ellipticPointRho, ellipticPointRho']
-  have hnormSq :
-      (1/2 : ℝ) * (1/2) + Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) = 1 := by
+  have hnormSq : (1/2 : ℝ) * (1/2) + Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) = 1 := by
     nlinarith [Real.sq_sqrt (show (0 : ℝ) ≤ 3 by norm_num)]
   apply Complex.ext
   · simp only [neg_div, Complex.neg_re, Complex.div_re,
@@ -265,8 +253,7 @@ theorem exists_height_bound_S (S : Finset UpperHalfPlane) :
 omit f hf in
 /-- All elements of `sVertOfS S` have im < H₁ when all elements of `S` have im < H₁. -/
 lemma sVertOfS_im_lt_height_bound (S : Finset UpperHalfPlane) (s : ℂ)
-    (hs : s ∈ sVertOfS S)
-    (h_bound : ∀ p ∈ S, (p : ℂ).im < H₁) :
+    (hs : s ∈ sVertOfS S) (h_bound : ∀ p ∈ S, (p : ℂ).im < H₁) :
     s.im < H₁ := by
   unfold sVertOfS at hs
   rcases Finset.mem_union.mp hs with h | hD
@@ -285,8 +272,7 @@ lemma sVertOfS_im_lt_height_bound (S : Finset UpperHalfPlane) (s : ℂ)
 
 include hf in
 /-- Zeros in `S` are complete: every zero of `f` in `𝒟` is in `S.filter zeros`. -/
-private theorem zeros_complete_of_hS_complete
-    (S : Finset UpperHalfPlane)
+private theorem zeros_complete_of_hS_complete (S : Finset UpperHalfPlane)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∀ s, s ∈ 𝒟 → f s = 0 → s ∈ S.filter (fun p => f p = 0) := by
   intro s hs_fd hs_zero
@@ -295,8 +281,7 @@ private theorem zeros_complete_of_hS_complete
 
 omit hf in
 /-- Summing `gWN · ord` over all of `S` equals summing over just zeros. -/
-theorem sum_gWN_ord_eq_filter_zeros
-    (S : Finset UpperHalfPlane) (g : ℂ → ℂ) :
+theorem sum_gWN_ord_eq_filter_zeros (S : Finset UpperHalfPlane) (g : ℂ → ℂ) :
     ∑ s ∈ S, g (↑s : ℂ) * (orderOfVanishingAt' (⇑f) s : ℂ) =
     ∑ s ∈ S.filter (fun p => f p = 0),
       g (↑s : ℂ) * (orderOfVanishingAt' (⇑f) s : ℂ) := by
@@ -397,8 +382,7 @@ private lemma sVertOfS_im_gt_sqrt3_half (S : Finset UpperHalfPlane) (s : ℂ)
 
 omit f hf in
 private lemma im_ge_sqrt3_half_of_re_half_and_norm_eq_one (p : ℍ)
-    (hre : |(↑p : ℂ).re| ≤ 1/2)
-    (hnorm : ‖(↑p : ℂ)‖ = 1) : (↑p : ℂ).im ≥ Real.sqrt 3 / 2 := by
+    (hre : |(↑p : ℂ).re| ≤ 1/2) (hnorm : ‖(↑p : ℂ)‖ = 1) : (↑p : ℂ).im ≥ Real.sqrt 3 / 2 := by
   have h_nsq : (↑p : ℂ).re ^ 2 + (↑p : ℂ).im ^ 2 = 1 := by
     have h_norm_sq : ‖(↑p : ℂ)‖ ^ 2 = 1 := by rw [hnorm]; norm_num
     have : ‖(↑p : ℂ)‖ ^ 2 = (↑p : ℂ).re ^ 2 + (↑p : ℂ).im ^ 2 := by
@@ -423,8 +407,7 @@ private lemma im_ge_sqrt3_half_of_re_half_and_norm_eq_one (p : ℍ)
 
 omit f hf in
 /-- On-curve singular points lie inside `fdBox M` when `H < M`. -/
-lemma fdBox_of_on_curve (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
+lemma fdBox_of_on_curve (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     {H M : ℝ} (_hH_sqrt3 : Real.sqrt 3 / 2 < H) (hH_lt_M : H < M) (hH_ge1 : 1 ≤ H)
     (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     (s : ℂ) (hs : s ∈ sArcOfS S ∪ sVertOfS S) : s ∈ fdBox M := by
@@ -441,8 +424,7 @@ lemma fdBox_of_on_curve (S : Finset UpperHalfPlane)
       simp only [sArcOfS, Finset.mem_union, Finset.mem_image,
         Finset.mem_filter, Finset.mem_insert, Finset.mem_singleton] at h_arc
       rcases h_arc with ⟨⟨p, ⟨hp_mem, hp_norm⟩, rfl⟩ | ⟨p, ⟨hp_mem, hp_norm⟩, rfl⟩⟩ | h_ell
-      · exact im_ge_sqrt3_half_of_re_half_and_norm_eq_one p
-          (hS p hp_mem).2 hp_norm
+      · exact im_ge_sqrt3_half_of_re_half_and_norm_eq_one p (hS p hp_mem).2 hp_norm
       · have hz_ne : (↑p : ℂ) ≠ 0 := by intro h; simp [h] at hp_norm
         have h_eq : (-(1:ℂ) / (↑p : ℂ)).im = (↑p : ℂ).im := by
           rw [show -(1:ℂ) / (↑p : ℂ) = (-(↑p : ℂ))⁻¹ from by field_simp, Complex.inv_im]
@@ -459,8 +441,7 @@ lemma fdBox_of_on_curve (S : Finset UpperHalfPlane)
             nlinarith [h_nsq]
           rw [h_nsq_val, div_one]
         rw [h_eq]
-        exact im_ge_sqrt3_half_of_re_half_and_norm_eq_one p
-          (hS p hp_mem).2 hp_norm
+        exact im_ge_sqrt3_half_of_re_half_and_norm_eq_one p (hS p hp_mem).2 hp_norm
       · rcases h_ell with rfl | rfl
         · show (Real.sqrt 3 / 2 : ℝ) ≤ (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
           simp only [add_im, neg_im, one_im, div_im, mul_im, I_re, I_im]; norm_num

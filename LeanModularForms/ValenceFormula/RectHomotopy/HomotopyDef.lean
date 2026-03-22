@@ -26,24 +26,20 @@ noncomputable def H_seg1 (p : ℝ × ℝ) : ℂ :=
 
 noncomputable def H_seg2 (p : ℝ × ℝ) : ℂ :=
   let arc_point :=
-    Complex.exp ((Real.pi / 3 + (p.1 - 1) *
-      (Real.pi / 2 - Real.pi / 3)) * I)
+    Complex.exp ((Real.pi / 3 + (p.1 - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
   let chord_point := chordSegment rho' i_point (p.1 - 1)
   (1 - p.2) • arc_point + p.2 • chord_point
 
 noncomputable def H_seg3 (p : ℝ × ℝ) : ℂ :=
   let arc_point :=
-    Complex.exp ((Real.pi / 2 + (p.1 - 2) *
-      (2 * Real.pi / 3 - Real.pi / 2)) * I)
+    Complex.exp ((Real.pi / 2 + (p.1 - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
   let chord_point := chordSegment i_point rho (p.1 - 2)
   (1 - p.2) • arc_point + p.2 • chord_point
 
 noncomputable def H_seg4 (p : ℝ × ℝ) : ℂ :=
-  -1/2 + (Real.sqrt 3 / 2 + (p.1 - 3) *
-    (H_height - Real.sqrt 3 / 2)) * I
+  -1/2 + (Real.sqrt 3 / 2 + (p.1 - 3) * (H_height - Real.sqrt 3 / 2)) * I
 
-noncomputable def H_seg5 (p : ℝ × ℝ) : ℂ :=
-  (p.1 - 9/2) + H_height * I
+noncomputable def H_seg5 (p : ℝ × ℝ) : ℂ := (p.1 - 9/2) + H_height * I
 
 lemma H_seg1_continuous : Continuous H_seg1 := by
   unfold H_seg1; continuity
@@ -105,14 +101,12 @@ lemma H_match_at_t1 (p : ℝ × ℝ) (hp : p.1 = 1) :
   simp only at hp; subst hp
   simp only [H_seg1, H_seg2, chordSegment, H_height,
     rho', i_point]
-  have hLHS :
-      (↑(Real.sqrt 3 / 2 + 1) - ↑(1:ℝ) *
+  have hLHS : (↑(Real.sqrt 3 / 2 + 1) - ↑(1:ℝ) *
         (↑(Real.sqrt 3 / 2 + 1) -
           ↑(Real.sqrt 3) / 2) : ℂ) =
         ↑(Real.sqrt 3) / 2 := by push_cast; ring
   simp only [hLHS]
-  have hangle :
-      (↑Real.pi / 3 + (↑(1:ℝ) - 1) *
+  have hangle : (↑Real.pi / 3 + (↑(1:ℝ) - 1) *
         (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ) =
         ↑Real.pi / 3 := by
     simp only [Complex.ofReal_one, sub_self,
@@ -204,8 +198,7 @@ lemma fdBoundaryToPolygonHomotopy_continuous :
     exact H_match_at_t1 p hp
   convert h12345 using 1
 
-lemma fdBoundaryToPolygonHomotopy_at_zero
-    (t : ℝ) (_ht : t ∈ Icc 0 5) :
+lemma fdBoundaryToPolygonHomotopy_at_zero (t : ℝ) (_ht : t ∈ Icc 0 5) :
     fdBoundaryToPolygonHomotopy (t, 0) = fdBoundary t := by
   simp only [fdBoundaryToPolygonHomotopy, fdBoundary]
   split_ifs with h1 h2 h3 h4
@@ -215,8 +208,7 @@ lemma fdBoundaryToPolygonHomotopy_at_zero
   · rfl
   · rfl
 
-lemma fdBoundaryToPolygonHomotopy_at_one
-    (t : ℝ) (_ht : t ∈ Icc 0 5) :
+lemma fdBoundaryToPolygonHomotopy_at_one (t : ℝ) (_ht : t ∈ Icc 0 5) :
     fdBoundaryToPolygonHomotopy (t, 1) = fdPolygon t := by
   simp only [fdBoundaryToPolygonHomotopy, fdPolygon]
   split_ifs with h1 h2 h3 h4
@@ -226,17 +218,14 @@ lemma fdBoundaryToPolygonHomotopy_at_one
   · rfl
   · rfl
 
-lemma fdBoundaryToPolygonHomotopy_avoids (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
-    (hp_im : p.im < H_height)
-    (t : ℝ) (_ht : t ∈ Icc 0 5) (s : ℝ)
+lemma fdBoundaryToPolygonHomotopy_avoids (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im : p.im < H_height) (t : ℝ) (_ht : t ∈ Icc 0 5) (s : ℝ)
     (hs : s ∈ Icc 0 1) :
     fdBoundaryToPolygonHomotopy (t, s) ≠ p := by
   simp only [fdBoundaryToPolygonHomotopy]
   split_ifs with h1 h2 h3 h4
   · intro heq
-    have hre :
-        (1/2 + (↑H_height - ↑t *
+    have hre : (1/2 + (↑H_height - ↑t *
           (↑H_height - ↑(Real.sqrt 3) / 2)) *
             I : ℂ).re = 1/2 := by
       simp only [Complex.add_re, Complex.ofReal_re,
@@ -253,10 +242,8 @@ lemma fdBoundaryToPolygonHomotopy_avoids (p : ℂ)
       constructor <;> linarith [h1, h2]
     have h_arc_in := segment2_arc_in_closed_unit_ball t
     have h_chord_in := chord1_in_closed_unit_ball (t - 1) ht2
-    have h_in_ball :
-        (1 - s) • Complex.exp
-          ((Real.pi / 3 + (t - 1) *
-            (Real.pi / 2 - Real.pi / 3)) * I) +
+    have h_in_ball : (1 - s) • Complex.exp
+          ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I) +
           s • chordSegment rho' i_point (t - 1) ∈
             closedBall (0 : ℂ) 1 :=
       chordSegment_in_convex convex_closedBall_zero_one
@@ -267,10 +254,8 @@ lemma fdBoundaryToPolygonHomotopy_avoids (p : ℂ)
       constructor <;> linarith [h2, h3]
     have h_arc_in := segment3_arc_in_closed_unit_ball t
     have h_chord_in := chord2_in_closed_unit_ball (t - 2) ht3
-    have h_in_ball :
-        (1 - s) • Complex.exp
-          ((Real.pi / 2 + (t - 2) *
-            (2 * Real.pi / 3 - Real.pi / 2)) * I) +
+    have h_in_ball : (1 - s) • Complex.exp
+          ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I) +
           s • chordSegment i_point rho (t - 2) ∈
             closedBall (0 : ℂ) 1 :=
       chordSegment_in_convex convex_closedBall_zero_one
@@ -278,8 +263,7 @@ lemma fdBoundaryToPolygonHomotopy_avoids (p : ℂ)
     have hp_out := outside_closed_unit_ball p hp_norm
     exact fun h => hp_out (h ▸ h_in_ball)
   · intro heq
-    have hre :
-        ((-1/2 : ℂ) + (↑(Real.sqrt 3) / 2 +
+    have hre : ((-1/2 : ℂ) + (↑(Real.sqrt 3) / 2 +
           (↑t - 3) * (↑H_height -
             ↑(Real.sqrt 3) / 2)) * I).re = -1/2 := by
       simp only [Complex.add_re, Complex.mul_re,
@@ -293,8 +277,7 @@ lemma fdBoundaryToPolygonHomotopy_avoids (p : ℂ)
     have : |p.re| = 1/2 := by rw [hre]; norm_num
     linarith
   · intro heq
-    have him :
-        (↑t - 9/2 + ↑H_height * I : ℂ).im =
+    have him : (↑t - 9/2 + ↑H_height * I : ℂ).im =
           H_height := by
       simp only [Complex.add_im, Complex.sub_im,
         Complex.ofReal_im, Complex.div_ofNat_im,
@@ -304,8 +287,7 @@ lemma fdBoundaryToPolygonHomotopy_avoids (p : ℂ)
         add_zero, zero_div, sub_zero, zero_add]
     rw [heq] at him; linarith
 
-lemma fdBoundaryToPolygonHomotopy_closed (s : ℝ)
-    (_hs : s ∈ Icc 0 1) :
+lemma fdBoundaryToPolygonHomotopy_closed (s : ℝ) (_hs : s ∈ Icc 0 1) :
     fdBoundaryToPolygonHomotopy (0, s) =
       fdBoundaryToPolygonHomotopy (5, s) := by
   simp only [fdBoundaryToPolygonHomotopy]
@@ -338,8 +320,7 @@ lemma circleAround_continuous (p : ℂ) (ε : ℝ) :
     Continuous (circleAround p ε) := by
   unfold circleAround; continuity
 
-lemma circleAround_dist (p : ℂ) (ε : ℝ) (hε : 0 ≤ ε)
-    (t : ℝ) : ‖circleAround p ε t - p‖ = ε := by
+lemma circleAround_dist (p : ℂ) (ε : ℝ) (hε : 0 ≤ ε) (t : ℝ) : ‖circleAround p ε t - p‖ = ε := by
   simp only [circleAround, add_sub_cancel_left]
   rw [Complex.norm_mul]
   have hform :
@@ -350,16 +331,13 @@ lemma circleAround_dist (p : ℂ) (ε : ℝ) (hε : 0 ≤ ε)
     Complex.norm_real]
   exact abs_of_nonneg hε
 
-noncomputable def polygonToCircleHomotopy (p : ℂ)
-    (ε : ℝ) : ℝ × ℝ → ℂ := fun (t, s) =>
+noncomputable def polygonToCircleHomotopy (p : ℂ) (ε : ℝ) : ℝ × ℝ → ℂ := fun (t, s) =>
   let z := fdPolygon t
   let dir := z - p
   p + (1 - s) * dir + s * ε * (dir / ‖dir‖)
 
-lemma fdPolygon_avoids_interior (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
-    (hp_im : p.im < H_height)
-    (t : ℝ) (_ht : t ∈ Icc 0 5) :
+lemma fdPolygon_avoids_interior (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im : p.im < H_height) (t : ℝ) (_ht : t ∈ Icc 0 5) :
     fdPolygon t ≠ p := by
   have h := fdBoundaryToPolygonHomotopy_avoids p hp_norm
     hp_re hp_im t _ht 1 ⟨zero_le_one, le_refl 1⟩
@@ -367,8 +345,7 @@ lemma fdPolygon_avoids_interior (p : ℂ)
   exact h
 
 theorem fdBoundaryToPolygon_homotopy_avoids_interior
-    (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
-    (hp_im : p.im < H_height) :
+    (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
     ∀ t ∈ Icc 0 5, ∀ s ∈ Icc (0:ℝ) 1,
       fdBoundaryToPolygonHomotopy (t, s) ≠ p :=
   fdBoundaryToPolygonHomotopy_avoids p hp_norm hp_re hp_im
@@ -383,13 +360,10 @@ theorem fdBoundaryToPolygon_homotopy_continuous :
     Continuous fdBoundaryToPolygonHomotopy :=
   fdBoundaryToPolygonHomotopy_continuous
 
-theorem winding_number_one_summary (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
-    (hp_im : p.im < H_height) :
-    (∀ t ∈ Icc 0 5, ∀ s ∈ Icc (0:ℝ) 1,
+theorem winding_number_one_summary (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
+    (hp_im : p.im < H_height) : (∀ t ∈ Icc 0 5, ∀ s ∈ Icc (0:ℝ) 1,
       fdBoundaryToPolygonHomotopy (t, s) ≠ p) ∧
-    Continuous fdBoundaryToPolygonHomotopy ∧
-    (∀ s ∈ Icc (0:ℝ) 1,
+    Continuous fdBoundaryToPolygonHomotopy ∧ (∀ s ∈ Icc (0:ℝ) 1,
       fdBoundaryToPolygonHomotopy (0, s) =
         fdBoundaryToPolygonHomotopy (5, s)) :=
   ⟨fdBoundaryToPolygon_homotopy_avoids_interior p

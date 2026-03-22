@@ -29,22 +29,19 @@ open scoped Real Interval
 
 noncomputable section
 
-private lemma fdBoundary_H_norm_eq_one_arc {H t : ℝ}
-    (h1 : 1 < t) (h3 : t < 3) :
+private lemma fdBoundary_H_norm_eq_one_arc {H t : ℝ} (h1 : 1 < t) (h3 : t < 3) :
     ‖fdBoundary_H H t‖ = 1 := by
   by_cases h2 : t ≤ 2
   · rw [fdBoundary_H_eq_seg2_H H h1 h2,
       show fdBoundary_seg2_H t =
-        exp (↑(Real.pi / 3 + (t - 1) *
-          (Real.pi / 2 - Real.pi / 3)) * I) from by
+        exp (↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I) from by
         simp only [fdBoundary_seg2_H, fdBoundary_seg2]
         congr 1; push_cast; ring]
     exact norm_exp_ofReal_mul_I _
   · push_neg at h2
     rw [fdBoundary_H_eq_seg3_H H h2 (le_of_lt h3),
       show fdBoundary_seg3_H t =
-        exp (↑(Real.pi / 2 + (t - 2) *
-          (2 * Real.pi / 3 - Real.pi / 2)) * I) from by
+        exp (↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I) from by
         simp only [fdBoundary_seg3_H, fdBoundary_seg3]
         congr 1; push_cast; ring]
     exact norm_exp_ofReal_mul_I _
@@ -52,8 +49,7 @@ private lemma fdBoundary_H_norm_eq_one_arc {H t : ℝ}
 set_option maxHeartbeats 400000 in
 /-- The boundary at height H avoids any strict interior point p
 with ‖p‖ > 1, |re p| < 1/2, im p > 0, im p < H. -/
-theorem fdBoundary_H_avoids_interior (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
+theorem fdBoundary_H_avoids_interior (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
     (_hp_im_pos : 0 < p.im) {H : ℝ} (hp_im : p.im < H) :
     ∀ t ∈ Icc (0 : ℝ) 5, fdBoundary_H H t ≠ p := by
   intro t ht habs
@@ -113,15 +109,13 @@ private lemma arc_hasDerivAt' (s : ℝ) :
     have := (hasDerivAt_const s (↑Real.pi : ℂ)).mul h2
     simp only [zero_mul, zero_add] at this; exact this
   have h4 : HasDerivAt (fun s : ℝ =>
-      ↑Real.pi * ((s : ℂ) + 1) / 6 * I)
-      (↑Real.pi * 1 / 6 * I) s := (h3.div_const _).mul_const _
+      ↑Real.pi * ((s : ℂ) + 1) / 6 * I) (↑Real.pi * 1 / 6 * I) s := (h3.div_const _).mul_const _
   convert h4 using 1; ring
 
 private lemma fdBoundary_H_hasDerivAt_arc' (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
     HasDerivAt (fdBoundary_H H)
       (↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + t) / 6) * I)) t := by
-  have heq : fdBoundary_H H =ᶠ[𝓝 t]
-      (fun s => Complex.exp ((↑Real.pi * (↑s + 1) / 6) * I)) :=
+  have heq : fdBoundary_H H =ᶠ[𝓝 t] (fun s => Complex.exp ((↑Real.pi * (↑s + 1) / 6) * I)) :=
     Filter.eventuallyEq_iff_exists_mem.mpr ⟨Set.Ioo 1 3, Ioo_mem_nhds ht1 ht3,
       fun s hs => (fdBoundary_H_eq_arc' hs.1 hs.2).trans (by congr 1; congr 1; push_cast; ring)⟩
   exact (heq.hasDerivAt_iff.mpr (arc_hasDerivAt' t)).congr_deriv (by push_cast; ring)
@@ -182,29 +176,25 @@ private lemma fdHomot_deriv_continuousOn_piece (H₀ H₁ : ℝ) (p₁ p₂ : �
       deriv (fun t => fdBoundary_H (H₀ + q.2 * (H₁ - H₀)) t) q.1)
       (Ioo p₁ p₂ ×ˢ Icc 0 1) := by
   by_cases h_le1 : p₂ ≤ 1
-  · apply ContinuousOn.congr
-      (f := fun q : ℝ × ℝ =>
+  · apply ContinuousOn.congr (f := fun q : ℝ × ℝ =>
         -(↑(H₀ + q.2 * (H₁ - H₀) - Real.sqrt 3 / 2) : ℂ) * I)
     · exact ((continuous_ofReal.comp (by fun_prop :
         Continuous (fun q : ℝ × ℝ => H₀ + q.2 * (H₁ - H₀) - Real.sqrt 3 / 2))).neg.mul
         continuous_const).continuousOn
     · intro q hq
-      convert (fdBoundary_H_hasDerivAt_seg1 _
-        (lt_of_lt_of_le hq.1.2 h_le1)).deriv using 1
+      convert (fdBoundary_H_hasDerivAt_seg1 _ (lt_of_lt_of_le hq.1.2 h_le1)).deriv using 1
       push_cast; ring
   · push_neg at h_le1
     have hp1_ge1 : 1 ≤ p₁ := by
       by_contra h; push_neg at h
       exact hfree 1 ⟨h, h_le1⟩ (by simp [fdBoundary_H_partition, Finset.mem_insert])
     by_cases h_le3 : p₂ ≤ 3
-    · apply ContinuousOn.congr
-        (f := fun q : ℝ × ℝ =>
+    · apply ContinuousOn.congr (f := fun q : ℝ × ℝ =>
           ↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + q.1) / 6) * I))
       · exact (continuous_const.mul
           ((continuous_ofReal.comp (by fun_prop)).mul continuous_const |>.cexp)).continuousOn
       · intro q hq
-        exact (fdBoundary_H_hasDerivAt_arc' _
-          (lt_of_le_of_lt hp1_ge1 hq.1.1)
+        exact (fdBoundary_H_hasDerivAt_arc' _ (lt_of_le_of_lt hp1_ge1 hq.1.1)
           (lt_of_lt_of_le hq.1.2 h_le3)).deriv
     · push_neg at h_le3
       have hp1_ge3 : 3 ≤ p₁ := by
@@ -212,15 +202,13 @@ private lemma fdHomot_deriv_continuousOn_piece (H₀ H₁ : ℝ) (p₁ p₂ : �
         exact hfree 3 ⟨by linarith, h_le3⟩
           (by simp [fdBoundary_H_partition, Finset.mem_insert, Finset.mem_singleton])
       by_cases h_le4 : p₂ ≤ 4
-      · apply ContinuousOn.congr
-          (f := fun q : ℝ × ℝ =>
+      · apply ContinuousOn.congr (f := fun q : ℝ × ℝ =>
             (↑(H₀ + q.2 * (H₁ - H₀) - Real.sqrt 3 / 2) : ℂ) * I)
         · exact ((continuous_ofReal.comp (by fun_prop :
             Continuous (fun q : ℝ × ℝ => H₀ + q.2 * (H₁ - H₀) - Real.sqrt 3 / 2))).mul
             continuous_const).continuousOn
         · intro q hq
-          convert (fdBoundary_H_hasDerivAt_seg4 _
-            (lt_of_le_of_lt hp1_ge3 hq.1.1)
+          convert (fdBoundary_H_hasDerivAt_seg4 _ (lt_of_le_of_lt hp1_ge3 hq.1.1)
             (lt_of_lt_of_le hq.1.2 h_le4)).deriv using 1
           push_cast; ring
       · push_neg at h_le4
@@ -231,8 +219,7 @@ private lemma fdHomot_deriv_continuousOn_piece (H₀ H₁ : ℝ) (p₁ p₂ : �
         apply ContinuousOn.congr (f := fun _ => (1 : ℂ))
         · exact continuousOn_const
         · intro q hq
-          exact (fdBoundary_H_hasDerivAt_seg5 _
-            (lt_of_le_of_lt hp1_ge4 hq.1.1)).deriv
+          exact (fdBoundary_H_hasDerivAt_seg5 _ (lt_of_le_of_lt hp1_ge4 hq.1.1)).deriv
 
 set_option maxHeartbeats 400000 in
 private lemma fdHomot_deriv_bound (H : ℝ) (hH : heightCutoff ≤ H) :
@@ -284,10 +271,8 @@ private lemma fdHomot_deriv_bound (H : ℝ) (hH : heightCutoff ≤ H) :
           exact le_max_right _ _
 
 set_option maxHeartbeats 1600000 in
-private lemma fdBoundary_H_piecewise_homotopic (p : ℂ)
-    (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
-    (hp_im_pos : 0 < p.im) (hp_im : p.im < heightCutoff)
-    {H : ℝ} (hH : heightCutoff ≤ H) :
+private lemma fdBoundary_H_piecewise_homotopic (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < heightCutoff) {H : ℝ} (hH : heightCutoff ≤ H) :
     PiecewiseCurvesHomotopicAvoiding (fdBoundary_H heightCutoff) (fdBoundary_H H)
       0 5 p fdBoundary_H_partition := by
   refine ⟨fun q => fdBoundary_H (heightCutoff + q.2 * (H - heightCutoff)) q.1,
@@ -302,8 +287,7 @@ private lemma fdBoundary_H_piecewise_homotopic (p : ℂ)
     exact fdBoundary_H_avoids_interior p hp_norm hp_re hp_im_pos
       (lt_of_lt_of_le hp_im (by nlinarith [hs.1] : heightCutoff ≤ _)) t ht
   · exact fun t _ ht_not_P s _ =>
-      fdBoundary_H_differentiableAt_off_partition
-        (heightCutoff + s * (H - heightCutoff)) t ht_not_P
+      fdBoundary_H_differentiableAt_off_partition (heightCutoff + s * (H - heightCutoff)) t ht_not_P
   · exact fun p₁ p₂ _ hfree _ =>
       fdHomot_deriv_continuousOn_piece heightCutoff H p₁ p₂ hfree
   · exact fdHomot_deriv_bound H hH
@@ -324,21 +308,17 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
 
 /-- Variant for upper half-plane points. -/
 theorem generalizedWindingNumber_fdBoundary_eq_neg_one_uhp
-    (s : UpperHalfPlane) (hs_norm : ‖(s : ℂ)‖ > 1)
-    (hs_re : |(s : ℂ).re| < 1 / 2)
+    (s : UpperHalfPlane) (hs_norm : ‖(s : ℂ)‖ > 1) (hs_re : |(s : ℂ).re| < 1 / 2)
     (hs_im : (s : ℂ).im < heightCutoff) :
     generalizedWindingNumber' fdBoundary 0 5 (s : ℂ) =
       -1 :=
-  generalizedWindingNumber_fdBoundary_eq_neg_one
-    (s : ℂ) hs_norm hs_re s.im_pos hs_im
+  generalizedWindingNumber_fdBoundary_eq_neg_one (s : ℂ) hs_norm hs_re s.im_pos hs_im
 
 /-- For interior points with im < heightCutoff, the generalized
 winding number of fdBoundary_H around p is -1 for any
 H ≥ heightCutoff. -/
-theorem gWN_fdBoundary_H_eq_neg_one_of_interior
-    (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
-    (hp_im_pos : 0 < p.im) (hp_im : p.im < heightCutoff)
-    {H : ℝ} (hH : heightCutoff ≤ H) :
+theorem gWN_fdBoundary_H_eq_neg_one_of_interior (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
+    (hp_im_pos : 0 < p.im) (hp_im : p.im < heightCutoff) {H : ℝ} (hH : heightCutoff ≤ H) :
     generalizedWindingNumber' (fdBoundary_H H) 0 5 p =
       -1 := by
   have hbase := generalizedWindingNumber_fdBoundary_eq_neg_one p hp_norm hp_re hp_im_pos hp_im
@@ -361,8 +341,7 @@ winding number of fdBoundary_H around p is -1.
 Requires H ≥ heightCutoff. -/
 theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
     (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
-    (hp_im_pos : 0 < p.im) {H : ℝ} (hH : heightCutoff ≤ H)
-    (hp_im : p.im < H) :
+    (hp_im_pos : 0 < p.im) {H : ℝ} (hH : heightCutoff ≤ H) (hp_im : p.im < H) :
     generalizedWindingNumber' (fdBoundary_H H) 0 5 p =
       -1 := by
   by_cases hp_low : p.im < heightCutoff
@@ -413,8 +392,7 @@ theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
       exact fdBoundary_H_avoids_interior (zPath s)
         (by linarith [Complex.abs_im_le_norm (zPath s),
             abs_of_pos (show 0 < (zPath s).im by linarith)])
-        (by rw [hzs_re]; exact hp_re)
-        (by linarith)
+        (by rw [hzs_re]; exact hp_re) (by linarith)
         (by rw [hzs_im]; nlinarith [hs.1, hs.2, hp_im, hHmid_lt, hH])
         t ht
     · intro t _ ht_not_P s _
@@ -463,6 +441,5 @@ theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
     (by norm_num : (0:ℝ) < 5) hhom
   rw [gWN_translate, gWN_translate] at h_eq
   exact h_eq.symm.trans hq_wn
-
 
 end

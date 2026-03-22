@@ -36,8 +36,7 @@ include hf
 theorem oncurve_arc_capture
     (S : Finset ℍ) (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     {H : ℝ} (hH : Real.sqrt 3 / 2 < H) {t : ℝ} (ht : t ∈ Set.Icc (0:ℝ) 5)
-    (h_norm : ‖fdBoundary_H H t‖ = 1)
-    (h_zero : modularFormCompOfComplex f (fdBoundary_H H t) = 0) :
+    (h_norm : ‖fdBoundary_H H t‖ = 1) (h_zero : modularFormCompOfComplex f (fdBoundary_H H t) = 0) :
     fdBoundary_H H t ∈ (↑(sArcOfS S) : Set ℂ) := by
   set z := fdBoundary_H H t with hz_def
   have h_im_ge := fdBoundary_H_im_ge_sqrt3_div_2 H hH.le t ht
@@ -195,8 +194,7 @@ theorem oncurve_seg4_capture
   exact ⟨p, Finset.mem_filter.mpr ⟨hp_in_S, h_re, h_norm_gt⟩, rfl⟩
 
 /-- Full on-curve capture: any zero of `f` on `fdBoundary_H H` is in the singular set. -/
-theorem oncurve_full_capture
-    (S : Finset ℍ) (_hS : ∀ p ∈ S, p ∈ 𝒟)
+theorem oncurve_full_capture (S : Finset ℍ) (_hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     {H : ℝ} (hH_ge1 : 1 ≤ H) (hH_sqrt3 : Real.sqrt 3 / 2 < H)
     (hH_bound : ∀ s ∈ S, (s : ℂ).im < H) :

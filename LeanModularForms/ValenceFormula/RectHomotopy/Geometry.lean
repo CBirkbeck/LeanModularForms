@@ -73,8 +73,7 @@ lemma outside_closed_unit_ball (z : ℂ) (hz : ‖z‖ > 1) :
 def chordSegment (z₁ z₂ : ℂ) : ℝ → ℂ :=
   fun t => (1 - t) • z₁ + t • z₂
 
-lemma chordSegment_in_convex {z₁ z₂ : ℂ} {S : Set ℂ}
-    (hS : Convex ℝ S) (hz₁ : z₁ ∈ S) (hz₂ : z₂ ∈ S)
+lemma chordSegment_in_convex {z₁ z₂ : ℂ} {S : Set ℂ} (hS : Convex ℝ S) (hz₁ : z₁ ∈ S) (hz₂ : z₂ ∈ S)
     (t : ℝ) (ht : t ∈ Icc 0 1) :
     chordSegment z₁ z₂ t ∈ S := by
   simp only [chordSegment]
@@ -88,8 +87,7 @@ lemma convex_closedBall_zero_one :
     Convex ℝ (closedBall (0 : ℂ) 1) :=
   convex_closedBall 0 1
 
-lemma chord_in_closed_unit_ball (z₁ z₂ : ℂ)
-    (hz₁ : ‖z₁‖ = 1) (hz₂ : ‖z₂‖ = 1)
+lemma chord_in_closed_unit_ball (z₁ z₂ : ℂ) (hz₁ : ‖z₁‖ = 1) (hz₂ : ‖z₂‖ = 1)
     (t : ℝ) (ht : t ∈ Icc 0 1) :
     chordSegment z₁ z₂ t ∈ closedBall (0 : ℂ) 1 := by
   apply chordSegment_in_convex convex_closedBall_zero_one
@@ -101,28 +99,23 @@ def arcToChordHomotopy (arc chord : ℝ → ℂ) :
     ℝ × ℝ → ℂ :=
   fun (t, s) => (1 - s) • arc t + s • chord t
 
-lemma arcToChordHomotopy_in_closed_unit_ball
-    (arc chord : ℝ → ℂ)
+lemma arcToChordHomotopy_in_closed_unit_ball (arc chord : ℝ → ℂ)
     (harc : ∀ t ∈ Icc 0 1,
       arc t ∈ closedBall (0 : ℂ) 1)
     (hchord : ∀ t ∈ Icc 0 1,
       chord t ∈ closedBall (0 : ℂ) 1)
-    (t : ℝ) (ht : t ∈ Icc 0 1)
-    (s : ℝ) (hs : s ∈ Icc 0 1) :
+    (t : ℝ) (ht : t ∈ Icc 0 1) (s : ℝ) (hs : s ∈ Icc 0 1) :
     arcToChordHomotopy arc chord (t, s) ∈
       closedBall (0 : ℂ) 1 := by
   simp only [arcToChordHomotopy]
-  exact chordSegment_in_convex convex_closedBall_zero_one
-    (harc t ht) (hchord t ht) s hs
+  exact chordSegment_in_convex convex_closedBall_zero_one (harc t ht) (hchord t ht) s hs
 
-lemma arcToChordHomotopy_avoids (arc chord : ℝ → ℂ)
-    (p : ℂ) (hp : ‖p‖ > 1)
+lemma arcToChordHomotopy_avoids (arc chord : ℝ → ℂ) (p : ℂ) (hp : ‖p‖ > 1)
     (harc : ∀ t ∈ Icc 0 1,
       arc t ∈ closedBall (0 : ℂ) 1)
     (hchord : ∀ t ∈ Icc 0 1,
       chord t ∈ closedBall (0 : ℂ) 1)
-    (t : ℝ) (ht : t ∈ Icc 0 1)
-    (s : ℝ) (hs : s ∈ Icc 0 1) :
+    (t : ℝ) (ht : t ∈ Icc 0 1) (s : ℝ) (hs : s ∈ Icc 0 1) :
     arcToChordHomotopy arc chord (t, s) ≠ p := by
   have hH := arcToChordHomotopy_in_closed_unit_ball
     arc chord harc hchord t ht s hs
@@ -155,14 +148,12 @@ lemma arc2_on_unit_circle (t : ℝ) : ‖arc2 t‖ = 1 := by
   rw [h, mul_comm]
   exact Complex.norm_exp_ofReal_mul_I _
 
-lemma arc1_in_closed_unit_ball (t : ℝ)
-    (_ : t ∈ Icc 0 1) :
+lemma arc1_in_closed_unit_ball (t : ℝ) (_ : t ∈ Icc 0 1) :
     arc1 t ∈ closedBall (0 : ℂ) 1 := by
   simp only [mem_closedBall, dist_zero_right,
     arc1_on_unit_circle, le_refl]
 
-lemma arc2_in_closed_unit_ball (t : ℝ)
-    (_ : t ∈ Icc 0 1) :
+lemma arc2_in_closed_unit_ball (t : ℝ) (_ : t ∈ Icc 0 1) :
     arc2 t ∈ closedBall (0 : ℂ) 1 := by
   simp only [mem_closedBall, dist_zero_right,
     arc2_on_unit_circle, le_refl]
@@ -170,20 +161,17 @@ lemma arc2_in_closed_unit_ball (t : ℝ)
 def chord1 : ℝ → ℂ := chordSegment rho' i_point
 def chord2 : ℝ → ℂ := chordSegment i_point rho
 
-lemma chord1_in_closed_unit_ball (t : ℝ)
-    (ht : t ∈ Icc 0 1) :
+lemma chord1_in_closed_unit_ball (t : ℝ) (ht : t ∈ Icc 0 1) :
     chord1 t ∈ closedBall (0 : ℂ) 1 :=
   chord_in_closed_unit_ball rho' i_point
     rho'_norm i_point_norm t ht
 
-lemma chord2_in_closed_unit_ball (t : ℝ)
-    (ht : t ∈ Icc 0 1) :
+lemma chord2_in_closed_unit_ball (t : ℝ) (ht : t ∈ Icc 0 1) :
     chord2 t ∈ closedBall (0 : ℂ) 1 :=
   chord_in_closed_unit_ball i_point rho
     i_point_norm rho_norm t ht
 
-lemma exists_ball_in_polygon_interior (p : ℂ)
-    (hp : ‖p‖ > 1) (hp_im : 0 < p.im) :
+lemma exists_ball_in_polygon_interior (p : ℂ) (hp : ‖p‖ > 1) (hp_im : 0 < p.im) :
     ∃ ε > 0, ∀ z, ‖z - p‖ < ε →
       z.im > 0 ∧ ‖z‖ > 1 := by
   use min ((‖p‖ - 1)/2) (p.im/2)
@@ -210,12 +198,10 @@ lemma exists_ball_in_polygon_interior (p : ℂ)
       linarith [abs_lt.mp this]
     linarith
 
-lemma circleIntegral_winding (p : ℂ) (ε : ℝ)
-    (hε : 0 < ε) :
+lemma circleIntegral_winding (p : ℂ) (ε : ℝ) (hε : 0 < ε) :
     (∮ z in C(p, ε), (z - p)⁻¹) =
       2 * Real.pi * I :=
-  circleIntegral.integral_sub_inv_of_mem_ball
-    (Metric.mem_ball_self hε)
+  circleIntegral.integral_sub_inv_of_mem_ball (Metric.mem_ball_self hε)
 
 /-- Height parameter H = √3/2 + 1 for FD boundary. -/
 noncomputable def H_height : ℝ := Real.sqrt 3 / 2 + 1
@@ -230,10 +216,8 @@ noncomputable def fdPolygon : ℝ → ℂ := fun t =>
   else if t ≤ 3 then
     chordSegment i_point rho (t - 2)
   else if t ≤ 4 then
-    -1/2 + (Real.sqrt 3 / 2 + (t - 3) *
-      (H_height - Real.sqrt 3 / 2)) * I
-  else
-    (t - 9/2) + H_height * I
+    -1/2 + (Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I
+  else (t - 9/2) + H_height * I
 
 /-- The FD boundary curve (local copy matching clean
 folder's `fdBoundary`). -/
@@ -242,16 +226,12 @@ noncomputable def fdBoundary : ℝ → ℂ := fun t =>
     1/2 + (H_height - t * (H_height -
       Real.sqrt 3 / 2)) * I
   else if t ≤ 2 then
-    Complex.exp ((Real.pi / 3 + (t - 1) *
-      (Real.pi / 2 - Real.pi / 3)) * I)
+    Complex.exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
   else if t ≤ 3 then
-    Complex.exp ((Real.pi / 2 + (t - 2) *
-      (2 * Real.pi / 3 - Real.pi / 2)) * I)
+    Complex.exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
   else if t ≤ 4 then
-    -1/2 + (Real.sqrt 3 / 2 + (t - 3) *
-      (H_height - Real.sqrt 3 / 2)) * I
-  else
-    (t - 9/2) + H_height * I
+    -1/2 + (Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I
+  else (t - 9/2) + H_height * I
 
 /-- The homotopy from FD boundary (s=0) to
 polygon (s=1). Segments 1,4,5 unchanged;
@@ -262,21 +242,17 @@ noncomputable def fdBoundaryToPolygonHomotopy :
     1/2 + (H_height - t * (H_height -
       Real.sqrt 3 / 2)) * I
   else if t ≤ 2 then
-    let arc_point := Complex.exp ((Real.pi / 3 +
-      (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+    let arc_point := Complex.exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
     let chord_point := chordSegment rho' i_point (t - 1)
     (1 - s) • arc_point + s • chord_point
   else if t ≤ 3 then
-    let arc_point := Complex.exp ((Real.pi / 2 +
-      (t - 2) * (2 * Real.pi / 3 -
+    let arc_point := Complex.exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 -
         Real.pi / 2)) * I)
     let chord_point := chordSegment i_point rho (t - 2)
     (1 - s) • arc_point + s • chord_point
   else if t ≤ 4 then
-    -1/2 + (Real.sqrt 3 / 2 + (t - 3) *
-      (H_height - Real.sqrt 3 / 2)) * I
-  else
-    (t - 9/2) + H_height * I
+    -1/2 + (Real.sqrt 3 / 2 + (t - 3) * (H_height - Real.sqrt 3 / 2)) * I
+  else (t - 9/2) + H_height * I
 
 lemma fdBoundary_at_zero :
     fdBoundary 0 = (1/2 : ℂ) + H_height * I := by
@@ -295,15 +271,13 @@ lemma fdBoundary_at_five :
   ring_nf
 
 lemma fdBoundaryToPolygonHomotopy_at_t_zero (s : ℝ) :
-    fdBoundaryToPolygonHomotopy (0, s) =
-      (1/2 : ℂ) + H_height * I := by
+    fdBoundaryToPolygonHomotopy (0, s) = (1/2 : ℂ) + H_height * I := by
   simp only [fdBoundaryToPolygonHomotopy,
     show (0 : ℝ) ≤ 1 from by norm_num, ↓reduceIte, H_height]
   simp only [Complex.ofReal_zero, zero_mul, sub_zero]
 
 lemma fdBoundaryToPolygonHomotopy_at_t_five (s : ℝ) :
-    fdBoundaryToPolygonHomotopy (5, s) =
-      (1/2 : ℂ) + H_height * I := by
+    fdBoundaryToPolygonHomotopy (5, s) = (1/2 : ℂ) + H_height * I := by
   simp only [fdBoundaryToPolygonHomotopy,
     show ¬(5 : ℝ) ≤ 1 from by norm_num, ↓reduceIte,
     show ¬(5 : ℝ) ≤ 2 from by norm_num,
@@ -313,38 +287,30 @@ lemma fdBoundaryToPolygonHomotopy_at_t_five (s : ℝ) :
   ring_nf
 
 lemma segment2_arc_on_unit_circle (t : ℝ) :
-    ‖Complex.exp ((Real.pi / 3 + (t - 1) *
-      (Real.pi / 2 - Real.pi / 3)) * I)‖ = 1 := by
+    ‖Complex.exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)‖ = 1 := by
   conv_lhs =>
-    rw [show ((Real.pi / 3 + (t - 1) *
-        (Real.pi / 2 - Real.pi / 3)) * I : ℂ) =
-      ↑(Real.pi / 3 + (t - 1) *
-        (Real.pi / 2 - Real.pi / 3)) * I by
+    rw [show ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I : ℂ) =
+      ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I by
       push_cast; ring]
   exact Complex.norm_exp_ofReal_mul_I _
 
 lemma segment3_arc_on_unit_circle (t : ℝ) :
-    ‖Complex.exp ((Real.pi / 2 + (t - 2) *
-      (2 * Real.pi / 3 - Real.pi / 2)) * I)‖ =
+    ‖Complex.exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)‖ =
     1 := by
   conv_lhs =>
-    rw [show ((Real.pi / 2 + (t - 2) *
-        (2 * Real.pi / 3 - Real.pi / 2)) * I : ℂ) =
-      ↑(Real.pi / 2 + (t - 2) *
-        (2 * Real.pi / 3 - Real.pi / 2)) * I by
+    rw [show ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I : ℂ) =
+      ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I by
       push_cast; ring]
   exact Complex.norm_exp_ofReal_mul_I _
 
 lemma segment2_arc_in_closed_unit_ball (t : ℝ) :
-    Complex.exp ((Real.pi / 3 + (t - 1) *
-      (Real.pi / 2 - Real.pi / 3)) * I) ∈
+    Complex.exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I) ∈
     closedBall (0 : ℂ) 1 := by
   simp only [mem_closedBall, dist_zero_right,
     segment2_arc_on_unit_circle, le_refl]
 
 lemma segment3_arc_in_closed_unit_ball (t : ℝ) :
-    Complex.exp ((Real.pi / 2 + (t - 2) *
-      (2 * Real.pi / 3 - Real.pi / 2)) * I) ∈
+    Complex.exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I) ∈
     closedBall (0 : ℂ) 1 := by
   simp only [mem_closedBall, dist_zero_right,
     segment3_arc_on_unit_circle, le_refl]

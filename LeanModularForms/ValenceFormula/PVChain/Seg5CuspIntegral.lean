@@ -234,8 +234,7 @@ private lemma seg5_q_radius_H_lt_one' {H : ℝ} (hH : 0 < H) : seg5_q_radius_H H
 This is the radius-parameterized version. The factorization `F(q) = q^m · g(q)` gives:
 `∮ logDeriv(F) = m · ∮ 1/q + ∮ logDeriv(g) = m · 2πi + 0`. -/
 lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
-    {R : ℝ} (hR_pos : 0 < R) (hR_lt : R < 1)
-    (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R,
+    {R : ℝ} (hR_pos : 0 < R) (hR_lt : R < 1) (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R,
         q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
     (∮ q in C(0, R),
       logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) q) =
@@ -260,15 +259,13 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
       intro h; simp [h] at hq
       exact absurd hq.symm (ne_of_gt hR_pos)
     have hq_ball : q ∈ Metric.ball (0 : ℂ) 1 :=
-      Metric.sphere_subset_closedBall.trans
-        (Metric.closedBall_subset_ball hR_lt) hq
+      Metric.sphere_subset_closedBall.trans (Metric.closedBall_subset_ball hR_lt) hq
     have hF_eq : F =ᶠ[𝓝 q] (fun z => z ^ m * g z) :=
       (Metric.isOpen_ball.eventually_mem hq_ball).mono (fun z hz => hFg z hz)
     have hg_diff_at := hg_diff.differentiableAt (Metric.isOpen_ball.mem_nhds hq_ball)
     have hg_ne_q := hg_nonvan q (Metric.sphere_subset_closedBall hq)
     simp only [logDeriv_apply, hF_eq.eq_of_nhds, hF_eq.deriv.eq_of_nhds]
-    have h_hd : HasDerivAt (fun z => z ^ m * g z)
-        (↑m * q ^ (m - 1) * g q + q ^ m * deriv g q) q :=
+    have h_hd : HasDerivAt (fun z => z ^ m * g z) (↑m * q ^ (m - 1) * g q + q ^ m * deriv g q) q :=
       (hasDerivAt_pow m q).mul hg_diff_at.hasDerivAt
     rw [h_hd.deriv]
     have hqm_ne : q ^ m ≠ 0 := pow_ne_zero m hq_ne
@@ -294,8 +291,7 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
       ((hg_diff.contDiffOn (n := 1) Metric.isOpen_ball).continuousOn_deriv_of_isOpen
         Metric.isOpen_ball le_rfl)
     show ContinuousOn (fun q => deriv g q / g q) (Metric.sphere 0 R)
-    exact ContinuousOn.div
-      (hg_deriv_cont.mono h_sphere_sub)
+    exact ContinuousOn.div (hg_deriv_cont.mono h_sphere_sub)
       (hg_diff.continuousOn.mono h_sphere_sub)
       (fun q hq => hg_nonvan q (Metric.sphere_subset_closedBall hq))
   have h_congr : (∮ q in C(0, R), logDeriv F q) =
@@ -394,8 +390,7 @@ lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
   simp_rw [qParam_seg5_H_eq_circleMap H]
   set g : ℝ → ℂ := fun θ => deriv (circleMap 0 (↑R)) θ • logDeriv F (circleMap 0 ↑R θ)
     with hg_def
-  have h_eq_integral :
-      (∫ t in (4:ℝ)..5,
+  have h_eq_integral : (∫ t in (4:ℝ)..5,
         logDeriv F (circleMap 0 R (2 * Real.pi * (t - 9 / 2))) *
         (2 * ↑Real.pi * I * circleMap 0 R (2 * Real.pi * (t - 9 / 2)))) =
       ∫ t in (4:ℝ)..5, (2 * Real.pi : ℝ) • g (2 * Real.pi * (t - 9 / 2)) := by
@@ -424,8 +419,7 @@ lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
 
 /-- Combination of Stages 1 and 2 at height H:
 the logDeriv integral along seg5 at height H = 2πi · orderAtCusp'. -/
-lemma seg5_logDeriv_integral_eq_H (hf : f ≠ 0)
-    {H : ℝ} (hH : 0 < H)
+lemma seg5_logDeriv_integral_eq_H (hf : f ≠ 0) {H : ℝ} (hH : 0 < H)
     (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
         q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
     ∫ t in (4:ℝ)..5,
@@ -446,8 +440,7 @@ to the form used in `PVChain.Assembly`, which integrates `logDeriv f(z(t)) * z'(
 
 For `t > 4`, `fdBoundary_H H t = fdBoundary_seg5_H H t` and `deriv (fdBoundary_H H) t = 1`,
 so the integrand with `* deriv ...` equals the integrand without. -/
-theorem seg5_logDeriv_integral_value_bridge
-    {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
+theorem seg5_logDeriv_integral_value_bridge {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
       q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
     ∫ t in (4:ℝ)..5,

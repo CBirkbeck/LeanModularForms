@@ -91,20 +91,17 @@ lemma norm_sub_one_eq_of_re_half (z : ℂ) (hre : z.re = 1/2) :
   norm_eq_of_normSq_eq (normSq_sub_one_eq_of_re_half z hre)
 
 /-- T-translation preserves norm for UpperHalfPlane points with `re = -1/2`. -/
-lemma vAdd_one_norm_eq_of_re_neg_half (p : ℍ)
-    (hre : (p : ℂ).re = -1/2) :
+lemma vAdd_one_norm_eq_of_re_neg_half (p : ℍ) (hre : (p : ℂ).re = -1/2) :
     ‖((1 : ℝ) +ᵥ p : ℍ).val‖ = ‖(p : ℂ)‖ := by
   rw [vAdd_one_coe]; exact norm_add_one_eq_of_re_neg_half _ hre
 
 /-- T⁻¹-translation preserves norm for UpperHalfPlane points with `re = 1/2`. -/
-lemma vAdd_neg_one_norm_eq_of_re_half (p : ℍ)
-    (hre : (p : ℂ).re = 1/2) :
+lemma vAdd_neg_one_norm_eq_of_re_half (p : ℍ) (hre : (p : ℂ).re = 1/2) :
     ‖((-1 : ℝ) +ᵥ p : ℍ).val‖ = ‖(p : ℂ)‖ := by
   rw [vAdd_neg_one_coe]; exact norm_sub_one_eq_of_re_half _ hre
 
 /-- T-translation sends left-vertical FD points to 𝒟. -/
-theorem vAdd_one_mem_fd_of_left_vert (p : ℍ)
-    (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = -1/2) :
+theorem vAdd_one_mem_fd_of_left_vert (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = -1/2) :
     (1 : ℝ) +ᵥ p ∈ 𝒟 := by
   obtain ⟨hnormSq, _⟩ := hp_fd
   refine ⟨?_, ?_⟩
@@ -115,8 +112,7 @@ theorem vAdd_one_mem_fd_of_left_vert (p : ℍ)
     rw [vAdd_one_coe, add_re, one_re, hre]; norm_num
 
 /-- T⁻¹-translation sends right-vertical FD points to 𝒟. -/
-theorem vAdd_neg_one_mem_fd_of_right_vert (p : ℍ)
-    (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = 1/2) :
+theorem vAdd_neg_one_mem_fd_of_right_vert (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = 1/2) :
     (-1 : ℝ) +ᵥ p ∈ 𝒟 := by
   obtain ⟨hnormSq, _⟩ := hp_fd
   refine ⟨?_, ?_⟩
@@ -126,8 +122,7 @@ theorem vAdd_neg_one_mem_fd_of_right_vert (p : ℍ)
     rw [vAdd_neg_one_coe, sub_re, one_re, hre]; norm_num
 
 /-- `(1:ℝ) +ᵥ ρ' = ρ'+1` as UpperHalfPlane elements. -/
-theorem vAdd_one_rho_eq_rho_plus_one :
-    (1 : ℝ) +ᵥ ellipticPointRho' = ellipticPointRhoPlusOne' := by
+theorem vAdd_one_rho_eq_rho_plus_one : (1 : ℝ) +ᵥ ellipticPointRho' = ellipticPointRhoPlusOne' := by
   apply Subtype.ext
   rw [vAdd_one_coe]
   exact ellipticPointRho_add_one_eq
@@ -197,8 +192,7 @@ def sRightVert (S : Finset ℍ) : Finset ℍ :=
 theorem vAdd_one_leftVert_subset_rightVert (S : Finset ℍ)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∀ p ∈ sLeftVert S,
-      orderOfVanishingAt' (⇑f) p ≠ 0 →
-      (1 : ℝ) +ᵥ p ∈ sRightVert S := by
+      orderOfVanishingAt' (⇑f) p ≠ 0 → (1 : ℝ) +ᵥ p ∈ sRightVert S := by
   intro p hp hord
   simp only [sLeftVert, Finset.mem_filter] at hp
   obtain ⟨_, hre, hnorm⟩ := hp
@@ -256,8 +250,7 @@ private lemma ord_ne_zero_of_cast_ne_zero {p : ℍ} {f : ℍ → ℂ}
 
 /-- Orders on right vertical edge equal orders on left vertical edge. -/
 theorem sum_ord_rightVert_eq_sum_ord_leftVert (S : Finset ℍ)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    (hS : ∀ p ∈ S, p ∈ 𝒟) (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∑ p ∈ sRightVert S, (orderOfVanishingAt' (⇑f) p : ℂ) =
     ∑ p ∈ sLeftVert S, (orderOfVanishingAt' (⇑f) p : ℂ) := by
   rw [← Finset.sum_filter_ne_zero, ← Finset.sum_filter_ne_zero (s := sLeftVert S)]
@@ -292,8 +285,7 @@ theorem sum_ord_rightVert_eq_sum_ord_leftVert (S : Finset ℍ)
   · intro p _; rw [ord_vAdd_neg_one_eq f p]
 
 /-- Orders on right arc equal orders on left arc (via S-action). -/
-theorem sum_ord_rightArc_eq_sum_ord_leftArc (S : Finset ℍ)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
+theorem sum_ord_rightArc_eq_sum_ord_leftArc (S : Finset ℍ) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∑ p ∈ sRightArc S, (orderOfVanishingAt' (⇑f) p : ℂ) =
     ∑ p ∈ sLeftArc S, (orderOfVanishingAt' (⇑f) p : ℂ) := by
