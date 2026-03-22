@@ -139,8 +139,7 @@ private lemma re_smul_ellipticPointI (g : SL(2, ℤ)) :
 
 private theorem fd'_orbit_i_eq_i (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = oi) :
     p = ellipticPointI' := by
-  have h_rel := Quotient.exact' horb
-  obtain ⟨g, hg⟩ := (h_rel : ∃ g : SL(2, ℤ), g • ellipticPointI' = p)
+  obtain ⟨g, hg⟩ := (Quotient.exact' horb : ∃ g : SL(2, ℤ), g • ellipticPointI' = p)
   subst hg
   set c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 with hc_def
   set d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 with hd_def
@@ -254,8 +253,7 @@ private lemma abs_re_eq_half_of_smul_rho_in_fd (g : SL(2, ℤ))
 
 private theorem fd'_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = orho) :
     p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne' := by
-  have h_rel := Quotient.exact' horb
-  obtain ⟨g, hg⟩ := (h_rel : ∃ g : SL(2, ℤ), g • ellipticPointRho' = p)
+  obtain ⟨g, hg⟩ := (Quotient.exact' horb : ∃ g : SL(2, ℤ), g • ellipticPointRho' = p)
   rw [← hg] at hp ⊢
   set c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 with hc_def
   set d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 with hd_def
@@ -475,17 +473,16 @@ private theorem orb_injOn_repCanon :
   obtain ⟨g, hg⟩ := Quotient.exact' h_eq
   have hp₁_fd := repCanon_mem_fd f hf hp₁
   have hp₂_fd := repCanon_mem_fd f hf hp₂
-  have h_abs := c_abs_le_one_of_smul_fd g p₁ p₂ hg hp₁_fd hp₂_fd
   rcases eq_or_ne ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0) 0 with hc | hc
   · exact injOn_c_eq_zero f hf g p₁ p₂ hg hp₁ hp₂ hp₁_fd hp₂_fd hc
-  · exact injOn_c_ne_zero f hf g p₁ p₂ hg hp₁ hp₂ hp₁_fd hp₂_fd hc h_abs
+  · exact injOn_c_ne_zero f hf g p₁ p₂ hg hp₁ hp₂ hp₁_fd hp₂_fd hc
+      (c_abs_le_one_of_smul_fd g p₁ p₂ hg hp₁_fd hp₂_fd)
 
 /-- The finsum over non-elliptic orbits equals the repCanon sum. -/
 theorem finsum_nonell_eq_repCanon_sum :
     ∑ᶠ (q : NonEllOrbit), ordOrbitQ f q =
     ∑ s ∈ repCanon f hf, (orderOfVanishingAt' (⇑f) s : ℂ) := by
-  have h_fin := finite_support_ordOrbit_nonEll f hf
-  set S := h_fin.toFinset with hS_def
+  set S := (finite_support_ordOrbit_nonEll f hf).toFinset with hS_def
   rw [finsum_eq_sum_of_support_subset _ (fun q hq => by
     rw [Finset.mem_coe, Set.Finite.mem_toFinset]
     exact Int.cast_ne_zero.mp (Function.mem_support.mp hq))]
@@ -509,18 +506,15 @@ private lemma disjoint_repStrict_repLeftVert :
     Disjoint (repStrict f hf) (repLeftVert f hf) := by
   apply Finset.disjoint_left.mpr
   intro p hp_s hp_lv
-  have hs := (Finset.mem_filter.mp hp_s).2
-  have hlv := (Finset.mem_filter.mp hp_lv).2
-  have h1 : |(p : ℂ).re| < 1/2 := hs.2.2.2.2
-  have h2 : (p : ℂ).re = -1/2 := hlv.1
+  have h1 : |(p : ℂ).re| < 1/2 := (Finset.mem_filter.mp hp_s).2.2.2.2.2
+  have h2 : (p : ℂ).re = -1/2 := (Finset.mem_filter.mp hp_lv).2.1
   rw [h2] at h1; norm_num at h1
 
 private lemma disjoint_union_repLeftArc :
     Disjoint (repStrict f hf ∪ repLeftVert f hf) (repLeftArc f hf) := by
   apply Finset.disjoint_left.mpr
   intro p hp_u hp_a
-  have ha := (Finset.mem_filter.mp hp_a).2
-  have h_norm_eq : ‖(p : ℂ)‖ = 1 := ha.2.1
+  have h_norm_eq : ‖(p : ℂ)‖ = 1 := (Finset.mem_filter.mp hp_a).2.2.1
   simp only [Finset.mem_union] at hp_u
   rcases hp_u with hp_s | hp_lv
   · exact absurd h_norm_eq (ne_of_gt (Finset.mem_filter.mp hp_s).2.2.2.2.1)
