@@ -27,49 +27,29 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 include hf in
 /-- The PV chain identity: equate residue and modular sides via
 uniqueness of limits, then cancel `2πi`. -/
-theorem pv_chain_identity
-    (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 →
-        orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
-      ∀ {H : ℝ}, H₀ ≤ H →
-        ∑ s ∈ S,
-          generalizedWindingNumber'
-            (fdBoundary_H H) 0 5 (↑s : ℂ) *
-            (orderOfVanishingAt' (⇑f) s : ℂ) =
-          -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
-  obtain ⟨H₁, hH₁, h_res⟩ :=
-    cpv_residue_side_tendsto f hf S hS hS_complete
-  obtain ⟨H₂, hH₂, h_mod⟩ :=
-    cpv_modular_side_tendsto f hf S hS hS_complete
-  refine ⟨max H₁ H₂,
-    lt_of_lt_of_le hH₁ (le_max_left _ _),
-    fun {H} hH => ?_⟩
+theorem pv_chain_identity (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
+      ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+        (orderOfVanishingAt' (⇑f) s : ℂ) =
+      -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
+  obtain ⟨H₁, hH₁, h_res⟩ := cpv_residue_side_tendsto f hf S hS hS_complete
+  obtain ⟨H₂, hH₂, h_mod⟩ := cpv_modular_side_tendsto f hf S hS hS_complete
+  refine ⟨max H₁ H₂, lt_of_lt_of_le hH₁ (le_max_left _ _), fun {H} hH => ?_⟩
   have h_r := h_res (le_trans (le_max_left _ _) hH)
   have h_m := h_mod (le_trans (le_max_right _ _) hH)
   haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
   have h_eq :
       2 * ↑Real.pi * I *
-        ∑ s ∈ S,
-          generalizedWindingNumber'
-            (fdBoundary_H H) 0 5 (↑s : ℂ) *
-            (orderOfVanishingAt' (⇑f) s : ℂ) =
-      -(2 * ↑Real.pi * I *
-        ((k : ℂ) / 12 -
-          (orderAtCusp' f : ℂ))) :=
+        ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+          (orderOfVanishingAt' (⇑f) s : ℂ) =
+      -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) :=
     tendsto_nhds_unique h_r h_m
   have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    simp only [ne_eq, mul_eq_zero,
-      OfNat.ofNat_ne_zero, not_false_eq_true,
-      ofReal_eq_zero, Real.pi_ne_zero,
-      I_ne_zero, or_self]
-  rw [show -(2 * ↑Real.pi * I *
-      ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) =
-    2 * ↑Real.pi * I *
-      (-((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))
-    from by ring] at h_eq
+    simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
+      ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero, or_self]
+  rw [show -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) =
+    2 * ↑Real.pi * I * (-((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) from by ring] at h_eq
   exact mul_left_cancel₀ hpi h_eq
 
 end

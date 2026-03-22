@@ -31,8 +31,7 @@ noncomputable section
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
 omit f hf in
-private lemma ellipticPointRho_re_neg :
-    (ellipticPointRho' : ℂ).re < 0 := by
+private lemma ellipticPointRho_re_neg : (ellipticPointRho' : ℂ).re < 0 := by
   change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0
   simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
 
@@ -43,302 +42,191 @@ private lemma ellipticPointRhoPlusOne_re_pos :
   simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
 
 omit f hf in
-private lemma ellipticPoint_ne_iρ1 :
-    ellipticPointI' ≠ ellipticPointRhoPlusOne' := by
-  intro h
-  have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
+private lemma ellipticPoint_ne_iρ1 : ellipticPointI' ≠ ellipticPointRhoPlusOne' := by
+  intro h; have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
   simp [ellipticPointI', ellipticPointRhoPlusOne'] at this
 
 omit f hf in
-private lemma ellipticPoint_ne_ρρ1 :
-    ellipticPointRho' ≠ ellipticPointRhoPlusOne' := by
-  intro h
-  have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
-  simp [ellipticPointRho', ellipticPointRhoPlusOne'] at this
-  norm_num at this
+private lemma ellipticPoint_ne_ρρ1 : ellipticPointRho' ≠ ellipticPointRhoPlusOne' := by
+  intro h; have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
+  simp [ellipticPointRho', ellipticPointRhoPlusOne'] at this; norm_num at this
 
 omit f hf in
-private lemma elliptic_finset_sum_eq_three
-    (S : Finset UpperHalfPlane)
-    (g : UpperHalfPlane → ℂ)
-    (_hS : ∀ p ∈ S, p ∈ 𝒟)
+private lemma elliptic_finset_sum_eq_three (S : Finset UpperHalfPlane)
+    (g : UpperHalfPlane → ℂ) (_hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete_zero : ∀ p, p ∈ 𝒟 → p ∉ S → g p = 0) :
     let P := fun (p : UpperHalfPlane) =>
-      p = ellipticPointI' ∨ p = ellipticPointRho' ∨
-      p = ellipticPointRhoPlusOne'
+      p = ellipticPointI' ∨ p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne'
     ∑ s ∈ S.filter P, g s =
-      g ellipticPointI' + g ellipticPointRho' +
-      g ellipticPointRhoPlusOne' := by
+      g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' := by
   intro P
   have h_ell_sub : S.filter P ⊆
       ({ellipticPointI', ellipticPointRho',
         ellipticPointRhoPlusOne'} : Finset UpperHalfPlane) := by
-    intro x hx
-    have := (Finset.mem_filter.mp hx).2
-    simp only [Finset.mem_insert, Finset.mem_singleton]
-    exact this
+    intro x hx; have := (Finset.mem_filter.mp hx).2
+    simp only [Finset.mem_insert, Finset.mem_singleton]; exact this
   have h_zero_outside : ∀ x ∈
       ({ellipticPointI', ellipticPointRho',
         ellipticPointRhoPlusOne'} : Finset UpperHalfPlane),
       x ∉ S.filter P → g x = 0 := by
     intro x hx hx_not
     simp only [Finset.mem_insert, Finset.mem_singleton] at hx
-    have hx_not_S : x ∉ S := by
-      intro hx_S; exact hx_not (Finset.mem_filter.mpr ⟨hx_S, hx⟩)
+    have hx_not_S : x ∉ S :=
+      fun hx_S => hx_not (Finset.mem_filter.mpr ⟨hx_S, hx⟩)
     have hx_fd : x ∈ 𝒟 := by
       rcases hx with rfl | rfl | rfl
       · exact ellipticPointI_mem_fd
       · exact ellipticPointRho_mem_fd
       · exact ellipticPointRhoPlusOne_mem_fd
     exact hS_complete_zero x hx_fd hx_not_S
-  rw [Finset.sum_subset h_ell_sub h_zero_outside]
-  rw [Finset.sum_insert (by simp [ellipticPointI_ne_rho, ellipticPoint_ne_iρ1]),
-      Finset.sum_insert (by simp [ellipticPoint_ne_ρρ1]),
-      Finset.sum_singleton]
+  rw [Finset.sum_subset h_ell_sub h_zero_outside,
+    Finset.sum_insert (by simp [ellipticPointI_ne_rho, ellipticPoint_ne_iρ1]),
+    Finset.sum_insert (by simp [ellipticPoint_ne_ρρ1]), Finset.sum_singleton]
   ring
 
 include hf in
 set_option maxHeartbeats 800000 in
-private theorem explicit_coefficients
-    (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 →
-        orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∃ H₀ : ℝ, 1 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
       (orderAtCusp' f : ℂ) +
-      (1/2 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
-      (1/6 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
-      (1/6 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f)
-          ellipticPointRhoPlusOne') +
+      (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') +
       ∑ s ∈ S.filter (fun p =>
-          p ≠ ellipticPointI' ∧
-          p ≠ ellipticPointRho' ∧
+          p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
           p ≠ ellipticPointRhoPlusOne'),
-        (-generalizedWindingNumber'
-          (fdBoundary_H H) 0 5 (↑s : ℂ)) *
+        (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
           ↑(orderOfVanishingAt' (⇑f) s) =
       (k : ℂ) / 12 := by
-  obtain ⟨H₀, hH₀_gt, h_identity⟩ :=
-    pv_chain_identity f hf S hS hS_complete
-  refine ⟨max H₀ 2,
-    by linarith [le_max_right H₀ 2], fun {H} hH => ?_⟩
-  have hH_ge_H₀ : H₀ ≤ H :=
-    le_trans (le_max_left H₀ 2) hH
-  have hH_gt_1 : 1 < H := by
-    linarith [le_max_right H₀ 2]
+  obtain ⟨H₀, hH₀_gt, h_identity⟩ := pv_chain_identity f hf S hS hS_complete
+  refine ⟨max H₀ 2, by linarith [le_max_right H₀ 2], fun {H} hH => ?_⟩
+  have hH_ge_H₀ : H₀ ≤ H := le_trans (le_max_left H₀ 2) hH
+  have hH_gt_1 : 1 < H := by linarith [le_max_right H₀ 2]
   have hH_gt_sqrt3 : Real.sqrt 3 / 2 < H := by
-    nlinarith [Real.sq_sqrt
-      (show (3:ℝ) ≥ 0 by norm_num),
-      sq_nonneg (Real.sqrt 3 - 2)]
+    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (Real.sqrt 3 - 2)]
   have h_sum := h_identity hH_ge_H₀
   set g := fun (s : UpperHalfPlane) =>
-    generalizedWindingNumber'
-      (fdBoundary_H H) 0 5 (↑s : ℂ) *
+    generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
       (orderOfVanishingAt' (⇑f) s : ℂ) with hg_def
-  have h_ord_zero :
-      ∀ p, p ∈ 𝒟 → p ∉ S →
-        orderOfVanishingAt' (⇑f) p = 0 :=
-    fun p hp hp_not =>
-      by_contra fun h_ne => hp_not (hS_complete _ hp h_ne)
+  have h_ord_zero : ∀ p, p ∈ 𝒟 → p ∉ S → orderOfVanishingAt' (⇑f) p = 0 :=
+    fun p hp hp_not => by_contra fun h_ne => hp_not (hS_complete _ hp h_ne)
   set P := fun (p : UpperHalfPlane) =>
-    p = ellipticPointI' ∨ p = ellipticPointRho' ∨
-    p = ellipticPointRhoPlusOne'
-  have h_split :=
-    (Finset.sum_filter_add_sum_filter_not S P g).symm
+    p = ellipticPointI' ∨ p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne'
+  have h_split := (Finset.sum_filter_add_sum_filter_not S P g).symm
   have h_ell_sum : ∑ s ∈ S.filter P, g s =
-      g ellipticPointI' + g ellipticPointRho' +
-      g ellipticPointRhoPlusOne' :=
-    elliptic_finset_sum_eq_three S g hS
-      (fun p hp hp_not => by
-        simp [hg_def, h_ord_zero p hp hp_not,
-          Int.cast_zero, mul_zero])
-  have h_gWN_i :=
-    gWN_fdBoundary_H_at_i H hH_gt_1
-  have h_gWN_ρ :=
-    gWN_fdBoundary_H_at_rho H hH_gt_sqrt3
-  have h_gWN_ρ1 :=
-    gWN_fdBoundary_H_at_rho_plus_one H hH_gt_sqrt3
+      g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
+    elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
+      simp [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
+  have h_gWN_i := gWN_fdBoundary_H_at_i H hH_gt_1
+  have h_gWN_ρ := gWN_fdBoundary_H_at_rho H hH_gt_sqrt3
+  have h_gWN_ρ1 := gWN_fdBoundary_H_at_rho_plus_one H hH_gt_sqrt3
   have hg_i : g ellipticPointI' =
-      (-1/2 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f)
-          ellipticPointI') := by
-    show generalizedWindingNumber'
-        (fdBoundary_H H) 0 5 I *
-      ↑(orderOfVanishingAt' (⇑f)
-        ellipticPointI') = _
+      (-1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
+    show generalizedWindingNumber' (fdBoundary_H H) 0 5 I *
+      ↑(orderOfVanishingAt' (⇑f) ellipticPointI') = _
     rw [h_gWN_i]
   have hg_ρ : g ellipticPointRho' =
-      (-1/6 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f)
-          ellipticPointRho') := by
-    show generalizedWindingNumber'
-        (fdBoundary_H H) 0 5 ellipticPointRho *
-      ↑(orderOfVanishingAt' (⇑f)
-        ellipticPointRho') = _
+      (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
+    show generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRho *
+      ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') = _
     rw [h_gWN_ρ]
   have hg_ρ1 : g ellipticPointRhoPlusOne' =
-      (-1/6 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f)
-          ellipticPointRhoPlusOne') := by
-    show generalizedWindingNumber'
-        (fdBoundary_H H) 0 5
-        ellipticPointRhoPlusOne *
-      ↑(orderOfVanishingAt' (⇑f)
-        ellipticPointRhoPlusOne') = _
+      (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') := by
+    show generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRhoPlusOne *
+      ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') = _
     rw [h_gWN_ρ1]
-  have h_filter_eq : S.filter (fun p => ¬P p) =
-      S.filter (fun p =>
-        p ≠ ellipticPointI' ∧
-        p ≠ ellipticPointRho' ∧
-        p ≠ ellipticPointRhoPlusOne') := by
-    ext x
-    simp only [Finset.mem_filter, P, not_or]
-  set R := ∑ s ∈ S.filter (fun p => ¬P p), g s
-    with hR_def
+  have h_filter_eq : S.filter (fun p => ¬P p) = S.filter (fun p =>
+      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne') := by
+    ext x; simp only [Finset.mem_filter, P, not_or]
+  set R := ∑ s ∈ S.filter (fun p => ¬P p), g s with hR_def
   have h_neg_R :
       ∑ s ∈ S.filter (fun p =>
-          p ≠ ellipticPointI' ∧
-          p ≠ ellipticPointRho' ∧
-          p ≠ ellipticPointRhoPlusOne'),
-        (-generalizedWindingNumber'
-          (fdBoundary_H H) 0 5 (↑s : ℂ)) *
-          ↑(orderOfVanishingAt' (⇑f) s) =
-        -R := by
-    rw [hR_def, h_filter_eq]
-    simp only [neg_mul, Finset.sum_neg_distrib,
-      hg_def]
-  rw [h_neg_R]
-  rw [h_split, h_ell_sum, hg_i, hg_ρ, hg_ρ1]
-    at h_sum
+          p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne'),
+        (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
+          ↑(orderOfVanishingAt' (⇑f) s) = -R := by
+    rw [hR_def, h_filter_eq]; simp only [neg_mul, Finset.sum_neg_distrib, hg_def]
+  rw [h_neg_R]; rw [h_split, h_ell_sum, hg_i, hg_ρ, hg_ρ1] at h_sum
   linear_combination -h_sum
 
 private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
-    (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = -1/2) :
-    s = ellipticPointRho' := by
-  apply Subtype.ext
-  show (s : ℂ) = (ellipticPointRho' : ℂ)
+    (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = -1/2) : s = ellipticPointRho' := by
+  apply Subtype.ext; show (s : ℂ) = (ellipticPointRho' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
   have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by
-      nlinarith
-    have h3 :=
-      Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
-    have h_prod :
-        ((s : ℂ).im - Real.sqrt 3 / 2) *
-        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
-      nlinarith
+    have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by nlinarith
+    have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
+    have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
+        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by nlinarith
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
-    · exact absurd h
-        (ne_of_gt (add_pos s.2 (by positivity)))
-  have h_rho_re :
-      (ellipticPointRho' : ℂ).re = -1/2 := by
-    change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re
-      = -1/2
-    simp only [add_re, mul_re, I_re, I_im,
-      mul_zero, mul_one]; norm_num
-  have h_rho_im :
-      (ellipticPointRho' : ℂ).im = Real.sqrt 3 / 2 := by
-    change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
-      = Real.sqrt 3 / 2
-    simp only [add_im, mul_im, I_re, I_im, mul_one,
-      neg_im, one_im, div_ofNat_im, ofReal_im,
-      mul_zero, add_zero, neg_zero, zero_div,
+    · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
+  have h_rho_re : (ellipticPointRho' : ℂ).re = -1/2 := by
+    change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
+    simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
+  have h_rho_im : (ellipticPointRho' : ℂ).im = Real.sqrt 3 / 2 := by
+    change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
+    simp only [add_im, mul_im, I_re, I_im, mul_one, neg_im, one_im,
+      div_ofNat_im, ofReal_im, mul_zero, add_zero, neg_zero, zero_div,
       ofReal_re, div_ofNat_re, zero_add]
   apply Complex.ext
   · exact hs_re.trans h_rho_re.symm
   · exact h_im.trans h_rho_im.symm
 
-private lemma unit_circle_re_pos_half_eq_rho_plus_one
-    (s : ℍ) (hs_norm : ‖(s : ℂ)‖ = 1)
-    (hs_re : (s : ℂ).re = 1/2) :
+private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
+    (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 1/2) :
     s = ellipticPointRhoPlusOne' := by
-  apply Subtype.ext
-  show (s : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
+  apply Subtype.ext; show (s : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
   have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by
-      nlinarith
-    have h3 :=
-      Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
-    have h_prod :
-        ((s : ℂ).im - Real.sqrt 3 / 2) *
-        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
-      nlinarith
+    have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by nlinarith
+    have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
+    have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
+        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by nlinarith
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
-    · exact absurd h
-        (ne_of_gt (add_pos s.2 (by positivity)))
-  have h_rho1_re :
-      (ellipticPointRhoPlusOne' : ℂ).re = 1/2 := by
-    change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re
-      = 1/2
-    simp only [add_re, mul_re, I_re, I_im,
-      mul_zero, mul_one]; norm_num
-  have h_rho1_im :
-      (ellipticPointRhoPlusOne' : ℂ).im
-        = Real.sqrt 3 / 2 := by
-    change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
-      = Real.sqrt 3 / 2
-    simp only [add_im, mul_im, I_re, I_im, mul_one,
-      one_im, div_ofNat_im, ofReal_im, mul_zero,
-      add_zero, zero_div, ofReal_re,
-      div_ofNat_re, zero_add]
+    · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
+  have h_rho1_re : (ellipticPointRhoPlusOne' : ℂ).re = 1/2 := by
+    change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
+    simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
+  have h_rho1_im : (ellipticPointRhoPlusOne' : ℂ).im = Real.sqrt 3 / 2 := by
+    change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
+    simp only [add_im, mul_im, I_re, I_im, mul_one, one_im, div_ofNat_im,
+      ofReal_im, mul_zero, add_zero, zero_div, ofReal_re, div_ofNat_re,
+      zero_add]
   apply Complex.ext
   · exact hs_re.trans h_rho1_re.symm
   · exact h_im.trans h_rho1_im.symm
 
-private lemma vert_edge_im_gt_sqrt3_half (s : ℍ)
-    (hs_norm : ‖(s : ℂ)‖ > 1)
-    (hs_abs_re : |(s : ℂ).re| = 1/2) :
-    Real.sqrt 3 / 2 < (s : ℂ).im := by
-  by_contra h_le
-  push_neg at h_le
-  have h3 :=
-    Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
+private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 1)
+    (hs_abs_re : |(s : ℂ).re| = 1/2) : Real.sqrt 3 / 2 < (s : ℂ).im := by
+  by_contra h_le; push_neg at h_le
+  have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
   have h_nsq_gt : Complex.normSq (s : ℂ) > 1 := by
-    rw [Complex.normSq_eq_norm_sq]
-    nlinarith [hs_norm, sq_nonneg (‖(s : ℂ)‖ - 1)]
+    rw [Complex.normSq_eq_norm_sq]; nlinarith [hs_norm, sq_nonneg (‖(s : ℂ)‖ - 1)]
   have h_nsq_eq : Complex.normSq (s : ℂ) =
-      (s : ℂ).re * (s : ℂ).re +
-      (s : ℂ).im * (s : ℂ).im :=
-    Complex.normSq_apply _
-  have h_re_sq :
-      (s : ℂ).re * (s : ℂ).re ≤ 1/4 := by
-    rcases (abs_eq (by norm_num : (1:ℝ)/2 ≥ 0)).mp
-      hs_abs_re with h | h <;> rw [h] <;> norm_num
-  have h_im_sq :
-      (s : ℂ).im * (s : ℂ).im ≤ 3/4 := by
-    have h_bound :
-        Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) = 3/4 := by
-      nlinarith
-    have h1 :
-        (s : ℂ).im * (s : ℂ).im ≤
-        Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) :=
-      mul_self_le_mul_self s.2.le h_le
+      (s : ℂ).re * (s : ℂ).re + (s : ℂ).im * (s : ℂ).im := Complex.normSq_apply _
+  have h_re_sq : (s : ℂ).re * (s : ℂ).re ≤ 1/4 := by
+    rcases (abs_eq (by norm_num : (1:ℝ)/2 ≥ 0)).mp hs_abs_re with h | h <;> rw [h] <;> norm_num
+  have h_im_sq : (s : ℂ).im * (s : ℂ).im ≤ 3/4 := by
+    have h_bound : Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) = 3/4 := by nlinarith
+    have h1 : (s : ℂ).im * (s : ℂ).im ≤
+        Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) := mul_self_le_mul_self s.2.le h_le
     linarith
   linarith
 
 private lemma unit_circle_re_zero_eq_i (s : ℍ)
-    (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 0) :
-    s = ellipticPointI' := by
-  apply Subtype.ext
-  show (s : ℂ) = (ellipticPointI' : ℂ)
+    (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 0) : s = ellipticPointI' := by
+  apply Subtype.ext; show (s : ℂ) = (ellipticPointI' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re, mul_zero, zero_add] at h_nsq
   have h_pos : (0 : ℝ) < (s : ℂ).im := s.2
-  have h_le : (s : ℂ).im ≤ 1 := by
-    have := mul_self_nonneg ((s : ℂ).im - 1)
-    nlinarith [h_nsq]
+  have h_le : (s : ℂ).im ≤ 1 := by nlinarith [mul_self_nonneg ((s : ℂ).im - 1), h_nsq]
   have h_ge : 1 ≤ (s : ℂ).im := by
     nlinarith [mul_le_of_le_one_right h_pos.le h_le, h_nsq]
   apply Complex.ext
@@ -348,76 +236,51 @@ private lemma unit_circle_re_zero_eq_i (s : ℍ)
 set_option maxHeartbeats 400000 in
 private theorem boundary_weight_auto
     (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟) :
-    ∃ H₁ : ℝ, 1 < H₁ ∧ ∀ {H : ℝ}, H₁ ≤ H →
-      ∀ s ∈ S,
-        s ≠ ellipticPointI' →
-        s ≠ ellipticPointRho' →
-        s ≠ ellipticPointRhoPlusOne' →
-        ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) →
-        generalizedWindingNumber'
-          (fdBoundary_H H) 0 5 (↑s : ℂ) = -1/2 := by
-  set M := S.sum (fun s : UpperHalfPlane =>
-    (s : ℂ).im) with hM_def
-  refine ⟨max 2 (M + 1),
-    by linarith [le_max_left (2 : ℝ) (M + 1)], ?_⟩
+    ∃ H₁ : ℝ, 1 < H₁ ∧ ∀ {H : ℝ}, H₁ ≤ H → ∀ s ∈ S,
+      s ≠ ellipticPointI' → s ≠ ellipticPointRho' →
+      s ≠ ellipticPointRhoPlusOne' →
+      ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) →
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) = -1/2 := by
+  set M := S.sum (fun s : UpperHalfPlane => (s : ℂ).im) with hM_def
+  refine ⟨max 2 (M + 1), by linarith [le_max_left (2 : ℝ) (M + 1)], ?_⟩
   intro H hH s hs hsi hsρ hsρ1 h_not_int
   have hs_fd := hS s hs
   have habs_re := hs_fd.2
   have hnorm_ge : 1 ≤ ‖(s : ℂ)‖ := by
-    rw [Complex.norm_def]
-    exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
+    rw [Complex.norm_def]; exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
   have h_im_pos : 0 < (s : ℂ).im := s.2
-  have hH_ge2 : (2 : ℝ) ≤ H :=
-    le_trans (le_max_left 2 (M + 1)) hH
+  have hH_ge2 : (2 : ℝ) ≤ H := le_trans (le_max_left 2 (M + 1)) hH
   have h_im_lt_H : (s : ℂ).im < H := by
-    have h1 : (s : ℂ).im ≤ M :=
-      Finset.single_le_sum
-        (fun x _ => le_of_lt x.2) hs
+    have h1 : (s : ℂ).im ≤ M := Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
     linarith [le_max_right (2 : ℝ) (M + 1)]
   have hH_sqrt : Real.sqrt 3 / 2 < H := by
-    have h3 :=
-      Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num)
-    nlinarith [sq_nonneg (Real.sqrt 3 - 2)]
+    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (Real.sqrt 3 - 2)]
   rcases eq_or_lt_of_le hnorm_ge with h_eq | h_gt
   · have h_re_lt : |(s : ℂ).re| < 1/2 := by
-      by_contra h_ge
-      push_neg at h_ge
-      have h_abs_eq : |(s : ℂ).re| = 1/2 :=
-        le_antisymm habs_re h_ge
-      rcases abs_cases (s : ℂ).re
-        with ⟨h_eq_abs, _⟩ | ⟨h_eq_abs, _⟩
-      · exact hsρ1
-          (unit_circle_re_pos_half_eq_rho_plus_one
-            s h_eq.symm (by linarith))
-      · exact hsρ
-          (unit_circle_re_neg_half_eq_rho
-            s h_eq.symm (by linarith))
+      by_contra h_ge; push_neg at h_ge
+      have h_abs_eq : |(s : ℂ).re| = 1/2 := le_antisymm habs_re h_ge
+      rcases abs_cases (s : ℂ).re with ⟨h_eq_abs, _⟩ | ⟨h_eq_abs, _⟩
+      · exact hsρ1 (unit_circle_re_pos_half_eq_rho_plus_one s h_eq.symm (by linarith))
+      · exact hsρ (unit_circle_re_neg_half_eq_rho s h_eq.symm (by linarith))
     exact gWN_fdBoundary_H_eq_neg_half_of_unitArc
       H (by linarith) (↑s) h_eq.symm h_re_lt h_im_pos
   · have h_abs_eq : |(s : ℂ).re| = 1/2 := by
-      by_contra h_ne
-      exact h_not_int
-        ⟨h_gt, lt_of_le_of_ne habs_re h_ne⟩
-    have h_im_sqrt :=
-      vert_edge_im_gt_sqrt3_half s h_gt h_abs_eq
-    rcases abs_cases (s : ℂ).re
-      with ⟨h_eq_abs, _⟩ | ⟨h_eq_abs, _⟩
+      by_contra h_ne; exact h_not_int ⟨h_gt, lt_of_le_of_ne habs_re h_ne⟩
+    have h_im_sqrt := vert_edge_im_gt_sqrt3_half s h_gt h_abs_eq
+    rcases abs_cases (s : ℂ).re with ⟨h_eq_abs, _⟩ | ⟨h_eq_abs, _⟩
     · exact gWN_fdBoundary_H_eq_neg_half_of_rightEdge
-        H hH_sqrt (↑s) (by linarith) h_gt
-        h_im_sqrt h_im_lt_H
+        H hH_sqrt (↑s) (by linarith) h_gt h_im_sqrt h_im_lt_H
     · exact gWN_fdBoundary_H_eq_neg_half_of_leftEdge
-        H hH_sqrt (↑s) (by linarith) h_gt
-        h_im_sqrt h_im_lt_H
+        H hH_sqrt (↑s) (by linarith) h_gt h_im_sqrt h_im_lt_H
 
-private lemma rho_singleton_sum_eq
-    (S : Finset UpperHalfPlane)
+private lemma rho_singleton_sum_eq (S : Finset UpperHalfPlane)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     (h_ord : orderOfVanishingAt' (⇑f) ellipticPointRho' ≠ 0) :
     ∑ s ∈ (if ellipticPointRhoPlusOne' ∈ sRightArc S
-      then {ellipticPointRhoPlusOne'} else ∅),
+        then {ellipticPointRhoPlusOne'} else ∅),
       (orderOfVanishingAt' (⇑f) s : ℂ) =
     ∑ s ∈ (if ellipticPointRho' ∈ sLeftArc S
-      then {ellipticPointRho'} else ∅),
+        then {ellipticPointRho'} else ∅),
       (orderOfVanishingAt' (⇑f) s : ℂ) := by
   have hρ_in_LA : ellipticPointRho' ∈ sLeftArc S := by
     simp only [sLeftArc, Finset.mem_filter]
@@ -428,137 +291,88 @@ private lemma rho_singleton_sum_eq
     exact ⟨hS_complete _ ellipticPointRhoPlusOne_mem_fd
       (by rwa [ord_rho_plus_one_eq_ord_rho_via_vAdd]),
       ellipticPointRhoPlusOne_norm, ellipticPointRhoPlusOne_re_pos⟩
-  rw [if_pos hρ1_in_RA, if_pos hρ_in_LA,
-    Finset.sum_singleton, Finset.sum_singleton]
-  exact_mod_cast congr_arg (Int.cast (R := ℂ))
-    (ord_rho_plus_one_eq_ord_rho_via_vAdd f)
+  rw [if_pos hρ1_in_RA, if_pos hρ_in_LA, Finset.sum_singleton, Finset.sum_singleton]
+  exact_mod_cast congr_arg (Int.cast (R := ℂ)) (ord_rho_plus_one_eq_ord_rho_via_vAdd f)
 
 /-- Non-elliptic right-arc ord sum equals non-elliptic left-arc ord sum. -/
 private theorem sum_nonEllArc_right_eq_left
-    (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     let RA_ne := S.filter (fun p =>
-      p ≠ ellipticPointRhoPlusOne' ∧
-      ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0)
+      p ≠ ellipticPointRhoPlusOne' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0)
     let LA_ne := S.filter (fun p =>
-      p ≠ ellipticPointRho' ∧
-      ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
-    ∑ p ∈ RA_ne,
-      (orderOfVanishingAt' (⇑f) p : ℂ) =
-    ∑ p ∈ LA_ne,
-      (orderOfVanishingAt' (⇑f) p : ℂ) := by
+      p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
+    ∑ p ∈ RA_ne, (orderOfVanishingAt' (⇑f) p : ℂ) =
+    ∑ p ∈ LA_ne, (orderOfVanishingAt' (⇑f) p : ℂ) := by
   intro RA_ne LA_ne
   have h_ra_ne : RA_ne =
-      (sRightArc S).filter
-        (· ≠ ellipticPointRhoPlusOne') := by
-    ext s; simp only [RA_ne, sRightArc,
-      Finset.mem_filter]; tauto
+      (sRightArc S).filter (· ≠ ellipticPointRhoPlusOne') := by
+    ext s; simp only [RA_ne, sRightArc, Finset.mem_filter]; tauto
   have h_la_ne : LA_ne =
       (sLeftArc S).filter (· ≠ ellipticPointRho') := by
-    ext s; simp only [LA_ne, sLeftArc,
-      Finset.mem_filter]; tauto
+    ext s; simp only [LA_ne, sLeftArc, Finset.mem_filter]; tauto
   rw [h_ra_ne, h_la_ne]
-  set f_ord := fun s : ℍ =>
-    (orderOfVanishingAt' (⇑f) s : ℂ) with hf_ord_def
-  have h_ra_split :=
-    Finset.sum_filter_add_sum_filter_not (sRightArc S)
-      (· ≠ ellipticPointRhoPlusOne') f_ord
-  have h_la_split :=
-    Finset.sum_filter_add_sum_filter_not (sLeftArc S)
-      (· ≠ ellipticPointRho') f_ord
+  set f_ord := fun s : ℍ => (orderOfVanishingAt' (⇑f) s : ℂ) with hf_ord_def
+  have h_ra_split := Finset.sum_filter_add_sum_filter_not (sRightArc S)
+    (· ≠ ellipticPointRhoPlusOne') f_ord
+  have h_la_split := Finset.sum_filter_add_sum_filter_not (sLeftArc S)
+    (· ≠ ellipticPointRho') f_ord
   suffices h_sing :
       ∑ p ∈ (sRightArc S).filter
-          (fun x => ¬(x ≠ ellipticPointRhoPlusOne')),
-        f_ord p =
+          (fun x => ¬(x ≠ ellipticPointRhoPlusOne')), f_ord p =
       ∑ p ∈ (sLeftArc S).filter
-          (fun x => ¬(x ≠ ellipticPointRho')),
-        f_ord p by
+          (fun x => ¬(x ≠ ellipticPointRho')), f_ord p by
     linear_combination
       sum_ord_rightArc_eq_sum_ord_leftArc f S hS hS_complete +
         h_ra_split - h_la_split - h_sing
   simp_rw [not_not]
-  conv_lhs => rw [Finset.filter_eq' (sRightArc S)
-    ellipticPointRhoPlusOne']
-  conv_rhs => rw [Finset.filter_eq' (sLeftArc S)
-    ellipticPointRho']
-  by_cases h_ord :
-      orderOfVanishingAt' (⇑f) ellipticPointRho' = 0
-  · have h_ord' :
-        orderOfVanishingAt' (⇑f)
-          ellipticPointRhoPlusOne' = 0 :=
+  conv_lhs => rw [Finset.filter_eq' (sRightArc S) ellipticPointRhoPlusOne']
+  conv_rhs => rw [Finset.filter_eq' (sLeftArc S) ellipticPointRho']
+  by_cases h_ord : orderOfVanishingAt' (⇑f) ellipticPointRho' = 0
+  · have h_ord' : orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne' = 0 :=
       ord_rho_plus_one_eq_ord_rho_via_vAdd f ▸ h_ord
-    have hf1 : f_ord ellipticPointRho' = 0 := by
-      simp [hf_ord_def, h_ord]
-    have hf2 : f_ord ellipticPointRhoPlusOne' = 0 := by
-      simp [hf_ord_def, h_ord']
-    split_ifs <;>
-      simp [Finset.sum_singleton, Finset.sum_empty,
-        hf1, hf2]
-  · simp only [hf_ord_def]
-    exact rho_singleton_sum_eq f S hS_complete h_ord
+    have hf1 : f_ord ellipticPointRho' = 0 := by simp [hf_ord_def, h_ord]
+    have hf2 : f_ord ellipticPointRhoPlusOne' = 0 := by simp [hf_ord_def, h_ord']
+    split_ifs <;> simp [Finset.sum_singleton, Finset.sum_empty, hf1, hf2]
+  · simp only [hf_ord_def]; exact rho_singleton_sum_eq f S hS_complete h_ord
 
 /-- Forward: a non-elliptic, non-interior boundary point of 𝒟 lies in one of
 the four boundary subsets (right vert, left vert, right arc, left arc). -/
-private theorem bdry_ne_mem_union
-    (S : Finset UpperHalfPlane) (s : UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hs_S : s ∈ S) (hsi : s ≠ ellipticPointI')
-    (hsρ : s ≠ ellipticPointRho')
-    (hsρ1 : s ≠ ellipticPointRhoPlusOne')
+private theorem bdry_ne_mem_union (S : Finset UpperHalfPlane) (s : UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟) (hs_S : s ∈ S) (hsi : s ≠ ellipticPointI')
+    (hsρ : s ≠ ellipticPointRho') (hsρ1 : s ≠ ellipticPointRhoPlusOne')
     (h_not_int : ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2)) :
     s ∈ sRightVert S ∨ s ∈ sLeftVert S ∨
-    (s ∈ S ∧ s ≠ ellipticPointRhoPlusOne' ∧
-      ‖(s : ℂ)‖ = 1 ∧ (s : ℂ).re > 0) ∨
-    (s ∈ S ∧ s ≠ ellipticPointRho' ∧
-      ‖(s : ℂ)‖ = 1 ∧ (s : ℂ).re < 0) := by
+    (s ∈ S ∧ s ≠ ellipticPointRhoPlusOne' ∧ ‖(s : ℂ)‖ = 1 ∧ (s : ℂ).re > 0) ∨
+    (s ∈ S ∧ s ≠ ellipticPointRho' ∧ ‖(s : ℂ)‖ = 1 ∧ (s : ℂ).re < 0) := by
   have hs_fd := hS s hs_S
   have hnorm_ge : 1 ≤ ‖(s : ℂ)‖ := by
-    rw [Complex.norm_def]
-    exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
+    rw [Complex.norm_def]; exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
   rcases eq_or_lt_of_le hnorm_ge with h_eq | h_gt
-  · rcases lt_trichotomy (s : ℂ).re 0
-      with hre_neg | hre_zero | hre_pos
-    · exact Or.inr (Or.inr (Or.inr
-        ⟨hs_S, hsρ, h_eq.symm, hre_neg⟩))
-    · exact absurd
-        (unit_circle_re_zero_eq_i s h_eq.symm hre_zero) hsi
-    · exact Or.inr (Or.inr (Or.inl
-        ⟨hs_S, hsρ1, h_eq.symm, hre_pos⟩))
+  · rcases lt_trichotomy (s : ℂ).re 0 with hre_neg | hre_zero | hre_pos
+    · exact Or.inr (Or.inr (Or.inr ⟨hs_S, hsρ, h_eq.symm, hre_neg⟩))
+    · exact absurd (unit_circle_re_zero_eq_i s h_eq.symm hre_zero) hsi
+    · exact Or.inr (Or.inr (Or.inl ⟨hs_S, hsρ1, h_eq.symm, hre_pos⟩))
   · have h_abs_eq : |(s : ℂ).re| = 1/2 := by
-      by_contra h_ne
-      exact h_not_int ⟨h_gt, lt_of_le_of_ne hs_fd.2 h_ne⟩
-    rcases abs_cases (s : ℂ).re
-      with ⟨_, h_sign⟩ | ⟨_, h_sign⟩
-    · exact Or.inl (Finset.mem_filter.mpr
-        ⟨hs_S, by linarith, h_gt⟩)
-    · exact Or.inr (Or.inl (Finset.mem_filter.mpr
-        ⟨hs_S, by linarith, h_gt⟩))
+      by_contra h_ne; exact h_not_int ⟨h_gt, lt_of_le_of_ne hs_fd.2 h_ne⟩
+    rcases abs_cases (s : ℂ).re with ⟨_, h_sign⟩ | ⟨_, h_sign⟩
+    · exact Or.inl (Finset.mem_filter.mpr ⟨hs_S, by linarith, h_gt⟩)
+    · exact Or.inr (Or.inl (Finset.mem_filter.mpr ⟨hs_S, by linarith, h_gt⟩))
 
 /-- Non-elliptic non-interior boundary points decompose into four disjoint sets. -/
-private theorem bdry_ne_eq_union
-    (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟) :
+private theorem bdry_ne_eq_union (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟) :
     let S_NE := S.filter (fun p =>
-      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
-      p ≠ ellipticPointRhoPlusOne')
-    S_NE.filter
-      (fun (p : ℍ) =>
-        ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)) =
+      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne')
+    S_NE.filter (fun (p : ℍ) => ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)) =
     (sRightVert S) ∪ (sLeftVert S) ∪
     S.filter (fun p =>
-      p ≠ ellipticPointRhoPlusOne' ∧
-      ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0) ∪
+      p ≠ ellipticPointRhoPlusOne' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0) ∪
     S.filter (fun p =>
-      p ≠ ellipticPointRho' ∧
-      ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0) := by
+      p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0) := by
   intro S_NE
   have h_rho_norm := ellipticPointRho_norm
   have h_rho1_norm := ellipticPointRhoPlusOne_norm
-  ext s
-  simp only [S_NE, sRightVert, sLeftVert,
-    Finset.mem_union, Finset.mem_filter]
+  ext s; simp only [S_NE, sRightVert, sLeftVert, Finset.mem_union, Finset.mem_filter]
   constructor
   · intro ⟨⟨hs_S, hsi, hsρ, hsρ1⟩, h_not_int⟩
     have := bdry_ne_mem_union S s hS hs_S hsi hsρ hsρ1 h_not_int
@@ -591,8 +405,7 @@ private theorem bdry_ne_eq_union
         fun ⟨h, _⟩ => by linarith⟩
 
 omit f hf in
-private lemma bdry_four_disjoint (S : Finset UpperHalfPlane)
-    (RA_ne LA_ne : Finset UpperHalfPlane)
+private lemma bdry_four_disjoint (S : Finset UpperHalfPlane) (RA_ne LA_ne : Finset UpperHalfPlane)
     (hRA : RA_ne = S.filter (fun p =>
       p ≠ ellipticPointRhoPlusOne' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0))
     (hLA : LA_ne = S.filter (fun p =>
@@ -609,117 +422,81 @@ private lemma bdry_four_disjoint (S : Finset UpperHalfPlane)
       fun s _ ⟨_, _, hre1⟩ ⟨_, _, hre2⟩ => by linarith⟩
 
 /-- Half the boundary-sum equals the left-vert sum plus the left-arc sum. -/
-private theorem half_bdry_sum_eq_leftVert_plus_leftArc
-    (S : Finset UpperHalfPlane)
+private theorem half_bdry_sum_eq_leftVert_plus_leftArc (S : Finset UpperHalfPlane)
     (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     let S_NE := S.filter (fun p =>
-      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
-      p ≠ ellipticPointRhoPlusOne')
+      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne')
     let BDRY := S_NE.filter
-      (fun (p : ℍ) =>
-        ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2))
+      (fun (p : ℍ) => ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2))
     let LA_ne := S.filter (fun p =>
-      p ≠ ellipticPointRho' ∧
-      ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
-    (1/2 : ℂ) *
-      ∑ s ∈ BDRY, (orderOfVanishingAt' (⇑f) s : ℂ) =
-    ∑ s ∈ sLeftVert S,
-      (orderOfVanishingAt' (⇑f) s : ℂ) +
-    ∑ s ∈ LA_ne,
-      (orderOfVanishingAt' (⇑f) s : ℂ) := by
+      p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
+    (1/2 : ℂ) * ∑ s ∈ BDRY, (orderOfVanishingAt' (⇑f) s : ℂ) =
+    ∑ s ∈ sLeftVert S, (orderOfVanishingAt' (⇑f) s : ℂ) +
+    ∑ s ∈ LA_ne, (orderOfVanishingAt' (⇑f) s : ℂ) := by
   intro S_NE BDRY LA_ne
   set RA_ne := S.filter (fun p =>
-    p ≠ ellipticPointRhoPlusOne' ∧
-    ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0) with hRA_ne_def
+    p ≠ ellipticPointRhoPlusOne' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0) with hRA_ne_def
   have h_disj_RV_LV : Disjoint (sRightVert S) (sLeftVert S) :=
-    Finset.disjoint_filter.mpr
-      fun s _ ⟨hre1, _⟩ ⟨hre2, _⟩ => by linarith
+    Finset.disjoint_filter.mpr fun s _ ⟨hre1, _⟩ ⟨hre2, _⟩ => by linarith
   have h12 : Disjoint (sRightVert S ∪ sLeftVert S) RA_ne :=
     Finset.disjoint_union_left.mpr
-      ⟨Finset.disjoint_filter.mpr
-          fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith,
-        Finset.disjoint_filter.mpr
-          fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith⟩
+      ⟨Finset.disjoint_filter.mpr fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith,
+        Finset.disjoint_filter.mpr fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith⟩
   have h_sum_decomp :
-      ∑ s ∈ BDRY,
-        (orderOfVanishingAt' (⇑f) s : ℂ) =
-      ∑ s ∈ sRightVert S,
-        (orderOfVanishingAt' (⇑f) s : ℂ) +
-      ∑ s ∈ sLeftVert S,
-        (orderOfVanishingAt' (⇑f) s : ℂ) +
-      ∑ s ∈ RA_ne,
-        (orderOfVanishingAt' (⇑f) s : ℂ) +
-      ∑ s ∈ LA_ne,
-        (orderOfVanishingAt' (⇑f) s : ℂ) := by
+      ∑ s ∈ BDRY, (orderOfVanishingAt' (⇑f) s : ℂ) =
+      ∑ s ∈ sRightVert S, (orderOfVanishingAt' (⇑f) s : ℂ) +
+      ∑ s ∈ sLeftVert S, (orderOfVanishingAt' (⇑f) s : ℂ) +
+      ∑ s ∈ RA_ne, (orderOfVanishingAt' (⇑f) s : ℂ) +
+      ∑ s ∈ LA_ne, (orderOfVanishingAt' (⇑f) s : ℂ) := by
     have h_bdry_decomp : BDRY =
-        sRightVert S ∪ sLeftVert S ∪ RA_ne ∪ LA_ne :=
-      bdry_ne_eq_union S hS
+        sRightVert S ∪ sLeftVert S ∪ RA_ne ∪ LA_ne := bdry_ne_eq_union S hS
     rw [h_bdry_decomp,
       Finset.sum_union (bdry_four_disjoint S RA_ne LA_ne hRA_ne_def rfl),
-      Finset.sum_union h12,
-      Finset.sum_union h_disj_RV_LV]
+      Finset.sum_union h12, Finset.sum_union h_disj_RV_LV]
   rw [h_sum_decomp, sum_ord_rightVert_eq_sum_ord_leftVert f S hS hS_complete,
     sum_nonEllArc_right_eq_left f S hS hS_complete]; ring
 
 include hf in
 set_option maxHeartbeats 800000 in
 /-- Orbit-sum valence formula with boundary weight hypothesis. -/
-theorem valence_formula_orbit_sum
-    (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     (orderAtCusp' f : ℂ) +
-    (1/2 : ℂ) *
-      ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
-    (1/3 : ℂ) *
-      ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
     ∑ s ∈ S.filter (fun p =>
-        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
-        p ≠ ellipticPointRhoPlusOne' ∧
+        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
         ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
       ↑(orderOfVanishingAt' (⇑f) s) +
-    ∑ s ∈ sLeftVert S,
-      ↑(orderOfVanishingAt' (⇑f) s) +
+    ∑ s ∈ sLeftVert S, ↑(orderOfVanishingAt' (⇑f) s) +
     ∑ s ∈ S.filter (fun p =>
-        p ≠ ellipticPointRho' ∧
-        ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
+        p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 := by
   -- Choose H large enough for explicit_coefficients and boundary_weight_auto
-  obtain ⟨H₀, hH₀, h_explicit⟩ :=
-    explicit_coefficients f hf S hS hS_complete
+  obtain ⟨H₀, hH₀, h_explicit⟩ := explicit_coefficients f hf S hS hS_complete
   obtain ⟨H₁, hH₁, h_bdry⟩ := boundary_weight_auto S hS
   set M := S.sum (fun s : UpperHalfPlane => (s : ℂ).im)
   set H := max (max H₀ H₁) (max heightCutoff M + 1)
-  have hH0_le : H₀ ≤ H :=
-    le_trans (le_max_left _ _) (le_max_left _ _)
-  have hH1_le : H₁ ≤ H :=
-    le_trans (le_max_right _ _) (le_max_left _ _)
+  have hH0_le : H₀ ≤ H := le_trans (le_max_left _ _) (le_max_left _ _)
+  have hH1_le : H₁ ≤ H := le_trans (le_max_right _ _) (le_max_left _ _)
   have hH_height : heightCutoff ≤ H := by
     linarith [le_max_left heightCutoff M,
       le_max_right (max H₀ H₁) (max heightCutoff M + 1)]
-  have hH_above : ∀ s ∈ S, (s : ℂ).im < H :=
-    fun s hs => by
-    have h1 : (s : ℂ).im ≤ M :=
-      Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
+  have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs => by
+    have h1 : (s : ℂ).im ≤ M := Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
     linarith [le_max_right heightCutoff M,
       le_max_right (max H₀ H₁) (max heightCutoff M + 1)]
   -- Collapse 1/6 + 1/6 → 1/3 via T-invariance
   have h_explicit' := h_explicit hH0_le
   rw [ord_rho_plus_one_eq_ord_rho_via_vAdd f] at h_explicit'
   have h_formula : (orderAtCusp' f : ℂ) +
-      (1/2 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
-      (1/3 : ℂ) *
-        ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+      (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+      (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
       ∑ s ∈ S.filter (fun p =>
-          p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
-          p ≠ ellipticPointRhoPlusOne'),
-        (-generalizedWindingNumber'
-          (fdBoundary_H H) 0 5 (↑s : ℂ)) *
+          p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne'),
+        (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
           ↑(orderOfVanishingAt' (⇑f) s) =
       (k : ℂ) / 12 := by linear_combination h_explicit'
   -- Set up subsets
@@ -727,29 +504,23 @@ theorem valence_formula_orbit_sum
     p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
     p ≠ ellipticPointRhoPlusOne') with hS_NE_def
   set INT := S.filter (fun p =>
-    p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
-    p ≠ ellipticPointRhoPlusOne' ∧
+    p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
     ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)
   -- Replace gWN with piecewise coefficients (1 for interior, 1/2 for boundary)
   suffices h_eq :
       ∑ s ∈ S_NE,
-        (-generalizedWindingNumber'
-          (fdBoundary_H H) 0 5 (↑s : ℂ)) *
+        (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
           ↑(orderOfVanishingAt' (⇑f) s) =
       ∑ s ∈ INT, ↑(orderOfVanishingAt' (⇑f) s) +
-      ∑ s ∈ sLeftVert S,
-        ↑(orderOfVanishingAt' (⇑f) s) +
+      ∑ s ∈ sLeftVert S, ↑(orderOfVanishingAt' (⇑f) s) +
       ∑ s ∈ S.filter (fun p =>
-          p ≠ ellipticPointRho' ∧
-          ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
+          p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
         ↑(orderOfVanishingAt' (⇑f) s) by
     have h := h_formula; rw [h_eq] at h; linear_combination h
   have h_gWN_val : ∀ s ∈ S_NE,
-      (-generalizedWindingNumber'
-        (fdBoundary_H H) 0 5 (↑s : ℂ)) *
+      (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
         ↑(orderOfVanishingAt' (⇑f) s) =
-      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2
-       then (1 : ℂ) else 1/2) *
+      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2 then (1 : ℂ) else 1/2) *
         ↑(orderOfVanishingAt' (⇑f) s) := by
     intro s hs
     simp only [hS_NE_def, Finset.mem_filter] at hs
@@ -762,46 +533,34 @@ theorem valence_formula_orbit_sum
   rw [Finset.sum_congr rfl h_gWN_val]
   -- Split into interior sum (coefficient 1) and boundary sum (coefficient 1/2)
   set LA_ne := S.filter (fun p =>
-    p ≠ ellipticPointRho' ∧
-    ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
+    p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
   set BDRY := S_NE.filter
     (fun (p : ℍ) => ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2))
-  have h_ne_int : S_NE.filter (fun (p : ℍ) =>
-      ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) = INT := by
+  have h_ne_int : S_NE.filter
+      (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) = INT := by
     ext s; simp only [hS_NE_def, INT, Finset.mem_filter]; tauto
-  have h_bdry_identity :=
-    half_bdry_sum_eq_leftVert_plus_leftArc f S hS hS_complete
+  have h_bdry_identity := half_bdry_sum_eq_leftVert_plus_leftArc f S hS hS_complete
   have h_split := Finset.sum_filter_add_sum_filter_not S_NE
-    (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)
-    (fun s =>
-      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2
-       then (1:ℂ) else 1/2) *
+    (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) (fun s =>
+      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
         ↑(orderOfVanishingAt' (⇑f) s))
   have h_int_sum :
-      ∑ x ∈ S_NE.filter (fun (p : ℍ) =>
-          ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
-        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2
-         then (1:ℂ) else 1/2) *
+      ∑ x ∈ S_NE.filter (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
+        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
           ↑(orderOfVanishingAt' (⇑f) x) =
-      ∑ x ∈ INT,
-        ↑(orderOfVanishingAt' (⇑f) x) := by
+      ∑ x ∈ INT, ↑(orderOfVanishingAt' (⇑f) x) := by
     rw [h_ne_int]; apply Finset.sum_congr rfl
     intro s hs
     simp only [INT, Finset.mem_filter] at hs
     rw [if_pos ⟨hs.2.2.2.2.1, hs.2.2.2.2.2⟩, one_mul]
   have h_bdry_sum :
       ∑ x ∈ BDRY,
-        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2
-         then (1:ℂ) else 1/2) *
+        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
           ↑(orderOfVanishingAt' (⇑f) x) =
-      (1/2 : ℂ) *
-        ∑ x ∈ BDRY,
-          (orderOfVanishingAt' (⇑f) x : ℂ) := by
-    rw [Finset.mul_sum]
-    apply Finset.sum_congr rfl; intro s hs
-    rw [if_neg (show ¬(‖(s : ℂ)‖ > 1 ∧
-      |(s : ℂ).re| < 1/2) from (Finset.mem_filter.mp hs).2)]
-  linear_combination
-    h_int_sum + h_bdry_sum + h_bdry_identity - h_split
+      (1/2 : ℂ) * ∑ x ∈ BDRY, (orderOfVanishingAt' (⇑f) x : ℂ) := by
+    rw [Finset.mul_sum]; apply Finset.sum_congr rfl; intro s hs
+    rw [if_neg (show ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) from
+      (Finset.mem_filter.mp hs).2)]
+  linear_combination h_int_sum + h_bdry_sum + h_bdry_identity - h_split
 
 end

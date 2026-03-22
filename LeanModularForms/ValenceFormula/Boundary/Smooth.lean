@@ -256,19 +256,17 @@ lemma fdBoundary_H_deriv_continuousAt_off_fullPartition
         filter_upwards [Ioo_mem_nhds h4' ht.2] with s hs
         exact (fdBoundary_H_hasDerivAt_seg5' H s hs).deriv.symm
 
-private lemma tendsto_of_eventually_const_left {c : ℂ} {p : ℝ} {f : ℝ → ℂ}
-    {a : ℝ} (ha : a < p) (hf : ∀ s ∈ Ioo a p, f s = c) :
-    Tendsto f (𝓝[<] p) (𝓝 c) := by
-  apply tendsto_const_nhds.congr'
-  filter_upwards [Ioo_mem_nhdsLT ha] with s hs
-  exact (hf s hs).symm
+private lemma tendsto_of_eventually_const_left {c : ℂ} {p : ℝ}
+    {f : ℝ → ℂ} {a : ℝ} (ha : a < p)
+    (hf : ∀ s ∈ Ioo a p, f s = c) : Tendsto f (𝓝[<] p) (𝓝 c) :=
+  tendsto_const_nhds.congr' (by
+    filter_upwards [Ioo_mem_nhdsLT ha] with s hs; exact (hf s hs).symm)
 
-private lemma tendsto_of_eventually_const_right {c : ℂ} {p : ℝ} {f : ℝ → ℂ}
-    {b : ℝ} (hb : p < b) (hf : ∀ s ∈ Ioo p b, f s = c) :
-    Tendsto f (𝓝[>] p) (𝓝 c) := by
-  apply tendsto_const_nhds.congr'
-  filter_upwards [Ioo_mem_nhdsGT hb] with s hs
-  exact (hf s hs).symm
+private lemma tendsto_of_eventually_const_right {c : ℂ} {p : ℝ}
+    {f : ℝ → ℂ} {b : ℝ} (hb : p < b)
+    (hf : ∀ s ∈ Ioo p b, f s = c) : Tendsto f (𝓝[>] p) (𝓝 c) :=
+  tendsto_const_nhds.congr' (by
+    filter_upwards [Ioo_mem_nhdsGT hb] with s hs; exact (hf s hs).symm)
 
 private lemma seg_vertical_deriv_ne_zero {H : ℝ} (hH : Real.sqrt 3 / 2 < H) :
     (↑H - ↑(Real.sqrt 3) / 2) * I ≠ (0 : ℂ) := by

@@ -57,51 +57,42 @@ lemma fdBoundary_H_eq_seg5_H {H t : ℝ} (ht4 : 4 < t) :
 private lemma seg2_angle_in_range {t : ℝ} (ht1 : 1 ≤ t) (ht2 : t ≤ 2) :
     Real.pi / 3 ≤ Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) ∧
     Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) ≤ 2 * Real.pi / 3 := by
-  have hpi : 0 < Real.pi := Real.pi_pos
-  constructor
-  · have : 0 ≤ (t - 1) * (Real.pi / 2 - Real.pi / 3) := by nlinarith
-    linarith
-  · have : (t - 1) * (Real.pi / 2 - Real.pi / 3) ≤ 1 * (Real.pi / 2 - Real.pi / 3) := by
-      apply mul_le_mul_of_nonneg_right (by linarith) (by linarith)
-    linarith
+  have hpi := Real.pi_pos; constructor
+  · nlinarith [mul_nonneg (show (0:ℝ) ≤ t - 1 by linarith)
+      (show (0:ℝ) ≤ Real.pi / 6 by linarith)]
+  · nlinarith [mul_le_mul_of_nonneg_right (show t - 1 ≤ 1 by linarith)
+      (show (0:ℝ) ≤ Real.pi / 6 by linarith)]
 
 private lemma seg3_angle_in_range {t : ℝ} (ht2 : 2 ≤ t) (ht3 : t ≤ 3) :
     Real.pi / 3 ≤ Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2) ∧
     Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2) ≤ 2 * Real.pi / 3 := by
-  have hpi : 0 < Real.pi := Real.pi_pos
+  have hpi := Real.pi_pos
   have h_nonneg : 0 ≤ (t - 2) * (2 * Real.pi / 3 - Real.pi / 2) := by nlinarith
   constructor
   · nlinarith
-  · have : (t - 2) * (2 * Real.pi / 3 - Real.pi / 2) ≤ 1 * (2 * Real.pi / 3 - Real.pi / 2) := by
-      apply mul_le_mul_of_nonneg_right (by linarith) (by linarith)
-    linarith
+  · nlinarith [mul_le_mul_of_nonneg_right (show t - 2 ≤ 1 by linarith)
+      (show (0:ℝ) ≤ Real.pi / 6 by linarith)]
 
-private lemma sin_pos_of_angle_in_range {θ : ℝ}
-    (h1 : Real.pi / 3 ≤ θ) (h2 : θ ≤ 2 * Real.pi / 3) :
-    0 < Real.sin θ := by
+private lemma sin_pos_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
+    (h2 : θ ≤ 2 * Real.pi / 3) : 0 < Real.sin θ := by
   apply Real.sin_pos_of_pos_of_lt_pi <;> linarith [Real.pi_pos]
 
-private lemma sin_ge_sqrt3_div_2_of_angle_in_range {θ : ℝ}
-    (h1 : Real.pi / 3 ≤ θ) (h2 : θ ≤ 2 * Real.pi / 3) :
-    Real.sqrt 3 / 2 ≤ Real.sin θ := by
-  have hpi : 0 < Real.pi := Real.pi_pos
-  rw [show Real.sqrt 3 / 2 = Real.sin (Real.pi / 3) from (Real.sin_pi_div_three).symm]
+private lemma sin_ge_sqrt3_div_2_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
+    (h2 : θ ≤ 2 * Real.pi / 3) : Real.sqrt 3 / 2 ≤ Real.sin θ := by
+  have hpi := Real.pi_pos
+  rw [show Real.sqrt 3 / 2 = Real.sin (Real.pi / 3) from Real.sin_pi_div_three.symm]
   by_cases h : θ ≤ Real.pi / 2
   · exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith) h h1
-  · push_neg at h
-    rw [show Real.sin θ = Real.sin (Real.pi - θ) from (Real.sin_pi_sub θ).symm]
+  · push_neg at h; rw [show Real.sin θ = Real.sin (Real.pi - θ) from (Real.sin_pi_sub θ).symm]
     exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith) (by linarith) (by linarith)
 
-private lemma abs_cos_le_half_of_angle_in_range {θ : ℝ}
-    (h1 : Real.pi / 3 ≤ θ) (h2 : θ ≤ 2 * Real.pi / 3) :
-    |Real.cos θ| ≤ 1 / 2 := by
-  have hpi : 0 < Real.pi := Real.pi_pos
-  rw [abs_le]; constructor
+private lemma abs_cos_le_half_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
+    (h2 : θ ≤ 2 * Real.pi / 3) : |Real.cos θ| ≤ 1 / 2 := by
+  have hpi := Real.pi_pos; rw [abs_le]; constructor
   · have : Real.cos (2 * Real.pi / 3) ≤ Real.cos θ :=
       Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h2
     rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
-      Real.cos_pi_sub, Real.cos_pi_div_three] at this
-    linarith
+      Real.cos_pi_sub, Real.cos_pi_div_three] at this; linarith
   · have : Real.cos θ ≤ Real.cos (Real.pi / 3) :=
       Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h1
     rw [Real.cos_pi_div_three] at this; linarith
@@ -111,11 +102,11 @@ private lemma seg1_H_im {H t : ℝ} (_ht0 : 0 ≤ t) (_ht1 : t ≤ 1) :
   simp [fdBoundary_seg1_H, add_im, ofReal_im, mul_im, I_re, I_im]
 
 private lemma seg4_H_im {H t : ℝ} :
-    (fdBoundary_seg4_H H t).im = Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2) := by
+    (fdBoundary_seg4_H H t).im =
+      Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2) := by
   simp [fdBoundary_seg4_H, add_im, ofReal_im, mul_im, I_re, I_im]
 
-private lemma seg5_H_im {H t : ℝ} :
-    (fdBoundary_seg5_H H t).im = H := by
+private lemma seg5_H_im {H t : ℝ} : (fdBoundary_seg5_H H t).im = H := by
   simp [fdBoundary_seg5_H, add_im, ofReal_im, mul_im, I_re, I_im]
 
 private lemma seg2_as_trig (t : ℝ) :
@@ -206,16 +197,13 @@ lemma fdBoundary_H_im_ge_sqrt3_div_2 (H : ℝ)
         · push_neg at h4
           rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]; exact hH
 
-private lemma seg1_H_re {H t : ℝ} :
-    (fdBoundary_seg1_H H t).re = 1 / 2 := by
+private lemma seg1_H_re {H t : ℝ} : (fdBoundary_seg1_H H t).re = 1 / 2 := by
   simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
 
-private lemma seg4_H_re {H t : ℝ} :
-    (fdBoundary_seg4_H H t).re = -1 / 2 := by
+private lemma seg4_H_re {H t : ℝ} : (fdBoundary_seg4_H H t).re = -1 / 2 := by
   simp [fdBoundary_seg4_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
 
-private lemma seg5_H_re {H t : ℝ} :
-    (fdBoundary_seg5_H H t).re = t - 9 / 2 := by
+private lemma seg5_H_re {H t : ℝ} : (fdBoundary_seg5_H H t).re = t - 9 / 2 := by
   simp [fdBoundary_seg5_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
 
 lemma fdBoundary_H_re_abs_le_half (H : ℝ) :
