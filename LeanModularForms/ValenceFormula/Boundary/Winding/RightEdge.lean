@@ -314,13 +314,116 @@ private lemma rightEdge_min_dist_from_non_seg1 (H : ℝ) (s : ℂ)
           exact rightEdge_min_dist_from_non_seg1_seg5 s hs_im _
             (im_fdBoundary_H_seg5 H t ht1 h2 h3_lt h4)
 
-set_option maxHeartbeats 400000 in
-theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
+private lemma rightEdge_neg_seg1_slitPlane_left (H : ℝ) (s : ℂ) (hs_re : s.re = 1/2)
+    (_hs_im : s.im < H) (hH_sqrt : Real.sqrt 3 / 2 < H)
+    (δ' : ℝ) (hδ' : 0 < δ') (t₀ : ℝ) (_hδ't₀ : δ' < t₀)
+    (ht₀_mul : t₀ * (H - Real.sqrt 3 / 2) = H - s.im)
+    (t : ℝ) (_ht0 : 0 ≤ t) (htd : t ≤ t₀ - δ') :
+    -(fdBoundary_seg1_H H t - s) ∈ Complex.slitPlane := by
+  have hα_pos : 0 < H - Real.sqrt 3 / 2 := by linarith
+  rw [Complex.mem_slitPlane_iff]; right
+  show (-(fdBoundary_seg1_H H t - s)).im ≠ 0
+  rw [rightEdge_h₀_eq hs_re]
+  simp only [Complex.neg_im, Complex.mul_im,
+    Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
+    mul_one, mul_zero, add_zero]
+  have : t * (H - Real.sqrt 3 / 2) < H - s.im := by
+    calc t * (H - Real.sqrt 3 / 2) ≤ (t₀ - δ') * (H - Real.sqrt 3 / 2) := by nlinarith
+      _ = t₀ * (H - Real.sqrt 3 / 2) - δ' * (H - Real.sqrt 3 / 2) := by ring
+      _ = (H - s.im) - δ' * (H - Real.sqrt 3 / 2) := by rw [ht₀_mul]
+      _ < H - s.im := by nlinarith
+  intro h; linarith
+
+private lemma rightEdge_neg_seg1_slitPlane_right (H : ℝ) (s : ℂ) (hs_re : s.re = 1/2)
+    (_hs_im : s.im < H) (hH_sqrt : Real.sqrt 3 / 2 < H)
+    (δ' : ℝ) (hδ' : 0 < δ') (t₀ : ℝ) (_hδ'1t₀ : δ' < 1 - t₀)
+    (ht₀_mul : t₀ * (H - Real.sqrt 3 / 2) = H - s.im)
+    (t : ℝ) (htd : t₀ + δ' ≤ t) (_ht1 : t ≤ 1) :
+    -(fdBoundary_seg1_H H t - s) ∈ Complex.slitPlane := by
+  have hα_pos : 0 < H - Real.sqrt 3 / 2 := by linarith
+  rw [Complex.mem_slitPlane_iff]; right
+  show (-(fdBoundary_seg1_H H t - s)).im ≠ 0
+  rw [rightEdge_h₀_eq hs_re]
+  simp only [Complex.neg_im, Complex.mul_im,
+    Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
+    mul_one, mul_zero, add_zero]
+  have : t * (H - Real.sqrt 3 / 2) > H - s.im := by
+    calc t * (H - Real.sqrt 3 / 2) ≥ (t₀ + δ') * (H - Real.sqrt 3 / 2) := by nlinarith
+      _ = t₀ * (H - Real.sqrt 3 / 2) + δ' * (H - Real.sqrt 3 / 2) := by ring
+      _ = (H - s.im) + δ' * (H - Real.sqrt 3 / 2) := by rw [ht₀_mul]
+      _ > H - s.im := by nlinarith
+  intro h; linarith
+
+private lemma rightEdge_neg_arc_slitPlane (s : ℂ) (hs_re : s.re = 1/2)
+    (hs_im_lower : Real.sqrt 3 / 2 < s.im)
+    (t : ℝ) (ht1 : 1 ≤ t) (ht3 : t ≤ 3) :
+    -(exp (↑(Real.pi * (1 + t) / 6) * I) - s) ∈ Complex.slitPlane := by
+  rw [Complex.mem_slitPlane_iff]
+  simp only [neg_sub]
+  set θ := Real.pi * (1 + t) / 6 with hθ_def
+  have hθ_lower : Real.pi / 3 ≤ θ := by simp only [hθ_def]; nlinarith [Real.pi_pos]
+  have hθ_upper : θ ≤ 2 * Real.pi / 3 := by simp only [hθ_def]; nlinarith [Real.pi_pos]
+  by_cases ht1_eq : t = 1
+  · right
+    subst ht1_eq
+    show (s - cexp (↑(Real.pi * (1 + 1) / 6) * I)).im ≠ 0
+    rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
+        exp_real_angle_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
+    simp [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
+      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_one, mul_zero, add_zero]
+    linarith [hs_im_lower]
+  · left
+    have ht1_strict : 1 < t := lt_of_le_of_ne ht1 (Ne.symm ht1_eq)
+    have hθ_strict : Real.pi / 3 < θ := by simp only [hθ_def]; nlinarith [Real.pi_pos]
+    simp only [Complex.sub_re, exp_ofReal_mul_I_re]
+    rw [hs_re]
+    have hcos_lt : Real.cos θ < 1 / 2 := by
+      have h_pi_div_three : Real.pi / 3 > 0 := by nlinarith [Real.pi_pos]
+      rw [← Real.cos_pi_div_three]
+      exact Real.cos_lt_cos_of_nonneg_of_le_pi (le_of_lt h_pi_div_three)
+        (hθ_upper.trans (by nlinarith [Real.pi_pos])) hθ_strict
+    linarith
+
+private lemma rightEdge_final_log (H : ℝ) (s : ℂ)
+    (hs_re : s.re = 1/2) (α : ℝ) (hα_def : α = H - Real.sqrt 3 / 2)
+    (δ : ℝ) (hδ_pos : 0 < δ) (hα_pos : 0 < α)
+    (t₀ : ℝ) (ht₀_mul : t₀ * α = H - s.im) :
+    Complex.log (-(fdBoundary_seg1_H H (t₀ - δ) - s)) -
+    Complex.log (-(fdBoundary_seg1_H H (t₀ + δ) - s)) = -(↑Real.pi * I) := by
+  have hval_minus : fdBoundary_seg1_H H (t₀ - δ) - s = ↑(δ * α) * I := by
+    rw [rightEdge_h₀_eq hs_re]
+    have h_sub : (t₀ - δ) * α = t₀ * α - δ * α := sub_mul t₀ δ α
+    have hval : H - (t₀ - δ) * (H - Real.sqrt 3 / 2) - s.im = δ * α := by
+      rw [hα_def] at h_sub ht₀_mul ⊢; linarith
+    rw [hval]
+  have hval_plus : fdBoundary_seg1_H H (t₀ + δ) - s = ↑(-(δ * α)) * I := by
+    rw [rightEdge_h₀_eq hs_re]
+    have h_add : (t₀ + δ) * α = t₀ * α + δ * α := add_mul t₀ δ α
+    have hval : H - (t₀ + δ) * (H - Real.sqrt 3 / 2) - s.im = -(δ * α) := by
+      rw [hα_def] at h_add ht₀_mul ⊢; linarith
+    rw [hval]
+  rw [hval_minus, hval_plus]
+  rw [show -(↑(δ * α) * I : ℂ) = ↑(δ * α) * (-I) from by ring,
+      show -(↑(-(δ * α)) * I : ℂ) = ↑(δ * α) * I from by push_cast; ring]
+  have hdα_pos : 0 < δ * α := mul_pos hδ_pos hα_pos
+  rw [Complex.log_ofReal_mul hdα_pos (show (-I : ℂ) ≠ 0 from neg_ne_zero.mpr I_ne_zero),
+      Complex.log_ofReal_mul hdα_pos I_ne_zero,
+      Complex.log_neg_I, Complex.log_I]
+  ring
+
+private lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
-    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
-    generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 := by
-  unfold generalizedWindingNumber' cauchyPrincipalValue'
-  dsimp only []; simp only [sub_zero]
+    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H)
+    (ε : ℝ) (hε_pos : 0 < ε)
+    (hε_lt_d : ε < min (min (‖s‖ - 1) 1) (H - s.im))
+    (hεα_lt_t₀ : ε / (H - Real.sqrt 3 / 2) < (H - s.im) / (H - Real.sqrt 3 / 2))
+    (hεα_lt_1mt₀ : ε / (H - Real.sqrt 3 / 2) < 1 - (H - s.im) / (H - Real.sqrt 3 / 2)) :
+    (∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
+        (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0) =
+      Complex.log (-(fdBoundary_seg1_H H ((H - s.im) / (H - Real.sqrt 3 / 2) -
+        ε / (H - Real.sqrt 3 / 2)) - s)) -
+      Complex.log (-(fdBoundary_seg1_H H ((H - s.im) / (H - Real.sqrt 3 / 2) +
+        ε / (H - Real.sqrt 3 / 2)) - s)) := by
   set g : ℝ → ℂ := fun t => fdBoundary_H H t - s with hg_def
   set α := H - Real.sqrt 3 / 2 with hα_def
   set t₀ := (H - s.im) / α with ht₀_def
@@ -329,6 +432,9 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
   have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
   have ht₀_lt : t₀ < 1 := by rw [ht₀_def, div_lt_one hα_pos]; linarith [hα_def]
   have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ hα_ne
+  set d := min (min (‖s‖ - 1) 1) (H - s.im)
+  set δ := ε / α with hδ_def
+  have hδ_pos : 0 < δ := div_pos hε_pos hα_pos
   set h₀ : ℝ → ℂ := fun t => fdBoundary_seg1_H H t - s
   set h_arc : ℝ → ℂ := fun t => exp (↑(Real.pi * (1 + t) / 6) * I) - s
   set h₃ : ℝ → ℂ := fun t => fdBoundary_seg4_H H t - s
@@ -388,61 +494,15 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
   have hslit₀_left : ∀ δ', 0 < δ' → δ' < t₀ →
       ∀ t ∈ Icc (0 : ℝ) (t₀ - δ'), -(h₀ t) ∈ Complex.slitPlane := by
     intro δ' hδ' hδ't₀ t ⟨ht0, htd⟩
-    rw [Complex.mem_slitPlane_iff]; right
-    show (-(h₀ t)).im ≠ 0
-    simp only [h₀, rightEdge_h₀_eq hs_re, Complex.neg_im, Complex.mul_im,
-      Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-      mul_one, mul_zero, add_zero]
-    have : t * α < H - s.im := by
-      calc t * α ≤ (t₀ - δ') * α := by nlinarith
-        _ = t₀ * α - δ' * α := by ring
-        _ = (H - s.im) - δ' * α := by rw [ht₀_mul]
-        _ < H - s.im := by nlinarith
-    rw [hα_def] at this; intro h; linarith
+    exact rightEdge_neg_seg1_slitPlane_left H s hs_re hs_im _hH_sqrt δ' hδ' t₀ hδ't₀
+      ht₀_mul t ht0 htd
   have hslit₀_right : ∀ δ', 0 < δ' → δ' < 1 - t₀ →
       ∀ t ∈ Icc (t₀ + δ') 1, -(h₀ t) ∈ Complex.slitPlane := by
     intro δ' hδ' hδ'1t₀ t ⟨htd, ht1⟩
-    rw [Complex.mem_slitPlane_iff]; right
-    show (-(h₀ t)).im ≠ 0
-    simp only [h₀, rightEdge_h₀_eq hs_re, Complex.neg_im, Complex.mul_im,
-      Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-      mul_one, mul_zero, add_zero]
-    have : t * α > H - s.im := by
-      calc t * α ≥ (t₀ + δ') * α := by nlinarith
-        _ = t₀ * α + δ' * α := by ring
-        _ = (H - s.im) + δ' * α := by rw [ht₀_mul]
-        _ > H - s.im := by nlinarith
-    rw [hα_def] at this; intro h; linarith
+    exact rightEdge_neg_seg1_slitPlane_right H s hs_re hs_im _hH_sqrt δ' hδ' t₀ hδ'1t₀
+      ht₀_mul t htd ht1
   have hslit_arc : ∀ t ∈ Icc (1:ℝ) 3, -(h_arc t) ∈ Complex.slitPlane := by
-    intro t ⟨ht1, ht3⟩
-    rw [Complex.mem_slitPlane_iff]
-    simp only [h_arc, neg_sub]
-    set θ := Real.pi * (1 + t) / 6 with hθ_def
-    have hθ_lower : Real.pi / 3 ≤ θ := by simp only [hθ_def]; nlinarith [Real.pi_pos]
-    have hθ_upper : θ ≤ 2 * Real.pi / 3 := by simp only [hθ_def]; nlinarith [Real.pi_pos]
-    by_cases ht1_eq : t = 1
-    · right
-      subst ht1_eq
-      show (s - cexp (↑(Real.pi * (1 + 1) / 6) * I)).im ≠ 0
-      rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
-          exp_real_angle_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
-      simp [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
-        Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_one, mul_zero, add_zero]
-      linarith [hs_im_lower]
-    · left
-      have ht1_strict : 1 < t := lt_of_le_of_ne ht1 (Ne.symm ht1_eq)
-      have hθ_strict : Real.pi / 3 < θ := by simp only [hθ_def]; nlinarith [Real.pi_pos]
-      simp only [Complex.sub_re, exp_ofReal_mul_I_re]
-      rw [hs_re]
-      have hcos_lt : Real.cos θ < 1 / 2 := by
-        have h_pi_div_three : Real.pi / 3 > 0 := by nlinarith [Real.pi_pos]
-        have h_theta : θ > Real.pi / 3 := hθ_strict
-        have h_theta_le_pi : θ ≤ 2 * Real.pi / 3 := hθ_upper
-        have h_upper_pi : 2 * Real.pi / 3 ≤ Real.pi := by nlinarith [Real.pi_pos]
-        rw [← Real.cos_pi_div_three]
-        exact Real.cos_lt_cos_of_nonneg_of_le_pi (le_of_lt h_pi_div_three)
-          (h_theta_le_pi.trans (by nlinarith [Real.pi_pos])) hθ_strict
-      linarith
+    intro t ⟨ht1, ht3⟩; exact rightEdge_neg_arc_slitPlane s hs_re hs_im_lower t ht1 ht3
   have hslit₃ : ∀ t ∈ Icc (3:ℝ) 4, -(h₃ t) ∈ Complex.slitPlane := by
     intro t ⟨_, _⟩
     rw [Complex.mem_slitPlane_iff]; left
@@ -467,48 +527,7 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
       simp [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
         Complex.ofReal_im, Complex.I_re, Complex.I_im]
       rw [hs_re]; linarith
-  set d := min (min (‖s‖ - 1) 1) (H - s.im)
   have hd_pos : 0 < d := rightEdge_min_dist_pos s hs_norm hs_im
-  set ε₀ := min d (min (d * α) (min (t₀ * α) ((1 - t₀) * α)))
-  have hε₀_pos : 0 < ε₀ := by
-    refine lt_min hd_pos (lt_min (mul_pos hd_pos hα_pos)
-      (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos)))
-  suffices h_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ), (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
-        deriv (fun u => fdBoundary_H H u - s) t else 0) = -(↑Real.pi * I) by
-    rw [show (fun ε => ∫ t in (0:ℝ)..5, if ‖(fdBoundary_H H t - s)‖ > ε then
-        (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0) =
-      (fun ε => ∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
-        deriv (fun u => fdBoundary_H H u - s) t else 0) from rfl]
-    have h_tendsto : Filter.Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
-          deriv (fun u => fdBoundary_H H u - s) t else 0)
-        (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) :=
-      tendsto_const_nhds.congr' (h_ev.mono (fun _ h => h.symm))
-    rw [h_tendsto.limUnder_eq]
-    field_simp [Real.pi_ne_zero, I_ne_zero]
-  rw [Filter.eventually_iff_exists_mem]
-  refine ⟨Ioo 0 ε₀, Ioo_mem_nhdsGT hε₀_pos, fun ε hε => ?_⟩
-  obtain ⟨hε_pos, hε_lt⟩ := hε
-  have hε_lt_d : ε < d := calc ε < ε₀ := hε_lt
-      _ ≤ d := min_le_left _ _
-  have hεα_lt_d : ε / α < d := by
-    rw [div_lt_iff₀ hα_pos]
-    calc ε < ε₀ := hε_lt
-      _ ≤ min (d * α) (min (t₀ * α) ((1 - t₀) * α)) := min_le_right _ _
-      _ ≤ d * α := min_le_left _ _
-  have hεα_lt_t₀ : ε / α < t₀ := by
-    rw [div_lt_iff₀ hα_pos]
-    calc ε < ε₀ := hε_lt
-      _ ≤ min (d * α) (min (t₀ * α) ((1 - t₀) * α)) := min_le_right _ _
-      _ ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
-      _ ≤ t₀ * α := min_le_left _ _
-  have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
-    rw [div_lt_iff₀ hα_pos]
-    calc ε < ε₀ := hε_lt
-      _ ≤ min (d * α) (min (t₀ * α) ((1 - t₀) * α)) := min_le_right _ _
-      _ ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
-      _ ≤ (1 - t₀) * α := min_le_right _ _
-  set δ := ε / α with hδ_def
-  have hδ_pos : 0 < δ := div_pos hε_pos hα_pos
   have hderiv_eq : deriv (fun u => fdBoundary_H H u - s) = deriv g := rfl
   rw [show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
     deriv (fun u => fdBoundary_H H u - s) t else 0) =
@@ -781,8 +800,6 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
         (Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4)))) =
       Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ (t₀ + δ))) := by
     rw [hep_1, hep_3, hep_4, hep_01]; ring
-  show ∫ t in (0:ℝ)..5, (if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) =
-      -(↑Real.pi * I)
   have h_step1 : ∫ t in (0:ℝ)..5, (if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) =
       (∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t) + (∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t) := by
     calc ∫ t in (0:ℝ)..5, (if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0)
@@ -790,24 +807,66 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
       _ = _ + _ + _ := h_split
       _ = _ + 0 + _ := by rw [h_mid_zero]
       _ = _ := by rw [add_zero, h_eq_left, h_eq_right]
+  show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
+      deriv (fun u => fdBoundary_H H u - s) t else 0) =
+    Complex.log (-(h₀ (t₀ - δ) )) - Complex.log (-(h₀ (t₀ + δ)))
+  rw [show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
+      deriv (fun u => fdBoundary_H H u - s) t else 0) =
+    (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) from rfl]
   rw [h_step1, h_ftc₀, h_right_total, h_telescope]
-  have hval_minus : h₀ (t₀ - δ) = ↑(δ * α) * I := by
-    show fdBoundary_seg1_H H (t₀ - δ) - s = _
-    have h_sub : (t₀ - δ) * α = t₀ * α - δ * α := sub_mul t₀ δ α
-    have hval : H - (t₀ - δ) * α - s.im = δ * α := by linarith [ht₀_mul]
-    rw [rightEdge_h₀_eq hs_re, show H - Real.sqrt 3 / 2 = α from hα_def.symm, hval]
-  have hval_plus : h₀ (t₀ + δ) = ↑(-(δ * α)) * I := by
-    show fdBoundary_seg1_H H (t₀ + δ) - s = _
-    have h_add : (t₀ + δ) * α = t₀ * α + δ * α := add_mul t₀ δ α
-    have hval : H - (t₀ + δ) * α - s.im = -(δ * α) := by linarith [ht₀_mul]
-    rw [rightEdge_h₀_eq hs_re, show H - Real.sqrt 3 / 2 = α from hα_def.symm, hval]
-  rw [hval_minus, hval_plus]
-  rw [show -(↑(δ * α) * I : ℂ) = ↑(δ * α) * (-I) from by ring,
-      show -(↑(-(δ * α)) * I : ℂ) = ↑(δ * α) * I from by push_cast; ring]
-  have hdα_pos : 0 < δ * α := mul_pos hδ_pos hα_pos
-  rw [Complex.log_ofReal_mul hdα_pos (show (-I : ℂ) ≠ 0 from neg_ne_zero.mpr I_ne_zero),
-      Complex.log_ofReal_mul hdα_pos I_ne_zero,
-      Complex.log_neg_I, Complex.log_I]
-  ring
+
+private lemma rightEdge_winding_aux (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
+    (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
+    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), (∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
+        (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0) =
+      -(↑Real.pi * I) := by
+  set α := H - Real.sqrt 3 / 2 with hα_def
+  have hα_pos : 0 < α := by rw [hα_def]; linarith
+  set t₀ := (H - s.im) / α with ht₀_def
+  have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
+  have ht₀_lt : t₀ < 1 := by rw [ht₀_def, div_lt_one hα_pos]; linarith [hα_def]
+  set d := min (min (‖s‖ - 1) 1) (H - s.im)
+  have hd_pos : 0 < d := rightEdge_min_dist_pos s hs_norm hs_im
+  set ε₀ := min d (min (d * α) (min (t₀ * α) ((1 - t₀) * α)))
+  have hε₀_pos : 0 < ε₀ := by
+    refine lt_min hd_pos (lt_min (mul_pos hd_pos hα_pos)
+      (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos)))
+  rw [Filter.eventually_iff_exists_mem]
+  refine ⟨Ioo 0 ε₀, Ioo_mem_nhdsGT hε₀_pos, fun ε hε => ?_⟩
+  obtain ⟨hε_pos, hε_lt⟩ := hε
+  have hε_lt_d : ε < d := calc ε < ε₀ := hε_lt
+      _ ≤ d := min_le_left _ _
+  have hεα_lt_t₀ : ε / α < t₀ := by
+    rw [div_lt_iff₀ hα_pos]
+    calc ε < ε₀ := hε_lt
+      _ ≤ min (d * α) (min (t₀ * α) ((1 - t₀) * α)) := min_le_right _ _
+      _ ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
+      _ ≤ t₀ * α := min_le_left _ _
+  have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+    rw [div_lt_iff₀ hα_pos]
+    calc ε < ε₀ := hε_lt
+      _ ≤ min (d * α) (min (t₀ * α) ((1 - t₀) * α)) := min_le_right _ _
+      _ ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
+      _ ≤ (1 - t₀) * α := min_le_right _ _
+  rw [rightEdge_winding_per_eps H hH_sqrt s hs_re hs_norm hs_im_lower hs_im ε
+    hε_pos hε_lt_d hεα_lt_t₀ hεα_lt_1mt₀]
+  exact rightEdge_final_log H s hs_re α hα_def (ε / α) (div_pos hε_pos hα_pos) hα_pos
+    t₀ (div_mul_cancel₀ _ (ne_of_gt hα_pos))
+
+theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
+    (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
+    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
+    generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 := by
+  unfold generalizedWindingNumber' cauchyPrincipalValue'
+  dsimp only []; simp only [sub_zero]
+  have h_ev := rightEdge_winding_aux H hH_sqrt s hs_re hs_norm hs_im_lower hs_im
+  have h_tendsto : Filter.Tendsto (fun ε => ∫ t in (0:ℝ)..5,
+        if ‖(fdBoundary_H H t - s)‖ > ε then
+          (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0)
+    (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) :=
+    tendsto_const_nhds.congr' (h_ev.mono (fun _ h => h.symm))
+  rw [h_tendsto.limUnder_eq]
+  field_simp [Real.pi_ne_zero, I_ne_zero]
 
 end
