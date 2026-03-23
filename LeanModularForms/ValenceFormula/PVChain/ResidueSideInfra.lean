@@ -213,14 +213,6 @@ lemma hasSimplePoleAt_logDeriv_at_point (z : ℂ) (hz_im : 0 < z.im) :
 
 /-! ### ContinuousAt of the regular part (for hf_ext) -/
 
-include hf in
-/-- The regular part `logDeriv F(z) - res/(z - s)` is continuous at `s` for any
-`s` where `HasSimplePoleAt` holds. -/
-lemma continuousAt_logDeriv_minus_singular_at_point (z : ℂ) (hz_im : 0 < z.im) :
-    ContinuousAt (fun w => logDeriv (modularFormCompOfComplex f) w -
-      residueSimplePole (logDeriv (modularFormCompOfComplex f)) z / (w - z)) z := by
-  sorry
-
 /-! ### orderOfVanishingAt' = analyticOrderNatAt -/
 
 include hf in
