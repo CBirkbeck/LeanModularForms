@@ -47,7 +47,8 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 private lemma qExpFMS_ne_zero (hf : f ≠ 0) :
     ModularFormClass.qExpansionFormalMultilinearSeries 1 f ≠ 0 := by
   intro h
-  have hp := ModularFormClass.hasFPowerSeries_cuspFunction (n := 1) (F := ModularForm (Gamma 1) k) (f := f)
+  have hp := ModularFormClass.hasFPowerSeries_cuspFunction
+    (n := 1) (F := ModularForm (Gamma 1) k) (f := f)
   -- Rewrite hp to use 0 as the series
   have hp0 : HasFPowerSeriesOnBall (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
       (0 : FormalMultilinearSeries ℂ ℂ ℂ) 0 1 := h ▸ hp

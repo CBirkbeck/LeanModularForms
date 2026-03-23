@@ -36,15 +36,15 @@ theorem pv_chain_identity (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ �
   obtain ⟨H₁, hH₁, h_res⟩ := cpv_residue_side_tendsto f hf S hS hS_complete
   obtain ⟨H₂, hH₂, h_mod⟩ := cpv_modular_side_tendsto f hf S hS hS_complete
   refine ⟨max H₁ H₂, lt_of_lt_of_le hH₁ (le_max_left _ _), fun {H} hH => ?_⟩
-  have h_r := h_res (le_trans (le_max_left _ _) hH)
-  have h_m := h_mod (le_trans (le_max_right _ _) hH)
   haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
   have h_eq :
       2 * ↑Real.pi * I *
         ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
           (orderOfVanishingAt' (⇑f) s : ℂ) =
       -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) :=
-    tendsto_nhds_unique h_r h_m
+    tendsto_nhds_unique
+      (h_res (le_trans (le_max_left _ _) hH))
+      (h_mod (le_trans (le_max_right _ _) hH))
   have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
     simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
       ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero, or_self]

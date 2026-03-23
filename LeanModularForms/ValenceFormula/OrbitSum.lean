@@ -122,8 +122,8 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zero (hf : f ≠ 0) (p : ℍ) (hp : f 
     orderOfVanishingAt' (⇑f) p ≠ 0 := by
   unfold orderOfVanishingAt'
   intro h_untop_eq
-  have h_anal := G_analyticAt f p
-  have h_nf : MeromorphicNFAt _ (p : ℂ) := h_anal.meromorphicNFAt
+  have h_nf : MeromorphicNFAt _ (p : ℂ) :=
+    (G_analyticAt f p).meromorphicNFAt
   have h_ord_ne : meromorphicOrderAt
       (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (↑p) ≠ (0 : WithTop ℤ) := by
     intro h0; apply h_nf.meromorphicOrderAt_eq_zero_iff.mp h0
@@ -136,11 +136,10 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zero (hf : f ≠ 0) (p : ℍ) (hp : f 
       {w | 0 < w.im} := fun w hw => G_analyticAt f ⟨w, hw⟩
   have h_preconn : IsPreconnected {w : ℂ | 0 < w.im} :=
     ((convex_halfSpace_im_gt 0).isConnected ⟨I, by simp [I_im]⟩).isPreconnected
-  have h_zero_on := h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
-    h_preconn p.im_pos h_top.frequently
   apply hf; ext z
-  have hG_eq := G_eval_eq_f f z
-  simp only [ModularForm.coe_zero, Pi.zero_apply, ← hG_eq, h_zero_on z.im_pos]
+  simp only [ModularForm.coe_zero, Pi.zero_apply, ← G_eval_eq_f f z,
+    h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
+      h_preconn p.im_pos h_top.frequently z.im_pos]
 
 private theorem modularFormCompOfComplex_eq' (p : ℍ) :
     modularFormCompOfComplex f (p : ℂ) = f p := by
@@ -208,15 +207,15 @@ theorem finite_support_ordOrbit (hf : f ≠ 0) :
     Set.Finite {q : Orbit | ordOrbit f q ≠ 0} := by
   choose rep hrep using fun q : Orbit => orbit_has_fd_rep q
   set S := {q : Orbit | ordOrbit f q ≠ 0}
-  have h_fin := finite_zeros_in_fd f hf
-  have h_image : rep '' S ⊆ {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt' (⇑f) p ≠ 0} := by
+  have h_image : rep '' S ⊆
+      {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt' (⇑f) p ≠ 0} := by
     rintro _ ⟨q, hq, rfl⟩
     exact ⟨(hrep q).2, by rw [← ordOrbit_mk f (rep q), (hrep q).1]; exact hq⟩
   have h_inj : Set.InjOn rep S := by
     intro q₁ _ q₂ _ h
     have : orb (rep q₁) = orb (rep q₂) := congrArg orb h
     rw [(hrep q₁).1, (hrep q₂).1] at this; exact this
-  exact Set.Finite.of_finite_image (h_fin.subset h_image) h_inj
+  exact (finite_zeros_in_fd f hf).subset h_image |>.of_finite_image h_inj
 
 /-- The set of non-elliptic orbits with nonzero `ordOrbit` is finite. -/
 theorem finite_support_ordOrbit_nonEll (hf : f ≠ 0) :
