@@ -200,7 +200,225 @@ private lemma unitArc_norm_continuous (s : ℂ) (H : ℝ) (t₀ : ℝ) :
   continuous_norm.comp (((fdBoundary_H_continuous H).comp (continuous_const.add continuous_id')).sub
     continuous_const)
 
-set_option maxHeartbeats 800000 in
+/-! ### Helper 1: Arc outside points have norm > ε -/
+
+private lemma unitArc_arc_outside_gt_eps (s : ℂ) (H : ℝ) (t₀ δ' ε : ℝ)
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (hδ'_pos : 0 < δ') (hδ'_left : 1 < t₀ - δ') (hδ'_right : t₀ + δ' < 3)
+    (hδ'_eq : ‖fdBoundary_H H (t₀ + δ') - s‖ = ε)
+    (t : ℝ) (ht1 : 1 < t) (ht3 : t < 3) (habs : δ' < |t - t₀|) :
+    ε < ‖fdBoundary_H H t - s‖ := by
+  rw [← hδ'_eq]
+  exact unitArc_norm_lt_of_abs_lt s H t₀ ht₀_Ioo h_s_arc (t₀ + δ') t
+    (by linarith [ht₀_Ioo.1]) hδ'_right ht1 ht3
+    (by rw [show t₀ + δ' - t₀ = δ' from by ring, abs_of_pos hδ'_pos]; exact habs)
+
+/-! ### Helper 2: Arc inside points have norm ≤ ε -/
+
+private lemma unitArc_arc_inside_le_eps (s : ℂ) (H : ℝ) (t₀ δ' ε : ℝ)
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (hδ'_pos : 0 < δ') (hδ'_left : 1 < t₀ - δ') (hδ'_right : t₀ + δ' < 3)
+    (hδ'_eq : ‖fdBoundary_H H (t₀ + δ') - s‖ = ε)
+    (t : ℝ) (ht1 : 1 < t) (ht3 : t < 3) (habs : |t - t₀| ≤ δ') :
+    ‖fdBoundary_H H t - s‖ ≤ ε := by
+  rcases eq_or_lt_of_le habs with heq | hlt
+  · rw [← hδ'_eq]
+    rw [show t = t₀ + (t - t₀) from by ring, Complex.norm_def, Complex.norm_def]
+    apply le_of_eq; congr 1
+    rw [unitArc_normSq_at_offset s H t₀ (t - t₀) h_s_arc (by linarith) (by linarith),
+        unitArc_normSq_at_offset s H t₀ δ' h_s_arc (by linarith [ht₀_Ioo.1]) hδ'_right]
+    congr 1; congr 1
+    rcases le_or_gt (t - t₀) 0 with h | h
+    · have h_neg : t - t₀ = -δ' := by rw [abs_of_nonpos h] at heq; linarith
+      rw [h_neg, show Real.pi * (-δ') / 6 = -(Real.pi * δ' / 6) from by ring, Real.cos_neg]
+    · rw [abs_of_pos h] at heq; rw [heq]
+  · rw [← hδ'_eq]
+    exact le_of_lt (unitArc_norm_lt_of_abs_lt s H t₀ ht₀_Ioo h_s_arc t (t₀ + δ')
+      ht1 ht3 (by linarith [ht₀_Ioo.1]) hδ'_right
+      (by rw [show t₀ + δ' - t₀ = δ' from by ring, abs_of_pos hδ'_pos]; exact hlt))
+
+/-! ### Helper 3: Norm classification — left of crossing -/
+
+private lemma unitArc_norm_gt_left (s : ℂ) (H : ℝ) (_hH : 1 < H) (t₀ δ' ε : ℝ)
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (hs_re : |s.re| < 1/2)
+    (hδ'_pos : 0 < δ') (hδ'_left : 1 < t₀ - δ') (hδ'_right : t₀ + δ' < 3)
+    (hδ'_eq : ‖fdBoundary_H H (t₀ + δ') - s‖ = ε)
+    (hε_lt_d : ε < min (min (1/2 - s.re) (s.re + 1/2)) (H - 1))
+    (t : ℝ) (_ht_mem : t ∈ Ioc (0:ℝ) (t₀ - δ')) (ht_lt : t < t₀ - δ') :
+    ε < ‖fdBoundary_H H t - s‖ := by
+  by_cases h1 : t ≤ 1
+  · calc ε < min (min (1/2 - s.re) (s.re + 1/2)) (H - 1) := hε_lt_d
+      _ ≤ 1/2 - s.re := le_trans (min_le_left _ _) (min_le_left _ _)
+      _ ≤ ‖fdBoundary_H H t - s‖ := unitArc_min_dist_from_seg1 H s hs_re t h1
+  · push_neg at h1
+    exact unitArc_arc_outside_gt_eps s H t₀ δ' ε ht₀_Ioo h_s_arc hδ'_pos hδ'_left hδ'_right
+      hδ'_eq t h1 (by linarith) (by rw [abs_of_nonpos (by linarith)]; linarith)
+
+/-! ### Helper 4: Norm classification — right of crossing -/
+
+private lemma unitArc_norm_gt_right (s : ℂ) (H : ℝ) (hH : 1 < H) (t₀ δ' ε : ℝ)
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (hs_re : |s.re| < 1/2) (hs_norm : ‖s‖ = 1) (hs_im_pos : 0 < s.im)
+    (hδ'_pos : 0 < δ') (hδ'_left : 1 < t₀ - δ') (hδ'_right : t₀ + δ' < 3)
+    (hδ'_eq : ‖fdBoundary_H H (t₀ + δ') - s‖ = ε)
+    (hε_lt_d : ε < min (min (1/2 - s.re) (s.re + 1/2)) (H - 1))
+    (t : ℝ) (ht_gt : t₀ + δ' < t) (ht5 : t ≤ 5) :
+    ε < ‖fdBoundary_H H t - s‖ := by
+  by_cases h3 : t < 3
+  · exact unitArc_arc_outside_gt_eps s H t₀ δ' ε ht₀_Ioo h_s_arc hδ'_pos hδ'_left hδ'_right
+      hδ'_eq t (by linarith) h3 (by rw [abs_of_pos (by linarith)]; linarith)
+  · push_neg at h3
+    calc ε < min (min (1/2 - s.re) (s.re + 1/2)) (H - 1) := hε_lt_d
+      _ ≤ ‖fdBoundary_H H t - s‖ :=
+        unitArc_min_dist_from_non_arc H hH s hs_norm hs_re hs_im_pos t h3 ht5
+
+/-! ### Helper 5: Integral split + assembly into log expression -/
+
+private lemma unitArc_integral_eq_ftc (s : ℂ) (H : ℝ) (hH : 1 < H) (t₀ δ' ε : ℝ)
+    (g : ℝ → ℂ)
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (hs_re : |s.re| < 1/2) (hs_norm : ‖s‖ = 1) (hs_im_pos : 0 < s.im)
+    (hδ'_pos : 0 < δ') (hδ'_left : 1 < t₀ - δ')
+    (hδ'_right : t₀ + δ' < 3)
+    (hδ'_eq : ‖fdBoundary_H H (t₀ + δ') - s‖ = ε)
+    (hε_lt_d : ε < min (min (1/2 - s.re) (s.re + 1/2)) (H - 1))
+    (h_arc_inside : ∀ t, 1 < t → t < 3 → |t - t₀| ≤ δ' → ‖fdBoundary_H H t - s‖ ≤ ε)
+    (hint_left : IntervalIntegrable (fun t => deriv g t / g t) volume 0 (t₀ - δ'))
+    (hint_right : IntervalIntegrable (fun t => deriv g t / g t) volume (t₀ + δ') 5)
+    (h_ftc_eq :
+      (∫ t in (0:ℝ)..(t₀ - δ'), deriv g t / g t) +
+      (∫ t in (t₀ + δ')..5, deriv g t / g t) =
+      Complex.log ((fdBoundary_H H (t₀ - δ') - s) / (-(fdBoundary_H H (t₀ + δ') - s))) -
+      ↑Real.pi * I)
+    (hg_eq : ∀ t, g t = fdBoundary_H H t - s) :
+    ∫ t in (0:ℝ)..5, (fun t => if ‖g t‖ > ε then deriv g t / g t else (0 : ℂ)) t =
+      Complex.log ((fdBoundary_H H (t₀ - δ') - s) / (-(fdBoundary_H H (t₀ + δ') - s))) -
+      ↑Real.pi * I := by
+  set F := fun t => if ‖g t‖ > ε then deriv g t / g t else (0 : ℂ) with hF_def
+  have hF_left : ∀ᵐ t ∂volume, t ∈ Set.uIoc 0 (t₀ - δ') → F t = deriv g t / g t := by
+    have h_excl : ({t₀ - δ'} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite _).measure_zero volume)
+    filter_upwards [h_excl] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by linarith : (0:ℝ) ≤ t₀ - δ')] at ht_mem
+    have ht_lt : t < t₀ - δ' := lt_of_le_of_ne ht_mem.2
+      (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+    simp only [hF_def]
+    have hgt : ‖g t‖ > ε := by
+      rw [hg_eq]
+      exact unitArc_norm_gt_left s H hH t₀ δ' ε ht₀_Ioo h_s_arc hs_re hδ'_pos hδ'_left
+        hδ'_right hδ'_eq hε_lt_d t ht_mem ht_lt
+    simp only [if_pos hgt]
+  have hF_right : ∀ᵐ t ∂volume, t ∈ Set.uIoc (t₀ + δ') 5 → F t = deriv g t / g t := by
+    have h_excl : ({t₀ + δ'} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite _).measure_zero volume)
+    filter_upwards [h_excl] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by linarith : t₀ + δ' ≤ 5)] at ht_mem
+    have ht_gt : t₀ + δ' < t := by
+      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
+      · exfalso; exact ht_ne (Set.mem_singleton_iff.mpr (by linarith))
+      · exact h
+    simp only [hF_def]
+    have hgt : ‖g t‖ > ε := by
+      rw [hg_eq]
+      exact unitArc_norm_gt_right s H hH t₀ δ' ε ht₀_Ioo h_s_arc hs_re hs_norm hs_im_pos
+        hδ'_pos hδ'_left hδ'_right hδ'_eq hε_lt_d t ht_gt ht_mem.2
+    simp only [if_pos hgt]
+  have hF_mid_ae : ∀ᵐ t ∂volume, t ∈ Set.uIoc (t₀ - δ') (t₀ + δ') → F t = 0 := by
+    apply Filter.Eventually.of_forall; intro t ht_mem
+    rw [Set.uIoc_of_le (by linarith : t₀ - δ' ≤ t₀ + δ')] at ht_mem
+    simp only [hF_def]
+    rw [if_neg]; push_neg; rw [hg_eq]
+    exact h_arc_inside t (by linarith [ht_mem.1]) (by linarith [ht_mem.2])
+      (by rw [abs_le]; constructor <;> linarith [ht_mem.1, ht_mem.2])
+  have hF_int_left : IntervalIntegrable F volume 0 (t₀ - δ') :=
+    hint_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      (hF_left.mono (fun t ht hm => (ht hm).symm)))
+  have hF_int_mid : IntervalIntegrable F volume (t₀ - δ') (t₀ + δ') := by
+    have hF_mid : ∀ t ∈ Set.uIoc (t₀ - δ') (t₀ + δ'), F t = 0 := by
+      intro t ht_mem
+      rw [Set.uIoc_of_le (by linarith : t₀ - δ' ≤ t₀ + δ')] at ht_mem
+      simp only [hF_def]
+      rw [if_neg]; push_neg; rw [hg_eq]
+      exact h_arc_inside t (by linarith [ht_mem.1]) (by linarith [ht_mem.2])
+        (by rw [abs_le]; constructor <;> linarith [ht_mem.1, ht_mem.2])
+    exact (IntervalIntegrable.zero (μ := volume) (a := t₀ - δ') (b := t₀ + δ')).congr
+      (fun t ht => (hF_mid t ht).symm)
+  have hF_int_right : IntervalIntegrable F volume (t₀ + δ') 5 :=
+    hint_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      (hF_right.mono (fun t ht hm => (ht hm).symm)))
+  have h_split : ∫ t in (0:ℝ)..5, F t =
+      (∫ t in (0:ℝ)..(t₀ - δ'), F t) + (∫ t in (t₀ - δ')..(t₀ + δ'), F t) +
+      (∫ t in (t₀ + δ')..(5:ℝ), F t) := by
+    rw [← intervalIntegral.integral_add_adjacent_intervals
+          (hF_int_left.trans hF_int_mid) hF_int_right,
+        ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid]
+  have h_mid_zero : ∫ t in (t₀ - δ')..(t₀ + δ'), F t = 0 := by
+    rw [intervalIntegral.integral_congr_ae hF_mid_ae]
+    simp [intervalIntegral.integral_zero]
+  have h_eq_left : ∫ t in (0:ℝ)..(t₀ - δ'), F t =
+      ∫ t in (0:ℝ)..(t₀ - δ'), deriv g t / g t :=
+    intervalIntegral.integral_congr_ae hF_left
+  have h_eq_right : ∫ t in (t₀ + δ')..(5:ℝ), F t =
+      ∫ t in (t₀ + δ')..(5:ℝ), deriv g t / g t :=
+    intervalIntegral.integral_congr_ae hF_right
+  rw [h_split, h_mid_zero, add_zero, h_eq_left, h_eq_right]
+  exact h_ftc_eq
+
+/-! ### Helper 6: Re-positivity for the log-div split -/
+
+private lemma unitArc_re_pos_at_offsets (s : ℂ) (t₀ δ' : ℝ)
+    (_ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (_hδ'_pos : 0 < δ') (hδ'_left : 1 < t₀ - δ') (hδ'_right : t₀ + δ' < 3) :
+    0 < (exp (↑(Real.pi * (1 + (t₀ - δ')) / 6) * I) - s).re ∧
+    0 < (-(exp (↑(Real.pi * (1 + (t₀ + δ')) / 6) * I) - s)).re := by
+  constructor
+  · set θ_m := Real.pi * (1 + (t₀ - δ')) / 6
+    set θ₀' := Real.pi * (1 + t₀) / 6
+    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
+    simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
+      Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
+      mul_zero, zero_mul, sub_self, add_zero]
+    show 0 < Real.cos θ_m - Real.cos θ₀'
+    have hθ_m_lt : θ_m < θ₀' := by simp [θ_m, θ₀']; nlinarith [Real.pi_pos]
+    have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, hδ'_left]
+    have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, hδ'_right]
+    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ_m_nn hθ₀_le_pi hθ_m_lt]
+  · set θ_p := Real.pi * (1 + (t₀ + δ')) / 6
+    set θ₀' := Real.pi * (1 + t₀) / 6
+    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
+    simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
+      Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
+      mul_zero, zero_mul, sub_self, add_zero, neg_sub]
+    show 0 < Real.cos θ₀' - Real.cos θ_p
+    have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
+    have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, hδ'_left]
+    have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, hδ'_right]
+    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ₀_nn hθ_p_le_pi hθ_gt]
+
+/-! ### Helper 7: Final distance bound via log tendsto -/
+
+private lemma unitArc_final_dist_bound (s : ℂ) (t₀ δ' : ℝ)
+    (hδ'_pos : 0 < δ') (hδ'_lt_δ₀ : δ' < δ₀) (r : ℝ)
+    (hδ₀_spec : ∀ ⦃x : ℝ⦄, x ∈ Ioi 0 → dist x 0 < δ₀ →
+      dist (Complex.log (exp (↑(Real.pi * (1 + (t₀ - x)) / 6) * I) - s) -
+        Complex.log (-(exp (↑(Real.pi * (1 + (t₀ + x)) / 6) * I) - s))) 0 < r) :
+    ‖Complex.log (exp (↑(Real.pi * (1 + (t₀ - δ')) / 6) * I) - s) -
+      Complex.log (-(exp (↑(Real.pi * (1 + (t₀ + δ')) / 6) * I) - s))‖ < r := by
+  have hδ'_in_Ioi : δ' ∈ Ioi (0:ℝ) := hδ'_pos
+  have hδ'_dist : dist δ' 0 < δ₀ := by
+    rw [Real.dist_eq, sub_zero, abs_of_pos hδ'_pos]; exact hδ'_lt_δ₀
+  have h_log_small := hδ₀_spec hδ'_in_Ioi hδ'_dist
+  rwa [dist_zero_right] at h_log_small
+
+/-! ### Main tendsto lemma, assembled from helpers -/
+
 private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (hs_im_pos : 0 < s.im) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
@@ -208,8 +426,6 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) := by
   set t₀ := 6 * Real.arccos s.re / Real.pi - 1 with ht₀_def
   have ht₀_Ioo := unitArc_t₀_mem_Ioo s hs_re hs_im_pos
-  have ht₀_gt1 : 1 < t₀ := ht₀_Ioo.1
-  have ht₀_lt3 : t₀ < 3 := ht₀_Ioo.2
   have hg_at_t₀ := unitArc_fdBoundary_eq H s hs_norm hs_re hs_im_pos
   have h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I) := by
     rw [← fdBoundary_H_eq_arc ht₀_Ioo.1 ht₀_Ioo.2]; exact hg_at_t₀.symm
@@ -229,9 +445,6 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     simp only [hδ₁_def]; linarith [min_le_left δ₀ hw]
   have hδ₁_lt_hw : δ₁ < hw := by
     simp only [hδ₁_def]; linarith [min_le_right δ₀ hw]
-  have hδ₁_left : 1 < t₀ - δ₁ := by linarith [lt_of_lt_of_le hδ₁_lt_hw (min_le_left _ _)]
-  have hδ₁_right : t₀ + δ₁ < 3 := by
-    linarith [lt_of_lt_of_le hδ₁_lt_hw (min_le_right _ _)]
   set ε₀ := ‖g (t₀ + δ₁)‖ with hε₀_def
   have hε₀_pos : 0 < ε₀ := by
     simp only [hε₀_def, hg_def]
@@ -268,6 +481,13 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     exact hδ'_eq
   have hδ'_left : 1 < t₀ - δ' := by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_left _ _)]
   have hδ'_right : t₀ + δ' < 3 := by linarith [lt_of_lt_of_le hδ'_lt_hw (min_le_right _ _)]
+  -- Rewrite hδ'_eq from g-form to fdBoundary-form
+  have hδ'_eq_fd : ‖fdBoundary_H H (t₀ + δ') - s‖ = ε := hδ'_eq
+  -- Arc inside classification
+  have h_arc_inside : ∀ t, 1 < t → t < 3 → |t - t₀| ≤ δ' → ‖fdBoundary_H H t - s‖ ≤ ε :=
+    fun t ht1 ht3 habs => unitArc_arc_inside_le_eps s H t₀ δ' ε ht₀_Ioo h_s_arc hδ'_pos
+      hδ'_left hδ'_right hδ'_eq_fd t ht1 ht3 habs
+  -- Rewrite integrand from inv*deriv form to deriv/g form
   have h_integrand_eq : (∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
       (fdBoundary_H H t - s)⁻¹ * deriv g t else 0) =
     ∫ t in (0:ℝ)..5, if ‖g t‖ > ε then
@@ -279,125 +499,17 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     · rw [mul_comm, div_eq_mul_inv]
     · rfl
   rw [h_integrand_eq]
-  have h_arc_outside : ∀ t, 1 < t → t < 3 → δ' < |t - t₀| → ‖g t‖ > ε := by
-    intro t ht1 ht3 habs
-    show ε < ‖g t‖
-    have hε_eq : ε = ‖g (t₀ + δ')‖ := by
-      change _ = ‖g (t₀ + δ')‖; exact hδ'_eq.symm
-    rw [hε_eq]; simp only [hg_def]
-    exact unitArc_norm_lt_of_abs_lt s H t₀ ht₀_Ioo h_s_arc (t₀ + δ') t
-      (by linarith) hδ'_right ht1 ht3
-      (by rw [show t₀ + δ' - t₀ = δ' from by ring, abs_of_pos hδ'_pos]; exact habs)
-  have h_arc_inside : ∀ t, 1 < t → t < 3 → |t - t₀| ≤ δ' → ‖g t‖ ≤ ε := by
-    intro t ht1 ht3 habs
-    rcases eq_or_lt_of_le habs with heq | hlt
-    · have hε_eq : ε = ‖g (t₀ + δ')‖ := by
-        change _ = ‖g (t₀ + δ')‖; exact hδ'_eq.symm
-      rw [hε_eq]; simp only [hg_def]
-      rw [show t = t₀ + (t - t₀) from by ring, Complex.norm_def, Complex.norm_def]
-      apply le_of_eq; congr 1
-      rw [unitArc_normSq_at_offset s H t₀ (t - t₀) h_s_arc (by linarith) (by linarith),
-          unitArc_normSq_at_offset s H t₀ δ' h_s_arc (by linarith) hδ'_right]
-      congr 1; congr 1
-      rcases le_or_gt (t - t₀) 0 with h | h
-      · have h_neg : t - t₀ = -δ' := by rw [abs_of_nonpos h] at heq; linarith
-        rw [h_neg, show Real.pi * (-δ') / 6 = -(Real.pi * δ' / 6) from by ring, Real.cos_neg]
-      · rw [abs_of_pos h] at heq; rw [heq]
-    · have hε_eq : ε = ‖g (t₀ + δ')‖ := by
-        change _ = ‖g (t₀ + δ')‖; exact hδ'_eq.symm
-      rw [hε_eq]; simp only [hg_def]
-      exact le_of_lt (unitArc_norm_lt_of_abs_lt s H t₀ ht₀_Ioo h_s_arc t (t₀ + δ')
-        ht1 ht3 (by linarith) hδ'_right
-        (by rw [show t₀ + δ' - t₀ = δ' from by ring, abs_of_pos hδ'_pos]; exact hlt))
-  have h_off_arc_seg1 : ∀ t, t ≤ 1 → ‖g t‖ ≥ d_min := by
-    intro t ht; simp only [hg_def, hd_min_def, ge_iff_le]
-    calc min (min (1/2 - s.re) (s.re + 1/2)) (H - 1)
-        ≤ 1/2 - s.re := le_trans (min_le_left _ _) (min_le_left _ _)
-      _ ≤ ‖fdBoundary_H H t - s‖ := unitArc_min_dist_from_seg1 H s hs_re t ht
-  have h_off_arc_right : ∀ t, 3 ≤ t → t ≤ 5 → ‖g t‖ ≥ d_min := by
-    intro t ht3 ht5; simp only [hg_def, hd_min_def, ge_iff_le]
-    exact unitArc_min_dist_from_non_arc H hH s hs_norm hs_re hs_im_pos t ht3 ht5
+  -- Get FTC pieces
   have h_ftc := unitArc_ftc_value H hH s hs_norm hs_re hs_im_pos δ' hδ'_pos t₀ ht₀_Ioo
     h_s_arc hδ'_left hδ'_right
-  set F := fun t => if ‖g t‖ > ε then deriv g t / g t else (0 : ℂ) with hF_def
-  have hF_left : ∀ᵐ t ∂volume, t ∈ Set.uIoc 0 (t₀ - δ') → F t = deriv g t / g t := by
-    have h_excl : ({t₀ - δ'} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite _).measure_zero volume)
-    filter_upwards [h_excl] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by linarith : (0:ℝ) ≤ t₀ - δ')] at ht_mem
-    have ht_lt : t < t₀ - δ' := lt_of_le_of_ne ht_mem.2
-      (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-    simp only [hF_def]
-    have hgt : ‖g t‖ > ε := by
-      by_cases h1 : t ≤ 1
-      · calc ε < d_min := hε_lt_d
-          _ ≤ ‖g t‖ := h_off_arc_seg1 t h1
-      · push_neg at h1
-        exact h_arc_outside t h1 (by linarith) (by rw [abs_of_nonpos (by linarith)]; linarith)
-    simp only [if_pos hgt]
-  have hF_right : ∀ᵐ t ∂volume, t ∈ Set.uIoc (t₀ + δ') 5 → F t = deriv g t / g t := by
-    have h_excl : ({t₀ + δ'} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite _).measure_zero volume)
-    filter_upwards [h_excl] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by linarith : t₀ + δ' ≤ 5)] at ht_mem
-    have ht_gt : t₀ + δ' < t := by
-      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
-      · exfalso; exact ht_ne (Set.mem_singleton_iff.mpr (by linarith))
-      · exact h
-    simp only [hF_def]
-    have hgt : ‖g t‖ > ε := by
-      by_cases h3 : t < 3
-      · exact h_arc_outside t (by linarith) h3 (by rw [abs_of_pos (by linarith)]; linarith)
-      · push_neg at h3
-        calc ε < d_min := hε_lt_d
-          _ ≤ ‖g t‖ := h_off_arc_right t h3 ht_mem.2
-    simp only [if_pos hgt]
-  have hF_mid_ae : ∀ᵐ t ∂volume, t ∈ Set.uIoc (t₀ - δ') (t₀ + δ') → F t = 0 := by
-    apply Filter.Eventually.of_forall; intro t ht_mem
-    rw [Set.uIoc_of_le (by linarith : t₀ - δ' ≤ t₀ + δ')] at ht_mem
-    simp only [hF_def]
-    rw [if_neg]; push_neg
-    exact h_arc_inside t (by linarith [ht_mem.1]) (by linarith [ht_mem.2])
-      (by rw [abs_le]; constructor <;> linarith [ht_mem.1, ht_mem.2])
   obtain ⟨hint_left, hint_right, h_ftc_eq⟩ := h_ftc
-  have hF_int_left : IntervalIntegrable F volume 0 (t₀ - δ') :=
-    hint_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (hF_left.mono (fun t ht hm => (ht hm).symm)))
-  have hF_int_mid : IntervalIntegrable F volume (t₀ - δ') (t₀ + δ') := by
-    have hF_mid : ∀ t ∈ Set.uIoc (t₀ - δ') (t₀ + δ'), F t = 0 := by
-      intro t ht_mem
-      rw [Set.uIoc_of_le (by linarith : t₀ - δ' ≤ t₀ + δ')] at ht_mem
-      simp only [hF_def]
-      rw [if_neg]; push_neg
-      exact h_arc_inside t (by linarith [ht_mem.1]) (by linarith [ht_mem.2])
-        (by rw [abs_le]; constructor <;> linarith [ht_mem.1, ht_mem.2])
-    exact (IntervalIntegrable.zero (μ := volume) (a := t₀ - δ') (b := t₀ + δ')).congr
-      (fun t ht => (hF_mid t ht).symm)
-  have hF_int_right : IntervalIntegrable F volume (t₀ + δ') 5 :=
-    hint_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (hF_right.mono (fun t ht hm => (ht hm).symm)))
-  have h_split : ∫ t in (0:ℝ)..5, F t =
-      (∫ t in (0:ℝ)..(t₀ - δ'), F t) + (∫ t in (t₀ - δ')..(t₀ + δ'), F t) +
-      (∫ t in (t₀ + δ')..(5:ℝ), F t) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals
-          (hF_int_left.trans hF_int_mid) hF_int_right,
-        ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid]
-  have h_mid_zero : ∫ t in (t₀ - δ')..(t₀ + δ'), F t = 0 := by
-    rw [intervalIntegral.integral_congr_ae hF_mid_ae]
-    simp [intervalIntegral.integral_zero]
-  have h_eq_left : ∫ t in (0:ℝ)..(t₀ - δ'), F t =
-      ∫ t in (0:ℝ)..(t₀ - δ'), deriv g t / g t :=
-    intervalIntegral.integral_congr_ae hF_left
-  have h_eq_right : ∫ t in (t₀ + δ')..(5:ℝ), F t =
-      ∫ t in (t₀ + δ')..(5:ℝ), deriv g t / g t :=
-    intervalIntegral.integral_congr_ae hF_right
-  have h_integral_eq : ∫ t in (0:ℝ)..5, F t =
-      Complex.log ((fdBoundary_H H (t₀ - δ') - s) / (-(fdBoundary_H H (t₀ + δ') - s))) -
-      ↑Real.pi * I := by
-    rw [h_split, h_mid_zero, add_zero, h_eq_left, h_eq_right]
-    exact h_ftc_eq
-  show dist (∫ t in (0:ℝ)..5, F t) (-(↑Real.pi * I)) < r
-  rw [h_integral_eq, dist_comm, dist_eq_norm]
+  -- Use Helper 5 to evaluate the integral
+  have h_integral_val := unitArc_integral_eq_ftc s H hH t₀ δ' ε g ht₀_Ioo h_s_arc
+    hs_re hs_norm hs_im_pos hδ'_pos hδ'_left hδ'_right hδ'_eq_fd hε_lt_d
+    h_arc_inside hint_left hint_right h_ftc_eq (fun t => rfl)
+  show dist (∫ t in (0:ℝ)..5, (fun t => if ‖g t‖ > ε then deriv g t / g t else 0) t)
+    (-(↑Real.pi * I)) < r
+  rw [h_integral_val, dist_comm, dist_eq_norm]
   rw [show -(↑Real.pi * I) -
     (Complex.log ((fdBoundary_H H (t₀ - δ') - s) / (-(fdBoundary_H H (t₀ + δ') - s))) -
     ↑Real.pi * I) =
@@ -405,36 +517,12 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     from by ring, norm_neg]
   rw [fdBoundary_H_eq_arc hδ'_left (by linarith : t₀ - δ' < 3),
       fdBoundary_H_eq_arc (by linarith : 1 < t₀ + δ') hδ'_right]
-  set θ_m := Real.pi * (1 + (t₀ - δ')) / 6
-  set θ₀' := Real.pi * (1 + t₀) / 6
-  set θ_p := Real.pi * (1 + (t₀ + δ')) / 6
-  have h_re_before : 0 < (exp (↑θ_m * I) - s).re := by
-    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
-    simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
-      Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-      mul_zero, zero_mul, sub_self, add_zero]
-    show 0 < Real.cos θ_m - Real.cos θ₀'
-    have hθ_m_lt : θ_m < θ₀' := by simp [θ_m, θ₀']; nlinarith [Real.pi_pos]
-    have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, ht₀_Ioo.1]
-    have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.2]
-    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ_m_nn hθ₀_le_pi hθ_m_lt]
-  have h_re_after : 0 < (-(exp (↑θ_p * I) - s)).re := by
-    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
-    simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
-      Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-      mul_zero, zero_mul, sub_self, add_zero, neg_sub]
-    show 0 < Real.cos θ₀' - Real.cos θ_p
-    have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
-    have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.1]
-    have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, ht₀_Ioo.2]
-    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ₀_nn hθ_p_le_pi hθ_gt]
+  -- Use Helper 6 for re_pos, then log_div split
+  obtain ⟨h_re_before, h_re_after⟩ := unitArc_re_pos_at_offsets s t₀ δ' ht₀_Ioo h_s_arc
+    hδ'_pos hδ'_left hδ'_right
   rw [log_div_of_re_pos h_re_before h_re_after]
-  have hδ'_in_Ioi : δ' ∈ Ioi (0:ℝ) := hδ'_pos
-  have hδ'_dist : dist δ' 0 < δ₀ := by
-    rw [Real.dist_eq, sub_zero, abs_of_pos hδ'_pos]; exact hδ'_lt_δ₀
-  have h_log_small := hδ₀_spec hδ'_in_Ioi hδ'_dist
-  rw [dist_zero_right] at h_log_small
-  convert h_log_small using 2
+  -- Use Helper 7 for the final distance bound
+  exact unitArc_final_dist_bound s t₀ δ' hδ'_pos hδ'_lt_δ₀ r hδ₀_spec
 
 /-- **Main theorem**: gWN = −1/2 at smooth arc points. -/
 theorem gWN_fdBoundary_H_eq_neg_half_of_unitArc (H : ℝ) (hH : 1 < H) (s : ℂ)
