@@ -357,7 +357,6 @@ private lemma g_rho'_norm_ge_one_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) 
       _ = |(fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)).re| := by rw [hre]
       _ ≤ ‖fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)‖ := Complex.abs_re_le_norm _
 
-set_option maxHeartbeats 8000000 in
 private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {δ_L δ_R : ℝ} (hδ_L : 0 < δ_L) (hδ_L1 : δ_L < 1) (hδ_R : 0 < δ_R) (hδ_R1 : δ_R < 1) :
     let g := fun t => fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)
@@ -574,7 +573,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
   rw [hg_closed]
   ring
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 800000 in
 /-- The PV integral of `(γ-ρ')⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ/3`. -/
 theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - ellipticPointRhoPlusOne‖ > ε
