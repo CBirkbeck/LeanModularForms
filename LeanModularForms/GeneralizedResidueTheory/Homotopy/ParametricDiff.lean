@@ -293,7 +293,517 @@ private lemma differentiableAt_comp_of_holomorphic
         (differentiableAt_const s))
   exact (hf.restrictScalars ℝ).comp t hH_diff
 
-set_option maxHeartbeats 400000 in
+private lemma hasDerivAt_homotopy_param
+    (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (a b s : ℝ)
+    (hab : a < b)
+    (hH_smooth : ContDiff ℝ 2 H)
+    (hf_diff : ∀ t ∈ Icc a b,
+      ∀ s' ∈ Icc (0:ℝ) 1,
+        DifferentiableAt ℂ f (H (t, s')))
+    (hfH_cont : Continuous (f ∘ H))
+    (hs : s ∈ Set.Icc 0 1)
+    (hf_differentiable : Differentiable ℂ f)
+    (h_schwarz : ∀ t ∈ Ioo a b,
+        deriv (fun s' =>
+          f (H (t, s')) *
+            deriv (fun t' => H (t', s')) t) s =
+          deriv (fun t' =>
+            f (H (t', s)) *
+              deriv (fun s'' => H (t', s'')) s) t) :
+    HasDerivAt (fun s' => ∫ t in a..b,
+        f (H (t, s')) *
+          deriv (fun t' => H (t', s')) t)
+      (∫ t in a..b,
+        deriv (fun t' =>
+          f (H (t', s)) *
+            deriv (fun s'' => H (t', s'')) s) t) s := by
+  let F : ℝ → ℝ → ℂ := fun s' t =>
+    f (H (t, s')) *
+      deriv (fun t' => H (t', s')) t
+  have hH_diff : Differentiable ℝ H :=
+    hH_smooth.differentiable
+      (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+  have h_partialT :
+      ContDiff ℝ 1 (fun p : ℝ × ℝ =>
+        deriv (fun t'' => H (t'', p.2)) p.1) :=
+    contDiff_partialDeriv_fst_of_contDiff_two
+      H hH_smooth
+  have h_partialS :
+      ContDiff ℝ 1 (fun p : ℝ × ℝ =>
+        deriv (fun s'' => H (p.1, s'')) p.2) :=
+    contDiff_partialDeriv_snd_of_contDiff_two
+      H hH_smooth
+  have h_integral_eq :
+      ∫ t in a..b,
+        deriv (fun s' => F s' t) s =
+      ∫ t in a..b,
+        deriv (fun t' =>
+          f (H (t', s)) *
+            deriv (fun s'' => H (t', s'')) s) t := by
+    apply intervalIntegral.integral_congr_ae
+    filter_upwards with t ht
+    rw [Set.uIoc_of_le (le_of_lt hab)] at ht
+    by_cases htb : t = b
+    · have hb_mem : b ∈ Icc a b :=
+        ⟨le_of_lt hab, le_refl b⟩
+      have h_emb_s :
+          DifferentiableAt ℝ
+            (fun s' : ℝ => (t, s')) s :=
+        (differentiableAt_const t).prodMk
+          differentiableAt_id
+      have h_emb_t :
+          DifferentiableAt ℝ
+            (fun t' : ℝ => (t', s)) t :=
+        differentiableAt_id.prodMk
+          (differentiableAt_const s)
+      have ht_mem : t ∈ Icc a b := by
+        rw [htb]; exact hb_mem
+      have hfH_diff_s :
+          DifferentiableAt ℝ
+            (fun s' => f (H (t, s'))) s := by
+        have hH_s :
+            DifferentiableAt ℝ
+              (fun s' => H (t, s')) s :=
+          (hH_diff (t, s)).comp s h_emb_s
+        exact ((hf_diff t ht_mem s hs
+          ).restrictScalars ℝ).comp s hH_s
+      have hfH_diff_t :
+          DifferentiableAt ℝ
+            (fun t' => f (H (t', s))) t := by
+        have hH_t :
+            DifferentiableAt ℝ
+              (fun t' => H (t', s)) t :=
+          (hH_diff (t, s)).comp t h_emb_t
+        exact ((hf_diff t ht_mem s hs
+          ).restrictScalars ℝ).comp t hH_t
+      have h_partialT_diff_s :
+          DifferentiableAt ℝ (fun s' =>
+            deriv (fun t' => H (t', s')) t) s := by
+        have h_comp :
+            (fun s' =>
+              deriv (fun t' => H (t', s')) t) =
+              (fun p : ℝ × ℝ =>
+                deriv (fun t' =>
+                  H (t', p.2)) p.1) ∘
+                  (fun s' => (t, s')) := rfl
+        rw [h_comp]
+        exact (h_partialT.differentiable le_rfl
+          (t, s)).comp s h_emb_s
+      have h_partialS_diff_t :
+          DifferentiableAt ℝ (fun t' =>
+            deriv (fun s' => H (t', s')) s) t := by
+        have h_comp :
+            (fun t' =>
+              deriv (fun s' => H (t', s')) s) =
+              (fun p : ℝ × ℝ =>
+                deriv (fun s' =>
+                  H (p.1, s')) p.2) ∘
+                  (fun t' => (t', s)) := rfl
+        rw [h_comp]
+        exact (h_partialS.differentiable le_rfl
+          (t, s)).comp t h_emb_t
+      have h_mixed :
+          deriv (fun s' =>
+            deriv (fun t' => H (t', s')) t) s =
+          deriv (fun t' =>
+            deriv (fun s' => H (t', s')) s) t :=
+        schwarz_partialDeriv_comm H hH_smooth t s
+      simp only [F]
+      have hf_at :
+          DifferentiableAt ℂ f (H (t, s)) :=
+        hf_diff t ht_mem s hs
+      have hH_s :
+          DifferentiableAt ℝ
+            (fun s' => H (t, s')) s :=
+        (hH_diff (t, s)).comp s h_emb_s
+      have hH_t :
+          DifferentiableAt ℝ
+            (fun t' => H (t', s)) t :=
+        (hH_diff (t, s)).comp t h_emb_t
+      have hLHS :
+          deriv (fun s' =>
+            f (H (t, s')) *
+              deriv (fun t' => H (t', s')) t) s =
+            deriv (fun s' => f (H (t, s'))) s *
+              deriv (fun t' => H (t', s)) t +
+            f (H (t, s)) *
+              deriv (fun s' =>
+                deriv (fun t' =>
+                  H (t', s')) t) s := by
+        show deriv ((fun s' => f (H (t, s'))) *
+          (fun s' =>
+            deriv (fun t' =>
+              H (t', s')) t)) s =
+          deriv (fun s' => f (H (t, s'))) s *
+            deriv (fun t' => H (t', s)) t +
+          f (H (t, s)) *
+            deriv (fun s' =>
+              deriv (fun t' =>
+                H (t', s')) t) s
+        rw [deriv_mul hfH_diff_s
+          h_partialT_diff_s]
+      have hRHS :
+          deriv (fun t' =>
+            f (H (t', s)) *
+              deriv (fun s'' =>
+                H (t', s'')) s) t =
+            deriv (fun t' =>
+              f (H (t', s))) t *
+              deriv (fun s' => H (t, s')) s +
+            f (H (t, s)) *
+              deriv (fun t' =>
+                deriv (fun s' =>
+                  H (t', s')) s) t := by
+        show deriv ((fun t' => f (H (t', s))) *
+          (fun t' =>
+            deriv (fun s' =>
+              H (t', s')) s)) t =
+          deriv (fun t' =>
+            f (H (t', s))) t *
+            deriv (fun s' => H (t, s')) s +
+          f (H (t, s)) *
+            deriv (fun t' =>
+              deriv (fun s' =>
+                H (t', s')) s) t
+        rw [deriv_mul hfH_diff_t
+          h_partialS_diff_t]
+      have h_chain_s :
+          deriv (fun s' =>
+            f (H (t, s'))) s =
+            deriv f (H (t, s)) *
+              deriv (fun s' => H (t, s')) s := by
+        have h_eq :
+            (fun s' => f (H (t, s'))) =
+              f ∘ (fun s' => H (t, s')) := rfl
+        rw [h_eq,
+          deriv.scomp s
+            (hf_differentiable (H (t, s)))
+          hH_s,
+          smul_eq_mul, mul_comm]
+      have h_chain_t :
+          deriv (fun t' =>
+            f (H (t', s))) t =
+            deriv f (H (t, s)) *
+              deriv (fun t' => H (t', s)) t := by
+        have h_eq :
+            (fun t' => f (H (t', s))) =
+              f ∘ (fun t' => H (t', s)) := rfl
+        rw [h_eq,
+          deriv.scomp t
+            (hf_differentiable (H (t, s)))
+          hH_t,
+          smul_eq_mul, mul_comm]
+      rw [hLHS, hRHS,
+        h_chain_s, h_chain_t, h_mixed]
+      ring
+    · have ht_Ioo : t ∈ Set.Ioo a b :=
+        ⟨ht.1, lt_of_le_of_ne ht.2 htb⟩
+      exact h_schwarz t ht_Ioo
+  let ε : ℝ := 1 / 4
+  have hε_pos : (0 : ℝ) < ε := by norm_num
+  have h_embed_t :
+      Continuous (fun t : ℝ => (t, s)) :=
+    continuous_id.prodMk continuous_const
+  have hF_meas : ∀ᶠ s' in 𝓝 s,
+      AEStronglyMeasurable (F s')
+        (volume.restrict (Ι a b)) := by
+    filter_upwards [Filter.univ_mem] with s' _
+    apply Continuous.aestronglyMeasurable
+    have h_embed_s' :
+        Continuous (fun t : ℝ => (t, s')) :=
+      continuous_id.prodMk continuous_const
+    have h1 :
+        Continuous (fun t => f (H (t, s'))) :=
+      hfH_cont.comp h_embed_s'
+    have h2 :
+        Continuous (fun t =>
+          deriv (fun t' => H (t', s')) t) :=
+      h_partialT.continuous.comp h_embed_s'
+    exact h1.mul h2
+  have hF_int :
+      IntervalIntegrable (F s) volume a b := by
+    apply Continuous.intervalIntegrable
+    have h1 :
+        Continuous (fun t => f (H (t, s))) :=
+      hfH_cont.comp h_embed_t
+    have h2 :
+        Continuous (fun t =>
+          deriv (fun t' => H (t', s)) t) :=
+      h_partialT.continuous.comp h_embed_t
+    exact h1.mul h2
+  have h_F'_cont :
+      Continuous (fun p : ℝ × ℝ =>
+        deriv (fun s'' => F s'' p.1) p.2) := by
+    have h_fH' :
+        Continuous (fun p : ℝ × ℝ =>
+          f (H (p.1, p.2))) := hfH_cont
+    have h_derivf' :
+        Continuous (fun p : ℝ × ℝ =>
+          deriv f (H (p.1, p.2))) := by
+      have := hf_differentiable.contDiff (n := ⊤)
+      exact (this.continuous_deriv le_top).comp
+        hH_smooth.continuous
+    have h_partialS' :
+        Continuous (fun p : ℝ × ℝ =>
+          deriv (fun s' => H (p.1, s')) p.2) :=
+      h_partialS.continuous
+    have h_partialT' :
+        Continuous (fun p : ℝ × ℝ =>
+          deriv (fun t' => H (t', p.2)) p.1) :=
+      h_partialT.continuous
+    have h_mixed' :
+        Continuous (fun p : ℝ × ℝ =>
+          deriv (fun s' =>
+            deriv (fun t' =>
+              H (t', s')) p.1) p.2) := by
+      have h_eq :
+          (fun p : ℝ × ℝ =>
+            deriv (fun s' =>
+              deriv (fun t' =>
+                H (t', s')) p.1) p.2) =
+          (fun p : ℝ × ℝ =>
+            fderiv ℝ (fun p' : ℝ × ℝ =>
+              deriv (fun t' =>
+                H (t', p'.2)) p'.1) p
+                  (0, 1)) := by
+        ext p
+        have hg_diff :
+            Differentiable ℝ (fun p' : ℝ × ℝ =>
+              deriv (fun t' =>
+                H (t', p'.2)) p'.1) :=
+          h_partialT.differentiable le_rfl
+        have h_emb_diff :
+            DifferentiableAt ℝ
+              (fun s' : ℝ => (p.1, s')) p.2 :=
+          (differentiableAt_const p.1).prodMk
+            differentiableAt_id
+        have h_deriv_emb :
+            deriv (fun s' => (p.1, s')) p.2 =
+              (0, 1) := by
+          have :
+              HasDerivAt (fun s' => (p.1, s'))
+                (0, 1) p.2 :=
+            (hasDerivAt_const p.2 p.1).prodMk
+              (hasDerivAt_id p.2)
+          exact this.deriv
+        calc deriv (fun s' =>
+              deriv (fun t' =>
+                H (t', s')) p.1) p.2
+            = deriv ((fun p' : ℝ × ℝ =>
+                deriv (fun t' =>
+                  H (t', p'.2)) p'.1) ∘
+                (fun s' => (p.1, s'))) p.2 := rfl
+          _ = (fderiv ℝ (fun p' =>
+                deriv (fun t' =>
+                  H (t', p'.2)) p'.1) p)
+                (deriv (fun s' =>
+                  (p.1, s')) p.2) := by
+              apply fderiv_comp_deriv p.2
+                (hg_diff p) h_emb_diff
+          _ = (fderiv ℝ (fun p' =>
+                deriv (fun t' =>
+                  H (t', p'.2)) p'.1) p)
+                (0, 1) := by rw [h_deriv_emb]
+      rw [h_eq]
+      have h_fderiv_cont :
+          Continuous (fun p : ℝ × ℝ =>
+            fderiv ℝ (fun p' =>
+              deriv (fun t' =>
+                H (t', p'.2)) p'.1) p) :=
+        h_partialT.continuous_fderiv le_rfl
+      exact h_fderiv_cont.clm_apply
+        continuous_const
+    have hF'_eq : ∀ t s',
+        deriv (fun s'' => F s'' t) s' =
+          deriv f (H (t, s')) *
+            deriv (fun s'' => H (t, s'')) s' *
+            deriv (fun t' => H (t', s')) t +
+          f (H (t, s')) *
+            deriv (fun s'' =>
+              deriv (fun t' =>
+                H (t', s'')) t) s' := by
+      intro t s'
+      simp only [F]
+      have h_emb_s' :
+          DifferentiableAt ℝ
+            (fun s'' : ℝ => (t, s'')) s' :=
+        (differentiableAt_const t).prodMk
+          differentiableAt_id
+      have hH_diff_s' :
+          DifferentiableAt ℝ
+            (fun s'' => H (t, s'')) s' :=
+        (hH_diff (t, s')).comp s' h_emb_s'
+      have hfH_diff_s' :
+          DifferentiableAt ℝ
+            (fun s'' => f (H (t, s''))) s' := by
+        exact (hf_differentiable (H (t, s'))
+          |>.restrictScalars ℝ).comp s'
+            hH_diff_s'
+      have h_partialT_diff_s' :
+          DifferentiableAt ℝ
+            (fun s'' =>
+              deriv (fun t' =>
+                H (t', s'')) t) s' := by
+        have h_comp :
+            (fun s'' =>
+              deriv (fun t' =>
+                H (t', s'')) t) =
+              (fun p : ℝ × ℝ =>
+                deriv (fun t' =>
+                  H (t', p.2)) p.1) ∘
+                  (fun s'' => (t, s'')) := rfl
+        rw [h_comp]
+        exact (h_partialT.differentiable le_rfl
+          (t, s')).comp s' h_emb_s'
+      show deriv ((fun s'' => f (H (t, s''))) *
+        (fun s'' =>
+          deriv (fun t' =>
+            H (t', s'')) t)) s' =
+        deriv f (H (t, s')) *
+          deriv (fun s'' => H (t, s'')) s' *
+          deriv (fun t' => H (t', s')) t +
+        f (H (t, s')) *
+          deriv (fun s'' =>
+            deriv (fun t' =>
+              H (t', s'')) t) s'
+      rw [deriv_mul hfH_diff_s'
+        h_partialT_diff_s']
+      have h_chain :
+          deriv (fun s'' =>
+            f (H (t, s''))) s' =
+            deriv f (H (t, s')) *
+              deriv (fun s'' =>
+                H (t, s'')) s' := by
+        have h_eq :
+            (fun s'' => f (H (t, s''))) =
+              f ∘ (fun s'' => H (t, s'')) := rfl
+        rw [h_eq,
+          deriv.scomp s'
+            (hf_differentiable (H (t, s')))
+            hH_diff_s',
+          smul_eq_mul, mul_comm]
+      simp only [h_chain, mul_assoc]
+    have hF'_fun_eq :
+        (fun p : ℝ × ℝ =>
+          deriv (fun s'' => F s'' p.1) p.2) =
+        (fun p : ℝ × ℝ =>
+          deriv f (H (p.1, p.2)) *
+            deriv (fun s'' =>
+              H (p.1, s'')) p.2 *
+            deriv (fun t' =>
+              H (t', p.2)) p.1 +
+          f (H (p.1, p.2)) *
+            deriv (fun s'' =>
+              deriv (fun t' =>
+                H (t', s'')) p.1) p.2) := by
+      ext ⟨t, s'⟩; exact hF'_eq t s'
+    rw [hF'_fun_eq]
+    exact ((h_derivf'.mul h_partialS').mul
+      h_partialT').add (h_fH'.mul h_mixed')
+  have h_uIoc_subset :
+      (Ι a b : Set ℝ) ⊆ Icc a b :=
+    Set.uIoc_subset_uIcc.trans
+      (Set.uIcc_of_le (le_of_lt hab)).subset
+  have hF'_meas :
+      AEStronglyMeasurable
+        (fun t =>
+          deriv (fun s' => F s' t) s)
+        (volume.restrict (Ι a b)) := by
+    have h_cont :
+        Continuous (fun t =>
+          deriv (fun s' => F s' t) s) :=
+      h_F'_cont.comp
+        (continuous_id.prodMk continuous_const)
+    exact h_cont.aestronglyMeasurable
+  let K : Set (ℝ × ℝ) :=
+    Icc a b ×ˢ Icc (s - ε) (s + ε)
+  have hK_compact : IsCompact K :=
+    isCompact_Icc.prod isCompact_Icc
+  have hK_ne : K.Nonempty :=
+    ⟨(a, s),
+      left_mem_Icc.mpr (le_of_lt hab),
+      by constructor <;> linarith⟩
+  obtain ⟨M_pt, hM_pt_mem, hM_pt_max⟩ :=
+    hK_compact.exists_isMaxOn hK_ne
+      (continuous_norm.comp
+        h_F'_cont).continuousOn
+  let M : ℝ :=
+    ‖deriv (fun s'' => F s'' M_pt.1) M_pt.2‖
+  have h_ball_subset :
+      Metric.ball s ε ⊆ Icc (s - ε) (s + ε) := by
+    intro x hx
+    simp only [Metric.mem_ball,
+      Real.dist_eq] at hx
+    constructor <;> linarith [abs_lt.mp hx]
+  have h_bound : ∀ᵐ t ∂volume,
+      t ∈ Ι a b →
+        ∀ s' ∈ Metric.ball s ε,
+          ‖deriv (fun s'' => F s'' t) s'‖ ≤
+            M := by
+    filter_upwards with t ht s' hs'
+    have ht_Icc : t ∈ Icc a b :=
+      h_uIoc_subset ht
+    have hs'_Icc :
+        s' ∈ Icc (s - ε) (s + ε) :=
+      h_ball_subset hs'
+    have h_mem_K : (t, s') ∈ K :=
+      ⟨ht_Icc, hs'_Icc⟩
+    have h_le := hM_pt_max h_mem_K
+    simp only [Set.mem_setOf_eq,
+      Function.comp_apply] at h_le
+    exact h_le
+  have h_bound_int :
+      IntervalIntegrable (fun _ => M) volume a b :=
+    intervalIntegrable_const
+  have h_diff : ∀ᵐ t ∂volume,
+      t ∈ Ι a b →
+        ∀ s' ∈ Metric.ball s ε,
+          HasDerivAt (fun s'' => F s'' t)
+            (deriv (fun s'' => F s'' t) s')
+            s' := by
+    filter_upwards with t _ht s' _hs'
+    have h_emb_s' :
+        DifferentiableAt ℝ
+          (fun s'' : ℝ => (t, s'')) s' :=
+      (differentiableAt_const t).prodMk
+        differentiableAt_id
+    have hH_diff_s' :
+        DifferentiableAt ℝ
+          (fun s'' => H (t, s'')) s' :=
+      (hH_diff (t, s')).comp s' h_emb_s'
+    have hfH_diff_s' :
+        DifferentiableAt ℝ
+          (fun s'' => f (H (t, s''))) s' := by
+      exact (hf_differentiable (H (t, s'))
+        |>.restrictScalars ℝ).comp s'
+          hH_diff_s'
+    have h_partialT_diff_s' :
+        DifferentiableAt ℝ
+          (fun s'' =>
+            deriv (fun t' =>
+              H (t', s'')) t) s' := by
+      have h_comp :
+          (fun s'' =>
+            deriv (fun t' =>
+              H (t', s'')) t) =
+            (fun p : ℝ × ℝ =>
+              deriv (fun t' =>
+                H (t', p.2)) p.1) ∘
+                (fun s'' => (t, s'')) := rfl
+      rw [h_comp]
+      exact (h_partialT.differentiable le_rfl
+        (t, s')).comp s' h_emb_s'
+    exact (hfH_diff_s'.mul
+      h_partialT_diff_s').hasDerivAt
+  have h_param :=
+    @intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+      ℝ _ volume ℂ _ _ _ a b ε (fun _ => M)
+      (F := fun s' t => F s' t) (F' := fun s' t => deriv (fun s'' => F s'' t) s') s
+      hε_pos hF_meas hF_int hF'_meas
+      h_bound h_bound_int h_diff
+  rw [← h_integral_eq]
+  exact h_param.2
+
 /-- Derivative of the homotopy integral vanishes. -/
 theorem hasDerivAt_homotopy_integral_zero
     (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (a b s : ℝ)
@@ -671,486 +1181,11 @@ theorem hasDerivAt_homotopy_integral_zero
       rw [hLHS, hRHS, h_chain_s, h_chain_t, h_mixed]
       ring
     have h_param :
-        HasDerivAt (fun s' => ∫ t in a..b, F s' t)
+        HasDerivAt (fun s'  => ∫ t in a..b, F s' t)
           (∫ t in a..b,
             deriv (fun t' => J t' s) t) s := by
-      have hH_diff : Differentiable ℝ H :=
-        hH_smooth.differentiable
-          (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
-      have h_partialT :
-          ContDiff ℝ 1 (fun p : ℝ × ℝ =>
-            deriv (fun t'' => H (t'', p.2)) p.1) :=
-        contDiff_partialDeriv_fst_of_contDiff_two
-          H hH_smooth
-      have h_partialS :
-          ContDiff ℝ 1 (fun p : ℝ × ℝ =>
-            deriv (fun s'' => H (p.1, s'')) p.2) :=
-        contDiff_partialDeriv_snd_of_contDiff_two
-          H hH_smooth
-      have h_integral_eq :
-          ∫ t in a..b,
-            deriv (fun s' => F s' t) s =
-          ∫ t in a..b,
-            deriv (fun t' => J t' s) t := by
-        apply intervalIntegral.integral_congr_ae
-        filter_upwards with t ht
-        rw [Set.uIoc_of_le (le_of_lt hab)] at ht
-        by_cases htb : t = b
-        · have hb_mem : b ∈ Icc a b :=
-            ⟨le_of_lt hab, le_refl b⟩
-          have h_emb_s :
-              DifferentiableAt ℝ
-                (fun s' : ℝ => (t, s')) s :=
-            (differentiableAt_const t).prodMk
-              differentiableAt_id
-          have h_emb_t :
-              DifferentiableAt ℝ
-                (fun t' : ℝ => (t', s)) t :=
-            differentiableAt_id.prodMk
-              (differentiableAt_const s)
-          have ht_mem : t ∈ Icc a b := by
-            rw [htb]; exact hb_mem
-          have hfH_diff_s :
-              DifferentiableAt ℝ
-                (fun s' => f (H (t, s'))) s := by
-            have hH_s :
-                DifferentiableAt ℝ
-                  (fun s' => H (t, s')) s :=
-              (hH_diff (t, s)).comp s h_emb_s
-            exact ((hf_diff t ht_mem s hs
-              ).restrictScalars ℝ).comp s hH_s
-          have hfH_diff_t :
-              DifferentiableAt ℝ
-                (fun t' => f (H (t', s))) t := by
-            have hH_t :
-                DifferentiableAt ℝ
-                  (fun t' => H (t', s)) t :=
-              (hH_diff (t, s)).comp t h_emb_t
-            exact ((hf_diff t ht_mem s hs
-              ).restrictScalars ℝ).comp t hH_t
-          have h_partialT_diff_s :
-              DifferentiableAt ℝ (fun s' =>
-                deriv (fun t' => H (t', s')) t) s := by
-            have h_comp :
-                (fun s' =>
-                  deriv (fun t' => H (t', s')) t) =
-                  (fun p : ℝ × ℝ =>
-                    deriv (fun t' =>
-                      H (t', p.2)) p.1) ∘
-                      (fun s' => (t, s')) := rfl
-            rw [h_comp]
-            exact (h_partialT.differentiable le_rfl
-              (t, s)).comp s h_emb_s
-          have h_partialS_diff_t :
-              DifferentiableAt ℝ (fun t' =>
-                deriv (fun s' => H (t', s')) s) t := by
-            have h_comp :
-                (fun t' =>
-                  deriv (fun s' => H (t', s')) s) =
-                  (fun p : ℝ × ℝ =>
-                    deriv (fun s' =>
-                      H (p.1, s')) p.2) ∘
-                      (fun t' => (t', s)) := rfl
-            rw [h_comp]
-            exact (h_partialS.differentiable le_rfl
-              (t, s)).comp t h_emb_t
-          have h_mixed :
-              deriv (fun s' =>
-                deriv (fun t' => H (t', s')) t) s =
-              deriv (fun t' =>
-                deriv (fun s' => H (t', s')) s) t :=
-            schwarz_partialDeriv_comm H hH_smooth t s
-          simp only [F, J]
-          have hf_at :
-              DifferentiableAt ℂ f (H (t, s)) :=
-            hf_diff t ht_mem s hs
-          have hH_s :
-              DifferentiableAt ℝ
-                (fun s' => H (t, s')) s :=
-            (hH_diff (t, s)).comp s h_emb_s
-          have hH_t :
-              DifferentiableAt ℝ
-                (fun t' => H (t', s)) t :=
-            (hH_diff (t, s)).comp t h_emb_t
-          have hLHS :
-              deriv (fun s' =>
-                f (H (t, s')) *
-                  deriv (fun t' => H (t', s')) t) s =
-                deriv (fun s' => f (H (t, s'))) s *
-                  deriv (fun t' => H (t', s)) t +
-                f (H (t, s)) *
-                  deriv (fun s' =>
-                    deriv (fun t' =>
-                      H (t', s')) t) s := by
-            show deriv ((fun s' => f (H (t, s'))) *
-              (fun s' =>
-                deriv (fun t' =>
-                  H (t', s')) t)) s =
-              deriv (fun s' => f (H (t, s'))) s *
-                deriv (fun t' => H (t', s)) t +
-              f (H (t, s)) *
-                deriv (fun s' =>
-                  deriv (fun t' =>
-                    H (t', s')) t) s
-            rw [deriv_mul hfH_diff_s
-              h_partialT_diff_s]
-          have hRHS :
-              deriv (fun t' =>
-                f (H (t', s)) *
-                  deriv (fun s'' =>
-                    H (t', s'')) s) t =
-                deriv (fun t' =>
-                  f (H (t', s))) t *
-                  deriv (fun s' => H (t, s')) s +
-                f (H (t, s)) *
-                  deriv (fun t' =>
-                    deriv (fun s' =>
-                      H (t', s')) s) t := by
-            show deriv ((fun t' => f (H (t', s))) *
-              (fun t' =>
-                deriv (fun s' =>
-                  H (t', s')) s)) t =
-              deriv (fun t' =>
-                f (H (t', s))) t *
-                deriv (fun s' => H (t, s')) s +
-              f (H (t, s)) *
-                deriv (fun t' =>
-                  deriv (fun s' =>
-                    H (t', s')) s) t
-            rw [deriv_mul hfH_diff_t
-              h_partialS_diff_t]
-          have h_chain_s :
-              deriv (fun s' =>
-                f (H (t, s'))) s =
-                deriv f (H (t, s)) *
-                  deriv (fun s' => H (t, s')) s := by
-            have h_eq :
-                (fun s' => f (H (t, s'))) =
-                  f ∘ (fun s' => H (t, s')) := rfl
-            rw [h_eq,
-              deriv.scomp s hf_at hH_s,
-              smul_eq_mul, mul_comm]
-          have h_chain_t :
-              deriv (fun t' =>
-                f (H (t', s))) t =
-                deriv f (H (t, s)) *
-                  deriv (fun t' => H (t', s)) t := by
-            have h_eq :
-                (fun t' => f (H (t', s))) =
-                  f ∘ (fun t' => H (t', s)) := rfl
-            rw [h_eq,
-              deriv.scomp t hf_at hH_t,
-              smul_eq_mul, mul_comm]
-          rw [hLHS, hRHS,
-            h_chain_s, h_chain_t, h_mixed]
-          ring
-        · have ht_Ioo : t ∈ Set.Ioo a b :=
-            ⟨ht.1, lt_of_le_of_ne ht.2 htb⟩
-          exact h_schwarz t ht_Ioo
-      let ε : ℝ := 1 / 4
-      have hε_pos : (0 : ℝ) < ε := by norm_num
-      have h_embed_t :
-          Continuous (fun t : ℝ => (t, s)) :=
-        continuous_id.prodMk continuous_const
-      have hF_meas : ∀ᶠ s' in 𝓝 s,
-          AEStronglyMeasurable (F s')
-            (volume.restrict (Ι a b)) := by
-        filter_upwards [Filter.univ_mem] with s' _
-        apply Continuous.aestronglyMeasurable
-        have h_embed_s' :
-            Continuous (fun t : ℝ => (t, s')) :=
-          continuous_id.prodMk continuous_const
-        have h1 :
-            Continuous (fun t => f (H (t, s'))) :=
-          hfH_cont.comp h_embed_s'
-        have h2 :
-            Continuous (fun t =>
-              deriv (fun t' => H (t', s')) t) :=
-          h_partialT.continuous.comp h_embed_s'
-        exact h1.mul h2
-      have hF_int :
-          IntervalIntegrable (F s) volume a b := by
-        apply Continuous.intervalIntegrable
-        have h1 :
-            Continuous (fun t => f (H (t, s))) :=
-          hfH_cont.comp h_embed_t
-        have h2 :
-            Continuous (fun t =>
-              deriv (fun t' => H (t', s)) t) :=
-          h_partialT.continuous.comp h_embed_t
-        exact h1.mul h2
-      have h_F'_cont :
-          Continuous (fun p : ℝ × ℝ =>
-            deriv (fun s'' => F s'' p.1) p.2) := by
-        have h_fH' :
-            Continuous (fun p : ℝ × ℝ =>
-              f (H (p.1, p.2))) := hfH_cont
-        have h_derivf' :
-            Continuous (fun p : ℝ × ℝ =>
-              deriv f (H (p.1, p.2))) := by
-          have := hf_differentiable.contDiff (n := ⊤)
-          exact (this.continuous_deriv le_top).comp
-            hH_smooth.continuous
-        have h_partialS' :
-            Continuous (fun p : ℝ × ℝ =>
-              deriv (fun s' => H (p.1, s')) p.2) :=
-          h_partialS.continuous
-        have h_partialT' :
-            Continuous (fun p : ℝ × ℝ =>
-              deriv (fun t' => H (t', p.2)) p.1) :=
-          h_partialT.continuous
-        have h_mixed' :
-            Continuous (fun p : ℝ × ℝ =>
-              deriv (fun s' =>
-                deriv (fun t' =>
-                  H (t', s')) p.1) p.2) := by
-          have h_eq :
-              (fun p : ℝ × ℝ =>
-                deriv (fun s' =>
-                  deriv (fun t' =>
-                    H (t', s')) p.1) p.2) =
-              (fun p : ℝ × ℝ =>
-                fderiv ℝ (fun p' : ℝ × ℝ =>
-                  deriv (fun t' =>
-                    H (t', p'.2)) p'.1) p
-                      (0, 1)) := by
-            ext p
-            have hg_diff :
-                Differentiable ℝ (fun p' : ℝ × ℝ =>
-                  deriv (fun t' =>
-                    H (t', p'.2)) p'.1) :=
-              h_partialT.differentiable le_rfl
-            have h_emb_diff :
-                DifferentiableAt ℝ
-                  (fun s' : ℝ => (p.1, s')) p.2 :=
-              (differentiableAt_const p.1).prodMk
-                differentiableAt_id
-            have h_deriv_emb :
-                deriv (fun s' => (p.1, s')) p.2 =
-                  (0, 1) := by
-              have :
-                  HasDerivAt (fun s' => (p.1, s'))
-                    (0, 1) p.2 :=
-                (hasDerivAt_const p.2 p.1).prodMk
-                  (hasDerivAt_id p.2)
-              exact this.deriv
-            calc deriv (fun s' =>
-                  deriv (fun t' =>
-                    H (t', s')) p.1) p.2
-                = deriv ((fun p' : ℝ × ℝ =>
-                    deriv (fun t' =>
-                      H (t', p'.2)) p'.1) ∘
-                    (fun s' => (p.1, s'))) p.2 := rfl
-              _ = (fderiv ℝ (fun p' =>
-                    deriv (fun t' =>
-                      H (t', p'.2)) p'.1) p)
-                    (deriv (fun s' =>
-                      (p.1, s')) p.2) := by
-                  apply fderiv_comp_deriv p.2
-                    (hg_diff p) h_emb_diff
-              _ = (fderiv ℝ (fun p' =>
-                    deriv (fun t' =>
-                      H (t', p'.2)) p'.1) p)
-                    (0, 1) := by rw [h_deriv_emb]
-          rw [h_eq]
-          have h_fderiv_cont :
-              Continuous (fun p : ℝ × ℝ =>
-                fderiv ℝ (fun p' =>
-                  deriv (fun t' =>
-                    H (t', p'.2)) p'.1) p) :=
-            h_partialT.continuous_fderiv le_rfl
-          exact h_fderiv_cont.clm_apply
-            continuous_const
-        have hF'_eq : ∀ t s',
-            deriv (fun s'' => F s'' t) s' =
-              deriv f (H (t, s')) *
-                deriv (fun s'' => H (t, s'')) s' *
-                deriv (fun t' => H (t', s')) t +
-              f (H (t, s')) *
-                deriv (fun s'' =>
-                  deriv (fun t' =>
-                    H (t', s'')) t) s' := by
-          intro t s'
-          simp only [F]
-          have h_emb_s' :
-              DifferentiableAt ℝ
-                (fun s'' : ℝ => (t, s'')) s' :=
-            (differentiableAt_const t).prodMk
-              differentiableAt_id
-          have hH_diff_s' :
-              DifferentiableAt ℝ
-                (fun s'' => H (t, s'')) s' :=
-            (hH_diff (t, s')).comp s' h_emb_s'
-          have hfH_diff_s' :
-              DifferentiableAt ℝ
-                (fun s'' => f (H (t, s''))) s' := by
-            exact (hf_differentiable (H (t, s'))
-              |>.restrictScalars ℝ).comp s'
-                hH_diff_s'
-          have h_partialT_diff_s' :
-              DifferentiableAt ℝ
-                (fun s'' =>
-                  deriv (fun t' =>
-                    H (t', s'')) t) s' := by
-            have h_comp :
-                (fun s'' =>
-                  deriv (fun t' =>
-                    H (t', s'')) t) =
-                  (fun p : ℝ × ℝ =>
-                    deriv (fun t' =>
-                      H (t', p.2)) p.1) ∘
-                      (fun s'' => (t, s'')) := rfl
-            rw [h_comp]
-            exact (h_partialT.differentiable le_rfl
-              (t, s')).comp s' h_emb_s'
-          show deriv ((fun s'' => f (H (t, s''))) *
-            (fun s'' =>
-              deriv (fun t' =>
-                H (t', s'')) t)) s' =
-            deriv f (H (t, s')) *
-              deriv (fun s'' => H (t, s'')) s' *
-              deriv (fun t' => H (t', s')) t +
-            f (H (t, s')) *
-              deriv (fun s'' =>
-                deriv (fun t' =>
-                  H (t', s'')) t) s'
-          rw [deriv_mul hfH_diff_s'
-            h_partialT_diff_s']
-          have h_chain :
-              deriv (fun s'' =>
-                f (H (t, s''))) s' =
-                deriv f (H (t, s')) *
-                  deriv (fun s'' =>
-                    H (t, s'')) s' := by
-            have h_eq :
-                (fun s'' => f (H (t, s''))) =
-                  f ∘ (fun s'' => H (t, s'')) := rfl
-            rw [h_eq,
-              deriv.scomp s'
-                (hf_differentiable (H (t, s')))
-                hH_diff_s',
-              smul_eq_mul, mul_comm]
-          simp only [h_chain, mul_assoc]
-        have hF'_fun_eq :
-            (fun p : ℝ × ℝ =>
-              deriv (fun s'' => F s'' p.1) p.2) =
-            (fun p : ℝ × ℝ =>
-              deriv f (H (p.1, p.2)) *
-                deriv (fun s'' =>
-                  H (p.1, s'')) p.2 *
-                deriv (fun t' =>
-                  H (t', p.2)) p.1 +
-              f (H (p.1, p.2)) *
-                deriv (fun s'' =>
-                  deriv (fun t' =>
-                    H (t', s'')) p.1) p.2) := by
-          ext ⟨t, s'⟩; exact hF'_eq t s'
-        rw [hF'_fun_eq]
-        exact ((h_derivf'.mul h_partialS').mul
-          h_partialT').add (h_fH'.mul h_mixed')
-      have h_uIoc_subset :
-          (Ι a b : Set ℝ) ⊆ Icc a b :=
-        Set.uIoc_subset_uIcc.trans
-          (Set.uIcc_of_le (le_of_lt hab)).subset
-      have hF'_meas :
-          AEStronglyMeasurable
-            (fun t =>
-              deriv (fun s' => F s' t) s)
-            (volume.restrict (Ι a b)) := by
-        have h_cont :
-            Continuous (fun t =>
-              deriv (fun s' => F s' t) s) :=
-          h_F'_cont.comp
-            (continuous_id.prodMk continuous_const)
-        exact h_cont.aestronglyMeasurable
-      let K : Set (ℝ × ℝ) :=
-        Icc a b ×ˢ Icc (s - ε) (s + ε)
-      have hK_compact : IsCompact K :=
-        isCompact_Icc.prod isCompact_Icc
-      have hK_ne : K.Nonempty :=
-        ⟨(a, s),
-          left_mem_Icc.mpr (le_of_lt hab),
-          by constructor <;> linarith⟩
-      obtain ⟨M_pt, hM_pt_mem, hM_pt_max⟩ :=
-        hK_compact.exists_isMaxOn hK_ne
-          (continuous_norm.comp
-            h_F'_cont).continuousOn
-      let M : ℝ :=
-        ‖deriv (fun s'' => F s'' M_pt.1) M_pt.2‖
-      have h_ball_subset :
-          Metric.ball s ε ⊆ Icc (s - ε) (s + ε) := by
-        intro x hx
-        simp only [Metric.mem_ball,
-          Real.dist_eq] at hx
-        constructor <;> linarith [abs_lt.mp hx]
-      have h_bound : ∀ᵐ t ∂volume,
-          t ∈ Ι a b →
-            ∀ s' ∈ Metric.ball s ε,
-              ‖deriv (fun s'' => F s'' t) s'‖ ≤
-                M := by
-        filter_upwards with t ht s' hs'
-        have ht_Icc : t ∈ Icc a b :=
-          h_uIoc_subset ht
-        have hs'_Icc :
-            s' ∈ Icc (s - ε) (s + ε) :=
-          h_ball_subset hs'
-        have h_mem_K : (t, s') ∈ K :=
-          ⟨ht_Icc, hs'_Icc⟩
-        have h_le := hM_pt_max h_mem_K
-        simp only [Set.mem_setOf_eq,
-          Function.comp_apply] at h_le
-        exact h_le
-      have h_bound_int :
-          IntervalIntegrable (fun _ => M) volume a b :=
-        intervalIntegrable_const
-      have h_diff : ∀ᵐ t ∂volume,
-          t ∈ Ι a b →
-            ∀ s' ∈ Metric.ball s ε,
-              HasDerivAt (fun s'' => F s'' t)
-                (deriv (fun s'' => F s'' t) s')
-                s' := by
-        filter_upwards with t _ht s' _hs'
-        have h_emb_s' :
-            DifferentiableAt ℝ
-              (fun s'' : ℝ => (t, s'')) s' :=
-          (differentiableAt_const t).prodMk
-            differentiableAt_id
-        have hH_diff_s' :
-            DifferentiableAt ℝ
-              (fun s'' => H (t, s'')) s' :=
-          (hH_diff (t, s')).comp s' h_emb_s'
-        have hfH_diff_s' :
-            DifferentiableAt ℝ
-              (fun s'' => f (H (t, s''))) s' := by
-          exact (hf_differentiable (H (t, s'))
-            |>.restrictScalars ℝ).comp s'
-              hH_diff_s'
-        have h_partialT_diff_s' :
-            DifferentiableAt ℝ
-              (fun s'' =>
-                deriv (fun t' =>
-                  H (t', s'')) t) s' := by
-          have h_comp :
-              (fun s'' =>
-                deriv (fun t' =>
-                  H (t', s'')) t) =
-                (fun p : ℝ × ℝ =>
-                  deriv (fun t' =>
-                    H (t', p.2)) p.1) ∘
-                    (fun s'' => (t, s'')) := rfl
-          rw [h_comp]
-          exact (h_partialT.differentiable le_rfl
-            (t, s')).comp s' h_emb_s'
-        exact (hfH_diff_s'.mul
-          h_partialT_diff_s').hasDerivAt
-      have h_param :=
-        @intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
-          ℝ _ volume ℂ _ _ _ a b ε (fun _ => M)
-          (F := fun s' t => F s' t) (F' := fun s' t => deriv (fun s'' => F s'' t) s') s
-          hε_pos hF_meas hF_int hF'_meas
-          h_bound h_bound_int h_diff
-      rw [← h_integral_eq]
-      exact h_param.2
+      exact hasDerivAt_homotopy_param f H a b s hab hH_smooth hf_diff hfH_cont hs
+        hf_differentiable (fun t ht => h_schwarz t ht)
     rw [h_ftc] at h_param
     exact h_param
   rw [h_boundary] at h_deriv
