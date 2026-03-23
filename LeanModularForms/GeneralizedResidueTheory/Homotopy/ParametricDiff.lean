@@ -293,7 +293,7 @@ private lemma differentiableAt_comp_of_holomorphic
         (differentiableAt_const s))
   exact (hf.restrictScalars ℝ).comp t hH_diff
 
-set_option maxHeartbeats 1600000 in
+set_option maxHeartbeats 400000 in
 /-- Derivative of the homotopy integral vanishes. -/
 theorem hasDerivAt_homotopy_integral_zero
     (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (a b s : ℝ)
@@ -1144,7 +1144,9 @@ theorem hasDerivAt_homotopy_integral_zero
         exact (hfH_diff_s'.mul
           h_partialT_diff_s').hasDerivAt
       have h_param :=
-        intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+        @intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+          ℝ _ volume ℂ _ _ _ a b ε (fun _ => M)
+          (F := fun s' t => F s' t) (F' := fun s' t => deriv (fun s'' => F s'' t) s') s
           hε_pos hF_meas hF_int hF'_meas
           h_bound h_bound_int h_diff
       rw [← h_integral_eq]

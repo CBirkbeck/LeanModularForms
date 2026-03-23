@@ -142,7 +142,13 @@ private lemma ftc_inductive_step {F : ℂ → ℂ} {f : ℂ → ℂ}
   rw [← intervalIntegral.integral_add_adjacent_intervals h_int_ac h_int_cb, h_ac, h_cb]
   ring
 
-private lemma ftc_piecewise_contour_induction {F : ℂ → ℂ} {f : ℂ → ℂ}
+/-- FTC for piecewise C¹ contours (induction on partition points): on any
+sub-interval `[a', b']` whose endpoints belong to the partition and that
+contains at most `n` interior partition points, the integral of
+`f(γ(t)) · γ'(t)` equals `F(γ(b')) - F(γ(a'))`, provided `F ∘ γ` is
+continuous, its derivative equals the integrand off the partition, and the
+integrand is interval-integrable. -/
+lemma ftc_piecewise_contour_induction {F : ℂ → ℂ} {f : ℂ → ℂ}
     (γ : PiecewiseC1Curve) (n : ℕ) (a' b' : ℝ)
     (h_int : IntervalIntegrable
       (fun t => f (γ.toFun t) * deriv γ.toFun t) volume γ.a γ.b)
@@ -168,7 +174,7 @@ private lemma ftc_piecewise_contour_induction {F : ℂ → ℂ} {f : ℂ → ℂ
           ih a'' b'' hc' hab'' hsub'' haP'' hbP'')
         hcard ha'b' hsub ha'P hb'P hc_filt.1 hc_filt.2.1 hc_filt.2.2
 
-/-- The contour integral of a derivative of a composition F circ gamma over a
+/- The contour integral of a derivative of a composition F circ gamma over a
 piecewise C^1 curve equals F(gamma(b)) - F(gamma(a)), when F is holomorphic
 on a set containing the image of gamma.
 
@@ -177,7 +183,11 @@ standard FTC (`integral_eq_sub_of_hasDerivAt_of_le`) on each smooth subinterval.
 On each subinterval [p_i, p_{i+1}], gamma is C^1 hence differentiable, so
 F circ gamma has derivative f(gamma(t)) * gamma'(t) by the chain rule, and
 the sum telescopes to F(gamma(b)) - F(gamma(a)). -/
-private theorem ftc_piecewise_contour {F : ℂ → ℂ} {f : ℂ → ℂ}
+/-- Fundamental theorem of calculus for piecewise C¹ contours: if `F` is a
+primitive of `f` on `U` (i.e. `HasDerivAt F (f z) z` for every `z ∈ U`) and
+`γ` is a piecewise C¹ curve lying in `U`, then
+`∫_γ f(z) dz = F(γ(b)) - F(γ(a))`. -/
+theorem ftc_piecewise_contour {F : ℂ → ℂ} {f : ℂ → ℂ}
     (γ : PiecewiseC1Curve) (U : Set ℂ) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (hF_prim : ∀ z ∈ U, HasDerivAt F (f z) z)
     (h_int : IntervalIntegrable
@@ -196,14 +206,6 @@ private theorem ftc_piecewise_contour {F : ℂ → ℂ} {f : ℂ → ℂ}
     le_rfl (le_of_lt γ.hab) (Subset.refl _)
     γ.endpoints_in_partition.1 γ.endpoints_in_partition.2
 
-/-- The integrand (gamma(t) - z)^{-1} * gamma'(t) is interval integrable when z
-is bounded away from the image of gamma.
-
-Proof strategy: gamma is continuous on [a,b] and avoids z, so
-|gamma(t) - z|^{-1} is bounded by compactness. The derivative deriv gamma
-is bounded on [a,b] off the finite partition (piecewise continuous and
-bounded on the compact interval). The product is therefore bounded and
-piecewise continuous, hence integrable. -/
 private lemma mem_Ioo_of_Icc_not_partition (γ : PiecewiseC1Curve)
     (t : ℝ) (ht_Icc : t ∈ Icc γ.a γ.b) (ht_not_part : t ∉ (γ.partition : Set ℝ)) :
     t ∈ Ioo γ.a γ.b := by
@@ -213,7 +215,10 @@ private lemma mem_Ioo_of_Icc_not_partition (γ : PiecewiseC1Curve)
   · by_contra h; push_neg at h
     exact ht_not_part (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)
 
-private theorem integrand_intervalIntegrable_of_avoids (γ : PiecewiseC1Immersion)
+/-- The integrand `(γ(t) - z)⁻¹ · γ'(t)` is interval-integrable whenever `z`
+is not in the image of `γ`. The proof uses compactness of `[a, b]` to bound
+`‖(γ(t) - z)⁻¹‖` and the piecewise C¹ bound on `‖γ'(t)‖`. -/
+theorem integrand_intervalIntegrable_of_avoids (γ : PiecewiseC1Immersion)
     (z : ℂ) (h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z) :
     IntervalIntegrable
       (fun t => (γ.toFun t - z)⁻¹ * deriv γ.toFun t) volume γ.a γ.b := by
@@ -711,7 +716,130 @@ private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
       exact le_trans (le_trans h_step1 h_step2) (le_trans (h_eq ▸ le_refl _)
         (le_trans h_le (le_max_right _ _)))
 
-set_option maxHeartbeats 1600000 in
+private theorem dixonH1_dslope_t_cont (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U) (x : ℂ) :
+    ContinuousOn (fun t => dslope f (γ.toFun t) x) (Icc γ.a γ.b) := by
+  by_cases hx : x ∈ U
+  · have h_eq : ∀ t ∈ Icc γ.a γ.b, dslope f (γ.toFun t) x = dslope f x (γ.toFun t) := by
+      intro t ht
+      by_cases h : γ.toFun t = x
+      · subst h; simp only [dslope_of_ne, ne_eq, not_true_eq_false, not_false_eq_true,
+          dslope_same]
+      · simp only [dslope_of_ne _ (Ne.symm h), dslope_of_ne _ h]
+        exact slope_comm f (γ.toFun t) x
+    apply ContinuousOn.congr _ h_eq
+    have h_dslope_cont : ContinuousOn (dslope f x) U :=
+      (continuousOn_dslope (hU.mem_nhds hx)).mpr
+        ⟨hf.continuousOn, (hf x hx).differentiableAt (hU.mem_nhds hx)⟩
+    exact h_dslope_cont.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)
+  · have hne : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x := fun t ht heq =>
+      hx (heq ▸ hγ_in_U t ht)
+    have h_eq : ∀ t ∈ Icc γ.a γ.b,
+        dslope f (γ.toFun t) x = (f x - f (γ.toFun t)) / (x - γ.toFun t) := by
+      intro t ht
+      rw [dslope_of_ne _ (Ne.symm (hne t ht)), slope_def_field]
+    apply ContinuousOn.congr _ h_eq
+    apply ContinuousOn.div
+    · exact continuousOn_const.sub
+        (hf.continuousOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht))
+    · exact continuousOn_const.sub γ.continuous_toFun
+    · intro t ht; exact sub_ne_zero.mpr (Ne.symm (hne t ht))
+
+private theorem dixonH1_F'_aestronglyMeasurable (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (w₀ : ℂ) (hw₀ : w₀ ∈ U)
+    (hdslope_diff : ∀ t ∈ Icc γ.a γ.b, DifferentiableOn ℂ (dslope f (γ.toFun t)) U)
+    (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d)
+    (hδ₀_pos : 0 < δ₀)
+    (hBd : ∀ c ∈ γ.toFun '' Icc γ.a γ.b, ∀ w ∈ Metric.ball w₀ δ₀,
+      ‖dslope f c w‖ ≤ C_b)
+    (hC_pos : 0 < C_b) :
+    AEStronglyMeasurable
+      (fun t => deriv (dslope f (γ.toFun t)) w₀ * deriv γ.toFun t)
+      (volume.restrict (Set.uIoc γ.a γ.b)) := by
+  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+  have hdslope_t_cont := dixonH1_dslope_t_cont hU hf γ hγ_in_U
+  refine aestronglyMeasurable_of_tendsto_ae (Filter.atTop (α := ℕ))
+      (f := fun n t => ((↑n + 1 : ℂ)) * (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) -
+        dslope f (γ.toFun t) w₀) * deriv γ.toFun t) ?_ ?_
+  · intro n
+    obtain ⟨M_n, hM_n⟩ := isCompact_Icc.exists_bound_of_continuousOn
+      ((hdslope_t_cont (w₀ + 1 / ((n : ℂ) + 1))).norm)
+    simp only [norm_norm] at hM_n
+    exact (intervalIntegrable_of_piecewise_continuousOn_bounded (P := γ.partition)
+      (‖(n : ℂ) + 1‖ * (M_n + C_b) * M_d) hab
+      (fun t ⟨ht_Icc, ht_np⟩ => by
+        have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
+          by_contra h; push_neg at h
+          exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
+          by_contra h; push_neg at h
+          exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
+        exact (continuousWithinAt_const.mul
+          ((hdslope_t_cont _ t ht_Icc |>.mono diff_subset).sub
+            (hdslope_t_cont _ t ht_Icc |>.mono diff_subset))).mul
+          (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt)
+      (fun t ht => by
+        simp only [norm_mul]
+        have h1 : ‖dslope f (γ.toFun t) (w₀ + 1 / ((n : ℂ) + 1)) -
+            dslope f (γ.toFun t) w₀‖ ≤ M_n + C_b :=
+          le_trans (norm_sub_le _ _)
+            (add_le_add (hM_n t ht) (hBd _ ⟨t, ht, rfl⟩ w₀ (Metric.mem_ball_self hδ₀_pos)))
+        have h2 : ‖deriv γ.toFun t‖ ≤ M_d := hM_d t ht
+        exact mul_le_mul (mul_le_mul_of_nonneg_left h1 (norm_nonneg _))
+          h2 (norm_nonneg _) (mul_nonneg (norm_nonneg _) (le_trans (norm_nonneg _) h1))
+        )).def'.aestronglyMeasurable
+  · filter_upwards [ae_restrict_mem measurableSet_uIoc] with t ht
+    rw [Set.uIoc_of_le hab] at ht
+    have ht_Icc : t ∈ Icc γ.a γ.b := Ioc_subset_Icc_self ht
+    have hderiv : HasDerivAt (dslope f (γ.toFun t)) (deriv (dslope f (γ.toFun t)) w₀) w₀ :=
+      ((hdslope_diff t ht_Icc).differentiableAt (hU.mem_nhds hw₀)).hasDerivAt
+    have h_tendsto_zero : Filter.Tendsto
+        (fun n : ℕ => (1 : ℂ) / (↑n + 1)) Filter.atTop (𝓝[≠] 0) := by
+      apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+      · have hR : Filter.Tendsto (fun n : ℕ => (1 : ℝ) / (↑n + 1)) Filter.atTop (𝓝 0) :=
+          tendsto_one_div_add_atTop_nhds_zero_nat
+        have hC : Filter.Tendsto (fun n : ℕ => (1 : ℂ) / ((n : ℂ) + 1)) Filter.atTop (𝓝 0) := by
+          have := Complex.continuous_ofReal.continuousAt.tendsto.comp hR
+          simp only [Function.comp_def] at this
+          exact this.congr (fun n => by push_cast; ring)
+        exact hC
+      · exact Filter.Eventually.of_forall (fun n => by
+          apply div_ne_zero one_ne_zero
+          norm_cast)
+    have hGn_eq : ∀ n : ℕ, ((↑n + 1 : ℂ)) *
+            (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) - dslope f (γ.toFun t) w₀) *
+            deriv γ.toFun t =
+        ((1 : ℂ) / (↑n + 1))⁻¹ •
+          (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) - dslope f (γ.toFun t) w₀) *
+        deriv γ.toFun t := by
+      intro n; simp only [smul_eq_mul]
+      have hn1 : (↑n + 1 : ℂ) ≠ 0 := by norm_cast
+      field_simp [hn1]
+    simp_rw [hGn_eq]
+    exact (hderiv.tendsto_slope_zero.comp h_tendsto_zero).mul_const _
+
+private theorem dixonH1_dslope_intervalIntegrable (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion) (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
+    (x : ℂ) (C_b M_d : ℝ) (hC_pos : 0 < C_b)
+    (hBd : ∀ c ∈ γ.toFun '' Icc γ.a γ.b, ‖dslope f c x‖ ≤ C_b)
+    (hM_d : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ M_d) :
+    IntervalIntegrable
+      (fun t => dslope f (γ.toFun t) x * deriv γ.toFun t) volume γ.a γ.b := by
+  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
+  have hdslope_t_cont := dixonH1_dslope_t_cont hU hf γ hγ_in_U
+  apply intervalIntegrable_of_piecewise_continuousOn_bounded (P := γ.partition) (C_b * M_d) hab
+  · intro t ⟨ht_Icc, ht_np⟩
+    have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
+      by_contra h; push_neg at h
+      exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
+      by_contra h; push_neg at h
+      exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
+    exact (hdslope_t_cont x t ht_Icc |>.mono diff_subset).mul
+      (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt
+  · intro t ht
+    rw [norm_mul]
+    exact mul_le_mul (hBd _ ⟨t, ht, rfl⟩) (hM_d t ht) (norm_nonneg _) hC_pos.le
+
 /-- h₁ is differentiable on all of U, including across the curve.
 Uses the Leibniz rule (parametric differentiation of the dslope integral). -/
 theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
@@ -723,34 +851,6 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
   obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
   have hγ_sub : γ.toFun '' Icc γ.a γ.b ⊆ U :=
     fun _ ⟨t, ht, he⟩ => he ▸ hγ_in_U t ht
-  have hdslope_t_cont : ∀ x : ℂ,
-      ContinuousOn (fun t => dslope f (γ.toFun t) x) (Icc γ.a γ.b) := by
-    intro x
-    by_cases hx : x ∈ U
-    · have h_eq : ∀ t ∈ Icc γ.a γ.b, dslope f (γ.toFun t) x = dslope f x (γ.toFun t) := by
-        intro t ht
-        by_cases h : γ.toFun t = x
-        · subst h; simp
-        · simp only [dslope_of_ne _ (Ne.symm h), dslope_of_ne _ h]
-          exact slope_comm f (γ.toFun t) x
-      apply ContinuousOn.congr _ h_eq
-      have h_dslope_cont : ContinuousOn (dslope f x) U :=
-        (continuousOn_dslope (hU.mem_nhds hx)).mpr
-          ⟨hf.continuousOn, (hf x hx).differentiableAt (hU.mem_nhds hx)⟩
-      exact h_dslope_cont.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht)
-    · have hne : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x := fun t ht heq =>
-        hx (heq ▸ hγ_in_U t ht)
-      have h_eq : ∀ t ∈ Icc γ.a γ.b,
-          dslope f (γ.toFun t) x = (f x - f (γ.toFun t)) / (x - γ.toFun t) := by
-        intro t ht
-        rw [dslope_of_ne _ (Ne.symm (hne t ht)), slope_def_field]
-      apply ContinuousOn.congr _ h_eq
-      apply ContinuousOn.div
-      · exact continuousOn_const.sub
-          (hf.continuousOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht))
-      · exact continuousOn_const.sub γ.continuous_toFun
-      · intro t ht; exact sub_ne_zero.mpr (Ne.symm (hne t ht))
-  -- For each w₀ ∈ U, prove HasDerivAt (dixonH1 f γ) D w₀ via the Leibniz rule
   intro w₀ hw₀
   apply DifferentiableAt.differentiableWithinAt
   obtain ⟨r, hr_pos, hr_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
@@ -758,7 +858,6 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     dslope_uniform_bound hU hf _
       (isCompact_Icc.image_of_continuousOn γ.continuous_toFun)
       hγ_sub w₀ hw₀
-  -- ε = min(δ₀, r)/2 ensures closedBall x ε ⊆ U for all x ∈ ball w₀ ε
   set ε := min δ₀ r / 2 with hε_def
   have hε_pos : 0 < ε := by positivity
   have h2ε_le_δ₀ : 2 * ε ≤ δ₀ := by simp only [hε_def]; linarith [min_le_left δ₀ r]
@@ -767,7 +866,6 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     apply hr_sub; rw [Metric.mem_ball] at hx ⊢
     have hy' := Metric.mem_closedBall.mp hy
     linarith [dist_triangle y x w₀]
-  -- Cauchy estimate: ‖deriv (dslope f (γ t)) x‖ ≤ C / ε for x ∈ ball w₀ ε
   have hCauchy : ∀ t ∈ Icc γ.a γ.b, ∀ x ∈ Metric.ball w₀ ε,
       ‖deriv (dslope f (γ.toFun t)) x‖ ≤ C / ε := by
     intro t ht x hx
@@ -777,112 +875,18 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
       apply hBd _ ⟨t, ht, rfl⟩
       rw [Metric.mem_ball] at hx ⊢; rw [Metric.mem_sphere] at hz
       linarith [dist_triangle z x w₀]
-  -- Step 1: F(w₀,·) = dslope f (γ t) w₀ * γ'(t) is interval integrable
-  have hF_int : IntervalIntegrable
-      (fun t => dslope f (γ.toFun t) w₀ * deriv γ.toFun t) volume γ.a γ.b := by
-    apply intervalIntegrable_of_piecewise_continuousOn_bounded (P := γ.partition) (C * M_d) hab
-    · intro t ⟨ht_Icc, ht_np⟩
-      have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
-        by_contra h; push_neg at h
-        exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
-        by_contra h; push_neg at h
-        exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
-      exact (hdslope_t_cont w₀ t ht_Icc |>.mono diff_subset).mul
-        (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt
-    · intro t ht
-      rw [norm_mul]
-      exact mul_le_mul (hBd _ ⟨t, ht, rfl⟩ w₀ (Metric.mem_ball_self hδ₀_pos))
-        (hM_d t ht) (norm_nonneg _) hC_pos.le
-  -- Step 2: F(x,·) is AE strongly measurable for x near w₀
+  have hF_int := dixonH1_dslope_intervalIntegrable hU hf γ hγ_in_U w₀ C M_d hC_pos
+    (fun c hc => hBd c hc w₀ (Metric.mem_ball_self hδ₀_pos)) hM_d
   have hF_meas : ∀ᶠ x in 𝓝 w₀,
       AEStronglyMeasurable (fun t => dslope f (γ.toFun t) x * deriv γ.toFun t)
         (volume.restrict (Set.uIoc γ.a γ.b)) := by
     apply Filter.eventually_of_mem (Metric.ball_mem_nhds w₀ hε_pos)
     intro x hx
-    have hx_ball_δ₀ : x ∈ Metric.ball w₀ δ₀ := Metric.ball_subset_ball (by linarith) hx
-    exact (intervalIntegrable_of_piecewise_continuousOn_bounded (P := γ.partition) (C * M_d) hab
-      (fun t ⟨ht_Icc, ht_np⟩ => by
-        have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
-          by_contra h; push_neg at h
-          exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
-          by_contra h; push_neg at h
-          exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
-        exact (hdslope_t_cont x t ht_Icc |>.mono diff_subset).mul
-          (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt)
-      (fun t ht => by
-        rw [norm_mul]
-        exact mul_le_mul (hBd _ ⟨t, ht, rfl⟩ x hx_ball_δ₀) (hM_d t ht)
-          (norm_nonneg _) hC_pos.le)).def'.aestronglyMeasurable
-  -- Step 3: F'(w₀,·) = deriv(dslope f (γ t)) w₀ * γ'(t) is AE strongly measurable
-  -- Use finite-difference approximants via aestronglyMeasurable_of_tendsto_ae
-  have hF'_meas : AEStronglyMeasurable
-      (fun t => deriv (dslope f (γ.toFun t)) w₀ * deriv γ.toFun t)
-      (volume.restrict (Set.uIoc γ.a γ.b)) := by
-    -- Define Gn n t = (n+1) * (dslope f (γt) (w₀ + 1/(n+1)) - dslope f (γt) w₀) * γ'(t)
-    -- This is a finite-difference approximation to deriv(dslope f (γ t)) w₀ * γ'(t)
-    refine aestronglyMeasurable_of_tendsto_ae (Filter.atTop (α := ℕ))
-        (f := fun n t => ((↑n + 1 : ℂ)) * (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) -
-          dslope f (γ.toFun t) w₀) * deriv γ.toFun t) ?_ ?_
-    · -- Each approximant is AE strongly measurable (piecewise continuous)
-      intro n
-      obtain ⟨M_n, hM_n⟩ := isCompact_Icc.exists_bound_of_continuousOn
-        ((hdslope_t_cont (w₀ + 1 / ((n : ℂ) + 1))).norm)
-      simp only [norm_norm] at hM_n
-      exact (intervalIntegrable_of_piecewise_continuousOn_bounded (P := γ.partition)
-        (‖(n : ℂ) + 1‖ * (M_n + C) * M_d) hab
-        (fun t ⟨ht_Icc, ht_np⟩ => by
-          have ht_Ioo : t ∈ Ioo γ.a γ.b := ⟨by
-            by_contra h; push_neg at h
-            exact ht_np (le_antisymm h ht_Icc.1 ▸ γ.endpoints_in_partition.1), by
-            by_contra h; push_neg at h
-            exact ht_np (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)⟩
-          exact (continuousWithinAt_const.mul
-            ((hdslope_t_cont _ t ht_Icc |>.mono diff_subset).sub
-              (hdslope_t_cont _ t ht_Icc |>.mono diff_subset))).mul
-            (γ.deriv_continuous_off_partition t ht_Ioo ht_np).continuousWithinAt)
-        (fun t ht => by
-          simp only [norm_mul]
-          have h1 : ‖dslope f (γ.toFun t) (w₀ + 1 / ((n : ℂ) + 1)) -
-              dslope f (γ.toFun t) w₀‖ ≤ M_n + C :=
-            le_trans (norm_sub_le _ _)
-              (add_le_add (hM_n t ht) (hBd _ ⟨t, ht, rfl⟩ w₀ (Metric.mem_ball_self hδ₀_pos)))
-          have h2 : ‖deriv γ.toFun t‖ ≤ M_d := hM_d t ht
-          exact mul_le_mul (mul_le_mul_of_nonneg_left h1 (norm_nonneg _))
-            h2 (norm_nonneg _) (mul_nonneg (norm_nonneg _) (le_trans (norm_nonneg _) h1))
-          )).def'.aestronglyMeasurable
-    · -- AE convergence: Gn n t → deriv(dslope f(γ t)) w₀ * γ'(t)
-      filter_upwards [ae_restrict_mem measurableSet_uIoc] with t ht
-      rw [Set.uIoc_of_le hab] at ht
-      have ht_Icc : t ∈ Icc γ.a γ.b := Ioc_subset_Icc_self ht
-      have hderiv : HasDerivAt (dslope f (γ.toFun t)) (deriv (dslope f (γ.toFun t)) w₀) w₀ :=
-        ((hdslope_diff t ht_Icc).differentiableAt (hU.mem_nhds hw₀)).hasDerivAt
-      -- h_n = (1:ℂ)/(n+1) → 0, ≠ 0
-      have h_tendsto_zero : Filter.Tendsto
-          (fun n : ℕ => (1 : ℂ) / (↑n + 1)) Filter.atTop (𝓝[≠] 0) := by
-        apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
-        · have hR : Filter.Tendsto (fun n : ℕ => (1 : ℝ) / (↑n + 1)) Filter.atTop (𝓝 0) :=
-            tendsto_one_div_add_atTop_nhds_zero_nat
-          have hC : Filter.Tendsto (fun n : ℕ => (1 : ℂ) / ((n : ℂ) + 1)) Filter.atTop (𝓝 0) := by
-            have := Complex.continuous_ofReal.continuousAt.tendsto.comp hR
-            simp only [Function.comp_def] at this
-            exact this.congr (fun n => by push_cast; ring)
-          exact hC
-        · exact Filter.Eventually.of_forall (fun n => by
-            apply div_ne_zero one_ne_zero
-            norm_cast)
-      -- Gn n t = (1/(n+1))⁻¹ • (dslope f (γt) (w₀ + 1/(n+1)) - dslope f (γt) w₀) * γ'(t)
-      have hGn_eq : ∀ n : ℕ, ((↑n + 1 : ℂ)) *
-              (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) - dslope f (γ.toFun t) w₀) *
-              deriv γ.toFun t =
-          ((1 : ℂ) / (↑n + 1))⁻¹ •
-            (dslope f (γ.toFun t) (w₀ + 1 / (↑n + 1)) - dslope f (γ.toFun t) w₀) *
-          deriv γ.toFun t := by
-        intro n; simp only [smul_eq_mul]
-        have hn1 : (↑n + 1 : ℂ) ≠ 0 := by norm_cast
-        field_simp [hn1]
-      simp_rw [hGn_eq]
-      exact (hderiv.tendsto_slope_zero.comp h_tendsto_zero).mul_const _
-  -- Step 4: Derivative bound ‖F'‖ ≤ C/ε * M_d
+    exact (dixonH1_dslope_intervalIntegrable hU hf γ hγ_in_U x C M_d hC_pos
+      (fun c hc => hBd c hc x (Metric.ball_subset_ball (by linarith) hx))
+      hM_d).def'.aestronglyMeasurable
+  have hF'_meas := dixonH1_F'_aestronglyMeasurable hU hf γ hγ_in_U w₀ hw₀
+    hdslope_diff hM_d hδ₀_pos hBd hC_pos
   have h_bound : ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
       ∀ x ∈ Metric.ball w₀ ε,
         ‖deriv (dslope f (γ.toFun t)) x * deriv γ.toFun t‖ ≤ C / ε * M_d := by
@@ -892,7 +896,6 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     rw [norm_mul]
     exact mul_le_mul (hCauchy t ht_Icc x hx) (hM_d t ht_Icc) (norm_nonneg _)
       (div_nonneg hC_pos.le hε_pos.le)
-  -- Step 5: Pointwise HasDerivAt (F x t) = F' x t
   have h_diff : ∀ᵐ t ∂volume, t ∈ Set.uIoc γ.a γ.b →
       ∀ x ∈ Metric.ball w₀ ε,
         HasDerivAt (fun x => dslope f (γ.toFun t) x * deriv γ.toFun t)
@@ -902,8 +905,10 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
       rw [Set.uIoc_of_le hab] at _ht; exact Ioc_subset_Icc_self _ht
     have hx_U : x ∈ U := hr_sub (Metric.ball_subset_ball (by linarith : ε ≤ r) hx)
     exact ((hdslope_diff t ht_Icc).differentiableAt (hU.mem_nhds hx_U) |>.hasDerivAt).mul_const _
-  -- Apply Leibniz rule (dixonH1 f γ = fun w => ∫ ... by definition)
-  exact ((intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+  exact ((@intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+    ℂ _ volume ℂ _ _ _ γ.a γ.b ε (fun _ => C / ε * M_d)
+    (F := fun x t => dslope f (γ.toFun t) x * deriv γ.toFun t)
+    (F' := fun x t => deriv (dslope f (γ.toFun t)) x * deriv γ.toFun t) w₀
     hε_pos hF_meas hF_int hF'_meas h_bound
     intervalIntegral.intervalIntegrable_const h_diff).2).differentiableAt
 
@@ -1222,7 +1227,7 @@ theorem cauchyIntegralFormula_nullHomologous (hU : IsOpen U) (hf : Differentiabl
 /-- The image of a piecewise C¹ immersion has empty interior in ℂ.
 This follows from the fact that a Lipschitz map from ℝ to ℂ has image with
 Hausdorff dimension at most 1, hence Lebesgue measure 0 in ℂ. -/
-private lemma piecewiseC1_image_interior_empty (γ : PiecewiseC1Immersion) :
+lemma piecewiseC1_image_interior_empty (γ : PiecewiseC1Immersion) :
     interior (γ.toFun '' Icc γ.a γ.b) = ∅ := by
   rw [interior_eq_empty_iff_dense_compl]
   apply dense_compl_of_dimH_lt_finrank
