@@ -284,7 +284,6 @@ private lemma rightEdge_min_dist_from_non_seg1_seg5 (s : ℂ) (hs_im : s.im < H)
   rw [norm_sub_rev]
   exact (min_le_right _ _).trans (rightEdge_dist_from_horizontal s hs_im z hz_im)
 
-set_option maxHeartbeats 800000 in
 private lemma rightEdge_min_dist_from_non_seg1 (H : ℝ) (s : ℂ)
     (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1) (hs_im : s.im < H)
     (t : ℝ) (ht1 : 1 < t) (ht5 : t ≤ 5) :
@@ -315,7 +314,7 @@ private lemma rightEdge_min_dist_from_non_seg1 (H : ℝ) (s : ℂ)
           exact rightEdge_min_dist_from_non_seg1_seg5 s hs_im _
             (im_fdBoundary_H_seg5 H t ht1 h2 h3_lt h4)
 
-set_option maxHeartbeats 1600000 in
+set_option maxHeartbeats 400000 in
 theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :

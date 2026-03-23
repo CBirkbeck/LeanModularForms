@@ -454,7 +454,6 @@ private lemma fdBoundary_H_eq_fdBoundary_on_13 (H : ℝ) {t : ℝ}
   simp only [ht1, ↓reduceIte, ht3]
 
 omit f hf in
-set_option maxHeartbeats 400000 in
 /-- `‖fdBoundary_H H t‖ ≥ 1` for `t ∈ [0, 5]` when `H ≥ 1`. -/
 lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
     ‖fdBoundary_H H t‖ ≥ 1 := by
@@ -595,7 +594,6 @@ lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ
   simp only [hF_def, hγ_closed]; ring
 
 include hf in
-set_option maxHeartbeats 800000 in
 /-- Winding number = 0 for points in `fdBox` but NOT in the fundamental domain. -/
 lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)

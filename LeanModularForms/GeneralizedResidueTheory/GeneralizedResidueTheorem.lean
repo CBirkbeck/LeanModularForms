@@ -32,7 +32,6 @@ open scoped Interval
 
 /-! ### Master theorem (null-homologous, higher-order poles, conditions A'+B) -/
 
-set_option maxHeartbeats 800000 in
 /-- **Generalized Residue Theorem** (Hungerbuhler-Wasem, Theorem 3.3).
 
 For a meromorphic function `f` with finitely many poles `S0` on a
@@ -234,7 +233,6 @@ theorem generalizedResidueTheorem_convex (U : Set ℂ) (hU : IsOpen U)
 /-! ### Simple-pole corollary -/
 
 open GeneralizedResidueTheory in
-set_option maxHeartbeats 800000 in
 /-- **Generalized Residue Theorem for simple poles** (null-homologous).
 
 When every singularity in `S0` is a simple pole, conditions (A') and (B) are

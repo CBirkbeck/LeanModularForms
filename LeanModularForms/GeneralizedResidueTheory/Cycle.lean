@@ -152,7 +152,6 @@ private theorem sum_swap_winding_residue (Γ : ContourCycle) (S0 : Finset ℂ)
           residueAt f s)
     from by ring), ← Finset.mul_sum, ← Finset.sum_mul]
 
-set_option maxHeartbeats 400000 in
 /-- **Generalized Residue Theorem for simple poles on a cycle.**
 
 Extends `generalizedResidueTheorem_simplePoles` from a single curve to a formal
@@ -201,7 +200,6 @@ theorem generalizedResidueTheorem_simplePoles_cycle
 
 /-! ### Higher-order residue theorem for cycles (Tendsto version) -/
 
-set_option maxHeartbeats 800000 in
 /-- **Generalized Residue Theorem for cycles** (higher-order poles, Tendsto).
 
 Extends `generalizedResidueTheorem` from a single curve to a formal Z-linear

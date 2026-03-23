@@ -85,7 +85,6 @@ private lemma elliptic_finset_sum_eq_three (S : Finset UpperHalfPlane)
   ring
 
 include hf in
-set_option maxHeartbeats 800000 in
 private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∃ H₀ : ℝ, 1 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
@@ -233,7 +232,6 @@ private lemma unit_circle_re_zero_eq_i (s : ℍ)
   · exact hs_re.trans Complex.I_re.symm
   · exact (le_antisymm h_le h_ge).trans Complex.I_im.symm
 
-set_option maxHeartbeats 400000 in
 private theorem boundary_weight_auto
     (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟) :
     ∃ H₁ : ℝ, 1 < H₁ ∧ ∀ {H : ℝ}, H₁ ≤ H → ∀ s ∈ S,
@@ -458,7 +456,6 @@ private theorem half_bdry_sum_eq_leftVert_plus_leftArc (S : Finset UpperHalfPlan
     sum_nonEllArc_right_eq_left f S hS hS_complete]; ring
 
 include hf in
-set_option maxHeartbeats 800000 in
 /-- Orbit-sum valence formula with boundary weight hypothesis. -/
 theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :

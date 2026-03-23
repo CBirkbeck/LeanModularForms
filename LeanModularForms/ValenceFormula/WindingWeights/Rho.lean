@@ -611,7 +611,7 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   rw [hg_closed]
   ring
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 private lemma cutoff_integral_eq_ftc (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {ε : ℝ} (hε : 0 < ε) (hε_small : ε < H - Real.sqrt 3 / 2)
     (hε_small2 : ε < 2 * Real.sin (Real.pi / 12)) :

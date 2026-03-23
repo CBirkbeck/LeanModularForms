@@ -52,7 +52,7 @@ private lemma convex_combo_gt_one' (s A Y₀ : ℝ) (hs0 : 0 ≤ s) (hs1 : s ≤
     have : s * Y₀ > s := by nlinarith
     linarith
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 400000 in
 /-- The straight line from any valid interior point p to ref_p₀ = I*Y₀
     avoids all points on the fdPolygon boundary. -/
 lemma fdPolygon_avoids_line_to_ref (p : ℂ) (hp_norm : ‖p‖ > 1)

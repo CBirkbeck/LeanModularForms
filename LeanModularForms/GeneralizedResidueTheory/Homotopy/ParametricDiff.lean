@@ -293,7 +293,7 @@ private lemma differentiableAt_comp_of_holomorphic
         (differentiableAt_const s))
   exact (hf.restrictScalars ℝ).comp t hH_diff
 
-set_option maxHeartbeats 2000000 in
+set_option maxHeartbeats 1600000 in
 /-- Derivative of the homotopy integral vanishes. -/
 theorem hasDerivAt_homotopy_integral_zero
     (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (a b s : ℝ)

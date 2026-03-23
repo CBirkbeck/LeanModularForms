@@ -295,7 +295,6 @@ private lemma arc_min_dist_pos (S : Finset UpperHalfPlane)
 
 /-! ### S-symmetry identity for arc CPV integral -/
 
-set_option maxHeartbeats 800000 in
 omit hf in
 lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
     (H : ℝ) (ε : ℝ) (hε : 0 < ε) (h_oncurve : ∀ t ∈ Set.Ioo (1:ℝ) 3,
@@ -473,7 +472,6 @@ lemma arc_non_excluded_measure_tendsto (S : Finset UpperHalfPlane) (H : ℝ) :
 
 /-! ### Arc CPV contribution tends to -(2πik/12) -/
 
-set_option maxHeartbeats 400000 in
 omit hf in
 theorem arc_cpv_contribution_tendsto (S : Finset UpperHalfPlane)
     (H : ℝ) (h_oncurve : ∀ t ∈ Set.Ioo (1:ℝ) 3,
@@ -623,7 +621,6 @@ lemma arc_cpv_eventually_eq_union (S : Finset UpperHalfPlane)
 
 /-! ### Final bridge for Assembly.lean -/
 
-set_option maxHeartbeats 400000 in
 omit hf in
 theorem tendsto_pvIntegral_arc_bridge (S : Finset UpperHalfPlane)
     {H : ℝ} (_hH : Real.sqrt 3 / 2 < H) (h_oncurve_arc : ∀ t ∈ Set.Ioo (1 : ℝ) 3,

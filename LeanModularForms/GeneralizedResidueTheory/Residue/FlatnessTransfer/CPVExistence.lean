@@ -25,7 +25,6 @@ noncomputable section
 
 namespace GeneralizedResidueTheory
 
-set_option maxHeartbeats 1600000 in
 private lemma continuousOn_cutoff_integral
     (γ : PiecewiseC1Immersion) (z₀ : ℂ) (t₀ : ℝ)
     (_ht₀ : t₀ ∈ Set.Ioo γ.a γ.b)
