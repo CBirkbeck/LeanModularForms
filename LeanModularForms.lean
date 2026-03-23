@@ -13,6 +13,7 @@ import LeanModularForms.ForMathlib.UpperHalfPlane
 import LeanModularForms.ForMathlib.hassumunifon
 import LeanModularForms.GeneralizedResidueTheory.Basic
 import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
+import LeanModularForms.GeneralizedResidueTheory.Cycle
 import LeanModularForms.GeneralizedResidueTheory.GeneralizedResidueTheorem
 import LeanModularForms.GeneralizedResidueTheory.HomologicalCauchy
 import LeanModularForms.GeneralizedResidueTheory.Homotopy.CircleParam
