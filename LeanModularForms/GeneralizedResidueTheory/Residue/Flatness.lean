@@ -35,8 +35,6 @@ Reference: Hungerbuhler-Wasem, arXiv:1808.00997v2, Definition 3.2.
 open Complex Set Filter Topology Asymptotics
 open scoped Real Interval
 
-attribute [local instance] Classical.propDecidable
-
 noncomputable section
 
 /-! ### Orthogonal projection in C (viewed as R^2) -/
@@ -413,6 +411,7 @@ theorem satisfiesConditionA_of_simple_poles
   intro _s _hs t₀ _ht₀ _hcross ht₀_Ioo
   exact isFlatOfOrder_one γ t₀ ht₀_Ioo
 
+open Classical in
 /-- Condition (B) for simple poles requires angle rationality at corner crossings
 as an explicit hypothesis. The Laurent coefficient condition is vacuously true
 (the only singular term is k = 1), so any q works; but the angle itself must

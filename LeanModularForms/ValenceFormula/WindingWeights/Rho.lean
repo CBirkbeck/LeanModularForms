@@ -611,7 +611,36 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   rw [hg_closed]
   ring
 
-set_option maxHeartbeats 400000 in
+private lemma norm_le_middle_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+    {ε δ_L δ_R : ℝ} (hε : 0 < ε) (hδ_L_pos : 0 < δ_L) (hδ_L_lt_one : δ_L < 1)
+    (hδ_R_pos : 0 < δ_R) (hδ_R_lt_one : δ_R < 1)
+    (h_norm_L : ‖fdBoundary_H H (3 - δ_L) - ellipticPointRho‖ = ε)
+    (h_norm_R : ‖fdBoundary_H H (3 + δ_R) - ellipticPointRho‖ = ε)
+    (hH_gap : 0 < H - Real.sqrt 3 / 2) :
+    ∀ t, 3 - δ_L ≤ t → t ≤ 3 + δ_R →
+      ¬(‖fdBoundary_H H t - (ellipticPointRho : ℂ)‖ > ε) := by
+  intro t ht_lo ht_hi
+  push_neg
+  rcases le_or_gt t 3 with ht3 | ht3
+  · rcases eq_or_lt_of_le ht3 with rfl | ht3'
+    · simp only [fdBoundary_H_at_three_eq_rho, sub_self, norm_zero]
+      exact le_of_lt hε
+    · have ht1 : 1 < t := by nlinarith
+      rw [g_norm_arc ht1 ht3']
+      rw [← h_norm_L, g_norm_seg2 hδ_L_pos hδ_L_lt_one]
+      have h_3mt_le : 3 - t ≤ δ_L := by linarith
+      have h_angle_le : (3 - t) * Real.pi / 12 ≤ δ_L * Real.pi / 12 := by
+        nlinarith [Real.pi_pos]
+      exact mul_le_mul_of_nonneg_left
+        (Real.sin_le_sin_of_le_of_le_pi_div_two
+          (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos]) h_angle_le)
+        (by norm_num : (0:ℝ) ≤ 2)
+  · have ht_le_4 : t ≤ 4 := by linarith
+    have h_t_as_3pδ : t = 3 + (t - 3) := by ring
+    rw [h_t_as_3pδ, g_norm_seg3 H hH (by linarith) (by linarith : t - 3 ≤ 1)]
+    rw [← h_norm_R, g_norm_seg3 H hH hδ_R_pos (le_of_lt hδ_R_lt_one)]
+    exact mul_le_mul_of_nonneg_right (by linarith : t - 3 ≤ δ_R) (le_of_lt hH_gap)
+
 private lemma cutoff_integral_eq_ftc (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {ε : ℝ} (hε : 0 < ε) (hε_small : ε < H - Real.sqrt 3 / 2)
     (hε_small2 : ε < 2 * Real.sin (Real.pi / 12)) :
@@ -672,66 +701,29 @@ private lemma cutoff_integral_eq_ftc (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
         _ = 1 / 2 := by rw [Real.sin_pi_div_six]
     linarith
   set F := fun t => if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else (0 : ℂ) with hF_def
+  have hg_eq : g = fun t => fdBoundary_H H t - (ellipticPointRho : ℂ) := rfl
   have h_norm_gt_left : ∀ t ∈ Ioo (0 : ℝ) (3 - δ_L), ‖g t‖ > ε := by
     intro t ⟨ht0, ht3⟩
     rcases le_or_gt t 1 with ht1 | ht1
     · calc ε < 1 := hε_lt_one
         _ ≤ ‖g t‖ := g_norm_ge_one_seg0 (le_of_lt ht0) ht1
     · have ht3' : t < 3 := by linarith
-      rw [show g t = fdBoundary_H H t - ellipticPointRho from rfl,
-          g_norm_arc ht1 ht3']
-      rw [← h_norm_L, show g (3 - δ_L) = fdBoundary_H H (3 - δ_L) - ellipticPointRho from rfl,
-          g_norm_seg2 hδ_L_pos hδ_L_lt_one]
-      have h_δ_lt : δ_L < 3 - t := by linarith
-      have hpi12 : (0 : ℝ) < Real.pi / 12 := by positivity
-      have h_angle_gt : δ_L * Real.pi / 12 < (3 - t) * Real.pi / 12 := by nlinarith
-      have h_sin_mono : Real.sin (δ_L * Real.pi / 12) < Real.sin ((3 - t) * Real.pi / 12) := by
-        apply Real.sin_lt_sin_of_lt_of_le_pi_div_two
-        · nlinarith [Real.pi_pos]
-        · nlinarith [Real.pi_pos]
-        · exact h_angle_gt
-      linarith
+      rw [hg_eq, g_norm_arc ht1 ht3', ← h_norm_L, hg_eq, g_norm_seg2 hδ_L_pos hδ_L_lt_one]
+      apply mul_lt_mul_of_pos_left _ (by norm_num : (0:ℝ) < 2)
+      exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
+        (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+        (by nlinarith : δ_L * Real.pi / 12 < (3 - t) * Real.pi / 12)
   have h_norm_gt_right : ∀ t ∈ Ioo (3 + δ_R) (5 : ℝ), ‖g t‖ > ε := by
     intro t ⟨ht3, ht5⟩
     rcases le_or_gt t 4 with ht4 | ht4
     · have h_t_eq : t = 3 + (t - 3) := by ring
-      rw [show g t = fdBoundary_H H t - ellipticPointRho from rfl, h_t_eq,
-          g_norm_seg3 H hH (by linarith : 0 < t - 3) (by linarith : t - 3 ≤ 1)]
-      rw [← h_norm_R, show g (3 + δ_R) = fdBoundary_H H (3 + δ_R) - ellipticPointRho from rfl,
-          g_norm_seg3 H hH hδ_R_pos (le_of_lt hδ_R_lt_one)]
-      have : δ_R < t - 3 := by linarith
-      exact mul_lt_mul_of_pos_right this hH_gap
+      rw [hg_eq, h_t_eq, g_norm_seg3 H hH (by linarith : 0 < t - 3) (by linarith : t - 3 ≤ 1),
+          ← h_norm_R, hg_eq, g_norm_seg3 H hH hδ_R_pos (le_of_lt hδ_R_lt_one)]
+      exact mul_lt_mul_of_pos_right (by linarith : δ_R < t - 3) hH_gap
     · calc ε < H - Real.sqrt 3 / 2 := hε_small
-        _ ≤ ‖g t‖ := g_norm_ge_seg4 H hH (le_of_lt ht4) (le_of_lt ht5)
-  have h_norm_le_middle : ∀ t, 3 - δ_L ≤ t → t ≤ 3 + δ_R → ¬(‖g t‖ > ε) := by
-    intro t ht_lo ht_hi
-    push_neg
-    rcases le_or_gt t 3 with ht3 | ht3
-    · rcases eq_or_lt_of_le ht3 with rfl | ht3'
-      · simp only [show g 3 = fdBoundary_H H 3 - ellipticPointRho from rfl,
-          fdBoundary_H_at_three_eq_rho, sub_self, norm_zero]
-        exact le_of_lt hε
-      · have ht1 : 1 < t := by nlinarith
-        rw [show g t = fdBoundary_H H t - ellipticPointRho from rfl,
-            g_norm_arc ht1 ht3']
-        rw [← h_norm_L, show g (3 - δ_L) = fdBoundary_H H (3 - δ_L) - ellipticPointRho from rfl,
-            g_norm_seg2 hδ_L_pos hδ_L_lt_one]
-        have h_3mt_le : 3 - t ≤ δ_L := by linarith
-        have h_angle_le : (3 - t) * Real.pi / 12 ≤ δ_L * Real.pi / 12 := by
-          have hpi12 : (0 : ℝ) < Real.pi / 12 := by positivity
-          nlinarith
-        have h_sin_le : Real.sin ((3 - t) * Real.pi / 12) ≤ Real.sin (δ_L * Real.pi / 12) := by
-          exact Real.sin_le_sin_of_le_of_le_pi_div_two
-            (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos]) h_angle_le
-        linarith
-    · have ht_le_4 : t ≤ 4 := by linarith
-      have h_t_as_3pδ : t = 3 + (t - 3) := by ring
-      rw [show g t = fdBoundary_H H t - ellipticPointRho from rfl, h_t_as_3pδ,
-          g_norm_seg3 H hH (by linarith) (by linarith : t - 3 ≤ 1)]
-      rw [← h_norm_R, show g (3 + δ_R) = fdBoundary_H H (3 + δ_R) - ellipticPointRho from rfl,
-          g_norm_seg3 H hH hδ_R_pos (le_of_lt hδ_R_lt_one)]
-      have : t - 3 ≤ δ_R := by linarith
-      exact mul_le_mul_of_nonneg_right this (le_of_lt hH_gap)
+        _ ≤ ‖g t‖ := by rw [hg_eq]; exact g_norm_ge_seg4 H hH (le_of_lt ht4) (le_of_lt ht5)
+  have h_norm_le_middle : ∀ t, 3 - δ_L ≤ t → t ≤ 3 + δ_R → ¬(‖g t‖ > ε) :=
+    norm_le_middle_rho H hH hε hδ_L_pos hδ_L_lt_one hδ_R_pos hδ_R_lt_one h_norm_L h_norm_R hH_gap
 
   have hF_when_gt (t : ℝ) (h_gt : ‖g t‖ > ε) : F t = deriv g t / g t := by
     simp only [hF_def, if_pos h_gt, mul_comm (g t)⁻¹, div_eq_mul_inv]

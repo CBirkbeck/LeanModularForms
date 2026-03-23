@@ -60,6 +60,18 @@ def cauchyPrincipalValueIntegrand' (f : ℂ → ℂ) (γ : ℝ → ℂ)
     (z₀ : ℂ) (ε : ℝ) (t : ℝ) : ℂ :=
   if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0
 
+@[simp]
+theorem cauchyPrincipalValueIntegrand'_of_gt {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
+    (h : ε < ‖γ t - z₀‖) :
+    cauchyPrincipalValueIntegrand' f γ z₀ ε t = f (γ t) * deriv γ t := by
+  simp only [cauchyPrincipalValueIntegrand', show ‖γ t - z₀‖ > ε from h, ite_true]
+
+@[simp]
+theorem cauchyPrincipalValueIntegrand'_of_le {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
+    (h : ‖γ t - z₀‖ ≤ ε) :
+    cauchyPrincipalValueIntegrand' f γ z₀ ε t = 0 := by
+  simp only [cauchyPrincipalValueIntegrand', show ¬(‖γ t - z₀‖ > ε) from not_lt.mpr h, ite_false]
+
 /-- The Cauchy principal value of ∮_γ f(z) dz, excluding ε-neighborhoods of z₀. -/
 def cauchyPrincipalValue' (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   limUnder (𝓝[>] (0 : ℝ)) fun ε =>
@@ -95,6 +107,17 @@ def ModelSectorCurve.γ₂ (C : ModelSectorCurve) : ℝ → ℂ :=
 /-- The radial ray along the direction `e^{iα}`. -/
 def ModelSectorCurve.γ₃ (C : ModelSectorCurve) : ℝ → ℂ :=
   fun t => t * exp (I * C.α)
+
+@[simp] theorem ModelSectorCurve.γ₁_zero (M : ModelSectorCurve) : M.γ₁ 0 = 0 := by
+  simp [ModelSectorCurve.γ₁]
+
+@[simp] theorem ModelSectorCurve.γ₃_zero (M : ModelSectorCurve) : M.γ₃ 0 = 0 := by
+  simp [ModelSectorCurve.γ₃]
+
+theorem ModelSectorCurve.γ₂_norm (M : ModelSectorCurve) (t : ℝ) :
+    ‖M.γ₂ t‖ = M.r := by
+  simp only [ModelSectorCurve.γ₂, norm_mul, Complex.norm_real, Real.norm_eq_abs,
+    abs_of_pos M.hr, mul_comm I, Complex.norm_exp_ofReal_mul_I, mul_one]
 
 /-- The residue of f at z₀ via the limit definition for simple poles. -/
 def residue' (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
