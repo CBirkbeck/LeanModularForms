@@ -711,7 +711,7 @@ private lemma dslope_uniform_bound (hU : IsOpen U) (hf : DifferentiableOn ℂ f 
       exact le_trans (le_trans h_step1 h_step2) (le_trans (h_eq ▸ le_refl _)
         (le_trans h_le (le_max_right _ _)))
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 1600000 in
 /-- h₁ is differentiable on all of U, including across the curve.
 Uses the Leibniz rule (parametric differentiation of the dslope integral). -/
 theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
@@ -1316,7 +1316,6 @@ end
 
 /-! ## Downstream theorems with null-homologous hypothesis -/
 
-set_option maxHeartbeats 4000000 in
 /-- Null-homologous version of `integral_eq_sum_residues_of_avoids`. -/
 theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
     (S0 : Finset ℂ) (hS0_in_U : ∀ s ∈ S0, s ∈ U) (f : ℂ → ℂ)

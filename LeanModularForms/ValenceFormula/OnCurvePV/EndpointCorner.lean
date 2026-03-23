@@ -19,7 +19,6 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
-set_option maxHeartbeats 32000000 in
 lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     CauchyPrincipalValueExists' (fun z => (z - ((1/2 : ℂ) + ↑H * I))⁻¹)
       (fdBoundary_H H) 0 5 ((1/2 : ℂ) + ↑H * I) := by
@@ -314,7 +313,6 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     Real.log_div hη.ne' hc_ne, Complex.ofReal_sub]
   ring
 
-set_option maxHeartbeats 16000000 in
 lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     CauchyPrincipalValueExists' (fun z => (z - (-(1/2 : ℂ) + ↑H * I))⁻¹)
       (fdBoundary_H H) 0 5 (-(1/2 : ℂ) + ↑H * I) := by

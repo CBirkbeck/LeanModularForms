@@ -193,7 +193,6 @@ lemma unitArc_min_dist_pos (s : ℂ) (_hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 
   exact ⟨⟨by linarith [(abs_lt.mp hs_re).2], by linarith [(abs_lt.mp hs_re).1]⟩,
          by linarith⟩
 
-set_option maxHeartbeats 8000000 in
 /-- Non-arc segments of fdBoundary_H stay at distance ≥ d from arc point s. -/
 lemma unitArc_min_dist_from_non_arc (H : ℝ) (hH : 1 < H) (s : ℂ)
     (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (_hs_im_pos : 0 < s.im)

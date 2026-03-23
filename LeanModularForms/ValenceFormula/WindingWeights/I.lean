@@ -384,7 +384,6 @@ private lemma log_neg_eq_add_pi_I {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : z.im < 0
   rw [Complex.arg_neg_eq_arg_add_pi_of_im_neg hz_im]
   push_cast; ring
 
-set_option maxHeartbeats 16000000 in
 private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     let g := fun t => fdBoundary_H H t - I
     IntervalIntegrable (fun t => deriv g t / g t) volume 0 (2 - δ) ∧
@@ -679,7 +678,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     linear_combination h_branch_t₀
   rw [hg_closed, h_branch_3, h_branch_t₀']; ring
 
-set_option maxHeartbeats 16000000 in
+set_option maxHeartbeats 800000 in
 /-- The PV integral of `(γ-I)⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ`. -/
 theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - I‖ > ε

@@ -432,7 +432,6 @@ private lemma g_rho_differentiableAt (H : ℝ) {t : ℝ}
     exact DifferentiableAt.congr_of_eventuallyEq
       ((hd.sub (differentiableAt_const _)).add (differentiableAt_const _)) h_local
 
-set_option maxHeartbeats 4000000 in
 private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {δ_L δ_R : ℝ} (hδ_L : 0 < δ_L) (hδ_L1 : δ_L < 1) (hδ_R : 0 < δ_R) (hδ_R1 : δ_R < 1) :
     let g := fun t => fdBoundary_H H t - (ellipticPointRho : ℂ)

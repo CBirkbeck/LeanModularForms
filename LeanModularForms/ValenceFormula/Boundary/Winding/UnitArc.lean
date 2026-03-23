@@ -200,7 +200,7 @@ private lemma unitArc_norm_continuous (s : ℂ) (H : ℝ) (t₀ : ℝ) :
   continuous_norm.comp (((fdBoundary_H_continuous H).comp (continuous_const.add continuous_id')).sub
     continuous_const)
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 800000 in
 private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
     (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (hs_im_pos : 0 < s.im) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then

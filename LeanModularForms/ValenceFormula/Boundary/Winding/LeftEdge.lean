@@ -92,7 +92,7 @@ private lemma leftEdge_min_dist_from_non_seg4_right (H : ℝ) (s : ℂ) (_hs_re 
     _ = |(fdBoundary_seg5_H H t - s).im| := by rw [him]; exact (abs_of_pos (by linarith)).symm
     _ ≤ ‖fdBoundary_seg5_H H t - s‖ := Complex.abs_im_le_norm _
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 800000 in
 private lemma leftEdge_winding_aux (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = -1/2) (hs_norm : ‖s‖ > 1)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :

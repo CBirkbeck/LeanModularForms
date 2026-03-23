@@ -18,7 +18,7 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
-set_option maxHeartbeats 8000000 in
+set_option maxHeartbeats 800000 in
 /-- For any point on `fdBoundary_H H`, the CPV integral of `(z - s)⁻¹` exists. -/
 theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (h_on : ∃ t ∈ Set.Icc (0:ℝ) 5, fdBoundary_H H t = s) :
