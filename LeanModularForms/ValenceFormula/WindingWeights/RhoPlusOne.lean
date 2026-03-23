@@ -621,7 +621,25 @@ private lemma rho'_norm_gt_right_of_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     · calc ε < H - Real.sqrt 3 / 2 := hε_lt_gap
         _ ≤ _ := g_rho'_norm_ge_seg4 hH (le_of_lt ht4) (le_of_lt ht5)
 
-set_option maxHeartbeats 300000 in
+private lemma arc_angle_lt_epsilon {δ_R ε : ℝ} (hδ_R_pos : 0 < δ_R)
+    (hδ_R_lt_one : δ_R < 1)
+    (h_norm_R : ‖fdBoundary_H H (1 + δ_R) - (ellipticPointRhoPlusOne : ℂ)‖ = ε) :
+    δ_R * Real.pi / 12 < ε := by
+  have h2sin := g_rho'_norm_arc (H := H) hδ_R_pos (show δ_R < 2 by linarith)
+  rw [h_norm_R] at h2sin
+  have h_sin_eq : Real.sin (δ_R * Real.pi / 12) = ε / 2 := by linarith
+  set x := δ_R * Real.pi / 12 with hx_def
+  have hx_pos : 0 < x := by positivity
+  have hx_le_one : x ≤ 1 := by
+    have hpi4 := Real.pi_le_four
+    have : x < Real.pi / 12 := by
+      rw [hx_def]; nlinarith
+    linarith
+  have h_sin_lb := Real.sin_gt_sub_cube hx_pos hx_le_one
+  have h_lb : x - x ^ 3 / 4 > x / 2 := by
+    have h1 := sq_nonneg x; have h2 := sq_nonneg (1 - x); nlinarith
+  linarith
+
 /-- The PV integral of `(γ-ρ')⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ/3`. -/
 theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - ellipticPointRhoPlusOne‖ > ε
@@ -799,22 +817,8 @@ theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     push_cast; ring
   rw [h_simp, norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs, abs_neg,
       abs_of_pos (by positivity)]
-  have h_angle_bound : δ_R * Real.pi / 12 < ε := by
-    have h2sin := g_rho'_norm_arc (H := H) hδ_R_pos (show δ_R < 2 by linarith)
-    have h_norm_R' : ‖zR‖ = ε := h_norm_R
-    rw [h_norm_R'] at h2sin
-    have h_sin_eq : Real.sin (δ_R * Real.pi / 12) = ε / 2 := by linarith
-    set x := δ_R * Real.pi / 12 with hx_def
-    have hx_pos : 0 < x := by positivity
-    have hx_le_one : x ≤ 1 := by
-      have hpi4 := Real.pi_le_four
-      have : x < Real.pi / 12 := by
-        rw [hx_def]; have := hδ_R_lt_one; nlinarith
-      linarith
-    have h_sin_lb := Real.sin_gt_sub_cube hx_pos hx_le_one
-    have h_lb : x - x ^ 3 / 4 > x / 2 := by
-      have h1 := sq_nonneg x; have h2 := sq_nonneg (1 - x); nlinarith
-    linarith
+  have h_angle_bound : δ_R * Real.pi / 12 < ε :=
+    arc_angle_lt_epsilon hδ_R_pos hδ_R_lt_one h_norm_R
   linarith
 
 /-- `generalizedWindingNumber' (fdBoundary_H H) 0 5 ρ' = -1/6`. -/

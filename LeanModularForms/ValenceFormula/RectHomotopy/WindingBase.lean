@@ -52,7 +52,164 @@ private lemma convex_combo_gt_one' (s A Y₀ : ℝ) (hs0 : 0 ≤ s) (hs1 : s ≤
     have : s * Y₀ > s := by nlinarith
     linarith
 
-set_option maxHeartbeats 400000 in
+private lemma avoids_chord_rho'_to_i (p : ℂ)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+    (hp_sq : p.re ^ 2 + p.im ^ 2 > 1)
+    (s : ℝ) (hs0 : 0 ≤ s) (hs1 : s ≤ 1)
+    (h1s_nn : 0 ≤ 1 - s)
+    (t : ℝ) (ht1 : 1 < t) (ht2 : t ≤ 2)
+    (heq_re : (fdPolygon t).re = (1 - s) * p.re)
+    (heq_im : (fdPolygon t).im = (1 - s) * p.im + s * ref_Y₀) : False := by
+  have hsq3 : Real.sqrt 3 ^ 2 = 3 := Real.sq_sqrt (by norm_num : (0:ℝ) ≤ 3)
+  have hsq3_pos : 0 < Real.sqrt 3 := Real.sqrt_pos_of_pos (by norm_num : (0:ℝ) < 3)
+  set u := t - 1 with hu_def
+  have hu0 : 0 ≤ u := by linarith
+  have hu1 : u ≤ 1 := by linarith
+  have hfd : fdPolygon t = chordSegment rho' i_point u := by
+    simp only [fdPolygon, show ¬(t ≤ 1) from not_le.mpr ht1, ↓reduceIte, ht2, hu_def]
+  have hfd_re : (fdPolygon t).re = (1 - u) / 2 := by
+    rw [hfd]
+    simp only [chordSegment, rho', i_point, smul_add, real_smul,
+      add_re, mul_re, ofReal_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
+      sub_zero, zero_mul, add_zero, one_re, one_im, div_ofNat_re, div_ofNat_im]
+    ring
+  have hfd_im : (fdPolygon t).im = (1 - u) * (Real.sqrt 3 / 2) + u := by
+    rw [hfd]
+    simp only [chordSegment, rho', i_point, smul_add, real_smul,
+      add_im, mul_im, ofReal_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
+      add_zero, zero_mul, one_re, one_im,
+      div_ofNat_re, div_ofNat_im]
+    ring
+  rcases le_or_gt 0 p.re with hp_re_nn | hp_re_neg
+  · rw [hfd_re] at heq_re
+    rw [hfd_im] at heq_im
+    have h_1mu : 1 - u = 2 * ((1 - s) * p.re) := by linarith
+    have h_u : u = 1 - 2 * ((1 - s) * p.re) := by linarith
+    have heq_im' : (1 - s) * (p.im + p.re * (2 - Real.sqrt 3)) + s * ref_Y₀ = 1 := by
+      have : (1 - u) * (Real.sqrt 3 / 2) + u =
+        1 - (1 - s) * p.re * (2 - Real.sqrt 3) := by
+        rw [h_1mu, h_u]; ring
+      linarith
+    have hp_im_bound : p.im > Real.sqrt (1 - p.re ^ 2) := by
+      have h1 : 0 ≤ 1 - p.re ^ 2 := by nlinarith [abs_lt.mp hp_re]
+      rw [show p.im = Real.sqrt (p.im ^ 2) from (Real.sqrt_sq (le_of_lt hp_im_pos)).symm]
+      exact Real.sqrt_lt_sqrt h1 (by nlinarith)
+    have hp_re_le : p.re ≤ 1/2 := by
+      rcases abs_le.mp (le_of_lt hp_re) with ⟨_, h⟩; linarith
+    have h_combo : p.im + p.re * (2 - Real.sqrt 3) > 1 := by
+      have h_ge := sqrt_one_minus_sq_plus_linear_ge_one p.re hp_re_nn hp_re_le
+      linarith
+    have h_lhs_gt : (1 - s) * (p.im + p.re * (2 - Real.sqrt 3)) + s * ref_Y₀ > 1 :=
+      convex_combo_gt_one' s (p.im + p.re * (2 - Real.sqrt 3)) ref_Y₀
+        hs0 hs1 ref_Y₀_gt_one h_combo
+    linarith
+  · rw [hfd_re] at heq_re
+    have h_lhs_nn : (1 - u) / 2 ≥ 0 := div_nonneg (by linarith) (by norm_num)
+    have h_rhs_le : (1 - s) * p.re ≤ 0 :=
+      mul_nonpos_of_nonneg_of_nonpos h1s_nn (le_of_lt hp_re_neg)
+    have h_both_zero : (1 - s) * p.re = 0 ∧ (1 - u) / 2 = 0 := by
+      constructor <;> linarith
+    have hs_eq : s = 1 := by
+      rcases mul_eq_zero.mp h_both_zero.1 with h | h
+      · linarith
+      · exfalso; linarith
+    rw [hs_eq] at heq_im
+    simp at heq_im
+    rw [hfd_im] at heq_im
+    have h_bound : (1 - u) * (Real.sqrt 3 / 2) + u ≤ 1 := by
+      have : (1 - u) * (Real.sqrt 3 / 2) + u =
+          Real.sqrt 3 / 2 + u * (1 - Real.sqrt 3 / 2) := by
+        ring
+      rw [this]
+      have h1 : 1 - Real.sqrt 3 / 2 > 0 := by nlinarith [hsq3]
+      have h2 : u * (1 - Real.sqrt 3 / 2) ≤ 1 * (1 - Real.sqrt 3 / 2) :=
+        mul_le_mul_of_nonneg_right hu1 (le_of_lt h1)
+      linarith
+    linarith [ref_Y₀_gt_one]
+
+private lemma avoids_chord_i_to_rho (p : ℂ)
+    (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im)
+    (hp_sq : p.re ^ 2 + p.im ^ 2 > 1)
+    (s : ℝ) (hs0 : 0 ≤ s) (hs1 : s ≤ 1)
+    (h1s_nn : 0 ≤ 1 - s)
+    (t : ℝ) (ht2 : 2 < t) (ht3 : t ≤ 3)
+    (heq_re : (fdPolygon t).re = (1 - s) * p.re)
+    (heq_im : (fdPolygon t).im = (1 - s) * p.im + s * ref_Y₀) : False := by
+  have hsq3 : Real.sqrt 3 ^ 2 = 3 := Real.sq_sqrt (by norm_num : (0:ℝ) ≤ 3)
+  have hsq3_pos : 0 < Real.sqrt 3 := Real.sqrt_pos_of_pos (by norm_num : (0:ℝ) < 3)
+  set v := t - 2 with hv_def
+  have hv0 : 0 ≤ v := by linarith
+  have hv1 : v ≤ 1 := by linarith
+  have hfd : fdPolygon t = chordSegment i_point rho v := by
+    simp only [fdPolygon, show ¬(t ≤ 1) from by linarith,
+      show ¬(t ≤ 2) from not_le.mpr ht2, ↓reduceIte, ht3, hv_def]
+  have hfd_re : (fdPolygon t).re = -v / 2 := by
+    rw [hfd]
+    simp only [chordSegment, i_point, rho, smul_add, real_smul,
+      add_re, mul_re, ofReal_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
+      sub_zero, zero_mul, one_re, one_im,
+      div_ofNat_re, div_ofNat_im, neg_re, neg_im]
+    ring
+  have hfd_im : (fdPolygon t).im = 1 - v * (1 - Real.sqrt 3 / 2) := by
+    rw [hfd]
+    simp only [chordSegment, i_point, rho, smul_add,
+      real_smul, add_im, mul_im, ofReal_re, ofReal_im,
+      I_re, I_im, mul_zero, mul_one, add_zero, zero_mul,
+      one_re, one_im, div_ofNat_re, div_ofNat_im,
+      neg_re, neg_im]
+    ring
+  rcases le_or_gt p.re 0 with hp_re_np | hp_re_pos
+  · rcases eq_or_lt_of_le hp_re_np with hp_re_zero | hp_re_neg
+    · rw [hfd_re] at heq_re
+      rw [hp_re_zero, mul_zero] at heq_re
+      have hv_eq : v = 0 := by linarith
+      rw [hfd_im, hv_eq] at heq_im
+      simp at heq_im
+      have hp_im_gt1 : p.im > 1 := by
+        have : p.im ^ 2 > 1 := by nlinarith [hp_re_zero]
+        nlinarith [sq_nonneg (p.im - 1)]
+      have : (1 - s) * p.im + s * ref_Y₀ > 1 :=
+        convex_combo_gt_one' s p.im ref_Y₀ hs0 hs1 ref_Y₀_gt_one hp_im_gt1
+      linarith
+    · rw [hfd_re] at heq_re
+      have hv_eq : v = -2 * ((1 - s) * p.re) := by linarith
+      have hv_eq' : v = 2 * (1 - s) * (-p.re) := by linarith
+      rw [hfd_im] at heq_im
+      have heq_im' : (1 - s) * (p.im + (-p.re) * (2 - Real.sqrt 3)) + s * ref_Y₀ = 1 := by
+        have : v * (1 - Real.sqrt 3 / 2) = (1 - s) * (-p.re) * (2 - Real.sqrt 3) := by
+          rw [hv_eq']; ring
+        linarith
+      have hp_abs_re : |p.re| = -p.re := abs_of_neg hp_re_neg
+      have hp_re_nn' : 0 ≤ -p.re := by linarith
+      have hp_re_le' : -p.re ≤ 1/2 := by
+        rw [← hp_abs_re]; linarith
+      have hp_im_bound : p.im > Real.sqrt (1 - p.re ^ 2) := by
+        have h1 : 0 ≤ 1 - p.re ^ 2 := by nlinarith [abs_lt.mp hp_re]
+        rw [show p.im = Real.sqrt (p.im ^ 2) from (Real.sqrt_sq (le_of_lt hp_im_pos)).symm]
+        exact Real.sqrt_lt_sqrt h1 (by nlinarith)
+      have h_neg_re_sq : (-p.re) ^ 2 = p.re ^ 2 := by ring
+      have h_combo : p.im + (-p.re) * (2 - Real.sqrt 3) > 1 := by
+        have h_ge := sqrt_one_minus_sq_plus_linear_ge_one (-p.re) hp_re_nn' hp_re_le'
+        rw [h_neg_re_sq] at h_ge
+        linarith
+      have h_lhs_gt : (1 - s) * (p.im + (-p.re) * (2 - Real.sqrt 3)) + s * ref_Y₀ > 1 :=
+        convex_combo_gt_one' s (p.im + (-p.re) * (2 - Real.sqrt 3)) ref_Y₀
+          hs0 hs1 ref_Y₀_gt_one h_combo
+      linarith
+  · rw [hfd_re] at heq_re
+    have h_rhs_nn : (1 - s) * p.re ≥ 0 := by positivity
+    have h_lhs_le : -v / 2 ≤ 0 := by linarith
+    have h_both_zero : (1 - s) * p.re = 0 ∧ v = 0 := by
+      constructor <;> linarith
+    have hs_eq : s = 1 := by
+      rcases mul_eq_zero.mp h_both_zero.1 with h | h
+      · linarith
+      · exfalso; linarith
+    rw [hs_eq] at heq_im; simp at heq_im
+    rw [hfd_im, show v = 0 from h_both_zero.2] at heq_im
+    simp at heq_im
+    linarith [ref_Y₀_gt_one]
+
 /-- The straight line from any valid interior point p to ref_p₀ = I*Y₀
     avoids all points on the fdPolygon boundary. -/
 lemma fdPolygon_avoids_line_to_ref (p : ℂ) (hp_norm : ‖p‖ > 1)
@@ -103,144 +260,12 @@ lemma fdPolygon_avoids_line_to_ref (p : ℂ) (hp_norm : ‖p‖ > 1)
     linarith
   · push_neg at ht1
     by_cases ht2 : t ≤ 2
-    · set u := t - 1 with hu_def
-      have hu0 : 0 ≤ u := by linarith
-      have hu1 : u ≤ 1 := by linarith
-      have hfd : fdPolygon t = chordSegment rho' i_point u := by
-        simp only [fdPolygon, show ¬(t ≤ 1) from not_le.mpr ht1, ↓reduceIte, ht2, hu_def]
-      have hfd_re : (fdPolygon t).re = (1 - u) / 2 := by
-        rw [hfd]
-        simp only [chordSegment, rho', i_point, smul_add, real_smul,
-          add_re, mul_re, ofReal_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
-          sub_zero, zero_mul, add_zero, one_re, one_im, div_ofNat_re, div_ofNat_im]
-        ring
-      have hfd_im : (fdPolygon t).im = (1 - u) * (Real.sqrt 3 / 2) + u := by
-        rw [hfd]
-        simp only [chordSegment, rho', i_point, smul_add, real_smul,
-          add_im, mul_im, ofReal_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
-          add_zero, zero_mul, one_re, one_im,
-          div_ofNat_re, div_ofNat_im]
-        ring
-      rcases le_or_gt 0 p.re with hp_re_nn | hp_re_neg
-      · rw [hfd_re] at heq_re
-        rw [hfd_im] at heq_im
-        have h_1mu : 1 - u = 2 * ((1 - s) * p.re) := by linarith
-        have h_u : u = 1 - 2 * ((1 - s) * p.re) := by linarith
-        have heq_im' : (1 - s) * (p.im + p.re * (2 - Real.sqrt 3)) + s * ref_Y₀ = 1 := by
-          have : (1 - u) * (Real.sqrt 3 / 2) + u =
-            1 - (1 - s) * p.re * (2 - Real.sqrt 3) := by
-            rw [h_1mu, h_u]; ring
-          linarith
-        have hp_im_bound : p.im > Real.sqrt (1 - p.re ^ 2) := by
-          have h1 : 0 ≤ 1 - p.re ^ 2 := by nlinarith [abs_lt.mp hp_re]
-          rw [show p.im = Real.sqrt (p.im ^ 2) from (Real.sqrt_sq (le_of_lt hp_im_pos)).symm]
-          exact Real.sqrt_lt_sqrt h1 (by nlinarith)
-        have hp_re_le : p.re ≤ 1/2 := by
-          rcases abs_le.mp (le_of_lt hp_re) with ⟨_, h⟩; linarith
-        have h_combo : p.im + p.re * (2 - Real.sqrt 3) > 1 := by
-          have h_ge := sqrt_one_minus_sq_plus_linear_ge_one p.re hp_re_nn hp_re_le
-          linarith
-        have h_lhs_gt : (1 - s) * (p.im + p.re * (2 - Real.sqrt 3)) + s * ref_Y₀ > 1 := by
-          exact convex_combo_gt_one' s (p.im + p.re * (2 - Real.sqrt 3)) ref_Y₀
-            hs0 hs1 ref_Y₀_gt_one h_combo
-        linarith
-      · rw [hfd_re] at heq_re
-        have h_lhs_nn : (1 - u) / 2 ≥ 0 := div_nonneg (by linarith) (by norm_num)
-        have h_rhs_le : (1 - s) * p.re ≤ 0 :=
-          mul_nonpos_of_nonneg_of_nonpos h1s_nn (le_of_lt hp_re_neg)
-        have h_both_zero : (1 - s) * p.re = 0 ∧ (1 - u) / 2 = 0 := by
-          constructor <;> linarith
-        have hs_eq : s = 1 := by
-          rcases mul_eq_zero.mp h_both_zero.1 with h | h
-          · linarith
-          · exfalso; linarith
-        rw [hs_eq] at heq_im
-        simp at heq_im
-        rw [hfd_im] at heq_im
-        have h_bound : (1 - u) * (Real.sqrt 3 / 2) + u ≤ 1 := by
-          have : (1 - u) * (Real.sqrt 3 / 2) + u =
-              Real.sqrt 3 / 2 + u * (1 - Real.sqrt 3 / 2) := by
-            ring
-          rw [this]
-          have h1 : 1 - Real.sqrt 3 / 2 > 0 := by nlinarith [hsq3]
-          have h2 : u * (1 - Real.sqrt 3 / 2) ≤ 1 * (1 - Real.sqrt 3 / 2) :=
-            mul_le_mul_of_nonneg_right hu1 (le_of_lt h1)
-          linarith
-        linarith [ref_Y₀_gt_one]
+    · exact (avoids_chord_rho'_to_i p hp_re hp_im_pos hp_sq s hs0 hs1 h1s_nn t
+        ht1 ht2 heq_re heq_im).elim
     · push_neg at ht2
       by_cases ht3 : t ≤ 3
-      · set v := t - 2 with hv_def
-        have hv0 : 0 ≤ v := by linarith
-        have hv1 : v ≤ 1 := by linarith
-        have hfd : fdPolygon t = chordSegment i_point rho v := by
-          simp only [fdPolygon, show ¬(t ≤ 1) from not_le.mpr ht1,
-            show ¬(t ≤ 2) from not_le.mpr ht2, ↓reduceIte, ht3, hv_def]
-        have hfd_re : (fdPolygon t).re = -v / 2 := by
-          rw [hfd]
-          simp only [chordSegment, i_point, rho, smul_add, real_smul,
-            add_re, mul_re, ofReal_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
-            sub_zero, zero_mul, one_re, one_im,
-            div_ofNat_re, div_ofNat_im, neg_re, neg_im]
-          ring
-        have hfd_im : (fdPolygon t).im = 1 - v * (1 - Real.sqrt 3 / 2) := by
-          rw [hfd]
-          simp only [chordSegment, i_point, rho, smul_add,
-            real_smul, add_im, mul_im, ofReal_re, ofReal_im,
-            I_re, I_im, mul_zero, mul_one, add_zero, zero_mul,
-            one_re, one_im, div_ofNat_re, div_ofNat_im,
-            neg_re, neg_im]
-          ring
-        rcases le_or_gt p.re 0 with hp_re_np | hp_re_pos
-        · rcases eq_or_lt_of_le hp_re_np with hp_re_zero | hp_re_neg
-          · rw [hfd_re] at heq_re
-            rw [hp_re_zero, mul_zero] at heq_re
-            have hv_eq : v = 0 := by linarith
-            rw [hfd_im, hv_eq] at heq_im
-            simp at heq_im
-            have hp_im_gt1 : p.im > 1 := by
-              have : p.im ^ 2 > 1 := by nlinarith [hp_re_zero]
-              nlinarith [sq_nonneg (p.im - 1)]
-            have : (1 - s) * p.im + s * ref_Y₀ > 1 :=
-              convex_combo_gt_one' s p.im ref_Y₀ hs0 hs1 ref_Y₀_gt_one hp_im_gt1
-            linarith
-          · rw [hfd_re] at heq_re
-            have hv_eq : v = -2 * ((1 - s) * p.re) := by linarith
-            have hv_eq' : v = 2 * (1 - s) * (-p.re) := by linarith
-            rw [hfd_im] at heq_im
-            have heq_im' : (1 - s) * (p.im + (-p.re) * (2 - Real.sqrt 3)) + s * ref_Y₀ = 1 := by
-              have : v * (1 - Real.sqrt 3 / 2) = (1 - s) * (-p.re) * (2 - Real.sqrt 3) := by
-                rw [hv_eq']; ring
-              linarith
-            have hp_abs_re : |p.re| = -p.re := abs_of_neg hp_re_neg
-            have hp_re_nn' : 0 ≤ -p.re := by linarith
-            have hp_re_le' : -p.re ≤ 1/2 := by
-              rw [← hp_abs_re]; linarith
-            have hp_im_bound : p.im > Real.sqrt (1 - p.re ^ 2) := by
-              have h1 : 0 ≤ 1 - p.re ^ 2 := by nlinarith [abs_lt.mp hp_re]
-              rw [show p.im = Real.sqrt (p.im ^ 2) from (Real.sqrt_sq (le_of_lt hp_im_pos)).symm]
-              exact Real.sqrt_lt_sqrt h1 (by nlinarith)
-            have h_neg_re_sq : (-p.re) ^ 2 = p.re ^ 2 := by ring
-            have h_combo : p.im + (-p.re) * (2 - Real.sqrt 3) > 1 := by
-              have h_ge := sqrt_one_minus_sq_plus_linear_ge_one (-p.re) hp_re_nn' hp_re_le'
-              rw [h_neg_re_sq] at h_ge
-              linarith
-            have h_lhs_gt : (1 - s) * (p.im + (-p.re) * (2 - Real.sqrt 3)) + s * ref_Y₀ > 1 :=
-              convex_combo_gt_one' s (p.im + (-p.re) * (2 - Real.sqrt 3)) ref_Y₀
-                hs0 hs1 ref_Y₀_gt_one h_combo
-            linarith
-        · rw [hfd_re] at heq_re
-          have h_rhs_nn : (1 - s) * p.re ≥ 0 := by positivity
-          have h_lhs_le : -v / 2 ≤ 0 := by linarith
-          have h_both_zero : (1 - s) * p.re = 0 ∧ v = 0 := by
-            constructor <;> linarith
-          have hs_eq : s = 1 := by
-            rcases mul_eq_zero.mp h_both_zero.1 with h | h
-            · linarith
-            · exfalso; linarith
-          rw [hs_eq] at heq_im; simp at heq_im
-          rw [hfd_im, show v = 0 from h_both_zero.2] at heq_im
-          simp at heq_im
-          linarith [ref_Y₀_gt_one]
+      · exact (avoids_chord_i_to_rho p hp_re hp_im_pos hp_sq s hs0 hs1 h1s_nn t
+          ht2 ht3 heq_re heq_im).elim
       · push_neg at ht3
         by_cases ht4 : t ≤ 4
         · have hfd_re : (fdPolygon t).re = -1/2 := by
