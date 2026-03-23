@@ -46,7 +46,6 @@ private lemma fdBoundary_H_norm_eq_one_arc {H t : ℝ} (h1 : 1 < t) (h3 : t < 3)
         congr 1; push_cast; ring]
     exact norm_exp_ofReal_mul_I _
 
-set_option maxHeartbeats 400000 in
 /-- The boundary at height H avoids any strict interior point p
 with ‖p‖ > 1, |re p| < 1/2, im p > 0, im p < H. -/
 theorem fdBoundary_H_avoids_interior (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
@@ -169,7 +168,6 @@ private lemma fdHomot_continuous (H₀ H₁ : ℝ) :
     ((continuous_ofReal.comp (continuous_snd.mul continuous_const)).mul
       (heightSens_continuous.comp continuous_fst))
 
-set_option maxHeartbeats 400000 in
 private lemma fdHomot_deriv_continuousOn_piece (H₀ H₁ : ℝ) (p₁ p₂ : ℝ)
     (hfree : ∀ x ∈ Ioo p₁ p₂, x ∉ fdBoundary_H_partition) :
     ContinuousOn (fun q : ℝ × ℝ =>
@@ -221,7 +219,6 @@ private lemma fdHomot_deriv_continuousOn_piece (H₀ H₁ : ℝ) (p₁ p₂ : �
         · intro q hq
           exact (fdBoundary_H_hasDerivAt_seg5 _ (lt_of_le_of_lt hp1_ge4 hq.1.1)).deriv
 
-set_option maxHeartbeats 400000 in
 private lemma fdHomot_deriv_bound (H : ℝ) (hH : heightCutoff ≤ H) :
     ∃ M, ∀ t ∈ Icc (0:ℝ) 5, ∀ s ∈ Icc (0:ℝ) 1,
       ‖deriv (fun t' => fdBoundary_H (heightCutoff + s * (H - heightCutoff)) t') t‖ ≤ M := by
@@ -270,7 +267,6 @@ private lemma fdHomot_deriv_bound (H : ℝ) (hH : heightCutoff ≤ H) :
           rw [(fdBoundary_H_hasDerivAt_seg5 H_s ht4').deriv, norm_one]
           exact le_max_right _ _
 
-set_option maxHeartbeats 1600000 in
 private lemma fdBoundary_H_piecewise_homotopic (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
     (hp_im_pos : 0 < p.im) (hp_im : p.im < heightCutoff) {H : ℝ} (hH : heightCutoff ≤ H) :
     PiecewiseCurvesHomotopicAvoiding (fdBoundary_H heightCutoff) (fdBoundary_H H)
@@ -335,7 +331,6 @@ private lemma gWN_translate (γ : ℝ → ℂ) (a b : ℝ) (p : ℂ) :
     generalizedWindingNumber' γ a b p := by
   unfold generalizedWindingNumber'; simp only [sub_zero]
 
-set_option maxHeartbeats 1600000 in
 /-- For any strict interior point with im < H, the generalized
 winding number of fdBoundary_H around p is -1.
 Requires H ≥ heightCutoff. -/

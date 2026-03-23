@@ -923,7 +923,6 @@ lemma singular_symmDiff_sup_bound
     Real.norm_eq_abs, one_div]
   exact inv_anti₀ hc_pos ht_lower
 
-set_option maxHeartbeats 800000 in
 lemma singular_annulus_bound_explicit
     {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     (hab : a < b) (hat₀ : t₀ ∈ Set.Ioo a b)

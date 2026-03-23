@@ -821,7 +821,6 @@ private lemma norm_cast_sub_eq {H : ℝ} (hH : Real.sqrt 3 / 2 < H) :
     push_cast; ring
   rw [hcast, Complex.norm_real, Real.norm_of_nonneg (by linarith)]
 
-set_option maxHeartbeats 1600000 in
 lemma fdBoundary_H_deriv_bound_ex {H : ℝ}
     (hH : Real.sqrt 3 / 2 < H) :
     ∃ M : ℝ, 0 < M ∧ ∀ t : ℝ,

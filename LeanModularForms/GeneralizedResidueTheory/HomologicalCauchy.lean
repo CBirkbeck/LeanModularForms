@@ -912,7 +912,6 @@ noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ)
     (γ : PiecewiseC1Immersion) (w : ℂ) : ℂ :=
   if _h : w ∈ U then dixonH1 f γ w else dixonH2 f γ w
 
-set_option maxHeartbeats 800000 in
 /-- The Dixon function is entire (differentiable on all of ℂ).
 On U: it's h₁, holomorphic by dixonH1_differentiableOn.
 On ℂ \ U: it's h₂, holomorphic by dixonH2_differentiableAt.

@@ -314,7 +314,6 @@ private lemma g_rho'_norm_arc {δ : ℝ} (hδ : 0 < δ) (hδ2 : δ < 2) :
       Complex.exp (↑(5 * Real.pi / 6 + δ * Real.pi / 12) * I) from by rw [exp_real_angle_I],
     Complex.norm_exp_ofReal_mul_I, mul_one]
 
-set_option maxHeartbeats 400000 in
 private lemma g_rho'_norm_arc_full {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
     ‖fdBoundary_H H t - ellipticPointRhoPlusOne‖ = 2 * Real.sin ((t - 1) * Real.pi / 12) := by
   have hδ : 0 < t - 1 := by linarith

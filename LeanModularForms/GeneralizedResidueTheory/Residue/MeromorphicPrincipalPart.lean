@@ -110,7 +110,6 @@ private theorem differentiableOn_zpow_sub_compl (s : ℂ) (n : ℤ) (c : ℂ) :
   exact (differentiableAt_const c).mul
     ((differentiableAt_id.sub (differentiableAt_const s)).zpow (Or.inl hne))
 
-set_option maxHeartbeats 400000 in
 /-- The principal part is differentiable on `{s}ᶜ`. -/
 theorem meromorphicPrincipalPart_differentiableOn (f : ℂ → ℂ) (s : ℂ)
     (hf : MeromorphicAt f s) :
@@ -376,7 +375,6 @@ The residue of the principal part equals the (N-1)-th coefficient `c_{N-1}`.
 This is computed directly via circle integrals: in the sum `Σ c_k (z-s)^{k-N}`,
 only the k=N-1 term (exponent -1) contributes to the residue. -/
 
-set_option maxHeartbeats 800000 in
 /-- The residue of `Σ_{k<N} c_k * (z-s)^{k-N}` equals `c_{N-1}` (the coefficient
 of `(z-s)^{-1}`). Proved directly by circle integral computation. -/
 private theorem residueAt_zpow_sum (s : ℂ) (N : ℕ) (hN : 0 < N) (c : ℕ → ℂ) :

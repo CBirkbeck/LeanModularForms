@@ -68,7 +68,6 @@ theorem generalizedResidueTheorem (U : Set ℂ) (hU : IsOpen U)
   exact (generalizedResidueTheorem' U hU hU_convex S hS_in_U hS_discrete hS_closed
     S0 hS0_subset f hf γ hγ_closed hγ_in_U hS_on_curve hSimplePoles hf_ext hPV_singular).2
 
-set_option maxHeartbeats 400000 in
 /-- **Generalized Residue Theorem for higher-order poles**
 (Hungerbuhler-Wasem, Theorem 3.3, full generality).
 
