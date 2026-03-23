@@ -311,8 +311,7 @@ theorem cuspFunction_not_eventually_zero (hf : f ≠ 0) :
       (convex_ball 0 1).isPreconnected (Metric.mem_ball_self (by norm_num : (0:ℝ) < 1)) h_freq
   apply hf; ext τ
   simp only [ModularForm.coe_zero, Pi.zero_apply]
-  have h_eq := SlashInvariantFormClass.eq_cuspFunction (1 : ℕ) f τ
-  rw [← h_eq]
+  rw [← SlashInvariantFormClass.eq_cuspFunction (1 : ℕ) f τ]
   have h_qmem : Function.Periodic.qParam (↑(1 : ℕ)) (↑τ : ℂ) ∈
       Metric.ball (0 : ℂ) 1 := by
     rw [Metric.mem_ball, dist_zero_right]

@@ -288,8 +288,10 @@ is exactly mathlib's `dslope f z w`. We use this identification throughout.
 Key mathlib facts:
 - `dslope_same f z = deriv f z`
 - `dslope_of_ne f h z = (f z - f c)/(z - c)` for `z ≠ c`
-- `continuousOn_dslope`: for fixed `c`, `z ↦ dslope f c z` is continuous iff `f` is continuous and differentiable at `c`
-- `Complex.differentiableOn_dslope`: for fixed `c`, `z ↦ dslope f c z` is differentiable iff `f` is differentiable
+- `continuousOn_dslope`: for fixed `c`, `z ↦ dslope f c z` is continuous
+  iff `f` is continuous and differentiable at `c`
+- `Complex.differentiableOn_dslope`: for fixed `c`,
+  `z ↦ dslope f c z` is differentiable iff `f` is differentiable
 -/
 
 section DixonProof
@@ -625,7 +627,8 @@ theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
       (fun w => ∫ t in γ.a..γ.b, f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t) w
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   have himage_closed := (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed
-  have himage_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty := ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr hab, rfl⟩
+  have himage_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
+    ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr hab, rfl⟩
   exact dixonH2_differentiableAt_infDist_pos f γ hf_cont w
     ((himage_closed.notMem_iff_infDist_pos himage_ne).mp fun ⟨t, ht, heq⟩ => hoff t ht heq)
 
@@ -718,8 +721,8 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
   have hdslope_diff : ∀ t ∈ Icc γ.a γ.b, DifferentiableOn ℂ (dslope f (γ.toFun t)) U :=
     fun t ht => (differentiableOn_dslope (hU.mem_nhds (hγ_in_U t ht))).mpr hf
   obtain ⟨M_d, hM_d⟩ := piecewiseC1Immersion_deriv_bounded γ
-  have hγ_compact := isCompact_Icc.image_of_continuousOn γ.continuous_toFun
-  have hγ_sub : γ.toFun '' Icc γ.a γ.b ⊆ U := fun _ ⟨t, ht, he⟩ => he ▸ hγ_in_U t ht
+  have hγ_sub : γ.toFun '' Icc γ.a γ.b ⊆ U :=
+    fun _ ⟨t, ht, he⟩ => he ▸ hγ_in_U t ht
   have hdslope_t_cont : ∀ x : ℂ,
       ContinuousOn (fun t => dslope f (γ.toFun t) x) (Icc γ.a γ.b) := by
     intro x
@@ -752,7 +755,9 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
   apply DifferentiableAt.differentiableWithinAt
   obtain ⟨r, hr_pos, hr_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
   obtain ⟨C, hC_pos, δ₀, hδ₀_pos, hBd⟩ :=
-    dslope_uniform_bound hU hf _ hγ_compact hγ_sub w₀ hw₀
+    dslope_uniform_bound hU hf _
+      (isCompact_Icc.image_of_continuousOn γ.continuous_toFun)
+      hγ_sub w₀ hw₀
   -- ε = min(δ₀, r)/2 ensures closedBall x ε ⊆ U for all x ∈ ball w₀ ε
   set ε := min δ₀ r / 2 with hε_def
   have hε_pos : 0 < ε := by positivity
@@ -899,7 +904,8 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     exact ((hdslope_diff t ht_Icc).differentiableAt (hU.mem_nhds hx_U) |>.hasDerivAt).mul_const _
   -- Apply Leibniz rule (dixonH1 f γ = fun w => ∫ ... by definition)
   exact ((intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
-    hε_pos hF_meas hF_int hF'_meas h_bound intervalIntegral.intervalIntegrable_const h_diff).2).differentiableAt
+    hε_pos hF_meas hF_int hF'_meas h_bound
+    intervalIntegral.intervalIntegrable_const h_diff).2).differentiableAt
 
 /-- The Dixon function: h1 on U, h2 on C \ U. -/
 noncomputable def dixonFunction (f : ℂ → ℂ) (U : Set ℂ)
@@ -924,8 +930,8 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
   · have hab : γ.a ≤ γ.b := le_of_lt γ.hab
     have hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w := fun t ht heq =>
       hw (heq ▸ h_null.image_subset t ht)
-    have himage_compact := isCompact_Icc.image_of_continuousOn γ.continuous_toFun
-    have himage_closed := himage_compact.isClosed
+    have himage_closed :=
+      (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed
     have himage_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
       ⟨γ.toFun γ.a, γ.a, left_mem_Icc.mpr hab, rfl⟩
     have hw_notmem : w ∉ γ.toFun '' Icc γ.a γ.b := fun ⟨t, ht, heq⟩ => hoff t ht heq
@@ -1656,11 +1662,10 @@ private theorem contourIntegral_correction_eq (S : Finset ℂ) (g g_corr : ℂ �
     ∀ t ∈ Set.uIcc γ.a γ.b,
       g (γ.toFun t) * deriv γ.toFun t =
       g_corr (γ.toFun t) * deriv γ.toFun t := by
-  have hab := le_of_lt γ.hab
-  have h_image_off := image_subset_diff_of_avoids S U γ h_null hγ_avoids
   intro t ht
-  rw [Set.uIcc_of_le hab] at ht
-  rw [h_agree (γ.toFun t) (h_image_off ⟨t, ht, rfl⟩)]
+  rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht
+  rw [h_agree _ (image_subset_diff_of_avoids S U γ h_null hγ_avoids
+    ⟨t, ht, rfl⟩)]
 
 /-- Finset version: induction on |S| using the single-pole version. -/
 theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh (S : Finset ℂ)

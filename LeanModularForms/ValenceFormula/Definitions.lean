@@ -140,9 +140,8 @@ theorem orderOfVanishingAt_nonneg {k : ℤ} (f : ModularForm (Gamma 1) k)
   have h_im_pos : 0 < (z : ℂ).im := z.im_pos
   have h_g_diffAt : ∀ᶠ w in 𝓝 (z : ℂ), DifferentiableAt ℂ g w := by
     filter_upwards [UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds h_im_pos] with w hw
-    have h_mdiff := f.holo'
     have h_diffOn : DifferentiableOn ℂ (f ∘ UpperHalfPlane.ofComplex) {w | 0 < w.im} :=
-      UpperHalfPlane.mdifferentiable_iff.mp h_mdiff
+      UpperHalfPlane.mdifferentiable_iff.mp f.holo'
     have h_eq_w : ∀ᶠ u in 𝓝 w, g u = (f ∘ UpperHalfPlane.ofComplex) u := by
       filter_upwards [UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hw] with u hu
       simp only [g, Function.comp_apply, dif_pos hu]

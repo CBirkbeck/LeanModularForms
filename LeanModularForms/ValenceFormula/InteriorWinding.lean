@@ -302,9 +302,9 @@ theorem generalizedWindingNumber_fdBoundary_eq_neg_one
     ext t
     simp only [RectHomotopyProof.fdBoundary, fdBoundary,
       RectHomotopyProof.H_height, heightCutoff]
-  have h := RectHomotopyProof.generalizedWindingNumber_fdBoundary_eq_neg_one p hp_norm hp_re
-    hp_im_pos (show p.im < RectHomotopyProof.H_height from hp_im)
-  rwa [heq] at h
+  exact heq ▸ RectHomotopyProof.generalizedWindingNumber_fdBoundary_eq_neg_one
+    p hp_norm hp_re hp_im_pos
+    (show p.im < RectHomotopyProof.H_height from hp_im)
 
 /-- Variant for upper half-plane points. -/
 theorem generalizedWindingNumber_fdBoundary_eq_neg_one_uhp
