@@ -678,7 +678,66 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     linear_combination h_branch_t₀
   rw [hg_closed, h_branch_3, h_branch_t₀']; ring
 
-set_option maxHeartbeats 800000 in
+private lemma i_norm_gt_right_helper (H : ℝ) (hH : 1 < H)
+    {ε δ : ℝ} (hε_lt_half : ε < 1/2) (hε_lt_gap : ε < H - 1)
+    (hδ_pos : 0 < δ) (hδ_lt_one : δ < 1)
+    (h_norm_R : ‖fdBoundary_H H (2 + δ) - I‖ = ε) :
+    ∀ t ∈ Ioo (2 + δ) (5 : ℝ),
+      ‖(fun t => fdBoundary_H H t - I) t‖ > ε := by
+  intro t ⟨ht2, ht5⟩
+  rcases le_or_gt t 3 with ht3 | ht3
+  · rcases eq_or_lt_of_le ht3 with rfl | ht3'
+    · calc ε < 1 / 2 := hε_lt_half
+        _ ≤ ‖(fun t => fdBoundary_H H t - I) 3‖ := g_i_norm_ge_seg3 (le_refl 3) (by norm_num)
+    · show ε < ‖fdBoundary_H H t - I‖
+      rw [g_i_norm_arc_right (by linarith) ht3']
+      rw [← h_norm_R, g_i_norm_right hδ_pos hδ_lt_one]
+      apply mul_lt_mul_of_pos_left _ (by norm_num : (0:ℝ) < 2)
+      exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
+        (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+        (by nlinarith [Real.pi_pos])
+  · rcases le_or_gt t 4 with ht4 | ht4
+    · calc ε < 1 / 2 := hε_lt_half
+        _ ≤ _ := g_i_norm_ge_seg3 (le_of_lt ht3) ht4
+    · calc ε < H - 1 := hε_lt_gap
+        _ ≤ _ := g_i_norm_ge_seg4 H hH (le_of_lt ht4) (le_of_lt ht5)
+
+private lemma i_norm_le_middle_helper (H : ℝ)
+    {ε δ : ℝ} (hε_pos : 0 < ε) (hδ_pos : 0 < δ) (hδ_lt_one : δ < 1)
+    (h_norm_L : ‖fdBoundary_H H (2 - δ) - I‖ = ε)
+    (h_norm_R : ‖fdBoundary_H H (2 + δ) - I‖ = ε) :
+    ∀ t, 2 - δ ≤ t → t ≤ 2 + δ →
+      ¬(‖(fun t => fdBoundary_H H t - I) t‖ > ε) := by
+  intro t ht_lo ht_hi; push_neg; show ‖fdBoundary_H H t - I‖ ≤ ε
+  rcases le_or_gt t 2 with ht2 | ht2
+  · rcases eq_or_lt_of_le ht2 with rfl | ht2'
+    · rw [fdBoundary_H_at_two_eq_I, sub_self, norm_zero]; exact le_of_lt hε_pos
+    · have ht1 : 1 < t := by linarith
+      rw [g_i_norm_arc_left ht1 ht2', ← h_norm_L, g_i_norm_left hδ_pos hδ_lt_one]
+      apply mul_le_mul_of_nonneg_left _ (by norm_num : (0:ℝ) ≤ 2)
+      exact Real.sin_le_sin_of_le_of_le_pi_div_two
+        (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+        (by nlinarith [Real.pi_pos])
+  · rw [g_i_norm_arc_right ht2 (by linarith), ← h_norm_R, g_i_norm_right hδ_pos hδ_lt_one]
+    apply mul_le_mul_of_nonneg_left _ (by norm_num : (0:ℝ) ≤ 2)
+    exact Real.sin_le_sin_of_le_of_le_pi_div_two
+      (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+      (by nlinarith [Real.pi_pos])
+
+private lemma i_angle_bound {δ ε : ℝ} (H : ℝ)
+    (hδ_pos : 0 < δ) (hδ_lt_one : δ < 1)
+    (h_norm_L : ‖fdBoundary_H H (2 - δ) - I‖ = ε) :
+    δ * Real.pi / 12 < ε := by
+  set x := δ * Real.pi / 12 with hx_def
+  have hx_pos : 0 < x := by positivity
+  have hx_le_one : x ≤ 1 := by nlinarith [Real.pi_le_four]
+  have h_sin_lb := Real.sin_gt_sub_cube hx_pos hx_le_one
+  have h_lb : x - x ^ 3 / 4 > x / 2 := by nlinarith [sq_nonneg x, sq_nonneg (1 - x)]
+  have h_norm_is_2sin : 2 * Real.sin x = ε := by
+    rw [hx_def]
+    linarith [g_i_norm_left (H := H) hδ_pos hδ_lt_one]
+  linarith
+
 /-- The PV integral of `(γ-I)⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ`. -/
 theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - I‖ > ε
@@ -745,42 +804,10 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
       exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
         (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
         (by nlinarith [Real.pi_pos])
-  have h_norm_gt_right : ∀ t ∈ Ioo (2 + δ) (5 : ℝ), ‖g t‖ > ε := by
-    intro t ⟨ht2, ht5⟩
-    rcases le_or_gt t 3 with ht3 | ht3
-    · rcases eq_or_lt_of_le ht3 with rfl | ht3'
-      · calc ε < 1 / 2 := hε_lt_half
-          _ ≤ ‖g 3‖ := g_i_norm_ge_seg3 (le_refl 3) (by norm_num)
-      · rw [show g t = fdBoundary_H H t - I from rfl, g_i_norm_arc_right (by linarith) ht3']
-        rw [← h_norm_R, g_i_norm_right hδ_pos hδ_lt_one]
-        apply mul_lt_mul_of_pos_left _ (by norm_num : (0:ℝ) < 2)
-        exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
-          (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-          (by nlinarith [Real.pi_pos])
-    · rcases le_or_gt t 4 with ht4 | ht4
-      · calc ε < 1 / 2 := hε_lt_half
-          _ ≤ ‖g t‖ := g_i_norm_ge_seg3 (le_of_lt ht3) ht4
-      · calc ε < H - 1 := hε_lt_gap
-          _ ≤ ‖g t‖ := g_i_norm_ge_seg4 H hH (le_of_lt ht4) (le_of_lt ht5)
-  have h_norm_le_middle : ∀ t, 2 - δ ≤ t → t ≤ 2 + δ → ¬(‖g t‖ > ε) := by
-    intro t ht_lo ht_hi; push_neg
-    rcases le_or_gt t 2 with ht2 | ht2
-    · rcases eq_or_lt_of_le ht2 with rfl | ht2'
-      · rw [show g 2 = fdBoundary_H H 2 - I from rfl, fdBoundary_H_at_two_eq_I,
-          sub_self, norm_zero]; exact le_of_lt hε_pos
-      · have ht1 : 1 < t := by linarith
-        rw [show g t = fdBoundary_H H t - I from rfl, g_i_norm_arc_left ht1 ht2']
-        rw [← h_norm_L, g_i_norm_left hδ_pos hδ_lt_one]
-        apply mul_le_mul_of_nonneg_left _ (by norm_num : (0:ℝ) ≤ 2)
-        exact Real.sin_le_sin_of_le_of_le_pi_div_two
-          (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-          (by nlinarith [Real.pi_pos])
-    · rw [show g t = fdBoundary_H H t - I from rfl, g_i_norm_arc_right ht2 (by linarith)]
-      rw [← h_norm_R, g_i_norm_right hδ_pos hδ_lt_one]
-      apply mul_le_mul_of_nonneg_left _ (by norm_num : (0:ℝ) ≤ 2)
-      exact Real.sin_le_sin_of_le_of_le_pi_div_two
-        (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-        (by nlinarith [Real.pi_pos])
+  have h_norm_gt_right : ∀ t ∈ Ioo (2 + δ) (5 : ℝ), ‖g t‖ > ε :=
+    i_norm_gt_right_helper H hH hε_lt_half hε_lt_gap hδ_pos hδ_lt_one h_norm_R
+  have h_norm_le_middle : ∀ t, 2 - δ ≤ t → t ≤ 2 + δ → ¬(‖g t‖ > ε) :=
+    i_norm_le_middle_helper H hε_pos hδ_pos hδ_lt_one h_norm_L h_norm_R
   set F := fun t => if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else (0 : ℂ) with hF_def
   have hF_when_gt (t : ℝ) (h_gt : ‖g t‖ > ε) : F t = deriv g t / g t := by
     simp only [hF_def, if_pos h_gt, mul_comm (g t)⁻¹, div_eq_mul_inv]
@@ -860,15 +887,7 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
       ↑(-(δ * Real.pi / 6)) * I := by push_cast; ring
   rw [h_simp, norm_mul, Complex.norm_real, Complex.norm_I, mul_one,
     Real.norm_eq_abs, abs_neg, abs_of_pos (by positivity)]
-  set x := δ * Real.pi / 12 with hx_def
-  have hx_pos : 0 < x := by positivity
-  have hx_le_one : x ≤ 1 := by nlinarith [Real.pi_le_four]
-  have h_sin_lb := Real.sin_gt_sub_cube hx_pos hx_le_one
-  have h_lb : x - x ^ 3 / 4 > x / 2 := by nlinarith [sq_nonneg x, sq_nonneg (1 - x)]
-  have h_norm_is_2sin : 2 * Real.sin x = ε := by
-    rw [hx_def, show δ * Real.pi / 12 = δ * Real.pi / 12 from rfl]
-    linarith [h_norm_L, g_i_norm_left (H := H) hδ_pos hδ_lt_one]
-  have hx_lt_ε : x < ε := by linarith
+  have := i_angle_bound H hδ_pos hδ_lt_one h_norm_L
   linarith
 
 /-- `generalizedWindingNumber' (fdBoundary_H H) 0 5 I = -1/2`.

@@ -566,12 +566,12 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
     have ht1 : 1 < t := by
       rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
       · exfalso
-        exact ht_ne (by simp [Set.mem_insert_iff, Set.mem_singleton_iff]; left; linarith)
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
       · exact h
     have ht3 : t < 3 := by
       rcases eq_or_lt_of_le ht_mem.2 with h | h
       · exfalso
-        exact ht_ne (by simp [Set.mem_insert_iff, Set.mem_singleton_iff]; right; linarith)
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
       · exact h
     rw [hg_arc t ht1 ht3, hderiv_arc t ⟨ht1, ht3⟩]
   have h_ae₃ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 3 4 →
@@ -585,12 +585,12 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
     have ht3 : 3 < t := by
       rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
       · exfalso
-        exact ht_ne (by simp [Set.mem_insert_iff, Set.mem_singleton_iff]; left; linarith)
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
       · exact h
     have ht4 : t < 4 := by
       rcases eq_or_lt_of_le ht_mem.2 with h | h
       · exfalso
-        exact ht_ne (by simp [Set.mem_insert_iff, Set.mem_singleton_iff]; right; linarith)
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
       · exact h
     rw [hg_h₃ t ht3 (le_of_lt ht4), hderiv_3 t ⟨ht3, ht4⟩]
   have h_ae₅ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 4 5 →
@@ -604,12 +604,12 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
     have ht4 : 4 < t := by
       rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
       · exfalso
-        exact ht_ne (by simp [Set.mem_insert_iff, Set.mem_singleton_iff]; left; linarith)
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
       · exact h
     have ht5 : t < 5 := by
       rcases eq_or_lt_of_le ht_mem.2 with h | h
       · exfalso
-        exact ht_ne (by simp [Set.mem_insert_iff, Set.mem_singleton_iff]; right; linarith)
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
       · exact h
     rw [hg_h₅ t ht4, hderiv_5 t ⟨ht4, ht5⟩]
   have hint₀ : IntervalIntegrable (fun t => deriv g t / g t) volume 0 (t₀ - δ) :=

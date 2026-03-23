@@ -92,6 +92,30 @@ private lemma leftEdge_min_dist_from_non_seg4_right (H : ℝ) (s : ℂ) (_hs_re 
     _ = |(fdBoundary_seg5_H H t - s).im| := by rw [him]; exact (abs_of_pos (by linarith)).symm
     _ ≤ ‖fdBoundary_seg5_H H t - s‖ := Complex.abs_im_le_norm _
 
+private lemma leftEdge_final_log (H : ℝ) (s : ℂ)
+    (hs_re : s.re = -1/2) (α : ℝ) (hα_def : α = H - Real.sqrt 3 / 2)
+    (δ : ℝ) (hδ_pos : 0 < δ) (hα_pos : 0 < α)
+    (t₀ : ℝ) (ht₀_mul : (t₀ - 3) * α = s.im - Real.sqrt 3 / 2) :
+    Complex.log (fdBoundary_seg4_H H (t₀ - δ) - s) -
+    Complex.log (fdBoundary_seg4_H H (t₀ + δ) - s) = -(↑Real.pi * I) := by
+  have hval_minus : fdBoundary_seg4_H H (t₀ - δ) - s = ↑(-(δ * α)) * I := by
+    rw [leftEdge_h₃_eq hs_re]
+    have h_expand : (t₀ - δ - 3) * (H - Real.sqrt 3 / 2) = (t₀ - 3) * α - δ * α := by
+      rw [hα_def]; ring
+    have h_eq' : Real.sqrt 3 / 2 + (t₀ - δ - 3) * (H - Real.sqrt 3 / 2) - s.im = -(δ * α) := by
+      rw [h_expand]; linarith [ht₀_mul]
+    rw [h_eq']
+  have hval_plus : fdBoundary_seg4_H H (t₀ + δ) - s = ↑(δ * α) * I := by
+    rw [leftEdge_h₃_eq hs_re]
+    have h_expand : (t₀ + δ - 3) * (H - Real.sqrt 3 / 2) = (t₀ - 3) * α + δ * α := by
+      rw [hα_def]; ring
+    have h_eq' : Real.sqrt 3 / 2 + (t₀ + δ - 3) * (H - Real.sqrt 3 / 2) - s.im = δ * α := by
+      rw [h_expand]; linarith [ht₀_mul]
+    rw [h_eq']
+  rw [hval_minus, hval_plus]
+  rw [show (↑(-(δ * α)) * I : ℂ) = -(↑(δ * α) * I) from by push_cast; ring]
+  exact log_neg_rI_sub_log_rI (mul_pos hδ_pos hα_pos)
+
 set_option maxHeartbeats 800000 in
 private lemma leftEdge_winding_aux (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = -1/2) (hs_norm : ‖s‖ > 1)
@@ -567,25 +591,7 @@ private lemma leftEdge_winding_aux (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
       _ = _ + 0 + _ := by rw [h_mid_zero]
       _ = _ := by rw [add_zero, h_eq_left, h_eq_right]
   rw [h_step1, h_left_total, h_right_total, h_telescope]
-  have hval_minus : h₃ (t₀ - δ) = ↑(-(δ * α)) * I := by
-    show fdBoundary_seg4_H H (t₀ - δ) - s = _
-    rw [leftEdge_h₃_eq hs_re]
-    have h_expand : (t₀ - δ - 3) * (H - Real.sqrt 3 / 2) = (t₀ - 3) * α - δ * α := by
-      rw [hα_def]; ring
-    have h_eq' : Real.sqrt 3 / 2 + (t₀ - δ - 3) * (H - Real.sqrt 3 / 2) - s.im = -(δ * α) := by
-      rw [h_expand]; linarith [ht₀_mul]
-    rw [h_eq']
-  have hval_plus : h₃ (t₀ + δ) = ↑(δ * α) * I := by
-    show fdBoundary_seg4_H H (t₀ + δ) - s = _
-    rw [leftEdge_h₃_eq hs_re]
-    have h_expand : (t₀ + δ - 3) * (H - Real.sqrt 3 / 2) = (t₀ - 3) * α + δ * α := by
-      rw [hα_def]; ring
-    have h_eq' : Real.sqrt 3 / 2 + (t₀ + δ - 3) * (H - Real.sqrt 3 / 2) - s.im = δ * α := by
-      rw [h_expand]; linarith [ht₀_mul]
-    rw [h_eq']
-  rw [hval_minus, hval_plus]
-  rw [show (↑(-(δ * α)) * I : ℂ) = -(↑(δ * α) * I) from by push_cast; ring]
-  exact log_neg_rI_sub_log_rI (mul_pos hδ_pos hα_pos)
+  exact leftEdge_final_log H s hs_re α hα_def δ hδ_pos hα_pos t₀ ht₀_mul
 
 theorem gWN_fdBoundary_H_eq_neg_half_of_leftEdge (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = -1/2) (hs_norm : ‖s‖ > 1)

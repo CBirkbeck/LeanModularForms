@@ -382,7 +382,38 @@ private lemma unitArc_g_slitPlane_seg1 (s : ℂ)
   simp [fdBoundary_seg1_H, Complex.sub_re, Complex.add_re, Complex.mul_re,
     Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im]
   linarith [(abs_lt.mp hs_re).2]
-set_option maxHeartbeats 400000 in
+private lemma unitArc_log_final (s : ℂ) (t₀ δ : ℝ)
+    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
+    (hδ_left : 1 < t₀ - δ) (hδ_right : t₀ + δ < 3) (hδ_pos : 0 < δ) :
+    let h_arc := fun t => exp (↑(Real.pi * (1 + t) / 6) * I) - s
+    0 < (h_arc (t₀ - δ)).re ∧ 0 < (-(h_arc (t₀ + δ))).re := by
+  intro h_arc
+  constructor
+  · show 0 < (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s).re
+    set θ_m := Real.pi * (1 + (t₀ - δ)) / 6
+    set θ₀' := Real.pi * (1 + t₀) / 6
+    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
+    simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_im,
+      Complex.I_re, Complex.I_im, mul_zero, zero_mul, sub_self, add_zero, Complex.sub_re]
+    show 0 < Real.cos θ_m - Real.cos θ₀'
+    have hθ_lt : θ_m < θ₀' := by simp [θ_m, θ₀']; nlinarith [Real.pi_pos]
+    have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, ht₀_Ioo.1]
+    have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.2]
+    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ_m_nn hθ₀_le_pi hθ_lt]
+  · show 0 < (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s)).re
+    set θ_p := Real.pi * (1 + (t₀ + δ)) / 6
+    set θ₀' := Real.pi * (1 + t₀) / 6
+    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
+    simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
+      Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
+      mul_zero, zero_mul, sub_self, add_zero, neg_sub]
+    show 0 < Real.cos θ₀' - Real.cos θ_p
+    have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
+    have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.1]
+    have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, ht₀_Ioo.2]
+    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ₀_nn hθ_p_le_pi hθ_gt]
+
 /-- For any `δ > 0` with `t₀-δ > 1` and `t₀+δ < 3`, the δ-split integral
 equals `log(g(t₀-δ)/(-g(t₀+δ))) - πI`. -/
 lemma unitArc_ftc_value (H : ℝ) (hH : 1 < H) (s : ℂ)
@@ -652,31 +683,8 @@ lemma unitArc_ftc_value (H : ℝ) (hH : 1 < H) (s : ℂ)
   have h_pd_arc : g (t₀ + δ) = h_arc (t₀ + δ) := by
     simp only [hg_def, h_arc]; rw [fdBoundary_H_eq_arc (by linarith) (by linarith)]
   rw [h_td_arc, h_pd_arc]
-  have h_re_before : 0 < (h_arc (t₀ - δ)).re := by
-    show 0 < (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s).re
-    set θ_m := Real.pi * (1 + (t₀ - δ)) / 6
-    set θ₀' := Real.pi * (1 + t₀) / 6
-    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
-    simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, mul_zero, zero_mul, sub_self, add_zero, Complex.sub_re]
-    show 0 < Real.cos θ_m - Real.cos θ₀'
-    have hθ_lt : θ_m < θ₀' := by simp [θ_m, θ₀']; nlinarith [Real.pi_pos]
-    have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, ht₀_Ioo.1]
-    have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.2]
-    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ_m_nn hθ₀_le_pi hθ_lt]
-  have h_re_after : 0 < (-(h_arc (t₀ + δ))).re := by
-    show 0 < (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s)).re
-    set θ_p := Real.pi * (1 + (t₀ + δ)) / 6
-    set θ₀' := Real.pi * (1 + t₀) / 6
-    rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
-    simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
-      Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-      mul_zero, zero_mul, sub_self, add_zero, neg_sub]
-    show 0 < Real.cos θ₀' - Real.cos θ_p
-    have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
-    have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.1]
-    have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, ht₀_Ioo.2]
-    linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ₀_nn hθ_p_le_pi hθ_gt]
+  obtain ⟨h_re_before, h_re_after⟩ :=
+    unitArc_log_final s t₀ δ ht₀_Ioo h_s_arc hδ_left hδ_right hδ_pos
   rw [log_div_of_re_pos h_re_before h_re_after]; ring
 
 end
