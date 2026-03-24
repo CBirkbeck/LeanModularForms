@@ -187,7 +187,8 @@ lemma sum_single_𝕋 (f : 𝕋 P ℤ) :
 /-- The action of a basis Hecke element on a basis module element as a sum over orbits. -/
 lemma T_single_smul_HeckeLeftCoset_single (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) (a b : Z) :
     T_single P Z D a • HeckeLeftCoset_single P Z m₀ b =
-    ∑ i ∈ smulOrbit P D m₀, HeckeLeftCoset_single P Z i (a * b) :=
+    ∑ i ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m₀),
+      HeckeLeftCoset_single P Z i (a * b) :=
   single_smul_single P Z D m₀ a b
 
 end API

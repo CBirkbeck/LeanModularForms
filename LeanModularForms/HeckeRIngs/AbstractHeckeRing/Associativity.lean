@@ -26,61 +26,58 @@ variable (P : HeckePair G) (Z : Type*) [CommRing Z]
 open Finsupp
 
 /-- IsScalarTower: `x •_M (y •_M z) = (y * x) •_M z` (Shimura Prop 3.4). -/
-private lemma smulOrbit_map_injective (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) :
-    Function.Injective (fun i : decompQuot P (HeckeCoset.rep D) =>
-      (⟦⟨((HeckeLeftCoset.rep m₀ : G) * (i.out : G) *
-        (HeckeCoset.rep D : G)),
-        delta_mul_mem P.H P.Δ i.out
-          (HeckeLeftCoset.rep m₀) (HeckeCoset.rep D) P.h₀⟩⟧ : HeckeLeftCoset P)) := by
+private lemma smulOrbit_map_injective (g : P.Δ) (β : P.Δ) :
+    Function.Injective (fun i : decompQuot P g =>
+      (⟦⟨((β : G) * (i.out : G) * (g : G)),
+        delta_mul_mem P.H P.Δ i.out β g P.h₀⟩⟧ : HeckeLeftCoset P)) := by
   intro i₁ i₂ heq
   by_contra hne
-  have hset : ({(HeckeLeftCoset.rep m₀ : G) * (i₁.out : G) *
-      (HeckeCoset.rep D : G)} : Set G) * (P.H : Set G) =
-    {(HeckeLeftCoset.rep m₀ : G) * (i₂.out : G) *
-      (HeckeCoset.rep D : G)} * P.H := Quotient.exact heq
-  have hmem : (HeckeLeftCoset.rep m₀ : G) * (i₁.out : G) * (HeckeCoset.rep D : G) ∈
-      ({(HeckeLeftCoset.rep m₀ : G) * (i₂.out : G) * (HeckeCoset.rep D : G)} : Set G) *
+  have hset : ({(β : G) * (i₁.out : G) *
+      (g : G)} : Set G) * (P.H : Set G) =
+    {(β : G) * (i₂.out : G) *
+      (g : G)} * P.H := Quotient.exact heq
+  have hmem : (β : G) * (i₁.out : G) * (g : G) ∈
+      ({(β : G) * (i₂.out : G) * (g : G)} : Set G) *
         (P.H : Set G) := by
     rw [← hset]; exact ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, ha, k, hk, hkk⟩ := hmem
   rw [Set.mem_singleton_iff] at ha; subst ha
-  have cancel : (i₂.out : G) * (HeckeCoset.rep D : G) * k =
-      (i₁.out : G) * (HeckeCoset.rep D : G) := by
-    apply mul_left_cancel (a := (HeckeLeftCoset.rep m₀ : G))
+  have cancel : (i₂.out : G) * (g : G) * k =
+      (i₁.out : G) * (g : G) := by
+    apply mul_left_cancel (a := (β : G))
     have := hkk; group at this ⊢; exact this
-  apply decompQuot_coset_diff P (HeckeCoset.rep D) i₁ i₂ hne
+  apply decompQuot_coset_diff P g i₁ i₂ hne
   exact leftCoset_eq_of_not_disjoint (H := P.H) _ _ (by
     rw [@not_disjoint_iff]
-    exact ⟨(i₁.out : G) * (HeckeCoset.rep D : G),
+    exact ⟨(i₁.out : G) * (g : G),
       ⟨1, P.H.one_mem, mul_one _⟩,
       ⟨k, hk, cancel⟩⟩)
 
-private lemma smulOrbit_sum_eq (D : HeckeCoset P) (m₀ : HeckeLeftCoset P)
+private lemma smulOrbit_sum_eq (g : P.Δ) (β : P.Δ)
     (f : HeckeLeftCoset P → (HeckeLeftCoset P) →₀ ℤ) :
-    ∑ i ∈ smulOrbit P D m₀, f i =
-    ∑ q : decompQuot P (HeckeCoset.rep D), f
-      (⟦⟨(HeckeLeftCoset.rep m₀ : G) * (q.out : G) * (HeckeCoset.rep D : G),
-        delta_mul_mem P.H P.Δ q.out (HeckeLeftCoset.rep m₀)
-          (HeckeCoset.rep D) P.h₀⟩⟧ : HeckeLeftCoset P) := by
+    ∑ i ∈ smulOrbit P g β, f i =
+    ∑ q : decompQuot P g, f
+      (⟦⟨(β : G) * (q.out : G) * (g : G),
+        delta_mul_mem P.H P.Δ q.out β g P.h₀⟩⟧ : HeckeLeftCoset P) := by
   conv_lhs => rw [smulOrbit]; simp only [Finset.top_eq_univ]
-  exact Finset.sum_image (fun a _ b _ hab => smulOrbit_map_injective P D m₀ hab)
+  exact Finset.sum_image (fun a _ b _ hab => smulOrbit_map_injective P g β hab)
 
-private lemma smulOrbit_congr (D : HeckeCoset P) (m₁ m₂ : HeckeLeftCoset P)
-    (h : m₁ = m₂) : smulOrbit P D m₁ = smulOrbit P D m₂ := h ▸ rfl
+private lemma smulOrbit_congr (g : P.Δ) (β₁ β₂ : P.Δ)
+    (h : β₁ = β₂) : smulOrbit P g β₁ = smulOrbit P g β₂ := h ▸ rfl
 
-private lemma smulOrbit_sum_left_H_eq (D : HeckeCoset P) (β : P.Δ)
+private lemma smulOrbit_sum_left_H_eq (g₀ : P.Δ) (β : P.Δ)
     (h : P.H) (c : ℤ) :
-    ∑ q : decompQuot P (HeckeCoset.rep D), Finsupp.single
+    ∑ q : decompQuot P g₀, Finsupp.single
       (⟦⟨(β : G) * (h : G) * q.out *
-        (HeckeCoset.rep D : G),
+        (g₀ : G),
       Submonoid.mul_mem _ (Submonoid.mul_mem _ (Submonoid.mul_mem _ β.2 (P.h₀ h.2))
-        (P.h₀ q.out.2)) (HeckeCoset.rep D).2⟩⟧ : HeckeLeftCoset P) c =
-    ∑ q : decompQuot P (HeckeCoset.rep D), Finsupp.single
-      (⟦⟨(β : G) * q.out * (HeckeCoset.rep D : G),
-      delta_mul_mem P.H P.Δ q.out β (HeckeCoset.rep D) P.h₀⟩⟧ :
+        (P.h₀ q.out.2)) g₀.2⟩⟧ : HeckeLeftCoset P) c =
+    ∑ q : decompQuot P g₀, Finsupp.single
+      (⟦⟨(β : G) * q.out * (g₀ : G),
+      delta_mul_mem P.H P.Δ q.out β g₀ P.h₀⟩⟧ :
         HeckeLeftCoset P) c := by
-  set g := (HeckeCoset.rep D : G) with hg_def
-  set σ : decompQuot P (HeckeCoset.rep D) → decompQuot P (HeckeCoset.rep D) :=
+  set g := (g₀ : G) with hg_def
+  set σ : decompQuot P g₀ → decompQuot P g₀ :=
     fun q => ⟦⟨(h : G) * q.out,
       P.H.mul_mem h.2 q.out.2⟩⟧
   have hσ : Function.Bijective σ := by
@@ -100,15 +97,15 @@ private lemma smulOrbit_sum_left_H_eq (D : HeckeCoset P) (β : P.Δ)
       rw [← Quotient.out_eq q, @Quotient.eq'', QuotientGroup.leftRel_apply]
       have hout := Quotient.out_eq (s := QuotientGroup.leftRel _)
         (⟦⟨(h : G)⁻¹ * q.out, P.H.mul_mem (P.H.inv_mem h.2) q.out.2⟩⟧ :
-          decompQuot P (HeckeCoset.rep D))
+          decompQuot P g₀)
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at hout
       convert hout using 1; ext; simp [Subgroup.coe_mul]; group
-  have hval : ∀ q : decompQuot P (HeckeCoset.rep D),
+  have hval : ∀ q : decompQuot P g₀,
       (⟦⟨(β : G) * (h : G) * q.out * g,
         Submonoid.mul_mem _ (Submonoid.mul_mem _ (Submonoid.mul_mem _ β.2 (P.h₀ h.2))
-          (P.h₀ q.out.2)) (HeckeCoset.rep D).2⟩⟧ : HeckeLeftCoset P) =
+          (P.h₀ q.out.2)) g₀.2⟩⟧ : HeckeLeftCoset P) =
       (⟦⟨(β : G) * (σ q).out * g,
-        delta_mul_mem P.H P.Δ (σ q).out β (HeckeCoset.rep D) P.h₀⟩⟧ :
+        delta_mul_mem P.H P.Δ (σ q).out β g₀ P.h₀⟩⟧ :
           HeckeLeftCoset P) := by
     intro q
     apply Quotient.sound
@@ -118,7 +115,7 @@ private lemma smulOrbit_sum_left_H_eq (D : HeckeCoset P) (β : P.Δ)
       ((ConjAct.toConjAct g • P.H).subgroupOf P.H) ⟨h * q.out, P.H.mul_mem h.2 q.out.2⟩
     have hn_coe : ((⟦⟨(h : G) * (q.out : G),
         P.H.mul_mem h.2 q.out.2⟩⟧ :
-        decompQuot P (HeckeCoset.rep D)).out : G) =
+        decompQuot P g₀).out : G) =
         (h : G) * (q.out : G) * (n : G) := by
       have := congr_arg (Subtype.val : ↥P.H → G) hn_eq
       simpa [Subgroup.coe_mul] using this
@@ -328,17 +325,17 @@ lemma heckeMultiplicity_uniform (g₂ g₁ : P.Δ) (D : HeckeCoset P)
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at h_j₀
       convert h_j₀ using 1; ext; simp [Subgroup.coe_mul]; group; rfl⟩
 
-private lemma iter_mem_smulOrbit_mulMap (g₂ g₁ : P.Δ) (m₀ : HeckeLeftCoset P)
+private lemma iter_mem_smulOrbit_mulMap (g₂ g₁ : P.Δ) (β : P.Δ)
     (i : decompQuot P g₂) (j : decompQuot P g₁) :
-    (⟦⟨(HeckeLeftCoset.rep m₀ : G) * i.out * (g₂ : G) *
+    (⟦⟨(β : G) * i.out * (g₂ : G) *
       j.out * (g₁ : G),
       Submonoid.mul_mem _ (Submonoid.mul_mem _
-        (delta_mul_mem P.H P.Δ i.out (HeckeLeftCoset.rep m₀) g₂ P.h₀)
+        (delta_mul_mem P.H P.Δ i.out β g₂ P.h₀)
         (P.h₀ j.out.2)) g₁.2⟩⟧ : HeckeLeftCoset P) ∈
-    smulOrbit P (mulMap P g₂ g₁ (i, j)) m₀ := by
+    smulOrbit P (HeckeCoset.rep (mulMap P g₂ g₁ (i, j))) β := by
   set D := mulMap P g₂ g₁ (i, j) with hD_def
   set g_D := (HeckeCoset.rep D : G) with hgD_def
-  set α := (HeckeLeftCoset.rep m₀ : G)
+  set α := (β : G)
   have h_in_doset : (i.out : G) * (g₂ : G) * ((j.out : G) * (g₁ : G)) ∈
       DoubleCoset.doubleCoset g_D P.H P.H := by
     have h1 := HeckeCoset.toSet_eq_rep D
@@ -363,14 +360,14 @@ private lemma iter_mem_smulOrbit_mulMap (g₂ g₁ : P.Δ) (m₀ : HeckeLeftCose
     rw [hsimp] at hn
     have := P.H.inv_mem hn; convert this using 1; group
   suffices hsuff : (⟦⟨α * (r.out : G) * g_D,
-      delta_mul_mem P.H P.Δ r.out (HeckeLeftCoset.rep m₀) (HeckeCoset.rep D) P.h₀⟩⟧ :
+      delta_mul_mem P.H P.Δ r.out β (HeckeCoset.rep D) P.h₀⟩⟧ :
         HeckeLeftCoset P) =
     (⟦⟨α * (i.out : G) * (g₂ : G) * (j.out : G) * (g₁ : G),
       Submonoid.mul_mem _ (Submonoid.mul_mem _
-        (delta_mul_mem P.H P.Δ i.out (HeckeLeftCoset.rep m₀) g₂ P.h₀)
+        (delta_mul_mem P.H P.Δ i.out β g₂ P.h₀)
         (P.h₀ j.out.2)) g₁.2⟩⟧ : HeckeLeftCoset P) by
     rw [← hsuff]
-    show _ ∈ smulOrbit P D m₀
+    show _ ∈ smulOrbit P (HeckeCoset.rep D) β
     simp only [smulOrbit, Finset.mem_image]
     exact ⟨r, Finset.mem_univ _, rfl⟩
   apply Quotient.sound; show lcRel P _ _; simp only [lcRel]
@@ -387,13 +384,13 @@ private lemma iter_mem_smulOrbit_mulMap (g₂ g₁ : P.Δ) (m₀ : HeckeLeftCose
       _ = α * h₁ * g_D := by group
 
 private lemma iter_smulOrbit_mem_mulSupport_smulOrbit
-    (g₂ g₁ : P.Δ) (m₀ j x₀ : HeckeLeftCoset P)
-    (hj : j ∈ smulOrbit P (⟦g₂⟧ : HeckeCoset P) m₀)
-    (hx₀ : x₀ ∈ smulOrbit P (⟦g₁⟧ : HeckeCoset P) j) :
-    ∃ D, D ∈ mulSupport P g₂ g₁ ∧ x₀ ∈ smulOrbit P D m₀ := by
-  set g₂' := (HeckeCoset.rep (⟦g₂⟧ : HeckeCoset P) : G) with hg₂'_def
-  set g₁' := (HeckeCoset.rep (⟦g₁⟧ : HeckeCoset P) : G) with hg₁'_def
-  set α := (HeckeLeftCoset.rep m₀ : G)
+    (g₂ g₁ : P.Δ) (β₀ : P.Δ) (j x₀ : HeckeLeftCoset P)
+    (hj : j ∈ smulOrbit P g₂ β₀)
+    (hx₀ : x₀ ∈ smulOrbit P g₁ (HeckeLeftCoset.rep j)) :
+    ∃ D, D ∈ mulSupport P g₂ g₁ ∧ x₀ ∈ smulOrbit P (HeckeCoset.rep D) β₀ := by
+  set g₂' := (g₂ : G) with hg₂'_def
+  set g₁' := (g₁ : G) with hg₁'_def
+  set α := (β₀ : G)
   simp only [smulOrbit, Finset.mem_image] at hj hx₀
   obtain ⟨i₀, _, hj_eq⟩ := hj
   obtain ⟨k₀, _, hx₀_eq⟩ := hx₀
@@ -417,52 +414,14 @@ private lemma iter_smulOrbit_mem_mulSupport_smulOrbit
     have : g₂'⁻¹ * (i₀.out : G)⁻¹ * α⁻¹ * β = h := by
       rw [show β = α * (i₀.out : G) * g₂' * h from hβ_eq.symm]; group
     rw [this]; exact hh
-  set k' : decompQuot P (HeckeCoset.rep (⟦g₁⟧ : HeckeCoset P)) :=
+  set k' : decompQuot P g₁ :=
     ⟦⟨g₂'⁻¹ * (i₀.out : G)⁻¹ * α⁻¹ * β * (k₀.out : G),
     P.H.mul_mem h_rep_mem k₀.out.2⟩⟧
-  -- Use iter_mem_smulOrbit_mulMap with the rep versions
-  set D' := mulMap P (HeckeCoset.rep ⟦g₂⟧) (HeckeCoset.rep ⟦g₁⟧) (i₀, k')
-  have h_target := iter_mem_smulOrbit_mulMap P
-    (HeckeCoset.rep ⟦g₂⟧) (HeckeCoset.rep ⟦g₁⟧) m₀ i₀ k'
-  -- g₂' ∈ Hg₂H and g₁' ∈ Hg₁H
-  have hg₂'_doset : g₂' ∈ DoubleCoset.doubleCoset (g₂ : G) P.H P.H := by
-    have h := HeckeCoset.toSet_eq_rep (⟦g₂⟧ : HeckeCoset P)
-    rw [HeckeCoset.toSet_mk] at h; rw [h]
-    exact DoubleCoset.mem_doubleCoset_self P.H P.H _
-  rw [DoubleCoset.mem_doubleCoset] at hg₂'_doset
-  obtain ⟨a₂, ha₂, b₂, hb₂, hg₂'_eq⟩ := hg₂'_doset
-  have hg₁'_doset : g₁' ∈ DoubleCoset.doubleCoset (g₁ : G) P.H P.H := by
-    have h := HeckeCoset.toSet_eq_rep (⟦g₁⟧ : HeckeCoset P)
-    rw [HeckeCoset.toSet_mk] at h; rw [h]
-    exact DoubleCoset.mem_doubleCoset_self P.H P.H _
-  rw [DoubleCoset.mem_doubleCoset] at hg₁'_doset
-  obtain ⟨a₁, ha₁, b₁, hb₁, hg₁'_eq⟩ := hg₁'_doset
-  -- Build the mulMap pair using g₂, g₁ with the same double coset as D'
-  set i₂ : decompQuot P g₂ := ⟦⟨(i₀.out : G) * a₂, P.H.mul_mem i₀.out.2 ha₂⟩⟧
-  set j₁ : decompQuot P g₁ :=
-    ⟦⟨b₂ * (k'.out : G) * a₁, P.H.mul_mem (P.H.mul_mem hb₂ k'.out.2) ha₁⟩⟧
-  -- Show mulMap P g₂ g₁ (i₂, j₁) = D' (same double coset)
-  have hD_eq : mulMap P g₂ g₁ (i₂, j₁) = D' := by
-    simp only [mulMap, D']
-    rw [HeckeCoset.eq_iff]
-    obtain ⟨m_i, hm_i_eq⟩ := QuotientGroup.mk_out_eq_mul
-      ((ConjAct.toConjAct (g₂ : G) • P.H).subgroupOf P.H)
-      ⟨(i₀.out : G) * a₂, P.H.mul_mem i₀.out.2 ha₂⟩
-    have hm_i_coe : (i₂.out : G) = (i₀.out : G) * a₂ * (m_i : G) :=
-      mk_out_coe_eq_mul P hm_i_eq
-    have hm_i_conj : (g₂ : G)⁻¹ * (m_i : G) * (g₂ : G) ∈ P.H :=
-      conjAct_mem_of_subgroupOf P (g₂ : G) m_i
-    obtain ⟨m_j, hm_j_eq⟩ := QuotientGroup.mk_out_eq_mul
-      ((ConjAct.toConjAct (g₁ : G) • P.H).subgroupOf P.H)
-      ⟨b₂ * (k'.out : G) * a₁, P.H.mul_mem (P.H.mul_mem hb₂ k'.out.2) ha₁⟩
-    have hm_j_coe : (j₁.out : G) = b₂ * (k'.out : G) * a₁ * (m_j : G) :=
-      mk_out_coe_eq_mul P hm_j_eq
-    have hm_j_conj : (g₁ : G)⁻¹ * (m_j : G) * (g₁ : G) ∈ P.H :=
-      conjAct_mem_of_subgroupOf P (g₁ : G) m_j
-    sorry
-  refine ⟨D', ?_, ?_⟩
-  · rw [← hD_eq]; exact Finset.mem_image_of_mem _ (Finset.mem_univ _)
-  -- Show x₀ ∈ smulOrbit P D' m₀
+  -- Use iter_mem_smulOrbit_mulMap directly with g₂, g₁
+  set D' := mulMap P g₂ g₁ (i₀, k')
+  have h_target := iter_mem_smulOrbit_mulMap P g₂ g₁ β₀ i₀ k'
+  refine ⟨D', Finset.mem_image_of_mem _ (Finset.mem_univ _), ?_⟩
+  -- Show x₀ ∈ smulOrbit P (HeckeCoset.rep D') β₀
   rw [← hx₀_eq]
   obtain ⟨n', hn'_eq⟩ := QuotientGroup.mk_out_eq_mul
     ((ConjAct.toConjAct g₁' • P.H).subgroupOf P.H)
@@ -476,14 +435,13 @@ private lemma iter_smulOrbit_mem_mulSupport_smulOrbit
     conjAct_inv_mem_of_subgroupOf P g₁' n'
   suffices hsuff :
     (⟦⟨β * (k₀.out : G) * g₁',
-      delta_mul_mem P.H P.Δ k₀.out (HeckeLeftCoset.rep j)
-        (HeckeCoset.rep ⟦g₁⟧) P.h₀⟩⟧ : HeckeLeftCoset P) =
+      delta_mul_mem P.H P.Δ k₀.out (HeckeLeftCoset.rep j) g₁ P.h₀⟩⟧ :
+        HeckeLeftCoset P) =
     (⟦⟨α * (i₀.out : G) * g₂' *
       (k'.out : G) * g₁',
       Submonoid.mul_mem _ (Submonoid.mul_mem _
-        (delta_mul_mem P.H P.Δ i₀.out (HeckeLeftCoset.rep m₀)
-          (HeckeCoset.rep ⟦g₂⟧) P.h₀)
-        (P.h₀ k'.out.2)) (HeckeCoset.rep ⟦g₁⟧).2⟩⟧ : HeckeLeftCoset P) by
+        (delta_mul_mem P.H P.Δ i₀.out β₀ g₂ P.h₀)
+        (P.h₀ k'.out.2)) g₁.2⟩⟧ : HeckeLeftCoset P) by
     rw [hsuff]; exact h_target
   apply Quotient.sound; show lcRel P _ _; simp only [lcRel]
   apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
@@ -493,61 +451,73 @@ private lemma iter_smulOrbit_mem_mulSupport_smulOrbit
   simp only [smul_eq_mul]
   rw [hn'_coe]; group
 
-private lemma smulOrbit_indicator_eq_sum (D₁ : HeckeCoset P)
-    (_m₀ : HeckeLeftCoset P) (x₀ : HeckeLeftCoset P) (β : P.Δ) :
-    (if x₀ ∈ smulOrbit P D₁
-      (⟦β⟧ : HeckeLeftCoset P) then (1 : ℤ) else 0) =
-    ∑ k : decompQuot P (HeckeCoset.rep D₁),
-      if (⟦⟨(β : G) * (k.out : G) * (HeckeCoset.rep D₁ : G),
-      delta_mul_mem P.H P.Δ k.out β (HeckeCoset.rep D₁) P.h₀⟩⟧ :
+private lemma smulOrbit_indicator_eq_sum (g₁ : P.Δ)
+    (x₀ : HeckeLeftCoset P) (β : P.Δ) :
+    (if x₀ ∈ smulOrbit P g₁ β then (1 : ℤ) else 0) =
+    ∑ k : decompQuot P g₁,
+      if (⟦⟨(β : G) * (k.out : G) * (g₁ : G),
+      delta_mul_mem P.H P.Δ k.out β g₁ P.h₀⟩⟧ :
         HeckeLeftCoset P) = x₀ then 1 else 0 := by
-  sorry
+  by_cases hmem : x₀ ∈ smulOrbit P g₁ β
+  · rw [if_pos hmem]
+    simp only [smulOrbit, Finset.mem_image] at hmem
+    obtain ⟨q₀, _, hq₀⟩ := hmem
+    rw [Finset.sum_eq_single q₀]
+    · rw [if_pos hq₀]
+    · intro q _ hne; rw [if_neg]; intro heq
+      exact hne (smulOrbit_map_injective P g₁ β (heq.trans hq₀.symm))
+    · exact fun h => absurd (Finset.mem_univ _) h
+  · rw [if_neg hmem]; symm
+    exact Finset.sum_eq_zero fun q _ => if_neg fun heq =>
+      hmem (Finset.mem_image.mpr ⟨q, Finset.mem_univ _, heq⟩)
 
 private lemma smulOrbit_count_eq_m' (g₂ g₁ : P.Δ) (D₀ : HeckeCoset P)
-    (m₀ x₀ : HeckeLeftCoset P)
-    (hx₀ : x₀ ∈ smulOrbit P D₀ m₀) :
-    (∑ j ∈ smulOrbit P (⟦g₂⟧ : HeckeCoset P) m₀,
-      if x₀ ∈ smulOrbit P (⟦g₁⟧ : HeckeCoset P) j then (1 : ℤ) else 0) =
+    (β₀ : P.Δ) (x₀ : HeckeLeftCoset P)
+    (hx₀ : x₀ ∈ smulOrbit P (HeckeCoset.rep D₀) β₀) :
+    (∑ j ∈ smulOrbit P g₂ β₀,
+      if x₀ ∈ smulOrbit P g₁ (HeckeLeftCoset.rep j) then (1 : ℤ) else 0) =
     (m P g₂ g₁) D₀ := by
   sorry
 
-private lemma smul_assoc_key (g₁ g₂ : P.Δ) (m₀ : HeckeLeftCoset P) :
+private lemma smul_assoc_key (g₁ g₂ : P.Δ) (β₀ : P.Δ) :
     ((m P g₂ g₁).sum fun D b₁ ↦
-      ∑ i ∈ smulOrbit P D m₀, Finsupp.single i (b₁ * 1)) =
-    (∑ j ∈ smulOrbit P (⟦g₂⟧ : HeckeCoset P) m₀,
+      ∑ i ∈ smulOrbit P (HeckeCoset.rep D) β₀, Finsupp.single i (b₁ * 1)) =
+    (∑ j ∈ smulOrbit P g₂ β₀,
       Finsupp.single j 1).sum
-      fun m b₂ ↦ ∑ i ∈ smulOrbit P (⟦g₁⟧ : HeckeCoset P) m,
+      fun m b₂ ↦ ∑ i ∈ smulOrbit P g₁ (HeckeLeftCoset.rep m),
         Finsupp.single i (1 * b₂) := by
   simp only [mul_one, one_mul]
   ext x₀
   simp only [Finsupp.sum_apply, Finsupp.finset_sum_apply, Finsupp.single_apply]
   simp_rw [Finset.sum_ite_eq']
-  have h_rhs : (∑ j ∈ smulOrbit P (⟦g₂⟧ : HeckeCoset P) m₀, Finsupp.single j 1).sum
-      (fun a₁ b ↦ if x₀ ∈ smulOrbit P (⟦g₁⟧ : HeckeCoset P) a₁ then b else (0 : ℤ)) =
-      ∑ j ∈ smulOrbit P (⟦g₂⟧ : HeckeCoset P) m₀,
-        if x₀ ∈ smulOrbit P (⟦g₁⟧ : HeckeCoset P) j then 1 else 0 := by
+  have h_rhs : (∑ j ∈ smulOrbit P g₂ β₀, Finsupp.single j 1).sum
+      (fun a₁ b ↦ if x₀ ∈ smulOrbit P g₁ (HeckeLeftCoset.rep a₁)
+        then b else (0 : ℤ)) =
+      ∑ j ∈ smulOrbit P g₂ β₀,
+        if x₀ ∈ smulOrbit P g₁ (HeckeLeftCoset.rep j) then 1 else 0 := by
     rw [← Finsupp.sum_finset_sum_index
       (h_zero := fun a => by simp)
       (h_add := fun a b₁ b₂ => by split_ifs <;> simp [*])]
     congr 1; ext j
     exact Finsupp.sum_single_index (by simp)
   rw [h_rhs]
-  by_cases h_ex : ∃ D₀ ∈ (m P g₂ g₁).support, x₀ ∈ smulOrbit P D₀ m₀
+  by_cases h_ex : ∃ D₀ ∈ (m P g₂ g₁).support, x₀ ∈ smulOrbit P (HeckeCoset.rep D₀) β₀
   · obtain ⟨D₀, hD₀, hx₀⟩ := h_ex
     have h_lhs : (m P g₂ g₁).sum (fun a₁ b ↦
-        if x₀ ∈ smulOrbit P a₁ m₀ then b
+        if x₀ ∈ smulOrbit P (HeckeCoset.rep a₁) β₀ then b
         else (0 : ℤ)) = (m P g₂ g₁) D₀ := by
       rw [Finsupp.sum]
       rw [Finset.sum_eq_single D₀
         (fun D hD hne => if_neg (Finset.disjoint_left.mp
-          (smulOrbit_disjoint_of_ne P D₀ D m₀ hne.symm) hx₀))
+          (smulOrbit_disjoint_of_ne P (HeckeCoset.rep D₀) (HeckeCoset.rep D) β₀
+            (by simp only [HeckeCoset.rep, Quotient.out_eq]; exact hne.symm)) hx₀))
         (fun h => absurd hD₀ h)]
       exact if_pos hx₀
     rw [h_lhs]
-    exact (smulOrbit_count_eq_m' P g₂ g₁ D₀ m₀ x₀ hx₀).symm
+    exact (smulOrbit_count_eq_m' P g₂ g₁ D₀ β₀ x₀ hx₀).symm
   · push_neg at h_ex
     have h_lhs : (m P g₂ g₁).sum (fun a₁ b ↦
-        if x₀ ∈ smulOrbit P a₁ m₀ then b
+        if x₀ ∈ smulOrbit P (HeckeCoset.rep a₁) β₀ then b
         else (0 : ℤ)) = 0 := by
       rw [Finsupp.sum]
       exact Finset.sum_eq_zero (fun D hD => if_neg (h_ex D hD))
@@ -557,7 +527,7 @@ private lemma smul_assoc_key (g₁ g₂ : P.Δ) (m₀ : HeckeLeftCoset P) :
       intro hmem
       obtain ⟨D, hD, hD_mem⟩ :=
         iter_smulOrbit_mem_mulSupport_smulOrbit
-          P g₂ g₁ m₀ j x₀ hj hmem
+          P g₂ g₁ β₀ j x₀ hj hmem
       exact absurd hD_mem (h_ex D hD)).symm
 
 private lemma smul_assoc_singles (D₁ D₂ : HeckeCoset P) (a₁ a₂ : ℤ)
@@ -570,9 +540,10 @@ private lemma smul_assoc_singles (D₁ D₂ : HeckeCoset P) (a₁ a₂ : ℤ)
   simp only [smul_eq_sum, HeckeLeftCoset_single, T_single]
   have hsi : ∀ (D : HeckeCoset P) (b : ℤ),
       (Finsupp.single m₀ c₀).sum (fun m b₂ =>
-        ∑ i ∈ smulOrbit P D m,
+        ∑ i ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m),
           Finsupp.single i (b * b₂)) =
-      ∑ i ∈ smulOrbit P D m₀, Finsupp.single i (b * c₀) := by
+      ∑ i ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m₀),
+        Finsupp.single i (b * c₀) := by
     intro D b
     rw [Finsupp.sum_single_index (by
       simp [mul_zero, Finsupp.single_zero,
@@ -582,10 +553,13 @@ private lemma smul_assoc_singles (D₁ D₂ : HeckeCoset P) (a₁ a₂ : ℤ)
   apply Finsupp.ext; intro x₀
   simp only [Finsupp.sum_apply, Finsupp.finset_sum_apply, Finsupp.single_apply]
   simp_rw [Finset.sum_ite_eq']
-  have h_rhs : (∑ j ∈ smulOrbit P D₂ m₀, Finsupp.single j (a₂ * c₀)).sum
-      (fun a b ↦ if x₀ ∈ smulOrbit P D₁ a then a₁ * b else (0 : ℤ)) =
-      ∑ j ∈ smulOrbit P D₂ m₀,
-        if x₀ ∈ smulOrbit P D₁ j
+  have h_rhs :
+      (∑ j ∈ smulOrbit P (HeckeCoset.rep D₂) (HeckeLeftCoset.rep m₀),
+        Finsupp.single j (a₂ * c₀)).sum
+      (fun a b ↦ if x₀ ∈ smulOrbit P (HeckeCoset.rep D₁) (HeckeLeftCoset.rep a)
+        then a₁ * b else (0 : ℤ)) =
+      ∑ j ∈ smulOrbit P (HeckeCoset.rep D₂) (HeckeLeftCoset.rep m₀),
+        if x₀ ∈ smulOrbit P (HeckeCoset.rep D₁) (HeckeLeftCoset.rep j)
         then a₁ * (a₂ * c₀) else 0 := by
     rw [← Finsupp.sum_finset_sum_index
       (h_zero := fun a => by simp)
@@ -594,10 +568,11 @@ private lemma smul_assoc_singles (D₁ D₂ : HeckeCoset P) (a₁ a₂ : ℤ)
     exact Finsupp.sum_single_index (by simp)
   rw [h_rhs]
   have h_lhs : (a₂ • a₁ • m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁)).sum
-      (fun D b₁ ↦ if x₀ ∈ smulOrbit P D m₀ then b₁ * c₀ else (0 : ℤ)) =
+      (fun D b₁ ↦ if x₀ ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m₀)
+        then b₁ * c₀ else (0 : ℤ)) =
       (m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁)).sum
       (fun D b₁ ↦
-        if x₀ ∈ smulOrbit P D m₀
+        if x₀ ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m₀)
         then a₂ * (a₁ * b₁) * c₀
         else (0 : ℤ)) := by
     rw [show a₂ • a₁ • m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
@@ -605,26 +580,34 @@ private lemma smul_assoc_singles (D₁ D₂ : HeckeCoset P) (a₁ a₂ : ℤ)
     rw [Finsupp.sum_smul_index (fun i => by split_ifs <;> simp)]
     rw [Finsupp.sum_smul_index (fun i => by split_ifs <;> simp)]
   rw [h_lhs]
-  have key := smul_assoc_key P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) m₀
-  rw [show (⟦HeckeCoset.rep D₂⟧ : HeckeCoset P) = D₂ from Quotient.out_eq _,
-      show (⟦HeckeCoset.rep D₁⟧ : HeckeCoset P) = D₁ from Quotient.out_eq _] at key
+  have key := smul_assoc_key P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (HeckeLeftCoset.rep m₀)
   simp only [mul_one, one_mul] at key
   have key_pt := congr_fun (congr_arg DFunLike.coe key) x₀
   simp only [Finsupp.sum_apply, Finsupp.finset_sum_apply, Finsupp.single_apply] at key_pt
   simp_rw [Finset.sum_ite_eq'] at key_pt
   simp_rw [show ∀ (D : HeckeCoset P) (b₁ : ℤ),
-      (if x₀ ∈ smulOrbit P D m₀ then a₂ * (a₁ * b₁) * c₀ else 0) =
-      a₁ * a₂ * c₀ * (if x₀ ∈ smulOrbit P D m₀ then b₁ else 0) from
+      (if x₀ ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m₀)
+        then a₂ * (a₁ * b₁) * c₀ else 0) =
+      a₁ * a₂ * c₀ *
+        (if x₀ ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m₀)
+          then b₁ else 0) from
     fun D b₁ => by split_ifs <;> ring]
   simp_rw [show ∀ (j : HeckeLeftCoset P),
-      (if x₀ ∈ smulOrbit P D₁ j then a₁ * (a₂ * c₀) else 0) =
-      a₁ * a₂ * c₀ * (if x₀ ∈ smulOrbit P D₁ j then 1 else 0) from
+      (if x₀ ∈ smulOrbit P (HeckeCoset.rep D₁) (HeckeLeftCoset.rep j)
+        then a₁ * (a₂ * c₀) else 0) =
+      a₁ * a₂ * c₀ *
+        (if x₀ ∈ smulOrbit P (HeckeCoset.rep D₁) (HeckeLeftCoset.rep j)
+          then 1 else 0) from
     fun j => by split_ifs <;> ring]
   simp_rw [← Finset.mul_sum, ← Finsupp.mul_sum]
   congr 1
-  have h_rhs2 : (∑ j ∈ smulOrbit P D₂ m₀, Finsupp.single j 1).sum
-      (fun a₁ b ↦ if x₀ ∈ smulOrbit P D₁ a₁ then b else (0 : ℤ)) =
-      ∑ j ∈ smulOrbit P D₂ m₀, if x₀ ∈ smulOrbit P D₁ j then 1 else 0 := by
+  have h_rhs2 :
+      (∑ j ∈ smulOrbit P (HeckeCoset.rep D₂) (HeckeLeftCoset.rep m₀),
+        Finsupp.single j 1).sum
+      (fun a₁ b ↦ if x₀ ∈ smulOrbit P (HeckeCoset.rep D₁) (HeckeLeftCoset.rep a₁)
+        then b else (0 : ℤ)) =
+      ∑ j ∈ smulOrbit P (HeckeCoset.rep D₂) (HeckeLeftCoset.rep m₀),
+        if x₀ ∈ smulOrbit P (HeckeCoset.rep D₁) (HeckeLeftCoset.rep j) then 1 else 0 := by
     rw [← Finsupp.sum_finset_sum_index
       (h_zero := fun a => by simp)
       (h_add := fun a b₁ b₂ => by split_ifs <;> simp [*])]

@@ -63,45 +63,44 @@ lemma HeckeCoset_deg_pos (D : HeckeCoset P) : 0 < HeckeCoset_deg P D := by
 
 section SmulOrbitCard
 
-private lemma smulOrbit_map_inj (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) :
-    Function.Injective (fun i : decompQuot P (HeckeCoset.rep D) =>
-      (⟦⟨(HeckeLeftCoset.rep m₀ : G) * (i.out : G) * (HeckeCoset.rep D : G),
-        delta_mul_mem P.H P.Δ i.out (HeckeLeftCoset.rep m₀)
-          (HeckeCoset.rep D) P.h₀⟩⟧ : HeckeLeftCoset P)) := by
+private lemma smulOrbit_map_inj (g : P.Δ) (β : P.Δ) :
+    Function.Injective (fun i : decompQuot P g =>
+      (⟦⟨(β : G) * (i.out : G) * (g : G),
+        delta_mul_mem P.H P.Δ i.out β g P.h₀⟩⟧ : HeckeLeftCoset P)) := by
   intro i₁ i₂ heq
   by_contra hne
-  have hset : ({(HeckeLeftCoset.rep m₀ : G) * (i₁.out : G) *
-      (HeckeCoset.rep D : G)} : Set G) * (P.H : Set G) =
-    {(HeckeLeftCoset.rep m₀ : G) * (i₂.out : G) *
-      (HeckeCoset.rep D : G)} * P.H := Quotient.exact heq
-  have hmem : (HeckeLeftCoset.rep m₀ : G) * (i₁.out : G) * (HeckeCoset.rep D : G) ∈
-      ({(HeckeLeftCoset.rep m₀ : G) * (i₂.out : G) * (HeckeCoset.rep D : G)} : Set G) *
+  have hset : ({(β : G) * (i₁.out : G) *
+      (g : G)} : Set G) * (P.H : Set G) =
+    {(β : G) * (i₂.out : G) *
+      (g : G)} * P.H := Quotient.exact heq
+  have hmem : (β : G) * (i₁.out : G) * (g : G) ∈
+      ({(β : G) * (i₂.out : G) * (g : G)} : Set G) *
       (P.H : Set G) := by
     rw [← hset]; exact ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, ha, k, hk, hkk⟩ := hmem
   rw [Set.mem_singleton_iff] at ha; subst ha
-  have cancel : (i₂.out : G) * (HeckeCoset.rep D : G) * k =
-      (i₁.out : G) * (HeckeCoset.rep D : G) := by
-    apply mul_left_cancel (a := (HeckeLeftCoset.rep m₀ : G))
+  have cancel : (i₂.out : G) * (g : G) * k =
+      (i₁.out : G) * (g : G) := by
+    apply mul_left_cancel (a := (β : G))
     have := hkk; group at this ⊢; exact this
-  exact decompQuot_coset_diff P (HeckeCoset.rep D) i₁ i₂ hne
+  exact decompQuot_coset_diff P g i₁ i₂ hne
     (leftCoset_eq_of_not_disjoint (H := P.H) _ _ (by
       rw [@not_disjoint_iff]
-      exact ⟨(i₁.out : G) * (HeckeCoset.rep D : G),
+      exact ⟨(i₁.out : G) * (g : G),
         ⟨1, P.H.one_mem, mul_one _⟩,
         ⟨k, hk, cancel⟩⟩))
 
 /-- The cardinality of a smul orbit equals the degree of the acting double coset. -/
-lemma smulOrbit_card (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) :
-    (smulOrbit P D m₀).card = Fintype.card (decompQuot P (HeckeCoset.rep D)) := by
-  have hinj := smulOrbit_map_inj P D m₀
+lemma smulOrbit_card (g : P.Δ) (β : P.Δ) :
+    (smulOrbit P g β).card = Fintype.card (decompQuot P g) := by
+  have hinj := smulOrbit_map_inj P g β
   show (Finset.image _ ⊤).card = _
   rw [Finset.top_eq_univ]
   convert (Finset.card_image_of_injective Finset.univ hinj).trans Finset.card_univ
 
 /-- The cardinality of a smul orbit cast to `ℤ` equals `HeckeCoset_deg`. -/
-lemma smulOrbit_card_intCast (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) :
-    ((smulOrbit P D m₀).card : ℤ) = HeckeCoset_deg P D := by
+lemma smulOrbit_card_intCast (D : HeckeCoset P) (β : P.Δ) :
+    ((smulOrbit P (HeckeCoset.rep D) β).card : ℤ) = HeckeCoset_deg P D := by
   simp [smulOrbit_card, HeckeCoset_deg]
 
 end SmulOrbitCard
@@ -134,7 +133,7 @@ lemma coeffSum_single_smul_single (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) (
     a * HeckeCoset_deg P D * b := by
   rw [T_single_smul_HeckeLeftCoset_single, coeffSum_finset_sum]
   simp only [coeffSum_single, Finset.sum_const, Int.nsmul_eq_mul,
-    smulOrbit_card_intCast]; ring
+    smulOrbit_card_intCast P D (HeckeLeftCoset.rep m₀)]; ring
 
 end CoeffSum
 
