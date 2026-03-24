@@ -11,6 +11,7 @@ import LeanModularForms.ForMathlib.QExpansion
 import LeanModularForms.ForMathlib.SlashActions
 import LeanModularForms.ForMathlib.UpperHalfPlane
 import LeanModularForms.ForMathlib.hassumunifon
+import LeanModularForms.ContourIntegral.WindingNumber
 import LeanModularForms.GeneralizedResidueTheory.ArcCalculus
 import LeanModularForms.GeneralizedResidueTheory.Basic
 import LeanModularForms.GeneralizedResidueTheory.CurveAvoidance
