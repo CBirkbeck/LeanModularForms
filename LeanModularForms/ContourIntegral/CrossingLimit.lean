@@ -23,17 +23,20 @@ open Set MeasureTheory Complex Filter
 namespace ContourIntegral
 
 /-- Master crossing limit theorem: the PV integral of (γ-s)⁻¹ · γ' along a
-closed curve with unique crossing at t₀ tends to L, provided:
+curve with unique crossing at t₀ tends to L, provided:
 1. For small ε, the curve is ε-far from s except near t₀
-2. FTC-for-log applies on the segments away from t₀
-3. The log ratio log(g(t₀-δ)) - log(g(t₀+δ)) → L as δ → 0⁺
+2. The far-segment integrals sum to some expression E(ε)
+3. E(ε) → L as ε → 0⁺
+
+The expression E(ε) is typically `log(g(t₀-δ)) - log(g(t₀+δ))` (simple case)
+or `log(g(t₀-δ)) - log(g(t₀+δ)) + correction` (when the curve crosses a
+branch cut of complex log, e.g., the `-2πi` correction at the elliptic point i).
 
 This is the general version of the pattern used in all 6 ValenceFormula
 winding number computations. -/
 theorem pv_tendsto_of_crossing_limit
     {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {L : ℂ}
     {t₀ : ℝ} (ht₀ : t₀ ∈ Ioo a b)
-    -- For each small ε, there exists δ with the splitting properties
     {δ : ℝ → ℝ}
     {threshold : ℝ} (hthresh : 0 < threshold)
     (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
@@ -42,31 +45,23 @@ theorem pv_tendsto_of_crossing_limit
       ∀ t ∈ Icc a b, δ ε ≤ |t - t₀| → ε < ‖γ t - s‖)
     (h_near : ∀ ε, 0 < ε → ε < threshold →
       ∀ t, |t - t₀| ≤ δ ε → ‖γ t - s‖ ≤ ε)
-    -- FTC + telescope on segments away from crossing
+    -- The far-segment integrals equal some expression E(ε)
+    {E : ℝ → ℂ}
     (h_ftc : ∀ ε, 0 < ε → ε < threshold →
       (∫ t in a..(t₀ - δ ε), (γ t - s)⁻¹ * deriv γ t) +
-      (∫ t in (t₀ + δ ε)..b, (γ t - s)⁻¹ * deriv γ t) =
-      Complex.log (γ (t₀ - δ ε) - s) - Complex.log (γ (t₀ + δ ε) - s))
-    -- Integrability on the far segments
+      (∫ t in (t₀ + δ ε)..b, (γ t - s)⁻¹ * deriv γ t) = E ε)
     (hint_left : ∀ ε, 0 < ε → ε < threshold →
       IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume a (t₀ - δ ε))
     (hint_right : ∀ ε, 0 < ε → ε < threshold →
       IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume (t₀ + δ ε) b)
-    -- The log ratio has limit L
-    (h_limit : Tendsto (fun ε =>
-      Complex.log (γ (t₀ - δ ε) - s) - Complex.log (γ (t₀ + δ ε) - s))
-      (nhdsWithin 0 (Ioi 0)) (nhds L)) :
+    -- E(ε) → L
+    (h_limit : Tendsto E (nhdsWithin 0 (Ioi 0)) (nhds L)) :
     Tendsto (fun ε =>
       ∫ t in a..b, if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0)
       (nhdsWithin 0 (Ioi 0)) (nhds L) := by
-  -- The PV function and the log-ratio function agree for all ε ∈ (0, threshold)
-  -- Derive a < b from ht₀
   have hab : a < b := lt_trans ht₀.1 ht₀.2
-  -- For ε ∈ (0, threshold), PV integral = log ratio
   have h_ev : (fun ε => ∫ t in a..b, if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0)
-      =ᶠ[nhdsWithin 0 (Ioi 0)]
-      (fun ε => Complex.log (γ (t₀ - δ ε) - s) - Complex.log (γ (t₀ + δ ε) - s)) := by
-    -- nhdsWithin 0 (Ioi 0) = 𝓝[>] 0; Ioo 0 threshold is a neighbourhood of 0 in 𝓝[>] 0
+      =ᶠ[nhdsWithin 0 (Ioi 0)] E := by
     filter_upwards [Ioo_mem_nhdsGT hthresh] with ε hε
     have hε_pos : 0 < ε := hε.1
     have hε_lt : ε < threshold := hε.2
