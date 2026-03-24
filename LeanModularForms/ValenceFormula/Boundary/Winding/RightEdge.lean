@@ -7,6 +7,7 @@ import LeanModularForms.ValenceFormula.Boundary.Smooth
 import LeanModularForms.GeneralizedResidueTheory.PrincipalValue
 import LeanModularForms.ValenceFormula.WindingWeights.Common
 import LeanModularForms.ContourIntegral.WindingNumber
+import LeanModularForms.ContourIntegral.CrossingLimit
 
 /-!
 # Generalized Winding Number at Right Edge Points
@@ -415,20 +416,25 @@ private lemma rightEdge_final_log (H : ℝ) (s : ℂ)
 set_option maxHeartbeats 1600000 in
 /-- FTC telescope: the left + right logDeriv integrals of `fdBoundary_H H - s` (skipping the
 crossing interval `[t₀ - δ, t₀ + δ]`) equal `log(-(h₀(t₀ - δ))) - log(-(h₀(t₀ + δ)))`.
-Here `h₀ t = fdBoundary_seg1_H H t - s`, `α = H - √3/2`, `t₀ = (H - s.im)/α`, `δ > 0`. -/
+Here `h₀ t = fdBoundary_seg1_H H t - s`, `α = H - √3/2`, `t₀ = (H - s.im)/α`, `δ > 0`.
+Also returns integrability of `(fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t`. -/
 lemma rightEdge_ftc_telescope (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H)
     (δ : ℝ) (hδ_pos : 0 < δ)
     (hδ_lt_t₀ : δ < (H - s.im) / (H - Real.sqrt 3 / 2))
     (hδ_lt_1mt₀ : δ < 1 - (H - s.im) / (H - Real.sqrt 3 / 2)) :
-    let g : ℝ → ℂ := fun t => fdBoundary_H H t - s
     let h₀ : ℝ → ℂ := fun t => fdBoundary_seg1_H H t - s
     let t₀ := (H - s.im) / (H - Real.sqrt 3 / 2)
-    (∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t) +
-    (∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t) =
+    IntervalIntegrable (fun t => (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t)
+        volume 0 (t₀ - δ) ∧
+    IntervalIntegrable (fun t => (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t)
+        volume (t₀ + δ) 5 ∧
+    (∫ t in (0:ℝ)..(t₀ - δ), (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t) +
+    (∫ t in (t₀ + δ)..(5:ℝ), (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t) =
     Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ (t₀ + δ))) := by
-  intro g h₀ t₀
+  intro h₀ t₀
+  set g : ℝ → ℂ := fun t => fdBoundary_H H t - s with hg_def
   set α := H - Real.sqrt 3 / 2 with hα_def
   have hα_pos : 0 < α := by rw [hα_def]; linarith
   have hα_ne : α ≠ 0 := ne_of_gt hα_pos
@@ -689,403 +695,241 @@ lemma rightEdge_ftc_telescope (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
         (Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4)))) =
       Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ (t₀ + δ))) := by
     rw [hep_1, hep_3, hep_4, hep_01]; ring
-  rw [h_ftc₀, h_right_total, h_telescope]
-
-set_option maxHeartbeats 1600000 in
-lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
-    (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
-    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H)
-    (ε : ℝ) (hε_pos : 0 < ε)
-    (hε_lt_d : ε < min (min (‖s‖ - 1) 1) (H - s.im))
-    (hεα_lt_t₀ : ε / (H - Real.sqrt 3 / 2) < (H - s.im) / (H - Real.sqrt 3 / 2))
-    (hεα_lt_1mt₀ : ε / (H - Real.sqrt 3 / 2) < 1 - (H - s.im) / (H - Real.sqrt 3 / 2)) :
-    (∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
-        (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0) =
-      Complex.log (-(fdBoundary_seg1_H H ((H - s.im) / (H - Real.sqrt 3 / 2) -
-        ε / (H - Real.sqrt 3 / 2)) - s)) -
-      Complex.log (-(fdBoundary_seg1_H H ((H - s.im) / (H - Real.sqrt 3 / 2) +
-        ε / (H - Real.sqrt 3 / 2)) - s)) := by
-  set g : ℝ → ℂ := fun t => fdBoundary_H H t - s with hg_def
-  set α := H - Real.sqrt 3 / 2 with hα_def
-  set t₀ := (H - s.im) / α with ht₀_def
-  have hα_pos : 0 < α := by rw [hα_def]; linarith
-  have hα_ne : α ≠ 0 := ne_of_gt hα_pos
-  have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
-  have ht₀_lt : t₀ < 1 := by rw [ht₀_def, div_lt_one hα_pos]; linarith [hα_def]
-  have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ hα_ne
-  set d := min (min (‖s‖ - 1) 1) (H - s.im)
-  set δ := ε / α with hδ_def
-  have hδ_pos : 0 < δ := div_pos hε_pos hα_pos
-  set h₀ : ℝ → ℂ := fun t => fdBoundary_seg1_H H t - s
-  set h_arc : ℝ → ℂ := fun t => exp (↑(Real.pi * (1 + t) / 6) * I) - s
-  set h₃ : ℝ → ℂ := fun t => fdBoundary_seg4_H H t - s
-  set h₅ : ℝ → ℂ := fun t => fdBoundary_seg5_H H t - s
-  have hd₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑α : ℂ) * I) t := by
-    intro t; exact (hasDerivAt_fdBoundary_seg1_H H t).sub (hasDerivAt_const t s)
-      |>.congr_deriv (by simp [hα_def])
-  have hd_arc : ∀ t : ℝ, HasDerivAt h_arc
-      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t :=
-    hasDerivAt_arc_rep s
-  have hd₃ : ∀ t : ℝ, HasDerivAt h₃ ((↑α : ℂ) * I) t := by
-    intro t; exact (hasDerivAt_fdBoundary_seg4_H H t).sub (hasDerivAt_const t s)
-      |>.congr_deriv (by simp [hα_def])
-  have hd₅ : ∀ t : ℝ, HasDerivAt h₅ 1 t := by
-    intro t; exact (hasDerivAt_fdBoundary_seg5_H H t).sub (hasDerivAt_const t s)
-      |>.congr_deriv (by simp)
-  have hg_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := by
-    intro t ht; simp only [hg_def, h₀]; rw [fdBoundary_H_eq_seg1_H ht]
-  have hg_arc : ∀ t, 1 < t → t < 3 → g t = h_arc t := by
-    intro t ht1 ht3; simp only [hg_def, h_arc]; rw [fdBoundary_H_eq_arc ht1 ht3]
-  have hg_h₃ : ∀ t, 3 < t → t ≤ 4 → g t = h₃ t := by
-    intro t ht3 ht4; simp only [hg_def, h₃]
-    rw [fdBoundary_H_eq_seg4_H ht3 ht4]
-  have hg_h₅ : ∀ t, 4 < t → g t = h₅ t := by
-    intro t ht4; simp only [hg_def, h₅]
-    rw [fdBoundary_H_eq_seg5_H ht4]
-  have hderiv_01 : ∀ t ∈ Ioo (0:ℝ) 1, deriv g t = deriv h₀ t := by
-    intro t ⟨_, ht1⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Iio_mem_nhds ht1) (fun s hs => hg_h₀ s (le_of_lt hs)))
-  have hderiv_arc : ∀ t ∈ Ioo (1:ℝ) 3, deriv g t = deriv h_arc t := by
-    intro t ⟨ht1, ht3⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Ioo_mem_nhds ht1 ht3) (fun s hs => hg_arc s hs.1 hs.2))
-  have hderiv_3 : ∀ t ∈ Ioo (3:ℝ) 4, deriv g t = deriv h₃ t := by
-    intro t ⟨ht3, ht4⟩
-    exact Filter.EventuallyEq.deriv_eq (Filter.eventually_of_mem (Ioo_mem_nhds ht3 ht4)
-        (fun s hs => hg_h₃ s hs.1 (le_of_lt hs.2)))
-  have hderiv_5 : ∀ t ∈ Ioo (4:ℝ) 5, deriv g t = deriv h₅ t := by
-    intro t ⟨ht4, _⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Ioi_mem_nhds ht4) (fun s hs => hg_h₅ s hs))
-  have hslit₀_left : ∀ δ', 0 < δ' → δ' < t₀ →
-      ∀ t ∈ Icc (0 : ℝ) (t₀ - δ'), -(h₀ t) ∈ Complex.slitPlane := by
-    intro δ' hδ' hδ't₀ t ⟨ht0, htd⟩
-    exact rightEdge_neg_seg1_slitPlane_left H s hs_re hs_im _hH_sqrt δ' hδ' t₀ hδ't₀
-      ht₀_mul t ht0 htd
-  have hslit₀_right : ∀ δ', 0 < δ' → δ' < 1 - t₀ →
-      ∀ t ∈ Icc (t₀ + δ') 1, -(h₀ t) ∈ Complex.slitPlane := by
-    intro δ' hδ' hδ'1t₀ t ⟨htd, ht1⟩
-    exact rightEdge_neg_seg1_slitPlane_right H s hs_re hs_im _hH_sqrt δ' hδ' t₀ hδ'1t₀
-      ht₀_mul t htd ht1
-  have hslit_arc : ∀ t ∈ Icc (1:ℝ) 3, -(h_arc t) ∈ Complex.slitPlane := by
-    intro t ⟨ht1, ht3⟩; exact rightEdge_neg_arc_slitPlane s hs_re hs_im_lower t ht1 ht3
-  have hslit₃ : ∀ t ∈ Icc (3:ℝ) 4, -(h₃ t) ∈ Complex.slitPlane := by
-    intro t ⟨_, _⟩
-    rw [Complex.mem_slitPlane_iff]; left
-    simp only [h₃, fdBoundary_seg4_H, neg_sub, Complex.sub_re,
-      Complex.add_re, Complex.neg_re, Complex.div_ofNat_re,
-      Complex.one_re, Complex.mul_re, Complex.ofReal_re,
-      Complex.I_re, Complex.I_im, mul_zero]
-    rw [hs_re]
-    norm_num
-  have hslit₅ : ∀ t ∈ Icc (4:ℝ) 5, -(h₅ t) ∈ Complex.slitPlane := by
-    intro t ⟨ht4, ht5⟩
-    rw [Complex.mem_slitPlane_iff]
-    simp only [h₅, fdBoundary_seg5_H, neg_sub]
-    by_cases ht5_eq : t = 5
-    · right
-      subst ht5_eq
-      simp [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
-        Complex.ofReal_im, Complex.I_re, Complex.I_im]
-      linarith
-    · left
-      have : t < 5 := lt_of_le_of_ne ht5 ht5_eq
-      simp [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
-        Complex.ofReal_im, Complex.I_re, Complex.I_im]
-      rw [hs_re]; linarith
-  have hd_pos : 0 < d := rightEdge_min_dist_pos s hs_norm hs_im
-  have hderiv_eq : deriv (fun u => fdBoundary_H H u - s) = deriv g := rfl
-  rw [show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
-    deriv (fun u => fdBoundary_H H u - s) t else 0) =
-    (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) from rfl]
-  have piece₀ := ftc_log_neg (by linarith : (0:ℝ) ≤ t₀ - δ)
-    ((continuous_fdBoundary_seg1_H H).sub continuous_const).continuousOn
-    (fun t _ => (hd₀ t).differentiableAt)
-    (by rw [show deriv h₀ = fun _ => -(↑α : ℂ) * I from funext fun t => (hd₀ t).deriv]
-        exact continuousOn_const)
-    (hslit₀_left δ hδ_pos hεα_lt_t₀)
-  have piece₁ := ftc_log_neg (by linarith : t₀ + δ ≤ 1)
-    ((continuous_fdBoundary_seg1_H H).sub continuous_const).continuousOn
-    (fun t _ => (hd₀ t).differentiableAt)
-    (by rw [show deriv h₀ = fun _ => -(↑α : ℂ) * I from funext fun t => (hd₀ t).deriv]
-        exact continuousOn_const)
-    (hslit₀_right δ hδ_pos hεα_lt_1mt₀)
-  have h_arc_cont : Continuous h_arc := by
-    simp only [h_arc]; exact (Continuous.cexp (by fun_prop)).sub continuous_const
-  have piece₂ := ftc_log_neg (by norm_num : (1:ℝ) ≤ 3)
-    h_arc_cont.continuousOn (fun t _ => (hd_arc t).differentiableAt)
-    (by rw [show deriv h_arc = fun t => ↑(Real.pi / 6) * I *
-          exp (↑(Real.pi * (1 + t) / 6) * I) from funext fun t => (hd_arc t).deriv]
-        exact (Continuous.mul continuous_const (Continuous.cexp (by fun_prop))).continuousOn)
-    hslit_arc
-  have piece₃ := ftc_log_neg (by norm_num : (3:ℝ) ≤ 4)
-    ((continuous_fdBoundary_seg4_H H).sub continuous_const).continuousOn
-    (fun t _ => (hd₃ t).differentiableAt)
-    (by rw [show deriv h₃ = fun _ => (↑α : ℂ) * I from funext fun t => (hd₃ t).deriv]
-        exact continuousOn_const)
-    hslit₃
-  have piece₄ := ftc_log_neg (by norm_num : (4:ℝ) ≤ 5)
-    ((continuous_fdBoundary_seg5_H H).sub continuous_const).continuousOn
-    (fun t _ => (hd₅ t).differentiableAt)
-    (by rw [show deriv h₅ = fun _ => (1 : ℂ) from funext fun t => (hd₅ t).deriv]
-        exact continuousOn_const)
-    hslit₅
-  have h_ae₀ : ∀ a b : ℝ, 0 ≤ a → a < b → b ≤ 1 →
-      ∀ᵐ t ∂volume, t ∈ Set.uIoc a b → deriv h₀ t / h₀ t = deriv g t / g t := by
-    intro a b ha_nn hab hb1
-    have h_excl : ({b} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite ({b} : Set ℝ)).measure_zero volume)
-    filter_upwards [h_excl] with t ht_ne ht
-    rw [Set.uIoc_of_le (le_of_lt hab)] at ht
-    have ht_lt_b : t < b := lt_of_le_of_ne ht.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-    have ht_lt1 : t < 1 := lt_of_lt_of_le ht_lt_b hb1
-    rw [hg_h₀ t (le_of_lt ht_lt1), hderiv_01 t ⟨by linarith [ht.1], ht_lt1⟩]
-  have h_ae_arc : ∀ᵐ t ∂volume, t ∈ Set.uIoc 1 3 →
-      deriv h_arc t / h_arc t = deriv g t / g t := by
-    have : ({1, 3} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({1, 3} : Set ℝ)).measure_zero volume)
-    filter_upwards [this] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht_mem
-    have ht1 : 1 < t := by
-      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
-      · exact h
-    have ht3 : t < 3 := by
-      rcases eq_or_lt_of_le ht_mem.2 with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
-      · exact h
-    rw [hg_arc t ht1 ht3, hderiv_arc t ⟨ht1, ht3⟩]
-  have h_ae₃ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 3 4 →
-      deriv h₃ t / h₃ t = deriv g t / g t := by
-    have : ({3, 4} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({3, 4} : Set ℝ)).measure_zero volume)
-    filter_upwards [this] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by norm_num : (3:ℝ) ≤ 4)] at ht_mem
-    have ht3 : 3 < t := by
-      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
-      · exact h
-    have ht4 : t < 4 := by
-      rcases eq_or_lt_of_le ht_mem.2 with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
-      · exact h
-    rw [hg_h₃ t ht3 (le_of_lt ht4), hderiv_3 t ⟨ht3, ht4⟩]
-  have h_ae₅ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 4 5 →
-      deriv h₅ t / h₅ t = deriv g t / g t := by
-    have : ({4, 5} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({4, 5} : Set ℝ)).measure_zero volume)
-    filter_upwards [this] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)] at ht_mem
-    have ht4 : 4 < t := by
-      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
-      · exact h
-    have ht5 : t < 5 := by
-      rcases eq_or_lt_of_le ht_mem.2 with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
-      · exact h
-    rw [hg_h₅ t ht4, hderiv_5 t ⟨ht4, ht5⟩]
-  have hint₀ : IntervalIntegrable (fun t => deriv g t / g t) volume 0 (t₀ - δ) :=
-    piece₀.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((h_ae₀ 0 (t₀ - δ) le_rfl (by linarith) (by linarith)).mono
-        (fun t ht hm => ht hm)))
-  have hint₁ : IntervalIntegrable (fun t => deriv g t / g t) volume (t₀ + δ) 1 :=
-    piece₁.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((h_ae₀ (t₀ + δ) 1 (by linarith) (by linarith) le_rfl).mono
-        (fun t ht hm => ht hm)))
-  have hint_arc : IntervalIntegrable (fun t => deriv g t / g t) volume 1 3 :=
-    piece₂.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (h_ae_arc.mono (fun t ht hm => ht hm)))
-  have hint₃ : IntervalIntegrable (fun t => deriv g t / g t) volume 3 4 :=
-    piece₃.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (h_ae₃.mono (fun t ht hm => ht hm)))
-  have hint₅ : IntervalIntegrable (fun t => deriv g t / g t) volume 4 5 :=
-    piece₄.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (h_ae₅.mono (fun t ht hm => ht hm)))
-  have hint_right : IntervalIntegrable (fun t => deriv g t / g t) volume (t₀ + δ) 5 :=
-    hint₁.trans hint_arc |>.trans hint₃ |>.trans hint₅
-  set F := fun t => if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else (0 : ℂ)
-  have hF_left : ∀ᵐ t ∂volume, t ∈ Set.uIoc 0 (t₀ - δ) →
-      F t = deriv g t / g t := by
-    have h_excl : ({t₀ - δ} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({t₀ - δ} : Set ℝ)).measure_zero volume)
-    filter_upwards [h_excl] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by linarith : (0:ℝ) ≤ t₀ - δ)] at ht_mem
-    have ht_lt : t < t₀ - δ := lt_of_le_of_ne ht_mem.2
-      (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-    have ht_le1 : t ≤ 1 := by linarith
-    have h_norm_gt : ‖g t‖ > ε := by
-      show ‖fdBoundary_H H t - s‖ > ε
-      rw [rightEdge_g_seg1_eq hs_re t ht_le1]
-      simp only [show H - Real.sqrt 3 / 2 = α from hα_def.symm]
-      rw [norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs]
-      have h_im_pos : H - t * α - s.im > 0 := by nlinarith [ht_mem.1]
-      rw [abs_of_pos h_im_pos]
-      have hε_eq : ε = δ * α := by rw [hδ_def]; field_simp
-      have h_tα : t * α < (t₀ - δ) * α := mul_lt_mul_of_pos_right ht_lt hα_pos
-      have h_expand : (t₀ - δ) * α = t₀ * α - δ * α := sub_mul t₀ δ α
-      linarith [ht₀_mul]
-    show F t = deriv g t / g t
-    simp only [F, if_pos h_norm_gt]
-    rw [div_eq_mul_inv, mul_comm]
-  have hF_right : ∀ᵐ t ∂volume, t ∈ Set.uIoc (t₀ + δ) 5 →
-      F t = deriv g t / g t := by
-    have h_boundary : ({t₀ + δ, 5} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({t₀ + δ, 5} : Set ℝ)).measure_zero volume)
-    filter_upwards [h_boundary] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by linarith : t₀ + δ ≤ 5)] at ht_mem
-    have h_norm_gt : ‖g t‖ > ε := by
-      by_cases ht1 : t ≤ 1
-      · show ‖fdBoundary_H H t - s‖ > ε
-        rw [rightEdge_g_seg1_eq hs_re t ht1]
-        simp only [show H - Real.sqrt 3 / 2 = α from hα_def.symm]
-        rw [norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs]
-        have h_tα : (t₀ + δ) * α < t * α :=
-          mul_lt_mul_of_pos_right ht_mem.1 hα_pos
-        have h_expand : (t₀ + δ) * α = t₀ * α + δ * α := add_mul t₀ δ α
-        have hε_eq : ε = δ * α := by rw [hδ_def]; field_simp
-        have h_im_neg : H - t * α - s.im < 0 := by linarith [ht₀_mul]
-        rw [abs_of_neg h_im_neg]
-        linarith [ht₀_mul]
-      · push_neg at ht1
-        have : d ≤ ‖g t‖ := by
-          show d ≤ ‖fdBoundary_H H t - s‖
-          exact rightEdge_min_dist_from_non_seg1 H s hs_re hs_norm hs_im t ht1 ht_mem.2
-        linarith [hε_lt_d]
-    show F t = deriv g t / g t
-    simp only [F, if_pos h_norm_gt]
-    rw [div_eq_mul_inv, mul_comm]
-  have hF_mid : ∀ t ∈ Set.uIoc (t₀ - δ) (t₀ + δ), F t = 0 := by
-    intro t ht_mem
-    rw [Set.uIoc_of_le (by linarith : t₀ - δ ≤ t₀ + δ)] at ht_mem
-    simp only [F]
-    have h_norm : ‖g t‖ ≤ ε := by
-      show ‖fdBoundary_H H t - s‖ ≤ ε
-      rw [rightEdge_g_seg1_eq hs_re t (by linarith [ht_mem.2, hεα_lt_1mt₀])]
-      simp only [show H - Real.sqrt 3 / 2 = α from hα_def.symm]
-      rw [norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs]
-      rw [abs_le]
-      have hε_eq : ε = δ * α := by rw [hδ_def]; field_simp
-      have h_upper : (t₀ + δ) * α = t₀ * α + δ * α := by ring
-      have h_lower : (t₀ - δ) * α = t₀ * α - δ * α := by ring
-      have h_tα_upper : t * α ≤ (t₀ + δ) * α :=
-        mul_le_mul_of_nonneg_right ht_mem.2 (le_of_lt hα_pos)
-      have h_tα_lower : (t₀ - δ) * α < t * α :=
-        mul_lt_mul_of_pos_right ht_mem.1 hα_pos
-      refine ⟨?_, ?_⟩
-      · linarith [ht₀_mul]
-      · linarith [ht₀_mul]
-    simp [if_neg (not_lt.mpr h_norm)]
-  have hF_int₀ : IntervalIntegrable F volume 0 (t₀ - δ) :=
-    hint₀.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (hF_left.mono (fun t ht hm => (ht hm).symm)))
-  have hF_int_mid : IntervalIntegrable F volume (t₀ - δ) (t₀ + δ) :=
-    (IntervalIntegrable.zero (μ := volume) (a := t₀ - δ) (b := t₀ + δ)).congr
-      (fun t ht => (hF_mid t ht).symm)
-  have hF_int_right : IntervalIntegrable F volume (t₀ + δ) 5 :=
-    hint_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (hF_right.mono (fun t ht hm => (ht hm).symm)))
-  have h_split : ∫ t in (0:ℝ)..5, F t =
-      (∫ t in (0:ℝ)..(t₀ - δ), F t) + (∫ t in (t₀ - δ)..(t₀ + δ), F t) +
-      (∫ t in (t₀ + δ)..(5:ℝ), F t) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals (hF_int₀.trans hF_int_mid) hF_int_right,
-        ← intervalIntegral.integral_add_adjacent_intervals hF_int₀ hF_int_mid]
-  have h_mid_zero : ∫ t in (t₀ - δ)..(t₀ + δ), F t = 0 := by
-    rw [intervalIntegral.integral_congr_ae (ae_of_all _ (fun t ht => hF_mid t ht))]
-    simp [intervalIntegral.integral_zero]
-  have h_eq_left : ∫ t in (0:ℝ)..(t₀ - δ), F t =
+  -- Convert from deriv g / g to (γ t - s)⁻¹ * deriv γ t form
+  have h_congr : ∀ t, deriv g t / g t =
+      (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t := fun t => by
+    simp only [hg_def, deriv_sub_const, div_eq_mul_inv, mul_comm]
+  have hint_left_g : IntervalIntegrable (fun t => (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t)
+      volume 0 (t₀ - δ) :=
+    hint₀.congr_ae (ae_of_all _ h_congr)
+  have hint_right_g : IntervalIntegrable (fun t => (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t)
+      volume (t₀ + δ) 5 :=
+    hint_right.congr_ae (ae_of_all _ h_congr)
+  have h_int_eq_left : (∫ t in (0:ℝ)..(t₀ - δ), (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t) =
       ∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t :=
-    intervalIntegral.integral_congr_ae hF_left
-  have h_eq_right : ∫ t in (t₀ + δ)..(5:ℝ), F t =
+    intervalIntegral.integral_congr_ae (ae_of_all _ (fun t _ => (h_congr t).symm))
+  have h_int_eq_right : (∫ t in (t₀ + δ)..(5:ℝ), (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t) =
       ∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t :=
-    intervalIntegral.integral_congr_ae hF_right
-  have h_ftc := rightEdge_ftc_telescope H _hH_sqrt s hs_re hs_im_lower hs_im δ hδ_pos
-    hεα_lt_t₀ hεα_lt_1mt₀
-  have h_step1 : ∫ t in (0:ℝ)..5, (if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) =
-      (∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t) + (∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t) := by
-    calc ∫ t in (0:ℝ)..5, (if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0)
-        = ∫ t in (0:ℝ)..5, F t := rfl
-      _ = _ + _ + _ := h_split
-      _ = _ + 0 + _ := by rw [h_mid_zero]
-      _ = _ := by rw [add_zero, h_eq_left, h_eq_right]
-  show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
-      deriv (fun u => fdBoundary_H H u - s) t else 0) =
-    Complex.log (-(fdBoundary_seg1_H H (t₀ - δ) - s)) -
-    Complex.log (-(fdBoundary_seg1_H H (t₀ + δ) - s))
-  rw [show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
-      deriv (fun u => fdBoundary_H H u - s) t else 0) =
-    (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) from rfl]
-  rw [h_step1]
-  exact h_ftc
+    intervalIntegral.integral_congr_ae (ae_of_all _ (fun t _ => (h_congr t).symm))
+  refine ⟨hint_left_g, hint_right_g, ?_⟩
+  rw [h_int_eq_left, h_int_eq_right, h_ftc₀, h_right_total, h_telescope]
+
+private lemma rightEdge_h_far (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
+    (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1) (hs_im : s.im < H)
+    (α : ℝ) (hα_pos : 0 < α) (hα_def : α = H - Real.sqrt 3 / 2)
+    (t₀ : ℝ) (ht₀_pos : 0 < t₀) (ht₀_lt : t₀ < 1)
+    (ht₀_mul : t₀ * α = H - s.im)
+    (threshold : ℝ) (hthresh : 0 < threshold)
+    (hthresh_le_d : threshold ≤ min (min (‖s‖ - 1) 1) (H - s.im))
+    (hthresh_le_t₀α : threshold ≤ t₀ * α)
+    (hthresh_le_1mt₀α : threshold ≤ (1 - t₀) * α) :
+    ∀ ε, 0 < ε → ε < threshold → ∀ t ∈ Icc (0:ℝ) 5, ε / α < |t - t₀| →
+      ε < ‖fdBoundary_H H t - s‖ := by
+  intro ε hε_pos hε_lt t ht_mem h_abs
+  set d := min (min (‖s‖ - 1) 1) (H - s.im)
+  have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+  have hεα_lt_t₀ : ε / α < t₀ := by
+    rw [div_lt_iff₀ hα_pos]
+    calc ε < threshold := hε_lt
+      _ ≤ t₀ * α := hthresh_le_t₀α
+  have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+    rw [div_lt_iff₀ hα_pos]
+    calc ε < threshold := hε_lt
+      _ ≤ (1 - t₀) * α := hthresh_le_1mt₀α
+  have hε_lt_d : ε < d := calc ε < threshold := hε_lt
+    _ ≤ _ := hthresh_le_d
+  rw [abs_sub_comm] at h_abs
+  rcases lt_or_ge t (t₀ - ε / α) with h_left | h_right
+  · -- t < t₀ - δ: t is on seg1 (t < 1), norm > ε
+    have ht1 : t ≤ 1 := by linarith [hεα_lt_t₀]
+    rw [fdBoundary_H_eq_seg1_H ht1, rightEdge_h₀_eq hs_re]
+    rw [norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs,
+        show H - Real.sqrt 3 / 2 = α from hα_def.symm]
+    have h_im_pos : H - t * α - s.im > 0 := by
+      have : t * α < (t₀ - ε / α) * α := mul_lt_mul_of_pos_right h_left hα_pos
+      have : (t₀ - ε / α) * α = t₀ * α - ε / α * α := by ring
+      nlinarith [div_mul_cancel₀ ε (ne_of_gt hα_pos), ht₀_mul]
+    rw [abs_of_pos h_im_pos]
+    have hε_eq : ε = ε / α * α := (div_mul_cancel₀ ε (ne_of_gt hα_pos)).symm
+    have h_tα : t * α < (t₀ - ε / α) * α := mul_lt_mul_of_pos_right h_left hα_pos
+    nlinarith [ht₀_mul, div_mul_cancel₀ ε (ne_of_gt hα_pos)]
+  · -- h_right : t₀ - ε/α ≤ t, h_abs : ε/α < |t₀ - t|
+    -- Derive t > t₀ + ε/α
+    have ht_gt : t₀ + ε / α < t := by
+      rcases le_or_gt t₀ t with h | h
+      · rw [abs_of_nonpos (by linarith)] at h_abs; linarith
+      · rw [abs_of_pos (by linarith)] at h_abs; linarith
+    by_cases ht1 : t ≤ 1
+    · -- t on seg1, t > t₀ + ε/α
+      rw [fdBoundary_H_eq_seg1_H ht1, rightEdge_h₀_eq hs_re]
+      rw [norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs,
+          show H - Real.sqrt 3 / 2 = α from hα_def.symm]
+      have h_tα : (t₀ + ε / α) * α < t * α := mul_lt_mul_of_pos_right ht_gt hα_pos
+      have h_expand : (t₀ + ε / α) * α = t₀ * α + ε / α * α := by ring
+      have h_im_neg : H - t * α - s.im < 0 := by
+        nlinarith [ht₀_mul, div_mul_cancel₀ ε (ne_of_gt hα_pos)]
+      rw [abs_of_neg h_im_neg]
+      nlinarith [ht₀_mul, div_mul_cancel₀ ε (ne_of_gt hα_pos)]
+    · -- t > 1: non-seg1 part, use min dist bound
+      push_neg at ht1
+      have : d ≤ ‖fdBoundary_H H t - s‖ :=
+        rightEdge_min_dist_from_non_seg1 H s hs_re hs_norm hs_im t ht1 ht_mem.2
+      linarith [hε_lt_d]
+
+private lemma rightEdge_h_near (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
+    (s : ℂ) (hs_re : s.re = 1/2)
+    (α : ℝ) (hα_pos : 0 < α) (hα_def : α = H - Real.sqrt 3 / 2)
+    (t₀ : ℝ) (ht₀_pos : 0 < t₀) (ht₀_lt : t₀ < 1)
+    (ht₀_mul : t₀ * α = H - s.im)
+    (threshold : ℝ)
+    (hthresh_le_t₀α : threshold ≤ t₀ * α)
+    (hthresh_le_1mt₀α : threshold ≤ (1 - t₀) * α) :
+    ∀ ε, 0 < ε → ε < threshold → ∀ t, |t - t₀| ≤ ε / α → ‖fdBoundary_H H t - s‖ ≤ ε := by
+  intro ε hε_pos _hε_lt t h_abs
+  have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+  have hεα_lt_t₀ : ε / α < t₀ := by
+    rw [div_lt_iff₀ hα_pos]
+    calc ε < threshold := ‹_›
+      _ ≤ t₀ * α := hthresh_le_t₀α
+  have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+    rw [div_lt_iff₀ hα_pos]
+    calc ε < threshold := ‹_›
+      _ ≤ (1 - t₀) * α := hthresh_le_1mt₀α
+  rw [abs_le] at h_abs
+  have ht_lower : t₀ - ε / α ≤ t := by linarith [h_abs.1]
+  have ht_upper : t ≤ t₀ + ε / α := by linarith [h_abs.2]
+  have ht1 : t ≤ 1 := by linarith
+  rw [fdBoundary_H_eq_seg1_H ht1, rightEdge_h₀_eq hs_re]
+  rw [norm_mul, Complex.norm_real, Complex.norm_I, mul_one, Real.norm_eq_abs,
+      show H - Real.sqrt 3 / 2 = α from hα_def.symm]
+  rw [abs_le]
+  have hε_eq : ε = ε / α * α := (div_mul_cancel₀ ε (ne_of_gt hα_pos)).symm
+  have h_tα_upper : t * α ≤ (t₀ + ε / α) * α :=
+    mul_le_mul_of_nonneg_right ht_upper (le_of_lt hα_pos)
+  have h_tα_lower : (t₀ - ε / α) * α ≤ t * α :=
+    mul_le_mul_of_nonneg_right ht_lower (le_of_lt hα_pos)
+  constructor <;> nlinarith [ht₀_mul, div_mul_cancel₀ ε (ne_of_gt hα_pos)]
 
 private lemma rightEdge_winding_aux (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
-    ∀ᶠ ε in 𝓝[>] (0 : ℝ), (∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
-        (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0) =
-      -(↑Real.pi * I) := by
+    Tendsto (fun ε => ∫ t in (0:ℝ)..5,
+        if ‖fdBoundary_H H t - s‖ > ε then
+          (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0)
+      (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) := by
   set α := H - Real.sqrt 3 / 2 with hα_def
   have hα_pos : 0 < α := by rw [hα_def]; linarith
+  have hα_ne : α ≠ 0 := ne_of_gt hα_pos
   set t₀ := (H - s.im) / α with ht₀_def
   have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
   have ht₀_lt : t₀ < 1 := by rw [ht₀_def, div_lt_one hα_pos]; linarith [hα_def]
+  have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ hα_ne
   set d := min (min (‖s‖ - 1) 1) (H - s.im)
   have hd_pos : 0 < d := rightEdge_min_dist_pos s hs_norm hs_im
-  set ε₀ := min d (min (d * α) (min (t₀ * α) ((1 - t₀) * α)))
-  have hε₀_pos : 0 < ε₀ := by
-    refine lt_min hd_pos (lt_min (mul_pos hd_pos hα_pos)
-      (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos)))
-  rw [Filter.eventually_iff_exists_mem]
-  refine ⟨Ioo 0 ε₀, Ioo_mem_nhdsGT hε₀_pos, fun ε hε => ?_⟩
-  obtain ⟨hε_pos, hε_lt⟩ := hε
-  have hε_lt_d : ε < d := calc ε < ε₀ := hε_lt
-      _ ≤ d := min_le_left _ _
-  have hεα_lt_t₀ : ε / α < t₀ := by
-    rw [div_lt_iff₀ hα_pos]
-    calc ε < ε₀ := hε_lt
-      _ ≤ min (d * α) (min (t₀ * α) ((1 - t₀) * α)) := min_le_right _ _
-      _ ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
+  -- Choose threshold small enough for all bounds
+  set threshold := min d (min (t₀ * α) ((1 - t₀) * α))
+  have hthresh_pos : 0 < threshold := lt_min hd_pos
+    (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos))
+  have hthresh_le_d : threshold ≤ d := min_le_left _ _
+  have hthresh_le_t₀α : threshold ≤ t₀ * α :=
+    calc threshold ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
       _ ≤ t₀ * α := min_le_left _ _
-  have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
-    rw [div_lt_iff₀ hα_pos]
-    calc ε < ε₀ := hε_lt
-      _ ≤ min (d * α) (min (t₀ * α) ((1 - t₀) * α)) := min_le_right _ _
-      _ ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
+  have hthresh_le_1mt₀α : threshold ≤ (1 - t₀) * α :=
+    calc threshold ≤ min (t₀ * α) ((1 - t₀) * α) := min_le_right _ _
       _ ≤ (1 - t₀) * α := min_le_right _ _
-  rw [rightEdge_winding_per_eps H hH_sqrt s hs_re hs_norm hs_im_lower hs_im ε
-    hε_pos hε_lt_d hεα_lt_t₀ hεα_lt_1mt₀]
-  exact rightEdge_final_log H s hs_re α hα_def (ε / α) (div_pos hε_pos hα_pos) hα_pos
-    t₀ (div_mul_cancel₀ _ (ne_of_gt hα_pos))
+  -- Define δ(ε) = ε/α
+  have hδ_fn : ∀ ε, 0 < ε → ε < threshold → 0 < ε / α :=
+    fun ε hε _ => div_pos hε hα_pos
+  have hδ_small : ∀ ε, 0 < ε → ε < threshold →
+      ε / α < min (t₀ - 0) (5 - t₀) := by
+    intro ε hε_pos hε_lt
+    simp only [sub_zero]
+    apply lt_min
+    · rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ t₀ * α := hthresh_le_t₀α
+    · rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ (1 - t₀) * α := hthresh_le_1mt₀α
+        _ < (5 - t₀) * α := by nlinarith
+  -- Apply pv_tendsto_of_crossing_limit
+  refine ContourIntegral.pv_tendsto_of_crossing_limit
+      (t₀ := t₀) (ht₀ := ⟨by linarith, by linarith⟩)
+      (threshold := threshold) (hthresh := hthresh_pos)
+      (δ := fun ε => ε / α)
+      (E := fun ε => Complex.log (-(fdBoundary_seg1_H H (t₀ - ε / α) - s)) -
+                     Complex.log (-(fdBoundary_seg1_H H (t₀ + ε / α) - s)))
+      ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  · -- hδ_pos
+    exact hδ_fn
+  · -- hδ_small
+    exact hδ_small
+  · -- h_far
+    intro ε hε_pos hε_lt
+    exact rightEdge_h_far H hH_sqrt s hs_re hs_norm hs_im α hα_pos hα_def t₀ ht₀_pos ht₀_lt
+      ht₀_mul threshold hthresh_pos hthresh_le_d hthresh_le_t₀α hthresh_le_1mt₀α
+      ε hε_pos hε_lt
+  · -- h_near
+    intro ε hε_pos hε_lt
+    exact rightEdge_h_near H hH_sqrt s hs_re α hα_pos hα_def t₀ ht₀_pos ht₀_lt ht₀_mul
+      threshold hthresh_le_t₀α hthresh_le_1mt₀α ε hε_pos hε_lt
+  · -- h_ftc: far integrals = E(ε)
+    intro ε hε_pos hε_lt
+    have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+    have hεα_lt_t₀ : ε / α < t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ t₀ * α := hthresh_le_t₀α
+    have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ (1 - t₀) * α := hthresh_le_1mt₀α
+    exact (rightEdge_ftc_telescope H hH_sqrt s hs_re hs_im_lower hs_im (ε / α)
+      hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).2.2
+  · -- hint_left
+    intro ε hε_pos hε_lt
+    have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+    have hεα_lt_t₀ : ε / α < t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ t₀ * α := hthresh_le_t₀α
+    have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ (1 - t₀) * α := hthresh_le_1mt₀α
+    exact (rightEdge_ftc_telescope H hH_sqrt s hs_re hs_im_lower hs_im (ε / α)
+      hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).1
+  · -- hint_right
+    intro ε hε_pos hε_lt
+    have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+    have hεα_lt_t₀ : ε / α < t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ t₀ * α := hthresh_le_t₀α
+    have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < threshold := hε_lt
+        _ ≤ (1 - t₀) * α := hthresh_le_1mt₀α
+    exact (rightEdge_ftc_telescope H hH_sqrt s hs_re hs_im_lower hs_im (ε / α)
+      hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).2.1
+  · -- h_limit: E(ε) → L
+    have hE_const : ∀ ε, 0 < ε → ε < threshold →
+        Complex.log (-(fdBoundary_seg1_H H (t₀ - ε / α) - s)) -
+        Complex.log (-(fdBoundary_seg1_H H (t₀ + ε / α) - s)) = -(↑Real.pi * I) := by
+      intro ε hε_pos hε_lt
+      exact rightEdge_final_log H s hs_re α hα_def (ε / α) (div_pos hε_pos hα_pos) hα_pos
+        t₀ ht₀_mul
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT hthresh_pos] with ε hε
+      exact (hE_const ε hε.1 hε.2).symm)
 
 theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
     generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 := by
   apply ContourIntegral.gWN_eq_neg_half_of_pv_tendsto
-  have h_ev := rightEdge_winding_aux H hH_sqrt s hs_re hs_norm hs_im_lower hs_im
-  have h_tendsto : Filter.Tendsto (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖fdBoundary_H H t - s‖ > ε then
-          (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0)
-    (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) :=
-    tendsto_const_nhds.congr' (h_ev.mono (fun _ h => h.symm))
-  convert h_tendsto using 2
+  have h_tendsto := rightEdge_winding_aux H hH_sqrt s hs_re hs_norm hs_im_lower hs_im
+  convert h_tendsto using 3
   simp [sub_zero, gt_iff_lt]
 
 end
