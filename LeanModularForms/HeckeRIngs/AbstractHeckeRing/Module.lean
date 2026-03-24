@@ -45,14 +45,50 @@ lemma smulOrbit_nonempty (g : P.Δ) (β : P.Δ) :
     replace `HeckeLeftCoset.rep j` with any representative of `j`. -/
 lemma smulOrbit_lcRel (g : P.Δ) {β₁ β₂ : P.Δ} (h : lcRel P β₁ β₂) :
     smulOrbit P g β₁ = smulOrbit P g β₂ := by
+  -- lcRel means {β₁} * H = {β₂} * H
+  -- Each orbit element ⟦⟨β * i.out * g, ...⟩⟧ only depends on the left coset {β * i.out * g} * H
+  -- Since β₁H = β₂H, for each i there exists i' with {β₁ * i.out * g} * H = {β₂ * i'.out * g} * H
   ext x; simp only [smulOrbit, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and]
-  constructor
-  · rintro ⟨i, hi⟩
-    -- β₁ * i.out * g is in the same left coset as β₂ * i'.out * g for some i'
-    -- because β₁H = β₂H means β₂⁻¹β₁ ∈ H
-    sorry
-  · rintro ⟨i, hi⟩
-    sorry
+  -- Both directions: show ⟦⟨β₁ * i.out * g⟩⟧ ∈ image iff ⟦⟨β₂ * j.out * g⟩⟧ ∈ image
+  -- by showing they produce the same set of HeckeLeftCoset values
+  suffices hsuff : ∀ (β β' : P.Δ), lcRel P β β' → ∀ i : decompQuot P g,
+      ∃ j : decompQuot P g,
+        (⟦⟨(β : G) * (i.out : G) * (g : G),
+          delta_mul_mem P.H P.Δ i.out β g P.h₀⟩⟧ : HeckeLeftCoset P) =
+        ⟦⟨(β' : G) * (j.out : G) * (g : G),
+          delta_mul_mem P.H P.Δ j.out β' g P.h₀⟩⟧ by
+    constructor
+    · rintro ⟨i, hi⟩; obtain ⟨j, hj⟩ := hsuff β₁ β₂ h i; exact ⟨j, hi ▸ hj.symm⟩
+    · rintro ⟨i, hi⟩; obtain ⟨j, hj⟩ := hsuff β₂ β₁ h.symm i; exact ⟨j, hi ▸ hj.symm⟩
+  intro β β' hlc i
+  -- hlc : {β} * H = {β'} * H, so β' ∈ {β} * H
+  have hβ'_mem : (β' : G) ∈ ({(β : G)} : Set G) * (P.H : Set G) := by
+    rw [hlc]; exact ⟨β', rfl, 1, P.H.one_mem, mul_one _⟩
+  obtain ⟨_, hβ_eq, k, hk, hβ'_eq⟩ := hβ'_mem
+  rw [Set.mem_singleton_iff] at hβ_eq; subst hβ_eq
+  -- hβ'_eq : β * k = β', so β' = β * k, k ∈ H
+  -- We need j s.t. {β * i.out * g} * H = {β' * j.out * g} * H
+  -- Use j = ⟦k⁻¹ * i.out⟧ so β' * j.out * g ≈ (β*k) * (k⁻¹*i.out) * g = β * i.out * g
+  set j : decompQuot P g := ⟦⟨k⁻¹ * i.out, P.H.mul_mem (P.H.inv_mem hk) (SetLike.coe_mem i.out)⟩⟧
+  refine ⟨j, Quotient.sound ?_⟩
+  show ({(β : G) * (i.out : G) * (g : G)} : Set G) * (P.H : Set G) =
+    {(β' : G) * (j.out : G) * (g : G)} * P.H
+  -- j.out = (k⁻¹ * i.out) * n for some n in the conjugate subgroup
+  obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (g : G) • P.H).subgroupOf P.H)
+    ⟨k⁻¹ * i.out, P.H.mul_mem (P.H.inv_mem hk) i.out.2⟩
+  have hj_coe : (j.out : G) = k⁻¹ * (i.out : G) * (n : G) := by
+    have := congr_arg (Subtype.val : P.H → G) hn_eq; simpa [Subgroup.coe_mul] using this
+  have hn_conj : (g : G)⁻¹ * (n : G) * g ∈ P.H := by
+    have := n.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this
+    simpa [ConjAct.ofConjAct_toConjAct] using this
+  rw [hj_coe, ← hβ'_eq]
+  conv_rhs =>
+    rw [show (β : G) * k * (k⁻¹ * (i.out : G) * ↑n) * (g : G) =
+      (β : G) * (i.out : G) * (g : G) * ((g : G)⁻¹ * ↑n * (g : G)) from by group,
+      ← Set.singleton_mul_singleton, mul_assoc]
+  rw [Subgroup.singleton_mul_subgroup hn_conj]
 
 /-- Corollary: `smulOrbit g (HeckeLeftCoset.rep ⟦β⟧) = smulOrbit g β`. -/
 lemma smulOrbit_rep_mk (g β : P.Δ) :

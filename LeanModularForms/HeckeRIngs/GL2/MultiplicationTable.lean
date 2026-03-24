@@ -354,7 +354,7 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
     have hne : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2))
         D_out1 ≠ 0 := by
       rw [← Finsupp.mem_support_iff, HeckeRing.m_support]
-      exact D_out1_pp_in_mulSupport p hp k hk
+      exact D_out1_pp_in_mulSupport p k hk
     exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne hm1_nn (Ne.symm hne))
   rw [show HeckeCoset_deg (GL_pair 2) D1 = ↑(p + 1) from by
       simpa using HeckeCoset_deg_T_diag_two_prime p hp (![1, p])
