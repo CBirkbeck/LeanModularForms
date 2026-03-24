@@ -27,7 +27,7 @@ open Matrix.SpecialLinearGroup Matrix ModularGroup CongruenceSubgroup
 
 open scoped MatrixGroups
 
-namespace HeckeRing.GLn
+namespace HeckeRing.GL2
 
 private lemma ZMod_inv_mul_cancel (p : ℕ) (hp : Nat.Prime p) (a : ℤ)
     (h : (a : ZMod p) ≠ 0) : (a : ZMod p)⁻¹ * (a : ZMod p) = 1 := by
@@ -268,4 +268,4 @@ theorem Gamma0_prime_power_index (p : ℕ) (hp : Nat.Prime p) (k : ℕ) (hk : 0 
       rw [← Subgroup.relIndex_mul_index h_le,
         Gamma0_relindex_step p hp m hm', ih hm', ← mul_assoc, hpm]
 
-end HeckeRing.GLn
+end HeckeRing.GL2
