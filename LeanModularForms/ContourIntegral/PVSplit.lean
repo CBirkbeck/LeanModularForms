@@ -35,7 +35,7 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ : �
     {t₀ : ℝ} (_hab : a < b)
     (ht₀ : t₀ ∈ Ioo a b) (_hε : 0 < ε) (hδ : 0 < δ)
     (hδ_small : δ < min (t₀ - a) (b - t₀))
-    (h_far : ∀ t ∈ Icc a b, δ ≤ |t - t₀| → ε < ‖γ t - s‖)
+    (h_far : ∀ t ∈ Icc a b, δ < |t - t₀| → ε < ‖γ t - s‖)
     (h_near : ∀ t, |t - t₀| ≤ δ → ‖γ t - s‖ ≤ ε)
     (hint_left : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume a (t₀ - δ))
     (hint_right : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume (t₀ + δ) b) :
@@ -62,26 +62,31 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ : �
     rw [abs_le]
     constructor <;> [linarith [ht.1]; linarith [ht.2]]
   -- F = (γ t - s)⁻¹ * deriv γ t a.e. on [a, t₀ - δ]
+  -- (The single boundary point t = t₀ - δ is measure zero; for all other t in Ioc a (t₀-δ)
+  --  we have |t - t₀| > δ strictly, so h_far applies.)
   have hF_left : ∀ᵐ t ∂volume, t ∈ uIoc a (t₀ - δ) →
       F t = (γ t - s)⁻¹ * deriv γ t := by
-    apply ae_of_all
-    intro t ht
+    have h_ne : ({t₀ - δ} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
+    filter_upwards [h_ne] with t ht_ne ht
     rw [uIoc_of_le (le_of_lt h_left_lt)] at ht
     simp only [hF_def]
     rw [if_pos]
-    -- ht : t ∈ Ioc a (t₀ - δ), so a < t ≤ t₀ - δ < b
+    -- ht : t ∈ Ioc a (t₀ - δ), t ≠ t₀ - δ, so t < t₀ - δ, giving |t - t₀| > δ
     apply h_far t ⟨le_of_lt ht.1, le_trans ht.2 (by linarith)⟩
     rw [abs_of_nonpos (by linarith [ht.2])]
-    linarith [ht.2]
+    have : t < t₀ - δ := lt_of_le_of_ne ht.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+    linarith
   -- F = (γ t - s)⁻¹ * deriv γ t a.e. on [t₀ + δ, b]
   have hF_right : ∀ᵐ t ∂volume, t ∈ uIoc (t₀ + δ) b →
       F t = (γ t - s)⁻¹ * deriv γ t := by
-    apply ae_of_all
-    intro t ht
+    have h_ne : ({t₀ + δ} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
+    filter_upwards [h_ne] with t ht_ne ht
     rw [uIoc_of_le (le_of_lt h_right_lt)] at ht
     simp only [hF_def]
     rw [if_pos]
-    -- ht : t ∈ Ioc (t₀ + δ) b, so t₀ + δ < t ≤ b
+    -- ht : t ∈ Ioc (t₀ + δ) b, so t₀ + δ < t, giving |t - t₀| = t - t₀ > δ
     apply h_far t ⟨le_trans (by linarith) (le_of_lt ht.1), ht.2⟩
     rw [abs_of_nonneg (by linarith [ht.1])]
     linarith [ht.1]

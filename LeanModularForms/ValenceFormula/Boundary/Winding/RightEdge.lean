@@ -413,6 +413,285 @@ private lemma rightEdge_final_log (H : ℝ) (s : ℂ)
   ring
 
 set_option maxHeartbeats 1600000 in
+/-- FTC telescope: the left + right logDeriv integrals of `fdBoundary_H H - s` (skipping the
+crossing interval `[t₀ - δ, t₀ + δ]`) equal `log(-(h₀(t₀ - δ))) - log(-(h₀(t₀ + δ)))`.
+Here `h₀ t = fdBoundary_seg1_H H t - s`, `α = H - √3/2`, `t₀ = (H - s.im)/α`, `δ > 0`. -/
+lemma rightEdge_ftc_telescope (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
+    (s : ℂ) (hs_re : s.re = 1/2)
+    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H)
+    (δ : ℝ) (hδ_pos : 0 < δ)
+    (hδ_lt_t₀ : δ < (H - s.im) / (H - Real.sqrt 3 / 2))
+    (hδ_lt_1mt₀ : δ < 1 - (H - s.im) / (H - Real.sqrt 3 / 2)) :
+    let g : ℝ → ℂ := fun t => fdBoundary_H H t - s
+    let h₀ : ℝ → ℂ := fun t => fdBoundary_seg1_H H t - s
+    let t₀ := (H - s.im) / (H - Real.sqrt 3 / 2)
+    (∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t) +
+    (∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t) =
+    Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ (t₀ + δ))) := by
+  intro g h₀ t₀
+  set α := H - Real.sqrt 3 / 2 with hα_def
+  have hα_pos : 0 < α := by rw [hα_def]; linarith
+  have hα_ne : α ≠ 0 := ne_of_gt hα_pos
+  have ht₀_def : t₀ = (H - s.im) / α := rfl
+  have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
+  have ht₀_lt : t₀ < 1 := by rw [ht₀_def, div_lt_one hα_pos]; linarith [hα_def]
+  have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ hα_ne
+  set h_arc : ℝ → ℂ := fun t => exp (↑(Real.pi * (1 + t) / 6) * I) - s
+  set h₃ : ℝ → ℂ := fun t => fdBoundary_seg4_H H t - s
+  set h₅ : ℝ → ℂ := fun t => fdBoundary_seg5_H H t - s
+  have hd₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑α : ℂ) * I) t := by
+    intro t; exact (hasDerivAt_fdBoundary_seg1_H H t).sub (hasDerivAt_const t s)
+      |>.congr_deriv (by simp [hα_def])
+  have hd_arc : ∀ t : ℝ, HasDerivAt h_arc
+      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t :=
+    hasDerivAt_arc_rep s
+  have hd₃ : ∀ t : ℝ, HasDerivAt h₃ ((↑α : ℂ) * I) t := by
+    intro t; exact (hasDerivAt_fdBoundary_seg4_H H t).sub (hasDerivAt_const t s)
+      |>.congr_deriv (by simp [hα_def])
+  have hd₅ : ∀ t : ℝ, HasDerivAt h₅ 1 t := by
+    intro t; exact (hasDerivAt_fdBoundary_seg5_H H t).sub (hasDerivAt_const t s)
+      |>.congr_deriv (by simp)
+  have hg_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := by
+    intro t ht; simp only [g, h₀]; rw [fdBoundary_H_eq_seg1_H ht]
+  have hg_arc : ∀ t, 1 < t → t < 3 → g t = h_arc t := by
+    intro t ht1 ht3; simp only [g, h_arc]; rw [fdBoundary_H_eq_arc ht1 ht3]
+  have hg_h₃ : ∀ t, 3 < t → t ≤ 4 → g t = h₃ t := by
+    intro t ht3 ht4; simp only [g, h₃]; rw [fdBoundary_H_eq_seg4_H ht3 ht4]
+  have hg_h₅ : ∀ t, 4 < t → g t = h₅ t := by
+    intro t ht4; simp only [g, h₅]; rw [fdBoundary_H_eq_seg5_H ht4]
+  have hep_01 : h₀ 0 = h₅ 5 := by
+    simp only [h₀, h₅, fdBoundary_seg1_H, fdBoundary_seg5_H]; push_cast; ring
+  have hep_1 : h₀ 1 = h_arc 1 := by
+    simp only [h₀, h_arc, fdBoundary_seg1_H]
+    rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
+        exp_real_angle_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
+    push_cast; ring
+  have hep_3 : h_arc 3 = h₃ 3 := by
+    simp only [h_arc, h₃, fdBoundary_seg4_H]
+    rw [show Real.pi * (1 + 3) / 6 = 2 * Real.pi / 3 from by ring,
+        exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
+    push_cast; ring
+  have hep_4 : h₃ 4 = h₅ 4 := by
+    simp only [h₃, h₅, fdBoundary_seg4_H, fdBoundary_seg5_H]; push_cast; ring
+  have hderiv_01 : ∀ t ∈ Ioo (0:ℝ) 1, deriv g t = deriv h₀ t := by
+    intro t ⟨_, ht1⟩
+    exact Filter.EventuallyEq.deriv_eq
+      (Filter.eventually_of_mem (Iio_mem_nhds ht1) (fun s hs => hg_h₀ s (le_of_lt hs)))
+  have hderiv_arc : ∀ t ∈ Ioo (1:ℝ) 3, deriv g t = deriv h_arc t := by
+    intro t ⟨ht1, ht3⟩
+    exact Filter.EventuallyEq.deriv_eq
+      (Filter.eventually_of_mem (Ioo_mem_nhds ht1 ht3) (fun s hs => hg_arc s hs.1 hs.2))
+  have hderiv_3 : ∀ t ∈ Ioo (3:ℝ) 4, deriv g t = deriv h₃ t := by
+    intro t ⟨ht3, ht4⟩
+    exact Filter.EventuallyEq.deriv_eq (Filter.eventually_of_mem (Ioo_mem_nhds ht3 ht4)
+        (fun s hs => hg_h₃ s hs.1 (le_of_lt hs.2)))
+  have hderiv_5 : ∀ t ∈ Ioo (4:ℝ) 5, deriv g t = deriv h₅ t := by
+    intro t ⟨ht4, _⟩
+    exact Filter.EventuallyEq.deriv_eq
+      (Filter.eventually_of_mem (Ioi_mem_nhds ht4) (fun s hs => hg_h₅ s hs))
+  have hslit₀_left : ∀ δ', 0 < δ' → δ' < t₀ →
+      ∀ t ∈ Icc (0 : ℝ) (t₀ - δ'), -(h₀ t) ∈ Complex.slitPlane := by
+    intro δ' hδ' hδ't₀ t ⟨ht0, htd⟩
+    exact rightEdge_neg_seg1_slitPlane_left H s hs_re hs_im _hH_sqrt δ' hδ' t₀ hδ't₀
+      ht₀_mul t ht0 htd
+  have hslit₀_right : ∀ δ', 0 < δ' → δ' < 1 - t₀ →
+      ∀ t ∈ Icc (t₀ + δ') 1, -(h₀ t) ∈ Complex.slitPlane := by
+    intro δ' hδ' hδ'1t₀ t ⟨htd, ht1⟩
+    exact rightEdge_neg_seg1_slitPlane_right H s hs_re hs_im _hH_sqrt δ' hδ' t₀ hδ'1t₀
+      ht₀_mul t htd ht1
+  have hslit_arc : ∀ t ∈ Icc (1:ℝ) 3, -(h_arc t) ∈ Complex.slitPlane := by
+    intro t ⟨ht1, ht3⟩; exact rightEdge_neg_arc_slitPlane s hs_re hs_im_lower t ht1 ht3
+  have hslit₃ : ∀ t ∈ Icc (3:ℝ) 4, -(h₃ t) ∈ Complex.slitPlane := by
+    intro t ⟨_, _⟩
+    rw [Complex.mem_slitPlane_iff]; left
+    simp only [h₃, fdBoundary_seg4_H, neg_sub, Complex.sub_re,
+      Complex.add_re, Complex.neg_re, Complex.div_ofNat_re,
+      Complex.one_re, Complex.mul_re, Complex.ofReal_re,
+      Complex.I_re, Complex.I_im, mul_zero]
+    rw [hs_re]; norm_num
+  have hslit₅ : ∀ t ∈ Icc (4:ℝ) 5, -(h₅ t) ∈ Complex.slitPlane := by
+    intro t ⟨ht4, ht5⟩
+    rw [Complex.mem_slitPlane_iff]
+    simp only [h₅, fdBoundary_seg5_H, neg_sub]
+    by_cases ht5_eq : t = 5
+    · right
+      subst ht5_eq
+      simp [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
+        Complex.ofReal_im, Complex.I_re, Complex.I_im]
+      linarith
+    · left
+      have : t < 5 := lt_of_le_of_ne ht5 ht5_eq
+      simp [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
+        Complex.ofReal_im, Complex.I_re, Complex.I_im]
+      rw [hs_re]; linarith
+  have piece₀ := ftc_log_neg (by linarith : (0:ℝ) ≤ t₀ - δ)
+    ((continuous_fdBoundary_seg1_H H).sub continuous_const).continuousOn
+    (fun t _ => (hd₀ t).differentiableAt)
+    (by rw [show deriv h₀ = fun _ => -(↑α : ℂ) * I from funext fun t => (hd₀ t).deriv]
+        exact continuousOn_const)
+    (hslit₀_left δ hδ_pos hδ_lt_t₀)
+  have piece₁ := ftc_log_neg (by linarith : t₀ + δ ≤ 1)
+    ((continuous_fdBoundary_seg1_H H).sub continuous_const).continuousOn
+    (fun t _ => (hd₀ t).differentiableAt)
+    (by rw [show deriv h₀ = fun _ => -(↑α : ℂ) * I from funext fun t => (hd₀ t).deriv]
+        exact continuousOn_const)
+    (hslit₀_right δ hδ_pos hδ_lt_1mt₀)
+  have h_arc_cont : Continuous h_arc := by
+    simp only [h_arc]; exact (Continuous.cexp (by fun_prop)).sub continuous_const
+  have piece₂ := ftc_log_neg (by norm_num : (1:ℝ) ≤ 3)
+    h_arc_cont.continuousOn (fun t _ => (hd_arc t).differentiableAt)
+    (by rw [show deriv h_arc = fun t => ↑(Real.pi / 6) * I *
+          exp (↑(Real.pi * (1 + t) / 6) * I) from funext fun t => (hd_arc t).deriv]
+        exact (Continuous.mul continuous_const (Continuous.cexp (by fun_prop))).continuousOn)
+    hslit_arc
+  have piece₃ := ftc_log_neg (by norm_num : (3:ℝ) ≤ 4)
+    ((continuous_fdBoundary_seg4_H H).sub continuous_const).continuousOn
+    (fun t _ => (hd₃ t).differentiableAt)
+    (by rw [show deriv h₃ = fun _ => (↑α : ℂ) * I from funext fun t => (hd₃ t).deriv]
+        exact continuousOn_const)
+    hslit₃
+  have piece₄ := ftc_log_neg (by norm_num : (4:ℝ) ≤ 5)
+    ((continuous_fdBoundary_seg5_H H).sub continuous_const).continuousOn
+    (fun t _ => (hd₅ t).differentiableAt)
+    (by rw [show deriv h₅ = fun _ => (1 : ℂ) from funext fun t => (hd₅ t).deriv]
+        exact continuousOn_const)
+    hslit₅
+  have h_ae₀ : ∀ a b : ℝ, 0 ≤ a → a < b → b ≤ 1 →
+      ∀ᵐ t ∂volume, t ∈ Set.uIoc a b → deriv h₀ t / h₀ t = deriv g t / g t := by
+    intro a b ha_nn hab hb1
+    have h_excl : ({b} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite ({b} : Set ℝ)).measure_zero volume)
+    filter_upwards [h_excl] with t ht_ne ht
+    rw [Set.uIoc_of_le (le_of_lt hab)] at ht
+    have ht_lt_b : t < b := lt_of_le_of_ne ht.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+    have ht_lt1 : t < 1 := lt_of_lt_of_le ht_lt_b hb1
+    rw [hg_h₀ t (le_of_lt ht_lt1), hderiv_01 t ⟨by linarith [ht.1], ht_lt1⟩]
+  have h_ae_arc : ∀ᵐ t ∂volume, t ∈ Set.uIoc 1 3 →
+      deriv h_arc t / h_arc t = deriv g t / g t := by
+    have : ({1, 3} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by
+        rw [compl_compl]
+        exact (Set.toFinite ({1, 3} : Set ℝ)).measure_zero volume)
+    filter_upwards [this] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht_mem
+    have ht1 : 1 < t := by
+      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
+      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
+      · exact h
+    have ht3 : t < 3 := by
+      rcases eq_or_lt_of_le ht_mem.2 with h | h
+      · exfalso
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
+      · exact h
+    rw [hg_arc t ht1 ht3, hderiv_arc t ⟨ht1, ht3⟩]
+  have h_ae₃ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 3 4 →
+      deriv h₃ t / h₃ t = deriv g t / g t := by
+    have : ({3, 4} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by
+        rw [compl_compl]
+        exact (Set.toFinite ({3, 4} : Set ℝ)).measure_zero volume)
+    filter_upwards [this] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by norm_num : (3:ℝ) ≤ 4)] at ht_mem
+    have ht3 : 3 < t := by
+      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
+      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
+      · exact h
+    have ht4 : t < 4 := by
+      rcases eq_or_lt_of_le ht_mem.2 with h | h
+      · exfalso
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
+      · exact h
+    rw [hg_h₃ t ht3 (le_of_lt ht4), hderiv_3 t ⟨ht3, ht4⟩]
+  have h_ae₅ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 4 5 →
+      deriv h₅ t / h₅ t = deriv g t / g t := by
+    have : ({4, 5} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by
+        rw [compl_compl]
+        exact (Set.toFinite ({4, 5} : Set ℝ)).measure_zero volume)
+    filter_upwards [this] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)] at ht_mem
+    have ht4 : 4 < t := by
+      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
+      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
+      · exact h
+    have ht5 : t < 5 := by
+      rcases eq_or_lt_of_le ht_mem.2 with h | h
+      · exfalso
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
+      · exact h
+    rw [hg_h₅ t ht4, hderiv_5 t ⟨ht4, ht5⟩]
+  have hint₀ : IntervalIntegrable (fun t => deriv g t / g t) volume 0 (t₀ - δ) :=
+    piece₀.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      ((h_ae₀ 0 (t₀ - δ) le_rfl (by linarith) (by linarith)).mono
+        (fun t ht hm => ht hm)))
+  have hint₁ : IntervalIntegrable (fun t => deriv g t / g t) volume (t₀ + δ) 1 :=
+    piece₁.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      ((h_ae₀ (t₀ + δ) 1 (by linarith) (by linarith) le_rfl).mono
+        (fun t ht hm => ht hm)))
+  have hint_arc : IntervalIntegrable (fun t => deriv g t / g t) volume 1 3 :=
+    piece₂.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      (h_ae_arc.mono (fun t ht hm => ht hm)))
+  have hint₃ : IntervalIntegrable (fun t => deriv g t / g t) volume 3 4 :=
+    piece₃.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      (h_ae₃.mono (fun t ht hm => ht hm)))
+  have hint₅ : IntervalIntegrable (fun t => deriv g t / g t) volume 4 5 :=
+    piece₄.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      (h_ae₅.mono (fun t ht hm => ht hm)))
+  have hint_right : IntervalIntegrable (fun t => deriv g t / g t) volume (t₀ + δ) 5 :=
+    hint₁.trans hint_arc |>.trans hint₃ |>.trans hint₅
+  have h_ftc₀ : ∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t =
+      Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ 0)) := by
+    rw [← piece₀.2, intervalIntegral.integral_congr_ae
+      ((h_ae₀ 0 (t₀ - δ) le_rfl (by linarith) (by linarith)).mono
+        (fun t ht hm => ht hm))]
+  have h_ftc₁ : ∫ t in (t₀ + δ)..(1:ℝ), deriv g t / g t =
+      Complex.log (-(h₀ 1)) - Complex.log (-(h₀ (t₀ + δ))) := by
+    rw [← piece₁.2, intervalIntegral.integral_congr_ae
+      ((h_ae₀ (t₀ + δ) 1 (by linarith) (by linarith) le_rfl).mono
+        (fun t ht hm => ht hm))]
+  have h_ftc_arc : ∫ t in (1:ℝ)..(3:ℝ), deriv g t / g t =
+      Complex.log (-(h_arc 3)) - Complex.log (-(h_arc 1)) := by
+    rw [← piece₂.2, intervalIntegral.integral_congr_ae (h_ae_arc.mono (fun t ht hm => ht hm))]
+  have h_ftc₃ : ∫ t in (3:ℝ)..(4:ℝ), deriv g t / g t =
+      Complex.log (-(h₃ 4)) - Complex.log (-(h₃ 3)) := by
+    rw [← piece₃.2, intervalIntegral.integral_congr_ae (h_ae₃.mono (fun t ht hm => ht hm))]
+  have h_ftc₅ : ∫ t in (4:ℝ)..(5:ℝ), deriv g t / g t =
+      Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4)) := by
+    rw [← piece₄.2, intervalIntegral.integral_congr_ae (h_ae₅.mono (fun t ht hm => ht hm))]
+  have h_right_total : ∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t =
+      Complex.log (-(h₀ 1)) - Complex.log (-(h₀ (t₀ + δ))) +
+      (Complex.log (-(h_arc 3)) - Complex.log (-(h_arc 1))) +
+      (Complex.log (-(h₃ 4)) - Complex.log (-(h₃ 3))) +
+      (Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4))) := by
+    have h_split_right : (∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t) =
+      (∫ t in (t₀ + δ)..(1:ℝ), deriv g t / g t) + (∫ t in (1:ℝ)..(3:ℝ), deriv g t / g t) +
+      (∫ t in (3:ℝ)..(4:ℝ), deriv g t / g t) + (∫ t in (4:ℝ)..(5:ℝ), deriv g t / g t) := by
+        have h1 : (∫ t in (t₀ + δ)..(1:ℝ), deriv g t / g t) +
+            (∫ t in (1:ℝ)..(3:ℝ), deriv g t / g t) =
+            ∫ t in (t₀ + δ)..(3:ℝ), deriv g t / g t := by
+          rw [← intervalIntegral.integral_add_adjacent_intervals hint₁ hint_arc]
+        have h2 : (∫ t in (t₀ + δ)..(3:ℝ), deriv g t / g t) +
+            (∫ t in (3:ℝ)..(4:ℝ), deriv g t / g t) =
+            ∫ t in (t₀ + δ)..(4:ℝ), deriv g t / g t := by
+          rw [← intervalIntegral.integral_add_adjacent_intervals
+            (hint₁.trans hint_arc) hint₃]
+        have h3 : (∫ t in (t₀ + δ)..(4:ℝ), deriv g t / g t) +
+            (∫ t in (4:ℝ)..(5:ℝ), deriv g t / g t) =
+            ∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t := by
+          rw [← intervalIntegral.integral_add_adjacent_intervals
+            ((hint₁.trans hint_arc).trans hint₃) hint₅]
+        rw [← h3, ← h2, ← h1]
+    rw [h_split_right, h_ftc₁, h_ftc_arc, h_ftc₃, h_ftc₅]
+  have h_telescope : Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ 0)) +
+      (Complex.log (-(h₀ 1)) - Complex.log (-(h₀ (t₀ + δ))) +
+        (Complex.log (-(h_arc 3)) - Complex.log (-(h_arc 1))) +
+        (Complex.log (-(h₃ 4)) - Complex.log (-(h₃ 3))) +
+        (Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4)))) =
+      Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ (t₀ + δ))) := by
+    rw [hep_1, hep_3, hep_4, hep_01]; ring
+  rw [h_ftc₀, h_right_total, h_telescope]
+
+set_option maxHeartbeats 1600000 in
 lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H)
@@ -463,20 +742,6 @@ lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
   have hg_h₅ : ∀ t, 4 < t → g t = h₅ t := by
     intro t ht4; simp only [hg_def, h₅]
     rw [fdBoundary_H_eq_seg5_H ht4]
-  have hep_01 : h₀ 0 = h₅ 5 := by
-    simp only [h₀, h₅, fdBoundary_seg1_H, fdBoundary_seg5_H]; push_cast; ring
-  have hep_1 : h₀ 1 = h_arc 1 := by
-    simp only [h₀, h_arc, fdBoundary_seg1_H]
-    rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
-        exp_real_angle_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
-    push_cast; ring
-  have hep_3 : h_arc 3 = h₃ 3 := by
-    simp only [h_arc, h₃, fdBoundary_seg4_H]
-    rw [show Real.pi * (1 + 3) / 6 = 2 * Real.pi / 3 from by ring,
-        exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
-    push_cast; ring
-  have hep_4 : h₃ 4 = h₅ 4 := by
-    simp only [h₃, h₅, fdBoundary_seg4_H, fdBoundary_seg5_H]; push_cast; ring
   have hderiv_01 : ∀ t ∈ Ioo (0:ℝ) 1, deriv g t = deriv h₀ t := by
     intro t ⟨_, ht1⟩
     exact Filter.EventuallyEq.deriv_eq
@@ -751,57 +1016,8 @@ lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
   have h_eq_right : ∫ t in (t₀ + δ)..(5:ℝ), F t =
       ∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t :=
     intervalIntegral.integral_congr_ae hF_right
-  have h_ftc₀ : ∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t =
-      Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ 0)) := by
-    rw [← piece₀.2, intervalIntegral.integral_congr_ae
-      ((h_ae₀ 0 (t₀ - δ) le_rfl (by linarith) (by linarith)).mono
-        (fun t ht hm => ht hm))]
-  have h_ftc₁ : ∫ t in (t₀ + δ)..(1:ℝ), deriv g t / g t =
-      Complex.log (-(h₀ 1)) - Complex.log (-(h₀ (t₀ + δ))) := by
-    rw [← piece₁.2, intervalIntegral.integral_congr_ae
-      ((h_ae₀ (t₀ + δ) 1 (by linarith) (by linarith) le_rfl).mono
-        (fun t ht hm => ht hm))]
-  have h_ftc_arc : ∫ t in (1:ℝ)..(3:ℝ), deriv g t / g t =
-      Complex.log (-(h_arc 3)) - Complex.log (-(h_arc 1)) := by
-    rw [← piece₂.2, intervalIntegral.integral_congr_ae (h_ae_arc.mono (fun t ht hm => ht hm))]
-  have h_ftc₃ : ∫ t in (3:ℝ)..(4:ℝ), deriv g t / g t =
-      Complex.log (-(h₃ 4)) - Complex.log (-(h₃ 3)) := by
-    rw [← piece₃.2, intervalIntegral.integral_congr_ae (h_ae₃.mono (fun t ht hm => ht hm))]
-  have h_ftc₅ : ∫ t in (4:ℝ)..(5:ℝ), deriv g t / g t =
-      Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4)) := by
-    rw [← piece₄.2, intervalIntegral.integral_congr_ae (h_ae₅.mono (fun t ht hm => ht hm))]
-  have h_right_total : ∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t =
-      Complex.log (-(h₀ 1)) - Complex.log (-(h₀ (t₀ + δ))) +
-      (Complex.log (-(h_arc 3)) - Complex.log (-(h_arc 1))) +
-      (Complex.log (-(h₃ 4)) - Complex.log (-(h₃ 3))) +
-      (Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4))) := by
-    have h_split_right : (∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t) =
-      (∫ t in (t₀ + δ)..(1:ℝ), deriv g t / g t) + (∫ t in (1:ℝ)..(3:ℝ), deriv g t / g t) +
-      (∫ t in (3:ℝ)..(4:ℝ), deriv g t / g t) + (∫ t in (4:ℝ)..(5:ℝ), deriv g t / g t) := by
-        have h1 : (∫ t in (t₀ + δ)..(1:ℝ), deriv g t / g t) +
-            (∫ t in (1:ℝ)..(3:ℝ), deriv g t / g t) =
-            ∫ t in (t₀ + δ)..(3:ℝ), deriv g t / g t := by
-          rw [← intervalIntegral.integral_add_adjacent_intervals
-            hint₁ hint_arc]
-        have h2 : (∫ t in (t₀ + δ)..(3:ℝ), deriv g t / g t) +
-            (∫ t in (3:ℝ)..(4:ℝ), deriv g t / g t) =
-            ∫ t in (t₀ + δ)..(4:ℝ), deriv g t / g t := by
-          rw [← intervalIntegral.integral_add_adjacent_intervals
-            (hint₁.trans hint_arc) hint₃]
-        have h3 : (∫ t in (t₀ + δ)..(4:ℝ), deriv g t / g t) +
-            (∫ t in (4:ℝ)..(5:ℝ), deriv g t / g t) =
-            ∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t := by
-          rw [← intervalIntegral.integral_add_adjacent_intervals
-            ((hint₁.trans hint_arc).trans hint₃) hint₅]
-        rw [← h3, ← h2, ← h1]
-    rw [h_split_right, h_ftc₁, h_ftc_arc, h_ftc₃, h_ftc₅]
-  have h_telescope : Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ 0)) +
-      (Complex.log (-(h₀ 1)) - Complex.log (-(h₀ (t₀ + δ))) +
-        (Complex.log (-(h_arc 3)) - Complex.log (-(h_arc 1))) +
-        (Complex.log (-(h₃ 4)) - Complex.log (-(h₃ 3))) +
-        (Complex.log (-(h₅ 5)) - Complex.log (-(h₅ 4)))) =
-      Complex.log (-(h₀ (t₀ - δ))) - Complex.log (-(h₀ (t₀ + δ))) := by
-    rw [hep_1, hep_3, hep_4, hep_01]; ring
+  have h_ftc := rightEdge_ftc_telescope H _hH_sqrt s hs_re hs_im_lower hs_im δ hδ_pos
+    hεα_lt_t₀ hεα_lt_1mt₀
   have h_step1 : ∫ t in (0:ℝ)..5, (if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) =
       (∫ t in (0:ℝ)..(t₀ - δ), deriv g t / g t) + (∫ t in (t₀ + δ)..(5:ℝ), deriv g t / g t) := by
     calc ∫ t in (0:ℝ)..5, (if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0)
@@ -811,11 +1027,13 @@ lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
       _ = _ := by rw [add_zero, h_eq_left, h_eq_right]
   show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
       deriv (fun u => fdBoundary_H H u - s) t else 0) =
-    Complex.log (-(h₀ (t₀ - δ) )) - Complex.log (-(h₀ (t₀ + δ)))
+    Complex.log (-(fdBoundary_seg1_H H (t₀ - δ) - s)) -
+    Complex.log (-(fdBoundary_seg1_H H (t₀ + δ) - s))
   rw [show (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ *
       deriv (fun u => fdBoundary_H H u - s) t else 0) =
     (∫ t in (0:ℝ)..5, if ‖g t‖ > ε then (g t)⁻¹ * deriv g t else 0) from rfl]
-  rw [h_step1, h_ftc₀, h_right_total, h_telescope]
+  rw [h_step1]
+  exact h_ftc
 
 private lemma rightEdge_winding_aux (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
