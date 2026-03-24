@@ -16,8 +16,8 @@ import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Commutativity
 
 This file re-exports the Hecke ring construction, split across:
 
-* `Basic` — core definitions (`ArithmeticGroupPair`, `T'`, `M`, `decompQuot`, `𝕋`, `𝕄`)
-* `Multiplication` — Shimura's multiplicity `m'`, `mulMap`, `mulSupport`, the `Mul` instance
+* `Basic` — core definitions (`HeckePair`, `HeckeCoset`, `HeckeLeftCoset`, `decompQuot`, `𝕋`, `HeckeModule`)
+* `Multiplication` — Shimura's `heckeMultiplicity`, `mulMap`, `mulSupport`, the `Mul` instance
 * `Module` — `smulOrbit`, module action on left cosets, faithfulness
 * `Associativity` — `IsScalarTower` (Shimura Prop 3.4)
 * `Ring` — `Ring (𝕋 P ℤ)` instance and user-facing API

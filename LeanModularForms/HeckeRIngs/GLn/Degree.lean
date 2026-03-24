@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GLn.CosetDecomposition
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Degree
-import LeanModularForms.HeckeRIngs.GLn.CongruenceIndex
+import LeanModularForms.HeckeRIngs.GL2.CongruenceIndex
 
 /-!
 # Degree Formulas for GL_n Hecke Ring
@@ -19,7 +19,7 @@ coefficients for the prime-power case.
 
 ## Main results
 
-* `upperTriRep_card_le_T'_deg` : `∏_{i<j} (a_j / a_i) ≤ deg(T(a₁,...,aₙ))`
+* `upperTriRep_card_le_HeckeCoset_deg` : `∏_{i<j} (a_j / a_i) ≤ deg(T(a₁,...,aₙ))`
 
 ## Important note on degree formulas
 
@@ -42,7 +42,8 @@ function `ψ(d) = d · ∏_{p | d} (1 + 1/p)`. For the prime-power case needed f
 * Shimura, Proposition 3.14, 3.18, Theorem 3.24
 -/
 
-open HeckeRing Finset CongruenceSubgroup Matrix.SpecialLinearGroup Matrix ModularGroup
+open HeckeRing HeckeRing.GL2 Finset CongruenceSubgroup Matrix.SpecialLinearGroup Matrix
+  ModularGroup
 open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GLn
@@ -54,8 +55,7 @@ def gaussianBinom (q : ℕ) (m k : ℕ) : ℕ :=
   else 0
 
 lemma gaussianBinom_zero_right (q m : ℕ) : gaussianBinom q m 0 = 1 := by
-  simp only [gaussianBinom, Nat.zero_le, ↓reduceIte,
-    Finset.range_zero, Finset.prod_empty]
+  simp only [gaussianBinom, Nat.zero_le, ↓reduceIte, Finset.range_zero, Finset.prod_empty]
 
 lemma gaussianBinom_gt (q m k : ℕ) (h : m < k) : gaussianBinom q m k = 0 := by
   simp only [gaussianBinom, Nat.not_le.mpr h, ↓reduceIte]
@@ -78,18 +78,20 @@ private lemma conjAct_smul_eq_of_mem {G : Type*} [Group G] (H : Subgroup G)
       simp [ConjAct.ofConjAct_toConjAct, mul_assoc]
     rw [this]; exact H.mul_mem (H.mul_mem (H.inv_mem hh) hx) hh
 
-variable (n : ℕ) [NeZero n]
+variable (n : ℕ)
 
 private def unipSL (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     SL(n, ℤ) :=
   ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
 
-omit [NeZero n] in
 private lemma upperTriGL_eq_diagMat_mul (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
-    upperTriGL n a ha hdiv B = diagMat n a ha * (unipSL n a hdiv B : GL (Fin n) ℚ) := by
+    upperTriGL n a ha hdiv B = diagMat n a * (unipSL n a hdiv B : GL (Fin n) ℚ) := by
   apply Units.ext
-  simp only [upperTriGL_val, Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val]
+  have hunip_val : (↑(mapGL ℚ (unipSL n a hdiv B)) : Matrix _ _ ℚ) =
+      (unipSL n a hdiv B).val.map (Int.cast) := by
+    simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
+  simp only [upperTriGL_val, Units.val_mul, hunip_val, diagMat_val n a ha]
   ext i j
   simp only [Matrix.map_apply, Matrix.mul_apply, Matrix.diagonal_apply]
   rw [Finset.sum_eq_single i]
@@ -113,31 +115,29 @@ private def invTransposeEquiv : SL(n, ℤ) ≃* SL(n, ℤ) where
   map_mul' σ τ := by
     show (σ * τ).transpose⁻¹ = σ.transpose⁻¹ * τ.transpose⁻¹
     have h : (σ * τ).transpose = τ.transpose * σ.transpose :=
-      Subtype.ext (by simp only [SpecialLinearGroup.coe_mul, SpecialLinearGroup.coe_transpose,
-        Matrix.transpose_mul])
+      Subtype.ext (by simp only [SpecialLinearGroup.coe_mul,
+        SpecialLinearGroup.coe_transpose, Matrix.transpose_mul])
     rw [h, _root_.mul_inv_rev]
 
-omit [NeZero n] in
 private lemma SL_transpose_inv_eq (σ : SL(n, ℤ)) :
     σ.transpose⁻¹ = σ⁻¹.transpose :=
-  Subtype.ext (by simp only [SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_transpose,
-    Matrix.adjugate_transpose])
+  Subtype.ext (by simp only [SpecialLinearGroup.coe_inv,
+    SpecialLinearGroup.coe_transpose, Matrix.adjugate_transpose])
 
-omit [NeZero n] in
 private lemma invTransposeEquiv_invol (σ : SL(n, ℤ)) :
     invTransposeEquiv n (invTransposeEquiv n σ) = σ := by
   rw [show invTransposeEquiv n σ = (invTransposeEquiv n).symm σ from SL_transpose_inv_eq n σ]
   exact (invTransposeEquiv n).apply_symm_apply σ
 
-omit [NeZero n] in
 private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
-    K.relIndex (SLnZ_subgroup n) = (K.comap (SLnZ_to_GLnQ n)).index := by
-  set f := SLnZ_to_GLnQ n
+    K.relIndex (SLnZ_subgroup n) = (K.comap (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)).index := by
+  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
   set H := SLnZ_subgroup n
   have h_inj : Function.Injective f := by
     intro x y hxy; ext i j
     have h := congr_arg (fun g => (Units.val g) i j) hxy
-    simp only [f, SLnZ_to_GLnQ_val, Matrix.map_apply] at h; exact_mod_cast h
+    simp only [f, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
+      Matrix.map_apply] at h; exact_mod_cast h
   have h_H_eq : H = Subgroup.map f ⊤ := by
     simp only [H, SLnZ_subgroup]; exact MonoidHom.range_eq_map f
   have h_inf : K ⊓ H = Subgroup.map f (K.comap f) := by
@@ -148,75 +148,73 @@ private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
     _ = (K.comap f).relIndex ⊤ := Subgroup.relIndex_map_map_of_injective _ _ h_inj
     _ = (K.comap f).index := (K.comap f).relIndex_top_right
 
-omit [NeZero n] in
 private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ ρ : SL(n, ℤ))
-    (h : (σ : GL (Fin n) ℚ) * diagMat n a ha = diagMat n a ha * (ρ : GL (Fin n) ℚ)) :
-    diagMat n a ha * (σ.transpose : GL (Fin n) ℚ) =
-    (ρ.transpose : GL (Fin n) ℚ) * diagMat n a ha := by
+    (h : (σ : GL (Fin n) ℚ) * diagMat n a = diagMat n a * (ρ : GL (Fin n) ℚ)) :
+    diagMat n a * (σ.transpose : GL (Fin n) ℚ) =
+    (ρ.transpose : GL (Fin n) ℚ) * diagMat n a := by
   apply Units.ext
-  simp only [Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val,
-    SpecialLinearGroup.coe_transpose, Matrix.transpose_map]
+  simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
+    diagMat_val n a ha, SpecialLinearGroup.coe_transpose, Matrix.transpose_map]
   have hM := congr_arg Units.val h
-  simp only [Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val] at hM
+  simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
+    diagMat_val n a ha] at hM
   have h1 := congr_arg Matrix.transpose hM
   simp only [Matrix.transpose_mul, Matrix.diagonal_transpose] at h1
   exact h1
 
-omit [NeZero n] in
 private lemma transpose_mem_conj_inv_of_mem_conj
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
     (hσ : (σ : GL (Fin n) ℚ) ∈
-      ConjAct.toConjAct (diagMat n a ha) • SLnZ_subgroup n) :
+      ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n) :
     (σ.transpose : GL (Fin n) ℚ) ∈
-      ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n := by
+      ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n := by
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct] at hσ
   simp only [inv_inv] at hσ
   obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp
     (show _ ∈ SLnZ_subgroup n from hσ)
-  have h_eq : (σ : GL (Fin n) ℚ) * diagMat n a ha =
-      diagMat n a ha * (ρ : GL (Fin n) ℚ) := by rw [hρ]; group
+  have h_eq : (σ : GL (Fin n) ℚ) * diagMat n a =
+      diagMat n a * (ρ : GL (Fin n) ℚ) := by rw [hρ]; group
   have h_trans := transpose_mul_diagMat n a ha σ ρ h_eq
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-  have : diagMat n a ha * (σ.transpose : GL (Fin n) ℚ) *
-      (diagMat n a ha)⁻¹ = (ρ.transpose : GL (Fin n) ℚ) := by
-    have h := congr_arg (· * (diagMat n a ha)⁻¹) h_trans
+  have : diagMat n a * (σ.transpose : GL (Fin n) ℚ) *
+      (diagMat n a)⁻¹ = (ρ.transpose : GL (Fin n) ℚ) := by
+    have h := congr_arg (· * (diagMat n a)⁻¹) h_trans
     simp only [mul_assoc, mul_inv_cancel, mul_one] at h
     rwa [← mul_assoc] at h
   rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
-omit [NeZero n] in
 private lemma transpose_mem_conj_of_mem_conj_inv
     (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
     (hτ : (τ : GL (Fin n) ℚ) ∈
-      ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n) :
+      ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n) :
     (τ.transpose : GL (Fin n) ℚ) ∈
-      ConjAct.toConjAct (diagMat n a ha) • SLnZ_subgroup n := by
+      ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n := by
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hτ
   obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp
     (show _ ∈ SLnZ_subgroup n from hτ)
-  have h_eq : (ρ : GL (Fin n) ℚ) * diagMat n a ha =
-      diagMat n a ha * (τ : GL (Fin n) ℚ) := by rw [hρ]; group
+  have h_eq : (ρ : GL (Fin n) ℚ) * diagMat n a =
+      diagMat n a * (τ : GL (Fin n) ℚ) := by rw [hρ]; group
   have h_trans := transpose_mul_diagMat n a ha ρ τ h_eq
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]; simp only [inv_inv]
-  have : (diagMat n a ha)⁻¹ * (τ.transpose : GL (Fin n) ℚ) *
-      diagMat n a ha = (ρ.transpose : GL (Fin n) ℚ) := by
-    have := congr_arg ((diagMat n a ha)⁻¹ * ·) h_trans.symm
+  have : (diagMat n a)⁻¹ * (τ.transpose : GL (Fin n) ℚ) *
+      diagMat n a = (ρ.transpose : GL (Fin n) ℚ) := by
+    have := congr_arg ((diagMat n a)⁻¹ * ·) h_trans.symm
     simp only [← mul_assoc, inv_mul_cancel, one_mul] at this
     exact this
   rw [this]; exact coe_mem_SLnZ n ρ.transpose
 
-omit [NeZero n] in
 private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
-    (ConjAct.toConjAct (diagMat n a ha)⁻¹ • SLnZ_subgroup n).relIndex
+    (ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n).relIndex
       (SLnZ_subgroup n) =
-    (ConjAct.toConjAct (diagMat n a ha) • SLnZ_subgroup n).relIndex
+    (ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n).relIndex
       (SLnZ_subgroup n) := by
   rw [relIndex_eq_comap_index, relIndex_eq_comap_index]
-  set H := SLnZ_subgroup n; set α := diagMat n a ha; set f := SLnZ_to_GLnQ n
+  set H := SLnZ_subgroup n; set α := diagMat n a
+  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
   set φ := invTransposeEquiv n
   suffices h : (ConjAct.toConjAct α • H).comap f =
       ((ConjAct.toConjAct α⁻¹ • H).comap f).map φ.toMonoidHom by
@@ -239,7 +237,8 @@ private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 
     exact (ConjAct.toConjAct α • H).inv_mem
       (transpose_mem_conj_of_mem_conj_inv n a ha τ hτ)
 
-omit [NeZero n] in
+variable [NeZero n]
+
 /-- The map sending each upper-triangular representative `B` to the coset of
 `(f(unipSL B))⁻¹` in the quotient `H ⧸ (α⁻¹-conjugate of H)` is injective.
 
@@ -247,8 +246,9 @@ This is the core injectivity argument: if two representatives map to the same co
 then their ratio lies in `H`, contradicting `upperTriMat_distinct_cosets`. -/
 private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (hdiv : DivChain n a)
-    (α : GL (Fin n) ℚ) (hα : α = diagMat n a ha) (H : Subgroup (GL (Fin n) ℚ))
-    (hH : H = SLnZ_subgroup n) (f : SL(n, ℤ) →* GL (Fin n) ℚ) (hf : f = SLnZ_to_GLnQ n)
+    (α : GL (Fin n) ℚ) (hα : α = diagMat n a) (H : Subgroup (GL (Fin n) ℚ))
+    (hH : H = SLnZ_subgroup n) (f : SL(n, ℤ) →* GL (Fin n) ℚ)
+    (hf : f = (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ))
     [Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H)] :
     Function.Injective
       (fun B : UpperTriRep n a hdiv =>
@@ -264,8 +264,8 @@ private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i,
   simp only [Subgroup.coe_mul, InvMemClass.coe_inv, inv_inv] at hq
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hq
-  set α := (diagMat n a ha : GL (Fin n) ℚ)
-  set f := SLnZ_to_GLnQ n
+  set α := (diagMat n a : GL (Fin n) ℚ)
+  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
   have h1 : upperTriGL n a ha hdiv B₁ = α * f (unipSL n a hdiv B₁) :=
     upperTriGL_eq_diagMat_mul n a ha hdiv B₁
   have h2 : upperTriGL n a ha hdiv B₂ = α * f (unipSL n a hdiv B₂) :=
@@ -288,14 +288,14 @@ private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i,
 Proved by constructing an injection from `UpperTriRep` into the quotient
 `H / (α⁻¹-conjugate ∩ H)` and applying `Fintype.card_le_of_injective`. -/
 private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain n a) (h_rel_ne : (ConjAct.toConjAct (diagMat n a ha : GL (Fin n) ℚ)⁻¹ •
+    (hdiv : DivChain n a) (h_rel_ne : (ConjAct.toConjAct (diagMat n a : GL (Fin n) ℚ)⁻¹ •
       (GL_pair n).H).relIndex (GL_pair n).H ≠ 0) :
     Fintype.card (UpperTriRep n a hdiv) ≤
-      (ConjAct.toConjAct (diagMat n a ha : GL (Fin n) ℚ)⁻¹ •
+      (ConjAct.toConjAct (diagMat n a : GL (Fin n) ℚ)⁻¹ •
         (GL_pair n).H).relIndex (GL_pair n).H := by
   set H := (GL_pair n).H
-  set α := (diagMat n a ha : GL (Fin n) ℚ)
-  set f := SLnZ_to_GLnQ n
+  set α := (diagMat n a : GL (Fin n) ℚ)
+  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
   haveI : Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
     Subgroup.fintypeOfIndexNeZero h_rel_ne
   set injMap : UpperTriRep n a hdiv → H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H :=
@@ -310,13 +310,13 @@ private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < 
         simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
 
 /-- The number of upper-triangular representatives is a lower bound on the degree. -/
-theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
+theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
     (Fintype.card (UpperTriRep n a hdiv) : ℤ) ≤
-    T'_deg (GL_pair n) (T_diag n a ha hdiv) := by
+    HeckeCoset_deg (GL_pair n) (T_diag a) := by
   set H := (GL_pair n).H
-  set D := T_diag n a ha hdiv
-  set δ := (D.eql.choose : GL (Fin n) ℚ) with hδ_def
-  set α := (diagMat n a ha : GL (Fin n) ℚ) with hα_def
+  set D := T_diag a
+  set δ := (D.doubleCoset_eq.choose : GL (Fin n) ℚ) with hδ_def
+  set α := (diagMat n a : GL (Fin n) ℚ) with hα_def
   have h_α_comm : α ∈ Subgroup.Commensurable.commensurator H :=
     (GL_pair n).h₁ (diagMat_mem_posDetInt n a ha)
   have h_α_inv_comm : α⁻¹ ∈ Subgroup.Commensurable.commensurator H :=
@@ -327,10 +327,11 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hd
       (ConjAct.toConjAct α⁻¹ • H).relIndex H :=
     upperTriRep_card_le_relIndex n a ha hdiv h_rel_ne
   have h_S2 := relIndex_conj_inv_eq_conj_diag n a ha
-  have h_in_set : δ ∈ D.set := by
-    rw [D.eql.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  rw [show D.set = DoubleCoset.doubleCoset α ↑H ↑H from rfl,
-    DoubleCoset.mem_doubleCoset] at h_in_set
+  have h_in_set : δ ∈ D.carrier := by
+    rw [D.doubleCoset_eq.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+  have h_D_set : D.carrier = DoubleCoset.doubleCoset α ↑H ↑H := by
+    simp only [D, T_diag, HeckeCoset.mk', hα_def]; congr 1; exact diagMat_delta_val n a ha
+  rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
   have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
   have h_smul_σ₂ : ConjAct.toConjAct σ₂ • H = H := conjAct_smul_eq_of_mem H hσ₂
@@ -344,14 +345,14 @@ theorem upperTriRep_card_le_T'_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hd
     have := Subgroup.relIndex_pointwise_smul
       (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
     rw [h_smul_σ₁] at this; exact this.symm
-  have h_def : T'_deg (GL_pair n) D =
+  have h_def : HeckeCoset_deg (GL_pair n) D =
       ↑((ConjAct.toConjAct δ • H).relIndex H) := by
-    simp only [T'_deg]; rw [← Nat.card_eq_fintype_card]; rfl
+    simp only [HeckeCoset_deg]; rw [← Nat.card_eq_fintype_card]; rfl
   calc (Fintype.card (UpperTriRep n a hdiv) : ℤ)
       ≤ ↑((ConjAct.toConjAct α⁻¹ • H).relIndex H) := by exact_mod_cast h_card_le
     _ = ↑((ConjAct.toConjAct α • H).relIndex H) := by exact_mod_cast h_S2
     _ = ↑((ConjAct.toConjAct δ • H).relIndex H) := by exact_mod_cast h_S1
-    _ = T'_deg (GL_pair n) D := h_def.symm
+    _ = HeckeCoset_deg (GL_pair n) D := h_def.symm
 
 private lemma a1_eq_a0_mul_pk {p : ℕ} {a : Fin 2 → ℕ} {k : ℕ}
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :
@@ -363,7 +364,7 @@ private lemma a1_eq_a0_mul_pk {p : ℕ} {a : Fin 2 → ℕ} {k : ℕ}
 private lemma conj_diagMat_mem_of_Gamma0 (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1)
     (σ : SL(2, ℤ)) (hσ : (↑(p ^ k) : ℤ) ∣ σ.1 1 0) :
-    (diagMat 2 a ha)⁻¹ * (σ : GL (Fin 2) ℚ) * diagMat 2 a ha ∈ SLnZ_subgroup 2 := by
+    (diagMat 2 a)⁻¹ * (σ : GL (Fin 2) ℚ) * diagMat 2 a ∈ SLnZ_subgroup 2 := by
   obtain ⟨c, hc⟩ := hσ
   let τ_mat : Matrix (Fin 2) (Fin 2) ℤ :=
     !![σ.1 0 0, ↑(p ^ k) * σ.1 0 1; c, σ.1 1 1]
@@ -373,61 +374,67 @@ private lemma conj_diagMat_mem_of_Gamma0 (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
     have hσ_det := σ.prop; simp only [Matrix.det_fin_two] at hσ_det
     rw [hc] at hσ_det; linarith
   let τ : SL(2, ℤ) := ⟨τ_mat, h_det⟩
-  rw [mem_SLnZ_subgroup_iff]
+  rw [MonoidHom.mem_range]
   refine ⟨τ, ?_⟩
   have ha1 := a1_eq_a0_mul_pk h_ratio h_dvd_a
   have hcQ : (σ.1 1 0 : ℚ) = (↑(p ^ k) : ℚ) * (c : ℚ) := by exact_mod_cast hc
   push_cast at ha1 hcQ
-  suffices h : diagMat 2 a ha * (τ : GL (Fin 2) ℚ) = (σ : GL (Fin 2) ℚ) * diagMat 2 a ha by
-    have h' := congr_arg ((diagMat 2 a ha)⁻¹ * ·) h
+  suffices h : diagMat 2 a * (τ : GL (Fin 2) ℚ) = (σ : GL (Fin 2) ℚ) * diagMat 2 a by
+    have h' := congr_arg ((diagMat 2 a)⁻¹ * ·) h
     simp only [← mul_assoc, inv_mul_cancel, one_mul] at h'; exact h'
-  apply Units.ext; simp only [Units.val_mul, SLnZ_to_GLnQ_val]
+  apply Units.ext
+  have hτ_val : (↑(mapGL ℚ τ) : Matrix _ _ ℚ) = τ.val.map (Int.cast) := by
+    simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
+  have hσ_val : (↑(mapGL ℚ σ) : Matrix _ _ ℚ) = σ.val.map (Int.cast) := by
+    simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
+  simp only [Units.val_mul, hτ_val, hσ_val]
   ext i j
-  simp only [diagMat_val, Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.map_apply]
+  simp only [diagMat_val 2 a ha, Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.map_apply]
   fin_cases i <;> fin_cases j <;>
     simp only [τ, τ_mat, Matrix.of_apply, Matrix.cons_val', Fin.isValue] <;>
     push_cast <;> (try rw [hcQ]) <;> (try rw [ha1]) <;> ring
 
 private lemma Gamma0_of_conj_diagMat_mem (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) (σ : SL(2, ℤ))
-    (hmem : (diagMat 2 a ha)⁻¹ * (σ : GL (Fin 2) ℚ) * diagMat 2 a ha ∈ SLnZ_subgroup 2) :
+    (hmem : (diagMat 2 a)⁻¹ * (σ : GL (Fin 2) ℚ) * diagMat 2 a ∈ SLnZ_subgroup 2) :
     (↑(p ^ k) : ℤ) ∣ σ.1 1 0 := by
-  rw [mem_SLnZ_subgroup_iff] at hmem
+  rw [MonoidHom.mem_range] at hmem
   obtain ⟨τ, hτ⟩ := hmem
   have ha1 := a1_eq_a0_mul_pk h_ratio h_dvd_a
   have ha0_ne : (a 0 : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (ha 0).ne'
-  have h_mul : diagMat 2 a ha * (τ : GL (Fin 2) ℚ) = (σ : GL (Fin 2) ℚ) * diagMat 2 a ha := by
-    have := congr_arg (diagMat 2 a ha * ·) hτ
+  have h_mul : diagMat 2 a * (τ : GL (Fin 2) ℚ) = (σ : GL (Fin 2) ℚ) * diagMat 2 a := by
+    have := congr_arg (diagMat 2 a * ·) hτ
     simp only [← mul_assoc, mul_inv_cancel, one_mul] at this; exact this
   have h_entry : (a 1 : ℚ) * (τ.1 1 0 : ℚ) = (σ.1 1 0 : ℚ) * (a 0 : ℚ) := by
-    have h10 : ∀ i j, (↑(diagMat 2 a ha * (τ : GL (Fin 2) ℚ)) :
+    have h10 : ∀ i j, (↑(diagMat 2 a * (τ : GL (Fin 2) ℚ)) :
         Matrix (Fin 2) (Fin 2) ℚ) i j =
-      (↑((σ : GL (Fin 2) ℚ) * diagMat 2 a ha) : Matrix (Fin 2) (Fin 2) ℚ) i j := by
+      (↑((σ : GL (Fin 2) ℚ) * diagMat 2 a) : Matrix (Fin 2) (Fin 2) ℚ) i j := by
       intro i j; rw [Units.ext_iff.mp h_mul]
     have := h10 1 0
-    simp only [Units.val_mul, SLnZ_to_GLnQ_val, diagMat_val,
-      Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.map_apply] at this
+    simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
+      diagMat_val 2 a ha, Matrix.diagonal_mul, Matrix.mul_diagonal,
+      Matrix.map_apply] at this
     exact this
   have h_σ₁₀ : (σ.1 1 0 : ℚ) = ↑(p ^ k) * (τ.1 1 0 : ℚ) := by
     rw [ha1] at h_entry; field_simp at h_entry ⊢; linarith
   exact ⟨τ.1 1 0, by exact_mod_cast h_σ₁₀⟩
 
-omit [NeZero n] in
 private lemma conjDiag_relIndex_eq_Gamma0_index
     (p : ℕ) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (k : ℕ)
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :
-    (ConjAct.toConjAct (diagMat 2 a ha) • SLnZ_subgroup 2).relIndex (SLnZ_subgroup 2) =
+    (ConjAct.toConjAct (diagMat 2 a) • SLnZ_subgroup 2).relIndex (SLnZ_subgroup 2) =
     (Gamma0 (p ^ k)).index := by
   set H := SLnZ_subgroup 2
-  set α := diagMat 2 a ha
-  set f := SLnZ_to_GLnQ 2
+  set α := diagMat 2 a
+  set f := (mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ)
   have h_inj : Function.Injective f := by
     intro σ₁ σ₂ h
     have := Units.ext_iff.mp h
-    simp only [f, SLnZ_to_GLnQ] at this
+    simp only [f, mapGL_coe_matrix, map_apply_coe,
+      RingHom.mapMatrix_apply] at this
     ext i j; exact Int.cast_injective (congr_fun₂ this i j)
   have h_H_eq : H = Subgroup.map f ⊤ := by
-    simp only [H, f, SLnZ_subgroup, MonoidHom.range_eq_map]
+    simp only [H, f, MonoidHom.range_eq_map]
   have h_gamma0_iff : ∀ σ : SL(2, ℤ),
       σ ∈ Gamma0 (p ^ k) ↔ α⁻¹ * f σ * α ∈ H := by
     intro σ
@@ -457,19 +464,20 @@ private lemma conjDiag_relIndex_eq_Gamma0_index
     _ = (Gamma0 (p ^ k)).index := (Gamma0 (p ^ k)).relIndex_top_right
 
 /-- For `n = 2` and prime `p`: `deg(T(p^i, p^(i+k))) = p^(k-1) * (p + 1)` for `k >= 1`. -/
-theorem T'_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p)
+theorem HeckeCoset_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p)
     (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain 2 a) (k : ℕ) (hk : 0 < k)
     (h_ratio : a 1 / a 0 = p ^ k) :
-    T'_deg (GL_pair 2) (T_diag 2 a ha hdiv) =
+    HeckeCoset_deg (GL_pair 2) (T_diag a) =
     ↑(p ^ (k - 1) * (p + 1)) := by
   set H := (GL_pair 2).H
-  set D := T_diag 2 a ha hdiv
-  set δ := (D.eql.choose : GL (Fin 2) ℚ) with hδ_def
-  set α := (diagMat 2 a ha : GL (Fin 2) ℚ) with hα_def
-  have h_in_set : δ ∈ D.set := by
-    rw [D.eql.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  rw [show D.set = DoubleCoset.doubleCoset α ↑H ↑H from rfl,
-    DoubleCoset.mem_doubleCoset] at h_in_set
+  set D := T_diag a
+  set δ := (D.doubleCoset_eq.choose : GL (Fin 2) ℚ) with hδ_def
+  set α := (diagMat 2 a : GL (Fin 2) ℚ) with hα_def
+  have h_in_set : δ ∈ D.carrier := by
+    rw [D.doubleCoset_eq.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+  have h_D_set : D.carrier = DoubleCoset.doubleCoset α ↑H ↑H := by
+    simp only [D, T_diag, HeckeCoset.mk', hα_def]; congr 1; exact diagMat_delta_val 2 a ha
+  rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
   have h_dvd_a : a 0 ∣ a 1 := divChain_dvd (n := 2) hdiv (Fin.zero_le 1)
   have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
@@ -483,7 +491,7 @@ theorem T'_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p)
     have h := Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct σ₁)
       (ConjAct.toConjAct α • H) H
     rw [h_smul_σ₁] at h; exact h
-  simp only [T'_deg]
+  simp only [HeckeCoset_deg]
   rw [show (Fintype.card (decompQuot (GL_pair 2) D) : ℤ) =
     ↑(Nat.card (decompQuot (GL_pair 2) D)) from by rw [Nat.card_eq_fintype_card]]
   show ↑((ConjAct.toConjAct δ • H).relIndex H) = (↑(p ^ (k - 1) * (p + 1)) : ℤ)
@@ -493,9 +501,9 @@ theorem T'_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p)
 
 private lemma diagMat_comm_of_const (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (h_const : ∀ i, a i = a 0) (g : GL (Fin n) ℚ) :
-    diagMat n a ha * g = g * diagMat n a ha := by
+    diagMat n a * g = g * diagMat n a := by
   apply Units.ext
-  simp only [Units.val_mul, diagMat_val]
+  simp only [Units.val_mul, diagMat_val n a ha]
   have h_diag : Matrix.diagonal (fun i => (a i : ℚ)) =
       (a 0 : ℚ) • (1 : Matrix (Fin n) (Fin n) ℚ) := by
     ext i j
@@ -506,20 +514,21 @@ private lemma diagMat_comm_of_const (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
   rw [h_diag, smul_mul_assoc, mul_smul_comm, one_mul, mul_one]
 
 /-- For `n = 2`, scalar case: `deg(T(c, c)) = 1`. -/
-theorem T'_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain 2 a) (h_eq : a 0 = a 1) :
-    T'_deg (GL_pair 2) (T_diag 2 a ha hdiv) = 1 := by
+theorem HeckeCoset_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
+    (_hdiv : DivChain 2 a) (h_eq : a 0 = a 1) :
+    HeckeCoset_deg (GL_pair 2) (T_diag a) = 1 := by
   have h_const : ∀ i : Fin 2, a i = a 0 := by intro i; fin_cases i <;> simp [h_eq]
-  set D := T_diag 2 a ha hdiv
-  set δ := (D.eql.choose : GL (Fin 2) ℚ) with hδ_def
-  have h_in_set : δ ∈ D.set := by
-    rw [D.eql.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  rw [show D.set = DoubleCoset.doubleCoset (diagMat 2 a ha : GL (Fin 2) ℚ)
-      ↑(GL_pair 2).H ↑(GL_pair 2).H from rfl,
-    DoubleCoset.mem_doubleCoset] at h_in_set
+  set D := T_diag a
+  set δ := (D.doubleCoset_eq.choose : GL (Fin 2) ℚ) with hδ_def
+  have h_in_set : δ ∈ D.carrier := by
+    rw [D.doubleCoset_eq.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+  have h_D_set : D.carrier = DoubleCoset.doubleCoset (diagMat 2 a : GL (Fin 2) ℚ)
+      ↑(GL_pair 2).H ↑(GL_pair 2).H := by
+    simp only [D, T_diag, HeckeCoset.mk']; congr 1; exact diagMat_delta_val 2 a ha
+  rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
   have h_comm := diagMat_comm_of_const 2 a ha h_const
-  have h_conj_triv : ∀ y : GL (Fin 2) ℚ, (diagMat 2 a ha)⁻¹ * y * diagMat 2 a ha = y :=
+  have h_conj_triv : ∀ y : GL (Fin 2) ℚ, (diagMat 2 a)⁻¹ * y * diagMat 2 a = y :=
     fun y => by rw [mul_assoc, ← h_comm y, ← mul_assoc, inv_mul_cancel, one_mul]
   have hconj : (ConjAct.toConjAct δ • (GL_pair 2).H).subgroupOf (GL_pair 2).H = ⊤ := by
     rw [Subgroup.subgroupOf_eq_top]
@@ -532,13 +541,13 @@ theorem T'_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
         ((GL_pair 2).H.inv_mem ((GL_pair 2).H.mul_mem hσ₁ hσ₂)) hx)
         ((GL_pair 2).H.mul_mem hσ₁ hσ₂)
     calc δ⁻¹ * x * δ
-        = (σ₁ * diagMat 2 a ha * σ₂)⁻¹ * x *
-          (σ₁ * diagMat 2 a ha * σ₂) := by rw [hδ_eq]
-      _ = σ₂⁻¹ * ((diagMat 2 a ha)⁻¹ * (σ₁⁻¹ * x * σ₁) *
-          diagMat 2 a ha) * σ₂ := by group
+        = (σ₁ * diagMat 2 a * σ₂)⁻¹ * x *
+          (σ₁ * diagMat 2 a * σ₂) := by rw [hδ_eq]
+      _ = σ₂⁻¹ * ((diagMat 2 a)⁻¹ * (σ₁⁻¹ * x * σ₁) *
+          diagMat 2 a) * σ₂ := by group
       _ = σ₂⁻¹ * (σ₁⁻¹ * x * σ₁) * σ₂ := by rw [h_conj_triv]
       _ = (σ₁ * σ₂)⁻¹ * x * (σ₁ * σ₂) := by group
-  simp only [T'_deg]
+  simp only [HeckeCoset_deg]
   haveI : Subsingleton (decompQuot (GL_pair 2) D) := by
     show Subsingleton ((GL_pair 2).H ⧸
       (ConjAct.toConjAct δ • (GL_pair 2).H).subgroupOf (GL_pair 2).H)
