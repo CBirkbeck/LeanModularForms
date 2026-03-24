@@ -84,9 +84,9 @@ theorem pv_tendsto_of_crossing_limit_asymmetric
     (hδL_small : ∀ ε, 0 < ε → ε < threshold → δ_left ε < t₀ - a)
     (hδR_small : ∀ ε, 0 < ε → ε < threshold → δ_right ε < b - t₀)
     (h_far_left : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t ∈ Icc a (t₀ - δ_left ε), ε < ‖γ t - s‖)
+      ∀ t ∈ Ico a (t₀ - δ_left ε), ε < ‖γ t - s‖)
     (h_far_right : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t ∈ Icc (t₀ + δ_right ε) b, ε < ‖γ t - s‖)
+      ∀ t ∈ Ioc (t₀ + δ_right ε) b, ε < ‖γ t - s‖)
     (h_near : ∀ ε, 0 < ε → ε < threshold →
       ∀ t ∈ Icc (t₀ - δ_left ε) (t₀ + δ_right ε), ‖γ t - s‖ ≤ ε)
     {E : ℝ → ℂ}
@@ -133,9 +133,8 @@ theorem pv_tendsto_of_crossing_limit_asymmetric
       rw [uIoc_of_le (le_of_lt h_left_lt)] at ht_mem
       simp only [hF_def]
       rw [if_pos]
-      -- t ∈ Ioc a (t₀ - δL) and t ≠ t₀ - δL, so t ≤ t₀ - δL, i.e., t ∈ Icc a (t₀ - δL)
       apply h_far_left ε hε_pos hε_lt t
-      exact ⟨le_of_lt ht_mem.1, ht_mem.2⟩
+      exact ⟨le_of_lt ht_mem.1, lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))⟩
     -- F = (γ t - s)⁻¹ * deriv γ t a.e. on [t₀ + δR, b]
     have hF_right : ∀ᵐ t ∂volume, t ∈ uIoc (t₀ + δ_right ε) b →
         F t = (γ t - s)⁻¹ * deriv γ t := by
@@ -146,7 +145,7 @@ theorem pv_tendsto_of_crossing_limit_asymmetric
       simp only [hF_def]
       rw [if_pos]
       apply h_far_right ε hε_pos hε_lt t
-      exact ⟨le_of_lt ht_mem.1, ht_mem.2⟩
+      exact ⟨ht_mem.1, ht_mem.2⟩
     -- Integrability of F on each piece
     have hF_int_left : IntervalIntegrable F volume a (t₀ - δ_left ε) :=
       (hint_left ε hε_pos hε_lt).congr_ae
