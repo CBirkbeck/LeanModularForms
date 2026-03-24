@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.WindingWeights.Common
+import LeanModularForms.ContourIntegral.WindingNumber
 
 /-!
 # Winding Number Weight at i
@@ -897,12 +898,9 @@ strictly inside the contour and the branch cut correction on seg 3 contributes `
 For `√3/2 < H < 1`, `I` would be outside the contour and the result would be `+1/2`. -/
 theorem gWN_fdBoundary_H_at_i (H : ℝ) (hH : 1 < H) :
     generalizedWindingNumber' (fdBoundary_H H) 0 5 I = -1/2 := by
-  unfold generalizedWindingNumber' cauchyPrincipalValue'
-  dsimp only []
-  simp only [sub_zero]
-  have h_tendsto := pv_integral_at_i_tendsto H hH
-  rw [h_tendsto.limUnder_eq]
-  have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp [Real.pi_ne_zero, I_ne_zero]
+  apply ContourIntegral.gWN_eq_neg_half_of_pv_tendsto
+  convert pv_integral_at_i_tendsto H hH using 2
+  · simp [sub_zero, gt_iff_lt]
+  · ring
 
 end
