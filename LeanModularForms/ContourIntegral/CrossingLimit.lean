@@ -42,7 +42,7 @@ theorem pv_tendsto_of_crossing_limit
     (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
     (hδ_small : ∀ ε, 0 < ε → ε < threshold → δ ε < min (t₀ - a) (b - t₀))
     (h_far : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t ∈ Icc a b, δ ε ≤ |t - t₀| → ε < ‖γ t - s‖)
+      ∀ t ∈ Icc a b, δ ε < |t - t₀| → ε < ‖γ t - s‖)
     (h_near : ∀ ε, 0 < ε → ε < threshold →
       ∀ t, |t - t₀| ≤ δ ε → ‖γ t - s‖ ≤ ε)
     -- The far-segment integrals equal some expression E(ε)
