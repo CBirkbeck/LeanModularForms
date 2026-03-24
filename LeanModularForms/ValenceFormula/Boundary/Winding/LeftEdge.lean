@@ -375,69 +375,6 @@ private lemma leftEdge_norm_gt_right (H : ℝ) (s : ℂ) (hs_re : s.re = -1/2)
       leftEdge_min_dist_from_non_seg4_right H s hs_re hs_norm hs_im t ht4 ht_mem.2
     linarith [hε_lt_d]
 
-private lemma leftEdge_cutoff_eq_left (H : ℝ) (s : ℂ) (hs_re : s.re = -1/2)
-    (hs_norm : ‖s‖ > 1) (hs_im : s.im < H)
-    (α : ℝ) (hα_pos : 0 < α) (hα_def : α = H - Real.sqrt 3 / 2)
-    (t₀ : ℝ) (ht₀_lt4 : t₀ < 4) (ht₀_mul : (t₀ - 3) * α = s.im - Real.sqrt 3 / 2)
-    (ε : ℝ) (hε_pos : 0 < ε) (δ : ℝ) (hδ_pos : 0 < δ) (hδ_def : δ = ε / α)
-    (hεα_lt_t₀m3 : δ < t₀ - 3)
-    (hε_lt_d : ε < min (min (‖s‖ - 1) 1) (H - s.im)) :
-    ∀ᵐ t ∂volume, t ∈ Set.uIoc 0 (t₀ - δ) →
-      (if ‖fdBoundary_H H t - s‖ > ε then
-          (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t
-        else 0) =
-      deriv (fun u => fdBoundary_H H u - s) t / (fdBoundary_H H t - s) := by
-  have h_excl : ({0, t₀ - δ} : Set ℝ)ᶜ ∈ ae volume :=
-    mem_ae_iff.mpr
-      (by rw [compl_compl]; exact (Set.toFinite ({0, t₀ - δ} : Set ℝ)).measure_zero volume)
-  filter_upwards [h_excl] with t ht_ne ht_mem
-  rw [Set.uIoc_of_le (by linarith : (0:ℝ) ≤ t₀ - δ)] at ht_mem
-  have h_norm_gt : ‖fdBoundary_H H t - s‖ > ε := by
-    apply leftEdge_norm_gt_left H s hs_re hs_norm hs_im α hα_pos hα_def t₀ ht₀_lt4 ht₀_mul ε
-      hε_pos δ hδ_pos hδ_def hεα_lt_t₀m3 hε_lt_d t ht_mem
-    intro h; exact ht_ne (by simp [Set.mem_insert_iff, Set.mem_singleton_iff]; right; exact h)
-  rw [if_pos h_norm_gt, div_eq_mul_inv, mul_comm]
-
-private lemma leftEdge_cutoff_eq_right (H : ℝ) (s : ℂ) (hs_re : s.re = -1/2)
-    (hs_norm : ‖s‖ > 1) (hs_im : s.im < H)
-    (α : ℝ) (hα_pos : 0 < α) (hα_def : α = H - Real.sqrt 3 / 2)
-    (t₀ : ℝ) (ht₀_gt3 : 3 < t₀) (ht₀_lt4 : t₀ < 4)
-    (ht₀_mul : (t₀ - 3) * α = s.im - Real.sqrt 3 / 2)
-    (ε : ℝ) (hε_pos : 0 < ε) (δ : ℝ) (hδ_pos : 0 < δ) (hδ_def : δ = ε / α)
-    (hεα_lt_4mt₀ : δ < 4 - t₀)
-    (hε_lt_d : ε < min (min (‖s‖ - 1) 1) (H - s.im)) :
-    ∀ᵐ t ∂volume, t ∈ Set.uIoc (t₀ + δ) 5 →
-      (if ‖fdBoundary_H H t - s‖ > ε then
-          (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t
-        else 0) =
-      deriv (fun u => fdBoundary_H H u - s) t / (fdBoundary_H H t - s) := by
-  have h_boundary : ({t₀ + δ, 5} : Set ℝ)ᶜ ∈ ae volume :=
-    mem_ae_iff.mpr
-      (by rw [compl_compl]; exact (Set.toFinite ({t₀ + δ, 5} : Set ℝ)).measure_zero volume)
-  filter_upwards [h_boundary] with t ht_ne ht_mem
-  rw [Set.uIoc_of_le (by linarith : t₀ + δ ≤ 5)] at ht_mem
-  have h_norm_gt : ‖fdBoundary_H H t - s‖ > ε :=
-    leftEdge_norm_gt_right H s hs_re hs_norm hs_im α hα_pos hα_def t₀ ht₀_gt3 ht₀_lt4 ht₀_mul ε
-      hε_pos δ hδ_pos hδ_def hεα_lt_4mt₀ hε_lt_d t ht_mem
-  rw [if_pos h_norm_gt, div_eq_mul_inv, mul_comm]
-
-private lemma leftEdge_cutoff_zero_mid (H : ℝ) (s : ℂ) (hs_re : s.re = -1/2)
-    (α : ℝ) (hα_pos : 0 < α) (hα_def : α = H - Real.sqrt 3 / 2)
-    (t₀ : ℝ) (ht₀_gt3 : 3 < t₀) (_ht₀_lt4 : t₀ < 4)
-    (ht₀_mul : (t₀ - 3) * α = s.im - Real.sqrt 3 / 2)
-    (ε : ℝ) (δ : ℝ) (hδ_pos : 0 < δ) (hδ_def : δ = ε / α)
-    (hεα_lt_t₀m3 : δ < t₀ - 3) (hεα_lt_4mt₀ : δ < 4 - t₀) :
-    ∀ t ∈ Set.uIoc (t₀ - δ) (t₀ + δ),
-      (if ‖fdBoundary_H H t - s‖ > ε then
-          (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t
-        else 0) = 0 := by
-  intro t ht_mem
-  rw [Set.uIoc_of_le (by linarith : t₀ - δ ≤ t₀ + δ)] at ht_mem
-  have h_norm : ‖fdBoundary_H H t - s‖ ≤ ε :=
-    leftEdge_norm_le_of_near_crossing H s hs_re α hα_pos hα_def t₀ ht₀_gt3 ht₀_mul ε δ hδ_def
-      hεα_lt_t₀m3 hεα_lt_4mt₀ t ht_mem
-  simp [if_neg (not_lt.mpr h_norm)]
-
 private lemma leftEdge_h_far (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = -1/2) (hs_norm : ‖s‖ > 1) (hs_im : s.im < H)
     (α : ℝ) (hα_pos : 0 < α) (hα_def : α = H - Real.sqrt 3 / 2)
