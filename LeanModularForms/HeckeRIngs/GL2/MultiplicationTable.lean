@@ -264,12 +264,105 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_p
     (hA : A ∈ HeckeRing.mulSupport (GL_pair 2) (HeckeCoset.rep (T_diag (![1, p])))
       (HeckeCoset.rep (T_diag (![1, p ^ k])))) :
     A = T_diag (![1, p ^ (k + 1)]) ∨ A = T_diag (![p, p ^ k]) := by
-  sorry
+  obtain ⟨a, ha_pos, hdiv, hrep⟩ := exists_diagonal_representative 2 (HeckeCoset.rep A)
+  have hA_eq : A = T_diag a := HeckeCoset_ext_toSet (P := GL_pair 2) (by
+    rw [HeckeCoset.toSet_eq_rep]; exact congr_arg HeckeCoset.toSet hrep)
+  set D1 := T_diag (![1, p]); set D2 := T_diag (![1, p ^ k])
+  rw [HeckeRing.mulSupport] at hA
+  simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and, Prod.exists] at hA
+  obtain ⟨i₀, j₀, hmap⟩ := hA
+  obtain ⟨L₁, ⟨SL_L₁, rfl⟩, R₁, ⟨SL_R₁, rfl⟩, hD1_eq⟩ := T_diag_rep_decompose (![1, p])
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
+  obtain ⟨L₂, ⟨SL_L₂, rfl⟩, R₂, ⟨SL_R₂, rfl⟩, hD2_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
+  have h_prod_in_A : (↑i₀.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D1 : GL (Fin 2) ℚ) *
+      ((↑j₀.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D2 : GL (Fin 2) ℚ)) ∈
+      DoubleCoset.doubleCoset (diagMat 2 a : GL (Fin 2) ℚ) (GL_pair 2).H (GL_pair 2).H := by
+    have h1 : (↑i₀.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D1 : GL (Fin 2) ℚ) *
+        ((↑j₀.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D2 : GL (Fin 2) ℚ)) ∈
+        HeckeCoset.toSet (HeckeRing.mulMap (GL_pair 2) (HeckeCoset.rep D1)
+          (HeckeCoset.rep D2) (i₀, j₀)) := by
+      rw [HeckeRing.mulMap, HeckeCoset.toSet_mk]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+    rw [hmap, hA_eq, T_diag, HeckeCoset.toSet_mk, diagMat_delta_val _ _ ha_pos] at h1; exact h1
+  rw [DoubleCoset.mem_doubleCoset] at h_prod_in_A
+  obtain ⟨L_a, ⟨SL_La, rfl⟩, R_a, ⟨SL_Ra, rfl⟩, h_prod_eq⟩ := h_prod_in_A
+  obtain ⟨SL_i₀, hSL_i₀⟩ := (i₀.out : ↥(GL_pair 2).H).2
+  obtain ⟨SL_j₀, hSL_j₀⟩ := (j₀.out : ↥(GL_pair 2).H).2
+  have h_det := mulSupport_pp_det_eq p k a ha_pos (↑i₀.out)
+    (HeckeCoset.rep D1 : GL (Fin 2) ℚ) (↑j₀.out) (HeckeCoset.rep D2 : GL (Fin 2) ℚ)
+    (by rw [show (↑i₀.out : GL _ ℚ) = (SL_i₀ : GL (Fin 2) ℚ) from hSL_i₀.symm]
+        exact SLnZ_to_GLnQ_det SL_i₀)
+    (by rw [hD1_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
+          SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det 2 (![1, p])
+          (by intro ⟨i, hi⟩; interval_cases i <;> simp [hp.pos])]; simp [Fin.prod_univ_two])
+    (by rw [show (↑j₀.out : GL _ ℚ) = (SL_j₀ : GL (Fin 2) ℚ) from hSL_j₀.symm]
+        exact SLnZ_to_GLnQ_det SL_j₀)
+    (by rw [hD2_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul,
+          SLnZ_to_GLnQ_det, SLnZ_to_GLnQ_det, diagMat_det 2 (![1, p ^ k])
+          (by intro ⟨i, hi⟩; interval_cases i <;> simp [pow_pos hp.pos k])]; simp [Fin.prod_univ_two])
+    SL_La SL_Ra h_prod_eq
+  have h_dvd := mulSupport_pp_dvd_p p hp k _hk a ha_pos hdiv (HeckeCoset.rep D1)
+    (HeckeCoset.rep D2) (↑i₀.out) (↑j₀.out) SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀
+    SL_j₀ hD1_eq hD2_eq hSL_i₀.symm hSL_j₀.symm h_prod_eq
+  rw [hA_eq]; exact mulSupport_pp_case_split p hp k _hk a ha_pos hdiv h_det h_dvd
 
+include hp in
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag (![1, p ^ (k + 1)]) ∈ HeckeRing.mulSupport (GL_pair 2)
       (HeckeCoset.rep (T_diag (![1, p]))) (HeckeCoset.rep (T_diag (![1, p ^ k]))) := by
-  sorry
+  set D1 := T_diag (![1, p]); set D2 := T_diag (![1, p ^ k])
+  set D_out1 := T_diag (![1, p ^ (k + 1)])
+  set α := (HeckeCoset.rep D1 : GL (Fin 2) ℚ); set β := (HeckeCoset.rep D2 : GL (Fin 2) ℚ)
+  obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ := T_diag_rep_decompose (![1, p])
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
+  obtain ⟨L₂, hL₂, R₂, hR₂, hβ_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
+  set i₀ : decompQuot (GL_pair 2) (HeckeCoset.rep D1) :=
+    ⟦⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩⟧
+  open scoped Pointwise in
+  obtain ⟨κ₁, hκ₁_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct α • (GL_pair 2).H).subgroupOf (GL_pair 2).H)
+    ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩
+  have hi₀ : (↑i₀.out : GL (Fin 2) ℚ) = L₁⁻¹ * (κ₁ : (GL_pair 2).H) := by
+    apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at hκ₁_eq
+    simpa [Subgroup.coe_mul] using hκ₁_eq
+  have hκ₁_conj : α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α ∈ (GL_pair 2).H := by
+    have := κ₁.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct] using this
+  set τ₀ : GL (Fin 2) ℚ := (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹
+  have hτ₀_mem : τ₀ ∈ (GL_pair 2).H :=
+    (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hκ₁_conj)
+      ((GL_pair 2).H.inv_mem hR₁)) ((GL_pair 2).H.inv_mem hL₂)
+  set j₀ : decompQuot (GL_pair 2) (HeckeCoset.rep D2) := ⟦⟨τ₀, hτ₀_mem⟩⟧
+  open scoped Pointwise in
+  obtain ⟨κ₂, hκ₂_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct β • (GL_pair 2).H).subgroupOf (GL_pair 2).H) ⟨τ₀, hτ₀_mem⟩
+  have hκ₂_conj : β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β ∈ (GL_pair 2).H := by
+    have := κ₂.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct] using this
+  have hj₀ : (↑j₀.out : GL (Fin 2) ℚ) = τ₀ * (κ₂ : (GL_pair 2).H) := by
+    apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at hκ₂_eq
+    simpa [Subgroup.coe_mul] using hκ₂_eq
+  have h_product_mem : (↑i₀.out : GL (Fin 2) ℚ) * α * ((↑j₀.out : GL (Fin 2) ℚ) * β) ∈
+      DoubleCoset.doubleCoset (diagMat 2 (![1, p ^ (k + 1)]) : GL (Fin 2) ℚ)
+        (GL_pair 2).H (GL_pair 2).H := by
+    rw [DoubleCoset.mem_doubleCoset]
+    refine ⟨1, (GL_pair 2).H.one_mem, R₂ * (β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β),
+      (GL_pair 2).H.mul_mem hR₂ hκ₂_conj, ?_⟩
+    -- The product L₁⁻¹κ₁ * (L₁D₁R₁) * τ₀κ₂ * (L₂D₂R₂) simplifies to D₁D₂ * (R₂ * β⁻¹κ₂β)
+    -- after cancellations: L₁⁻¹L₁ = 1, κ₁(L₁D₁R₁)(L₁D₁R₁)⁻¹κ₁⁻¹ = 1, R₁⁻¹R₁ = 1, etc.
+    sorry
+  rw [HeckeRing.mulSupport]; simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
+    true_and, Prod.exists]
+  exact ⟨i₀, j₀, HeckeCoset_ext_toSet (P := GL_pair 2) (by
+    change HeckeCoset.toSet (HeckeRing.mulMap _ _ _ (i₀, j₀)) = HeckeCoset.toSet D_out1
+    rw [HeckeRing.mulMap, HeckeCoset.toSet_mk]
+    show DoubleCoset.doubleCoset _ _ _ = HeckeCoset.toSet (T_diag (![1, p ^ (k + 1)]))
+    rw [show T_diag (![1, p ^ (k + 1)]) = (⟦diagMat_delta 2 (![1, p ^ (k + 1)])⟧ :
+      HeckeCoset (GL_pair 2)) from rfl, HeckeCoset.toSet_mk,
+      diagMat_delta_val _ _
+        (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]
+    exact DoubleCoset.doubleCoset_eq_of_mem h_product_mem)⟩
 
 private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
     (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
@@ -354,7 +447,7 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
     have hne : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2))
         D_out1 ≠ 0 := by
       rw [← Finsupp.mem_support_iff, HeckeRing.m_support]
-      exact D_out1_pp_in_mulSupport p k hk
+      exact D_out1_pp_in_mulSupport p hp k hk
     exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne hm1_nn (Ne.symm hne))
   rw [show HeckeCoset_deg (GL_pair 2) D1 = ↑(p + 1) from by
       simpa using HeckeCoset_deg_T_diag_two_prime p hp (![1, p])
