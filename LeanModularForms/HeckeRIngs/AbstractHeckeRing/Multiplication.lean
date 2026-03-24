@@ -431,8 +431,10 @@ lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
     (⟦d⟧ : HeckeCoset P) ∈ mulSupport P g₁ g₂ := by
   rw [mulSupport]; simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
     true_and, Prod.exists]
-  refine ⟨⟦⟨h₁, h₁.2⟩⟧, ⟦⟨h₂, h₂.2⟩⟧, ?_⟩
-  sorry
+  exact ⟨⟦⟨h₁, h₁.2⟩⟧, ⟦⟨h₂, h₂.2⟩⟧, sorry⟩
+  -- The proof needs: mulMap g₁ g₂ (⟦h₁⟧, ⟦h₂⟧) = ⟦d⟧
+  -- i.e., Quotient.out ⟦h₁⟧ * g₁ * (Quotient.out ⟦h₂⟧ * g₂) is in HdH
+  -- The conjugate subgroup elements from Quotient.out are absorbed into H.
 
 /-- Left multiplication by `HeckeCoset.one` has multiplicity `1` on the diagonal
 and `0` elsewhere. -/
