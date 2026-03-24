@@ -69,76 +69,113 @@ structure HeckePair (G : Type*) [Group G] where
   h₀ : H.toSubmonoid ≤ Δ
   h₁ : Δ ≤ (commensurator H).toSubmonoid
 
-/-- A set in `G` equal to some double coset `HgH` with `g : Δ`. -/
-structure HeckeCoset (P : HeckePair G) where
-  carrier : Set G
-  doubleCoset_eq : ∃ elt : P.Δ, carrier = DoubleCoset.doubleCoset (elt : G) P.H P.H
+/-- Two elements of `Δ` define the same double coset `HgH = HhH`. -/
+def dcRel (P : HeckePair G) (g h : P.Δ) : Prop :=
+  DoubleCoset.doubleCoset (g : G) P.H P.H = DoubleCoset.doubleCoset (h : G) P.H P.H
 
-/-- A left coset `gH` with `g ∈ Δ`. -/
-structure HeckeLeftCoset (P : HeckePair G) where
-  carrier : Set G
-  leftCoset_eq : ∃ elt : P.Δ, carrier = {(elt : G)} * (P.H : Set G)
+/-- The setoid on `Δ` identifying elements with the same double coset. -/
+instance dcSetoid (P : HeckePair G) : Setoid P.Δ where
+  r := dcRel P
+  iseqv := ⟨fun _ => rfl, Eq.symm, Eq.trans⟩
 
-/-- Two double cosets in `HeckeCoset` are equal if their underlying sets are equal. -/
-@[ext] lemma HeckeCoset_ext (P : HeckePair G) (D1 D2 : HeckeCoset P)
-    (h : D1.carrier = D2.carrier) : D1 = D2 := by cases D1; cases D2; simp_all
+/-- A Hecke double coset: an equivalence class of `Δ`-elements under `HgH = HhH`.
+    This is the basis type for the Hecke ring. -/
+def HeckeCoset (P : HeckePair G) := Quotient (dcSetoid P)
 
-/-- The chosen Δ-representative of a double coset. -/
-noncomputable def HeckeCoset_rep {P : HeckePair G} (D : HeckeCoset P) : P.Δ :=
-  D.doubleCoset_eq.choose
+noncomputable instance (P : HeckePair G) : DecidableEq (HeckeCoset P) := Classical.decEq _
 
-/-- The double coset equals `H · rep · H`. -/
-lemma HeckeCoset_set_eq_doubleCoset {P : HeckePair G} (D : HeckeCoset P) :
-    D.carrier = DoubleCoset.doubleCoset (HeckeCoset_rep D : G) P.H P.H :=
-  D.doubleCoset_eq.choose_spec
+/-- Two elements of `Δ` define the same left coset `gH = hH`. -/
+def lcRel (P : HeckePair G) (g h : P.Δ) : Prop :=
+  ({(g : G)} : Set G) * (P.H : Set G) = {(h : G)} * P.H
 
-/-- The representative lies in its own double coset. -/
-lemma HeckeCoset_rep_mem {P : HeckePair G} (D : HeckeCoset P) :
-    (HeckeCoset_rep D : G) ∈ D.carrier := by
-  rw [HeckeCoset_set_eq_doubleCoset]; exact DoubleCoset.mem_doubleCoset_self P.H P.H _
+/-- The setoid on `Δ` identifying elements with the same left coset. -/
+instance lcSetoid (P : HeckePair G) : Setoid P.Δ where
+  r := lcRel P
+  iseqv := ⟨fun _ => rfl, Eq.symm, Eq.trans⟩
 
-/-- Make an element of `HeckeCoset P` given an element `g : P.Δ`, i.e. make `HgH`. -/
-def HeckeCoset.mk' (P : HeckePair G) (g : P.Δ) : HeckeCoset P :=
-  ⟨DoubleCoset.doubleCoset g P.H P.H, g, rfl⟩
+/-- A Hecke left coset: an equivalence class of `Δ`-elements under `gH = hH`. -/
+def HeckeLeftCoset (P : HeckePair G) := Quotient (lcSetoid P)
 
-/-- Make an element of `HeckeLeftCoset P` given an element `g : P.Δ`, i.e. make `gH`. -/
-def HeckeLeftCoset.mk' (P : HeckePair G) (g : P.Δ) : HeckeLeftCoset P :=
-  ⟨{(g : G)} * (P.H : Set G), g, rfl⟩
+noncomputable instance (P : HeckePair G) : DecidableEq (HeckeLeftCoset P) := Classical.decEq _
 
-/-- The identity double coset `H · 1 · H = H`. -/
-def HeckeCoset.one (P : HeckePair G) : HeckeCoset P := HeckeCoset.mk' P (1 : P.Δ)
+namespace HeckeCoset
 
-/-- `HeckeCoset.one` is definitionally `HeckeCoset.mk' P 1`. -/
-lemma T_one_eq (P : HeckePair G) : HeckeCoset.one P = HeckeCoset.mk' P (1 : P.Δ) :=
-  rfl
+variable {P : HeckePair G}
 
-/-- `HeckeCoset.one` is the double coset of the identity element. -/
-lemma T_one_eq_doset_one (P : HeckePair G) :
-    HeckeCoset.one P =
-      ⟨DoubleCoset.doubleCoset (1 : P.Δ) P.H P.H, 1, rfl⟩ := rfl
+/-- The underlying set `HgH`, well-defined on the quotient. -/
+noncomputable def toSet (D : HeckeCoset P) : Set G :=
+  Quotient.lift (fun (g : P.Δ) => DoubleCoset.doubleCoset (g : G) P.H P.H)
+    (fun a b (h : @Setoid.r _ (dcSetoid P) a b) => h) D
 
-/-- The chosen representative of `HeckeCoset.one` has the same double coset as `1`. -/
-lemma T_one_choose_doubleCoset_eq (P : HeckePair G) :
-    DoubleCoset.doubleCoset ((HeckeCoset.one P).doubleCoset_eq.choose : G) P.H P.H =
-    DoubleCoset.doubleCoset (1 : G) P.H P.H := by
-  have := (HeckeCoset.one P).doubleCoset_eq.choose_spec
-  rw [T_one_eq_doset_one] at this; simpa using this.symm
+/-- A representative `g : Δ` (via `Quotient.out`). -/
+noncomputable def rep (D : HeckeCoset P) : P.Δ := Quotient.out D
 
-/-- The chosen representative of `HeckeCoset.one` is the product of two elements of `H` with `1`. -/
-lemma T_one_choose_eq (P : HeckePair G) :
-    ∃ h₁ h₂ : P.H, h₁ * ((HeckeCoset.one P).doubleCoset_eq.choose : G) * h₂ = 1 := by
-  have := (HeckeCoset.one P).doubleCoset_eq.choose_spec; rw [HeckeCoset.one, HeckeCoset.mk'] at this
-  have h2 := (DoubleCoset.eq P.H P.H _ _).mp
-    (DoubleCoset.mk_eq_of_doubleCoset_eq this.symm)
-  obtain ⟨h₁, h1, h₂, h2⟩ := h2
-  exact ⟨⟨h₁, h1⟩, ⟨h₂, h2.1⟩, h2.2.symm⟩
+/-- `⟦g⟧ = ⟦h⟧ ↔ HgH = HhH`. -/
+lemma eq_iff (g h : P.Δ) : (⟦g⟧ : HeckeCoset P) = ⟦h⟧ ↔
+    DoubleCoset.doubleCoset (g : G) P.H P.H = DoubleCoset.doubleCoset (h : G) P.H P.H :=
+  Quotient.eq (r := dcSetoid P)
 
-/-- The chosen representative of `HeckeCoset.one` belongs to `H`. -/
-lemma T_one_choose_mem_H (P : HeckePair G) :
-    ((HeckeCoset.one P).doubleCoset_eq.choose : G) ∈ P.H := by
-  obtain ⟨h₁, h₂, h₃⟩ := T_one_choose_eq P
-  rw [@mul_eq_one_iff_eq_inv, ← @eq_inv_mul_iff_mul_eq] at h₃; rw [h₃]
-  exact Subgroup.mul_mem _ (Subgroup.inv_mem _ h₁.2) (Subgroup.inv_mem _ h₂.2)
+/-- The carrier set of `⟦g⟧` is definitionally `HgH`. -/
+@[simp] lemma toSet_mk (g : P.Δ) :
+    HeckeCoset.toSet (⟦g⟧ : HeckeCoset P) = DoubleCoset.doubleCoset (g : G) P.H P.H := rfl
+
+/-- The carrier set equals the double coset of the representative. -/
+lemma toSet_eq_rep (D : HeckeCoset P) :
+    HeckeCoset.toSet D = DoubleCoset.doubleCoset (HeckeCoset.rep D : G) P.H P.H := by
+  refine Quotient.inductionOn D fun g => ?_
+  simp only [toSet_mk]
+  have h := Quotient.out_eq (⟦g⟧ : HeckeCoset P)
+  exact (Quotient.exact h).symm
+
+/-- The representative lies in its double coset. -/
+lemma rep_mem (D : HeckeCoset P) : (HeckeCoset.rep D : G) ∈ HeckeCoset.toSet D := by
+  rw [toSet_eq_rep]; exact DoubleCoset.mem_doubleCoset_self P.H P.H _
+
+/-- The identity double coset `H1H = H`. -/
+def one (P : HeckePair G) : HeckeCoset P := ⟦⟨1, P.Δ.one_mem⟩⟧
+
+/-- Induction: to prove something for all double cosets, prove it for `⟦g⟧`. -/
+protected lemma ind {motive : HeckeCoset P → Prop}
+    (h : ∀ g : P.Δ, motive ⟦g⟧) : ∀ D, motive D := Quotient.ind h
+
+/-- Two-argument induction. -/
+protected lemma ind₂ {motive : HeckeCoset P → HeckeCoset P → Prop}
+    (h : ∀ g₁ g₂ : P.Δ, motive ⟦g₁⟧ ⟦g₂⟧) : ∀ D₁ D₂, motive D₁ D₂ := Quotient.ind₂ h
+
+/-- The representative of `HeckeCoset.one` belongs to `H`. -/
+lemma one_rep_mem_H (P : HeckePair G) : ((one P).rep : G) ∈ P.H := by
+  have hm := rep_mem (one P)
+  rw [toSet_eq_rep] at hm
+  have h2 := @Quotient.exact _ (dcSetoid P) (rep (one P)) ⟨(1 : G), P.Δ.one_mem⟩
+    (Quotient.out_eq (⟦⟨(1 : G), P.Δ.one_mem⟩⟧ : HeckeCoset P))
+  change _ = _ at h2
+  rw [h2, mem_doubleCoset] at hm
+  obtain ⟨a, ha, b, hb, hab⟩ := hm
+  rw [show (⟨(1 : G), P.Δ.one_mem⟩ : P.Δ).1 = (1 : G) from rfl, mul_one] at hab
+  rw [hab]; exact P.H.mul_mem ha hb
+
+end HeckeCoset
+
+namespace HeckeLeftCoset
+
+variable {P : HeckePair G}
+
+/-- The underlying set `gH`, well-defined on the quotient. -/
+noncomputable def toSet (D : HeckeLeftCoset P) : Set G :=
+  Quotient.lift (fun (g : P.Δ) => ({(g : G)} : Set G) * (P.H : Set G))
+    (fun _ _ (h : lcRel P _ _) => h) D
+
+/-- A representative `g : Δ`. -/
+noncomputable def rep (D : HeckeLeftCoset P) : P.Δ := Quotient.out D
+
+/-- The identity left coset `1H = H`. -/
+def one (P : HeckePair G) : HeckeLeftCoset P := ⟦⟨1, P.Δ.one_mem⟩⟧
+
+/-- Induction for left cosets. -/
+protected lemma ind {motive : HeckeLeftCoset P → Prop}
+    (h : ∀ g : P.Δ, motive ⟦g⟧) : ∀ D, motive D := Quotient.ind h
+
+end HeckeLeftCoset
 
 /-- Left-multiplying the representative by an element of `H` does not change the double coset. -/
 lemma doset_mul_left_eq_self (P : HeckePair G) (h : P.H) (g : G) :
@@ -159,9 +196,6 @@ lemma DoubleCoset.doubleCoset_mul_assoc (f g h : G) :
     DoubleCoset.doubleCoset ((f * g) * h) H H =
     DoubleCoset.doubleCoset (f * (g * h)) H H := by
   simp_rw [DoubleCoset.doubleCoset, ← Set.singleton_mul_singleton, ← mul_assoc]
-
-/-- The identity left coset `1 · H = H`. -/
-def HeckeLeftCoset.one (P : HeckePair G) : HeckeLeftCoset P := HeckeLeftCoset.mk' P (1 : P.Δ)
 
 /-- Scalar multiplication by a group element is the same as singleton set multiplication. -/
 lemma smul_eq_singleton_mul (s : Set G) (g : G) : g • s = {g} * s :=
@@ -298,11 +332,15 @@ def HeckeModule (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeLeft
 
 variable (P : HeckePair G) (Z : Type*) [CommRing Z]
 
+/-- The decomposition quotient `H / (H ∩ gHg⁻¹)` for a concrete `g : Δ`.
+    Indexes the left cosets in the decomposition of `HgH`. -/
+abbrev decompQuot (P : HeckePair G) (g : P.Δ) :=
+  P.H ⧸ (ConjAct.toConjAct (g : G) • P.H).subgroupOf P.H
+
 /-- The decomposition quotient is finite because `Δ ≤ commensurator(H)`. -/
-noncomputable instance (P : HeckePair G) (D : HeckeCoset P) :
-    Fintype (P.H ⧸ ((ConjAct.toConjAct (D.doubleCoset_eq.choose : G)) •
-      P.H).subgroupOf P.H) :=
-  Subgroup.fintypeOfIndexNeZero (P.h₁ D.doubleCoset_eq.choose.2).1
+noncomputable instance instFintypeDecompQuot (P : HeckePair G) (g : P.Δ) :
+    Fintype (decompQuot P g) :=
+  Subgroup.fintypeOfIndexNeZero (P.h₁ g.2).1
 
 /-- Products of the form `a · h · b` with `h ∈ H`, `a, b ∈ Δ` remain in `Δ`. -/
 lemma delta_mul_mem (i : H) (a b : Δ) (h₀ : H.toSubmonoid ≤ Δ) :
@@ -316,8 +354,3 @@ noncomputable instance instAddCommGroup𝕋 : AddCommGroup (𝕋 P Z) :=
 /-- The additive commutative group structure on the Hecke module. -/
 noncomputable instance instAddCommGroupHeckeModule : AddCommGroup (HeckeModule P Z) :=
   inferInstanceAs (AddCommGroup ((HeckeLeftCoset P) →₀ Z))
-
-/-- The quotient `H / (H ∩ gHg⁻¹)` indexing left cosets in the decomposition of a
-double coset `HgH`. -/
-abbrev decompQuot (D : HeckeCoset P) :=
-  P.H ⧸ (ConjAct.toConjAct (D.doubleCoset_eq.choose : G) • P.H).subgroupOf P.H

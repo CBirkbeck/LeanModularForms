@@ -315,7 +315,7 @@ theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < 
     HeckeCoset_deg (GL_pair n) (T_diag a) := by
   set H := (GL_pair n).H
   set D := T_diag a
-  set δ := (D.doubleCoset_eq.choose : GL (Fin n) ℚ) with hδ_def
+  set δ := (HeckeCoset.rep D : GL (Fin n) ℚ) with hδ_def
   set α := (diagMat n a : GL (Fin n) ℚ) with hα_def
   have h_α_comm : α ∈ Subgroup.Commensurable.commensurator H :=
     (GL_pair n).h₁ (diagMat_mem_posDetInt n a ha)
@@ -327,10 +327,9 @@ theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < 
       (ConjAct.toConjAct α⁻¹ • H).relIndex H :=
     upperTriRep_card_le_relIndex n a ha hdiv h_rel_ne
   have h_S2 := relIndex_conj_inv_eq_conj_diag n a ha
-  have h_in_set : δ ∈ D.carrier := by
-    rw [D.doubleCoset_eq.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  have h_D_set : D.carrier = DoubleCoset.doubleCoset α ↑H ↑H := by
-    simp only [D, T_diag, HeckeCoset.mk', hα_def]; congr 1; exact diagMat_delta_val n a ha
+  have h_in_set : δ ∈ HeckeCoset.toSet D := HeckeCoset.rep_mem D
+  have h_D_set : HeckeCoset.toSet D = DoubleCoset.doubleCoset α ↑H ↑H := by
+    simp only [D, T_diag, HeckeCoset.toSet_mk, hα_def]; congr 1; exact diagMat_delta_val n a ha
   rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
   have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
@@ -469,35 +468,35 @@ theorem HeckeCoset_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p)
     (h_ratio : a 1 / a 0 = p ^ k) :
     HeckeCoset_deg (GL_pair 2) (T_diag a) =
     ↑(p ^ (k - 1) * (p + 1)) := by
-  set H := (GL_pair 2).H
   set D := T_diag a
-  set δ := (D.doubleCoset_eq.choose : GL (Fin 2) ℚ) with hδ_def
+  set δ := (HeckeCoset.rep D : GL (Fin 2) ℚ) with hδ_def
   set α := (diagMat 2 a : GL (Fin 2) ℚ) with hα_def
-  have h_in_set : δ ∈ D.carrier := by
-    rw [D.doubleCoset_eq.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  have h_D_set : D.carrier = DoubleCoset.doubleCoset α ↑H ↑H := by
-    simp only [D, T_diag, HeckeCoset.mk', hα_def]; congr 1; exact diagMat_delta_val 2 a ha
+  set H := (GL_pair 2).H
+  have h_dvd_a : a 0 ∣ a 1 := hdiv 0 (by omega)
+  have h_in_set : δ ∈ HeckeCoset.toSet D := HeckeCoset.rep_mem D
+  have h_D_set : HeckeCoset.toSet D = DoubleCoset.doubleCoset α ↑H ↑H := by
+    simp only [D, T_diag, HeckeCoset.toSet_mk, hα_def]; congr 1; exact diagMat_delta_val 2 a ha
   rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
-  have h_dvd_a : a 0 ∣ a 1 := divChain_dvd (n := 2) hdiv (Fin.zero_le 1)
   have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
-  have h_smul_σ₂ : ConjAct.toConjAct σ₂ • H = H := conjAct_smul_eq_of_mem H hσ₂
   have h_δ_smul : ConjAct.toConjAct δ • H =
       ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
-    rw [hδ_eq, map_mul, map_mul, ← smul_smul, ← smul_smul, h_smul_σ₂]
-  have h_relIndex : (ConjAct.toConjAct δ • H).relIndex H =
-      (ConjAct.toConjAct α • H).relIndex H := by
+    rw [hδ_eq, map_mul, map_mul, ← smul_smul,
+      ← smul_smul, conjAct_smul_eq_of_mem H hσ₂]
+  have h_S1 : (ConjAct.toConjAct α • H).relIndex H =
+      (ConjAct.toConjAct δ • H).relIndex H := by
     rw [h_δ_smul]
-    have h := Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct σ₁)
-      (ConjAct.toConjAct α • H) H
-    rw [h_smul_σ₁] at h; exact h
-  simp only [HeckeCoset_deg]
-  rw [show (Fintype.card (decompQuot (GL_pair 2) D) : ℤ) =
-    ↑(Nat.card (decompQuot (GL_pair 2) D)) from by rw [Nat.card_eq_fintype_card]]
-  show ↑((ConjAct.toConjAct δ • H).relIndex H) = (↑(p ^ (k - 1) * (p + 1)) : ℤ)
-  rw [h_relIndex, show H = SLnZ_subgroup 2 from rfl,
-    conjDiag_relIndex_eq_Gamma0_index p a ha k h_ratio h_dvd_a,
-    Gamma0_prime_power_index p hp k hk]
+    have := Subgroup.relIndex_pointwise_smul
+      (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
+    rw [h_smul_σ₁] at this; exact this.symm
+  have h_def : HeckeCoset_deg (GL_pair 2) D =
+      ↑((ConjAct.toConjAct δ • H).relIndex H) := by
+    simp only [HeckeCoset_deg]; rw [← Nat.card_eq_fintype_card]; rfl
+  have h_Gamma0 : (ConjAct.toConjAct α • H).relIndex H =
+      (Gamma0 (p ^ k)).index := conjDiag_relIndex_eq_Gamma0_index p a ha k h_ratio h_dvd_a
+  rw [h_def, show (ConjAct.toConjAct δ • H).relIndex H =
+      (ConjAct.toConjAct α • H).relIndex H from h_S1.symm,
+    h_Gamma0, Gamma0_prime_power_index p hp k hk]
 
 private lemma diagMat_comm_of_const (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     (h_const : ∀ i, a i = a 0) (g : GL (Fin n) ℚ) :
@@ -517,42 +516,41 @@ private lemma diagMat_comm_of_const (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
 theorem HeckeCoset_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (_hdiv : DivChain 2 a) (h_eq : a 0 = a 1) :
     HeckeCoset_deg (GL_pair 2) (T_diag a) = 1 := by
-  have h_const : ∀ i : Fin 2, a i = a 0 := by intro i; fin_cases i <;> simp [h_eq]
+  have h_const : ∀ i, a i = a 0 := fun i => by fin_cases i <;> simp [h_eq]
   set D := T_diag a
-  set δ := (D.doubleCoset_eq.choose : GL (Fin 2) ℚ) with hδ_def
-  have h_in_set : δ ∈ D.carrier := by
-    rw [D.doubleCoset_eq.choose_spec]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  have h_D_set : D.carrier = DoubleCoset.doubleCoset (diagMat 2 a : GL (Fin 2) ℚ)
-      ↑(GL_pair 2).H ↑(GL_pair 2).H := by
-    simp only [D, T_diag, HeckeCoset.mk']; congr 1; exact diagMat_delta_val 2 a ha
-  rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
-  obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
-  have h_comm := diagMat_comm_of_const 2 a ha h_const
-  have h_conj_triv : ∀ y : GL (Fin 2) ℚ, (diagMat 2 a)⁻¹ * y * diagMat 2 a = y :=
-    fun y => by rw [mul_assoc, ← h_comm y, ← mul_assoc, inv_mul_cancel, one_mul]
-  have hconj : (ConjAct.toConjAct δ • (GL_pair 2).H).subgroupOf (GL_pair 2).H = ⊤ := by
-    rw [Subgroup.subgroupOf_eq_top]
-    intro x hx
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
-    rw [ConjAct.smul_def, ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-    suffices h_eq : δ⁻¹ * x * δ = (σ₁ * σ₂)⁻¹ * x * (σ₁ * σ₂) by
-      rw [h_eq]
-      exact (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem
-        ((GL_pair 2).H.inv_mem ((GL_pair 2).H.mul_mem hσ₁ hσ₂)) hx)
-        ((GL_pair 2).H.mul_mem hσ₁ hσ₂)
-    calc δ⁻¹ * x * δ
-        = (σ₁ * diagMat 2 a * σ₂)⁻¹ * x *
-          (σ₁ * diagMat 2 a * σ₂) := by rw [hδ_eq]
-      _ = σ₂⁻¹ * ((diagMat 2 a)⁻¹ * (σ₁⁻¹ * x * σ₁) *
-          diagMat 2 a) * σ₂ := by group
-      _ = σ₂⁻¹ * (σ₁⁻¹ * x * σ₁) * σ₂ := by rw [h_conj_triv]
-      _ = (σ₁ * σ₂)⁻¹ * x * (σ₁ * σ₂) := by group
-  simp only [HeckeCoset_deg]
-  haveI : Subsingleton (decompQuot (GL_pair 2) D) := by
-    show Subsingleton ((GL_pair 2).H ⧸
-      (ConjAct.toConjAct δ • (GL_pair 2).H).subgroupOf (GL_pair 2).H)
-    rw [hconj]; exact QuotientGroup.subsingleton_quotient_top
-  haveI := uniqueOfSubsingleton (⟦1⟧ : decompQuot (GL_pair 2) D)
-  exact_mod_cast Fintype.card_unique
+  set δ := HeckeCoset.rep D
+  set H := (GL_pair 2).H
+  suffices hsmul : ConjAct.toConjAct (δ : GL (Fin 2) ℚ) • H = H by
+    have h_def : HeckeCoset_deg (GL_pair 2) D =
+        ↑((ConjAct.toConjAct (δ : GL (Fin 2) ℚ) • H).relIndex H) := by
+      simp only [HeckeCoset_deg, Subgroup.relIndex, Subgroup.index,
+        ← Nat.card_eq_fintype_card]; rfl
+    rw [h_def, hsmul, Subgroup.relIndex_self]; simp
+  have hδ_mem : (δ : GL (Fin 2) ℚ) ∈
+      DoubleCoset.doubleCoset (↑(diagMat_delta 2 a)) H H := by
+    have h1 : HeckeCoset.toSet D =
+        DoubleCoset.doubleCoset (↑(diagMat_delta 2 a)) H H := by
+      simp only [D, H, T_diag, HeckeCoset.toSet_mk]
+    rw [← h1]; exact HeckeCoset.rep_mem D
+  rw [DoubleCoset.mem_doubleCoset] at hδ_mem; obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
+  have h_comm : diagMat 2 a * h₂ = h₂ * diagMat 2 a :=
+    diagMat_comm_of_const 2 a ha h_const h₂
+  have hδ_simp : (δ : GL (Fin 2) ℚ) = (h₁ * h₂) * diagMat 2 a := by
+    rw [hδ_eq, show (↑(diagMat_delta 2 a) : GL (Fin 2) ℚ) =
+        diagMat 2 a from diagMat_delta_val 2 a ha, mul_assoc]
+    rw [h_comm, ← mul_assoc]
+  have h_diag_conj : ∀ (g : GL (Fin 2) ℚ),
+      (diagMat 2 a)⁻¹ * g * diagMat 2 a = g := by
+    intro g; rw [mul_assoc, ← diagMat_comm_of_const 2 a ha h_const g, ← mul_assoc,
+      inv_mul_cancel, one_mul]
+  rw [hδ_simp, map_mul, ← smul_smul]
+  have h_smul_diag : ConjAct.toConjAct (diagMat 2 a) • H = H := by
+    ext x; simp only [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+      map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
+    constructor
+    · intro hx; rwa [h_diag_conj] at hx
+    · intro hx; rwa [h_diag_conj]
+  rw [h_smul_diag]
+  exact conjAct_smul_eq_of_mem H (H.mul_mem hh₁ hh₂)
 
 end HeckeRing.GLn

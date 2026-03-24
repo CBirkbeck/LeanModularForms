@@ -30,10 +30,12 @@ noncomputable instance instSMul𝕋 : SMul (𝕋 P ℤ) (𝕋 P ℤ) where
 
 /-- The orbit of a left coset `m` under the double coset `t`: the set of left cosets
 `{m · σ_i · g | σ_i ∈ H/(H ∩ gHg⁻¹)}`. -/
-noncomputable def smulOrbit (t : HeckeCoset P) (m : HeckeLeftCoset P) : Finset (HeckeLeftCoset P) :=
-  Finset.image (fun i : decompQuot P t =>
-    HeckeLeftCoset.mk' P ⟨(m.leftCoset_eq.choose : G) * (i.out : G) * (t.doubleCoset_eq.choose : G),
-      delta_mul_mem P.H P.Δ i.out m.leftCoset_eq.choose t.doubleCoset_eq.choose P.h₀⟩) ⊤
+noncomputable def smulOrbit (t : HeckeCoset P) (m : HeckeLeftCoset P) :
+    Finset (HeckeLeftCoset P) :=
+  Finset.image (fun i : decompQuot P (HeckeCoset.rep t) =>
+    (⟦⟨(HeckeLeftCoset.rep m : G) * (i.out : G) * (HeckeCoset.rep t : G),
+      delta_mul_mem P.H P.Δ i.out (HeckeLeftCoset.rep m)
+        (HeckeCoset.rep t) P.h₀⟩⟧ : HeckeLeftCoset P)) ⊤
 
 /-- The smul orbit of any left coset under any double coset is nonempty. -/
 lemma smulOrbit_nonempty (t : HeckeCoset P) (m : HeckeLeftCoset P) :
@@ -72,8 +74,10 @@ lemma single_basis {α : Type*} (t : Finsupp α Z) :
 noncomputable instance instOneHeckeModule : One (HeckeModule P Z) :=
   ⟨Finsupp.single (HeckeLeftCoset.one P) 1⟩
 
-/-- The one element of `HeckeModule` is the basis element corresponding to the identity left coset. -/
-lemma one_eq_HeckeLeftCoset_single : (1 : HeckeModule P Z) = Finsupp.single (HeckeLeftCoset.one P) 1 := rfl
+/-- The one element of `HeckeModule` is the basis element corresponding to the identity
+left coset. -/
+lemma one_eq_HeckeLeftCoset_single :
+    (1 : HeckeModule P Z) = Finsupp.single (HeckeLeftCoset.one P) 1 := rfl
 
 /-- The module action is additive in the Hecke ring argument. -/
 lemma smul_add_left (T₁ T₂ : 𝕋 P Z) (m : HeckeModule P Z) :
@@ -112,39 +116,52 @@ lemma smul_add_right (T : 𝕋 P Z) (m₁ m₂ : HeckeModule P Z) :
   rw [← Finsupp.sum_add]
 
 /-- The smul orbits of distinct double cosets acting on the same left coset are disjoint. -/
-lemma smulOrbit_disjoint_of_ne (D₁ D₂ : HeckeCoset P) (m : HeckeLeftCoset P) (hne : D₁ ≠ D₂) :
+lemma smulOrbit_disjoint_of_ne (D₁ D₂ : HeckeCoset P) (m : HeckeLeftCoset P)
+    (hne : D₁ ≠ D₂) :
     Disjoint (smulOrbit P D₁ m) (smulOrbit P D₂ m) := by
   rw [Finset.disjoint_left]
   intro x hx₁ hx₂
-  apply hne; apply HeckeRing.HeckeCoset_ext P
+  apply hne; apply HeckeCoset_ext_toSet (P := P)
   simp only [smulOrbit, Finset.mem_image] at hx₁ hx₂
   obtain ⟨i₁, _, hi₁⟩ := hx₁; obtain ⟨i₂, _, hi₂⟩ := hx₂
   rw [← hi₂] at hi₁
-  have hset := congr_arg HeckeLeftCoset.carrier hi₁
-  simp only [HeckeLeftCoset.mk'] at hset
-  have hmem : (m.leftCoset_eq.choose : G) * ↑(Quotient.out i₁) * (D₁.doubleCoset_eq.choose : G) ∈
-      ({(m.leftCoset_eq.choose : G) * ↑(Quotient.out i₂) * (D₂.doubleCoset_eq.choose : G)} : Set G) *
-      (↑P.H : Set G) := by
+  -- hi₁ : ⟦rep m * i₁.out * rep D₁, _⟩⟧ = ⟦⟨rep m * i₂.out * rep D₂, _⟩⟧
+  -- This means the left cosets are equal, so {rep m * i₁.out * rep D₁} * H = {rep m * i₂.out * rep D₂} * H
+  have hset : ({(HeckeLeftCoset.rep m : G) * (i₁.out : G) *
+      (HeckeCoset.rep D₁ : G)} : Set G) * (P.H : Set G) =
+    {(HeckeLeftCoset.rep m : G) * (i₂.out : G) *
+      (HeckeCoset.rep D₂ : G)} * P.H := by
+    have := Quotient.exact hi₁
+    exact this
+  have hmem : (HeckeLeftCoset.rep m : G) * ↑i₁.out *
+      (HeckeCoset.rep D₁ : G) ∈
+      ({(HeckeLeftCoset.rep m : G) * ↑i₂.out *
+        (HeckeCoset.rep D₂ : G)} : Set G) * (↑P.H : Set G) := by
     rw [← hset]; exact ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, ha, k, hk, hkk⟩ := hmem
   rw [Set.mem_singleton_iff] at ha; subst ha
-  have hstep : ↑(Quotient.out i₂) * (D₂.doubleCoset_eq.choose : G) * k =
-      ↑(Quotient.out i₁) * (D₁.doubleCoset_eq.choose : G) := by
-    have h : (m.leftCoset_eq.choose : G) * (↑(Quotient.out i₂) * (D₂.doubleCoset_eq.choose : G) * k) =
-        (m.leftCoset_eq.choose : G) * (↑(Quotient.out i₁) * (D₁.doubleCoset_eq.choose : G)) := by
+  have hstep : ↑i₂.out * (HeckeCoset.rep D₂ : G) * k =
+      ↑i₁.out * (HeckeCoset.rep D₁ : G) := by
+    have h : (HeckeLeftCoset.rep m : G) *
+        (↑i₂.out * (HeckeCoset.rep D₂ : G) * k) =
+        (HeckeLeftCoset.rep m : G) *
+        (↑i₁.out * (HeckeCoset.rep D₁ : G)) := by
       have := hkk; dsimp at this; group at this ⊢; exact this
     exact mul_left_cancel h
-  have hg : (D₁.doubleCoset_eq.choose : G) =
-      ↑((Quotient.out i₁)⁻¹ * Quotient.out i₂) * (D₂.doubleCoset_eq.choose : G) * k := by
-    apply mul_left_cancel (a := (↑(Quotient.out i₁) : G))
-    have : ↑(Quotient.out i₁) * (↑((Quotient.out i₁)⁻¹ * Quotient.out i₂) *
-        (D₂.doubleCoset_eq.choose : G) * k) = ↑(Quotient.out i₂) * (D₂.doubleCoset_eq.choose : G) * k := by
+  have hg : (HeckeCoset.rep D₁ : G) =
+      ↑(i₁.out⁻¹ * i₂.out) *
+        (HeckeCoset.rep D₂ : G) * k := by
+    apply mul_left_cancel (a := (↑i₁.out : G))
+    have : ↑i₁.out *
+        (↑(i₁.out⁻¹ * i₂.out) *
+        (HeckeCoset.rep D₂ : G) * k) =
+        ↑i₂.out * (HeckeCoset.rep D₂ : G) * k := by
       simp only [Subgroup.coe_mul, Subgroup.coe_inv]; group
     rw [this]; exact hstep.symm
-  rw [D₁.doubleCoset_eq.choose_spec, D₂.doubleCoset_eq.choose_spec]
-  conv_lhs => rw [hg]
+  rw [HeckeCoset.toSet_eq_rep, HeckeCoset.toSet_eq_rep]
+  conv_lhs => rw [show (HeckeCoset.rep D₁ : G) = _ from hg]
   exact (DoubleCoset.doubleCoset_mul_right_eq_self P ⟨k, hk⟩ _).trans
-    (doset_mul_left_eq_self P ((Quotient.out i₁)⁻¹ * Quotient.out i₂) _)
+    (doset_mul_left_eq_self P (i₁.out⁻¹ * i₂.out) _)
 
 private lemma smul_one_eval (T : 𝕋 P Z) (D : HeckeCoset P) (m : HeckeLeftCoset P)
     (hm : m ∈ smulOrbit P D (HeckeLeftCoset.one P)) :
@@ -168,7 +185,8 @@ private lemma smul_one_eval (T : 𝕋 P Z) (D : HeckeCoset P) (m : HeckeLeftCose
   · intro D' _ hne
     exact Finset.sum_eq_zero fun i hi =>
       if_neg (fun heq => absurd (heq ▸ hi)
-        (Finset.disjoint_left.mp (smulOrbit_disjoint_of_ne P D D' (HeckeLeftCoset.one P) (Ne.symm hne)) hm))
+        (Finset.disjoint_left.mp
+          (smulOrbit_disjoint_of_ne P D D' (HeckeLeftCoset.one P) (Ne.symm hne)) hm))
   · intro hns
     exact Finset.sum_eq_zero fun x _ => by
       have h0 : T.toFun D = 0 := Finsupp.notMem_support_iff.mp hns
@@ -185,7 +203,8 @@ lemma eq_of_smul_eq_smul_𝕋 (T1 T2 : (𝕋 P Z))
     rwa [smul_one_eval P Z T1 D m hm, smul_one_eval P Z T2 D m hm] at h1
 
 /-- The module action of `𝕋 P ℤ` on `HeckeModule P ℤ` is faithful. -/
-noncomputable instance instFaithfulSMulHeckeModule : FaithfulSMul (𝕋 P ℤ) (HeckeModule P ℤ) where
+noncomputable instance instFaithfulSMulHeckeModule :
+    FaithfulSMul (𝕋 P ℤ) (HeckeModule P ℤ) where
   eq_of_smul_eq_smul {t1 t2} h := eq_of_smul_eq_smul_𝕋 P ℤ t1 t2 h
 
 /-- The scalar multiplication on `𝕋` is defined as reverse multiplication. -/

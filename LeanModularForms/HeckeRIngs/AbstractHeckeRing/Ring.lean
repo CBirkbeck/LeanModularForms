@@ -110,12 +110,14 @@ lemma T_single_smul (D : HeckeCoset P) (n a : ℤ) :
 
 /-- The product of two basis elements equals the scaled multiplication finsupp. -/
 lemma T_single_mul_T_single (D₁ D₂ : HeckeCoset P) (a b : ℤ) :
-    T_single P ℤ D₁ a * T_single P ℤ D₂ b = a • b • m P D₁ D₂ :=
+    T_single P ℤ D₁ a * T_single P ℤ D₂ b =
+      a • b • m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) :=
   mul_singleton_𝕋 P D₁ D₂ a b
 
 /-- The product of two unit-coefficient basis elements is the multiplication finsupp. -/
 @[simp] lemma T_single_one_mul_T_single_one (D₁ D₂ : HeckeCoset P) :
-    T_single P ℤ D₁ 1 * T_single P ℤ D₂ 1 = m P D₁ D₂ := by
+    T_single P ℤ D₁ 1 * T_single P ℤ D₂ 1 =
+      m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) := by
   simp [T_single_mul_T_single]
 
 /-- Right multiplication by 1 is the identity. -/
@@ -129,30 +131,37 @@ lemma T_single_mul_T_single (D₁ D₂ : HeckeCoset P) (a b : ℤ) :
 /-- When `heckeMultiplicity` is one on a single output and zero elsewhere, multiplication of
 unit-coefficient basis elements produces a single basis element. -/
 lemma T_single_one_mul_eq_single (D₁ D₂ D_out : HeckeCoset P)
-    (h_one : heckeMultiplicity P D₁ D₂ D_out = 1)
-    (h_zero : ∀ A, A ≠ D_out → heckeMultiplicity P D₁ D₂ A = 0) :
+    (h_one : heckeMultiplicity P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)
+      (HeckeCoset.rep D_out) = 1)
+    (h_zero : ∀ A, A ≠ D_out → heckeMultiplicity P (HeckeCoset.rep D₁)
+      (HeckeCoset.rep D₂) (HeckeCoset.rep A) = 0) :
     T_single P ℤ D₁ 1 * T_single P ℤ D₂ 1 = T_single P ℤ D_out 1 := by
-  rw [T_single_one_mul_T_single_one, m_eq_single P D₁ D₂ D_out h_one h_zero]
+  rw [T_single_one_mul_T_single_one,
+    m_eq_single P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) D_out h_one h_zero]
 
 /-- Evaluating the multiplication finsupp at a double coset gives `heckeMultiplicity`. -/
-@[simp] lemma m_apply (D₁ D₂ D : HeckeCoset P) :
-    (m P D₁ D₂) D = heckeMultiplicity P D₁ D₂ D := rfl
+@[simp] lemma m_apply (g₁ g₂ : P.Δ) (D : HeckeCoset P) :
+    (m P g₁ g₂) D = heckeMultiplicity P g₁ g₂ (HeckeCoset.rep D) := rfl
 
 /-- Right multiplication by `HeckeCoset.one` is the identity on `m`. -/
 @[simp] lemma m_mul_T_one (D : HeckeCoset P) :
-    m P D (HeckeCoset.one P) = Finsupp.single D 1 := m_mul_one_eq_single P D
+    m P (HeckeCoset.rep D) (HeckeCoset.one P).rep =
+      Finsupp.single (⟦HeckeCoset.rep D⟧ : HeckeCoset P) 1 :=
+  m_mul_one_eq_single P (HeckeCoset.rep D)
 
 /-- Left multiplication by `HeckeCoset.one` is the identity on `m`. -/
 @[simp] lemma m_T_one_mul (D : HeckeCoset P) :
-    m P (HeckeCoset.one P) D = Finsupp.single D 1 := m_one_mul_eq_single P D
+    m P (HeckeCoset.one P).rep (HeckeCoset.rep D) =
+      Finsupp.single (⟦HeckeCoset.rep D⟧ : HeckeCoset P) 1 :=
+  m_one_mul_eq_single P (HeckeCoset.rep D)
 
 /-- The support of the multiplication finsupp equals `mulSupport`. -/
-lemma m_support (D₁ D₂ : HeckeCoset P) :
-    (m P D₁ D₂).support = mulSupport P D₁ D₂ := rfl
+lemma m_support (g₁ g₂ : P.Δ) :
+    (m P g₁ g₂).support = mulSupport P g₁ g₂ := rfl
 
 /-- The multiplicity `heckeMultiplicity` is nonneg since it is a natural number cast to `ℤ`. -/
-lemma heckeMultiplicity_nonneg (D₁ D₂ D : HeckeCoset P) :
-    0 ≤ heckeMultiplicity P D₁ D₂ D := by
+lemma heckeMultiplicity_nonneg (g₁ g₂ d : P.Δ) :
+    0 ≤ heckeMultiplicity P g₁ g₂ d := by
   simp [heckeMultiplicity]
 
 /-- Extensionality for Hecke ring elements. -/
