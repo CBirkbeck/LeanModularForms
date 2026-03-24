@@ -316,11 +316,18 @@ include hp in
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag (![1, p ^ (k + 1)]) ∈ HeckeRing.mulSupport (GL_pair 2)
       (HeckeCoset.rep (T_diag (![1, p]))) (HeckeCoset.rep (T_diag (![1, p ^ k]))) := by
-  -- This proof constructs explicit coset reps i₀, j₀ and shows their product
-  -- lies in the double coset of diag(1, p^{k+1}). The old proof used `group` for
-  -- a 20-term cancellation which times out in the quotient-based design.
-  -- Needs decomposition into smaller helper lemmas.
-  sorry
+  -- Use the high-level API: show 1 * diag(![1,p]) * (1 * diag(![1,p^k])) ∈ H diag(![1,p^{k+1}]) H
+  obtain ⟨L₁, hL₁, _R₁, _hR₁, hα_eq⟩ := T_diag_rep_decompose (![1, p])
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
+  obtain ⟨L₂, hL₂, _R₂, _hR₂, hβ_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
+  apply HeckeRing.mem_mulSupport_of_product_mem _ _ _ (diagMat_delta 2 (![1, p ^ (k + 1)]))
+    ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩ ⟨L₂⁻¹, (GL_pair 2).H.inv_mem hL₂⟩
+  -- Goal: L₁⁻¹ * rep(D1) * (L₂⁻¹ * rep(D2)) ∈ H diag(![1,p^{k+1}]) H
+  rw [hα_eq, hβ_eq, DoubleCoset.mem_doubleCoset]
+  exact ⟨1, (GL_pair 2).H.one_mem, _R₁ * _R₂,
+    (GL_pair 2).H.mul_mem _hR₁ _hR₂, by
+      sorry⟩ -- L₁⁻¹ * L₁ * D₁ * R₁ * (L₂⁻¹ * L₂ * D₂ * R₂) = diag(![1,p^{k+1}]) * R₁R₂
 
 private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
     (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
