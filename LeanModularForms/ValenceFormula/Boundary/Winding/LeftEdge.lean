@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.Boundary.Winding.RightEdge
+import LeanModularForms.ContourIntegral.WindingNumber
 
 /-!
 # Generalized Winding Number at Left Edge Points
@@ -714,15 +715,14 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_leftEdge (H : ℝ) (hH_sqrt : Real.sqrt 
     (s : ℂ) (hs_re : s.re = -1/2) (hs_norm : ‖s‖ > 1)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
     generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 := by
-  unfold generalizedWindingNumber' cauchyPrincipalValue'
-  dsimp only []; simp only [sub_zero]
+  apply ContourIntegral.gWN_eq_neg_half_of_pv_tendsto
   have h_ev := leftEdge_winding_aux H hH_sqrt s hs_re hs_norm hs_im_lower hs_im
   have h_tendsto : Filter.Tendsto (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖(fdBoundary_H H t - s)‖ > ε then
+        if ‖fdBoundary_H H t - s‖ > ε then
           (fdBoundary_H H t - s)⁻¹ * deriv (fun u => fdBoundary_H H u - s) t else 0)
     (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) :=
     tendsto_const_nhds.congr' (h_ev.mono (fun _ h => h.symm))
-  rw [h_tendsto.limUnder_eq]
-  field_simp [Real.pi_ne_zero, I_ne_zero]
+  convert h_tendsto using 2
+  simp [sub_zero, gt_iff_lt]
 
 end

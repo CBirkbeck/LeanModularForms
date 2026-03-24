@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.Boundary.Winding.UnitArcHelpers
+import LeanModularForms.ContourIntegral.WindingNumber
 
 /-!
 # Unit Arc Winding Number
@@ -528,8 +529,6 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
 theorem gWN_fdBoundary_H_eq_neg_half_of_unitArc (H : ℝ) (hH : 1 < H) (s : ℂ)
     (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (hs_im_pos : 0 < s.im) :
     generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 := by
-  unfold generalizedWindingNumber' cauchyPrincipalValue'
-  dsimp only []; simp only [sub_zero]
-  have h_tendsto := unitArc_winding_tendsto H hH s hs_norm hs_re hs_im_pos
-  rw [h_tendsto.limUnder_eq]
-  field_simp [Real.pi_ne_zero, I_ne_zero]
+  apply ContourIntegral.gWN_eq_neg_half_of_pv_tendsto
+  convert unitArc_winding_tendsto H hH s hs_norm hs_re hs_im_pos using 2
+  simp [sub_zero, gt_iff_lt]
