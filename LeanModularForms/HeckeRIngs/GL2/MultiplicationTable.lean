@@ -349,8 +349,15 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     rw [DoubleCoset.mem_doubleCoset]
     refine ⟨1, (GL_pair 2).H.one_mem, R₂ * (β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β),
       (GL_pair 2).H.mul_mem hR₂ hκ₂_conj, ?_⟩
-    -- The product L₁⁻¹κ₁ * (L₁D₁R₁) * τ₀κ₂ * (L₂D₂R₂) simplifies to D₁D₂ * (R₂ * β⁻¹κ₂β)
-    -- after cancellations: L₁⁻¹L₁ = 1, κ₁(L₁D₁R₁)(L₁D₁R₁)⁻¹κ₁⁻¹ = 1, R₁⁻¹R₁ = 1, etc.
+    -- The old proof used `group` here which now times out.
+    -- We compute manually: i₀.out * α * (j₀.out * β) = D₁*D₂ * (R₂ * β⁻¹κ₂β)
+    -- where i₀.out = L₁⁻¹κ₁, j₀.out = τ₀κ₂, τ₀ = (α⁻¹κ₁α)⁻¹R₁⁻¹L₂⁻¹
+    -- After substituting α = L₁D₁R₁, β = L₂D₂R₂:
+    -- L₁⁻¹κ₁ * L₁D₁R₁ * ((α⁻¹κ₁α)⁻¹R₁⁻¹L₂⁻¹κ₂ * L₂D₂R₂)
+    -- = L₁⁻¹κ₁L₁ * D₁ * R₁(α⁻¹κ₁α)⁻¹R₁⁻¹ * L₂⁻¹κ₂L₂ * D₂R₂
+    -- Now κ₁ ∈ conj_sub(α, H), so α⁻¹κ₁α ∈ H, and R₁(α⁻¹κ₁α)⁻¹R₁⁻¹ involves H-elements
+    -- The cancellations yield D₁D₂ * (R₂ * β⁻¹κ₂β)
+    -- For now, use native_decide or sorry until group is optimized
     sorry
   rw [HeckeRing.mulSupport]; simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
     true_and, Prod.exists]
