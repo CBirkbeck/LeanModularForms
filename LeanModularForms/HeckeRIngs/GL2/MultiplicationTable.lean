@@ -327,7 +327,10 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   rw [hα_eq, hβ_eq, DoubleCoset.mem_doubleCoset]
   exact ⟨1, (GL_pair 2).H.one_mem, _R₁ * _R₂,
     (GL_pair 2).H.mul_mem _hR₁ _hR₂, by
-      sorry⟩ -- L₁⁻¹ * L₁ * D₁ * R₁ * (L₂⁻¹ * L₂ * D₂ * R₂) = diag(![1,p^{k+1}]) * R₁R₂
+      -- L₁⁻¹ * (L₁ * D₁ * R₁) * (L₂⁻¹ * (L₂ * D₂ * R₂)) = diag * (R₁ * R₂)
+      -- after inv_mul_cancel_left twice and diag product
+      simp only [one_mul, inv_mul_cancel_left]; ring_nf
+      sorry⟩ -- diagMat multiplication step
 
 private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
     (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
