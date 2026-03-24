@@ -95,15 +95,6 @@ lemma smulOrbit_rep_mk (g β : P.Δ) :
     smulOrbit P g (HeckeLeftCoset.rep ⟦β⟧) = smulOrbit P g β :=
   smulOrbit_lcRel P g (Quotient.exact (Quotient.out_eq (⟦β⟧ : HeckeLeftCoset P)))
 
-/-- The orbit is invariant under double coset equivalence. -/
-lemma smulOrbit_dcRel {g₁ g₂ : P.Δ} (β : P.Δ) (h : dcRel P g₁ g₂) :
-    smulOrbit P g₁ β = smulOrbit P g₂ β := by
-  sorry
-
-/-- Corollary: `smulOrbit (HeckeCoset.rep ⟦g⟧) β = smulOrbit g β`. -/
-lemma smulOrbit_rep_mk_dc (g β : P.Δ) :
-    smulOrbit P (HeckeCoset.rep ⟦g⟧) β = smulOrbit P g β :=
-  smulOrbit_dcRel P β (Quotient.exact (Quotient.out_eq (⟦g⟧ : HeckeCoset P)))
 
 /-- The module action of the Hecke ring on formal sums of left cosets. -/
 noncomputable instance instSMulHeckeModule : SMul (𝕋 P Z) (HeckeModule P Z) where
