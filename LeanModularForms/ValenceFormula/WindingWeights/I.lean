@@ -44,7 +44,7 @@ private lemma arg_approach_i_left (hδ : 0 < δ) (hδ_small : δ < 1) :
     rw [show δ * Real.pi / 6 = 2 * (δ * Real.pi / 12) from by ring, Real.cos_two_mul]
     nlinarith [Real.sin_sq_add_cos_sq (δ * Real.pi / 12)]
   have h_sin_pos : 0 < Real.sin (δ * Real.pi / 12) :=
-    Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+    ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h_eq : ↑(Real.cos θ) + ↑(Real.sin θ) * I - I =
       ↑(2 * Real.sin (δ * Real.pi / 12)) *
         (↑(Real.cos (δ * Real.pi / 12)) + ↑(-(Real.sin (δ * Real.pi / 12))) * I) := by
@@ -83,7 +83,7 @@ private lemma arg_approach_i_right (hδ : 0 < δ) (hδ_small : δ < 1) :
     rw [show δ * Real.pi / 6 = 2 * (δ * Real.pi / 12) from by ring, Real.cos_two_mul]
     nlinarith [Real.sin_sq_add_cos_sq (δ * Real.pi / 12)]
   have h_sin_pos : 0 < Real.sin (δ * Real.pi / 12) :=
-    Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+    ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   set w := (↑(Real.cos (δ * Real.pi / 12)) : ℂ) +
     ↑(Real.sin (δ * Real.pi / 12)) * I with hw_def
   have h_eq : ↑(Real.cos θ) + ↑(Real.sin θ) * I - I =
@@ -134,7 +134,7 @@ private lemma g_i_norm_left {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     rw [show δ * Real.pi / 6 = 2 * (δ * Real.pi / 12) from by ring, Real.cos_two_mul]
     nlinarith [Real.sin_sq_add_cos_sq (δ * Real.pi / 12)]
   have h_sin_pos : 0 < Real.sin (δ * Real.pi / 12) :=
-    Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+    ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h_eq : ↑(Real.cos θ) + ↑(Real.sin θ) * I - I =
       (2 * Real.sin (δ * Real.pi / 12)) • Complex.exp (↑(-(δ * Real.pi / 12)) * I) := by
     rw [Complex.real_smul, exp_real_angle_I, Real.cos_neg, Real.sin_neg, h_cos, h_sin]
@@ -164,7 +164,7 @@ private lemma g_i_norm_right {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     rw [show δ * Real.pi / 6 = 2 * (δ * Real.pi / 12) from by ring, Real.cos_two_mul]
     nlinarith [Real.sin_sq_add_cos_sq (δ * Real.pi / 12)]
   have h_sin_pos : 0 < Real.sin (δ * Real.pi / 12) :=
-    Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+    ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h_eq : ↑(Real.cos θ) + ↑(Real.sin θ) * I - I =
       (-(2 * Real.sin (δ * Real.pi / 12))) • Complex.exp (↑(δ * Real.pi / 12) * I) := by
     rw [Complex.real_smul, exp_real_angle_I, h_cos, h_sin]
@@ -749,7 +749,7 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
   set ε₀ := min (min (min (1/2) (H - 1)) (2 * Real.sin (Real.pi / 12))) (r / 2) with hε₀_def
   have hH1_pos : 0 < H - 1 := by linarith
   have hsin_pos : 0 < Real.sin (Real.pi / 12) :=
-    Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+    ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by positivity
   have hε₀_pos : 0 < ε₀ := by positivity
   refine ⟨ε₀, hε₀_pos, ?_⟩

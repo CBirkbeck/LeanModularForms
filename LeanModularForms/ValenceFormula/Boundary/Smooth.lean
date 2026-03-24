@@ -24,22 +24,18 @@ open scoped Real Interval
 
 noncomputable section
 
+-- The arc on t ∈ (1,3) is ArcCalculus.unitArc (π/3) (2π/3) 1 3.
 private lemma arc_hasDerivAt (s : ℝ) :
     HasDerivAt (fun s' : ℝ => exp ((↑Real.pi * (↑s' + 1) / 6) * I))
       (exp ((↑Real.pi * (↑s + 1) / 6) * I) * (↑Real.pi / 6 * I)) s := by
-  apply HasDerivAt.cexp
-  have h1 : HasDerivAt (fun s : ℝ => (s : ℂ)) 1 s := by
-    simpa using (hasDerivAt_id s).ofReal_comp
-  have h2 : HasDerivAt (fun s : ℝ => (s : ℂ) + 1) 1 s := by
-    convert h1.add (hasDerivAt_const s (1 : ℂ)) using 1; simp
-  have h3 : HasDerivAt (fun s : ℝ =>
-      ↑Real.pi * ((s : ℂ) + 1)) (↑Real.pi * 1) s := by
-    have := (hasDerivAt_const s (↑Real.pi : ℂ)).mul h2
-    simp only [zero_mul, zero_add] at this; exact this
-  have h4 : HasDerivAt (fun s : ℝ =>
-      ↑Real.pi * ((s : ℂ) + 1) / 6 * I)
-      (↑Real.pi * 1 / 6 * I) s := (h3.div_const _).mul_const _
-  convert h4 using 1; ring
+  have h := ArcCalculus.unitArc_hasDerivAt
+    (Real.pi / 3) (Real.pi * 2 / 3) (1 : ℝ) (3 : ℝ) s (by norm_num)
+  have hfun : ArcCalculus.unitArc (Real.pi / 3) (Real.pi * 2 / 3) (1 : ℝ) (3 : ℝ) =
+      fun s' : ℝ => exp ((↑Real.pi * (↑s' + 1) / 6) * I) := by
+    funext s'; simp only [ArcCalculus.unitArc]; push_cast; ring_nf
+  rw [hfun] at h
+  convert h using 1
+  congr 1; congr 1; push_cast; ring
 
 private lemma fdBoundary_H_eq_arc_near {H : ℝ} {s : ℝ}
     (hs1 : 1 < s) (hs3 : s < 3) :

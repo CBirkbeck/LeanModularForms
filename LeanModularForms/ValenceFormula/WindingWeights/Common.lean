@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.Boundary.Smooth
+import LeanModularForms.GeneralizedResidueTheory.LogDerivFTC
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
 
 /-!
@@ -103,36 +104,8 @@ lemma ftc_log_piece {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b) (hh_cont : C
     (heq : ∀ t ∈ Ioo a b, g t = h t ∧ deriv g t = deriv h t)
     (heq_a : g a = h a) (heq_b : g b = h b) :
     IntervalIntegrable (fun t => deriv g t / g t) volume a b ∧
-    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
-  have hh_ne : ∀ t ∈ Icc a b, h t ≠ 0 := fun t ht => Complex.slitPlane_ne_zero (hh_slit t ht)
-  have hh_div_cont : ContinuousOn (fun t => deriv h t / h t) (Icc a b) :=
-    hh_deriv_cont.div hh_cont hh_ne
-  have hint_h : IntervalIntegrable (fun t => deriv h t / h t) volume a b :=
-    (hh_div_cont.mono (uIcc_of_le hab ▸ Subset.rfl)).intervalIntegrable
-  have hb_ae : ({b} : Set ℝ)ᶜ ∈ ae volume :=
-    mem_ae_iff.mpr (by rw [compl_compl]; exact measure_singleton b)
-  have h_congr : ∀ᵐ t ∂volume, t ∈ Ι a b → deriv g t / g t = deriv h t / h t := by
-    filter_upwards [hb_ae] with t ht_ne_b ht_mem
-    have ht_ne : t ≠ b := fun h => ht_ne_b (mem_singleton_iff.mpr h)
-    rw [uIoc_of_le hab] at ht_mem
-    obtain ⟨hval, hderiv⟩ := heq t ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 ht_ne⟩
-    rw [hval, hderiv]
-  have hint_g : IntervalIntegrable (fun t => deriv g t / g t) volume a b := by
-    constructor
-    · exact MeasureTheory.Integrable.congr
-        (show Integrable _ (volume.restrict (Ioc a b)) from hint_h.1)
-        ((MeasureTheory.ae_restrict_iff' measurableSet_Ioc).mpr
-          (h_congr.mono (fun t ht hm => (ht (uIoc_of_le hab ▸ hm)).symm)))
-    · rw [show Ioc b a = ∅ from Set.Ioc_eq_empty (not_lt.mpr hab)]
-      exact MeasureTheory.integrableOn_empty
-  have h_ftc := intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab
-    (ContinuousOn.clog hh_cont hh_slit) (fun t ht => (hh_diff t ht).hasDerivAt.clog_real
-      (hh_slit t (Ioo_subset_Icc_self ht))) hint_h
-  exact ⟨hint_g, by
-    calc ∫ t in a..b, deriv g t / g t
-        = ∫ t in a..b, deriv h t / h t := intervalIntegral.integral_congr_ae h_congr
-      _ = Complex.log (h b) - Complex.log (h a) := h_ftc
-      _ = Complex.log (g b) - Complex.log (g a) := by rw [heq_a, heq_b]⟩
+    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) :=
+  LogDerivFTC.ftc_log_piece hab hh_cont hh_diff hh_deriv_cont hh_slit heq heq_a heq_b
 
 lemma continuousOn_arg_im_nonneg :
     ContinuousOn Complex.arg {z : ℂ | 0 ≤ z.im ∧ z ≠ 0} := by

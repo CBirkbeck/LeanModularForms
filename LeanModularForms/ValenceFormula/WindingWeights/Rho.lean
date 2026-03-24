@@ -200,8 +200,7 @@ private lemma arg_approach_rho_left_helper (hδ : 0 < δ) (hδ_small : δ < 1) :
     show (↑(Real.sin (Real.pi / 6 - δ * Real.pi / 12)) : ℂ) =
     Complex.sin ↑(Real.pi / 6 - δ * Real.pi / 12) from Complex.ofReal_sin _]
   exact Complex.arg_mul_cos_add_sin_mul_I (mul_pos (by norm_num : (0:ℝ) < 2)
-      (Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos])
-        (by nlinarith [Real.pi_pos])))
+      (ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])))
     ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
 
 /-- The `arg` of the approach direction from the left (seg 2 side) at `ρ`.
@@ -302,8 +301,7 @@ private lemma g_norm_seg2 {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
   rw [show (↑Real.pi / 2 + (↑(3 - δ : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
     (↑θ : ℂ) * I from by simp only [θ]; push_cast; ring, exp_real_angle_I, h_eq]
   have h_sin_nn : 0 ≤ Real.sin (δ * Real.pi / 12) :=
-    le_of_lt (Real.sin_pos_of_pos_of_lt_pi
-      (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos]))
+    le_of_lt (ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos]))
   rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (mul_nonneg (by norm_num) h_sin_nn),
     show (↑(Real.cos (Real.pi / 6 - δ * Real.pi / 12)) +
       ↑(Real.sin (Real.pi / 6 - δ * Real.pi / 12)) * I) =
@@ -354,8 +352,7 @@ private lemma g_norm_arc {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
         mul_one, zero_div]; linarith [h_im]
   rw [show (↑(θ : ℝ) : ℂ) * I = (↑θ : ℂ) * I from rfl, exp_real_angle_I, h_eq]
   have h_sin_nn : 0 ≤ Real.sin (δ * Real.pi / 12) :=
-    le_of_lt (Real.sin_pos_of_pos_of_lt_pi
-      (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos]))
+    le_of_lt (ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos]))
   rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (mul_nonneg (by norm_num) h_sin_nn),
     show (↑(Real.cos (Real.pi / 6 - δ * Real.pi / 12)) +
       ↑(Real.sin (Real.pi / 6 - δ * Real.pi / 12)) * I) =
@@ -798,7 +795,7 @@ theorem pv_integral_at_rho_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   set ε₀ := min (min (H - Real.sqrt 3 / 2) (2 * Real.sin (Real.pi / 12))) r with hε₀_def
   have hH_gap : 0 < H - Real.sqrt 3 / 2 := by linarith
   have hsin_pos : 0 < Real.sin (Real.pi / 12) :=
-    Real.sin_pos_of_pos_of_lt_pi (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+    ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by positivity
   have hε₀_pos : 0 < ε₀ := lt_min (lt_min hH_gap h2sin_pos) hr
   refine ⟨ε₀, hε₀_pos, ?_⟩
