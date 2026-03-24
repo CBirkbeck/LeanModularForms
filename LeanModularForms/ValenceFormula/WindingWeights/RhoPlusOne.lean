@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.WindingWeights.Common
+import LeanModularForms.ContourIntegral.WindingNumber
 
 /-!
 # Winding Number Weight at ρ+1
@@ -823,13 +824,9 @@ theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
 /-- `generalizedWindingNumber' (fdBoundary_H H) 0 5 ρ' = -1/6`. -/
 theorem gWN_fdBoundary_H_at_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRhoPlusOne = -1/6 := by
-  unfold generalizedWindingNumber' cauchyPrincipalValue'
-  dsimp only []
-  simp only [sub_zero]
-  have h_tendsto := pv_integral_at_rho_plus_one_tendsto H hH
-  rw [h_tendsto.limUnder_eq]
-  have h_pi_ne : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp [Real.pi_ne_zero, I_ne_zero]
-  ring
+  apply ContourIntegral.gWN_eq_neg_sixth_of_pv_tendsto
+  convert pv_integral_at_rho_plus_one_tendsto H hH using 2
+  · simp [sub_zero, gt_iff_lt]
+  · ring
 
 end
