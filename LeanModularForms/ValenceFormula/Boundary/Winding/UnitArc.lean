@@ -352,7 +352,7 @@ private lemma unitArc_final_dist_bound (s : ℂ) (t₀ δ' : ℝ)
 
 /-! ### Main tendsto lemma, wired through `pv_tendsto_of_crossing_limit` -/
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 800000 in
 private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
     (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (hs_im_pos : 0 < s.im)
     (t₀ : ℝ) (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
