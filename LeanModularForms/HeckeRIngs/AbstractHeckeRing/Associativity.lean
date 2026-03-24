@@ -391,7 +391,107 @@ private lemma iter_smulOrbit_mem_mulSupport_smulOrbit
     (hj : j ∈ smulOrbit P (⟦g₂⟧ : HeckeCoset P) m₀)
     (hx₀ : x₀ ∈ smulOrbit P (⟦g₁⟧ : HeckeCoset P) j) :
     ∃ D, D ∈ mulSupport P g₂ g₁ ∧ x₀ ∈ smulOrbit P D m₀ := by
-  sorry
+  set g₂' := (HeckeCoset.rep (⟦g₂⟧ : HeckeCoset P) : G) with hg₂'_def
+  set g₁' := (HeckeCoset.rep (⟦g₁⟧ : HeckeCoset P) : G) with hg₁'_def
+  set α := (HeckeLeftCoset.rep m₀ : G)
+  simp only [smulOrbit, Finset.mem_image] at hj hx₀
+  obtain ⟨i₀, _, hj_eq⟩ := hj
+  obtain ⟨k₀, _, hx₀_eq⟩ := hx₀
+  set β := (HeckeLeftCoset.rep j : G)
+  have h_rep_mem : g₂'⁻¹ * (i₀.out : G)⁻¹ * α⁻¹ * β ∈ P.H := by
+    have h_j_set : HeckeLeftCoset.toSet j =
+        ({α * (i₀.out : G) * g₂'} : Set G) * ↑P.H := by
+      rw [← hj_eq]; rfl
+    have hβ : β ∈ ({α * (i₀.out : G) * g₂'} : Set G) * ↑P.H := by
+      have h_coset : ({β} : Set G) * ↑P.H = ({α * (i₀.out : G) * g₂'} : Set G) * ↑P.H := by
+        have h1 : HeckeLeftCoset.toSet j = ({β} : Set G) * ↑P.H := by
+          show _ = _
+          have := Quotient.out_eq (s := lcSetoid P) j
+          rw [← this]; rfl
+        rw [← h1, h_j_set]
+      have hβ_triv : β ∈ ({β} : Set G) * ↑P.H :=
+        ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
+      rwa [h_coset] at hβ_triv
+    simp only [Set.singleton_mul, Set.mem_image] at hβ
+    obtain ⟨h, hh, hβ_eq⟩ := hβ
+    have : g₂'⁻¹ * (i₀.out : G)⁻¹ * α⁻¹ * β = h := by
+      rw [show β = α * (i₀.out : G) * g₂' * h from hβ_eq.symm]; group
+    rw [this]; exact hh
+  set k' : decompQuot P (HeckeCoset.rep (⟦g₁⟧ : HeckeCoset P)) :=
+    ⟦⟨g₂'⁻¹ * (i₀.out : G)⁻¹ * α⁻¹ * β * (k₀.out : G),
+    P.H.mul_mem h_rep_mem k₀.out.2⟩⟧
+  -- Use iter_mem_smulOrbit_mulMap with the rep versions
+  set D' := mulMap P (HeckeCoset.rep ⟦g₂⟧) (HeckeCoset.rep ⟦g₁⟧) (i₀, k')
+  have h_target := iter_mem_smulOrbit_mulMap P
+    (HeckeCoset.rep ⟦g₂⟧) (HeckeCoset.rep ⟦g₁⟧) m₀ i₀ k'
+  -- g₂' ∈ Hg₂H and g₁' ∈ Hg₁H
+  have hg₂'_doset : g₂' ∈ DoubleCoset.doubleCoset (g₂ : G) P.H P.H := by
+    have h := HeckeCoset.toSet_eq_rep (⟦g₂⟧ : HeckeCoset P)
+    rw [HeckeCoset.toSet_mk] at h; rw [h]
+    exact DoubleCoset.mem_doubleCoset_self P.H P.H _
+  rw [DoubleCoset.mem_doubleCoset] at hg₂'_doset
+  obtain ⟨a₂, ha₂, b₂, hb₂, hg₂'_eq⟩ := hg₂'_doset
+  have hg₁'_doset : g₁' ∈ DoubleCoset.doubleCoset (g₁ : G) P.H P.H := by
+    have h := HeckeCoset.toSet_eq_rep (⟦g₁⟧ : HeckeCoset P)
+    rw [HeckeCoset.toSet_mk] at h; rw [h]
+    exact DoubleCoset.mem_doubleCoset_self P.H P.H _
+  rw [DoubleCoset.mem_doubleCoset] at hg₁'_doset
+  obtain ⟨a₁, ha₁, b₁, hb₁, hg₁'_eq⟩ := hg₁'_doset
+  -- Build the mulMap pair using g₂, g₁ with the same double coset as D'
+  set i₂ : decompQuot P g₂ := ⟦⟨(i₀.out : G) * a₂, P.H.mul_mem i₀.out.2 ha₂⟩⟧
+  set j₁ : decompQuot P g₁ :=
+    ⟦⟨b₂ * (k'.out : G) * a₁, P.H.mul_mem (P.H.mul_mem hb₂ k'.out.2) ha₁⟩⟧
+  -- Show mulMap P g₂ g₁ (i₂, j₁) = D' (same double coset)
+  have hD_eq : mulMap P g₂ g₁ (i₂, j₁) = D' := by
+    simp only [mulMap, D']
+    rw [HeckeCoset.eq_iff]
+    obtain ⟨m_i, hm_i_eq⟩ := QuotientGroup.mk_out_eq_mul
+      ((ConjAct.toConjAct (g₂ : G) • P.H).subgroupOf P.H)
+      ⟨(i₀.out : G) * a₂, P.H.mul_mem i₀.out.2 ha₂⟩
+    have hm_i_coe : (i₂.out : G) = (i₀.out : G) * a₂ * (m_i : G) :=
+      mk_out_coe_eq_mul P hm_i_eq
+    have hm_i_conj : (g₂ : G)⁻¹ * (m_i : G) * (g₂ : G) ∈ P.H :=
+      conjAct_mem_of_subgroupOf P (g₂ : G) m_i
+    obtain ⟨m_j, hm_j_eq⟩ := QuotientGroup.mk_out_eq_mul
+      ((ConjAct.toConjAct (g₁ : G) • P.H).subgroupOf P.H)
+      ⟨b₂ * (k'.out : G) * a₁, P.H.mul_mem (P.H.mul_mem hb₂ k'.out.2) ha₁⟩
+    have hm_j_coe : (j₁.out : G) = b₂ * (k'.out : G) * a₁ * (m_j : G) :=
+      mk_out_coe_eq_mul P hm_j_eq
+    have hm_j_conj : (g₁ : G)⁻¹ * (m_j : G) * (g₁ : G) ∈ P.H :=
+      conjAct_mem_of_subgroupOf P (g₁ : G) m_j
+    sorry
+  refine ⟨D', ?_, ?_⟩
+  · rw [← hD_eq]; exact Finset.mem_image_of_mem _ (Finset.mem_univ _)
+  -- Show x₀ ∈ smulOrbit P D' m₀
+  rw [← hx₀_eq]
+  obtain ⟨n', hn'_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct g₁' • P.H).subgroupOf P.H)
+    ⟨g₂'⁻¹ * (i₀.out : G)⁻¹ * α⁻¹ * β * (k₀.out : G),
+      P.H.mul_mem h_rep_mem k₀.out.2⟩
+  have hn'_coe : (k'.out : G) =
+      g₂'⁻¹ * (i₀.out : G)⁻¹ * α⁻¹ * β * (k₀.out : G) * (n' : G) := by
+    have := congr_arg (Subtype.val : ↥P.H → G) hn'_eq
+    simpa [Subgroup.coe_mul] using this
+  have hn'_conj : g₁'⁻¹ * (n' : G)⁻¹ * g₁' ∈ P.H :=
+    conjAct_inv_mem_of_subgroupOf P g₁' n'
+  suffices hsuff :
+    (⟦⟨β * (k₀.out : G) * g₁',
+      delta_mul_mem P.H P.Δ k₀.out (HeckeLeftCoset.rep j)
+        (HeckeCoset.rep ⟦g₁⟧) P.h₀⟩⟧ : HeckeLeftCoset P) =
+    (⟦⟨α * (i₀.out : G) * g₂' *
+      (k'.out : G) * g₁',
+      Submonoid.mul_mem _ (Submonoid.mul_mem _
+        (delta_mul_mem P.H P.Δ i₀.out (HeckeLeftCoset.rep m₀)
+          (HeckeCoset.rep ⟦g₂⟧) P.h₀)
+        (P.h₀ k'.out.2)) (HeckeCoset.rep ⟦g₁⟧).2⟩⟧ : HeckeLeftCoset P) by
+    rw [hsuff]; exact h_target
+  apply Quotient.sound; show lcRel P _ _; simp only [lcRel]
+  apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
+  refine ⟨β * (k₀.out : G) * g₁',
+    ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩, ?_⟩
+  refine ⟨g₁'⁻¹ * (n' : G)⁻¹ * g₁', hn'_conj, ?_⟩
+  simp only [smul_eq_mul]
+  rw [hn'_coe]; group
 
 private lemma smulOrbit_indicator_eq_sum (D₁ : HeckeCoset P)
     (_m₀ : HeckeLeftCoset P) (x₀ : HeckeLeftCoset P) (β : P.Δ) :
