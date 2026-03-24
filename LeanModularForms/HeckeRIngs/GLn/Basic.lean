@@ -392,7 +392,7 @@ noncomputable def intMat_to_delta (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
 /-- Embed an integer matrix with positive determinant into a double coset element `HeckeCoset`. -/
 noncomputable def intMat_to_HeckeCoset (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
     HeckeRing.HeckeCoset (GL_pair n) :=
-  HeckeRing.HeckeCoset.mk' _ (intMat_to_delta n A hdet)
+  ⟦intMat_to_delta n A hdet⟧
 
 end API
 

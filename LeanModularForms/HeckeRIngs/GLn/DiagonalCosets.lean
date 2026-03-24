@@ -140,7 +140,7 @@ variable {n} [NeZero n]
 Hypotheses `ha` (positivity) and `hdiv` (divisibility chain) belong in lemmas,
 not the definition; the result is junk when they fail. -/
 noncomputable def T_diag (a : Fin n → ℕ) : HeckeCoset (GL_pair n) :=
-  HeckeCoset.mk' (GL_pair n) (diagMat_delta n a)
+  ⟦diagMat_delta n a⟧
 
 /-- `T(a₁,...,aₙ)` as a Hecke ring element with coefficient `1`. -/
 noncomputable def T_elem (a : Fin n → ℕ) : HeckeAlgebra n :=
@@ -148,23 +148,30 @@ noncomputable def T_elem (a : Fin n → ℕ) : HeckeAlgebra n :=
 
 /-- The representative of T_diag lies in the double coset of diagMat. -/
 lemma T_diag_rep_mem_doubleCoset (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
-    ((T_diag a).doubleCoset_eq.choose : GL (Fin n) ℚ) ∈ DoubleCoset.doubleCoset
+    (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) ∈ DoubleCoset.doubleCoset
       (diagMat n a : GL (Fin n) ℚ) (GL_pair n).H (GL_pair n).H := by
-  have h_spec := (T_diag a).doubleCoset_eq.choose_spec
-  rw [show (diagMat n a : GL (Fin n) ℚ) = ↑(diagMat_delta n a) from
-    (diagMat_delta_val n a ha).symm]
-  simp only [T_diag, HeckeCoset.mk'] at h_spec; rw [h_spec]
-  exact DoubleCoset.mem_doubleCoset_self _ _ _
+  have h1 := HeckeCoset.rep_mem (T_diag a)
+  rw [HeckeCoset.toSet_eq_rep] at h1
+  have h2 : (⟦HeckeCoset.rep (T_diag a)⟧ : HeckeCoset (GL_pair n)) = T_diag a :=
+    Quotient.out_eq _
+  simp only [T_diag] at h2
+  have h3 : DoubleCoset.doubleCoset (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ)
+      (GL_pair n).H (GL_pair n).H =
+    DoubleCoset.doubleCoset (↑(diagMat_delta n a) : GL (Fin n) ℚ)
+      (GL_pair n).H (GL_pair n).H :=
+    (HeckeCoset.eq_iff _ _).mp h2
+  rw [h3] at h1; rwa [diagMat_delta_val n a ha] at h1
 
 /-- Decompose the T_diag representative as L * diagMat * R with L, R in H. -/
 lemma T_diag_rep_decompose (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     ∃ (L : GL (Fin n) ℚ), L ∈ (GL_pair n).H ∧ ∃ (R : GL (Fin n) ℚ), R ∈ (GL_pair n).H ∧
-      ((T_diag a).doubleCoset_eq.choose : GL (Fin n) ℚ) = L * diagMat n a * R :=
+      (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) = L * diagMat n a * R :=
   DoubleCoset.mem_doubleCoset.mp (T_diag_rep_mem_doubleCoset a ha)
 
 lemma T_diag_ones : T_diag (fun _ : Fin n => 1) = HeckeCoset.one (GL_pair n) := by
-  apply HeckeCoset_ext
-  simp only [T_diag, HeckeCoset.mk', HeckeCoset.one, diagMat_delta, dif_pos (fun _ => Nat.one_pos)]
+  simp only [T_diag, HeckeCoset.one]
+  rw [HeckeCoset.eq_iff]
+  simp only [diagMat_delta, dif_pos (fun _ => Nat.one_pos)]
   congr 1; exact diagMat_one n
 
 /-- Two diagonal double cosets are equal iff the underlying double cosets in `GL_n(ℚ)` coincide. -/
@@ -173,11 +180,14 @@ lemma T_diag_eq_iff (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 <
     DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) =
     DoubleCoset.doubleCoset (diagMat n b : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   constructor
-  · intro h; have := congr_arg HeckeCoset.carrier h
-    simp only [T_diag, HeckeCoset.mk', diagMat_delta_val n a ha, diagMat_delta_val n b hb] at this
+  · intro h; have := congr_arg HeckeCoset.toSet h
+    simp only [T_diag, HeckeCoset.toSet_mk, diagMat_delta_val n a ha,
+      diagMat_delta_val n b hb] at this
     exact this
-  · intro h; apply HeckeCoset_ext
-    simp only [T_diag, HeckeCoset.mk', diagMat_delta_val n a ha, diagMat_delta_val n b hb]; exact h
+  · intro h
+    simp only [T_diag]
+    rw [HeckeCoset.eq_iff]
+    simp only [diagMat_delta_val n a ha, diagMat_delta_val n b hb]; exact h
 
 end TDiag
 
@@ -891,7 +901,7 @@ private lemma double_coset_eq_of_SLnZ_equiv (α : (GL_pair n).Δ) (A : Matrix (F
 (Smith normal form). -/
 theorem exists_diagonal_representative (α : (GL_pair n).Δ) :
     ∃ (a : Fin n → ℕ) (_ha : ∀ i, 0 < a i) (_hdiv : DivChain n a),
-      HeckeCoset.mk' (GL_pair n) α = T_diag a := by
+      (⟦α⟧ : HeckeCoset (GL_pair n)) = T_diag a := by
   obtain ⟨A, hA⟩ : HasIntEntries n (↑α : GL (Fin n) ℚ) := α.2.1
   have h_det : (0 : ℚ) < (↑(↑α : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ).det := α.2.2
   have hdet_pos : 0 < A.det := by
@@ -907,7 +917,8 @@ theorem exists_diagonal_representative (α : (GL_pair n).Δ) :
   have hdiv : DivChain n a := by
     intro i hi; have h1 := hd_div i hi
     rw [hd_eq ⟨i, by omega⟩, hd_eq ⟨i + 1, hi⟩] at h1; exact_mod_cast h1
-  refine ⟨a, hd_pos_nat, hdiv, ?_⟩; apply HeckeCoset_ext
+  refine ⟨a, hd_pos_nat, hdiv, ?_⟩
+  simp only [T_diag]; rw [HeckeCoset.eq_iff]
   show DoubleCoset.doubleCoset (↑α : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) =
     DoubleCoset.doubleCoset (↑(diagMat_delta n a) : GL (Fin n) ℚ) (SLnZ_subgroup n)
       (SLnZ_subgroup n)
@@ -1028,9 +1039,9 @@ theorem T_diag_span (f : HeckeAlgebra n) :
       f = ∑ s ∈ S.attach, c s • T_elem s.1.1 := by
   have h_rep : ∀ t : HeckeCoset (GL_pair n),
       ∃ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a), t = T_diag a := by
-    intro t; obtain ⟨δ, hδ⟩ := t.doubleCoset_eq
-    have ht : HeckeCoset.mk' (GL_pair n) δ = t := HeckeCoset_ext _ _ _ hδ.symm
-    obtain ⟨a, ha, hdiv, hT⟩ := exists_diagonal_representative n δ
+    intro t
+    obtain ⟨a, ha, hdiv, hT⟩ := exists_diagonal_representative n (HeckeCoset.rep t)
+    have ht : (⟦HeckeCoset.rep t⟧ : HeckeCoset (GL_pair n)) = t := Quotient.out_eq t
     exact ⟨a, ha, hdiv, ht ▸ hT⟩
   choose a_fn ha_fn hdiv_fn hrep_fn using h_rep
   let toSub : HeckeCoset (GL_pair n) → { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p } :=

@@ -47,12 +47,13 @@ open Finsupp
 
 /-- The degree of a double coset: `deg(HgH) = [H : H ∩ gHg⁻¹]`, the number of left cosets
 in the decomposition of `HgH`. -/
-noncomputable def HeckeCoset_deg (D : HeckeCoset P) : ℤ := Fintype.card (decompQuot P D)
+noncomputable def HeckeCoset_deg (D : HeckeCoset P) : ℤ :=
+  Fintype.card (decompQuot P (HeckeCoset.rep D))
 
 /-- The degree of the identity double coset is 1. -/
 @[simp] lemma HeckeCoset_deg_T_one : HeckeCoset_deg P (HeckeCoset.one P) = 1 := by
   simp only [HeckeCoset_deg]; haveI := subsingleton_decompQuot_T_one P
-  haveI : Unique (decompQuot P (HeckeCoset.one P)) :=
+  haveI : Unique (decompQuot P (HeckeCoset.one P).rep) :=
     uniqueOfSubsingleton (one_in_decompQuot_T_one P).some
   simp [Fintype.card_unique]
 
@@ -63,39 +64,45 @@ lemma HeckeCoset_deg_pos (D : HeckeCoset P) : 0 < HeckeCoset_deg P D := by
 section SmulOrbitCard
 
 private lemma smulOrbit_map_inj (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) :
-    Function.Injective (fun i : decompQuot P D =>
-      HeckeLeftCoset.mk' P ⟨((m₀.leftCoset_eq.choose : G) * (i.out : G) * (D.doubleCoset_eq.choose : G)),
-        delta_mul_mem P.H P.Δ i.out m₀.leftCoset_eq.choose D.doubleCoset_eq.choose P.h₀⟩) := by
+    Function.Injective (fun i : decompQuot P (HeckeCoset.rep D) =>
+      (⟦⟨(HeckeLeftCoset.rep m₀ : G) * (i.out : G) * (HeckeCoset.rep D : G),
+        delta_mul_mem P.H P.Δ i.out (HeckeLeftCoset.rep m₀)
+          (HeckeCoset.rep D) P.h₀⟩⟧ : HeckeLeftCoset P)) := by
   intro i₁ i₂ heq
   by_contra hne
-  have hset := congr_arg HeckeLeftCoset.carrier heq
-  simp only [HeckeLeftCoset.mk'] at hset
-  have hmem : (m₀.leftCoset_eq.choose : G) * (i₁.out : G) * (D.doubleCoset_eq.choose : G) ∈
-      ({(m₀.leftCoset_eq.choose : G) * (i₂.out : G) * (D.doubleCoset_eq.choose : G)} : Set G) *
+  have hset : ({(HeckeLeftCoset.rep m₀ : G) * (i₁.out : G) *
+      (HeckeCoset.rep D : G)} : Set G) * (P.H : Set G) =
+    {(HeckeLeftCoset.rep m₀ : G) * (i₂.out : G) *
+      (HeckeCoset.rep D : G)} * P.H := Quotient.exact heq
+  have hmem : (HeckeLeftCoset.rep m₀ : G) * (i₁.out : G) * (HeckeCoset.rep D : G) ∈
+      ({(HeckeLeftCoset.rep m₀ : G) * (i₂.out : G) * (HeckeCoset.rep D : G)} : Set G) *
       (P.H : Set G) := by
     rw [← hset]; exact ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, ha, k, hk, hkk⟩ := hmem
   rw [Set.mem_singleton_iff] at ha; subst ha
-  have cancel : (i₂.out : G) * (D.doubleCoset_eq.choose : G) * k = (i₁.out : G) * (D.doubleCoset_eq.choose : G) := by
-    apply mul_left_cancel (a := (m₀.leftCoset_eq.choose : G))
+  have cancel : (i₂.out : G) * (HeckeCoset.rep D : G) * k =
+      (i₁.out : G) * (HeckeCoset.rep D : G) := by
+    apply mul_left_cancel (a := (HeckeLeftCoset.rep m₀ : G))
     have := hkk; group at this ⊢; exact this
-  exact decompQuot_coset_diff P D i₁ i₂ hne
+  exact decompQuot_coset_diff P (HeckeCoset.rep D) i₁ i₂ hne
     (leftCoset_eq_of_not_disjoint (H := P.H) _ _ (by
       rw [@not_disjoint_iff]
-      exact ⟨(i₁.out : G) * (D.doubleCoset_eq.choose : G),
+      exact ⟨(i₁.out : G) * (HeckeCoset.rep D : G),
         ⟨1, P.H.one_mem, mul_one _⟩,
         ⟨k, hk, cancel⟩⟩))
 
 /-- The cardinality of a smul orbit equals the degree of the acting double coset. -/
 lemma smulOrbit_card (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) :
-    (smulOrbit P D m₀).card = Fintype.card (decompQuot P D) := by
-  simp only [smulOrbit,
-    Finset.card_image_of_injective _ (smulOrbit_map_inj P D m₀)]
-  exact Finset.card_univ
+    (smulOrbit P D m₀).card = Fintype.card (decompQuot P (HeckeCoset.rep D)) := by
+  have hinj := smulOrbit_map_inj P D m₀
+  show (Finset.image _ ⊤).card = _
+  rw [Finset.top_eq_univ]
+  convert (Finset.card_image_of_injective Finset.univ hinj).trans Finset.card_univ
 
 /-- The cardinality of a smul orbit cast to `ℤ` equals `HeckeCoset_deg`. -/
 lemma smulOrbit_card_intCast (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) :
-    ((smulOrbit P D m₀).card : ℤ) = HeckeCoset_deg P D := by simp [smulOrbit_card, HeckeCoset_deg]
+    ((smulOrbit P D m₀).card : ℤ) = HeckeCoset_deg P D := by
+  simp [smulOrbit_card, HeckeCoset_deg]
 
 end SmulOrbitCard
 
