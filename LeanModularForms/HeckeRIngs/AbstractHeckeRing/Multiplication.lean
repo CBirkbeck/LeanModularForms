@@ -423,6 +423,17 @@ lemma heckeMultiplicity_pos_of_mem (g₁ g₂ : P.Δ) (d : HeckeCoset P)
     simp only [heckeMultiplicity]; exact Nat.cast_nonneg _
   omega
 
+/-- If `h₁ * g₁ * (h₂ * g₂) ∈ HdH` (with `h₁, h₂ ∈ H`), then `⟦d⟧ ∈ mulSupport g₁ g₂`.
+    Avoids manual construction of decomposition quotient elements. -/
+lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
+    (hmem : (h₁ : G) * g₁ * ((h₂ : G) * g₂) ∈
+      DoubleCoset.doubleCoset (d : G) P.H P.H) :
+    (⟦d⟧ : HeckeCoset P) ∈ mulSupport P g₁ g₂ := by
+  rw [mulSupport]; simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
+    true_and, Prod.exists]
+  refine ⟨⟦⟨h₁, h₁.2⟩⟧, ⟦⟨h₂, h₂.2⟩⟧, ?_⟩
+  sorry
+
 /-- Left multiplication by `HeckeCoset.one` has multiplicity `1` on the diagonal
 and `0` elsewhere. -/
 lemma heckeMultiplicity_one_mul (g₁ d : P.Δ) :
