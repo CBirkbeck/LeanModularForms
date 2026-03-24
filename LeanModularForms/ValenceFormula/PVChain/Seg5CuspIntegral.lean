@@ -7,6 +7,7 @@ import LeanModularForms.ValenceFormula.PVChain.Helpers
 import LeanModularForms.ValenceFormula.ModularInvariance
 import LeanModularForms.ValenceFormula.Boundary.Smooth
 import LeanModularForms.ValenceFormula.Boundary.Bounds
+import LeanModularForms.GeneralizedResidueTheory.LogDerivFTC
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Periodic
 
 /-!

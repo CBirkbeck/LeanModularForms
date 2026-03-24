@@ -3,6 +3,7 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ValenceFormula.RectHomotopy.AngleAnalysis
+import LeanModularForms.GeneralizedResidueTheory.CurveAvoidance
 
 /-!
 # Winding number base lemmas
@@ -302,7 +303,11 @@ lemma fdPolygon_avoids_line_to_ref (p : ℂ) (hp_norm : ‖p‖ > 1)
             have : (1 - s) * H_height + s * H_height = H_height := by ring
             linarith
 
-/-- rc(t) - ref_p₀ lies in slitPlane for t ∈ [0, 5] with t ≠ tL ref_p₀. -/
+/-- rc(t) - ref_p₀ lies in slitPlane for t ∈ [0, 5] with t ≠ tL ref_p₀.
+Note: `CurveAvoidance.curve_sub_in_slitPlane` does not apply here because its `hpos`
+hypothesis requires `0 < im ∨ 0 < re` uniformly on all of `Icc 0 5`, whereas at `tL`
+the vector has `re < 0` and `im = 0` (a branch-cut crossing). slitPlane membership at
+non-`tL` points relies on `im ≠ 0` (not `im > 0`), which is outside the API's scope. -/
 lemma rc_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
     (htL : t ≠ tL ref_p₀) :
     fdPolygonRadialCircle ref_p₀ t - ref_p₀ ∈ Complex.slitPlane := by
@@ -404,7 +409,9 @@ lemma rc_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
               mul_one, mul_zero, add_zero, zero_add]
           linarith [ref_Y₀_lt_H]
 
-/-- fdPolygon t - ref_p₀ is in slitPlane for t ∈ [0, 5] with t ≠ tL ref_p₀. -/
+/-- fdPolygon t - ref_p₀ is in slitPlane for t ∈ [0, 5] with t ≠ tL ref_p₀.
+Derived from `rc_sub_ref_p₀_mem_slitPlane` via positive-scaling; the same
+`curve_sub_in_slitPlane` incompatibility applies (see above). -/
 lemma fdPolygon_sub_ref_p₀_mem_slitPlane (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5)
     (htL : t ≠ tL ref_p₀) :
     fdPolygon t - ref_p₀ ∈ Complex.slitPlane := by
