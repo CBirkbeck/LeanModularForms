@@ -4,6 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.Boundary.Basic
+import LeanModularForms.GeneralizedResidueTheory.PiecewiseCurveAPI
+import LeanModularForms.GeneralizedResidueTheory.CurveAvoidance
+import LeanModularForms.GeneralizedResidueTheory.ArcCalculus
 
 /-!
 # Fundamental Domain Boundary – Bounds
@@ -74,8 +77,8 @@ private lemma seg3_angle_in_range {t : ℝ} (ht2 : 2 ≤ t) (ht3 : t ≤ 3) :
       (show (0:ℝ) ≤ Real.pi / 6 by linarith)]
 
 private lemma sin_pos_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
-    (h2 : θ ≤ 2 * Real.pi / 3) : 0 < Real.sin θ := by
-  apply Real.sin_pos_of_pos_of_lt_pi <;> linarith [Real.pi_pos]
+    (h2 : θ ≤ 2 * Real.pi / 3) : 0 < Real.sin θ :=
+  ArcCalculus.sin_pos_of_mem_Ioo_zero_pi ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
 
 private lemma sin_ge_sqrt3_div_2_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
     (h2 : θ ≤ 2 * Real.pi / 3) : Real.sqrt 3 / 2 ≤ Real.sin θ := by
@@ -87,15 +90,8 @@ private lemma sin_ge_sqrt3_div_2_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 
     exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith) (by linarith) (by linarith)
 
 private lemma abs_cos_le_half_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
-    (h2 : θ ≤ 2 * Real.pi / 3) : |Real.cos θ| ≤ 1 / 2 := by
-  have hpi := Real.pi_pos; rw [abs_le]; constructor
-  · have : Real.cos (2 * Real.pi / 3) ≤ Real.cos θ :=
-      Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h2
-    rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
-      Real.cos_pi_sub, Real.cos_pi_div_three] at this; linarith
-  · have : Real.cos θ ≤ Real.cos (Real.pi / 3) :=
-      Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h1
-    rw [Real.cos_pi_div_three] at this; linarith
+    (h2 : θ ≤ 2 * Real.pi / 3) : |Real.cos θ| ≤ 1 / 2 :=
+  ArcCalculus.abs_cos_le_half_of_mem_Icc ⟨h1, h2⟩
 
 private lemma seg1_H_im {H t : ℝ} (_ht0 : 0 ≤ t) (_ht1 : t ≤ 1) :
     (fdBoundary_seg1_H H t).im = H - t * (H - Real.sqrt 3 / 2) := by

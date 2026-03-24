@@ -411,7 +411,8 @@ private lemma rightEdge_final_log (H : ℝ) (s : ℂ)
       Complex.log_neg_I, Complex.log_I]
   ring
 
-private lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
+set_option maxHeartbeats 1600000 in
+lemma rightEdge_winding_per_eps (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
     (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
     (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H)
     (ε : ℝ) (hε_pos : 0 < ε)
