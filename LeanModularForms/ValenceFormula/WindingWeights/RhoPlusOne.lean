@@ -5,6 +5,7 @@ Authors:
 -/
 import LeanModularForms.ValenceFormula.WindingWeights.Common
 import LeanModularForms.ContourIntegral.WindingNumber
+import LeanModularForms.ContourIntegral.CrossingLimit
 
 /-!
 # Winding Number Weight at ρ+1
