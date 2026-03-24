@@ -119,6 +119,16 @@ lemma eq_iff (g h : P.Δ) : (⟦g⟧ : HeckeCoset P) = ⟦h⟧ ↔
 @[simp] lemma toSet_mk (g : P.Δ) :
     HeckeCoset.toSet (⟦g⟧ : HeckeCoset P) = DoubleCoset.doubleCoset (g : G) P.H P.H := rfl
 
+/-- Membership in `toSet ⟦g⟧` is membership in the double coset `HgH`. -/
+lemma mem_toSet_mk (g : P.Δ) (x : G) :
+    x ∈ HeckeCoset.toSet (⟦g⟧ : HeckeCoset P) ↔ x ∈ DoubleCoset.doubleCoset (g : G) P.H P.H :=
+  Iff.rfl
+
+/-- If two `HeckeCoset`s have the same `toSet`, they are equal. -/
+lemma ext_toSet {D₁ D₂ : HeckeCoset P} (h : HeckeCoset.toSet D₁ = HeckeCoset.toSet D₂) :
+    D₁ = D₂ := by
+  exact Quotient.ind₂ (fun g₁ g₂ => by intro h; exact Quotient.sound h) D₁ D₂ h
+
 /-- The carrier set equals the double coset of the representative. -/
 lemma toSet_eq_rep (D : HeckeCoset P) :
     HeckeCoset.toSet D = DoubleCoset.doubleCoset (HeckeCoset.rep D : G) P.H P.H := by
