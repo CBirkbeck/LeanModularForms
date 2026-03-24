@@ -264,90 +264,13 @@ private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_p
     (hA : A ∈ HeckeRing.mulSupport (GL_pair 2) (HeckeCoset.rep (T_diag (![1, p])))
       (HeckeCoset.rep (T_diag (![1, p ^ k])))) :
     A = T_diag (![1, p ^ (k + 1)]) ∨ A = T_diag (![p, p ^ k]) := by
-  obtain ⟨a, ha_pos, hdiv, hrep⟩ := exists_diagonal_representative 2 (HeckeCoset.rep A)
   sorry
 
-include hp in
-/-- `diagMat 2 (![1, p]) * diagMat 2 (![1, p^k]) = diagMat 2 (![1, p^{k+1}])` -/
-private lemma diagMat_mul_ppow (k : ℕ) :
-    (diagMat 2 (![1, p]) : GL (Fin 2) ℚ) * diagMat 2 (![1, p ^ k]) =
-      diagMat 2 (![1, p ^ (k + 1)]) := by
-  rw [diagMat_mul 2 (![1, p]) (![1, p ^ k])
-    (by intro i; fin_cases i <;> simp [hp.pos])
-    (by intro i; fin_cases i <;> simp [pow_pos hp.pos k])]
-  congr 1; ext i; fin_cases i <;> simp [Pi.mul_apply, pow_succ, mul_comm]
-
-include hp in
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag (![1, p ^ (k + 1)]) ∈ HeckeRing.mulSupport (GL_pair 2)
       (HeckeCoset.rep (T_diag (![1, p]))) (HeckeCoset.rep (T_diag (![1, p ^ k]))) := by
-  set D1 := T_diag (![1, p])
-  set D2 := T_diag (![1, p ^ k])
-  set D_out1 := T_diag (![1, p ^ (k + 1)])
-  set α := (HeckeCoset.rep D1 : GL (Fin 2) ℚ)
-  set β := (HeckeCoset.rep D2 : GL (Fin 2) ℚ)
   sorry
-/-  Old proof body removed during port.
-  have hi₀ : (↑i₀.out : GL (Fin 2) ℚ) = L₁⁻¹ * (κ₁ : (GL_pair 2).H) := by
-    apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at hκ₁_eq
-    simpa [Subgroup.coe_mul] using hκ₁_eq
-  have hκ₁_conj : α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α ∈ (GL_pair 2).H := by
-    have := κ₁.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-      ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct] using this
-  set τ₀ : GL (Fin 2) ℚ :=
-    (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹
-  have hτ₀_mem : τ₀ ∈ (GL_pair 2).H :=
-    (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hκ₁_conj)
-      ((GL_pair 2).H.inv_mem hR₁)) ((GL_pair 2).H.inv_mem hL₂)
-  set j₀ : decompQuot (GL_pair 2) D2 := ⟦⟨τ₀, hτ₀_mem⟩⟧
-  open scoped Pointwise in
-  obtain ⟨κ₂, hκ₂_eq⟩ := QuotientGroup.mk_out_eq_mul
-    ((ConjAct.toConjAct (D2.doubleCoset_eq.choose : GL (Fin 2) ℚ) •
-      (GL_pair 2).H).subgroupOf (GL_pair 2).H)
-    ⟨τ₀, hτ₀_mem⟩
-  have hj₀ : (↑j₀.out : GL (Fin 2) ℚ) = τ₀ * (κ₂ : (GL_pair 2).H) := by
-    apply_fun (↑· : ↥(GL_pair 2).H → GL (Fin 2) ℚ) at hκ₂_eq
-    simpa [Subgroup.coe_mul] using hκ₂_eq
-  have hκ₂_conj : β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β ∈ (GL_pair 2).H := by
-    have := κ₂.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-      ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct] using this
-  have h_product_mem : (↑i₀.out : GL (Fin 2) ℚ) * α *
-      ((↑j₀.out : GL (Fin 2) ℚ) * β) ∈ DoubleCoset.doubleCoset
-        ((diagMat 2 (![1, p ^ (k + 1)])) : GL (Fin 2) ℚ)
-        (GL_pair 2).H (GL_pair 2).H := by
-    rw [DoubleCoset.mem_doubleCoset]
-    refine ⟨1, (GL_pair 2).H.one_mem,
-      R₂ * (β⁻¹ * (κ₂.val : GL (Fin 2) ℚ) * β),
-      (GL_pair 2).H.mul_mem hR₂ hκ₂_conj, ?_⟩
-    rw [hi₀, hj₀, show α = L₁ * diagMat 2 (![1, p]) * R₁ from hα_eq,
-        show β = L₂ * diagMat 2 (![1, p ^ k]) * R₂ from hβ_eq]
-    set D₁_mat := diagMat 2 (![1, p])
-    set D₂_mat := diagMat 2 (![1, p ^ k])
-    have h_D_mul : D₁_mat * D₂_mat = diagMat 2 (![1, p ^ (k + 1)]) := diagMat_mul_ppow p hp k
-    rw [one_mul, ← h_D_mul]
-    simp only [show τ₀ =
-      (α⁻¹ * (κ₁.val : GL (Fin 2) ℚ) * α)⁻¹ * R₁⁻¹ * L₂⁻¹ from rfl,
-               show α = L₁ * D₁_mat * R₁ from hα_eq]
-    group
-  rw [HeckeRing.mulSupport]; simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
-    true_and, Prod.exists]
-  exact ⟨i₀, j₀, by
-    apply HeckeRing.HeckeCoset_ext (GL_pair 2)
-    show (HeckeRing.mulMap (GL_pair 2) D1 D2 (i₀, j₀)).carrier = D_out1.carrier
-    rw [HeckeRing.mulMap, HeckeRing.HeckeCoset.mk']
-    simp only
-    conv_rhs => rw [show D_out1 = HeckeRing.HeckeCoset.mk' (GL_pair 2)
-        (diagMat_delta 2 (![1, p ^ (k + 1)])) from rfl,
-      HeckeRing.HeckeCoset.mk']
-    simp only
-    rw [show (diagMat_delta 2 (![1, p ^ (k + 1)]) : GL (Fin 2) ℚ) =
-      diagMat 2 (![1, p ^ (k + 1)]) from diagMat_delta_val _ _
-        (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]
-    exact DoubleCoset.doubleCoset_eq_of_mem h_product_mem⟩
--/
 
-/-- The degree sum `m1 * deg(D_out1) + m2 * deg(D_out2) = deg(D1) * deg(D2)` when
-    the mulSupport of `D1 * D2` is contained in `{D_out1, D_out2}`. -/
 private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
     (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
       HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
@@ -357,7 +280,31 @@ private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL
       HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
         (HeckeCoset.rep D_out2) * HeckeCoset_deg (GL_pair 2) D_out2 =
       HeckeCoset_deg (GL_pair 2) D1 * HeckeCoset_deg (GL_pair 2) D2 := by
-  sorry
+  have h1 : HeckeRing.deg (GL_pair 2)
+      (HeckeRing.m (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)) =
+      HeckeCoset_deg (GL_pair 2) D1 * HeckeCoset_deg (GL_pair 2) D2 := by
+    rw [← HeckeRing.T_single_one_mul_T_single_one, HeckeRing.deg_mul,
+      HeckeRing.deg_T_single, HeckeRing.deg_T_single]; ring
+  have h2 : HeckeRing.deg (GL_pair 2)
+      (HeckeRing.m (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)) =
+      HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+        (HeckeCoset.rep D_out1) * HeckeCoset_deg (GL_pair 2) D_out1 +
+        HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+          (HeckeCoset.rep D_out2) *
+          HeckeCoset_deg (GL_pair 2) D_out2 := by
+    open scoped Classical in
+    simp only [HeckeRing.deg, RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk,
+      HeckeRing.deg_fun]
+    have hsub : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep D1)
+        (HeckeCoset.rep D2)).support ⊆ ({D_out1, D_out2} : Finset _) := by
+      intro A hA; simp only [Finset.mem_insert, Finset.mem_singleton]
+      rw [Finsupp.mem_support_iff] at hA
+      exact (or_iff_not_imp_left.mpr fun h1 =>
+        (Classical.em (A = D_out2)).elim id fun h2 => absurd (h_zero A h1 h2) hA)
+    exact Finset.sum_subset hsub (by
+      intro A _ hA; rw [Finsupp.notMem_support_iff.mp hA]; simp) |>.trans
+      (Finset.sum_pair h_ne)
+  linarith
 
 include hp in
 private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
@@ -367,13 +314,14 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
     HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep (T_diag (![1, p])))
       (HeckeCoset.rep (T_diag (![1, p ^ k])))
       (HeckeCoset.rep (T_diag (![p, p ^ k]))) = if k = 1 then ↑(p + 1) else ↑p := by
-  sorry
-/-  set D1 := T_diag (![1, p])
+  set D1 := T_diag (![1, p])
   set D2 := T_diag (![1, p ^ k])
   set D_out1 := T_diag (![1, p ^ (k + 1)])
   set D_out2 := T_diag (![p, p ^ k])
-  set m1 := HeckeRing.heckeMultiplicity (GL_pair 2) D1 D2 D_out1
-  set m2 := HeckeRing.heckeMultiplicity (GL_pair 2) D1 D2 D_out2
+  set m1 := HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1)
+    (HeckeCoset.rep D2) (HeckeCoset.rep D_out1)
+  set m2 := HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1)
+    (HeckeCoset.rep D2) (HeckeCoset.rep D_out2)
   have h_ne : D_out1 ≠ D_out2 := by
     intro heq
     have h1_pos : ∀ i : Fin 2, 0 < (![1, p ^ (k + 1)]) i := by
@@ -390,23 +338,29 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
     have := congr_fun this 0; simp only [Matrix.cons_val_zero] at this
     exact absurd this.symm (Nat.Prime.one_lt hp).ne'
   have h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
-      HeckeRing.heckeMultiplicity (GL_pair 2) D1 D2 A = 0 := by
+      HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+        (HeckeCoset.rep A) = 0 := by
     intro A h1 h2; apply HeckeRing.heckeMultiplicity_eq_zero_of_nmem_mulSupport
     intro hmem; exact (mulSupport_pp_subset p hp k hk A hmem).elim h1 h2
-  have h_deg : m1 * HeckeCoset_deg (GL_pair 2) D_out1 + m2 * HeckeCoset_deg (GL_pair 2) D_out2 =
+  have h_deg : m1 * HeckeCoset_deg (GL_pair 2) D_out1 +
+      m2 * HeckeCoset_deg (GL_pair 2) D_out2 =
       HeckeCoset_deg (GL_pair 2) D1 * HeckeCoset_deg (GL_pair 2) D2 :=
     heckeMultiplicity_deg_sum_eq D1 D2 D_out1 D_out2 h_ne h_zero
-  have hm1_nn := HeckeRing.heckeMultiplicity_nonneg (GL_pair 2) D1 D2 D_out1
-  have hm2_nn := HeckeRing.heckeMultiplicity_nonneg (GL_pair 2) D1 D2 D_out2
+  have hm1_nn := HeckeRing.heckeMultiplicity_nonneg (GL_pair 2) (HeckeCoset.rep D1)
+    (HeckeCoset.rep D2) (HeckeCoset.rep D_out1)
+  have hm2_nn := HeckeRing.heckeMultiplicity_nonneg (GL_pair 2) (HeckeCoset.rep D1)
+    (HeckeCoset.rep D2) (HeckeCoset.rep D_out2)
   have hm1_pos : 1 ≤ m1 := by
-    have hne : (HeckeRing.m (GL_pair 2) D1 D2) D_out1 ≠ 0 := by
+    have hne : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2))
+        D_out1 ≠ 0 := by
       rw [← Finsupp.mem_support_iff, HeckeRing.m_support]
       exact D_out1_pp_in_mulSupport p hp k hk
     exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne hm1_nn (Ne.symm hne))
   rw [show HeckeCoset_deg (GL_pair 2) D1 = ↑(p + 1) from by
       simpa using HeckeCoset_deg_T_diag_two_prime p hp (![1, p])
         (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp) 1 one_pos (by simp [pow_one]),
+        (fun i hi => by (have : i = 0 := by omega); subst this; simp) 1 one_pos
+        (by simp [pow_one]),
     show HeckeCoset_deg (GL_pair 2) D2 = ↑(p ^ (k - 1) * (p + 1)) from
       HeckeCoset_deg_T_diag_two_prime p hp _
         (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
@@ -414,16 +368,19 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
     show HeckeCoset_deg (GL_pair 2) D_out1 = ↑(p ^ k * (p + 1)) from
       HeckeCoset_deg_T_diag_two_prime p hp _
         (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp) (k + 1) (by omega) (by simp)] at h_deg
+        (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+        (k + 1) (by omega) (by simp)] at h_deg
   by_cases hk1 : k = 1
   · subst hk1; simp only [ite_true, show 1 - 1 = 0 from rfl, pow_zero, one_mul] at h_deg ⊢
-    have hd_o2 : HeckeCoset_deg (GL_pair 2) D_out2 = 1 := HeckeCoset_deg_T_diag_two_scalar _
+    have hd_o2 : HeckeCoset_deg (GL_pair 2) D_out2 = 1 :=
+      HeckeCoset_deg_T_diag_two_scalar _
         (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos 1)
         (fun i hi => by (have : i = 0 := by omega); subst this; simp [pow_one])
         (by show (![p, p ^ 1] : Fin 2 → ℕ) 0 = (![p, p ^ 1] : Fin 2 → ℕ) 1; simp [pow_one])
     rw [hd_o2] at h_deg; push_cast at h_deg ⊢
     have h_m1_eq : m1 = 1 := by
-      nlinarith [mul_self_nonneg ((p : ℤ) - 1), show (2 : ℤ) ≤ p from by exact_mod_cast hp.two_le]
+      nlinarith [mul_self_nonneg ((p : ℤ) - 1),
+        show (2 : ℤ) ≤ p from by exact_mod_cast hp.two_le]
     exact ⟨h_m1_eq, by rw [h_m1_eq] at h_deg; linarith⟩
   · simp only [show k ≠ 1 from hk1, ite_false]; have hk2 : 2 ≤ k := by omega
     have hd_o2 : HeckeCoset_deg (GL_pair 2) D_out2 = ↑(p ^ (k - 2) * (p + 1)) :=
@@ -453,12 +410,14 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
         ((p : ℤ) * ((p : ℤ) + 1)) * ((p : ℤ) ^ (k - 2) * ((p : ℤ) + 1)) by nlinarith)
       linarith
     have h_m1_eq : m1 = 1 := by
--/
+      have h_le : m1 * (p : ℤ) ^ 2 ≤ (p : ℤ) ^ 2 + p := by linarith [h_eq, hm2_nn]
+      nlinarith [show (p : ℤ) ^ 2 ≥ 4 by nlinarith]
+    exact ⟨h_m1_eq, by rw [h_m1_eq] at h_eq; linarith⟩
 
 /-- Theorem 3.24(5): `T(p) · T(1, pᵏ) = T(1, p^{k+1}) + m · T(p, pᵏ)` -/
 theorem T_sum_prime_mul_T_ad (k : ℕ) (hk : 0 < k) :
     T_sum ⟨p, hp.pos⟩ * T_ad 1 (p ^ k) = T_ad 1 (p ^ (k + 1)) +
-      (if k = 1 then (↑(p + 1) : ℤ) else (↑p : ℤ)) • T_ad p (p ^ k) := by sorry /-
+      (if k = 1 then (↑(p + 1) : ℤ) else (↑p : ℤ)) • T_ad p (p ^ k) := by
   rw [T_sum_prime p hp]
   set D1 := T_diag (![1, p])
   set D2 := T_diag (![1, p ^ k])
@@ -489,12 +448,14 @@ theorem T_sum_prime_mul_T_ad (k : ℕ) (hk : 0 < k) :
     T_ad_of_pos p (p ^ k) hp.pos (pow_pos hp.pos k) (dvd_pow_self p (by omega))
   rw [h_ad_1p, h_ad_1pk, h_ad_1pk1, h_ad_ppk]
   have h_mul : T_elem (![1, p]) * T_elem (![1, p ^ k]) =
-      HeckeRing.m (GL_pair 2) D1 D2 := HeckeRing.T_single_one_mul_T_single_one (GL_pair 2) D1 D2
+      HeckeRing.m (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2) :=
+    HeckeRing.T_single_one_mul_T_single_one (GL_pair 2) D1 D2
   have h_rhs : T_elem (![1, p ^ (k + 1)]) + c • T_elem (![p, p ^ k]) =
       Finsupp.single D_out1 1 + c • Finsupp.single D_out2 1 := rfl
   rw [h_mul, h_rhs, Finsupp.smul_single', mul_one]
   apply Finsupp.ext; intro A
-  show HeckeRing.heckeMultiplicity (GL_pair 2) D1 D2 A =
+  show HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+    (HeckeCoset.rep A) =
     (Finsupp.single D_out1 (1 : ℤ) + Finsupp.single D_out2 c) A
   rw [Finsupp.add_apply]
   by_cases h1 : A = D_out1
@@ -509,8 +470,6 @@ theorem T_sum_prime_mul_T_ad (k : ℕ) (hk : 0 < k) :
       apply HeckeRing.heckeMultiplicity_eq_zero_of_nmem_mulSupport
       intro hmem
       exact (mulSupport_pp_subset p hp k hk A hmem).elim h1 h2
-
--/
 
 /-- `T_sum(1) = 1`: the sum over divisor pairs of 1 is the identity. -/
 lemma T_sum_one : T_sum 1 = (1 : HeckeAlgebra 2) := by

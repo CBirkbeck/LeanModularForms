@@ -477,7 +477,98 @@ private lemma smulOrbit_count_eq_m' (g₂ g₁ : P.Δ) (D₀ : HeckeCoset P)
     (∑ j ∈ smulOrbit P g₂ β₀,
       if x₀ ∈ smulOrbit P g₁ (HeckeLeftCoset.rep j) then (1 : ℤ) else 0) =
     (m P g₂ g₁) D₀ := by
-  sorry
+  simp only [smulOrbit, Finset.mem_image] at hx₀
+  obtain ⟨q₀, _, hq₀⟩ := hx₀
+  -- Step 1: Convert to indexed sum, replacing HeckeLeftCoset.rep with concrete elements
+  -- We need: sum over orbit = sum over decompQuot with smulOrbit_rep_mk applied
+  have h_lhs_eq :
+    ∀ q : decompQuot P g₂,
+      smulOrbit P g₁ (HeckeLeftCoset.rep
+        (⟦⟨(β₀ : G) * (q.out : G) * (g₂ : G),
+          delta_mul_mem P.H P.Δ q.out β₀ g₂ P.h₀⟩⟧ : HeckeLeftCoset P)) =
+      smulOrbit P g₁ ⟨(β₀ : G) * (q.out : G) * (g₂ : G),
+          delta_mul_mem P.H P.Δ q.out β₀ g₂ P.h₀⟩ := by
+    intro q
+    exact smulOrbit_lcRel P g₁
+      (Quotient.exact (Quotient.out_eq
+        (⟦⟨(β₀ : G) * (q.out : G) * (g₂ : G),
+          delta_mul_mem P.H P.Δ q.out β₀ g₂ P.h₀⟩⟧ : HeckeLeftCoset P)))
+  set F : HeckeLeftCoset P → ℤ :=
+    fun j => if x₀ ∈ smulOrbit P g₁ (HeckeLeftCoset.rep j) then 1 else 0 with hF_def
+  show (∑ j ∈ smulOrbit P g₂ β₀, F j) = (m P g₂ g₁) D₀
+  conv_lhs => rw [smulOrbit]; rw [Finset.top_eq_univ]
+  have h_inj : Set.InjOn (fun i : decompQuot P g₂ =>
+      (⟦⟨(β₀ : G) * (i.out : G) * (g₂ : G),
+        delta_mul_mem P.H P.Δ i.out β₀ g₂ P.h₀⟩⟧ : HeckeLeftCoset P))
+      (Finset.univ : Finset (decompQuot P g₂)) :=
+    fun a _ b _ hab => smulOrbit_map_injective P g₂ β₀ hab
+  have h_img := Finset.sum_image (f := F) h_inj
+  rw [h_img]
+  simp only [hF_def, h_lhs_eq]
+  -- Step 2: Use smulOrbit_indicator_eq_sum to expand each indicator
+  simp_rw [smulOrbit_indicator_eq_sum P g₁ x₀]
+  have M_mk_eq_iff : ∀ (a b : P.Δ),
+      (⟦a⟧ : HeckeLeftCoset P) = ⟦b⟧ ↔
+      ({(a : G)} : Set G) * ↑P.H = {(b : G)} * ↑P.H :=
+    fun a b => ⟨fun h => Quotient.exact h, fun h => Quotient.sound h⟩
+  simp_rw [← hq₀, M_mk_eq_iff]
+  rw [← Fintype.sum_prod_type']
+  rw [Finset.sum_boole, ← Fintype.card_subtype, ← Nat.card_eq_fintype_card]
+  -- Step 4: Factor out the left coset representative β₀
+  have h_iff : ∀ (p : decompQuot P g₂ × decompQuot P g₁),
+      ({(β₀ : G) * ↑p.1.out * (g₂ : G) * ↑p.2.out *
+        (g₁ : G)} : Set G) * ↑P.H =
+        {(β₀ : G) * ↑q₀.out * (HeckeCoset.rep D₀ : G)} * ↑P.H ↔
+      ({(↑p.1.out : G) * (g₂ : G)} : Set G) *
+        {(↑p.2.out : G) * (g₁ : G)} * ↑P.H =
+        {(↑q₀.out : G) * (HeckeCoset.rep D₀ : G)} * ↑P.H := by
+    intro p
+    constructor
+    · intro h
+      have hl : ({(β₀ : G) * ↑p.1.out * (g₂ : G) * ↑p.2.out *
+          (g₁ : G)} : Set G) =
+          ({(β₀ : G)} : Set G) *
+          {↑p.1.out * (g₂ : G) * (↑p.2.out * (g₁ : G))} := by
+        rw [Set.singleton_mul_singleton]; congr 1; group
+      have hr : ({(β₀ : G) * ↑q₀.out * (HeckeCoset.rep D₀ : G)} : Set G) =
+          ({(β₀ : G)} : Set G) * {↑q₀.out * (HeckeCoset.rep D₀ : G)} := by
+        rw [Set.singleton_mul_singleton]; congr 1; group
+      have hset' : ({(β₀ : G)} : Set G) *
+          ({↑p.1.out * (g₂ : G) * (↑p.2.out * (g₁ : G))} * ↑P.H) =
+          {(β₀ : G)} * ({↑q₀.out * (HeckeCoset.rep D₀ : G)} * ↑P.H) := by
+        rw [← mul_assoc, ← hl, ← mul_assoc, ← hr]; exact h
+      have h' := set_singleton_mul_left_cancel (β₀ : G) hset'
+      rwa [Set.singleton_mul_singleton]
+    · intro h
+      rw [Set.singleton_mul_singleton] at h
+      have hl : ({(β₀ : G) * ↑p.1.out * (g₂ : G) * ↑p.2.out *
+          (g₁ : G)} : Set G) =
+          ({(β₀ : G)} : Set G) *
+          {↑p.1.out * (g₂ : G) * (↑p.2.out * (g₁ : G))} := by
+        rw [Set.singleton_mul_singleton]; congr 1; group
+      have hr : ({(β₀ : G) * ↑q₀.out * (HeckeCoset.rep D₀ : G)} : Set G) =
+          ({(β₀ : G)} : Set G) * {↑q₀.out * (HeckeCoset.rep D₀ : G)} := by
+        rw [Set.singleton_mul_singleton]; congr 1; group
+      calc ({(β₀ : G) * ↑p.1.out * (g₂ : G) * ↑p.2.out *
+              (g₁ : G)} : Set G) * ↑P.H
+          _ = ({(β₀ : G)} * {↑p.1.out * (g₂ : G) *
+              (↑p.2.out * (g₁ : G))}) * ↑P.H := by rw [hl]
+          _ = {(β₀ : G)} * ({↑p.1.out * (g₂ : G) *
+              (↑p.2.out * (g₁ : G))} * ↑P.H) :=
+              mul_assoc ({(β₀ : G)} : Set G) _ _
+          _ = {(β₀ : G)} * ({↑q₀.out * (HeckeCoset.rep D₀ : G)} * ↑P.H) :=
+              congr_arg _ h
+          _ = ({(β₀ : G)} * {↑q₀.out * (HeckeCoset.rep D₀ : G)}) * ↑P.H :=
+              (mul_assoc ({(β₀ : G)} : Set G) _ _).symm
+          _ = ({(β₀ : G) * ↑q₀.out * (HeckeCoset.rep D₀ : G)} : Set G) * ↑P.H := by
+              rw [hr]
+  have h_prop := fun p => propext (h_iff p)
+  simp_rw [h_prop]
+  -- Step 5: Conclude using the multiplicity definition and uniformity
+  rw [show (m P g₂ g₁) D₀ = (heckeMultiplicity P g₂ g₁ (HeckeCoset.rep D₀) : ℤ) from rfl]
+  unfold heckeMultiplicity
+  norm_cast
+  exact heckeMultiplicity_uniform P g₂ g₁ D₀ q₀
 
 private lemma smul_assoc_key (g₁ g₂ : P.Δ) (β₀ : P.Δ) :
     ((m P g₂ g₁).sum fun D b₁ ↦
