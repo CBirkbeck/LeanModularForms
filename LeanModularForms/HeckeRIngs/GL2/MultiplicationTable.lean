@@ -316,21 +316,29 @@ include hp in
 private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag (![1, p ^ (k + 1)]) ∈ HeckeRing.mulSupport (GL_pair 2)
       (HeckeCoset.rep (T_diag (![1, p]))) (HeckeCoset.rep (T_diag (![1, p ^ k]))) := by
-  -- Use the high-level API: show 1 * diag(![1,p]) * (1 * diag(![1,p^k])) ∈ H diag(![1,p^{k+1}]) H
-  obtain ⟨L₁, hL₁, _R₁, _hR₁, hα_eq⟩ := T_diag_rep_decompose (![1, p])
+  -- Use h₁ = L₁⁻¹, h₂ = R₁⁻¹ * L₂⁻¹ to cancel the SL factors
+  obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ := T_diag_rep_decompose (![1, p])
     (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-  obtain ⟨L₂, hL₂, _R₂, _hR₂, hβ_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
+  obtain ⟨L₂, hL₂, R₂, hR₂, hβ_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
     (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
   apply HeckeRing.mem_mulSupport_of_product_mem _ _ _ (diagMat_delta 2 (![1, p ^ (k + 1)]))
-    ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩ ⟨L₂⁻¹, (GL_pair 2).H.inv_mem hL₂⟩
-  -- Goal: L₁⁻¹ * rep(D1) * (L₂⁻¹ * rep(D2)) ∈ H diag(![1,p^{k+1}]) H
+    ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩ ⟨R₁⁻¹ * L₂⁻¹, (GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hR₁) ((GL_pair 2).H.inv_mem hL₂)⟩
+  -- Goal: L₁⁻¹ * rep(D1) * ((R₁⁻¹L₂⁻¹) * rep(D2)) ∈ H diag(![1,p^{k+1}]) H
+  -- = L₁⁻¹ * (L₁ D₁ R₁) * (R₁⁻¹ L₂⁻¹ * L₂ D₂ R₂)
+  -- = D₁ * D₂ * R₂ (after cancellation)
+  -- This is in H * diag * H with witnesses 1 and R₂
+  simp only [Subgroup.coe_inv, Subgroup.coe_mul]
   rw [hα_eq, hβ_eq, DoubleCoset.mem_doubleCoset]
-  exact ⟨1, (GL_pair 2).H.one_mem, _R₁ * _R₂,
-    (GL_pair 2).H.mul_mem _hR₁ _hR₂, by
-      -- L₁⁻¹ * (L₁ * D₁ * R₁) * (L₂⁻¹ * (L₂ * D₂ * R₂)) = diag * (R₁ * R₂)
-      -- after inv_mul_cancel_left twice and diag product
-      simp only [one_mul, inv_mul_cancel_left]; ring_nf
-      sorry⟩ -- diagMat multiplication step
+  refine ⟨1, (GL_pair 2).H.one_mem, R₂, hR₂, ?_⟩
+  -- After simp cancellation: D₁ * (D₂ * R₂) = diagMat_delta(![1,p^{k+1}]) * R₂
+  simp only [one_mul, _root_.mul_inv_rev, inv_inv, mul_assoc,
+    inv_mul_cancel_left, mul_inv_cancel_left, inv_mul_cancel, mul_inv_cancel, mul_one]
+  rw [diagMat_delta_val 2 (![1, p ^ (k + 1)])
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]
+  rw [← mul_assoc, diagMat_mul 2 (![1, p]) (![1, p ^ k])
+    (by intro i; fin_cases i <;> simp [hp.pos])
+    (by intro i; fin_cases i <;> simp [pow_pos hp.pos k])]
+  congr 2; ext i; fin_cases i <;> simp [Pi.mul_apply, pow_succ, mul_comm]
 
 private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
     (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →

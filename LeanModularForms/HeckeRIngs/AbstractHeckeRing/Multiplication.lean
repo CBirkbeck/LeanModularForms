@@ -431,10 +431,25 @@ lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
     (⟦d⟧ : HeckeCoset P) ∈ mulSupport P g₁ g₂ := by
   rw [mulSupport]; simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
     true_and, Prod.exists]
-  exact ⟨⟦⟨h₁, h₁.2⟩⟧, ⟦⟨h₂, h₂.2⟩⟧, sorry⟩
-  -- The proof needs: mulMap g₁ g₂ (⟦h₁⟧, ⟦h₂⟧) = ⟦d⟧
-  -- i.e., Quotient.out ⟦h₁⟧ * g₁ * (Quotient.out ⟦h₂⟧ * g₂) is in HdH
-  -- The conjugate subgroup elements from Quotient.out are absorbed into H.
+  refine ⟨⟦⟨h₁, h₁.2⟩⟧, ⟦⟨h₂, h₂.2⟩⟧, ?_⟩
+  -- mulMap returns ⟦⟨i.out * g₁ * (j.out * g₂)⟩⟧; need = ⟦d⟧ (double coset equality)
+  unfold mulMap; rw [HeckeCoset.eq_iff]; dsimp only
+  obtain ⟨n₁, hn₁⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (g₁ : G) • P.H).subgroupOf P.H) ⟨(h₁ : G), h₁.2⟩
+  obtain ⟨n₂, hn₂⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (g₂ : G) • P.H).subgroupOf P.H) ⟨(h₂ : G), h₂.2⟩
+  have hi : ((⟦⟨(h₁ : G), h₁.2⟩⟧ : decompQuot P g₁).out : G) = h₁ * n₁ := by
+    have := congr_arg (Subtype.val : P.H → G) hn₁; simpa [Subgroup.coe_mul]
+  have hj : ((⟦⟨(h₂ : G), h₂.2⟩⟧ : decompQuot P g₂).out : G) = h₂ * n₂ := by
+    have := congr_arg (Subtype.val : P.H → G) hn₂; simpa [Subgroup.coe_mul]
+  have hn₁c : (g₁ : G)⁻¹ * ↑n₁ * g₁ ∈ P.H := by
+    have := n₁.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct]
+  have hn₂c : (g₂ : G)⁻¹ * ↑n₂ * g₂ ∈ P.H := by
+    have := n₂.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct]
+  rw [hi, hj]
+  sorry
 
 /-- Left multiplication by `HeckeCoset.one` has multiplicity `1` on the diagonal
 and `0` elsewhere. -/
