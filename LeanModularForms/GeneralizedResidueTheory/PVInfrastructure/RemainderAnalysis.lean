@@ -46,7 +46,8 @@ private lemma contDiffOn_Icc_of_contDiffAt
     ∃ δ > 0,
       ContDiffOn ℝ n γ (Set.Icc (t₀ - δ) (t₀ + δ)) := by
   obtain ⟨u, hu_mem, hγ_on⟩ :=
-    hγ.contDiffOn (m := n) le_rfl (by simp)
+    hγ.contDiffOn (m := n) le_rfl
+      (by simp only [ENat.natCast_ne_coe_top, WithTop.natCast_ne_top, imp_self])
   obtain ⟨r, hr_pos, hball_sub⟩ :=
     Metric.mem_nhds_iff.mp hu_mem
   use r / 2, by linarith
@@ -68,7 +69,7 @@ private lemma bound_iteratedDerivWithin_two_on_Icc
         (iteratedDerivWithin 2 γ (Set.Icc a b))
         (Set.Icc a b) :=
     hγ.continuousOn_iteratedDerivWithin
-      (by norm_cast) (uniqueDiffOn_Icc hab)
+      (by simp only [Nat.cast_ofNat, le_refl]) (uniqueDiffOn_Icc hab)
   have h_compact : IsCompact (Set.Icc a b) :=
     isCompact_Icc
   obtain ⟨M, hM⟩ :=

@@ -468,7 +468,8 @@ private lemma windingNumber_integer_of_piecewise_with_bound
     ∃ n : ℤ, generalizedWindingNumber' γ a b z₀ = n := by
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := bound_away_from_z₀ γ a b z₀ hab hγ_cont hγ_avoids
   have h_int : IntervalIntegrable (fun t => deriv γ t / (γ t - z₀)) volume a b := by
-    have h_coe : (↑(P ∪ {a, b}) : Set ℝ) = ↑P ∪ {a, b} := by simp
+    have h_coe : (↑(P ∪ {a, b}) : Set ℝ) = ↑P ∪ {a, b} := by
+      simp only [Finset.coe_union, Finset.coe_insert, Finset.coe_singleton]
     exact intervalIntegrable_of_piecewise_continuousOn_bounded (M / δ) hab.le
       (h_coe ▸ logDeriv_continuousOn_off_finset hγ_cont hγ_deriv_cont hγ_avoids)
       (fun t ht => logDeriv_integrand_bound hδ_pos hδ_bound hγ_deriv_bound t ht)
@@ -509,7 +510,8 @@ theorem exp_integral_eq_endpoint_ratio_piecewise
   obtain ⟨M, hM⟩ := hγ_deriv_bound
   obtain ⟨δ, hδ, hδ_bd⟩ := bound_away_from_z₀ γ a b z₀ hab hγ_cont hγ_avoids
   have h_int : IntervalIntegrable (fun t => deriv γ t / (γ t - z₀)) volume a b := by
-    have h_coe : (↑(P ∪ {a, b}) : Set ℝ) = ↑P ∪ {a, b} := by simp
+    have h_coe : (↑(P ∪ {a, b}) : Set ℝ) = ↑P ∪ {a, b} := by
+      simp only [Finset.coe_union, Finset.coe_insert, Finset.coe_singleton]
     exact intervalIntegrable_of_piecewise_continuousOn_bounded (M / δ) hab.le
       (h_coe ▸ logDeriv_continuousOn_off_finset hγ_cont hγ_deriv_cont hγ_avoids)
       (fun t ht => logDeriv_integrand_bound hδ hδ_bd hM t ht)

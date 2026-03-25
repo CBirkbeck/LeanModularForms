@@ -275,7 +275,7 @@ private theorem hasDerivAt_zpow_comp_sub'
     (hγ : HasDerivAt γ L t) (hne : γ t ≠ s) :
     HasDerivAt (fun t => (γ t - s) ^ n) (↑n * (γ t - s) ^ (n - 1) * L) t := by
   have h := (hasDerivAt_zpow n (γ t - s) (Or.inl (sub_ne_zero.mpr hne))).comp t (hγ.sub_const s)
-  exact h.congr_deriv (by simp)
+  exact h.congr_deriv (by ring)
 
 /-- FTC for the integral of `(γ(t) - s)^n * γ'(t)` on `[a, b]` when `γ(t) ≠ s`
 on `[a, b]` and `n ≠ -1`. The primitive is `(γ(t) - s)^{n+1} / (n+1)`. -/
@@ -367,7 +367,7 @@ theorem contourIntegral_const_mul_zpow_eq_zero (s : ℂ) (n : ℤ) (hn : n ≤ -
   simp_rw [h_eq]
   rw [intervalIntegral.integral_const_mul]
   rw [contourIntegral_zpow_eq_zero s n hn γ hγ_closed hγ_avoids]
-  simp
+  simp only [mul_zero]
 
 /-! ### Residue of the principal part
 

@@ -102,7 +102,8 @@ private lemma unitArc_unique_crossing (H : ℝ) (hH : 1 < H) (s : ℂ)
       · subst h1'
         simp only [fdBoundary_H, show (1:ℝ) ≤ 1 from le_refl _, ↓reduceIte] at hs_eq
         have hre := congr_arg Complex.re hs_eq
-        simp at hre
+        simp only [add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
+          sub_zero, zero_mul, zero_add, zero_sub] at hre
         have := (abs_lt.mp hs_re).2
         linarith
       · have ht1 : 1 < t := lt_of_le_of_ne (le_of_lt h1) (Ne.symm h1')
@@ -370,7 +371,7 @@ private lemma unitArc_far_endpoint_correction (H : ℝ) (hH : 1 < H) (s : ℂ)
       Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im]
   have hg₀_im_pos : 0 < g₀.im := by rw [hg₀_im]; linarith
   have hg₀_ne : g₀ ≠ 0 := by
-    intro h; have := congr_arg Complex.im h; simp at this; linarith [hg₀_im_pos]
+    intro h; have := congr_arg Complex.im h; simp only [Complex.zero_im] at this; linarith [hg₀_im_pos]
   simp only [Complex.log]
   rw [norm_neg, arg_neg_eq_arg_sub_pi_iff.mpr (Or.inl hg₀_im_pos)]
   push_cast; ring
@@ -437,16 +438,16 @@ lemma unitArc_ftc_value (H : ℝ) (hH : 1 < H) (s : ℂ)
   set h₅ : ℝ → ℂ := fun t => fdBoundary_seg5_H H t - s
   have hd₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by
     intro t; exact (hasDerivAt_fdBoundary_seg1_H H t).sub (hasDerivAt_const t s)
-      |>.congr_deriv (by simp)
+      |>.congr_deriv (by simp only [sub_zero])
   have hd_arc : ∀ t : ℝ, HasDerivAt h_arc
       (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t :=
     hasDerivAt_arc_rep s
   have hd₃ : ∀ t : ℝ, HasDerivAt h₃ ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by
     intro t; exact (hasDerivAt_fdBoundary_seg4_H H t).sub (hasDerivAt_const t s)
-      |>.congr_deriv (by simp)
+      |>.congr_deriv (by simp only [sub_zero])
   have hd₅ : ∀ t : ℝ, HasDerivAt h₅ 1 t := by
     intro t; exact (hasDerivAt_fdBoundary_seg5_H H t).sub (hasDerivAt_const t s)
-      |>.congr_deriv (by simp)
+      |>.congr_deriv (by simp only [sub_zero])
   have hg_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := by
     intro t ht; simp only [hg_def, h₀]; rw [fdBoundary_H_eq_seg1_H ht]
   have hg_arc : ∀ t, 1 < t → t < 3 → g t = h_arc t := by

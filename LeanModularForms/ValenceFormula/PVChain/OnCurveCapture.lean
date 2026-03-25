@@ -88,7 +88,7 @@ theorem oncurve_vert_capture
       nlinarith [mul_self_lt_mul_self (by positivity : 0 ≤ Real.sqrt 3 / 2) h_im_gt,
         Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
     rw [Complex.norm_eq_sqrt_sq_add_sq]
-    calc 1 = Real.sqrt 1 := by simp
+    calc 1 = Real.sqrt 1 := by simp only [Real.sqrt_one]
       _ < Real.sqrt (z.re ^ 2 + z.im ^ 2) :=
           Real.sqrt_lt_sqrt (by norm_num) (by linarith)
   let p : ℍ := ⟨z, h_im_pos⟩
@@ -171,7 +171,7 @@ theorem oncurve_seg4_capture
       nlinarith [mul_self_lt_mul_self (by positivity : 0 ≤ Real.sqrt 3 / 2) h_im_gt,
         Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
     rw [Complex.norm_eq_sqrt_sq_add_sq]
-    calc 1 = Real.sqrt 1 := by simp
+    calc 1 = Real.sqrt 1 := by simp only [Real.sqrt_one]
       _ < Real.sqrt ((fdBoundary_seg1_H H s).re ^ 2 + (fdBoundary_seg1_H H s).im ^ 2) :=
         Real.sqrt_lt_sqrt (by norm_num) (by linarith)
   let p : ℍ := ⟨fdBoundary_seg1_H H s, h_im_pos⟩

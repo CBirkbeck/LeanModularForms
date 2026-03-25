@@ -455,7 +455,7 @@ lemma rightEdge_ftc_telescope (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
       |>.congr_deriv (by simp [hα_def])
   have hd₅ : ∀ t : ℝ, HasDerivAt h₅ 1 t := by
     intro t; exact (hasDerivAt_fdBoundary_seg5_H H t).sub (hasDerivAt_const t s)
-      |>.congr_deriv (by simp)
+      |>.congr_deriv (by simp only [sub_zero])
   have hg_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := by
     intro t ht; simp only [g, h₀]; rw [fdBoundary_H_eq_seg1_H ht]
   have hg_arc : ∀ t, 1 < t → t < 3 → g t = h_arc t := by

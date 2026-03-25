@@ -302,7 +302,7 @@ theorem isFlatOfOrder_one (γ : PiecewiseC1Immersion) (t₀ : ℝ)
     have hcl : IsClosed ((↑γ.partition : Set ℝ) \ {t₀}) :=
       (γ.partition.finite_toSet.subset Set.diff_subset).isClosed
     filter_upwards [
-      nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
+      nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (Set.mem_compl (fun h => h.2 rfl))),
       nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2),
       self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
     exact γ.smooth_off_partition t ht₂ fun hm =>
@@ -311,7 +311,7 @@ theorem isFlatOfOrder_one (γ : PiecewiseC1Immersion) (t₀ : ℝ)
     have hcl : IsClosed ((↑γ.partition : Set ℝ) \ {t₀}) :=
       (γ.partition.finite_toSet.subset Set.diff_subset).isClosed
     filter_upwards [
-      nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
+      nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (Set.mem_compl (fun h => h.2 rfl))),
       nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2),
       self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
     exact γ.smooth_off_partition t ht₂ fun hm =>

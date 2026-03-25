@@ -129,7 +129,7 @@ private theorem laurent_coeff_le_poleOrder (f : ℂ → ℂ) (s : ℂ)
     have : ∑ k : Fin N_s, a_s k * (0 : ℂ) ^ (m_idx.val - k.val) =
         a_s m_idx := by
       rw [Finset.sum_eq_single m_idx]
-      · simp
+      · simp only [Nat.sub_self, pow_zero, mul_one]
       · intro k _ hk
         by_cases hkm : k.val < m_idx.val
         · simp [zero_pow (by omega : m_idx.val - k.val ≠ 0)]
@@ -718,7 +718,7 @@ private theorem cpv_polar_term_tendsto (S0 : Finset ℂ) (f : ℂ → ℂ)
         (fun z => a_s k / (z - s) ^ (k.val + 1))
         γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
   obtain ⟨kv, hkv⟩ := k
-  simp at hk_ge
+  simp only [Fin.val] at hk_ge
   have hm : 2 ≤ kv + 1 := by omega
   by_cases ha_zero : a_s ⟨kv, hkv⟩ = 0
   · have h_zero : ∀ ε t, cauchyPrincipalValueIntegrandOn S0
@@ -802,14 +802,14 @@ private theorem assembly_errNF_eventuallyEq (f : ℂ → ℂ) (s : ℂ)
         a_s ⟨0, hN_s_pos⟩ / (z - s) := by
       rw [← Finset.sum_sub_distrib]
       rw [Finset.sum_eq_single ⟨0, hN_s_pos⟩]
-      · simp
+      · simp only [zero_add, pow_one, ge_iff_le, nonpos_iff_eq_zero, one_ne_zero, ↓reduceIte, sub_zero]
       · intro k _ hk
         have hkval : k.val ≥ 1 := by
           by_contra h
           push_neg at h
           have : k.val = 0 := by omega
           exact hk (Fin.ext this)
-        simp [hkval]
+        simp only [hkval, if_true, sub_self]
       · intro h; exact absurd (Finset.mem_univ _) h
     rw [h_a0_eq] at h_sum_split
     linear_combination h_sum_split

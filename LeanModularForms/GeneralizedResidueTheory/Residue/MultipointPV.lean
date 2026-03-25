@@ -334,7 +334,8 @@ lemma finset_discrete_min_sep (S0 : Finset ℂ) (hS0_nonempty : S0.Nonempty)
       have h_exists_y : ∃ y ∈ S0, y ≠ x := by
         by_contra h_all; push_neg at h_all
         have : S0.card ≤ 1 := (Finset.card_le_card
-          (fun z hz => Finset.mem_singleton.mpr (h_all z hz))).trans (by simp)
+          (fun z hz => Finset.mem_singleton.mpr (h_all z hz))).trans
+          (by simp only [Finset.card_singleton, le_refl])
         omega
       obtain ⟨y, hy, hne⟩ := h_exists_y; refine ⟨‖y - x‖, ?_⟩
       simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]

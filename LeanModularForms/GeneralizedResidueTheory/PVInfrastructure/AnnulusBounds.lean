@@ -1562,7 +1562,8 @@ lemma singular_annulus_bound_explicit
                     ⟨ht_Icc, hδ, h1, h2⟩
                   exact (h_not_sd.2 hmem).2.2
               by_cases ht_eq : t = t₀
-              · subst ht_eq; simp
+              · subst ht_eq
+                simp only [sub_self, norm_zero, abs_zero, mul_zero]
               · have hinv_ne :
                     (↑(t - t₀) : ℂ)⁻¹ ≠ 0 :=
                   inv_ne_zero
@@ -1688,7 +1689,7 @@ lemma singular_annulus_bound_explicit
             volume (symmDiff γAnn tAnnLin_loc) := by
             rw [h_sd_zero]
         _ = volume (symmDiff γAnn tAnnLin_loc) := by
-            simp
+            simp only [zero_add]
         _ ≤ ENNReal.ofReal
               (Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3) :=
             h_meas ε₁ ε₂ hε₂_pos hε₂_le

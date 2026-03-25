@@ -65,7 +65,7 @@ lemma angle_lifted_ref_p₀_continuousOn :
         exact mem_of_mem_nhds hs, tendsto_arg_w_right⟩
     have hcomp_fun : (fun t => (↑(Complex.arg (fdPolygon t - ref_p₀) - 2 * Real.pi) : ℂ)) =
         (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ)) ∘
-        (fun t => Complex.arg (fdPolygon t - ref_p₀)) := by ext; simp
+        (fun t => Complex.arg (fdPolygon t - ref_p₀)) := by ext; rfl
     rw [hcomp_fun]
     have h_outer : Tendsto (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ))
         (𝓝 Real.pi) (𝓝 ↑(-Real.pi : ℝ)) := by
@@ -99,7 +99,7 @@ lemma angle_lifted_ref_p₀_continuousOn :
           exact mem_of_mem_nhds hs, tendsto_arg_w_right⟩
       have hcomp_fun : (fun t => (↑(Complex.arg (fdPolygon t - ref_p₀) - 2 * Real.pi) : ℂ)) =
           (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ)) ∘
-          (fun t => Complex.arg (fdPolygon t - ref_p₀)) := by ext; simp
+          (fun t => Complex.arg (fdPolygon t - ref_p₀)) := by ext; rfl
       rw [hcomp_fun]
       have h_outer : Tendsto (fun x : ℝ => (↑(x - 2 * Real.pi) : ℂ))
           (𝓝 Real.pi) (𝓝 ↑(-Real.pi : ℝ)) := by

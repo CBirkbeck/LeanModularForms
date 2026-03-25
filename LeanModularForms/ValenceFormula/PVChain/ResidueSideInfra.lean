@@ -45,7 +45,7 @@ lemma fdBox_isOpen (M : ℝ) : IsOpen (fdBox M) := by
 private lemma strict_convex_comb_lb {a b x y L : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
     (hab : a + b = 1) (hx : L < x) (hy : L < y) : L < a * x + b * y := by
   rcases eq_or_lt_of_le ha with rfl | ha'
-  · simp at hab; subst hab; simp; linarith
+  · simp only [zero_add] at hab; subst hab; simp only [zero_mul, zero_add, one_mul]; linarith
   · have h1 : a * L < a * x := mul_lt_mul_of_pos_left hx ha'
     have h2 : b * L ≤ b * y := mul_le_mul_of_nonneg_left hy.le hb
     have : a * L + b * L = L := by rw [← add_mul, hab, one_mul]
@@ -54,7 +54,7 @@ private lemma strict_convex_comb_lb {a b x y L : ℝ} (ha : 0 ≤ a) (hb : 0 ≤
 private lemma strict_convex_comb_ub {a b x y U : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
     (hab : a + b = 1) (hx : x < U) (hy : y < U) : a * x + b * y < U := by
   rcases eq_or_lt_of_le ha with rfl | ha'
-  · simp at hab; subst hab; simp; linarith
+  · simp only [zero_add] at hab; subst hab; simp only [zero_mul, zero_add, one_mul]; linarith
   · have h1 : a * x < a * U := mul_lt_mul_of_pos_left hx ha'
     have h2 : b * y ≤ b * U := mul_le_mul_of_nonneg_left hy.le hb
     have : a * U + b * U = U := by rw [← add_mul, hab, one_mul]
@@ -133,7 +133,8 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
     have : n ≠ 0 := by
       intro h_eq_zero
       exact h_order_ne_zero (by
-        rw [← Nat.cast_analyticOrderNatAt h_not_top, ← hn_def, h_eq_zero]; simp)
+        rw [← Nat.cast_analyticOrderNatAt h_not_top, ← hn_def, h_eq_zero]
+        simp only [Nat.cast_zero])
     omega
   refine ⟨n, g, hn_pos, hg_analytic, hg_ne_zero, rfl, ?_⟩
   have hg_eventually_analytic := hg_analytic.eventually_analyticAt
@@ -161,7 +162,8 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
       have hzs : z - (s : ℂ) ≠ 0 := sub_ne_zero.mpr hz_ne_s
       have hn' : 0 < n := by exact_mod_cast hn_pos
       have h_hd : HasDerivAt (fun w => (w - (s : ℂ)) ^ n) (↑n * (z - (s : ℂ)) ^ (n - 1)) z := by
-        convert ((hasDerivAt_id z).sub (hasDerivAt_const z (s : ℂ))).pow n using 1; simp
+        convert ((hasDerivAt_id z).sub (hasDerivAt_const z (s : ℂ))).pow n using 1
+        simp only [Pi.sub_apply, id_eq, sub_zero, mul_one]
       rw [logDeriv_apply, h_hd.deriv]
       rw [div_eq_div_iff (pow_ne_zero _ hzs) hzs]
       rw [mul_assoc, ← pow_succ, show n - 1 + 1 = n from by omega]
@@ -431,7 +433,7 @@ lemma logDerivPatched_hf_ext (F : ℂ → ℂ) (S0 : Finset ℂ) (hsp : ∀ s �
   rw [eventually_nhdsWithin_iff] at hF_eq
   rw [Filter.EventuallyEq]
   filter_upwards [hF_eq,
-      h_open_compl.mem_nhds (by simp : s ∈ (↑(S0.erase s) : Set ℂ)ᶜ)]
+      h_open_compl.mem_nhds (Set.mem_compl_iff _ _ |>.mpr (Finset.not_mem_erase s S0))]
     with z hz_F hz_compl
   by_cases hzs : z = s
   · subst hzs
@@ -472,7 +474,7 @@ lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Ic
                  Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
     calc ‖fdBoundary_seg1_H H t‖ = Real.sqrt (normSq (fdBoundary_seg1_H H t)) := rfl
       _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
-      _ = 1 := by simp
+      _ = 1 := by simp only [Real.sqrt_one]
   · push_neg at h1; by_cases h3 : t ≤ 3
     · rw [fdBoundary_H_eq_fdBoundary_on_13 H (by linarith) h3]
       suffices ‖fdBoundary t‖ = 1 by linarith
@@ -502,7 +504,7 @@ lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Ic
                      Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
         calc ‖fdBoundary_seg4_H H t‖ = Real.sqrt (normSq (fdBoundary_seg4_H H t)) := rfl
           _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
-          _ = 1 := by simp
+          _ = 1 := by simp only [Real.sqrt_one]
       · push_neg at h4
         rw [fdBoundary_H_eq_seg5_H h4]
         have him : (fdBoundary_seg5_H H t).im = H := by
@@ -515,7 +517,7 @@ lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Ic
             mul_self_le_mul_self (by linarith : (0:ℝ) ≤ 1) him_ge]
         calc ‖fdBoundary_seg5_H H t‖ = Real.sqrt (normSq (fdBoundary_seg5_H H t)) := rfl
           _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
-          _ = 1 := by simp
+          _ = 1 := by simp only [Real.sqrt_one]
 
 omit f hf in
 /-- The boundary `fdBoundary_H H` avoids every point NOT in the closed FD. -/
@@ -631,7 +633,7 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
       show (fdBoundary_HCurve H).b = (5:ℝ) from rfl] at h_classical
   rw [h_classical]
   suffices h_int : ∫ t in (0:ℝ)..5, (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t = 0 by
-    rw [h_int]; simp
+    rw [h_int]; simp only [mul_zero]
   push_neg at hz₀_not_fd
   have hγ_diff : ∀ t, t ∉ (fdBoundaryFullPartition : Finset ℝ) →
       DifferentiableAt ℝ (fdBoundary_H H) t := by

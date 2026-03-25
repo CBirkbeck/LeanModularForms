@@ -42,7 +42,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_bound :
           subst h1'
           exact
             fdBoundaryToPolygonHomotopy_not_diffAt_134
-              s hs 1 (by simp) hd
+              s hs 1 (Set.mem_insert 1 _) hd
         · have ht2' : t ∈ Ioo 1 2 :=
             ⟨lt_of_le_of_ne (not_lt.mp h1) (Ne.symm h1'), h2⟩
           have heq : (fun t' =>
@@ -634,7 +634,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_bound :
               subst h3'
               exact
                 fdBoundaryToPolygonHomotopy_not_diffAt_134
-                  s hs 3 (by simp) hd
+                  s hs 3 (Set.mem_insert_of_mem 1 (Set.mem_insert 3 _)) hd
             · have ht4' : t ∈ Ioo 3 4 :=
                 ⟨lt_of_le_of_ne (not_lt.mp h3)
                   (Ne.symm h3'), h4⟩
@@ -668,7 +668,8 @@ lemma fdBoundaryToPolygonHomotopy_deriv_bound :
               subst h4'
               exact
                 fdBoundaryToPolygonHomotopy_not_diffAt_134
-                  s hs 4 (by simp) hd
+                  s hs 4 (Set.mem_insert_of_mem 1 (Set.mem_insert_of_mem 3
+                    (Set.mem_singleton_iff.mpr rfl))) hd
             · have ht5' : t > 4 :=
                 lt_of_le_of_ne (not_lt.mp h4)
                   (Ne.symm h4')

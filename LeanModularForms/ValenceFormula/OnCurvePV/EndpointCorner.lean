@@ -64,7 +64,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
               linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
             nlinarith [mul_lt_mul hH hH.le (by positivity : (0:ℝ) < Real.sqrt 3 / 2) hH0.le,
                        Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
-          calc (1:ℝ) = Real.sqrt 1 := by simp
+          calc (1:ℝ) = Real.sqrt 1 := by simp only [Real.sqrt_one]
             _ < Real.sqrt (Complex.normSq s) := Real.sqrt_lt_sqrt (by norm_num) h_nsq
             _ = ‖s‖ := rfl
         linarith
@@ -222,8 +222,10 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     rw [h_zero, zero_add]
     refine intervalIntegral.integral_congr_ae' ?_ (by
       filter_upwards with t ht; exfalso; linarith [ht.1, ht.2])
-    filter_upwards [compl_mem_ae_iff.mpr (show volume {η / c} = 0 by simp),
-                    compl_mem_ae_iff.mpr (show volume {(1:ℝ)} = 0 by simp)]
+    filter_upwards [compl_mem_ae_iff.mpr (show volume {η / c} = 0 by
+                      simp only [Real.volume_singleton]),
+                    compl_mem_ae_iff.mpr (show volume {(1:ℝ)} = 0 by
+                      simp only [Real.volume_singleton])]
       with t ht_ne_low ht_ne_high
     intro ht
     have ht_low : η / c < t := ht.1
@@ -264,7 +266,8 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     rw [h_zero, add_zero]
     refine intervalIntegral.integral_congr_ae' ?_ (by
       filter_upwards with t ht; exfalso; linarith [ht.1, ht.2])
-    filter_upwards [compl_mem_ae_iff.mpr (show volume {5 - η} = 0 by simp)]
+    filter_upwards [compl_mem_ae_iff.mpr (show volume {5 - η} = 0 by
+                      simp only [Real.volume_singleton])]
       with t ht_ne_high
     intro ht
     have ht4 : 4 < t := ht.1
@@ -346,7 +349,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
               linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
             nlinarith [mul_lt_mul hH hH.le (by positivity : (0:ℝ) < Real.sqrt 3 / 2) hH0.le,
                        Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
-          calc (1:ℝ) = Real.sqrt 1 := by simp
+          calc (1:ℝ) = Real.sqrt 1 := by simp only [Real.sqrt_one]
             _ < Real.sqrt (Complex.normSq s) := Real.sqrt_lt_sqrt (by norm_num) h_nsq
             _ = ‖s‖ := rfl
         linarith
@@ -482,7 +485,8 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       have h_le : (3:ℝ) ≤ 4 - η / c := by linarith [hη_div_c_lt_1]
       refine intervalIntegral.integral_congr_ae' ?_ (by
         filter_upwards with t ht; exfalso; linarith [ht.1, ht.2])
-      filter_upwards [compl_mem_ae_iff.mpr (show volume {4 - η / c} = 0 by simp)]
+      filter_upwards [compl_mem_ae_iff.mpr (show volume {4 - η / c} = 0 by
+                        simp only [Real.volume_singleton])]
         with t ht_ne
       intro ht
       have ht3 : 3 < t := ht.1

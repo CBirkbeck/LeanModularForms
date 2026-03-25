@@ -72,8 +72,8 @@ theorem contourIntegralCycle_single (f : ℂ → ℂ) (γ : PiecewiseC1Immersion
       ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t := by
   unfold contourIntegralCycle
   rw [Finsupp.sum_single_index]
-  · simp
-  · simp
+  · simp only [Int.cast_one, one_mul]
+  · simp only [Int.cast_zero, zero_mul]
 
 /-- Winding number of a single curve with multiplicity 1. -/
 theorem windingNumberCycle_single (γ : PiecewiseC1Immersion) (z : ℂ) :
@@ -81,8 +81,8 @@ theorem windingNumberCycle_single (γ : PiecewiseC1Immersion) (z : ℂ) :
       generalizedWindingNumber' γ.toFun γ.a γ.b z := by
   unfold windingNumberCycle
   rw [Finsupp.sum_single_index]
-  · simp
-  · simp
+  · simp only [Int.cast_one, one_mul]
+  · simp only [Int.cast_zero, zero_mul]
 
 /-- A null-homologous single curve gives a null-homologous cycle. -/
 theorem isNullHomologousCycle_single (γ : PiecewiseC1Immersion) (U : Set ℂ)
@@ -98,8 +98,8 @@ theorem cpvCycle_single (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Imm
       cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b := by
   unfold cpvCycle
   rw [Finsupp.sum_single_index]
-  · simp
-  · simp
+  · simp only [Int.cast_one, one_mul]
+  · simp only [Int.cast_zero, zero_mul]
 
 /-! ### Main theorems -/
 
@@ -288,7 +288,7 @@ theorem windingNumberCycle_isInt (Γ : ContourCycle)
   -- under addition and holds for 0 and each summand.
   apply Finset.sum_induction _ (fun x : ℂ => ∃ n : ℤ, x = ↑n)
   · rintro _ _ ⟨a, rfl⟩ ⟨b, rfl⟩; exact ⟨a + b, by push_cast; ring⟩
-  · exact ⟨0, by simp⟩
+  · exact ⟨0, by simp only [Int.cast_zero]⟩
   · intro γ hγ
     obtain ⟨m, hm⟩ := windingNumber_isInt_of_immersion_closed_avoiding γ z
       (h_closed γ hγ) (h_avoids γ hγ)

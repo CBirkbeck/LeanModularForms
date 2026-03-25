@@ -155,7 +155,7 @@ lemma schwarz_partialDeriv_comm
     deriv (fun t' =>
       deriv (fun s' => H (t', s')) s) t := by
   have h_symm : IsSymmSndFDerivAt ℝ H (t, s) :=
-    (hH.contDiffAt).isSymmSndFDerivAt (by simp)
+    (hH.contDiffAt).isSymmSndFDerivAt (by simp only [minSmoothness_of_isRCLikeNormedField, le_refl])
   have hH_diff : Differentiable ℝ H :=
     hH.differentiable
       (by norm_num : (1 : WithTop ℕ∞) ≤ 2)

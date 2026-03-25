@@ -35,7 +35,7 @@ private lemma mero_sub_const_fwd (g : ℂ → ℂ) (x c : ℂ) (h_sub_an : Analy
   obtain ⟨n, hn⟩ := hg; refine ⟨n, ?_⟩
   have : (fun w => (w - (x + c)) ^ n • g (w - c)) = (fun z => (z - x) ^ n • g z) ∘ (· - c) := by
     ext w; simp only [Function.comp]; congr 1; ring
-  rw [this]; exact hn.comp_of_eq h_sub_an (by simp)
+  rw [this]; exact hn.comp_of_eq h_sub_an (add_sub_cancel_right x c)
 
 private lemma mero_sub_const_bwd (g : ℂ → ℂ) (x c : ℂ) (h_add_an : AnalyticAt ℂ (· + c) x)
     (hgφ : MeromorphicAt (fun w => g (w - c)) (x + c)) :
@@ -43,12 +43,12 @@ private lemma mero_sub_const_bwd (g : ℂ → ℂ) (x c : ℂ) (h_add_an : Analy
   obtain ⟨n, hn⟩ := hgφ; refine ⟨n, ?_⟩
   have : (fun w => (w - x) ^ n • g w) = (fun z => (z - (x + c)) ^ n • g (z - c)) ∘ (· + c) := by
     ext w; simp only [Function.comp, add_sub_cancel_right]; congr 1; ring
-  rw [this]; exact hn.comp_of_eq h_add_an (by simp)
+  rw [this]; exact hn.comp_of_eq h_add_an rfl
 
 private lemma filter_map_sub_const (x c : ℂ) {p : ℂ → Prop} (hp : ∀ᶠ z in 𝓝[≠] x, p z) :
     ∀ᶠ w in 𝓝[≠] (x + c), p (w - c) := by
   have : map (Homeomorph.addRight (-c)) (𝓝[≠] (x + c)) = 𝓝[≠] x := by
-    rw [Homeomorph.map_punctured_nhds_eq]; simp
+    rw [Homeomorph.map_punctured_nhds_eq]; simp only [Homeomorph.coe_addRight, add_neg_cancel_right]
   rw [← this] at hp; rw [eventually_map] at hp
   exact hp.mono fun z hz => by simpa [sub_eq_add_neg] using hz
 
@@ -67,7 +67,7 @@ private lemma meromorphicOrderAt_comp_sub_const (g : ℂ → ℂ) (x c : ℂ) :
   · obtain ⟨n, hn⟩ := WithTop.ne_top_iff_exists.mp htop
     obtain ⟨h, hh_an, hh_ne, hh_eq⟩ := (meromorphicOrderAt_eq_int_iff hg_mero).mp hn.symm
     rw [hn.symm, meromorphicOrderAt_eq_int_iff (mero_sub_const_fwd g x c h_sub_an hg_mero)]
-    refine ⟨fun w => h (w - c), hh_an.comp_of_eq h_sub_an (by simp),
+    refine ⟨fun w => h (w - c), hh_an.comp_of_eq h_sub_an (add_sub_cancel_right x c),
       by simpa using hh_ne, ?_⟩
     exact (filter_map_sub_const x c hh_eq).mono fun z hz => by
       simp only [smul_eq_mul] at hz ⊢; rw [hz]; congr 1; congr 1; ring
@@ -230,7 +230,7 @@ private lemma meromorphicOrderAt_zpow_eq_zero (p_cplx : ℂ) (hp_ne : p_cplx ≠
   rw [h_an.meromorphicOrderAt_eq,
     show analyticOrderAt (fun z : ℂ => z ^ k) p_cplx = 0 from
       analyticOrderAt_eq_zero.mpr (Or.inr (zpow_ne_zero k hp_ne))]
-  simp
+  simp only [ENat.map_zero, CharP.cast_eq_zero, WithTop.coe_zero]
 
 /-- S-invariance of vanishing order: `ord(f, S·z) = ord(f, z)`. -/
 lemma ord_S_eq (p : ℍ) :
@@ -242,7 +242,7 @@ lemma ord_S_eq (p : ℍ) :
     rw [UpperHalfPlane.modular_S_smul, UpperHalfPlane.coe_mk, neg_inv]
   conv_lhs => rw [h_S_coe]
   have hp_ne : p_cplx ≠ 0 := by
-    intro h; have : p_cplx.im = 0 := by rw [h]; simp
+    intro h; have : p_cplx.im = 0 := by rw [h]; simp only [Complex.zero_im]
     linarith [show p.im = p_cplx.im from rfl, p.im_pos]
   suffices h : meromorphicOrderAt G (-p_cplx⁻¹) =
       meromorphicOrderAt G p_cplx from congr_arg WithTop.untop₀ h

@@ -407,7 +407,7 @@ lemma fdPolygon_right_deriv_norm_le (x : ℝ) :
     have h1 : (↑H_height : ℂ) - ↑(Real.sqrt 3) / 2 = 1 := by
       simp only [H_height]; push_cast; ring
     rw [h1]; simp [Complex.norm_I]
-  · rw [fdPolygon_deriv_seg5]; simp
+  · rw [fdPolygon_deriv_seg5]; simp only [norm_one]; norm_num
 
 /-- fdPolygon has a right derivative at every point. -/
 lemma fdPolygon_hasDerivWithinAt_Ici (x : ℝ) :

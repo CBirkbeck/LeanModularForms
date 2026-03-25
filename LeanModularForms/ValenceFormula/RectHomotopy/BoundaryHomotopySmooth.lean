@@ -126,10 +126,20 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           ↑s * (-1 / 2 + (1 - ↑(Real.sqrt 3) / 2) * I) := by
         have h1 : ((Real.pi : ℝ) / 6 : ℂ) * I * rho' =
             -↑Real.pi * ↑(Real.sqrt 3) / 12 + ↑Real.pi / 12 * I := by
-          simp only [rho']; apply Complex.ext <;> simp <;> ring
+          simp only [rho']; apply Complex.ext <;>
+            simp only [Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im,
+              Complex.ofReal_re, Complex.ofReal_im, Complex.add_im, Complex.mul_im,
+              Complex.div_ofNat_re, Complex.div_ofNat_im, Complex.one_re, Complex.one_im,
+              Complex.neg_re, Complex.neg_im, Complex.natCast_re, Complex.natCast_im,
+              Complex.im_ofNat, mul_zero, sub_zero, zero_mul, add_zero, mul_one, zero_div] <;>
+            ring
         have h2 : i_point - rho' = (-1/2 : ℂ) + (1 - ↑(Real.sqrt 3) / 2) * I := by
           simp only [i_point, rho']
-          apply Complex.ext <;> simp; norm_num
+          apply Complex.ext <;>
+            simp only [Complex.sub_re, Complex.sub_im, Complex.add_re, Complex.add_im,
+              Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
+              Complex.ofReal_re, Complex.ofReal_im, Complex.one_re, Complex.one_im,
+              mul_zero, sub_zero, zero_mul, add_zero, mul_one] <;> norm_num
         rw [h1, h2]
         simp only [Complex.real_smul]; push_cast; ring
       rw [h_deriv_eq] at h_combined
@@ -210,7 +220,9 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           simp only [Complex.sub_im,
             Complex.one_im, h_im_s, sub_zero]
         have h_im_coeff :
-            Complex.im ((1 : ℂ) - Real.sqrt 3 / 2) = 0 := by simp
+            Complex.im ((1 : ℂ) - Real.sqrt 3 / 2) = 0 := by
+              simp only [Complex.sub_im, Complex.one_im, Complex.ofReal_im, sub_zero,
+                         Complex.div_ofNat_im, zero_div]
         simp only [Complex.add_re,
           Complex.mul_re, Complex.sub_re,
           Complex.ofReal_re, Complex.one_re,
@@ -479,7 +491,9 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           simp only [Complex.sub_im,
             Complex.one_im, h_im_s, sub_zero]
         have h_im_coeff :
-            Complex.im ((Real.sqrt 3 : ℂ) / 2 - 1) = 0 := by simp
+            Complex.im ((Real.sqrt 3 : ℂ) / 2 - 1) = 0 := by
+              simp only [Complex.sub_im, Complex.div_ofNat_im, Complex.ofReal_im,
+                         Complex.one_im, sub_zero, zero_div]
         simp only [Complex.add_re,
           Complex.mul_re, Complex.sub_re,
           Complex.ofReal_re, Complex.one_re,
@@ -617,7 +631,7 @@ lemma interval_in_segment (p₁ p₂ : ℝ) (_hp : p₁ < p₂)
       · by_contra hlt
         have h1_in : (1 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h1⟩
         have := h_avoid 1 h1_in
-        simp at this
+        exact absurd (Finset.mem_insert_self 1 _) this
       · exact h2
     · right
       by_cases h3 : p₂ ≤ 3
@@ -626,7 +640,7 @@ lemma interval_in_segment (p₁ p₂ : ℝ) (_hp : p₁ < p₂)
         · by_contra hlt
           have h2_in : (2 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h2⟩
           have := h_avoid 2 h2_in
-          simp at this
+          exact absurd (Finset.mem_insert.mpr (Or.inr (Finset.mem_insert_self 2 _))) this
         · exact h3
       · right
         by_cases h4 : p₂ ≤ 4
@@ -635,12 +649,14 @@ lemma interval_in_segment (p₁ p₂ : ℝ) (_hp : p₁ < p₂)
           · by_contra hlt
             have h3_in : (3 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h3⟩
             have := h_avoid 3 h3_in
-            simp at this
+            exact absurd (Finset.mem_insert.mpr (Or.inr (Finset.mem_insert.mpr
+              (Or.inr (Finset.mem_insert_self 3 _))))) this
           · exact h4
         · right
           by_contra hlt
           have h4_in : (4 : ℝ) ∈ Set.Ioo p₁ p₂ := ⟨not_le.mp hlt, not_le.mp h4⟩
           have := h_avoid 4 h4_in
-          simp at this
+          exact absurd (Finset.mem_insert.mpr (Or.inr (Finset.mem_insert.mpr (Or.inr
+            (Finset.mem_insert.mpr (Or.inr (Finset.mem_singleton_self 4))))))) this
 
 end RectHomotopyProof

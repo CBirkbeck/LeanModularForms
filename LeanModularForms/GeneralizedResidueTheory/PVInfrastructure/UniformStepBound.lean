@@ -169,7 +169,7 @@ lemma pv_step_bound_ratio_two_uniform
         Complex.norm_real, Real.norm_eq_abs]
       have h_t_ne : t ≠ t₀ := by
         intro heq; subst heq
-        simp at hcond; linarith [hcond.1]
+        simp only [sub_self, norm_zero] at hcond; linarith [hcond.1]
       have h_abs_pos : 0 < |t - t₀| :=
         abs_pos.mpr (sub_ne_zero.mpr h_t_ne)
       have h_lt_δ_up : |t - t₀| < δ_up :=
