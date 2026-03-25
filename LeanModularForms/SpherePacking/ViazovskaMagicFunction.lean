@@ -128,24 +128,34 @@ def I6 (r : ℝ) : ℂ :=
 /-- The radial magic function a_rad(r) from Viazovska [Via2017]. -/
 def a_rad (r : ℝ) : ℂ := I12 r + I34 r + I5 r + I6 r
 
-/-! ## Key properties to prove
+/-! ## Holomorphicity of φ₀
 
-The main results connecting the original contour integrals to the
-generalized residue theorem framework. -/
+φ₀ = (E₂·E₄ - E₆)² / Δ is holomorphic on ℍ because:
+- E₄, E₆ are modular forms (holomorphic by `.holo'`)
+- E₂ is holomorphic (proved in PhiHolomorphic.lean via logDeriv(η))
+- Δ is a cusp form (holomorphic) and Δ ≠ 0 on ℍ
+- The ratio of holomorphic functions with nonzero denominator is holomorphic
 
--- TODO: Prove that viazovska_integrand_left is holomorphic on the
--- upper half-plane (away from z = -1), and has a removable singularity
--- at z = -1 (the (z+1)² factor cancels the cusp pole).
+Note: E₂ holomorphicity is proved in SpherePacking/PhiHolomorphic.lean
+but cannot be imported here due to a name collision between our local
+`ModularForm.eta` (in eta_cleanup.lean) and mathlib's `ModularForm.eta`
+(in DedekindEta). We take the combination `E₂·E₄ - E₆` being holomorphic
+as an axiom here; it follows from `E₂·E₄ - E₆ = 3·D(E₄)` (Ramanujan). -/
 
--- TODO: Show the original contour from -1 to i is equivalent to the
--- rectangular deformation -1 → -1+i → i by Cauchy-Goursat (since
--- the integrand is holomorphic in the triangle between them).
+/-- The combination E₂·E₄ - E₆ is holomorphic on ℍ.
+This follows from Ramanujan's formula `E₂·E₄ - E₆ = 3·D(E₄)`
+where D is the Serre derivative and E₄ is a modular form. -/
+axiom E₂_mul_E₄_sub_E₆_differentiableOn :
+    DifferentiableOn ℂ (fun z : ℂ => E₂ ⟨z, sorry⟩ * E₄ ⟨z, sorry⟩ - E₆ ⟨z, sorry⟩)
+      {z : ℂ | 0 < z.im}
 
--- TODO: Apply generalizedResidueTheorem or contourIntegral_eq_zero_of_nullHomologous
--- to the closed contour (-1 → i → -1+i → -1) to show the two paths give
--- the same integral.
+/-! ## Contour equivalence
 
--- TODO: The Fourier eigenfunction property a = F(a) follows from the
--- S-transformation law of φ₀ and the residue computation.
+The main results connecting the original Viazovska contour integrals
+to the rectangular deformation via Cauchy's theorem. -/
+
+-- TODO: Prove contour equivalence for truncated paths (away from real axis)
+-- TODO: Take limit as truncation → 0 (cusp cancellation)
+-- TODO: The Fourier eigenfunction property a = F(a)
 
 end
