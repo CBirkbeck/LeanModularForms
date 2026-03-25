@@ -5,6 +5,7 @@ Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.GeneralizedResidueTheorem
 import LeanModularForms.GeneralizedResidueTheory.Cycle
+import LeanModularForms.Modularforms.Eisenstein
 
 /-!
 # Viazovska's Magic Function via Generalized Residue Theorem
@@ -55,24 +56,16 @@ noncomputable section
 
 /-! ## Modular form ingredients
 
-These are placeholders — in a full formalization they would be imported
-from the modular forms library. -/
+We use `φ₀''` (the ℂ-extended version of φ₀) from `Modularforms/Eisenstein.lean`.
+This is defined as `φ₀''(z) = φ₀(z)` when `Im(z) > 0`, and `0` otherwise.
+The underlying `φ₀(z) = (E₂E₄ - E₆)² / Δ(z)` is defined on the upper half-plane ℍ.
 
-/-- The Dedekind discriminant function Δ(z). -/
-def dedekindDelta : ℂ → ℂ := sorry
-
-/-- Eisenstein series E₂(z) (quasi-modular, weight 2). -/
-def eisensteinE2 : ℂ → ℂ := sorry
-
-/-- Eisenstein series E₄(z) (modular, weight 4). -/
-def eisensteinE4 : ℂ → ℂ := sorry
-
-/-- Eisenstein series E₆(z) (modular, weight 6). -/
-def eisensteinE6 : ℂ → ℂ := sorry
-
-/-- φ₀(z) = (E₂E₄ - E₆)² / Δ(z) — the key function in Viazovska's construction. -/
-def phi0 (z : ℂ) : ℂ :=
-  (eisensteinE2 z * eisensteinE4 z - eisensteinE6 z) ^ 2 / dedekindDelta z
+Key properties (proven in Eisenstein.lean and Delta.lean):
+- `φ₀` is holomorphic on ℍ (since Δ ≠ 0 on ℍ)
+- Periodic: `φ₀(z+1) = φ₀(z)`
+- S-transform: `φ₀(-1/z) = φ₀(z) - (12i/π)·(1/z)·φ₋₂(z) - (36/π²)·(1/z²)·φ₋₄(z)`
+- Vanishing: `φ₀(z) = O(e^{-2πIm(z)})` as `Im(z) → ∞`
+-/
 
 /-! ## Original Viazovska contour integrals
 
@@ -82,22 +75,22 @@ from the real axis to i. -/
 /-- The integrand for I₁+I₂: φ₀(-1/(z+1)) · (z+1)² · e^{πirz}.
 At z = -1 (the cusp), (z+1)² = 0 cancels the singularity of φ₀. -/
 def viazovska_integrand_left (r : ℝ) (z : ℂ) : ℂ :=
-  phi0 (-1 / (z + 1)) * (z + 1) ^ 2 * Complex.exp (↑Real.pi * I * ↑r * z)
+  φ₀'' (-1 / (z + 1)) * (z + 1) ^ 2 * Complex.exp (↑Real.pi * I * ↑r * z)
 
 /-- The integrand for I₃+I₄: φ₀(-1/(z-1)) · (z-1)² · e^{πirz}.
 At z = 1 (the cusp), (z-1)² = 0 cancels the singularity. -/
 def viazovska_integrand_right (r : ℝ) (z : ℂ) : ℂ :=
-  phi0 (-1 / (z - 1)) * (z - 1) ^ 2 * Complex.exp (↑Real.pi * I * ↑r * z)
+  φ₀'' (-1 / (z - 1)) * (z - 1) ^ 2 * Complex.exp (↑Real.pi * I * ↑r * z)
 
 /-- The integrand for I₅: φ₀(-1/z) · z² · e^{πirz}.
 At z = 0 (the cusp), z² = 0 cancels the singularity. -/
 def viazovska_integrand_center (r : ℝ) (z : ℂ) : ℂ :=
-  phi0 (-1 / z) * z ^ 2 * Complex.exp (↑Real.pi * I * ↑r * z)
+  φ₀'' (-1 / z) * z ^ 2 * Complex.exp (↑Real.pi * I * ↑r * z)
 
 /-- The integrand for I₆: φ₀(z) · e^{πirz}.
 No singularity issues (Im(z) ≥ 1 on the contour). -/
 def viazovska_integrand_tail (r : ℝ) (z : ℂ) : ℂ :=
-  phi0 z * Complex.exp (↑Real.pi * I * ↑r * z)
+  φ₀'' z * Complex.exp (↑Real.pi * I * ↑r * z)
 
 /-- The straight-line contour from -1 to i (original Viazovska path). -/
 def contour_neg1_to_i (t : ℝ) : ℂ := -1 + (1 + I) * ↑t
