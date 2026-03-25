@@ -413,7 +413,6 @@ private lemma rightEdge_final_log (H : ℝ) (s : ℂ)
       Complex.log_neg_I, Complex.log_I]
   ring
 
-set_option maxHeartbeats 1600000 in
 /-- FTC telescope: the left + right logDeriv integrals of `fdBoundary_H H - s` (skipping the
 crossing interval `[t₀ - δ, t₀ + δ]`) equal `log(-(h₀(t₀ - δ))) - log(-(h₀(t₀ + δ)))`.
 Here `h₀ t = fdBoundary_seg1_H H t - s`, `α = H - √3/2`, `t₀ = (H - s.im)/α`, `δ > 0`.
