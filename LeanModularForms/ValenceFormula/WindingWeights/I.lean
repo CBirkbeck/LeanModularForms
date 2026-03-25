@@ -842,7 +842,120 @@ private lemma i_angle_bound {δ ε : ℝ} (H : ℝ)
     linarith [g_i_norm_left (H := H) hδ_pos hδ_lt_one]
   linarith
 
-set_option maxHeartbeats 400000 in
+-- Helper: for ε < threshold where threshold ≤ min(2sin(π/12), 1),
+-- the map δ(ε) = 12/π · arcsin(ε/2) satisfies δ < 1.
+private lemma i_delta_lt_one {ε : ℝ} (hε_pos : 0 < ε)
+    (hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12)) :
+    12 / Real.pi * Real.arcsin (ε / 2) < 1 := by
+  have hpi_pos : 0 < Real.pi := Real.pi_pos
+  have hsin_pos : 0 < Real.sin (Real.pi / 12) :=
+    ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
+  have hε_half_pos : 0 < ε / 2 := by linarith
+  have hε_lt_sin : ε / 2 < Real.sin (Real.pi / 12) := by linarith
+  have hε_half_neg : -1 ≤ ε / 2 := by linarith
+  have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
+    calc Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
+          Real.arcsin_lt_arcsin hε_half_neg hε_lt_sin (Real.sin_le_one _)
+      _ = Real.pi / 12 :=
+          Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+  calc 12 / Real.pi * Real.arcsin (ε / 2)
+      < 12 / Real.pi * (Real.pi / 12) :=
+        mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
+    _ = 1 := by field_simp
+
+-- Helper: integrability and FTC for the i-crossing, with integrand already in the
+-- form expected by pv_tendsto_of_crossing_limit (i.e. (γ t - I)⁻¹ * deriv γ t).
+private lemma i_ftc_integrability (H : ℝ) (hH : 1 < H) {ε : ℝ}
+    (hε_pos : 0 < ε) (hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12)) :
+    let δ := 12 / Real.pi * Real.arcsin (ε / 2)
+    IntervalIntegrable (fun t => (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t)
+        volume 0 (2 - δ) ∧
+    IntervalIntegrable (fun t => (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t)
+        volume (2 + δ) 5 ∧
+    ((∫ t in (0:ℝ)..(2 - δ), (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t) +
+     (∫ t in (2 + δ)..(5:ℝ), (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t) =
+     Complex.log (fdBoundary_H H (2 - δ) - I) -
+     Complex.log (fdBoundary_H H (2 + δ) - I) - 2 * ↑Real.pi * I) := by
+  intro δ
+  have hpi_pos : 0 < Real.pi := Real.pi_pos
+  have hε_half_pos : 0 < ε / 2 := by linarith
+  have harcsin_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr hε_half_pos
+  have hδ_pos : 0 < δ := mul_pos (div_pos (by norm_num) hpi_pos) harcsin_pos
+  have hδ_lt_one : δ < 1 := i_delta_lt_one hε_pos hε_lt_2sin
+  obtain ⟨hL, hR, hsum⟩ := ftc_logDeriv_telescope_i H hH hδ_pos hδ_lt_one
+  have h_congr : ∀ t, (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t =
+      deriv (fun s => fdBoundary_H H s - I) t / (fdBoundary_H H t - I) := fun t => by
+    simp [deriv_sub_const, div_eq_mul_inv, mul_comm]
+  refine ⟨(intervalIntegrable_congr (fun t _ => h_congr t)).mpr hL,
+          (intervalIntegrable_congr (fun t _ => h_congr t)).mpr hR, ?_⟩
+  simp_rw [h_congr]; exact hsum
+
+-- Helper: the log-difference E(ε) tends to -(I·π).
+private lemma i_E_tendsto (H : ℝ) (_ : 1 < H) (threshold : ℝ) (hthresh_pos : 0 < threshold)
+    (hthresh_le_2sin : threshold ≤ 2 * Real.sin (Real.pi / 12))
+    (hthresh_le_one : threshold ≤ 1) :
+    Tendsto (fun ε =>
+        Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+        Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+        2 * ↑Real.pi * I)
+      (𝓝[>] 0) (𝓝 (-(I * ↑Real.pi))) := by
+  have hpi_pos : 0 < Real.pi := Real.pi_pos
+  rw [Metric.tendsto_nhdsWithin_nhds]
+  intro r hr
+  refine ⟨min threshold (r/2), lt_min hthresh_pos (by linarith), ?_⟩
+  intro ε hε_mem hε_dist
+  simp only [Set.mem_Ioi] at hε_mem
+  rw [Real.dist_eq, sub_zero, abs_of_pos hε_mem] at hε_dist
+  have hε_pos : 0 < ε := hε_mem
+  have hε_lt : ε < threshold := hε_dist.trans_le (min_le_left _ _)
+  have hε_lt_r2 : ε < r / 2 := hε_dist.trans_le (min_le_right _ _)
+  have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) := lt_of_lt_of_le hε_lt hthresh_le_2sin
+  have hε_half_neg : -1 ≤ ε / 2 := by linarith
+  have hε_half_le : ε / 2 ≤ 1 := by linarith [lt_of_lt_of_le hε_lt hthresh_le_one]
+  have hε_half_pos : 0 < ε / 2 := by linarith
+  have harcsin_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr hε_half_pos
+  have hδ_pos : 0 < 12 / Real.pi * Real.arcsin (ε / 2) :=
+    mul_pos (div_pos (by norm_num) hpi_pos) harcsin_pos
+  have hδ_lt_one : 12 / Real.pi * Real.arcsin (ε / 2) < 1 :=
+    i_delta_lt_one hε_pos hε_lt_2sin
+  -- sin((δ·π/12)) = ε/2
+  have hsin_eq : Real.sin ((12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 12) = ε / 2 := by
+    have : (12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 12 = Real.arcsin (ε / 2) := by
+      field_simp
+    rw [this, Real.sin_arcsin hε_half_neg hε_half_le]
+  -- Angle bound: δπ/12 < ε
+  have h_angle_bnd : (12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 12 < ε :=
+    i_angle_bound H hδ_pos hδ_lt_one (by rw [g_i_norm_left hδ_pos hδ_lt_one]; linarith)
+  -- norms at crossing points equal ε
+  have h_nL : ‖fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I‖ = ε := by
+    rw [g_i_norm_left hδ_pos hδ_lt_one]; linarith
+  have h_nR : ‖fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I‖ = ε := by
+    rw [g_i_norm_right hδ_pos hδ_lt_one]
+    linarith [h_nL, g_i_norm_left (H := H) hδ_pos hδ_lt_one]
+  -- E(ε) - (-(I·π)) = -(δπ/6)·I
+  have h_E_eq :
+      Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+      Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+      2 * ↑Real.pi * I - -(I * ↑Real.pi) =
+      -(↑((12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 6) * I) := by
+    rw [← Complex.re_add_im (Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I)),
+        ← Complex.re_add_im (Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I)),
+        Complex.log_re, Complex.log_re, Complex.log_im, Complex.log_im,
+        arg_approach_i_left (H := H) hδ_pos hδ_lt_one,
+        arg_approach_i_right (H := H) hδ_pos hδ_lt_one, h_nL, h_nR]
+    push_cast; ring
+  have h_dist :
+      dist (Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+            Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+            2 * ↑Real.pi * I)
+           (-(I * ↑Real.pi)) =
+      ‖Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+        Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
+        2 * ↑Real.pi * I - -(I * ↑Real.pi)‖ := Complex.dist_eq _ _
+  rw [h_dist, h_E_eq, norm_neg, norm_mul, Complex.norm_real, Complex.norm_I, mul_one,
+      Real.norm_eq_abs, abs_of_pos (by positivity)]
+  linarith
+
 /-- The PV integral of `(γ-I)⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ`.
 
 Proof wires through `pv_tendsto_of_crossing_limit` with:
@@ -860,13 +973,14 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
   have hsin_pos : 0 < Real.sin (Real.pi / 12) :=
     ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by positivity
-  -- threshold := min (min (min (1/2) (H-1)) (2 sin(π/12))) 1
   set threshold := min (min (min (1/2 : ℝ) (H - 1)) (2 * Real.sin (Real.pi / 12))) 1
     with hthreshold_def
   have hthresh_pos : 0 < threshold :=
     lt_min (lt_min (lt_min (by norm_num) hH1_pos) h2sin_pos) one_pos
+  have hthresh_le_2sin : threshold ≤ 2 * Real.sin (Real.pi / 12) :=
+    le_trans (min_le_left _ _) (min_le_right _ _)
+  have hthresh_le_one : threshold ≤ 1 := min_le_right _ _
   -- δ(ε) = 12/π * arcsin(ε/2)
-  -- Auxiliary: for ε < threshold, δ(ε) satisfies 0 < δ < min(2 - 0, 5 - 2)
   have hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < 12 / Real.pi * Real.arcsin (ε / 2) :=
     fun ε hε _ => mul_pos (div_pos (by norm_num) hpi_pos)
       (Real.arcsin_pos.mpr (by linarith))
@@ -876,32 +990,12 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
     simp only [sub_zero]
     apply lt_min
     all_goals {
-      have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) := lt_of_lt_of_le hε_lt
-        (le_trans (min_le_left _ _) (min_le_right _ _))
-      have hε_half_le : ε / 2 ≤ 1 := by
-        have : ε < 1 := lt_of_lt_of_le hε_lt (min_le_right _ _); linarith
-      have hε_half_neg : -1 ≤ ε / 2 := by linarith
-      have hε_lt_sin : ε / 2 < Real.sin (Real.pi / 12) := by linarith
-      have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
-        calc Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
-              Real.arcsin_lt_arcsin hε_half_neg hε_lt_sin (Real.sin_le_one _)
-          _ = Real.pi / 12 :=
-              Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-      calc 12 / Real.pi * Real.arcsin (ε / 2)
-          < 12 / Real.pi * (Real.pi / 12) :=
-            mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
-        _ = 1 := by field_simp
-        _ ≤ _ := by norm_num }
-  -- The integrand in the theorem uses deriv (fun s => fdBoundary_H H s - I) which
-  -- equals deriv (fdBoundary_H H) by deriv_sub_const. Define γ = fdBoundary_H H.
-  -- The curve γ has a = 0, b = 5, t₀ = 2 ∈ Ioo 0 5.
-  -- E(ε) = log(g(2-δ)) - log(g(2+δ)) - 2πi where g = fdBoundary_H H - I
-  -- This equals -(I*π) for all ε (constant), so E(ε) → -(I*π).
-  -- But pv_tendsto_of_crossing_limit requires (γ t - s)⁻¹ * deriv γ t,
-  -- which is (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t.
-  -- Our theorem uses deriv (fun s => fdBoundary_H H s - I) = deriv (fdBoundary_H H)
-  -- (constant shift). So apply via convert.
-  -- Step: prove the theorem for the form pv_tendsto_of_crossing_limit expects:
+      have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) :=
+        lt_of_lt_of_le hε_lt hthresh_le_2sin
+      have hδ1 : 12 / Real.pi * Real.arcsin (ε / 2) < 1 :=
+        i_delta_lt_one hε_pos hε_lt_2sin
+      linarith }
+  -- reduce to the form without deriv (fun s => ...)
   suffices h : Tendsto (fun ε => ∫ t in (0:ℝ)..5,
         if ‖fdBoundary_H H t - I‖ > ε
         then (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t
@@ -920,7 +1014,6 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
         · congr 1; simp [deriv_sub_const]
         · rfl
     simp_rw [heq]; exact h
-  -- Now apply pv_tendsto_of_crossing_limit
   apply ContourIntegral.pv_tendsto_of_crossing_limit
     (t₀ := 2) (ht₀ := by norm_num)
     (threshold := threshold) (hthresh := hthresh_pos)
@@ -929,176 +1022,27 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
       Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
       Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
       2 * ↑Real.pi * I)
-  · -- hδ_pos
-    exact hδ_pos
-  · -- hδ_small
-    exact hδ_small
-  · -- h_far
+  · exact hδ_pos
+  · exact hδ_small
+  · intro ε hε_pos hε_lt; exact i_h_far H hH ε hε_pos hε_lt
+  · intro ε hε_pos hε_lt; exact i_h_near H ε hε_pos hε_lt
+  · -- h_ftc
     intro ε hε_pos hε_lt
-    exact i_h_far H hH ε hε_pos hε_lt
-  · -- h_near
-    intro ε hε_pos hε_lt
-    exact i_h_near H ε hε_pos hε_lt
-  · -- h_ftc: far integrals sum = E(ε)
-    intro ε hε_pos hε_lt
-    set δ := 12 / Real.pi * Real.arcsin (ε / 2)
-    have hε_half_pos : 0 < ε / 2 := by linarith
-    have hε_half_le : ε / 2 ≤ 1 := by
-      have : ε < 1 := lt_of_lt_of_le hε_lt (min_le_right _ _); linarith
-    have hε_half_neg : -1 ≤ ε / 2 := by linarith
-    have harcsin_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr hε_half_pos
-    have hδ_pos' : 0 < δ := by positivity
-    have hδ_lt_one : δ < 1 := by
-      -- Use threshold ≤ 1 and ε < threshold, so ε < 1, and δ < 1 follows from i_h_far setup
-      have hε_lt_one : ε < 1 := lt_of_lt_of_le hε_lt (min_le_right _ _)
-      have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) := lt_of_lt_of_le hε_lt
-        (le_trans (min_le_left _ _) (min_le_right _ _))
-      have hε_lt_sin : ε / 2 < Real.sin (Real.pi / 12) := by linarith
-      have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
-        calc Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
-              Real.arcsin_lt_arcsin (by linarith) hε_lt_sin (Real.sin_le_one _)
-          _ = Real.pi / 12 :=
-              Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-      calc δ = 12 / Real.pi * Real.arcsin (ε / 2) := rfl
-        _ < 12 / Real.pi * (Real.pi / 12) :=
-            mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
-        _ = 1 := by field_simp
-    have h_ftc := ftc_logDeriv_telescope_i H hH hδ_pos' hδ_lt_one
-    obtain ⟨_, _, h_sum⟩ := h_ftc
-    -- h_sum: ∫ deriv g / g from 0 to 2-δ + ∫ deriv g / g from 2+δ to 5
-    --        = log(g(2-δ)) - log(g(2+δ)) - 2πI
-    -- Convert integrands: deriv g / g = (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H)
-    have h_cvt : ∀ t, (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t =
-        deriv (fun s => fdBoundary_H H s - I) t / (fdBoundary_H H t - I) := fun t => by
-      simp [deriv_sub_const, div_eq_mul_inv, mul_comm]
-    simp_rw [h_cvt]
-    exact h_sum
+    have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) :=
+      lt_of_lt_of_le hε_lt hthresh_le_2sin
+    exact (i_ftc_integrability H hH hε_pos hε_lt_2sin).2.2
   · -- hint_left
     intro ε hε_pos hε_lt
-    set δ := 12 / Real.pi * Real.arcsin (ε / 2)
-    have hε_half_pos : 0 < ε / 2 := by linarith
-    have hε_half_neg : -1 ≤ ε / 2 := by linarith
-    have harcsin_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr hε_half_pos
-    have hδ_pos' : 0 < δ := by positivity
-    have hδ_lt_one : δ < 1 := by
-      have hε_lt_one : ε < 1 := lt_of_lt_of_le hε_lt (min_le_right _ _)
-      have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) := lt_of_lt_of_le hε_lt
-        (le_trans (min_le_left _ _) (min_le_right _ _))
-      have hε_lt_sin : ε / 2 < Real.sin (Real.pi / 12) := by linarith
-      have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
-        calc Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
-              Real.arcsin_lt_arcsin (by linarith) hε_lt_sin (Real.sin_le_one _)
-          _ = Real.pi / 12 :=
-              Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-      calc δ = 12 / Real.pi * Real.arcsin (ε / 2) := rfl
-        _ < 12 / Real.pi * (Real.pi / 12) :=
-            mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
-        _ = 1 := by field_simp
-    have ⟨hint_L, _, _⟩ := ftc_logDeriv_telescope_i H hH hδ_pos' hδ_lt_one
-    exact (intervalIntegrable_congr (fun t _ =>
-      show deriv (fun s => fdBoundary_H H s - I) t / (fdBoundary_H H t - I) =
-           (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t from by
-        simp [deriv_sub_const, div_eq_mul_inv, mul_comm])).mp hint_L
+    have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) :=
+      lt_of_lt_of_le hε_lt hthresh_le_2sin
+    exact (i_ftc_integrability H hH hε_pos hε_lt_2sin).1
   · -- hint_right
     intro ε hε_pos hε_lt
-    set δ := 12 / Real.pi * Real.arcsin (ε / 2)
-    have hε_half_pos : 0 < ε / 2 := by linarith
-    have hε_half_neg : -1 ≤ ε / 2 := by linarith
-    have harcsin_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr hε_half_pos
-    have hδ_pos' : 0 < δ := by positivity
-    have hδ_lt_one : δ < 1 := by
-      have hε_lt_one : ε < 1 := lt_of_lt_of_le hε_lt (min_le_right _ _)
-      have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) := lt_of_lt_of_le hε_lt
-        (le_trans (min_le_left _ _) (min_le_right _ _))
-      have hε_lt_sin : ε / 2 < Real.sin (Real.pi / 12) := by linarith
-      have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
-        calc Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
-              Real.arcsin_lt_arcsin (by linarith) hε_lt_sin (Real.sin_le_one _)
-          _ = Real.pi / 12 :=
-              Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-      calc δ = 12 / Real.pi * Real.arcsin (ε / 2) := rfl
-        _ < 12 / Real.pi * (Real.pi / 12) :=
-            mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
-        _ = 1 := by field_simp
-    have ⟨_, hint_R, _⟩ := ftc_logDeriv_telescope_i H hH hδ_pos' hδ_lt_one
-    exact (intervalIntegrable_congr (fun t _ =>
-      show deriv (fun s => fdBoundary_H H s - I) t / (fdBoundary_H H t - I) =
-           (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t from by
-        simp [deriv_sub_const, div_eq_mul_inv, mul_comm])).mp hint_R
-  · -- h_limit: E(ε) → -(I·π)
-    -- E(ε) = log(g(2-δ)) - log(g(2+δ)) - 2πI
-    -- After expanding args: E(ε) = -(δ(ε)·π/6 + π)·I
-    -- Key bound: ‖E(ε) - (-(I·π))‖ = δ(ε)·π/6 ≤ 2ε → 0
-    -- Use i_angle_bound: δ·π/12 < ε, so δ·π/6 < 2ε < r when ε < r/2
-    rw [Metric.tendsto_nhdsWithin_nhds]
-    intro r hr
-    refine ⟨min threshold (r/2), lt_min hthresh_pos (by linarith), ?_⟩
-    intro ε hε_mem hε_dist
-    simp only [Set.mem_Ioi] at hε_mem
-    rw [Real.dist_eq, sub_zero, abs_of_pos hε_mem] at hε_dist
-    have hε_pos : 0 < ε := hε_mem
-    have hε_lt : ε < threshold := hε_dist.trans_le (min_le_left _ _)
-    have hε_lt_r2 : ε < r / 2 := hε_dist.trans_le (min_le_right _ _)
-    have hε_half_pos : 0 < ε / 2 := by linarith
-    have hε_half_le : ε / 2 ≤ 1 := by
-      have : ε < 1 := lt_of_lt_of_le hε_lt (min_le_right _ _); linarith
-    have hε_half_neg : -1 ≤ ε / 2 := by linarith
-    have harcsin_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr hε_half_pos
-    have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) := lt_of_lt_of_le hε_lt
-      (le_trans (min_le_left _ _) (min_le_right _ _))
-    have hε_lt_sin : ε / 2 < Real.sin (Real.pi / 12) := by linarith
-    have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
-      calc Real.arcsin (ε / 2) < Real.arcsin (Real.sin (Real.pi / 12)) :=
-            Real.arcsin_lt_arcsin (by linarith) hε_lt_sin (Real.sin_le_one _)
-        _ = Real.pi / 12 :=
-            Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-    have hδ_pos' : 0 < 12 / Real.pi * Real.arcsin (ε / 2) :=
-      mul_pos (div_pos (by norm_num) hpi_pos) harcsin_pos
-    have hδ_lt_one : 12 / Real.pi * Real.arcsin (ε / 2) < 1 :=
-      calc 12 / Real.pi * Real.arcsin (ε / 2)
-          < 12 / Real.pi * (Real.pi / 12) :=
-            mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
-        _ = 1 := by field_simp
-    -- Compute sin value for norm equalities
-    have hsin_eq : Real.sin ((12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 12) = ε / 2 := by
-      have : (12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 12 = Real.arcsin (ε / 2) := by
-        field_simp
-      rw [this, Real.sin_arcsin hε_half_neg hε_half_le]
-    -- Angle bound: δπ/12 < ε
-    have h_angle_bnd : (12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 12 < ε :=
-      i_angle_bound H hδ_pos' hδ_lt_one (by
-        rw [g_i_norm_left hδ_pos' hδ_lt_one]; linarith)
-    -- E(ε) - (-(I·π)) = -(δπ/6)·I
-    have h_E_eq :
-        Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
-        Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
-        2 * ↑Real.pi * I - -(I * ↑Real.pi) =
-        -(↑((12 / Real.pi * Real.arcsin (ε / 2)) * Real.pi / 6) * I) := by
-      have h_nL : ‖fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I‖ = ε := by
-        rw [g_i_norm_left hδ_pos' hδ_lt_one]; linarith
-      have h_nR : ‖fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I‖ = ε := by
-        rw [g_i_norm_right hδ_pos' hδ_lt_one]
-        rw [g_i_norm_left hδ_pos' hδ_lt_one] at h_nL
-        linarith
-      have h_aL := arg_approach_i_left (H := H) hδ_pos' hδ_lt_one
-      have h_aR := arg_approach_i_right (H := H) hδ_pos' hδ_lt_one
-      rw [← Complex.re_add_im (Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I)),
-          ← Complex.re_add_im (Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I)),
-          Complex.log_re, Complex.log_re, Complex.log_im, Complex.log_im,
-          h_aL, h_aR, h_nL, h_nR]
-      push_cast; ring
-    -- Bound: dist (E ε) (-(I·π)) = ‖E ε - (-(I·π))‖ = δπ/6 < 2ε < r
-    have h_dist : dist
-        (Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
-         Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
-         2 * ↑Real.pi * I)
-        (-(I * ↑Real.pi)) =
-        ‖Complex.log (fdBoundary_H H (2 - 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
-         Complex.log (fdBoundary_H H (2 + 12 / Real.pi * Real.arcsin (ε / 2)) - I) -
-         2 * ↑Real.pi * I - -(I * ↑Real.pi)‖ := Complex.dist_eq _ _
-    rw [h_dist, h_E_eq, norm_neg, norm_mul, Complex.norm_real, Complex.norm_I, mul_one,
-      Real.norm_eq_abs, abs_of_pos (by positivity)]
-    linarith
+    have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) :=
+      lt_of_lt_of_le hε_lt hthresh_le_2sin
+    exact (i_ftc_integrability H hH hε_pos hε_lt_2sin).2.1
+  · -- h_limit
+    exact i_E_tendsto H hH threshold hthresh_pos hthresh_le_2sin hthresh_le_one
 
 /-- `generalizedWindingNumber' (fdBoundary_H H) 0 5 I = -1/2`.
 
