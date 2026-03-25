@@ -828,52 +828,6 @@ private lemma i_h_near (H : ℝ) :
       _ = ε := by
           rw [hδ_angle, Real.sin_arcsin hε_half_neg hε_half_le]; linarith
 
-private lemma i_norm_gt_right_helper (H : ℝ) (hH : 1 < H)
-    {ε δ : ℝ} (hε_lt_half : ε < 1/2) (hε_lt_gap : ε < H - 1)
-    (hδ_pos : 0 < δ) (hδ_lt_one : δ < 1)
-    (h_norm_R : ‖fdBoundary_H H (2 + δ) - I‖ = ε) :
-    ∀ t ∈ Ioo (2 + δ) (5 : ℝ),
-      ‖(fun t => fdBoundary_H H t - I) t‖ > ε := by
-  intro t ⟨ht2, ht5⟩
-  rcases le_or_gt t 3 with ht3 | ht3
-  · rcases eq_or_lt_of_le ht3 with rfl | ht3'
-    · calc ε < 1 / 2 := hε_lt_half
-        _ ≤ ‖(fun t => fdBoundary_H H t - I) 3‖ := g_i_norm_ge_seg3 (le_refl 3) (by norm_num)
-    · show ε < ‖fdBoundary_H H t - I‖
-      rw [g_i_norm_arc_right (by linarith) ht3']
-      rw [← h_norm_R, g_i_norm_right hδ_pos hδ_lt_one]
-      apply mul_lt_mul_of_pos_left _ (by norm_num : (0:ℝ) < 2)
-      exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
-        (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-        (by nlinarith [Real.pi_pos])
-  · rcases le_or_gt t 4 with ht4 | ht4
-    · calc ε < 1 / 2 := hε_lt_half
-        _ ≤ _ := g_i_norm_ge_seg3 (le_of_lt ht3) ht4
-    · calc ε < H - 1 := hε_lt_gap
-        _ ≤ _ := g_i_norm_ge_seg4 H hH (le_of_lt ht4) (le_of_lt ht5)
-
-private lemma i_norm_le_middle_helper (H : ℝ)
-    {ε δ : ℝ} (hε_pos : 0 < ε) (hδ_pos : 0 < δ) (hδ_lt_one : δ < 1)
-    (h_norm_L : ‖fdBoundary_H H (2 - δ) - I‖ = ε)
-    (h_norm_R : ‖fdBoundary_H H (2 + δ) - I‖ = ε) :
-    ∀ t, 2 - δ ≤ t → t ≤ 2 + δ →
-      ¬(‖(fun t => fdBoundary_H H t - I) t‖ > ε) := by
-  intro t ht_lo ht_hi; push_neg; show ‖fdBoundary_H H t - I‖ ≤ ε
-  rcases le_or_gt t 2 with ht2 | ht2
-  · rcases eq_or_lt_of_le ht2 with rfl | ht2'
-    · rw [fdBoundary_H_at_two_eq_I, sub_self, norm_zero]; exact le_of_lt hε_pos
-    · have ht1 : 1 < t := by linarith
-      rw [g_i_norm_arc_left ht1 ht2', ← h_norm_L, g_i_norm_left hδ_pos hδ_lt_one]
-      apply mul_le_mul_of_nonneg_left _ (by norm_num : (0:ℝ) ≤ 2)
-      exact Real.sin_le_sin_of_le_of_le_pi_div_two
-        (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-        (by nlinarith [Real.pi_pos])
-  · rw [g_i_norm_arc_right ht2 (by linarith), ← h_norm_R, g_i_norm_right hδ_pos hδ_lt_one]
-    apply mul_le_mul_of_nonneg_left _ (by norm_num : (0:ℝ) ≤ 2)
-    exact Real.sin_le_sin_of_le_of_le_pi_div_two
-      (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-      (by nlinarith [Real.pi_pos])
-
 private lemma i_angle_bound {δ ε : ℝ} (H : ℝ)
     (hδ_pos : 0 < δ) (hδ_lt_one : δ < 1)
     (h_norm_L : ‖fdBoundary_H H (2 - δ) - I‖ = ε) :

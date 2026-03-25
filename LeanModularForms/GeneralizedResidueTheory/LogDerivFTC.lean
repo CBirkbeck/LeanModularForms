@@ -114,4 +114,29 @@ theorem ftc_log_piece {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
       _ = Complex.log (h b) - Complex.log (h a) := h_ftc
       _ = Complex.log (g b) - Complex.log (g a) := by rw [heq_a, heq_b]⟩
 
+/-- FTC for log-derivative when the negated function stays in slitPlane:
+∫ f'/f = log(-f(b)) - log(-f(a)) when -f ∈ slitPlane on [a,b]. -/
+theorem integral_logDeriv_eq_neg_log_sub {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
+    (hf_cont : ContinuousOn f (Icc a b))
+    (hf_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ f t)
+    (hf_deriv_cont : ContinuousOn (deriv f) (Icc a b))
+    (hf_neg_slit : ∀ t ∈ Icc a b, -f t ∈ Complex.slitPlane) :
+    ∫ t in a..b, deriv f t / f t = Complex.log (-f b) - Complex.log (-f a) := by
+  have hf_ne : ∀ t ∈ Icc a b, f t ≠ 0 := fun t ht =>
+    neg_ne_zero.mp (Complex.slitPlane_ne_zero (hf_neg_slit t ht))
+  have hF_cont : ContinuousOn (fun t => Complex.log (-(f t))) (Icc a b) :=
+    hf_cont.neg.clog (fun t ht => hf_neg_slit t ht)
+  have hF_deriv : ∀ x ∈ Ioo a b, HasDerivAt (fun t => Complex.log (-(f t)))
+      (deriv f x / f x) x := by
+    intro x hx
+    have hslit := hf_neg_slit x (Ioo_subset_Icc_self hx)
+    have h_log := (hf_diff x hx).hasDerivAt.neg.clog_real hslit
+    convert h_log using 1
+    exact (neg_div_neg_eq (deriv f x) (f x)).symm
+  have hint : IntervalIntegrable (fun t => deriv f t / f t) volume a b := by
+    apply ContinuousOn.intervalIntegrable
+    rw [Set.uIcc_of_le hab]
+    exact hf_deriv_cont.div hf_cont (fun x hx => hf_ne x hx)
+  exact intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab hF_cont hF_deriv hint
+
 end LogDerivFTC

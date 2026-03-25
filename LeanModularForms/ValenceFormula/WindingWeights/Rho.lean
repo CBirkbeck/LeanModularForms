@@ -389,48 +389,6 @@ private lemma g_norm_ge_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     _ = |(fdBoundary_H H t - (ellipticPointRho : ℂ)).im| := by rw [him]
     _ ≤ ‖fdBoundary_H H t - (ellipticPointRho : ℂ)‖ := Complex.abs_im_le_norm _
 
-private lemma g_rho_differentiableAt (H : ℝ) {t : ℝ}
-    (ht : (0 < t ∧ t < 1) ∨ (1 < t ∧ t < 3) ∨ (3 < t ∧ t < 4) ∨ (4 < t ∧ t < 6)) :
-    DifferentiableAt ℝ (fun s => fdBoundary_H H s - (ellipticPointRho : ℂ)) t := by
-  apply DifferentiableAt.sub _ (differentiableAt_const _)
-  have hd : DifferentiableAt ℝ (fun s : ℝ => (s : ℂ)) t := Complex.ofRealCLM.differentiableAt
-  rcases ht with ⟨_, ht1⟩ | ⟨ht1, ht3⟩ | ⟨ht3, ht4⟩ | ⟨ht4, _⟩
-  · have h_local : fdBoundary_H H =ᶠ[𝓝 t]
-      (fun s => (1/2 : ℂ) + (↑H - ↑s * (↑H - ↑(Real.sqrt 3) / 2)) * I) := by
-      filter_upwards [Iio_mem_nhds ht1] with s hs
-      simp only [fdBoundary_H, show s ≤ 1 from le_of_lt hs, ↓reduceIte]
-    exact DifferentiableAt.congr_of_eventuallyEq
-      ((differentiableAt_const _).add (((differentiableAt_const _).sub
-        (hd.mul (differentiableAt_const _))).mul (differentiableAt_const _))) h_local
-  · have h_local : fdBoundary_H H =ᶠ[𝓝 t]
-      (fun s => exp ((↑(Real.pi / 6) + ↑s * ↑(Real.pi / 6)) * I)) := by
-      filter_upwards [Ioo_mem_nhds ht1 ht3] with s ⟨hs1, hs3⟩
-      simp only [fdBoundary_H, show ¬(s ≤ 1) from not_le.mpr hs1]
-      rcases le_or_gt s 2 with hs2 | hs2
-      · simp only [hs2, ↓reduceIte]; congr 1; push_cast; ring
-      · simp only [show ¬(s ≤ 2) from not_le.mpr hs2,
-          show s ≤ 3 from le_of_lt hs3, ↓reduceIte]
-        congr 1; push_cast; ring
-    exact DifferentiableAt.congr_of_eventuallyEq
-      ((((differentiableAt_const _).add (hd.mul (differentiableAt_const _))).mul
-        (differentiableAt_const _)).cexp) h_local
-  · have h_local : fdBoundary_H H =ᶠ[𝓝 t] (fun s => (-1/2 : ℂ) +
-        (↑(Real.sqrt 3) / 2 + (↑s - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I) := by
-      filter_upwards [Ioo_mem_nhds ht3 ht4] with s ⟨hs3, hs4⟩
-      unfold fdBoundary_H
-      rw [if_neg (by linarith), if_neg (by linarith), if_neg (by linarith), if_pos (by linarith)]
-    exact DifferentiableAt.congr_of_eventuallyEq
-      ((differentiableAt_const _).add (((differentiableAt_const _).add
-        (((hd.sub (differentiableAt_const _)).mul (differentiableAt_const _)))).mul
-        (differentiableAt_const _))) h_local
-  · have h_local : fdBoundary_H H =ᶠ[𝓝 t] (fun s => (↑s - 9/2 : ℂ) + ↑H * I) := by
-      filter_upwards [Ioi_mem_nhds ht4] with s hs4
-      have hs4' : 4 < s := hs4
-      unfold fdBoundary_H
-      rw [if_neg (by linarith), if_neg (by linarith), if_neg (by linarith), if_neg (by linarith)]
-    exact DifferentiableAt.congr_of_eventuallyEq
-      ((hd.sub (differentiableAt_const _)).add (differentiableAt_const _)) h_local
-
 private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {δ_L δ_R : ℝ} (hδ_L : 0 < δ_L) (hδ_L1 : δ_L < 1) (hδ_R : 0 < δ_R) (hδ_R1 : δ_R < 1) :
     let g := fun t => fdBoundary_H H t - (ellipticPointRho : ℂ)
