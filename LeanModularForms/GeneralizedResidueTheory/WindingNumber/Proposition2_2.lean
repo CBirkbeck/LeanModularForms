@@ -48,8 +48,8 @@ private lemma HasDerivAt.re' {f : ℝ → ℂ} {f' : ℂ} {x : ℝ} (h : HasDeri
   rw [hasDerivAt_iff_hasFDerivAt] at h ⊢
   convert HasFDerivAt.comp x (Complex.reCLM.hasFDerivAt (x := f x)) h using 1
   ext
-  simp [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
-    Complex.reCLM_apply]
+  simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
+    Complex.reCLM_apply, Complex.smul_re]
 
 /-! ### Eventually not in partition (shared pattern) -/
 
@@ -59,7 +59,9 @@ private lemma eventually_not_in_partition_left
     ∀ᶠ t in 𝓝[<] p, t ∉ γ.toPiecewiseC1Curve.partition := by
   have hcl : IsClosed ((↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ)) :=
     (γ.toPiecewiseC1Curve.partition.finite_toSet.subset diff_subset).isClosed
-  have hmem : p ∉ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ) := by simp
+  have hmem : p ∉ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ) := by
+    simp only [Set.mem_diff, Finset.mem_coe, Set.mem_singleton_iff, not_and, not_not,
+      implies_true]
   have hopen := hcl.isOpen_compl.mem_nhds hmem
   have h1 : ∀ᶠ t in 𝓝[<] p, t ∈ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ)ᶜ :=
     eventually_nhdsWithin_of_eventually_nhds hopen
@@ -72,7 +74,9 @@ private lemma eventually_not_in_partition_right
     ∀ᶠ t in 𝓝[>] p, t ∉ γ.toPiecewiseC1Curve.partition := by
   have hcl : IsClosed ((↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ)) :=
     (γ.toPiecewiseC1Curve.partition.finite_toSet.subset diff_subset).isClosed
-  have hmem : p ∉ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ) := by simp
+  have hmem : p ∉ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ) := by
+    simp only [Set.mem_diff, Finset.mem_coe, Set.mem_singleton_iff, not_and, not_not,
+      implies_true]
   have hopen := hcl.isOpen_compl.mem_nhds hmem
   have h1 : ∀ᶠ t in 𝓝[>] p, t ∈ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ)ᶜ :=
     eventually_nhdsWithin_of_eventually_nhds hopen
@@ -107,7 +111,7 @@ theorem PiecewiseC1Immersion.eventually_ne_left_of_partition
   obtain ⟨L, hL_ne, hL_tendsto⟩ := γ.left_deriv_limit p hp hap
   -- Define h(t) = Re(conj(L) * (γ(t) - z₀)).
   set h : ℝ → ℝ := fun t => ((starRingEnd ℂ L) * (γ.toFun t - z₀)).re with hh_def
-  have hh_p : h p = 0 := by simp [hh_def, hcross]
+  have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, mul_zero, Complex.zero_re]
   -- (E1): Eventually t ∉ partition
   have h_ev_smooth : ∀ᶠ t in 𝓝[<] p, t ∉ γ.toPiecewiseC1Curve.partition :=
     eventually_not_in_partition_left γ p
@@ -164,7 +168,7 @@ theorem PiecewiseC1Immersion.eventually_ne_left_of_partition
   -- Conclude: for t ∈ (q, p), h(t) < h(p) = 0, so h(t) ≠ 0, so γ(t) ≠ z₀
   rw [Filter.Eventually, mem_nhdsLT_iff_exists_Ioo_subset' hap]
   exact ⟨q, hq_lt_p, fun t ht hγt => by
-    have hht : h t = 0 := by simp [hh_def, hγt]
+    have hht : h t = 0 := by simp only [hh_def, hγt, sub_self, mul_zero, Complex.zero_re]
     have : h t < h p := hh_mono (Ioo_subset_Icc_self ht) (right_mem_Icc.mpr hq_lt_p.le) ht.2
     linarith⟩
 
@@ -178,7 +182,7 @@ theorem PiecewiseC1Immersion.eventually_ne_right_of_partition
     ∀ᶠ t in 𝓝[>] p, γ.toFun t ≠ z₀ := by
   obtain ⟨L, hL_ne, hL_tendsto⟩ := γ.right_deriv_limit p hp hpb
   set h : ℝ → ℝ := fun t => ((starRingEnd ℂ L) * (γ.toFun t - z₀)).re with hh_def
-  have hh_p : h p = 0 := by simp [hh_def, hcross]
+  have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, mul_zero, Complex.zero_re]
   -- (E1): Eventually t ∉ partition
   have h_ev_smooth : ∀ᶠ t in 𝓝[>] p, t ∉ γ.toPiecewiseC1Curve.partition :=
     eventually_not_in_partition_right γ p
@@ -233,7 +237,7 @@ theorem PiecewiseC1Immersion.eventually_ne_right_of_partition
   -- For t ∈ (p, r), h(p) = 0 < h(t), so γ(t) ≠ z₀
   rw [Filter.Eventually, mem_nhdsGT_iff_exists_Ioo_subset' hpb]
   exact ⟨r, hr_gt_p, fun t ht hγt => by
-    have hht : h t = 0 := by simp [hh_def, hγt]
+    have hht : h t = 0 := by simp only [hh_def, hγt, sub_self, mul_zero, Complex.zero_re]
     have : h p < h t := hh_mono (left_mem_Icc.mpr hr_gt_p.le) (Ioo_subset_Icc_self ht) ht.1
     linarith⟩
 
@@ -286,7 +290,8 @@ theorem PiecewiseC1Immersion.crossing_not_accPt
 theorem crossing_set_isClosed (γ : PiecewiseC1Immersion) (z₀ : ℂ) :
     IsClosed {t ∈ Icc γ.a γ.b | γ.toFun t = z₀} := by
   have : {t ∈ Icc γ.a γ.b | γ.toFun t = z₀} = Icc γ.a γ.b ∩ γ.toFun ⁻¹' {z₀} := by
-    ext t; simp [mem_inter_iff, mem_preimage, mem_singleton_iff]
+    ext t; simp only [Set.mem_sep_iff, Set.mem_inter_iff, Set.mem_preimage,
+      Set.mem_singleton_iff]
   rw [this]
   exact γ.continuous_toFun.preimage_isClosed_of_isClosed isClosed_Icc isClosed_singleton
 
@@ -379,7 +384,8 @@ private lemma continuousAt_deriv_of_contDiffAt_two
     ContinuousAt (deriv f) x := by
   -- ContDiffAt ℝ 2 gives ContDiffOn ℝ 2 f U for some open U ∋ x
   have h1 : ContDiffAt ℝ 1 f x := h.of_le (by norm_num)
-  obtain ⟨U, hU_nhd, hU_cd⟩ := h1.contDiffOn (le_refl _) (by simp)
+  obtain ⟨U, hU_nhd, hU_cd⟩ := h1.contDiffOn (le_refl _) (by
+    simp only [WithTop.one_eq_coe, ENat.top_ne_one, WithTop.one_ne_top, imp_self])
   obtain ⟨V, hVU, hV_open, hxV⟩ := mem_nhds_iff.mp hU_nhd
   have hV_cd : ContDiffOn ℝ 1 f V := hU_cd.mono hVU
   have h_cont_on : ContinuousOn (deriv f) V :=
@@ -488,7 +494,7 @@ theorem cpv_integrand_intervalIntegrable
             (S \ γ.partition) := by
           intro t ⟨⟨ht_far, ht_Icc⟩, ht_notP⟩
           have h_ne : γ.toFun t - z₀ ≠ 0 := by
-            intro heq; simp [heq] at ht_far; linarith
+            intro heq; simp only [Set.mem_setOf_eq, heq, norm_zero] at ht_far; linarith
           apply ContinuousWithinAt.mul
           · have hγ_sub : ContinuousWithinAt (fun t => γ.toFun t - z₀)
                 (S \ γ.partition) t :=
@@ -514,7 +520,7 @@ theorem cpv_integrand_intervalIntegrable
         have h_P_inter_meas : MeasurableSet (↑γ.partition ∩ S) :=
           γ.partition.finite_toSet.measurableSet.inter hS_meas
         have h_eq_S : S = (S \ γ.partition) ∪ (↑γ.partition ∩ S) := by
-          ext x; simp [S]; tauto
+          ext x; simp only [S, Set.mem_union, Set.mem_diff, Set.mem_inter_iff]; tauto
         have h_restrict_eq : volume.restrict S =
             volume.restrict ((S \ γ.partition) ∪ (↑γ.partition ∩ S)) := by
           rw [← h_eq_S]

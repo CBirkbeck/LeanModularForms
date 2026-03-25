@@ -446,7 +446,7 @@ private lemma dixonH2_pointwise_hasDerivAt (fz c z x : ℂ) (hne : z - x ≠ 0) 
     HasDerivAt (fun x => fz * (z - x)⁻¹ * c) (fz * (z - x)⁻¹ ^ 2 * c) x := by
   have h1 : HasDerivAt (fun x => z - x) (-1) x := by
     convert (hasDerivAt_const x z).sub (hasDerivAt_id x) using 1
-    simp
+    simp only [zero_sub]
   have h2 : HasDerivAt (fun x => (z - x)⁻¹) (-(-1) / (z - x) ^ 2) x :=
     h1.fun_inv hne
   simp only [neg_neg, one_div] at h2
@@ -507,7 +507,7 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
   have hF_int : IntervalIntegrable (dixonH2_F f γ w) volume γ.a γ.b := by
     have heq : dixonH2_F f γ w =
         fun t => f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t := by
-      ext t; simp [dixonH2_F, div_eq_mul_inv]
+      ext t; simp only [dixonH2_F, div_eq_mul_inv]
     rw [heq]
     exact dixonH2_integrand_integrable f γ hfγ_cont M_f M_d ε
       hM_f hM_d _hM_f_nn hε_pos w _hdist_lb_w hav_w
@@ -518,7 +518,7 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     have hint_x : IntervalIntegrable (dixonH2_F f γ x) volume γ.a γ.b := by
       have heq : dixonH2_F f γ x =
           fun t => f (γ.toFun t) / (γ.toFun t - x) * deriv γ.toFun t := by
-        ext t; simp [dixonH2_F, div_eq_mul_inv]
+        ext t; simp only [dixonH2_F, div_eq_mul_inv]
       rw [heq]
       exact dixonH2_integrand_integrable f γ hfγ_cont M_f M_d ε
         hM_f hM_d _hM_f_nn hε_pos x (fun t ht => _hdist_lb x hx t ht)
@@ -962,7 +962,7 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
         have hdiff2 : DifferentiableAt ℂ
             (fun w'' => ∫ t in γ.a..γ.b, (γ.toFun t - w'')⁻¹ * deriv γ.toFun t) w' := by
           have h := dixonH2_differentiableAt (fun _ => 1) γ continuousOn_const w' hoff'
-          convert h using 2; simp [dixonH2, div_eq_mul_inv]
+          convert h using 2; simp only [dixonH2, div_eq_mul_inv, one_mul]
         exact hdiff2.continuousAt.continuousWithinAt
       · intro w' hw'
         have hoff' : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w' :=
@@ -1035,7 +1035,7 @@ theorem dixonFunction_differentiable (hU : IsOpen U) (hf : DifferentiableOn ℂ 
         have h1 : (wn_Z ⟨w', hw'⟩ : ℂ) = n := by rw [wn_Z_cast]; exact hn
         have h2 : (wn_Z ⟨w', hw'⟩ : ℂ) = 0 := by exact_mod_cast h_wn_Z
         exact_mod_cast h1.symm.trans h2
-      simp [hn, h_n_zero]
+      simp only [hn, h_n_zero, Int.cast_zero]
     have heq_on_ball : ∀ᶠ w' in 𝓝 w, dixonFunction f U γ w' = dixonH2 f γ w' := by
       apply Filter.Eventually.mono (Metric.ball_mem_nhds w hε_pos)
       intro w' hw'
@@ -1310,7 +1310,7 @@ theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U) (hf : Differen
     simp only [hF_def, mul_div_assoc, div_self hne, mul_one]
   rw [intervalIntegral.integral_congr h_eq]
   have hCIF := cauchyIntegralFormula_nullHomologous hU hF_diff γ h_null w₀ hw₀U hw₀_avoids
-  rw [show F w₀ = 0 from by simp [hF_def, sub_self, mul_zero], mul_zero] at hCIF
+  rw [show F w₀ = 0 from by simp only [hF_def, sub_self, mul_zero], mul_zero] at hCIF
   exact hCIF
 
 end DixonProof
@@ -1374,7 +1374,7 @@ theorem integral_eq_sum_residues_of_nullHomologous (U : Set ℂ) (hU : IsOpen U)
     have h := IntervalIntegrable.sum S0 h_sing_term_int
     rwa [show (∑ i ∈ S0, fun t => residueSimplePole f i / (γ.toFun t - ↑i) * deriv γ.toFun t) =
       (fun t => ∑ i ∈ S0, residueSimplePole f i / (γ.toFun t - ↑i) * deriv γ.toFun t) from
-      funext fun t => by simp [Finset.sum_apply]] at h
+      funext fun t => by simp only [Finset.sum_apply]] at h
   rw [h_eq, intervalIntegral.integral_add h_sing_int h_g_int, hg_zero, add_zero,
     intervalIntegral.integral_finset_sum (fun s hs =>
     (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve ⟨M_d, hM_d⟩).continuousOn_mul
@@ -1408,7 +1408,7 @@ private lemma regularPart_update_differentiableOn (f : ℂ → ℂ) (s : ℂ)
       obtain ⟨V, hV_open, hz_V, hV_eq⟩ := hg_eq
       exact ⟨V, hV_open.mem_nhds hz_V, fun w hw => by
         by_cases hwz : w = z
-        · simp [hwz, rp_nf, Function.update_self]
+        · simp only [hwz, Function.update_self, rp_nf]
         · simp only [rp_nf]
           rw [Function.update_of_ne hwz]
           exact (hV_eq ⟨hw, hwz⟩).symm⟩
@@ -1597,10 +1597,10 @@ private theorem analytic_correction_differentiableOn (S : Finset ℂ) (f : ℂ �
             hw (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwne, Finset.mem_coe.mp hwS⟩))
       have h_punc : ∀ᶠ w in 𝓝[≠] z,
           (if w ∈ (S : Set ℂ) then limUnder (𝓝[≠] w) g else g w) = g_ext w :=
-        (h_no_S_near.and hg_eq_ext).mono fun w ⟨hw1, hw2⟩ => by simp [hw1, hw2]
+        (h_no_S_near.and hg_eq_ext).mono fun w ⟨hw1, hw2⟩ => by simp only [hw1, ↓reduceIte, hw2]
       have h_at_z :
           (if z ∈ (S : Set ℂ) then limUnder (𝓝[≠] z) g else g z) = g_ext z := by
-        simp [hzS, h_lim]
+        simp only [hzS, ↓reduceIte, h_lim]
       rw [eventually_nhdsWithin_iff] at h_punc
       have h_ev : (fun w => if w ∈ (S : Set ℂ) then
           limUnder (𝓝[≠] w) g else g w) =ᶠ[𝓝 z] g_ext :=
@@ -1683,7 +1683,7 @@ theorem contourIntegral_eq_zero_of_meromorphic_residue_zero_finset_nh (S : Finse
     (diff_sub_principalParts_differentiableOn S f U hf_mero hf_diff)
   rw [intervalIntegral.integral_congr (show ∀ t ∈ Set.uIcc γ.a γ.b, f (γ.toFun t) *
       deriv γ.toFun t = g (γ.toFun t) * deriv γ.toFun t + pp (γ.toFun t) *
-      deriv γ.toFun t from fun t _ => by simp [g]; ring),
+      deriv γ.toFun t from fun t _ => by simp only [g]; ring),
     intervalIntegral.integral_add (remainder_integrable S f U hf_mero hf_diff γ h_null hγ_avoids)
       (principalParts_integrable S f hf_mero γ hγ_avoids),
     show ∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t = 0 from by
