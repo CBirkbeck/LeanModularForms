@@ -242,13 +242,14 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     have hpos : (0 : ℝ) < ‖f t - z₀‖ := norm_pos_iff.mpr hne'
     have hgsq := (hf.sub_const z₀).norm_sq
     convert (Real.hasDerivAt_sqrt (by positivity)).comp t hgsq using 1
-    · ext s; simp [Function.comp, Real.sqrt_sq (norm_nonneg _)]
+    · ext s; simp only [Function.comp, Real.sqrt_sq (norm_nonneg _)]
     · rw [Real.sqrt_sq hpos.le]; field_simp [ne_of_gt hpos]
   -- Helper: inner ℝ a b / ‖a‖ = inner ℝ (a/↑‖a‖) b (holds for all a, even zero)
   have inner_div_norm : ∀ (a b : ℂ),
       inner (𝕜 := ℝ) a b / ‖a‖ = inner (𝕜 := ℝ) (a / ↑‖a‖) b := by
     intro a b
-    have ha : a / ↑‖a‖ = (‖a‖⁻¹ : ℝ) • a := by simp [div_eq_mul_inv, mul_comm]
+    have ha : a / ↑‖a‖ = (‖a‖⁻¹ : ℝ) • a := by
+      simp only [div_eq_mul_inv, Complex.real_smul, Complex.ofReal_inv]; ring
     rw [ha, real_inner_smul_left]; ring
   -- Step 1: Get right and left one-sided derivative limits (nonzero)
   obtain ⟨L_R, hL_R_ne, htend_R⟩ :
@@ -305,11 +306,13 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
   have hslope_R : Filter.Tendsto
       (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[>] t₀) (𝓝 L_R) := by
     rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_diff_left] at hHDWA_R
-    convert hHDWA_R using 1; ext t; simp [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
+    convert hHDWA_R using 1; ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm,
+      Complex.real_smul, Complex.ofReal_inv]
   have hslope_L : Filter.Tendsto
       (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[<] t₀) (𝓝 L_L) := by
     rw [hasDerivWithinAt_iff_tendsto_slope, Set.Iic_diff_right] at hHDWA_L
-    convert hHDWA_L using 1; ext t; simp [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
+    convert hHDWA_L using 1; ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm,
+      Complex.real_smul, Complex.ofReal_inv]
   have hL_R_pos : ‖L_R‖ > 0 := norm_pos_iff.mpr hL_R_ne
   have hL_L_pos : ‖L_L‖ > 0 := norm_pos_iff.mpr hL_L_ne
   -- Step 5: Direction (γ t - z₀)/‖γ t - z₀‖ → L_R/‖L_R‖ (right) and
@@ -326,7 +329,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     simp only [Set.mem_Ioi] at htgt
     have hd : t - t₀ > 0 := sub_pos.mpr htgt
     simp only [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp [h] at hpos; linarith
+    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
     show (γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖ =
          (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
     rw [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le]; push_cast
@@ -344,7 +347,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     simp only [Set.mem_Iio] at htlt
     have hd : t - t₀ < 0 := sub_neg.mpr htlt
     simp only [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp [h] at hpos; linarith
+    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
     show -((γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖) =
          (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
     rw [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le]; push_cast
@@ -363,7 +366,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     have hLR_inner :
         ‖L_R‖ = inner (𝕜 := ℝ) (L_R / ↑‖L_R‖) L_R := by
       have hsmul : L_R / ↑‖L_R‖ = (‖L_R‖⁻¹ : ℝ) • L_R := by
-        simp [div_eq_mul_inv, mul_comm]
+        simp only [div_eq_mul_inv, Complex.real_smul, Complex.ofReal_inv]; ring
       rw [hsmul, real_inner_smul_left, real_inner_self_eq_norm_sq]
       field_simp
     rw [hLR_inner]
@@ -379,7 +382,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     have hLL_inner :
         -‖L_L‖ = inner (𝕜 := ℝ) (-L_L / ↑‖L_L‖) L_L := by
       have hsmul : -(L_L / ↑‖L_L‖) = -(‖L_L‖⁻¹ : ℝ) • L_L := by
-        simp [div_eq_mul_inv, mul_comm]
+        simp only [div_eq_mul_inv, Complex.real_smul, Complex.ofReal_neg, Complex.ofReal_inv]; ring
       rw [neg_div, hsmul, real_inner_smul_left,
         real_inner_self_eq_norm_sq]; field_simp
     rw [hLL_inner]
@@ -412,14 +415,14 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
       0 < inner ℝ (γ.toFun t - z₀) (deriv γ.toFun t) / ‖γ.toFun t - z₀‖ := by
     intro t ht
     apply hεR
-    · simp [Metric.mem_ball, Real.dist_eq, abs_of_pos (sub_pos.mpr ht.1)]
+    · simp only [Metric.mem_ball, Real.dist_eq, abs_of_pos (sub_pos.mpr ht.1)]
       linarith [ht.2, min_le_left (t₀ + εR / 2) r₀]
     · exact ht.1
   have hneg_L : ∀ t ∈ Set.Ioo l₁ t₀,
       inner ℝ (γ.toFun t - z₀) (deriv γ.toFun t) / ‖γ.toFun t - z₀‖ < 0 := by
     intro t ht
     apply hεL
-    · simp [Metric.mem_ball, Real.dist_eq, abs_of_neg (sub_neg.mpr ht.2)]
+    · simp only [Metric.mem_ball, Real.dist_eq, abs_of_neg (sub_neg.mpr ht.2)]
       linarith [ht.1, le_max_left (t₀ - εL / 2) l₀]
     · exact ht.2
   refine ⟨l₁, r₁, hl₁_lt, hr₁_gt, hl₁_ge_a, hr₁_le_b, ?_, ?_⟩
@@ -432,7 +435,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
       have hdiff := γ.smooth_off_partition t
         ⟨le_trans hl₁_ge_a (le_of_lt ht.1), le_trans ht.2.le ht₀.2.le⟩ (hno_L₁ t ht)
       have hne : γ.toFun t ≠ z₀ := by
-        intro heq; have := hneg_L t ht; simp [heq] at this
+        intro heq; have := hneg_L t ht; simp only [heq, sub_self, inner_zero_left, norm_zero, zero_div, lt_irrefl] at this
       rw [(hasDerivAt_norm_sub γ.toFun t _ hdiff.hasDerivAt hne).deriv]
       exact hneg_L t ht
   · -- StrictMonoOn ‖γ · - z₀‖ on [t₀, r₁]: deriv is positive on interior (t₀, r₁)
@@ -444,7 +447,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
       have hdiff := γ.smooth_off_partition t
         ⟨le_trans ht₀.1.le (le_of_lt ht.1), le_trans ht.2.le hr₁_le_b⟩ (hno_R₁ t ht)
       have hne : γ.toFun t ≠ z₀ := by
-        intro heq; have := hpos_R t ht; simp [heq] at this
+        intro heq; have := hpos_R t ht; simp only [heq, sub_self, inner_zero_left, norm_zero, zero_div, lt_irrefl] at this
       rw [(hasDerivAt_norm_sub γ.toFun t _ hdiff.hasDerivAt hne).deriv]
       exact hpos_R t ht
 
@@ -463,7 +466,7 @@ lemma exists_cutoff_boundary_times
   set g : ℝ → ℝ := fun t => ‖γ.toFun t - z₀‖ with hg_def
   have hg_cont : ContinuousOn g (Icc γ.a γ.b) :=
     continuous_norm.comp_continuousOn (γ.continuous_toFun.sub continuousOn_const)
-  have hg_t₀ : g t₀ = 0 := by simp [hg_def, hcross]
+  have hg_t₀ : g t₀ = 0 := by simp only [hg_def, hcross, sub_self, norm_zero]
   -- Step 1: Get local strict monotonicity of g near t₀ from the immersion property.
   -- g is strictly decreasing on [l, t₀] and strictly increasing on [t₀, r].
   obtain ⟨l, r, hl_lt, hr_gt, hl_ge_a, hr_le_b, hg_anti, hg_mono⟩ :=
@@ -994,12 +997,14 @@ lemma crossing_ratio_tendsto
       (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[>] t₀) (𝓝 L_R) := by
     rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_diff_left] at hHDWA_R
     convert hHDWA_R using 1
-    ext t; simp [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
+    ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm,
+      Complex.real_smul, Complex.ofReal_inv]
   have hslope_L : Filter.Tendsto
       (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[<] t₀) (𝓝 L_L) := by
     rw [hasDerivWithinAt_iff_tendsto_slope, Set.Iic_diff_right] at hHDWA_L
     convert hHDWA_L using 1
-    ext t; simp [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
+    ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm,
+      Complex.real_smul, Complex.ofReal_inv]
   -- ============================================================
   -- Step 3: Direction convergence
   -- (γ(t)-z₀)/‖γ(t)-z₀‖ → L_R/‖L_R‖ as t→t₀⁺
@@ -1017,7 +1022,7 @@ lemma crossing_ratio_tendsto
     simp only [Set.mem_Ioi] at htgt
     have hd : t - t₀ > 0 := sub_pos.mpr htgt
     simp only [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp [h] at hpos; linarith
+    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
     show (γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖ =
          (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
     rw [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le]; push_cast
@@ -1036,7 +1041,7 @@ lemma crossing_ratio_tendsto
     simp only [Set.mem_Iio] at htlt
     have hd : t - t₀ < 0 := sub_neg.mpr htlt
     simp only [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp [h] at hpos; linarith
+    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
     show -((γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖) =
          (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
     rw [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le]; push_cast
@@ -1070,7 +1075,7 @@ lemma crossing_ratio_tendsto
       have heq := honly t ht_Icc hγt
       simp only [Metric.mem_ball, Real.dist_eq] at ht_ball
       push_neg at ht_ball
-      subst heq; simp at ht_ball; linarith
+      subst heq; simp only [sub_self, abs_zero] at ht_ball; linarith
     by_cases hK_ne : K.Nonempty
     · have hcont_norm : ContinuousOn (fun t => ‖γ.toFun t - z₀‖) K :=
         continuous_norm.comp_continuousOn
@@ -1199,7 +1204,8 @@ lemma crossing_ratio_tendsto
       have hratio : (-L_L / ↑‖L_L‖) / (L_L / ↑‖L_L‖) = -1 := by
         field_simp [hne, hL_L_ne]
       rw [hratio, show -(I * ↑Real.pi) = -(↑Real.pi * I) by ring,
-          Complex.exp_neg, Complex.exp_pi_mul_I]; simp
+          Complex.exp_neg, Complex.exp_pi_mul_I]
+      norm_num
   -- ============================================================
   -- Step 6 (final): Combine direction ratio convergence with algebraic identity
   -- ============================================================
@@ -1331,7 +1337,7 @@ private lemma cpv_inv_sub_eq_limit
     unfold cauchyPrincipalValue'
     congr 1; ext ε
     apply intervalIntegral.integral_congr; intro t _
-    simp [sub_zero, deriv_sub_const]
+    simp only [sub_zero, deriv_sub_const]
   rw [h_eq]; exact hL.limUnder_eq
 
 /-- **FTC + direction limit**: For a closed piecewise C¹ immersion with unique crossing
@@ -1427,7 +1433,7 @@ theorem generalizedWindingNumber_eq_external_sub_angle
     generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
       externalWindingContribution γ z₀ t₀ ht₀ -
         (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * Real.pi) := by
-  simp [externalWindingContribution]
+  simp only [externalWindingContribution, add_sub_cancel_right]
 
 /-- H-W Proposition 2.3 (specialized): For a closed piecewise C¹ immersion
 passing through z₀ exactly once at t₀, with zero external winding, the
@@ -1490,7 +1496,7 @@ theorem externalWindingContribution_zero_of_windingNumber_eq
     (h_eq : generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
       -((angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * Real.pi))) :
     externalWindingContribution γ z₀ t₀ ht₀ = 0 := by
-  simp [externalWindingContribution, h_eq]
+  simp only [externalWindingContribution, h_eq, neg_add_cancel]
 
 /-- The external winding contribution is translation-invariant. -/
 theorem externalWindingContribution_translate
@@ -1510,7 +1516,7 @@ theorem externalWindingContribution_translate
       (fun t => γ.toFun t - z₀) γ.a γ.b 0
   have h_eq : (fun t => (γ.translate c).toFun t - (z₀ + c)) =
       (fun t => γ.toFun t - z₀) := by
-    ext t; simp [PiecewiseC1Immersion.translate]
+    ext t; simp only [PiecewiseC1Immersion.translate]; ring
   rw [h_eq]
 
 /-- Winding number with angles is additive over disjoint crossing sets. -/
@@ -1553,7 +1559,7 @@ theorem windingNumberWithAngles_union
   · rw [← Finset.sum_union hST]
     refine Finset.sum_bij (fun x hx => x.val)
       ?_ ?_ ?_ ?_ <;>
-      simp +decide
+      simp (config := { decide := true }) -- TODO: convert to simp only
     tauto
 
 end
