@@ -255,11 +255,11 @@ private lemma unitArc_norm_gt_right (s : ℂ) (H : ℝ) (hH : 1 < H) (t₀ δ' �
 
 /-- For `δ(ε) = 12/π · arcsin(ε/2)`, points within δ of the crossing satisfy `‖γ t - s‖ ≤ ε`. -/
 private lemma unitArc_h_near (H : ℝ) (s : ℂ)
-    (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (hs_im_pos : 0 < s.im)
+    (_hs_norm : ‖s‖ = 1) (_hs_re : |s.re| < 1/2) (_hs_im_pos : 0 < s.im)
     (t₀ : ℝ) (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
     (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
-    (hw : ℝ) (hhw : hw = min (t₀ - 1) (3 - t₀)) (hhw_pos : 0 < hw)
-    (ε : ℝ) (hε_pos : 0 < ε)
+    (hw : ℝ) (hhw : hw = min (t₀ - 1) (3 - t₀)) (_hhw_pos : 0 < hw)
+    (ε : ℝ) (_hε_pos : 0 < ε)
     (δ : ℝ) (hδ_pos : 0 < δ) (hδ_lt_hw : δ < hw)
     (hδ_eq : ‖fdBoundary_H H (t₀ + δ) - s‖ = ε)
     (t : ℝ) (habs : |t - t₀| ≤ δ) :
@@ -314,7 +314,7 @@ private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
     (hs_norm : ‖s‖ = 1) (hs_re : |s.re| < 1/2) (hs_im_pos : 0 < s.im)
     (t₀ : ℝ) (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
     (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
-    (hg_at_t₀ : fdBoundary_H H t₀ = s) :
+    (_hg_at_t₀ : fdBoundary_H H t₀ = s) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0)
     (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) := by
@@ -414,7 +414,7 @@ private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
         hδ_pos' hδ_left hδ_right hδ_eq hε_lt_d t ⟨ht_mem.1, le_of_lt ht_left⟩ ht_left
     · have ht_right' : t₀ + δ_fn ε < t := by
         -- Since t ≥ t₀ - δ and |t - t₀| > δ, we have t > t₀ + δ
-        rcases le_or_lt t₀ t with h_t_ge | h_t_lt
+        rcases le_or_gt t₀ t with h_t_ge | h_t_lt
         · rw [abs_of_nonneg (by linarith)] at habs; linarith
         · exfalso
           have h_abs_eq : |t - t₀| = t₀ - t := by rw [abs_of_neg (sub_neg.mpr h_t_lt)]; ring

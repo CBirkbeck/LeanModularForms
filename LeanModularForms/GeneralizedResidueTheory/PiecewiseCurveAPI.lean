@@ -97,8 +97,8 @@ theorem sortedPartition_head (γ : PiecewiseC1Curve) :
   linarith
 
 /-- Helper: in a sorted list, every element is ≤ the last element. -/
-private theorem sorted_le_getLast : ∀ (l : List ℝ) (hl : l.Sorted (· ≤ ·))
-    (hne : l ≠ []) (elem : ℝ) (hmem : elem ∈ l), elem ≤ l.getLast hne
+private theorem sorted_le_getLast : ∀ (l : List ℝ) (_hl : l.Sorted (· ≤ ·))
+    (hne : l ≠ []) (elem : ℝ) (_hmem : elem ∈ l), elem ≤ l.getLast hne
   | [], _, hne, _, _ => absurd rfl hne
   | [hd], _, _, elem, hmem => by
       simp only [List.getLast_singleton]
@@ -144,9 +144,9 @@ theorem sortedPartition_last (γ : PiecewiseC1Curve) :
     Uses a structural induction on the list length, handling the base case (2 elements)
     and inductive case (>2 elements) separately. -/
 private theorem sorted_consecutive_union :
-    ∀ (pts : List ℝ) (hsorted : pts.Sorted (· ≤ ·)) (hne : pts ≠ [])
-      (htail_ne : pts.tail ≠ []) (lo hi : ℝ)
-      (hhead : pts.head hne = lo) (hlast : pts.getLast hne = hi),
+    ∀ (pts : List ℝ) (_hsorted : pts.Sorted (· ≤ ·)) (hne : pts ≠ [])
+      (_htail_ne : pts.tail ≠ []) (lo hi : ℝ)
+      (_hhead : pts.head hne = lo) (_hlast : pts.getLast hne = hi),
     Icc lo hi ⊆ ⋃ p ∈ pts.zip pts.tail, Icc p.1 p.2 := by
   intro pts
   induction pts with

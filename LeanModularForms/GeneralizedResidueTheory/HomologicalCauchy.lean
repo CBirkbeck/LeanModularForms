@@ -723,8 +723,7 @@ private theorem dixonH1_dslope_t_cont (hU : IsOpen U) (hf : DifferentiableOn ℂ
   · have h_eq : ∀ t ∈ Icc γ.a γ.b, dslope f (γ.toFun t) x = dslope f x (γ.toFun t) := by
       intro t ht
       by_cases h : γ.toFun t = x
-      · subst h; simp only [dslope_of_ne, ne_eq, not_true_eq_false, not_false_eq_true,
-          dslope_same]
+      · subst h; simp only [dslope_same]
       · simp only [dslope_of_ne _ (Ne.symm h), dslope_of_ne _ h]
         exact slope_comm f (γ.toFun t) x
     apply ContinuousOn.congr _ h_eq
@@ -753,7 +752,7 @@ private theorem dixonH1_F'_aestronglyMeasurable (hU : IsOpen U) (hf : Differenti
     (hδ₀_pos : 0 < δ₀)
     (hBd : ∀ c ∈ γ.toFun '' Icc γ.a γ.b, ∀ w ∈ Metric.ball w₀ δ₀,
       ‖dslope f c w‖ ≤ C_b)
-    (hC_pos : 0 < C_b) :
+    (_hC_pos : 0 < C_b) :
     AEStronglyMeasurable
       (fun t => deriv (dslope f (γ.toFun t)) w₀ * deriv γ.toFun t)
       (volume.restrict (Set.uIoc γ.a γ.b)) := by

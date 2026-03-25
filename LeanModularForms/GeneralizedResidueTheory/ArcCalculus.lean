@@ -1,3 +1,7 @@
+/-
+Copyright (c) 2026. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
 import Mathlib
 
 /-!
@@ -86,7 +90,7 @@ theorem unitArc_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : a < b) :
   -- Apply chain rule for cexp
   have hexp := hc.cexp
   simp only [unitArc]
-  convert hexp using 1 <;> push_cast <;> ring
+  convert hexp using 1
 
 /-- Key distance formula: squared norm of difference of two points on the unit circle. -/
 theorem exp_sub_norm_sq (θ₁ θ₂ : ℝ) :
@@ -95,7 +99,7 @@ theorem exp_sub_norm_sq (θ₁ θ₂ : ℝ) :
   -- Expand using exp(iθ) = cos θ + i sin θ
   simp only [Complex.normSq_apply, Complex.exp_mul_I, Complex.sub_re, Complex.sub_im,
     Complex.add_re, Complex.mul_re, Complex.I_re, mul_zero,
-    Complex.ofReal_im, Complex.I_im, mul_one, sub_zero, Complex.add_im,
+    Complex.I_im, mul_one, sub_zero, Complex.add_im,
     Complex.mul_im, zero_add,
     Complex.cos_ofReal_re, Complex.cos_ofReal_im,
     Complex.sin_ofReal_re, Complex.sin_ofReal_im]
