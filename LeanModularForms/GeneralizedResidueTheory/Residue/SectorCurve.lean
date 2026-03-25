@@ -115,7 +115,7 @@ theorem sectorCurve_seg3 (r : ℝ) (α : ℝ) (t : ℝ) (ht : t ∈ Icc 2 3) :
   · -- t = 2: second branch applies (2 ≤ 2), result matches by computation
     simp only [sectorCurve, show ¬(2 : ℝ) ≤ 1 from by norm_num,
       show (2 : ℝ) ≤ 2 from le_refl 2, ↓reduceIte]
-    push_cast; ring
+    push_cast; ring_nf
   · simp only [sectorCurve, if_neg (not_le.mpr (lt_trans one_lt_two h2)),
       if_neg (not_le.mpr h2)]
 

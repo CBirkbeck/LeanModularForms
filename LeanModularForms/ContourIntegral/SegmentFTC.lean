@@ -29,7 +29,7 @@ namespace ContourIntegral
 log(f b) - log(f a) and the integral over [b,c] is log(f c) - log(f b),
 then the integral over [a,c] is log(f c) - log(f a). -/
 theorem ftc_telescope_two {f : ℝ → ℂ} {a b c : ℝ}
-    (hab : a ≤ b) (hbc : b ≤ c)
+    (_hab : a ≤ b) (_hbc : b ≤ c)
     (hint_ab : IntervalIntegrable (fun t => deriv f t / f t) volume a b)
     (hint_bc : IntervalIntegrable (fun t => deriv f t / f t) volume b c)
     (h_ab : ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a))
@@ -43,8 +43,8 @@ theorem ftc_telescope_two {f : ℝ → ℂ} {a b c : ℝ}
 terms at a and b cancel by closedness. -/
 theorem ftc_telescope_closed_split {f : ℝ → ℂ} {a b t₀ δ : ℝ}
     (h_closed : f a = f b)
-    (hint_left : IntervalIntegrable (fun t => deriv f t / f t) volume a (t₀ - δ))
-    (hint_right : IntervalIntegrable (fun t => deriv f t / f t) volume (t₀ + δ) b)
+    (_hint_left : IntervalIntegrable (fun t => deriv f t / f t) volume a (t₀ - δ))
+    (_hint_right : IntervalIntegrable (fun t => deriv f t / f t) volume (t₀ + δ) b)
     (h_left : ∫ t in a..(t₀ - δ), deriv f t / f t =
       Complex.log (f (t₀ - δ)) - Complex.log (f a))
     (h_right : ∫ t in (t₀ + δ)..b, deriv f t / f t =
@@ -78,7 +78,7 @@ theorem ftc_telescope_integrability {g h : ℝ → ℂ} {a b : ℝ}
     (h_ae : ∀ᵐ t ∂volume, t ∈ Ι a b → deriv g t / g t = deriv h t / h t) :
     IntervalIntegrable (fun t => deriv g t / g t) volume a b :=
   hint_h.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-    (h_ae.mono (fun t ht hm => (ht hm).symm)))
+    (h_ae.mono (fun _t ht hm => (ht hm).symm)))
 
 /-- Transfer an FTC result from a local function `h` to `g` given that their
 log-derivatives agree a.e. and their values agree at the endpoints.

@@ -383,7 +383,7 @@ private lemma unitArc_g_slitPlane_seg1 (s : ℂ)
     Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im]
   linarith [(abs_lt.mp hs_re).2]
 private lemma unitArc_log_final (s : ℂ) (t₀ δ : ℝ)
-    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
+    (_ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3)
     (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
     (hδ_left : 1 < t₀ - δ) (hδ_right : t₀ + δ < 3) (hδ_pos : 0 < δ) :
     let h_arc := fun t => exp (↑(Real.pi * (1 + t) / 6) * I) - s
@@ -398,8 +398,8 @@ private lemma unitArc_log_final (s : ℂ) (t₀ δ : ℝ)
       Complex.I_re, Complex.I_im, mul_zero, zero_mul, sub_self, add_zero, Complex.sub_re]
     show 0 < Real.cos θ_m - Real.cos θ₀'
     have hθ_lt : θ_m < θ₀' := by simp [θ_m, θ₀']; nlinarith [Real.pi_pos]
-    have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, ht₀_Ioo.1]
-    have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.2]
+    have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, _ht₀_Ioo.1]
+    have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, _ht₀_Ioo.2]
     linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ_m_nn hθ₀_le_pi hθ_lt]
   · show 0 < (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s)).re
     set θ_p := Real.pi * (1 + (t₀ + δ)) / 6
@@ -410,8 +410,8 @@ private lemma unitArc_log_final (s : ℂ) (t₀ δ : ℝ)
       mul_zero, zero_mul, sub_self, add_zero, neg_sub]
     show 0 < Real.cos θ₀' - Real.cos θ_p
     have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
-    have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.1]
-    have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, ht₀_Ioo.2]
+    have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, _ht₀_Ioo.1]
+    have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, _ht₀_Ioo.2]
     linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ₀_nn hθ_p_le_pi hθ_gt]
 
 /-- For any `δ > 0` with `t₀-δ > 1` and `t₀+δ < 3`, the δ-split integral
