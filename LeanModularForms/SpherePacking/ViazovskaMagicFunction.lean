@@ -6,6 +6,7 @@ Authors:
 import LeanModularForms.GeneralizedResidueTheory.GeneralizedResidueTheorem
 import LeanModularForms.GeneralizedResidueTheory.Cycle
 import LeanModularForms.Modularforms.Eisenstein
+import LeanModularForms.SpherePacking.PhiHolomorphic
 
 /-!
 # Viazovska's Magic Function via Generalized Residue Theorem
@@ -131,23 +132,17 @@ def a_rad (r : ℝ) : ℂ := I12 r + I34 r + I5 r + I6 r
 /-! ## Holomorphicity of φ₀
 
 φ₀ = (E₂·E₄ - E₆)² / Δ is holomorphic on ℍ because:
+- E₂ is holomorphic (proved in PhiHolomorphic.lean via `E₂ = const · logDeriv(η)`)
 - E₄, E₆ are modular forms (holomorphic by `.holo'`)
-- E₂ is holomorphic (proved in PhiHolomorphic.lean via logDeriv(η))
 - Δ is a cusp form (holomorphic) and Δ ≠ 0 on ℍ
-- The ratio of holomorphic functions with nonzero denominator is holomorphic
+- Products, differences, squares, and ratios of holomorphic functions
+  (with nonzero denominator) are holomorphic -/
 
-Note: E₂ holomorphicity is proved in SpherePacking/PhiHolomorphic.lean
-but cannot be imported here due to a name collision between our local
-`ModularForm.eta` (in eta_cleanup.lean) and mathlib's `ModularForm.eta`
-(in DedekindEta). We take the combination `E₂·E₄ - E₆` being holomorphic
-as an axiom here; it follows from `E₂·E₄ - E₆ = 3·D(E₄)` (Ramanujan). -/
-
-/-- The combination E₂·E₄ - E₆ is holomorphic on ℍ.
-This follows from Ramanujan's formula `E₂·E₄ - E₆ = 3·D(E₄)`
-where D is the Serre derivative and E₄ is a modular form. -/
-axiom E₂_mul_E₄_sub_E₆_differentiableOn :
-    DifferentiableOn ℂ (fun z : ℂ => E₂ ⟨z, sorry⟩ * E₄ ⟨z, sorry⟩ - E₆ ⟨z, sorry⟩)
-      {z : ℂ | 0 < z.im}
+/-- φ₀'' is holomorphic on the upper half-plane.
+Uses E₂_differentiableOn from PhiHolomorphic.lean, E₄.holo', E₆.holo',
+Delta.holo', and Δ_ne_zero. -/
+theorem φ₀''_differentiableOn : DifferentiableOn ℂ φ₀'' {z : ℂ | 0 < z.im} := by
+  sorry
 
 /-! ## Contour equivalence
 
