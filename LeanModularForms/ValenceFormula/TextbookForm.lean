@@ -314,7 +314,9 @@ private lemma inv_c_sq_eq (g : SL(2, ℤ)) :
     ((g⁻¹ : SL(2, ℤ)).1 1 0) ^ 2 = ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0) ^ 2 := by
   have : (g⁻¹ : SL(2, ℤ)).1 1 0 = -((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0) := by
     show (↑g⁻¹ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = _
-    rw [Matrix.SpecialLinearGroup.coe_inv g, Matrix.adjugate_fin_two]; simp
+    rw [Matrix.SpecialLinearGroup.coe_inv g, Matrix.adjugate_fin_two]
+    simp only [Fin.isValue, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero,
+               Matrix.cons_val_fin_one, Matrix.cons_val_one]
   rw [this]; ring
 
 private lemma repCanon_norm_one_re_neg (p : ℍ) (hp : p ∈ repCanon f hf)

@@ -216,7 +216,7 @@ theorem sortedPartition_tail_nonempty (γ : PiecewiseC1Curve) :
     rw [heq] at h
     simp only [List.tail_cons] at h
     rw [heq, h]
-    simp
+    simp only [List.length_cons, List.length_nil, Nat.zero_add, le_refl]
   linarith
 
 /-- The union of `Icc p.1 p.2` over all `p ∈ consecutivePairs γ` covers `[a, b]`. -/
@@ -233,10 +233,10 @@ theorem consecutivePairs_cover (γ : PiecewiseC1Curve) :
 private theorem sorted_zip_tail_le {l : List ℝ} (hl : l.Sorted (· ≤ ·))
     {p : ℝ × ℝ} (hp : p ∈ l.zip l.tail) : p.1 ≤ p.2 := by
   induction l with
-  | nil => simp at hp
+  | nil => simp only [List.zip_nil_left, List.not_mem_nil] at hp
   | cons x xs ih =>
     cases xs with
-    | nil => simp at hp
+    | nil => simp only [List.tail_cons, List.zip_nil_right, List.not_mem_nil] at hp
     | cons y ys =>
       simp only [List.zip_cons_cons, List.tail_cons, List.mem_cons] at hp
       cases hp with

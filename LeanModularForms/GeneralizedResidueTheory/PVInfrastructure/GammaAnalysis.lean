@@ -142,7 +142,7 @@ lemma integrand_times_t_tendsto_one
       · have h1 : Tendsto (fun t => t - t₀)
             (𝓝 t₀) (𝓝 (t₀ - t₀)) :=
           tendsto_id.sub_const t₀
-        simp at h1; exact h1.mono_left nhdsWithin_le_nhds
+        simp only [sub_self] at h1; exact h1.mono_left nhdsWithin_le_nhds
       · filter_upwards [self_mem_nhdsWithin] with t ht
         simp only [Set.mem_compl_iff,
           Set.mem_singleton_iff, sub_ne_zero]
@@ -333,7 +333,7 @@ lemma no_return_of_inj_continuous
     rw [norm_pos_iff, sub_ne_zero]
     intro h_eq
     have h_t_eq := h_inj t ht_Icc h_eq
-    subst h_t_eq; simp at ht_dist; linarith
+    subst h_t_eq; simp only [Set.mem_setOf_eq, sub_self, abs_zero] at ht_dist; linarith
   obtain ⟨ρ, hρ_pos, hρ_le⟩ :=
     hS_compact.exists_forall_le' hf_cont hf_pos
   exact ⟨ρ, hρ_pos,
@@ -400,7 +400,8 @@ lemma contAt_deriv_of_contDiffAt_two
     (hγ_C2 : ContDiffAt ℝ 2 γ t₀) :
     ContinuousAt (deriv γ) t₀ := by
   obtain ⟨u, hu_mem, hγ_on⟩ :=
-    hγ_C2.contDiffOn (m := 2) le_rfl (by simp)
+    hγ_C2.contDiffOn (m := 2) le_rfl
+      (by norm_cast)
   obtain ⟨ε, hε_pos, hball_sub⟩ :=
     Metric.mem_nhds_iff.mp hu_mem
   have hγ_ball :

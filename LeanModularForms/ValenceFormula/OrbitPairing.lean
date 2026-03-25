@@ -238,7 +238,9 @@ private lemma S_mul_S : ModularGroup.S * ModularGroup.S = -1 := by
 
 /-- S² acts as the identity on ℍ. -/
 lemma S_smul_S_smul (p : ℍ) : ModularGroup.S • (ModularGroup.S • p) = p := by
-  rw [← mul_smul, S_mul_S]; apply Subtype.ext; simp
+  rw [← mul_smul, S_mul_S]
+  apply Subtype.ext
+  simp only [ModularGroup.SL_neg_smul, one_smul]
 
 /-- The S-action is injective on ℍ. -/
 lemma S_smul_injective : Function.Injective (ModularGroup.S • · : ℍ → ℍ) :=

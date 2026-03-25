@@ -88,7 +88,7 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
     Set.ext fun n => (h_zero_iff n).not
   have hps_ne : ps ≠ 0 := by
     intro h; apply hp_ne
-    exact FormalMultilinearSeries.ext fun n => (h_zero_iff n).mpr (by rw [h]; simp)
+    exact FormalMultilinearSeries.ext fun n => (h_zero_iff n).mpr (by rw [h]; simp only [map_zero])
   -- Strategy: show p.order satisfies the characterization of ps.order.toNat
   -- Both are the smallest n with nonzero n-th coefficient
   show p.order = (orderAtCusp' f).toNat
@@ -182,7 +182,7 @@ private lemma circleIntegral_const_mul_inv (m : ℂ) {R : ℝ} (hR : R ≠ 0) :
     (∮ q in C(0, R), m * q⁻¹) = m * (2 * ↑Real.pi * I) := by
   rw [circleIntegral.integral_const_mul]
   congr 1
-  have : (fun q : ℂ => q⁻¹) = (fun q => (q - 0)⁻¹) := by ext; simp
+  have : (fun q : ℂ => q⁻¹) = (fun q => (q - 0)⁻¹) := by ext; simp only [sub_zero]
   rw [this]
   exact circleIntegral.integral_sub_center_inv 0 hR
 

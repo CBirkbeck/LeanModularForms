@@ -42,7 +42,7 @@ theorem hasDerivAt_zpow_comp_sub
     hasDerivAt_zpow n (γ t - s) (Or.inl (sub_ne_zero.mpr hne))
   have h_comp := h_base.comp t hγ_sub
   refine h_comp.congr_deriv ?_
-  simp
+  ring
 
 /-- ContinuousOn for `t ↦ (γ(t) - s)^n` on a set where `γ(t) ≠ s`. -/
 theorem continuousOn_zpow_comp_sub
@@ -563,7 +563,7 @@ private lemma re_pos_right_of_slope
     have hcl : IsClosed ((↑γ.partition : Set ℝ) \ {t₀}) :=
       (γ.partition.finite_toSet.subset Set.diff_subset).isClosed
     filter_upwards [nhdsWithin_le_nhds
-        (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
+        (hcl.isOpen_compl.mem_nhds (Set.mem_compl (fun h => h.2 rfl))),
       nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2),
       self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
     exact γ.smooth_off_partition t ht₂
@@ -610,7 +610,7 @@ private lemma re_pos_left_of_slope
     have hcl : IsClosed ((↑γ.partition : Set ℝ) \ {t₀}) :=
       (γ.partition.finite_toSet.subset Set.diff_subset).isClosed
     filter_upwards [nhdsWithin_le_nhds
-        (hcl.isOpen_compl.mem_nhds (Set.mem_compl (by simp))),
+        (hcl.isOpen_compl.mem_nhds (Set.mem_compl (fun h => h.2 rfl))),
       nhdsWithin_le_nhds (Icc_mem_nhds ht₀.1 ht₀.2),
       self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
     exact γ.smooth_off_partition t ht₂
@@ -744,7 +744,7 @@ private lemma direction_rate_from_flatness_left
       div_self hL_ne]
   have h_td_eq : ∀ w : ℂ, tangentDeviation w (-L_L) = tangentDeviation w L_L := by
     intro w
-    have : -L_L = (-1 : ℝ) • L_L := by simp
+    have : -L_L = (-1 : ℝ) • L_L := by simp only [neg_smul, one_smul]
     rw [this, tangentDeviation_real_smul_right _ (by norm_num : (-1 : ℝ) ≠ 0)]
   have h_flat_eps : (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) (-L_L)‖) =o[𝓝[>] 0]
       (fun ε => ε ^ m) := by

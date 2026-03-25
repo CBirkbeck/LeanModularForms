@@ -35,9 +35,10 @@ private lemma unitArc_log_ratio_tendsto (s : ℂ)
     exact nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num : (0:ℝ) < 6))
   have h_log_exp : Tendsto (fun δ : ℝ => Complex.log (cexp (↑(-(Real.pi * δ / 6)) * I)))
       (nhdsWithin 0 (Ioi 0)) (nhds 0) := by
-    rw [show (0 : ℂ) = Complex.log 1 from by simp]
+    rw [show (0 : ℂ) = Complex.log 1 from (by simp only [Complex.log_one])]
     apply (continuousAt_clog (by simp [slitPlane])).tendsto.comp
-    rw [show (1 : ℂ) = cexp (↑(-(Real.pi * 0 / 6)) * I) from by simp]
+    rw [show (1 : ℂ) = cexp (↑(-(Real.pi * 0 / 6)) * I) from
+      (by simp only [mul_zero, zero_div, neg_zero, ofReal_zero, zero_mul, Complex.exp_zero])]
     exact Tendsto.mono_left (by fun_prop : Continuous _).continuousAt.tendsto nhdsWithin_le_nhds
   have h_agree : ∀ᶠ δ in nhdsWithin (0:ℝ) (Ioi 0),
       Complex.log (cexp (↑(-(Real.pi * δ / 6)) * I)) =

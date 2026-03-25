@@ -129,7 +129,7 @@ private theorem circleIntegral_laurent_term
     congr 1
     have h_eq' : Set.EqOn (fun z => (z - s) ^ (-(1 : ℤ)))
         (fun z => (z - s)⁻¹) (Metric.sphere s r) := by
-      intro z _; simp
+      intro z _; simp only [zpow_neg_one]
     rw [circleIntegral.integral_congr hr_pos.le h_eq',
       circleIntegral.integral_sub_center_inv s hr_ne]
   · simp only [hk, if_false]
@@ -746,7 +746,7 @@ theorem multipoint_pv_zpow_tendsto_zero (S0 : Finset ℂ)
         ∫ t in γ.a..γ.b, (0 : ℂ) from by
       congr 1; ext t
       rw [hS0_single, cauchyPrincipalValueIntegrandOn_singleton]; ring_nf]
-    simp
+    simp only [intervalIntegral.integral_zero]
   · have hS0_ne : S0.Nonempty := ⟨s, hs⟩
     let δ_sep := (S0.erase s).inf' (by
       exact (Finset.erase_nonempty hs).mpr
@@ -911,8 +911,8 @@ lemma cpvIntegrandOn_finset_sum {ι : Type*} (S0 : Finset ℂ) (T : Finset ι)
     ∑ i ∈ T, cauchyPrincipalValueIntegrandOn S0 (f i) γ ε t := by
   simp only [cauchyPrincipalValueIntegrandOn]
   split_ifs with h
-  · simp
-  · simp [Finset.sum_mul]
+  · simp only [Finset.sum_const_zero]
+  · simp only [Finset.sum_mul]
 
 /-- Integrability of CPV integrand for functions continuous on U \ S0.
 For any g continuous on U \ S0 with γ mapping into U, the multi-point CPV

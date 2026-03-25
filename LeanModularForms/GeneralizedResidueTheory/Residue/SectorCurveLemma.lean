@@ -878,7 +878,7 @@ theorem generalizedWindingNumber_sectorCurve (r : ℝ) (hr : 0 < r) (α : ℝ)
     generalizedWindingNumber' (sectorCurve r α) 0 3 0 = ↑α / (2 * ↑Real.pi) := by
   unfold generalizedWindingNumber'
   have hpv_val := (pv_sector_dz_over_z r hr α hα_nonneg hα_le).2
-  have h_sub_zero : (fun t => sectorCurve r α t - 0) = sectorCurve r α := by ext; simp
+  have h_sub_zero : (fun t => sectorCurve r α t - 0) = sectorCurve r α := by ext; simp only [sub_zero]
   rw [h_sub_zero, hpv_val]
   have h_pi_ne : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
   have h_I_ne : (I : ℂ) ≠ 0 := Complex.I_ne_zero

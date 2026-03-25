@@ -439,7 +439,7 @@ lemma arc_non_excluded_measure_tendsto (S : Finset UpperHalfPlane) (H : ℝ) :
         continuous_const).measurableSet)
   · apply Filter.Eventually.of_forall; intro ε
     apply Filter.Eventually.of_forall; intro t _
-    split_ifs <;> simp
+    split_ifs <;> norm_num
   · exact intervalIntegrable_const
   · rw [ae_iff]
     apply measure_mono_null (t := (⋃ s ∈ (sArcOfS S : Finset ℂ),

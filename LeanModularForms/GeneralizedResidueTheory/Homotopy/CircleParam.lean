@@ -40,7 +40,7 @@ lemma circleParam_closed (z₀ : ℂ) (r : ℝ) (a b : ℝ) (hab : a < b) :
   simp only [circleParam]
   have hne : (b : ℂ) - a ≠ 0 := by
     simp [sub_ne_zero, Complex.ofReal_inj]; exact ne_of_gt hab
-  have ha : ((a : ℂ) - a) / ((b : ℂ) - a) = 0 := by simp
+  have ha : ((a : ℂ) - a) / ((b : ℂ) - a) = 0 := by simp only [sub_self, zero_div]
   have hb : ((b : ℂ) - a) / ((b : ℂ) - a) = 1 := div_self hne
   simp only [ha, hb, mul_zero, exp_zero, mul_one, exp_two_pi_mul_I]
 

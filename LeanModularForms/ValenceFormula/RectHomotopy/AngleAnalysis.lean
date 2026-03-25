@@ -59,8 +59,14 @@ lemma v0_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
     (fdPolygon 0 - p).re > 0 ∧ (fdPolygon 0 - p).im > 0 := by
   rw [fdPolygon_at_zero]
   have hpre : p.re < 1/2 := (abs_lt.mp hp_re).2
-  have hre : (1/2 + H_height * I - p).re = 1/2 - p.re := by simp
-  have him : (1/2 + H_height * I - p).im = H_height - p.im := by simp
+  have hre : (1/2 + H_height * I - p).re = 1/2 - p.re := by
+    simp only [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
+               Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_zero, zero_mul,
+               Complex.div_ofNat_re, Complex.one_re, sub_self, add_zero]
+  have him : (1/2 + H_height * I - p).im = H_height - p.im := by
+    simp only [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_re,
+               Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_one, zero_mul, add_zero,
+               Complex.div_ofNat_im, Complex.one_im, zero_div, zero_add]
   constructor
   · rw [hre]; linarith
   · rw [him]; linarith
@@ -122,8 +128,15 @@ lemma v4_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
   rw [fdPolygon_at_four]
   have hpre_neg : -(1/2) < p.re := (abs_lt.mp hp_re).1
   have hpre : -1/2 < p.re := by linarith
-  have hre : (-1/2 + H_height * I - p).re = -1/2 - p.re := by simp
-  have him : (-1/2 + H_height * I - p).im = H_height - p.im := by simp
+  have hre : (-1/2 + H_height * I - p).re = -1/2 - p.re := by
+    simp only [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
+               Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_zero, zero_mul,
+               Complex.neg_re, Complex.div_ofNat_re, Complex.one_re, sub_self, add_zero]
+  have him : (-1/2 + H_height * I - p).im = H_height - p.im := by
+    simp only [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_re,
+               Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_one, zero_mul,
+               Complex.neg_im, Complex.div_ofNat_im, Complex.one_im, zero_div, neg_zero,
+               zero_add, add_zero]
   constructor
   · rw [hre]; linarith
   · rw [him]; linarith
@@ -199,7 +212,12 @@ lemma seg4_vec_re_neg (p : ℂ) (hp_re : |p.re| < 1/2) (t : ℝ)
     · linarith [ht.1]
     · linarith [ht.1]
     · linarith [ht.1]
-    · simp
+    · simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.I_re, Complex.I_im,
+                 Complex.add_im, Complex.mul_im, Complex.ofReal_im, Complex.sub_re, Complex.sub_im,
+                 Complex.div_ofNat_re, Complex.div_ofNat_im, Complex.one_re, Complex.one_im,
+                 Complex.natCast_re, Complex.natCast_im, Complex.im_ofNat,
+                 mul_zero, zero_mul, mul_one, sub_self, add_zero, sub_zero, zero_add,
+                 Complex.neg_re, zero_div, neg_zero, sub_neg_eq_add]
     · linarith [ht.2]
   rw [Complex.sub_re, hseg4_re]
   linarith
@@ -315,7 +333,10 @@ noncomputable def fdPolygonRadialCircle_angle_lifted (p : ℂ) :
 lemma fdPolygon_zero_ne_interior (p : ℂ) (hp_im : p.im < H_height) : fdPolygon 0 ≠ p := by
   rw [fdPolygon_at_zero]
   intro heq
-  have him : (1/2 + H_height * I).im = H_height := by simp
+  have him : (1/2 + H_height * I).im = H_height := by
+    simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.I_re, Complex.I_im,
+               Complex.ofReal_im, mul_one, zero_mul, Complex.div_ofNat_im, Complex.one_im,
+               zero_div, zero_add, add_zero]
   have hp_im' : p.im = H_height := by rw [← heq]; exact him
   linarith
 
@@ -421,7 +442,7 @@ lemma ref_p₀_re : |ref_p₀.re| < 1 / 2 := by
   unfold ref_p₀
   simp only [Complex.mul_re, Complex.I_re, Complex.I_im,
     Complex.ofReal_re, Complex.ofReal_im, zero_mul, one_mul, sub_zero]
-  simp
+  norm_num
 
 lemma ref_p₀_im_pos : 0 < ref_p₀.im := by
   unfold ref_p₀

@@ -229,7 +229,7 @@ private lemma pvIntegrand_seg4_eq_neg_seg1 (_S : Finset UpperHalfPlane) (Sx : Fi
   have h_trunc := h_trunc_iff u hu
   simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn]
   by_cases h_trunc_u : ∃ s ∈ Sx, ‖fdBoundary_H H u - s‖ ≤ ε
-  · rw [if_pos h_trunc_u, if_pos (h_trunc.mpr h_trunc_u)]; simp
+  · rw [if_pos h_trunc_u, if_pos (h_trunc.mpr h_trunc_u)]; simp only [neg_zero]
   · rw [if_neg h_trunc_u, if_neg (mt h_trunc.mp h_trunc_u)]
     have h_seg1 : fdBoundary_H H u = fdBoundary_seg1_H H u :=
       fdBoundary_H_eq_seg1_H hu_le1
@@ -413,7 +413,8 @@ private lemma pvIntegrand_measurableSet_trunc
       ‖fdBoundary_H H t - s‖ ≤ ε} := by
   have : {t : ℝ | ∃ s ∈ sArcOfS S ∪ sVertOfS S, ‖fdBoundary_H H t - s‖ ≤ ε} =
       ⋃ s ∈ (sArcOfS S ∪ sVertOfS S), {t | ‖fdBoundary_H H t - s‖ ≤ ε} := by
-    ext t; simp
+    ext t
+    simp only [Set.mem_setOf_eq, Set.mem_iUnion₂, exists_prop]
   rw [this]
   exact MeasurableSet.biUnion (sArcOfS S ∪ sVertOfS S).countable_toSet
     fun s _ => measurableSet_le
@@ -879,7 +880,7 @@ private lemma exists_height_above_sqrt3_and_S
       ∀ s ∈ S, (s : ℂ).im < H₀ := by
   rcases S.eq_empty_or_nonempty with rfl | hne
   · exact ⟨1, by nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)],
-      le_refl _, by simp⟩
+      le_refl _, fun s hs => absurd hs (Finset.not_mem_empty s)⟩
   · refine ⟨max 1 (S.sup' hne (fun s => (s : ℂ).im) + 1), ?_, ?_, ?_⟩
     · calc Real.sqrt 3 / 2 < 1 := by
             nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]

@@ -557,7 +557,7 @@ lemma summableSubseqAux_le_geometric {γ : ℝ → ℂ}
   let ε := summableSubseqAux hL hγ_hasderiv
     hγ_cont_deriv δ₀
   induction n with
-  | zero => simp
+  | zero => simp only [pow_zero, div_one, le_refl]
   | succ m ih =>
     have h_halving := summableSubseqAux_halving hL
       hγ_hasderiv hγ_cont_deriv δ₀ hδ₀_pos m

@@ -76,7 +76,7 @@ theorem cauchyPrincipalValueIntegrand_bounded
       · exact absurd ⟨γ t, ⟨t, ht, rfl⟩, by
           simp only [Metric.mem_ball, not_lt]
           exact le_of_lt h⟩ h_empty
-      · simp⟩
+      · simp only [norm_zero, le_refl]⟩
 
 lemma cauchyPrincipalValueIntegrand_eq_indicator
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) :

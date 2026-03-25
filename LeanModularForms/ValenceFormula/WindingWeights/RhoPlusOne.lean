@@ -139,7 +139,7 @@ private lemma g_rho'_ne_zero (hH : Real.sqrt 3 / 2 < H)
         have : Real.sqrt 3 / 2 < Real.sin (Real.pi * (1 + t) / 6) :=
           sin_gt_sqrt3_div_2_of_mem (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
         linarith
-      rw [h_eq] at him_pos; simp at him_pos
+      rw [h_eq] at him_pos; simp only [Complex.zero_im, lt_irrefl] at him_pos
     · rcases eq_or_lt_of_le h3 with rfl | h3'
       · rw [fdBoundary_H_at_three_eq_rho] at h_eq
         simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
@@ -152,13 +152,15 @@ private lemma g_rho'_ne_zero (hH : Real.sqrt 3 / 2 < H)
           have hre : (-1 + ↑((t - 3) * (H - Real.sqrt 3 / 2)) * I : ℂ).re = -1 := by
             simp [Complex.add_re, Complex.neg_re, Complex.one_re, Complex.mul_re,
               Complex.ofReal_re, Complex.I_re, Complex.ofReal_im, Complex.I_im]
-          rw [h_eq] at hre; simp at hre
+          rw [h_eq] at hre
+          simp only [Complex.zero_re] at hre
+          norm_num at hre
         · rw [g_rho'_seg4_value h4] at h_eq
           have him : (↑(t - 5) + ↑(H - Real.sqrt 3 / 2) * I : ℂ).im =
               H - Real.sqrt 3 / 2 := by
             simp [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
               Complex.I_im, Complex.ofReal_re]
-          rw [h_eq] at him; simp at him; linarith
+          rw [h_eq] at him; simp only [Complex.zero_im] at him; linarith
 
 private lemma g_rho'_slitPlane (hH : Real.sqrt 3 / 2 < H)
     {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 5) (hne1 : t ≠ 1) (hne3 : t ≠ 3) :
@@ -416,7 +418,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     rw [h_eq]
     have := ((hasDerivAt_const t (1:ℝ)).sub (hasDerivAt_id t)).mul_const
       (H - Real.sqrt 3 / 2) |>.ofReal_comp.mul_const I
-    convert this using 1; simp
+    convert this using 1; push_cast; ring
   have hd_h₁ : ∀ t : ℝ, HasDerivAt h₁
       (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t := by
     intro t

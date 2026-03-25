@@ -207,7 +207,7 @@ lemma fdBoundary_H_re_abs_le_half (H : ℝ) :
       |Complex.re (fdBoundary_H H t)| ≤ 1 / 2 := by
   intro t ⟨ht0, ht5⟩
   by_cases h1 : t ≤ 1
-  · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_re]; simp
+  · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_re]; norm_num
   · push_neg at h1
     by_cases h2 : t ≤ 2
     · rw [fdBoundary_H_eq_seg2_H H h1 h2, fdBoundary_seg2_H, seg2_re]

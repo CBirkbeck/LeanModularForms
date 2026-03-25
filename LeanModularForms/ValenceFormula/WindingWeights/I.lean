@@ -325,7 +325,7 @@ private lemma g_i_at_t₀ (hH : 1 < H) :
     rw [show 3 + (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) - 3 =
       (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) from by ring]
     rw [div_mul_cancel₀ _ (ne_of_gt h_den_pos)]; ring
-  rw [h_im_zero]; simp
+  rw [h_im_zero]; simp only [ofReal_zero, zero_mul, add_zero]
 
 private lemma g_i_seg3_im_neg {t : ℝ} (ht3 : 3 < t) (ht_t0 : t < t₀_i H)
     (hH : 1 < H) : (fdBoundary_H H t - I).im < 0 := by
@@ -482,7 +482,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       convert this using 1
       ring
     have h2 := h1.ofReal_comp.add (hasDerivAt_const t (↑(H - 1) * I))
-    exact h2.congr_deriv (by simp)
+    exact h2.congr_deriv (by simp only [Complex.ofReal_one, add_zero])
   have heq_01 : ∀ t ∈ Ioo (0:ℝ) 1, g t = h₀ t ∧ deriv g t = deriv h₀ t := by
     intro t ⟨_, ht1⟩
     refine ⟨hg_eq_h₀ t (le_of_lt ht1), ?_⟩
@@ -592,7 +592,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       · show (h₂ t₀).im ≤ 0
         rw [← hg_eq_h₂ t₀ (by linarith [t₀_i_gt_three hH]) (by linarith [t₀_i_lt_four hH]),
           hgt₀_val]
-        simp
+        norm_num
       · show (h₂ t).im ≤ 0
         rw [← hg_eq_h₂ t ht3' (by linarith)]
         exact le_of_lt (g_i_seg3_im_neg ht3' ht_t0' hH)
@@ -612,7 +612,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hh₂_im_nn_t₀4 : ∀ t ∈ Icc t₀ (4:ℝ), 0 ≤ (h₂ t).im := by
     intro t ⟨ht_t0, ht4⟩
     rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
-    · rw [← hgt₀_2, hgt₀_val]; simp
+    · rw [← hgt₀_2, hgt₀_val]; norm_num
     · rw [← hg_eq_h₂ t (by linarith) ht4]
       exact le_of_lt (g_i_seg3_im_pos ht_t0' ht4 hH)
   have hh₂_ne_t₀4 : ∀ t ∈ Icc t₀ (4:ℝ), h₂ t ≠ 0 := by

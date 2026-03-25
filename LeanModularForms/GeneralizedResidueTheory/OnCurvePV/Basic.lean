@@ -293,7 +293,7 @@ lemma arc_angle_injective {t t' : ℝ}
       exact le_mul_of_one_le_right (by positivity) h1
     have h3 : |2 * Real.pi * (n : ℝ)| < Real.pi := by rwa [h_vals] at h_diff_small
     linarith [Real.pi_pos]
-  rw [hn0] at h_vals; simp at h_vals
+  rw [hn0] at h_vals; simp only [Int.cast_zero, mul_zero] at h_vals
   nlinarith [Real.pi_ne_zero, Real.pi_pos]
 
 /-- CPV trivially exists when the curve avoids `z₀` on `[a, b]`. -/
