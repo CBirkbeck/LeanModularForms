@@ -49,9 +49,10 @@ noncomputable abbrev etaProdTerm (z : ℂ) := ∏' (n : ℕ), (1 - eta_q n z)
 local notation "ηₚ" => etaProdTerm
 
 /- The eta function. Best to define it on all of ℂ since we want to take its logDeriv. -/
-noncomputable def ModularForm.eta (z : ℂ) := (𝕢 24 z) * ηₚ z
+noncomputable def dedekindEtaFun' (z : ℂ) := (𝕢 24 z) * ηₚ z
 
-local notation "η" => ModularForm.eta
+local notation "η" => dedekindEtaFun'
+
 
 theorem Summable_eta_q (z : ℍ) : Summable fun n : ℕ ↦ ‖-eta_q n z‖ := by
     simp_rw  [eta_q, eta_q_eq_pow, norm_neg, norm_pow, summable_nat_add_iff 1]
@@ -101,8 +102,8 @@ theorem etaProdTerm_ne_zero (z : ℍ) : ηₚ z ≠ 0 := by
     simpa [eta_q, ←summable_norm_iff] using Summable_eta_q x
 
 /--Eta is non-vanishing!-/
-lemma eta_nonzero_on_UpperHalfPlane (z : ℍ) : η z ≠ 0 := by
-  simpa [ModularForm.eta, Periodic.qParam] using etaProdTerm_ne_zero z
+lemma dedekindEtaFun'_ne_zero (z : ℍ) : η z ≠ 0 := by
+  simpa [dedekindEtaFun', Periodic.qParam] using etaProdTerm_ne_zero z
 
 /-
 lemma differentiable_eta_q (n : ℕ) : Differentiable ℂ (eta_q n) := by
@@ -149,7 +150,7 @@ lemma tsum_log_deriv_eta_q' (z : ℂ) :
   ext i
   ring
 
-lemma logDeriv_q (n : ℝ) (z : ℂ) : logDeriv (𝕢 n) z = 2 * ↑π * Complex.I / n := by
+lemma logDeriv_q' (n : ℝ) (z : ℂ) : logDeriv (𝕢 n) z = 2 * ↑π * Complex.I / n := by
   have : (𝕢 n) = (fun z ↦ cexp (z)) ∘ (fun z => (2 * ↑π * Complex.I / n) * z)  := by
     ext y
     simp only [Periodic.qParam, comp_apply]
@@ -157,7 +158,7 @@ lemma logDeriv_q (n : ℝ) (z : ℂ) : logDeriv (𝕢 n) z = 2 * ↑π * Complex
   rw [this, logDeriv_comp (by fun_prop) (by fun_prop), deriv_const_mul _ (by fun_prop)]
   simp only [LogDeriv_exp, Pi.one_apply, deriv_id'', mul_one, one_mul]
 
-lemma logDeriv_z_term (z : ℍ) : logDeriv (𝕢 24) ↑z  =  2 * ↑π * Complex.I / 24 := by
+lemma logDeriv_z_term' (z : ℍ) : logDeriv (𝕢 24) ↑z  =  2 * ↑π * Complex.I / 24 := by
   have : (𝕢 24) = (fun z ↦ cexp (z)) ∘ (fun z => (2 * ↑π * Complex.I / 24) * z)  := by
     ext y
     simp only [Periodic.qParam, ofReal_ofNat, comp_apply]
@@ -179,18 +180,18 @@ theorem etaProdTerm_differentiableAt (z : ℍ) : DifferentiableAt ℂ ηₚ ↑z
     intro x hx
     simp [sub_eq_add_neg, eta_q_eq_exp]
 
-lemma eta_DifferentiableAt_UpperHalfPlane (z : ℍ) : DifferentiableAt ℂ eta z := by
+lemma eta_DifferentiableAt_UpperHalfPlane' (z : ℍ) : DifferentiableAt ℂ dedekindEtaFun' z := by
   apply DifferentiableAt.mul (by fun_prop) (etaProdTerm_differentiableAt z)
 
-lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12) * E₂ z := by
-  unfold ModularForm.eta etaProdTerm
+lemma eta_logDeriv' (z : ℍ) : logDeriv dedekindEtaFun' z = (π * Complex.I / 12) * E₂ z := by
+  unfold dedekindEtaFun' etaProdTerm
   rw [logDeriv_mul (UpperHalfPlane.coe z) _ (etaProdTerm_ne_zero z) _
     (etaProdTerm_differentiableAt z)]
   · have HG := logDeriv_tprod_eq_tsum2 (isOpen_lt continuous_const Complex.continuous_im) z
       (fun n x => 1 - eta_q n x) (fun i ↦ one_add_eta_q_ne_zero i z) ?_ ?_ ?_ (etaProdTerm_ne_zero z)
     rw [show z.1 = UpperHalfPlane.coe z by rfl] at HG
     rw [HG]
-    · simp only [tsum_log_deriv_eta_q' z, E₂, logDeriv_z_term z, mul_neg, one_div, mul_inv_rev, Pi.smul_apply, smul_eq_mul]
+    · simp only [tsum_log_deriv_eta_q' z, E₂, logDeriv_z_term' z, mul_neg, one_div, mul_inv_rev, Pi.smul_apply, smul_eq_mul]
       rw [G2_q_exp'', riemannZeta_two, ← (tsum_eq_tsum_sigma_pos'' z), mul_sub, sub_eq_add_neg, mul_add]
       conv =>
         enter [1,2,2,1]
@@ -222,7 +223,7 @@ lemma eta_logDeriv (z : ℍ) : logDeriv ModularForm.eta z = (π * Complex.I / 12
   · simp [ne_eq, exp_ne_zero, not_false_eq_true, Periodic.qParam]
   · fun_prop
 
-lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
+lemma eta_logDeriv_eql' (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   (logDeriv ((csqrt) * η)) z := by
   have h0 : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z = ((z :ℂ)^(2 : ℤ))⁻¹ * (logDeriv η) (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ) := by
     rw [logDeriv_comp, mul_comm]
@@ -235,7 +236,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
     simp only [deriv.fun_neg', deriv_inv', neg_neg, inv_inj]
     norm_cast
     · simpa only using
-      eta_DifferentiableAt_UpperHalfPlane (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ)
+      eta_DifferentiableAt_UpperHalfPlane' (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ)
     conv =>
       enter [2]
       ext z
@@ -254,8 +255,8 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   nth_rw 2 [div_eq_mul_inv]
   rw [← Complex.exp_neg, show 2⁻¹ * cexp (-(2⁻¹ * Complex.log ↑z)) * cexp (-(2⁻¹ * Complex.log ↑z)) =
    (cexp (-(2⁻¹ * Complex.log ↑z)) * cexp (-(2⁻¹ * Complex.log ↑z)))* 2⁻¹ by ring, ← Complex.exp_add,
-   ← sub_eq_add_neg, show -(2⁻¹ * Complex.log ↑z) - 2⁻¹ * Complex.log ↑z = -Complex.log ↑z by ring, Complex.exp_neg, Complex.exp_log, eta_logDeriv z]
-  have Rb := eta_logDeriv (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ)
+   ← sub_eq_add_neg, show -(2⁻¹ * Complex.log ↑z) - 2⁻¹ * Complex.log ↑z = -Complex.log ↑z by ring, Complex.exp_neg, Complex.exp_log, eta_logDeriv' z]
+  have Rb := eta_logDeriv' (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ)
   simp only [coe_mk_subtype] at Rb
   rw [Rb]
   have E := E₂_transform z
@@ -282,7 +283,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   rw [mul_comm]
   · simpa only [UpperHalfPlane.coe, ne_eq] using (ne_zero z)
   · simp only [csqrt, one_div, ne_eq, Complex.exp_ne_zero, not_false_eq_true]
-  · apply eta_nonzero_on_UpperHalfPlane z
+  · apply dedekindEtaFun'_ne_zero z
   · unfold csqrt
     rw [show (fun a ↦ cexp (1 / 2 * Complex.log a)) = cexp ∘ (fun a ↦ 1 / 2 * Complex.log a) by rfl]
     apply DifferentiableAt.comp
@@ -294,17 +295,17 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
     have hz := z.2
     simp  at hz
     exact Ne.symm (ne_of_lt hz)
-  · apply eta_DifferentiableAt_UpperHalfPlane z
+  · apply eta_DifferentiableAt_UpperHalfPlane' z
 
-lemma eta_logderivs : {z : ℂ | 0 < z.im}.EqOn (logDeriv (η ∘ (fun z : ℂ => -1/z)))
+lemma eta_logderivs' : {z : ℂ | 0 < z.im}.EqOn (logDeriv (η ∘ (fun z : ℂ => -1/z)))
   (logDeriv ((csqrt) * η)) := by
   intro z hz
-  have := eta_logDeriv_eql ⟨z, hz⟩
+  have := eta_logDeriv_eql' ⟨z, hz⟩
   exact this
 
-lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
+lemma eta_logderivs_const' : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
   (z • ((csqrt) * η)) := by
-  have h := eta_logderivs
+  have h := eta_logderivs'
   rw [logDeriv_eqOn_iff] at h
   · exact h
   · apply DifferentiableOn.comp
@@ -313,7 +314,7 @@ lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn (
     · rw [DifferentiableOn]
       intro x hx
       apply DifferentiableAt.differentiableWithinAt
-      apply eta_DifferentiableAt_UpperHalfPlane ⟨x, hx⟩
+      apply eta_DifferentiableAt_UpperHalfPlane' ⟨x, hx⟩
     · apply DifferentiableOn.div
       fun_prop
       fun_prop
@@ -336,23 +337,23 @@ lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn (
     apply (csqrt_differentiableAt ⟨x, hx⟩).differentiableWithinAt
     simp only [DifferentiableOn, mem_setOf_eq]
     intro x hx
-    apply (eta_DifferentiableAt_UpperHalfPlane ⟨x, hx⟩).differentiableWithinAt
+    apply (eta_DifferentiableAt_UpperHalfPlane' ⟨x, hx⟩).differentiableWithinAt
   · exact isOpen_lt continuous_const Complex.continuous_im
   · refine Convex.isPreconnected ?_
     exact convex_halfSpace_im_gt 0
   · intro x hx
     simp only [Pi.mul_apply, ne_eq, mul_eq_zero, not_or]
-    refine ⟨ ?_ , by apply eta_nonzero_on_UpperHalfPlane ⟨x, hx⟩⟩
+    refine ⟨ ?_ , by apply dedekindEtaFun'_ne_zero ⟨x, hx⟩⟩
     unfold csqrt
     simp only [one_div, Complex.exp_ne_zero, not_false_eq_true]
   · intro x hx
     simp only [comp_apply, ne_eq]
-    have := eta_nonzero_on_UpperHalfPlane ⟨-1 / x, by simpa using pnat_div_upper 1 ⟨x, hx⟩⟩
+    have := dedekindEtaFun'_ne_zero ⟨-1 / x, by simpa using pnat_div_upper 1 ⟨x, hx⟩⟩
     simpa only [ne_eq, coe_mk_subtype] using this
 
-lemma eta_equality : {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
+lemma eta_equality' : {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
    ((csqrt (Complex.I))⁻¹ • ((csqrt) * η)) := by
-  have h := eta_logderivs_const
+  have h := eta_logderivs_const'
   obtain ⟨z, hz, h⟩ := h
   intro x hx
   have h2 := h hx
@@ -364,7 +365,7 @@ lemma eta_equality : {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
     enter [2]
     rw [← mul_assoc]
   have he : η Complex.I ≠ 0 := by
-    have h:=  eta_nonzero_on_UpperHalfPlane UpperHalfPlane.I
+    have h:=  dedekindEtaFun'_ne_zero UpperHalfPlane.I
     convert h
   have hcd := (mul_eq_right₀ he).mp (_root_.id (Eq.symm h3))
   rw [mul_eq_one_iff_inv_eq₀ hz] at hcd
