@@ -138,11 +138,35 @@ def a_rad (r : ℝ) : ℂ := I12 r + I34 r + I5 r + I6 r
 - Products, differences, squares, and ratios of holomorphic functions
   (with nonzero denominator) are holomorphic -/
 
-/-- φ₀'' is holomorphic on the upper half-plane.
-Uses E₂_differentiableOn from PhiHolomorphic.lean, E₄.holo', E₆.holo',
-Delta.holo', and Δ_ne_zero. -/
+/-- φ₀'' is holomorphic on the upper half-plane. -/
 theorem φ₀''_differentiableOn : DifferentiableOn ℂ φ₀'' {z : ℂ | 0 < z.im} := by
-  sorry
+  have hE₂ := E₂_differentiableOn
+  have hE₄ := UpperHalfPlane.mdifferentiable_iff.mp E₄.holo'
+  have hE₆ := UpperHalfPlane.mdifferentiable_iff.mp E₆.holo'
+  have hΔ := UpperHalfPlane.mdifferentiable_iff.mp Delta.holo'
+  intro z hz
+  have hz' : 0 < z.im := hz
+  have hE₂z := (E₂_differentiableOn z hz).differentiableAt
+    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
+  have hE₄z := (hE₄ z hz).differentiableAt
+    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
+  have hE₆z := (hE₆ z hz).differentiableAt
+    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
+  have hΔz := (hΔ z hz).differentiableAt
+    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
+  have hΔ_ne : (Delta.toSlashInvariantForm ∘ UpperHalfPlane.ofComplex) z ≠ 0 := by
+    simp [Function.comp, UpperHalfPlane.ofComplex_apply_of_im_pos hz']; exact Δ_ne_zero ⟨z, hz'⟩
+  have hdiff := ((hE₂z.mul hE₄z).sub hE₆z).pow 2 |>.div hΔz hΔ_ne
+  have hopen := (isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz'
+  apply hdiff.differentiableWithinAt.congr_of_eventuallyEq
+  rw [nhdsWithin_eq_nhds.mpr (Filter.mem_of_superset hopen (fun _ h => h))]
+  filter_upwards [hopen] with w hw
+  simp only [φ₀'', hw, dif_pos, φ₀, Function.comp,
+    UpperHalfPlane.ofComplex_apply_of_im_pos hw, Pi.mul_apply, Pi.sub_apply,
+    Pi.pow_apply, Pi.div_apply]; rfl
+  · simp only [φ₀'', hz', dif_pos, φ₀, Function.comp,
+      UpperHalfPlane.ofComplex_apply_of_im_pos hz', Pi.mul_apply, Pi.sub_apply,
+      Pi.pow_apply, Pi.div_apply]; rfl
 
 /-! ## Contour equivalence
 
