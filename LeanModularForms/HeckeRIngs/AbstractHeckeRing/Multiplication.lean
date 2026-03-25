@@ -449,7 +449,26 @@ lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
     have := n₂.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct]
   rw [hi, hj]
-  sorry
+  -- Goal: H((h₁↑↑n₁)g₁((h₂↑↑n₂)g₂))H = HdH
+  -- Use doubleCoset_eq_of_mem: show the product ∈ HdH
+  apply HeckeCoset.doubleCoset_eq_of_mem
+  -- (h₁n₁)g₁(h₂n₂g₂) = (h₁n₁h₁⁻¹ * a) * d * (b * g₂⁻¹n₂g₂) with both in H
+  rw [DoubleCoset.mem_doubleCoset] at hmem; obtain ⟨a, ha, b, hb, hab⟩ := hmem
+  rw [DoubleCoset.mem_doubleCoset]
+  exact ⟨(h₁ : G) * ↑↑n₁ * (h₁ : G)⁻¹ * a,
+    P.H.mul_mem (P.H.mul_mem (P.H.mul_mem h₁.2 (SetLike.coe_mem n₁.val)) (P.H.inv_mem h₁.2)) ha,
+    b * ((g₂ : G)⁻¹ * ↑↑n₂ * g₂),
+    P.H.mul_mem hb hn₂c,
+    by
+      have key : (↑h₁ * ↑↑n₁ * (↑h₁ : G)⁻¹ * a) * ↑d * (b * ((↑g₂ : G)⁻¹ * ↑↑n₂ * ↑g₂)) =
+        (↑h₁ * ↑↑n₁) * (↑g₁ : G) * ((↑h₂ * ↑↑n₂) * ↑g₂) := by
+          have h := hab
+          calc (↑h₁ * ↑↑n₁ * (↑h₁ : G)⁻¹ * a) * ↑d * (b * ((↑g₂ : G)⁻¹ * ↑↑n₂ * ↑g₂))
+              = ↑h₁ * ↑↑n₁ * (↑h₁)⁻¹ * (a * ↑d * b) * ((↑g₂)⁻¹ * ↑↑n₂ * ↑g₂) := by group
+            _ = ↑h₁ * ↑↑n₁ * (↑h₁)⁻¹ * (↑h₁ * ↑g₁ * (↑h₂ * ↑g₂)) *
+                ((↑g₂)⁻¹ * ↑↑n₂ * ↑g₂) := by rw [h]
+            _ = (↑h₁ * ↑↑n₁) * ↑g₁ * ((↑h₂ * ↑↑n₂) * ↑g₂) := by group
+      exact key.symm⟩
 
 /-- Left multiplication by `HeckeCoset.one` has multiplicity `1` on the diagonal
 and `0` elsewhere. -/
