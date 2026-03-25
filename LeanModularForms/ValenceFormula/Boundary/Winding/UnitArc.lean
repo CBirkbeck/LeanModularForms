@@ -117,18 +117,6 @@ private lemma unitArc_normSq_at_offset (s : ℂ) (H : ℝ) (t₀ δ : ℝ)
   rw [normSq_exp_sub]
   congr 1; congr 1; congr 1; ring
 
-private lemma unitArc_norm_offset_symm (s : ℂ) (H : ℝ) (t₀ δ : ℝ)
-    (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
-    (h_left_arc : 1 < t₀ - δ) (h_left_arc' : t₀ - δ < 3)
-    (h_right_arc : 1 < t₀ + δ) (h_right_arc' : t₀ + δ < 3) :
-    ‖fdBoundary_H H (t₀ - δ) - s‖ = ‖fdBoundary_H H (t₀ + δ) - s‖ := by
-  rw [Complex.norm_def, Complex.norm_def]
-  congr 1
-  rw [show t₀ - δ = t₀ + (-δ) from sub_eq_add_neg t₀ δ]
-  rw [unitArc_normSq_at_offset s H t₀ (-δ) h_s_arc (by linarith) (by linarith)]
-  rw [unitArc_normSq_at_offset s H t₀ δ h_s_arc h_right_arc h_right_arc']
-  congr 1; congr 1; rw [show Real.pi * (-δ) / 6 = -(Real.pi * δ / 6) from by ring, Real.cos_neg]
-
 private lemma unitArc_norm_strict_mono (s : ℂ) (H : ℝ) (t₀ : ℝ)
     (_ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3) (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
     (δ₁ δ₂ : ℝ) (hδ₁_nn : 0 ≤ δ₁) (hδ₁₂ : δ₁ < δ₂) (hδ₂ : δ₂ < min (t₀ - 1) (3 - t₀)) :
@@ -185,22 +173,6 @@ private lemma unitArc_norm_lt_of_abs_lt (s : ℂ) (H : ℝ) (t₀ : ℝ)
   rw [Complex.norm_def, Complex.norm_def]
   apply Real.sqrt_lt_sqrt (Complex.normSq_nonneg _)
   rw [hns₁, hns₂, hcos₁, hcos₂]; linarith
-
-private lemma unitArc_norm_pos_at_offset (s : ℂ) (H : ℝ) (t₀ δ : ℝ)
-    (ht₀_Ioo : t₀ ∈ Ioo (1:ℝ) 3) (h_s_arc : s = exp (↑(Real.pi * (1 + t₀) / 6) * I))
-    (hδ_pos : 0 < δ) (hδ_small : δ < min (t₀ - 1) (3 - t₀)) :
-    0 < ‖fdBoundary_H H (t₀ + δ) - s‖ := by
-  have h0 : ‖fdBoundary_H H (t₀ + 0) - s‖ = 0 := by
-    simp only [add_zero]
-    rw [fdBoundary_H_eq_arc ht₀_Ioo.1 ht₀_Ioo.2, h_s_arc, sub_self, norm_zero]
-  calc 0 = ‖fdBoundary_H H (t₀ + 0) - s‖ := h0.symm
-    _ < ‖fdBoundary_H H (t₀ + δ) - s‖ :=
-        unitArc_norm_strict_mono s H t₀ ht₀_Ioo h_s_arc 0 δ le_rfl hδ_pos hδ_small
-
-private lemma unitArc_norm_continuous (s : ℂ) (H : ℝ) (t₀ : ℝ) :
-    Continuous (fun δ : ℝ => ‖fdBoundary_H H (t₀ + δ) - s‖) :=
-  continuous_norm.comp (((fdBoundary_H_continuous H).comp (continuous_const.add continuous_id')).sub
-    continuous_const)
 
 /-! ### Helper 1: Arc outside points have norm > ε -/
 
@@ -334,21 +306,6 @@ private lemma unitArc_re_pos_at_offsets (s : ℂ) (t₀ δ' : ℝ)
     have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, hδ'_left]
     have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, hδ'_right]
     linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ₀_nn hθ_p_le_pi hθ_gt]
-
-/-! ### Helper 7: Final distance bound via log tendsto -/
-
-private lemma unitArc_final_dist_bound (s : ℂ) (t₀ δ' : ℝ)
-    (hδ'_pos : 0 < δ') (hδ'_lt_δ₀ : δ' < δ₀) (r : ℝ)
-    (hδ₀_spec : ∀ ⦃x : ℝ⦄, x ∈ Ioi 0 → dist x 0 < δ₀ →
-      dist (Complex.log (exp (↑(Real.pi * (1 + (t₀ - x)) / 6) * I) - s) -
-        Complex.log (-(exp (↑(Real.pi * (1 + (t₀ + x)) / 6) * I) - s))) 0 < r) :
-    ‖Complex.log (exp (↑(Real.pi * (1 + (t₀ - δ')) / 6) * I) - s) -
-      Complex.log (-(exp (↑(Real.pi * (1 + (t₀ + δ')) / 6) * I) - s))‖ < r := by
-  have hδ'_in_Ioi : δ' ∈ Ioi (0:ℝ) := hδ'_pos
-  have hδ'_dist : dist δ' 0 < δ₀ := by
-    rw [Real.dist_eq, sub_zero, abs_of_pos hδ'_pos]; exact hδ'_lt_δ₀
-  have h_log_small := hδ₀_spec hδ'_in_Ioi hδ'_dist
-  rwa [dist_zero_right] at h_log_small
 
 /-! ### Main tendsto lemma, wired through `pv_tendsto_of_crossing_limit` -/
 
