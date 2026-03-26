@@ -374,4 +374,209 @@ theorem truncated_horiz_eq_I12_horiz (r : ℝ) :
     I12_horiz r := by
   rw [I12_horiz_eq_segment]
 
+/-! ### Step 5: Cusp decay and integrand boundary behavior
+
+To pass from the truncated contour equivalence (δ > 0) to the full equivalence
+(starting at -1), we need the integrand to vanish at z = -1. This follows from
+the cusp behavior of φ₀: as z → -1, the substitution w = -1/(z+1) sends
+Im(w) → +∞, and the q-expansion of φ₀ shows φ₀(w) = O(e^{-2πIm(w)}).
+The factor (z+1)² cancels the 1/w² from the change of variables, leaving
+the integrand → 0.
+
+We state the key cusp estimates as sorry'd lemmas (requiring q-expansion
+infrastructure) and prove the contour equivalence from them. -/
+
+/-- The integrand `viazovska_integrand_left r` vanishes at z = -1.
+
+**Proof sketch:** Under w = -1/(z+1), as z → -1 we have Im(w) → +∞.
+The q-expansion gives φ₀(w) = O(e^{2πi·w}) = O(e^{-2π·Im(w)}) → 0 as
+Im(w) → +∞. Meanwhile (z+1)² → 0, exp(πirz) → exp(-πir) (bounded), and
+the composition φ₀(-1/(z+1)) remains bounded (the cusp form property
+(E₂E₄-E₆)²/Δ starts at q¹ in its q-expansion, so φ₀(w) → 0).
+Therefore the product → 0.
+
+**Dependency:** Requires q-expansion infrastructure for Eisenstein series
+and the Dedekind discriminant, specifically that (E₂E₄-E₆)²/Δ is a
+cusp form (vanishes at ∞). -/
+theorem viazovska_integrand_left_tendsto_zero (r : ℝ) :
+    Filter.Tendsto (viazovska_integrand_left r) (𝓝[{z | 0 < z.im}] (-1)) (𝓝 0) := by
+  sorry
+
+/-- The parameterized diagonal integrand is continuous on `[0,1]`.
+
+The function `t ↦ F(contour_neg1_to_i(t)) · (1+I)` is continuous on `(0,1]`
+(since `Im(contour_neg1_to_i(t)) = t > 0` there) and extends continuously
+to `t = 0` with value `0` (since `φ₀''(-1) = 0` by definition:
+`Im(-1) ≤ 0` so the `dif_neg` branch of `φ₀''` applies).
+
+At `t = 0`: `contour_neg1_to_i(0) = -1`, so `φ₀''(-1/(−1+1)) = φ₀''(-1/0)`,
+but actually `viazovska_integrand_left r (-1)` has factor `(-1+1)² = 0`,
+so the integrand is `0 · exp(…) = 0` regardless.
+
+**Dependency:** `viazovska_integrand_left_tendsto_zero` (cusp decay).
+Specifically, needs `F(contour_neg1_to_i(t)) → F(-1)` as `t → 0⁺`,
+which follows from the tendsto-zero estimate since `contour_neg1_to_i(t)` enters
+the upper half-plane for `t > 0` and approaches `-1` as `t → 0`. -/
+theorem continuousOn_diagonal_integrand (r : ℝ) :
+    ContinuousOn (fun t : ℝ =>
+      viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I : ℂ))
+      (Icc 0 1) := by
+  sorry
+
+/-- The parameterized vertical integrand is continuous on `[0,1]`.
+
+The function `t ↦ F(-1 + tI) · I` is continuous on `(0,1]`
+(since `Im(-1 + tI) = t > 0`) and at `t = 0` the integrand equals `0`
+because the factor `(-1+1)² = 0` in `viazovska_integrand_left` vanishes
+(here `z = -1`, so `z + 1 = 0`).
+
+**Dependency:** Same as `continuousOn_diagonal_integrand`. -/
+theorem continuousOn_vertical_integrand (r : ℝ) :
+    ContinuousOn (fun t : ℝ =>
+      viazovska_integrand_left r (-1 + I * ↑t) * I)
+      (Icc 0 1) := by
+  sorry
+
+/-! ### Step 5b: FTC-based limit argument
+
+The key observation is that all segment integrals equal `G(endpoint) - G(startpoint)`
+for a primitive `G` on the upper half-plane. As `δ → 0`, the starting point
+`-1 + δI` approaches `-1`, and `G(-1 + δI)` converges by continuity.
+
+We work with the primitive directly to avoid dominated convergence. -/
+
+/-- The primitive `G` of `viazovska_integrand_left r` on the upper half-plane,
+whose existence follows from `holomorphic_convex_primitive`. -/
+theorem exists_primitive_viazovska_integrand_left (r : ℝ) :
+    ∃ G : ℂ → ℂ, ∀ z ∈ {z : ℂ | 0 < z.im},
+      HasDerivAt G (viazovska_integrand_left r z) z := by
+  obtain ⟨G, hG⟩ := holomorphic_convex_primitive convex_upperHalfPlaneSet
+    isOpen_upperHalfPlaneSet ⟨I, I_mem_uhp⟩ (viazovska_integrand_left_differentiableOn r)
+  exact ⟨G, hG⟩
+
+/-- The truncated diagonal integral from `-1 + δI` to `I` equals `G(I) - G(-1+δI)`
+for the primitive `G` of the integrand. -/
+theorem truncated_diagonal_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
+    (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
+    (δ : ℝ) (hδ : 0 < δ) :
+    (∫ t in (0:ℝ)..1, viazovska_integrand_left r
+      ((-1 + ↑δ * I) + t • ((I : ℂ) - (-1 + ↑δ * I))) *
+        ((I : ℂ) - (-1 + ↑δ * I))) = G I - G (-1 + ↑δ * I) :=
+  segment_integral_eq_sub_of_hasDerivAt isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+    (neg_one_add_delta_I_mem_uhp hδ) I_mem_uhp hG
+    (viazovska_integrand_left_differentiableOn r).continuousOn
+
+/-- The truncated vertical integral from `-1 + δI` to `-1 + I` equals
+`G(-1+I) - G(-1+δI)` for the primitive. -/
+theorem truncated_vertical_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
+    (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
+    (δ : ℝ) (hδ : 0 < δ) :
+    (∫ t in (0:ℝ)..1, viazovska_integrand_left r
+      ((-1 + ↑δ * I) + t • ((-1 + I) - (-1 + ↑δ * I))) *
+        ((-1 + I) - (-1 + ↑δ * I))) = G (-1 + I) - G (-1 + ↑δ * I) :=
+  segment_integral_eq_sub_of_hasDerivAt isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+    (neg_one_add_delta_I_mem_uhp hδ) neg_one_add_I_mem_uhp hG
+    (viazovska_integrand_left_differentiableOn r).continuousOn
+
+/-- The horizontal integral from `-1 + I` to `I` equals `G(I) - G(-1+I)`. -/
+theorem horizontal_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
+    (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z) :
+    I12_horiz r = G I - G (-1 + I) := by
+  rw [I12_horiz_eq_segment]
+  exact segment_integral_eq_sub_of_hasDerivAt isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+    neg_one_add_I_mem_uhp I_mem_uhp hG
+    (viazovska_integrand_left_differentiableOn r).continuousOn
+
+/-! ### Step 6: Full contour equivalence via primitive cancellation
+
+The full contour equivalence `I12 = I12_vert + I12_horiz` follows from
+the primitive approach: both sides equal `G(I) - lim_{δ→0} G(-1+δI)`.
+
+The truncated versions give:
+- Diagonal: `G(I) - G(-1+δI)`
+- Vertical + Horizontal: `(G(-1+I) - G(-1+δI)) + (G(I) - G(-1+I)) = G(I) - G(-1+δI)`
+
+So truncated diagonal = truncated vertical + horizontal for all δ > 0.
+Taking δ → 0 and using continuity of the integrals gives the result. -/
+
+/-- `I12` equals the integral restricted to `[δ, 1]` plus the integral on `[0, δ]`.
+For continuous integrands (from `continuousOn_diagonal_integrand`), the `[0, δ]` part
+vanishes as `δ → 0`. -/
+theorem I12_split_at_delta (r : ℝ) (δ : ℝ) (hδ₀ : 0 ≤ δ) (hδ₁ : δ ≤ 1)
+    (hcont : ContinuousOn (fun t : ℝ =>
+      viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I : ℂ)) (Icc 0 1)) :
+    I12 r = (∫ t in (0:ℝ)..δ,
+      viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I)) +
+      (∫ t in δ..1,
+      viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I)) := by
+  have hI12 : I12 r = ∫ t in (0:ℝ)..1,
+      viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I) := by
+    unfold I12; congr 1; ext t; rw [deriv_contour_neg1_to_i]
+  rw [hI12]
+  have hint := hcont.intervalIntegrable_of_Icc (μ := volume) (by linarith : (0:ℝ) ≤ 1)
+  have hδ_mem : δ ∈ Set.uIcc (0:ℝ) 1 := Set.mem_uIcc.mpr (Or.inl ⟨hδ₀, hδ₁⟩)
+  exact (intervalIntegral.integral_add_adjacent_intervals
+    (hint.mono_set (Set.uIcc_subset_uIcc_left hδ_mem))
+    (hint.mono_set (Set.uIcc_subset_uIcc_right hδ_mem))).symm
+
+/-- `I12_vert` equals the integral restricted to `[δ, 1]` plus the integral on `[0, δ]`. -/
+theorem I12_vert_split_at_delta (r : ℝ) (δ : ℝ) (hδ₀ : 0 ≤ δ) (hδ₁ : δ ≤ 1)
+    (hcont : ContinuousOn (fun t : ℝ =>
+      viazovska_integrand_left r (-1 + I * ↑t) * I) (Icc 0 1)) :
+    I12_vert r = (∫ t in (0:ℝ)..δ,
+      viazovska_integrand_left r (-1 + I * ↑t) * I) +
+      (∫ t in δ..1,
+      viazovska_integrand_left r (-1 + I * ↑t) * I) := by
+  unfold I12_vert
+  have hint := hcont.intervalIntegrable_of_Icc (μ := volume) (by linarith : (0:ℝ) ≤ 1)
+  have hδ_mem : δ ∈ Set.uIcc (0:ℝ) 1 := Set.mem_uIcc.mpr (Or.inl ⟨hδ₀, hδ₁⟩)
+  exact (intervalIntegral.integral_add_adjacent_intervals
+    (hint.mono_set (Set.uIcc_subset_uIcc_left hδ_mem))
+    (hint.mono_set (Set.uIcc_subset_uIcc_right hδ_mem))).symm
+
+/-- **Full contour equivalence**: the diagonal integral `I12` from `-1` to `I`
+equals the sum of the vertical integral `I12_vert` (from `-1` to `-1+I`)
+and the horizontal integral `I12_horiz` (from `-1+I` to `I`).
+
+This is the rectangular decomposition of the original Viazovska contour integral.
+The proof uses path independence on the upper half-plane (truncated at height δ)
+and then takes the limit δ → 0, using the cusp decay estimate to control the
+boundary behavior at z = -1.
+
+**Proof strategy (once cusp decay is available):**
+1. Split `I12 = ∫₀^δ (diag) + ∫_δ^1 (diag)` via `I12_split_at_delta`
+2. Split `I12_vert = ∫₀^δ (vert) + ∫_δ^1 (vert)` via `I12_vert_split_at_delta`
+3. The `∫_δ^1` parts satisfy the truncated contour equivalence (reparameterized)
+4. Both `∫₀^δ` parts → 0 as δ → 0 by `continuousOn_diagonal_integrand` /
+   `continuousOn_vertical_integrand` (integrand value is 0 at t=0)
+5. `I12_horiz` is δ-independent (`truncated_horiz_eq_I12_horiz`)
+
+**Dependencies:** `viazovska_integrand_left_tendsto_zero` (cusp decay),
+via `continuousOn_diagonal_integrand` and `continuousOn_vertical_integrand`. -/
+theorem I12_eq_rectangular (r : ℝ) : I12 r = I12_vert r + I12_horiz r := by
+  sorry
+
+/-! ### Summary of sorry dependencies
+
+The file contains the following sorry'd lemmas:
+
+1. **`viazovska_integrand_left_tendsto_zero`** (root dependency)
+   - The integrand F(z) → 0 as z → -1 within the upper half-plane
+   - Requires: q-expansion of (E₂E₄-E₆)²/Δ showing it is a cusp form
+   - This is the fundamental analytic input from modular forms theory
+
+2. **`continuousOn_diagonal_integrand`** (depends on 1)
+   - Continuity of parameterized diagonal integrand on [0,1]
+   - Proof: combine holomorphicity on (0,1] with the tendsto-zero limit at t=0
+
+3. **`continuousOn_vertical_integrand`** (depends on 1)
+   - Continuity of parameterized vertical integrand on [0,1]
+   - Proof: same strategy as 2, different parameterization
+
+4. **`I12_eq_rectangular`** (depends on 2, 3)
+   - Full contour equivalence I12 = I12_vert + I12_horiz
+   - Proof: split at δ, use truncated equivalence, take limit
+
+Everything else in this file is **sorry-free and axiom-clean**. -/
+
 end
