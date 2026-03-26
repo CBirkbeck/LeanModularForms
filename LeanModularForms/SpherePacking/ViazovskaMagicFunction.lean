@@ -37,7 +37,7 @@ horizontal integral `∫_{-1+i→i}`. This is the first step toward evaluating
 
 ## How this differs from Sphere-Packing-Lean (Gauss2 PR)
 
-The Sphere-Packing-Lean formalization (Gauss2 PR by Birkbeck-Horgeneration-Schlank)
+The Sphere-Packing-Lean formalization
 deforms the original triangular contours into **rectangular** contours from the
 start, avoiding the cusp singularity at `z = -1, 0, 1` entirely. The contour
 integrals are then evaluated on rectangles where all four sides lie strictly
@@ -83,8 +83,6 @@ singularities directly:
   Annals of Mathematics, 185(3), 991-1015.
 * Hungerbühler, N., Wasem, M. (2019). "A generalized version of the
   residue theorem." arXiv:1808.00997v2.
-* Birkbeck, C., Horgeneration, D., Schlank, T. "Sphere-Packing-Lean"
-  (Gauss2 PR). Formalizes Viazovska's proof using rectangular contours.
 -/
 
 open Complex Set Filter Topology MeasureTheory
