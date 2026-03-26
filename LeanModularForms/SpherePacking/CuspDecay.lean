@@ -42,30 +42,24 @@ noncomputable section
 
 /-! ## q-parameter and Eisenstein series at the cusp -/
 
-set_option maxHeartbeats 400000 in
 /-- The q-parameter `q = exp(2*pi*i*z)` tends to 0 as `Im(z) -> infinity`. -/
 theorem tendsto_qParam_atImInfty :
     Tendsto (fun (z : UpperHalfPlane) => Function.Periodic.qParam 1 (z : ℂ))
     UpperHalfPlane.atImInfty (nhds 0) := by
   have h := tendsto_neg_cexp_atImInfty 0
   simp only [Nat.cast_zero, zero_add, mul_one] at h
-  have h2 := h.neg
-  simp only [neg_neg, neg_zero] at h2
-  apply Filter.Tendsto.congr _ h2
-  intro z
-  simp only [Function.Periodic.qParam]
-  congr 1; push_cast; ring
+  have h2 := h.neg; simp only [neg_neg, neg_zero] at h2
+  exact Filter.Tendsto.congr
+    (fun z => by simp only [Function.Periodic.qParam]; congr 1; push_cast; ring) h2
 
-set_option maxHeartbeats 800000 in
 /-- `E4(z) -> 1` as `Im(z) -> infinity`, from the q-expansion constant term. -/
 theorem E₄_tendsto_one_atImInfty :
     Tendsto E₄ UpperHalfPlane.atImInfty (nhds 1) := by
   have heq : ∀ z : UpperHalfPlane, E₄ z = SlashInvariantFormClass.cuspFunction 1 E₄
       (Function.Periodic.qParam (↑(1 : ℕ)) (z : ℂ)) :=
     fun z => (SlashInvariantFormClass.eq_cuspFunction 1 E₄ z).symm
-  have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 E₄
   have hcont : ContinuousAt (SlashInvariantFormClass.cuspFunction 1 E₄) 0 :=
-    hfps.analyticAt.continuousAt
+    (ModularFormClass.hasFPowerSeries_cuspFunction 1 E₄).analyticAt.continuousAt
   have hval : SlashInvariantFormClass.cuspFunction 1 E₄ 0 = 1 := by
     rw [cuspfunc_Zero]; exact E4_q_exp_zero
   have hq : Tendsto (fun (z : UpperHalfPlane) =>
@@ -75,16 +69,14 @@ theorem E₄_tendsto_one_atImInfty :
   rw [show (1 : ℂ) = SlashInvariantFormClass.cuspFunction 1 E₄ 0 from hval.symm]
   exact (hcont.tendsto.comp hq).congr (fun z => (heq z).symm)
 
-set_option maxHeartbeats 800000 in
 /-- `E6(z) -> 1` as `Im(z) -> infinity`, from the q-expansion constant term. -/
 theorem E₆_tendsto_one_atImInfty :
     Tendsto E₆ UpperHalfPlane.atImInfty (nhds 1) := by
   have heq : ∀ z : UpperHalfPlane, E₆ z = SlashInvariantFormClass.cuspFunction 1 E₆
       (Function.Periodic.qParam (↑(1 : ℕ)) (z : ℂ)) :=
     fun z => (SlashInvariantFormClass.eq_cuspFunction 1 E₆ z).symm
-  have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 E₆
   have hcont : ContinuousAt (SlashInvariantFormClass.cuspFunction 1 E₆) 0 :=
-    hfps.analyticAt.continuousAt
+    (ModularFormClass.hasFPowerSeries_cuspFunction 1 E₆).analyticAt.continuousAt
   have hval : SlashInvariantFormClass.cuspFunction 1 E₆ 0 = 1 := by
     rw [cuspfunc_Zero]; exact E6_q_exp_zero
   have hq : Tendsto (fun (z : UpperHalfPlane) =>
@@ -103,43 +95,38 @@ This gives `cF(q)/q -> 1` and `cF'(q) -> 1` as `q -> 0`. -/
 /-- The cuspFunction of Delta. -/
 noncomputable def cF_Delta := SlashInvariantFormClass.cuspFunction 1 Delta
 
-/-- The derivative of cF_Delta at 0 is 1 (the `q^1` coefficient of Delta). -/
+/-- The derivative of cF_Delta at 0 equals 1. -/
 lemma deriv_cF_Delta_zero : deriv cF_Delta 0 = 1 := by
   have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 Delta
-  have : cF_Delta = SlashInvariantFormClass.cuspFunction 1 Delta := rfl
-  rw [this, hfps.hasFPowerSeriesAt.deriv]
-  simp [ModularFormClass.qExpansionFormalMultilinearSeries]
-  exact Delta_q_one_term
+  rw [show cF_Delta = SlashInvariantFormClass.cuspFunction 1 Delta from rfl,
+    hfps.hasFPowerSeriesAt.deriv]
+  simp [ModularFormClass.qExpansionFormalMultilinearSeries]; exact Delta_q_one_term
 
-/-- cF_Delta has derivative 1 at 0 (HasDerivAt version). -/
+/-- cF_Delta has derivative 1 at 0. -/
 lemma cF_Delta_hasDerivAt_zero : HasDerivAt cF_Delta (1 : ℂ) 0 := by
   have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 Delta
-  rw [← deriv_cF_Delta_zero]
-  have : cF_Delta = SlashInvariantFormClass.cuspFunction 1 Delta := rfl
-  rw [this]; exact hfps.analyticAt.differentiableAt.hasDerivAt
+  rw [← deriv_cF_Delta_zero,
+    show cF_Delta = SlashInvariantFormClass.cuspFunction 1 Delta from rfl]
+  exact hfps.analyticAt.differentiableAt.hasDerivAt
 
-/-- `cF(q)/q -> 1` as `q -> 0` (from the simple zero of Delta at the cusp). -/
+/-- `cF(q)/q -> 1` as `q -> 0`. -/
 lemma cF_Delta_div_q_tendsto :
     Tendsto (fun q => cF_Delta q / q) (𝓝[≠] 0) (nhds 1) := by
   have h0 : cF_Delta 0 = 0 := CuspFormClass.cuspFunction_apply_zero 1 Delta
   have hda := cF_Delta_hasDerivAt_zero
   rw [hasDerivAt_iff_tendsto_slope] at hda
-  convert hda using 1
-  ext q; simp [slope, h0, div_eq_mul_inv, mul_comm]
+  convert hda using 1; ext q; simp [slope, h0, div_eq_mul_inv, mul_comm]
 
-/-- `deriv cF_Delta` is continuous at 0 (analyticity of the derivative). -/
+/-- `deriv cF_Delta` is continuous at 0. -/
 lemma continuousAt_deriv_cF_Delta : ContinuousAt (deriv cF_Delta) 0 := by
-  have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 Delta
-  have : cF_Delta = SlashInvariantFormClass.cuspFunction 1 Delta := rfl
-  rw [this]; exact hfps.analyticAt.deriv.continuousAt
+  rw [show cF_Delta = SlashInvariantFormClass.cuspFunction 1 Delta from rfl]
+  exact (ModularFormClass.hasFPowerSeries_cuspFunction 1 Delta).analyticAt.deriv.continuousAt
 
 /-- `cF'(q) -> 1` as `q -> 0`. -/
 lemma tendsto_deriv_cF_Delta : Tendsto (deriv cF_Delta) (𝓝 0) (nhds 1) := by
   rw [← deriv_cF_Delta_zero]; exact continuousAt_deriv_cF_Delta
 
-set_option maxHeartbeats 800000 in
-/-- `q * cF'(q) / cF(q) -> 1` as `q -> 0` (within `q != 0`).
-This is the key ratio that controls the logDeriv of Delta at the cusp. -/
+/-- The ratio `q * cF'(q) / cF(q) -> 1` as `q -> 0` within `q != 0`. -/
 lemma cF_ratio_tendsto_one :
     Tendsto (fun q => q * deriv cF_Delta q / cF_Delta q) (𝓝[≠] 0) (nhds 1) := by
   have h1 : Tendsto (fun q => deriv cF_Delta q / (cF_Delta q / q)) (𝓝[≠] 0) (nhds 1) := by
@@ -148,8 +135,7 @@ lemma cF_ratio_tendsto_one :
       cF_Delta_div_q_tendsto one_ne_zero
   refine h1.congr' ?_
   filter_upwards [self_mem_nhdsWithin] with q hq
-  simp only [mem_compl_iff, mem_singleton_iff] at hq
-  field_simp
+  simp only [mem_compl_iff, mem_singleton_iff] at hq; field_simp
 
 /-! ## phi0 is bounded at Im -> infinity
 
@@ -161,8 +147,6 @@ We prove `φ₀ = (E₂E₄-E₆)²/Δ` is bounded at Im -> infinity. The proof 
 Combined: `|φ₀| ≤ 2K²|q| → 0`.
 -/
 
-/-- `E₂·E₄ - E₆` is `O(q)` at infinity: there exists `K` and `A` such that
-`‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖qParam z‖` for `Im(z) ≥ A` and `‖E₄ z‖ ≤ 2`. -/
 private lemma exp_eq_qParam_pow (z : UpperHalfPlane) (n : ℕ+) :
     cexp (2 * ↑Real.pi * I * ↑↑n * ↑z) =
     (Function.Periodic.qParam 1 (z : ℂ)) ^ (n : ℕ) := by
@@ -174,169 +158,190 @@ private lemma tsum_pnat_eq_r_times (r : ℝ) :
   have h1 : ∑' (n : ℕ+), (↑↑n : ℝ) * r ^ (n : ℕ) =
       ∑' (m : ℕ), (↑(m + 1) : ℝ) * r ^ (m + 1) := by
     rw [← Equiv.tsum_eq Equiv.pnatEquivNat]
-    congr 1; ext n
-    simp only [Equiv.pnatEquivNat, Equiv.coe_fn_mk]
+    congr 1; ext n; simp only [Equiv.pnatEquivNat, Equiv.coe_fn_mk]
     rw [show (↑↑n : ℝ) = (↑(n.natPred + 1) : ℝ) from by rw [n.natPred_add_one.symm],
         show (n : ℕ) = n.natPred + 1 from n.natPred_add_one.symm]
-  rw [h1, ← tsum_mul_left]
-  congr 1; ext m; ring
+  rw [h1, ← tsum_mul_left]; congr 1; ext m; ring
 
-set_option maxHeartbeats 64000000 in
+private lemma norm_term_le_two_mul {q : ℂ} (hq : ‖q‖ ≤ 1/2) (n : ℕ+) :
+    ‖(↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖ ≤
+    2 * (n : ℝ) * ‖q‖ ^ (n : ℕ) := by
+  simp only [norm_div, norm_mul, norm_pow, Complex.norm_natCast]
+  have hqn_le : ‖q‖ ^ (n : ℕ) ≤ 1/2 :=
+    (pow_le_pow_left₀ (norm_nonneg q) hq n).trans
+      ((pow_le_pow_of_le_one (by norm_num) (by norm_num) n.2).trans (by norm_num))
+  have h1_sub : 1/2 ≤ ‖1 - q ^ (n : ℕ)‖ := by
+    linarith [norm_sub_norm_le (1 : ℂ) (q ^ (n : ℕ)), norm_one (α := ℂ),
+      show ‖q ^ (n : ℕ)‖ ≤ 1/2 from norm_pow q n ▸ hqn_le]
+  calc (n : ℝ) * ‖q‖ ^ (n : ℕ) / ‖1 - q ^ ↑n‖
+      ≤ (n : ℝ) * ‖q‖ ^ (n : ℕ) / (1/2) :=
+        div_le_div_of_nonneg_left (by positivity) (by positivity) h1_sub
+    _ = 2 * (n : ℝ) * ‖q‖ ^ (n : ℕ) := by ring
+
+private lemma summable_nat_mul_pow {r : ℝ} (hr : ‖r‖ < 1) :
+    Summable (fun n : ℕ => (↑n : ℝ) * r ^ n) :=
+  (summable_pow_mul_geometric_of_norm_lt_one 1 hr).congr (fun n => by simp only [pow_one])
+
+private lemma summable_two_mul_pnat_pow {r : ℝ} (hr : ‖r‖ < 1) :
+    Summable (fun n : ℕ+ => 2 * (↑↑n : ℝ) * r ^ (n : ℕ)) := by
+  change Summable ((fun m : ℕ => 2 * (↑m : ℝ) * r ^ m) ∘ (↑· : ℕ+ → ℕ))
+  exact (((summable_nat_mul_pow hr).mul_left 2).congr
+    (fun n => by ring)).comp_injective Subtype.val_injective
+
+private lemma summable_norm_E2_terms {q : ℂ} (hq : ‖q‖ ≤ 1/2) :
+    Summable (fun n : ℕ+ => ‖(↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖) := by
+  have hnn : ‖(‖q‖ : ℝ)‖ < 1 := by
+    rw [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg q)]
+    exact lt_of_le_of_lt hq (by norm_num)
+  exact Summable.of_norm_bounded (summable_two_mul_pnat_pow hnn) fun n => by
+    rw [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]; exact norm_term_le_two_mul hq n
+
+private lemma tsum_succ_mul_pow {r : ℝ} (hr : ‖r‖ < 1) :
+    ∑' m : ℕ, (↑(m + 1) : ℝ) * r ^ m = 1 / (1 - r) ^ 2 := by
+  have := tsum_choose_mul_geometric_of_norm_lt_one 1 hr
+  simp at this; rw [one_div]; convert this using 1; congr 1; ext n; push_cast; ring
+
+private lemma tsum_two_mul_pnat_pow {r : ℝ} (hr : ‖r‖ < 1) :
+    ∑' (n : ℕ+), 2 * (↑↑n : ℝ) * r ^ (n : ℕ) = 2 * (r / (1 - r) ^ 2) := by
+  rw [show (fun n : ℕ+ => 2 * (↑↑n : ℝ) * r ^ (n : ℕ)) =
+      (fun n : ℕ+ => 2 * ((↑↑n : ℝ) * r ^ (n : ℕ))) from by ext n; ring,
+    tsum_mul_left, tsum_pnat_eq_r_times r, tsum_succ_mul_pow hr]; ring
+
+private lemma tsum_E2_series_bound {q : ℂ} (hq : ‖q‖ ≤ 1/2) :
+    24 * ‖∑' (n : ℕ+), (↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖ ≤
+    192 * ‖q‖ := by
+  have hq_lt : ‖q‖ < 1 := lt_of_le_of_lt hq (by norm_num)
+  have hnn : ‖(‖q‖ : ℝ)‖ < 1 := by rwa [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg q)]
+  calc 24 * ‖∑' (n : ℕ+), (↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖
+      ≤ 24 * ∑' (n : ℕ+), ‖(↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖ :=
+        mul_le_mul_of_nonneg_left
+          (norm_tsum_le_tsum_norm (summable_norm_E2_terms hq)) (by norm_num)
+    _ ≤ 24 * ∑' (n : ℕ+), 2 * (↑↑n : ℝ) * ‖q‖ ^ (n : ℕ) :=
+        mul_le_mul_of_nonneg_left ((summable_norm_E2_terms hq).tsum_le_tsum
+          (norm_term_le_two_mul hq) (summable_two_mul_pnat_pow hnn)) (by norm_num)
+    _ = 24 * (2 * (‖q‖ / (1 - ‖q‖) ^ 2)) := by rw [tsum_two_mul_pnat_pow hnn]
+    _ ≤ 24 * (2 * (4 * ‖q‖)) := by
+        gcongr; rw [div_le_iff₀ (pow_pos (by linarith) 2)]
+        nlinarith [norm_nonneg q, sq_nonneg (1 - 2 * ‖q‖)]
+    _ = 192 * ‖q‖ := by ring
+
 private lemma E2_sub_one_bound (z : UpperHalfPlane)
     (hq : ‖Function.Periodic.qParam 1 (z : ℂ)‖ ≤ 1/2) :
     ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
   set q := Function.Periodic.qParam 1 (z : ℂ) with hq_def
-  have hq_lt : ‖q‖ < 1 := lt_of_le_of_lt hq (by norm_num)
-  -- Rewrite E₂ - 1 using the q-expansion
-  have hE2_sub : E₂ z - 1 = (-24) * ∑' (n : ℕ+), ↑↑n * q ^ (n : ℕ) / (1 - q ^ (n : ℕ)) := by
-    have h := E₂_eq z
-    have : E₂ z - 1 = (-24) * ∑' (n : ℕ+), ↑↑n * cexp (2 * ↑Real.pi * I * ↑↑n * ↑z) /
-        (1 - cexp (2 * ↑Real.pi * I * ↑↑n * ↑z)) := by rw [h]; ring
+  have hE2_sub :
+      E₂ z - 1 = (-24) * ∑' (n : ℕ+), ↑↑n * q ^ (n : ℕ) / (1 - q ^ (n : ℕ)) := by
+    have : E₂ z - 1 = (-24) * ∑' (n : ℕ+),
+        ↑↑n * cexp (2 * ↑Real.pi * I * ↑↑n * ↑z) /
+        (1 - cexp (2 * ↑Real.pi * I * ↑↑n * ↑z)) := by rw [E₂_eq z]; ring
     rw [this]; congr 1; apply tsum_congr; intro n; rw [exp_eq_qParam_pow z n]
   rw [hE2_sub, norm_mul, show ‖(-24 : ℂ)‖ = 24 from by norm_num]
-  -- Summability of norms (from summable_norm_pow_mul_geometric_div_one_sub)
-  have hsum_norm : Summable (fun n : ℕ+ => ‖(↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖) :=
-    ((summable_norm_pow_mul_geometric_div_one_sub (𝕜 := ℂ) 1 hq_lt |>.congr
-      (fun n => by simp [pow_one])).norm).subtype _
-  -- ‖tsum‖ ≤ tsum of norms
-  have htsum_le := norm_tsum_le_tsum_norm hsum_norm
-  -- Pointwise bound: ‖n*q^n/(1-q^n)‖ ≤ 2*n*‖q‖^n for ‖q‖ ≤ 1/2
-  have hterm : ∀ n : ℕ+, ‖(↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖ ≤
-      2 * (n : ℝ) * ‖q‖ ^ (n : ℕ) := by
-    intro n
-    simp only [norm_div, norm_mul, norm_pow, Complex.norm_natCast]
-    have hqn_le : ‖q‖ ^ (n : ℕ) ≤ 1/2 := by
-      calc ‖q‖ ^ (n : ℕ) ≤ (1/2) ^ (n : ℕ) := pow_le_pow_left₀ (norm_nonneg q) hq n
-        _ ≤ (1/2) ^ 1 := pow_le_pow_of_le_one (by norm_num) (by norm_num) n.2
-        _ = 1/2 := by norm_num
-    have h1_sub : 1/2 ≤ ‖1 - q ^ (n : ℕ)‖ := by
-      linarith [norm_sub_norm_le (1 : ℂ) (q ^ (n : ℕ)), norm_one (α := ℂ),
-        show ‖q ^ (n : ℕ)‖ ≤ 1/2 from norm_pow q n ▸ hqn_le]
-    calc (n : ℝ) * ‖q‖ ^ (n : ℕ) / ‖1 - q ^ ↑n‖
-        ≤ (n : ℝ) * ‖q‖ ^ (n : ℕ) / (1/2) := by
-          apply div_le_div_of_nonneg_left (by positivity) (by positivity) h1_sub
-      _ = 2 * (n : ℝ) * ‖q‖ ^ (n : ℕ) := by ring
-  -- Σ_{ℕ+} ‖terms‖ ≤ Σ_{ℕ+} 2n*‖q‖^n (by tsum_le_tsum)
-  have hnn : ‖(‖q‖ : ℝ)‖ < 1 := by rwa [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg q)]
-  have hsum_bound : Summable (fun n : ℕ+ => 2 * (↑↑n : ℝ) * ‖q‖ ^ (n : ℕ)) := by
-    exact (((summable_pow_mul_geometric_of_norm_lt_one 1 hnn).congr
-        (fun n => by simp [pow_one])).mul_left 2 |>.congr (fun n => by ring)).subtype _
-  -- Evaluate Σ_{ℕ+} 2n*‖q‖^n = 2*‖q‖/(1-‖q‖)^2
-  have htsum_val : ∑' (n : ℕ+), 2 * (↑↑n : ℝ) * ‖q‖ ^ (n : ℕ) =
-      2 * (‖q‖ / (1 - ‖q‖) ^ 2) := by
-    have hfn : (fun n : ℕ+ => 2 * (↑↑n : ℝ) * ‖q‖ ^ (n : ℕ)) =
-        (fun n : ℕ+ => 2 * ((↑↑n : ℝ) * ‖q‖ ^ (n : ℕ))) := by ext n; ring
-    rw [hfn, tsum_mul_left, tsum_pnat_eq_r_times ‖q‖]
-    have hchoose : ∑' m : ℕ, (↑(m + 1) : ℝ) * ‖q‖ ^ m = 1 / (1 - ‖q‖) ^ 2 := by
-      have := tsum_choose_mul_geometric_of_norm_lt_one 1 hnn
-      simp only [Nat.add_one_sub_one, pow_one] at this
-      convert this using 1; congr 1; ext n; simp [Nat.choose_one_right]
-    rw [hchoose]; ring
-  -- For ‖q‖ ≤ 1/2: ‖q‖/(1-‖q‖)^2 ≤ 4*‖q‖
-  have hq_bound : ‖q‖ / (1 - ‖q‖) ^ 2 ≤ 4 * ‖q‖ := by
-    rw [div_le_iff₀ (by positivity : (0:ℝ) < (1 - ‖q‖) ^ 2)]
-    nlinarith [norm_nonneg q]
-  -- Combine: 24 * ‖Σ‖ ≤ 24 * 2 * 4 * ‖q‖ = 192 * ‖q‖
-  calc 24 * ‖∑' (n : ℕ+), ↑↑n * q ^ ↑n / (1 - q ^ ↑n)‖
-      ≤ 24 * ∑' (n : ℕ+), ‖↑↑n * q ^ ↑n / (1 - q ^ ↑n)‖ :=
-        mul_le_mul_of_nonneg_left htsum_le (by norm_num)
-    _ ≤ 24 * ∑' (n : ℕ+), 2 * ↑↑n * ‖q‖ ^ ↑n :=
-        mul_le_mul_of_nonneg_left (tsum_le_tsum hterm hsum_norm hsum_bound) (by norm_num)
-    _ = 24 * (2 * (‖q‖ / (1 - ‖q‖) ^ 2)) := by rw [htsum_val]
-    _ ≤ 24 * (2 * (4 * ‖q‖)) :=
-        mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hq_bound (by norm_num)) (by norm_num)
-    _ = 192 * ‖q‖ := by ring
+  exact tsum_E2_series_bound hq
 
-set_option maxHeartbeats 3200000 in
-private lemma A_E_is_O_q : ∃ K > 0, ∃ A : ℝ, ∀ z : UpperHalfPlane, A ≤ z.im →
-    ‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ∧
-    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 ∧
-    Function.Periodic.qParam 1 (z : ℂ) ≠ 0 := by
-  -- Get O(q) bound for E₄-1 and E₆-1 via cusp function analyticity
-  have hE4_O : (fun q : ℂ => SlashInvariantFormClass.cuspFunction 1 E₄ q - 1) =O[𝓝 0] id := by
-    have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 E₄
-    have hval : SlashInvariantFormClass.cuspFunction 1 E₄ 0 = 1 := by
-      rw [cuspfunc_Zero]; exact E4_q_exp_zero
-    have hbig := hfps.analyticAt.differentiableAt.hasFDerivAt.isBigO_sub
-    simp only [hval, sub_zero] at hbig; exact hbig
-  have hE6_O : (fun q : ℂ => SlashInvariantFormClass.cuspFunction 1 E₆ q - 1) =O[𝓝 0] id := by
-    have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 E₆
-    have hval : SlashInvariantFormClass.cuspFunction 1 E₆ 0 = 1 := by
-      rw [cuspfunc_Zero]; exact E6_q_exp_zero
-    have hbig := hfps.analyticAt.differentiableAt.hasFDerivAt.isBigO_sub
-    simp only [hval, sub_zero] at hbig; exact hbig
-  -- Extract concrete bounds from IsBigO
-  obtain ⟨C₁, hC₁_pos, hC₁⟩ := hE4_O.exists_pos
-  obtain ⟨C₂, hC₂_pos, hC₂⟩ := hE6_O.exists_pos
-  have hq_tendsto := tendsto_qParam_atImInfty
-  -- Pull back bounds to UpperHalfPlane
-  have hE4_uhp : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-      ‖E₄ z - 1‖ ≤ C₁ * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
-    apply (hq_tendsto.eventually (hC₁.bound.mono (fun q hq => by simpa [id] using hq))).mono
-    intro z hz
-    have := (SlashInvariantFormClass.eq_cuspFunction 1 E₄ z).symm
-    simp only [Nat.cast_one] at this; rwa [this]
-  have hE6_uhp : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-      ‖E₆ z - 1‖ ≤ C₂ * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
-    apply (hq_tendsto.eventually (hC₂.bound.mono (fun q hq => by simpa [id] using hq))).mono
-    intro z hz
-    have := (SlashInvariantFormClass.eq_cuspFunction 1 E₆ z).symm
-    simp only [Nat.cast_one] at this; rwa [this]
-  have hE2_uhp : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-      ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
-    apply (hq_tendsto.eventually (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1/2))).mono
-    intro z hz; exact E2_sub_one_bound z (by simp only [dist_zero_right] at hz; linarith)
-  have hE4_bdd : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty, ‖E₄ z‖ ≤ 2 := by
-    apply (E₄_tendsto_one_atImInfty.eventually (Metric.ball_mem_nhds 1 (by norm_num : (0:ℝ) < 1))).mono
-    intro z hz
-    have h1 : ‖E₄ z - 1‖ < 1 := by rwa [dist_eq_norm] at hz
-    linarith [norm_le_insert' (E₄ z) 1, norm_one (α := ℂ)]
-  have hq_lt : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-      ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 := by
-    apply (hq_tendsto.eventually (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1))).mono
-    intro z hz; rwa [dist_zero_right] at hz
-  -- Combine eventual conditions
-  rw [Filter.eventually_atImInfty] at hE4_uhp hE6_uhp hE2_uhp hE4_bdd hq_lt
-  obtain ⟨A₁, hA₁⟩ := hE4_uhp; obtain ⟨A₂, hA₂⟩ := hE6_uhp
-  obtain ⟨A₃, hA₃⟩ := hE2_uhp; obtain ⟨A₄, hA₄⟩ := hE4_bdd; obtain ⟨A₅, hA₅⟩ := hq_lt
-  -- K must be ≥ ‖E₂‖*C₁ + 192 + C₂ ≤ (1+192)*C₁ + 192 + C₂ = 193*C₁ + 192 + C₂
-  set K := 193 * C₁ + 192 + C₂ with hK_def
-  refine ⟨K, by positivity, max (max (max A₁ A₂) (max A₃ A₄)) A₅, fun z hz => ?_⟩
-  have hz1 := hA₁ z (le_trans (le_max_left _ _ |>.trans (le_max_left _ _ |>.trans (le_max_left _ _))) hz)
-  have hz2 := hA₂ z (le_trans (le_max_right _ _ |>.trans (le_max_left _ _ |>.trans (le_max_left _ _))) hz)
-  have hz3 := hA₃ z (le_trans (le_max_left _ _ |>.trans (le_max_right _ _ |>.trans (le_max_left _ _))) hz)
-  have hz4 := hA₄ z (le_trans (le_max_right _ _ |>.trans (le_max_right _ _ |>.trans (le_max_left _ _))) hz)
-  have hz5 := hA₅ z (le_trans (le_max_right _ _) hz)
+/-- The cusp function of a modular form with constant term 1 satisfies `cF(q) - 1 = O(q)`. -/
+private lemma cuspFunction_sub_one_isBigO {f : ModularForm (CongruenceSubgroup.Gamma 1) k}
+    (hval : SlashInvariantFormClass.cuspFunction 1 f 0 = 1) :
+    (fun q : ℂ => SlashInvariantFormClass.cuspFunction 1 f q - 1) =O[𝓝 0] id := by
+  have hbig := (ModularFormClass.hasFPowerSeries_cuspFunction 1 f).analyticAt
+    |>.differentiableAt.hasFDerivAt.isBigO_sub
+  simpa only [hval, sub_zero] using hbig
+
+/-- `‖E₄ z - 1‖ ≤ C * ‖q(z)‖` eventually, for some `C > 0`. -/
+private lemma E4_sub_one_eventually_le : ∃ C > 0,
+    ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+    ‖E₄ z - 1‖ ≤ C * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
+  obtain ⟨C, hC, hbound⟩ := (cuspFunction_sub_one_isBigO
+    (by rw [cuspfunc_Zero]; exact E4_q_exp_zero)).exists_pos
+  exact ⟨C, hC, (tendsto_qParam_atImInfty.eventually
+    (hbound.bound.mono (fun q hq => by simpa [id] using hq))).mono fun z hz => by
+      have := (SlashInvariantFormClass.eq_cuspFunction 1 E₄ z).symm
+      simp only [Nat.cast_one] at this; rwa [this]⟩
+
+/-- `‖E₆ z - 1‖ ≤ C * ‖q(z)‖` eventually, for some `C > 0`. -/
+private lemma E6_sub_one_eventually_le : ∃ C > 0,
+    ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+    ‖E₆ z - 1‖ ≤ C * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
+  obtain ⟨C, hC, hbound⟩ := (cuspFunction_sub_one_isBigO
+    (by rw [cuspfunc_Zero]; exact E6_q_exp_zero)).exists_pos
+  exact ⟨C, hC, (tendsto_qParam_atImInfty.eventually
+    (hbound.bound.mono (fun q hq => by simpa [id] using hq))).mono fun z hz => by
+      have := (SlashInvariantFormClass.eq_cuspFunction 1 E₆ z).symm
+      simp only [Nat.cast_one] at this; rwa [this]⟩
+
+/-- `‖E₂ z - 1‖ ≤ 192 * ‖q(z)‖` eventually (from the Eisenstein series bound). -/
+private lemma E2_sub_one_eventually_le :
+    ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+    ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ :=
+  (tendsto_qParam_atImInfty.eventually
+    (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1/2))).mono fun z hz =>
+    E2_sub_one_bound z (by simp only [dist_zero_right] at hz; linarith)
+
+/-- `‖E₄ z‖ ≤ 2` eventually (since `E₄ → 1`). -/
+private lemma E4_eventually_bounded :
+    ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty, ‖E₄ z‖ ≤ 2 :=
+  (E₄_tendsto_one_atImInfty.eventually
+    (Metric.ball_mem_nhds 1 (by norm_num : (0:ℝ) < 1))).mono fun z hz =>
+    by linarith [show ‖E₄ z - 1‖ < 1 from by rwa [dist_eq_norm] at hz,
+      norm_le_insert' (E₄ z) 1, norm_one (α := ℂ)]
+
+/-- `‖q(z)‖ < 1` eventually (since `q → 0`). -/
+private lemma qParam_eventually_lt_one :
+    ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 :=
+  (tendsto_qParam_atImInfty.eventually
+    (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1))).mono fun z hz => by
+    rwa [dist_zero_right] at hz
+
+/-- Triangle inequality for `E₂E₄ - E₆` decomposed as `E₂(E₄-1) + (E₂-1) - (E₆-1)`. -/
+private lemma E2E4_sub_E6_bound {z : UpperHalfPlane} {C₁ C₂ : ℝ} (_hC₁ : 0 < C₁)
+    (hE4 : ‖E₄ z - 1‖ ≤ C₁ * ‖Function.Periodic.qParam 1 (z : ℂ)‖)
+    (hE6 : ‖E₆ z - 1‖ ≤ C₂ * ‖Function.Periodic.qParam 1 (z : ℂ)‖)
+    (hE2 : ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖)
+    (hq_lt : ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1) :
+    ‖E₂ z * E₄ z - E₆ z‖ ≤
+    (193 * C₁ + 192 + C₂) * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
   set qz := Function.Periodic.qParam 1 (z : ℂ)
-  have hq_ne : qz ≠ 0 := Function.Periodic.qParam_ne_zero _
-  refine ⟨?_, hz5, hq_ne⟩
-  -- Decompose: E₂*E₄ - E₆ = E₂*(E₄-1) + (E₂-1) - (E₆-1)
-  have hdecomp : E₂ z * E₄ z - E₆ z = E₂ z * (E₄ z - 1) + (E₂ z - 1) - (E₆ z - 1) := by ring
-  rw [hdecomp]
-  -- ‖E₂‖ ≤ 1 + 192 (since ‖E₂-1‖ ≤ 192*‖q‖ ≤ 192)
-  have hE2_norm : ‖E₂ z‖ ≤ 193 := by
+  have hE2_norm : ‖E₂ z‖ ≤ 193 :=
     calc ‖E₂ z‖ ≤ ‖(1 : ℂ)‖ + ‖E₂ z - 1‖ := norm_le_insert' _ _
       _ ≤ 1 + 192 * ‖qz‖ := by linarith [norm_one (α := ℂ)]
       _ ≤ 1 + 192 * 1 := by nlinarith [norm_nonneg qz]
       _ = 193 := by norm_num
+  rw [show E₂ z * E₄ z - E₆ z =
+    E₂ z * (E₄ z - 1) + (E₂ z - 1) - (E₆ z - 1) from by ring]
   calc ‖E₂ z * (E₄ z - 1) + (E₂ z - 1) - (E₆ z - 1)‖
       ≤ ‖E₂ z * (E₄ z - 1)‖ + ‖E₂ z - 1‖ + ‖E₆ z - 1‖ := by
         linarith [norm_sub_le (E₂ z * (E₄ z - 1) + (E₂ z - 1)) (E₆ z - 1),
                   norm_add_le (E₂ z * (E₄ z - 1)) (E₂ z - 1)]
     _ ≤ ‖E₂ z‖ * (C₁ * ‖qz‖) + 192 * ‖qz‖ + C₂ * ‖qz‖ := by
-        gcongr; rw [norm_mul]; exact mul_le_mul_of_nonneg_left hz1 (norm_nonneg _)
+        gcongr; rw [norm_mul]; exact mul_le_mul_of_nonneg_left hE4 (norm_nonneg _)
     _ = (‖E₂ z‖ * C₁ + 192 + C₂) * ‖qz‖ := by ring
-    _ ≤ K * ‖qz‖ := by
-        gcongr; calc ‖E₂ z‖ * C₁ + 192 + C₂ ≤ 193 * C₁ + 192 + C₂ := by nlinarith
-          _ = K := hK_def.symm
+    _ ≤ (193 * C₁ + 192 + C₂) * ‖qz‖ := by gcongr
 
-/-- Lower bound on `|Δ|` in terms of `|q|` for small `q`. -/
+private lemma A_E_is_O_q : ∃ K > 0, ∃ A : ℝ, ∀ z : UpperHalfPlane, A ≤ z.im →
+    ‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ∧
+    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 ∧
+    Function.Periodic.qParam 1 (z : ℂ) ≠ 0 := by
+  obtain ⟨C₁, hC₁, hE4⟩ := E4_sub_one_eventually_le
+  obtain ⟨C₂, hC₂, hE6⟩ := E6_sub_one_eventually_le
+  have hE2 := E2_sub_one_eventually_le; have hE4b := E4_eventually_bounded
+  have hqlt := qParam_eventually_lt_one
+  rw [Filter.eventually_atImInfty] at hE4 hE6 hE2 hE4b hqlt
+  obtain ⟨A₁, h₁⟩ := hE4; obtain ⟨A₂, h₂⟩ := hE6
+  obtain ⟨A₃, h₃⟩ := hE2; obtain ⟨A₄, h₄⟩ := hE4b; obtain ⟨A₅, h₅⟩ := hqlt
+  refine ⟨193 * C₁ + 192 + C₂, by positivity, A₁ ⊔ A₂ ⊔ A₃ ⊔ A₄ ⊔ A₅, fun z hz => ?_⟩
+  have ge : ∀ Aᵢ, Aᵢ ≤ A₁ ⊔ A₂ ⊔ A₃ ⊔ A₄ ⊔ A₅ → Aᵢ ≤ z.im :=
+    fun _ h => le_trans h hz
+  have g₁ := h₁ z (ge _ (le_sup_of_le_left (le_sup_of_le_left (le_sup_of_le_left le_sup_left))))
+  have g₂ := h₂ z (ge _ (le_sup_of_le_left (le_sup_of_le_left (le_sup_of_le_left le_sup_right))))
+  have g₃ := h₃ z (ge _ (le_sup_of_le_left (le_sup_of_le_left le_sup_right)))
+  have g₅ := h₅ z (ge _ le_sup_right)
+  exact ⟨E2E4_sub_E6_bound hC₁ g₁ g₂ g₃ g₅, g₅, Function.Periodic.qParam_ne_zero _⟩
+
 private lemma Delta_lower_bound : ∃ r > 0, ∀ z : UpperHalfPlane,
     ‖Function.Periodic.qParam 1 (z : ℂ)‖ < r →
     Function.Periodic.qParam 1 (z : ℂ) ≠ 0 →
     1/2 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ≤ ‖Δ z‖ := by
-  have h := cF_Delta_div_q_tendsto
-  rw [Metric.tendsto_nhdsWithin_nhds] at h
+  have h := cF_Delta_div_q_tendsto; rw [Metric.tendsto_nhdsWithin_nhds] at h
   obtain ⟨δ, hδ_pos, hδ⟩ := h (1/2) (by norm_num)
   refine ⟨δ, hδ_pos, fun z hqz_small hqz_ne => ?_⟩
   set qz := Function.Periodic.qParam 1 (z : ℂ)
@@ -347,13 +352,10 @@ private lemma Delta_lower_bound : ∃ r > 0, ∀ z : UpperHalfPlane,
   have hq_pos : 0 < ‖qz‖ := norm_pos_iff.mpr hqz_ne
   have hdist := hδ hqz_ne (by rwa [dist_zero_right])
   rw [dist_eq_norm, div_sub_one hqz_ne, norm_div] at hdist
-  have hcF_close : ‖cF_Delta qz - qz‖ < 1/2 * ‖qz‖ := by
-    rwa [div_lt_iff₀ hq_pos] at hdist
-  -- ‖qz‖ = ‖cF_Delta qz - (cF_Delta qz - qz)‖ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖
-  have h_tri : ‖qz‖ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖ := by
+  have hcF_close : ‖cF_Delta qz - qz‖ < 1/2 * ‖qz‖ := by rwa [div_lt_iff₀ hq_pos] at hdist
+  linarith [show ‖qz‖ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖ from
     calc ‖qz‖ = ‖cF_Delta qz - (cF_Delta qz - qz)‖ := by ring_nf
-      _ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖ := norm_sub_le _ _
-  linarith
+      _ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖ := norm_sub_le _ _]
 
 /-- phi0 is bounded at `Im -> infinity`. -/
 theorem phi0_isBoundedAtImInfty :
@@ -361,30 +363,22 @@ theorem phi0_isBoundedAtImInfty :
   rw [UpperHalfPlane.isBoundedAtImInfty_iff]
   obtain ⟨K, hK_pos, A₁, hA₁⟩ := A_E_is_O_q
   obtain ⟨r, hr_pos, hDelta_lb⟩ := Delta_lower_bound
-  -- Get A₂ such that Im(z) ≥ A₂ implies |q| < r.
   have hq_event : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
       ‖Function.Periodic.qParam 1 (z : ℂ)‖ < r := by
-    have := tendsto_qParam_atImInfty.eventually (Metric.ball_mem_nhds 0 hr_pos)
-    apply this.mono; intro z hz; rwa [dist_zero_right] at hz
+    exact (tendsto_qParam_atImInfty.eventually
+      (Metric.ball_mem_nhds 0 hr_pos)).mono fun z hz => by rwa [dist_zero_right] at hz
   rw [Filter.eventually_atImInfty] at hq_event
   obtain ⟨A₂, hA₂⟩ := hq_event
   refine ⟨2 * K ^ 2, max A₁ A₂, fun z hz => ?_⟩
-  have hz1 : A₁ ≤ z.im := le_trans (le_max_left _ _) hz
-  have hz2 : A₂ ≤ z.im := le_trans (le_max_right _ _) hz
   set qz := Function.Periodic.qParam 1 (z : ℂ)
-  obtain ⟨hAE_bound, hqz_lt_one, hqz_ne⟩ := hA₁ z hz1
-  have hqz_small : ‖qz‖ < r := hA₂ z hz2
-  have hDelta_lower : 1/2 * ‖qz‖ ≤ ‖Δ z‖ := hDelta_lb z hqz_small hqz_ne
-  simp only [φ₀]
-  rw [norm_div, norm_pow]
-  have hqz_pos : 0 < ‖qz‖ := norm_pos_iff.mpr hqz_ne
-  have hDelta_pos : 0 < ‖Δ z‖ := norm_pos_iff.mpr (Δ_ne_zero z)
-  have hnum_bound : ‖E₂ z * E₄ z - E₆ z‖ ^ 2 ≤ (K * ‖qz‖) ^ 2 := by
-    apply pow_le_pow_left₀ (norm_nonneg _) hAE_bound
-  have hden_lower : 0 < 1/2 * ‖qz‖ := by positivity
+  obtain ⟨hAE_bound, hqz_lt_one, hqz_ne⟩ := hA₁ z (le_trans (le_max_left _ _) hz)
+  have hDelta_lower : 1/2 * ‖qz‖ ≤ ‖Δ z‖ :=
+    hDelta_lb z (hA₂ z (le_trans (le_max_right _ _) hz)) hqz_ne
+  simp only [φ₀]; rw [norm_div, norm_pow]
   calc ‖E₂ z * E₄ z - E₆ z‖ ^ 2 / ‖Δ z‖
       ≤ (K * ‖qz‖) ^ 2 / (1/2 * ‖qz‖) := by
-        apply div_le_div₀ (by positivity) hnum_bound hden_lower hDelta_lower
+        exact div_le_div₀ (by positivity) (pow_le_pow_left₀ (norm_nonneg _) hAE_bound 2)
+          (by positivity) hDelta_lower
     _ = 2 * K ^ 2 * ‖qz‖ := by field_simp
     _ ≤ 2 * K ^ 2 := by nlinarith [hqz_lt_one, sq_nonneg K]
 
