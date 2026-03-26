@@ -5,6 +5,7 @@ Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.GeneralizedResidueTheorem
 import LeanModularForms.GeneralizedResidueTheory.Cycle
+import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.Modularforms.Eisenstein
 import LeanModularForms.SpherePacking.PhiHolomorphic
 
@@ -168,13 +169,209 @@ theorem φ₀''_differentiableOn : DifferentiableOn ℂ φ₀'' {z : ℂ | 0 < z
       UpperHalfPlane.ofComplex_apply_of_im_pos hz', Pi.mul_apply, Pi.sub_apply,
       Pi.pow_apply, Pi.div_apply]; rfl
 
-/-! ## Contour equivalence
+/-! ## Upper half-plane: convexity and openness -/
 
-The main results connecting the original Viazovska contour integrals
-to the rectangular deformation via Cauchy's theorem. -/
+/-- The upper half-plane `{z : ℂ | 0 < z.im}` is open. -/
+theorem isOpen_upperHalfPlaneSet : IsOpen {z : ℂ | 0 < z.im} :=
+  isOpen_lt continuous_const Complex.continuous_im
 
--- TODO: Prove contour equivalence for truncated paths (away from real axis)
--- TODO: Take limit as truncation → 0 (cusp cancellation)
--- TODO: The Fourier eigenfunction property a = F(a)
+/-- The upper half-plane `{z : ℂ | 0 < z.im}` is convex. -/
+theorem convex_upperHalfPlaneSet : Convex ℝ {z : ℂ | 0 < z.im} := by
+  intro x hx y hy a b ha hb hab
+  show 0 < (a • x + b • y).im
+  have him : (a • x + b • y).im = a * x.im + b * y.im := by
+    simp [Complex.add_im]
+  rw [him]
+  have hx' : (0 : ℝ) < x.im := hx
+  have hy' : (0 : ℝ) < y.im := hy
+  rcases eq_or_lt_of_le ha with rfl | ha'
+  · simp at hab; subst hab; simp; linarith
+  · linarith [mul_pos ha' hx', mul_nonneg hb (le_of_lt hy')]
+
+/-! ## Holomorphicity of the integrand -/
+
+/-- When `Im(z) > 0`, the point `-1/(z+1)` also has positive imaginary part. -/
+theorem neg_inv_add_one_im_pos {z : ℂ} (hz : 0 < z.im) : 0 < (-1 / (z + 1)).im := by
+  have hne : z + 1 ≠ 0 := by
+    intro h; have := (Complex.ext_iff.mp h).2; simp at this; linarith
+  rw [neg_div, Complex.neg_im, Complex.div_im]
+  rw [Complex.one_im, Complex.one_re, zero_mul, zero_div, one_mul, zero_sub, neg_neg]
+  exact div_pos (by simp [Complex.add_im]; linarith) (Complex.normSq_pos.mpr hne)
+
+/-- The integrand `viazovska_integrand_left r` is holomorphic on the upper half-plane.
+This follows from holomorphicity of `φ₀''` and the algebraic factors. -/
+theorem viazovska_integrand_left_differentiableOn (r : ℝ) :
+    DifferentiableOn ℂ (viazovska_integrand_left r) {z : ℂ | 0 < z.im} := by
+  intro z hz
+  unfold viazovska_integrand_left
+  have hz' : 0 < z.im := hz
+  have hne : z + 1 ≠ 0 := by
+    intro h; have := (Complex.ext_iff.mp h).2; simp at this; linarith
+  have him := neg_inv_add_one_im_pos hz'
+  have hφ : DifferentiableAt ℂ φ₀'' (-1 / (z + 1)) :=
+    (φ₀''_differentiableOn _ him).differentiableAt
+      (isOpen_upperHalfPlaneSet.mem_nhds him)
+  have hinv : DifferentiableAt ℂ (fun w => -1 / (w + 1)) z :=
+    (differentiableAt_const _).div
+      (differentiableAt_id.add (differentiableAt_const _)) hne
+  exact ((hφ.comp z hinv).mul
+    ((differentiableAt_id.add (differentiableAt_const _)).pow 2) |>.mul
+    (Complex.differentiable_exp.differentiableAt.comp z
+      ((differentiableAt_const _).mul differentiableAt_id))).differentiableWithinAt
+
+/-! ## Contour equivalence infrastructure
+
+### Segment integrals and the fundamental theorem of calculus
+
+Given a holomorphic function `f` on a convex open set `S` with primitive `G`
+(i.e., `G' = f` on `S`), the segment integral from `a` to `b` equals `G(b) - G(a)`.
+This gives path independence: for `a, b, c ∈ S`,
+```
+∫_{a→b} f dz = ∫_{a→c} f dz + ∫_{c→b} f dz
+```
+since both sides equal `G(b) - G(a)`. -/
+
+/-- FTC for segment integrals: if `G' = f` on a convex open set,
+then the segment integral of `f` from `a` to `b` equals `G(b) - G(a)`. -/
+theorem segment_integral_eq_sub_of_hasDerivAt {f G : ℂ → ℂ} {S : Set ℂ}
+    (_hS_open : IsOpen S) (hS_convex : Convex ℝ S)
+    {a b : ℂ} (ha : a ∈ S) (hb : b ∈ S)
+    (hG : ∀ z ∈ S, HasDerivAt G (f z) z)
+    (hf_cont : ContinuousOn f S) :
+    ∫ t in (0:ℝ)..1, f (a + t • (b - a)) * (b - a) = G b - G a := by
+  have h_mem : ∀ t ∈ Icc (0 : ℝ) 1, a + ↑t • (b - a) ∈ S := by
+    intro t ht
+    have : a + ↑t • (b - a) = (1 - t) • a + t • b := by
+      simp only [smul_sub, sub_smul, one_smul]; ring
+    rw [this]
+    exact hS_convex ha hb (by linarith [ht.2]) ht.1 (by ring)
+  have hcont : ContinuousOn (fun t : ℝ => f (a + t • (b - a))) (Icc 0 1) :=
+    hf_cont.comp (continuous_const.add
+      (continuous_ofReal.smul continuous_const)).continuousOn h_mem
+  have key := intervalIntegral.integral_unitInterval_deriv_eq_sub (𝕜 := ℂ)
+    (f := G) (f' := f) (z₀ := a) (z₁ := b - a)
+    hcont (fun t ht => hG _ (h_mem t ht))
+  rw [show a + (b - a) = b from by ring] at key
+  rw [smul_eq_mul] at key
+  rw [intervalIntegral.integral_mul_const, mul_comm]
+  exact key
+
+/-- Contour additivity: for a holomorphic function on a convex open set,
+the segment integral from `a` to `b` equals the sum of segment integrals
+from `a` to `c` and from `c` to `b`. -/
+theorem segment_integral_add_of_holomorphic {f : ℂ → ℂ} {S : Set ℂ}
+    (hS_open : IsOpen S) (hS_convex : Convex ℝ S)
+    (hf : DifferentiableOn ℂ f S)
+    {a b c : ℂ} (ha : a ∈ S) (hb : b ∈ S) (hc : c ∈ S) :
+    ∫ t in (0:ℝ)..1, f (a + t • (b - a)) * (b - a) =
+    (∫ t in (0:ℝ)..1, f (a + t • (c - a)) * (c - a)) +
+    (∫ t in (0:ℝ)..1, f (c + t • (b - c)) * (b - c)) := by
+  obtain ⟨G, hG⟩ := holomorphic_convex_primitive hS_convex hS_open ⟨a, ha⟩ hf
+  rw [segment_integral_eq_sub_of_hasDerivAt hS_open hS_convex ha hb hG hf.continuousOn,
+      segment_integral_eq_sub_of_hasDerivAt hS_open hS_convex ha hc hG hf.continuousOn,
+      segment_integral_eq_sub_of_hasDerivAt hS_open hS_convex hc hb hG hf.continuousOn]
+  ring
+
+/-! ### Contour parameterization lemmas -/
+
+/-- The derivative of `contour_neg1_to_i` is the constant `1 + I`. -/
+theorem deriv_contour_neg1_to_i (t : ℝ) : deriv contour_neg1_to_i t = 1 + I := by
+  have h1 : HasDerivAt (fun s : ℝ => (-1 : ℂ) + (1 + I) * ↑s) (1 + I) t := by
+    have h := (ofRealCLM.hasDerivAt (x := t)).const_mul (1 + I : ℂ)
+    have hv : (1 + I) * ofRealCLM (1 : ℝ) = 1 + I := by
+      simp [ofRealCLM, Complex.ofReal_one]
+    rw [hv] at h
+    exact (hasDerivAt_const t (-1 : ℂ)).add h |>.congr_deriv (by ring)
+  have h2 : (fun s : ℝ => (-1 : ℂ) + (1 + I) * ↑s) = contour_neg1_to_i := by
+    ext s; simp [contour_neg1_to_i]
+  rw [h2] at h1; exact h1.deriv
+
+/-- `I12` expressed as a segment integral from `-1` to `I`. -/
+theorem I12_eq_segment_integral (r : ℝ) :
+    I12 r = ∫ t in (0:ℝ)..1,
+      viazovska_integrand_left r ((-1 : ℂ) + t • ((I : ℂ) - (-1))) *
+        ((I : ℂ) - (-1)) := by
+  unfold I12; congr 1; ext t
+  rw [deriv_contour_neg1_to_i]
+  have h1 : contour_neg1_to_i t = (-1 : ℂ) + ↑t • ((I : ℂ) - (-1)) := by
+    simp [contour_neg1_to_i, Complex.real_smul, sub_neg_eq_add]; ring
+  rw [h1, show (1 : ℂ) + I = (I : ℂ) - (-1) from by ring]
+
+/-! ### Rectangular decomposition integrals -/
+
+/-- The vertical integral from `-1` to `-1+I`: left side of the rectangular path. -/
+def I12_vert (r : ℝ) : ℂ :=
+  ∫ t in (0:ℝ)..1, viazovska_integrand_left r (-1 + I * ↑t) * I
+
+/-- The horizontal integral from `-1+I` to `I`: top side of the rectangular path. -/
+def I12_horiz (r : ℝ) : ℂ :=
+  ∫ t in (0:ℝ)..1, viazovska_integrand_left r (-1 + I + ↑t)
+
+/-- `I12_vert` expressed as a segment integral from `-1` to `-1+I`. -/
+theorem I12_vert_eq_segment (r : ℝ) :
+    I12_vert r = ∫ t in (0:ℝ)..1,
+      viazovska_integrand_left r ((-1 : ℂ) + t • ((-1 + I) - (-1 : ℂ))) *
+        ((-1 + I) - (-1 : ℂ)) := by
+  simp only [I12_vert]; congr 1; ext t
+  congr 1
+  · congr 1; simp [Complex.real_smul]; ring
+  · ring
+
+/-- `I12_horiz` expressed as a segment integral from `-1+I` to `I`. -/
+theorem I12_horiz_eq_segment (r : ℝ) :
+    I12_horiz r = ∫ t in (0:ℝ)..1,
+      viazovska_integrand_left r ((-1 + I : ℂ) + t • ((I : ℂ) - (-1 + I))) *
+        ((I : ℂ) - (-1 + I)) := by
+  simp only [I12_horiz]; congr 1; ext t
+  have h1 : (I : ℂ) - (-1 + I) = 1 := by ring
+  rw [h1, mul_one]
+  congr 1; simp [Complex.real_smul]
+
+/-! ### Truncated contour equivalence
+
+For `δ > 0`, the diagonal integral from `-1 + δI` to `I` equals the
+vertical integral from `-1 + δI` to `-1 + I` plus the horizontal integral
+from `-1 + I` to `I`. All three segments lie in the upper half-plane,
+so path independence (from `holomorphic_convex_primitive`) applies. -/
+
+/-- The point `-1 + δI` lies in the upper half-plane for `δ > 0`. -/
+theorem neg_one_add_delta_I_mem_uhp {δ : ℝ} (hδ : 0 < δ) :
+    (-1 + ↑δ * I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
+  show 0 < (-1 + ↑δ * I : ℂ).im
+  simp [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im,
+        Complex.ofReal_re, Complex.ofReal_im]; linarith
+
+/-- The point `-1 + I` lies in the upper half-plane. -/
+theorem neg_one_add_I_mem_uhp : (-1 + I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
+  show 0 < (-1 + I : ℂ).im; simp [Complex.add_im, Complex.I_im]
+
+/-- The point `I` lies in the upper half-plane. -/
+theorem I_mem_uhp : (I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
+  show 0 < (I : ℂ).im; simp [Complex.I_im]
+
+/-- Truncated contour equivalence: for `δ > 0`, the diagonal segment integral from
+`-1 + δI` to `I` equals the vertical from `-1 + δI` to `-1 + I` plus the
+horizontal from `-1 + I` to `I`. This is path independence for holomorphic
+functions on the convex open upper half-plane. -/
+theorem truncated_contour_equivalence (r : ℝ) (δ : ℝ) (hδ : 0 < δ) :
+    let a : ℂ := -1 + ↑δ * I
+    let c : ℂ := -1 + I
+    let b : ℂ := I
+    let F := viazovska_integrand_left r
+    (∫ t in (0:ℝ)..1, F (a + t • (b - a)) * (b - a)) =
+    (∫ t in (0:ℝ)..1, F (a + t • (c - a)) * (c - a)) +
+    (∫ t in (0:ℝ)..1, F (c + t • (b - c)) * (b - c)) := by
+  exact segment_integral_add_of_holomorphic
+    isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+    (viazovska_integrand_left_differentiableOn r)
+    (neg_one_add_delta_I_mem_uhp hδ) I_mem_uhp neg_one_add_I_mem_uhp
+
+/-- The horizontal part of the truncated equivalence equals `I12_horiz`.
+The segment from `-1+I` to `I` does not depend on `δ`. -/
+theorem truncated_horiz_eq_I12_horiz (r : ℝ) :
+    (∫ t in (0:ℝ)..1, viazovska_integrand_left r
+      ((-1 + I : ℂ) + t • ((I : ℂ) - (-1 + I))) * ((I : ℂ) - (-1 + I))) =
+    I12_horiz r := by
+  rw [I12_horiz_eq_segment]
 
 end
