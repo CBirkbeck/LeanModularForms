@@ -163,11 +163,172 @@ Combined: `|φ₀| ≤ 2K²|q| → 0`.
 
 /-- `E₂·E₄ - E₆` is `O(q)` at infinity: there exists `K` and `A` such that
 `‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖qParam z‖` for `Im(z) ≥ A` and `‖E₄ z‖ ≤ 2`. -/
+private lemma exp_eq_qParam_pow (z : UpperHalfPlane) (n : ℕ+) :
+    cexp (2 * ↑Real.pi * I * ↑↑n * ↑z) =
+    (Function.Periodic.qParam 1 (z : ℂ)) ^ (n : ℕ) := by
+  simp only [Function.Periodic.qParam, ← exp_nsmul, nsmul_eq_mul, ofReal_one, div_one]; ring_nf
+
+private lemma tsum_pnat_eq_r_times (r : ℝ) :
+    ∑' (n : ℕ+), (↑↑n : ℝ) * r ^ (n : ℕ) =
+    r * ∑' (m : ℕ), (↑(m + 1) : ℝ) * r ^ m := by
+  have h1 : ∑' (n : ℕ+), (↑↑n : ℝ) * r ^ (n : ℕ) =
+      ∑' (m : ℕ), (↑(m + 1) : ℝ) * r ^ (m + 1) := by
+    rw [← Equiv.tsum_eq Equiv.pnatEquivNat]
+    congr 1; ext n
+    simp only [Equiv.pnatEquivNat, Equiv.coe_fn_mk]
+    rw [show (↑↑n : ℝ) = (↑(n.natPred + 1) : ℝ) from by rw [n.natPred_add_one.symm],
+        show (n : ℕ) = n.natPred + 1 from n.natPred_add_one.symm]
+  rw [h1, ← tsum_mul_left]
+  congr 1; ext m; ring
+
+set_option maxHeartbeats 16000000 in
+private lemma E2_sub_one_bound (z : UpperHalfPlane)
+    (hq : ‖Function.Periodic.qParam 1 (z : ℂ)‖ ≤ 1/2) :
+    ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
+  set q := Function.Periodic.qParam 1 (z : ℂ) with hq_def
+  have hq_lt : ‖q‖ < 1 := lt_of_le_of_lt hq (by norm_num)
+  -- Rewrite E₂ - 1 using the q-expansion
+  have hE2_sub : E₂ z - 1 = (-24) * ∑' (n : ℕ+), ↑↑n * q ^ (n : ℕ) / (1 - q ^ (n : ℕ)) := by
+    have h := E₂_eq z
+    have : E₂ z - 1 = (-24) * ∑' (n : ℕ+), ↑↑n * cexp (2 * ↑Real.pi * I * ↑↑n * ↑z) /
+        (1 - cexp (2 * ↑Real.pi * I * ↑↑n * ↑z)) := by rw [h]; ring
+    rw [this]; congr 1; apply tsum_congr; intro n; rw [exp_eq_qParam_pow z n]
+  rw [hE2_sub, norm_mul, show ‖(-24 : ℂ)‖ = 24 from by norm_num]
+  -- Summability of norms (from summable_norm_pow_mul_geometric_div_one_sub)
+  have hsum_norm : Summable (fun n : ℕ+ => ‖(↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖) :=
+    ((summable_norm_pow_mul_geometric_div_one_sub (𝕜 := ℂ) 1 hq_lt |>.congr
+      (fun n => by simp [pow_one])).norm).subtype _
+  -- ‖tsum‖ ≤ tsum of norms
+  have htsum_le := norm_tsum_le_tsum_norm hsum_norm
+  -- Pointwise bound: ‖n*q^n/(1-q^n)‖ ≤ 2*n*‖q‖^n for ‖q‖ ≤ 1/2
+  have hterm : ∀ n : ℕ+, ‖(↑↑n : ℂ) * q ^ (n : ℕ) / (1 - q ^ (n : ℕ))‖ ≤
+      2 * (n : ℝ) * ‖q‖ ^ (n : ℕ) := by
+    intro n
+    simp only [norm_div, norm_mul, norm_pow, Complex.norm_natCast]
+    have hqn_le : ‖q‖ ^ (n : ℕ) ≤ 1/2 := by
+      calc ‖q‖ ^ (n : ℕ) ≤ (1/2) ^ (n : ℕ) := pow_le_pow_left₀ (norm_nonneg q) hq n
+        _ ≤ (1/2) ^ 1 := pow_le_pow_of_le_one (by norm_num) (by norm_num) n.2
+        _ = 1/2 := by norm_num
+    have h1_sub : 1/2 ≤ ‖1 - q ^ (n : ℕ)‖ := by
+      linarith [norm_sub_norm_le (1 : ℂ) (q ^ (n : ℕ)), norm_one (α := ℂ),
+        show ‖q ^ (n : ℕ)‖ ≤ 1/2 from norm_pow q n ▸ hqn_le]
+    calc (n : ℝ) * ‖q‖ ^ (n : ℕ) / ‖1 - q ^ ↑n‖
+        ≤ (n : ℝ) * ‖q‖ ^ (n : ℕ) / (1/2) := by
+          apply div_le_div_of_nonneg_left (by positivity) (by positivity) h1_sub
+      _ = 2 * (n : ℝ) * ‖q‖ ^ (n : ℕ) := by ring
+  -- Σ_{ℕ+} ‖terms‖ ≤ Σ_{ℕ+} 2n*‖q‖^n (by tsum_le_tsum)
+  have hnn : ‖(‖q‖ : ℝ)‖ < 1 := by rwa [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg q)]
+  have hsum_bound : Summable (fun n : ℕ+ => 2 * (↑↑n : ℝ) * ‖q‖ ^ (n : ℕ)) := by
+    exact (((summable_pow_mul_geometric_of_norm_lt_one 1 hnn).congr
+        (fun n => by simp [pow_one])).mul_left 2 |>.congr (fun n => by ring)).subtype _
+  -- Evaluate Σ_{ℕ+} 2n*‖q‖^n = 2*‖q‖/(1-‖q‖)^2
+  have htsum_val : ∑' (n : ℕ+), 2 * (↑↑n : ℝ) * ‖q‖ ^ (n : ℕ) =
+      2 * (‖q‖ / (1 - ‖q‖) ^ 2) := by
+    have hfn : (fun n : ℕ+ => 2 * (↑↑n : ℝ) * ‖q‖ ^ (n : ℕ)) =
+        (fun n : ℕ+ => 2 * ((↑↑n : ℝ) * ‖q‖ ^ (n : ℕ))) := by ext n; ring
+    rw [hfn, tsum_mul_left, tsum_pnat_eq_r_times ‖q‖]
+    have hchoose : ∑' m : ℕ, (↑(m + 1) : ℝ) * ‖q‖ ^ m = 1 / (1 - ‖q‖) ^ 2 := by
+      have := tsum_choose_mul_geometric_of_norm_lt_one 1 hnn
+      simp only [Nat.add_one_sub_one, pow_one] at this
+      convert this using 1; congr 1; ext n; simp [Nat.choose_one_right]
+    rw [hchoose]; ring
+  -- For ‖q‖ ≤ 1/2: ‖q‖/(1-‖q‖)^2 ≤ 4*‖q‖
+  have hq_bound : ‖q‖ / (1 - ‖q‖) ^ 2 ≤ 4 * ‖q‖ := by
+    rw [div_le_iff₀ (by positivity : (0:ℝ) < (1 - ‖q‖) ^ 2)]
+    nlinarith [norm_nonneg q]
+  -- Combine: 24 * ‖Σ‖ ≤ 24 * 2 * 4 * ‖q‖ = 192 * ‖q‖
+  calc 24 * ‖∑' (n : ℕ+), ↑↑n * q ^ ↑n / (1 - q ^ ↑n)‖
+      ≤ 24 * ∑' (n : ℕ+), ‖↑↑n * q ^ ↑n / (1 - q ^ ↑n)‖ :=
+        mul_le_mul_of_nonneg_left htsum_le (by norm_num)
+    _ ≤ 24 * ∑' (n : ℕ+), 2 * ↑↑n * ‖q‖ ^ ↑n :=
+        mul_le_mul_of_nonneg_left (tsum_le_tsum hterm hsum_norm hsum_bound) (by norm_num)
+    _ = 24 * (2 * (‖q‖ / (1 - ‖q‖) ^ 2)) := by rw [htsum_val]
+    _ ≤ 24 * (2 * (4 * ‖q‖)) :=
+        mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hq_bound (by norm_num)) (by norm_num)
+    _ = 192 * ‖q‖ := by ring
+
+set_option maxHeartbeats 3200000 in
 private lemma A_E_is_O_q : ∃ K > 0, ∃ A : ℝ, ∀ z : UpperHalfPlane, A ≤ z.im →
     ‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ∧
     ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 ∧
     Function.Periodic.qParam 1 (z : ℂ) ≠ 0 := by
-  sorry
+  -- Get O(q) bound for E₄-1 and E₆-1 via cusp function analyticity
+  have hE4_O : (fun q : ℂ => SlashInvariantFormClass.cuspFunction 1 E₄ q - 1) =O[𝓝 0] id := by
+    have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 E₄
+    have hval : SlashInvariantFormClass.cuspFunction 1 E₄ 0 = 1 := by
+      rw [cuspfunc_Zero]; exact E4_q_exp_zero
+    have hbig := hfps.analyticAt.differentiableAt.hasFDerivAt.isBigO_sub
+    simp only [hval, sub_zero] at hbig; exact hbig
+  have hE6_O : (fun q : ℂ => SlashInvariantFormClass.cuspFunction 1 E₆ q - 1) =O[𝓝 0] id := by
+    have hfps := ModularFormClass.hasFPowerSeries_cuspFunction 1 E₆
+    have hval : SlashInvariantFormClass.cuspFunction 1 E₆ 0 = 1 := by
+      rw [cuspfunc_Zero]; exact E6_q_exp_zero
+    have hbig := hfps.analyticAt.differentiableAt.hasFDerivAt.isBigO_sub
+    simp only [hval, sub_zero] at hbig; exact hbig
+  -- Extract concrete bounds from IsBigO
+  obtain ⟨C₁, hC₁_pos, hC₁⟩ := hE4_O.exists_pos
+  obtain ⟨C₂, hC₂_pos, hC₂⟩ := hE6_O.exists_pos
+  have hq_tendsto := tendsto_qParam_atImInfty
+  -- Pull back bounds to UpperHalfPlane
+  have hE4_uhp : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+      ‖E₄ z - 1‖ ≤ C₁ * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
+    apply (hq_tendsto.eventually (hC₁.bound.mono (fun q hq => by simpa [id] using hq))).mono
+    intro z hz
+    have := (SlashInvariantFormClass.eq_cuspFunction 1 E₄ z).symm
+    simp only [Nat.cast_one] at this; rwa [this]
+  have hE6_uhp : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+      ‖E₆ z - 1‖ ≤ C₂ * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
+    apply (hq_tendsto.eventually (hC₂.bound.mono (fun q hq => by simpa [id] using hq))).mono
+    intro z hz
+    have := (SlashInvariantFormClass.eq_cuspFunction 1 E₆ z).symm
+    simp only [Nat.cast_one] at this; rwa [this]
+  have hE2_uhp : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+      ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
+    apply (hq_tendsto.eventually (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1/2))).mono
+    intro z hz; exact E2_sub_one_bound z (by simp only [dist_zero_right] at hz; linarith)
+  have hE4_bdd : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty, ‖E₄ z‖ ≤ 2 := by
+    apply (E₄_tendsto_one_atImInfty.eventually (Metric.ball_mem_nhds 1 (by norm_num : (0:ℝ) < 1))).mono
+    intro z hz
+    have h1 : ‖E₄ z - 1‖ < 1 := by rwa [dist_eq_norm] at hz
+    linarith [norm_le_insert' (E₄ z) 1, norm_one (α := ℂ)]
+  have hq_lt : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+      ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 := by
+    apply (hq_tendsto.eventually (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1))).mono
+    intro z hz; rwa [dist_zero_right] at hz
+  -- Combine eventual conditions
+  rw [Filter.eventually_atImInfty] at hE4_uhp hE6_uhp hE2_uhp hE4_bdd hq_lt
+  obtain ⟨A₁, hA₁⟩ := hE4_uhp; obtain ⟨A₂, hA₂⟩ := hE6_uhp
+  obtain ⟨A₃, hA₃⟩ := hE2_uhp; obtain ⟨A₄, hA₄⟩ := hE4_bdd; obtain ⟨A₅, hA₅⟩ := hq_lt
+  -- K must be ≥ ‖E₂‖*C₁ + 192 + C₂ ≤ (1+192)*C₁ + 192 + C₂ = 193*C₁ + 192 + C₂
+  set K := 193 * C₁ + 192 + C₂ with hK_def
+  refine ⟨K, by positivity, max (max (max A₁ A₂) (max A₃ A₄)) A₅, fun z hz => ?_⟩
+  have hz1 := hA₁ z (le_trans (le_max_left _ _ |>.trans (le_max_left _ _ |>.trans (le_max_left _ _))) hz)
+  have hz2 := hA₂ z (le_trans (le_max_right _ _ |>.trans (le_max_left _ _ |>.trans (le_max_left _ _))) hz)
+  have hz3 := hA₃ z (le_trans (le_max_left _ _ |>.trans (le_max_right _ _ |>.trans (le_max_left _ _))) hz)
+  have hz4 := hA₄ z (le_trans (le_max_right _ _ |>.trans (le_max_right _ _ |>.trans (le_max_left _ _))) hz)
+  have hz5 := hA₅ z (le_trans (le_max_right _ _) hz)
+  set qz := Function.Periodic.qParam 1 (z : ℂ)
+  have hq_ne : qz ≠ 0 := Function.Periodic.qParam_ne_zero _
+  refine ⟨?_, hz5, hq_ne⟩
+  -- Decompose: E₂*E₄ - E₆ = E₂*(E₄-1) + (E₂-1) - (E₆-1)
+  have hdecomp : E₂ z * E₄ z - E₆ z = E₂ z * (E₄ z - 1) + (E₂ z - 1) - (E₆ z - 1) := by ring
+  rw [hdecomp]
+  -- ‖E₂‖ ≤ 1 + 192 (since ‖E₂-1‖ ≤ 192*‖q‖ ≤ 192)
+  have hE2_norm : ‖E₂ z‖ ≤ 193 := by
+    calc ‖E₂ z‖ ≤ ‖(1 : ℂ)‖ + ‖E₂ z - 1‖ := norm_le_insert' _ _
+      _ ≤ 1 + 192 * ‖qz‖ := by linarith [norm_one (α := ℂ)]
+      _ ≤ 1 + 192 * 1 := by nlinarith [norm_nonneg qz]
+      _ = 193 := by norm_num
+  calc ‖E₂ z * (E₄ z - 1) + (E₂ z - 1) - (E₆ z - 1)‖
+      ≤ ‖E₂ z * (E₄ z - 1)‖ + ‖E₂ z - 1‖ + ‖E₆ z - 1‖ := by
+        linarith [norm_sub_le (E₂ z * (E₄ z - 1) + (E₂ z - 1)) (E₆ z - 1),
+                  norm_add_le (E₂ z * (E₄ z - 1)) (E₂ z - 1)]
+    _ ≤ ‖E₂ z‖ * (C₁ * ‖qz‖) + 192 * ‖qz‖ + C₂ * ‖qz‖ := by
+        gcongr; rw [norm_mul]; exact mul_le_mul_of_nonneg_left hz1 (norm_nonneg _)
+    _ = (‖E₂ z‖ * C₁ + 192 + C₂) * ‖qz‖ := by ring
+    _ ≤ K * ‖qz‖ := by
+        gcongr; calc ‖E₂ z‖ * C₁ + 192 + C₂ ≤ 193 * C₁ + 192 + C₂ := by nlinarith
+          _ = K := hK_def.symm
 
 /-- Lower bound on `|Δ|` in terms of `|q|` for small `q`. -/
 private lemma Delta_lower_bound : ∃ r > 0, ∀ z : UpperHalfPlane,
