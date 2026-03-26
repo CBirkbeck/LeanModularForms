@@ -181,7 +181,7 @@ private lemma tsum_pnat_eq_r_times (r : ℝ) :
   rw [h1, ← tsum_mul_left]
   congr 1; ext m; ring
 
-set_option maxHeartbeats 16000000 in
+set_option maxHeartbeats 64000000 in
 private lemma E2_sub_one_bound (z : UpperHalfPlane)
     (hq : ‖Function.Periodic.qParam 1 (z : ℂ)‖ ≤ 1/2) :
     ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
