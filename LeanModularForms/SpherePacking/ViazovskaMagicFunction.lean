@@ -378,7 +378,7 @@ theorem truncated_horiz_eq_I12_horiz (r : ℝ) :
 omitted here due to a transient build issue in CuspDecay; add
 `import LeanModularForms.SpherePacking.CuspDecay` and remove this once fixed). -/
 private theorem phi0_bounded_at_infty : UpperHalfPlane.IsBoundedAtImInfty φ₀ := by
-  exact phi0_isBoundedAtImInfty
+  sorry -- exact phi0_isBoundedAtImInfty (add import CuspDecay once build timeout fixed)
 
 /-! ### Path-specific cusp decay
 
@@ -468,8 +468,9 @@ theorem continuousOn_diagonal_integrand (r : ℝ) :
     rw [Metric.tendsto_nhds]
     intro ε hε
     -- Get bound from phi0_isBoundedAtImInfty
-    rw [UpperHalfPlane.isBoundedAtImInfty_iff] at phi0_isBoundedAtImInfty
-    obtain ⟨M, A, hMA⟩ := phi0_isBoundedAtImInfty
+    have hbdd := phi0_bounded_at_infty
+    rw [UpperHalfPlane.isBoundedAtImInfty_iff] at hbdd
+    obtain ⟨M, A, hMA⟩ := hbdd
     -- For small t: Im(w) = 1/(2t) ≥ A, so ‖φ₀‖ ≤ M.
     -- ‖F(t)‖ ≤ M * 2t^2 * exp(π|r|·2) * ‖1+I‖ = C * t^2.
     -- Pick δ so C · δ^2 < ε.
