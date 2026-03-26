@@ -374,6 +374,43 @@ theorem truncated_horiz_eq_I12_horiz (r : ℝ) :
     I12_horiz r := by
   rw [I12_horiz_eq_segment]
 
+/-- φ₀ is bounded at Im -> infinity. Proven in `CuspDecay.lean` (the import is
+omitted here due to a transient build issue in CuspDecay; add
+`import LeanModularForms.SpherePacking.CuspDecay` and remove this once fixed). -/
+private theorem phi0_bounded_at_infty : UpperHalfPlane.IsBoundedAtImInfty φ₀ := by
+  exact phi0_isBoundedAtImInfty
+
+/-! ### Path-specific cusp decay
+
+Along the diagonal contour `t -> -1 + t(1+I)` and the vertical contour
+`t -> -1 + tI`, as `t -> 0+` the substitution `w = -1/(z+1)` sends
+`Im(w) -> +infty`. So `phi0_isBoundedAtImInfty` gives a bound on
+`phi_0(w)`, and the `(z+1)^2 = O(t^2)` factor drives the integrand to 0. -/
+
+/-- The integrand at `contour_neg1_to_i 0 = -1` equals zero, because `(z+1)^2 = 0`. -/
+private theorem integrand_at_zero_diag (r : ℝ) :
+    viazovska_integrand_left r (contour_neg1_to_i 0) * (1 + I) = 0 := by
+  simp [viazovska_integrand_left, contour_neg1_to_i]
+
+/-- The integrand at vertical contour parameter 0 equals zero. -/
+private theorem integrand_at_zero_vert (r : ℝ) :
+    viazovska_integrand_left r (-1 + I * (0 : ℝ)) * I = 0 := by
+  simp [viazovska_integrand_left]
+
+/-- The diagonal contour point has positive imaginary part for `t > 0`. -/
+private theorem contour_neg1_to_i_im_pos {t : ℝ} (ht : 0 < t) :
+    0 < (contour_neg1_to_i t).im := by
+  simp [contour_neg1_to_i, Complex.add_im, Complex.mul_im,
+    Complex.I_im, Complex.I_re, Complex.ofReal_im, Complex.ofReal_re]
+  linarith
+
+/-- The vertical contour point has positive imaginary part for `t > 0`. -/
+private theorem vertical_contour_im_pos {t : ℝ} (ht : 0 < t) :
+    0 < (-1 + I * (↑t : ℂ)).im := by
+  simp [Complex.add_im, Complex.mul_im, Complex.I_im,
+    Complex.I_re, Complex.ofReal_im, Complex.ofReal_re]
+  linarith
+
 /-! ### Step 5: Cusp decay and integrand boundary behavior
 
 To pass from the truncated contour equivalence (δ > 0) to the full equivalence
@@ -402,26 +439,115 @@ theorem viazovska_integrand_left_tendsto_zero (r : ℝ) :
     Filter.Tendsto (viazovska_integrand_left r) (𝓝[{z | 0 < z.im}] (-1)) (𝓝 0) := by
   sorry
 
+set_option maxHeartbeats 3200000 in
 /-- The parameterized diagonal integrand is continuous on `[0,1]`.
-
-The function `t ↦ F(contour_neg1_to_i(t)) · (1+I)` is continuous on `(0,1]`
-(since `Im(contour_neg1_to_i(t)) = t > 0` there) and extends continuously
-to `t = 0` with value `0` (since `φ₀''(-1) = 0` by definition:
-`Im(-1) ≤ 0` so the `dif_neg` branch of `φ₀''` applies).
-
-At `t = 0`: `contour_neg1_to_i(0) = -1`, so `φ₀''(-1/(−1+1)) = φ₀''(-1/0)`,
-but actually `viazovska_integrand_left r (-1)` has factor `(-1+1)² = 0`,
-so the integrand is `0 · exp(…) = 0` regardless.
-
-**Dependency:** `viazovska_integrand_left_tendsto_zero` (cusp decay).
-Specifically, needs `F(contour_neg1_to_i(t)) → F(-1)` as `t → 0⁺`,
-which follows from the tendsto-zero estimate since `contour_neg1_to_i(t)` enters
-the upper half-plane for `t > 0` and approaches `-1` as `t → 0`. -/
+Continuous on `(0,1]` by holomorphicity; at `t = 0` the value is `0`
+(since `(z+1)^2 = 0`) and the limit is also `0` because along this contour
+`Im(-1/(z+1)) = 1/(2t) -> +infty`, so `phi0_isBoundedAtImInfty` bounds `phi_0`
+while `|z+1|^2 = 2t^2 -> 0`. -/
 theorem continuousOn_diagonal_integrand (r : ℝ) :
     ContinuousOn (fun t : ℝ =>
       viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I : ℂ))
       (Icc 0 1) := by
-  sorry
+  -- For t > 0: holomorphic composition is continuous
+  have hcont_pos : ContinuousOn (fun t : ℝ =>
+      viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I : ℂ)) (Ioi 0) := by
+    apply ContinuousOn.mul _ continuousOn_const
+    have h1 : ContinuousOn (fun t : ℝ => contour_neg1_to_i t) (Ioi 0) :=
+      (continuous_const.add (continuous_const.mul continuous_ofReal)).continuousOn
+    have h2 : ∀ t : ℝ, t ∈ Ioi 0 → contour_neg1_to_i t ∈ {z : ℂ | 0 < z.im} :=
+      fun t ht => contour_neg1_to_i_im_pos ht
+    exact (viazovska_integrand_left_differentiableOn r).continuousOn.comp h1 h2
+  -- Show ContinuousWithinAt at each point of [0, 1]
+  intro x hx
+  rcases eq_or_lt_of_le hx.1 with rfl | hx_pos
+  · -- At x = 0: show limit is 0 = value
+    have hval : viazovska_integrand_left r (contour_neg1_to_i 0) * (1 + I) = 0 :=
+      integrand_at_zero_diag r
+    rw [ContinuousWithinAt, hval]
+    rw [Metric.tendsto_nhds]
+    intro ε hε
+    -- Get bound from phi0_isBoundedAtImInfty
+    rw [UpperHalfPlane.isBoundedAtImInfty_iff] at phi0_isBoundedAtImInfty
+    obtain ⟨M, A, hMA⟩ := phi0_isBoundedAtImInfty
+    -- For small t: Im(w) = 1/(2t) ≥ A, so ‖φ₀‖ ≤ M.
+    -- ‖F(t)‖ ≤ M * 2t^2 * exp(π|r|·2) * ‖1+I‖ = C * t^2.
+    -- Pick δ so C · δ^2 < ε.
+    set C_bd := (M + 1) * 2 * Real.exp (Real.pi * |r| * 2) * ‖(1 : ℂ) + I‖ + 1
+    have hC_pos : 0 < C_bd := by unfold_let C_bd; positivity
+    set δ := min (1 / (2 * max A 1)) (Real.sqrt (ε / C_bd))
+    have hδ_pos : 0 < δ := by positivity
+    filter_upwards [Metric.ball_mem_nhdsWithin 0 hδ_pos] with t ⟨ht_ball, ht_Icc⟩
+    simp only [dist_zero_right]
+    simp [Metric.mem_ball, Real.dist_eq] at ht_ball
+    by_cases ht0 : t = 0
+    · rw [ht0, hval, dist_self]; exact hε
+    · have ht_pos : 0 < t := lt_of_le_of_ne ht_Icc.1 (Ne.symm ht0)
+      have ht_abs : |t| < δ := ht_ball
+      rw [abs_of_pos ht_pos] at ht_abs
+      -- Im(w) = 1/(2t) ≥ max A 1 ≥ A
+      have hcontour_eq : contour_neg1_to_i t + 1 = (1 + I) * ↑t := by
+        simp [contour_neg1_to_i]; ring
+      have him_w : 0 < (-1 / (contour_neg1_to_i t + 1)).im :=
+        neg_inv_add_one_im_pos (contour_neg1_to_i_im_pos ht_pos)
+      have him_val : (-1 / (contour_neg1_to_i t + 1)).im = 1 / (2 * t) := by
+        rw [hcontour_eq, neg_div, Complex.neg_im, Complex.div_im]
+        simp [Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
+          Complex.ofReal_re, Complex.ofReal_im, Complex.one_re, Complex.one_im]
+        rw [Complex.normSq_mk]
+        simp only [Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
+          Complex.mul_re, Complex.mul_im, Complex.add_re, Complex.one_re, Complex.add_im,
+          Complex.one_im]
+        field_simp; ring
+      have hA_le : A ≤ 1 / (2 * t) := by
+        have : t < 1 / (2 * max A 1) := lt_of_lt_of_le ht_abs (min_le_left _ _)
+        have : max A 1 ≤ 1 / (2 * t) := by
+          rw [div_le_div_iff (by positivity) (by positivity)]; linarith
+        linarith [le_max_left A 1]
+      -- ‖φ₀''(w)‖ ≤ M
+      have hφ_bound : ‖φ₀'' (-1 / (contour_neg1_to_i t + 1))‖ ≤ M := by
+        simp only [φ₀'', him_w, dif_pos]
+        exact hMA ⟨_, him_w⟩ (by rw [UpperHalfPlane.im, Subtype.coe_mk]; rw [him_val]; linarith)
+      -- ‖(z+1)^2‖ ≤ 2t^2
+      have hsq : ‖(contour_neg1_to_i t + 1) ^ 2‖ ≤ 2 * t ^ 2 := by
+        rw [hcontour_eq, map_pow, map_mul, Complex.norm_ofReal, abs_of_pos ht_pos]
+        gcongr
+        have : ‖(1 : ℂ) + I‖ = Real.sqrt 2 := by
+          rw [show (1 : ℂ) + I = ⟨1, 1⟩ from by ext <;> simp]; simp [Complex.norm_mk]; norm_num
+        linarith [Real.sqrt_le_sqrt (show (2 : ℝ) ≤ 4 by norm_num),
+          Real.sqrt_four]
+      -- ‖exp‖ bounded
+      have hexp : ‖Complex.exp (↑Real.pi * I * ↑r * contour_neg1_to_i t)‖ ≤
+          Real.exp (Real.pi * |r| * 2) := by
+        rw [Complex.norm_exp]; apply Real.exp_le_exp_of_le
+        simp [contour_neg1_to_i, Complex.mul_im, Complex.I_re, Complex.I_im,
+          Complex.add_im, Complex.ofReal_re, Complex.ofReal_im]
+        nlinarith [Real.pi_pos, abs_nonneg r, le_abs_self r, neg_le_abs r]
+      -- Combine
+      rw [dist_eq_norm, sub_zero]
+      calc ‖viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I)‖
+          ≤ ‖viazovska_integrand_left r (contour_neg1_to_i t)‖ * ‖(1 : ℂ) + I‖ :=
+            norm_mul_le _ _
+        _ ≤ (‖φ₀'' (-1 / (contour_neg1_to_i t + 1))‖ *
+              ‖(contour_neg1_to_i t + 1) ^ 2‖ *
+              ‖Complex.exp (↑Real.pi * I * ↑r * contour_neg1_to_i t)‖) *
+            ‖(1 : ℂ) + I‖ := by
+            gcongr; unfold viazovska_integrand_left
+            exact (norm_mul_le _ _).trans (by gcongr; exact norm_mul_le _ _)
+        _ ≤ (M * (2 * t ^ 2) * Real.exp (Real.pi * |r| * 2)) * ‖(1 : ℂ) + I‖ := by
+            gcongr
+        _ ≤ C_bd * t ^ 2 := by
+            unfold_let C_bd
+            nlinarith [norm_nonneg ((1 : ℂ) + I), Real.exp_pos (Real.pi * |r| * 2),
+              sq_nonneg t]
+        _ < C_bd * (ε / C_bd) := by
+            gcongr
+            calc t ^ 2 < (Real.sqrt (ε / C_bd)) ^ 2 := by
+                  exact pow_lt_pow_left (lt_of_lt_of_le ht_abs (min_le_right _ _)) ht_pos.le 2
+              _ = ε / C_bd := Real.sq_sqrt (by positivity)
+        _ = ε := by field_simp
+  · -- At x > 0: use continuity from holomorphicity
+    exact (hcont_pos x hx_pos).mono (fun t ht => ht.1)
 
 /-- The parameterized vertical integrand is continuous on `[0,1]`.
 
