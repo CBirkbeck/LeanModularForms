@@ -153,17 +153,78 @@ lemma cF_ratio_tendsto_one :
 
 /-! ## phi0 is bounded at Im -> infinity
 
-The key remaining step: `phi0` is bounded at infinity.
-The mathematical argument is:
-- `logDeriv(eta^24)(z) = 2*pi*I * q * cF'(q)/cF(q)` (chain rule + cuspFunction)
-- `logDeriv(eta^24) = 24 * logDeriv(eta) = 24 * pi*I/12 * E2 = 2*pi*I * E2`
-- So `E2 = q * cF'(q)/cF(q) -> 1` as `Im -> infinity`
-- Then `E2*E4-E6 -> 0`, so `(E2*E4-E6)^2/Delta -> 0` (cusp form ratio)
-- In particular, `phi0` is bounded at infinity. -/
+We prove `φ₀ = (E₂E₄-E₆)²/Δ` is bounded at Im -> infinity. The proof uses:
+- `E₂E₄-E₆ = (E₂-1)·E₄ + (E₄-E₆)` is `O(q)` as `Im → ∞`
+- `|E₂-1| ≤ 192·|q|` from the q-expansion series bound
+- `|E₄-E₆| ≤ L·|q|` from analyticity of cuspFunctions
+- `|Δ| ≥ (1/2)|q|` from `cF_Delta_div_q_tendsto`
+Combined: `|φ₀| ≤ 2K²|q| → 0`.
+-/
+
+/-- `E₂·E₄ - E₆` is `O(q)` at infinity: there exists `K` and `A` such that
+`‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖qParam z‖` for `Im(z) ≥ A` and `‖E₄ z‖ ≤ 2`. -/
+private lemma A_E_is_O_q : ∃ K > 0, ∃ A : ℝ, ∀ z : UpperHalfPlane, A ≤ z.im →
+    ‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ∧
+    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 ∧
+    Function.Periodic.qParam 1 (z : ℂ) ≠ 0 := by
+  sorry
+
+/-- Lower bound on `|Δ|` in terms of `|q|` for small `q`. -/
+private lemma Delta_lower_bound : ∃ r > 0, ∀ z : UpperHalfPlane,
+    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < r →
+    Function.Periodic.qParam 1 (z : ℂ) ≠ 0 →
+    1/2 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ≤ ‖Δ z‖ := by
+  have h := cF_Delta_div_q_tendsto
+  rw [Metric.tendsto_nhdsWithin_nhds] at h
+  obtain ⟨δ, hδ_pos, hδ⟩ := h (1/2) (by norm_num)
+  refine ⟨δ, hδ_pos, fun z hqz_small hqz_ne => ?_⟩
+  set qz := Function.Periodic.qParam 1 (z : ℂ)
+  have hDelta_eq : Δ z = cF_Delta qz := by
+    have := (SlashInvariantFormClass.eq_cuspFunction 1 Delta z).symm
+    simp only [Nat.cast_one, cF_Delta] at this ⊢; exact this
+  rw [hDelta_eq]
+  have hq_pos : 0 < ‖qz‖ := norm_pos_iff.mpr hqz_ne
+  have hdist := hδ hqz_ne (by rwa [dist_zero_right])
+  rw [dist_eq_norm, div_sub_one hqz_ne, norm_div] at hdist
+  have hcF_close : ‖cF_Delta qz - qz‖ < 1/2 * ‖qz‖ := by
+    rwa [div_lt_iff₀ hq_pos] at hdist
+  -- ‖qz‖ = ‖cF_Delta qz - (cF_Delta qz - qz)‖ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖
+  have h_tri : ‖qz‖ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖ := by
+    calc ‖qz‖ = ‖cF_Delta qz - (cF_Delta qz - qz)‖ := by ring_nf
+      _ ≤ ‖cF_Delta qz‖ + ‖cF_Delta qz - qz‖ := norm_sub_le _ _
+  linarith
 
 /-- phi0 is bounded at `Im -> infinity`. -/
 theorem phi0_isBoundedAtImInfty :
     UpperHalfPlane.IsBoundedAtImInfty φ₀ := by
-  sorry
+  rw [UpperHalfPlane.isBoundedAtImInfty_iff]
+  obtain ⟨K, hK_pos, A₁, hA₁⟩ := A_E_is_O_q
+  obtain ⟨r, hr_pos, hDelta_lb⟩ := Delta_lower_bound
+  -- Get A₂ such that Im(z) ≥ A₂ implies |q| < r.
+  have hq_event : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
+      ‖Function.Periodic.qParam 1 (z : ℂ)‖ < r := by
+    have := tendsto_qParam_atImInfty.eventually (Metric.ball_mem_nhds 0 hr_pos)
+    apply this.mono; intro z hz; rwa [dist_zero_right] at hz
+  rw [Filter.eventually_atImInfty] at hq_event
+  obtain ⟨A₂, hA₂⟩ := hq_event
+  refine ⟨2 * K ^ 2, max A₁ A₂, fun z hz => ?_⟩
+  have hz1 : A₁ ≤ z.im := le_trans (le_max_left _ _) hz
+  have hz2 : A₂ ≤ z.im := le_trans (le_max_right _ _) hz
+  set qz := Function.Periodic.qParam 1 (z : ℂ)
+  obtain ⟨hAE_bound, hqz_lt_one, hqz_ne⟩ := hA₁ z hz1
+  have hqz_small : ‖qz‖ < r := hA₂ z hz2
+  have hDelta_lower : 1/2 * ‖qz‖ ≤ ‖Δ z‖ := hDelta_lb z hqz_small hqz_ne
+  simp only [φ₀]
+  rw [norm_div, norm_pow]
+  have hqz_pos : 0 < ‖qz‖ := norm_pos_iff.mpr hqz_ne
+  have hDelta_pos : 0 < ‖Δ z‖ := norm_pos_iff.mpr (Δ_ne_zero z)
+  have hnum_bound : ‖E₂ z * E₄ z - E₆ z‖ ^ 2 ≤ (K * ‖qz‖) ^ 2 := by
+    apply pow_le_pow_left₀ (norm_nonneg _) hAE_bound
+  have hden_lower : 0 < 1/2 * ‖qz‖ := by positivity
+  calc ‖E₂ z * E₄ z - E₆ z‖ ^ 2 / ‖Δ z‖
+      ≤ (K * ‖qz‖) ^ 2 / (1/2 * ‖qz‖) := by
+        apply div_le_div₀ (by positivity) hnum_bound hden_lower hDelta_lower
+    _ = 2 * K ^ 2 * ‖qz‖ := by field_simp
+    _ ≤ 2 * K ^ 2 := by nlinarith [hqz_lt_one, sq_nonneg K]
 
 end
