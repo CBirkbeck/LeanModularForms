@@ -100,7 +100,7 @@ theorem circleParam_winding_eq_one (z₀ : ℂ) (r : ℝ)
     generalizedWindingNumber' (circleParam z₀ r a b) a b z₀ =
       1 := by
   have havoids : ∀ t, ‖circleParam z₀ r a b t - z₀‖ = r :=
-    fun t => circleParam_dist z₀ r (le_of_lt hr) a b hab t
+    fun t => circleParam_dist z₀ r (hr.le) a b hab t
   unfold generalizedWindingNumber' cauchyPrincipalValue'
   have hint_const : ∀ ε > 0, ε < r →
       (∫ t in a..b,
@@ -274,7 +274,7 @@ theorem circleParamCW_winding_eq_neg_one (z₀ : ℂ)
   have havoids :
       ∀ t, ‖circleParamCW z₀ r a b t - z₀‖ = r :=
     fun t =>
-      circleParamCW_dist z₀ r (le_of_lt hr) a b hab t
+      circleParamCW_dist z₀ r (hr.le) a b hab t
   unfold generalizedWindingNumber' cauchyPrincipalValue'
   have hint_const : ∀ ε > 0, ε < r →
       (∫ t in a..b,

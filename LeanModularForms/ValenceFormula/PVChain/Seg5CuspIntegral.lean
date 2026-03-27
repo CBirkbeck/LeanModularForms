@@ -50,19 +50,15 @@ private lemma qExpFMS_ne_zero (hf : f ≠ 0) :
   intro h
   have hp := ModularFormClass.hasFPowerSeries_cuspFunction
     (n := 1) (F := ModularForm (Gamma 1) k) (f := f)
-  -- Rewrite hp to use 0 as the series
   have hp0 : HasFPowerSeriesOnBall (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
       (0 : FormalMultilinearSeries ℂ ℂ ℂ) 0 1 := h ▸ hp
-  -- cuspFunction 1 f = 0 near 0
   have hF_ev := hp0.eventually_eq_zero
-  -- F is analytic, so if it vanishes near 0, it vanishes on the connected ball
   have hF_analytic : AnalyticOnNhd ℂ (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
       (Metric.ball 0 1) := hp.analyticOnNhd
   have hF_eq_zero : Set.EqOn (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) 0
       (Metric.ball 0 1) :=
     hF_analytic.eqOn_zero_of_preconnected_of_eventuallyEq_zero
       (Convex.isPreconnected (convex_ball 0 1)) (Metric.mem_ball_self one_pos) hF_ev
-  -- f(τ) = cuspFunction(qParam(τ)) = 0 for all τ
   have : ∀ τ : UpperHalfPlane, f τ = 0 := by
     intro τ
     have := SlashInvariantFormClass.eq_cuspFunction (n := 1) (f := f) τ
@@ -77,35 +73,25 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
   set p := ModularFormClass.qExpansionFormalMultilinearSeries 1 f
   set ps := ModularFormClass.qExpansion 1 f
   have hp_ne := qExpFMS_ne_zero f hf
-  -- Key: ‖p n‖ = ‖ps.coeff n‖ via qExpansionFormalMultilinearSeries_apply_norm
   have h_norm : ∀ n, ‖p n‖ = ‖ps.coeff n‖ :=
     ModularFormClass.qExpansionFormalMultilinearSeries_apply_norm 1 f
-  -- So p n = 0 ↔ ps.coeff n = 0
   have h_zero_iff : ∀ n, p n = 0 ↔ ps.coeff n = 0 := by
     intro n; rw [← norm_eq_zero, h_norm, norm_eq_zero]
-  -- {n | p n ≠ 0} = {n | ps.coeff n ≠ 0}
   have h_sets : {n | p n ≠ 0} = {n | ps.coeff n ≠ 0} :=
     Set.ext fun n => (h_zero_iff n).not
   have hps_ne : ps ≠ 0 := by
     intro h; apply hp_ne
     exact FormalMultilinearSeries.ext fun n => (h_zero_iff n).mpr (by rw [h]; simp only [map_zero])
-  -- Strategy: show p.order satisfies the characterization of ps.order.toNat
-  -- Both are the smallest n with nonzero n-th coefficient
   show p.order = (orderAtCusp' f).toNat
   unfold orderAtCusp'
   simp only [Int.toNat_natCast]
-  -- Goal: p.order = ps.order.toNat
-  -- Use order_eq_nat: ps.order = n ↔ ps.coeff n ≠ 0 ∧ ∀ i < n, ps.coeff i = 0
   have hps_order : ps.order = ↑ps.order.toNat :=
     (ENat.coe_toNat_eq_self.mpr (PowerSeries.order_eq_top.not.mpr hps_ne)).symm
   set m := ps.order.toNat
   have hm := (PowerSeries.order_eq_nat.mp (by exact_mod_cast hps_order) :
     ps.coeff m ≠ 0 ∧ ∀ i, i < m → ps.coeff i = 0)
-  -- p.order = sInf {n | p n ≠ 0} by definition
-  -- We show p.order = m by showing m is the smallest index with p m ≠ 0
   have hp_m_ne : p m ≠ 0 := (h_zero_iff m).not.mpr hm.1
   have hp_lt : ∀ i, i < m → p i = 0 := fun i hi => (h_zero_iff i).mpr (hm.2 i hi)
-  -- p.order is sInf {n | p n ≠ 0}, and m is the min of this set
   show p.order = m
   unfold FormalMultilinearSeries.order
   have hm_mem : m ∈ {n | p n ≠ 0} := hp_m_ne
@@ -115,8 +101,6 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
     by_contra h_lt
     push_neg at h_lt
     have h_sInf_mem := Nat.sInf_mem ⟨m, hm_mem⟩
-    -- h_sInf_mem : sInf {n | p n ≠ 0} ∈ {n | p n ≠ 0}, i.e., p (sInf ..) ≠ 0
-    -- hp_lt _ h_lt : p (sInf ..) = 0
     exact h_sInf_mem (hp_lt _ h_lt)
 
 /-- The cuspFunction factors as `q^m * g(q)` on the open unit ball,
@@ -134,15 +118,12 @@ private lemma cuspFunction_factored (hf : f ≠ 0) :
     ModularFormClass.hasFPowerSeries_cuspFunction 1 f
   have hp_ne : p ≠ 0 := qExpFMS_ne_zero f hf
   have hp_order : p.order = (orderAtCusp' f).toNat := qExpFMS_order_eq f hf
-  -- g₀ := (swap dslope 0)^[p.order] F
   set g₀ := (Function.swap dslope 0)^[p.order] F
-  -- g₀ is differentiable on ball(0,1) via Complex.differentiableOn_dslope
   have hF_diff : DifferentiableOn ℂ F (Metric.ball 0 1) :=
     hp.analyticOnNhd.differentiableOn
   have hball_nhds : Metric.ball (0 : ℂ) 1 ∈ 𝓝 (0 : ℂ) :=
     Metric.ball_mem_nhds 0 one_pos
   have hg_diff : DifferentiableOn ℂ g₀ (Metric.ball 0 1) := by
-    -- Iterate: dslope preserves differentiability on ball for ℂ
     suffices ∀ (k : ℕ), DifferentiableOn ℂ ((Function.swap dslope 0)^[k] F)
         (Metric.ball 0 1) from this p.order
     intro k
@@ -151,14 +132,11 @@ private lemma cuspFunction_factored (hf : f ≠ 0) :
     | succ j ih =>
       simp only [Function.iterate_succ', Function.comp_def]
       exact (Complex.differentiableOn_dslope hball_nhds).mpr ih
-  -- g₀ 0 ≠ 0
   have hg_ne : g₀ 0 ≠ 0 :=
     hp.hasFPowerSeriesAt.iterate_dslope_fslope_ne_zero hp_ne
-  -- F =ᶠ[𝓝 0] fun z => z^n • g₀ z (local factorization)
   have hF_local : ∀ᶠ z in 𝓝 (0 : ℂ),
       F z = (z - 0) ^ p.order • g₀ z :=
     hp.hasFPowerSeriesAt.eq_pow_order_mul_iterate_dslope
-  -- Both sides are analytic on ball(0,1), so they agree everywhere
   have hF_analytic : AnalyticOnNhd ℂ F (Metric.ball 0 1) := hp.analyticOnNhd
   have hg_analytic : AnalyticOnNhd ℂ g₀ (Metric.ball 0 1) :=
     fun z hz => hg_diff.analyticAt (IsOpen.mem_nhds Metric.isOpen_ball hz)
@@ -168,7 +146,6 @@ private lemma cuspFunction_factored (hf : f ≠ 0) :
   have hF_eq : Set.EqOn F (fun z => (z - 0) ^ p.order • g₀ z) (Metric.ball 0 1) :=
     hF_analytic.eqOn_of_preconnected_of_eventuallyEq hRHS_analytic
       (Convex.isPreconnected (convex_ball 0 1)) h0_mem hF_local
-  -- Now produce the witness
   refine ⟨g₀, hg_diff, hg_ne, fun q hq => ?_⟩
   have := hF_eq hq
   simp only [sub_zero, smul_eq_mul] at this
@@ -449,12 +426,9 @@ theorem seg5_logDeriv_integral_value_bridge {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
         deriv (fdBoundary_H H) t =
       2 * ↑Real.pi * I * (orderAtCusp' f : ℂ) := by
-  -- Step 1: For t ∈ (4, 5], fdBoundary_H H t = fdBoundary_seg5_H H t
-  -- and deriv (fdBoundary_H H) t = 1.
   have hH_pos : 0 < H := by
     calc (0 : ℝ) < Real.sqrt 3 / 2 := by positivity
       _ < H := hH
-  -- The integrands agree a.e. on (4, 5)
   have h_eq_ae : ∀ᵐ t ∂MeasureTheory.volume,
       t ∈ Set.uIoc 4 5 →
         logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
