@@ -556,7 +556,7 @@ private theorem pv_cutoff_integral_seg2_eq_Ialpha (r : ℝ) (hr : 0 < r) (α : �
     filter_upwards [(Filter.eventuallyEq_set.mp Ioo_ae_eq_Ioc)] with t ht
     rw [Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 2)]
     exact fun ht_mem => h_on_Ioo t (ht.mpr ht_mem)
-  show ∫ (t : ℝ) in (1 : ℝ)..2, F t = I * ↑α
+  change ∫ (t : ℝ) in (1 : ℝ)..2, F t = I * ↑α
   rw [intervalIntegral.integral_congr_ae h_ae, intervalIntegral.integral_const]; norm_num
 
 private theorem pv_cutoff_integral_seg3_eq_neg_inv (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)

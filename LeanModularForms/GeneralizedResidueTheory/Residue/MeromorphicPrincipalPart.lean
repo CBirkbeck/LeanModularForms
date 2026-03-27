@@ -234,8 +234,6 @@ theorem meromorphicAt_sub_principalPart_eventually (f : ℂ → ℂ) (s : ℂ)
       unfold meromorphicPrincipalPart
       rw [dif_neg (not_and_of_not_right _ h_neg)]
     push_neg at h_neg
-    -- No pole: pp = 0. f agrees with toMeromorphicNFAt f s near s,
-    -- which is analytic (non-negative order in normal form).
     refine ⟨toMeromorphicNFAt f s, ?_, ?_⟩
     · exact (meromorphicNFAt_toMeromorphicNFAt.meromorphicOrderAt_nonneg_iff_analyticAt).mp
         (by rwa [← meromorphicOrderAt_congr hf.eq_nhdsNE_toMeromorphicNFAt])
@@ -317,30 +315,22 @@ theorem contourIntegral_zpow_eq_zero (s : ℂ) (n : ℤ) (hn : n ≤ -2)
     (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, (γ.toFun t - s) ^ n * deriv γ.toFun t = 0 := by
-  -- Use the local FTC lemma: integral_zpow_comp_sub_mul_deriv'
-  -- n != -1 since n <= -2
   have hn_ne : n ≠ -1 := by omega
-  -- Integrability of (γ(t) - s)^n * γ'(t) on the piecewise C^1 curve
   have h_int : IntervalIntegrable
       (fun t => (γ.toFun t - s) ^ n * (deriv γ.toFun t : ℂ)) volume γ.a γ.b := by
-    -- (γ(t) - s)^n is continuous on [a,b] since γ avoids s
     have h_zpow_cont : ContinuousOn (fun t => (γ.toFun t - s) ^ n) (Icc γ.a γ.b) :=
       continuousOn_zpow_comp_sub' γ.continuous_toFun hγ_avoids
-    -- γ' is piecewise continuous and bounded
     exact IntervalIntegrable.continuousOn_mul
       (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
         (piecewiseC1Immersion_deriv_bounded γ))
       (h_zpow_cont.mono (by rw [Set.uIcc_of_le (le_of_lt γ.hab)]))
-  -- Apply FTC
   have h_ftc := integral_zpow_comp_sub_mul_deriv' hn_ne (le_of_lt γ.hab)
     γ.continuous_toFun hγ_avoids
     (↑γ.partition : Set ℝ) (γ.partition.finite_toSet.countable)
     (fun _ ⟨_, h⟩ => h)
     (fun t ht hn_part => γ.smooth_off_partition t (Ioo_subset_Icc_self ht) hn_part)
     h_int
-  -- Now h_ftc says the integral = ((γ b - s)^{n+1} - (γ a - s)^{n+1}) / (n+1)
   rw [h_ftc]
-  -- Since γ is closed, γ(b) = γ(a), so the numerator is 0
   have h_eq : γ.toFun γ.b = γ.toFun γ.a := hγ_closed.symm
   rw [h_eq, sub_self, zero_div]
 
@@ -376,7 +366,6 @@ private theorem residueAt_zpow_sum (s : ℂ) (N : ℕ) (hN : 0 < N) (c : ℕ →
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
   have h2piI_ne : (2 : ℂ) * ↑Real.pi * I ≠ 0 :=
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero)) I_ne_zero
-  -- Compute the contour integral of each term individually
   have h_term_integral : ∀ k, (∮ z in C(s, r),
       c k * (z - s) ^ ((k : ℤ) - (N : ℤ))) =
       if k = N - 1 then c (N - 1) * (2 * ↑Real.pi * I) else 0 := by
@@ -394,7 +383,6 @@ private theorem residueAt_zpow_sum (s : ℂ) (N : ℕ) (hN : 0 < N) (c : ℕ →
       rw [circleIntegral.integral_const_mul,
         circleIntegral.integral_sub_zpow_of_ne (show (k : ℤ) - (N : ℤ) ≠ -1 by omega),
         mul_zero]
-  -- Push the contour integral through the sum
   have h_sum_eq : (∮ z in C(s, r),
       ∑ k ∈ Finset.range N, c k * (z - s) ^ ((k : ℤ) - (N : ℤ))) =
       ∑ k ∈ Finset.range N,
@@ -408,7 +396,6 @@ private theorem residueAt_zpow_sum (s : ℂ) (N : ℕ) (hN : 0 < N) (c : ℕ →
           simp [dist_self] at hmem
           exact hr_ne (abs_eq_zero.mp hmem.symm))))
       exact h_zpow_ci.const_fun_smul
-    -- Prove by Finset.induction
     have : ∀ S : Finset ℕ,
         (∮ z in C(s, r), ∑ k ∈ S, c k * (z - s) ^ ((k : ℤ) - (N : ℤ))) =
         ∑ k ∈ S, (∮ z in C(s, r), c k * (z - s) ^ ((k : ℤ) - (N : ℤ))) := by
@@ -513,9 +500,7 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
     (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, meromorphicPrincipalPart f s (γ.toFun t) * deriv γ.toFun t = 0 := by
-  -- If order >= 0, principal part is 0, integral is trivially 0
   by_cases h_neg : meromorphicOrderAt f s < 0
-  · -- Genuine pole case: pp is a finite sum, each term integrates to 0
     set N := poleOrderNat f s with hN_def
     set g := meromorphicFactor f s hf h_neg.ne_top with hg_def
     have hN_pos : 0 < N := poleOrderNat_pos_of_neg_order f s h_neg
@@ -526,7 +511,6 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
       rw [dif_pos ⟨hf, h_neg⟩]
     rw [h_pp_eq]
     simp_rw [Finset.sum_mul]
-    -- The coefficient c_{N-1} = 0 because residueAt f s = residueAt pp s = c_{N-1}
     have h_coeff_zero : iteratedDeriv (N - 1) g s / ↑((N - 1).factorial) = 0 := by
       have h_res_pp := residueAt_zpow_sum s N hN_pos
         (fun k => iteratedDeriv k g s / ↑(k.factorial))
@@ -535,7 +519,6 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
             iteratedDeriv k g s / ↑(k.factorial) * (z - s) ^ ((k : ℤ) - (N : ℤ))) s :=
         residueAt_eq_residueAt_principalPart_sum f s hf N g h_pp_eq
       rw [hres] at h_res_eq; rw [← h_res_pp]; exact h_res_eq.symm
-    -- Each term integrates to 0: k=N-1 has zero coefficient, k<N-1 has exponent <= -2
     have h_int : ∀ k ∈ Finset.range N, IntervalIntegrable
         (fun t => iteratedDeriv k g s / ↑(k.factorial) * (γ.toFun t - s) ^
           ((k : ℤ) - (N : ℤ)) * deriv γ.toFun t) MeasureTheory.volume γ.a γ.b := by
@@ -561,7 +544,6 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
     · have hk_lt : k < N - 1 := by omega
       have h_exp : (k : ℤ) - (N : ℤ) ≤ -2 := by omega
       exact contourIntegral_const_mul_zpow_eq_zero s _ h_exp _ γ hγ_closed hγ_avoids
-  · -- Principal part is identically zero
     have h_pp : meromorphicPrincipalPart f s = fun _ => 0 := by
       unfold meromorphicPrincipalPart
       rw [dif_neg (not_and_of_not_right _ h_neg)]
