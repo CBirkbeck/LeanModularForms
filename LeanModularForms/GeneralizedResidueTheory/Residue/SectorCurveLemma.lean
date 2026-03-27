@@ -115,17 +115,14 @@ theorem pv_sector_higher_power (r : ℝ) (_hr : 0 < r) (α : ℝ)
       HasDerivAt F (f t) t := by
     intro t ⟨ht, ht_not⟩
     have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
-    have h_pow := (hγ_diff t ht ht_not').hasDerivAt.pow n
-    have h_div := h_pow.div_const (↑n : ℂ)
     change HasDerivAt F (sectorCurve r α t ^ (n - 1) * deriv (sectorCurve r α) t) t
-    convert h_div using 1
+    convert ((hγ_diff t ht ht_not').hasDerivAt.pow n).div_const (↑n : ℂ) using 1
     rw [mul_assoc, mul_div_cancel_left₀ _ hn_ne]
   have hf_int : IntervalIntegrable f volume 0 3 :=
     (pow_integrableOn_01 r α n).trans (pow_integrableOn_12 r α n) |>.trans
       (pow_integrableOn_23 r α n)
-  have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-    F f (by norm_num : (0:ℝ) ≤ 3) hS_count hF_cont hF_deriv hf_int
-  rw [h_ftc]
+  rw [MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+    F f (by norm_num : (0:ℝ) ≤ 3) hS_count hF_cont hF_deriv hf_int]
   change F 3 - F 0 = 0
   simp only [F, sectorCurve_zero, sectorCurve_three, zero_pow (by omega : n ≠ 0),
     zero_div, sub_self]
@@ -244,12 +241,12 @@ private theorem integral_analytic_sectorCurve_eq_zero (r : ℝ) (hr : 0 < r) (α
     have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
     exact (hF _ (hγ_in_ball t (Ioo_subset_Icc_self ht))).comp_of_eq t
       (sectorCurve_differentiableAt_off_knots r α t ht ht_not').hasDerivAt rfl
-  have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+  rw [MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
     (F ∘ sectorCurve r α) _ (by norm_num : (0 : ℝ) ≤ 3)
     ((Set.Finite.inter_of_left (Set.toFinite {1, 2}) _).countable)
     (hF_contOn.comp (sectorCurve_continuousOn r α) hγ_in_ball) hF_deriv
-    (φ_sectorCurve_intervalIntegrable r hr α g hg)
-  rw [h_ftc, Function.comp_apply, Function.comp_apply,
+    (φ_sectorCurve_intervalIntegrable r hr α g hg),
+    Function.comp_apply, Function.comp_apply,
     sectorCurve_zero, sectorCurve_three, sub_self]
 
 private theorem cauchyPV_g_aestronglyMeasurable (r : ℝ) (α : ℝ)
@@ -449,13 +446,11 @@ private theorem cauchyPV_g_tendsto_zero (r : ℝ) (hr : 0 < r) (α : ℝ)
       cauchyPrincipalValueIntegrand' g (sectorCurve r α) 0 ε t)
       (𝓝[>] 0) (𝓝 0) := by
   have h_int_g := φ_sectorCurve_intervalIntegrable r hr α g hg
-  have h_zero_set := sectorCurve_zero_set_finite r hr α
-  have hg_zero := integral_analytic_sectorCurve_eq_zero r hr α g hg
   suffices h : Tendsto (fun ε => ∫ t in (0:ℝ)..3,
       cauchyPrincipalValueIntegrand' g (sectorCurve r α) 0 ε t)
       (𝓝[>] 0) (𝓝 (∫ t in (0:ℝ)..3,
         (fun t => g (sectorCurve r α t) * deriv (sectorCurve r α) t) t)) by
-    rwa [hg_zero] at h
+    rwa [integral_analytic_sectorCurve_eq_zero r hr α g hg] at h
   exact intervalIntegral.tendsto_integral_filter_of_dominated_convergence
     (fun t => ‖g (sectorCurve r α t) * deriv (sectorCurve r α) t‖)
     (by filter_upwards [self_mem_nhdsWithin] with ε _
@@ -464,7 +459,8 @@ private theorem cauchyPV_g_tendsto_zero (r : ℝ) (hr : 0 < r) (α : ℝ)
     (by filter_upwards [self_mem_nhdsWithin] with ε _
         exact Eventually.of_forall fun t _ => cauchyPV_g_norm_le r α g ε t)
     h_int_g.norm
-    (by filter_upwards [h_zero_set.countable.ae_notMem _] with t ht ht_uIoc
+    (by filter_upwards [(sectorCurve_zero_set_finite r hr α).countable.ae_notMem _]
+          with t ht ht_uIoc
         have h_ne : sectorCurve r α t ≠ 0 := fun heq =>
           ht ⟨Ioc_subset_Icc_self (uIoc_of_le (by norm_num : (0:ℝ) ≤ 3) ▸ ht_uIoc), heq⟩
         exact tendsto_const_nhds.congr' (by
@@ -491,9 +487,6 @@ private theorem cauchyPV_simplePole_integral_split (r : ℝ) (hr : 0 < r) (α : 
     cauchyPrincipalValueIntegrand' g (sectorCurve r α) 0 ε t := by
     intro t; simp only [cauchyPrincipalValueIntegrand', sub_zero, div_eq_mul_inv]
     split_ifs <;> ring
-  have h_g_pv_int := cauchyPV_g_intervalIntegrable r hr α g hg ε
-  have h_inv_03 := cauchyPV_inv_intervalIntegrable r hr α ε hε_pos hε_lt_r
-  have h_c_inv_int := h_inv_03.const_mul c
   rw [show (∫ t in (0:ℝ)..3, cauchyPrincipalValueIntegrand' (fun z => c / z + g z)
       (sectorCurve r α) 0 ε t) =
     ∫ t in (0:ℝ)..3, (c * cauchyPrincipalValueIntegrand' (fun z => z⁻¹)
@@ -501,7 +494,9 @@ private theorem cauchyPV_simplePole_integral_split (r : ℝ) (hr : 0 < r) (α : 
     cauchyPrincipalValueIntegrand' g (sectorCurve r α) 0 ε t) from
     intervalIntegral.integral_congr (fun t _ => h_decomp t),
     ← intervalIntegral.integral_const_mul]
-  exact intervalIntegral.integral_add h_c_inv_int h_g_pv_int
+  exact intervalIntegral.integral_add
+    ((cauchyPV_inv_intervalIntegrable r hr α ε hε_pos hε_lt_r).const_mul c)
+    (cauchyPV_g_intervalIntegrable r hr α g hg ε)
 
 /-- **Lemma 3.1 (Simple pole version)**:
 For `f(z) = c/z + g(z)` where `g` is analytic on a ball containing the sector,
@@ -517,19 +512,13 @@ theorem cauchyPV_sectorCurve_simplePole (r : ℝ) (hr : 0 < r) (α : ℝ)
     cauchyPrincipalValue' (fun z => c / z + g z) (sectorCurve r α) 0 3 0 = I * ↑α * c := by
   have hpv_inv := pv_sector_dz_over_z r hr α hα_nonneg hα_le
   obtain ⟨L_inv, hL_inv⟩ := hpv_inv.1
-  have hL_inv_eq : L_inv = I * ↑α := by
-    exact hL_inv.limUnder_eq.symm.trans hpv_inv.2
-  rw [hL_inv_eq] at hL_inv
-  have h_g_tend := cauchyPV_g_tendsto_zero r hr α g hg
-  have h_c_inv : Tendsto (fun ε => c * ∫ t in (0:ℝ)..3,
-      cauchyPrincipalValueIntegrand' (fun z => z⁻¹) (sectorCurve r α) 0 ε t)
-      (𝓝[>] 0) (𝓝 (c * (I * ↑α))) := hL_inv.const_mul c
-  have h_split := cauchyPV_simplePole_integral_split r hr α c g hg
+  rw [show L_inv = I * ↑α from hL_inv.limUnder_eq.symm.trans hpv_inv.2] at hL_inv
   have h_tendsto : Tendsto (fun ε => ∫ t in (0:ℝ)..3,
       cauchyPrincipalValueIntegrand' (fun z => c / z + g z) (sectorCurve r α) 0 ε t)
       (𝓝[>] 0) (𝓝 (I * ↑α * c)) := by
     rw [show I * ↑α * c = c * (I * ↑α) + 0 from by ring]
-    exact (h_c_inv.add h_g_tend).congr' (h_split.mono (fun _ h => h.symm))
+    exact ((hL_inv.const_mul c).add (cauchyPV_g_tendsto_zero r hr α g hg)).congr'
+      ((cauchyPV_simplePole_integral_split r hr α c g hg).mono (fun _ h => h.symm))
   refine ⟨⟨_, h_tendsto⟩, ?_⟩
   exact h_tendsto.limUnder_eq
 
@@ -565,8 +554,8 @@ theorem cauchyPV_sectorCurve_eq_mul_residueSimplePole (r : ℝ) (hr : 0 < r) (α
     congr 1; ext t; exact h_eq ε (mem_Ioi.mp hε) t
   obtain ⟨L, hL⟩ := h_sp.1
   refine ⟨⟨L, hL.congr' (h_int_eq.mono (fun _ h => h.symm))⟩, ?_⟩
-  have h_f_tend := hL.congr' (h_int_eq.mono (fun _ h => h.symm))
-  have hpv_f : cauchyPrincipalValue' f (sectorCurve r α) 0 3 0 = L := h_f_tend.limUnder_eq
+  have hpv_f : cauchyPrincipalValue' f (sectorCurve r α) 0 3 0 = L :=
+    (hL.congr' (h_int_eq.mono (fun _ h => h.symm))).limUnder_eq
   have hpv_cg : cauchyPrincipalValue' (fun z => c / z + g z)
       (sectorCurve r α) 0 3 0 = L := hL.limUnder_eq
   rw [hpv_f, ← hpv_cg, h_sp.2, hc]
@@ -701,15 +690,14 @@ private theorem zpow_primitive_hasDerivAt (r : ℝ) (hr : 0 < r) (α : ℝ) (n :
   have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
   have hγ_ne := sectorCurve_ne_zero_of_Icc_δ r hr α δ hδ_pos
     hδ_lt_1 t (Ioo_subset_Icc_self ht)
-  have hγ_diff := sectorCurve_differentiableAt_off_knots r α t
-    ⟨lt_trans hδ_pos ht.1, lt_of_lt_of_le ht.2 (by linarith)⟩ ht_not'
   have h_zpow : HasDerivAt (fun s => (γ s) ^ m)
       (((m : ℂ) * (γ t) ^ (m - 1)) • deriv γ t) t :=
-    (hasDerivAt_zpow m (γ t) (Or.inl hγ_ne)).comp t hγ_diff.hasDerivAt
-  have h_div := h_zpow.div_const (m : ℂ)
+    (hasDerivAt_zpow m (γ t) (Or.inl hγ_ne)).comp t
+      (sectorCurve_differentiableAt_off_knots r α t
+        ⟨lt_trans hδ_pos ht.1, lt_of_lt_of_le ht.2 (by linarith)⟩ ht_not').hasDerivAt
   have hm_sub : m - 1 = -(↑n : ℤ) := by simp [m]
   change HasDerivAt F ((γ t) ^ (-(↑n : ℤ)) * deriv γ t) t
-  convert h_div using 1
+  convert h_zpow.div_const (m : ℂ) using 1
   rw [smul_eq_mul, mul_assoc, mul_div_cancel_left₀ _ hm_ne, hm_sub]
 
 private theorem zpow_ftc_vanishes (r : ℝ) (_hr : 0 < r) (α : ℝ) (n : ℕ) (_hn : 2 ≤ n)
@@ -833,7 +821,6 @@ theorem pv_sector_negative_power (r : ℝ) (hr : 0 < r) (α : ℝ)
     CauchyPrincipalValueExists' (fun z => z ^ (-(↑n : ℤ))) (sectorCurve r α) 0 3 0 ∧
     cauchyPrincipalValue' (fun z => z ^ (-(↑n : ℤ))) (sectorCurve r α) 0 3 0 = 0 := by
   obtain ⟨k, hk⟩ := h_angle
-  have h_exp_one := angle_condition_exp_eq_one n hn α k hk
   set γ := sectorCurve r α
   set m : ℤ := 1 - ↑n
   have h_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
@@ -857,12 +844,13 @@ theorem pv_sector_negative_power (r : ℝ) (hr : 0 < r) (α : ℝ)
       (zpow_integrableOn_δ1 r hr α n δ hδ_pos hδ_lt_1).trans
         (zpow_integrableOn_12 r hr α n) |>.trans
         (zpow_integrableOn_23δ r hr α n δ hδ_pos hδ_lt_1)
-    have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-      _ _ (by linarith : δ ≤ 3 - δ)
-      ((Set.Finite.inter_of_left (Set.toFinite {1, 2}) _).countable) hF_cont
-      (zpow_primitive_hasDerivAt r hr α n hn δ hδ_pos hδ_lt_1) hf_int
-    rw [pv_cutoff_integral_eq_mid r hr α n ε hε_pos (mem_Iio.mp hε), h_ftc]
-    exact zpow_ftc_vanishes r hr α n hn δ hδ_pos hδ_lt_1 h_exp_one
+    rw [pv_cutoff_integral_eq_mid r hr α n ε hε_pos (mem_Iio.mp hε),
+      MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+        _ _ (by linarith : δ ≤ 3 - δ)
+        ((Set.Finite.inter_of_left (Set.toFinite {1, 2}) _).countable) hF_cont
+        (zpow_primitive_hasDerivAt r hr α n hn δ hδ_pos hδ_lt_1) hf_int]
+    exact zpow_ftc_vanishes r hr α n hn δ hδ_pos hδ_lt_1
+      (angle_condition_exp_eq_one n hn α k hk)
   have h_tendsto : Tendsto (fun ε =>
       ∫ t in (0 : ℝ)..3,
         if ‖γ t - 0‖ > ε then (γ t) ^ (-(↑n : ℤ)) * deriv γ t else 0)
@@ -877,9 +865,8 @@ theorem generalizedWindingNumber_sectorCurve (r : ℝ) (hr : 0 < r) (α : ℝ)
     (_hPV : CauchyPrincipalValueExists' (fun z => z⁻¹) (sectorCurve r α) 0 3 0) :
     generalizedWindingNumber' (sectorCurve r α) 0 3 0 = ↑α / (2 * ↑Real.pi) := by
   unfold generalizedWindingNumber'
-  have hpv_val := (pv_sector_dz_over_z r hr α hα_nonneg hα_le).2
-  have h_sub_zero : (fun t => sectorCurve r α t - 0) = sectorCurve r α := by ext; simp only [sub_zero]
-  rw [h_sub_zero, hpv_val]
+  rw [show (fun t => sectorCurve r α t - 0) = sectorCurve r α from by ext; simp only [sub_zero],
+    (pv_sector_dz_over_z r hr α hα_nonneg hα_le).2]
   have h_pi_ne : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
   have h_I_ne : (I : ℂ) ≠ 0 := Complex.I_ne_zero
   field_simp

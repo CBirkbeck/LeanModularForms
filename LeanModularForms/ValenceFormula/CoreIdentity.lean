@@ -100,11 +100,10 @@ private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p �
       (k : ℂ) / 12 := by
   obtain ⟨H₀, hH₀_gt, h_identity⟩ := pv_chain_identity f hf S hS hS_complete
   refine ⟨max H₀ 2, by linarith [le_max_right H₀ 2], fun {H} hH => ?_⟩
-  have hH_ge_H₀ : H₀ ≤ H := le_trans (le_max_left H₀ 2) hH
   have hH_gt_1 : 1 < H := by linarith [le_max_right H₀ 2]
   have hH_gt_sqrt3 : Real.sqrt 3 / 2 < H := by
     nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (Real.sqrt 3 - 2)]
-  have h_sum := h_identity hH_ge_H₀
+  have h_sum := h_identity (le_trans (le_max_left H₀ 2) hH)
   set g := fun (s : UpperHalfPlane) =>
     generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
       (orderOfVanishingAt' (⇑f) s : ℂ) with hg_def
@@ -117,24 +116,21 @@ private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p �
       g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
     elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
       simp [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
-  have h_gWN_i := gWN_fdBoundary_H_at_i H hH_gt_1
-  have h_gWN_ρ := gWN_fdBoundary_H_at_rho H hH_gt_sqrt3
-  have h_gWN_ρ1 := gWN_fdBoundary_H_at_rho_plus_one H hH_gt_sqrt3
   have hg_i : g ellipticPointI' =
       (-1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
     change generalizedWindingNumber' (fdBoundary_H H) 0 5 I *
       ↑(orderOfVanishingAt' (⇑f) ellipticPointI') = _
-    rw [h_gWN_i]
+    rw [gWN_fdBoundary_H_at_i H hH_gt_1]
   have hg_ρ : g ellipticPointRho' =
       (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
     change generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRho *
       ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') = _
-    rw [h_gWN_ρ]
+    rw [gWN_fdBoundary_H_at_rho H hH_gt_sqrt3]
   have hg_ρ1 : g ellipticPointRhoPlusOne' =
       (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') := by
     change generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRhoPlusOne *
       ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') = _
-    rw [h_gWN_ρ1]
+    rw [gWN_fdBoundary_H_at_rho_plus_one H hH_gt_sqrt3]
   have h_filter_eq : S.filter (fun p => ¬P p) = S.filter (fun p =>
       p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne') := by
     ext x; simp only [Finset.mem_filter, P, not_or]
@@ -224,10 +220,9 @@ private lemma unit_circle_re_zero_eq_i (s : ℍ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re, mul_zero, zero_add] at h_nsq
-  have h_pos : (0 : ℝ) < (s : ℂ).im := s.2
   have h_le : (s : ℂ).im ≤ 1 := by nlinarith [mul_self_nonneg ((s : ℂ).im - 1), h_nsq]
   have h_ge : 1 ≤ (s : ℂ).im := by
-    nlinarith [mul_le_of_le_one_right h_pos.le h_le, h_nsq]
+    nlinarith [mul_le_of_le_one_right s.2.le h_le, h_nsq]
   apply Complex.ext
   · exact hs_re.trans Complex.I_re.symm
   · exact (le_antisymm h_le h_ge).trans Complex.I_im.symm
@@ -246,11 +241,9 @@ private theorem boundary_weight_auto
   have habs_re := hs_fd.2
   have hnorm_ge : 1 ≤ ‖(s : ℂ)‖ := by
     rw [Complex.norm_def]; exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
-  have h_im_pos : 0 < (s : ℂ).im := s.2
-  have hH_ge2 : (2 : ℝ) ≤ H := le_trans (le_max_left 2 (M + 1)) hH
   have h_im_lt_H : (s : ℂ).im < H := by
-    have h1 : (s : ℂ).im ≤ M := Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
-    linarith [le_max_right (2 : ℝ) (M + 1)]
+    linarith [Finset.single_le_sum (fun x _ => le_of_lt x.2) hs,
+      le_max_right (2 : ℝ) (M + 1)]
   have hH_sqrt : Real.sqrt 3 / 2 < H := by
     nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (Real.sqrt 3 - 2)]
   rcases eq_or_lt_of_le hnorm_ge with h_eq | h_gt
@@ -261,15 +254,16 @@ private theorem boundary_weight_auto
       · exact hsρ1 (unit_circle_re_pos_half_eq_rho_plus_one s h_eq.symm (by linarith))
       · exact hsρ (unit_circle_re_neg_half_eq_rho s h_eq.symm (by linarith))
     exact gWN_fdBoundary_H_eq_neg_half_of_unitArc
-      H (by linarith) (↑s) h_eq.symm h_re_lt h_im_pos
+      H (by linarith) (↑s) h_eq.symm h_re_lt s.2
   · have h_abs_eq : |(s : ℂ).re| = 1/2 := by
       by_contra h_ne; exact h_not_int ⟨h_gt, lt_of_le_of_ne habs_re h_ne⟩
-    have h_im_sqrt := vert_edge_im_gt_sqrt3_half s h_gt h_abs_eq
     rcases abs_cases (s : ℂ).re with ⟨h_eq_abs, _⟩ | ⟨h_eq_abs, _⟩
     · exact gWN_fdBoundary_H_eq_neg_half_of_rightEdge
-        H hH_sqrt (↑s) (by linarith) h_gt h_im_sqrt h_im_lt_H
+        H hH_sqrt (↑s) (by linarith) h_gt
+        (vert_edge_im_gt_sqrt3_half s h_gt h_abs_eq) h_im_lt_H
     · exact gWN_fdBoundary_H_eq_neg_half_of_leftEdge
-        H hH_sqrt (↑s) (by linarith) h_gt h_im_sqrt h_im_lt_H
+        H hH_sqrt (↑s) (by linarith) h_gt
+        (vert_edge_im_gt_sqrt3_half s h_gt h_abs_eq) h_im_lt_H
 
 private lemma rho_singleton_sum_eq (S : Finset UpperHalfPlane)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
@@ -327,10 +321,9 @@ private theorem sum_nonEllArc_right_eq_left
   conv_lhs => rw [Finset.filter_eq' (sRightArc S) ellipticPointRhoPlusOne']
   conv_rhs => rw [Finset.filter_eq' (sLeftArc S) ellipticPointRho']
   by_cases h_ord : orderOfVanishingAt' (⇑f) ellipticPointRho' = 0
-  · have h_ord' : orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne' = 0 :=
-      ord_rho_plus_one_eq_ord_rho_via_vAdd f ▸ h_ord
-    have hf1 : f_ord ellipticPointRho' = 0 := by simp [hf_ord_def, h_ord]
-    have hf2 : f_ord ellipticPointRhoPlusOne' = 0 := by simp [hf_ord_def, h_ord']
+  · have hf1 : f_ord ellipticPointRho' = 0 := by simp [hf_ord_def, h_ord]
+    have hf2 : f_ord ellipticPointRhoPlusOne' = 0 := by
+      simp [hf_ord_def, ord_rho_plus_one_eq_ord_rho_via_vAdd f ▸ h_ord]
     split_ifs <;> simp [Finset.sum_singleton, Finset.sum_empty, hf1, hf2]
   · simp only [hf_ord_def]; exact rho_singleton_sum_eq f S hS_complete h_ord
 
@@ -475,16 +468,14 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
   obtain ⟨H₁, hH₁, h_bdry⟩ := boundary_weight_auto S hS
   set M := S.sum (fun s : UpperHalfPlane => (s : ℂ).im)
   set H := max (max H₀ H₁) (max heightCutoff M + 1)
-  have hH0_le : H₀ ≤ H := le_trans (le_max_left _ _) (le_max_left _ _)
-  have hH1_le : H₁ ≤ H := le_trans (le_max_right _ _) (le_max_left _ _)
   have hH_height : heightCutoff ≤ H := by
     linarith [le_max_left heightCutoff M,
       le_max_right (max H₀ H₁) (max heightCutoff M + 1)]
   have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs => by
-    have h1 : (s : ℂ).im ≤ M := Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
-    linarith [le_max_right heightCutoff M,
+    linarith [Finset.single_le_sum (fun x _ => le_of_lt x.2) hs,
+      le_max_right heightCutoff M,
       le_max_right (max H₀ H₁) (max heightCutoff M + 1)]
-  have h_explicit' := h_explicit hH0_le
+  have h_explicit' := h_explicit (le_trans (le_max_left _ _) (le_max_left _ _))
   rw [ord_rho_plus_one_eq_ord_rho_via_vAdd f] at h_explicit'
   have h_formula : (orderAtCusp' f : ℂ) +
       (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
@@ -509,7 +500,7 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
       ∑ s ∈ S.filter (fun p =>
           p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
         ↑(orderOfVanishingAt' (⇑f) s) by
-    have h := h_formula; rw [h_eq] at h; linear_combination h
+    rw [h_eq] at h_formula; linear_combination h_formula
   have h_gWN_val : ∀ s ∈ S_NE,
       (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
         ↑(orderOfVanishingAt' (⇑f) s) =
@@ -522,7 +513,7 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
     · obtain ⟨hnorm, hre⟩ := h_int
       rw [gWN_fdBoundary_H_eq_neg_one_of_strictInterior _
         hnorm hre s.2 hH_height (hH_above s hs_S)]; ring
-    · rw [h_bdry hH1_le s hs_S hsi hsρ hsρ1 h_int]; ring
+    · rw [h_bdry (le_trans (le_max_right _ _) (le_max_left _ _)) s hs_S hsi hsρ hsρ1 h_int]; ring
   rw [Finset.sum_congr rfl h_gWN_val]
   set LA_ne := S.filter (fun p =>
     p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)

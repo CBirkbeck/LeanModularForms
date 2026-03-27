@@ -140,9 +140,8 @@ private theorem fd'_orbit_i_eq_i (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = oi)
     ⟨a * c + b * d, by rw [h_re]; push_cast; ring⟩
   have h_n_zero : n = 0 := by
     by_contra h_ne
-    have h1 : (1 : ℝ) ≤ |(n : ℝ)| := by
-      exact_mod_cast Int.one_le_abs h_ne
-    have h2 := hp.2; rw [hn] at h2; linarith
+    have h2 := hp.2; rw [hn] at h2
+    linarith [show (1 : ℝ) ≤ |(n : ℝ)| from by exact_mod_cast Int.one_le_abs h_ne]
   exact UpperHalfPlane.ext'
     (by rw [hn, h_n_zero, Int.cast_zero]
         exact (Complex.I_re : (I : ℂ).re = 0).symm)
@@ -182,7 +181,7 @@ private lemma normSq_denom_at_rho (g : SL(2, ℤ)) :
   simp only [add_re, mul_re, neg_re, one_re, div_ofNat_re, ofReal_re, mul_zero, I_re, I_im,
     sub_zero, mul_one, add_im, neg_im, one_im, div_ofNat_im, ofReal_im, zero_div, mul_im,
     zero_mul, add_zero, Complex.intCast_re, Complex.intCast_im]
-  have h3 := Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num); ring_nf; nlinarith
+  ring_nf; nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
 
 private lemma normSq_denom_eq_one_of_smul_rho_in_fd (g : SL(2, ℤ))
     (h_fd : g • ellipticPointRho' ∈ 𝒟) :
@@ -201,8 +200,8 @@ private lemma normSq_denom_eq_one_of_smul_rho_in_fd (g : SL(2, ℤ))
       div_nonpos_iff.mpr (Or.inl ⟨by positivity, h⟩)
     linarith
   have h_lt2 : (c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2 < 2 := by
-    have h3 := Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)
-    nlinarith [mul_lt_mul_of_pos_right h_gt h_pos,
+    nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num),
+      mul_lt_mul_of_pos_right h_gt h_pos,
       div_mul_cancel₀ ((Real.sqrt 3 / 2 : ℝ)) (ne_of_gt h_pos),
       sq_nonneg (Real.sqrt 3 - 2)]
   have : (0 : ℤ) < c ^ 2 - c * d + d ^ 2 := by exact_mod_cast h_pos
@@ -216,7 +215,6 @@ private lemma abs_re_eq_half_of_smul_rho_in_fd (g : SL(2, ℤ))
         ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) +
       ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) ^ 2 = 1) :
     |(g • ellipticPointRho').re| = 1/2 := by
-  have h_re_bound := h_fd.2
   have h_im_eq : (g • ellipticPointRho').im = Real.sqrt 3 / 2 := by
     have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
     rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at h_im; exact h_im
@@ -227,10 +225,9 @@ private lemma abs_re_eq_half_of_smul_rho_in_fd (g : SL(2, ℤ))
     have h_apply := Complex.normSq_apply (↑(g • ellipticPointRho') : ℂ)
     rw [UpperHalfPlane.coe_re, UpperHalfPlane.coe_im] at h_apply
     nlinarith [h_fd.1, h_apply]
-  have h_re_abs_ge : |(g • ellipticPointRho').re| ≥ 1/2 := by
+  exact le_antisymm h_fd.2 (by
     by_contra h_lt; push_neg at h_lt; nlinarith [sq_abs (g • ellipticPointRho').re,
-      abs_nonneg (g • ellipticPointRho').re, h_im_sq, h_nsq]
-  exact le_antisymm h_re_bound h_re_abs_ge
+      abs_nonneg (g • ellipticPointRho').re, h_im_sq, h_nsq])
 
 private theorem fd'_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = orho) :
     p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne' := by
@@ -245,7 +242,6 @@ private theorem fd'_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = orh
     have := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
     rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at this; exact this
   have h_re_abs := abs_re_eq_half_of_smul_rho_in_fd g hp h_cd1
-  have h_re_bound := hp.1
   have h_re_eq : (g • ellipticPointRho').re = -1/2 ∨ (g • ellipticPointRho').re = 1/2 := by
     rcases le_or_gt (g • ellipticPointRho').re 0 with h_neg | h_pos
     · left; linarith [abs_of_nonpos h_neg]
@@ -303,11 +299,9 @@ private lemma d_mul_linear_nonneg {c d : ℤ} {z : ℍ}
 private lemma normSq_denom_ge_one (h : SL(2, ℤ)) (z : ℍ) (hz : z ∈ 𝒟)
     (h_csq : ((h : Matrix (Fin 2) (Fin 2) ℤ) 1 0) ^ 2 = 1) :
     Complex.normSq (UpperHalfPlane.denom h z) ≥ 1 := by
-  have hnsq : Complex.normSq (z : ℂ) ≥ 1 :=
-    hz.1
   have h_csq_real : ((h : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) ^ 2 = 1 := by exact_mod_cast h_csq
   rw [normSq_denom_expand_general, h_csq_real, one_mul]
-  nlinarith [d_mul_linear_nonneg (c := (h : Matrix (Fin 2) (Fin 2) ℤ) 1 0)
+  nlinarith [hz.1, d_mul_linear_nonneg (c := (h : Matrix (Fin 2) (Fin 2) ℤ) 1 0)
     (d := (h : Matrix (Fin 2) (Fin 2) ℤ) 1 1) hz (abs_int_cast_eq_one_of_sq_one h_csq_real)]
 
 private lemma inv_c_sq_eq (g : SL(2, ℤ)) :
@@ -358,14 +352,13 @@ private lemma c_abs_le_one_of_smul_fd (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     have h_eq : (↑c : ℝ) ^ 2 * p₂.im * p₁.im =
         (↑c : ℝ) ^ 2 * p₂.im ^ 2 * p₁.im / p₂.im := by field_simp
     rw [h_eq]; exact (div_le_one p₂.im_pos).mpr h2
-  have h_c2_real : (↑c : ℝ) ^ 2 ≥ 4 := by exact_mod_cast h_c2
   have h_prod : 4 * (p₂.im * p₁.im) ≤ 1 := by
+    have h_c2_real : (↑c : ℝ) ^ 2 ≥ 4 := by exact_mod_cast h_c2
     nlinarith [mul_nonneg (show (0 : ℝ) ≤ (↑c : ℝ) ^ 2 - 4 from by linarith)
       (mul_nonneg p₂.im_pos.le p₁.im_pos.le)]
-  have h_p1_gt := fd'_im_gt_half' _ hp₁
-  have h_p2_gt := fd'_im_gt_half' _ hp₂
   have : p₁.im = (↑p₁ : ℂ).im := rfl; have : p₂.im = (↑p₂ : ℂ).im := rfl
-  nlinarith [mul_nonneg (by linarith : (0 : ℝ) ≤ p₁.im - 1/2)
+  nlinarith [fd'_im_gt_half' _ hp₁, fd'_im_gt_half' _ hp₂,
+    mul_nonneg (by linarith : (0 : ℝ) ≤ p₁.im - 1/2)
     (by linarith : (0 : ℝ) ≤ p₂.im - 1/2)]
 
 private lemma repCanon_re_lt_half (p : ℍ) (hp : p ∈ repCanon f hf) : p.re < 1/2 := by
@@ -385,14 +378,10 @@ private lemma injOn_c_eq_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
   have h_re_shift : p₁.re = p₂.re + (n : ℝ) := by
     rw [hTn]; exact ModularGroup.re_T_zpow_smul p₂ n
   have h_n_zero : n = 0 := by
-    have h_re1_bound := abs_le.mp hp₁_fd.2
-    have h_re2_bound := abs_le.mp hp₂_fd.2
-    have h1 : (n : ℝ) < 1 := by
-      linarith [repCanon_re_lt_half f hf p₁ hp₁, h_re2_bound.2]
-    have h2 : (-1 : ℝ) < n := by
-      linarith [repCanon_re_lt_half f hf p₂ hp₂, h_re1_bound.1]
-    have : n < 1 := by exact_mod_cast h1
-    have : -1 < n := by exact_mod_cast h2
+    have : n < 1 := by exact_mod_cast show (n : ℝ) < 1 from by
+      linarith [repCanon_re_lt_half f hf p₁ hp₁, (abs_le.mp hp₂_fd.2).2]
+    have : -1 < n := by exact_mod_cast show (-1 : ℝ) < n from by
+      linarith [repCanon_re_lt_half f hf p₂ hp₂, (abs_le.mp hp₁_fd.2).1]
     omega
   rw [hTn, h_n_zero, zpow_zero, one_smul]
 
