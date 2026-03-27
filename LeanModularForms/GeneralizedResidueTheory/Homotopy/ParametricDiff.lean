@@ -421,52 +421,23 @@ private lemma hasDerivAt_homotopy_param
             (fun t' => H (t', s)) t :=
         (hH_diff (t, s)).comp t h_emb_t
       have hLHS :
-          deriv (fun s' =>
-            f (H (t, s')) *
-              deriv (fun t' => H (t', s')) t) s =
-            deriv (fun s' => f (H (t, s'))) s *
-              deriv (fun t' => H (t', s)) t +
-            f (H (t, s)) *
-              deriv (fun s' =>
-                deriv (fun t' =>
-                  H (t', s')) t) s := by
-        show deriv ((fun s' => f (H (t, s'))) *
-          (fun s' =>
-            deriv (fun t' =>
-              H (t', s')) t)) s =
-          deriv (fun s' => f (H (t, s'))) s *
-            deriv (fun t' => H (t', s)) t +
-          f (H (t, s)) *
-            deriv (fun s' =>
-              deriv (fun t' =>
-                H (t', s')) t) s
-        rw [deriv_mul hfH_diff_s
-          h_partialT_diff_s]
+          deriv (fun s' => f (H (t, s')) * deriv (fun t' => H (t', s')) t) s =
+            deriv (fun s' => f (H (t, s'))) s * deriv (fun t' => H (t', s)) t +
+            f (H (t, s)) * deriv (fun s' => deriv (fun t' => H (t', s')) t) s := by
+        change deriv ((fun s' => f (H (t, s'))) *
+          (fun s' => deriv (fun t' => H (t', s')) t)) s =
+          deriv (fun s' => f (H (t, s'))) s * deriv (fun t' => H (t', s)) t +
+          f (H (t, s)) * deriv (fun s' => deriv (fun t' => H (t', s')) t) s
+        rw [deriv_mul hfH_diff_s h_partialT_diff_s]
       have hRHS :
-          deriv (fun t' =>
-            f (H (t', s)) *
-              deriv (fun s'' =>
-                H (t', s'')) s) t =
-            deriv (fun t' =>
-              f (H (t', s))) t *
-              deriv (fun s' => H (t, s')) s +
-            f (H (t, s)) *
-              deriv (fun t' =>
-                deriv (fun s' =>
-                  H (t', s')) s) t := by
-        show deriv ((fun t' => f (H (t', s))) *
-          (fun t' =>
-            deriv (fun s' =>
-              H (t', s')) s)) t =
-          deriv (fun t' =>
-            f (H (t', s))) t *
-            deriv (fun s' => H (t, s')) s +
-          f (H (t, s)) *
-            deriv (fun t' =>
-              deriv (fun s' =>
-                H (t', s')) s) t
-        rw [deriv_mul hfH_diff_t
-          h_partialS_diff_t]
+          deriv (fun t' => f (H (t', s)) * deriv (fun s'' => H (t', s'')) s) t =
+            deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
+            f (H (t, s)) * deriv (fun t' => deriv (fun s' => H (t', s')) s) t := by
+        change deriv ((fun t' => f (H (t', s))) *
+          (fun t' => deriv (fun s' => H (t', s')) s)) t =
+          deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
+          f (H (t, s)) * deriv (fun t' => deriv (fun s' => H (t', s')) s) t
+        rw [deriv_mul hfH_diff_t h_partialS_diff_t]
       have h_chain_s :
           deriv (fun s' =>
             f (H (t, s'))) s =
@@ -655,17 +626,11 @@ private lemma hasDerivAt_homotopy_param
         rw [h_comp]
         exact (h_partialT.differentiable le_rfl
           (t, s')).comp s' h_emb_s'
-      show deriv ((fun s'' => f (H (t, s''))) *
-        (fun s'' =>
-          deriv (fun t' =>
-            H (t', s'')) t)) s' =
-        deriv f (H (t, s')) *
-          deriv (fun s'' => H (t, s'')) s' *
+      change deriv ((fun s'' => f (H (t, s''))) *
+        (fun s'' => deriv (fun t' => H (t', s'')) t)) s' =
+        deriv f (H (t, s')) * deriv (fun s'' => H (t, s'')) s' *
           deriv (fun t' => H (t', s')) t +
-        f (H (t, s')) *
-          deriv (fun s'' =>
-            deriv (fun t' =>
-              H (t', s'')) t) s'
+        f (H (t, s')) * deriv (fun s'' => deriv (fun t' => H (t', s'')) t) s'
       rw [deriv_mul hfH_diff_s'
         h_partialT_diff_s']
       have h_chain :
@@ -1123,40 +1088,22 @@ theorem hasDerivAt_homotopy_integral_zero
             (fun t' => H (t', s)) t :=
         (hH_diff (t, s)).comp t h_emb_t
       have hLHS :
-          deriv (fun s' =>
-            f (H (t, s')) *
-              deriv (fun t' => H (t', s')) t) s =
-            deriv (fun s' => f (H (t, s'))) s *
-              deriv (fun t' => H (t', s)) t +
-            f (H (t, s)) *
-              deriv (fun s' =>
-                deriv (fun t' => H (t', s')) t) s := by
-        show deriv ((fun s' => f (H (t, s'))) *
-          (fun s' =>
-            deriv (fun t' => H (t', s')) t)) s =
-          deriv (fun s' => f (H (t, s'))) s *
-            deriv (fun t' => H (t', s)) t +
-          f (H (t, s)) *
-            deriv (fun s' =>
-              deriv (fun t' => H (t', s')) t) s
+          deriv (fun s' => f (H (t, s')) * deriv (fun t' => H (t', s')) t) s =
+            deriv (fun s' => f (H (t, s'))) s * deriv (fun t' => H (t', s)) t +
+            f (H (t, s)) * deriv (fun s' => deriv (fun t' => H (t', s')) t) s := by
+        change deriv ((fun s' => f (H (t, s'))) *
+          (fun s' => deriv (fun t' => H (t', s')) t)) s =
+          deriv (fun s' => f (H (t, s'))) s * deriv (fun t' => H (t', s)) t +
+          f (H (t, s)) * deriv (fun s' => deriv (fun t' => H (t', s')) t) s
         rw [deriv_mul hfH_diff_s h_partialT_diff_s]
       have hRHS :
-          deriv (fun t' =>
-            f (H (t', s)) *
-              deriv (fun s'' => H (t', s'')) s) t =
-            deriv (fun t' => f (H (t', s))) t *
-              deriv (fun s' => H (t, s')) s +
-            f (H (t, s)) *
-              deriv (fun t' =>
-                deriv (fun s' => H (t', s')) s) t := by
-        show deriv ((fun t' => f (H (t', s))) *
-          (fun t' =>
-            deriv (fun s' => H (t', s')) s)) t =
-          deriv (fun t' => f (H (t', s))) t *
-            deriv (fun s' => H (t, s')) s +
-          f (H (t, s)) *
-            deriv (fun t' =>
-              deriv (fun s' => H (t', s')) s) t
+          deriv (fun t' => f (H (t', s)) * deriv (fun s'' => H (t', s'')) s) t =
+            deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
+            f (H (t, s)) * deriv (fun t' => deriv (fun s' => H (t', s')) s) t := by
+        change deriv ((fun t' => f (H (t', s))) *
+          (fun t' => deriv (fun s' => H (t', s')) s)) t =
+          deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
+          f (H (t, s)) * deriv (fun t' => deriv (fun s' => H (t', s')) s) t
         rw [deriv_mul hfH_diff_t h_partialS_diff_t]
       have h_chain_s :
           deriv (fun s' => f (H (t, s'))) s =

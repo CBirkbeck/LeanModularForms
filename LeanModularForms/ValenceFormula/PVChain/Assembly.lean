@@ -880,7 +880,7 @@ private lemma exists_height_above_sqrt3_and_S
       ∀ s ∈ S, (s : ℂ).im < H₀ := by
   rcases S.eq_empty_or_nonempty with rfl | hne
   · exact ⟨1, by nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)],
-      le_refl _, fun s hs => absurd hs (Finset.not_mem_empty s)⟩
+      le_refl _, fun s hs => absurd hs (Finset.notMem_empty s)⟩
   · refine ⟨max 1 (S.sup' hne (fun s => (s : ℂ).im) + 1), ?_, ?_, ?_⟩
     · calc Real.sqrt 3 / 2 < 1 := by
             nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]

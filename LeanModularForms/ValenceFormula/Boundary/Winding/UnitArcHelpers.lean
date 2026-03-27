@@ -102,8 +102,8 @@ private lemma unitArc_unique_crossing (H : ℝ) (hH : 1 < H) (s : ℂ)
       · subst h1'
         simp only [fdBoundary_H, show (1:ℝ) ≤ 1 from le_refl _, ↓reduceIte] at hs_eq
         have hre := congr_arg Complex.re hs_eq
-        simp only [add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
-          sub_zero, zero_mul, zero_add, zero_sub] at hre
+        simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one,
+          zero_sub] at hre
         have := (abs_lt.mp hs_re).2
         linarith
       · have ht1 : 1 < t := lt_of_le_of_ne (le_of_lt h1) (Ne.symm h1')

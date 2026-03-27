@@ -654,8 +654,6 @@ lemma continuousAt_sum_remainder (S0 : Finset ℂ) (c : ℂ → ℂ)
     ContinuousAt (fun z => (∑ s' ∈ S0, c s' / (z - s')) -
       residueSimplePole (fun z => ∑ s' ∈ S0, c s' / (z - s')) s / (z - s)) s := by
   rw [residueSimplePole_sum_div_sub S0 c s hs]
-  -- Need: ContinuousAt (fun z => Σ_{full} - c(s)/(z-s)) s
-  -- This equals ContinuousAt (fun z => Σ_{S0.erase s} c(s')/(z-s')) s
   have h_rem : (fun z => (∑ s' ∈ S0, c s' / (z - s')) - c s / (z - s)) =
       (fun z => ∑ s' ∈ S0.erase s, c s' / (z - s')) := by
     funext z; rw [← Finset.add_sum_erase S0 (fun s' => c s' / (z - s')) hs]; ring
@@ -689,7 +687,7 @@ lemma cpv_eq_of_cancel_and_exists
       (𝓝[>] 0) (𝓝 L_res) := by
     rw [h_eq, show L_res = 0 + L_res from (zero_add _).symm]
     exact hCancel.add hL_res
-  show limUnder (𝓝[>] 0) _ = limUnder (𝓝[>] 0) _
+  change limUnder (𝓝[>] 0) _ = limUnder (𝓝[>] 0) _
   rw [h_f_tendsto.limUnder_eq, hL_res.limUnder_eq]
 
 /-- **Theorem (Higher-order, Tendsto formulation)**: Variant of

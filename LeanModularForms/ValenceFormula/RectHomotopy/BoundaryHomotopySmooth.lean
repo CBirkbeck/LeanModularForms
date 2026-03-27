@@ -126,20 +126,9 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           ↑s * (-1 / 2 + (1 - ↑(Real.sqrt 3) / 2) * I) := by
         have h1 : ((Real.pi : ℝ) / 6 : ℂ) * I * rho' =
             -↑Real.pi * ↑(Real.sqrt 3) / 12 + ↑Real.pi / 12 * I := by
-          simp only [rho']; apply Complex.ext <;>
-            simp only [Complex.add_re, Complex.mul_re, Complex.I_re, Complex.I_im,
-              Complex.ofReal_re, Complex.ofReal_im, Complex.add_im, Complex.mul_im,
-              Complex.div_ofNat_re, Complex.div_ofNat_im, Complex.one_re, Complex.one_im,
-              Complex.neg_re, Complex.neg_im, Complex.natCast_re, Complex.natCast_im,
-              Complex.im_ofNat, mul_zero, sub_zero, zero_mul, add_zero, mul_one, zero_div] <;>
-            ring
+          simp only [rho']; apply Complex.ext <;> simp <;> ring
         have h2 : i_point - rho' = (-1/2 : ℂ) + (1 - ↑(Real.sqrt 3) / 2) * I := by
-          simp only [i_point, rho']
-          apply Complex.ext <;>
-            simp only [Complex.sub_re, Complex.sub_im, Complex.add_re, Complex.add_im,
-              Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-              Complex.ofReal_re, Complex.ofReal_im, Complex.one_re, Complex.one_im,
-              mul_zero, sub_zero, zero_mul, add_zero, mul_one] <;> norm_num
+          simp only [i_point, rho']; apply Complex.ext <;> simp <;> norm_num
         rw [h1, h2]
         simp only [Complex.real_smul]; push_cast; ring
       rw [h_deriv_eq] at h_combined
@@ -307,7 +296,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
                 (t' - 2) * ((Real.pi : ℝ) / 6)) * I))
           (((Real.pi : ℝ) / 6) * I * rho) (3 : ℝ) := by
         convert h_arc using 2
-        show rho = Complex.exp (((Real.pi : ℝ) / 2 +
+        change rho = Complex.exp (((Real.pi : ℝ) / 2 +
             ((3 : ℝ) - 2) * ((Real.pi : ℝ) / 6) : ℂ) * I)
         rw [show ((Real.pi : ℝ) / 2 + ((3 : ℝ) - 2) *
                 ((Real.pi : ℝ) / 6) : ℂ) * I =

@@ -139,14 +139,11 @@ theorem IsFlatOfOrder.of_le {γ : ℝ → ℂ} {t₀ : ℝ} {m n : ℕ}
     (h : IsFlatOfOrder γ t₀ m) (hmn : n ≤ m)
     (hγ_cont : ContinuousAt γ t₀) :
     IsFlatOfOrder γ t₀ n := by
-  -- Key: ‖γ t - γ t₀‖ → 0 as t → t₀, so
-  -- ‖γ t - γ t₀‖ ^ m ≤ ‖γ t - γ t₀‖ ^ n eventually
   have h_le_one : ∀ᶠ t in 𝓝 t₀, ‖γ t - γ t₀‖ ≤ 1 := by
     have : Tendsto (fun t => ‖γ t - γ t₀‖) (𝓝 t₀) (𝓝 0) := by
       rw [← norm_zero (E := ℂ), ← sub_self (γ t₀)]
       exact (hγ_cont.sub continuousAt_const).norm
     exact this (Iic_mem_nhds one_pos)
-  -- ‖w‖^m = O(‖w‖^n) when ‖w‖ ≤ 1 and n ≤ m
   have h_big_O : ∀ (l : Filter ℝ), l ≤ 𝓝 t₀ →
       (fun t => ‖γ t - γ t₀‖ ^ m) =O[l] (fun t => ‖γ t - γ t₀‖ ^ n) := by
     intro l hl
@@ -180,18 +177,14 @@ theorem tangentDeviation_isLittleO_of_hasDerivAt
   rw [Asymptotics.isLittleO_norm_norm]
   set r := fun t => γ t - γ t₀ - (t - t₀) • L with hr_def
   have hr := hasDerivAt_iff_isLittleO.mp hγ
-  -- tangentDeviation(γ t - γ t₀, L) = tangentDeviation(r t, L)
   have h_eq : ∀ t, tangentDeviation (γ t - γ t₀) L = tangentDeviation (r t) L := by
     intro t
     rw [show γ t - γ t₀ = (t - t₀) • L + r t from by simp [hr_def],
       tangentDeviation_add, tangentDeviation_real_smul_self _ _ hL, zero_add]
-  -- tangentDeviation(r, L) =O r (from norm bound ≤ 2‖r‖)
   have hO : (fun t => tangentDeviation (r t) L) =O[𝓝 t₀] r :=
     Asymptotics.isBigO_iff.mpr
       ⟨2, Eventually.of_forall fun t => norm_tangentDeviation_le _ _ hL⟩
-  -- tangentDeviation(r, L) =o (t - t₀)
   have ho1 := hO.trans_isLittleO hr
-  -- (t - t₀) =O (γ t - γ t₀) from L ≠ 0
   have hO2 : (fun t => t - t₀) =O[𝓝 t₀] (fun t => γ t - γ t₀) := by
     have hL_pos : (0 : ℝ) < ‖L‖ := norm_pos_iff.mpr hL
     rw [Asymptotics.isBigO_iff]
@@ -216,7 +209,6 @@ theorem tangentDeviation_isLittleO_right
       (fun t => ‖γ t - γ t₀‖ ^ 1) := by
   simp only [pow_one]
   rw [Asymptotics.isLittleO_norm_norm]
-  -- Get HasDerivWithinAt from the hypotheses via FTC extension
   obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
   have hderiv : HasDerivWithinAt γ L (Ioi t₀) t₀ :=
     hasDerivWithinAt_Ioi_iff_Ici.mpr
@@ -295,10 +287,7 @@ theorem isFlatOfOrder_one (γ : PiecewiseC1Immersion) (t₀ : ℝ)
     IsFlatOfOrder γ.toFun t₀ 1 := by
   have hcont : ContinuousAt γ.toFun t₀ :=
     γ.continuous_toFun.continuousAt (Icc_mem_nhds ht₀.1 ht₀.2)
-  -- The partition is finite, so eventually (near t₀) we avoid partition points.
-  -- At non-partition points, the curve is differentiable.
   have hdiff_right : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ.toFun t := by
-    -- γ.partition is finite, so (γ.partition \ {t₀})ᶜ is an open neighborhood of t₀
     have hcl : IsClosed ((↑γ.partition : Set ℝ) \ {t₀}) :=
       (γ.partition.finite_toSet.subset Set.diff_subset).isClosed
     filter_upwards [
@@ -441,9 +430,7 @@ theorem satisfiesConditionB_of_simple_poles
       rw [angleAtCrossing_smooth γ t₀ ht₀_Ioo hp]
       push_cast
       ring
-  · -- laurent_compatible: for simple poles, N = 1 and the only term is k = 0
-    -- so the condition k.val ≥ 1 is never satisfied, making it vacuously true
-    intro s hs t₀ _ht₀ _hcross _ht₀_Ioo
+  · intro s hs t₀ _ht₀ _hcross _ht₀_Ioo
     obtain ⟨c, g, hg, hf_eq⟩ := _hSimplePoles s hs
     refine ⟨1, ![c], g, hg, ?_, ?_⟩
     · filter_upwards [hf_eq] with z hz

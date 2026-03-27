@@ -207,7 +207,6 @@ private lemma slope_tendsto_left_of_deriv
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hcross : γ.toFun t₀ = s)
     (L : ℂ) (hL_lim : Tendsto (deriv γ.toFun) (𝓝[<] t₀) (𝓝 L)) :
     Tendsto (fun ε : ℝ => ε⁻¹ • (γ.toFun (t₀ - ε) - s)) (𝓝[>] 0) (𝓝 (-L)) := by
-  have ht₀_Icc : t₀ ∈ Icc γ.a γ.b := Ioo_subset_Icc_self ht₀
   let P := γ.toPiecewiseC1Curve.partition.filter (· < t₀)
   have hP_ne : P.Nonempty :=
     ⟨γ.a, Finset.mem_filter.mpr
@@ -228,11 +227,12 @@ private lemma slope_tendsto_left_of_deriv
     (γ.toPiecewiseC1Curve.smooth_off_partition t (h_sub ht)
       (h_no_part t ht)).differentiableWithinAt
   have h_cont : ContinuousWithinAt γ.toFun (Ioo δ t₀) t₀ :=
-    (γ.toPiecewiseC1Curve.continuous_toFun.continuousWithinAt ht₀_Icc).mono h_sub
+    (γ.toPiecewiseC1Curve.continuous_toFun.continuousWithinAt
+      (Ioo_subset_Icc_self ht₀)).mono h_sub
   have h_deriv : HasDerivWithinAt γ.toFun L (Iic t₀) t₀ :=
     hasDerivWithinAt_Iic_of_tendsto_deriv h_diff h_cont (Ioo_mem_nhdsLT hδ_lt) hL_lim
-  rw [hasDerivWithinAt_iff_tendsto_slope] at h_deriv
-  rw [show (Iic t₀ \ {t₀} : Set ℝ) = Iio t₀ from Iic_diff_right] at h_deriv
+  rw [hasDerivWithinAt_iff_tendsto_slope, show (Iic t₀ \ {t₀} : Set ℝ) = Iio t₀ from
+    Iic_diff_right] at h_deriv
   have h_map : Tendsto (fun ε : ℝ => t₀ - ε) (𝓝[>] (0 : ℝ)) (𝓝[<] t₀) := by
     apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
     · have : Tendsto (fun ε : ℝ => t₀ - ε) (𝓝 (0 : ℝ)) (𝓝 t₀) := by
@@ -259,12 +259,9 @@ theorem crossing_direction_left_tendsto
     (hL_lim : Tendsto (deriv γ.toFun) (𝓝[<] t₀) (𝓝 L_left)) :
     Tendsto (fun ε => (γ.toFun (t₀ - ε) - s) / ‖γ.toFun (t₀ - ε) - s‖)
       (𝓝[>] 0) (𝓝 (-L_left / ‖L_left‖)) := by
-  have h_slope := slope_tendsto_left_of_deriv γ s t₀ ht₀ hcross L_left hL_lim
-  have h_norm_neg : ‖-L_left‖ = ‖L_left‖ := norm_neg L_left
-  have hL_neg : -L_left ≠ 0 := neg_ne_zero.mpr hL
-  have h_dir := direction_of_slope_tendsto _ (-L_left) hL_neg h_slope
-  have h_eq : -L_left / ↑‖-L_left‖ = -L_left / ↑‖L_left‖ := by rw [h_norm_neg]
-  rwa [h_eq] at h_dir
+  have h_dir := direction_of_slope_tendsto _ (-L_left) (neg_ne_zero.mpr hL)
+    (slope_tendsto_left_of_deriv γ s t₀ ht₀ hcross L_left hL_lim)
+  rwa [norm_neg] at h_dir
 
 /-! ## L3: Boundary term vanishing under angle condition (with flatness rate)
 
@@ -377,10 +374,10 @@ theorem zpow_boundary_diff_tendsto_zero
     rw [← zpow_natCast ε (n - 1), ← zpow_add₀ (ne_of_gt hε_pos)]
     exact zpow_le_one₀ hε_pos hε_lt.le (by omega)
   calc ε ^ k * ‖(wR ε / ↑‖wR ε‖) ^ k - (wL ε / ↑‖wL ε‖) ^ k‖
-      ≤ ε ^ k * (η / 2 * ε ^ (n - 1 : ℕ)) := by
-        exact mul_le_mul_of_nonneg_left h_bnd (zpow_nonneg hε_pos.le k)
+      ≤ ε ^ k * (η / 2 * ε ^ (n - 1 : ℕ)) :=
+        mul_le_mul_of_nonneg_left h_bnd (zpow_nonneg hε_pos.le k)
     _ = η / 2 * (ε ^ k * ε ^ (n - 1 : ℕ)) := by ring
-    _ ≤ η / 2 * 1 := by exact mul_le_mul_of_nonneg_left h_pow_le (half_pos hη).le
+    _ ≤ η / 2 * 1 := mul_le_mul_of_nonneg_left h_pow_le (half_pos hη).le
     _ = η / 2 := mul_one _
     _ < η := half_lt_self hη
 
@@ -428,7 +425,7 @@ theorem norm_sub_le_tangentDeviation_of_unit (u v : ℂ)
   have h_sq_le : ‖u - v‖ ^ 2 / 2 ≤ ‖u - v‖ / 2 := by
     rw [div_le_div_iff_of_pos_right two_pos]
     calc ‖u - v‖ ^ 2 = ‖u - v‖ * ‖u - v‖ := sq _
-      _ ≤ ‖u - v‖ * 1 := by exact mul_le_mul_of_nonneg_left h_close (norm_nonneg _)
+      _ ≤ ‖u - v‖ * 1 := mul_le_mul_of_nonneg_left h_close (norm_nonneg _)
       _ = ‖u - v‖ := mul_one _
   linarith [h_smul_norm, h_sq_le, h_tri]
 

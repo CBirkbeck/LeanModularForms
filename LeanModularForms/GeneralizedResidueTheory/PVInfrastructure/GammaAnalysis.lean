@@ -37,40 +37,22 @@ private lemma hasDerivAt_remainder_bound
       |t - t₀| < δ →
       ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ε * |t - t₀| := by
   intro ε hε
-  rw [hasDerivAt_iff_isLittleO] at hγ
-  rw [Asymptotics.isLittleO_iff] at hγ
+  rw [hasDerivAt_iff_isLittleO, Asymptotics.isLittleO_iff] at hγ
   obtain ⟨s, hs_mem, hs⟩ := (hγ hε).exists_mem
-  rw [Metric.mem_nhds_iff] at hs_mem
-  obtain ⟨δ, hδ_pos, hδ_ball⟩ := hs_mem
-  refine ⟨δ, hδ_pos, fun t ht_pos ht_lt => ?_⟩
-  have ht_in_ball : t ∈ Metric.ball t₀ δ := by
-    simp [Metric.mem_ball, Real.dist_eq, ht_lt]
-  have h_bound := hs t (hδ_ball ht_in_ball)
-  simp only [Real.norm_eq_abs] at h_bound
-  exact h_bound
+  obtain ⟨δ, hδ_pos, hδ_ball⟩ := Metric.mem_nhds_iff.mp hs_mem
+  refine ⟨δ, hδ_pos, fun t _ ht_lt => ?_⟩
+  have h_bound := hs t (hδ_ball (by simp [Metric.mem_ball, Real.dist_eq, ht_lt]))
+  simpa only [Real.norm_eq_abs] using h_bound
 
 private lemma norm_real_smul (x : ℝ) (L : ℂ) :
     ‖x • L‖ = |x| * ‖L‖ := by
   rw [norm_smul, Real.norm_eq_abs]
-
-private lemma complex_mul_real_eq_smul
-    (L : ℂ) (t t₀ : ℝ) :
-    L * ↑(t - t₀) = (t - t₀) • L := by
-  simp only [Complex.real_smul, mul_comm]
 
 private lemma norm_add_lower_bound (a b : ℂ) :
     ‖a + b‖ ≥ ‖a‖ - ‖b‖ := by
   have h := norm_sub_norm_le a (-b)
   simp only [sub_neg_eq_add, norm_neg] at h
   linarith
-
-private lemma norm_inv_le_of_norm_ge
-    {x : ℂ} {c : ℝ} (hc : 0 < c) (h : c ≤ ‖x‖) :
-    ‖x⁻¹‖ ≤ 1 / c := by
-  have hx_ne : x ≠ 0 := by
-    intro hx0; simp [hx0] at h; linarith
-  rw [norm_inv, inv_eq_one_div]
-  exact one_div_le_one_div_of_le hc h
 
 private lemma farSet_isCompact
     (a b t₀ δ : ℝ) (_hab : a < b) (_hδ : 0 < δ) :
@@ -203,8 +185,7 @@ lemma integrand_asymptotic
   obtain ⟨δ, hδ_pos, hδ⟩ := h_tendsto ε hε
   refine ⟨δ, hδ_pos, fun t ht_pos ht_lt => ?_⟩
   have h_ne : t ≠ t₀ := fun h => by simp [h] at ht_pos
-  have h_dist : dist t t₀ < δ := by rwa [Real.dist_eq]
-  have h_bound := hδ h_ne h_dist
+  have h_bound := hδ h_ne (by rwa [Real.dist_eq])
   rw [Complex.dist_eq] at h_bound
   have h_ne_c : (↑(t - t₀) : ℂ) ≠ 0 := by
     simp only [ne_eq, ofReal_eq_zero, sub_eq_zero]
@@ -353,21 +334,11 @@ lemma t_bound_from_gamma_bound
     (h_gamma_bound : ‖γ t - γ t₀‖ ≤ εC) :
     |t - t₀| ≤ 2 * εC / ‖L‖ := by
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have h_lower_t := h_lower t ht_pos ht_lt
-  have h1 : (‖L‖ / 2) * |t - t₀| ≤ εC :=
-    le_trans h_lower_t h_gamma_bound
-  have h_half_pos : 0 < ‖L‖ / 2 := half_pos hL_norm_pos
-  have h2 : |t - t₀| ≤ 2 * εC / ‖L‖ := by
-    have key : ‖L‖ / 2 * |t - t₀| ≤ εC := h1
-    have h_ne : ‖L‖ ≠ 0 := ne_of_gt hL_norm_pos
-    calc |t - t₀|
-        = (‖L‖ / 2 * |t - t₀|) / (‖L‖ / 2) := by
-          field_simp
-      _ ≤ εC / (‖L‖ / 2) := by
-          exact div_le_div_of_nonneg_right key
-            (le_of_lt h_half_pos)
-      _ = 2 * εC / ‖L‖ := by field_simp
-  exact h2
+  have h1 : (‖L‖ / 2) * |t - t₀| ≤ εC := le_trans (h_lower t ht_pos ht_lt) h_gamma_bound
+  calc |t - t₀|
+      = (‖L‖ / 2 * |t - t₀|) / (‖L‖ / 2) := by field_simp
+    _ ≤ εC / (‖L‖ / 2) := div_le_div_of_nonneg_right h1 (half_pos hL_norm_pos).le
+    _ = 2 * εC / ‖L‖ := by field_simp
 
 /-- From γ-space lower bound to t-space lower bound:
 If ‖γ t - γ t₀‖ > εC and we have the upper bound,
@@ -382,17 +353,11 @@ lemma t_lower_from_gamma_lower
       ‖γ s - γ t₀‖ ≤ 2 * ‖L‖ * |s - t₀|)
     (h_gamma_lower : εC < ‖γ t - γ t₀‖) :
     εC / (2 * ‖L‖) < |t - t₀| := by
-  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have h_upper_t := h_upper t ht_pos ht_lt
-  have h1 : εC < 2 * ‖L‖ * |t - t₀| :=
-    lt_of_lt_of_le h_gamma_lower h_upper_t
-  have h_two_norm_pos : 0 < 2 * ‖L‖ := by linarith
-  have h2 : εC / (2 * ‖L‖) < |t - t₀| := by
-    calc εC / (2 * ‖L‖)
-        < (2 * ‖L‖ * |t - t₀|) / (2 * ‖L‖) :=
-          div_lt_div_of_pos_right h1 h_two_norm_pos
-      _ = |t - t₀| := by field_simp
-  exact h2
+  have h1 : εC < 2 * ‖L‖ * |t - t₀| := lt_of_lt_of_le h_gamma_lower (h_upper t ht_pos ht_lt)
+  calc εC / (2 * ‖L‖)
+      < (2 * ‖L‖ * |t - t₀|) / (2 * ‖L‖) :=
+        div_lt_div_of_pos_right h1 (by linarith [norm_pos_iff.mpr hL])
+    _ = |t - t₀| := by field_simp
 
 /-- If γ is C² at t₀, then deriv γ is continuous at t₀. -/
 lemma contAt_deriv_of_contDiffAt_two

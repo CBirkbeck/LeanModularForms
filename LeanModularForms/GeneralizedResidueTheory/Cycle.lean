@@ -70,69 +70,51 @@ def cpvCycle (S0 : Finset ℂ) (f : ℂ → ℂ) (Γ : ContourCycle) : ℂ :=
 theorem contourIntegralCycle_single (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) :
     contourIntegralCycle f (Finsupp.single γ 1) =
       ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t := by
-  unfold contourIntegralCycle
-  rw [Finsupp.sum_single_index]
-  · simp only [Int.cast_one, one_mul]
-  · simp only [Int.cast_zero, zero_mul]
+  unfold contourIntegralCycle; rw [Finsupp.sum_single_index] <;> simp
 
 /-- Winding number of a single curve with multiplicity 1. -/
 theorem windingNumberCycle_single (γ : PiecewiseC1Immersion) (z : ℂ) :
     windingNumberCycle (Finsupp.single γ 1) z =
       generalizedWindingNumber' γ.toFun γ.a γ.b z := by
-  unfold windingNumberCycle
-  rw [Finsupp.sum_single_index]
-  · simp only [Int.cast_one, one_mul]
-  · simp only [Int.cast_zero, zero_mul]
+  unfold windingNumberCycle; rw [Finsupp.sum_single_index] <;> simp
 
 /-- A null-homologous single curve gives a null-homologous cycle. -/
 theorem isNullHomologousCycle_single (γ : PiecewiseC1Immersion) (U : Set ℂ)
     (h : IsNullHomologous γ U) :
-    IsNullHomologousCycle (Finsupp.single γ 1) U := by
-  intro γ' hγ'
-  rw [Finsupp.support_single_ne_zero _ (one_ne_zero), Finset.mem_singleton] at hγ'
-  rwa [hγ']
+    IsNullHomologousCycle (Finsupp.single γ 1) U := fun γ' hγ' => by
+  rw [Finsupp.support_single_ne_zero _ one_ne_zero, Finset.mem_singleton] at hγ'; rwa [hγ']
 
 /-- CPV integral of a single curve with multiplicity 1. -/
 theorem cpvCycle_single (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Immersion) :
     cpvCycle S0 f (Finsupp.single γ 1) =
       cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b := by
-  unfold cpvCycle
-  rw [Finsupp.sum_single_index]
-  · simp only [Int.cast_one, one_mul]
-  · simp only [Int.cast_zero, zero_mul]
+  unfold cpvCycle; rw [Finsupp.sum_single_index] <;> simp
 
 /-! ### Main theorems -/
 
 /-- **Cauchy theorem for cycles**: if `f` is holomorphic on `U` and `Gamma` is
-null-homologous in `U`, then the contour integral of `f` over `Gamma` is zero.
-
-Proof: each summand `n * integral_gamma f dz` has `integral_gamma f dz = 0`
-by the single-curve Dixon theorem, so `n * 0 = 0`. -/
+null-homologous in `U`, then the contour integral of `f` over `Gamma` is zero. -/
 theorem contourIntegralCycle_eq_zero_of_nullHomologous
     {U : Set ℂ} (hU : IsOpen U) {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f U)
     (Γ : ContourCycle) (h_null : IsNullHomologousCycle Γ U) :
     contourIntegralCycle f Γ = 0 := by
-  unfold contourIntegralCycle
-  apply Finset.sum_eq_zero
-  intro γ hγ
-  simp only
-  rw [contourIntegral_eq_zero_of_nullHomologous hU hf γ (h_null γ hγ), mul_zero]
+  simp only [contourIntegralCycle, Finsupp.sum]
+  exact Finset.sum_eq_zero fun γ hγ => by
+    rw [contourIntegral_eq_zero_of_nullHomologous hU hf γ (h_null γ hγ), mul_zero]
 
 /-- Winding number of a null-homologous cycle is zero outside `U`. -/
 theorem windingNumberCycle_eq_zero_outside
     {U : Set ℂ} (Γ : ContourCycle) (h_null : IsNullHomologousCycle Γ U)
     {z : ℂ} (hz : z ∉ U) :
     windingNumberCycle Γ z = 0 := by
-  unfold windingNumberCycle
-  apply Finset.sum_eq_zero
-  intro γ hγ
-  simp only
-  rw [(h_null γ hγ).winding_zero z hz, mul_zero]
+  simp only [windingNumberCycle, Finsupp.sum]
+  exact Finset.sum_eq_zero fun γ hγ => by
+    rw [(h_null γ hγ).winding_zero z hz, mul_zero]
 
 /-! ### Residue theorem for cycles (simple poles) -/
 
 /-- Algebraic core: rewrite the weighted sum of per-component residue formulas as
-the cycle-level residue sum. Factoring and sum-swapping only. -/
+the cycle-level residue sum. -/
 private theorem sum_swap_winding_residue (Γ : ContourCycle) (S0 : Finset ℂ)
     (f : ℂ → ℂ) :
     ∑ γ ∈ Γ.support, (↑(Γ γ) : ℂ) *
@@ -155,9 +137,7 @@ private theorem sum_swap_winding_residue (Γ : ContourCycle) (S0 : Finset ℂ)
 /-- **Generalized Residue Theorem for simple poles on a cycle.**
 
 Extends `generalizedResidueTheorem_simplePoles` from a single curve to a formal
-Z-linear combination of curves. The per-component hypotheses ensure that each
-summand satisfies the single-curve theorem; linearity of both CPV and winding
-numbers yields the cycle-level identity. -/
+Z-linear combination of curves. -/
 theorem generalizedResidueTheorem_simplePoles_cycle
     (U : Set ℂ) (hU : IsOpen U) (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
@@ -177,7 +157,6 @@ theorem generalizedResidueTheorem_simplePoles_cycle
       γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂) :
     cpvCycle S0 f Γ = 2 * Real.pi * I * ∑ s ∈ S0,
       windingNumberCycle Γ s * residueAt f s := by
-  -- Each component satisfies the single-curve theorem
   have h_comp : ∀ γ ∈ Γ.support,
       cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
         2 * Real.pi * I * ∑ s ∈ S0,
@@ -186,8 +165,7 @@ theorem generalizedResidueTheorem_simplePoles_cycle
       hS_closed S0 hS0_subset f hf γ (h_null γ hγ)
       (hS_on_curve γ hγ) hSimplePoles hf_ext (hγ_meas γ hγ)
       (h_no_endpt γ hγ) (h_unique γ hγ)
-  -- Unfold to Finset.sum, substitute each CPV, then swap sums
-  show Γ.sum (fun γ n => (n : ℂ) *
+  change Γ.sum (fun γ n => (n : ℂ) *
       cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b) =
     2 * ↑Real.pi * I * ∑ s ∈ S0, windingNumberCycle Γ s * residueAt f s
   simp_rw [Finsupp.sum]
@@ -203,8 +181,7 @@ theorem generalizedResidueTheorem_simplePoles_cycle
 /-- **Generalized Residue Theorem for cycles** (higher-order poles, Tendsto).
 
 Extends `generalizedResidueTheorem` from a single curve to a formal Z-linear
-combination of curves. Each component must satisfy conditions (A') and (B).
-The conclusion is a `Tendsto` statement for the CPV integrand sum. -/
+combination of curves. Each component must satisfy conditions (A') and (B). -/
 theorem generalizedResidueTheorem_cycle
     (U : Set ℂ) (hU : IsOpen U) (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
     (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
@@ -229,7 +206,6 @@ theorem generalizedResidueTheorem_cycle
       (𝓝[>] 0)
       (𝓝 (2 * Real.pi * I * ∑ s ∈ S0,
         windingNumberCycle Γ s * residueAt f s)) := by
-  -- Each component has a Tendsto result
   have h_comp : ∀ γ ∈ Γ.support,
       Tendsto (fun ε => ∫ t in γ.a..γ.b,
         cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
@@ -240,7 +216,6 @@ theorem generalizedResidueTheorem_cycle
       hS_closed S0 hS0_subset f hf γ (h_null γ hγ) (hS_on_curve γ hγ)
       hMero (hCondA γ hγ) (hCondB γ hγ) (hγ_meas γ hγ)
       (h_no_endpt γ hγ) (h_unique γ hγ)
-  -- Rewrite the target limit using the sum-swap lemma
   simp_rw [Finsupp.sum]
   rw [show 2 * ↑Real.pi * I * ∑ s ∈ S0,
       windingNumberCycle Γ s * residueAt f s =
@@ -253,9 +228,7 @@ theorem generalizedResidueTheorem_cycle
 /-! ### Winding number integrality -/
 
 /-- The generalized winding number of a closed piecewise C^1 immersion around a
-point it avoids is an integer. Discharges the hypotheses of
-`windingNumber_integer_of_piecewise_closed_avoiding` from the immersion
-structure. -/
+point it avoids is an integer. -/
 theorem windingNumber_isInt_of_immersion_closed_avoiding
     (γ : PiecewiseC1Immersion) (z : ℂ)
     (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
@@ -265,30 +238,20 @@ theorem windingNumber_isInt_of_immersion_closed_avoiding
     γ.partition γ.hab hγ_closed γ.continuous_toFun
     (fun t ht hP => γ.smooth_off_partition t (Ioo_subset_Icc_self ht) hP)
     (fun _p1 _p2 _h12 hnoP hsub t ht =>
-      (γ.deriv_continuous_off_partition t (hsub ht)
-        (hnoP t ht)).continuousWithinAt)
-    h_avoids
-    ⟨_, fun t ht =>
-      (piecewiseC1Immersion_deriv_bounded γ).choose_spec t ht⟩
+      (γ.deriv_continuous_off_partition t (hsub ht) (hnoP t ht)).continuousWithinAt)
+    h_avoids ⟨_, fun t ht => (piecewiseC1Immersion_deriv_bounded γ).choose_spec t ht⟩
 
 /-- Winding number of a cycle around a point avoided by all component curves is
-an integer, provided each component curve is closed.
-
-Each component winding number is an integer (by
-`windingNumber_isInt_of_immersion_closed_avoiding`). A Z-linear combination
-of integers is an integer. -/
+an integer, provided each component curve is closed. -/
 theorem windingNumberCycle_isInt (Γ : ContourCycle)
     (h_closed : ∀ γ ∈ Γ.support, γ.toPiecewiseC1Curve.IsClosed)
     (z : ℂ) (h_avoids : ∀ γ ∈ Γ.support,
       ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z) :
     ∃ n : ℤ, windingNumberCycle Γ z = ↑n := by
-  unfold windingNumberCycle
-  simp_rw [Finsupp.sum]
-  -- Use Finset.sum_induction: the predicate "is an integer cast" is closed
-  -- under addition and holds for 0 and each summand.
+  simp only [windingNumberCycle, Finsupp.sum]
   apply Finset.sum_induction _ (fun x : ℂ => ∃ n : ℤ, x = ↑n)
   · rintro _ _ ⟨a, rfl⟩ ⟨b, rfl⟩; exact ⟨a + b, by push_cast; ring⟩
-  · exact ⟨0, by simp only [Int.cast_zero]⟩
+  · exact ⟨0, Int.cast_zero.symm⟩
   · intro γ hγ
     obtain ⟨m, hm⟩ := windingNumber_isInt_of_immersion_closed_avoiding γ z
       (h_closed γ hγ) (h_avoids γ hγ)

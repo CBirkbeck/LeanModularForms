@@ -193,17 +193,6 @@ lemma cpv_exists_inv_sub_of_closed_unique
   obtain ⟨δ, hδ, l, r, hl_lt, hr_gt, hl_ge_a, hr_le_b, hg_anti, hg_mono,
     hδ_le_l, hδ_le_r, hbnd⟩ :=
     exists_cutoff_boundary_times_with_mono γ z₀ t₀ ht₀ hcross honly
-  have h_re_zero : ∀ᶠ ε in 𝓝[>] (0:ℝ), (R ε).re = 0 := by
-    filter_upwards [Ioo_mem_nhdsGT hδ] with ε hε
-    obtain ⟨σ₁, σ₂, ha, hlt₁, hlt₂, hb, hnorm₁, hnorm₂, _, _, _⟩ :=
-      hbnd ε hε
-    have h_ftc := exp_cutoff_integral_eq_ratio γ hclosed z₀ σ₁ σ₂ ε
-      ha (lt_trans hlt₁ hlt₂) hb hε.1 hnorm₁ hnorm₂ ‹_› ‹_› ‹_›
-    have h_norm : ‖Complex.exp (R ε)‖ = 1 := by
-      rw [h_ftc, norm_div, hnorm₁, hnorm₂]
-      exact div_self (ne_of_gt hε.1)
-    rw [Complex.norm_exp] at h_norm
-    exact (Real.exp_eq_one_iff _).mp h_norm
   set L₀ : ℂ := Complex.exp (-(I * ↑(angleAtCrossing γ t₀ ht₀)))
   have hL₀_ne : L₀ ≠ 0 := Complex.exp_ne_zero _
   have hR_cont : ContinuousOn R (Ioo 0 δ) :=
@@ -297,17 +286,14 @@ lemma cpv_exists_inv_sub_of_closed_unique
       (hR_cont : ContinuousOn R (Ioo 0 δ)) :
       ∃ L, Tendsto R (𝓝[>] 0) (𝓝 L) := by
     have h_shift : Tendsto (fun ε => Complex.exp (R ε + ↑Real.pi * I))
-        (𝓝[>] 0) (𝓝 (-L₀)) := by
-      have : (fun ε => Complex.exp (R ε + ↑Real.pi * I)) =
-          (fun ε => -(Complex.exp (R ε))) := by
-        ext ε; rw [Complex.exp_add, Complex.exp_pi_mul_I]; ring
-      rw [this]; exact h_exp.neg
-    have hR'_cont : ContinuousOn (fun ε => R ε + ↑Real.pi * I) (Ioo 0 δ) :=
-      hR_cont.add continuousOn_const
-    obtain ⟨L', hL'⟩ := cpv_of_exp_tendsto_slitPlane
-      (fun ε => R ε + ↑Real.pi * I) (-L₀) δ hδ hsp h_shift hR'_cont
-    exact ⟨L' - ↑Real.pi * I, by
-      have : R = fun ε => (R ε + ↑Real.pi * I) - ↑Real.pi * I := by ext; ring
-      rw [this]; exact hL'.sub tendsto_const_nhds⟩
+        (𝓝[>] 0) (𝓝 (-L₀)) :=
+      (show (fun ε => Complex.exp (R ε + ↑Real.pi * I)) =
+          fun ε => -(Complex.exp (R ε)) from
+        funext fun ε => by rw [Complex.exp_add, Complex.exp_pi_mul_I]; ring) ▸ h_exp.neg
+    obtain ⟨L', hL'⟩ := cpv_of_exp_tendsto_slitPlane _ (-L₀) δ hδ hsp h_shift
+      (hR_cont.add continuousOn_const)
+    exact ⟨L' - ↑Real.pi * I,
+      (show R = fun ε => (R ε + ↑Real.pi * I) - ↑Real.pi * I from funext fun _ => by ring)
+        ▸ hL'.sub tendsto_const_nhds⟩
 
 end GeneralizedResidueTheory

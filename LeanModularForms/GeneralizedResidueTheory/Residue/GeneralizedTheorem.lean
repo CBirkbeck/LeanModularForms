@@ -55,7 +55,6 @@ theorem generalizedResidueTheorem (U : Set ℂ) (hU : IsOpen U)
     cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
       2 * Real.pi * I * ∑ s ∈ S0,
         generalizedWindingNumber' γ.toFun γ.a γ.b s * residueSimplePole f s := by
-  -- Derive hPV_singular from C2 regularity
   have hPV_singular : ∀ s ∈ S0, CauchyPrincipalValueExists'
       (fun z => residueSimplePole f s / (z - s)) γ.toFun γ.a γ.b s := by
     intro s hs
@@ -103,10 +102,6 @@ theorem generalizedResidueTheorem_higher_order (U : Set ℂ) (hU : IsOpen U)
     cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
       2 * Real.pi * I * ∑ s ∈ S0,
         generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s := by
-  -- The NH version uses unique_cross instead of C2_cross.
-  -- Derive unique_cross from C2_cross + immersion (deriv ne zero):
-  -- Actually the NH version signature is different; we need to map the hypotheses.
-  -- Use the direct proof via generalizedResidueTheorem + limit arithmetic.
   set f_res := fun z => ∑ s ∈ S0, residueAt f s / (z - s) with hf_res_def
   have hSimple_res : ∀ s ∈ S0, HasSimplePoleAt f_res s :=
     fun s hs => hasSimplePoleAt_sum_div_sub S0 (residueAt f) s hs
