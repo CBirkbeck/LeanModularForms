@@ -126,7 +126,7 @@ theorem meromorphicPrincipalPart_differentiableOn (f : ℂ → ℂ) (s : ℂ)
 /-- When the meromorphic order is negative, `poleOrderNat` is positive. -/
 private theorem poleOrderNat_pos_of_neg_order (f : ℂ → ℂ) (s : ℂ)
     (h_neg : meromorphicOrderAt f s < 0) : 0 < poleOrderNat f s := by
-  show 0 < (-(meromorphicOrderAt f s).untop₀).toNat
+  change 0 < (-(meromorphicOrderAt f s).untop₀).toNat
   have h_neg' : (meromorphicOrderAt f s).untop₀ < 0 := by
     cases h : (meromorphicOrderAt f s) with
     | top => exact absurd h h_neg.ne_top
@@ -161,7 +161,7 @@ private theorem taylor_remainder_factored (G : ℂ → ℂ) (s : ℂ) (N : ℕ)
     have hH_sum := hasFPowerSeriesAt_iff'.mp hH_fps
     filter_upwards [hG_sum, hH_sum] with z hG_z hH_z
     simp only [FormalMultilinearSeries.coeff_iterate_fslope, smul_eq_mul] at hG_z hH_z
-    show G z - P z = (z - s) ^ N * H z
+    change G z - P z = (z - s) ^ N * H z
     set c := fun k => (z - s) ^ k * pG.coeff k with hc_def
     have hG_tail : HasSum (fun j => c (j + N))
         (G z - ∑ i ∈ Finset.range N, c i) :=
@@ -185,38 +185,31 @@ theorem meromorphicAt_sub_principalPart_eventually (f : ℂ → ℂ) (s : ℂ)
     ∃ g : ℂ → ℂ, AnalyticAt ℂ g s ∧
       ∀ᶠ z in 𝓝[≠] s, f z - meromorphicPrincipalPart f s z = g z := by
   by_cases h_neg : meromorphicOrderAt f s < 0
-  · -- f has a genuine pole of order N. Strategy: factor pp = (z-s)^{-N} * P
-    -- where P is analytic, then show f - pp = (z-s)^{-N} * (G - P) where
-    -- G - P = (z-s)^N * H for analytic H (Taylor remainder). So f - pp = H.
-    set N := poleOrderNat f s
+  · set N := poleOrderNat f s
     set G := meromorphicFactor f s hf h_neg.ne_top
     have hG_spec := ((meromorphicOrderAt_ne_top_iff hf).mp h_neg.ne_top).choose_spec
     have hG_an : AnalyticAt ℂ G s := hG_spec.1
     have hf_ev : f =ᶠ[𝓝[≠] s] fun z =>
         (z - s) ^ (meromorphicOrderAt f s).untop₀ • G z := hG_spec.2.2
-    -- The order is -(N : ℤ)
     have hN_pos : 0 < N := poleOrderNat_pos_of_neg_order f s h_neg
     have h_ord_neg : (meromorphicOrderAt f s).untop₀ < 0 := by
       cases h : meromorphicOrderAt f s with
       | top => exact absurd h h_neg.ne_top
       | coe v => simp [WithTop.untop₀]; rw [h] at h_neg; exact_mod_cast h_neg
     have h_ord_eq : (meromorphicOrderAt f s).untop₀ = -(N : ℤ) := by
-      show (meromorphicOrderAt f s).untop₀ = -↑((-((meromorphicOrderAt f s).untop₀)).toNat)
+      change (meromorphicOrderAt f s).untop₀ = -↑((-((meromorphicOrderAt f s).untop₀)).toNat)
       omega
-    -- Define P = Taylor polynomial of G (the analytic polynomial part)
     set P : ℂ → ℂ := fun z => ∑ k ∈ Finset.range N,
       (iteratedDeriv k G s / ↑(k.factorial)) * (z - s) ^ (k : ℕ)
-    -- P is analytic at s (finite sum of polynomial terms)
     have hP_an : AnalyticAt ℂ P s := by
       apply Finset.analyticAt_fun_sum; intro k _
       have h_sub_an : AnalyticAt ℂ (· - s) s := by fun_prop
       exact analyticAt_const.mul (h_sub_an.pow _)
-    -- pp(z) = (z-s)^{-N} * P(z) near s (away from s)
     have h_pp_eq : ∀ᶠ z in 𝓝[≠] s, meromorphicPrincipalPart f s z =
         (z - s) ^ (-(N : ℤ)) * P z := by
       filter_upwards [self_mem_nhdsWithin] with z hz
       have hne : z - s ≠ 0 := sub_ne_zero.mpr (Set.mem_compl_singleton_iff.mp hz)
-      show meromorphicPrincipalPart f s z = _
+      change meromorphicPrincipalPart f s z = _
       unfold meromorphicPrincipalPart; rw [dif_pos ⟨hf, h_neg⟩]
       simp only [P, N, G]; rw [Finset.mul_sum]
       apply Finset.sum_congr rfl; intro k _
@@ -224,26 +217,20 @@ theorem meromorphicAt_sub_principalPart_eventually (f : ℂ → ℂ) (s : ℂ)
         (z - s) ^ (-(poleOrderNat f s : ℤ)) * (z - s) ^ (k : ℕ) from by
         rw [← zpow_natCast (z - s) k, ← zpow_add₀ hne]; congr 1; omega]
       ring
-    -- Taylor remainder: G(z) - P(z) = (z-s)^N • H(z) near s for some analytic H.
     have h_taylor : ∃ H : ℂ → ℂ, AnalyticAt ℂ H s ∧
         ∀ᶠ z in 𝓝 s, G z - P z = (z - s) ^ N • H z :=
       taylor_remainder_factored G s N hG_an P rfl hP_an
     obtain ⟨H, hH_an, hH_eq⟩ := h_taylor
-    -- Combine: f - pp =ae (z-s)^{-N} * G - (z-s)^{-N} * P = (z-s)^{-N} * (G-P) = H
     refine ⟨H, hH_an, ?_⟩
     filter_upwards [hf_ev, h_pp_eq, hH_eq.filter_mono nhdsWithin_le_nhds,
       self_mem_nhdsWithin] with z hf_z hpp_z hH_z hz_ne
     have hne : z - s ≠ 0 := sub_ne_zero.mpr (Set.mem_compl_singleton_iff.mp hz_ne)
     simp only [smul_eq_mul] at hf_z hH_z ⊢
-    -- f z = (z-s)^{-N} * G z, pp z = (z-s)^{-N} * P z
-    -- f z - pp z = (z-s)^{-N} * (G z - P z) = (z-s)^{-N} * (z-s)^N * H z = H z
     rw [hf_z, hpp_z]; simp only [h_ord_eq]
     rw [← mul_sub, hH_z]
     rw [← mul_assoc, ← zpow_natCast (z - s) N, ← zpow_add₀ hne, neg_add_cancel,
       zpow_zero, one_mul]
-  · -- No pole: pp = 0, so remainder = f. MeromorphicAt gives f =ae (z-s)^n * g
-    -- with n >= 0, g analytic. The product (z-s)^n * g is analytic.
-    have h_pp : meromorphicPrincipalPart f s = fun _ => 0 := by
+  · have h_pp : meromorphicPrincipalPart f s = fun _ => 0 := by
       unfold meromorphicPrincipalPart
       rw [dif_neg (not_and_of_not_right _ h_neg)]
     push_neg at h_neg
@@ -304,7 +291,7 @@ private theorem integral_zpow_comp_sub_mul_deriv'
     have hne : γ t ≠ s := hγ_ne t (Ioo_subset_Icc_self ht)
     have h_div := (hasDerivAt_zpow_comp_sub' (n := n + 1)
       (hγ_diff t ht ht_not_E).hasDerivAt hne).div_const (↑(n + 1) : ℂ)
-    show HasDerivAt F ((γ t - s) ^ n * ↑(deriv γ t)) t
+    change HasDerivAt F ((γ t - s) ^ n * ↑(deriv γ t)) t
     have : (↑(n + 1) : ℂ) * (γ t - s) ^ (n + 1 - 1) * ↑(deriv γ t) / (↑(n + 1) : ℂ)
         = (γ t - s) ^ n * ↑(deriv γ t) := by
       rw [show (n + 1 : ℤ) - 1 = n from by ring]
@@ -476,7 +463,7 @@ private theorem residueAt_eq_residueAt_principalPart_sum (f : ℂ → ℂ) (s : 
   obtain ⟨rf, hrf_pos, hrf_eq⟩ := hg_eq'
   have hr₀_pos : 0 < min rg rf := lt_min hrg_pos hrf_pos
   unfold residueAt
-  show limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
+  change limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
     limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), pp z)
   unfold limUnder; congr 1; apply Filter.map_congr
   apply Filter.Eventually.mono (Ioo_mem_nhdsGT hr₀_pos)

@@ -279,25 +279,19 @@ omit f hf in
 /-- For `H ≥ 1` and `M > H`, `fdBoundary_H H t ∈ fdBox M` for `t ∈ [0, 5]`. -/
 lemma fdBoundary_H_mem_fdBox' {H M : ℝ} (hH : 1 ≤ H) (hM : H < M)
     (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) : fdBoundary_H H t ∈ fdBox M := by
+  have h_re_abs := fdBoundary_H_re_abs_le_half H t ht
   constructor
-  · -- re > -1
-    have h_re_abs := fdBoundary_H_re_abs_le_half H t ht
-    linarith [abs_le.mp h_re_abs]
+  · linarith [abs_le.mp h_re_abs]
   constructor
-  · -- re < 1
-    have h_re_abs := fdBoundary_H_re_abs_le_half H t ht
-    linarith [abs_le.mp h_re_abs]
+  · linarith [abs_le.mp h_re_abs]
   constructor
-  · -- im > 1/2
-    have hH_sqrt3 : Real.sqrt 3 / 2 ≤ H := by
+  · have hH_sqrt3 : Real.sqrt 3 / 2 ≤ H := by
       nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
     have h_half_lt_sqrt3 : (1:ℝ)/2 < Real.sqrt 3 / 2 := by
-      have : Real.sqrt 3 * Real.sqrt 3 = 3 := Real.mul_self_sqrt (by norm_num)
-      have : 0 < Real.sqrt 3 := Real.sqrt_pos.mpr (by norm_num : (0:ℝ) < 3)
-      nlinarith
+      nlinarith [Real.mul_self_sqrt (show (0:ℝ) ≤ 3 by norm_num),
+        Real.sqrt_pos.mpr (show (0:ℝ) < 3 by norm_num)]
     exact lt_of_lt_of_le h_half_lt_sqrt3 (fdBoundary_H_im_ge_sqrt3_div_2 H hH_sqrt3 t ht)
-  · -- im < M
-    exact lt_of_le_of_lt (fdBoundary_H_im_le_H hH t ht) hM
+  · exact lt_of_le_of_lt (fdBoundary_H_im_le_H hH t ht) hM
 
 /-! ### Discrete set separation -/
 
@@ -433,7 +427,7 @@ lemma logDerivPatched_hf_ext (F : ℂ → ℂ) (S0 : Finset ℂ) (hsp : ∀ s �
   rw [eventually_nhdsWithin_iff] at hF_eq
   rw [Filter.EventuallyEq]
   filter_upwards [hF_eq,
-      h_open_compl.mem_nhds (Set.mem_compl_iff _ _ |>.mpr (Finset.not_mem_erase s S0))]
+      h_open_compl.mem_nhds (Set.mem_compl_iff _ _ |>.mpr (Finset.notMem_erase s S0))]
     with z hz_F hz_compl
   by_cases hzs : z = s
   · subst hzs

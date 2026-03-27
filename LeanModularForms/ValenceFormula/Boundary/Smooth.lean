@@ -650,7 +650,7 @@ noncomputable def fdBoundary_HImmersion (H : ℝ)
 
 lemma fdBoundary_HCurve_closed (H : ℝ) :
     (fdBoundary_HCurve H).IsClosed := by
-  show fdBoundary_H H 0 = fdBoundary_H H 5
+  change fdBoundary_H H 0 = fdBoundary_H H 5
   exact fdBoundary_H_closed H
 
 lemma fdBoundary_differentiableAt_off_partition
@@ -752,7 +752,7 @@ noncomputable def fdBoundaryImmersion : PiecewiseC1Immersion where
 
 lemma fdBoundaryImmersion_closed :
     fdBoundaryCurve.IsClosed := by
-  show fdBoundary 0 = fdBoundary 5
+  change fdBoundary 0 = fdBoundary 5
   exact fdBoundary_closed
 
 lemma fdBoundary_H_hasDerivAt_arc (H : ℝ) {t : ℝ}

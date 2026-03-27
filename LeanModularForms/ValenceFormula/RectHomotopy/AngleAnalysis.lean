@@ -212,12 +212,7 @@ lemma seg4_vec_re_neg (p : ℂ) (hp_re : |p.re| < 1/2) (t : ℝ)
     · linarith [ht.1]
     · linarith [ht.1]
     · linarith [ht.1]
-    · simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.I_re, Complex.I_im,
-                 Complex.add_im, Complex.mul_im, Complex.ofReal_im, Complex.sub_re, Complex.sub_im,
-                 Complex.div_ofNat_re, Complex.div_ofNat_im, Complex.one_re, Complex.one_im,
-                 Complex.natCast_re, Complex.natCast_im, Complex.im_ofNat,
-                 mul_zero, zero_mul, mul_one, sub_self, add_zero, sub_zero, zero_add,
-                 Complex.neg_re, zero_div, neg_zero, sub_neg_eq_add]
+    · simp
     · linarith [ht.2]
   rw [Complex.sub_re, hseg4_re]
   linarith
@@ -500,7 +495,7 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
     have h_deriv_eq : ∀ q ∈ Ioo q₁ q₂ ×ˢ Icc (0:ℝ) 1,
         deriv (fun t' => H (t', q.2)) q.1 = deriv fdPolygon q.1 := by
       intro ⟨t, s⟩ ⟨ht, _hs⟩
-      show deriv (fun t' => fdPolygon t' - ((1 - ↑s) * p₁ + ↑s * p₂)) t = deriv fdPolygon t
+      change deriv (fun t' => fdPolygon t' - ((1 - ↑s) * p₁ + ↑s * p₂)) t = deriv fdPolygon t
       exact deriv_sub_const _
     suffices h_cont : ContinuousOn (fun q : ℝ × ℝ => deriv fdPolygon q.1)
         (Ioo q₁ q₂ ×ˢ Icc 0 1) by

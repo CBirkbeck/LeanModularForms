@@ -64,16 +64,8 @@ private lemma bound_iteratedDerivWithin_two_on_Icc
     (hγ : ContDiffOn ℝ 2 γ (Set.Icc a b)) :
     ∃ C ≥ 0, ∀ y ∈ Set.Icc a b,
       ‖iteratedDerivWithin 2 γ (Set.Icc a b) y‖ ≤ C := by
-  have h_cont :
-      ContinuousOn
-        (iteratedDerivWithin 2 γ (Set.Icc a b))
-        (Set.Icc a b) :=
-    hγ.continuousOn_iteratedDerivWithin
-      (by simp only [Nat.cast_ofNat, le_refl]) (uniqueDiffOn_Icc hab)
-  have h_compact : IsCompact (Set.Icc a b) :=
-    isCompact_Icc
-  obtain ⟨M, hM⟩ :=
-    h_compact.exists_bound_of_continuousOn h_cont
+  obtain ⟨M, hM⟩ := isCompact_Icc.exists_bound_of_continuousOn
+    (hγ.continuousOn_iteratedDerivWithin (by norm_cast) (uniqueDiffOn_Icc hab))
   by_cases hM_neg : M < 0
   · use 0, le_refl 0
     intro y hy
@@ -87,17 +79,11 @@ lemma contDiffAt_one_deriv_of_contDiffAt_two
     {γ : ℝ → ℂ} {t₀ : ℝ}
     (hγ_C2 : ContDiffAt ℝ 2 γ t₀) :
     ContDiffAt ℝ 1 (deriv γ) t₀ := by
-  have h_fderiv_C1 :
-      ContDiffAt ℝ 1 (fderiv ℝ γ) t₀ := by
-    have h : ContDiffAt ℝ (1 + 1) γ t₀ := hγ_C2
-    exact h.fderiv_right_succ
-  have h_const :
-      ContDiffAt ℝ 1 (fun _ : ℝ => (1 : ℝ)) t₀ :=
-    contDiffAt_const
-  have h_apply := h_fderiv_C1.clm_apply h_const
-  have h_eq : (fun t => (fderiv ℝ γ t) 1) = deriv γ := by
-    ext t; exact fderiv_deriv.symm
-  rw [← h_eq]; exact h_apply
+  have h_apply := (show ContDiffAt ℝ (1 + 1) γ t₀ from hγ_C2).fderiv_right_succ.clm_apply
+    (contDiffAt_const (c := (1 : ℝ)))
+  rw [show (fun t => (fderiv ℝ γ t) 1) = deriv γ from by
+    ext t; exact fderiv_deriv.symm] at h_apply
+  exact h_apply
 
 /-- Lipschitz-type bound on `deriv γ` deviation from C². -/
 lemma deriv_deviation_bound_of_C2
@@ -106,21 +92,14 @@ lemma deriv_deviation_bound_of_C2
     (hγ_deriv : deriv γ t₀ = L) :
     ∃ K δ, 0 < δ ∧ ∀ t, |t - t₀| < δ →
       ‖deriv γ t - L‖ ≤ K * |t - t₀| := by
-  have h_deriv_C1 : ContDiffAt ℝ 1 (deriv γ) t₀ :=
-    contDiffAt_one_deriv_of_contDiffAt_two hγ_C2
   obtain ⟨K, s, hs_nhds, h_lip⟩ :=
-    h_deriv_C1.exists_lipschitzOnWith
-  obtain ⟨δ, hδ_pos, hball_sub⟩ :=
-    Metric.mem_nhds_iff.mp hs_nhds
-  use K, δ, hδ_pos
-  intro t ht
-  have ht_in_s : t ∈ s :=
-    hball_sub (Metric.mem_ball.mpr (by rwa [Real.dist_eq]))
-  have ht₀_in_s : t₀ ∈ s :=
-    hball_sub (Metric.mem_ball.mpr (by simp [hδ_pos]))
-  have h := h_lip.dist_le_mul t ht_in_s t₀ ht₀_in_s
-  rw [dist_eq_norm, hγ_deriv, Real.dist_eq] at h
-  exact h
+    (contDiffAt_one_deriv_of_contDiffAt_two hγ_C2).exists_lipschitzOnWith
+  obtain ⟨δ, hδ_pos, hball_sub⟩ := Metric.mem_nhds_iff.mp hs_nhds
+  refine ⟨K, δ, hδ_pos, fun t ht => ?_⟩
+  have h := h_lip.dist_le_mul t
+    (hball_sub (Metric.mem_ball.mpr (by rwa [Real.dist_eq])))
+    t₀ (hball_sub (Metric.mem_ball.mpr (by simp [hδ_pos])))
+  rwa [dist_eq_norm, hγ_deriv, Real.dist_eq] at h
 
 /-- Quadratic Taylor approximation from C² smoothness. -/
 lemma quadratic_approx_of_contDiffAt_two
@@ -281,31 +260,16 @@ lemma bounded_slope_deviation_of_contDiffAt_two
     quadratic_approx_of_contDiffAt_two hγ_C2 hγ_deriv
   refine ⟨K₁, δ₁, hδ₁_pos, hK₁_pos,
     fun t ht_pos ht_lt => ?_⟩
-  have h := h_quad t ht_lt
-  have ht_ne_real : t - t₀ ≠ 0 :=
-    abs_pos.mp ht_pos
   have ht_ne : (↑(t - t₀) : ℂ) ≠ 0 :=
-    Complex.ofReal_ne_zero.mpr ht_ne_real
-  have h_smul_eq : (t - t₀) • L = (↑(t - t₀) : ℂ) * L :=
-    Complex.real_smul
-  have h_eq :
-      (γ t - γ t₀) / (↑(t - t₀)) - L =
-        (γ t - γ t₀ - (t - t₀) • L) / (↑(t - t₀)) := by
-    rw [h_smul_eq]; field_simp [ht_ne]
-  rw [h_eq, norm_div]
-  have h_norm_eq : ‖(↑(t - t₀) : ℂ)‖ = |t - t₀| :=
-    Complex.norm_real _
-  rw [h_norm_eq]
-  have h_abs_pos : 0 < |t - t₀| := ht_pos
-  have h_calc :
-      K₁ * |t - t₀| ^ 2 / |t - t₀| =
-        K₁ * |t - t₀| := by
-    field_simp
+    Complex.ofReal_ne_zero.mpr (abs_pos.mp ht_pos)
+  rw [show (γ t - γ t₀) / (↑(t - t₀)) - L =
+      (γ t - γ t₀ - (t - t₀) • L) / (↑(t - t₀)) from by
+    rw [Complex.real_smul]; field_simp [ht_ne],
+    norm_div, Complex.norm_real _]
   calc ‖γ t - γ t₀ - (t - t₀) • L‖ / |t - t₀|
       ≤ K₁ * |t - t₀| ^ 2 / |t - t₀| :=
-        div_le_div_of_nonneg_right h
-          (le_of_lt h_abs_pos)
-    _ = K₁ * |t - t₀| := h_calc
+        div_le_div_of_nonneg_right (h_quad t ht_lt) ht_pos.le
+    _ = K₁ * |t - t₀| := by field_simp
 
 /-- Numerator quadratic bound for `(t-t₀)γ'(t) - (γt - γt₀)`. -/
 lemma numerator_quadratic_bound

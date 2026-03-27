@@ -717,8 +717,7 @@ private theorem cpv_polar_term_tendsto (S0 : Finset ℂ) (f : ℂ → ℂ)
       cauchyPrincipalValueIntegrandOn S0
         (fun z => a_s k / (z - s) ^ (k.val + 1))
         γ.toFun ε t) (𝓝[>] 0) (𝓝 0) := by
-  obtain ⟨kv, hkv⟩ := k
-  simp only [Fin.val] at hk_ge
+  obtain ⟨kv, hkv⟩ := k; change kv ≥ 1 at hk_ge
   have hm : 2 ≤ kv + 1 := by omega
   by_cases ha_zero : a_s ⟨kv, hkv⟩ = 0
   · have h_zero : ∀ ε t, cauchyPrincipalValueIntegrandOn S0
