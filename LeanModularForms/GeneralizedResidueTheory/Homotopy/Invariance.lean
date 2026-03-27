@@ -40,7 +40,7 @@ private theorem homotopy_uniform_avoidance
     (isCompact_Icc.prod isCompact_Icc).image hH_cont
   have hnonempty : (H '' (Icc a b ×ˢ Icc (0:ℝ) 1)).Nonempty :=
     ⟨H (a, 0), (a, 0),
-      ⟨left_mem_Icc.mpr (le_of_lt hab),
+      ⟨left_mem_Icc.mpr (hab.le),
        left_mem_Icc.mpr zero_le_one⟩, rfl⟩
   have hz_notin : z₀ ∉ H '' (Icc a b ×ˢ Icc (0:ℝ) 1) :=
     fun ⟨⟨t, s⟩, ⟨ht, hs⟩, heq⟩ =>
@@ -290,7 +290,7 @@ private theorem generalizedWindingNumber'_eq_of_eq_on
     funext ε
     apply intervalIntegral.integral_congr_ae
     have h_uIoc : Set.uIoc a b = Ioc a b :=
-      Set.uIoc_of_le (le_of_lt hab)
+      Set.uIoc_of_le (hab.le)
     rw [h_uIoc]
     rw [h_uIoc] at heq_deriv
     have h_ae : ∀ᵐ t ∂volume.restrict (Ioc a b),
@@ -334,7 +334,7 @@ theorem windingNumber_eq_of_piecewise_homotopic
   have heq : n 0 = n 1 := continuous_integer_valued_constant n hn_cont hn_int
   have hn0_eq : n 0 = generalizedWindingNumber' γ₀ a b z₀ := by
     apply generalizedWindingNumber'_eq_of_eq_on (fun t => H (t, 0)) γ₀ a b z₀ hab hH0
-    rw [Set.uIoc_of_le (le_of_lt hab)]
+    rw [Set.uIoc_of_le (hab.le)]
     have h_eq_on_Ioo : Set.EqOn (fun t => H (t, 0)) γ₀ (Ioo a b) :=
       fun t' ht' => hH0 t' (Ioo_subset_Icc_self ht')
     have h_deriv_eq_on : Set.EqOn (deriv (fun t => H (t, 0))) (deriv γ₀) (Ioo a b) :=
@@ -344,7 +344,7 @@ theorem windingNumber_eq_of_piecewise_homotopic
     exact h_deriv_eq_on (ht.mpr ht_Ioc)
   have hn1_eq : n 1 = generalizedWindingNumber' γ₁ a b z₀ := by
     apply generalizedWindingNumber'_eq_of_eq_on (fun t => H (t, 1)) γ₁ a b z₀ hab hH1
-    rw [Set.uIoc_of_le (le_of_lt hab)]
+    rw [Set.uIoc_of_le (hab.le)]
     have h_eq_on_Ioo : Set.EqOn (fun t => H (t, 1)) γ₁ (Ioo a b) :=
       fun t' ht' => hH1 t' (Ioo_subset_Icc_self ht')
     have h_deriv_eq_on : Set.EqOn (deriv (fun t => H (t, 1))) (deriv γ₁) (Ioo a b) :=
@@ -475,7 +475,7 @@ theorem windingNumber_eq_of_homotopic_closed
   have hn0_eq : n 0 = generalizedWindingNumber' γ₀ a b z₀ := by
     apply generalizedWindingNumber'_eq_of_eq_on
       (fun t => H (t, 0)) γ₀ a b z₀ hab hH0
-    rw [Set.uIoc_of_le (le_of_lt hab)]
+    rw [Set.uIoc_of_le (hab.le)]
     have h_eq_on_Ioo :
         Set.EqOn (fun t => H (t, 0)) γ₀ (Ioo a b) :=
       fun t' ht' => hH0 t' (Ioo_subset_Icc_self ht')
@@ -485,7 +485,7 @@ theorem windingNumber_eq_of_homotopic_closed
   have hn1_eq : n 1 = generalizedWindingNumber' γ₁ a b z₀ := by
     apply generalizedWindingNumber'_eq_of_eq_on
       (fun t => H (t, 1)) γ₁ a b z₀ hab hH1
-    rw [Set.uIoc_of_le (le_of_lt hab)]
+    rw [Set.uIoc_of_le (hab.le)]
     have h_eq_on_Ioo :
         Set.EqOn (fun t => H (t, 1)) γ₁ (Ioo a b) :=
       fun t' ht' => hH1 t' (Ioo_subset_Icc_self ht')
@@ -596,7 +596,7 @@ theorem contourIntegral_eq_of_homotopic
     intervalIntegral_continuous_on_param
       (fun t s => f (H (t, s)) *
         deriv (fun t' => H (t', s)) t)
-      a b (Icc 0 1) (le_of_lt hab) h_integrand_cont
+      a b (Icc 0 1) (hab.le) h_integrand_cont
       (fun s _ => by
         apply Continuous.intervalIntegrable
         exact h_integrand_cont.comp

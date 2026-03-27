@@ -96,21 +96,12 @@ lemma contDiff_partialDeriv_snd_of_contDiff_two
   have h_emb_diff :
       DifferentiableAt ℝ (fun s : ℝ => (p.1, s)) p.2 :=
     (differentiableAt_const p.1).prodMk differentiableAt_id
-  show deriv (fun s => H (p.1, s)) p.2 =
-    fderiv ℝ H p (0, 1)
-  have h_deriv_emb :
-      deriv (fun s => (p.1, s)) p.2 = (0, 1) := by
-    have : HasDerivAt (fun s => (p.1, s)) (0, 1) p.2 :=
-      (hasDerivAt_const p.2 p.1).prodMk
-        (hasDerivAt_id p.2)
-    exact this.deriv
+  change deriv (fun s => H (p.1, s)) p.2 = fderiv ℝ H p (0, 1)
   calc deriv (fun s => H (p.1, s)) p.2
-      = (fderiv ℝ H (p.1, p.2))
-          (deriv (fun s => (p.1, s)) p.2) := by
-        apply fderiv_comp_deriv p.2
-          (hH_diff (p.1, p.2)) h_emb_diff
+      = (fderiv ℝ H (p.1, p.2)) (deriv (fun s => (p.1, s)) p.2) :=
+        fderiv_comp_deriv p.2 (hH_diff (p.1, p.2)) h_emb_diff
     _ = (fderiv ℝ H p) (0, 1) := by
-        rw [h_deriv_emb]
+        rw [((hasDerivAt_const p.2 p.1).prodMk (hasDerivAt_id p.2)).deriv]
 
 lemma contDiff_partialDeriv_fst_of_contDiff_two
     (H : ℝ × ℝ → ℂ) (hH : ContDiff ℝ 2 H) :
@@ -130,21 +121,12 @@ lemma contDiff_partialDeriv_fst_of_contDiff_two
   have h_emb_diff :
       DifferentiableAt ℝ (fun t : ℝ => (t, p.2)) p.1 :=
     differentiableAt_id.prodMk (differentiableAt_const p.2)
-  show deriv (fun t => H (t, p.2)) p.1 =
-    fderiv ℝ H p (1, 0)
-  have h_deriv_emb :
-      deriv (fun t => (t, p.2)) p.1 = (1, 0) := by
-    have : HasDerivAt (fun t => (t, p.2)) (1, 0) p.1 :=
-      (hasDerivAt_id p.1).prodMk
-        (hasDerivAt_const p.1 p.2)
-    exact this.deriv
+  change deriv (fun t => H (t, p.2)) p.1 = fderiv ℝ H p (1, 0)
   calc deriv (fun t => H (t, p.2)) p.1
-      = (fderiv ℝ H (p.1, p.2))
-          (deriv (fun t => (t, p.2)) p.1) := by
-        apply fderiv_comp_deriv p.1
-          (hH_diff (p.1, p.2)) h_emb_diff
+      = (fderiv ℝ H (p.1, p.2)) (deriv (fun t => (t, p.2)) p.1) :=
+        fderiv_comp_deriv p.1 (hH_diff (p.1, p.2)) h_emb_diff
     _ = (fderiv ℝ H p) (1, 0) := by
-        rw [h_deriv_emb]
+        rw [((hasDerivAt_id p.1).prodMk (hasDerivAt_const p.1 p.2)).deriv]
 
 /-- Schwarz theorem: mixed partials of a C² function commute. -/
 lemma schwarz_partialDeriv_comm
@@ -204,26 +186,14 @@ lemma schwarz_partialDeriv_comm
       _ = (fderiv ℝ H (t', s)) (0, 1) := by
           rw [h_has_deriv.deriv]
   simp_rw [h_inner_t, h_inner_s]
-  have h_emb_s :
-      DifferentiableAt ℝ (fun s' : ℝ => (t, s')) s :=
+  have h_emb_s : DifferentiableAt ℝ (fun s' : ℝ => (t, s')) s :=
     (differentiableAt_const t).prodMk differentiableAt_id
-  have h_deriv_emb_s :
-      deriv (fun s' => (t, s')) s = (0, 1) := by
-    have h1 : HasDerivAt (fun _ : ℝ => t) (0 : ℝ) s :=
-      hasDerivAt_const s t
-    have h2 : HasDerivAt (fun s' : ℝ => s') (1 : ℝ) s :=
-      hasDerivAt_id s
-    exact (HasDerivAt.prodMk h1 h2).deriv
-  have h_emb_t :
-      DifferentiableAt ℝ (fun t' : ℝ => (t', s)) t :=
+  have h_deriv_emb_s : deriv (fun s' => (t, s')) s = (0, 1) :=
+    ((hasDerivAt_const s t).prodMk (hasDerivAt_id s)).deriv
+  have h_emb_t : DifferentiableAt ℝ (fun t' : ℝ => (t', s)) t :=
     differentiableAt_id.prodMk (differentiableAt_const s)
-  have h_deriv_emb_t :
-      deriv (fun t' => (t', s)) t = (1, 0) := by
-    have h1 : HasDerivAt (fun t' : ℝ => t') (1 : ℝ) t :=
-      hasDerivAt_id t
-    have h2 : HasDerivAt (fun _ : ℝ => s) (0 : ℝ) t :=
-      hasDerivAt_const t s
-    exact (HasDerivAt.prodMk h1 h2).deriv
+  have h_deriv_emb_t : deriv (fun t' => (t', s)) t = (1, 0) :=
+    ((hasDerivAt_id t).prodMk (hasDerivAt_const t s)).deriv
   have hLHS :
       deriv (fun s' =>
         (fderiv ℝ H (t, s')) (1, 0)) s =

@@ -166,7 +166,7 @@ theorem limUnder_eventually_eq_const {α : Type*}
   rw [Filter.tendsto_def]
   intro s hs
   filter_upwards [hf] with x hx
-  show f x ∈ s; rw [hx]; exact mem_of_mem_nhds hs
+  change f x ∈ s; rw [hx]; exact mem_of_mem_nhds hs
 
 /-- At a point not in a finite set, there is an open ball disjoint from the set. -/
 lemma exists_ball_avoiding_finset {P : Finset ℝ} {t : ℝ} (ht : t ∉ P) :
@@ -204,10 +204,9 @@ private lemma logDeriv_integrand_bound
     (hM : ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M)
     (t : ℝ) (ht : t ∈ Icc a b) :
     ‖deriv γ t / (γ t - z₀)‖ ≤ M / δ := by
-  simp only [norm_div]
-  calc ‖deriv γ t‖ / ‖γ t - z₀‖
-      ≤ ‖deriv γ t‖ / δ := div_le_div_of_nonneg_left (norm_nonneg _) hδ (hδ_bd t ht)
-    _ ≤ M / δ := div_le_div_of_nonneg_right (hM t ht) hδ.le
+  rw [norm_div]
+  exact (div_le_div_of_nonneg_left (norm_nonneg _) hδ (hδ_bd t ht)).trans
+    (div_le_div_of_nonneg_right (hM t ht) hδ.le)
 
 private lemma logDeriv_continuousOn_off_finset
     {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {P : Finset ℝ}
