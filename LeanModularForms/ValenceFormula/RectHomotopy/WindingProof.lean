@@ -126,7 +126,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
   set θ_L := fdPolygonRadialCircle_angle_lifted ref_p₀ with hθ_L
   set F : ℝ → ℂ := fun t => I * (θ_L t : ℂ) with hF
   have hF_change : F 5 - F 0 = -2 * ↑Real.pi * I := by
-    show I * (θ_L 5 : ℂ) - I * (θ_L 0 : ℂ) = -2 * ↑Real.pi * I
+    change I * (θ_L 5 : ℂ) - I * (θ_L 0 : ℂ) = -2 * ↑Real.pi * I
     have h := fdPolygonRadialCircle_angle_lifted_change ref_p₀
       ref_p₀_norm ref_p₀_re ref_p₀_im_pos ref_p₀_im
     rw [← mul_sub]
@@ -135,7 +135,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
     have hval : θ_L 5 - θ_L 0 = -(2 * Real.pi) := by linarith
     rw [hval]; push_cast; ring
   have hF_cont : ContinuousOn F (Icc 0 5) := by
-    show ContinuousOn (fun t => I * (θ_L t : ℂ)) (Icc 0 5)
+    change ContinuousOn (fun t => I * (θ_L t : ℂ)) (Icc 0 5)
     exact continuousOn_const.mul angle_lifted_ref_p₀_continuousOn
   have hF_deriv : ∀ x ∈ (Ioo (0:ℝ) 5) \ ({1, 2, 3, tL ref_p₀, 4} : Set ℝ),
       HasDerivAt F ((rc x - ref_p₀)⁻¹ * deriv rc x) x := by
@@ -146,7 +146,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
       simp only [Finset.mem_insert, Finset.mem_singleton, not_or]
       exact ⟨ht1, ht2, ht3, ht4⟩
     have hrc_diff : DifferentiableAt ℝ rc t := by
-      show DifferentiableAt ℝ (fun t' => polygonToCircleRadial ref_p₀ (t', 1)) t
+      change DifferentiableAt ℝ (fun t' => polygonToCircleRadial ref_p₀ (t', 1)) t
       exact polygonToCircleRadial_differentiable_off_partition ref_p₀ ref_p₀_norm ref_p₀_re
         ref_p₀_im t ht ht_not_P 1 ⟨by norm_num, le_refl 1⟩
     have hrc_hasderiv : HasDerivAt (fun t' => rc t' - ref_p₀) (deriv rc t) t := by
@@ -184,7 +184,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
         have ht'_Icc : t' ∈ Icc (0:ℝ) 5 := ⟨le_of_lt ht'_pos, le_of_lt ht'_lt5⟩
         have hne : fdPolygon t' ≠ ref_p₀ :=
           fdPolygon_avoids_interior ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t' ht'_Icc
-        show I * ↑(θ_L t') = Complex.log (rc t' - ref_p₀)
+        change I * ↑(θ_L t') = Complex.log (rc t' - ref_p₀)
         simp only [hθ_L, fdPolygonRadialCircle_angle_lifted, ht'_lt, ↓reduceIte]
         exact (log_eq_I_arg t' ht'_Icc hne).symm
       exact h_log_deriv.congr_of_eventuallyEq hF_eq_log
@@ -202,7 +202,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
         have ht'_Icc : t' ∈ Icc (0:ℝ) 5 := ⟨le_of_lt ht'_pos, le_of_lt ht'_lt5⟩
         have hne : fdPolygon t' ≠ ref_p₀ :=
           fdPolygon_avoids_interior ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im t' ht'_Icc
-        show I * ↑(θ_L t') = Complex.log (rc t' - ref_p₀) + (-2 * ↑Real.pi * I)
+        change I * ↑(θ_L t') = Complex.log (rc t' - ref_p₀) + (-2 * ↑Real.pi * I)
         simp only [hθ_L, fdPolygonRadialCircle_angle_lifted,
           show ¬t' < tL ref_p₀ from
             not_lt.mpr (le_of_lt ht'_gt), ↓reduceIte]
@@ -224,7 +224,7 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
     have h_meas : AEStronglyMeasurable (fun t => (rc t - ref_p₀)⁻¹ * deriv rc t)
         (volume.restrict (Ioc 0 5)) := by
       have hrc_cont : Continuous rc := by
-        show Continuous (fun t => polygonToCircleRadial ref_p₀ (t, 1))
+        change Continuous (fun t => polygonToCircleRadial ref_p₀ (t, 1))
         exact (polygonToCircleRadial_continuous ref_p₀ ref_p₀_norm ref_p₀_re ref_p₀_im).comp
           (continuous_id.prodMk continuous_const)
       have h_inv_factor : AEStronglyMeasurable (fun t => (rc t - ref_p₀)⁻¹)
@@ -258,21 +258,21 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
     have hab : (0 : ℝ) < 5 := by norm_num
     have hθ_diff : Differentiable ℝ θ_target := by
       intro t
-      show DifferentiableAt ℝ (fun t => θ₀ - 2 * Real.pi * t / 5) t
+      change DifferentiableAt ℝ (fun t => θ₀ - 2 * Real.pi * t / 5) t
       exact ((differentiableAt_const θ₀).sub
         ((differentiableAt_const (2 * Real.pi)).mul differentiableAt_id |>.div_const 5))
     have hθ_deriv_cont : Continuous (deriv θ_target) := by
       have hd : deriv θ_target = fun _ => -(2 * Real.pi / 5) := by
         ext t
         have hd : HasDerivAt θ_target (-(2 * Real.pi / 5)) t := by
-          show HasDerivAt (fun t => θ₀ - 2 * Real.pi * t / 5) _ t
+          change HasDerivAt (fun t => θ₀ - 2 * Real.pi * t / 5) _ t
           have := ((hasDerivAt_const t θ₀).sub
             ((hasDerivAt_id t).const_mul (2 * Real.pi) |>.div_const 5))
           convert this using 1; ring
         exact hd.deriv
       rw [hd]; exact continuous_const
     have hθ_change : θ_target 5 - θ_target 0 = 2 * Real.pi * (-1 : ℤ) := by
-      show (θ₀ - 2 * Real.pi * 5 / 5) - (θ₀ - 2 * Real.pi * 0 / 5) = _
+      change (θ₀ - 2 * Real.pi * 5 / 5) - (θ₀ - 2 * Real.pi * 0 / 5) = _
       push_cast; ring
     exact winding_of_S1_curve_eq_degree ref_p₀ 0 5 hab (-1) θ_target hθ_diff hθ_deriv_cont hθ_change
   set rc := fdPolygonRadialCircle ref_p₀ with hrc_def
@@ -306,7 +306,7 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
   simp only [h_match_target] at h_target_winding
   have h_dist_target : ∀ t, ‖γ_target t - ref_p₀‖ = 1 := by
     intro t
-    show ‖(ref_p₀ + exp (I * (θ_target t : ℂ))) - ref_p₀‖ = 1
+    change ‖(ref_p₀ + exp (I * (θ_target t : ℂ))) - ref_p₀‖ = 1
     simp only [add_sub_cancel_left, mul_comm I]
     exact norm_exp_ofReal_mul_I _
   have h_target_integral : ∀ ε > 0, ε < 1 → (∫ t in (0:ℝ)..5,
@@ -323,7 +323,7 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
     have h_integrand : ∀ t, (γ_target t - ref_p₀)⁻¹ * deriv γ_target t =
         -(2 * ↑Real.pi * I / 5) := by
       intro t
-      show (ref_p₀ + exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)) - ref_p₀)⁻¹ *
+      change (ref_p₀ + exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ)) - ref_p₀)⁻¹ *
         deriv (fun t => ref_p₀ + exp (I * ((θ₀ - 2 * Real.pi * t / 5 : ℝ) : ℂ))) t = _
       simp only [add_sub_cancel_left]
       have h_deriv : deriv (fun t =>
