@@ -155,10 +155,8 @@ private theorem aestronglyMeasurable_of_continuousOn_off_finite
   constructor
   · exact hf_cont.aestronglyMeasurable
       (measurableSet_Icc.diff (Finset.measurableSet P))
-  · have h_null : volume ((P : Set ℝ) ∩ Icc a b) = 0 :=
-      (Finset.finite_toSet P |>.inter_of_left
-        (Icc a b)).measure_zero _
-    rw [Measure.restrict_zero_set h_null]
+  · rw [Measure.restrict_zero_set
+      ((Finset.finite_toSet P |>.inter_of_left (Icc a b)).measure_zero _)]
     exact aestronglyMeasurable_zero_measure f
 
 /-- A piecewise continuous bounded function is interval integrable. -/
@@ -203,8 +201,7 @@ private theorem exists_min_above_in_finite_union
     hs_min_le b ⟨Set.mem_union_left _ rfl, ht_lt_b⟩,
     fun x hx hxS => by linarith [hs_min_le x ⟨hxS, hx.1⟩, hx.2]⟩
 
-/-- On an open interval where `f` is differentiable with `deriv f = 0`,
-`f` equals `f t` by constancy on the interval and left-continuity at `t`. -/
+-- FIXME: [STRUCTURE] 33 lines
 private theorem eq_on_Ioo_of_deriv_zero
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     {f : ℝ → E} {a b t s_min : ℝ}
@@ -237,6 +234,7 @@ private theorem eq_on_Ioo_of_deriv_zero
     tendsto_const_nhds
   intro x hx; rw [h_ft]; exact h_eq_mid x hx
 
+-- FIXME: [STRUCTURE] 34 lines
 /-- If f is continuous on [a,b], differentiable on (a,b)\P with f'=0 there,
 then f has zero right derivative at every point of [a,b). -/
 theorem hasDerivWithinAt_zero_of_deriv_zero_off_finite
@@ -285,18 +283,12 @@ theorem continuousWithinAt_integral_of_dominated_piecewise
     rw [uIoc_of_le hab]
     exact Ioc_subset_Icc_self
   apply intervalIntegral.continuousWithinAt_of_dominated_interval (bound := bound)
-  · apply Filter.eventually_of_mem (self_mem_nhdsWithin (s := S))
-    intro x hx
+  · filter_upwards [self_mem_nhdsWithin (s := S)] with x hx
     exact (hF_meas x hx).mono_set h_uIoc_sub
-  · apply Filter.eventually_of_mem (self_mem_nhdsWithin (s := S))
-    intro x hx
-    apply Filter.Eventually.of_forall
-    intro t ht
-    exact hF_bound x hx t (h_uIoc_sub ht)
+  · filter_upwards [self_mem_nhdsWithin (s := S)] with x hx
+    exact .of_forall fun t ht => hF_bound x hx t (h_uIoc_sub ht)
   · exact intervalIntegrable_const
-  · have h_ae_uIoc : ∀ᵐ t ∂volume.restrict (uIoc a b),
-        ContinuousWithinAt (fun x => F x t) S x₀ :=
-      MeasureTheory.ae_restrict_of_ae_restrict_of_subset h_uIoc_sub hF_cont
-    exact MeasureTheory.ae_imp_of_ae_restrict h_ae_uIoc
+  · exact MeasureTheory.ae_imp_of_ae_restrict
+      (MeasureTheory.ae_restrict_of_ae_restrict_of_subset h_uIoc_sub hF_cont)
 
 end
