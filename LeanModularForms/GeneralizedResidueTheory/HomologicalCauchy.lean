@@ -269,9 +269,11 @@ theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U) (hU_convex : Co
     have h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z :=
       fun t ht heq => hz (heq ▸ hγ_in_U t ht)
     rw [generalizedWindingNumber_eq_classical_away γ.toPiecewiseC1Curve z h_avoids]
+    have h_ne_z : ∀ w ∈ U, w - z ≠ 0 :=
+      fun w hw => sub_ne_zero.mpr (fun heq => hz (heq ▸ hw))
     have h_holo : DifferentiableOn ℂ (fun w => (w - z)⁻¹) U := fun w hw =>
       ((differentiableAt_id.sub (differentiableAt_const z)).inv
-        (sub_ne_zero.mpr (fun heq => hz (heq ▸ hw)))).differentiableWithinAt
+        (h_ne_z w hw)).differentiableWithinAt
     obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne h_holo
     have h_int := integrand_intervalIntegrable_of_avoids γ z h_avoids
     have h_ftc := ftc_piecewise_contour γ.toPiecewiseC1Curve U hγ_in_U hF h_int
@@ -821,7 +823,7 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
   obtain ⟨C, hC_pos, δ₀, hδ₀_pos, hBd⟩ :=
     dslope_uniform_bound hU hf _
       (isCompact_Icc.image_of_continuousOn γ.continuous_toFun)
-      (fun _ ���t, ht, he⟩ => he ▸ hγ_in_U t ht) w₀ hw₀
+      (fun _ ⟨t, ht, he⟩ => he ▸ hγ_in_U t ht) w₀ hw₀
   set ε := min δ₀ r / 2 with hε_def
   have hε_pos : 0 < ε := by positivity
   have h2ε_le_δ₀ : 2 * ε ≤ δ₀ := by simp only [hε_def]; linarith [min_le_left δ₀ r]
@@ -1119,9 +1121,10 @@ private lemma dixonFunction_norm_lt_of_large (hU : IsOpen U) (hf : Differentiabl
               (R + M_f * M_d * (γ.b - γ.a) / ε) < ‖w‖) :
     ‖dixonFunction f U γ w‖ < ε := by
   have hR_lt : R < ‖w‖ := by
+    have hnn : 0 ≤ M_d * (γ.b - γ.a) / (2 * Real.pi) :=
+      div_nonneg (mul_nonneg hM_d_nn (by linarith [γ.hab])) Real.two_pi_pos.le
     linarith [le_max_left (R + M_d * (γ.b - γ.a) / (2 * Real.pi))
-                           (R + M_f * M_d * (γ.b - γ.a) / ε),
-      div_nonneg (mul_nonneg hM_d_nn (by linarith [γ.hab])) Real.two_pi_pos.le]
+                           (R + M_f * M_d * (γ.b - γ.a) / ε)]
   have hwn_eq_zero : generalizedWindingNumber' γ.toFun γ.a γ.b w = 0 :=
     windingNumber_zero_of_large_norm γ hM_d_nn hR hM_d h_null.closed
       (lt_of_le_of_lt (le_max_left _ _) hw)
@@ -1179,7 +1182,8 @@ theorem cauchyIntegralFormula_nullHomologous (hU : IsOpen U) (hf : Differentiabl
       2 * ↑Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b w * f w := by
   have h_zero := dixonFunction_eq_zero hU hf γ h_null w
   simp only [dixonFunction, dif_pos hw] at h_zero
-  linear_combination -(h_zero ▸ dixonH1_eq hU hf γ h_null.image_subset w hoff)
+  have h_eq := dixonH1_eq hU hf γ h_null.image_subset w hoff
+  rw [h_zero] at h_eq; linear_combination -h_eq
 
 /-- The image of a piecewise C¹ immersion has empty interior in ℂ.
 This follows from the fact that a Lipschitz map from ℝ to ℂ has image with
@@ -1206,12 +1210,13 @@ lemma piecewiseC1_image_interior_empty (γ : PiecewiseC1Immersion) :
           exact ht_npart (le_antisymm ht_Icc.2 h ▸ γ.endpoints_in_partition.2)
       have hevt : ∀ᶠ y in 𝓝 t, HasDerivAt γ.toFun (deriv γ.toFun y) y := by
         filter_upwards [(γ.partition.finite_toSet.isClosed.isOpen_compl.inter
-          isOpen_Ioo).mem_nhds ⟨ht_npart, ht_Ioo⟩]
+          (isOpen_Ioo (a := γ.a) (b := γ.b))).mem_nhds ⟨ht_npart, ht_Ioo⟩]
           with y ⟨hy_compl, hy_Ioo⟩
         exact (γ.smooth_off_partition y (Ioo_subset_Icc_self hy_Ioo) hy_compl).hasDerivAt
-      obtain ⟨K, v, hv, hLip⟩ := (hasStrictDerivAt_of_hasDerivAt_of_continuousAt hevt
-        (γ.deriv_continuous_off_partition t ht_Ioo ht_npart)).hasStrictFDerivAt
-          .exists_lipschitzOnWith
+      have hstrict : HasStrictDerivAt γ.toFun (deriv γ.toFun t) t :=
+        hasStrictDerivAt_of_hasDerivAt_of_continuousAt hevt
+          (γ.deriv_continuous_off_partition t ht_Ioo ht_npart)
+      obtain ⟨K, v, hv, hLip⟩ := hstrict.hasStrictFDerivAt.exists_lipschitzOnWith
       refine ⟨K, (Icc γ.a γ.b \ ↑γ.partition) ∩ v,
         inter_mem_nhdsWithin _ hv,
         hLip.mono Set.inter_subset_right⟩
@@ -1237,15 +1242,17 @@ theorem contourIntegral_eq_zero_of_nullHomologous (hU : IsOpen U) (hf : Differen
   have hw₀_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w₀ := fun t ht heq =>
     hw₀_off ⟨t, ht, heq⟩
   set F := fun z => f z * (z - w₀) with hF_def
+  have hF_diff : DifferentiableOn ℂ F U :=
+    hf.mul (differentiableOn_id.sub (differentiableOn_const w₀))
   have h_eq : ∀ t ∈ Set.uIcc γ.a γ.b,
       f (γ.toFun t) * deriv γ.toFun t =
       F (γ.toFun t) / (γ.toFun t - w₀) * deriv γ.toFun t := by
     intro t ht
     have ht_Icc : t ∈ Icc γ.a γ.b := Set.uIcc_of_le hab ▸ ht
-    simp only [hF_def, mul_div_assoc, div_self (sub_ne_zero.mpr (hw₀_avoids t ht_Icc)), mul_one]
+    have hne : γ.toFun t - w₀ ≠ 0 := sub_ne_zero.mpr (hw₀_avoids t ht_Icc)
+    simp only [hF_def, mul_div_assoc, div_self hne, mul_one]
   rw [intervalIntegral.integral_congr h_eq]
-  have hCIF := cauchyIntegralFormula_nullHomologous hU
-    (hf.mul (differentiableOn_id.sub (differentiableOn_const w₀))) γ h_null w₀ hw₀U hw₀_avoids
+  have hCIF := cauchyIntegralFormula_nullHomologous hU hF_diff γ h_null w₀ hw₀U hw₀_avoids
   rw [show F w₀ = 0 from by simp only [hF_def, sub_self, mul_zero], mul_zero] at hCIF
   exact hCIF
 
@@ -1757,18 +1764,22 @@ lemma pv_res_tendsto_of_immersion_nullHomologous (U : Set ℂ) (S : Set ℂ)
     exact cpv_exists_inv_sub_of_closed_unique γ s h_null.closed
       (h_no_endpt_cross s hs) t₀ ht₀_Ioo hcross
       (fun t ht hgt => h_unique_cross s hs t ht t₀ ht₀ hgt hcross)
+  have hSimple_res : ∀ s ∈ S0, HasSimplePoleAt f_res s :=
+    fun s hs => hasSimplePoleAt_sum_div_sub S0 (residueAt f) s hs
+  have hf_res_diff_univ : DifferentiableOn ℂ f_res (Set.univ \ ↑S0) :=
+    differentiableOn_sum_div_sub S0 (residueAt f) Set.univ
   have h_thm := generalizedResidueTheorem' Set.univ isOpen_univ convex_univ
     S (fun s _ => Set.mem_univ s) hS_discrete hS_closed S0 hS0_subset
-    f_res (differentiableOn_sum_div_sub S0 (residueAt f) Set.univ)
-    γ h_null.closed (fun t _ => Set.mem_univ _)
+    f_res hf_res_diff_univ γ h_null.closed (fun t _ => Set.mem_univ _)
     (fun t ht h_mem => hS_on_curve t ht h_mem)
-    (fun s hs => hasSimplePoleAt_sum_div_sub S0 (residueAt f) s hs)
-    hf_ext_res hPV_singular
+    hSimple_res hf_ext_res hPV_singular
   obtain ⟨h_exists, h_value⟩ := h_thm
   obtain ⟨L, hL⟩ := h_exists
   have h_limit_eq : L = 2 * Real.pi * I * ∑ s ∈ S0,
       generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s := by
-    rw [hL.limUnder_eq.symm, h_value]; congr 1; apply Finset.sum_congr rfl
+    have hL_eq : L = cauchyPrincipalValueOn S0 f_res γ.toFun γ.a γ.b :=
+      hL.limUnder_eq.symm
+    rw [hL_eq, h_value]; congr 1; apply Finset.sum_congr rfl
     intro s hs; rw [h_res_eq s hs]
   rw [← h_limit_eq]
   exact hL
