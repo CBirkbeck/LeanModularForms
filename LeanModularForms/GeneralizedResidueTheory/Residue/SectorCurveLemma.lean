@@ -117,7 +117,7 @@ theorem pv_sector_higher_power (r : ℝ) (_hr : 0 < r) (α : ℝ)
     have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
     have h_pow := (hγ_diff t ht ht_not').hasDerivAt.pow n
     have h_div := h_pow.div_const (↑n : ℂ)
-    show HasDerivAt F (sectorCurve r α t ^ (n - 1) * deriv (sectorCurve r α) t) t
+    change HasDerivAt F (sectorCurve r α t ^ (n - 1) * deriv (sectorCurve r α) t) t
     convert h_div using 1
     rw [mul_assoc, mul_div_cancel_left₀ _ hn_ne]
   have hf_int : IntervalIntegrable f volume 0 3 :=
@@ -126,7 +126,7 @@ theorem pv_sector_higher_power (r : ℝ) (_hr : 0 < r) (α : ℝ)
   have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
     F f (by norm_num : (0:ℝ) ≤ 3) hS_count hF_cont hF_deriv hf_int
   rw [h_ftc]
-  show F 3 - F 0 = 0
+  change F 3 - F 0 = 0
   simp only [F, sectorCurve_zero, sectorCurve_three, zero_pow (by omega : n ≠ 0),
     zero_div, sub_self]
 
@@ -708,7 +708,7 @@ private theorem zpow_primitive_hasDerivAt (r : ℝ) (hr : 0 < r) (α : ℝ) (n :
     (hasDerivAt_zpow m (γ t) (Or.inl hγ_ne)).comp t hγ_diff.hasDerivAt
   have h_div := h_zpow.div_const (m : ℂ)
   have hm_sub : m - 1 = -(↑n : ℤ) := by simp [m]
-  show HasDerivAt F ((γ t) ^ (-(↑n : ℤ)) * deriv γ t) t
+  change HasDerivAt F ((γ t) ^ (-(↑n : ℤ)) * deriv γ t) t
   convert h_div using 1
   rw [smul_eq_mul, mul_assoc, mul_div_cancel_left₀ _ hm_ne, hm_sub]
 
