@@ -102,12 +102,9 @@ lemma integral_inv_symm
     have h1 := intervalIntegral.integral_comp_sub_left
       (f := fun x => (↑(x - t₀) : ℂ)⁻¹)
       (d := 2 * t₀) (a := t₀ + ε₁) (b := t₀ + ε₂)
-    have h_b1 : 2 * t₀ - (t₀ + ε₂) = t₀ - ε₂ := by
-      ring
-    have h_b2 : 2 * t₀ - (t₀ + ε₁) = t₀ - ε₁ := by
-      ring
-    have h_i : ∀ x, 2 * t₀ - x - t₀ = -(x - t₀) :=
-      by intro x; ring
+    have h_b1 : 2 * t₀ - (t₀ + ε₂) = t₀ - ε₂ := by ring
+    have h_b2 : 2 * t₀ - (t₀ + ε₁) = t₀ - ε₁ := by ring
+    have h_i : ∀ x, 2 * t₀ - x - t₀ = -(x - t₀) := fun x => by ring
     simp only [h_b1, h_b2, h_i, h_odd] at h1
     rw [intervalIntegral.integral_neg] at h1
     exact h1.symm
@@ -295,12 +292,9 @@ lemma exists_eta_delta {γ : ℝ → ℂ} {t₀ : ℝ}
     (η : ℝ) (hη : 0 < η) :
     ∃ δ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ →
       ‖(γ t - γ t₀)⁻¹ * deriv γ t -
-        (↑(t - t₀))⁻¹‖ ≤ η / |t - t₀| := by
-  have h_tendsto :=
-    integrand_times_t_tendsto_one γ t₀ L hL
-      hγ_hasderiv hγ_cont_deriv
-  exact integrand_asymptotic γ t₀ L hL
-    hγ_hasderiv hγ_cont_deriv h_tendsto η hη
+        (↑(t - t₀))⁻¹‖ ≤ η / |t - t₀| :=
+  integrand_asymptotic γ t₀ L hL hγ_hasderiv hγ_cont_deriv
+    (integrand_times_t_tendsto_one γ t₀ L hL hγ_hasderiv hγ_cont_deriv) η hη
 
 /-- Dyadic step [ε/2, ε] contributes ≤ 2η*log(2). -/
 lemma step_bound_with_eta {r : ℝ → ℂ}
@@ -312,22 +306,12 @@ lemma step_bound_with_eta {r : ℝ → ℂ}
     ‖∫ t in (t₀ - ε)..(t₀ - ε / 2), r t‖ +
       ‖∫ t in (t₀ + ε / 2)..(t₀ + ε), r t‖ ≤
         2 * η * Real.log 2 := by
-  have h_half_pos : 0 < ε / 2 := by linarith
-  have h_half_lt : ε / 2 < ε := by linarith
-  have hr_restricted :
-      ∀ t, ε / 2 < |t - t₀| → |t - t₀| < ε →
-        ‖r t‖ ≤ η / |t - t₀| := by
-    intro t ht_lo ht_hi
-    exact hr_bound t (lt_trans h_half_pos ht_lo)
-      (le_of_lt ht_hi)
-  have h_ratio_eq : ε / (ε / 2) = 2 := by
-    field_simp
   calc ‖∫ t in (t₀ - ε)..(t₀ - ε / 2), r t‖ +
       ‖∫ t in (t₀ + ε / 2)..(t₀ + ε), r t‖
       ≤ 2 * η * Real.log (ε / (ε / 2)) :=
-        remainder_annulus_bound h_half_pos hε_pos
-          h_half_lt hη_pos hr_restricted
-    _ = 2 * η * Real.log 2 := by rw [h_ratio_eq]
+        remainder_annulus_bound (by linarith) hε_pos (by linarith) hη_pos
+          (fun t ht_lo ht_hi => hr_bound t (by linarith) ht_hi.le)
+    _ = 2 * η * Real.log 2 := by rw [show ε / (ε / 2) = 2 from by field_simp]
 
 /-- Error bound extends to smaller scales. -/
 lemma error_at_smaller_scale {γ : ℝ → ℂ}
@@ -731,18 +715,11 @@ lemma remainder_step_bound {r : ℝ → ℂ}
     ‖∫ t in (t₀ - ε)..(t₀ - ε / 2), r t‖ +
       ‖∫ t in (t₀ + ε / 2)..(t₀ + ε), r t‖ ≤
         2 * η * Real.log 2 := by
-  have h_half_pos : 0 < ε / 2 := by linarith
-  have h_half_lt : ε / 2 < ε := by linarith
-  have h_ratio_eq : ε / (ε / 2) = 2 := by
-    field_simp
-  have h_log_eq : Real.log (ε / (ε / 2)) =
-      Real.log 2 := by rw [h_ratio_eq]
   calc ‖∫ t in (t₀ - ε)..(t₀ - ε / 2), r t‖ +
       ‖∫ t in (t₀ + ε / 2)..(t₀ + ε), r t‖
       ≤ 2 * η * Real.log (ε / (ε / 2)) :=
-        remainder_annulus_bound h_half_pos hε_pos
-          h_half_lt (by linarith) hr_bound
-    _ = 2 * η * Real.log 2 := by rw [h_log_eq]
+        remainder_annulus_bound (by linarith) hε_pos (by linarith) (by linarith) hr_bound
+    _ = 2 * η * Real.log 2 := by rw [show ε / (ε / 2) = 2 from by field_simp]
 
 /-- Remainder bounded ratio for annuli. -/
 lemma remainder_bounded_ratio {r : ℝ → ℂ}

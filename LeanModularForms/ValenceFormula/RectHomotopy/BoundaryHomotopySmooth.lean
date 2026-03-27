@@ -128,7 +128,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
             -↑Real.pi * ↑(Real.sqrt 3) / 12 + ↑Real.pi / 12 * I := by
           simp only [rho']; apply Complex.ext <;> simp <;> ring
         have h2 : i_point - rho' = (-1/2 : ℂ) + (1 - ↑(Real.sqrt 3) / 2) * I := by
-          simp only [i_point, rho']; apply Complex.ext <;> (simp; norm_num)
+          simp only [i_point, rho']; apply Complex.ext <;> (simp; try norm_num)
         rw [h1, h2]
         simp only [Complex.real_smul]; push_cast; ring
       rw [h_deriv_eq] at h_combined

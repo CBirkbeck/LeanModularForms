@@ -122,17 +122,17 @@ private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p �
   have h_gWN_ρ1 := gWN_fdBoundary_H_at_rho_plus_one H hH_gt_sqrt3
   have hg_i : g ellipticPointI' =
       (-1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
-    show generalizedWindingNumber' (fdBoundary_H H) 0 5 I *
+    change generalizedWindingNumber' (fdBoundary_H H) 0 5 I *
       ↑(orderOfVanishingAt' (⇑f) ellipticPointI') = _
     rw [h_gWN_i]
   have hg_ρ : g ellipticPointRho' =
       (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
-    show generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRho *
+    change generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRho *
       ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') = _
     rw [h_gWN_ρ]
   have hg_ρ1 : g ellipticPointRhoPlusOne' =
       (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') := by
-    show generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRhoPlusOne *
+    change generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRhoPlusOne *
       ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') = _
     rw [h_gWN_ρ1]
   have h_filter_eq : S.filter (fun p => ¬P p) = S.filter (fun p =>
@@ -471,7 +471,6 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
         p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 := by
-  -- Choose H large enough for explicit_coefficients and boundary_weight_auto
   obtain ⟨H₀, hH₀, h_explicit⟩ := explicit_coefficients f hf S hS hS_complete
   obtain ⟨H₁, hH₁, h_bdry⟩ := boundary_weight_auto S hS
   set M := S.sum (fun s : UpperHalfPlane => (s : ℂ).im)
@@ -485,7 +484,6 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
     have h1 : (s : ℂ).im ≤ M := Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
     linarith [le_max_right heightCutoff M,
       le_max_right (max H₀ H₁) (max heightCutoff M + 1)]
-  -- Collapse 1/6 + 1/6 → 1/3 via T-invariance
   have h_explicit' := h_explicit hH0_le
   rw [ord_rho_plus_one_eq_ord_rho_via_vAdd f] at h_explicit'
   have h_formula : (orderAtCusp' f : ℂ) +
@@ -496,14 +494,12 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
         (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
           ↑(orderOfVanishingAt' (⇑f) s) =
       (k : ℂ) / 12 := by linear_combination h_explicit'
-  -- Set up subsets
   set S_NE := S.filter (fun p =>
     p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
     p ≠ ellipticPointRhoPlusOne') with hS_NE_def
   set INT := S.filter (fun p =>
     p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
     ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)
-  -- Replace gWN with piecewise coefficients (1 for interior, 1/2 for boundary)
   suffices h_eq :
       ∑ s ∈ S_NE,
         (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
@@ -528,7 +524,6 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
         hnorm hre s.2 hH_height (hH_above s hs_S)]; ring
     · rw [h_bdry hH1_le s hs_S hsi hsρ hsρ1 h_int]; ring
   rw [Finset.sum_congr rfl h_gWN_val]
-  -- Split into interior sum (coefficient 1) and boundary sum (coefficient 1/2)
   set LA_ne := S.filter (fun p =>
     p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
   set BDRY := S_NE.filter

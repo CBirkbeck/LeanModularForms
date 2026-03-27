@@ -65,10 +65,10 @@ abbrev ellipticPointRhoPlusOne : ℂ := (ellipticPointRhoPlusOne' : ℂ)
 
 theorem ellipticPointRho_add_one_eq :
     ellipticPointRho + 1 = ellipticPointRhoPlusOne := by
-  show (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) + 1 = 1/2 + (Real.sqrt 3 / 2) * I; ring
+  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) + 1 = 1/2 + (Real.sqrt 3 / 2) * I; ring
 
 private lemma rho_normSq_eq_one : Complex.normSq (ellipticPointRho' : ℂ) = 1 := by
-  show Complex.normSq (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
+  change Complex.normSq (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
   have h1 : (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
       ((-1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
   rw [h1, Complex.normSq_add_mul_I]
@@ -79,7 +79,7 @@ private lemma rho_normSq_eq_one : Complex.normSq (ellipticPointRho' : ℂ) = 1 :
 
 private lemma rho_plus_one_normSq_eq_one :
     Complex.normSq (ellipticPointRhoPlusOne' : ℂ) = 1 := by
-  show Complex.normSq (1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
+  change Complex.normSq (1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
   have h1 : (1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
       ((1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
   rw [h1, Complex.normSq_add_mul_I]
@@ -89,12 +89,10 @@ private lemma rho_plus_one_normSq_eq_one :
   rw [h2, h3]; ring
 
 theorem ellipticPointRhoPlusOne_norm : ‖ellipticPointRhoPlusOne‖ = 1 := by
-  show Real.sqrt (Complex.normSq _) = 1
-  rw [rho_plus_one_normSq_eq_one, Real.sqrt_one]
+  change Real.sqrt (Complex.normSq _) = 1; rw [rho_plus_one_normSq_eq_one, Real.sqrt_one]
 
 theorem ellipticPointRho_norm : ‖ellipticPointRho‖ = 1 := by
-  show Real.sqrt (Complex.normSq _) = 1
-  rw [rho_normSq_eq_one, Real.sqrt_one]
+  change Real.sqrt (Complex.normSq _) = 1; rw [rho_normSq_eq_one, Real.sqrt_one]
 
 theorem ellipticPointI_mem_fd : ellipticPointI' ∈ 𝒟 := by
   simp only [ModularGroup.fd, ellipticPointI', mem_setOf_eq]
