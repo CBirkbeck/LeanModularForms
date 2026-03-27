@@ -152,9 +152,9 @@ private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
   rw [Complex.normSq_apply, hs_re] at h_nsq
   have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
     have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by nlinarith
-    have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
     have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
-        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by nlinarith
+        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
+      nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
@@ -179,9 +179,9 @@ private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
   rw [Complex.normSq_apply, hs_re] at h_nsq
   have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
     have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by nlinarith
-    have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
     have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
-        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by nlinarith
+        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
+      nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
@@ -200,18 +200,14 @@ private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
 private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 1)
     (hs_abs_re : |(s : ℂ).re| = 1/2) : Real.sqrt 3 / 2 < (s : ℂ).im := by
   by_contra h_le; push_neg at h_le
-  have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
   have h_nsq_gt : Complex.normSq (s : ℂ) > 1 := by
     rw [Complex.normSq_eq_norm_sq]; nlinarith [hs_norm, sq_nonneg (‖(s : ℂ)‖ - 1)]
-  have h_nsq_eq : Complex.normSq (s : ℂ) =
-      (s : ℂ).re * (s : ℂ).re + (s : ℂ).im * (s : ℂ).im := Complex.normSq_apply _
   have h_re_sq : (s : ℂ).re * (s : ℂ).re ≤ 1/4 := by
     rcases (abs_eq (by norm_num : (1:ℝ)/2 ≥ 0)).mp hs_abs_re with h | h <;> rw [h] <;> norm_num
   have h_im_sq : (s : ℂ).im * (s : ℂ).im ≤ 3/4 := by
-    have h_bound : Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) = 3/4 := by nlinarith
-    have h1 : (s : ℂ).im * (s : ℂ).im ≤
-        Real.sqrt 3 / 2 * (Real.sqrt 3 / 2) := mul_self_le_mul_self s.2.le h_le
-    linarith
+    have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
+    nlinarith [mul_self_le_mul_self s.2.le h_le]
+  have h_nsq_eq := Complex.normSq_apply (s : ℂ)
   linarith
 
 private lemma unit_circle_re_zero_eq_i (s : ℍ)
@@ -241,9 +237,10 @@ private theorem boundary_weight_auto
   have habs_re := hs_fd.2
   have hnorm_ge : 1 ≤ ‖(s : ℂ)‖ := by
     rw [Complex.norm_def]; exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
+  have hH_ge2 : (2 : ℝ) ≤ H := le_trans (le_max_left 2 (M + 1)) hH
   have h_im_lt_H : (s : ℂ).im < H := by
-    linarith [Finset.single_le_sum (fun x _ => le_of_lt x.2) hs,
-      le_max_right (2 : ℝ) (M + 1)]
+    have h1 : (s : ℂ).im ≤ M := Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
+    linarith [le_max_right (2 : ℝ) (M + 1)]
   have hH_sqrt : Real.sqrt 3 / 2 < H := by
     nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (Real.sqrt 3 - 2)]
   rcases eq_or_lt_of_le hnorm_ge with h_eq | h_gt
@@ -472,10 +469,11 @@ theorem valence_formula_orbit_sum (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S,
     linarith [le_max_left heightCutoff M,
       le_max_right (max H₀ H₁) (max heightCutoff M + 1)]
   have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs => by
-    linarith [Finset.single_le_sum (fun x _ => le_of_lt x.2) hs,
-      le_max_right heightCutoff M,
+    have h1 : (s : ℂ).im ≤ M := Finset.single_le_sum (fun x _ => le_of_lt x.2) hs
+    linarith [le_max_right heightCutoff M,
       le_max_right (max H₀ H₁) (max heightCutoff M + 1)]
-  have h_explicit' := h_explicit (le_trans (le_max_left _ _) (le_max_left _ _))
+  have hH0_le : H₀ ≤ H := le_trans (le_max_left _ _) (le_max_left _ _)
+  have h_explicit' := h_explicit hH0_le
   rw [ord_rho_plus_one_eq_ord_rho_via_vAdd f] at h_explicit'
   have h_formula : (orderAtCusp' f : ℂ) +
       (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
