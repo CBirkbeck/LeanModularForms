@@ -62,9 +62,8 @@ private lemma eventually_not_in_partition_left
   have hmem : p ∉ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ) := by
     simp only [Set.mem_diff, Finset.mem_coe, Set.mem_singleton_iff, not_and, not_not,
       implies_true]
-  have hopen := hcl.isOpen_compl.mem_nhds hmem
   have h1 : ∀ᶠ t in 𝓝[<] p, t ∈ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ)ᶜ :=
-    eventually_nhdsWithin_of_eventually_nhds hopen
+    eventually_nhdsWithin_of_eventually_nhds (hcl.isOpen_compl.mem_nhds hmem)
   have h2 : ∀ᶠ t in 𝓝[<] p, t < p := eventually_nhdsWithin_of_forall fun t ht => ht
   exact (h1.and h2).mono fun t ⟨ht_compl, ht_lt⟩ ht_part =>
     ht_compl ⟨ht_part, ne_of_lt ht_lt⟩
@@ -77,9 +76,8 @@ private lemma eventually_not_in_partition_right
   have hmem : p ∉ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ) := by
     simp only [Set.mem_diff, Finset.mem_coe, Set.mem_singleton_iff, not_and, not_not,
       implies_true]
-  have hopen := hcl.isOpen_compl.mem_nhds hmem
   have h1 : ∀ᶠ t in 𝓝[>] p, t ∈ (↑γ.toPiecewiseC1Curve.partition \ {p} : Set ℝ)ᶜ :=
-    eventually_nhdsWithin_of_eventually_nhds hopen
+    eventually_nhdsWithin_of_eventually_nhds (hcl.isOpen_compl.mem_nhds hmem)
   have h2 : ∀ᶠ t in 𝓝[>] p, p < t := eventually_nhdsWithin_of_forall fun t ht => ht
   exact (h1.and h2).mono fun t ⟨ht_compl, ht_gt⟩ ht_part =>
     ht_compl ⟨ht_part, ne_of_gt ht_gt⟩
@@ -94,9 +92,8 @@ theorem PiecewiseC1Immersion.eventually_ne_at_smooth_crossing
     (hcross : γ.toFun t₀ = z₀)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Curve.partition) :
     ∀ᶠ t in 𝓝[≠] t₀, γ.toFun t ≠ z₀ := by
-  have h_diff := γ.smooth_off_partition t₀ ht₀ hsmooth
-  have h_deriv_ne := γ.deriv_ne_zero t₀ ht₀ hsmooth
-  exact hcross ▸ h_diff.hasDerivAt.eventually_ne h_deriv_ne
+  exact hcross ▸ (γ.smooth_off_partition t₀ ht₀ hsmooth).hasDerivAt.eventually_ne
+    (γ.deriv_ne_zero t₀ ht₀ hsmooth)
 
 /-! ### Isolation of crossings at partition points -/
 
@@ -154,18 +151,12 @@ theorem PiecewiseC1Immersion.eventually_ne_left_of_partition
     intro s hs
     obtain ⟨hs_smooth, hs_deriv, hs_Iab⟩ := hq_cond hs
     -- Compute deriv h s = Re(conj(L) * γ'(s))
-    have hh_has : HasDerivAt h ((starRingEnd ℂ L * deriv γ.toFun s).re) s := by
-      have h_sub := (γ.smooth_off_partition s hs_Iab hs_smooth).hasDerivAt.sub
-        (hasDerivAt_const s z₀)
-      have h_mul := h_sub.const_mul (starRingEnd ℂ L)
-      have h_simp : HasDerivAt (fun t => starRingEnd ℂ L * (γ.toFun t - z₀))
-          (starRingEnd ℂ L * deriv γ.toFun s) s :=
-        h_mul.congr_deriv (by ring)
-      exact h_simp.re'
+    have hh_has : HasDerivAt h ((starRingEnd ℂ L * deriv γ.toFun s).re) s :=
+      (((γ.smooth_off_partition s hs_Iab hs_smooth).hasDerivAt.sub
+        (hasDerivAt_const s z₀)).const_mul (starRingEnd ℂ L)).congr_deriv (by ring) |>.re'
     rw [hh_has.deriv]; exact hs_deriv
-  -- h is strictly monotone on [q, p]
+  -- h is strictly monotone on [q, p]; for t ∈ (q, p), h(t) < h(p) = 0
   have hh_mono := strictMonoOn_of_deriv_pos (convex_Icc q p) hh_cont_qp hh_deriv_pos
-  -- Conclude: for t ∈ (q, p), h(t) < h(p) = 0, so h(t) ≠ 0, so γ(t) ≠ z₀
   rw [Filter.Eventually, mem_nhdsLT_iff_exists_Ioo_subset' hap]
   exact ⟨q, hq_lt_p, fun t ht hγt => by
     have hht : h t = 0 := by simp only [hh_def, hγt, sub_self, mul_zero, Complex.zero_re]
@@ -223,18 +214,12 @@ theorem PiecewiseC1Immersion.eventually_ne_right_of_partition
     rw [interior_Icc]
     intro s hs
     obtain ⟨hs_smooth, hs_deriv, hs_Iab⟩ := hr_cond hs
-    have hh_has : HasDerivAt h ((starRingEnd ℂ L * deriv γ.toFun s).re) s := by
-      have h_sub := (γ.smooth_off_partition s hs_Iab hs_smooth).hasDerivAt.sub
-        (hasDerivAt_const s z₀)
-      have h_mul := h_sub.const_mul (starRingEnd ℂ L)
-      have h_simp : HasDerivAt (fun t => starRingEnd ℂ L * (γ.toFun t - z₀))
-          (starRingEnd ℂ L * deriv γ.toFun s) s :=
-        h_mul.congr_deriv (by ring)
-      exact h_simp.re'
+    have hh_has : HasDerivAt h ((starRingEnd ℂ L * deriv γ.toFun s).re) s :=
+      (((γ.smooth_off_partition s hs_Iab hs_smooth).hasDerivAt.sub
+        (hasDerivAt_const s z₀)).const_mul (starRingEnd ℂ L)).congr_deriv (by ring) |>.re'
     rw [hh_has.deriv]; exact hs_deriv
-  -- h is strictly monotone on [p, r]
+  -- h is strictly monotone on [p, r]; for t ∈ (p, r), h(p) = 0 < h(t)
   have hh_mono := strictMonoOn_of_deriv_pos (convex_Icc p r) hh_cont_pr hh_deriv_pos
-  -- For t ∈ (p, r), h(p) = 0 < h(t), so γ(t) ≠ z₀
   rw [Filter.Eventually, mem_nhdsGT_iff_exists_Ioo_subset' hpb]
   exact ⟨r, hr_gt_p, fun t ht hγt => by
     have hht : h t = 0 := by simp only [hh_def, hγt, sub_self, mul_zero, Complex.zero_re]
@@ -305,9 +290,8 @@ theorem finite_crossings (γ : PiecewiseC1Immersion) (z₀ : ℂ) :
   have hS_inf : S.Infinite := hS_not_fin
   obtain ⟨x, _, hx_acc⟩ :=
     hS_inf.exists_accPt_of_subset_isCompact isCompact_Icc (fun t (ht : t ∈ S) => ht.1)
-  have hS_closed := crossing_set_isClosed γ z₀
   have hx_closure : x ∈ closure S := mem_closure_iff_clusterPt.mpr hx_acc.clusterPt
-  have hx_S : x ∈ S := by rwa [hS_closed.closure_eq] at hx_closure
+  have hx_S : x ∈ S := by rwa [(crossing_set_isClosed γ z₀).closure_eq] at hx_closure
   exact γ.crossing_not_accPt z₀ x hx_S.1 hx_S.2 hx_acc
 
 /-! ### Isolated crossing intervals -/
@@ -596,10 +580,9 @@ private theorem cpv_exists_on_subinterval
         ⟨lt_of_le_of_ne ht₁_Icc.1 (fun h => h_no_endpt.1 (h ▸ hγt₁)),
          lt_of_le_of_ne ht₁_Icc.2 (fun h => h_no_endpt.2 (h ▸ hγt₁))⟩
       -- t₁ ∈ Ioo a b (since [c,d] ⊆ [a,b] and t₁ ∈ (c,d))
-      have ht₁_Ioo_ab : t₁ ∈ Ioo γ.a γ.b := by
-        have hc_ge_a := (h_sub (left_mem_Icc.mpr hcd)).1
-        have hd_le_b := (h_sub (right_mem_Icc.mpr hcd)).2
-        exact ⟨lt_of_le_of_lt hc_ge_a ht₁_Ioo.1, lt_of_lt_of_le ht₁_Ioo.2 hd_le_b⟩
+      have ht₁_Ioo_ab : t₁ ∈ Ioo γ.a γ.b :=
+        ⟨lt_of_le_of_lt (h_sub (left_mem_Icc.mpr hcd)).1 ht₁_Ioo.1,
+         lt_of_lt_of_le ht₁_Ioo.2 (h_sub (right_mem_Icc.mpr hcd)).2⟩
       -- Get isolating interval for t₁
       obtain ⟨a', b', ha'_lt, ht₁_lt_b', hab'_sub_ab, h_unique, _⟩ :=
         exists_isolated_crossing_interval γ z₀ t₁ ht₁_Ioo_ab hγt₁
@@ -673,11 +656,10 @@ private theorem cpv_exists_on_subinterval
       have h_card_cα : h_fin_cα.toFinset.card ≤ n := by
         have h_sub_finset : h_fin_cα.toFinset ⊆ h_fin_cd.toFinset.erase t₁ := by
           intro t ht_mem
-          have ht_cd := h_fin_cd.mem_toFinset.mpr
+          refine Finset.mem_erase.mpr ⟨?_, h_fin_cd.mem_toFinset.mpr
             ((fun ⟨ht_Icc, hγt⟩ => ⟨⟨ht_Icc.1, ht_Icc.2.trans
               (hαβ_sub_cd (left_mem_Icc.mpr hαβ_lt.le)).2⟩, hγt⟩)
-              (h_fin_cα.mem_toFinset.mp ht_mem))
-          refine Finset.mem_erase.mpr ⟨?_, ht_cd⟩
+              (h_fin_cα.mem_toFinset.mp ht_mem))⟩
           intro heq; subst heq
           exact ht₁_not_cα (h_fin_cα.mem_toFinset.mp ht_mem)
         have h_le := Finset.card_le_card h_sub_finset
@@ -687,12 +669,11 @@ private theorem cpv_exists_on_subinterval
       have h_card_βd : h_fin_βd.toFinset.card ≤ n := by
         have h_sub_finset : h_fin_βd.toFinset ⊆ h_fin_cd.toFinset.erase t₁ := by
           intro t ht_mem
-          have ht_cd := h_fin_cd.mem_toFinset.mpr
+          refine Finset.mem_erase.mpr ⟨?_, h_fin_cd.mem_toFinset.mpr
             ((fun ⟨ht_Icc, hγt⟩ => ⟨⟨(hαβ_sub_cd
               (right_mem_Icc.mpr hαβ_lt.le)).1.trans ht_Icc.1,
               ht_Icc.2⟩, hγt⟩)
-              (h_fin_βd.mem_toFinset.mp ht_mem))
-          refine Finset.mem_erase.mpr ⟨?_, ht_cd⟩
+              (h_fin_βd.mem_toFinset.mp ht_mem))⟩
           intro heq; subst heq
           exact ht₁_not_βd (h_fin_βd.mem_toFinset.mp ht_mem)
         have h_le := Finset.card_le_card h_sub_finset
