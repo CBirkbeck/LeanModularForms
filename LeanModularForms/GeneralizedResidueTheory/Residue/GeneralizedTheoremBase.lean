@@ -687,7 +687,7 @@ lemma cpv_eq_of_cancel_and_exists
       (𝓝[>] 0) (𝓝 L_res) := by
     rw [h_eq, show L_res = 0 + L_res from (zero_add _).symm]
     exact hCancel.add hL_res
-  change limUnder (𝓝[>] 0) _ = limUnder (𝓝[>] 0) _
+  simp only [cauchyPrincipalValueOn]
   rw [h_f_tendsto.limUnder_eq, hL_res.limUnder_eq]
 
 /-- **Theorem (Higher-order, Tendsto formulation)**: Variant of

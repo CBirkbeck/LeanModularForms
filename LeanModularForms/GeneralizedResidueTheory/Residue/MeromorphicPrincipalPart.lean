@@ -444,16 +444,14 @@ private theorem residueAt_eq_residueAt_principalPart_sum (f : ℂ → ℂ) (s : 
   obtain ⟨rf, hrf_pos, hrf_eq⟩ := hg_eq'
   have hr₀_pos : 0 < min rg rf := lt_min hrg_pos hrf_pos
   unfold residueAt
-  change limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
-    limUnder (𝓝[>] (0 : ℝ)) (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), pp z)
-  unfold limUnder; congr 1; apply Filter.map_congr
+  apply limUnder_eventually_eq
   apply Filter.Eventually.mono (Ioo_mem_nhdsGT hr₀_pos)
   intro r ⟨hr_pos, hr_lt⟩
   have hr_lt_rg : r < rg := lt_of_lt_of_le hr_lt (min_le_left _ _)
   have hr_lt_rf : r < rf := lt_of_lt_of_le hr_lt (min_le_right _ _)
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
   suffices h_circ : (∮ z in C(s, r), f z) = (∮ z in C(s, r), pp z) by
-    simp only; rw [h_circ]
+    rw [h_circ]
   have h_eq_on : Set.EqOn f (fun z => pp z + g_an z) (Metric.sphere s r) := by
     intro z hz
     have h_ne : z ≠ s := by
