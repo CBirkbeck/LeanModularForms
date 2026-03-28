@@ -109,7 +109,20 @@ and ~48,600 lines across three main directories:
 **Definitions.lean (11):** Remove `fundamentalDomainCanonical` + 4 related,
   `orderOfVanishingAt_nonneg`, `windingNumberCoeff'` + 4 related
 
-### Priority 4: Mathlib API audit (pending)
-- Check all 171 definitions against mathlib
-- Key candidates: `PiecewiseC1Curve` (no mathlib equivalent),
-  `cauchyPrincipalValue'` (custom CPV), `IsNullHomologous` (custom)
+### Priority 4: Mathlib API Replacements (5 definitions)
+
+| Custom Definition | Mathlib Equivalent | Action |
+|---|---|---|
+| `fundamentalDomainCanonical` | `ModularGroup.fd` | Replace |
+| `ellipticPointI'` | `UpperHalfPlane.I` | Replace |
+| `truncatedFundamentalDomain` | `ModularGroup.truncatedFundamentalDomain` | Replace |
+| `chordSegment` | `AffineMap.lineMap` | Replace |
+| `petersson` | `UpperHalfPlane.petersson` | Replace |
+
+**Consider migrating:** `csqrt` → `Complex.sqrt`, `Gamma/Gamma0/Gamma1` →
+`CongruenceSubgroup.*`, `curveInfDist` → `Metric.infDist`, `Θ₂/Θ₃` → `jacobiTheta₂/jacobiTheta`
+
+**Keep custom (no mathlib equivalent):** `PiecewiseC1Curve`, `PiecewiseC1Immersion`,
+`cauchyPrincipalValue'`, `generalizedWindingNumber'`, `IsNullHomologous`, `ContourCycle`,
+`residueAt`, `HasSimplePoleAt`, all H-W conditions (A', B), all boundary parameterizations,
+η, Δ, φ₀, E₄/E₆ specializations — these represent genuinely novel formalization content.
