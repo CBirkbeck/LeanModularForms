@@ -67,7 +67,7 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
           ⟨Set.Ioi 4, Ioi_mem_nhds (by norm_num : (4:ℝ) < 9/2),
             fun s (hs : 4 < s) => fdBoundary_H_eq_seg5_H hs⟩
       apply ContDiffAt.congr_of_eventuallyEq _ heq
-      show ContDiffAt ℝ 2 (fdBoundary_seg5_H 1) (9/2 : ℝ)
+      change ContDiffAt ℝ 2 (fdBoundary_seg5_H 1) (9/2 : ℝ)
       unfold fdBoundary_seg5_H
       apply ContDiffAt.add
       · exact Complex.ofRealCLM.contDiff.contDiffAt.sub contDiffAt_const

@@ -242,10 +242,9 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
   have h_countable : ({1, 2, 3, tL ref_p₀, 4} : Set ℝ).Countable :=
     Set.Finite.countable (Set.Finite.insert _ (Set.Finite.insert _ (Set.Finite.insert _
       (Set.Finite.insert _ (Set.finite_singleton _)))))
-  have hFTC := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le F
+  rw [MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le F
     (fun t => (rc t - ref_p₀)⁻¹ * deriv rc t) (by norm_num : (0:ℝ) ≤ 5)
-    h_countable hF_cont hF_deriv h_int
-  rw [hFTC, hF_change]
+    h_countable hF_cont hF_deriv h_int, hF_change]
 
 /-- Winding number of fdPolygon at the reference point ref_p0 is -1. -/
 lemma winding_fdPolygon_at_ref_eq_neg_one :
@@ -401,10 +400,9 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
 lemma winding_fdPolygon_eq_neg_one (p : ℂ) (hp_norm : ‖p‖ > 1)
     (hp_re : |p.re| < 1/2) (hp_im_pos : 0 < p.im) (hp_im : p.im < H_height) :
     generalizedWindingNumber' fdPolygon 0 5 p = -1 := by
-  have h_avoid := fdPolygon_avoids_line_to_ref p hp_norm hp_re hp_im_pos hp_im
-  have h_eq := winding_fdPolygon_center_invariant p ref_p₀
-    hp_norm hp_re hp_im ref_p₀_norm ref_p₀_re ref_p₀_im h_avoid
-  rw [h_eq]
+  rw [winding_fdPolygon_center_invariant p ref_p₀
+    hp_norm hp_re hp_im ref_p₀_norm ref_p₀_re ref_p₀_im
+    (fdPolygon_avoids_line_to_ref p hp_norm hp_re hp_im_pos hp_im)]
   exact winding_fdPolygon_at_ref_eq_neg_one
 
 /-- Winding number of fdPolygonRadialCircle around p equals -1. -/

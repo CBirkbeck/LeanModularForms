@@ -337,7 +337,7 @@ private theorem assembly_regNF_differentiableWithinAt_pole
     apply Filter.Eventually.mono
       ((hV_open.inter h_compl_open).mem_nhds ⟨hz_V, hz_in_compl⟩)
     intro w ⟨hw_V, hw_compl⟩
-    show (fun w => g_corr z hz_S w -
+    change (fun w => g_corr z hz_S w -
       ∑ s' ∈ S0.erase z, meromorphicPrincipalPart f s' w) w =
       assembly_regNF S0 f g_corr w
     simp only [assembly_regNF]
@@ -827,7 +827,7 @@ private theorem assembly_polarHigher_differentiableOn
         ((differentiableAt_id.sub (differentiableAt_const _)).pow _)
         (pow_ne_zero _ (sub_ne_zero.mpr hzs))
     · simp only [hk, ite_false]; exact differentiableAt_const 0
-  show DifferentiableWithinAt ℂ (fun w => ∑ k : Fin N_s,
+  change DifferentiableWithinAt ℂ (fun w => ∑ k : Fin N_s,
     if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) _ z
   have h_eq_sum : (fun w => ∑ k : Fin N_s,
       if k.val ≥ 1 then a_s k / (w - s) ^ (k.val + 1) else 0) =
@@ -909,7 +909,7 @@ private theorem cpv_perTerm_crossed_positive_order
       term_s (assembly_polarHigher a_s s)
       (assembly_errNF_eventuallyEq f s hN_s_pos a_s g_loc g_rp hf_eq_loc hg_rp_eq h_a0)
       (hg_loc_an.sub hg_rp_an) (fun w hw => by
-        show assembly_errNF f s g_loc g_rp a_s w = term_s w - _
+        change assembly_errNF f s g_loc g_rp a_s w = term_s w - _
         simp only [assembly_errNF, if_neg hw, assembly_polarHigher, hterm_s])
       (differentiableOn_ppMinusRes f s (hMero s hs)) (assembly_polarHigher_differentiableOn a_s s)
   exact cpv_tendsto_zero_of_add_split U S0 γ hγ_in_U term_s err_nf
@@ -1014,7 +1014,7 @@ private theorem assembly_abstract_crossings_case (U : Set ℂ) (hU : IsOpen U)
       h z = h_reg_nf z + assembly_pol S0 f z := by
     intro z hz_not_S0
     have hz_not_S : z ∉ S0 := fun hh => hz_not_S0 (Finset.mem_coe.mpr hh)
-    show h z = (if _ : z ∈ S0 then _ else assembly_reg S0 f z) + assembly_pol S0 f z
+    change h z = (if _ : z ∈ S0 then _ else assembly_reg S0 f z) + assembly_pol S0 f z
     rw [dif_neg hz_not_S]
     simp only [hh_eq, assembly_reg, assembly_pol, assembly_totalPP, Finset.sum_sub_distrib]; ring
   exact cpv_tendsto_zero_of_add_split_set U S0 γ hγ_in_U h h_reg_nf (assembly_pol S0 f)

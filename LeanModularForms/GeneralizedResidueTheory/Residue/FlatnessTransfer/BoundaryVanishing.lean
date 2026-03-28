@@ -36,11 +36,8 @@ theorem hasDerivAt_zpow_comp_sub
     (hγ : HasDerivAt γ L t) (hne : γ t ≠ s) :
     HasDerivAt (fun t => (γ t - s) ^ n)
       (↑n * (γ t - s) ^ (n - 1) * L) t := by
-  have hγ_sub : HasDerivAt (fun t => γ t - s) L t :=
-    hγ.sub_const s
-  have h_base : HasDerivAt (· ^ n) (↑n * (γ t - s) ^ (n - 1)) (γ t - s) :=
-    hasDerivAt_zpow n (γ t - s) (Or.inl (sub_ne_zero.mpr hne))
-  have h_comp := h_base.comp t hγ_sub
+  have h_comp := (hasDerivAt_zpow n (γ t - s) (Or.inl (sub_ne_zero.mpr hne))).comp t
+    (hγ.sub_const s)
   refine h_comp.congr_deriv ?_
   ring
 
@@ -647,11 +644,11 @@ private lemma tangentDeviation_scale_eq
     (w L : ℂ) (_hw_ne : ‖w‖ ≠ 0) (hL_ne : ‖L‖ ≠ 0) :
     ‖tangentDeviation (w / (↑‖w‖ : ℂ)) (L / (↑‖L‖ : ℂ))‖ =
       ‖tangentDeviation w L‖ / ‖w‖ := by
-  have h1 : (w / (↑‖w‖ : ℂ) : ℂ) = (‖w‖⁻¹ : ℝ) • w := by
-    simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div]
-  have h2 : (L / (↑‖L‖ : ℂ) : ℂ) = (‖L‖⁻¹ : ℝ) • L := by
-    simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div]
-  rw [h1, h2, tangentDeviation_real_smul_right _ (inv_ne_zero hL_ne),
+  rw [show (w / (↑‖w‖ : ℂ) : ℂ) = (‖w‖⁻¹ : ℝ) • w from by
+      simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div],
+    show (L / (↑‖L‖ : ℂ) : ℂ) = (‖L‖⁻¹ : ℝ) • L from by
+      simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div],
+    tangentDeviation_real_smul_right _ (inv_ne_zero hL_ne),
     tangentDeviation_real_smul_left, norm_smul, Real.norm_eq_abs,
     abs_of_nonneg (inv_nonneg.mpr (norm_nonneg _)), inv_mul_eq_div]
 
@@ -711,11 +708,11 @@ private lemma tangentDeviation_scale_neg_eq
     (w L : ℂ) (_hw_ne : ‖w‖ ≠ 0) (hL_ne : ‖L‖ ≠ 0) :
     ‖tangentDeviation (w / (↑‖w‖ : ℂ)) (-L / (↑‖L‖ : ℂ))‖ =
       ‖tangentDeviation w (-L)‖ / ‖w‖ := by
-  have h1 : (w / (↑‖w‖ : ℂ) : ℂ) = (‖w‖⁻¹ : ℝ) • w := by
-    simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div]
-  have h_negL : -L / (↑‖L‖ : ℂ) = (‖L‖⁻¹ : ℝ) • (-L) := by
-    rw [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div, neg_div]
-  rw [h1, h_negL, tangentDeviation_real_smul_right _ (inv_ne_zero hL_ne),
+  rw [show (w / (↑‖w‖ : ℂ) : ℂ) = (‖w‖⁻¹ : ℝ) • w from by
+      simp [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div],
+    show -L / (↑‖L‖ : ℂ) = (‖L‖⁻¹ : ℝ) • (-L) from by
+      rw [Complex.real_smul, Complex.ofReal_inv, inv_mul_eq_div, neg_div],
+    tangentDeviation_real_smul_right _ (inv_ne_zero hL_ne),
     tangentDeviation_real_smul_left, norm_smul, Real.norm_eq_abs,
     abs_of_nonneg (inv_nonneg.mpr (norm_nonneg _)), inv_mul_eq_div]
 
@@ -739,18 +736,14 @@ private lemma direction_rate_from_flatness_left
     rw [hv₀_def]
     simp only [norm_div, norm_neg, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hL_pos,
       div_self hL_ne]
-  have h_td_eq : ∀ w : ℂ, tangentDeviation w (-L_L) = tangentDeviation w L_L := by
-    intro w
-    have : -L_L = (-1 : ℝ) • L_L := by simp only [neg_smul, one_smul]
-    rw [this, tangentDeviation_real_smul_right _ (by norm_num : (-1 : ℝ) ≠ 0)]
   have h_flat_eps : (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) (-L_L)‖) =o[𝓝[>] 0]
       (fun ε => ε ^ m) := by
     have h1 := (h_flat.left_flat L_L hL_L_ne htend_L).congr
       (fun t => by rw [hcross]) (fun t => by rw [hcross])
-    have h2 : (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) (-L_L)‖) =
-        (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) L_L‖) :=
-      funext fun ε => by rw [h_td_eq]
-    rw [h2]
+    rw [show (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) (-L_L)‖) =
+        (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) L_L‖) from
+      funext fun ε => by rw [show -L_L = (-1 : ℝ) • L_L from by simp only [neg_smul, one_smul],
+        tangentDeviation_real_smul_right _ (by norm_num : (-1 : ℝ) ≠ 0)]]
     exact ((h1.comp_tendsto hσ_tendsto).congr (fun _ => rfl) (fun _ => rfl)).trans_eventuallyEq
       (by filter_upwards [hσ_norm] with ε hε; simp only [Function.comp_def]; rw [hε])
   have h_re_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ),

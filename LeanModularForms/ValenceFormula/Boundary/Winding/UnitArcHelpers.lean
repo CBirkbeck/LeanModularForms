@@ -288,7 +288,7 @@ private lemma unitArc_neg_g_slitPlane_seg4 (s : ℂ)
     -(fdBoundary_seg4_H H t - s) ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff]; left
   simp only [fdBoundary_seg4_H, neg_sub]
-  show 0 < (s - (-1/2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I)).re
+  change 0 < (s - (-1/2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I)).re
   simp [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
     Complex.I_re, Complex.I_im, Complex.neg_re]
   linarith [(abs_lt.mp hs_re).1]
@@ -391,25 +391,23 @@ private lemma unitArc_log_final (s : ℂ) (t₀ δ : ℝ)
     0 < (h_arc (t₀ - δ)).re ∧ 0 < (-(h_arc (t₀ + δ))).re := by
   intro h_arc
   constructor
-  · show 0 < (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s).re
+  · change 0 < (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s).re
     set θ_m := Real.pi * (1 + (t₀ - δ)) / 6
     set θ₀' := Real.pi * (1 + t₀) / 6
     rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
     simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, zero_mul, sub_self, add_zero, Complex.sub_re]
-    show 0 < Real.cos θ_m - Real.cos θ₀'
     have hθ_lt : θ_m < θ₀' := by simp [θ_m, θ₀']; nlinarith [Real.pi_pos]
     have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, _ht₀_Ioo.1]
     have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, _ht₀_Ioo.2]
     linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hθ_m_nn hθ₀_le_pi hθ_lt]
-  · show 0 < (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s)).re
+  · change 0 < (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s)).re
     set θ_p := Real.pi * (1 + (t₀ + δ)) / 6
     set θ₀' := Real.pi * (1 + t₀) / 6
     rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
     simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
       Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
       mul_zero, zero_mul, sub_self, add_zero, neg_sub]
-    show 0 < Real.cos θ₀' - Real.cos θ_p
     have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
     have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, _ht₀_Ioo.1]
     have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, _ht₀_Ioo.2]

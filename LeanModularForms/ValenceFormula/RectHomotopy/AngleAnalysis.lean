@@ -59,17 +59,17 @@ lemma v0_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
     (fdPolygon 0 - p).re > 0 ∧ (fdPolygon 0 - p).im > 0 := by
   rw [fdPolygon_at_zero]
   have hpre : p.re < 1/2 := (abs_lt.mp hp_re).2
-  have hre : (1/2 + H_height * I - p).re = 1/2 - p.re := by
-    simp only [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
-               Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_zero, zero_mul,
-               Complex.div_ofNat_re, Complex.one_re, sub_self, add_zero]
-  have him : (1/2 + H_height * I - p).im = H_height - p.im := by
-    simp only [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_re,
-               Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_one, zero_mul, add_zero,
-               Complex.div_ofNat_im, Complex.one_im, zero_div, zero_add]
   constructor
-  · rw [hre]; linarith
-  · rw [him]; linarith
+  · have : (1/2 + H_height * I - p).re = 1/2 - p.re := by
+      simp only [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
+                 Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_zero, zero_mul,
+                 Complex.div_ofNat_re, Complex.one_re, sub_self, add_zero]
+    linarith
+  · have : (1/2 + H_height * I - p).im = H_height - p.im := by
+      simp only [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_re,
+                 Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_one, zero_mul, add_zero,
+                 Complex.div_ofNat_im, Complex.one_im, zero_div, zero_add]
+    linarith
 
 /-- For interior points with ‖p‖ > 1, |p.re| < 1/2, 0 < p.im, we have p.im > √3/2. -/
 lemma interior_point_im_bound (p : ℂ) (hp_norm : ‖p‖ > 1)
@@ -100,9 +100,7 @@ lemma v1_quadrant (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
   have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
   have hre : (rho' - p).re = 1/2 - p.re := by simp [rho']
   have him : (rho' - p).im = Real.sqrt 3 / 2 - p.im := by simp [rho']
-  constructor
-  · rw [hre]; linarith
-  · rw [him]; linarith
+  exact ⟨by linarith, by linarith⟩
 
 /-- Polygon vertex at t=3: rho. -/
 lemma fdPolygon_at_three : fdPolygon 3 = rho := by
@@ -113,14 +111,11 @@ lemma fdPolygon_at_three : fdPolygon 3 = rho := by
 lemma v3_quadrant (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2)
     (hp_im_pos : 0 < p.im) : (fdPolygon 3 - p).re < 0 ∧ (fdPolygon 3 - p).im < 0 := by
   rw [fdPolygon_at_three]
-  have hpre_neg : -(1/2) < p.re := (abs_lt.mp hp_re).1
-  have hpre : -1/2 < p.re := by linarith
+  have hpre : -1/2 < p.re := by linarith [(abs_lt.mp hp_re).1]
   have hbound := interior_point_im_bound p hp_norm hp_re hp_im_pos
   have hre : (rho - p).re = -1/2 - p.re := by simp [rho]
   have him : (rho - p).im = Real.sqrt 3 / 2 - p.im := by simp [rho]
-  constructor
-  · rw [hre]; linarith
-  · rw [him]; linarith
+  exact ⟨by linarith, by linarith⟩
 
 /-- Direction from p to fdPolygon 4 is in Q2 (re < 0, im > 0). -/
 lemma v4_quadrant (p : ℂ) (hp_re : |p.re| < 1/2) (hp_im : p.im < H_height) :
@@ -297,14 +292,9 @@ lemma arg_seg4_after (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1/2) (h
 /-- arg is preserved under normalization. -/
 lemma arg_normalize_eq (z : ℂ) (hz : z ≠ 0) :
     Complex.arg (z / ‖z‖) = Complex.arg z := by
-  have hnorm_pos : (‖z‖ : ℝ) > 0 := norm_pos_iff.mpr hz
-  rw [div_eq_mul_inv]
-  have hinv_pos : (0 : ℝ) < ‖z‖⁻¹ := inv_pos_of_pos hnorm_pos
-  have h : z * (↑‖z‖)⁻¹ = z * (‖z‖⁻¹ : ℝ) := by
-    congr 1
-    simp only [Complex.ofReal_inv]
-  rw [h]
-  exact Complex.arg_mul_real hinv_pos z
+  rw [div_eq_mul_inv, show z * (↑‖z‖)⁻¹ = z * (‖z‖⁻¹ : ℝ) from by
+    congr 1; simp only [Complex.ofReal_inv]]
+  exact Complex.arg_mul_real (inv_pos_of_pos (norm_pos_iff.mpr hz)) z
 
 /-- fdPolygonRadialCircle_angle equals arg(fdPolygon t - p). -/
 lemma fdPolygonRadialCircle_angle_eq_arg (p : ℂ) (t : ℝ) (hne : fdPolygon t ≠ p) :
@@ -312,11 +302,9 @@ lemma fdPolygonRadialCircle_angle_eq_arg (p : ℂ) (t : ℝ) (hne : fdPolygon t 
       Complex.arg (fdPolygon t - p) := by
   simp only [fdPolygonRadialCircle_angle, angleOnCircle,
     fdPolygonRadialCircle, polygonToCircleRadial]
-  have hdir_ne : fdPolygon t - p ≠ 0 := sub_ne_zero.mpr hne
   set dir := fdPolygon t - p with hdir_def
-  have hscale : (1 - 1 : ℝ) * ‖dir‖ + 1 = 1 := by ring
-  simp only [hscale, one_smul, add_sub_cancel_left]
-  exact arg_normalize_eq dir hdir_ne
+  simp only [show (1 - 1 : ℝ) * ‖dir‖ + 1 = 1 from by ring, one_smul, add_sub_cancel_left]
+  exact arg_normalize_eq dir (sub_ne_zero.mpr hne)
 
 /-- Lifted angle function that accounts for branch cut crossing. -/
 noncomputable def fdPolygonRadialCircle_angle_lifted (p : ℂ) :
@@ -472,11 +460,9 @@ lemma winding_fdPolygon_center_invariant (p₁ p₂ : ℂ)
   have hab : (0 : ℝ) < 5 := by norm_num
   suffices h_hom : PiecewiseCurvesHomotopicAvoiding γ₀ γ₁ 0 5 0
       ({1, 2, 3, 4} : Finset ℝ) by
-    have h_eq := windingNumber_eq_of_piecewise_homotopic γ₀ γ₁ 0 5 0
+    rw [← winding_translate fdPolygon p₁, ← winding_translate fdPolygon p₂]
+    exact windingNumber_eq_of_piecewise_homotopic γ₀ γ₁ 0 5 0
       ({1, 2, 3, 4} : Finset ℝ) hab h_hom
-    rw [← winding_translate fdPolygon p₁,
-      ← winding_translate fdPolygon p₂]
-    exact h_eq
   refine ⟨H, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact fdPolygon_continuous.comp continuous_fst |>.sub ((continuous_const.sub
         (Complex.continuous_ofReal.comp continuous_snd)).mul

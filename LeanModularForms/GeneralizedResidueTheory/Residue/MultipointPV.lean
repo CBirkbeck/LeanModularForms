@@ -143,10 +143,9 @@ private theorem aEStronglyMeasurable_pv_integrand_multipoint {g : ℂ → ℂ} {
   have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
       (volume.restrict ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b)ᶜ) :=
     aestronglyMeasurable_const
-  have h_piecewise := AEStronglyMeasurable.piecewise (measurableSet_multipoint_goodset S hγ)
+  exact ((AEStronglyMeasurable.piecewise (measurableSet_multipoint_goodset S hγ)
     (h_base_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
-    h_zero_meas
-  exact (h_piecewise.mono_measure Measure.restrict_le_self).congr
+    h_zero_meas).mono_measure Measure.restrict_le_self).congr
     (goodset_piecewise_ae_eq_multipoint S).symm
 
 private lemma aEStronglyMeasurable_residueProd_on_goodset {γ : ℝ → ℂ} {a b ε : ℝ}
@@ -274,14 +273,10 @@ theorem aEStronglyMeasurable_pv_integrand_decomposed {g_reg : ℂ → ℂ} {γ :
     AEStronglyMeasurable (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0
       else (g_reg (γ t) + ∑ s ∈ S, coeffs s / (γ t - s)) * deriv γ t)
       (volume.restrict (Icc a b)) := by
-  have h_prod_meas := aEStronglyMeasurable_decomposed_on_goodset
-    S coeffs hε hg hγ hγ'_off_P
-  have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
-      (volume.restrict ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b)ᶜ) :=
-    aestronglyMeasurable_const
-  have h_piecewise := AEStronglyMeasurable.piecewise
-    (measurableSet_multipoint_goodset S hγ) h_prod_meas h_zero_meas
-  exact (h_piecewise.mono_measure
+  exact ((AEStronglyMeasurable.piecewise
+    (measurableSet_multipoint_goodset S hγ)
+    (aEStronglyMeasurable_decomposed_on_goodset S coeffs hε hg hγ hγ'_off_P)
+    aestronglyMeasurable_const).mono_measure
     Measure.restrict_le_self).congr
     (goodset_piecewise_ae_eq_decomposed
       S coeffs).symm
@@ -619,10 +614,9 @@ lemma aEStronglyMeasurable_multipointPV_diff
     have h3 :=
       aEStronglyMeasurable_pv_sum_residue S0 f γ ε
         hε a b hγ_cont hγ'_off_P
-    have h4 := h1.sub h3
     have h_subset : Ι a b ⊆ Icc a b :=
       Set.uIoc_of_le hab ▸ Set.Ioc_subset_Icc_self
-    exact h4.mono_measure
+    exact (h1.sub h3).mono_measure
       (Measure.restrict_mono h_subset le_rfl)
   case inr =>
     have hba : b ≤ a := hab.le
@@ -635,12 +629,11 @@ lemma aEStronglyMeasurable_multipointPV_diff
     have h3 :=
       aEStronglyMeasurable_pv_sum_residue S0 f γ ε
         hε b a hγ_cont hγ'_off_P
-    have h4 := h1.sub h3
     have h_subset : Ι a b ⊆ Icc b a :=
       Set.uIoc_comm a b ▸
         Set.uIoc_of_le hba ▸
           Set.Ioc_subset_Icc_self
-    exact h4.mono_measure
+    exact (h1.sub h3).mono_measure
       (Measure.restrict_mono h_subset le_rfl)
 
 /-! ## Dominated Convergence -/
@@ -1477,11 +1470,10 @@ lemma dominated_convergence_multipoint_helper
         aEStronglyMeasurable_pv_sum_residue S0 f
           γ.toFun ε hε γ.a γ.b hγ_cont_Icc
           hγ'_off_P_Icc
-      have h_meas_diff := h_meas_pv.sub h_meas_sum
       have h_subset : Ι γ.a γ.b ⊆ Icc γ.a γ.b :=
         Set.uIoc_of_le (le_of_lt γ.hab) ▸
           Set.Ioc_subset_Icc_self
-      exact h_meas_diff.mono_measure
+      exact (h_meas_pv.sub h_meas_sum).mono_measure
         (Measure.restrict_mono h_subset le_rfl)
     rw [hG_eq]
     apply Filter.Tendsto.congr'

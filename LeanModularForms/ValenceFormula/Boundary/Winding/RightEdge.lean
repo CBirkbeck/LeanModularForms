@@ -70,7 +70,7 @@ lemma rightEdge_unique_crossing (H : ℝ) (_hH : heightCutoff ≤ H) (s : ℂ)
     have him := congr_arg Complex.im hs_eq
     simp [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
           Complex.I_re, Complex.I_im] at him
-    show t = (H - s.im) / (H - Real.sqrt 3 / 2)
+    change t = (H - s.im) / (H - Real.sqrt 3 / 2)
     have h_eq : t * (H - Real.sqrt 3 / 2) = H - s.im := by linarith
     rw [eq_div_iff (ne_of_gt hden_pos)]
     linarith
@@ -324,7 +324,7 @@ private lemma rightEdge_neg_seg1_slitPlane_left (H : ℝ) (s : ℂ) (hs_re : s.r
     -(fdBoundary_seg1_H H t - s) ∈ Complex.slitPlane := by
   have hα_pos : 0 < H - Real.sqrt 3 / 2 := by linarith
   rw [Complex.mem_slitPlane_iff]; right
-  show (-(fdBoundary_seg1_H H t - s)).im ≠ 0
+  change (-(fdBoundary_seg1_H H t - s)).im ≠ 0
   rw [rightEdge_h₀_eq hs_re]
   simp only [Complex.neg_im, Complex.mul_im,
     Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
@@ -344,7 +344,7 @@ private lemma rightEdge_neg_seg1_slitPlane_right (H : ℝ) (s : ℂ) (hs_re : s.
     -(fdBoundary_seg1_H H t - s) ∈ Complex.slitPlane := by
   have hα_pos : 0 < H - Real.sqrt 3 / 2 := by linarith
   rw [Complex.mem_slitPlane_iff]; right
-  show (-(fdBoundary_seg1_H H t - s)).im ≠ 0
+  change (-(fdBoundary_seg1_H H t - s)).im ≠ 0
   rw [rightEdge_h₀_eq hs_re]
   simp only [Complex.neg_im, Complex.mul_im,
     Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
@@ -368,7 +368,7 @@ private lemma rightEdge_neg_arc_slitPlane (s : ℂ) (hs_re : s.re = 1/2)
   by_cases ht1_eq : t = 1
   · right
     subst ht1_eq
-    show (s - cexp (↑(Real.pi * (1 + 1) / 6) * I)).im ≠ 0
+    change (s - cexp (↑(Real.pi * (1 + 1) / 6) * I)).im ≠ 0
     rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
         exp_real_angle_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
     simp [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,

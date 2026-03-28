@@ -128,18 +128,12 @@ theorem cauchyPrincipalValue_eq_classical_off_curve'
     (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀) :
     ∃ δ > 0, ∀ ε < δ, ∀ t ∈ Icc γ.a γ.b,
       ‖γ.toFun t - z₀‖ > ε := by
-  have h_compact : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
-    isCompact_Icc.image_of_continuousOn γ.continuous_toFun
-  have hz_notin : z₀ ∉ γ.toFun '' Icc γ.a γ.b := by
-    rw [mem_image]; push_neg; intro t ht; exact hoff t ht
-  have h_nonempty : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
-    ⟨γ.toFun γ.a,
-      mem_image_of_mem _ (left_mem_Icc.mpr γ.hab.le)⟩
   have h_dist_pos :
       0 < Metric.infDist z₀ (γ.toFun '' Icc γ.a γ.b) := by
-    rw [← Metric.infDist_pos_iff_notMem_closure h_nonempty,
-      h_compact.isClosed.closure_eq]
-    exact hz_notin
+    rw [← Metric.infDist_pos_iff_notMem_closure
+      ⟨γ.toFun γ.a, mem_image_of_mem _ (left_mem_Icc.mpr γ.hab.le)⟩,
+      (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed.closure_eq]
+    rw [mem_image]; push_neg; intro t ht; exact hoff t ht
   exact ⟨_, h_dist_pos, fun ε hε t ht => by
     calc ‖γ.toFun t - z₀‖
         = dist (γ.toFun t) z₀ := (dist_eq_norm _ _).symm
@@ -152,12 +146,10 @@ theorem integral_inv_real_axis (r ε : ℝ) (hr : 0 < r)
     (hε : 0 < ε) :
     ∫ t in ε..r, (t : ℂ)⁻¹ =
     Complex.log r - Complex.log ε := by
-  have h_real : ∫ t in ε..r, (t : ℝ)⁻¹ =
-      Real.log r - Real.log ε := by
-    rw [integral_inv_of_pos hε hr,
-      Real.log_div hr.ne' hε.ne']
   simp_rw [← Complex.ofReal_inv]
-  rw [intervalIntegral.integral_ofReal, h_real]
+  rw [intervalIntegral.integral_ofReal,
+    show ∫ t in ε..r, (t : ℝ)⁻¹ = Real.log r - Real.log ε from by
+      rw [integral_inv_of_pos hε hr, Real.log_div hr.ne' hε.ne']]
   simp only [Complex.ofReal_sub,
     Complex.ofReal_log hr.le, Complex.ofReal_log hε.le]
 

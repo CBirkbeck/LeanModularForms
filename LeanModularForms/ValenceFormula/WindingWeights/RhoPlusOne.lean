@@ -371,25 +371,25 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
   set h₂ : ℝ → ℂ := fun t => -1 + ↑((t - 3) * (H - Real.sqrt 3 / 2)) * I
   set h₃ : ℝ → ℂ := fun t => ↑(t - 5) + ↑(H - Real.sqrt 3 / 2) * I
   have hg_eq_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := by
-    intro t ht; show fdBoundary_H H t - ρ' = h₀ t
+    intro t ht; change fdBoundary_H H t - ρ' = h₀ t
     rw [g_rho'_seg0_value ht]
   have hg_eq_h₁ : ∀ t, 1 < t → t < 3 → g t = h₁ t := by
-    intro t ht1 ht3; show fdBoundary_H H t - ρ' = h₁ t
+    intro t ht1 ht3; change fdBoundary_H H t - ρ' = h₁ t
     rw [g_rho'_arc_value ht1 ht3]
     simp only [h₁, hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
       UpperHalfPlane.coe_mk_subtype]
     push_cast; ring
   have hg_eq_h₂ : ∀ t, 3 < t → t ≤ 4 → g t = h₂ t := by
-    intro t ht3 ht4; show fdBoundary_H H t - ρ' = h₂ t
+    intro t ht3 ht4; change fdBoundary_H H t - ρ' = h₂ t
     rw [g_rho'_seg3_value ht3 ht4]
   have hg_eq_h₃ : ∀ t, 4 < t → g t = h₃ t := by
-    intro t ht4; show fdBoundary_H H t - ρ' = h₃ t
+    intro t ht4; change fdBoundary_H H t - ρ' = h₃ t
     rw [g_rho'_seg4_value ht4]
   have hg0 : g 0 = h₀ 0 := hg_eq_h₀ 0 (by norm_num)
   have hg1mδ : g (1 - δ_L) = h₀ (1 - δ_L) := hg_eq_h₀ (1 - δ_L) (by linarith)
   have hg1pδ : g (1 + δ_R) = h₁ (1 + δ_R) := hg_eq_h₁ (1 + δ_R) (by linarith) (by linarith)
   have hg3_1 : g 3 = h₁ 3 := by
-    show fdBoundary_H H 3 - ρ' = h₁ 3
+    change fdBoundary_H H 3 - ρ' = h₁ 3
     rw [fdBoundary_H_at_three_eq_rho]
     simp only [h₁, hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
       ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
@@ -397,14 +397,14 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     rw [exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
     push_cast; ring
   have hg3_2 : g 3 = h₂ 3 := by
-    show fdBoundary_H H 3 - ρ' = h₂ 3
+    change fdBoundary_H H 3 - ρ' = h₂ 3
     rw [fdBoundary_H_at_three_eq_rho]
     simp only [h₂, hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
       ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
     push_cast; ring
   have hg4_2 : g 4 = h₂ 4 := hg_eq_h₂ 4 (by linarith) (le_refl 4)
   have hg4_3 : g 4 = h₃ 4 := by
-    show fdBoundary_H H 4 - ρ' = h₃ 4
+    change fdBoundary_H H 4 - ρ' = h₃ 4
     rw [fdBoundary_H_at_four H]
     simp only [hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
       UpperHalfPlane.coe_mk_subtype, h₃]
@@ -567,7 +567,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     (intervalIntegral.integral_add_adjacent_intervals piece₂.1 piece₃.1).symm,
     piece₀.2, piece₁.2, piece₂.2, piece₃.2]
   have hg_closed : g 0 = g 5 := by
-    show fdBoundary_H H 0 - ρ' = fdBoundary_H H 5 - ρ'
+    change fdBoundary_H H 0 - ρ' = fdBoundary_H H 5 - ρ'
     rw [fdBoundary_H_closed H]
   rw [hg_closed]
   ring
@@ -632,7 +632,6 @@ private lemma arc_angle_lt_epsilon {δ_R ε : ℝ} (hδ_R_pos : 0 < δ_R)
   have hx_le_one : x ≤ 1 := by linarith [Real.pi_le_four, show x < Real.pi / 12 by rw [hx_def]; nlinarith]
   nlinarith [Real.sin_gt_sub_cube hx_pos hx_le_one, sq_nonneg x, sq_nonneg (1 - x)]
 
--- Helper: 12/π * arcsin(ε/2) < 1 when ε < 2 sin(π/12), extracted to avoid repeated derivation.
 private lemma δ_right_lt_one_aux {ε : ℝ}
     (hε_half_neg : (-1 : ℝ) ≤ ε / 2)
     (hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12)) :
@@ -649,14 +648,11 @@ private lemma δ_right_lt_one_aux {ε : ℝ}
         mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
     _ = 1 := by field_simp [hpi_pos.ne']
 
--- Helper: the integrand `f⁻¹ * deriv g` equals `deriv (g - c) / (g - c)` pointwise.
 private lemma inv_mul_deriv_eq_logDeriv_sub (H : ℝ) (c : ℂ) :
     (fun t => (fdBoundary_H H t - c)⁻¹ * deriv (fdBoundary_H H) t) =
     (fun t => deriv (fun s => fdBoundary_H H s - c) t / (fdBoundary_H H t - c)) := by
   funext t; rw [deriv_sub_const, div_eq_mul_inv]; ring
 
--- The deriv of (fun s => fdBoundary_H H s - c) equals deriv (fdBoundary_H H)
--- since subtracting a constant doesn't change the derivative.
 /-- The PV integral of `(γ-ρ')⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ/3`. -/
 theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - ellipticPointRhoPlusOne‖ > ε
@@ -668,22 +664,17 @@ theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   have hsin_pos : 0 < Real.sin (Real.pi / 12) :=
     ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by positivity
-  -- Simplify deriv (fun s => fdBoundary_H H s - c) = deriv (fdBoundary_H H)
   have hderiv_eq : ∀ t : ℝ, deriv (fun s => fdBoundary_H H s - (ellipticPointRhoPlusOne : ℂ)) t =
       deriv (fdBoundary_H H) t := fun t => by
     simp [deriv_sub_const]
   simp_rw [hderiv_eq]
-  -- Now the goal uses deriv (fdBoundary_H H)
   set threshold := min (H - Real.sqrt 3 / 2) (2 * Real.sin (Real.pi / 12)) with hthresh_def
   have hthresh_pos : 0 < threshold := lt_min hH_gap h2sin_pos
-  -- Define the asymmetric cutoff radii
   set δ_left : ℝ → ℝ := fun ε => ε / (H - Real.sqrt 3 / 2) with hδL_def
   set δ_right : ℝ → ℝ := fun ε => 12 / Real.pi * Real.arcsin (ε / 2) with hδR_def
-  -- Define the FTC expression
   set E : ℝ → ℂ := fun ε =>
     Complex.log (fdBoundary_H H (1 - δ_left ε) - ellipticPointRhoPlusOne) -
     Complex.log (fdBoundary_H H (1 + δ_right ε) - ellipticPointRhoPlusOne) with hE_def
-  -- Apply the asymmetric crossing limit theorem directly
   apply ContourIntegral.pv_tendsto_of_crossing_limit_asymmetric
       (γ := fdBoundary_H H) (s := ellipticPointRhoPlusOne) (a := 0) (b := 5) (t₀ := 1)
       (δ_left := δ_left) (δ_right := δ_right) (threshold := threshold) (E := E)
@@ -803,9 +794,7 @@ theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     have h_ftc_rho' := ftc_logDeriv_telescope_rho_plus_one H hH hδL_pos hδL_lt_one
       hδR_pos hδR_lt_one
     obtain ⟨_, _, h_telescope⟩ := h_ftc_rho'
-    -- The FTC telescope gives the equality; E is exactly that telescope value
     simp only [hE_def, hδL_def, hδR_def]
-    -- Rewrite integrand: (g t)⁻¹ * deriv (fdBoundary_H H) t = deriv g t / g t
     simp_rw [inv_mul_deriv_eq_logDeriv_sub H ellipticPointRhoPlusOne]
     exact h_telescope
   · -- hint_left: integrable on [0, 1 - δ_left ε]

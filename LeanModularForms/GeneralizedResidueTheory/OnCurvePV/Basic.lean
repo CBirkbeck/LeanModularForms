@@ -202,24 +202,20 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       simp only [Metric.mem_ball, not_lt]; exact le_of_lt ht_S
     have hγt_in : γ t ∈ γ '' Icc a b \ Metric.ball z₀ ε :=
       ⟨mem_image_of_mem γ ht_Icc, hγt_not_ball⟩
-    have hf_at := hf (γ t) hγt_in
-    have hγ_at := hγ t ht_Icc
-    have hγ'_at := hγ'_off_P t ⟨ht_Icc, ht_nP⟩
     have h_maps : MapsTo γ ((S ∩ Icc a b) \ P)
         (γ '' Icc a b \ Metric.ball z₀ ε) := by
       intro s ⟨⟨hs_S, hs_Icc⟩, _⟩
       refine ⟨mem_image_of_mem γ hs_Icc, ?_⟩
       simp only [S, mem_setOf_eq] at hs_S
       simp only [Metric.mem_ball, not_lt]; exact le_of_lt hs_S
-    have hfγ_at : ContinuousWithinAt (f ∘ γ) ((S ∩ Icc a b) \ P) t :=
-      hf_at.comp (hγ_at.mono (diff_subset.trans inter_subset_right)) h_maps
-    exact hfγ_at.mul
-      (hγ'_at.mono (by intro x ⟨⟨_, hx_Icc⟩, hx_nP⟩; exact ⟨hx_Icc, hx_nP⟩))
+    exact ((hf (γ t) hγt_in).comp
+      ((hγ t ht_Icc).mono (diff_subset.trans inter_subset_right)) h_maps).mul
+      ((hγ'_off_P t ⟨ht_Icc, ht_nP⟩).mono
+        (by intro x ⟨⟨_, hx_Icc⟩, hx_nP⟩; exact ⟨hx_Icc, hx_nP⟩))
   have h_base_meas : AEStronglyMeasurable (fun t => f (γ t) * deriv γ t)
       (volume.restrict (S ∩ Icc a b)) := by
     have h_diff_meas : MeasurableSet ((S ∩ Icc a b) \ P) :=
       hS_meas.diff P.finite_toSet.measurableSet
-    have h_cont_meas := h_cont.aestronglyMeasurable (μ := volume) h_diff_meas
     have hP_meas_zero : volume (↑P ∩ (S ∩ Icc a b)) = 0 :=
       (P.finite_toSet.inter_of_left _).measure_zero volume
     have hP_inter_meas : MeasurableSet (↑P ∩ (S ∩ Icc a b)) :=
@@ -232,7 +228,7 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       rw [← Measure.restrict_union h_disj hP_inter_meas]
       congr 1; ext x; simp only [mem_union, mem_diff, mem_inter_iff]; tauto
     rw [h_eq]
-    apply AEStronglyMeasurable.add_measure h_cont_meas
+    apply AEStronglyMeasurable.add_measure (h_cont.aestronglyMeasurable (μ := volume) h_diff_meas)
     simp only [Measure.restrict_eq_zero.mpr hP_meas_zero]
     exact aestronglyMeasurable_zero_measure _
   have h_piecewise : AEStronglyMeasurable
@@ -334,10 +330,10 @@ lemma cpv_concat (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
   simp only [Set.mem_Ioi] at hε
   have hII := h_int ε hε
   have hac := hab.trans hbc
-  have hII_ab := hII.mono_set (by
-    rw [Set.uIcc_of_le hab, Set.uIcc_of_le hac]; exact Set.Icc_subset_Icc_right hbc)
-  have hII_bc := hII.mono_set (by
-    rw [Set.uIcc_of_le hbc, Set.uIcc_of_le hac]; exact Set.Icc_subset_Icc_left hab)
-  exact intervalIntegral.integral_add_adjacent_intervals hII_ab hII_bc
+  exact intervalIntegral.integral_add_adjacent_intervals
+    (hII.mono_set (by
+      rw [Set.uIcc_of_le hab, Set.uIcc_of_le hac]; exact Set.Icc_subset_Icc_right hbc))
+    (hII.mono_set (by
+      rw [Set.uIcc_of_le hbc, Set.uIcc_of_le hac]; exact Set.Icc_subset_Icc_left hab))
 
 end

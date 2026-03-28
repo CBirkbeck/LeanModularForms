@@ -276,8 +276,8 @@ theorem isNullHomologous_of_convex (U : Set ℂ) (hU : IsOpen U) (hU_convex : Co
         (h_ne_z w hw)).differentiableWithinAt
     obtain ⟨F, hF⟩ := holomorphic_convex_primitive hU_convex hU hU_ne h_holo
     have h_int := integrand_intervalIntegrable_of_avoids γ z h_avoids
-    have h_ftc := ftc_piecewise_contour γ.toPiecewiseC1Curve U hγ_in_U hF h_int
-    rw [h_ftc, congrArg F hγ_closed.symm, sub_self, mul_zero]
+    rw [ftc_piecewise_contour γ.toPiecewiseC1Curve U hγ_in_U hF h_int,
+      congrArg F hγ_closed.symm, sub_self, mul_zero]
 
 /-! ## Dixon's Proof of the Homological Cauchy Theorem
 
@@ -318,13 +318,11 @@ private lemma dixonH1_dslope_expansion (γ : PiecewiseC1Immersion) (w : ℂ)
         f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t -
           f w / (γ.toFun t - w) * deriv γ.toFun t := by
   intro t ht_ui
-  have hab : γ.a ≤ γ.b := le_of_lt γ.hab
-  have ht : t ∈ Icc γ.a γ.b := Set.uIcc_of_le hab ▸ ht_ui
+  have ht : t ∈ Icc γ.a γ.b := Set.uIcc_of_le (le_of_lt γ.hab) ▸ ht_ui
   have hne : γ.toFun t ≠ w := hoff t ht
-  have hsub : γ.toFun t - w ≠ 0 := sub_ne_zero.mpr hne
   rw [dslope_of_ne _ (Ne.symm hne), slope_def_field,
     show w - γ.toFun t = -(γ.toFun t - w) from by ring]
-  field_simp [hsub]
+  field_simp [sub_ne_zero.mpr hne]
   ring
 
 private lemma dixonH1_cauchyIntegrand_integrable (hU : IsOpen U)
@@ -552,18 +550,16 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     simp only [dixonH2_F, dixonH2_F']
     exact dixonH2_pointwise_hasDerivAt (f (γ.toFun t)) (deriv γ.toFun t) (γ.toFun t) x
       (sub_ne_zero.mpr (_hball_avoids x hx_ball t ht'))
-  have hmain := (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
-    hε_pos hF_meas hF_int hF'_meas h_bound hbound_int h_diff).2
-  convert hmain using 2
+  convert (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+    hε_pos hF_meas hF_int hF'_meas h_bound hbound_int h_diff).2 using 2
 
 private lemma ball_avoids_curve_of_infDist_pos (γ : PiecewiseC1Immersion)
     (w : ℂ) (hinfDist_pos : 0 < Metric.infDist w (γ.toFun '' Icc γ.a γ.b)) :
     ∀ x ∈ Metric.ball w (Metric.infDist w (γ.toFun '' Icc γ.a γ.b) / 2),
       ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ x := by
   intro x hx t ht heq
-  have hmem : x ∈ γ.toFun '' Icc γ.a γ.b := ⟨t, ht, heq⟩
-  have h1 := Metric.infDist_le_dist_of_mem (x := w) hmem
-  linarith [show dist w x < _ / 2 from by rw [dist_comm]; exact Metric.mem_ball.mp hx]
+  linarith [Metric.infDist_le_dist_of_mem (x := w) (show x ∈ γ.toFun '' Icc γ.a γ.b from ⟨t, ht, heq⟩),
+    show dist w x < _ / 2 from by rw [dist_comm]; exact Metric.mem_ball.mp hx]
 
 private lemma dist_lower_bound_at_center (γ : PiecewiseC1Immersion) (w : ℂ) :
     ∀ t ∈ Icc γ.a γ.b,
@@ -609,7 +605,7 @@ theorem dixonH2_differentiableAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     (hf_cont : ContinuousOn f (γ.toFun '' Icc γ.a γ.b)) (w : ℂ)
     (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ w) :
     DifferentiableAt ℂ (dixonH2 f γ) w := by
-  show DifferentiableAt ℂ
+  change DifferentiableAt ℂ
       (fun w => ∫ t in γ.a..γ.b, f (γ.toFun t) / (γ.toFun t - w) * deriv γ.toFun t) w
   have hab : γ.a ≤ γ.b := le_of_lt γ.hab
   have himage_closed := (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed

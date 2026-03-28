@@ -157,9 +157,8 @@ private theorem taylor_remainder_factored (G : ℂ → ℂ) (s : ℂ) (N : ℕ)
     have hH_fps := HasFPowerSeriesAt.has_fpower_series_iterate_dslope_fslope N hG_fps
     set H := (Function.swap dslope s)^[N] G
     refine ⟨H, hH_fps.analyticAt, ?_⟩
-    have hG_sum := hasFPowerSeriesAt_iff'.mp hG_fps
-    have hH_sum := hasFPowerSeriesAt_iff'.mp hH_fps
-    filter_upwards [hG_sum, hH_sum] with z hG_z hH_z
+    filter_upwards [hasFPowerSeriesAt_iff'.mp hG_fps,
+      hasFPowerSeriesAt_iff'.mp hH_fps] with z hG_z hH_z
     simp only [FormalMultilinearSeries.coeff_iterate_fslope, smul_eq_mul] at hG_z hH_z
     change G z - P z = (z - s) ^ N * H z
     set c := fun k => (z - s) ^ k * pG.coeff k with hc_def
@@ -203,8 +202,7 @@ theorem meromorphicAt_sub_principalPart_eventually (f : ℂ → ℂ) (s : ℂ)
       (iteratedDeriv k G s / ↑(k.factorial)) * (z - s) ^ (k : ℕ)
     have hP_an : AnalyticAt ℂ P s := by
       apply Finset.analyticAt_fun_sum; intro k _
-      have h_sub_an : AnalyticAt ℂ (· - s) s := by fun_prop
-      exact analyticAt_const.mul (h_sub_an.pow _)
+      exact analyticAt_const.mul ((by fun_prop : AnalyticAt ℂ (· - s) s).pow _)
     have h_pp_eq : ∀ᶠ z in 𝓝[≠] s, meromorphicPrincipalPart f s z =
         (z - s) ^ (-(N : ℤ)) * P z := by
       filter_upwards [self_mem_nhdsWithin] with z hz
@@ -295,9 +293,8 @@ private theorem integral_zpow_comp_sub_mul_deriv'
       rw [show (n + 1 : ℤ) - 1 = n from by ring]
       rw [mul_assoc, mul_div_cancel_left₀ _ hn1_cast]
     rwa [this] at h_div
-  have h_ftc := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-    F f hab hE_count hF_cont hF_deriv h_int
-  rw [h_ftc]
+  rw [MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+    F f hab hE_count hF_cont hF_deriv h_int]
   simp only [F]
   rw [← sub_div]
 
@@ -324,26 +321,23 @@ theorem contourIntegral_zpow_eq_zero (s : ℂ) (n : ℤ) (hn : n ≤ -2)
       (piecewiseC1_deriv_intervalIntegrable γ.toPiecewiseC1Curve
         (piecewiseC1Immersion_deriv_bounded γ))
       (h_zpow_cont.mono (by rw [Set.uIcc_of_le (le_of_lt γ.hab)]))
-  have h_ftc := integral_zpow_comp_sub_mul_deriv' hn_ne (le_of_lt γ.hab)
+  rw [integral_zpow_comp_sub_mul_deriv' hn_ne (le_of_lt γ.hab)
     γ.continuous_toFun hγ_avoids
     (↑γ.partition : Set ℝ) (γ.partition.finite_toSet.countable)
     (fun _ ⟨_, h⟩ => h)
     (fun t ht hn_part => γ.smooth_off_partition t (Ioo_subset_Icc_self ht) hn_part)
-    h_int
-  rw [h_ftc]
-  have h_eq : γ.toFun γ.b = γ.toFun γ.a := hγ_closed.symm
-  rw [h_eq, sub_self, zero_div]
+    h_int]
+  rw [hγ_closed.symm, sub_self, zero_div]
 
 /-- Variant: contour integral of `c * (z - s)^n` is zero for `n <= -2`. -/
 theorem contourIntegral_const_mul_zpow_eq_zero (s : ℂ) (n : ℤ) (hn : n ≤ -2) (c : ℂ)
     (γ : PiecewiseC1Immersion) (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, c * (γ.toFun t - s) ^ n * deriv γ.toFun t = 0 := by
-  have h_eq : ∀ t, c * (γ.toFun t - s) ^ n * deriv γ.toFun t =
-      c * ((γ.toFun t - s) ^ n * deriv γ.toFun t) := fun t => by ring
-  simp_rw [h_eq]
-  rw [intervalIntegral.integral_const_mul]
-  rw [contourIntegral_zpow_eq_zero s n hn γ hγ_closed hγ_avoids]
+  simp_rw [show ∀ t, c * (γ.toFun t - s) ^ n * deriv γ.toFun t =
+      c * ((γ.toFun t - s) ^ n * deriv γ.toFun t) from fun t => by ring]
+  rw [intervalIntegral.integral_const_mul,
+    contourIntegral_zpow_eq_zero s n hn γ hγ_closed hγ_avoids]
   simp only [mul_zero]
 
 /-! ### Residue of the principal part
@@ -468,9 +462,8 @@ private theorem residueAt_eq_residueAt_principalPart_sum (f : ℂ → ℂ) (s : 
       rw [Metric.mem_sphere.mp hz]; exact hr_lt_rf
     have h_mem : z ∈ Metric.ball s rf ∩ {s}ᶜ :=
       ⟨Metric.mem_ball.mpr h_in, Set.mem_compl_singleton_iff.mpr h_ne⟩
-    have h_sub := hrf_eq h_mem
-    simp only [Set.mem_setOf_eq] at h_sub
-    rw [show f z = pp z + (f z - pp z) from (add_sub_cancel _ _).symm, h_sub]
+    rw [show f z = pp z + (f z - pp z) from (add_sub_cancel _ _).symm,
+      show f z - pp z = g_an z from by simpa using hrf_eq h_mem]
   have h_g_cont : ContinuousOn g_an (Metric.closedBall s r) :=
     hg_ball.continuousOn.mono (Metric.closedBall_subset_ball hr_lt_rg)
   have h_ci_g : CircleIntegrable g_an s r :=
@@ -512,13 +505,13 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
     rw [h_pp_eq]
     simp_rw [Finset.sum_mul]
     have h_coeff_zero : iteratedDeriv (N - 1) g s / ↑((N - 1).factorial) = 0 := by
-      have h_res_pp := residueAt_zpow_sum s N hN_pos
-        (fun k => iteratedDeriv k g s / ↑(k.factorial))
       have h_res_eq : residueAt f s = residueAt (fun z =>
           ∑ k ∈ Finset.range N,
             iteratedDeriv k g s / ↑(k.factorial) * (z - s) ^ ((k : ℤ) - (N : ℤ))) s :=
         residueAt_eq_residueAt_principalPart_sum f s hf N g h_pp_eq
-      rw [hres] at h_res_eq; rw [← h_res_pp]; exact h_res_eq.symm
+      rw [hres] at h_res_eq
+      rw [← residueAt_zpow_sum s N hN_pos (fun k => iteratedDeriv k g s / ↑(k.factorial))]
+      exact h_res_eq.symm
     have h_int : ∀ k ∈ Finset.range N, IntervalIntegrable
         (fun t => iteratedDeriv k g s / ↑(k.factorial) * (γ.toFun t - s) ^
           ((k : ℤ) - (N : ℤ)) * deriv γ.toFun t) MeasureTheory.volume γ.a γ.b := by

@@ -639,25 +639,21 @@ lemma annulus_symmDiff_measure_bound
   have hε₁_pos : 0 < ε₁ :=
     lt_of_lt_of_le hε₂_pos hε₂_le
   have hK₀_nonneg : 0 ≤ K₀ := le_of_lt hK₀_pos
-  have hε₁_lt_half : ε₁ < ‖L‖ * δ₁ / 2 := hε₁_lt
   have hε₁_over_L_lt_δ₁ : ε₁ / ‖L‖ < δ₁ := by
-    have h1 : ε₁ < ‖L‖ * δ₁ / 2 := hε₁_lt_half
     calc ε₁ / ‖L‖
-        < (‖L‖ * δ₁ / 2) / ‖L‖ := by
-          apply div_lt_div_of_pos_right h1
-            hL_norm_pos
+        < (‖L‖ * δ₁ / 2) / ‖L‖ :=
+          div_lt_div_of_pos_right hε₁_lt hL_norm_pos
       _ = δ₁ / 2 := by field_simp
       _ < δ₁ := by linarith [hδ₁_pos]
   have hε₁_over_L_lt_δ₀ : ε₁ / ‖L‖ < δ₀ :=
     lt_of_lt_of_le hε₁_over_L_lt_δ₁ hδ₁_le_δ₀
   have h2ε₁_over_L_lt_δ₁ :
       2 * ε₁ / ‖L‖ < δ₁ := by
-    have h1 : ε₁ < ‖L‖ * δ₁ / 2 := hε₁_lt_half
-    have h2 : 2 * ε₁ < ‖L‖ * δ₁ := by linarith
-    have h3 : 2 * ε₁ / ‖L‖ < ‖L‖ * δ₁ / ‖L‖ :=
-      div_lt_div_of_pos_right h2 hL_norm_pos
-    have h4 : ‖L‖ * δ₁ / ‖L‖ = δ₁ := by field_simp
-    linarith
+    have h2 : 2 * ε₁ < ‖L‖ * δ₁ := by
+      have : ε₁ < ‖L‖ * δ₁ / 2 := hε₁_lt
+      linarith
+    linarith [div_lt_div_of_pos_right h2 hL_norm_pos,
+      show ‖L‖ * δ₁ / ‖L‖ = δ₁ from by field_simp]
   have h2ε₁_over_L_lt_δ₀ : 2 * ε₁ / ‖L‖ < δ₀ :=
     lt_of_lt_of_le h2ε₁_over_L_lt_δ₁ hδ₁_le_δ₀
   have h_lower_bound :
@@ -751,10 +747,8 @@ lemma annulus_symmDiff_measure_bound
       · exact h_localize_tAnnLin t ht_tAnn
     have ht_lt_δ₀ : |t - t₀| < δ₀ :=
       lt_of_lt_of_le ht_localized (min_le_left _ _)
-    have h_approx := h_quad t ht_lt_δ₀
     have h_gx_bound : |g t - x t| ≤ e t := by
-      have := norm_linear_approx_bound h_quad ht_lt_δ₀
-      convert this using 2
+      convert norm_linear_approx_bound h_quad ht_lt_δ₀ using 2
     have ht_Icc : t ∈ Set.Icc a b := by
       rcases hxor with
         ⟨⟨ht_Icc, _, _, _⟩, _⟩ |
@@ -776,25 +770,16 @@ lemma annulus_symmDiff_measure_bound
         · intro ⟨hγ_lo', hγ_hi'⟩
           exact ht_not_γAnn
             ⟨ht_Icc, ht_localized, hγ_lo', hγ_hi'⟩
-    have h_near :=
-      symmDiff_subset_boundaryLayers h_gx_bound hxor'
     have hR_bound : |t - t₀| ≤ R_max := by
       rcases hxor with ⟨ht_γAnn, _⟩ | ⟨ht_tAnn, _⟩
       · have h_lb := h_lower_bound t ht_localized
         have ⟨_, _, _, ht_upper⟩ := ht_γAnn
-        have h1 :
-            ‖L‖ / 2 * |t - t₀| ≤ ε₁ :=
-          le_trans h_lb ht_upper
-        have h1' :
-            |t - t₀| * (‖L‖ / 2) ≤ ε₁ := by
-          rw [mul_comm]; exact h1
+        have h1 : |t - t₀| * (‖L‖ / 2) ≤ ε₁ := by
+          rw [mul_comm]; exact le_trans h_lb ht_upper
         have hL2_pos : 0 < ‖L‖ / 2 := by linarith
-        have h2 :
-            |t - t₀| ≤ ε₁ / (‖L‖ / 2) := by
-          rw [le_div_iff₀ hL2_pos]; exact h1'
-        have h3 : ε₁ / (‖L‖ / 2) = 2 * ε₁ / ‖L‖ :=
-          by field_simp
-        simp only [R_max, h3] at h2 ⊢; exact h2
+        have h2 : |t - t₀| ≤ ε₁ / (‖L‖ / 2) := (le_div_iff₀ hL2_pos).mpr h1
+        simp only [R_max, show ε₁ / (‖L‖ / 2) = 2 * ε₁ / ‖L‖ from by field_simp] at h2 ⊢
+        exact h2
       · have ⟨_, _, _, ht_upper⟩ := ht_tAnn
         have h1 : ‖L‖ * |t - t₀| ≤ ε₁ := ht_upper
         have h1' :
@@ -813,39 +798,24 @@ lemma annulus_symmDiff_measure_bound
       apply mul_le_mul_of_nonneg_left _ hK₀_nonneg
       exact sq_le_sq'
         (by linarith [abs_nonneg (t - t₀)]) hR_bound
-    rcases h_near with h_near₂ | h_near₁
+    rcases symmDiff_subset_boundaryLayers h_gx_bound hxor' with h_near₂ | h_near₁
     · right
-      show |x t - ε₂| ≤ Δ
+      change |x t - ε₂| ≤ Δ
       exact le_trans h_near₂ he_le_Δ
     · left
-      show |x t - ε₁| ≤ Δ
+      change |x t - ε₁| ≤ Δ
       exact le_trans h_near₁ he_le_Δ
-  have h_shell_width :
-      shell₁_hi - shell₁_lo = 2 * Δ / ‖L‖ := by
-    simp only [shell₁_lo, shell₁_hi]; field_simp; ring
-  have h_meas_subset :
-      volume (symmDiff γAnn tAnnLin) ≤
-      volume (shell₁ ∪ shell₂) :=
-    MeasureTheory.measure_mono h_subset
-  have h_shell₁_vol :
-      volume shell₁ ≤
-      ENNReal.ofReal (4 * Δ / ‖L‖) := by
-    have h_eq : shell₁ =
-        {t : ℝ | |‖L‖ * |t - t₀| - ε₁| ≤ Δ} := by
-      simp only [shell₁, x]
-    rw [h_eq]
-    exact shell_vol_le hL_norm_pos hΔ_nonneg hε₁_pos
-  have h_shell₂_vol :
-      volume shell₂ ≤
-      ENNReal.ofReal (4 * Δ / ‖L‖) := by
-    have h_eq : shell₂ =
-        {t : ℝ | |‖L‖ * |t - t₀| - ε₂| ≤ Δ} := by
-      simp only [shell₂, x]
-    rw [h_eq]
-    exact shell_vol_le hL_norm_pos hΔ_nonneg hε₂_pos
+  have h_shell₁_eq : shell₁ = {t : ℝ | |‖L‖ * |t - t₀| - ε₁| ≤ Δ} := by
+    simp only [shell₁, x]
+  have h_shell₂_eq : shell₂ = {t : ℝ | |‖L‖ * |t - t₀| - ε₂| ≤ Δ} := by
+    simp only [shell₂, x]
+  have h_shell₁_vol : volume shell₁ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) := by
+    rw [h_shell₁_eq]; exact shell_vol_le hL_norm_pos hΔ_nonneg hε₁_pos
+  have h_shell₂_vol : volume shell₂ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) := by
+    rw [h_shell₂_eq]; exact shell_vol_le hL_norm_pos hΔ_nonneg hε₂_pos
   have h_total_vol :
       volume (shell₁ ∪ shell₂) ≤
-      ENNReal.ofReal (8 * Δ / ‖L‖) := by
+      ENNReal.ofReal (8 * Δ / ‖L‖) :=
     calc volume (shell₁ ∪ shell₂)
         ≤ volume shell₁ + volume shell₂ :=
           MeasureTheory.measure_union_le _ _
@@ -856,22 +826,12 @@ lemma annulus_symmDiff_measure_bound
             (4 * Δ / ‖L‖ + 4 * Δ / ‖L‖) := by
           rw [← ENNReal.ofReal_add] <;> positivity
       _ = ENNReal.ofReal (8 * Δ / ‖L‖) := by ring_nf
-  have hΔ_eq :
-      Δ = 4 * K₀ * ε₁^2 / ‖L‖^2 := by
-    simp only [Δ, R_max]
-    field_simp
-    ring
-  have h_bound_eq :
-      8 * Δ / ‖L‖ = 32 * K₀ * ε₁^2 / ‖L‖^3 := by
-    rw [hΔ_eq]
-    field_simp
-    ring
   calc volume (symmDiff γAnn tAnnLin)
-      ≤ volume (shell₁ ∪ shell₂) := h_meas_subset
+      ≤ volume (shell₁ ∪ shell₂) :=
+        MeasureTheory.measure_mono h_subset
     _ ≤ ENNReal.ofReal (8 * Δ / ‖L‖) := h_total_vol
-    _ = ENNReal.ofReal
-        (32 * K₀ * ε₁^2 / ‖L‖^3) := by
-        rw [h_bound_eq]
+    _ = ENNReal.ofReal (32 * K₀ * ε₁^2 / ‖L‖^3) := by
+        congr 1; simp only [Δ, R_max]; field_simp; ring
 
 lemma singular_tAnnLin_inside_interval
     {t₀ a b : ℝ} (hat₀ : t₀ ∈ Set.Ioo a b)

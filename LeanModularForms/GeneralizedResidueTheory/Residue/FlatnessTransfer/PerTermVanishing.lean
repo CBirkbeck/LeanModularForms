@@ -401,7 +401,6 @@ private lemma aesm_diff_single_multi_cpv_zpow
         Icc γ.a γ.b ⊆
       {t | ε < ‖γ.toFun t - s‖} ∩ Icc γ.a γ.b :=
     Set.inter_subset_inter_left _ Set.diff_subset
-  have hGoodSet_Icc_meas := measurableSet_goodSet_Icc S0 γ ε
   have hSG_meas : MeasurableSet (({t | ε < ‖γ.toFun t - s‖} \
       {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b) := by
     rw [show ({t | ε < ‖γ.toFun t - s‖} \
@@ -409,19 +408,11 @@ private lemma aesm_diff_single_multi_cpv_zpow
       ({t | ε < ‖γ.toFun t - s‖} ∩ Icc γ.a γ.b) \
         ({t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖} ∩ Icc γ.a γ.b) from by
         ext x; simp only [mem_inter_iff, mem_diff]; tauto]
-    exact hSF_meas.diff hGoodSet_Icc_meas
-  have h_base_aesm := aesm_zpow_on_singleFar γ s m ε hε
-  have h1 : AEStronglyMeasurable
-      (fun t => (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t)
-      (volume.restrict (({t | ε < ‖γ.toFun t - s‖} \
-        {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b)) :=
-    h_base_aesm.mono_measure (Measure.restrict_mono hSG_sub le_rfl)
-  have h_zero : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
-      (volume.restrict (({t | ε < ‖γ.toFun t - s‖} \
-        {t | ∀ s' ∈ S0, ε < ‖γ.toFun t - s'‖}) ∩ Icc γ.a γ.b)ᶜ) :=
-    aestronglyMeasurable_const
-  have h_pw := AEStronglyMeasurable.piecewise hSG_meas h1 h_zero
-  apply (h_pw.mono_measure Measure.restrict_le_self).congr
+    exact hSF_meas.diff (measurableSet_goodSet_Icc S0 γ ε)
+  apply ((AEStronglyMeasurable.piecewise hSG_meas
+    ((aesm_zpow_on_singleFar γ s m ε hε).mono_measure (Measure.restrict_mono hSG_sub le_rfl))
+    (aestronglyMeasurable_const (α := ℝ) (β := ℂ))).mono_measure
+      Measure.restrict_le_self).congr
   filter_upwards with t
   simp only [Set.piecewise, Set.indicator]
 
@@ -432,9 +423,6 @@ private lemma ae_forall_ne_of_finite_crossings
     ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b → ∀ s ∈ S0, γ.toFun t ≠ s := by
   have h_preimage_finite : (⋃ s ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s}).Finite :=
     Set.Finite.biUnion S0.finite_toSet (fun s _ => finite_crossings γ s)
-  have h_preimage_null :
-      volume (⋃ s ∈ S0, {t ∈ Icc γ.a γ.b | γ.toFun t = s}) = 0 :=
-    h_preimage_finite.measure_zero _
   rw [Filter.eventually_iff, mem_ae_iff]
   refine le_antisymm ?_ (zero_le _)
   calc volume {t | ¬(t ∈ Ι γ.a γ.b → ∀ s ∈ S0, γ.toFun t ≠ s)}
@@ -443,7 +431,7 @@ private lemma ae_forall_ne_of_finite_crossings
         obtain ⟨ht_in, s, hs, hts⟩ := ht
         exact Set.mem_biUnion hs
           ⟨Ioc_subset_Icc_self (Set.uIoc_of_le γ.hab.le ▸ ht_in), hts⟩
-    _ = 0 := h_preimage_null
+    _ = 0 := h_preimage_finite.measure_zero _
 
 /-! ### Sublemma 2: Multi-point CPV of higher-order pole term → 0 -/
 
@@ -481,13 +469,11 @@ private lemma single_cutoff_zpow_intervalIntegrable
         (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0)
       volume γ.a γ.b := by
   set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
-  have h_eq :
-      (fun t => if ‖γ.toFun t - s‖ > ε then
-        f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
-      (fun t =>
-        cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) := by
-    ext t; rw [cauchyPrincipalValueIntegrandOn_singleton]
-  rw [h_eq]
+  rw [show (fun t => if ‖γ.toFun t - s‖ > ε then
+      f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
+    (fun t =>
+      cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) from
+    funext fun t => by rw [cauchyPrincipalValueIntegrandOn_singleton]]
   rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
   refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
   refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
@@ -588,7 +574,6 @@ private lemma dct_bound_diff_cpv_zpow
         cauchyPrincipalValueIntegrandOn S0
           (fun z => (z - s) ^ (-(m : ℤ))) γ.toFun ε t‖ ≤
       (δ_sep / 2)⁻¹ ^ m * (|Mγ'| + 1) := by
-  have hε_lt := hε.2
   set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
   apply ae_of_all; intro t ht
   simp only [cauchyPrincipalValueIntegrandOn]
@@ -605,7 +590,7 @@ private lemma dct_bound_diff_cpv_zpow
           calc ‖s - s'‖ = ‖(s - γ.toFun t) + (γ.toFun t - s')‖ := by ring_nf
             _ ≤ ‖s - γ.toFun t‖ + ‖γ.toFun t - s'‖ := norm_add_le _ _
             _ = ‖γ.toFun t - s‖ + ‖γ.toFun t - s'‖ := by rw [norm_sub_rev]
-        linarith [hε_lt]
+        linarith [hε.2]
       have ht_Icc : t ∈ Icc γ.a γ.b :=
         Ioc_subset_Icc_self (Set.uIoc_of_le γ.hab.le ▸ ht)
       calc ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖

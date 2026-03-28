@@ -32,18 +32,14 @@ noncomputable section
 private lemma fdBoundary_H_norm_eq_one_arc {H t : ℝ} (h1 : 1 < t) (h3 : t < 3) :
     ‖fdBoundary_H H t‖ = 1 := by
   by_cases h2 : t ≤ 2
-  · rw [fdBoundary_H_eq_seg2_H H h1 h2,
-      show fdBoundary_seg2_H t =
-        exp (↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I) from by
-        simp only [fdBoundary_seg2_H, fdBoundary_seg2]
-        congr 1; push_cast; ring]
+  · rw [fdBoundary_H_eq_seg2_H H h1 h2]; simp only [fdBoundary_seg2_H, fdBoundary_seg2]
+    rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
+      ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
     exact norm_exp_ofReal_mul_I _
   · push_neg at h2
-    rw [fdBoundary_H_eq_seg3_H H h2 (le_of_lt h3),
-      show fdBoundary_seg3_H t =
-        exp (↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I) from by
-        simp only [fdBoundary_seg3_H, fdBoundary_seg3]
-        congr 1; push_cast; ring]
+    rw [fdBoundary_H_eq_seg3_H H h2 (le_of_lt h3)]; simp only [fdBoundary_seg3_H, fdBoundary_seg3]
+    rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
+      ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
     exact norm_exp_ofReal_mul_I _
 
 /-- The boundary at height H avoids any strict interior point p
@@ -276,7 +272,7 @@ private lemma fdBoundary_H_piecewise_homotopic (p : ℂ) (hp_norm : ‖p‖ > 1)
   · exact fdHomot_continuous heightCutoff H
   · intro t _; simp only [zero_mul, add_zero]
   · intro t _
-    show fdBoundary_H (heightCutoff + 1 * (H - heightCutoff)) t = fdBoundary_H H t
+    change fdBoundary_H (heightCutoff + 1 * (H - heightCutoff)) t = fdBoundary_H H t
     congr 1; ring
   · intro s _; exact fdBoundary_H_closed _
   · intro t ht s hs
@@ -373,10 +369,10 @@ theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
           Continuous (fun s => (1 - s) * Hmid + s * p.im))).mul continuous_const)).comp
           continuous_snd)
     · intro t _
-      show fdBoundary_H H t - zPath 0 = fdBoundary_H H t - q
+      change fdBoundary_H H t - zPath 0 = fdBoundary_H H t - q
       congr 1; simp only [zPath, q]; push_cast; ring
     · intro t _
-      show fdBoundary_H H t - zPath 1 = fdBoundary_H H t - p
+      change fdBoundary_H H t - zPath 1 = fdBoundary_H H t - p
       congr 1; simp only [zPath]; push_cast; ring_nf
       exact Complex.re_add_im p
     · intro s _; simp only [sub_left_inj]; exact fdBoundary_H_closed H
@@ -391,7 +387,7 @@ theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
         (by rw [hzs_im]; nlinarith [hs.1, hs.2, hp_im, hHmid_lt, hH])
         t ht
     · intro t _ ht_not_P s _
-      show DifferentiableAt ℝ (fun t' => fdBoundary_H H t' - zPath s) t
+      change DifferentiableAt ℝ (fun t' => fdBoundary_H H t' - zPath s) t
       have : t ∉ fdBoundary_H_partition := by
         simp only [fdBoundaryFullPartition, fdBoundary_H_partition,
           Finset.mem_insert, Finset.mem_singleton] at ht_not_P ⊢
@@ -399,7 +395,7 @@ theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
       exact (fdBoundary_H_differentiableAt_off_partition H t this).sub
         (differentiableAt_const _)
     · intro p₁ p₂ _ hfree hsub
-      show ContinuousOn (fun r : ℝ × ℝ =>
+      change ContinuousOn (fun r : ℝ × ℝ =>
         deriv (fun t' => fdBoundary_H H t' - zPath r.2) r.1)
         (Ioo p₁ p₂ ×ˢ Icc 0 1)
       have hc_base : ContinuousOn (deriv (fdBoundary_H H)) (Ioo p₁ p₂) :=
@@ -419,7 +415,7 @@ theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
     · obtain ⟨M, hM'⟩ := piecewiseC1Immersion_deriv_bounded (fdBoundary_HImmersion H hH_sqrt)
       have hM : ∀ t ∈ Icc (0:ℝ) 5, ‖deriv (fdBoundary_H H) t‖ ≤ M := hM'
       refine ⟨M, fun t ht s _ => ?_⟩
-      show ‖deriv (fun t' => fdBoundary_H H t' - zPath s) t‖ ≤ M
+      change ‖deriv (fun t' => fdBoundary_H H t' - zPath s) t‖ ≤ M
       by_cases hd : DifferentiableAt ℝ (fdBoundary_H H) t
       · rw [show (fun t' => fdBoundary_H H t' - zPath s) =
             fdBoundary_H H - fun _ => zPath s from funext fun _ => rfl,
