@@ -355,8 +355,8 @@ decomposition). This makes the ContinuousAt hypothesis hold. -/
 omit f hf in
 private lemma residueSimplePole_congr_local (F G : ℂ → ℂ) (z₀ : ℂ)
     (h : F =ᶠ[𝓝[≠] z₀] G) : residueSimplePole F z₀ = residueSimplePole G z₀ := by
-  simp only [residueSimplePole, limUnder]
-  congr 1; exact Filter.map_congr (h.mono fun z hz => by simp only [hz])
+  unfold residueSimplePole
+  exact congrArg lim (Filter.map_congr (h.mono fun z hz => by rw [hz]))
 
 omit f hf in
 noncomputable def logDerivPatched (F : ℂ → ℂ) (S0 : Finset ℂ)

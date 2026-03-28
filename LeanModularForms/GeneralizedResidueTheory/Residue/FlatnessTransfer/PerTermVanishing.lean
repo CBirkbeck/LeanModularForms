@@ -1202,9 +1202,6 @@ lemma residueAt_sub_residueSum_eq_zero
       residueAt f s * (2 * ↑Real.pi * I) :=
     circleIntegral_simple_pole_sum S0 (residueAt f) s hs r hr_pos
       h_no_pole_on_sphere h_no_pole_in_cb
-  simp only [show ∀ s' : ℂ, (limUnder (𝓝[>] (0:ℝ)) fun r =>
-    (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s', r), f z) = residueAt f s' from
-    fun _ => rfl]
   rw [h_int_sub, h_int_sum, mul_sub, mul_comm (residueAt f s) _, ← mul_assoc,
     inv_mul_cancel₀ h2piI_ne, one_mul]
   rw [h_const_integral r hr_pos hr_lt.le]

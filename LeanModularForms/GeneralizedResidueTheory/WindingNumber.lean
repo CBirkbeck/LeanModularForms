@@ -1321,16 +1321,14 @@ private lemma cpv_inv_sub_eq_limit
       else 0) (𝓝[>] 0) (𝓝 L)) :
     cauchyPrincipalValue' (·⁻¹)
       (fun t => γ.toFun t - z₀) γ.a γ.b 0 = L := by
-  have h_eq : cauchyPrincipalValue' (·⁻¹)
-      (fun t => γ.toFun t - z₀) γ.a γ.b 0 =
-    limUnder (𝓝[>] 0) (fun ε => ∫ t in γ.a..γ.b,
-      if ‖γ.toFun t - z₀‖ > ε
-      then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0) := by
-    unfold cauchyPrincipalValue'
-    congr 1; ext ε
-    apply intervalIntegral.integral_congr; intro t _
-    simp only [sub_zero, deriv_sub_const]
-  rw [h_eq]; exact hL.limUnder_eq
+  have hL' : Tendsto (fun ε => ∫ t in γ.a..γ.b,
+      if ‖(fun t => γ.toFun t - z₀) t - 0‖ > ε
+      then (·⁻¹) ((fun t => γ.toFun t - z₀) t) *
+        deriv (fun t => γ.toFun t - z₀) t
+      else 0) (𝓝[>] 0) (𝓝 L) := by
+    refine hL.congr (Filter.eventually_of_forall fun ε => ?_)
+    congr 1 with t; simp only [sub_zero, deriv_sub_const]
+  unfold cauchyPrincipalValue'; exact hL'.limUnder_eq
 
 /-- **FTC + direction limit**: For a closed piecewise C¹ immersion with unique crossing
 at t₀ through z₀, the exponential of the Cauchy PV integral equals `exp(-i · α)` where
