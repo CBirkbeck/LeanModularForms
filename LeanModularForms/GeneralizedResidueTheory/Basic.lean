@@ -89,44 +89,6 @@ def CauchyPrincipalValueExists' (f : ℂ → ℂ) (γ : ℝ → ℂ)
 def generalizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   (2 * Real.pi * I)⁻¹ * cauchyPrincipalValue' (·⁻¹) (fun t => γ t - z₀) a b 0
 
-/-- A model sector curve for computing angle contributions. -/
-structure ModelSectorCurve where
-  r : ℝ
-  hr : 0 < r
-  α : ℝ
-  hα_nonneg : 0 ≤ α
-  hα_le : α ≤ 2 * Real.pi
-
-/-- The radial ray along the positive real axis. -/
-def ModelSectorCurve.γ₁ (_C : ModelSectorCurve) : ℝ → ℂ := fun t => t
-
-/-- The circular arc of radius `r`. -/
-def ModelSectorCurve.γ₂ (C : ModelSectorCurve) : ℝ → ℂ :=
-  fun t => C.r * exp (I * t)
-
-/-- The radial ray along the direction `e^{iα}`. -/
-def ModelSectorCurve.γ₃ (C : ModelSectorCurve) : ℝ → ℂ :=
-  fun t => t * exp (I * C.α)
-
-@[simp] theorem ModelSectorCurve.γ₁_zero (M : ModelSectorCurve) : M.γ₁ 0 = 0 := by
-  simp [ModelSectorCurve.γ₁]
-
-@[simp] theorem ModelSectorCurve.γ₃_zero (M : ModelSectorCurve) : M.γ₃ 0 = 0 := by
-  simp [ModelSectorCurve.γ₃]
-
-theorem ModelSectorCurve.γ₂_norm (M : ModelSectorCurve) (t : ℝ) :
-    ‖M.γ₂ t‖ = M.r := by
-  simp only [ModelSectorCurve.γ₂, norm_mul, Complex.norm_real, Real.norm_eq_abs,
-    abs_of_pos M.hr, mul_comm I, Complex.norm_exp_ofReal_mul_I, mul_one]
-
-/-- The residue of f at z₀ via the limit definition for simple poles. -/
-def residue' (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
-  limUnder (𝓝[≠] z₀) fun z => (z - z₀) * f z
-
-/-- Residue via contour integral: `(1/2πi) ∮_{|z-z₀|=1} f(z) dz`. -/
-def residueIntegral' (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
-  (2 * Real.pi * I)⁻¹ * ∮ z in C(z₀, 1), f z
-
 /-- Two curves are homotopic relative to endpoints. -/
 def CurvesHomotopic (Γ γ : ℝ → ℂ) (a b : ℝ) : Prop :=
   ∃ H : ℝ × ℝ → ℂ,
