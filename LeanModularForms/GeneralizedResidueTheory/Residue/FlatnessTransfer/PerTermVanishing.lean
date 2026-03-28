@@ -1020,18 +1020,9 @@ private lemma residueAt_congr {f g : ℂ → ℂ} {s : ℂ}
       intro heq; rw [heq, Metric.mem_sphere, dist_self] at hz; linarith
     exact hδ_eq ⟨Metric.mem_ball.mpr (by rw [Metric.mem_sphere.mp hz]; exact hr_lt),
       Set.mem_compl_singleton_iff.mpr hne⟩
-  change limUnder (𝓝[>] (0 : ℝ))
-      (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), f z) =
-    limUnder (𝓝[>] (0 : ℝ))
-      (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r), g z)
-  unfold limUnder
-  congr 1
-  apply Filter.map_congr
-  apply Filter.Eventually.mono (Ioo_mem_nhdsGT hδ_pos)
-  intro r ⟨hr_pos, hr_lt⟩
-  simp only
-  congr 1
-  exact h_ci_eq r hr_pos hr_lt
+  exact limUnder_eventually_eq (by
+    filter_upwards [Ioo_mem_nhdsGT hδ_pos] with r ⟨hr_pos, hr_lt⟩
+    simp only; congr 1; exact h_ci_eq r hr_pos hr_lt)
 
 /-- Circle integrals of a meromorphic `f` are constant for small radii: if `f` is
 analytic on `ball s rf \ {s}`, then `∮_{C(s,r)} f = ∮_{C(s,R₀)} f` for `r ≤ R₀ < rf`.
