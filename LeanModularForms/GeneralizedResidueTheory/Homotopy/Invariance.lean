@@ -579,7 +579,7 @@ theorem contourIntegral_eq_of_homotopic
   suffices h : I 0 = I 1 from h
   have hH_diff : Differentiable ℝ H :=
     hH_smooth.differentiable
-      (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
   have h_deriv_t_cont : Continuous
       (fun p : ℝ × ℝ =>
         deriv (fun t => H (t, p.2)) p.1) :=

@@ -1683,8 +1683,8 @@ lemma singular_annulus_bound_explicit
       _ ≤ Csing * ε₁ := by
           suffices h :
               Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3 * bound ≤
-              Csing * ε₁ from by
-          show Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3 *
+              Csing * ε₁ by
+          change Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3 *
             (2 * ‖L‖ / ε₂) ≤
             4 * Kmeas / ‖L‖ ^ 2 * ε₁
           have h1 :
