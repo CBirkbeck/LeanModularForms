@@ -171,7 +171,8 @@ omit hf in
 private lemma logDeriv_modFormComp_periodic :
     Function.Periodic (logDeriv (modularFormCompOfComplex f)) (1 : ℂ) := by
   have h_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
-    have := SlashInvariantFormClass.periodic_comp_ofComplex 1 f
+    have := SlashInvariantFormClass.periodic_comp_ofComplex f
+      ModularFormClass.one_mem_strictPeriods_SL2Z
     simpa only [Nat.cast_one] using this
   intro z
   simp only [logDeriv, Pi.div_apply]
@@ -327,7 +328,7 @@ include hf in
 private theorem seg5_logDeriv_integral_value
     {H : ℝ} (_hH : Real.sqrt 3 / 2 < H)
     (_hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0) :
     ∫ t in (4:ℝ)..5,
       logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
         deriv (fdBoundary_H H) t =
@@ -339,7 +340,7 @@ private theorem tendsto_pvIntegral_seg5
     (S : Finset UpperHalfPlane)
     {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0)
     (h_vert_below_H : ∀ s ∈ sVertOfS S, s.im < H)
     (h_arc_below_H : ∀ s ∈ sArcOfS S, s.im < H) :
     Tendsto (fun ε =>
@@ -612,7 +613,7 @@ omit hf in
 private lemma modFormComp_ne_zero_at_height
     {H : ℝ} (hH_pos : 0 < H)
     (hcusp : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0)
+      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0)
     {z : ℂ} (hz_im : z.im = H) :
     modularFormCompOfComplex f z ≠ 0 := by
   have hz_pos : 0 < z.im := hz_im ▸ hH_pos
@@ -620,15 +621,16 @@ private lemma modFormComp_ne_zero_at_height
     simp only [modularFormCompOfComplex, Function.comp_apply]
     congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos hz_pos
   intro h_zero
-  have h_qmem : Function.Periodic.qParam (↑(1 : ℕ)) (↑(⟨z, hz_pos⟩ : ℍ) : ℂ) ∈
+  have h_qmem : Function.Periodic.qParam (1 : ℝ) (↑(⟨z, hz_pos⟩ : ℍ) : ℂ) ∈
       Metric.closedBall (0 : ℂ) (seg5_q_radius_H H) := by
     rw [Metric.mem_closedBall, dist_zero_right, Function.Periodic.norm_qParam]
-    simp only [Nat.cast_one, div_one, seg5_q_radius_H, hz_im]
+    simp only [div_one, seg5_q_radius_H, hz_im]; exact le_refl _
   have h_qne :
-      Function.Periodic.qParam (↑(1 : ℕ)) (↑(⟨z, hz_pos⟩ : ℍ) : ℂ) ≠ 0 := by
+      Function.Periodic.qParam (1 : ℝ) (↑(⟨z, hz_pos⟩ : ℍ) : ℂ) ≠ 0 := by
     simp only [Function.Periodic.qParam, ne_eq]
     exact Complex.exp_ne_zero _
-  exact absurd ((SlashInvariantFormClass.eq_cuspFunction (1 : ℕ) f ⟨z, hz_pos⟩).trans
+  exact absurd ((SlashInvariantFormClass.eq_cuspFunction f ⟨z, hz_pos⟩
+    ModularFormClass.one_mem_strictPeriods_SL2Z one_ne_zero).trans
     (h_bridge ▸ h_zero)) (hcusp _ h_qmem h_qne)
 
 include hf in
@@ -640,7 +642,7 @@ private lemma modular_side_h_capture
     (hH_gt_one : 1 < H)
     (_hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     (hcusp : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0) :
     ∀ t ∈ Icc (0 : ℝ) 5,
       modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
       fdBoundary_H H t ∈ (↑(sArcOfS S ∪ sVertOfS S) : Set ℂ) := by
@@ -704,7 +706,8 @@ private lemma modular_side_h_capture
             rw [h4_u, fdBoundary_H_eq_seg1_H (by linarith : 4 - t ≤ 1)]
           have h_F_per : Function.Periodic
               (modularFormCompOfComplex f) (1 : ℂ) := by
-            have := SlashInvariantFormClass.periodic_comp_ofComplex 1 f
+            have := SlashInvariantFormClass.periodic_comp_ofComplex f
+              ModularFormClass.one_mem_strictPeriods_SL2Z
             simpa only [Nat.cast_one] using this
           have h_F_zero_shifted :
               modularFormCompOfComplex f (fdBoundary_H H (4 - t)) = 0 := by
@@ -838,16 +841,20 @@ private lemma fd_point_mem_fdBox
   rw [mem_allZerosInFdBox_iff]
   have h_fd := hS p hp_S
   refine ⟨⟨?_, ?_, ?_, by linarith [hH_bound p hp_S]⟩, ?_⟩
-  · linarith [(abs_le.mp h_fd.2).1]
-  · linarith [(abs_le.mp h_fd.2).2]
-  · by_contra h_le; push_neg at h_le
+  · rw [UpperHalfPlane.coe_re]; linarith [(abs_le.mp h_fd.2).1]
+  · rw [UpperHalfPlane.coe_re]; linarith [(abs_le.mp h_fd.2).2]
+  · by_contra h_le
+    have h_le' : (↑p : ℂ).im ≤ 1/2 := le_of_not_gt h_le
+    rw [UpperHalfPlane.coe_im] at h_le'
     have h_nsq :
-        1 ≤ (↑p : ℂ).re * (↑p : ℂ).re + (↑p : ℂ).im * (↑p : ℂ).im := by
-      have := Complex.normSq_apply (↑p : ℂ); linarith [h_fd.1]
+        1 ≤ p.re * p.re + p.im * p.im := by
+      have := Complex.normSq_apply (↑p : ℂ)
+      rw [UpperHalfPlane.coe_re, UpperHalfPlane.coe_im] at this
+      linarith [h_fd.1]
     nlinarith [(abs_le.mp h_fd.2).1, (abs_le.mp h_fd.2).2, p.im_pos]
   · have h_mfcc_eq : modularFormCompOfComplex f (↑p : ℂ) = f p := by
       simp only [modularFormCompOfComplex, Function.comp_apply]
-      congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]; ext; rfl
+      congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
     rw [h_mfcc_eq]; exact hp_zero
 
 omit f hf in
@@ -968,7 +975,8 @@ private lemma cpv_residue_side_off_curve_min_dist
     obtain ⟨h_box, h_narc⟩ := Finset.mem_sdiff.mp hs
     rw [hS_on] at h_narc
     exact h_narc (Finset.mem_coe.mp (heq ▸ h_capture_S_on t ht (by
-      rw [heq, hSbox] at h_box
+      rw [heq]
+      rw [hSbox] at h_box
       exact ((mem_allZerosInFdBox_iff f hf hM_half).mp h_box).2)))
   have h_cont : ContinuousOn (fun t => ‖γ t - s‖) (Icc 0 5) :=
     ((fdBoundary_H_continuous H).continuousOn.sub continuousOn_const).norm
@@ -1089,8 +1097,7 @@ private lemma cpv_residue_side_sum_convert
       intro p hp h_eq
       have h_mfcc_eq : modularFormCompOfComplex f (↑p : ℂ) = f p := by
         simp only [modularFormCompOfComplex, Function.comp_apply]
-        congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
-        ext; rfl
+        congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
       exact hs_ni (Finset.mem_image.mpr ⟨p, Finset.mem_filter.mpr ⟨hp, by
         rw [← h_mfcc_eq, h_eq]
         exact ((mem_allZerosInFdBox_iff f hf hM_half).mp hs).2⟩, h_eq⟩)
@@ -1105,7 +1112,7 @@ private lemma cpv_residue_side_sum_convert
     _ = ∑ p ∈ S_zeros,
           generalizedWindingNumber' γ 0 5 (↑p : ℂ) *
             residueSimplePole F (↑p : ℂ) :=
-        Finset.sum_image (fun _ _ _ _ h => Subtype.val_injective h)
+        Finset.sum_image (fun _ _ _ _ h => UpperHalfPlane.ext h)
     _ = ∑ p ∈ S_zeros,
           generalizedWindingNumber' γ 0 5 (↑p : ℂ) *
             (orderOfVanishingAt' (⇑f) p : ℂ) := by
@@ -1212,9 +1219,11 @@ theorem cpv_residue_side_tendsto
         (orderOfVanishingAt' (⇑f) s : ℂ) := by
     rw [show L = cauchyPrincipalValueOn S0 Fp γ 0 5 from
       (Filter.Tendsto.limUnder_eq hL_tendsto).symm, h_val]; congr 1
-    rw [Finset.sum_congr rfl (fun s hs => by
-        change _ * residueSimplePole Fp s = _ * residueSimplePole F s
-        congr 1; exact residue_logDerivPatched_eq_raw F S0 hSimplePoles s hs),
+    have h_res_congr : ∀ s ∈ S0,
+        generalizedWindingNumber' γ 0 5 s * residueSimplePole Fp s =
+        generalizedWindingNumber' γ 0 5 s * residueSimplePole F s := by
+      intro s hs; congr 1; exact residue_logDerivPatched_eq_raw F S0 hSimplePoles s hs
+    rw [Finset.sum_congr rfl h_res_congr,
       show S0 = Sbox ∪ (S_on \ Sbox) from by
       rw [hS0_def]; exact Finset.union_sdiff_self_eq_union.symm]
     rw [Finset.sum_union Finset.disjoint_sdiff]
