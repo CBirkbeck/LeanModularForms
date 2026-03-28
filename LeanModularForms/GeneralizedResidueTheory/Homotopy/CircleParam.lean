@@ -127,16 +127,14 @@ theorem circleParam_winding_eq_one (z₀ : ℂ) (r : ℝ)
       exact ne_of_gt hab
     simp only [Complex.real_smul, Complex.ofReal_sub]
     field_simp
-  have hlim : limUnder (𝓝[>] (0 : ℝ))
-      (fun ε => ∫ t in a..b,
+  have hlim : Tendsto (fun ε => ∫ t in a..b,
         if ‖circleParam z₀ r a b t - z₀‖ > ε then
           (circleParam z₀ r a b t - z₀)⁻¹ *
             deriv (circleParam z₀ r a b) t
-        else 0) =
-      2 * Real.pi * I := by
-    apply limUnder_eventually_eq_const
-    filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
-    exact hint_const ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2
+        else 0) (𝓝[>] (0 : ℝ)) (𝓝 (2 * Real.pi * I)) :=
+    tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
+      exact (hint_const ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2).symm)
   have h_match :
       (fun ε => ∫ t in a..b,
         if ‖(fun t => circleParam z₀ r a b t - z₀) t - 0‖ >
@@ -154,7 +152,7 @@ theorem circleParam_winding_eq_one (z₀ : ℂ) (r : ℝ)
         else 0) := by
     ext ε; congr 1 with t
     simp only [sub_zero, deriv_sub_const]
-  simp only [h_match, hlim]
+  simp only [h_match, hlim.limUnder_eq]
   have hpi_ne : (2 : ℂ) * Real.pi * I ≠ 0 := by
     simp [ne_eq, mul_eq_zero, Complex.ofReal_eq_zero,
       Real.pi_ne_zero, I_ne_zero]
@@ -302,16 +300,14 @@ theorem circleParamCW_winding_eq_neg_one (z₀ : ℂ)
       exact ne_of_gt hab
     simp only [Complex.real_smul, Complex.ofReal_sub]
     field_simp [hba_ne]
-  have hlim : limUnder (𝓝[>] (0 : ℝ))
-      (fun ε => ∫ t in a..b,
+  have hlim : Tendsto (fun ε => ∫ t in a..b,
         if ‖circleParamCW z₀ r a b t - z₀‖ > ε then
           (circleParamCW z₀ r a b t - z₀)⁻¹ *
             deriv (circleParamCW z₀ r a b) t
-        else 0) =
-      -2 * Real.pi * I := by
-    apply limUnder_eventually_eq_const
-    filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
-    exact hint_const ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2
+        else 0) (𝓝[>] (0 : ℝ)) (𝓝 (-2 * Real.pi * I)) :=
+    tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
+      exact (hint_const ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2).symm)
   have h_match :
       (fun ε => ∫ t in a..b,
         if ‖(fun t =>
@@ -330,7 +326,7 @@ theorem circleParamCW_winding_eq_neg_one (z₀ : ℂ)
         else 0) := by
     ext ε; congr 1 with t
     simp only [sub_zero, deriv_sub_const]
-  simp only [h_match, hlim]
+  simp only [h_match, hlim.limUnder_eq]
   have hpi_ne : (2 : ℂ) * Real.pi * I ≠ 0 := by
     simp [ne_eq, mul_eq_zero, Complex.ofReal_eq_zero,
       Real.pi_ne_zero, I_ne_zero]
@@ -403,12 +399,12 @@ theorem winding_of_S1_curve_eq_degree (z₀ : ℂ) (a b : ℝ) (_hab : a < b)
         fun t => (γ t - z₀)⁻¹ * deriv γ t := by
       ext t; simp only [h_cond t, ↓reduceIte]
     rw [this, h_integral]
-  have hlim : limUnder (𝓝[>] (0 : ℝ)) (fun ε =>
-      ∫ t in a..b, if ‖γ t - z₀‖ > ε then (γ t - z₀)⁻¹ * deriv γ t else 0) =
-      2 * Real.pi * I * n := by
-    apply limUnder_eventually_eq_const
-    filter_upwards [Ioo_mem_nhdsGT (by norm_num : (0:ℝ) < 1)] with ε hε
-    exact hint_const ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2
+  have hlim : Tendsto (fun ε =>
+      ∫ t in a..b, if ‖γ t - z₀‖ > ε then (γ t - z₀)⁻¹ * deriv γ t else 0)
+      (𝓝[>] (0 : ℝ)) (𝓝 (2 * Real.pi * I * n)) :=
+    tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT (by norm_num : (0:ℝ) < 1)] with ε hε
+      exact (hint_const ε (mem_Ioo.mp hε).1 (mem_Ioo.mp hε).2).symm)
   unfold generalizedWindingNumber' cauchyPrincipalValue'
   have h_match : (fun ε => ∫ t in a..b,
       if ‖(fun t => γ t - z₀) t - 0‖ > ε then
@@ -416,7 +412,7 @@ theorem winding_of_S1_curve_eq_degree (z₀ : ℂ) (a b : ℝ) (_hab : a < b)
       else 0) = (fun ε => ∫ t in a..b,
       if ‖γ t - z₀‖ > ε then (γ t - z₀)⁻¹ * deriv γ t else 0) := by
     ext ε; congr 1 with t; simp only [sub_zero, deriv_sub_const]
-  simp only [h_match, hlim]
+  simp only [h_match, hlim.limUnder_eq]
   have hpi_ne : (2 : ℂ) * Real.pi * I ≠ 0 := by
     simp [ne_eq, mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
   field_simp
