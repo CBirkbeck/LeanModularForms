@@ -62,18 +62,17 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
       (fdBoundary_H 1) (17/4) (19/4) I := by
     apply cpv_exists_on_smooth_subinterval 1 hH I
       (show (9/2:ℝ) ∈ Set.Ioo (17/4:ℝ) (19/4) from ⟨by norm_num, by norm_num⟩) hγ92
-    · have heq : fdBoundary_H 1 =ᶠ[𝓝 (9/2:ℝ)] fdBoundary_seg5_H 1 :=
-        Filter.eventuallyEq_iff_exists_mem.mpr
+    · apply ContDiffAt.congr_of_eventuallyEq _
+        (Filter.eventuallyEq_iff_exists_mem.mpr
           ⟨Set.Ioi 4, Ioi_mem_nhds (by norm_num : (4:ℝ) < 9/2),
-            fun s (hs : 4 < s) => fdBoundary_H_eq_seg5_H hs⟩
-      apply ContDiffAt.congr_of_eventuallyEq _ heq
+            fun s (hs : 4 < s) => fdBoundary_H_eq_seg5_H hs⟩)
       change ContDiffAt ℝ 2 (fdBoundary_seg5_H 1) (9/2 : ℝ)
       unfold fdBoundary_seg5_H
       apply ContDiffAt.add
       · exact Complex.ofRealCLM.contDiff.contDiffAt.sub contDiffAt_const
       · exact contDiffAt_const
-    · have hd := fdBoundary_H_hasDerivAt_seg5 1 (show (4:ℝ) < 9/2 from by norm_num)
-      rw [hd.deriv]; exact one_ne_zero
+    · rw [(fdBoundary_H_hasDerivAt_seg5 1 (show (4:ℝ) < 9/2 from by norm_num)).deriv]
+      exact one_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_45 1).mono
       intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt

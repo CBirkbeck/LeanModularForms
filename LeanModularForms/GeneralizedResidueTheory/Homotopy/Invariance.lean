@@ -323,12 +323,10 @@ theorem windingNumber_eq_of_piecewise_homotopic
     · intro t ht h_not_P
       exact hH_diff t ht h_not_P s hs
     · intro p₁ p₂ hp₁p₂ hpiece h_sub
-      have h_full := hH_deriv_cont p₁ p₂ hp₁p₂ hpiece h_sub
-      have h_embed : ContinuousOn (fun t => (t, s)) (Ioo p₁ p₂) :=
+      convert (hH_deriv_cont p₁ p₂ hp₁p₂ hpiece h_sub).comp
         (continuous_id.prodMk continuous_const).continuousOn
-      have h_range : MapsTo (fun t => (t, s)) (Ioo p₁ p₂) (Ioo p₁ p₂ ×ˢ Icc 0 1) :=
-        fun t ht => ⟨ht, hs⟩
-      convert h_full.comp h_embed h_range using 1
+        (fun t (ht : t ∈ Ioo p₁ p₂) => (show (t, s) ∈ Ioo p₁ p₂ ×ˢ Icc 0 1 from ⟨ht, hs⟩))
+        using 1
     · exact fun t ht => hH_avoid t ht s hs
     · exact ⟨M, fun t ht => hM_bound t ht s hs⟩
   have heq : n 0 = n 1 := continuous_integer_valued_constant n hn_cont hn_int
