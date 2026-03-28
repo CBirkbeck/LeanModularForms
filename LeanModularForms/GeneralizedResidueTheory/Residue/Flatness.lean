@@ -96,7 +96,7 @@ theorem norm_tangentDeviation_le (w L : ℂ) (hL : L ≠ 0) :
   suffices h : ‖((w * starRingEnd ℂ L).re / Complex.normSq L) • L‖ ≤ ‖w‖ by
     calc ‖w - _‖ ≤ ‖w‖ + ‖((w * starRingEnd ℂ L).re / Complex.normSq L) • L‖ :=
             norm_sub_le _ _
-      _ ≤ ‖w‖ + ‖w‖ := add_le_add_left h _
+      _ ≤ ‖w‖ + ‖w‖ := by gcongr
       _ = 2 * ‖w‖ := by ring
   rw [norm_smul, Real.norm_eq_abs]
   calc |(w * starRingEnd ℂ L).re / Complex.normSq L| * ‖L‖
