@@ -322,6 +322,8 @@ private theorem cauchyPV_inv_integrableOn_3δ3 (r : ℝ) (hr : 0 < r) (α : ℝ)
     IntervalIntegrable (cauchyPrincipalValueIntegrand' (fun z => z⁻¹)
       (sectorCurve r α) 0 ε) volume (3 - ε / r) 3 := by
   exact (intervalIntegrable_const (c := (0 : ℂ))).congr (fun t ht => by
+    have hεr_pos : ε / r > 0 := div_pos hε_pos hr
+    have hεr_lt_one : ε / r < 1 := (div_lt_one hr).mpr hε_lt_r
     rw [Set.uIoc_of_le (by linarith : 3 - ε / r ≤ 3)] at ht
     simp only [cauchyPrincipalValueIntegrand', sub_zero]
     rw [if_neg (not_lt.mpr _)]
