@@ -1,129 +1,103 @@
-# Project Overview: ContourIntegral API + Winding Number Files
+# Project Overview: LeanModularForms
 
-Generated: 2026-03-25
+Generated: 2026-03-28
 
-## Summary
-- Files: 12 (4 API + 4 Winding + 4 WindingWeights)
-- Total lines: 7,209
-- Sorries: 0
-- Total declarations: ~170
+## Executive Summary
 
-## ContourIntegral API (598 lines, 14 declarations)
+This project formalizes the **generalized residue theorem** of Hungerbühler–Wasem
+(arXiv:1808.00997v2, Theorem 3.3) and applies it to the **valence formula for modular
+forms** and **Viazovska's sphere packing** contour integrals. The codebase spans 84 files
+and ~48,600 lines across three main directories:
 
-| File | Lines | Decls | Key API |
-|------|-------|-------|---------|
-| PVSplit.lean | 127 | 1 | `pv_split_at_crossing` |
-| SegmentFTC.lean | 223 | 8 | `ftc_telescope_closed_split_five`, `ftc_telescope_integrability` |
-| CrossingLimit.lean | 188 | 2 | `pv_tendsto_of_crossing_limit`, `pv_tendsto_of_crossing_limit_asymmetric` |
-| WindingNumber.lean | 60 | 3 | `gWN_eq_neg_half_of_pv_tendsto`, `gWN_eq_neg_sixth_of_pv_tendsto` |
+- **GeneralizedResidueTheory/** (37 files): The core complex analysis framework including
+  piecewise C¹ curves, Cauchy principal values, generalized winding numbers, Dixon's proof
+  of the Cauchy integral formula for null-homologous curves, and the full Theorem 3.3 with
+  conditions (A') and (B).
 
-## Winding Files (2,998 lines, 87 declarations)
+- **ValenceFormula/** (44 files): The valence formula for weight-k modular forms on SL₂(ℤ),
+  building on the generalized residue theorem. Includes fundamental domain geometry,
+  boundary winding numbers, orbit pairing, and the textbook-form result.
 
-| File | Lines | Decls | Main Result | Uses API |
-|------|-------|-------|-------------|----------|
-| RightEdge.lean | 935 | 27 | `gWN = -1/2` (right vertical) | symmetric |
-| LeftEdge.lean | 782 | 23 | `gWN = -1/2` (left vertical) | symmetric |
-| UnitArc.lean | 591 | 19 | `gWN = -1/2` (smooth arc) | symmetric |
-| UnitArcHelpers.lean | 690 | 18 | helpers for UnitArc | N/A |
+- **SpherePacking/** (3 files): Application to Viazovska's magic function, proving the
+  contour equivalence I₁₂ = I₁₂_vert + I₁₂_horiz using original triangular contours.
 
-## WindingWeights Files (3,613 lines, 91 declarations)
+**Key metrics:** 0 sorries, 0 `set_option maxHeartbeats`, 1754 declarations (1017 lemmas,
+547 theorems, 171 definitions).
 
-| File | Lines | Decls | Main Result | Uses API |
-|------|-------|-------|-------------|----------|
-| Common.lean | 222 | 16 | shared helpers | N/A |
-| I.lean | 1,161 | 27 | `gWN = -1/2` (at i) | symmetric |
-| Rho.lean | 1,092 | 23 | `gWN = -1/6` (at ρ) | asymmetric |
-| RhoPlusOne.lean | 1,138 | 25 | `gWN = -1/6` (at ρ+1) | asymmetric |
+## Statistics
 
----
-
-## Dead Code (candidates for deletion)
-
-### Confirmed unused within project:
-
-| Declaration | File | Lines | Reason |
-|-------------|------|-------|--------|
-| `unitArc_norm_offset_symm` | UnitArc:120 | 11 | 0 references |
-| `unitArc_norm_pos_at_offset` | UnitArc:189 | 10 | 0 references |
-| `unitArc_norm_continuous` | UnitArc:200 | 4 | 0 references |
-| `unitArc_final_dist_bound` | UnitArc:340 | 12 | 0 references |
-| `cutoff_integral_eq_ftc_rho_plus_one` | RhoPlusOne:644 | 132 | superseded by `pv_tendsto_of_crossing_limit_asymmetric` |
-| `i_norm_gt_right_helper` | I:831 | 23 | 0 references |
-| `i_norm_le_middle_helper` | I:855 | 21 | 0 references |
-| `fdBoundary_H_eq_rho_iff` | Rho:139 | 11 | 0 references in winding files |
-| `arg_approach_rho_left` | Rho:210 | 16 | superseded by `_helper` version |
-| `g_rho_differentiableAt` | Rho:392 | 41 | 0 references |
-
-**Total deletable: ~280 lines**
-
-### SegmentFTC unused theorems (API available but not yet adopted):
-
-| Declaration | Lines | Status |
-|-------------|-------|--------|
-| `ftc_telescope_closed_split` | 12 | Available but unused — `ftc_telescope_closed_split_five` used instead |
-| `ftc_telescope_transfer` | 12 | Available but unused |
-| `ftc_telescope_piecewise_two` | 21 | Available but unused |
-| `ftc_telescope_piecewise_three` | 28 | Available but unused |
-
-These are general API — keep for future use.
+| Metric | Count |
+|--------|-------|
+| Files | 84 |
+| Total lines | 48,590 |
+| Declarations | 1,754 |
+| - lemmas | 1,017 |
+| - theorems | 547 |
+| - definitions | 171 |
+| - structures | 7 |
+| - classes | 3 |
+| Sorries | 0 |
+| `set_option maxHeartbeats` | 0 |
 
 ---
 
-## Shared Helpers in Wrong Location
+## Part 1: Moral Duplications
 
-These helpers are defined in RightEdge.lean but used across multiple files:
+### HIGH Priority (should fix)
 
-| Declaration | Defined in | Used by |
-|-------------|-----------|---------|
-| `ftc_log_neg` | RightEdge:147 | RightEdge (5x), LeftEdge (indirectly), UnitArcHelpers (5x) |
-| `ftc_log` | RightEdge:171 | LeftEdge (5x), UnitArcHelpers (2x) |
-| `log_neg_rI_sub_log_rI` | RightEdge:192 | RightEdge, LeftEdge |
-| `log_div_of_re_pos` | RightEdge:199 | UnitArc, UnitArcHelpers |
-| `hasDerivAt_arc_rep` | RightEdge:244 | LeftEdge, UnitArcHelpers |
-| `re_fdBoundary_H_seg4` | RightEdge:261 | UnitArcHelpers |
-| `im_fdBoundary_H_seg5` | RightEdge:267 | UnitArcHelpers |
-| `rightEdge_dist_from_arc` | RightEdge:115 | LeftEdge |
+1. **`ftc_log_piece` wrapper** — `ValenceFormula/WindingWeights/Common.lean:100` wraps
+   `GeneralizedResidueTheory/LogDerivFTC.lean:78` with zero added value.
+   **Action:** Delete wrapper, import LogDerivFTC directly.
 
-**Recommendation**: Move these 8 helpers to `Common.lean` or a new `SharedHelpers.lean`.
+2. **`fdBoundary` local copy** — `RectHomotopy/Geometry.lean:224` is an acknowledged copy of
+   `Boundary/Basic.lean:64` (same 5-segment curve with renamed height constant).
+   **Action:** Delete copy, import from Boundary/Basic.
 
----
+3. **`H_height` vs `heightCutoff`** — Both equal `√3/2 + 1`, defined independently in
+   `RectHomotopy/Geometry.lean:207` and `Boundary/Basic.lean:32`.
+   **Action:** Unify to `heightCutoff`.
 
-## Consolidation Opportunities
+### MEDIUM Priority
 
-### A. Parallel Structure: Rho ↔ RhoPlusOne
+4. **`cos/sin_two_pi_div_three'`** — Primed copies in `RectHomotopy/HomotopyDef.lean`
+   duplicate `WindingWeights/Common.lean` versions.
+   **Action:** Delete primed copies.
 
-These files have nearly identical structure with different crossing parameters:
+5. **`exp_real_angle_I` vs `exp_real_mul_I`** — Same Euler formula identity in two files.
+   **Action:** Unify name.
 
-| Pattern | Rho | RhoPlusOne |
-|---------|-----|------------|
-| Crossing point | t₀ = 3 | t₀ = 1 |
-| Left side | arc (seg2) | vertical (seg0) |
-| Right side | vertical (seg3) | arc (seg1-2) |
-| δ_left | arcsin-based | linear |
-| δ_right | linear | arcsin-based |
-| Limit | -πi/3 | -πi/3 |
+6. **`fd_im_gt_half` private duplicates** — Same fact proved privately in `OrbitSum.lean`
+   and `TextbookForm.lean`.
+   **Action:** Make one public, delete other.
 
-The geometry is **mirror-symmetric** (left↔right swap). A parametric version could save ~400 lines.
+### KEEP (intentional API layering)
 
-### B. FTC Telescope Pattern
-
-Each file has a ~150-250 line `_ftc_telescope` helper. All follow the same pattern:
-1. Define segment functions (~15 lines)
-2. Apply `ftc_log_piece` on each segment (~35 lines)
-3. Establish ae-equality (~20 lines)
-4. Transfer integrability (~25 lines)
-5. Combine and telescope (~15 lines)
-
-`ftc_telescope_closed_split_five` was designed to replace steps 2-5, but type mismatches (negated log, different segment counts) prevent direct use. A more flexible variant accepting per-segment FTC results as a `List` or `Fin n →` would work.
-
-### C. Missing: `ftc_log` / `ftc_log_neg` in GRT
-
-`ftc_log` and `ftc_log_neg` (RightEdge:147-190) are general FTC lemmas that should live in `GeneralizedResidueTheory/LogDerivFTC.lean` alongside the existing `integral_logDeriv_eq_log_sub`. The negated variant handles curves where `-f` stays in slitPlane.
+- Convex vs null-homologous wrappers (thin corollaries, good API design)
+- `rho`/`i_point` (ℂ) vs `ellipticPointRho'` (ℍ) — different types
+- `cpv_exists_inv_sub*` variants — genuinely different hypotheses
+- Single-curve vs cycle theorems — different input types
 
 ---
 
-## Top Priorities
+## Part 2: Recommended Action Plan
 
-1. **Delete ~280 lines of dead code** across UnitArc, I, Rho, RhoPlusOne
-2. **Move 8 shared helpers** from RightEdge to Common.lean
-3. **Add `ftc_log_neg` to LogDerivFTC.lean** (general API, not FD-specific)
+### Priority 1: Quick Wins (can do now)
+- Delete `ftc_log_piece` wrapper in ValenceFormula
+- Delete `fdBoundary` copy in RectHomotopy/Geometry
+- Unify `H_height` → `heightCutoff`
+- Delete `cos/sin_two_pi_div_three'` primed copies
+- Delete `exp_real_mul_I` duplicate
+
+### Priority 2: API Improvements
+- Rename `generalizedResidueTheorem` in Residue/ to avoid name collision
+- Make `fd_im_gt_half` public and shared
+- Add connecting lemmas between ℂ and ℍ point definitions
+
+### Priority 3: Mathlib API audit
+- Check all 171 definitions against mathlib
+- Identify hand-rolled patterns that should use mathlib API
+- Key candidates: `PiecewiseC1Curve` (no mathlib equivalent),
+  `cauchyPrincipalValue'` (custom CPV), `IsNullHomologous` (custom)
+
+### Priority 4: Unused declaration cleanup
+- Remove dead code identified by cross-file grep
