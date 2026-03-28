@@ -52,13 +52,13 @@ private lemma qExpFMS_ne_zero (hf : f ≠ 0) :
     (n := 1) (F := ModularForm (Gamma 1) k) (f := f)
   have hp0 : HasFPowerSeriesOnBall (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
       (0 : FormalMultilinearSeries ℂ ℂ ℂ) 0 1 := h ▸ hp
-  have hF_ev := hp0.eventually_eq_zero
   have hF_analytic : AnalyticOnNhd ℂ (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
       (Metric.ball 0 1) := hp.analyticOnNhd
   have hF_eq_zero : Set.EqOn (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) 0
       (Metric.ball 0 1) :=
     hF_analytic.eqOn_zero_of_preconnected_of_eventuallyEq_zero
-      (Convex.isPreconnected (convex_ball 0 1)) (Metric.mem_ball_self one_pos) hF_ev
+      (Convex.isPreconnected (convex_ball 0 1)) (Metric.mem_ball_self one_pos)
+      hp0.eventually_eq_zero
   have : ∀ τ : UpperHalfPlane, f τ = 0 := by
     intro τ
     have := SlashInvariantFormClass.eq_cuspFunction (n := 1) (f := f) τ
@@ -82,7 +82,7 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
   have hps_ne : ps ≠ 0 := by
     intro h; apply hp_ne
     exact FormalMultilinearSeries.ext fun n => (h_zero_iff n).mpr (by rw [h]; simp only [map_zero])
-  show p.order = (orderAtCusp' f).toNat
+  change p.order = (orderAtCusp' f).toNat
   unfold orderAtCusp'
   simp only [Int.toNat_natCast]
   have hps_order : ps.order = ↑ps.order.toNat :=
@@ -92,7 +92,7 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
     ps.coeff m ≠ 0 ∧ ∀ i, i < m → ps.coeff i = 0)
   have hp_m_ne : p m ≠ 0 := (h_zero_iff m).not.mpr hm.1
   have hp_lt : ∀ i, i < m → p i = 0 := fun i hi => (h_zero_iff i).mpr (hm.2 i hi)
-  show p.order = m
+  change p.order = m
   unfold FormalMultilinearSeries.order
   have hm_mem : m ∈ {n | p n ≠ 0} := hp_m_ne
   apply le_antisymm
@@ -100,8 +100,7 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
   · -- m ≤ sInf {n | p n ≠ 0}: if sInf < m, then p (sInf) ≠ 0 but also = 0
     by_contra h_lt
     push_neg at h_lt
-    have h_sInf_mem := Nat.sInf_mem ⟨m, hm_mem⟩
-    exact h_sInf_mem (hp_lt _ h_lt)
+    exact Nat.sInf_mem ⟨m, hm_mem⟩ (hp_lt _ h_lt)
 
 /-- The cuspFunction factors as `q^m * g(q)` on the open unit ball,
 where `m = orderAtCusp' f` and `g` is differentiable with `g(0) ≠ 0`. -/
@@ -178,7 +177,7 @@ private lemma circleIntegral_logDeriv_regular_zero
   have h_ball_sub : Metric.ball (0 : ℂ) R ⊆ Metric.ball 0 1 :=
     Metric.ball_subset_ball (le_of_lt hR_lt)
   have hg_cont : ContinuousOn (logDeriv g) (Metric.closedBall (0 : ℂ) R) := by
-    show ContinuousOn (fun q => deriv g q / g q) (Metric.closedBall (0 : ℂ) R)
+    change ContinuousOn (fun q => deriv g q / g q) (Metric.closedBall (0 : ℂ) R)
     exact ContinuousOn.div
       (((hg_diff.contDiffOn (n := 1) Metric.isOpen_ball).continuousOn_deriv_of_isOpen
         Metric.isOpen_ball le_rfl).mono h_cb_sub)
@@ -226,10 +225,7 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
     by_cases hq0 : q = 0
     · exact hq0 ▸ hg_ne
     · have hF_ne := hcusp_nonvan q hq hq0
-      have hq_ball := Metric.closedBall_subset_ball hR_lt hq
-      have hFq := hFg q hq_ball
-      rw [← hF_def] at hFq
-      rw [hFq] at hF_ne
+      rw [← hF_def, hFg q (Metric.closedBall_subset_ball hR_lt hq)] at hF_ne
       exact right_ne_zero_of_mul hF_ne
   have h_split : ∀ q, q ∈ Metric.sphere (0 : ℂ) R →
       logDeriv F q = ↑m / q + logDeriv g q := by
@@ -241,18 +237,16 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
       Metric.sphere_subset_closedBall.trans (Metric.closedBall_subset_ball hR_lt) hq
     have hF_eq : F =ᶠ[𝓝 q] (fun z => z ^ m * g z) :=
       (Metric.isOpen_ball.eventually_mem hq_ball).mono (fun z hz => hFg z hz)
-    have hg_diff_at := hg_diff.differentiableAt (Metric.isOpen_ball.mem_nhds hq_ball)
-    have hg_ne_q := hg_nonvan q (Metric.sphere_subset_closedBall hq)
     simp only [logDeriv_apply, hF_eq.eq_of_nhds, hF_eq.deriv.eq_of_nhds]
     have h_hd : HasDerivAt (fun z => z ^ m * g z) (↑m * q ^ (m - 1) * g q + q ^ m * deriv g q) q :=
-      (hasDerivAt_pow m q).mul hg_diff_at.hasDerivAt
+      (hasDerivAt_pow m q).mul
+        (hg_diff.differentiableAt (Metric.isOpen_ball.mem_nhds hq_ball)).hasDerivAt
     rw [h_hd.deriv]
     have hqm_ne : q ^ m ≠ 0 := pow_ne_zero m hq_ne
     field_simp
     rcases m with _ | n
     · ring
     · rw [Nat.succ_sub_one]; ring
-  have hR_ne : R ≠ 0 := ne_of_gt hR_pos
   have hR_le : 0 ≤ R := le_of_lt hR_pos
   have hci_inv : CircleIntegrable (fun q => (↑m : ℂ) * q⁻¹) 0 R := by
     apply ContinuousOn.circleIntegrable hR_le
@@ -269,7 +263,7 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
     have hg_deriv_cont : ContinuousOn (deriv g) (Metric.ball (0 : ℂ) 1) :=
       ((hg_diff.contDiffOn (n := 1) Metric.isOpen_ball).continuousOn_deriv_of_isOpen
         Metric.isOpen_ball le_rfl)
-    show ContinuousOn (fun q => deriv g q / g q) (Metric.sphere 0 R)
+    change ContinuousOn (fun q => deriv g q / g q) (Metric.sphere 0 R)
     exact ContinuousOn.div (hg_deriv_cont.mono h_sphere_sub)
       (hg_diff.continuousOn.mono h_sphere_sub)
       (fun q hq => hg_nonvan q (Metric.sphere_subset_closedBall hq))
@@ -284,11 +278,11 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
       (fun q => (↑m : ℂ) * q⁻¹ + logDeriv g q) := by
     ext; simp [div_eq_mul_inv]
   rw [h_congr, h_div_eq, circleIntegral.integral_add hci_inv hci_logDeriv,
-      circleIntegral_const_mul_inv (↑m : ℂ) hR_ne,
+      circleIntegral_const_mul_inv (↑m : ℂ) (ne_of_gt hR_pos),
       circleIntegral_logDeriv_regular_zero g hR_pos hR_lt hg_diff hg_nonvan,
       add_zero]
   have hm_cast : (↑m : ℂ) = ↑(orderAtCusp' f) := by
-    show (↑((orderAtCusp' f).toNat) : ℂ) = ↑(orderAtCusp' f)
+    change (↑((orderAtCusp' f).toNat) : ℂ) = ↑(orderAtCusp' f)
     unfold orderAtCusp'
     push_cast [Int.toNat_natCast]; rfl
   rw [hm_cast]; ring
@@ -313,7 +307,7 @@ omit f hf in
 /-- The imaginary part of `fdBoundary_seg5_H H t` is `H`, which is positive when `H > 0`. -/
 private lemma im_fdBoundary_seg5_H_pos {H : ℝ} (hH : 0 < H) (t : ℝ) :
     0 < (fdBoundary_seg5_H H t).im := by
-  show 0 < ((↑t : ℂ) - 9 / 2 + ↑H * I).im
+  change 0 < ((↑t : ℂ) - 9 / 2 + ↑H * I).im
   simp [add_im, mul_im, sub_im, ofReal_im, ofReal_re, I_re, I_im]
   linarith
 

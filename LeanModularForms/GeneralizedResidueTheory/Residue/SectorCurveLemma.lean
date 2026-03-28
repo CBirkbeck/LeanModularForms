@@ -100,7 +100,6 @@ theorem pv_sector_higher_power (r : ℝ) (_hr : 0 < r) (α : ℝ)
     (n : ℕ) (hn : 1 ≤ n) (_h_angle : ∃ k : ℤ, n * α = k * (2 * Real.pi)) :
     ∫ t in (0 : ℝ)..3,
       (sectorCurve r α t) ^ (n - 1) * deriv (sectorCurve r α) t = 0 := by
-  have hn_ne : (↑n : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
   set f : ℝ → ℂ := fun t =>
     (sectorCurve r α t) ^ (n - 1) * deriv (sectorCurve r α) t
   set F : ℝ → ℂ := fun t => (sectorCurve r α t) ^ n / (↑n : ℂ)
@@ -117,7 +116,7 @@ theorem pv_sector_higher_power (r : ℝ) (_hr : 0 < r) (α : ℝ)
     have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
     change HasDerivAt F (sectorCurve r α t ^ (n - 1) * deriv (sectorCurve r α) t) t
     convert ((hγ_diff t ht ht_not').hasDerivAt.pow n).div_const (↑n : ℂ) using 1
-    rw [mul_assoc, mul_div_cancel_left₀ _ hn_ne]
+    rw [mul_assoc, mul_div_cancel_left₀ _ (Nat.cast_ne_zero.mpr (by omega) : (↑n : ℂ) ≠ 0)]
   have hf_int : IntervalIntegrable f volume 0 3 :=
     (pow_integrableOn_01 r α n).trans (pow_integrableOn_12 r α n) |>.trans
       (pow_integrableOn_23 r α n)
@@ -309,13 +308,12 @@ private theorem cauchyPV_inv_integrableOn_0δ (r : ℝ) (hr : 0 < r) (α : ℝ)
     (ε : ℝ) (hε_pos : 0 < ε) (hε_lt_r : ε < r) :
     IntervalIntegrable (cauchyPrincipalValueIntegrand' (fun z => z⁻¹)
       (sectorCurve r α) 0 ε) volume 0 (ε / r) := by
-  have hδ : 0 < ε / r := div_pos hε_pos hr
-  have hδ1 : ε / r < 1 := by rwa [div_lt_one hr]
   exact (intervalIntegrable_const (c := (0 : ℂ))).congr (fun t ht => by
-    rw [Set.uIoc_of_le hδ.le] at ht
+    rw [Set.uIoc_of_le (div_pos hε_pos hr).le] at ht
     simp only [cauchyPrincipalValueIntegrand', sub_zero]
     rw [if_neg (not_lt.mpr _)]
-    rw [sectorCurve_norm_seg1 r hr α t ⟨le_of_lt ht.1, le_trans ht.2 (le_of_lt hδ1)⟩]
+    rw [sectorCurve_norm_seg1 r hr α t ⟨le_of_lt ht.1,
+      le_trans ht.2 (le_of_lt (by rwa [div_lt_one hr] : ε / r < 1))⟩]
     exact le_trans (mul_le_mul_of_nonneg_right ht.2 hr.le)
       (le_of_eq (div_mul_cancel₀ ε (ne_of_gt hr))))
 
@@ -323,18 +321,14 @@ private theorem cauchyPV_inv_integrableOn_3δ3 (r : ℝ) (hr : 0 < r) (α : ℝ)
     (ε : ℝ) (hε_pos : 0 < ε) (hε_lt_r : ε < r) :
     IntervalIntegrable (cauchyPrincipalValueIntegrand' (fun z => z⁻¹)
       (sectorCurve r α) 0 ε) volume (3 - ε / r) 3 := by
-  have hδ : 0 < ε / r := div_pos hε_pos hr
-  have hδ1 : ε / r < 1 := by rwa [div_lt_one hr]
   exact (intervalIntegrable_const (c := (0 : ℂ))).congr (fun t ht => by
     rw [Set.uIoc_of_le (by linarith : 3 - ε / r ≤ 3)] at ht
     simp only [cauchyPrincipalValueIntegrand', sub_zero]
     rw [if_neg (not_lt.mpr _)]
-    have h2 : 2 ≤ t := by linarith [ht.1]
-    rw [sectorCurve_norm_seg3' r hr α t ⟨h2, ht.2⟩]
+    rw [sectorCurve_norm_seg3' r hr α t ⟨by linarith [ht.1], ht.2⟩]
     have : (3 - t) * r ≤ ε / r * r :=
       mul_le_mul_of_nonneg_right (by linarith [ht.1]) hr.le
-    have hδr : ε / r * r = ε := div_mul_cancel₀ ε (ne_of_gt hr)
-    linarith)
+    linarith [div_mul_cancel₀ ε (ne_of_gt hr)])
 
 private theorem cauchyPV_inv_integrableOn_δ1 (r : ℝ) (hr : 0 < r) (α : ℝ)
     (ε : ℝ) (hε_pos : 0 < ε) (hε_lt_r : ε < r) :
@@ -867,8 +861,6 @@ theorem generalizedWindingNumber_sectorCurve (r : ℝ) (hr : 0 < r) (α : ℝ)
   unfold generalizedWindingNumber'
   rw [show (fun t => sectorCurve r α t - 0) = sectorCurve r α from by ext; simp only [sub_zero],
     (pv_sector_dz_over_z r hr α hα_nonneg hα_le).2]
-  have h_pi_ne : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  have h_I_ne : (I : ℂ) ≠ 0 := Complex.I_ne_zero
   field_simp
 
 end

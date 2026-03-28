@@ -83,7 +83,7 @@ private lemma unitArc_log_diff_tendsto (s : ℂ)
       rw [h_s_arc, exp_real_angle_I, exp_real_angle_I]
       simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.ofReal_im,
         Complex.I_re, Complex.I_im, mul_zero, zero_mul, sub_self, add_zero, Complex.sub_re]
-      show 0 < Real.cos θ_m - Real.cos θ₀'; linarith
+      change 0 < Real.cos θ_m - Real.cos θ₀'; linarith
     set θ_p := Real.pi * (1 + (t₀ + δ)) / 6
     have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
     have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, ht₀_Ioo.1]
@@ -95,7 +95,7 @@ private lemma unitArc_log_diff_tendsto (s : ℂ)
       simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
         Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
         mul_zero, zero_mul, sub_self, add_zero, neg_sub]
-      show 0 < Real.cos θ₀' - Real.cos θ_p; linarith
+      change 0 < Real.cos θ₀' - Real.cos θ_p; linarith
     exact (log_div_of_re_pos h_re_a h_re_b).symm
   exact h_ratio.congr' (h_ev_agree.mono fun _ h => h.symm)
 
@@ -170,10 +170,10 @@ private lemma unitArc_norm_lt_of_abs_lt (s : ℂ) (H : ℝ) (t₀ : ℝ)
   have hφ₂_le_pi : Real.pi * |t₂ - t₀| / 6 ≤ Real.pi := by nlinarith [Real.pi_pos]
   have hφ_lt : Real.pi * |t₁ - t₀| / 6 < Real.pi * |t₂ - t₀| / 6 := by
     nlinarith [Real.pi_pos]
-  have hcos_lt := Real.cos_lt_cos_of_nonneg_of_le_pi hφ₁_nn hφ₂_le_pi hφ_lt
   rw [Complex.norm_def, Complex.norm_def]
   apply Real.sqrt_lt_sqrt (Complex.normSq_nonneg _)
-  rw [hns₁, hns₂, hcos₁, hcos₂]; linarith
+  rw [hns₁, hns₂, hcos₁, hcos₂]
+  linarith [Real.cos_lt_cos_of_nonneg_of_le_pi hφ₁_nn hφ₂_le_pi hφ_lt]
 
 /-! ### Helper 1: Arc outside points have norm > ε -/
 
@@ -291,7 +291,7 @@ private lemma unitArc_re_pos_at_offsets (s : ℂ) (t₀ δ' : ℝ)
     simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
       Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
       mul_zero, zero_mul, sub_self, add_zero]
-    show 0 < Real.cos θ_m - Real.cos θ₀'
+    change 0 < Real.cos θ_m - Real.cos θ₀'
     have hθ_m_lt : θ_m < θ₀' := by simp [θ_m, θ₀']; nlinarith [Real.pi_pos]
     have hθ_m_nn : 0 ≤ θ_m := by simp [θ_m]; nlinarith [Real.pi_pos, hδ'_left]
     have hθ₀_le_pi : θ₀' ≤ Real.pi := by simp [θ₀']; nlinarith [Real.pi_pos, hδ'_right]
@@ -302,7 +302,7 @@ private lemma unitArc_re_pos_at_offsets (s : ℂ) (t₀ δ' : ℝ)
     simp only [Complex.sub_re, Complex.add_re, Complex.ofReal_re,
       Complex.mul_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
       mul_zero, zero_mul, sub_self, add_zero, neg_sub]
-    show 0 < Real.cos θ₀' - Real.cos θ_p
+    change 0 < Real.cos θ₀' - Real.cos θ_p
     have hθ_gt : θ₀' < θ_p := by simp [θ₀', θ_p]; nlinarith [Real.pi_pos]
     have hθ₀_nn : 0 ≤ θ₀' := by simp [θ₀']; nlinarith [Real.pi_pos, hδ'_left]
     have hθ_p_le_pi : θ_p ≤ Real.pi := by simp [θ_p]; nlinarith [Real.pi_pos, hδ'_right]
@@ -325,10 +325,8 @@ private lemma unitArc_limit_aux (H : ℝ) (s : ℂ)
         Complex.log (-(fdBoundary_H H (t₀ + δ_fn ε) - s)) - ↑Real.pi * I)
       (nhdsWithin 0 (Ioi 0)) (nhds (-(↑Real.pi * I))) := by
   have h_diff := unitArc_log_diff_tendsto s hs_norm hs_re hs_im_pos t₀ ht₀_Ioo h_s_arc
-  -- Define the log-diff function for composition
   set f_diff := fun δ => Complex.log (exp (↑(Real.pi * (1 + (t₀ - δ)) / 6) * I) - s) -
     Complex.log (-(exp (↑(Real.pi * (1 + (t₀ + δ)) / 6) * I) - s))
-  -- δ_fn tends to 0⁺ as ε → 0⁺
   have hδ_fn_to_zero : Tendsto δ_fn (nhdsWithin 0 (Ioi 0)) (nhdsWithin 0 (Ioi 0)) := by
     apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
     · have hcont : Continuous δ_fn := by
@@ -340,10 +338,8 @@ private lemma unitArc_limit_aux (H : ℝ) (s : ℂ)
         simp only [hδ_fn_def]
         have hε_pos : 0 < ε := Set.mem_Ioi.mp hε
         exact mul_pos (by positivity) (Real.arcsin_pos.mpr (by linarith)))
-  -- f_diff(δ_fn(ε)) → 0 as ε → 0⁺
   have h_comp : Tendsto (f_diff ∘ δ_fn) (nhdsWithin 0 (Ioi 0)) (nhds 0) :=
     h_diff.comp hδ_fn_to_zero
-  -- goal function = (f_diff ∘ δ_fn)(ε) - πI eventually
   have h_ev : ∀ᶠ ε in nhdsWithin 0 (Ioi 0),
       Complex.log (fdBoundary_H H (t₀ - δ_fn ε) - s) -
         Complex.log (-(fdBoundary_H H (t₀ + δ_fn ε) - s)) - ↑Real.pi * I =
@@ -358,7 +354,6 @@ private lemma unitArc_limit_aux (H : ℝ) (s : ℂ)
     have hδ_right : t₀ + δ_fn ε < 3 := by linarith
     rw [fdBoundary_H_eq_arc hδ_left (by linarith [ht₀_Ioo.2, hδ_pos']),
         fdBoundary_H_eq_arc (by linarith [ht₀_Ioo.1, hδ_pos']) hδ_right]
-  -- Conclude: goal tends to -πI
   have h_sub : Tendsto (fun ε => (f_diff ∘ δ_fn) ε - ↑Real.pi * I)
       (nhdsWithin 0 (Ioi 0)) (nhds (0 - ↑Real.pi * I)) :=
     h_comp.sub tendsto_const_nhds
@@ -397,11 +392,9 @@ private lemma unitArc_ftc_bundle_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
   have hδ_right : t₀ + δ_fn ε < 3 := by linarith
   obtain ⟨hint_l, hint_r, h_sum⟩ := unitArc_ftc_value H hH s hs_norm hs_re hs_im_pos
     (δ_fn ε) hδ_pos' t₀ ht₀_Ioo h_s_arc hδ_left hδ_right
-  -- Convert: deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t
   have h_deriv_eq : ∀ t : ℝ,
       deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t :=
     fun t => by simp [deriv_sub_const]
-  -- Convert integrand form: div → inv*mul
   have h_integrand_eq : ∀ t : ℝ,
       deriv (fun u => fdBoundary_H H u - s) t / (fdBoundary_H H t - s) =
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t :=
@@ -427,23 +420,18 @@ private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
     Tendsto (fun ε => ∫ t in (0:ℝ)..5, if ‖fdBoundary_H H t - s‖ > ε then
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0)
     (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) := by
-  -- Geometric constants
   set d_min := min (min (1/2 - s.re) (s.re + 1/2)) (H - 1) with hd_min_def
   have hd_min_pos : 0 < d_min := unitArc_min_dist_pos s hs_norm hs_re hs_im_pos H hH
-  -- hw = min(t₀-1, 3-t₀): half-width of the arc window around t₀
   set hw := min (t₀ - 1) (3 - t₀) with hhw_def
   have hhw_pos : 0 < hw := lt_min (by linarith [ht₀_Ioo.1]) (by linarith [ht₀_Ioo.2])
   have hhw_le_t₀_sub_one : hw ≤ t₀ - 1 := min_le_left _ _
   have hhw_le_three_sub_t₀ : hw ≤ 3 - t₀ := min_le_right _ _
-  -- Threshold: ε < 2·sin(π·hw/12) ensures δ(ε) = 12/π·arcsin(ε/2) < hw
   have hsin_hw : 0 < Real.sin (Real.pi * hw / 12) := by
     apply Real.sin_pos_of_pos_of_lt_pi; · positivity
     · nlinarith [Real.pi_pos]
   set threshold := min d_min (2 * Real.sin (Real.pi * hw / 12)) with hthresh_def
   have hthresh_pos : 0 < threshold := lt_min hd_min_pos (by positivity)
-  -- δ(ε) = 12/π · arcsin(ε/2)
   set δ_fn : ℝ → ℝ := fun ε => 12 / Real.pi * Real.arcsin (ε / 2) with hδ_fn_def
-  -- Key sub-lemma: 0 < ε < threshold → δ(ε) < hw (used throughout)
   have hδ_lt_hw : ∀ ε, 0 < ε → ε < threshold → δ_fn ε < hw := by
     intro ε hε_pos hε_lt
     have hε_lt_2sin : ε < 2 * Real.sin (Real.pi * hw / 12) :=
@@ -459,19 +447,16 @@ private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
     calc 12 / Real.pi * Real.arcsin (ε / 2) < 12 / Real.pi * (Real.pi * hw / 12) :=
           mul_lt_mul_of_pos_left harcsin_lt (by positivity)
       _ = hw := by field_simp
-  -- δ(ε) > 0
   have hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_fn ε := by
     intro ε hε_pos _
     simp only [hδ_fn_def]
     exact mul_pos (by positivity) (Real.arcsin_pos.mpr (by linarith))
-  -- δ(ε) < min(t₀, 5 - t₀) (bounds for pv_tendsto_of_crossing_limit)
   have hδ_small : ∀ ε, 0 < ε → ε < threshold → δ_fn ε < min (t₀ - 0) (5 - t₀) := by
     intro ε hε_pos hε_lt
     have hδ_lt := hδ_lt_hw ε hε_pos hε_lt
     apply lt_min
     · linarith [ht₀_Ioo.1, hhw_le_t₀_sub_one, hδ_lt]
     · linarith [ht₀_Ioo.2, hhw_le_three_sub_t₀, hδ_lt]
-  -- ‖fdBoundary_H H (t₀ + δ(ε)) - s‖ = ε
   have hδ_norm_eq : ∀ ε, 0 < ε → ε < threshold →
       ‖fdBoundary_H H (t₀ + δ_fn ε) - s‖ = ε := by
     intro ε hε_pos hε_lt
@@ -506,7 +491,6 @@ private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
     rw [h2sin, Real.sqrt_sq_eq_abs, abs_of_pos (by linarith), hangle,
         Real.sin_arcsin hε_half_bounds.1 hε_half_bounds.2]
     ring
-  -- h_far: points farther than δ(ε) from t₀ have ‖γ t - s‖ > ε
   have h_far : ∀ ε, 0 < ε → ε < threshold →
       ∀ t ∈ Icc (0:ℝ) 5, δ_fn ε < |t - t₀| → ε < ‖fdBoundary_H H t - s‖ := by
     intro ε hε_pos hε_lt t ht_mem habs
@@ -522,7 +506,6 @@ private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
     · exact unitArc_norm_gt_left s H hH t₀ (δ_fn ε) ε ht₀_Ioo h_s_arc hs_re
         hδ_pos' hδ_left hδ_right hδ_eq hε_lt_d t ⟨ht_mem.1, le_of_lt ht_left⟩ ht_left
     · have ht_right' : t₀ + δ_fn ε < t := by
-        -- Since t ≥ t₀ - δ and |t - t₀| > δ, we have t > t₀ + δ
         rcases le_or_gt t₀ t with h_t_ge | h_t_lt
         · rw [abs_of_nonneg (by linarith)] at habs; linarith
         · exfalso
@@ -531,25 +514,20 @@ private lemma unitArc_winding_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
           linarith
       exact unitArc_norm_gt_right s H hH t₀ (δ_fn ε) ε ht₀_Ioo h_s_arc hs_re hs_norm hs_im_pos
         hδ_pos' hδ_left hδ_right hδ_eq hε_lt_d t ht_right' ht_mem.2
-  -- h_near: points within δ(ε) of t₀ have ‖γ t - s‖ ≤ ε
   have h_near : ∀ ε, 0 < ε → ε < threshold →
       ∀ t, |t - t₀| ≤ δ_fn ε → ‖fdBoundary_H H t - s‖ ≤ ε :=
     fun ε hε_pos hε_lt t habs =>
       unitArc_h_near H s hs_norm hs_re hs_im_pos t₀ ht₀_Ioo h_s_arc hw rfl hhw_pos
         ε hε_pos (δ_fn ε) (hδ_pos ε hε_pos hε_lt) (hδ_lt_hw ε hε_pos hε_lt)
         (hδ_norm_eq ε hε_pos hε_lt) t habs
-  -- E(ε): the telescoping log expression from the FTC
   set E := fun ε => Complex.log (fdBoundary_H H (t₀ - δ_fn ε) - s) -
     Complex.log (-(fdBoundary_H H (t₀ + δ_fn ε) - s)) - ↑Real.pi * I with hE_def
-  -- Helper: converts FTC integrands and invokes unitArc_ftc_value (via extracted lemma)
   have h_ftc_bundle := unitArc_ftc_bundle_aux H hH s hs_norm hs_re hs_im_pos t₀ ht₀_Ioo
     h_s_arc hw threshold hhw_le_t₀_sub_one hhw_le_three_sub_t₀ δ_fn hδ_pos hδ_lt_hw
-  -- h_limit: E(ε) → -(πI) (via extracted lemma)
   have h_limit : Tendsto E (nhdsWithin 0 (Ioi 0)) (nhds (-(↑Real.pi * I))) :=
     unitArc_limit_aux H s hs_norm hs_re hs_im_pos t₀ ht₀_Ioo h_s_arc
       hw threshold hthresh_pos hhw_le_t₀_sub_one hhw_le_three_sub_t₀
       δ_fn hδ_fn_def hδ_lt_hw hδ_pos
-  -- Apply the master theorem
   exact ContourIntegral.pv_tendsto_of_crossing_limit
     (t₀ := t₀) (ht₀ := ⟨by linarith [ht₀_Ioo.1], by linarith [ht₀_Ioo.2]⟩)
     (threshold := threshold) (hthresh := hthresh_pos)
@@ -568,9 +546,8 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
   have hg_at_t₀ := unitArc_fdBoundary_eq H s hs_norm hs_re hs_im_pos
   have h_s_arc : s = exp (↑(Real.pi * (1 + (6 * Real.arccos s.re / Real.pi - 1)) / 6) * I) := by
     rw [← fdBoundary_H_eq_arc ht₀_Ioo.1 ht₀_Ioo.2]; exact hg_at_t₀.symm
-  have h_aux := unitArc_winding_aux H hH s hs_norm hs_re hs_im_pos
-    (6 * Real.arccos s.re / Real.pi - 1) ht₀_Ioo h_s_arc hg_at_t₀
-  convert h_aux using 2
+  convert unitArc_winding_aux H hH s hs_norm hs_re hs_im_pos
+    (6 * Real.arccos s.re / Real.pi - 1) ht₀_Ioo h_s_arc hg_at_t₀ using 2
   simp [deriv_sub_const]
 
 /-- **Main theorem**: gWN = −1/2 at smooth arc points. -/

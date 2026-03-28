@@ -141,61 +141,56 @@ private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p �
         (-generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ)) *
           ↑(orderOfVanishingAt' (⇑f) s) = -R := by
     rw [hR_def, h_filter_eq]; simp only [neg_mul, Finset.sum_neg_distrib, hg_def]
-  rw [h_neg_R]; rw [h_split, h_ell_sum, hg_i, hg_ρ, hg_ρ1] at h_sum
+  rw [h_neg_R]
+  rw [h_split, h_ell_sum, hg_i, hg_ρ, hg_ρ1] at h_sum
   linear_combination -h_sum
 
 private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = -1/2) : s = ellipticPointRho' := by
-  apply Subtype.ext; show (s : ℂ) = (ellipticPointRho' : ℂ)
+  apply Subtype.ext; change (s : ℂ) = (ellipticPointRho' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
   have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by nlinarith
     have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
         ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
       nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
-  have h_rho_re : (ellipticPointRho' : ℂ).re = -1/2 := by
-    change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
-    simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
-  have h_rho_im : (ellipticPointRho' : ℂ).im = Real.sqrt 3 / 2 := by
+  apply Complex.ext
+  · rwa [show (ellipticPointRho' : ℂ).re = -1/2 from by
+      change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
+      simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num]
+  · rw [h_im]
     change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
     simp only [add_im, mul_im, I_re, I_im, mul_one, neg_im, one_im,
       div_ofNat_im, ofReal_im, mul_zero, add_zero, neg_zero, zero_div,
       ofReal_re, div_ofNat_re, zero_add]
-  apply Complex.ext
-  · exact hs_re.trans h_rho_re.symm
-  · exact h_im.trans h_rho_im.symm
 
 private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 1/2) :
     s = ellipticPointRhoPlusOne' := by
-  apply Subtype.ext; show (s : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
+  apply Subtype.ext; change (s : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
   have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_im_sq : (s : ℂ).im * (s : ℂ).im = 3/4 := by nlinarith
     have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
         ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
       nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
-  have h_rho1_re : (ellipticPointRhoPlusOne' : ℂ).re = 1/2 := by
-    change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
-    simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
-  have h_rho1_im : (ellipticPointRhoPlusOne' : ℂ).im = Real.sqrt 3 / 2 := by
+  apply Complex.ext
+  · rwa [show (ellipticPointRhoPlusOne' : ℂ).re = 1/2 from by
+      change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
+      simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num]
+  · rw [h_im]
     change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
     simp only [add_im, mul_im, I_re, I_im, mul_one, one_im, div_ofNat_im,
       ofReal_im, mul_zero, add_zero, zero_div, ofReal_re, div_ofNat_re,
       zero_add]
-  apply Complex.ext
-  · exact hs_re.trans h_rho1_re.symm
-  · exact h_im.trans h_rho1_im.symm
 
 private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 1)
     (hs_abs_re : |(s : ℂ).re| = 1/2) : Real.sqrt 3 / 2 < (s : ℂ).im := by
@@ -207,12 +202,11 @@ private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 
   have h_im_sq : (s : ℂ).im * (s : ℂ).im ≤ 3/4 := by
     have h3 := Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)
     nlinarith [mul_self_le_mul_self s.2.le h_le]
-  have h_nsq_eq := Complex.normSq_apply (s : ℂ)
-  linarith
+  linarith [Complex.normSq_apply (s : ℂ)]
 
 private lemma unit_circle_re_zero_eq_i (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 0) : s = ellipticPointI' := by
-  apply Subtype.ext; show (s : ℂ) = (ellipticPointI' : ℂ)
+  apply Subtype.ext; change (s : ℂ) = (ellipticPointI' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re, mul_zero, zero_add] at h_nsq

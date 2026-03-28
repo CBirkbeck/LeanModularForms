@@ -71,7 +71,7 @@ private lemma sl2_det (g : SL(2, ℤ)) :
     (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
     (g : Matrix (Fin 2) (Fin 2) ℤ) 0 1 *
       (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
-  have h := g.prop; rw [Matrix.det_fin_two] at h; exact_mod_cast h
+  have h := g.prop; rwa [Matrix.det_fin_two] at h
 
 private lemma ellipticPointI'_coe : (ellipticPointI' : ℂ) = Complex.I := rfl
 private lemma ellipticPointI'_im : (ellipticPointI' : ℍ).im = 1 := Complex.I_im
@@ -100,7 +100,7 @@ private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
     by_contra h; push_neg at h
     have hc0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by nlinarith [sq_nonneg c]
     have hd0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 = 0 := by nlinarith [sq_nonneg d]
-    have h_det := sl2_det g; rw [hc0, hd0] at h_det; norm_num at h_det
+    have := sl2_det g; rw [hc0, hd0] at this; norm_num at this
   have h_pos : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 > 0 :=
     by exact_mod_cast show (0 : ℤ) < c ^ 2 + d ^ 2 by omega
   have h_lt2 : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 < 2 := by
@@ -114,7 +114,7 @@ private lemma re_smul_ellipticPointI (g : SL(2, ℤ)) :
      (g : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) /
     (((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) ^ 2 +
      ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) ^ 2) := by
-  show (↑(g • ellipticPointI') : ℂ).re = _
+  change (↑(g • ellipticPointI') : ℂ).re = _
   rw [UpperHalfPlane.coe_specialLinearGroup_apply, ellipticPointI'_coe]
   simp only [algebraMap_int_eq, Int.coe_castRingHom]
   rw [Complex.div_re, Complex.normSq_apply]
@@ -241,8 +241,8 @@ private theorem fd'_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = orh
   have h_im : (g • ellipticPointRho').im = Real.sqrt 3 / 2 := by
     have := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
     rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at this; exact this
-  have h_re_abs := abs_re_eq_half_of_smul_rho_in_fd g hp h_cd1
   have h_re_eq : (g • ellipticPointRho').re = -1/2 ∨ (g • ellipticPointRho').re = 1/2 := by
+    have h_re_abs := abs_re_eq_half_of_smul_rho_in_fd g hp h_cd1
     rcases le_or_gt (g • ellipticPointRho').re 0 with h_neg | h_pos
     · left; linarith [abs_of_nonpos h_neg]
     · right; linarith [abs_of_pos h_pos]
@@ -307,7 +307,7 @@ private lemma normSq_denom_ge_one (h : SL(2, ℤ)) (z : ℍ) (hz : z ∈ 𝒟)
 private lemma inv_c_sq_eq (g : SL(2, ℤ)) :
     ((g⁻¹ : SL(2, ℤ)).1 1 0) ^ 2 = ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0) ^ 2 := by
   have : (g⁻¹ : SL(2, ℤ)).1 1 0 = -((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0) := by
-    show (↑g⁻¹ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = _
+    change (↑g⁻¹ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = _
     rw [Matrix.SpecialLinearGroup.coe_inv g, Matrix.adjugate_fin_two]
     simp only [Fin.isValue, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero,
                Matrix.cons_val_fin_one, Matrix.cons_val_one]
@@ -457,7 +457,7 @@ theorem finsum_nonell_eq_repCanon_sum :
   set φ : (p : ℍ) → p ∈ R → NonEllOrbit :=
     fun p hp => ⟨orb p, orb_repCanon_nonEll f hf p hp⟩ with hφ_def
   have h_im : ∀ p (hp : p ∈ R), φ p hp ∈ S := fun p hp => by
-    rw [Set.Finite.mem_toFinset]; show ordOrbit f (orb p) ≠ 0; rw [ordOrbit_mk]
+    rw [Set.Finite.mem_toFinset]; change ordOrbit f (orb p) ≠ 0; rw [ordOrbit_mk]
     have hp_s₀ := repCanon_mem_s₀ f hf hp
     rw [s₀, Set.Finite.mem_toFinset] at hp_s₀; exact hp_s₀.2
   have h_surj : ∀ q ∈ S, ∃ p, ∃ hp : p ∈ R, φ p hp = q := fun q hq => by

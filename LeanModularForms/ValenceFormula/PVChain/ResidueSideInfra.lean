@@ -122,12 +122,12 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
         logDeriv (modularFormCompOfComplex f) z =
           n / (z - (s : ℂ)) + logDeriv g z := by
   have h_analytic := analyticAt_modform f (s : ℂ) s.im_pos
-  have h_not_top := modform_not_locally_zero f hf s
   have h_order_ne_zero : analyticOrderAt (modularFormCompOfComplex f) (s : ℂ) ≠ 0 := by
     rw [h_analytic.analyticOrderAt_ne_zero]
     simp only [modularFormCompOfComplex, Function.comp_apply,
       UpperHalfPlane.ofComplex_apply]; exact hs
-  obtain ⟨g, hg_analytic, hg_ne_zero, hg_eq⟩ := (h_analytic.analyticOrderAt_ne_top.mp h_not_top)
+  obtain ⟨g, hg_analytic, hg_ne_zero, hg_eq⟩ :=
+    h_analytic.analyticOrderAt_ne_top.mp (modform_not_locally_zero f hf s)
   set n : ℕ := analyticOrderNatAt (modularFormCompOfComplex f) (s : ℂ) with hn_def
   have hn_pos : (n : ℤ) > 0 := by
     have : n ≠ 0 := by
@@ -137,11 +137,10 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
         simp only [Nat.cast_zero])
     omega
   refine ⟨n, g, hn_pos, hg_analytic, hg_ne_zero, rfl, ?_⟩
-  have hg_eventually_analytic := hg_analytic.eventually_analyticAt
-  have hg_eventually_ne_zero := hg_analytic.continuousAt.eventually_ne hg_ne_zero
   have h_all : ∀ᶠ z in 𝓝 (s : ℂ), ((modularFormCompOfComplex f) z = (z - (s : ℂ)) ^ n • g z) ∧
       AnalyticAt ℂ g z ∧ g z ≠ 0 := by
-    filter_upwards [hg_eq, hg_eventually_analytic, hg_eventually_ne_zero]
+    filter_upwards [hg_eq, hg_analytic.eventually_analyticAt,
+        hg_analytic.continuousAt.eventually_ne hg_ne_zero]
       with z hz hza hzne
     exact ⟨hz, hza, hzne⟩
   obtain ⟨U, hU_mem, hU_cond⟩ := Filter.eventually_iff_exists_mem.mp h_all
@@ -170,7 +169,6 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
     calc logDeriv (modularFormCompOfComplex f) z
         = logDeriv (fun w => (w - (s : ℂ)) ^ n * g w) z := by
           unfold logDeriv; simp only [Pi.div_apply]
-          have h_val_eq := h_eq_mul
           have h_deriv_eq : deriv (modularFormCompOfComplex f) z =
               deriv (fun w => (w - (s : ℂ)) ^ n * g w) z := by
             have h_eq_at_z : (modularFormCompOfComplex f) =ᶠ[𝓝 z]
@@ -179,7 +177,7 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
               exact ⟨V, IsOpen.mem_nhds hV_open hz_in_V,
                 fun w hw => (hU_cond w (hV_sub hw)).1⟩
             exact h_eq_at_z.deriv_eq
-          rw [h_deriv_eq, h_val_eq]
+          rw [h_deriv_eq, h_eq_mul]
       _ = logDeriv (fun w => (w - (s : ℂ)) ^ n) z + logDeriv g z := h_logDeriv_product
       _ = ↑↑n / (z - (s : ℂ)) + logDeriv g z := by rw [h_logDeriv_pow]
 
@@ -228,13 +226,10 @@ private lemma orderOfVanishingAt'_eq_analyticOrderNatAt (s : ℍ) (_hs : f s = 0
     filter_upwards [UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds s.im_pos] with w hw
     simp only [g₁, g₂, modularFormCompOfComplex, Function.comp_apply, dif_pos hw,
       UpperHalfPlane.ofComplex_apply_of_im_pos hw]
-  have h_order_eq : meromorphicOrderAt g₁ (s : ℂ) = meromorphicOrderAt g₂ (s : ℂ) :=
-    meromorphicOrderAt_congr h_eq
-  have h_analytic := analyticAt_modform f (s : ℂ) s.im_pos
-  have h_not_top := modform_not_locally_zero f hf s
-  rw [h_order_eq, h_analytic.meromorphicOrderAt_eq]
+  rw [meromorphicOrderAt_congr h_eq,
+    (analyticAt_modform f (s : ℂ) s.im_pos).meromorphicOrderAt_eq]
   cases h : analyticOrderAt g₂ (s : ℂ) with
-  | top => exact absurd h h_not_top
+  | top => exact absurd h (modform_not_locally_zero f hf s)
   | coe n => simp only [analyticOrderNatAt, h, ENat.toNat_coe]; norm_cast
 
 /-! ### residueSimplePole lemmas -/
@@ -252,9 +247,8 @@ theorem residueSimplePole_logDeriv_eq_order (s : ℍ) (hs : f s = 0) :
       logDeriv (modularFormCompOfComplex f) z = (n : ℂ) / (z - (s : ℂ)) + logDeriv g z := by
     rw [eventually_nhdsWithin_iff]; simp only [Set.mem_compl_iff, Set.mem_singleton_iff]
     exact h_formula
-  have h_res := residue_simple_pole_eq_laurent _ (s : ℂ) (n : ℂ) (logDeriv g)
-    h_logDeriv_g_analytic h_decomp
-  rw [h_res, hn_eq]
+  rw [residue_simple_pole_eq_laurent _ (s : ℂ) (n : ℂ) (logDeriv g)
+    h_logDeriv_g_analytic h_decomp, hn_eq]
   exact_mod_cast (orderOfVanishingAt'_eq_analyticOrderNatAt f hf s hs).symm
 
 omit hf in
@@ -262,16 +256,13 @@ omit hf in
 lemma residueSimplePole_logDeriv_eq_zero_at_nonzero (z : ℂ) (hz_im : 0 < z.im)
     (hz_nz : modularFormCompOfComplex f z ≠ 0) :
     residueSimplePole (logDeriv (modularFormCompOfComplex f)) z = 0 := by
-  have h_cont := (analyticAt_logDeriv_off_zeros' f z hz_im hz_nz).continuousAt
-  have h1 : Tendsto (· - z) (𝓝[≠] z) (𝓝 0) := by
+  have h_prod : Tendsto (fun w => (w - z) * logDeriv (modularFormCompOfComplex f) w)
+      (𝓝[≠] z) (𝓝 (0 * logDeriv (modularFormCompOfComplex f) z)) := by
+    refine Tendsto.mul ?_ (((analyticAt_logDeriv_off_zeros' f z hz_im hz_nz).continuousAt).tendsto.mono_left nhdsWithin_le_nhds)
     rw [show (0 : ℂ) = z - z from (sub_self z).symm]
     exact (continuous_id.sub continuous_const).continuousAt.tendsto.mono_left
       nhdsWithin_le_nhds
-  have h_prod : Tendsto (fun w => (w - z) * logDeriv (modularFormCompOfComplex f) w)
-      (𝓝[≠] z) (𝓝 (0 * logDeriv (modularFormCompOfComplex f) z)) :=
-    h1.mul (h_cont.tendsto.mono_left nhdsWithin_le_nhds)
-  rw [zero_mul] at h_prod
-  exact h_prod.limUnder_eq
+  rwa [zero_mul] at h_prod
 
 /-! ### fdBoundary_H ∈ fdBox -/
 
@@ -474,12 +465,12 @@ lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Ic
       suffices ‖fdBoundary t‖ = 1 by linarith
       simp only [fdBoundary, show ¬(t ≤ 1) from by linarith, ↓reduceIte]
       split_ifs with h2
-      · show ‖fdBoundary_seg2 t‖ = 1
+      · change ‖fdBoundary_seg2 t‖ = 1
         unfold fdBoundary_seg2
         rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
             ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
         exact Complex.norm_exp_ofReal_mul_I _
-      · show ‖fdBoundary_seg3 t‖ = 1
+      · change ‖fdBoundary_seg3 t‖ = 1
         unfold fdBoundary_seg3
         rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
             ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
@@ -522,11 +513,9 @@ lemma off_curve_of_not_in_fd_H {H : ℝ} (hH : 1 ≤ H) (z₀ : ℂ)
   intro t ht heq
   by_cases h_re : |z₀.re| ≤ 1/2
   · have h_norm_lt : ‖z₀‖ < 1 := hz₀_not_fd h_re
-    have h_norm_ge : ‖fdBoundary_H H t‖ ≥ 1 := fdBoundary_H_norm_ge_one hH t ht
-    linarith [heq ▸ h_norm_ge]
+    linarith [heq ▸ fdBoundary_H_norm_ge_one hH t ht]
   · push_neg at h_re
-    have h_re_le := fdBoundary_H_re_abs_le_half H t ht
-    linarith [heq ▸ h_re_le]
+    linarith [heq ▸ fdBoundary_H_re_abs_le_half H t ht]
 
 omit f hf in
 /-- FTC: integral = 0 for a closed curve with slit-plane avoidance. -/
@@ -546,16 +535,14 @@ lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ
   have hF_deriv : ∀ t ∈ Ioo (0:ℝ) 5 \ (↑fdBoundaryFullPartition : Set ℝ),
       HasDerivAt F (F' t) t := by
     intro t ⟨ht_ioo, ht_not_P⟩
-    have h_diff := hγ_diff t (Finset.mem_coe.not.mp ht_not_P)
-    have h_slit_t := h_slit t (Ioo_subset_Icc_self ht_ioo)
-    have h_log := Complex.hasDerivAt_log h_slit_t
     have h_inner : HasDerivAt (fun u => ω * (γ u - z₀)) (ω * deriv γ t) t := by
-      convert (h_diff.hasDerivAt.sub_const z₀).const_mul ω using 1
-    have h_comp := h_log.scomp t h_inner
-    convert h_comp using 1
+      convert ((hγ_diff t (Finset.mem_coe.not.mp ht_not_P)).hasDerivAt.sub_const z₀).const_mul ω
+        using 1
+    convert (Complex.hasDerivAt_log (h_slit t (Ioo_subset_Icc_self ht_ioo))).scomp t h_inner
+      using 1
     rw [smul_eq_mul]
-    have hne := sub_ne_zero.mpr (h_off t (Ioo_subset_Icc_self ht_ioo))
-    have hωne : ω * (γ t - z₀) ≠ 0 := mul_ne_zero hω hne
+    have hωne : ω * (γ t - z₀) ≠ 0 :=
+      mul_ne_zero hω (sub_ne_zero.mpr (h_off t (Ioo_subset_Icc_self ht_ioo)))
     simp only [hF'_def]; field_simp
   have hF'_int : IntervalIntegrable F' volume 0 5 := by
     obtain ⟨Mγ, hMγ⟩ := hγ_deriv_bdd
@@ -565,7 +552,7 @@ lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ
     obtain ⟨Mg, hMg⟩ := continuousOn_image_bounded hγ_cont.continuousOn hg_cont
     have h_cont : ContinuousOn F' (Icc 0 5 \ fdBoundaryFullPartition) := by
       intro t ⟨ht_Icc, ht_not_P⟩
-      show ContinuousWithinAt (fun t => (γ t - z₀)⁻¹ * deriv γ t) _ t
+      change ContinuousWithinAt (fun t => (γ t - z₀)⁻¹ * deriv γ t) _ t
       have ht_Ioo : t ∈ Ioo (0:ℝ) 5 := by
         refine ⟨lt_of_le_of_ne ht_Icc.1 ?_, lt_of_le_of_ne ht_Icc.2 ?_⟩
         · intro h; exact ht_not_P (by rw [← h]; simp [fdBoundaryFullPartition])
@@ -575,7 +562,7 @@ lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ
         (hγ_deriv_cont t ht_Ioo (Finset.mem_coe.not.mp ht_not_P)).continuousWithinAt
     have h_bound : ∀ t ∈ Icc (0:ℝ) 5, ‖F' t‖ ≤ Mg * Mγ := by
       intro t ht
-      show ‖(γ t - z₀)⁻¹ * deriv γ t‖ ≤ Mg * Mγ
+      change ‖(γ t - z₀)⁻¹ * deriv γ t‖ ≤ Mg * Mγ
       rw [norm_mul]
       exact mul_le_mul (hMg _ ⟨t, ht, rfl⟩) (hMγ t ht) (norm_nonneg _)
         (le_trans (norm_nonneg _) (hMg _ ⟨t, ht, rfl⟩))
@@ -586,7 +573,7 @@ lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ
   have hFTC := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le F F'
     (by norm_num : (0:ℝ) ≤ 5) fdBoundaryFullPartition.countable_toSet
     hF_cont hF_deriv hF'_int
-  rw [hFTC]; show F 5 - F 0 = 0
+  rw [hFTC]; change F 5 - F 0 = 0
   simp only [hF_def, hγ_closed]; ring
 
 include hf in
@@ -609,7 +596,7 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
       exact this
     have h_fd : s ∈ 𝒟 := by
       refine ⟨?_, h_re⟩
-      show 1 ≤ Complex.normSq z₀
+      change 1 ≤ Complex.normSq z₀
       have h_sq := Complex.sq_norm z₀
       rw [Complex.normSq_apply] at h_sq ⊢
       nlinarith [h_sq]
@@ -655,21 +642,17 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
         linarith [h_re_neg_I ▸ h_not_slit.1]
       have h2 : (fdBoundary_H H t).re = z₀.re := by
         have := h_not_slit.2; rw [h_im_neg_I] at this; linarith
-      have h_norm_curve : ‖fdBoundary_H H t‖ ≥ 1 :=
-        fdBoundary_H_norm_ge_one hH t ht
       have h_sq_norm_z₀ := Complex.sq_norm z₀
       rw [Complex.normSq_apply] at h_sq_norm_z₀
       have h_sq_norm_curve := Complex.sq_norm (fdBoundary_H H t)
-      rw [Complex.normSq_apply] at h_sq_norm_curve
-      rw [h2] at h_sq_norm_curve
-      have h_z₀_sq_lt : ‖z₀‖ ^ 2 < 1 := by nlinarith [norm_nonneg z₀]
+      rw [Complex.normSq_apply, h2] at h_sq_norm_curve
       have h_curve_sq_ge : ‖fdBoundary_H H t‖ ^ 2 ≥ 1 := by
-        nlinarith [norm_nonneg (fdBoundary_H H t)]
+        nlinarith [norm_nonneg (fdBoundary_H H t), fdBoundary_H_norm_ge_one hH t ht]
       have h_im_pos : 0 < (fdBoundary_H H t).im :=
         fdBoundary_H_im_pos H hH_sqrt3 t ht
-      have h_prod : (z₀.im - (fdBoundary_H H t).im) * (z₀.im + (fdBoundary_H H t).im) ≥ 0 :=
-        mul_nonneg (by linarith) (by linarith)
-      nlinarith
+      nlinarith [mul_nonneg (show z₀.im - (fdBoundary_H H t).im ≥ 0 from by linarith)
+        (show z₀.im + (fdBoundary_H H t).im ≥ 0 from by linarith),
+        show ‖z₀‖ ^ 2 < 1 from by nlinarith [norm_nonneg z₀]]
     · exact hγ_diff
     · exact hγ_deriv_cont
     · exact hγ_deriv_bdd
@@ -678,7 +661,7 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
     · apply ftc_integral_zero_of_closed_slit (ω := -1) (by norm_num)
         (fdBoundary_H_continuous H) (fdBoundary_H_closed H) h_off
       · intro t ht; rw [Complex.mem_slitPlane_iff]; left
-        show 0 < ((-1 : ℂ) * (fdBoundary_H H t - z₀)).re
+        change 0 < ((-1 : ℂ) * (fdBoundary_H H t - z₀)).re
         simp only [neg_one_mul, neg_re, sub_re]
         linarith [abs_le.mp (fdBoundary_H_re_abs_le_half H t ht)]
       · exact hγ_diff

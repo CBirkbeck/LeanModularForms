@@ -543,13 +543,13 @@ private lemma pvIntegrand_intervalIntegrable
     exact h_not_near ⟨s, Finset.mem_coe.mpr hs, h_contra.le⟩
   have hF_K : EqOn F (fun t => logDeriv g (γ t) * deriv γ t) K := by
     intro t ⟨_, h_not_near⟩
-    show cauchyPrincipalValueIntegrandOn S₀ (logDeriv g) γ ε t = _
+    change cauchyPrincipalValueIntegrandOn S₀ (logDeriv g) γ ε t = _
     simp only [cauchyPrincipalValueIntegrandOn]
     simp only [Finset.mem_coe] at h_not_near
     exact if_neg h_not_near
   have h_compl_zero : EqOn F 0 (uIoc a b \ K) := by
     intro t ⟨ht_uioc, h_not_K⟩
-    show cauchyPrincipalValueIntegrandOn S₀ (logDeriv g) γ ε t = 0
+    change cauchyPrincipalValueIntegrandOn S₀ (logDeriv g) γ ε t = 0
     simp only [cauchyPrincipalValueIntegrandOn]
     have h_near : ∃ s ∈ (S₀ : Set ℂ), ‖γ t - s‖ ≤ ε := by
       by_contra h_far; exact h_not_K ⟨ht_uioc, h_far⟩
@@ -1198,7 +1198,7 @@ theorem cpv_residue_side_tendsto
         have := h (γ t) habs
         simp [sub_self] at this
         linarith [mem_Ioi.mp hε]
-      show Fp (γ t) * _ = F (γ t) * _
+      change Fp (γ t) * _ = F (γ t) * _
       congr 1; exact logDerivPatched_eq_raw_off F S0 hSimplePoles h_not
   have hL_tendsto_S_on : Tendsto (fun ε =>
       ∫ t in (0:ℝ)..5, cauchyPrincipalValueIntegrandOn S_on F γ ε t)
@@ -1213,7 +1213,7 @@ theorem cpv_residue_side_tendsto
     rw [show L = cauchyPrincipalValueOn S0 Fp γ 0 5 from
       (Filter.Tendsto.limUnder_eq hL_tendsto).symm, h_val]; congr 1
     rw [Finset.sum_congr rfl (fun s hs => by
-        show _ * residueSimplePole Fp s = _ * residueSimplePole F s
+        change _ * residueSimplePole Fp s = _ * residueSimplePole F s
         congr 1; exact residue_logDerivPatched_eq_raw F S0 hSimplePoles s hs),
       show S0 = Sbox ∪ (S_on \ Sbox) from by
       rw [hS0_def]; exact Finset.union_sdiff_self_eq_union.symm]
