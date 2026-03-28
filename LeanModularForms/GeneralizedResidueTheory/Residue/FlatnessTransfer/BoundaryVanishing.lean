@@ -571,7 +571,7 @@ private lemma re_pos_right_of_slope
     rw [Complex.mul_conj]; simp only [Complex.ofReal_re]
     exact Complex.normSq_pos.mpr hL_R_ne
   have h_slope : Tendsto (slope γ.toFun t₀) (𝓝[>] t₀) (𝓝 L_R) :=
-    (hasDerivWithinAt_iff_tendsto_slope' Set.notMem_Ioi_self).mp hderiv
+    (hasDerivWithinAt_iff_tendsto_slope' Set.self_notMem_Ioi).mp hderiv
   have h_slope_re : Tendsto (fun t => (slope γ.toFun t₀ t * starRingEnd ℂ L_R).re)
       (𝓝[>] t₀) (𝓝 (L_R * starRingEnd ℂ L_R).re) :=
     (continuous_re.comp (continuous_mul_right _)).continuousAt.tendsto.comp h_slope
@@ -619,7 +619,7 @@ private lemma re_pos_left_of_slope
     simp only [Complex.ofReal_re]
     exact Complex.normSq_pos.mpr hL_L_ne
   have h_slope : Tendsto (slope γ.toFun t₀) (𝓝[<] t₀) (𝓝 L_L) :=
-    (hasDerivWithinAt_iff_tendsto_slope' Set.notMem_Iio_self).mp hderiv
+    (hasDerivWithinAt_iff_tendsto_slope' Set.self_notMem_Iio).mp hderiv
   have h_slope_re : Tendsto (fun t => (slope γ.toFun t₀ t * starRingEnd ℂ (-L_L)).re)
       (𝓝[<] t₀) (𝓝 (L_L * starRingEnd ℂ (-L_L)).re) :=
     (continuous_re.comp (continuous_mul_right _)).continuousAt.tendsto.comp h_slope
@@ -740,10 +740,12 @@ private lemma direction_rate_from_flatness_left
       (fun ε => ε ^ m) := by
     have h1 := (h_flat.left_flat L_L hL_L_ne htend_L).congr
       (fun t => by rw [hcross]) (fun t => by rw [hcross])
-    rw [show (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) (-L_L)‖) =
-        (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) L_L‖) from
-      funext fun ε => by rw [show -L_L = (-1 : ℝ) • L_L from by simp only [neg_smul, one_smul],
-        tangentDeviation_real_smul_right _ (by norm_num : (-1 : ℝ) ≠ 0)]]
+    have h_neg_eq : (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) (-L_L)‖) =
+        (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) L_L‖) :=
+      funext fun ε => by
+        rw [show -L_L = (-1 : ℝ) • L_L from by simp only [neg_smul, one_smul],
+          tangentDeviation_real_smul_right _ (show (-1 : ℝ) ≠ 0 by norm_num)]
+    rw [h_neg_eq]
     exact ((h1.comp_tendsto hσ_tendsto).congr (fun _ => rfl) (fun _ => rfl)).trans_eventuallyEq
       (by filter_upwards [hσ_norm] with ε hε; simp only [Function.comp_def]; rw [hε])
   have h_re_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
