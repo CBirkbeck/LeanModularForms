@@ -546,14 +546,6 @@ lemma cauchyPrincipalValueIntegrandOn_eq_of_far
   unfold cauchyPrincipalValueIntegrandOn
   rw [if_neg]; push_neg; intro s hs; linarith [h_far s hs]
 
-lemma cauchyPrincipalValueIntegrandOn_eq_zero_of_near
-    (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
-    (ε : ℝ) (t : ℝ) (s : ℂ)
-    (hs : s ∈ S0) (h_near : ‖γ t - s‖ ≤ ε) :
-    cauchyPrincipalValueIntegrandOn S0 f γ ε t = 0 := by
-  unfold cauchyPrincipalValueIntegrandOn
-  rw [if_pos]; exact ⟨s, hs, h_near⟩
-
 lemma cauchyPrincipalValueIntegrandOn_empty
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cauchyPrincipalValueIntegrandOn ∅ f γ ε t =
@@ -561,17 +553,6 @@ lemma cauchyPrincipalValueIntegrandOn_empty
   unfold cauchyPrincipalValueIntegrandOn
   rw [if_neg]; push_neg
   intro s hs; exact absurd hs (Finset.notMem_empty s)
-
-lemma cauchyPrincipalValueExistsOn_empty
-    (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
-    CauchyPrincipalValueExistsOn ∅ f γ a b := by
-  unfold CauchyPrincipalValueExistsOn
-  use ∫ t in a..b, f (γ t) * deriv γ t
-  apply Filter.Tendsto.congr'; swap; exact tendsto_const_nhds
-  filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)]
-    with ε _
-  apply intervalIntegral.integral_congr; intro t _
-  exact cauchyPrincipalValueIntegrandOn_empty f γ ε t
 
 lemma cauchyPrincipalValueIntegrandOn_singleton
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) :
@@ -585,18 +566,6 @@ lemma cauchyPrincipalValueIntegrandOn_singleton
   · push_neg at h; rw [if_neg, if_pos h]; push_neg
     intro s hs
     simp only [Finset.mem_singleton] at hs; rw [hs]; linarith
-
-lemma cauchyPrincipalValueExistsOn_singleton
-    (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (h_single : CauchyPrincipalValueExists' f γ a b z₀) :
-    CauchyPrincipalValueExistsOn {z₀} f γ a b := by
-  obtain ⟨L, hL⟩ := h_single
-  use L; apply Tendsto.congr' _ hL
-  filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)]
-    with ε _
-  apply intervalIntegral.integral_congr; intro t _
-  exact (cauchyPrincipalValueIntegrandOn_singleton
-    f γ z₀ ε t).symm
 
 lemma cauchyPrincipalValueOn_empty
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
