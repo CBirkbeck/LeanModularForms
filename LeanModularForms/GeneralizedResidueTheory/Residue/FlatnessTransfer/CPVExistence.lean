@@ -271,8 +271,7 @@ lemma cpv_exists_inv_sub_of_closed_unique
           exact ⟨by rw [heq]; exact Metric.mem_ball_self h2pi_pos,
             by rw [heq]; exact hy⟩
       intro ε₁ hε₁ ε₂ hε₂
-      exact isPreconnected_Ioo.constant_of_mapsTo (isDiscrete_of_discreteTopology (s := T))
-        h_phi_cont h_maps hε₁ hε₂
+      exact isPreconnected_Ioo.constant_of_mapsTo ⟨hT_disc⟩ h_phi_cont h_maps hε₁ hε₂
     have hη2 : η / 2 ∈ Ioo (0:ℝ) η := ⟨by linarith, by linarith⟩
     set k := R (η / 2) - Complex.log (Complex.exp (R (η / 2)))
     have hR_eq : ∀ᶠ ε in 𝓝[>] (0:ℝ), R ε = Complex.log (Complex.exp (R ε)) + k := by
