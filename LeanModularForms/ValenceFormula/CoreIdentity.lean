@@ -157,12 +157,11 @@ private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
-  apply UpperHalfPlane.ext
-  apply Complex.ext
-  · simp only [ellipticPointRho', UpperHalfPlane.coe_mk, add_re, neg_re, one_re, div_ofNat_re,
-      mul_re, ofReal_re, I_re, ofReal_im, I_im, mul_zero, sub_zero]; linarith
-  · simp only [ellipticPointRho', UpperHalfPlane.coe_mk, add_im, neg_im, one_im, div_ofNat_im,
-      mul_im, ofReal_re, I_re, ofReal_im, I_im, mul_one, mul_zero, add_zero]; linarith
+  apply UpperHalfPlane.ext; apply Complex.ext <;>
+    simp only [ellipticPointRho', UpperHalfPlane.coe_mk, add_re, add_im, neg_re, neg_im, one_re,
+      one_im, div_ofNat_re, div_ofNat_im, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im,
+      mul_zero, mul_one, sub_zero, add_zero, zero_mul, zero_add, zero_div, neg_zero] <;>
+    linarith
 
 private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 1/2) :
@@ -177,11 +176,11 @@ private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
-  apply UpperHalfPlane.ext; apply Complex.ext
-  · simp only [ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_re, one_re, div_ofNat_re,
-      mul_re, ofReal_re, I_re, ofReal_im, I_im, mul_zero, sub_zero]; linarith
-  · simp only [ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_im, one_im, div_ofNat_im,
-      mul_im, ofReal_re, I_re, ofReal_im, I_im, mul_one, mul_zero, add_zero]; linarith
+  apply UpperHalfPlane.ext; apply Complex.ext <;>
+    simp only [ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_re, add_im, one_re, one_im,
+      div_ofNat_re, div_ofNat_im, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im, mul_zero,
+      mul_one, sub_zero, add_zero, zero_mul, zero_add, zero_div] <;>
+    linarith
 
 private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 1)
     (hs_abs_re : |(s : ℂ).re| = 1/2) : Real.sqrt 3 / 2 < (s : ℂ).im := by
