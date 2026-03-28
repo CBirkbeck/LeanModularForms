@@ -93,11 +93,23 @@ and ~48,600 lines across three main directories:
 - Make `fd_im_gt_half` public and shared
 - Add connecting lemmas between ℂ and ℍ point definitions
 
-### Priority 3: Mathlib API audit
+### Priority 3: Unused Declaration Cleanup (~52 declarations)
+
+**Basic.lean (9):** Remove `ModelSectorCurve` (struct + 6 methods), `residue'`, `residueIntegral'`
+**PrincipalValue.lean (11):** Remove `cauchyPrincipalValueIntegrand_add'/_smul'/_eq_indicator/_integrable`,
+  `cauchyPrincipalValue_add'/_smul'`, `windingNumber_homotopy_invariant'`,
+  `cauchyPrincipalValueExists_of_singular_pole/_continuous_piecewise/_simple_pole`,
+  `limUnder_eventually_eq'`, `epsilon_cutoff_trivial_on_compact`
+**HomologicalCauchy.lean (1):** Remove `integral_eq_sum_residues_of_nullHomologous`
+**Residue.lean (3):** Remove `cauchyPrincipalValueIntegrandOn_eq_zero_of_near`,
+  `cauchyPrincipalValueExistsOn_empty/_singleton`
+**GeneralizedResidueTheorem.lean (2):** Remove `generalizedResidueTheorem_convex`,
+  `HasSimplePoleAt.meromorphicAt`
+**Cycle.lean (15):** Entire file unused — keep as future API or remove
+**Definitions.lean (11):** Remove `fundamentalDomainCanonical` + 4 related,
+  `orderOfVanishingAt_nonneg`, `windingNumberCoeff'` + 4 related
+
+### Priority 4: Mathlib API audit (pending)
 - Check all 171 definitions against mathlib
-- Identify hand-rolled patterns that should use mathlib API
 - Key candidates: `PiecewiseC1Curve` (no mathlib equivalent),
   `cauchyPrincipalValue'` (custom CPV), `IsNullHomologous` (custom)
-
-### Priority 4: Unused declaration cleanup
-- Remove dead code identified by cross-file grep
