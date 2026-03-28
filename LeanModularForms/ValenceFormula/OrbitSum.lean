@@ -137,14 +137,15 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zero (hf : f ≠ 0) (p : ℍ) (hp : f 
   have h_preconn : IsPreconnected {w : ℂ | 0 < w.im} :=
     ((convex_halfSpace_im_gt 0).isConnected ⟨I, by simp [I_im]⟩).isPreconnected
   apply hf; ext z
-  simp only [ModularForm.coe_zero, Pi.zero_apply, ← G_eval_eq_f f z,
-    h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
-      h_preconn p.im_pos h_top.frequently z.im_pos]
+  change f z = 0
+  exact (G_eval_eq_f f z).symm.trans
+    (h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
+      h_preconn p.im_pos h_top.frequently z.im_pos)
 
 private theorem modularFormCompOfComplex_eq' (p : ℍ) :
     modularFormCompOfComplex f (p : ℂ) = f p := by
   simp only [modularFormCompOfComplex, Function.comp_apply]
-  congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]; ext; rfl
+  congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
 
 private theorem fd_im_gt_half (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
   by_contra h_le; push_neg at h_le
@@ -165,13 +166,14 @@ private theorem no_zeros_above_height' (hf : f ≠ 0) :
       ∀ (p : ℍ), H₀ ≤ (p : ℂ).im → f p ≠ 0 := by
   obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
   refine ⟨H₀, hH₀_gt, fun p hp hfp => ?_⟩
-  have h_eq := SlashInvariantFormClass.eq_cuspFunction (1 : ℕ) f p
-  have h_qParam_mem : Function.Periodic.qParam (↑(1 : ℕ)) (↑p : ℂ) ∈
+  have h_eq := SlashInvariantFormClass.eq_cuspFunction f p
+      ModularFormClass.one_mem_strictPeriods_SL2Z one_ne_zero
+  have h_qParam_mem : Function.Periodic.qParam (1 : ℝ) (↑p : ℂ) ∈
       Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H₀)) := by
     rw [Metric.mem_closedBall, dist_zero_right, Function.Periodic.norm_qParam]
-    simp only [Nat.cast_one, div_one]
+    simp only [div_one]
     exact Real.exp_le_exp.mpr (by nlinarith [Real.pi_pos])
-  have h_qParam_ne : Function.Periodic.qParam (↑(1 : ℕ)) (↑p : ℂ) ≠ 0 := by
+  have h_qParam_ne : Function.Periodic.qParam (1 : ℝ) (↑p : ℂ) ≠ 0 := by
     simp only [Function.Periodic.qParam, ne_eq]
     exact Complex.exp_ne_zero _
   exact hH₀_nonvan _ h_qParam_mem h_qParam_ne (h_eq ▸ hfp)
@@ -187,7 +189,9 @@ theorem finite_zeros_in_fd (hf : f ≠ 0) :
   have hM_half : (1:ℝ)/2 < H₀ + 1 := by
     linarith [Real.sqrt_pos_of_pos (by norm_num : (0:ℝ) < 3)]
   have h_fin := modularForm_finitely_many_zeros_in_fdBox f hf hM_half
-  apply Set.Finite.subset (h_fin.preimage (fun _ _ _ _ h => Subtype.val_injective h))
+  have h_coe_inj : Function.Injective (UpperHalfPlane.coe : ℍ → ℂ) :=
+    fun _ _ h => UpperHalfPlane.ext_iff.mpr h
+  apply (h_fin.preimage (h_coe_inj.injOn)).subset
   intro p ⟨hp_fd, hp_zero⟩
   show (p : ℂ) ∈ {z ∈ fdBox (H₀ + 1) | modularFormCompOfComplex f z = 0}
   have habs_re := hp_fd.2

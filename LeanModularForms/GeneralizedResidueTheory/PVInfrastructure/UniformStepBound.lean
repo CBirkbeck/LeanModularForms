@@ -53,7 +53,7 @@ lemma pv_step_bound_ratio_two_uniform
     singular_annulus_bound_explicit hab hat₀
       hγ_C2 hγ_deriv hL hγ_cont h_inj
   have hγ_diff :=
-    hγ_C2.differentiableAt one_le_two
+    hγ_C2.differentiableAt (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
   have hγ_hasderiv : HasDerivAt γ L t₀ := by
     rw [← hγ_deriv]; exact hγ_diff.hasDerivAt
   obtain ⟨δ_lo, hδ_lo_pos, h_lower⟩ :=
