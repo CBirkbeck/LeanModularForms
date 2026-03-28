@@ -87,13 +87,13 @@ private lemma homotopy_integrand_continuousOn_t
     have h1 := (min_le_right (ε / 2) _).trans (min_le_left (t - a) (b - t))
     have h2 := (min_le_right (ε / 2) _).trans (min_le_right (t - a) (b - t))
     exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
-  have h_deriv_joint := hH_deriv_cont _ _ (by linarith : t - ε' < t + ε') h_avoid_P h_sub_ab
   apply ContinuousWithinAt.mono _ (Set.diff_subset_diff_right (Finset.coe_subset.mpr
     (Finset.subset_union_left (s₂ := {a, b}))))
   exact ContinuousWithinAt.mul
     ((hH_cont.comp (continuous_id.prodMk continuous_const)).continuousAt.sub
       continuousAt_const |>.inv₀ (sub_ne_zero.mpr (hH_avoid t ht_Icc s hs)) |>.continuousWithinAt)
-    ((h_deriv_joint.comp (continuous_id.prodMk continuous_const).continuousOn
+    (((hH_deriv_cont _ _ (by linarith : t - ε' < t + ε') h_avoid_P h_sub_ab).comp
+      (continuous_id.prodMk continuous_const).continuousOn
       (fun t' ht' => ⟨ht', hs⟩) t ht_in).continuousAt
       (Ioo_mem_nhds ht_in.1 ht_in.2) |>.continuousWithinAt)
 
@@ -125,13 +125,12 @@ private lemma homotopy_integrand_continuousWithinAt_s
     have h1 := (min_le_right (ε / 2) _).trans (min_le_left (t - a) (b - t))
     have h2 := (min_le_right (ε / 2) _).trans (min_le_right (t - a) (b - t))
     exact ⟨by linarith [hx.1], by linarith [hx.2]⟩
-  have h_deriv_joint := hH_deriv_cont _ _ (by linarith : t - ε' < t + ε') h_avoid_P h_sub_ab
   exact ContinuousWithinAt.mul
     ((hH_cont.comp (continuous_const.prodMk continuous_id)).continuousAt.sub
       continuousAt_const |>.inv₀
         (sub_ne_zero.mpr (hH_avoid t ht_Icc s₀ hs₀))
       |>.continuousWithinAt)
-    ((h_deriv_joint.comp
+    (((hH_deriv_cont _ _ (by linarith : t - ε' < t + ε') h_avoid_P h_sub_ab).comp
       (continuous_const.prodMk continuous_id).continuousOn
       (fun s hs => ⟨ht_in, hs⟩)) s₀ hs₀)
 
