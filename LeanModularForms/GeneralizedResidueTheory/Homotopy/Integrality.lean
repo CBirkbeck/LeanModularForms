@@ -156,17 +156,10 @@ theorem PiecewiseCurvesHomotopicAvoiding.toBasic
     hpts H hcont hH0 hH1,
     fun t ht s hs => havoid t (Set.Ioo_subset_Icc_self ht) s hs⟩
 
-/-- If f is eventually equal to a constant along a filter,
-then the limit equals that constant. -/
-theorem limUnder_eventually_eq_const {α : Type*}
-    [TopologicalSpace α] {f : α → ℂ} {l : Filter α}
-    {c : ℂ} [l.NeBot] (hf : ∀ᶠ x in l, f x = c) :
-    limUnder l f = c := by
-  apply Filter.Tendsto.limUnder_eq
-  rw [Filter.tendsto_def]
-  intro s hs
-  filter_upwards [hf] with x hx
-  change f x ∈ s; rw [hx]; exact mem_of_mem_nhds hs
+/-- If f is eventually equal to a constant, `limUnder` equals that constant. -/
+theorem limUnder_eventually_eq_const {α : Type*} [TopologicalSpace α] {f : α → ℂ}
+    {l : Filter α} {c : ℂ} [l.NeBot] (hf : ∀ᶠ x in l, f x = c) : limUnder l f = c :=
+  (tendsto_const_nhds.congr' (hf.mono fun _ h => h.symm)).limUnder_eq
 
 /-- At a point not in a finite set, there is an open ball disjoint from the set. -/
 lemma exists_ball_avoiding_finset {P : Finset ℝ} {t : ℝ} (ht : t ∉ P) :
