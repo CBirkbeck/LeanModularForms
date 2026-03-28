@@ -114,7 +114,7 @@ lemma quadratic_approx_of_contDiffAt_two
   have h_C1_at : ContDiffAt ℝ 1 γ t₀ :=
     hγ_C2.of_le one_le_two
   have h_diff_at : DifferentiableAt ℝ γ t₀ :=
-    h_C1_at.differentiableAt le_rfl
+    h_C1_at.differentiableAt one_ne_zero
   have h1_ne_top : (1 : WithTop ℕ∞) ≠ ↑(⊤ : ℕ∞) := by
     intro heq
     have : (1 : ℕ∞) = ⊤ := WithTop.coe_injective heq
@@ -123,7 +123,7 @@ lemma quadratic_approx_of_contDiffAt_two
     h_C1_at.eventually h1_ne_top
   have h_evt_diff :
       ∀ᶠ s in 𝓝 t₀, DifferentiableAt ℝ γ s :=
-    h_evt_C1.mono (fun s hs => hs.differentiableAt le_rfl)
+    h_evt_C1.mono (fun s hs => hs.differentiableAt one_ne_zero)
   obtain ⟨δ₂, hδ₂_pos, h_diff_ball⟩ :=
     Metric.eventually_nhds_iff.mp h_evt_diff
   let δ := min δ₁ δ₂
@@ -330,7 +330,7 @@ lemma remainder_bounded_of_C2
           (↑(t - t₀))⁻¹‖ ≤ C := by
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hγ_diff : DifferentiableAt ℝ γ t₀ :=
-    hγ_C2.differentiableAt one_le_two
+    hγ_C2.differentiableAt two_ne_zero
   have hγ_hasderiv : HasDerivAt γ L t₀ := by
     rw [← hγ_deriv]; exact hγ_diff.hasDerivAt
   obtain ⟨δ₁, hδ₁_pos, h_lower⟩ :=

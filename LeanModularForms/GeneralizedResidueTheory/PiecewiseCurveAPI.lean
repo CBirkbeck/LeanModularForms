@@ -48,7 +48,7 @@ theorem mem_sortedPartition (γ : PiecewiseC1Curve) (x : ℝ) :
 /-- The `sortedPartition` is sorted with respect to `≤`. -/
 theorem sortedPartition_sorted (γ : PiecewiseC1Curve) :
     γ.sortedPartition.Sorted (· ≤ ·) := by
-  simp only [sortedPartition, Finset.sort_sorted]
+  simp only [sortedPartition]; exact Finset.pairwise_sort γ.partition (· ≤ ·)
 
 /-- The `sortedPartition` has no duplicates. -/
 theorem sortedPartition_nodup (γ : PiecewiseC1Curve) :
