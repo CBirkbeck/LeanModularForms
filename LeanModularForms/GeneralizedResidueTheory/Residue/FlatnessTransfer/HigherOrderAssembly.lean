@@ -256,20 +256,12 @@ private theorem residueAt_ppMinusRes_eq_zero (f : ℂ → ℂ) (s : ℂ)
       _ = (∮ z in C(s, r), (fun z => f z - residueAt f s / (z - s)) z) := h_int_eq
   rw [show residueAt (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s)) s =
     residueAt (fun z => f z - residueAt f s / (z - s)) s from by
-    change limUnder (𝓝[>] (0 : ℝ))
-        (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r),
-          (fun z => meromorphicPrincipalPart f s z - residueAt f s / (z - s)) z) =
-      limUnder (𝓝[>] (0 : ℝ))
-        (fun r => (2 * ↑Real.pi * I)⁻¹ *
-          ∮ z in C(s, r), (fun z => f z - residueAt f s / (z - s)) z)
-    unfold limUnder
-    congr 1
-    apply Filter.map_congr
-    apply Filter.Eventually.mono (Ioo_mem_nhdsGT hρ'_pos)
-    intro r ⟨hr_pos, hr_lt⟩
-    simp only
-    congr 1
-    exact h_ci_agree r hr_pos hr_lt]
+    simp only [residueAt]
+    exact limUnder_eventually_eq (by
+      filter_upwards [Ioo_mem_nhdsGT hρ'_pos] with r ⟨hr_pos, hr_lt⟩
+      simp only
+      congr 1
+      exact h_ci_agree r hr_pos hr_lt)]
   exact h_single
 
 /-- Sum of all meromorphic principal parts over `S0`. -/
