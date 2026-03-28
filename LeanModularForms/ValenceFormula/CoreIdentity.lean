@@ -147,7 +147,6 @@ private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p �
 
 private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = -1/2) : s = ellipticPointRho' := by
-  apply UpperHalfPlane.ext; change (s : ℂ) = (ellipticPointRho' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
@@ -158,20 +157,16 @@ private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
+  apply UpperHalfPlane.ext
   apply Complex.ext
-  · rwa [show (ellipticPointRho' : ℂ).re = -1/2 from by
-      change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
-      simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num]
-  · rw [h_im]
-    change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
-    simp only [add_im, mul_im, I_re, I_im, mul_one, neg_im, one_im,
-      div_ofNat_im, ofReal_im, mul_zero, add_zero, neg_zero, zero_div,
-      ofReal_re, div_ofNat_re, zero_add]
+  · simp only [ellipticPointRho', UpperHalfPlane.coe_mk, add_re, neg_re, one_re, div_ofNat_re,
+      mul_re, ofReal_re, I_re, ofReal_im, I_im, mul_zero, sub_zero]; linarith
+  · simp only [ellipticPointRho', UpperHalfPlane.coe_mk, add_im, neg_im, one_im, div_ofNat_im,
+      mul_im, ofReal_re, I_re, ofReal_im, I_im, mul_one, mul_zero, add_zero]; linarith
 
 private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 1/2) :
     s = ellipticPointRhoPlusOne' := by
-  apply UpperHalfPlane.ext; change (s : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
@@ -182,15 +177,11 @@ private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
     · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
-  apply Complex.ext
-  · rwa [show (ellipticPointRhoPlusOne' : ℂ).re = 1/2 from by
-      change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
-      simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num]
-  · rw [h_im]
-    change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
-    simp only [add_im, mul_im, I_re, I_im, mul_one, one_im, div_ofNat_im,
-      ofReal_im, mul_zero, add_zero, zero_div, ofReal_re, div_ofNat_re,
-      zero_add]
+  apply UpperHalfPlane.ext; apply Complex.ext
+  · simp only [ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_re, one_re, div_ofNat_re,
+      mul_re, ofReal_re, I_re, ofReal_im, I_im, mul_zero, sub_zero]; linarith
+  · simp only [ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_im, one_im, div_ofNat_im,
+      mul_im, ofReal_re, I_re, ofReal_im, I_im, mul_one, mul_zero, add_zero]; linarith
 
 private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 1)
     (hs_abs_re : |(s : ℂ).re| = 1/2) : Real.sqrt 3 / 2 < (s : ℂ).im := by
