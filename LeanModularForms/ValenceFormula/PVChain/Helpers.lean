@@ -227,8 +227,8 @@ omit hf in
 /-- `modularFormCompOfComplex f` is periodic with period 1. -/
 private theorem modularFormCompOfComplex_periodic :
     Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
-  have := SlashInvariantFormClass.periodic_comp_ofComplex 1 f
-  simpa only [Nat.cast_one] using this
+  exact SlashInvariantFormClass.periodic_comp_ofComplex f
+    ModularFormClass.one_mem_strictPeriods_SL2Z
 
 omit f hf in
 /-- There exists a height above √3/2 exceeding all points in `S`. -/

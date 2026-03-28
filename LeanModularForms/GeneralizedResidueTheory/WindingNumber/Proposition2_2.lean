@@ -44,12 +44,8 @@ noncomputable section
 
 /-- If `f` has derivative `f'` at `x`, then `Re ∘ f` has derivative `Re(f')` at `x`. -/
 private lemma HasDerivAt.re' {f : ℝ → ℂ} {f' : ℂ} {x : ℝ} (h : HasDerivAt f f' x) :
-    HasDerivAt (fun t => (f t).re) f'.re x := by
-  rw [hasDerivAt_iff_hasFDerivAt] at h ⊢
-  convert HasFDerivAt.comp x (Complex.reCLM.hasFDerivAt (x := f x)) h using 1
-  ext
-  simp only [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply,
-    Complex.reCLM_apply, Complex.smul_re]
+    HasDerivAt (fun t => (f t).re) f'.re x :=
+  Complex.reCLM.hasFDerivAt.comp_hasDerivAt x h
 
 /-! ### Eventually not in partition (shared pattern) -/
 
