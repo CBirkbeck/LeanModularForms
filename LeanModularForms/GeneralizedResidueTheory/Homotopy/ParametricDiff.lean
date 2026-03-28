@@ -92,7 +92,7 @@ lemma contDiff_partialDeriv_snd_of_contDiff_two
   ext p
   have hH_diff : Differentiable ℝ H :=
     hH.differentiable
-      (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
   have h_emb_diff :
       DifferentiableAt ℝ (fun s : ℝ => (p.1, s)) p.2 :=
     (differentiableAt_const p.1).prodMk differentiableAt_id
@@ -101,7 +101,8 @@ lemma contDiff_partialDeriv_snd_of_contDiff_two
       = (fderiv ℝ H (p.1, p.2)) (deriv (fun s => (p.1, s)) p.2) :=
         fderiv_comp_deriv p.2 (hH_diff (p.1, p.2)) h_emb_diff
     _ = (fderiv ℝ H p) (0, 1) := by
-        rw [((hasDerivAt_const p.2 p.1).prodMk (hasDerivAt_id p.2)).deriv]
+        congr 1
+        exact ((hasDerivAt_const p.2 p.1).prodMk (hasDerivAt_id p.2)).deriv
 
 lemma contDiff_partialDeriv_fst_of_contDiff_two
     (H : ℝ × ℝ → ℂ) (hH : ContDiff ℝ 2 H) :
@@ -117,7 +118,7 @@ lemma contDiff_partialDeriv_fst_of_contDiff_two
   ext p
   have hH_diff : Differentiable ℝ H :=
     hH.differentiable
-      (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
   have h_emb_diff :
       DifferentiableAt ℝ (fun t : ℝ => (t, p.2)) p.1 :=
     differentiableAt_id.prodMk (differentiableAt_const p.2)
@@ -126,7 +127,8 @@ lemma contDiff_partialDeriv_fst_of_contDiff_two
       = (fderiv ℝ H (p.1, p.2)) (deriv (fun t => (t, p.2)) p.1) :=
         fderiv_comp_deriv p.1 (hH_diff (p.1, p.2)) h_emb_diff
     _ = (fderiv ℝ H p) (1, 0) := by
-        rw [((hasDerivAt_id p.1).prodMk (hasDerivAt_const p.1 p.2)).deriv]
+        congr 1
+        exact ((hasDerivAt_id p.1).prodMk (hasDerivAt_const p.1 p.2)).deriv
 
 /-- Schwarz theorem: mixed partials of a C² function commute. -/
 lemma schwarz_partialDeriv_comm
@@ -140,12 +142,12 @@ lemma schwarz_partialDeriv_comm
     (hH.contDiffAt).isSymmSndFDerivAt (by simp only [minSmoothness_of_isRCLikeNormedField, le_refl])
   have hH_diff : Differentiable ℝ H :=
     hH.differentiable
-      (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
   have hH1 : ContDiff ℝ 1
       (fun p : ℝ × ℝ => fderiv ℝ H p) :=
     hH.fderiv_right le_rfl
   have hfH : Differentiable ℝ (fun p => fderiv ℝ H p) :=
-    hH1.differentiable le_rfl
+    hH1.differentiable one_ne_zero
   have h_inner_t : ∀ s',
       deriv (fun t' => H (t', s')) t =
         fderiv ℝ H (t, s') (1, 0) := fun s' => by
@@ -246,7 +248,7 @@ private lemma differentiableAt_mul_of_contDiff
     (hg : DifferentiableAt ℝ g t)
     (hh : ContDiff ℝ 1 h) :
     DifferentiableAt ℝ (fun t' => g t' * h t') t :=
-  hg.mul (hh.differentiable le_rfl t)
+  hg.mul (hh.differentiable one_ne_zero t)
 
 private lemma differentiableAt_comp_of_holomorphic
     (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (t s : ℝ)
@@ -257,7 +259,7 @@ private lemma differentiableAt_comp_of_holomorphic
   have hH_diff :
       DifferentiableAt ℝ (fun t' => H (t', s)) t := by
     have h := hH.differentiable
-      (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
     exact DifferentiableAt.comp t (h (t, s))
       (differentiableAt_id.prodMk
         (differentiableAt_const s))
@@ -292,7 +294,7 @@ private lemma hasDerivAt_homotopy_param
       deriv (fun t' => H (t', s')) t
   have hH_diff : Differentiable ℝ H :=
     hH_smooth.differentiable
-      (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
   have h_partialT :
       ContDiff ℝ 1 (fun p : ℝ × ℝ =>
         deriv (fun t'' => H (t'', p.2)) p.1) :=
@@ -357,7 +359,7 @@ private lemma hasDerivAt_homotopy_param
                   H (t', p.2)) p.1) ∘
                   (fun s' => (t, s')) := rfl
         rw [h_comp]
-        exact (h_partialT.differentiable le_rfl
+        exact (h_partialT.differentiable one_ne_zero
           (t, s)).comp s h_emb_s
       have h_partialS_diff_t :
           DifferentiableAt ℝ (fun t' =>
@@ -370,7 +372,7 @@ private lemma hasDerivAt_homotopy_param
                   H (p.1, s')) p.2) ∘
                   (fun t' => (t', s)) := rfl
         rw [h_comp]
-        exact (h_partialS.differentiable le_rfl
+        exact (h_partialS.differentiable one_ne_zero
           (t, s)).comp t h_emb_t
       have h_mixed :
           deriv (fun s' =>
@@ -512,7 +514,7 @@ private lemma hasDerivAt_homotopy_param
             Differentiable ℝ (fun p' : ℝ × ℝ =>
               deriv (fun t' =>
                 H (t', p'.2)) p'.1) :=
-          h_partialT.differentiable le_rfl
+          h_partialT.differentiable one_ne_zero
         have h_emb_diff :
             DifferentiableAt ℝ
               (fun s' : ℝ => (p.1, s')) p.2 :=
@@ -551,7 +553,7 @@ private lemma hasDerivAt_homotopy_param
             fderiv ℝ (fun p' =>
               deriv (fun t' =>
                 H (t', p'.2)) p'.1) p) :=
-        h_partialT.continuous_fderiv le_rfl
+        h_partialT.continuous_fderiv one_ne_zero
       exact h_fderiv_cont.clm_apply
         continuous_const
     have hF'_eq : ∀ t s',
@@ -594,7 +596,7 @@ private lemma hasDerivAt_homotopy_param
                   H (t', p.2)) p.1) ∘
                   (fun s'' => (t, s'')) := rfl
         rw [h_comp]
-        exact (h_partialT.differentiable le_rfl
+        exact (h_partialT.differentiable one_ne_zero
           (t, s')).comp s' h_emb_s'
       change deriv ((fun s'' => f (H (t, s''))) *
         (fun s'' => deriv (fun t' => H (t', s'')) t)) s' =
@@ -726,15 +728,13 @@ private lemma hasDerivAt_homotopy_param
                 H (t', p.2)) p.1) ∘
                 (fun s'' => (t, s'')) := rfl
       rw [h_comp]
-      exact (h_partialT.differentiable le_rfl
+      exact (h_partialT.differentiable one_ne_zero
         (t, s')).comp s' h_emb_s'
     exact (hfH_diff_s'.mul
       h_partialT_diff_s').hasDerivAt
   have h_param :=
-    @intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
-      ℝ _ volume ℂ _ _ _ a b ε (fun _ => M)
-      (F := fun s' t => F s' t) (F' := fun s' t => deriv (fun s'' => F s'' t) s') s
-      hε_pos hF_meas hF_int hF'_meas
+    intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+      (Metric.ball_mem_nhds s hε_pos) hF_meas hF_int hF'_meas
       h_bound h_bound_int h_diff
   rw [← h_integral_eq]
   exact h_param.2
@@ -779,7 +779,7 @@ theorem hasDerivAt_homotopy_integral_zero
       simp only [J]
       have hH_diff : Differentiable ℝ H :=
         hH_smooth.differentiable
-          (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+          (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
       have h_emb :
           DifferentiableAt ℝ
             (fun t' : ℝ => (t', s)) t :=
@@ -812,7 +812,7 @@ theorem hasDerivAt_homotopy_integral_zero
                 deriv (fun s'' => H (p.1, s'')) p.2) ∘
                   (fun t' => (t', s)) := rfl
         rw [h_comp]
-        exact (h_partialS.differentiable le_rfl (t, s)).comp
+        exact (h_partialS.differentiable one_ne_zero (t, s)).comp
           t h_emb
       exact hfH_diff.mul h_partial_diff
     have hJ_deriv_cont :
@@ -820,7 +820,7 @@ theorem hasDerivAt_homotopy_integral_zero
           deriv (fun t' => J t' s) t) (Icc a b) := by
       have hH_diff : Differentiable ℝ H :=
         hH_smooth.differentiable
-          (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+          (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
       have h_partialS :
           ContDiff ℝ 1 (fun p : ℝ × ℝ =>
             deriv (fun s'' => H (p.1, s'')) p.2) :=
@@ -882,7 +882,7 @@ theorem hasDerivAt_homotopy_integral_zero
                   deriv (fun s'' => H (p.1, s'')) p.2) ∘
                     (fun t' => (t', s)) := rfl
           rw [h_comp]
-          exact (h_partialS.differentiable le_rfl
+          exact (h_partialS.differentiable one_ne_zero
             (t, s)).comp t h_emb
         exact deriv_mul hfH_diff h_partial_diff
       suffices h_rhs_cont : ContinuousOn (fun t =>
@@ -972,7 +972,7 @@ theorem hasDerivAt_homotopy_integral_zero
       intro t ht
       have hH_diff : Differentiable ℝ H :=
         hH_smooth.differentiable
-          (by norm_num : (1 : WithTop ℕ∞) ≤ 2)
+          (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
       have h_partialS :
           ContDiff ℝ 1 (fun p : ℝ × ℝ =>
             deriv (fun s'' => H (p.1, s'')) p.2) :=
@@ -1031,7 +1031,7 @@ theorem hasDerivAt_homotopy_integral_zero
                 deriv (fun t' => H (t', p.2)) p.1) ∘
                   (fun s' => (t, s')) := rfl
         rw [h_comp]
-        exact (h_partialT.differentiable le_rfl
+        exact (h_partialT.differentiable one_ne_zero
           (t, s)).comp s h_emb_s
       have h_partialS_diff_t :
           DifferentiableAt ℝ
@@ -1044,7 +1044,7 @@ theorem hasDerivAt_homotopy_integral_zero
                 deriv (fun s' => H (p.1, s')) p.2) ∘
                   (fun t' => (t', s)) := rfl
         rw [h_comp]
-        exact (h_partialS.differentiable le_rfl
+        exact (h_partialS.differentiable one_ne_zero
           (t, s)).comp t h_emb_t
       have hf_at :
           DifferentiableAt ℂ f (H (t, s)) :=

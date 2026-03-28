@@ -354,7 +354,7 @@ private lemma hasDerivAt_segmentIntegral_aux {f : ℂ → ℂ}
       ⟨le_of_lt ht_mem.1, ht_mem.2⟩
     exact hasDerivAt_segmentIntegrand hS_open hf (h_seg_z t ht)
   exact (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_lip
-    hε'_pos hF_meas hF_int hF'_meas h_lip bound_int h_diff).2
+    (Metric.ball_mem_nhds z hε'_pos) hF_meas hF_int hF'_meas h_lip bound_int h_diff).2
 
 private lemma hasDerivAt_segmentIntegral {f : ℂ → ℂ}
     {S : Set ℂ} {c z : ℂ}
