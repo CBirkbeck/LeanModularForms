@@ -17,21 +17,6 @@ open scoped Real Interval
 
 noncomputable section
 
-theorem cauchyPrincipalValueIntegrand_add'
-    (f g : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) :
-    cauchyPrincipalValueIntegrand' (f + g) γ z₀ ε t =
-    cauchyPrincipalValueIntegrand' f γ z₀ ε t +
-    cauchyPrincipalValueIntegrand' g γ z₀ ε t := by
-  simp only [cauchyPrincipalValueIntegrand', Pi.add_apply]
-  split_ifs <;> ring
-
-theorem cauchyPrincipalValueIntegrand_smul'
-    (c : ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) :
-    cauchyPrincipalValueIntegrand' (fun z => c * f z) γ z₀ ε t =
-    c * cauchyPrincipalValueIntegrand' f γ z₀ ε t := by
-  simp only [cauchyPrincipalValueIntegrand']
-  split_ifs <;> ring
-
 theorem cauchyPrincipalValueIntegrand_bounded
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (ε : ℝ)
     (_hε : 0 < ε)
@@ -71,15 +56,6 @@ theorem cauchyPrincipalValueIntegrand_bounded
           simp only [Metric.mem_ball, not_lt]
           exact le_of_lt h⟩ h_empty
       · simp only [norm_zero, le_refl]⟩
-
-lemma cauchyPrincipalValueIntegrand_eq_indicator
-    (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) :
-    cauchyPrincipalValueIntegrand' f γ z₀ ε =
-      {t | ε < ‖γ t - z₀‖}.indicator
-        (fun t => f (γ t) * deriv γ t) := by
-  ext t
-  unfold cauchyPrincipalValueIntegrand'
-  simp only [indicator, mem_setOf_eq]
 
 lemma measurableSet_pv_support (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
     (ε : ℝ) (hγ_cont : ContinuousOn γ (Icc a b)) :
@@ -138,13 +114,6 @@ theorem limUnder_eventually_eq {α : Type*}
     (h : ∀ᶠ x in l, f x = g x) :
     limUnder l f = limUnder l g := by
   unfold limUnder; congr 1; exact Filter.map_congr h
-
-theorem limUnder_eventually_eq'
-    {f g : ℝ → ℂ}
-    (h : ∀ᶠ ε in 𝓝[>] (0 : ℝ), f ε = g ε) :
-    limUnder (𝓝[>] (0 : ℝ)) f =
-    limUnder (𝓝[>] (0 : ℝ)) g :=
-  limUnder_eventually_eq h
 
 private theorem aEStronglyMeasurable_pv_integrand
     {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {ε : ℝ}
@@ -333,73 +302,6 @@ theorem cauchyPrincipalValueExists_of_continuous
         (by rw [uIoc_of_le hab.le]; exact Ioc_subset_Icc_self)
         le_rfl)
 
-/-- PV is additive when both limits exist. -/
-theorem cauchyPrincipalValue_add'
-    (f g : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (hf : CauchyPrincipalValueExists' f γ a b z₀)
-    (hg : CauchyPrincipalValueExists' g γ a b z₀)
-    (hf_int : ∀ᶠ ε in 𝓝[>] 0, IntervalIntegrable
-      (cauchyPrincipalValueIntegrand' f γ z₀ ε) volume a b)
-    (hg_int : ∀ᶠ ε in 𝓝[>] 0, IntervalIntegrable
-      (cauchyPrincipalValueIntegrand' g γ z₀ ε) volume a b) :
-    cauchyPrincipalValue' (f + g) γ a b z₀ =
-    cauchyPrincipalValue' f γ a b z₀ +
-      cauchyPrincipalValue' g γ a b z₀ := by
-  obtain ⟨Lf, hLf⟩ := hf
-  obtain ⟨Lg, hLg⟩ := hg
-  have h_sum_tendsto : Tendsto (fun ε =>
-      ∫ t in a..b, cauchyPrincipalValueIntegrand'
-        (f + g) γ z₀ ε t)
-      (𝓝[>] 0) (𝓝 (Lf + Lg)) := by
-    refine Tendsto.congr' ?_ (hLf.add hLg)
-    filter_upwards [hf_int, hg_int] with ε hfε hgε
-    simp_rw [cauchyPrincipalValueIntegrand_add']
-    exact (intervalIntegral.integral_add hfε hgε).symm
-  have hLf' : Tendsto (fun ε => ∫ t in a..b,
-      cauchyPrincipalValueIntegrand' f γ z₀ ε t)
-      (𝓝[>] 0) (𝓝 Lf) := hLf
-  have hLg' : Tendsto (fun ε => ∫ t in a..b,
-      cauchyPrincipalValueIntegrand' g γ z₀ ε t)
-      (𝓝[>] 0) (𝓝 Lg) := hLg
-  change limUnder (𝓝[>] 0)
-      (fun ε => ∫ t in a..b,
-        cauchyPrincipalValueIntegrand' (f + g) γ z₀ ε t) =
-    limUnder (𝓝[>] 0)
-      (fun ε => ∫ t in a..b,
-        cauchyPrincipalValueIntegrand' f γ z₀ ε t) +
-    limUnder (𝓝[>] 0)
-      (fun ε => ∫ t in a..b,
-        cauchyPrincipalValueIntegrand' g γ z₀ ε t)
-  rw [Tendsto.limUnder_eq h_sum_tendsto,
-    Tendsto.limUnder_eq hLf', Tendsto.limUnder_eq hLg']
-
-/-- PV is homogeneous. -/
-theorem cauchyPrincipalValue_smul'
-    (c : ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (hf : CauchyPrincipalValueExists' f γ a b z₀) :
-    cauchyPrincipalValue' (fun z => c * f z) γ a b z₀ =
-    c * cauchyPrincipalValue' f γ a b z₀ := by
-  obtain ⟨Lf, hLf⟩ := hf
-  have h_tendsto : Tendsto (fun ε =>
-      ∫ t in a..b, cauchyPrincipalValueIntegrand'
-        (fun z => c * f z) γ z₀ ε t)
-      (𝓝[>] 0) (𝓝 (c * Lf)) := by
-    simp_rw [cauchyPrincipalValueIntegrand_smul',
-      intervalIntegral.integral_const_mul]
-    exact hLf.const_mul c
-  have hLf' : Tendsto (fun ε => ∫ t in a..b,
-      cauchyPrincipalValueIntegrand' f γ z₀ ε t)
-      (𝓝[>] 0) (𝓝 Lf) := hLf
-  change limUnder (𝓝[>] 0)
-      (fun ε => ∫ t in a..b,
-        cauchyPrincipalValueIntegrand'
-          (fun z => c * f z) γ z₀ ε t) =
-    c * limUnder (𝓝[>] 0)
-      (fun ε => ∫ t in a..b,
-        cauchyPrincipalValueIntegrand' f γ z₀ ε t)
-  rw [Tendsto.limUnder_eq h_tendsto,
-    Tendsto.limUnder_eq hLf']
-
 /-- PV exists for singular 1/(z-z₀) integrands on C¹ immersions. -/
 theorem cauchyPrincipalValueExists_of_singular_inv
     (γ : PiecewiseC1Immersion) (z₀ : ℂ)
@@ -437,107 +339,6 @@ theorem cauchyPrincipalValueExists_of_singular_inv
       simp only [gt_iff_lt, show ε < ‖γ.toFun t - z₀‖ from
         lt_of_lt_of_le hε.2 (hδ_le t ht), ite_true])
 
-/-- Homotopy invariance of PV integrals. -/
-theorem homotopy_pv_integral_eq'
-    (f : ℂ → ℂ) (Γ γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (_hab : a < b)
-    (_H : ℝ × ℝ → ℂ) (_hH_cont : Continuous _H)
-    (_hH0 : ∀ t ∈ Icc a b, _H (t, 0) = Γ t)
-    (_hH1 : ∀ t ∈ Icc a b, _H (t, 1) = γ t)
-    (_hH_endpoints :
-      ∀ s ∈ Icc (0:ℝ) 1, _H (a, s) = z₀ ∧ _H (b, s) = z₀)
-    (_hH_nonzero :
-      ∀ t ∈ Ioo a b, ∀ s ∈ Icc (0:ℝ) 1, _H (t, s) ≠ z₀)
-    (h_cutoff_eq : ∀ ε > 0,
-      (∫ t in a..b, if ‖Γ t - z₀‖ > ε
-        then f (Γ t) * deriv Γ t else 0) =
-      (∫ t in a..b, if ‖γ t - z₀‖ > ε
-        then f (γ t) * deriv γ t else 0)) :
-    cauchyPrincipalValue' f Γ a b z₀ =
-    cauchyPrincipalValue' f γ a b z₀ := by
-  unfold cauchyPrincipalValue'
-  exact limUnder_eventually_eq (by
-    filter_upwards [self_mem_nhdsWithin] with ε hε
-    exact h_cutoff_eq ε (mem_Ioi.mp hε))
-
-/-- Homotopy invariance of winding numbers. -/
-theorem windingNumber_homotopy_invariant'
-    (Γ γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
-    (H : ℝ × ℝ → ℂ) (hH_cont : Continuous H)
-    (hH0 : ∀ t ∈ Icc a b, H (t, 0) = Γ t)
-    (hH1 : ∀ t ∈ Icc a b, H (t, 1) = γ t)
-    (hH_endpoints :
-      ∀ s ∈ Icc (0:ℝ) 1, H (a, s) = z₀ ∧ H (b, s) = z₀)
-    (hH_nonzero :
-      ∀ t ∈ Ioo a b, ∀ s ∈ Icc (0:ℝ) 1, H (t, s) ≠ z₀)
-    (h_cutoff_eq : ∀ ε > 0,
-      (∫ t in a..b, if ε < ‖(Γ t - z₀) - 0‖
-        then (Γ t - z₀)⁻¹ * deriv (fun t => Γ t - z₀) t
-        else 0) =
-      (∫ t in a..b, if ε < ‖(γ t - z₀) - 0‖
-        then (γ t - z₀)⁻¹ * deriv (fun t => γ t - z₀) t
-        else 0)) :
-    generalizedWindingNumber' Γ a b z₀ =
-    generalizedWindingNumber' γ a b z₀ := by
-  unfold generalizedWindingNumber'
-  congr 1
-  exact homotopy_pv_integral_eq' (·⁻¹)
-    (fun t => Γ t - z₀) (fun t => γ t - z₀) a b 0 hab
-    (fun p => H p - z₀)
-    (hH_cont.sub continuous_const)
-    (fun t ht => by simp only [hH0 t ht])
-    (fun t ht => by simp only [hH1 t ht])
-    (fun s hs => by
-      obtain ⟨h1, h2⟩ := hH_endpoints s hs
-      exact ⟨by simp [h1], by simp [h2]⟩)
-    (fun t ht s hs =>
-      sub_ne_zero.mpr (hH_nonzero t ht s hs))
-    h_cutoff_eq
-
-/-- PV exists for c/(z-z₀) integrands on C¹ immersions. -/
-theorem cauchyPrincipalValueExists_of_singular_pole
-    (γ : PiecewiseC1Immersion) (z₀ c : ℂ)
-    (h_crossing_cauchy :
-      (∃ t ∈ Icc γ.a γ.b, γ.toFun t = z₀) →
-        Cauchy (Filter.map (fun ε =>
-          ∫ t in γ.a..γ.b,
-            if ε < ‖γ.toFun t - z₀‖
-            then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t
-            else 0) (𝓝[>] 0))) :
-    CauchyPrincipalValueExists'
-      (fun z => c / (z - z₀)) γ.toFun γ.a γ.b z₀ := by
-  have h_eq : (fun z => c / (z - z₀)) =
-      (fun z => c * (z - z₀)⁻¹) := by ext z; ring
-  obtain ⟨L, hL⟩ := cauchyPrincipalValueExists_of_singular_inv
-    γ z₀ h_crossing_cauchy
-  refine ⟨c * L, ?_⟩
-  have h_eq' : ∀ ε, (fun t =>
-      if ε < ‖γ.toFun t - z₀‖
-      then c * (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t
-      else 0) = (fun t => c *
-        (if ε < ‖γ.toFun t - z₀‖
-        then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t
-        else 0)) := by
-    intro ε; ext t; split_ifs <;> ring
-  have h_tendsto : Tendsto (fun ε => ∫ t in γ.a..γ.b,
-      if ε < ‖γ.toFun t - z₀‖
-      then c * (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t
-      else 0) (𝓝[>] 0) (𝓝 (c * L)) := by
-    simp_rw [h_eq']
-    simp_rw [intervalIntegral.integral_const_mul]
-    exact Tendsto.const_mul c hL
-  have h_eq'' : ∀ ε, (∫ t in γ.a..γ.b,
-      if ε < ‖γ.toFun t - z₀‖
-      then c / (γ.toFun t - z₀) * deriv γ.toFun t
-      else 0) = (∫ t in γ.a..γ.b,
-      if ε < ‖γ.toFun t - z₀‖
-      then c * (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t
-      else 0) := by
-    intro ε
-    apply intervalIntegral.integral_congr
-    intro t _; simp only []; split_ifs <;> ring
-  simp_rw [h_eq'']; exact h_tendsto
-
 /-- Uniform avoidance on compact sets. -/
 theorem uniform_avoidance_on_compact
     (γ : ℝ → ℂ) (K : Set ℝ) (z₀ : ℂ)
@@ -550,13 +351,6 @@ theorem uniform_avoidance_on_compact
   exact ⟨‖γ t₀ - z₀‖,
     norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t₀ ht₀)),
     Filter.eventually_principal.mp h_min⟩
-
-/-- For ε below the avoidance bound, the cutoff is trivial. -/
-theorem epsilon_cutoff_trivial_on_compact
-    (γ : ℝ → ℂ) (K : Set ℝ) (z₀ : ℂ) (ε δ : ℝ)
-    (hε : ε < δ) (h_avoid : ∀ t ∈ K, δ ≤ ‖γ t - z₀‖) :
-    ∀ t ∈ K, ε < ‖γ t - z₀‖ :=
-  fun t ht => lt_of_lt_of_le hε (h_avoid t ht)
 
 private theorem pv_piecewise_measurable
     (g : ℂ → ℂ) (γ : PiecewiseC1Curve) (z₀ : ℂ)
@@ -607,36 +401,6 @@ private theorem pv_piecewise_pointwise
       (norm_pos_iff.mpr (sub_ne_zero.mpr h_ne))] with ε hε
     simp only [hε.2, ite_true])
 
-/-- PV exists for continuous integrands when the full integrand is integrable
-and the preimage of z₀ is finite. -/
-theorem cauchyPrincipalValueExists_of_continuous_piecewise
-    (g : ℂ → ℂ) (γ : PiecewiseC1Curve) (z₀ : ℂ)
-    (h_integrable : IntervalIntegrable
-      (fun t => g (γ.toFun t) * deriv γ.toFun t)
-      volume γ.a γ.b)
-    (h_finite_preimage :
-      Set.Finite {t ∈ Icc γ.a γ.b | γ.toFun t = z₀}) :
-    CauchyPrincipalValueExists' g γ.toFun γ.a γ.b z₀ := by
-  by_cases h_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀
-  · obtain ⟨δ, hδ, hδ_le⟩ := uniform_avoidance_on_compact
-      γ.toFun (Icc γ.a γ.b) z₀ isCompact_Icc
-      ⟨γ.a, left_mem_Icc.mpr γ.hab.le⟩
-      γ.continuous_toFun h_avoids
-    refine ⟨∫ t in γ.a..γ.b,
-        g (γ.toFun t) * deriv γ.toFun t, ?_⟩
-    exact tendsto_const_nhds.congr' (by
-      filter_upwards [Ioo_mem_nhdsGT hδ] with ε hε
-      symm; apply intervalIntegral.integral_congr
-      intro t ht; rw [uIcc_of_le γ.hab.le] at ht
-      simp only [gt_iff_lt, lt_of_lt_of_le hε.2 (hδ_le t ht), ite_true])
-  · exact ⟨∫ t in γ.a..γ.b, g (γ.toFun t) * deriv γ.toFun t,
-      intervalIntegral.tendsto_integral_filter_of_dominated_convergence
-        (fun t => ‖g (γ.toFun t) * deriv γ.toFun t‖)
-        (pv_piecewise_measurable g γ z₀ h_integrable)
-        (pv_piecewise_bound γ z₀ g)
-        h_integrable.norm
-        (pv_piecewise_pointwise γ z₀ g h_finite_preimage)⟩
-
 private theorem pv_simple_pole_integrand_split
     (γ_fun : ℝ → ℂ) (z₀ c : ℂ) (g : ℂ → ℂ) (ε : ℝ) (t : ℝ) :
     (if ε < ‖γ_fun t - z₀‖
@@ -679,38 +443,5 @@ private theorem pv_simple_pole_tendsto
   symm
   exact intervalIntegral.integral_add
     (h_int ε (mem_Ioi.mp hε)).1 (h_int ε (mem_Ioi.mp hε)).2
-
-/-- PV exists for c/(z-z₀) + g(z) when the regular part g has PV. -/
-theorem cauchyPrincipalValueExists_of_simple_pole
-    (γ : PiecewiseC1Immersion) (z₀ : ℂ) (c : ℂ)
-    (g : ℂ → ℂ)
-    (h_crossing_cauchy :
-      (∃ t ∈ Icc γ.a γ.b, γ.toFun t = z₀) →
-        Cauchy (Filter.map (fun ε =>
-          ∫ t in γ.a..γ.b,
-            if ε < ‖γ.toFun t - z₀‖
-            then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t
-            else 0) (𝓝[>] 0)))
-    (h_g_exists :
-      CauchyPrincipalValueExists' g γ.toFun γ.a γ.b z₀)
-    (h_int : ∀ ε > 0,
-      IntervalIntegrable (fun t =>
-        if ε < ‖γ.toFun t - z₀‖
-        then c / (γ.toFun t - z₀) * deriv γ.toFun t
-        else 0) volume γ.a γ.b ∧
-      IntervalIntegrable (fun t =>
-        if ε < ‖γ.toFun t - z₀‖
-        then g (γ.toFun t) * deriv γ.toFun t
-        else 0) volume γ.a γ.b) :
-    CauchyPrincipalValueExists'
-      (fun z => c / (z - z₀) + g z)
-      γ.toFun γ.a γ.b z₀ := by
-  obtain ⟨Ls, hLs⟩ :=
-    cauchyPrincipalValueExists_of_singular_pole
-      γ z₀ c h_crossing_cauchy
-  obtain ⟨Lg, hLg⟩ := h_g_exists
-  refine ⟨Ls + Lg, ?_⟩
-  simp_rw [pv_simple_pole_integrand_split]
-  exact pv_simple_pole_tendsto γ z₀ c g Ls Lg hLs hLg h_int
 
 end
