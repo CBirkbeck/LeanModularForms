@@ -379,6 +379,7 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
         (h_arc_ne_zero t ht_ioo) hg_ne
       simp only [← hg_def] at h_logD
       rw [h_rev] at h_d_4mt ⊢; rw [h_d_4mt, h_deriv_arc t ht_ioo, h_logD]
+      have hγt_ne := h_arc_ne_zero t ht_ioo
       field_simp; push_cast; ring
   have hF_int : IntervalIntegrable F MeasureTheory.volume 1 3 :=
     cpv_integrand_intervalIntegrable_arc f S H ε hε h_oncurve
