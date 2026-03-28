@@ -108,12 +108,11 @@ lemma continuousOn_pv_base (f : ℂ → ℂ) (γ : ℝ → ℂ)
       ((hγ_cont t ht_Icc).mono inter_subset_right) h_maps
   exact hfγ_at.mul ((hγ'_cont t ht_Icc).mono inter_subset_right)
 
-theorem limUnder_eventually_eq {α : Type*}
-    [TopologicalSpace α] [Nonempty α]
-    {f g : ℝ → α} {l : Filter ℝ} [l.NeBot]
-    (h : ∀ᶠ x in l, f x = g x) :
+/-- If `f =ᶠ g` along a filter, their `limUnder` values agree. -/
+theorem limUnder_eventually_eq {α : Type*} [TopologicalSpace α] [Nonempty α]
+    {f g : ℝ → α} {l : Filter ℝ} [l.NeBot] (h : ∀ᶠ x in l, f x = g x) :
     limUnder l f = limUnder l g := by
-  unfold limUnder; congr 1; exact Filter.map_congr h
+  simp only [limUnder, Filter.map_congr h]
 
 private theorem aEStronglyMeasurable_pv_integrand
     {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {ε : ℝ}
