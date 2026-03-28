@@ -905,7 +905,7 @@ lemma singular_annulus_bound_explicit
     annulus_symmDiff_measure_bound hab hat₀
       hγ_C2 hγ_deriv hL
   have hγ_diff : DifferentiableAt ℝ γ t₀ :=
-    hγ_C2.differentiableAt one_le_two
+    hγ_C2.differentiableAt two_ne_zero
   have hγ_hasderiv : HasDerivAt γ L t₀ := by
     rw [← hγ_deriv]; exact hγ_diff.hasDerivAt
   obtain ⟨δ_lo, hδ_lo_pos, h_lower⟩ :=
@@ -1683,7 +1683,7 @@ lemma singular_annulus_bound_explicit
       _ ≤ Csing * ε₁ := by
           suffices h :
               Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3 * bound ≤
-              Csing * ε₁ by
+              Csing * ε₁ by exact h
           change Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3 *
             (2 * ‖L‖ / ε₂) ≤
             4 * Kmeas / ‖L‖ ^ 2 * ε₁

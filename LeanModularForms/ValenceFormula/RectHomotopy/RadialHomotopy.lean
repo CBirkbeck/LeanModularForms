@@ -318,7 +318,7 @@ lemma polygonToCircleRadial_deriv_cont_on_piece (p : ℂ) (hp_norm : ‖p‖ > 1
       DifferentiableAt ℝ (polygonToCircleRadial p) q := by
     have h_ev_c1 :=
       h_joint_c1.eventually (WithTop.coe_injective.ne WithTop.coe_ne_top)
-    exact h_ev_c1.mono (fun q hq => hq.differentiableAt le_rfl)
+    exact h_ev_c1.mono (fun q hq => hq.differentiableAt one_ne_zero)
   have h_deriv_eq_fderiv : ∀ᶠ q : ℝ × ℝ in 𝓝 (t, s),
       deriv (fun t' => polygonToCircleRadial p (t', q.2)) q.1 =
         fderiv ℝ (polygonToCircleRadial p) q ((1 : ℝ), (0 : ℝ)) := by
@@ -583,7 +583,7 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
             Real.norm_eq_abs]
       _ ≤ |1 - s| * ‖fdPolygon t' - fdPolygon t‖ +
           |s| * (4 * ‖fdPolygon t' - fdPolygon t‖ / δ) := by
-          apply add_le_add_left
+          apply add_le_add_right
           apply mul_le_mul_of_nonneg_left
           · have h_nsub := norm_normalize_sub_le (half_pos hδ_pos)
               ht'_delta (le_trans (by linarith : δ / 2 ≤ δ) (hδ_le t ht))
