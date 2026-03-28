@@ -411,7 +411,7 @@ private lemma aesm_diff_single_multi_cpv_zpow
     exact hSF_meas.diff (measurableSet_goodSet_Icc S0 γ ε)
   apply ((AEStronglyMeasurable.piecewise hSG_meas
     ((aesm_zpow_on_singleFar γ s m ε hε).mono_measure (Measure.restrict_mono hSG_sub le_rfl))
-    (aestronglyMeasurable_const (α := ℝ) (β := ℂ))).mono_measure
+    (aestronglyMeasurable_const (β := ℂ) (b := 0))).mono_measure
       Measure.restrict_le_self).congr
   filter_upwards with t
   simp only [Set.piecewise, Set.indicator]
@@ -469,11 +469,12 @@ private lemma single_cutoff_zpow_intervalIntegrable
         (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0)
       volume γ.a γ.b := by
   set f_zpow := fun z => (z - s) ^ (-(m : ℤ)) with hf_zpow_def
-  rw [show (fun t => if ‖γ.toFun t - s‖ > ε then
+  have h_eq_cpv : (fun t => if ‖γ.toFun t - s‖ > ε then
       f_zpow (γ.toFun t) * deriv γ.toFun t else 0) =
     (fun t =>
-      cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) from
-    funext fun t => by rw [cauchyPrincipalValueIntegrandOn_singleton]]
+      cauchyPrincipalValueIntegrandOn {s} f_zpow γ.toFun ε t) :=
+    funext fun t => by rw [cauchyPrincipalValueIntegrandOn_singleton]
+  rw [h_eq_cpv]
   rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (le_of_lt γ.hab)]
   refine IntegrableOn.mono_set ?_ Ioc_subset_Icc_self
   refine integrableOn_of_bounded_aeMeasurable (M := ε⁻¹ ^ m * (|Mγ'| + 1)) ?_ ?_
@@ -1022,7 +1023,7 @@ private lemma residueAt_congr {f g : ℂ → ℂ} {s : ℂ}
       Set.mem_compl_singleton_iff.mpr hne⟩
   exact limUnder_eventually_eq (by
     filter_upwards [Ioo_mem_nhdsGT hδ_pos] with r ⟨hr_pos, hr_lt⟩
-    simp only; congr 1; exact h_ci_eq r hr_pos hr_lt)
+    congr 1; exact h_ci_eq r hr_pos hr_lt)
 
 /-- Circle integrals of a meromorphic `f` are constant for small radii: if `f` is
 analytic on `ball s rf \ {s}`, then `∮_{C(s,r)} f = ∮_{C(s,R₀)} f` for `r ≤ R₀ < rf`.
@@ -1127,7 +1128,9 @@ lemma residueAt_sub_residueSum_eq_zero
     (S0 : Finset ℂ) (f : ℂ → ℂ) (s : ℂ) (hs : s ∈ S0)
     (hMero : MeromorphicAt f s) :
     residueAt (fun z => f z - ∑ s' ∈ S0, residueAt f s' / (z - s')) s = 0 := by
-  unfold residueAt
+  show limUnder (𝓝[>] (0 : ℝ)) (fun r =>
+    (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(s, r),
+      f z - ∑ s' ∈ S0, residueAt f s' / (z - s')) = 0
   apply Filter.Tendsto.limUnder_eq
   have h_min_dist : ∃ δ > 0, ∀ s' ∈ S0, s' ≠ s → δ ≤ dist s' s := by
     by_cases h_other : ∃ s' ∈ S0, s' ≠ s
