@@ -16,8 +16,6 @@ All proofs delegate to the machinery in `HomologicalCauchy.lean` and
 
 * `generalizedResidueTheorem` -- the most general version: null-homologous
   curve, higher-order poles, conditions (A')+(B).
-* `generalizedResidueTheorem_convex` -- corollary for convex domains (closedness
-  replaces null-homologous hypothesis).
 * `generalizedResidueTheorem_simplePoles` -- corollary for simple poles in
   null-homologous setting (conditions A+B drop out; uses `HasSimplePoleAt`).
 
@@ -41,8 +39,7 @@ the Cauchy principal value integral converges to
 provided conditions (A') (flatness) and (B) (angle/Laurent compatibility)
 hold at every crossing point.
 
-This is the most general form. See `generalizedResidueTheorem_convex` for
-the convex-domain specialization and `generalizedResidueTheorem_simplePoles`
+This is the most general form. See `generalizedResidueTheorem_simplePoles`
 for the simple-pole case where conditions A'+B are not needed. -/
 theorem generalizedResidueTheorem (U : Set ℂ) (hU : IsOpen U)
     (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
@@ -195,40 +192,6 @@ theorem generalizedResidueTheorem (U : Set ℂ) (hU : IsOpen U)
     ext ε; ring
   rw [h_eq, show L = 0 + L from (zero_add _).symm]
   exact hCancel.add hPV_res_tendsto
-
-/-! ### Convex-domain corollary -/
-
-/-- **Generalized Residue Theorem** (convex domain).
-
-Specialization of `generalizedResidueTheorem` to convex open sets, where
-null-homologousness is automatic for any closed curve contained in `U`.
-Requires the curve to be closed and contained in `U`. -/
-theorem generalizedResidueTheorem_convex (U : Set ℂ) (hU : IsOpen U)
-    (hU_convex : Convex ℝ U)
-    (S : Set ℂ) (hS_in_U : ∀ s ∈ S, s ∈ U)
-    (hS_discrete : ∀ s ∈ S, ∃ ε > 0, ∀ s' ∈ S, s' ≠ s → ε ≤ ‖s' - s‖)
-    (hS_closed : IsClosed S) (S0 : Finset ℂ) (hS0_subset : ∀ s ∈ S0, s ∈ S)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ S0))
-    (γ : PiecewiseC1Immersion)
-    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
-    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
-    (hS_on_curve : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ S → γ.toFun t ∈ S0)
-    (hMero : ∀ s ∈ S0, MeromorphicAt f s)
-    (hCondA : SatisfiesConditionA' γ f S0 (fun s => poleOrderAt f s))
-    (hCondB : SatisfiesConditionB γ f S0)
-    (hγ_meas : Measurable γ.toFun)
-    (h_no_endpt_cross : ∀ s ∈ S0, γ.toFun γ.a ≠ s ∧ γ.toFun γ.b ≠ s)
-    (h_unique_cross : ∀ s ∈ S0, ∀ t₁ ∈ Icc γ.a γ.b, ∀ t₂ ∈ Icc γ.a γ.b,
-      γ.toFun t₁ = s → γ.toFun t₂ = s → t₁ = t₂) :
-    Tendsto (fun ε => ∫ t in γ.a..γ.b,
-        cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
-      (𝓝[>] 0) (𝓝 (2 * Real.pi * I * ∑ s ∈ S0,
-        generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s)) :=
-  generalizedResidueTheorem U hU S hS_in_U hS_discrete hS_closed S0 hS0_subset
-    f hf γ
-    (isNullHomologous_of_convex U hU hU_convex
-      ⟨γ.toFun γ.a, hγ_in_U γ.a (left_mem_Icc.mpr γ.hab.le)⟩ γ hγ_closed hγ_in_U)
-    hS_on_curve hMero hCondA hCondB hγ_meas h_no_endpt_cross h_unique_cross
 
 /-! ### Simple-pole corollary -/
 
@@ -390,20 +353,3 @@ theorem generalizedResidueTheorem_simplePoles (U : Set ℂ) (hU : IsOpen U)
   congr 1; apply Finset.sum_congr rfl
   intro s hs; rw [residueAt_eq_residueSimplePole f s (hSimplePoles s hs)]
 
-/-! ### API bridge lemmas -/
-
-/-- A simple pole is meromorphic.
-
-`HasSimplePoleAt f z₀` decomposes `f` as `c/(z-z₀) + g` with `g` analytic.
-Multiplying by `(z-z₀)` yields the analytic function `c + (z-z₀)·g`, which
-witnesses `MeromorphicAt f z₀` via the zpow characterization with `n = -1`. -/
-theorem HasSimplePoleAt.meromorphicAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (hf : HasSimplePoleAt f z₀) : MeromorphicAt f z₀ := by
-  obtain ⟨c, g, hg_an, hf_eq⟩ := hf
-  rw [MeromorphicAt.iff_eventuallyEq_zpow_smul_analyticAt]
-  refine ⟨-1, fun z => c + (z - z₀) * g z, ?_, ?_⟩
-  · exact analyticAt_const.add ((analyticAt_id.sub analyticAt_const).mul hg_an)
-  · filter_upwards [hf_eq, self_mem_nhdsWithin] with z hfz hne
-    rw [Set.mem_compl_singleton_iff] at hne
-    have hsub_ne : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-    rw [hfz, zpow_neg_one, smul_eq_mul]; field_simp [hsub_ne]
