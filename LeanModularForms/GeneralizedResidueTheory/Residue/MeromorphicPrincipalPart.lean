@@ -492,7 +492,7 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
     (hγ_avoids : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     ∫ t in γ.a..γ.b, meromorphicPrincipalPart f s (γ.toFun t) * deriv γ.toFun t = 0 := by
   by_cases h_neg : meromorphicOrderAt f s < 0
-    set N := poleOrderNat f s with hN_def
+  · set N := poleOrderNat f s with hN_def
     set g := meromorphicFactor f s hf h_neg.ne_top with hg_def
     have hN_pos : 0 < N := poleOrderNat_pos_of_neg_order f s h_neg
     have h_pp_eq : meromorphicPrincipalPart f s = fun z =>
@@ -535,7 +535,7 @@ theorem contourIntegral_principalPart_eq_zero_of_residue_zero
     · have hk_lt : k < N - 1 := by omega
       have h_exp : (k : ℤ) - (N : ℤ) ≤ -2 := by omega
       exact contourIntegral_const_mul_zpow_eq_zero s _ h_exp _ γ hγ_closed hγ_avoids
-    have h_pp : meromorphicPrincipalPart f s = fun _ => 0 := by
+  · have h_pp : meromorphicPrincipalPart f s = fun _ => 0 := by
       unfold meromorphicPrincipalPart
       rw [dif_neg (not_and_of_not_right _ h_neg)]
     simp only [h_pp, zero_mul, intervalIntegral.integral_zero]

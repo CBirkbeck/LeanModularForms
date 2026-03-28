@@ -133,7 +133,7 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
     have : n ≠ 0 := by
       intro h_eq_zero
       exact h_order_ne_zero (by
-        rw [← Nat.cast_analyticOrderNatAt h_not_top, ← hn_def, h_eq_zero]
+        rw [← Nat.cast_analyticOrderNatAt (modform_not_locally_zero f hf s), ← hn_def, h_eq_zero]
         simp only [Nat.cast_zero])
     omega
   refine ⟨n, g, hn_pos, hg_analytic, hg_ne_zero, rfl, ?_⟩
@@ -262,7 +262,7 @@ lemma residueSimplePole_logDeriv_eq_zero_at_nonzero (z : ℂ) (hz_im : 0 < z.im)
     rw [show (0 : ℂ) = z - z from (sub_self z).symm]
     exact (continuous_id.sub continuous_const).continuousAt.tendsto.mono_left
       nhdsWithin_le_nhds
-  rwa [zero_mul] at h_prod
+  rw [zero_mul] at h_prod; exact h_prod.limUnder_eq
 
 /-! ### fdBoundary_H ∈ fdBox -/
 
@@ -356,7 +356,7 @@ omit f hf in
 private lemma residueSimplePole_congr_local (F G : ℂ → ℂ) (z₀ : ℂ)
     (h : F =ᶠ[𝓝[≠] z₀] G) : residueSimplePole F z₀ = residueSimplePole G z₀ := by
   unfold residueSimplePole
-  exact congrArg lim (Filter.map_congr (h.mono fun z hz => by rw [hz]))
+  exact congrArg lim (Filter.map_congr (h.mono fun z hz => congr_arg _ hz))
 
 omit f hf in
 noncomputable def logDerivPatched (F : ℂ → ℂ) (S0 : Finset ℂ)
@@ -652,7 +652,7 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
         fdBoundary_H_im_pos H hH_sqrt3 t ht
       nlinarith [mul_nonneg (show z₀.im - (fdBoundary_H H t).im ≥ 0 from by linarith)
         (show z₀.im + (fdBoundary_H H t).im ≥ 0 from by linarith),
-        show ‖z₀‖ ^ 2 < 1 from by nlinarith [norm_nonneg z₀]]
+        (show ‖z₀‖ ^ 2 < 1 from by nlinarith [norm_nonneg z₀])]
     · exact hγ_diff
     · exact hγ_deriv_cont
     · exact hγ_deriv_bdd
