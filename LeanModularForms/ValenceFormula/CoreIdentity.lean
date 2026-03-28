@@ -147,7 +147,7 @@ private theorem explicit_coefficients (S : Finset UpperHalfPlane) (hS : ∀ p �
 
 private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = -1/2) : s = ellipticPointRho' := by
-  apply Subtype.ext; change (s : ℂ) = (ellipticPointRho' : ℂ)
+  apply UpperHalfPlane.ext; change (s : ℂ) = (ellipticPointRho' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
@@ -171,7 +171,7 @@ private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
 private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 1/2) :
     s = ellipticPointRhoPlusOne' := by
-  apply Subtype.ext; change (s : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
+  apply UpperHalfPlane.ext; change (s : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re] at h_nsq
@@ -206,7 +206,7 @@ private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 
 
 private lemma unit_circle_re_zero_eq_i (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 0) : s = ellipticPointI' := by
-  apply Subtype.ext; change (s : ℂ) = (ellipticPointI' : ℂ)
+  apply UpperHalfPlane.ext; change (s : ℂ) = (ellipticPointI' : ℂ)
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
   rw [Complex.normSq_apply, hs_re, mul_zero, zero_add] at h_nsq

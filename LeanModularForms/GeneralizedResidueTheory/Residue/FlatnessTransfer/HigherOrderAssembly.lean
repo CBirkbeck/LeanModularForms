@@ -259,7 +259,6 @@ private theorem residueAt_ppMinusRes_eq_zero (f : ℂ → ℂ) (s : ℂ)
     simp only [residueAt]
     exact limUnder_eventually_eq (by
       filter_upwards [Ioo_mem_nhdsGT hρ'_pos] with r ⟨hr_pos, hr_lt⟩
-      simp only
       congr 1
       exact h_ci_agree r hr_pos hr_lt)]
   exact h_single
