@@ -160,8 +160,8 @@ lemma ord_rho_plus_one_eq_ord_rho :
     orderOfVanishingAt' f ellipticPointRhoPlusOne' =
     orderOfVanishingAt' f ellipticPointRho' := by
   have h : (1 : ℝ) +ᵥ ellipticPointRho' = ellipticPointRhoPlusOne' :=
-    Subtype.ext (by
-      show ((1 : ℝ) : ℂ) + ↑ellipticPointRho' = ↑ellipticPointRhoPlusOne'
+    UpperHalfPlane.ext (by
+      show (((1 : ℝ) : ℂ) + ↑ellipticPointRho') = ↑ellipticPointRhoPlusOne'
       simp only [ellipticPointRho', ellipticPointRhoPlusOne']
       show (1 : ℂ) + (-1 / 2 + ↑(Real.sqrt 3) / 2 * I) =
         1 / 2 + ↑(Real.sqrt 3) / 2 * I
@@ -180,7 +180,7 @@ lemma modform_comp_ofComplex_S_identity (z : ℂ) (hz : 0 < z.im) :
   set z_uhp : UpperHalfPlane := ⟨z, hz⟩
   have h_eq : (⟨-(1:ℂ)/z, h_neg_inv_im⟩ : UpperHalfPlane) =
       ModularGroup.S • z_uhp :=
-    Subtype.ext (by
+    UpperHalfPlane.ext (by
       rw [UpperHalfPlane.modular_S_smul]
       show -(1:ℂ)/z = (-z)⁻¹; field_simp)
   rw [h_eq]
@@ -298,39 +298,41 @@ theorem modularForm_finitely_many_zeros_in_fdBox (hf : f ≠ 0) {M : ℝ} (hM : 
 
 /-- The cusp function of a nonzero modular form is not identically zero near 0. -/
 theorem cuspFunction_not_eventually_zero (hf : f ≠ 0) :
-    ¬∀ᶠ q in 𝓝 (0 : ℂ), SlashInvariantFormClass.cuspFunction (1 : ℕ) f q = 0 := by
+    ¬∀ᶠ q in 𝓝 (0 : ℂ), SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q = 0 := by
   intro h_freq
-  have h_diff : DifferentiableOn ℂ (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
+  have h_diff : DifferentiableOn ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f))
       (Metric.ball 0 1) := fun q hq =>
-    (ModularFormClass.differentiableAt_cuspFunction (n := 1) (f := f)
+    (ModularFormClass.differentiableAt_cuspFunction f
+      (by norm_num : (0 : ℝ) < 1) ModularFormClass.one_mem_strictPeriods_SL2Z
       (by rwa [Metric.mem_ball, dist_zero_right] at hq)).differentiableWithinAt
-  have h_anal : AnalyticOnNhd ℂ (SlashInvariantFormClass.cuspFunction (1 : ℕ) f)
+  have h_anal : AnalyticOnNhd ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f))
       (Metric.ball 0 1) := h_diff.analyticOnNhd Metric.isOpen_ball
-  have h_eqOn : EqOn (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) 0 (Metric.ball 0 1) :=
+  have h_eqOn : EqOn (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f)) 0 (Metric.ball 0 1) :=
     h_anal.eqOn_zero_of_preconnected_of_eventuallyEq_zero
       (convex_ball 0 1).isPreconnected (Metric.mem_ball_self (by norm_num : (0:ℝ) < 1)) h_freq
   apply hf; ext τ
   simp only [ModularForm.coe_zero, Pi.zero_apply]
-  rw [← SlashInvariantFormClass.eq_cuspFunction (1 : ℕ) f τ]
-  have h_qmem : Function.Periodic.qParam (↑(1 : ℕ)) (↑τ : ℂ) ∈
+  rw [← SlashInvariantFormClass.eq_cuspFunction f τ ModularFormClass.one_mem_strictPeriods_SL2Z (by norm_num : (1:ℝ) ≠ 0)]
+  have h_qmem : Function.Periodic.qParam (1 : ℝ) (↑τ : ℂ) ∈
       Metric.ball (0 : ℂ) 1 := by
     rw [Metric.mem_ball, dist_zero_right]
-    exact UpperHalfPlane.norm_qParam_lt_one 1 τ
+    exact_mod_cast UpperHalfPlane.norm_qParam_lt_one 1 τ
   exact h_eqOn h_qmem
 
 /-- For a nonzero modular form, the cusp function is eventually nonzero near 0. -/
 theorem cuspFunction_eventually_ne_zero (hf : f ≠ 0) :
     ∀ᶠ q in 𝓝[≠] (0 : ℂ),
-      SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0 := by
-  have h_anal : AnalyticAt ℂ (SlashInvariantFormClass.cuspFunction (1 : ℕ) f) 0 :=
-    ModularFormClass.analyticAt_cuspFunction_zero (n := 1) (f := f)
+      SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
+  have h_anal : AnalyticAt ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f)) 0 :=
+    ModularFormClass.analyticAt_cuspFunction_zero f
+      (by norm_num : (0 : ℝ) < 1) ModularFormClass.one_mem_strictPeriods_SL2Z
   exact h_anal.eventually_eq_zero_or_eventually_ne_zero.resolve_left
     (cuspFunction_not_eventually_zero f hf)
 
 /-- Existence of a nonvanishing radius for the cusp function. -/
 theorem exists_radius_cusp_nonvanishing (hf : f ≠ 0) :
     ∃ r : ℝ, 0 < r ∧ ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) r →
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0 := by
+      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   obtain ⟨s, hs_prop, hs_open, hs_zero⟩ := eventually_nhds_iff.mp
     (eventually_nhdsWithin_iff.mp (cuspFunction_eventually_ne_zero f hf))
   obtain ⟨r, hr_pos, hr_ball⟩ := Metric.isOpen_iff.mp hs_open 0 hs_zero
@@ -345,7 +347,7 @@ noncomputable def heightOfRadius (r : ℝ) : ℝ := -Real.log r / (2 * Real.pi)
 theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
     ∃ H : ℝ, Real.sqrt 3 / 2 < H ∧
       ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H)) →
-        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0 := by
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   obtain ⟨r, hr_pos, hr_nonvan⟩ := exists_radius_cusp_nonvanishing f hf
   let H₀ := max (heightOfRadius r) (Real.sqrt 3 / 2 + 1)
   refine ⟨H₀, ?_, ?_⟩
@@ -366,9 +368,9 @@ theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
 /-- Height monotonicity for cusp nonvanishing. -/
 lemma cusp_nonvanishing_height_mono {H₁ H₂ : ℝ} (hH : H₁ ≤ H₂)
     (h : ∀ q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H₁)), q ≠ 0 →
-      SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0) :
+      SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0) :
     ∀ q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H₂)), q ≠ 0 →
-      SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0 :=
+      SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 :=
   fun q hq hq_ne => h q (Metric.closedBall_subset_closedBall
     (Real.exp_le_exp.mpr (by nlinarith [Real.pi_pos])) hq) hq_ne
 
@@ -376,7 +378,7 @@ lemma cusp_nonvanishing_height_mono {H₁ H₂ : ℝ} (hH : H₁ ≤ H₂)
 theorem exists_height_cusp_nonvanishing_above (hf : f ≠ 0) (Hmin : ℝ) :
     ∃ H : ℝ, Hmin ≤ H ∧ Real.sqrt 3 / 2 < H ∧
       ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H)) →
-        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℕ) f q ≠ 0 := by
+        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
   exact ⟨max H₀ Hmin, le_max_right _ _, lt_of_lt_of_le hH₀_gt (le_max_left _ _),
     cusp_nonvanishing_height_mono f (le_max_left _ _) hH₀_nonvan⟩
