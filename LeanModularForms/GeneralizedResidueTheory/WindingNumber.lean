@@ -147,9 +147,9 @@ theorem integral_inv_real_axis (r ε : ℝ) (hr : 0 < r)
     ∫ t in ε..r, (t : ℂ)⁻¹ =
     Complex.log r - Complex.log ε := by
   simp_rw [← Complex.ofReal_inv]
-  rw [intervalIntegral.integral_ofReal,
-    show ∫ t in ε..r, (t : ℝ)⁻¹ = Real.log r - Real.log ε from by
-      rw [integral_inv_of_pos hε hr, Real.log_div hr.ne' hε.ne']]
+  have h_real : ∫ t in ε..r, (t : ℝ)⁻¹ = Real.log r - Real.log ε := by
+    rw [integral_inv_of_pos hε hr, Real.log_div hr.ne' hε.ne']
+  rw [intervalIntegral.integral_ofReal, h_real]
   simp only [Complex.ofReal_sub,
     Complex.ofReal_log hr.le, Complex.ofReal_log hε.le]
 
@@ -1326,8 +1326,7 @@ private lemma cpv_inv_sub_eq_limit
       then (·⁻¹) ((fun t => γ.toFun t - z₀) t) *
         deriv (fun t => γ.toFun t - z₀) t
       else 0) (𝓝[>] 0) (𝓝 L) := by
-    refine hL.congr (Filter.eventually_of_forall fun ε => ?_)
-    congr 1 with t; simp only [sub_zero, deriv_sub_const]
+    exact hL.congr fun ε => by congr 1 with t; simp only [sub_zero, deriv_sub_const]
   unfold cauchyPrincipalValue'; exact hL'.limUnder_eq
 
 /-- **FTC + direction limit**: For a closed piecewise C¹ immersion with unique crossing

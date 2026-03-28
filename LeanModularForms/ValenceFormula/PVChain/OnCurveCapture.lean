@@ -152,8 +152,9 @@ theorem oncurve_seg4_capture
   have h_seg_eq : z = fdBoundary_seg1_H H s - 1 := by
     rw [hz_seg, ← h4s]; exact seg4_eq_seg1_minus_one_H H s hs_Icc
   have h_periodic : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
-    have := SlashInvariantFormClass.periodic_comp_ofComplex 1 f
-    simpa only [Nat.cast_one] using this
+    have := SlashInvariantFormClass.periodic_comp_ofComplex f
+      ModularFormClass.one_mem_strictPeriods_SL2Z
+    simpa only [Complex.ofReal_one] using this
   have h_z_plus_1 : z + 1 = fdBoundary_seg1_H H s := by rw [h_seg_eq]; ring
   have h_zero_seg1 : modularFormCompOfComplex f (fdBoundary_seg1_H H s) = 0 := by
     rw [← h_z_plus_1]; exact (h_periodic z).symm ▸ h_zero
