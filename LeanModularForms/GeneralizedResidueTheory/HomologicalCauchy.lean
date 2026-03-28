@@ -18,7 +18,7 @@ import Mathlib.Analysis.Complex.HasPrimitives
 import Mathlib.MeasureTheory.Measure.OpenPos
 import Mathlib.Topology.MetricSpace.HausdorffDimension
 import Mathlib.LinearAlgebra.Complex.FiniteDimensional
-import Mathlib.Analysis.NormedSpace.Connected
+import Mathlib.Analysis.Normed.Module.Connected
 
 /-!
 # Null-Homologous Curves and the Cauchy Integral Theorem
@@ -551,7 +551,7 @@ private lemma dixonH2_hasDerivAt (f : ℂ → ℂ) (γ : PiecewiseC1Immersion)
     exact dixonH2_pointwise_hasDerivAt (f (γ.toFun t)) (deriv γ.toFun t) (γ.toFun t) x
       (sub_ne_zero.mpr (_hball_avoids x hx_ball t ht'))
   convert (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
-    hε_pos hF_meas hF_int hF'_meas h_bound hbound_int h_diff).2 using 2
+    (Metric.ball_mem_nhds w hε_pos) hF_meas hF_int hF'_meas h_bound hbound_int h_diff).2 using 2
 
 private lemma ball_avoids_curve_of_infDist_pos (γ : PiecewiseC1Immersion)
     (w : ℂ) (hinfDist_pos : 0 < Metric.infDist w (γ.toFun '' Icc γ.a γ.b)) :
@@ -867,11 +867,8 @@ theorem dixonH1_differentiableOn (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
       rw [Set.uIoc_of_le hab] at _ht; exact Ioc_subset_Icc_self _ht
     have hx_U : x ∈ U := hr_sub (Metric.ball_subset_ball (by linarith : ε ≤ r) hx)
     exact ((hdslope_diff t ht_Icc).differentiableAt (hU.mem_nhds hx_U) |>.hasDerivAt).mul_const _
-  exact ((@intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
-    ℂ _ volume ℂ _ _ _ γ.a γ.b ε (fun _ => C / ε * M_d)
-    (F := fun x t => dslope f (γ.toFun t) x * deriv γ.toFun t)
-    (F' := fun x t => deriv (dslope f (γ.toFun t)) x * deriv γ.toFun t) w₀
-    hε_pos hF_meas hF_int hF'_meas h_bound
+  exact ((intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le
+    (Metric.ball_mem_nhds w₀ hε_pos) hF_meas hF_int hF'_meas h_bound
     intervalIntegral.intervalIntegrable_const h_diff).2).differentiableAt
 
 /-- The Dixon function: h1 on U, h2 on C \ U. -/

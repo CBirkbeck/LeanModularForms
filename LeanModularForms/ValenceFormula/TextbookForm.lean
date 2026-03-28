@@ -142,7 +142,7 @@ private theorem fd'_orbit_i_eq_i (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = oi)
     by_contra h_ne
     have h2 := hp.2; rw [hn] at h2
     linarith [show (1 : ℝ) ≤ |(n : ℝ)| from by exact_mod_cast Int.one_le_abs h_ne]
-  exact UpperHalfPlane.ext'
+  exact UpperHalfPlane.ext_re_im
     (by rw [hn, h_n_zero, Int.cast_zero]
         exact (Complex.I_re : (I : ℂ).re = 0).symm)
     (by linarith [h_im, ellipticPointI'_im])
@@ -248,10 +248,10 @@ private theorem fd'_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orb p = orh
     · right; linarith [abs_of_pos h_pos]
   rcases h_re_eq with h_re_left | h_re_right
   · left
-    exact UpperHalfPlane.ext' (by linarith [h_re_left, ellipticPointRho'_re])
+    exact UpperHalfPlane.ext_re_im (by linarith [h_re_left, ellipticPointRho'_re])
       (by linarith [h_im, ellipticPointRho'_im])
   · right
-    exact UpperHalfPlane.ext' (by linarith [h_re_right, ellipticPointRhoPlusOne'_re])
+    exact UpperHalfPlane.ext_re_im (by linarith [h_re_right, ellipticPointRhoPlusOne'_re])
       (by linarith [h_im, ellipticPointRhoPlusOne'_im])
 
 private theorem orb_repCanon_nonEll (p : ℍ) (hp : p ∈ repCanon f hf) :
@@ -356,10 +356,12 @@ private lemma c_abs_le_one_of_smul_fd (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     have h_c2_real : (↑c : ℝ) ^ 2 ≥ 4 := by exact_mod_cast h_c2
     nlinarith [mul_nonneg (show (0 : ℝ) ≤ (↑c : ℝ) ^ 2 - 4 from by linarith)
       (mul_nonneg p₂.im_pos.le p₁.im_pos.le)]
-  have : p₁.im = (↑p₁ : ℂ).im := rfl; have : p₂.im = (↑p₂ : ℂ).im := rfl
-  nlinarith [fd'_im_gt_half' _ hp₁, fd'_im_gt_half' _ hp₂,
-    mul_nonneg (by linarith : (0 : ℝ) ≤ p₁.im - 1/2)
-    (by linarith : (0 : ℝ) ≤ p₂.im - 1/2)]
+  have hp1_im : (1 : ℝ) / 2 < p₁.im := by
+    rw [← UpperHalfPlane.coe_im]; exact fd'_im_gt_half' _ hp₁
+  have hp2_im : (1 : ℝ) / 2 < p₂.im := by
+    rw [← UpperHalfPlane.coe_im]; exact fd'_im_gt_half' _ hp₂
+  nlinarith [mul_pos (by linarith : (0:ℝ) < p₁.im - 1/2)
+    (by linarith : (0:ℝ) < p₂.im - 1/2)]
 
 private lemma repCanon_re_lt_half (p : ℍ) (hp : p ∈ repCanon f hf) : p.re < 1/2 := by
   simp only [repCanon, Finset.mem_union] at hp; rcases hp with (h | h) | h
@@ -378,10 +380,16 @@ private lemma injOn_c_eq_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
   have h_re_shift : p₁.re = p₂.re + (n : ℝ) := by
     rw [hTn]; exact ModularGroup.re_T_zpow_smul p₂ n
   have h_n_zero : n = 0 := by
-    have : n < 1 := by exact_mod_cast show (n : ℝ) < 1 from by
-      linarith [repCanon_re_lt_half f hf p₁ hp₁, (abs_le.mp hp₂_fd.2).2]
-    have : -1 < n := by exact_mod_cast show (-1 : ℝ) < n from by
-      linarith [repCanon_re_lt_half f hf p₂ hp₂, (abs_le.mp hp₁_fd.2).1]
+    have h1 := repCanon_re_lt_half f hf p₁ hp₁
+    have h3 := repCanon_re_lt_half f hf p₂ hp₂
+    have h4 : -(1 / 2) ≤ p₂.re := by
+      have := hp₂_fd.2; rw [← UpperHalfPlane.coe_re] at this; exact (abs_le.mp this).1
+    have h5 : -(1 / 2) ≤ p₁.re := by
+      have := hp₁_fd.2; rw [← UpperHalfPlane.coe_re] at this; exact (abs_le.mp this).1
+    have h_n_lt : (↑n : ℝ) < 1 := by linarith
+    have h_n_gt : (-1 : ℝ) < (↑n : ℝ) := by linarith
+    have : n < 1 := by exact_mod_cast h_n_lt
+    have : -1 < n := by exact_mod_cast h_n_gt
     omega
   rw [hTn, h_n_zero, zpow_zero, one_smul]
 
@@ -431,7 +439,7 @@ private lemma injOn_c_ne_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
       sq_nonneg ((p₁ : ℂ).re + (p₂ : ℂ).re),
       repCanon_norm_one_re_neg f hf p₁ hp₁ h_p1_norm,
       repCanon_norm_one_re_neg f hf p₂ hp₂ h_p2_norm]
-  exact UpperHalfPlane.ext' h_re_eq h_im_eq
+  exact UpperHalfPlane.ext_re_im h_re_eq h_im_eq
 
 private theorem orb_injOn_repCanon :
     Set.InjOn orb ↑(repCanon f hf) := by
