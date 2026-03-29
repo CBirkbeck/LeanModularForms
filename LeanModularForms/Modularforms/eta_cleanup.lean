@@ -1,6 +1,8 @@
 import LeanModularForms.Modularforms.E2
 import LeanModularForms.Modularforms.csqrt
 import LeanModularForms.Modularforms.logDeriv_lems
+import LeanModularForms.Modularforms.exp_lems
+import LeanModularForms.Modularforms.upperhalfplane
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex MatrixGroups
@@ -187,26 +189,25 @@ lemma eta_logDeriv' (z : ℍ) : logDeriv dedekindEtaFun' z = (π * Complex.I / 1
   unfold dedekindEtaFun' etaProdTerm
   rw [logDeriv_mul (UpperHalfPlane.coe z) _ (etaProdTerm_ne_zero z) _
     (etaProdTerm_differentiableAt z)]
-  · have HG := logDeriv_tprod_eq_tsum2 (isOpen_lt continuous_const Complex.continuous_im) z
-      (fun n x => 1 - eta_q n x) (fun i ↦ one_add_eta_q_ne_zero i z) ?_ ?_ ?_ (etaProdTerm_ne_zero z)
-    rw [show z.1 = UpperHalfPlane.coe z by rfl] at HG
+  · have HG := logDeriv_tprod_eq_tsum2 (isOpen_lt continuous_const Complex.continuous_im)
+      ⟨(z : ℂ), z.2⟩ (fun n x => 1 - eta_q n x)
+      (fun i ↦ one_add_eta_q_ne_zero i z) ?_ ?_ ?_ (etaProdTerm_ne_zero z)
+    rw [show (⟨(z : ℂ), z.2⟩ : {b : ℂ | 0 < b.im}).1 = UpperHalfPlane.coe z by rfl] at HG
     rw [HG]
     · simp only [tsum_log_deriv_eta_q' z, E₂, logDeriv_z_term' z, mul_neg, one_div, mul_inv_rev, Pi.smul_apply, smul_eq_mul]
-      rw [G2_q_exp'', riemannZeta_two, ← (tsum_eq_tsum_sigma_pos'' z), mul_sub, sub_eq_add_neg, mul_add]
-      conv =>
-        enter [1,2,2,1]
-        ext n
-        rw [neg_div, neg_eq_neg_one_mul]
-      rw [tsum_mul_left]
-      have hpi : (π : ℂ) ≠ 0 := by simp
+      rw [show E2 z = E₂ z from rfl, E₂_eq z, mul_sub, sub_eq_add_neg]
+      conv_rhs => rw [show (∑' (n : ℕ+), ↑↑n * cexp (2 * ↑π * Complex.I * ↑↑n * ↑z) /
+          (1 - cexp (2 * ↑π * Complex.I * ↑↑n * ↑z))) = ∑' (n : ℕ),
+          (↑(n + 1 : ℕ) * cexp (2 * ↑π * Complex.I * ↑(n + 1 : ℕ) * ↑z) /
+          (1 - cexp (2 * ↑π * Complex.I * ↑(n + 1 : ℕ) * ↑z))) from by
+        rw [← Equiv.pnatEquivNat.symm.tsum_eq]; simp]
+      simp_rw [eta_q_eq_exp]
       congr 1
-      · ring_nf
-        field_simp
-      · field_simp
-        ring_nf
-        congr
-        ext n
-        ring_nf
+      · ring
+      · rw [← tsum_mul_left, ← neg_eq_iff_eq_neg]
+        conv_rhs => rw [← tsum_mul_left, ← tsum_mul_left]
+        rw [← tsum_neg]
+        apply tsum_congr; intro n; push_cast; ring
     · intro i x hx
       simp_rw [eta_q_eq_exp]
       fun_prop
@@ -217,9 +218,7 @@ lemma eta_logDeriv' (z : ℍ) : logDeriv dedekindEtaFun' z = (π * Complex.I / 1
       have := one_add_eta_q_ne_zero b z
       simp only [UpperHalfPlane.coe, ne_eq, neg_mul, Nat.cast_add, Nat.cast_one, mul_neg] at *
       field_simp
-    · use ηₚ
-      apply (hasProdLocallyUniformlyOn_eta).congr
-      exact fun n ⦃x⦄ hx ↦ Eq.refl ((fun b ↦ ∏ i ∈ n, (fun n a ↦ 1 - eta_q n a) i b) x)
+    · exact hasProdLocallyUniformlyOn_eta.multipliableLocallyUniformlyOn
   · simp [ne_eq, exp_ne_zero, not_false_eq_true, Periodic.qParam]
   · fun_prop
 
