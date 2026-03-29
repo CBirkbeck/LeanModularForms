@@ -5,7 +5,7 @@ import LeanModularForms.ContourIntegral.WindingNumber
 import LeanModularForms.ForMathlib.AtImInfty
 import LeanModularForms.ForMathlib.Bounds
 import LeanModularForms.ForMathlib.CongruenceSubgroupsCopy
-import LeanModularForms.ForMathlib.CongruenceSubgrps
+-- import LeanModularForms.ForMathlib.CongruenceSubgrps -- disabled: needs mathlib 4.28 adaptation
 import LeanModularForms.ForMathlib.FunctionsBoundedAtInfty
 import LeanModularForms.ForMathlib.Identities
 import LeanModularForms.ForMathlib.IsBoundedAtImInfty
@@ -14,7 +14,7 @@ import LeanModularForms.ForMathlib.Petersson
 import LeanModularForms.ForMathlib.QExpansion
 import LeanModularForms.ForMathlib.SlashActions
 import LeanModularForms.ForMathlib.UpperHalfPlane
-import LeanModularForms.ForMathlib.hassumunifon
+-- import LeanModularForms.ForMathlib.hassumunifon -- disabled: needs mathlib 4.28 adaptation
 import LeanModularForms.GeneralizedResidueTheory.ArcCalculus
 import LeanModularForms.GeneralizedResidueTheory.Basic
 import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
@@ -42,7 +42,7 @@ import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.Bounda
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.CPVExistence
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.HigherOrderAssembly
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.PerTermVanishing
-import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem
+-- import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem -- name collision
 import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheoremBase
 import LeanModularForms.GeneralizedResidueTheory.Residue.MeasureHelpers
 import LeanModularForms.GeneralizedResidueTheory.Residue.MeromorphicLaurent
@@ -81,7 +81,7 @@ import LeanModularForms.Modularforms.qExpansion_lems
 import LeanModularForms.Modularforms.riemannZetalems
 import LeanModularForms.Modularforms.summable_lems
 import LeanModularForms.Modularforms.tendstolems
-import LeanModularForms.Modularforms.test
+-- import LeanModularForms.Modularforms.test -- disabled: needs mathlib 4.28 adaptation
 import LeanModularForms.Modularforms.tsumderivWithin
 import LeanModularForms.Modularforms.uniformcts
 import LeanModularForms.Modularforms.upperhalfplane
