@@ -61,6 +61,7 @@ import LeanModularForms.Modularforms.DimensionFormulas
 import LeanModularForms.Modularforms.E2
 import LeanModularForms.Modularforms.Eisenstein
 import LeanModularForms.Modularforms.Eisensteinqexpansions
+import LeanModularForms.Modularforms.Generators
 import LeanModularForms.Modularforms.Icc_Ico_lems
 import LeanModularForms.Modularforms.IsCuspForm
 import LeanModularForms.Modularforms.JacobiTheta
