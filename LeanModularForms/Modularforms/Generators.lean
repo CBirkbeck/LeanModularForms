@@ -153,7 +153,14 @@ private lemma mul_Delta_map_eq_DirectSum_mul (n : ℕ) (hn : 12 ≤ n)
     DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) ↑n (mul_Delta_map ↑n h) =
       DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) (↑n - 12) h *
         DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 12 (ModForm_mk Γ(1) 12 Delta) := by
-  sorry
+  rw [DirectSum.of_mul_of]
+  apply DirectSum.of_eq_of_gradedMonoid_eq
+  have hind : (↑n : ℤ) - 12 + 12 = ↑n := by omega
+  apply ModularForm.gradedMonoid_eq_of_cast hind.symm
+  simp only [GradedMonoid.mk, mul_Delta_map]
+  ext z
+  simp [GradedMonoid.GMul.mul, ModularForm.mul, ModularForm.mcast]
+  rfl
 
 /-- A cusp form of weight n (≥ 12) equals `mul_Delta_map n h` where
 h = CuspForms_iso_Modforms (the corresponding CuspForm). -/
@@ -180,7 +187,35 @@ private lemma monomial_coeff_zero_eq_one (n a b : ℕ) (hab : 4 * a + 6 * b = n)
       (((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 4 E₄) ^ a *
         (DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 6 E₆) ^ b)
         (↑n : ℤ))).coeff 0 = 1 := by
-  sorry
+  subst hab
+  have hab' : (↑(4 * a + 6 * b) : ℤ) = ↑a * 4 + ↑b * 6 := by push_cast; ring
+  rw [hab']
+  rw [DirectSum.ofPow, DirectSum.ofPow, DirectSum.of_mul_of]
+  convert_to (qExpansion 1 (⇑(GradedMonoid.GMul.mul (GradedMonoid.GMonoid.gnpow a E₄)
+      (GradedMonoid.GMonoid.gnpow b E₆)))).coeff 0 = 1 using 2
+  · simp [DirectSum.of_eq_same]
+  change (qExpansion 1 (⇑((GradedMonoid.GMonoid.gnpow a E₄).mul
+      (GradedMonoid.GMonoid.gnpow b E₆)))).coeff 0 = 1
+  have hqm := qExpansion_mul_coeff 1 (a • (4 : ℤ)) (b • (6 : ℤ))
+      (GradedMonoid.GMonoid.gnpow a E₄) (GradedMonoid.GMonoid.gnpow b E₆)
+  simp only [Nat.cast_one] at hqm
+  rw [hqm]
+  have hgnpow4 : (GradedMonoid.GMonoid.gnpow a E₄ : ModularForm Γ(1) (a • 4)) =
+      ((DirectSum.of _ 4 E₄) ^ a) (a • (4 : ℤ)) := by
+    rw [DirectSum.ofPow]; simp [DirectSum.of_eq_same]
+  have hgnpow6 : (GradedMonoid.GMonoid.gnpow b E₆ : ModularForm Γ(1) (b • 6)) =
+      ((DirectSum.of _ 6 E₆) ^ b) (b • (6 : ℤ)) := by
+    rw [DirectSum.ofPow]; simp [DirectSum.of_eq_same]
+  simp_rw [hgnpow4, hgnpow6]
+  show (qExpansion 1 ⇑(((DirectSum.of _ 4 E₄) ^ a) (↑a * 4)) *
+       qExpansion 1 ⇑(((DirectSum.of _ 6 E₆) ^ b) (↑b * 6))).coeff 0 = 1
+  rw [qExpansion_pow, qExpansion_pow]
+  simp only [PowerSeries.coeff_zero_eq_constantCoeff, map_mul, map_pow]
+  have hc4 : PowerSeries.constantCoeff (qExpansion 1 (⇑E₄)) = 1 := by
+    rw [← PowerSeries.coeff_zero_eq_constantCoeff]; exact E4_q_exp_zero
+  have hc6 : PowerSeries.constantCoeff (qExpansion 1 (⇑E₆)) = 1 := by
+    rw [← PowerSeries.coeff_zero_eq_constantCoeff]; exact E6_q_exp_zero
+  simp [hc4, hc6]
 
 /-- Per-weight surjectivity: `DirectSum.of _ k f ∈ range evalE₄E₆` for all k and f. -/
 private lemma surj_of_weight : ∀ (k : ℤ) (f : ModularForm Γ(1) k),
@@ -252,17 +287,78 @@ private lemma surj_of_weight : ∀ (k : ℤ) (f : ModularForm Γ(1) k),
         -- Strategy: decompose f = (cusp form) + c • (monomial E₄^a · E₆^b)
         -- Cusp form part: factor through Δ × M_{n-12}, apply ih
         -- Monomial part: directly in range of evalE₄E₆
-        -- The full proof involves cast bookkeeping between ℕ and ℤ indices.
-        -- Key sub-steps (all individually verified):
-        -- 1. monomial_weight_exists gives (a,b) with 4a+6b=n
-        -- 2. monomial_coeff_zero_eq_one: q-coeff 0 of E₄^a·E₆^b = 1 (sorry)
-        -- 3. IsCuspForm_iff_coeffZero_eq_zero: f - c•m is cusp form
-        -- 4. cuspform_eq_mul_Delta: cusp form = Δ · h
-        -- 5. mul_Delta_map_eq_DirectSum_mul: of _ n g = of _ (n-12) h * of _ 12 Δ (sorry)
-        -- 6. ih (n-12): of _ (n-12) h ∈ range by induction
-        -- 7. delta_mem_range_evalE₄E₆: Δ ∈ range
-        -- 8. Subalgebra closure: product and sum of range elements are in range
-        sorry
+        push_neg at hn12
+        have hk_even_nat : Even n := by exact_mod_cast hk_odd
+        obtain ⟨a, b, hab⟩ := monomial_weight_exists n (by omega) hk_even_nat
+        -- The monomial E₄^a · E₆^b as a DirectSum element
+        set mo := ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 4 E₄) ^ a *
+          (DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 6 E₆) ^ b)
+        -- Its weight-n component
+        set mn := mo (↑n : ℤ)
+        set c := (qExpansion 1 f).coeff 0
+        have hmn_coeff : (qExpansion 1 mn).coeff 0 = 1 :=
+          monomial_coeff_zero_eq_one n a b hab
+        -- Step 1: f - c • mn is a cusp form (q-coeff 0 vanishes)
+        have hg_cusp : IsCuspForm Γ(1) ↑n (f - c • mn) := by
+          rw [IsCuspForm_iff_coeffZero_eq_zero]
+          set Q := qExpansionAddHom (show (0 : ℝ) < (1 : ℝ) by norm_num)
+            (show (1 : ℝ) ∈ Γ(1).strictPeriods from by simp) (↑n)
+          have hQ_smul : Q (c • mn) = c • Q mn :=
+            qExpansion_smul (by norm_num : (0 : ℝ) < 1)
+              (by simp : (1 : ℝ) ∈ Γ(1).strictPeriods) c mn
+          change (Q (f - c • mn)).coeff 0 = 0
+          rw [map_sub, hQ_smul]
+          rw [show Q f = qExpansion 1 f from rfl, show Q mn = qExpansion 1 mn from rfl]
+          rw [map_sub, map_smul, smul_eq_mul, hmn_coeff, mul_one, sub_self]
+        set g := f - c • mn
+        -- Step 2: Factor g through Δ
+        have hcast : (↑n : ℤ) - 12 = (↑(n - 12) : ℤ) := by omega
+        set h' := CuspForms_iso_Modforms ↑n (IsCuspForm_to_CuspForm Γ(1) ↑n g hg_cusp)
+        have hg_eq : g = mul_Delta_map ↑n h' :=
+          cuspform_eq_mul_Delta n (by omega) g hg_cusp
+        have hg_ds : DirectSum.of _ (↑n : ℤ) g =
+            DirectSum.of _ ((↑n : ℤ) - 12) h' *
+            DirectSum.of _ 12 (ModForm_mk Γ(1) 12 Delta) := by
+          rw [hg_eq]; exact mul_Delta_map_eq_DirectSum_mul n (by omega) h'
+        -- Step 3: Transport h' across the ℤ cast for induction
+        have hof_cast : DirectSum.of _ ((↑n : ℤ) - 12) h' =
+            DirectSum.of _ (↑(n - 12) : ℤ) (hcast ▸ h') := by
+          have : ∀ (k1 k2 : ℤ) (hk : k1 = k2) (x : ModularForm Γ(1) k1),
+            DirectSum.of _ k1 x = DirectSum.of _ k2 (hk ▸ x) := by
+            intros k1 k2 hk x; subst hk; rfl
+          exact this _ _ hcast h'
+        -- Step 4: Apply induction hypothesis to h' (weight n - 12)
+        have hih : DirectSum.of _ ((↑n : ℤ) - 12) h' ∈ Set.range evalE₄E₆ := by
+          rw [hof_cast]; exact ih (n - 12) (by omega) (by omega) (hcast ▸ h')
+        have hdelta := delta_mem_range_evalE₄E₆
+        -- Step 5: g is in range (product of ih and Δ)
+        have hg_in : DirectSum.of _ (↑n : ℤ) g ∈ Set.range evalE₄E₆ := by
+          rw [hg_ds]
+          obtain ⟨p1, hp1⟩ := hih
+          obtain ⟨p2, hp2⟩ := hdelta
+          exact ⟨p1 * p2, by rw [map_mul, hp1, hp2]⟩
+        -- Step 6: The monomial mo is in range
+        have hmn_in : mo ∈ Set.range evalE₄E₆ :=
+          ⟨MvPolynomial.X 0 ^ a * MvPolynomial.X 1 ^ b, by
+            rw [map_mul, map_pow, map_pow, evalE₄E₆_X0, evalE₄E₆_X1]⟩
+        -- Step 7: of _ n mn = mo (monomial is supported at weight n)
+        have hmn_eq : DirectSum.of _ (↑n : ℤ) mn = mo := by
+          simp only [mn, mo]
+          rw [DirectSum.ofPow, DirectSum.ofPow, DirectSum.of_mul_of]
+          have hk' : a • (4 : ℤ) + b • (6 : ℤ) = ↑n := by simp; linarith
+          rw [show (↑n : ℤ) = a • (4 : ℤ) + b • (6 : ℤ) from hk'.symm,
+            DirectSum.of_eq_same]
+        -- Step 8: Combine f = g + c • mn, both parts in range
+        have hf_eq : f = g + c • mn := by simp [g]
+        have hf_ds : DirectSum.of _ (↑n : ℤ) f =
+            DirectSum.of _ (↑n : ℤ) g + c • DirectSum.of _ (↑n : ℤ) mn := by
+          rw [hf_eq, map_add, ← DirectSum.of_smul]
+        rw [hf_ds, hmn_eq]
+        obtain ⟨p1, hp1⟩ := hg_in
+        obtain ⟨p2, hp2⟩ := hmn_in
+        exact ⟨p1 + MvPolynomial.C c * p2, by
+          rw [map_add, hp1, map_mul, evalE₄E₆_C, hp2,
+            Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul]⟩
 
 /-- The evaluation homomorphism `evalE₄E₆ : ℂ[X₀, X₁] →ₐ[ℂ] ⨁_k M_k(Γ(1))` is surjective.
 
