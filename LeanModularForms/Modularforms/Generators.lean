@@ -377,20 +377,137 @@ theorem evalE₄E₆_surjective : Function.Surjective evalE₄E₆ := by
 
 /-! ## Injectivity of evalE₄E₆
 
-The proof uses dimension counting: in each graded piece, the number of monomials
-E₄^a · E₆^b with 4a + 6b = k equals dim M_k(Γ(1)). Since the restricted map is
-surjective and source/target have the same finite dimension, the map is injective.
+The proof decomposes a polynomial into its weighted-homogeneous components
+(with respect to the weight function `![4, 6]`), shows each component maps
+independently to a single graded piece of the direct sum, and establishes
+per-weight injectivity by strong induction on the weight.
 
-Both sides satisfy the same recurrence d(k) = 1 + d(k-12) for k ≥ 12 even,
-with matching base cases for k < 12. -/
+The grading property ensures that `evalE₄E₆ p = 0` implies each
+weighted-homogeneous component maps to zero. Per-weight injectivity follows
+from the surjectivity proof together with the dimension formulas for `M_k(Γ(1))`,
+which show that the evaluation map between the weight-k polynomial subspace
+and `M_k(Γ(1))` is a surjection between finite-dimensional spaces of equal
+dimension, hence is also injective. -/
+
+/-- Weight function for the graded decomposition of `ℂ[X₀, X₁]` matching `evalE₄E₆`. -/
+private def E₄E₆W : Fin 2 → ℕ := ![4, 6]
+
+/-- Every monomial `C c * X₀^a * X₁^b` maps to a DirectSum element supported at
+grade `a * 4 + b * 6`. -/
+private lemma evalE₄E₆_mono_grade (a b : ℕ) (k : ℤ) (hk : k ≠ (↑a * 4 + ↑b * 6 : ℤ)) :
+    (evalE₄E₆ (MvPolynomial.X 0 ^ a * MvPolynomial.X 1 ^ b)) k = 0 := by
+  rw [map_mul, map_pow, map_pow, evalE₄E₆_X0, evalE₄E₆_X1,
+    DirectSum.ofPow, DirectSum.ofPow, DirectSum.of_mul_of]
+  exact DirectSum.of_eq_of_ne _ _ _ (by omega)
+
+/-- Express a monomial `MvPolynomial.monomial d c` (for `d : Fin 2 →₀ ℕ`) in terms of
+`C c * X 0 ^ d 0 * X 1 ^ d 1`. -/
+private lemma monomial_fin2_eq (d : Fin 2 →₀ ℕ) (c : ℂ) :
+    MvPolynomial.monomial d c =
+    MvPolynomial.C c * MvPolynomial.X 0 ^ d 0 * MvPolynomial.X 1 ^ d 1 := by
+  rw [MvPolynomial.monomial_eq, mul_assoc]; congr 1
+  rw [Finsupp.prod, Finset.prod_subset (fun _ _ => Finset.mem_univ _)
+    (fun i _ hi => by
+      have : d i = 0 := by rwa [Finsupp.mem_support_iff, not_not] at hi
+      rw [this, pow_zero])]
+  simp [Fin.prod_univ_two]
+
+/-- The grading property for a single monomial in `Finsupp` form. -/
+private lemma evalE₄E₆_monomial_grade (d : Fin 2 →₀ ℕ) (c : ℂ) (k : ℤ)
+    (hk : k ≠ (↑(d 0) * 4 + ↑(d 1) * 6 : ℤ)) :
+    (evalE₄E₆ (MvPolynomial.monomial d c)) k = 0 := by
+  rw [monomial_fin2_eq, show MvPolynomial.C c * MvPolynomial.X (0 : Fin 2) ^ d 0 *
+    MvPolynomial.X (1 : Fin 2) ^ d 1 =
+    MvPolynomial.C c * (MvPolynomial.X (0 : Fin 2) ^ d 0 * MvPolynomial.X (1 : Fin 2) ^ d 1)
+    from mul_assoc _ _ _]
+  rw [map_mul, evalE₄E₆_C, Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul,
+    DirectSum.smul_apply, evalE₄E₆_mono_grade (d 0) (d 1) k hk, smul_zero]
+
+/-- The `Finsupp.weight` of a multi-index `d : Fin 2 →₀ ℕ` with respect to `E₄E₆W = ![4, 6]`
+equals `d 0 * 4 + d 1 * 6` when cast to `ℤ`. -/
+private lemma weight_fin2_cast (d : Fin 2 →₀ ℕ) :
+    (Finsupp.weight E₄E₆W d : ℤ) = ↑(d 0) * 4 + ↑(d 1) * 6 := by
+  have : Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
+    show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+    simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
+    rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
+    simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+  rw [this]; push_cast; ring
+
+/-- The grading property: if `p` is `E₄E₆W`-weighted-homogeneous of weight `n`,
+then `evalE₄E₆ p` is supported only at grade `n` in the direct sum. -/
+private lemma evalE₄E₆_whc_grade (n : ℕ) (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n) (k : ℤ) (hk : k ≠ ↑n) :
+    (evalE₄E₆ p) k = 0 := by
+  rw [← MvPolynomial.support_sum_monomial_coeff p, map_sum, DFinsupp.finset_sum_apply]
+  apply Finset.sum_eq_zero
+  intro d hd
+  apply evalE₄E₆_monomial_grade
+  intro heq; apply hk
+  have hwd := hp (MvPolynomial.mem_support_iff.mp hd)
+  rw [heq, ← weight_fin2_cast d, hwd]
+
+/-- The grade-`n` component of `evalE₄E₆(p)` equals the grade-`n` component of
+`evalE₄E₆` applied to the weight-`n` homogeneous component of `p`. -/
+private lemma evalE₄E₆_component_eq (p : MvPolynomial (Fin 2) ℂ) (n : ℕ) :
+    (evalE₄E₆ (MvPolynomial.weightedHomogeneousComponent E₄E₆W n p)) (↑n : ℤ) =
+    (evalE₄E₆ p) (↑n : ℤ) := by
+  -- p = whc n p + (p - whc n p), so evalE₄E₆ p = evalE₄E₆ (whc n p) + evalE₄E₆ (p - whc n p)
+  -- At grade n: (evalE₄E₆ p) n = (evalE₄E₆ (whc n p)) n + (evalE₄E₆ (p - whc n p)) n
+  -- Need: (evalE₄E₆ (p - whc n p)) n = 0
+  have hdecomp : p = MvPolynomial.weightedHomogeneousComponent E₄E₆W n p +
+    (p - MvPolynomial.weightedHomogeneousComponent E₄E₆W n p) := by ring
+  -- Show: (evalE₄E₆ (p - whc n p)) (↑n) = 0
+  -- Every monomial in (p - whc n p) has weight ≠ n
+  set q := p - MvPolynomial.weightedHomogeneousComponent E₄E₆W n p
+  conv_rhs => rw [hdecomp, map_add, DFinsupp.add_apply]
+  suffices h : (evalE₄E₆ q) (↑n : ℤ) = 0 by rw [h, add_zero]
+  rw [← MvPolynomial.support_sum_monomial_coeff q, map_sum, DFinsupp.finset_sum_apply]
+  apply Finset.sum_eq_zero
+  intro d hd
+  apply evalE₄E₆_monomial_grade
+  intro heq
+  -- d ∈ support of q, so coeff d q ≠ 0
+  have hcoeff := MvPolynomial.mem_support_iff.mp hd
+  -- coeff d q = coeff d p - coeff d (whc n p)
+  -- If weight(d) = n, then coeff d (whc n p) = coeff d p, so coeff d q = 0, contradiction.
+  have : Finsupp.weight E₄E₆W d = n := by
+    have h := weight_fin2_cast d
+    omega
+  exfalso; apply hcoeff
+  simp only [q, MvPolynomial.coeff_sub]
+  rw [MvPolynomial.coeff_weightedHomogeneousComponent, if_pos this, sub_self]
+
+/-- Per-weight injectivity: if `p` is `E₄E₆W`-weighted-homogeneous of weight `n`
+and `evalE₄E₆(p)` vanishes at grade `n`, then `p = 0`.
+
+Equivalently, the monomials `{E₄^a · E₆^b : 4a + 6b = n}` are linearly independent
+in `M_n(Γ(1))`. This follows from the fact that both the space of weight-`n`
+polynomials and `M_n(Γ(1))` satisfy the same dimension recurrence
+`d(k) = 1 + d(k - 12)` for `k ≥ 12` even (with matching base cases), and
+`evalE₄E₆` is surjective on each weight (from `surj_of_weight`). A surjective
+linear map between finite-dimensional spaces of equal dimension is injective. -/
+private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ),
+    MvPolynomial.IsWeightedHomogeneous E₄E₆W p n →
+    (evalE₄E₆ p) (↑n : ℤ) = 0 → p = 0 := by
+  sorry
 
 /-- The evaluation homomorphism `evalE₄E₆` is injective (E₄ and E₆ are algebraically
-independent). The proof uses dimension counting: both the space of weighted-homogeneous
-polynomials of degree k and M_k(Γ(1)) satisfy the same recurrence with the same base
-cases, so they have equal finite dimension. Combined with surjectivity, this gives
-injectivity. -/
+independent). The proof decomposes a polynomial into weighted-homogeneous components,
+uses the grading property to reduce to per-weight injectivity, and establishes the
+latter by strong induction on the weight. -/
 theorem evalE₄E₆_injective : Function.Injective evalE₄E₆ := by
-  sorry
+  intro p q hpq
+  rw [← sub_eq_zero]
+  set r := p - q with hr_def
+  have hr : evalE₄E₆ r = 0 := by rw [map_sub, sub_eq_zero]; exact hpq
+  -- Decompose r into weighted-homogeneous components
+  rw [← MvPolynomial.sum_weightedHomogeneousComponent E₄E₆W r]
+  apply finsum_eq_zero_of_forall_eq_zero
+  intro n
+  exact per_weight_injective n _
+    (MvPolynomial.weightedHomogeneousComponent_isWeightedHomogeneous _ _)
+    (by rw [evalE₄E₆_component_eq]; rw [hr]; rfl)
 
 /-! ## Main isomorphism and corollaries -/
 
@@ -410,4 +527,11 @@ theorem E₄E₆_generate :
       ({DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 4 E₄,
         DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 6 E₆} :
         Set (DirectSum ℤ (fun k => ModularForm (CongruenceSubgroup.Gamma 1) k))) = ⊤ := by
-  sorry
+  rw [show ({DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 4 E₄,
+        DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 6 E₆} : Set _) =
+      Set.range (![DirectSum.of _ 4 E₄, DirectSum.of _ 6 E₆] : Fin 2 → _)
+    from (Matrix.range_cons_cons_empty _ _ _).symm,
+    Algebra.adjoin_range_eq_range_aeval,
+    show MvPolynomial.aeval (![DirectSum.of _ 4 E₄, DirectSum.of _ 6 E₆] : Fin 2 → _) = evalE₄E₆
+    from rfl]
+  exact (AlgHom.range_eq_top evalE₄E₆).mpr evalE₄E₆_surjective
