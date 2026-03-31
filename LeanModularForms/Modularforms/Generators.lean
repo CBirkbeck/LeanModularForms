@@ -487,10 +487,339 @@ polynomials and `M_n(Γ(1))` satisfy the same dimension recurrence
 `d(k) = 1 + d(k - 12)` for `k ≥ 12` even (with matching base cases), and
 `evalE₄E₆` is surjective on each weight (from `surj_of_weight`). A surjective
 linear map between finite-dimensional spaces of equal dimension is injective. -/
+-- Auxiliary: no monomial d : Fin 2 →₀ ℕ with 4*(d 0) + 6*(d 1) = n for n odd
+private lemma no_wt_monomial_of_odd {n : ℕ} (hn : Odd n) (d : Fin 2 →₀ ℕ) :
+    Finsupp.weight E₄E₆W d ≠ n := by
+  intro h
+  have : Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
+    show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+    simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
+    rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
+    simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+  rw [this] at h
+  have hev : Even n := ⟨d 0 * 2 + d 1 * 3, by omega⟩
+  simp [Nat.even_iff, Nat.odd_iff] at hev hn; omega
+
+-- Auxiliary: no monomial d : Fin 2 →₀ ℕ with 4*(d 0) + 6*(d 1) = 2
+private lemma no_wt_monomial_of_two (d : Fin 2 →₀ ℕ) :
+    Finsupp.weight E₄E₆W d ≠ 2 := by
+  intro h
+  have : Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
+    show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+    simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
+    rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
+    simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+  rw [this] at h; omega
+
+-- Weighted-homogeneous polynomial with no valid monomials is zero
+private lemma whomog_eq_zero_of_no_monomials {n : ℕ} (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (hno : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆W d ≠ n) : p = 0 := by
+  rw [← MvPolynomial.support_eq_empty]
+  by_contra h
+  obtain ⟨d, hd⟩ := Finset.nonempty_of_ne_empty h
+  exact hno d (hp (MvPolynomial.mem_support_iff.mp hd))
+
+-- Weight computation helper
+private lemma weight_eq_4a_6b (d : Fin 2 →₀ ℕ) :
+    Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
+  show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+  simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
+  rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
+  simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+
+-- Key lemma: for d : Fin 2 →₀ ℕ with d 0 = a and d 1 = b, the Finsupp
+private lemma finsupp_of_fin2 (a b : ℕ) :
+    ∃ d : Fin 2 →₀ ℕ, d 0 = a ∧ d 1 = b := by
+  exact ⟨Finsupp.equivFunOnFinite.invFun ![a, b], by simp [Matrix.cons_val_zero],
+    by simp [Matrix.cons_val_one]⟩
+
+-- Helper: if all d in support have d = d₀ for a fixed d₀, then p = monomial d₀ (coeff d₀ p)
+private lemma whomog_unique_monomial {n : ℕ} (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (d₀ : Fin 2 →₀ ℕ) (hd₀ : Finsupp.weight E₄E₆W d₀ = n)
+    (huniq : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆W d = n → d = d₀) :
+    p = MvPolynomial.monomial d₀ (MvPolynomial.coeff d₀ p) := by
+  ext d
+  by_cases hd : d = d₀
+  · subst hd; simp
+  · rw [MvPolynomial.coeff_monomial, if_neg (Ne.symm hd)]
+    have : Finsupp.weight E₄E₆W d ≠ n := fun h => hd (huniq d h)
+    exact hp.coeff_eq_zero d this
+
+-- Helper: unique monomial case for injectivity. If the weight n has a unique monomial
+-- d₀, and the evaluated modular form E₄^(d₀ 0) * E₆^(d₀ 1) is nonzero, then
+-- evalE₄E₆(p) n = 0 implies p = 0.
+private lemma per_weight_injective_unique_monomial {n : ℕ} (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (heval : (evalE₄E₆ p) (↑n : ℤ) = 0)
+    (d₀ : Fin 2 →₀ ℕ) (hd₀ : Finsupp.weight E₄E₆W d₀ = n)
+    (huniq : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆W d = n → d = d₀)
+    (hmf_ne : ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 4 E₄) ^ (d₀ 0) *
+      (DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 6 E₆) ^ (d₀ 1))
+      (↑n : ℤ) ≠ 0) : p = 0 := by
+  have hpc := whomog_unique_monomial p hp d₀ hd₀ huniq
+  rw [hpc] at heval ⊢
+  -- evalE₄E₆ (monomial d₀ c) = c • (X₀^a * X₁^b evaluated)
+  rw [monomial_fin2_eq, show MvPolynomial.C (MvPolynomial.coeff d₀ p) *
+    MvPolynomial.X (0 : Fin 2) ^ d₀ 0 * MvPolynomial.X (1 : Fin 2) ^ d₀ 1 =
+    MvPolynomial.C (MvPolynomial.coeff d₀ p) *
+    (MvPolynomial.X (0 : Fin 2) ^ d₀ 0 * MvPolynomial.X (1 : Fin 2) ^ d₀ 1)
+    from mul_assoc _ _ _] at heval
+  rw [map_mul, evalE₄E₆_C, Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul,
+    map_mul, map_pow, map_pow, evalE₄E₆_X0, evalE₄E₆_X1,
+    DirectSum.smul_apply] at heval
+  rcases smul_eq_zero.mp heval with hc | hmz
+  · rw [show MvPolynomial.monomial d₀ (MvPolynomial.coeff d₀ p) =
+      MvPolynomial.monomial d₀ 0 from by rw [hc], MvPolynomial.monomial_zero]
+  · exact absurd hmz hmf_ne
+
+-- The polynomial identity: X₀³ - X₁² = 1728 * Delta_poly
+private lemma X0_cubed_eq : (MvPolynomial.X (0 : Fin 2)) ^ 3 =
+    (MvPolynomial.X (1 : Fin 2)) ^ 2 + (1728 : ℂ) • Delta_poly := by
+  simp only [Delta_poly, smul_smul]
+  norm_num
+
+-- Delta_poly is weighted-homogeneous of degree 12
+private lemma Delta_poly_isWeightedHomogeneous :
+    MvPolynomial.IsWeightedHomogeneous E₄E₆W Delta_poly 12 := by
+  unfold Delta_poly
+  simp only [MvPolynomial.smul_eq_C_mul]
+  intro d hd
+  simp only [MvPolynomial.coeff_C_mul, MvPolynomial.coeff_sub] at hd
+  have h1 : MvPolynomial.IsWeightedHomogeneous E₄E₆W
+      (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) 12 :=
+    show _ from (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (0 : Fin 2)).pow 3
+  have h2 : MvPolynomial.IsWeightedHomogeneous E₄E₆W
+      (MvPolynomial.X (1 : Fin 2) ^ 2 : MvPolynomial (Fin 2) ℂ) 12 :=
+    show _ from (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (1 : Fin 2)).pow 2
+  by_cases hd3 : MvPolynomial.coeff d (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) ≠ 0
+  · exact h1 hd3
+  · push_neg at hd3
+    by_cases hd6 : MvPolynomial.coeff d (MvPolynomial.X (1 : Fin 2) ^ 2 : MvPolynomial (Fin 2) ℂ) ≠ 0
+    · exact h2 hd6
+    · push_neg at hd6; simp [hd3, hd6] at hd
+
+-- If mul_Delta_map n f = 0 then f = 0 (Delta doesn't vanish on ℍ)
+private lemma mul_Delta_map_injective {k : ℤ} (f : ModularForm Γ(1) (k - 12))
+    (hf : mul_Delta_map k f = 0) : f = 0 := by
+  ext z
+  have hz := congr_fun (congr_arg (fun x => x.toFun) hf) z
+  simp only [ModularForm.zero_apply, SlashInvariantForm.toFun_eq_coe,
+    ModularForm.toSlashInvariantForm_coe] at hz
+  rw [mul_Delta_map_eq] at hz
+  exact (mul_eq_zero.mp hz).resolve_right (Δ_ne_zero z)
+
+-- Divisibility by Delta_poly: if p is WH of degree n ≥ 12 and evalE₄E₆(p) n = 0,
+-- then p = Delta_poly * q for some WH q of degree n - 12 with eval(q)(n-12) = 0.
+-- Proof strategy:
+-- 1. Sum of polynomial coefficients = 0 (from q-coeff 0 of eval being 0)
+-- 2. Using X₀³ = X₁² + 1728·Delta_poly, reduce all monomials to a < 3
+-- 3. Since sum of coefficients = 0 and there's exactly one reduced monomial,
+--    the residual is 0, so p ≡ 0 mod Delta_poly
+-- 4. Factor p = Delta_poly * q in ℂ[X₀,X₁]
+-- 5. Delta * eval(q)(n-12) = eval(p)(n) = 0, and Delta(z) ≠ 0, so eval(q)(n-12) = 0
+-- Key property: evalE₄E₆(Delta_poly * q) evaluated at grade n is the modular form
+-- (evalE₄E₆ q)(n-12) * Delta. So if the product is 0 and Delta ≠ 0 on ℍ,
+-- then (evalE₄E₆ q)(n-12) = 0.
+-- For the polynomial factoring, we use the fact that MvPolynomial over a field
+-- is a UFD, and Delta_poly is a nonzero element. But we actually prove divisibility
+-- more directly: every WH polynomial of degree n with eval 0 is divisible by
+-- Delta_poly, using the polynomial identity X₀³ = X₁² + 1728·Delta_poly.
+
+-- Helper: Delta_poly divides X₀^a * X₁^b - X₀^(a-3) * X₁^(b+2) for a ≥ 3
+-- Specifically: X₀^a * X₁^b - X₀^(a-3) * X₁^(b+2) = 1728 * Delta_poly * X₀^(a-3) * X₁^b
+private lemma monomial_reduction (a b : ℕ) (ha : 3 ≤ a) :
+    (MvPolynomial.X (0 : Fin 2) ^ a * MvPolynomial.X (1 : Fin 2) ^ b : MvPolynomial (Fin 2) ℂ) =
+    MvPolynomial.X 0 ^ (a - 3) * MvPolynomial.X 1 ^ (b + 2) +
+    (1728 : ℂ) • Delta_poly * (MvPolynomial.X 0 ^ (a - 3) * MvPolynomial.X 1 ^ b) := by
+  have : (MvPolynomial.X (0 : Fin 2) : MvPolynomial (Fin 2) ℂ) ^ a =
+    MvPolynomial.X 0 ^ (a - 3) * MvPolynomial.X (0 : Fin 2) ^ 3 := by
+    rw [← pow_add]; congr 1; omega
+  rw [this, X0_cubed_eq]
+  ring
+
+-- Every WH polynomial of degree n can be written as c * (unique reduced monomial) +
+-- 1728 * Delta_poly * s, where the reduced monomial has d 0 < 3.
+-- If c = 0 (which follows from eval = 0 via the q-coeff-0 argument),
+-- then p = 1728 * Delta_poly * s = Delta_poly * (1728 * s).
+-- Proof: by well-founded induction on the sum of d 0 values in the support.
+-- Each step uses monomial_reduction to decrease the max d 0 value.
+
+-- The main factoring: p WH of degree n ≥ 12, eval = 0, gives divisibility by Delta_poly
+private lemma div_Delta_poly {n : ℕ} (hn12 : 12 ≤ n)
+    (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (heval : (evalE₄E₆ p) (↑n : ℤ) = 0) :
+    ∃ q : MvPolynomial (Fin 2) ℂ,
+      MvPolynomial.IsWeightedHomogeneous E₄E₆W q (n - 12) ∧
+      p = Delta_poly * q ∧
+      (evalE₄E₆ q) (↑(n - 12) : ℤ) = 0 := by
+  -- The proof uses `monomial_reduction` to iteratively reduce all monomials
+  -- with X₀-exponent ≥ 3, accumulating Delta_poly factors. Since the q-expansion
+  -- coefficient 0 of any monomial E₄^a·E₆^b equals 1 (`monomial_coeff_zero_eq_one`),
+  -- the vanishing of evalE₄E₆(p) forces the sum of coefficients to be 0, which
+  -- (combined with the uniqueness of the "reduced" monomial with X₀-exponent < 3)
+  -- implies the residual is 0. The eval condition on q follows from Delta being
+  -- non-vanishing on ℍ (`Δ_ne_zero`) via `mul_Delta_map_injective`.
+  sorry
+
+-- Inductive step: for n ≥ 12 even, evalE₄E₆(p) n = 0 implies p = 0
+-- assuming the result for all smaller weights.
+private lemma per_weight_injective_inductive_step (n : ℕ)
+    (ih : ∀ m < n, ∀ (p : MvPolynomial (Fin 2) ℂ),
+      MvPolynomial.IsWeightedHomogeneous E₄E₆W p m → (evalE₄E₆ p) (↑m : ℤ) = 0 → p = 0)
+    (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (heval : (evalE₄E₆ p) (↑n : ℤ) = 0)
+    (hk_odd : Even n) (hn12 : 12 ≤ n) : p = 0 := by
+  -- Factor p = Delta_poly * q with q WH of degree n-12 and eval(q)(n-12) = 0
+  obtain ⟨q, hq_wh, hpq, hq_eval⟩ := div_Delta_poly hn12 p hp heval
+  -- By induction, q = 0
+  have hq_zero : q = 0 := ih (n - 12) (by omega) q hq_wh hq_eval
+  -- Hence p = Delta_poly * 0 = 0
+  rw [hpq, hq_zero, mul_zero]
+
 private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ),
     MvPolynomial.IsWeightedHomogeneous E₄E₆W p n →
     (evalE₄E₆ p) (↑n : ℤ) = 0 → p = 0 := by
-  sorry
+  intro n
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+  intro p hp heval
+  by_cases hk_odd : Odd n
+  · -- Odd weight: no monomials exist, so p = 0
+    exact whomog_eq_zero_of_no_monomials p hp (fun d => no_wt_monomial_of_odd hk_odd d)
+  · rw [Nat.not_odd_iff_even] at hk_odd
+    by_cases hn4 : n < 4
+    · -- n ∈ {0, 2}: handle both (n=1,3 impossible since even)
+      have hn02 : n = 0 ∨ n = 2 := by
+        obtain ⟨m, rfl⟩ := hk_odd; omega
+      rcases hn02 with rfl | rfl
+      · -- n = 0: p is a constant C(c), show c = 0
+        -- First establish p = C (coeff 0 p)
+        have hpc : p = MvPolynomial.C (MvPolynomial.coeff 0 p) := by
+          ext d'
+          simp only [MvPolynomial.coeff_C]
+          by_cases hd' : 0 = d'
+          · simp [hd']
+          · rw [if_neg hd']
+            have : Finsupp.weight E₄E₆W d' ≠ 0 := by
+              intro hw; apply hd'
+              have h46' := weight_eq_4a_6b d'
+              rw [hw] at h46'
+              symm; ext i; fin_cases i <;> simp [Finsupp.coe_zero] <;> omega
+            exact hp.coeff_eq_zero d' this
+        rw [hpc] at heval ⊢
+        rw [evalE₄E₆_C, Algebra.algebraMap_eq_smul_one] at heval
+        -- (c • 1) ↑0 = c • (1 ↑0) = c • (1 : M₀)
+        have h1eq : (1 : DirectSum ℤ (fun k => ModularForm Γ(1) k)) ((0 : ℕ) : ℤ) =
+            (1 : ModularForm Γ(1) 0) := by
+          show (1 : DirectSum ℤ (fun k => ModularForm Γ(1) k)) (0 : ℤ) = 1
+          have := DirectSum.of_zero_one (fun k : ℤ => ModularForm Γ(1) k)
+          conv_lhs => rw [← this]
+          exact DirectSum.of_eq_same _ _
+        simp only [DirectSum.smul_apply] at heval
+        rw [h1eq] at heval
+        have h1ne : (1 : ModularForm Γ(1) 0) ≠ 0 := by
+          intro h
+          have := congr_fun (congr_arg (fun x => x.toFun) h) UpperHalfPlane.I
+          simp [ModularForm.one_coe_eq_one] at this
+        rcases smul_eq_zero.mp heval with hc | h1z
+        · rw [hc, map_zero]
+        · exact absurd h1z h1ne
+      · -- n = 2: no valid monomials
+        exact whomog_eq_zero_of_no_monomials p hp (fun d => no_wt_monomial_of_two d)
+    · push_neg at hn4
+      by_cases hn12 : n < 12
+      · -- n ∈ {4, 6, 8, 10}: exactly one monomial
+        -- Each has unique (a,b) with 4a+6b = n, so p = C(c) * X₀^a * X₁^b
+        -- If eval = 0, the modular form c * E₄^a * E₆^b = 0, so c = 0
+        -- Use rank-1 of M_n: eval gives c * (nonzero form) = 0
+        have hn_cases : n = 4 ∨ n = 6 ∨ n = 8 ∨ n = 10 := by
+          obtain ⟨m, rfl⟩ := hk_odd; omega
+        -- For each case, the only valid monomial determines p uniquely up to scalar
+        -- The eval at grade n lies in a rank-1 space and is nonzero iff scalar is nonzero
+        -- Since eval = 0, the scalar (hence p) is 0
+        rcases hn_cases with rfl | rfl | rfl | rfl
+        · -- n = 4: d₀ = (1, 0)
+          obtain ⟨d₀, hd0a, hd0b⟩ := finsupp_of_fin2 1 0
+          apply per_weight_injective_unique_monomial p hp heval d₀
+            (by rw [weight_eq_4a_6b]; omega)
+          · intro d hd; have h46 := weight_eq_4a_6b d; rw [hd] at h46
+            have hda : d 0 = d₀ 0 := by omega
+            have hdb : d 1 = d₀ 1 := by omega
+            ext i; fin_cases i <;> assumption
+          · rw [hd0a, hd0b]
+            intro habs
+            have := monomial_coeff_zero_eq_one 4 1 0 (by omega)
+            rw [habs] at this; simp [qExpansion_zero] at this
+        · -- n = 6: d₀ = (0, 1)
+          obtain ⟨d₀, hd0a, hd0b⟩ := finsupp_of_fin2 0 1
+          apply per_weight_injective_unique_monomial p hp heval d₀
+            (by rw [weight_eq_4a_6b]; omega)
+          · intro d hd; have h46 := weight_eq_4a_6b d; rw [hd] at h46
+            have hda : d 0 = d₀ 0 := by omega
+            have hdb : d 1 = d₀ 1 := by omega
+            ext i; fin_cases i <;> assumption
+          · rw [hd0a, hd0b]
+            intro habs
+            have := monomial_coeff_zero_eq_one 6 0 1 (by omega)
+            rw [habs] at this; simp [qExpansion_zero] at this
+        · -- n = 8: d₀ = (2, 0)
+          obtain ⟨d₀, hd0a, hd0b⟩ := finsupp_of_fin2 2 0
+          apply per_weight_injective_unique_monomial p hp heval d₀
+            (by rw [weight_eq_4a_6b]; omega)
+          · intro d hd; have h46 := weight_eq_4a_6b d; rw [hd] at h46
+            have hda : d 0 = d₀ 0 := by omega
+            have hdb : d 1 = d₀ 1 := by omega
+            ext i; fin_cases i <;> assumption
+          · rw [hd0a, hd0b]
+            intro habs
+            have := monomial_coeff_zero_eq_one 8 2 0 (by omega)
+            rw [habs] at this; simp [qExpansion_zero] at this
+        · -- n = 10: d₀ = (1, 1)
+          obtain ⟨d₀, hd0a, hd0b⟩ := finsupp_of_fin2 1 1
+          apply per_weight_injective_unique_monomial p hp heval d₀
+            (by rw [weight_eq_4a_6b]; omega)
+          · intro d hd; have h46 := weight_eq_4a_6b d; rw [hd] at h46
+            have hda : d 0 = d₀ 0 := by omega
+            have hdb : d 1 = d₀ 1 := by omega
+            ext i; fin_cases i <;> assumption
+          · rw [hd0a, hd0b]
+            intro habs
+            have := monomial_coeff_zero_eq_one 10 1 1 (by omega)
+            rw [habs] at this; simp [qExpansion_zero] at this
+      · -- n ≥ 12: inductive step via Delta decomposition
+        push_neg at hn12
+        -- Key: use the polynomial identity X₀³ - X₁² = 1728 · Delta_poly
+        -- to show p is divisible by Delta_poly, then apply induction.
+        -- Step 1: Since evalE₄E₆(p) n = 0 and p is WH of degree n,
+        --   the product evalE₄E₆(Delta_poly) * evalE₄E₆(q) at grade n = 0
+        --   where p = Delta_poly * q (by polynomial division)
+        -- Step 2: Delta * (evalE₄E₆(q))(n-12) = 0 implies (evalE₄E₆(q))(n-12) = 0
+        --   since Delta doesn't vanish on ℍ
+        -- Step 3: By induction, q = 0, hence p = 0
+        -- We implement this via: if p has support, take any d ∈ supp(p),
+        -- show coeff d p = 0 → contradiction.
+        -- Equivalently, all coefficients of p are 0.
+        -- Use: evalE₄E₆ is an AlgHom from an integral domain ℂ[X₀,X₁],
+        -- and if evalE₄E₆(p) = 0 in the direct sum, then p is in the kernel.
+        -- The graded modular form ring is an integral domain
+        -- (product of nonzero modular forms is nonzero on ℍ).
+        -- This approach: show evalE₄E₆ restricted to weighted-homogeneous
+        -- polynomials of degree n is injective by showing its kernel is 0.
+        -- Factor: p = Delta_poly * q where q is WH of degree n-12
+        -- Then evalE₄E₆(p) = evalE₄E₆(Delta_poly) * evalE₄E₆(q)
+        -- At grade n: Delta * (evalE₄E₆(q))(n-12) = 0
+        -- Since Delta ≠ 0 on ℍ: (evalE₄E₆(q))(n-12) = 0
+        -- By induction: q = 0, hence p = 0
+        -- The factoring p = Delta_poly * q uses:
+        --   X₀³ = X₁² + 1728 * Delta_poly
+        -- Every monomial X₀^a * X₁^b with a ≥ 3 reduces mod Delta_poly
+        -- Since sum of coefficients = 0 (from q-coeff 0 of eval = 0),
+        -- the reduced polynomial is 0, giving divisibility by Delta_poly.
+        exact per_weight_injective_inductive_step n ih p hp heval hk_odd hn12
 
 /-- The evaluation homomorphism `evalE₄E₆` is injective (E₄ and E₆ are algebraically
 independent). The proof decomposes a polynomial into weighted-homogeneous components,
