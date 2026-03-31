@@ -278,3 +278,40 @@ theorem evalE₄E₆_surjective : Function.Surjective evalE₄E₆ := by
   intro k _
   rw [AlgHom.mem_range]
   exact surj_of_weight k (x k)
+
+/-! ## Injectivity of evalE₄E₆
+
+The proof uses dimension counting: in each graded piece, the number of monomials
+E₄^a · E₆^b with 4a + 6b = k equals dim M_k(Γ(1)). Since the restricted map is
+surjective and source/target have the same finite dimension, the map is injective.
+
+Both sides satisfy the same recurrence d(k) = 1 + d(k-12) for k ≥ 12 even,
+with matching base cases for k < 12. -/
+
+/-- The evaluation homomorphism `evalE₄E₆` is injective (E₄ and E₆ are algebraically
+independent). The proof uses dimension counting: both the space of weighted-homogeneous
+polynomials of degree k and M_k(Γ(1)) satisfy the same recurrence with the same base
+cases, so they have equal finite dimension. Combined with surjectivity, this gives
+injectivity. -/
+theorem evalE₄E₆_injective : Function.Injective evalE₄E₆ := by
+  sorry
+
+/-! ## Main isomorphism and corollaries -/
+
+/-- The graded ring of level 1 modular forms is isomorphic to the weighted polynomial
+ring in E₄ (weight 4) and E₆ (weight 6).
+
+This is the classical structure theorem: every modular form for SL₂(ℤ) is a polynomial
+in the Eisenstein series E₄ and E₆, and E₄, E₆ are algebraically independent. -/
+noncomputable def modularFormsEquivMvPolynomial :
+    MvPolynomial (Fin 2) ℂ ≃ₐ[ℂ]
+      DirectSum ℤ (fun k => ModularForm (CongruenceSubgroup.Gamma 1) k) :=
+  AlgEquiv.ofBijective evalE₄E₆ ⟨evalE₄E₆_injective, evalE₄E₆_surjective⟩
+
+/-- E₄ and E₆ generate the entire graded ring of level 1 modular forms. -/
+theorem E₄E₆_generate :
+    Algebra.adjoin ℂ
+      ({DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 4 E₄,
+        DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 6 E₆} :
+        Set (DirectSum ℤ (fun k => ModularForm (CongruenceSubgroup.Gamma 1) k))) = ⊤ := by
+  sorry
