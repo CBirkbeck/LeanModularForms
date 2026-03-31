@@ -646,6 +646,271 @@ private lemma monomial_reduction (a b : ℕ) (ha : 3 ≤ a) :
 -- Proof: by well-founded induction on the sum of d 0 values in the support.
 -- Each step uses monomial_reduction to decrease the max d 0 value.
 
+-- Helper: weighted homogeneity for X₀^a * X₁^b when 4a+6b = n.
+private lemma X0_pow_mul_X1_pow_isWeightedHomogeneous (a b n : ℕ) (hab : a * 4 + b * 6 = n) :
+    MvPolynomial.IsWeightedHomogeneous E₄E₆W
+      (MvPolynomial.X (0 : Fin 2) ^ a * MvPolynomial.X (1 : Fin 2) ^ b :
+        MvPolynomial (Fin 2) ℂ) n := by
+  have h0 := (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (0 : Fin 2)).pow a
+  have h1 := (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (1 : Fin 2)).pow b
+  convert h0.mul h1 using 1; simp [E₄E₆W]; omega
+
+-- Sub-lemma: polynomial decomposition modulo Delta_poly.
+-- Every WH polynomial p of degree n can be written as r + Delta_poly * s where
+-- r is WH of degree n, s is WH of degree n - 12, and every monomial of r has
+-- X₀-exponent < 3.
+-- Proof by strong induction on the sum of X₀-exponents in the support.
+private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
+    (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n) :
+    ∃ r s : MvPolynomial (Fin 2) ℂ,
+      MvPolynomial.IsWeightedHomogeneous E₄E₆W r n ∧
+      MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12) ∧
+      p = r + Delta_poly * s ∧
+      (∀ d ∈ r.support, d 0 < 3) := by
+  -- Induction on the sum of X₀-exponents across the support.
+  -- When all X₀-exponents are < 3, take r = p and s = 0.
+  -- Otherwise, reduce one monomial with X₀-exponent ≥ 3 using monomial_reduction,
+  -- which strictly decreases the total X₀-exponent sum.
+  suffices key : ∀ (M : ℕ) (p : MvPolynomial (Fin 2) ℂ),
+      MvPolynomial.IsWeightedHomogeneous E₄E₆W p n →
+      (∑ d ∈ p.support, d 0) ≤ M →
+      ∃ r s : MvPolynomial (Fin 2) ℂ,
+        MvPolynomial.IsWeightedHomogeneous E₄E₆W r n ∧
+        MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12) ∧
+        p = r + Delta_poly * s ∧
+        (∀ d ∈ r.support, d 0 < 3) from
+    key _ p hp le_rfl
+  intro M
+  induction M using Nat.strong_induction_on with
+  | _ M ih =>
+  intro p hp hM
+  -- Check if all monomials already have X₀-exponent < 3
+  by_cases hall : ∀ d ∈ p.support, d 0 < 3
+  · -- Base case: p is already reduced
+    exact ⟨p, 0, hp, (MvPolynomial.isWeightedHomogeneous_zero ℂ E₄E₆W (n - 12)),
+      by simp, hall⟩
+  · -- Inductive case: find a monomial with X₀-exponent ≥ 3 and reduce it
+    push_neg at hall
+    obtain ⟨d, hd_mem, hd_ge⟩ := hall
+    have hcoeff_ne : MvPolynomial.coeff d p ≠ 0 :=
+      MvPolynomial.mem_support_iff.mp hd_mem
+    have hwd : d 0 * 4 + d 1 * 6 = n := by
+      have := hp (MvPolynomial.mem_support_iff.mp hd_mem)
+      have := weight_eq_4a_6b d; omega
+    set c := MvPolynomial.coeff d p
+    -- p' replaces X₀^(d 0) * X₁^(d 1) with X₀^(d 0-3) * X₁^(d 1+2)
+    -- and extracts a Delta_poly factor from the difference.
+    set delta_piece := MvPolynomial.C c * ((1728 : ℂ) • Delta_poly *
+      (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ (d 1)))
+    set p' := p - delta_piece with hp'_def
+    -- p = p' + delta_piece
+    have hp_eq : p = p' + delta_piece := by simp [p']
+    -- p' has the monomial at d replaced: using monomial_reduction,
+    -- C c * X₀^(d 0) * X₁^(d 1) = C c * X₀^(d 0-3) * X₁^(d 1+2) + delta_piece
+    -- So the net effect on p' is: coeff at d becomes 0, coeff at d' increases by c.
+    -- p' is WH of degree n (p minus a WH poly of degree n)
+    have hp'_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆W p' n := by
+      rw [hp'_def]
+      have hdp_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆W delta_piece n := by
+        show MvPolynomial.IsWeightedHomogeneous E₄E₆W
+          (MvPolynomial.C c * ((1728 : ℂ) • Delta_poly *
+            (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
+              MvPolynomial.X (1 : Fin 2) ^ (d 1)))) n
+        apply MvPolynomial.IsWeightedHomogeneous.C_mul
+        rw [MvPolynomial.smul_eq_C_mul,
+          show MvPolynomial.C (1728 : ℂ) * Delta_poly *
+            (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ d 1) =
+            MvPolynomial.C (1728 : ℂ) * (Delta_poly *
+              (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
+                MvPolynomial.X (1 : Fin 2) ^ d 1)) from by ring]
+        apply MvPolynomial.IsWeightedHomogeneous.C_mul
+        have h12 := Delta_poly_isWeightedHomogeneous
+        have hn12' := X0_pow_mul_X1_pow_isWeightedHomogeneous (d 0 - 3) (d 1) (n - 12)
+          (by omega)
+        convert h12.mul hn12' using 1; omega
+      exact (MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆W n _).mp
+        (Submodule.sub_mem _
+          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆W n p).mpr hp)
+          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆W n delta_piece).mpr hdp_wh))
+    -- delta_piece = Delta_poly * q₁
+    set q₁ := MvPolynomial.C (c * 1728) *
+      (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ (d 1))
+    have hdelta_eq : delta_piece = Delta_poly * q₁ := by
+      simp only [delta_piece, q₁, MvPolynomial.smul_eq_C_mul, map_mul]; ring
+    -- q₁ is WH of degree n - 12
+    have hq₁_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆W q₁ (n - 12) :=
+      MvPolynomial.IsWeightedHomogeneous.C_mul
+        (X0_pow_mul_X1_pow_isWeightedHomogeneous (d 0 - 3) (d 1) (n - 12) (by omega)) _
+    -- Key: the sum of X₀-exponents for p' is strictly less than for p
+    -- p' = p - delta_piece, and delta_piece = C c * 1728 • Delta_poly * X₀^(d0-3) * X₁^(d1)
+    -- By monomial_reduction: C c * X₀^(d0) * X₁^(d1) = C c * X₀^(d0-3) * X₁^(d1+2) + delta_piece
+    -- So p' = p - (C c * X₀^(d0) * X₁^(d1) - C c * X₀^(d0-3) * X₁^(d1+2))
+    --       = p - C c * X₀^(d0) * X₁^(d1) + C c * X₀^(d0-3) * X₁^(d1+2)
+    -- The coeff of d in p' is 0 (removed), and coeff of d' = (d0-3, d1+2) increases by c.
+    -- Net effect on Σ d0: remove d0, add at most (d0-3). Sum decreases by ≥ 3.
+    have hM_lt : ∑ d' ∈ p'.support, d' 0 < ∑ d' ∈ p.support, d' 0 := by
+      sorry
+    obtain ⟨r, s', hr_wh, hs'_wh, hp'_eq, hr_red⟩ :=
+      ih (∑ d' ∈ p'.support, d' 0) (by omega) p' hp'_wh le_rfl
+    refine ⟨r, s' + q₁, hr_wh, hs'_wh.add hq₁_wh, ?_, hr_red⟩
+    rw [hp_eq, hdelta_eq, hp'_eq, mul_add]; ring
+
+-- Auxiliary: if a₁ < 3 and a₂ < 3 and 4*a₁ + 6*b₁ = 4*a₂ + 6*b₂, then a₁ = a₂ and b₁ = b₂.
+private lemma unique_small_weight_soln {a₁ b₁ a₂ b₂ : ℕ}
+    (ha₁ : a₁ < 3) (ha₂ : a₂ < 3)
+    (h : a₁ * 4 + b₁ * 6 = a₂ * 4 + b₂ * 6) : a₁ = a₂ ∧ b₁ = b₂ := by
+  constructor
+  · interval_cases a₁ <;> interval_cases a₂ <;> omega
+  · omega
+
+-- Sub-lemma: for WH of degree n with all X₀-exponents < 3, the support has at most one element.
+private lemma reduced_poly_is_scalar {n : ℕ} (_hn12 : 12 ≤ n)
+    (r : MvPolynomial (Fin 2) ℂ)
+    (hr : MvPolynomial.IsWeightedHomogeneous E₄E₆W r n)
+    (hr_red : ∀ d ∈ r.support, d 0 < 3) :
+    ∀ d₁ d₂ : Fin 2 →₀ ℕ, d₁ ∈ r.support → d₂ ∈ r.support → d₁ = d₂ := by
+  intro d₁ d₂ hd₁ hd₂
+  have hw1 := hr (MvPolynomial.mem_support_iff.mp hd₁)
+  have hw2 := hr (MvPolynomial.mem_support_iff.mp hd₂)
+  have h46_1 := weight_eq_4a_6b d₁; rw [hw1] at h46_1
+  have h46_2 := weight_eq_4a_6b d₂; rw [hw2] at h46_2
+  have heq : d₁ 0 * 4 + d₁ 1 * 6 = d₂ 0 * 4 + d₂ 1 * 6 := by linarith
+  obtain ⟨hd0, hd1⟩ := unique_small_weight_soln (hr_red d₁ hd₁) (hr_red d₂ hd₂) heq
+  ext i; fin_cases i
+  · exact hd0
+  · exact hd1
+
+-- Sub-lemma: evalE₄E₆(Delta_poly * s) at grade n has q-expansion coeff 0 = 0.
+-- This is because evalE₄E₆(Delta_poly) = (1/1728) • (E₄³ - E₆²), and the
+-- grade-12 component is Delta (a cusp form with q-coeff 0 = 0).
+private lemma evalE₄E₆_Delta_mul_coeff_zero {n : ℕ} (hn12 : 12 ≤ n)
+    (s : MvPolynomial (Fin 2) ℂ)
+    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12)) :
+    (qExpansion 1 ↑((evalE₄E₆ (Delta_poly * s)) (↑n : ℤ))).coeff 0 = 0 := by
+  -- evalE₄E₆(Delta_poly * s) = evalE₄E₆(Delta_poly) * evalE₄E₆(s)
+  rw [map_mul]
+  -- evalE₄E₆(Delta_poly) is supported at grade 12
+  -- evalE₄E₆(s) is supported at grade n-12
+  -- Their product at grade n is (evalE₄E₆(Delta_poly) 12) * (evalE₄E₆(s) (n-12))
+  -- = Delta_form * (evalE₄E₆ s (n-12))
+  -- where Delta_form is a cusp form, so q-coeff 0 = 0.
+  sorry
+
+-- Sub-lemma: if evalE₄E₆(r + Delta_poly * s)(n) = 0, where r has all X₀-exponents < 3,
+-- then r = 0. The argument uses q-expansion coefficient 0.
+private lemma coeff_zero_of_eval_zero {n : ℕ} (hn12 : 12 ≤ n)
+    (r s : MvPolynomial (Fin 2) ℂ)
+    (hr : MvPolynomial.IsWeightedHomogeneous E₄E₆W r n)
+    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12))
+    (hr_red : ∀ d ∈ r.support, d 0 < 3)
+    (heval : (evalE₄E₆ (r + Delta_poly * s)) (↑n : ℤ) = 0) :
+    r = 0 := by
+  by_cases hr_empty : r.support = ∅
+  · rwa [MvPolynomial.support_eq_empty] at hr_empty
+  · obtain ⟨d₀, hd₀⟩ := Finset.nonempty_of_ne_empty hr_empty
+    have huniq := reduced_poly_is_scalar hn12 r hr hr_red
+    have hr_mono : r = MvPolynomial.monomial d₀ (MvPolynomial.coeff d₀ r) := by
+      ext d
+      by_cases hd : d = d₀
+      · subst hd; simp
+      · rw [MvPolynomial.coeff_monomial, if_neg (Ne.symm hd)]
+        by_cases hd_supp : d ∈ r.support
+        · exact absurd (huniq d d₀ hd_supp hd₀) hd
+        · rwa [MvPolynomial.mem_support_iff, not_not] at hd_supp
+    have hwd₀ := hr (MvPolynomial.mem_support_iff.mp hd₀)
+    have hwd₀' := weight_eq_4a_6b d₀; rw [hwd₀] at hwd₀'
+    set c := MvPolynomial.coeff d₀ r
+    suffices hc : c = 0 by rw [hr_mono, hc, MvPolynomial.monomial_zero]
+    -- Use the per_weight_injective_unique_monomial approach:
+    -- r has exactly one monomial d₀ with d₀ 0 < 3.
+    -- If evalE₄E₆(r)(n) = 0, then by the unique monomial argument, c = 0.
+    -- But we have evalE₄E₆(r + Delta_poly * s)(n) = 0, not evalE₄E₆(r)(n) = 0.
+    -- So we need: evalE₄E₆(Delta_poly * s)(n) = 0, which gives evalE₄E₆(r)(n) = 0.
+    -- The key q-expansion argument. Strategy:
+    -- (evalE₄E₆ (r + Delta * s))(n) = 0 as a modular form.
+    -- So its q-expansion coeff 0 = 0.
+    -- We show this coeff equals c + 0 = c, giving c = 0.
+    --
+    -- Work through the algebra of DFinsupp/DirectSum:
+    -- evalE₄E₆(r + Delta*s) = evalE₄E₆(r) + evalE₄E₆(Delta*s) [map_add]
+    -- At grade n: DFinsupp.add_apply gives sum of grade-n components.
+    -- The grade-n component of evalE₄E₆(r) is c • (E₄^a₀ * E₆^b₀) at grade n.
+    -- The grade-n component of evalE₄E₆(Delta*s) involves Delta (cusp form, q-coeff 0 = 0).
+    -- Sum = 0 as modular form, so pointwise evaluation at any z gives 0.
+    -- In particular, qExpansion 1 applied to the zero function gives 0.
+    --
+    -- Use heval directly: the modular form at grade n is 0.
+    -- By IsCuspForm_iff_coeffZero_eq_zero-style reasoning on the sum.
+    --
+    -- Cleanest approach: show (evalE₄E₆ r)(n) = 0, using that
+    -- the form (r + Delta*s) evaluates to 0 at grade n,
+    -- and Delta*s evaluates to something whose q-coeff 0 is 0.
+    -- So evalE₄E₆(r)(n) has q-coeff 0 = 0, hence c = 0.
+    --
+    -- For this we need qExpansion linearity on the ADD of two modular forms.
+    -- This is the qExpansionAddHom from the surjectivity proof.
+    set Q := qExpansionAddHom (show (0 : ℝ) < (1 : ℝ) by norm_num)
+      (show (1 : ℝ) ∈ Γ(1).strictPeriods from by simp) (↑n)
+    -- Q is an AddMonoidHom: ModularForm Γ(1) n → PowerSeries ℂ
+    -- Q (f + g) = Q f + Q g
+    -- Q 0 = 0
+    have hQ_zero : Q ((evalE₄E₆ (r + Delta_poly * s)) (↑n : ℤ)) = 0 := by
+      rw [heval]; exact map_zero Q
+    rw [show evalE₄E₆ (r + Delta_poly * s) = evalE₄E₆ r + evalE₄E₆ (Delta_poly * s)
+      from map_add _ _ _, DFinsupp.add_apply, map_add] at hQ_zero
+    -- hQ_zero : Q (evalE₄E₆(r)(n)) + Q (evalE₄E₆(Delta*s)(n)) = 0
+    -- Extract coeff 0
+    have hcoeff_sum : (Q ((evalE₄E₆ r) (↑n : ℤ))).coeff 0 +
+        (Q ((evalE₄E₆ (Delta_poly * s)) (↑n : ℤ))).coeff 0 = 0 := by
+      rw [← PowerSeries.coeff_add, hQ_zero, map_zero]
+    -- Q f = qExpansion 1 f (by definition of qExpansionAddHom)
+    change (qExpansion 1 ↑((evalE₄E₆ r) (↑n : ℤ))).coeff 0 +
+      (qExpansion 1 ↑((evalE₄E₆ (Delta_poly * s)) (↑n : ℤ))).coeff 0 = 0 at hcoeff_sum
+    -- q-coeff 0 of evalE₄E₆(r)(n) = c
+    set mo := ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 4 E₄) ^ d₀ 0 *
+      (DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 6 E₆) ^ d₀ 1)
+    have hmo_coeff : (qExpansion 1 ↑(mo (↑n : ℤ))).coeff 0 = 1 :=
+      monomial_coeff_zero_eq_one n (d₀ 0) (d₀ 1) (by omega)
+    have hq_r : (qExpansion 1 ↑((evalE₄E₆ r) (↑n : ℤ))).coeff 0 = c := by
+      -- evalE₄E₆(monomial d₀ c)(n) = c • (E₄^(d₀ 0) * E₆^(d₀ 1))(n)
+      -- q-coeff 0 = c * 1 = c (by monomial_coeff_zero_eq_one)
+      rw [hr_mono, monomial_fin2_eq,
+        show MvPolynomial.C c * MvPolynomial.X (0 : Fin 2) ^ d₀ 0 *
+          MvPolynomial.X (1 : Fin 2) ^ d₀ 1 =
+          MvPolynomial.C c * (MvPolynomial.X (0 : Fin 2) ^ d₀ 0 *
+          MvPolynomial.X (1 : Fin 2) ^ d₀ 1) from mul_assoc _ _ _,
+        map_mul, evalE₄E₆_C, Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul,
+        map_mul, map_pow, map_pow, evalE₄E₆_X0, evalE₄E₆_X1]
+      -- Goal: coeff 0 (qExpansion 1 ↑((c • mo) n)) = c
+      -- (c • mo) n = c • (mo n) by DirectSum.smul_apply
+      -- ↑(c • mo n) = c • ↑(mo n) by ModularForm.coe_smul
+      -- qExpansion 1 (c • f) = c • qExpansion 1 f by qExpansion_smul
+      rw [DirectSum.smul_apply]
+      -- Goal: coeff 0 (qExpansion 1 ↑(c • mo n)) = c
+      -- Use qExpansion_smul which says qExpansion p (c • ↑f) = c • qExpansion p ↑f
+      have hqs := qExpansion_smul (show (0 : ℝ) < 1 from by norm_num)
+        (show (1 : ℝ) ∈ Γ(1).strictPeriods from by simp) c (mo (↑n : ℤ))
+      -- hqs : qExpansion 1 ↑(c • mo n) = c • qExpansion 1 ↑(mo n)
+      -- hqs : qExpansion 1 (c • ↑(mo n)) = c • qExpansion 1 ↑(mo n)
+      have hcoe : (↑(c • mo (↑n : ℤ)) : ℍ → ℂ) = c • ↑(mo (↑n : ℤ)) := rfl
+      rw [hcoe, hqs, PowerSeries.coeff_smul, hmo_coeff, smul_eq_mul, mul_one]
+    -- q-coeff 0 of evalE₄E₆(Delta_poly * s)(n) = 0
+    have hq_ds : (qExpansion 1 ↑((evalE₄E₆ (Delta_poly * s)) (↑n : ℤ))).coeff 0 = 0 :=
+      evalE₄E₆_Delta_mul_coeff_zero hn12 s hs
+    -- Combine: c + 0 = 0, so c = 0
+    rw [hq_r, hq_ds, add_zero] at hcoeff_sum; exact hcoeff_sum
+
+-- Sub-lemma: evalE₄E₆(Delta_poly * s)(n) relates to mul_Delta_map.
+-- If evalE₄E₆(Delta_poly * s)(n) = 0 and s is WH of degree n-12,
+-- then evalE₄E₆(s)(n-12) = 0 (using Δ ≠ 0).
+private lemma eval_Delta_mul_zero_imp {n : ℕ} (hn12 : 12 ≤ n)
+    (s : MvPolynomial (Fin 2) ℂ)
+    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12))
+    (hds : (evalE₄E₆ (Delta_poly * s)) (↑n : ℤ) = 0) :
+    (evalE₄E₆ s) (↑(n - 12) : ℤ) = 0 := by
+  sorry
+
 -- The main factoring: p WH of degree n ≥ 12, eval = 0, gives divisibility by Delta_poly
 private lemma div_Delta_poly {n : ℕ} (hn12 : 12 ≤ n)
     (p : MvPolynomial (Fin 2) ℂ)
@@ -655,14 +920,16 @@ private lemma div_Delta_poly {n : ℕ} (hn12 : 12 ≤ n)
       MvPolynomial.IsWeightedHomogeneous E₄E₆W q (n - 12) ∧
       p = Delta_poly * q ∧
       (evalE₄E₆ q) (↑(n - 12) : ℤ) = 0 := by
-  -- The proof uses `monomial_reduction` to iteratively reduce all monomials
-  -- with X₀-exponent ≥ 3, accumulating Delta_poly factors. Since the q-expansion
-  -- coefficient 0 of any monomial E₄^a·E₆^b equals 1 (`monomial_coeff_zero_eq_one`),
-  -- the vanishing of evalE₄E₆(p) forces the sum of coefficients to be 0, which
-  -- (combined with the uniqueness of the "reduced" monomial with X₀-exponent < 3)
-  -- implies the residual is 0. The eval condition on q follows from Delta being
-  -- non-vanishing on ℍ (`Δ_ne_zero`) via `mul_Delta_map_injective`.
-  sorry
+  -- Step 1: Decompose p = r + Delta_poly * s where r has small X₀-exponents
+  obtain ⟨r, s, hr_wh, hs_wh, hp_eq, hr_red⟩ := whomog_poly_Delta_decomp hn12 p hp
+  -- Step 2: Show r = 0 using q-expansion argument
+  have heval' : (evalE₄E₆ (r + Delta_poly * s)) (↑n : ℤ) = 0 := by rwa [← hp_eq]
+  have hr_zero := coeff_zero_of_eval_zero hn12 r s hr_wh hs_wh hr_red heval'
+  -- Step 3: p = Delta_poly * s
+  have hp_ds : p = Delta_poly * s := by rw [hp_eq, hr_zero, zero_add]
+  -- Step 4: eval condition on s
+  have hds : (evalE₄E₆ (Delta_poly * s)) (↑n : ℤ) = 0 := by rwa [← hp_ds]
+  exact ⟨s, hs_wh, hp_ds, eval_Delta_mul_zero_imp hn12 s hs_wh hds⟩
 
 -- Inductive step: for n ≥ 12 even, evalE₄E₆(p) n = 0 implies p = 0
 -- assuming the result for all smaller weights.
