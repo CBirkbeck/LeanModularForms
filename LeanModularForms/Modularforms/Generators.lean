@@ -788,14 +788,61 @@ private lemma evalE₄E₆_Delta_mul_coeff_zero {n : ℕ} (hn12 : 12 ≤ n)
     (s : MvPolynomial (Fin 2) ℂ)
     (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12)) :
     (qExpansion 1 ↑((evalE₄E₆ (Delta_poly * s)) (↑n : ℤ))).coeff 0 = 0 := by
-  -- evalE₄E₆(Delta_poly * s) = evalE₄E₆(Delta_poly) * evalE₄E₆(s)
   rw [map_mul]
-  -- evalE₄E₆(Delta_poly) is supported at grade 12
-  -- evalE₄E₆(s) is supported at grade n-12
-  -- Their product at grade n is (evalE₄E₆(Delta_poly) 12) * (evalE₄E₆(s) (n-12))
-  -- = Delta_form * (evalE₄E₆ s (n-12))
-  -- where Delta_form is a cusp form, so q-coeff 0 = 0.
-  sorry
+  have hD_grade := evalE₄E₆_whc_grade 12 Delta_poly Delta_poly_isWeightedHomogeneous
+  have hS_grade := evalE₄E₆_whc_grade (n - 12) s hs
+  set D := evalE₄E₆ Delta_poly; set S := evalE₄E₆ s
+  have hD_single : D = DirectSum.of _ 12 (D 12) := by
+    ext k; by_cases hk : k = 12
+    · subst hk; simp [DirectSum.of_eq_same]
+    · rw [hD_grade k hk, DirectSum.of_eq_of_ne _ _ _ hk]
+  have hS_single : S = DirectSum.of _ (↑(n-12) : ℤ) (S (↑(n-12))) := by
+    ext k; by_cases hk : k = (↑(n-12) : ℤ)
+    · subst hk; simp [DirectSum.of_eq_same]
+    · rw [hS_grade k hk, DirectSum.of_eq_of_ne _ _ _ hk]
+  rw [hD_single, hS_single, DirectSum.of_mul_of]
+  have hcast : (12 : ℤ) + ↑(n - 12) = ↑n := by omega
+  rw [DirectSum.of_apply, dif_pos hcast]
+  -- Transport through Eq.recOn: qExpansion only depends on the underlying function
+  have hq_eq : qExpansion 1 ↑(hcast ▸ GradedMonoid.GMul.mul (D 12) (S (↑(n-12))) :
+      ModularForm Γ(1) (↑n)) =
+      qExpansion 1 ↑(GradedMonoid.GMul.mul (D 12) (S (↑(n-12)))) := by
+    congr 1; ext z
+    have : ∀ {k₁ k₂ : ℤ} (heq : k₁ = k₂) (f : ModularForm Γ(1) k₁) (z : ℍ),
+      (heq ▸ f : ModularForm Γ(1) k₂) z = f z := by intros; subst_vars; rfl
+    exact this hcast _ z
+  rw [hq_eq]
+  -- GMul.mul is ModularForm.mul pointwise
+  have hmul_coe : (↑(GradedMonoid.GMul.mul (D 12) (S (↑(n-12)))) : ℍ → ℂ) =
+      ↑((D 12).mul (S (↑(n-12)))) := rfl
+  rw [hmul_coe]
+  have hmul_coeff := qExpansion_mul_coeff 1 12 (↑(n-12)) (D 12) (S (↑(n-12)))
+  simp only [Nat.cast_one] at hmul_coeff; rw [hmul_coeff]
+  simp only [PowerSeries.coeff_mul, Finset.antidiagonal_zero, Finset.sum_singleton]
+  -- D 12 = ModForm_mk Γ(1) 12 Delta
+  have hD12 : D 12 = ModForm_mk Γ(1) 12 Delta := by
+    change (evalE₄E₆ Delta_poly) 12 = _
+    have hev : evalE₄E₆ Delta_poly =
+        DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 12 (ModForm_mk Γ(1) 12 Delta) := by
+      rw [evalE₄E₆_Delta_poly]; ext i; by_cases hi : i = 12
+      · subst hi; simp only [DirectSum.smul_apply, DirectSum.sub_apply, DirectSum.of_eq_same]
+        rw [show ModForm_mk Γ(1) 12 Delta = ModForm_mk Γ(1) 12 Delta_E4_E6_aux from by
+          rw [Delta_E4_eqn], Delta_E4_E6_eq]; simp only [DirectSum.sub_apply]
+      · simp only [DirectSum.smul_apply, DirectSum.sub_apply, DirectSum.of_eq_of_ne _ _ _ hi]
+        have he4 : ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 4 E₄) ^ 3) i = 0 := by
+          rw [pow_three, DirectSum.of_mul_of, DirectSum.of_mul_of]
+          exact DirectSum.of_eq_of_ne _ _ _ (by omega)
+        have he6 : ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 6 E₆) ^ 2) i = 0 := by
+          rw [pow_two, DirectSum.of_mul_of]; exact DirectSum.of_eq_of_ne _ _ _ (by omega)
+        rw [he4, he6, sub_self, smul_zero]
+    rw [hev, DirectSum.of_eq_same]
+  -- Delta is a cusp form, so its q-coeff 0 = 0
+  have hDelta_coeff : (qExpansion 1 ↑(D 12)).coeff 0 = 0 := by
+    rw [hD12]
+    have hcusp : IsCuspForm Γ(1) 12 (ModForm_mk Γ(1) 12 Delta) := by
+      rw [IsCuspForm, CuspFormSubmodule, LinearMap.mem_range]; exact ⟨Delta, rfl⟩
+    exact (IsCuspForm_iff_coeffZero_eq_zero 12 _).mp hcusp
+  rw [hDelta_coeff, zero_mul]
 
 -- Sub-lemma: if evalE₄E₆(r + Delta_poly * s)(n) = 0, where r has all X₀-exponents < 3,
 -- then r = 0. The argument uses q-expansion coefficient 0.
@@ -909,7 +956,51 @@ private lemma eval_Delta_mul_zero_imp {n : ℕ} (hn12 : 12 ≤ n)
     (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12))
     (hds : (evalE₄E₆ (Delta_poly * s)) (↑n : ℤ) = 0) :
     (evalE₄E₆ s) (↑(n - 12) : ℤ) = 0 := by
-  sorry
+  rw [map_mul] at hds
+  have hD_grade := evalE₄E₆_whc_grade 12 Delta_poly Delta_poly_isWeightedHomogeneous
+  have hS_grade := evalE₄E₆_whc_grade (n - 12) s hs
+  set D := evalE₄E₆ Delta_poly
+  set S := evalE₄E₆ s
+  have hD_single : D = DirectSum.of _ 12 (D 12) := by
+    ext k; by_cases hk : k = 12
+    · subst hk; simp [DirectSum.of_eq_same]
+    · rw [hD_grade k hk, DirectSum.of_eq_of_ne _ _ _ hk]
+  have hS_single : S = DirectSum.of _ (↑(n-12) : ℤ) (S (↑(n-12))) := by
+    ext k; by_cases hk : k = (↑(n-12) : ℤ)
+    · subst hk; simp [DirectSum.of_eq_same]
+    · rw [hS_grade k hk, DirectSum.of_eq_of_ne _ _ _ hk]
+  rw [hD_single, hS_single, DirectSum.of_mul_of] at hds
+  have hcast : (12 : ℤ) + ↑(n - 12) = ↑n := by omega
+  have hds2 : GradedMonoid.GMul.mul (D 12) (S (↑(n-12))) = 0 := by
+    have h := hds
+    rw [DirectSum.of_apply, dif_pos hcast] at h
+    have : ∀ {k₁ k₂ : ℤ} (h : k₁ = k₂) (f : ModularForm Γ(1) k₁),
+      h ▸ f = (0 : ModularForm Γ(1) k₂) → f = 0 := by
+      intros k₁ k₂ heq f hf; cases heq; exact hf
+    exact this hcast _ h
+  have hD12 : D 12 = ModForm_mk Γ(1) 12 Delta := by
+    change (evalE₄E₆ Delta_poly) 12 = _
+    have hev : evalE₄E₆ Delta_poly =
+        DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 12 (ModForm_mk Γ(1) 12 Delta) := by
+      rw [evalE₄E₆_Delta_poly]; ext i; by_cases hi : i = 12
+      · subst hi; simp only [DirectSum.smul_apply, DirectSum.sub_apply, DirectSum.of_eq_same]
+        rw [show ModForm_mk Γ(1) 12 Delta = ModForm_mk Γ(1) 12 Delta_E4_E6_aux from by
+          rw [Delta_E4_eqn], Delta_E4_E6_eq]; simp only [DirectSum.sub_apply]
+      · simp only [DirectSum.smul_apply, DirectSum.sub_apply, DirectSum.of_eq_of_ne _ _ _ hi]
+        have he4 : ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 4 E₄) ^ 3) i = 0 := by
+          rw [pow_three, DirectSum.of_mul_of, DirectSum.of_mul_of]
+          exact DirectSum.of_eq_of_ne _ _ _ (by omega)
+        have he6 : ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 6 E₆) ^ 2) i = 0 := by
+          rw [pow_two, DirectSum.of_mul_of]; exact DirectSum.of_eq_of_ne _ _ _ (by omega)
+        rw [he4, he6, sub_self, smul_zero]
+    rw [hev, DirectSum.of_eq_same]
+  ext z; simp only [ModularForm.zero_apply]
+  have hpw := congr_fun (congr_arg (fun (f : ModularForm Γ(1) _) => f.toFun) hds2) z
+  simp only [SlashInvariantForm.toFun_eq_coe, ModularForm.toSlashInvariantForm_coe,
+    ModularForm.zero_apply] at hpw
+  change (D 12) z * (S (↑(n-12))) z = 0 at hpw
+  have hDnz : (D 12) z ≠ 0 := by rw [hD12]; exact Δ_ne_zero z
+  exact (mul_eq_zero.mp hpw).resolve_left hDnz
 
 -- The main factoring: p WH of degree n ≥ 12, eval = 0, gives divisibility by Delta_poly
 private lemma div_Delta_poly {n : ℕ} (hn12 : 12 ≤ n)
