@@ -750,7 +750,149 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
     -- The coeff of d in p' is 0 (removed), and coeff of d' = (d0-3, d1+2) increases by c.
     -- Net effect on Σ d0: remove d0, add at most (d0-3). Sum decreases by ≥ 3.
     have hM_lt : ∑ d' ∈ p'.support, d' 0 < ∑ d' ∈ p.support, d' 0 := by
-      sorry
+      -- Define the new monomial exponent d' = (d0-3, d1+2)
+      set d' := Finsupp.single (0 : Fin 2) (d 0 - 3) + Finsupp.single (1 : Fin 2) (d 1 + 2)
+        with hd'_def
+      have hd_fin : d = Finsupp.single (0 : Fin 2) (d 0) +
+          Finsupp.single (1 : Fin 2) (d 1) := by
+        ext i; fin_cases i <;> simp [Finsupp.add_apply]
+      have hdd' : d ≠ d' := by
+        intro heq; have h0 := Finsupp.ext_iff.mp heq (0 : Fin 2)
+        simp [hd'_def, Finsupp.add_apply] at h0; omega
+      -- Step 1: Rewrite delta_piece as monomial d c - monomial d' c
+      have hdp_mono : delta_piece =
+          (MvPolynomial.monomial d) c - (MvPolynomial.monomial d') c := by
+        -- First simplify 1728 • Delta_poly
+        have h1728 : (1728 : ℂ) • Delta_poly =
+          MvPolynomial.X (0 : Fin 2) ^ 3 - MvPolynomial.X (1 : Fin 2) ^ 2 := by
+          simp only [Delta_poly, smul_smul]; norm_num
+        -- Expand delta_piece
+        have hdp_simp : delta_piece = MvPolynomial.C c *
+          (MvPolynomial.X (0 : Fin 2) ^ 3 - MvPolynomial.X (1 : Fin 2) ^ 2) *
+          (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
+            MvPolynomial.X (1 : Fin 2) ^ (d 1)) := by
+          show MvPolynomial.C c * ((1728 : ℂ) • Delta_poly *
+            (MvPolynomial.X 0 ^ (d 0 - 3) * MvPolynomial.X 1 ^ (d 1))) = _
+          rw [h1728]; ring
+        rw [hdp_simp]
+        -- Compute (X₀³ - X₁²) * (X₀^(d0-3) * X₁^d1)
+        --   = X₀^d0 * X₁^d1 - X₀^(d0-3) * X₁^(d1+2)
+        have h3 : (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) *
+          (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ d 1) =
+          MvPolynomial.X (0 : Fin 2) ^ d 0 * MvPolynomial.X (1 : Fin 2) ^ d 1 := by
+          have h := show (MvPolynomial.X (0 : Fin 2) : MvPolynomial (Fin 2) ℂ) ^ 3 *
+              (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ d 1)
+            = (MvPolynomial.X (0 : Fin 2) ^ 3 * MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3)) *
+                MvPolynomial.X (1 : Fin 2) ^ d 1 from by ring
+          rw [h, ← pow_add, show 3 + (d 0 - 3) = d 0 from by omega]
+        have h2 : (MvPolynomial.X (1 : Fin 2) ^ 2 : MvPolynomial (Fin 2) ℂ) *
+          (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ d 1) =
+          MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
+            MvPolynomial.X (1 : Fin 2) ^ (d 1 + 2) := by
+          have h := show (MvPolynomial.X (1 : Fin 2) : MvPolynomial (Fin 2) ℂ) ^ 2 *
+              (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ d 1)
+            = MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
+                (MvPolynomial.X (1 : Fin 2) ^ d 1 * MvPolynomial.X (1 : Fin 2) ^ 2) from by
+                  ring
+          rw [h, ← pow_add]
+        -- Now rewrite to monomial form
+        rw [show MvPolynomial.C c * (MvPolynomial.X (0 : Fin 2) ^ 3 -
+            MvPolynomial.X (1 : Fin 2) ^ 2) *
+            (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
+              MvPolynomial.X (1 : Fin 2) ^ d 1) =
+          MvPolynomial.C c * (MvPolynomial.X (0 : Fin 2) ^ 3 *
+            (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ d 1)) -
+          MvPolynomial.C c * (MvPolynomial.X (1 : Fin 2) ^ 2 *
+            (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
+              MvPolynomial.X (1 : Fin 2) ^ d 1)) from by ring,
+          h3, h2]
+        -- Now: C c * (X₀^d0 * X₁^d1) - C c * (X₀^(d0-3) * X₁^(d1+2))
+        --    = monomial d c - monomial d' c
+        congr 1
+        · rw [MvPolynomial.X_pow_eq_monomial, MvPolynomial.X_pow_eq_monomial,
+            MvPolynomial.monomial_mul, one_mul, MvPolynomial.C_mul_monomial, mul_one]
+          exact congrArg (· c) (congrArg MvPolynomial.monomial hd_fin.symm)
+        · rw [MvPolynomial.X_pow_eq_monomial, MvPolynomial.X_pow_eq_monomial,
+            MvPolynomial.monomial_mul, one_mul, MvPolynomial.C_mul_monomial, mul_one]
+      -- Step 2: coeff d p' = 0, so d ∉ p'.support
+      have hcoeff_d_p' : MvPolynomial.coeff d p' = 0 := by
+        rw [hp'_def, MvPolynomial.coeff_sub, hdp_mono, MvPolynomial.coeff_sub,
+          MvPolynomial.coeff_monomial, MvPolynomial.coeff_monomial,
+          if_pos rfl, if_neg hdd'.symm, sub_zero, sub_self]
+      have hd_not : d ∉ p'.support := MvPolynomial.notMem_support_iff.mpr hcoeff_d_p'
+      -- Step 3: delta_piece.support ⊆ {d, d'}
+      have hdp_supp : delta_piece.support ⊆ {d, d'} := by
+        rw [hdp_mono]
+        intro x hx
+        have hx_mem := MvPolynomial.support_sub (Fin 2)
+          ((MvPolynomial.monomial d) c) ((MvPolynomial.monomial d') c) hx
+        simp only [Finset.mem_union] at hx_mem
+        simp only [Finset.mem_insert, Finset.mem_singleton]
+        rcases hx_mem with hx1 | hx2
+        · left
+          rw [MvPolynomial.support_monomial] at hx1
+          split_ifs at hx1 with hc
+          · exact absurd hx1 (Finset.notMem_empty _)
+          · exact Finset.mem_singleton.mp hx1
+        · right
+          rw [MvPolynomial.support_monomial] at hx2
+          split_ifs at hx2 with hc
+          · exact absurd hx2 (Finset.notMem_empty _)
+          · exact Finset.mem_singleton.mp hx2
+      -- Step 4: p'.support ⊆ p.support ∪ {d'}
+      have hp'_supp : p'.support ⊆ p.support ∪ {d'} := by
+        intro x hx
+        have hx_union := MvPolynomial.support_sub (Fin 2) p delta_piece hx
+        simp only [Finset.mem_union, Finset.mem_singleton] at hx_union ⊢
+        rcases hx_union with h | h
+        · exact Or.inl h
+        · have := hdp_supp h
+          simp only [Finset.mem_insert, Finset.mem_singleton] at this
+          rcases this with rfl | rfl
+          · exact absurd hx hd_not
+          · exact Or.inr rfl
+      -- Step 5: Apply the sum inequality
+      have hd'0 : d' 0 = d 0 - 3 := by simp [hd'_def, Finsupp.add_apply]
+      by_cases hd'T : d' ∈ p.support
+      · -- d' already in p.support: p'.support ⊆ p.support, use erase
+        have hS : p'.support ⊆ p.support := by
+          intro x hx
+          rcases (Finset.mem_union.mp (hp'_supp hx)) with h | h
+          · exact h
+          · exact Finset.mem_singleton.mp h ▸ hd'T
+        calc ∑ x ∈ p'.support, x 0
+            ≤ ∑ x ∈ p.support.erase d, x 0 :=
+              Finset.sum_le_sum_of_subset (fun x hx =>
+                Finset.mem_erase.mpr ⟨fun h => hd_not (h ▸ hx), hS hx⟩)
+          _ < ∑ x ∈ p.support.erase d, x 0 + d 0 := by omega
+          _ = ∑ x ∈ p.support, x 0 := Finset.sum_erase_add p.support _ hd_mem
+      · -- d' ∉ p.support: use disjoint union
+        have hd'_not_erase : d' ∉ p.support.erase d :=
+          fun h => hd'T (Finset.mem_of_mem_erase h)
+        have hdisj : Disjoint (p.support.erase d) {d'} :=
+          Finset.disjoint_singleton_right.mpr hd'_not_erase
+        have hTd' : (p.support ∪ {d'}).erase d = p.support.erase d ∪ {d'} := by
+          ext x
+          simp only [Finset.mem_erase, Finset.mem_union, Finset.mem_singleton]
+          constructor
+          · rintro ⟨hne, hx | rfl⟩
+            · exact Or.inl ⟨hne, hx⟩
+            · exact Or.inr rfl
+          · rintro (⟨hne, hx⟩ | rfl)
+            · exact ⟨hne, Or.inl hx⟩
+            · exact ⟨hdd'.symm, Or.inr rfl⟩
+        have hST : p'.support ⊆ p.support.erase d ∪ {d'} := by
+          rw [← hTd']
+          intro x hx
+          exact Finset.mem_erase.mpr ⟨fun h => hd_not (h ▸ hx), hp'_supp hx⟩
+        calc ∑ x ∈ p'.support, x 0
+            ≤ ∑ x ∈ p.support.erase d ∪ {d'}, x 0 :=
+              Finset.sum_le_sum_of_subset hST
+          _ = ∑ x ∈ p.support.erase d, x 0 + ∑ x ∈ {d'}, x 0 :=
+              Finset.sum_union hdisj
+          _ = ∑ x ∈ p.support.erase d, x 0 + d' 0 := by simp
+          _ < ∑ x ∈ p.support.erase d, x 0 + d 0 := by omega
+          _ = ∑ x ∈ p.support, x 0 := Finset.sum_erase_add p.support _ hd_mem
     obtain ⟨r, s', hr_wh, hs'_wh, hp'_eq, hr_red⟩ :=
       ih (∑ d' ∈ p'.support, d' 0) (by omega) p' hp'_wh le_rfl
     refine ⟨r, s' + q₁, hr_wh, hs'_wh.add hq₁_wh, ?_, hr_red⟩
