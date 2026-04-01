@@ -3,6 +3,20 @@ module
 public import LeanModularForms.Modularforms.DimensionFormulas
 public import Mathlib.RingTheory.MvPolynomial.WeightedHomogeneous
 
+/-!
+# Generators of the graded ring of level 1 modular forms
+
+We prove that the graded ring `⨁ k, M_k(Γ(1))` of modular forms for `SL₂(ℤ)` is isomorphic
+to the weighted polynomial ring `ℂ[X₀, X₁]` with `X₀` of weight 4 (mapping to `E₄`) and
+`X₁` of weight 6 (mapping to `E₆`). The main results are:
+
+* `evalE₄E₆_surjective`: every modular form is a polynomial in `E₄` and `E₆`
+* `evalE₄E₆_injective`: `E₄` and `E₆` are algebraically independent
+* `modularFormsEquivMvPolynomial`: the algebra isomorphism
+  `ℂ[X₀, X₁] ≃ₐ[ℂ] ⨁ k, M_k(Γ(1))`
+* `E₄E₆_generate`: `Algebra.adjoin ℂ {E₄, E₆} = ⊤`
+-/
+
 @[expose] public section
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
@@ -16,7 +30,8 @@ noncomputable section
 /-- Weight function assigning weight 4 to E₄ (variable 0) and weight 6 to E₆ (variable 1). -/
 def E₄E₆Weight : Fin 2 → ℕ := ![4, 6]
 
-/-- Evaluation homomorphism sending `ℂ[X₀, X₁]` to the graded ring of level 1 modular forms via `X₀ ↦ E₄` and `X₁ ↦ E₆`. -/
+/-- Evaluation homomorphism sending `ℂ[X₀, X₁]` to the graded ring of level 1 modular forms
+via `X₀ ↦ E₄` and `X₁ ↦ E₆`. -/
 noncomputable def evalE₄E₆ :
     MvPolynomial (Fin 2) ℂ →ₐ[ℂ]
       DirectSum ℤ (fun k => ModularForm (CongruenceSubgroup.Gamma 1) k) :=
@@ -24,7 +39,8 @@ noncomputable def evalE₄E₆ :
     ![DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 4 E₄,
       DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 6 E₆]
 
-/-- The polynomial `Δ_poly = (1/1728)(X₀³ - X₁²)` in `ℂ[X₀, X₁]`, mapping to `Δ` under `evalE₄E₆`. -/
+/-- The polynomial `Δ_poly = (1/1728)(X₀³ - X₁²)` in `ℂ[X₀, X₁]`,
+mapping to `Δ` under `evalE₄E₆`. -/
 noncomputable def Delta_poly : MvPolynomial (Fin 2) ℂ :=
   (1 / 1728 : ℂ) • (MvPolynomial.X 0 ^ 3 - MvPolynomial.X 1 ^ 2)
 
@@ -101,7 +117,8 @@ lemma evalE₄E₆_Delta_poly :
     evalE₄E₆ Delta_poly =
       (1 / 1728 : ℂ) •
         ((DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 4 E₄) ^ 3 -
-         (DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 6 E₆) ^ 2) := by
+         (DirectSum.of (fun k : ℤ =>
+            ModularForm (CongruenceSubgroup.Gamma 1) k) 6 E₆) ^ 2) := by
   simp only [Delta_poly, map_smul, map_sub, map_pow, evalE₄E₆_X0, evalE₄E₆_X1]
 
 /-- The discriminant `Δ` lies in the range of `evalE₄E₆`. -/
@@ -143,7 +160,8 @@ private lemma mul_modform_ne_zero_of_coeff_one {k₁ k₂ : ℤ}
     simp only [Nat.cast_one] at this; rw [this]
     simp only [PowerSeries.coeff_mul, Finset.antidiagonal_zero, Finset.sum_singleton, hf, hg,
       mul_one]
-  have hcoe : (⇑(f.mul g) : ℍ → ℂ) = 0 := by rw [h]; ext z; simp only [zero_apply, Pi.zero_apply]
+  have hcoe : (⇑(f.mul g) : ℍ → ℂ) = 0 := by
+    rw [h]; ext z; simp only [zero_apply, Pi.zero_apply]
   rw [show qExpansion 1 (f.mul g) = qExpansion 1 (0 : ℍ → ℂ) from
     congr_arg (qExpansion 1) hcoe, qExpansion_zero] at hcoeff
   simp only [PowerSeries.coeff_zero_eq_constantCoeff, PowerSeries.constantCoeff_zero,
@@ -165,7 +183,8 @@ private lemma mul_Delta_map_eq_DirectSum_mul (n : ℕ) (_hn : 12 ≤ n)
 
 private lemma cuspform_eq_mul_Delta (n : ℕ) (_hn : 12 ≤ n) (g : ModularForm Γ(1) ↑n)
     (hg : IsCuspForm Γ(1) ↑n g) :
-    g = mul_Delta_map ↑n (CuspForms_iso_Modforms ↑n (IsCuspForm_to_CuspForm Γ(1) ↑n g hg)) := by
+    g = mul_Delta_map ↑n
+      (CuspForms_iso_Modforms ↑n (IsCuspForm_to_CuspForm Γ(1) ↑n g hg)) := by
   set g_cusp := IsCuspForm_to_CuspForm Γ(1) ↑n g hg
   set h := CuspForms_iso_Modforms ↑n g_cusp
   ext z
@@ -272,7 +291,8 @@ private lemma surj_of_weight : ∀ (k : ℤ) (f : ModularForm Γ(1) k),
               (weight_eight_one_dimensional 10 (by norm_num) ⟨5, rfl⟩ (by norm_num))
               (mul_modform_ne_zero_of_coeff_one E₄ E₆ E4_q_exp_zero E6_q_exp_zero) f
           exact ⟨MvPolynomial.C c * (MvPolynomial.X 0 * MvPolynomial.X 1), by
-            rw [map_mul, map_mul, evalE₄E₆_C, evalE₄E₆_X0, evalE₄E₆_X1, DirectSum.of_mul_of,
+            rw [map_mul, map_mul, evalE₄E₆_C, evalE₄E₆_X0, evalE₄E₆_X1,
+              DirectSum.of_mul_of,
               Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul, ← DirectSum.of_smul]
             norm_cast⟩
         · exfalso; obtain ⟨m, hm⟩ := hk_odd; omega
@@ -324,7 +344,8 @@ private lemma surj_of_weight : ∀ (k : ℤ) (f : ModularForm Γ(1) k),
         have hmn_eq : DirectSum.of _ (↑n : ℤ) mn = mo := by
           simp only [mn, mo]
           rw [DirectSum.ofPow, DirectSum.ofPow, DirectSum.of_mul_of]
-          have hk' : a • (4 : ℤ) + b • (6 : ℤ) = ↑n := by simp only [Int.nsmul_eq_mul]; linarith
+          have hk' : a • (4 : ℤ) + b • (6 : ℤ) = ↑n := by
+            simp only [Int.nsmul_eq_mul]; linarith
           rw [show (↑n : ℤ) = a • (4 : ℤ) + b • (6 : ℤ) from hk'.symm,
             DirectSum.of_eq_same]
         have hf_eq : f = g + c • mn := by simp only [g, sub_add_cancel]
@@ -338,7 +359,8 @@ private lemma surj_of_weight : ∀ (k : ℤ) (f : ModularForm Γ(1) k),
           rw [map_add, hp1, map_mul, evalE₄E₆_C, hp2,
             Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul]⟩
 
-/-- The evaluation homomorphism `evalE₄E₆ : ℂ[X₀, X₁] →ₐ[ℂ] ⨁_k M_k(Γ(1))` is surjective. -/
+/-- The evaluation homomorphism `evalE₄E₆ : ℂ[X₀, X₁] →ₐ[ℂ] ⨁_k M_k(Γ(1))`
+is surjective. -/
 theorem evalE₄E₆_surjective : Function.Surjective evalE₄E₆ := by
   classical
   intro x
@@ -365,7 +387,8 @@ which show that the evaluation map between the weight-k polynomial subspace
 and `M_k(Γ(1))` is a surjection between finite-dimensional spaces of equal
 dimension, hence is also injective. -/
 
-private lemma evalE₄E₆_mono_grade (a b : ℕ) (k : ℤ) (hk : k ≠ (↑a * 4 + ↑b * 6 : ℤ)) :
+private lemma evalE₄E₆_mono_grade (a b : ℕ) (k : ℤ)
+    (hk : k ≠ (↑a * 4 + ↑b * 6 : ℤ)) :
     (evalE₄E₆ (MvPolynomial.X 0 ^ a * MvPolynomial.X 1 ^ b)) k = 0 := by
   rw [map_mul, map_pow, map_pow, evalE₄E₆_X0, evalE₄E₆_X1,
     DirectSum.ofPow, DirectSum.ofPow, DirectSum.of_mul_of]
@@ -510,10 +533,12 @@ private lemma Delta_poly_isWeightedHomogeneous :
   simp only [MvPolynomial.smul_eq_C_mul]
   intro d hd
   simp only [MvPolynomial.coeff_C_mul, MvPolynomial.coeff_sub] at hd
-  by_cases hd3 : MvPolynomial.coeff d (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) ≠ 0
+  by_cases hd3 : MvPolynomial.coeff d
+      (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) ≠ 0
   · exact ((MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (0 : Fin 2)).pow 3) hd3
   · push_neg at hd3
-    by_cases hd6 : MvPolynomial.coeff d (MvPolynomial.X (1 : Fin 2) ^ 2 : MvPolynomial (Fin 2) ℂ) ≠ 0
+    by_cases hd6 : MvPolynomial.coeff d
+        (MvPolynomial.X (1 : Fin 2) ^ 2 : MvPolynomial (Fin 2) ℂ) ≠ 0
     · exact ((MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (1 : Fin 2)).pow 2) hd6
     · push_neg at hd6; simp only [hd3, hd6, sub_self, mul_zero, ne_eq, not_true] at hd
 
@@ -599,7 +624,8 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
       exact (MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆Weight n _).mp
         (Submodule.sub_mem _
           ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆Weight n p).mpr hp)
-          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆Weight n delta_piece).mpr hdp_wh))
+          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆Weight n
+            delta_piece).mpr hdp_wh))
     set q₁ := MvPolynomial.C (c * 1728) *
       (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ (d 1))
     have hdelta_eq : delta_piece = Delta_poly * q₁ := by
@@ -612,7 +638,11 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
         ext i; fin_cases i <;> simp [Finsupp.add_apply]
       have hdd' : d ≠ d' := by
         intro heq; have h0 := Finsupp.ext_iff.mp heq (0 : Fin 2)
-        simp [hd'_def, Finsupp.add_apply] at h0; omega
+        simp only [Fin.isValue, hd'_def, Finsupp.single_tsub,
+          Finsupp.single_add, Finsupp.add_apply, Finsupp.coe_tsub,
+          Pi.sub_apply, Finsupp.single_eq_same, ne_eq, zero_ne_one,
+          not_false_eq_true, Finsupp.single_eq_of_ne, add_zero] at h0
+        omega
       have hdp_mono : delta_piece =
           (MvPolynomial.monomial d) c - (MvPolynomial.monomial d') c := by
         have h1728 : (1728 : ℂ) • Delta_poly =
@@ -736,7 +766,8 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
       hr_red⟩
     rw [hp_eq, hdelta_eq, hp'_eq, mul_add]; ring
 
-private lemma unique_small_weight_soln {a₁ b₁ a₂ b₂ : ℕ} (ha₁ : a₁ < 3) (ha₂ : a₂ < 3)
+private lemma unique_small_weight_soln {a₁ b₁ a₂ b₂ : ℕ}
+    (ha₁ : a₁ < 3) (ha₂ : a₂ < 3)
     (h : a₁ * 4 + b₁ * 6 = a₂ * 4 + b₂ * 6) : a₁ = a₂ ∧ b₁ = b₂ := by
   exact ⟨by interval_cases a₁ <;> interval_cases a₂ <;> omega, by omega⟩
 
@@ -744,7 +775,8 @@ private lemma reduced_poly_is_scalar {n : ℕ} (_hn12 : 12 ≤ n)
     (r : MvPolynomial (Fin 2) ℂ)
     (hr : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight r n)
     (hr_red : ∀ d ∈ r.support, d 0 < 3) :
-    ∀ d₁ d₂ : Fin 2 →₀ ℕ, d₁ ∈ r.support → d₂ ∈ r.support → d₁ = d₂ := by
+    ∀ d₁ d₂ : Fin 2 →₀ ℕ,
+      d₁ ∈ r.support → d₂ ∈ r.support → d₁ = d₂ := by
   intro d₁ d₂ hd₁ hd₂
   have hw1 := hr (MvPolynomial.mem_support_iff.mp hd₁)
   have hw2 := hr (MvPolynomial.mem_support_iff.mp hd₂)
@@ -851,7 +883,8 @@ private lemma coeff_zero_of_eval_zero {n : ℕ} (hn12 : 12 ≤ n)
           MvPolynomial.X (1 : Fin 2) ^ d₀ 1) from mul_assoc _ _ _,
         map_mul, evalE₄E₆_C, Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul,
         map_mul, map_pow, map_pow, evalE₄E₆_X0, evalE₄E₆_X1]
-      rw [DirectSum.smul_apply, show (↑(c • mo (↑n : ℤ)) : ℍ → ℂ) = c • ↑(mo (↑n : ℤ)) from rfl,
+      rw [DirectSum.smul_apply,
+        show (↑(c • mo (↑n : ℤ)) : ℍ → ℂ) = c • ↑(mo (↑n : ℤ)) from rfl,
         qExpansion_smul (show (0 : ℝ) < 1 from by norm_num)
           (show (1 : ℝ) ∈ Γ(1).strictPeriods from by simp) c (mo (↑n : ℤ)),
         PowerSeries.coeff_smul, monomial_coeff_zero_eq_one n (d₀ 0) (d₀ 1) (by omega),
@@ -927,7 +960,8 @@ private lemma div_Delta_poly {n : ℕ} (hn12 : 12 ≤ n)
 
 private lemma per_weight_injective_inductive_step (n : ℕ)
     (ih : ∀ m < n, ∀ (p : MvPolynomial (Fin 2) ℂ),
-      MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p m → (evalE₄E₆ p) (↑m : ℤ) = 0 → p = 0)
+      MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p m →
+        (evalE₄E₆ p) (↑m : ℤ) = 0 → p = 0)
     (p : MvPolynomial (Fin 2) ℂ)
     (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n)
     (heval : (evalE₄E₆ p) (↑n : ℤ) = 0)
@@ -973,7 +1007,9 @@ private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ
         have h1ne : (1 : ModularForm Γ(1) 0) ≠ 0 := by
           intro h
           have := congr_fun (congr_arg (fun x => x.toFun) h) UpperHalfPlane.I
-          simp [ModularForm.one_coe_eq_one] at this
+          simp only [SlashInvariantForm.toFun_eq_coe,
+            toSlashInvariantForm_coe, one_coe_eq_one,
+            Pi.one_apply, zero_apply, one_ne_zero] at this
         rcases smul_eq_zero.mp heval with hc | h1z
         · rw [hc, map_zero]
         · exact absurd h1z h1ne
@@ -1038,7 +1074,8 @@ private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ
       · push_neg at hn12
         exact per_weight_injective_inductive_step n ih p hp heval hk_odd hn12
 
-/-- The evaluation homomorphism `evalE₄E₆` is injective (E₄ and E₆ are algebraically independent). -/
+/-- The evaluation homomorphism `evalE₄E₆` is injective
+(E₄ and E₆ are algebraically independent). -/
 theorem evalE₄E₆_injective : Function.Injective evalE₄E₆ := by
   intro p q hpq
   rw [← sub_eq_zero]
@@ -1053,7 +1090,8 @@ theorem evalE₄E₆_injective : Function.Injective evalE₄E₆ := by
 
 /-! ## Main isomorphism and corollaries -/
 
-/-- The graded ring of level 1 modular forms is isomorphic to the weighted polynomial ring in E₄ and E₆. -/
+/-- The graded ring of level 1 modular forms is isomorphic to the weighted polynomial ring
+in E₄ and E₆. -/
 noncomputable def modularFormsEquivMvPolynomial :
     MvPolynomial (Fin 2) ℂ ≃ₐ[ℂ]
       DirectSum ℤ (fun k => ModularForm (CongruenceSubgroup.Gamma 1) k) :=
@@ -1070,6 +1108,7 @@ theorem E₄E₆_generate :
       Set.range (![DirectSum.of _ 4 E₄, DirectSum.of _ 6 E₆] : Fin 2 → _)
     from (Matrix.range_cons_cons_empty _ _ _).symm,
     Algebra.adjoin_range_eq_range_aeval,
-    show MvPolynomial.aeval (![DirectSum.of _ 4 E₄, DirectSum.of _ 6 E₆] : Fin 2 → _) = evalE₄E₆
+    show MvPolynomial.aeval
+        (![DirectSum.of _ 4 E₄, DirectSum.of _ 6 E₆] : Fin 2 → _) = evalE₄E₆
     from rfl]
   exact (AlgHom.range_eq_top evalE₄E₆).mpr evalE₄E₆_surjective
