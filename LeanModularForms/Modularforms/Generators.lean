@@ -148,7 +148,7 @@ private lemma mul_modform_ne_zero_of_coeff_one {k₁ k₂ : ℤ}
   simp at hcoeff
 
 /-- `mul_Delta_map` equals the DirectSum product of h and Δ. -/
-private lemma mul_Delta_map_eq_DirectSum_mul (n : ℕ) (hn : 12 ≤ n)
+private lemma mul_Delta_map_eq_DirectSum_mul (n : ℕ) (_hn : 12 ≤ n)
     (h : ModularForm Γ(1) (↑n - 12)) :
     DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) ↑n (mul_Delta_map ↑n h) =
       DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) (↑n - 12) h *
@@ -389,9 +389,6 @@ which show that the evaluation map between the weight-k polynomial subspace
 and `M_k(Γ(1))` is a surjection between finite-dimensional spaces of equal
 dimension, hence is also injective. -/
 
-/-- Weight function for the graded decomposition of `ℂ[X₀, X₁]` matching `evalE₄E₆`. -/
-private def E₄E₆W : Fin 2 → ℕ := ![4, 6]
-
 /-- Every monomial `C c * X₀^a * X₁^b` maps to a DirectSum element supported at
 grade `a * 4 + b * 6`. -/
 private lemma evalE₄E₆_mono_grade (a b : ℕ) (k : ℤ) (hk : k ≠ (↑a * 4 + ↑b * 6 : ℤ)) :
@@ -423,21 +420,21 @@ private lemma evalE₄E₆_monomial_grade (d : Fin 2 →₀ ℕ) (c : ℂ) (k : 
   rw [map_mul, evalE₄E₆_C, Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul,
     DirectSum.smul_apply, evalE₄E₆_mono_grade (d 0) (d 1) k hk, smul_zero]
 
-/-- The `Finsupp.weight` of a multi-index `d : Fin 2 →₀ ℕ` with respect to `E₄E₆W = ![4, 6]`
+/-- The `Finsupp.weight` of a multi-index `d : Fin 2 →₀ ℕ` with respect to `E₄E₆Weight = ![4, 6]`
 equals `d 0 * 4 + d 1 * 6` when cast to `ℤ`. -/
 private lemma weight_fin2_cast (d : Fin 2 →₀ ℕ) :
-    (Finsupp.weight E₄E₆W d : ℤ) = ↑(d 0) * 4 + ↑(d 1) * 6 := by
-  have : Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
-    show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+    (Finsupp.weight E₄E₆Weight d : ℤ) = ↑(d 0) * 4 + ↑(d 1) * 6 := by
+  have : Finsupp.weight E₄E₆Weight d = d 0 * 4 + d 1 * 6 := by
+    show (Finsupp.linearCombination ℕ E₄E₆Weight).toAddMonoidHom d = d 0 * 4 + d 1 * 6
     simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
-    rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
-    simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+    rw [d.sum_fintype (fun i a => a • E₄E₆Weight i) (fun i => by simp)]
+    simp [Fin.sum_univ_two, E₄E₆Weight, mul_comm]
   rw [this]; push_cast; ring
 
-/-- The grading property: if `p` is `E₄E₆W`-weighted-homogeneous of weight `n`,
+/-- The grading property: if `p` is `E₄E₆Weight`-weighted-homogeneous of weight `n`,
 then `evalE₄E₆ p` is supported only at grade `n` in the direct sum. -/
 private lemma evalE₄E₆_whc_grade (n : ℕ) (p : MvPolynomial (Fin 2) ℂ)
-    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n) (k : ℤ) (hk : k ≠ ↑n) :
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n) (k : ℤ) (hk : k ≠ ↑n) :
     (evalE₄E₆ p) k = 0 := by
   rw [← MvPolynomial.support_sum_monomial_coeff p, map_sum, DFinsupp.finset_sum_apply]
   apply Finset.sum_eq_zero
@@ -450,16 +447,16 @@ private lemma evalE₄E₆_whc_grade (n : ℕ) (p : MvPolynomial (Fin 2) ℂ)
 /-- The grade-`n` component of `evalE₄E₆(p)` equals the grade-`n` component of
 `evalE₄E₆` applied to the weight-`n` homogeneous component of `p`. -/
 private lemma evalE₄E₆_component_eq (p : MvPolynomial (Fin 2) ℂ) (n : ℕ) :
-    (evalE₄E₆ (MvPolynomial.weightedHomogeneousComponent E₄E₆W n p)) (↑n : ℤ) =
+    (evalE₄E₆ (MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p)) (↑n : ℤ) =
     (evalE₄E₆ p) (↑n : ℤ) := by
   -- p = whc n p + (p - whc n p), so evalE₄E₆ p = evalE₄E₆ (whc n p) + evalE₄E₆ (p - whc n p)
   -- At grade n: (evalE₄E₆ p) n = (evalE₄E₆ (whc n p)) n + (evalE₄E₆ (p - whc n p)) n
   -- Need: (evalE₄E₆ (p - whc n p)) n = 0
-  have hdecomp : p = MvPolynomial.weightedHomogeneousComponent E₄E₆W n p +
-    (p - MvPolynomial.weightedHomogeneousComponent E₄E₆W n p) := by ring
+  have hdecomp : p = MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p +
+    (p - MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p) := by ring
   -- Show: (evalE₄E₆ (p - whc n p)) (↑n) = 0
   -- Every monomial in (p - whc n p) has weight ≠ n
-  set q := p - MvPolynomial.weightedHomogeneousComponent E₄E₆W n p
+  set q := p - MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p
   conv_rhs => rw [hdecomp, map_add, DFinsupp.add_apply]
   suffices h : (evalE₄E₆ q) (↑n : ℤ) = 0 by rw [h, add_zero]
   rw [← MvPolynomial.support_sum_monomial_coeff q, map_sum, DFinsupp.finset_sum_apply]
@@ -471,14 +468,14 @@ private lemma evalE₄E₆_component_eq (p : MvPolynomial (Fin 2) ℂ) (n : ℕ)
   have hcoeff := MvPolynomial.mem_support_iff.mp hd
   -- coeff d q = coeff d p - coeff d (whc n p)
   -- If weight(d) = n, then coeff d (whc n p) = coeff d p, so coeff d q = 0, contradiction.
-  have : Finsupp.weight E₄E₆W d = n := by
+  have : Finsupp.weight E₄E₆Weight d = n := by
     have h := weight_fin2_cast d
     omega
   exfalso; apply hcoeff
   simp only [q, MvPolynomial.coeff_sub]
   rw [MvPolynomial.coeff_weightedHomogeneousComponent, if_pos this, sub_self]
 
-/-- Per-weight injectivity: if `p` is `E₄E₆W`-weighted-homogeneous of weight `n`
+/-- Per-weight injectivity: if `p` is `E₄E₆Weight`-weighted-homogeneous of weight `n`
 and `evalE₄E₆(p)` vanishes at grade `n`, then `p = 0`.
 
 Equivalently, the monomials `{E₄^a · E₆^b : 4a + 6b = n}` are linearly independent
@@ -489,32 +486,32 @@ polynomials and `M_n(Γ(1))` satisfy the same dimension recurrence
 linear map between finite-dimensional spaces of equal dimension is injective. -/
 -- Auxiliary: no monomial d : Fin 2 →₀ ℕ with 4*(d 0) + 6*(d 1) = n for n odd
 private lemma no_wt_monomial_of_odd {n : ℕ} (hn : Odd n) (d : Fin 2 →₀ ℕ) :
-    Finsupp.weight E₄E₆W d ≠ n := by
+    Finsupp.weight E₄E₆Weight d ≠ n := by
   intro h
-  have : Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
-    show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+  have : Finsupp.weight E₄E₆Weight d = d 0 * 4 + d 1 * 6 := by
+    show (Finsupp.linearCombination ℕ E₄E₆Weight).toAddMonoidHom d = d 0 * 4 + d 1 * 6
     simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
-    rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
-    simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+    rw [d.sum_fintype (fun i a => a • E₄E₆Weight i) (fun i => by simp)]
+    simp [Fin.sum_univ_two, E₄E₆Weight, mul_comm]
   rw [this] at h
   have hev : Even n := ⟨d 0 * 2 + d 1 * 3, by omega⟩
   simp [Nat.even_iff, Nat.odd_iff] at hev hn; omega
 
 -- Auxiliary: no monomial d : Fin 2 →₀ ℕ with 4*(d 0) + 6*(d 1) = 2
 private lemma no_wt_monomial_of_two (d : Fin 2 →₀ ℕ) :
-    Finsupp.weight E₄E₆W d ≠ 2 := by
+    Finsupp.weight E₄E₆Weight d ≠ 2 := by
   intro h
-  have : Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
-    show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+  have : Finsupp.weight E₄E₆Weight d = d 0 * 4 + d 1 * 6 := by
+    show (Finsupp.linearCombination ℕ E₄E₆Weight).toAddMonoidHom d = d 0 * 4 + d 1 * 6
     simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
-    rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
-    simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+    rw [d.sum_fintype (fun i a => a • E₄E₆Weight i) (fun i => by simp)]
+    simp [Fin.sum_univ_two, E₄E₆Weight, mul_comm]
   rw [this] at h; omega
 
 -- Weighted-homogeneous polynomial with no valid monomials is zero
 private lemma whomog_eq_zero_of_no_monomials {n : ℕ} (p : MvPolynomial (Fin 2) ℂ)
-    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
-    (hno : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆W d ≠ n) : p = 0 := by
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n)
+    (hno : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆Weight d ≠ n) : p = 0 := by
   rw [← MvPolynomial.support_eq_empty]
   by_contra h
   obtain ⟨d, hd⟩ := Finset.nonempty_of_ne_empty h
@@ -522,11 +519,11 @@ private lemma whomog_eq_zero_of_no_monomials {n : ℕ} (p : MvPolynomial (Fin 2)
 
 -- Weight computation helper
 private lemma weight_eq_4a_6b (d : Fin 2 →₀ ℕ) :
-    Finsupp.weight E₄E₆W d = d 0 * 4 + d 1 * 6 := by
-  show (Finsupp.linearCombination ℕ E₄E₆W).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+    Finsupp.weight E₄E₆Weight d = d 0 * 4 + d 1 * 6 := by
+  show (Finsupp.linearCombination ℕ E₄E₆Weight).toAddMonoidHom d = d 0 * 4 + d 1 * 6
   simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
-  rw [d.sum_fintype (fun i a => a • E₄E₆W i) (fun i => by simp)]
-  simp [Fin.sum_univ_two, E₄E₆W, mul_comm]
+  rw [d.sum_fintype (fun i a => a • E₄E₆Weight i) (fun i => by simp)]
+  simp [Fin.sum_univ_two, E₄E₆Weight, mul_comm]
 
 -- Key lemma: for d : Fin 2 →₀ ℕ with d 0 = a and d 1 = b, the Finsupp
 private lemma finsupp_of_fin2 (a b : ℕ) :
@@ -536,25 +533,25 @@ private lemma finsupp_of_fin2 (a b : ℕ) :
 
 -- Helper: if all d in support have d = d₀ for a fixed d₀, then p = monomial d₀ (coeff d₀ p)
 private lemma whomog_unique_monomial {n : ℕ} (p : MvPolynomial (Fin 2) ℂ)
-    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
-    (d₀ : Fin 2 →₀ ℕ) (hd₀ : Finsupp.weight E₄E₆W d₀ = n)
-    (huniq : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆W d = n → d = d₀) :
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n)
+    (d₀ : Fin 2 →₀ ℕ) (hd₀ : Finsupp.weight E₄E₆Weight d₀ = n)
+    (huniq : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆Weight d = n → d = d₀) :
     p = MvPolynomial.monomial d₀ (MvPolynomial.coeff d₀ p) := by
   ext d
   by_cases hd : d = d₀
   · subst hd; simp
   · rw [MvPolynomial.coeff_monomial, if_neg (Ne.symm hd)]
-    have : Finsupp.weight E₄E₆W d ≠ n := fun h => hd (huniq d h)
+    have : Finsupp.weight E₄E₆Weight d ≠ n := fun h => hd (huniq d h)
     exact hp.coeff_eq_zero d this
 
 -- Helper: unique monomial case for injectivity. If the weight n has a unique monomial
 -- d₀, and the evaluated modular form E₄^(d₀ 0) * E₆^(d₀ 1) is nonzero, then
 -- evalE₄E₆(p) n = 0 implies p = 0.
 private lemma per_weight_injective_unique_monomial {n : ℕ} (p : MvPolynomial (Fin 2) ℂ)
-    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n)
     (heval : (evalE₄E₆ p) (↑n : ℤ) = 0)
-    (d₀ : Fin 2 →₀ ℕ) (hd₀ : Finsupp.weight E₄E₆W d₀ = n)
-    (huniq : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆W d = n → d = d₀)
+    (d₀ : Fin 2 →₀ ℕ) (hd₀ : Finsupp.weight E₄E₆Weight d₀ = n)
+    (huniq : ∀ d : Fin 2 →₀ ℕ, Finsupp.weight E₄E₆Weight d = n → d = d₀)
     (hmf_ne : ((DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 4 E₄) ^ (d₀ 0) *
       (DirectSum.of (fun k : ℤ => ModularForm Γ(1) k) 6 E₆) ^ (d₀ 1))
       (↑n : ℤ) ≠ 0) : p = 0 := by
@@ -582,17 +579,17 @@ private lemma X0_cubed_eq : (MvPolynomial.X (0 : Fin 2)) ^ 3 =
 
 -- Delta_poly is weighted-homogeneous of degree 12
 private lemma Delta_poly_isWeightedHomogeneous :
-    MvPolynomial.IsWeightedHomogeneous E₄E₆W Delta_poly 12 := by
+    MvPolynomial.IsWeightedHomogeneous E₄E₆Weight Delta_poly 12 := by
   unfold Delta_poly
   simp only [MvPolynomial.smul_eq_C_mul]
   intro d hd
   simp only [MvPolynomial.coeff_C_mul, MvPolynomial.coeff_sub] at hd
-  have h1 : MvPolynomial.IsWeightedHomogeneous E₄E₆W
+  have h1 : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight
       (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) 12 :=
-    show _ from (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (0 : Fin 2)).pow 3
-  have h2 : MvPolynomial.IsWeightedHomogeneous E₄E₆W
+    show _ from (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (0 : Fin 2)).pow 3
+  have h2 : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight
       (MvPolynomial.X (1 : Fin 2) ^ 2 : MvPolynomial (Fin 2) ℂ) 12 :=
-    show _ from (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (1 : Fin 2)).pow 2
+    show _ from (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (1 : Fin 2)).pow 2
   by_cases hd3 : MvPolynomial.coeff d (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) ≠ 0
   · exact h1 hd3
   · push_neg at hd3
@@ -648,12 +645,12 @@ private lemma monomial_reduction (a b : ℕ) (ha : 3 ≤ a) :
 
 -- Helper: weighted homogeneity for X₀^a * X₁^b when 4a+6b = n.
 private lemma X0_pow_mul_X1_pow_isWeightedHomogeneous (a b n : ℕ) (hab : a * 4 + b * 6 = n) :
-    MvPolynomial.IsWeightedHomogeneous E₄E₆W
+    MvPolynomial.IsWeightedHomogeneous E₄E₆Weight
       (MvPolynomial.X (0 : Fin 2) ^ a * MvPolynomial.X (1 : Fin 2) ^ b :
         MvPolynomial (Fin 2) ℂ) n := by
-  have h0 := (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (0 : Fin 2)).pow a
-  have h1 := (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆W (1 : Fin 2)).pow b
-  convert h0.mul h1 using 1; simp [E₄E₆W]; omega
+  have h0 := (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (0 : Fin 2)).pow a
+  have h1 := (MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (1 : Fin 2)).pow b
+  convert h0.mul h1 using 1; simp [E₄E₆Weight]; omega
 
 -- Sub-lemma: polynomial decomposition modulo Delta_poly.
 -- Every WH polynomial p of degree n can be written as r + Delta_poly * s where
@@ -662,10 +659,10 @@ private lemma X0_pow_mul_X1_pow_isWeightedHomogeneous (a b n : ℕ) (hab : a * 4
 -- Proof by strong induction on the sum of X₀-exponents in the support.
 private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
     (p : MvPolynomial (Fin 2) ℂ)
-    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n) :
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n) :
     ∃ r s : MvPolynomial (Fin 2) ℂ,
-      MvPolynomial.IsWeightedHomogeneous E₄E₆W r n ∧
-      MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12) ∧
+      MvPolynomial.IsWeightedHomogeneous E₄E₆Weight r n ∧
+      MvPolynomial.IsWeightedHomogeneous E₄E₆Weight s (n - 12) ∧
       p = r + Delta_poly * s ∧
       (∀ d ∈ r.support, d 0 < 3) := by
   -- Induction on the sum of X₀-exponents across the support.
@@ -673,11 +670,11 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
   -- Otherwise, reduce one monomial with X₀-exponent ≥ 3 using monomial_reduction,
   -- which strictly decreases the total X₀-exponent sum.
   suffices key : ∀ (M : ℕ) (p : MvPolynomial (Fin 2) ℂ),
-      MvPolynomial.IsWeightedHomogeneous E₄E₆W p n →
+      MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n →
       (∑ d ∈ p.support, d 0) ≤ M →
       ∃ r s : MvPolynomial (Fin 2) ℂ,
-        MvPolynomial.IsWeightedHomogeneous E₄E₆W r n ∧
-        MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12) ∧
+        MvPolynomial.IsWeightedHomogeneous E₄E₆Weight r n ∧
+        MvPolynomial.IsWeightedHomogeneous E₄E₆Weight s (n - 12) ∧
         p = r + Delta_poly * s ∧
         (∀ d ∈ r.support, d 0 < 3) from
     key _ p hp le_rfl
@@ -688,7 +685,7 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
   -- Check if all monomials already have X₀-exponent < 3
   by_cases hall : ∀ d ∈ p.support, d 0 < 3
   · -- Base case: p is already reduced
-    exact ⟨p, 0, hp, (MvPolynomial.isWeightedHomogeneous_zero ℂ E₄E₆W (n - 12)),
+    exact ⟨p, 0, hp, (MvPolynomial.isWeightedHomogeneous_zero ℂ E₄E₆Weight (n - 12)),
       by simp, hall⟩
   · -- Inductive case: find a monomial with X₀-exponent ≥ 3 and reduce it
     push_neg at hall
@@ -710,10 +707,10 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
     -- C c * X₀^(d 0) * X₁^(d 1) = C c * X₀^(d 0-3) * X₁^(d 1+2) + delta_piece
     -- So the net effect on p' is: coeff at d becomes 0, coeff at d' increases by c.
     -- p' is WH of degree n (p minus a WH poly of degree n)
-    have hp'_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆W p' n := by
+    have hp'_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p' n := by
       rw [hp'_def]
-      have hdp_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆W delta_piece n := by
-        show MvPolynomial.IsWeightedHomogeneous E₄E₆W
+      have hdp_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight delta_piece n := by
+        show MvPolynomial.IsWeightedHomogeneous E₄E₆Weight
           (MvPolynomial.C c * ((1728 : ℂ) • Delta_poly *
             (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) *
               MvPolynomial.X (1 : Fin 2) ^ (d 1)))) n
@@ -729,17 +726,17 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
         have hn12' := X0_pow_mul_X1_pow_isWeightedHomogeneous (d 0 - 3) (d 1) (n - 12)
           (by omega)
         convert h12.mul hn12' using 1; omega
-      exact (MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆W n _).mp
+      exact (MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆Weight n _).mp
         (Submodule.sub_mem _
-          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆W n p).mpr hp)
-          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆W n delta_piece).mpr hdp_wh))
+          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆Weight n p).mpr hp)
+          ((MvPolynomial.mem_weightedHomogeneousSubmodule ℂ E₄E₆Weight n delta_piece).mpr hdp_wh))
     -- delta_piece = Delta_poly * q₁
     set q₁ := MvPolynomial.C (c * 1728) *
       (MvPolynomial.X (0 : Fin 2) ^ (d 0 - 3) * MvPolynomial.X (1 : Fin 2) ^ (d 1))
     have hdelta_eq : delta_piece = Delta_poly * q₁ := by
       simp only [delta_piece, q₁, MvPolynomial.smul_eq_C_mul, map_mul]; ring
     -- q₁ is WH of degree n - 12
-    have hq₁_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆W q₁ (n - 12) :=
+    have hq₁_wh : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight q₁ (n - 12) :=
       MvPolynomial.IsWeightedHomogeneous.C_mul
         (X0_pow_mul_X1_pow_isWeightedHomogeneous (d 0 - 3) (d 1) (n - 12) (by omega)) _
     -- Key: the sum of X₀-exponents for p' is strictly less than for p
@@ -909,7 +906,7 @@ private lemma unique_small_weight_soln {a₁ b₁ a₂ b₂ : ℕ}
 -- Sub-lemma: for WH of degree n with all X₀-exponents < 3, the support has at most one element.
 private lemma reduced_poly_is_scalar {n : ℕ} (_hn12 : 12 ≤ n)
     (r : MvPolynomial (Fin 2) ℂ)
-    (hr : MvPolynomial.IsWeightedHomogeneous E₄E₆W r n)
+    (hr : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight r n)
     (hr_red : ∀ d ∈ r.support, d 0 < 3) :
     ∀ d₁ d₂ : Fin 2 →₀ ℕ, d₁ ∈ r.support → d₂ ∈ r.support → d₁ = d₂ := by
   intro d₁ d₂ hd₁ hd₂
@@ -928,7 +925,7 @@ private lemma reduced_poly_is_scalar {n : ℕ} (_hn12 : 12 ≤ n)
 -- grade-12 component is Delta (a cusp form with q-coeff 0 = 0).
 private lemma evalE₄E₆_Delta_mul_coeff_zero {n : ℕ} (hn12 : 12 ≤ n)
     (s : MvPolynomial (Fin 2) ℂ)
-    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12)) :
+    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight s (n - 12)) :
     (qExpansion 1 ↑((evalE₄E₆ (Delta_poly * s)) (↑n : ℤ))).coeff 0 = 0 := by
   rw [map_mul]
   have hD_grade := evalE₄E₆_whc_grade 12 Delta_poly Delta_poly_isWeightedHomogeneous
@@ -990,8 +987,8 @@ private lemma evalE₄E₆_Delta_mul_coeff_zero {n : ℕ} (hn12 : 12 ≤ n)
 -- then r = 0. The argument uses q-expansion coefficient 0.
 private lemma coeff_zero_of_eval_zero {n : ℕ} (hn12 : 12 ≤ n)
     (r s : MvPolynomial (Fin 2) ℂ)
-    (hr : MvPolynomial.IsWeightedHomogeneous E₄E₆W r n)
-    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12))
+    (hr : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight r n)
+    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight s (n - 12))
     (hr_red : ∀ d ∈ r.support, d 0 < 3)
     (heval : (evalE₄E₆ (r + Delta_poly * s)) (↑n : ℤ) = 0) :
     r = 0 := by
@@ -1095,7 +1092,7 @@ private lemma coeff_zero_of_eval_zero {n : ℕ} (hn12 : 12 ≤ n)
 -- then evalE₄E₆(s)(n-12) = 0 (using Δ ≠ 0).
 private lemma eval_Delta_mul_zero_imp {n : ℕ} (hn12 : 12 ≤ n)
     (s : MvPolynomial (Fin 2) ℂ)
-    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆W s (n - 12))
+    (hs : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight s (n - 12))
     (hds : (evalE₄E₆ (Delta_poly * s)) (↑n : ℤ) = 0) :
     (evalE₄E₆ s) (↑(n - 12) : ℤ) = 0 := by
   rw [map_mul] at hds
@@ -1147,10 +1144,10 @@ private lemma eval_Delta_mul_zero_imp {n : ℕ} (hn12 : 12 ≤ n)
 -- The main factoring: p WH of degree n ≥ 12, eval = 0, gives divisibility by Delta_poly
 private lemma div_Delta_poly {n : ℕ} (hn12 : 12 ≤ n)
     (p : MvPolynomial (Fin 2) ℂ)
-    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n)
     (heval : (evalE₄E₆ p) (↑n : ℤ) = 0) :
     ∃ q : MvPolynomial (Fin 2) ℂ,
-      MvPolynomial.IsWeightedHomogeneous E₄E₆W q (n - 12) ∧
+      MvPolynomial.IsWeightedHomogeneous E₄E₆Weight q (n - 12) ∧
       p = Delta_poly * q ∧
       (evalE₄E₆ q) (↑(n - 12) : ℤ) = 0 := by
   -- Step 1: Decompose p = r + Delta_poly * s where r has small X₀-exponents
@@ -1168,11 +1165,11 @@ private lemma div_Delta_poly {n : ℕ} (hn12 : 12 ≤ n)
 -- assuming the result for all smaller weights.
 private lemma per_weight_injective_inductive_step (n : ℕ)
     (ih : ∀ m < n, ∀ (p : MvPolynomial (Fin 2) ℂ),
-      MvPolynomial.IsWeightedHomogeneous E₄E₆W p m → (evalE₄E₆ p) (↑m : ℤ) = 0 → p = 0)
+      MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p m → (evalE₄E₆ p) (↑m : ℤ) = 0 → p = 0)
     (p : MvPolynomial (Fin 2) ℂ)
-    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆W p n)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n)
     (heval : (evalE₄E₆ p) (↑n : ℤ) = 0)
-    (hk_odd : Even n) (hn12 : 12 ≤ n) : p = 0 := by
+    (_hk_odd : Even n) (hn12 : 12 ≤ n) : p = 0 := by
   -- Factor p = Delta_poly * q with q WH of degree n-12 and eval(q)(n-12) = 0
   obtain ⟨q, hq_wh, hpq, hq_eval⟩ := div_Delta_poly hn12 p hp heval
   -- By induction, q = 0
@@ -1181,7 +1178,7 @@ private lemma per_weight_injective_inductive_step (n : ℕ)
   rw [hpq, hq_zero, mul_zero]
 
 private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ),
-    MvPolynomial.IsWeightedHomogeneous E₄E₆W p n →
+    MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n →
     (evalE₄E₆ p) (↑n : ℤ) = 0 → p = 0 := by
   intro n
   induction n using Nat.strong_induction_on with
@@ -1204,7 +1201,7 @@ private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ
           by_cases hd' : 0 = d'
           · simp [hd']
           · rw [if_neg hd']
-            have : Finsupp.weight E₄E₆W d' ≠ 0 := by
+            have : Finsupp.weight E₄E₆Weight d' ≠ 0 := by
               intro hw; apply hd'
               have h46' := weight_eq_4a_6b d'
               rw [hw] at h46'
@@ -1331,7 +1328,7 @@ theorem evalE₄E₆_injective : Function.Injective evalE₄E₆ := by
   set r := p - q with hr_def
   have hr : evalE₄E₆ r = 0 := by rw [map_sub, sub_eq_zero]; exact hpq
   -- Decompose r into weighted-homogeneous components
-  rw [← MvPolynomial.sum_weightedHomogeneousComponent E₄E₆W r]
+  rw [← MvPolynomial.sum_weightedHomogeneousComponent E₄E₆Weight r]
   apply finsum_eq_zero_of_forall_eq_zero
   intro n
   exact per_weight_injective n _
