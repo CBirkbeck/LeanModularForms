@@ -25,14 +25,26 @@ open scoped Real Interval
 
 noncomputable section
 
+-- Needed in mathlib v4.29 where these instances are no longer synthesized automatically
+attribute [local instance] IsScalarTower.complexToReal
+
+private instance instNormSMulClassRealComplex : NormSMulClass ℝ ℂ :=
+  NormedSpace.toNormSMulClass
+
+private instance instIsBoundedSMulRealComplex : IsBoundedSMul ℝ ℂ :=
+  NormSMulClass.toIsBoundedSMul
+
+private instance instContinuousSMulRealComplex : ContinuousSMul ℝ ℂ :=
+  IsBoundedSMul.continuousSMul
+
 private lemma segment_subset_convex {S : Set ℂ} (hS : Convex ℝ S)
     {c z : ℂ} (hc : c ∈ S) (hz : z ∈ S) :
     ∀ t ∈ Icc (0 : ℝ) 1, c + t • (z - c) ∈ S := by
   intro t ht
   have heq : c + t • (z - c) = (1 - t) • c + t • z := by
-    simp only [smul_sub, sub_smul, one_smul]; ring
+    module
   rw [heq]
-  exact hS hc hz (by linarith [ht.2]) ht.1 (by ring)
+  exact hS hc hz (by linarith [ht.2]) ht.1 (by linarith [ht.1])
 
 private lemma segmentIntegrand_continuousOn {f : ℂ → ℂ} {S : Set ℂ}
     {c z : ℂ} (hf : ContinuousOn f S)
@@ -118,7 +130,7 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
   simp only [ofReal_one, ofReal_zero, one_mul, zero_mul,
     sub_zero] at h_parts
   have hv1 : f (c + (1 : ℝ) • (z - c)) = f z := by
-    simp only [one_smul]; ring_nf
+    simp [one_smul]
   rw [hv1] at h_parts
   exact h_parts
 
@@ -208,7 +220,7 @@ private lemma segmentIntegrand_lipschitzOnWith {f : ℂ → ℂ}
     segment_subset_convex hS_convex hc (hε_ball hy) t ht
   have h_diff :
       (c + t • (x - c)) - (c + t • (y - c)) = t • (x - y) := by
-    simp only [smul_sub, sub_add_eq_sub_sub]; ring
+    module
   have hconv_seg : Convex ℝ
       (segment ℝ (c + t • (x - c)) (c + t • (y - c))) :=
     convex_segment _ _
@@ -235,7 +247,7 @@ private lemma segmentIntegrand_lipschitzOnWith {f : ℂ → ℂ}
       have hp_form :
           p = c + t • ((x + s • (y - x)) - c) := by
         rw [← hp_eq]; simp only [smul_sub, smul_add]
-        simp only [smul_comm s t]; ring
+        simp only [smul_comm s t]; module
       rw [hp_form]; exact hM_bound _ hw'
     exact Convex.norm_image_sub_le_of_norm_deriv_le
       h_diff_at h_deriv_bound hconv_seg
@@ -378,7 +390,7 @@ private lemma hasDerivAt_segmentIntegral {f : ℂ → ℂ}
       H w * (w - c) := by
     intro w
     simp only [H]
-    rw [← intervalIntegral.integral_mul_const]
+    exact intervalIntegral.integral_mul_const (𝕜 := ℂ) _ _
   suffices HasDerivAt (fun w => H w * (w - c)) (f z) z by
     convert this using 1
     ext w; exact hF_eq w
@@ -391,7 +403,9 @@ private lemma hasDerivAt_segmentIntegral {f : ℂ → ℂ}
     simp only [H, H']
     have h_ibp :=
       integral_t_mul_deriv_eq hS_open hf h_seg_z
-    rw [← intervalIntegral.integral_mul_const]
+    rw [show (∫ (t : ℝ) in (0 : ℝ)..1, ↑t * deriv f (c + t • (z - c))) * (z - c) =
+      ∫ (t : ℝ) in (0 : ℝ)..1, ↑t * deriv f (c + t • (z - c)) * (z - c) from
+      (intervalIntegral.integral_mul_const (𝕜 := ℂ) _ _).symm]
     convert h_ibp using 2
     ext t; ring
   suffices hH : HasDerivAt H (H' z) z by

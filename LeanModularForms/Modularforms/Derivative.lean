@@ -78,15 +78,15 @@ theorem E₂_holo' : MDiff E₂ := by
   have hη : DifferentiableOn ℂ η {z : ℂ | 0 < z.im} := by
     intro z hz
     have hz' : DifferentiableAt ℂ η z := by
-      simpa [η] using (ModularForm.differentiableAt_eta_of_mem_upperHalfPlaneSet (z := z) hz)
+      simpa [ModularForm.eta] using (ModularForm.differentiableAt_eta_of_mem_upperHalfPlaneSet (z := z) hz)
     exact hz'.differentiableWithinAt
   have hlog : DifferentiableOn ℂ (logDeriv η) {z | 0 < z.im} :=
     (hη.deriv isOpen_upperHalfPlaneSet).div hη fun z hz => by
-      simpa [η] using (ModularForm.eta_ne_zero (z := z) hz)
+      simpa [ModularForm.eta] using (ModularForm.eta_ne_zero (z := z) hz)
   exact (hlog.const_mul ((↑π * I / 12)⁻¹)).congr fun z hz => by
     simp only [Function.comp_apply, ofComplex_apply_of_im_pos hz,
       show logDeriv η z = (↑π * I / 12) * E₂ ⟨z, hz⟩ by
-        simpa [η, E₂] using (ModularForm.logDeriv_eta_eq_E2 ⟨z, hz⟩)]
+        simpa [ModularForm.eta, E₂] using (ModularForm.logDeriv_eta_eq_E2 ⟨z, hz⟩)]
     field_simp [Real.pi_ne_zero]
 
 /--
