@@ -279,6 +279,59 @@ private lemma delta_piece_eq_monomial_sub
   · rw [MvPolynomial.X_pow_eq_monomial, MvPolynomial.X_pow_eq_monomial,
       MvPolynomial.monomial_mul, one_mul, MvPolynomial.C_mul_monomial, mul_one]
 
+private lemma Finset.sum_lt_sum_of_replace {α : Type*} [DecidableEq α]
+    (S S' : Finset α) (f : α → ℕ) (d d' : α)
+    (hd_mem : d ∈ S) (hd_not : d ∉ S')
+    (hS' : S' ⊆ S.erase d ∪ {d'})
+    (hlt : f d' < f d) :
+    ∑ x ∈ S', f x < ∑ x ∈ S, f x := by
+  by_cases hd'S : d' ∈ S
+  · calc ∑ x ∈ S', f x
+        ≤ ∑ x ∈ S.erase d, f x := Finset.sum_le_sum_of_subset (fun x hx =>
+          Finset.mem_erase.mpr ⟨fun h => hd_not (h ▸ hx),
+            match Finset.mem_union.mp (hS' hx) with
+            | .inl h => Finset.mem_of_mem_erase h
+            | .inr h => Finset.mem_singleton.mp h ▸ hd'S⟩)
+      _ < ∑ x ∈ S.erase d, f x + f d :=
+          Nat.lt_add_of_pos_right (Nat.pos_of_ne_zero (by omega))
+      _ = ∑ x ∈ S, f x := Finset.sum_erase_add S f hd_mem
+  · calc ∑ x ∈ S', f x
+        ≤ ∑ x ∈ S.erase d ∪ {d'}, f x := Finset.sum_le_sum_of_subset hS'
+      _ = ∑ x ∈ S.erase d, f x + f d' := by
+          rw [Finset.sum_union (Finset.disjoint_singleton_right.mpr
+            (fun h => hd'S (Finset.mem_of_mem_erase h))), Finset.sum_singleton]
+      _ < ∑ x ∈ S.erase d, f x + f d := Nat.add_lt_add_left hlt _
+      _ = ∑ x ∈ S, f x := Finset.sum_erase_add S f hd_mem
+
+open Classical in
+private lemma mvpoly_support_after_reduction {σ R : Type*} [CommRing R] [DecidableEq σ]
+    (p : MvPolynomial σ R) (d d' : σ →₀ ℕ) (c : R)
+    (hdd' : d ≠ d') (hc : MvPolynomial.coeff d p = c) :
+    let delta := MvPolynomial.monomial d c - MvPolynomial.monomial d' c
+    d ∉ (p - delta).support ∧ (p - delta).support ⊆ p.support.erase d ∪ {d'} := by
+  have hcoeff_d : MvPolynomial.coeff d
+      (p - (MvPolynomial.monomial d c - MvPolynomial.monomial d' c)) = 0 := by
+    rw [MvPolynomial.coeff_sub, MvPolynomial.coeff_sub,
+      MvPolynomial.coeff_monomial, MvPolynomial.coeff_monomial,
+      if_pos rfl, if_neg hdd'.symm, sub_zero, hc, sub_self]
+  have hd_not : d ∉ (p - (MvPolynomial.monomial d c -
+      MvPolynomial.monomial d' c)).support :=
+    MvPolynomial.notMem_support_iff.mpr hcoeff_d
+  refine ⟨hd_not, fun x hx => ?_⟩
+  rcases Finset.mem_union.mp (MvPolynomial.support_sub σ p _ hx) with hp | hdelta
+  · by_cases hxd : x = d
+    · exact absurd (hxd ▸ hx) hd_not
+    · exact Finset.mem_union_left _ (Finset.mem_erase.mpr ⟨hxd, hp⟩)
+  · rcases Finset.mem_union.mp (MvPolynomial.support_sub σ _ _ hdelta) with h1 | h2
+    · rw [MvPolynomial.support_monomial] at h1
+      split_ifs at h1
+      · exact absurd h1 (Finset.notMem_empty _)
+      · exact absurd ((Finset.mem_singleton.mp h1) ▸ hx) hd_not
+    · rw [MvPolynomial.support_monomial] at h2
+      split_ifs at h2
+      · exact absurd h2 (Finset.notMem_empty _)
+      · exact Finset.mem_union_right _ (by rwa [Finset.mem_singleton] at h2 ⊢)
+
 private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
     (p : MvPolynomial (Fin 2) ℂ)
     (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n) :
@@ -329,83 +382,15 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
         with hd'_def
       have hdd' : d ≠ d' := by
         intro heq; have h0 := Finsupp.ext_iff.mp heq (0 : Fin 2)
-        simp only [Fin.isValue, hd'_def, Finsupp.single_tsub,
-          Finsupp.single_add, Finsupp.add_apply, Finsupp.coe_tsub,
-          Pi.sub_apply, Finsupp.single_eq_same, ne_eq, zero_ne_one,
-          not_false_eq_true, Finsupp.single_eq_of_ne, add_zero] at h0
+        simp only [Fin.isValue, hd'_def, Finsupp.add_apply, Finsupp.single_eq_same,
+          ne_eq, zero_ne_one, not_false_eq_true, Finsupp.single_eq_of_ne, add_zero] at h0
         omega
       have hdp_mono : delta_piece =
           (MvPolynomial.monomial d) c - (MvPolynomial.monomial d') c :=
         delta_piece_eq_monomial_sub d hd_ge c d' hd'_def
-      have hcoeff_d_p' : MvPolynomial.coeff d p' = 0 := by
-        rw [hp'_def, MvPolynomial.coeff_sub, hdp_mono, MvPolynomial.coeff_sub,
-          MvPolynomial.coeff_monomial, MvPolynomial.coeff_monomial,
-          if_pos rfl, if_neg hdd'.symm, sub_zero, sub_self]
-      have hd_not : d ∉ p'.support := MvPolynomial.notMem_support_iff.mpr hcoeff_d_p'
-      have hdp_supp : delta_piece.support ⊆ {d, d'} := by
-        rw [hdp_mono]; intro x hx
-        simp only [Finset.mem_insert, Finset.mem_singleton]
-        rcases Finset.mem_union.mp (MvPolynomial.support_sub (Fin 2)
-          ((MvPolynomial.monomial d) c) ((MvPolynomial.monomial d') c) hx) with hx1 | hx2
-        · left
-          rw [MvPolynomial.support_monomial] at hx1
-          split_ifs at hx1 with hc
-          · exact absurd hx1 (Finset.notMem_empty _)
-          · exact Finset.mem_singleton.mp hx1
-        · right
-          rw [MvPolynomial.support_monomial] at hx2
-          split_ifs at hx2 with hc
-          · exact absurd hx2 (Finset.notMem_empty _)
-          · exact Finset.mem_singleton.mp hx2
-      have hp'_supp : p'.support ⊆ p.support ∪ {d'} := by
-        intro x hx
-        have hx_union := MvPolynomial.support_sub (Fin 2) p delta_piece hx
-        simp only [Finset.mem_union, Finset.mem_singleton] at hx_union ⊢
-        rcases hx_union with h | h
-        · exact Or.inl h
-        · have := hdp_supp h
-          simp only [Finset.mem_insert, Finset.mem_singleton] at this
-          rcases this with rfl | rfl
-          · exact absurd hx hd_not
-          · exact Or.inr rfl
-      have hd'0 : d' 0 = d 0 - 3 := by simp [hd'_def, Finsupp.add_apply]
-      by_cases hd'T : d' ∈ p.support
-      · have hS : p'.support ⊆ p.support := by
-          intro x hx
-          rcases (Finset.mem_union.mp (hp'_supp hx)) with h | h
-          · exact h
-          · exact Finset.mem_singleton.mp h ▸ hd'T
-        calc ∑ x ∈ p'.support, x 0
-            ≤ ∑ x ∈ p.support.erase d, x 0 :=
-              Finset.sum_le_sum_of_subset (fun x hx =>
-                Finset.mem_erase.mpr ⟨fun h => hd_not (h ▸ hx), hS hx⟩)
-          _ < ∑ x ∈ p.support.erase d, x 0 + d 0 := by omega
-          _ = ∑ x ∈ p.support, x 0 := Finset.sum_erase_add p.support _ hd_mem
-      · have hdisj : Disjoint (p.support.erase d) {d'} :=
-          Finset.disjoint_singleton_right.mpr (fun h => hd'T (Finset.mem_of_mem_erase h))
-        have hTd' : (p.support ∪ {d'}).erase d = p.support.erase d ∪ {d'} := by
-          ext x
-          simp only [Finset.mem_erase, Finset.mem_union, Finset.mem_singleton]
-          constructor
-          · rintro ⟨hne, hx | rfl⟩
-            · exact Or.inl ⟨hne, hx⟩
-            · exact Or.inr rfl
-          · rintro (⟨hne, hx⟩ | rfl)
-            · exact ⟨hne, Or.inl hx⟩
-            · exact ⟨hdd'.symm, Or.inr rfl⟩
-        have hST : p'.support ⊆ p.support.erase d ∪ {d'} := by
-          rw [← hTd']
-          intro x hx
-          exact Finset.mem_erase.mpr ⟨fun h => hd_not (h ▸ hx), hp'_supp hx⟩
-        calc ∑ x ∈ p'.support, x 0
-            ≤ ∑ x ∈ p.support.erase d ∪ {d'}, x 0 :=
-              Finset.sum_le_sum_of_subset hST
-          _ = ∑ x ∈ p.support.erase d, x 0 + ∑ x ∈ {d'}, x 0 :=
-              Finset.sum_union hdisj
-          _ = ∑ x ∈ p.support.erase d, x 0 + d' 0 := by
-              simp only [Finset.sum_singleton]
-          _ < ∑ x ∈ p.support.erase d, x 0 + d 0 := by omega
-          _ = ∑ x ∈ p.support, x 0 := Finset.sum_erase_add p.support _ hd_mem
+      obtain ⟨hd_not, hsupp⟩ := hdp_mono ▸ mvpoly_support_after_reduction p d d' c hdd' rfl
+      exact Finset.sum_lt_sum_of_replace p.support p'.support
+        (· 0) d d' hd_mem hd_not hsupp (by simp [hd'_def, Finsupp.add_apply]; omega)
     obtain ⟨r, s', hr_wh, hs'_wh, hp'_eq, hr_red⟩ :=
       ih (∑ d' ∈ p'.support, d' 0) (by omega) p' hp'_wh le_rfl
     refine ⟨r, s' + q₁, hr_wh, hs'_wh.add (.C_mul
