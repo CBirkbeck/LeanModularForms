@@ -139,3 +139,85 @@ lemma delta_mem_range_evalE₄E₆ :
       rw [pow_two, DirectSum.of_mul_of]
       exact DirectSum.of_eq_of_ne _ _ _ (by omega)
     rw [he4, he6, sub_self, smul_zero]
+
+/-! ## Additional API lemmas -/
+
+/-- `evalE₄E₆` maps the monomial `X₀^a * X₁^b` to `(of _ 4 E₄)^a * (of _ 6 E₆)^b`. -/
+lemma evalE₄E₆_monomial (a b : ℕ) :
+    evalE₄E₆ (MvPolynomial.X 0 ^ a * MvPolynomial.X 1 ^ b) =
+      (DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 4 E₄) ^ a *
+      (DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) 6 E₆) ^ b := by
+  rw [map_mul, map_pow, map_pow, evalE₄E₆_X0, evalE₄E₆_X1]
+
+/-- The weight-12 component of `evalE₄E₆ Delta_poly` is the discriminant `Δ`. -/
+lemma evalE₄E₆_Delta_poly_grade :
+    (evalE₄E₆ Delta_poly) (12 : ℤ) = ModForm_mk (CongruenceSubgroup.Gamma 1) 12 Delta := by
+  rw [evalE₄E₆_Delta_poly]
+  simp only [DirectSum.smul_apply, DirectSum.sub_apply]
+  rw [show ModForm_mk Γ(1) 12 Delta = ModForm_mk Γ(1) 12 Delta_E4_E6_aux from by
+    rw [Delta_E4_eqn], Delta_E4_E6_eq]
+  simp only [DirectSum.sub_apply]
+
+/-- A weighted-homogeneous polynomial evaluates to a single-graded DirectSum element. -/
+lemma evalE₄E₆_whc_eq_single (n : ℕ) (p : MvPolynomial (Fin 2) ℂ)
+    (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n) :
+    evalE₄E₆ p = DirectSum.of _ (↑n : ℤ) ((evalE₄E₆ p) ↑n) := by
+  apply DFinsupp.ext; intro k
+  by_cases hk : k = (↑n : ℤ)
+  · subst hk; simp [DirectSum.of_eq_same]
+  · rw [DirectSum.of_eq_of_ne _ _ _ hk]
+    rw [← MvPolynomial.support_sum_monomial_coeff p, map_sum, DFinsupp.finset_sum_apply]
+    apply Finset.sum_eq_zero
+    intro d hd
+    have hweight := hp (MvPolynomial.mem_support_iff.mp hd)
+    have hd0 : MvPolynomial.monomial d (MvPolynomial.coeff d p) =
+        MvPolynomial.C (MvPolynomial.coeff d p) * MvPolynomial.X 0 ^ d 0 *
+          MvPolynomial.X 1 ^ d 1 := by
+      rw [MvPolynomial.monomial_eq, mul_assoc]; congr 1
+      rw [Finsupp.prod, Finset.prod_subset (fun _ _ => Finset.mem_univ _) (fun i _ hi => by
+        have : d i = 0 := by rwa [Finsupp.mem_support_iff, not_not] at hi
+        rw [this, pow_zero])]
+      simp only [Fin.prod_univ_two]
+    rw [hd0, show MvPolynomial.C (MvPolynomial.coeff d p) *
+        MvPolynomial.X (0 : Fin 2) ^ d 0 * MvPolynomial.X (1 : Fin 2) ^ d 1 =
+        MvPolynomial.C (MvPolynomial.coeff d p) *
+        (MvPolynomial.X (0 : Fin 2) ^ d 0 * MvPolynomial.X (1 : Fin 2) ^ d 1)
+        from mul_assoc _ _ _]
+    rw [map_mul, evalE₄E₆_C, Algebra.algebraMap_eq_smul_one, smul_mul_assoc, one_mul,
+      DirectSum.smul_apply, evalE₄E₆_monomial, DirectSum.ofPow, DirectSum.ofPow,
+      DirectSum.of_mul_of]
+    simp only [Int.nsmul_eq_mul]
+    rw [DirectSum.of_eq_of_ne _ _ _ (by
+      intro heq; apply hk; rw [heq]
+      have : Finsupp.weight E₄E₆Weight d = d 0 * 4 + d 1 * 6 := by
+        change (Finsupp.linearCombination ℕ E₄E₆Weight).toAddMonoidHom d = d 0 * 4 + d 1 * 6
+        simp only [LinearMap.toAddMonoidHom_coe, Finsupp.linearCombination_apply]
+        rw [d.sum_fintype (fun i a => a • E₄E₆Weight i) (fun i => by simp only [zero_smul])]
+        simp only [Fin.sum_univ_two, E₄E₆Weight, Matrix.cons_val_zero, Matrix.cons_val_one,
+          mul_comm, smul_eq_mul]
+      rw [this] at hweight; push_cast [← hweight]; ring), smul_zero]
+
+/-- Weight casting for DirectSum elements. -/
+lemma DirectSum_of_cast_eq {k₁ k₂ : ℤ} (hk : k₁ = k₂)
+    (x : ModularForm (CongruenceSubgroup.Gamma 1) k₁) :
+    DirectSum.of (fun k : ℤ => ModularForm (CongruenceSubgroup.Gamma 1) k) k₁ x =
+    DirectSum.of _ k₂ (hk ▸ x) := by
+  subst hk; rfl
+
+/-- The 0th q-expansion coefficient of `Δ` is 0 (Δ is a cusp form). -/
+lemma qExpansion_coeff_zero_Delta :
+    (qExpansion 1 (ModForm_mk (CongruenceSubgroup.Gamma 1) 12 Delta)).coeff 0 = 0 :=
+  (IsCuspForm_iff_coeffZero_eq_zero 12 _).mp ⟨Delta, rfl⟩
+
+/-- In a 1-dimensional weight space, if the generator is in the image of `evalE₄E₆`,
+then all elements are. -/
+lemma surj_of_rank_one {k : ℤ}
+    (hrank : Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) k) = 1)
+    {g : ModularForm (CongruenceSubgroup.Gamma 1) k} (hg : g ≠ 0)
+    (p : MvPolynomial (Fin 2) ℂ) (hp : evalE₄E₆ p = DirectSum.of _ k g)
+    (f : ModularForm (CongruenceSubgroup.Gamma 1) k) :
+    DirectSum.of _ k f ∈ Set.range evalE₄E₆ := by
+  obtain ⟨c, rfl⟩ := exists_smul_eq_of_rank_one hrank hg f
+  exact ⟨MvPolynomial.C c * p, by
+    rw [map_mul, evalE₄E₆_C, hp, Algebra.algebraMap_eq_smul_one,
+      smul_mul_assoc, one_mul, ← DirectSum.of_smul]⟩
