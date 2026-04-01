@@ -144,10 +144,15 @@ private lemma surj_inductive_step (n : ℕ) (hn12 : 12 ≤ n) (hk_even : Even n)
     set Q := qExpansionAddHom (by norm_num : (0 : ℝ) < 1) hsp (↑n)
     have hQ_smul : Q (c • mn) = c • Q mn :=
       qExpansion_smul (by norm_num : (0 : ℝ) < 1) hsp c mn
-    change (Q (f - c • mn)).coeff 0 = 0
-    rw [map_sub, hQ_smul, show Q f = qExpansion 1 f from rfl,
-      show Q mn = qExpansion 1 mn from rfl, map_sub, map_smul, smul_eq_mul, hmn_coeff,
-      mul_one, sub_self]
+    have hQf : Q f = qExpansion 1 f := rfl
+    have hQmn : Q mn = qExpansion 1 mn := rfl
+    have : (Q (f - c • mn)).coeff 0 =
+        (qExpansion 1 (f : ℍ → ℂ)).coeff 0 - c * (qExpansion 1 (mn : ℍ → ℂ)).coeff 0 := by
+      rw [show Q (f - c • mn) = Q f - Q (c • mn) from map_sub Q f (c • mn),
+        hQ_smul, hQf, hQmn]
+      simp [map_sub, map_smul, smul_eq_mul]
+    rw [show (qExpansion 1 (f - c • mn : ModularForm Γ(1) ↑n)).coeff 0 =
+      (Q (f - c • mn)).coeff 0 from rfl, this, hmn_coeff, mul_one, sub_self]
   set g := f - c • mn
   have hcast : (↑n : ℤ) - 12 = (↑(n - 12) : ℤ) := by omega
   set h' := CuspForms_iso_Modforms ↑n (IsCuspForm_to_CuspForm Γ(1) ↑n g hg_cusp)

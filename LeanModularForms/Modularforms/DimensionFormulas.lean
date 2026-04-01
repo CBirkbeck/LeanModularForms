@@ -163,23 +163,46 @@ lemma Delta_E4_E6_aux_q_one_term : (qExpansion 1 Delta_E4_E6_aux).coeff 1 = 1 :=
     have hA : qExpansion 1 A = (qExpansion 1 E₄) ^ 3 := by simpa [A] using h4
     have hB : qExpansion 1 B = (qExpansion 1 E₆) ^ 2 := by simpa [B] using h6
     rw [hA, hB]
-    simp
+    have he4_0 := E4_q_exp_zero
+    have he6_0 := E6_q_exp_zero
+    have he4_1 := E4_q_exp_one
+    have he6_1 := E6_q_exp_one
+    -- Direct computation: coeff_1(E₄³ - E₆²) = 1728
+    -- In Lean 4.29, rw/simp can't match through coercion layers (PowerSeries.coeff,
+    -- ModularForm → ℍ → ℂ). Use sub_eq_sub_of_eq with manual term construction.
     rw [pow_three, pow_two]
-    simp_rw [PowerSeries.coeff_mul]
-    rw [antidiagonal_one]
-    simp [Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
-      not_false_eq_true, Finset.sum_insert, Finset.antidiagonal_zero, Prod.mk_zero_zero,
-      Finset.sum_singleton, Prod.fst_zero, Prod.snd_zero]
-    have he4 := E4_q_exp_zero
-    have he6 := E6_q_exp_zero
-    simp at *
-    simp_rw [E4_q_exp_one, he4, he6]
-    ring_nf
-    rw [antidiagonal_one]
-    simp [Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
-      not_false_eq_true, Finset.sum_insert, Finset.sum_singleton]
-    simp_rw [E4_q_exp_one, he4, E6_q_exp_one]
-    ring
+    have hmul4a := qExpansion_mul_coeff 1 4 4 E₄ E₄
+    have hmul4b := qExpansion_mul_coeff 1 4 8 E₄ (E₄.mul E₄)
+    have hmul6 := qExpansion_mul_coeff 1 6 6 E₆ E₆
+    simp only [Nat.cast_one] at hmul4a hmul4b hmul6
+    -- Build the argument equality
+    have h_arg_eq : (1728⁻¹ : ℂ) • (qExpansion 1 ⇑E₄ * (qExpansion 1 ⇑E₄ * qExpansion 1 ⇑E₄) -
+        qExpansion 1 ⇑E₆ * qExpansion 1 ⇑E₆) =
+        (1728⁻¹ : ℂ) • (qExpansion 1 ⇑(E₄.mul (E₄.mul E₄)) -
+        qExpansion 1 ⇑(E₆.mul E₆)) := by
+      congr 1
+      exact congrArg₂ (· - ·) (hmul4b.trans (congrArg _ hmul4a)).symm hmul6.symm
+    -- Transport through LinearMap application via congr_arg then ▸
+    have h_trans := congrArg (PowerSeries.coeff 1) h_arg_eq
+    -- Use ▸ which works at the definitional level
+    calc (PowerSeries.coeff 1)
+          (1728⁻¹ • (qExpansion 1 ⇑E₄ * (qExpansion 1 ⇑E₄ * qExpansion 1 ⇑E₄) -
+          qExpansion 1 ⇑E₆ * qExpansion 1 ⇑E₆))
+        = (PowerSeries.coeff 1)
+          (1728⁻¹ • (qExpansion 1 ⇑(E₄.mul (E₄.mul E₄)) -
+          qExpansion 1 ⇑(E₆.mul E₆))) := h_trans
+      _ = 1728⁻¹ * ((PowerSeries.coeff 1) (qExpansion 1 ⇑(E₄.mul (E₄.mul E₄))) -
+          (PowerSeries.coeff 1) (qExpansion 1 ⇑(E₆.mul E₆))) := by
+        rw [map_smul, smul_eq_mul, map_sub]
+      _ = 1728⁻¹ * (3 * 240 - (PowerSeries.coeff 1) (qExpansion 1 ⇑(E₆.mul E₆))) := by
+        rw [E4_pow_q_exp_one]
+      _ = 1728⁻¹ * (3 * 240 - (PowerSeries.coeff 1) (qExpansion 1 ⇑E₆ * qExpansion 1 ⇑E₆)) := by
+        rw [congrArg (PowerSeries.coeff 1) hmul6]
+      _ = 1 := by
+        rw [PowerSeries.coeff_mul, antidiagonal_one]
+        simp only [Finset.sum_insert (by decide : (1, 0) ∉ ({(0, 1)} : Finset _)),
+          Finset.sum_singleton, he6_0, he6_1]
+        norm_num
   simpa [hsub1, hsub2] using hmain
 
 theorem Delta_E4_eqn : Delta = Delta_E4_E6_aux := by
@@ -340,11 +363,11 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
     obtain ⟨c6, hc6⟩ := exists_smul_eq_of_rank_one' weight_six_one_dimensional E6_ne_zero
       ((f.mul f).mul f)
     have hc6e : c6 = ((qExpansion 1 f).coeff 0)^3 := by
-      have := qExpansion_mul_coeff 1 4 2 (f.mul f) f
+      have h1 : qExpansion (1 : ℕ) ⇑(c6 • E₆) = qExpansion (1 : ℕ) ⇑(f.mul f) * qExpansion (1 : ℕ) ⇑f := by
+        rw [hc6]; exact qExpansion_mul_coeff 1 4 2 (f.mul f) f
       have h2 := qExpansion_mul_coeff 1 2 2 f f
-      rw [← hc6] at this
-      rw [qExpansion_coe_smul (a := c6) (f := E₆), ← qExpansion_smul2 1 c6, h2] at this
-      have hh := congr_arg (fun x => x.coeff 0) this
+      rw [qExpansion_coe_smul, ← qExpansion_smul2 1 c6, h2] at h1
+      have hh := congr_arg (fun x => x.coeff 0) h1
       simp only [_root_.map_smul, smul_eq_mul] at hh
       rw [Nat.cast_one, E6_q_exp_zero] at hh
       rw [pow_three]
@@ -355,10 +378,10 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
     obtain ⟨c4, hc4⟩ := exists_smul_eq_of_rank_one' weight_four_one_dimensional E4_ne_zero
       (f.mul f)
     have hc4e : c4 = ((qExpansion 1 f).coeff 0)^2 := by
-      have := qExpansion_mul_coeff 1 2 2 f f
-      rw [← hc4] at this
-      rw [qExpansion_coe_smul (a := c4) (f := E₄), ← qExpansion_smul2 1 c4] at this
-      have hh := congr_arg (fun x => x.coeff 0) this
+      have h1 : qExpansion (1 : ℕ) ⇑(c4 • E₄) = qExpansion (1 : ℕ) ⇑f * qExpansion (1 : ℕ) ⇑f := by
+        rw [hc4]; exact qExpansion_mul_coeff 1 2 2 f f
+      rw [qExpansion_coe_smul (a := c4) (f := E₄), ← qExpansion_smul2 1 c4] at h1
+      have hh := congr_arg (fun x => x.coeff 0) h1
       simp only [_root_.map_smul, smul_eq_mul] at hh
       rw [Nat.cast_one, E4_q_exp_zero] at hh
       rw [pow_two]
@@ -440,9 +463,9 @@ lemma dim_modforms_eq_one_add_dim_cuspforms (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk
   rw [rank_eq_one_iff]
   refine ⟨Submodule.Quotient.mk (E k hk), ?_, ?_⟩
   · intro hq
-    rw [Submodule.Quotient.mk_eq_zero, CuspFormSubmodule_mem_iff_coeffZero_eq_zero,
-      Ek_q_exp_zero k hk hk2] at hq
-    simp at hq
+    have hq' := (Submodule.Quotient.mk_eq_zero _).mp hq
+    rw [CuspFormSubmodule_mem_iff_coeffZero_eq_zero, Ek_q_exp_zero k hk hk2] at hq'
+    simp at hq'
   · intro v
     obtain ⟨f, rfl⟩ := Quotient.exists_rep v
     refine ⟨(qExpansion 1 f).coeff 0, ?_⟩
@@ -525,29 +548,23 @@ lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     have : Finset.filter Even (Finset.Icc 3 14) = ({4,6,8,10,12, 14} : Finset ℕ) := by
         decide
     rw [this] at hkop
-    fin_cases hkop
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -8 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -6 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -4 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -2 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
-      div_self, Nat.floor_one, Nat.reduceAdd, Nat.cast_ite, Nat.cast_one]
-      rw [ModularForm.levelOne_weight_zero_rank_one]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, dim_weight_two, add_zero, dvd_refl, ↓reduceIte]
-      norm_cast
+    fin_cases hkop <;> simp_all
+    -- k = 4: weight k - 12 = -8
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-8 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 6: weight k - 12 = -6
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-6 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 8: weight k - 12 = -4
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-4 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 10: weight k - 12 = -2
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-2 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 12: weight k - 12 = 0
+    · convert (congrArg (1 + ·) ModularForm.levelOne_weight_zero_rank_one) using 1 <;> norm_cast
+    -- k = 14: weight k - 12 = 2
+    · convert (congrArg (1 + ·) dim_weight_two) using 1 <;> norm_cast
 
 lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) (k)) = if 12 ∣ ((k) : ℤ) - 2 then

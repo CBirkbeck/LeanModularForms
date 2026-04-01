@@ -46,6 +46,7 @@ private lemma hasDerivAt_remainder_bound
 
 private lemma norm_real_smul (x : ℝ) (L : ℂ) :
     ‖x • L‖ = |x| * ‖L‖ := by
+  haveI : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
   rw [norm_smul, Real.norm_eq_abs]
 
 private lemma norm_add_lower_bound (a b : ℂ) :

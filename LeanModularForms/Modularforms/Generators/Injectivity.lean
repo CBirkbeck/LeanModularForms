@@ -62,7 +62,10 @@ private lemma weight_fin2_cast (d : Fin 2 →₀ ℕ) :
 private lemma evalE₄E₆_whc_grade (n : ℕ) (p : MvPolynomial (Fin 2) ℂ)
     (hp : MvPolynomial.IsWeightedHomogeneous E₄E₆Weight p n) (k : ℤ) (hk : k ≠ ↑n) :
     (evalE₄E₆ p) k = 0 := by
-  rw [← MvPolynomial.support_sum_monomial_coeff p, map_sum, DFinsupp.finset_sum_apply]
+  rw [← MvPolynomial.support_sum_monomial_coeff p, map_sum,
+    show (∑ x ∈ p.support, evalE₄E₆ ((MvPolynomial.monomial x) (MvPolynomial.coeff x p))) k =
+      ∑ x ∈ p.support, (evalE₄E₆ ((MvPolynomial.monomial x) (MvPolynomial.coeff x p))) k from
+      map_sum (DFinsupp.evalAddMonoidHom k) _ _]
   apply Finset.sum_eq_zero
   intro d hd
   apply evalE₄E₆_monomial_grade
@@ -75,9 +78,15 @@ private lemma evalE₄E₆_component_eq (p : MvPolynomial (Fin 2) ℂ) (n : ℕ)
   have hdecomp : p = MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p +
     (p - MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p) := by ring
   set q := p - MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p
-  conv_rhs => rw [hdecomp, map_add, DFinsupp.add_apply]
+  conv_rhs =>
+    rw [hdecomp, map_add]
+    change (evalE₄E₆ (MvPolynomial.weightedHomogeneousComponent E₄E₆Weight n p)) (↑n : ℤ) +
+      (evalE₄E₆ q) (↑n : ℤ)
   suffices h : (evalE₄E₆ q) (↑n : ℤ) = 0 by rw [h, add_zero]
-  rw [← MvPolynomial.support_sum_monomial_coeff q, map_sum, DFinsupp.finset_sum_apply]
+  rw [← MvPolynomial.support_sum_monomial_coeff q, map_sum,
+    show (∑ x ∈ q.support, evalE₄E₆ ((MvPolynomial.monomial x) (MvPolynomial.coeff x q))) (↑n : ℤ) =
+      ∑ x ∈ q.support, (evalE₄E₆ ((MvPolynomial.monomial x) (MvPolynomial.coeff x q))) (↑n : ℤ) from
+      map_sum (DFinsupp.evalAddMonoidHom (↑n : ℤ)) _ _]
   apply Finset.sum_eq_zero
   intro d hd
   apply evalE₄E₆_monomial_grade
@@ -469,8 +478,10 @@ private lemma coeff_zero_of_eval_zero {n : ℕ} (hn12 : 12 ≤ n)
       (show (1 : ℝ) ∈ Γ(1).strictPeriods from by simp) (↑n)
     have hQ_zero : Q ((evalE₄E₆ (r + Delta_poly * s)) (↑n : ℤ)) = 0 := by
       rw [heval]; exact map_zero Q
+    have hadd : (evalE₄E₆ r + evalE₄E₆ (Delta_poly * s)) (↑n : ℤ) =
+        (evalE₄E₆ r) (↑n : ℤ) + (evalE₄E₆ (Delta_poly * s)) (↑n : ℤ) := DFinsupp.add_apply ..
     rw [show evalE₄E₆ (r + Delta_poly * s) = evalE₄E₆ r + evalE₄E₆ (Delta_poly * s)
-      from map_add _ _ _, DFinsupp.add_apply, map_add] at hQ_zero
+      from map_add _ _ _, hadd, map_add] at hQ_zero
     have hcoeff_sum : (Q ((evalE₄E₆ r) (↑n : ℤ))).coeff 0 +
         (Q ((evalE₄E₆ (Delta_poly * s)) (↑n : ℤ))).coeff 0 = 0 := by
       rw [← PowerSeries.coeff_add, hQ_zero, map_zero]
@@ -489,9 +500,8 @@ private lemma coeff_zero_of_eval_zero {n : ℕ} (hn12 : 12 ≤ n)
       rw [DirectSum.smul_apply,
         show (↑(c • mo (↑n : ℤ)) : ℍ → ℂ) = c • ↑(mo (↑n : ℤ)) from rfl,
         qExpansion_smul (show (0 : ℝ) < 1 from by norm_num)
-          (show (1 : ℝ) ∈ Γ(1).strictPeriods from by simp) c (mo (↑n : ℤ)),
-        PowerSeries.coeff_smul, monomial_coeff_zero_eq_one n (d₀ 0) (d₀ 1) (by omega),
-        smul_eq_mul, mul_one]
+          (show (1 : ℝ) ∈ Γ(1).strictPeriods from by simp) c (mo (↑n : ℤ))]
+      rw [map_smul, smul_eq_mul, monomial_coeff_zero_eq_one n (d₀ 0) (d₀ 1) (by omega), mul_one]
     rw [hq_r, evalE₄E₆_Delta_mul_coeff_zero hn12 s hs, add_zero] at hcoeff_sum
     exact hcoeff_sum
 

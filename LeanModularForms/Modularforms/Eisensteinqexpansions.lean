@@ -307,8 +307,7 @@ lemma E_k_q_expansion (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (z : ℍ) 
     (E k hk) z = 1 +
         (1 / (riemannZeta (k))) * ((-2 * ↑π * Complex.I) ^ k / (k - 1)!) *
         ∑' n : ℕ+, σ (k - 1) n * Complex.exp (2 * ↑π * Complex.I * z * n) := by
-  rw [_root_.E]
-  rw [IsGLPos.smul_apply]
+  rw [_root_.E]; show (1 / 2 : ℂ) • (eisensteinSeriesMF hk standardcongruencecondition) z = _
   have hmf : (ModularForm.eisensteinSeriesMF hk standardcongruencecondition) z =
       (eisensteinSeriesSIF standardcongruencecondition k) z := rfl
   rw [hmf]
@@ -323,10 +322,18 @@ lemma E_k_q_expansion (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (z : ℍ) 
     simp
     omega
   rw [← inv_mul_eq_iff_eq_mul₀ z2 ] at HE2
-  simp at *
-  conv =>
-    enter [1,2]
-    rw [← HE2]
+  simp at HE1 HE2 ⊢
+  -- Lean 4.29: `rw` fails on binder name `c` vs `x` for gammaSet tsum.
+  -- The goal is alpha-equivalent to what we can prove from HE1 + HE2.
+  -- Use `convert` which handles alpha-equivalence via `congr` under the hood.
+  have step := congrArg (2⁻¹ * ·) HE2.symm
+  dsimp only at step
+  suffices h : 2⁻¹ * ((riemannZeta ↑k)⁻¹ *
+    ∑' (x : Fin 2 → ℤ), ((↑(x 0) * (↑z : ℂ) + ↑(x 1)) ^ k)⁻¹) =
+    1 + (riemannZeta ↑k)⁻¹ * ((-(2 * ↑π * Complex.I)) ^ k / ↑(k - 1)!) *
+      ∑' (n : ℕ+), ↑((σ (k - 1)) ↑n) * cexp (2 * ↑π * Complex.I * ↑z * ↑↑n) by
+    -- step.symm ▸ h gives the goal; `convert` handles alpha-equiv binder names
+    convert step.symm ▸ h
   simp_rw [← mul_assoc]
   rw [HE1, mul_add]
   have : 2⁻¹ * (riemannZeta (k))⁻¹ * (2 * riemannZeta (k)) = 1 := by

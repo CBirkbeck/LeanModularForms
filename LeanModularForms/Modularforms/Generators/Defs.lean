@@ -166,7 +166,10 @@ lemma evalE₄E₆_whc_eq_single (n : ℕ) (p : MvPolynomial (Fin 2) ℂ)
   by_cases hk : k = (↑n : ℤ)
   · subst hk; simp [DirectSum.of_eq_same]
   · rw [DirectSum.of_eq_of_ne _ _ _ hk]
-    rw [← MvPolynomial.support_sum_monomial_coeff p, map_sum, DFinsupp.finset_sum_apply]
+    conv_lhs => rw [← MvPolynomial.support_sum_monomial_coeff p]; rw [map_sum]
+    rw [show (∑ x ∈ p.support, evalE₄E₆ ((MvPolynomial.monomial x) (MvPolynomial.coeff x p))) k =
+      ∑ x ∈ p.support, (evalE₄E₆ ((MvPolynomial.monomial x) (MvPolynomial.coeff x p))) k from
+      map_sum (DFinsupp.evalAddMonoidHom k) _ _]
     apply Finset.sum_eq_zero
     intro d hd
     have hweight := hp (MvPolynomial.mem_support_iff.mp hd)
