@@ -137,7 +137,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   have h_integrand_seg1 : ∀ t, 0 < t → t < 1 →
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑t : ℂ)⁻¹ := by
     intro t ht0 ht1
-    rw [h_diff_seg1 t ht0.le ht1.le, (fdBoundary_H_hasDerivAt_seg1 H ht1).deriv]
+    rw [h_diff_seg1 t ht0.le ht1.le]; erw [(fdBoundary_H_hasDerivAt_seg1 H ht1).deriv]
     have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 → (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
       rw [mul_inv_rev, mul_assoc, mul_comm a⁻¹ b,
         ← mul_assoc, inv_mul_cancel₀ hb, one_mul]
@@ -152,7 +152,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   have h_integrand_seg5 : ∀ t, 4 < t →
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 5) : ℂ)⁻¹ := by
     intro t ht4
-    rw [h_diff_seg5 t ht4, (fdBoundary_H_hasDerivAt_seg5 H ht4).deriv, mul_one]
+    rw [h_diff_seg5 t ht4]; erw [(fdBoundary_H_hasDerivAt_seg5 H ht4).deriv]; rw [mul_one]
   have hii := fdBoundary_H_cutout_ii H hH s η hη
   have h_01_15 : (∫ t in (0:ℝ)..5, if η < ‖fdBoundary_H H t - s‖
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) =
@@ -422,7 +422,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     have h_integrand_seg4 : ∀ t, 3 < t → t < 4 →
         (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 4) : ℂ)⁻¹ := by
       intro t ht3 ht4
-      rw [h_diff_seg4 t ht3 ht4.le, (fdBoundary_H_hasDerivAt_seg4 H ht3 ht4).deriv]
+      rw [h_diff_seg4 t ht3 ht4.le]; erw [(fdBoundary_H_hasDerivAt_seg4 H ht3 ht4).deriv]
       have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 → (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
         rw [mul_inv_rev, mul_assoc, mul_comm a⁻¹ b,
           ← mul_assoc, inv_mul_cancel₀ hb, one_mul]
@@ -436,7 +436,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     have h_integrand_seg5 : ∀ t, 4 < t →
         (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 4) : ℂ)⁻¹ := by
       intro t ht4
-      rw [h_diff_seg5 t ht4, (fdBoundary_H_hasDerivAt_seg5 H ht4).deriv, mul_one]
+      rw [h_diff_seg5 t ht4]; erw [(fdBoundary_H_hasDerivAt_seg5 H ht4).deriv]; rw [mul_one]
     have h_split : F η = (∫ t in (3:ℝ)..4, if η < ‖fdBoundary_H H t - s‖
         then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) +
       (∫ t in (4:ℝ)..5, if η < ‖fdBoundary_H H t - s‖

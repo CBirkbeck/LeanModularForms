@@ -156,7 +156,8 @@ lemma rc_integral_eq_neg_two_pi_I_ref_p₀ :
       rc_sub_ref_p₀_mem_slitPlane t ht_Icc htL
     have h_log_deriv : HasDerivAt (fun t' => Complex.log (rc t' - ref_p₀))
         ((rc t - ref_p₀)⁻¹ * deriv rc t) t := by
-      have h_comp := (Complex.hasDerivAt_log h_slit).scomp t hrc_hasderiv
+      have h_comp := @HasDerivAt.scomp ℝ _ ℂ _ _ t ℂ _ _ _ IsScalarTower.right _ _ _ _
+        (Complex.hasDerivAt_log h_slit) hrc_hasderiv
       rw [Function.comp_def] at h_comp
       exact h_comp.congr_deriv (by rw [smul_eq_mul, mul_comm])
     have log_eq_I_arg : ∀ t' ∈ Icc (0:ℝ) 5, fdPolygon t' ≠ ref_p₀ →
@@ -283,26 +284,9 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
   have h_neg_one : (-1 : ℤ) = (-1 : ℂ) := by norm_cast
   rw [h_neg_one] at h_target_winding
   unfold generalizedWindingNumber' cauchyPrincipalValue'
-  have h_match_rc : (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖(fun t => rc t - ref_p₀) t - 0‖ > ε then
-          (fun x => x⁻¹) ((fun t => rc t - ref_p₀) t) * deriv (fun t => rc t - ref_p₀) t
-        else 0) =
-      (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖rc t - ref_p₀‖ > ε then (rc t - ref_p₀)⁻¹ * deriv rc t
-        else 0) := by
-    ext ε; congr 1 with t; simp only [sub_zero, deriv_sub_const]
-  simp only [h_match_rc]
+  simp only [sub_zero, Function.comp_def, deriv_sub_const]
   unfold generalizedWindingNumber' cauchyPrincipalValue' at h_target_winding
-  have h_match_target : (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖(fun t => γ_target t - ref_p₀) t - 0‖ > ε then
-          (fun x => x⁻¹) ((fun t => γ_target t - ref_p₀) t) *
-            deriv (fun t => γ_target t - ref_p₀) t
-        else 0) =
-      (fun ε => ∫ t in (0:ℝ)..5,
-        if ‖γ_target t - ref_p₀‖ > ε then (γ_target t - ref_p₀)⁻¹ * deriv γ_target t
-        else 0) := by
-    ext ε; congr 1 with t; simp only [sub_zero, deriv_sub_const]
-  simp only [h_match_target] at h_target_winding
+  simp only [sub_zero, Function.comp_def, deriv_sub_const] at h_target_winding
   have h_dist_target : ∀ t, ‖γ_target t - ref_p₀‖ = 1 := by
     intro t
     change ‖(ref_p₀ + exp (I * (θ_target t : ℂ))) - ref_p₀‖ = 1
@@ -365,9 +349,7 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
     rw [show (fun t => (γ_target t - ref_p₀)⁻¹ * deriv γ_target t) =
         fun _ => -(2 * ↑Real.pi * I / 5) from funext h_integrand]
     rw [intervalIntegral.integral_const]
-    simp only [Complex.real_smul, Complex.ofReal_sub,
-      Complex.ofReal_ofNat, Complex.ofReal_zero]
-    ring
+    erw [Complex.real_smul]; push_cast; ring
   have h_target_limit : limUnder (𝓝[>] (0:ℝ)) (fun ε =>
       ∫ t in (0:ℝ)..5,
         if ‖γ_target t - ref_p₀‖ > ε then (γ_target t - ref_p₀)⁻¹ * deriv γ_target t else 0) =
@@ -379,8 +361,8 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
       ∫ t in (0:ℝ)..5,
         if ‖rc t - ref_p₀‖ > ε then (rc t - ref_p₀)⁻¹ * deriv rc t else 0) =
       -2 * ↑Real.pi * I by
-    rw [h_rc_limit_eq]
-    rw [h_target_limit] at h_target_winding
+    erw [h_rc_limit_eq]
+    erw [h_target_limit] at h_target_winding
     exact h_target_winding
   apply limUnder_eventually_eq_const
   filter_upwards [Ioo_mem_nhdsGT (by norm_num : (0:ℝ) < 1)] with ε hε

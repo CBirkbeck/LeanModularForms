@@ -189,7 +189,7 @@ private lemma deriv_fdBoundary_H_on_seg1 (H : ℝ) (u : ℝ) (hu : u ∈ Set.Ioo
     have : Iio (1 : ℝ) ∈ 𝓝 u := Iio_mem_nhds hu.2
     filter_upwards [this] with t ht
     exact fdBoundary_H_eq_seg1_H (le_of_lt ht)
-  rw [h_eq.deriv_eq, (hasDerivAt_fdBoundary_seg1_H H u).deriv]
+  erw [h_eq.deriv_eq, (hasDerivAt_fdBoundary_seg1_H H u).deriv]
 
 omit f hf in
 private lemma deriv_fdBoundary_H_on_seg4 (H : ℝ) (t : ℝ) (ht : t ∈ Set.Ioo (3:ℝ) 4) :
@@ -197,7 +197,7 @@ private lemma deriv_fdBoundary_H_on_seg4 (H : ℝ) (t : ℝ) (ht : t ∈ Set.Ioo
   have h_eq : fdBoundary_H H =ᶠ[𝓝 t] fdBoundary_seg4_H H := by
     filter_upwards [Ioi_mem_nhds ht.1, Iio_mem_nhds ht.2] with s hs1 hs2
     exact fdBoundary_H_eq_seg4_H hs1 (le_of_lt hs2)
-  rw [h_eq.deriv_eq, (hasDerivAt_fdBoundary_seg4_H H t).deriv]
+  erw [h_eq.deriv_eq, (hasDerivAt_fdBoundary_seg4_H H t).deriv]
 
 omit f hf in
 private lemma integral_seg4_cov (G : ℝ → ℂ) :
@@ -236,7 +236,7 @@ private lemma pvIntegrand_seg4_eq_neg_seg1 (_S : Finset UpperHalfPlane) (Sx : Fi
       simp only [Function.Periodic] at h_per
       rw [show fdBoundary_H H u - 1 + 1 = fdBoundary_H H u from by ring] at this
       exact this.symm
-    rw [h_logDeriv, deriv_fdBoundary_H_on_seg4 H (4 - u) ⟨h4u_gt3, h4u_lt4⟩,
+    erw [h_logDeriv, deriv_fdBoundary_H_on_seg4 H (4 - u) ⟨h4u_gt3, h4u_lt4⟩,
         deriv_fdBoundary_H_on_seg1 H u hu]
     ring
 
@@ -388,7 +388,7 @@ private theorem tendsto_pvIntegral_seg5
           · exact Filter.Eventually.of_forall fun t ht => by
               rw [Set.mem_Ioc] at ht
               simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn,
-                if_neg (hε t ht.1 ht.2)]
+                if_neg (hε t ht.1 ht.2)]; rfl
           · exact Filter.Eventually.of_forall fun t ht => by
               rw [Set.mem_Ioc] at ht; exact absurd ht.1 (by linarith [ht.2])
       _ = L := seg5_logDeriv_integral_value f hf hH hcusp_nonvan
@@ -423,14 +423,14 @@ private lemma norm_deriv_fdBoundary_H_le
     rw [hcast, Complex.norm_real, Real.norm_of_nonneg (by
       linarith [Real.sqrt_pos_of_pos (by norm_num : (3:ℝ) > 0)])]
   by_cases h1 : t < 1
-  · rw [(fdBoundary_H_hasDerivAt_seg1 H h1).deriv,
-        neg_mul, norm_neg, norm_mul, Complex.norm_I, mul_one,
+  · erw [(fdBoundary_H_hasDerivAt_seg1 H h1).deriv]
+    rw [neg_mul, norm_neg, norm_mul, Complex.norm_I, mul_one,
         h_norm_cast]
     exact le_trans (by linarith [Real.sqrt_nonneg 3]) (le_max_left H 1)
   · push_neg at h1
     have h1' : 1 < t := lt_of_le_of_ne h1 (Ne.symm ht_ne1)
     by_cases h3 : t < 3
-    · rw [(fdBoundary_H_hasDerivAt_arc H h1' h3).deriv]
+    · erw [(fdBoundary_H_hasDerivAt_arc H h1' h3).deriv]
       simp only [norm_mul, Complex.norm_I, mul_one]
       have hexp : ‖exp ((↑Real.pi * (↑t + 1) / 6 : ℂ) * I)‖ = 1 := by
         rw [show (↑Real.pi * (↑t + 1) / 6 : ℂ) * I =
@@ -445,12 +445,12 @@ private lemma norm_deriv_fdBoundary_H_le
     · push_neg at h3
       have h3' : 3 < t := lt_of_le_of_ne h3 (Ne.symm ht_ne3)
       by_cases h4 : t < 4
-      · rw [(fdBoundary_H_hasDerivAt_seg4 H h3' h4).deriv,
-            norm_mul, Complex.norm_I, mul_one, h_norm_cast]
+      · erw [(fdBoundary_H_hasDerivAt_seg4 H h3' h4).deriv]
+        rw [norm_mul, Complex.norm_I, mul_one, h_norm_cast]
         exact le_trans (by linarith [Real.sqrt_nonneg 3]) (le_max_left H 1)
       · push_neg at h4
         have h4' : 4 < t := lt_of_le_of_ne h4 (Ne.symm ht_ne4)
-        rw [(fdBoundary_H_hasDerivAt_seg5 H h4').deriv, norm_one]
+        erw [(fdBoundary_H_hasDerivAt_seg5 H h4').deriv]; rw [norm_one]
         exact le_max_right H 1
 
 omit hf in

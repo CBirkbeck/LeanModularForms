@@ -31,11 +31,12 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
       · filter_upwards [h_mem] with t ht
         have ht1 : t ≤ 1 := le_of_lt ht.2
         have h1_1 : (1 : ℝ) ≤ 1 := le_refl 1
-        simp only [slope_def_module, fdBoundaryToPolygonHomotopy, ht1, h1_1, ite_true,
-                   Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_sub]
+        simp only [slope_def_module, fdBoundaryToPolygonHomotopy, ht1, h1_1, ite_true]
+        erw [Complex.real_smul]
         have hne : (↑t : ℂ) - 1 ≠ 0 := by
           simp only [sub_ne_zero]; norm_cast
           exact ne_of_lt ht.2
+        simp only [Complex.ofReal_inv, Complex.ofReal_sub]
         field_simp [hne]
         simp only [H_height]; push_cast; ring
       · exact tendsto_const_nhds
@@ -529,13 +530,12 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           fdBoundaryToPolygonHomotopy,
           ht1, ht2, ht3, ht4,
           h4_1, h4_2, h4_3, h4_4,
-          ite_false, ite_true,
-          Complex.real_smul,
-          Complex.ofReal_inv,
-          Complex.ofReal_sub]
+          ite_false, ite_true]
+        erw [Complex.real_smul]
         have hne : (↑t : ℂ) - 4 ≠ 0 := by
           simp only [sub_ne_zero]; norm_cast
           exact ne_of_lt ht.2
+        simp only [Complex.ofReal_inv, Complex.ofReal_sub]
         field_simp [hne]
         simp only [H_height]; push_cast; ring
       · exact tendsto_const_nhds
@@ -565,13 +565,12 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
           fdBoundaryToPolygonHomotopy,
           ht1, ht2, ht3, ht4,
           h4_1, h4_2, h4_3, h4_4,
-          ite_false, ite_true,
-          Complex.real_smul,
-          Complex.ofReal_inv,
-          Complex.ofReal_sub]
+          ite_false, ite_true]
+        erw [Complex.real_smul]
         have hne : (↑t : ℂ) - 4 ≠ 0 := by
           simp only [sub_ne_zero]; norm_cast
           exact ne_of_gt ht.1
+        simp only [Complex.ofReal_inv, Complex.ofReal_sub]
         field_simp [hne]
         push_cast; ring
       · exact tendsto_const_nhds

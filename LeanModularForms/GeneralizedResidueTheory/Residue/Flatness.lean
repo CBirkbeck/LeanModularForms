@@ -35,6 +35,8 @@ Reference: Hungerbuhler-Wasem, arXiv:1808.00997v2, Definition 3.2.
 open Complex Set Filter Topology Asymptotics
 open scoped Real Interval
 
+private instance : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
+
 noncomputable section
 
 /-! ### Orthogonal projection in C (viewed as R^2) -/
@@ -85,8 +87,8 @@ theorem tangentDeviation_real_smul_self (c : ℝ) (L : ℂ) (hL : L ≠ 0) :
 theorem tangentDeviation_add (w₁ w₂ L : ℂ) :
     tangentDeviation (w₁ + w₂) L = tangentDeviation w₁ L + tangentDeviation w₂ L := by
   simp only [tangentDeviation, orthogonalProjectionComplex, add_mul, Complex.add_re,
-    add_div, add_smul]
-  abel
+    add_div]
+  erw [add_smul]; abel
 
 /-- Norm bound: ‖tangentDeviation w L‖ ≤ 2 * ‖w‖ for L ≠ 0. -/
 theorem norm_tangentDeviation_le (w L : ℂ) (hL : L ≠ 0) :
@@ -195,6 +197,7 @@ theorem tangentDeviation_isLittleO_of_hasDerivAt
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
       rw [this]; exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
+    have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
   exact (ho1.trans_isBigO hO2).congr_left fun t => (h_eq t).symm
 
@@ -235,6 +238,7 @@ theorem tangentDeviation_isLittleO_right
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
       rw [this]; exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
+    have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
   exact (ho1.trans_isBigO hO2).congr_left fun t => (h_eq t).symm
 
@@ -275,6 +279,7 @@ theorem tangentDeviation_isLittleO_left
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
       rw [this]; exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
+    have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
   exact (ho1.trans_isBigO hO2).congr_left fun t => (h_eq t).symm
 

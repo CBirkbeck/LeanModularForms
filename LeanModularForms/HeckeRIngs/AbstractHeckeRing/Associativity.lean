@@ -463,7 +463,7 @@ private lemma smulOrbit_indicator_eq_sum (g₁ : P.Δ)
     simp only [smulOrbit, Finset.mem_image] at hmem
     obtain ⟨q₀, _, hq₀⟩ := hmem
     rw [Finset.sum_eq_single q₀]
-    · rw [if_pos hq₀]
+    · simp only [hq₀, ↓reduceIte]
     · intro q _ hne; rw [if_neg]; intro heq
       exact hne (smulOrbit_map_injective P g₁ β (heq.trans hq₀.symm))
     · exact fun h => absurd (Finset.mem_univ _) h
@@ -711,16 +711,27 @@ which is equivalent to associativity of multiplication (Shimura Proposition 3.4)
 noncomputable instance instIsScalarTower :
     IsScalarTower (𝕋 P ℤ) (𝕋 P ℤ) (HeckeModule P ℤ) where
   smul_assoc x y z := by
-    simp only [smul_def]
+    show (x • y) • z = x • (y • z)
+    rw [show x • y = y * x from rfl]
     induction x using Finsupp.induction_linear with
-    | zero => simp only [mul_zero, zero_smul_HeckeModule]
+    | zero =>
+      have h1 : y * (0 : 𝕋 P ℤ) = 0 :=
+        @mul_zero _ (instNonUnitalNonAssocSemiring P).toMulZeroClass y
+      rw [h1, zero_smul_HeckeModule, zero_smul_HeckeModule]
     | add x₁ x₂ ih₁ ih₂ =>
-      rw [mul_add, smul_add_left, ih₁, ih₂, ← smul_add_left]
+      have h1 : y * (x₁ + x₂) = y * x₁ + y * x₂ :=
+        (instNonUnitalNonAssocSemiring P).left_distrib y x₁ x₂
+      rw [h1, smul_add_left, ih₁, ih₂, ← smul_add_left]
     | single D₁ a₁ =>
       induction y using Finsupp.induction_linear with
-      | zero => simp only [zero_mul, zero_smul_HeckeModule, smul_zero_HeckeModule]
+      | zero =>
+        have h1 : (0 : 𝕋 P ℤ) * Finsupp.single D₁ a₁ = 0 :=
+          @zero_mul _ (instNonUnitalNonAssocSemiring P).toMulZeroClass _
+        rw [h1, zero_smul_HeckeModule, smul_zero_HeckeModule]
       | add y₁ y₂ ih₁ ih₂ =>
-        rw [add_mul, smul_add_left, ih₁, ih₂, smul_add_left, smul_add_right]
+        have h1 : (y₁ + y₂) * Finsupp.single D₁ a₁ = y₁ * Finsupp.single D₁ a₁ + y₂ * Finsupp.single D₁ a₁ :=
+          (instNonUnitalNonAssocSemiring P).right_distrib y₁ y₂ _
+        rw [h1, smul_add_left, ih₁, ih₂, smul_add_left, smul_add_right]
       | single D₂ a₂ =>
         induction z using Finsupp.induction_linear with
         | zero => simp only [smul_zero_HeckeModule]

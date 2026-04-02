@@ -199,7 +199,7 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
     intro t ⟨⟨ht_S, ht_Icc⟩, ht_nP⟩
     have hγt_not_ball : γ t ∉ Metric.ball z₀ ε := by
       simp only [S, mem_setOf_eq] at ht_S
-      simp only [Metric.mem_ball, not_lt]; exact le_of_lt ht_S
+      simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact le_of_lt ht_S
     have hγt_in : γ t ∈ γ '' Icc a b \ Metric.ball z₀ ε :=
       ⟨mem_image_of_mem γ ht_Icc, hγt_not_ball⟩
     have h_maps : MapsTo γ ((S ∩ Icc a b) \ P)
@@ -207,7 +207,7 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       intro s ⟨⟨hs_S, hs_Icc⟩, _⟩
       refine ⟨mem_image_of_mem γ hs_Icc, ?_⟩
       simp only [S, mem_setOf_eq] at hs_S
-      simp only [Metric.mem_ball, not_lt]; exact le_of_lt hs_S
+      simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact le_of_lt hs_S
     exact ((hf (γ t) hγt_in).comp
       ((hγ t ht_Icc).mono (diff_subset.trans inter_subset_right)) h_maps).mul
       ((hγ'_off_P t ⟨ht_Icc, ht_nP⟩).mono

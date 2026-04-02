@@ -336,7 +336,7 @@ theorem contourIntegral_const_mul_zpow_eq_zero (s : ℂ) (n : ℤ) (hn : n ≤ -
     ∫ t in γ.a..γ.b, c * (γ.toFun t - s) ^ n * deriv γ.toFun t = 0 := by
   simp_rw [show ∀ t, c * (γ.toFun t - s) ^ n * deriv γ.toFun t =
       c * ((γ.toFun t - s) ^ n * deriv γ.toFun t) from fun t => by ring]
-  rw [intervalIntegral.integral_const_mul,
+  erw [intervalIntegral.integral_const_mul,
     contourIntegral_zpow_eq_zero s n hn γ hγ_closed hγ_avoids]
   simp only [mul_zero]
 

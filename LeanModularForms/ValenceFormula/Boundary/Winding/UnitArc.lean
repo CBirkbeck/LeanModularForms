@@ -392,7 +392,7 @@ private lemma unitArc_ftc_bundle_aux (H : ℝ) (hH : 1 < H) (s : ℂ)
     (δ_fn ε) hδ_pos' t₀ ht₀_Ioo h_s_arc hδ_left hδ_right
   have h_deriv_eq : ∀ t : ℝ,
       deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t :=
-    fun t => by simp [deriv_sub_const]
+    fun t => deriv_sub_const (f := fdBoundary_H H) _
   have h_integrand_eq : ∀ t : ℝ,
       deriv (fun u => fdBoundary_H H u - s) t / (fdBoundary_H H t - s) =
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t :=
@@ -544,9 +544,11 @@ private lemma unitArc_winding_tendsto (H : ℝ) (hH : 1 < H) (s : ℂ)
   have hg_at_t₀ := unitArc_fdBoundary_eq H s hs_norm hs_re hs_im_pos
   have h_s_arc : s = exp (↑(Real.pi * (1 + (6 * Real.arccos s.re / Real.pi - 1)) / 6) * I) := by
     rw [← fdBoundary_H_eq_arc ht₀_Ioo.1 ht₀_Ioo.2]; exact hg_at_t₀.symm
-  convert unitArc_winding_aux H hH s hs_norm hs_re hs_im_pos
-    (6 * Real.arccos s.re / Real.pi - 1) ht₀_Ioo h_s_arc hg_at_t₀ using 2
-  simp [deriv_sub_const]
+  have hd : ∀ t, deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t :=
+    fun t => deriv_sub_const (f := fdBoundary_H H) _
+  simp_rw [hd]
+  exact unitArc_winding_aux H hH s hs_norm hs_re hs_im_pos
+    (6 * Real.arccos s.re / Real.pi - 1) ht₀_Ioo h_s_arc hg_at_t₀
 
 /-- **Main theorem**: gWN = −1/2 at smooth arc points. -/
 theorem gWN_fdBoundary_H_eq_neg_half_of_unitArc (H : ℝ) (hH : 1 < H) (s : ℂ)

@@ -88,6 +88,8 @@ singularities directly:
 open Complex Set Filter Topology MeasureTheory
 open scoped Interval
 
+instance instIsScalarTowerRealComplexComplex : IsScalarTower ℝ ℂ ℂ := IsScalarTower.right
+
 noncomputable section
 
 /-! ## Modular form ingredients
@@ -281,12 +283,12 @@ theorem segment_integral_eq_sub_of_hasDerivAt {f G : ℂ → ℂ} {S : Set ℂ}
   have hcont : ContinuousOn (fun t : ℝ => f (a + t • (b - a))) (Icc 0 1) :=
     hf_cont.comp (continuous_const.add
       (continuous_ofReal.smul continuous_const)).continuousOn h_mem
-  have key := intervalIntegral.integral_unitInterval_deriv_eq_sub (𝕜 := ℂ)
-    (f := G) (f' := f) (z₀ := a) (z₁ := b - a)
+  have key := @intervalIntegral.integral_unitInterval_deriv_eq_sub ℂ ℂ _ _ _ _ _
+    IsScalarTower.right G f a (b - a)
     hcont (fun t ht => hG _ (h_mem t ht))
   rw [show a + (b - a) = b from by ring] at key
   rw [smul_eq_mul] at key
-  rw [intervalIntegral.integral_mul_const, mul_comm]
+  erw [intervalIntegral.integral_mul_const]; rw [mul_comm]
   exact key
 
 /-- Contour additivity: for a holomorphic function on a convex open set,
@@ -845,8 +847,9 @@ private theorem ftc_tail_diag (r : ℝ) (G : ℂ → ℂ)
     intro t ht
     have ht_pos : 0 < t := by
       rcases Set.mem_uIcc.mp ht with ⟨h1, _⟩ | ⟨_, h2⟩ <;> linarith
-    exact ((hG _ (contour_neg1_to_i_im_pos ht_pos)).scomp t
-      (hasDerivAt_contour_neg1_to_i t)).congr_deriv (by simp [smul_eq_mul]; ring)
+    exact ((@HasDerivAt.scomp ℝ _ ℂ _ _ t ℂ _ _ _ IsScalarTower.right _ _ _ _
+      (hG _ (contour_neg1_to_i_im_pos ht_pos))
+      (hasDerivAt_contour_neg1_to_i t))).congr_deriv (by simp [smul_eq_mul]; ring)
   have h := intervalIntegral.integral_eq_sub_of_hasDerivAt hGdiag
     ((hcont.mono (fun x hx => ⟨by linarith [hx.1], hx.2⟩)).intervalIntegrable_of_Icc
       (by linarith))
@@ -865,8 +868,9 @@ private theorem ftc_tail_vert (r : ℝ) (G : ℂ → ℂ)
     intro t ht
     have ht_pos : 0 < t := by
       rcases Set.mem_uIcc.mp ht with ⟨h1, _⟩ | ⟨_, h2⟩ <;> linarith
-    exact ((hG _ (vertical_contour_im_pos ht_pos)).scomp t
-      (hasDerivAt_vert_contour t)).congr_deriv (by simp [smul_eq_mul]; ring)
+    exact ((@HasDerivAt.scomp ℝ _ ℂ _ _ t ℂ _ _ _ IsScalarTower.right _ _ _ _
+      (hG _ (vertical_contour_im_pos ht_pos))
+      (hasDerivAt_vert_contour t))).congr_deriv (by simp [smul_eq_mul]; ring)
   exact intervalIntegral.integral_eq_sub_of_hasDerivAt hGvert
     ((hcont.mono (fun x hx => ⟨by linarith [hx.1], hx.2⟩)).intervalIntegrable_of_Icc
       (by linarith))

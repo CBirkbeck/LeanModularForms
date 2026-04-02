@@ -37,7 +37,7 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
 private lemma deriv_fdBoundary_H_arc (H : ℝ) {t : ℝ} (h1 : 1 < t) (h3 : t < 3) :
     deriv (fdBoundary_H H) t = ↑(Real.pi / 6) * I * fdBoundary_H H t := by
-  rw [fdBoundary_H_eq_arc h1 h3, (fdBoundary_H_hasDerivAt_arc H h1 h3).deriv, mul_comm]
+  rw [fdBoundary_H_eq_arc h1 h3]; erw [(fdBoundary_H_hasDerivAt_arc H h1 h3).deriv]; rw [mul_comm]
   congr 1
   · push_cast; ring
   · congr 1; push_cast; ring
@@ -362,11 +362,11 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
       have h_4mt := h_4mt_ioo t ht_ioo
       have h_not_ind_4mt : ¬ind (4 - t) := fun h => h_near ((h_ind_sym t ht_ioo).mp h)
       have h_F_t : F t = logDeriv g (γ t) * deriv γ t := by
-        change cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        rw [cauchyPrincipalValueIntegrandOn, if_neg h_near]
+        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
+        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_near]; rfl
       have h_F_4mt : F (4 - t) = logDeriv g (γ (4 - t)) * deriv γ (4 - t) := by
-        change cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        rw [cauchyPrincipalValueIntegrandOn, if_neg h_not_ind_4mt]
+        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
+        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_not_ind_4mt]; rfl
       rw [h_F_4mt, h_F_t, if_neg h_near]; simp only [Complex.ofReal_one, mul_one]
       have h_rev : γ (4 - t) = -(1:ℂ) / γ t := fdBoundary_arc_S_reverse H t ht_ioo
       have h_d_4mt := h_deriv_arc (4-t) h_4mt

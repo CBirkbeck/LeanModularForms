@@ -20,6 +20,10 @@ open scoped Real Interval
 
 attribute [local instance] Classical.propDecidable
 
+/-- Work around mathlib 4.29-rc8 instance synthesis issue for `ℝ`-scalar-on-`ℂ`. -/
+noncomputable instance instNormSMulClassRealComplex' : NormSMulClass ℝ ℂ :=
+  @NormedSpace.toNormSMulClass ℝ ℂ _ _ _
+
 noncomputable section
 
 theorem exp_real_angle_I (θ : ℝ) :
@@ -211,8 +215,9 @@ lemma ftc_log_piece_lower {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
     hnh_log_cont (fun t ht => by
       have hda := (hh_diff t ht).hasDerivAt.neg
       have := hda.clog_real (hnh_slit t ht)
-      convert this using 1
-      simp only [Pi.neg_apply, neg_div_neg_eq]) hint_h
+      have goal_eq : -deriv h t / -h t = deriv h t / h t := by
+        simp only [neg_div_neg_eq]
+      exact goal_eq ▸ this) hint_h
   exact ⟨hint_g, by
     calc ∫ t in a..b, deriv g t / g t
         = ∫ t in a..b, deriv h t / h t := intervalIntegral.integral_congr_ae h_congr

@@ -154,8 +154,9 @@ private lemma slope_tendsto_right_of_deriv
       exact this.mono_left nhdsWithin_le_nhds
     · filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
       exact lt_add_of_pos_right t₀ hε
-  exact (h_deriv.comp h_map).congr (fun ε => by
-    simp only [Function.comp, slope, vsub_eq_sub, hcross, add_sub_cancel_left])
+  refine (h_deriv.comp h_map).congr (fun ε => ?_)
+  simp only [Function.comp, slope, vsub_eq_sub, hcross, add_sub_cancel_left]
+  erw [Complex.real_smul]
 
 private lemma direction_of_slope_tendsto
     (f : ℝ → ℂ) (L : ℂ) (hL : L ≠ 0)
@@ -242,10 +243,11 @@ private lemma slope_tendsto_left_of_deriv
   have h_neg : Tendsto (fun ε : ℝ => -((-ε)⁻¹ • (γ.toFun (t₀ - ε) - s)))
       (𝓝[>] 0) (𝓝 (-L)) := h_comp.neg.congr (fun ε => by
     simp only [Function.comp, slope, vsub_eq_sub]
-    rw [hcross]; ring_nf)
+    rw [hcross]; erw [Complex.real_smul, Complex.real_smul]; ring)
   convert h_neg using 1
   ext ε
-  rw [inv_neg, neg_smul, neg_neg]
+  erw [Complex.real_smul, Complex.real_smul]
+  push_cast; ring
 
 /-- Left-side analogue of `crossing_direction_right_tendsto`:
 `(γ(t₋(ε)) - s) / ‖γ(t₋(ε)) - s‖ → -L_left / ‖L_left‖`. -/
@@ -465,7 +467,8 @@ private lemma orthogonalProjectionComplex_real_smul_left (c : ℝ) (w L : ℂ) :
 
 private lemma tangentDeviation_real_smul_left (c : ℝ) (w L : ℂ) :
     tangentDeviation (c • w) L = c • tangentDeviation w L := by
-  simp only [tangentDeviation, orthogonalProjectionComplex_real_smul_left, smul_sub]
+  simp only [tangentDeviation, orthogonalProjectionComplex_real_smul_left]
+  simp only [RCLike.real_smul_eq_coe_mul]; ring
 
 private lemma orthogonalProjectionComplex_real_smul_right (c : ℝ) (hc : c ≠ 0) (w L : ℂ) :
     orthogonalProjectionComplex w (c • L) = orthogonalProjectionComplex w L := by
@@ -743,7 +746,7 @@ private lemma direction_rate_from_flatness_left
     have h_neg_eq : (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) (-L_L)‖) =
         (fun ε => ‖tangentDeviation (γ.toFun (σ ε) - s) L_L‖) :=
       funext fun ε => by
-        rw [show -L_L = (-1 : ℝ) • L_L from by simp only [neg_smul, one_smul],
+        rw [show -L_L = (-1 : ℝ) • L_L from by erw [neg_smul, one_smul],
           tangentDeviation_real_smul_right _ (show (-1 : ℝ) ≠ 0 by norm_num)]
     rw [h_neg_eq]
     exact ((h1.comp_tendsto hσ_tendsto).congr (fun _ => rfl) (fun _ => rfl)).trans_eventuallyEq

@@ -29,6 +29,8 @@ open scoped Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
 
 attribute [local instance] Classical.propDecidable
 
+private instance : IsScalarTower ℝ ℂ ℂ := inferInstance
+
 noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
@@ -336,10 +338,10 @@ lemma cpvExists_scale (γ : ℝ → ℂ) (a b : ℝ) (s c : ℂ)
       then (c / (γ t - s)) * deriv γ t else 0) =
     fun ε => c * ∫ t in a..b, if ‖γ t - s‖ > ε
       then (γ t - s)⁻¹ * deriv γ t else 0 := by
-    ext ε; rw [← intervalIntegral.integral_const_mul]
+    ext ε; erw [← intervalIntegral.integral_const_mul]
     apply intervalIntegral.integral_congr; intro t _
     dsimp only; split_ifs with h <;> ring
-  rw [h_eq]
+  erw [h_eq]
   exact hL.const_mul c
 
 /-! ### logDeriv_patched — patched logDeriv for ContinuousAt at zeros
@@ -538,7 +540,8 @@ lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ
     have h_inner : HasDerivAt (fun u => ω * (γ u - z₀)) (ω * deriv γ t) t := by
       convert ((hγ_diff t (Finset.mem_coe.not.mp ht_not_P)).hasDerivAt.sub_const z₀).const_mul ω
         using 1
-    convert (Complex.hasDerivAt_log (h_slit t (Ioo_subset_Icc_self ht_ioo))).scomp t h_inner
+    convert (@HasDerivAt.scomp ℝ _ ℂ _ _ t ℂ _ _ _ IsScalarTower.right _ _ _ _
+      (Complex.hasDerivAt_log (h_slit t (Ioo_subset_Icc_self ht_ioo))) h_inner)
       using 1
     rw [smul_eq_mul]
     have hωne : ω * (γ t - z₀) ≠ 0 :=
@@ -614,7 +617,7 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
       show (fdBoundary_HCurve H).b = (5:ℝ) from rfl] at h_classical
   rw [h_classical]
   suffices h_int : ∫ t in (0:ℝ)..5, (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t = 0 by
-    rw [h_int]; simp only [mul_zero]
+    erw [h_int]; simp only [mul_zero]
   push_neg at hz₀_not_fd
   have hγ_diff : ∀ t, t ∉ (fdBoundaryFullPartition : Finset ℝ) →
       DifferentiableAt ℝ (fdBoundary_H H) t := by

@@ -697,7 +697,10 @@ lemma rightEdge_ftc_telescope (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
   -- Convert from deriv g / g to (γ t - s)⁻¹ * deriv γ t form
   have h_congr : ∀ t, deriv g t / g t =
       (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t := fun t => by
-    simp only [hg_def, deriv_sub_const, div_eq_mul_inv, mul_comm]
+    simp only [hg_def]
+    have hd : deriv (fun t => fdBoundary_H H t - s) t = deriv (fdBoundary_H H) t :=
+      deriv_sub_const (f := fdBoundary_H H) _
+    rw [hd, div_eq_mul_inv, mul_comm]
   have hint_left_g : IntervalIntegrable (fun t => (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t)
       volume 0 (t₀ - δ) :=
     hint₀.congr_ae (ae_of_all _ h_congr)
@@ -928,7 +931,9 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
     generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 := by
   apply ContourIntegral.gWN_eq_neg_half_of_pv_tendsto
   have h_tendsto := rightEdge_winding_aux H hH_sqrt s hs_re hs_norm hs_im_lower hs_im
-  convert h_tendsto using 3
-  simp [sub_zero, gt_iff_lt]
+  have hd : ∀ t, deriv (fun t => fdBoundary_H H t - s) t = deriv (fdBoundary_H H) t :=
+    fun t => deriv_sub_const (f := fdBoundary_H H) _
+  convert h_tendsto using 1
+  ext ε; congr 1; ext t; simp only [sub_zero, gt_iff_lt, hd]
 
 end

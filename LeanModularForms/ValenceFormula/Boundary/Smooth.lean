@@ -24,6 +24,10 @@ open scoped Real Interval
 
 noncomputable section
 
+private instance : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
+private instance : IsBoundedSMul ℝ ℂ := NormSMulClass.toIsBoundedSMul
+private instance : ContinuousSMul ℝ ℂ := IsBoundedSMul.continuousSMul
+
 -- The arc on t ∈ (1,3) is ArcCalculus.unitArc (π/3) (2π/3) 1 3.
 private lemma arc_hasDerivAt (s : ℝ) :
     HasDerivAt (fun s' : ℝ => exp ((↑Real.pi * (↑s' + 1) / 6) * I))
@@ -185,26 +189,30 @@ lemma fdBoundary_H_deriv_ne_zero_off_fullPartition
     ⟨lt_of_le_of_ne ht.1 (Ne.symm ht0),
      lt_of_le_of_ne ht.2 ht5⟩
   by_cases h1 : t < 1
-  · rw [(fdBoundary_H_hasDerivAt_seg1' H t ⟨ht'.1, h1⟩).deriv]
+  · have hd := (fdBoundary_H_hasDerivAt_seg1' H t ⟨ht'.1, h1⟩)
+    rw [show deriv (fdBoundary_H H) t = _ from hd.deriv]
     simp only [neg_mul, ne_eq, neg_eq_zero, mul_eq_zero, sub_eq_zero, I_ne_zero, or_false]
     intro h; apply_fun Complex.re at h
     simp [ofReal_re] at h; linarith
   · push_neg at h1
     have h1' : 1 < t := lt_of_le_of_ne h1 (Ne.symm ht1)
     by_cases h3 : t < 3
-    · rw [((arc_hasDerivAt t).congr_of_eventuallyEq
-          (fdBoundary_H_eq_arc_near (H := H) h1' h3)).deriv]
+    · have hd := ((arc_hasDerivAt t).congr_of_eventuallyEq
+          (fdBoundary_H_eq_arc_near (H := H) h1' h3))
+      rw [show deriv (fdBoundary_H H) t = _ from hd.deriv]
       exact arc_limit_ne_zero t
     · push_neg at h3
       have h3' : 3 < t := lt_of_le_of_ne h3 (Ne.symm ht3)
       by_cases h4 : t < 4
-      · rw [(fdBoundary_H_hasDerivAt_seg4' H t ⟨h3', h4⟩).deriv]
+      · have hd := (fdBoundary_H_hasDerivAt_seg4' H t ⟨h3', h4⟩)
+        rw [show deriv (fdBoundary_H H) t = _ from hd.deriv]
         simp only [ne_eq, mul_eq_zero, sub_eq_zero, I_ne_zero, or_false]
         intro h; apply_fun Complex.re at h
         simp [ofReal_re] at h; linarith
       · push_neg at h4
-        rw [(fdBoundary_H_hasDerivAt_seg5' H t
-          ⟨lt_of_le_of_ne h4 (Ne.symm ht4), ht'.2⟩).deriv]
+        have hd := (fdBoundary_H_hasDerivAt_seg5' H t
+          ⟨lt_of_le_of_ne h4 (Ne.symm ht4), ht'.2⟩)
+        rw [show deriv (fdBoundary_H H) t = _ from hd.deriv]
         exact one_ne_zero
 
 lemma fdBoundary_H_deriv_continuousAt_off_fullPartition
@@ -226,7 +234,7 @@ lemma fdBoundary_H_deriv_continuousAt_off_fullPartition
         filter_upwards
           [(fdBoundary_H_eq_arc_near (H := H) h1' h3).deriv]
           with s hs
-        rw [hs]; exact (arc_hasDerivAt s).deriv
+        exact hs ▸ (arc_hasDerivAt s).deriv
       exact (continuousAt_congr hderiv_eq).mpr
         arc_deriv_continuous.continuousAt
     · push_neg at h3
@@ -810,13 +818,13 @@ lemma fdBoundary_H_deriv_bound_ex {H : ℝ}
     Finset.mem_singleton] at ht
   push_neg at ht; obtain ⟨h1, h3, h4⟩ := ht
   by_cases ht1 : t < 1
-  · rw [(fdBoundary_H_hasDerivAt_seg1 H ht1).deriv,
+  · rw [show deriv (fdBoundary_H H) t = _ from (fdBoundary_H_hasDerivAt_seg1 H ht1).deriv,
       neg_mul, norm_neg, norm_mul, Complex.norm_I, mul_one,
       norm_cast_sub_eq hH]
     exact le_max_left _ _
   · push_neg at ht1
     by_cases ht3 : t < 3
-    · rw [(fdBoundary_H_hasDerivAt_arc H
+    · rw [show deriv (fdBoundary_H H) t = _ from (fdBoundary_H_hasDerivAt_arc H
           (lt_of_le_of_ne ht1 (Ne.symm h1)) ht3).deriv]
       simp only [norm_mul, Complex.norm_I, mul_one]
       have hexp : ‖exp ((↑Real.pi * (↑t + 1) / 6) * I)‖ = 1 := by
@@ -832,13 +840,13 @@ lemma fdBoundary_H_deriv_bound_ex {H : ℝ}
       exact le_max_of_le_right (by linarith [Real.pi_le_four])
     · push_neg at ht3
       by_cases ht4 : t < 4
-      · rw [(fdBoundary_H_hasDerivAt_seg4 H
+      · rw [show deriv (fdBoundary_H H) t = _ from (fdBoundary_H_hasDerivAt_seg4 H
             (lt_of_le_of_ne ht3 (Ne.symm h3)) ht4).deriv,
           norm_mul, Complex.norm_I, mul_one,
           norm_cast_sub_eq hH]
         exact le_max_left _ _
       · push_neg at ht4
-        rw [(fdBoundary_H_hasDerivAt_seg5 H
+        rw [show deriv (fdBoundary_H H) t = _ from (fdBoundary_H_hasDerivAt_seg5 H
             (lt_of_le_of_ne ht4 (Ne.symm h4))).deriv,
           norm_one]
         exact le_max_right _ _

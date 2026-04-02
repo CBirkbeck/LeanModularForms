@@ -31,7 +31,7 @@ lemma fdPolygon_at_t2 : fdPolygon 2 = i_point := by
     show (2:ℝ) ≤ 2 from le_refl 2, ↓reduceIte]
   simp only [chordSegment, i_point]
   simp only [show (2:ℝ) - 1 = 1 by ring]
-  simp only [sub_self, zero_smul, zero_add, one_smul]
+  simp only [sub_self]; simp
 
 lemma fdPolygon_at_t3 : fdPolygon 3 = rho := by
   simp only [fdPolygon,
@@ -40,7 +40,7 @@ lemma fdPolygon_at_t3 : fdPolygon 3 = rho := by
     show (3:ℝ) ≤ 3 from le_refl 3, ↓reduceIte]
   simp only [chordSegment, rho]
   simp only [show (3:ℝ) - 2 = 1 by ring]
-  simp only [sub_self, zero_smul, zero_add, one_smul]
+  simp only [sub_self]; simp
 
 lemma fdPolygon_at_t4 :
     fdPolygon 4 = -1/2 + H_height * I := by
@@ -89,8 +89,7 @@ lemma fdPolygon_match_t1 :
     fdPolygon_seg1 1 = fdPolygon_seg2 1 := by
   simp only [fdPolygon_seg1, fdPolygon_seg2,
     chordSegment, H_height, rho']
-  simp only [sub_self, zero_smul, sub_zero, one_smul]
-  push_cast; ring
+  simp only [sub_self]; simp [rho']
 
 lemma fdPolygon_match_t2 :
     fdPolygon_seg2 2 = fdPolygon_seg3 2 := by
@@ -98,16 +97,14 @@ lemma fdPolygon_match_t2 :
     chordSegment, i_point]
   simp only [show (2:ℝ) - 1 = 1 by ring,
     show (2:ℝ) - 2 = 0 by ring]
-  simp only [sub_self, zero_smul, zero_add,
-    one_smul, sub_zero, add_zero]
+  simp only [sub_self]; simp
 
 lemma fdPolygon_match_t3 :
     fdPolygon_seg3 3 = fdPolygon_seg4 3 := by
   simp only [fdPolygon_seg3, fdPolygon_seg4,
     chordSegment, rho, H_height]
   simp only [show (3:ℝ) - 2 = 1 by ring]
-  simp only [sub_self, zero_smul, zero_add, one_smul]
-  push_cast; ring
+  simp only [sub_self]; simp
 
 lemma fdPolygon_match_t4 :
     fdPolygon_seg4 4 = fdPolygon_seg5 4 := by

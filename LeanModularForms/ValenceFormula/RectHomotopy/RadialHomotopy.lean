@@ -53,9 +53,9 @@ lemma polygonToCircleRadial_avoids (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p
   rw [add_eq_left] at heq
   have hsmul_zero : ((1 - s) * ‖fdPolygon t - p‖ + s) •
         ((fdPolygon t - p) / ‖fdPolygon t - p‖) = 0 := heq
-  rw [smul_eq_zero] at hsmul_zero
-  rcases hsmul_zero with hcoeff_zero | hdir_zero
-  · exact ne_of_gt hcoeff hcoeff_zero
+  rw [RCLike.real_smul_eq_coe_mul] at hsmul_zero
+  rcases mul_eq_zero.mp hsmul_zero with hcoeff_zero | hdir_zero
+  · exact ne_of_gt hcoeff (Complex.ofReal_eq_zero.mp hcoeff_zero)
   · rw [div_eq_zero_iff] at hdir_zero
     rcases hdir_zero with h1 | h2
     · exact hdir_ne h1
@@ -75,7 +75,8 @@ lemma fdPolygonRadialCircle_dist (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.r
   have hdir_ne : fdPolygon t - p ≠ 0 := sub_ne_zero.mpr hz_ne
   have hnorm_pos : ‖fdPolygon t - p‖ > 0 := norm_pos_iff.mpr hdir_ne
   simp only [fdPolygonRadialCircle, polygonToCircleRadial, sub_self, zero_mul, zero_add,
-    one_smul, add_sub_cancel_left]
+    add_sub_cancel_left]
+  erw [one_smul]
   rw [norm_div]
   have h_norm_real : ‖(‖fdPolygon t - p‖ : ℂ)‖ = |‖fdPolygon t - p‖| :=
     RCLike.norm_ofReal ‖fdPolygon t - p‖
@@ -546,9 +547,11 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
       · simp [hdir_ne]
       · have hnorm_ne : (‖dir‖ : ℂ) ≠ 0 :=
           Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr hdir_ne)
-        have hsmul_cancel : (‖dir‖ : ℝ) • (dir / (‖dir‖ : ℂ)) = dir := by
-          rw [real_smul, mul_div_cancel₀ _ hnorm_ne]
-        rw [add_smul, mul_smul, hsmul_cancel, ← add_assoc]
+        erw [RCLike.real_smul_eq_coe_mul, RCLike.real_smul_eq_coe_mul,
+          RCLike.real_smul_eq_coe_mul]
+        push_cast
+        have hmdc : ↑‖dir‖ * (dir / ↑‖dir‖) = dir := mul_div_cancel₀ _ hnorm_ne
+        rw [add_mul, mul_assoc]; erw [hmdc]; rw [add_assoc]
     have hg_diff : ∀ t',
         polygonToCircleRadial p (t', s) - polygonToCircleRadial p (t, s) =
         (1 - s) • (fdPolygon t' - fdPolygon t) +
@@ -559,8 +562,10 @@ lemma polygonToCircleRadial_deriv_bounded (p : ℂ) (hp_norm : ‖p‖ > 1)
       have h_cancel : ∀ (a b c d e : ℂ),
           a + b + c - (a + d + e) = (b - d) + (c - e) := by
         intros; ring
-      rw [h_cancel, ← smul_sub, ← smul_sub]
-      congr 1; congr 1; ring
+      rw [h_cancel]
+      simp only [RCLike.real_smul_eq_coe_mul]
+      push_cast
+      ring
     have h_norm_ge : ∀ᶠ t' in 𝓝 t, δ / 2 ≤ ‖fdPolygon t' - p‖ :=
       (fdPolygon_continuous.sub continuous_const).norm.continuousAt.preimage_mem_nhds
         (Ici_mem_nhds (by linarith [hδ_le t ht] : δ / 2 < ‖fdPolygon t - p‖))

@@ -98,7 +98,7 @@ section API
 /-- Subtraction of two basis elements with the same double coset. -/
 lemma T_single_sub (D : HeckeCoset P) (a b : ℤ) :
     T_single P ℤ D a - T_single P ℤ D b = T_single P ℤ D (a - b) := by
-  simp [sub_eq_add_neg]
+  rw [sub_eq_add_neg, T_single_neg, T_single_add, sub_eq_add_neg]
 
 /-- Scalar multiplication on a basis element. -/
 lemma T_single_smul (D : HeckeCoset P) (n a : ℤ) :
