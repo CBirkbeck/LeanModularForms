@@ -2,6 +2,7 @@ import LeanModularForms.Modularforms.tendstolems
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Analysis.Complex.LocallyUniformLimit
+import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Topology.Algebra.InfiniteSum.UniformOn
 import Mathlib.Topology.Separation.CompletelyRegular
 
@@ -23,36 +24,23 @@ theorem logDeriv_tprod_eq_tsum2 {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
     rw [← Summable.hasSum_iff hm]
     rw [Summable.hasSum_iff_tendsto_nat hm]
     let g := (∏' i : ℕ, f i ·)
-    have := logDeriv_tendsto (f := fun (n : ℕ) ↦ ∏ i ∈ Finset.range n, (f i)) (g := g) (s := s) hs
-      (p := atTop)
-    simp only [eventually_atTop, ge_iff_le, ne_eq, forall_exists_index, Subtype.forall, g] at this
-    have HT := this x x.2 ?_ ?_ ?_ ?_
+    have h_tlu : TendstoLocallyUniformlyOn (fun n z ↦ ∏ i ∈ Finset.range n, f i z) g atTop s := by
+      have := htend.hasProdLocallyUniformlyOn.tendstoLocallyUniformlyOn_finsetRange
+      exact this.congr (fun n => by intro z _; show ∏ i ∈ Finset.range n, f i z = ∏ i ∈ Finset.range n, f i z; rfl)
+    have h_diff : ∀ᶠ (n : ℕ) in atTop, DifferentiableOn ℂ (fun z => ∏ i ∈ Finset.range n, f i z) s := by
+      simp only [eventually_atTop, ge_iff_le]
+      use 0; intro b _; intro z hz
+      have := DifferentiableAt.finset_prod (fun i (_ : i ∈ Finset.range b) =>
+        (hd i z hz).differentiableAt (IsOpen.mem_nhds hs hz))
+      exact this.differentiableWithinAt.congr (fun w hw => (Finset.prod_apply ..).symm) (Finset.prod_apply ..).symm
+    have HT := logDeriv_tendsto (f := fun (n : ℕ) z ↦ ∏ i ∈ Finset.range n, f i z) (g := g)
+      (s := s) hs (x.2) (p := atTop) h_tlu h_diff hnez
     conv =>
       enter [1]
       ext n
-      rw [← logDeriv_prod _ _ _ (by intro i hi; apply hf i)
+      rw [← logDeriv_prod (by intro i hi; apply hf i)
         (by intro i hi; apply (hd i x x.2).differentiableAt; exact IsOpen.mem_nhds hs x.2)]
-    apply HT.congr
-    intro m
-    congr
-    ext i
-    simp only [Finset.prod_apply]
-    have:= htend.hasProdLocallyUniformlyOn.tendstoLocallyUniformlyOn_finsetRange
-    convert this
-    simp
-    use 0
-    intro b hb
-    rw [DifferentiableOn]
-    intro z hz
-    apply DifferentiableAt.differentiableWithinAt
-    have hp : ∀ (i : ℕ), i ∈ Finset.range b →  DifferentiableAt ℂ (f i) z := by
-      intro i hi
-      have := (hd i z hz).differentiableAt
-      apply this
-      exact IsOpen.mem_nhds hs hz
-    have := DifferentiableAt.finset_prod hp
-    convert this
-    · exact hnez
+    exact HT
 
 
 theorem logDeriv_tprod_eq_tsumold  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ → ℂ → ℂ)
@@ -67,32 +55,32 @@ theorem logDeriv_tprod_eq_tsumold  {s : Set ℂ} (hs : IsOpen s) (x : s) (f : �
     rw [← Summable.hasSum_iff hm]
     rw [Summable.hasSum_iff_tendsto_nat hm]
     let g := (∏' i : ℕ, f i ·)
-    have := logDeriv_tendsto (f := fun n ↦ ∏ i ∈ Finset.range n, (f i)) (g:=g) (s := s) hs (p := atTop)
-    simp only [eventually_atTop, ge_iff_le, ne_eq, forall_exists_index, Subtype.forall, g] at this
-    have HT := this x x.2 ?_ ?_ ?_ ?_
+    have HT := logDeriv_tendsto (f := fun n ↦ ∏ i ∈ Finset.range n, (f i)) (g := g)
+      (s := s) hs (x.2) (p := atTop) ?_ ?_ ?_
     conv =>
       enter [1]
       ext n
-      rw [← logDeriv_prod _ _ _ (by intro i hi; apply hf i)
+      rw [← logDeriv_prod (by intro i hi; apply hf i)
         (by intro i hi; apply (hd i x x.2).differentiableAt; exact IsOpen.mem_nhds hs x.2)]
     apply HT.congr
     intro m
     congr
     ext i
     simp only [Finset.prod_apply]
-    exact htend
-    use 0
-    intro b hb
-    rw [DifferentiableOn]
-    intro z hz
-    apply DifferentiableAt.differentiableWithinAt
-    have hp : ∀ (i : ℕ), i ∈ Finset.range b →  DifferentiableAt ℂ (f i) z := by
-      intro i hi
-      have := (hd i z hz).differentiableAt
-      apply this
-      exact IsOpen.mem_nhds hs hz
-    have := DifferentiableAt.finset_prod hp
-    convert this
+    · exact htend
+    · simp only [eventually_atTop, ge_iff_le]
+      use 0
+      intro b hb
+      rw [DifferentiableOn]
+      intro z hz
+      apply DifferentiableAt.differentiableWithinAt
+      have hp : ∀ (i : ℕ), i ∈ Finset.range b →  DifferentiableAt ℂ (f i) z := by
+        intro i hi
+        have := (hd i z hz).differentiableAt
+        apply this
+        exact IsOpen.mem_nhds hs hz
+      have := DifferentiableAt.finset_prod hp
+      convert this
     · exact hnez
 
 
@@ -135,7 +123,8 @@ lemma logDeriv_q_expo_summable (r : ℂ) (hr : ‖r‖ < 1) : Summable fun n : �
     use N
     intro n hn
     have h4 := hN n hn
-    have := norm_lt_of_mem_ball h4 (E := ℂ)
+    have : dist ((1 - r ^ n)⁻¹) 1 < 1 := by rwa [dist_eq_norm]
+    have := norm_lt_of_mem_ball (Metric.mem_ball.mpr this) (E := ℂ)
     simp at *
     rw [div_eq_mul_inv]
     rw [mul_comm]
@@ -179,4 +168,5 @@ lemma logDeriv_eqOn_iff2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableO
     (hg : DifferentiableOn ℂ g s) (hs : s.Nonempty) (hs2 : IsOpen s) (hsc : Convex ℝ s)
     (hgn : ∀ x, x ∈ s →  g x ≠ 0) (hfn : ∀ x, x ∈ s → f x ≠ 0) : EqOn (logDeriv f) (logDeriv g) s ↔
     ∃( z : ℂ),  z ≠ 0 ∧  EqOn (f) (z • g) s := by
-  apply logDeriv_eqOn_iff hf hg hs2 (hsc.isPreconnected) hgn hfn
+  haveI : IsBoundedSMul ℝ ℂ := NormedSpace.toIsBoundedSMul
+  exact logDeriv_eqOn_iff hf hg hs2 (hsc.isPreconnected) hgn hfn

@@ -1,12 +1,16 @@
-import Mathlib.Data.Rat.Star
-import Mathlib.LinearAlgebra.Dimension.Localization
-import Mathlib.NumberTheory.ModularForms.LevelOne
-import LeanModularForms.Modularforms.Eisenstein
+module
+
+public import Mathlib.Data.Rat.Star
+public import Mathlib.LinearAlgebra.Dimension.Localization
+public import Mathlib.NumberTheory.ModularForms.LevelOne
+public import LeanModularForms.Modularforms.Eisenstein
+
+@[expose] public section
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex MatrixGroups SlashInvariantFormClass ModularFormClass
 
-open scoped Interval Real NNReal ENNReal Topology BigOperators Nat Classical
+open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
   Real MatrixGroups CongruenceSubgroup
 
 noncomputable section
@@ -27,18 +31,29 @@ lemma mul_Delta_map_eq (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gamma 1) (
   rfl
 
 lemma mul_Delta_map_eq_mul (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gamma 1) (k - 12)) :
-  ((mul_Delta_map k f) : ℍ → ℂ) = (f.mul (ModForm_mk _ 12 Delta))  := by
+  ((mul_Delta_map k f) : ℍ → ℂ) = (f.mul (ModForm_mk _ 12 Delta)) := by
   ext z
   rw [mul_Delta_map, mcast_apply ]
+
+lemma qExpansion_coe_smul {n : ℕ} [NeZero n] {k : ℤ} (a : ℂ) (f : ModularForm Γ(n) k) :
+    qExpansion n (⇑(a • f)) = qExpansion n (a • ⇑f) := rfl
+
+lemma qExpansion_coe_smul_cusp {n : ℕ} [NeZero n] {k : ℤ} (a : ℂ) (f : CuspForm Γ(n) k) :
+    qExpansion n (⇑(a • f)) = qExpansion n (a • ⇑f) := rfl
+
+lemma qExpansion_coe_sub {k : ℤ} (f g : ModularForm Γ(1) k) :
+    qExpansion (1 : ℕ) (⇑(f - g)) = qExpansion (1 : ℕ) (⇑f - ⇑g) := rfl
 
 lemma mul_Delta_IsCuspForm (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gamma 1) (k - 12)) :
   IsCuspForm (CongruenceSubgroup.Gamma 1) k (mul_Delta_map k f) := by
   rw [IsCuspForm_iff_coeffZero_eq_zero]
-  rw [qExpansion_ext2  _ _ (mul_Delta_map_eq_mul k f)]
-  rw [qExpansion_mul_coeff_zero]
-  simp only [ mul_eq_zero]
+  rw [qExpansion_ext2 _ _ (mul_Delta_map_eq_mul k f)]
+  rw [← Nat.cast_one (R := ℝ), qExpansion_mul_coeff]
+  simp only [PowerSeries.coeff_mul, Finset.antidiagonal_zero, Prod.mk_zero_zero,
+    Finset.sum_singleton, Prod.fst_zero, Prod.snd_zero]
+  simp only [mul_eq_zero]
   right
-  rw [← IsCuspForm_iff_coeffZero_eq_zero ]
+  rw [Nat.cast_one, ← IsCuspForm_iff_coeffZero_eq_zero]
   rw [IsCuspForm, CuspFormSubmodule, CuspForm_to_ModularForm]
   simp
 
@@ -49,8 +64,8 @@ def Modform_mul_Delta' (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gamma 1) (
 theorem mul_apply {k₁ k₂ : ℤ} {Γ : Subgroup SL(2, ℤ)} (f : SlashInvariantForm Γ k₁)
     (g : SlashInvariantForm Γ k₂) (z : ℍ) : (f.mul g) z = f z * g z := rfl
 
-lemma Modform_mul_Delta_apply (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gamma 1) (k - 12)) (z : ℍ) :
-  (Modform_mul_Delta' k f) z = f z * Delta z := by
+lemma Modform_mul_Delta_apply (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gamma 1) (k - 12))
+    (z : ℍ) : (Modform_mul_Delta' k f) z = f z * Delta z := by
   rw [Modform_mul_Delta']
   have := congr_fun
     (CuspForm_to_ModularForm_Fun_coe _ _ (mul_Delta_map k f) (mul_Delta_IsCuspForm k f)) z
@@ -60,14 +75,14 @@ lemma Modform_mul_Delta_apply (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gam
 
 def CuspForms_iso_Modforms (k : ℤ) : CuspForm (CongruenceSubgroup.Gamma 1) k ≃ₗ[ℂ]
     ModularForm (CongruenceSubgroup.Gamma 1) (k - 12) where
-      toFun f :=  CuspForm_div_Discriminant k f
+      toFun f := CuspForm_div_Discriminant k f
       map_add' a b := CuspForm_div_Discriminant_Add k a b
       map_smul' := by
         intro m a
         ext z
         simp only [CuspForm_div_Discriminant_apply, CuspForm.IsGLPos.smul_apply, smul_eq_mul,
           RingHom.id_apply, IsGLPos.smul_apply]
-        ring
+        exact mul_div_assoc m (a z) (Δ z)
       invFun := Modform_mul_Delta' k
       left_inv := by
         intro f
@@ -111,24 +126,15 @@ lemma IsCuspForm_weight_lt_eq_zero (k : ℤ) (hk : k < 12) (f : ModularForm Γ(1
   simp only [SlashInvariantForm.toFun_eq_coe, CuspForm.toSlashInvariantForm_coe,
   toSlashInvariantForm_coe] at hz
   rw [← hz]
-  have := rank_zero_iff_forall_zero.mp  (cuspform_weight_lt_12_zero k hk)
+  have := rank_zero_iff_forall_zero.mp (cuspform_weight_lt_12_zero k hk)
     (IsCuspForm_to_CuspForm Γ(1) k f hf)
   rw [this]
   simp only [CuspForm.zero_apply]
 
 lemma Delta_E4_E6_eq : ModForm_mk _ _ Delta_E4_E6_aux =
   ((1/ 1728 : ℂ) • (((DirectSum.of _ 4 E₄)^3 - (DirectSum.of _ 6 E₆)^2) 12 )) := by
-  rw [ModForm_mk]
-  rw [Delta_E4_E6_aux]
-  have := CuspForm_to_ModularForm_Fun_coe _ _  ((1/ 1728 : ℂ) • (((DirectSum.of _ 4 E₄)^3 - (DirectSum.of _ 6 E₆)^2) 12 )) ?_
-  simp at *
-  ext z
-  have hg := congr_fun this z
-  simp at *
-  rw [← hg]
+  ext
   rfl
-  rw [IsCuspForm_iff_coeffZero_eq_zero]
-  exact E4E6_coeff_zero_eq_zero
 
 lemma Delta_E4_E6_aux_q_one_term : (qExpansion 1 Delta_E4_E6_aux).coeff 1 = 1 := by
   have := Delta_E4_E6_eq
@@ -140,43 +146,79 @@ lemma Delta_E4_E6_aux_q_one_term : (qExpansion 1 Delta_E4_E6_aux).coeff 1 = 1 :=
     rfl
   rw [h1, Delta_E4_E6_eq]
   simp only [one_div, DirectSum.sub_apply]
-  rw [← qExpansion_smul2]
-  rw [qExpansion_sub]
-  have h4 := qExpansion_pow E₄ 3
-  have h6 := qExpansion_pow E₆ 2
-  simp only [Nat.cast_ofNat, Int.reduceMul] at h4 h6
-  rw [h4, h6]
-  simp
-  rw [pow_three, pow_two]
-  simp_rw [PowerSeries.coeff_mul]
-  rw [antidiagonal_one]
-  simp  [Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
-    not_false_eq_true, Finset.sum_insert, Finset.antidiagonal_zero, Prod.mk_zero_zero,
-    Finset.sum_singleton, Prod.fst_zero, Prod.snd_zero]
-  have he4 := E4_q_exp_zero
-  have he6 := E6_q_exp_zero
-  simp at *
-  simp_rw [E4_q_exp_one, he4, he6]
-  ring_nf
-  rw [antidiagonal_one]
-  simp only [Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
-    not_false_eq_true, Finset.sum_insert, PowerSeries.coeff_zero_eq_constantCoeff,
-    Finset.sum_singleton, one_div]
-  simp_rw [E4_q_exp_one, he4, E6_q_exp_one]
-  ring
+  let A : ModularForm Γ(1) 12 := (((DirectSum.of _ 4 E₄) ^ 3) 12)
+  let B : ModularForm Γ(1) 12 := (((DirectSum.of _ 6 E₆) ^ 2) 12)
+  change (PowerSeries.coeff 1) (qExpansion 1 ⇑((1728⁻¹ : ℂ) • (A - B))) = 1
+  rw [show qExpansion 1 ⇑((1728⁻¹ : ℂ) • (A - B)) = qExpansion 1 ((1728⁻¹ : ℂ) • (A - B)) by rfl]
+  change (PowerSeries.coeff 1) (qExpansion 1 ((1728⁻¹ : ℂ) • ((A - B : ModularForm Γ(1) 12)))) = 1
+  rw [← Nat.cast_one (R := ℝ), ← qExpansion_smul2]
+  have hsub1 : qExpansion 1 ⇑(A - B) = qExpansion 1 (⇑A - ⇑B) := by rfl
+  have hsub2 : qExpansion 1 (⇑A - ⇑B) = qExpansion 1 ⇑A - qExpansion 1 ⇑B := by
+    simpa using (qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ))
+      (hh := by positivity) (hΓ := by simp) (f := A) (g := B))
+  have hmain : (PowerSeries.coeff 1) ((1728⁻¹ : ℂ) • (qExpansion 1 ⇑A - qExpansion 1 ⇑B)) = 1 := by
+    have h4 := qExpansion_pow E₄ 3
+    have h6 := qExpansion_pow E₆ 2
+    simp only [Nat.cast_ofNat, Int.reduceMul] at h4 h6
+    have hA : qExpansion 1 A = (qExpansion 1 E₄) ^ 3 := by simpa [A] using h4
+    have hB : qExpansion 1 B = (qExpansion 1 E₆) ^ 2 := by simpa [B] using h6
+    rw [hA, hB]
+    have he4_0 := E4_q_exp_zero
+    have he6_0 := E6_q_exp_zero
+    have he4_1 := E4_q_exp_one
+    have he6_1 := E6_q_exp_one
+    -- Direct computation: coeff_1(E₄³ - E₆²) = 1728
+    -- In Lean 4.29, rw/simp can't match through coercion layers (PowerSeries.coeff,
+    -- ModularForm → ℍ → ℂ). Use sub_eq_sub_of_eq with manual term construction.
+    rw [pow_three, pow_two]
+    have hmul4a := qExpansion_mul_coeff 1 4 4 E₄ E₄
+    have hmul4b := qExpansion_mul_coeff 1 4 8 E₄ (E₄.mul E₄)
+    have hmul6 := qExpansion_mul_coeff 1 6 6 E₆ E₆
+    simp only [Nat.cast_one] at hmul4a hmul4b hmul6
+    -- Build the argument equality
+    have h_arg_eq : (1728⁻¹ : ℂ) • (qExpansion 1 ⇑E₄ * (qExpansion 1 ⇑E₄ * qExpansion 1 ⇑E₄) -
+        qExpansion 1 ⇑E₆ * qExpansion 1 ⇑E₆) =
+        (1728⁻¹ : ℂ) • (qExpansion 1 ⇑(E₄.mul (E₄.mul E₄)) -
+        qExpansion 1 ⇑(E₆.mul E₆)) := by
+      congr 1
+      exact congrArg₂ (· - ·) (hmul4b.trans (congrArg _ hmul4a)).symm hmul6.symm
+    -- Transport through LinearMap application via congr_arg then ▸
+    have h_trans := congrArg (PowerSeries.coeff 1) h_arg_eq
+    -- Use ▸ which works at the definitional level
+    calc (PowerSeries.coeff 1)
+          (1728⁻¹ • (qExpansion 1 ⇑E₄ * (qExpansion 1 ⇑E₄ * qExpansion 1 ⇑E₄) -
+          qExpansion 1 ⇑E₆ * qExpansion 1 ⇑E₆))
+        = (PowerSeries.coeff 1)
+          (1728⁻¹ • (qExpansion 1 ⇑(E₄.mul (E₄.mul E₄)) -
+          qExpansion 1 ⇑(E₆.mul E₆))) := h_trans
+      _ = 1728⁻¹ * ((PowerSeries.coeff 1) (qExpansion 1 ⇑(E₄.mul (E₄.mul E₄))) -
+          (PowerSeries.coeff 1) (qExpansion 1 ⇑(E₆.mul E₆))) := by
+        rw [map_smul, smul_eq_mul, map_sub]
+      _ = 1728⁻¹ * (3 * 240 - (PowerSeries.coeff 1) (qExpansion 1 ⇑(E₆.mul E₆))) := by
+        rw [E4_pow_q_exp_one]
+      _ = 1728⁻¹ * (3 * 240 - (PowerSeries.coeff 1) (qExpansion 1 ⇑E₆ * qExpansion 1 ⇑E₆)) := by
+        rw [congrArg (PowerSeries.coeff 1) hmul6]
+      _ = 1 := by
+        rw [PowerSeries.coeff_mul, antidiagonal_one]
+        simp only [Finset.sum_insert (by decide : (1, 0) ∉ ({(0, 1)} : Finset _)),
+          Finset.sum_singleton, he6_0, he6_1]
+        norm_num
+  simpa [hsub1, hsub2] using hmain
 
-theorem Delta_E4_eqn : Delta = Delta_E4_E6_aux  := by
+theorem Delta_E4_eqn : Delta = Delta_E4_E6_aux := by
   ext z
   obtain ⟨c, H⟩ := delta_eq_E4E6_const
-  suffices h2 : c  = 1 by
+  suffices h2 : c = 1 by
     rw [h2] at H
     simp at H
     rw [H]
   · have h1 := Delta_q_one_term
     have h2 := Delta_E4_E6_aux_q_one_term
-    have := qExpansion_smul 1 c Delta
     rw [← H] at h2
-    rw [← this] at h2
+    have hs := (qExpansion_smul (Γ := Γ(1)) (h := (1 : ℕ))
+      (hh := by positivity) (hΓ := by simp) c Delta).symm
+    have hsmul : qExpansion 1 ⇑(c • Delta) = qExpansion 1 (c • ⇑Delta) := by rfl
+    rw [hsmul, ← Nat.cast_one (R := ℝ), ← hs] at h2
     simp at h2
     rw [h1] at h2
     simpa using h2
@@ -200,12 +242,20 @@ lemma weight_six_one_dimensional : Module.rank ℂ (ModularForm Γ(1) 6) = 1 := 
     set c := (qExpansion 1 f).coeff 0 with hc
     have hcusp : IsCuspForm Γ(1) 6 (E₆ - c⁻¹• f) := by
       rw [IsCuspForm_iff_coeffZero_eq_zero]
-      rw [qExpansion_sub]
-      have := modularForm_normalise f hf2
-      simp only [ne_eq,  map_sub] at *
-      rw [hc, this]
-      rw [E6_q_exp_zero]
-      exact sub_eq_zero_of_eq rfl
+      rw [← Nat.cast_one (R := ℝ), qExpansion_coe_sub,
+        qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)]
+      have hnorm0 := modularForm_normalise f hf2
+      have hcInv : c⁻¹ = ((PowerSeries.coeff 0) (qExpansion 1 ⇑f))⁻¹ := by simp [hc]
+      have hnorm : (PowerSeries.coeff 0) (qExpansion 1 ⇑(c⁻¹ • f)) = 1 := by
+        calc
+          (PowerSeries.coeff 0) (qExpansion 1 ⇑(c⁻¹ • f)) =
+              (PowerSeries.coeff 0) (qExpansion 1 (c⁻¹ • ⇑f)) := by rfl
+          _ = (PowerSeries.coeff 0) (qExpansion 1 (((PowerSeries.coeff 0)
+                (qExpansion 1 ⇑f))⁻¹ • ⇑f)) := by simp [hcInv]
+          _ = 1 := hnorm0
+      have hnorm' : PowerSeries.constantCoeff (qExpansion 1 (c⁻¹ • ⇑f)) = 1 := by
+        simpa [PowerSeries.constantCoeff] using hnorm
+      simp [map_sub, E6_q_exp_zero, hnorm']
     have := IsCuspForm_weight_lt_eq_zero 6 (by norm_num) (E₆ - c⁻¹• f) hcusp
     have hfc := hf c
     rw [@sub_eq_zero] at this
@@ -230,21 +280,29 @@ lemma weight_four_one_dimensional : Module.rank ℂ (ModularForm Γ(1) 4) = 1 :=
     set c := (qExpansion 1 f).coeff 0 with hc
     have hcusp : IsCuspForm Γ(1) 4 (E₄ - c⁻¹• f) := by
       rw [IsCuspForm_iff_coeffZero_eq_zero]
-      rw [qExpansion_sub]
-      have := modularForm_normalise f hf2
-      simp only [ne_eq,  map_sub] at *
-      rw [hc, this]
-      rw [E4_q_exp_zero]
-      exact sub_eq_zero_of_eq rfl
+      rw [← Nat.cast_one (R := ℝ), qExpansion_coe_sub,
+        qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)]
+      have hnorm0 := modularForm_normalise f hf2
+      have hcInv : c⁻¹ = ((PowerSeries.coeff 0) (qExpansion 1 ⇑f))⁻¹ := by simp [hc]
+      have hnorm : (PowerSeries.coeff 0) (qExpansion 1 ⇑(c⁻¹ • f)) = 1 := by
+        calc
+          (PowerSeries.coeff 0) (qExpansion 1 ⇑(c⁻¹ • f)) =
+              (PowerSeries.coeff 0) (qExpansion 1 (c⁻¹ • ⇑f)) := by rfl
+          _ = (PowerSeries.coeff 0) (qExpansion 1 (((PowerSeries.coeff 0)
+                (qExpansion 1 ⇑f))⁻¹ • ⇑f)) := by simp [hcInv]
+          _ = 1 := hnorm0
+      have hnorm' : PowerSeries.constantCoeff (qExpansion 1 (c⁻¹ • ⇑f)) = 1 := by
+        simpa [PowerSeries.constantCoeff] using hnorm
+      simp [map_sub, E4_q_exp_zero, hnorm']
     have := IsCuspForm_weight_lt_eq_zero 4 (by norm_num) (E₄ - c⁻¹• f) hcusp
     have hfc := hf c
     rw [@sub_eq_zero] at this
     aesop
 
-lemma weight_eight_one_dimensional  (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (hk3 : k < 12):
+lemma weight_eight_one_dimensional (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (hk3 : k < 12) :
     Module.rank ℂ (ModularForm Γ(1) k) = 1 := by
   rw [rank_eq_one_iff ]
-  refine ⟨E hk ,Ek_ne_zero k hk hk2, ?_⟩
+  refine ⟨E k hk ,Ek_ne_zero k hk hk2, ?_⟩
   by_contra h
   simp at h
   obtain ⟨f, hf⟩ := h
@@ -258,17 +316,25 @@ lemma weight_eight_one_dimensional  (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (hk3
       rw [← IsCuspForm_iff_coeffZero_eq_zero] at h
       exact hf2 h
     set c := (qExpansion 1 f).coeff 0 with hc
-    have hcusp : IsCuspForm Γ(1) k (E hk - c⁻¹• f) := by
+    have hcusp : IsCuspForm Γ(1) k (E k hk - c⁻¹• f) := by
       rw [IsCuspForm_iff_coeffZero_eq_zero]
-      rw [qExpansion_sub]
-      have := modularForm_normalise f hf2
-      simp only [ne_eq,  map_sub] at *
-      rw [hc, this]
+      rw [← Nat.cast_one (R := ℝ), qExpansion_coe_sub,
+        qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)]
+      have hnorm0 := modularForm_normalise f hf2
+      have hcInv : c⁻¹ = ((PowerSeries.coeff 0) (qExpansion 1 ⇑f))⁻¹ := by simp [hc]
+      have hnorm : (PowerSeries.coeff 0) (qExpansion 1 ⇑(c⁻¹ • f)) = 1 := by
+        calc
+          (PowerSeries.coeff 0) (qExpansion 1 ⇑(c⁻¹ • f)) =
+              (PowerSeries.coeff 0) (qExpansion 1 (c⁻¹ • ⇑f)) := by rfl
+          _ = (PowerSeries.coeff 0)
+              (qExpansion 1 (((PowerSeries.coeff 0) (qExpansion 1 ⇑f))⁻¹ • ⇑f)) := by
+              simp [hcInv]
+          _ = 1 := hnorm0
       have hE := Ek_q_exp_zero k hk hk2
-      simp at *
-      rw [hE]
-      exact sub_eq_zero_of_eq rfl
-    have := IsCuspForm_weight_lt_eq_zero k (by simpa using hk3) (E hk - c⁻¹• f) hcusp
+      have hnorm' : PowerSeries.constantCoeff (qExpansion 1 (c⁻¹ • ⇑f)) = 1 := by
+        simpa [PowerSeries.constantCoeff] using hnorm
+      simp [map_sub, hE, hnorm']
+    have := IsCuspForm_weight_lt_eq_zero k (by simpa using hk3) (E k hk - c⁻¹• f) hcusp
     have hfc := hf c
     rw [@sub_eq_zero] at this
     aesop
@@ -286,7 +352,7 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
     simp only [SlashInvariantForm.toFun_eq_coe, CuspForm.toSlashInvariantForm_coe,
       toSlashInvariantForm_coe] at hz
     rw [← hz]
-    have := rank_zero_iff_forall_zero.mp  (cuspform_weight_lt_12_zero 2 (by norm_num))
+    have := rank_zero_iff_forall_zero.mp (cuspform_weight_lt_12_zero 2 (by norm_num))
       (IsCuspForm_to_CuspForm Γ(1) 2 f hf)
     rw [this]
     simp only [CuspForm.zero_apply]
@@ -294,53 +360,47 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
       intro h
       rw [← IsCuspForm_iff_coeffZero_eq_zero] at h
       exact hf h
-    have r6 := weight_six_one_dimensional
-    rw [Module.rank_eq_one_iff_finrank_eq_one] at r6
-    rw [finrank_eq_one_iff_of_nonzero' E₆ E6_ne_zero] at r6
-    have r6f := r6 ((f.mul f).mul f)
-    obtain ⟨c6, hc6⟩ := r6f
-    have hc6e : c6 =  ((qExpansion 1 f).coeff 0)^3 := by
-      have := qExpansion_mul_coeff 1 4 2 (f.mul f) f
+    obtain ⟨c6, hc6⟩ := exists_smul_eq_of_rank_one' weight_six_one_dimensional E6_ne_zero
+      ((f.mul f).mul f)
+    have hc6e : c6 = ((qExpansion 1 f).coeff 0)^3 := by
+      have h1 : qExpansion (1 : ℕ) ⇑(c6 • E₆) = qExpansion (1 : ℕ) ⇑(f.mul f) * qExpansion (1 : ℕ) ⇑f := by
+        rw [hc6]; exact qExpansion_mul_coeff 1 4 2 (f.mul f) f
       have h2 := qExpansion_mul_coeff 1 2 2 f f
-      rw [← hc6] at this
-      rw [← qExpansion_smul2 1 c6, h2] at this
-      have hh := congr_arg (fun x => x.coeff 0) this
+      rw [qExpansion_coe_smul, ← qExpansion_smul2 1 c6, h2] at h1
+      have hh := congr_arg (fun x => x.coeff 0) h1
       simp only [_root_.map_smul, smul_eq_mul] at hh
-      rw [E6_q_exp_zero] at hh
+      rw [Nat.cast_one, E6_q_exp_zero] at hh
       rw [pow_three]
       simp only [PowerSeries.coeff_zero_eq_constantCoeff, ne_eq, Int.reduceAdd, mul_one,
         map_mul] at *
       rw [← mul_assoc]
       exact hh
-    have r4 := weight_four_one_dimensional
-    rw [Module.rank_eq_one_iff_finrank_eq_one] at r4
-    rw [finrank_eq_one_iff_of_nonzero' E₄ E4_ne_zero] at r4
-    have r4f := r4 (f.mul f)
-    obtain ⟨c4, hc4⟩ := r4f
-    have hc4e : c4 =  ((qExpansion 1 f).coeff 0)^2 := by
-      have := qExpansion_mul_coeff 1 2 2 f f
-      rw [← hc4] at this
-      rw [← qExpansion_smul2 1 c4] at this
-      have hh := congr_arg (fun x => x.coeff 0) this
+    obtain ⟨c4, hc4⟩ := exists_smul_eq_of_rank_one' weight_four_one_dimensional E4_ne_zero
+      (f.mul f)
+    have hc4e : c4 = ((qExpansion 1 f).coeff 0)^2 := by
+      have h1 : qExpansion (1 : ℕ) ⇑(c4 • E₄) = qExpansion (1 : ℕ) ⇑f * qExpansion (1 : ℕ) ⇑f := by
+        rw [hc4]; exact qExpansion_mul_coeff 1 2 2 f f
+      rw [qExpansion_coe_smul (a := c4) (f := E₄), ← qExpansion_smul2 1 c4] at h1
+      have hh := congr_arg (fun x => x.coeff 0) h1
       simp only [_root_.map_smul, smul_eq_mul] at hh
-      rw [E4_q_exp_zero] at hh
+      rw [Nat.cast_one, E4_q_exp_zero] at hh
       rw [pow_two]
       simpa using hh
     exfalso
-    let F :=  DirectSum.of _ 2 f
+    let F := DirectSum.of _ 2 f
     let D := DirectSum.of _ 12 (ModForm_mk Γ(1) 12 Delta) 12
     have : D ≠ 0 := by
       have HD := ModForm_mk_inj _ _ _ Delta_ne_zero
       apply HD
-    have HF2 : (F^2)  =  c4 • (DirectSum.of _ 4 E₄) := by
+    have HF2 : (F^2) = c4 • (DirectSum.of _ 4 E₄) := by
       rw [← DirectSum.of_smul, hc4]
       simp [F]
       rw [pow_two, DirectSum.of_mul_of]
       rfl
-    have HF3 : (F^3)  =  c6 • (DirectSum.of _ 6 E₆) := by
+    have HF3 : (F^3) = c6 • (DirectSum.of _ 6 E₆) := by
       rw [← DirectSum.of_smul, hc6]
       simp [F]
-      rw [pow_three,  ← mul_assoc, DirectSum.of_mul_of, DirectSum.of_mul_of]
+      rw [pow_three, ← mul_assoc, DirectSum.of_mul_of, DirectSum.of_mul_of]
       rfl
     have HF12 : (((F^2)^3) 12) = ((qExpansion 1 f).coeff 0)^6 • (E₄.mul (E₄.mul E₄)) := by
       rw [HF2, pow_three]
@@ -359,7 +419,8 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
       rw [@DirectSum.smul_apply]
       simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, DirectSum.of_eq_same]
       rfl
-    have V : (1 / 1728 : ℂ) • ((((F^2)^3) 12) - (((F^3)^2) 12)) =  ((qExpansion 1 f).coeff 0)^6 • D := by
+    have V : (1 / 1728 : ℂ) • ((((F^2)^3) 12) - (((F^3)^2) 12)) = ((qExpansion 1 f).coeff 0)^6 • D
+      := by
       rw [HF12, hF2]
       simp only [one_div, Int.reduceAdd, PowerSeries.coeff_zero_eq_constantCoeff,
         DirectSum.of_eq_same, D]
@@ -391,38 +452,42 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
       rw [← Delta_apply] at hDelta
       exact hDelta h
 
-lemma dim_modforms_eq_one_add_dim_cuspforms (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) :
+lemma dim_modforms_eq_one_add_dim_cuspforms (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) k) =
     1 + Module.rank ℂ (CuspForm (CongruenceSubgroup.Gamma 1) k) := by
-    have h1 : Module.rank ℂ (CuspFormSubmodule (CongruenceSubgroup.Gamma 1) k)  =
+  have h1 : Module.rank ℂ (CuspFormSubmodule (CongruenceSubgroup.Gamma 1) k) =
       Module.rank ℂ (CuspForm (CongruenceSubgroup.Gamma 1) k) := by
-      apply LinearEquiv.rank_eq
-      have := CuspForm_iso_CuspFormSubmodule Γ(1) k
-      exact _root_.id this.symm
-    rw [← h1, ← Submodule.rank_quotient_add_rank (CuspFormSubmodule (CongruenceSubgroup.Gamma 1) k)]
-    congr
-    rw [rank_eq_one_iff ]
-    refine ⟨ Submodule.Quotient.mk (E (by linarith)), ?_, ?_⟩
-    intro hq
-    rw [Submodule.Quotient.mk_eq_zero] at hq
-    have := IsCuspForm_iff_coeffZero_eq_zero k (E (by linarith))
-    rw [IsCuspForm] at this
-    rw [this, Ek_q_exp_zero k hk hk2] at hq
-    aesop
-    intro v
-    have  := Quotient.exists_rep v
-    obtain ⟨f, hf⟩ := this
-    use ((qExpansion 1 f).coeff 0)
-    rw [← Submodule.Quotient.mk_smul, ← hf ]
-    have : ⟦f⟧ = Submodule.Quotient.mk f
-      (p := (CuspFormSubmodule (CongruenceSubgroup.Gamma 1) k)  ):= by rfl
-    rw [this, Submodule.Quotient.eq, CuspFormSubmodule_mem_iff_coeffZero_eq_zero, qExpansion_sub,
-      ← qExpansion_smul2]
-    have hc := Ek_q_exp_zero k hk hk2
-    simp only [PowerSeries.coeff_zero_eq_constantCoeff, map_sub, PowerSeries.constantCoeff_smul,
-      smul_eq_mul] at *
-    rw [hc]
-    ring
+    simpa using LinearEquiv.rank_eq (CuspForm_iso_CuspFormSubmodule Γ(1) k).symm
+  rw [← h1, ← Submodule.rank_quotient_add_rank (CuspFormSubmodule (CongruenceSubgroup.Gamma 1) k)]
+  congr
+  rw [rank_eq_one_iff]
+  refine ⟨Submodule.Quotient.mk (E k hk), ?_, ?_⟩
+  · intro hq
+    have hq' := (Submodule.Quotient.mk_eq_zero _).mp hq
+    rw [CuspFormSubmodule_mem_iff_coeffZero_eq_zero, Ek_q_exp_zero k hk hk2] at hq'
+    simp at hq'
+  · intro v
+    obtain ⟨f, rfl⟩ := Quotient.exists_rep v
+    refine ⟨(qExpansion 1 f).coeff 0, ?_⟩
+    change Submodule.Quotient.mk (((qExpansion 1 f).coeff 0) • E k hk) = Submodule.Quotient.mk f
+    rw [Submodule.Quotient.eq, CuspFormSubmodule_mem_iff_coeffZero_eq_zero]
+    let c : ℂ := (qExpansion 1 f).coeff 0
+    change (PowerSeries.coeff 0) (qExpansion 1 ⇑(c • E k hk - f)) = 0
+    have hqsub :
+        qExpansion 1 ⇑(c • E k hk - f) =
+          qExpansion 1 ⇑(c • E k hk) - qExpansion 1 ⇑f := by
+      simpa using
+        (qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)
+          (f := c • E k hk) (g := f))
+    have hsmul : qExpansion 1 ⇑(c • E k hk) = c • qExpansion 1 (E k hk) := by
+      calc
+        qExpansion 1 ⇑(c • E k hk) = qExpansion 1 (c • ⇑(E k hk)) := by rfl
+        _ = c • qExpansion 1 (E k hk) := by
+          simpa using (qExpansion_smul2 1 c (E k hk)).symm
+    rw [hqsub, hsmul]
+    rw [← Nat.cast_one (R := ℝ)]
+    simp [PowerSeries.coeff_zero_eq_constantCoeff, map_sub, smul_eq_mul, Ek_q_exp_zero k hk hk2,
+      c]
 
 theorem dim_weight_two : Module.rank ℂ (ModularForm Γ(1) ↑2) = 0 := by
   rw [@rank_zero_iff_forall_zero]
@@ -440,10 +505,10 @@ lemma floor_lem1 (k a : ℚ) (ha : 0 < a) (hak : a ≤ k) :
   refine (le_div_iff₀ ha).mpr ?_
   simpa using hak
 
-lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k)  :
+lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) (k)) = if 12 ∣ ((k) : ℤ) - 2 then
     Nat.floor ((k : ℚ)/ 12) else Nat.floor ((k : ℚ) / 12) + 1 := by
-  induction' k using Nat.strong_induction_on with k ihn
+  induction k using Nat.strong_induction_on with | h k ihn =>
   rw [dim_modforms_eq_one_add_dim_cuspforms (k) (by omega) hk2 ,
     LinearEquiv.rank_eq (CuspForms_iso_Modforms (((k)) : ℤ))]
   by_cases HK : (3 : ℤ) ≤ (((k : ℤ) - 12))
@@ -473,7 +538,7 @@ lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k)  :
         omega
     · omega
     · refine (Nat.even_sub ?_).mpr ?_
-      omega
+      · omega
       simp only [hk2, true_iff]
       decide
   · simp only [not_le] at HK
@@ -483,60 +548,28 @@ lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k)  :
     have : Finset.filter Even (Finset.Icc 3 14) = ({4,6,8,10,12, 14} : Finset ℕ) := by
         decide
     rw [this] at hkop
-    fin_cases hkop
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg,  Nat.cast_ite]
-      have h8 : -8 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -6 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg,  Nat.cast_ite]
-      have h8 : -4 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -2 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
-      div_self, Nat.floor_one, Nat.reduceAdd, Nat.cast_ite, Nat.cast_one]
-      rw [ModularForm.levelOne_weight_zero_rank_one]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, dim_weight_two, add_zero, dvd_refl, ↓reduceIte]
-      norm_cast
+    fin_cases hkop <;> simp_all
+    -- k = 4: weight k - 12 = -8
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-8 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 6: weight k - 12 = -6
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-6 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 8: weight k - 12 = -4
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-4 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 10: weight k - 12 = -2
+    · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
+        (show (-2 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+    -- k = 12: weight k - 12 = 0
+    · convert (congrArg (1 + ·) ModularForm.levelOne_weight_zero_rank_one) using 1 <;> norm_cast
+    -- k = 14: weight k - 12 = 2
+    · convert (congrArg (1 + ·) dim_weight_two) using 1 <;> norm_cast
 
-lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k)  :
+lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) (k)) = if 12 ∣ ((k) : ℤ) - 2 then
     Nat.floor ((k : ℚ)/ 12) else Nat.floor ((k : ℚ) / 12) + 1 := by
   apply dim_modforms_lvl_one k hk hk2
-
-
-lemma MF_mul_apply (f g : ModularForm Γ(1) k) (z : ℍ) :
-    (f.mul g) z = f z * g z := by
-  simp
-
-lemma Delta_eq_E4E6_apply (z : ℍ) : Δ z = ((E₄ z)^3 - (E₆ z)^2) / 1728 := by
-  rw [← Delta_apply]
-  rw [Delta_E4_eqn,  Delta_E4_E6_aux]
-  rw [CuspForm_to_ModularForm_apply]
-  rw [@pow_three, pow_two]
-  rw [@DirectSum.sub_apply]
-  simp
-  simp_rw [DirectSum.of_mul_of]
-  simp
-  have := MF_mul_apply E₆ E₆  z
-  have : (GradedMonoid.GMul.mul E₆ E₆) z = E₆ z * E₆ z := by
-    rfl
-  have h2 : (GradedMonoid.GMul.mul E₄ (GradedMonoid.GMul.mul E₄ E₄)) z =
-    E₄ z * (GradedMonoid.GMul.mul E₄ E₄) z := by rfl
-  have h3 : (GradedMonoid.GMul.mul E₄ E₄) z = E₄ z * E₄ z := by
-    rfl
-  rw [this, h2, h3]
-  ring
-
-
 
 lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.index Γ ≠ 0) :
     FiniteDimensional ℂ (ModularForm Γ k) := by sorry
