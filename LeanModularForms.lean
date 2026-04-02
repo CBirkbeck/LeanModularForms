@@ -8,6 +8,7 @@ import LeanModularForms.ForMathlib.CongruenceSubgroupsCopy
 -- import LeanModularForms.ForMathlib.CongruenceSubgrps -- disabled: needs mathlib 4.28 adaptation
 import LeanModularForms.ForMathlib.FunctionsBoundedAtInfty
 import LeanModularForms.ForMathlib.Identities
+import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.IsBoundedAtImInfty
 import LeanModularForms.ForMathlib.LevelOne
 import LeanModularForms.ForMathlib.Petersson
@@ -125,6 +126,7 @@ import LeanModularForms.ValenceFormula.RectHomotopy.WindingBase
 import LeanModularForms.ValenceFormula.RectHomotopy.WindingProof
 import LeanModularForms.ValenceFormula.TextbookExistence
 import LeanModularForms.ValenceFormula.TextbookForm
+import LeanModularForms.ValenceFormula.TrigLemmas
 import LeanModularForms.ValenceFormula.WindingWeights
 import LeanModularForms.ValenceFormula.WindingWeights.Common
 import LeanModularForms.ValenceFormula.WindingWeights.I

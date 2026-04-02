@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.Homotopy.CircleParam
+import LeanModularForms.ValenceFormula.Boundary.Basic
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Convex.Basic
 import Mathlib.MeasureTheory.Integral.CircleIntegral
@@ -205,6 +206,8 @@ lemma circleIntegral_winding (p : ℂ) (ε : ℝ) (hε : 0 < ε) :
 
 /-- Height parameter H = √3/2 + 1 for FD boundary. -/
 noncomputable def H_height : ℝ := Real.sqrt 3 / 2 + 1
+
+lemma H_height_eq_heightCutoff : H_height = heightCutoff := rfl
 
 /-- Polygon: FD boundary with arcs replaced by chords. -/
 noncomputable def fdPolygon : ℝ → ℂ := fun t =>
