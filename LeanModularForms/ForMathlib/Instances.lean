@@ -1,0 +1,31 @@
+/-
+Copyright (c) 2024. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+import Mathlib.Analysis.Complex.Basic
+
+/-!
+# Shared typeclass instances for `ℝ`-scalar-on-`ℂ`
+
+In mathlib 4.29, `NormSMulClass.toIsBoundedSMul` is no longer an instance
+(to avoid loops), which breaks the chain
+
+    NormedSpace ℝ ℂ → NormSMulClass ℝ ℂ → IsBoundedSMul ℝ ℂ → ContinuousSMul ℝ ℂ
+
+We provide all three instances here so every file in the project can
+`import LeanModularForms.ForMathlib.Instances` instead of redeclaring them.
+
+We also provide `IsScalarTower ℝ ℂ ℂ` which was previously redeclared
+in several files with different proof terms.
+-/
+
+noncomputable instance instNormSMulClassRealComplex : NormSMulClass ℝ ℂ :=
+  NormedSpace.toNormSMulClass
+
+noncomputable instance instIsBoundedSMulRealComplex : IsBoundedSMul ℝ ℂ :=
+  NormSMulClass.toIsBoundedSMul
+
+noncomputable instance instContinuousSMulRealComplex : ContinuousSMul ℝ ℂ :=
+  IsBoundedSMul.continuousSMul
+
+instance instIsScalarTowerRealComplexComplex : IsScalarTower ℝ ℂ ℂ := inferInstance
