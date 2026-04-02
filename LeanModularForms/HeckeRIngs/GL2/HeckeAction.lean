@@ -91,8 +91,8 @@ private lemma delta_cosetRep_det_pos (g : (GL_pair 2).Δ) (σ : (GL_pair 2).H) :
   exact mul_pos (delta_det_pos_real g)
     (by rw [SLnZ_det_one_real]; exact one_pos)
 
-private lemma sigma_eq_id_of_pos_det {g : GL (Fin 2) ℝ} (hg : 0 < g.det.val) :
-    UpperHalfPlane.σ g = RingHom.id ℂ := by
+private lemma sigma_eq_refl_of_pos_det {g : GL (Fin 2) ℝ} (hg : 0 < g.det.val) :
+    UpperHalfPlane.σ g = .refl ℝ ℂ := by
   unfold UpperHalfPlane.σ; simp only [hg, ↓reduceIte]
 
 private lemma glMap_transpose_det_val (g : GL (Fin 2) ℚ) :
@@ -144,7 +144,7 @@ lemma heckeSlash_smul (k : ℤ) (D : HeckeCoset (GL_pair 2)) (c : ℂ) (f : ℍ 
   change ((c • f) ∣[k] glMap _) _ = (c • (f ∣[k] glMap _)) _
   have hA : 0 < (glMap (tRep D i)).det.val :=
     cosetRep_delta_transpose_det_pos ⟨i.out, SetLike.coe_mem _⟩ (HeckeCoset.rep D)
-  rw [ModularForm.smul_slash, sigma_eq_id_of_pos_det hA]; simp
+  rw [ModularForm.smul_slash]; simp [sigma_eq_refl_of_pos_det hA]
 
 section SlashInvariance
 

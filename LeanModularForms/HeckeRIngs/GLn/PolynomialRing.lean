@@ -160,7 +160,7 @@ lemma T_scalar_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
 /-- Each `T_gen k` lies in the range of `evalHom`. -/
 lemma T_gen_mem_evalHom_range (k : Fin n) :
     T_gen n p k ∈ (evalHom n p).range :=
-  ⟨MvPolynomial.X k, by simp [evalHom, MvPolynomial.eval₂Hom_X']⟩
+  ⟨MvPolynomial.X k, by unfold evalHom; exact MvPolynomial.eval₂Hom_X' _ _ k⟩
 
 end PolynomialRing
 
@@ -200,11 +200,11 @@ lemma T_sum_p_eq_T_gen_zero (p : ℕ) (hp : p.Prime) :
 
 private lemma X_zero_mem_range (p : ℕ) :
     T_gen 2 p (0 : Fin 2) ∈ (evalHom 2 p).range :=
-  ⟨MvPolynomial.X 0, by simp [evalHom, MvPolynomial.eval₂Hom_X']⟩
+  ⟨MvPolynomial.X 0, by unfold evalHom; exact MvPolynomial.eval₂Hom_X' _ _ 0⟩
 
 private lemma X_one_mem_range (p : ℕ) :
     T_gen 2 p (1 : Fin 2) ∈ (evalHom 2 p).range :=
-  ⟨MvPolynomial.X 1, by simp [evalHom, MvPolynomial.eval₂Hom_X']⟩
+  ⟨MvPolynomial.X 1, by unfold evalHom; exact MvPolynomial.eval₂Hom_X' _ _ 1⟩
 
 private lemma T_pp_mem_range (p : ℕ) (hp : p.Prime) :
     T_pp p ∈ (evalHom 2 p).range := by
@@ -349,17 +349,18 @@ lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
     (P : MvPolynomial (Fin n) ℤ) : evalHom n p P ∈ R_p n p hp := by
   apply MvPolynomial.induction_on P
   · intro a
-    show evalHom n p (MvPolynomial.C a) ∈ R_p n p hp
-    simp only [evalHom, MvPolynomial.eval₂Hom_C]
-    show (a : HeckeAlgebra n) ∈ R_p n p hp
+    have : evalHom n p (MvPolynomial.C a) = (Int.castRingHom (HeckeAlgebra n)) a := by
+      unfold evalHom; exact MvPolynomial.eval₂Hom_C _ _ a
+    rw [this]; show (a : HeckeAlgebra n) ∈ R_p n p hp
     rw [show (a : HeckeAlgebra n) = a • (1 : HeckeAlgebra n) from (zsmul_one a).symm]
     exact (R_p n p hp).zsmul_mem (R_p n p hp).one_mem a
   · intro f g hf hg; rw [map_add]; exact (R_p n p hp).add_mem hf hg
   · intro f i hf
     rw [map_mul]
     exact (R_p n p hp).mul_mem hf (by
-      show evalHom n p (MvPolynomial.X i) ∈ R_p n p hp
-      simp only [evalHom, MvPolynomial.eval₂Hom_X']
+      have : evalHom n p (MvPolynomial.X i) = T_gen n p i := by
+        unfold evalHom; exact MvPolynomial.eval₂Hom_X' _ _ i
+      rw [this]
       exact T_gen_mem_R_p n p hp i)
 
 /-- The restricted evaluation homomorphism into `R_p`. -/
@@ -395,17 +396,40 @@ theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) :
   have h0 : (evalHom 1 p R).toFun D = 0 := by rw [hR]; rfl
   apply hcoeff
   suffices h : ((evalHom 1 p) R).toFun D = MvPolynomial.coeff s R from h ▸ h0
-  show Finsupp.toFun (MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra 1))
+  -- Adapted for v4.29: use erw for coercion-sensitive rewrites
+  -- Reduce to eval₂ and expand as sum, push application D inside
+  show (MvPolynomial.eval₂ (Int.castRingHom (HeckeAlgebra 1))
     (fun k => T_gen 1 p k) R) D = _
-  simp only [MvPolynomial.eval₂_eq', Fin.prod_univ_one, T_gen_pow_one p hp]
-  conv_lhs =>
-    rw [show (T_elem (n := 1) : (Fin 1 → ℕ) → _) =
-      fun a => Finsupp.single (T_diag (n := 1) a) (1 : ℤ) from rfl]
-  simp only [Finsupp.coe_finset_sum, Pi.smul_apply, Finsupp.single_apply]
-  simp only [D, Finset.sum_ite_eq', MvPolynomial.mem_support_iff, ne_eq]
-  split_ifs with h
-  · rfl
-  · exact absurd rfl (h hcoeff)
+  rw [MvPolynomial.eval₂_eq']
+  erw [Finsupp.finset_sum_apply]
+  simp only [Fin.prod_univ_one]
+  -- Each summand: (int_cast * T_gen^k) D → coeff * if delta
+  have step : ∀ d ∈ R.support,
+      ((Int.castRingHom (HeckeAlgebra 1)) (R.coeff d) * T_gen 1 p 0 ^ d 0) D =
+      R.coeff d * if T_diag (n := 1) (fun _ => p ^ d 0) = D then 1 else 0 := fun d _ => by
+    rw [T_gen_pow_one p hp,
+      show (T_elem (fun _ : Fin 1 => p ^ d 0) : HeckeAlgebra 1) =
+        Finsupp.single (T_diag (n := 1) (fun _ => p ^ d 0)) (1 : ℤ) from rfl,
+      show (Int.castRingHom (HeckeAlgebra 1)) (R.coeff d) =
+        (R.coeff d) • (1 : HeckeAlgebra 1) from by rw [Int.coe_castRingHom, zsmul_one],
+      smul_mul_assoc, one_mul, Finsupp.smul_apply, Finsupp.single_apply, smul_eq_mul]
+  erw [Finset.sum_congr rfl step]
+  -- The T_diag condition in the sum is equivalent to d = s
+  have hTd : ∀ d, (T_diag (n := 1) (fun _ => p ^ d 0) = D) ↔ d = s := by
+    intro d; constructor
+    · intro h
+      have := diagonal_representative_unique (n := 1) (fun _ : Fin 1 => p ^ d 0)
+        (fun _ : Fin 1 => p ^ s 0) (fun _ => pow_pos hp.pos _) (fun _ => pow_pos hp.pos _)
+        (divChain_const 1 _) (divChain_const 1 _) h
+      exact Finsupp.ext (fun i => by
+        fin_cases i; exact Nat.pow_right_injective hp.one_lt (congr_fun this 0))
+    · rintro rfl; rfl
+  simp only [D, mul_ite, mul_one, mul_zero]
+  simp_rw [show ∀ d, (if (T_diag (n := 1) (fun _ => p ^ d 0)) =
+    T_diag (fun _ => p ^ s 0) then R.coeff d else 0) =
+    if d = s then R.coeff d else 0 from fun d => if_congr (hTd d) rfl rfl]
+  rw [Finset.sum_ite_eq']
+  simp [MvPolynomial.mem_support_iff, hcoeff]
 
 /-! #### n=2 injectivity -/
 

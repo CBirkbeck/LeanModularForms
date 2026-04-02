@@ -5,7 +5,7 @@ import LeanModularForms.ContourIntegral.WindingNumber
 import LeanModularForms.ForMathlib.AtImInfty
 import LeanModularForms.ForMathlib.Bounds
 import LeanModularForms.ForMathlib.CongruenceSubgroupsCopy
--- import LeanModularForms.ForMathlib.CongruenceSubgrps -- disabled: needs mathlib 4.28 adaptation
+import LeanModularForms.ForMathlib.CongruenceSubgrps
 import LeanModularForms.ForMathlib.FunctionsBoundedAtInfty
 import LeanModularForms.ForMathlib.Identities
 import LeanModularForms.ForMathlib.IsBoundedAtImInfty
@@ -14,7 +14,7 @@ import LeanModularForms.ForMathlib.Petersson
 import LeanModularForms.ForMathlib.QExpansion
 import LeanModularForms.ForMathlib.SlashActions
 import LeanModularForms.ForMathlib.UpperHalfPlane
--- import LeanModularForms.ForMathlib.hassumunifon -- disabled: needs mathlib 4.28 adaptation
+import LeanModularForms.ForMathlib.hassumunifon
 import LeanModularForms.GeneralizedResidueTheory.ArcCalculus
 import LeanModularForms.GeneralizedResidueTheory.Basic
 import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
@@ -42,7 +42,7 @@ import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.Bounda
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.CPVExistence
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.HigherOrderAssembly
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.PerTermVanishing
--- import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem -- name collision
+-- import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheorem  -- name collision with GeneralizedResidueTheorem
 import LeanModularForms.GeneralizedResidueTheory.Residue.GeneralizedTheoremBase
 import LeanModularForms.GeneralizedResidueTheory.Residue.MeasureHelpers
 import LeanModularForms.GeneralizedResidueTheory.Residue.MeromorphicLaurent
@@ -53,20 +53,60 @@ import LeanModularForms.GeneralizedResidueTheory.Residue.SectorCurveLemma
 import LeanModularForms.GeneralizedResidueTheory.WindingNumber
 import LeanModularForms.GeneralizedResidueTheory.WindingNumber.Proposition2_2
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Associativity
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Basic
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Commutativity
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Degree
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Module
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Multiplication
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Prototype
+import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Ring
+import LeanModularForms.HeckeRIngs.GL2.Basic
+import LeanModularForms.HeckeRIngs.GL2.CongruenceIndex
+import LeanModularForms.HeckeRIngs.GL2.Degree
+import LeanModularForms.HeckeRIngs.GL2.HeckeAction
+import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm
+import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
+import LeanModularForms.HeckeRIngs.GLn.Basic
+import LeanModularForms.HeckeRIngs.GLn.CoprimeMul
+import LeanModularForms.HeckeRIngs.GLn.CosetDecomposition
+import LeanModularForms.HeckeRIngs.GLn.Degree
+import LeanModularForms.HeckeRIngs.GLn.DiagonalCosets
+import LeanModularForms.HeckeRIngs.GLn.PolynomialRing
+import LeanModularForms.HeckeRIngs.GLn.PrimeDecomposition
+import LeanModularForms.HeckeRIngs.GLn.SLnTransvection
+import LeanModularForms.HeckeRIngs.GLn.TransposeAntiInvolution
 import LeanModularForms.Modularforms.AtImInfty
 import LeanModularForms.Modularforms.BigO
 import LeanModularForms.Modularforms.Cauchylems
 import LeanModularForms.Modularforms.Delta
+import LeanModularForms.Modularforms.Derivative
 import LeanModularForms.Modularforms.DimensionFormulas
 import LeanModularForms.Modularforms.E2
 import LeanModularForms.Modularforms.Eisenstein
+import LeanModularForms.Modularforms.EisensteinAsymptotics
 import LeanModularForms.Modularforms.Eisensteinqexpansions
+import LeanModularForms.Modularforms.FG
+import LeanModularForms.Modularforms.ForMathlib_Cusps
+import LeanModularForms.Modularforms.ForMathlib_FunctionsBoundedAtInfty
+import LeanModularForms.Modularforms.ForMathlib_SlashActions
+import LeanModularForms.Modularforms.ForMathlib_UpperHalfPlane
 import LeanModularForms.Modularforms.Generators
+import LeanModularForms.Modularforms.Generators.Defs
+import LeanModularForms.Modularforms.Generators.Injectivity
+import LeanModularForms.Modularforms.Generators.Surjectivity
 import LeanModularForms.Modularforms.Icc_Ico_lems
 import LeanModularForms.Modularforms.IsCuspForm
 import LeanModularForms.Modularforms.JacobiTheta
+import LeanModularForms.Modularforms.MDifferentiableFunProp
+import LeanModularForms.Modularforms.NormNumI
+import LeanModularForms.Modularforms.PhiTransform
 import LeanModularForms.Modularforms.QExpansion
+import LeanModularForms.Modularforms.RamanujanIdentities
+import LeanModularForms.Modularforms.ResToImagAxis
+import LeanModularForms.Modularforms.SerreDerivativeSlash
 import LeanModularForms.Modularforms.SlashActionAuxil
+import LeanModularForms.Modularforms.ThetaDerivIdentities
 import LeanModularForms.Modularforms.clog_arg_lems
 import LeanModularForms.Modularforms.cotangent
 import LeanModularForms.Modularforms.csqrt
@@ -82,11 +122,13 @@ import LeanModularForms.Modularforms.qExpansion_lems
 import LeanModularForms.Modularforms.riemannZetalems
 import LeanModularForms.Modularforms.summable_lems
 import LeanModularForms.Modularforms.tendstolems
--- import LeanModularForms.Modularforms.test -- disabled: needs mathlib 4.28 adaptation
+import LeanModularForms.Modularforms.test
 import LeanModularForms.Modularforms.tsumderivWithin
 import LeanModularForms.Modularforms.uniformcts
 import LeanModularForms.Modularforms.upperhalfplane
-import LeanModularForms.SpherePacking.ViazovskaMagicFunction
+-- import LeanModularForms.SpherePacking.CuspDecay  -- name collision with EisensteinAsymptotics
+import LeanModularForms.SpherePacking.PhiHolomorphic
+-- import LeanModularForms.SpherePacking.ViazovskaMagicFunction  -- transitively imports CuspDecay (name collision)
 import LeanModularForms.ValenceFormula.Boundary.Basic
 import LeanModularForms.ValenceFormula.Boundary.Bounds
 import LeanModularForms.ValenceFormula.Boundary.Smooth

@@ -80,6 +80,33 @@ noncomputable instance instNonAssocRing : NonAssocRing (𝕋 P ℤ) :=
 noncomputable instance instRing : Ring (𝕋 P ℤ) :=
   { HeckeRing.instNonAssocRing P, HeckeRing.instSemiring P with }
 
+/-! ## Algebra compatibility lemmas
+
+In mathlib v4.29, `Finsupp` gains pointwise multiplication instances that conflict with
+the Hecke ring's custom convolution multiplication. The lemmas below use the Hecke `Ring`
+instance explicitly so that `rw` can match the custom `Mul`. -/
+
+protected lemma mul_sub (a b c : 𝕋 P ℤ) : a * (b - c) = a * b - a * c :=
+  @_root_.mul_sub _ (instRing (P := P)).toNonAssocRing.toNonUnitalNonAssocRing a b c
+
+protected lemma sub_mul (a b c : 𝕋 P ℤ) : (a - b) * c = a * c - b * c :=
+  @_root_.sub_mul _ (instRing (P := P)).toNonAssocRing.toNonUnitalNonAssocRing a b c
+
+protected lemma mul_assoc (a b c : 𝕋 P ℤ) : a * b * c = a * (b * c) :=
+  @_root_.mul_assoc _ (instSemiring (P := P)).toMonoid.toSemigroup a b c
+
+protected lemma mul_add (a b c : 𝕋 P ℤ) : a * (b + c) = a * b + a * c :=
+  (instNonUnitalNonAssocSemiring P).left_distrib a b c
+
+protected lemma add_mul (a b c : 𝕋 P ℤ) : (a + b) * c = a * c + b * c :=
+  (instNonUnitalNonAssocSemiring P).right_distrib a b c
+
+protected lemma pow_succ (a : 𝕋 P ℤ) (n : ℕ) : a ^ (n + 1) = a ^ n * a :=
+  @_root_.pow_succ _ (instSemiring (P := P)).toMonoid a n
+
+protected lemma pow_succ' (a : 𝕋 P ℤ) (n : ℕ) : a ^ (n + 1) = a * a ^ n :=
+  @_root_.pow_succ' _ (instSemiring (P := P)).toMonoid a n
+
 section API
 
 /-- A basis element with coefficient zero is zero. -/
