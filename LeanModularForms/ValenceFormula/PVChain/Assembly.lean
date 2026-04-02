@@ -42,15 +42,6 @@ The modular side decomposes into:
 -/
 
 omit f hf in
-private lemma sVertOfS_shift_iff (S : Finset UpperHalfPlane) (s : ℂ) :
-    s ∈ sVertOfS S → (s.re = 1/2 ∧ s - 1 ∈ sVertOfS S) ∨
-                       (s.re = -1/2 ∧ s + 1 ∈ sVertOfS S) := by
-  intro hs
-  rcases sVertOfS_re S s hs with hre | hre
-  · exact Or.inl ⟨hre, sVertOfS_pair_left S s hs hre⟩
-  · exact Or.inr ⟨hre, sVertOfS_pair_right S s hs hre⟩
-
-omit f hf in
 private lemma norm_sub_one_le {z s : ℂ} (hz : z.re = 1/2) (hs : s.re = -1/2) :
     ‖(z - 1) - s‖ ≤ ‖z - s‖ := by
   have hre1 : ((z - 1) - s).re = 0 := by
@@ -393,23 +384,6 @@ private theorem tendsto_pvIntegral_seg5
               rw [Set.mem_Ioc] at ht; exact absurd ht.1 (by linarith [ht.2])
       _ = L := seg5_logDeriv_integral_value f hf hH hcusp_nonvan
   exact tendsto_const_nhds.congr' (h_ev.mono fun ε h => h.symm)
-
-omit hf in
-private lemma pvIntegrand_measurableSet_trunc
-    (S : Finset UpperHalfPlane)
-    {H : ℝ} (ε : ℝ) :
-    MeasurableSet {t : ℝ | ∃ s ∈ sArcOfS S ∪ sVertOfS S,
-      ‖fdBoundary_H H t - s‖ ≤ ε} := by
-  have : {t : ℝ | ∃ s ∈ sArcOfS S ∪ sVertOfS S, ‖fdBoundary_H H t - s‖ ≤ ε} =
-      ⋃ s ∈ (sArcOfS S ∪ sVertOfS S), {t | ‖fdBoundary_H H t - s‖ ≤ ε} := by
-    ext t
-    simp only [Set.mem_setOf_eq, Set.mem_iUnion₂, exists_prop]
-  rw [this]
-  exact MeasurableSet.biUnion (sArcOfS S ∪ sVertOfS S).countable_toSet
-    fun s _ => measurableSet_le
-      (continuous_norm.comp
-        ((fdBoundary_H_continuous H).sub continuous_const)).measurable
-      measurable_const
 
 omit f hf in
 private lemma norm_deriv_fdBoundary_H_le
