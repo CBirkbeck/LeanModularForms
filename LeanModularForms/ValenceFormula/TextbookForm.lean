@@ -76,16 +76,6 @@ private lemma sl2_det (g : SL(2, ℤ)) :
 private lemma ellipticPointI'_coe : (ellipticPointI' : ℂ) = Complex.I := rfl
 private lemma ellipticPointI'_im : (ellipticPointI' : ℍ).im = 1 := Complex.I_im
 
-private lemma fd'_im_gt_half' (p : ℍ) (hp : p ∈ 𝒟) : (1 : ℝ)/2 < (p : ℂ).im := by
-  by_contra h; push_neg at h
-  have hre : p.re = (↑p : ℂ).re := rfl; have h_pos : (0 : ℝ) < (p : ℂ).im := p.2
-  have h1 : (1 : ℝ) ≤ (p : ℂ).re * (p : ℂ).re + (p : ℂ).im * (p : ℂ).im := by
-    rw [← Complex.normSq_apply]; exact hp.1
-  have ⟨hlo, hhi⟩ := abs_le.mp hp.2; rw [hre] at hlo hhi
-  nlinarith [mul_nonneg (show (0:ℝ) ≤ 1/2 - (p : ℂ).re from by linarith)
-    (show (0:ℝ) ≤ 1/2 + (p : ℂ).re from by linarith),
-    mul_nonneg h_pos.le (show (0:ℝ) ≤ 1/2 - (p : ℂ).im from by linarith)]
-
 private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
     (h_fd : g • ellipticPointI' ∈ 𝒟) :
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) ^ 2 +
@@ -95,7 +85,7 @@ private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
   have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointI'
   rw [ellipticPointI'_im, show (ellipticPointI' : ℂ) = I from rfl, normSq_denom_at_I] at h_im
   have h_gt : (1 : ℝ)/2 < 1 / ((c : ℝ) ^ 2 + (d : ℝ) ^ 2) := by
-    rw [← h_im]; exact fd'_im_gt_half' _ h_fd
+    rw [← h_im]; exact fd_im_gt_half _ h_fd
   have h_ge : c ^ 2 + d ^ 2 ≥ 1 := by
     by_contra h; push_neg at h
     have hc0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by nlinarith [sq_nonneg c]
@@ -192,7 +182,7 @@ private lemma normSq_denom_eq_one_of_smul_rho_in_fd (g : SL(2, ℤ))
   let d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1
   have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
   rw [ellipticPointRho'_im, normSq_denom_at_rho] at h_im
-  have h_gt : (1 : ℝ)/2 < (g • ellipticPointRho').im := fd'_im_gt_half' _ h_fd
+  have h_gt : (1 : ℝ)/2 < (g • ellipticPointRho').im := fd_im_gt_half _ h_fd
   rw [h_im] at h_gt
   have h_pos : (c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2 > 0 := by
     by_contra h; push_neg at h
@@ -357,9 +347,9 @@ private lemma c_abs_le_one_of_smul_fd (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     nlinarith [mul_nonneg (show (0 : ℝ) ≤ (↑c : ℝ) ^ 2 - 4 from by linarith)
       (mul_nonneg p₂.im_pos.le p₁.im_pos.le)]
   have hp1_im : (1 : ℝ) / 2 < p₁.im := by
-    rw [← UpperHalfPlane.coe_im]; exact fd'_im_gt_half' _ hp₁
+    rw [← UpperHalfPlane.coe_im]; exact fd_im_gt_half _ hp₁
   have hp2_im : (1 : ℝ) / 2 < p₂.im := by
-    rw [← UpperHalfPlane.coe_im]; exact fd'_im_gt_half' _ hp₂
+    rw [← UpperHalfPlane.coe_im]; exact fd_im_gt_half _ hp₂
   nlinarith [mul_pos (by linarith : (0:ℝ) < p₁.im - 1/2)
     (by linarith : (0:ℝ) < p₂.im - 1/2)]
 
