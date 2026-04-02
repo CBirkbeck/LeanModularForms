@@ -3,6 +3,7 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ValenceFormula.RectHomotopy.Geometry
+import LeanModularForms.ValenceFormula.TrigLemmas
 
 /-!
 # Homotopy infrastructure for FD boundary → polygon deformation
@@ -68,42 +69,24 @@ lemma H_seg4_continuous : Continuous H_seg4 := by
 lemma H_seg5_continuous : Continuous H_seg5 := by
   unfold H_seg5; continuity
 
-lemma exp_real_mul_I (θ : ℝ) :
-    Complex.exp (↑θ * I) =
-      ↑(Real.cos θ) + ↑(Real.sin θ) * I := by
-  rw [Complex.exp_mul_I, Complex.ofReal_cos,
-    Complex.ofReal_sin]
-
-lemma Real.cos_two_pi_div_three' :
-    Real.cos (2 * Real.pi / 3) = -1/2 := by
-  have h : 2 * Real.pi / 3 = Real.pi - Real.pi / 3 := by
-    ring
-  rw [h, Real.cos_pi_sub, Real.cos_pi_div_three]; norm_num
-
-lemma Real.sin_two_pi_div_three' :
-    Real.sin (2 * Real.pi / 3) = Real.sqrt 3 / 2 := by
-  have h : 2 * Real.pi / 3 = Real.pi - Real.pi / 3 := by
-    ring
-  rw [h, Real.sin_pi_sub, Real.sin_pi_div_three]
-
 lemma exp_pi_div_three_eq_rho' :
     Complex.exp (↑(Real.pi / 3) * I) = rho' := by
-  rw [exp_real_mul_I, Real.cos_pi_div_three,
+  rw [exp_real_angle_I, Real.cos_pi_div_three,
     Real.sin_pi_div_three]
   simp only [rho', Complex.ofReal_div,
     Complex.ofReal_one, Complex.ofReal_ofNat]
 
 lemma exp_pi_div_two_eq_I :
     Complex.exp (↑(Real.pi / 2) * I) = I := by
-  rw [exp_real_mul_I, Real.cos_pi_div_two,
+  rw [exp_real_angle_I, Real.cos_pi_div_two,
     Real.sin_pi_div_two]
   simp only [Complex.ofReal_zero, Complex.ofReal_one,
     zero_add, one_mul]
 
 lemma exp_two_pi_div_three_eq_rho :
     Complex.exp (↑(2 * Real.pi / 3) * I) = rho := by
-  rw [exp_real_mul_I, Real.cos_two_pi_div_three',
-    Real.sin_two_pi_div_three']
+  rw [exp_real_angle_I, cos_two_pi_div_three,
+    sin_two_pi_div_three]
   simp only [rho, Complex.ofReal_neg, Complex.ofReal_div,
     Complex.ofReal_one, Complex.ofReal_ofNat]
 

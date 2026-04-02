@@ -147,7 +147,7 @@ private theorem modularFormCompOfComplex_eq' (p : ℍ) :
   simp only [modularFormCompOfComplex, Function.comp_apply]
   congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
 
-private theorem fd_im_gt_half (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
+theorem fd_im_gt_half (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
   by_contra h_le; push_neg at h_le
   obtain ⟨hnormSq, habs_re⟩ := hp
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
