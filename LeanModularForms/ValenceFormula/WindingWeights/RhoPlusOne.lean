@@ -194,12 +194,6 @@ private lemma g_rho'_slitPlane (hH : Real.sqrt 3 / 2 < H)
               Complex.I_re, Complex.I_im, Complex.ofReal_re]
           rw [this]; exact ne_of_gt (by linarith)
 
-private lemma exp_pi_div_three :
-    Complex.exp (↑(Real.pi / 3) * I) = 1/2 + ↑(Real.sqrt 3 / 2) * I := by
-  rw [show (↑(Real.pi / 3) : ℂ) * I = ↑(Real.pi / 3) * I from rfl, exp_real_angle_I,
-    Real.cos_pi_div_three, Real.sin_pi_div_three]
-  push_cast; ring
-
 private theorem arg_approach_rho'_left (hH : Real.sqrt 3 / 2 < H)
     {δ : ℝ} (hδ : 0 < δ) (_hδ1 : δ ≤ 1) :
     (fdBoundary_H H (1 - δ) - ellipticPointRhoPlusOne).arg = Real.pi / 2 := by
