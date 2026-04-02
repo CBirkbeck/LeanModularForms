@@ -1,0 +1,5 @@
+module
+
+public import LeanModularForms.Modularforms.Generators.Defs
+public import LeanModularForms.Modularforms.Generators.Surjectivity
+public import LeanModularForms.Modularforms.Generators.Injectivity
