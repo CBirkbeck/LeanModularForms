@@ -13,6 +13,11 @@ open Metric Filter Function
 
 open scoped ModularForm MatrixGroups Manifold Topology BigOperators
 
+-- In mathlib 4.29, NormSMulClass.toIsBoundedSMul is not an instance (to avoid loops),
+-- which breaks the chain NormedSpace ℝ ℂ → ContinuousSMul ℝ ℂ. Provide it locally.
+noncomputable instance : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
+noncomputable instance : IsBoundedSMul ℝ ℂ := NormSMulClass.toIsBoundedSMul
+
 /-- Constant Pi functions (numeric literals) are MDifferentiable. -/
 @[fun_prop]
 lemma MDifferentiable.pi_ofNat (n : ℕ) [n.AtLeastTwo] :
@@ -721,10 +726,16 @@ theorem deriv_resToImagAxis_eq (F : ℍ → ℂ) (hF : MDiff F) {t : ℝ} (ht : 
     have him : 0 < (g s).im := by simp [g, hs]
     simp [Function.resToImagAxis_apply, ResToImagAxis, hs, Function.comp_apply, g,
       ofComplex_apply_of_im_pos him]
-  rw [h_eq.deriv_eq]
-  have hg : HasDerivAt g I t := by simpa using ofRealCLM.hasDerivAt.const_mul I
+  suffices h : deriv ((F ∘ ofComplex) ∘ g) t = -2 * ↑π * (D F).resToImagAxis t by
+    exact h_eq.deriv_eq (x := t) ▸ h
+  have hg : HasDerivAt g I t := by
+    show HasDerivAt (fun x : ℝ => I * (x : ℂ)) I t
+    have h := ofRealCLM.hasDerivAt (x := t) |>.const_mul I
+    simp only [ofRealCLM_apply, ofReal_one, mul_one] at h; exact h
   have hF' := (MDifferentiableAt_DifferentiableAt (hF z)).hasDerivAt
-  rw [(hF'.scomp t hg).deriv]
+  have hcomp := (hF'.comp t hg).deriv
+  -- hcomp : deriv ((F ∘ ofComplex) ∘ g) t = deriv (F ∘ ofComplex) (g t) * I
+  rw [show deriv ((F ∘ ↑ofComplex) ∘ g) t = deriv (F ∘ ↑ofComplex) (↑z) * I from hcomp]
   have hD : deriv (F ∘ ofComplex) z = 2 * π * I * D F z := by simp only [D]; field_simp
   simp only [hD, Function.resToImagAxis_apply, ResToImagAxis, dif_pos ht, z, smul_eq_mul]
   ring_nf; simp only [I_sq]; ring

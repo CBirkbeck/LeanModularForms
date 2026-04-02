@@ -209,7 +209,8 @@ noncomputable instance : Ring (HeckeAlg P) where
   natCast_zero := by simp
   natCast_succ _ := by sorry
   intCast_negSucc _ := by sorry
-  __ := inferInstanceAs (AddCommGroup (HeckeAlg P))
+  neg_add_cancel := fun a => neg_add_cancel a
+  intCast_ofNat _ := by sorry
 
 -- ═══════════════════════════════════════════════════════════
 -- 8. COMMUTATIVITY VIA ANTI-INVOLUTION
@@ -243,9 +244,9 @@ lemma AntiInvolution.onCoset_invol (ι : AntiInvolution P) :
     Function.Involutive ι.onCoset :=
   HeckeCoset.ind P fun g => by
     simp only [AntiInvolution.onCoset, Quotient.lift_mk]
-    rw [HeckeCoset.eq_iff]
-    change doubleCoset ((ι.toFun ((ι.toFun g).unop)).unop : G) _ _ = doubleCoset (g : G) _ _
-    rw [ι.involutive g]
+    exact (HeckeCoset.eq_iff P _ _).mpr (by
+      change doubleCoset ((ι.toFun ((ι.toFun g).unop)).unop : G) _ _ = doubleCoset (g : G) _ _
+      rw [ι.involutive g])
 
 /-- **Shimura Prop 3.8**: If `ι` fixes all double cosets, the Hecke ring is commutative. -/
 theorem commutative_of_fixed_antiInvolution (ι : AntiInvolution P)
@@ -253,9 +254,10 @@ theorem commutative_of_fixed_antiInvolution (ι : AntiInvolution P)
     ∀ f g : HeckeAlg P, f * g = g * f := by sorry
 
 /-- CommRing instance from a fixed-point anti-involution. -/
+@[reducible]
 noncomputable def instCommRing (ι : AntiInvolution P)
     (h_fix : ∀ D : HeckeCoset P, ι.onCoset D = D) : CommRing (HeckeAlg P) :=
-  { inferInstanceAs (Ring (HeckeAlg P)) with
+  { (inferInstance : Ring (HeckeAlg P)) with
     mul_comm := commutative_of_fixed_antiInvolution ι h_fix }
 
 end HeckeRing.V2

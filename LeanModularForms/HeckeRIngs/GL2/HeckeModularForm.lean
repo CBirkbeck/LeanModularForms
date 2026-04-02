@@ -300,8 +300,10 @@ private theorem heckeSlash_comp (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2)) (
     unfold heckeSlashExt; rw [mul_singleton_𝕋]; simp]
   have h_comm : m (GL_pair 2) (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
       m (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) := by
-    simpa only [T_single_one_mul_T_single_one] using
-      mul_comm (T_single (GL_pair 2) ℤ D₂ 1) (T_single (GL_pair 2) ℤ D₁ 1)
+    have h1 := @T_single_one_mul_T_single_one _ _ (GL_pair 2) D₂ D₁
+    have h2 := @T_single_one_mul_T_single_one _ _ (GL_pair 2) D₁ D₂
+    rw [← h1, ← h2]
+    exact (instCommRing_HeckeAlgebra (n := 2)).mul_comm _ _
   rw [h_comm]; simp_rw [heckeSlash]
   rw [show (∑ i : decompQuot (GL_pair 2) (HeckeCoset.rep D₁),
       (∑ j : decompQuot (GL_pair 2) (HeckeCoset.rep D₂),
