@@ -742,22 +742,25 @@ private lemma leftEdge_winding_aux (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     have := (leftEdge_ftc_telescope H hH_sqrt s hs_re hs_norm hs_im_lower hs_im α hα_pos hα_def
       t₀ ht₀_gt3 ht₀_lt4 ht₀_mul threshold hthresh_pos hthresh_le_t₀m3α hthresh_le_4mt₀α
       ε hε_pos hε_lt).2.2
-    simp only [deriv_sub_const] at this
-    exact this
+    have hd : ∀ t, deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t :=
+      fun t => deriv_sub_const (f := fdBoundary_H H) _
+    simp_rw [hd] at this; exact this
   · -- hint_left
     intro ε hε_pos hε_lt
     have := (leftEdge_ftc_telescope H hH_sqrt s hs_re hs_norm hs_im_lower hs_im α hα_pos hα_def
       t₀ ht₀_gt3 ht₀_lt4 ht₀_mul threshold hthresh_pos hthresh_le_t₀m3α hthresh_le_4mt₀α
       ε hε_pos hε_lt).1
-    simp only [deriv_sub_const] at this
-    exact this
+    have hd : ∀ t, deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t :=
+      fun t => deriv_sub_const (f := fdBoundary_H H) _
+    simp_rw [hd] at this; exact this
   · -- hint_right
     intro ε hε_pos hε_lt
     have := (leftEdge_ftc_telescope H hH_sqrt s hs_re hs_norm hs_im_lower hs_im α hα_pos hα_def
       t₀ ht₀_gt3 ht₀_lt4 ht₀_mul threshold hthresh_pos hthresh_le_t₀m3α hthresh_le_4mt₀α
       ε hε_pos hε_lt).2.1
-    simp only [deriv_sub_const] at this
-    exact this
+    have hd : ∀ t, deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t :=
+      fun t => deriv_sub_const (f := fdBoundary_H H) _
+    simp_rw [hd] at this; exact this
   · -- h_limit: E(ε) → L
     -- E(ε) = log(h₃(t₀ - ε/α)) - log(h₃(t₀ + ε/α)) = -(π*I) constantly
     have hE_const : ∀ ε, 0 < ε → ε < threshold →
@@ -776,6 +779,9 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_leftEdge (H : ℝ) (hH_sqrt : Real.sqrt 
     generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 := by
   apply ContourIntegral.gWN_eq_neg_half_of_pv_tendsto
   have h_tendsto := leftEdge_winding_aux H hH_sqrt s hs_re hs_norm hs_im_lower hs_im
+  have hd : ∀ t, deriv (fun u => fdBoundary_H H u - s) t = deriv (fdBoundary_H H) t :=
+    fun t => deriv_sub_const (f := fdBoundary_H H) _
+  simp_rw [hd]
   convert h_tendsto using 3
   simp [sub_zero, gt_iff_lt]
 

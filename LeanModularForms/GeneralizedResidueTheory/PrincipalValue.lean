@@ -40,9 +40,11 @@ theorem cauchyPrincipalValueIntegrand_bounded
     unfold cauchyPrincipalValueIntegrand'; split_ifs with h
     · calc ‖f (γ t) * deriv γ t‖ = ‖f (γ t)‖ * ‖deriv γ t‖ := norm_mul _ _
         _ ≤ Mf * Mγ := by
-            apply mul_le_mul (hMf' _ ⟨⟨t, ht, rfl⟩, by simpa [Metric.mem_ball] using h.le⟩)
+            apply mul_le_mul (hMf' _ ⟨⟨t, ht, rfl⟩, by
+                simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact h.le⟩)
               (hMγ' t ht) (norm_nonneg _)
-              (le_trans (norm_nonneg _) (hMf' _ ⟨⟨t, ht, rfl⟩, by simpa [Metric.mem_ball] using h.le⟩))
+              (le_trans (norm_nonneg _) (hMf' _ ⟨⟨t, ht, rfl⟩, by
+                simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact h.le⟩))
         _ ≤ Mf * Mγ + 1 := le_add_of_nonneg_right one_pos.le
     · simp only [norm_zero]
       exact add_nonneg (mul_nonneg
@@ -53,7 +55,7 @@ theorem cauchyPrincipalValueIntegrand_bounded
       unfold cauchyPrincipalValueIntegrand'
       split_ifs with h
       · exact absurd ⟨γ t, ⟨t, ht, rfl⟩, by
-          simp only [Metric.mem_ball, not_lt]
+          simp only [Metric.mem_ball, not_lt, dist_eq_norm]
           exact le_of_lt h⟩ h_empty
       · simp only [norm_zero, le_refl]⟩
 
@@ -95,13 +97,13 @@ lemma continuousOn_pv_base (f : ℂ → ℂ) (γ : ℝ → ℂ)
   intro t ⟨ht_far, ht_Icc⟩
   have hγt_in : γ t ∈ γ '' Icc a b \ Metric.ball z₀ ε :=
     ⟨mem_image_of_mem γ ht_Icc, by
-      simp only [Metric.mem_ball, not_lt]; exact le_of_lt ht_far⟩
+      simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact le_of_lt ht_far⟩
   have h_maps :
       MapsTo γ ({t | ε < ‖γ t - z₀‖} ∩ Icc a b)
         (γ '' Icc a b \ Metric.ball z₀ ε) := by
     intro s ⟨hs_far, hs_Icc⟩
     exact ⟨mem_image_of_mem γ hs_Icc, by
-      simp only [Metric.mem_ball, not_lt]; exact le_of_lt hs_far⟩
+      simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact le_of_lt hs_far⟩
   have hfγ_at : ContinuousWithinAt (f ∘ γ)
       ({t | ε < ‖γ t - z₀‖} ∩ Icc a b) t :=
     ContinuousWithinAt.comp (hf_cont _ hγt_in)
@@ -221,7 +223,7 @@ theorem cauchyPrincipalValue_of_dominated
         (𝓝[>] 0) (𝓝 L) := by
     filter_upwards [h_ae_unr] with t ht ht_mem
     exact ht (Ioc_subset_Icc_self (uIoc_of_le hab' ▸ ht_mem))
-  let g : ℝ → ℂ := fun t => _root_.limUnder (𝓝[>] (0 : ℝ))
+  let g : ℝ → ℂ := fun t => Filter.limUnder (𝓝[>] (0 : ℝ))
     (fun ε => cauchyPrincipalValueIntegrand' f γ z₀ ε t)
   have h_lim_conv : ∀ᵐ t ∂volume, t ∈ uIoc a b →
       Tendsto
@@ -229,7 +231,7 @@ theorem cauchyPrincipalValue_of_dominated
         (𝓝[>] 0) (𝓝 (g t)) := by
     filter_upwards [h_limit_ae] with t ht ht_mem
     obtain ⟨L, hL⟩ := ht ht_mem
-    rwa [show g t = L from Tendsto.limUnder_eq hL]
+    rwa [show g t = L from hL.limUnder_eq]
   exact ⟨∫ t in a..b, g t,
     intervalIntegral.tendsto_integral_filter_of_dominated_convergence
       (fun _ => M) hF_meas h_bound_ae

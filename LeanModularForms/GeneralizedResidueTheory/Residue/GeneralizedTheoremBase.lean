@@ -500,7 +500,7 @@ lemma CauchyPrincipalValueExists'.const_mul
       c * (∫ t in a..b, if ‖γ t - z₀‖ > ε
         then f (γ t) * deriv γ t else 0) := by
     intro ε
-    rw [← intervalIntegral.integral_const_mul]
+    erw [← intervalIntegral.integral_const_mul]
     congr 1; ext t
     split_ifs <;> ring
   exact (hL.const_mul c).congr (fun ε => (h_eq ε).symm)

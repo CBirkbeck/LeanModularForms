@@ -2,6 +2,7 @@ import LeanModularForms.Modularforms.tendstolems
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Algebra.Order.Ring.Star
 import Mathlib.Analysis.Complex.LocallyUniformLimit
+import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Topology.Algebra.InfiniteSum.UniformOn
 import Mathlib.Topology.Separation.CompletelyRegular
 
@@ -122,7 +123,8 @@ lemma logDeriv_q_expo_summable (r : ℂ) (hr : ‖r‖ < 1) : Summable fun n : �
     use N
     intro n hn
     have h4 := hN n hn
-    have := norm_lt_of_mem_ball h4 (E := ℂ)
+    have : dist ((1 - r ^ n)⁻¹) 1 < 1 := by rwa [dist_eq_norm]
+    have := norm_lt_of_mem_ball (Metric.mem_ball.mpr this) (E := ℂ)
     simp at *
     rw [div_eq_mul_inv]
     rw [mul_comm]
@@ -166,4 +168,5 @@ lemma logDeriv_eqOn_iff2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableO
     (hg : DifferentiableOn ℂ g s) (hs : s.Nonempty) (hs2 : IsOpen s) (hsc : Convex ℝ s)
     (hgn : ∀ x, x ∈ s →  g x ≠ 0) (hfn : ∀ x, x ∈ s → f x ≠ 0) : EqOn (logDeriv f) (logDeriv g) s ↔
     ∃( z : ℂ),  z ≠ 0 ∧  EqOn (f) (z • g) s := by
-  apply logDeriv_eqOn_iff hf hg hs2 (hsc.isPreconnected) hgn hfn
+  haveI : IsBoundedSMul ℝ ℂ := NormedSpace.toIsBoundedSMul
+  exact logDeriv_eqOn_iff hf hg hs2 (hsc.isPreconnected) hgn hfn

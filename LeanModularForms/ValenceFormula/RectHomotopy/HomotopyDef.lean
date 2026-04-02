@@ -19,6 +19,18 @@ continuity and matching at breakpoints, and establishes the main results:
 
 open Complex Set Metric Filter
 
+/-- Work around mathlib 4.29-rc8 instance synthesis issue: `NormedSpace.toNormSMulClass` fails
+to unify for `ℝ ℂ` during typeclass resolution, breaking `NormSMulClass`, `IsBoundedSMul`,
+and `ContinuousSMul` for `ℝ ℂ`. We provide all three instances explicitly. -/
+noncomputable instance instNormSMulClassRealComplex : NormSMulClass ℝ ℂ :=
+  @NormedSpace.toNormSMulClass ℝ ℂ _ _ _
+
+noncomputable instance instIsBoundedSMulRealComplex : IsBoundedSMul ℝ ℂ :=
+  NormSMulClass.toIsBoundedSMul
+
+noncomputable instance instContinuousSMulRealComplex : ContinuousSMul ℝ ℂ :=
+  IsBoundedSMul.continuousSMul
+
 namespace RectHomotopyProof
 
 noncomputable def H_seg1 (p : ℝ × ℝ) : ℂ :=
@@ -115,11 +127,11 @@ lemma H_match_at_t1 (p : ℝ × ℝ) (hp : p.1 = 1) :
   have hpi3 : (↑Real.pi / 3 : ℂ) = ↑(Real.pi / 3) := by
     push_cast; ring
   rw [hpi3, exp_pi_div_three_eq_rho']
-  simp only [sub_self, zero_smul, add_zero, rho']
+  simp only [sub_self, rho']
   simp only [smul_add, Complex.real_smul,
     Complex.ofReal_sub, Complex.ofReal_one,
     sub_zero, one_mul]
-  ring
+  push_cast; ring
 
 lemma H_match_at_t2 (p : ℝ × ℝ) (hp : p.1 = 2) :
     H_seg2 p = H_seg3 p := by
@@ -203,8 +215,8 @@ lemma fdBoundaryToPolygonHomotopy_at_zero (t : ℝ) (_ht : t ∈ Icc 0 5) :
   simp only [fdBoundaryToPolygonHomotopy, fdBoundary]
   split_ifs with h1 h2 h3 h4
   · rfl
-  · simp only [sub_zero, one_smul, zero_smul, add_zero]
-  · simp only [sub_zero, one_smul, zero_smul, add_zero]
+  · simp only [sub_zero]; simp
+  · simp only [sub_zero]; simp
   · rfl
   · rfl
 
@@ -213,8 +225,8 @@ lemma fdBoundaryToPolygonHomotopy_at_one (t : ℝ) (_ht : t ∈ Icc 0 5) :
   simp only [fdBoundaryToPolygonHomotopy, fdPolygon]
   split_ifs with h1 h2 h3 h4
   · rfl
-  · simp only [sub_self, zero_smul, one_smul, zero_add]
-  · simp only [sub_self, zero_smul, one_smul, zero_add]
+  · simp only [sub_self]; simp
+  · simp only [sub_self]; simp
   · rfl
   · rfl
 

@@ -188,9 +188,9 @@ lemma quadratic_approx_of_contDiffAt_two
       deriv_id s
     have hsub : deriv (fun x => x - t₀) s = 1 := by
       rw [deriv_sub_const, hid]
-    rw [deriv_smul_const
-      (differentiableAt_id.sub
-        (differentiableAt_const _)), hsub, one_smul]
+    have : deriv (fun s => (s - t₀) • L) s = deriv (fun s => s - t₀) s • L :=
+      deriv_smul_const (differentiableAt_id.sub (differentiableAt_const _)) L
+    rw [this, hsub]; simp
   have h_deriv :
       ∀ s ∈ Set.uIcc t₀ t,
         deriv h s = deriv γ s - L := by
@@ -219,7 +219,7 @@ lemma quadratic_approx_of_contDiffAt_two
     simp only [step1, step2, step3,
       h_deriv_f₂, h_deriv_f₃, sub_zero, f₁]
   have h_at_t₀ : h t₀ = 0 := by
-    simp only [h, f₁, f₂, f₃, sub_self, zero_smul]
+    simp only [h, f₁, f₂, f₃, sub_self]; simp
   have h_deriv_bound :
       ∀ s ∈ Set.uIcc t₀ t,
         ‖deriv h s‖ ≤ M * |t - t₀| := by

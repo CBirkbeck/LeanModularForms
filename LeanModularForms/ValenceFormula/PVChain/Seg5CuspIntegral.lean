@@ -392,10 +392,11 @@ lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
         (2 * ↑Real.pi * I * circleMap 0 R (2 * Real.pi * (t - 9 / 2)))) =
       ∫ t in (4:ℝ)..5, (2 * Real.pi : ℝ) • g (2 * Real.pi * (t - 9 / 2)) := by
     congr 1; ext t
-    simp only [hg_def, deriv_circleMap, Complex.real_smul, smul_eq_mul, ofReal_mul, ofReal_ofNat]
-    ring
+    simp only [hg_def, smul_eq_mul]
+    erw [deriv_circleMap]
+    erw [Complex.real_smul]; push_cast; ring
   rw [h_eq_integral]
-  rw [intervalIntegral.integral_smul]
+  erw [intervalIntegral.integral_smul]
   have hpi_ne : (2 * Real.pi : ℝ) ≠ 0 := by positivity
   rw [show (fun t : ℝ => g (2 * Real.pi * (t - 9 / 2))) =
     (fun t : ℝ => g (2 * Real.pi * t + (2 * Real.pi * (-9 / 2)))) by
@@ -404,15 +405,16 @@ lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
   have hbnd_lo : 2 * Real.pi * 4 + 2 * Real.pi * (-9 / 2) = -Real.pi := by ring
   have hbnd_hi : 2 * Real.pi * 5 + 2 * Real.pi * (-9 / 2) = Real.pi := by ring
   rw [hbnd_lo, hbnd_hi]
-  rw [smul_inv_smul₀ hpi_ne]
+  erw [smul_inv_smul₀ hpi_ne]
   have h_periodic : Function.Periodic g (2 * Real.pi) := by
     intro θ
-    simp only [hg_def, deriv_circleMap, periodic_circleMap 0 R θ, smul_eq_mul]
+    simp only [hg_def, smul_eq_mul]
+    erw [deriv_circleMap, deriv_circleMap, periodic_circleMap 0 R θ]
   have h_shift := Function.Periodic.intervalIntegral_add_eq h_periodic (-Real.pi) 0
   simp only [zero_add] at h_shift
   rw [show (-Real.pi + 2 * Real.pi : ℝ) = Real.pi from by ring] at h_shift
   rw [h_shift]
-  simp only [circleIntegral, hg_def]
+  simp only [circleIntegral, hg_def]; rfl
 
 /-- Combination of Stages 1 and 2 at height H:
 the logDeriv integral along seg5 at height H = 2πi · orderAtCusp'. -/
@@ -455,7 +457,7 @@ theorem seg5_logDeriv_integral_value_bridge {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     filter_upwards with t ht
     rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)] at ht
     have ht4 : (4 : ℝ) < t := ht.1
-    rw [fdBoundary_H_eq_seg5_H ht4, (fdBoundary_H_hasDerivAt_seg5 H ht4).deriv, mul_one]
+    rw [fdBoundary_H_eq_seg5_H ht4]; erw [(fdBoundary_H_hasDerivAt_seg5 H ht4).deriv]; rw [mul_one]
   calc ∫ t in (4:ℝ)..5,
         logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
           deriv (fdBoundary_H H) t

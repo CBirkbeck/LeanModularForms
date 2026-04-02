@@ -24,6 +24,11 @@ open scoped Interval
 
 namespace LogDerivFTC
 
+private noncomputable instance : ContinuousSMul ℝ ℂ :=
+  ⟨(show (fun p : ℝ × ℂ => p.1 • p.2) = (fun p => (p.1 : ℂ) * p.2) from
+    funext fun p => by simp [Complex.real_smul]) ▸
+    (Complex.continuous_ofReal.comp continuous_fst).mul continuous_snd⟩
+
 /-!
 ### Basic integrability and FTC for C¹ curves staying in the slit plane
 -/

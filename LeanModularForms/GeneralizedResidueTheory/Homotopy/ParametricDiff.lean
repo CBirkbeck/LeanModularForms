@@ -32,6 +32,11 @@ open scoped Real Interval
 
 noncomputable section
 
+private noncomputable instance : ContinuousSMul ℝ ℂ :=
+  ⟨(show (fun p : ℝ × ℂ => p.1 • p.2) = (fun p => (p.1 : ℂ) * p.2) from
+    funext fun p => by simp [Complex.real_smul]) ▸
+    (Complex.continuous_ofReal.comp continuous_fst).mul continuous_snd⟩
+
 /-- Continuity of a parametric interval integral. -/
 theorem intervalIntegral_continuous_on_param
     (f : ℝ → ℝ → ℂ) (a b : ℝ) (S : Set ℝ) (hab : a ≤ b)
@@ -400,7 +405,7 @@ private lemma hasDerivAt_homotopy_param
           (fun s' => deriv (fun t' => H (t', s')) t)) s =
           deriv (fun s' => f (H (t, s'))) s * deriv (fun t' => H (t', s)) t +
           f (H (t, s)) * deriv (fun s' => deriv (fun t' => H (t', s')) t) s
-        rw [deriv_mul hfH_diff_s h_partialT_diff_s]
+        exact deriv_mul hfH_diff_s h_partialT_diff_s
       have hRHS :
           deriv (fun t' => f (H (t', s)) * deriv (fun s'' => H (t', s'')) s) t =
             deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
@@ -409,7 +414,7 @@ private lemma hasDerivAt_homotopy_param
           (fun t' => deriv (fun s' => H (t', s')) s)) t =
           deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
           f (H (t, s)) * deriv (fun t' => deriv (fun s' => H (t', s')) s) t
-        rw [deriv_mul hfH_diff_t h_partialS_diff_t]
+        exact deriv_mul hfH_diff_t h_partialS_diff_t
       have h_chain_s :
           deriv (fun s' =>
             f (H (t, s'))) s =
@@ -418,11 +423,8 @@ private lemma hasDerivAt_homotopy_param
         have h_eq :
             (fun s' => f (H (t, s'))) =
               f ∘ (fun s' => H (t, s')) := rfl
-        rw [h_eq,
-          deriv.scomp s
-            (hf_differentiable (H (t, s)))
-          hH_s,
-          smul_eq_mul, mul_comm]
+        rw [h_eq]; have := deriv.scomp s (hf_differentiable (H (t, s))) hH_s
+        simp only [smul_eq_mul, mul_comm] at this; exact this
       have h_chain_t :
           deriv (fun t' =>
             f (H (t', s))) t =
@@ -431,11 +433,8 @@ private lemma hasDerivAt_homotopy_param
         have h_eq :
             (fun t' => f (H (t', s))) =
               f ∘ (fun t' => H (t', s)) := rfl
-        rw [h_eq,
-          deriv.scomp t
-            (hf_differentiable (H (t, s)))
-          hH_t,
-          smul_eq_mul, mul_comm]
+        rw [h_eq]; have := deriv.scomp t (hf_differentiable (H (t, s))) hH_t
+        simp only [smul_eq_mul, mul_comm] at this; exact this
       rw [hLHS, hRHS,
         h_chain_s, h_chain_t, h_mixed]
       ring
@@ -598,13 +597,6 @@ private lemma hasDerivAt_homotopy_param
         rw [h_comp]
         exact (h_partialT.differentiable one_ne_zero
           (t, s')).comp s' h_emb_s'
-      change deriv ((fun s'' => f (H (t, s''))) *
-        (fun s'' => deriv (fun t' => H (t', s'')) t)) s' =
-        deriv f (H (t, s')) * deriv (fun s'' => H (t, s'')) s' *
-          deriv (fun t' => H (t', s')) t +
-        f (H (t, s')) * deriv (fun s'' => deriv (fun t' => H (t', s'')) t) s'
-      rw [deriv_mul hfH_diff_s'
-        h_partialT_diff_s']
       have h_chain :
           deriv (fun s'' =>
             f (H (t, s''))) s' =
@@ -614,12 +606,15 @@ private lemma hasDerivAt_homotopy_param
         have h_eq :
             (fun s'' => f (H (t, s''))) =
               f ∘ (fun s'' => H (t, s'')) := rfl
-        rw [h_eq,
-          deriv.scomp s'
-            (hf_differentiable (H (t, s')))
-            hH_diff_s',
-          smul_eq_mul, mul_comm]
-      simp only [h_chain, mul_assoc]
+        rw [h_eq]; have := deriv.scomp s' (hf_differentiable (H (t, s'))) hH_diff_s'
+        simp only [smul_eq_mul, mul_comm] at this; exact this
+      change deriv ((fun s'' => f (H (t, s''))) *
+        (fun s'' => deriv (fun t' => H (t', s'')) t)) s' =
+        deriv f (H (t, s')) * deriv (fun s'' => H (t, s'')) s' *
+          deriv (fun t' => H (t', s')) t +
+        f (H (t, s')) * deriv (fun s'' => deriv (fun t' => H (t', s'')) t) s'
+      have h_dm := deriv_mul hfH_diff_s' h_partialT_diff_s'
+      erw [h_dm, h_chain, mul_assoc]; rfl
     have hF'_fun_eq :
         (fun p : ℝ × ℝ =>
           deriv (fun s'' => F s'' p.1) p.2) =
@@ -928,9 +923,8 @@ theorem hasDerivAt_homotopy_integral_zero
           have h_eq :
               (fun t' => f (H (t', s))) =
                 f ∘ (fun t' => H (t', s)) := rfl
-          rw [h_eq,
-            deriv.scomp t hf_at hH_t,
-            smul_eq_mul, mul_comm]
+          rw [h_eq]; have := deriv.scomp t hf_at hH_t
+          simp only [smul_eq_mul, mul_comm] at this; exact this
         suffices h_chain_cont : ContinuousOn (fun t =>
             deriv f (H (t, s)) *
               deriv (fun t' => H (t', s)) t)
@@ -1065,7 +1059,7 @@ theorem hasDerivAt_homotopy_integral_zero
           (fun s' => deriv (fun t' => H (t', s')) t)) s =
           deriv (fun s' => f (H (t, s'))) s * deriv (fun t' => H (t', s)) t +
           f (H (t, s)) * deriv (fun s' => deriv (fun t' => H (t', s')) t) s
-        rw [deriv_mul hfH_diff_s h_partialT_diff_s]
+        exact deriv_mul hfH_diff_s h_partialT_diff_s
       have hRHS :
           deriv (fun t' => f (H (t', s)) * deriv (fun s'' => H (t', s'')) s) t =
             deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
@@ -1074,7 +1068,7 @@ theorem hasDerivAt_homotopy_integral_zero
           (fun t' => deriv (fun s' => H (t', s')) s)) t =
           deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
           f (H (t, s)) * deriv (fun t' => deriv (fun s' => H (t', s')) s) t
-        rw [deriv_mul hfH_diff_t h_partialS_diff_t]
+        exact deriv_mul hfH_diff_t h_partialS_diff_t
       have h_chain_s :
           deriv (fun s' => f (H (t, s'))) s =
             deriv f (H (t, s)) *
@@ -1082,9 +1076,8 @@ theorem hasDerivAt_homotopy_integral_zero
         have h_eq :
             (fun s' => f (H (t, s'))) =
               f ∘ (fun s' => H (t, s')) := rfl
-        rw [h_eq,
-          deriv.scomp s hf_at hH_s,
-          smul_eq_mul, mul_comm]
+        rw [h_eq]; have := deriv.scomp s hf_at hH_s
+        simp only [smul_eq_mul, mul_comm] at this; exact this
       have h_chain_t :
           deriv (fun t' => f (H (t', s))) t =
             deriv f (H (t, s)) *
@@ -1092,9 +1085,8 @@ theorem hasDerivAt_homotopy_integral_zero
         have h_eq :
             (fun t' => f (H (t', s))) =
               f ∘ (fun t' => H (t', s)) := rfl
-        rw [h_eq,
-          deriv.scomp t hf_at hH_t,
-          smul_eq_mul, mul_comm]
+        rw [h_eq]; have := deriv.scomp t hf_at hH_t
+        simp only [smul_eq_mul, mul_comm] at this; exact this
       rw [hLHS, hRHS, h_chain_s, h_chain_t, h_mixed]
       ring
     have h_param :

@@ -651,7 +651,10 @@ private lemma δ_right_lt_one_aux {ε : ℝ}
 private lemma inv_mul_deriv_eq_logDeriv_sub (H : ℝ) (c : ℂ) :
     (fun t => (fdBoundary_H H t - c)⁻¹ * deriv (fdBoundary_H H) t) =
     (fun t => deriv (fun s => fdBoundary_H H s - c) t / (fdBoundary_H H t - c)) := by
-  funext t; rw [deriv_sub_const, div_eq_mul_inv]; ring
+  funext t
+  have : deriv (fun s => fdBoundary_H H s - c) t = deriv (fdBoundary_H H) t :=
+    deriv_sub_const (f := fdBoundary_H H) c
+  rw [this, div_eq_mul_inv, mul_comm]
 
 /-- The PV integral of `(γ-ρ')⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ/3`. -/
 theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
@@ -665,8 +668,8 @@ theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
   have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by positivity
   have hderiv_eq : ∀ t : ℝ, deriv (fun s => fdBoundary_H H s - (ellipticPointRhoPlusOne : ℂ)) t =
-      deriv (fdBoundary_H H) t := fun t => by
-    simp [deriv_sub_const]
+      deriv (fdBoundary_H H) t := fun t =>
+    deriv_sub_const (f := fdBoundary_H H) _
   simp_rw [hderiv_eq]
   set threshold := min (H - Real.sqrt 3 / 2) (2 * Real.sin (Real.pi / 12)) with hthresh_def
   have hthresh_pos : 0 < threshold := lt_min hH_gap h2sin_pos

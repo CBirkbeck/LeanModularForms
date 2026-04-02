@@ -79,8 +79,7 @@ private lemma bounded_on_Ioo_of_continuousOn_with_limits
   obtain ⟨Lb, hLb⟩ := hf_right
   let g := extendFrom (Ioo a b) f
   have hg_cont : ContinuousOn g (Icc a b) :=
-    continuousOn_Icc_extendFrom_Ioo (ne_of_lt hab) hf_cont
-      hLa hLb
+    continuousOn_Icc_extendFrom_Ioo hf_cont hLa hLb
   obtain ⟨M, hM⟩ := isCompact_Icc.exists_bound_of_continuousOn
     hg_cont
   exact ⟨M, fun t ht => by
@@ -324,8 +323,8 @@ lemma integral_singular_term_eq_winding_times_coeff
   calc ∫ t in γ.a..γ.b, c / (γ.toFun t - s) * deriv γ.toFun t
       = ∫ t in γ.a..γ.b, c * ((γ.toFun t - s)⁻¹ * deriv γ.toFun t) := by
         apply intervalIntegral.integral_congr; intro t _; exact h_integrand t
-    _ = c * ∫ t in γ.a..γ.b, (γ.toFun t - s)⁻¹ * deriv γ.toFun t := by
-        rw [intervalIntegral.integral_const_mul]
+    _ = c * ∫ t in γ.a..γ.b, (γ.toFun t - s)⁻¹ * deriv γ.toFun t :=
+        intervalIntegral.integral_smul c (fun t => (γ.toFun t - s)⁻¹ * deriv γ.toFun t)
     _ = c * (2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b s) := by rw [h_integral]
     _ = 2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b s * c := by ring
 
@@ -706,7 +705,20 @@ theorem pv_integral_simple_pole
           deriv (fun s => γ.toFun s - z₀) t
         else 0) * c := by
     intro ε
-    rw [← intervalIntegral.integral_mul_const]
+    rw [show (∫ t in γ.a..γ.b,
+        if ‖(fun s => γ.toFun s - z₀) t - 0‖ > ε
+        then (·⁻¹) ((fun s => γ.toFun s - z₀) t) *
+          deriv (fun s => γ.toFun s - z₀) t
+        else 0) * c =
+      ∫ t in γ.a..γ.b, (if ‖(fun s => γ.toFun s - z₀) t - 0‖ > ε
+        then (·⁻¹) ((fun s => γ.toFun s - z₀) t) *
+          deriv (fun s => γ.toFun s - z₀) t
+        else 0) * c from
+      (intervalIntegral.integral_mul_const c
+        (fun t => if ‖(fun s => γ.toFun s - z₀) t - 0‖ > ε
+          then (·⁻¹) ((fun s => γ.toFun s - z₀) t) *
+            deriv (fun s => γ.toFun s - z₀) t
+          else 0)).symm]
     apply intervalIntegral.integral_congr
     intro t _; exact h_integrand' ε t
   simp_rw [h_integral']

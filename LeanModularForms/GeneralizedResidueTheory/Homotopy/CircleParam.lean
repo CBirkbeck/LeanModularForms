@@ -24,6 +24,11 @@ open scoped Real Interval
 
 noncomputable section
 
+private noncomputable instance : ContinuousSMul ℝ ℂ :=
+  ⟨(show (fun p : ℝ × ℂ => p.1 • p.2) = (fun p => (p.1 : ℂ) * p.2) from
+    funext fun p => by simp [Complex.real_smul]) ▸
+    (Complex.continuous_ofReal.comp continuous_fst).mul continuous_snd⟩
+
 /-- Standard circle parameterization: `z₀ + r·exp(2πi(t-a)/(b-a))`. -/
 def circleParam (z₀ : ℂ) (r : ℝ) (a b : ℝ) (t : ℝ) : ℂ :=
   z₀ + r * exp (2 * Real.pi * I * ((t - a) / (b - a)))
@@ -125,7 +130,7 @@ theorem circleParam_winding_eq_one (z₀ : ℂ) (r : ℝ)
     have hba_ne : (b : ℂ) - a ≠ 0 := by
       simp [sub_ne_zero, Complex.ofReal_inj]
       exact ne_of_gt hab
-    simp only [Complex.real_smul, Complex.ofReal_sub]
+    erw [Complex.real_smul]; rw [Complex.ofReal_sub]
     field_simp
   have hlim : Tendsto (fun ε => ∫ t in a..b,
         if ‖circleParam z₀ r a b t - z₀‖ > ε then
@@ -298,7 +303,7 @@ theorem circleParamCW_winding_eq_neg_one (z₀ : ℂ)
     have hba_ne : (b : ℂ) - a ≠ 0 := by
       simp [sub_ne_zero, Complex.ofReal_inj]
       exact ne_of_gt hab
-    simp only [Complex.real_smul, Complex.ofReal_sub]
+    erw [Complex.real_smul]; rw [Complex.ofReal_sub]
     field_simp [hba_ne]
   have hlim : Tendsto (fun ε => ∫ t in a..b,
         if ‖circleParamCW z₀ r a b t - z₀‖ > ε then
@@ -339,7 +344,7 @@ private lemma hasDerivAt_ofReal_comp (θ : ℝ → ℝ) (t : ℝ)
     hθ.hasDerivAt.hasFDerivAt
   rw [show Complex.ofRealCLM ∘ θ = fun u => (θ u : ℂ) from rfl] at h3f
   convert h3f.hasDerivAt using 1
-  simp [ContinuousLinearMap.comp_apply, ContinuousLinearMap.smulRight_apply, smul_eq_mul]
+  simp [ContinuousLinearMap.comp_apply, smul_eq_mul]
 
 /-- For a C¹ curve on S¹ with angle lift θ, the winding number equals the degree. -/
 theorem winding_of_S1_curve_eq_degree (z₀ : ℂ) (a b : ℝ) (_hab : a < b)

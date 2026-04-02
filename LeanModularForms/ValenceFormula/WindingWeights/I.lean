@@ -885,7 +885,9 @@ private lemma i_ftc_integrability (H : ℝ) (hH : 1 < H) {ε : ℝ}
   obtain ⟨hL, hR, hsum⟩ := ftc_logDeriv_telescope_i H hH hδ_pos hδ_lt_one
   have h_congr : ∀ t, (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t =
       deriv (fun s => fdBoundary_H H s - I) t / (fdBoundary_H H t - I) := fun t => by
-    simp [deriv_sub_const, div_eq_mul_inv, mul_comm]
+    have hd : deriv (fun s => fdBoundary_H H s - I) t = deriv (fdBoundary_H H) t :=
+      deriv_sub_const (f := fdBoundary_H H) _
+    rw [hd, div_eq_mul_inv, mul_comm]
   refine ⟨(intervalIntegrable_congr (fun t _ => h_congr t)).mpr hL,
           (intervalIntegrable_congr (fun t _ => h_congr t)).mpr hR, ?_⟩
   simp_rw [h_congr]; exact hsum
@@ -1011,7 +1013,7 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
           else 0) := fun ε =>
       intervalIntegral.integral_congr fun t _ => by
         split_ifs with h
-        · congr 1; simp [deriv_sub_const]
+        · congr 1; exact deriv_sub_const (f := fdBoundary_H H) _
         · rfl
     simp_rw [heq]; exact h
   apply ContourIntegral.pv_tendsto_of_crossing_limit

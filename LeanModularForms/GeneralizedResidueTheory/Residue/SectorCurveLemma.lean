@@ -488,8 +488,12 @@ private theorem cauchyPV_simplePole_integral_split (r : ℝ) (hr : 0 < r) (α : 
     ∫ t in (0:ℝ)..3, (c * cauchyPrincipalValueIntegrand' (fun z => z⁻¹)
       (sectorCurve r α) 0 ε t +
     cauchyPrincipalValueIntegrand' g (sectorCurve r α) 0 ε t) from
-    intervalIntegral.integral_congr (fun t _ => h_decomp t),
-    ← intervalIntegral.integral_const_mul]
+    intervalIntegral.integral_congr (fun t _ => h_decomp t)]
+  rw [show c * ∫ t in (0:ℝ)..3, cauchyPrincipalValueIntegrand' (fun z => z⁻¹)
+      (sectorCurve r α) 0 ε t =
+    ∫ t in (0:ℝ)..3, c * cauchyPrincipalValueIntegrand' (fun z => z⁻¹)
+      (sectorCurve r α) 0 ε t from
+    (intervalIntegral.integral_const_mul c _).symm]
   exact intervalIntegral.integral_add
     ((cauchyPV_inv_intervalIntegrable r hr α ε hε_pos hε_lt_r).const_mul c)
     (cauchyPV_g_intervalIntegrable r hr α g hg ε)

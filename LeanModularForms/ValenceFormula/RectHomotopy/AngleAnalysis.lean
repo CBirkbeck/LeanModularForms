@@ -303,7 +303,8 @@ lemma fdPolygonRadialCircle_angle_eq_arg (p : ℂ) (t : ℝ) (hne : fdPolygon t 
   simp only [fdPolygonRadialCircle_angle, angleOnCircle,
     fdPolygonRadialCircle, polygonToCircleRadial]
   set dir := fdPolygon t - p with hdir_def
-  simp only [show (1 - 1 : ℝ) * ‖dir‖ + 1 = 1 from by ring, one_smul, add_sub_cancel_left]
+  simp only [show (1 - 1 : ℝ) * ‖dir‖ + 1 = 1 from by ring, add_sub_cancel_left]
+  erw [one_smul]
   exact arg_normalize_eq dir (sub_ne_zero.mpr hne)
 
 /-- Lifted angle function that accounts for branch cut crossing. -/

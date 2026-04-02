@@ -406,13 +406,13 @@ lemma summableSubseqAux_pos {γ : ℝ → ℂ}
     simp only [summableSubseqAux_zero]
     have h_min_pos : 0 < min δ₀ (δ 0) :=
       lt_min hδ₀_pos (hδ_pos 0)
-    linarith
+    positivity
   | succ m ih =>
     simp only [summableSubseqAux_succ]
     have h_min_pos :
         0 < min (ε m / 2) (δ (m + 1)) :=
       lt_min (by linarith) (hδ_pos (m + 1))
-    linarith
+    positivity
 
 lemma summableSubseqAux_halving {γ : ℝ → ℂ}
     {t₀ : ℝ} {L : ℂ} (hL : L ≠ 0)
@@ -463,7 +463,8 @@ lemma summableSubseqAux_lt_delta {γ : ℝ → ℂ}
       min_le_right _ _
     have h_min_pos : 0 < min δ₀ (δ 0) :=
       lt_min hδ₀_pos (hδ_pos 0)
-    linarith
+    exact lt_of_le_of_lt (div_le_div_of_nonneg_right h_min_le (by norm_num : (0:ℝ) < 2).le)
+      (half_lt_self (hδ_pos 0))
   | succ m _ =>
     simp only [summableSubseqAux_succ]
     have h_min_le :

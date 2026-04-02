@@ -338,7 +338,8 @@ lemma eta_logderivs_const' : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn 
     intro x hx
     apply (eta_DifferentiableAt_UpperHalfPlane' ⟨x, hx⟩).differentiableWithinAt
   · exact isOpen_lt continuous_const Complex.continuous_im
-  · refine Convex.isPreconnected ?_
+  · haveI : IsBoundedSMul ℝ ℂ := NormedSpace.toIsBoundedSMul
+    refine Convex.isPreconnected ?_
     exact convex_halfSpace_im_gt 0
   · intro x hx
     simp only [Pi.mul_apply, ne_eq, mul_eq_zero, not_or]

@@ -655,7 +655,7 @@ lemma singleton_one_mul_𝕋 (D2 : HeckeCoset P) (b : ℤ) :
     rw [mul_singleton_𝕋, m_mul_one_eq_single]
     simp only [T_single]
     rw [show (⟦HeckeCoset.rep ⟦g⟧⟧ : HeckeCoset P) = ⟦g⟧ from Quotient.out_eq _]
-    simp [Finsupp.smul_single_one]
+    simp
 
 /-- The off-diagonal multiplicity for left multiplication by `HeckeCoset.one` is zero. -/
 lemma heckeMultiplicity_one_mul_eq_zero (g₁ : P.Δ) (A : HeckeCoset P)
@@ -690,7 +690,7 @@ lemma one_mul_singleton_𝕋 (D2 : HeckeCoset P) (b : ℤ) :
     rw [mul_singleton_𝕋, m_one_mul_eq_single]
     simp only [T_single]
     rw [show (⟦HeckeCoset.rep ⟦g⟧⟧ : HeckeCoset P) = ⟦g⟧ from Quotient.out_eq _]
-    simp [Finsupp.smul_single_one]
+    simp
 
 /-- The Hecke ring is a non-unital non-associative semiring (distributivity and zero laws). -/
 noncomputable instance instNonUnitalNonAssocSemiring :
@@ -699,26 +699,27 @@ noncomputable instance instNonUnitalNonAssocSemiring :
     left_distrib := fun f g h => by
       simp only [mul_def]
       refine Eq.trans (congr_arg (Finsupp.sum f)
-        (funext₂ fun a₁ b₁ => Finsupp.sum_add_index ?_ ?_))
-        ?_ <;>
-        simp
-      intro D1 _ a b
-      simp_rw [← smul_assoc, smul_eq_mul]
-      ring_nf
-      rw [@add_smul]
+        (funext₂ fun a₁ b₁ => Finsupp.sum_add_index' ?_ ?_))
+        ?_
+      · intro a; simp only [zero_smul, smul_zero]
+      · intro D1 a b
+        simp_rw [← smul_assoc, smul_eq_mul]
+        ring_nf
+        rw [@add_smul]
+      · exact Finsupp.sum_add
 
     right_distrib := fun f g h => by
       simp only [mul_def]
-      refine Eq.trans (Finsupp.sum_add_index ?_ ?_) ?_ <;>
-        simp only [Finset.mem_union, mem_support_iff, ne_eq, zero_smul,
-          sum_fun_zero, implies_true]
-      intro D1 _ a b
-      apply Finsupp.ext; intro t
-      simp_rw [add_smul]
-      simp only [sum_add, coe_add, Pi.add_apply, sum_apply, coe_smul,
-        Pi.smul_apply, smul_eq_mul]
-      rw [add_apply]
-      simp only [sum_apply, coe_smul, Pi.smul_apply, smul_eq_mul]
+      refine Eq.trans (Finsupp.sum_add_index' ?_ ?_) ?_
+      · intro a; change (h.sum fun D2 b₂ ↦ (0 : ℤ) • b₂ • m P a.rep D2.rep) = 0
+        simp only [zero_smul, Finsupp.sum_fun_zero]
+      · intro D1 a b
+        change (h.sum fun D2 b₂ ↦ (a + b) • b₂ • m P D1.rep D2.rep) =
+          (h.sum fun D2 b₂ ↦ a • b₂ • m P D1.rep D2.rep) +
+          (h.sum fun D2 b₂ ↦ b • b₂ • m P D1.rep D2.rep)
+        simp_rw [add_smul]
+        exact Finsupp.sum_add
+      · rfl
 
     zero_mul := fun f => by
       simp only [mul_def]

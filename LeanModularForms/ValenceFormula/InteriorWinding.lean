@@ -231,12 +231,13 @@ private lemma fdHomot_deriv_bound (H : ℝ) (hH : heightCutoff ≤ H) :
       · exact fdBoundary_H_not_differentiableAt_1 hH_s_sqrt
       · exact fdBoundary_H_not_differentiableAt_3 hH_s_sqrt
       · exact fdBoundary_H_not_differentiableAt_4 hH_s_sqrt
-    rw [deriv_zero_of_not_differentiableAt hnd, norm_zero]
+    erw [deriv_zero_of_not_differentiableAt hnd]; rw [norm_zero]
     exact le_trans zero_le_one (le_max_right _ _)
   · simp only [fdBoundary_H_partition, Finset.mem_insert, Finset.mem_singleton] at htp
     push_neg at htp; obtain ⟨h1, h3, h4⟩ := htp
     by_cases ht1 : t < 1
-    · rw [(fdBoundary_H_hasDerivAt_seg1 H_s ht1).deriv, neg_mul, norm_neg, norm_mul,
+    · erw [(fdBoundary_H_hasDerivAt_seg1 H_s ht1).deriv]
+      rw [neg_mul, norm_neg, norm_mul,
           Complex.norm_I, mul_one,
           show (↑H_s : ℂ) - ↑(Real.sqrt 3) / 2 = ↑(H_s - Real.sqrt 3 / 2) from by
             push_cast; ring,
@@ -245,14 +246,16 @@ private lemma fdHomot_deriv_bound (H : ℝ) (hH : heightCutoff ≤ H) :
     · push_neg at ht1
       have ht1' : 1 < t := lt_of_le_of_ne ht1 (Ne.symm h1)
       by_cases ht3 : t < 3
-      · rw [(fdBoundary_H_hasDerivAt_arc' H_s ht1' ht3).deriv, norm_mul, norm_mul,
+      · erw [(fdBoundary_H_hasDerivAt_arc' H_s ht1' ht3).deriv]
+        rw [norm_mul, norm_mul,
             Complex.norm_of_nonneg (le_of_lt (by positivity : (0:ℝ) < Real.pi / 6)),
             Complex.norm_I, mul_one, Complex.norm_exp_ofReal_mul_I, mul_one]
         exact le_trans (by have := Real.pi_le_four; linarith) (le_max_right _ _)
       · push_neg at ht3
         have ht3' : 3 < t := lt_of_le_of_ne ht3 (Ne.symm h3)
         by_cases ht4 : t < 4
-        · rw [(fdBoundary_H_hasDerivAt_seg4 H_s ht3' ht4).deriv, norm_mul,
+        · erw [(fdBoundary_H_hasDerivAt_seg4 H_s ht3' ht4).deriv]
+          rw [norm_mul,
               Complex.norm_I, mul_one,
               show (↑H_s : ℂ) - ↑(Real.sqrt 3) / 2 = ↑(H_s - Real.sqrt 3 / 2) from by
                 push_cast; ring,
@@ -260,7 +263,7 @@ private lemma fdHomot_deriv_bound (H : ℝ) (hH : heightCutoff ≤ H) :
           exact le_trans (by linarith) (le_max_left _ _)
         · push_neg at ht4
           have ht4' : 4 < t := lt_of_le_of_ne ht4 (Ne.symm h4)
-          rw [(fdBoundary_H_hasDerivAt_seg5 H_s ht4').deriv, norm_one]
+          erw [(fdBoundary_H_hasDerivAt_seg5 H_s ht4').deriv]; rw [norm_one]
           exact le_max_right _ _
 
 private lemma fdBoundary_H_piecewise_homotopic (p : ℂ) (hp_norm : ‖p‖ > 1) (hp_re : |p.re| < 1 / 2)
@@ -409,24 +412,24 @@ theorem gWN_fdBoundary_H_eq_neg_one_of_strictInterior
           exact ⟨this.2.1, this.2.2.2.1, this.2.2.2.2.1⟩
         have hd := fdBoundary_H_differentiableAt_off_partition H r.1 ht_not_part
         simp only [Function.comp_def]
-        rw [show (fun t' => fdBoundary_H H t' - zPath r.2) =
+        erw [show (fun t' => fdBoundary_H H t' - zPath r.2) =
             fdBoundary_H H - fun _ => zPath r.2 from funext fun _ => rfl,
-          deriv_sub hd (differentiableAt_const _), deriv_const, sub_zero])
+          deriv_sub hd (differentiableAt_const _), deriv_const, sub_zero]; rfl)
     · obtain ⟨M, hM'⟩ := piecewiseC1Immersion_deriv_bounded (fdBoundary_HImmersion H hH_sqrt)
       have hM : ∀ t ∈ Icc (0:ℝ) 5, ‖deriv (fdBoundary_H H) t‖ ≤ M := hM'
       refine ⟨M, fun t ht s _ => ?_⟩
       change ‖deriv (fun t' => fdBoundary_H H t' - zPath s) t‖ ≤ M
       by_cases hd : DifferentiableAt ℝ (fdBoundary_H H) t
-      · rw [show (fun t' => fdBoundary_H H t' - zPath s) =
+      · erw [show (fun t' => fdBoundary_H H t' - zPath s) =
             fdBoundary_H H - fun _ => zPath s from funext fun _ => rfl,
           deriv_sub hd (differentiableAt_const _), deriv_const, sub_zero]
         exact hM t ht
       · have hnd : ¬DifferentiableAt ℝ (fun t' => fdBoundary_H H t' - zPath s) t := by
-          rw [show (fun t' => fdBoundary_H H t' - zPath s) =
+          erw [show (fun t' => fdBoundary_H H t' - zPath s) =
               fun t' => fdBoundary_H H t' + (-zPath s) from by ext; ring,
             differentiableAt_add_const_iff]
           exact hd
-        rw [deriv_zero_of_not_differentiableAt hnd, norm_zero]
+        erw [deriv_zero_of_not_differentiableAt hnd]; rw [norm_zero]
         linarith [norm_nonneg (deriv (fdBoundary_H H) t), hM t ht]
   have h_eq := windingNumber_eq_of_piecewise_homotopic _ _ 0 5 0 fdBoundaryFullPartition
     (by norm_num : (0:ℝ) < 5) hhom

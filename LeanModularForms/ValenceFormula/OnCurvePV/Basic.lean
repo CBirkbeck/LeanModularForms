@@ -120,7 +120,7 @@ private lemma fdBoundary_H_cutout_bound (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
               · exact fdBoundary_H_not_differentiableAt_1 hH
               · exact fdBoundary_H_not_differentiableAt_3 hH
               · exact fdBoundary_H_not_differentiableAt_4 hH
-            rw [deriv_zero_of_not_differentiableAt this]; simp [le_of_lt hM_pos]
+            erw [deriv_zero_of_not_differentiableAt this]; simp [le_of_lt hM_pos]
           · exact hM_bound t htp
         · exact norm_nonneg _
         · exact le_of_lt (inv_pos_of_pos hε)

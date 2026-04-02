@@ -80,7 +80,7 @@ instance dcSetoid (P : HeckePair G) : Setoid P.Δ where
 
 /-- A Hecke double coset: an equivalence class of `Δ`-elements under `HgH = HhH`.
     This is the basis type for the Hecke ring. -/
-def HeckeCoset (P : HeckePair G) := Quotient (dcSetoid P)
+abbrev HeckeCoset (P : HeckePair G) := Quotient (dcSetoid P)
 
 noncomputable instance (P : HeckePair G) : DecidableEq (HeckeCoset P) := Classical.decEq _
 
@@ -355,11 +355,13 @@ lemma DoubleCoset.doubleCoset_one_mul (h : G) :
     ⋃ (_ : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H),
       DoubleCoset.doubleCoset h H H := by simp [Set.iUnion_const]
 
-/-- The Hecke ring type: formal `Z`-linear combinations of double cosets `HeckeCoset P`. -/
-def 𝕋 (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeCoset P) Z
+/-- The Hecke ring type: formal `Z`-linear combinations of double cosets `HeckeCoset P`.
+    Changed from `def` to `abbrev` for transparency in instance resolution (Lean 4.29+). -/
+abbrev 𝕋 (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeCoset P) Z
 
-/-- The Hecke module type: formal `Z`-linear combinations of left cosets `HeckeLeftCoset P`. -/
-def HeckeModule (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeLeftCoset P) Z
+/-- The Hecke module type: formal `Z`-linear combinations of left cosets `HeckeLeftCoset P`.
+    Changed from `def` to `abbrev` for transparency in instance resolution (Lean 4.29+). -/
+abbrev HeckeModule (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeLeftCoset P) Z
 
 variable (P : HeckePair G) (Z : Type*) [CommRing Z]
 

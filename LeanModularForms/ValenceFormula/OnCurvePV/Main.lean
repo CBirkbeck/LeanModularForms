@@ -71,7 +71,7 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
       apply ContDiffAt.add
       · exact Complex.ofRealCLM.contDiff.contDiffAt.sub contDiffAt_const
       · exact contDiffAt_const
-    · rw [(fdBoundary_H_hasDerivAt_seg5 1 (show (4:ℝ) < 9/2 from by norm_num)).deriv]
+    · erw [(fdBoundary_H_hasDerivAt_seg5 1 (show (4:ℝ) < 9/2 from by norm_num)).deriv]
       exact one_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_45 1).mono
       intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
@@ -167,7 +167,7 @@ private theorem cpv_exists_generic_seg1 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
       apply ContDiffAt.congr_of_eventuallyEq _ heq
       exact contDiffAt_const.add ((Complex.ofRealCLM.contDiff.contDiffAt.comp t₀
           (contDiffAt_const.sub (contDiffAt_id.mul contDiffAt_const))).mul contDiffAt_const)
-    · rw [(fdBoundary_H_hasDerivAt_seg1 H ht₀_lt_1).deriv]
+    · erw [(fdBoundary_H_hasDerivAt_seg1 H ht₀_lt_1).deriv]
       apply mul_ne_zero
       · exact neg_ne_zero.mpr (sub_ne_zero.mpr (by exact_mod_cast hH.ne'))
       · exact I_ne_zero
@@ -281,7 +281,7 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
       apply ContDiffAt.congr_of_eventuallyEq _ heq
       exact (Complex.ofRealCLM.contDiff.contDiffAt.comp t₁
         (contDiffAt_id.sub contDiffAt_const)).add contDiffAt_const
-    · rw [(fdBoundary_H_hasDerivAt_seg5 H ht₁_gt4).deriv]; exact one_ne_zero
+    · erw [(fdBoundary_H_hasDerivAt_seg5 H ht₁_gt4).deriv]; exact one_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_45 H).mono
       intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
@@ -456,7 +456,7 @@ private theorem cpv_exists_generic_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s :
       exact ((Complex.ofRealCLM.contDiff.contDiffAt.comp t₀
         (by fun_prop : ContDiffAt ℝ 2 (fun u : ℝ => Real.pi * (1 + u) / 6) t₀)).mul
           contDiffAt_const).cexp
-    · rw [(fdBoundary_H_hasDerivAt_arc H ht₀_gt_1 ht₀_lt_3).deriv]
+    · erw [(fdBoundary_H_hasDerivAt_arc H ht₀_gt_1 ht₀_lt_3).deriv]
       apply mul_ne_zero (exp_ne_zero _)
       apply mul_ne_zero
       · exact by norm_num [Complex.ofReal_ne_zero]
@@ -499,7 +499,7 @@ private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
       exact contDiffAt_const.add ((Complex.ofRealCLM.contDiff.contDiffAt.comp t₀
           (contDiffAt_const.add ((contDiffAt_id.sub contDiffAt_const).mul
             contDiffAt_const))).mul contDiffAt_const)
-    · rw [(fdBoundary_H_hasDerivAt_seg4 H ht₀_gt_3 ht₀_lt_4).deriv]
+    · erw [(fdBoundary_H_hasDerivAt_seg4 H ht₀_gt_3 ht₀_lt_4).deriv]
       apply mul_ne_zero
       · exact sub_ne_zero.mpr (by exact_mod_cast hH.ne')
       · exact I_ne_zero
@@ -659,7 +659,7 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
           ContDiffAt ℝ 2 (fun u : ℝ =>
             Real.pi * (1 + u) / 6) t₁)).mul
           contDiffAt_const).cexp
-    · rw [(fdBoundary_H_hasDerivAt_arc H ht₁_gt1 ht₁_lt3).deriv]
+    · erw [(fdBoundary_H_hasDerivAt_arc H ht₁_gt1 ht₁_lt3).deriv]
       apply mul_ne_zero (exp_ne_zero _)
       apply mul_ne_zero
       · exact by norm_num [Complex.ofReal_ne_zero]
@@ -824,7 +824,7 @@ private theorem cpv_exists_generic_seg5 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
       apply ContDiffAt.congr_of_eventuallyEq _ heq
       exact (Complex.ofRealCLM.contDiff.contDiffAt.comp t₀
         (contDiffAt_id.sub contDiffAt_const)).add contDiffAt_const
-    · rw [(fdBoundary_H_hasDerivAt_seg5 H ht₀_gt_4).deriv]; exact one_ne_zero
+    · erw [(fdBoundary_H_hasDerivAt_seg5 H ht₀_gt_4).deriv]; exact one_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_45 H).mono
       intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
@@ -880,7 +880,7 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
               contDiffAt_const).cexp
         · have hd := fdBoundary_H_hasDerivAt_arc H
             (show (1:ℝ) < 2 from by norm_num) (show (2:ℝ) < 3 from by norm_num)
-          rw [hd.deriv]
+          erw [hd.deriv]
           apply mul_ne_zero (exp_ne_zero _)
           apply mul_ne_zero
           · exact by norm_num [Complex.ofReal_ne_zero]

@@ -430,9 +430,11 @@ fixes every double coset. -/
 theorem mul_comm_of_antiInvolution (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D)
     (f g : 𝕋 P ℤ) : f * g = g * f := by
   apply induction_linear_𝕋 P f
-  · simp
+  · rw [@zero_mul _ (instNonUnitalNonAssocSemiring P).toMulZeroClass,
+        @mul_zero _ (instNonUnitalNonAssocSemiring P).toMulZeroClass]
   · intro D₁ a; apply induction_linear_𝕋 P g
-    · simp
+    · rw [@zero_mul _ (instNonUnitalNonAssocSemiring P).toMulZeroClass,
+          @mul_zero _ (instNonUnitalNonAssocSemiring P).toMulZeroClass]
     · intro D₂ b
       rw [T_single_mul_T_single, T_single_mul_T_single,
         m_comm_of_onHeckeCoset_eq ι h_fix D₁ D₂, smul_comm]
