@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.Residue.MultipointPV
+import LeanModularForms.GeneralizedResidueTheory.Residue.MultipointPV.DominatedConvergence
 import LeanModularForms.GeneralizedResidueTheory.Residue.Flatness
 import LeanModularForms.GeneralizedResidueTheory.Residue.SectorCurveLemma
 import LeanModularForms.GeneralizedResidueTheory.WindingNumber.Proposition2_2
