@@ -4,7 +4,7 @@
 
 Contribute the generalized residue theorem (Hungerbuhler-Wasem, Theorem 3.3), Dixon theorem,
 winding number decomposition (Prop 2.3), and the textbook valence formula for modular forms
-to mathlib, structured as two independent PR chains of 100-300 line PRs.
+to mathlib, structured as two PR chains of 100-300 line PRs.
 
 **Paper reference:** Hungerbuhler-Wasem, arXiv:1808.00997v2
 
@@ -19,16 +19,18 @@ to mathlib, structured as two independent PR chains of 100-300 line PRs.
   then deduce clean corollaries (simple poles, convex domains)
 - **Wrap mathlib Path**: `PiecewiseC1Path` extends mathlib's `Path` rather than defining from scratch
 - **Mathlib quality**: No proofs > ~50 lines, no one-off definitions, clean docstrings
+- **Usability-driven**: The SingleCrossingData framework (learned from valence formula work) is
+  promoted to Chain 1 because it makes winding number computations practical for downstream users
 
 ## Two PR Chains
 
-**Chain 1 — General Complex Analysis** (13 PRs, ~2800 lines)
+**Chain 1 — General Complex Analysis** (14 PRs, ~3050 lines)
 Broadly useful: piecewise curves, CPV integrals, winding numbers, residues, Dixon, generalized
 residue theorem. Useful to anyone doing complex analysis in Lean.
 
-**Chain 2 — Valence Formula** (TBD, separate planning)
+**Chain 2 — Valence Formula** (6 PRs, ~1500 lines)
 Builds on Chain 1 + mathlib `ModularForm` infrastructure. Targets the textbook valence formula
-`ord_inf + (1/2)ord_i + (1/3)ord_rho + sum(interior) = k/12`. Deferred until Chain 1 is settled.
+`ord_inf + (1/2)ord_i + (1/3)ord_rho + sum(interior) = k/12`.
 
 ---
 
@@ -120,6 +122,41 @@ Builds on Chain 1 + mathlib `ModularForm` infrastructure. Targets the textbook v
   in a convex set (via Poincare bridge, PR 6)
 
 **Depends on:** PR 3
+
+---
+
+#### PR 4b — Single-Crossing Computation Framework (~200 lines)
+
+**Theme:** Reusable framework for computing winding numbers at crossing points.
+
+This PR is the key lesson from the valence formula work: every winding number computation
+at a crossing point follows the same 5-step pattern. Without this framework, each downstream
+computation is a standalone 1000+ line ordeal. With it, users supply 5 ingredients and get
+the winding number automatically.
+
+**Definitions:**
+- `SingleCrossingData (gamma) (a b : R) (z0 : C)` — structure packaging:
+  - `L : C` — target PV limit
+  - `t0 : R` — unique crossing parameter
+  - `delta : R -> R` — cutoff function (maps epsilon to parameter window)
+  - `threshold : R` — validity bound for epsilon
+  - `h_far` / `h_near` — norm bounds: outside delta-window curve is far, inside is near
+  - `E : R -> C` — FTC expression for near-crossing integral
+  - `h_ftc` — integral over delta-window equals E(eps)
+  - `h_limit` — `Tendsto E (nhdsWithin 0 (Ioi 0)) (nhds L)`
+- `AsymmetricCrossingData` — variant with `delta_left != delta_right` (for corners
+  where left/right geometry differs, e.g. arc meets line segment)
+
+**Key theorems:**
+- `HasCauchyPV.of_singleCrossing` — master theorem: SingleCrossingData implies CPV exists
+- `HasGeneralizedWindingNumber.of_singleCrossing` — derives winding = L / (2*pi*I)
+- `HasGeneralizedWindingNumber.of_singleCrossing_neg_half` — specialization for smooth
+  crossing: L = -pi*I gives winding = -1/2
+- `HasGeneralizedWindingNumber.of_singleCrossing_neg_sixth` — specialization for 60-degree
+  corner: L = -pi*I/3 gives winding = -1/6
+- `HasCauchyPV.of_asymmetricCrossing` — asymmetric variant
+
+**Depends on:** PR 4, PR 2 (FTC)
 
 ---
 
@@ -277,9 +314,9 @@ Builds on Chain 1 + mathlib `ModularForm` infrastructure. Targets the textbook v
 - `IsFlatOfOrder (n : N) (gamma) (t : R)` — curve flatness of order n at crossing
   (tangent deviation is O(|s-t|^n))
 - `HasFlatCrossings (f : C -> C) (gamma)` — for each pole s of f on gamma, the crossing
-  has flatness >= pole order (condition A')
+  has flatness >= pole order (working name for condition A')
 - `IsLaurentCompatible (f : C -> C) (gamma)` — angle/Laurent coefficient compatibility
-  at each crossing (condition B)
+  at each crossing (working name for condition B)
 
 **Key theorems:**
 - `hasFlatCrossings_of_simplePoles` — automatic for simple poles (no condition needed)
@@ -299,7 +336,7 @@ Builds on Chain 1 + mathlib `ModularForm` infrastructure. Targets the textbook v
 - `generalizedResidueTheorem` — **HW Theorem 3.3** (full generality):
   For gamma null-homologous in U, f meromorphic on U with poles S on gamma satisfying
   HasFlatCrossings + IsLaurentCompatible:
-  `HasCauchyPVOn S (f'/f or f) gamma (2*pi*I * sum_{s in poles} windingNumber(gamma, s) * residue(f, s))`
+  `HasCauchyPVOn S f gamma (2*pi*I * sum_{s in poles} windingNumber(gamma, s) * residue(f, s))`
 - `generalizedResidueTheorem_simplePoles` — **Corollary** (deduced):
   Simple poles only, no geometric conditions needed
 - `generalizedResidueTheorem_convex` — **Corollary** (deduced):
@@ -309,21 +346,184 @@ Builds on Chain 1 + mathlib `ModularForm` infrastructure. Targets the textbook v
 
 ---
 
-## Dependency Graph (ASCII)
+## Chain 2: Valence Formula
+
+### Overview
+
+The textbook valence formula for modular forms of weight k on SL(2,Z):
 
 ```
-PR1 ──> PR2 ──> PR3 ──┬──> PR4 ──> PR8 ───────────────────────┐
-                       │     │                                   │
-                       │     └──> PR9 ──> PR10 ──> PR11 ──> PR13
-                       │                    ^         ^          ^
-                       ├──> PR5 ────────────│─────────┘──> PR12 ─┘
-                       │                    │
-                       ├──> PR6 ────────────┘
-                       │                    
-                       └──> PR7 ──────────> PR10
+ord_inf(f) + (1/2) * ord_i(f) + (1/3) * ord_rho(f) + sum_{z in F°} ord_z(f) = k/12
+```
+
+Chain 2 builds on Chain 1's generalized residue theorem (PR 13) and the single-crossing
+framework (PR 4b) plus mathlib's existing `ModularForm` infrastructure.
+
+### Proof Strategy
+
+1. Define the 5-segment boundary contour gamma_H of the fundamental domain at height H
+2. Apply the generalized residue theorem to logDeriv(f) along gamma_H:
+   - Residue side: CPV integral -> 2*pi*I * sum(windingNumber * ord(f, s))
+3. Compute winding numbers:
+   - Interior points: winding = -1 (via homotopy to polygon -> circle)
+   - At i: winding = -1/2 (instantiate SingleCrossingData, arc geometry)
+   - At rho, rho+1: winding = -1/6 each (instantiate AsymmetricCrossingData)
+4. Compute modular side using T/S transformations:
+   - Left + right vertical edges cancel by T-periodicity
+   - Arc contributions give -2*pi*I * k/6 via S-transformation
+   - Horizontal segment gives 2*pi*I * ord_inf(f)
+5. Equate residue side and modular side via limit uniqueness
+
+### Chain 2 PR Breakdown
+
+#### PR V1 — Fundamental Domain Boundary Contour (~250 lines)
+
+**Theme:** The 5-segment closed contour around the standard fundamental domain.
+
+**Definitions:**
+- `fdBoundary (H : R)` — piecewise C1 closed path over [0,5] at height H:
+  - Segment 1 (t in [0,1]): Right vertical from (1/2 + H*I) down to rho+1
+  - Segment 2 (t in [1,2]): Unit circle arc from rho+1 to i
+  - Segment 3 (t in [2,3]): Unit circle arc from i to rho
+  - Segment 4 (t in [3,4]): Left vertical from rho up to (-1/2 + H*I)
+  - Segment 5 (t in [4,5]): Horizontal from (-1/2 + H*I) to (1/2 + H*I)
+- `fdBoundary_piecewiseC1Immersion` — it is a PiecewiseC1Immersion
+- `fdBoundary_isClosed` — endpoints match
+
+**Key API:**
+- Segment accessors and parameterization formulas
+- Partition = {0, 1, 2, 3, 4, 5}
+- Crossing points: i at t=2, rho at t=3, rho+1 at t=1
+
+**Depends on:** Chain 1 PR 1 (piecewise curves)
+
+---
+
+#### PR V2 — Interior Winding Number (~250 lines)
+
+**Theme:** Winding number = -1 for points in the strict interior of the fundamental domain.
+
+**Key theorems:**
+- `generalizedWindingNumber_fdBoundary_eq_neg_one` — for z with ||z|| > 1 and |re(z)| < 1/2:
+  `HasGeneralizedWindingNumber (fdBoundary H) z (-1)`
+
+**Proof strategy:**
+- Homotopy to inscribed polygon (fdBoundaryToPolygonHomotopy)
+- Radial homotopy from polygon to circle around reference point
+- Angle integration via FTC: total rotation = -2*pi (clockwise)
+- Branch cut handling at left vertical edge crossing
+
+**Helper lemmas:**
+- Arc avoidance: interior points stay outside chord homotopy
+- Polygon avoidance geometry
+- Lifted angle continuity at branch cut crossing
+
+**Depends on:** V1, Chain 1 PR 7 (homotopy invariance)
+
+---
+
+#### PR V3 — Elliptic Point Winding Weights (~300 lines)
+
+**Theme:** Winding number at the three elliptic/boundary points using SingleCrossingData.
+
+**Key theorems:**
+- `generalizedWindingNumber_fdBoundary_at_i_eq_neg_half`:
+  Instantiate `SingleCrossingData` with:
+  - t0 = 2, delta(eps) = (12/pi) * arcsin(eps/2), L = -pi*I
+  - Arc geometry: distance = 2*sin(delta*pi/12)
+  - FTC via Complex.log on the arc
+- `generalizedWindingNumber_fdBoundary_at_rho_eq_neg_sixth`:
+  Instantiate `AsymmetricCrossingData` with:
+  - t0 = 3, delta_L(eps) = (12/pi)*arcsin(eps/2), delta_R(eps) = eps/(H - sqrt(3)/2)
+  - L = -pi*I/3 (60-degree corner)
+- `generalizedWindingNumber_fdBoundary_at_rho_plus_one_eq_neg_sixth`:
+  Mirror of rho (t0 = 1, delta_L/R swapped)
+
+**Helper lemmas:**
+- Arc distance formulas, FTC for log-derivative on arcs
+- Vertical segment distance (linear in delta)
+- Angle convergence at crossing points
+
+**Depends on:** V1, Chain 1 PR 4b (single-crossing framework)
+
+---
+
+#### PR V4 — Orbit Pairing and T/S Invariance (~250 lines)
+
+**Theme:** Modular symmetry cancellations in the contour integral.
+
+**Key theorems:**
+- `contourIntegral_leftEdge_add_rightEdge_eq_zero` — T-periodicity:
+  f(z+1) = f(z) implies left + right vertical integrals cancel
+- `contourIntegral_arcs_eq` — S-transformation on arcs:
+  f(Sz) = z^k * f(z) implies arc₁ + arc₂ = -2*pi*I * k/6
+- `ord_rho_plus_one_eq_ord_rho` — T-invariance of orders
+- `sum_ord_leftVert_eq_sum_T_image` — orbit pairing on vertical edges
+
+**Depends on:** V1, mathlib `ModularForm`, `SlashAction`
+
+---
+
+#### PR V5 — Valence Formula Core Identity (~250 lines)
+
+**Theme:** Assembly of the valence formula from residue theorem + modular side.
+
+**Key theorems:**
+- `cpv_residue_side_tendsto` — residue side:
+  `HasCauchyPVOn S (logDeriv f) (fdBoundary H) (2*pi*I * sum(gWN * ord))`
+- `cpv_modular_side_tendsto` — modular side:
+  CPV integral -> -2*pi*I * (k/12 - ord_inf(f))
+- `valenceFormula_core` — equate via Tendsto uniqueness:
+  `sum(gWN * ord) = -(k/12 - ord_inf(f))`
+- Substitute winding weights from V2, V3:
+  `ord_inf + (1/2)*ord_i + (1/3)*ord_rho + sum(interior) = k/12`
+
+**Depends on:** V2, V3, V4, Chain 1 PR 13 (generalized residue theorem)
+
+---
+
+#### PR V6 — Textbook Valence Formula (~200 lines)
+
+**Theme:** Clean user-facing API for the valence formula.
+
+**Key theorems:**
+- `valenceFormula_textbook` — the clean statement for `ModularForm (Gamma 1) k`:
+  `ord_inf(f) + (1/2) * ord_i(f) + (1/3) * ord_rho(f) + finsum_{z in F°} ord_z(f) = k/12`
+- `valenceFormula_textbook_finsum` — orbit-sum form using `finsum` over non-elliptic orbits
+- Corollaries:
+  - `ModularForm.weight_nonneg` — k >= 0 for nonzero f
+  - `ModularForm.weight_eq_zero_iff` — k = 0 iff f is constant
+  - `ModularForm.finite_zeros_in_fd` — f has finitely many zeros in the fundamental domain
+
+**Depends on:** V5
+
+---
+
+## Full Dependency Graph
+
+```
+CHAIN 1:
+PR1 ──> PR2 ──> PR3 ──┬──> PR4 ──> PR4b ──> PR8 ──────────────┐
+                       │     │        │                          │
+                       │     │        └──> PR9 ──> PR10 ──> PR11 ──> PR13
+                       │     │                      ^         ^        ^
+                       ├──> PR5 ─────────────────── │─────────┘── PR12─┘
+                       │                            │
+                       ├──> PR6 ────────────────────┘
+                       │
+                       └──> PR7 ──────────────────> PR10
+
+CHAIN 2:
+V1 (PR1) ──> V2 (PR7) ──────────────────────> V5 (PR13) ──> V6
+   │                                            ^
+   ├──> V3 (PR4b) ─────────────────────────────┘
+   │                                            ^
+   └──> V4 (mathlib ModularForm) ──────────────┘
 ```
 
 ## Line Budget
+
+### Chain 1
 
 | PR | Title | Est. Lines | Depends On |
 |----|-------|-----------|------------|
@@ -331,6 +531,7 @@ PR1 ──> PR2 ──> PR3 ──┬──> PR4 ──> PR8 ──────�
 | 2  | Contour Integration | ~200 | 1 |
 | 3  | Cauchy Principal Value | ~250 | 2 |
 | 4  | Generalized Winding Number | ~200 | 3 |
+| 4b | Single-Crossing Framework | ~200 | 4, 2 |
 | 5  | Residue Definitions | ~250 | 3 |
 | 6  | Poincare Bridge | ~150 | 2 |
 | 7  | Homotopy Invariance | ~200 | 4, 6 |
@@ -340,22 +541,42 @@ PR1 ──> PR2 ──> PR3 ──┬──> PR4 ──> PR8 ──────�
 | 11 | Homological Cauchy (Meromorphic) | ~250 | 10, 5 |
 | 12 | Higher-Order Pole Conditions | ~150 | 1, 5 |
 | 13 | Generalized Residue Theorem | ~250 | 11, 12, 8 |
-| **Total** | | **~2850** | |
+| **Chain 1 Total** | | **~3050** | |
+
+### Chain 2
+
+| PR | Title | Est. Lines | Depends On |
+|----|-------|-----------|------------|
+| V1 | FD Boundary Contour | ~250 | PR 1 |
+| V2 | Interior Winding Number | ~250 | V1, PR 7 |
+| V3 | Elliptic Point Winding Weights | ~300 | V1, PR 4b |
+| V4 | Orbit Pairing / T,S Invariance | ~250 | V1, mathlib |
+| V5 | Valence Formula Core Identity | ~250 | V2, V3, V4, PR 13 |
+| V6 | Textbook Valence Formula | ~200 | V5 |
+| **Chain 2 Total** | | **~1500** | |
+
+### Grand Total: ~4550 lines across 20 PRs
 
 ## Open Questions
 
-1. **Naming for conditions A'/B**: `HasFlatCrossings`/`IsLaurentCompatible` are placeholders.
+1. **Naming for conditions A'/B**: `HasFlatCrossings`/`IsLaurentCompatible` are working names.
    Need mathlib-style review.
-2. **Chain 2 (Valence Formula)**: Deferred. Needs separate design once Chain 1 structure is
-   settled. Will build on PR 13 + mathlib `ModularForm` API.
-3. **Dixon proof decomposition**: The current proof is 259+228 lines. PR 10 budgets ~300 lines
+2. **Dixon proof decomposition**: The current proof is 259+228 lines. PR 10 budgets ~300 lines
    total, so the decomposition into ~5 helper lemmas is essential. May need prototyping.
-4. **Poincare bridge details**: Need to verify the exact 1-form translation works smoothly
+3. **Poincare bridge details**: Need to verify the exact 1-form translation works smoothly
    with mathlib's `E -> E ->L[K] F` representation.
+4. **V2 proof size**: Interior winding = -1 currently uses a 3-layer homotopy argument with
+   ~2000 lines of supporting code. Needs aggressive decomposition and may push the 250-line
+   budget. Could split into V2a (homotopy construction) + V2b (angle integration).
+5. **V3 proof size**: Each elliptic point currently takes 900-1100 lines. The SingleCrossing
+   framework should compress this significantly, but the trigonometric helper lemmas for arc
+   geometry may still be substantial. May need a V3a (arc geometry lemmas) + V3b (instantiation).
 
 ## Refactoring Required
 
 Before PRing, the following current proofs need decomposition to meet mathlib's style:
+
+### Chain 1
 - `dixonFunction_differentiable` (259 lines -> ~5 x 40 lines)
 - `dixonH1_eq` (228 lines -> ~5 x 40 lines)
 - `generalizedResidueTheorem` (166 lines -> ~4 x 40 lines)
@@ -363,3 +584,8 @@ Before PRing, the following current proofs need decomposition to meet mathlib's 
 - `contourIntegral_eq_zero_of_meromorphic_residue_zero_nh` (185 lines -> ~4 x 40 lines)
 - `windingNumber_eq_of_piecewise_homotopic` (138 lines -> ~3 x 40 lines)
 - Plus ~30 more proofs in the 50-80 line range
+
+### Chain 2
+- Interior winding proof (~2000 lines across 4 files -> needs major restructuring)
+- Elliptic winding weight proofs (3 x ~1000 lines -> should compress with SingleCrossing)
+- Orbit pairing + modular side assembly
