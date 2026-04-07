@@ -112,19 +112,6 @@ theorem hasGeneralizedWindingNumber_of_avoids {γ : PiecewiseC1Path x y} {z₀ :
     γ.contourIntegral (fun z => (z - z₀)⁻¹) from by field_simp]
   exact hasCauchyPV_of_avoids hδ
 
-/-- If `γ` avoids `z₀` and is a closed path in a convex set not containing `z₀`,
-then the generalized winding number is 0.
-
-This requires knowing that the contour integral of `(z - z₀)⁻¹` around a closed
-null-homologous path equals zero, which follows from the fact that `(z - z₀)⁻¹` has
-an antiderivative `log(z - z₀)` on the simply connected domain. -/
-theorem generalizedWindingNumber_eq_zero_of_avoids {γ : PiecewiseC1Path x y}
-    {z₀ : ℂ} (hclosed : x = y)
-    (hδ : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - z₀‖)
-    (hU : ∃ U : Set ℂ, Convex ℝ U ∧ z₀ ∉ U ∧ ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U) :
-    generalizedWindingNumber γ z₀ = 0 := by
-  sorry
-
 /-! ### Value from HasGeneralizedWindingNumber -/
 
 /-- If `HasGeneralizedWindingNumber γ z₀ w`, then the `cauchyPV` value satisfies the
