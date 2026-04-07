@@ -737,7 +737,7 @@ theorem deriv_resToImagAxis_eq (F : ℍ → ℂ) (hF : MDiff F) {t : ℝ} (ht : 
   -- hcomp : deriv ((F ∘ ofComplex) ∘ g) t = deriv (F ∘ ofComplex) (g t) * I
   rw [show deriv ((F ∘ ↑ofComplex) ∘ g) t = deriv (F ∘ ↑ofComplex) (↑z) * I from hcomp]
   have hD : deriv (F ∘ ofComplex) z = 2 * π * I * D F z := by simp only [D]; field_simp
-  simp only [hD, Function.resToImagAxis_apply, ResToImagAxis, dif_pos ht, z, smul_eq_mul]
+  simp only [hD, Function.resToImagAxis_apply, ResToImagAxis, dif_pos ht, z]
   ring_nf; simp only [I_sq]; ring
 
 /-- The derivative of a function with zero imaginary part also has zero imaginary part. -/

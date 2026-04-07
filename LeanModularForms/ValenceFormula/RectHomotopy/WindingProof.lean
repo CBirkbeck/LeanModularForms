@@ -284,9 +284,9 @@ lemma winding_fdPolygon_at_ref_eq_neg_one :
   have h_neg_one : (-1 : ℤ) = (-1 : ℂ) := by norm_cast
   rw [h_neg_one] at h_target_winding
   unfold generalizedWindingNumber' cauchyPrincipalValue'
-  simp only [sub_zero, Function.comp_def, deriv_sub_const]
+  simp only [sub_zero, deriv_sub_const]
   unfold generalizedWindingNumber' cauchyPrincipalValue' at h_target_winding
-  simp only [sub_zero, Function.comp_def, deriv_sub_const] at h_target_winding
+  simp only [sub_zero, deriv_sub_const] at h_target_winding
   have h_dist_target : ∀ t, ‖γ_target t - ref_p₀‖ = 1 := by
     intro t
     change ‖(ref_p₀ + exp (I * (θ_target t : ℂ))) - ref_p₀‖ = 1

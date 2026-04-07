@@ -387,7 +387,7 @@ lemma contAt_deriv_of_contDiffAt_two
       deriv γ = (fun t => fderiv ℝ γ t 1) := by
     ext t
     by_cases h : DifferentiableAt ℝ γ t
-    · rw [fderiv_deriv]
+    · rw [fderiv_apply_one_eq_deriv]
     · simp [deriv_zero_of_not_differentiableAt h,
         fderiv_zero_of_not_differentiableAt h]
   rw [h_deriv_eq]

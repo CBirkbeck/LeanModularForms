@@ -95,7 +95,7 @@ lemma fdBoundary_at_one :
     fdBoundary 1 = ellipticPointRhoPlusOne := by
   simp only [fdBoundary, show (1 : ℝ) ≤ 1 from le_refl _, ite_true,
     ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-    UpperHalfPlane.coe_mk_subtype, heightCutoff]
+    UpperHalfPlane.coe_mk, heightCutoff]
   push_cast; ring
 
 lemma fdBoundary_at_two :
@@ -118,7 +118,7 @@ lemma fdBoundary_at_three :
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-  simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+  simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   ring
 
 lemma fdBoundary_at_four :
@@ -196,7 +196,7 @@ lemma fdBoundary_H_at_one (H : ℝ) :
     fdBoundary_H H 1 = ellipticPointRhoPlusOne := by
   simp only [fdBoundary_H, show (1 : ℝ) ≤ 1 from le_refl _, ite_true,
     ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-    UpperHalfPlane.coe_mk_subtype]
+    UpperHalfPlane.coe_mk]
   push_cast; ring
 
 lemma fdBoundary_H_at_two (H : ℝ) :
@@ -219,7 +219,7 @@ lemma fdBoundary_H_at_three (H : ℝ) :
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-  simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+  simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   ring
 
 lemma fdBoundary_H_at_four (H : ℝ) :

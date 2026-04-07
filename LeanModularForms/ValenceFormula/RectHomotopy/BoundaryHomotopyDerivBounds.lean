@@ -16,6 +16,108 @@ open Complex Set Metric Filter Topology
 
 namespace RectHomotopyProof
 
+/-! ### Shared arc-chord homotopy derivative bound
+
+The segments 2 and 3 of the homotopy both interpolate between an arc of the unit circle
+and a chord between two unit-norm points. The derivative bound is identical in both cases:
+`|1-s| * pi/6 + |s| * 2 <= 3 <= 5`.
+-/
+
+/-- Generic norm bound for the derivative of a homotopy between an arc segment of the
+unit circle and a chord between two points of norm 1. The arc has angular speed `pi/6`
+and the chord has length at most 2, giving bound `|1-s| * pi/6 + |s| * 2 <= 3 <= 5`.
+
+Parameters:
+- `θ₀` : starting angle of the arc
+- `n` : offset (the function is `t' ↦ arc(t'-n), chord(t'-n)`)
+- `p q` : chord endpoints with `‖p‖ = 1`, `‖q‖ = 1`
+- `hpq_diff` : the angular difference `θ_end - θ₀` simplifies to `pi/6` -/
+lemma norm_deriv_homotopy_arc_chord_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1)
+    (θ₀ : ℝ) (n : ℝ) (p q : ℂ) (hp : ‖p‖ = 1) (hq : ‖q‖ = 1)
+    (_hfunc_eq : ∀ t' : ℝ,
+      (1 - s) • Complex.exp ((↑θ₀ + (↑(t' - n)) * (↑(Real.pi / 6))) * I) +
+        s • chordSegment p q (t' - n) =
+      (1 - s) • Complex.exp ((↑θ₀ + (↑(t' - n)) * (↑(Real.pi / 6))) * I) +
+        s • chordSegment p q (t' - n)) :
+    ‖deriv (fun t' : ℝ =>
+      (1 - s) • Complex.exp ((↑θ₀ + (↑(t' - n)) * (↑(Real.pi / 6))) * I) +
+        s • chordSegment p q (t' - n)) t‖ ≤ 5 := by
+  have h1s : |1 - s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
+  have hs' : |s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
+  have hpi6 : Real.pi / 6 ≤ 1 := by have := Real.pi_le_four; linarith
+  have hpq : ‖q - p‖ ≤ 2 := by
+    calc ‖q - p‖ ≤ ‖q‖ + ‖p‖ := norm_sub_le _ _
+      _ = 1 + 1 := by rw [hp, hq]
+      _ = 2 := by norm_num
+  by_cases hd : DifferentiableAt ℝ (fun t' : ℝ =>
+      (1 - s) • Complex.exp ((↑θ₀ + (↑(t' - n)) * (↑(Real.pi / 6))) * I) +
+        s • chordSegment p q (t' - n)) t
+  · -- Compute HasDerivAt for the arc component
+    have h_arc : HasDerivAt (fun t' : ℝ =>
+          Complex.exp ((↑θ₀ + (↑(t' - n)) * (↑(Real.pi / 6))) * I))
+        ((↑(Real.pi / 6)) * I *
+          Complex.exp ((↑θ₀ + (↑(t - n)) * (↑(Real.pi / 6))) * I)) t := by
+      have h_inner : HasDerivAt (fun t' : ℝ =>
+            (↑θ₀ : ℂ) + ((↑t' : ℂ) - ↑n) * (↑(Real.pi / 6)))
+          ((↑(Real.pi / 6) : ℂ)) t := by
+        have h_shift : HasDerivAt (fun t' : ℝ => (↑t' : ℂ) - ↑n) 1 t :=
+          Complex.ofRealCLM.hasDerivAt.sub_const ↑n
+        have h_mul := h_shift.mul_const (↑(Real.pi / 6) : ℂ)
+        simp only [one_mul] at h_mul
+        exact h_mul.const_add (↑θ₀ : ℂ)
+      have h_timesI := h_inner.mul_const I
+      have h_comp := (Complex.hasDerivAt_exp _).comp t h_timesI
+      convert h_comp using 1
+      · ext t'; simp only [Function.comp]; push_cast; ring
+      · push_cast; ring
+    -- Compute HasDerivAt for the chord component
+    have h_chord : HasDerivAt (fun t' : ℝ => chordSegment p q (t' - n)) (q - p) t := by
+      simp only [chordSegment]
+      have h_shift : HasDerivAt (fun t' : ℝ => t' - n) (1 : ℝ) t := (hasDerivAt_id t).sub_const n
+      have h1 : HasDerivAt (fun t' : ℝ => (1 - (t' - n)) • p) (-p) t := by
+        have h_coef : HasDerivAt (fun t' : ℝ => (1 - (t' - n) : ℝ)) (-1 : ℝ) t := by
+          have := (hasDerivAt_const t (1 : ℝ)).sub h_shift
+          simp only [zero_sub] at this; convert this using 1
+        exact (h_coef.smul_const p).congr_deriv (by simp only [neg_one_smul])
+      have h2 : HasDerivAt (fun t' : ℝ => (t' - n) • q) q t := by
+        exact (h_shift.smul_const q).congr_deriv (by simp only [one_smul])
+      exact (h1.add h2).congr_deriv (by ring)
+    -- Combined HasDerivAt
+    have h_combined : HasDerivAt (fun t' : ℝ =>
+          (1 - s) • Complex.exp ((↑θ₀ + (↑(t' - n)) * (↑(Real.pi / 6))) * I) +
+            s • chordSegment p q (t' - n))
+        ((1 - s) • ((↑(Real.pi / 6)) * I *
+            Complex.exp ((↑θ₀ + (↑(t - n)) * (↑(Real.pi / 6))) * I)) +
+         s • (q - p)) t :=
+      (h_arc.const_smul (1 - s)).add (h_chord.const_smul s)
+    rw [h_combined.deriv]
+    calc ‖(1 - s) • ((↑(Real.pi / 6)) * I *
+              Complex.exp ((↑θ₀ + (↑(t - n)) * (↑(Real.pi / 6))) * I)) +
+           s • (q - p)‖
+        ≤ ‖(1 - s) • ((↑(Real.pi / 6)) * I *
+              Complex.exp ((↑θ₀ + (↑(t - n)) * (↑(Real.pi / 6))) * I))‖ +
+          ‖s • (q - p)‖ := norm_add_le _ _
+      _ = |1 - s| * ‖(↑(Real.pi / 6)) * I *
+              Complex.exp ((↑θ₀ + (↑(t - n)) * (↑(Real.pi / 6))) * I)‖ +
+          |s| * ‖q - p‖ := by rw [norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs]
+      _ = |1 - s| * ((Real.pi / 6) * 1) + |s| * ‖q - p‖ := by
+            congr 2
+            rw [mul_assoc, norm_mul, norm_mul]
+            rw [show ‖(↑(Real.pi / 6) : ℂ)‖ = Real.pi / 6 from by
+              rw [Complex.norm_real]; exact abs_of_pos (by positivity)]
+            rw [Complex.norm_I, one_mul]
+            congr 1
+            rw [show (↑θ₀ + (↑(t - n)) * (↑(Real.pi / 6))) * I =
+              ((θ₀ + (t - n) * (Real.pi / 6)) : ℝ) * I from by push_cast; ring]
+            exact Complex.norm_exp_ofReal_mul_I _
+      _ = |1 - s| * Real.pi / 6 + |s| * ‖q - p‖ := by ring
+      _ ≤ |1 - s| * 1 + |s| * 2 := by
+            nlinarith [abs_nonneg (1 - s), abs_nonneg s]
+      _ ≤ 1 * 1 + 1 * 2 := by nlinarith [h1s, hs']
+      _ = 3 := by norm_num
+      _ ≤ 5 := by norm_num
+  · simp only [deriv_zero_of_not_differentiableAt hd, norm_zero]; norm_num
+
 /-- Norm bound for segment 2 derivative. -/
 lemma norm_deriv_H_seg2_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
     ‖deriv (fun t' : ℝ =>
@@ -27,252 +129,18 @@ lemma norm_deriv_H_seg2_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
         chordSegment rho' i_point (t' - 1)
       (1 - s) • arc_point +
         s • chord_point) t‖ ≤ 5 := by
-  have h1s : |1 - s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  have hs' : |s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  have hpi6 : Real.pi / 6 ≤ 1 := by
-    have := Real.pi_le_four; linarith
-  have hi_rho : ‖i_point - rho'‖ ≤ 2 := by
-    calc ‖i_point - rho'‖
-        ≤ ‖i_point‖ + ‖rho'‖ :=
-          norm_sub_le _ _
-      _ = 1 + 1 := by
-          rw [i_point_norm, rho'_norm]
-      _ = 2 := by norm_num
-  by_cases hd : DifferentiableAt ℝ (fun t' : ℝ =>
-        let arc_point :=
-          Complex.exp ((Real.pi / 3 +
-              (t' - 1) * (Real.pi / 2 -
-                  Real.pi / 3)) * I)
-        let chord_point :=
-          chordSegment rho' i_point (t' - 1)
-        (1 - s) • arc_point +
-          s • chord_point) t
-  · have h_bound : ‖deriv (fun t' : ℝ =>
-        let arc_point :=
-          Complex.exp ((Real.pi / 3 +
-              (t' - 1) * (Real.pi / 2 -
-                  Real.pi / 3)) * I)
-        let chord_point :=
-          chordSegment rho' i_point (t' - 1)
-        (1 - s) • arc_point +
-          s • chord_point) t‖ ≤
-        |1 - s| * 1 + |s| * 2 := by
-      have hpi : (Real.pi / 2 - Real.pi / 3 : ℂ) =
-            Real.pi / 6 := by
-        ring
-      have func_eq : (fun t' : ℝ =>
-            let arc_point :=
-              Complex.exp ((Real.pi / 3 +
-                  (t' - 1) * (Real.pi / 2 -
-                      Real.pi / 3)) * I)
-            let chord_point :=
-              chordSegment rho' i_point (t' - 1)
-            (1 - s) • arc_point +
-              s • chord_point) =
-          (fun t' : ℝ =>
-            let arc_point :=
-              Complex.exp ((Real.pi / 3 +
-                  (t' - 1) * (Real.pi / 6)) * I)
-            let chord_point :=
-              chordSegment rho' i_point (t' - 1)
-            (1 - s) • arc_point +
-              s • chord_point) := by
-        ext t'; simp only [hpi]
-      rw [func_eq]
-      have h_arc : HasDerivAt (fun t' : ℝ =>
-            Complex.exp (((Real.pi : ℝ) / 3 +
-                (t' - 1) * ((Real.pi : ℝ) / 6)) * I))
-          (((Real.pi : ℝ) / 6) * I *
-            Complex.exp (((Real.pi : ℝ) / 3 +
-                (t - 1) * ((Real.pi : ℝ) / 6)) *
-                I))
-          t := by
-        have h_inner : HasDerivAt (fun t' : ℝ =>
-              (Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) *
-                  ((Real.pi : ℂ) / 6))
-            ((Real.pi : ℂ) / 6) t := by
-          have h_shift :
-              HasDerivAt (fun t' : ℝ =>
-                  (t' : ℂ) - 1) 1 t := by
-            have h :=
-              @ContinuousLinearMap.hasDerivAt
-                ℝ _ ℂ _ _ t
-                Complex.ofRealCLM
-            simp only [
-              Complex.ofRealCLM_apply] at h
-            exact h.sub_const 1
-          have h_mul : HasDerivAt (fun t' : ℝ =>
-                ((t' : ℂ) - 1) * ((Real.pi : ℂ) / 6))
-              ((Real.pi : ℂ) / 6) t := by
-            have :=
-              h_shift.mul_const ((Real.pi : ℂ) / 6)
-            simp only [one_mul] at this
-            exact this
-          have :=
-            h_mul.const_add ((Real.pi : ℂ) / 3)
-          exact this
-        have h_times_I : HasDerivAt (fun t' : ℝ =>
-              ((Real.pi : ℂ) / 3 + ((t' : ℂ) - 1) *
-                  ((Real.pi : ℂ) / 6)) * I)
-            (((Real.pi : ℂ) / 6) * I) t :=
-          h_inner.mul_const I
-        have h_exp : HasDerivAt Complex.exp (Complex.exp
-              (((Real.pi : ℂ) / 3 + ((t : ℂ) - 1) *
-                  ((Real.pi : ℂ) / 6)) * I))
-            (((Real.pi : ℂ) / 3 + ((t : ℂ) - 1) *
-                ((Real.pi : ℂ) / 6)) *
-              I) :=
-          Complex.hasDerivAt_exp _
-        have := h_exp.comp t h_times_I
-        simp only [
-          mul_comm (Complex.exp _)] at this
-        exact this
-      have h_chord : HasDerivAt (fun t' : ℝ =>
-            chordSegment rho' i_point (t' - 1))
-          (i_point - rho') t := by
-        simp only [chordSegment]
-        have h_shift :
-            HasDerivAt (fun t' : ℝ => t' - 1)
-              (1 : ℝ) t :=
-          (hasDerivAt_id t).sub_const 1
-        have h1 : HasDerivAt (fun t' : ℝ =>
-              (1 - (t' - 1)) • rho')
-            (-rho') t := by
-          have h_coef : HasDerivAt (fun t' : ℝ =>
-                (1 - (t' - 1) : ℝ))
-              (-1 : ℝ) t := by
-            have := (hasDerivAt_const t (1 : ℝ)).sub
-                h_shift
-            simp only [zero_sub] at this
-            convert this using 1
-          have := h_coef.smul_const rho'
-          simp only [neg_one_smul] at this
-          exact this
-        have h2 : HasDerivAt (fun t' : ℝ =>
-              (t' - 1) • i_point)
-            i_point t := by
-          have := h_shift.smul_const i_point
-          simp only [one_smul] at this
-          exact this
-        convert h1.add h2 using 1
-        ring
-      have h_combined : HasDerivAt (fun t' : ℝ =>
-            let arc_point :=
-              Complex.exp ((Real.pi / 3 +
-                  (t' - 1) * (Real.pi / 6)) * I)
-            let chord_point :=
-              chordSegment rho' i_point (t' - 1)
-            (1 - s) • arc_point +
-              s • chord_point)
-          ((1 - s) • (((Real.pi : ℝ) / 6) * I *
-              Complex.exp (((Real.pi : ℝ) / 3 +
-                  (t - 1) * ((Real.pi : ℝ) / 6)) *
-                  I)) +
-           s • (i_point - rho')) t := by
-        have h1 := h_arc.const_smul (1 - s)
-        have h2 := h_chord.const_smul s
-        have := h1.add h2
-        convert this
-      rw [h_combined.deriv]
-      calc ‖(1 - s) • (((Real.pi : ℝ) / 6) * I *
-                Complex.exp (((Real.pi : ℝ) / 3 +
-                    (t - 1) * ((Real.pi : ℝ) / 6)) *
-                    I)) +
-             s • (i_point - rho')‖
-          ≤ ‖(1 - s) • (((Real.pi : ℝ) / 6) * I *
-                Complex.exp (((Real.pi : ℝ) / 3 +
-                    (t - 1) * ((Real.pi : ℝ) / 6)) *
-                    I))‖ +
-            ‖s • (i_point - rho')‖ :=
-          norm_add_le _ _
-        _ = |1 - s| *
-              ‖((Real.pi : ℝ) / 6) * I *
-                Complex.exp (((Real.pi : ℝ) / 3 +
-                    (t - 1) * ((Real.pi : ℝ) / 6)) *
-                    I)‖ +
-            |s| * ‖i_point - rho'‖ := by
-          rw [norm_smul, norm_smul,
-            Real.norm_eq_abs,
-            Real.norm_eq_abs]
-        _ = |1 - s| * ((Real.pi / 6) *
-                ‖Complex.exp (((Real.pi : ℝ) / 3 +
-                    (t - 1) * ((Real.pi : ℝ) / 6)) *
-                    I)‖) +
-            |s| * ‖i_point - rho'‖ := by
-              congr 1
-              rw [mul_assoc, norm_mul,
-                norm_mul]
-              have hpi_norm :
-                  ‖(Real.pi : ℂ) / 6‖ =
-                    Real.pi / 6 := by
-                have h1 :
-                    ‖(Real.pi : ℂ)‖ =
-                      Real.pi := by
-                  rw [Complex.norm_real]
-                  exact abs_of_pos
-                    Real.pi_pos
-                have h2 :
-                    ‖(6 : ℂ)‖ = 6 := by
-                  norm_num
-                rw [norm_div, h1, h2]
-              rw [hpi_norm,
-                Complex.norm_I, one_mul]
-        _ = |1 - s| * ((Real.pi / 6) * 1) +
-            |s| * ‖i_point - rho'‖ := by
-              congr 2
-              have : ((Real.pi : ℝ) / 3 +
-                    (t - 1) * ((Real.pi : ℝ) / 6)) *
-                    I =
-                  ((Real.pi / 3 + (t - 1) *
-                      (Real.pi / 6)) : ℝ) *
-                    I := by
-                push_cast; ring
-              rw [this,
-                Complex.norm_exp_ofReal_mul_I]
-        _ = |1 - s| * Real.pi / 6 +
-            |s| * ‖i_point - rho'‖ := by
-          ring
-        _ ≤ |1 - s| * 1 + |s| * 2 := by
-            have h1 :
-                |1 - s| * Real.pi / 6 ≤
-                  |1 - s| * 1 := by
-              have hpos : (0 : ℝ) ≤ |1 - s| :=
-                abs_nonneg _
-              calc |1 - s| * Real.pi / 6 = |1 - s| *
-                        (Real.pi / 6) := by
-                      ring
-                  _ ≤ |1 - s| * 1 :=
-                    mul_le_mul_of_nonneg_left
-                      hpi6 hpos
-            have h2 :
-                |s| * ‖i_point - rho'‖ ≤
-                  |s| * 2 :=
-              mul_le_mul_of_nonneg_left
-                hi_rho (abs_nonneg _)
-            linarith
-    calc ‖deriv (fun t' : ℝ =>
-          let arc_point :=
-            Complex.exp ((Real.pi / 3 +
-                (t' - 1) * (Real.pi / 2 -
-                    Real.pi / 3)) * I)
-          let chord_point :=
-            chordSegment rho' i_point (t' - 1)
-          (1 - s) • arc_point +
-            s • chord_point) t‖
-        ≤ |1 - s| * 1 + |s| * 2 :=
-          h_bound
-      _ ≤ 1 * 1 + 1 * 2 := by
-          nlinarith [h1s, hs']
-      _ = 3 := by norm_num
-      _ ≤ 5 := by norm_num
-  · simp only [
-      deriv_zero_of_not_differentiableAt hd,
-      norm_zero]
-    norm_num
+  -- Simplify angular difference to pi/6
+  have func_eq : (fun t' : ℝ =>
+        let arc_point := Complex.exp ((Real.pi / 3 + (t' - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
+        let chord_point := chordSegment rho' i_point (t' - 1)
+        (1 - s) • arc_point + s • chord_point) =
+      (fun t' : ℝ =>
+        (1 - s) • Complex.exp ((↑(Real.pi / 3) + ↑(t' - 1) * ↑(Real.pi / 6)) * I) +
+          s • chordSegment rho' i_point (t' - 1)) := by
+    ext t'; dsimp only; congr 2; congr 1; congr 1; push_cast; ring
+  rw [func_eq]
+  exact norm_deriv_homotopy_arc_chord_le t s hs (Real.pi / 3) 1 rho' i_point
+    rho'_norm i_point_norm (fun _ => rfl)
 
 /-- Norm bound for segment 3 derivative. -/
 lemma norm_deriv_H_seg3_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
@@ -285,261 +153,18 @@ lemma norm_deriv_H_seg3_le (t s : ℝ) (hs : s ∈ Icc (0:ℝ) 1) :
         chordSegment i_point rho (t' - 2)
       (1 - s) • arc_point +
         s • chord_point) t‖ ≤ 5 := by
-  have h1s : |1 - s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  have hs' : |s| ≤ 1 := by
-    rw [abs_le]
-    constructor <;> linarith [hs.1, hs.2]
-  have hpi6 : Real.pi / 6 ≤ 1 := by
-    have := Real.pi_le_four; linarith
-  have hrho_i : ‖rho - i_point‖ ≤ 2 := by
-    calc ‖rho - i_point‖
-        ≤ ‖rho‖ + ‖i_point‖ :=
-          norm_sub_le _ _
-      _ = 1 + 1 := by
-          rw [rho_norm, i_point_norm]
-      _ = 2 := by norm_num
-  by_cases hd : DifferentiableAt ℝ (fun t' : ℝ =>
-        let arc_point :=
-          Complex.exp ((Real.pi / 2 +
-              (t' - 2) * (2 * Real.pi / 3 -
-                  Real.pi / 2)) * I)
-        let chord_point :=
-          chordSegment i_point rho (t' - 2)
-        (1 - s) • arc_point +
-          s • chord_point) t
-  · have h_bound : ‖deriv (fun t' : ℝ =>
-        let arc_point :=
-          Complex.exp ((Real.pi / 2 +
-              (t' - 2) * (2 * Real.pi / 3 -
-                  Real.pi / 2)) * I)
-        let chord_point :=
-          chordSegment i_point rho (t' - 2)
-        (1 - s) • arc_point +
-          s • chord_point) t‖ ≤
-        |1 - s| * 1 + |s| * 2 := by
-      have hpi : (2 * Real.pi / 3 -
-            Real.pi / 2 : ℂ) =
-            Real.pi / 6 := by
-        ring
-      have func_eq : (fun t' : ℝ =>
-            let arc_point :=
-              Complex.exp ((Real.pi / 2 +
-                  (t' - 2) * (2 * Real.pi / 3 -
-                      Real.pi / 2)) * I)
-            let chord_point :=
-              chordSegment i_point rho (t' - 2)
-            (1 - s) • arc_point +
-              s • chord_point) =
-          (fun t' : ℝ =>
-            let arc_point :=
-              Complex.exp ((Real.pi / 2 +
-                  (t' - 2) * (Real.pi / 6)) * I)
-            let chord_point :=
-              chordSegment i_point rho (t' - 2)
-            (1 - s) • arc_point +
-              s • chord_point) := by
-        ext t'; simp only [hpi]
-      rw [func_eq]
-      have h_ofReal :
-          ∀ x : ℝ, HasDerivAt (fun t' : ℝ => (t' : ℂ))
-            1 x := fun x => by
-        have h :=
-          @ContinuousLinearMap.hasDerivAt
-            ℝ _ ℂ _ _ x Complex.ofRealCLM
-        simp only [
-          Complex.ofRealCLM_apply] at h
-        exact h
-      have h_arc : HasDerivAt (fun t' : ℝ =>
-            Complex.exp (((Real.pi : ℝ) / 2 +
-                (t' - 2) * ((Real.pi : ℝ) / 6)) *
-                I))
-          (((Real.pi : ℝ) / 6) * I *
-            Complex.exp (((Real.pi : ℝ) / 2 +
-                (t - 2) * ((Real.pi : ℝ) / 6)) *
-                I))
-          t := by
-        have h_inner : HasDerivAt (fun t' : ℝ =>
-              (Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) *
-                  ((Real.pi : ℂ) / 6))
-            ((Real.pi : ℂ) / 6) t := by
-          have h_shift :
-              HasDerivAt (fun t' : ℝ =>
-                  (t' : ℂ) - 2)
-                1 t :=
-            (h_ofReal t).sub_const 2
-          have h_mul : HasDerivAt (fun t' : ℝ =>
-                ((t' : ℂ) - 2) * ((Real.pi : ℂ) / 6))
-              ((Real.pi : ℂ) / 6) t := by
-            have :=
-              h_shift.mul_const ((Real.pi : ℂ) / 6)
-            simp only [one_mul] at this
-            exact this
-          have :=
-            h_mul.const_add ((Real.pi : ℂ) / 2)
-          simp only at this
-          exact this
-        have h_times_I : HasDerivAt (fun t' : ℝ =>
-              ((Real.pi : ℂ) / 2 + ((t' : ℂ) - 2) *
-                  ((Real.pi : ℂ) / 6)) * I)
-            (((Real.pi : ℂ) / 6) * I) t :=
-          h_inner.mul_const I
-        have h_exp :
-            HasDerivAt Complex.exp (Complex.exp
-                (((Real.pi : ℂ) / 2 + ((t : ℂ) - 2) *
-                    ((Real.pi : ℂ) / 6)) *
-                  I))
-              (((Real.pi : ℂ) / 2 + ((t : ℂ) - 2) *
-                  ((Real.pi : ℂ) / 6)) *
-                I) :=
-          Complex.hasDerivAt_exp _
-        have := h_exp.comp t h_times_I
-        simp only [
-          mul_comm (Complex.exp _)] at this
-        exact this
-      have h_chord : HasDerivAt (fun t' : ℝ =>
-            chordSegment i_point rho (t' - 2))
-          (rho - i_point) t := by
-        simp only [chordSegment]
-        have h_shift :
-            HasDerivAt (fun t' : ℝ => t' - 2)
-              (1 : ℝ) t :=
-          (hasDerivAt_id t).sub_const 2
-        have h1 : HasDerivAt (fun t' : ℝ =>
-              (1 - (t' - 2)) • i_point)
-            (-i_point) t := by
-          have h_coef : HasDerivAt (fun t' : ℝ =>
-                (1 - (t' - 2) : ℝ))
-              (-1 : ℝ) t := by
-            have := (hasDerivAt_const t (1 : ℝ)).sub
-                h_shift
-            simp only [zero_sub] at this
-            convert this using 1
-          have :=
-            h_coef.smul_const i_point
-          simp only [neg_one_smul] at this
-          exact this
-        have h2 : HasDerivAt (fun t' : ℝ =>
-              (t' - 2) • rho)
-            rho t := by
-          have := h_shift.smul_const rho
-          simp only [one_smul] at this
-          exact this
-        convert h1.add h2 using 1
-        ring
-      have h_combined : HasDerivAt (fun t' : ℝ =>
-            let arc_point :=
-              Complex.exp ((Real.pi / 2 +
-                  (t' - 2) * (Real.pi / 6)) * I)
-            let chord_point :=
-              chordSegment i_point rho (t' - 2)
-            (1 - s) • arc_point +
-              s • chord_point)
-          ((1 - s) • (((Real.pi : ℝ) / 6) * I *
-              Complex.exp (((Real.pi : ℝ) / 2 +
-                  (t - 2) * ((Real.pi : ℝ) / 6)) *
-                  I)) +
-           s • (rho - i_point)) t := by
-        have h1 := h_arc.const_smul (1 - s)
-        have h2 := h_chord.const_smul s
-        convert h1.add h2
-      rw [h_combined.deriv]
-      calc ‖(1 - s) • (((Real.pi : ℝ) / 6) * I *
-                Complex.exp (((Real.pi : ℝ) / 2 +
-                    (t - 2) * ((Real.pi : ℝ) / 6)) *
-                    I)) +
-             s • (rho - i_point)‖
-          ≤ ‖(1 - s) • (((Real.pi : ℝ) / 6) * I *
-                Complex.exp (((Real.pi : ℝ) / 2 +
-                    (t - 2) * ((Real.pi : ℝ) / 6)) *
-                    I))‖ +
-            ‖s • (rho - i_point)‖ :=
-          norm_add_le _ _
-        _ = |1 - s| *
-              ‖((Real.pi : ℝ) / 6) * I *
-                Complex.exp (((Real.pi : ℝ) / 2 +
-                    (t - 2) * ((Real.pi : ℝ) / 6)) *
-                    I)‖ +
-            |s| * ‖rho - i_point‖ := by
-          rw [norm_smul, norm_smul,
-            Real.norm_eq_abs,
-            Real.norm_eq_abs]
-        _ = |1 - s| * ((Real.pi / 6) *
-                ‖Complex.exp (((Real.pi : ℝ) / 2 +
-                    (t - 2) * ((Real.pi : ℝ) / 6)) *
-                    I)‖) +
-            |s| * ‖rho - i_point‖ := by
-              congr 1
-              rw [mul_assoc, norm_mul,
-                norm_mul]
-              have hpi_norm :
-                  ‖(Real.pi : ℂ) / 6‖ =
-                    Real.pi / 6 := by
-                have h1 :
-                    ‖(Real.pi : ℂ)‖ =
-                      Real.pi := by
-                  rw [Complex.norm_real]
-                  exact abs_of_pos
-                    Real.pi_pos
-                have h2 :
-                    ‖(6 : ℂ)‖ = 6 := by
-                  norm_num
-                rw [norm_div, h1, h2]
-              rw [hpi_norm,
-                Complex.norm_I, one_mul]
-        _ = |1 - s| * ((Real.pi / 6) * 1) +
-            |s| * ‖rho - i_point‖ := by
-              congr 2
-              have : ((Real.pi : ℝ) / 2 +
-                    (t - 2) * ((Real.pi : ℝ) / 6)) *
-                    I =
-                  ((Real.pi / 2 + (t - 2) *
-                      (Real.pi / 6)) : ℝ) *
-                    I := by
-                push_cast; ring
-              rw [this,
-                Complex.norm_exp_ofReal_mul_I]
-        _ = |1 - s| * Real.pi / 6 +
-            |s| * ‖rho - i_point‖ := by
-          ring
-        _ ≤ |1 - s| * 1 + |s| * 2 := by
-            have h1 :
-                |1 - s| * Real.pi / 6 ≤
-                  |1 - s| * 1 := by
-              have hpos : (0 : ℝ) ≤ |1 - s| :=
-                abs_nonneg _
-              calc |1 - s| * Real.pi / 6 = |1 - s| *
-                        (Real.pi / 6) := by
-                      ring
-                  _ ≤ |1 - s| * 1 :=
-                    mul_le_mul_of_nonneg_left
-                      hpi6 hpos
-            have h2 :
-                |s| * ‖rho - i_point‖ ≤
-                  |s| * 2 :=
-              mul_le_mul_of_nonneg_left
-                hrho_i (abs_nonneg _)
-            linarith
-    calc ‖deriv (fun t' : ℝ =>
-          let arc_point :=
-            Complex.exp ((Real.pi / 2 +
-                (t' - 2) * (2 * Real.pi / 3 -
-                    Real.pi / 2)) * I)
-          let chord_point :=
-            chordSegment i_point rho (t' - 2)
-          (1 - s) • arc_point +
-            s • chord_point) t‖
-        ≤ |1 - s| * 1 + |s| * 2 :=
-          h_bound
-      _ ≤ 1 * 1 + 1 * 2 := by
-          nlinarith [h1s, hs']
-      _ = 3 := by norm_num
-      _ ≤ 5 := by norm_num
-  · simp only [
-      deriv_zero_of_not_differentiableAt hd,
-      norm_zero]
-    norm_num
+  -- Simplify angular difference to pi/6
+  have func_eq : (fun t' : ℝ =>
+        let arc_point := Complex.exp ((Real.pi / 2 + (t' - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
+        let chord_point := chordSegment i_point rho (t' - 2)
+        (1 - s) • arc_point + s • chord_point) =
+      (fun t' : ℝ =>
+        (1 - s) • Complex.exp ((↑(Real.pi / 2) + ↑(t' - 2) * ↑(Real.pi / 6)) * I) +
+          s • chordSegment i_point rho (t' - 2)) := by
+    ext t'; dsimp only; congr 2; congr 1; congr 1; push_cast; ring
+  rw [func_eq]
+  exact norm_deriv_homotopy_arc_chord_le t s hs (Real.pi / 2) 2 i_point rho
+    i_point_norm rho_norm (fun _ => rfl)
 
 /-- Segment 2 derivative bound for t in (1,2). -/
 lemma fdBoundaryToPolygonHomotopy_seg2_deriv_bound (t : ℝ) (_ht : t ∈ Ioo 1 2)

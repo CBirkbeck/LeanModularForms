@@ -29,7 +29,7 @@ theorem logDeriv_tprod_eq_tsum2 {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
       exact this.congr (fun n => by intro z _; show ∏ i ∈ Finset.range n, f i z = ∏ i ∈ Finset.range n, f i z; rfl)
     have h_diff : ∀ᶠ (n : ℕ) in atTop, DifferentiableOn ℂ (fun z => ∏ i ∈ Finset.range n, f i z) s := by
       simp only [eventually_atTop, ge_iff_le]
-      use 0; intro b _; intro z hz
+      use 0; intro b _ z hz
       have := DifferentiableAt.finset_prod (fun i (_ : i ∈ Finset.range b) =>
         (hd i z hz).differentiableAt (IsOpen.mem_nhds hs hz))
       exact this.differentiableWithinAt.congr (fun w hw => (Finset.prod_apply ..).symm) (Finset.prod_apply ..).symm
@@ -165,7 +165,7 @@ lemma deriv_EqOn_congr {f g : ℂ → ℂ} (s : Set ℂ) (hfg : s.EqOn f g) (hs 
 
 
 lemma logDeriv_eqOn_iff2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn ℂ f s)
-    (hg : DifferentiableOn ℂ g s) (hs : s.Nonempty) (hs2 : IsOpen s) (hsc : Convex ℝ s)
+    (hg : DifferentiableOn ℂ g s) (_hs : s.Nonempty) (hs2 : IsOpen s) (hsc : Convex ℝ s)
     (hgn : ∀ x, x ∈ s →  g x ≠ 0) (hfn : ∀ x, x ∈ s → f x ≠ 0) : EqOn (logDeriv f) (logDeriv g) s ↔
     ∃( z : ℂ),  z ≠ 0 ∧  EqOn (f) (z • g) s := by
   haveI : IsBoundedSMul ℝ ℂ := NormedSpace.toIsBoundedSMul

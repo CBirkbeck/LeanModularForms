@@ -185,7 +185,7 @@ lemma qExpansion_coeff_eq_intervalIntegral (n : ℕ)
   congr 1 with u
   let τ : ℍ := ⟨u + t * I, by simpa using ht⟩
   have : circleMap 0 R (u * (2 * π / h)) = 𝕢 h τ := by
-    simp only [circleMap, ofReal_exp, ← exp_add, zero_add, τ, UpperHalfPlane.coe_mk_subtype, R]
+    simp only [circleMap, ofReal_exp, ← exp_add, zero_add, τ, UpperHalfPlane.coe_mk, R]
     congr 1
     push_cast
     ring_nf

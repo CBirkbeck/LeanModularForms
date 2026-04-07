@@ -82,7 +82,7 @@ lemma contDiffAt_one_deriv_of_contDiffAt_two
   have h_apply := (show ContDiffAt ℝ (1 + 1) γ t₀ from hγ_C2).fderiv_right_succ.clm_apply
     (contDiffAt_const (c := (1 : ℝ)))
   rw [show (fun t => (fderiv ℝ γ t) 1) = deriv γ from by
-    ext t; exact fderiv_deriv.symm] at h_apply
+    ext t; exact fderiv_apply_one_eq_deriv.symm] at h_apply
   exact h_apply
 
 /-- Lipschitz-type bound on `deriv γ` deviation from C². -/

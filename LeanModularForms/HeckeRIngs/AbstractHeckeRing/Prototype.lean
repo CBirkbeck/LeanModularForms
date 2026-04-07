@@ -174,7 +174,7 @@ noncomputable def mCoeff (g₁ g₂ : P.Δ) : HeckeAlg P where
   support := mulSupport P g₁ g₂
   toFun := heckeMultiplicity P g₁ g₂
   mem_support_toFun D := by
-    simp only [ne_eq, Finset.mem_coe]
+    simp only [ne_eq]
     exact ⟨heckeMultiplicity_ne_zero_of_mem P g₁ g₂ D,
       fun h => by_contra fun hm => h (heckeMultiplicity_eq_zero_of_nmem P g₁ g₂ D hm)⟩
 

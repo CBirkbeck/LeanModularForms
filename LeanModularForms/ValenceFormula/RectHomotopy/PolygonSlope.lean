@@ -95,7 +95,7 @@ lemma slope_fdPolygon_seg4 (s t : ℝ) (hs : s > 3) (ht : t > 3) (hs4 : s ≤ 4)
     simp only [sub_ne_zero, ne_eq, Complex.ofReal_inj]
     exact hst.symm
   simp only [Complex.ofReal_inv, Complex.ofReal_sub]
-  field_simp [hne]; push_cast; ring
+  field_simp [hne]; ring
 
 lemma slope_fdPolygon_seg5 (s t : ℝ) (hs : s > 4) (ht : t > 4) (hst : s ≠ t) :
     slope fdPolygon s t = 1 := by
@@ -117,7 +117,7 @@ lemma slope_fdPolygon_seg5 (s t : ℝ) (hs : s > 4) (ht : t > 4) (hst : s ≠ t)
     simp only [sub_ne_zero, ne_eq, Complex.ofReal_inj]
     exact hst.symm
   simp only [Complex.ofReal_inv, Complex.ofReal_sub]
-  field_simp [hne]; push_cast; ring
+  field_simp [hne]; ring
 
 lemma fdPolygon_deriv_ne_at_t1 : (-I : ℂ) ≠ (i_point - rho') := by
   simp only [rho', i_point]

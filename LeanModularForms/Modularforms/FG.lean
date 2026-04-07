@@ -16,7 +16,7 @@ public import LeanModularForms.Modularforms.summable_lems
 @[expose] public section
 
 open Filter Complex
-open UpperHalfPlane (atImInfty ofComplex ofComplex_apply ofComplex_apply_of_im_pos coe_mk_subtype
+open UpperHalfPlane (atImInfty ofComplex ofComplex_apply ofComplex_apply_of_im_pos coe_mk
   eventuallyEq_coe_comp_ofComplex isOpen_upperHalfPlaneSet IsBoundedAtImInfty)
 open scoped Real Manifold CongruenceSubgroup ArithmeticFunction.sigma UpperHalfPlane
 

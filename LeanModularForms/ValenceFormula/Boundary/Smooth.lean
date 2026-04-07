@@ -460,7 +460,7 @@ private lemma seg4_eventuallyEq_right_3 (H : ℝ) :
   · rw [show fdBoundary_H H 3 = fdBoundary 3 from
       (fdBoundary_H_at_three H).trans fdBoundary_at_three.symm, fdBoundary_at_three]
     simp only [fdBoundary_seg4_H, ellipticPointRho, ellipticPointRho',
-      UpperHalfPlane.coe_mk_subtype]; push_cast; ring
+      UpperHalfPlane.coe_mk]; push_cast; ring
   · exact (fdBoundary_H_eq_seg4_H h (by linarith [hs.1.2])).symm
 
 lemma fdBoundary_H_not_differentiableAt_3 {H : ℝ} (_hH : Real.sqrt 3 / 2 < H) :
@@ -476,7 +476,7 @@ lemma fdBoundary_H_not_differentiableAt_3 {H : ℝ} (_hH : Real.sqrt 3 / 2 < H) 
     rw [show fdBoundary_H H 3 = fdBoundary 3 from
       (fdBoundary_H_at_three H).trans fdBoundary_at_three.symm, fdBoundary_at_three]
     simp only [fdBoundary_seg4_H, ellipticPointRho, ellipticPointRho',
-      UpperHalfPlane.coe_mk_subtype]; push_cast; ring
+      UpperHalfPlane.coe_mk]; push_cast; ring
   have hleft : HasDerivWithinAt (fdBoundary_H H)
       (↑(Real.pi / 6) * I * exp (↑(Real.pi * 4 / 6) * I)) (Iic 3) 3 :=
     ((arc_eventuallyEq_left_3 H).hasDerivWithinAt_iff hval_arc).mp

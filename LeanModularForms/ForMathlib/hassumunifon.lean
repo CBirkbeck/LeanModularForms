@@ -298,7 +298,7 @@ private lemma iteratedDeriv_CotTerm_bounded_uniformly {k : ℕ} (hk : 1 ≤ k) (
   · have := summand_bound_of_mem_verticalStrip (k := (k + 1)) (by norm_cast; omega) ![1, n+1] hB
       (z := ⟨a, (hK ha)⟩) (A := A) (by aesop)
     simp only [coe_setOf, image_univ, Fin.isValue, Matrix.cons_val_zero, Int.cast_one,
-      coe_mk_subtype, one_mul, Matrix.cons_val_one, Matrix.cons_val_fin_one, Int.cast_add,
+      coe_mk, one_mul, Matrix.cons_val_one, Matrix.cons_val_fin_one, Int.cast_add,
       Int.cast_natCast, neg_add_rev, abs_norm_eq_max_natAbs, Int.reduceNeg, sub_eq_add_neg,
       norm_zpow, ge_iff_le] at *
     norm_cast at *
@@ -306,7 +306,7 @@ private lemma iteratedDeriv_CotTerm_bounded_uniformly {k : ℕ} (hk : 1 ≤ k) (
       (z := ⟨a, (hK ha)⟩) (A := A) (by aesop)
     rw [abs_norm_eq_max_natAbs_neg] at this
     simp only [coe_setOf, image_univ, neg_add_rev, Int.reduceNeg, Fin.isValue, Matrix.cons_val_zero,
-      Int.cast_one, coe_mk_subtype, one_mul, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Int.cast_one, coe_mk, one_mul, Matrix.cons_val_one, Matrix.cons_val_fin_one,
       Int.cast_add, Int.cast_neg, Int.cast_natCast, sub_eq_add_neg, norm_zpow, ge_iff_le] at *
     norm_cast at *
 
@@ -875,7 +875,7 @@ lemma EQ1 (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (z : ℍ) : ∑' (x : Fin 2 �
   · have (b : ℕ+) := Eisenstein_qExpansion_identity'' (k := k - 1) (by omega)
       ⟨b * z , by simpa using z.2⟩
     have hk1 : k - 1 + 1 = k := by omega
-    simp only [coe_mk_subtype, hk1, one_div, neg_mul, mul_assoc, Fin.isValue,
+    simp only [coe_mk, hk1, one_div, neg_mul, mul_assoc, Fin.isValue,
       piFinTwoEquiv_symm_apply, Fin.cons_zero, Int.cast_zero, zero_mul, Fin.cons_one, zero_add,
       tsum_int_inv_eq_two_riemannZeta (by omega) hk2, Int.cast_natCast, add_right_inj,
       mul_eq_mul_left_iff, OfNat.ofNat_ne_zero, or_false] at *

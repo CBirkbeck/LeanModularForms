@@ -42,7 +42,7 @@ private theorem cuspFunction_eqOn_const_of_nonpos_wt (hk : k ≤ 0) (f : F) :
         ⟨_, im_invQParam_pos_of_norm_lt_one Real.zero_lt_one (mem_ball_zero_iff.mp hq) hq'⟩
       exact ⟨_, norm_qParam_le_of_one_half_le_im hξ,
         by simpa [← eq_cuspFunction' f (dvd_of_eq <| Subgroup.Gamma_width 1),
-          Nat.cast_one, coe_mk_subtype, qParam_right_inv one_ne_zero hq'] using hξ₂⟩
+          Nat.cast_one, coe_mk, qParam_right_inv one_ne_zero hq'] using hξ₂⟩
 
 private theorem levelOne_nonpos_wt_const (hk : k ≤ 0) (f : F) :
     ⇑f = Function.const _ (cuspFunction 1 f 0) := funext fun z ↦ by

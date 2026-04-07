@@ -130,7 +130,7 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
   simp only [ofReal_one, ofReal_zero, one_mul, zero_mul,
     sub_zero] at h_parts
   have hv1 : f (c + (1 : ℝ) • (z - c)) = f z := by
-    simp [one_smul]
+    simp
   rw [hv1] at h_parts
   exact h_parts
 

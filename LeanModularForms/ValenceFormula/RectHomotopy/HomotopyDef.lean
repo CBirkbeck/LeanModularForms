@@ -111,7 +111,7 @@ lemma H_match_at_t1 (p : ℝ × ℝ) (hp : p.1 = 1) :
     push_cast; ring
   rw [hpi3, exp_pi_div_three_eq_rho']
   simp only [sub_self, rho']
-  simp only [smul_add, Complex.real_smul,
+  simp only [Complex.real_smul,
     Complex.ofReal_sub, Complex.ofReal_one,
     sub_zero, one_mul]
   push_cast; ring

@@ -213,7 +213,7 @@ theorem T_elem_mem_closure_ppow (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (h
       have h_det : ∏ i, a i = 1 := by
         have h_supp : (∏ i, a i).factorization.support = ∅ :=
           Finset.card_eq_zero.mp (Nat.le_zero.mp hcard)
-        have := Nat.factorization_prod_pow_eq_self (prod_pos_of_pos n a ha_pos).ne'
+        have := Nat.prod_factorization_pow_eq_self (prod_pos_of_pos n a ha_pos).ne'
         rw [Finsupp.prod, h_supp, Finset.prod_empty] at this
         exact this.symm
       exact Nat.eq_one_of_dvd_one (h_det ▸ h_dvd)

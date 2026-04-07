@@ -83,7 +83,7 @@ lemma hasProdLocallyUniformlyOn_eta :
   obtain ⟨z, hz, hB, HB⟩ := IsCompact.exists_sSup_image_eq_and_ge hcK (by simpa using hN) hc
   apply Summable.hasProdUniformlyOn_nat_one_add hcK (Summable_eta_q ⟨z, by simpa using (hK hz)⟩)
   · filter_upwards with n x hx
-    simpa only [eta_q, eta_q_eq_pow n x, norm_neg, norm_pow, coe_mk_subtype,
+    simpa only [eta_q, eta_q_eq_pow n x, norm_neg, norm_pow, coe_mk,
         eta_q_eq_pow n (⟨z, hK hz⟩ : ℍ)] using
         pow_le_pow_left₀ (by simp [norm_nonneg]) (HB x hx) (n + 1)
   · simp_rw [eta_q, Periodic.qParam]
@@ -194,7 +194,7 @@ lemma eta_logDeriv' (z : ℍ) : logDeriv dedekindEtaFun' z = (π * Complex.I / 1
       (fun i ↦ one_add_eta_q_ne_zero i z) ?_ ?_ ?_ (etaProdTerm_ne_zero z)
     rw [show (⟨(z : ℂ), z.2⟩ : {b : ℂ | 0 < b.im}).1 = UpperHalfPlane.coe z by rfl] at HG
     rw [HG]
-    · simp only [tsum_log_deriv_eta_q' z, E₂, logDeriv_z_term' z, mul_neg, one_div, mul_inv_rev, Pi.smul_apply, smul_eq_mul]
+    · simp only [tsum_log_deriv_eta_q' z, E₂, logDeriv_z_term' z, mul_neg]
       rw [show E2 z = E₂ z from rfl, E₂_eq z, mul_sub, sub_eq_add_neg]
       conv_rhs => rw [show (∑' (n : ℕ+), ↑↑n * cexp (2 * ↑π * Complex.I * ↑↑n * ↑z) /
           (1 - cexp (2 * ↑π * Complex.I * ↑↑n * ↑z))) = ∑' (n : ℕ),
@@ -211,12 +211,12 @@ lemma eta_logDeriv' (z : ℍ) : logDeriv dedekindEtaFun' z = (π * Complex.I / 1
     · intro i x hx
       simp_rw [eta_q_eq_exp]
       fun_prop
-    · simp only [mem_setOf_eq, one_add_eta_logDeriv_eq]
+    · simp only [one_add_eta_logDeriv_eq]
       apply ((summable_nat_add_iff 1).mpr ((logDeriv_q_expo_summable (𝕢₁ z)
         (by simpa [Periodic.qParam] using exp_upperHalfPlane_lt_one z)).mul_left (-2 * π * Complex.I))).congr
       intro b
       have := one_add_eta_q_ne_zero b z
-      simp only [UpperHalfPlane.coe, ne_eq, neg_mul, Nat.cast_add, Nat.cast_one, mul_neg] at *
+      simp only [ne_eq, neg_mul, Nat.cast_add, Nat.cast_one, mul_neg] at *
       field_simp
     · exact hasProdLocallyUniformlyOn_eta.multipliableLocallyUniformlyOn
   · simp [ne_eq, exp_ne_zero, not_false_eq_true, Periodic.qParam]
@@ -256,18 +256,16 @@ lemma eta_logDeriv_eql' (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z 
    (cexp (-(2⁻¹ * Complex.log ↑z)) * cexp (-(2⁻¹ * Complex.log ↑z)))* 2⁻¹ by ring, ← Complex.exp_add,
    ← sub_eq_add_neg, show -(2⁻¹ * Complex.log ↑z) - 2⁻¹ * Complex.log ↑z = -Complex.log ↑z by ring, Complex.exp_neg, Complex.exp_log, eta_logDeriv' z]
   have Rb := eta_logDeriv' (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ)
-  simp only [coe_mk_subtype] at Rb
   rw [Rb]
   have E := E₂_transform z
   simp only [one_div, neg_mul, smul_eq_mul, SL_slash_def,
     modular_S_smul,
     ModularGroup.denom_S, Int.reduceNeg, zpow_neg] at *
   have h00 :  (UpperHalfPlane.mk (-z : ℂ)⁻¹ z.im_inv_neg_coe_pos) = (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ) := by
-    simp [UpperHalfPlane.mk]
+    simp
     ring_nf
   rw [h00] at E
   rw [← mul_assoc, mul_comm, ← mul_assoc]
-  simp only [UpperHalfPlane.coe] at *
   rw [E, add_mul, add_comm]
   congr 1
   have hzne := ne_zero z
@@ -276,7 +274,7 @@ lemma eta_logDeriv_eql' (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z 
   have hpi : (π : ℂ) ≠ 0 := by
     simp only [ne_eq, ofReal_eq_zero]
     exact Real.pi_ne_zero
-  simp [UpperHalfPlane.coe] at hzne ⊢
+  simp at hzne ⊢
   field_simp
   ring
   rw [mul_comm]
@@ -349,7 +347,7 @@ lemma eta_logderivs_const' : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn 
   · intro x hx
     simp only [comp_apply, ne_eq]
     have := dedekindEtaFun'_ne_zero ⟨-1 / x, by simpa using pnat_div_upper 1 ⟨x, hx⟩⟩
-    simpa only [ne_eq, coe_mk_subtype] using this
+    simpa only [ne_eq, coe_mk] using this
 
 lemma eta_equality' : {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
    ((csqrt (Complex.I))⁻¹ • ((csqrt) * η)) := by

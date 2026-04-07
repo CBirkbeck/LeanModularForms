@@ -149,7 +149,7 @@ private lemma slope_tendsto_right_of_deriv
   have h_map : Tendsto (fun ε : ℝ => t₀ + ε) (𝓝[>] (0 : ℝ)) (𝓝[>] t₀) := by
     apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
     · have : Tendsto (fun ε : ℝ => t₀ + ε) (𝓝 (0 : ℝ)) (𝓝 t₀) := by
-        have := (continuous_add_left t₀).tendsto (0 : ℝ)
+        have := (continuous_const_add t₀).tendsto (0 : ℝ)
         simpa using this
       exact this.mono_left nhdsWithin_le_nhds
     · filter_upwards [self_mem_nhdsWithin] with ε (hε : (0 : ℝ) < ε)
@@ -577,7 +577,7 @@ lemma re_pos_right_of_slope
     (hasDerivWithinAt_iff_tendsto_slope' Set.self_notMem_Ioi).mp hderiv
   have h_slope_re : Tendsto (fun t => (slope γ.toFun t₀ t * starRingEnd ℂ L_R).re)
       (𝓝[>] t₀) (𝓝 (L_R * starRingEnd ℂ L_R).re) :=
-    (continuous_re.comp (continuous_mul_right _)).continuousAt.tendsto.comp h_slope
+    (continuous_re.comp (continuous_mul_const _)).continuousAt.tendsto.comp h_slope
   have h_ev := h_slope_re (Ioi_mem_nhds hReLR)
   filter_upwards [h_ev, self_mem_nhdsWithin] with t ht ht_pos
   have ht_gt : t₀ < t := Set.mem_Ioi.mp ht_pos
@@ -625,7 +625,7 @@ lemma re_pos_left_of_slope
     (hasDerivWithinAt_iff_tendsto_slope' Set.self_notMem_Iio).mp hderiv
   have h_slope_re : Tendsto (fun t => (slope γ.toFun t₀ t * starRingEnd ℂ (-L_L)).re)
       (𝓝[<] t₀) (𝓝 (L_L * starRingEnd ℂ (-L_L)).re) :=
-    (continuous_re.comp (continuous_mul_right _)).continuousAt.tendsto.comp h_slope
+    (continuous_re.comp (continuous_mul_const _)).continuousAt.tendsto.comp h_slope
   have h_ev := h_slope_re (Iio_mem_nhds hReLLneg)
   filter_upwards [h_ev, self_mem_nhdsWithin] with t ht ht_neg
   have ht_lt : t < t₀ := Set.mem_Iio.mp ht_neg

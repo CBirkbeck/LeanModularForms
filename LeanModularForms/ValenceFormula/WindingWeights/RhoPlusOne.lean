@@ -30,7 +30,7 @@ private lemma g_rho'_seg0_value {t : ℝ} (ht : t ≤ 1) :
     fdBoundary_H H t - ellipticPointRhoPlusOne =
     ↑((1 - t) * (H - Real.sqrt 3 / 2)) * I := by
   rw [fdBoundary_H_seg0 H ht]
-  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk_subtype]
+  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   push_cast; ring
 
 private lemma g_rho'_norm_seg0 (hH : Real.sqrt 3 / 2 < H) {t : ℝ} (_ht0 : 0 ≤ t) (ht1 : t < 1) :
@@ -42,21 +42,21 @@ private lemma g_rho'_arc_value {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
     fdBoundary_H H t - ellipticPointRhoPlusOne =
     Complex.exp (↑(Real.pi * (1 + t) / 6) * I) - (↑(1/2 : ℝ) + ↑(Real.sqrt 3 / 2) * I) := by
   rw [fdBoundary_H_eq_arc ht1 ht3]
-  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk_subtype]
+  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   push_cast; ring
 
 private lemma g_rho'_seg3_value {t : ℝ} (ht3 : 3 < t) (ht4 : t ≤ 4) :
     fdBoundary_H H t - ellipticPointRhoPlusOne =
     -1 + ↑((t - 3) * (H - Real.sqrt 3 / 2)) * I := by
   rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith) ht4]
-  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk_subtype]
+  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   push_cast; ring
 
 private lemma g_rho'_seg4_value {t : ℝ} (ht4 : 4 < t) :
     fdBoundary_H H t - ellipticPointRhoPlusOne =
     ↑(t - 5) + ↑(H - Real.sqrt 3 / 2) * I := by
   rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
-  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk_subtype]
+  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   push_cast; ring
 
 private lemma sin_ge_sqrt3_div_2_of_mem {θ : ℝ}
@@ -100,7 +100,7 @@ private lemma g_rho'_im_nonneg (hH : Real.sqrt 3 / 2 < H)
     · rcases eq_or_lt_of_le h3 with rfl | h3'
       · rw [fdBoundary_H_at_three_eq_rho]
         simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-          ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+          ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
           sub_im, add_im, neg_im, one_im, div_ofNat_im, mul_im, ofReal_im, I_re,
           I_im, mul_zero, add_zero, mul_one, zero_div]
         ring_nf; norm_num
@@ -143,7 +143,7 @@ private lemma g_rho'_ne_zero (hH : Real.sqrt 3 / 2 < H)
     · rcases eq_or_lt_of_le h3 with rfl | h3'
       · rw [fdBoundary_H_at_three_eq_rho] at h_eq
         simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-          ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype] at h_eq
+          ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk] at h_eq
         have : (-1/2 + ↑(Real.sqrt 3) / 2 * I - (1/2 + ↑(Real.sqrt 3) / 2 * I) : ℂ) = -1 := by
           ring
         rw [this] at h_eq; exact absurd h_eq (by norm_num)
@@ -323,7 +323,7 @@ private lemma g_rho'_norm_ge_seg4 (hH : Real.sqrt 3 / 2 < H)
     · have : fdBoundary_H H 4 - (ellipticPointRhoPlusOne : ℂ) =
           -1 + ↑(H - Real.sqrt 3 / 2) * I := by
         rw [fdBoundary_H_at_four]
-        simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk_subtype]
+        simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
         push_cast; ring
       rw [this, Complex.add_im, Complex.neg_im, Complex.one_im, mul_comm,
         Complex.I_mul_im, Complex.ofReal_re]; ring
@@ -339,7 +339,7 @@ private lemma g_rho'_norm_ge_one_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) 
   rcases eq_or_lt_of_le ht3 with rfl | ht3'
   · rw [fdBoundary_H_at_three_eq_rho]
     simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-      ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+      ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     have : (-1/2 + ↑(Real.sqrt 3) / 2 * I - (1/2 + ↑(Real.sqrt 3) / 2 * I) : ℂ) = -1 := by
       ring
     rw [this, norm_neg, norm_one]
@@ -371,7 +371,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     intro t ht1 ht3; change fdBoundary_H H t - ρ' = h₁ t
     rw [g_rho'_arc_value ht1 ht3]
     simp only [h₁, hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-      UpperHalfPlane.coe_mk_subtype]
+      UpperHalfPlane.coe_mk]
     push_cast; ring
   have hg_eq_h₂ : ∀ t, 3 < t → t ≤ 4 → g t = h₂ t := by
     intro t ht3 ht4; change fdBoundary_H H t - ρ' = h₂ t
@@ -386,7 +386,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     change fdBoundary_H H 3 - ρ' = h₁ 3
     rw [fdBoundary_H_at_three_eq_rho]
     simp only [h₁, hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-      ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+      ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     rw [show Real.pi * (1 + 3) / 6 = 2 * Real.pi / 3 from by ring]
     rw [exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
     push_cast; ring
@@ -394,14 +394,14 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     change fdBoundary_H H 3 - ρ' = h₂ 3
     rw [fdBoundary_H_at_three_eq_rho]
     simp only [h₂, hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-      ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+      ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     push_cast; ring
   have hg4_2 : g 4 = h₂ 4 := hg_eq_h₂ 4 (by linarith) (le_refl 4)
   have hg4_3 : g 4 = h₃ 4 := by
     change fdBoundary_H H 4 - ρ' = h₃ 4
     rw [fdBoundary_H_at_four H]
     simp only [hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-      UpperHalfPlane.coe_mk_subtype, h₃]
+      UpperHalfPlane.coe_mk, h₃]
     push_cast; ring
   have hg5 : g 5 = h₃ 5 := hg_eq_h₃ 5 (by norm_num)
   have hd_h₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by

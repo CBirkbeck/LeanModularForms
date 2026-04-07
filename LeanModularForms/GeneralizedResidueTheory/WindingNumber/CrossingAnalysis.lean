@@ -29,48 +29,38 @@ open scoped Real Interval
 
 noncomputable section
 
-/-- Helper: g = ‖γ(·) - z₀‖ is strictly decreasing on a left neighborhood of t₀ and
-strictly increasing on a right neighborhood, when γ is an immersion at t₀.
-This is the key "local monotonicity" fact that makes the cutoff boundary well-defined. -/
-lemma piecewiseC1Immersion_norm_strictMono_near_crossing
-    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+/-! ### Shared one-sided derivative and direction infrastructure
+
+These helper lemmas factor out the patterns used by both
+`piecewiseC1Immersion_norm_strictMono_near_crossing` and `crossing_ratio_tendsto`.
+-/
+
+/-- Extract one-sided derivative limits and partition-free neighborhoods at a crossing. -/
+lemma immersion_one_sided_setup
+    (γ : PiecewiseC1Immersion) (_z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
-    (hcross : γ.toFun t₀ = z₀) :
-    ∃ l r : ℝ, l < t₀ ∧ t₀ < r ∧ γ.a ≤ l ∧ r ≤ γ.b ∧
-      StrictAntiOn (fun t => ‖γ.toFun t - z₀‖) (Icc l t₀) ∧
-      StrictMonoOn (fun t => ‖γ.toFun t - z₀‖) (Icc t₀ r) := by
-  -- Helper: HasDerivAt of ‖f · - z₀‖ via sqrt ∘ norm_sq chain rule
-  have hasDerivAt_norm_sub : ∀ (f : ℝ → ℂ) (t : ℝ) (L : ℂ),
-      HasDerivAt f L t → f t ≠ z₀ →
-      HasDerivAt (fun s => ‖f s - z₀‖) (inner ℝ (f t - z₀) L / ‖f t - z₀‖) t := by
-    intro f t L hf hne
-    have hne' : f t - z₀ ≠ 0 := sub_ne_zero.mpr hne
-    have hpos : (0 : ℝ) < ‖f t - z₀‖ := norm_pos_iff.mpr hne'
-    have hgsq := (hf.sub_const z₀).norm_sq
-    convert (Real.hasDerivAt_sqrt (by positivity)).comp t hgsq using 1
-    · ext s; simp only [Function.comp, Real.sqrt_sq (norm_nonneg _)]
-    · rw [Real.sqrt_sq hpos.le]; field_simp [ne_of_gt hpos]
-  -- Helper: inner ℝ a b / ‖a‖ = inner ℝ (a/↑‖a‖) b (holds for all a, even zero)
-  have inner_div_norm : ∀ (a b : ℂ),
-      inner (𝕜 := ℝ) a b / ‖a‖ = inner (𝕜 := ℝ) (a / ↑‖a‖) b := by
-    intro a b
-    have ha : a / ↑‖a‖ = (‖a‖⁻¹ : ℝ) • a := by
-      simp only [div_eq_mul_inv, Complex.real_smul, Complex.ofReal_inv]; ring
-    rw [ha]; erw [real_inner_smul_left]; ring
-  -- Step 1: Get right and left one-sided derivative limits (nonzero)
+    (_hcross : γ.toFun t₀ = _z₀) :
+    ∃ (L_R L_L : ℂ),
+      L_R ≠ 0 ∧ L_L ≠ 0 ∧
+      HasDerivWithinAt γ.toFun L_R (Set.Ici t₀) t₀ ∧
+      HasDerivWithinAt γ.toFun L_L (Set.Iic t₀) t₀ ∧
+      Filter.Tendsto (deriv γ.toFun) (𝓝[>] t₀) (𝓝 L_R) ∧
+      Filter.Tendsto (deriv γ.toFun) (𝓝[<] t₀) (𝓝 L_L) := by
+  -- Right derivative limit
   obtain ⟨L_R, hL_R_ne, htend_R⟩ :
       ∃ L : ℂ, L ≠ 0 ∧ Filter.Tendsto (deriv γ.toFun) (𝓝[>] t₀) (𝓝 L) := by
     by_cases h : t₀ ∈ γ.partition
     · exact γ.right_deriv_limit t₀ h ht₀.2
     · exact ⟨_, γ.deriv_ne_zero t₀ (Ioo_subset_Icc_self ht₀) h,
         (γ.deriv_continuous_off_partition t₀ ht₀ h).tendsto.mono_left nhdsWithin_le_nhds⟩
+  -- Left derivative limit
   obtain ⟨L_L, hL_L_ne, htend_L⟩ :
       ∃ L : ℂ, L ≠ 0 ∧ Filter.Tendsto (deriv γ.toFun) (𝓝[<] t₀) (𝓝 L) := by
     by_cases h : t₀ ∈ γ.partition
     · exact γ.left_deriv_limit t₀ h ht₀.1
     · exact ⟨_, γ.deriv_ne_zero t₀ (Ioo_subset_Icc_self ht₀) h,
         (γ.deriv_continuous_off_partition t₀ ht₀ h).tendsto.mono_left nhdsWithin_le_nhds⟩
-  -- Step 2: Get partition-free open neighborhoods (t₀, r₀) and (l₀, t₀)
+  -- Partition-free right neighborhood
   obtain ⟨r₀, hr₀, hr₀b, hno_R⟩ :
       ∃ r₀ > t₀, r₀ ≤ γ.b ∧ ∀ s ∈ Set.Ioo t₀ r₀, s ∉ γ.partition := by
     let Q := γ.partition.filter (fun x => t₀ < x)
@@ -82,6 +72,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
           linarith [Finset.min'_le Q s (Finset.mem_filter.mpr ⟨hc, hs.1⟩), hs.2]⟩
     · exact ⟨γ.b, ht₀.2, le_refl _,
         fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.1⟩⟩⟩
+  -- Partition-free left neighborhood
   obtain ⟨l₀, hl₀, hl₀a, hno_L⟩ :
       ∃ l₀ < t₀, γ.a ≤ l₀ ∧ ∀ s ∈ Set.Ioo l₀ t₀, s ∉ γ.partition := by
     let Q := γ.partition.filter (fun x => x < t₀)
@@ -93,7 +84,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
           linarith [Finset.le_max' Q s (Finset.mem_filter.mpr ⟨hc, hs.2⟩), hs.1]⟩
     · exact ⟨γ.a, ht₀.1, le_refl _,
         fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.2⟩⟩⟩
-  -- Step 3: HasDerivWithinAt on Ici/Iic from one-sided tendsto (using FDeriv.Extend)
+  -- HasDerivWithinAt from one-sided tendsto
   have hHDWA_R : HasDerivWithinAt γ.toFun L_R (Set.Ici t₀) t₀ :=
     hasDerivWithinAt_Ici_of_tendsto_deriv (s := Set.Ioo t₀ r₀)
       (fun s hs => (γ.smooth_off_partition s
@@ -108,60 +99,114 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
         (hno_L s hs)).differentiableWithinAt)
       (γ.continuous_toFun.continuousAt (Icc_mem_nhds ht₀.1 ht₀.2)).continuousWithinAt
       (Ioo_mem_nhdsLT hl₀) htend_L
-  -- Step 4: Slope tendsto (γ t - z₀)/(t - t₀) → L_R (right) and L_L (left)
-  have hslope_R : Filter.Tendsto
-      (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[>] t₀) (𝓝 L_R) := by
-    rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_diff_left] at hHDWA_R
-    convert hHDWA_R using 1; ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
-    erw [Complex.real_smul]; simp only [Complex.ofReal_inv]
-  have hslope_L : Filter.Tendsto
-      (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[<] t₀) (𝓝 L_L) := by
-    rw [hasDerivWithinAt_iff_tendsto_slope, Set.Iic_diff_right] at hHDWA_L
-    convert hHDWA_L using 1; ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
-    erw [Complex.real_smul]; simp only [Complex.ofReal_inv]
+  exact ⟨L_R, L_L, hL_R_ne, hL_L_ne, hHDWA_R, hHDWA_L, htend_R, htend_L⟩
+
+/-- Slope convergence from HasDerivWithinAt: `(γ(t) - z₀) / (t - t₀) → L` as `t → t₀⁺`. -/
+lemma immersion_slope_tendsto_right
+    {γ : ℝ → ℂ} {z₀ : ℂ} {t₀ : ℝ} {L_R : ℂ}
+    (hcross : γ t₀ = z₀)
+    (hHDWA_R : HasDerivWithinAt γ L_R (Set.Ici t₀) t₀) :
+    Filter.Tendsto (fun t => (γ t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[>] t₀) (𝓝 L_R) := by
+  rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_diff_left] at hHDWA_R
+  convert hHDWA_R using 1; ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv]
+  erw [Complex.real_smul]; simp only [Complex.ofReal_inv]; ring
+
+/-- Slope convergence from HasDerivWithinAt: `(γ(t) - z₀) / (t - t₀) → L` as `t → t₀⁻`. -/
+lemma immersion_slope_tendsto_left
+    {γ : ℝ → ℂ} {z₀ : ℂ} {t₀ : ℝ} {L_L : ℂ}
+    (hcross : γ t₀ = z₀)
+    (hHDWA_L : HasDerivWithinAt γ L_L (Set.Iic t₀) t₀) :
+    Filter.Tendsto (fun t => (γ t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[<] t₀) (𝓝 L_L) := by
+  rw [hasDerivWithinAt_iff_tendsto_slope, Set.Iic_diff_right] at hHDWA_L
+  convert hHDWA_L using 1; ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv]
+  erw [Complex.real_smul]; simp only [Complex.ofReal_inv]; ring
+
+/-- Direction convergence: `(γ(t) - z₀) / ‖γ(t) - z₀‖ → L / ‖L‖` as `t → t₀⁺`. -/
+lemma immersion_direction_tendsto_right
+    {γ : ℝ → ℂ} {z₀ : ℂ} {t₀ : ℝ} {L_R : ℂ} (hL_R_ne : L_R ≠ 0)
+    (hslope_R : Filter.Tendsto (fun t => (γ t - z₀) / ((t - t₀ : ℝ) : ℂ))
+      (𝓝[>] t₀) (𝓝 L_R)) :
+    Filter.Tendsto (fun t => (γ t - z₀) / ↑‖γ t - z₀‖) (𝓝[>] t₀) (𝓝 (L_R / ↑‖L_R‖)) := by
+  have hL_R_pos : ‖L_R‖ > 0 := norm_pos_iff.mpr hL_R_ne
+  have hLne : (‖L_R‖ : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hL_R_pos
+  have hnorm_tend : Filter.Tendsto (fun t => ‖(γ t - z₀) / ((t - t₀ : ℝ) : ℂ)‖)
+      (𝓝[>] t₀) (𝓝 ‖L_R‖) := continuous_norm.continuousAt.tendsto.comp hslope_R
+  apply (hslope_R.div hnorm_tend.ofReal hLne).congr'
+  filter_upwards [hnorm_tend.eventually (Ioi_mem_nhds (by linarith : ‖L_R‖ / 2 < ‖L_R‖)),
+                  self_mem_nhdsWithin] with t hpos htgt
+  simp only [Set.mem_Ioi] at htgt
+  have hd : t - t₀ > 0 := sub_pos.mpr htgt
+  simp only [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le] at hpos
+  have hfne : γ t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
+  show (γ t - z₀) / ↑(t - t₀) / ↑‖(γ t - z₀) / ↑(t - t₀)‖ =
+       (γ t - z₀) / ↑‖γ t - z₀‖
+  rw [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le]; push_cast
+  field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_gt hd,
+    norm_ne_zero_iff.mpr hfne, ne_of_gt hd]
+
+/-- Direction convergence: `(γ(t) - z₀) / ‖γ(t) - z₀‖ → -L / ‖L‖` as `t → t₀⁻`. -/
+lemma immersion_direction_tendsto_left
+    {γ : ℝ → ℂ} {z₀ : ℂ} {t₀ : ℝ} {L_L : ℂ} (hL_L_ne : L_L ≠ 0)
+    (hslope_L : Filter.Tendsto (fun t => (γ t - z₀) / ((t - t₀ : ℝ) : ℂ))
+      (𝓝[<] t₀) (𝓝 L_L)) :
+    Filter.Tendsto (fun t => (γ t - z₀) / ↑‖γ t - z₀‖) (𝓝[<] t₀) (𝓝 (-L_L / ↑‖L_L‖)) := by
+  have hL_L_pos : ‖L_L‖ > 0 := norm_pos_iff.mpr hL_L_ne
+  have hLne : (‖L_L‖ : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hL_L_pos
+  have hnorm_tend : Filter.Tendsto (fun t => ‖(γ t - z₀) / ((t - t₀ : ℝ) : ℂ)‖)
+      (𝓝[<] t₀) (𝓝 ‖L_L‖) := continuous_norm.continuousAt.tendsto.comp hslope_L
+  rw [neg_div]
+  apply (hslope_L.div hnorm_tend.ofReal hLne).neg.congr'
+  filter_upwards [hnorm_tend.eventually (Ioi_mem_nhds (by linarith : ‖L_L‖ / 2 < ‖L_L‖)),
+                  self_mem_nhdsWithin] with t hpos htlt
+  simp only [Set.mem_Iio] at htlt
+  have hd : t - t₀ < 0 := sub_neg.mpr htlt
+  simp only [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le] at hpos
+  have hfne : γ t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
+  show -((γ t - z₀) / ↑(t - t₀) / ↑‖(γ t - z₀) / ↑(t - t₀)‖) =
+       (γ t - z₀) / ↑‖γ t - z₀‖
+  rw [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le]; push_cast
+  field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_lt hd,
+    norm_ne_zero_iff.mpr hfne, ne_of_lt hd]
+
+/-- Helper: g = ‖γ(·) - z₀‖ is strictly decreasing on a left neighborhood of t₀ and
+strictly increasing on a right neighborhood, when γ is an immersion at t₀.
+This is the key "local monotonicity" fact that makes the cutoff boundary well-defined. -/
+lemma piecewiseC1Immersion_norm_strictMono_near_crossing
+    (γ : PiecewiseC1Immersion) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
+    (hcross : γ.toFun t₀ = z₀) :
+    ∃ l r : ℝ, l < t₀ ∧ t₀ < r ∧ γ.a ≤ l ∧ r ≤ γ.b ∧
+      StrictAntiOn (fun t => ‖γ.toFun t - z₀‖) (Icc l t₀) ∧
+      StrictMonoOn (fun t => ‖γ.toFun t - z₀‖) (Icc t₀ r) := by
+  -- Helper: HasDerivAt of ‖f · - z₀‖ via sqrt . norm_sq chain rule
+  have hasDerivAt_norm_sub : ∀ (f : ℝ → ℂ) (t : ℝ) (L : ℂ),
+      HasDerivAt f L t → f t ≠ z₀ →
+      HasDerivAt (fun s => ‖f s - z₀‖) (inner ℝ (f t - z₀) L / ‖f t - z₀‖) t := by
+    intro f t L hf hne
+    have hne' : f t - z₀ ≠ 0 := sub_ne_zero.mpr hne
+    have hpos : (0 : ℝ) < ‖f t - z₀‖ := norm_pos_iff.mpr hne'
+    have hgsq := (hf.sub_const z₀).norm_sq
+    convert (Real.hasDerivAt_sqrt (by positivity)).comp t hgsq using 1
+    · ext s; simp only [Function.comp, Real.sqrt_sq (norm_nonneg _)]
+    · rw [Real.sqrt_sq hpos.le]; field_simp [ne_of_gt hpos]
+  -- Helper: inner ℝ a b / ‖a‖ = inner ℝ (a/↑‖a‖) b
+  have inner_div_norm : ∀ (a b : ℂ),
+      inner (𝕜 := ℝ) a b / ‖a‖ = inner (𝕜 := ℝ) (a / ↑‖a‖) b := by
+    intro a b
+    have ha : a / ↑‖a‖ = (‖a‖⁻¹ : ℝ) • a := by
+      simp only [div_eq_mul_inv, Complex.real_smul, Complex.ofReal_inv]; ring
+    rw [ha]; erw [real_inner_smul_left]; ring
+  -- Step 1: Use shared one-sided setup
+  obtain ⟨L_R, L_L, hL_R_ne, hL_L_ne, hHDWA_R, hHDWA_L, htend_R, htend_L⟩ :=
+    immersion_one_sided_setup γ z₀ t₀ ht₀ hcross
+  -- Step 2: Slope and direction convergence from shared helpers
+  have hslope_R := immersion_slope_tendsto_right hcross hHDWA_R
+  have hslope_L := immersion_slope_tendsto_left hcross hHDWA_L
+  have hdir_R := immersion_direction_tendsto_right hL_R_ne hslope_R
+  have hdir_L := immersion_direction_tendsto_left hL_L_ne hslope_L
   have hL_R_pos : ‖L_R‖ > 0 := norm_pos_iff.mpr hL_R_ne
   have hL_L_pos : ‖L_L‖ > 0 := norm_pos_iff.mpr hL_L_ne
-  -- Step 5: Direction (γ t - z₀)/‖γ t - z₀‖ → L_R/‖L_R‖ (right) and
-  -- -L_L/‖L_L‖ (left)
-  have hdir_R : Filter.Tendsto (fun t => (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖)
-      (𝓝[>] t₀) (𝓝 (L_R / ↑‖L_R‖)) := by
-    have hLne : (‖L_R‖ : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hL_R_pos
-    -- Explicit type annotation prevents beta-reduction issue in filter_upwards
-    have hnorm_tend : Filter.Tendsto (fun t => ‖(γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)‖)
-        (𝓝[>] t₀) (𝓝 ‖L_R‖) := continuous_norm.continuousAt.tendsto.comp hslope_R
-    apply (hslope_R.div hnorm_tend.ofReal hLne).congr'
-    filter_upwards [hnorm_tend.eventually (Ioi_mem_nhds (by linarith : ‖L_R‖ / 2 < ‖L_R‖)),
-                    self_mem_nhdsWithin] with t hpos htgt
-    simp only [Set.mem_Ioi] at htgt
-    have hd : t - t₀ > 0 := sub_pos.mpr htgt
-    simp only [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
-    show (γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖ =
-         (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
-    rw [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le]; push_cast
-    field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_gt hd,
-      norm_ne_zero_iff.mpr hfne, ne_of_gt hd]
-  have hdir_L : Filter.Tendsto (fun t => (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖)
-      (𝓝[<] t₀) (𝓝 (-L_L / ↑‖L_L‖)) := by
-    have hLne : (‖L_L‖ : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hL_L_pos
-    have hnorm_tend : Filter.Tendsto (fun t => ‖(γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)‖)
-        (𝓝[<] t₀) (𝓝 ‖L_L‖) := continuous_norm.continuousAt.tendsto.comp hslope_L
-    rw [neg_div]
-    apply (hslope_L.div hnorm_tend.ofReal hLne).neg.congr'
-    filter_upwards [hnorm_tend.eventually (Ioi_mem_nhds (by linarith : ‖L_L‖ / 2 < ‖L_L‖)),
-                    self_mem_nhdsWithin] with t hpos htlt
-    simp only [Set.mem_Iio] at htlt
-    have hd : t - t₀ < 0 := sub_neg.mpr htlt
-    simp only [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
-    show -((γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖) =
-         (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
-    rw [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le]; push_cast
-    field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_lt hd,
-      norm_ne_zero_iff.mpr hfne, ne_of_lt hd]
-  -- Step 6: inner ℝ (γ t - z₀) (γ' t) / ‖γ t - z₀‖ → ‖L_R‖ (right)
-  -- and -‖L_L‖ (left)
-  -- Key: as t → t₀, direction → L/‖L‖ and deriv → L, so inner product → ‖L‖
+  -- Step 3: inner ℝ (γ t - z₀) (γ' t) / ‖γ t - z₀‖ → ‖L_R‖ (right) and -‖L_L‖ (left)
   have hinner_tend_R : Filter.Tendsto
       (fun t => inner ℝ (γ.toFun t - z₀) (deriv γ.toFun t) / ‖γ.toFun t - z₀‖)
       (𝓝[>] t₀) (𝓝 ‖L_R‖) := by
@@ -193,7 +238,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     rw [hLL_inner]
     convert (continuous_inner (E := ℂ) (𝕜 := ℝ)).continuousAt.tendsto.comp
         (hdir_L.prodMk_nhds htend_L) using 1
-  -- Step 7: Eventually positive/negative inner product ratio near t₀
+  -- Step 4: Eventually positive/negative inner product ratio near t₀
   have hev_R : ∀ᶠ t in 𝓝[>] t₀,
       0 < inner ℝ (γ.toFun t - z₀) (deriv γ.toFun t) / ‖γ.toFun t - z₀‖ :=
     hinner_tend_R.eventually (Ioi_mem_nhds hL_R_pos)
@@ -204,6 +249,29 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
   rw [Filter.Eventually, nhdsWithin, Filter.mem_inf_principal, Metric.mem_nhds_iff] at hev_R hev_L
   obtain ⟨εR, hεR_pos, hεR⟩ := hev_R
   obtain ⟨εL, hεL_pos, hεL⟩ := hev_L
+  -- Partition-free neighborhoods for smooth_off_partition
+  obtain ⟨r₀, hr₀, hr₀b, hno_R⟩ :
+      ∃ r₀ > t₀, r₀ ≤ γ.b ∧ ∀ s ∈ Set.Ioo t₀ r₀, s ∉ γ.partition := by
+    let Q := γ.partition.filter (fun x => t₀ < x)
+    by_cases hQ : Q.Nonempty
+    · have hmem := Finset.mem_filter.mp (Finset.min'_mem Q hQ)
+      exact ⟨Q.min' hQ, hmem.2,
+        le_trans (γ.partition_subset hmem.1).2 (le_refl _),
+        fun s hs hc => by
+          linarith [Finset.min'_le Q s (Finset.mem_filter.mpr ⟨hc, hs.1⟩), hs.2]⟩
+    · exact ⟨γ.b, ht₀.2, le_refl _,
+        fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.1⟩⟩⟩
+  obtain ⟨l₀, hl₀, hl₀a, hno_L⟩ :
+      ∃ l₀ < t₀, γ.a ≤ l₀ ∧ ∀ s ∈ Set.Ioo l₀ t₀, s ∉ γ.partition := by
+    let Q := γ.partition.filter (fun x => x < t₀)
+    by_cases hQ : Q.Nonempty
+    · have hmem := Finset.mem_filter.mp (Finset.max'_mem Q hQ)
+      exact ⟨Q.max' hQ, hmem.2,
+        le_trans (γ.partition_subset hmem.1).1 (le_refl _),
+        fun s hs hc => by
+          linarith [Finset.le_max' Q s (Finset.mem_filter.mpr ⟨hc, hs.2⟩), hs.1]⟩
+    · exact ⟨γ.a, ht₀.1, le_refl _,
+        fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.2⟩⟩⟩
   -- Set the final interval endpoints
   set r₁ := min (t₀ + εR / 2) r₀
   set l₁ := max (t₀ - εL / 2) l₀
@@ -735,123 +803,15 @@ lemma crossing_ratio_tendsto
     Tendsto (fun ε => (γ.toFun (σ₁ ε) - z₀) / (γ.toFun (σ₂ ε) - z₀))
       (𝓝[>] 0)
       (𝓝 (Complex.exp (-(I * ↑(angleAtCrossing γ t₀ ht₀))))) := by
-  -- ============================================================
-  -- Step 1: Extract one-sided derivative limits L_L (left) and L_R (right)
-  -- ============================================================
-  obtain ⟨L_R, hL_R_ne, htend_R⟩ :
-      ∃ L : ℂ, L ≠ 0 ∧ Filter.Tendsto (deriv γ.toFun) (𝓝[>] t₀) (𝓝 L) := by
-    by_cases h : t₀ ∈ γ.partition
-    · exact γ.right_deriv_limit t₀ h ht₀.2
-    · exact ⟨_, γ.deriv_ne_zero t₀ (Ioo_subset_Icc_self ht₀) h,
-             (γ.deriv_continuous_off_partition t₀ ht₀ h).tendsto.mono_left
-               nhdsWithin_le_nhds⟩
-  obtain ⟨L_L, hL_L_ne, htend_L⟩ :
-      ∃ L : ℂ, L ≠ 0 ∧ Filter.Tendsto (deriv γ.toFun) (𝓝[<] t₀) (𝓝 L) := by
-    by_cases h : t₀ ∈ γ.partition
-    · exact γ.left_deriv_limit t₀ h ht₀.1
-    · exact ⟨_, γ.deriv_ne_zero t₀ (Ioo_subset_Icc_self ht₀) h,
-             (γ.deriv_continuous_off_partition t₀ ht₀ h).tendsto.mono_left
-               nhdsWithin_le_nhds⟩
+  -- Step 1: Use shared one-sided setup for derivatives, slopes, and directions
+  obtain ⟨L_R, L_L, hL_R_ne, hL_L_ne, hHDWA_R, hHDWA_L, htend_R, htend_L⟩ :=
+    immersion_one_sided_setup γ z₀ t₀ ht₀ hcross
   have hL_R_pos : ‖L_R‖ > 0 := norm_pos_iff.mpr hL_R_ne
   have hL_L_pos : ‖L_L‖ > 0 := norm_pos_iff.mpr hL_L_ne
-  -- ============================================================
-  -- Step 2: Slope convergence: (γ(t)-z₀)/(t-t₀) → L
-  -- ============================================================
-  -- Get partition-free neighborhoods around t₀
-  obtain ⟨r₀, hr₀, hr₀b, hno_R⟩ :
-      ∃ r₀ > t₀, r₀ ≤ γ.b ∧ ∀ s ∈ Set.Ioo t₀ r₀, s ∉ γ.partition := by
-    let Q := γ.partition.filter (fun x => t₀ < x)
-    by_cases hQ : Q.Nonempty
-    · have hmem := Finset.mem_filter.mp (Finset.min'_mem Q hQ)
-      exact ⟨Q.min' hQ, hmem.2,
-        le_trans (γ.partition_subset hmem.1).2 (le_refl _),
-        fun s hs hc =>
-          by linarith [Finset.min'_le Q s (Finset.mem_filter.mpr ⟨hc, hs.1⟩), hs.2]⟩
-    · exact ⟨γ.b, ht₀.2, le_refl _,
-        fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.1⟩⟩⟩
-  obtain ⟨l₀, hl₀, hl₀a, hno_L⟩ :
-      ∃ l₀ < t₀, γ.a ≤ l₀ ∧ ∀ s ∈ Set.Ioo l₀ t₀, s ∉ γ.partition := by
-    let Q := γ.partition.filter (fun x => x < t₀)
-    by_cases hQ : Q.Nonempty
-    · have hmem := Finset.mem_filter.mp (Finset.max'_mem Q hQ)
-      exact ⟨Q.max' hQ, hmem.2,
-        le_trans (γ.partition_subset hmem.1).1 (le_refl _),
-        fun s hs hc =>
-          by linarith [Finset.le_max' Q s (Finset.mem_filter.mpr ⟨hc, hs.2⟩), hs.1]⟩
-    · exact ⟨γ.a, ht₀.1, le_refl _,
-        fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.2⟩⟩⟩
-  -- HasDerivWithinAt on Ici/Iic
-  have hHDWA_R : HasDerivWithinAt γ.toFun L_R (Set.Ici t₀) t₀ :=
-    hasDerivWithinAt_Ici_of_tendsto_deriv (s := Set.Ioo t₀ r₀)
-      (fun s hs => (γ.smooth_off_partition s
-        ⟨le_trans ht₀.1.le (le_of_lt hs.1), le_trans hs.2.le hr₀b⟩
-        (hno_R s hs)).differentiableWithinAt)
-      (γ.continuous_toFun.continuousAt
-        (Icc_mem_nhds ht₀.1 ht₀.2)).continuousWithinAt
-      (Ioo_mem_nhdsGT hr₀) htend_R
-  have hHDWA_L : HasDerivWithinAt γ.toFun L_L (Set.Iic t₀) t₀ :=
-    hasDerivWithinAt_Iic_of_tendsto_deriv (s := Set.Ioo l₀ t₀)
-      (fun s hs => (γ.smooth_off_partition s
-        ⟨le_trans hl₀a (le_of_lt hs.1), le_trans hs.2.le ht₀.2.le⟩
-        (hno_L s hs)).differentiableWithinAt)
-      (γ.continuous_toFun.continuousAt
-        (Icc_mem_nhds ht₀.1 ht₀.2)).continuousWithinAt
-      (Ioo_mem_nhdsLT hl₀) htend_L
-  -- Slope tendsto: (γ(t) - z₀)/(t - t₀) → L
-  have hslope_R : Filter.Tendsto
-      (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[>] t₀) (𝓝 L_R) := by
-    rw [hasDerivWithinAt_iff_tendsto_slope, Set.Ici_diff_left] at hHDWA_R
-    convert hHDWA_R using 1
-    ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
-    erw [Complex.real_smul]; simp only [Complex.ofReal_inv]
-  have hslope_L : Filter.Tendsto
-      (fun t => (γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)) (𝓝[<] t₀) (𝓝 L_L) := by
-    rw [hasDerivWithinAt_iff_tendsto_slope, Set.Iic_diff_right] at hHDWA_L
-    convert hHDWA_L using 1
-    ext t; simp only [slope, vsub_eq_sub, hcross, div_eq_mul_inv, mul_comm]
-    erw [Complex.real_smul]; simp only [Complex.ofReal_inv]
-  -- ============================================================
-  -- Step 3: Direction convergence
-  -- (γ(t)-z₀)/‖γ(t)-z₀‖ → L_R/‖L_R‖ as t→t₀⁺
-  -- (γ(t)-z₀)/‖γ(t)-z₀‖ → -L_L/‖L_L‖ as t→t₀⁻
-  -- ============================================================
-  have hdir_R : Filter.Tendsto (fun t => (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖)
-      (𝓝[>] t₀) (𝓝 (L_R / ↑‖L_R‖)) := by
-    have hLne : (‖L_R‖ : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hL_R_pos
-    have hnorm_tend : Filter.Tendsto (fun t => ‖(γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)‖)
-        (𝓝[>] t₀) (𝓝 ‖L_R‖) :=
-      continuous_norm.continuousAt.tendsto.comp hslope_R
-    apply (hslope_R.div hnorm_tend.ofReal hLne).congr'
-    filter_upwards [hnorm_tend.eventually (Ioi_mem_nhds (by linarith : ‖L_R‖ / 2 < ‖L_R‖)),
-                    self_mem_nhdsWithin] with t hpos htgt
-    simp only [Set.mem_Ioi] at htgt
-    have hd : t - t₀ > 0 := sub_pos.mpr htgt
-    simp only [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
-    show (γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖ =
-         (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
-    rw [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le]; push_cast
-    field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_gt hd,
-      norm_ne_zero_iff.mpr hfne, ne_of_gt hd]
-  have hdir_L : Filter.Tendsto (fun t => (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖)
-      (𝓝[<] t₀) (𝓝 (-L_L / ↑‖L_L‖)) := by
-    have hLne : (‖L_L‖ : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hL_L_pos
-    have hnorm_tend : Filter.Tendsto (fun t => ‖(γ.toFun t - z₀) / ((t - t₀ : ℝ) : ℂ)‖)
-        (𝓝[<] t₀) (𝓝 ‖L_L‖) :=
-      continuous_norm.continuousAt.tendsto.comp hslope_L
-    rw [neg_div]
-    apply (hslope_L.div hnorm_tend.ofReal hLne).neg.congr'
-    filter_upwards [hnorm_tend.eventually (Ioi_mem_nhds (by linarith : ‖L_L‖ / 2 < ‖L_L‖)),
-                    self_mem_nhdsWithin] with t hpos htlt
-    simp only [Set.mem_Iio] at htlt
-    have hd : t - t₀ < 0 := sub_neg.mpr htlt
-    simp only [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le] at hpos
-    have hfne : γ.toFun t - z₀ ≠ 0 := by intro h; simp only [h, norm_zero, zero_div] at hpos; linarith
-    show -((γ.toFun t - z₀) / ↑(t - t₀) / ↑‖(γ.toFun t - z₀) / ↑(t - t₀)‖) =
-         (γ.toFun t - z₀) / ↑‖γ.toFun t - z₀‖
-    rw [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le]; push_cast
-    field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_lt hd,
-      norm_ne_zero_iff.mpr hfne, ne_of_lt hd]
+  have hslope_R := immersion_slope_tendsto_right hcross hHDWA_R
+  have hslope_L := immersion_slope_tendsto_left hcross hHDWA_L
+  have hdir_R := immersion_direction_tendsto_right hL_R_ne hslope_R
+  have hdir_L := immersion_direction_tendsto_left hL_L_ne hslope_L
   -- ============================================================
   -- Step 4: σ₁(ε) → t₀ and σ₂(ε) → t₀ in nhds t₀
   -- ============================================================
