@@ -19,6 +19,168 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
+/-- `∫ t in a..1, t⁻¹ = log 1 - log a` for `0 < a ≤ 1`. -/
+private lemma integral_inv_eq_log_sub (a : ℝ) (ha : 0 < a) (ha1 : a ≤ 1) :
+    ∫ t in a..1, (↑t : ℂ)⁻¹ = Complex.log ↑(1:ℝ) - Complex.log ↑a := by
+  simp_rw [← Complex.ofReal_inv]
+  rw [intervalIntegral.integral_ofReal]
+  have hderiv : ∀ t ∈ Set.uIcc a 1,
+      HasDerivAt (fun t => Real.log t) (t⁻¹) t := by
+    intro t ht; rw [Set.uIcc_of_le ha1] at ht
+    exact Real.hasDerivAt_log (by linarith [ht.1] : t ≠ 0)
+  have hint : IntervalIntegrable (fun t : ℝ => t⁻¹) MeasureTheory.volume a 1 := by
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.inv₀ continuousOn_id
+    intro t ht; rw [Set.uIcc_of_le ha1, Set.mem_Icc] at ht
+    simp only [id]; linarith [ht.1]
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint, Real.log_one,
+    Complex.ofReal_one, Complex.log_one, ← Complex.ofReal_log ha.le]
+  push_cast; ring
+
+/-- `∫ t in 4..(5 - η), (t - 5)⁻¹ = log η` for `0 < η < 1`. -/
+private lemma integral_shifted_inv_eq_log (η : ℝ) (hη : 0 < η) (hη1 : η < 1) :
+    ∫ t in (4:ℝ)..(5 - η), (↑(t - 5) : ℂ)⁻¹ = ↑(Real.log η) := by
+  simp_rw [← Complex.ofReal_inv]
+  rw [intervalIntegral.integral_ofReal]
+  congr 1
+  have h5η : (4:ℝ) ≤ 5 - η := by linarith
+  have hderiv : ∀ t ∈ Set.uIcc 4 (5 - η),
+      HasDerivAt (fun t => Real.log (t - 5)) ((t - 5)⁻¹) t := by
+    intro t ht; rw [Set.uIcc_of_le h5η] at ht
+    have : t - 5 ≠ 0 := ne_of_lt (by linarith [ht.2])
+    have h1 := (Real.hasDerivAt_log this).comp t ((hasDerivAt_id t).sub_const 5)
+    simp only [Function.comp_def, mul_one] at h1; convert h1 using 1
+  have hint : IntervalIntegrable (fun t => (t - 5)⁻¹) MeasureTheory.volume 4 (5 - η) := by
+    apply ContinuousOn.intervalIntegrable
+    apply ContinuousOn.inv₀ (continuousOn_id.sub continuousOn_const)
+    intro t ht; rw [Set.uIcc_of_le h5η, Set.mem_Icc] at ht
+    simp only [id]; exact ne_of_lt (by linarith [ht.2])
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint]
+  simp only [show 5 - η - 5 = -η from by ring, show (4:ℝ) - 5 = -(1:ℝ) from by ring]
+  rw [Real.log_neg_eq_log, Real.log_neg_eq_log, Real.log_one, sub_zero]
+
+/-- The endpoint `s = 1/2 + H*I` is not hit by segments 1--4 of `fdBoundary_H H`. -/
+private lemma endpoint_avoid_14 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    let s := (1/2 : ℂ) + ↑H * I
+    ∀ t ∈ Set.Icc (1:ℝ) 4, fdBoundary_H H t ≠ s := by
+  intro s t ht habs
+  rw [Set.mem_Icc] at ht
+  by_cases ht3 : t ≤ 3
+  · by_cases ht1 : t = 1
+    · subst ht1
+      rw [fdBoundary_H_at_one] at habs
+      have h_im := congr_arg Complex.im habs
+      simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+        UpperHalfPlane.coe_mk_subtype, Complex.add_im, Complex.ofReal_im,
+        Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re,
+        Complex.div_ofNat, mul_zero, mul_one, s] at h_im
+      linarith
+    · have ht1' : 1 < t := lt_of_le_of_ne ht.1 (Ne.symm ht1)
+      have h_norm : ‖fdBoundary_H H t‖ = 1 :=
+        fdBoundary_H_eq_arc ht1' (lt_of_le_of_ne ht3 (by
+          intro h; subst h
+          have hγ3_eq : fdBoundary_H H 3 = fdBoundary 3 := by
+            rw [fdBoundary_H_at_three]
+            exact fdBoundary_at_three.symm
+          rw [hγ3_eq, fdBoundary_at_three] at habs
+          have him := congr_arg Complex.im habs
+          simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+            Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
+            Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.div_ofNat, s] at him
+          linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)])) |>.symm ▸
+        Complex.norm_exp_ofReal_mul_I _
+      rw [habs] at h_norm
+      have : 1 < ‖s‖ := by
+        have h_nsq : 1 < Complex.normSq s := by
+          simp only [s, Complex.normSq_apply, Complex.add_re, Complex.ofReal_re,
+            Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_im,
+            Complex.add_im, Complex.mul_im, Complex.one_re, Complex.one_im,
+            Complex.div_ofNat]
+          have hH0 : 0 < H := by
+            linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
+          nlinarith [mul_lt_mul hH hH.le (by positivity : (0:ℝ) < Real.sqrt 3 / 2) hH0.le,
+                     Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
+        calc (1:ℝ) = Real.sqrt 1 := by simp only [Real.sqrt_one]
+          _ < Real.sqrt (Complex.normSq s) := Real.sqrt_lt_sqrt (by norm_num) h_nsq
+          _ = ‖s‖ := rfl
+      linarith
+  · push_neg at ht3
+    have h_re_t := fdBoundary_H_seg4_re' H ht3 ht.2
+    rw [habs] at h_re_t
+    simp [s, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+      Complex.I_im, Complex.ofReal_im] at h_re_t
+    norm_num at h_re_t
+
+/-- The endpoint `s = 1/2 + H*I` has positive distance to the boundary on `[1, 4]`. -/
+private lemma endpoint_min_dist (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    let s := (1/2 : ℂ) + ↑H * I
+    ∃ δ > 0, ∀ t ∈ Set.Icc (1:ℝ) 4, δ ≤ ‖fdBoundary_H H t - s‖ := by
+  intro s
+  have h_cont_norm : ContinuousOn (fun t => ‖fdBoundary_H H t - s‖)
+      (Set.Icc (1:ℝ) 4) :=
+    ((fdBoundary_H_continuous H).continuousOn.sub continuousOn_const).norm.mono
+      (Set.Icc_subset_Icc (by norm_num : (0:ℝ) ≤ 1) (by norm_num : (4:ℝ) ≤ 5))
+  have h_pos_norm : ∀ t ∈ Set.Icc (1:ℝ) 4, 0 < ‖fdBoundary_H H t - s‖ :=
+    fun t ht => norm_pos_iff.mpr (sub_ne_zero.mpr (endpoint_avoid_14 H hH t ht))
+  exact isCompact_Icc.exists_forall_le' h_cont_norm h_pos_norm
+
+/-- Segment 1 difference: `fdBoundary_H H t - s = (-t) * c * I` for the endpoint. -/
+private lemma endpoint_diff_seg1 (H : ℝ) (s : ℂ) (hs_def : s = (1/2 : ℂ) + ↑H * I)
+    (c : ℝ) (hc_def : c = H - Real.sqrt 3 / 2) (t : ℝ) (_ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
+    fdBoundary_H H t - s = ↑((-t) * c) * I := by
+  rw [fdBoundary_H_eq_seg1_H ht1, hs_def]
+  simp only [fdBoundary_seg1_H, hc_def]
+  push_cast; ring
+
+/-- Segment 5 difference: `fdBoundary_H H t - s = t - 5` for the endpoint. -/
+private lemma endpoint_diff_seg5 (H : ℝ) (s : ℂ) (hs_def : s = (1/2 : ℂ) + ↑H * I)
+    (t : ℝ) (ht4 : 4 < t) :
+    fdBoundary_H H t - s = ↑(t - 5) := by
+  rw [fdBoundary_H_eq_seg5_H ht4, hs_def]
+  simp only [fdBoundary_seg5_H]
+  push_cast; ring
+
+/-- Norm on seg1: `‖fdBoundary_H H t - s‖ = t * c` for the endpoint. -/
+private lemma endpoint_norm_seg1 (H : ℝ) (s : ℂ) (hs_def : s = (1/2 : ℂ) + ↑H * I)
+    (c : ℝ) (hc_def : c = H - Real.sqrt 3 / 2) (hc : 0 < c)
+    (t : ℝ) (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
+    ‖fdBoundary_H H t - s‖ = t * c := by
+  rw [endpoint_diff_seg1 H s hs_def c hc_def t ht0 ht1, norm_mul, Complex.norm_real,
+    Complex.norm_I, mul_one, Real.norm_eq_abs, abs_of_nonpos (by nlinarith : (-t) * c ≤ 0)]
+  ring
+
+/-- Norm on seg5: `‖fdBoundary_H H t - s‖ = 5 - t` for the endpoint. -/
+private lemma endpoint_norm_seg5 (H : ℝ) (s : ℂ) (hs_def : s = (1/2 : ℂ) + ↑H * I)
+    (t : ℝ) (ht4 : 4 < t) (ht5 : t ≤ 5) :
+    ‖fdBoundary_H H t - s‖ = 5 - t := by
+  rw [endpoint_diff_seg5 H s hs_def t ht4, Complex.norm_real, Real.norm_eq_abs,
+    abs_of_nonpos (by linarith)]
+  ring
+
+/-- Integrand on seg1: `(γ t - s)⁻¹ * γ'(t) = t⁻¹` for the endpoint. -/
+private lemma endpoint_integrand_seg1 (H : ℝ) (s : ℂ) (hs_def : s = (1/2 : ℂ) + ↑H * I)
+    (c : ℝ) (hc_def : c = H - Real.sqrt 3 / 2) (hc : 0 < c)
+    (t : ℝ) (ht0 : 0 < t) (ht1 : t < 1) :
+    (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑t : ℂ)⁻¹ := by
+  rw [endpoint_diff_seg1 H s hs_def c hc_def t ht0.le ht1.le]
+  erw [(fdBoundary_H_hasDerivAt_seg1 H ht1).deriv]
+  have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 → (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
+    rw [mul_inv_rev, mul_assoc, mul_comm a⁻¹ b,
+      ← mul_assoc, inv_mul_cancel₀ hb, one_mul]
+  have hc_eq : (↑H - ↑(Real.sqrt 3) / 2 : ℂ) = ↑c := by push_cast [hc_def]; ring
+  have hrw1 : (-(↑H - ↑(Real.sqrt 3) / 2 : ℂ)) * I = -(↑c : ℂ) * I := by rw [hc_eq]
+  have hrw2 : (↑(-t * c) : ℂ) * I = ↑t * (-(↑c : ℂ) * I) := by push_cast; ring
+  rw [hrw1, hrw2]
+  exact key ↑t _ (Complex.ofReal_ne_zero.mpr ht0.ne') (mul_ne_zero (neg_ne_zero.mpr
+      (Complex.ofReal_ne_zero.mpr hc.ne')) I_ne_zero)
+
+/-- Integrand on seg5: `(γ t - s)⁻¹ * γ'(t) = (t - 5)⁻¹` for the endpoint. -/
+private lemma endpoint_integrand_seg5 (H : ℝ) (s : ℂ) (hs_def : s = (1/2 : ℂ) + ↑H * I)
+    (t : ℝ) (ht4 : 4 < t) :
+    (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 5) : ℂ)⁻¹ := by
+  rw [endpoint_diff_seg5 H s hs_def t ht4]
+  erw [(fdBoundary_H_hasDerivAt_seg5 H ht4).deriv]; rw [mul_one]
+
 lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     CauchyPrincipalValueExists' (fun z => (z - ((1/2 : ℂ) + ↑H * I))⁻¹)
       (fdBoundary_H H) 0 5 ((1/2 : ℂ) + ↑H * I) := by
@@ -26,63 +188,7 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   set c := H - Real.sqrt 3 / 2 with hc_def
   have hc : 0 < c := sub_pos.mpr hH
   have hc_ne : c ≠ 0 := hc.ne'
-  have h_avoid_14 : ∀ t ∈ Set.Icc (1:ℝ) 4, fdBoundary_H H t ≠ s := by
-    intro t ht habs
-    rw [Set.mem_Icc] at ht
-    by_cases ht3 : t ≤ 3
-    · by_cases ht1 : t = 1
-      · subst ht1
-        rw [fdBoundary_H_at_one] at habs
-        have h_im := congr_arg Complex.im habs
-        simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-          UpperHalfPlane.coe_mk_subtype, Complex.add_im, Complex.ofReal_im,
-          Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re,
-          Complex.div_ofNat, mul_zero, mul_one, hs_def] at h_im
-        linarith
-      · have ht1' : 1 < t := lt_of_le_of_ne ht.1 (Ne.symm ht1)
-        have h_norm : ‖fdBoundary_H H t‖ = 1 :=
-          fdBoundary_H_eq_arc ht1' (lt_of_le_of_ne ht3 (by
-            intro h; subst h
-            have hγ3_eq : fdBoundary_H H 3 = fdBoundary 3 := by
-              rw [fdBoundary_H_at_three]
-              exact fdBoundary_at_three.symm
-            rw [hγ3_eq, fdBoundary_at_three] at habs
-            have him := congr_arg Complex.im habs
-            simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
-              Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
-              Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.div_ofNat, hs_def] at him
-            linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)])) |>.symm ▸
-          Complex.norm_exp_ofReal_mul_I _
-        rw [habs] at h_norm
-        have : 1 < ‖s‖ := by
-          have h_nsq : 1 < Complex.normSq s := by
-            simp only [hs_def, Complex.normSq_apply, Complex.add_re, Complex.ofReal_re,
-              Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_im,
-              Complex.add_im, Complex.mul_im, Complex.one_re, Complex.one_im,
-              Complex.div_ofNat]
-            have hH0 : 0 < H := by
-              linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
-            nlinarith [mul_lt_mul hH hH.le (by positivity : (0:ℝ) < Real.sqrt 3 / 2) hH0.le,
-                       Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
-          calc (1:ℝ) = Real.sqrt 1 := by simp only [Real.sqrt_one]
-            _ < Real.sqrt (Complex.normSq s) := Real.sqrt_lt_sqrt (by norm_num) h_nsq
-            _ = ‖s‖ := rfl
-        linarith
-    · push_neg at ht3
-      have h_re_t := fdBoundary_H_seg4_re' H ht3 ht.2
-      rw [habs] at h_re_t
-      simp [hs_def, Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
-        Complex.I_im, Complex.ofReal_im] at h_re_t
-      norm_num at h_re_t
-  have h_cont_norm : ContinuousOn (fun t => ‖fdBoundary_H H t - s‖)
-      (Set.Icc (1:ℝ) 4) :=
-    ((fdBoundary_H_continuous H).continuousOn.sub continuousOn_const).norm.mono
-      (Set.Icc_subset_Icc (by norm_num : (0:ℝ) ≤ 1) (by norm_num : (4:ℝ) ≤ 5))
-  have h_pos_norm : ∀ t ∈ Set.Icc (1:ℝ) 4, 0 < ‖fdBoundary_H H t - s‖ :=
-    fun t ht => norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid_14 t ht))
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ : ∃ δ > 0, ∀ t ∈ Set.Icc (1:ℝ) 4,
-      δ ≤ ‖fdBoundary_H H t - s‖ :=
-    isCompact_Icc.exists_forall_le' h_cont_norm h_pos_norm
+  obtain ⟨δ, hδ_pos, hδ_bound⟩ := endpoint_min_dist H hH
   set ε₀ := min c (min 1 δ) with hε₀_def
   have hε₀ : 0 < ε₀ := lt_min hc (lt_min one_pos hδ_pos)
   set F := fun ε => ∫ t in (0:ℝ)..5,
@@ -110,49 +216,16 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   intro η hη hη_c hη_1 hη_δ
   have hη_div_c_pos : 0 < η / c := div_pos hη hc
   have hη_div_c_lt_1 : η / c < 1 := (div_lt_one hc).mpr hη_c
-  have h_diff_seg1 : ∀ t, 0 ≤ t → t ≤ 1 →
-      fdBoundary_H H t - s = ↑((-t) * c) * I := by
-    intro t ht0 ht1
-    rw [fdBoundary_H_eq_seg1_H ht1, hs_def]
-    simp only [fdBoundary_seg1_H, hc_def]
-    push_cast; ring
-  have h_diff_seg5 : ∀ t, 4 < t →
-      fdBoundary_H H t - s = ↑(t - 5) := by
-    intro t ht4
-    rw [fdBoundary_H_eq_seg5_H ht4, hs_def]
-    simp only [fdBoundary_seg5_H]
-    push_cast; ring
-  have h_norm_seg1 : ∀ t, 0 ≤ t → t ≤ 1 →
-      ‖fdBoundary_H H t - s‖ = t * c := by
-    intro t ht0 ht1
-    rw [h_diff_seg1 t ht0 ht1, norm_mul, Complex.norm_real, Complex.norm_I, mul_one,
-      Real.norm_eq_abs, abs_of_nonpos (by nlinarith : (-t) * c ≤ 0)]
-    ring
-  have h_norm_seg5 : ∀ t, 4 < t → t ≤ 5 →
-      ‖fdBoundary_H H t - s‖ = 5 - t := by
-    intro t ht4 ht5
-    rw [h_diff_seg5 t ht4, Complex.norm_real, Real.norm_eq_abs,
-      abs_of_nonpos (by linarith)]
-    ring
+  have h_norm_seg1 : ∀ t, 0 ≤ t → t ≤ 1 → ‖fdBoundary_H H t - s‖ = t * c :=
+    fun t ht0 ht1 => endpoint_norm_seg1 H s hs_def c hc_def hc t ht0 ht1
+  have h_norm_seg5 : ∀ t, 4 < t → t ≤ 5 → ‖fdBoundary_H H t - s‖ = 5 - t :=
+    fun t ht4 ht5 => endpoint_norm_seg5 H s hs_def t ht4 ht5
   have h_integrand_seg1 : ∀ t, 0 < t → t < 1 →
-      (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑t : ℂ)⁻¹ := by
-    intro t ht0 ht1
-    rw [h_diff_seg1 t ht0.le ht1.le]; erw [(fdBoundary_H_hasDerivAt_seg1 H ht1).deriv]
-    have key : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 → (a * b)⁻¹ * b = a⁻¹ := fun a b _ hb => by
-      rw [mul_inv_rev, mul_assoc, mul_comm a⁻¹ b,
-        ← mul_assoc, inv_mul_cancel₀ hb, one_mul]
-    have hc_eq : (↑H - ↑(Real.sqrt 3) / 2 : ℂ) = ↑c := by
-      push_cast [hc_def]; ring
-    have hrw1 : (-(↑H - ↑(Real.sqrt 3) / 2 : ℂ)) * I = -(↑c : ℂ) * I := by
-      rw [hc_eq]
-    have hrw2 : (↑(-t * c) : ℂ) * I = ↑t * (-(↑c : ℂ) * I) := by push_cast; ring
-    rw [hrw1, hrw2]
-    exact key ↑t _ (Complex.ofReal_ne_zero.mpr ht0.ne') (mul_ne_zero (neg_ne_zero.mpr
-        (Complex.ofReal_ne_zero.mpr hc.ne')) I_ne_zero)
+      (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑t : ℂ)⁻¹ :=
+    fun t ht0 ht1 => endpoint_integrand_seg1 H s hs_def c hc_def hc t ht0 ht1
   have h_integrand_seg5 : ∀ t, 4 < t →
-      (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 5) : ℂ)⁻¹ := by
-    intro t ht4
-    rw [h_diff_seg5 t ht4]; erw [(fdBoundary_H_hasDerivAt_seg5 H ht4).deriv]; rw [mul_one]
+      (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t = (↑(t - 5) : ℂ)⁻¹ :=
+    fun t ht4 => endpoint_integrand_seg5 H s hs_def t ht4
   have hii := fdBoundary_H_cutout_ii H hH s η hη
   have h_01_15 : (∫ t in (0:ℝ)..5, if η < ‖fdBoundary_H H t - s‖
       then (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0) =
@@ -276,45 +349,64 @@ lemma cpv_at_endpoint (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     rw [if_pos, h_integrand_seg5 t ht4]
     rw [h_norm_seg5 t ht4 (by linarith)]; linarith
   have h_int1 : ∫ t in (η / c)..1, (↑t : ℂ)⁻¹ =
-      Complex.log ↑(1:ℝ) - Complex.log ↑(η / c) := by
-    simp_rw [← Complex.ofReal_inv]
-    rw [intervalIntegral.integral_ofReal]
-    have h_le : (η / c : ℝ) ≤ 1 := hη_div_c_lt_1.le
-    have hderiv : ∀ t ∈ Set.uIcc (η / c) 1,
-        HasDerivAt (fun t => Real.log t) (t⁻¹) t := by
-      intro t ht; rw [Set.uIcc_of_le h_le] at ht
-      exact Real.hasDerivAt_log (by linarith [ht.1, hη_div_c_pos] : t ≠ 0)
-    have hint : IntervalIntegrable (fun t : ℝ => t⁻¹) MeasureTheory.volume (η / c) 1 := by
-      apply ContinuousOn.intervalIntegrable
-      apply ContinuousOn.inv₀ continuousOn_id
-      intro t ht; rw [Set.uIcc_of_le h_le, Set.mem_Icc] at ht
-      simp only [id]; linarith [ht.1, hη_div_c_pos]
-    rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint, Real.log_one,
-      Complex.ofReal_one, Complex.log_one, ← Complex.ofReal_log hη_div_c_pos.le]
-    push_cast; ring
-  have h_int2 : ∫ t in (4:ℝ)..(5 - η), (↑(t - 5) : ℂ)⁻¹ = ↑(Real.log η) := by
-    simp_rw [← Complex.ofReal_inv]
-    rw [intervalIntegral.integral_ofReal]
-    congr 1
-    have h5η : (4:ℝ) ≤ 5 - η := by linarith
-    have hderiv : ∀ t ∈ Set.uIcc 4 (5 - η),
-        HasDerivAt (fun t => Real.log (t - 5)) ((t - 5)⁻¹) t := by
-      intro t ht; rw [Set.uIcc_of_le h5η] at ht
-      have : t - 5 ≠ 0 := ne_of_lt (by linarith [ht.2])
-      have h1 := (Real.hasDerivAt_log this).comp t ((hasDerivAt_id t).sub_const 5)
-      simp only [Function.comp_def, mul_one] at h1; convert h1 using 1
-    have hint : IntervalIntegrable (fun t => (t - 5)⁻¹) MeasureTheory.volume 4 (5 - η) := by
-      apply ContinuousOn.intervalIntegrable
-      apply ContinuousOn.inv₀ (continuousOn_id.sub continuousOn_const)
-      intro t ht; rw [Set.uIcc_of_le h5η, Set.mem_Icc] at ht
-      simp only [id]; exact ne_of_lt (by linarith [ht.2])
-    rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint]
-    simp only [show 5 - η - 5 = -η from by ring, show (4:ℝ) - 5 = -(1:ℝ) from by ring]
-    rw [Real.log_neg_eq_log, Real.log_neg_eq_log, Real.log_one, sub_zero]
+      Complex.log ↑(1:ℝ) - Complex.log ↑(η / c) :=
+    integral_inv_eq_log_sub (η / c) hη_div_c_pos hη_div_c_lt_1.le
+  have h_int2 : ∫ t in (4:ℝ)..(5 - η), (↑(t - 5) : ℂ)⁻¹ = ↑(Real.log η) :=
+    integral_shifted_inv_eq_log η hη hη_1
   rw [h_split, h_I14, h_I01, h_I45, h_int1, h_int2]
   rw [Complex.ofReal_one, Complex.log_one, ← Complex.ofReal_log hη_div_c_pos.le,
     Real.log_div hη.ne' hc_ne, Complex.ofReal_sub]
   ring
+
+/-- The corner `s = -1/2 + H*I` avoids the boundary on `[0, 3]`. -/
+private lemma corner_cpv_03 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    CauchyPrincipalValueExists' (fun z => (z - (-(1/2 : ℂ) + ↑H * I))⁻¹)
+      (fdBoundary_H H) 0 3 (-(1/2 : ℂ) + ↑H * I) := by
+  set s := -(1/2 : ℂ) + ↑H * I with hs_def
+  apply cpv_avoidance _ _ _ _ _ ((fdBoundary_H_continuous H).continuousOn.mono
+    (Set.Icc_subset_Icc_right (by norm_num : (3:ℝ) ≤ 5))) (by norm_num)
+  intro t ht habs
+  rw [Set.mem_Icc] at ht
+  by_cases ht1 : t ≤ 1
+  · have hre := fdBoundary_H_seg1_re' H ht.1 ht1
+    rw [habs, hs_def] at hre
+    simp only [Complex.add_re, Complex.neg_re, Complex.ofReal_re, Complex.mul_re,
+      Complex.I_re, Complex.I_im, Complex.ofReal_im, Complex.one_re, Complex.div_ofNat] at hre
+    linarith
+  · push_neg at ht1
+    by_cases ht3 : t < 3
+    · have h_norm : ‖fdBoundary_H H t‖ = 1 := by
+        rw [fdBoundary_H_eq_arc (H := H) ht1 ht3, Complex.norm_exp_ofReal_mul_I]
+      rw [habs] at h_norm
+      have : 1 < ‖s‖ := by
+        have h_nsq : 1 < Complex.normSq s := by
+          simp only [hs_def, Complex.normSq_apply, Complex.add_re, Complex.neg_re,
+            Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_im,
+            Complex.add_im, Complex.neg_im, Complex.mul_im, Complex.one_re, Complex.one_im,
+            Complex.div_ofNat]
+          have hH0 : 0 < H := by
+            linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
+          nlinarith [mul_lt_mul hH hH.le (by positivity : (0:ℝ) < Real.sqrt 3 / 2) hH0.le,
+                     Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
+        calc (1:ℝ) = Real.sqrt 1 := by simp only [Real.sqrt_one]
+          _ < Real.sqrt (Complex.normSq s) := Real.sqrt_lt_sqrt (by norm_num) h_nsq
+          _ = ‖s‖ := rfl
+      linarith
+    · have ht3_eq : t = 3 := le_antisymm ht.2 (by linarith)
+      subst ht3_eq
+      have hγ3_eq : fdBoundary_H H 3 = fdBoundary 3 := by
+        rw [fdBoundary_H_at_three]
+        exact fdBoundary_at_three.symm
+      rw [hγ3_eq, fdBoundary_at_three] at habs
+      have him_s : s.im = H := by
+        simp [hs_def, Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
+          Complex.I_re, Complex.I_im, Complex.ofReal_re]
+      rw [← habs] at him_s
+      have him_rho : (ellipticPointRho : ℂ).im = Real.sqrt 3 / 2 := by
+        simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+          Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
+          Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.div_ofNat]
+      linarith [him_rho]
 
 lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     CauchyPrincipalValueExists' (fun z => (z - (-(1/2 : ℂ) + ↑H * I))⁻¹)
@@ -323,51 +415,7 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   set c := H - Real.sqrt 3 / 2 with hc_def
   have hc : 0 < c := sub_pos.mpr hH
   have h_cpv_03 : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
-      (fdBoundary_H H) 0 3 s := by
-    apply cpv_avoidance _ _ _ _ _ ((fdBoundary_H_continuous H).continuousOn.mono
-      (Set.Icc_subset_Icc_right (by norm_num : (3:ℝ) ≤ 5))) (by norm_num)
-    intro t ht habs
-    rw [Set.mem_Icc] at ht
-    by_cases ht1 : t ≤ 1
-    · have hre := fdBoundary_H_seg1_re' H ht.1 ht1
-      rw [habs, hs_def] at hre
-      simp only [Complex.add_re, Complex.neg_re, Complex.ofReal_re, Complex.mul_re,
-        Complex.I_re, Complex.I_im, Complex.ofReal_im, Complex.one_re, Complex.div_ofNat] at hre
-      linarith
-    · push_neg at ht1
-      by_cases ht3 : t < 3
-      · have h_norm : ‖fdBoundary_H H t‖ = 1 := by
-          rw [fdBoundary_H_eq_arc (H := H) ht1 ht3, Complex.norm_exp_ofReal_mul_I]
-        rw [habs] at h_norm
-        have : 1 < ‖s‖ := by
-          have h_nsq : 1 < Complex.normSq s := by
-            simp only [hs_def, Complex.normSq_apply, Complex.add_re, Complex.neg_re,
-              Complex.ofReal_re, Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_im,
-              Complex.add_im, Complex.neg_im, Complex.mul_im, Complex.one_re, Complex.one_im,
-              Complex.div_ofNat]
-            have hH0 : 0 < H := by
-              linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)]
-            nlinarith [mul_lt_mul hH hH.le (by positivity : (0:ℝ) < Real.sqrt 3 / 2) hH0.le,
-                       Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
-          calc (1:ℝ) = Real.sqrt 1 := by simp only [Real.sqrt_one]
-            _ < Real.sqrt (Complex.normSq s) := Real.sqrt_lt_sqrt (by norm_num) h_nsq
-            _ = ‖s‖ := rfl
-        linarith
-      · have ht3_eq : t = 3 := le_antisymm ht.2 (by linarith)
-        subst ht3_eq
-        have hγ3_eq : fdBoundary_H H 3 = fdBoundary 3 := by
-          rw [fdBoundary_H_at_three]
-          exact fdBoundary_at_three.symm
-        rw [hγ3_eq, fdBoundary_at_three] at habs
-        have him_s : s.im = H := by
-          simp [hs_def, Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
-            Complex.I_re, Complex.I_im, Complex.ofReal_re]
-        rw [← habs] at him_s
-        have him_rho : (ellipticPointRho : ℂ).im = Real.sqrt 3 / 2 := by
-          simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
-            Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
-            Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.div_ofNat]
-        linarith [him_rho]
+      (fdBoundary_H H) 0 3 s := corner_cpv_03 H hH
   have h_cpv_35 : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) 3 5 s := by
     set ε₀ := min c 1 with hε₀_def
@@ -573,39 +621,11 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       rw [intervalIntegral.integral_neg] at key
       linarith
     have h_pos_int1 : ∫ u in (η / c)..1, (↑u : ℂ)⁻¹ =
-        Complex.log ↑(1:ℝ) - Complex.log ↑(η / c) := by
-      simp_rw [← Complex.ofReal_inv]
-      rw [intervalIntegral.integral_ofReal]
-      have h_le : (η / c : ℝ) ≤ 1 := hη_div_c_lt_1.le
-      have hderiv : ∀ t ∈ Set.uIcc (η / c) 1,
-          HasDerivAt (fun t => Real.log t) (t⁻¹) t := by
-        intro t ht; rw [Set.uIcc_of_le h_le] at ht
-        exact Real.hasDerivAt_log (by linarith [ht.1, hη_div_c_pos] : t ≠ 0)
-      have hint : IntervalIntegrable (fun t : ℝ => t⁻¹) MeasureTheory.volume (η / c) 1 := by
-        apply ContinuousOn.intervalIntegrable
-        apply ContinuousOn.inv₀ continuousOn_id
-        intro t ht; rw [Set.uIcc_of_le h_le, Set.mem_Icc] at ht
-        simp only [id]; linarith [ht.1, hη_div_c_pos]
-      rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint, Real.log_one,
-        Complex.ofReal_one, Complex.log_one, ← Complex.ofReal_log hη_div_c_pos.le]
-      push_cast; ring
+        Complex.log ↑(1:ℝ) - Complex.log ↑(η / c) :=
+      integral_inv_eq_log_sub (η / c) hη_div_c_pos hη_div_c_lt_1.le
     have h_pos_int2 : ∫ u in η..1, (↑u : ℂ)⁻¹ =
-        Complex.log ↑(1:ℝ) - Complex.log ↑η := by
-      simp_rw [← Complex.ofReal_inv]
-      rw [intervalIntegral.integral_ofReal]
-      have h_le : (η : ℝ) ≤ 1 := by linarith [hη_1]
-      have hderiv : ∀ t ∈ Set.uIcc η 1,
-          HasDerivAt (fun t => Real.log t) (t⁻¹) t := by
-        intro t ht; rw [Set.uIcc_of_le h_le] at ht
-        exact Real.hasDerivAt_log (by linarith [ht.1, hη] : t ≠ 0)
-      have hint : IntervalIntegrable (fun t : ℝ => t⁻¹) MeasureTheory.volume η 1 := by
-        apply ContinuousOn.intervalIntegrable
-        apply ContinuousOn.inv₀ continuousOn_id
-        intro t ht; rw [Set.uIcc_of_le h_le, Set.mem_Icc] at ht
-        simp only [id]; linarith [ht.1, hη]
-      rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv hint, Real.log_one,
-        Complex.ofReal_one, Complex.log_one, ← Complex.ofReal_log hη.le]
-      push_cast; ring
+        Complex.log ↑(1:ℝ) - Complex.log ↑η :=
+      integral_inv_eq_log_sub η hη hη_1.le
     rw [h_split, h_I34, h_I45, h_sub34, h_sub45, h_neg_axis, h_pos_int1, h_pos_int2,
       Complex.ofReal_one, Complex.log_one,
       ← Complex.ofReal_log hη.le, ← Complex.ofReal_log hη_div_c_pos.le,

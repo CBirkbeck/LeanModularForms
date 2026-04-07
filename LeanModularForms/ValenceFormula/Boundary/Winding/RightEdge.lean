@@ -291,6 +291,107 @@ private lemma rightEdge_min_dist_from_non_seg1 (H : ℝ) (s : ℂ)
           exact rightEdge_min_dist_from_non_seg1_seg5 s hs_im _
             (im_fdBoundary_H_seg5 H t ht1 h2 h3_lt h4)
 
+/-- AE seg equalities for the right edge: each segment representative agrees with `g`
+on its interior, so `deriv h / h = deriv g / g` a.e. on the corresponding interval. -/
+private lemma rightEdge_ae_seg_eq (g h₀ h_arc h₃ h₅ : ℝ → ℂ)
+    (hg_h₀ : ∀ t, t ≤ 1 → g t = h₀ t)
+    (hg_arc : ∀ t, 1 < t → t < 3 → g t = h_arc t)
+    (hg_h₃ : ∀ t, 3 < t → t ≤ 4 → g t = h₃ t)
+    (hg_h₅ : ∀ t, 4 < t → g t = h₅ t)
+    (hderiv_01 : ∀ t ∈ Ioo (0:ℝ) 1, deriv g t = deriv h₀ t)
+    (hderiv_arc : ∀ t ∈ Ioo (1:ℝ) 3, deriv g t = deriv h_arc t)
+    (hderiv_3 : ∀ t ∈ Ioo (3:ℝ) 4, deriv g t = deriv h₃ t)
+    (hderiv_5 : ∀ t ∈ Ioo (4:ℝ) 5, deriv g t = deriv h₅ t) :
+    (∀ a b : ℝ, 0 ≤ a → a < b → b ≤ 1 →
+      ∀ᵐ t ∂volume, t ∈ Set.uIoc a b → deriv h₀ t / h₀ t = deriv g t / g t) ∧
+    (∀ᵐ t ∂volume, t ∈ Set.uIoc 1 3 →
+      deriv h_arc t / h_arc t = deriv g t / g t) ∧
+    (∀ᵐ t ∂volume, t ∈ Set.uIoc 3 4 →
+      deriv h₃ t / h₃ t = deriv g t / g t) ∧
+    (∀ᵐ t ∂volume, t ∈ Set.uIoc 4 5 →
+      deriv h₅ t / h₅ t = deriv g t / g t) := by
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro a b _ha_nn hab hb1
+    have h_excl : ({b} : Set ℝ)ᶜ ∈ ae volume :=
+      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite ({b} : Set ℝ)).measure_zero volume)
+    filter_upwards [h_excl] with t ht_ne ht
+    rw [Set.uIoc_of_le (le_of_lt hab)] at ht
+    have ht_lt_b : t < b := lt_of_le_of_ne ht.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+    have ht_lt1 : t < 1 := lt_of_lt_of_le ht_lt_b hb1
+    rw [hg_h₀ t (le_of_lt ht_lt1), hderiv_01 t ⟨by linarith [ht.1], ht_lt1⟩]
+  · have : ({1, 3} : Set ℝ)ᶜ ∈ ae volume := mem_ae_iff.mpr (by
+        rw [compl_compl]; exact (Set.toFinite ({1, 3} : Set ℝ)).measure_zero volume)
+    filter_upwards [this] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht_mem
+    have ht1 : 1 < t := by
+      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
+      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
+      · exact h
+    have ht3 : t < 3 := by
+      rcases eq_or_lt_of_le ht_mem.2 with h | h
+      · exfalso
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
+      · exact h
+    rw [hg_arc t ht1 ht3, hderiv_arc t ⟨ht1, ht3⟩]
+  · have : ({3, 4} : Set ℝ)ᶜ ∈ ae volume := mem_ae_iff.mpr (by
+        rw [compl_compl]; exact (Set.toFinite ({3, 4} : Set ℝ)).measure_zero volume)
+    filter_upwards [this] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by norm_num : (3:ℝ) ≤ 4)] at ht_mem
+    have ht3 : 3 < t := by
+      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
+      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
+      · exact h
+    have ht4 : t < 4 := by
+      rcases eq_or_lt_of_le ht_mem.2 with h | h
+      · exfalso
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
+      · exact h
+    rw [hg_h₃ t ht3 (le_of_lt ht4), hderiv_3 t ⟨ht3, ht4⟩]
+  · have : ({4, 5} : Set ℝ)ᶜ ∈ ae volume := mem_ae_iff.mpr (by
+        rw [compl_compl]; exact (Set.toFinite ({4, 5} : Set ℝ)).measure_zero volume)
+    filter_upwards [this] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)] at ht_mem
+    have ht4 : 4 < t := by
+      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
+      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
+      · exact h
+    have ht5 : t < 5 := by
+      rcases eq_or_lt_of_le ht_mem.2 with h | h
+      · exfalso
+        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
+      · exact h
+    rw [hg_h₅ t ht4, hderiv_5 t ⟨ht4, ht5⟩]
+
+/-- `-(fdBoundary_seg4_H H t - s) ∈ slitPlane` when `s.re = 1/2`:
+`(s - seg4).re = 1 > 0`. -/
+private lemma rightEdge_neg_seg4_slitPlane (s : ℂ) (hs_re : s.re = 1/2)
+    (t : ℝ) (_ht3 : 3 ≤ t) (_ht4 : t ≤ 4) :
+    -(fdBoundary_seg4_H H t - s) ∈ Complex.slitPlane := by
+  rw [Complex.mem_slitPlane_iff]; left
+  simp only [fdBoundary_seg4_H, neg_sub, Complex.sub_re,
+    Complex.add_re, Complex.neg_re, Complex.div_ofNat_re,
+    Complex.one_re, Complex.mul_re, Complex.ofReal_re,
+    Complex.I_re, Complex.I_im, mul_zero]
+  rw [hs_re]; norm_num
+
+/-- `-(fdBoundary_seg5_H H t - s) ∈ slitPlane` when `s.re = 1/2, s.im < H`:
+either `(s-seg5).re > 0` (when `t < 5`) or `(s-seg5).im ≠ 0` (when `t = 5`). -/
+private lemma rightEdge_neg_seg5_slitPlane (s : ℂ) (hs_re : s.re = 1/2)
+    (hs_im : s.im < H)
+    (t : ℝ) (_ht4 : 4 ≤ t) (ht5 : t ≤ 5) :
+    -(fdBoundary_seg5_H H t - s) ∈ Complex.slitPlane := by
+  rw [Complex.mem_slitPlane_iff]
+  simp only [fdBoundary_seg5_H, neg_sub]
+  by_cases ht5_eq : t = 5
+  · right; subst ht5_eq
+    simp [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
+      Complex.ofReal_im, Complex.I_re, Complex.I_im]
+    linarith
+  · left; have : t < 5 := lt_of_le_of_ne ht5 ht5_eq
+    simp [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
+      Complex.ofReal_im, Complex.I_re, Complex.I_im]
+    rw [hs_re]; linarith
+
 private lemma rightEdge_neg_seg1_slitPlane_left (H : ℝ) (s : ℂ) (hs_re : s.re = 1/2)
     (_hs_im : s.im < H) (hH_sqrt : Real.sqrt 3 / 2 < H)
     (δ' : ℝ) (hδ' : 0 < δ') (t₀ : ℝ) (_hδ't₀ : δ' < t₀)
@@ -481,29 +582,10 @@ lemma rightEdge_ftc_telescope (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
       ht₀_mul t htd ht1
   have hslit_arc : ∀ t ∈ Icc (1:ℝ) 3, -(h_arc t) ∈ Complex.slitPlane := by
     intro t ⟨ht1, ht3⟩; exact rightEdge_neg_arc_slitPlane s hs_re hs_im_lower t ht1 ht3
-  have hslit₃ : ∀ t ∈ Icc (3:ℝ) 4, -(h₃ t) ∈ Complex.slitPlane := by
-    intro t ⟨_, _⟩
-    rw [Complex.mem_slitPlane_iff]; left
-    simp only [h₃, fdBoundary_seg4_H, neg_sub, Complex.sub_re,
-      Complex.add_re, Complex.neg_re, Complex.div_ofNat_re,
-      Complex.one_re, Complex.mul_re, Complex.ofReal_re,
-      Complex.I_re, Complex.I_im, mul_zero]
-    rw [hs_re]; norm_num
-  have hslit₅ : ∀ t ∈ Icc (4:ℝ) 5, -(h₅ t) ∈ Complex.slitPlane := by
-    intro t ⟨ht4, ht5⟩
-    rw [Complex.mem_slitPlane_iff]
-    simp only [h₅, fdBoundary_seg5_H, neg_sub]
-    by_cases ht5_eq : t = 5
-    · right
-      subst ht5_eq
-      simp [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
-        Complex.ofReal_im, Complex.I_re, Complex.I_im]
-      linarith
-    · left
-      have : t < 5 := lt_of_le_of_ne ht5 ht5_eq
-      simp [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
-        Complex.ofReal_im, Complex.I_re, Complex.I_im]
-      rw [hs_re]; linarith
+  have hslit₃ : ∀ t ∈ Icc (3:ℝ) 4, -(h₃ t) ∈ Complex.slitPlane :=
+    fun t ⟨ht3, ht4⟩ => rightEdge_neg_seg4_slitPlane s hs_re t ht3 ht4
+  have hslit₅ : ∀ t ∈ Icc (4:ℝ) 5, -(h₅ t) ∈ Complex.slitPlane :=
+    fun t ⟨ht4, ht5⟩ => rightEdge_neg_seg5_slitPlane s hs_re hs_im t ht4 ht5
   have piece₀ := ftc_log_neg (by linarith : (0:ℝ) ≤ t₀ - δ)
     ((continuous_fdBoundary_seg1_H H).sub continuous_const).continuousOn
     (fun t _ => (hd₀ t).differentiableAt)
@@ -536,70 +618,8 @@ lemma rightEdge_ftc_telescope (H : ℝ) (_hH_sqrt : Real.sqrt 3 / 2 < H)
     (by rw [show deriv h₅ = fun _ => (1 : ℂ) from funext fun t => (hd₅ t).deriv]
         exact continuousOn_const)
     hslit₅
-  have h_ae₀ : ∀ a b : ℝ, 0 ≤ a → a < b → b ≤ 1 →
-      ∀ᵐ t ∂volume, t ∈ Set.uIoc a b → deriv h₀ t / h₀ t = deriv g t / g t := by
-    intro a b ha_nn hab hb1
-    have h_excl : ({b} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.toFinite ({b} : Set ℝ)).measure_zero volume)
-    filter_upwards [h_excl] with t ht_ne ht
-    rw [Set.uIoc_of_le (le_of_lt hab)] at ht
-    have ht_lt_b : t < b := lt_of_le_of_ne ht.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-    have ht_lt1 : t < 1 := lt_of_lt_of_le ht_lt_b hb1
-    rw [hg_h₀ t (le_of_lt ht_lt1), hderiv_01 t ⟨by linarith [ht.1], ht_lt1⟩]
-  have h_ae_arc : ∀ᵐ t ∂volume, t ∈ Set.uIoc 1 3 →
-      deriv h_arc t / h_arc t = deriv g t / g t := by
-    have : ({1, 3} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({1, 3} : Set ℝ)).measure_zero volume)
-    filter_upwards [this] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht_mem
-    have ht1 : 1 < t := by
-      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
-      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
-      · exact h
-    have ht3 : t < 3 := by
-      rcases eq_or_lt_of_le ht_mem.2 with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
-      · exact h
-    rw [hg_arc t ht1 ht3, hderiv_arc t ⟨ht1, ht3⟩]
-  have h_ae₃ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 3 4 →
-      deriv h₃ t / h₃ t = deriv g t / g t := by
-    have : ({3, 4} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({3, 4} : Set ℝ)).measure_zero volume)
-    filter_upwards [this] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by norm_num : (3:ℝ) ≤ 4)] at ht_mem
-    have ht3 : 3 < t := by
-      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
-      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
-      · exact h
-    have ht4 : t < 4 := by
-      rcases eq_or_lt_of_le ht_mem.2 with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
-      · exact h
-    rw [hg_h₃ t ht3 (le_of_lt ht4), hderiv_3 t ⟨ht3, ht4⟩]
-  have h_ae₅ : ∀ᵐ t ∂volume, t ∈ Set.uIoc 4 5 →
-      deriv h₅ t / h₅ t = deriv g t / g t := by
-    have : ({4, 5} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by
-        rw [compl_compl]
-        exact (Set.toFinite ({4, 5} : Set ℝ)).measure_zero volume)
-    filter_upwards [this] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (by norm_num : (4:ℝ) ≤ 5)] at ht_mem
-    have ht4 : 4 < t := by
-      rcases eq_or_lt_of_le (le_of_lt ht_mem.1) with h | h
-      · exfalso; exact ht_ne (Set.mem_insert_iff.mpr (Or.inl (by linarith)))
-      · exact h
-    have ht5 : t < 5 := by
-      rcases eq_or_lt_of_le ht_mem.2 with h | h
-      · exfalso
-        exact ht_ne (Set.mem_insert_iff.mpr (Or.inr (Set.mem_singleton_iff.mpr (by linarith))))
-      · exact h
-    rw [hg_h₅ t ht4, hderiv_5 t ⟨ht4, ht5⟩]
+  obtain ⟨h_ae₀, h_ae_arc, h_ae₃, h_ae₅⟩ := rightEdge_ae_seg_eq g h₀ h_arc h₃ h₅
+    hg_h₀ hg_arc hg_h₃ hg_h₅ hderiv_01 hderiv_arc hderiv_3 hderiv_5
   have hint₀ : IntervalIntegrable (fun t => deriv g t / g t) volume 0 (t₀ - δ) :=
     piece₀.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       ((h_ae₀ 0 (t₀ - δ) le_rfl (by linarith) (by linarith)).mono
