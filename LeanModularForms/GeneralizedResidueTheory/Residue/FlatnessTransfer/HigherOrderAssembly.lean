@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.PerTermVanishing
+import LeanModularForms.GeneralizedResidueTheory.Residue.FlatnessTransfer.PerTermVanishing.CPVHelpers
 import LeanModularForms.GeneralizedResidueTheory.Residue.MeromorphicPrincipalPart
 
 /-!

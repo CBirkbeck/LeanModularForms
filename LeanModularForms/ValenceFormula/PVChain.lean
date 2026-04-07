@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ValenceFormula.PVChain.Assembly
+import LeanModularForms.ValenceFormula.PVChain.Assembly.ResidueSide
 
 /-!
 # PV Chain: Residue Side and Modular Side
