@@ -309,7 +309,7 @@ angle is `π` (a straight crossing).
 At partition points (corners), the angle is `arg(L_right) - arg(-L_left)` where
 `L_left` and `L_right` are the one-sided derivative limits. -/
 def angleAtCrossing (γ : PiecewiseC1Immersion x y) (t₀ : ℝ)
-    (_ht₀ : t₀ ∈ Ioo 0 1) : ℝ :=
+    (_ : t₀ ∈ Ioo 0 1) : ℝ :=
   if h : t₀ ∈ γ.partition then
     let L_left := Classical.choose (γ.left_deriv_limit t₀ h)
     let L_right := Classical.choose (γ.right_deriv_limit t₀ h)

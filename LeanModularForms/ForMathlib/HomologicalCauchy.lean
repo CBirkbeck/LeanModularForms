@@ -69,7 +69,7 @@ theorem differentiableOn_div_sub_const (c s₀ : ℂ) :
 /-- On any open set `U` containing `s₀`, if `g` is analytic at `s₀` and differentiable
 on `U \ {s₀}`, then `g` is differentiable on all of `U`. -/
 theorem differentiableOn_of_analyticAt_and_off_point {g : ℂ → ℂ} {s₀ : ℂ} {U : Set ℂ}
-    (hU : IsOpen U) (_hs₀ : s₀ ∈ U)
+    (hU : IsOpen U) (_ : s₀ ∈ U)
     (hg_an : AnalyticAt ℂ g s₀)
     (hg_diff : DifferentiableOn ℂ g (U \ {s₀})) :
     DifferentiableOn ℂ g U := by
@@ -130,7 +130,7 @@ theorem contourIntegral_simple_pole_eq_winding
     (hf_diff : DifferentiableOn ℂ f (U \ {s₀}))
     (h_removable : AnalyticAt ℂ (fun z => f z - c / (z - s₀)) s₀)
     {γ : PiecewiseC1Path x x} (hnh : IsNullHomologous γ U)
-    (_hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s₀)
+    (_ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s₀)
     (h_int_f : IntervalIntegrable
       (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1)
     (h_int_pole : IntervalIntegrable

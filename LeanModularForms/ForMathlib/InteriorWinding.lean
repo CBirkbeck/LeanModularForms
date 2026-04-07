@@ -137,7 +137,7 @@ The proof is by cases on the 5 segments:
 - Segments 2, 3: `‖w‖ = 1` but `‖z‖ > 1`
 - Segment 5: `im = H` but `z.im < H` -/
 theorem fdBoundaryFun_ne_strictInterior {z : ℂ} (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1 / 2)
-    (H : ℝ) (_hH : H > Real.sqrt 3 / 2) (hz_im : z.im < H) (t : ℝ) :
+    (H : ℝ) (_ : H > Real.sqrt 3 / 2) (hz_im : z.im < H) (t : ℝ) :
     fdBoundaryFun H t ≠ z := by
   have hz_re_lt : z.re < 1 / 2 := lt_of_le_of_lt (le_abs_self _) hz_re
   have hz_re_gt : -(1 / 2) < z.re := lt_of_lt_of_le (neg_lt_neg hz_re) (neg_abs_le _)
@@ -237,14 +237,14 @@ geometric properties of each contour segment. They are useful for
 downstream computations that need quantitative distance estimates. -/
 
 /-- Distance from a unit-circle point to a point with `‖z‖ > 1`. -/
-theorem norm_sub_ge_of_unit_circle {w z : ℂ} (hw : ‖w‖ = 1) (_hz : 1 < ‖z‖) :
+theorem norm_sub_ge_of_unit_circle {w z : ℂ} (hw : ‖w‖ = 1) (_ : 1 < ‖z‖) :
     ‖z‖ - 1 ≤ ‖w - z‖ := by
   calc ‖z‖ - 1 = ‖z‖ - ‖w‖ := by rw [hw]
     _ ≤ ‖z - w‖ := norm_sub_norm_le z w
     _ = ‖w - z‖ := norm_sub_rev z w
 
 /-- Distance from a point with `re = 1/2` to a point with `re < 1/2`. -/
-theorem norm_sub_ge_of_re_half {w z : ℂ} (hw : w.re = 1 / 2) (_hz : z.re < 1 / 2) :
+theorem norm_sub_ge_of_re_half {w z : ℂ} (hw : w.re = 1 / 2) (_ : z.re < 1 / 2) :
     1 / 2 - z.re ≤ ‖w - z‖ := by
   calc 1 / 2 - z.re = w.re - z.re := by rw [hw]
     _ = (w - z).re := by simp [sub_re]
@@ -253,7 +253,7 @@ theorem norm_sub_ge_of_re_half {w z : ℂ} (hw : w.re = 1 / 2) (_hz : z.re < 1 /
 
 /-- Distance from a point with `re = -1/2` to a point with `re > -1/2`. -/
 theorem norm_sub_ge_of_re_neg_half {w z : ℂ} (hw : w.re = -(1 / 2))
-    (_hz : -(1 / 2) < z.re) :
+    (_ : -(1 / 2) < z.re) :
     z.re - (-(1 / 2)) ≤ ‖w - z‖ := by
   have : z.re + 1 / 2 = z.re - (-(1 / 2)) := by ring
   calc z.re - (-(1 / 2)) = z.re - w.re := by rw [hw]
@@ -262,7 +262,7 @@ theorem norm_sub_ge_of_re_neg_half {w z : ℂ} (hw : w.re = -(1 / 2))
     _ ≤ ‖w - z‖ := Complex.abs_re_le_norm (w - z)
 
 /-- Distance from a point with `im = H` to a point with `im < H`. -/
-theorem norm_sub_ge_of_im_eq {w z : ℂ} {H : ℝ} (hw : w.im = H) (_hz : z.im < H) :
+theorem norm_sub_ge_of_im_eq {w z : ℂ} {H : ℝ} (hw : w.im = H) (_ : z.im < H) :
     H - z.im ≤ ‖w - z‖ := by
   calc H - z.im = w.im - z.im := by rw [hw]
     _ = (w - z).im := by simp [sub_im]
