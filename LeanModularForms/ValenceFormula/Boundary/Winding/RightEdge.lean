@@ -8,6 +8,7 @@ import LeanModularForms.GeneralizedResidueTheory.PrincipalValue
 import LeanModularForms.ValenceFormula.WindingWeights.Common
 import LeanModularForms.ContourIntegral.WindingNumber
 import LeanModularForms.ContourIntegral.CrossingLimit
+import LeanModularForms.ValenceFormula.Boundary.Winding.Framework
 
 /-!
 # Generalized Winding Number at Right Edge Points
@@ -909,5 +910,173 @@ theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge (H : ℝ) (hH_sqrt : Real.sqrt
     fun t => deriv_sub_const (f := fdBoundary_H H) _
   convert h_tendsto using 1
   ext ε; congr 1; ext t; simp only [sub_zero, gt_iff_lt, hd]
+
+/-! ### SingleCrossingData construction for right edge
+
+Demonstrates how the `SingleCrossingData` framework can be used to prove
+the right edge winding number result. -/
+
+/-- Construct `SingleCrossingData` for a right edge point.
+
+Bundles all the geometric ingredients (crossing parameter, cutoff function,
+far/near bounds, FTC telescope, limit) into a single data structure. -/
+def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
+    (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
+    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
+    SingleCrossingData (fdBoundary_H H) 0 5 s where
+  L := -(↑Real.pi * I)
+  t₀ := (H - s.im) / (H - Real.sqrt 3 / 2)
+  ht₀ := by
+    set α := H - Real.sqrt 3 / 2
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    constructor
+    · exact div_pos (by linarith) hα_pos
+    · have : (H - s.im) / α < 1 := by
+        rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
+      linarith
+  δ := fun ε => ε / (H - Real.sqrt 3 / 2)
+  threshold :=
+    let α := H - Real.sqrt 3 / 2
+    let t₀ := (H - s.im) / α
+    let d := min (min (‖s‖ - 1) 1) (H - s.im)
+    min d (min (t₀ * α) ((1 - t₀) * α))
+  hthresh := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    set t₀ := (H - s.im) / α
+    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
+    have ht₀_lt : t₀ < 1 := by
+      rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
+    exact lt_min (rightEdge_min_dist_pos s hs_norm hs_im)
+      (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos))
+  hδ_pos := fun ε hε _ => div_pos hε (by show 0 < H - Real.sqrt 3 / 2; linarith)
+  hδ_small := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    set t₀ := (H - s.im) / α
+    have ht₀_lt : t₀ < 1 := by
+      rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
+    intro ε hε_pos hε_lt
+    simp only [sub_zero]
+    apply lt_min
+    · rw [div_lt_iff₀ hα_pos]
+      calc ε < _ := hε_lt
+        _ ≤ t₀ * α := le_trans (min_le_right _ _) (min_le_left _ _)
+    · rw [div_lt_iff₀ hα_pos]
+      calc ε < _ := hε_lt
+        _ ≤ (1 - t₀) * α := le_trans (min_le_right _ _) (min_le_right _ _)
+        _ < (5 - t₀) * α := by nlinarith
+  h_far := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    set t₀ := (H - s.im) / α
+    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
+    have ht₀_lt : t₀ < 1 := by
+      rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
+    have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ (ne_of_gt hα_pos)
+    set threshold := min (min (min (‖s‖ - 1) 1) (H - s.im)) (min (t₀ * α) ((1 - t₀) * α))
+    have hthresh_pos : 0 < threshold := lt_min (rightEdge_min_dist_pos s hs_norm hs_im)
+      (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos))
+    intro ε hε_pos hε_lt
+    exact rightEdge_h_far H hH_sqrt s hs_re hs_norm hs_im α hα_pos hα_def t₀ ht₀_pos ht₀_lt
+      ht₀_mul threshold hthresh_pos (min_le_left _ _)
+      (le_trans (min_le_right _ _) (min_le_left _ _))
+      (le_trans (min_le_right _ _) (min_le_right _ _))
+      ε hε_pos hε_lt
+  h_near := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    set t₀ := (H - s.im) / α
+    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
+    have ht₀_lt : t₀ < 1 := by
+      rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
+    have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ (ne_of_gt hα_pos)
+    intro ε hε_pos hε_lt
+    exact rightEdge_h_near H hH_sqrt s hs_re α hα_pos hα_def t₀ ht₀_pos ht₀_lt ht₀_mul
+      _ (le_trans (min_le_right _ _) (min_le_left _ _))
+      (le_trans (min_le_right _ _) (min_le_right _ _))
+      ε hε_pos hε_lt
+  E := fun ε =>
+    let α := H - Real.sqrt 3 / 2
+    let t₀ := (H - s.im) / α
+    Complex.log (-(fdBoundary_seg1_H H (t₀ - ε / α) - s)) -
+    Complex.log (-(fdBoundary_seg1_H H (t₀ + ε / α) - s))
+  h_ftc := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    set t₀ := (H - s.im) / α
+    intro ε hε_pos hε_lt
+    have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+    have hεα_lt_t₀ : ε / α < t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < _ := hε_lt
+        _ ≤ t₀ * α := le_trans (min_le_right _ _) (min_le_left _ _)
+    have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+      rw [div_lt_iff₀ hα_pos]
+      calc ε < _ := hε_lt
+        _ ≤ (1 - t₀) * α := le_trans (min_le_right _ _) (min_le_right _ _)
+    exact (rightEdge_ftc_telescope H hH_sqrt s hs_re hs_im_lower hs_im (ε / α)
+      hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).2.2
+  hint_left := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    set t₀ := (H - s.im) / α
+    intro ε hε_pos hε_lt
+    have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+    have hεα_lt_t₀ : ε / α < t₀ := by
+      rw [div_lt_iff₀ hα_pos]; calc ε < _ := hε_lt
+        _ ≤ t₀ * α := le_trans (min_le_right _ _) (min_le_left _ _)
+    have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+      rw [div_lt_iff₀ hα_pos]; calc ε < _ := hε_lt
+        _ ≤ (1 - t₀) * α := le_trans (min_le_right _ _) (min_le_right _ _)
+    exact (rightEdge_ftc_telescope H hH_sqrt s hs_re hs_im_lower hs_im (ε / α)
+      hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).1
+  hint_right := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    set t₀ := (H - s.im) / α
+    intro ε hε_pos hε_lt
+    have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
+    have hεα_lt_t₀ : ε / α < t₀ := by
+      rw [div_lt_iff₀ hα_pos]; calc ε < _ := hε_lt
+        _ ≤ t₀ * α := le_trans (min_le_right _ _) (min_le_left _ _)
+    have hεα_lt_1mt₀ : ε / α < 1 - t₀ := by
+      rw [div_lt_iff₀ hα_pos]; calc ε < _ := hε_lt
+        _ ≤ (1 - t₀) * α := le_trans (min_le_right _ _) (min_le_right _ _)
+    exact (rightEdge_ftc_telescope H hH_sqrt s hs_re hs_im_lower hs_im (ε / α)
+      hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).2.1
+  h_limit := by
+    set α := H - Real.sqrt 3 / 2 with hα_def
+    have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
+    have hα_ne : α ≠ 0 := ne_of_gt hα_pos
+    set t₀ := (H - s.im) / α
+    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
+    have ht₀_lt : t₀ < 1 := by
+      rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
+    have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ hα_ne
+    set threshold := min (min (min (‖s‖ - 1) 1) (H - s.im)) (min (t₀ * α) ((1 - t₀) * α))
+    have hthresh_pos : 0 < threshold := lt_min (rightEdge_min_dist_pos s hs_norm hs_im)
+      (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos))
+    have hE_const : ∀ ε, 0 < ε → ε < threshold →
+        Complex.log (-(fdBoundary_seg1_H H (t₀ - ε / α) - s)) -
+        Complex.log (-(fdBoundary_seg1_H H (t₀ + ε / α) - s)) = -(↑Real.pi * I) := by
+      intro ε hε_pos _hε_lt
+      exact rightEdge_final_log H s hs_re α hα_def (ε / α) (div_pos hε_pos hα_pos) hα_pos
+        t₀ ht₀_mul
+    exact tendsto_const_nhds.congr' (by
+      filter_upwards [Ioo_mem_nhdsGT hthresh_pos] with ε hε
+      exact (hE_const ε hε.1 hε.2).symm)
+
+/-- Alternative proof of the right edge gWN via the `SingleCrossingData` framework.
+
+Demonstrates that the main theorem can be derived from the framework by
+constructing `rightEdgeCrossingData` and applying `gWN_eq_neg_half_of_singleCrossing`. -/
+theorem gWN_fdBoundary_H_eq_neg_half_of_rightEdge' (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
+    (s : ℂ) (hs_re : s.re = 1/2) (hs_norm : ‖s‖ > 1)
+    (hs_im_lower : Real.sqrt 3 / 2 < s.im) (hs_im : s.im < H) :
+    generalizedWindingNumber' (fdBoundary_H H) 0 5 s = -1/2 :=
+  gWN_eq_neg_half_of_singleCrossing
+    (rightEdgeCrossingData H hH_sqrt s hs_re hs_norm hs_im_lower hs_im)
+    rfl
 
 end
