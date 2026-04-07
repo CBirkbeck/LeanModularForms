@@ -109,7 +109,7 @@ The proof uses `differentiableOn_of_analyticAt_and_off_point` at each pole. -/
 theorem differentiableOn_sub_principalPartSum
     {f : ℂ → ℂ} {U : Set ℂ} {S : Finset ℂ} {c : ℂ → ℂ}
     (hU : IsOpen U)
-    (_hSU : ∀ s ∈ S, s ∈ U)
+    (_ : ∀ s ∈ S, s ∈ U)
     (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
     (h_removable : ∀ s ∈ S,
       AnalyticAt ℂ (fun z => f z - principalPartSum S c z) s) :

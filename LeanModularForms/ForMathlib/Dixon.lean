@@ -206,7 +206,7 @@ This follows from the Dixon identity `h₁ + f(w) · winding = h₂` and the fac
 theorem cauchyIntegralFormula_convex {U : Set ℂ} {f : ℂ → ℂ}
     {γ : PiecewiseC1Path x x} (hnh : IsNullHomologous γ U)
     (hf : DifferentiableOn ℂ f U) (hU : Convex ℝ U)
-    (hUo : IsOpen U) (hUne : U.Nonempty) {w : ℂ} (_hw : w ∈ U)
+    (hUo : IsOpen U) (hUne : U.Nonempty) {w : ℂ} (_ : w ∈ U)
     (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
     (h_int_ds : IntervalIntegrable
       (fun t => dslope f (γ t) w * deriv γ.toPath.extend t) volume 0 1)

@@ -313,7 +313,7 @@ private lemma extend_eventuallyEq_smooth (H : ℝ) (t : ℝ) (ht : t ∈ Ioo (0 
 /-- The boundary contour as a `PiecewiseC1Path`. The hypothesis `hH` ensures the vertical
 segments have nonzero length; it is not used in the construction but documents the geometric
 constraint. -/
-def fdBoundary (H : ℝ) (_hH : H > Real.sqrt 3 / 2) :
+def fdBoundary (H : ℝ) (_ : H > Real.sqrt 3 / 2) :
     PiecewiseC1Path (1 / 2 + (H : ℂ) * I) (1 / 2 + (H : ℂ) * I) where
   toPath := fdBoundaryPath H
   partition := {1 / 5, 2 / 5, 3 / 5, 4 / 5}

@@ -44,7 +44,7 @@ If `f` is differentiable on a convex open set `U`, then there exists `F : ℂ �
 `F(z) = ∫₀¹ f(c + t(z-c)) · (z-c) dt` from a fixed basepoint `c ∈ U`. -/
 theorem DifferentiableOn.hasPrimitive_of_convex {f : ℂ → ℂ} {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : Convex ℝ U) (hUo : IsOpen U)
-    (_hUne : U.Nonempty) :
+    (_ : U.Nonempty) :
     ∃ F : ℂ → ℂ, ∀ z ∈ U, HasDerivAt F (f z) z := by
   obtain ⟨F, hF⟩ := hU.exists_forall_hasDerivWithinAt hf
   exact ⟨F, fun z hz => (hF z hz).hasDerivAt (hUo.mem_nhds hz)⟩

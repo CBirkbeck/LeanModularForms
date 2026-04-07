@@ -253,7 +253,7 @@ theorem seg4_integrand_eq_neg_seg1 {f : ℂ → ℂ} (hf : IsPeriodic f) {H : �
 
 /-- On segment 5, the boundary function traces a horizontal line at height `H`. -/
 theorem fdBoundaryFun_seg5_im {H : ℝ} {t : ℝ}
-    (ht1 : 4 / 5 < t) (_ht2 : t ≤ 1) :
+    (ht1 : 4 / 5 < t) (_ : t ≤ 1) :
     (fdBoundaryFun H t).im = H := by
   simp only [fdBoundaryFun,
     show ¬t ≤ 1 / 5 from not_le.mpr (by linarith),
@@ -264,7 +264,7 @@ theorem fdBoundaryFun_seg5_im {H : ℝ} {t : ℝ}
 
 /-- On segment 5, the real part ranges linearly from `-1/2` to `1/2`. -/
 theorem fdBoundaryFun_seg5_re {H : ℝ} {t : ℝ}
-    (ht1 : 4 / 5 < t) (_ht2 : t ≤ 1) :
+    (ht1 : 4 / 5 < t) (_ : t ≤ 1) :
     (fdBoundaryFun H t).re = -1 / 2 + 5 * (t - 4 / 5) := by
   simp only [fdBoundaryFun,
     show ¬t ≤ 1 / 5 from not_le.mpr (by linarith),
@@ -332,7 +332,7 @@ theorem S_map_unit_circle {z : ℂ} (hz : ‖z‖ = 1) :
 /-- The angle parameterization of segment 2 and segment 3 are complementary:
 `seg2Angle(t) + seg3Angle(4/5 - t) = π` for `t ∈ [1/5, 2/5]`. -/
 theorem seg2_seg3_angle_complementary {t : ℝ}
-    (_ht1 : 1 / 5 ≤ t) (_ht2 : t ≤ 2 / 5) :
+    (_ : 1 / 5 ≤ t) (_ : t ≤ 2 / 5) :
     seg2Angle t + seg3Angle (4 / 5 - t) = Real.pi := by
   simp only [seg2Angle, seg3Angle]; ring
 

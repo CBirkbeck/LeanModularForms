@@ -332,7 +332,7 @@ theorem norm_rhoPlusOne : ‖rhoPlusOne‖ = 1 := by
 /-! ### Segment 1 avoids ρ+1 except at endpoint -/
 
 theorem fdBoundaryFun_ne_rhoPlusOne_seg1 {H : ℝ} (hH : H > Real.sqrt 3 / 2)
-    {t : ℝ} (_ht1 : 0 ≤ t) (ht2 : t < 1 / 5) :
+    {t : ℝ} (_ : 0 ≤ t) (ht2 : t < 1 / 5) :
     fdBoundaryFun H t ≠ rhoPlusOne := by
   simp only [fdBoundaryFun, show t ≤ 1 / 5 from le_of_lt ht2, ite_true, rhoPlusOne]
   intro heq

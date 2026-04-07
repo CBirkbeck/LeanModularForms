@@ -246,7 +246,7 @@ flatness condition reduces to `IsFlatOfOrder γ t₀ 0`, which holds for any
 continuous curve by `isFlatOfOrder_zero`. -/
 theorem hasFlatCrossings_of_simplePoles
     (f : ℂ → ℂ) (γ : PiecewiseC1Immersion x y) (S₀ : Finset ℂ)
-    (_hSimple : ∀ s ∈ S₀, HasSimplePoleAt f s)
+    (_ : ∀ s ∈ S₀, HasSimplePoleAt f s)
     (hAnalytic : ∀ s ∈ S₀, poleOrder f s = 0) :
     HasFlatCrossings f γ S₀ := by
   intro s hs t₀ _ht₀ _hcross
