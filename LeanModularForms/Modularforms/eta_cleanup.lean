@@ -158,7 +158,7 @@ lemma logDeriv_q' (n : ℝ) (z : ℂ) : logDeriv (𝕢 n) z = 2 * ↑π * Comple
     simp only [Periodic.qParam, comp_apply]
     ring_nf
   rw [this, logDeriv_comp (by fun_prop) (by fun_prop), deriv_const_mul _ (by fun_prop)]
-  simp only [LogDeriv_exp, Pi.one_apply, deriv_id'', mul_one, one_mul]
+  simp only [logDeriv_exp, Pi.one_apply, deriv_id'', mul_one, one_mul]
 
 lemma logDeriv_z_term' (z : ℍ) : logDeriv (𝕢 24) ↑z  =  2 * ↑π * Complex.I / 24 := by
   have : (𝕢 24) = (fun z ↦ cexp (z)) ∘ (fun z => (2 * ↑π * Complex.I / 24) * z)  := by
@@ -166,7 +166,7 @@ lemma logDeriv_z_term' (z : ℍ) : logDeriv (𝕢 24) ↑z  =  2 * ↑π * Compl
     simp only [Periodic.qParam, ofReal_ofNat, comp_apply]
     ring_nf
   rw [this, logDeriv_comp, deriv_const_mul]
-  simp only [LogDeriv_exp, Pi.one_apply, deriv_id'', mul_one, one_mul]
+  simp only [logDeriv_exp, Pi.one_apply, deriv_id'', mul_one, one_mul]
   all_goals {fun_prop}
 
 theorem etaProdTerm_differentiableAt (z : ℍ) : DifferentiableAt ℂ ηₚ ↑z := by

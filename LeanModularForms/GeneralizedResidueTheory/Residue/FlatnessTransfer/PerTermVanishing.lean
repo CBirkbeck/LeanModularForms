@@ -569,7 +569,7 @@ private lemma dct_bound_diff_cpv_zpow
     (Mγ' : ℝ) (hMγ' : ∀ t ∈ Icc γ.a γ.b, ‖deriv γ.toFun t‖ ≤ Mγ')
     (δ_sep : ℝ) (hδ_pos : 0 < δ_sep)
     (hδ_sep_le : ∀ s' ∈ S0.erase s, δ_sep ≤ ‖s - s'‖)
-    (ε : ℝ) (hε : ε ∈ Ioo 0 (δ_sep / 2)) :
+    (ε : ℝ) (_hε_mem : ε ∈ Ioo 0 (δ_sep / 2)) :
     ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
       ‖(if ‖γ.toFun t - s‖ > ε then
           (fun z => (z - s) ^ (-(m : ℤ))) (γ.toFun t) * deriv γ.toFun t else 0) -
@@ -592,7 +592,7 @@ private lemma dct_bound_diff_cpv_zpow
           calc ‖s - s'‖ = ‖(s - γ.toFun t) + (γ.toFun t - s')‖ := by ring_nf
             _ ≤ ‖s - γ.toFun t‖ + ‖γ.toFun t - s'‖ := norm_add_le _ _
             _ = ‖γ.toFun t - s‖ + ‖γ.toFun t - s'‖ := by rw [norm_sub_rev]
-        linarith [hε.2]
+        linarith [_hε_mem.2]
       have ht_Icc : t ∈ Icc γ.a γ.b :=
         Ioc_subset_Icc_self (Set.uIoc_of_le γ.hab.le ▸ ht)
       calc ‖f_zpow (γ.toFun t) * deriv γ.toFun t‖

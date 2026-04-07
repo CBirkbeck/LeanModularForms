@@ -47,7 +47,7 @@ theorem mem_sortedPartition (γ : PiecewiseC1Curve) (x : ℝ) :
 
 /-- The `sortedPartition` is sorted with respect to `≤`. -/
 theorem sortedPartition_sorted (γ : PiecewiseC1Curve) :
-    γ.sortedPartition.Sorted (· ≤ ·) := by
+    γ.sortedPartition.Pairwise (· ≤ ·) := by
   simp only [sortedPartition]; exact Finset.pairwise_sort γ.partition (· ≤ ·)
 
 /-- The `sortedPartition` has no duplicates. -/
@@ -91,7 +91,7 @@ theorem sortedPartition_head (γ : PiecewiseC1Curve) :
   linarith
 
 /-- Helper: in a sorted list, every element is ≤ the last element. -/
-private theorem sorted_le_getLast : ∀ (l : List ℝ) (_hl : l.Sorted (· ≤ ·))
+private theorem sorted_le_getLast : ∀ (l : List ℝ) (_hl : l.Pairwise (· ≤ ·))
     (hne : l ≠ []) (elem : ℝ) (_hmem : elem ∈ l), elem ≤ l.getLast hne
   | [], _, hne, _, _ => absurd rfl hne
   | [hd], _, _, elem, hmem => by
@@ -131,7 +131,7 @@ theorem sortedPartition_last (γ : PiecewiseC1Curve) :
     Uses a structural induction on the list length, handling the base case (2 elements)
     and inductive case (>2 elements) separately. -/
 private theorem sorted_consecutive_union :
-    ∀ (pts : List ℝ) (_hsorted : pts.Sorted (· ≤ ·)) (hne : pts ≠ [])
+    ∀ (pts : List ℝ) (_hsorted : pts.Pairwise (· ≤ ·)) (hne : pts ≠ [])
       (_htail_ne : pts.tail ≠ []) (lo hi : ℝ)
       (_hhead : pts.head hne = lo) (_hlast : pts.getLast hne = hi),
     Icc lo hi ⊆ ⋃ p ∈ pts.zip pts.tail, Icc p.1 p.2 := by
@@ -149,7 +149,7 @@ private theorem sorted_consecutive_union :
     | nil => exact absurd rfl htail_ne
     | cons y ys =>
       simp only [List.zip_cons_cons, List.tail_cons]
-      have hys_sorted : (y :: ys).Sorted (· ≤ ·) :=
+      have hys_sorted : (y :: ys).Pairwise (· ≤ ·) :=
         (List.pairwise_cons.mp hsorted).2
       have hys_ne : y :: ys ≠ [] := List.cons_ne_nil y ys
       rw [List.getLast_cons_cons] at hlast
@@ -203,7 +203,7 @@ theorem consecutivePairs_cover (γ : PiecewiseC1Curve) :
 /-! ### Properties of consecutive pairs -/
 
 /-- For any sorted list, consecutive pairs in `l.zip l.tail` satisfy `p.1 ≤ p.2`. -/
-private theorem sorted_zip_tail_le {l : List ℝ} (hl : l.Sorted (· ≤ ·))
+private theorem sorted_zip_tail_le {l : List ℝ} (hl : l.Pairwise (· ≤ ·))
     {p : ℝ × ℝ} (hp : p ∈ l.zip l.tail) : p.1 ≤ p.2 := by
   induction l with
   | nil => simp only [List.zip_nil_left, List.not_mem_nil] at hp

@@ -184,6 +184,7 @@ private lemma conj_mat_det_one (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_de
   push_cast; rw [mul_one, Fintype.card_fin, ← pow_succ,
     Nat.sub_one_add_one_eq_of_pos (NeZero.pos n)]
 
+omit [NeZero n] in
 /-- If `A * δ = γ * A` at the integer level, then `g * δ_GL = γ_GL * g` at the GL level,
     so `δ_GL = g⁻¹ * γ_GL * g`. -/
 private lemma int_mul_eq (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
@@ -230,6 +231,7 @@ private lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n)
     _ = g⁻¹ * ((γ : GL (Fin n) ℚ) * g) := by rw [h_unit_eq]
     _ = g⁻¹ * (γ : GL (Fin n) ℚ) * g := by rw [mul_assoc]
 
+omit [NeZero n] in
 /-- Reverse direction of `adjugate_conj_dvd`: `d | (γ - I)` entry-wise implies
     `d | (A * γ * adj(A))` entry-wise. -/
 private lemma conj_dvd_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ)
@@ -259,6 +261,7 @@ private lemma conj_mat_det_one_reverse
     show (A.det : ℚ) * (A.det : ℚ) ^ (n - 1) = (A.det : ℚ) ^ n from by
       rw [← pow_succ']; congr 1; exact Nat.succ_pred_eq_of_pos (NeZero.pos n)]
 
+omit [NeZero n] in
 /-- Reverse direction of `int_mul_eq`: `δ * A = A * γ` where
     `δ = (A * γ * adj(A)) / det(A)`. -/
 private lemma int_mul_eq_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
