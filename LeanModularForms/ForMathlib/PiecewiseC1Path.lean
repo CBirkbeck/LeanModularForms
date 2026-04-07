@@ -3,7 +3,7 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.Analysis.Calculus.Deriv.Basic
+import Mathlib.Analysis.Calculus.Deriv.Add
 import Mathlib.Topology.Path
 
 /-!
@@ -53,7 +53,7 @@ structure PiecewiseC1Path (x y : E) extends Path x y where
   /-- Finite set of breakpoints in the open interval `(0, 1)`. -/
   partition : Finset ℝ
   /-- All breakpoints lie in the open interval `(0, 1)`. -/
-  partition_subset : ↑partition ⊆ Ioo 0 1
+  partition_subset : (partition : Set ℝ) ⊆ Ioo 0 1
   /-- The extended path is differentiable at every point of `(0, 1)` outside the partition. -/
   differentiable_off : ∀ t ∈ Ioo 0 1, t ∉ partition → DifferentiableAt ℝ toPath.extend t
   /-- The derivative of the extended path is continuous at every point of `(0, 1)` outside
@@ -63,14 +63,15 @@ structure PiecewiseC1Path (x y : E) extends Path x y where
 
 namespace PiecewiseC1Path
 
-/-- The underlying continuous function `ℝ → E` obtained by extending the path. -/
-def toFun (γ : PiecewiseC1Path x y) : ℝ → E := γ.toPath.extend
+/-- The underlying function `ℝ → E` obtained by extending the path. -/
+def extendedPath (γ : PiecewiseC1Path x y) : ℝ → E := γ.toPath.extend
 
 instance : CoeFun (PiecewiseC1Path x y) fun _ => ℝ → E where
-  coe := toFun
+  coe := extendedPath
 
 @[simp]
-theorem coe_toFun (γ : PiecewiseC1Path x y) : γ.toFun = γ.toPath.extend := rfl
+theorem extendedPath_eq (γ : PiecewiseC1Path x y) :
+    γ.extendedPath = γ.toPath.extend := rfl
 
 @[simp]
 theorem apply_zero (γ : PiecewiseC1Path x y) : γ 0 = x :=
@@ -87,24 +88,31 @@ def IsClosed (_γ : PiecewiseC1Path x y) : Prop := x = y
 theorem continuous (γ : PiecewiseC1Path x y) : Continuous (γ : ℝ → E) :=
   γ.toPath.continuous_extend
 
+omit [NormedSpace ℝ E] in
+/-- Helper: the translation of a `Path` by a constant. -/
+private def translatePath (γ : Path x y) (c : E) : Path (x + c) (y + c) where
+  toFun t := γ t + c
+  continuous_toFun := γ.continuous.add continuous_const
+  source' := by simp
+  target' := by simp
+
+omit [NormedSpace ℝ E] in
+private theorem translatePath_extend (γ : Path x y) (c : E) :
+    (translatePath γ c).extend = fun t => γ.extend t + c := by
+  ext t; simp only [translatePath, Path.extend, ContinuousMap.coe_mk]; rfl
+
 /-- Translate a piecewise C¹ path by a constant. The partition is unchanged. -/
 def translate (γ : PiecewiseC1Path x y) (c : E) : PiecewiseC1Path (x + c) (y + c) where
-  toPath := {
-    toContinuousMap := ⟨fun t => γ.toPath t + c,
-      γ.toPath.continuous.add continuous_const⟩
-    source' := by simp [γ.toPath.source]
-    target' := by simp [γ.toPath.target]
-  }
+  toPath := translatePath γ.toPath c
   partition := γ.partition
   partition_subset := γ.partition_subset
   differentiable_off := fun t ht htp => by
-    have hd := γ.differentiable_off t ht htp
-    show DifferentiableAt ℝ (Path.extend _) t
-    sorry
+    rw [translatePath_extend]
+    exact (γ.differentiable_off t ht htp).add (differentiableAt_const c)
   deriv_continuous_off := fun t ht htp => by
-    have hc := γ.deriv_continuous_off t ht htp
-    show ContinuousAt (deriv (Path.extend _)) t
-    sorry
+    have h := congr_arg deriv (translatePath_extend γ.toPath c)
+    rw [h, deriv_add_const']
+    exact γ.deriv_continuous_off t ht htp
 
 end PiecewiseC1Path
 
@@ -127,10 +135,14 @@ structure PiecewiseC1Immersion (x y : E) extends PiecewiseC1Path x y where
 namespace PiecewiseC1Immersion
 
 instance : CoeFun (PiecewiseC1Immersion x y) fun _ => ℝ → E where
-  coe γ := γ.toPiecewiseC1Path.toFun
+  coe γ := γ.toPiecewiseC1Path.extendedPath
 
 /-- A piecewise C¹ immersion is closed if its endpoints coincide. -/
 def IsClosed (_γ : PiecewiseC1Immersion x y) : Prop := x = y
+
+/-- The underlying extended path is continuous. -/
+theorem continuous (γ : PiecewiseC1Immersion x y) : Continuous (γ : ℝ → E) :=
+  γ.toPiecewiseC1Path.continuous
 
 end PiecewiseC1Immersion
 
