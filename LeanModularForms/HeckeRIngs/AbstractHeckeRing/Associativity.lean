@@ -87,7 +87,7 @@ private lemma smulOrbit_sum_left_H_eq (g₀ : P.Δ) (β : P.Δ)
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at heq
       have hmem : (q₁.out : ↥P.H)⁻¹ * q₂.out ∈
           (ConjAct.toConjAct g • P.H).subgroupOf P.H := by
-        convert heq using 1; ext; simp [Subgroup.coe_mul]; group
+        convert heq using 1; ext; simp [Subgroup.coe_mul]
       rw [← @QuotientGroup.leftRel_apply, ← @Quotient.eq''] at hmem
       simp only [Quotient.out_eq'] at hmem
       exact hmem
@@ -261,7 +261,7 @@ lemma heckeMultiplicity_uniform (g₂ g₁ : P.Δ) (D : HeckeCoset P)
     have hi₁₂ : i₁ = i₂ := by
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at hi
       exact decompQuot_eq_of_conjAct_rel P g₂ i₁ i₂
-        (by convert hi using 1; ext; simp [Subgroup.coe_mul]; group)
+        (by convert hi using 1; ext; simp [Subgroup.coe_mul])
     subst hi₁₂
     have hj₁₂ : j₁ = j₂ := by
       rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at hj

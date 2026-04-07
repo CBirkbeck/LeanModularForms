@@ -76,6 +76,7 @@ lemma divChain_T_gen (k : Fin n) :
 
 variable [NeZero n]
 
+omit [NeZero n] in
 /-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
 lemma T_gen_diag_is_ppow (k : Fin n) :
     T_gen_diag n p k =
@@ -84,6 +85,7 @@ lemma T_gen_diag_is_ppow (k : Fin n) :
   simp only [T_gen_diag, ppowDiag]
   split_ifs <;> simp
 
+omit [NeZero n] in
 /-- The exponent function for T_gen is monotone. -/
 lemma T_gen_exp_monotone (k : Fin n) :
     Monotone (fun i : Fin n => if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by

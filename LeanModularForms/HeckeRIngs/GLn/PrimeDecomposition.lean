@@ -192,6 +192,7 @@ private def ppowClosureSet (n : ℕ) [NeZero n] : Set (HeckeAlgebra n) :=
   { f | ∃ (p : ℕ) (_hp : p.Prime) (e : Fin n → ℕ) (_hmono : Monotone e),
     f = T_elem (ppowDiag n p e) }
 
+omit [NeZero n] in
 private lemma prod_pos_of_pos (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     0 < ∏ i, a i :=
   Finset.prod_pos (fun i _ => ha_pos i)

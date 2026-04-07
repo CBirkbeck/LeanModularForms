@@ -239,6 +239,7 @@ private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 
 
 variable [NeZero n]
 
+omit [NeZero n] in
 /-- The map sending each upper-triangular representative `B` to the coset of
 `(f(unipSL B))⁻¹` in the quotient `H ⧸ (α⁻¹-conjugate of H)` is injective.
 

@@ -380,7 +380,7 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   rw [hα_eq, hβ_eq, DoubleCoset.mem_doubleCoset]
   refine ⟨1, (GL_pair 2).H.one_mem, R₂, hR₂, ?_⟩
   -- After simp cancellation: D₁ * (D₂ * R₂) = diagMat_delta(![1,p^{k+1}]) * R₂
-  simp only [one_mul, _root_.mul_inv_rev, mul_assoc,
+  simp only [one_mul, mul_assoc,
     inv_mul_cancel_left, mul_inv_cancel_left]
   rw [diagMat_delta_val 2 (![1, p ^ (k + 1)])
     (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]

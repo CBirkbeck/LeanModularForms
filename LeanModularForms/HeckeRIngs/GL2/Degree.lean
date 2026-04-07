@@ -128,7 +128,7 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
   match k with
   | 0 =>
     simp only [Nat.zero_div, Nat.zero_add, Finset.sum_range_one, Nat.sub_zero]
-    simp [pow_zero, deg_ppow_term_eq' p hp 0 0 rfl]
+    simp [pow_zero]
   | 1 =>
     simp only [show (1 : ℕ) / 2 = 0 from rfl, Nat.zero_add, Finset.sum_range_one, Nat.sub_zero]
     convert deg_ppow_term_lt' p hp 0 1 (by omega) using 1
