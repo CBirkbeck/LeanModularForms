@@ -26,6 +26,64 @@ private instance : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
 
 noncomputable section
 
+/-! ### Reusable API: norm-annulus rescaling, indicator bundles, integral splitting -/
+
+/-- The annulus condition `ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁` is equivalent to
+    `c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂` where `c₁ = ε₂/‖L‖` and `c₂ = ε₁/‖L‖`. -/
+lemma norm_annulus_condition_iff {t₀ : ℝ} {L : ℂ}
+    {ε₁ ε₂ : ℝ} (hL_pos : 0 < ‖L‖) (t : ℝ) :
+    (ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁) ↔
+    (ε₂ / ‖L‖ < |t - t₀| ∧ |t - t₀| ≤ ε₁ / ‖L‖) := by
+  constructor
+  · rintro ⟨h1, h2⟩
+    exact ⟨by rwa [div_lt_iff₀ hL_pos, mul_comm],
+           by rwa [le_div_iff₀ hL_pos, mul_comm]⟩
+  · rintro ⟨h1, h2⟩
+    exact ⟨by rwa [div_lt_iff₀ hL_pos, mul_comm] at h1,
+           by rwa [le_div_iff₀ hL_pos, mul_comm] at h2⟩
+
+/-- When an integrand is a.e. zero on an interval, its interval integral is zero. -/
+lemma intervalIntegral_eq_zero_of_ae_eq_zero {a b : ℝ}
+    {φ : ℝ → ℂ} (_hI : IntervalIntegrable φ volume a b)
+    (h_ae : ∀ᵐ t ∂volume, t ∈ Set.uIoc a b → φ t = 0) :
+    ∫ t in a..b, φ t = 0 := by
+  rw [show (∫ t in a..b, φ t) = ∫ t in a..b, (0 : ℂ) from by
+    apply intervalIntegral.integral_congr_ae
+    filter_upwards [h_ae] with t ht ht_mem
+    exact ht ht_mem]
+  exact intervalIntegral.integral_zero
+
+/-- Split `∫ a..b f` into five consecutive sub-integrals at four ordered intermediate points. -/
+lemma integral_split_five {a p₁ p₂ p₃ p₄ b : ℝ}
+    {φ : ℝ → ℂ}
+    (h₁ : IntervalIntegrable φ volume a p₁)
+    (h₂ : IntervalIntegrable φ volume p₁ p₂)
+    (h₃ : IntervalIntegrable φ volume p₂ p₃)
+    (h₄ : IntervalIntegrable φ volume p₃ p₄)
+    (h₅ : IntervalIntegrable φ volume p₄ b) :
+    ∫ t in a..b, φ t =
+      (∫ t in a..p₁, φ t) + (∫ t in p₁..p₂, φ t) +
+      (∫ t in p₂..p₃, φ t) + (∫ t in p₃..p₄, φ t) +
+      (∫ t in p₄..b, φ t) := by
+  rw [show (∫ t in a..b, φ t) =
+      (∫ t in a..p₄, φ t) + (∫ t in p₄..b, φ t) from
+    (intervalIntegral.integral_add_adjacent_intervals
+      (h₁.trans h₂ |>.trans h₃ |>.trans h₄) h₅).symm,
+    show (∫ t in a..p₄, φ t) =
+      (∫ t in a..p₃, φ t) + (∫ t in p₃..p₄, φ t) from
+    (intervalIntegral.integral_add_adjacent_intervals
+      (h₁.trans h₂ |>.trans h₃) h₄).symm,
+    show (∫ t in a..p₃, φ t) =
+      (∫ t in a..p₂, φ t) + (∫ t in p₂..p₃, φ t) from
+    (intervalIntegral.integral_add_adjacent_intervals
+      (h₁.trans h₂) h₃).symm,
+    show (∫ t in a..p₂, φ t) =
+      (∫ t in a..p₁, φ t) + (∫ t in p₁..p₂, φ t) from
+    (intervalIntegral.integral_add_adjacent_intervals
+      h₁ h₂).symm]
+
+/-! ### End API section -/
+
 lemma singular_tAnnLin_inside_interval
     {t₀ a b : ℝ} (hat₀ : t₀ ∈ Set.Ioo a b)
     {L : ℂ} (hL_pos : 0 < ‖L‖) {ε₁ : ℝ}
@@ -76,12 +134,148 @@ lemma singular_symmDiff_sup_bound
     Real.norm_eq_abs, one_div]
   exact inv_anti₀ hc_pos ht_lower
 
+/-! ### Helper: measurability, bound, and integrability for the linearized indicator -/
+
+private lemma singular_annulus_f_lin_measurable
+    {t₀ : ℝ} {L : ℂ} {ε₁ ε₂ : ℝ} :
+    Measurable (fun t : ℝ =>
+      if ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁
+      then (↑(t - t₀) : ℂ)⁻¹ else 0) := by
+  apply Measurable.ite
+  · apply MeasurableSet.inter
+    · exact (isOpen_lt continuous_const (continuous_const.mul
+        (continuous_abs.comp (continuous_id.sub continuous_const)))).measurableSet
+    · exact (isClosed_le (continuous_const.mul
+        (continuous_abs.comp (continuous_id.sub continuous_const)))
+        continuous_const).measurableSet
+  · exact (Complex.measurable_ofReal.comp (measurable_id.sub_const t₀)).inv
+  · exact measurable_const
+
+private lemma singular_annulus_f_lin_bound
+    {t₀ : ℝ} {L : ℂ} {ε₁ ε₂ : ℝ}
+    (hL_pos : 0 < ‖L‖) (hε₂_pos : 0 < ε₂) (t : ℝ) :
+    ‖(if ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁
+      then (↑(t - t₀) : ℂ)⁻¹ else (0 : ℂ))‖ ≤ 2 * ‖L‖ / ε₂ := by
+  by_cases hcond : ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁
+  · rw [if_pos hcond]
+    have hlo : ε₂ / (2 * ‖L‖) < |t - t₀| := by
+      calc ε₂ / (2 * ‖L‖)
+          < ε₂ / ‖L‖ := div_lt_div_of_pos_left hε₂_pos hL_pos (by linarith)
+        _ ≤ |t - t₀| := by rw [div_le_iff₀ hL_pos, mul_comm]; exact le_of_lt hcond.1
+    calc ‖(↑(t - t₀) : ℂ)⁻¹‖
+        ≤ 1 / (ε₂ / (2 * ‖L‖)) :=
+          singular_symmDiff_sup_bound (by positivity) (le_of_lt hlo)
+      _ = 2 * ‖L‖ / ε₂ := by rw [one_div, inv_div]
+  · simp only [hcond, ite_false, norm_zero]; positivity
+
+/-- The linearized annular indicator is integrable on any interval. -/
+lemma singular_annulus_f_lin_intervalIntegrable
+    {t₀ : ℝ} {L : ℂ} {ε₁ ε₂ : ℝ}
+    (hL_pos : 0 < ‖L‖) (hε₂_pos : 0 < ε₂) (u v : ℝ) :
+    IntervalIntegrable (fun t =>
+      if ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁
+      then (↑(t - t₀) : ℂ)⁻¹ else 0) volume u v := by
+  rw [intervalIntegrable_iff]
+  exact MeasureTheory.IntegrableOn.of_bound measure_Ioc_lt_top
+    singular_annulus_f_lin_measurable.aestronglyMeasurable.restrict
+    (2 * ‖L‖ / ε₂)
+    (Filter.Eventually.of_forall
+      (fun t => singular_annulus_f_lin_bound hL_pos hε₂_pos t))
+
 /-! ### Helper: linearized annular integral vanishes by symmetric cancellation -/
+
+/-- On `(a, t₀ - c₂)`, the annular indicator `φ` is a.e. zero because `|t - t₀| > c₂`. -/
+private lemma lin_indicator_zero_left
+    {a t₀ c₁ c₂ : ℝ} (hc₂_nonneg : 0 ≤ c₂)
+    (ha_lt_mc₂ : a < t₀ - c₂)
+    {φ : ℝ → ℂ} (hI : IntervalIntegrable φ volume a (t₀ - c₂))
+    (hφ_zero : ∀ t, ¬(c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂) → φ t = 0) :
+    ∫ t in a..(t₀ - c₂), φ t = 0 :=
+  intervalIntegral_eq_zero_of_ae_eq_zero hI (by
+    have h_ae : ({t₀ - c₂} : Set ℝ)ᶜ ∈
+        MeasureTheory.ae MeasureTheory.volume :=
+      MeasureTheory.compl_mem_ae_iff.mpr
+        (MeasureTheory.measure_singleton _)
+    filter_upwards [h_ae] with t ht_ne ht_mem
+    rw [Set.uIoc_of_le (le_of_lt ha_lt_mc₂)] at ht_mem
+    exact hφ_zero t (fun ⟨_, hle⟩ => absurd hle
+      (not_le.mpr (by
+        rw [abs_of_nonpos (by linarith [ht_mem.2] : t - t₀ ≤ 0)]
+        linarith [lt_of_le_of_ne ht_mem.2 ht_ne]))))
+
+/-- On `(t₀ + c₂, b)`, the annular indicator `φ` is zero because `|t - t₀| > c₂`. -/
+private lemma lin_indicator_zero_right
+    {t₀ c₁ c₂ b : ℝ} (hc₂_nonneg : 0 ≤ c₂)
+    (hpc₂_lt_b : t₀ + c₂ < b)
+    {φ : ℝ → ℂ} (hI : IntervalIntegrable φ volume (t₀ + c₂) b)
+    (hφ_zero : ∀ t, ¬(c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂) → φ t = 0) :
+    ∫ t in (t₀ + c₂)..b, φ t = 0 :=
+  intervalIntegral_eq_zero_of_ae_eq_zero hI (by
+    filter_upwards with t ht_mem
+    rw [Set.uIoc_of_le (le_of_lt hpc₂_lt_b)] at ht_mem
+    exact hφ_zero t (fun ⟨_, hle⟩ => absurd hle
+      (not_le.mpr (by
+        rw [abs_of_nonneg (by linarith [ht_mem.1] : 0 ≤ t - t₀)]
+        linarith [ht_mem.1]))))
+
+/-- On `(t₀ - c₁, t₀ + c₁)`, the annular indicator `φ` is zero because `|t - t₀| < c₁`. -/
+private lemma lin_indicator_zero_middle
+    {t₀ c₁ c₂ : ℝ} (hmc₁_le_pc₁ : t₀ - c₁ ≤ t₀ + c₁)
+    {φ : ℝ → ℂ}
+    (hφ_zero : ∀ t, ¬(c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂) → φ t = 0) :
+    ∫ t in (t₀ - c₁)..(t₀ + c₁), φ t = 0 := by
+  rw [show (∫ t in (t₀ - c₁)..(t₀ + c₁), φ t) =
+      ∫ t in (t₀ - c₁)..(t₀ + c₁), (0 : ℂ) from
+    intervalIntegral.integral_congr (fun t ht => by
+      rw [Set.uIcc_of_le hmc₁_le_pc₁] at ht
+      exact hφ_zero t (fun ⟨hgt, _⟩ => absurd
+        (abs_le.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩)
+        (not_le.mpr hgt)))]
+  exact intervalIntegral.integral_zero
+
+/-- On `(t₀ - c₂, t₀ - c₁)`, the indicator equals `(t - t₀)⁻¹` (left annular wing). -/
+private lemma lin_indicator_eq_inv_left
+    {t₀ c₁ c₂ : ℝ} (hc₁_nonneg : 0 ≤ c₁)
+    (hmc₂_le_mc₁ : t₀ - c₂ ≤ t₀ - c₁)
+    {φ : ℝ → ℂ}
+    (hφ_val : ∀ t, c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂ →
+      φ t = (↑(t - t₀) : ℂ)⁻¹) :
+    ∫ t in (t₀ - c₂)..(t₀ - c₁), φ t =
+    ∫ t in (t₀ - c₂)..(t₀ - c₁), (↑(t - t₀) : ℂ)⁻¹ := by
+  apply intervalIntegral.integral_congr_ae
+  have h_ne : ({t₀ - c₁} : Set ℝ)ᶜ ∈
+      MeasureTheory.ae MeasureTheory.volume :=
+    MeasureTheory.compl_mem_ae_iff.mpr
+      (MeasureTheory.measure_singleton _)
+  filter_upwards [h_ne] with t ht_ne ht_mem
+  rw [Set.uIoc_of_le hmc₂_le_mc₁] at ht_mem
+  have h_np : t - t₀ ≤ 0 := by linarith [ht_mem.2]
+  exact hφ_val t
+    ⟨by rw [abs_of_nonpos h_np]
+        linarith [lt_of_le_of_ne ht_mem.2 ht_ne],
+     by rw [abs_of_nonpos h_np]; linarith [ht_mem.1]⟩
+
+/-- On `(t₀ + c₁, t₀ + c₂)`, the indicator equals `(t - t₀)⁻¹` (right annular wing). -/
+private lemma lin_indicator_eq_inv_right
+    {t₀ c₁ c₂ : ℝ} (hc₁_nonneg : 0 ≤ c₁)
+    (hpc₁_le_pc₂ : t₀ + c₁ ≤ t₀ + c₂)
+    {φ : ℝ → ℂ}
+    (hφ_val : ∀ t, c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂ →
+      φ t = (↑(t - t₀) : ℂ)⁻¹) :
+    ∫ t in (t₀ + c₁)..(t₀ + c₂), φ t =
+    ∫ t in (t₀ + c₁)..(t₀ + c₂), (↑(t - t₀) : ℂ)⁻¹ := by
+  apply intervalIntegral.integral_congr_ae
+  filter_upwards with t ht_mem
+  rw [Set.uIoc_of_le hpc₁_le_pc₂] at ht_mem
+  have h_nn : 0 ≤ t - t₀ := by linarith [ht_mem.1]
+  exact hφ_val t
+    ⟨by rw [abs_of_nonneg h_nn]; linarith [ht_mem.1],
+     by rw [abs_of_nonneg h_nn]; linarith [ht_mem.2]⟩
 
 private lemma singular_annulus_lin_integral_zero
     {a b t₀ : ℝ} {L : ℂ} {ε₁ ε₂ : ℝ}
     (hL_pos : 0 < ‖L‖)
-    (hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂)
+    (_hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂)
     (hε₂_le : ε₂ ≤ ε₁)
     (hε₁_lt_Ldist :
       ε₁ < ‖L‖ * min (t₀ - a) (b - t₀))
@@ -90,225 +284,41 @@ private lemma singular_annulus_lin_integral_zero
       if ε₂ < ‖L‖ * |t - t₀| ∧
         ‖L‖ * |t - t₀| ≤ ε₁
       then (↑(t - t₀) : ℂ)⁻¹ else 0) = 0 := by
-  set c₁ := ε₂ / ‖L‖ with hc₁_def
-  set c₂ := ε₁ / ‖L‖ with hc₂_def
+  set c₁ := ε₂ / ‖L‖; set c₂ := ε₁ / ‖L‖
   have hc₁_pos : 0 < c₁ := div_pos hε₂_pos hL_pos
-  have hc₂_pos : 0 < c₂ := div_pos hε₁_pos hL_pos
   have hc₁_le_c₂ : c₁ ≤ c₂ :=
-    div_le_div_of_nonneg_right hε₂_le
-      (le_of_lt hL_pos)
-  have hc₂_lt_dist :
-      c₂ < min (t₀ - a) (b - t₀) := by
-    rw [hc₂_def, div_lt_iff₀ hL_pos]
+    div_le_div_of_nonneg_right hε₂_le (le_of_lt hL_pos)
+  have hc₂_lt_dist : c₂ < min (t₀ - a) (b - t₀) := by
+    rw [show c₂ = ε₁ / ‖L‖ from rfl, div_lt_iff₀ hL_pos]
     linarith [mul_comm ‖L‖ (min (t₀ - a) (b - t₀))]
-  have ha_lt_mc₂ : a < t₀ - c₂ := by
-    linarith [lt_of_lt_of_le hc₂_lt_dist
-      (min_le_left _ _)]
-  have hmc₂_le_mc₁ : t₀ - c₂ ≤ t₀ - c₁ := by
-    linarith [hc₁_le_c₂]
-  have hmc₁_le_pc₁ : t₀ - c₁ ≤ t₀ + c₁ := by
-    linarith [hc₁_pos]
-  have hpc₁_le_pc₂ : t₀ + c₁ ≤ t₀ + c₂ := by
-    linarith [hc₁_le_c₂]
-  have hpc₂_lt_b : t₀ + c₂ < b := by
-    linarith [lt_of_lt_of_le hc₂_lt_dist
-      (min_le_right _ _)]
-  have h_cond_iff : ∀ t : ℝ,
-      (ε₂ < ‖L‖ * |t - t₀| ∧
-       ‖L‖ * |t - t₀| ≤ ε₁) ↔
-      (c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂) := by
-    intro t
-    constructor
-    · rintro ⟨h1, h2⟩
-      exact ⟨by rwa [hc₁_def, div_lt_iff₀ hL_pos,
-                 mul_comm],
-             by rwa [hc₂_def, le_div_iff₀ hL_pos,
-                 mul_comm]⟩
-    · rintro ⟨h1, h2⟩
-      exact ⟨by rwa [hc₁_def, div_lt_iff₀ hL_pos,
-                 mul_comm] at h1,
-             by rwa [hc₂_def, le_div_iff₀ hL_pos,
-                 mul_comm] at h2⟩
+  -- Set up the indicator and its integrability
   set φ : ℝ → ℂ := fun t =>
-    if ε₂ < ‖L‖ * |t - t₀| ∧
-      ‖L‖ * |t - t₀| ≤ ε₁
+    if ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁
     then (↑(t - t₀) : ℂ)⁻¹ else 0
-    with hφ_def
-  have hφ_bound : ∀ t : ℝ, ‖φ t‖ ≤ 1 / c₁ := by
-    intro t
-    simp only [hφ_def]
-    by_cases hcond :
-        ε₂ < ‖L‖ * |t - t₀| ∧
-        ‖L‖ * |t - t₀| ≤ ε₁
-    · rw [if_pos hcond]
-      exact singular_symmDiff_sup_bound hc₁_pos
-        (le_of_lt ((h_cond_iff t).mp hcond).1)
-    · rw [if_neg hcond, norm_zero]; positivity
-  have hφ_meas : Measurable φ := by
-    simp only [hφ_def]
-    apply Measurable.ite
-    · apply MeasurableSet.inter
-      · exact (isOpen_lt continuous_const
-          (continuous_const.mul
-            (continuous_abs.comp
-              (continuous_id.sub
-                continuous_const)))).measurableSet
-      · exact (isClosed_le
-          (continuous_const.mul
-            (continuous_abs.comp
-              (continuous_id.sub
-                continuous_const)))
-          continuous_const).measurableSet
-    · exact (Complex.measurable_ofReal.comp
-        (measurable_id.sub_const t₀)).inv
-    · exact measurable_const
-  have hφ_integrable :
-      ∀ u v : ℝ,
-      IntervalIntegrable φ
-        MeasureTheory.volume u v := by
-    intro u v
-    rw [intervalIntegrable_iff]
-    exact MeasureTheory.IntegrableOn.of_bound
-      measure_Ioc_lt_top
-      hφ_meas.aestronglyMeasurable.restrict
-      (1 / c₁)
-      (Filter.Eventually.of_forall
-        (fun x => hφ_bound x))
-  have hφ_zero :
-      ∀ t, ¬(c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂) →
-      φ t = 0 :=
-    fun t hnt => by
-      simp only [hφ_def,
-        if_neg (mt (h_cond_iff t).mp hnt)]
-  have hφ_val :
-      ∀ t, c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂ →
-      φ t = (↑(t - t₀) : ℂ)⁻¹ :=
-    fun t ht => by
-      simp only [hφ_def,
-        if_pos ((h_cond_iff t).mpr ht)]
-  have hI₁ := hφ_integrable a (t₀ - c₂)
-  have hI₂ := hφ_integrable (t₀ - c₂) (t₀ - c₁)
-  have hI₃ := hφ_integrable (t₀ - c₁) (t₀ + c₁)
-  have hI₄ := hφ_integrable (t₀ + c₁) (t₀ + c₂)
-  have hI₅ := hφ_integrable (t₀ + c₂) b
-  have h_split : ∫ t in a..b, φ t =
-      (∫ t in a..(t₀ - c₂), φ t) +
-      (∫ t in (t₀ - c₂)..(t₀ - c₁), φ t) +
-      (∫ t in (t₀ - c₁)..(t₀ + c₁), φ t) +
-      (∫ t in (t₀ + c₁)..(t₀ + c₂), φ t) +
-      (∫ t in (t₀ + c₂)..b, φ t) := by
-    rw [show (∫ t in a..b, φ t) =
-        (∫ t in a..(t₀ + c₂), φ t) +
-        (∫ t in (t₀ + c₂)..b, φ t) from
-      (intervalIntegral.integral_add_adjacent_intervals
-        (hI₁.trans hI₂ |>.trans hI₃ |>.trans hI₄)
-        hI₅).symm,
-      show (∫ t in a..(t₀ + c₂), φ t) =
-        (∫ t in a..(t₀ + c₁), φ t) +
-        (∫ t in (t₀ + c₁)..(t₀ + c₂), φ t) from
-      (intervalIntegral.integral_add_adjacent_intervals
-        (hI₁.trans hI₂ |>.trans hI₃) hI₄).symm,
-      show (∫ t in a..(t₀ + c₁), φ t) =
-        (∫ t in a..(t₀ - c₁), φ t) +
-        (∫ t in (t₀ - c₁)..(t₀ + c₁), φ t) from
-      (intervalIntegral.integral_add_adjacent_intervals
-        (hI₁.trans hI₂) hI₃).symm,
-      show (∫ t in a..(t₀ - c₁), φ t) =
-        (∫ t in a..(t₀ - c₂), φ t) +
-        (∫ t in (t₀ - c₂)..(t₀ - c₁), φ t) from
-      (intervalIntegral.integral_add_adjacent_intervals
-        hI₁ hI₂).symm]
-  have hφ_zero_left :
-      ∫ t in a..(t₀ - c₂), φ t = 0 := by
-    rw [show (∫ t in a..(t₀ - c₂), φ t) =
-        ∫ t in a..(t₀ - c₂), (0 : ℂ) from by
-      apply intervalIntegral.integral_congr_ae
-      have h_ae :
-          ({t₀ - c₂} : Set ℝ)ᶜ ∈
-          MeasureTheory.ae MeasureTheory.volume :=
-        MeasureTheory.compl_mem_ae_iff.mpr
-          (MeasureTheory.measure_singleton _)
-      filter_upwards [h_ae] with t ht_ne ht_mem
-      rw [Set.uIoc_of_le
-        (le_of_lt ha_lt_mc₂)] at ht_mem
-      have ht_lt : t < t₀ - c₂ :=
-        lt_of_le_of_ne ht_mem.2 ht_ne
-      exact hφ_zero t
-        (fun ⟨_, hle⟩ => absurd hle
-          (not_le.mpr (by
-            rw [abs_of_nonpos
-              (by linarith : t - t₀ ≤ 0)]
-            linarith)))]
-    exact intervalIntegral.integral_zero
-  have hφ_zero_right :
-      ∫ t in (t₀ + c₂)..b, φ t = 0 := by
-    rw [show (∫ t in (t₀ + c₂)..b, φ t) =
-        ∫ t in (t₀ + c₂)..b, (0 : ℂ) from by
-      apply intervalIntegral.integral_congr_ae
-      filter_upwards with t ht_mem
-      rw [Set.uIoc_of_le
-        (le_of_lt hpc₂_lt_b)] at ht_mem
-      exact hφ_zero t
-        (fun ⟨_, hle⟩ => absurd hle
-          (not_le.mpr (by
-            rw [abs_of_nonneg
-              (by linarith [ht_mem.1] :
-                0 ≤ t - t₀)]
-            linarith [ht_mem.1])))]
-    exact intervalIntegral.integral_zero
-  have hφ_zero_middle :
-      ∫ t in (t₀ - c₁)..(t₀ + c₁), φ t = 0 := by
-    rw [show (∫ t in (t₀ - c₁)..(t₀ + c₁), φ t) =
-        ∫ t in (t₀ - c₁)..(t₀ + c₁), (0 : ℂ) from
-      intervalIntegral.integral_congr
-        (fun t ht => by
-          rw [Set.uIcc_of_le hmc₁_le_pc₁] at ht
-          exact hφ_zero t
-            (fun ⟨hgt, _⟩ => absurd
-              (abs_le.mpr
-                ⟨by linarith [ht.1],
-                 by linarith [ht.2]⟩)
-              (not_le.mpr hgt)))]
-    exact intervalIntegral.integral_zero
-  have hφ_eq_left :
-      ∫ t in (t₀ - c₂)..(t₀ - c₁), φ t =
-      ∫ t in (t₀ - c₂)..(t₀ - c₁),
-        (↑(t - t₀) : ℂ)⁻¹ := by
-    apply intervalIntegral.integral_congr_ae
-    have h_ne :
-        ({t₀ - c₁} : Set ℝ)ᶜ ∈
-        MeasureTheory.ae MeasureTheory.volume :=
-      MeasureTheory.compl_mem_ae_iff.mpr
-        (MeasureTheory.measure_singleton _)
-    filter_upwards [h_ne] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le hmc₂_le_mc₁] at ht_mem
-    have h1 : t₀ - c₂ < t := ht_mem.1
-    have h2 : t < t₀ - c₁ :=
-      lt_of_le_of_ne ht_mem.2 ht_ne
-    exact hφ_val t
-      ⟨by rw [abs_of_nonpos
-            (by linarith : t - t₀ ≤ 0)]; linarith,
-       by rw [abs_of_nonpos
-            (by linarith : t - t₀ ≤ 0)]; linarith⟩
-  have hφ_eq_right :
-      ∫ t in (t₀ + c₁)..(t₀ + c₂), φ t =
-      ∫ t in (t₀ + c₁)..(t₀ + c₂),
-        (↑(t - t₀) : ℂ)⁻¹ := by
-    apply intervalIntegral.integral_congr_ae
-    filter_upwards with t ht_mem
-    rw [Set.uIoc_of_le hpc₁_le_pc₂] at ht_mem
-    have h1 : t₀ + c₁ < t := ht_mem.1
-    have h2 : t ≤ t₀ + c₂ := ht_mem.2
-    exact hφ_val t
-      ⟨by rw [abs_of_nonneg
-            (by linarith : 0 ≤ t - t₀)]; linarith,
-       by rw [abs_of_nonneg
-            (by linarith : 0 ≤ t - t₀)]; linarith⟩
-  rw [h_split, hφ_zero_left, hφ_zero_right,
-    hφ_zero_middle, hφ_eq_left, hφ_eq_right]
+  have hφ_int := singular_annulus_f_lin_intervalIntegrable hL_pos hε₂_pos
+    (ε₁ := ε₁) (t₀ := t₀)
+  have h_cond_iff := norm_annulus_condition_iff hL_pos
+    (ε₁ := ε₁) (ε₂ := ε₂) (t₀ := t₀)
+  have hφ_zero : ∀ t, ¬(c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂) → φ t = 0 :=
+    fun t hnt => if_neg (mt (h_cond_iff t).mp hnt)
+  have hφ_val : ∀ t, c₁ < |t - t₀| ∧ |t - t₀| ≤ c₂ → φ t = (↑(t - t₀) : ℂ)⁻¹ :=
+    fun t ht => if_pos ((h_cond_iff t).mpr ht)
+  -- Split, zero out 3 pieces, identify 2 wings, then cancel
+  have ha_lt_mc₂ : a < t₀ - c₂ := by linarith [lt_of_lt_of_le hc₂_lt_dist (min_le_left _ _)]
+  have hpc₂_lt_b : t₀ + c₂ < b := by linarith [lt_of_lt_of_le hc₂_lt_dist (min_le_right _ _)]
+  have h_split := integral_split_five
+    (hφ_int a (t₀ - c₂)) (hφ_int (t₀ - c₂) (t₀ - c₁))
+    (hφ_int (t₀ - c₁) (t₀ + c₁)) (hφ_int (t₀ + c₁) (t₀ + c₂))
+    (hφ_int (t₀ + c₂) b)
+  have hc₂_pos : 0 < c₂ := div_pos (lt_of_lt_of_le hε₂_pos hε₂_le) hL_pos
+  have h0_L := lin_indicator_zero_left hc₂_pos.le ha_lt_mc₂ (hφ_int a (t₀ - c₂)) hφ_zero
+  have h0_R := lin_indicator_zero_right hc₂_pos.le hpc₂_lt_b (hφ_int (t₀ + c₂) b) hφ_zero
+  have h0_M := lin_indicator_zero_middle (by linarith : t₀ - c₁ ≤ t₀ + c₁) hφ_zero
+  have hE_L := lin_indicator_eq_inv_left hc₁_pos.le (by linarith : t₀ - c₂ ≤ t₀ - c₁) hφ_val
+  have hE_R := lin_indicator_eq_inv_right hc₁_pos.le (by linarith : t₀ + c₁ ≤ t₀ + c₂) hφ_val
+  rw [h_split, h0_L, h0_R, h0_M, hE_L, hE_R]
   simp only [zero_add, add_zero]
-  exact singular_tAnnLin_cancel t₀ hL_pos
-    ε₁ ε₂ hε₂_pos hε₂_le
+  exact singular_tAnnLin_cancel t₀ hL_pos ε₁ ε₂ hε₂_pos hε₂_le
 
 /-! ### Helper: pointwise bound on difference between gamma and linearized indicators -/
 
@@ -376,60 +386,34 @@ private lemma singular_annulus_diff_pointwise_bound
   · simp [hγ, hlin]
     exact le_of_lt hbound_pos
 
-/-! ### Helper: measurability and pointwise bound for the linearized indicator -/
-
-private lemma singular_annulus_f_lin_measurable
-    {t₀ : ℝ} {L : ℂ} {ε₁ ε₂ : ℝ} :
-    Measurable (fun t : ℝ =>
-      if ε₂ < ‖L‖ * |t - t₀| ∧
-        ‖L‖ * |t - t₀| ≤ ε₁
-      then (↑(t - t₀) : ℂ)⁻¹ else 0) := by
-  apply Measurable.ite
-  · apply MeasurableSet.inter
-    · exact (isOpen_lt continuous_const
-        (continuous_const.mul
-          (continuous_abs.comp
-            (continuous_id.sub
-              continuous_const)))).measurableSet
-    · exact (isClosed_le
-        (continuous_const.mul
-          (continuous_abs.comp
-            (continuous_id.sub
-              continuous_const)))
-        continuous_const).measurableSet
-  · exact (Complex.measurable_ofReal.comp
-      (measurable_id.sub_const t₀)).inv
-  · exact measurable_const
-
-private lemma singular_annulus_f_lin_bound
-    {t₀ : ℝ} {L : ℂ} {ε₁ ε₂ : ℝ}
-    (hL_pos : 0 < ‖L‖) (hε₂_pos : 0 < ε₂)
-    (t : ℝ) :
-    ‖(if ε₂ < ‖L‖ * |t - t₀| ∧
-        ‖L‖ * |t - t₀| ≤ ε₁
-      then (↑(t - t₀) : ℂ)⁻¹ else (0 : ℂ))‖ ≤
-    2 * ‖L‖ / ε₂ := by
-  by_cases hcond :
-      ε₂ < ‖L‖ * |t - t₀| ∧
-      ‖L‖ * |t - t₀| ≤ ε₁
-  · rw [if_pos hcond]
-    have h_lo :
-        ε₂ / (2 * ‖L‖) ≤ |t - t₀| :=
-      le_of_lt (by
-        calc ε₂ / (2 * ‖L‖) < ε₂ / ‖L‖ :=
-              div_lt_div_of_pos_left hε₂_pos
-                hL_pos (by linarith)
-          _ ≤ |t - t₀| := by
-              rw [div_le_iff₀ hL_pos, mul_comm]
-              exact le_of_lt hcond.1)
-    exact le_trans
-      (singular_symmDiff_sup_bound
-        (by positivity) h_lo)
-      (by rw [one_div, inv_div])
-  · simp only [hcond, ite_false, norm_zero]
-    positivity
-
 /-! ### Helper: symmetric difference volume bound via a.e. correction -/
+
+/-- The symmetric difference between the `h'`-defined annulus and the `‖γ-γ₀‖`-defined annulus
+    has measure zero when `h' =ᵐ ‖γ-γ₀‖`. -/
+private lemma symmDiff_ae_version_null
+    {γ : ℝ → ℂ} {a b t₀ : ℝ}
+    {ε₁ ε₂ δ₀' : ℝ} {h' : ℝ → ℝ}
+    (hh'_ae : ∀ᵐ t ∂volume.restrict (Set.Icc a b),
+      ‖γ t - γ t₀‖ = h' t) :
+    volume (symmDiff
+      {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < h' t ∧ h' t ≤ ε₁}
+      {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}) = 0 := by
+  have h_sd_subset : symmDiff
+      {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < h' t ∧ h' t ≤ ε₁}
+      {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁} ⊆
+      {t | t ∈ Set.Icc a b ∧ h' t ≠ ‖γ t - γ t₀‖} := by
+    intro t ht; simp only [Set.mem_symmDiff, Set.mem_setOf_eq] at ht ⊢
+    rcases ht with ⟨h_in, h_not⟩ | ⟨h_in, h_not⟩
+    · exact ⟨h_in.1, fun heq => h_not ⟨h_in.1, h_in.2.1, heq ▸ h_in.2.2.1, heq ▸ h_in.2.2.2⟩⟩
+    · exact ⟨h_in.1, fun heq => h_not ⟨h_in.1, h_in.2.1,
+        heq.symm ▸ h_in.2.2.1, heq.symm ▸ h_in.2.2.2⟩⟩
+  have h_null : volume {t | t ∈ Set.Icc a b ∧ h' t ≠ ‖γ t - γ t₀‖} = 0 := by
+    rw [show {t | t ∈ Set.Icc a b ∧ h' t ≠ ‖γ t - γ t₀‖} =
+        {t | ¬(‖γ t - γ t₀‖ = h' t)} ∩ Set.Icc a b from by
+      ext t; simp [Set.mem_setOf_eq, eq_comm, and_comm],
+      ← MeasureTheory.Measure.restrict_apply' measurableSet_Icc]
+    exact MeasureTheory.ae_iff.mp hh'_ae
+  exact le_antisymm (le_of_le_of_eq (MeasureTheory.measure_mono h_sd_subset) h_null) (zero_le _)
 
 private lemma singular_annulus_symmDiff_vol_via_ae
     {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
@@ -455,75 +439,19 @@ private lemma singular_annulus_symmDiff_vol_via_ae
         ε₂ < ‖L‖ * |t - t₀| ∧
         ‖L‖ * |t - t₀| ≤ ε₁}) ≤
     ENNReal.ofReal (Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3) := by
-  set γAnn' := {t : ℝ |
-    t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧
-    ε₂ < h' t ∧ h' t ≤ ε₁}
-  set γAnn := {t : ℝ |
-    t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧
-    ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
-  set tAnnLin_loc := {t : ℝ |
-    t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧
-    ε₂ < ‖L‖ * |t - t₀| ∧
-    ‖L‖ * |t - t₀| ≤ ε₁}
-  have h_sd_subset :
-      symmDiff γAnn' γAnn ⊆
-      {t : ℝ |
-        t ∈ Set.Icc a b ∧
-        h' t ≠ ‖γ t - γ t₀‖} := by
-    intro t ht
-    simp only [Set.mem_symmDiff,
-      Set.mem_setOf_eq] at ht ⊢
-    rcases ht with ⟨h_in, h_not⟩ |
-      ⟨h_in, h_not⟩
-    · refine ⟨h_in.1, fun heq => h_not ?_⟩
-      exact ⟨h_in.1, h_in.2.1,
-        heq ▸ h_in.2.2.1, heq ▸ h_in.2.2.2⟩
-    · refine ⟨h_in.1, fun heq => h_not ?_⟩
-      exact ⟨h_in.1, h_in.2.1,
-        heq.symm ▸ h_in.2.2.1,
-        heq.symm ▸ h_in.2.2.2⟩
-  have h_null_set :
-      volume {t : ℝ |
-        t ∈ Set.Icc a b ∧
-        h' t ≠ ‖γ t - γ t₀‖} = 0 := by
-    have h_ae_not :
-        (volume.restrict (Set.Icc a b))
-          {t | ¬(‖γ t - γ t₀‖ = h' t)} = 0 :=
-      MeasureTheory.ae_iff.mp hh'_ae
-    rw [show {t | t ∈ Set.Icc a b ∧
-          h' t ≠ ‖γ t - γ t₀‖} =
-        {t | ¬(‖γ t - γ t₀‖ = h' t)} ∩
-        Set.Icc a b from by
-      ext t
-      simp only [Set.mem_setOf_eq,
-        Set.mem_inter_iff, Set.mem_Icc,
-        ne_eq, eq_comm]
-      exact ⟨fun ⟨h1, h2⟩ => ⟨h2, h1⟩,
-             fun ⟨h1, h2⟩ => ⟨h2, h1⟩⟩]
-    rw [← MeasureTheory.Measure.restrict_apply'
-      measurableSet_Icc]
-    exact h_ae_not
-  have h_sd_zero :
-      volume (symmDiff γAnn' γAnn) = 0 :=
-    le_antisymm
-      (le_of_le_of_eq
-        (MeasureTheory.measure_mono h_sd_subset)
-        h_null_set)
-      (zero_le _)
-  calc volume (symmDiff γAnn' tAnnLin_loc)
-      ≤ volume (symmDiff γAnn' γAnn) +
-          volume (symmDiff γAnn tAnnLin_loc) :=
-          MeasureTheory.measure_symmDiff_le
-            γAnn' γAnn tAnnLin_loc
-    _ = 0 +
-          volume (symmDiff γAnn tAnnLin_loc) := by
-          rw [h_sd_zero]
-    _ = volume (symmDiff γAnn tAnnLin_loc) := by
-          simp only [zero_add]
-    _ ≤ ENNReal.ofReal
-            (Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3) :=
-          h_meas ε₁ ε₂ hε₂_pos hε₂_le
-            hε₁_lt_δ_meas
+  calc volume (symmDiff
+        {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < h' t ∧ h' t ≤ ε₁}
+        {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁})
+      ≤ volume (symmDiff
+          {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < h' t ∧ h' t ≤ ε₁}
+          {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}) +
+        volume (symmDiff
+          {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
+          {t | t ∈ Set.Icc a b ∧ |t - t₀| < δ₀' ∧ ε₂ < ‖L‖ * |t - t₀| ∧ ‖L‖ * |t - t₀| ≤ ε₁}) :=
+        MeasureTheory.measure_symmDiff_le _ _ _
+    _ ≤ ENNReal.ofReal (Kmeas * ε₁ ^ 2 / ‖L‖ ^ 3) := by
+        rw [symmDiff_ae_version_null hh'_ae, zero_add]
+        exact h_meas ε₁ ε₂ hε₂_pos hε₂_le hε₁_lt_δ_meas
 
 lemma singular_annulus_bound_explicit
     {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
