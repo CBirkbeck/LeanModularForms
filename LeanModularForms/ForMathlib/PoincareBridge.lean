@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.PiecewiseContourIntegral
-import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
+import Mathlib.Analysis.Complex.HasPrimitives
+import Mathlib.MeasureTheory.Integral.CurveIntegral.Poincare
 
 /-!
 # Convex Domain Primitives (Poincare Bridge)
@@ -43,9 +44,10 @@ If `f` is differentiable on a convex open set `U`, then there exists `F : ℂ �
 `F(z) = ∫₀¹ f(c + t(z-c)) · (z-c) dt` from a fixed basepoint `c ∈ U`. -/
 theorem DifferentiableOn.hasPrimitive_of_convex {f : ℂ → ℂ} {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : Convex ℝ U) (hUo : IsOpen U)
-    (hUne : U.Nonempty) :
-    ∃ F : ℂ → ℂ, ∀ z ∈ U, HasDerivAt F (f z) z :=
-  holomorphic_convex_primitive hU hUo hUne hf
+    (_hUne : U.Nonempty) :
+    ∃ F : ℂ → ℂ, ∀ z ∈ U, HasDerivAt F (f z) z := by
+  obtain ⟨F, hF⟩ := hU.exists_forall_hasDerivWithinAt hf
+  exact ⟨F, fun z hz => (hF z hz).hasDerivAt (hUo.mem_nhds hz)⟩
 
 /-- A holomorphic function on a convex open set has a primitive, stated using
 mathlib's `Complex.IsExactOn`. -/
