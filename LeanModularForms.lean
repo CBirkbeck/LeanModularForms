@@ -18,6 +18,7 @@ import LeanModularForms.ForMathlib.UpperHalfPlane
 import LeanModularForms.ForMathlib.hassumunifon
 import LeanModularForms.GeneralizedResidueTheory.ArcCalculus
 import LeanModularForms.GeneralizedResidueTheory.Basic
+import LeanModularForms.GeneralizedResidueTheory.Bridges
 import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.GeneralizedResidueTheory.CurveAvoidance
 import LeanModularForms.GeneralizedResidueTheory.Cycle
