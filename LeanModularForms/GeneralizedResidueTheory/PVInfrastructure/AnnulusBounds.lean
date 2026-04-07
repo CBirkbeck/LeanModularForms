@@ -52,6 +52,67 @@ lemma annulus_t_measure_bound {γ : ℝ → ℂ}
   exact t_bound_from_gamma_annulus hL hε₁_pos
     h_lower t ht_pos ht_lt_δ₁ hγ_upper
 
+/-- Points in the annulus `{t | ε₂ < ‖γ t - γ t₀‖ ≤ ε₁}` within `[a,b]` have
+    `|t - t₀| ≤ 2ε₁/‖L‖`, so the indicator integrand is zero far from `t₀`. -/
+private lemma remainder_annulus_zero_of_far
+    {γ : ℝ → ℂ} {a b t₀ : ℝ}
+    {δ₁ ε₁ ε₂ : ℝ} {L : ℂ}
+    (hL : L ≠ 0) (hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂)
+    (h_lower : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₁ →
+      ‖γ t - γ t₀‖ ≥ (‖L‖ / 2) * |t - t₀|)
+    (h_localize : ∀ t ∈ Set.Icc a b,
+      ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁)
+    (hab : a < b) {r : ℝ → ℂ}
+    (t : ℝ) (ht : t ∈ Set.uIoc a b)
+    (h_far : 2 * ε₁ / ‖L‖ < |t - t₀|) :
+    (if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
+      then r t else 0) = 0 := by
+  by_cases hcond : ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
+  · exfalso
+    have ht_in_Icc : t ∈ Set.Icc a b := by
+      rw [Set.uIoc_eq_union] at ht
+      rcases ht with ht_ab | ht_ba
+      · exact Set.Ioc_subset_Icc_self ht_ab
+      · rw [Set.Ioc_eq_empty_of_le hab.le] at ht_ba
+        exact absurd ht_ba (Set.notMem_empty t)
+    by_cases ht_eq : t = t₀
+    · simp only [ht_eq, sub_self, norm_zero] at hcond
+      exact absurd hcond.1 (not_lt.mpr hε₂_pos.le)
+    exact not_lt.mpr
+      (annulus_t_measure_bound hL hε₁_pos h_lower
+        (fun s hs hγs => by simp only [min_self]
+                            exact lt_of_lt_of_le (h_localize s hs hγs) (min_le_right _ _))
+        t ht_in_Icc ht_eq hcond.1 hcond.2) h_far
+  · simp only [hcond, ↓reduceIte]
+
+/-- Pointwise bound: the indicator integrand is bounded by `max 0 C` on `Ι a b`. -/
+private lemma remainder_annulus_pw_bound
+    {γ : ℝ → ℂ} {a b t₀ : ℝ}
+    {C δ₀ δ₁ ε₁ ε₂ : ℝ}
+    (hε₂_pos : 0 < ε₂)
+    (hr_bounded : ∀ t, 0 < |t - t₀| → |t - t₀| < δ₀ →
+      ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ C)
+    (h_localize : ∀ t ∈ Set.Icc a b,
+      ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₀ δ₁)
+    (hab : a < b) (t : ℝ) (ht : t ∈ Set.uIoc a b) :
+    ‖if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
+      then (γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹
+      else 0‖ ≤ max 0 C := by
+  by_cases hcond : ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
+  · rw [if_pos hcond]
+    have ht_in_Icc : t ∈ Set.Icc a b := by
+      rw [Set.uIoc_eq_union] at ht; rcases ht with h | h
+      · exact Set.Ioc_subset_Icc_self h
+      · exact absurd (Set.Ioc_eq_empty_of_le hab.le ▸ h) (Set.notMem_empty t)
+    by_cases ht_eq : t = t₀
+    · simp only [ht_eq, sub_self, norm_zero] at hcond
+      exact absurd hcond.1 (not_lt.mpr hε₂_pos.le)
+    have ht_pos : 0 < |t - t₀| := abs_pos.mpr (sub_ne_zero.mpr ht_eq)
+    exact le_trans (hr_bounded t ht_pos
+      (lt_of_lt_of_le (h_localize t ht_in_Icc hcond.2) (min_le_left _ _)))
+      (le_max_right 0 C)
+  · simp only [hcond, ↓reduceIte, norm_zero, le_max_iff, le_refl, true_or]
+
 lemma remainder_integral_bound_on_annulus
     {γ : ℝ → ℂ} {a b t₀ : ℝ}
     {C δ₀ δ₁ ε₁ ε₂ : ℝ} {L : ℂ}
@@ -77,195 +138,54 @@ lemma remainder_integral_bound_on_annulus
   intro r
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hab : a < b :=
-    (Set.mem_Ioo.mp hat₀).1.trans_le
-      (le_of_lt (Set.mem_Ioo.mp hat₀).2)
-  have h_pw_bound :
-      ∀ t ∈ Set.uIoc a b,
-      ‖if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
-        then r t else 0‖ ≤ max 0 C := by
-    intro t ht
-    by_cases hcond :
-        ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
-    · rw [if_pos hcond]
-      have ht_in_Icc : t ∈ Set.Icc a b := by
-        rw [Set.uIoc_eq_union] at ht
-        rcases ht with ht_ab | ht_ba
-        · exact Set.Ioc_subset_Icc_self ht_ab
-        · rw [Set.Ioc_eq_empty_of_le hab.le] at ht_ba
-          exact absurd ht_ba (Set.notMem_empty t)
-      have ht_loc := h_localize t ht_in_Icc hcond.2
-      by_cases ht_eq : t = t₀
-      · simp only [ht_eq, sub_self, norm_zero] at hcond
-        exact absurd hcond.1 (not_lt.mpr hε₂_pos.le)
-      have ht_pos : 0 < |t - t₀| :=
-        abs_pos.mpr (sub_ne_zero.mpr ht_eq)
-      have ht_lt_δ₀ : |t - t₀| < δ₀ :=
-        lt_of_lt_of_le ht_loc (min_le_left _ _)
-      have hr_t := hr_bounded t ht_pos ht_lt_δ₀
-      simp only [r] at hr_t ⊢
-      exact le_trans hr_t (le_max_right 0 C)
-    · simp only [hcond, ↓reduceIte, norm_zero,
-        le_max_iff, le_refl, true_or]
-  let S := {t ∈ Set.Icc a b |
-    ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁}
-  have hS_subset : S ⊆
-      Set.Icc (t₀ - 2 * ε₁ / ‖L‖)
-              (t₀ + 2 * ε₁ / ‖L‖) := by
-    intro t ht
-    obtain ⟨ht_ab, hε_lower, hε_upper⟩ := ht
-    have h_loc_adapted :
-        ∀ t ∈ Set.Icc a b,
-        ‖γ t - γ t₀‖ ≤ ε₁ →
-        |t - t₀| < min δ₁ δ₁ := by
-      intro s hs hγs
-      simp only [min_self]
-      exact lt_of_lt_of_le (h_localize s hs hγs)
-        (min_le_right _ _)
-    by_cases ht_eq : t = t₀
-    · rw [ht_eq, Set.mem_Icc]
-      have h_term_pos : 0 < 2 * ε₁ / ‖L‖ := by
-        positivity
-      constructor
-      · linarith [h_term_pos]
-      · linarith [h_term_pos]
-    have ht_bound :=
-      annulus_t_measure_bound hL hε₁_pos h_lower
-        h_loc_adapted t ht_ab ht_eq hε_lower hε_upper
-    rw [abs_le] at ht_bound
-    exact Set.mem_Icc.mpr
-      ⟨by linarith [ht_bound.1],
-       by linarith [ht_bound.2]⟩
-  have hS_measure :
-      MeasureTheory.volume S ≤
-      ENNReal.ofReal (4 * ε₁ / ‖L‖) := by
-    have h_width :
-        (t₀ + 2 * ε₁ / ‖L‖) -
-        (t₀ - 2 * ε₁ / ‖L‖) = 4 * ε₁ / ‖L‖ := by
-      ring
-    calc MeasureTheory.volume S
-        ≤ MeasureTheory.volume
-          (Set.Icc (t₀ - 2 * ε₁ / ‖L‖)
-                   (t₀ + 2 * ε₁ / ‖L‖)) :=
-          MeasureTheory.measure_mono hS_subset
-      _ = ENNReal.ofReal
-          ((t₀ + 2 * ε₁ / ‖L‖) -
-           (t₀ - 2 * ε₁ / ‖L‖)) :=
-          Real.volume_Icc
-      _ = ENNReal.ofReal (4 * ε₁ / ‖L‖) := by
-          rw [h_width]
-  have hr_bound_on_S :
-      ∀ t ∈ S, ‖r t‖ ≤ max 0 C := by
-    intro t ⟨ht_ab, hε_lower, hε_upper⟩
-    by_cases ht_eq : t = t₀
-    · simp only [ht_eq, sub_self, norm_zero]
-        at hε_lower
-      exact absurd hε_lower (not_lt.mpr hε₂_pos.le)
-    have ht_loc := h_localize t ht_ab hε_upper
-    have ht_pos : 0 < |t - t₀| :=
-      abs_pos.mpr (sub_ne_zero.mpr ht_eq)
-    have ht_lt_δ₀ : |t - t₀| < δ₀ :=
-      lt_of_lt_of_le ht_loc (min_le_left _ _)
-    have hr_t := hr_bounded t ht_pos ht_lt_δ₀
-    simp only [r] at hr_t ⊢
-    exact le_trans hr_t (le_max_right 0 C)
-  have h_zero_of_far :
-      ∀ t ∈ Set.uIoc a b,
-      2 * ε₁ / ‖L‖ < |t - t₀| →
-      (if ε₂ < ‖γ t - γ t₀‖ ∧
-          ‖γ t - γ t₀‖ ≤ ε₁
-        then r t else 0) = 0 := by
-    intro t ht h_far
-    by_cases hcond :
-        ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
-    · exfalso
-      have ht_in_Icc : t ∈ Set.Icc a b := by
-        rw [Set.uIoc_eq_union] at ht
-        rcases ht with ht_ab | ht_ba
-        · exact Set.Ioc_subset_Icc_self ht_ab
-        · rw [Set.Ioc_eq_empty_of_le hab.le] at ht_ba
-          exact absurd ht_ba (Set.notMem_empty t)
-      by_cases ht_eq : t = t₀
-      · simp only [ht_eq, sub_self, norm_zero]
-          at hcond
-        exact absurd hcond.1
-          (not_lt.mpr hε₂_pos.le)
-      have h_loc_adapted :
-          ∀ s ∈ Set.Icc a b,
-          ‖γ s - γ t₀‖ ≤ ε₁ →
-          |s - t₀| < min δ₁ δ₁ := by
-        intro s hs hγs; simp only [min_self]
-        exact lt_of_lt_of_le (h_localize s hs hγs)
-          (min_le_right _ _)
-      have ht_bound :=
-        annulus_t_measure_bound hL hε₁_pos h_lower
-          h_loc_adapted t ht_in_Icc ht_eq hcond.1
-          hcond.2
-      exact not_lt.mpr ht_bound h_far
-    · simp only [hcond, ↓reduceIte]
-  set R := 2 * ε₁ / ‖L‖ with hR_def
+    (Set.mem_Ioo.mp hat₀).1.trans_le (le_of_lt (Set.mem_Ioo.mp hat₀).2)
+  -- Localize h_lower for annulus_t_measure_bound
+  have h_loc_δ₁ : ∀ t ∈ Set.Icc a b,
+      ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁ := by
+    intro s hs hγs; simp only [min_self]
+    exact lt_of_lt_of_le (h_localize s hs hγs) (min_le_right _ _)
+  -- Set up the indicator domination
+  set R := 2 * ε₁ / ‖L‖
   have hR_pos : 0 < R := by positivity
-  set Icontain :=
-    Set.Icc (t₀ - R) (t₀ + R) with hI_def
-  set g_comp : ℝ → ℝ :=
-    Icontain.indicator (fun _ => max 0 C)
-    with hg_comp_def
-  have hg_int :
-      IntervalIntegrable g_comp volume a b := by
+  set Icontain := Set.Icc (t₀ - R) (t₀ + R)
+  set g_comp : ℝ → ℝ := Icontain.indicator (fun _ => max 0 C)
+  have hg_int : IntervalIntegrable g_comp volume a b := by
     constructor <;>
       exact (MeasureTheory.integrableOn_const
-        (hs := measure_Ioc_lt_top.ne)).indicator
-        measurableSet_Icc
-  have h_pw_le :
-      ∀ᵐ t ∂volume, t ∈ Set.Ioc a b →
-      ‖if ε₂ < ‖γ t - γ t₀‖ ∧
-          ‖γ t - γ t₀‖ ≤ ε₁
+        (hs := measure_Ioc_lt_top.ne)).indicator measurableSet_Icc
+  have h_pw_le : ∀ᵐ t ∂volume, t ∈ Set.Ioc a b →
+      ‖if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
         then r t else 0‖ ≤ g_comp t := by
-    apply Filter.Eventually.of_forall
-    intro t ht
+    apply Filter.Eventually.of_forall; intro t ht
     simp only [g_comp, Set.indicator]
     by_cases ht_in : t ∈ Icontain
     · simp only [ht_in, ↓reduceIte]
-      have ht_uIoc : t ∈ Ι a b := by
-        rw [Set.uIoc_of_le hab.le]; exact ht
-      exact h_pw_bound t ht_uIoc
+      exact remainder_annulus_pw_bound hε₂_pos hr_bounded h_localize hab
+        t (Set.uIoc_of_le hab.le ▸ ht)
     · simp only [ht_in, ↓reduceIte]
-      have h_far : 2 * ε₁ / ‖L‖ < |t - t₀| := by
-        simp only [Icontain, Set.mem_Icc,
-          not_and_or, not_le] at ht_in
+      have h_far : R < |t - t₀| := by
+        simp only [Icontain, Set.mem_Icc, not_and_or, not_le] at ht_in
         rcases ht_in with h | h
         · rw [abs_of_neg (by linarith)]; linarith
         · rw [abs_of_pos (by linarith)]; linarith
-      have ht_uIoc : t ∈ Ι a b := by
-        rw [Set.uIoc_of_le hab.le]; exact ht
-      rw [h_zero_of_far t ht_uIoc h_far, norm_zero]
+      rw [remainder_annulus_zero_of_far hL hε₁_pos hε₂_pos h_lower h_loc_δ₁ hab
+        t (Set.uIoc_of_le hab.le ▸ ht) h_far, norm_zero]
   calc ‖∫ t in a..b,
-      if ε₂ < ‖γ t - γ t₀‖ ∧
-          ‖γ t - γ t₀‖ ≤ ε₁
+      if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
         then r t else 0‖
       ≤ ∫ t in a..b, g_comp t :=
-        intervalIntegral.norm_integral_le_of_norm_le
-          hab.le h_pw_le hg_int
+        intervalIntegral.norm_integral_le_of_norm_le hab.le h_pw_le hg_int
     _ ≤ max 0 C * (4 * ε₁ / ‖L‖) := by
         rw [intervalIntegral.integral_of_le hab.le,
-          MeasureTheory.integral_indicator
-            measurableSet_Icc,
-          MeasureTheory.setIntegral_const,
-          smul_eq_mul, mul_comm]
-        apply mul_le_mul_of_nonneg_left _
-          (le_max_left 0 C)
+          MeasureTheory.integral_indicator measurableSet_Icc,
+          MeasureTheory.setIntegral_const, smul_eq_mul, mul_comm]
+        apply mul_le_mul_of_nonneg_left _ (le_max_left 0 C)
         unfold MeasureTheory.Measure.real
-        apply ENNReal.toReal_le_of_le_ofReal
-          (by positivity)
-        calc (volume.restrict (Set.Ioc a b))
-              Icontain
-            ≤ volume Icontain :=
-              MeasureTheory.Measure.restrict_apply_le
-                _ _
-          _ = ENNReal.ofReal
-              ((t₀ + R) - (t₀ - R)) :=
-              Real.volume_Icc
-          _ = ENNReal.ofReal (4 * ε₁ / ‖L‖) := by
-              simp only [R]; ring_nf
+        apply ENNReal.toReal_le_of_le_ofReal (by positivity)
+        calc (volume.restrict (Set.Ioc a b)) Icontain
+            ≤ volume Icontain := MeasureTheory.Measure.restrict_apply_le _ _
+          _ = ENNReal.ofReal ((t₀ + R) - (t₀ - R)) := Real.volume_Icc
+          _ = ENNReal.ofReal (4 * ε₁ / ‖L‖) := by simp only [R]; ring_nf
 
 lemma norm_linear_approx_bound {γ : ℝ → ℂ}
     {t₀ : ℝ} {L : ℂ} {K₀ δ₀ : ℝ}
@@ -427,6 +347,80 @@ lemma near_threshold_implies_r_in_shell
       mul_comm _ _
     linarith
 
+/-- When `ε ≤ Δ` (small epsilon), the shell is contained in a ball of radius `(ε+Δ)/L_norm`. -/
+private lemma shell_vol_le_of_small_eps {t₀ ε Δ L_norm : ℝ}
+    (hL_pos : 0 < L_norm) (_hΔ_nonneg : 0 ≤ Δ) (h : ε ≤ Δ) :
+    volume {t : ℝ | |L_norm * |t - t₀| - ε| ≤ Δ} ≤
+      ENNReal.ofReal (4 * Δ / L_norm) := by
+  have h_sub : {t : ℝ | |L_norm * |t - t₀| - ε| ≤ Δ} ⊆
+      {t : ℝ | |t - t₀| ≤ (ε + Δ) / L_norm} := by
+    intro t ht; simp only [Set.mem_setOf_eq] at ht ⊢
+    calc |t - t₀| = (L_norm * |t - t₀|) / L_norm := by field_simp
+      _ ≤ (ε + Δ) / L_norm := div_le_div_of_nonneg_right
+          (by linarith [(abs_le.mp ht).2]) hL_pos.le
+  calc volume {t : ℝ | |L_norm * |t - t₀| - ε| ≤ Δ}
+      ≤ volume {t : ℝ | |t - t₀| ≤ (ε + Δ) / L_norm} :=
+        MeasureTheory.measure_mono h_sub
+    _ = volume (Set.Icc (t₀ - (ε + Δ) / L_norm) (t₀ + (ε + Δ) / L_norm)) := by
+        congr 1; ext t; simp only [Set.mem_setOf_eq, Set.mem_Icc, abs_le]
+        constructor <;> intro ⟨h1, h2⟩ <;> constructor <;> linarith
+    _ = ENNReal.ofReal (2 * (ε + Δ) / L_norm) := by rw [Real.volume_Icc]; ring_nf
+    _ ≤ ENNReal.ofReal (4 * Δ / L_norm) := by
+        apply ENNReal.ofReal_le_ofReal
+        calc 2 * (ε + Δ) / L_norm ≤ 2 * (2 * Δ) / L_norm :=
+              div_le_div_of_nonneg_right (by linarith) hL_pos.le
+          _ = 4 * Δ / L_norm := by ring
+
+/-- The level set `{|t - t₀| = r₁}` for `r₁ > 0` has measure zero (it's at most 2 points). -/
+private lemma volume_abs_eq_null {t₀ r₁ : ℝ} (hr₁_pos : 0 < r₁) :
+    volume {t : ℝ | |t - t₀| = r₁} = 0 := by
+  have h_sub : {t : ℝ | |t - t₀| = r₁} ⊆ {t₀ - r₁, t₀ + r₁} := by
+    intro t ht; simp only [Set.mem_setOf_eq] at ht
+    simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
+    rcases (abs_eq hr₁_pos.le).mp ht with h1 | h1
+    · right; linarith
+    · left; linarith
+  exact le_antisymm (le_of_le_of_eq
+    (MeasureTheory.measure_mono h_sub)
+    ((Set.toFinite _).measure_zero volume)) (zero_le _)
+
+/-- When `Δ < ε` (large epsilon), the shell is an annulus with width `2Δ/L_norm`. -/
+private lemma shell_vol_le_of_large_eps {t₀ ε Δ L_norm : ℝ}
+    (hL_pos : 0 < L_norm) (hΔ_nonneg : 0 ≤ Δ) (h : Δ < ε) :
+    volume {t : ℝ | |L_norm * |t - t₀| - ε| ≤ Δ} ≤
+      ENNReal.ofReal (4 * Δ / L_norm) := by
+  let r₁ := (ε - Δ) / L_norm; let r₂ := (ε + Δ) / L_norm
+  have hr₁_pos : 0 < r₁ := div_pos (by linarith) hL_pos
+  have hr₁_le_r₂ : r₁ ≤ r₂ :=
+    div_le_div_of_nonneg_right (by linarith) hL_pos.le
+  have h_sub : {t : ℝ | |L_norm * |t - t₀| - ε| ≤ Δ} ⊆
+      {t : ℝ | r₁ ≤ |t - t₀| ∧ |t - t₀| ≤ r₂} := by
+    intro t ht; simp only [Set.mem_setOf_eq] at ht
+    have h_abs := abs_le.mp ht
+    exact ⟨by calc r₁ = (ε - Δ) / L_norm := rfl
+              _ ≤ (L_norm * |t - t₀|) / L_norm :=
+                  div_le_div_of_nonneg_right (by linarith [h_abs.1]) hL_pos.le
+              _ = |t - t₀| := by field_simp,
+           by calc |t - t₀| = (L_norm * |t - t₀|) / L_norm := by field_simp
+              _ ≤ (ε + Δ) / L_norm :=
+                  div_le_div_of_nonneg_right (by linarith [h_abs.2]) hL_pos.le⟩
+  calc volume {t : ℝ | |L_norm * |t - t₀| - ε| ≤ Δ}
+      ≤ volume {t : ℝ | r₁ ≤ |t - t₀| ∧ |t - t₀| ≤ r₂} :=
+        MeasureTheory.measure_mono h_sub
+    _ ≤ volume ({t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ∪ {t : ℝ | |t - t₀| = r₁}) :=
+        MeasureTheory.measure_mono (fun t ⟨h1, h2⟩ => by
+          by_cases heq : |t - t₀| = r₁
+          · right; exact heq
+          · left; exact ⟨lt_of_le_of_ne h1 (Ne.symm heq), h2⟩)
+    _ ≤ volume {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} +
+        volume {t : ℝ | |t - t₀| = r₁} := MeasureTheory.measure_union_le _ _
+    _ = volume {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} := by
+        rw [volume_abs_eq_null hr₁_pos, add_zero]
+    _ ≤ ENNReal.ofReal (2 * (r₂ - r₁)) := volume_shell_le hr₁_le_r₂
+    _ = ENNReal.ofReal (4 * Δ / L_norm) := by
+        congr 1; show 2 * (r₂ - r₁) = 4 * Δ / L_norm
+        simp only [r₁, r₂]; field_simp; ring
+
 lemma shell_vol_le {t₀ ε Δ L_norm : ℝ}
     (hL_pos : 0 < L_norm)
     (hΔ_nonneg : 0 ≤ Δ) (_hε_pos : 0 < ε) :
@@ -434,155 +428,8 @@ lemma shell_vol_le {t₀ ε Δ L_norm : ℝ}
       |L_norm * |t - t₀| - ε| ≤ Δ} ≤
       ENNReal.ofReal (4 * Δ / L_norm) := by
   by_cases h : ε ≤ Δ
-  · have h_sub :
-        {t : ℝ | |L_norm * |t - t₀| - ε| ≤ Δ} ⊆
-        {t : ℝ |
-          |t - t₀| ≤ (ε + Δ) / L_norm} := by
-      intro t ht
-      simp only [Set.mem_setOf_eq] at ht ⊢
-      have h_abs := abs_le.mp ht
-      have h_upper :
-        L_norm * |t - t₀| ≤ ε + Δ := by
-        linarith [h_abs.2]
-      calc |t - t₀|
-          = (L_norm * |t - t₀|) / L_norm := by
-            field_simp
-        _ ≤ (ε + Δ) / L_norm := by
-            apply div_le_div_of_nonneg_right
-              h_upper hL_pos.le
-    have h_ball :
-        {t : ℝ |
-          |t - t₀| ≤ (ε + Δ) / L_norm} =
-        Set.Icc (t₀ - (ε + Δ) / L_norm)
-                (t₀ + (ε + Δ) / L_norm) := by
-      ext t
-      simp only [Set.mem_setOf_eq, Set.mem_Icc,
-        abs_le]
-      constructor <;> intro ⟨h1, h2⟩ <;>
-        constructor <;> linarith
-    have h_vol :
-        volume (Set.Icc
-          (t₀ - (ε + Δ) / L_norm)
-          (t₀ + (ε + Δ) / L_norm)) =
-        ENNReal.ofReal
-          (2 * (ε + Δ) / L_norm) := by
-      rw [Real.volume_Icc]; ring_nf
-    calc volume {t : ℝ |
-        |L_norm * |t - t₀| - ε| ≤ Δ}
-        ≤ volume {t : ℝ |
-            |t - t₀| ≤ (ε + Δ) / L_norm} :=
-          MeasureTheory.measure_mono h_sub
-      _ = volume (Set.Icc
-            (t₀ - (ε + Δ) / L_norm)
-            (t₀ + (ε + Δ) / L_norm)) := by
-          rw [h_ball]
-      _ = ENNReal.ofReal
-            (2 * (ε + Δ) / L_norm) := h_vol
-      _ ≤ ENNReal.ofReal
-            (4 * Δ / L_norm) := by
-          apply ENNReal.ofReal_le_ofReal
-          have : ε + Δ ≤ 2 * Δ := by linarith
-          calc 2 * (ε + Δ) / L_norm
-              ≤ 2 * (2 * Δ) / L_norm := by
-                apply div_le_div_of_nonneg_right _
-                  hL_pos.le; linarith
-            _ = 4 * Δ / L_norm := by ring
-  · push_neg at h
-    let r₁ := (ε - Δ) / L_norm
-    let r₂ := (ε + Δ) / L_norm
-    have hr₁_pos : 0 < r₁ := by
-      simp only [r₁]
-      apply div_pos; linarith; exact hL_pos
-    have hr₁_le_r₂ : r₁ ≤ r₂ := by
-      simp only [r₁, r₂]
-      apply div_le_div_of_nonneg_right _ hL_pos.le
-      linarith
-    have h_sub :
-        {t : ℝ |
-          |L_norm * |t - t₀| - ε| ≤ Δ} ⊆
-        {t : ℝ |
-          r₁ ≤ |t - t₀| ∧
-          |t - t₀| ≤ r₂} := by
-      intro t ht
-      simp only [Set.mem_setOf_eq] at ht
-      have h_abs := abs_le.mp ht
-      simp only [r₁, r₂, Set.mem_setOf_eq]
-      constructor
-      · calc (ε - Δ) / L_norm
-            ≤ (L_norm * |t - t₀|) / L_norm := by
-              apply div_le_div_of_nonneg_right _
-                hL_pos.le; linarith [h_abs.1]
-          _ = |t - t₀| := by field_simp
-      · calc |t - t₀|
-            = (L_norm * |t - t₀|) / L_norm := by
-              field_simp
-          _ ≤ (ε + Δ) / L_norm := by
-              apply div_le_div_of_nonneg_right _
-                hL_pos.le; linarith [h_abs.2]
-    have h_sub_strict :
-        {t : ℝ |
-          r₁ ≤ |t - t₀| ∧ |t - t₀| ≤ r₂} ⊆
-        {t : ℝ |
-          r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ∪
-        {t : ℝ | |t - t₀| = r₁} := by
-      intro t ⟨h1, h2⟩
-      by_cases heq : |t - t₀| = r₁
-      · right; exact heq
-      · left
-        exact ⟨lt_of_le_of_ne h1 (Ne.symm heq), h2⟩
-    have h_singleton_null :
-        volume {t : ℝ | |t - t₀| = r₁} = 0 := by
-      have h_sub :
-          {t : ℝ | |t - t₀| = r₁} ⊆
-          {t₀ - r₁, t₀ + r₁} := by
-        intro t ht
-        simp only [Set.mem_setOf_eq] at ht
-        simp only [Set.mem_insert_iff,
-          Set.mem_singleton_iff]
-        rcases (abs_eq hr₁_pos.le).mp ht with h1 | h1
-        · right; linarith
-        · left; linarith
-      have h_finite :
-          (({t₀ - r₁, t₀ + r₁} : Set ℝ)).Finite :=
-        Set.toFinite _
-      have h_pair_null :
-          volume ({t₀ - r₁, t₀ + r₁} : Set ℝ) = 0 :=
-        h_finite.measure_zero volume
-      have h_le :
-          volume {t : ℝ | |t - t₀| = r₁} ≤
-          volume ({t₀ - r₁, t₀ + r₁} : Set ℝ) :=
-        MeasureTheory.measure_mono h_sub
-      simp only [h_pair_null, nonpos_iff_eq_zero]
-        at h_le
-      exact h_le
-    have h_width :
-        r₂ - r₁ = 2 * Δ / L_norm := by
-      simp only [r₁, r₂]; field_simp; ring
-    calc volume {t : ℝ |
-        |L_norm * |t - t₀| - ε| ≤ Δ}
-        ≤ volume {t : ℝ |
-            r₁ ≤ |t - t₀| ∧ |t - t₀| ≤ r₂} :=
-          MeasureTheory.measure_mono h_sub
-      _ ≤ volume ({t : ℝ |
-            r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ∪
-          {t : ℝ | |t - t₀| = r₁}) :=
-          MeasureTheory.measure_mono h_sub_strict
-      _ ≤ volume {t : ℝ |
-            r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} +
-          volume {t : ℝ | |t - t₀| = r₁} :=
-          MeasureTheory.measure_union_le _ _
-      _ = volume {t : ℝ |
-            r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} +
-          0 := by rw [h_singleton_null]
-      _ = volume {t : ℝ |
-            r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} := by
-          ring
-      _ ≤ ENNReal.ofReal (2 * (r₂ - r₁)) :=
-          volume_shell_le hr₁_le_r₂
-      _ = ENNReal.ofReal (2 * (2 * Δ / L_norm)) := by
-          rw [h_width]
-      _ = ENNReal.ofReal (4 * Δ / L_norm) := by
-          ring_nf
+  · exact shell_vol_le_of_small_eps hL_pos hΔ_nonneg h
+  · exact shell_vol_le_of_large_eps hL_pos hΔ_nonneg (not_le.mp h)
 
 lemma annulus_symmDiff_measure_bound
     {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
