@@ -313,7 +313,7 @@ lemma ModularFormClass.qExpansion_isBigO {k : ℤ} (hk : 0 ≤ k) {Γ : Subgroup
       exact_mod_cast hn.ne'
     · refine (hC _).trans (le_of_eq ?_)
       congr 1
-      rw [← UpperHalfPlane.coe_im, UpperHalfPlane.coe_mk_subtype, add_im, ofReal_im, zero_add,
+      rw [← UpperHalfPlane.coe_im, UpperHalfPlane.coe_mk, add_im, ofReal_im, zero_add,
         mul_I_im, ← ofReal_one, ← ofReal_natCast, ← ofReal_div, ofReal_re, div_zpow, one_zpow,
         one_div_one_div]
       exact max_eq_right <| one_le_zpow₀ (mod_cast hn) hk

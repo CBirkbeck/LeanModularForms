@@ -160,7 +160,7 @@ private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
   apply UpperHalfPlane.ext; apply Complex.ext <;>
     simp only [ellipticPointRho', UpperHalfPlane.coe_mk, add_re, add_im, neg_re, neg_im, one_re,
       one_im, div_ofNat_re, div_ofNat_im, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im,
-      mul_zero, mul_one, sub_zero, add_zero, zero_mul, zero_add, zero_div, neg_zero] <;>
+      mul_zero, mul_one, sub_zero, add_zero, zero_add, zero_div, neg_zero] <;>
     linarith
 
 private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
@@ -179,7 +179,7 @@ private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
   apply UpperHalfPlane.ext; apply Complex.ext <;>
     simp only [ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_re, add_im, one_re, one_im,
       div_ofNat_re, div_ofNat_im, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im, mul_zero,
-      mul_one, sub_zero, add_zero, zero_mul, zero_add, zero_div] <;>
+      mul_one, sub_zero, add_zero, zero_add, zero_div] <;>
     linarith
 
 private lemma vert_edge_im_gt_sqrt3_half (s : ℍ) (hs_norm : ‖(s : ℂ)‖ > 1)

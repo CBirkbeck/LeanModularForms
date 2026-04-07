@@ -70,7 +70,7 @@ def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=
     ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z
 
 private lemma bounded_on_Ioo_of_continuousOn_with_limits
-    {f : ℝ → ℂ} {a b : ℝ} (hab : a < b)
+    {f : ℝ → ℂ} {a b : ℝ} (_hab : a < b)
     (hf_cont : ContinuousOn f (Ioo a b))
     (hf_left : ∃ L : ℂ, Tendsto f (𝓝[>] a) (𝓝 L))
     (hf_right : ∃ L : ℂ, Tendsto f (𝓝[<] b) (𝓝 L)) :

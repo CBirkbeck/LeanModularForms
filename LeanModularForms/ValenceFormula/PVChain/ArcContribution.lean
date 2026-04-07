@@ -597,8 +597,6 @@ lemma arc_cpv_eventually_eq_union (S : Finset UpperHalfPlane)
   apply intervalIntegral.integral_congr
   intro t ht
   rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht
-  change cauchyPrincipalValueIntegrandOn (sArcOfS S ∪ sVertOfS S) g (fdBoundary_H H) ε t =
-    cauchyPrincipalValueIntegrandOn (sArcOfS S) g (fdBoundary_H H) ε t
   have h_ind_eq : ∀ p ∈ sVertOfS S, p ∉ sArcOfS S → ε < ‖fdBoundary_H H t - p‖ := by
     intro p hp hp_not; exact lt_of_lt_of_le hε_lt (h_far p hp hp_not t ht)
   unfold cauchyPrincipalValueIntegrandOn

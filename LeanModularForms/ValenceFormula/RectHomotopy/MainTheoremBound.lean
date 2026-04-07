@@ -93,7 +93,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_bound :
                     not_le.mpr ht1',
                     ht'_le2, ite_false,
                     ite_true,
-                    add_zero, sub_zero]
+                    sub_zero]
                   erw [one_smul, zero_smul, add_zero]
                   congr 1; ring
                 · simp only [
@@ -101,7 +101,7 @@ lemma fdBoundaryToPolygonHomotopy_deriv_bound :
                     not_le.mpr (lt_of_not_ge ht'_le2),
                     le_of_lt ht2', ite_false,
                     ite_true,
-                    add_zero, sub_zero]
+                    sub_zero]
                   erw [one_smul, zero_smul, add_zero]
                   congr 1
                   ring

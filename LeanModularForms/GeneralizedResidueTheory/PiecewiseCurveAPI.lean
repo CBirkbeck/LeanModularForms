@@ -103,11 +103,11 @@ private theorem sorted_le_getLast : ∀ (l : List ℝ) (_hl : l.Sorted (· ≤ �
           (hd2 :: tl2).getLast htl_ne from List.getLast_cons_cons]
       rcases List.mem_cons.mp hmem with rfl | hmem'
       · have hhd2_mem : hd2 ∈ hd2 :: tl2 := List.mem_cons_self
-        have h1 : elem ≤ hd2 := (List.sorted_cons.mp hl).1 hd2 hhd2_mem
+        have h1 : elem ≤ hd2 := (List.pairwise_cons.mp hl).1 hd2 hhd2_mem
         have h2 : hd2 ≤ (hd2 :: tl2).getLast htl_ne :=
-          sorted_le_getLast _ (List.sorted_cons.mp hl).2 htl_ne hd2 hhd2_mem
+          sorted_le_getLast _ (List.pairwise_cons.mp hl).2 htl_ne hd2 hhd2_mem
         linarith
-      · exact sorted_le_getLast _ (List.sorted_cons.mp hl).2 htl_ne elem hmem'
+      · exact sorted_le_getLast _ (List.pairwise_cons.mp hl).2 htl_ne elem hmem'
 
 /-- The last element of the sorted partition equals `γ.b`.
 
@@ -150,7 +150,7 @@ private theorem sorted_consecutive_union :
     | cons y ys =>
       simp only [List.zip_cons_cons, List.tail_cons]
       have hys_sorted : (y :: ys).Sorted (· ≤ ·) :=
-        (List.sorted_cons.mp hsorted).2
+        (List.pairwise_cons.mp hsorted).2
       have hys_ne : y :: ys ≠ [] := List.cons_ne_nil y ys
       rw [List.getLast_cons_cons] at hlast
       cases ys with
@@ -215,9 +215,9 @@ private theorem sorted_zip_tail_le {l : List ℝ} (hl : l.Sorted (· ≤ ·))
       cases hp with
       | inl h =>
         rw [h]
-        exact (List.sorted_cons.mp hl).1 y List.mem_cons_self
+        exact (List.pairwise_cons.mp hl).1 y List.mem_cons_self
       | inr h =>
-        exact ih ((List.sorted_cons.mp hl).2) h
+        exact ih ((List.pairwise_cons.mp hl).2) h
 
 /-- For each consecutive pair `(p, q)`, we have `p ≤ q`. -/
 theorem consecutivePairs_le (γ : PiecewiseC1Curve) (p : ℝ × ℝ)

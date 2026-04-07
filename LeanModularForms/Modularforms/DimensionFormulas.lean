@@ -408,7 +408,7 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
       rw [DirectSum.of_mul_of, DirectSum.of_mul_of, hc4e, smul_smul, smul_smul]
       ring_nf
       rw [@DirectSum.smul_apply]
-      simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, DirectSum.of_eq_same]
+      simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd]
       rfl
     have hF2 : (((F^3)^2) 12) = ((qExpansion 1 f).coeff 0)^6 • ((E₆.mul E₆)) := by
       rw [HF3, pow_two]
@@ -417,7 +417,7 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
       rw [DirectSum.of_mul_of, hc6e, smul_smul]
       ring_nf
       rw [@DirectSum.smul_apply]
-      simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, DirectSum.of_eq_same]
+      simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd]
       rfl
     have V : (1 / 1728 : ℂ) • ((((F^2)^3) 12) - (((F^3)^2) 12)) = ((qExpansion 1 f).coeff 0)^6 • D
       := by
@@ -426,9 +426,9 @@ f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contrad
         DirectSum.of_eq_same, D]
       rw [Delta_E4_eqn, Delta_E4_E6_eq, pow_two, pow_three, DirectSum.of_mul_of,
         DirectSum.of_mul_of,DirectSum.of_mul_of]
-      simp only [one_div, Int.reduceAdd, DirectSum.sub_apply, DirectSum.of_eq_same]
+      simp only [one_div, Int.reduceAdd, DirectSum.sub_apply]
       ext y
-      simp only [IsGLPos.smul_apply, sub_apply, Int.reduceAdd, smul_eq_mul]
+      simp only [IsGLPos.smul_apply, sub_apply, smul_eq_mul]
       ring_nf
       rfl
     have ht : (1 / 1728 : ℂ) • ((((F^2)^3) 12) - (((F^3)^2) 12)) = 0 := by
@@ -551,20 +551,20 @@ lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     fin_cases hkop <;> simp_all
     -- k = 4: weight k - 12 = -8
     · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
-        (show (-8 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+        (show (-8 : ℤ) < 0 by norm_num))) using 1; norm_cast
     -- k = 6: weight k - 12 = -6
     · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
-        (show (-6 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+        (show (-6 : ℤ) < 0 by norm_num))) using 1; norm_cast
     -- k = 8: weight k - 12 = -4
     · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
-        (show (-4 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+        (show (-4 : ℤ) < 0 by norm_num))) using 1; norm_cast
     -- k = 10: weight k - 12 = -2
     · convert (congrArg (1 + ·) (ModularForm.levelOne_neg_weight_rank_zero
-        (show (-2 : ℤ) < 0 by norm_num))) using 1 <;> norm_cast
+        (show (-2 : ℤ) < 0 by norm_num))) using 1; norm_cast
     -- k = 12: weight k - 12 = 0
-    · convert (congrArg (1 + ·) ModularForm.levelOne_weight_zero_rank_one) using 1 <;> norm_cast
+    · convert (congrArg (1 + ·) ModularForm.levelOne_weight_zero_rank_one) using 1; norm_cast
     -- k = 14: weight k - 12 = 2
-    · convert (congrArg (1 + ·) dim_weight_two) using 1 <;> norm_cast
+    · convert (congrArg (1 + ·) dim_weight_two) using 1; norm_cast
 
 lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) (k)) = if 12 ∣ ((k) : ℤ) - 2 then

@@ -47,7 +47,7 @@ private lemma mul_Delta_map_eq_DirectSum_mul (n : ℕ) (_hn : 12 ≤ n)
   apply ModularForm.gradedMonoid_eq_of_cast hind.symm
   simp only [GradedMonoid.mk, mul_Delta_map]
   ext z
-  simp only [mcast, mul, GradedMonoid.GMul.mul]
+  simp only [mcast, GradedMonoid.GMul.mul]
   rfl
 
 private lemma cuspform_eq_mul_Delta (n : ℕ) (_hn : 12 ≤ n) (g : ModularForm Γ(1) ↑n)

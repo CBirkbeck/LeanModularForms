@@ -377,12 +377,11 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   -- = L₁⁻¹ * (L₁ D₁ R₁) * (R₁⁻¹ L₂⁻¹ * L₂ D₂ R₂)
   -- = D₁ * D₂ * R₂ (after cancellation)
   -- This is in H * diag * H with witnesses 1 and R₂
-  simp only [Subgroup.coe_inv, Subgroup.coe_mul]
   rw [hα_eq, hβ_eq, DoubleCoset.mem_doubleCoset]
   refine ⟨1, (GL_pair 2).H.one_mem, R₂, hR₂, ?_⟩
   -- After simp cancellation: D₁ * (D₂ * R₂) = diagMat_delta(![1,p^{k+1}]) * R₂
-  simp only [one_mul, _root_.mul_inv_rev, inv_inv, mul_assoc,
-    inv_mul_cancel_left, mul_inv_cancel_left, inv_mul_cancel, mul_inv_cancel, mul_one]
+  simp only [one_mul, _root_.mul_inv_rev, mul_assoc,
+    inv_mul_cancel_left, mul_inv_cancel_left]
   rw [diagMat_delta_val 2 (![1, p ^ (k + 1)])
     (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]
   rw [← mul_assoc, diagMat_mul 2 (![1, p]) (![1, p ^ k])

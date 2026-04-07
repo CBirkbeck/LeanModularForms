@@ -71,7 +71,7 @@ private lemma endpoint_avoid_14 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       rw [fdBoundary_H_at_one] at habs
       have h_im := congr_arg Complex.im habs
       simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-        UpperHalfPlane.coe_mk_subtype, Complex.add_im, Complex.ofReal_im,
+        UpperHalfPlane.coe_mk, Complex.add_im, Complex.ofReal_im,
         Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re,
         Complex.div_ofNat, mul_zero, mul_one, s] at h_im
       linarith
@@ -84,7 +84,7 @@ private lemma endpoint_avoid_14 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
             exact fdBoundary_at_three.symm
           rw [hγ3_eq, fdBoundary_at_three] at habs
           have him := congr_arg Complex.im habs
-          simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+          simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
             Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
             Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.div_ofNat, s] at him
           linarith [Real.sqrt_pos.mpr (show (0:ℝ) < 3 from by norm_num)])) |>.symm ▸
@@ -403,7 +403,7 @@ private lemma corner_cpv_03 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
           Complex.I_re, Complex.I_im, Complex.ofReal_re]
       rw [← habs] at him_s
       have him_rho : (ellipticPointRho : ℂ).im = Real.sqrt 3 / 2 := by
-        simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+        simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
           Complex.add_im, Complex.neg_im, Complex.ofReal_im, Complex.mul_im,
           Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.div_ofNat]
       linarith [him_rho]

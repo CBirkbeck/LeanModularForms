@@ -244,7 +244,7 @@ private lemma g_i_norm_ge_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) :
   have hre : (fdBoundary_H H t - I).re = -1 / 2 := by
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
     · rw [fdBoundary_H_at_three_eq_rho]
-      simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+      simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
         Complex.add_re, Complex.sub_re, Complex.neg_re, Complex.div_ofNat_re,
         Complex.one_re, Complex.mul_re, Complex.ofReal_re,
         Complex.I_re, Complex.I_im, mul_zero, sub_zero]
@@ -262,7 +262,7 @@ private lemma g_i_slitPlane_arc_right {t : ℝ} (ht2 : 2 < t) (ht3 : t ≤ 3) :
   rw [Complex.mem_slitPlane_iff]; right
   rcases eq_or_lt_of_le ht3 with rfl | ht3'
   · rw [fdBoundary_H_at_three_eq_rho]
-    simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+    simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
       Complex.add_im, Complex.sub_im, Complex.neg_im, Complex.div_ofNat_im, Complex.div_ofNat_re,
       Complex.one_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one, zero_div]
@@ -367,7 +367,7 @@ private lemma g_i_ne_zero_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) :
   simp only [Complex.zero_re] at this
   rcases eq_or_lt_of_le ht3 with rfl | ht3'
   · rw [fdBoundary_H_at_three_eq_rho] at this
-    simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype,
+    simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
       Complex.add_re, Complex.sub_re, Complex.neg_re, Complex.div_ofNat_re,
       Complex.one_re, Complex.mul_re, Complex.ofReal_re,
       Complex.I_re, Complex.I_im, mul_zero, sub_zero] at this
@@ -420,7 +420,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     show fdBoundary_H H 1 - I = h₁ 1
     rw [fdBoundary_H_at_one_eq_rho_plus_one]
     simp only [h₁, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
-      UpperHalfPlane.coe_mk_subtype]
+      UpperHalfPlane.coe_mk]
     rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
         show (↑(Real.pi / 3) : ℂ) * I = ↑(Real.pi / 3) * I from rfl,
         exp_real_angle_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
@@ -430,7 +430,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hg3_1 : g 3 = h₁ 3 := by
     show fdBoundary_H H 3 - I = h₁ 3
     rw [fdBoundary_H_at_three_eq_rho]
-    simp only [h₁, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+    simp only [h₁, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     rw [show Real.pi * (1 + 3) / 6 = 2 * Real.pi / 3 from by ring]
     rw [show (↑(2 * Real.pi / 3) : ℂ) * I = ↑(2 * Real.pi / 3) * I from rfl,
         exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
@@ -438,7 +438,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hg3_2 : g 3 = h₂ 3 := by
     show fdBoundary_H H 3 - I = h₂ 3
     rw [fdBoundary_H_at_three_eq_rho]
-    simp only [h₂, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+    simp only [h₂, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     push_cast; ring
   have hgt₀_2 : g t₀ = h₂ t₀ := hg_eq_h₂ t₀ ht₀3 (le_of_lt ht₀4)
   have hgt₀_val : g t₀ = (-1 : ℂ) / 2 := g_i_at_t₀ hH

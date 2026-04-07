@@ -31,7 +31,7 @@ theorem fdBoundary_H_at_one_eq_rho_plus_one (H : ℝ) :
     fdBoundary_H H 1 = ellipticPointRhoPlusOne := by
   simp only [fdBoundary_H]
   simp only [show (1 : ℝ) ≤ 1 from le_refl 1, ↓reduceIte]
-  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk_subtype]
+  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   simp only [Complex.ofReal_one, one_mul]
   ring
 
@@ -54,7 +54,7 @@ theorem fdBoundary_H_at_three_eq_rho (H : ℝ) :
   rw [show (↑(Real.pi : ℝ) / 2 + (↑(3:ℝ) - 2) * (2 * ↑(Real.pi : ℝ) / 3 - ↑(Real.pi : ℝ) / 2)) * I =
     ↑(2 * Real.pi / 3) * I from by push_cast; ring,
     exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
-  simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk_subtype]
+  simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   push_cast; ring
 
 theorem fdBoundary_H_seg0 (H : ℝ) {t : ℝ} (ht : t ≤ 1) :

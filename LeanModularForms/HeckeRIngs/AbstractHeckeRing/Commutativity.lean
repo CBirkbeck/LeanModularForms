@@ -422,7 +422,7 @@ lemma m_comm_of_onHeckeCoset_eq (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D
     (D₁ D₂ : HeckeCoset P) :
     m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) =
     m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) := by
-  ext D; simp only [m, Finsupp.coe_mk]
+  ext D; simp only [m]
   exact heckeMultiplicity_comm_of_onHeckeCoset_eq ι h_fix D₁ D₂ D
 
 /-- Shimura Proposition 3.8: the Hecke ring is commutative when the anti-involution
@@ -445,7 +445,7 @@ end AntiInvolution
 
 /-- Shimura Proposition 3.8: `CommRing (𝕋 P ℤ)` from an anti-involution
 fixing every double coset. -/
-noncomputable def instCommRing_of_antiInvolution (ι : AntiInvolution P)
+@[reducible] noncomputable def instCommRing_of_antiInvolution (ι : AntiInvolution P)
     (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D) : CommRing (𝕋 P ℤ) :=
   { HeckeRing.instRing P with mul_comm := ι.mul_comm_of_antiInvolution h_fix }
 

@@ -89,7 +89,7 @@ lemma fdPolygon_match_t1 :
     fdPolygon_seg1 1 = fdPolygon_seg2 1 := by
   simp only [fdPolygon_seg1, fdPolygon_seg2,
     chordSegment, H_height, rho']
-  simp only [sub_self]; simp [rho']
+  simp only [sub_self]; simp
 
 lemma fdPolygon_match_t2 :
     fdPolygon_seg2 2 = fdPolygon_seg3 2 := by

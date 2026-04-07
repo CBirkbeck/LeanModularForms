@@ -157,7 +157,7 @@ lemma fdBoundaryToPolygonHomotopy_not_diffAt_134 (s : ℝ) (hs : s ∈ Set.Icc (
             exact exp_pi_div_three_eq_rho'
           have h_chord : chordSegment rho' i_point ((1:ℝ) - 1) = rho' := by
             simp only [chordSegment, show ((1:ℝ) - 1) = (0 : ℝ) from by ring]
-            simp [zero_smul, one_smul, sub_zero]
+            simp [sub_zero]
           calc g 1 = (1 - s) •
                 Complex.exp (((Real.pi : ℝ) / 3 +
                     ((1:ℝ) - 1) * ((Real.pi : ℝ) / 6)) * I) +
