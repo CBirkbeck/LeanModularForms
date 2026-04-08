@@ -4980,6 +4980,7 @@ private lemma T_1p_mem_ψ_range (p : ℕ) (hp : p.Prime) :
     show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (0 : Fin 2))) = _
     simp only [ψ_hom, MvPolynomial.eval₂Hom_X']; rfl⟩
 
+
 /-- **T'(1,m) ∈ range(ψ)** by strong induction on m (Shimura Thm 3.34 core).
 Handles: m=1 (identity), m=p prime (generator), coprime products (T_coprime_mul),
 p|N prime powers (T_bad_mul), non-prime-power composites (factorization + coprime mul).
@@ -5027,32 +5028,22 @@ private lemma T_1m_mem_ψ_range (m : ℕ) (hm : 0 < m) :
         have hk : 2 ≤ k := by
           by_contra h; push_neg at h; interval_cases k <;> simp_all
         by_cases hpN : (p : ℤ).gcd N = 1
-        · -- p coprime to N, k ≥ 2: Hecke product extraction via degree inequality.
-          -- Key mathematical argument (Shimura Thm 3.34):
+        · -- p coprime to N, k ≥ 2: Hecke product extraction (Shimura Thm 3.34).
+          -- Mathematical argument:
+          -- (1) T'(1,p) * T'(1,p^{k-1}) is in range (both factors in range by IH).
+          -- (2) The product expands as Σ_D μ_D · T_single D 1 where each D = T'(p^j, p^{k-j}).
+          -- (3) For j ≥ 1: T_single (T'(p^j, p^{k-j})) 1 ∈ range via T_Gamma0_scalar_mul + IH.
+          -- (4) μ₀ = 1 at T'(1, p^k): identity pair gives μ₀ ≥ 1; degree inequality gives
+          --     μ₀ ≤ deg(product)/deg(T'(1,p^k)) = (p+1)/p ≤ 1 for integer μ₀.
+          -- (5) Extract T'(1, p^k) by subtraction.
           --
-          -- The product T'(1,p) * T'(1,p^{k-1}) is in range (both factors in range by IH).
-          -- It expands as Σ_D μ_D * T_single D 1 where each D has diagonal (d₁, d₂)
-          -- with d₁*d₂ = p^k, d₁|d₂, gcd(d₁,N)=1. So D ∈ {T'(p^j, p^{k-j}) : 0 ≤ j ≤ k/2}.
-          --
-          -- For j ≥ 1 (d₁ = p^j ≥ p > 1): T_single (T'(p^j, p^{k-j})) 1 ∈ range
-          -- by T_diag_mem_ψ_range (d₁ > 1 case, already proved).
-          --
-          -- For j = 0 (D = T'(1, p^k)): μ₀ = 1 by degree inequality.
-          --   • μ₀ ≥ 1: identity pair in decompQuot gives diag(1,p)*diag(1,p^{k-1}) = diag(1,p^k).
-          --   • μ₀ ≤ 1: total degree = deg(T'(1,p)) * deg(T'(1,p^{k-1})) = p^{k-2}(p+1)²,
-          --     and deg(T'(1,p^k)) = p^{k-1}(p+1), so μ₀ ≤ (p+1)/p ≤ 1 for integer μ₀.
-          --     The degree equalities follow from the CRT bijection
-          --     Γ₀(N)/Γ₀(Np^j) ≅ SL₂(ℤ)/Γ₀(p^j) (for gcd(N,p)=1).
-          --
-          -- Therefore: T_single T'(1,p^k) 1 = product - Σ_{j≥1} μ_j T_single T'(p^j,p^{k-j}) 1 ∈ range.
-          --
-          -- The formalization of this argument requires:
-          -- (a) The Gamma0 degree formula deg(T'(1,p^j)) = p^{j-1}(p+1) for p ∤ N
-          --     (transfers from GL via the decompQuot CRT bijection)
-          -- (b) The support classification: mulSupport ⊆ {T'(p^j, p^{k-j}) : 0 ≤ j ≤ k/2}
-          -- (c) The multiplicity calculation μ₀ = 1 via degree inequality
-          --
-          -- This deep analysis is deferred; the sorry below isolates the full claim.
+          -- Formalization requires the Gamma0-level multiplication formula
+          -- `T'(1,p) * T'(1, p^{k-1}) = T'(1, p^k) + c • T'(p, p^{k-1})`,
+          -- which transfers from the GL-level `T_sum_prime_mul_T_ad` (Shimura 3.24(5))
+          -- via the ring hom `shimura_ring_hom = ψ_hom ∘ π_hom⁻¹`. The transfer requires
+          -- showing `shimura_ring_hom` maps GL basis elements to Gamma0 basis elements,
+          -- which follows from the decompQuot CRT bijection
+          -- `Γ₀(N)/Γ₀(Np^j) ≅ SL₂(ℤ)/Γ₀(p^j)` for gcd(N,p)=1 (~300 lines of formalization).
           sorry
         · -- p | N: T'(1,p^k) = T'(1,p)^k by T_bad_mul (all p-powers multiply simply)
           -- T'(1,p) ∈ range directly. Product ∈ range by subring closure.
