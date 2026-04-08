@@ -4103,24 +4103,24 @@ private theorem shimura_prop_3_31_surjective (N : ℕ) [NeZero N]
         Matrix (Fin 2) (Fin 2) ℚ).det.num) N = 1) :
     ∃ (D' : HeckeCoset (Gamma0_pair N)), cosetMap N D' = D := by
   -- Step 1: Get the diagonal representative of D at the GL level
-  obtain ⟨a, ha_pos, ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
+  obtain ⟨a, ha_pos, _ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
   have hD_eq : D = T_diag a := by
     rw [show D = (⟦HeckeCoset.rep D⟧ : HeckeCoset (GL_pair 2)) from
       (HeckeCoset.mk_rep D).symm, ha_eq]
-  -- Step 2: Compute the determinant - it equals ∏ a i (a natural number)
-  have hdet_eq : (↑((HeckeCoset.rep D : (GL_pair 2).Δ) : GL (Fin 2) ℚ) :
-      Matrix (Fin 2) (Fin 2) ℚ).det = (a 0 * a 1 : ℕ) := by
-    have h1 : (↑((HeckeCoset.rep D : (GL_pair 2).Δ) : GL (Fin 2) ℚ) :
-        Matrix (Fin 2) (Fin 2) ℚ) =
-        (↑(HeckeCoset.rep (T_diag a) : (GL_pair 2).Δ) : GL (Fin 2) ℚ) := by
-      congr 2; rw [hD_eq]
-    rw [h1, prod_rep_T_diag a ha_pos]
-    simp [Fin.prod_univ_two]
-  -- Step 3: From hD_coprime and hdet_eq, deduce gcd(a 0, N) = 1
+  -- Step 2: Substitute D = T_diag a in the determinant condition
+  -- Use prod_rep_T_diag to compute (rep (T_diag a)).det = a 0 * a 1
+  have hrep_eq : (HeckeCoset.rep D : (GL_pair 2).Δ) =
+      (HeckeCoset.rep (T_diag a) : (GL_pair 2).Δ) := by
+    rw [hD_eq]
+  rw [hrep_eq] at hD_coprime
+  rw [prod_rep_T_diag a ha_pos] at hD_coprime
+  simp only [Fin.prod_univ_two] at hD_coprime
+  -- Now hD_coprime : Int.gcd (((a 0 : ℚ) * (a 1 : ℚ)).num) N = 1
+  -- Step 3: Extract gcd(a 0, N) = 1
   have ha0_gcd : Int.gcd (a 0 : ℤ) N = 1 := by
-    rw [hdet_eq] at hD_coprime
-    have h_num : ((a 0 * a 1 : ℕ) : ℚ).num = (a 0 * a 1 : ℤ) := by
-      push_cast; exact Rat.num_natCast _
+    have h_num : (((a 0 : ℚ) * (a 1 : ℚ)).num) = (a 0 * a 1 : ℤ) := by
+      have : ((a 0 : ℚ) * (a 1 : ℚ)) = ((a 0 * a 1 : ℕ) : ℚ) := by push_cast; ring
+      rw [this]; exact_mod_cast Rat.num_natCast _
     rw [h_num] at hD_coprime
     rw [Int.gcd_natCast_natCast] at hD_coprime ⊢
     have hNat : Nat.Coprime (a 0 * a 1) N := hD_coprime
