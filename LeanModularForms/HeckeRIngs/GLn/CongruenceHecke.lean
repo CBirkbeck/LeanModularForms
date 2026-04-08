@@ -4980,13 +4980,96 @@ private lemma T_1p_mem_ψ_range (p : ℕ) (hp : p.Prime) :
     show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (0 : Fin 2))) = _
     simp only [ψ_hom, MvPolynomial.eval₂Hom_X']; rfl⟩
 
+/-- **T'(p,p) ∈ range(ψ)** for prime p with p ∤ N: follows from ψ_hom definition
+since `X_{(p,1)} ↦ T'(p,p)` when p ∤ N. -/
+private lemma T_pp_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N = 1) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![p, p])
+        (fun i => by fin_cases i <;> simp [hp.pos])
+        (by show Int.gcd (↑p) ↑N = 1; exact hpN)) 1 ∈ (ψ_hom N).range := by
+  have hp_not_dvd_N : ¬(p ∣ N) := by
+    intro h; rw [Int.gcd_natCast_natCast] at hpN
+    exact Nat.Prime.not_coprime_iff_dvd.mpr ⟨p, hp, dvd_refl p, h⟩ hpN
+  refine ⟨MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2)), ?_⟩
+  show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2))) = _
+  simp only [ψ_hom, MvPolynomial.eval₂Hom_X']
+  simp only [show (1 : Fin 2) ≠ 0 from by omega, ↓reduceIte, dif_neg hp_not_dvd_N]
+  congr 1; simp only [T_diag_Gamma0]; congr 1
+  ext i; fin_cases i <;> rfl
+
+/-- **T'(p, p^j) ∈ range(ψ)** for prime p with p ∤ N, j ≥ 1, given that
+    T'(1, p^(j-1)) ∈ range. Uses T_Gamma0_scalar_mul to factor T'(p, p) * T'(1, p^(j-1)). -/
+private lemma T_p_ppow_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N = 1)
+    (j : ℕ) (hj : 1 ≤ j)
+    (h_IH : HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![1, p^(j-1)])
+        (fun i => by fin_cases i <;> simp [pow_pos hp.pos])
+        (by simp)) 1 ∈ (ψ_hom N).range) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![p, p^j])
+        (fun i => by fin_cases i <;> simp [hp.pos, pow_pos hp.pos])
+        (by show Int.gcd (↑p) ↑N = 1; exact hpN)) 1 ∈ (ψ_hom N).range := by
+  -- T'(p, p) ∈ range (generator)
+  have h_Tpp := T_pp_mem_ψ_range N p hp hpN
+  -- T_Gamma0_scalar_mul: T'(p, p) * T'(1, p^(j-1)) = T'((fun _ => p) * ![1, p^(j-1)])
+  have h_mul := T_Gamma0_scalar_mul N p (p^(j-1)) hp.pos (pow_pos hp.pos _) hpN
+  -- The diagonals (fun _ => p) * ![1, p^(j-1)] and ![p, p^j] are equal as functions
+  have h_diag_eq : (fun _ : Fin 2 => p) * ![1, p^(j-1)] = ![p, p^j] := by
+    funext i
+    fin_cases i
+    · show p * 1 = p; ring
+    · show p * p^(j-1) = p^j
+      rw [← pow_succ', show j - 1 + 1 = j from Nat.sub_add_cancel hj]
+  -- Convert h_mul to use ![p, p^j] form
+  have h_eq : T_diag_Gamma0 N ((fun _ : Fin 2 => p) * ![1, p^(j-1)])
+      (fun i => Nat.mul_pos hp.pos (by fin_cases i <;> simp [pow_pos hp.pos]))
+      (by show Int.gcd (↑(p * 1)) ↑N = 1; simp [hpN]) =
+    T_diag_Gamma0 N (![p, p^j])
+      (fun i => by fin_cases i <;> simp [hp.pos, pow_pos hp.pos])
+      (by show Int.gcd (↑p) ↑N = 1; exact hpN) := by
+    simp only [T_diag_Gamma0]; congr 1; exact h_diag_eq
+  rw [h_eq] at h_mul
+  -- Now h_mul : T'(p, p) * T'(1, p^(j-1)) = T'(![p, p^j])
+  rw [← h_mul]
+  exact (ψ_hom N).range.mul_mem h_Tpp h_IH
+
+/-- **Gamma0-level prime-power multiplication formula** (p ∤ N case).
+    For prime p coprime to N and k ≥ 1:
+    `T'(1,p) * T'(1, p^k) = T'(1, p^(k+1)) + c_k • T'(p, p^k)`
+    where c_k = p+1 if k=1, p if k ≥ 2.
+
+    This is the Gamma0-level analogue of `T_sum_prime_mul_T_ad`. The proof transfers
+    the GL identity via the ring hom `shimura_ring_hom = ψ_hom ∘ π_hom⁻¹` and uses the
+    decompQuot CRT bijection `Γ₀(N)/Γ₀(Np^j) ≅ SL₂(ℤ)/Γ₀(p^j)` for `gcd(N,p)=1`.
+
+    **Status**: Sorry'd. The full formalization requires the decompQuot bijection
+    (~200 lines of CRT formalization). -/
+private lemma Gamma0_T1p_mul_T1ppow_coprime (p : ℕ) (hp : p.Prime)
+    (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![1, p])
+        (fun i => by fin_cases i <;> simp [hp.pos])
+        (by simp)) 1 *
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![1, p^k])
+        (fun i => by fin_cases i <;> simp [pow_pos hp.pos])
+        (by simp)) 1 =
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![1, p^(k+1)])
+        (fun i => by fin_cases i <;> simp [pow_pos hp.pos])
+        (by simp)) 1 +
+    (if k = 1 then ((p : ℤ) + 1) else (p : ℤ)) •
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![p, p^k])
+        (fun i => by fin_cases i <;> simp [hp.pos, pow_pos hp.pos])
+        (by show Int.gcd (↑p) ↑N = 1; exact hpN)) 1 := by
+  sorry
 
 /-- **T'(1,m) ∈ range(ψ)** by strong induction on m (Shimura Thm 3.34 core).
 Handles: m=1 (identity), m=p prime (generator), coprime products (T_coprime_mul),
 p|N prime powers (T_bad_mul), non-prime-power composites (factorization + coprime mul).
-The case p∤N, k≥2 (pure prime power, p coprime to level) extracts T'(1,p^k) from the
-product T'(1,p) * T'(1,p^{k-1}) via degree inequality argument + subtraction;
-one sorry remains encapsulating the degree formula + multiplicity=1 claim. -/
+The case p∤N, k≥2 uses `Gamma0_T1p_mul_T1ppow_coprime` to extract T'(1, p^k) from the
+product T'(1,p) * T'(1, p^{k-1}) by subtraction. -/
 private lemma T_1m_mem_ψ_range (m : ℕ) (hm : 0 < m) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, m])
@@ -5028,23 +5111,46 @@ private lemma T_1m_mem_ψ_range (m : ℕ) (hm : 0 < m) :
         have hk : 2 ≤ k := by
           by_contra h; push_neg at h; interval_cases k <;> simp_all
         by_cases hpN : (p : ℤ).gcd N = 1
-        · -- p coprime to N, k ≥ 2: Hecke product extraction (Shimura Thm 3.34).
-          -- Mathematical argument:
-          -- (1) T'(1,p) * T'(1,p^{k-1}) is in range (both factors in range by IH).
-          -- (2) The product expands as Σ_D μ_D · T_single D 1 where each D = T'(p^j, p^{k-j}).
-          -- (3) For j ≥ 1: T_single (T'(p^j, p^{k-j})) 1 ∈ range via T_Gamma0_scalar_mul + IH.
-          -- (4) μ₀ = 1 at T'(1, p^k): identity pair gives μ₀ ≥ 1; degree inequality gives
-          --     μ₀ ≤ deg(product)/deg(T'(1,p^k)) = (p+1)/p ≤ 1 for integer μ₀.
-          -- (5) Extract T'(1, p^k) by subtraction.
-          --
-          -- Formalization requires the Gamma0-level multiplication formula
-          -- `T'(1,p) * T'(1, p^{k-1}) = T'(1, p^k) + c • T'(p, p^{k-1})`,
-          -- which transfers from the GL-level `T_sum_prime_mul_T_ad` (Shimura 3.24(5))
-          -- via the ring hom `shimura_ring_hom = ψ_hom ∘ π_hom⁻¹`. The transfer requires
-          -- showing `shimura_ring_hom` maps GL basis elements to Gamma0 basis elements,
-          -- which follows from the decompQuot CRT bijection
-          -- `Γ₀(N)/Γ₀(Np^j) ≅ SL₂(ℤ)/Γ₀(p^j)` for gcd(N,p)=1 (~300 lines of formalization).
-          sorry
+        · -- p coprime to N, k ≥ 2: extract T'(1,p^k) from product T'(1,p) * T'(1,p^{k-1})
+          -- using the Gamma0 multiplication formula `Gamma0_T1p_mul_T1ppow_coprime`.
+          -- Strategy: from `T'(1,p) * T'(1, p^{k-1}) = T'(1, p^k) + c • T'(p, p^{k-1})`,
+          -- rearrange to `T'(1, p^k) = T'(1,p) * T'(1, p^{k-1}) - c • T'(p, p^{k-1})`.
+          -- All RHS terms are in range:
+          --   • T'(1,p) ∈ range by IH (since p < p^k)
+          --   • T'(1, p^{k-1}) ∈ range by IH (since p^{k-1} < p^k)
+          --   • T'(p, p^{k-1}) ∈ range via T_p_ppow_mem_ψ_range + IH for T'(1, p^{k-2})
+          have hp_lt : p < p ^ k := by
+            calc p = p ^ 1 := (pow_one p).symm
+              _ < p ^ k := Nat.pow_lt_pow_right hp.one_lt hk
+          have hpk1_lt : p ^ (k - 1) < p ^ k :=
+            Nat.pow_lt_pow_right hp.one_lt (by omega)
+          have hpk2_lt : p ^ (k - 2) < p ^ k :=
+            Nat.pow_lt_pow_right hp.one_lt (by omega)
+          have h_IHp := ih p hp_lt hp.pos
+          have h_IHpk1 := ih (p ^ (k - 1)) hpk1_lt (pow_pos hp.pos _)
+          have h_IHpk2 := ih (p ^ (k - 2)) hpk2_lt (pow_pos hp.pos _)
+          -- T'(p, p^(k-1)) ∈ range via the helper T_p_ppow_mem_ψ_range
+          -- Note: for j = k-1, we need T'(1, p^(j-1)) = T'(1, p^(k-2)) ∈ range
+          have hk1_pos : 1 ≤ k - 1 := by omega
+          have h_IHpk1_alt : HeckeRing.T_single (Gamma0_pair N) ℤ
+              (T_diag_Gamma0 N (![1, p^((k-1)-1)])
+                (fun i => by fin_cases i <;> simp [pow_pos hp.pos])
+                (by simp)) 1 ∈ (ψ_hom N).range := by
+            have h_eq : k - 1 - 1 = k - 2 := by omega
+            rw [h_eq]; exact h_IHpk2
+          have h_Tppk1 := T_p_ppow_mem_ψ_range N p hp hpN (k - 1) hk1_pos h_IHpk1_alt
+          -- Apply the Gamma0 multiplication formula with k-1
+          have h_formula := Gamma0_T1p_mul_T1ppow_coprime N p hp hpN (k - 1) hk1_pos
+          -- Normalize (k-1)+1 = k in the formula
+          have hk_norm : k - 1 + 1 = k := Nat.sub_add_cancel (by omega : 1 ≤ k)
+          rw [hk_norm] at h_formula
+          -- h_formula : T'(1,p) * T'(1, p^(k-1)) = T'(1, p^k) + c • T'(p, p^(k-1))
+          -- where c = if k-1 = 1 then p+1 else p
+          -- Extract: T'(1, p^k) = T'(1,p) * T'(1, p^(k-1)) - c • T'(p, p^(k-1))
+          rw [eq_sub_of_add_eq h_formula.symm]
+          exact (ψ_hom N).range.sub_mem
+            ((ψ_hom N).range.mul_mem h_IHp h_IHpk1)
+            ((ψ_hom N).range.zsmul_mem h_Tppk1 _)
         · -- p | N: T'(1,p^k) = T'(1,p)^k by T_bad_mul (all p-powers multiply simply)
           -- T'(1,p) ∈ range directly. Product ∈ range by subring closure.
           -- T'(1,p) * T'(1,p^{k-1}) = T'(1,p^k) by T_bad_mul, and both ∈ range by IH.
