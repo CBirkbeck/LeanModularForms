@@ -5096,11 +5096,10 @@ private lemma T_p_ppow_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gc
     - `shimura_prop_3_31` (line ~784): injectivity on coprime-det cosets
     - `shimura_prop_3_31_surjective` (line ~4099): surjectivity via diagonal reps
 
-    **Status**: Sorry'd. Filling this requires a multiplicity equality lemma:
-    for coprime-det g₁, g₂, g₃ ∈ Δ₀(N), the Γ₀(N)-multiplicity equals the
-    SL₂(ℤ)-multiplicity. The proof of this requires the decompQuot bijection
-    `Γ₀(N) / (Γ₀(N) ∩ g Γ₀(N) g⁻¹) ≅ SL₂(ℤ) / (SL₂(ℤ) ∩ g SL₂(ℤ) g⁻¹)`,
-    which follows from a CRT-style argument using `Gamma_gcd_eq_mul`. -/
+    **Status**: Sorry'd. Filling this requires showing the multiplication
+    compatibility of cosetMap on coprime-det cosets, which reduces to a
+    multiplicity equality lemma. The proof of that requires the decompQuot
+    bijection following from `Gamma_gcd_eq_mul`. -/
 private lemma Gamma0_T1p_mul_T1ppow_coprime (p : ℕ) (hp : p.Prime)
     (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
