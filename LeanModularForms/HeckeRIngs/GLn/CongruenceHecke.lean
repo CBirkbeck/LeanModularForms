@@ -5011,6 +5011,13 @@ private lemma T_p_ppow_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gc
         (by show Int.gcd (↑p) ↑N = 1; exact hpN)) 1 ∈ (ψ_hom N).range := by
   -- T'(p, p) ∈ range (generator)
   have h_Tpp := T_pp_mem_ψ_range N p hp hpN
+  -- Convert ![p, p] form to (fun _ => p) form (matches T_Gamma0_scalar_mul's signature)
+  have h_pp_eq : T_diag_Gamma0 N (![p, p])
+      (fun i => by fin_cases i <;> simp [hp.pos])
+      (by show Int.gcd (↑p) ↑N = 1; exact hpN) =
+    T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hpN := by
+    simp only [T_diag_Gamma0]; congr 1; ext i; fin_cases i <;> rfl
+  rw [h_pp_eq] at h_Tpp
   -- T_Gamma0_scalar_mul: T'(p, p) * T'(1, p^(j-1)) = T'((fun _ => p) * ![1, p^(j-1)])
   have h_mul := T_Gamma0_scalar_mul N p (p^(j-1)) hp.pos (pow_pos hp.pos _) hpN
   -- The diagonals (fun _ => p) * ![1, p^(j-1)] and ![p, p^j] are equal as functions
