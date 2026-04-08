@@ -234,6 +234,7 @@ theorem generalizedWindingNumber_eq_half_of_external_one_smooth
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
   push_cast
   field_simp
+  ring
 
 /-- When the external winding is -1 and the crossing is smooth, the generalized
 winding number is `-3/2`. -/
