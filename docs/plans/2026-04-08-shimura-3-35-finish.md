@@ -54,19 +54,53 @@ This proves the inverse map exists.
 **Injectivity**: Let `α, β ∈ Δ*_N` with `α ≡ β (mod N)`. If `ΓαΓ = ΓβΓ`, then by
 Lemma 3.29(1), `Γ'αΓ' = Γ'βΓ'`. (`R(Γ', Δ'_N)` is a free Z-module.)
 
-## Current State (after refactoring)
+## Current State (after Shimura Prop 3.31 implementation)
 
-`shimura_thm_3_35` is proved modulo a single sorry in the focused helper lemma
-`Gamma0_T1p_mul_T1ppow_coprime`, which states the Gamma0-level prime-power
-multiplication formula:
+**Both parts of Shimura's Proposition 3.31 are now proved:**
+- `shimura_prop_3_31` (line 784): injectivity of cosetMap on coprime-det cosets
+- `shimura_prop_3_31_surjective` (line 4099): every coprime-det GL coset has a
+  Γ₀(N) preimage. **Just added.**
+
+These two lemmas together give the **full bijection** between coprime-det
+Γ₀(N)-double cosets and coprime-det SL₂(ℤ)-double cosets (Shimura's Prop 3.31).
+
+**Status of `shimura_thm_3_35`**: Proved modulo a single sorry in
+`Gamma0_T1p_mul_T1ppow_coprime`, the Gamma0-level prime-power multiplication
+formula:
 
 ```
 T'(1,p) * T'(1, p^k) = T'(1, p^(k+1)) + c_k • T'(p, p^k)
 ```
 
 where `c_k = p+1` if `k=1`, `c_k = p` if `k ≥ 2`. This is the Gamma0-level
-analogue of `T_sum_prime_mul_T_ad` (Shimura 3.24(5)), and it's exactly the
-formula Shimura derives via Prop 3.31 in his book.
+analogue of `T_sum_prime_mul_T_ad` (Shimura 3.24(5)).
+
+## Remaining Work: Multiplicity Equality
+
+To fill the helper lemma sorry, the **multiplication formula transfer** still needs:
+
+**Key Lemma** (multiplicity equality for coprime det):
+```lean
+private theorem heckeMultiplicity_Gamma0_eq_GL_coprime
+    (g₁ g₂ : (Gamma0_pair N).Δ) (D : HeckeCoset (Gamma0_pair N))
+    (h_g₁ h_g₂ h_D : coprime det conditions) :
+    HeckeRing.heckeMultiplicity (Gamma0_pair N) g₁.val g₂.val (HeckeCoset.rep D) =
+    HeckeRing.heckeMultiplicity (GL_pair 2)
+      (Delta0_inclusion N g₁) (Delta0_inclusion N g₂)
+      (HeckeCoset.rep (cosetMap N D))
+```
+
+The proof requires showing the bijection on decompQuots:
+`Γ₀(N) / (Γ₀(N) ∩ g Γ₀(N) g⁻¹) ≅ SL₂(ℤ) / (SL₂(ℤ) ∩ g SL₂(ℤ) g⁻¹)` for g with
+coprime det. This follows from `Γ₀(N) · (SL₂(ℤ) ∩ g SL₂(ℤ) g⁻¹) = SL₂(ℤ)` for
+the coprime case (a CRT-style argument similar to `Gamma_gcd_eq_mul`).
+
+Once this multiplicity equality is established, the helper lemma follows by:
+1. `Finsupp.ext` on the multiplication formula
+2. For each Γ₀(N) coset D, compute the multiplicity via the equality lemma + the
+   GL formula (`T_sum_prime_mul_T_ad`)
+3. The support classification follows from `shimura_prop_3_31_surjective` +
+   `shimura_prop_3_31`
 
 ## Implementation Plan: Shimura's Prop 3.31 Approach
 
