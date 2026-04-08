@@ -4087,6 +4087,48 @@ private lemma prod_rep_T_diag (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) :
   rw [show T_diag a = (⟦diagMat_delta 2 a⟧ : HeckeCoset (GL_pair 2)) from rfl] at h_eq
   exact (det_doubleCoset_eq h_eq).trans (by simp [diagMat_delta_val 2 a ha, diagMat_det 2 a ha])
 
+/-- **Shimura Proposition 3.31 (Surjectivity)**: Every GL₂(ℤ)-double coset has a
+    `Γ₀(N)`-double coset preimage under `cosetMap`. Combined with `shimura_prop_3_31`
+    (injectivity on coprime-det cosets), this gives the bijection between coprime-det
+    cosets at the two levels — Shimura's full Prop 3.31.
+
+    **Proof**: Apply `exists_diagonal_representative` to get a diagonal form
+    `(a₀, a₁)` for the GL coset. The coprime-det condition gives `gcd(a₀, N) = 1`,
+    so `T_diag_Gamma0 N (![a₀, a₁])` is a valid `Γ₀(N)` coset whose `cosetMap`
+    image equals the original coset via `cosetMap_T_diag_Gamma0`. -/
+private theorem shimura_prop_3_31_surjective (N : ℕ) [NeZero N]
+    (D : HeckeCoset (GL_pair 2))
+    (hD_coprime : Int.gcd
+      ((↑((HeckeCoset.rep D : (GL_pair 2).Δ) : GL (Fin 2) ℚ) :
+        Matrix (Fin 2) (Fin 2) ℚ).det.num) N = 1) :
+    ∃ (D' : HeckeCoset (Gamma0_pair N)), cosetMap N D' = D := by
+  -- Step 1: Get the diagonal representative of D at the GL level
+  obtain ⟨a, ha_pos, ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
+  have hD_eq : D = T_diag a := by
+    rw [show D = (⟦HeckeCoset.rep D⟧ : HeckeCoset (GL_pair 2)) from
+      (HeckeCoset.mk_rep D).symm, ha_eq]
+  -- Step 2: Compute the determinant - it equals ∏ a i (a natural number)
+  have hdet_eq : (↑((HeckeCoset.rep D : (GL_pair 2).Δ) : GL (Fin 2) ℚ) :
+      Matrix (Fin 2) (Fin 2) ℚ).det = (a 0 * a 1 : ℕ) := by
+    have h1 : (↑((HeckeCoset.rep D : (GL_pair 2).Δ) : GL (Fin 2) ℚ) :
+        Matrix (Fin 2) (Fin 2) ℚ) =
+        (↑(HeckeCoset.rep (T_diag a) : (GL_pair 2).Δ) : GL (Fin 2) ℚ) := by
+      congr 2; rw [hD_eq]
+    rw [h1, prod_rep_T_diag a ha_pos]
+    simp [Fin.prod_univ_two]
+  -- Step 3: From hD_coprime and hdet_eq, deduce gcd(a 0, N) = 1
+  have ha0_gcd : Int.gcd (a 0 : ℤ) N = 1 := by
+    rw [hdet_eq] at hD_coprime
+    have h_num : ((a 0 * a 1 : ℕ) : ℚ).num = (a 0 * a 1 : ℤ) := by
+      push_cast; exact Rat.num_natCast _
+    rw [h_num] at hD_coprime
+    rw [Int.gcd_natCast_natCast] at hD_coprime ⊢
+    have hNat : Nat.Coprime (a 0 * a 1) N := hD_coprime
+    exact Nat.Coprime.coprime_dvd_left ⟨a 1, rfl⟩ hNat
+  -- Step 4: Build the Γ₀(N) coset preimage
+  refine ⟨T_diag_Gamma0 N a ha_pos ha0_gcd, ?_⟩
+  rw [cosetMap_T_diag_Gamma0, ← hD_eq]
+
 /-- Every coset in the support of a mulMap output has determinant = det(g₁) * det(g₂). -/
 private lemma det_mulMap_eq (g₁ g₂ : (GL_pair 2).Δ)
     (p : HeckeRing.decompQuot (GL_pair 2) g₁ × HeckeRing.decompQuot (GL_pair 2) g₂) :
