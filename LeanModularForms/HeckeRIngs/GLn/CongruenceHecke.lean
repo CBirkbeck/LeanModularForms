@@ -5087,12 +5087,20 @@ private lemma T_p_ppow_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gc
     `T'(1,p) * T'(1, p^k) = T'(1, p^(k+1)) + c_k • T'(p, p^k)`
     where c_k = p+1 if k=1, p if k ≥ 2.
 
-    This is the Gamma0-level analogue of `T_sum_prime_mul_T_ad`. The proof transfers
-    the GL identity via the ring hom `shimura_ring_hom = ψ_hom ∘ π_hom⁻¹` and uses the
-    decompQuot CRT bijection `Γ₀(N)/Γ₀(Np^j) ≅ SL₂(ℤ)/Γ₀(p^j)` for `gcd(N,p)=1`.
+    This is the Gamma0-level analogue of `T_sum_prime_mul_T_ad` (Shimura 3.24(5)).
+    Per Shimura's *Introduction to the Arithmetic Theory of Automorphic Functions*
+    p. 71, the proof transfers the GL identity via Proposition 3.31 (the bijection
+    between coprime-det Γ₀(N)-double cosets and coprime-det SL₂(ℤ)-double cosets).
 
-    **Status**: Sorry'd. The full formalization requires the decompQuot bijection
-    (~200 lines of CRT formalization). -/
+    **Both halves of Prop 3.31 are now formalized**:
+    - `shimura_prop_3_31` (line ~784): injectivity on coprime-det cosets
+    - `shimura_prop_3_31_surjective` (line ~4099): surjectivity via diagonal reps
+
+    **Status**: Sorry'd. Filling this requires a multiplicity equality lemma:
+    for coprime-det g₁, g₂, g₃ ∈ Δ₀(N), the Γ₀(N)-multiplicity equals the
+    SL₂(ℤ)-multiplicity. The proof of this requires the decompQuot bijection
+    `Γ₀(N) / (Γ₀(N) ∩ g Γ₀(N) g⁻¹) ≅ SL₂(ℤ) / (SL₂(ℤ) ∩ g SL₂(ℤ) g⁻¹)`,
+    which follows from a CRT-style argument using `Gamma_gcd_eq_mul`. -/
 private lemma Gamma0_T1p_mul_T1ppow_coprime (p : ℕ) (hp : p.Prime)
     (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
