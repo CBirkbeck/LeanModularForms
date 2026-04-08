@@ -1,19 +1,154 @@
 # Plan: Finish Shimura Theorem 3.35
 
-**Date**: 2026-04-08
+**Date**: 2026-04-08 (updated 2026-04-08 after reading Shimura)
 **File**: `LeanModularForms/HeckeRIngs/GLn/CongruenceHecke.lean`
-**Goal**: Eliminate the last sorry at line 5047 in `T_1m_mem_ψ_range`.
+**Goal**: Eliminate the sorry in `Gamma0_T1p_mul_T1ppow_coprime`.
 
-## Current State
+## Shimura's Actual Approach (pp. 67-71)
 
-`shimura_thm_3_35` (line ~5238) is proved modulo a single sorry inside
-`T_1m_mem_ψ_range`. The case is: `T'(1, p^k) ∈ range(ψ_hom N)` for prime `p ∤ N`
-and `k ≥ 2`.
+After consulting Shimura's *Introduction to the Arithmetic Theory of Automorphic
+Functions* §3.3, here is the actual proof strategy:
 
-## Mathematical Strategy (Shimura Thm 3.34)
+### Key Theorem: Proposition 3.31 (the "Δ_N isomorphism")
 
-The approach is to extract `T'(1, p^k)` from the Hecke product
-`T'(1, p) * T'(1, p^{k-1})` at the Gamma0(N) level via the formula:
+> The correspondence `Γ'αΓ' ↦ ΓαΓ`, with `α ∈ Δ'_N`, defines an **isomorphism** of
+> `R(Γ', Δ'_N)` onto `R(Γ, Δ_N)`.
+
+Where:
+- `Γ' = Γ₀(N)` (the level-N congruence subgroup)
+- `Γ = SL₂(ℤ)` (the full modular group)
+- `Δ'_N = {[u v; w z] ∈ Δ | u coprime to N, w ≡ 0 (N), (z, N) = 1}` — the
+  "level-N primitive Δ"
+- `Δ_N` is the SL₂(ℤ)-level analogue (`{α ∈ Δ | similar conditions}`)
+- `Δ*_N = {α ∈ Δ | λ_N(α) = [1 0; 0 x] for x ∈ (ℤ/N)^×}` — even more restrictive
+
+The isomorphism is the natural collapsing map. Its inverse exists because of the
+CRT-type lifting argument.
+
+### How Shimura uses Prop 3.31 (p. 71)
+
+Shimura derives the Gamma0-level multiplication formula directly:
+
+> "By (1) and (5) of Th. 3.24, and by **Prop. 3.31**, we have
+> `pT'(p, p) = T'(p)² - T'(p²)` for every prime p not dividing N"
+
+For higher prime powers:
+
+> "Thus the multiplication of the elements `T'(n)` can be reduced to that of
+> `T'(p^k)` with a prime p. If p divides N, we have `T'(p^k) = T'(p)^k`. If
+> `(p, N) = 1`, the elements `T'(p^k)` satisfy the same formulas as in Th. 3.24,
+> **on account of Prop. 3.31**."
+
+So Shimura's proof of the Gamma0 multiplication formulas is essentially:
+1. Apply the inverse isomorphism `R(Γ, Δ_N) → R(Γ', Δ'_N)` to the GL identity
+2. The identity transfers because both sides live in the restricted Hecke rings
+   that are isomorphic via Prop 3.31
+
+### Proof of Prop 3.31 (Shimura p. 67-68)
+
+**Surjectivity**: Let `η ∈ Δ_N`, `b = det(η)`. Take integer `c` with `bc ≡ 1 (mod N)`,
+put `φ = [1 0; 0 c]`. Then `det(ηφ) ≡ 1 (mod N)`. By Lemma 1.38 (CRT for SL₂),
+there exists `γ ∈ Γ` with `γ ≡ ηφ (mod N)`. Then `γ⁻¹η ∈ Δ*_N`, and `Γγ⁻¹ηΓ = ΓηΓ`.
+This proves the inverse map exists.
+
+**Injectivity**: Let `α, β ∈ Δ*_N` with `α ≡ β (mod N)`. If `ΓαΓ = ΓβΓ`, then by
+Lemma 3.29(1), `Γ'αΓ' = Γ'βΓ'`. (`R(Γ', Δ'_N)` is a free Z-module.)
+
+## Current State (after refactoring)
+
+`shimura_thm_3_35` is proved modulo a single sorry in the focused helper lemma
+`Gamma0_T1p_mul_T1ppow_coprime`, which states the Gamma0-level prime-power
+multiplication formula:
+
+```
+T'(1,p) * T'(1, p^k) = T'(1, p^(k+1)) + c_k • T'(p, p^k)
+```
+
+where `c_k = p+1` if `k=1`, `c_k = p` if `k ≥ 2`. This is the Gamma0-level
+analogue of `T_sum_prime_mul_T_ad` (Shimura 3.24(5)), and it's exactly the
+formula Shimura derives via Prop 3.31 in his book.
+
+## Implementation Plan: Shimura's Prop 3.31 Approach
+
+The cleanest path is to formalize Shimura's Proposition 3.31 directly: the
+isomorphism `R(Γ₀(N), Δ'_N) ≅ R(SL₂(ℤ), Δ_N)` for the level-N "primitive"
+Hecke rings. Then transfer the GL identity `T_sum_prime_mul_T_ad` to the
+Gamma0 level via the inverse isomorphism.
+
+### Phase A: Define the level-N "primitive" subset Δ_N (~30 lines)
+
+Define a sub-semigroup `Delta_N_primitive ⊆ Delta0_submonoid N` consisting of
+matrices `[a b; c d]` with `a coprime to N`, `c ≡ 0 (mod N)`, `d coprime to N`.
+
+(In Shimura's notation: this is `Δ'_N` for `Γ' = Γ₀(N)`.)
+
+### Phase B: Define the SL₂(ℤ)-level analogue (~30 lines)
+
+Define `Delta_N_SL2 ⊆ Delta_submonoid` (the level-1 Hecke Δ) consisting of
+matrices satisfying the same conditions on `a, c, d` mod N.
+
+### Phase C: Build the isomorphism Prop 3.31 (~150 lines)
+
+The isomorphism `R(Γ₀(N), Delta_N_primitive) ≅ R(SL₂(ℤ), Delta_N_SL2)` via
+`[Γ₀(N)αΓ₀(N)] ↦ [SL₂(ℤ)αSL₂(ℤ)]`. Key steps:
+
+1. **Show the natural map is well-defined**: Each Γ₀(N)-double coset maps to a
+   unique SL₂(ℤ)-double coset.
+2. **Show injectivity**: For `α, β ∈ Delta_N_primitive` (with reduction `≡ I (mod N)`),
+   if `[SL₂(ℤ)αSL₂(ℤ)] = [SL₂(ℤ)βSL₂(ℤ)]`, then `[Γ₀(N)αΓ₀(N)] = [Γ₀(N)βΓ₀(N)]`.
+   Uses Shimura's Lemma 3.29(1).
+3. **Show surjectivity**: For any `η ∈ Delta_N_SL2`, find `γ ∈ SL₂(ℤ)` such that
+   `γ⁻¹η ∈ Delta_N_primitive` and `[SL₂γ⁻¹ηSL₂] = [SL₂ηSL₂]`. Uses Shimura's
+   Lemma 1.38 (CRT lifting for SL₂).
+4. **Show ring homomorphism**: The map preserves multiplication. Follows from
+   the existing `cosetMap_mulMap` machinery.
+5. **Conclude isomorphism** by combining injectivity + surjectivity + ring hom.
+
+### Phase D: Transfer the GL multiplication formula (~50 lines)
+
+Use the isomorphism to transfer:
+```
+T_elem(![1, p]) * T_elem(![1, p^k]) = T_elem(![1, p^(k+1)]) + c_k • T_elem(![p, p^k])
+```
+(GL level, from `T_sum_prime_mul_T_ad`)
+
+to:
+```
+T'(1, p) * T'(1, p^k) = T'(1, p^(k+1)) + c_k • T'(p, p^k)
+```
+(Gamma0 level, the helper lemma `Gamma0_T1p_mul_T1ppow_coprime`)
+
+For this transfer, we need:
+- `[1 0; 0 p^j] ∈ Delta_N_SL2` for all `j ≥ 0` (since first column is `[1, 0]`,
+  trivially satisfies all mod-N conditions)
+- `[p 0; 0 p^k] ∈ Delta_N_SL2` for `gcd(p, N) = 1` (first column `[p, 0]` reduces
+  to a unit times `[1, 0]` in some appropriate equivalence)
+
+(The exact details of which matrices are in `Delta_N` depends on the precise
+definition; this is part of Phase A.)
+
+### Phase E: Use the formula to fill the helper lemma sorry (~10 lines)
+
+Apply Phase D's result to fill `Gamma0_T1p_mul_T1ppow_coprime`. Then the main
+theorem `shimura_thm_3_35` is complete.
+
+## Total Estimated Effort
+
+- Phase A: ~30 lines (define `Delta_N_primitive`)
+- Phase B: ~30 lines (define `Delta_N_SL2`)
+- Phase C: ~150 lines (Prop 3.31 isomorphism)
+- Phase D: ~50 lines (transfer the multiplication formula)
+- Phase E: ~10 lines (use it)
+- **Total: ~270 lines of new code**
+
+This is the actual cost to finish Shimura 3.35 cleanly.
+
+---
+
+## Original Mathematical Strategy (Pre-Shimura Reading)
+
+The approach I took before reading Shimura was to extract `T'(1, p^k)` from the
+Hecke product `T'(1, p) * T'(1, p^{k-1})` at the Gamma0(N) level via the formula:
 
 ```
 T'(1, p) * T'(1, p^{k-1}) = T'(1, p^k) + c_{k-1} • T'(p, p^{k-1})
@@ -23,6 +158,9 @@ where `c_{k-1} = p+1` if `k-1 = 1` (i.e., `k = 2`), and `c_{k-1} = p` if `k ≥ 
 
 This is the Gamma0-level analogue of Shimura's identity 3.24(5) (proved at GL
 level as `T_sum_prime_mul_T_ad` in `GL2/MultiplicationTable.lean:487`).
+
+This is exactly the same goal as Phase D above. Shimura's Prop 3.31 is the right
+tool to prove it.
 
 ## Why This Is Hard
 
