@@ -3782,7 +3782,123 @@ private lemma Gamma0_deg_coprime_mul (N : ℕ) [NeZero N]
   gives the SL₂-level cardinality formula. The bridge to `HeckeCoset_deg` requires
   identifying `decompQuot` with the `Gamma0` quotient for diagonal elements — a
   concrete stabilizer computation. -/
-  sorry
+  -- Diagonal Δ-elements for m, n, mn
+  set g_m : (Gamma0_pair N).Δ := ⟨diagMat 2 (![1, m]),
+    diagMat_mem_Delta0_of_gcd N _ (fun i => by fin_cases i <;> simp [hm_pos]) (by simp)⟩
+  set g_n : (Gamma0_pair N).Δ := ⟨diagMat 2 (![1, n]),
+    diagMat_mem_Delta0_of_gcd N _ (fun i => by fin_cases i <;> simp [hn_pos]) (by simp)⟩
+  set g_mn : (Gamma0_pair N).Δ := ⟨diagMat 2 (![1, m * n]),
+    diagMat_mem_Delta0_of_gcd N _ (fun i => by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
+      (by simp)⟩
+  -- T_diag_Gamma0 definitionally equals ⟦g_k⟧
+  change HeckeRing.HeckeCoset_deg _ ⟦g_m⟧ * HeckeRing.HeckeCoset_deg _ ⟦g_n⟧ =
+    HeckeRing.HeckeCoset_deg _ ⟦g_mn⟧
+  -- Step 1: Transfer decompQuot from reps to diagonal elements.
+  -- Since ⟦rep ⟦g⟧⟧ = ⟦g⟧, the rep is in DC(g), so decompQuot(rep) ≃ decompQuot(g).
+  have h_rep_card : ∀ (g : (Gamma0_pair N).Δ),
+      Nat.card (HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep ⟦g⟧)) =
+      Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g) := by
+    intro g
+    have h_mk := HeckeCoset.mk_rep (⟦g⟧ : HeckeRing.HeckeCoset (Gamma0_pair N))
+    rw [HeckeCoset.eq_iff] at h_mk
+    have h_in : (HeckeCoset.rep ⟦g⟧ : GL (Fin 2) ℚ) ∈
+        DoubleCoset.doubleCoset (g : GL (Fin 2) ℚ)
+          ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
+      rw [← h_mk]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+    rw [DoubleCoset.mem_doubleCoset] at h_in
+    obtain ⟨γ₁, hγ₁, γ₂, hγ₂, h_eq⟩ := h_in
+    let g_mid : (Gamma0_pair N).Δ := ⟨γ₁ * ↑g * γ₂, h_eq ▸ (HeckeCoset.rep ⟦g⟧).2⟩
+    have h_mid : (g_mid : GL (Fin 2) ℚ) = HeckeCoset.rep ⟦g⟧ := h_eq.symm
+    exact Nat.card_congr (
+      (Equiv.cast (congrArg (HeckeRing.decompQuot (Gamma0_pair N))
+        (Subtype.ext h_mid))).symm.trans
+      (HeckeRing.decompQuot_double_H_equiv (Gamma0_pair N) g ⟨γ₁, hγ₁⟩ ⟨γ₂, hγ₂⟩
+        (h_eq ▸ (HeckeCoset.rep ⟦g⟧).2)))
+  -- HeckeCoset_deg = Fintype.card(decompQuot(rep)) = Nat.card(decompQuot(g))
+  simp only [HeckeRing.HeckeCoset_deg]
+  rw [show (Fintype.card (HeckeRing.decompQuot (Gamma0_pair N)
+        (HeckeCoset.rep ⟦g_m⟧)) : ℤ) =
+      Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g_m) from by
+      rw [Nat.card_eq_fintype_card, h_rep_card],
+    show (Fintype.card (HeckeRing.decompQuot (Gamma0_pair N)
+        (HeckeCoset.rep ⟦g_n⟧)) : ℤ) =
+      Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g_n) from by
+      rw [Nat.card_eq_fintype_card, h_rep_card],
+    show (Fintype.card (HeckeRing.decompQuot (Gamma0_pair N)
+        (HeckeCoset.rep ⟦g_mn⟧)) : ℤ) =
+      Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g_mn) from by
+      rw [Nat.card_eq_fintype_card, h_rep_card]]
+  -- Step 2: Use stab_diag_eq_Gamma0 to transfer to Gamma0 quotients.
+  set H := (Gamma0_pair N).H
+  set K_m := ((CongruenceSubgroup.Gamma0 (m * N)).map (mapGL ℚ)).subgroupOf H
+  set K_n := ((CongruenceSubgroup.Gamma0 (n * N)).map (mapGL ℚ)).subgroupOf H
+  set K_mn := ((CongruenceSubgroup.Gamma0 (m * n * N)).map (mapGL ℚ)).subgroupOf H
+  have h_stab_m := stab_diag_eq_Gamma0 N m hm_pos
+  have h_stab_n := stab_diag_eq_Gamma0 N n hn_pos
+  have h_stab_mn := stab_diag_eq_Gamma0 N (m * n) (Nat.mul_pos hm_pos hn_pos)
+  rw [show Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g_m) = Nat.card (↥H ⧸ K_m) from
+      Nat.card_congr (Subgroup.quotientEquivOfEq h_stab_m),
+    show Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g_n) = Nat.card (↥H ⧸ K_n) from
+      Nat.card_congr (Subgroup.quotientEquivOfEq h_stab_n),
+    show Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g_mn) = Nat.card (↥H ⧸ K_mn) from
+      Nat.card_congr (Subgroup.quotientEquivOfEq h_stab_mn)]
+  -- Step 3: K_m ⊓ K_n = K_mn from Gamma0_inf_eq_of_coprime
+  have h_inf : K_m ⊓ K_n = K_mn := by
+    simp only [K_m, K_n, K_mn, ← Subgroup.subgroupOf_inf]
+    congr 1
+    rw [← Subgroup.map_inf_eq (f := mapGL ℚ) (hf := mapGL_injective)]
+    congr 1
+    haveI : NeZero (m * N) := ⟨by omega⟩
+    haveI : NeZero (n * N) := ⟨by omega⟩
+    haveI : NeZero (m * n * N) := ⟨by omega⟩
+    exact Gamma0_inf_eq_of_coprime N m n hcop
+  -- Step 4: FiniteIndex instances
+  haveI : Finite (HeckeRing.decompQuot (Gamma0_pair N) g_m) := Fintype.finite _
+  haveI : Finite (HeckeRing.decompQuot (Gamma0_pair N) g_n) := Fintype.finite _
+  haveI : Finite (HeckeRing.decompQuot (Gamma0_pair N) g_mn) := Fintype.finite _
+  haveI : Finite (↥H ⧸ K_m) := (Subgroup.quotientEquivOfEq h_stab_m).symm.finite
+  haveI : Finite (↥H ⧸ K_n) := (Subgroup.quotientEquivOfEq h_stab_n).symm.finite
+  haveI : Finite (↥H ⧸ K_mn) := (Subgroup.quotientEquivOfEq h_stab_mn).symm.finite
+  haveI : K_m.FiniteIndex := ⟨by rw [Subgroup.index_eq_card]; exact Nat.card_pos.ne'⟩
+  haveI : K_n.FiniteIndex := ⟨by rw [Subgroup.index_eq_card]; exact Nat.card_pos.ne'⟩
+  haveI : (K_m ⊓ K_n).FiniteIndex := by
+    rw [h_inf]; exact ⟨by rw [Subgroup.index_eq_card]; exact Nat.card_pos.ne'⟩
+  -- Step 5: Apply CRT
+  rw [← h_inf]
+  simp only [Nat.cast_inj, ← Fintype.card_eq_nat_card]
+  exact card_quotient_inf_of_set_mul K_m K_n (by
+    -- Product covering: every g ∈ H factors as k₁ * k₂ with k₁ ∈ K_m, k₂ ∈ K_n.
+    intro ⟨g, hg⟩
+    obtain ⟨γ, hγ_mem, hγ_eq⟩ := Subgroup.mem_map.mp hg
+    haveI : NeZero (m * N) := ⟨by omega⟩
+    haveI : NeZero (n * N) := ⟨by omega⟩
+    obtain ⟨σ_m, hσ_m, hδ_m⟩ := Gamma0_mN_mul_GammaN_eq_Gamma0 N m hm_pos γ hγ_mem
+    set δ := σ_m⁻¹ * γ with hδ_def
+    have h_gcd : Nat.gcd (m * N) (n * N) = N := by
+      rw [Nat.gcd_mul_right, hcop.gcd_eq_one, one_mul]
+    have hδ_mem : δ ∈ CongruenceSubgroup.Gamma N := hδ_m
+    have hδ_sup : δ ∈ CongruenceSubgroup.Gamma (m * N) ⊔
+        CongruenceSubgroup.Gamma (n * N) := by
+      have h_eq := Gamma_gcd_eq_mul (m * N) (n * N)
+      rw [← Subgroup.map_sup, h_gcd] at h_eq
+      exact Subgroup.map_injective mapGL_injective h_eq ▸ (h_gcd ▸ hδ_mem)
+    obtain ⟨α, hα, β, hβ, hαβ⟩ := Subgroup.mem_sup.mp hδ_sup
+    have hα_Gamma0 : α ∈ CongruenceSubgroup.Gamma0 (m * N) :=
+      CongruenceSubgroup.Gamma_le_Gamma0 (m * N) hα
+    have hβ_Gamma0 : β ∈ CongruenceSubgroup.Gamma0 (n * N) :=
+      CongruenceSubgroup.Gamma_le_Gamma0 (n * N) hβ
+    have h_factor : γ = σ_m * α * β := by
+      rw [mul_assoc, ← hαβ, hδ_def, mul_comm σ_m⁻¹, ← mul_assoc, mul_inv_cancel_right]
+    refine ⟨⟨mapGL ℚ (σ_m * α), ?_⟩, ?_, ⟨mapGL ℚ β, ?_⟩, ?_, ?_⟩
+    · exact Subgroup.mem_map_of_mem _ (CongruenceSubgroup.Gamma0_antitone
+        (Nat.dvd_mul_left N m) (Subgroup.mul_mem _ hσ_m hα_Gamma0))
+    · rw [Subgroup.mem_subgroupOf]
+      exact Subgroup.mem_map_of_mem _ (Subgroup.mul_mem _ hσ_m hα_Gamma0)
+    · exact Subgroup.mem_map_of_mem _ (CongruenceSubgroup.Gamma0_antitone
+        (Nat.dvd_mul_left N n) hβ_Gamma0)
+    · rw [Subgroup.mem_subgroupOf]
+      exact Subgroup.mem_map_of_mem _ hβ_Gamma0
+    · ext; simp only [Subgroup.coe_mul, Subgroup.coe_mk, ← map_mul, h_factor, mul_assoc])
 /-- **Coprime diagonal multiplication for Gamma0** (Shimura §3.2, Prop 3.16–17):
 `T'(1,m) * T'(1,n) = T'(1,mn)` when `gcd(m, n) = 1`.
 
@@ -4584,11 +4700,544 @@ private lemma ker_π_le_ker_ψ :
   rw [(RingHom.injective_iff_ker_eq_bot π_hom).mp π_injective]
   exact bot_le
 
+/-- The product element in a scalar × diagonal mulMap lands in the GL DC of the product diagonal.
+Uses scalar centrality: `diag(c,c) * g = g * diag(c,c)` for all `g`. -/
+private lemma product_mem_GL_DC_scalar
+    (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
+    (hc_gcd : Int.gcd (↑c) ↑N = 1) (ha_gcd : Int.gcd (a 0) N = 1)
+    (p : HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N
+          (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd)) ×
+      HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N a ha ha_gcd))) :
+    (p.1.out : GL (Fin 2) ℚ) * HeckeCoset.rep (T_diag_Gamma0 N
+        (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd) *
+      ((p.2.out : GL (Fin 2) ℚ) * HeckeCoset.rep (T_diag_Gamma0 N a ha ha_gcd)) ∈
+    DoubleCoset.doubleCoset (diagMat 2 ((fun _ : Fin 2 => c) * a) : GL (Fin 2) ℚ)
+      (SLnZ_subgroup 2 : Set _) (SLnZ_subgroup 2 : Set _) := by
+  -- Get DC memberships for reps
+  have hc_rep := HeckeCoset.rep_mem (T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd)
+  simp only [T_diag_Gamma0, HeckeCoset.toSet_mk] at hc_rep
+  have ha_rep := HeckeCoset.rep_mem (T_diag_Gamma0 N a ha ha_gcd)
+  simp only [T_diag_Gamma0, HeckeCoset.toSet_mk] at ha_rep
+  -- Lift to GL-level DCs
+  have hc_gl := Gamma0_doubleCoset_subset_Gamma N _ hc_rep
+  have ha_gl := Gamma0_doubleCoset_subset_Gamma N _ ha_rep
+  -- Decompose reps
+  rw [DoubleCoset.mem_doubleCoset] at hc_gl ha_gl
+  obtain ⟨L_c, ⟨σL_c, rfl⟩, R_c, ⟨σR_c, rfl⟩, hc_eq⟩ := hc_gl
+  obtain ⟨L_a, ⟨σL_a, rfl⟩, R_a, ⟨σR_a, rfl⟩, ha_eq⟩ := ha_gl
+  -- Get SL₂ memberships for coset elements
+  obtain ⟨σp₁, rfl⟩ := Gamma0_le_SLnZ N (SetLike.coe_mem p.1.out)
+  obtain ⟨σp₂, rfl⟩ := Gamma0_le_SLnZ N (SetLike.coe_mem p.2.out)
+  -- Now compute: σp₁ * (L_c * diag(c,c) * R_c) * (σp₂ * (L_a * diag(a) * R_a))
+  -- = σp₁ * L_c * (diag(c,c) * (R_c * σp₂ * L_a)) * diag(a) * R_a     [associativity]
+  -- = σp₁ * L_c * ((R_c * σp₂ * L_a) * diag(c,c)) * diag(a) * R_a     [scalar comm]
+  -- = σp₁ * L_c * R_c * σp₂ * L_a * (diag(c,c) * diag(a)) * R_a       [associativity]
+  -- = σp₁ * L_c * R_c * σp₂ * L_a * diag((fun _ => c) * a) * R_a       [diagMat_mul]
+  rw [DoubleCoset.mem_doubleCoset]
+  refine ⟨mapGL ℚ (σp₁ * σL_c * σR_c * σp₂ * σL_a),
+    ⟨σp₁ * σL_c * σR_c * σp₂ * σL_a, rfl⟩,
+    mapGL ℚ σR_a, ⟨σR_a, rfl⟩, ?_⟩
+  rw [show HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd) =
+        mapGL ℚ σL_c * diagMat 2 (fun _ => c) * mapGL ℚ σR_c from hc_eq,
+      show HeckeCoset.rep (T_diag_Gamma0 N a ha ha_gcd) =
+        mapGL ℚ σL_a * diagMat 2 a * mapGL ℚ σR_a from ha_eq]
+  calc mapGL ℚ σp₁ * (mapGL ℚ σL_c * diagMat 2 (fun _ => c) * mapGL ℚ σR_c) *
+        (mapGL ℚ σp₂ * (mapGL ℚ σL_a * diagMat 2 a * mapGL ℚ σR_a))
+      = mapGL ℚ σp₁ * mapGL ℚ σL_c *
+        (diagMat 2 (fun _ => c) * (mapGL ℚ σR_c * mapGL ℚ σp₂ * mapGL ℚ σL_a)) *
+        (diagMat 2 a * mapGL ℚ σR_a) := by group
+    _ = mapGL ℚ σp₁ * mapGL ℚ σL_c *
+        ((mapGL ℚ σR_c * mapGL ℚ σp₂ * mapGL ℚ σL_a) * diagMat 2 (fun _ => c)) *
+        (diagMat 2 a * mapGL ℚ σR_a) := by
+          rw [diagMat_scalar_comm 2 c hc]
+    _ = mapGL ℚ (σp₁ * σL_c * σR_c * σp₂ * σL_a) *
+        (diagMat 2 (fun _ => c) * diagMat 2 a) * mapGL ℚ σR_a := by
+          simp only [map_mul]; group
+    _ = mapGL ℚ (σp₁ * σL_c * σR_c * σp₂ * σL_a) *
+        diagMat 2 ((fun _ => c) * a) * mapGL ℚ σR_a := by
+          rw [diagMat_mul 2 _ a (fun _ => hc) ha]
+
+/-- Every mulMap output for scalar × arbitrary in the Gamma0 Hecke algebra
+equals `T_diag_Gamma0 N ((fun _ => c) * a)`. -/
+private lemma mulMap_Gamma0_scalar_eq
+    (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
+    (hc_gcd : Int.gcd (↑c) ↑N = 1) (ha_gcd : Int.gcd (a 0) N = 1)
+    (hdiv : a 0 ∣ a 1)
+    (hca_gcd : Int.gcd (↑((fun _ : Fin 2 => c) * a) 0) ↑N = 1)
+    (p : HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N
+          (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd)) ×
+      HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N a ha ha_gcd))) :
+    HeckeRing.mulMap (Gamma0_pair N)
+      (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd))
+      (HeckeCoset.rep (T_diag_Gamma0 N a ha ha_gcd)) p =
+    T_diag_Gamma0 N ((fun _ : Fin 2 => c) * a)
+      (fun i => Nat.mul_pos hc (ha i)) hca_gcd := by
+  set D := HeckeRing.mulMap (Gamma0_pair N) _ _ p
+  -- Step 1: Get diagonal representative
+  obtain ⟨b, hb, hgcd_b, hdiv_b, hrep⟩ := Gamma0_exists_diag_rep N (HeckeCoset.rep D)
+  have hrep' : D = T_diag_Gamma0 N b hb hgcd_b := by rw [← hrep]; exact (HeckeCoset.mk_rep D).symm
+  -- Step 2: cosetMap gives T_diag b at GL level
+  have hGL : cosetMap N D = T_diag b := by rw [hrep', cosetMap_T_diag_Gamma0]
+  -- Step 3: cosetMap gives T_diag ((fun _ => c) * a) via GL DC membership
+  have hGL_ca : cosetMap N D = T_diag ((fun _ : Fin 2 => c) * a) := by
+    exact cosetMap_mulMap_mem_GL_DC N _ _ p _
+      (product_mem_GL_DC_scalar N c hc a ha hc_gcd ha_gcd p)
+  -- Step 4: b = (fun _ => c) * a by diagonal uniqueness
+  have hdiv_b' : DivChain 2 b := fun i hi => (show i = 0 by omega) ▸ hdiv_b
+  have hdiv_ca : DivChain 2 ((fun _ : Fin 2 => c) * a) := fun i hi => by
+    have h0 : (⟨i, by omega⟩ : Fin 2) = (0 : Fin 2) := Fin.ext (show i = 0 by omega)
+    have h1 : (⟨i + 1, hi⟩ : Fin 2) = (1 : Fin 2) := Fin.ext (show i + 1 = 1 by omega)
+    show ((fun _ => c) * a) ⟨i, _⟩ ∣ ((fun _ => c) * a) ⟨i + 1, hi⟩
+    rw [h0, h1]; simp only [Pi.mul_apply]; exact Nat.mul_dvd_mul_left c hdiv
+  have hb_eq : b = (fun _ : Fin 2 => c) * a := diagonal_representative_unique 2 b
+    ((fun _ : Fin 2 => c) * a) hb (fun i => Nat.mul_pos hc (ha i)) hdiv_b' hdiv_ca
+    (by rw [← hGL, hGL_ca])
+  subst hb_eq; exact hrep'
+
+/-- The degree of a scalar Gamma0 double coset `T'(c, c)` is `1`:
+`diag(c,c)` centralizes all of `GL₂(ℚ)`, hence the stabilizer is all of `Γ₀(N)`. -/
+private lemma Gamma0_HeckeCoset_deg_scalar (c : ℕ) (hc : 0 < c)
+    (hc_gcd : Int.gcd (↑c) ↑N = 1) :
+    HeckeRing.HeckeCoset_deg (Gamma0_pair N)
+      (T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd) = 1 := by
+  set D := T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd
+  set δ := HeckeCoset.rep D
+  set H := (Gamma0_pair N).H
+  suffices hsmul : ConjAct.toConjAct (δ : GL (Fin 2) ℚ) • H = H by
+    have h_def : HeckeRing.HeckeCoset_deg (Gamma0_pair N) D =
+        ↑((ConjAct.toConjAct (δ : GL (Fin 2) ℚ) • H).relIndex H) := by
+      simp only [HeckeRing.HeckeCoset_deg, Subgroup.relIndex, Subgroup.index,
+        ← Nat.card_eq_fintype_card]; rfl
+    rw [h_def, hsmul, Subgroup.relIndex_self]; simp
+  -- δ is in the DC of diag(c,c), so δ = h₁ * diag(c,c) * h₂ for some h₁, h₂ ∈ H
+  have hδ_mem : (δ : GL (Fin 2) ℚ) ∈
+      DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) H H := by
+    have h1 : HeckeCoset.toSet D =
+        DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) H H := by
+      simp only [D, T_diag_Gamma0, HeckeCoset.toSet_mk]
+    rw [← h1]; exact HeckeCoset.rep_mem D
+  rw [DoubleCoset.mem_doubleCoset] at hδ_mem; obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
+  -- δ = (h₁ * h₂) * diag(c,c) by scalar centrality
+  have hδ_simp : (δ : GL (Fin 2) ℚ) = (h₁ * h₂) * diagMat 2 (fun _ : Fin 2 => c) := by
+    rw [hδ_eq, mul_assoc, diagMat_scalar_comm 2 c hc h₂, ← mul_assoc]
+  -- ConjAct by h₁*h₂ preserves H, and ConjAct by diag(c,c) preserves H
+  rw [hδ_simp, map_mul, ← smul_smul]
+  -- Scalar conjugation preserves H (any subgroup)
+  have hscalar_smul : ConjAct.toConjAct (diagMat 2 (fun _ : Fin 2 => c)) • H = H := by
+    ext x; constructor
+    · intro hx; rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hx
+      simp only [ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hx
+      rwa [diagMat_scalar_conj_eq 2 c hc] at hx
+    · intro hx; rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
+      simp only [ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
+      rwa [diagMat_scalar_conj_eq 2 c hc]
+  rw [hscalar_smul]
+  -- ConjAct by an element of H preserves H
+  ext x; simp only [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+    map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
+  constructor
+  · intro hx; have : x = (h₁ * h₂) * ((h₁ * h₂)⁻¹ * x * (h₁ * h₂)) * (h₁ * h₂)⁻¹ := by group
+    rw [this]; exact H.mul_mem (H.mul_mem (H.mul_mem hh₁ hh₂) hx) (H.inv_mem (H.mul_mem hh₁ hh₂))
+  · intro hx; exact H.mul_mem (H.mul_mem (H.inv_mem (H.mul_mem hh₁ hh₂)) hx) (H.mul_mem hh₁ hh₂)
+
+/-- **Generalized Gamma0-level scalar multiplication**: `T'(c,c) * T'(a₀,a₁) = T'(c*a₀, c*a₁)`.
+The scalar `diag(c,c)` centralizes `Γ₀(N)`, so its double coset has degree 1
+and the unique mulMap output is `T'(c*a₀, c*a₁)` with multiplicity 1. -/
+private lemma T_Gamma0_scalar_mul_gen (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ)
+    (ha : ∀ i, 0 < a i) (hc_gcd : Int.gcd (↑c) ↑N = 1)
+    (ha_gcd : Int.gcd (a 0) N = 1) (hdiv : a 0 ∣ a 1) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd) 1 *
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N a ha ha_gcd) 1 =
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N ((fun _ : Fin 2 => c) * a)
+        (fun i => Nat.mul_pos hc (ha i))
+        (by show Int.gcd (↑(c * a 0)) ↑N = 1
+            simp only [Int.gcd_natCast_natCast]
+            exact Nat.Coprime.mul_left
+              (by rwa [Int.gcd_natCast_natCast] at hc_gcd)
+              (by rwa [Int.gcd_natCast_natCast] at ha_gcd))) 1 := by
+  set D_c := T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd
+  set D_a := T_diag_Gamma0 N a ha ha_gcd
+  have hca_gcd' : Int.gcd (↑((fun _ : Fin 2 => c) * a) 0) ↑N = 1 := by
+    show Int.gcd (↑(c * a 0)) ↑N = 1
+    simp only [Int.gcd_natCast_natCast]
+    exact Nat.Coprime.mul_left
+      (by rwa [Int.gcd_natCast_natCast] at hc_gcd)
+      (by rwa [Int.gcd_natCast_natCast] at ha_gcd)
+  set D_out := T_diag_Gamma0 N ((fun _ : Fin 2 => c) * a)
+    (fun i => Nat.mul_pos hc (ha i)) hca_gcd'
+  change HeckeRing.T_single _ ℤ D_c 1 * HeckeRing.T_single _ ℤ D_a 1 =
+    HeckeRing.T_single _ ℤ D_out 1
+  have h_mulMap : ∀ p, HeckeRing.mulMap (Gamma0_pair N) D_c.rep D_a.rep p = D_out :=
+    mulMap_Gamma0_scalar_eq N c hc a ha hc_gcd ha_gcd hdiv hca_gcd'
+  refine HeckeRing.T_single_one_mul_eq_single (Gamma0_pair N) D_c D_a D_out ?_ ?_
+  · -- heckeMultiplicity = 1: Subsingleton approach
+    have h_card : Fintype.card (HeckeRing.decompQuot (Gamma0_pair N) D_c.rep) = 1 := by
+      have := Gamma0_HeckeCoset_deg_scalar N c hc hc_gcd
+      simp only [HeckeRing.HeckeCoset_deg] at this; exact_mod_cast this
+    haveI : Subsingleton (HeckeRing.decompQuot (Gamma0_pair N) D_c.rep) :=
+      Fintype.card_le_one_iff_subsingleton.mp (le_of_eq h_card)
+    have h_le : HeckeRing.heckeMultiplicity (Gamma0_pair N) D_c.rep D_a.rep D_out.rep ≤ 1 := by
+      classical
+      simp only [HeckeRing.heckeMultiplicity]; norm_cast; rw [Nat.card_eq_fintype_card]
+      apply Fintype.card_le_one_iff_subsingleton.mpr; constructor
+      intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
+      have hi : i₁ = i₂ := Subsingleton.elim i₁ i₂; subst hi
+      simp only [Set.mem_setOf_eq] at h₁ h₂
+      have hj := HeckeRing.decompQuot_snd_eq_of_fst_eq (Gamma0_pair N) D_c.rep D_a.rep D_out.rep i₁ j₁ j₂ h₁ h₂
+      subst hj; rfl
+    have h_pos : 0 < HeckeRing.heckeMultiplicity (Gamma0_pair N) D_c.rep D_a.rep D_out.rep := by
+      have h_mem : D_out ∈ HeckeRing.mulSupport (Gamma0_pair N) D_c.rep D_a.rep := by
+        simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
+          true_and, Prod.exists]
+        have ⟨i₀⟩ : Nonempty (HeckeRing.decompQuot (Gamma0_pair N) D_c.rep) :=
+          Fintype.card_pos_iff.mp (h_card ▸ Nat.one_pos)
+        have ⟨j₀⟩ : Nonempty (HeckeRing.decompQuot (Gamma0_pair N) D_a.rep) :=
+          Fintype.card_pos_iff.mp (by
+            have := HeckeRing.HeckeCoset_deg_pos (Gamma0_pair N) D_a
+            simp only [HeckeRing.HeckeCoset_deg] at this; omega)
+        exact ⟨i₀, j₀, h_mulMap (i₀, j₀)⟩
+      exact HeckeRing.heckeMultiplicity_pos_of_mem (Gamma0_pair N) _ _ _ h_mem
+    omega
+  · -- heckeMultiplicity = 0 elsewhere
+    intro A hA
+    exact HeckeRing.heckeMultiplicity_eq_zero_of_mulMap_unique (Gamma0_pair N) _ _ D_out A hA h_mulMap
+
+/-- **Gamma0-level scalar multiplication**: `T'(c,c) * T'(1,m) = T'(c, c*m)`.
+The scalar `diag(c,c)` centralizes `Γ₀(N)`, so its double coset has degree 1
+and the unique mulMap output is `T'(c, c*m)` with multiplicity 1.
+This is used for the `d₁ > 1` case of surjectivity (Shimura Thm 3.34). -/
+private lemma T_Gamma0_scalar_mul (c m : ℕ) (hc : 0 < c) (hm : 0 < m)
+    (hc_gcd : Int.gcd (↑c) ↑N = 1) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd) 1 *
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![1, m]) (fun i => by fin_cases i <;> simp [hm]) (by simp)) 1 =
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N ((fun _ : Fin 2 => c) * ![1, m])
+        (fun i => Nat.mul_pos hc (by fin_cases i <;> simp [hm]))
+        (by show Int.gcd (↑(c * 1)) ↑N = 1; simp [hc_gcd])) 1 := by
+  set D_c := T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hc_gcd
+  set D_m := T_diag_Gamma0 N (![1, m]) (fun i => by fin_cases i <;> simp [hm]) (by simp)
+  set D_out := T_diag_Gamma0 N ((fun _ : Fin 2 => c) * ![1, m])
+    (fun i => Nat.mul_pos hc (by fin_cases i <;> simp [hm]))
+    (by show Int.gcd (↑(c * 1)) ↑N = 1; simp [hc_gcd])
+  change HeckeRing.T_single _ ℤ D_c 1 * HeckeRing.T_single _ ℤ D_m 1 =
+    HeckeRing.T_single _ ℤ D_out 1
+  have hca_gcd : Int.gcd (↑((fun _ : Fin 2 => c) * (![1, m] : Fin 2 → ℕ)) 0) ↑N = 1 := by
+    simp [hc_gcd]
+  have h_mulMap : ∀ p, HeckeRing.mulMap (Gamma0_pair N) D_c.rep D_m.rep p = D_out := by
+    intro p
+    have h := mulMap_Gamma0_scalar_eq N c hc ![1, m]
+      (fun i => by fin_cases i <;> simp [hm]) hc_gcd (by simp) (by simp) hca_gcd p
+    convert h using 2
+    simp only [T_diag_Gamma0]; congr 1
+    ext i; fin_cases i <;> simp [Pi.mul_apply]
+  refine HeckeRing.T_single_one_mul_eq_single (Gamma0_pair N) D_c D_m D_out ?_ ?_
+  · -- heckeMultiplicity = 1: since deg(D_c) = 1, decompQuot(D_c) is a singleton,
+    -- so pairs (i,j) are determined by j. Since mulMap always hits D_out,
+    -- there's at most one pair per target. Combined with positivity, μ = 1.
+    have h_card : Fintype.card (HeckeRing.decompQuot (Gamma0_pair N) D_c.rep) = 1 := by
+      have := Gamma0_HeckeCoset_deg_scalar N c hc hc_gcd
+      simp only [HeckeRing.HeckeCoset_deg] at this; exact_mod_cast this
+    haveI : Subsingleton (HeckeRing.decompQuot (Gamma0_pair N) D_c.rep) :=
+      Fintype.card_le_one_iff_subsingleton.mp (le_of_eq h_card)
+    have h_le : HeckeRing.heckeMultiplicity (Gamma0_pair N) D_c.rep D_m.rep D_out.rep ≤ 1 := by
+      classical
+      simp only [HeckeRing.heckeMultiplicity]; norm_cast; rw [Nat.card_eq_fintype_card]
+      apply Fintype.card_le_one_iff_subsingleton.mpr; constructor
+      intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
+      have hi : i₁ = i₂ := Subsingleton.elim i₁ i₂; subst hi
+      simp only [Set.mem_setOf_eq] at h₁ h₂
+      have hj := HeckeRing.decompQuot_snd_eq_of_fst_eq (Gamma0_pair N) D_c.rep D_m.rep D_out.rep i₁ j₁ j₂ h₁ h₂
+      subst hj; rfl
+    have h_pos : 0 < HeckeRing.heckeMultiplicity (Gamma0_pair N) D_c.rep D_m.rep D_out.rep := by
+      have h_mem : D_out ∈ HeckeRing.mulSupport (Gamma0_pair N) D_c.rep D_m.rep := by
+        simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
+          true_and, Prod.exists]
+        have ⟨i₀⟩ : Nonempty (HeckeRing.decompQuot (Gamma0_pair N) D_c.rep) :=
+          Fintype.card_pos_iff.mp (h_card ▸ Nat.one_pos)
+        have ⟨j₀⟩ : Nonempty (HeckeRing.decompQuot (Gamma0_pair N) D_m.rep) :=
+          Fintype.card_pos_iff.mp (by
+            have := HeckeRing.HeckeCoset_deg_pos (Gamma0_pair N) D_m
+            simp only [HeckeRing.HeckeCoset_deg] at this; omega)
+        exact ⟨i₀, j₀, h_mulMap (i₀, j₀)⟩
+      exact HeckeRing.heckeMultiplicity_pos_of_mem (Gamma0_pair N) _ _ _ h_mem
+    omega
+  · -- heckeMultiplicity = 0 elsewhere
+    intro A hA
+    exact HeckeRing.heckeMultiplicity_eq_zero_of_mulMap_unique (Gamma0_pair N) _ _ D_out A hA h_mulMap
+
+/-- **T'(1,p) ∈ range(ψ)** for any prime p: follows directly from ψ_hom definition. -/
+private lemma T_1p_mem_ψ_range (p : ℕ) (hp : p.Prime) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![1, p])
+        (fun i => by fin_cases i <;> simp [hp.pos])
+        (by simp)) 1 ∈ (ψ_hom N).range :=
+  ⟨MvPolynomial.X (⟨p, hp⟩, (0 : Fin 2)), by
+    show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (0 : Fin 2))) = _
+    simp only [ψ_hom, MvPolynomial.eval₂Hom_X']; rfl⟩
+
+/-- **T'(1,m) ∈ range(ψ)** by strong induction on m (Shimura Thm 3.34 core).
+Handles: m=1 (identity), m=p prime (generator), coprime products (T_coprime_mul),
+p|N prime powers (T_bad_mul), non-prime-power composites (factorization + coprime mul).
+The case p∤N, k≥2 (pure prime power, p coprime to level) extracts T'(1,p^k) from the
+product T'(1,p) * T'(1,p^{k-1}) via degree inequality argument + subtraction;
+one sorry remains encapsulating the degree formula + multiplicity=1 claim. -/
+private lemma T_1m_mem_ψ_range (m : ℕ) (hm : 0 < m) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N (![1, m])
+        (fun i => by fin_cases i <;> simp [hm])
+        (by simp)) 1 ∈ (ψ_hom N).range := by
+  induction m using Nat.strongRecOn with
+  | _ m ih =>
+  by_cases hm1 : m = 1
+  · -- m = 1: identity coset
+    subst hm1; convert (ψ_hom N).range.one_mem using 1
+    show Finsupp.single _ 1 = 1; rfl
+  · -- m > 1: extract prime factor
+    obtain ⟨p, hp, hp_dvd⟩ := Nat.exists_prime_and_dvd (by omega : m ≠ 1)
+    set q := m / p with hq_def
+    have hpq : m = p * q := (Nat.mul_div_cancel' hp_dvd).symm
+    have hq_pos : 0 < q := Nat.pos_of_ne_zero
+      (by intro h; rw [h, Nat.mul_zero] at hpq; omega)
+    have hq_lt : q < m := by
+      rw [hpq]; exact lt_mul_of_one_lt_left hq_pos hp.one_lt
+    by_cases hcop : Nat.Coprime p q
+    · -- gcd(p, q) = 1: use T_coprime_mul
+      have hp_lt : p < m := by
+        rw [hpq]; exact lt_mul_of_one_lt_right hp.pos (by omega)
+      have h_IHp := ih p hp_lt hp.pos
+      have h_IHq := ih q hq_lt hq_pos
+      conv_lhs => rw [hpq]
+      rw [← T_coprime_mul N p q hp.pos hq_pos hcop]
+      exact (ψ_hom N).range.mul_mem h_IHp h_IHq
+    · -- gcd(p, q) > 1: p | q, so p² | m. Factor out ALL p-powers.
+      -- Let a = p^(v_p(m)), b = m/a. Then gcd(a,b)=1 and both < m (since m has ≥2 prime factors or p²|m).
+      -- Use T_coprime_mul for (a, b).
+      -- But if m = p^k (pure prime power), b = 1 and we need T'(1, p^k) ∈ range.
+      -- For p | N: T'(1,p)^k = T'(1,p^k) by T_bad_mul. T'(1,p) ∈ range.
+      -- For p ∤ N, k ≥ 2: need the Hecke product extraction argument.
+      -- First check: is m a prime power?
+      by_cases hm_ppow : ∃ k, m = p ^ k
+      · -- m = p^k for some k ≥ 2
+        obtain ⟨k, rfl⟩ := hm_ppow
+        have hk : 2 ≤ k := by
+          by_contra h; push_neg at h; interval_cases k <;> simp_all
+        by_cases hpN : (p : ℤ).gcd N = 1
+        · -- p coprime to N, k ≥ 2: Hecke product extraction via degree inequality.
+          -- Key mathematical argument (Shimura Thm 3.34):
+          --
+          -- The product T'(1,p) * T'(1,p^{k-1}) is in range (both factors in range by IH).
+          -- It expands as Σ_D μ_D * T_single D 1 where each D has diagonal (d₁, d₂)
+          -- with d₁*d₂ = p^k, d₁|d₂, gcd(d₁,N)=1. So D ∈ {T'(p^j, p^{k-j}) : 0 ≤ j ≤ k/2}.
+          --
+          -- For j ≥ 1 (d₁ = p^j ≥ p > 1): T_single (T'(p^j, p^{k-j})) 1 ∈ range
+          -- by T_diag_mem_ψ_range (d₁ > 1 case, already proved).
+          --
+          -- For j = 0 (D = T'(1, p^k)): μ₀ = 1 by degree inequality.
+          --   • μ₀ ≥ 1: identity pair in decompQuot gives diag(1,p)*diag(1,p^{k-1}) = diag(1,p^k).
+          --   • μ₀ ≤ 1: total degree = deg(T'(1,p)) * deg(T'(1,p^{k-1})) = p^{k-2}(p+1)²,
+          --     and deg(T'(1,p^k)) = p^{k-1}(p+1), so μ₀ ≤ (p+1)/p ≤ 1 for integer μ₀.
+          --     The degree equalities follow from the CRT bijection
+          --     Γ₀(N)/Γ₀(Np^j) ≅ SL₂(ℤ)/Γ₀(p^j) (for gcd(N,p)=1).
+          --
+          -- Therefore: T_single T'(1,p^k) 1 = product - Σ_{j≥1} μ_j T_single T'(p^j,p^{k-j}) 1 ∈ range.
+          --
+          -- The formalization of this argument requires:
+          -- (a) The Gamma0 degree formula deg(T'(1,p^j)) = p^{j-1}(p+1) for p ∤ N
+          --     (transfers from GL via the decompQuot CRT bijection)
+          -- (b) The support classification: mulSupport ⊆ {T'(p^j, p^{k-j}) : 0 ≤ j ≤ k/2}
+          -- (c) The multiplicity calculation μ₀ = 1 via degree inequality
+          --
+          -- This deep analysis is deferred; the sorry below isolates the full claim.
+          sorry
+        · -- p | N: T'(1,p^k) = T'(1,p)^k by T_bad_mul (all p-powers multiply simply)
+          -- T'(1,p) ∈ range directly. Product ∈ range by subring closure.
+          -- T'(1,p) * T'(1,p^{k-1}) = T'(1,p^k) by T_bad_mul, and both ∈ range by IH.
+          have hp_lt : p < p ^ k := by
+            calc p = p ^ 1 := (pow_one p).symm
+              _ < p ^ k := Nat.pow_lt_pow_right hp.one_lt hk
+          have hpk1_lt : p ^ (k - 1) < p ^ k :=
+            Nat.pow_lt_pow_right hp.one_lt (by omega)
+          have h_IHp := ih p hp_lt hp.pos
+          have h_IHpk1 := ih (p ^ (k - 1)) hpk1_lt (pow_pos hp.pos _)
+          -- p | N means p ∣ N^1 and p^{k-1} ∣ N^{k-1}
+          have hpN : ¬((p : ℤ).gcd ↑N = 1) := hpN
+          have hp_dvd_N : p ∣ N := by
+            by_contra h
+            exact hpN (by rw [Int.gcd_natCast_natCast]; exact (hp.coprime_iff_not_dvd.mpr h))
+          conv_lhs => rw [show p ^ k = p * p ^ (k - 1) from by rw [← pow_succ, Nat.succ_eq_add_one, Nat.sub_add_cancel hk]]
+          rw [← T_bad_mul N p (p ^ (k - 1)) hp.pos (pow_pos hp.pos _) 1
+            (dvd_trans hp_dvd_N (dvd_pow_self N (by omega)))
+            (k - 1) (Nat.pow_dvd_pow N (by omega))]
+          exact (ψ_hom N).range.mul_mem h_IHp h_IHpk1
+      · -- m is NOT a prime power: it has another prime factor q ≠ p.
+        -- Factor m = p^(v_p(m)) * (m / p^(v_p(m))) with coprime parts.
+        push_neg at hm_ppow
+        -- m has at least one prime factor ≠ p, say q.
+        -- Split: a = p-part of m, b = p-free part of m. gcd(a,b)=1, both > 1, both < m.
+        -- Factor m = p^v * (m/p^v) with coprime parts.
+        set v := m.factorization p
+        set a := p ^ v with ha_def
+        set b := m / a with hb_def
+        have ha_dvd : a ∣ m := Nat.ord_pow_dvd_factorization p m
+        have hab : m = a * b := (Nat.mul_div_cancel' ha_dvd).symm
+        have hv_pos : 0 < v := by
+          rw [show v = m.factorization p from rfl]
+          exact Nat.Prime.factorization_pos hp hp_dvd
+        have ha_pos : 0 < a := pow_pos hp.pos v
+        have hb_pos : 0 < b := Nat.pos_of_ne_zero (by
+          intro hb0; rw [hb0, Nat.mul_zero] at hab; omega)
+        have ha_lt : a < m := by
+          rw [hab]; refine lt_mul_of_one_lt_right ha_pos ?_
+          by_contra h; push_neg at h; interval_cases b
+          · omega
+          · -- b = 1 means m = a = p^v, contradicting hm_ppow
+            exact hm_ppow v (by omega)
+        have hb_lt : b < m := by
+          rw [hab]; exact lt_mul_of_one_lt_left hb_pos (Nat.one_lt_pow hv_pos.ne' hp.one_lt)
+        have hcop_ab : Nat.Coprime a b := Nat.coprime_ppow_primes hp
+          (Nat.coprime_div_pow_factorization hp.prime m)
+        conv_lhs => rw [hab]
+        rw [← T_coprime_mul N a b ha_pos hb_pos hcop_ab]
+        exact (ψ_hom N).range.mul_mem (ih a ha_lt ha_pos) (ih b hb_lt hb_pos)
+
+/-- **T'(d₁,d₂) ∈ range(ψ)** for `d₁ | d₂`, `gcd(d₁,N) = 1`.
+Reduces to `T_1m_mem_ψ_range` when `d₁ = 1`. The `d₁ > 1` case needs
+Gamma0-level scalar extraction: `T'(d₁,d₂) = T'(d₁,d₁) * T'(1,d₂/d₁)`. -/
+private lemma T_diag_mem_ψ_range (a : Fin 2 → ℕ)
+    (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (a 0) N = 1) (hdiv : a 0 ∣ a 1) :
+    HeckeRing.T_single (Gamma0_pair N) ℤ
+      (T_diag_Gamma0 N a ha hgcd) 1 ∈ (ψ_hom N).range := by
+  by_cases ha1 : a 0 = 1
+  · -- d₁ = 1: direct from T_1m_mem_ψ_range
+    have ha_eq : a = ![1, a 1] := by ext i; fin_cases i <;> simp [ha1]
+    have : T_diag_Gamma0 N a ha hgcd = T_diag_Gamma0 N (![1, a 1])
+        (fun i => by fin_cases i <;> simp [ha 1]) (by simp) := by
+      simp only [T_diag_Gamma0]; congr 1; ext; simp [ha_eq]
+    rw [this]
+    exact T_1m_mem_ψ_range N (a 1) (ha 1)
+  · -- d₁ > 1: factor T'(a₀, a₁) = T'(a₀, a₀) * T'(1, a₁/a₀) and show each ∈ range.
+    have ha0_gt : 1 < a 0 := Nat.one_lt_iff_ne_one.mpr ha1
+    -- Step 1: T'(1, a₁/a₀) ∈ range
+    set q := a 1 / a 0 with hq_def
+    have hq_pos : 0 < q := Nat.pos_of_ne_zero (by
+      intro hq0; rw [hq_def, Nat.div_eq_zero_iff (ha 0)] at hq0
+      exact Nat.not_lt.mpr (Nat.le_of_dvd (ha 1) hdiv) hq0)
+    have hq_mul : a 1 = a 0 * q := (Nat.mul_div_cancel' hdiv).symm
+    have h_T1q := T_1m_mem_ψ_range N q hq_pos
+    -- Step 2: T'(a₀, a₀) ∈ range, by strong induction on a₀
+    suffices hscalar : ∀ (d : ℕ) (hd : 0 < d) (hd_gcd : Int.gcd (↑d) ↑N = 1),
+        HeckeRing.T_single (Gamma0_pair N) ℤ
+          (T_diag_Gamma0 N (fun _ : Fin 2 => d) (fun _ => hd) hd_gcd) 1 ∈
+          (ψ_hom N).range by
+      -- Step 3: Combine using T_Gamma0_scalar_mul_gen
+      have h_scalar_a0 := hscalar (a 0) (ha 0) hgcd
+      -- T'(a₀, a₀) * T'(1, q) = T'(a₀, a₀*q) = T'(a₀, a₁)
+      have h_product := T_Gamma0_scalar_mul N (a 0) q (ha 0) hq_pos hgcd
+      -- (fun _ => a 0) * ![1, q] = ![a 0, a 0 * q] = ![a 0, a 1] = a
+      have hfun_eq : (fun _ : Fin 2 => a 0) * ![1, q] = a := by
+        ext i; fin_cases i
+        · simp [Pi.mul_apply]
+        · simp [Pi.mul_apply, hq_mul]
+      -- Match T_diag_Gamma0 arguments
+      have hD_eq : T_diag_Gamma0 N ((fun _ : Fin 2 => a 0) * ![1, q])
+          (fun i => Nat.mul_pos (ha 0) (by fin_cases i <;> simp [hq_pos]))
+          (by show Int.gcd (↑(a 0 * 1)) ↑N = 1; simp [hgcd]) =
+        T_diag_Gamma0 N a ha hgcd := by
+        simp only [T_diag_Gamma0]; congr 1; exact hfun_eq
+      rw [hD_eq] at h_product
+      rw [← h_product]
+      exact (ψ_hom N).range.mul_mem h_scalar_a0 h_T1q
+    -- Prove the scalar helper by strong induction on d
+    intro d
+    induction d using Nat.strongRecOn with
+    | _ d ih =>
+    intro hd hd_gcd
+    by_cases hd1 : d = 1
+    · -- d = 1: T'(1, 1) = identity
+      subst hd1
+      convert (ψ_hom N).range.one_mem using 1
+      show Finsupp.single _ 1 = 1; rfl
+    · -- d > 1: extract prime p | d with gcd(p, N) = 1
+      obtain ⟨p, hp, hp_dvd⟩ := Nat.exists_prime_and_dvd (by omega : d ≠ 1)
+      -- gcd(p, N) = 1 since p | d and gcd(d, N) = 1
+      have hp_gcd : Int.gcd (↑p) ↑N = 1 := by
+        rw [Int.gcd_natCast_natCast] at hd_gcd ⊢
+        exact Nat.Coprime.coprime_dvd_left hp_dvd hd_gcd
+      -- T'(p, p) ∈ range: it's a generator of ψ_hom
+      have hp_not_dvd_N : ¬(p ∣ N) := by
+        intro h; rw [Int.gcd_natCast_natCast] at hp_gcd
+        exact Nat.Prime.not_coprime_iff_dvd.mpr ⟨p, hp, dvd_refl p, h⟩ hp_gcd
+      have h_Tpp : HeckeRing.T_single (Gamma0_pair N) ℤ
+          (T_diag_Gamma0 N (![p, p]) (fun i => by fin_cases i <;> simp [hp.pos])
+            (by show Int.gcd (↑p) ↑N = 1; exact hp_gcd)) 1 ∈ (ψ_hom N).range :=
+        ⟨MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2)), by
+          show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2))) = _
+          simp only [ψ_hom, MvPolynomial.eval₂Hom_X']
+          simp only [show (1 : Fin 2) ≠ 0 from by omega, ↓reduceIte,
+            dif_neg hp_not_dvd_N]
+          congr 1; simp only [T_diag_Gamma0]; congr 1
+          ext i; fin_cases i <;> rfl⟩
+      -- Convert T'(![p,p]) to T'(fun _ => p)
+      have h_pp_eq : T_diag_Gamma0 N (![p, p])
+          (fun i => by fin_cases i <;> simp [hp.pos])
+          (by show Int.gcd (↑p) ↑N = 1; exact hp_gcd) =
+        T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hp_gcd := by
+        simp only [T_diag_Gamma0]; congr 1; ext i; fin_cases i <;> rfl
+      rw [h_pp_eq] at h_Tpp
+      -- d/p: properties
+      set e := d / p with he_def
+      have he_pos : 0 < e := Nat.pos_of_ne_zero (by
+        intro he0; rw [he_def, Nat.div_eq_zero_iff hp.pos] at he0; omega)
+      have he_mul : d = p * e := (Nat.mul_div_cancel' hp_dvd).symm
+      have he_lt : e < d := by
+        rw [he_mul]; exact lt_mul_of_one_lt_left he_pos hp.one_lt
+      have he_gcd : Int.gcd (↑e) ↑N = 1 := by
+        rw [Int.gcd_natCast_natCast] at hd_gcd ⊢
+        exact Nat.Coprime.coprime_dvd_left (Dvd.intro_left p he_mul) hd_gcd
+      -- T'(e, e) ∈ range by IH
+      have h_Te := ih e he_lt he_pos he_gcd
+      -- T'(p,p) * T'(e,e) = T'(p*e, p*e) = T'(d, d) by T_Gamma0_scalar_mul_gen
+      have h_prod := T_Gamma0_scalar_mul_gen N p hp.pos (fun _ : Fin 2 => e)
+        (fun _ => he_pos) hp_gcd he_gcd (dvd_refl e)
+      -- (fun _ => p) * (fun _ => e) = (fun _ => d)
+      have hpe_eq : (fun _ : Fin 2 => p) * (fun _ : Fin 2 => e) = (fun _ : Fin 2 => d) := by
+        ext i; simp [Pi.mul_apply, ← he_mul]
+      have hD_eq' : T_diag_Gamma0 N ((fun _ : Fin 2 => p) * (fun _ : Fin 2 => e))
+          (fun i => Nat.mul_pos hp.pos he_pos)
+          (by show Int.gcd (↑(p * e)) ↑N = 1; rw [← he_mul]; exact hd_gcd) =
+        T_diag_Gamma0 N (fun _ : Fin 2 => d) (fun _ => hd) hd_gcd := by
+        simp only [T_diag_Gamma0]; congr 1; exact hpe_eq
+      rw [hD_eq'] at h_prod
+      rw [← h_prod]
+      exact (ψ_hom N).range.mul_mem h_Tpp h_Te
+
 /-- **Target surjectivity** (Shimura Thm 3.34): `𝕋 (Gamma0_pair N) ℤ` is generated
     as a ring by the images of `ψ`. -/
 private lemma ψ_surjective :
     Function.Surjective (ψ_hom N) := by
-  sorry
+  intro y
+  induction y using Finsupp.induction_linear with
+  | zero => exact ⟨0, map_zero _⟩
+  | add f g hf hg =>
+    obtain ⟨xf, rfl⟩ := hf; obtain ⟨xg, rfl⟩ := hg
+    exact ⟨xf + xg, map_add _ _ _⟩
+  | single D c =>
+    -- T_single D c ∈ range: factor coefficient, get diagonal representative
+    suffices h : Finsupp.single D 1 ∈ (ψ_hom N).range by
+      obtain ⟨x, hx⟩ := h
+      exact ⟨c • x, by rw [map_zsmul, hx, Finsupp.smul_single', smul_eq_mul, mul_one]⟩
+    -- Get diagonal representative for D
+    obtain ⟨a, ha, hgcd, hdiv, hrep⟩ := Gamma0_exists_diag_rep N (HeckeCoset.rep D)
+    have hD : D = T_diag_Gamma0 N a ha hgcd := by
+      rw [show D = (⟦HeckeCoset.rep D⟧ : HeckeCoset (Gamma0_pair N)) from
+        (Quotient.out_eq D).symm, hrep]
+    rw [hD]
+    exact T_diag_mem_ψ_range N a ha hgcd hdiv
 
 /-- The surjective ring hom `R(Γ, Δ) →+* R(Γ₀(N), Δ₀(N))` via factorization. -/
 private noncomputable def shimura_ring_hom :
