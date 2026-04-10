@@ -19,13 +19,12 @@ valence formula for weight-`k` modular forms on `SL₂(ℤ)`.
 
 1. **FTC at `i`**: `arcFTCHyp_atI` — the complete `ArcFTCHyp` at `i`
 2. **FTC at `ρ`**: `cornerFTCHyp_atRho` — the complete `CornerFTCHyp` at `ρ`
-3. **Interior contour integral**: `fdBoundaryPC1Path_contourIntegral_interior_eq` —
+3. **FTC at `ρ+1`**: `cornerFTCHyp_atRhoPlusOne_unconditional` — the complete
+   `CornerFTCHyp` at `ρ+1`
+4. **Interior contour integral**: `fdBoundaryPC1Path_contourIntegral_interior_eq` —
    `∮_γ (w - z)⁻¹ dw = -2πi` for strict interior `z`
 
 ## Remaining hypotheses (taken as parameters)
-
-4. **FTC at `ρ+1`**: A `CornerFTCHyp` instance for the asymmetric crossing at `ρ+1`.
-   The limit `E(ε) → -πi/3` is proved; integrability and FTC identity remain.
 
 5. **Boundary winding**: `HasGeneralizedWindingNumber γ z (-1/2)` for smooth
    boundary points. This requires `SingleCrossingData` per point.
@@ -35,10 +34,10 @@ valence formula for weight-`k` modular forms on `SL₂(ℤ)`.
 
 ## Main results
 
-* `mkFDWindingDataFull_of_analytical` — assembles `FDWindingDataFull H` from the
-  unconditional pieces plus hypotheses 4 and 5
+* `mkFDWindingDataFull_of_boundaryWinding` — assembles `FDWindingDataFull H` from
+  the four unconditional pieces plus the boundary winding hypothesis
 * `valence_formula_textbook_orbit_finsum_unconditional` — the textbook valence formula
-  with the exact statement requested, taking the minimal remaining hypotheses
+  taking only `hf`, boundary winding, and the residue-modular identity
 
 ## References
 
@@ -74,21 +73,18 @@ structure ResidueModularHyp {k : ℤ} (f : ModularForm (Gamma 1) k) (H : ℝ)
 
 /-! ### Assembly of FDWindingDataFull -/
 
-/-- Assemble `FDWindingDataFull H` using the three unconditional pieces plus the
-remaining hypotheses for `ρ+1` and boundary winding.
+/-- Assemble `FDWindingDataFull H` using the four unconditional FTC/interior pieces
+plus the boundary winding hypothesis.
 
 **Unconditional** (filled in automatically):
 - `arcFTCHyp_atI` for the crossing at `i`
 - `cornerFTCHyp_atRho` for the crossing at `ρ`
+- `cornerFTCHyp_atRhoPlusOne_unconditional` for the crossing at `ρ+1`
 - `fdBoundaryPC1Path_contourIntegral_interior_eq` for interior contour integrals
 
-**Taken as parameters:**
-- `h_ftc_rp1`: a `CornerFTCHyp` for the crossing at `ρ+1`
+**Taken as parameter:**
 - `h_boundary`: the generalized winding number at smooth boundary points -/
-def mkFDWindingDataFull_of_analytical {H : ℝ} (hH : 1 < H)
-    (h_ftc_rp1 : CornerFTCHyp (fdBoundaryPC1Path H (fdHeightValid_of_one_lt H hH))
-      ellipticPointRhoPlusOne (1/5) (vertDelta H) arcsinDelta
-      (min (1/3) (H - Real.sqrt 3 / 2)) (-(↑Real.pi / 3 * I)))
+def mkFDWindingDataFull_of_boundaryWinding {H : ℝ} (hH : 1 < H)
     (h_boundary : ∀ z : ℂ, z.im > 0 → z.im < H →
       z ≠ I → z ≠ ellipticPointRho → z ≠ ellipticPointRhoPlusOne →
       ¬(‖z‖ > 1 ∧ |z.re| < 1/2) →
@@ -99,7 +95,8 @@ def mkFDWindingDataFull_of_analytical {H : ℝ} (hH : 1 < H)
   mkFDWindingDataFull hH
     (arcFTCHyp_atI hH (fdBoundaryPC1Path_eq H (fdHeightValid_of_one_lt H hH)))
     (cornerFTCHyp_atRho hH (fdBoundaryPC1Path_eq H (fdHeightValid_of_one_lt H hH)))
-    h_ftc_rp1
+    (cornerFTCHyp_atRhoPlusOne_unconditional hH
+      (fdBoundaryPC1Path_eq H (fdHeightValid_of_one_lt H hH)))
     (fun _ hz => fdBoundaryPC1Path_contourIntegral_interior_eq
       (fdHeightValid_of_one_lt H hH) hz)
     h_boundary
@@ -119,26 +116,24 @@ This takes the exact textbook form with `∑ᶠ` over non-elliptic orbits.
 
 ### Remaining hypotheses
 
-The three remaining hypotheses represent deep analytical facts that are not
-yet fully formalized:
+The two remaining hypotheses represent the deepest analytical facts:
 
-1. **`h_ftc_rp1`**: A `CornerFTCHyp` for the crossing at `ρ+1`. The limit
-   `E(ε) → -(π/3)·I` is proved unconditionally; only the integrability and
-   FTC telescope on the far segments remain. These require tracking the branch
-   of `Complex.log` through the negative-real-part arc.
-
-2. **`h_boundary`**: The generalized winding number equals `-1/2` at every smooth
+1. **`h_boundary`**: The generalized winding number equals `-1/2` at every smooth
    boundary point. This requires constructing `SingleCrossingData` for each such
    point (the CPV integral of `(w - z)⁻¹` along the boundary converges to `-πi`).
 
-3. **`h_residue_modular`**: The residue-modular identity obtained by applying
-   the generalized residue theorem to `logDeriv(f)` and computing the modular
-   side (horizontal segment gives cusp order, verticals cancel, arcs give `-k/6`). -/
+2. **`h_residue_modular`**: The residue-modular identity combining the generalized
+   residue theorem for `logDeriv(f)` with modular invariance (horizontal segment
+   gives cusp order, verticals cancel, arcs give `-k/6`).
+
+### What is discharged automatically
+
+- **FTC at `i`**: `arcFTCHyp_atI`
+- **FTC at `ρ`**: `cornerFTCHyp_atRho`
+- **FTC at `ρ+1`**: `cornerFTCHyp_atRhoPlusOne_unconditional`
+- **Interior contour integral**: `fdBoundaryPC1Path_contourIntegral_interior_eq` -/
 theorem valence_formula_textbook_orbit_finsum_unconditional
     {H : ℝ} (hH : 1 < H)
-    (h_ftc_rp1 : CornerFTCHyp (fdBoundaryPC1Path H (fdHeightValid_of_one_lt H hH))
-      ellipticPointRhoPlusOne (1/5) (vertDelta H) arcsinDelta
-      (min (1/3) (H - Real.sqrt 3 / 2)) (-(↑Real.pi / 3 * I)))
     (h_boundary : ∀ z : ℂ, z.im > 0 → z.im < H →
       z ≠ I → z ≠ ellipticPointRho → z ≠ ellipticPointRhoPlusOne →
       ¬(‖z‖ > 1 ∧ |z.re| < 1/2) →
@@ -153,7 +148,7 @@ theorem valence_formula_textbook_orbit_finsum_unconditional
     ∑ᶠ (q : NonEllOrbit), ordOrbitQ f q =
     (k : ℂ) / 12 :=
   valence_formula_textbook_of_windingDataFull f hf
-    ⟨H, mkFDWindingDataFull_of_analytical hH h_ftc_rp1 h_boundary,
+    ⟨H, mkFDWindingDataFull_of_boundaryWinding hH h_boundary,
      h_residue_modular.h_above, h_residue_modular.h_identity⟩
 
 end
