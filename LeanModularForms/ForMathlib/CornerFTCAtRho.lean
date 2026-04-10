@@ -856,4 +856,331 @@ def cornerFTCHyp_atRhoPlusOne {H : ℝ} (hH : 1 < H)
       (by linarith) (by linarith) (le_refl 1) hγ (h_int_right ε hε hεt)
   h_limit := E_atRhoPlusOne_tendsto H (fdHeightValid_of_one_lt H hH)
 
+/-! ## Part 13: Seg4 reference for rho+1 (neg-slitPlane FTC)
+
+On seg4 (`3/5 < t ≤ 4/5`), `fdBoundaryFun H t - rp1 = -1 + (5t-3)(H-√3/2)i`.
+Since Re = -1 < 0, we use the neg-slitPlane approach: `-(f(t) - rp1)` has Re = 1 > 0. -/
+
+private def seg4Ref_rp1 (H : ℝ) (t : ℝ) : ℂ :=
+  -1 + ↑((5 * t - 3) * (H - Real.sqrt 3 / 2)) * I
+
+private lemma seg4Ref_rp1_contDiff (H : ℝ) : ContDiff ℝ ⊤ (seg4Ref_rp1 H) := by
+  unfold seg4Ref_rp1
+  exact contDiff_const.add
+    ((Complex.ofRealCLM.contDiff.comp
+      (((contDiff_const.mul (contDiff_id (𝕜 := ℝ) (E := ℝ))).sub contDiff_const).mul
+        contDiff_const)).mul contDiff_const)
+
+private lemma seg4Ref_rp1_neg_slitPlane (H : ℝ) (t : ℝ) :
+    -(seg4Ref_rp1 H t) ∈ Complex.slitPlane := by
+  rw [Complex.mem_slitPlane_iff]; left
+  have : (-(seg4Ref_rp1 H t)).re = 1 := by
+    unfold seg4Ref_rp1
+    simp [neg_add_rev, add_re, neg_re, ofReal_re, one_re, mul_re, ofReal_im, I_re, I_im]
+  linarith [this]
+
+private lemma seg4Ref_rp1_eq (H : ℝ) {t : ℝ} (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
+    fdBoundaryFun H t - ellipticPointRhoPlusOne = seg4Ref_rp1 H t := by
+  simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
+    show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
+    ht4, ite_true, ite_false, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+    UpperHalfPlane.coe_mk, seg4Ref_rp1]; push_cast; ring
+
+private lemma seg4Ref_rp1_eventuallyEq (H : ℝ) {t : ℝ} (ht3 : 3/5 < t) (ht4 : t < 4/5) :
+    (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) =ᶠ[𝓝 t] seg4Ref_rp1 H :=
+  Filter.eventually_of_mem
+    (Filter.inter_mem (Ioi_mem_nhds ht3) (Iio_mem_nhds ht4))
+    fun s ⟨hs3, hs4⟩ =>
+      seg4Ref_rp1_eq H (by rwa [mem_Ioi] at hs3) (by rw [mem_Iio] at hs4; linarith)
+
+private lemma seg4Ref_rp1_eq_35 (H : ℝ) :
+    fdBoundaryFun H (3/5) - ellipticPointRhoPlusOne = seg4Ref_rp1 H (3/5) := by
+  rw [fdBoundaryFun_at_three_fifths]
+  simp only [ellipticPointRho, ellipticPointRho', ellipticPointRhoPlusOne,
+    ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, seg4Ref_rp1]; push_cast; ring
+
+private lemma seg4Ref_rp1_eq_45 (H : ℝ) :
+    fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne = seg4Ref_rp1 H (4/5) := by
+  rw [fdBoundaryFun_at_four_fifths]
+  simp only [seg4Ref_rp1, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+    UpperHalfPlane.coe_mk]; push_cast; ring
+
+private theorem seg4_ftc_neg_rp1 (H : ℝ) :
+    IntervalIntegrable (fun t =>
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+      (fdBoundaryFun H t - ellipticPointRhoPlusOne)) volume (3/5) (4/5) ∧
+    ∫ t in (3/5 : ℝ)..(4/5),
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+      (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+      Complex.log (-(fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne)) -
+      Complex.log (-(fdBoundaryFun H (3/5) - ellipticPointRhoPlusOne)) := by
+  have h_piece := LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
+    (seg4Ref_rp1_contDiff H).continuous.continuousOn
+    (fun t _ => (seg4Ref_rp1_contDiff H).differentiable (by norm_num) |>.differentiableAt)
+    ((seg4Ref_rp1_contDiff H).continuous_deriv le_top).continuousOn
+    (fun t _ => seg4Ref_rp1_neg_slitPlane H t)
+  have h_ae : ∀ᵐ t ∂volume, t ∈ Ι (3/5 : ℝ) (4/5) →
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+      deriv (seg4Ref_rp1 H) t / seg4Ref_rp1 H t := by
+    filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (4/5 : ℝ))] with t ht_ne ht_mem
+    rw [uIoc_of_le (by norm_num : (3/5 : ℝ) ≤ 4/5)] at ht_mem
+    have ht_lt : t < 4/5 := lt_of_le_of_ne ht_mem.2
+      (fun h => ht_ne (mem_singleton_iff.mpr h))
+    rw [seg4Ref_rp1_eq H (by linarith [ht_mem.1]) (le_of_lt ht_lt),
+      (seg4Ref_rp1_eventuallyEq H (by linarith [ht_mem.1]) ht_lt).deriv_eq]
+  exact ⟨h_piece.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      (h_ae.mono fun t ht hm => (ht hm).symm)),
+    by rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2,
+      seg4Ref_rp1_eq_35 H, seg4Ref_rp1_eq_45 H]⟩
+
+/-! ## Part 14: Seg5 reference for rho+1 (neg-slitPlane FTC)
+
+On seg5 (`4/5 < t ≤ 1`), `fdBoundaryFun H t - rp1 = (5t-5) + (H-√3/2)i`.
+`-(f(t) - rp1)` has Im = -(H-√3/2) ≠ 0 → in slitPlane. -/
+
+private def seg5Ref_rp1 (H : ℝ) (t : ℝ) : ℂ :=
+  (5 * ↑t - 5) + (↑H - ↑(Real.sqrt 3) / 2) * I
+
+private lemma seg5Ref_rp1_contDiff (H : ℝ) : ContDiff ℝ ⊤ (seg5Ref_rp1 H) := by
+  unfold seg5Ref_rp1
+  exact ((contDiff_const.mul Complex.ofRealCLM.contDiff).sub contDiff_const).add contDiff_const
+
+private lemma seg5Ref_rp1_neg_slitPlane (H : ℝ) (hH : fdHeightValid H) (t : ℝ) :
+    -(seg5Ref_rp1 H t) ∈ Complex.slitPlane := by
+  rw [Complex.mem_slitPlane_iff]; right
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  show (-(seg5Ref_rp1 H t)).im ≠ 0
+  have him : (seg5Ref_rp1 H t).im = H - Real.sqrt 3 / 2 := by
+    unfold seg5Ref_rp1
+    simp [add_im, sub_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]
+  rw [neg_im]; linarith [him]
+
+private lemma seg5Ref_rp1_eq (H : ℝ) {t : ℝ} (ht : 4/5 < t) :
+    fdBoundaryFun H t - ellipticPointRhoPlusOne = seg5Ref_rp1 H t := by
+  simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
+    show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
+    show ¬t ≤ 4/5 from by linarith, ite_false, seg5Ref_rp1,
+    ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
+  push_cast; ring
+
+private lemma seg5Ref_rp1_eventuallyEq (H : ℝ) {t : ℝ} (ht : 4/5 < t) :
+    (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) =ᶠ[𝓝 t] seg5Ref_rp1 H :=
+  Filter.eventually_of_mem (Ioi_mem_nhds ht) fun s hs => seg5Ref_rp1_eq H hs
+
+private lemma seg5Ref_rp1_eq_45 (H : ℝ) :
+    fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne = seg5Ref_rp1 H (4/5) := by
+  rw [fdBoundaryFun_at_four_fifths]
+  simp only [seg5Ref_rp1, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+    UpperHalfPlane.coe_mk]; push_cast; ring
+
+private lemma seg5Ref_rp1_eq_1 (H : ℝ) :
+    fdBoundaryFun H 1 - ellipticPointRhoPlusOne = seg5Ref_rp1 H 1 := by
+  rw [fdBoundaryFun_at_one]
+  simp only [seg5Ref_rp1, fdStart, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+    UpperHalfPlane.coe_mk]; push_cast; ring
+
+private theorem seg5_ftc_neg_rp1 (H : ℝ) (hH : fdHeightValid H) :
+    IntervalIntegrable (fun t =>
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+      (fdBoundaryFun H t - ellipticPointRhoPlusOne)) volume (4/5) 1 ∧
+    ∫ t in (4/5 : ℝ)..1,
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+      (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+      Complex.log (-(fdBoundaryFun H 1 - ellipticPointRhoPlusOne)) -
+      Complex.log (-(fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne)) := by
+  have h_piece := LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
+    (seg5Ref_rp1_contDiff H).continuous.continuousOn
+    (fun t _ => (seg5Ref_rp1_contDiff H).differentiable (by norm_num) |>.differentiableAt)
+    ((seg5Ref_rp1_contDiff H).continuous_deriv le_top).continuousOn
+    (fun t _ => seg5Ref_rp1_neg_slitPlane H hH t)
+  have h_ae : ∀ᵐ t ∂volume, t ∈ Ι (4/5 : ℝ) 1 →
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+      deriv (seg5Ref_rp1 H) t / seg5Ref_rp1 H t := by
+    filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (1 : ℝ))] with t ht_ne ht_mem
+    rw [uIoc_of_le (by norm_num : (4/5 : ℝ) ≤ 1)] at ht_mem
+    have ht_lt : t < 1 := lt_of_le_of_ne ht_mem.2
+      (fun h => ht_ne (mem_singleton_iff.mpr h))
+    rw [seg5Ref_rp1_eq H (by linarith [ht_mem.1]),
+      (seg5Ref_rp1_eventuallyEq H (by linarith [ht_mem.1])).deriv_eq]
+  exact ⟨h_piece.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      (h_ae.mono fun t ht hm => (ht hm).symm)),
+    by rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2,
+      seg5Ref_rp1_eq_45 H, seg5Ref_rp1_eq_1 H]⟩
+
+/-! ## Part 15: Branch correction lemmas for rho+1
+
+At the boundary of the neg-slitPlane and normal FTC domains, we need
+`log(-z) = log(z) - πI` when Im(z) > 0. -/
+
+private lemma log_neg_eq_sub_pi_I_rp1 {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : 0 < z.im) :
+    Complex.log (-z) = Complex.log z - ↑Real.pi * I := by
+  show ↑(Real.log ‖-z‖) + ↑((-z).arg) * I =
+    ↑(Real.log ‖z‖) + ↑z.arg * I - ↑Real.pi * I
+  simp only [norm_neg]
+  rw [Complex.arg_neg_eq_arg_sub_pi_of_im_pos hz_im]
+  push_cast; ring
+
+private lemma fdBoundary_sub_rp1_at_start_im_pos (H : ℝ) (hH : fdHeightValid H) :
+    0 < (fdBoundaryFun H 0 - ellipticPointRhoPlusOne).im := by
+  rw [fdBoundaryFun_at_zero]
+  have him : (fdStart H - ellipticPointRhoPlusOne).im = H - Real.sqrt 3 / 2 := by
+    simp only [fdStart, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+      UpperHalfPlane.coe_mk, sub_im, add_im, mul_im, ofReal_re, ofReal_im,
+      I_re, I_im, one_im, div_ofNat]; norm_num
+  rw [him]; unfold fdHeightValid at hH; linarith
+
+private lemma arcRef_rp1_im_pos {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 2/5) :
+    0 < (arcRef_rp1 (1/5 + δ)).im := by
+  unfold arcRef_rp1
+  rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin]
+  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk,
+    sub_im, add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+    mul_zero, add_zero, mul_one, zero_add, one_im, div_ofNat]
+  have hθ_gt : Real.pi / 3 < fdArcAngle (1/5 + δ) := by
+    unfold fdArcAngle; nlinarith [Real.pi_pos]
+  have hθ_lt : fdArcAngle (1/5 + δ) < 2 * Real.pi / 3 := by
+    unfold fdArcAngle; nlinarith [Real.pi_pos]
+  have : Real.sqrt 3 / 2 < Real.sin (fdArcAngle (1/5 + δ)) := by
+    rcases le_or_gt (fdArcAngle (1/5 + δ)) (Real.pi / 2) with h | h
+    · rw [← Real.sin_pi_div_three]
+      exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
+        (by linarith [Real.pi_pos]) h hθ_gt
+    · rw [← Real.sin_pi_sub (fdArcAngle (1/5 + δ)), ← Real.sin_pi_div_three]
+      exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
+        (by linarith [Real.pi_pos]) (by linarith) (by linarith)
+  linarith
+
+/-! ## Part 16: FTC telescope for rho+1
+
+The left side `[0, 1/5-δL]` uses normal FTC (seg1 in slitPlane).
+The right side `[1/5+δR, 1]` uses neg-slitPlane FTC throughout (arc + seg4 + seg5).
+The `πI` branch corrections at the junction cancel exactly. -/
+
+set_option maxHeartbeats 800000 in
+theorem fdBoundary_ftc_telescope_rp1 (H : ℝ) (hH : 1 < H) {δL δR : ℝ}
+    (hδL : 0 < δL) (hδL' : δL < 1/5) (hδR : 0 < δR) (hδR' : δR < 2/5) :
+    (∫ t in (0 : ℝ)..(1/5 - δL),
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne)⁻¹ * deriv (fdBoundaryFun H) t) +
+    (∫ t in (1/5 + δR)..(1 : ℝ),
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne)⁻¹ * deriv (fdBoundaryFun H) t) =
+    Complex.log (fdBoundaryFun H (1/5 - δL) - ellipticPointRhoPlusOne) -
+    Complex.log (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne) := by
+  have hH_valid := fdHeightValid_of_one_lt H hH
+  have h_form : ∀ t,
+      (fdBoundaryFun H t - ellipticPointRhoPlusOne)⁻¹ * deriv (fdBoundaryFun H) t =
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) :=
+    fun t => integrand_form_eq' (fdBoundaryFun H) ellipticPointRhoPlusOne t
+  simp_rw [h_form]
+  -- Per-segment FTC
+  have p1 := seg1_ftc_rp1 H hH_valid hδL hδL'
+  have p_arc := arc_ftc_neg_rp1 H hδR hδR'
+  have p4 := seg4_ftc_neg_rp1 H
+  have p5 := seg5_ftc_neg_rp1 H hH_valid
+  -- Left side: seg1
+  -- Right side in log(-f): arc + seg4 + seg5 telescope
+  have hright_arc_seg4 :
+    ∫ t in (1/5 + δR)..(4/5 : ℝ),
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+    Complex.log (-(fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne)) -
+    Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) := by
+    rw [← intervalIntegral.integral_add_adjacent_intervals p_arc.1 p4.1,
+      p_arc.2, p4.2]; ring
+  have hright :
+    ∫ t in (1/5 + δR)..(1 : ℝ),
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+    Complex.log (-(fdBoundaryFun H 1 - ellipticPointRhoPlusOne)) -
+    Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) := by
+    rw [← intervalIntegral.integral_add_adjacent_intervals (p_arc.1.trans p4.1) p5.1,
+      hright_arc_seg4, p5.2]; ring
+  -- Branch corrections: Im > 0 at both junction points
+  have h_arc_eq := arcRef_rp1_eq H (show 1/5 < 1/5 + δR from by linarith)
+    (show 1/5 + δR ≤ 3/5 from by linarith)
+  have h_arc_ne : fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne ≠ 0 := by
+    intro h
+    have h1 : arcRef_rp1 (1/5 + δR) = 0 := by rwa [← h_arc_eq]
+    have h2 := arcRef_rp1_im_pos hδR hδR'
+    rw [h1] at h2; simp at h2
+  have h_arc_im : 0 < (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne).im := by
+    rw [h_arc_eq]; exact arcRef_rp1_im_pos hδR hδR'
+  have h_branch_arc :
+      Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) =
+      Complex.log (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne) - ↑Real.pi * I :=
+    log_neg_eq_sub_pi_I_rp1 h_arc_ne h_arc_im
+  have h_start_ne : fdBoundaryFun H 0 - ellipticPointRhoPlusOne ≠ 0 := by
+    intro h
+    have := fdBoundary_sub_rp1_at_start_im_pos H hH_valid
+    rw [h] at this; simp at this
+  have h_branch_start :
+      Complex.log (-(fdBoundaryFun H 0 - ellipticPointRhoPlusOne)) =
+      Complex.log (fdBoundaryFun H 0 - ellipticPointRhoPlusOne) - ↑Real.pi * I :=
+    log_neg_eq_sub_pi_I_rp1 h_start_ne (fdBoundary_sub_rp1_at_start_im_pos H hH_valid)
+  -- Convert right side from log(-f) to log(f) with branch corrections cancelling
+  have hright' :
+    ∫ t in (1/5 + δR)..(1 : ℝ),
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+    Complex.log (fdBoundaryFun H 0 - ellipticPointRhoPlusOne) -
+    Complex.log (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne) := by
+    rw [hright, h_branch_arc,
+      show -(fdBoundaryFun H 1 - ellipticPointRhoPlusOne) =
+        -(fdBoundaryFun H 0 - ellipticPointRhoPlusOne) from by rw [fdBoundaryFun_closed],
+      h_branch_start]; ring
+  -- Combine: left + right telescopes
+  rw [p1.2, hright']; ring
+
+/-! ## Part 17: Combined integrability for rho+1 -/
+
+theorem fdBoundary_integrable_left_of_rp1 (H : ℝ) (hH : fdHeightValid H)
+    {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 1/5) :
+    IntervalIntegrable
+      (fun t => (fdBoundaryFun H t - ellipticPointRhoPlusOne)⁻¹ * deriv (fdBoundaryFun H) t)
+      volume 0 (1/5 - δ) := by
+  simp_rw [fun t => integrand_form_eq' (fdBoundaryFun H) ellipticPointRhoPlusOne t]
+  exact (seg1_ftc_rp1 H hH hδ hδ').1
+
+theorem fdBoundary_integrable_right_of_rp1 (H : ℝ) (hH : fdHeightValid H)
+    {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 2/5) :
+    IntervalIntegrable
+      (fun t => (fdBoundaryFun H t - ellipticPointRhoPlusOne)⁻¹ * deriv (fdBoundaryFun H) t)
+      volume (1/5 + δ) 1 := by
+  simp_rw [fun t => integrand_form_eq' (fdBoundaryFun H) ellipticPointRhoPlusOne t]
+  exact ((arc_ftc_neg_rp1 H hδ hδ').1.trans (seg4_ftc_neg_rp1 H).1).trans
+    (seg5_ftc_neg_rp1 H hH).1
+
+/-! ## Part 18: Unconditional CornerFTCHyp at rho+1 -/
+
+/-- The complete, unconditional `CornerFTCHyp` at rho+1. -/
+def cornerFTCHyp_atRhoPlusOne_unconditional {H : ℝ} (hH : 1 < H)
+    {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t) :
+    CornerFTCHyp γ ellipticPointRhoPlusOne (1/5)
+      (vertDelta H) arcsinDelta
+      (min (1/3) (H - Real.sqrt 3 / 2))
+      (-(↑Real.pi / 3 * I)) :=
+  cornerFTCHyp_atRhoPlusOne hH hγ
+    (fun ε hε hεt => by
+      have hε_13 : ε < 1/3 := lt_of_lt_of_le hεt (min_le_left _ _)
+      have hε_H : ε < H - Real.sqrt 3 / 2 := lt_of_lt_of_le hεt (min_le_right _ _)
+      have hH_valid := fdHeightValid_of_one_lt H hH
+      have hδL := vertDelta_pos hH_valid hε
+      have hδL' := vertDelta_lt_one_fifth hH_valid hε_H
+      have hδR := arcsinDelta_pos hε
+      have hδR' := arcsinDelta_lt_one_fifth hε hε_13
+      exact fdBoundary_ftc_telescope_rp1 H hH hδL hδL' hδR (by linarith))
+    (fun ε hε hεt => by
+      have hε_H : ε < H - Real.sqrt 3 / 2 := lt_of_lt_of_le hεt (min_le_right _ _)
+      have hH_valid := fdHeightValid_of_one_lt H hH
+      exact fdBoundary_integrable_left_of_rp1 H hH_valid
+        (vertDelta_pos hH_valid hε) (vertDelta_lt_one_fifth hH_valid hε_H))
+    (fun ε hε hεt => by
+      have hε_13 : ε < 1/3 := lt_of_lt_of_le hεt (min_le_left _ _)
+      have hH_valid := fdHeightValid_of_one_lt H hH
+      exact fdBoundary_integrable_right_of_rp1 H hH_valid
+        (arcsinDelta_pos hε) (by linarith [arcsinDelta_lt_one_fifth hε hε_13]))
+
 end
