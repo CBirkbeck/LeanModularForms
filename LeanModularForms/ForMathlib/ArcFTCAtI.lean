@@ -161,10 +161,9 @@ private def seg4Ref_I (H : ℝ) (t : ℝ) : ℂ := (-1/2 : ℂ) +
 private lemma seg4Ref_I_contDiff (H : ℝ) : ContDiff ℝ ⊤ (seg4Ref_I H) := by
   unfold seg4Ref_I
   apply ContDiff.add contDiff_const
-  apply ContDiff.mul _ contDiff_const
-  have : ContDiff ℝ ⊤ (fun x : ℝ => Real.sqrt 3 / 2 - 1 + (5 * x - 3) * (H - Real.sqrt 3 / 2)) := by
-    fun_prop
-  exact Complex.ofRealCLM.contDiff.comp this
+  exact (Complex.ofRealCLM.contDiff.comp (by fun_prop :
+    ContDiff ℝ ⊤ fun x : ℝ => Real.sqrt 3 / 2 - 1 +
+      (5 * x - 3) * (H - Real.sqrt 3 / 2))).mul contDiff_const
 
 private lemma seg4Ref_I_neg_slitPlane (H : ℝ) (t : ℝ) :
     -(seg4Ref_I H t) ∈ Complex.slitPlane := by
@@ -239,19 +238,19 @@ private lemma seg5Ref_I_slitPlane (H : ℝ) (hH : 1 < H) (t : ℝ) :
   show (seg5Ref_I H t).im ≠ 0
   have : (seg5Ref_I H t).im = H - 1 := by
     unfold seg5Ref_I
-    simp [add_im, sub_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]
+    simp only [add_im, sub_im, mul_im, ofReal_re, ofReal_im, I_re, I_im, mul_zero, mul_one,
+      zero_add, add_zero]; norm_num
   rw [this]; linarith
 
 private lemma seg5Ref_I_eq (H : ℝ) {t : ℝ} (ht : 4/5 < t) :
     fdBoundaryFun H t - I = seg5Ref_I H t := by
   simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
     show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
-    show ¬t ≤ 4/5 from by linarith, ite_false, seg5Ref_I]
-  push_cast; ring
+    show ¬t ≤ 4/5 from by linarith, ite_false, seg5Ref_I]; ring
 
 private lemma seg5Ref_I_eventuallyEq (H : ℝ) {t : ℝ} (ht : 4/5 < t) :
     (fun s => fdBoundaryFun H s - I) =ᶠ[𝓝 t] seg5Ref_I H :=
-  Filter.eventually_of_mem (Ioi_mem_nhds ht) fun s hs => seg5Ref_I_eq H hs
+  Filter.eventually_of_mem (Ioi_mem_nhds ht) fun _ hs => seg5Ref_I_eq H hs
 
 private lemma seg5Ref_I_eq_45 (H : ℝ) :
     fdBoundaryFun H (4/5) - I = seg5Ref_I H (4/5) := by
@@ -304,7 +303,7 @@ private lemma fdBoundary_sub_I_at_35_im_neg (H : ℝ) :
   rw [fdBoundaryFun_at_three_fifths]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
     sub_im, add_im, neg_im, ofReal_im, one_im, div_ofNat, mul_im,
-    ofReal_re, I_re, I_im, mul_zero, mul_one, add_zero, zero_add]
+    ofReal_re, I_re, I_im, mul_zero, mul_one, add_zero]
   nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
     sq_nonneg (Real.sqrt 3 - 2)]
 
@@ -312,7 +311,7 @@ private lemma fdBoundary_sub_I_at_45_im_pos (H : ℝ) (hH : 1 < H) :
     0 < (fdBoundaryFun H (4/5) - I).im := by
   rw [fdBoundaryFun_at_four_fifths]
   simp only [sub_im, add_im, neg_im, ofReal_im, one_im, div_ofNat, mul_im,
-    ofReal_re, I_re, I_im, mul_zero, mul_one, add_zero, zero_add]; linarith
+    ofReal_re, I_re, I_im, mul_zero, mul_one, add_zero]; linarith
 
 private lemma fdBoundary_sub_I_at_2p_im_neg (H : ℝ) {δ : ℝ}
     (hδ : 0 < δ) (hδ' : δ < 1/5) :
@@ -321,28 +320,19 @@ private lemma fdBoundary_sub_I_at_2p_im_neg (H : ℝ) {δ : ℝ}
     exp_mul_I, ← ofReal_cos, ← ofReal_sin]
   simp only [add_im, sub_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
     mul_zero, add_zero, mul_one, zero_add]
-  -- Need: sin(fdArcAngle(2/5+δ)) < 1
-  -- fdArcAngle(2/5+δ) = π/2 + 5δπ/6 ∈ (π/2, π) for 0 < δ < 1/5
-  -- sin(π/2 + x) = cos(x), and cos(x) < 1 for x > 0
   have hgt : Real.pi / 2 < fdArcAngle (2/5 + δ) := by
     unfold fdArcAngle; nlinarith [Real.pi_pos]
   have hlt : fdArcAngle (2/5 + δ) < Real.pi := by
     unfold fdArcAngle; nlinarith [Real.pi_pos]
-  -- sin(θ) < 1 for θ ∈ (π/2, π): use sin(θ) = sin(π-θ) with 0 < π-θ < π/2
-  -- and strict monotonicity of sin on [0, π/2]
   have h1 : Real.sin (fdArcAngle (2/5 + δ)) =
-      Real.sin (Real.pi - fdArcAngle (2/5 + δ)) := by
-    rw [Real.sin_pi_sub]
+      Real.sin (Real.pi - fdArcAngle (2/5 + δ)) := by rw [Real.sin_pi_sub]
   have h2 : Real.pi - fdArcAngle (2/5 + δ) < Real.pi / 2 := by linarith
-  have h3 : Real.sin (Real.pi - fdArcAngle (2/5 + δ)) <
-      Real.sin (Real.pi / 2) :=
+  have h3 : Real.sin (Real.pi - fdArcAngle (2/5 + δ)) < Real.sin (Real.pi / 2) :=
     Real.sin_lt_sin_of_lt_of_le_pi_div_two (by linarith) le_rfl h2
-  rw [Real.sin_pi_div_two] at h3
-  linarith [h1]
+  rw [Real.sin_pi_div_two] at h3; linarith [h1]
 
 /-! ## Part 5: Full FTC telescope -/
 
-set_option maxHeartbeats 800000 in
 /-- Full FTC telescope for the crossing at `i`. -/
 theorem fdBoundary_ftc_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ}
     (hδ : 0 < δ) (hδ' : δ < 1/5) :
@@ -352,59 +342,46 @@ theorem fdBoundary_ftc_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ}
         (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t) =
     Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
     Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
-  -- Convert to deriv/div form
   have h_form : ∀ t, (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t =
       deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) :=
     fun t => integrand_form_eq (fdBoundaryFun H) I t
   simp_rw [h_form]
-  -- Per-segment FTC
   have p1 := seg1_ftc_I H (by norm_num) (le_refl (1/5 : ℝ))
   have p2 := seg2_ftc_I H hδ hδ'
   have p3 := seg3_ftc_neg_I H hδ hδ'
   have p4 := seg4_ftc_neg_I H
   have p5 := seg5_ftc_full_I H hH
-  -- Telescope left: seg1 + seg2
-  have hleft :
-    ∫ t in (0 : ℝ)..(2/5 - δ),
+  have hleft : ∫ t in (0 : ℝ)..(2/5 - δ),
       deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
-    Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
-    Complex.log (fdBoundaryFun H 0 - I) := by
+      Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
+      Complex.log (fdBoundaryFun H 0 - I) := by
     rw [← intervalIntegral.integral_add_adjacent_intervals p1.1 p2.1, p1.2, p2.2]; ring
-  -- Telescope seg3+seg4 (in log(-f))
-  have hright34 :
-    ∫ t in (2/5 + δ)..(4/5 : ℝ),
+  have hright34 : ∫ t in (2/5 + δ)..(4/5 : ℝ),
       deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
-    Complex.log (-(fdBoundaryFun H (4/5) - I)) -
-    Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) := by
+      Complex.log (-(fdBoundaryFun H (4/5) - I)) -
+      Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) := by
     rw [← intervalIntegral.integral_add_adjacent_intervals p3.1 p4.1, p3.2, p4.2]; ring
-  -- Branch corrections
   have h_branch_2pδ : Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) =
       Complex.log (fdBoundaryFun H (2/5 + δ) - I) + ↑Real.pi * I :=
     log_neg_eq_add_pi_I (fdBoundaryFun_sub_i_ne_zero_seg3 H _ (by linarith) (by linarith))
       (fdBoundary_sub_I_at_2p_im_neg H hδ hδ')
   have h45_ne : fdBoundaryFun H (4/5) - I ≠ 0 := by
-    intro h
-    have := fdBoundary_sub_I_at_45_im_pos H hH
-    rw [h] at this; simp at this
+    intro h; have := fdBoundary_sub_I_at_45_im_pos H hH
+    rw [h] at this; simp only [zero_im, lt_irrefl] at this
   have h_branch_45 : Complex.log (-(fdBoundaryFun H (4/5) - I)) =
       Complex.log (fdBoundaryFun H (4/5) - I) - ↑Real.pi * I :=
     log_neg_eq_sub_pi_I h45_ne (fdBoundary_sub_I_at_45_im_pos H hH)
-  -- Convert seg3+seg4 to log(f) form
-  have hright34' :
-    ∫ t in (2/5 + δ)..(4/5 : ℝ),
+  have hright34' : ∫ t in (2/5 + δ)..(4/5 : ℝ),
       deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
-    Complex.log (fdBoundaryFun H (4/5) - I) -
-    Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
+      Complex.log (fdBoundaryFun H (4/5) - I) -
+      Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
     rw [hright34, h_branch_45, h_branch_2pδ]; ring
-  -- Telescope right: (seg3+seg4) + seg5
-  have hright :
-    ∫ t in (2/5 + δ)..(1 : ℝ),
+  have hright : ∫ t in (2/5 + δ)..(1 : ℝ),
       deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
-    Complex.log (fdBoundaryFun H 1 - I) -
-    Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
+      Complex.log (fdBoundaryFun H 1 - I) -
+      Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
     rw [← intervalIntegral.integral_add_adjacent_intervals (p3.1.trans p4.1) p5.1,
       hright34', p5.2]; ring
-  -- Combine, using closedness: f(0) = f(1)
   rw [hleft, hright, fdBoundaryFun_closed H]; ring
 
 /-! ## Part 6: E function and limit -/
@@ -416,16 +393,15 @@ private def E_atI (H : ℝ) (ε : ℝ) : ℂ :=
 private lemma arcsinDelta_tendsto_nhdsWithin :
     Tendsto arcsinDelta (𝓝[>] 0) (𝓝[>] 0) := by
   apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
-  · -- arcsinDelta → 0
-    have : arcsinDelta = fun ε => 12 / (5 * Real.pi) * Real.arcsin (ε / 2) := rfl
+  · have : arcsinDelta = fun ε => 12 / (5 * Real.pi) * Real.arcsin (ε / 2) := rfl
     rw [this]
-    have hcont : ContinuousAt (fun ε : ℝ => 12 / (5 * Real.pi) * Real.arcsin (ε / 2)) 0 := by
-      apply ContinuousAt.mul continuousAt_const
-      exact Real.continuous_arcsin.continuousAt.comp (continuousAt_id.div_const 2)
+    have hcont : ContinuousAt (fun ε : ℝ =>
+        12 / (5 * Real.pi) * Real.arcsin (ε / 2)) 0 := by
+      exact continuousAt_const.mul
+        (Real.continuous_arcsin.continuousAt.comp (continuousAt_id.div_const 2))
     convert hcont.tendsto.mono_left nhdsWithin_le_nhds using 1
-    simp [Real.arcsin_zero]
-  · -- Eventually arcsinDelta > 0
-    rw [eventually_nhdsWithin_iff]
+    simp only [Real.arcsin_zero, mul_zero, zero_div]
+  · rw [eventually_nhdsWithin_iff]
     filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1 from by norm_num)] with ε _ hε
     exact mem_Ioi.mpr (arcsinDelta_pos (by rwa [mem_Ioi] at hε))
 
