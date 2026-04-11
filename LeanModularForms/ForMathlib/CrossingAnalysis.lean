@@ -219,12 +219,10 @@ theorem crossing_isolated
     (hcross : (γ : ℝ → E) t₀ = z₀) :
     ∀ᶠ t in 𝓝[≠] t₀, (γ : ℝ → E) t ≠ z₀ ∨ t ∉ Icc (0 : ℝ) 1 := by
   by_cases hpart : t₀ ∈ γ.toPiecewiseC1Path.partition
-  · -- Partition point (in Ioo 0 1): combine left and right
-    rw [punctured_nhds_eq_nhdsWithin_sup_nhdsWithin, Filter.eventually_sup]
+  · rw [punctured_nhds_eq_nhdsWithin_sup_nhdsWithin, Filter.eventually_sup]
     exact ⟨(crossing_isolated_left γ z₀ t₀ hpart ht₀.1 hcross).mono fun t ht => Or.inl ht,
            (crossing_isolated_right γ z₀ t₀ hpart ht₀.2 hcross).mono fun t ht => Or.inl ht⟩
-  · -- Smooth point in Ioo 0 1: use HasDerivAt.eventually_ne
-    exact (crossing_isolated_smooth γ z₀ t₀ ht₀ hcross hpart).mono fun t ht => Or.inl ht
+  · exact (crossing_isolated_smooth γ z₀ t₀ ht₀ hcross hpart).mono fun t ht => Or.inl ht
 
 /-! ### No accumulation points -/
 
@@ -247,25 +245,15 @@ theorem crossingSet_finite
     (γ : PiecewiseC1Immersion x y) (z₀ : E)
     (h0 : (γ : ℝ → E) 0 ≠ z₀) (h1 : (γ : ℝ → E) 1 ≠ z₀) :
     Set.Finite (γ.crossingSet z₀) := by
-  by_contra hS_not_fin
-  have hS_inf : (γ.crossingSet z₀).Infinite := hS_not_fin
-  -- Bolzano-Weierstrass: infinite subset of [0,1] has an accumulation point
-  obtain ⟨a, _, ha_acc⟩ :=
-    hS_inf.exists_accPt_of_subset_isCompact isCompact_Icc (crossingSet_subset_Icc γ z₀)
-  -- The accumulation point is in the crossing set (which is closed)
-  have ha_closure : a ∈ closure (γ.crossingSet z₀) :=
-    mem_closure_iff_clusterPt.mpr ha_acc.clusterPt
-  have ha_S : a ∈ γ.crossingSet z₀ := by
-    rwa [(γ.crossingSet_isClosed z₀).closure_eq] at ha_closure
-  -- γ(a) = z₀ and a ∈ [0,1]
-  have ha_Icc : a ∈ Icc (0 : ℝ) 1 := ha_S.1
-  have ha_cross : (γ : ℝ → E) a = z₀ := ha_S.2
-  -- a ≠ 0 and a ≠ 1 (endpoint avoidance)
+  by_contra hS_inf
+  obtain ⟨a, _, ha_acc⟩ := (Set.not_finite.mp hS_inf).exists_accPt_of_subset_isCompact
+    isCompact_Icc (crossingSet_subset_Icc γ z₀)
+  have ha_S : a ∈ γ.crossingSet z₀ :=
+    (γ.crossingSet_isClosed z₀).closure_eq ▸ mem_closure_iff_clusterPt.mpr ha_acc.clusterPt
   have ha_Ioo : a ∈ Ioo (0 : ℝ) 1 :=
-    ⟨lt_of_le_of_ne ha_Icc.1 (Ne.symm (fun h => h0 (h ▸ ha_cross))),
-     lt_of_le_of_ne ha_Icc.2 (fun h => h1 (h ▸ ha_cross))⟩
-  -- But a ∈ (0,1) with γ(a) = z₀ cannot be an accumulation point
-  exact γ.crossing_not_accPt z₀ a ha_Ioo ha_cross ha_acc
+    ⟨lt_of_le_of_ne ha_S.1.1 (Ne.symm (fun h => h0 (h ▸ ha_S.2))),
+     lt_of_le_of_ne ha_S.1.2 (fun h => h1 (h ▸ ha_S.2))⟩
+  exact γ.crossing_not_accPt z₀ a ha_Ioo ha_S.2 ha_acc
 
 end PiecewiseC1Immersion
 
