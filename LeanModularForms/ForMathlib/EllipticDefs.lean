@@ -114,7 +114,7 @@ theorem ellipticPointRhoPlusOne_norm : ‖ellipticPointRhoPlusOne‖ = 1 := by
 theorem ellipticPointI_mem_fd : ellipticPointI' ∈ 𝒟 := by
   simp only [ModularGroup.fd, ellipticPointI', mem_setOf_eq]
   constructor
-  · simp [Complex.normSq_I]
+  · simp only [UpperHalfPlane.coe_I, Complex.normSq_I]; norm_num
   · simp only [UpperHalfPlane.re]; norm_num
 
 theorem ellipticPointRho_mem_fd : ellipticPointRho' ∈ 𝒟 := by

@@ -87,7 +87,7 @@ theorem fdBoundaryFun_at_two_fifths (H : ℝ) :
       ↑(Real.pi / 2) * I := by push_cast; ring
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_two, Real.sin_pi_div_two]
-  simp [ellipticPointI, ellipticPointI']
+  simp only [ellipticPointI, ellipticPointI']; norm_num
 
 theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
     fdBoundaryFun H (3/5) = ellipticPointRho := by
@@ -100,8 +100,7 @@ theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-  simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
-  ring
+  simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]; norm_num
 
 theorem fdBoundaryFun_at_four_fifths (H : ℝ) :
     fdBoundaryFun H (4/5) = -1/2 + ↑H * I := by
@@ -382,6 +381,11 @@ is obtained by providing:
 
 For interior points, the winding number follows from the contour integral
 (standard Cauchy winding number for a closed curve avoiding the point). -/
+private lemma pi_third_div_two_pi : -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 6 := by
+  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+  have hI : (I : ℂ) ≠ 0 := I_ne_zero
+  field_simp; ring
+
 def FDWindingData.mk_of_crossing {H : ℝ}
     (boundary : PiecewiseC1Path (fdStart H) (fdStart H))
     (hbdy : ∀ t ∈ Icc (0 : ℝ) 1, boundary.toPath.extend t = fdBoundaryFun H t)
@@ -405,15 +409,9 @@ def FDWindingData.mk_of_crossing {H : ℝ}
       field_simp] at this
   winding_at_rho := by
     have := D_rho.hasWindingNumber
-    rwa [hL_rho, show -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 6 from by
-      have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-      have hI : (I : ℂ) ≠ 0 := I_ne_zero
-      field_simp; ring] at this
+    rwa [hL_rho, pi_third_div_two_pi] at this
   winding_at_rho_plus_one := by
     have := D_rho1.hasWindingNumber
-    rwa [hL_rho1, show -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 6 from by
-      have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-      have hI : (I : ℂ) ≠ 0 := I_ne_zero
-      field_simp; ring] at this
+    rwa [hL_rho1, pi_third_div_two_pi] at this
 
 end
