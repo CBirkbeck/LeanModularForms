@@ -79,10 +79,9 @@ theorem arc_near_at_I (H : ℝ) {ε : ℝ} (hε_lt : ε < 1/2)
     rw [hα_abs]
     calc 5 * Real.pi / 12 * |t - 2/5| ≤ 5 * Real.pi / 12 * arcDelta ε := by gcongr
       _ = ε / 2 := half_angle_factor ε
-  have hα_pi : |α| ≤ Real.pi := by linarith
   calc 2 * |Real.sin α|
       ≤ 2 * |α| := by
-        apply mul_le_mul_of_nonneg_left (sin_abs_le_abs α hα_pi) (by norm_num)
+        apply mul_le_mul_of_nonneg_left Real.abs_sin_le_abs (by norm_num)
     _ ≤ 2 * (ε / 2) := by linarith
     _ = ε := by ring
 

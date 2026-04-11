@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.WindingWeightProofs
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
 
 /-!
 # Arc FTC — Crossing Angles and Winding Numbers for FD Boundary
@@ -34,7 +33,6 @@ At each crossing, the **FTC limit** `L` satisfies `L/(2πi) = -α/(2π)`:
 ## Main results
 
 ### Auxiliary
-* `sin_abs_le_abs` — `|sin x| ≤ |x|` when `|x| ≤ π`
 * `arg_exp_mul_I` — `arg(exp(iθ)) = θ` for `θ ∈ (-π, π]`
 * `arg_ofReal_mul_I` — `arg(r·I) = π/2` for `r > 0`
 
@@ -58,30 +56,11 @@ At each crossing, the **FTC limit** `L` satisfies `L/(2πi) = -α/(2π)`:
 * K. Hungerbühler, J. Wasem, *A generalized notion of winding numbers*
 -/
 
-open Complex MeasureTheory Set Filter Topology
-open scoped Real Interval
+open Complex Set
 
 noncomputable section
 
 /-! ## Part 1: Auxiliary lemmas -/
-
-/-- `|sin x| ≤ |x|` when `|x| ≤ π`. Uses monotonicity of sin on `[0, π]`. -/
-theorem sin_abs_le_abs (x : ℝ) (hx : |x| ≤ Real.pi) : |Real.sin x| ≤ |x| := by
-  rcases le_or_gt 0 x with hx_nn | hx_neg
-  · rw [abs_of_nonneg hx_nn]
-    rcases eq_or_lt_of_le hx_nn with rfl | hx_pos
-    · simp
-    · have : 0 ≤ Real.sin x :=
-        Real.sin_nonneg_of_nonneg_of_le_pi hx_nn (by rwa [abs_of_nonneg hx_nn] at hx)
-      rw [abs_of_nonneg this]
-      exact (Real.sin_lt hx_pos).le
-  · rw [abs_of_neg hx_neg]
-    have hx' : 0 < -x := neg_pos.mpr hx_neg
-    have : Real.sin x ≤ 0 := by
-      rw [← neg_nonneg, ← Real.sin_neg]
-      exact Real.sin_nonneg_of_nonneg_of_le_pi hx'.le (by rwa [abs_of_neg hx_neg] at hx)
-    rw [abs_of_nonpos this, ← Real.sin_neg]
-    exact (Real.sin_lt hx').le
 
 /-- The argument of `exp(iθ)` is `θ` for `θ ∈ (-π, π]`. -/
 theorem arg_exp_mul_I (θ : ℝ) (hθ : θ ∈ Ioc (-Real.pi) Real.pi) :
@@ -97,16 +76,6 @@ theorem arg_ofReal_mul_I (r : ℝ) (hr : 0 < r) :
     push_cast; ring
   rw [h, Complex.arg_mul_real hr]
   exact arg_exp_mul_I _ ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
-
-/-- The argument of a negative real number is `π`. -/
-theorem arg_neg_ofReal (r : ℝ) (hr : 0 < r) :
-    arg (-(↑r : ℂ)) = Real.pi := by
-  rw [Complex.arg_eq_pi_iff]; constructor <;> simp <;> linarith
-
-/-- The argument of a positive real number is `0`. -/
-theorem arg_pos_ofReal (r : ℝ) (hr : 0 < r) :
-    arg (↑r : ℂ) = 0 := by
-  simp [Complex.arg, ofReal_re, ofReal_im, hr.le]
 
 /-! ## Part 2: Arc tangent directions -/
 
@@ -162,8 +131,8 @@ theorem fdBoundary_seg1_deriv (H t : ℝ) :
     have hd := h1.const_mul ((5 : ℂ) * (↑H - ↑(Real.sqrt 3) / 2))
     have := hd.const_sub (H : ℂ)
     convert this using 1
-    · funext s; push_cast; ring
-    · push_cast; ring
+    · funext s; ring
+    · ring
   exact ((hasDerivAt_const t ((1 : ℂ) / 2)).add (h2.mul_const I)).deriv.trans (by ring)
 
 /-- Left vertical (segment 4) tangent: upward. -/
@@ -177,7 +146,7 @@ theorem fdBoundary_seg4_deriv (H t : ℝ) :
       (5 * (↑H - ↑(Real.sqrt 3) / 2)) t := by
     have hd := ((h1.const_mul (5 : ℂ)).sub_const (3 : ℂ)).mul_const (↑H - ↑(Real.sqrt 3) / 2)
       |>.const_add (↑(Real.sqrt 3) / 2 : ℂ)
-    convert hd using 1 <;> first | (funext s; push_cast; ring) | ring
+    convert hd using 1; ring
   exact ((hasDerivAt_const t ((-1 : ℂ) / 2)).add (h2.mul_const I)).deriv.trans (by ring)
 
 /-! ## Part 3: Crossing angle computations -/
@@ -262,8 +231,8 @@ Both tangent directions are `-(5π/6)` (leftward), so
 theorem fdBoundary_angle_at_I_partition :
     arg (-(↑(5 * Real.pi / 6) : ℂ)) -
       arg (-(-(↑(5 * Real.pi / 6) : ℂ))) = Real.pi := by
-  have hpi : (0 : ℝ) < 5 * Real.pi / 6 := by positivity
-  rw [neg_neg, arg_neg_ofReal _ hpi, arg_pos_ofReal _ hpi]; ring
+  rw [neg_neg, ← ofReal_neg, Complex.arg_ofReal_of_neg (by linarith [Real.pi_pos]),
+    Complex.arg_ofReal_of_nonneg (by positivity)]; ring
 
 /-! ## Part 4: ArcFTCHyp limit target values -/
 
