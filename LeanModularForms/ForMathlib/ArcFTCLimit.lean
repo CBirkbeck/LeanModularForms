@@ -38,9 +38,7 @@ noncomputable section
 theorem fdBoundaryFun_sub_i_slitPlane_seg1 (H : ℝ) (t : ℝ) (ht : t ≤ 1/5) :
     fdBoundaryFun H t - I ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff]; left
-  have : (fdBoundaryFun H t - I).re = 1/2 := by
-    simp [sub_re, fdBoundaryFun_seg1_re H t ht, I_re]
-  linarith
+  simp only [sub_re, fdBoundaryFun_seg1_re H t ht, I_re]; norm_num
 
 /-- On segment 2 (arc before `i`, angle `< π/2`), `γ(t) - i ∈ slitPlane`. -/
 theorem fdBoundaryFun_sub_i_slitPlane_seg2 (H : ℝ) (t : ℝ)
@@ -90,9 +88,7 @@ theorem fdBoundaryFun_sub_i_slitPlane_seg5 (H : ℝ) (hH : 1 < H)
     (t : ℝ) (ht : 4/5 < t) :
     fdBoundaryFun H t - I ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff]; right
-  have : (fdBoundaryFun H t - I).im = H - 1 := by
-    simp [sub_im, fdBoundaryFun_seg5_im H t ht, I_im]
-  rw [this]; linarith
+  simp only [sub_im, fdBoundaryFun_seg5_im H t ht, I_im]; linarith
 
 /-! ## Part 2: Arc norm symmetry -/
 
@@ -147,9 +143,8 @@ theorem fdBoundaryFun_arg_left (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 
   set α := 5 * δ * Real.pi / 12
   have hα_pos : 0 < α := by positivity
   have hα_small : α < Real.pi := by
-    show 5 * δ * Real.pi / 12 < Real.pi; nlinarith [Real.pi_pos]
-  have h_sinα_pos : 0 < Real.sin α :=
-    Real.sin_pos_of_pos_of_lt_pi hα_pos hα_small
+    change 5 * δ * Real.pi / 12 < Real.pi; nlinarith [Real.pi_pos]
+  have h_sinα_pos : 0 < Real.sin α := Real.sin_pos_of_pos_of_lt_pi hα_pos hα_small
   have h_cosθ : Real.cos (fdArcAngle (2/5 - δ)) = Real.sin (5 * δ * Real.pi / 6) := by
     rw [show fdArcAngle (2/5 - δ) = Real.pi / 2 - 5 * δ * Real.pi / 6 from by
       unfold fdArcAngle; ring]
@@ -158,14 +153,12 @@ theorem fdBoundaryFun_arg_left (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 
     rw [show fdArcAngle (2/5 - δ) = Real.pi / 2 - 5 * δ * Real.pi / 6 from by
       unfold fdArcAngle; ring]
     exact Real.sin_pi_div_two_sub _
-  have h2α : (5 * δ * Real.pi / 6 : ℝ) = 2 * α := by show _ = 2 * (5 * δ * Real.pi / 12); ring
+  have h2α : (5 * δ * Real.pi / 6 : ℝ) = 2 * α := by ring
   have h_sin_double : Real.sin (5 * δ * Real.pi / 6) =
-      2 * Real.sin α * Real.cos α := by
-    rw [h2α, Real.sin_two_mul]
+      2 * Real.sin α * Real.cos α := by rw [h2α, Real.sin_two_mul]
   have h_cos_double : Real.cos (5 * δ * Real.pi / 6) - 1 =
       -(2 * Real.sin α ^ 2) := by
     rw [h2α, Real.cos_two_mul]; nlinarith [Real.sin_sq_add_cos_sq α]
-  -- The point = 2sin(α) · (cos(α) - i·sin(α)) = 2sin(α) · exp(-iα)
   have h_eq : ↑(Real.cos (fdArcAngle (2/5 - δ))) +
       ↑(Real.sin (fdArcAngle (2/5 - δ))) * I - I =
       ↑(2 * Real.sin α) * (↑(Real.cos α) + ↑(-(Real.sin α)) * I) := by
@@ -177,7 +170,6 @@ theorem fdBoundaryFun_arg_left (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 
         mul_zero, add_zero, mul_one, zero_add]
       rw [h_sinθ]; nlinarith [h_cos_double]
   rw [h_eq]
-  -- (cos α + (-sin α)·I) = cos(-α) + sin(-α)·I
   have h_trig : (↑(Real.cos α) : ℂ) + ↑(-(Real.sin α)) * I =
       Complex.cos ↑(-α) + Complex.sin ↑(-α) * I := by
     rw [← Complex.ofReal_cos, ← Complex.ofReal_sin, Real.cos_neg, Real.sin_neg, ofReal_neg]
@@ -196,9 +188,8 @@ theorem fdBoundaryFun_arg_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ <
   set α := 5 * δ * Real.pi / 12
   have hα_pos : 0 < α := by positivity
   have hα_small : α < Real.pi := by
-    show 5 * δ * Real.pi / 12 < Real.pi; nlinarith [Real.pi_pos]
-  have h_sinα_pos : 0 < Real.sin α :=
-    Real.sin_pos_of_pos_of_lt_pi hα_pos hα_small
+    change 5 * δ * Real.pi / 12 < Real.pi; nlinarith [Real.pi_pos]
+  have h_sinα_pos : 0 < Real.sin α := Real.sin_pos_of_pos_of_lt_pi hα_pos hα_small
   have h_cosθ : Real.cos (fdArcAngle (2/5 + δ)) = -(Real.sin (5 * δ * Real.pi / 6)) := by
     rw [show fdArcAngle (2/5 + δ) = Real.pi / 2 + 5 * δ * Real.pi / 6 from by
       unfold fdArcAngle; ring, Real.cos_add, Real.cos_pi_div_two, Real.sin_pi_div_two]
@@ -207,14 +198,12 @@ theorem fdBoundaryFun_arg_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ <
     rw [show fdArcAngle (2/5 + δ) = Real.pi / 2 + 5 * δ * Real.pi / 6 from by
       unfold fdArcAngle; ring, Real.sin_add, Real.sin_pi_div_two, Real.cos_pi_div_two]
     ring
-  have h2α : (5 * δ * Real.pi / 6 : ℝ) = 2 * α := by show _ = 2 * (5 * δ * Real.pi / 12); ring
+  have h2α : (5 * δ * Real.pi / 6 : ℝ) = 2 * α := by ring
   have h_sin_double : Real.sin (5 * δ * Real.pi / 6) =
-      2 * Real.sin α * Real.cos α := by
-    rw [h2α, Real.sin_two_mul]
+      2 * Real.sin α * Real.cos α := by rw [h2α, Real.sin_two_mul]
   have h_cos_double : Real.cos (5 * δ * Real.pi / 6) - 1 =
       -(2 * Real.sin α ^ 2) := by
     rw [h2α, Real.cos_two_mul]; nlinarith [Real.sin_sq_add_cos_sq α]
-  -- The point = -2sin(α) · (cos(α) + i·sin(α)) = -2sin(α) · exp(iα)
   have h_eq : ↑(Real.cos (fdArcAngle (2/5 + δ))) +
       ↑(Real.sin (fdArcAngle (2/5 + δ))) * I - I =
       -(↑(2 * Real.sin α) * (↑(Real.cos α) + ↑(Real.sin α) * I)) := by
@@ -226,7 +215,6 @@ theorem fdBoundaryFun_arg_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ <
         mul_zero, add_zero, mul_one, zero_add]
       rw [h_sinθ]; nlinarith [h_cos_double]
   rw [h_eq]
-  -- arg(-r·w) = arg(w) - π when im(r·w) > 0
   have h_trig : (↑(Real.cos α) : ℂ) + ↑(Real.sin α) * I =
       Complex.cos ↑α + Complex.sin ↑α * I := by
     rw [← Complex.ofReal_cos, ← Complex.ofReal_sin]
@@ -255,7 +243,6 @@ theorem fdBoundaryFun_log_diff_core_tendsto (H : ℝ) :
     Tendsto (fun δ => Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
       Complex.log (fdBoundaryFun H (2/5 + δ) - I))
       (𝓝[>] 0) (𝓝 (↑Real.pi * I)) := by
-  -- Step 1: Eventually, δ < 1/5 so both points are on the arc
   have hkey : ∀ᶠ δ in 𝓝[>] (0:ℝ),
       Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
       Complex.log (fdBoundaryFun H (2/5 + δ) - I) =
@@ -277,20 +264,16 @@ theorem fdBoundaryFun_log_diff_core_tendsto (H : ℝ) :
       (fdBoundaryFun_sub_i_ne_zero_seg3 H _ (by linarith) (by linarith))
       (fdBoundaryFun_sub_i_norm_symm H hδ_pos hδ),
       fdBoundaryFun_arg_diff H hδ_pos hδ]
-  -- Use Tendsto.congr' to transfer from the arg*I function to the log diff
   have htend : Tendsto (fun δ : ℝ => (↑(Real.pi - 5 * δ * Real.pi / 6) : ℂ) * I)
       (𝓝[>] 0) (𝓝 (↑Real.pi * I)) := by
     apply Filter.Tendsto.mul_const
     apply Filter.Tendsto.ofReal
-    have : Tendsto (fun δ : ℝ => Real.pi - 5 * δ * Real.pi / 6) (𝓝 0) (𝓝 Real.pi) := by
-      have key : ContinuousAt (fun δ : ℝ => Real.pi - 5 * δ * Real.pi / 6) 0 := by
-        apply ContinuousAt.sub continuousAt_const
-        apply ContinuousAt.div_const
-        exact (continuousAt_const.mul continuousAt_id).mul continuousAt_const
-      have h := key.tendsto
-      simp only [mul_zero, zero_mul, zero_div, sub_zero] at h
-      exact h
-    exact this.mono_left nhdsWithin_le_nhds
-  exact htend.congr' (hkey.mono (fun δ h => h.symm))
+    have key : ContinuousAt (fun δ : ℝ => Real.pi - 5 * δ * Real.pi / 6) 0 :=
+      continuousAt_const.sub
+        ((continuousAt_const.mul continuousAt_id).mul continuousAt_const |>.div_const _)
+    have h := key.tendsto
+    simp only [mul_zero, zero_mul, zero_div, sub_zero] at h
+    exact h.mono_left nhdsWithin_le_nhds
+  exact htend.congr' (hkey.mono fun _ h => h.symm)
 
 end
