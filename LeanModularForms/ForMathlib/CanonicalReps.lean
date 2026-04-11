@@ -30,8 +30,8 @@ finsets used by `valence_formula_orbit_sum_s₀`.
 * `orb_injOn_repCanon` — the orbit map is injective on `repCanon`
 -/
 
-open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
-open scoped Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
+open Complex Set CongruenceSubgroup
+open scoped UpperHalfPlane ModularForm Modular MatrixGroups
 
 attribute [local instance] Classical.propDecidable
 
@@ -41,7 +41,8 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
 /-! ### Canonical representative finsets -/
 
-/-- Strict interior representatives: points in `s₀` with `‖p‖ > 1`, `|re| < 1/2`, not elliptic. -/
+/-- Strict interior representatives: points in `s₀` with `‖p‖ > 1`, `|re| < 1/2`,
+not elliptic. -/
 noncomputable def repStrict : Finset ℍ :=
   (s₀ f hf).filter (fun p => p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
     p ≠ ellipticPointRhoPlusOne' ∧ ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)
@@ -128,9 +129,10 @@ theorem disjoint_union_repLeftArc :
   · have h_gt : ‖(p : ℂ)‖ > 1 := (Finset.mem_filter.mp hp_lv).2.2
     linarith
 
-/-! ### Helper lemmas for norm = 1 characterisations -/
+/-! ### Helper lemmas for norm = 1 characterizations -/
 
-private lemma uhp_norm_one_re_zero_eq_i (p : ℍ) (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = 0) :
+private lemma uhp_norm_one_re_zero_eq_i (p : ℍ)
+    (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = 0) :
     p = ellipticPointI' := by
   apply UpperHalfPlane.ext; show (p : ℂ) = I
   have h_nsq : Complex.normSq (p : ℂ) = 1 := by
@@ -394,7 +396,6 @@ private lemma normSq_denom_one_of_im_eq (g : SL(2, ℤ))
 
 private lemma injOn_c_eq_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     (hg : g • p₂ = p₁) (hp₁ : p₁ ∈ repCanon f hf) (hp₂ : p₂ ∈ repCanon f hf)
-    (_ : p₁ ∈ 𝒟) (hp₂_fd : p₂ ∈ 𝒟)
     (hc : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0) :
     p₁ = p₂ := by
   obtain ⟨n, hn⟩ := ModularGroup.exists_eq_T_zpow_of_c_eq_zero hc
@@ -405,14 +406,13 @@ private lemma injOn_c_eq_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     have h1 := repCanon_re_lt_half f hf p₁ hp₁
     have h3 := repCanon_re_lt_half f hf p₂ hp₂
     have h4 : -(1 / 2) ≤ p₂.re := by
-      have := hp₂_fd.2; rw [← UpperHalfPlane.coe_re] at this; exact (abs_le.mp this).1
+      have := (repCanon_mem_fd f hf hp₂).2; rw [← UpperHalfPlane.coe_re] at this
+      exact (abs_le.mp this).1
     have h5 : -(1 / 2) ≤ p₁.re := by
       have := (repCanon_mem_fd f hf hp₁).2; rw [← UpperHalfPlane.coe_re] at this
       exact (abs_le.mp this).1
-    have h_n_lt : (↑n : ℝ) < 1 := by linarith
-    have h_n_gt : (-1 : ℝ) < (↑n : ℝ) := by linarith
-    have : n < 1 := by exact_mod_cast h_n_lt
-    have : -1 < n := by exact_mod_cast h_n_gt
+    have : n < 1 := by exact_mod_cast (show (↑n : ℝ) < 1 by linarith)
+    have : -1 < n := by exact_mod_cast (show (-1 : ℝ) < (↑n : ℝ) by linarith)
     omega
   rw [hTn, h_n_zero, zpow_zero, one_smul]
 
@@ -464,7 +464,7 @@ theorem orb_injOn_repCanon :
   have hp₁_fd := repCanon_mem_fd f hf hp₁
   have hp₂_fd := repCanon_mem_fd f hf hp₂
   rcases eq_or_ne ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0) 0 with hc | hc
-  · exact injOn_c_eq_zero f hf g p₁ p₂ hg hp₁ hp₂ hp₁_fd hp₂_fd hc
+  · exact injOn_c_eq_zero f hf g p₁ p₂ hg hp₁ hp₂ hc
   · exact injOn_c_ne_zero f hf g p₁ p₂ hg hp₁ hp₂ hp₁_fd hp₂_fd hc
       (c_abs_le_one_of_smul_fd g p₁ p₂ hg hp₁_fd hp₂_fd)
 
