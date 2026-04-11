@@ -49,7 +49,6 @@ theorem arcsin_le_pi_half_mul {x : ℝ} (hx : 0 ≤ x) (hx1 : x ≤ 1) :
     Real.arcsin x ≤ Real.pi / 2 * x := by
   rcases eq_or_lt_of_le hx with rfl | hx_pos
   · simp
-  have hpi := Real.pi_pos
   have h_nn : 0 ≤ Real.arcsin x := Real.arcsin_nonneg.mpr hx
   have h_le : Real.arcsin x ≤ Real.pi / 2 := Real.arcsin_le_pi_div_two x
   have h_jordan := Real.mul_le_sin h_nn h_le
@@ -63,7 +62,6 @@ theorem arcsin_le_pi_half_mul {x : ℝ} (hx : 0 ≤ x) (hx1 : x ≤ 1) :
 theorem arcsinDelta_lt_one_fifth {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3) :
     arcsinDelta ε < 1/5 := by
   unfold arcsinDelta
-  have hpi := Real.pi_pos
   calc 12 / (5 * Real.pi) * Real.arcsin (ε / 2)
       ≤ 12 / (5 * Real.pi) * (Real.pi / 2 * (ε / 2)) := by
         gcongr; exact arcsin_le_pi_half_mul (by linarith) (by linarith)
