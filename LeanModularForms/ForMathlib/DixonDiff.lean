@@ -153,10 +153,10 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
 /-- **h1 is holomorphic on U.**
 
 Uses the parametric Leibniz rule with Cauchy estimates for the derivative of dslope. -/
-theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
-    (hf : DifferentiableOn ℂ f U)
+theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (_hU : IsOpen U)
+    (_hf : DifferentiableOn ℂ f U)
     (γ : PiecewiseC1Immersion x x)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
+    (_hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
     (h_int : ∀ w ∈ U, IntervalIntegrable
       (fun t => dslope f w (γ.toPiecewiseC1Path t) *
         deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
@@ -165,7 +165,7 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
         (fun t => dslope f w (γ.toPiecewiseC1Path t) *
           deriv γ.toPiecewiseC1Path.toPath.extend t)
         (volume.restrict (Set.uIoc 0 1)))
-    (h_dslope_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
+    (_h_dslope_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
       ∀ c ∈ γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1,
         ∀ w ∈ Metric.ball w₀ δ, ‖dslope f c w‖ ≤ C)
     (h_deriv_bound : ∃ D : ℝ, ∀ t ∈ Icc (0 : ℝ) 1,
@@ -235,7 +235,7 @@ off `U` means off the curve.
 Patching at `boundary(U)`: null-homologous gives winding number 0 near `boundary(U)`,
 so `h1 = h2` by the fundamental identity. -/
 theorem dixonFunction_differentiable {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
-    (hf : DifferentiableOn ℂ f U)
+    (_hf : DifferentiableOn ℂ f U)
     (γ : PiecewiseC1Immersion x x) (h_null : IsNullHomologous γ U)
     (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
     (h2_diff : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
