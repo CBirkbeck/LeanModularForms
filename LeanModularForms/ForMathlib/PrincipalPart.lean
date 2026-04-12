@@ -87,15 +87,15 @@ noncomputable def principalPartSum (S : Finset ℂ) (c : ℂ → ℂ) (z : ℂ) 
 
 theorem principalPartSum_empty (c : ℂ → ℂ) (z : ℂ) :
     principalPartSum ∅ c z = 0 := by
-  simp [principalPartSum]
+  simp only [principalPartSum, Finset.sum_empty]
 
 theorem principalPartSum_singleton (s : ℂ) (c : ℂ → ℂ) (z : ℂ) :
     principalPartSum {s} c z = c s / (z - s) := by
-  simp [principalPartSum]
+  simp only [principalPartSum, Finset.sum_singleton]
 
 theorem principalPartSum_insert {S : Finset ℂ} {s : ℂ} (hs : s ∉ S) (c : ℂ → ℂ) (z : ℂ) :
     principalPartSum (insert s S) c z = c s / (z - s) + principalPartSum S c z := by
-  simp [principalPartSum, Finset.sum_insert hs]
+  simp only [principalPartSum, Finset.sum_insert hs]
 
 /-! ### Differentiability of the principal part sum -/
 
@@ -107,9 +107,8 @@ theorem differentiableAt_div_sub {s : ℂ} {c : ℂ} {z : ℂ} (hz : z ≠ s) :
 
 /-- A single term `c / (z - s)` is differentiable on `{s}ᶜ`. -/
 theorem differentiableOn_div_sub (s : ℂ) (c : ℂ) :
-    DifferentiableOn ℂ (fun z => c / (z - s)) {s}ᶜ := by
-  intro z hz
-  exact (differentiableAt_div_sub (mem_compl_singleton_iff.mp hz)).differentiableWithinAt
+    DifferentiableOn ℂ (fun z => c / (z - s)) {s}ᶜ :=
+  fun _z hz => (differentiableAt_div_sub (mem_compl_singleton_iff.mp hz)).differentiableWithinAt
 
 /-- The principal part sum `∑ s ∈ S, c(s) / (z - s)` is differentiable on `(↑S)ᶜ`. -/
 theorem principalPartSum_differentiableOn (S : Finset ℂ) (c : ℂ → ℂ) :

@@ -92,7 +92,7 @@ theorem contourIntegral_smul (c : ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x
 /-- The contour integral of the zero function is zero. -/
 theorem contourIntegral_zero (γ : PiecewiseC1Path x y) :
     contourIntegral (fun _ => 0) γ = 0 := by
-  simp [contourIntegral]
+  simp only [contourIntegral, zero_mul, intervalIntegral.integral_zero]
 
 /-- Subtraction: `∮_γ (f - g) = ∮_γ f - ∮_γ g` when both integrands are integrable. -/
 theorem contourIntegral_sub (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
