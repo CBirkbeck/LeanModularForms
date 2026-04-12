@@ -368,6 +368,153 @@ private theorem half_bdry_sum_eq_leftVert_plus_leftArc
 
 /-! ### The core identity from FDWindingDataFull -/
 
+/-- Substitute known winding values at elliptic points into the residue-modular identity.
+
+Given that `g s = (-gWN(s)) * ord(f, s)` and the elliptic winding values
+(-1/2 at i, -1/6 at rho and rho+1), this derives the formula with 1/2, 1/3 coefficients
+and a non-elliptic remainder sum. The 1/3 arises from 1/6 + 1/6 after T-invariance
+identifies `ord(f, rho+1) = ord(f, rho)`. -/
+private theorem elliptic_winding_substitution
+    {H : ℝ} (wd : FDWindingDataFull H)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (h_residue_modular :
+      (orderAtCusp' f : ℂ) +
+      ∑ s ∈ S, (-generalizedWindingNumber wd.boundary (↑s : ℂ)) *
+        ↑(orderOfVanishingAt' (⇑f) s) = (k : ℂ) / 12) :
+    (orderAtCusp' f : ℂ) +
+    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+    ∑ s ∈ S.filter (fun p =>
+        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne'),
+      (-generalizedWindingNumber wd.boundary (↑s : ℂ)) *
+        ↑(orderOfVanishingAt' (⇑f) s) = (k : ℂ) / 12 := by
+  set g := fun (s : UpperHalfPlane) =>
+    (-generalizedWindingNumber wd.boundary (↑s : ℂ)) *
+      (orderOfVanishingAt' (⇑f) s : ℂ) with hg_def
+  have h_ord_zero : ∀ p, p ∈ 𝒟 → p ∉ S → orderOfVanishingAt' (⇑f) p = 0 :=
+    fun p hp hp_not => by_contra fun h_ne => hp_not (hS_complete _ hp h_ne)
+  set P := fun (p : UpperHalfPlane) =>
+    p = ellipticPointI' ∨ p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne'
+  have h_ell_sum : ∑ s ∈ S.filter P, g s =
+      g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
+    elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
+      simp only [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
+  have hg_i : g ellipticPointI' =
+      (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
+    show (-generalizedWindingNumber wd.boundary I) *
+      ↑(orderOfVanishingAt' (⇑f) ellipticPointI') = _; rw [wd.winding_at_i.eq]; ring
+  have hg_ρ : g ellipticPointRho' =
+      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
+    show (-generalizedWindingNumber wd.boundary ellipticPointRho) *
+      ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') = _; rw [wd.winding_at_rho.eq]; ring
+  have hg_ρ1 : g ellipticPointRhoPlusOne' =
+      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
+    show (-generalizedWindingNumber wd.boundary ellipticPointRhoPlusOne) *
+      ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') = _
+    rw [wd.winding_at_rho_plus_one.eq,
+      show (orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne' : ℂ) =
+        ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') from
+        congr_arg _ (ord_rho_plus_one_eq_ord_rho_via_vAdd f)]; ring
+  have h_filter_eq : S.filter (fun p => ¬P p) = S.filter (fun p =>
+      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne') := by
+    ext x; simp only [P, Finset.mem_filter, not_or]
+  have h_sum_eq : ∑ s ∈ S, g s =
+      ∑ s ∈ S.filter P, g s + ∑ s ∈ S.filter (fun p =>
+        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne'), g s := by
+    rw [← h_filter_eq]; exact (Finset.sum_filter_add_sum_filter_not S P g).symm
+  rw [h_sum_eq, h_ell_sum, hg_i, hg_ρ, hg_ρ1] at h_residue_modular
+  linear_combination h_residue_modular
+
+/-- Decompose the non-elliptic winding-weighted sum into interior + left-vertical + left-arc.
+
+For interior points (‖z‖ > 1, |re| < 1/2), winding = -1, so the coefficient is 1.
+For boundary points, winding = -1/2, so the coefficient is 1/2. We then use
+`half_bdry_sum_eq_leftVert_plus_leftArc` to rewrite the half-boundary sum. -/
+private theorem nonEll_gWN_sum_eq_int_plus_bdry
+    {H : ℝ} (wd : FDWindingDataFull H)
+    (S : Finset UpperHalfPlane)
+    (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (hgw_int : ∀ s ∈ S, ‖(s : ℂ)‖ > 1 → |(s : ℂ).re| < 1/2 →
+      generalizedWindingNumber wd.boundary (↑s) = -1)
+    (hgw_bdry : ∀ s ∈ S, s ≠ ellipticPointI' → s ≠ ellipticPointRho' →
+      s ≠ ellipticPointRhoPlusOne' → ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) →
+      generalizedWindingNumber wd.boundary (↑s) = -1/2) :
+    let S_NE := S.filter (fun p =>
+      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne')
+    let INT := S.filter (fun p =>
+      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
+      ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)
+    ∑ s ∈ S_NE, (-generalizedWindingNumber wd.boundary (↑s : ℂ)) *
+        ↑(orderOfVanishingAt' (⇑f) s) =
+      ∑ s ∈ INT, ↑(orderOfVanishingAt' (⇑f) s) +
+      ∑ s ∈ sLeftVert S, ↑(orderOfVanishingAt' (⇑f) s) +
+      ∑ s ∈ S.filter (fun p =>
+          p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
+        ↑(orderOfVanishingAt' (⇑f) s) := by
+  intro S_NE INT
+  -- Substitute winding values: interior → 1, boundary → 1/2
+  set g := fun (s : UpperHalfPlane) =>
+    (-generalizedWindingNumber wd.boundary (↑s : ℂ)) *
+      (orderOfVanishingAt' (⇑f) s : ℂ)
+  have h_gWN_val : ∀ s ∈ S_NE, g s =
+      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2 then (1 : ℂ) else 1/2) *
+        ↑(orderOfVanishingAt' (⇑f) s) := by
+    intro s hs
+    simp only [S_NE, Finset.mem_filter] at hs
+    obtain ⟨hs_S, hsi, hsρ, hsρ1⟩ := hs
+    split_ifs with h_int
+    · simp only [g]; rw [hgw_int s hs_S h_int.1 h_int.2]; ring
+    · simp only [g]; rw [hgw_bdry s hs_S hsi hsρ hsρ1 h_int]; ring
+  rw [Finset.sum_congr rfl h_gWN_val]
+  -- Split into interior (coefficient 1) and boundary (coefficient 1/2) parts
+  set BDRY := S_NE.filter
+    (fun (p : ℍ) => ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2))
+  have h_ne_int : S_NE.filter
+      (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) = INT := by
+    ext s; simp only [S_NE, INT, Finset.mem_filter]; tauto
+  have h_split := Finset.sum_filter_add_sum_filter_not S_NE
+    (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) (fun s =>
+      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
+        ↑(orderOfVanishingAt' (⇑f) s))
+  have h_int_sum :
+      ∑ x ∈ S_NE.filter (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
+        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
+          ↑(orderOfVanishingAt' (⇑f) x) =
+      ∑ x ∈ INT, ↑(orderOfVanishingAt' (⇑f) x) := by
+    rw [h_ne_int]; apply Finset.sum_congr rfl; intro s hs
+    simp only [INT, Finset.mem_filter] at hs
+    rw [if_pos ⟨hs.2.2.2.2.1, hs.2.2.2.2.2⟩, one_mul]
+  have h_bdry_sum :
+      ∑ x ∈ BDRY,
+        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
+          ↑(orderOfVanishingAt' (⇑f) x) =
+      (1/2 : ℂ) * ∑ x ∈ BDRY, (orderOfVanishingAt' (⇑f) x : ℂ) := by
+    rw [Finset.mul_sum]; apply Finset.sum_congr rfl; intro s hs
+    rw [if_neg (show ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) from
+      (Finset.mem_filter.mp hs).2)]
+  have h_bdry_identity := half_bdry_sum_eq_leftVert_plus_leftArc f S hS hS_complete
+  linear_combination h_int_sum + h_bdry_sum + h_bdry_identity - h_split
+
+omit f hf in
+/-- Extract boundary winding = -1/2 from `FDWindingDataFull`, lifting from `ℂ` to `ℍ`. -/
+private theorem boundary_winding_eq_neg_half
+    {H : ℝ} (wd : FDWindingDataFull H)
+    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_below : ∀ s ∈ S, (s : ℂ).im < H) :
+    ∀ s ∈ S, s ≠ ellipticPointI' → s ≠ ellipticPointRho' →
+      s ≠ ellipticPointRhoPlusOne' → ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) →
+      generalizedWindingNumber wd.boundary (↑s) = -1/2 := by
+  intro s hs hsi hsρ hsρ1 h_not_int
+  have hs_fd := hS s hs
+  exact (wd.boundary_winding (↑s) s.2 (hS_below s hs)
+    (by intro h; exact hsi (UpperHalfPlane.ext h))
+    (by intro h; exact hsρ (UpperHalfPlane.ext h))
+    (by intro h; exact hsρ1 (UpperHalfPlane.ext h))
+    h_not_int hs_fd.1 hs_fd.2).eq
+
 set_option linter.unusedSectionVars false in
 include hf in
 /-- **Core identity** for the valence formula, conditional on `FDWindingDataFull`.
@@ -402,129 +549,11 @@ theorem valence_formula_core_of_windingDataFull
         p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 := by
-  -- Extract winding number values at the three elliptic points
-  have hgw_i : generalizedWindingNumber wd.boundary I = -1/2 :=
-    wd.winding_at_i.eq
-  have hgw_ρ : generalizedWindingNumber wd.boundary ellipticPointRho = -1/6 :=
-    wd.winding_at_rho.eq
-  have hgw_ρ1 : generalizedWindingNumber wd.boundary ellipticPointRhoPlusOne = -1/6 :=
-    wd.winding_at_rho_plus_one.eq
-  -- For interior points, winding = -1
-  have hgw_int : ∀ s ∈ S, ‖(s : ℂ)‖ > 1 → |(s : ℂ).re| < 1/2 →
-      generalizedWindingNumber wd.boundary (↑s) = -1 := fun s hs hn hr =>
-    (wd.interior_winding (↑s) hn hr s.2 (hS_below s hs)).eq
-  -- For non-interior boundary points, winding = -1/2
-  have hgw_bdry : ∀ s ∈ S, s ≠ ellipticPointI' → s ≠ ellipticPointRho' →
-      s ≠ ellipticPointRhoPlusOne' → ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) →
-      generalizedWindingNumber wd.boundary (↑s) = -1/2 := by
-    intro s hs hsi hsρ hsρ1 h_not_int
-    have hs_fd := hS s hs
-    exact (wd.boundary_winding (↑s) s.2 (hS_below s hs)
-      (by intro h; exact hsi (UpperHalfPlane.ext h))
-      (by intro h; exact hsρ (UpperHalfPlane.ext h))
-      (by intro h; exact hsρ1 (UpperHalfPlane.ext h))
-      h_not_int hs_fd.1 hs_fd.2).eq
-  -- Define the negated-winding function for cleaner notation
-  set g := fun (s : UpperHalfPlane) =>
-    (-generalizedWindingNumber wd.boundary (↑s : ℂ)) *
-      (orderOfVanishingAt' (⇑f) s : ℂ) with hg_def
-  have h_ord_zero : ∀ p, p ∈ 𝒟 → p ∉ S → orderOfVanishingAt' (⇑f) p = 0 :=
-    fun p hp hp_not => by_contra fun h_ne => hp_not (hS_complete _ hp h_ne)
-  -- Split S into elliptic + non-elliptic
-  set P := fun (p : UpperHalfPlane) =>
-    p = ellipticPointI' ∨ p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne'
-  have h_ell_sum : ∑ s ∈ S.filter P, g s =
-      g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
-    elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
-      simp only [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
-  -- Substitute winding weights at elliptic points
-  have hg_i : g ellipticPointI' =
-      (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
-    show (-generalizedWindingNumber wd.boundary I) *
-      ↑(orderOfVanishingAt' (⇑f) ellipticPointI') = _; rw [hgw_i]; ring
-  have hg_ρ : g ellipticPointRho' =
-      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
-    show (-generalizedWindingNumber wd.boundary ellipticPointRho) *
-      ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') = _; rw [hgw_ρ]; ring
-  have hg_ρ1 : g ellipticPointRhoPlusOne' =
-      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') := by
-    show (-generalizedWindingNumber wd.boundary ellipticPointRhoPlusOne) *
-      ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') = _; rw [hgw_ρ1]; ring
-  -- Combine ρ and ρ+1 via T-invariance: ord(f,ρ+1) = ord(f,ρ)
-  rw [ord_rho_plus_one_eq_ord_rho_via_vAdd f] at hg_ρ1
-  -- Non-elliptic filter
-  have h_filter_eq : S.filter (fun p => ¬P p) = S.filter (fun p =>
-      p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne') := by
-    ext x; simp only [P, Finset.mem_filter, not_or]
-  set S_NE := S.filter (fun p =>
-    p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
-    p ≠ ellipticPointRhoPlusOne') with hS_NE_def
-  set INT := S.filter (fun p =>
-    p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
-    ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)
-  -- Main formula from residue-modular identity + elliptic substitution
-  have h_formula : (orderAtCusp' f : ℂ) +
-      (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
-      (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
-      ∑ s ∈ S_NE, g s = (k : ℂ) / 12 := by
-    have h_sum_eq : ∑ s ∈ S, g s =
-        ∑ s ∈ S.filter P, g s + ∑ s ∈ S_NE, g s := by
-      rw [← h_filter_eq]; exact (Finset.sum_filter_add_sum_filter_not S P g).symm
-    rw [h_sum_eq, h_ell_sum, hg_i, hg_ρ, hg_ρ1] at h_residue_modular
-    -- h_residue_modular is now:
-    -- cusp + (1/2*b + 1/6*c + 1/6*c + Σ_NE g) = k/12
-    -- Goal: cusp + 1/2*b + 1/3*c + Σ_NE g = k/12
-    -- These match since 1/6 + 1/6 = 1/3
-    linear_combination h_residue_modular
-  -- Decompose non-elliptic sum into interior + boundary contributions
-  suffices h_eq :
-      ∑ s ∈ S_NE, g s =
-      ∑ s ∈ INT, ↑(orderOfVanishingAt' (⇑f) s) +
-      ∑ s ∈ sLeftVert S, ↑(orderOfVanishingAt' (⇑f) s) +
-      ∑ s ∈ S.filter (fun p =>
-          p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
-        ↑(orderOfVanishingAt' (⇑f) s) by
-    rw [h_eq] at h_formula; linear_combination h_formula
-  -- Interior: winding -1 → coefficient 1. Boundary: winding -1/2 → coefficient 1/2.
-  have h_gWN_val : ∀ s ∈ S_NE, g s =
-      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2 then (1 : ℂ) else 1/2) *
-        ↑(orderOfVanishingAt' (⇑f) s) := by
-    intro s hs
-    simp only [hS_NE_def, Finset.mem_filter] at hs
-    obtain ⟨hs_S, hsi, hsρ, hsρ1⟩ := hs
-    split_ifs with h_int
-    · simp only [hg_def]; rw [hgw_int s hs_S h_int.1 h_int.2]; ring
-    · simp only [hg_def]; rw [hgw_bdry s hs_S hsi hsρ hsρ1 h_int]; ring
-  rw [Finset.sum_congr rfl h_gWN_val]
-  set LA_ne := S.filter (fun p =>
-    p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)
-  set BDRY := S_NE.filter
-    (fun (p : ℍ) => ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2))
-  have h_ne_int : S_NE.filter
-      (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) = INT := by
-    ext s; simp only [hS_NE_def, INT, Finset.mem_filter]; tauto
-  have h_bdry_identity := half_bdry_sum_eq_leftVert_plus_leftArc f S hS hS_complete
-  have h_split := Finset.sum_filter_add_sum_filter_not S_NE
-    (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) (fun s =>
-      (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
-        ↑(orderOfVanishingAt' (⇑f) s))
-  have h_int_sum :
-      ∑ x ∈ S_NE.filter (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
-        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
-          ↑(orderOfVanishingAt' (⇑f) x) =
-      ∑ x ∈ INT, ↑(orderOfVanishingAt' (⇑f) x) := by
-    rw [h_ne_int]; apply Finset.sum_congr rfl; intro s hs
-    simp only [INT, Finset.mem_filter] at hs
-    rw [if_pos ⟨hs.2.2.2.2.1, hs.2.2.2.2.2⟩, one_mul]
-  have h_bdry_sum :
-      ∑ x ∈ BDRY,
-        (if ‖(x : ℂ)‖ > 1 ∧ |(x : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *
-          ↑(orderOfVanishingAt' (⇑f) x) =
-      (1/2 : ℂ) * ∑ x ∈ BDRY, (orderOfVanishingAt' (⇑f) x : ℂ) := by
-    rw [Finset.mul_sum]; apply Finset.sum_congr rfl; intro s hs
-    rw [if_neg (show ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2) from
-      (Finset.mem_filter.mp hs).2)]
-  linear_combination h_int_sum + h_bdry_sum + h_bdry_identity - h_split
+  have h_formula := elliptic_winding_substitution f wd S hS hS_complete h_residue_modular
+  have h_eq := nonEll_gWN_sum_eq_int_plus_bdry f wd S hS hS_complete
+    (fun s hs hn hr => (wd.interior_winding (↑s) hn hr s.2 (hS_below s hs)).eq)
+    (boundary_winding_eq_neg_half wd S hS hS_below)
+  rw [h_eq] at h_formula; linear_combination h_formula
 
 /-! ### The full textbook valence formula -/
 
