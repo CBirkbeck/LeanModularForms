@@ -90,6 +90,13 @@ theorem fdBoundary_seg4_in_slitPlane_of_im_ne {z : ℂ} {H : ℝ}
 The contour integral splits into five segment integrals via
 `intervalIntegral.integral_add_adjacent_intervals`. -/
 
+/-- Extract segment integrability from full `[0, 1]` integrability. -/
+private lemma segment_integrability {f : ℝ → ℂ} (hint : IntervalIntegrable f volume 0 1)
+    {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1) :
+    IntervalIntegrable f volume a b :=
+  hint.mono_set (Set.uIcc_subset_uIcc
+    (Set.mem_uIcc_of_le ha (le_trans hab hb)) (Set.mem_uIcc_of_le (le_trans ha hab) hb))
+
 /-- The contour integral of `(w - z)⁻¹` along the FD boundary splits into five
 segment integrals at the partition points. -/
 theorem fdBoundary_contourIntegral_split {z : ℂ} {H : ℝ}
@@ -103,21 +110,11 @@ theorem fdBoundary_contourIntegral_split {z : ℂ} {H : ℝ}
       (∫ t in (3/5 : ℝ)..4/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t) +
       (∫ t in (4/5 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t) := by
   unfold PiecewiseC1Path.contourIntegral
-  have hint1 : IntervalIntegrable _ volume (0 : ℝ) (1/5) :=
-    hint.mono_set (Set.uIcc_subset_uIcc
-      (by constructor <;> norm_num) (by constructor <;> norm_num))
-  have hint2 : IntervalIntegrable _ volume (1/5 : ℝ) (2/5) :=
-    hint.mono_set (Set.uIcc_subset_uIcc
-      (by constructor <;> norm_num) (by constructor <;> norm_num))
-  have hint3 : IntervalIntegrable _ volume (2/5 : ℝ) (3/5) :=
-    hint.mono_set (Set.uIcc_subset_uIcc
-      (by constructor <;> norm_num) (by constructor <;> norm_num))
-  have hint4 : IntervalIntegrable _ volume (3/5 : ℝ) (4/5) :=
-    hint.mono_set (Set.uIcc_subset_uIcc
-      (by constructor <;> norm_num) (by constructor <;> norm_num))
-  have hint5 : IntervalIntegrable _ volume (4/5 : ℝ) 1 :=
-    hint.mono_set (Set.uIcc_subset_uIcc
-      (by constructor <;> norm_num) (by constructor <;> norm_num))
+  have hint1 := segment_integrability hint (a := 0) (b := 1/5) (by norm_num) (by norm_num) (by norm_num)
+  have hint2 := segment_integrability hint (a := 1/5) (b := 2/5) (by norm_num) (by norm_num) (by norm_num)
+  have hint3 := segment_integrability hint (a := 2/5) (b := 3/5) (by norm_num) (by norm_num) (by norm_num)
+  have hint4 := segment_integrability hint (a := 3/5) (b := 4/5) (by norm_num) (by norm_num) (by norm_num)
+  have hint5 := segment_integrability hint (a := 4/5) (b := 1) (by norm_num) (by norm_num) (by norm_num)
   rw [show (∫ t in (0 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t) =
       (∫ t in (0 : ℝ)..1/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t) +
       (∫ t in (1/5 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t) from

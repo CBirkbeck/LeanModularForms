@@ -123,27 +123,21 @@ theorem generalizedResidueTheorem_simplePoles_structural
       ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
         residue f s := by
   set c := fun s => residue f s with hc_def
-  -- g agrees with f - pp on the curve (curve avoids S, hence in U \ S)
   have h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
       g (γ t) = f (γ t) - principalPartSum S c (γ t) :=
     fun t ht => hg_agree (γ t) ⟨hγ_in_U t ht, fun hmem =>
       hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
-  -- Contour integral of g = contour integral of (f - pp) by pointwise agreement
   have h_integrals_eq : γ.contourIntegral g =
       γ.contourIntegral (fun z => f z - principalPartSum S c z) := by
     simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
-    apply intervalIntegral.integral_congr
-    intro t ht
+    apply intervalIntegral.integral_congr; intro t ht
     rw [uIcc_of_le (zero_le_one' ℝ)] at ht
     simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
     show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
     rw [h_g_on_curve t ht]
-  -- The remainder integral vanishes
   have h_rem_zero : γ.contourIntegral (fun z => f z - principalPartSum S c z) = 0 :=
     h_integrals_eq ▸ hg_zero
-  -- Decompose: integral(f) = integral(f - pp) + Σ 2πi * winding * coeff
-  rw [contourIntegral_decomp_of_simple_poles hδ h_rem_int h_pp_int hI,
-      h_rem_zero, zero_add]
+  rw [contourIntegral_decomp_of_simple_poles hδ h_rem_int h_pp_int hI, h_rem_zero, zero_add]
 
 /-! ## Convex domain corollary -/
 
