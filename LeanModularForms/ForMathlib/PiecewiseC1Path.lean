@@ -99,7 +99,7 @@ private def translatePath (γ : Path x y) (c : E) : Path (x + c) (y + c) where
 omit [NormedSpace ℝ E] in
 private theorem translatePath_extend (γ : Path x y) (c : E) :
     (translatePath γ c).extend = fun t => γ.extend t + c := by
-  ext t; simp only [translatePath, Path.extend, ContinuousMap.coe_mk]; rfl
+  ext t; rfl
 
 /-- Translate a piecewise C¹ path by a constant. The partition is unchanged. -/
 def translate (γ : PiecewiseC1Path x y) (c : E) : PiecewiseC1Path (x + c) (y + c) where

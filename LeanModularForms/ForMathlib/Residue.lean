@@ -87,10 +87,8 @@ theorem hasCauchyPV_simple_pole {s : ℂ} {c : ℂ}
     {γ : PiecewiseC1Path x y} {w : ℂ}
     (hw : HasGeneralizedWindingNumber γ s w) :
     HasCauchyPV (fun z => c / (z - s)) γ s (2 * ↑Real.pi * I * w * c) := by
-  have heq : (fun z => c / (z - s)) = (fun z => c * (z - s)⁻¹) := by
-    ext z; rw [div_eq_mul_inv]
-  have hlim : 2 * ↑Real.pi * I * w * c = c * (2 * ↑Real.pi * I * w) := by ring
-  rw [heq, hlim]
+  simp only [div_eq_mul_inv]
+  rw [show 2 * ↑Real.pi * I * w * c = c * (2 * ↑Real.pi * I * w) from by ring]
   exact hw.const_mul c
 
 /-- Variant with zero coefficient: `HasCauchyPV` of `0/(z-s)` is trivially 0. -/
