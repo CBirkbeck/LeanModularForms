@@ -107,6 +107,47 @@ Proof:
 3. The contour integral of `g` vanishes by Cauchy for convex domains.
 4. The contour integral of the remainder equals that of `g`, hence vanishes.
 5. The CPV equals the contour integral (by avoidance), hence vanishes. -/
+private theorem contourIntegral_remainder_eq_zero_of_simplePoles
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1) :
+    γ.contourIntegral
+      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0 := by
+  obtain ⟨g, hg_diff, hg_agree⟩ := remainder_differentiableOn_of_simplePoles
+    hU_open S hS_in_U f hf hSimplePoles
+  have h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
+      g (γ t) = f (γ t) - principalPartSum S (fun s => residue f s) (γ t) :=
+    fun t ht => hg_agree (γ t) ⟨hγ_in_U t ht, fun hmem =>
+      hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
+  have h_g_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand g γ) volume 0 1 := by
+    apply h_rem_int.congr
+    intro t ht
+    rw [uIoc_of_le (zero_le_one' ℝ)] at ht
+    simp only [PiecewiseC1Path.contourIntegrand]
+    rw [h_g_on_curve t (Ioc_subset_Icc_self ht)]
+  have hg_zero : γ.contourIntegral g = 0 :=
+    γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
+      hg_diff hγ_in_U h_g_int
+  have h_integrals_eq : γ.contourIntegral g =
+      γ.contourIntegral (fun z => f z - principalPartSum S (fun s => residue f s) z) := by
+    simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
+    apply intervalIntegral.integral_congr
+    intro t ht
+    rw [uIcc_of_le (zero_le_one' ℝ)] at ht
+    simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
+    show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
+    rw [h_g_on_curve t ht]
+  rw [← h_integrals_eq]; exact hg_zero
+
 theorem hCancel_of_simplePoles_convex
     {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
@@ -122,42 +163,8 @@ theorem hCancel_of_simplePoles_convex
       volume 0 1) :
     HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
-  -- Step 1: Get corrected holomorphic remainder
-  obtain ⟨g, hg_diff, hg_agree⟩ := remainder_differentiableOn_of_simplePoles
-    hU_open S hS_in_U f hf hSimplePoles
-  -- Step 2: g agrees with f - pp on the curve (curve avoids S)
-  have h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
-      g (γ t) = f (γ t) - principalPartSum S (fun s => residue f s) (γ t) :=
-    fun t ht => hg_agree (γ t) ⟨hγ_in_U t ht, fun hmem =>
-      hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
-  -- Step 3: Integrability of g (agrees with rem on curve)
-  have h_g_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand g γ) volume 0 1 := by
-    apply h_rem_int.congr
-    intro t ht
-    rw [uIoc_of_le (zero_le_one' ℝ)] at ht
-    simp only [PiecewiseC1Path.contourIntegrand]
-    rw [h_g_on_curve t (Ioc_subset_Icc_self ht)]
-  -- Step 4: g integral vanishes by Cauchy for convex domains
-  have hg_zero : γ.contourIntegral g = 0 :=
-    γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
-      hg_diff hγ_in_U h_g_int
-  -- Step 5: Contour integrals of g and the remainder agree
-  have h_integrals_eq : γ.contourIntegral g =
-      γ.contourIntegral (fun z => f z - principalPartSum S (fun s => residue f s) z) := by
-    simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
-    apply intervalIntegral.integral_congr
-    intro t ht
-    rw [uIcc_of_le (zero_le_one' ℝ)] at ht
-    simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
-    show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
-    rw [h_g_on_curve t ht]
-  -- Step 6: remainder contour integral vanishes
-  have h_rem_zero : γ.contourIntegral
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0 :=
-    h_integrals_eq ▸ hg_zero
-  -- Step 7: CPV equals contour integral (avoidance), which is 0
-  rw [← h_rem_zero]
+  rw [← contourIntegral_remainder_eq_zero_of_simplePoles hU_convex hU_open hU_ne S hS_in_U
+    f hf γ hSimplePoles hγ_in_U hγ_avoids h_rem_int]
   exact hasCauchyPVOn_of_avoids hδ
 
 /-- The CPV of the singular part equals the winding number formula when `gamma`
@@ -279,6 +286,39 @@ theorem cpvIntegrandOn_integrableOn_eventually_of_avoids
 When `gamma` avoids `S` with margin `delta`, the CPV integrand integrability
 hypotheses can be derived from the contour integrand integrability. This
 removes the `hI_cpv_rem` and `hI_cpv_sing` hypotheses. -/
+private theorem cpvIntegrandOn_sum_eq_of_avoids
+    {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (hδ_bound : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1)
+    (h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1) :
+    (fun ε => ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) =ᶠ[𝓝[>] 0]
+    (fun ε =>
+      (∫ t in (0 : ℝ)..1,
+        cpvIntegrandOn S (fun z => f z -
+          principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t) +
+      (∫ t in (0 : ℝ)..1,
+        cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
+          γ.toPath.extend ε t)) := by
+  filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
+  have hε_pos : 0 < ε := hε.1
+  have hε_lt : ε < δ := hε.2
+  have h_f_eq : (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
+      (fun t => cpvIntegrandOn S (fun z => f z -
+        principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t +
+      cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
+        γ.toPath.extend ε t) := by
+    ext t; rw [← cpvIntegrandOn_add]; congr 1; ext z; ring
+  rw [h_f_eq]
+  exact intervalIntegral.integral_add
+    (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_rem_int)
+    (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_pp_int)
+
 theorem hasCauchyPVOn_simplePoles_convex_auto
     {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
@@ -301,50 +341,14 @@ theorem hasCauchyPVOn_simplePoles_convex_auto
     HasCauchyPVOn S f γ
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ s * residue f s) := by
-  -- Unpack avoidance
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := hδ
-  -- Build cancellation and singular CPV
   have h_cancel := hCancel_of_simplePoles_convex hU_convex hU_open hU_ne S hS_in_U f hf γ
     hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ h_rem_int
   have h_sing := hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI
   simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
-  -- For small ε, cpvIntegrandOn S f = (f - pp) part + pp part
-  have h_sum_eq :
-      (fun ε => ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) =ᶠ[𝓝[>] 0]
-      (fun ε =>
-        (∫ t in (0 : ℝ)..1,
-          cpvIntegrandOn S (fun z => f z -
-            principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t) +
-        (∫ t in (0 : ℝ)..1,
-          cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
-            γ.toPath.extend ε t)) := by
-    filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
-    have hε_pos : 0 < ε := hε.1
-    have hε_lt : ε < δ := hε.2
-    have h_f_eq : (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
-        (fun t => cpvIntegrandOn S (fun z => f z -
-          principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t +
-        cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
-          γ.toPath.extend ε t) := by
-      ext t; rw [← cpvIntegrandOn_add]; congr 1; ext z; ring
-    rw [h_f_eq]
-    exact intervalIntegral.integral_add
-      (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_rem_int)
-      (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_pp_int)
-  have h_lim : Tendsto
-      (fun ε =>
-        (∫ t in (0 : ℝ)..1,
-          cpvIntegrandOn S (fun z => f z -
-            principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t) +
-        (∫ t in (0 : ℝ)..1,
-          cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
-            γ.toPath.extend ε t))
-      (𝓝[>] 0)
-      (𝓝 (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s * residue f s)) := by
-    have := h_cancel.add h_sing
-    simp only [zero_add] at this
-    exact this
-  exact h_lim.congr' h_sum_eq.symm
+  have h_lim := h_cancel.add h_sing
+  simp only [zero_add] at h_lim
+  exact h_lim.congr' (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
 
 /-! ## Bridge to the full generalized residue theorem -/
 
