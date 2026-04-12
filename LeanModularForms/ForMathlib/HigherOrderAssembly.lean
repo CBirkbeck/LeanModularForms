@@ -307,13 +307,8 @@ theorem hasCauchyPVOn_simplePoles_convex_auto
   have h_cancel := hCancel_of_simplePoles_convex hU_convex hU_open hU_ne S hS_in_U f hf γ
     hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ h_rem_int
   have h_sing := hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI
-  -- The CPV of f decomposes as CPV(f - pp) + CPV(pp)
-  -- We use the eventually-equal approach: for small ε, the CPV integrand = full integrand
   simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
-  -- Eventually (for ε < δ), cpvIntegrandOn S f = f * γ' on [0,1]
-  -- So the ε-integral of cpvIntegrandOn S f converges to the contour integral of f.
-  -- And the contour integral of f = contour integral of (f - pp) + contour integral of pp
-  -- = 0 + Σ winding * residue.
+  -- For small ε, cpvIntegrandOn S f = (f - pp) part + pp part
   have h_sum_eq :
       (fun ε => ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) =ᶠ[𝓝[>] 0]
       (fun ε =>
@@ -326,7 +321,6 @@ theorem hasCauchyPVOn_simplePoles_convex_auto
     filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
     have hε_pos : 0 < ε := hε.1
     have hε_lt : ε < δ := hε.2
-    -- For this ε, the CPV integrands = full integrands
     have h_f_eq : (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
         (fun t => cpvIntegrandOn S (fun z => f z -
           principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t +
@@ -337,7 +331,6 @@ theorem hasCauchyPVOn_simplePoles_convex_auto
     exact intervalIntegral.integral_add
       (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_rem_int)
       (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_pp_int)
-  -- The sum of limits
   have h_lim : Tendsto
       (fun ε =>
         (∫ t in (0 : ℝ)..1,

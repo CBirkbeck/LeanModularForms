@@ -72,8 +72,7 @@ def generalizedWindingNumber (γ : PiecewiseC1Path x y) (z₀ : ℂ) : ℂ :=
 theorem HasGeneralizedWindingNumber.eq {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
     (h : HasGeneralizedWindingNumber γ z₀ w) : generalizedWindingNumber γ z₀ = w := by
   simp only [generalizedWindingNumber, h.cauchyPV_eq]
-  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    simp [mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  have hpi := Complex.two_pi_I_ne_zero
   field_simp
 
 /-! ### Uniqueness -/
@@ -84,8 +83,7 @@ theorem HasGeneralizedWindingNumber.unique {γ : PiecewiseC1Path x y} {z₀ w₁
     (h₂ : HasGeneralizedWindingNumber γ z₀ w₂) : w₁ = w₂ := by
   have h : 2 * ↑Real.pi * I * w₁ = 2 * ↑Real.pi * I * w₂ :=
     HasCauchyPV.unique h₁ h₂
-  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    simp [mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  have hpi := Complex.two_pi_I_ne_zero
   exact mul_left_cancel₀ hpi h
 
 /-! ### Negation -/
@@ -106,8 +104,7 @@ theorem hasGeneralizedWindingNumber_of_avoids {γ : PiecewiseC1Path x y} {z₀ :
     HasGeneralizedWindingNumber γ z₀
       ((2 * ↑Real.pi * I)⁻¹ * γ.contourIntegral (fun z => (z - z₀)⁻¹)) := by
   simp only [HasGeneralizedWindingNumber]
-  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    simp [mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  have hpi := Complex.two_pi_I_ne_zero
   rw [show 2 * ↑Real.pi * I * ((2 * ↑Real.pi * I)⁻¹ * γ.contourIntegral (fun z => (z - z₀)⁻¹)) =
     γ.contourIntegral (fun z => (z - z₀)⁻¹) from by field_simp]
   exact hasCauchyPV_of_avoids hδ
@@ -130,8 +127,7 @@ theorem hasGeneralizedWindingNumber_of_hasCauchyPV {γ : PiecewiseC1Path x y} {z
     (h : HasCauchyPV (fun z => (z - z₀)⁻¹) γ z₀ L) :
     HasGeneralizedWindingNumber γ z₀ ((2 * ↑Real.pi * I)⁻¹ * L) := by
   simp only [HasGeneralizedWindingNumber]
-  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    simp [mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
+  have hpi := Complex.two_pi_I_ne_zero
   rwa [show 2 * ↑Real.pi * I * ((2 * ↑Real.pi * I)⁻¹ * L) = L from by field_simp]
 
 /-- `generalizedWindingNumber` agrees with any `HasGeneralizedWindingNumber` witness.

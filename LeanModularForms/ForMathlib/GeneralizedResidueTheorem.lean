@@ -95,11 +95,11 @@ is guaranteed by Cauchy's theorem for null-homologous or convex domains. It is
 stated as a parameter for modularity: the structural theorem is independent of the
 topological mechanism producing `hg_zero`. -/
 theorem generalizedResidueTheorem_simplePoles_structural
-    {U : Set ℂ} (hU : IsOpen U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    {U : Set ℂ} (_hU : IsOpen U)
+    (S : Finset ℂ) (_hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (_hf : DifferentiableOn ℂ f (U \ ↑S))
     (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (_hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
     (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
     (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)

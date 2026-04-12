@@ -145,17 +145,6 @@ def mkFDWindingDataFull {H : ℝ} (hH : 1 < H)
   toFDWindingData := mkFDWindingData_of_analytical hH h_ftc_i h_ftc_rho h_ftc_rho1 h_interior
   boundary_winding := h_boundary
 
-/-! ### Variant: take only the PV limits as hypotheses
-
-For users who have already proved integrability and FTC on segments, the PV limits
-(the `Tendsto E (nhdsWithin 0 (Ioi 0)) (nhds L)` parts) are the essential content.
-This variant packs the integrability and FTC into a structure, then takes the limits
-as separate hypotheses.
-
-This is NOT provided here because it would require spelling out the E functions explicitly,
-which depends on the specific branch-cut choices for Complex.log on each segment.
-The `ArcFTCHyp` / `CornerFTCHyp` structures are the right level of abstraction. -/
-
 /-! ### Convenience: extract the winding number equalities -/
 
 /-- The winding number at `i` is `-1/2`, given the analytical hypotheses. -/
@@ -176,32 +165,5 @@ theorem windingNumber_interior_eq {H : ℝ} (hH : 1 < H) {z : ℂ}
       (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I)) :
     generalizedWindingNumber (fdBoundaryPC1Path H (fdHeightValid_of_one_lt H hH)) z = -1 :=
   (fdBoundary_interior_winding_neg_one (fdHeightValid_of_one_lt H hH) hz h_integral).eq
-
-/-! ### Summary of what remains to fill the hypotheses
-
-To construct `FDWindingDataFull` unconditionally (with no hypotheses beyond `1 < H`),
-one must provide:
-
-1. **`ArcFTCHyp` at `i`**: This requires:
-   - An `E` function (the FTC expression for far-segment integrals)
-   - `h_ftc`: `∫₀^{2/5-δ} + ∫_{2/5+δ}^1 = E(ε)` (FTC on segments 1,3,4,5 + branch)
-   - `hint_left/right`: integrability (available from `gamma_integrable_left/right_of_I`)
-   - `h_limit`: `E(ε) → -πi` (requires FTC with Complex.log + telescoping + branch)
-
-2. **`CornerFTCHyp` at `ρ`**: Similar, with asymmetric deltas (arcsin left, vert right).
-
-3. **`CornerFTCHyp` at `ρ+1`**: Mirror of ρ (vert left, arcsin right).
-
-4. **Interior contour integral**: `∮_γ (w-z)⁻¹ = -2πi` for strict interior `z`.
-   This requires: FTC on each of the 5 segments with `log(γ(t)-z)` as primitive,
-   telescoping of the 5 log differences, and the total branch correction = `-2πi`.
-
-5. **Boundary winding**: `HasGeneralizedWindingNumber γ z (-1/2)` for smooth boundary `z`.
-   This requires: the CPV integral at smooth on-curve points (single crossing, angle π).
-
-The geometric infrastructure (near/far bounds, cutoffs, avoidance, integrability) is
-fully proved. The remaining work is purely analytical: computing contour integrals via FTC
-with the correct branch of `Complex.log`.
--/
 
 end

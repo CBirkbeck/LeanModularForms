@@ -89,7 +89,7 @@ theorem tangentDeviation_real_smul_self (c : ℝ) (L : ℂ) (hL : L ≠ 0) :
 theorem tangentDeviation_add (w₁ w₂ L : ℂ) :
     tangentDeviation (w₁ + w₂) L = tangentDeviation w₁ L + tangentDeviation w₂ L := by
   simp only [tangentDeviation, orthogonalProjectionComplex, add_mul, Complex.add_re, add_div]
-  erw [add_smul]; abel
+  module
 
 /-- Norm bound: `‖tangentDeviation w L‖ ≤ 2 * ‖w‖` for `L ≠ 0`. -/
 theorem norm_tangentDeviation_le (w L : ℂ) (hL : L ≠ 0) :
