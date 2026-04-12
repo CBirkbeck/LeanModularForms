@@ -45,21 +45,25 @@ private lemma ellipticPointI'_coe : (ellipticPointI' : ℂ) = Complex.I := rfl
 private lemma ellipticPointI'_im : (ellipticPointI' : ℍ).im = 1 := Complex.I_im
 
 private lemma ellipticPointRho'_re : (ellipticPointRho' : ℍ).re = -1/2 := by
-  show (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2; simp [add_re, mul_re, I_re, I_im]
+  show (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
+  simp only [add_re, mul_re, I_re, I_im]; norm_num
 
 private lemma ellipticPointRho'_im :
     (ellipticPointRho' : ℍ).im = Real.sqrt 3 / 2 := by
   show (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
-  simp [add_im, mul_im, I_re, I_im]
+  simp only [add_im, mul_im, I_re, I_im, ofReal_im, mul_zero, mul_one, zero_add,
+    neg_im, one_im, div_ofNat_im, zero_div, neg_zero, div_ofNat_re, ofReal_re, add_zero]
 
 private lemma ellipticPointRhoPlusOne'_re :
     (ellipticPointRhoPlusOne' : ℍ).re = 1/2 := by
-  show (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2; simp [add_re, mul_re, I_re, I_im]
+  show (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
+  simp only [add_re, mul_re, I_re, I_im]; norm_num
 
 private lemma ellipticPointRhoPlusOne'_im :
     (ellipticPointRhoPlusOne' : ℍ).im = Real.sqrt 3 / 2 := by
   show (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
-  simp [add_im, mul_im, I_re, I_im]
+  simp only [add_im, mul_im, I_re, I_im, ofReal_im, mul_zero, mul_one, zero_add,
+    one_im, div_ofNat_im, zero_div, div_ofNat_re, ofReal_re, add_zero]
 
 /-! ### SL₂(ℤ) denominator computations at i -/
 
@@ -85,7 +89,8 @@ private lemma normSq_denom_at_I (g : SL(2, ℤ)) :
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) ^ 2 +
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) ^ 2 := by
   rw [denom_at_I, Complex.normSq_apply]
-  simp [add_re, mul_re, add_im, mul_im, Complex.I_re, Complex.I_im]; ring
+  simp only [add_re, mul_re, add_im, mul_im, Complex.I_re, Complex.I_im,
+    Complex.intCast_re, Complex.intCast_im]; ring
 
 omit f hf in
 private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))

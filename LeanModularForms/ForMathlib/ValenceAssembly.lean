@@ -68,23 +68,25 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 omit f hf in
 private lemma ellipticPointRho_re_neg : (ellipticPointRho' : ℂ).re < 0 := by
   change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0
-  simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
+  simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]
+  norm_num
 
 omit f hf in
 private lemma ellipticPointRhoPlusOne_re_pos :
     (ellipticPointRhoPlusOne' : ℂ).re > 0 := by
   change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re > 0
-  simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
+  simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]
+  norm_num
 
 omit f hf in
 private lemma ellipticPoint_ne_iρ1 : ellipticPointI' ≠ ellipticPointRhoPlusOne' := by
   intro h; have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
-  simp [ellipticPointI', ellipticPointRhoPlusOne'] at this
+  simp only [ellipticPointI', ellipticPointRhoPlusOne'] at this; norm_num at this
 
 omit f hf in
 private lemma ellipticPoint_ne_ρρ1 : ellipticPointRho' ≠ ellipticPointRhoPlusOne' := by
   intro h; have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
-  simp [ellipticPointRho', ellipticPointRhoPlusOne'] at this; norm_num at this
+  simp only [ellipticPointRho', ellipticPointRhoPlusOne'] at this; norm_num at this
 
 /-! ### Unit circle point classification -/
 
@@ -171,8 +173,13 @@ private lemma elliptic_finset_sum_eq_three (S : Finset UpperHalfPlane)
       · exact ellipticPointRhoPlusOne_mem_fd
     exact hS_complete_zero x hx_fd hx_not_S
   rw [Finset.sum_subset h_ell_sub h_zero_outside,
-    Finset.sum_insert (by simp [ellipticPointI_ne_rho, ellipticPoint_ne_iρ1]),
-    Finset.sum_insert (by simp [ellipticPoint_ne_ρρ1]), Finset.sum_singleton]
+    Finset.sum_insert (show ellipticPointI' ∉ ({ellipticPointRho', ellipticPointRhoPlusOne'} :
+        Finset ℍ) by
+      simp only [Finset.mem_insert, Finset.mem_singleton, not_or]
+      exact ⟨ellipticPointI_ne_rho, ellipticPoint_ne_iρ1⟩),
+    Finset.sum_insert (show ellipticPointRho' ∉ ({ellipticPointRhoPlusOne'} : Finset ℍ) by
+      simp only [Finset.mem_singleton]
+      exact ellipticPoint_ne_ρρ1), Finset.sum_singleton]
   ring
 
 /-! ### Non-elliptic right-arc sum equals left-arc sum -/
@@ -232,10 +239,10 @@ private theorem sum_nonEllArc_right_eq_left
   conv_lhs => rw [Finset.filter_eq' (sRightArc S) ellipticPointRhoPlusOne']
   conv_rhs => rw [Finset.filter_eq' (sLeftArc S) ellipticPointRho']
   by_cases h_ord : orderOfVanishingAt' (⇑f) ellipticPointRho' = 0
-  · have hf1 : f_ord ellipticPointRho' = 0 := by simp [hf_ord_def, h_ord]
+  · have hf1 : f_ord ellipticPointRho' = 0 := by simp only [hf_ord_def, h_ord, Int.cast_zero]
     have hf2 : f_ord ellipticPointRhoPlusOne' = 0 := by
-      simp [hf_ord_def, ord_rho_plus_one_eq_ord_rho_via_vAdd f ▸ h_ord]
-    split_ifs <;> simp [Finset.sum_singleton, Finset.sum_empty, hf1, hf2]
+      simp only [hf_ord_def, ord_rho_plus_one_eq_ord_rho_via_vAdd f ▸ h_ord, Int.cast_zero]
+    split_ifs <;> simp only [Finset.sum_singleton, Finset.sum_empty, hf1, hf2]
   · simp only [hf_ord_def]; exact rho_singleton_sum_eq f S hS_complete h_ord
 
 /-! ### Boundary point classification -/
@@ -429,7 +436,7 @@ theorem valence_formula_core_of_windingDataFull
   have h_ell_sum : ∑ s ∈ S.filter P, g s =
       g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
     elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
-      simp [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
+      simp only [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
   -- Substitute winding weights at elliptic points
   have hg_i : g ellipticPointI' =
       (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
