@@ -53,10 +53,7 @@ variable {x y : ℂ}
 private theorem cpvIntegrand_div_eq_mul_inv (c s : ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrand (fun z => c / (z - s)) γ s ε t =
       cpvIntegrand (fun z => c * (z - s)⁻¹) γ s ε t := by
-  simp only [cpvIntegrand]
-  split_ifs with h
-  · rw [div_eq_mul_inv]
-  · rfl
+  simp only [cpvIntegrand]; split_ifs <;> simp [div_eq_mul_inv]
 
 /-! ### PV of a single simple pole term -/
 
