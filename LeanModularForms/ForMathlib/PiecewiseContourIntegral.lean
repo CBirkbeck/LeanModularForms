@@ -171,6 +171,23 @@ private lemma partition_filter_card_lt_right (P : Finset ℝ) {a' b' c : ℝ}
     simp only [Finset.mem_filter] at hcmem
     exact lt_irrefl c hcmem.2.1
 
+/-- Restrict integrability from `[0,1]` to sub-intervals `[a',c]` and `[c,b']`. -/
+private lemma integrability_split {f : ℂ → ℂ} (γ : PiecewiseC1Path x y)
+    {a' b' c : ℝ} (ha'b' : a' ≤ b') (hsub : Icc a' b' ⊆ Icc 0 1)
+    (hc_bds : c ∈ Icc 0 1)
+    (h_int : IntervalIntegrable
+      (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1) :
+    IntervalIntegrable (fun t => f (γ t) * deriv γ.toPath.extend t) volume a' c ∧
+    IntervalIntegrable (fun t => f (γ t) * deriv γ.toPath.extend t) volume c b' :=
+  ⟨h_int.mono_set (uIcc_subset_uIcc
+      (Set.mem_uIcc_of_le (hsub (left_mem_Icc.mpr ha'b')).1
+        (hsub (left_mem_Icc.mpr ha'b')).2)
+      (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2)),
+   h_int.mono_set (uIcc_subset_uIcc
+      (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2)
+      (Set.mem_uIcc_of_le (hsub (right_mem_Icc.mpr ha'b')).1
+        (hsub (right_mem_Icc.mpr ha'b')).2))⟩
+
 /-- FTC induction on partition cardinality: on any sub-interval `[a', b']` with
 at most `n` interior partition points, the integral telescopes to `F(γ(b')) - F(γ(a'))`. -/
 private lemma ftc_induction {F f : ℂ → ℂ} (γ : PiecewiseC1Path x y)
@@ -195,14 +212,7 @@ private lemma ftc_induction {F f : ℂ → ℂ} (γ : PiecewiseC1Path x y)
       simp only [Finset.mem_filter] at hc_filt
       have hc_bds : c ∈ Icc 0 1 :=
         hsub ⟨le_of_lt hc_filt.2.1, le_of_lt hc_filt.2.2⟩
-      have h_int_ac := h_int.mono_set (uIcc_subset_uIcc
-        (Set.mem_uIcc_of_le (hsub (left_mem_Icc.mpr ha'b')).1
-          (hsub (left_mem_Icc.mpr ha'b')).2)
-        (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2))
-      have h_int_cb := h_int.mono_set (uIcc_subset_uIcc
-        (Set.mem_uIcc_of_le hc_bds.1 hc_bds.2)
-        (Set.mem_uIcc_of_le (hsub (right_mem_Icc.mpr ha'b')).1
-          (hsub (right_mem_Icc.mpr ha'b')).2))
+      obtain ⟨h_int_ac, h_int_cb⟩ := integrability_split γ ha'b' hsub hc_bds h_int
       have hcard_ac :
           (γ.partition.filter (fun t => a' < t ∧ t < c)).card ≤ m := by
         have := partition_filter_card_lt_left γ.partition hc_filt.1 hc_filt.2.1 hc_filt.2.2

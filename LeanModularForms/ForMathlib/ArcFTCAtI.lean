@@ -333,6 +333,33 @@ private lemma fdBoundary_sub_I_at_2p_im_neg (H : ℝ) {δ : ℝ}
 
 /-! ## Part 5: Full FTC telescope -/
 
+/-- Branch correction: the integral over `[2/5+delta, 4/5]` equals
+`log(f(4/5)-I) - log(f(2/5+delta)-I) - 2*pi*I` after resolving the two log-of-neg
+branch cuts. -/
+private lemma right_integral_34_branch_corrected (H : ℝ) (hH : 1 < H) {δ : ℝ}
+    (hδ : 0 < δ) (hδ' : δ < 1/5)
+    (p3 : IntervalIntegrable _ _ (2/5 + δ) (3/5) ∧ _)
+    (p4 : IntervalIntegrable _ _ (3/5) (4/5) ∧ _)
+    (hright34 : ∫ t in (2/5 + δ)..(4/5 : ℝ),
+        deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
+        Complex.log (-(fdBoundaryFun H (4/5) - I)) -
+        Complex.log (-(fdBoundaryFun H (2/5 + δ) - I))) :
+    ∫ t in (2/5 + δ)..(4/5 : ℝ),
+      deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
+      Complex.log (fdBoundaryFun H (4/5) - I) -
+      Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
+  have h_branch_2pδ : Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) =
+      Complex.log (fdBoundaryFun H (2/5 + δ) - I) + ↑Real.pi * I :=
+    log_neg_eq_add_pi_I (fdBoundaryFun_sub_i_ne_zero_seg3 H _ (by linarith) (by linarith))
+      (fdBoundary_sub_I_at_2p_im_neg H hδ hδ')
+  have h45_ne : fdBoundaryFun H (4/5) - I ≠ 0 := by
+    intro h; have := fdBoundary_sub_I_at_45_im_pos H hH
+    rw [h] at this; simp only [zero_im, lt_irrefl] at this
+  have h_branch_45 : Complex.log (-(fdBoundaryFun H (4/5) - I)) =
+      Complex.log (fdBoundaryFun H (4/5) - I) - ↑Real.pi * I :=
+    log_neg_eq_sub_pi_I h45_ne (fdBoundary_sub_I_at_45_im_pos H hH)
+  rw [hright34, h_branch_45, h_branch_2pδ]; ring
+
 /-- Full FTC telescope for the crossing at `i`. -/
 theorem fdBoundary_ftc_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ}
     (hδ : 0 < δ) (hδ' : δ < 1/5) :
@@ -356,26 +383,8 @@ theorem fdBoundary_ftc_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ}
       Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
       Complex.log (fdBoundaryFun H 0 - I) := by
     rw [← intervalIntegral.integral_add_adjacent_intervals p1.1 p2.1, p1.2, p2.2]; ring
-  have hright34 : ∫ t in (2/5 + δ)..(4/5 : ℝ),
-      deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
-      Complex.log (-(fdBoundaryFun H (4/5) - I)) -
-      Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals p3.1 p4.1, p3.2, p4.2]; ring
-  have h_branch_2pδ : Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) =
-      Complex.log (fdBoundaryFun H (2/5 + δ) - I) + ↑Real.pi * I :=
-    log_neg_eq_add_pi_I (fdBoundaryFun_sub_i_ne_zero_seg3 H _ (by linarith) (by linarith))
-      (fdBoundary_sub_I_at_2p_im_neg H hδ hδ')
-  have h45_ne : fdBoundaryFun H (4/5) - I ≠ 0 := by
-    intro h; have := fdBoundary_sub_I_at_45_im_pos H hH
-    rw [h] at this; simp only [zero_im, lt_irrefl] at this
-  have h_branch_45 : Complex.log (-(fdBoundaryFun H (4/5) - I)) =
-      Complex.log (fdBoundaryFun H (4/5) - I) - ↑Real.pi * I :=
-    log_neg_eq_sub_pi_I h45_ne (fdBoundary_sub_I_at_45_im_pos H hH)
-  have hright34' : ∫ t in (2/5 + δ)..(4/5 : ℝ),
-      deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
-      Complex.log (fdBoundaryFun H (4/5) - I) -
-      Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
-    rw [hright34, h_branch_45, h_branch_2pδ]; ring
+  have hright34' := right_integral_34_branch_corrected H hH hδ hδ' p3 p4 (by
+    rw [← intervalIntegral.integral_add_adjacent_intervals p3.1 p4.1, p3.2, p4.2]; ring)
   have hright : ∫ t in (2/5 + δ)..(1 : ℝ),
       deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
       Complex.log (fdBoundaryFun H 1 - I) -

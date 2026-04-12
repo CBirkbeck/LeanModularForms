@@ -374,6 +374,27 @@ Given that `g s = (-gWN(s)) * ord(f, s)` and the elliptic winding values
 (-1/2 at i, -1/6 at rho and rho+1), this derives the formula with 1/2, 1/3 coefficients
 and a non-elliptic remainder sum. The 1/3 arises from 1/6 + 1/6 after T-invariance
 identifies `ord(f, rho+1) = ord(f, rho)`. -/
+/-- Evaluate the winding-weighted function `g` at each elliptic point using the
+known winding values: `-1/2` at `i`, `-1/6` at `rho` and `rho+1`, with
+T-invariance identifying orders at `rho+1` and `rho`. -/
+private lemma elliptic_winding_values
+    {H : ℝ} (wd : FDWindingDataFull H)
+    (g := fun (s : UpperHalfPlane) => (-generalizedWindingNumber wd.boundary (↑s : ℂ)) *
+      (orderOfVanishingAt' (⇑f) s : ℂ)) :
+    g ellipticPointI' = (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') ∧
+    g ellipticPointRho' = (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') ∧
+    g ellipticPointRhoPlusOne' =
+      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
+  refine ⟨?_, ?_, ?_⟩
+  · show (-generalizedWindingNumber wd.boundary I) * _ = _; rw [wd.winding_at_i.eq]; ring
+  · show (-generalizedWindingNumber wd.boundary ellipticPointRho) * _ = _
+    rw [wd.winding_at_rho.eq]; ring
+  · show (-generalizedWindingNumber wd.boundary ellipticPointRhoPlusOne) *
+      ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') = _
+    rw [wd.winding_at_rho_plus_one.eq, show (orderOfVanishingAt' (⇑f)
+        ellipticPointRhoPlusOne' : ℂ) = ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') from
+      congr_arg _ (ord_rho_plus_one_eq_ord_rho_via_vAdd f)]; ring
+
 private theorem elliptic_winding_substitution
     {H : ℝ} (wd : FDWindingDataFull H)
     (S : Finset UpperHalfPlane)
@@ -400,20 +421,7 @@ private theorem elliptic_winding_substitution
       g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
     elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
       simp only [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
-  have hg_i : g ellipticPointI' =
-      (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
-    show (-generalizedWindingNumber wd.boundary I) * _ = _; rw [wd.winding_at_i.eq]; ring
-  have hg_ρ : g ellipticPointRho' =
-      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
-    show (-generalizedWindingNumber wd.boundary ellipticPointRho) * _ = _
-    rw [wd.winding_at_rho.eq]; ring
-  have hg_ρ1 : g ellipticPointRhoPlusOne' =
-      (1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
-    show (-generalizedWindingNumber wd.boundary ellipticPointRhoPlusOne) *
-      ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') = _
-    rw [wd.winding_at_rho_plus_one.eq, show (orderOfVanishingAt' (⇑f)
-        ellipticPointRhoPlusOne' : ℂ) = ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') from
-      congr_arg _ (ord_rho_plus_one_eq_ord_rho_via_vAdd f)]; ring
+  obtain ⟨hg_i, hg_ρ, hg_ρ1⟩ := elliptic_winding_values f wd
   have h_filter_eq : S.filter (fun p => ¬P p) = S.filter (fun p =>
       p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne') := by
     ext x; simp only [P, Finset.mem_filter, not_or]
