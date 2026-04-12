@@ -57,7 +57,7 @@ theorem ord_smul_eq (g : SL(2, ℤ)) (p : ℍ) :
     · exact ord_S_eq f q
     · rw [UpperHalfPlane.modular_T_smul]; exact ord_add_one_eq f q
   | one =>
-    intro q; simp [one_smul]
+    intro q; simp only [one_smul]
   | mul x y _ _ ihx ihy =>
     intro q; rw [mul_smul, ihx (y • q)]; exact ihy q
   | inv x _ ihx =>
@@ -156,7 +156,8 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zero (hf : f ≠ 0) (p : ℍ) (hp : f 
   have h_analOn : AnalyticOnNhd ℂ (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0)
       {w | 0 < w.im} := fun w hw => G_analyticAt f ⟨w, hw⟩
   have h_preconn : IsPreconnected {w : ℂ | 0 < w.im} :=
-    ((convex_halfSpace_im_gt 0).isConnected ⟨I, by simp [I_im]⟩).isPreconnected
+    ((convex_halfSpace_im_gt 0).isConnected
+      ⟨I, by simp only [Set.mem_setOf_eq, I_im]; exact one_pos⟩).isPreconnected
   apply hf; ext z
   change f z = 0
   exact (G_eval_eq_f f z).symm.trans
@@ -353,7 +354,7 @@ theorem orb_rho_plus_one_eq_orb_rho :
   exact ⟨ModularGroup.T, by
     rw [UpperHalfPlane.modular_T_smul]
     ext
-    simp [ellipticPointRho', ellipticPointRhoPlusOne', UpperHalfPlane.coe_vadd]
-    ring⟩
+    simp only [ellipticPointRho', ellipticPointRhoPlusOne', UpperHalfPlane.coe_vadd]
+    push_cast; ring⟩
 
 end

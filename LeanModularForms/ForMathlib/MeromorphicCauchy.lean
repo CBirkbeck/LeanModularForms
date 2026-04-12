@@ -97,9 +97,7 @@ theorem contourIntegral_decomp_of_simple_poles {f : ℂ → ℂ} {S : Finset ℂ
         ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s * c s := by
   rw [← contourIntegral_principalPartSum_eq hδ hI,
       ← γ.contourIntegral_add _ _ h_rem_int h_pp_int]
-  congr 1
-  funext z
-  ring
+  congr 1 with z; ring
 
 /-! ## Analyticity of the remainder at poles -/
 
@@ -256,11 +254,10 @@ theorem contourIntegral_eq_sum_winding_coefficients_convex
     simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
     show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
     rw [h_g_on_curve t ht]
-  -- Step 6: remainder integral vanishes
-  have h_rem_zero : γ.contourIntegral (fun z => f z - principalPartSum S c z) = 0 :=
-    h_integrals_eq ▸ hg_zero
-  -- Step 7: decompose and substitute
-  rw [contourIntegral_decomp_of_simple_poles hδ h_rem_int h_pp_int hI, h_rem_zero, zero_add]
+  -- Step 6: decompose and substitute (remainder vanishes since g integral is zero)
+  rw [contourIntegral_decomp_of_simple_poles hδ h_rem_int h_pp_int hI,
+    show γ.contourIntegral (fun z => f z - principalPartSum S c z) = 0 from
+      h_integrals_eq ▸ hg_zero, zero_add]
 
 /-! ## Special case: zero coefficients -/
 
