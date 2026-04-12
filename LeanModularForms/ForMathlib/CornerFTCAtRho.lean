@@ -312,6 +312,46 @@ private theorem vert_norm_at_rho (H : ℝ) (hH : fdHeightValid H) {ε : ℝ} (h�
     ε / (5 * (H - Real.sqrt 3 / 2)) * (5 * (H - Real.sqrt 3 / 2)) from by ring]
   exact div_mul_cancel₀ ε (ne_of_gt (by positivity))
 
+private lemma cos_theta_rho_identity {α : ℝ} :
+    Real.cos (2 * Real.pi / 3 - 2 * α) + 1/2 =
+      2 * Real.sin α * Real.cos (Real.pi / 6 - α) := by
+  rw [show (2 * Real.pi / 3 - 2 * α : ℝ) = (Real.pi - Real.pi / 3) - 2 * α from by ring,
+    Real.cos_sub,
+    show Real.cos (Real.pi - Real.pi / 3) = -(1/2) from by
+      rw [Real.cos_pi_sub, Real.cos_pi_div_three],
+    show Real.sin (Real.pi - Real.pi / 3) = Real.sqrt 3 / 2 from by
+      rw [Real.sin_pi_sub, Real.sin_pi_div_three],
+    Real.cos_two_mul, Real.sin_two_mul, Real.cos_sub, Real.cos_pi_div_six, Real.sin_pi_div_six]
+  nlinarith [Real.sin_sq_add_cos_sq α]
+
+private lemma sin_theta_rho_identity {α : ℝ} :
+    Real.sin (2 * Real.pi / 3 - 2 * α) - Real.sqrt 3 / 2 =
+      2 * Real.sin α * Real.sin (Real.pi / 6 - α) := by
+  rw [show (2 * Real.pi / 3 - 2 * α : ℝ) = (Real.pi - Real.pi / 3) - 2 * α from by ring,
+    Real.sin_sub,
+    show Real.sin (Real.pi - Real.pi / 3) = Real.sqrt 3 / 2 from by
+      rw [Real.sin_pi_sub, Real.sin_pi_div_three],
+    show Real.cos (Real.pi - Real.pi / 3) = -(1/2) from by
+      rw [Real.cos_pi_sub, Real.cos_pi_div_three],
+    Real.cos_two_mul, Real.sin_two_mul, Real.sin_sub, Real.sin_pi_div_six,
+    Real.cos_pi_div_six]; ring_nf
+  have h5 := Real.sin_sq_add_cos_sq α
+  have h6 : Real.sqrt 3 * (Real.sin α ^ 2 + Real.cos α ^ 2) = Real.sqrt 3 := by rw [h5, mul_one]
+  linarith
+
+private lemma arcRef_sub_rho_decomp {θ α : ℝ} (hθ : θ = 2 * Real.pi / 3 - 2 * α) :
+    (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRho =
+      ↑(2 * Real.sin α) * (↑(Real.cos (Real.pi / 6 - α)) +
+        ↑(Real.sin (Real.pi / 6 - α)) * I) := by
+  simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
+  apply Complex.ext
+  · simp only [sub_re, add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
+      mul_zero, sub_zero, add_zero, mul_one, neg_re, one_re, div_ofNat, zero_mul]
+    linarith [show Real.cos θ + 1/2 = _ from hθ ▸ cos_theta_rho_identity]
+  · simp only [sub_im, add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+      mul_zero, add_zero, mul_one, zero_add, neg_im, one_im, div_ofNat, zero_mul]
+    linarith [show Real.sin θ - Real.sqrt 3 / 2 = _ from hθ ▸ sin_theta_rho_identity]
+
 private theorem arc_arg_at_rho (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3) :
     (fdBoundaryFun H (3/5 - arcsinDelta ε) - ellipticPointRho).arg =
       Real.pi / 6 - 5 * arcsinDelta ε * Real.pi / 12 := by
@@ -324,46 +364,14 @@ private theorem arc_arg_at_rho (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε 
   have hα_pos : 0 < α := by positivity
   have hα_small : α < Real.pi / 6 := by
     rw [α_def]; nlinarith [arcsinDelta_lt_one_fifth hε hε_lt]
-  have h_sinα_pos : 0 < Real.sin α :=
-    Real.sin_pos_of_pos_of_lt_pi hα_pos (by linarith [Real.pi_pos])
   have hθ_eq : θ = 2 * Real.pi / 3 - 2 * α := by
     show fdArcAngle (3/5 - arcsinDelta ε) = _; unfold fdArcAngle; rw [α_def]; ring
-  have h_cos_theta : Real.cos θ + 1/2 = 2 * Real.sin α * Real.cos (Real.pi / 6 - α) := by
-    rw [hθ_eq, show (2 * Real.pi / 3 - 2 * α : ℝ) = (Real.pi - Real.pi / 3) - 2 * α from
-      by ring, Real.cos_sub, show Real.cos (Real.pi - Real.pi / 3) = -(1/2) from by
-      rw [Real.cos_pi_sub, Real.cos_pi_div_three],
-      show Real.sin (Real.pi - Real.pi / 3) = Real.sqrt 3 / 2 from by
-      rw [Real.sin_pi_sub, Real.sin_pi_div_three], Real.cos_two_mul, Real.sin_two_mul,
-      Real.cos_sub, Real.cos_pi_div_six, Real.sin_pi_div_six]
-    nlinarith [Real.sin_sq_add_cos_sq α]
-  have h_sin_theta : Real.sin θ - Real.sqrt 3 / 2 =
-      2 * Real.sin α * Real.sin (Real.pi / 6 - α) := by
-    rw [hθ_eq, show (2 * Real.pi / 3 - 2 * α : ℝ) = (Real.pi - Real.pi / 3) - 2 * α from
-      by ring, Real.sin_sub, show Real.sin (Real.pi - Real.pi / 3) = Real.sqrt 3 / 2 from by
-      rw [Real.sin_pi_sub, Real.sin_pi_div_three],
-      show Real.cos (Real.pi - Real.pi / 3) = -(1/2) from by
-      rw [Real.cos_pi_sub, Real.cos_pi_div_three], Real.cos_two_mul, Real.sin_two_mul,
-      Real.sin_sub, Real.sin_pi_div_six, Real.cos_pi_div_six]; ring_nf
-    have h5 := Real.sin_sq_add_cos_sq α
-    have h6 : Real.sqrt 3 * (Real.sin α ^ 2 + Real.cos α ^ 2) = Real.sqrt 3 := by rw [h5, mul_one]
-    linarith
-  have h_re : (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRho =
-      ↑(2 * Real.sin α) * (↑(Real.cos (Real.pi / 6 - α)) +
-        ↑(Real.sin (Real.pi / 6 - α)) * I) := by
-    simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
-    apply Complex.ext
-    · simp only [sub_re, add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
-        mul_zero, sub_zero, add_zero, mul_one, neg_re, one_re, div_ofNat, zero_mul]
-      linarith [h_cos_theta]
-    · simp only [sub_im, add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
-        mul_zero, add_zero, mul_one, zero_add, neg_im, one_im, div_ofNat, zero_mul]
-      linarith [h_sin_theta]
-  rw [h_re]
-  have h_trig_rho : (↑(Real.cos (Real.pi / 6 - α)) : ℂ) +
-      ↑(Real.sin (Real.pi / 6 - α)) * I =
-      Complex.cos ↑(Real.pi / 6 - α) + Complex.sin ↑(Real.pi / 6 - α) * I := by
-    rw [← Complex.ofReal_cos, ← Complex.ofReal_sin]
-  rw [h_trig_rho]
+  rw [arcRef_sub_rho_decomp hθ_eq,
+    show (↑(Real.cos (Real.pi / 6 - α)) : ℂ) + ↑(Real.sin (Real.pi / 6 - α)) * I =
+      Complex.cos ↑(Real.pi / 6 - α) + Complex.sin ↑(Real.pi / 6 - α) * I from
+      by rw [← Complex.ofReal_cos, ← Complex.ofReal_sin]]
+  have h_sinα_pos : 0 < Real.sin α :=
+    Real.sin_pos_of_pos_of_lt_pi hα_pos (by linarith [Real.pi_pos])
   exact Complex.arg_mul_cos_add_sin_mul_I (show (0:ℝ) < 2 * Real.sin α from by positivity)
     ⟨by linarith [Real.pi_pos], le_of_lt (by linarith [Real.pi_pos])⟩
 
@@ -626,6 +634,49 @@ private theorem vert_arg_at_rp1 (H : ℝ) (hH : fdHeightValid H) {ε : ℝ} (hε
     5 * vertDelta H ε * (H - Real.sqrt 3 / 2) from by ring]
   exact arg_ofReal_mul_I _ (by positivity)
 
+private lemma cos_theta_rp1_identity {α : ℝ} :
+    Real.cos (Real.pi / 3 + 2 * α) - 1/2 =
+      2 * Real.sin α * Real.cos (5 * Real.pi / 6 + α) := by
+  have hc56 : Real.cos (5 * Real.pi / 6) = -(Real.sqrt 3 / 2) := by
+    rw [show (5 * Real.pi / 6 : ℝ) = Real.pi - Real.pi / 6 from by ring,
+      Real.cos_pi_sub, Real.cos_pi_div_six]
+  have hs56 : Real.sin (5 * Real.pi / 6) = 1/2 := by
+    rw [show (5 * Real.pi / 6 : ℝ) = Real.pi - Real.pi / 6 from by ring,
+      Real.sin_pi_sub, Real.sin_pi_div_six]
+  rw [Real.cos_add (Real.pi / 3) (2 * α), Real.cos_pi_div_three,
+    Real.sin_pi_div_three, Real.cos_two_mul, Real.sin_two_mul,
+    Real.cos_add (5 * Real.pi / 6) α, hc56, hs56]
+  nlinarith [Real.sin_sq_add_cos_sq α]
+
+private lemma sin_theta_rp1_identity {α : ℝ} :
+    Real.sin (Real.pi / 3 + 2 * α) - Real.sqrt 3 / 2 =
+      2 * Real.sin α * Real.sin (5 * Real.pi / 6 + α) := by
+  have hc56 : Real.cos (5 * Real.pi / 6) = -(Real.sqrt 3 / 2) := by
+    rw [show (5 * Real.pi / 6 : ℝ) = Real.pi - Real.pi / 6 from by ring,
+      Real.cos_pi_sub, Real.cos_pi_div_six]
+  have hs56 : Real.sin (5 * Real.pi / 6) = 1/2 := by
+    rw [show (5 * Real.pi / 6 : ℝ) = Real.pi - Real.pi / 6 from by ring,
+      Real.sin_pi_sub, Real.sin_pi_div_six]
+  rw [Real.sin_add (Real.pi / 3) (2 * α), Real.sin_pi_div_three,
+    Real.cos_pi_div_three, Real.cos_two_mul, Real.sin_two_mul,
+    Real.sin_add (5 * Real.pi / 6) α, hc56, hs56]; ring_nf
+  have h5 := Real.sin_sq_add_cos_sq α
+  have h6 : Real.sqrt 3 * (Real.sin α ^ 2 + Real.cos α ^ 2) = Real.sqrt 3 := by rw [h5, mul_one]
+  linarith
+
+private lemma arcRef_sub_rp1_decomp {θ α : ℝ} (hθ : θ = Real.pi / 3 + 2 * α) :
+    (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRhoPlusOne =
+      ↑(2 * Real.sin α) * (↑(Real.cos (5 * Real.pi / 6 + α)) +
+        ↑(Real.sin (5 * Real.pi / 6 + α)) * I) := by
+  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
+  apply Complex.ext
+  · simp only [sub_re, add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
+      mul_zero, sub_zero, add_zero, mul_one, one_re, div_ofNat, zero_mul]
+    linarith [show Real.cos θ - 1/2 = _ from hθ ▸ cos_theta_rp1_identity]
+  · simp only [sub_im, add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
+      mul_zero, add_zero, mul_one, zero_add, one_im, div_ofNat, zero_mul]
+    linarith [show Real.sin θ - Real.sqrt 3 / 2 = _ from hθ ▸ sin_theta_rp1_identity]
+
 private theorem arc_arg_at_rp1 (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3) :
     (fdBoundaryFun H (1/5 + arcsinDelta ε) - ellipticPointRhoPlusOne).arg =
       5 * Real.pi / 6 + 5 * arcsinDelta ε * Real.pi / 12 := by
@@ -638,49 +689,17 @@ private theorem arc_arg_at_rp1 (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε 
   have hα_pos : 0 < α := by positivity
   have hα_small : α < Real.pi / 6 := by
     rw [α_def]; nlinarith [arcsinDelta_lt_one_fifth hε hε_lt]
-  have h_sinα_pos : 0 < Real.sin α :=
-    Real.sin_pos_of_pos_of_lt_pi hα_pos (by linarith [Real.pi_pos])
   have hθ_eq : θ = Real.pi / 3 + 2 * α := by
     show fdArcAngle (1/5 + arcsinDelta ε) = _; unfold fdArcAngle; rw [α_def]; ring
-  have hc56 : Real.cos (5 * Real.pi / 6) = -(Real.sqrt 3 / 2) := by
-    rw [show (5 * Real.pi / 6 : ℝ) = Real.pi - Real.pi / 6 from by ring,
-      Real.cos_pi_sub, Real.cos_pi_div_six]
-  have hs56 : Real.sin (5 * Real.pi / 6) = 1/2 := by
-    rw [show (5 * Real.pi / 6 : ℝ) = Real.pi - Real.pi / 6 from by ring,
-      Real.sin_pi_sub, Real.sin_pi_div_six]
-  have h_cos_theta : Real.cos θ - 1/2 = 2 * Real.sin α * Real.cos (5 * Real.pi / 6 + α) := by
-    rw [hθ_eq, Real.cos_add (Real.pi / 3) (2 * α), Real.cos_pi_div_three,
-      Real.sin_pi_div_three, Real.cos_two_mul, Real.sin_two_mul,
-      Real.cos_add (5 * Real.pi / 6) α, hc56, hs56]
-    nlinarith [Real.sin_sq_add_cos_sq α]
-  have h_sin_theta : Real.sin θ - Real.sqrt 3 / 2 =
-      2 * Real.sin α * Real.sin (5 * Real.pi / 6 + α) := by
-    rw [hθ_eq, Real.sin_add (Real.pi / 3) (2 * α), Real.sin_pi_div_three,
-      Real.cos_pi_div_three, Real.cos_two_mul, Real.sin_two_mul,
-      Real.sin_add (5 * Real.pi / 6) α, hc56, hs56]; ring_nf
-    have h5 := Real.sin_sq_add_cos_sq α
-    have h6 : Real.sqrt 3 * (Real.sin α ^ 2 + Real.cos α ^ 2) = Real.sqrt 3 := by rw [h5, mul_one]
-    linarith
-  have h_re : (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRhoPlusOne =
-      ↑(2 * Real.sin α) * (↑(Real.cos (5 * Real.pi / 6 + α)) +
-        ↑(Real.sin (5 * Real.pi / 6 + α)) * I) := by
-    simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
-    apply Complex.ext
-    · simp only [sub_re, add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
-        mul_zero, sub_zero, add_zero, mul_one, one_re, div_ofNat, zero_mul]
-      linarith [h_cos_theta]
-    · simp only [sub_im, add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
-        mul_zero, add_zero, mul_one, zero_add, one_im, div_ofNat, zero_mul]
-      linarith [h_sin_theta]
-  rw [h_re]
-  have h_angle_pos : -(Real.pi) < 5 * Real.pi / 6 + α := by linarith [Real.pi_pos]
-  have h_angle_le : 5 * Real.pi / 6 + α ≤ Real.pi := by linarith [Real.pi_pos]
-  rw [show (↑(Real.cos (5 * Real.pi / 6 + α)) : ℂ) = Complex.cos ↑(5 * Real.pi / 6 + α) from
-    Complex.ofReal_cos _,
+  rw [arcRef_sub_rp1_decomp hθ_eq,
+    show (↑(Real.cos (5 * Real.pi / 6 + α)) : ℂ) = Complex.cos ↑(5 * Real.pi / 6 + α) from
+      Complex.ofReal_cos _,
     show (↑(Real.sin (5 * Real.pi / 6 + α)) : ℂ) = Complex.sin ↑(5 * Real.pi / 6 + α) from
-    Complex.ofReal_sin _]
+      Complex.ofReal_sin _]
+  have h_sinα_pos : 0 < Real.sin α :=
+    Real.sin_pos_of_pos_of_lt_pi hα_pos (by linarith [Real.pi_pos])
   exact Complex.arg_mul_cos_add_sin_mul_I (show (0 : ℝ) < 2 * Real.sin α from by positivity)
-    ⟨h_angle_pos, h_angle_le⟩
+    ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
 
 private def E_atRhoPlusOne (H : ℝ) (ε : ℝ) : ℂ :=
   Complex.log (fdBoundaryFun H (1/5 - vertDelta H ε) - ellipticPointRhoPlusOne) -
@@ -957,6 +976,48 @@ private lemma arcRef_rp1_im_pos {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 2/5) :
         (by linarith [Real.pi_pos]) (by linarith) (by linarith)
   linarith
 
+private theorem ftc_right_neg_log_rp1 (H : ℝ) (hH : fdHeightValid H) {δR : ℝ}
+    (hδR : 0 < δR) (hδR' : δR < 2/5) :
+    ∫ t in (1/5 + δR)..(1 : ℝ),
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+    Complex.log (-(fdBoundaryFun H 1 - ellipticPointRhoPlusOne)) -
+    Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) := by
+  have p_arc := arc_ftc_neg_rp1 H hδR hδR'
+  have p4 := seg4_ftc_neg_rp1 H
+  have p5 := seg5_ftc_neg_rp1 H hH
+  have hright_arc_seg4 :
+    ∫ t in (1/5 + δR)..(4/5 : ℝ),
+      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
+        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
+    Complex.log (-(fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne)) -
+    Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) := by
+    rw [← intervalIntegral.integral_add_adjacent_intervals p_arc.1 p4.1,
+      p_arc.2, p4.2]; ring
+  rw [← intervalIntegral.integral_add_adjacent_intervals (p_arc.1.trans p4.1) p5.1,
+    hright_arc_seg4, p5.2]; ring
+
+private lemma branch_correction_arc_rp1 (H : ℝ) {δR : ℝ} (hδR : 0 < δR) (hδR' : δR < 2/5) :
+    Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) =
+    Complex.log (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne) - ↑Real.pi * I := by
+  have h_arc_eq := arcRef_rp1_eq H (show 1/5 < 1/5 + δR from by linarith)
+    (show 1/5 + δR ≤ 3/5 from by linarith)
+  have h_arc_ne : fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne ≠ 0 := by
+    intro h
+    have h1 : arcRef_rp1 (1/5 + δR) = 0 := by rwa [← h_arc_eq]
+    have h2 := arcRef_rp1_im_pos hδR hδR'
+    rw [h1] at h2; simp at h2
+  exact log_neg_eq_sub_pi_I_rp1 h_arc_ne (h_arc_eq ▸ arcRef_rp1_im_pos hδR hδR')
+
+private lemma branch_correction_start_rp1 (H : ℝ) (hH : fdHeightValid H) :
+    Complex.log (-(fdBoundaryFun H 0 - ellipticPointRhoPlusOne)) =
+    Complex.log (fdBoundaryFun H 0 - ellipticPointRhoPlusOne) - ↑Real.pi * I := by
+  have h_start_ne : fdBoundaryFun H 0 - ellipticPointRhoPlusOne ≠ 0 := by
+    intro h
+    have := fdBoundary_sub_rp1_at_start_im_pos H hH
+    rw [h] at this; simp at this
+  exact log_neg_eq_sub_pi_I_rp1 h_start_ne (fdBoundary_sub_rp1_at_start_im_pos H hH)
+
 private theorem fdBoundary_ftc_telescope_rp1 (H : ℝ) (hH : 1 < H) {δL δR : ℝ}
     (hδL : 0 < δL) (hδL' : δL < 1/5) (hδR : 0 < δR) (hδR' : δR < 2/5) :
     (∫ t in (0 : ℝ)..(1/5 - δL),
@@ -973,56 +1034,17 @@ private theorem fdBoundary_ftc_telescope_rp1 (H : ℝ) (hH : 1 < H) {δL δR : �
     fun t => integrand_form_eq' (fdBoundaryFun H) ellipticPointRhoPlusOne t
   simp_rw [h_form]
   have p1 := seg1_ftc_rp1 H hH_valid hδL hδL'
-  have p_arc := arc_ftc_neg_rp1 H hδR hδR'
-  have p4 := seg4_ftc_neg_rp1 H
-  have p5 := seg5_ftc_neg_rp1 H hH_valid
-  have hright_arc_seg4 :
-    ∫ t in (1/5 + δR)..(4/5 : ℝ),
-      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
-        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
-    Complex.log (-(fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne)) -
-    Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals p_arc.1 p4.1,
-      p_arc.2, p4.2]; ring
-  have hright :
-    ∫ t in (1/5 + δR)..(1 : ℝ),
-      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
-        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
-    Complex.log (-(fdBoundaryFun H 1 - ellipticPointRhoPlusOne)) -
-    Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals (p_arc.1.trans p4.1) p5.1,
-      hright_arc_seg4, p5.2]; ring
-  have h_arc_eq := arcRef_rp1_eq H (show 1/5 < 1/5 + δR from by linarith)
-    (show 1/5 + δR ≤ 3/5 from by linarith)
-  have h_arc_ne : fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne ≠ 0 := by
-    intro h
-    have h1 : arcRef_rp1 (1/5 + δR) = 0 := by rwa [← h_arc_eq]
-    have h2 := arcRef_rp1_im_pos hδR hδR'
-    rw [h1] at h2; simp at h2
-  have h_arc_im : 0 < (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne).im := by
-    rw [h_arc_eq]; exact arcRef_rp1_im_pos hδR hδR'
-  have h_branch_arc :
-      Complex.log (-(fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne)) =
-      Complex.log (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne) - ↑Real.pi * I :=
-    log_neg_eq_sub_pi_I_rp1 h_arc_ne h_arc_im
-  have h_start_ne : fdBoundaryFun H 0 - ellipticPointRhoPlusOne ≠ 0 := by
-    intro h
-    have := fdBoundary_sub_rp1_at_start_im_pos H hH_valid
-    rw [h] at this; simp at this
-  have h_branch_start :
-      Complex.log (-(fdBoundaryFun H 0 - ellipticPointRhoPlusOne)) =
-      Complex.log (fdBoundaryFun H 0 - ellipticPointRhoPlusOne) - ↑Real.pi * I :=
-    log_neg_eq_sub_pi_I_rp1 h_start_ne (fdBoundary_sub_rp1_at_start_im_pos H hH_valid)
   have hright' :
     ∫ t in (1/5 + δR)..(1 : ℝ),
       deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
         (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
     Complex.log (fdBoundaryFun H 0 - ellipticPointRhoPlusOne) -
     Complex.log (fdBoundaryFun H (1/5 + δR) - ellipticPointRhoPlusOne) := by
-    rw [hright, h_branch_arc,
+    rw [ftc_right_neg_log_rp1 H hH_valid hδR hδR',
+      branch_correction_arc_rp1 H hδR hδR',
       show -(fdBoundaryFun H 1 - ellipticPointRhoPlusOne) =
         -(fdBoundaryFun H 0 - ellipticPointRhoPlusOne) from by rw [fdBoundaryFun_closed],
-      h_branch_start]; ring
+      branch_correction_start_rp1 H hH_valid]; ring
   rw [p1.2, hright']; ring
 
 private theorem fdBoundary_integrable_left_of_rp1 (H : ℝ) (hH : fdHeightValid H)
