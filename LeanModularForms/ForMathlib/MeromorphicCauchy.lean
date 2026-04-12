@@ -112,6 +112,45 @@ theorem sub_principalPartSum_analyticAt_all {f : ℂ → ℂ} {S : Finset ℂ} {
 
 /-! ## Removable singularity: corrected remainder is DifferentiableOn -/
 
+/-- At a pole, the limit-corrected function agrees with the analytic extension in a full
+neighborhood. -/
+private lemma correction_eventuallyEq_analyticExt {S : Finset ℂ} {z : ℂ}
+    (rem : ℂ → ℂ) (g_z : ℂ → ℂ) (hzS : z ∈ (↑S : Set ℂ))
+    (hg_z_an : AnalyticAt ℂ g_z z) (hg_z_eq : ∀ᶠ w in 𝓝[≠] z, rem w = g_z w) :
+    (fun w => if w ∈ (↑S : Set ℂ) then limUnder (𝓝[≠] w) rem else rem w) =ᶠ[𝓝 z] g_z := by
+  set correction := fun w => if w ∈ (↑S : Set ℂ) then limUnder (𝓝[≠] w) rem else rem w
+  have h_lim_eq : limUnder (𝓝[≠] z) rem = g_z z :=
+    (hg_z_an.continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+      |>.congr' (hg_z_eq.mono fun _ h => h.symm)).limUnder_eq
+  have h_at_z : correction z = g_z z := by
+    simp only [correction, hzS, ↓reduceIte, h_lim_eq]
+  have hz_not_erase : z ∉ (↑(S.erase z) : Set ℂ) := by
+    simp only [Finset.mem_coe, Finset.mem_erase, ne_eq, not_true_eq_false, false_and,
+      not_false_eq_true]
+  obtain ⟨V, hV_open, hz_V, hV_eq⟩ := mem_nhdsWithin.mp hg_z_eq
+  have h_erase_away : (↑(S.erase z) : Set ℂ)ᶜ ∈ 𝓝 z :=
+    (S.erase z).finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_erase
+  apply Filter.mem_of_superset (Filter.inter_mem (hV_open.mem_nhds hz_V) h_erase_away)
+  intro w ⟨hw_V, hw_erase⟩
+  show correction w = g_z w
+  by_cases hwz : w = z
+  · rw [hwz, h_at_z]
+  · have hw_not_S : w ∉ (↑S : Set ℂ) := by
+      intro hmem
+      exact hw_erase (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwz, Finset.mem_coe.mp hmem⟩))
+    show (if w ∈ (↑S : Set ℂ) then _ else rem w) = g_z w
+    rw [if_neg hw_not_S]
+    exact hV_eq ⟨hw_V, hwz⟩
+
+/-- Away from `S`, the limit-corrected function agrees with the remainder in a neighborhood. -/
+private lemma correction_eventuallyEq_rem {S : Finset ℂ} {z : ℂ}
+    (rem : ℂ → ℂ) (hzS : z ∉ (↑S : Set ℂ)) :
+    (fun w => if w ∈ (↑S : Set ℂ) then limUnder (𝓝[≠] w) rem else rem w) =ᶠ[𝓝 z] rem := by
+  apply Filter.mem_of_superset (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
+  intro w hw
+  show (if w ∈ (↑S : Set ℂ) then _ else rem w) = rem w
+  rw [if_neg hw]
+
 /-- **The corrected remainder is DifferentiableOn U.**
 
 Given `f` differentiable on `U \ S` with simple poles at `S` matching coefficients `c`,
@@ -126,73 +165,65 @@ theorem sub_principalPartSum_corrected_differentiableOn {f : ℂ → ℂ} {U : S
     (h_coeff : ∀ (s : ℂ) (hs : s ∈ S), (h_pole s hs).coeff = c s) :
     ∃ g : ℂ → ℂ, DifferentiableOn ℂ g U ∧
       ∀ z ∈ U \ (↑S : Set ℂ), g z = f z - principalPartSum S c z := by
-  -- For each pole s, choose the analytic extension
   have h_ext : ∀ s ∈ S, ∃ g_s : ℂ → ℂ, AnalyticAt ℂ g_s s ∧
       ∀ᶠ z in 𝓝[≠] s, (f z - principalPartSum S c z) = g_s z :=
     sub_principalPartSum_analyticAt_all h_pole h_coeff
-  -- Define the corrected function: use limUnder at poles, remainder elsewhere
   set rem : ℂ → ℂ := fun z => f z - principalPartSum S c z
   set correction : ℂ → ℂ := fun z =>
     if z ∈ (↑S : Set ℂ) then limUnder (𝓝[≠] z) rem else rem z
   refine ⟨correction, ?_, ?_⟩
-  · -- DifferentiableOn ℂ correction U
-    intro z hz
+  · intro z hz
     by_cases hzS : z ∈ (↑S : Set ℂ)
-    · -- z is a pole: use the analytic extension
-      have hzS' : z ∈ S := Finset.mem_coe.mp hzS
-      obtain ⟨g_z, hg_z_an, hg_z_eq⟩ := h_ext z hzS'
-      -- The limit of rem at z equals g_z(z) by continuity of g_z
-      have h_lim_eq : limUnder (𝓝[≠] z) rem = g_z z :=
-        (hg_z_an.continuousAt.tendsto.mono_left nhdsWithin_le_nhds
-          |>.congr' (hg_z_eq.mono fun _ h => h.symm)).limUnder_eq
-      -- correction(z) = g_z(z)
-      have h_at_z : correction z = g_z z := by
-        simp only [correction, hzS, ↓reduceIte, h_lim_eq]
-      -- Other poles are far from z (since S is finite)
-      have hz_not_erase : z ∉ (↑(S.erase z) : Set ℂ) := by
-        simp only [Finset.mem_coe, Finset.mem_erase, ne_eq, not_true_eq_false, false_and,
-          not_false_eq_true]
-      -- Extract open set V where rem = g_z in punctured nhd
-      obtain ⟨V, hV_open, hz_V, hV_eq⟩ := mem_nhdsWithin.mp hg_z_eq
-      -- correction = g_z in a full neighborhood of z
-      have h_correction_eq_g_z : correction =ᶠ[𝓝 z] g_z := by
-        have h_erase_away : (↑(S.erase z) : Set ℂ)ᶜ ∈ 𝓝 z :=
-          (S.erase z).finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_erase
-        apply Filter.mem_of_superset (Filter.inter_mem (hV_open.mem_nhds hz_V) h_erase_away)
-        intro w ⟨hw_V, hw_erase⟩
-        show correction w = g_z w
-        by_cases hwz : w = z
-        · rw [hwz, h_at_z]
-        · -- w /= z and w not in S.erase z, so w not in S
-          have hw_not_S : w ∉ (↑S : Set ℂ) := by
-            intro hmem
-            exact hw_erase (Finset.mem_coe.mpr
-              (Finset.mem_erase.mpr ⟨hwz, Finset.mem_coe.mp hmem⟩))
-          show (if w ∈ (↑S : Set ℂ) then _ else rem w) = g_z w
-          rw [if_neg hw_not_S]
-          exact hV_eq ⟨hw_V, hwz⟩
+    · obtain ⟨g_z, hg_z_an, hg_z_eq⟩ := h_ext z (Finset.mem_coe.mp hzS)
       exact (hg_z_an.differentiableAt.congr_of_eventuallyEq
-        h_correction_eq_g_z).differentiableWithinAt
-    · -- z is not a pole: correction = rem at z and near z
-      have h_near_z : correction =ᶠ[𝓝 z] rem := by
-        apply Filter.mem_of_superset
-          (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
-        intro w hw
-        show (if w ∈ (↑S : Set ℂ) then _ else rem w) = rem w
-        rw [if_neg hw]
-      have h_rem_diff : DifferentiableAt ℂ rem z := by
+        (correction_eventuallyEq_analyticExt rem g_z hzS hg_z_an hg_z_eq)).differentiableWithinAt
+    · have h_rem_diff : DifferentiableAt ℂ rem z := by
         have h_U_minus_S := hU_open.sdiff S.finite_toSet.isClosed
         exact ((hf_diff z ⟨hz, hzS⟩).differentiableAt
           (h_U_minus_S.mem_nhds ⟨hz, hzS⟩)).sub
           (principalPartSum_differentiableAt (hz := hzS))
       exact (h_rem_diff.congr_of_eventuallyEq
-        h_near_z).differentiableWithinAt
-  · -- Agreement on U \ S
-    intro z ⟨_, hzS⟩
+        (correction_eventuallyEq_rem rem hzS)).differentiableWithinAt
+  · intro z ⟨_, hzS⟩
     show (if z ∈ (↑S : Set ℂ) then _ else rem z) = rem z
     rw [if_neg hzS]
 
 /-! ## Residue theorem for convex domains -/
+
+/-- The contour integral of `g` equals that of `f - principalPartSum` when `g` agrees with
+the remainder on the curve. -/
+private lemma contourIntegral_corrected_eq_rem {f : ℂ → ℂ} {S : Finset ℂ} {c : ℂ → ℂ}
+    {γ : PiecewiseC1Path x x} {g : ℂ → ℂ}
+    (h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
+      g (γ t) = f (γ t) - principalPartSum S c (γ t)) :
+    γ.contourIntegral g =
+      γ.contourIntegral (fun z => f z - principalPartSum S c z) := by
+  simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
+  apply intervalIntegral.integral_congr
+  intro t ht
+  rw [uIcc_of_le (zero_le_one' ℝ)] at ht
+  simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
+  show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
+  rw [h_g_on_curve t ht]
+
+/-- The contour integrand of the corrected remainder is EqOn the integrand of the
+original remainder on `uIoc 0 1`, and hence the corrected function is integrable. -/
+private lemma corrected_remainder_integrable {f : ℂ → ℂ} {S : Finset ℂ} {c : ℂ → ℂ}
+    {γ : PiecewiseC1Path x x} {g : ℂ → ℂ}
+    (h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
+      g (γ t) = f (γ t) - principalPartSum S c (γ t))
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand (fun z => f z - principalPartSum S c z) γ)
+      volume 0 1) :
+    IntervalIntegrable (PiecewiseC1Path.contourIntegrand g γ) volume 0 1 := by
+  have h_eqOn : EqOn (PiecewiseC1Path.contourIntegrand g γ)
+      (PiecewiseC1Path.contourIntegrand (fun z => f z - principalPartSum S c z) γ)
+      (uIoc 0 1) := by
+    intro t ht
+    rw [uIoc_of_le (zero_le_one' ℝ)] at ht
+    simp only [PiecewiseC1Path.contourIntegrand]
+    rw [h_g_on_curve t (Ioc_subset_Icc_self ht)]
+  exact h_rem_int.congr h_eqOn.symm
 
 /-- **Residue theorem for convex domains.**
 
@@ -221,43 +252,18 @@ theorem contourIntegral_eq_sum_winding_coefficients_convex
       volume 0 1) :
     γ.contourIntegral f =
       ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s * c s := by
-  -- Step 1: Obtain the corrected remainder g
   obtain ⟨g, hg_diff, hg_agree⟩ :=
     sub_principalPartSum_corrected_differentiableOn hU_open hf_diff hS_sub h_pole h_coeff
-  -- Step 2: g agrees with f - principalPartSum on the curve (which avoids S)
   have h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
       g (γ t) = f (γ t) - principalPartSum S c (γ t) :=
     fun t ht => hg_agree (γ t) ⟨hγ t ht, fun hmem =>
       hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
-  -- Step 3: Integrability of g from integrability of rem (they agree on the curve)
-  have h_eqOn : EqOn (PiecewiseC1Path.contourIntegrand g γ)
-      (PiecewiseC1Path.contourIntegrand (fun z => f z - principalPartSum S c z) γ)
-      (uIoc 0 1) := by
-    intro t ht
-    rw [uIoc_of_le (zero_le_one' ℝ)] at ht
-    simp only [PiecewiseC1Path.contourIntegrand]
-    rw [h_g_on_curve t (Ioc_subset_Icc_self ht)]
-  have h_g_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand g γ) volume 0 1 :=
-    h_rem_int.congr h_eqOn.symm
-  -- Step 4: g integral vanishes by Cauchy for convex domains
   have hg_zero : γ.contourIntegral g = 0 :=
     γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
-      hg_diff hγ h_g_int
-  -- Step 5: contour integral of g = contour integral of (f - principalPartSum)
-  have h_integrals_eq : γ.contourIntegral g =
-      γ.contourIntegral (fun z => f z - principalPartSum S c z) := by
-    simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
-    apply intervalIntegral.integral_congr
-    intro t ht
-    rw [uIcc_of_le (zero_le_one' ℝ)] at ht
-    simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
-    show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
-    rw [h_g_on_curve t ht]
-  -- Step 6: decompose and substitute (remainder vanishes since g integral is zero)
+      hg_diff hγ (corrected_remainder_integrable h_g_on_curve h_rem_int)
   rw [contourIntegral_decomp_of_simple_poles hδ h_rem_int h_pp_int hI,
     show γ.contourIntegral (fun z => f z - principalPartSum S c z) = 0 from
-      h_integrals_eq ▸ hg_zero, zero_add]
+      (contourIntegral_corrected_eq_rem h_g_on_curve) ▸ hg_zero, zero_add]
 
 /-! ## Special case: zero coefficients -/
 

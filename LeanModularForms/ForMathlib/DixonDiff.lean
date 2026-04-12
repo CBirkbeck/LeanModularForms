@@ -89,6 +89,25 @@ private lemma h2_pointwise_hasDerivAt (fz c z w : ℂ) (hne : z - w ≠ 0) :
     convert h using 1; rw [inv_pow]
   exact ((h_inv.const_mul fz).mul_const c).congr_deriv (by ring)
 
+/-- Norm bound for the h2 integrand: `‖f(γ t) * (γ t - w')⁻¹ ^ 2 * γ'(t)‖ ≤ M * ε⁻¹² * D`
+when `w'` is in a ball of radius `ε` around `w` and the curve stays at distance `≥ ε`. -/
+private lemma h2_integrand_norm_bound {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
+    {M ε D : ℝ} (hM_nn : 0 ≤ M) (hε_pos : 0 < ε)
+    (hM : ∀ t ∈ Icc (0 : ℝ) 1, ‖f (γ t)‖ ≤ M)
+    (hD : ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv γ.toPath.extend t‖ ≤ D)
+    (h_dist_lb : ∀ w' ∈ Metric.ball w ε,
+      ∀ t ∈ Icc (0 : ℝ) 1, ε ≤ ‖γ t - w'‖)
+    {t : ℝ} (ht : t ∈ Ioc (0 : ℝ) 1) {w' : ℂ} (hw' : w' ∈ Metric.ball w ε) :
+    ‖f (γ t) * (γ t - w')⁻¹ ^ 2 * deriv γ.toPath.extend t‖ ≤ M * ε⁻¹ ^ 2 * D := by
+  have ht_Icc := Ioc_subset_Icc_self ht
+  rw [norm_mul, norm_mul, norm_pow, norm_inv]
+  exact mul_le_mul
+    (mul_le_mul (hM t ht_Icc)
+      (pow_le_pow_left₀ (by positivity)
+        (inv_anti₀ hε_pos (h_dist_lb w' hw' t ht_Icc)) 2)
+      (by positivity) hM_nn)
+    (hD t ht_Icc) (by positivity) (mul_nonneg hM_nn (by positivity))
+
 /-- **h2 is holomorphic at every point off the curve.**
 
 Uses the parametric Leibniz rule (differentiation under the integral sign).
@@ -111,15 +130,14 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
       (volume.restrict (Set.uIoc 0 1))) :
     DifferentiableAt ℂ (dixonH2 f γ) w := by
   have hid_pos := curveImage_infDist_pos γ w hoff
-  have hε_pos : 0 < Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2 := by linarith
   set ε := Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2
+  have hε_pos : 0 < ε := by simp only [ε]; linarith
   have h2ε : 2 * ε ≤ Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) := by
     simp only [ε]; linarith
   obtain ⟨M, hM_nn, hM⟩ := h_fγ_bound
   obtain ⟨D, hD⟩ := h_deriv_bound
   have h_ball_avoids := ball_avoids_curve γ w hε_pos h2ε
   have h_dist_lb := ball_dist_lower_bound γ w h2ε
-  -- Rewrite dixonH2 to mul-inv form
   have h_eq : dixonH2 f γ = fun w' =>
       ∫ t in (0 : ℝ)..1, f (γ t) * (γ t - w')⁻¹ * deriv γ.toPath.extend t := by
     ext w'; simp only [dixonH2, div_eq_mul_inv]
@@ -133,22 +151,27 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
     h_int h_F'_meas
     (by filter_upwards with t ht w' hw'
         rw [Set.uIoc_of_le zero_le_one] at ht
-        have ht_Icc := Ioc_subset_Icc_self ht
-        rw [norm_mul, norm_mul, norm_pow, norm_inv]
-        exact mul_le_mul
-          (mul_le_mul (hM t ht_Icc)
-            (pow_le_pow_left₀ (by positivity)
-              (inv_anti₀ hε_pos (h_dist_lb w' hw' t ht_Icc)) 2)
-            (by positivity) hM_nn)
-          (hD t ht_Icc) (by positivity) (mul_nonneg hM_nn (by positivity)))
+        exact h2_integrand_norm_bound hM_nn hε_pos hM hD h_dist_lb ht hw')
     (intervalIntegrable_const (c := M * ε⁻¹ ^ 2 * D))
     (by filter_upwards with t ht w' hw'
         rw [Set.uIoc_of_le zero_le_one] at ht
-        have ht_Icc := Ioc_subset_Icc_self ht
         exact h2_pointwise_hasDerivAt (f (γ t)) (deriv γ.toPath.extend t) (γ t) w'
-          (sub_ne_zero.mpr (h_ball_avoids w' hw' t ht_Icc)))).2.differentiableAt
+          (sub_ne_zero.mpr (h_ball_avoids w' hw' t (Ioc_subset_Icc_self ht))))).2.differentiableAt
 
 /-! ## h1 differentiability -/
+
+/-- The ball of radius `min (min a b) c / 2` is contained in balls of radius `a`, `b`, and `c`. -/
+private lemma min3_ball_subsets (w₀ : ℂ) {ε_m ε_d δ_C : ℝ}
+    (hε_m_pos : 0 < ε_m) (hε_d_pos : 0 < ε_d) (hδ_C_pos : 0 < δ_C) :
+    let ε := min (min ε_m ε_d) δ_C / 2
+    (0 < ε) ∧
+    (Metric.ball w₀ ε ⊆ Metric.ball w₀ ε_m) ∧
+    (Metric.ball w₀ ε ⊆ Metric.ball w₀ ε_d) ∧
+    (Metric.ball w₀ ε ⊆ Metric.ball w₀ δ_C) := by
+  refine ⟨by positivity,
+    Metric.ball_subset_ball (by linarith [min_le_left (min ε_m ε_d) δ_C, min_le_left ε_m ε_d]),
+    Metric.ball_subset_ball (by linarith [min_le_left (min ε_m ε_d) δ_C, min_le_right ε_m ε_d]),
+    Metric.ball_subset_ball (by linarith [min_le_right (min ε_m ε_d) δ_C])⟩
 
 /-- **h1 is holomorphic on U.**
 
@@ -194,14 +217,8 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (_hU : IsOpen U
   obtain ⟨ε_m, hε_m_pos, h_meas_ball⟩ := h_meas w₀ hw₀
   obtain ⟨ε_d, hε_d_pos, h_dslope_hda⟩ := h_dslope_hasDerivAt w₀ hw₀
   obtain ⟨C, hC_pos, δ_C, hδ_C_pos, h_deriv_bd⟩ := h_dslope_deriv_bound w₀ hw₀
-  set ε := min (min ε_m ε_d) δ_C / 2
-  have hε_pos : 0 < ε := by positivity
-  have hball_sub_εm : Metric.ball w₀ ε ⊆ Metric.ball w₀ ε_m := Metric.ball_subset_ball (by
-    simp only [ε]; linarith [min_le_left (min ε_m ε_d) δ_C, min_le_left ε_m ε_d])
-  have hball_sub_εd : Metric.ball w₀ ε ⊆ Metric.ball w₀ ε_d := Metric.ball_subset_ball (by
-    simp only [ε]; linarith [min_le_left (min ε_m ε_d) δ_C, min_le_right ε_m ε_d])
-  have hball_sub_δC : Metric.ball w₀ ε ⊆ Metric.ball w₀ δ_C := Metric.ball_subset_ball (by
-    simp only [ε]; linarith [min_le_right (min ε_m ε_d) δ_C])
+  obtain ⟨hε_pos, hball_sub_εm, hball_sub_εd, hball_sub_δC⟩ :=
+    min3_ball_subsets w₀ hε_m_pos hε_d_pos hδ_C_pos
   exact (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le (𝕜 := ℂ)
     (F := fun w t => dslope f w (γ.toPiecewiseC1Path t) *
       deriv γ.toPiecewiseC1Path.toPath.extend t)
@@ -222,8 +239,7 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (_hU : IsOpen U
     (intervalIntegrable_const (c := C * D))
     (by filter_upwards with t ht w hw
         rw [Set.uIoc_of_le zero_le_one] at ht
-        have ht_Icc := Ioc_subset_Icc_self ht
-        exact h_dslope_hda t ht_Icc w (hball_sub_εd hw))).2.differentiableAt
+        exact h_dslope_hda t (Ioc_subset_Icc_self ht) w (hball_sub_εd hw))).2.differentiableAt
 
 /-! ## Dixon function is entire -/
 
