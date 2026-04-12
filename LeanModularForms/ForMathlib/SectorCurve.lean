@@ -52,7 +52,7 @@ def lineCurve (r : ℝ) (α : ℝ) (t : ℝ) : ℂ :=
 
 @[simp]
 theorem lineCurve_zero (r : ℝ) (α : ℝ) : lineCurve r α 0 = 0 := by
-  simp [lineCurve]
+  simp only [lineCurve, mul_zero, Complex.ofReal_zero, zero_mul]
 
 theorem lineCurve_eq (r : ℝ) (α : ℝ) (t : ℝ) :
     lineCurve r α t = ↑(r * t) * exp (↑α * I) := rfl
@@ -102,20 +102,12 @@ theorem lineCurve_integrand_inv (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) (ht 
     (lineCurve r α t)⁻¹ * deriv (lineCurve r α) t = ↑t⁻¹ := by
   rw [lineCurve_eq, lineCurve_deriv]
   have hexp : exp (↑α * I) ≠ 0 := exp_ne_zero _
-  rw [mul_inv_rev]
-  calc (exp (↑α * I))⁻¹ * (↑(r * t))⁻¹ * (↑r * exp (↑α * I))
-      = (↑(r * t))⁻¹ * ((exp (↑α * I))⁻¹ * (↑r * exp (↑α * I))) := by ring
-    _ = (↑(r * t))⁻¹ * (↑r * ((exp (↑α * I))⁻¹ * exp (↑α * I))) := by ring
-    _ = (↑(r * t))⁻¹ * (↑r * 1) := by rw [inv_mul_cancel₀ hexp]
-    _ = (↑(r * t))⁻¹ * ↑r := by ring
-    _ = ↑t⁻¹ := by
-        have hr' : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
-        have ht' : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ht
-        push_cast
-        rw [mul_inv]
-        -- Goal: (↑r)⁻¹ * (↑t)⁻¹ * ↑r = (↑t)⁻¹
-        rw [show (↑r : ℂ)⁻¹ * (↑t)⁻¹ * ↑r = (↑r)⁻¹ * ↑r * (↑t)⁻¹ from by ring,
-            inv_mul_cancel₀ hr', one_mul]
+  have hr' : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
+  have ht' : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ht
+  simp only [mul_inv_rev, Complex.ofReal_mul]
+  field_simp
+  push_cast
+  field_simp
 
 /-! ### The higher-order factor -/
 
@@ -125,7 +117,8 @@ def higherOrderFactor (r : ℝ) (α : ℝ) (k : ℕ) : ℂ :=
 
 @[simp]
 theorem higherOrderFactor_zero (r : ℝ) (α : ℝ) : higherOrderFactor r α 0 = 1 := by
-  simp [higherOrderFactor]
+  simp only [higherOrderFactor, CharP.cast_eq_zero, neg_zero, zero_mul, exp_zero,
+    pow_zero, Complex.ofReal_one, one_mul]
 
 /-- When `k · α ∈ 2πℤ`, the exponential factor `exp(-ikα)` equals `1`. -/
 theorem exp_factor_eq_one_of_angle_condition (k : ℕ) (α : ℝ)

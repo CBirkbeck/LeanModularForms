@@ -147,9 +147,10 @@ private lemma ref_seg4_I_ne_zero (H : ℝ) (t : ℝ) : ref_seg4_I H t ≠ 0 := b
   intro h
   have hre : (ref_seg4_I H t).re = -1/2 := by
     unfold ref_seg4_I
-    simp [Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re, Complex.ofReal_im,
+    simp only [Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, Complex.neg_re, Complex.one_re, Complex.div_ofNat]
-  rw [h] at hre; simp at hre; linarith
+    norm_num
+  rw [h] at hre; simp only [zero_re] at hre; linarith
 
 private lemma ref_seg4_I_neg_slitPlane (H : ℝ) (t : ℝ) :
     -(ref_seg4_I H t) ∈ Complex.slitPlane := by
@@ -183,9 +184,9 @@ private lemma ref_seg5_I_slitPlane (H : ℝ) (hH : 1 < H) (t : ℝ) :
   rw [Complex.mem_slitPlane_iff]; right
   -- Goal: (ref_seg5_I H t).im ≠ 0
   unfold ref_seg5_I
-  simp [Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_re, Complex.ofReal_im,
+  simp only [Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_re, Complex.ofReal_im,
     Complex.I_re, Complex.I_im]
-  linarith
+  norm_num; linarith
 
 private lemma ref_seg5_I_ne_zero (H : ℝ) (hH : 1 < H) (t : ℝ) : ref_seg5_I H t ≠ 0 := by
   exact Complex.slitPlane_ne_zero (ref_seg5_I_slitPlane H hH t)
@@ -371,7 +372,7 @@ theorem seg4_full_intervalIntegrable_I (H : ℝ) :
   have h_ee := fdBoundary_sub_I_eventuallyEq_ref_seg4 H ht3 ht4
   rw [h_val, ← h_ee.deriv_eq]; congr 1
   show deriv (fun s => fdBoundaryFun H s - I) t = deriv (fdBoundaryFun H) t
-  simp [deriv_sub_const]
+  simp only [deriv_sub_const]
 
 /-! ### Segment 5: Full integrability via continuous reference -/
 

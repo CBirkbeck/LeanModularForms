@@ -56,7 +56,6 @@ namespace SegmentFTC
 `log(f b) - log(f a)` and the integral over `[b,c]` is `log(f c) - log(f b)`,
 then the integral over `[a,c]` is `log(f c) - log(f a)`. -/
 theorem ftc_telescope_two {f : ℝ → ℂ} {a b c : ℝ}
-    (_hab : a ≤ b) (_hbc : b ≤ c)
     (hint_ab : IntervalIntegrable (fun t => deriv f t / f t) volume a b)
     (hint_bc : IntervalIntegrable (fun t => deriv f t / f t) volume b c)
     (h_ab : ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a))
@@ -85,8 +84,6 @@ theorem ftc_telescope_three {f : ℝ → ℂ} {a b c d : ℝ}
 terms at `a` and `b` cancel by closedness. -/
 theorem ftc_telescope_closed_split {f : ℝ → ℂ} {a b t₀ δ : ℝ}
     (h_closed : f a = f b)
-    (_hint_left : IntervalIntegrable (fun t => deriv f t / f t) volume a (t₀ - δ))
-    (_hint_right : IntervalIntegrable (fun t => deriv f t / f t) volume (t₀ + δ) b)
     (h_left : ∫ t in a..(t₀ - δ), deriv f t / f t =
       Complex.log (f (t₀ - δ)) - Complex.log (f a))
     (h_right : ∫ t in (t₀ + δ)..b, deriv f t / f t =
@@ -130,7 +127,6 @@ single interior breakpoint `p`. Given FTC results on `[a, p]` and `[p, b]` for l
 functions `h₁` and `h₂` respectively, together with a.e. agreement of log-derivatives
 and matching endpoints, the combined integral telescopes to `log(g b) - log(g a)`. -/
 theorem ftc_telescope_piecewise_two {g h₁ h₂ : ℝ → ℂ} {a p b : ℝ}
-    (hap : a ≤ p) (hpb : p ≤ b)
     (hint₁ : IntervalIntegrable (fun t => deriv h₁ t / h₁ t) volume a p)
     (hint₂ : IntervalIntegrable (fun t => deriv h₂ t / h₂ t) volume p b)
     (h_ftc₁ : ∫ t in a..p, deriv h₁ t / h₁ t = Complex.log (h₁ p) - Complex.log (h₁ a))
@@ -149,7 +145,7 @@ theorem ftc_telescope_piecewise_two {g h₁ h₂ : ℝ → ℂ} {a p b : ℝ}
   have h_eq₂ : ∫ t in p..b, deriv g t / g t = Complex.log (g b) - Complex.log (g p) := by
     rw [intervalIntegral.integral_congr_ae (h_ae₂.mono (fun t ht hm => ht hm)),
         h_ftc₂, h_gp_right, h_gb]
-  exact ⟨hint_g₁.trans hint_g₂, ftc_telescope_two hap hpb hint_g₁ hint_g₂ h_eq₁ h_eq₂⟩
+  exact ⟨hint_g₁.trans hint_g₂, ftc_telescope_two hint_g₁ hint_g₂ h_eq₁ h_eq₂⟩
 
 /-- Piecewise FTC telescope with three local functions (two interior breakpoints). -/
 theorem ftc_telescope_piecewise_three {g h₁ h₂ h₃ : ℝ → ℂ} {a p q b : ℝ}
