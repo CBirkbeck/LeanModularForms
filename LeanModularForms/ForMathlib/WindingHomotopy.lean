@@ -180,6 +180,19 @@ structure WindingNumberHomotopyData (z₀ : ℂ) (P : Finset ℝ) where
 
 /-! ### Main theorem: homotopy invariance -/
 
+/-- If a homotopy `H(t, s)` agrees with `γ` on `[0, 1]`, their winding numbers coincide. -/
+private theorem gWN01_eq_of_homotopy_slice (H : ℝ × ℝ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (s : ℝ)
+    (heq : ∀ t ∈ Icc (0 : ℝ) 1, H (t, s) = γ t) :
+    generalizedWindingNumber01 (fun t => H (t, s)) z₀ =
+    generalizedWindingNumber01 γ z₀ := by
+  apply generalizedWindingNumber01_eq_of_eq_on (fun t => H (t, s)) γ z₀ heq
+  rw [Set.uIoc_of_le zero_le_one]
+  have h_eq_on_Ioo : EqOn (fun t => H (t, s)) γ (Ioo 0 1) :=
+    fun t' ht' => heq t' (Ioo_subset_Icc_self ht')
+  rw [ae_restrict_iff' measurableSet_Ioc]
+  filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
+  exact h_eq_on_Ioo.deriv isOpen_Ioo (ht.mpr ht_Ioc)
+
 /-- **Winding number homotopy invariance** (with explicit hypotheses).
 
 Given a piecewise C^1 homotopy `H` from `gamma_0` to `gamma_1` avoiding `z_0`,
@@ -218,39 +231,19 @@ theorem windingNumber_eq_of_piecewise_homotopic_of_hyps
     generalizedWindingNumber01 γ₁ z₀ := by
   obtain ⟨H, hH_cont, hH0, hH1, hH_closed, hH_avoid, hH_diff, hH_deriv_cont,
     M, hM_bound⟩ := hhom
-  -- Define the parametric winding number
   let n : ℝ → ℂ := fun s => generalizedWindingNumber01 (fun t => H (t, s)) z₀
-  -- Step 1: n is continuous on [0, 1]
   have h_n_cont : ContinuousOn n (Icc 0 1) :=
     hn_cont H hH_cont hH_avoid hH_diff hH_deriv_cont ⟨M, hM_bound⟩
-  -- Step 2: n is integer-valued
-  have h_n_int : ∀ s ∈ Icc (0 : ℝ) 1, ∃ m : ℤ, n s = m := by
-    intro s hs
-    exact hn_int (fun t => H (t, s))
+  have h_n_int : ∀ s ∈ Icc (0 : ℝ) 1, ∃ m : ℤ, n s = m := fun s hs =>
+    hn_int (fun t => H (t, s))
       (hH_closed s hs)
       (hH_cont.comp (continuous_id.prodMk continuous_const))
       (fun t ht => hH_avoid t ht s hs)
-  -- Step 3: continuous + integer-valued + connected implies constant
   have h_n_const : n 0 = n 1 :=
     continuous_integer_valued_constant n h_n_cont h_n_int
-  -- Extract: n(0) = gWN(gamma_0) and n(1) = gWN(gamma_1)
-  have hn0 : n 0 = generalizedWindingNumber01 γ₀ z₀ := by
-    apply generalizedWindingNumber01_eq_of_eq_on (fun t => H (t, 0)) γ₀ z₀ hH0
-    rw [Set.uIoc_of_le zero_le_one]
-    have h_eq_on_Ioo : EqOn (fun t => H (t, 0)) γ₀ (Ioo 0 1) :=
-      fun t' ht' => hH0 t' (Ioo_subset_Icc_self ht')
-    rw [ae_restrict_iff' measurableSet_Ioc]
-    filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
-    exact h_eq_on_Ioo.deriv isOpen_Ioo (ht.mpr ht_Ioc)
-  have hn1 : n 1 = generalizedWindingNumber01 γ₁ z₀ := by
-    apply generalizedWindingNumber01_eq_of_eq_on (fun t => H (t, 1)) γ₁ z₀ hH1
-    rw [Set.uIoc_of_le zero_le_one]
-    have h_eq_on_Ioo : EqOn (fun t => H (t, 1)) γ₁ (Ioo 0 1) :=
-      fun t' ht' => hH1 t' (Ioo_subset_Icc_self ht')
-    rw [ae_restrict_iff' measurableSet_Ioc]
-    filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
-    exact h_eq_on_Ioo.deriv isOpen_Ioo (ht.mpr ht_Ioc)
-  rw [← hn0, ← hn1, h_n_const]
+  have hn0 := gWN01_eq_of_homotopy_slice H γ₀ z₀ 0 hH0
+  have hn1 := gWN01_eq_of_homotopy_slice H γ₁ z₀ 1 hH1
+  rw [← hn0, ← hn1]; exact h_n_const
 
 /-- **Winding number homotopy invariance** -- the main theorem, bundled.
 

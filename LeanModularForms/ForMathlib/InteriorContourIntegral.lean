@@ -306,6 +306,31 @@ private theorem arcF_standard {z : ℂ} (hz_norm : 1 < ‖z‖)
       (arcRef_ee z H (by linarith [ht.1]) (by linarith [ht.2])).deriv_eq⟩)
     (arcRef_eq15 z H) (arcRef_eq35 z H)
 
+/-- Branch correction: `log(-w) = log(w) + πi` when `w.im < 0`. -/
+private lemma log_neg_add_pi_of_im_neg {w : ℂ} (him : w.im < 0) :
+    Complex.log (-w) = Complex.log w + ↑Real.pi * I := by
+  show ↑(Real.log ‖-w‖) + ↑((-w).arg) * I =
+    ↑(Real.log ‖w‖) + ↑(w.arg) * I + ↑Real.pi * I
+  simp only [norm_neg]; rw [arg_neg_eq_arg_add_pi_of_im_neg him]; push_cast; ring
+
+/-- At the arc endpoints `t = 1/5` and `t = 3/5`, the imaginary part of `γ(t) - z` is
+negative for strict interior `z`. -/
+private lemma arcEndpoint_im_neg {z : ℂ}
+    (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : 0 < z.im)
+    (H : ℝ) (p : ℝ) (hp : p ∈ ({1/5, 3/5} : Set ℝ)) :
+    (fdBoundaryFun H p - z).im < 0 := by
+  rcases hp with rfl | rfl
+  · have : (fdBoundaryFun H (1/5)).im = Real.sqrt 3 / 2 := by
+      rw [fdBoundaryFun_at_one_fifth]
+      simp [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk,
+        add_im, mul_im, I_re, I_im]
+    simp only [sub_im]; linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
+  · have : (fdBoundaryFun H (3/5)).im = Real.sqrt 3 / 2 := by
+      rw [fdBoundaryFun_at_three_fifths]
+      simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
+        add_im, neg_im, mul_im, I_re, I_im]
+    simp only [sub_im]; linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
+
 set_option maxHeartbeats 800000 in
 private theorem arcF_negated {z : ℂ} (hz_norm : 1 < ‖z‖)
     (hz_re : |z.re| < 1/2) (hz_re_pos : 0 < z.re) (hz_im : 0 < z.im) (H : ℝ) :
@@ -330,41 +355,11 @@ private theorem arcF_negated {z : ℂ} (hz_norm : 1 < ‖z‖)
       (arcRef_ee z H (by linarith [hm.1]) hlt).deriv_eq]
   have hint := hp.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       (hae.mono fun t ht hm => (ht hm).symm))
-  -- Both endpoints have im(γ-z) = √3/2 - z.im < 0
-  have him_lt : ∀ p ∈ ({1/5, 3/5} : Set ℝ),
-      (fdBoundaryFun H p - z).im < 0 := by
-    intro p hp; rcases hp with rfl | rfl
-    · have : (fdBoundaryFun H (1/5)).im = Real.sqrt 3 / 2 := by
-        rw [fdBoundaryFun_at_one_fifth]
-        simp [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk,
-          add_im, mul_im, I_re, I_im]
-      simp only [sub_im]; linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
-    · have : (fdBoundaryFun H (3/5)).im = Real.sqrt 3 / 2 := by
-        rw [fdBoundaryFun_at_three_fifths]
-        simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
-          add_im, neg_im, mul_im, I_re, I_im]
-      simp only [sub_im]; linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
-  have hbc : ∀ p ∈ ({1/5, 3/5} : Set ℝ),
-      Complex.log (-(fdBoundaryFun H p - z)) =
-      Complex.log (fdBoundaryFun H p - z) + ↑Real.pi * I := by
-    intro p hp
-    have him := him_lt p hp
-    show ↑(Real.log ‖-(fdBoundaryFun H p - z)‖) + ↑((-(fdBoundaryFun H p - z)).arg) * I =
-      ↑(Real.log ‖fdBoundaryFun H p - z‖) + ↑((fdBoundaryFun H p - z).arg) * I + ↑Real.pi * I
-    simp only [norm_neg]; rw [arg_neg_eq_arg_add_pi_of_im_neg him]; push_cast; ring
   exact ⟨hint, by
     rw [intervalIntegral.integral_congr_ae hae, hp.2, arcRef_eq15 z H, arcRef_eq35 z H]
-    have him1 : (arcRef z (1/5)).im < 0 := arcRef_eq15 z H ▸ him_lt _ (Or.inl rfl)
-    have him3 : (arcRef z (3/5)).im < 0 := arcRef_eq35 z H ▸ him_lt _ (Or.inr rfl)
-    have h1 : Complex.log (-(arcRef z (1/5))) = Complex.log (arcRef z (1/5)) + ↑Real.pi * I := by
-      show ↑(Real.log ‖-(arcRef z (1/5))‖) + ↑((-(arcRef z (1/5))).arg) * I =
-        ↑(Real.log ‖arcRef z (1/5)‖) + ↑((arcRef z (1/5)).arg) * I + ↑Real.pi * I
-      simp only [norm_neg]; rw [arg_neg_eq_arg_add_pi_of_im_neg him1]; push_cast; ring
-    have h3 : Complex.log (-(arcRef z (3/5))) = Complex.log (arcRef z (3/5)) + ↑Real.pi * I := by
-      show ↑(Real.log ‖-(arcRef z (3/5))‖) + ↑((-(arcRef z (3/5))).arg) * I =
-        ↑(Real.log ‖arcRef z (3/5)‖) + ↑((arcRef z (3/5)).arg) * I + ↑Real.pi * I
-      simp only [norm_neg]; rw [arg_neg_eq_arg_add_pi_of_im_neg him3]; push_cast; ring
-    rw [h3, h1]; ring⟩
+    have him1 := arcRef_eq15 z H ▸ arcEndpoint_im_neg hz_norm hz_re hz_im H _ (Or.inl rfl)
+    have him3 := arcRef_eq35 z H ▸ arcEndpoint_im_neg hz_norm hz_re hz_im H _ (Or.inr rfl)
+    rw [log_neg_add_pi_of_im_neg him3, log_neg_add_pi_of_im_neg him1]; ring⟩
 
 private theorem arcF {z : ℂ} (hz_norm : 1 < ‖z‖)
     (hz_re : |z.re| < 1/2) (hz_im : 0 < z.im) (H : ℝ) :
