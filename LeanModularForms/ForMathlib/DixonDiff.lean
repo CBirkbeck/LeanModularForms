@@ -173,13 +173,28 @@ private lemma min3_ball_subsets (w₀ : ℂ) {ε_m ε_d δ_C : ℝ}
     Metric.ball_subset_ball (by linarith [min_le_left (min ε_m ε_d) δ_C, min_le_right ε_m ε_d]),
     Metric.ball_subset_ball (by linarith [min_le_right (min ε_m ε_d) δ_C])⟩
 
+/-- Product bound for dslope derivative times path derivative. -/
+private lemma dslope_deriv_product_bound
+    {C D : ℝ} {γ : PiecewiseC1Path x x}
+    (h_deriv_bd : ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ_C,
+      ‖deriv (dslope f (γ t)) w‖ ≤ C)
+    (hD : ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv γ.toPath.extend t‖ ≤ D)
+    (hball_sub : Metric.ball w₀ ε ⊆ Metric.ball w₀ δ_C) :
+    ∀ᵐ t, t ∈ Set.uIoc (0 : ℝ) 1 → ∀ w ∈ Metric.ball w₀ ε,
+      ‖deriv (dslope f (γ t)) w * deriv γ.toPath.extend t‖ ≤ C * D := by
+  filter_upwards with t ht w hw
+  rw [Set.uIoc_of_le zero_le_one] at ht
+  have ht_Icc := Ioc_subset_Icc_self ht
+  rw [norm_mul]
+  exact mul_le_mul (h_deriv_bd t ht_Icc w (hball_sub hw)) (hD t ht_Icc)
+    (norm_nonneg _) (le_trans (norm_nonneg _) (h_deriv_bd t ht_Icc w (hball_sub hw)))
+
 /-- **h1 is holomorphic on U.**
 
 Uses the parametric Leibniz rule with Cauchy estimates for the derivative of dslope. -/
-theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (_hU : IsOpen U)
-    (_hf : DifferentiableOn ℂ f U)
-    (γ : PiecewiseC1Immersion x x)
-    (_hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
+theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
+    (_hU : IsOpen U) (_hf : DifferentiableOn ℂ f U)
+    (γ : PiecewiseC1Immersion x x) (_hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
     (h_int : ∀ w ∈ U, IntervalIntegrable
       (fun t => dslope f w (γ.toPiecewiseC1Path t) *
         deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
@@ -193,26 +208,20 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (_hU : IsOpen U
         ∀ w ∈ Metric.ball w₀ δ, ‖dslope f c w‖ ≤ C)
     (h_deriv_bound : ∃ D : ℝ, ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ D)
-    -- HasDerivAt for the dslope integrand (swaps dslope arguments + multiplies by γ')
     (h_dslope_hasDerivAt : ∀ w₀ ∈ U, ∃ ε > 0,
       ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ ε,
         HasDerivAt (fun w' => dslope f w' (γ.toPiecewiseC1Path t) *
           deriv γ.toPiecewiseC1Path.toPath.extend t)
           (deriv (dslope f (γ.toPiecewiseC1Path t)) w *
             deriv γ.toPiecewiseC1Path.toPath.extend t) w)
-    -- F' measurability
-    (h_F'_meas : ∀ w₀ ∈ U,
-      AEStronglyMeasurable
-        (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
-          deriv γ.toPiecewiseC1Path.toPath.extend t)
-        (volume.restrict (Set.uIoc 0 1)))
-    -- Derivative bound for dslope
+    (h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
+      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) (volume.restrict (Set.uIoc 0 1)))
     (h_dslope_deriv_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
       ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
         ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C) :
     DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U := by
-  intro w₀ hw₀
-  apply DifferentiableAt.differentiableWithinAt
+  intro w₀ hw₀; apply DifferentiableAt.differentiableWithinAt
   obtain ⟨D, hD⟩ := h_deriv_bound
   obtain ⟨ε_m, hε_m_pos, h_meas_ball⟩ := h_meas w₀ hw₀
   obtain ⟨ε_d, hε_d_pos, h_dslope_hda⟩ := h_dslope_hasDerivAt w₀ hw₀
@@ -224,21 +233,13 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ} (_hU : IsOpen U
       deriv γ.toPiecewiseC1Path.toPath.extend t)
     (F' := fun w t => deriv (dslope f (γ.toPiecewiseC1Path t)) w *
       deriv γ.toPiecewiseC1Path.toPath.extend t)
-    (bound := fun _ => C * D)
-    (Metric.ball_mem_nhds w₀ hε_pos)
+    (bound := fun _ => C * D) (Metric.ball_mem_nhds w₀ hε_pos)
     (by filter_upwards [Metric.ball_mem_nhds w₀ hε_pos] with w hw
         exact h_meas_ball w (hball_sub_εm hw))
-    (h_int w₀ hw₀)
-    (h_F'_meas w₀ hw₀)
-    (by filter_upwards with t ht w hw
-        rw [Set.uIoc_of_le zero_le_one] at ht
-        have ht_Icc := Ioc_subset_Icc_self ht
-        rw [norm_mul]
-        exact mul_le_mul (h_deriv_bd t ht_Icc w (hball_sub_δC hw)) (hD t ht_Icc)
-          (norm_nonneg _) (le_trans (norm_nonneg _) (h_deriv_bd t ht_Icc w (hball_sub_δC hw))))
+    (h_int w₀ hw₀) (h_F'_meas w₀ hw₀)
+    (dslope_deriv_product_bound h_deriv_bd hD hball_sub_δC)
     (intervalIntegrable_const (c := C * D))
-    (by filter_upwards with t ht w hw
-        rw [Set.uIoc_of_le zero_le_one] at ht
+    (by filter_upwards with t ht w hw; rw [Set.uIoc_of_le zero_le_one] at ht
         exact h_dslope_hda t (Ioc_subset_Icc_self ht) w (hball_sub_εd hw))).2.differentiableAt
 
 /-! ## Dixon function is entire -/

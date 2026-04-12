@@ -771,31 +771,29 @@ private def cornerFTCHyp_atRhoPlusOne {H : ℝ} (hH : 1 < H)
   E := E_atRhoPlusOne H
   h_ftc := by
     intro ε hε hεt
-    have hε_13 : ε < 1/3 := lt_of_lt_of_le hεt (min_le_left _ _)
-    have hε_H : ε < H - Real.sqrt 3 / 2 := lt_of_lt_of_le hεt (min_le_right _ _)
+    have hε_H := lt_of_lt_of_le hεt (min_le_right (1/3) (H - Real.sqrt 3 / 2))
+    have hε_13 := lt_of_lt_of_le hεt (min_le_left (1/3) (H - Real.sqrt 3 / 2))
     have hH_valid := fdHeightValid_of_one_lt H hH
-    have hδL := vertDelta_pos hH_valid hε
-    have hδL' := vertDelta_lt_one_fifth hH_valid hε_H
-    have hδR := arcsinDelta_pos hε
-    have hδR' := arcsinDelta_lt_one_fifth hε hε_13
-    rw [transfer_integral ellipticPointRhoPlusOne (by linarith) (le_refl 0) (by linarith) hγ,
-      transfer_integral ellipticPointRhoPlusOne (by linarith) (by linarith) (le_refl 1) hγ]
+    rw [transfer_integral ellipticPointRhoPlusOne
+        (by linarith [vertDelta_pos hH_valid hε, vertDelta_lt_one_fifth hH_valid hε_H])
+        (le_refl 0) (by linarith [vertDelta_pos hH_valid hε]) hγ,
+      transfer_integral ellipticPointRhoPlusOne
+        (by linarith [arcsinDelta_pos hε, arcsinDelta_lt_one_fifth hε hε_13])
+        (by linarith [arcsinDelta_pos hε]) (le_refl 1) hγ]
     exact h_ftc_hyp ε hε hεt
   hint_left := by
     intro ε hε hεt
-    have hε_H : ε < H - Real.sqrt 3 / 2 := lt_of_lt_of_le hεt (min_le_right _ _)
+    have hε_H := lt_of_lt_of_le hεt (min_le_right (1/3) (H - Real.sqrt 3 / 2))
     have hH_valid := fdHeightValid_of_one_lt H hH
-    have hδL := vertDelta_pos hH_valid hε
-    have hδL' := vertDelta_lt_one_fifth hH_valid hε_H
     exact transfer_integrability ellipticPointRhoPlusOne
-      (by linarith) (le_refl 0) (by linarith) hγ (h_int_left ε hε hεt)
+      (by linarith [vertDelta_pos hH_valid hε, vertDelta_lt_one_fifth hH_valid hε_H])
+      (le_refl 0) (by linarith [vertDelta_pos hH_valid hε]) hγ (h_int_left ε hε hεt)
   hint_right := by
     intro ε hε hεt
-    have hε_13 : ε < 1/3 := lt_of_lt_of_le hεt (min_le_left _ _)
-    have hδR := arcsinDelta_pos hε
-    have hδR' := arcsinDelta_lt_one_fifth hε hε_13
+    have hε_13 := lt_of_lt_of_le hεt (min_le_left (1/3) (H - Real.sqrt 3 / 2))
     exact transfer_integrability ellipticPointRhoPlusOne
-      (by linarith) (by linarith) (le_refl 1) hγ (h_int_right ε hε hεt)
+      (by linarith [arcsinDelta_pos hε, arcsinDelta_lt_one_fifth hε hε_13])
+      (by linarith [arcsinDelta_pos hε]) (le_refl 1) hγ (h_int_right ε hε hεt)
   h_limit := E_atRhoPlusOne_tendsto H (fdHeightValid_of_one_lt H hH)
 
 private def seg4Ref_rp1 (H : ℝ) (t : ℝ) : ℂ :=
