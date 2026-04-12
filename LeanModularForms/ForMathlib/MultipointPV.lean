@@ -120,27 +120,18 @@ theorem disjoint_balls_of_small_epsilon (S : Finset ℂ) (ε : ℝ) (δ : ℝ)
 theorem cpvIntegrandOn_sub (S : Finset ℂ) (f g : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => f z - g z) γ ε t =
       cpvIntegrandOn S f γ ε t - cpvIntegrandOn S g γ ε t := by
-  simp only [cpvIntegrandOn]
-  split_ifs with h
-  · simp
-  · ring
+  simp only [cpvIntegrandOn]; split_ifs <;> ring
 
 /-- The multi-point CPV integrand distributes over addition pointwise. -/
 theorem cpvIntegrandOn_add (S : Finset ℂ) (f g : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => f z + g z) γ ε t =
       cpvIntegrandOn S f γ ε t + cpvIntegrandOn S g γ ε t := by
-  simp only [cpvIntegrandOn]
-  split_ifs with h
-  · simp
-  · ring
+  simp only [cpvIntegrandOn]; split_ifs <;> ring
 
 /-- The multi-point CPV integrand commutes with negation pointwise. -/
 theorem cpvIntegrandOn_neg (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => -f z) γ ε t = -cpvIntegrandOn S f γ ε t := by
-  simp only [cpvIntegrandOn]
-  split_ifs with h
-  · simp
-  · ring
+  simp only [cpvIntegrandOn]; split_ifs <;> ring
 
 /-- If there are no singularities near `γ(t)` for the larger set `T ⊇ S`,
 then there are none for `S` either, so both integrands equal the full integrand. -/
@@ -191,11 +182,10 @@ theorem HasCauchyPVOn.sub {S : Finset ℂ} {f g : ℂ → ℂ}
       (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) -
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    have h_pw : (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) =
+    rw [show (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) =
       (fun t => cpvIntegrandOn S f γ.toPath.extend ε t -
-        cpvIntegrandOn S g γ.toPath.extend ε t) := by
-      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring
-    rw [h_pw]
+        cpvIntegrandOn S g γ.toPath.extend ε t) from by
+      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring]
     exact intervalIntegral.integral_sub (hfi ε hε) (hgi ε hε)
   exact (hf.sub hg).congr' heq.symm
 
@@ -215,11 +205,10 @@ theorem HasCauchyPVOn.add {S : Finset ℂ} {f g : ℂ → ℂ}
       (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) +
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    have h_pw : (fun t => cpvIntegrandOn S (fun z => f z + g z) γ.toPath.extend ε t) =
+    rw [show (fun t => cpvIntegrandOn S (fun z => f z + g z) γ.toPath.extend ε t) =
       (fun t => cpvIntegrandOn S f γ.toPath.extend ε t +
-        cpvIntegrandOn S g γ.toPath.extend ε t) := by
-      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring
-    rw [h_pw]
+        cpvIntegrandOn S g γ.toPath.extend ε t) from by
+      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring]
     exact intervalIntegral.integral_add (hfi ε hε) (hgi ε hε)
   exact (hf.add hg).congr' heq.symm
 
@@ -246,11 +235,10 @@ theorem hasCauchyPVOn_of_tendsto_sub {S : Finset ℂ} {f g : ℂ → ℂ}
           cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) +
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    have h_pw : (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
+    rw [show (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
       (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t +
-        cpvIntegrandOn S g γ.toPath.extend ε t) := by
-      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring
-    rw [h_pw]
+        cpvIntegrandOn S g γ.toPath.extend ε t) from by
+      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring]
     exact intervalIntegral.integral_add (hfgi ε hε) (hgi ε hε)
   have h_sum : Tendsto
       (fun ε =>
@@ -258,7 +246,7 @@ theorem hasCauchyPVOn_of_tendsto_sub {S : Finset ℂ} {f g : ℂ → ℂ}
           cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) +
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t))
       (𝓝[>] 0) (𝓝 L) := by
-    convert hfg.add hg using 1; simp [add_comm]
+    convert hfg.add hg using 1; simp only [zero_add]
   exact h_sum.congr' heq.symm
 
 /-! ## Connection between single-point and multi-point CPV -/

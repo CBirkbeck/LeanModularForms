@@ -173,13 +173,16 @@ lemma ord_add_one_eq (p : ℍ) :
   unfold orderOfVanishingAt'
   set G : ℂ → ℂ := fun w => if h : 0 < w.im then f ⟨w, h⟩ else 0 with hG_def
   set p_cplx : ℂ := (p : ℂ) with hp_def
-  conv_lhs => rw [show (((1 : ℝ) +ᵥ p : ℍ) : ℂ) = p_cplx + 1 by simp [hp_def]; ring]
+  conv_lhs => rw [show (((1 : ℝ) +ᵥ p : ℍ) : ℂ) = p_cplx + 1 by
+    simp only [hp_def, UpperHalfPlane.coe_vadd]; push_cast; ring]
   have hG_eq_near : G =ᶠ[𝓝[≠] (p_cplx + 1)] (fun w => G (w - 1)) := by
     rw [Filter.EventuallyEq, eventually_nhdsWithin_iff]
     filter_upwards [isOpen_lt continuous_const continuous_im |>.mem_nhds
-      (show 0 < (p_cplx + 1).im by simp [hp_def, p.im_pos])] with z hz _
-    simp only [hG_def]; rw [dif_pos hz, dif_pos (by simp [sub_im, hz] : 0 < (z - 1).im)]
-    set z₀ : ℍ := ⟨z - 1, by simp [sub_im, hz]⟩
+      (show 0 < (p_cplx + 1).im by
+        simp only [hp_def, add_im, one_im, add_zero]; exact p.im_pos)] with z hz _
+    simp only [hG_def]
+    rw [dif_pos hz, dif_pos (by simp only [sub_im, one_im, sub_zero]; exact hz : 0 < (z - 1).im)]
+    set z₀ : ℍ := ⟨z - 1, by simp only [sub_im, one_im, sub_zero]; exact hz⟩
     have h_period := SlashInvariantForm.vAdd_width_periodic 1 k 1 f.toSlashInvariantForm z₀
     have h_vadd_coe : ((1 : ℝ) +ᵥ z₀ : ℍ) = ⟨z, hz⟩ :=
       by ext; change (↑(1 : ℝ) : ℂ) + (z - 1) = z; push_cast; ring
@@ -206,10 +209,11 @@ lemma ord_rho_plus_one_eq_ord_rho :
 /-- S-identity for modular forms: `f(-1/z) = z^k * f(z)`. -/
 lemma modform_comp_ofComplex_S_identity (z : ℂ) (hz : 0 < z.im) :
     f (UpperHalfPlane.ofComplex (-(1:ℂ)/z)) = (z : ℂ) ^ k * f (UpperHalfPlane.ofComplex z) := by
-  have hz_ne : z ≠ 0 := by intro h; simp [h] at hz
+  have hz_ne : z ≠ 0 := by intro h; simp only [h, Complex.zero_im, lt_irrefl] at hz
   have h_neg_inv_im : 0 < (-(1:ℂ)/z).im := by
     rw [show -(1:ℂ)/z = (-z)⁻¹ from by field_simp, Complex.inv_im]
-    exact div_pos (by simp [hz]) (Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne))
+    exact div_pos (by simp only [Complex.neg_im, neg_neg]; exact hz)
+      (Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne))
   rw [UpperHalfPlane.ofComplex_apply_of_im_pos hz,
     UpperHalfPlane.ofComplex_apply_of_im_pos h_neg_inv_im]
   set z_uhp : UpperHalfPlane := ⟨z, hz⟩
@@ -230,10 +234,11 @@ private lemma modform_G_S_identity
     (z : ℂ) (hz : 0 < z.im) :
     G (-z⁻¹) = z ^ k * G z := by
   subst hG_def
-  have hz_ne : z ≠ 0 := by intro h; simp [h] at hz
+  have hz_ne : z ≠ 0 := by intro h; simp only [h, Complex.zero_im, lt_irrefl] at hz
   have h_neg_inv_im : 0 < (-z⁻¹).im := by
     rw [neg_inv, Complex.inv_im]
-    exact div_pos (by simp [hz]) (Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne))
+    exact div_pos (by simp only [Complex.neg_im, neg_neg]; exact hz)
+      (Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne))
   simp only [dif_pos h_neg_inv_im, dif_pos hz]
   have h_eq := modform_comp_ofComplex_S_identity f z hz
   rw [show -(1:ℂ)/z = -z⁻¹ from by field_simp] at h_eq
@@ -280,7 +285,7 @@ lemma ord_S_eq (p : ℍ) :
         meromorphicOrderAt_mul (analyticAt_id.zpow hp_ne).meromorphicAt
           (modform_G_meromorphicAt f G hG_def p)
     _ = meromorphicOrderAt G p_cplx := by
-        simp [meromorphicOrderAt_zpow_eq_zero p_cplx hp_ne]
+        simp only [meromorphicOrderAt_zpow_eq_zero p_cplx hp_ne, zero_add]
 
 /-! ### Finiteness of zeros in a bounded box -/
 

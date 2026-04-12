@@ -66,12 +66,12 @@ lemma vAdd_one_coe (p : ℍ) : ((1 : ℝ) +ᵥ p : ℂ) = (p : ℂ) + 1 := by
 /-- T-translation shifts real part by 1. -/
 lemma vAdd_one_re (p : ℍ) : ((1 : ℝ) +ᵥ p : ℍ).re = p.re + 1 := by
   show ((1 : ℝ) +ᵥ p : ℂ).re = p.re + 1
-  rw [vAdd_one_coe]; simp [add_re]
+  rw [vAdd_one_coe]; simp only [add_re, one_re]; rfl
 
 /-- T-translation preserves imaginary part. -/
 lemma vAdd_one_im_eq (p : ℍ) : ((1 : ℝ) +ᵥ p : ℍ).im = p.im := by
   show ((1 : ℝ) +ᵥ p : ℂ).im = p.im
-  rw [vAdd_one_coe]; simp [add_im]
+  rw [vAdd_one_coe]; simp only [add_im, one_im, add_zero]; rfl
 
 /-- T⁻¹-translation coercion: `((-1:ℝ) +ᵥ p : ℂ) = (p : ℂ) - 1`. -/
 lemma vAdd_neg_one_coe (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℂ) = (p : ℂ) - 1 := by
@@ -80,12 +80,12 @@ lemma vAdd_neg_one_coe (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℂ) = (p : ℂ) - 1 := 
 /-- T⁻¹-translation shifts real part by -1. -/
 lemma vAdd_neg_one_re (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℍ).re = p.re - 1 := by
   show ((-1 : ℝ) +ᵥ p : ℂ).re = p.re - 1
-  rw [vAdd_neg_one_coe]; simp [sub_re]
+  rw [vAdd_neg_one_coe]; simp only [sub_re, one_re]; rfl
 
 /-- T⁻¹-translation preserves imaginary part. -/
 lemma vAdd_neg_one_im_eq (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℍ).im = p.im := by
   show ((-1 : ℝ) +ᵥ p : ℂ).im = p.im
-  rw [vAdd_neg_one_coe]; simp [sub_im]
+  rw [vAdd_neg_one_coe]; simp only [sub_im, one_im, sub_zero]; rfl
 
 /-! ### Norm preservation under T-translation -/
 
@@ -148,7 +148,7 @@ theorem vAdd_neg_one_rho_plus_one_eq_rho :
 theorem ellipticPointRhoPlusOne_mem_fd : ellipticPointRhoPlusOne' ∈ 𝒟 := by
   rw [← vAdd_one_rho_eq_rho_plus_one]
   exact vAdd_one_mem_fd_of_left_vert ellipticPointRho' ellipticPointRho_mem_fd
-    (by simp [ellipticPointRho'])
+    (by simp only [ellipticPointRho']; norm_num)
 
 /-! ### Vanishing order identities -/
 
@@ -196,7 +196,7 @@ theorem S_smul_mem_fd_of_unit (p : ℍ) (hp_fd : p ∈ 𝒟) (hp_norm : ‖(p : 
 /-! ### S-involution properties -/
 
 private lemma S_mul_S : ModularGroup.S * ModularGroup.S = -1 := by
-  ext i j; fin_cases i <;> fin_cases j <;> simp [ModularGroup.S]
+  ext i j; fin_cases i <;> fin_cases j <;> simp only [ModularGroup.S] <;> decide
 
 /-- S² acts as the identity on ℍ. -/
 lemma S_smul_S_smul (p : ℍ) : ModularGroup.S • (ModularGroup.S • p) = p := by
