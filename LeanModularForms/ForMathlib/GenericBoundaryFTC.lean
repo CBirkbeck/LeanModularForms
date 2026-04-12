@@ -59,9 +59,7 @@ We formalize this by providing two reductions:
 -/
 
 open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
-open scoped Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
-
-attribute [local instance] Classical.propDecidable
+open scoped Classical Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
 
 noncomputable section
 
@@ -267,52 +265,12 @@ theorem smoothBoundaryPoint_classification {z : ℂ}
   · right
     exact ⟨smoothBoundaryPoint_vert_re h_not_int hns hre h_gt, h_gt⟩
 
-/-! ### Part 5: Enumerating smooth boundary points
-
-The smooth boundary point set is a subset of the FD boundary (the unit circle
-arc union the two vertical edges). For a given height `H`, we can enumerate
-all possible smooth boundary points parametrically.
-
-The arc points are: `{exp(theta * I) | theta in (pi/3, pi/2) union (pi/2, 2pi/3)}`
-The right-vertical points are: `{1/2 + y*I | y in (sqrt(3)/2, H)}`
-The left-vertical points are: `{-1/2 + y*I | y in (sqrt(3)/2, H)}`
-
-For a SPECIFIC modular form `f`, only finitely many of these have non-zero
-vanishing order. The `h_cover` hypothesis captures this: `T` need only contain
-points where `f` has a zero.
-
-The following theorem shows this concretely: if `T` contains the image of every
-`s in S` (where `S` is the finite set of zeros in the FD) that is a smooth
-boundary point, then `h_cover` holds for ALL smooth boundary points --
-because points NOT in `S` contribute zero to the formula regardless.
-
-This is NOT quite the same as `h_cover` (which requires `z in T` for ALL such `z`,
-not just those in `S`). The full `h_cover` is a geometric statement independent
-of `f`. But for the VALENCE FORMULA, only the zeros matter. -/
+/-! ### Part 5: Finite boundary reduction for the valence formula -/
 
 /-- **Finite boundary reduction for the valence formula.**
 
-If one has:
-- `SmoothBoundaryWindingData` for every boundary zero of `f` (a finite set)
-- Coverage: every such boundary zero lies in the provided finite set `T`
-
-then the full `h_boundary` hypothesis can be discharged, and the valence
-formula holds.
-
-This is a consequence of `mk_boundaryWinding_of_finite`:
-the coverage condition says T contains ALL smooth boundary points,
-and each has winding -1/2. The finiteness of zeros is irrelevant for
-the COVERAGE condition -- that is purely geometric.
-
-However, the WINDING condition (proving HasGeneralizedWindingNumber at each
-point in T) only requires work at the zeros. At non-zeros, the contribution
-is `(-gWN) * 0 = 0`. But we still need the proof of HasGeneralizedWindingNumber
-to construct the FDWindingDataFull.
-
-The key insight: for a SPECIFIC height `H` and modular form `f`, the smooth
-boundary point set is finite modulo the observation that only the zeros of `f`
-contribute. The finite-set version is the practical API for discharging
-the boundary hypothesis. -/
+If `T` covers all smooth boundary points and each has winding `-1/2`,
+then the full `h_boundary` hypothesis is discharged. -/
 theorem valence_formula_boundary_dischargeable
     {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
     {H : ℝ} (hH : 1 < H)
@@ -373,14 +331,7 @@ When `f` has NO zeros on the smooth boundary of the FD (all zeros are at
 elliptic points or in the strict interior), the boundary hypothesis is
 trivially satisfied with `T = empty`. -/
 
-/-- When no smooth boundary zeros exist, the boundary winding hypothesis is
-vacuously true. The finite set `T = empty` suffices, and the coverage
-condition is trivially false (no `z` satisfies the smooth boundary conditions
-AND has non-zero order at the same time -- but actually the coverage condition
-is geometric and may still be nonempty).
-
-For the GENERIC case where `T` is provided externally and covers all smooth
-boundary points, the winding data `h_winding` on `T` is the only non-trivial input. -/
+/-- When the smooth boundary point set is empty, `h_boundary` is vacuously true. -/
 theorem h_boundary_of_no_smooth_zeros {H : ℝ} (hH : H > Real.sqrt 3 / 2)
     (h_empty : SmoothBoundaryPointSet H = ∅) :
     ∀ z : ℂ, z.im > 0 → z.im < H →
@@ -406,37 +357,5 @@ theorem smoothBoundaryPointSet_mono {H₁ H₂ : ℝ} (hle : H₁ ≤ H₂) :
     SmoothBoundaryPointSet H₁ ⊆ SmoothBoundaryPointSet H₂ := by
   intro z ⟨him, him_lt, hni, hρ, hρ1, h_ni, hns, hre⟩
   exact ⟨him, lt_of_lt_of_le him_lt hle, hni, hρ, hρ1, h_ni, hns, hre⟩
-
-/-! ### Part 9: Summary of the discharge strategy
-
-To discharge `h_boundary` in the valence formula, a consumer should:
-
-1. Fix a height `H > 1` above all zeros of `f` in the fundamental domain.
-
-2. Identify the finite set `T` of smooth boundary points: these are the points
-   on the FD boundary (unit circle arc minus {i, rho, rho+1}, left/right
-   vertical edges) below height `H`. Since the FD boundary is a closed curve,
-   the set of smooth boundary points is compact and can be parameterized.
-
-3. For each `z in T`, construct `SmoothBoundaryWindingData` for the FD boundary
-   path at height `H`. This requires:
-   - A crossing parameter `t_0` (where the boundary passes through `z`)
-   - A cutoff function delta
-   - Geometric near/far bounds (proved per-segment in `WindingWeightProofs.lean`)
-   - An `ArcFTCHyp` (the FTC telescope computation for the specific segment)
-
-4. Apply `valence_formula_textbook_of_finiteBoundaryWinding` with the finite set
-   `T`, the winding data, the coverage proof, and the residue-modular identity.
-
-The geometric bounds and the FTC computations for each segment type are
-already available:
-- Arc segments: `ArcFTCAtI.lean` (for i) and similar for generic arc points
-- Vertical segments: affine parametrization gives a simple rational integrand
-- Horizontal segment: affine parametrization
-
-The per-segment ArcFTCHyp construction is the main analytical work. For the
-arc segments, it follows the same pattern as `arcFTCHyp_atI` but with a
-different crossing parameter. For the vertical/horizontal segments, the
-integrand is a simple rational function and the FTC is straightforward. -/
 
 end
