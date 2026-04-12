@@ -359,9 +359,26 @@ structure ArcFTCHyp {x y : ℂ} (γ : PiecewiseC1Path x y) (z₀ : ℂ)
 
 /-! ## Part 7: Constructors for SingleCrossingData -/
 
-/-- Construct `SingleCrossingData` at `I` from geometric bounds and `ArcFTCHyp`.
+/-- Far-bound at `I`: on every segment of the FD boundary at distance `> δ ε` from `t = 2/5`,
+the distance to `I` exceeds `ε`. -/
+private lemma fdBoundary_far_atI {H : ℝ} (hH : 1 < H)
+    {ε : ℝ} (hε_half : ε < 1/2) (hε_Hm1 : ε < H - 1)
+    {δε : ℝ} (hδε : δε < 1/5)
+    (h_arc_far : ∀ t ∈ Icc (1/5 : ℝ) (3/5), δε < |t - 2/5| →
+      ε < ‖fdBoundaryFun H t - I‖)
+    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) (hδt : δε < |t - 2/5|) :
+    ε < ‖fdBoundaryFun H t - I‖ := by
+  by_cases ht1 : t ≤ 1/5
+  · linarith [fdBoundaryFun_seg1_dist_I_lower H t ht1]
+  · push_neg at ht1
+    by_cases ht2 : t ≤ 3/5
+    · exact h_arc_far t ⟨le_of_lt ht1, ht2⟩ hδt
+    · push_neg at ht2
+      by_cases ht3 : t ≤ 4/5
+      · linarith [fdBoundaryFun_seg4_dist_I_lower H t ht2 ht3]
+      · push_neg at ht3
+        linarith [fdBoundaryFun_seg5_dist_I_lower H hH t ht3]
 
-The crossing occurs at `t0 = 2/5` on the unit circle arc. -/
 def mkSingleCrossingData_atI {H : ℝ} (hH : 1 < H)
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
@@ -389,18 +406,10 @@ def mkSingleCrossingData_atI {H : ℝ} (hH : 1 < H)
   h_far := fun ε hε hεt t ht hδt => by
     change ε < ‖γ.toPath.extend t - I‖
     rw [hγ t ht]
-    have hε_half : ε < 1/2 := lt_of_lt_of_le hεt (le_trans hthresh_le (min_le_left _ _))
-    have hε_Hm1 : ε < H - 1 := lt_of_lt_of_le hεt (le_trans hthresh_le (min_le_right _ _))
-    by_cases ht1 : t ≤ 1/5
-    · linarith [fdBoundaryFun_seg1_dist_I_lower H t ht1]
-    · push_neg at ht1
-      by_cases ht2 : t ≤ 3/5
-      · exact h_arc_far ε hε hεt t ⟨le_of_lt ht1, ht2⟩ hδt
-      · push_neg at ht2
-        by_cases ht3 : t ≤ 4/5
-        · linarith [fdBoundaryFun_seg4_dist_I_lower H t ht2 ht3]
-        · push_neg at ht3
-          linarith [fdBoundaryFun_seg5_dist_I_lower H hH t ht3]
+    exact fdBoundary_far_atI hH
+      (lt_of_lt_of_le hεt (le_trans hthresh_le (min_le_left _ _)))
+      (lt_of_lt_of_le hεt (le_trans hthresh_le (min_le_right _ _)))
+      (hδ_small ε hε hεt) (h_arc_far ε hε hεt) ht hδt
   h_near := fun ε hε hεt t hδt => by
     have ht01 : t ∈ Icc (0 : ℝ) 1 := by
       have hδ := hδ_small ε hε hεt
