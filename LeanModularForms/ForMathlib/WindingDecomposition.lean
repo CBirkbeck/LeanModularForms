@@ -57,7 +57,7 @@ crossing, and the angle between outgoing and negated incoming directions is `π`
 At a corner point (in the partition), the angle is `arg(L_right) - arg(-L_left)` where
 `L_left` and `L_right` are the one-sided derivative limits. -/
 def angleAtCrossing (γ : PiecewiseC1Immersion x y)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) : ℝ :=
+    (t₀ : ℝ) (_ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) : ℝ :=
   if h : t₀ ∈ γ.toPiecewiseC1Path.partition then
     let L_left := Classical.choose (γ.left_deriv_limit t₀ h)
     let L_right := Classical.choose (γ.right_deriv_limit t₀ h)
@@ -88,7 +88,6 @@ theorem angleAtCrossing_smooth_div_two_pi (γ : PiecewiseC1Immersion x y)
     (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi) = 1 / 2 := by
   rw [angleAtCrossing_smooth γ t₀ ht₀ hsmooth]
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  push_cast
   field_simp
 
 /-! ### External winding contribution -/
@@ -157,7 +156,6 @@ theorem generalizedWindingNumber_eq_neg_half_smooth_crossing
   rw [generalizedWindingNumber_eq_neg_angleContribution_single γ z₀ t₀ ht₀ h_external,
       angleAtCrossing_smooth γ t₀ ht₀ hsmooth]
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  push_cast
   field_simp
 
 /-- At a corner crossing with angle `α` and zero external winding, the generalized
@@ -196,7 +194,6 @@ theorem externalWindingContribution_zero_of_neg_half
   apply externalWindingContribution_zero_of_windingNumber_eq
   rw [angleAtCrossing_smooth γ t₀ ht₀ hsmooth, h_eq]
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  push_cast
   field_simp
 
 /-! ### Algebraic lemmas for downstream use -/
@@ -232,7 +229,6 @@ theorem generalizedWindingNumber_eq_half_of_external_one_smooth
   rw [generalizedWindingNumber_of_external_eq γ z₀ t₀ ht₀ 1 h_external,
       angleAtCrossing_smooth γ t₀ ht₀ hsmooth]
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  push_cast
   field_simp
   ring
 
@@ -247,7 +243,6 @@ theorem generalizedWindingNumber_eq_neg_three_halves_of_external_neg_one_smooth
   rw [generalizedWindingNumber_of_external_eq γ z₀ t₀ ht₀ (-1) h_external,
       angleAtCrossing_smooth γ t₀ ht₀ hsmooth]
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  push_cast
   field_simp
   ring
 
@@ -292,7 +287,7 @@ endpoints avoid `z₀`. -/
 theorem endpoint_avoidance_of_unique_interior_crossing
     (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    (hcross : (γ : ℝ → ℂ) t₀ = z₀)
+    (_hcross : (γ : ℝ → ℂ) t₀ = z₀)
     (honly : ∀ t ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t = z₀ → t = t₀) :
     (γ : ℝ → ℂ) 0 ≠ z₀ ∧ (γ : ℝ → ℂ) 1 ≠ z₀ := by
   constructor

@@ -247,7 +247,7 @@ variable (H : ℝ)
 theorem fdBoundaryFun_seg1_dist_I_lower (t : ℝ) (ht : t ≤ 1/5) :
     (1 : ℝ) / 2 ≤ ‖fdBoundaryFun H t - I‖ := by
   have h1 : (fdBoundaryFun H t - I).re = 1/2 := by
-    simp [sub_re, fdBoundaryFun_seg1_re H t ht, I_re]
+    simp only [sub_re, fdBoundaryFun_seg1_re H t ht, I_re, sub_zero]
   calc (1 : ℝ) / 2
       = |((fdBoundaryFun H t - I).re)| := by rw [h1]; norm_num
     _ ≤ ‖fdBoundaryFun H t - I‖ := Complex.abs_re_le_norm _
@@ -256,7 +256,7 @@ theorem fdBoundaryFun_seg1_dist_I_lower (t : ℝ) (ht : t ≤ 1/5) :
 theorem fdBoundaryFun_seg4_dist_I_lower (t : ℝ) (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     (1 : ℝ) / 2 ≤ ‖fdBoundaryFun H t - I‖ := by
   have h1 : (fdBoundaryFun H t - I).re = -1/2 := by
-    simp [sub_re, fdBoundaryFun_seg4_re H t ht3 ht4, I_re]
+    simp only [sub_re, fdBoundaryFun_seg4_re H t ht3 ht4, I_re, sub_zero]
   calc (1 : ℝ) / 2
       = |((fdBoundaryFun H t - I).re)| := by rw [h1]; norm_num
     _ ≤ ‖fdBoundaryFun H t - I‖ := Complex.abs_re_le_norm _
@@ -265,7 +265,7 @@ theorem fdBoundaryFun_seg4_dist_I_lower (t : ℝ) (ht3 : 3/5 < t) (ht4 : t ≤ 4
 theorem fdBoundaryFun_seg5_dist_I_lower (hH : 1 < H) (t : ℝ) (ht : 4/5 < t) :
     H - 1 ≤ ‖fdBoundaryFun H t - I‖ := by
   have h1 : (fdBoundaryFun H t - I).im = H - 1 := by
-    simp [sub_im, fdBoundaryFun_seg5_im H t ht, I_im]
+    simp only [sub_im, fdBoundaryFun_seg5_im H t ht, I_im]
   calc H - 1
       = |((fdBoundaryFun H t - I).im)| := by rw [h1]; rw [abs_of_pos (by linarith)]
     _ ≤ ‖fdBoundaryFun H t - I‖ := Complex.abs_im_le_norm _
@@ -550,8 +550,7 @@ theorem windingNumber_at_rhoPlusOne_eq {H : ℝ}
 /-- The crossing parameter for `i` on the FD boundary is `t0 = 2/5`. -/
 theorem fdBoundary_crosses_I_at (H : ℝ) : fdBoundaryFun H (2/5) = I := by
   have h1 := fdBoundaryFun_at_two_fifths H
-  have h2 : ellipticPointI = I := by
-    simp [ellipticPointI, ellipticPointI']
+  have h2 : ellipticPointI = I := rfl
   rwa [h2] at h1
 
 /-- The crossing parameter for `rho+1` on the FD boundary is `t0 = 1/5`. -/
