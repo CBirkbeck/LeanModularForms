@@ -205,13 +205,9 @@ theorem norm_two_pi_i_inv_circleIntegral_tendsto_zero {g : ℂ → ℂ} {z₀ : 
   simp only [Real.dist_eq, sub_zero] at hr_lt
   have hr_abs : |r| = r := abs_of_pos hr_pos
   have hr_lt_R : r < R := by
-    calc r = |r| := hr_abs.symm
-    _ < min R (δ / M) := hr_lt
-    _ ≤ R := min_le_left _ _
+    linarith [hr_abs.symm.trans_lt (hr_lt.trans_le (min_le_left R (δ / M)))]
   have hr_lt_δM : r < δ / M := by
-    calc r = |r| := hr_abs.symm
-    _ < min R (δ / M) := hr_lt
-    _ ≤ δ / M := min_le_right _ _
+    linarith [hr_abs.symm.trans_lt (hr_lt.trans_le (min_le_right R (δ / M)))]
   have h_bound : ∀ z ∈ sphere z₀ r, ‖g z‖ ≤ M := by
     intro z hz
     have h_dist : dist z z₀ < R := by rw [mem_sphere.mp hz]; linarith
@@ -226,7 +222,7 @@ theorem norm_two_pi_i_inv_circleIntegral_tendsto_zero {g : ℂ → ℂ} {z₀ : 
   calc ‖(2 * ↑Real.pi * I)⁻¹ • ∮ z in C(z₀, r), g z‖
       ≤ r * M := circleIntegral.norm_two_pi_i_inv_smul_integral_le_of_norm_le_const
         hr_pos.le h_bound
-    _ < (δ / M) * M := by exact mul_lt_mul_of_pos_right hr_lt_δM hM_pos
+    _ < (δ / M) * M := mul_lt_mul_of_pos_right hr_lt_δM hM_pos
     _ = δ := div_mul_cancel₀ δ (ne_of_gt hM_pos)
 
 end
