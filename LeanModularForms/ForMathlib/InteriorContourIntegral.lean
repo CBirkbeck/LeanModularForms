@@ -65,7 +65,7 @@ private lemma ref1_eq (z : ℂ) (H : ℝ) {t : ℝ} (ht : t ≤ 1/5) :
     fdBoundaryFun H t - z = ref1 z H t := by
   simp only [fdBoundaryFun, ht, ite_true, ref1]
   apply Complex.ext <;> push_cast <;> simp [add_re, sub_re, mul_re, mul_im, ofReal_re,
-    ofReal_im, I_re, I_im, add_im, sub_im] <;> ring
+    ofReal_im, I_re, I_im, add_im, sub_im]
 
 private lemma ref1_slit (z : ℂ) (H : ℝ) (hz : z.re < 1/2) (t : ℝ) :
     ref1 z H t ∈ slitPlane := by
@@ -85,7 +85,7 @@ private lemma ref5_eq (z : ℂ) (H : ℝ) {t : ℝ} (ht : 4/5 < t) :
   simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith, show ¬t ≤ 2/5 from by linarith,
     show ¬t ≤ 3/5 from by linarith, show ¬t ≤ 4/5 from by linarith, ite_false, ref5]
   apply Complex.ext <;> push_cast <;> simp [add_re, sub_re, mul_re, mul_im, ofReal_re,
-    ofReal_im, I_re, I_im, add_im, sub_im] <;> ring
+    ofReal_im, I_re, I_im, add_im, sub_im]
 
 private lemma ref5_slit (z : ℂ) (H : ℝ) (hz : z.im < H) (t : ℝ) :
     ref5 z H t ∈ slitPlane := by
@@ -150,8 +150,12 @@ private theorem seg5F (z : ℂ) (H : ℝ) (hz : z.im < H) :
         fun s hs => ref5_eq z H hs)⟩)
     (by -- ref5_eq doesn't apply at t=4/5 (needs strict ineq), compute directly
       unfold ref5; rw [fdBoundaryFun_at_four_fifths]
-      apply Complex.ext <;> push_cast <;> simp [add_re, sub_re, mul_re, mul_im, ofReal_re,
-        ofReal_im, I_re, I_im, add_im, sub_im] <;> ring)
+      apply Complex.ext
+      · push_cast
+        simp [sub_re, mul_re, ofReal_re, ofReal_im, I_re, I_im, sub_im]
+        ring
+      · push_cast
+        simp [sub_re, mul_im, ofReal_re, ofReal_im, I_re, I_im, add_im, sub_im])
     (ref5_eq z H (by norm_num))
 
 set_option maxHeartbeats 400000 in
@@ -238,7 +242,7 @@ private lemma arcRef_eq35 (z : ℂ) (H : ℝ) :
 private lemma arcRef_ee (z : ℂ) (H : ℝ) {t : ℝ} (ht1 : 1/5 < t) (ht2 : t < 3/5) :
     (fun s => fdBoundaryFun H s - z) =ᶠ[𝓝 t] arcRef z :=
   Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht1) (Iio_mem_nhds ht2))
-    fun s ⟨hs1, hs2⟩ => arcRef_eq z H (mem_Ioi.mp hs1) (le_of_lt (mem_Iio.mp hs2))
+    fun _ ⟨hs1, hs2⟩ => arcRef_eq z H (mem_Ioi.mp hs1) (le_of_lt (mem_Iio.mp hs2))
 
 set_option maxHeartbeats 800000 in
 private lemma arcRef_slit_nonpos {z : ℂ}
