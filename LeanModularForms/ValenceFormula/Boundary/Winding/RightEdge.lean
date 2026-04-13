@@ -948,19 +948,12 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
   t₀ := (H - s.im) / (H - Real.sqrt 3 / 2)
   ht₀ := by
     set α := H - Real.sqrt 3 / 2
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
     constructor
     · exact div_pos (by linarith) hα_pos
     · have : (H - s.im) / α < 1 := by
         rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
       linarith
-=======
-    have hα_pos : 0 < α := by linarith
-    have ht₀_pos : 0 < (H - s.im) / α := div_pos (by linarith) hα_pos
-    have ht₀_lt : (H - s.im) / α < 1 := by rw [div_lt_one hα_pos]; linarith
-    exact ⟨ht₀_pos, by linarith⟩
->>>>>>> Stashed changes
   δ := fun ε => ε / (H - Real.sqrt 3 / 2)
   threshold :=
     let α := H - Real.sqrt 3 / 2
@@ -969,7 +962,6 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     min d (min (t₀ * α) ((1 - t₀) * α))
   hthresh := by
     set α := H - Real.sqrt 3 / 2 with hα_def
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
     set t₀ := (H - s.im) / α
     have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
@@ -984,20 +976,6 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     set t₀ := (H - s.im) / α
     have ht₀_lt : t₀ < 1 := by
       rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
-=======
-    have hα_pos : 0 < α := by linarith
-    set t₀ := (H - s.im) / α
-    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
-    have ht₀_lt : t₀ < 1 := by rw [div_lt_one hα_pos]; linarith
-    exact lt_min (rightEdge_min_dist_pos s hs_norm hs_im)
-      (lt_min (mul_pos ht₀_pos hα_pos) (mul_pos (by linarith) hα_pos))
-  hδ_pos := fun ε hε _ => div_pos hε (by linarith)
-  hδ_small := by
-    set α := H - Real.sqrt 3 / 2 with hα_def
-    have hα_pos : 0 < α := by linarith
-    set t₀ := (H - s.im) / α
-    have ht₀_lt : t₀ < 1 := by rw [div_lt_one hα_pos]; linarith
->>>>>>> Stashed changes
     intro ε hε_pos hε_lt
     simp only [sub_zero]
     apply lt_min
@@ -1010,18 +988,11 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
         _ < (5 - t₀) * α := by nlinarith
   h_far := by
     set α := H - Real.sqrt 3 / 2 with hα_def
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
     set t₀ := (H - s.im) / α
     have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
     have ht₀_lt : t₀ < 1 := by
       rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
-=======
-    have hα_pos : 0 < α := by linarith
-    set t₀ := (H - s.im) / α
-    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
-    have ht₀_lt : t₀ < 1 := by rw [div_lt_one hα_pos]; linarith
->>>>>>> Stashed changes
     have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ (ne_of_gt hα_pos)
     set threshold := min (min (min (‖s‖ - 1) 1) (H - s.im)) (min (t₀ * α) ((1 - t₀) * α))
     have hthresh_pos : 0 < threshold := lt_min (rightEdge_min_dist_pos s hs_norm hs_im)
@@ -1034,18 +1005,11 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
       ε hε_pos hε_lt
   h_near := by
     set α := H - Real.sqrt 3 / 2 with hα_def
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
     set t₀ := (H - s.im) / α
     have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
     have ht₀_lt : t₀ < 1 := by
       rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
-=======
-    have hα_pos : 0 < α := by linarith
-    set t₀ := (H - s.im) / α
-    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
-    have ht₀_lt : t₀ < 1 := by rw [div_lt_one hα_pos]; linarith
->>>>>>> Stashed changes
     have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ (ne_of_gt hα_pos)
     intro ε hε_pos hε_lt
     exact rightEdge_h_near H hH_sqrt s hs_re α hα_pos hα_def t₀ ht₀_pos ht₀_lt ht₀_mul
@@ -1059,14 +1023,8 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     Complex.log (-(fdBoundary_seg1_H H (t₀ + ε / α) - s))
   h_ftc := by
     set α := H - Real.sqrt 3 / 2 with hα_def
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
     set t₀ := (H - s.im) / α
-=======
-    have hα_pos : 0 < α := by linarith
-    set t₀ := (H - s.im) / α
-    have ht₀_lt : t₀ < 1 := by rw [div_lt_one hα_pos]; linarith
->>>>>>> Stashed changes
     intro ε hε_pos hε_lt
     have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
     have hεα_lt_t₀ : ε / α < t₀ := by
@@ -1081,11 +1039,7 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
       hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).2.2
   hint_left := by
     set α := H - Real.sqrt 3 / 2 with hα_def
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
-=======
-    have hα_pos : 0 < α := by linarith
->>>>>>> Stashed changes
     set t₀ := (H - s.im) / α
     intro ε hε_pos hε_lt
     have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
@@ -1099,11 +1053,7 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
       hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).1
   hint_right := by
     set α := H - Real.sqrt 3 / 2 with hα_def
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
-=======
-    have hα_pos : 0 < α := by linarith
->>>>>>> Stashed changes
     set t₀ := (H - s.im) / α
     intro ε hε_pos hε_lt
     have hδ_pos : 0 < ε / α := div_pos hε_pos hα_pos
@@ -1117,20 +1067,12 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
       hδ_pos hεα_lt_t₀ hεα_lt_1mt₀).2.1
   h_limit := by
     set α := H - Real.sqrt 3 / 2 with hα_def
-<<<<<<< Updated upstream
     have hα_pos : 0 < α := by show 0 < H - Real.sqrt 3 / 2; linarith
     have hα_ne : α ≠ 0 := ne_of_gt hα_pos
     set t₀ := (H - s.im) / α
     have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
     have ht₀_lt : t₀ < 1 := by
       rw [div_lt_one hα_pos]; show H - s.im < H - Real.sqrt 3 / 2; linarith
-=======
-    have hα_pos : 0 < α := by linarith
-    have hα_ne : α ≠ 0 := ne_of_gt hα_pos
-    set t₀ := (H - s.im) / α
-    have ht₀_pos : 0 < t₀ := div_pos (by linarith) hα_pos
-    have ht₀_lt : t₀ < 1 := by rw [div_lt_one hα_pos]; linarith
->>>>>>> Stashed changes
     have ht₀_mul : t₀ * α = H - s.im := div_mul_cancel₀ _ hα_ne
     set threshold := min (min (min (‖s‖ - 1) 1) (H - s.im)) (min (t₀ * α) ((1 - t₀) * α))
     have hthresh_pos : 0 < threshold := lt_min (rightEdge_min_dist_pos s hs_norm hs_im)
@@ -1138,11 +1080,7 @@ def rightEdgeCrossingData (H : ℝ) (hH_sqrt : Real.sqrt 3 / 2 < H)
     have hE_const : ∀ ε, 0 < ε → ε < threshold →
         Complex.log (-(fdBoundary_seg1_H H (t₀ - ε / α) - s)) -
         Complex.log (-(fdBoundary_seg1_H H (t₀ + ε / α) - s)) = -(↑Real.pi * I) := by
-<<<<<<< Updated upstream
       intro ε hε_pos _hε_lt
-=======
-      intro ε hε_pos hε_lt
->>>>>>> Stashed changes
       exact rightEdge_final_log H s hs_re α hα_def (ε / α) (div_pos hε_pos hα_pos) hα_pos
         t₀ ht₀_mul
     exact tendsto_const_nhds.congr' (by
