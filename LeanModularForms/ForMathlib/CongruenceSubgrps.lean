@@ -41,8 +41,9 @@ noncomputable def width : ℕ := Subgroup.relIndex Γ (.zpowers ModularGroup.T)
 lemma width_ne_zero [Γ.FiniteIndex] : Γ.width ≠ 0 :=
   FiniteIndex.index_ne_zero
 
-lemma T_pow_width_mem : T ^ Γ.width ∈ Γ :=
-  (Γ.subgroupOf <| .zpowers T).pow_index_mem ⟨_, mem_zpowers _⟩
+lemma T_pow_width_mem : T ^ Γ.width ∈ Γ := by
+  letI : CommGroup (zpowers T) := IsCyclic.commGroup
+  exact (Γ.subgroupOf <| .zpowers T).pow_index_mem ⟨_, mem_zpowers _⟩
 
 /-- The integers `n` such that `[1, n; 0, 1] ∈ Γ` are precisely the multiples of `Γ.width`. -/
 lemma T_zpow_mem_iff {n : ℤ} : T ^ n ∈ Γ ↔ ↑Γ.width ∣ n := by
