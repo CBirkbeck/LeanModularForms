@@ -18,7 +18,7 @@ This file defines piecewise C¹ paths in normed spaces, wrapping mathlib's `Path
   in `(0, 1)`. Differentiability and derivative continuity are stated in terms of
   `Path.extend`, which extends the path to all of `ℝ`.
 
-* `PiecewiseC1Immersion x y` — a `PiecewiseC1Path x y` whose derivative is nonzero away
+* `PwC1Immersion x y` — a `PiecewiseC1Path x y` whose derivative is nonzero away
   from partition points, with nonzero one-sided derivative limits at partition points.
 
 * `PiecewiseC1Path.IsClosed` — predicate that a path is closed (`x = y`).
@@ -121,7 +121,7 @@ end PiecewiseC1Path
 This extends `PiecewiseC1Path x y` with the condition that the derivative is nonzero away from
 partition points, and has nonzero one-sided limits at partition points. This ensures the path
 has a well-defined tangent direction everywhere. -/
-structure PiecewiseC1Immersion (x y : E) extends PiecewiseC1Path x y where
+structure PwC1Immersion (x y : E) extends PiecewiseC1Path x y where
   /-- The derivative is nonzero at every point of `(0, 1)` outside the partition. -/
   deriv_ne_zero : ∀ t ∈ Ioo 0 1, t ∉ partition →
     deriv toPiecewiseC1Path.toPath.extend t ≠ 0
@@ -132,18 +132,18 @@ structure PiecewiseC1Immersion (x y : E) extends PiecewiseC1Path x y where
   right_deriv_limit : ∀ p ∈ partition, ∃ L : E, L ≠ 0 ∧
     Tendsto (deriv toPiecewiseC1Path.toPath.extend) (𝓝[>] p) (𝓝 L)
 
-namespace PiecewiseC1Immersion
+namespace PwC1Immersion
 
-instance : CoeFun (PiecewiseC1Immersion x y) fun _ => ℝ → E where
+instance : CoeFun (PwC1Immersion x y) fun _ => ℝ → E where
   coe γ := γ.toPiecewiseC1Path.extendedPath
 
 /-- A piecewise C¹ immersion is closed if its endpoints coincide. -/
-def IsClosed (_γ : PiecewiseC1Immersion x y) : Prop := x = y
+def IsClosed (_γ : PwC1Immersion x y) : Prop := x = y
 
 /-- The underlying extended path is continuous. -/
-theorem continuous (γ : PiecewiseC1Immersion x y) : Continuous (γ : ℝ → E) :=
+theorem continuous (γ : PwC1Immersion x y) : Continuous (γ : ℝ → E) :=
   γ.toPiecewiseC1Path.continuous
 
-end PiecewiseC1Immersion
+end PwC1Immersion
 
 end

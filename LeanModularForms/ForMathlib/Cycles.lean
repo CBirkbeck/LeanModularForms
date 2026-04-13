@@ -32,7 +32,7 @@ contour integration and winding numbers extended by linearity.
 
 ## Design notes
 
-`PiecewiseC1Immersion x y` has type parameters `x y`. For formal Z-linear combinations
+`PwC1Immersion x y` has type parameters `x y`. For formal Z-linear combinations
 we need a single type, so we bundle the basepoint into `ClosedImmersion`. With
 `open scoped Classical`, `Finsupp` works without decidable equality.
 
@@ -55,7 +55,7 @@ structure ClosedImmersion where
   /-- The common start and end point of the closed curve. -/
   basepoint : ℂ
   /-- The underlying piecewise C^1 immersion from `basepoint` to `basepoint`. -/
-  immersion : PiecewiseC1Immersion basepoint basepoint
+  immersion : PwC1Immersion basepoint basepoint
 
 namespace ClosedImmersion
 
@@ -75,8 +75,8 @@ instance : CoeFun ClosedImmersion fun _ => ℝ → ℂ where
 theorem coe_eq (γ : ClosedImmersion) :
     (γ : ℝ → ℂ) = γ.toPath.extendedPath := rfl
 
-/-- Wrap a closed `PiecewiseC1Immersion x x` into a `ClosedImmersion`. -/
-def mk' {x : ℂ} (γ : PiecewiseC1Immersion x x) : ClosedImmersion where
+/-- Wrap a closed `PwC1Immersion x x` into a `ClosedImmersion`. -/
+def mk' {x : ℂ} (γ : PwC1Immersion x x) : ClosedImmersion where
   basepoint := x
   immersion := γ
 

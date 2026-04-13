@@ -17,7 +17,7 @@ topological condition required by the generalized residue theorem of Hungerbuhle
 ## Main definitions
 
 * `IsNullHomologous` -- null-homologous closed piecewise C^1 immersion in an open set.
-  Closedness is encoded by `PiecewiseC1Immersion x x` (same start and end point).
+  Closedness is encoded by `PwC1Immersion x x` (same start and end point).
 
 ## Main results
 
@@ -30,7 +30,7 @@ topological condition required by the generalized residue theorem of Hungerbuhle
 
 ## Design notes
 
-We use `PiecewiseC1Immersion x x` to encode closedness: since the start and end points
+We use `PwC1Immersion x x` to encode closedness: since the start and end points
 are the same, the path is automatically closed. The `winding_zero` field uses the value
 `generalizedWindingNumber` (not the `HasGeneralizedWindingNumber` predicate) because
 downstream applications need the actual numerical value `0`.
@@ -51,9 +51,9 @@ variable {x : ℂ}
 1. Its image lies in `U`.
 2. Its winding number around every point outside `U` is zero.
 
-Closedness is encoded by the type: `PiecewiseC1Immersion x x` has the same start and
+Closedness is encoded by the type: `PwC1Immersion x x` has the same start and
 end point. -/
-structure IsNullHomologous (γ : PiecewiseC1Immersion x x) (U : Set ℂ) : Prop where
+structure IsNullHomologous (γ : PwC1Immersion x x) (U : Set ℂ) : Prop where
   /-- The image of `gamma` lies in `U`. -/
   image_subset : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U
   /-- The generalized winding number around every point outside `U` is zero. -/
@@ -63,13 +63,13 @@ structure IsNullHomologous (γ : PiecewiseC1Immersion x x) (U : Set ℂ) : Prop 
 /-! ### Basic properties -/
 
 /-- The underlying path of a null-homologous immersion is closed. -/
-theorem IsNullHomologous.closed {γ : PiecewiseC1Immersion x x} {U : Set ℂ}
+theorem IsNullHomologous.closed {γ : PwC1Immersion x x} {U : Set ℂ}
     (_h : IsNullHomologous γ U) : γ.toPiecewiseC1Path.IsClosed :=
   rfl
 
 /-- Monotonicity: if `gamma` is null-homologous in `U` and `U ⊆ V`, then `gamma` is
 null-homologous in `V`. -/
-theorem IsNullHomologous.mono {γ : PiecewiseC1Immersion x x} {U V : Set ℂ}
+theorem IsNullHomologous.mono {γ : PwC1Immersion x x} {U V : Set ℂ}
     (h : IsNullHomologous γ U) (hUV : U ⊆ V) : IsNullHomologous γ V where
   image_subset := fun t ht => hUV (h.image_subset t ht)
   winding_zero := fun z hz => h.winding_zero z (fun hmem => hz (hUV hmem))
@@ -129,7 +129,7 @@ The contour integral vanishes: either by the FTC telescope (if the integrand is 
 or by mathlib's convention that the integral of a non-integrable function is zero. -/
 theorem isNullHomologous_of_convex {U : Set ℂ}
     (hU : Convex ℝ U) (hUo : IsOpen U) (hUne : U.Nonempty)
-    (γ : PiecewiseC1Immersion x x)
+    (γ : PwC1Immersion x x)
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U) :
     IsNullHomologous γ U where
   image_subset := hγ

@@ -284,7 +284,7 @@ private theorem tangentDeviation_isLittleO_left
 /-- Every piecewise C¹ immersion is flat of order 1 at any interior point.
 The derivative approximation `γ(t) - γ(t₀) ∼ L(t - t₀)` lies exactly on the
 tangent line, so the deviation is the remainder `o(t - t₀) = o(‖γ(t) - γ(t₀)‖)`. -/
-theorem isFlatOfOrder_one (γ : PiecewiseC1Immersion x y) (t₀ : ℝ)
+theorem isFlatOfOrder_one (γ : PwC1Immersion x y) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) :
     IsFlatOfOrder (γ : ℝ → ℂ) t₀ 1 := by
   have hcont : ContinuousAt (γ : ℝ → ℂ) t₀ :=
@@ -318,7 +318,7 @@ theorem isFlatOfOrder_one (γ : PiecewiseC1Immersion x y) (t₀ : ℝ)
 /-- **Condition (A')** from Hungerbuhler-Wasem: for each singular point `s` in `S₀`
 and each parameter `t₀` where `γ(t₀) = s`, the curve must be flat of order
 `poleOrder s` at `t₀`. -/
-def SatisfiesConditionA' (γ : PiecewiseC1Immersion x y) (_f : ℂ → ℂ)
+def SatisfiesConditionA' (γ : PwC1Immersion x y) (_f : ℂ → ℂ)
     (S0 : Finset ℂ) (poleOrder : ℂ → ℕ) : Prop :=
   ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
     t₀ ∈ Ioo (0 : ℝ) 1 →
@@ -331,7 +331,7 @@ the angle `α` is a rational multiple of `π`, and the Laurent coefficients of `
 angle compatibility.
 
 For simple poles, this is vacuously satisfied for the Laurent part. -/
-structure SatisfiesConditionB (γ : PiecewiseC1Immersion x y) (f : ℂ → ℂ)
+structure SatisfiesConditionB (γ : PwC1Immersion x y) (f : ℂ → ℂ)
     (S0 : Finset ℂ) : Prop where
   /-- The angle at each crossing is a rational multiple of `π`. -/
   angle_rational : ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
@@ -366,7 +366,7 @@ For simple poles (order 1), both conditions are automatically satisfied:
 pole order function assigns order 1 to each pole. Flatness of order 1 is automatic
 for any piecewise C¹ immersion. -/
 theorem satisfiesConditionA'_of_simplePoles
-    (γ : PiecewiseC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
+    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
     (_hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s) :
     SatisfiesConditionA' γ f S0 (fun _ => 1) := by
   intro _s _hs _t₀ _ht₀ _hcross ht₀_Ioo
@@ -379,7 +379,7 @@ as an explicit hypothesis. The Laurent coefficient condition is vacuously true
 At smooth crossings the angle is `π = 1 · π / 1`, so this is automatic.
 At corner crossings, the angle depends on the curve geometry. -/
 theorem satisfiesConditionB_of_simplePoles
-    (γ : PiecewiseC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
+    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
     (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
     (hAngles : ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
       ∀ ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1,
@@ -412,7 +412,7 @@ theorem satisfiesConditionB_of_simplePoles
 corner crossing angles are rational multiples of `π`. Condition (A') is fully
 automatic; condition (B) requires the angle hypothesis only at corners. -/
 theorem conditions_automatic_simple_poles
-    (γ : PiecewiseC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
+    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
     (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
     (hAngles : ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
       ∀ ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1,
@@ -428,7 +428,7 @@ theorem conditions_automatic_simple_poles
 /-- Condition (A') with pole order `p` is implied by condition (A') with any
 larger pole order `q ≥ p`, provided `γ` is continuous. -/
 theorem SatisfiesConditionA'.of_le_poleOrder
-    (γ : PiecewiseC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
+    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
     {p q : ℂ → ℕ} (hpq : ∀ s ∈ S0, p s ≤ q s)
     (hA : SatisfiesConditionA' γ f S0 q) :
     SatisfiesConditionA' γ f S0 p := by
