@@ -189,7 +189,7 @@ holds for off-curve points.
 For `w ∉ U`: `dixonFunction = dixonH2` by definition.
 For `w ∈ U` with `n(γ,w) = 0`: the identity gives `h1 = h2`. -/
 theorem dixonFunction_eventually_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ}
-    (γ : PiecewiseC1Immersion x x)
+    (γ : PwC1Immersion x x)
     (h_identity : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
       dixonH1 f γ.toPiecewiseC1Path w =
         dixonH2 f γ.toPiecewiseC1Path w -

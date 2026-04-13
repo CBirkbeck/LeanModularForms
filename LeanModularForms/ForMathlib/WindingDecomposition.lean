@@ -56,7 +56,7 @@ crossing, and the angle between outgoing and negated incoming directions is `π`
 
 At a corner point (in the partition), the angle is `arg(L_right) - arg(-L_left)` where
 `L_left` and `L_right` are the one-sided derivative limits. -/
-def angleAtCrossing (γ : PiecewiseC1Immersion x y)
+def angleAtCrossing (γ : PwC1Immersion x y)
     (t₀ : ℝ) (_ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) : ℝ :=
   if h : t₀ ∈ γ.toPiecewiseC1Path.partition then
     let L_left := Classical.choose (γ.left_deriv_limit t₀ h)
@@ -67,14 +67,14 @@ def angleAtCrossing (γ : PiecewiseC1Immersion x y)
 /-! ### Basic properties of the crossing angle -/
 
 /-- At a smooth point (not in the partition), the crossing angle is `π`. -/
-theorem angleAtCrossing_smooth (γ : PiecewiseC1Immersion x y)
+theorem angleAtCrossing_smooth (γ : PwC1Immersion x y)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition) :
     angleAtCrossing γ t₀ ht₀ = Real.pi := by
   simp only [angleAtCrossing, hsmooth, dite_false]
 
 /-- The crossing angle is bounded: it lies in `(-π, π]` when at a smooth point. -/
-theorem angleAtCrossing_smooth_pos (γ : PiecewiseC1Immersion x y)
+theorem angleAtCrossing_smooth_pos (γ : PwC1Immersion x y)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition) :
     0 < angleAtCrossing γ t₀ ht₀ := by
@@ -82,7 +82,7 @@ theorem angleAtCrossing_smooth_pos (γ : PiecewiseC1Immersion x y)
   exact Real.pi_pos
 
 /-- Helper lemma: crossings at smooth points contribute `1/2` to the angle sum. -/
-theorem angleAtCrossing_smooth_div_two_pi (γ : PiecewiseC1Immersion x y)
+theorem angleAtCrossing_smooth_div_two_pi (γ : PwC1Immersion x y)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition) :
     (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi) = 1 / 2 := by
@@ -98,7 +98,7 @@ from the local crossing angle.
 
 The H-W decomposition is `n_{z₀}(γ) = N - α/(2π)`, so `N = n_{z₀}(γ) + α/(2π)`.
 When `N = 0`, the generalized winding number equals `-α/(2π)`. -/
-def externalWindingContribution (γ : PiecewiseC1Immersion x y)
+def externalWindingContribution (γ : PwC1Immersion x y)
     (z₀ : ℂ) (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) : ℂ :=
   generalizedWindingNumber γ.toPiecewiseC1Path z₀ +
     (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi)
@@ -114,7 +114,7 @@ This is algebraically immediate from the definition of `externalWindingContribut
 mathematical content is that `N` is an integer (proved separately under regularity
 hypotheses). -/
 theorem generalizedWindingNumber_eq_external_sub_angle
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) :
     (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
       externalWindingContribution γ z₀ t₀ ht₀ -
@@ -124,7 +124,7 @@ theorem generalizedWindingNumber_eq_external_sub_angle
 /-- Variant: express the external winding contribution in terms of the generalized
 winding number and the crossing angle. -/
 theorem externalWindingContribution_eq
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) :
     externalWindingContribution γ z₀ t₀ ht₀ =
       generalizedWindingNumber γ.toPiecewiseC1Path z₀ +
@@ -135,7 +135,7 @@ theorem externalWindingContribution_eq
 /-- When the external winding contribution is zero, the generalized winding number equals
 minus the crossing angle contribution. -/
 theorem generalizedWindingNumber_eq_neg_angleContribution_single
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (h_external : externalWindingContribution γ z₀ t₀ ht₀ = 0) :
     (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
@@ -148,7 +148,7 @@ theorem generalizedWindingNumber_eq_neg_angleContribution_single
 number is `-1/2`. This is the most common case: a simple curve passing through `z₀`
 transversally. -/
 theorem generalizedWindingNumber_eq_neg_half_smooth_crossing
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition)
     (h_external : externalWindingContribution γ z₀ t₀ ht₀ = 0) :
@@ -161,7 +161,7 @@ theorem generalizedWindingNumber_eq_neg_half_smooth_crossing
 /-- At a corner crossing with angle `α` and zero external winding, the generalized
 winding number is `-α/(2π)`. -/
 theorem generalizedWindingNumber_eq_neg_corner_contribution
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (α : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hangle : angleAtCrossing γ t₀ ht₀ = α)
     (h_external : externalWindingContribution γ z₀ t₀ ht₀ = 0) :
@@ -176,7 +176,7 @@ theorem generalizedWindingNumber_eq_neg_corner_contribution
 winding contribution is zero. This lets you prove the external winding is zero by
 exhibiting a homotopy to a "model" curve whose winding number equals `-α/(2π)`. -/
 theorem externalWindingContribution_zero_of_windingNumber_eq
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (h_eq : (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
       -((angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi))) :
@@ -186,7 +186,7 @@ theorem externalWindingContribution_zero_of_windingNumber_eq
 /-- If the generalized winding number equals `-1/2` and the crossing is smooth,
 then the external winding contribution is zero. -/
 theorem externalWindingContribution_zero_of_neg_half
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition)
     (h_eq : (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) = -(1 / 2)) :
@@ -201,7 +201,7 @@ theorem externalWindingContribution_zero_of_neg_half
 /-- The external winding contribution determines the generalized winding number
 via the crossing angle. -/
 theorem generalizedWindingNumber_of_external_eq
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (N : ℂ)
     (hN : externalWindingContribution γ z₀ t₀ ht₀ = N) :
     (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
@@ -211,7 +211,7 @@ theorem generalizedWindingNumber_of_external_eq
 /-- When the external winding is an integer `n`, the generalized winding number is
 `n - α/(2π)`. -/
 theorem generalizedWindingNumber_of_external_int
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (n : ℤ)
     (hn : externalWindingContribution γ z₀ t₀ ht₀ = (n : ℂ)) :
     (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
@@ -221,7 +221,7 @@ theorem generalizedWindingNumber_of_external_int
 /-- When the external winding is 1 and the crossing is smooth, the generalized
 winding number is `1/2`. -/
 theorem generalizedWindingNumber_eq_half_of_external_one_smooth
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition)
     (h_external : externalWindingContribution γ z₀ t₀ ht₀ = 1) :
@@ -235,7 +235,7 @@ theorem generalizedWindingNumber_eq_half_of_external_one_smooth
 /-- When the external winding is -1 and the crossing is smooth, the generalized
 winding number is `-3/2`. -/
 theorem generalizedWindingNumber_eq_neg_three_halves_of_external_neg_one_smooth
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition)
     (h_external : externalWindingContribution γ z₀ t₀ ht₀ = -1) :
@@ -250,12 +250,12 @@ theorem generalizedWindingNumber_eq_neg_three_halves_of_external_neg_one_smooth
 
 /-- The winding number contribution from a single crossing, defined as
 `angleAtCrossing / (2π)`. This is the angle-based formula from H-W. -/
-def windingContributionAt (γ : PiecewiseC1Immersion x y)
+def windingContributionAt (γ : PwC1Immersion x y)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) : ℂ :=
   (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi)
 
 /-- A smooth crossing contributes `1/2` to the angle-based winding. -/
-theorem windingContributionAt_smooth (γ : PiecewiseC1Immersion x y)
+theorem windingContributionAt_smooth (γ : PwC1Immersion x y)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition) :
     windingContributionAt γ t₀ ht₀ = 1 / 2 := by
@@ -263,7 +263,7 @@ theorem windingContributionAt_smooth (γ : PiecewiseC1Immersion x y)
   exact angleAtCrossing_smooth_div_two_pi γ t₀ ht₀ hsmooth
 
 /-- A corner crossing with angle `α` contributes `α/(2π)` to the angle-based winding. -/
-theorem windingContributionAt_corner (γ : PiecewiseC1Immersion x y)
+theorem windingContributionAt_corner (γ : PwC1Immersion x y)
     (t₀ : ℝ) (α : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (hangle : angleAtCrossing γ t₀ ht₀ = α) :
     windingContributionAt γ t₀ ht₀ = ↑α / (2 * ↑Real.pi) := by
@@ -272,7 +272,7 @@ theorem windingContributionAt_corner (γ : PiecewiseC1Immersion x y)
 /-- The decomposition in terms of `windingContributionAt`:
 `n_{z₀}(γ) = N - windingContributionAt γ t₀`. -/
 theorem generalizedWindingNumber_eq_external_sub_contribution
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) :
     (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
       externalWindingContribution γ z₀ t₀ ht₀ -
@@ -285,7 +285,7 @@ theorem generalizedWindingNumber_eq_external_sub_contribution
 /-- If a crossing is the unique crossing in `[0,1]` and lies in `(0,1)`, then the
 endpoints avoid `z₀`. -/
 theorem endpoint_avoidance_of_unique_interior_crossing
-    (γ : PiecewiseC1Immersion x y) (z₀ : ℂ)
+    (γ : PwC1Immersion x y) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
     (_hcross : (γ : ℝ → ℂ) t₀ = z₀)
     (honly : ∀ t ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t = z₀ → t = t₀) :

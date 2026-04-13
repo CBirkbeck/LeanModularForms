@@ -42,7 +42,7 @@ hypotheses to the main theorem via `WindingNumberHomotopyData`.
 The winding number `generalizedWindingNumber01` is defined locally as the `[0, 1]`
 specialization of the Cauchy principal value formula. This avoids an import conflict
 between `ForMathlib.PiecewiseC1Path` (imported by `HomotopyDefs`) and
-`GeneralizedResidueTheory.Basic`, which both define `PiecewiseC1Immersion`.
+`GeneralizedResidueTheory.Basic`, which both define `PwC1Immersion`.
 
 ## References
 

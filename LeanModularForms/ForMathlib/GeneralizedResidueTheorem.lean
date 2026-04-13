@@ -250,7 +250,7 @@ theorem generalizedResidueTheorem
     {U : Set ℂ} (_hU : IsOpen U)
     (S : Finset ℂ) (_hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (_hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Immersion x x) (_h_null : IsNullHomologous γ U)
+    (γ : PwC1Immersion x x) (_h_null : IsNullHomologous γ U)
     (_hMero : ∀ s ∈ S, MeromorphicAt f s)
     (_hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (_hCondB : SatisfiesConditionB γ f S)
@@ -299,7 +299,7 @@ For simple poles, flatness of order 1 suffices for condition (A'), and the
 Laurent compatibility in condition (B) is vacuously satisfied. This bundles
 the results from `FlatnessConditions.lean`. -/
 theorem conditions_automatic_for_simplePoles
-    (γ : PiecewiseC1Immersion x x) (f : ℂ → ℂ) (S : Finset ℂ)
+    (γ : PwC1Immersion x x) (f : ℂ → ℂ) (S : Finset ℂ)
     (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
     (hAngles : ∀ s ∈ S, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
       ∀ ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1,
@@ -312,7 +312,7 @@ theorem conditions_automatic_for_simplePoles
 /-- Condition (A') is automatic for simple poles: every piecewise C^1 immersion
 is flat of order 1 at interior crossings. -/
 theorem conditionA'_automatic_for_simplePoles
-    (γ : PiecewiseC1Immersion x x) (f : ℂ → ℂ) (S : Finset ℂ)
+    (γ : PwC1Immersion x x) (f : ℂ → ℂ) (S : Finset ℂ)
     (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s) :
     SatisfiesConditionA' γ f S (fun _ => 1) :=
   satisfiesConditionA'_of_simplePoles γ f S hSimplePoles

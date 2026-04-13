@@ -362,7 +362,7 @@ theorem generalizedResidueTheorem_of_cancel_oracle
     {U : Set ℂ} (hU : IsOpen U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
     (hMero : ∀ s ∈ S, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (hCondB : SatisfiesConditionB γ f S)

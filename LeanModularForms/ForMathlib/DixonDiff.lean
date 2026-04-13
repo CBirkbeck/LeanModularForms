@@ -194,7 +194,7 @@ private lemma dslope_deriv_product_bound
 Uses the parametric Leibniz rule with Cauchy estimates for the derivative of dslope. -/
 theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
     (_hU : IsOpen U) (_hf : DifferentiableOn ℂ f U)
-    (γ : PiecewiseC1Immersion x x) (_hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
+    (γ : PwC1Immersion x x) (_hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
     (h_int : ∀ w ∈ U, IntervalIntegrable
       (fun t => dslope f w (γ.toPiecewiseC1Path t) *
         deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
@@ -253,7 +253,7 @@ Patching at `boundary(U)`: null-homologous gives winding number 0 near `boundary
 so `h1 = h2` by the fundamental identity. -/
 theorem dixonFunction_differentiable {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
     (_hf : DifferentiableOn ℂ f U)
-    (γ : PiecewiseC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
     (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
     (h2_diff : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
       DifferentiableAt ℂ (dixonH2 f γ.toPiecewiseC1Path) w)
