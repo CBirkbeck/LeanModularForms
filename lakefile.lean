@@ -9,7 +9,7 @@ package «LeanModularForms» where
   -- add any additional package configuration options here
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.29.0-rc8"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.30.0-rc1"
 
 @[default_target]
 lean_lib «LeanModularForms» where
