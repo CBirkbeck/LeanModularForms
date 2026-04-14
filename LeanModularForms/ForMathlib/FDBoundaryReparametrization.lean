@@ -225,4 +225,40 @@ theorem integral_cpvIntegrandOn_fdBoundary_H_eq_fdBoundaryFun
   exact intervalIntegral.integral_congr (fun t _ =>
     (cpvIntegrandOn_fdBoundaryFun_eq_smul_fdBoundary_H S f ε t H).symm)
 
+/-- Multi-point version: convert a Tendsto statement about the old-chain
+multi-point CPV integrand on `[0, 5]` into a ForMathlib `HasCauchyPVOn`
+statement on a `PiecewiseC1Path` agreeing with `fdBoundaryFun H`. -/
+theorem hasCauchyPVOn_of_cauchyPVOn'_tendsto
+    {H : ℝ} {S : Finset ℂ} {f : ℂ → ℂ} {L : ℂ}
+    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
+    (h_old : Tendsto (fun ε =>
+      ∫ t in (0 : ℝ)..5,
+        if ∃ s ∈ S, ‖fdBoundary_H H t - s‖ ≤ ε then 0
+          else f (fdBoundary_H H t) * deriv (fdBoundary_H H) t)
+      (𝓝[>] 0) (𝓝 L)) :
+    HasCauchyPVOn S f γ L := by
+  have h_eq : ∀ ε : ℝ,
+      (∫ t in (0 : ℝ)..5,
+        if ∃ s ∈ S, ‖fdBoundary_H H t - s‖ ≤ ε then 0
+          else f (fdBoundary_H H t) * deriv (fdBoundary_H H) t) =
+      ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t := by
+    intro ε
+    rw [integral_cpvIntegrandOn_fdBoundary_H_eq_fdBoundaryFun S f ε H]
+    apply intervalIntegral.integral_congr_ae
+    filter_upwards [compl_mem_ae_iff.mpr (measure_singleton 1)] with t ht_ne_1 ht_mem
+    rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht_mem
+    have ht_open : t ∈ Ioo (0 : ℝ) 1 :=
+      ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 fun h => ht_ne_1 (mem_singleton_iff.mpr h)⟩
+    have ht_icc : t ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht_open
+    show cpvIntegrandOn S f (fdBoundaryFun H) ε t =
+      cpvIntegrandOn S f γ.toPath.extend ε t
+    simp only [cpvIntegrandOn, hγ t ht_icc]
+    have hee : γ.toPath.extend =ᶠ[𝓝 t] fdBoundaryFun H := by
+      filter_upwards [Ioo_mem_nhds ht_open.1 ht_open.2] with s hs
+      exact hγ s (Ioo_subset_Icc_self hs)
+    rw [hee.symm.deriv_eq]
+  simp only [HasCauchyPVOn]
+  exact h_old.congr h_eq
+
 end
