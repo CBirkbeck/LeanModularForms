@@ -113,7 +113,7 @@ theorem core_identity_forMathlib
         p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
         ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
       ↑(orderOfVanishingAt' (⇑f) s) +
-    ∑ s ∈ sLeftVert S, ↑(orderOfVanishingAt' (⇑f) s) +
+    ∑ s ∈ sLeftVertFM S, ↑(orderOfVanishingAt' (⇑f) s) +
     ∑ s ∈ S.filter (fun p =>
         p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
@@ -140,12 +140,12 @@ This is the culmination of the ForMathlib chain, combining:
    generalized residue theorem)
 2. FD boundary geometry (crossing analysis, FTC telescoping, interior winding)
 3. Modular invariance (T-cancellation, S-arc, horizontal contribution)
-4. Orbit algebra (T-pairing, S-pairing, canonical representatives) -/
+4. OrbitFM algebra (T-pairing, S-pairing, canonical representatives) -/
 theorem valence_formula_orbit_sum_forMathlib :
     (orderAtCusp' f : ℂ) +
     (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
     (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
-    ∑ᶠ (q : NonEllOrbit), ordOrbitQ f q =
+    ∑ᶠ (q : NonEllOrbitFM), ordOrbitQFM f q =
     (k : ℂ) / 12 :=
   valence_formula_textbook_orbit_finsum f hf
 

@@ -295,7 +295,7 @@ theorem modular_side_cancel_two_pi_I {L : ℂ} (k : ℤ) (ord_inf : ℂ)
     2 * ↑Real.pi * I * (-((k : ℂ) / 12 - ord_inf)) from by ring] at h
   exact mul_left_cancel₀ hpi h
 
-/-- **Orbit-sum rearrangement**: from `wt_sum = -(k/12 - ord_∞)` derive
+/-- **OrbitFM-sum rearrangement**: from `wt_sum = -(k/12 - ord_∞)` derive
 the textbook form `ord_∞ + (-wt_sum) = k/12`. -/
 theorem modular_side_rearrange (k : ℤ) (ord_inf weighted_sum : ℂ)
     (h : weighted_sum = -((k : ℂ) / 12 - ord_inf)) :
