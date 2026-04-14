@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.CauchyPrincipalValue
 import LeanModularForms.ForMathlib.FDBoundary
 import LeanModularForms.ForMathlib.FDBoundaryPath
+import LeanModularForms.ForMathlib.GeneralizedWindingNumber
 import LeanModularForms.ValenceFormula.Boundary.Basic
 import LeanModularForms.GeneralizedResidueTheory.Basic
 
@@ -260,5 +261,23 @@ theorem hasCauchyPVOn_of_cauchyPVOn'_tendsto
     rw [hee.symm.deriv_eq]
   simp only [HasCauchyPVOn]
   exact h_old.congr h_eq
+
+/-! ### Winding number equivalence -/
+
+/-- Bridge: from an old-chain `CauchyPrincipalValueExists'` result, derive the
+new-chain `HasGeneralizedWindingNumber`. -/
+theorem hasGeneralizedWindingNumber_of_cauchyPrincipalValueExists'_tendsto
+    {H : ℝ} {z₀ : ℂ} {w : ℂ}
+    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
+    (h_old : Tendsto (fun ε =>
+      ∫ t in (0 : ℝ)..5,
+        if ‖fdBoundary_H H t - z₀‖ > ε then
+          (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t
+        else 0)
+      (𝓝[>] 0) (𝓝 (2 * ↑Real.pi * I * w))) :
+    HasGeneralizedWindingNumber γ z₀ w := by
+  simp only [HasGeneralizedWindingNumber]
+  exact hasCauchyPV_of_cauchyPV'_tendsto γ hγ h_old
 
 end
