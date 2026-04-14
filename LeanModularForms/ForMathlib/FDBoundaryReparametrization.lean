@@ -280,4 +280,21 @@ theorem hasGeneralizedWindingNumber_of_cauchyPrincipalValueExists'_tendsto
   simp only [HasGeneralizedWindingNumber]
   exact hasCauchyPV_of_cauchyPV'_tendsto γ hγ h_old
 
+/-- **Winding number equality**: if a new-chain `PiecewiseC1Path` agrees with
+`fdBoundaryFun H` on `[0, 1]` and the old-chain winding number has a value,
+then so does the new-chain one and they are equal. -/
+theorem generalizedWindingNumber_eq_of_agreement
+    {H : ℝ} {z₀ : ℂ}
+    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
+    (w : ℂ)
+    (h_old : Tendsto (fun ε =>
+      ∫ t in (0 : ℝ)..5,
+        if ‖fdBoundary_H H t - z₀‖ > ε then
+          (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t
+        else 0)
+      (𝓝[>] 0) (𝓝 (2 * ↑Real.pi * I * w))) :
+    generalizedWindingNumber γ z₀ = w :=
+  (hasGeneralizedWindingNumber_of_cauchyPrincipalValueExists'_tendsto γ hγ h_old).eq
+
 end
