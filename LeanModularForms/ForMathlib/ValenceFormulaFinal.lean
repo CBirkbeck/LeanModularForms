@@ -64,7 +64,7 @@ theorem valence_formula_textbook {k : ℤ}
     (orderAtCusp' f : ℂ) +
     (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
     (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
-    ∑ᶠ (q : NonEllOrbitFM), ordOrbitQFM f q =
+    ∑ᶠ (q : NonEllOrbit), ordOrbitQ f q =
     (k : ℂ) / 12 :=
   valence_formula_textbook_orbit_finsum f hf
 
