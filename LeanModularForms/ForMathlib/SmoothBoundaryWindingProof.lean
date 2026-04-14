@@ -33,11 +33,12 @@ construction of `SmoothBoundaryWindingData`.
 
 ## Main results
 
-* `mkFDWindingDataFull` -- assembler from `FDWindingData` + boundary hypothesis
-* `boundaryWindingHyp_of_smoothData` -- from `SmoothBoundaryWindingData` oracle
-* `mkFDWindingDataFull_of_smoothData` -- full assembler via smooth data
-* `smooth_boundary_classification` -- geometric dichotomy for boundary points
-* `boundary_point_on_vert_or_arc` -- membership in vertical or arc segment
+* `mkFDWindingDataFull` — assembler from `FDWindingData` + boundary hypothesis
+* `boundaryWindingHyp_of_smoothData` — from `SmoothBoundaryWindingData` oracle
+* `mkFDWindingDataFull_of_smoothData` — full assembler via smooth data
+* `smooth_boundary_classification` — geometric dichotomy for boundary points
+* `boundary_point_on_vert_edge`, `boundary_point_on_arc_range` — geometric
+  descriptions of the two cases
 
 ## References
 
@@ -45,27 +46,25 @@ construction of `SmoothBoundaryWindingData`.
 * K. Hungerbuhler, J. Wasem, *A generalized notion of winding numbers*
 -/
 
-open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
-open scoped Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
-
-attribute [local instance] Classical.propDecidable
+open Complex
+open scoped Real UpperHalfPlane
 
 noncomputable section
 
 /-! ### Canonical coordinate forms for the elliptic points -/
 
-private lemma ellipticPointRho_coe_eq :
-    (ellipticPointRho : ℂ) = ((-1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by
-  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) = _
-  push_cast
-  ring
+private lemma ellipticPointRho_re : (ellipticPointRho : ℂ).re = -1/2 := by
+  simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
 
-private lemma ellipticPointRhoPlusOne_coe_eq :
-    (ellipticPointRhoPlusOne : ℂ) =
-      ((1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by
-  change (1/2 + (Real.sqrt 3 / 2) * I : ℂ) = _
-  push_cast
-  ring
+private lemma ellipticPointRho_im : (ellipticPointRho : ℂ).im = Real.sqrt 3 / 2 := by
+  simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
+
+private lemma ellipticPointRhoPlusOne_re : (ellipticPointRhoPlusOne : ℂ).re = 1/2 := by
+  simp [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
+
+private lemma ellipticPointRhoPlusOne_im :
+    (ellipticPointRhoPlusOne : ℂ).im = Real.sqrt 3 / 2 := by
+  simp [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
 
 /-! ### The boundary winding condition as a predicate -/
 
@@ -119,9 +118,22 @@ def mkFDWindingDataFull_of_smoothData {H : ℝ} (D : FDWindingData H)
 
 /-! ### Geometric classification of smooth boundary points -/
 
+/-- On the unit circle in the upper half-plane, a point with `|re| = 1/2` has
+`im = √3 / 2`. Used to derive `z = ρ` or `z = ρ+1` from the coordinate data. -/
+private lemma im_eq_sqrt3_half_of_normSq_one_of_absRe_half
+    {z : ℂ} (h_nsq : Complex.normSq z = 1)
+    (hz_im : z.im > 0) (h_re_sq : z.re * z.re = 1/4) :
+    z.im = Real.sqrt 3 / 2 := by
+  rw [Complex.normSq_apply] at h_nsq
+  have h_prod : (z.im - Real.sqrt 3 / 2) * (z.im + Real.sqrt 3 / 2) = 0 := by
+    nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
+  rcases mul_eq_zero.mp h_prod with h | h
+  · linarith
+  · exact absurd h (ne_of_gt (add_pos hz_im (by positivity)))
+
 /-- A non-elliptic non-interior FD boundary point lies either on a vertical edge
 (`|re| = 1/2`, `norm > 1`) or on the smooth part of the unit circle arc
-(`norm = 1`, `re != 0`, `|re| != 1/2`). -/
+(`norm = 1`, `re ≠ 0`, `|re| ≠ 1/2`). -/
 theorem smooth_boundary_classification (z : ℂ)
     (hz_im : z.im > 0)
     (hz_ne_I : z ≠ I)
@@ -131,121 +143,54 @@ theorem smooth_boundary_classification (z : ℂ)
     (hz_nsq : Complex.normSq z ≥ 1)
     (hz_re : |z.re| ≤ 1/2) :
     (|z.re| = 1/2 ∧ ‖z‖ > 1) ∨ (‖z‖ = 1 ∧ z.re ≠ 0 ∧ |z.re| ≠ 1/2) := by
-  have hnorm_ge : ‖z‖ ≥ 1 := by
-    rw [Complex.norm_def]
-    exact Real.sqrt_one ▸ Real.sqrt_le_sqrt (by linarith [hz_nsq])
-  rcases eq_or_lt_of_le hnorm_ge with h_eq | h_gt
-  · -- norm = 1: on the unit circle
-    right
+  have hnorm_ge : (1 : ℝ) ≤ ‖z‖ := by
+    rw [Complex.norm_def]; exact Real.one_le_sqrt.mpr (by linarith)
+  rcases hnorm_ge.eq_or_lt with h_eq | h_gt
+  · -- `‖z‖ = 1`: on the unit circle arc.
     have h_nsq_1 : Complex.normSq z = 1 := by
-      rw [Complex.normSq_eq_norm_sq, h_eq.symm, one_pow]
-    refine ⟨h_eq.symm, ?_, ?_⟩
-    · -- re != 0: else z = i
-      intro hre_zero
-      apply hz_ne_I
+      rw [Complex.normSq_eq_norm_sq, h_eq.symm]; ring
+    refine Or.inr ⟨h_eq.symm, fun hre_zero => ?_, fun hre_half => ?_⟩
+    · -- `re = 0` forces `z = I`.
       rw [Complex.normSq_apply, hre_zero, mul_zero, zero_add] at h_nsq_1
-      have h_im_le : z.im ≤ 1 := by nlinarith [mul_self_nonneg (z.im - 1)]
-      have h_im_ge : z.im ≥ 1 := by nlinarith [mul_self_nonneg (z.im - 1)]
-      exact Complex.ext (hre_zero.trans I_re.symm)
-        (le_antisymm h_im_le h_im_ge ▸ I_im.symm)
-    · -- |re| != 1/2: else z = rho or rho+1
-      intro hre_half
-      rw [Complex.normSq_apply] at h_nsq_1
-      rcases abs_cases z.re with ⟨_, h_sign⟩ | ⟨_, h_sign⟩
-      · -- re >= 0, |re| = re = 1/2
-        have hre_val : z.re = 1/2 := by linarith
-        have h_im_sq : z.im * z.im = 3/4 := by nlinarith
-        have h_im_val : z.im = Real.sqrt 3 / 2 := by
-          have h_prod : (z.im - Real.sqrt 3 / 2) *
-              (z.im + Real.sqrt 3 / 2) = 0 := by
-            nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
-          rcases mul_eq_zero.mp h_prod with h | h
-          · linarith
-          · exact absurd h (ne_of_gt (add_pos hz_im (by positivity)))
-        apply hz_ne_rho1
-        rw [ellipticPointRhoPlusOne_coe_eq]
-        apply Complex.ext
-        · simp only [add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
-            mul_zero, mul_one, sub_zero, add_zero]
-          linarith [hre_val]
-        · simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
-            mul_zero, mul_one, add_zero, zero_add]
-          linarith [h_im_val]
-      · -- re < 0, |re| = -re, -re = 1/2, re = -1/2
-        have hre_val : z.re = -1/2 := by linarith
-        have h_im_sq : z.im * z.im = 3/4 := by nlinarith
-        have h_im_val : z.im = Real.sqrt 3 / 2 := by
-          have h_prod : (z.im - Real.sqrt 3 / 2) *
-              (z.im + Real.sqrt 3 / 2) = 0 := by
-            nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
-          rcases mul_eq_zero.mp h_prod with h | h
-          · linarith
-          · exact absurd h (ne_of_gt (add_pos hz_im (by positivity)))
-        apply hz_ne_rho
-        rw [ellipticPointRho_coe_eq]
-        apply Complex.ext
-        · simp only [add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
-            mul_zero, mul_one, sub_zero, add_zero]
-          linarith [hre_val]
-        · simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
-            mul_zero, mul_one, add_zero, zero_add]
-          linarith [h_im_val]
-  · -- norm > 1: must have |re| = 1/2
-    left
-    refine ⟨le_antisymm hz_re ?_, h_gt⟩
+      exact hz_ne_I <| Complex.ext (hre_zero.trans I_re.symm) <| by
+        nlinarith [mul_self_nonneg (z.im - 1), mul_self_nonneg (z.im + 1), hz_im, I_im]
+    · -- `|re| = 1/2` forces `z = ρ` (if `re < 0`) or `z = ρ+1` (if `re ≥ 0`).
+      have h_re_sq : z.re * z.re = 1/4 := by nlinarith [sq_abs z.re, hre_half]
+      have h_im_val := im_eq_sqrt3_half_of_normSq_one_of_absRe_half h_nsq_1 hz_im h_re_sq
+      rcases abs_eq (by norm_num : (0:ℝ) ≤ 1/2) |>.mp hre_half with h_pos | h_neg
+      · exact hz_ne_rho1 <| Complex.ext
+          (by rw [h_pos, ellipticPointRhoPlusOne_re]) (by rw [h_im_val, ellipticPointRhoPlusOne_im])
+      · exact hz_ne_rho <| Complex.ext
+          (by rw [h_neg, ellipticPointRho_re]; ring) (by rw [h_im_val, ellipticPointRho_im])
+  · -- `‖z‖ > 1`: interior exclusion forces `|re| = 1/2`.
+    refine Or.inl ⟨le_antisymm hz_re ?_, h_gt⟩
     by_contra h
     push Not at h
     exact hz_not_int ⟨h_gt, h⟩
 
 /-! ### Boundary point location on the FD contour -/
 
-/-- A smooth boundary point with `|re| = 1/2` and `norm > 1` lies on a vertical
-edge of the FD boundary. Such points have `im > sqrt(3)/2` (they are above the
-arc endpoints) and satisfy `re = 1/2` or `re = -1/2`. -/
-theorem boundary_point_on_vert_edge (z : ℂ)
-    (hz_im : z.im > 0)
-    (hz_re_half : |z.re| = 1/2) (hz_norm_gt : ‖z‖ > 1) :
-    z.im > Real.sqrt 3 / 2 := by
-  have h_nsq_gt : Complex.normSq z > 1 := by
-    rw [Complex.normSq_eq_norm_sq]; nlinarith [hz_norm_gt, sq_nonneg (‖z‖ - 1)]
-  rw [Complex.normSq_apply] at h_nsq_gt
-  rcases abs_cases z.re with ⟨h_eq, _⟩ | ⟨h_eq, _⟩
-  · -- re = 1/2
-    have : z.re = 1/2 := by linarith [hz_re_half]
-    nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-      mul_self_nonneg (z.im - Real.sqrt 3 / 2)]
-  · -- re = -1/2
-    have : z.re = -1/2 := by linarith [hz_re_half]
-    nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-      mul_self_nonneg (z.im - Real.sqrt 3 / 2)]
+/-- A smooth boundary point with `|re| = 1/2` and `‖z‖ > 1` satisfies
+`z.im > √3 / 2`: such points lie above the elliptic corners on a vertical edge. -/
+theorem boundary_point_on_vert_edge {z : ℂ}
+    (hz_im : 0 < z.im) (hz_re_half : |z.re| = 1/2) (hz_norm_gt : 1 < ‖z‖) :
+    Real.sqrt 3 / 2 < z.im := by
+  nlinarith [Complex.normSq_apply z, Complex.normSq_eq_norm_sq (z := z),
+    sq_abs z.re, hz_re_half, hz_im, hz_norm_gt, sq_nonneg (‖z‖ - 1),
+    Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
+    mul_self_nonneg (z.im - Real.sqrt 3 / 2)]
 
-/-- A smooth boundary point on the unit circle arc with `re != 0` and
-`|re| != 1/2` has `im > 0` and satisfies `1/3 < angle/pi < 2/3` (excluding
-the elliptic points and `i`). -/
-theorem boundary_point_on_arc_range (z : ℂ)
-    (hz_norm : ‖z‖ = 1) (_hz_im : z.im > 0)
+/-- A smooth boundary point on the unit circle arc with `re ≠ 0` and
+`|re| ≠ 1/2` has `z.re²` in `(0, 1/4) ∪ (1/4, ∞)`: either strictly between the
+imaginary axis and the vertical edge, or beyond. -/
+theorem boundary_point_on_arc_range {z : ℂ}
     (hz_re_ne : z.re ≠ 0) (hz_re_half : |z.re| ≠ 1/2) :
     0 < z.re * z.re ∧ z.re * z.re < 1/4 ∨
     0 < z.re * z.re ∧ 1/4 < z.re * z.re := by
-  have h_nsq : Complex.normSq z = 1 := by
-    rw [Complex.normSq_eq_norm_sq, hz_norm, one_pow]
-  rw [Complex.normSq_apply] at h_nsq
-  have h_re_sq_pos : 0 < z.re * z.re := mul_self_pos.mpr hz_re_ne
-  have h_re_sq_bound : z.re * z.re ≠ 1/4 := by
-    intro h
-    have h_cases : z.re = 1/2 ∨ z.re = -1/2 := by
-      have h_prod : (z.re - 1/2) * (z.re + 1/2) = 0 := by nlinarith
-      rcases mul_eq_zero.mp h_prod with h1 | h1
-      · exact Or.inl (by linarith)
-      · exact Or.inr (by linarith)
-    have h_abs : |z.re| = 1/2 := by
-      rcases h_cases with h1 | h1
-      · rw [h1]; norm_num
-      · rw [h1]; norm_num
-    exact hz_re_half h_abs
-  rcases lt_or_gt_of_ne h_re_sq_bound with h | h
-  · exact Or.inl ⟨h_re_sq_pos, h⟩
-  · exact Or.inr ⟨h_re_sq_pos, h⟩
+  have h_pos : 0 < z.re * z.re := mul_self_pos.mpr hz_re_ne
+  refine (lt_or_gt_of_ne fun h => hz_re_half ?_).imp (⟨h_pos, ·⟩) (⟨h_pos, ·⟩)
+  have habs : |z.re| ^ 2 = (1/2 : ℝ) ^ 2 := by rw [sq_abs]; linarith
+  exact (sq_eq_sq₀ (abs_nonneg _) (by norm_num)).mp habs
 
 /-! ### BoundaryWindingHyp is exactly the gap for FDWindingDataFull -/
 
@@ -260,11 +205,8 @@ theorem boundaryWindingHyp_of_fdWindingDataFull {H : ℝ}
 `FDWindingDataFull`: they carry exactly the same data. -/
 theorem fdWindingDataFull_iff_windingData_and_boundary {H : ℝ} :
     (∃ _ : FDWindingDataFull H, True) ↔
-    (∃ D : FDWindingData H, BoundaryWindingHyp D.boundary) := by
-  constructor
-  · rintro ⟨D, _⟩
-    exact ⟨D.toFDWindingData, D.boundary_winding⟩
-  · rintro ⟨D, h⟩
-    exact ⟨mkFDWindingDataFull D h, trivial⟩
+      ∃ D : FDWindingData H, BoundaryWindingHyp D.boundary :=
+  ⟨fun ⟨D, _⟩ => ⟨D.toFDWindingData, D.boundary_winding⟩,
+    fun ⟨D, h⟩ => ⟨mkFDWindingDataFull D h, trivial⟩⟩
 
 end
