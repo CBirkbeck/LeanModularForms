@@ -92,13 +92,13 @@ theorem fdBoundaryFun_seg1_dist_eq {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
 /-! ### Near bound -/
 
 /-- `K · t₀ = H - z₀.im` for the seg1 crossing parameter. -/
-private theorem seg1Speed_mul_t₀ {H c : ℝ} (hH : Real.sqrt 3 / 2 < H) :
+theorem seg1Speed_mul_t₀ {H c : ℝ} (hH : Real.sqrt 3 / 2 < H) :
     seg1Speed H * seg1T₀ H c = H - c := by
   have hK : seg1Speed H ≠ 0 := ne_of_gt (seg1Speed_pos hH)
   unfold seg1T₀; field_simp
 
 /-- `K · (1/5 - t₀) = z₀.im - √3/2` for the seg1 crossing parameter. -/
-private theorem seg1Speed_mul_one_fifth_sub_t₀ {H c : ℝ}
+theorem seg1Speed_mul_one_fifth_sub_t₀ {H c : ℝ}
     (hH : Real.sqrt 3 / 2 < H) :
     seg1Speed H * (1/5 - seg1T₀ H c) = c - Real.sqrt 3 / 2 := by
   have h_over_five : seg1Speed H * (1/5) = H - Real.sqrt 3 / 2 := by
