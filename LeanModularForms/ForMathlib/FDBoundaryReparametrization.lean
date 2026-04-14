@@ -21,6 +21,8 @@ chains until the residue side is fully ported to the ForMathlib chain.
 ## Main results
 
 * `fdBoundaryFun_eq_fdBoundary_H_scaled` — the key reparametrization identity
+* `fdBoundaryFun_eq_comp` — the equation as a function composition
+* `deriv_fdBoundaryFun_eq` — derivative of fdBoundaryFun at non-partition points
 -/
 
 open Complex MeasureTheory Set Filter Topology
@@ -54,5 +56,10 @@ theorem fdBoundaryFun_eq_fdBoundary_H_scaled (H : ℝ) (t : ℝ) :
         · have h4' : ¬ (5 * t ≤ 4) := by push Not at h4; linarith
           simp only [h1, h2, h3, h4, h1', h2', h3', h4', ite_false]
           push_cast; ring
+
+/-- As a function composition identity. -/
+theorem fdBoundaryFun_eq_comp (H : ℝ) :
+    fdBoundaryFun H = fun t => fdBoundary_H H (5 * t) :=
+  funext (fdBoundaryFun_eq_fdBoundary_H_scaled H)
 
 end
