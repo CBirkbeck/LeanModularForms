@@ -87,7 +87,7 @@ private lemma arc_h₀_slitPlane {H : ℝ} {θ₀ : ℝ}
   rw [Complex.mem_slitPlane_iff]; left
   unfold arc_h₀
   simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
-    Complex.I_re, Complex.I_im, mul_zero, sub_zero]
+    Complex.I_re, Complex.I_im, mul_zero]
   rw [arcZ₀_re_eq]
   have hpi := Real.pi_pos
   have hθ₀ : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
@@ -178,7 +178,7 @@ private lemma hasDerivAt_arc_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
         (((hasDerivAt_id t).const_mul 5).sub_const 3).congr_deriv (by ring)
       have := ((hd.mul_const (H - Real.sqrt 3 / 2)).const_add (Real.sqrt 3 / 2)).sub_const z₀.im
       exact this.congr_deriv (by unfold seg1Speed; ring)
-    exact (h_real.ofReal_comp).congr_deriv (by push_cast; ring)
+    exact (h_real.ofReal_comp).congr_deriv (by ring)
   exact ((hasDerivAt_const t (((-1/2 - z₀.re : ℝ) : ℂ))).add (h1.mul_const I)).congr_deriv
     (by ring)
 
@@ -193,7 +193,7 @@ private lemma neg_arc_h₃_slitPlane {H : ℝ} {θ₀ : ℝ}
   rw [Complex.mem_slitPlane_iff]; left
   unfold arc_h₃
   simp only [Complex.neg_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
-    Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, sub_zero]
+    Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero]
   rw [arcZ₀_re_eq]
   have hpi := Real.pi_pos
   have hθ₀ : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
@@ -323,7 +323,7 @@ private lemma arc_seg1_ftc (H : ℝ) {θ₀ : ℝ}
   intro t _
   exact arc_h₀_slitPlane h_lo h_hi t
 
-private lemma arc_arc_left_ftc {H : ℝ} {θ₀ : ℝ}
+private lemma arc_arc_left_ftc {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)
     {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt : δ < arcT₀ θ₀ - 1/5) :
     IntervalIntegrable
@@ -349,7 +349,7 @@ private lemma arc_arc_left_ftc {H : ℝ} {θ₀ : ℝ}
   intro t ⟨ht1, ht_lt⟩
   exact arc_h_arc_left_slitPlane h_lo h_hi ht1 (by linarith)
 
-private lemma arc_arc_right_ftc {H : ℝ} {θ₀ : ℝ}
+private lemma arc_arc_right_ftc {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)
     {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt : δ < 3/5 - arcT₀ θ₀) :
     IntervalIntegrable
@@ -423,8 +423,7 @@ private lemma arc_junction_15 (H : ℝ) (z₀ : ℂ) :
   · simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
       Complex.ofReal_im, Complex.I_re, Complex.I_im]
   · simp only [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero,
-      zero_sub]
+      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
     ring
 
 private lemma arc_junction_35 (H : ℝ) (z₀ : ℂ) :
@@ -436,12 +435,10 @@ private lemma arc_junction_35 (H : ℝ) (z₀ : ℂ) :
     Real.cos_pi_sub, Real.sin_pi_sub, Real.cos_pi_div_three, Real.sin_pi_div_three]
   apply Complex.ext
   · simp only [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, sub_zero, neg_zero,
-      Complex.neg_re, Complex.one_re, Complex.div_ofNat]
+      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero]
     ring
   · simp only [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero,
-      Complex.neg_im, Complex.one_im, Complex.div_ofNat]
+      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
     ring
 
 private lemma arc_junction_45 (H : ℝ) (z₀ : ℂ) :
@@ -449,7 +446,7 @@ private lemma arc_junction_45 (H : ℝ) (z₀ : ℂ) :
   unfold arc_h₃ arc_h₅
   apply Complex.ext
   · simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, mul_zero, sub_zero]
+      Complex.I_re, Complex.I_im, mul_zero]
     ring
   · simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
@@ -460,7 +457,7 @@ private lemma arc_closed (H : ℝ) (z₀ : ℂ) :
   unfold arc_h₀ arc_h₅
   apply Complex.ext
   · simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, mul_zero, sub_zero]
+      Complex.I_re, Complex.I_im, mul_zero]
     ring
   · simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
@@ -471,8 +468,7 @@ private lemma arc_closed (H : ℝ) (z₀ : ℂ) :
 /-- For arc z₀ with `θ₀ ∈ (π/3, 2π/3)` and `H > 1`, `arc_h₃(4/5) = arc_h₅(4/5)`
 lies in the upper-left quadrant (re < 0, im > 0). Hence
 `log(-h(4/5)) - log(h(4/5)) = -π · I`. -/
-private lemma arc_branch_correction_45 {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
-    (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3) :
+private lemma arc_branch_correction_45 {H : ℝ} (hH : 1 < H) (θ₀ : ℝ) :
     Complex.log (-(arc_h₃ H (exp (↑θ₀ * I)) (4/5))) -
     Complex.log (arc_h₅ H (exp (↑θ₀ * I)) (4/5)) = -(↑Real.pi * I) := by
   have h_eq : arc_h₃ H (exp (↑θ₀ * I)) (4/5) = arc_h₅ H (exp (↑θ₀ * I)) (4/5) :=
@@ -493,36 +489,15 @@ private lemma arc_branch_correction_45 {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
     rw [h_eq]
   rw [h_val]
   -- Apply Complex.log_neg_eq: log(-z) = log(z) - iπ (when z.im > 0)
-  -- Or compute directly
   set w := ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) + ((H - Real.sin θ₀ : ℝ) : ℂ) * I with hw_def
-  have hpi := Real.pi_pos
-  have hθ₀_Icc : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have h2pi3 : (2 * Real.pi / 3) ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have h_cos_2pi3 : Real.cos (2 * Real.pi / 3) = -1/2 := by
-    rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
-        Real.cos_pi_sub, Real.cos_pi_div_three]
-    norm_num
-  have h_cos : Real.cos (2 * Real.pi / 3) < Real.cos θ₀ :=
-    Real.strictAntiOn_cos hθ₀_Icc h2pi3 h_hi
-  rw [h_cos_2pi3] at h_cos
-  have h_w_re : w.re = -1/2 - Real.cos θ₀ := by
-    rw [hw_def]
-    simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, mul_zero, sub_zero]
-    ring
   have h_w_im : w.im = H - Real.sin θ₀ := by
     rw [hw_def]
     simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add]
     ring
-  have h_re_neg : w.re < 0 := by rw [h_w_re]; linarith
   have h_im_pos : w.im > 0 := by
-    rw [h_w_im]
-    have := Real.sin_le_one θ₀
-    linarith
+    rw [h_w_im]; linarith [Real.sin_le_one θ₀]
   -- For z with re < 0 and im > 0, log(-z) = log(z) - iπ
-  have h_w_ne : w ≠ 0 := by intro h; rw [h] at h_re_neg; simp at h_re_neg
-  have h_neg_w_ne : -w ≠ 0 := neg_ne_zero.mpr h_w_ne
   have h_arg_neg : (-w).arg = w.arg - Real.pi :=
     Complex.arg_neg_eq_arg_sub_pi_of_im_pos h_im_pos
   have h_log_neg : Complex.log (-w) = Complex.log w - ↑Real.pi * I := by
@@ -623,7 +598,6 @@ private lemma arc_ae_eq_h₅ (H : ℝ) (z₀ : ℂ) :
 
 /-! ### Telescope: the trimmed integral for arc crossings -/
 
-set_option maxHeartbeats 400000 in
 /-- The trimmed integral for an arc crossing equals
 `log(h_arc(t₀-δ)) - log(-h_arc(t₀+δ)) + (-π·I)`. The first part is the
 "crossing contribution" (which → 0 as δ → 0), and the second is the branch
@@ -643,8 +617,8 @@ theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
   have ht₀_lo : 1/5 < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
   have ht₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
   have h_seg1 := arc_seg1_ftc H h_lo h_hi
-  have h_arc_left := arc_arc_left_ftc (H := H) h_lo h_hi hδ_pos hδ_lt_lo
-  have h_arc_right := arc_arc_right_ftc (H := H) h_lo h_hi hδ_pos hδ_lt_hi
+  have h_arc_left := arc_arc_left_ftc h_lo h_hi hδ_pos hδ_lt_lo
+  have h_arc_right := arc_arc_right_ftc h_lo h_hi hδ_pos hδ_lt_hi
   have h_seg4 := arc_seg4_ftc H h_lo h_hi
   have h_seg5 := arc_seg5_ftc hH (θ₀ := θ₀)
   have h_int_seg1 :
@@ -735,7 +709,7 @@ theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
   -- log(-arc_h₅(4/5)). Restate the branch correction in those terms:
   have h_branch_45 : Complex.log (-(arc_h₅ H z₀ (4/5))) -
       Complex.log (arc_h₅ H z₀ (4/5)) = -(↑Real.pi * I) := by
-    have h_orig := arc_branch_correction_45 hH h_lo h_hi
+    have h_orig := arc_branch_correction_45 hH θ₀
     have h_eq : arc_h₃ H z₀ (4/5) = arc_h₅ H z₀ (4/5) := arc_junction_45 H z₀
     rwa [h_eq] at h_orig
   -- Algebra: collect terms, junction values cancel, branch correction at 4/5 gives -π·I
@@ -858,7 +832,7 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
   set gap := min (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀) with h_gap_def
   have h_gap_pos : 0 < gap := lt_min (by linarith) (by linarith)
   have h_gap_le_fifth : gap ≤ 1/5 := by
-    show min (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀) ≤ 1/5
+    change min (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀) ≤ 1/5
     rcases le_total (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀) with h | h
     · rw [min_eq_left h]; linarith
     · rw [min_eq_right h]; linarith
@@ -882,7 +856,6 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
     -- Verify the left and right arc endpoints are in slitPlane via re > 0
     have h_a_re : 0 < (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - δ)).re := by
       -- Directly prove: re = cos(fdArcAngle (t₀-δ)) - cos(θ₀) > 0
-      show 0 < (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - δ)).re
       unfold arc_h_arc
       rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin]
       simp only [Complex.sub_re, Complex.add_re, Complex.mul_re,
@@ -988,7 +961,7 @@ private lemma arc_h_ftc_helper {H : ℝ} (hH : 1 < H)
   exact fdBoundary_ftc_telescope_arc_aux hH h_lo h_hi h_δ_pos h_δ_lt_lo h_δ_lt_hi
 
 set_option maxHeartbeats 2000000 in
-private lemma arc_hint_left_helper {H : ℝ} (hH : 1 < H)
+private lemma arc_hint_left_helper {H : ℝ} (_hH : 1 < H)
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
     {θ₀ : ℝ} (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)
@@ -1005,7 +978,7 @@ private lemma arc_hint_left_helper {H : ℝ} (hH : 1 < H)
   have h_t₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
   apply transfer_integrability (exp (↑θ₀ * I)) (by linarith) (le_refl 0) (by linarith) hγ
   have h_seg1 := arc_seg1_ftc H h_lo h_hi
-  have h_arc_left := arc_arc_left_ftc (H := H) h_lo h_hi h_δ_pos h_δ_lt_lo
+  have h_arc_left := arc_arc_left_ftc h_lo h_hi h_δ_pos h_δ_lt_lo
   have hint_seg1 : IntervalIntegrable
       (fun t => (fdBoundaryFun H t - exp (↑θ₀ * I))⁻¹ * deriv (fdBoundaryFun H) t)
       volume 0 (1/5) :=
@@ -1031,12 +1004,12 @@ private lemma arc_hint_right_helper {H : ℝ} (hH : 1 < H)
   have h_δ_pos : 0 < arcsinDelta ε := arcsinDelta_pos hε
   have h_lt_gap : arcsinDelta ε < arcGap θ₀ :=
     arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr
-  have h_gap_hi : arcGap θ₀ ≤ 3/5 - arcT₀ θ₀ := min_le_right _ _
-  have h_δ_lt_hi : arcsinDelta ε < 3/5 - arcT₀ θ₀ := lt_of_lt_of_le h_lt_gap h_gap_hi
+  have h_δ_lt_hi : arcsinDelta ε < 3/5 - arcT₀ θ₀ :=
+    lt_of_lt_of_le h_lt_gap (min_le_right _ _)
   have h_t₀_lo : (1/5 : ℝ) < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
   have h_t₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
   apply transfer_integrability (exp (↑θ₀ * I)) (by linarith) (by linarith) (le_refl 1) hγ
-  have h_arc_right := arc_arc_right_ftc (H := H) h_lo h_hi h_δ_pos h_δ_lt_hi
+  have h_arc_right := arc_arc_right_ftc h_lo h_hi h_δ_pos h_δ_lt_hi
   have h_seg4 := arc_seg4_ftc H h_lo h_hi
   have h_seg5 := arc_seg5_ftc hH (θ₀ := θ₀)
   have hint_arc_right : IntervalIntegrable
