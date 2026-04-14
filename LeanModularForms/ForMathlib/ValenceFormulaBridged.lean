@@ -182,4 +182,34 @@ theorem valence_formula_textbook_unconditional_FM
     filter_upwards with ε
     simp only [F_int_FM, dif_pos hH, hγ_def]
 
+include hf in
+/-- **The Valence Formula** for weight-`k` modular forms on `SL₂(ℤ)`, in textbook
+finsum-over-orbits form. This is the same statement as the original
+`valence_formula_textbook_orbit_finsum` in `ValenceFormula/TextbookForm.lean`,
+but proved unconditionally via the new ForMathlib chain.
+
+For any nonzero modular form `f` of weight `k` for `SL₂(ℤ)`:
+
+$$\operatorname{ord}_\infty(f) + \tfrac{1}{2}\operatorname{ord}_i(f)
+  + \tfrac{1}{3}\operatorname{ord}_\rho(f)
+  + \sum_{q\;\text{non-ell}} \operatorname{ord}_q(f) = \frac{k}{12}$$
+-/
+theorem valence_formula_textbook_orbit_finsum_FM :
+    (orderAtCusp' f : ℂ) +
+    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+    ∑ᶠ (q : NonEllOrbitFM), ordOrbitQFM f q =
+    (k : ℂ) / 12 := by
+  apply valence_formula_textbook_orbit_finsum f hf
+  intro S hS hS_complete
+  -- For any S, pick a height bound and apply the unconditional theorem
+  set H_S := S.sum (fun s : UpperHalfPlane => (s : ℂ).im) + 1 with hH_S_def
+  have hH_S : ∀ s ∈ S, (s : ℂ).im < H_S := fun s hs => by
+    rw [hH_S_def]
+    have h_le : (s : ℂ).im ≤ S.sum (fun s : UpperHalfPlane => (s : ℂ).im) :=
+      Finset.single_le_sum (f := fun s : UpperHalfPlane => (s : ℂ).im)
+        (fun x _ => le_of_lt x.2) hs
+    linarith
+  exact valence_formula_textbook_unconditional_FM f hf S hS hS_complete H_S hH_S
+
 end
