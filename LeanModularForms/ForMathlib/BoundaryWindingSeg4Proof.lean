@@ -91,14 +91,14 @@ theorem fdBoundaryFun_seg4_dist_eq {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   rw [h_norm, h_im_eq, abs_mul, abs_of_pos hK_pos]
 
 /-- `K · (t₀ - 3/5) = z₀.im - √3/2` for the seg4 crossing parameter. -/
-private theorem seg1Speed_mul_t₀_sub_three_fifths {H c : ℝ}
+theorem seg1Speed_mul_t₀_sub_three_fifths {H c : ℝ}
     (hH : Real.sqrt 3 / 2 < H) :
     seg1Speed H * (seg4T₀ H c - 3/5) = c - Real.sqrt 3 / 2 := by
   have hK : seg1Speed H ≠ 0 := ne_of_gt (seg1Speed_pos hH)
   unfold seg4T₀; field_simp; ring
 
 /-- `K · (4/5 - t₀) = H - c` for the seg4 crossing parameter. -/
-private theorem seg1Speed_mul_four_fifths_sub_t₀ {H c : ℝ}
+theorem seg1Speed_mul_four_fifths_sub_t₀ {H c : ℝ}
     (hH : Real.sqrt 3 / 2 < H) :
     seg1Speed H * (4/5 - seg4T₀ H c) = H - c := by
   have hK : seg1Speed H ≠ 0 := ne_of_gt (seg1Speed_pos hH)
