@@ -97,14 +97,9 @@ private lemma hasDerivAt_seg4_h_arc (z₀ : ℂ) (t : ℝ) :
       exact this.congr_deriv (by ring)
     exact hd1.congr_deriv (by ring)
   have h2 : HasDerivAt (fun s : ℝ => (↑(fdArcAngle s) : ℂ) * I)
-      (↑(5 * Real.pi / 6) * I) t := by
-    have := (h1.ofReal_comp).mul_const I
-    exact this.congr_deriv (by push_cast; ring)
-  have h3 : HasDerivAt (fun s : ℝ => exp ((↑(fdArcAngle s) : ℂ) * I))
-      (↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I)) t := by
-    have := h2.cexp
-    exact this.congr_deriv (by ring)
-  exact h3.sub_const z₀
+      (↑(5 * Real.pi / 6) * I) t :=
+    ((h1.ofReal_comp).mul_const I).congr_deriv (by push_cast; ring)
+  exact (h2.cexp.congr_deriv (by ring)).sub_const z₀
 
 private lemma deriv_seg4_h_arc (z₀ : ℂ) (t : ℝ) :
     deriv (seg4_h_arc z₀) t = ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) :=
@@ -159,7 +154,7 @@ private lemma seg4_h₀_slitPlane {H : ℝ} {z₀ : ℂ} (hz_re : z₀.re = -1/2
   rw [Complex.mem_slitPlane_iff]; left
   unfold seg4_h₀
   simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
-    Complex.I_re, Complex.I_im, mul_zero, sub_zero]
+    Complex.I_re, Complex.I_im, mul_zero]
   rw [hz_re]; norm_num
 
 /-- Seg4 reference (the crossing segment for seg4 z₀). -/
@@ -206,7 +201,7 @@ private lemma hasDerivAt_seg4_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
         (((hasDerivAt_id t).const_mul 5).sub_const 3).congr_deriv (by ring)
       have := ((hd.mul_const (H - Real.sqrt 3 / 2)).const_add (Real.sqrt 3 / 2)).sub_const z₀.im
       exact this.congr_deriv (by unfold seg1Speed; ring)
-    exact (h_real.ofReal_comp).congr_deriv (by push_cast; ring)
+    exact (h_real.ofReal_comp).congr_deriv (by ring)
   exact ((hasDerivAt_const t (((-1/2 - z₀.re : ℝ) : ℂ))).add (h1.mul_const I)).congr_deriv
     (by ring)
 
@@ -217,9 +212,8 @@ private lemma deriv_seg4_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
 /-- For seg4 z₀ at left half [3/5, t₀-δ], `seg4_h₃ ∈ slitPlane` (negative imaginary). -/
 private lemma seg4_h₃_left_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {z₀ : ℂ} (hz_re : z₀.re = -1/2)
-    (hc_lo : Real.sqrt 3 / 2 < z₀.im)
     {δ : ℝ} (hδ_pos : 0 < δ)
-    {t : ℝ} (ht3 : 3/5 ≤ t) (htd : t ≤ seg4T₀ H z₀.im - δ) :
+    {t : ℝ} (htd : t ≤ seg4T₀ H z₀.im - δ) :
     seg4_h₃ H z₀ t ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff]; right
   rw [seg4_h₃_eq_pure_im hz_re]
@@ -228,26 +222,20 @@ private lemma seg4_h₃_left_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   intro h_eq
   have hK : 0 < seg1Speed H := seg1Speed_pos hH
   have hK_eq_seg4 : seg1Speed H * (seg4T₀ H z₀.im - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
-    unfold seg4T₀
-    field_simp
-    ring
-  have h_im_eq : Real.sqrt 3 / 2 + (5 * t - 3) * (H - Real.sqrt 3 / 2) - z₀.im = 0 := h_eq
-  have h_t_eq : (5 * t - 3) * (H - Real.sqrt 3 / 2) = z₀.im - Real.sqrt 3 / 2 := by linarith
+    unfold seg4T₀; field_simp; ring
   have h_t : t = seg4T₀ H z₀.im := by
     have h_speed_eq : seg1Speed H * (t - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
       unfold seg1Speed; linarith
-    have h_eq2 : seg1Speed H * (t - 3/5) = seg1Speed H * (seg4T₀ H z₀.im - 3/5) := by
-      rw [h_speed_eq, hK_eq_seg4]
-    have hcancel : t - 3/5 = seg4T₀ H z₀.im - 3/5 := mul_left_cancel₀ (ne_of_gt hK) h_eq2
+    have hcancel : t - 3/5 = seg4T₀ H z₀.im - 3/5 :=
+      mul_left_cancel₀ (ne_of_gt hK) (h_speed_eq.trans hK_eq_seg4.symm)
     linarith
   linarith
 
 /-- For seg4 z₀ at right half [t₀+δ, 4/5], `seg4_h₃ ∈ slitPlane`. -/
 private lemma seg4_h₃_right_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {z₀ : ℂ} (hz_re : z₀.re = -1/2)
-    (hc_lo : Real.sqrt 3 / 2 < z₀.im)
     {δ : ℝ} (hδ_pos : 0 < δ)
-    {t : ℝ} (htd : seg4T₀ H z₀.im + δ ≤ t) (ht4 : t ≤ 4/5) :
+    {t : ℝ} (htd : seg4T₀ H z₀.im + δ ≤ t) :
     seg4_h₃ H z₀ t ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff]; right
   rw [seg4_h₃_eq_pure_im hz_re]
@@ -256,17 +244,12 @@ private lemma seg4_h₃_right_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   intro h_eq
   have hK : 0 < seg1Speed H := seg1Speed_pos hH
   have hK_eq_seg4 : seg1Speed H * (seg4T₀ H z₀.im - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
-    unfold seg4T₀
-    field_simp
-    ring
-  have h_im_eq : Real.sqrt 3 / 2 + (5 * t - 3) * (H - Real.sqrt 3 / 2) - z₀.im = 0 := h_eq
-  have h_t_eq : (5 * t - 3) * (H - Real.sqrt 3 / 2) = z₀.im - Real.sqrt 3 / 2 := by linarith
+    unfold seg4T₀; field_simp; ring
   have h_t : t = seg4T₀ H z₀.im := by
     have h_speed_eq : seg1Speed H * (t - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
       unfold seg1Speed; linarith
-    have h_eq2 : seg1Speed H * (t - 3/5) = seg1Speed H * (seg4T₀ H z₀.im - 3/5) := by
-      rw [h_speed_eq, hK_eq_seg4]
-    have hcancel : t - 3/5 = seg4T₀ H z₀.im - 3/5 := mul_left_cancel₀ (ne_of_gt hK) h_eq2
+    have hcancel : t - 3/5 = seg4T₀ H z₀.im - 3/5 :=
+      mul_left_cancel₀ (ne_of_gt hK) (h_speed_eq.trans hK_eq_seg4.symm)
     linarith
   linarith
 
@@ -356,7 +339,7 @@ private lemma seg4_arc_ftc {z₀ : ℂ} (hz_re : z₀.re = -1/2)
 
 /-- FTC for the seg4 left half [3/5, t₀ - δ]. -/
 private lemma seg4_left_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
-    {z₀ : ℂ} (hz_re : z₀.re = -1/2) (hc_lo : Real.sqrt 3 / 2 < z₀.im)
+    {z₀ : ℂ} (hz_re : z₀.re = -1/2)
     {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt : δ < seg4T₀ H z₀.im - 3/5) :
     IntervalIntegrable
       (fun t => deriv (seg4_h₃ H z₀) t / seg4_h₃ H z₀ t) volume (3/5) (seg4T₀ H z₀.im - δ) ∧
@@ -371,12 +354,12 @@ private lemma seg4_left_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       rw [show deriv (seg4_h₃ H z₀) = fun _ => (seg1Speed H : ℂ) * I from
         funext (deriv_seg4_h₃ H z₀)]
       exact continuousOn_const)
-  intro t ⟨ht3, htd⟩
-  exact seg4_h₃_left_slitPlane hH hz_re hc_lo hδ_pos ht3 htd
+  intro t ⟨_, htd⟩
+  exact seg4_h₃_left_slitPlane hH hz_re hδ_pos htd
 
 /-- FTC for the seg4 right half [t₀ + δ, 4/5]. -/
 private lemma seg4_right_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
-    {z₀ : ℂ} (hz_re : z₀.re = -1/2) (hc_lo : Real.sqrt 3 / 2 < z₀.im)
+    {z₀ : ℂ} (hz_re : z₀.re = -1/2)
     {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt : δ < 4/5 - seg4T₀ H z₀.im) :
     IntervalIntegrable
       (fun t => deriv (seg4_h₃ H z₀) t / seg4_h₃ H z₀ t) volume (seg4T₀ H z₀.im + δ) (4/5) ∧
@@ -391,8 +374,8 @@ private lemma seg4_right_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       rw [show deriv (seg4_h₃ H z₀) = fun _ => (seg1Speed H : ℂ) * I from
         funext (deriv_seg4_h₃ H z₀)]
       exact continuousOn_const)
-  intro t ⟨htd, ht4⟩
-  exact seg4_h₃_right_slitPlane hH hz_re hc_lo hδ_pos htd ht4
+  intro t ⟨htd, _⟩
+  exact seg4_h₃_right_slitPlane hH hz_re hδ_pos htd
 
 /-- FTC for seg5 [4/5, 1] (full). -/
 private lemma seg4_seg5_ftc (H : ℝ) {z₀ : ℂ} (hc_hi : z₀.im < H) :
@@ -423,8 +406,7 @@ private lemma seg4_junction_15 (H : ℝ) (z₀ : ℂ) :
   · simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
       Complex.ofReal_im, Complex.I_re, Complex.I_im]
   · simp only [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero,
-      zero_sub]
+      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
     ring
 
 private lemma seg4_junction_35 (H : ℝ) (z₀ : ℂ) :
@@ -436,12 +418,10 @@ private lemma seg4_junction_35 (H : ℝ) (z₀ : ℂ) :
     Real.cos_pi_sub, Real.sin_pi_sub, Real.cos_pi_div_three, Real.sin_pi_div_three]
   apply Complex.ext
   · simp only [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, sub_zero, neg_zero,
-      Complex.neg_re, Complex.one_re, Complex.div_ofNat]
+      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero]
     ring
   · simp only [Complex.sub_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero,
-      Complex.neg_im, Complex.one_im, Complex.div_ofNat]
+      Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
     ring
 
 private lemma seg4_junction_45 (H : ℝ) (z₀ : ℂ) :
@@ -449,7 +429,7 @@ private lemma seg4_junction_45 (H : ℝ) (z₀ : ℂ) :
   unfold seg4_h₃ seg4_h₅
   apply Complex.ext
   · simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, mul_zero, sub_zero]
+      Complex.I_re, Complex.I_im, mul_zero]
     ring
   · simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
@@ -460,7 +440,7 @@ private lemma seg4_closed (H : ℝ) (z₀ : ℂ) :
   unfold seg4_h₀ seg4_h₅
   apply Complex.ext
   · simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, mul_zero, sub_zero]
+      Complex.I_re, Complex.I_im, mul_zero]
     ring
   · simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
@@ -607,7 +587,6 @@ private lemma seg4_ae_eq_h₅ (H : ℝ) (z₀ : ℂ) :
 
 /-! ### Telescope theorem for seg4 -/
 
-set_option maxHeartbeats 400000 in
 /-- The full FTC telescope for the seg4 crossing. -/
 theorem fdBoundary_ftc_telescope_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {z₀ : ℂ} (hz_re : z₀.re = -1/2)
@@ -625,8 +604,8 @@ theorem fdBoundary_ftc_telescope_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   -- Per-segment FTC pieces
   have h_seg1 := seg4_seg1_ftc H hz_re
   have h_arc := seg4_arc_ftc hz_re hc_lo
-  have h_left := seg4_left_ftc hH hz_re hc_lo hδ_pos hδ_lt_lo
-  have h_right := seg4_right_ftc hH hz_re hc_lo hδ_pos hδ_lt_hi
+  have h_left := seg4_left_ftc hH hz_re hδ_pos hδ_lt_lo
+  have h_right := seg4_right_ftc hH hz_re hδ_pos hδ_lt_hi
   have h_seg5 := seg4_seg5_ftc H hc_hi
   -- Convert each integral via ae equality
   have h_int_seg1 :
@@ -780,7 +759,7 @@ def arcFTCHyp_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     -- Need integrability on [0, t₀-δ]; combine seg1 + arc + left half of seg4
     have h_seg1 := seg4_seg1_ftc H hz_re
     have h_arc := seg4_arc_ftc hz_re hc_lo
-    have h_left := seg4_left_ftc hH hz_re hc_lo h_lin_pos h_lin_lt_lo
+    have h_left := seg4_left_ftc hH hz_re h_lin_pos h_lin_lt_lo
     have hint_seg1 : IntervalIntegrable
         (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
         volume 0 (1/5) :=
@@ -812,7 +791,7 @@ def arcFTCHyp_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     have h_t₀_hi : seg4T₀ H z₀.im < 4/5 := seg4T₀_lt_four_fifths hH hc_hi
     have h2 : 0 ≤ seg4T₀ H z₀.im + linDelta (seg1Speed H) ε := by linarith
     apply transfer_integrability z₀ (by linarith) h2 (le_refl 1) hγ
-    have h_right := seg4_right_ftc hH hz_re hc_lo h_lin_pos h_lin_lt_hi
+    have h_right := seg4_right_ftc hH hz_re h_lin_pos h_lin_lt_hi
     have h_seg5 := seg4_seg5_ftc H hc_hi
     have hint_right : IntervalIntegrable
         (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
