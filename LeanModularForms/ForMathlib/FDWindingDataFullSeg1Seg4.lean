@@ -38,6 +38,11 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
+/-- `√3 / 2 < H` whenever `1 < H`, used to feed the seg1/seg4 FTC providers. -/
+private lemma sqrt_three_div_two_lt_of_one_lt {H : ℝ} (hH : 1 < H) : Real.sqrt 3 / 2 < H := by
+  have : Real.sqrt 3 < 2 := (Real.sqrt_lt' (by norm_num)).mpr (by norm_num)
+  linarith
+
 /-- `FDWindingDataFull H` constructor where seg1 and seg4 FTC providers are
 filled in unconditionally; only the arc FTC provider is required. -/
 def mkFDWindingDataFull_seg1seg4_unconditional {H : ℝ} (hH : 1 < H)
@@ -45,63 +50,48 @@ def mkFDWindingDataFull_seg1seg4_unconditional {H : ℝ} (hH : 1 < H)
     (ftc_arc : ∀ θ₀ : ℝ, Real.pi / 3 < θ₀ → θ₀ < 2 * Real.pi / 3 →
       ArcFTCHyp D.boundary (exp (↑θ₀ * I)) (arcT₀ θ₀) arcsinDelta
         (arcThreshold H θ₀) (-(↑Real.pi * I))) :
-    FDWindingDataFull H := by
-  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
-    have h_sqrt3_lt : Real.sqrt 3 < 2 := by
-      nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
-    linarith
-  exact mkFDWindingDataFull_of_ftcProviders hH D
-    (fun z₀ hz_re hi_lo hi_hi =>
+    FDWindingDataFull H :=
+  let hH_sqrt3 := sqrt_three_div_two_lt_of_one_lt hH
+  mkFDWindingDataFull_of_ftcProviders hH D
+    (fun _ hz_re hi_lo hi_hi =>
       arcFTCHyp_seg1 hH_sqrt3 D.boundary D.boundary_eq hz_re hi_lo hi_hi)
-    (fun z₀ hz_re hi_lo hi_hi =>
+    (fun _ hz_re hi_lo hi_hi =>
       arcFTCHyp_seg4 hH_sqrt3 D.boundary D.boundary_eq hz_re hi_lo hi_hi)
     ftc_arc
 
 /-- `FDWindingDataFull H` constructor from `FDWindingData H` alone.
 All three FTC providers (seg1, seg4, arc) are supplied unconditionally. -/
-def mkFDWindingDataFull_unconditional {H : ℝ} (hH : 1 < H)
-    (D : FDWindingData H) :
-    FDWindingDataFull H := by
-  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
-    have h_sqrt3_lt : Real.sqrt 3 < 2 := by
-      nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
-    linarith
-  exact mkFDWindingDataFull_of_ftcProviders hH D
-    (fun z₀ hz_re hi_lo hi_hi =>
+def mkFDWindingDataFull_unconditional {H : ℝ} (hH : 1 < H) (D : FDWindingData H) :
+    FDWindingDataFull H :=
+  let hH_sqrt3 := sqrt_three_div_two_lt_of_one_lt hH
+  mkFDWindingDataFull_of_ftcProviders hH D
+    (fun _ hz_re hi_lo hi_hi =>
       arcFTCHyp_seg1 hH_sqrt3 D.boundary D.boundary_eq hz_re hi_lo hi_hi)
-    (fun z₀ hz_re hi_lo hi_hi =>
+    (fun _ hz_re hi_lo hi_hi =>
       arcFTCHyp_seg4 hH_sqrt3 D.boundary D.boundary_eq hz_re hi_lo hi_hi)
-    (fun θ₀ h_lo h_hi =>
+    (fun _ h_lo h_hi =>
       arcFTCHyp_arc_generic hH D.boundary D.boundary_eq h_lo h_hi)
 
 /-! ### Fully unconditional FDWindingData from the FD boundary path -/
 
 /-- Unconditional `FDWindingData H` using the canonical `fdBoundaryPC1Path`
 and the three unconditional elliptic-point FTC providers. -/
-def fdWindingData_unconditional {H : ℝ} (hH : 1 < H) : FDWindingData H := by
-  have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
-    have h_sqrt3_lt : Real.sqrt 3 < 2 := by
-      nlinarith [Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0), Real.sqrt_nonneg 3]
-    linarith
+def fdWindingData_unconditional {H : ℝ} (hH : 1 < H) : FDWindingData H :=
+  let hH_sqrt3 := sqrt_three_div_two_lt_of_one_lt hH
   let γ : PiecewiseC1Path (fdStart H) (fdStart H) := fdBoundaryPC1Path H hH_sqrt3
-  have hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t :=
+  let hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t :=
     fdBoundaryPC1Path_eq H hH_sqrt3
-  refine {
-    boundary := γ
+  { boundary := γ
     boundary_eq := hγ
-    interior_winding := ?_
-    winding_at_i := ?_
-    winding_at_rho := ?_
-    winding_at_rho_plus_one := ?_ }
-  · intro z hz_norm hz_re hz_im_pos hz_im_lt
-    exact fdBoundary_interior_winding_complete hH_sqrt3
-      ⟨hz_norm, hz_re, hz_im_pos, hz_im_lt⟩ hγ
-  · exact hasWindingNumber_atI_of_scd
+    interior_winding := fun _ hz_norm hz_re hz_im_pos hz_im_lt =>
+      fdBoundary_interior_winding_complete hH_sqrt3
+        ⟨hz_norm, hz_re, hz_im_pos, hz_im_lt⟩ hγ
+    winding_at_i := hasWindingNumber_atI_of_scd
       (singleCrossingData_atI_of_ftcHyp hH γ hγ (arcFTCHyp_atI hH hγ)) rfl
-  · exact hasWindingNumber_atRho_of_cornerFtcHyp hH γ hγ
+    winding_at_rho := hasWindingNumber_atRho_of_cornerFtcHyp hH γ hγ
       (cornerFTCHyp_atRho hH hγ)
-  · exact hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp hH γ hγ
-      (cornerFTCHyp_atRhoPlusOne_unconditional hH hγ)
+    winding_at_rho_plus_one := hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp hH γ hγ
+      (cornerFTCHyp_atRhoPlusOne_unconditional hH hγ) }
 
 /-- Fully unconditional `FDWindingDataFull H` — no hypotheses beyond `1 < H`. -/
 def fdWindingDataFull_unconditional {H : ℝ} (hH : 1 < H) : FDWindingDataFull H :=
@@ -147,7 +137,7 @@ theorem valence_formula_unconditional_mkD {k : ℤ}
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 :=
   valence_formula_of_two_sides_Hgt1 f S hS hS_complete
-    (fun _ hH => fdWindingDataFull_unconditional hH)
+    (fun _ => fdWindingDataFull_unconditional)
     H_S hH_S F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod
 
 end

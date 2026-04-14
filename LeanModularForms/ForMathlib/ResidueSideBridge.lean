@@ -21,10 +21,8 @@ suitable for combining with `valence_formula_unconditional_mkD`.
   returning a `HasCauchyPVOn` with the modular limit value
 -/
 
-open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
-open scoped Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
-
-attribute [local instance] Classical.propDecidable
+open Complex Set CongruenceSubgroup
+open scoped UpperHalfPlane ModularForm Modular
 
 noncomputable section
 
@@ -54,14 +52,7 @@ theorem cpv_residue_side_HasCauchyPVOn
               generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
                 (orderOfVanishingAt' (⇑f) s : ℂ)) := by
   obtain ⟨H₀, hH₀, h_old⟩ := cpv_residue_side_forMathlib f hf S hS hS_complete
-  refine ⟨H₀, hH₀, fun {H} hH γ hγ => ?_⟩
-  apply hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ
-  have h_old_spec := h_old hH
-  refine h_old_spec.congr' ?_
-  filter_upwards with ε
-  apply intervalIntegral.integral_congr
-  intro t _
-  rfl
+  exact ⟨H₀, hH₀, fun hH γ hγ => hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ (h_old hH)⟩
 
 include hf in
 /-- **Modular side (ForMathlib form)**: the ε-truncated integral of
@@ -79,13 +70,6 @@ theorem cpv_modular_side_HasCauchyPVOn
           (-(2 * ↑Real.pi * I *
             ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))) := by
   obtain ⟨H₀, hH₀, h_old⟩ := cpv_modular_side_forMathlib f hf S hS hS_complete
-  refine ⟨H₀, hH₀, fun {H} hH γ hγ => ?_⟩
-  apply hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ
-  have h_old_spec := h_old hH
-  refine h_old_spec.congr' ?_
-  filter_upwards with ε
-  apply intervalIntegral.integral_congr
-  intro t _
-  rfl
+  exact ⟨H₀, hH₀, fun hH γ hγ => hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ (h_old hH)⟩
 
 end
