@@ -87,4 +87,56 @@ theorem deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H (H : ℝ) (t : ℝ) :
   rw [fdBoundaryFun_eq_comp]
   exact deriv_comp_mul_left (5 : ℝ) (fdBoundary_H H) t
 
+/-- Complex-valued version: `deriv (fdBoundaryFun H) t = 5 * deriv (fdBoundary_H H) (5*t)`. -/
+theorem deriv_fdBoundaryFun_eq (H : ℝ) (t : ℝ) :
+    deriv (fdBoundaryFun H) t = (5 : ℂ) * deriv (fdBoundary_H H) (5 * t) := by
+  rw [deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H]
+  rw [show ((5 : ℝ) • deriv (fdBoundary_H H) (5 * t) : ℂ) =
+    (5 : ℝ) * deriv (fdBoundary_H H) (5 * t) from rfl]
+  push_cast; ring
+
+/-! ### Integrand equivalence for Cauchy PV -/
+
+/-- The Cauchy PV integrand using `fdBoundaryFun` and `[0,1]` equals
+`5` times the integrand using `fdBoundary_H` and `[0,5]` after reparametrization.
+
+Specifically, at any point `t`, the integrand at parameter `t` (new chain)
+equals `5` times the integrand at parameter `5*t` (old chain). This factor
+of 5 is absorbed by the integration domain via change of variables. -/
+theorem cpvIntegrand_fdBoundaryFun_eq_smul_cpvIntegrand_fdBoundary_H
+    (f : ℂ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) (H : ℝ) :
+    cpvIntegrand f (fdBoundaryFun H) z₀ ε t =
+    (5 : ℂ) * (if ‖fdBoundary_H H (5 * t) - z₀‖ > ε
+      then f (fdBoundary_H H (5 * t)) * deriv (fdBoundary_H H) (5 * t) else 0) := by
+  simp only [cpvIntegrand]
+  rw [fdBoundaryFun_eq_fdBoundary_H_scaled, deriv_fdBoundaryFun_eq]
+  split_ifs with h
+  · ring
+  · ring
+
+/-- The integral of the old-chain CPV integrand from 0 to 5 equals
+the integral of the new-chain CPV integrand from 0 to 1. -/
+theorem integral_cpvIntegrand_fdBoundary_H_eq_fdBoundaryFun
+    (f : ℂ → ℂ) (z₀ : ℂ) (ε : ℝ) (H : ℝ) :
+    ∫ u in (0 : ℝ)..5,
+      (if ‖fdBoundary_H H u - z₀‖ > ε then
+        f (fdBoundary_H H u) * deriv (fdBoundary_H H) u else 0) =
+    ∫ t in (0 : ℝ)..1, cpvIntegrand f (fdBoundaryFun H) z₀ ε t := by
+  -- Strategy: show both sides equal ∫ t in 0..1, 5 * old_integrand t
+  -- LHS via change of variables and integral_const_mul
+  -- RHS via h_pointwise equation
+  have h_left : (∫ u in (0 : ℝ)..5,
+      (if ‖fdBoundary_H H u - z₀‖ > ε then
+        f (fdBoundary_H H u) * deriv (fdBoundary_H H) u else 0)) =
+      ∫ t in (0 : ℝ)..1, (5 : ℂ) *
+        (if ‖fdBoundary_H H (5 * t) - z₀‖ > ε then
+          f (fdBoundary_H H (5 * t)) * deriv (fdBoundary_H H) (5 * t) else 0) := by
+    rw [integral_zero_to_five_eq_five_smul_zero_to_one]
+    rw [show ∀ v : ℂ, ((5 : ℝ) • v) = (5 : ℂ) * v from fun v => by
+      rw [Complex.real_smul]; push_cast; ring]
+    exact (intervalIntegral.integral_const_mul (5 : ℂ) _).symm
+  rw [h_left]
+  exact intervalIntegral.integral_congr (fun t _ =>
+    (cpvIntegrand_fdBoundaryFun_eq_smul_cpvIntegrand_fdBoundary_H f z₀ ε t H).symm)
+
 end
