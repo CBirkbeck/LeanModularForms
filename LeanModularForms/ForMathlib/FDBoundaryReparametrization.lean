@@ -297,4 +297,42 @@ theorem generalizedWindingNumber_eq_of_agreement
     generalizedWindingNumber γ z₀ = w :=
   (hasGeneralizedWindingNumber_of_cauchyPrincipalValueExists'_tendsto γ hγ h_old).eq
 
+/-- When the old chain's `cauchyPrincipalValueExists'` for the winding integrand
+has an old-chain value, the new chain's `generalizedWindingNumber` equals the
+old chain's `generalizedWindingNumber'`. -/
+theorem generalizedWindingNumber_eq_generalizedWindingNumber'
+    {H : ℝ} {z₀ : ℂ}
+    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
+    (h_exists : CauchyPrincipalValueExists' (·⁻¹)
+      (fun t => fdBoundary_H H t - z₀) 0 5 0) :
+    generalizedWindingNumber γ z₀ =
+      generalizedWindingNumber' (fdBoundary_H H) 0 5 z₀ := by
+  obtain ⟨L, hL⟩ := h_exists
+  -- Simplify the limit statement
+  have h_simpl : Tendsto (fun ε =>
+      ∫ t in (0 : ℝ)..5,
+        if ‖fdBoundary_H H t - z₀‖ > ε then
+          (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t
+        else 0) (𝓝[>] 0) (𝓝 L) := by
+    refine hL.congr' ?_
+    filter_upwards with ε
+    apply intervalIntegral.integral_congr
+    intro t _
+    simp only [deriv_sub_const, sub_zero]
+  -- Old chain's winding number value
+  have h_gWN' : generalizedWindingNumber' (fdBoundary_H H) 0 5 z₀ =
+      (2 * ↑Real.pi * I)⁻¹ * L := by
+    simp only [generalizedWindingNumber', cauchyPrincipalValue']
+    congr 1
+    exact hL.limUnder_eq
+  rw [h_gWN']
+  -- New chain's winding number via bridge
+  set w := (2 * ↑Real.pi * I)⁻¹ * L with hw_def
+  have h_L_eq : L = 2 * ↑Real.pi * I * w := by
+    rw [hw_def]
+    field_simp [Complex.two_pi_I_ne_zero]
+  rw [h_L_eq] at h_simpl
+  exact generalizedWindingNumber_eq_of_agreement γ hγ w h_simpl
+
 end
