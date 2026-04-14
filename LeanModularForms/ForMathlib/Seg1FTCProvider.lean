@@ -345,7 +345,7 @@ private lemma seg1_left_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
         deriv (seg1_h₀ H z₀) t / seg1_h₀ H z₀ t =
       Complex.log (-(seg1_h₀ H z₀ (seg1T₀ H z₀.im - δ))) -
       Complex.log (-(seg1_h₀ H z₀ 0)) := by
-  apply LogDerivFTC.ftc_log_neg_on_segment (by linarith : (0:ℝ) ≤ seg1T₀ H z₀.im - δ)
+  apply LogDerivFTCFM.ftc_log_neg_on_segment (by linarith : (0:ℝ) ≤ seg1T₀ H z₀.im - δ)
     (seg1_h₀_continuous H z₀).continuousOn
     (fun t _ => (hasDerivAt_seg1_h₀ H z₀ t).differentiableAt)
     (by
@@ -365,7 +365,7 @@ private lemma seg1_right_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
         deriv (seg1_h₀ H z₀) t / seg1_h₀ H z₀ t =
       Complex.log (-(seg1_h₀ H z₀ (1/5))) -
       Complex.log (-(seg1_h₀ H z₀ (seg1T₀ H z₀.im + δ))) := by
-  apply LogDerivFTC.ftc_log_neg_on_segment (by linarith : seg1T₀ H z₀.im + δ ≤ 1/5)
+  apply LogDerivFTCFM.ftc_log_neg_on_segment (by linarith : seg1T₀ H z₀.im + δ ≤ 1/5)
     (seg1_h₀_continuous H z₀).continuousOn
     (fun t _ => (hasDerivAt_seg1_h₀ H z₀ t).differentiableAt)
     (by
@@ -384,7 +384,7 @@ private lemma seg1_arc_ftc {z₀ : ℂ} (hz_re : z₀.re = 1/2)
         deriv (seg1_h_arc z₀) t / seg1_h_arc z₀ t =
       Complex.log (-(seg1_h_arc z₀ (3/5))) -
       Complex.log (-(seg1_h_arc z₀ (1/5))) := by
-  apply LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (1/5 : ℝ) ≤ 3/5)
+  apply LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (1/5 : ℝ) ≤ 3/5)
     (seg1_h_arc_continuous z₀).continuousOn
     (fun t _ => (hasDerivAt_seg1_h_arc z₀ t).differentiableAt)
     (by
@@ -408,7 +408,7 @@ private lemma seg1_seg4_ftc (H : ℝ) {z₀ : ℂ} (hz_re : z₀.re = 1/2) :
         deriv (seg1_h₃ H z₀) t / seg1_h₃ H z₀ t =
       Complex.log (-(seg1_h₃ H z₀ (4/5))) -
       Complex.log (-(seg1_h₃ H z₀ (3/5))) := by
-  apply LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
+  apply LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
     (seg1_h₃_continuous H z₀).continuousOn
     (fun t _ => (hasDerivAt_seg1_h₃ H z₀ t).differentiableAt)
     (by
@@ -426,7 +426,7 @@ private lemma seg1_seg5_ftc (H : ℝ) {z₀ : ℂ} (hc_hi : z₀.im < H) :
         deriv (seg1_h₅ H z₀) t / seg1_h₅ H z₀ t =
       Complex.log (-(seg1_h₅ H z₀ 1)) -
       Complex.log (-(seg1_h₅ H z₀ (4/5))) := by
-  apply LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
+  apply LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
     (seg1_h₅_continuous H z₀).continuousOn
     (fun t _ => (hasDerivAt_seg1_h₅ H z₀ t).differentiableAt)
     (by

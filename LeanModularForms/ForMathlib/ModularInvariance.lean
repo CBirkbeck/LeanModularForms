@@ -14,15 +14,15 @@ The order of vanishing `orderOfVanishingAt'` is invariant under the full modular
 This follows from T-periodicity `f(z+1) = f(z)` and the S-identity `f(-1/z) = z^k f(z)`.
 
 We also provide:
-* `modularFormCompOfComplex` -- coercion of modular form to `ℂ → ℂ`
-* `fdBox` and `modularForm_finitely_many_zeros_in_fdBox` -- finiteness of zeros
+* `modularFormCompOfComplexFM` -- coercion of modular form to `ℂ → ℂ`
+* `fdBoxFM` and `modularForm_finitely_many_zeros_in_fdBoxFM` -- finiteness of zeros
 
 ## Main results
 
 * `ord_add_one_eq` : T-invariance of vanishing order
 * `ord_S_eq` : S-invariance of vanishing order
 * `ord_rho_plus_one_eq_ord_rho` : `ρ` and `ρ+1` have equal vanishing order
-* `modularForm_finitely_many_zeros_in_fdBox` : finiteness of zeros in a bounded box
+* `modularForm_finitely_many_zeros_in_fdBoxFM` : finiteness of zeros in a bounded box
 -/
 
 open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
@@ -35,7 +35,7 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k)
 /-! ### Modular form as a function on ℂ -/
 
 /-- The composition of a modular form with `ofComplex`, for contour integration. -/
-abbrev modularFormCompOfComplex : ℂ → ℂ := f ∘ UpperHalfPlane.ofComplex
+abbrev modularFormCompOfComplexFM : ℂ → ℂ := f ∘ UpperHalfPlane.ofComplex
 
 /-! ### meromorphicOrderAt under precomposition -/
 
@@ -290,18 +290,18 @@ lemma ord_S_eq (p : ℍ) :
 /-! ### Finiteness of zeros in a bounded box -/
 
 /-- An open box containing the truncated fundamental domain. -/
-def fdBox (M : ℝ) : Set ℂ := {z : ℂ | -1 < z.re ∧ z.re < 1 ∧ (1:ℝ)/2 < z.im ∧ z.im < M}
+def fdBoxFM (M : ℝ) : Set ℂ := {z : ℂ | -1 < z.re ∧ z.re < 1 ∧ (1:ℝ)/2 < z.im ∧ z.im < M}
 
-lemma fdBox_im_pos {M : ℝ} {z : ℂ} (hz : z ∈ fdBox M) : 0 < z.im := by
+lemma fdBoxFM_im_pos {M : ℝ} {z : ℂ} (hz : z ∈ fdBoxFM M) : 0 < z.im := by
   linarith [hz.2.2.1]
 
-/-- A nonzero modular form has finitely many zeros in `fdBox M`. -/
-theorem modularForm_finitely_many_zeros_in_fdBox (hf : f ≠ 0) {M : ℝ} (hM : (1:ℝ)/2 < M) :
-    Set.Finite {z ∈ fdBox M | modularFormCompOfComplex f z = 0} := by
+/-- A nonzero modular form has finitely many zeros in `fdBoxFM M`. -/
+theorem modularForm_finitely_many_zeros_in_fdBoxFM (hf : f ≠ 0) {M : ℝ} (hM : (1:ℝ)/2 < M) :
+    Set.Finite {z ∈ fdBoxFM M | modularFormCompOfComplexFM f z = 0} := by
   by_contra h_inf
-  set Z := {z ∈ fdBox M | modularFormCompOfComplex f z = 0} with hZ_def
+  set Z := {z ∈ fdBoxFM M | modularFormCompOfComplexFM f z = 0} with hZ_def
   have hZ_inf : Z.Infinite := h_inf
-  have hBdd : Bornology.IsBounded (fdBox M) :=
+  have hBdd : Bornology.IsBounded (fdBoxFM M) :=
     isBounded_iff_forall_norm_le.mpr ⟨1 + M, fun z hz =>
       (Complex.norm_le_abs_re_add_abs_im z).trans (by
         have : |z.re| < 1 := abs_lt.mpr ⟨by linarith [hz.1], hz.2.1⟩
@@ -313,16 +313,16 @@ theorem modularForm_finitely_many_zeros_in_fdBox (hf : f ≠ 0) {M : ℝ} (hM : 
   have hz₀_im : (1:ℝ)/2 ≤ z₀.im := closure_minimal (fun z hz => le_of_lt hz.2.2.1)
     (isClosed_le continuous_const Complex.continuous_im) hz₀K
   have hz₀_pos : 0 < z₀.im := by linarith [hz₀_im]
-  have h_freq : ∃ᶠ y in 𝓝[≠] z₀, modularFormCompOfComplex f y = 0 :=
+  have h_freq : ∃ᶠ y in 𝓝[≠] z₀, modularFormCompOfComplexFM f y = 0 :=
     (accPt_iff_frequently_nhdsNE.mp hz₀_acc).mono fun y hy => hy.2
   let U := {z : ℂ | 0 < z.im}
-  have h_analOn : AnalyticOnNhd ℂ (modularFormCompOfComplex f) U :=
+  have h_analOn : AnalyticOnNhd ℂ (modularFormCompOfComplexFM f) U :=
     fun z hz => (UpperHalfPlane.mdifferentiable_iff.mp f.holo').analyticAt
       (UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hz)
   have h_preconn : IsPreconnected U := (Complex.isConnected_of_upperHalfPlane (r := 0)
       (fun z (hz : 0 < z.im) => hz) (fun z (hz : 0 < z.im) => le_of_lt hz)).isPreconnected
   apply hf; ext z
-  simpa only [ModularForm.coe_zero, Pi.zero_apply, modularFormCompOfComplex,
+  simpa only [ModularForm.coe_zero, Pi.zero_apply, modularFormCompOfComplexFM,
       Function.comp_apply, UpperHalfPlane.ofComplex_apply] using
     (h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
       h_preconn hz₀_pos h_freq) z.im_pos

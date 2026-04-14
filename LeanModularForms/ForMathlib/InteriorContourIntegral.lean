@@ -124,7 +124,7 @@ private theorem seg1F (z : ℂ) (H : ℝ) (hz : z.re < 1/2) :
     ∫ t in (0 : ℝ)..(1/5), deriv (fun s => fdBoundaryFun H s - z) t /
       (fdBoundaryFun H t - z) =
       Complex.log (fdBoundaryFun H (1/5) - z) - Complex.log (fdBoundaryFun H 0 - z) :=
-  LogDerivFTC.ftc_log_piece (by norm_num) (ref1_cd z H).continuous.continuousOn
+  LogDerivFTCFM.ftc_log_piece (by norm_num) (ref1_cd z H).continuous.continuousOn
     (fun t _ => (ref1_cd z H).differentiable (by norm_num) |>.differentiableAt)
     ((ref1_cd z H).continuous_deriv le_top).continuousOn
     (fun t _ => ref1_slit z H hz t)
@@ -140,7 +140,7 @@ private theorem seg5F (z : ℂ) (H : ℝ) (hz : z.im < H) :
     ∫ t in (4/5 : ℝ)..1, deriv (fun s => fdBoundaryFun H s - z) t /
       (fdBoundaryFun H t - z) =
       Complex.log (fdBoundaryFun H 1 - z) - Complex.log (fdBoundaryFun H (4/5) - z) :=
-  LogDerivFTC.ftc_log_piece (by norm_num) (ref5_cd z H).continuous.continuousOn
+  LogDerivFTCFM.ftc_log_piece (by norm_num) (ref5_cd z H).continuous.continuousOn
     (fun t _ => (ref5_cd z H).differentiable (by norm_num) |>.differentiableAt)
     ((ref5_cd z H).continuous_deriv le_top).continuousOn
     (fun t _ => ref5_slit z H hz t)
@@ -185,7 +185,7 @@ private theorem seg4F (z : ℂ) (H : ℝ) (hz : -1/2 < z.re) :
       exact deriv.neg
     rw [hd, neg_div_neg_eq]
   -- ftc_log_piece with g = h = ref4n gives ∫ ref4n'/ref4n = log(ref4n(b)) - log(ref4n(a))
-  have hp := LogDerivFTC.ftc_log_piece (by norm_num : (3:ℝ)/5 ≤ 4/5)
+  have hp := LogDerivFTCFM.ftc_log_piece (by norm_num : (3:ℝ)/5 ≤ 4/5)
     (ref4n_cd z H).continuous.continuousOn
     (fun t _ => (ref4n_cd z H).differentiable (by norm_num) |>.differentiableAt)
     ((ref4n_cd z H).continuous_deriv le_top).continuousOn
@@ -298,7 +298,7 @@ private theorem arcF_standard {z : ℂ} (hz_norm : 1 < ‖z‖)
       (fdBoundaryFun H t - z) =
       Complex.log (fdBoundaryFun H (3/5) - z) -
       Complex.log (fdBoundaryFun H (1/5) - z) :=
-  LogDerivFTC.ftc_log_piece (by norm_num) (arcRef_cd z).continuous.continuousOn
+  LogDerivFTCFM.ftc_log_piece (by norm_num) (arcRef_cd z).continuous.continuousOn
     (fun t _ => (arcRef_cd z).differentiable (by norm_num) |>.differentiableAt)
     ((arcRef_cd z).continuous_deriv le_top).continuousOn
     (fun t ht => arcRef_slit_nonpos hz_norm hz_re_le hz_im ht.1 ht.2)
@@ -340,7 +340,7 @@ private theorem arcF_negated {z : ℂ} (hz_norm : 1 < ‖z‖)
       (fdBoundaryFun H t - z) =
       Complex.log (fdBoundaryFun H (3/5) - z) -
       Complex.log (fdBoundaryFun H (1/5) - z) := by
-  have hp := LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (1:ℝ)/5 ≤ 3/5)
+  have hp := LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (1:ℝ)/5 ≤ 3/5)
     (arcRef_cd z).continuous.continuousOn
     (fun t _ => (arcRef_cd z).differentiable (by norm_num) |>.differentiableAt)
     ((arcRef_cd z).continuous_deriv le_top).continuousOn

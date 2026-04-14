@@ -238,9 +238,9 @@ private theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
 
 /-! ### Finiteness of zeros -/
 
-private theorem modularFormCompOfComplex_eq' (p : ℍ) :
-    modularFormCompOfComplex f (p : ℂ) = f p := by
-  simp only [modularFormCompOfComplex, Function.comp_apply]
+private theorem modularFormCompOfComplexFM_eq' (p : ℍ) :
+    modularFormCompOfComplexFM f (p : ℂ) = f p := by
+  simp only [modularFormCompOfComplexFM, Function.comp_apply]
   congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
 
 theorem fd_im_gt_half (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
@@ -284,23 +284,23 @@ theorem finite_zeros_in_fd (hf : f ≠ 0) :
   obtain ⟨H₀, hH₀_gt, hH₀_no_zeros⟩ := no_zeros_above_height' f hf
   have hM_half : (1:ℝ)/2 < H₀ + 1 := by
     linarith [Real.sqrt_pos_of_pos (by norm_num : (0:ℝ) < 3)]
-  have h_fin := modularForm_finitely_many_zeros_in_fdBox f hf hM_half
+  have h_fin := modularForm_finitely_many_zeros_in_fdBoxFM f hf hM_half
   have h_coe_inj : Function.Injective (UpperHalfPlane.coe : ℍ → ℂ) :=
     fun _ _ h => UpperHalfPlane.ext_iff.mpr h
   apply (h_fin.preimage (h_coe_inj.injOn)).subset
   intro p ⟨hp_fd, hp_zero⟩
-  show (p : ℂ) ∈ {z ∈ fdBox (H₀ + 1) | modularFormCompOfComplex f z = 0}
+  show (p : ℂ) ∈ {z ∈ fdBoxFM (H₀ + 1) | modularFormCompOfComplexFM f z = 0}
   have habs_re := hp_fd.2
   have him_gt := fd_im_gt_half p hp_fd
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
   have hre := abs_le.mp habs_re
   constructor
-  · simp only [fdBox, Set.mem_setOf_eq]
+  · simp only [fdBoxFM, Set.mem_setOf_eq]
     refine ⟨by linarith [hre_bridge], by linarith [hre_bridge], him_gt, ?_⟩
     by_contra h_ge; push_neg at h_ge
     have : H₀ ≤ (↑p : ℂ).im := by linarith
     exact absurd hp_zero (hH₀_no_zeros p this)
-  · exact (modularFormCompOfComplex_eq' f p).symm ▸ hp_zero
+  · exact (modularFormCompOfComplexFM_eq' f p).symm ▸ hp_zero
 
 /-! ### Finite support of ordOrbit -/
 
