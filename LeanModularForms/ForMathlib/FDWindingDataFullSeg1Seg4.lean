@@ -31,8 +31,10 @@ This file plugs the now-unconditional seg1, seg4, and arc FTC providers into
   taking an arc FTC provider as hypothesis.
 -/
 
-open Complex MeasureTheory Set Filter Topology
-open scoped Real Interval
+open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
+open scoped Real Interval UpperHalfPlane ModularForm Modular MatrixGroups
+
+attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
@@ -104,5 +106,48 @@ def fdWindingData_unconditional {H : ℝ} (hH : 1 < H) : FDWindingData H := by
 /-- Fully unconditional `FDWindingDataFull H` — no hypotheses beyond `1 < H`. -/
 def fdWindingDataFull_unconditional {H : ℝ} (hH : 1 < H) : FDWindingDataFull H :=
   mkFDWindingDataFull_unconditional hH (fdWindingData_unconditional hH)
+
+/-! ### Top-level unconditional valence formula -/
+
+/-- **The valence formula, fully unconditional in `mkD`**.
+
+This is `valence_formula_of_two_sides_Hgt1` with the `mkD` parameter
+supplied unconditionally via `fdWindingDataFull_unconditional`. The
+only remaining hypotheses are the residue-side and modular-side
+Tendsto results. -/
+theorem valence_formula_unconditional_mkD {k : ℤ}
+    (f : ModularForm (Gamma 1) k)
+    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S)
+    (F : ℝ → ℝ → ℂ)
+    (H_res : ℝ) (hH_res_gt : 1 < H_res)
+    (h_res : ∀ (H : ℝ), H_res ≤ H → (hH : 1 < H) →
+      Tendsto (F H) (𝓝[>] 0)
+        (𝓝 (2 * ↑Real.pi * I *
+          ∑ s ∈ S,
+            generalizedWindingNumber
+              (fdWindingDataFull_unconditional hH).boundary (↑s : ℂ) *
+              (orderOfVanishingAt' (⇑f) s : ℂ))))
+    (H_mod : ℝ) (hH_mod_gt : 1 < H_mod)
+    (h_mod : ∀ (H : ℝ), H_mod ≤ H → (_hH : 1 < H) →
+      Tendsto (F H) (𝓝[>] 0)
+        (𝓝 (-(2 * ↑Real.pi * I *
+          ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))))) :
+    (orderAtCusp' f : ℂ) +
+    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+    ∑ s ∈ S.filter (fun p =>
+        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
+        ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
+      ↑(orderOfVanishingAt' (⇑f) s) +
+    ∑ s ∈ sLeftVert S, ↑(orderOfVanishingAt' (⇑f) s) +
+    ∑ s ∈ S.filter (fun p =>
+        p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
+      ↑(orderOfVanishingAt' (⇑f) s) =
+    (k : ℂ) / 12 :=
+  valence_formula_of_two_sides_Hgt1 f S hS hS_complete
+    (fun H hH => fdWindingDataFull_unconditional hH)
+    H_S hH_S F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod
 
 end
