@@ -163,7 +163,7 @@ private theorem seg1_ftc_rho (H : ℝ) :
       (fdBoundaryFun H t - ellipticPointRho) =
       Complex.log (fdBoundaryFun H (1/5) - ellipticPointRho) -
       Complex.log (fdBoundaryFun H 0 - ellipticPointRho) :=
-  LogDerivFTC.ftc_log_piece (by norm_num)
+  LogDerivFTCFM.ftc_log_piece (by norm_num)
     (ref_seg1_rho_contDiff H).continuous.continuousOn
     (fun t _ => ((ref_seg1_rho_contDiff H).differentiable (by norm_num)).differentiableAt)
     ((ref_seg1_rho_contDiff H).continuous_deriv le_top).continuousOn
@@ -180,7 +180,7 @@ private theorem arc_ftc_rho (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 2/5
       (fdBoundaryFun H t - ellipticPointRho) =
       Complex.log (fdBoundaryFun H (3/5 - δ) - ellipticPointRho) -
       Complex.log (fdBoundaryFun H (1/5) - ellipticPointRho) := by
-  apply LogDerivFTC.ftc_log_piece (by linarith)
+  apply LogDerivFTCFM.ftc_log_piece (by linarith)
     arcRef_rho_contDiff.continuous.continuousOn
     (fun t _ => arcRef_rho_contDiff.differentiable (by norm_num) |>.differentiableAt)
     (arcRef_rho_contDiff.continuous_deriv le_top).continuousOn
@@ -203,7 +203,7 @@ private theorem seg4_ftc_rho (H : ℝ) (hH : fdHeightValid H) {δ : ℝ}
       (fdBoundaryFun H t - ellipticPointRho) =
       Complex.log (fdBoundaryFun H (4/5) - ellipticPointRho) -
       Complex.log (fdBoundaryFun H (3/5 + δ) - ellipticPointRho) :=
-  LogDerivFTC.ftc_log_piece (by linarith)
+  LogDerivFTCFM.ftc_log_piece (by linarith)
     (ref_seg4_rho_contDiff H).continuous.continuousOn
     (fun t _ => ((ref_seg4_rho_contDiff H).differentiable (by norm_num)).differentiableAt)
     ((ref_seg4_rho_contDiff H).continuous_deriv le_top).continuousOn
@@ -220,7 +220,7 @@ private theorem seg5_ftc_rho (H : ℝ) (hH : fdHeightValid H) :
       (fdBoundaryFun H t - ellipticPointRho) =
       Complex.log (fdBoundaryFun H 1 - ellipticPointRho) -
       Complex.log (fdBoundaryFun H (4/5) - ellipticPointRho) := by
-  refine LogDerivFTC.ftc_log_piece (by norm_num)
+  refine LogDerivFTCFM.ftc_log_piece (by norm_num)
     (ref_seg5_rho_contDiff H).continuous.continuousOn
     (fun t _ => ((ref_seg5_rho_contDiff H).differentiable (by norm_num)).differentiableAt)
     ((ref_seg5_rho_contDiff H).continuous_deriv le_top).continuousOn
@@ -552,7 +552,7 @@ private theorem seg1_ftc_rp1 (H : ℝ) (hH : fdHeightValid H) {δ : ℝ}
       (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
       Complex.log (fdBoundaryFun H (1/5 - δ) - ellipticPointRhoPlusOne) -
       Complex.log (fdBoundaryFun H 0 - ellipticPointRhoPlusOne) :=
-  LogDerivFTC.ftc_log_piece (by linarith)
+  LogDerivFTCFM.ftc_log_piece (by linarith)
     (ref_seg1_rp1_contDiff H).continuous.continuousOn
     (fun t _ => ((ref_seg1_rp1_contDiff H).differentiable (by norm_num)).differentiableAt)
     ((ref_seg1_rp1_contDiff H).continuous_deriv le_top).continuousOn
@@ -571,7 +571,7 @@ private theorem arc_ftc_neg_rp1 (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ <
       Complex.log (-(fdBoundaryFun H (3/5) - ellipticPointRhoPlusOne)) -
       Complex.log (-(fdBoundaryFun H (1/5 + δ) - ellipticPointRhoPlusOne)) := by
   have hab : (1/5 + δ) ≤ (3/5 : ℝ) := by linarith
-  have h_piece := LogDerivFTC.ftc_log_neg_on_segment hab
+  have h_piece := LogDerivFTCFM.ftc_log_neg_on_segment hab
     arcRef_rp1_contDiff.continuous.continuousOn
     (fun t _ => arcRef_rp1_contDiff.differentiable (by norm_num) |>.differentiableAt)
     (arcRef_rp1_contDiff.continuous_deriv le_top).continuousOn
@@ -848,7 +848,7 @@ private theorem seg4_ftc_neg_rp1 (H : ℝ) :
       (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
       Complex.log (-(fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne)) -
       Complex.log (-(fdBoundaryFun H (3/5) - ellipticPointRhoPlusOne)) := by
-  have h_piece := LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
+  have h_piece := LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
     (seg4Ref_rp1_contDiff H).continuous.continuousOn
     (fun t _ => (seg4Ref_rp1_contDiff H).differentiable (by norm_num) |>.differentiableAt)
     ((seg4Ref_rp1_contDiff H).continuous_deriv le_top).continuousOn
@@ -917,7 +917,7 @@ private theorem seg5_ftc_neg_rp1 (H : ℝ) (hH : fdHeightValid H) :
       (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
       Complex.log (-(fdBoundaryFun H 1 - ellipticPointRhoPlusOne)) -
       Complex.log (-(fdBoundaryFun H (4/5) - ellipticPointRhoPlusOne)) := by
-  have h_piece := LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
+  have h_piece := LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
     (seg5Ref_rp1_contDiff H).continuous.continuousOn
     (fun t _ => (seg5Ref_rp1_contDiff H).differentiable (by norm_num) |>.differentiableAt)
     ((seg5Ref_rp1_contDiff H).continuous_deriv le_top).continuousOn

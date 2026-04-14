@@ -313,7 +313,7 @@ private lemma arc_seg1_ftc (H : ℝ) {θ₀ : ℝ}
         deriv (arc_h₀ H (exp (↑θ₀ * I))) t / arc_h₀ H (exp (↑θ₀ * I)) t =
       Complex.log (arc_h₀ H (exp (↑θ₀ * I)) (1/5)) -
       Complex.log (arc_h₀ H (exp (↑θ₀ * I)) 0) := by
-  apply LogDerivFTC.ftc_log_on_segment (by norm_num : (0 : ℝ) ≤ 1/5)
+  apply LogDerivFTCFM.ftc_log_on_segment (by norm_num : (0 : ℝ) ≤ 1/5)
     (arc_h₀_continuous H _).continuousOn
     (fun t _ => (hasDerivAt_arc_h₀ H _ t).differentiableAt)
     (by
@@ -333,7 +333,7 @@ private lemma arc_arc_left_ftc {H : ℝ} {θ₀ : ℝ}
         deriv (arc_h_arc (exp (↑θ₀ * I))) t / arc_h_arc (exp (↑θ₀ * I)) t =
       Complex.log (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - δ)) -
       Complex.log (arc_h_arc (exp (↑θ₀ * I)) (1/5)) := by
-  apply LogDerivFTC.ftc_log_on_segment (by linarith : (1/5 : ℝ) ≤ arcT₀ θ₀ - δ)
+  apply LogDerivFTCFM.ftc_log_on_segment (by linarith : (1/5 : ℝ) ≤ arcT₀ θ₀ - δ)
     (arc_h_arc_continuous _).continuousOn
     (fun t _ => (hasDerivAt_arc_h_arc _ t).differentiableAt)
     (by
@@ -359,7 +359,7 @@ private lemma arc_arc_right_ftc {H : ℝ} {θ₀ : ℝ}
         deriv (arc_h_arc (exp (↑θ₀ * I))) t / arc_h_arc (exp (↑θ₀ * I)) t =
       Complex.log (-(arc_h_arc (exp (↑θ₀ * I)) (3/5))) -
       Complex.log (-(arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ + δ))) := by
-  apply LogDerivFTC.ftc_log_neg_on_segment (by linarith : arcT₀ θ₀ + δ ≤ 3/5)
+  apply LogDerivFTCFM.ftc_log_neg_on_segment (by linarith : arcT₀ θ₀ + δ ≤ 3/5)
     (arc_h_arc_continuous _).continuousOn
     (fun t _ => (hasDerivAt_arc_h_arc _ t).differentiableAt)
     (by
@@ -384,7 +384,7 @@ private lemma arc_seg4_ftc (H : ℝ) {θ₀ : ℝ}
         deriv (arc_h₃ H (exp (↑θ₀ * I))) t / arc_h₃ H (exp (↑θ₀ * I)) t =
       Complex.log (-(arc_h₃ H (exp (↑θ₀ * I)) (4/5))) -
       Complex.log (-(arc_h₃ H (exp (↑θ₀ * I)) (3/5))) := by
-  apply LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
+  apply LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
     (arc_h₃_continuous H _).continuousOn
     (fun t _ => (hasDerivAt_arc_h₃ H _ t).differentiableAt)
     (by
@@ -401,7 +401,7 @@ private lemma arc_seg5_ftc {H : ℝ} (hH : 1 < H) {θ₀ : ℝ} :
     ∫ t in (4/5 : ℝ)..(1 : ℝ),
         deriv (arc_h₅ H (exp (↑θ₀ * I))) t / arc_h₅ H (exp (↑θ₀ * I)) t =
       Complex.log (arc_h₅ H (exp (↑θ₀ * I)) 1) - Complex.log (arc_h₅ H (exp (↑θ₀ * I)) (4/5)) := by
-  apply LogDerivFTC.ftc_log_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
+  apply LogDerivFTCFM.ftc_log_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
     (arc_h₅_continuous H _).continuousOn
     (fun t _ => (hasDerivAt_arc_h₅ H _ t).differentiableAt)
     (by
