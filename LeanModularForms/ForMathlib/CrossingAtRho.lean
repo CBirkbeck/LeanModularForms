@@ -473,7 +473,7 @@ theorem hasWindingNumber_atRho_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (-(↑Real.pi / 3 * I)) := by
     simp only [HasCauchyPV]
     apply (PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
-      (_ht₀ := show (3/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
+      (ht₀ := show (3/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
       (threshold := threshold) (hthresh := hthresh)
       (δ_left := arcsinDelta) (δ_right := vertDelta H)
       (hδL_pos := fun ε hε _ => arcsinDelta_pos hε)
@@ -516,7 +516,7 @@ theorem hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       ellipticPointRhoPlusOne (-(↑Real.pi / 3 * I)) := by
     simp only [HasCauchyPV]
     apply (PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
-      (_ht₀ := show (1/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
+      (ht₀ := show (1/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
       (threshold := threshold) (hthresh := hthresh)
       (δ_left := vertDelta H) (δ_right := arcsinDelta)
       (hδL_pos := fun ε hε _ => vertDelta_pos hH_valid hε)

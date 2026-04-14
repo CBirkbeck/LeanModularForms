@@ -338,8 +338,6 @@ private lemma fdBoundary_sub_I_at_2p_im_neg (H : ℝ) {δ : ℝ}
 branch cuts. -/
 private lemma right_integral_34_branch_corrected (H : ℝ) (hH : 1 < H) {δ : ℝ}
     (hδ : 0 < δ) (hδ' : δ < 1/5)
-    (p3 : IntervalIntegrable _ _ (2/5 + δ) (3/5) ∧ _)
-    (p4 : IntervalIntegrable _ _ (3/5) (4/5) ∧ _)
     (hright34 : ∫ t in (2/5 + δ)..(4/5 : ℝ),
         deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
         Complex.log (-(fdBoundaryFun H (4/5) - I)) -
@@ -383,7 +381,7 @@ theorem fdBoundary_ftc_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ}
       Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
       Complex.log (fdBoundaryFun H 0 - I) := by
     rw [← intervalIntegral.integral_add_adjacent_intervals p1.1 p2.1, p1.2, p2.2]; ring
-  have hright34' := right_integral_34_branch_corrected H hH hδ hδ' p3 p4 (by
+  have hright34' := right_integral_34_branch_corrected H hH hδ hδ' (by
     rw [← intervalIntegral.integral_add_adjacent_intervals p3.1 p4.1, p3.2, p4.2]; ring)
   have hright : ∫ t in (2/5 + δ)..(1 : ℝ),
       deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) =
@@ -429,7 +427,7 @@ private theorem E_atI_tendsto (H : ℝ) :
       2 * ↑Real.pi * I)
       (𝓝[>] 0) (𝓝 (↑Real.pi * I - 2 * ↑Real.pi * I)) :=
     h1.sub tendsto_const_nhds
-  convert h2 using 1; ring
+  convert h2 using 2; ring_nf
 
 /-! ## Part 7: Assembly -/
 

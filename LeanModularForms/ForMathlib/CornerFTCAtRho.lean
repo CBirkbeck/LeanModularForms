@@ -368,8 +368,8 @@ private theorem arc_arg_at_rho (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε 
     show fdArcAngle (3/5 - arcsinDelta ε) = _; unfold fdArcAngle; rw [α_def]; ring
   rw [arcRef_sub_rho_decomp hθ_eq,
     show (↑(Real.cos (Real.pi / 6 - α)) : ℂ) + ↑(Real.sin (Real.pi / 6 - α)) * I =
-      Complex.cos ↑(Real.pi / 6 - α) + Complex.sin ↑(Real.pi / 6 - α) * I from
-      by rw [← Complex.ofReal_cos, ← Complex.ofReal_sin]]
+      Complex.cos ↑(Real.pi / 6 - α) + Complex.sin ↑(Real.pi / 6 - α) * I from by
+      rw [← Complex.ofReal_cos, ← Complex.ofReal_sin] ]
   have h_sinα_pos : 0 < Real.sin α :=
     Real.sin_pos_of_pos_of_lt_pi hα_pos (by linarith [Real.pi_pos])
   exact Complex.arg_mul_cos_add_sin_mul_I (show (0:ℝ) < 2 * Real.sin α from by positivity)

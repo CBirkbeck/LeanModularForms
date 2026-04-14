@@ -383,4 +383,88 @@ theorem valence_formula_of_two_sides
     F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod
   exact valence_formula_orbit_sum_of_pvChain f S hS hS_complete h_pvChain
 
+/-! ### Stronger-bound variants with `1 < H` -/
+
+omit hf in
+/-- Variant of `discharge_pvChain_full` with `mkD` over `H > 1` instead of
+`H > √3/2`. -/
+theorem discharge_pvChain_full_Hgt1
+    (S : Finset UpperHalfPlane) (_hS : ∀ p ∈ S, p ∈ 𝒟)
+    (_hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (mkD : ∀ H : ℝ, 1 < H → FDWindingDataFull H)
+    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S)
+    (F : ℝ → ℝ → ℂ)
+    (H_res : ℝ) (hH_res_gt : 1 < H_res)
+    (h_res : ∀ (H : ℝ), H_res ≤ H → (hH : 1 < H) →
+      Tendsto (F H) (𝓝[>] 0)
+        (𝓝 (2 * ↑Real.pi * I *
+          ∑ s ∈ S,
+            generalizedWindingNumber (mkD H hH).boundary (↑s : ℂ) *
+              (orderOfVanishingAt' (⇑f) s : ℂ))))
+    (H_mod : ℝ) (_hH_mod_gt : 1 < H_mod)
+    (h_mod : ∀ (H : ℝ), H_mod ≤ H → (hH : 1 < H) →
+      Tendsto (F H) (𝓝[>] 0)
+        (𝓝 (-(2 * ↑Real.pi * I *
+          ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))))) :
+    ∃ H' : ℝ, ∃ D : FDWindingDataFull H',
+      (∀ s ∈ S, (s : ℂ).im < H') ∧
+      ∑ s ∈ S,
+        generalizedWindingNumber D.boundary (↑s : ℂ) *
+          (orderOfVanishingAt' (⇑f) s : ℂ) =
+      -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
+  set H := max (max H_res H_mod) H_S + 1
+  have hH_ge_res : H_res ≤ H := le_trans (le_max_left _ _)
+    (le_trans (le_max_left _ _) (le_of_lt (lt_add_one _)))
+  have hH_ge_mod : H_mod ≤ H := le_trans (le_max_right _ _)
+    (le_trans (le_max_left _ _) (le_of_lt (lt_add_one _)))
+  have hH_gt_1 : 1 < H :=
+    lt_of_lt_of_le hH_res_gt hH_ge_res
+  have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
+    lt_of_lt_of_le (hH_S s hs)
+      (le_trans (le_max_right _ _) (le_of_lt (lt_add_one _)))
+  refine ⟨H, mkD H hH_gt_1, hH_above, ?_⟩
+  exact pvChainIdentity f S
+    { D := mkD H hH_gt_1
+      hH_above := hH_above
+      F_eps := F H
+      h_res := h_res H hH_ge_res hH_gt_1
+      h_mod := h_mod H hH_ge_mod hH_gt_1 }
+
+/-- Variant of `valence_formula_of_two_sides` with `mkD` over `H > 1` instead
+of `H > √3/2`. Useful when the `FDWindingDataFull` constructor only works
+for `H > 1` (e.g. the unconditional `mkFDWindingDataFull_unconditional`). -/
+theorem valence_formula_of_two_sides_Hgt1
+    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    (mkD : ∀ H : ℝ, 1 < H → FDWindingDataFull H)
+    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S)
+    (F : ℝ → ℝ → ℂ)
+    (H_res : ℝ) (hH_res_gt : 1 < H_res)
+    (h_res : ∀ (H : ℝ), H_res ≤ H → (hH : 1 < H) →
+      Tendsto (F H) (𝓝[>] 0)
+        (𝓝 (2 * ↑Real.pi * I *
+          ∑ s ∈ S,
+            generalizedWindingNumber (mkD H hH).boundary (↑s : ℂ) *
+              (orderOfVanishingAt' (⇑f) s : ℂ))))
+    (H_mod : ℝ) (hH_mod_gt : 1 < H_mod)
+    (h_mod : ∀ (H : ℝ), H_mod ≤ H → (hH : 1 < H) →
+      Tendsto (F H) (𝓝[>] 0)
+        (𝓝 (-(2 * ↑Real.pi * I *
+          ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))))) :
+    (orderAtCusp' f : ℂ) +
+    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+    ∑ s ∈ S.filter (fun p =>
+        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
+        ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
+      ↑(orderOfVanishingAt' (⇑f) s) +
+    ∑ s ∈ sLeftVert S, ↑(orderOfVanishingAt' (⇑f) s) +
+    ∑ s ∈ S.filter (fun p =>
+        p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
+      ↑(orderOfVanishingAt' (⇑f) s) =
+    (k : ℂ) / 12 := by
+  have h_pvChain := discharge_pvChain_full_Hgt1 f S hS hS_complete mkD H_S hH_S
+    F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod
+  exact valence_formula_orbit_sum_of_pvChain f S hS hS_complete h_pvChain
+
 end
