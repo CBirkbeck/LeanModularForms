@@ -3,8 +3,11 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import LeanModularForms.ForMathlib.CauchyPrincipalValue
 import LeanModularForms.ForMathlib.FDBoundary
+import LeanModularForms.ForMathlib.FDBoundaryPath
 import LeanModularForms.ValenceFormula.Boundary.Basic
+import LeanModularForms.GeneralizedResidueTheory.Basic
 
 /-!
 # Bridge: `fdBoundaryFun` ↔ `fdBoundary_H`
@@ -138,5 +141,50 @@ theorem integral_cpvIntegrand_fdBoundary_H_eq_fdBoundaryFun
   rw [h_left]
   exact intervalIntegral.integral_congr (fun t _ =>
     (cpvIntegrand_fdBoundaryFun_eq_smul_cpvIntegrand_fdBoundary_H f z₀ ε t H).symm)
+
+/-! ### Winding number equivalence -/
+
+/-- For a `PiecewiseC1Path` that agrees with `fdBoundaryFun H` on `[0, 1]`,
+the ForMathlib-style `HasCauchyPV` predicate at `z₀` for `(· - z₀)⁻¹`
+corresponds exactly to the old-chain's `cauchyPrincipalValueExists'`
+for `fdBoundary_H H` on `[0, 5]`.
+
+This is the bridge that allows old-chain residue side results to be
+transferred to the new chain. -/
+theorem hasCauchyPV_of_cauchyPV'_tendsto
+    {H : ℝ} {z₀ : ℂ} {L : ℂ}
+    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
+    (h_old : Tendsto (fun ε =>
+      ∫ t in (0 : ℝ)..5,
+        if ‖fdBoundary_H H t - z₀‖ > ε then
+          (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t
+        else 0)
+      (𝓝[>] 0) (𝓝 L)) :
+    HasCauchyPV (fun z => (z - z₀)⁻¹) γ z₀ L := by
+  have h_eq : ∀ ε : ℝ,
+      (∫ t in (0 : ℝ)..5,
+        if ‖fdBoundary_H H t - z₀‖ > ε then
+          (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t else 0) =
+      ∫ t in (0 : ℝ)..1, cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t := by
+    intro ε
+    rw [integral_cpvIntegrand_fdBoundary_H_eq_fdBoundaryFun
+      (fun z => (z - z₀)⁻¹) z₀ ε H]
+    -- Use a.e. equality on the open interval (0,1)
+    apply intervalIntegral.integral_congr_ae
+    filter_upwards [compl_mem_ae_iff.mpr (measure_singleton 1)] with t ht_ne_1 ht_mem
+    rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht_mem
+    have ht_open : t ∈ Ioo (0 : ℝ) 1 :=
+      ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 fun h => ht_ne_1 (mem_singleton_iff.mpr h)⟩
+    have ht_icc : t ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht_open
+    show cpvIntegrand (fun z => (z - z₀)⁻¹) (fdBoundaryFun H) z₀ ε t =
+      cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t
+    simp only [cpvIntegrand, hγ t ht_icc]
+    have hee : γ.toPath.extend =ᶠ[𝓝 t] fdBoundaryFun H := by
+      filter_upwards [Ioo_mem_nhds ht_open.1 ht_open.2] with s hs
+      exact hγ s (Ioo_subset_Icc_self hs)
+    rw [hee.symm.deriv_eq]
+  simp only [HasCauchyPV]
+  exact (h_old.congr h_eq)
 
 end
