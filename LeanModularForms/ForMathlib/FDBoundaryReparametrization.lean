@@ -76,4 +76,15 @@ theorem integral_zero_to_five_eq_five_smul_zero_to_one (F : ℝ → ℂ) :
   simp only [add_zero, mul_zero, mul_one] at h
   exact h.symm
 
+/-! ### Derivative chain rule for the reparametrization -/
+
+/-- The derivative of `fdBoundaryFun H` is 5 times the derivative of
+`fdBoundary_H H` at the reparametrized point. Works everywhere thanks to
+`deriv_comp_mul_left` (which handles both the differentiable and the
+non-differentiable case uniformly). -/
+theorem deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H (H : ℝ) (t : ℝ) :
+    deriv (fdBoundaryFun H) t = (5 : ℝ) • deriv (fdBoundary_H H) (5 * t) := by
+  rw [fdBoundaryFun_eq_comp]
+  exact deriv_comp_mul_left (5 : ℝ) (fdBoundary_H H) t
+
 end
