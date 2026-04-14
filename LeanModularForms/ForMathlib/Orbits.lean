@@ -11,25 +11,25 @@ import Mathlib.NumberTheory.ModularForms.LevelOne
 /-!
 # SL₂(ℤ) Orbits on the Upper Half-Plane
 
-`orderOfVanishingAt'` is invariant under the full modular group SL(2, ℤ). We define `ordOrbit`
+`orderOfVanishingAt'` is invariant under the full modular group SL(2, ℤ). We define `ordOrbitFM`
 on orbits and establish finite support for the orbit sum.
 
 ## Main Definitions
 
-* `Orbit` — the orbit quotient `MulAction.orbitRel.Quotient SL(2, ℤ) ℍ`
-* `orb` — canonical quotient map `ℍ → Orbit`
-* `ordOrbit` — order of vanishing lifted to orbits
-* `oi`, `orho` — orbits of the elliptic points `i` and `ρ`
-* `NonEllOrbit` — non-elliptic orbits
+* `OrbitFM` — the orbit quotient `MulAction.orbitRel.Quotient SL(2, ℤ) ℍ`
+* `orbFM` — canonical quotient map `ℍ → OrbitFM`
+* `ordOrbitFM` — order of vanishing lifted to orbits
+* `oiFM`, `orhoFM` — orbits of the elliptic points `i` and `ρ`
+* `NonEllOrbitFM` — non-elliptic orbits
 * `s₀` — the finite set of zeros in the fundamental domain
 
 ## Main Results
 
-* `ord_smul_eq` — `orderOfVanishingAt' f (g • p) = orderOfVanishingAt' f p`
-* `finite_zeros_in_fd` — finiteness of zeros with nonzero order in `𝒟`
-* `finite_support_ordOrbit` — finitely many orbits have nonzero `ordOrbit`
-* `orbit_has_fd_rep` — every orbit has a representative in `𝒟`
-* `orb_rho_plus_one_eq_orb_rho` — T-equivalence of elliptic orbits
+* `ord_smul_eqFM` — `orderOfVanishingAt' f (g • p) = orderOfVanishingAt' f p`
+* `finite_zeros_in_fdFM` — finiteness of zeros with nonzero order in `𝒟`
+* `finite_support_ordOrbitFM` — finitely many orbits have nonzero `ordOrbitFM`
+* `orbit_has_fd_repFM` — every orbit has a representative in `𝒟`
+* `orb_rho_plus_one_eq_orb_rhoFM` — T-equivalence of elliptic orbits
 -/
 
 open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
@@ -42,7 +42,7 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k)
 /-! ### SL₂(ℤ)-invariance of vanishing order -/
 
 /-- `orderOfVanishingAt'` is invariant under the action of any `g ∈ SL(2, ℤ)`. -/
-theorem ord_smul_eq (g : SL(2, ℤ)) (p : ℍ) :
+theorem ord_smul_eqFM (g : SL(2, ℤ)) (p : ℍ) :
     orderOfVanishingAt' (⇑f) (g • p) = orderOfVanishingAt' (⇑f) p := by
   have hg_mem : g ∈ Subgroup.closure {ModularGroup.S, ModularGroup.T} := by
     rw [SpecialLinearGroup.SL2Z_generators]; exact Subgroup.mem_top g
@@ -54,8 +54,8 @@ theorem ord_smul_eq (g : SL(2, ℤ)) (p : ℍ) :
   | mem x hx =>
     intro q
     rcases hx with rfl | rfl
-    · exact ord_S_eq f q
-    · rw [UpperHalfPlane.modular_T_smul]; exact ord_add_one_eq f q
+    · exact ord_S_eqFM f q
+    · rw [UpperHalfPlane.modular_T_smul]; exact ord_add_one_eqFM f q
   | one =>
     intro q; simp only [one_smul]
   | mul x y _ _ ihx ihy =>
@@ -63,37 +63,37 @@ theorem ord_smul_eq (g : SL(2, ℤ)) (p : ℍ) :
   | inv x _ ihx =>
     intro q; have := ihx (x⁻¹ • q); rw [smul_inv_smul] at this; exact this.symm
 
-/-! ### Orbit definitions -/
+/-! ### OrbitFM definitions -/
 
 /-- The type of orbits of `SL(2, ℤ)` acting on `ℍ`. -/
-abbrev Orbit := MulAction.orbitRel.Quotient SL(2, ℤ) ℍ
+abbrev OrbitFM := MulAction.orbitRel.Quotient SL(2, ℤ) ℍ
 
 /-- The canonical map from `ℍ` to its orbit. -/
-def orb (p : ℍ) : Orbit := Quotient.mk'' p
+def orbFM (p : ℍ) : OrbitFM := Quotient.mk'' p
 
-/-- The order of vanishing lifted to orbits. Well-defined by `ord_smul_eq`. -/
-def ordOrbit (q : Orbit) : ℤ :=
+/-- The order of vanishing lifted to orbits. Well-defined by `ord_smul_eqFM`. -/
+def ordOrbitFM (q : OrbitFM) : ℤ :=
   Quotient.liftOn' q (fun p => orderOfVanishingAt' (⇑f) p) (fun a b hab => by
       rw [MulAction.orbitRel_apply] at hab
       obtain ⟨g, hg⟩ := hab
-      rw [← hg]; exact ord_smul_eq f g b)
+      rw [← hg]; exact ord_smul_eqFM f g b)
 
 @[simp]
-theorem ordOrbit_mk (p : ℍ) : ordOrbit f (orb p) = orderOfVanishingAt' (⇑f) p := rfl
+theorem ordOrbit_mkFM (p : ℍ) : ordOrbitFM f (orbFM p) = orderOfVanishingAt' (⇑f) p := rfl
 
 /-- The orbit of `i`. -/
-def oi : Orbit := orb ellipticPointI'
+def oiFM : OrbitFM := orbFM ellipticPointI'
 
 /-- The orbit of `ρ`. -/
-def orho : Orbit := orb ellipticPointRho'
+def orhoFM : OrbitFM := orbFM ellipticPointRho'
 
-/-- A non-elliptic orbit is one distinct from both `oi` and `orho`. -/
-def NonEllOrbit := {q : Orbit // q ≠ oi ∧ q ≠ orho}
+/-- A non-elliptic orbit is one distinct from both `oiFM` and `orhoFM`. -/
+def NonEllOrbitFM := {q : OrbitFM // q ≠ oiFM ∧ q ≠ orhoFM}
 
 /-! ### Representatives in the fundamental domain -/
 
 /-- Every orbit has a representative in the fundamental domain `𝒟`. -/
-theorem orbit_has_fd_rep (q : Orbit) : ∃ p : ℍ, orb p = q ∧ p ∈ 𝒟 := by
+theorem orbit_has_fd_repFM (q : OrbitFM) : ∃ p : ℍ, orbFM p = q ∧ p ∈ 𝒟 := by
   induction q using Quotient.inductionOn' with
   | h z =>
     obtain ⟨g, hg⟩ := ModularGroup.exists_smul_mem_fd z
@@ -102,7 +102,7 @@ theorem orbit_has_fd_rep (q : Orbit) : ∃ p : ℍ, orb p = q ∧ p ∈ 𝒟 := 
 
 /-! ### Analyticity helpers -/
 
-private theorem G_analyticAt (p : ℍ) :
+private theorem G_analyticAtFM (p : ℍ) :
     AnalyticAt ℂ (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (p : ℂ) := by
   have h_diffOn : DifferentiableOn ℂ (f ∘ UpperHalfPlane.ofComplex) {w | 0 < w.im} :=
     UpperHalfPlane.mdifferentiable_iff.mp f.holo'
@@ -115,7 +115,7 @@ private theorem G_analyticAt (p : ℍ) :
   exact ((h_diffOn w hw).differentiableAt
     (UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hw)).congr_of_eventuallyEq h_eq
 
-private theorem G_eval_eq_f (p : ℍ) :
+private theorem G_eval_eq_fFM (p : ℍ) :
     (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (p : ℂ) = f p := by
   simp only []
   split_ifs with h
@@ -128,9 +128,9 @@ private theorem G_eval_eq_f (p : ℍ) :
 theorem orderOfVanishingAt'_eq_zero_of_ne_zero' (p : ℍ) (hp : f p ≠ 0) :
     orderOfVanishingAt' f p = 0 := by
   unfold orderOfVanishingAt'
-  have h_nf : MeromorphicNFAt _ (p : ℂ) := AnalyticAt.meromorphicNFAt (G_analyticAt f p)
+  have h_nf : MeromorphicNFAt _ (p : ℂ) := AnalyticAt.meromorphicNFAt (G_analyticAtFM f p)
   have hGp : (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (p : ℂ) ≠ 0 := by
-    rw [G_eval_eq_f]; exact hp
+    rw [G_eval_eq_fFM]; exact hp
   rw [h_nf.meromorphicOrderAt_eq_zero_iff.mpr hGp]; rfl
 
 /-- `orderOfVanishingAt' f p ≠ 0` implies `f p = 0`. -/
@@ -139,12 +139,12 @@ theorem eq_zero_of_orderOfVanishingAt'_ne_zero' (p : ℍ)
   by_contra h; exact hp (orderOfVanishingAt'_eq_zero_of_ne_zero' f p h)
 
 /-- `f ≠ 0` and `f p = 0` implies `orderOfVanishingAt' f p ≠ 0`. -/
-theorem orderOfVanishingAt'_ne_zero_of_eq_zero (hf : f ≠ 0) (p : ℍ) (hp : f p = 0) :
+theorem orderOfVanishingAt'_ne_zero_of_eq_zeroFM (hf : f ≠ 0) (p : ℍ) (hp : f p = 0) :
     orderOfVanishingAt' (⇑f) p ≠ 0 := by
   unfold orderOfVanishingAt'
   intro h_untop_eq
   have h_nf : MeromorphicNFAt _ (p : ℂ) :=
-    (G_analyticAt f p).meromorphicNFAt
+    (G_analyticAtFM f p).meromorphicNFAt
   have h_ord_ne : meromorphicOrderAt
       (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (↑p) ≠ (0 : WithTop ℤ) := by
     intro h0; apply h_nf.meromorphicOrderAt_eq_zero_iff.mp h0
@@ -154,20 +154,20 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zero (hf : f ≠ 0) (p : ℍ) (hp : f 
   have h_top := (WithTop.untop₀_eq_zero.mp h_untop_eq).resolve_left h_ord_ne
   rw [meromorphicOrderAt_eq_top_iff] at h_top
   have h_analOn : AnalyticOnNhd ℂ (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0)
-      {w | 0 < w.im} := fun w hw => G_analyticAt f ⟨w, hw⟩
+      {w | 0 < w.im} := fun w hw => G_analyticAtFM f ⟨w, hw⟩
   have h_preconn : IsPreconnected {w : ℂ | 0 < w.im} :=
     ((convex_halfSpace_im_gt 0).isConnected
       ⟨I, by simp only [Set.mem_setOf_eq, I_im]; exact one_pos⟩).isPreconnected
   apply hf; ext z
   change f z = 0
-  exact (G_eval_eq_f f z).symm.trans
+  exact (G_eval_eq_fFM f z).symm.trans
     (h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
       h_preconn p.im_pos h_top.frequently z.im_pos)
 
 /-! ### Cusp nonvanishing -/
 
 /-- The cusp function is not eventually zero near `q = 0` for a nonzero modular form. -/
-private theorem cuspFunction_not_eventually_zero (hf : f ≠ 0) :
+private theorem cuspFunction_not_eventually_zeroFM (hf : f ≠ 0) :
     ¬∀ᶠ q in 𝓝 (0 : ℂ), SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q = 0 := by
   intro h_freq
   have h_diff : DifferentiableOn ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f))
@@ -191,21 +191,21 @@ private theorem cuspFunction_not_eventually_zero (hf : f ≠ 0) :
   exact h_eqOn h_qmem
 
 /-- The cusp function is eventually nonzero near `q = 0` (punctured). -/
-private theorem cuspFunction_eventually_ne_zero (hf : f ≠ 0) :
+private theorem cuspFunction_eventually_ne_zeroFM (hf : f ≠ 0) :
     ∀ᶠ q in 𝓝[≠] (0 : ℂ),
       SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   have h_anal : AnalyticAt ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f)) 0 :=
     ModularFormClass.analyticAt_cuspFunction_zero f
       (by norm_num : (0 : ℝ) < 1) ModularFormClass.one_mem_strictPeriods_SL2Z
   exact h_anal.eventually_eq_zero_or_eventually_ne_zero.resolve_left
-    (cuspFunction_not_eventually_zero f hf)
+    (cuspFunction_not_eventually_zeroFM f hf)
 
 /-- Existence of a nonvanishing radius for the cusp function. -/
-private theorem exists_radius_cusp_nonvanishing (hf : f ≠ 0) :
+private theorem exists_radius_cusp_nonvanishingFM (hf : f ≠ 0) :
     ∃ r : ℝ, 0 < r ∧ ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) r →
       q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   obtain ⟨s, hs_prop, hs_open, hs_zero⟩ := eventually_nhds_iff.mp
-    (eventually_nhdsWithin_iff.mp (cuspFunction_eventually_ne_zero f hf))
+    (eventually_nhdsWithin_iff.mp (cuspFunction_eventually_ne_zeroFM f hf))
   obtain ⟨r, hr_pos, hr_ball⟩ := Metric.isOpen_iff.mp hs_open 0 hs_zero
   exact ⟨r / 2, by linarith, fun q hq hq_ne =>
     hs_prop q (hr_ball (lt_of_le_of_lt (Metric.mem_closedBall.mp hq) (by linarith)))
@@ -215,11 +215,11 @@ private theorem exists_radius_cusp_nonvanishing (hf : f ≠ 0) :
 private noncomputable def heightOfRadius (r : ℝ) : ℝ := -Real.log r / (2 * Real.pi)
 
 /-- For a nonzero modular form, there exists `H > √3/2` with cusp nonvanishing. -/
-private theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
+private theorem exists_height_cusp_nonvanishingFM (hf : f ≠ 0) :
     ∃ H : ℝ, Real.sqrt 3 / 2 < H ∧
       ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H)) →
         q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
-  obtain ⟨r, hr_pos, hr_nonvan⟩ := exists_radius_cusp_nonvanishing f hf
+  obtain ⟨r, hr_pos, hr_nonvan⟩ := exists_radius_cusp_nonvanishingFM f hf
   let H₀ := max (heightOfRadius r) (Real.sqrt 3 / 2 + 1)
   refine ⟨H₀, ?_, ?_⟩
   · calc Real.sqrt 3 / 2 < Real.sqrt 3 / 2 + 1 := by linarith
@@ -243,7 +243,7 @@ private theorem modularFormCompOfComplexFM_eq' (p : ℍ) :
   simp only [modularFormCompOfComplexFM, Function.comp_apply]
   congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
 
-theorem fd_im_gt_half (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
+theorem fd_im_gt_halfFM (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
   by_contra h_le; push_neg at h_le
   obtain ⟨hnormSq, habs_re⟩ := hp
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
@@ -260,7 +260,7 @@ theorem fd_im_gt_half (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := 
 private theorem no_zeros_above_height' (hf : f ≠ 0) :
     ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
       ∀ (p : ℍ), H₀ ≤ (p : ℂ).im → f p ≠ 0 := by
-  obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
+  obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishingFM f hf
   refine ⟨H₀, hH₀_gt, fun p hp hfp => ?_⟩
   have h_eq := SlashInvariantFormClass.eq_cuspFunction f p
       ModularFormClass.one_mem_strictPeriods_SL2Z one_ne_zero
@@ -275,7 +275,7 @@ private theorem no_zeros_above_height' (hf : f ≠ 0) :
   exact hH₀_nonvan _ h_qParam_mem h_qParam_ne (h_eq ▸ hfp)
 
 /-- The set of zeros (with nonzero order) in `𝒟` is finite. -/
-theorem finite_zeros_in_fd (hf : f ≠ 0) :
+theorem finite_zeros_in_fdFM (hf : f ≠ 0) :
     Set.Finite {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt' (⇑f) p ≠ 0} := by
   apply Set.Finite.subset (s := {p : ℍ | p ∈ 𝒟 ∧ f p = 0})
   swap
@@ -291,7 +291,7 @@ theorem finite_zeros_in_fd (hf : f ≠ 0) :
   intro p ⟨hp_fd, hp_zero⟩
   show (p : ℂ) ∈ {z ∈ fdBoxFM (H₀ + 1) | modularFormCompOfComplexFM f z = 0}
   have habs_re := hp_fd.2
-  have him_gt := fd_im_gt_half p hp_fd
+  have him_gt := fd_im_gt_halfFM p hp_fd
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
   have hre := abs_le.mp habs_re
   constructor
@@ -302,52 +302,52 @@ theorem finite_zeros_in_fd (hf : f ≠ 0) :
     exact absurd hp_zero (hH₀_no_zeros p this)
   · exact (modularFormCompOfComplexFM_eq' f p).symm ▸ hp_zero
 
-/-! ### Finite support of ordOrbit -/
+/-! ### Finite support of ordOrbitFM -/
 
-/-- The set of orbits with nonzero `ordOrbit` is finite. -/
-theorem finite_support_ordOrbit (hf : f ≠ 0) :
-    Set.Finite {q : Orbit | ordOrbit f q ≠ 0} := by
-  choose rep hrep using fun q : Orbit => orbit_has_fd_rep q
-  set S := {q : Orbit | ordOrbit f q ≠ 0}
+/-- The set of orbits with nonzero `ordOrbitFM` is finite. -/
+theorem finite_support_ordOrbitFM (hf : f ≠ 0) :
+    Set.Finite {q : OrbitFM | ordOrbitFM f q ≠ 0} := by
+  choose rep hrep using fun q : OrbitFM => orbit_has_fd_repFM q
+  set S := {q : OrbitFM | ordOrbitFM f q ≠ 0}
   have h_image : rep '' S ⊆
       {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt' (⇑f) p ≠ 0} := by
     rintro _ ⟨q, hq, rfl⟩
-    exact ⟨(hrep q).2, by rw [← ordOrbit_mk f (rep q), (hrep q).1]; exact hq⟩
+    exact ⟨(hrep q).2, by rw [← ordOrbit_mkFM f (rep q), (hrep q).1]; exact hq⟩
   have h_inj : Set.InjOn rep S := by
     intro q₁ _ q₂ _ h
-    have : orb (rep q₁) = orb (rep q₂) := congrArg orb h
+    have : orbFM (rep q₁) = orbFM (rep q₂) := congrArg orbFM h
     rw [(hrep q₁).1, (hrep q₂).1] at this; exact this
-  exact (finite_zeros_in_fd f hf).subset h_image |>.of_finite_image h_inj
+  exact (finite_zeros_in_fdFM f hf).subset h_image |>.of_finite_image h_inj
 
-/-- The set of non-elliptic orbits with nonzero `ordOrbit` is finite. -/
-theorem finite_support_ordOrbit_nonEll (hf : f ≠ 0) :
-    Set.Finite {q : NonEllOrbit | ordOrbit f q.val ≠ 0} := by
-  apply Set.Finite.subset ((finite_support_ordOrbit f hf).preimage
-      (fun (a : NonEllOrbit) _ (b : NonEllOrbit) _ h =>
+/-- The set of non-elliptic orbits with nonzero `ordOrbitFM` is finite. -/
+theorem finite_support_ordOrbit_nonEllFM (hf : f ≠ 0) :
+    Set.Finite {q : NonEllOrbitFM | ordOrbitFM f q.val ≠ 0} := by
+  apply Set.Finite.subset ((finite_support_ordOrbitFM f hf).preimage
+      (fun (a : NonEllOrbitFM) _ (b : NonEllOrbitFM) _ h =>
         Subtype.val_injective h))
   intro ⟨q, hq_ne⟩ hq_ord
   simp only [Set.mem_preimage, Set.mem_setOf_eq] at hq_ord ⊢
   exact hq_ord
 
-/-! ### The canonical zero set s₀ -/
+/-! ### The canonical zero set s₀FM -/
 
 /-- The canonical finite set of zeros (with nonzero order) in `𝒟`. -/
-noncomputable def s₀ (hf : f ≠ 0) : Finset ℍ := (finite_zeros_in_fd f hf).toFinset
+noncomputable def s₀FM (hf : f ≠ 0) : Finset ℍ := (finite_zeros_in_fdFM f hf).toFinset
 
 /-- Every point in `s₀` lies in the fundamental domain `𝒟`. -/
-theorem s₀_mem_fd (hf : f ≠ 0) : ∀ p ∈ s₀ f hf, p ∈ 𝒟 := by
-  intro p hp; rw [s₀, Set.Finite.mem_toFinset] at hp; exact hp.1
+theorem s₀FM_mem_fd (hf : f ≠ 0) : ∀ p ∈ s₀FM f hf, p ∈ 𝒟 := by
+  intro p hp; rw [s₀FM, Set.Finite.mem_toFinset] at hp; exact hp.1
 
 /-- `s₀` captures all points in `𝒟` with nonzero order of vanishing. -/
-theorem s₀_complete (hf : f ≠ 0) :
-    ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ s₀ f hf := by
-  intro p hp hord; rw [s₀, Set.Finite.mem_toFinset]; exact ⟨hp, hord⟩
+theorem s₀FM_complete (hf : f ≠ 0) :
+    ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ s₀FM f hf := by
+  intro p hp hord; rw [s₀FM, Set.Finite.mem_toFinset]; exact ⟨hp, hord⟩
 
 /-! ### Elliptic orbit T-equivalence -/
 
 /-- The orbit of `ρ+1` equals the orbit of `ρ`. -/
-theorem orb_rho_plus_one_eq_orb_rho :
-    orb ellipticPointRhoPlusOne' = (orho : Orbit) := by
+theorem orb_rho_plus_one_eq_orb_rhoFM :
+    orbFM ellipticPointRhoPlusOne' = (orhoFM : OrbitFM) := by
   show Quotient.mk'' ellipticPointRhoPlusOne' = Quotient.mk'' ellipticPointRho'
   rw [Quotient.eq'']
   rw [MulAction.orbitRel_apply, MulAction.mem_orbit_iff]

@@ -743,7 +743,7 @@ theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
 
 /-- Helper: for `a, b : ℂ` with both having positive real part,
 `log(a/b) = log(a) - log(b)`. -/
-private lemma log_div_of_re_pos {a b : ℂ} (ha : 0 < a.re) (hb : 0 < b.re) :
+private lemma log_div_of_re_posFM {a b : ℂ} (ha : 0 < a.re) (hb : 0 < b.re) :
     Complex.log (a / b) = Complex.log a - Complex.log b := by
   have ha_ne : a ≠ 0 := by intro h; simp [h] at ha
   have hb_ne : b ≠ 0 := by intro h; simp [h] at hb
@@ -917,7 +917,7 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
       have hθ₀_Icc : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
       have h_cos := Real.strictAntiOn_cos hθ₀_Icc h_t_Icc h_t_arc
       linarith
-    rw [← log_div_of_re_pos h_a_re h_b_re]
+    rw [← log_div_of_re_posFM h_a_re h_b_re]
     rw [h_ratio]
   exact h_ratio_tendsto.congr' h_eventually_eq
 

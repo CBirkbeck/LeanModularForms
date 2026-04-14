@@ -113,7 +113,7 @@ private theorem seg2_ftc_I (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 1/5)
       (fdBoundaryFun H t - I) =
       Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
       Complex.log (fdBoundaryFun H (1/5) - I) :=
-  LogDerivFTCFM.ftc_log_piece (by linarith)
+  LogDerivFTCFM.ftc_log_pieceFM (by linarith)
     arcRef_I_contDiff.continuous.continuousOn
     (fun t _ => arcRef_I_contDiff.differentiable (by norm_num) |>.differentiableAt)
     (arcRef_I_contDiff.continuous_deriv le_top).continuousOn
@@ -268,7 +268,7 @@ private theorem seg5_ftc_full_I (H : ℝ) (hH : 1 < H) :
       (fdBoundaryFun H t - I) =
       Complex.log (fdBoundaryFun H 1 - I) -
       Complex.log (fdBoundaryFun H (4/5) - I) :=
-  LogDerivFTCFM.ftc_log_piece (by norm_num)
+  LogDerivFTCFM.ftc_log_pieceFM (by norm_num)
     (seg5Ref_I_contDiff H).continuous.continuousOn
     (fun t _ => (seg5Ref_I_contDiff H).differentiable (by norm_num) |>.differentiableAt)
     ((seg5Ref_I_contDiff H).continuous_deriv le_top).continuousOn
@@ -280,7 +280,7 @@ private theorem seg5_ftc_full_I (H : ℝ) (hH : 1 < H) :
 
 /-! ## Part 3: Branch correction lemmas -/
 
-private lemma log_neg_eq_add_pi_I {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : z.im < 0) :
+private lemma log_neg_eq_add_pi_IFM {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : z.im < 0) :
     Complex.log (-z) = Complex.log z + ↑Real.pi * I := by
   show ↑(Real.log ‖-z‖) + ↑((-z).arg) * I =
     ↑(Real.log ‖z‖) + ↑z.arg * I + ↑Real.pi * I
@@ -348,7 +348,7 @@ private lemma right_integral_34_branch_corrected (H : ℝ) (hH : 1 < H) {δ : �
       Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
   have h_branch_2pδ : Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) =
       Complex.log (fdBoundaryFun H (2/5 + δ) - I) + ↑Real.pi * I :=
-    log_neg_eq_add_pi_I (fdBoundaryFun_sub_i_ne_zero_seg3 H _ (by linarith) (by linarith))
+    log_neg_eq_add_pi_IFM (fdBoundaryFun_sub_i_ne_zero_seg3 H _ (by linarith) (by linarith))
       (fdBoundary_sub_I_at_2p_im_neg H hδ hδ')
   have h45_ne : fdBoundaryFun H (4/5) - I ≠ 0 := by
     intro h; have := fdBoundary_sub_I_at_45_im_pos H hH

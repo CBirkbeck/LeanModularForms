@@ -34,7 +34,7 @@ and log-derivative FTC. These are the building blocks for computing integrals of
 * `ftc_log_on_segment` — combined integrability + FTC for a single C^1 function
 * `ftc_log_neg_on_segment` — same when `-f` stays in slitPlane
 * `integral_logDeriv_eq_neg_log_sub` — bare FTC when `-f` stays in slitPlane
-* `ftc_log_piece` — combined integrability + FTC when `f` and `g` agree a.e.
+* `ftc_log_pieceFM` — combined integrability + FTC when `f` and `g` agree a.e.
 
 ## References
 
@@ -275,7 +275,7 @@ Given a "reference" function `h` (C^1 with values in slitPlane) and a function `
 that agrees with `h` on `(a,b)` up to a null set (with matching endpoint values),
 both `∫ g'/g` and `∫ h'/h` are interval integrable and equal
 `Complex.log(g b) - Complex.log(g a)`. -/
-theorem ftc_log_piece {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
+theorem ftc_log_pieceFM {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
     (hh_cont : ContinuousOn h (Icc a b))
     (hh_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ h t)
     (hh_deriv_cont : ContinuousOn (deriv h) (Icc a b))
