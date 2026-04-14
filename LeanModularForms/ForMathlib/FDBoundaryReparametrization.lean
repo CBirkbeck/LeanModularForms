@@ -22,7 +22,7 @@ chains until the residue side is fully ported to the ForMathlib chain.
 
 * `fdBoundaryFun_eq_fdBoundary_H_scaled` — the key reparametrization identity
 * `fdBoundaryFun_eq_comp` — the equation as a function composition
-* `deriv_fdBoundaryFun_eq` — derivative of fdBoundaryFun at non-partition points
+* `fdBoundaryFun_integral_eq_fdBoundary_H_integral` — integral change of variables
 -/
 
 open Complex MeasureTheory Set Filter Topology
@@ -61,5 +61,19 @@ theorem fdBoundaryFun_eq_fdBoundary_H_scaled (H : ℝ) (t : ℝ) :
 theorem fdBoundaryFun_eq_comp (H : ℝ) :
     fdBoundaryFun H = fun t => fdBoundary_H H (5 * t) :=
   funext (fdBoundaryFun_eq_fdBoundary_H_scaled H)
+
+/-! ### Integral change of variables for `[0, 1] ↔ [0, 5]` -/
+
+/-- Linear change-of-variable identity:
+`∫_{0}^{5} F u du = 5 * ∫_{0}^{1} F(5t) dt`.
+
+This is a specialization of `intervalIntegral.smul_integral_comp_mul_add`
+with `c = 5, d = 0, a = 0, b = 1`. -/
+theorem integral_zero_to_five_eq_five_smul_zero_to_one (F : ℝ → ℂ) :
+    ∫ u in (0 : ℝ)..5, F u = (5 : ℝ) • ∫ t in (0 : ℝ)..1, F (5 * t) := by
+  have h := intervalIntegral.smul_integral_comp_mul_add (a := (0 : ℝ)) (b := 1) F
+    (5 : ℝ) (0 : ℝ)
+  simp only [add_zero, mul_zero, mul_one] at h
+  exact h.symm
 
 end
