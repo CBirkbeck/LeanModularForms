@@ -187,4 +187,42 @@ theorem hasCauchyPV_of_cauchyPV'_tendsto
   simp only [HasCauchyPV]
   exact (h_old.congr h_eq)
 
+/-! ### Multi-point CPV integrand equivalence -/
+
+/-- Multi-point version: the integrand at parameter `t` on the new chain
+equals 5 times the integrand at parameter `5*t` on the old chain. -/
+theorem cpvIntegrandOn_fdBoundaryFun_eq_smul_fdBoundary_H
+    (S : Finset ℂ) (f : ℂ → ℂ) (ε : ℝ) (t : ℝ) (H : ℝ) :
+    cpvIntegrandOn S f (fdBoundaryFun H) ε t =
+    (5 : ℂ) * (if ∃ s ∈ S, ‖fdBoundary_H H (5 * t) - s‖ ≤ ε then 0
+      else f (fdBoundary_H H (5 * t)) * deriv (fdBoundary_H H) (5 * t)) := by
+  simp only [cpvIntegrandOn]
+  rw [fdBoundaryFun_eq_fdBoundary_H_scaled, deriv_fdBoundaryFun_eq]
+  split_ifs with h
+  · ring
+  · ring
+
+/-- Multi-point integral equivalence: the integral over `[0, 5]` of the
+old-chain CPV integrand equals the integral over `[0, 1]` of the new-chain
+`cpvIntegrandOn` integrand. -/
+theorem integral_cpvIntegrandOn_fdBoundary_H_eq_fdBoundaryFun
+    (S : Finset ℂ) (f : ℂ → ℂ) (ε : ℝ) (H : ℝ) :
+    ∫ u in (0 : ℝ)..5,
+      (if ∃ s ∈ S, ‖fdBoundary_H H u - s‖ ≤ ε then 0
+        else f (fdBoundary_H H u) * deriv (fdBoundary_H H) u) =
+    ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f (fdBoundaryFun H) ε t := by
+  have h_left : (∫ u in (0 : ℝ)..5,
+      (if ∃ s ∈ S, ‖fdBoundary_H H u - s‖ ≤ ε then 0
+        else f (fdBoundary_H H u) * deriv (fdBoundary_H H) u)) =
+      ∫ t in (0 : ℝ)..1, (5 : ℂ) *
+        (if ∃ s ∈ S, ‖fdBoundary_H H (5 * t) - s‖ ≤ ε then 0
+          else f (fdBoundary_H H (5 * t)) * deriv (fdBoundary_H H) (5 * t)) := by
+    rw [integral_zero_to_five_eq_five_smul_zero_to_one]
+    rw [show ∀ v : ℂ, ((5 : ℝ) • v) = (5 : ℂ) * v from fun v => by
+      rw [Complex.real_smul]; push_cast; ring]
+    exact (intervalIntegral.integral_const_mul (5 : ℂ) _).symm
+  rw [h_left]
+  exact intervalIntegral.integral_congr (fun t _ =>
+    (cpvIntegrandOn_fdBoundaryFun_eq_smul_fdBoundary_H S f ε t H).symm)
+
 end
