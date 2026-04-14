@@ -147,7 +147,7 @@ theorem valence_formula_unconditional_mkD {k : ℤ}
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 :=
   valence_formula_of_two_sides_Hgt1 f S hS hS_complete
-    (fun H hH => fdWindingDataFull_unconditional hH)
+    (fun _ hH => fdWindingDataFull_unconditional hH)
     H_S hH_S F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod
 
 end
