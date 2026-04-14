@@ -297,6 +297,73 @@ theorem generalizedWindingNumber_eq_of_agreement
     generalizedWindingNumber γ z₀ = w :=
   (hasGeneralizedWindingNumber_of_cauchyPrincipalValueExists'_tendsto γ hγ h_old).eq
 
+/-- **Reverse bridge**: from a new-chain `HasGeneralizedWindingNumber` (with a
+known value `w`), derive the old chain's `generalizedWindingNumber' = w`.
+
+This is the per-point converter: if the new chain proves a winding number value,
+the old chain's parametrization gives the same value. -/
+theorem generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber
+    {H : ℝ}
+    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
+    {z₀ w : ℂ} (h : HasGeneralizedWindingNumber γ z₀ w) :
+    generalizedWindingNumber' (fdBoundary_H H) 0 5 z₀ = w := by
+  -- Unfold HasGeneralizedWindingNumber to get HasCauchyPV
+  simp only [HasGeneralizedWindingNumber, HasCauchyPV] at h
+  -- The old chain integrand equals the new chain integrand (after change of vars)
+  have h_eq : ∀ ε : ℝ,
+      (∫ t in (0 : ℝ)..1, cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t) =
+      ∫ t in (0 : ℝ)..5,
+        if ‖fdBoundary_H H t - z₀‖ > ε then
+          (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t
+        else 0 := by
+    intro ε
+    -- Step 1: rewrite γ.extend to fdBoundaryFun H via a.e. equality
+    have h_step1 : (∫ t in (0 : ℝ)..1,
+        cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t) =
+        ∫ t in (0 : ℝ)..1,
+        cpvIntegrand (fun z => (z - z₀)⁻¹) (fdBoundaryFun H) z₀ ε t := by
+      apply intervalIntegral.integral_congr_ae
+      filter_upwards [compl_mem_ae_iff.mpr (measure_singleton 1)] with t ht_ne_1 ht_mem
+      rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht_mem
+      have ht_open : t ∈ Ioo (0 : ℝ) 1 :=
+        ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 fun h => ht_ne_1 (mem_singleton_iff.mpr h)⟩
+      have ht_icc : t ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht_open
+      show cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t =
+        cpvIntegrand (fun z => (z - z₀)⁻¹) (fdBoundaryFun H) z₀ ε t
+      simp only [cpvIntegrand, hγ t ht_icc]
+      have hee : γ.toPath.extend =ᶠ[𝓝 t] fdBoundaryFun H := by
+        filter_upwards [Ioo_mem_nhds ht_open.1 ht_open.2] with s hs
+        exact hγ s (Ioo_subset_Icc_self hs)
+      rw [hee.symm.deriv_eq]
+    rw [h_step1, ← integral_cpvIntegrand_fdBoundary_H_eq_fdBoundaryFun
+      (fun z => (z - z₀)⁻¹) z₀ ε H]
+  -- Convert h to old chain Tendsto via h_eq
+  have h_old : Tendsto (fun ε =>
+      ∫ t in (0 : ℝ)..5,
+        if ‖fdBoundary_H H t - z₀‖ > ε then
+          (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t
+        else 0) (𝓝[>] 0) (𝓝 (2 * ↑Real.pi * I * w)) :=
+    h.congr h_eq
+  -- Extract the limit value
+  have h_pv_val : cauchyPrincipalValue' (·⁻¹) (fun t => fdBoundary_H H t - z₀) 0 5 0 =
+      2 * ↑Real.pi * I * w := by
+    simp only [cauchyPrincipalValue']
+    have h_old' : Tendsto (fun ε =>
+        ∫ t in (0 : ℝ)..5, if ‖(fun t => fdBoundary_H H t - z₀) t - 0‖ > ε
+          then (fun w => w⁻¹) ((fun t => fdBoundary_H H t - z₀) t) *
+               deriv (fun t => fdBoundary_H H t - z₀) t else 0)
+        (𝓝[>] 0) (𝓝 (2 * ↑Real.pi * I * w)) := by
+      refine h_old.congr' ?_
+      filter_upwards with ε
+      apply intervalIntegral.integral_congr
+      intro t _
+      simp only [sub_zero, deriv_sub_const]
+    exact h_old'.limUnder_eq
+  -- Apply the definition of gWN'
+  simp only [generalizedWindingNumber', h_pv_val]
+  field_simp [Complex.two_pi_I_ne_zero]
+
 /-- When the old chain's `cauchyPrincipalValueExists'` for the winding integrand
 has an old-chain value, the new chain's `generalizedWindingNumber` equals the
 old chain's `generalizedWindingNumber'`. -/

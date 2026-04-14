@@ -69,55 +69,108 @@ theorem valence_formula_textbook_unconditional_FM
     cpv_residue_side_HasCauchyPVOn f hf S hS hS_complete
   obtain ⟨H₀_mod, hH₀_mod, h_mod_bridge⟩ :=
     cpv_modular_side_HasCauchyPVOn f hf S hS hS_complete
-  -- Pick max(H₀_res, H₀_mod, 1) + 1 to get H > 1 and above both H₀'s
-  set H_res := max (max H₀_res H₀_mod) 1 + 1 with hH_res_def
+  -- Pick max(H₀_res, H₀_mod, H_S, 1) + 1 to get H > 1 and above all bounds
+  set H_res := max (max (max H₀_res H₀_mod) H_S) 1 + 1 with hH_res_def
   have hH_res_gt : (1 : ℝ) < H_res := by
     rw [hH_res_def]
-    have h1 : (1 : ℝ) ≤ max (max H₀_res H₀_mod) 1 := le_max_right _ _
+    have h1 : (1 : ℝ) ≤ max (max (max H₀_res H₀_mod) H_S) 1 := le_max_right _ _
     linarith
   have hH₀_res_le : H₀_res ≤ H_res := by
     rw [hH_res_def]
     have h1 : H₀_res ≤ max H₀_res H₀_mod := le_max_left _ _
-    have h2 : max H₀_res H₀_mod ≤ max (max H₀_res H₀_mod) 1 := le_max_left _ _
+    have h2 : max H₀_res H₀_mod ≤ max (max H₀_res H₀_mod) H_S := le_max_left _ _
+    have h3 : max (max H₀_res H₀_mod) H_S ≤ max (max (max H₀_res H₀_mod) H_S) 1 :=
+      le_max_left _ _
     linarith
   have hH₀_mod_le : H₀_mod ≤ H_res := by
     rw [hH_res_def]
     have h1 : H₀_mod ≤ max H₀_res H₀_mod := le_max_right _ _
-    have h2 : max H₀_res H₀_mod ≤ max (max H₀_res H₀_mod) 1 := le_max_left _ _
+    have h2 : max H₀_res H₀_mod ≤ max (max H₀_res H₀_mod) H_S := le_max_left _ _
+    have h3 : max (max H₀_res H₀_mod) H_S ≤ max (max (max H₀_res H₀_mod) H_S) 1 :=
+      le_max_left _ _
+    linarith
+  have hH_S_le : H_S ≤ H_res := by
+    rw [hH_res_def]
+    have h1 : H_S ≤ max (max H₀_res H₀_mod) H_S := le_max_right _ _
+    have h2 : max (max H₀_res H₀_mod) H_S ≤ max (max (max H₀_res H₀_mod) H_S) 1 :=
+      le_max_left _ _
     linarith
   -- Apply valence_formula_unconditional_mkD with explicit residue/modular sides
   refine valence_formula_unconditional_mkD f S hS hS_complete H_S hH_S (F_int_FM f S)
     H_res hH_res_gt ?_ H_res hH_res_gt ?_
   · -- Residue side: F_int → 2πi · Σ gWN · ord
-    -- Strategy: use uniqueness of limits via Tendsto.unique
     intro H hH_ge hH
     have hH_ge_res : H₀_res ≤ H := le_trans hH₀_res_le hH_ge
-    have hH_ge_mod : H₀_mod ≤ H := le_trans hH₀_mod_le hH_ge
     set γ := (fdWindingDataFull_unconditional hH).boundary with hγ_def
     have hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t :=
       (fdWindingDataFull_unconditional hH).boundary_eq
-    -- Use the modular side bridge to get the value of the limit (which doesn't
-    -- involve winding numbers). By uniqueness, the residue side limit equals
-    -- the modular side limit, and we can derive the new-chain residue side
-    -- from the modular side.
-    -- Simpler: use the residue bridge directly and rewrite the equivalent value
     have h_pv := h_res_bridge hH_ge_res γ hγ
-    have h_pv_mod := h_mod_bridge hH_ge_mod γ hγ
-    -- Both h_pv and h_pv_mod give Tendsto for the same function.
-    -- By uniqueness of limits:
-    --   2πi * Σ gWN' s * ord = -(2πi * (k/12 - ord_cusp))
-    have h_unique : (2 * ↑Real.pi * I *
-        ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+    -- Use the reverse bridge to convert old chain gWN' to new chain gWN
+    -- For each s, gWN' γ s = gWN γ s (via generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber)
+    -- This requires HasGeneralizedWindingNumber γ s w, which we get from FDWindingDataFull
+    have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
+      lt_of_lt_of_le (hH_S s hs) (le_trans hH_S_le hH_ge)
+    -- For each s ∈ S ⊆ 𝒟, derive gWN' = gWN via the per-point bridge
+    have h_gwn_eq : ∀ s ∈ S,
+        generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) =
+        generalizedWindingNumber γ (↑s : ℂ) := by
+      intro s hs_S
+      have hs_fd := hS s hs_S
+      have hs_im_lt : (s : ℂ).im < H := hH_above s hs_S
+      -- Get HasGeneralizedWindingNumber γ s w via case split
+      -- Cases: s = i, s = ρ, s = ρ+1, strict interior, or boundary
+      by_cases hsi : (s : ℂ) = I
+      · -- Case: s = i
+        have h_gwn : HasGeneralizedWindingNumber γ (↑s : ℂ) (-1/2) := by
+          rw [hsi, hγ_def]; exact (fdWindingDataFull_unconditional hH).winding_at_i
+        rw [generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber γ hγ h_gwn,
+            ← h_gwn.eq]
+      · by_cases hsρ : (s : ℂ) = ellipticPointRho
+        · have h_gwn : HasGeneralizedWindingNumber γ (↑s : ℂ) (-1/6) := by
+            rw [hsρ, hγ_def]; exact (fdWindingDataFull_unconditional hH).winding_at_rho
+          rw [generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber γ hγ h_gwn,
+              ← h_gwn.eq]
+        · by_cases hsρ1 : (s : ℂ) = ellipticPointRhoPlusOne
+          · have h_gwn : HasGeneralizedWindingNumber γ (↑s : ℂ) (-1/6) := by
+              rw [hsρ1, hγ_def]
+              exact (fdWindingDataFull_unconditional hH).winding_at_rho_plus_one
+            rw [generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber γ hγ h_gwn,
+                ← h_gwn.eq]
+          · -- Non-elliptic case: either strict interior or boundary
+            by_cases hint : ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2
+            · -- Strict interior
+              have h_gwn : HasGeneralizedWindingNumber γ (↑s : ℂ) (-1) := by
+                rw [hγ_def]
+                exact (fdWindingDataFull_unconditional hH).toFDWindingData.interior_winding
+                  (↑s : ℂ) hint.1 hint.2 s.2 hs_im_lt
+              rw [generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber γ hγ h_gwn,
+                  ← h_gwn.eq]
+            · -- On boundary (non-elliptic non-interior)
+              have h_normSq : Complex.normSq (s : ℂ) ≥ 1 := hs_fd.1
+              have h_gwn : HasGeneralizedWindingNumber γ (↑s : ℂ) (-1/2) := by
+                rw [hγ_def]
+                exact (fdWindingDataFull_unconditional hH).boundary_winding
+                  (↑s : ℂ) s.2 hs_im_lt hsi hsρ hsρ1 hint h_normSq hs_fd.2
+              rw [generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber γ hγ h_gwn,
+                  ← h_gwn.eq]
+    -- Sum equality follows
+    have h_sum_eq :
+        (∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
           (orderOfVanishingAt' (⇑f) s : ℂ)) =
-      -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) := by
-      simp only [HasCauchyPVOn] at h_pv h_pv_mod
-      exact tendsto_nhds_unique h_pv h_pv_mod
-    -- We want to show the residue side limit equals 2πi * Σ gWN γ s * ord
-    -- The actual value is determined by the modular side, not the winding numbers
-    -- We need: gWN γ s value such that the sum equals the modular side value
-    -- This is exactly what valence_formula_unconditional_mkD wants on the residue side
-    -- For now, leave as a sorry that relates the two winding number forms
-    sorry
+        ∑ s ∈ S, generalizedWindingNumber γ (↑s : ℂ) *
+          (orderOfVanishingAt' (⇑f) s : ℂ) := by
+      apply Finset.sum_congr rfl
+      intro s hs
+      rw [h_gwn_eq s hs]
+    -- Convert the limit value
+    have h_F_eq : F_int_FM f S H = fun ε =>
+      ∫ t in (0 : ℝ)..1,
+        cpvIntegrandOn (sArcOfS S ∪ sVertOfS S)
+          (logDeriv (modularFormCompOfComplex f)) γ.toPath.extend ε t := by
+      funext ε
+      simp only [F_int_FM, dif_pos hH, hγ_def]
+    rw [h_F_eq, ← h_sum_eq]
+    exact h_pv
   · -- Modular side: F_int → -(2πi * (k/12 - ord_cusp))
     intro H hH_ge hH
     have hH_ge_mod : H₀_mod ≤ H := le_trans hH₀_mod_le hH_ge

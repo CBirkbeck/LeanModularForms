@@ -55,45 +55,27 @@ with `h` analytic at `z₀`. From Mathlib's factorization `f =ᶠ (z - z₀)⁻�
 at `z₀` by the removable singularity theorem (since `g` is analytic, the difference quotient
 extends analytically). -/
 
-/-- Helper: if `g` is analytic at `z₀`, then `(g z - g z₀) / (z - z₀)` is analytic at `z₀`.
+/-- Helper: if `g` is analytic at `z₀`, then there exists an analytic `h` at `z₀`
+that equals `(g z - g z₀) / (z - z₀)` for all `z` in a punctured neighborhood of `z₀`.
 
-This is the removable singularity for the difference quotient. The limit at `z₀` is
-`deriv g z₀`, and the function is analytic away from `z₀`. By the analytic order
-factorization, `g z - g z₀ = (z - z₀) • h z` with `h` analytic (since `g z - g z₀`
-vanishes at `z₀`), so the quotient is just `h`. -/
-private theorem analyticAt_diff_quot (g : ℂ → ℂ) (z₀ : ℂ) (hg : AnalyticAt ℂ g z₀) :
-    AnalyticAt ℂ (fun z => (g z - g z₀) / (z - z₀)) z₀ := by
-  -- g is analytic at z₀, so g z - g z₀ is analytic and vanishes at z₀.
-  -- By natCast_le_analyticOrderAt, since the order is ≥ 1, we get
-  -- g z - g z₀ = (z - z₀)^1 • h(z) near z₀ for some analytic h.
-  -- Then (g z - g z₀) / (z - z₀) =ᶠ h(z), so it's analytic.
+NOTE: We cannot directly claim `(fun z => (g z - g z₀) / (z - z₀))` is analytic at `z₀`,
+because that function evaluates to `0/0 = 0` at `z = z₀` by Lean's convention, while
+the analytic extension's value at `z₀` is `deriv g z₀` (generally nonzero). The two
+agree only on the PUNCTURED neighborhood. -/
+private theorem exists_analytic_diff_quot (g : ℂ → ℂ) (z₀ : ℂ) (hg : AnalyticAt ℂ g z₀) :
+    ∃ h : ℂ → ℂ, AnalyticAt ℂ h z₀ ∧
+      ∀ᶠ z in 𝓝[≠] z₀, (g z - g z₀) / (z - z₀) = h z := by
   have h_an : AnalyticAt ℂ (fun z => g z - g z₀) z₀ := hg.sub analyticAt_const
-  -- The analytic order is ≥ 1 since the function vanishes at z₀
   have h_ord : 1 ≤ analyticOrderAt (fun z => g z - g z₀) z₀ := by
     rw [← not_lt, ENat.lt_one_iff_eq_zero]
     exact h_an.analyticOrderAt_ne_zero.mpr (by simp)
-  -- Extract the factorization: g z - g z₀ = (z - z₀) • h(z) near z₀
-  obtain ⟨h_fn, hh_an, hh_eq⟩ :=
-    (natCast_le_analyticOrderAt h_an).mp h_ord
-  -- The quotient equals h near z₀
-  have h_ev : (fun z => (g z - g z₀) / (z - z₀)) =ᶠ[𝓝 z₀] h_fn := by
-    filter_upwards [hh_eq] with z hz
-    simp only [pow_one, smul_eq_mul] at hz
-    by_cases hzsub : z - z₀ = 0
-    · -- At z = z₀, both sides are determined by continuity
-      have hzeq : z = z₀ := sub_eq_zero.mp hzsub
-      rw [hzsub, div_zero]
-      rw [hzeq, sub_self, zero_mul] at hz
-      -- h_fn z₀ could be anything; we need the congr to handle this
-      -- Actually at z₀: numerator is 0, denominator is 0, so div = 0
-      -- and h z₀ = (g z₀ - g z₀) / (z₀ - z₀) = 0/0 = 0 by convention
-      -- But h_fn z₀ might not be 0. Use the eventually-eq approach.
-      -- Since the set {z₀} has empty interior, the eq holds ae.
-      -- Actually filter_upwards gives z from nhds z₀ which includes z₀.
-      -- We need to handle z = z₀ specially.
-      sorry
-    · rw [hz, mul_div_cancel_left₀ _ hzsub]
-  exact (analyticAt_congr h_ev).mpr hh_an
+  obtain ⟨h_fn, hh_an, hh_eq⟩ := (natCast_le_analyticOrderAt h_an).mp h_ord
+  refine ⟨h_fn, hh_an, ?_⟩
+  rw [eventually_nhdsWithin_iff]
+  filter_upwards [hh_eq] with z hz hne
+  simp only [pow_one, smul_eq_mul] at hz
+  have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
+  rw [hz, mul_div_cancel_left₀ _ hzsub]
 
 /-- If `f` is meromorphic at `z₀` with order exactly `-1` (simple pole), then
 `f` satisfies the project's `HasSimplePoleAt` decomposition with coefficient `g(z₀)`,
@@ -102,12 +84,15 @@ theorem hasSimplePoleAt_of_meromorphicAt_order_neg_one (f : ℂ → ℂ) (z₀ :
     (hf : MeromorphicAt f z₀) (hord : meromorphicOrderAt f z₀ = (-1 : ℤ)) :
     HasSimplePoleAt f z₀ := by
   obtain ⟨g, hg_an, _hg_ne, hg_eq⟩ := (meromorphicOrderAt_eq_int_iff hf).mp hord
-  -- Decompose g(z)/(z - z₀) = g(z₀)/(z - z₀) + (g(z) - g(z₀))/(z - z₀)
-  refine ⟨g z₀, fun z => (g z - g z₀) / (z - z₀), analyticAt_diff_quot g z₀ hg_an, ?_⟩
-  filter_upwards [hg_eq, self_mem_nhdsWithin] with z hz hne
+  -- Decompose g(z)/(z - z₀) = g(z₀)/(z - z₀) + h(z) where h is the analytic
+  -- factor of g(z) - g(z₀).
+  obtain ⟨h_fn, hh_an, hh_eq⟩ := exists_analytic_diff_quot g z₀ hg_an
+  refine ⟨g z₀, h_fn, hh_an, ?_⟩
+  filter_upwards [hg_eq, hh_eq, self_mem_nhdsWithin] with z hz hh_z hne
   have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
   rw [hz]
   simp only [zpow_neg_one, smul_eq_mul]
+  rw [← hh_z]
   field_simp
   ring
 
@@ -121,12 +106,13 @@ theorem residueSimplePole_eq_of_meromorphicAt_order_neg_one (f : ℂ → ℂ) (z
     (g : ℂ → ℂ) (hg_an : AnalyticAt ℂ g z₀) (_hg_ne : g z₀ ≠ 0)
     (hg_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = (z - z₀) ^ (-1 : ℤ) • g z) :
     residueSimplePole f z₀ = g z₀ := by
-  apply residueSimplePole_eq_of_decomposition f z₀ (g z₀)
-    (fun z => (g z - g z₀) / (z - z₀)) (analyticAt_diff_quot g z₀ hg_an)
-  filter_upwards [hg_eq, self_mem_nhdsWithin] with z hz hne
+  obtain ⟨h_fn, hh_an, hh_eq⟩ := exists_analytic_diff_quot g z₀ hg_an
+  apply residueSimplePole_eq_of_decomposition f z₀ (g z₀) h_fn hh_an
+  filter_upwards [hg_eq, hh_eq, self_mem_nhdsWithin] with z hz hh_z hne
   have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
   rw [hz]
   simp only [zpow_neg_one, smul_eq_mul]
+  rw [← hh_z]
   field_simp
   ring
 
