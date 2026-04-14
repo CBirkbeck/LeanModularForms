@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.BoundaryWindingSeg1Proof
+import LeanModularForms.ForMathlib.SegmentAnalysis
 import LeanModularForms.ForMathlib.SegmentFTC
 import LeanModularForms.ForMathlib.WindingWeightProofs
 
@@ -748,7 +749,116 @@ theorem fdBoundary_ftc_telescope_seg1 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   rw [h_alg]
   exact seg1_log_diff_eq_neg_pi_I hH hz_re hδ_pos
 
+/-! ### Final assembly: the ArcFTCHyp for seg1 -/
+
+/-- The full `ArcFTCHyp` at any seg1 interior point, with limit `-π · I`. -/
+def arcFTCHyp_seg1 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
+    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
+    {z₀ : ℂ} (hz_re : z₀.re = 1/2)
+    (hc_lo : Real.sqrt 3 / 2 < z₀.im) (hc_hi : z₀.im < H) :
+    ArcFTCHyp γ z₀ (seg1T₀ H z₀.im) (linDelta (seg1Speed H))
+      (seg1Threshold H z₀) (-(↑Real.pi * I)) where
+  E := fun _ => -(↑Real.pi * I)
+  h_ftc := by
+    intro ε hε hε_thr
+    have hK_pos : 0 < seg1Speed H := seg1Speed_pos hH
+    have h_lin_pos : 0 < linDelta (seg1Speed H) ε := linDelta_pos hK_pos hε
+    -- ε bounds derived from threshold
+    have h_eps_top : ε < H - z₀.im :=
+      lt_of_lt_of_le hε_thr (min_le_right _ _)
+    have h_eps_arc : ε < ‖z₀‖ - 1 :=
+      lt_of_lt_of_le hε_thr (le_trans (min_le_left _ _) (min_le_left _ _))
+    have h_eps_width : ε < z₀.im - Real.sqrt 3 / 2 :=
+      lt_of_lt_of_le h_eps_arc (norm_sub_one_le_im_sub_sqrt3 hz_re hc_lo.le)
+    have h_lin_lt_t₀ : linDelta (seg1Speed H) ε < seg1T₀ H z₀.im := by
+      unfold linDelta
+      rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_t₀ hH]
+      exact h_eps_top
+    have h_lin_lt_one_fifth_sub :
+        linDelta (seg1Speed H) ε < 1/5 - seg1T₀ H z₀.im := by
+      unfold linDelta
+      rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_one_fifth_sub_t₀ hH]
+      exact h_eps_width
+    -- Transfer to fdBoundaryFun-based integrand
+    have h_t₀_pos : 0 < seg1T₀ H z₀.im := seg1T₀_pos hH hc_hi
+    have h_t₀_lt : seg1T₀ H z₀.im < 1/5 := seg1T₀_lt_one_fifth hH hc_lo
+    rw [transfer_integral z₀ (by linarith) (le_refl 0) (by linarith) hγ,
+        transfer_integral z₀ (by linarith) (by linarith) (le_refl 1) hγ]
+    exact fdBoundary_ftc_telescope_seg1 hH hz_re hc_lo hc_hi h_lin_pos
+      h_lin_lt_t₀ h_lin_lt_one_fifth_sub
+  hint_left := by
+    intro ε hε hε_thr
+    have hK_pos : 0 < seg1Speed H := seg1Speed_pos hH
+    have h_lin_pos : 0 < linDelta (seg1Speed H) ε := linDelta_pos hK_pos hε
+    have h_eps_top : ε < H - z₀.im :=
+      lt_of_lt_of_le hε_thr (min_le_right _ _)
+    have h_eps_arc : ε < ‖z₀‖ - 1 :=
+      lt_of_lt_of_le hε_thr (le_trans (min_le_left _ _) (min_le_left _ _))
+    have h_eps_width : ε < z₀.im - Real.sqrt 3 / 2 :=
+      lt_of_lt_of_le h_eps_arc (norm_sub_one_le_im_sub_sqrt3 hz_re hc_lo.le)
+    have h_lin_lt_t₀ : linDelta (seg1Speed H) ε < seg1T₀ H z₀.im := by
+      unfold linDelta
+      rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_t₀ hH]
+      exact h_eps_top
+    have h_t₀_pos : 0 < seg1T₀ H z₀.im := seg1T₀_pos hH hc_hi
+    have h_t₀_lt : seg1T₀ H z₀.im < 1/5 := seg1T₀_lt_one_fifth hH hc_lo
+    apply transfer_integrability z₀ (by linarith) (le_refl 0) (by linarith) hγ
+    have h_left := seg1_left_ftc hH hz_re hc_lo hc_hi h_lin_pos h_lin_lt_t₀
+    exact h_left.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+      ((ae_eq_seg1_h₀ H z₀ (by linarith) (by linarith)).mono (fun t ht hm => (ht hm).symm)))
+  hint_right := by
+    intro ε hε hε_thr
+    have hK_pos : 0 < seg1Speed H := seg1Speed_pos hH
+    have h_lin_pos : 0 < linDelta (seg1Speed H) ε := linDelta_pos hK_pos hε
+    have h_eps_top : ε < H - z₀.im :=
+      lt_of_lt_of_le hε_thr (min_le_right _ _)
+    have h_eps_arc : ε < ‖z₀‖ - 1 :=
+      lt_of_lt_of_le hε_thr (le_trans (min_le_left _ _) (min_le_left _ _))
+    have h_eps_width : ε < z₀.im - Real.sqrt 3 / 2 :=
+      lt_of_lt_of_le h_eps_arc (norm_sub_one_le_im_sub_sqrt3 hz_re hc_lo.le)
+    have h_lin_lt_t₀ : linDelta (seg1Speed H) ε < seg1T₀ H z₀.im := by
+      unfold linDelta
+      rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_t₀ hH]
+      exact h_eps_top
+    have h_lin_lt_one_fifth_sub :
+        linDelta (seg1Speed H) ε < 1/5 - seg1T₀ H z₀.im := by
+      unfold linDelta
+      rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_one_fifth_sub_t₀ hH]
+      exact h_eps_width
+    have h_t₀_pos : 0 < seg1T₀ H z₀.im := seg1T₀_pos hH hc_hi
+    have h_t₀_lt : seg1T₀ H z₀.im < 1/5 := seg1T₀_lt_one_fifth hH hc_lo
+    apply transfer_integrability z₀ (by linarith) (by linarith) (le_refl 1) hγ
+    -- Need integrability on [t₀+δ, 1]; combine seg1_right + arc + seg4 + seg5
+    have h_right := seg1_right_ftc hH hz_re hc_hi h_lin_pos h_lin_lt_one_fifth_sub
+    have h_arc := seg1_arc_ftc hz_re hc_lo
+    have h_seg4 := seg1_seg4_ftc H hz_re
+    have h_seg5 := seg1_seg5_ftc H hc_hi
+    have hint_right_seg1 : IntervalIntegrable
+        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
+        volume (seg1T₀ H z₀.im + linDelta (seg1Speed H) ε) (1/5) :=
+      h_right.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+        ((ae_eq_seg1_h₀ H z₀ (by linarith) le_rfl).mono (fun t ht hm => (ht hm).symm)))
+    have hint_arc : IntervalIntegrable
+        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
+        volume (1/5) (3/5) :=
+      h_arc.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+        ((ae_eq_seg1_h_arc H z₀).mono (fun t ht hm => (ht hm).symm)))
+    have hint_seg4 : IntervalIntegrable
+        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
+        volume (3/5) (4/5) :=
+      h_seg4.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+        ((ae_eq_seg1_h₃ H z₀).mono (fun t ht hm => (ht hm).symm)))
+    have hint_seg5 : IntervalIntegrable
+        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
+        volume (4/5) 1 :=
+      h_seg5.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+        ((ae_eq_seg1_h₅ H z₀).mono (fun t ht hm => (ht hm).symm)))
+    exact ((hint_right_seg1.trans hint_arc).trans hint_seg4).trans hint_seg5
+  h_limit := tendsto_const_nhds
+
 end
+
 
 
 
