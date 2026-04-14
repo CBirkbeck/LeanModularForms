@@ -88,51 +88,36 @@ theorem valence_formula_textbook_unconditional_FM
   -- Apply valence_formula_unconditional_mkD with explicit residue/modular sides
   refine valence_formula_unconditional_mkD f S hS hS_complete H_S hH_S (F_int_FM f S)
     H_res hH_res_gt ?_ H_res hH_res_gt ?_
-  · -- Residue side: F_int → 2πi · Σ gWN · ord (need to bridge gWN' to gWN)
+  · -- Residue side: F_int → 2πi · Σ gWN · ord
+    -- Strategy: use uniqueness of limits via Tendsto.unique
     intro H hH_ge hH
     have hH_ge_res : H₀_res ≤ H := le_trans hH₀_res_le hH_ge
+    have hH_ge_mod : H₀_mod ≤ H := le_trans hH₀_mod_le hH_ge
     set γ := (fdWindingDataFull_unconditional hH).boundary with hγ_def
     have hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t :=
       (fdWindingDataFull_unconditional hH).boundary_eq
+    -- Use the modular side bridge to get the value of the limit (which doesn't
+    -- involve winding numbers). By uniqueness, the residue side limit equals
+    -- the modular side limit, and we can derive the new-chain residue side
+    -- from the modular side.
+    -- Simpler: use the residue bridge directly and rewrite the equivalent value
     have h_pv := h_res_bridge hH_ge_res γ hγ
-    -- h_pv : HasCauchyPVOn ... γ (2πi * Σ gWN' (fdBoundary_H H) 0 5 s * ord)
-    -- We need Tendsto F_int (𝓝[>] 0) (𝓝 (2πi * Σ gWN γ s * ord))
-    have h_F_eq : ∀ ε, F_int_FM f S H ε =
-      ∫ t in (0 : ℝ)..1,
-        cpvIntegrandOn (sArcOfS S ∪ sVertOfS S)
-          (logDeriv (modularFormCompOfComplex f)) γ.toPath.extend ε t := by
-      intro ε
-      simp only [F_int_FM, dif_pos hH, hγ_def]
-    -- Show the limit values are equal via winding number equivalence
-    have h_lim_eq : (2 * ↑Real.pi * I *
-        ∑ s ∈ S, generalizedWindingNumber γ (↑s : ℂ) *
+    have h_pv_mod := h_mod_bridge hH_ge_mod γ hγ
+    -- Both h_pv and h_pv_mod give Tendsto for the same function.
+    -- By uniqueness of limits:
+    --   2πi * Σ gWN' s * ord = -(2πi * (k/12 - ord_cusp))
+    have h_unique : (2 * ↑Real.pi * I *
+        ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
           (orderOfVanishingAt' (⇑f) s : ℂ)) =
-      (2 * ↑Real.pi * I *
-        ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
-          (orderOfVanishingAt' (⇑f) s : ℂ)) := by
-      congr 1
-      apply Finset.sum_congr rfl
-      intro s _
-      congr 1
-      -- Need: gWN γ s = gWN' (fdBoundary_H H) 0 5 s
-      have h_exists : CauchyPrincipalValueExists' (·⁻¹)
-          (fun t => fdBoundary_H H t - (↑s : ℂ)) 0 5 0 := by
-        -- Extract from h_pv (which is a HasCauchyPVOn = Tendsto)
-        -- We need an existence proof at this specific s, which the bridge gives us
-        -- via the multi-point CPV result. Use the winding number directly.
-        sorry
-      exact generalizedWindingNumber_eq_generalizedWindingNumber' γ hγ h_exists
-    rw [h_lim_eq]
-    -- Now h_pv has the right limit value; just need to rewrite F_int
-    have h_pv_unfold : Tendsto (fun ε =>
-      ∫ t in (0 : ℝ)..1, cpvIntegrandOn (sArcOfS S ∪ sVertOfS S)
-        (logDeriv (modularFormCompOfComplex f)) γ.toPath.extend ε t)
-      (𝓝[>] 0) (𝓝 (2 * ↑Real.pi * I *
-        ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
-          (orderOfVanishingAt' (⇑f) s : ℂ))) := h_pv
-    refine h_pv_unfold.congr' ?_
-    filter_upwards with ε
-    exact (h_F_eq ε).symm
+      -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) := by
+      simp only [HasCauchyPVOn] at h_pv h_pv_mod
+      exact tendsto_nhds_unique h_pv h_pv_mod
+    -- We want to show the residue side limit equals 2πi * Σ gWN γ s * ord
+    -- The actual value is determined by the modular side, not the winding numbers
+    -- We need: gWN γ s value such that the sum equals the modular side value
+    -- This is exactly what valence_formula_unconditional_mkD wants on the residue side
+    -- For now, leave as a sorry that relates the two winding number forms
+    sorry
   · -- Modular side: F_int → -(2πi * (k/12 - ord_cusp))
     intro H hH_ge hH
     have hH_ge_mod : H₀_mod ≤ H := le_trans hH₀_mod_le hH_ge
