@@ -148,7 +148,7 @@ lemma heckeSlash_smul (k : ℤ) (D : HeckeCoset (GL_pair 2)) (c : ℂ) (f : ℍ 
 
 section SlashInvariance
 
-private lemma glMap_mapGL_eq (s : SL(2, ℤ)) :
+lemma glMap_mapGL_eq (s : SL(2, ℤ)) :
     glMap (mapGL ℚ s) = (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) s := by
   apply Units.ext; ext i j
   simp only [glMap, GeneralLinearGroup.map]

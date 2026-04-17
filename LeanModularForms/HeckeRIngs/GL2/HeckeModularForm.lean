@@ -349,10 +349,214 @@ theorem heckeOperator_comp (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2)) (f : M
 
 end Composition
 
-end HeckeRing.GL2
+section RingHom
 
--- TODO: Package the Hecke action as an algebra anti-homomorphism
--- `HeckeAlgebra 2 →+* Module.End ℂ (ModularForm 𝒮ℒ k)`
--- using `heckeOperator_comp` for multiplicativity and `heckeOperatorLinear` for linearity.
--- Note: the order reversal D₂ * D₁ means this is an anti-homomorphism, or equivalently
--- a homomorphism from HeckeAlgebra 2ᵐᵒᵖ. Since HeckeAlgebra 2 is commutative, this is moot.
+/-! ### The Hecke algebra as endomorphisms of modular forms
+
+Packages `heckeOperatorLinear` into a ring homomorphism
+`𝕋 (GL_pair 2) ℤ →+* Module.End ℂ (ModularForm 𝒮ℒ k)`.
+
+Composition of Hecke operators corresponds to `T(D₂) * T(D₁)` in the Hecke ring (Shimura
+Prop 3.30). Since `𝕋 (GL_pair 2) ℤ` is commutative (Shimura Prop 3.8, via the transpose
+anti-involution), this ordering ambiguity is irrelevant and we obtain a genuine
+homomorphism rather than an anti-homomorphism. -/
+
+open HeckeRing (T_single)
+
+/-- The `ℂ`-linear endomorphism of modular forms attached to a Hecke algebra element
+`T : 𝕋 (GL_pair 2) ℤ`, obtained by extending `heckeOperatorLinear` by `ℤ`-linearity. -/
+noncomputable def heckeSum (k : ℤ) (T : HeckeAlgebra 2) :
+    Module.End ℂ (ModularForm 𝒮ℒ k) :=
+  T.sum (fun D c => c • heckeOperatorLinear k D)
+
+@[simp] lemma heckeSum_zero (k : ℤ) : heckeSum k (0 : HeckeAlgebra 2) = 0 :=
+  Finsupp.sum_zero_index
+
+@[simp] lemma heckeSum_T_single (k : ℤ) (D : HeckeCoset (GL_pair 2)) (c : ℤ) :
+    heckeSum k (T_single (GL_pair 2) ℤ D c) = c • heckeOperatorLinear k D :=
+  Finsupp.sum_single_index (by simp)
+
+lemma heckeSum_add (k : ℤ) (T₁ T₂ : HeckeAlgebra 2) :
+    heckeSum k (T₁ + T₂) = heckeSum k T₁ + heckeSum k T₂ :=
+  Finsupp.sum_add_index' (h_zero := fun _ => by simp)
+    (h_add := fun _ c₁ c₂ => by rw [add_zsmul])
+
+/-- Pointwise agreement of `heckeSum k T f` and `heckeSlashExt k T f` for each `z ∈ ℍ`. -/
+lemma heckeSum_apply_apply (k : ℤ) (T : HeckeAlgebra 2) (f : ModularForm 𝒮ℒ k) (z : ℍ) :
+    (heckeSum k T f) z = heckeSlashExt k T (f : ℍ → ℂ) z := by
+  classical
+  induction T using Finsupp.induction_linear with
+  | zero =>
+    simp only [heckeSum_zero, LinearMap.zero_apply, ModularForm.zero_apply]
+    unfold heckeSlashExt
+    rw [Finsupp.sum_zero_index]; rfl
+  | add T₁ T₂ h₁ h₂ =>
+    rw [heckeSum_add]
+    simp only [LinearMap.add_apply, ModularForm.add_apply, h₁, h₂]
+    unfold heckeSlashExt
+    rw [show (T₁ + T₂).sum (fun D c => c • heckeSlash k D (f : ℍ → ℂ)) =
+        T₁.sum (fun D c => c • heckeSlash k D (f : ℍ → ℂ)) +
+        T₂.sum (fun D c => c • heckeSlash k D (f : ℍ → ℂ)) from
+      Finsupp.sum_add_index' (h_zero := fun _ => by simp)
+        (h_add := fun _ c₁ c₂ => by rw [add_zsmul])]
+    rfl
+  | single D c =>
+    show (heckeSum k (T_single (GL_pair 2) ℤ D c) f) z = _
+    rw [heckeSum_T_single]
+    simp only [LinearMap.smul_apply, ModularForm.smul_apply]
+    unfold heckeSlashExt
+    rw [Finsupp.sum_single_index (by simp : (0 : ℤ) • heckeSlash k D _ = _)]
+    rfl
+
+/-- The Hecke slash action of `HeckeCoset.one` on a Γ-invariant function is the identity.
+The sum defining `heckeSlash` has a single term (the decomposition quotient is trivial)
+that lies in `H`, hence fixes any Γ-invariant function. -/
+private lemma heckeSlash_one (k : ℤ) (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
+    heckeSlash k (HeckeCoset.one (GL_pair 2)) f = f := by
+  haveI : Subsingleton (decompQuot (GL_pair 2)
+      (HeckeCoset.rep (HeckeCoset.one (GL_pair 2)))) :=
+    subsingleton_decompQuot_T_one (GL_pair 2)
+  haveI : Nonempty (decompQuot (GL_pair 2)
+      (HeckeCoset.rep (HeckeCoset.one (GL_pair 2)))) :=
+    one_in_decompQuot_T_one (GL_pair 2)
+  haveI : Unique (decompQuot (GL_pair 2)
+      (HeckeCoset.rep (HeckeCoset.one (GL_pair 2)))) := uniqueOfSubsingleton default
+  unfold heckeSlash
+  rw [show (Finset.univ : Finset (decompQuot (GL_pair 2)
+        (HeckeCoset.rep (HeckeCoset.one (GL_pair 2))))) = {default} from by
+    apply Finset.eq_singleton_iff_unique_mem.mpr
+    refine ⟨Finset.mem_univ _, fun i _ => Subsingleton.elim _ _⟩,
+    Finset.sum_singleton]
+  -- tRep = transpose of q.out * rep(one); this is an H-element transpose
+  set q : decompQuot (GL_pair 2) (HeckeCoset.rep (HeckeCoset.one (GL_pair 2))) := default
+  have hmem_H : (q.out : GL (Fin 2) ℚ) *
+      (HeckeCoset.rep (HeckeCoset.one (GL_pair 2)) : GL (Fin 2) ℚ) ∈ (GL_pair 2).H :=
+    (GL_pair 2).H.mul_mem (SetLike.coe_mem _) (HeckeCoset.one_rep_mem_H _)
+  -- tRep(one) q is the transpose of h = q.out * rep(one), which is in H.
+  -- Its transpose (an element of H via GL_transpose_mem_SLnZ) fixes f via Γ-invariance.
+  show f ∣[k] tRep (HeckeCoset.one (GL_pair 2)) q = f
+  have htr_mem : (GL_transposeEquiv 2
+      ((q.out : GL (Fin 2) ℚ) *
+        (HeckeCoset.rep (HeckeCoset.one (GL_pair 2)) : GL (Fin 2) ℚ))).unop ∈
+      (GL_pair 2).H :=
+    GL_transpose_mem_SLnZ 2 hmem_H
+  show f ∣[k] glMap (tRep (HeckeCoset.one (GL_pair 2)) q) = f
+  -- glMap of an H-element gives an element of 𝒮ℒ
+  obtain ⟨s, hs⟩ := htr_mem
+  have hmap : glMap (tRep (HeckeCoset.one (GL_pair 2)) q) = mapGL ℝ s := by
+    apply Units.ext; ext i j
+    -- The tRep q is (GL_transposeEquiv 2 (q.out * rep(one))).unop, which by hs equals (mapGL ℚ s)
+    have hrep : (tRep (HeckeCoset.one (GL_pair 2)) q : GL (Fin 2) ℚ) =
+        (mapGL ℚ s : GL (Fin 2) ℚ) := by
+      show ((GL_transposeEquiv 2 _).unop : GL (Fin 2) ℚ) = _
+      rw [← hs]
+    simp only [glMap, GeneralLinearGroup.map, Units.coe_map,
+      mapGL_coe_matrix, algebraMap_int_eq]
+    rw [show (tRep (HeckeCoset.one (GL_pair 2)) q : Matrix (Fin 2) (Fin 2) ℚ) =
+        ((mapGL ℚ s : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) from by rw [hrep]]
+    rfl
+  rw [hmap]
+  exact hf _ (MonoidHom.mem_range.mpr ⟨s, rfl⟩)
+
+/-- `heckeOperator k (HeckeCoset.one _) = id` on modular forms. -/
+@[simp] lemma heckeOperator_one (k : ℤ) (f : ModularForm 𝒮ℒ k) :
+    heckeOperator k (HeckeCoset.one (GL_pair 2)) f = f := by
+  apply ModularForm.ext
+  intro z
+  change heckeSlash k (HeckeCoset.one (GL_pair 2)) (f : ℍ → ℂ) z = f z
+  rw [heckeSlash_one k (f : ℍ → ℂ)
+    (fun γ hγ => SlashInvariantFormClass.slash_action_eq f γ hγ)]
+
+@[simp] lemma heckeOperatorLinear_one (k : ℤ) :
+    heckeOperatorLinear k (HeckeCoset.one (GL_pair 2)) = 1 := by
+  apply LinearMap.ext
+  intro f
+  show heckeOperator k (HeckeCoset.one (GL_pair 2)) f = (1 : Module.End ℂ _) f
+  rw [Module.End.one_apply, heckeOperator_one]
+
+@[simp] lemma heckeSum_one (k : ℤ) : heckeSum k (1 : HeckeAlgebra 2) = 1 := by
+  rw [show (1 : HeckeAlgebra 2) = T_single (GL_pair 2) ℤ (HeckeCoset.one (GL_pair 2)) 1 from
+    HeckeRing.one_def _ _, heckeSum_T_single, heckeOperatorLinear_one, one_smul]
+
+/-- Helper: heckeSlashExt is `ℤ`-linear in the Hecke algebra argument. -/
+private lemma heckeSlashExt_zsmul (k : ℤ) (n : ℤ) (T : HeckeAlgebra 2) (f : ℍ → ℂ) :
+    heckeSlashExt k (n • T) f = n • heckeSlashExt k T f := by
+  unfold heckeSlashExt
+  rw [Finsupp.sum_smul_index (g := T) (b := n) (h := fun D c => c • heckeSlash k D f)
+      (by simp), Finsupp.smul_sum]
+  refine Finsupp.sum_congr ?_
+  intro D _
+  exact SemigroupAction.mul_smul _ _ _
+
+/-- Helper: multiplicativity of `heckeSum` on basis elements. -/
+private lemma heckeSum_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2)) (a b : ℤ) :
+    heckeSum k (T_single (GL_pair 2) ℤ D₁ a * T_single (GL_pair 2) ℤ D₂ b) =
+      heckeSum k (T_single (GL_pair 2) ℤ D₁ a) *
+        heckeSum k (T_single (GL_pair 2) ℤ D₂ b) := by
+  -- Step 1: flip using commutativity of 𝕋 (GL_pair 2) ℤ
+  rw [show T_single (GL_pair 2) ℤ D₁ a * T_single (GL_pair 2) ℤ D₂ b =
+      T_single (GL_pair 2) ℤ D₂ b * T_single (GL_pair 2) ℤ D₁ a from mul_comm _ _]
+  apply LinearMap.ext
+  intro f
+  apply ModularForm.ext
+  intro z
+  -- Step 2: convert LHS to underlying ℍ → ℂ
+  rw [heckeSum_apply_apply]
+  -- Step 3: expand T_single * T_single = (b*a) • (T_single 1 * T_single 1)
+  have h_prod : T_single (GL_pair 2) ℤ D₂ b * T_single (GL_pair 2) ℤ D₁ a =
+      (b * a) • (T_single (GL_pair 2) ℤ D₂ 1 * T_single (GL_pair 2) ℤ D₁ 1) := by
+    rw [HeckeRing.T_single_mul_T_single, HeckeRing.T_single_mul_T_single,
+      one_smul, one_smul, ← SemigroupAction.mul_smul]
+  rw [h_prod, heckeSlashExt_zsmul]
+  -- Now apply heckeOperator_comp
+  rw [← heckeOperator_comp k D₁ D₂ f]
+  -- Compute RHS
+  show (b * a : ℤ) • (heckeOperator k D₁ (heckeOperator k D₂ f) : ℍ → ℂ) z =
+      ((heckeSum k (T_single (GL_pair 2) ℤ D₁ a) *
+        heckeSum k (T_single (GL_pair 2) ℤ D₂ b)) f) z
+  rw [heckeSum_T_single, heckeSum_T_single]
+  show (b * a : ℤ) • (heckeOperator k D₁ (heckeOperator k D₂ f) : ℍ → ℂ) z =
+      (a • heckeOperatorLinear k D₁) ((b • heckeOperatorLinear k D₂) f) z
+  simp only [LinearMap.smul_apply, ModularForm.smul_apply]
+  rw [show (heckeOperatorLinear k D₁) (b • heckeOperatorLinear k D₂ f) =
+      b • (heckeOperatorLinear k D₁) (heckeOperatorLinear k D₂ f) from
+    (heckeOperatorLinear k D₁).map_smul_of_tower b _]
+  rw [ModularForm.smul_apply]
+  show (b * a : ℤ) • (heckeOperator k D₁ (heckeOperator k D₂ f) : ℍ → ℂ) z =
+      a • b • (heckeOperator k D₁ (heckeOperator k D₂ f) : ℍ → ℂ) z
+  rw [smul_smul, mul_comm b a]
+
+lemma heckeSum_mul (k : ℤ) (T₁ T₂ : HeckeAlgebra 2) :
+    heckeSum k (T₁ * T₂) = heckeSum k T₁ * heckeSum k T₂ := by
+  induction T₁ using Finsupp.induction_linear with
+  | zero => simp [zero_mul]
+  | add T₁ T₁' h h' =>
+    rw [add_mul, heckeSum_add, heckeSum_add, h, h', add_mul]
+  | single D₁ a =>
+    induction T₂ using Finsupp.induction_linear with
+    | zero => simp [mul_zero]
+    | add T₂ T₂' h h' =>
+      rw [mul_add, heckeSum_add, heckeSum_add, h, h', mul_add]
+    | single D₂ b => exact heckeSum_mul_T_single k D₁ D₂ a b
+
+/-- The Hecke algebra as endomorphisms of modular forms (Shimura Prop 3.30). Maps a
+formal sum `T = ∑ c_D · [D]` to `∑ c_D · T(D)`; multiplicativity comes from
+`heckeOperator_comp` plus the commutativity of `𝕋 (GL_pair 2) ℤ`. -/
+noncomputable def heckeRingHom (k : ℤ) :
+    HeckeAlgebra 2 →+* Module.End ℂ (ModularForm 𝒮ℒ k) where
+  toFun := heckeSum k
+  map_zero' := heckeSum_zero k
+  map_one' := heckeSum_one k
+  map_add' := heckeSum_add k
+  map_mul' := heckeSum_mul k
+
+@[simp] lemma heckeRingHom_apply (k : ℤ) (T : HeckeAlgebra 2) :
+    heckeRingHom k T = heckeSum k T := rfl
+
+@[simp] lemma heckeRingHom_T_single (k : ℤ) (D : HeckeCoset (GL_pair 2)) (c : ℤ) :
+    heckeRingHom k (T_single (GL_pair 2) ℤ D c) = c • heckeOperatorLinear k D :=
+  heckeSum_T_single k D c
+
+end RingHom
+
+end HeckeRing.GL2
