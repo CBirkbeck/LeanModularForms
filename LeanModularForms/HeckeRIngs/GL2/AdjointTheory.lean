@@ -1185,6 +1185,40 @@ private lemma peterssonInner_slash_adjoint_coset
   rw [← h_slash_simp, ← h_domain]
   exact h_main
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **Right-slash version of `peterssonInner_slash_adjoint`**:
+`peterssonInner k D f (g ∣ α) = peterssonInner k (α • D) (f ∣ peterssonAdj α) g`.
+
+Follows from `peterssonInner_slash_adjoint` via Hermitian symmetry. -/
+private lemma peterssonInner_slash_adjoint_right (D : Set ℍ) (α : GL (Fin 2) ℝ)
+    (hα : 0 < α.det.val) (f g : ℍ → ℂ) :
+    peterssonInner k D f (g ∣[k] α) =
+      peterssonInner k (α • D) (f ∣[k] peterssonAdj α) g := by
+  have h1 := peterssonInner_conj_symm k D f (g ∣[k] α)
+  have h2 := peterssonInner_slash_adjoint (k := k) D α hα g f
+  have h3 := peterssonInner_conj_symm k (α • D) (f ∣[k] peterssonAdj α) g
+  rw [← h1, h2, h3]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-a (right variant)**: Per-summand slash adjoint when the right argument
+is slashed by a coset rep. Mirrors `peterssonInner_slash_adjoint_coset`. -/
+private lemma peterssonInner_slash_adjoint_coset_right
+    (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val) (q : SL(2, ℤ)) (f g : ℍ → ℂ) :
+    peterssonInner k fd
+        (f ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))
+        (g ∣[k] (β * (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))) =
+      peterssonInner k
+        (β • ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)))
+        (f ∣[k] peterssonAdj β)
+        g := by
+  have h1 := peterssonInner_conj_symm k fd (f ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))
+      (g ∣[k] (β * (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
+  have h2 := peterssonInner_slash_adjoint_coset (k := k) β hβ q g f
+  have h3 := peterssonInner_conj_symm k
+      (β • ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)))
+      (f ∣[k] peterssonAdj β) g
+  rw [← h1, h2, h3]
+
 private theorem petN_heckeT_p_diamond_shift_core
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
