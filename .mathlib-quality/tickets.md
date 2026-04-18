@@ -33,16 +33,94 @@ See `docs/plans/strong-multiplicity-one.md` for the master 9-phase plan and
 | Blocked | 5 | Structural or gated on other epics |
 | Open | 15 | Path forward to SMO |
 
-**Immediate priorities** (can start now):
-1. **POST-3** (Phase 7 L-functions) — independent, unblocked
-2. **T201** (Γ₁(N) fund-domain) — independent, under active work by other worker
-3. **POST-6** (Phase 8 Miyake Main Lemma) — mostly independent but deep
-
 **Blocked** (documented with diagnostic):
 - POST-1 (general-χ ring hom) — Quot.out structural issue
 - POST-2 (heckeT_p_all_comm_distinct refactor) — gated on POST-1
-- POST-4 (Newforms.lean:1523) — gated on T206/T207 (Epic D)
+- POST-4 (Newforms.lean:1523) — gated on T207 (Epic D)
 - POST-5 (Newforms.lean:1654) — gated on POST-3
+
+---
+
+## Parallel Work Plan
+
+**Up to 4 workers can run in parallel at peak**, limited by file dependencies
+(two tickets touching the same file cannot run in parallel) and LSP server load.
+
+### Available parallel tracks NOW (no blockers)
+
+| Track | Ticket | File | Est. LOC | Depends on |
+|---|---|---|---|---|
+| 1 | **T201** Γ₁(N) fundamental domain | `PeterssonLevelN.lean` (new section) | 80-100 | none |
+| 2 | **POST-3** L-function infrastructure | NEW `GL2/LFunction.lean` | 500 | none (Phase 3 complete) |
+| 3 | **T205-d** petN heckeT_p adjoint bijection | `AdjointTheory.lean` (~line 1586) | 80-150 | T205-a ✅, triple product ✅ |
+| 4 | **T207** spectral theorem (Mathlib API) | `AdjointTheory.lean:1270` (new helpers) | 80-120 | T206 ✅ (scaffold can proceed pre-T205) |
+
+Tracks 1, 2, 3, 4 are independent — different files, no cross-dependencies.
+Track 4 can scaffold Mathlib API calls even before T205 closes.
+
+### Tracks that open after current work
+
+After **T201** completes:
+- **T202** (petN = ∫ over D_N) — `PeterssonLevelN.lean`
+- **T203** (domain shift invariance) — `PeterssonLevelN.lean` — can run parallel with T202
+
+After **T205** closes (critical path unblocks):
+- **POST-4** (Newforms.lean:1523) — closes quickly as corollary
+- (T208 cleanup of AdjointTheory.lean can run immediately in parallel too)
+
+After **POST-3** completes:
+- **POST-5** (Newforms.lean:1654) — Euler product use
+- Can run parallel with POST-6 since POST-5 is small.
+
+After **POST-4** + **POST-5** close Phase 6:
+- **POST-6** (Miyake Main Lemma) — needs most of Phase 6
+- Can be SCAFFOLDED in parallel before (statement + helper lemma tickets).
+
+**POST-7** (SMO) depends on POST-6 + full Phase 6; run LAST.
+
+### Serial choke points
+
+- T205 → any Phase 6 closure (currently biggest blocker for final chain)
+- POST-6 must complete before POST-7 (one-person job, ~1000 LOC)
+
+### Recommended initial dispatch (4 parallel workers)
+
+1. **Worker A**: T201 → T202 → T203 → (joins Worker C on T205-d when T203 done)
+2. **Worker B**: POST-3 (L-function infrastructure) — runs ~1-2 sessions
+3. **Worker C**: T205-d (the hardest sorry) — dedicated 2-4 hour session
+4. **Worker D**: T207 Mathlib API scaffold — can start immediately
+
+### File-level contention to avoid
+
+Do NOT run these simultaneously:
+- Any two tickets touching `AdjointTheory.lean` (T205-d, T207, T208, POST-4)
+- Any two tickets touching `Newforms.lean` (POST-4, POST-5)
+- Any two tickets touching `PeterssonLevelN.lean` (T201, T202, T203)
+
+For each file, queue serially.
+
+---
+
+## Cleanup Checkpoints
+
+The `/mathlib-quality:develop` skill inserts cleanup tickets every 3-5 proof tickets
+to catch naming/golfing/generality issues while context is fresh. These MUST run
+before building further on top:
+
+| Checkpoint | After | File(s) | Ticket |
+|---|---|---|---|
+| CLEANUP-D1 | T201, T202, T203 | `PeterssonLevelN.lean` | [CLEANUP-D1] |
+| CLEANUP-D2 | T205 (+T205-a done) | `AdjointTheory.lean` (sections 1000-1600) | [CLEANUP-D2] |
+| CLEANUP-D3 | T207 | `AdjointTheory.lean` (full, ≈ T208) | [CLEANUP-D3 / T208] |
+| CLEANUP-E1 | POST-3 | `GL2/LFunction.lean` (or wherever) | [CLEANUP-E1] |
+| CLEANUP-E2 | POST-4, POST-5 | `GL2/Newforms.lean` | [CLEANUP-E2] |
+| CLEANUP-E3 | POST-6 | `Eigenforms/MainLemma.lean` | [CLEANUP-E3] |
+| CLEANUP-FINAL | POST-7 (all done) | Full sweep before PR | [CLEANUP-FINAL] |
+
+Each cleanup checkpoint runs the `/cleanup` procedure (13-item mathlib audit +
+golfing) on the specified file(s), per `skills/mathlib-quality/references/golfing-rules.md`.
+
+Defined as explicit tickets below at the relevant epics.
 
 ---
 
@@ -283,7 +361,8 @@ Target: `AdjointTheory.lean` sorry-free. Key theorems:
 - **Status**: open
 - **File**: PeterssonLevelN.lean (or new file)
 - **Depends on**: none
-- **Parallel**: yes (independent of all other tickets)
+- **Parallel**: ✅ **yes — can run NOW in parallel with POST-3, T205-d, T207**
+  (different files, no cross-dependencies)
 - **Description**: Prove
   ```lean
   theorem isFundamentalDomain_Gamma1_coset_tiling :
@@ -308,7 +387,7 @@ Target: `AdjointTheory.lean` sorry-free. Key theorems:
 - **Status**: open
 - **File**: PeterssonLevelN.lean
 - **Depends on**: T201
-- **Parallel**: no
+- **Parallel**: ⚠️ **serialize with T201/T203** (same file)
 - **Description**: Prove
   ```lean
   theorem petN_eq_setIntegral_fundDomain
@@ -325,7 +404,8 @@ Target: `AdjointTheory.lean` sorry-free. Key theorems:
 - **Status**: open
 - **File**: PeterssonLevelN.lean (or AdjointTheory.lean)
 - **Depends on**: T201
-- **Parallel**: yes (with T202)
+- **Parallel**: ✅ **yes with T202** (same file — serialize if on PeterssonLevelN.lean;
+  can parallelize if T203 lives in AdjointTheory.lean)
 - **Description**: For α ∈ GL₂⁺(ℝ) that normalizes Γ₁(N), the shifted tiling
   α • D_N is also a Γ₁(N)-fundamental domain:
   ```lean
@@ -346,12 +426,31 @@ Target: `AdjointTheory.lean` sorry-free. Key theorems:
   and α⁻¹γᵢα ∈ Γ₁ by normalization.
 - **Estimated**: 40-60 LOC (leveraging Mathlib's `setIntegral_eq`).
 
+### [CLEANUP-D1] /cleanup on PeterssonLevelN.lean after foundation
+- **Status**: open
+- **File**: `Modularforms/PeterssonLevelN.lean`
+- **Depends on**: T201, T202, T203
+- **Type**: cleanup
+- **Description**: Run `/cleanup` on the new T201-T203 code. Apply the 13-item
+  mathlib audit + golfing rules:
+  - No `by exact` wrappers
+  - No single-use `have` blocks unless they aid readability
+  - Terminal simp must be squeezed (`simp only [...]`)
+  - Proper naming (`conclusion_of_hypothesis`)
+  - Proof length ≤ 50 LOC (decompose if longer, see `/develop` skill)
+  - Docstrings on every public declaration
+  - Maximum generality (prefer typeclass bounds over concrete types)
+- **Verification**: `lake build`, no new sorries/axioms, `#print axioms` clean.
+- **Estimated**: minor edits + potential decomposition of any > 50-LOC proofs.
+
 ## Open — Core Adjoint (sorry #1, #2)
 
 ### [T205 / T205-d] `petN_heckeT_p_diamond_shift_core` (sorry #2)
 - **Status**: in progress — stuck on combinatorial coset bijection
 - **File**: AdjointTheory.lean (sorry near line 1586)
 - **Depends on**: T205-a ✅ (both variants proved), triple product identity ✅
+- **Parallel**: ⚠️ **serialize with T207, T208, POST-4** (same file: AdjointTheory.lean).
+  Can run in parallel with T201/T202/T203 (PeterssonLevelN.lean) and POST-3 (new file).
 - **Statement** (at line 815, 1163):
   ```lean
   petN (heckeT_p_cusp k p hp hpN f) g =
@@ -452,13 +551,29 @@ prerequisites in place.
 **Reference**: DS Theorem 5.5.3 (page 186): α = [1,0;0,p], α' = [p,0;0,1], factor
 [p,0;0,1] using T105, conclude T_p* acts as T_p · ⟨p⁻¹⟩.
 
+### [CLEANUP-D2] /cleanup on AdjointTheory.lean T205 section
+- **Status**: open
+- **File**: `GL2/AdjointTheory.lean` (lines ~1000-1600: T205-a, T205-d, helpers)
+- **Depends on**: T205 (closed)
+- **Type**: cleanup
+- **Description**: Focused `/cleanup` on the T205 proof and its helpers before
+  T207 builds on it. Check:
+  - Proof length ≤ 50 LOC (T205-d proof likely needs decomposition into
+    sub-lemmas via extracted helpers)
+  - Naming (the numerous `peterssonInner_slash_adjoint_coset*` variants)
+  - Remove any temporary `set_option maxHeartbeats` that was for debug
+  - Verify axiom-clean (`#print axioms`)
+- **Do not attempt** full file cleanup yet — T207 will add more; save for T208.
+
 ## Open — Downstream (sorry #4)
 
 ### [T207] `exists_simultaneous_eigenform_basis` (sorry #4)
 - **Status**: open
 - **File**: AdjointTheory.lean:1270 (sorry at 1325)
 - **Depends on**: T206 ✅ (done)
-- **Parallel**: partially — Mathlib API work can proceed independently
+- **Parallel**: ⚠️ **can SCAFFOLD now in parallel** (Mathlib API exploration,
+  statement of helper lemmas) but final proof must be after T205 completes
+  (both touch AdjointTheory.lean). T207 cleanup = T208 below.
 - **Statement**:
   ```lean
   ∃ (B : Finset (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)),
@@ -519,20 +634,24 @@ to avoid showing Hecke operators are symmetric (they're only "χ-twisted symmetr
 
 ## Open — Cleanup
 
-### [T208] Fix stale comments and remove dead code
+### [CLEANUP-D3 / T208] Final /cleanup on AdjointTheory.lean
 - **Status**: open
-- **File**: AdjointTheory.lean
-- **Depends on**: T207 (after all sorries are filled)
-- **Parallel**: partially (comment fixes can happen anytime)
+- **File**: AdjointTheory.lean (full file)
+- **Depends on**: T207 (after all Epic D sorries are filled)
+- **Parallel**: ⚠️ partially — comment fixes (item 1 below) can happen anytime
+  in parallel; full cleanup must wait for T207.
 - **Type**: cleanup
 - **Description**:
-  1. Fix stale comments claiming `heckeT_n_comm` is sorry'd (lines 1266, 1284, 1323)
-     — `heckeT_n_comm` is FULLY PROVED at HeckeT_n.lean:1693, no sorries.
+  1. **Immediate** (can run anytime): Fix stale comments claiming `heckeT_n_comm`
+     is sorry'd (AdjointTheory.lean lines 1266, 1284, 1323) — it is FULLY PROVED
+     at HeckeT_n.lean:1693.
   2. Remove dead code block at lines 668-692 (superseded SL₂(ℝ) invariance comments).
-  3. Clean up proof of `petN_heckeT_p_adjoint_unsymm` (lines 822-849) which duplicates
-     `heckeT_p_adjoint_of_diamond_shift` (lines 865-896) — merge into one.
-  4. Run `/cleanup` on the full file.
-- **Estimated**: deletion + minor edits.
+  3. Clean up proof of `petN_heckeT_p_adjoint_unsymm` (lines 822-849) which
+     duplicates `heckeT_p_adjoint_of_diamond_shift` (lines 865-896) — merge into one.
+  4. Run full `/cleanup` on the file (13-item audit + golfing).
+  5. Verify no proof exceeds 50 LOC (decompose if so).
+  6. Axiom check on each key theorem (`#print axioms`).
+- **Estimated**: deletion + minor edits + decompositions as needed.
 
 ## Epic D dependency graph
 
@@ -605,26 +724,87 @@ T201 (IsFundDomain Γ₁ tiling) ──→ T202 (petN = ∫_{D_N})
 - **Status**: open, HIGH PRIORITY (independent of POST-1, Epic D).
 - **File**: new `GL2/LFunction.lean` or `Eigenforms/LFunction.lean`.
 - **Depends on**: nothing (Phase 3 complete).
+- **Parallel**: ✅ **yes — fully independent, NEW file, no contention with others.**
 - **Description**: Define `L(s, f) = Σ a_n n^{-s}`; prove convergence for cusp forms;
   prove Euler product ⟺ normalized eigenform.
 - **Reference**: [DS] §5.9, [Miy] Thm 4.5.16. See `docs/plans/strong-multiplicity-one.md` §Phase 7.
 - **Estimated**: 500 LOC.
 
+### [CLEANUP-E1] /cleanup on LFunction.lean after POST-3
+- **Status**: open
+- **File**: whichever file POST-3 landed in
+- **Depends on**: POST-3
+- **Type**: cleanup
+- **Description**: Full 13-item audit + golfing on the new L-function file.
+  Check convergence proofs aren't overly ad hoc — prefer mathlib's `Summable` /
+  `DirichletSeries` API where possible.
+
+### [CLEANUP-E2] /cleanup on Newforms.lean after POST-4 + POST-5
+- **Status**: open
+- **File**: `GL2/Newforms.lean` (1725L)
+- **Depends on**: POST-4, POST-5 (both sorries filled)
+- **Type**: cleanup
+- **Description**: Full 13-item audit. Newforms.lean has ~1700 LOC that was
+  built up incrementally; audit naming conventions, generality (level `N`
+  parameters should be explicit; `k` implicit where it makes sense), check
+  that `Newform` struct API doesn't have unused fields, simp-tag `_eq`/`_iff`
+  lemmas where appropriate.
+- **Estimated**: 1-2 hour sweep.
+
 ### [POST-6] Phase 8: Miyake Main Lemma (Thm 4.6.8)
 - **Status**: open.
 - **Depends on**: Phase 6 complete (POST-4, POST-5) or most of it.
 - **File**: new `Eigenforms/MainLemma.lean`.
+- **Parallel**: ⚠️ **statement + helper lemma tickets can SCAFFOLD now** in parallel
+  with Phase 6 closure; the main proof composition must wait.
 - **Description**: If `f ∈ G_k(N, χ)` and `a_n = 0` for all n prime to `l`:
   either `f = 0` or `f = Σ f_p(pz)` for `p | (l, N/m_χ)`.
 - **Reference**: [Miy] Thm 4.6.8. See `docs/plans/strong-multiplicity-one.md` §Phase 8.
 - **Estimated**: 1000 LOC.
+- **Sub-tickets to scaffold** (can be parallel helper work):
+  - POST-6a: Hecke's Lemma 4.6.3 (if f ∈ G_k(N,χ), α ∈ Δ₀(N) with det α > 1
+    and (det α, N) = 1 and (a,b,c,d) = 1 and f|α ∈ G_k(N,χ), then f = 0)
+  - POST-6b: Conductor theorem 4.6.4 (if f(z+1) = f(z) and f(lz) ∈ G_k(N,χ),
+    deduce f ∈ G_k(N/l, χ) or f = 0)
+  - POST-6c: Coprime sieving 4.6.5 (if f ∈ G_k(N,χ) and g(z) = Σ_{(n,L)=1} a_n q^n,
+    then g ∈ G_k(M,χ) for specific M)
+  - POST-6d: Square-free decomposition 4.6.7
+  - POST-6e: Assemble Main Lemma 4.6.8 (needs POST-6a through POST-6d)
+
+### [CLEANUP-E3] /cleanup on MainLemma.lean after POST-6
+- **Status**: open
+- **File**: `Eigenforms/MainLemma.lean`
+- **Depends on**: POST-6
+- **Type**: cleanup
+- **Description**: Full audit. Pay attention to: each sub-lemma (6a-6d) is stated
+  with maximum generality (Dirichlet character `χ : DirichletCharacter ℂ N`,
+  not a specific concrete character); the induction in 6e is clean.
 
 ### [POST-7] Phase 9: Strong Multiplicity One (Miyake Thm 4.6.12) — FINAL GOAL
 - **Status**: open.
 - **Depends on**: POST-4, POST-5, POST-6.
 - **File**: new `Eigenforms/StrongMultiplicityOne.lean`.
+- **Parallel**: ❌ **must be LAST** — the one-person finale.
 - **Description**: Short ~400 LOC proof once Phases 6 and 8 are in place.
 - **Reference**: See `docs/plans/strong-multiplicity-one.md` §Phase 9.
+
+### [CLEANUP-FINAL] Pre-PR full sweep
+- **Status**: open
+- **File**: ALL touched files
+- **Depends on**: POST-7
+- **Type**: cleanup
+- **Description**: Final full-project audit before PR:
+  1. `lake build` clean (no warnings, no sorries).
+  2. `grep -r "sorry\|axiom\|constant" LeanModularForms/` — should be empty
+     (except pre-existing `DimensionFormulas.lean:557` if still there).
+  3. `#print axioms` on every key theorem (POST-7 = SMO, plus all Newform API,
+     LFunction API, MainLemma). Only `propext`, `Classical.choice`, `Quot.sound`.
+  4. `/cleanup` on every file modified in Epics D + E (in addition to per-file
+     cleanup tickets that already ran).
+  5. Naming: one final pass for `mathlib-naming-conventions` compliance.
+  6. API: confirm each definition has ≥ 3-5 API lemmas.
+  7. Docstrings on every public declaration.
+- **Estimated**: 1-2 day final sweep.
 
 ---
 
