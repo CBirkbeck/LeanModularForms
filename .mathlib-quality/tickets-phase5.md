@@ -208,71 +208,57 @@ These comments must be updated during cleanup (T208).
   T_p* acts as T_p · ⟨p⁻¹⟩.
 - **Estimated**: ~200-300 lines (was 80-120, revised after detailed analysis)
 
-### [T205-a] Per-summand slash adjoint for T_p coset reps
-- **Status**: open
-- **File**: AdjointTheory.lean (new private lemmas)
-- **Depends on**: none (has all prereqs: peterssonInner_slash_adjoint proved, adj identities proved)
-- **Parallel**: yes (self-contained)
-- **Description**: Prove for each coset rep β ∈ {α_0, ..., α_{p-1}, M_∞}:
-  ```lean
-  peterssonInner k fd (⇑f ∣[k] (β * q⁻¹)) (⇑g ∣[k] q⁻¹) =
-    peterssonInner k (β • (q⁻¹ • fd)) ⇑f (⇑g ∣[k] peterssonAdj β)
-  ```
-  **Proof**: Direct application of `peterssonInner_slash_adjoint` with the factorization
-  `adj(β * q⁻¹) = q * adj(β)` (since adj is anti-multiplicative + q⁻¹ has det 1, so
-  adj(q⁻¹) = q). Then `(g ∣ q⁻¹) ∣ (q * adj(β)) = g ∣ adj(β)` by slash composition.
-- **Estimated**: ~25-40 lines (two cases: β upper and β = M_∞)
-
-### [T205-c] Compute peterssonAdj(M_∞) action on Γ₁(N)-cusp forms
-- **Status**: open
-- **File**: AdjointTheory.lean (new private lemma)
-- **Depends on**: none (has `M_infty_eq_sigma_mul_T_p_lower`, `peterssonAdj_glMap_T_p_lower`)
-- **Parallel**: yes (self-contained)
-- **Description**: Prove:
-  ```lean
-  ∀ g : CuspForm (Gamma1 N, k), ⇑g ∣[k] peterssonAdj (M_∞) =
-    (⟨p⟩ ⇑g) ∣[k] glMap (T_p_upper p hp.pos 0)
-  ```
-  **Proof sketch**:
-  - M_∞ = σ_p · T_p_lower (by `M_infty_eq_sigma_mul_T_p_lower`)
-  - peterssonAdj is anti-multiplicative: adj(M_∞) = adj(T_p_lower) · adj(σ_p)
-  - adj(σ_p) = σ_p⁻¹ (SL element)
-  - g ∣ σ_p⁻¹ = ⟨p⟩ g (σ_p⁻¹ has lower-right ≡ p mod N by Bezout; slash by Γ₀(N)
-    element with lower-right d gives diamond ⟨d⟩ on Γ₁(N)-forms)
-  - g ∣ adj(T_p_lower) = g ∣ T_p_upper(0) (by `slash_peterssonAdj_T_p_lower_eq_T_p_upper_0`)
-  Need to check: the order of composition matters. adj(M_∞) acts FIRST by adj(T_p_lower),
-  THEN by adj(σ_p). Alternative factorization may be needed.
-- **Estimated**: ~50-80 lines (Bezout + matrix compose + diamond slash identity)
+### [T205-a] Per-summand slash adjoint for T_p coset reps ✅
+- **Status**: done (2026-04-18)
+- **File**: AdjointTheory.lean:1129 (`peterssonInner_slash_adjoint_coset`) and
+  :1192 (`peterssonInner_slash_adjoint_coset_right` — right variant via Hermitian)
+- **Notes**: ~40 LOC each. Also added 3 supporting lemmas: `peterssonAdj_mul`
+  (anti-multiplicativity from Matrix.adjugate_mul_distrib),
+  `peterssonAdj_mapGL_SL_eq_inv` (adj = inv for SL elements),
+  `peterssonInner_slash_adjoint_right` (right-slash version via Hermitian symmetry).
+  Axiom-clean.
 
 ### [T205-d] Main assembly: petN_heckeT_p_diamond_shift_core proof
-- **Status**: blocked
-- **File**: AdjointTheory.lean:1104
-- **Depends on**: T205-a, T205-c
+- **Status**: open
+- **File**: AdjointTheory.lean:1281 (the main sorry)
+- **Depends on**: T205-a ✅ (both variants proved)
 - **Parallel**: no
-- **Description**: Combine T205-a (per-summand adj) + T205-c (M_∞ adj) +
-  `slash_peterssonAdj_T_p_upper_eq_T_p_lower` (b-independence for upper reps) to prove:
-  ```lean
-  petN (T_p f) g = petN (⟨p⟩ f) (T_p g)
-  ```
-  **Proof structure**:
-  1. Unfold petN on both sides (Σ_q over SL/Γ₁).
-  2. Expand `⇑(T_p f) = Σ_β ⇑f ∣ β` via `heckeT_p_fun_eq_coset_sum`.
-  3. Use peterssonInner linearity to distribute over the sum.
-  4. Apply T205-a per summand: each becomes `peterssonInner k (β • q⁻¹ • fd) f (g ∣ adj β)`.
-  5. Apply `slash_peterssonAdj_T_p_upper_eq_T_p_lower` (b-independence):
-     g ∣ adj(α_b) = g ∣ T_p_lower (b-indep).
-  6. Apply T205-c: g ∣ adj(M_∞) = (⟨p⟩ g) ∣ T_p_upper(0).
-  7. Reassemble: the upper terms become p copies of same integrand, reindex domains.
-  8. The lower term contributes ⟨p⟩ slash on the second arg, which on RHS
-     corresponds to T_p g's M_∞ term.
-  9. Use `sum_setIntegral_GL2_shift` to reassemble shifted integrals into the
-     canonical petN sum structure.
+- **Proof outline** (analysis completed 2026-04-18):
+  After applying T205-a / T205-a_right to both sides + slash_peterssonAdj simplifications,
+  both reduce to a sum of 4 explicit summands (per q : SL(2,ℤ) ⧸ Γ₁(N)):
 
-  **Key challenge**: The collection {α_b • q⁻¹ • fd}_{b, q} forms a p-fold cover
-  of Γ₁(N)\ℍ (since the p+1 T_p coset reps decompose the double coset
-  `Γ₁ diag(1,p) Γ₁`). This requires a careful reindexing — the natural
-  bijection uses the double coset structure.
-- **Estimated**: ~100-150 lines
+  LHS = ∑_q [Σ_b peterssonInner k (α_b • q⁻¹ • fd) f (g ∣ T_p_lower)
+            + peterssonInner k (T_p_lower • q⁻¹ • fd) (⟨p⟩ f) (g ∣ T_p_upper(0))]
+
+  RHS = ∑_q [Σ_c peterssonInner k (α_c • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_lower) g
+            + peterssonInner k (T_p_lower • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_upper(0)) (⟨p⟩ g)]
+
+  The summand matching requires:
+
+  **Matrix identity** (for L_upper ↔ R_upper): `T_p_lower · α_b = p · shift(b)` where
+  shift(b) ∈ Γ₁(N). This transforms L_upper tiles (T_p_lower • α_b • q⁻¹ • fd) into
+  Γ₁(N)-translates of (q⁻¹ • fd). Matching L_upper ↔ R_upper then needs a bijection
+  between (b, q) pairs on LHS and (c, q') pairs on RHS reflecting the double coset
+  structure `Γ₁ diag(1,p) Γ₁ ↔ Γ₁ diag(p,1) Γ₁` via γ₀ ∈ Γ₀(N) (= `adjointGamma0Rep`).
+
+  **For L_lower ↔ R_lower**: After applying `slash_M_infty_eq_diamond_slash_T_p_lower`
+  (existing lemma: `f ∣ M_∞ = (⟨p⟩ f) ∣ T_p_lower`), both summands can be re-written
+  in M_∞ form. The identity then reduces to a Hermitian/reindexing argument.
+
+  **Key existing infrastructure** (all proved):
+  - T205-a: `peterssonInner_slash_adjoint_coset` (and right variant)
+  - `slash_peterssonAdj_T_p_upper_eq_T_p_lower` (b-independence)
+  - `slash_peterssonAdj_T_p_lower_eq_T_p_upper_0`
+  - `slash_M_infty_eq_diamond_slash_T_p_lower`
+  - `sum_setIntegral_GL2_shift` (for domain reassembly under Γ₁(N)-normalizing shifts)
+  - `peterssonInner_slash_adjoint_right`, `peterssonAdj_mul`, `peterssonAdj_mapGL_SL_eq_inv`
+
+  **Remaining work**: The summand-matching bijection. Concretely needs a lemma
+  relating `{(b, q) : SL(2,ℤ) ⧸ Γ₁(N) × [0, p)} ∪ {q}` to `{(c, q') : SL(2,ℤ) ⧸ Γ₁(N) × [0, p)} ∪ {q'}`
+  via the γ₀ Γ₀(N) action. Needs either (a) direct matrix/coset algebra, or (b)
+  a reduction to the abstract Hecke algebra's double-coset inverse identity.
+- **Estimated**: ~80-150 lines (revised down: infrastructure is all there, main
+  effort is the coset bijection)
 
 ---
 

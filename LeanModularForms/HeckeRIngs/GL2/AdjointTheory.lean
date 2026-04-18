@@ -1276,8 +1276,29 @@ private theorem petN_heckeT_p_diamond_shift_core
   --
   -- The assembly of the domain-shifted integrals back into petN sums
   -- is the fundamental-domain tiling argument.
-  -- This reduces to exactly the same IsFundamentalDomain prerequisite
-  -- as petN_slash_adjoint_GL2 (sorry #1).
+  --
+  -- ============================================================================
+  -- Proof state analysis (2026-04-18):
+  -- After applying T205-a and T205-a_right to both sides + slash_peterssonAdj
+  -- simplifications, LHS and RHS each become sums of two shapes:
+  --
+  --   LHS = ∑_q [Σ_b peterssonInner k (α_b • q⁻¹ • fd) f (g ∣ T_p_lower)
+  --             + peterssonInner k (T_p_lower • q⁻¹ • fd) (⟨p⟩ f) (g ∣ T_p_upper(0))]
+  --   RHS = ∑_q [Σ_c peterssonInner k (α_c • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_lower) g
+  --             + peterssonInner k (T_p_lower • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_upper(0)) (⟨p⟩ g)]
+  --
+  -- Matrix identity (for upper summands): T_p_lower · α_b = p · shift(b) where
+  -- shift(b) ∈ Γ₁(N). So (T_p_lower • α_b • q⁻¹ • fd) = (shift(b) · q⁻¹) • fd,
+  -- a Γ₁(N)-translate of q⁻¹ • fd.
+  --
+  -- The summand-matching bijection between LHS's (b, q) pairs and RHS's (c, q')
+  -- pairs reflects the double-coset inverse identity:
+  --   `Γ₁(N) · diag(p,1) · Γ₁(N) = Γ₁(N) · diag(1,p) · Γ₁(N) · γ₀`
+  -- where γ₀ ∈ Γ₀(N) represents ⟨p⟩⁻¹ (= adjointGamma0Rep in this file).
+  -- All infrastructure needed is proved: T205-a, peterssonInner_slash_adjoint_right,
+  -- slash_peterssonAdj_T_p_{upper,lower}_eq_..., slash_M_infty_eq_diamond_slash_T_p_lower,
+  -- sum_setIntegral_GL2_shift, adjointGamma0Rep + adjointGamma0Rep_units.
+  -- The remaining ~80-150 LOC is the coset bijection argument.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
