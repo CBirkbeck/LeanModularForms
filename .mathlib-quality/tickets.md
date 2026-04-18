@@ -1,8 +1,12 @@
 # Master Ticket Board: LeanModularForms → Strong Multiplicity One
 
 *Consolidated 2026-04-17 from `tickets.md` (Bridge+Commutativity Refactor),
-`tickets-prop-3-34.md` (Shimura Prop 3.34), `tickets-phase5.md` (Adjoint Theory),
-`tickets-finish-congruence-hecke.md` (CongruenceHecke+BlockBijection).*
+`tickets-prop-3-34.md` (Shimura Prop 3.34), and `tickets-finish-congruence-hecke.md`
+(CongruenceHecke+BlockBijection).*
+
+*Epic D (Adjoint Theory) remains in `tickets-phase5.md` as the authoritative
+source; the Epic D summary below is a digest — refer to `tickets-phase5.md`
+for complete up-to-date status from the active worker.*
 
 ## Overview
 
@@ -198,9 +202,9 @@ done; remaining blockers documented under POST-1.*
 
 # Epic D: Hecke Adjoint Theory (⚠️ ACTIVE — other worker)
 
-*Originally `tickets-phase5.md`. Owned by another worker; do NOT modify
-`AdjointTheory.lean`/`DeltaEigenform.lean`/`Newforms.lean`/`FourierHecke.lean`
-without coordination.*
+*Authoritative source: `tickets-phase5.md` — this section is a digest.
+Owned by another worker; do NOT modify `AdjointTheory.lean`/`DeltaEigenform.lean`/
+`Newforms.lean`/`FourierHecke.lean` without coordination.*
 
 **Active files**: GL2/AdjointTheory.lean (2643L, 2 sorries), Modularforms/PeterssonLevelN.lean,
 PeterssonInner.lean, PSL2Action.lean.
