@@ -1201,6 +1201,20 @@ private lemma peterssonInner_slash_adjoint_right (D : Set ℍ) (α : GL (Fin 2) 
   rw [← h1, h2, h3]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- Additivity of `peterssonInner` in the first argument (requires integrability).
+Derived from `peterssonInner_add_right` via Hermitian symmetry. -/
+private lemma peterssonInner_add_left (D : Set ℍ) (f₁ f₂ g : ℍ → ℂ)
+    (hf₁ : IntegrableOn (fun τ => petersson k g f₁ τ) D μ_hyp)
+    (hf₂ : IntegrableOn (fun τ => petersson k g f₂ τ) D μ_hyp) :
+    peterssonInner k D (f₁ + f₂) g =
+      peterssonInner k D f₁ g + peterssonInner k D f₂ g := by
+  have h1 := peterssonInner_conj_symm k D (f₁ + f₂) g
+  have h2 := peterssonInner_add_right k D g f₁ f₂ hf₁ hf₂
+  have h3a := peterssonInner_conj_symm k D f₁ g
+  have h3b := peterssonInner_conj_symm k D f₂ g
+  rw [← h1, h2, map_add, h3a, h3b]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a (right variant)**: Per-summand slash adjoint when the right argument
 is slashed by a coset rep. Mirrors `peterssonInner_slash_adjoint_coset`. -/
 private lemma peterssonInner_slash_adjoint_coset_right
