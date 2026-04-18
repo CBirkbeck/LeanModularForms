@@ -219,10 +219,68 @@ These comments must be updated during cleanup (T208).
   Axiom-clean.
 
 ### [T205-d] Main assembly: petN_heckeT_p_diamond_shift_core proof
-- **Status**: open
-- **File**: AdjointTheory.lean:1281 (the main sorry)
-- **Depends on**: T205-a ✅ (both variants proved)
+- **Status**: open (stuck on final combinatorial bijection, see below)
+- **File**: AdjointTheory.lean (sorry at current line ~1586)
+- **Depends on**: T205-a ✅ (both variants proved), triple product identity ✅
 - **Parallel**: no
+
+#### What's been accomplished (2026-04-18 session)
+
+**Infrastructure closed sorry-free** (all axiom-clean):
+- `sum_setIntegral_GL2_shift` (T204, ~75 LOC): fundamental domain tiling for GL₂⁺ shifts
+- `petN_slash_adjoint_GL2` (T204 downstream, signature expanded)
+- `peterssonInner_slash_adjoint_coset` (T205-a, ~40 LOC) + right variant via Hermitian
+- `peterssonAdj_mul` (anti-multiplicativity of peterssonAdj)
+- `peterssonAdj_mapGL_SL_eq_inv` (adj = inv for SL elements cast to GL)
+- `peterssonInner_slash_adjoint_right` (via Hermitian symmetry)
+- `peterssonInner_add_left` (via Hermitian symmetry)
+- `adjointGamma1Rep` + `adjointGamma1Rep_mem_Gamma1` (explicit γ₁⁻¹ ∈ Γ₁(N))
+- `T_p_lower_triple_product_matrix` (DS key identity: T_p_lower = γ₁⁻¹ · T_p_upper(0) · γ₀)
+- `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0` (CuspForm + ModularForm variants)
+
+**T205-d proof scaffold** (lines 1222-1586 of AdjointTheory.lean):
+1. `show` unfolds petN to explicit SL-coset sum over `SL(2,ℤ) ⧸ Gamma1 N`.
+2. `h_Tpf`, `h_Tpg`: naive double-coset decomp via `heckeT_p_fun_eq_coset_sum`
+   (⇑(T_p h) = heckeT_p_ut ⇑h + ⇑h ∣ M_∞).
+3. `simp_rw [h_Tpf, h_Tpg]`: apply these on both sides of the goal.
+4. `simp only [slash_M_infty_eq_diamond_slash_T_p_lower, SlashAction.add_slash]`:
+   rewrite `h ∣ M_∞ = (⟨u⟩ h) ∣ T_p_lower` and distribute outer `∣ q⁻¹`.
+5. `simp only [slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm]`:
+   rewrite `(⟨u⟩ h) ∣ T_p_lower = ((⟨u⟩ h) ∣ T_p_upper(0)) ∣ γ₀`.
+
+At this point, the goal is a clean "4-term symmetric adjoint" identity with γ₀ = adjointGamma0Rep exposed explicitly on both sides.
+
+#### Where I'm stuck
+
+The residual sorry is the **combinatorial coset bijection** matching LHS's `(b, q)` pairs to RHS's `(c, q')` pairs, where q runs over `SL(2,ℤ) ⧸ Γ₁(N)` and b, c run over `{0, ..., p-1}`.
+
+**Why local algebraic moves don't close it**:
+- Applying `petN_slash_invariant` with γ = adjointGamma0Rep to transform LHS/RHS is **circular**: substituting f' := ⟨u⟩⁻¹ f, g' := ⟨u⟩⁻¹ g reduces T205 to itself on (f', g').
+- T205 symmetric form ⟺ asymmetric form `petN (T_p f) g = petN f (⟨u⟩⁻¹ T_p g)` via diamond unitarity + `heckeT_p_comm_diamondOp`. Both forms need the same combinatorial argument.
+- The σ-reindex in `petN_slash_invariant` (PeterssonLevelN.lean:887) IS the template but its direct adaptation fails per-summand because `T_p_upper(0)` appearing after our rewrites **doesn't normalize Γ₁(N)**. So moving γ ∈ Γ₀(N) through the T_p_upper(0) slash isn't trivial.
+
+**What's genuinely needed** (~80-150 LOC):
+A σ-reindex `Equiv.sum_comp` on `SL(2,ℤ) ⧸ Γ₁(N)` that absorbs γ₀ together with the matrix identity `T_p_lower · α_b = p · shift(b)` (where shift(b) ∈ Γ₁(N)). The bijection matches summands via:
+- σ(q) = ⟦q.out · γ₀⁻¹⟧ on the quotient
+- Per summand, use `peterssonInner_slash_adjoint_coset` / `_right` + adjugate simplifications
+- Explicit matrix bookkeeping: T_p_upper(c) · σ(q).out⁻¹ = γ₁ · T_p_upper(c') · q.out⁻¹ · γ₀⁻¹ for some c' ∈ {0,...,p-1}, γ₁ ∈ Γ₁(N)
+
+The proof is analogous to Finset.sum_bij applied at the sum level with bijection (b,q)↦(c',σ(q)).
+
+**Attempted strategies that failed**:
+1. Direct `petN_slash_invariant` application — circular.
+2. Diamond unitarity + `heckeT_p_comm_diamondOp` reduction — circular via substitution.
+3. Per-summand `peterssonInner_slash_adjoint` transforms to "common form" — LHS/RHS each invariant under the transformations, so can't be unified by local moves.
+4. M_∞ substitution via `slash_M_infty_eq_diamond_slash_T_p_lower` — helpful for the scaffold but doesn't resolve the bijection.
+5. Triple product via T_p_lower = γ₁⁻¹·T_p_upper(0)·γ₀ — exposes γ₀ but still leaves the per-summand matching.
+
+**Concrete next steps for a future session**:
+1. Adapt the σ-reindex proof from `petN_slash_invariant` to our scaffolded goal.
+2. Write the explicit bijection (b, q) ↦ (c(b, q), σ(q)) with c(b, q) computed by decomposing `γ₀⁻¹ · α_b · q.out⁻¹ · σ(q).out⁻¹⁻¹ ∈ Γ₁(N)`.
+3. Use `Finset.sum_bij_nested` or similar to rewrite the sum.
+4. Per-summand matching via slash action composition.
+
+- **Estimated effort**: ~2-4 hour dedicated session with careful Lean matrix bookkeeping. All prerequisites are in place.
 - **Proof outline** (analysis completed 2026-04-18):
   After applying T205-a / T205-a_right to both sides + slash_peterssonAdj simplifications,
   both reduce to a sum of 4 explicit summands (per q : SL(2,ℤ) ⧸ Γ₁(N)):
