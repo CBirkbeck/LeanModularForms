@@ -1414,6 +1414,18 @@ private theorem petN_heckeT_p_diamond_shift_core
   -- adjointGamma0Rep_units, petN_slash_invariant, diamondOp_petersson_unitary,
   -- heckeT_p_comm_diamondOp) is proved. The remaining step is assembling these
   -- via the coset bijection argument.
+  -- --------------------------------------------------------------------------
+  -- Concrete progress (2026-04-17): rewrite `f ∣ M_∞ = (⟨u⟩ f) ∣ T_p_lower`
+  -- on both sides (via `slash_M_infty_eq_diamond_slash_T_p_lower`), then
+  -- distribute the outer `∣[k] q.out⁻¹` over the `+` in each petersson
+  -- slot via `SlashAction.add_slash`. This puts both sides into the
+  -- symmetric "four-term" shape where the upper-triangular (`heckeT_p_ut`)
+  -- and lower-diamond (`(⟨u⟩ h) ∣ T_p_lower`) pieces appear explicitly on
+  -- each side, which is the setup expected by the remaining coset-bijection
+  -- / peterssonInner-adjoint argument. The residual sorry is exactly the
+  -- "naive double-coset symmetric adjoint" identity described above.
+  simp only [slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN,
+    SlashAction.add_slash]
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
