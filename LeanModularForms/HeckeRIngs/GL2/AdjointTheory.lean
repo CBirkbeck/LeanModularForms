@@ -415,6 +415,49 @@ private lemma adjointGamma0Rep_units (p N : ℕ) (hpN : Nat.Coprime p N) [NeZero
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   exact hmod
 
+/-- The Γ₁(N) representative γ₁⁻¹ for the triple product identity. Constructed
+using Bezout coefficients `gcdA·p + gcdB·N = 1`, this is the matrix
+`[[p·gcdA, gcdB], [-N, 1]] ∈ SL(2,ℤ)` with determinant `p·gcdA - gcdB·(-N) =
+p·gcdA + gcdB·N = 1`. Its top-left entry is `p·gcdA ≡ 1 mod N`, and (1,0)
+entry is `-N ≡ 0`, so it lies in `Γ₁(N)`. -/
+private noncomputable def adjointGamma1Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
+    SL(2, ℤ) :=
+  let a := Int.gcdA p N
+  let b := Int.gcdB p N
+  ⟨!![(p : ℤ) * a, b; -(N : ℤ), 1], by
+    -- det = (p*a)*1 - b*(-N) = p*a + b*N = 1 (Bezout)
+    have hbez := Int.gcd_eq_gcd_ab p N
+    rw [show (Int.gcd (↑p) (↑N) : ℤ) = 1 from by exact_mod_cast hpN] at hbez
+    simp only [Matrix.det_fin_two_of]
+    linarith⟩
+
+/-- `adjointGamma1Rep ∈ Γ₁(N)`: top-left entry is `p·gcdA ≡ 1 mod N`,
+bottom-right is `1 ≡ 1`, (1,0) entry is `-N ≡ 0`. -/
+private lemma adjointGamma1Rep_mem_Gamma1 (p N : ℕ) [NeZero N]
+    (hpN : Nat.Coprime p N) :
+    adjointGamma1Rep p N hpN ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  -- Top-left: p*gcdA, bottom-right: 1, (1,0): -N
+  -- From Bezout: p*gcdA + gcdB*N = 1, so p*gcdA = 1 - gcdB*N ≡ 1 mod N.
+  have hbez := Int.gcd_eq_gcd_ab p N
+  rw [show (Int.gcd (↑p) (↑N) : ℤ) = 1 from by exact_mod_cast hpN] at hbez
+  refine ⟨?_, ?_, ?_⟩
+  · -- (p*gcdA : ZMod N) = 1
+    show (((adjointGamma1Rep p N hpN).val 0 0 : ℤ) : ZMod N) = 1
+    unfold adjointGamma1Rep
+    -- Goal: ((p * Int.gcdA p N : ℤ) : ZMod N) = 1
+    have h : ((p : ℤ) * Int.gcdA p N + Int.gcdB p N * N : ZMod N) = 1 := by
+      have := congr_arg (Int.cast : ℤ → ZMod N) hbez
+      simp only [Int.cast_one, Int.cast_add, Int.cast_mul, Int.cast_natCast] at this
+      push_cast; linear_combination -this
+    simpa [ZMod.natCast_self] using h
+  · -- (1 : ZMod N) = 1
+    show (((adjointGamma1Rep p N hpN).val 1 1 : ℤ) : ZMod N) = 1
+    unfold adjointGamma1Rep; simp
+  · -- (-N : ZMod N) = 0
+    show (((adjointGamma1Rep p N hpN).val 1 0 : ℤ) : ZMod N) = 0
+    unfold adjointGamma1Rep; simp
+
 /-! ### Hermitian adjoint of Hecke operators
 
 The adjoint is defined via the Petersson inner product:
@@ -1128,6 +1171,96 @@ private lemma slash_peterssonAdj_T_p_lower_eq_T_p_upper_0
   rw [show (glMap (T_p_upper p hp.pos 0) : Matrix _ _ ℝ) i j =
       (!![(1 : ℝ), 0; 0, (p : ℝ)]) i j from by rw [h2]]
 
+/-- **T_p_lower triple product identity** (DS Theorem 5.5.3, matrix level):
+`T_p_lower = γ₁_inv · T_p_upper(0) · γ₀` where `γ₁_inv ∈ Γ₁(N)` and
+`γ₀ = adjointGamma0Rep ∈ Γ₀(N)`. Verified by direct matrix multiplication
+using Bezout `p·gcdA + gcdB·N = 1`. -/
+private lemma T_p_lower_triple_product_matrix (p N : ℕ) [NeZero N] (hp : 0 < p)
+    (hpN : Nat.Coprime p N) :
+    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (adjointGamma1Rep p N hpN)) *
+      (glMap (T_p_upper p hp 0)) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) := by
+  -- Verify as matrices over ℝ
+  apply Units.ext; ext i j
+  -- LHS matrix: T_p_lower has entries [[p,0],[0,1]] over ℝ
+  have h_lhs : (glMap (T_p_lower p hp) : Matrix (Fin 2) (Fin 2) ℝ) =
+      !![(p : ℝ), 0; 0, 1] := by
+    ext i' j'; fin_cases i' <;> fin_cases j' <;> simp [glMap, T_p_lower]
+  -- Bezout relation in ℤ
+  have hbez : (p : ℤ) * Int.gcdA p N + Int.gcdB p N * N = 1 := by
+    have h := Int.gcd_eq_gcd_ab p N
+    rw [show (Int.gcd (↑p) (↑N) : ℤ) = 1 from by exact_mod_cast hpN] at h
+    linarith
+  -- Bezout in ℝ
+  have hbezℝ : (p : ℝ) * (Int.gcdA p N : ℝ) + (Int.gcdB p N : ℝ) * (N : ℝ) = 1 := by
+    have := congr_arg (Int.cast : ℤ → ℝ) hbez
+    push_cast at this; linarith
+  -- RHS matrix: γ₁_inv · T_p_upper(0) · γ₀
+  have h_rhs : ((((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (adjointGamma1Rep p N hpN)) *
+      (glMap (T_p_upper p hp 0))) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) :
+      GL (Fin 2) ℝ).val =
+      (!![(p : ℝ), 0; 0, 1] : Matrix (Fin 2) (Fin 2) ℝ) := by
+    ext i' j'
+    -- γ₁_inv = [[p*gcdA, gcdB],[-N, 1]]
+    -- T_p_upper(0) = [[1, 0],[0, p]]
+    -- γ₀ = [[p, -gcdB],[N, gcdA]]
+    -- Product = [[p, 0],[0, 1]] by Bezout
+    fin_cases i' <;> fin_cases j' <;>
+      simp [adjointGamma1Rep, adjointGamma0Rep, glMap, T_p_upper,
+        mapGL, Matrix.SpecialLinearGroup.map,
+        Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Units.val_mul] <;>
+      nlinarith [hbezℝ]
+  show (glMap (T_p_lower p hp) : Matrix _ _ ℝ) i j =
+    ((((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (adjointGamma1Rep p N hpN)) *
+        (glMap (T_p_upper p hp 0))) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) : GL (Fin 2) ℝ).val i j
+  rw [h_lhs, h_rhs]
+
+/-- **Slash identity for T_p_lower via triple product** (T205-d Step 2, ModularForm version):
+For `f ∈ M_k(Γ₁(N))`, slashing by `T_p_lower` equals slashing by
+`T_p_upper(0)` then by `γ₀ = adjointGamma0Rep`. This uses the triple-product
+matrix identity plus the fact that `γ₁_inv ∈ Γ₁(N)` acts trivially on `f`. -/
+private lemma slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) =
+      (⇑f ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) := by
+  -- Use the triple product identity: T_p_lower = γ₁_inv · T_p_upper(0) · γ₀
+  rw [show (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (adjointGamma1Rep p N hpN)) *
+      (glMap (T_p_upper p hp.pos 0)) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) from
+    T_p_lower_triple_product_matrix p N hp.pos hpN]
+  -- Distribute the slash: (γ₁_inv · T_p_upper(0) · γ₀) -> γ₁_inv, then T_p_upper(0), then γ₀
+  rw [SlashAction.slash_mul, SlashAction.slash_mul]
+  -- Now: ((f ∣ γ₁_inv) ∣ T_p_upper(0)) ∣ γ₀ = (f ∣ T_p_upper(0)) ∣ γ₀
+  -- γ₁_inv ∈ Γ₁(N), so f ∣ γ₁_inv = f by slash_action_eq
+  congr 2
+  -- Goal: f ∣ (mapGL ℝ γ₁_inv) = f
+  have hmem : (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (adjointGamma1Rep p N hpN) ∈
+      (Gamma1 N).map (mapGL ℝ) :=
+    ⟨adjointGamma1Rep p N hpN, adjointGamma1Rep_mem_Gamma1 p N hpN, rfl⟩
+  exact SlashInvariantFormClass.slash_action_eq f _ hmem
+
+/-- **Slash identity for T_p_lower via triple product** (T205-d Step 2, CuspForm version):
+The CuspForm version, derived from the ModularForm version. -/
+private lemma slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) =
+      (⇑f ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) :=
+  slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN f.toModularForm'
+
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a**: Per-summand slash adjoint identity for a GL₂⁺(ℝ) element β
 post-composed with an SL₂(ℤ) element q⁻¹.
@@ -1440,6 +1573,16 @@ private theorem petN_heckeT_p_diamond_shift_core
   -- "naive double-coset symmetric adjoint" identity described above.
   simp only [slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN,
     SlashAction.add_slash]
+  -- Concrete progress (2026-04-18): use the triple-product identity
+  -- `T_p_lower = γ₁⁻¹ · T_p_upper(0) · γ₀` (where γ₁⁻¹ ∈ Γ₁(N) and
+  -- γ₀ = adjointGamma0Rep ∈ Γ₀(N) represents ⟨u⟩⁻¹) to rewrite the
+  -- `(⟨u⟩ h) ∣ T_p_lower` terms on both sides as
+  -- `((⟨u⟩ h) ∣ T_p_upper(0)) ∣ γ₀`. This exposes the γ₀ rep explicitly
+  -- and aligns with the expected form for petN_slash_invariant.
+  simp only [show ∀ (h : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
+      ⇑h ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
+        ⇑h ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) from fun _ => rfl,
+    slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN]
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
