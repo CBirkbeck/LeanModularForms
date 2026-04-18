@@ -3775,7 +3775,7 @@ private lemma diagConj_entry (k : ℕ) (hk : 0 < k) (σ : GL (Fin 2) ℚ) (i j :
 diagonal element `diag(1,k)`, the double-coset stabilizer
 `(ConjAct g • H).subgroupOf H` inside `H = Γ₀(N).map(mapGL)` equals
 `Γ₀(kN).map(mapGL).subgroupOf H`. -/
-private lemma stab_diag_eq_Gamma0 (N : ℕ) [NeZero N] (k : ℕ) (hk : 0 < k) :
+lemma stab_diag_eq_Gamma0 (N : ℕ) [NeZero N] (k : ℕ) (hk : 0 < k) :
     (ConjAct.toConjAct (diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ) •
       (Gamma0_pair N).H).subgroupOf (Gamma0_pair N).H =
     ((CongruenceSubgroup.Gamma0 (k * N)).map (mapGL ℚ)).subgroupOf
