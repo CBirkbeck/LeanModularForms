@@ -1583,6 +1583,51 @@ private theorem petN_heckeT_p_diamond_shift_core
       ⇑h ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
         ⇑h ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) from fun _ => rfl,
     slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN]
+  -- Residual goal (2026-04-17 status after T205-d simplifications):
+  --   ∑_x peterssonInner k fd
+  --         (heckeT_p_ut k p _ ⇑f ∣ q⁻¹
+  --          + ((⟨u⟩ f) ∣ T_p_upper(0)) ∣ γ₀ ∣ q⁻¹)
+  --         (⇑g ∣ q⁻¹)
+  --   =
+  --   ∑_x peterssonInner k fd
+  --         (⇑(⟨u⟩ f) ∣ q⁻¹)
+  --         (heckeT_p_ut k p _ ⇑g ∣ q⁻¹
+  --          + ((⟨u⟩ g) ∣ T_p_upper(0)) ∣ γ₀ ∣ q⁻¹)
+  -- where γ₀ = mapGL ℝ (adjointGamma0Rep p N hpN).val, which represents ⟨u⟩⁻¹.
+  --
+  -- WHY SIMPLE APPROACHES FAIL:
+  -- (a) Direct `petN_slash_invariant` with γ = adjointGamma0Rep transforms the
+  --     RHS = petN(⟨u⟩f, T_p g) into petN((⟨u⟩f)∣γ₀, (T_p g)∣γ₀) = petN(f, T_p(⟨u⟩⁻¹ g))
+  --     (via heckeT_p_comm_diamondOp + ⟨u⟩⟨u⟩⁻¹ = 1). Substituting f' = ⟨u⟩⁻¹ f,
+  --     g' = ⟨u⟩⁻¹ g returns petN(T_p f', ⟨u⟩ g') = petN(⟨u⟩ f', T_p g'), i.e.
+  --     the same identity at (f', g'). Hence CIRCULAR.
+  -- (b) Summand-by-summand matching fails: `peterssonInner_slash_adjoint` shifts
+  --     the domain from `fd` to `α • fd`, breaking direct summand alignment.
+  --
+  -- WHAT A COMPLETE PROOF LOOKS LIKE (~80-150 LOC):
+  -- (1) Distribute over `+` in the peterssonInner slot (needs integrability, via
+  --     `peterssonInner_add_left` / `peterssonInner_add_right`). This yields four
+  --     LHS pieces and four RHS pieces per q.
+  -- (2) For each upper-triangular LHS piece
+  --       ∑_b peterssonInner (f ∣ T_p_upper(b) ∣ q⁻¹) (g ∣ q⁻¹):
+  --     apply `peterssonInner_slash_adjoint_coset` with β = glMap(T_p_upper(b)),
+  --     then `slash_peterssonAdj_T_p_upper_eq_T_p_lower` to absorb b.
+  --     Result: p · peterssonInner (α_b • q⁻¹ • fd) f (g ∣ T_p_lower).
+  -- (3) For the lower LHS piece ((⟨u⟩ f) ∣ T_p_upper(0)) ∣ γ₀ ∣ q⁻¹, note the
+  --     γ₀ ∣ q⁻¹ factor combines to γ₀ q⁻¹ = (q γ₀⁻¹)⁻¹. So reindexing the
+  --     q-sum by q ↦ q γ₀⁻¹ (valid since γ₀ ∈ Γ₀(N) normalizes Γ₁(N)) converts
+  --     this term into the RHS's T_p_ut g term with an ⟨u⟩-twist absorbed.
+  -- (4) Mirror Steps 2-3 on the RHS.
+  -- (5) Assemble the shifted-tile integrals via `sum_setIntegral_GL2_shift` and
+  --     match via the q ↦ q γ₀⁻¹ bijection on SL₂(ℤ)/Γ₁(N).
+  --
+  -- All infrastructure (peterssonInner_slash_adjoint_coset,
+  -- peterssonInner_slash_adjoint_coset_right, slash_peterssonAdj_T_p_upper_eq_T_p_lower,
+  -- slash_peterssonAdj_T_p_lower_eq_T_p_upper_0, slash_T_p_lower_eq_...,
+  -- sum_setIntegral_GL2_shift, petN_slash_invariant, heckeT_p_comm_diamondOp,
+  -- diamondOp_petersson_unitary, adjointGamma0Rep, adjointGamma0Rep_units,
+  -- Gamma0_normalizes_Gamma1) is proved. Net remaining work: the careful
+  -- reindexing + integrability bookkeeping, which requires ~80-150 LOC.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
