@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
 import LeanModularForms.HeckeRIngs.GL2.FourierHecke
+import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma1
 import LeanModularForms.Modularforms.PeterssonInner
 import LeanModularForms.Modularforms.PeterssonLevelN
 import Mathlib.Analysis.Complex.UpperHalfPlane.Metric
@@ -1299,6 +1300,88 @@ private theorem petN_heckeT_p_diamond_shift_core
   -- slash_peterssonAdj_T_p_{upper,lower}_eq_..., slash_M_infty_eq_diamond_slash_T_p_lower,
   -- sum_setIntegral_GL2_shift, adjointGamma0Rep + adjointGamma0Rep_units.
   -- The remaining ~80-150 LOC is the coset bijection argument.
+  --
+  -- ============================================================================
+  -- Proof skeleton (2026-04-17): structured via named sub-sorries for the hard
+  -- coset bijection / per-tile-shift integral identity.
+  --
+  -- Macro strategy: use `petN_slash_adjoint_GL2` applied once per coset rep of
+  -- the naive double-coset sum (`T_p_upper(b)` for 0 ≤ b < p, plus `M_∞`), and
+  -- reindex the resulting RHS summands to match the RHS coset-sum form of
+  -- `petN (⟨p⟩ f) (T_p g)`.
+  --
+  -- At the top level, we state the identity as "bijection of naive coset sums"
+  -- and delegate the actual matrix bijection to a single sub-sorry.
+  -- ============================================================================
+  set u := ZMod.unitOfCoprime p hpN with hu_def
+  -- ============================================================================
+  -- Step 1: Unfold `petN` on both sides to sums over `SL₂(ℤ)/Γ₁(N)`-cosets.
+  -- Each side becomes a finite sum of `peterssonInner k fd (… ∣ q⁻¹) (… ∣ q⁻¹)`.
+  -- ============================================================================
+  show ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      UpperHalfPlane.peterssonInner k ModularGroup.fd
+        (⇑(heckeT_p_cusp k p hp hpN f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
+        (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹) =
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      UpperHalfPlane.peterssonInner k ModularGroup.fd
+        (⇑(diamondOp_cusp k u f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
+        (⇑(heckeT_p_cusp k p hp hpN g) ∣[k] (q.out : SL(2, ℤ))⁻¹)
+  -- ============================================================================
+  -- Step 2: On the LHS, rewrite `⇑(heckeT_p_cusp k p hp hpN f)` as
+  --   `heckeT_p_ut k p hp.pos (⇑f.toModularForm') + ⇑f.toModularForm' ∣[k] M_∞`
+  -- via `heckeT_p_fun_eq_coset_sum`. This is the "naive double-coset sum" form.
+  --
+  -- On the RHS, similarly rewrite `⇑(heckeT_p_cusp k p hp hpN g)`.
+  --
+  -- Step 3: Split each `peterssonInner` summand using linearity in the slashed-sum
+  -- argument. (Requires per-coset integrability of the petersson integrand.)
+  --
+  -- Step 4: For each upper-triangular term `peterssonInner k fd (f ∣ α_b ∣ q⁻¹) …`,
+  -- apply `peterssonInner_slash_adjoint_coset` with β = glMap (T_p_upper p hp.pos b)
+  -- to get `peterssonInner k (β • q⁻¹ • fd) f (g ∣ peterssonAdj β)`.
+  --
+  -- Step 5: `slash_peterssonAdj_T_p_upper_eq_T_p_lower` shows
+  --   `g ∣ peterssonAdj (glMap (T_p_upper p hp.pos b)) = g ∣ glMap (T_p_lower p hp.pos)`
+  -- for ALL b (b-independence), collapsing the Σ_b sum to p copies.
+  --
+  -- Step 6: For the M_∞ term, use `slash_M_infty_eq_diamond_slash_T_p_lower` to
+  -- rewrite `f ∣ M_∞ = (⟨p⟩ f) ∣ T_p_lower`, introducing the ⟨p⟩ twist.
+  --
+  -- Step 7: Mirror Steps 3-6 on the RHS (which has `T_p g` instead of `T_p f`).
+  --
+  -- Step 8: At this point LHS and RHS are sums of integrals over
+  --   - p shifted-tile integrals of `f, g ∣ T_p_lower` vs `(⟨p⟩ f) ∣ T_p_lower, g`
+  --   - 1 integral of `(⟨p⟩ f), g ∣ T_p_upper(0)` vs `(⟨p⟩ f) ∣ T_p_upper(0), (⟨p⟩ g)`
+  -- The residual reindexing is by `adjointGamma0Rep`, which is a Γ₀(N) rep for ⟨p⟩⁻¹.
+  --
+  -- Step 9: Use `petN_slash_invariant` with γ = adjointGamma0Rep, together with
+  -- `diamondOp_petersson_unitary` for the ⟨p⟩ twist, to match the final sums.
+  -- ============================================================================
+  --
+  -- STARTING POINT: naive double-coset sum decomposition (via `heckeT_p_fun_eq_coset_sum`).
+  have h_Tpf : (⇑(heckeT_p_cusp k p hp hpN f) : UpperHalfPlane → ℂ) =
+      heckeT_p_ut k p hp.pos (⇑f.toModularForm') +
+      ⇑f.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
+    heckeT_p_fun_eq_coset_sum k hp hpN f.toModularForm'
+  have h_Tpg : (⇑(heckeT_p_cusp k p hp hpN g) : UpperHalfPlane → ℂ) =
+      heckeT_p_ut k p hp.pos (⇑g.toModularForm') +
+      ⇑g.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
+    heckeT_p_fun_eq_coset_sum k hp hpN g.toModularForm'
+  -- NAMED SUB-SORRY: `petN_heckeT_p_naive_coset_sum_identity`
+  -- Informal statement: after the naive double-coset decomposition above, the
+  -- per-coset sums on LHS and RHS are equal, modulo the ⟨p⟩ twist.
+  --
+  -- More concretely: for each q ∈ SL₂(ℤ)/Γ₁(N),
+  --   Σ_{b=0}^{p-1} peterssonInner k fd (⇑f ∣[k] glMap (T_p_upper p hp.pos b) ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹)
+  --     + peterssonInner k fd (⇑f ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹)
+  --   =
+  --   (after reindexing by adjointGamma0Rep)
+  --   Σ_{c=0}^{p-1} peterssonInner k fd (⇑(diamondOp_cusp k u f) ∣[k] q.out⁻¹) (⇑g ∣[k] glMap (T_p_upper p hp.pos c) ∣[k] q.out⁻¹)
+  --     + peterssonInner k fd (⇑(diamondOp_cusp k u f) ∣[k] q.out⁻¹) (⇑g ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) ∣[k] q.out⁻¹)
+  --
+  -- This is the substantive ~80-150 LOC coset bijection. All building blocks
+  -- (A)-(G) from the strategy comment above are proved lemmas; what remains is
+  -- the combinatorial/bookkeeping assembly.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
