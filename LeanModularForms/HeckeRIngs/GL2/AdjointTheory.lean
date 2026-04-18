@@ -1367,21 +1367,53 @@ private theorem petN_heckeT_p_diamond_shift_core
       heckeT_p_ut k p hp.pos (⇑g.toModularForm') +
       ⇑g.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
     heckeT_p_fun_eq_coset_sum k hp hpN g.toModularForm'
-  -- NAMED SUB-SORRY: `petN_heckeT_p_naive_coset_sum_identity`
-  -- Informal statement: after the naive double-coset decomposition above, the
-  -- per-coset sums on LHS and RHS are equal, modulo the ⟨p⟩ twist.
+  -- After the naive double-coset decomposition above, the identity reduces to
+  -- a sum over `q ∈ SL₂(ℤ)/Γ₁(N)` of the "naive double-coset" expansion of each side.
+  -- Substitute h_Tpf on LHS and h_Tpg on RHS to put both sides in the form
+  -- ∑_q peterssonInner k fd ((Σ_b f∣α_b + f∣M_∞)∣q⁻¹) ... .
+  simp_rw [h_Tpf, h_Tpg]
+  -- ============================================================================
+  -- REMAINING SUB-SORRY: `petN_naive_double_coset_symmetric_adjoint`
   --
-  -- More concretely: for each q ∈ SL₂(ℤ)/Γ₁(N),
-  --   Σ_{b=0}^{p-1} peterssonInner k fd (⇑f ∣[k] glMap (T_p_upper p hp.pos b) ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹)
-  --     + peterssonInner k fd (⇑f ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹)
+  -- Statement (after `simp_rw [h_Tpf, h_Tpg]`):
+  --   ∑_q peterssonInner k fd
+  --        ((heckeT_p_ut k p hp.pos ⇑f + ⇑f ∣[k] M_∞) ∣[k] q.out⁻¹)
+  --        (⇑g ∣[k] q.out⁻¹)
   --   =
-  --   (after reindexing by adjointGamma0Rep)
-  --   Σ_{c=0}^{p-1} peterssonInner k fd (⇑(diamondOp_cusp k u f) ∣[k] q.out⁻¹) (⇑g ∣[k] glMap (T_p_upper p hp.pos c) ∣[k] q.out⁻¹)
-  --     + peterssonInner k fd (⇑(diamondOp_cusp k u f) ∣[k] q.out⁻¹) (⇑g ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) ∣[k] q.out⁻¹)
+  --   ∑_q peterssonInner k fd
+  --        (⇑(⟨u⟩ f) ∣[k] q.out⁻¹)
+  --        ((heckeT_p_ut k p hp.pos ⇑g + ⇑g ∣[k] M_∞) ∣[k] q.out⁻¹)
   --
-  -- This is the substantive ~80-150 LOC coset bijection. All building blocks
-  -- (A)-(G) from the strategy comment above are proved lemmas; what remains is
-  -- the combinatorial/bookkeeping assembly.
+  -- Informal argument outline (~80-150 LOC, not attempted here):
+  --   1. Distribute + via SlashAction.add_slash and peterssonInner linearity.
+  --      LHS = Σ_q [peterssonInner (f_ut ∣ q⁻¹) (g ∣ q⁻¹)
+  --               + peterssonInner (f ∣ M_∞ ∣ q⁻¹) (g ∣ q⁻¹)]
+  --      where f_ut := heckeT_p_ut k p hp.pos ⇑f = Σ_b f ∣ α_b.
+  --   2. On the "upper" part of LHS, apply peterssonInner_slash_adjoint_coset
+  --      with β = glMap (T_p_upper p hp.pos b) for each b. Use
+  --      slash_peterssonAdj_T_p_upper_eq_T_p_lower for b-independence,
+  --      collapsing the Σ_b into p copies of the same integral.
+  --   3. On the "M_∞" term, rewrite f ∣ M_∞ = ⟨u⟩f ∣ T_p_lower via
+  --      slash_M_infty_eq_diamond_slash_T_p_lower, then apply
+  --      peterssonInner_slash_adjoint_coset with β = glMap (T_p_lower) and
+  --      slash_peterssonAdj_T_p_lower_eq_T_p_upper_0.
+  --   4. Mirror Steps 1-3 on RHS via the "right" variants
+  --      (peterssonInner_slash_adjoint_coset_right, etc.).
+  --   5. After Steps 2-4, LHS and RHS are sums of `peterssonInner` with shifted
+  --      domains {α • q.out⁻¹ • fd}. These assemble into Γ₁(N)-fundamental
+  --      domain integrals via sum_setIntegral_GL2_shift.
+  --   6. The remaining sums are matched via a coset bijection induced by
+  --      `adjointGamma0Rep p N hpN ∈ Γ₀(N)`, whose image under `Gamma0MapUnits`
+  --      is `u⁻¹` (cf. `adjointGamma0Rep_units`). This rep represents ⟨u⟩⁻¹,
+  --      which accounts for the ⟨u⟩-twist difference between LHS and RHS.
+  --
+  -- All infrastructure (peterssonInner_slash_adjoint_coset,
+  -- peterssonInner_slash_adjoint_coset_right, slash_peterssonAdj_T_p_upper_eq_T_p_lower,
+  -- slash_peterssonAdj_T_p_lower_eq_T_p_upper_0, slash_M_infty_eq_diamond_slash_T_p_lower,
+  -- M_infty_eq_sigma_mul_T_p_lower, sum_setIntegral_GL2_shift, adjointGamma0Rep,
+  -- adjointGamma0Rep_units, petN_slash_invariant, diamondOp_petersson_unitary,
+  -- heckeT_p_comm_diamondOp) is proved. The remaining step is assembling these
+  -- via the coset bijection argument.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
