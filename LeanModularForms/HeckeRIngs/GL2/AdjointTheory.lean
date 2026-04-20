@@ -1338,6 +1338,42 @@ private lemma slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0
           ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) :=
   slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN f.toModularForm'
 
+/-- **T127 residual M_∞-term reducing helper**: the T205 post-simp-chain
+form `(⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀` equals the original `f ∣ M_∞` (reverse of
+the two-step simp normalization used in T205).
+
+Composes `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm` (reverse
+direction, moving γ₀ + T_p_upper(0) to T_p_lower) with
+`slash_M_infty_eq_diamond_slash_T_p_lower` (reverse direction, moving
+`(⟨u⟩ f) ∣ T_p_lower` to `f ∣ M_∞`).
+
+**Role in T205 closure.**  The T205 existing proof body applies the forward
+direction of this two-step normalization to expand `f ∣ M_∞` into the
+three-slash form `(⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀`.  This helper provides the
+reverse identity, enabling an alternate proof path that works at the
+M_∞-level directly (e.g., through `peterssonInner_slash_adjoint_coset` with
+β = glMap M_∞, using the T106 M_∞ adjoint helper).  Shrinks T205's M_∞
+residual from a 3-slash form to a 1-slash form on the non-invariant side. -/
+theorem slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+      (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) =
+    ⇑f ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) := by
+  -- Reverse direction of the T205 simp chain:
+  -- Step 1: (⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀ = (⟨u⟩ f) ∣ T_p_lower  (triple-product reverse)
+  rw [← slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN
+    (diamondOp k (ZMod.unitOfCoprime p hpN) f)]
+  -- Step 2: ⟨u⟩ f ∣ glMap T_p_lower = ⟨u⟩ f ∣ (T_p_lower : GL ℚ)  (rfl bridge via glMap)
+  rw [show ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) =
+      ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (T_p_lower p hp.pos : GL (Fin 2) ℚ) from rfl]
+  -- Step 3: (⟨u⟩ f) ∣ T_p_lower = f ∣ M_∞  (reverse of slash_M_infty_eq_diamond_slash_T_p_lower)
+  rw [← slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN f]
+
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a**: Per-summand slash adjoint identity for a GL₂⁺(ℝ) element β
 post-composed with an SL₂(ℤ) element q⁻¹.
