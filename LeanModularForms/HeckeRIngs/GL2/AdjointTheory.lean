@@ -1698,6 +1698,187 @@ theorem aedisjoint_pairwise_family_of_pair_ae_disjoint
   fun i hi j hj hij => h_pair i (Finset.mem_coe.mp hi) j (Finset.mem_coe.mp hj) hij
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094 matrix identity M2 witness: explicit Γ₁(N) factor from
+`T_p_upper(b)⁻¹ · M_∞`.**
+
+SL(2, ℤ) element with matrix `!![ap − bNm, 1 − b; Nm, 1]`
+(where `a = aInvOfCoprime, m = mIdxOfCoprime`, so `ap − Nm = 1` by Bezout). -/
+noncomputable def M_infty_Gamma1_factor
+    (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (b : ℕ) : SL(2, ℤ) :=
+  ⟨!![(aInvOfCoprime N p hpN : ℤ) * p - (b : ℤ) * ((N : ℤ) * mIdxOfCoprime N p hpN),
+      1 - (b : ℤ);
+      (N : ℤ) * mIdxOfCoprime N p hpN, 1],
+    by
+      have h := N_mul_mIdx_eq N p hpN
+      rw [Matrix.det_fin_two_of]; linarith⟩
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: `M_infty_Gamma1_factor` lies in `Γ₁(N)`.** -/
+theorem M_infty_Gamma1_factor_mem_Gamma1
+    (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (b : ℕ) :
+    M_infty_Gamma1_factor N p hpN b ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  have hN : (((N : ℤ) : ZMod N) : ZMod N) = 0 := by
+    push_cast; exact ZMod.natCast_self N
+  refine ⟨?_, ?_, ?_⟩
+  · -- (0,0) ≡ 1 mod N: ap - bNm ≡ ap ≡ 1 mod N.
+    change ((((aInvOfCoprime N p hpN : ℤ) * p -
+        (b : ℤ) * ((N : ℤ) * mIdxOfCoprime N p hpN)) : ℤ) : ZMod N) = 1
+    push_cast
+    have : (((b : ℕ) : ZMod N) *
+        (((N : ℕ) : ZMod N) * ((mIdxOfCoprime N p hpN : ℤ) : ZMod N))) = 0 := by
+      rw [show (((N : ℕ) : ZMod N)) = 0 from ZMod.natCast_self N]; ring
+    rw [this, sub_zero]
+    exact aInvOfCoprime_mul_eq_one N p hpN
+  · change ((1 : ℤ) : ZMod N) = 1
+    push_cast; rfl
+  · change ((((N : ℤ) * mIdxOfCoprime N p hpN) : ℤ) : ZMod N) = 0
+    push_cast
+    rw [show (((N : ℕ) : ZMod N)) = 0 from ZMod.natCast_self N]; ring
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: `M_infty_Gamma1_factor` is non-trivial in `PSL(2, ℤ)` for `p` prime.**
+
+If `γ = M_infty_Gamma1_factor` were central in `SL(2, ℤ)`, commutation with the
+rotation `S = !![0, -1; 1, 0]` would force both `γ 0 0 = γ 1 1` and `γ 0 1 =
+-γ 1 0`.  Using `γ 1 1 = 1` and `γ 0 0 = ap − bNm`, we'd get `ap − bNm = 1`.
+Separately, `γ 0 1 = 1 − b = -Nm`.  Combined with the Bezout `ap − Nm = 1`,
+this leaves a contradiction whenever `p ≥ 2` (i.e., `p` prime). -/
+theorem M_infty_Gamma1_factor_psl_ne_one
+    (N p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
+    (QuotientGroup.mk (M_infty_Gamma1_factor N p hpN b) : PSL(2, ℤ)) ≠ 1 := by
+  -- Commutation with `S = !![0, -1; 1, 0]` + entry (1,0) gives `ap - bNm = 1`.
+  -- Combined with Bezout `ap - Nm = 1`, we get `(b-1)·Nm = 0`.  Via
+  -- entry (0,1) giving `1 - b = -Nm`, both cases collapse to `Nm = 0` and
+  -- `ap = 1`, which contradicts `p` prime ≥ 2.
+  intro heq
+  rw [QuotientGroup.eq_one_iff] at heq
+  have hS : (!![(0 : ℤ), -1; 1, 0] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+    simp [Matrix.det_fin_two]
+  set S_mat : SL(2, ℤ) := ⟨!![0, -1; 1, 0], hS⟩
+  have hcomm : M_infty_Gamma1_factor N p hpN b * S_mat =
+      S_mat * M_infty_Gamma1_factor N p hpN b := heq.comm S_mat
+  have hcomm_val : (M_infty_Gamma1_factor N p hpN b : SL(2, ℤ)).val * S_mat.val =
+      S_mat.val * (M_infty_Gamma1_factor N p hpN b : SL(2, ℤ)).val :=
+    congr_arg Subtype.val hcomm
+  -- Entry (1,0) of commutation: γ 1 1 = γ 0 0, i.e., 1 = ap - bNm.
+  have h_10 := congr_fun (congr_fun hcomm_val 1) 0
+  simp only [S_mat, M_infty_Gamma1_factor, Matrix.mul_apply, Fin.sum_univ_two,
+    Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+    Matrix.head_cons, Matrix.head_fin_const] at h_10
+  -- Entry (0,0) of commutation: γ 0 1 = -γ 1 0, i.e., 1 - b = -Nm.
+  have h_00 := congr_fun (congr_fun hcomm_val 0) 0
+  simp only [S_mat, M_infty_Gamma1_factor, Matrix.mul_apply, Fin.sum_univ_two,
+    Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+    Matrix.head_cons, Matrix.head_fin_const] at h_00
+  -- h_10: `ap - bNm = 1`; Bezout `ap - Nm = 1`.  Subtract: `(1-b) Nm = 0`.
+  -- h_00: `1 - b = -Nm`.
+  have h_bezout := N_mul_mIdx_eq N p hpN
+  -- From h_10, h_bezout: `ap - bNm - (ap - Nm) = 0`, i.e., `(1-b) * Nm = 0`.
+  -- From h_00: `(1 - b) = -Nm`.  Substitute: `(-Nm) * Nm = 0`, so `Nm^2 = 0`, `Nm = 0`.
+  have h_Nm_zero : (N : ℤ) * mIdxOfCoprime N p hpN = 0 := by
+    have h_sub : (1 - (b : ℤ)) * ((N : ℤ) * mIdxOfCoprime N p hpN) = 0 := by
+      linarith
+    have h_subst : -((N : ℤ) * mIdxOfCoprime N p hpN) *
+        ((N : ℤ) * mIdxOfCoprime N p hpN) = 0 := by
+      have : (1 - (b : ℤ)) = -((N : ℤ) * mIdxOfCoprime N p hpN) := by linarith
+      rw [this] at h_sub; exact h_sub
+    have h_sq : ((N : ℤ) * mIdxOfCoprime N p hpN)^2 = 0 := by
+      have := h_subst; nlinarith
+    exact pow_eq_zero_iff (by norm_num : (2 : ℕ) ≠ 0) |>.mp h_sq
+  -- Then ap = 1 from Bezout.
+  have h_ap : (aInvOfCoprime N p hpN : ℤ) * p = 1 := by linarith
+  -- ap = 1 with p prime ≥ 2: impossible.
+  have hp_div : (p : ℤ) ∣ 1 := ⟨aInvOfCoprime N p hpN, by linarith⟩
+  have hp_ge : (p : ℤ) ≥ 2 := by exact_mod_cast hp.two_le
+  have hp_unit := Int.isUnit_iff.mp (isUnit_of_dvd_one hp_div)
+  rcases hp_unit with h | h <;> omega
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094 matrix identity M2: `(T_p_upper(b))⁻¹ · M_∞ = mapGL ℝ
+(M_infty_Gamma1_factor)`.**  Verified via `M_∞ = T_p_upper(b) · γ'` computation. -/
+theorem glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1
+    (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (b : ℕ) :
+    (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ)⁻¹ *
+        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
+      ((mapGL ℝ : SL(2, ℤ) →* _) (M_infty_Gamma1_factor N p hpN b)) := by
+  have h_mul : (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
+      (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* _) (M_infty_Gamma1_factor N p hpN b)) := by
+    apply Units.ext
+    ext i j
+    have h_L : ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        !![((aInvOfCoprime N p hpN : ℤ) : ℝ) * (p : ℝ), 1;
+           (((N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ℝ) * (p : ℝ), (p : ℝ)] := by
+      ext i' j'; fin_cases i' <;> fin_cases j' <;>
+        simp [glMap, M_infty, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+          Matrix.GeneralLinearGroup.map, Matrix.of_apply]
+    have h_R1 : ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) = !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] := by
+      ext i' j'; fin_cases i' <;> fin_cases j' <;>
+        simp [glMap, T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+          Matrix.GeneralLinearGroup.map, Matrix.of_apply]
+    have h_R2 : (((mapGL ℝ : SL(2, ℤ) →* _) (M_infty_Gamma1_factor N p hpN b)) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        !![((aInvOfCoprime N p hpN : ℤ) : ℝ) * (p : ℝ) -
+             (b : ℝ) * (((N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ℝ),
+           (1 : ℝ) - (b : ℝ);
+           (((N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ℝ), 1] := by
+      ext i' j'; fin_cases i' <;> fin_cases j' <;>
+        simp [mapGL_coe_matrix, M_infty_Gamma1_factor, algebraMap_int_eq,
+          Matrix.of_apply]
+    show ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) : Matrix _ _ ℝ) i j =
+      ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
+       ((mapGL ℝ : SL(2, ℤ) →* _) (M_infty_Gamma1_factor N p hpN b)) :
+       GL (Fin 2) ℝ).val i j
+    rw [h_L, Units.val_mul, h_R1, h_R2]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply] <;> ring
+  rw [h_mul, ← mul_assoc, inv_mul_cancel, one_mul]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: AE-disjoint for `T_p_upper(b)` vs `M_∞` (p prime).** -/
+theorem aedisjoint_glMap_M_infty_T_p_upper
+    {N : ℕ} [NeZero N] {p : ℕ} (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
+    AEDisjoint μ_hyp
+      ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        (Gamma1_fundDomain_PSL N : Set ℍ))
+      ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+        (Gamma1_fundDomain_PSL N : Set ℍ)) := by
+  have h_det_pos : 0 < (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ).det.val := by
+    show 0 < ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+    rw [show (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+      (algebraMap ℚ ℝ) (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det) from
+        (RingHom.map_det _ _).symm]
+    rw [show ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+      simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.det_fin_two, Matrix.of_apply]]
+    show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+    rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+    exact_mod_cast hp.pos
+  have h_inv_det_pos : 0 <
+      ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)⁻¹).det.val := by
+    show 0 < ((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)⁻¹).det : ℝˣ) : ℝ)
+    rw [show (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)⁻¹).det : ℝˣ) =
+        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ).det : ℝˣ)⁻¹ from
+      map_inv _ _]
+    show 0 < (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ).det : ℝˣ))⁻¹.val
+    rw [Units.val_inv_eq_inv_val]
+    exact inv_pos.mpr h_det_pos
+  exact aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
+    (glMap (T_p_upper p hp.pos b)) (glMap (M_infty N p hp.pos hpN))
+    (measurePreserving_glPos_smul _ h_inv_det_pos)
+    (M_infty_Gamma1_factor N p hpN b)
+    (M_infty_Gamma1_factor_mem_Gamma1 N p hpN b)
+    (M_infty_Gamma1_factor_psl_ne_one N p hp hpN b)
+    (glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1 N p hp.pos hpN b)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a (right variant)**: Per-summand slash adjoint when the right argument
 is slashed by a coset rep. Mirrors `peterssonInner_slash_adjoint_coset`. -/
 private lemma peterssonInner_slash_adjoint_coset_right
