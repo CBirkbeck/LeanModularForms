@@ -2065,6 +2065,68 @@ theorem peterssonInner_M_infty_slash_adjoint_coset
       (glMap (M_infty N p hp hpN)) (glMap_M_infty_det_pos N p hp hpN) q f g]
   rw [peterssonAdj_glMap_M_infty_eq N p hp hpN]
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T126 coset-reindex helper (cusp-form version)**: for a `Γ₁(N)`-cusp
+form `g` and `γ ∈ Γ₀(N)`, slashing by `(σ q).out⁻¹` where
+`σ = Gamma1QuotEquivOfGamma0 γ` equals slashing by `q.out⁻¹` after applying
+the diamond operator `⟨Gamma0MapUnits γ⟩`.
+
+Captures the core "Γ₀(N)-coset-reindex absorbs into diamond shift" identity:
+under the `q ↦ q·γ⁻¹` reindex of `SL(2, ℤ) ⧸ Γ₁(N)`, the slashed cusp form
+`g ∣[k] (σ q).out⁻¹` collapses to `(⟨Gamma0MapUnits γ⟩ g) ∣[k] q.out⁻¹`.
+
+**Role in T205 closure.**  This is the precise sub-lemma missing for the
+`q ↦ q·γ₀⁻¹` reindex in `petN_heckeT_p_diamond_shift_core`: applied at
+γ = `adjointGamma0Rep` (so `Gamma0MapUnits γ = u⁻¹`), we get the identity
+`g ∣ (σ q).out⁻¹ = (⟨u⁻¹⟩ g) ∣ q.out⁻¹` for Γ₁(N)-cusp forms on the
+"outer" `g` slot of `peterssonInner k fd (· ∣ q⁻¹) (g ∣ q⁻¹)`.
+
+**Proof.**  By definition of `Gamma1QuotEquivOfGamma0`, `(σ q) = ⟦q.out·γ⁻¹⟧`
+in `SL(2, ℤ) ⧸ Γ₁(N)`.  Extract `η₀ ∈ Γ₁(N)` with
+`(σ q).out = q.out · γ⁻¹ · η₀⁻¹`; then `(σ q).out⁻¹ = η₀ · γ · q.out⁻¹`.
+Using `slash_Gamma1_eq` to absorb `η₀` and `diamondOpCusp_eq` to identify
+`g ∣ γ` with `⟨Gamma0MapUnits γ⟩ g`, the identity follows. -/
+theorem slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv
+    (γ : ↥(Gamma0 N)) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (q : SL(2, ℤ) ⧸ Gamma1 N) :
+    ⇑g ∣[k] ((Gamma1QuotEquivOfGamma0 (γ : SL(2, ℤ)) γ.property q).out :
+      SL(2, ℤ))⁻¹ =
+    ⇑(diamondOp_cusp k (Gamma0MapUnits γ) g) ∣[k]
+      (q.out : SL(2, ℤ))⁻¹ := by
+  -- Step 1: extract η₀ ∈ Γ₁(N) with (σ q).out = q.out · γ⁻¹ · η₀⁻¹.
+  set σ := Gamma1QuotEquivOfGamma0 (γ : SL(2, ℤ)) γ.property
+  have h_coset_eq : (σ q) = ⟦q.out * (γ : SL(2, ℤ))⁻¹⟧ := by
+    conv_lhs => rw [show q = ⟦q.out⟧ from q.out_eq.symm]
+    rfl
+  have h_out_eq_mk : ⟦(σ q).out⟧ = (⟦q.out * (γ : SL(2, ℤ))⁻¹⟧ :
+      SL(2, ℤ) ⧸ Gamma1 N) := by
+    rw [← h_coset_eq, (σ q).out_eq]
+  have h_mem : ((σ q).out)⁻¹ * (q.out * (γ : SL(2, ℤ))⁻¹) ∈ Gamma1 N := by
+    have h_left_rel := Quotient.exact h_out_eq_mk
+    change (QuotientGroup.leftRel _).r _ _ at h_left_rel
+    rwa [QuotientGroup.leftRel_apply] at h_left_rel
+  set η₀ := ((σ q).out)⁻¹ * (q.out * (γ : SL(2, ℤ))⁻¹)
+  -- Step 2: `(σ q).out = q.out · γ⁻¹ · η₀⁻¹`, so `(σ q).out⁻¹ = η₀ · γ · q.out⁻¹`.
+  have h_inv_eq : ((σ q).out : SL(2, ℤ))⁻¹ =
+      η₀ * (γ : SL(2, ℤ)) * ((q.out : SL(2, ℤ)))⁻¹ := by
+    show ((σ q).out)⁻¹ = η₀ * (γ : SL(2, ℤ)) * (q.out)⁻¹
+    show ((σ q).out)⁻¹ = (((σ q).out)⁻¹ * (q.out * (γ : SL(2, ℤ))⁻¹)) *
+        (γ : SL(2, ℤ)) * (q.out)⁻¹
+    group
+  rw [h_inv_eq, SlashAction.slash_mul, SlashAction.slash_mul]
+  -- Step 3: slash by η₀ ∈ Γ₁(N) is identity on cusp form g.
+  rw [show ⇑g ∣[k] η₀ = ⇑g from
+    SlashInvariantFormClass.slash_action_eq g _
+      (Subgroup.mem_map.mpr ⟨η₀, h_mem, rfl⟩)]
+  -- Step 4: slash by γ ∈ Γ₀(N) is diamond operator on cusp form g.
+  rw [show ⇑g ∣[k] (γ : SL(2, ℤ)) =
+    ⇑(diamondOp_cusp k (Gamma0MapUnits γ) g) from by
+    show ⇑g ∣[k] (mapGL ℝ (γ : SL(2, ℤ)) : GL (Fin 2) ℝ) = _
+    show ⇑g ∣[k] (mapGL ℝ (γ : SL(2, ℤ)) : GL (Fin 2) ℝ) =
+      ⇑(diamondOpCusp k (Gamma0MapUnits γ) g)
+    rw [diamondOpCusp_eq k (Gamma0MapUnits γ) γ rfl]
+    rfl]
+
 private theorem petN_heckeT_p_diamond_shift_core
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
