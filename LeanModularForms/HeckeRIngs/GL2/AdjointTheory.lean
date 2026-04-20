@@ -1338,6 +1338,67 @@ private lemma slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0
           ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) :=
   slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN f.toModularForm'
 
+/-- **T205 b-coset bijection (slash form)**: for every `b : ℕ`, slashing a
+Γ₁(N)-cusp form `f` by `peterssonAdj(glMap T_p_upper(p, b)) * (mapGL ℝ γ₀)⁻¹`
+(`γ₀ = adjointGamma0Rep p N hpN`) collapses to slashing by
+`glMap T_p_upper(p, 0)`.
+
+**Matrix identity (with explicit Γ₁(N) witness).** Combining
+`peterssonAdj_T_p_upper_eq_shift_mul_lower`
+(`adj(T_p_upper(p, b)) = mapGL(shift(-b)) * glMap T_p_lower`) with
+`T_p_lower_triple_product_matrix`
+(`glMap T_p_lower = mapGL(γ₁_inv) * glMap T_p_upper(p, 0) * mapGL(γ₀)`)
+gives the exact 2×2 matrix equality
+```
+peterssonAdj (glMap T_p_upper(p, b)) · (mapGL γ₀)⁻¹
+  = mapGL (shift(-b) * γ₁_inv) · glMap T_p_upper(p, 0)
+```
+where `σ_b := shiftSL_loc(-b) * adjointGamma1Rep p N hpN` is the explicit
+Γ₁(N) witness (both `shiftSL_loc(-b)` and `adjointGamma1Rep` lie in Γ₁(N)
+by `shiftSL_loc_mem_Gamma1` and `adjointGamma1Rep_mem_Gamma1`).
+
+**Why this is the correct b-coset identity.** The naive T_p_upper-family
+conjugation `T_p_upper(p, b) * γ₀ = σ * T_p_upper(p, b')` fails: the
+(0,0) entry `p + bN ≡ p mod N` requires `p ≡ 1 mod N` for `σ ∈ Γ₁(N)`.
+Reversing to the adjoint side (slashing by `adj(T_p_upper(p, b)) * γ₀⁻¹`)
+fixes the mod-N obstruction because the (0,0) entry becomes
+`pm + bN = 1 + (n+b)N ≡ 1 mod N` (using the Bezout identity
+`p·m - n·N = 1` in `adjointGamma0Rep`'s definition).
+
+**Role in T205 closure.** Consumed per-summand in the T_p-adjoint
+decomposition to collapse all `p` upper-triangular `b ∈ Fin p` adjoint
+contributions into a single `T_p_upper(p, 0)` term after the γ₀-slash.
+Pairs with `peterssonInner_sum_slash_adjoint_constantRHS` and the T094
+`aedisjoint_pairwise_T_p_family` at the line-2365 residual. -/
+private lemma slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (⇑f ∣[k] peterssonAdj (glMap (T_p_upper p hp.pos b))) ∣[k]
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))⁻¹ :
+          GL (Fin 2) ℝ) =
+    ⇑f ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ) := by
+  -- Step 1: substitute the matrix factorization `adj = mapGL(shift) * T_p_lower`.
+  rw [peterssonAdj_T_p_upper_eq_shift_mul_lower p hp.pos b]
+  -- Step 2: substitute `T_p_lower = mapGL(γ₁_inv) * T_p_upper(0) * mapGL(γ₀)`.
+  rw [T_p_lower_triple_product_matrix p N hp.pos hpN]
+  -- Step 3: split the slash by the product into successive slashes.
+  rw [SlashAction.slash_mul, SlashAction.slash_mul, SlashAction.slash_mul]
+  -- Step 4: collapse `... ∣[k] mapGL(γ₀) ∣[k] (mapGL γ₀)⁻¹ = ...` via
+  -- `mul_inv_cancel` + `slash_one`.
+  rw [← SlashAction.slash_mul, mul_inv_cancel, SlashAction.slash_one]
+  -- Step 5: absorb slash by `mapGL(shift(-b))` (∈ Γ₁(N)-image) on cusp form `f`.
+  rw [show (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (shiftSL_loc (-(b : ℤ)))) : UpperHalfPlane → ℂ) = ⇑f from
+      SlashInvariantFormClass.slash_action_eq f _
+        (Subgroup.mem_map.mpr ⟨_, shiftSL_loc_mem_Gamma1 _, rfl⟩)]
+  -- Step 6: absorb slash by `mapGL(γ₁_inv)` (= `adjointGamma1Rep`, ∈ Γ₁(N)-image).
+  rw [show (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (adjointGamma1Rep p N hpN)) : UpperHalfPlane → ℂ) = ⇑f from
+      SlashInvariantFormClass.slash_action_eq f _
+        (Subgroup.mem_map.mpr
+          ⟨_, adjointGamma1Rep_mem_Gamma1 p N hpN, rfl⟩)]
+
 /-- **T127 residual M_∞-term reducing helper**: the T205 post-simp-chain
 form `(⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀` equals the original `f ∣ M_∞` (reverse of
 the two-step simp normalization used in T205).
@@ -2359,9 +2420,16 @@ private theorem petN_heckeT_p_diamond_shift_core
   -- (`slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty`),
   -- plus `heckeT_p_comm_diamondOp`, `diamondOp_petersson_unitary`,
   -- `petN_slash_invariant`, `slash_peterssonAdj_{T_p_upper, T_p_lower}`,
-  -- `slash_M_infty_eq_diamond_slash_T_p_lower`, and
-  -- `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm`.  The
-  -- remaining step is to assemble these into the b-permutation identity.
+  -- `slash_M_infty_eq_diamond_slash_T_p_lower`,
+  -- `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm`, **and the
+  -- new T205 b-coset bijection
+  -- `slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`
+  -- (line 1373)** which encodes the concrete per-`b : Fin p` matrix-level
+  -- identity `adj(T_p_upper(p, b)) * (mapGL γ₀)⁻¹ = mapGL(shift(-b)*γ₁_inv) *
+  -- glMap T_p_upper(p, 0)` with explicit Γ₁(N) witness, collapsing all
+  -- upper-triangular adjoint contributions to the single `T_p_upper(p, 0)`
+  -- rep after γ₀-slash.  The remaining step is to assemble these into the
+  -- b-permutation identity.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
