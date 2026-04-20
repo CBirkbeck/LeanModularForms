@@ -1779,6 +1779,102 @@ theorem measurePreserving_glPos_smul (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val
   measurePreserving_smul (⟨α, hα⟩ : GL(2, ℝ)⁺) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205/T128 bridge: GL-pair AE-disjoint on the SL(2, ℤ)-fundamental
+domain `ModularGroup.fd` via `mapGL ℝ σ`-factored inverse product**.
+
+For `α₁, α₂ : GL (Fin 2) ℝ` with `α₁⁻¹` measure-preserving on `ℍ`, if
+`α₁⁻¹ * α₂ = mapGL ℝ σ` for some `σ : SL(2, ℤ)` with non-trivial image
+in `PSL(2, ℤ)`, then `α₁ • fd` and `α₂ • fd` are AE-disjoint.
+
+This is the `fd`-version of
+`aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1` (which works for
+`Gamma1_fundDomain_PSL N`).  It is the specific AE-disjointness needed
+for the T205 upper-family union collapse on the per-`q` tile
+`(mapGL q⁻¹) • fd`, where the `σ = q · shift(b₂-b₁) · q⁻¹` conjugate
+product lands in `SL(2, ℤ) \ Γ₁(N)` in general (Γ₁(N) is not normal
+in SL(2, ℤ)), so the Γ₁-version cannot be invoked directly.
+
+**Proof route** (per manager guidance):
+1. Start from `isFundamentalDomain_fdo_PSL.aedisjoint` (gives
+   `AEDisjoint fdo (q • fdo)` for `q = ⟨σ⟩ ≠ 1 ∈ PSL(2, ℤ)`).
+2. Transfer from `fdo` to `fd` via `fd_ae_eq_fdo` + `AEDisjoint.congr`,
+   using that `q`-smul preserves a.e. equality of sets (as `q` acts by
+   a measure-preserving map on `ℍ`).
+3. Pull back by `α₁⁻¹` following the pattern of
+   `aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1`. -/
+theorem aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne
+    (α₁ α₂ : GL (Fin 2) ℝ)
+    (h_mp_inv : MeasurePreserving ((α₁⁻¹ • ·) : ℍ → ℍ) μ_hyp μ_hyp)
+    (σ : SL(2, ℤ)) (hσ_ne : (QuotientGroup.mk σ : PSL(2, ℤ)) ≠ 1)
+    (h_inv_mul : α₁⁻¹ * α₂ =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) σ : GL (Fin 2) ℝ)) :
+    AEDisjoint μ_hyp (α₁ • (ModularGroup.fd : Set ℍ))
+      (α₂ • (ModularGroup.fd : Set ℍ)) := by
+  set q : PSL(2, ℤ) := QuotientGroup.mk σ with hq_def
+  -- Step 1: `AEDisjoint fdo (q • fdo)` from `isFundamentalDomain_fdo_PSL`.
+  have h_fdo_aedisjoint : AEDisjoint μ_hyp (fdo : Set ℍ) (q • (fdo : Set ℍ)) := by
+    have h_ne : (1 : PSL(2, ℤ)) ≠ q := fun h => hσ_ne h.symm
+    have h_gen := isFundamentalDomain_fdo_PSL.aedisjoint h_ne
+    -- Unfold `Function.onFun` and simplify `1 • fdo = fdo`.
+    simp only [Function.onFun, one_smul] at h_gen
+    exact h_gen
+  -- Step 2: `q`-smul of `fd` and `fdo` agree a.e. (since `fd =ᵐ fdo` and
+  -- `q`-smul is measure-preserving on `ℍ` via `instSMulInvMeasure_PSL`).
+  have h_q_smul_aeeq :
+      (q • (ModularGroup.fd : Set ℍ) : Set ℍ) =ᵐ[μ_hyp] (q • (fdo : Set ℍ)) := by
+    refine ae_eq_set.mpr ⟨?_, ?_⟩
+    · -- μ (q • fd \ q • fdo) = μ (q • (fd \ fdo)) = μ (fd \ fdo) = 0
+      -- (using `measure_smul` via `instSMulInvMeasure_PSL`).
+      have h_sdiff : (q • (ModularGroup.fd : Set ℍ) \ q • (fdo : Set ℍ) : Set ℍ) =
+          q • ((ModularGroup.fd : Set ℍ) \ fdo) := by
+        ext x
+        simp only [Set.mem_diff, Set.mem_smul_set_iff_inv_smul_mem]
+      rw [h_sdiff, measure_smul]
+      exact hyperbolicMeasure_fd_boundary
+    · -- μ (q • fdo \ q • fd) = 0 because `fdo ⊆ fd` makes this set empty.
+      have h_fdo_sub_fd : q • (fdo : Set ℍ) ⊆ q • (ModularGroup.fd : Set ℍ) := by
+        intro x hx
+        rcases hx with ⟨y, hy, rfl⟩
+        exact ⟨y, fdo_subset_fd hy, rfl⟩
+      rw [Set.diff_eq_empty.mpr h_fdo_sub_fd]
+      exact measure_empty
+  -- Step 3: `AEDisjoint fd (q • fd)` by transferring from Step 1 via Step 2.
+  have h_inner : AEDisjoint μ_hyp (ModularGroup.fd : Set ℍ)
+      (q • (ModularGroup.fd : Set ℍ)) :=
+    h_fdo_aedisjoint.congr fd_ae_eq_fdo h_q_smul_aeeq
+  -- Step 4: Preimage identifications (same as Gamma1 version).
+  have h_pre_α₁ : ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set ℍ) : Set ℍ) =
+      α₁ • (ModularGroup.fd : Set ℍ) := by
+    ext τ; simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+  have h_pre_α₂ : ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set ℍ)) : Set ℍ) =
+      α₂ • (ModularGroup.fd : Set ℍ) := by
+    ext τ
+    simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+    have hq_smul : ∀ z : ℍ, (q⁻¹ • z : ℍ) =
+        (((mapGL ℝ : SL(2, ℤ) →* _) σ)⁻¹ : GL (Fin 2) ℝ) • z := by
+      intro z
+      rw [hq_def, ← QuotientGroup.mk_inv, PSL_smul_coe]
+      rw [sl_moeb, show ((σ⁻¹ : SL(2, ℤ)) : GL (Fin 2) ℝ) =
+          ((mapGL ℝ : SL(2, ℤ) →* _) σ)⁻¹ from by
+        rw [← map_inv]; rfl]
+    rw [hq_smul (α₁⁻¹ • τ)]
+    have h_eq : ((mapGL ℝ : SL(2, ℤ) →* _) σ)⁻¹ = α₂⁻¹ * α₁ := by
+      rw [← h_inv_mul, mul_inv_rev, inv_inv]
+    rw [h_eq, mul_smul]
+    rw [show (α₁ • α₁⁻¹ • τ : ℍ) = τ from by
+      rw [← mul_smul, mul_inv_cancel, one_smul]]
+  -- Step 5: AE-disjointness of preimages via quasi-measure-preserving.
+  have h_QMP : MeasureTheory.Measure.QuasiMeasurePreserving
+      ((α₁⁻¹ • ·) : ℍ → ℍ) μ_hyp μ_hyp :=
+    h_mp_inv.quasiMeasurePreserving
+  have h_pre_aedisjoint : AEDisjoint μ_hyp
+      ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set ℍ))
+      ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set ℍ))) :=
+    h_inner.preimage h_QMP
+  rw [h_pre_α₁, h_pre_α₂] at h_pre_aedisjoint
+  exact h_pre_aedisjoint
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T094 bridge: GL-pair AE-disjoint via `mapGL ℝ γ`-factored inverse product.**
 
 For `α₁, α₂ : GL (Fin 2) ℝ` with `α₁⁻¹` measure-preserving on ℍ, if
