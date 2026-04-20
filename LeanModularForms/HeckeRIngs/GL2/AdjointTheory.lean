@@ -1399,6 +1399,41 @@ private lemma slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zer
         (Subgroup.mem_map.mpr
           ⟨_, adjointGamma1Rep_mem_Gamma1 p N hpN, rfl⟩)]
 
+/-- **T205 adjoint b-collapse (q-summand form, b-independent RHS)**: for any
+`b : ℕ` and Γ₁(N)-cusp form `g`, slashing `g` by
+`peterssonAdj(glMap T_p_upper(p, b))` equals slashing by
+`glMap T_p_upper(p, 0)` then by `mapGL γ₀`.
+
+This packages the b-coset-bijection in the precise `hadj`-form required by
+`peterssonInner_sum_slash_adjoint_constantRHS`: all `p` upper-triangular
+adjoint slashes collapse to the same b-independent constant RHS
+`(⇑g ∣ glMap T_p_upper(p, 0)) ∣ mapGL γ₀`.
+
+**Direct consumer of `slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`**:
+the b-coset-bijection states `(⇑g ∣ adj) ∣ (mapGL γ₀)⁻¹ = ⇑g ∣ T_p_upper(0)`;
+right-multiplying both sides by `mapGL γ₀` and canceling
+`(mapGL γ₀)⁻¹ * mapGL γ₀ = 1` yields the `hadj` shape.
+
+**Role in T205 closure.** Supplies the `hadj` hypothesis for
+`peterssonInner_sum_slash_adjoint_constantRHS` on the upper-family
+`{glMap T_p_upper(p, b) : b ∈ Fin p}`, enabling the p-fold b-sum to
+collapse to a single `peterssonInner` over the union domain with
+`g' = (⇑g ∣ glMap T_p_upper(p, 0)) ∣ mapGL γ₀`. -/
+private lemma slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ⇑g ∣[k] peterssonAdj (glMap (T_p_upper p hp.pos b)) =
+    (⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) := by
+  -- Invoke the b-coset-bijection:
+  --   `(⇑g ∣[k] peterssonAdj(glMap T_p_upper(p, b))) ∣[k] (mapGL γ₀)⁻¹
+  --      = ⇑g ∣[k] glMap T_p_upper(p, 0)`
+  -- and right-multiply both sides by `mapGL γ₀`, canceling
+  -- `(mapGL γ₀)⁻¹ * mapGL γ₀ = 1`.
+  rw [← slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero
+        p hp hpN b g,
+      ← SlashAction.slash_mul, inv_mul_cancel, SlashAction.slash_one]
 /-- **T127 residual M_∞-term reducing helper**: the T205 post-simp-chain
 form `(⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀` equals the original `f ∣ M_∞` (reverse of
 the two-step simp normalization used in T205).
@@ -1506,6 +1541,65 @@ private lemma peterssonInner_slash_adjoint_right (D : Set ℍ) (α : GL (Fin 2) 
   have h2 := peterssonInner_slash_adjoint (k := k) D α hα g f
   have h3 := peterssonInner_conj_symm k (α • D) (f ∣[k] peterssonAdj α) g
   rw [← h1, h2, h3]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205 per-`q` adjoint `peterssonInner` reduction (upper-family slice)**:
+for each `b : ℕ` and `q : SL(2, ℤ)`, the per-summand `peterssonInner`
+of the T_p-upper-family piece reduces via the b-coset-bijection to a
+`peterssonInner` with b-INDEPENDENT g-slot
+`(⇑g ∣ glMap T_p_upper(p, 0)) ∣ mapGL γ₀`.
+
+**Composition**. Apply `peterssonInner_slash_adjoint_coset` (T205-a) with
+β = `glMap T_p_upper(p, b)` to transfer the adjoint to the g-slot;
+then apply
+`slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0`
+(which invokes the b-coset-bijection
+`slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`
+via a γ₀-right-multiplication) to collapse the b-dependence to a single
+constant `(⇑g ∣ glMap T_p_upper(p, 0)) ∣ mapGL γ₀`.
+
+**Role in T205 closure.** This is the per-`q` invariant used to supply
+`peterssonInner_sum_slash_adjoint_constantRHS`'s `hadj` hypothesis:
+all `p` upper-triangular b-summands share the same b-independent
+g-side, collapsing the `p`-fold Σ_b to a single union-domain
+`peterssonInner`. -/
+private lemma peterssonInner_slash_adj_T_p_upper_q_summand_eq
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
+    peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set ℍ)))
+      ⇑f
+      ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
+  -- Positive det of glMap T_p_upper(p, b) in GL (Fin 2) ℝ.
+  have hdet_pos : 0 < (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ).det.val := by
+    show 0 < ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+    rw [show (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+        (algebraMap ℚ ℝ) (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det) from
+          (RingHom.map_det _ _).symm]
+    rw [show ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+      simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.det_fin_two, Matrix.of_apply]]
+    show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+    rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+    exact_mod_cast hp.pos
+  -- Step 1: transfer the adjoint to the g-slot via `peterssonInner_slash_adjoint_coset`.
+  rw [peterssonInner_slash_adjoint_coset (glMap (T_p_upper p hp.pos b))
+        hdet_pos q ⇑f ⇑g]
+  -- Step 2: apply the b-coset-bijection consumer to collapse b-dependence on
+  -- the g-slot.  This transitively invokes
+  -- `slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`
+  -- through `slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0`.
+  rw [slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0 p hp hpN b g]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Additivity of `peterssonInner` in the first argument (requires integrability).
