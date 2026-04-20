@@ -2163,6 +2163,94 @@ theorem slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv
     rw [diamondOpCusp_eq k (Gamma0MapUnits γ) γ rfl]
     rfl]
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T128 Hecke-diamond whole-cusp-form coset-reindex helper**: for a
+`Γ₁(N)`-cusp form `g` and `γ ∈ Γ₀(N)`, slashing the full `T_p`-image
+`heckeT_p_cusp k p hp hpN g` by `(σ q).out⁻¹` (where
+`σ = Gamma1QuotEquivOfGamma0 γ`) equals slashing
+`heckeT_p_cusp k p hp hpN (⟨Gamma0MapUnits γ⟩ g)` by `q.out⁻¹`.
+
+Composes T126 (`slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv`)
+with `heckeT_p_comm_diamondOp` (the `ModularForm`-level Hecke/diamond
+commutation) to push the diamond twist inside `T_p_cusp` at function level.
+
+**Role in T205 closure.** The `q ↦ q·γ₀⁻¹` reindex on the
+`heckeT_p_cusp g` side is absorbed into a single diamond twist of `g`,
+simultaneously covering BOTH residual non-invariant slash terms of the
+naive double-coset decomposition — the upper-ut sum
+`heckeT_p_ut k p hp.pos ⇑g` and the `M_∞` piece
+`⇑g ∣[k] M_∞` — since they are the two components of the single quantity
+`heckeT_p_cusp g ∣[k] (σ q).out⁻¹`.  This sidesteps the per-`b`
+permutation/conjugation route (which fails because the naive matrix
+conjugate `T_p_upper(b) · γ₀ · T_p_upper(b)⁻¹` has non-integer entries
+in general). -/
+theorem slash_heckeT_p_cusp_Gamma1QuotEquiv_out_inv_eq
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (γ : ↥(Gamma0 N)) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (q : SL(2, ℤ) ⧸ Gamma1 N) :
+    ⇑(heckeT_p_cusp k p hp hpN g) ∣[k]
+      ((Gamma1QuotEquivOfGamma0 (γ : SL(2, ℤ)) γ.property q).out :
+        SL(2, ℤ))⁻¹ =
+    ⇑(heckeT_p_cusp k p hp hpN
+        (diamondOp_cusp k (Gamma0MapUnits γ) g)) ∣[k]
+      (q.out : SL(2, ℤ))⁻¹ := by
+  -- Step 1: apply T126 helper to `heckeT_p_cusp k p hp hpN g`.
+  rw [slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv γ
+      (heckeT_p_cusp k p hp hpN g) q]
+  set d := Gamma0MapUnits γ with hd_def
+  -- Goal: ⇑(⟨d⟩_cusp (T_p_cusp g)) ∣ q.out⁻¹ = ⇑(T_p_cusp (⟨d⟩_cusp g)) ∣ q.out⁻¹
+  -- Reduce to equality of the underlying functions.
+  suffices h_eq : (⇑(diamondOp_cusp k d (heckeT_p_cusp k p hp hpN g)) :
+      UpperHalfPlane → ℂ) =
+      ⇑(heckeT_p_cusp k p hp hpN (diamondOp_cusp k d g)) by
+    rw [h_eq]
+  -- Step 2: diamondOp_cusp at function level is slash by γ.
+  have h_diamond_cusp_coe : ∀ (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
+      (⇑(diamondOp_cusp k d f) : UpperHalfPlane → ℂ) =
+      (⇑f : UpperHalfPlane → ℂ) ∣[k]
+        (mapGL ℝ (γ : SL(2, ℤ)) : GL (Fin 2) ℝ) := fun f => by
+    show (⇑(diamondOpCusp k d f) : UpperHalfPlane → ℂ) = _
+    rw [diamondOpCusp_eq k d γ rfl]
+    rfl
+  -- Step 3: diamondOp (ModularForm) at function level is slash by γ.
+  have h_diamond_mf_coe : ∀ (F : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
+      (⇑(diamondOp k d F) : UpperHalfPlane → ℂ) =
+      (⇑F : UpperHalfPlane → ℂ) ∣[k]
+        (mapGL ℝ (γ : SL(2, ℤ)) : GL (Fin 2) ℝ) := fun F => by
+    rw [diamondOp_eq_diamondOpAux k d γ rfl]
+    rfl
+  -- Step 4: heckeT_p commutes with diamondOp (ModularForm level), applied to g.toModularForm'.
+  have h_comm_app : diamondOp k d (heckeT_p k p hp hpN g.toModularForm') =
+      heckeT_p k p hp hpN (diamondOp k d g.toModularForm') :=
+    LinearMap.congr_fun
+      (heckeT_p_comm_diamondOp (N := N) k p hp hpN d) g.toModularForm'
+  -- Step 5: heckeT_p's value (as a function) depends only on ⇑F (via heckeT_p_fun_eq_coset_sum).
+  have h_heckeT_p_congr : ∀ (F₁ F₂ : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
+      (⇑F₁ : UpperHalfPlane → ℂ) = ⇑F₂ →
+      (⇑(heckeT_p k p hp hpN F₁) : UpperHalfPlane → ℂ) =
+      ⇑(heckeT_p k p hp hpN F₂) := fun F₁ F₂ hF => by
+    show heckeT_p_fun k p hp hpN F₁ = heckeT_p_fun k p hp hpN F₂
+    rw [heckeT_p_fun_eq_coset_sum k hp hpN F₁,
+      heckeT_p_fun_eq_coset_sum k hp hpN F₂, hF]
+  -- Step 6: chain the equalities.
+  calc (⇑(diamondOp_cusp k d (heckeT_p_cusp k p hp hpN g)) :
+        UpperHalfPlane → ℂ)
+      = (⇑(heckeT_p_cusp k p hp hpN g) : UpperHalfPlane → ℂ) ∣[k]
+          (mapGL ℝ (γ : SL(2, ℤ)) : GL (Fin 2) ℝ) := h_diamond_cusp_coe _
+    _ = (⇑(heckeT_p k p hp hpN g.toModularForm') : UpperHalfPlane → ℂ) ∣[k]
+          (mapGL ℝ (γ : SL(2, ℤ)) : GL (Fin 2) ℝ) := rfl
+    _ = ⇑(diamondOp k d (heckeT_p k p hp hpN g.toModularForm')) :=
+          (h_diamond_mf_coe _).symm
+    _ = ⇑(heckeT_p k p hp hpN (diamondOp k d g.toModularForm')) := by
+          rw [h_comm_app]
+    _ = ⇑(heckeT_p k p hp hpN (diamondOp_cusp k d g).toModularForm') := by
+          apply h_heckeT_p_congr
+          rw [h_diamond_mf_coe, show (⇑(diamondOp_cusp k d g).toModularForm' :
+            UpperHalfPlane → ℂ) = ⇑(diamondOp_cusp k d g) from rfl,
+            h_diamond_cusp_coe]
+          rfl
+    _ = ⇑(heckeT_p_cusp k p hp hpN (diamondOp_cusp k d g)) := rfl
+
 private theorem petN_heckeT_p_diamond_shift_core
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
