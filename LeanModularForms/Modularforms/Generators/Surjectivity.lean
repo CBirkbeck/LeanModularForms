@@ -191,7 +191,7 @@ private lemma surj_of_weight : ∀ (k : ℤ) (f : ModularForm Γ(1) k),
   · rw [rank_zero_iff_forall_zero.mp (ModularForm.levelOne_neg_weight_rank_zero hk_neg) f,
       map_zero]
     exact ⟨0, map_zero _⟩
-  · push_neg at hk_neg
+  · push Not at hk_neg
     obtain ⟨n, rfl⟩ : ∃ n : ℕ, k = (n : ℤ) := ⟨k.toNat, by omega⟩
     revert f
     induction n using Nat.strong_induction_on with
@@ -224,7 +224,7 @@ private lemma surj_of_weight : ∀ (k : ℤ) (f : ModularForm Γ(1) k),
             (mul_modform_ne_zero_of_coeff_one E₄ E₆ E4_q_exp_zero E6_q_exp_zero)
             (MvPolynomial.X 0 * MvPolynomial.X 1) evalE₄E₆_X0_X1 f
         · exfalso; obtain ⟨m, hm⟩ := hk_odd; omega
-      · push_neg at hn12
+      · push Not at hn12
         exact surj_inductive_step n hn12 (by exact_mod_cast hk_odd)
           (fun m hm => ih m hm (by omega)) f
 

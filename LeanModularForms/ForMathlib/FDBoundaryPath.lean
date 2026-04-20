@@ -178,23 +178,23 @@ private lemma fdBoundaryFun_differentiableAt_off (H : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
     DifferentiableAt ℝ (fdBoundaryFun H) t := by
   simp only [fdBoundaryPartition, Finset.mem_insert, Finset.mem_singleton] at htp
-  push_neg at htp; obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
+  push Not at htp; obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
   by_cases h1 : t < 1/5
   · exact (seg1Fun_differentiableAt H t).congr_of_eventuallyEq
       (fdBoundaryFun_eventuallyEq_seg1 H t h1)
-  · push_neg at h1
+  · push Not at h1
     by_cases h2 : t < 2/5
     · exact (seg2Fun_differentiableAt t).congr_of_eventuallyEq
         (fdBoundaryFun_eventuallyEq_seg2 H t (lt_of_le_of_ne h1 (Ne.symm ht1)) h2)
-    · push_neg at h2
+    · push Not at h2
       by_cases h3 : t < 3/5
       · exact (seg3Fun_differentiableAt t).congr_of_eventuallyEq
           (fdBoundaryFun_eventuallyEq_seg3 H t (lt_of_le_of_ne h2 (Ne.symm ht2)) h3)
-      · push_neg at h3
+      · push Not at h3
         by_cases h4 : t < 4/5
         · exact (seg4Fun_differentiableAt H t).congr_of_eventuallyEq
             (fdBoundaryFun_eventuallyEq_seg4 H t (lt_of_le_of_ne h3 (Ne.symm ht3)) h4)
-        · push_neg at h4
+        · push Not at h4
           exact (seg5Fun_differentiableAt H t).congr_of_eventuallyEq
             (fdBoundaryFun_eventuallyEq_seg5 H t (lt_of_le_of_ne h4 (Ne.symm ht4)))
 
@@ -204,26 +204,26 @@ private lemma fdBoundaryFun_deriv_continuousAt_off (H : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
     ContinuousAt (deriv (fdBoundaryFun H)) t := by
   simp only [fdBoundaryPartition, Finset.mem_insert, Finset.mem_singleton] at htp
-  push_neg at htp; obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
+  push Not at htp; obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
   by_cases h1 : t < 1/5
   · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg1 H t h1).deriv).mpr
       ((seg1Fun_contDiff H).continuous_deriv le_top).continuousAt
-  · push_neg at h1
+  · push Not at h1
     by_cases h2 : t < 2/5
     · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg2 H t
           (lt_of_le_of_ne h1 (Ne.symm ht1)) h2).deriv).mpr
         (seg2Fun_contDiff.continuous_deriv le_top).continuousAt
-    · push_neg at h2
+    · push Not at h2
       by_cases h3 : t < 3/5
       · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg3 H t
             (lt_of_le_of_ne h2 (Ne.symm ht2)) h3).deriv).mpr
           (seg3Fun_contDiff.continuous_deriv le_top).continuousAt
-      · push_neg at h3
+      · push Not at h3
         by_cases h4 : t < 4/5
         · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg4 H t
               (lt_of_le_of_ne h3 (Ne.symm ht3)) h4).deriv).mpr
             ((seg4Fun_contDiff H).continuous_deriv le_top).continuousAt
-        · push_neg at h4
+        · push Not at h4
           exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg5 H t
               (lt_of_le_of_ne h4 (Ne.symm ht4))).deriv).mpr
             ((seg5Fun_contDiff H).continuous_deriv le_top).continuousAt

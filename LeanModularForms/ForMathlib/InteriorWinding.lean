@@ -133,13 +133,13 @@ theorem fdBoundaryFun_avoids_interior {z : ℂ} {H : ℝ}
   intro t ⟨ht0, ht1⟩
   by_cases h1 : t ≤ 1/5
   · exact fdBoundaryFun_avoids_seg1 hz_re h1
-  · push_neg at h1
+  · push Not at h1
     by_cases h2 : t ≤ 3/5
     · exact fdBoundaryFun_avoids_arc hz_norm h1 h2
-    · push_neg at h2
+    · push Not at h2
       by_cases h3 : t ≤ 4/5
       · exact fdBoundaryFun_avoids_seg4 hz_re h2 h3
-      · push_neg at h3
+      · push Not at h3
         exact fdBoundaryFun_avoids_seg5 hz_im h3
 
 /-! ### Minimum distance to boundary -/
@@ -337,17 +337,17 @@ theorem fdBoundaryFun_minDist_explicit {z : ℂ} {H : ℝ}
   · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
         ≤ 1/2 - |z.re| := le_trans (min_le_left _ _) (min_le_left _ _)
       _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg1_re_dist hz_re h1
-  · push_neg at h1
+  · push Not at h1
     by_cases h2 : t ≤ 3/5
     · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
           ≤ ‖z‖ - 1 := le_trans (min_le_left _ _) (min_le_right _ _)
         _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_arc_dist hz_norm h1 h2
-    · push_neg at h2
+    · push Not at h2
       by_cases h3 : t ≤ 4/5
       · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
             ≤ 1/2 - |z.re| := le_trans (min_le_left _ _) (min_le_left _ _)
           _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg4_re_dist hz_re h2 h3
-      · push_neg at h3
+      · push Not at h3
         calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
             ≤ H - z.im := min_le_right _ _
           _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg5_im_dist hz_im h3

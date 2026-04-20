@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.SingleCrossing
-import LeanModularForms.ValenceFormula.Definitions
+import LeanModularForms.ForMathlib.EllipticPoints
 
 /-!
 # Fundamental Domain Boundary
@@ -338,7 +338,7 @@ theorem fdBoundaryFun_arc_norm (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 
       push_cast; ring
     rw [h]; exact Complex.norm_exp_ofReal_mul_I _
   · -- Seg 3
-    push_neg at ht
+    push Not at ht
     simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
       show ¬t ≤ 2/5 from by linarith, ht2, ite_true, ite_false]
     have h : (↑Real.pi / 2 + (5 * ↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =

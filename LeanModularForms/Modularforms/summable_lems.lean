@@ -1610,9 +1610,9 @@ theorem a1 (k : ℕ) (e : ℕ+) (z : ℍ) :
   apply Summable.mul_left
   apply Summable.of_norm
   have : (fun a : ℕ ↦ ‖cexp (2 * ↑π * Complex.I * ↑z * ↑↑e * ↑↑a)‖) =
-    fun a : ℕ ↦ ‖cexp (2 * ↑π * Complex.I * ↑z * ↑↑e) ^ (a : ℕ)‖ := by
+    fun a : ℕ ↦ ‖cexp (2 * ↑π * Complex.I * ↑z * ↑↑e)‖ ^ (a : ℕ) := by
     ext a
-    rw [← Complex.exp_nat_mul]
+    rw [← norm_pow, ← Complex.exp_nat_mul]
     ring_nf
   rw [this]
   have h1 : ‖cexp (2 * ↑π * Complex.I * ↑z * ↑↑e)‖ < 1 := by
@@ -1621,8 +1621,7 @@ theorem a1 (k : ℕ) (e : ℕ+) (z : ℍ) :
       zero_sub, natCast_re, neg_mul, zero_add, natCast_im, Real.exp_lt_one_iff, Left.neg_neg_iff,
       Nat.cast_pos, PNat.pos, mul_pos_iff_of_pos_right]
     positivity
-  have h2 := summable_norm_iff.mpr (summable_geometric_iff_norm_lt_one.mpr h1)
-  apply h2
+  exact summable_geometric_of_lt_one (norm_nonneg _) h1
 
 
 /-This is straight from the mod forms repo-/

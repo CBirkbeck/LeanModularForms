@@ -98,7 +98,7 @@ theorem arc_far_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
   have hpi := Real.pi_pos
   -- t must be strictly less than 3/5 (otherwise |t - 3/5| = 0)
   have ht3 : t < 3/5 := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have : t = 3/5 := le_antisymm ht_arc.2 h
     subst this; simp only [sub_self, abs_zero] at hδt; linarith [arcsinDelta_pos hε]
   rcases eq_or_lt_of_le ht_arc.1 with rfl | ht1
@@ -223,7 +223,7 @@ theorem arc_far_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/
   have hpi := Real.pi_pos
   -- t must be strictly greater than 1/5
   have ht1 : 1/5 < t := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have : t = 1/5 := le_antisymm h ht_arc.1
     subst this; simp only [sub_self, abs_zero] at hδt; linarith [arcsinDelta_pos hε]
   rw [fdBoundaryFun_arc_dist_rhoPlusOne H t ht1 ht_arc.2]
@@ -340,7 +340,7 @@ private theorem rho_far_left {H : ℝ}
   · calc ε < 1/3 := hε_13
       _ ≤ 1 := by norm_num
       _ ≤ _ := fdBoundaryFun_seg1_dist_rho_lower H t ht1
-  · push_neg at ht1
+  · push Not at ht1
     have ht3 : t ≤ 3/5 := by linarith [ht.2, arcsinDelta_pos hε]
     exact arc_far_at_rho_arcsin H hε hε_13 ⟨le_of_lt ht1, ht3⟩ (by
       rw [show t - 3/5 = -(3/5 - t) from by ring, abs_neg,
@@ -361,7 +361,7 @@ private theorem rho_far_right {H : ℝ} (hH : 1 < H)
   by_cases ht4 : t ≤ 4/5
   · have ht3 : 3/5 < t := by linarith [ht.1, vertDelta_pos hH_valid hε]
     exact vert_far_at_rho H hH_valid ht3 ht4 (by linarith [ht.1])
-  · push_neg at ht4
+  · push Not at ht4
     calc ε < H - Real.sqrt 3 / 2 := hε_H
       _ ≤ _ := fdBoundaryFun_seg5_dist_rho_lower H hH_valid t ht4
 
@@ -384,7 +384,7 @@ private theorem rho_near {H : ℝ} (hH : 1 < H)
       rw [show t - 3/5 = -(3/5 - t) from by ring, abs_neg,
         abs_of_nonneg (by linarith)]
       linarith [ht.1])
-  · push_neg at ht35
+  · push Not at ht35
     have ht4 : t ≤ 4/5 := by
       linarith [ht.2, vertDelta_lt_one_fifth hH_valid hε_H]
     exact vert_near_at_rho H hH_valid ht35 ht4 (by linarith [ht.2])
@@ -421,12 +421,12 @@ private theorem rhoPlusOne_far_right {H : ℝ} (hH : 1 < H)
     exact arc_far_at_rhoPlusOne_arcsin H hε hε_13 ⟨le_of_lt ht1, ht3⟩ (by
       rw [abs_of_pos (by linarith)]
       linarith [ht.1])
-  · push_neg at ht3
+  · push Not at ht3
     by_cases ht4 : t ≤ 4/5
     · calc ε < 1/3 := hε_13
         _ ≤ 1 := by norm_num
         _ ≤ _ := fdBoundaryFun_seg4_dist_rhoPlusOne_lower H t ht3 ht4
-    · push_neg at ht4
+    · push Not at ht4
       calc ε < H - Real.sqrt 3 / 2 := hε_H
         _ ≤ _ := fdBoundaryFun_seg5_dist_rhoPlusOne_lower H
           (fdHeightValid_of_one_lt H hH) t ht4
@@ -449,7 +449,7 @@ private theorem rhoPlusOne_near {H : ℝ} (hH : 1 < H)
   · exact arc_near_at_rhoPlusOne_arcsin H hε hε_13 ht15 (by
       rw [abs_of_nonneg (by linarith)]
       linarith [ht.2])
-  · push_neg at ht15
+  · push Not at ht15
     have ht0 : 0 ≤ t := by
       linarith [ht.1, vertDelta_lt_one_fifth hH_valid hε_H]
     exact vert_near_at_rhoPlusOne H hH_valid ht0 ht15 (by linarith [ht.1])

@@ -181,11 +181,11 @@ private lemma Delta_poly_isWeightedHomogeneous :
   by_cases hd3 : MvPolynomial.coeff d
       (MvPolynomial.X (0 : Fin 2) ^ 3 : MvPolynomial (Fin 2) ℂ) ≠ 0
   · exact ((MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (0 : Fin 2)).pow 3) hd3
-  · push_neg at hd3
+  · push Not at hd3
     by_cases hd6 : MvPolynomial.coeff d
         (MvPolynomial.X (1 : Fin 2) ^ 2 : MvPolynomial (Fin 2) ℂ) ≠ 0
     · exact ((MvPolynomial.isWeightedHomogeneous_X ℂ E₄E₆Weight (1 : Fin 2)).pow 2) hd6
-    · push_neg at hd6; simp only [hd3, hd6, sub_self, mul_zero, ne_eq, not_true] at hd
+    · push Not at hd6; simp only [hd3, hd6, sub_self, mul_zero, ne_eq, not_true] at hd
 
 private lemma mul_Delta_map_injective {k : ℤ} (f : ModularForm Γ(1) (k - 12))
     (hf : mul_Delta_map k f = 0) : f = 0 := by
@@ -365,7 +365,7 @@ private lemma whomog_poly_Delta_decomp {n : ℕ} (hn12 : 12 ≤ n)
   by_cases hall : ∀ d ∈ p.support, d 0 < 3
   · exact ⟨p, 0, hp, MvPolynomial.isWeightedHomogeneous_zero ℂ E₄E₆Weight (n - 12),
       by simp only [mul_zero, add_zero], hall⟩
-  · push_neg at hall
+  · push Not at hall
     obtain ⟨d, hd_mem, hd_ge⟩ := hall
     have hwd : d 0 * 4 + d 1 * 6 = n := by
       have := hp (MvPolynomial.mem_support_iff.mp hd_mem)
@@ -616,7 +616,7 @@ private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ
       rcases hn02 with rfl | rfl
       · exact per_weight_injective_zero p hp heval
       · exact whomog_eq_zero_of_no_monomials p hp (fun d => no_wt_monomial_of_two d)
-    · push_neg at hn4
+    · push Not at hn4
       by_cases hn12 : n < 12
       · have hn_cases : n = 4 ∨ n = 6 ∨ n = 8 ∨ n = 10 := by
           obtain ⟨m, rfl⟩ := hk_odd; omega
@@ -625,7 +625,7 @@ private lemma per_weight_injective : ∀ (n : ℕ) (p : MvPolynomial (Fin 2) ℂ
         · exact per_weight_injective_small 0 1 (by omega) (by omega) rfl p hp heval
         · exact per_weight_injective_small 2 0 (by omega) (by omega) rfl p hp heval
         · exact per_weight_injective_small 1 1 (by omega) (by omega) rfl p hp heval
-      · push_neg at hn12
+      · push Not at hn12
         exact per_weight_injective_inductive_step n ih p hp heval hk_odd hn12
 
 /-- The evaluation homomorphism `evalE₄E₆` is injective
