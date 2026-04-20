@@ -1879,6 +1879,43 @@ theorem aedisjoint_glMap_M_infty_T_p_upper
     (glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1 N p hp.pos hpN b)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: T_p-double-coset family `{T_p_upper(b)}_{b<p} ∪ {M_∞}` — pairwise
+AE-disjoint translates of `Gamma1_fundDomain_PSL N`.**
+
+The `p + 1` elements of the `T_p` double coset, indexed by `Option (Fin p)`
+with `none = M_∞` and `some b = T_p_upper(b)`, translate the Γ₁(N)-fundamental
+domain into `p + 1` pairwise AE-disjoint translates. Composes directly with
+`peterssonInner_sum_slash_adjoint_constantRHS` (via
+`aedisjoint_pairwise_family_of_pair_ae_disjoint`) at the T205 call site. -/
+theorem aedisjoint_pairwise_T_p_family
+    {N : ℕ} [NeZero N] (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    (↑(Finset.univ : Finset (Option (Fin p))) : Set (Option (Fin p))).Pairwise
+      (fun i j =>
+        AEDisjoint μ_hyp
+          ((match i with
+            | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+              (Gamma1_fundDomain_PSL N : Set ℍ))
+          ((match j with
+            | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+              (Gamma1_fundDomain_PSL N : Set ℍ))) := by
+  intro i _ j _ hij
+  match i, j, hij with
+  | none, none, h => exact absurd rfl h
+  | none, some b, _ =>
+    exact (aedisjoint_glMap_M_infty_T_p_upper hp hpN b.val).symm
+  | some b, none, _ => exact aedisjoint_glMap_M_infty_T_p_upper hp hpN b.val
+  | some b₁, some b₂, hij =>
+    refine aedisjoint_glMap_T_p_upper_pair hp.pos ?_
+    intro h_eq
+    apply hij
+    have h_val : b₁.val = b₂.val := by
+      have : (b₁.val : ℤ) = (b₂.val : ℤ) := by linarith
+      exact_mod_cast this
+    exact congr_arg some (Fin.ext h_val)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a (right variant)**: Per-summand slash adjoint when the right argument
 is slashed by a coset rep. Mirrors `peterssonInner_slash_adjoint_coset`. -/
 private lemma peterssonInner_slash_adjoint_coset_right
