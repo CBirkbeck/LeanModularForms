@@ -244,7 +244,7 @@ private theorem modularFormCompOfComplexFM_eq' (p : ℍ) :
   congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
 
 theorem fd_im_gt_halfFM (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
-  by_contra h_le; push_neg at h_le
+  by_contra h_le; push Not at h_le
   obtain ⟨hnormSq, habs_re⟩ := hp
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
   have him_bridge : p.im = (↑p : ℂ).im := rfl
@@ -297,7 +297,7 @@ theorem finite_zeros_in_fdFM (hf : f ≠ 0) :
   constructor
   · simp only [fdBoxFM, Set.mem_setOf_eq]
     refine ⟨by linarith [hre_bridge], by linarith [hre_bridge], him_gt, ?_⟩
-    by_contra h_ge; push_neg at h_ge
+    by_contra h_ge; push Not at h_ge
     have : H₀ ≤ (↑p : ℂ).im := by linarith
     exact absurd hp_zero (hH₀_no_zeros p this)
   · exact (modularFormCompOfComplexFM_eq' f p).symm ▸ hp_zero

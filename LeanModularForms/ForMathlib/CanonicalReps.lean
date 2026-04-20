@@ -361,7 +361,7 @@ private lemma c_abs_le_one_of_smul_fdFM (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     have := ModularGroup.im_smul_eq_div_normSq g p₂; rw [hg] at this; exact this
   have h_nsq_eq : Complex.normSq (UpperHalfPlane.denom g p₂) = p₂.im / p₁.im := by
     rw [h_p1_im_eq]; field_simp
-  by_contra h_gt; push_neg at h_gt
+  by_contra h_gt; push Not at h_gt
   have h_c2 : c ^ 2 ≥ 4 := by nlinarith [sq_abs c]
   have h1 : (↑c : ℝ) ^ 2 * p₂.im ^ 2 ≤ p₂.im / p₁.im := by
     rw [← h_nsq_eq]; convert p₂.c_mul_im_sq_le_normSq_denom g using 1; simp [c]; ring

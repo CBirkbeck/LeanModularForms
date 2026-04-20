@@ -206,7 +206,7 @@ theorem fdBoundaryFun_arc_eq_exp (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t �
   by_cases ht : t ≤ 2/5
   · simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith, ht, ite_true, ite_false]
     congr 1; simp only [fdArcAngle]; push_cast; ring
-  · push_neg at ht
+  · push Not at ht
     simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
       show ¬t ≤ 2/5 from by linarith, ht2, ite_true, ite_false]
     congr 1; simp only [fdArcAngle]; push_cast; ring
@@ -370,13 +370,13 @@ private lemma fdBoundary_far_atI {H : ℝ} (hH : 1 < H)
     ε < ‖fdBoundaryFun H t - I‖ := by
   by_cases ht1 : t ≤ 1/5
   · linarith [fdBoundaryFun_seg1_dist_I_lower H t ht1]
-  · push_neg at ht1
+  · push Not at ht1
     by_cases ht2 : t ≤ 3/5
     · exact h_arc_far t ⟨le_of_lt ht1, ht2⟩ hδt
-    · push_neg at ht2
+    · push Not at ht2
       by_cases ht3 : t ≤ 4/5
       · linarith [fdBoundaryFun_seg4_dist_I_lower H t ht2 ht3]
-      · push_neg at ht3
+      · push Not at ht3
         linarith [fdBoundaryFun_seg5_dist_I_lower H hH t ht3]
 
 def mkSingleCrossingData_atI {H : ℝ} (hH : 1 < H)

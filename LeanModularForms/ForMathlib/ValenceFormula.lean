@@ -104,7 +104,7 @@ private lemma normSq_denom_eq_one_of_smul_i_in_fdFM (g : SL(2, ℤ))
   have h_gt : (1 : ℝ)/2 < 1 / ((c : ℝ) ^ 2 + (d : ℝ) ^ 2) := by
     rw [← h_im]; exact fd_im_gt_halfFM _ h_fd
   have h_ge : c ^ 2 + d ^ 2 ≥ 1 := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have hc0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by nlinarith [sq_nonneg c]
     have hd0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 = 0 := by nlinarith [sq_nonneg d]
     have := sl2_detFM g; rw [hc0, hd0] at this; norm_num at this
@@ -197,7 +197,7 @@ private lemma normSq_denom_eq_one_of_smul_rho_in_fdFM (g : SL(2, ℤ))
   have h_gt : (1 : ℝ)/2 < (g • ellipticPointRho').im := fd_im_gt_halfFM _ h_fd
   rw [h_im] at h_gt
   have h_pos : (c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2 > 0 := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have : Real.sqrt 3 / 2 / ((c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2) ≤ 0 :=
       div_nonpos_iff.mpr (Or.inl ⟨by positivity, h⟩)
     linarith
@@ -229,7 +229,7 @@ private lemma abs_re_eq_half_of_smul_rho_in_fdFM (g : SL(2, ℤ))
     rw [UpperHalfPlane.coe_re, UpperHalfPlane.coe_im] at h_apply
     nlinarith [h_fd.1, h_apply]
   exact le_antisymm h_fd.2 (by
-    by_contra h_lt; push_neg at h_lt; nlinarith [sq_abs (g • ellipticPointRho').re,
+    by_contra h_lt; push Not at h_lt; nlinarith [sq_abs (g • ellipticPointRho').re,
       abs_nonneg (g • ellipticPointRho').re, h_im_sq, h_nsq])
 
 /-! ### FD orbit rigidity: ρ -/

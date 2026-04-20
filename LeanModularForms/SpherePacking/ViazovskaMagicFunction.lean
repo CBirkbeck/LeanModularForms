@@ -5,7 +5,7 @@ Authors:
 -/
 import LeanModularForms.GeneralizedResidueTheory.GeneralizedResidueTheorem
 import LeanModularForms.GeneralizedResidueTheory.Cycle
-import LeanModularForms.GeneralizedResidueTheory.CauchyPrimitive
+import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.Modularforms.Eisenstein
 import LeanModularForms.SpherePacking.PhiHolomorphic
 import LeanModularForms.SpherePacking.CuspDecay

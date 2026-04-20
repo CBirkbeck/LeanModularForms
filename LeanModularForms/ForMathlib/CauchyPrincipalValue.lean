@@ -169,7 +169,7 @@ theorem cpvIntegrandOn_of_forall_gt {S : Finset ℂ} {f : ℂ → ℂ} {γ : ℝ
     cpvIntegrandOn S f γ ε t = f (γ t) * deriv γ t := by
   simp only [cpvIntegrandOn]
   rw [if_neg]
-  push_neg
+  push Not
   exact h
 
 @[simp]

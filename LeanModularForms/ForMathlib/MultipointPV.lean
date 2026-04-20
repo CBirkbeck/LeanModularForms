@@ -63,14 +63,14 @@ theorem finset_discrete_min_sep (S : Finset ℂ) (hS_nonempty : S.Nonempty)
     have hs_eq : s = a := by rw [hS_eq] at hs; exact Finset.mem_singleton.mp hs
     have hs'_eq : s' = a := by rw [hS_eq] at hs'; exact Finset.mem_singleton.mp hs'
     exact (hne (hs_eq.trans hs'_eq.symm)).elim
-  · push_neg at h_singleton
+  · push Not at h_singleton
     classical
     let dists : Finset ℝ := S.biUnion (fun s =>
       S.filter (· ≠ s) |>.image (fun s' => ‖s' - s‖))
     have h_nonempty : dists.Nonempty := by
       obtain ⟨a, ha⟩ := hS_nonempty
       have h_exists_b : ∃ b ∈ S, b ≠ a := by
-        by_contra h_all; push_neg at h_all
+        by_contra h_all; push Not at h_all
         have : S.card ≤ 1 := (Finset.card_le_card
           (fun z hz => Finset.mem_singleton.mpr (h_all z hz))).trans
           (by simp only [Finset.card_singleton, le_refl])
