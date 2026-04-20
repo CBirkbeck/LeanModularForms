@@ -2012,6 +2012,59 @@ private lemma peterssonInner_slash_adjoint_coset_right
       (f ∣[k] peterssonAdj β) g
   rw [← h1, h2, h3]
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T106 helper: `glMap M_∞` has positive determinant `p` in `GL (Fin 2) ℝ`.** -/
+theorem glMap_M_infty_det_pos
+    (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    0 < (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ).det.val := by
+  show 0 < ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) :
+    Matrix (Fin 2) (Fin 2) ℝ).det
+  rw [show ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ) =
+      ((M_infty N p hp hpN : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+  rw [show (((M_infty N p hp hpN : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+    (algebraMap ℚ ℝ) (((M_infty N p hp hpN : GL (Fin 2) ℚ).val).det) from
+      (RingHom.map_det _ _).symm]
+  -- det(M_∞) in GL(Fin 2) ℚ equals p (since M_∞ has det p by construction).
+  have h_det_Q : ((M_infty N p hp hpN : GL (Fin 2) ℚ).val).det = (p : ℚ) := by
+    have hmem := N_mul_mIdx_eq N p hpN
+    simp only [M_infty_val, Matrix.det_fin_two_of]
+    have hmem_q : ((N : ℤ) * mIdxOfCoprime N p hpN : ℚ) =
+        (aInvOfCoprime N p hpN : ℤ) * p - 1 := by exact_mod_cast hmem
+    rw [hmem_q]
+    ring
+  rw [h_det_Q]
+  show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+  rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+  exact_mod_cast hp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T106 right-slash M_∞ adjoint coset identity**: per-`q` M_∞-summand
+transformation for the Hecke adjoint.
+
+Composes `peterssonInner_slash_adjoint_coset` (at β = glMap M_∞) with
+`peterssonAdj_glMap_M_infty_eq` to rewrite the `g`-side adjoint-slash in a
+clean form suitable for the right-slash T205 closure path. The resulting
+RHS integrand is `g ∣[k] (glMap T_p_upper(0) * mapGL ℝ σ_p⁻¹)`, which on
+a cusp form further simplifies via the matrix identity `T_p_upper(0) · σ_p⁻¹
+= p · M_∞⁻¹` (not used here — kept in this compiled form for flexibility). -/
+theorem peterssonInner_M_infty_slash_adjoint_coset
+    (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (q : SL(2, ℤ)) (f g : ℍ → ℂ) :
+    peterssonInner k fd
+        (f ∣[k] ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) *
+          (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
+        (g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
+      peterssonInner k
+        ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)))
+        f
+        (g ∣[k] ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) (sigma_p_specific N p hp hpN)⁻¹))) := by
+  rw [peterssonInner_slash_adjoint_coset
+      (glMap (M_infty N p hp hpN)) (glMap_M_infty_det_pos N p hp hpN) q f g]
+  rw [peterssonAdj_glMap_M_infty_eq N p hp hpN]
+
 private theorem petN_heckeT_p_diamond_shift_core
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
