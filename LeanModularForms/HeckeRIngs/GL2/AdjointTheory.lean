@@ -1347,6 +1347,181 @@ private lemma peterssonInner_add_left (D : Set ℍ) (f₁ f₂ g : ℍ → ℂ)
   have h3b := peterssonInner_conj_symm k D f₂ g
   rw [← h1, h2, map_add, h3a, h3b]
 
+/-! ### T092 / T094: Finset-additivity, finite-union bridge, and T_p-specific
+AE-disjointness (DS Theorem 5.5.2(b) / T205 instantiation) -/
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T092 helper: `petersson` is linear in its second argument over finite sums.** -/
+theorem petersson_sum_right {ι : Type*} (s : Finset ι) (f : ℍ → ℂ)
+    (g : ι → ℍ → ℂ) (τ : ℍ) :
+    petersson k f (∑ i ∈ s, g i) τ = ∑ i ∈ s, petersson k f (g i) τ := by
+  simp only [petersson, Finset.sum_apply, Finset.mul_sum, Finset.sum_mul]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T092 helper: Finset additivity of `peterssonInner` in the first arg.** -/
+theorem peterssonInner_sum_left
+    {ι : Type*} [DecidableEq ι] (s : Finset ι) (F : ι → ℍ → ℂ)
+    (g : ℍ → ℂ) (D : Set ℍ)
+    (h_int : ∀ i ∈ s, IntegrableOn (fun τ => petersson k g (F i) τ) D μ_hyp) :
+    peterssonInner k D (∑ i ∈ s, F i) g = ∑ i ∈ s, peterssonInner k D (F i) g := by
+  induction s using Finset.induction_on with
+  | empty => simp [peterssonInner_zero_left]
+  | insert i t hi ih =>
+    rw [Finset.sum_insert hi]
+    have h_i := h_int i (Finset.mem_insert_self i t)
+    have h_t := fun j hj => h_int j (Finset.mem_insert_of_mem hj)
+    have h_sum_int :
+        IntegrableOn (fun τ => petersson k g (∑ j ∈ t, F j) τ) D μ_hyp := by
+      have h_eq :
+          (fun τ => petersson k g (∑ j ∈ t, F j) τ) =
+            fun τ => ∑ j ∈ t, petersson k g (F j) τ := by
+        funext τ; exact petersson_sum_right t g F τ
+      rw [h_eq]
+      exact MeasureTheory.integrable_finset_sum _ h_t
+    rw [peterssonInner_add_left D (F i) (∑ j ∈ t, F j) g h_i h_sum_int,
+      ih h_t, Finset.sum_insert hi]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T092: sum-of-slashes adjoint (DS 5.5.2(b) slice).** -/
+theorem peterssonInner_sum_slash_adjoint
+    {ι : Type*} [DecidableEq ι] (s : Finset ι)
+    (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
+    (D : Set ℍ) (f g : ℍ → ℂ)
+    (h_int : ∀ i ∈ s,
+      IntegrableOn (fun τ => petersson k g (f ∣[k] α i) τ) D μ_hyp) :
+    peterssonInner k D (∑ i ∈ s, f ∣[k] α i) g =
+      ∑ i ∈ s, peterssonInner k ((α i) • D) f (g ∣[k] peterssonAdj (α i)) := by
+  rw [peterssonInner_sum_left s (fun i => f ∣[k] α i) g D h_int]
+  refine Finset.sum_congr rfl fun i hi => ?_
+  exact peterssonInner_slash_adjoint D (α i) (hα i hi) f g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T092 finite-union bridge (pure measure-theoretic form).** -/
+theorem setIntegral_biUnion_finset_ae
+    {X ι : Type*} [MeasurableSpace X] {μ : Measure X}
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (s : Finset ι) {S : ι → Set X} {f : X → E}
+    (hm : ∀ i ∈ s, NullMeasurableSet (S i) μ)
+    (hd : (↑s : Set ι).Pairwise (fun i j => AEDisjoint μ (S i) (S j)))
+    (hfi : IntegrableOn f (⋃ i ∈ s, S i) μ) :
+    ∫ x in ⋃ i ∈ s, S i, f x ∂μ = ∑ i ∈ s, ∫ x in S i, f x ∂μ := by
+  classical
+  have h_biU : (⋃ i ∈ s, S i) = ⋃ i : s, S i.val := by
+    ext x; simp [Set.mem_iUnion]
+  have hm' : ∀ i : s, NullMeasurableSet (S i.val) μ :=
+    fun i => hm i.val i.property
+  have hd' : Pairwise (fun i j : s => AEDisjoint μ (S i.val) (S j.val)) := by
+    intro i j hij
+    exact hd (Finset.mem_coe.mpr i.property) (Finset.mem_coe.mpr j.property)
+      (fun h => hij (Subtype.ext h))
+  have hfi' : IntegrableOn f (⋃ i : s, S i.val) μ := by
+    rw [← h_biU]; exact hfi
+  rw [h_biU, integral_iUnion_ae hm' hd' hfi', tsum_fintype,
+    Finset.sum_coe_sort s (fun i => ∫ x in S i, f x ∂μ)]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T092 finite-union bridge (`peterssonInner` form).** -/
+theorem peterssonInner_biUnion_finset_ae
+    {ι : Type*} (s : Finset ι) {D : ι → Set ℍ}
+    (hm : ∀ i ∈ s, NullMeasurableSet (D i) μ_hyp)
+    (hd : (↑s : Set ι).Pairwise (fun i j => AEDisjoint μ_hyp (D i) (D j)))
+    (f g : ℍ → ℂ)
+    (hfi : IntegrableOn (fun τ => petersson k f g τ) (⋃ i ∈ s, D i) μ_hyp) :
+    peterssonInner k (⋃ i ∈ s, D i) f g = ∑ i ∈ s, peterssonInner k (D i) f g :=
+  setIntegral_biUnion_finset_ae s hm hd hfi
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T092: sum-of-slashes adjoint under constant-RHS hypothesis.** -/
+theorem peterssonInner_sum_slash_adjoint_constantRHS
+    {ι : Type*} [DecidableEq ι] (s : Finset ι)
+    (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
+    (D : Set ℍ) (f g g' : ℍ → ℂ)
+    (hadj : ∀ i ∈ s, g ∣[k] peterssonAdj (α i) = g')
+    (h_int : ∀ i ∈ s,
+      IntegrableOn (fun τ => petersson k g (f ∣[k] α i) τ) D μ_hyp)
+    (hm : ∀ i ∈ s, NullMeasurableSet ((α i) • D) μ_hyp)
+    (hd : (↑s : Set ι).Pairwise
+      (fun i j => AEDisjoint μ_hyp ((α i) • D) ((α j) • D)))
+    (hfi : IntegrableOn (fun τ => petersson k f g' τ)
+      (⋃ i ∈ s, (α i) • D) μ_hyp) :
+    peterssonInner k D (∑ i ∈ s, f ∣[k] α i) g =
+      peterssonInner k (⋃ i ∈ s, (α i) • D) f g' := by
+  rw [peterssonInner_sum_slash_adjoint s α hα D f g h_int]
+  rw [peterssonInner_biUnion_finset_ae s hm hd f g' hfi]
+  exact Finset.sum_congr rfl fun i hi => by rw [hadj i hi]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094 wrapper: AE-disjoint via PSL-coset `mul_inv_mem`.**  Direct
+instantiation of `IsFundamentalDomain.aedisjoint_smul_of_mul_inv_mem` for
+`Gamma1_fundDomain_PSL N`. -/
+theorem aedisjoint_imageGamma1_PSL_smul_Gamma1_fundDomain
+    {N : ℕ} [NeZero N] {q₁ q₂ : PSL(2, ℤ)}
+    (h_mem : q₁⁻¹ * q₂ ∈ imageGamma1_PSL N) (h_ne : q₁⁻¹ * q₂ ≠ 1) :
+    AEDisjoint μ_hyp (q₁ • (Gamma1_fundDomain_PSL N : Set ℍ))
+      (q₂ • (Gamma1_fundDomain_PSL N : Set ℍ)) :=
+  isFundamentalDomain_Gamma1_coset_tiling.aedisjoint_smul_of_mul_inv_mem
+    h_mem h_ne
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094 helper: positive-det `GL (Fin 2) ℝ` elements are measure-preserving
+on `ℍ` w.r.t. `μ_hyp`.** Lifts to `GL(2, ℝ)⁺` (positivity) and invokes
+`measurePreserving_smul` with `instSMulInvMeasure_GLpos`. -/
+theorem measurePreserving_glPos_smul (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) :
+    MeasurePreserving ((α • ·) : ℍ → ℍ) μ_hyp μ_hyp :=
+  measurePreserving_smul (⟨α, hα⟩ : GL(2, ℝ)⁺) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094 bridge: GL-pair AE-disjoint via `mapGL ℝ γ`-factored inverse product.**
+
+For `α₁, α₂ : GL (Fin 2) ℝ` with `α₁⁻¹` measure-preserving on ℍ, if
+`α₁⁻¹ * α₂ = mapGL ℝ γ` for some `γ ∈ Γ₁(N)` non-trivial in `PSL(2,ℤ)`,
+then `α₁ • D_N^PSL` and `α₂ • D_N^PSL` are AE-disjoint. -/
+theorem aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
+    {N : ℕ} [NeZero N] (α₁ α₂ : GL (Fin 2) ℝ)
+    (h_mp_inv : MeasurePreserving ((α₁⁻¹ • ·) : ℍ → ℍ) μ_hyp μ_hyp)
+    (γ : SL(2, ℤ)) (hγ_Γ1 : γ ∈ Gamma1 N)
+    (hγ_ne : (QuotientGroup.mk γ : PSL(2, ℤ)) ≠ 1)
+    (h_inv_mul : α₁⁻¹ * α₂ = ((mapGL ℝ : SL(2, ℤ) →* _) γ : GL (Fin 2) ℝ)) :
+    AEDisjoint μ_hyp (α₁ • (Gamma1_fundDomain_PSL N : Set ℍ))
+      (α₂ • (Gamma1_fundDomain_PSL N : Set ℍ)) := by
+  set D : Set ℍ := Gamma1_fundDomain_PSL N
+  set q : PSL(2, ℤ) := QuotientGroup.mk γ with hq_def
+  have h_inner : AEDisjoint μ_hyp D (q • D) := by
+    have h_mem : (1 : PSL(2, ℤ))⁻¹ * q ∈ imageGamma1_PSL N := by
+      rw [inv_one, one_mul, hq_def]
+      exact Subgroup.mem_map.mpr ⟨γ, hγ_Γ1, rfl⟩
+    have h_ne : (1 : PSL(2, ℤ))⁻¹ * q ≠ 1 := by
+      rw [inv_one, one_mul]; exact hγ_ne
+    have h_gen := isFundamentalDomain_Gamma1_coset_tiling (N := N)
+      |>.aedisjoint_smul_of_mul_inv_mem h_mem h_ne
+    rwa [one_smul] at h_gen
+  have h_pre_α₁ : ((α₁⁻¹ • ·) ⁻¹' D : Set ℍ) = α₁ • D := by
+    ext τ; simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+  have h_pre_α₂ : ((α₁⁻¹ • ·) ⁻¹' (q • D) : Set ℍ) = α₂ • D := by
+    ext τ
+    simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+    have hq_smul : ∀ σ : ℍ, (q⁻¹ • σ : ℍ) =
+        (((mapGL ℝ : SL(2, ℤ) →* _) γ)⁻¹ : GL (Fin 2) ℝ) • σ := by
+      intro σ
+      rw [hq_def, ← QuotientGroup.mk_inv, PSL_smul_coe]
+      rw [sl_moeb, show ((γ⁻¹ : SL(2, ℤ)) : GL (Fin 2) ℝ) =
+          ((mapGL ℝ : SL(2, ℤ) →* _) γ)⁻¹ from by
+        rw [← map_inv]; rfl]
+    rw [hq_smul (α₁⁻¹ • τ)]
+    have h_eq : ((mapGL ℝ : SL(2, ℤ) →* _) γ)⁻¹ = α₂⁻¹ * α₁ := by
+      rw [← h_inv_mul, mul_inv_rev, inv_inv]
+    rw [h_eq, mul_smul]
+    rw [show (α₁ • α₁⁻¹ • τ : ℍ) = τ from by
+      rw [← mul_smul, mul_inv_cancel, one_smul]]
+  have h_QMP : MeasureTheory.Measure.QuasiMeasurePreserving
+      ((α₁⁻¹ • ·) : ℍ → ℍ) μ_hyp μ_hyp :=
+    h_mp_inv.quasiMeasurePreserving
+  have h_pre_aedisjoint : AEDisjoint μ_hyp
+      ((α₁⁻¹ • ·) ⁻¹' D) ((α₁⁻¹ • ·) ⁻¹' (q • D)) :=
+    h_inner.preimage h_QMP
+  rw [h_pre_α₁, h_pre_α₂] at h_pre_aedisjoint
+  exact h_pre_aedisjoint
+
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a (right variant)**: Per-summand slash adjoint when the right argument
 is slashed by a coset rep. Mirrors `peterssonInner_slash_adjoint_coset`. -/
