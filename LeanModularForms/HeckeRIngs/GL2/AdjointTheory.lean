@@ -1088,6 +1088,83 @@ private lemma peterssonAdj_glMap_T_p_lower (p : ℕ) (hp : 0 < p) :
   rw [hcoe, Matrix.adjugate_fin_two]
   ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.of_apply]
 
+/-- **T106 helper (GL₂(ℝ)-level)**: `peterssonAdj (glMap T_p_lower) = glMap T_p_upper(0)`.
+
+Both are `GL (Fin 2) ℝ` elements with matrix `[[1, 0], [0, p]]`. Provides the
+GL-level identity needed downstream when `adj(T_p_lower)` must be compared to
+`T_p_upper(0)` as group elements (not just as matrices). -/
+theorem peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero
+    (p : ℕ) (hp : 0 < p) :
+    peterssonAdj (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) =
+      (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) := by
+  apply Units.ext
+  ext i j
+  have h_L := peterssonAdj_glMap_T_p_lower p hp
+  have h_R : ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ) = !![(1 : ℝ), 0; 0, (p : ℝ)] := by
+    ext i' j'; fin_cases i' <;> fin_cases j' <;>
+      simp [glMap, T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.GeneralLinearGroup.map, Matrix.of_apply]
+  show (peterssonAdj (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) :
+      Matrix _ _ ℝ) i j =
+    ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) : Matrix _ _ ℝ) i j
+  rw [h_L, h_R]
+
+/-- **T106 helper**: `glMap (mapGL ℚ γ) = mapGL ℝ γ` for `γ : SL(2, ℤ)`.
+
+Composition of `SL(2, ℤ) → GL(2, ℚ) → GL(2, ℝ)` via `glMap ∘ mapGL ℚ` equals
+the direct `SL(2, ℤ) → GL(2, ℝ)` map `mapGL ℝ`. Follows from Mathlib's
+`map_mapGL` for `SpecialLinearGroup`. -/
+theorem glMap_mapGL_Q_eq_mapGL_R (γ : SL(2, ℤ)) :
+    (glMap ((mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ) γ) : GL (Fin 2) ℝ) =
+      (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ := by
+  apply Units.ext
+  -- Both sides are `SpecialLinearGroup.map (algebraMap ℤ ℝ) γ` (as matrices).
+  -- LHS = `(mapGL ℚ γ).map (algebraMap ℚ ℝ) = mapGL ℝ γ` via `map_mapGL`.
+  ext i j
+  show ((glMap ((mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ) γ) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ) i j =
+    (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ) : Matrix (Fin 2) (Fin 2) ℝ) i j
+  simp [glMap, Matrix.GeneralLinearGroup.map, mapGL_coe_matrix,
+    Matrix.SpecialLinearGroup.map, algebraMap_int_eq,
+    IsScalarTower.algebraMap_apply ℤ ℚ ℝ, Matrix.map_apply]
+
+/-- **T106 M_∞ adjoint helper**: `peterssonAdj (glMap M_∞) =
+glMap T_p_upper(0) * mapGL ℝ σ_p⁻¹`.
+
+Uses `M_∞ = mapGL ℚ σ_p · T_p_lower` (from `M_infty_eq_sigma_mul_T_p_lower`)
+combined with:
+* `peterssonAdj_mul` (anti-multiplicativity of `peterssonAdj`),
+* `peterssonAdj_mapGL_SL_eq_inv` (for the SL-element `σ_p`),
+* `peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero`,
+* `glMap_mapGL_Q_eq_mapGL_R` (bridging ℚ↔ℝ glMap compositions),
+* `map_inv` on `mapGL ℝ` (MonoidHom preserves inverses).
+
+This is the single missing M_∞ adjoint ingredient needed by
+`petN_heckeT_p_diamond_shift_core` for the M_∞ term: after slashing `g` by
+this adjoint, `σ_p⁻¹ ∈ Γ₀(N)` acts as the diamond operator `⟨p⟩⁻¹` on `g`. -/
+theorem peterssonAdj_glMap_M_infty_eq
+    (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    peterssonAdj (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
+      (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* _) (sigma_p_specific N p hp hpN)⁻¹) := by
+  -- Step 1: `M_∞ = mapGL ℚ σ_p · T_p_lower` in GL(Fin 2) ℚ.
+  rw [show (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
+      (glMap ((mapGL ℚ : SL(2, ℤ) →* _) (sigma_p_specific N p hp hpN)) *
+        glMap (T_p_lower p hp) : GL (Fin 2) ℝ) from by
+    rw [← map_mul]; exact congr_arg _
+      (M_infty_eq_sigma_mul_T_p_lower N p hp hpN)]
+  -- Step 2: adj anti-multiplicativity.
+  rw [peterssonAdj_mul]
+  -- Step 3: adj(glMap T_p_lower) = glMap T_p_upper(0).
+  rw [peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero]
+  -- Step 4: glMap (mapGL ℚ σ_p) = mapGL ℝ σ_p.
+  rw [glMap_mapGL_Q_eq_mapGL_R]
+  -- Step 5: adj(mapGL ℝ σ_p) = (mapGL ℝ σ_p)⁻¹.
+  rw [peterssonAdj_mapGL_SL_eq_inv]
+  -- Step 6: (mapGL ℝ σ_p)⁻¹ = mapGL ℝ (σ_p⁻¹) via MonoidHom.map_inv.
+  rw [← map_inv]
+
 /-- The shift matrix `[[1, m; 0, 1]]` as an SL₂(ℤ) element. -/
 private def shiftSL_loc (m : ℤ) : SL(2, ℤ) :=
   ⟨!![1, m; 0, 1], by simp [Matrix.det_fin_two]⟩
