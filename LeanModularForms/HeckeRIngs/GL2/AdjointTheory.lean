@@ -1602,6 +1602,46 @@ private lemma peterssonInner_slash_adj_T_p_upper_q_summand_eq
   rw [slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0 p hp hpN b g]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205 finite-family upper b-collapse (per-`q`)**: for each
+`q : SL(2, ℤ)` and Γ₁(N)-cusp forms `f g`, the finite `b`-sum of the
+upper-family per-q `peterssonInner` contributions equals the `b`-sum
+of the domain-shifted `peterssonInner`s with **b-INDEPENDENT** g-slot
+`(⇑g ∣ glMap T_p_upper(p, 0)) ∣ mapGL γ₀`.
+
+**Proof** (one line): `Finset.sum_congr rfl` + `peterssonInner_slash_adj_T_p_upper_q_summand_eq`
+applied pointwise for each `b ∈ Finset.range p`.  This packages the
+b-coset-bijection (transitively invoked through
+`peterssonInner_slash_adj_T_p_upper_q_summand_eq` →
+`slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0` →
+`slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`)
+as a single `Finset.sum`-level consumer.
+
+**Role in T205 closure.** Directly usable after T205's petN-unfold +
+heckeT_p_fun_eq_coset_sum + SlashAction.add_slash + peterssonInner
+linearity distribution reveals the `∑_b` upper-family sum.  The per-b
+domain `T_p_upper(p, b) • (mapGL q⁻¹ • fd)` union can then be combined
+via `peterssonInner_biUnion_finset_ae` (T094 `aedisjoint_pairwise_T_p_family`
+handles disjointness) into a single union-domain integral for
+`peterssonInner_sum_slash_adjoint_constantRHS`-style collapse. -/
+private lemma sum_peterssonInner_upper_family_per_b_rewrite
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set ℍ)))
+        ⇑f
+        ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) :=
+  Finset.sum_congr rfl fun b _ =>
+    peterssonInner_slash_adj_T_p_upper_q_summand_eq p hp hpN b q f g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Additivity of `peterssonInner` in the first argument (requires integrability).
 Derived from `peterssonInner_add_right` via Hermitian symmetry. -/
 private lemma peterssonInner_add_left (D : Set ℍ) (f₁ f₂ g : ℍ → ℂ)
@@ -2497,33 +2537,55 @@ private theorem petN_heckeT_p_diamond_shift_core
   --   `petN (T_p f, g) = petN (T_p (⟨u⁻¹⟩ f), ⟨u⁻¹⟩ g)`
   -- reshaping the T205 residual symmetrically.
   rw [petN_heckeT_p_adjointGamma0Rep_reindex p hp hpN f g]
+  -- Invoke the T205 upper-family b-collapse per `q`: for every q : SL(2, ℤ),
+  -- the Σ_b upper-triangular `peterssonInner` contributions equal the Σ_b
+  -- domain-shifted `peterssonInner`s with b-INDEPENDENT g-slot
+  -- `(⇑g' ∣ glMap T_p_upper(p, 0)) ∣ mapGL γ₀`.  This is supplied by
+  -- `sum_peterssonInner_upper_family_per_b_rewrite` (line ~1624), which
+  -- transitively invokes the b-coset-bijection
+  -- `slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`
+  -- via `peterssonInner_slash_adj_T_p_upper_q_summand_eq` and
+  -- `slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0`.
+  have _h_upper_family_collapse :
+      ∀ q : SL(2, ℤ), ∑ b ∈ Finset.range p,
+        UpperHalfPlane.peterssonInner k ModularGroup.fd
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
+            ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+              (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+            (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
+        ∑ b ∈ Finset.range p,
+          UpperHalfPlane.peterssonInner k
+              ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+                ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) •
+                  (ModularGroup.fd : Set UpperHalfPlane)))
+            ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
+            ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) :=
+    fun q => sum_peterssonInner_upper_family_per_b_rewrite p hp hpN q
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
   -- Residual T205 obligation (reshaped):
   --   `petN (T_p (⟨u⁻¹⟩ f), ⟨u⁻¹⟩ g) = petN (⟨u⟩ f, T_p g)`
   --
-  -- The σ-reindex has absorbed the `γ₀ = adjointGamma0Rep`-slash on both
-  -- `peterssonInner` slots into uniform `⟨u⁻¹⟩` diamond twists (T128 + T126).
-  -- Remaining content: the transposition of `T_p` between the f-slot and
-  -- the g-slot with the correct ⟨u⟩-twist adjustment.  This corresponds to
-  -- the matrix-level b-permutation / coset bijection argument (DS 5.5.3
-  -- proof; Miyake §4.5 Lemma).
-  --
-  -- All adjugate-side infrastructure is proved: T094 finite-family API
-  -- (`aedisjoint_pairwise_T_p_family`, `integrableOn_petersson_biUnion_glMap_smul`,
-  --  `peterssonInner_sum_slash_adjoint_constantRHS`), T106 M_∞ adjoint helper
-  -- (`peterssonAdj_glMap_M_infty_eq`), T127 reverse-chain helper
-  -- (`slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty`),
-  -- plus `heckeT_p_comm_diamondOp`, `diamondOp_petersson_unitary`,
-  -- `petN_slash_invariant`, `slash_peterssonAdj_{T_p_upper, T_p_lower}`,
-  -- `slash_M_infty_eq_diamond_slash_T_p_lower`,
-  -- `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm`, **and the
-  -- new T205 b-coset bijection
-  -- `slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`
-  -- (line 1373)** which encodes the concrete per-`b : Fin p` matrix-level
-  -- identity `adj(T_p_upper(p, b)) * (mapGL γ₀)⁻¹ = mapGL(shift(-b)*γ₁_inv) *
-  -- glMap T_p_upper(p, 0)` with explicit Γ₁(N) witness, collapsing all
-  -- upper-triangular adjoint contributions to the single `T_p_upper(p, 0)`
-  -- rep after γ₀-slash.  The remaining step is to assemble these into the
-  -- b-permutation identity.
+  -- Remaining assembly to close T205 (not attempted in this pass, ~80-150 LOC):
+  -- (1) `show` to unfold `petN` on both sides to `∑_q peterssonInner fd ...`;
+  -- (2) `simp_rw [heckeT_p_fun_eq_coset_sum]` to unfold `T_p` to
+  --     `heckeT_p_ut + (· ∣ M_∞)`;
+  -- (3) distribute `+` via `SlashAction.add_slash` + `peterssonInner_add_left/right`
+  --     (needs per-b integrability hypotheses);
+  -- (4) apply `_h_upper_family_collapse q` on the exposed Σ_b upper-family sum for
+  --     each q (this consumes the b-coset bijection via the above helper chain);
+  -- (5) apply `peterssonInner_biUnion_finset_ae` with `aedisjoint_pairwise_T_p_family`
+  --     (T094) and `integrableOn_petersson_biUnion_glMap_smul` (T094) to fuse the
+  --     Σ_b domain-shifted `peterssonInner`s into a single union-domain integral;
+  -- (6) handle the `M_∞` term via `slash_M_infty_eq_diamond_slash_T_p_lower` +
+  --     `peterssonInner_M_infty_slash_adjoint_coset` (T106);
+  -- (7) mirror steps (3)-(6) on the RHS via the right-slash variants
+  --     (`peterssonInner_slash_adjoint_coset_right`, etc.);
+  -- (8) match the two ∑_q union-domain integrals.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
