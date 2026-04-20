@@ -2026,6 +2026,151 @@ theorem aedisjoint_glMap_T_p_upper_pair
     (glMap_T_p_upper_inv_mul_eq_mapGL_shift hp b₁ b₂)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205 per-`q` upper-family pairwise AE-disjoint on `fd`-tiles**:
+for fixed `q : SL(2, ℤ)` and `b₁ ≠ b₂`, the tiles
+`(glMap T_p_upper(p, b) * mapGL q⁻¹) • fd` are pairwise AE-disjoint.
+
+This is the `hd` input for `peterssonInner_biUnion_finset_ae` / the
+`peterssonInner_sum_slash_adjoint_constantRHS` finite-family collapse on
+the T205 upper family at each `q : SL(2, ℤ) ⧸ Γ₁(N)`.
+
+**Uses**: `aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne` (fd-level
+bridge) with `σ = q · shiftSL_loc(b₂-b₁) · q⁻¹`, `h_inv_mul` from
+`glMap_T_p_upper_inv_mul_eq_mapGL_shift` combined with conjugation by
+`mapGL q⁻¹`, and PSL nontriviality of the conjugate from the existing
+shift-commutation argument (transported through conjugation: a group
+element is trivial in a quotient iff its conjugate is).
+
+**Why not the Γ₁-version**: `(α₁)⁻¹ · α₂ = mapGL(q · shift(b₂-b₁) · q⁻¹)`
+lands in `SL(2, ℤ) \ Γ₁(N)` in general (Γ₁(N) is not normal in SL(2, ℤ)),
+so `aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1` does not apply. -/
+theorem aedisjoint_glMap_T_p_upper_pair_fd_per_q
+    {p : ℕ} (hp : 0 < p) (q : SL(2, ℤ)) {b₁ b₂ : ℕ}
+    (hne : (b₂ : ℤ) - (b₁ : ℤ) ≠ 0) :
+    AEDisjoint μ_hyp
+      (((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
+          (ModularGroup.fd : Set ℍ))
+      (((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
+          (ModularGroup.fd : Set ℍ)) := by
+  set α₁ : GL (Fin 2) ℝ :=
+    (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)
+  set α₂ : GL (Fin 2) ℝ :=
+    (glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)
+  -- Positive det of `glMap T_p_upper(p, b)` (= p > 0).
+  have h_Tp_det_pos :
+      ∀ b, 0 < (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ).det.val := by
+    intro b
+    show 0 < ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+    rw [show (((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+        (algebraMap ℚ ℝ) (((T_p_upper p hp b : GL (Fin 2) ℚ).val).det) from
+          (RingHom.map_det _ _).symm]
+    rw [show ((T_p_upper p hp b : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+      simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.det_fin_two, Matrix.of_apply]]
+    show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+    rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+    exact_mod_cast hp
+  -- Det of matrix of `mapGL q⁻¹` is 1 (since `q⁻¹ ∈ SL(2, ℤ)`).
+  have h_mapGL_mat_det_eq_one :
+      (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ).det = 1 := by
+    rw [show (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((Int.castRingHom ℝ).mapMatrix (q⁻¹ : SL(2, ℤ)).val) by
+      rw [mapGL_coe_matrix]; rfl]
+    rw [← RingHom.map_det, (q⁻¹ : SL(2, ℤ)).property]
+    simp
+  -- Positive det of α₁ = glMap T_p_upper(p, b₁) * mapGL q⁻¹.
+  have h_α₁_det_pos : 0 < (α₁ : GL (Fin 2) ℝ).det.val := by
+    show 0 < ((α₁ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((α₁ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+        ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
+        (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ) :
+          Matrix (Fin 2) (Fin 2) ℝ) from Units.val_mul _ _,
+      Matrix.det_mul, h_mapGL_mat_det_eq_one, mul_one]
+    exact h_Tp_det_pos b₁
+  -- Positive det of α₁⁻¹ = 1/det(α₁) > 0.
+  have h_α₁_inv_det_pos : 0 < (α₁⁻¹ : GL (Fin 2) ℝ).det.val := by
+    show 0 < (((α₁⁻¹).det : ℝˣ) : ℝ)
+    rw [show ((α₁⁻¹ : GL (Fin 2) ℝ)).det = α₁.det⁻¹ from map_inv _ _,
+      Units.val_inv_eq_inv_val]
+    exact inv_pos.mpr h_α₁_det_pos
+  -- Matrix identity: α₁⁻¹ * α₂ = mapGL (q * shift(b₂-b₁) * q⁻¹).
+  have h_inv_mul : α₁⁻¹ * α₂ =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q * shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) * q⁻¹) : GL (Fin 2) ℝ) := by
+    show (((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ *
+        ((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))) = _
+    rw [mul_inv_rev]
+    -- `((mapGL q⁻¹))⁻¹ = mapGL q`.
+    rw [show (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ =
+          ((mapGL ℝ : SL(2, ℤ) →* _) q : GL (Fin 2) ℝ) from by
+        rw [← map_inv]; simp]
+    -- Re-associate: (mapGL q * (glMap T_p_upper(b₁))⁻¹) * (glMap T_p_upper(b₂) * mapGL q⁻¹)
+    --             = mapGL q * ((glMap T_p_upper(b₁))⁻¹ * glMap T_p_upper(b₂)) * mapGL q⁻¹
+    rw [mul_assoc ((mapGL ℝ : SL(2, ℤ) →* _) q : GL (Fin 2) ℝ)
+          (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹,
+      ← mul_assoc ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹)
+          (glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ)
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ),
+      glMap_T_p_upper_inv_mul_eq_mapGL_shift hp b₁ b₂,
+      ← mul_assoc]
+    -- Now: mapGL q * mapGL shift * mapGL q⁻¹ = mapGL (q * shift * q⁻¹).
+    rw [← map_mul, ← map_mul]
+  -- PSL nontriviality of the conjugate `q · shift(b₂-b₁) · q⁻¹`.
+  -- Reduce to nontriviality of `shift(b₂-b₁)` by conjugation invariance in
+  -- the group quotient.
+  have h_psl_shift_ne :
+      (QuotientGroup.mk (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ))) :
+        PSL(2, ℤ)) ≠ 1 := by
+    intro heq
+    rw [QuotientGroup.eq_one_iff] at heq
+    have hS : (!![(0 : ℤ), -1; 1, 0] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+      simp [Matrix.det_fin_two]
+    set S_mat : SL(2, ℤ) := ⟨!![0, -1; 1, 0], hS⟩
+    have hcomm : shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) * S_mat =
+        S_mat * shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) := heq.comm S_mat
+    have hcomm_val :
+        (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) : SL(2, ℤ)).val * S_mat.val =
+        S_mat.val * (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) : SL(2, ℤ)).val :=
+      congr_arg Subtype.val hcomm
+    have h_00 := congr_fun (congr_fun hcomm_val 0) 0
+    simp only [S_mat, shiftSL_loc, Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.head_cons, Matrix.head_fin_const] at h_00
+    apply hne; linarith
+  have h_psl_conj_ne :
+      (QuotientGroup.mk (q * shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) * q⁻¹) :
+        PSL(2, ℤ)) ≠ 1 := by
+    intro heq
+    apply h_psl_shift_ne
+    have hconj : (QuotientGroup.mk q : PSL(2, ℤ)) *
+            (QuotientGroup.mk (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ))) : PSL(2, ℤ)) *
+            (QuotientGroup.mk q : PSL(2, ℤ))⁻¹ = 1 := by
+      rw [← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul, ← QuotientGroup.mk_mul]
+      exact heq
+    -- Solve for shift from the conjugate equation.
+    rw [mul_inv_eq_one] at hconj
+    -- hconj : ⟨q⟩ * ⟨shift⟩ = ⟨q⟩; conclude ⟨shift⟩ = 1 via `mul_left_cancel` on
+    -- `⟨q⟩ * ⟨shift⟩ = ⟨q⟩ * 1`.
+    exact mul_left_cancel (hconj.trans (mul_one _).symm)
+  -- Apply the fd-level helper.
+  exact aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne α₁ α₂
+    (measurePreserving_glPos_smul _ h_α₁_inv_det_pos)
+    (q * shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) * q⁻¹)
+    h_psl_conj_ne h_inv_mul
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T094: `μ_hyp` is invariant under positive-det `GL (Fin 2) ℝ` translates.**
 
 Uses the `(α⁻¹ • ·)` preimage formula and `MeasurePreserving.measure_preimage` on
