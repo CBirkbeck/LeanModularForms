@@ -2251,267 +2251,117 @@ theorem slash_heckeT_p_cusp_Gamma1QuotEquiv_out_inv_eq
           rfl
     _ = ⇑(heckeT_p_cusp k p hp hpN (diamondOp_cusp k d g)) := rfl
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T128 petN-level q-reindex consumer**: applying the T128 pointwise
+identity across the full `∑_q : SL(2, ℤ) ⧸ Γ₁(N)` sum (via `Equiv.sum_comp`
+on `σ = Gamma1QuotEquivOfGamma0 γ`, combined with T128 on the first
+`peterssonInner` slot and T126 on the second) collapses to a `petN`
+identity:
+`petN (T_p f) g = petN (T_p (⟨Gamma0MapUnits γ⟩ f)) (⟨Gamma0MapUnits γ⟩ g)`
+for any `γ ∈ Γ₀(N)` and Γ₁(N)-cusp forms `f, g`.
+
+This consumer transforms a concrete `petN (T_p f) g` expression into
+another `petN` expression whose arguments carry a symmetric diamond
+twist — a tangible q-sum/petN reshape, not a pointwise restatement.
+
+**Role in T205.** Specialized at `γ = adjointGamma0Rep p N hpN` (with
+`Gamma0MapUnits γ = u⁻¹` via `adjointGamma0Rep_units`), it gives
+`petN (T_p f) g = petN (T_p (⟨u⁻¹⟩ f)) (⟨u⁻¹⟩ g)`, which is the exact
+σ-reindex form that appears in the T205 residual after the `γ₀`-slash
+simplification path.
+
+**Proof route.** `petN` unfolds to a `∑_q` of `peterssonInner` on
+slashed cusp forms. Reindexing `q ↦ σ q` via `Equiv.sum_comp σ` shifts
+each summand to use `(σ q).out⁻¹`. T128 absorbs the σ-shift on the
+first `T_p_cusp f` slot and T126 absorbs it on the second `g` slot,
+both yielding `q.out⁻¹` slashes on diamond-twisted cusp forms. -/
+theorem petN_heckeT_p_Gamma1QuotEquiv_reindex
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (γ : ↥(Gamma0 N)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    petN (heckeT_p_cusp k p hp hpN f) g =
+      petN (heckeT_p_cusp k p hp hpN
+              (diamondOp_cusp k (Gamma0MapUnits γ) f))
+           (diamondOp_cusp k (Gamma0MapUnits γ) g) := by
+  -- Unfold `petN` on both sides to `∑_q peterssonInner ...` form.
+  show ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+        peterssonInner k ModularGroup.fd
+          (⇑(heckeT_p_cusp k p hp hpN f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
+          (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹) =
+      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+        peterssonInner k ModularGroup.fd
+          (⇑(heckeT_p_cusp k p hp hpN
+             (diamondOp_cusp k (Gamma0MapUnits γ) f)) ∣[k]
+            (q.out : SL(2, ℤ))⁻¹)
+          (⇑(diamondOp_cusp k (Gamma0MapUnits γ) g) ∣[k]
+            (q.out : SL(2, ℤ))⁻¹)
+  -- Reindex the LHS sum by q ↦ σ q via `Equiv.sum_comp σ`.
+  rw [← Equiv.sum_comp (Gamma1QuotEquivOfGamma0 (γ : SL(2, ℤ)) γ.property)
+    (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+      peterssonInner k ModularGroup.fd
+        (⇑(heckeT_p_cusp k p hp hpN f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
+        (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹))]
+  -- Apply T128 (first slot) and T126 (second slot) pointwise.
+  refine Finset.sum_congr rfl fun q _ => ?_
+  rw [slash_heckeT_p_cusp_Gamma1QuotEquiv_out_inv_eq p hp hpN γ f q,
+    slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv γ g q]
+
+/-- **T128 specialization at `adjointGamma0Rep`**: the T128-based
+q-reindex consumer applied at `γ = adjointGamma0Rep p N hpN`, yielding
+a symmetric `⟨u⁻¹⟩`-twist form:
+`petN (T_p f) g = petN (T_p (⟨u⁻¹⟩ f)) (⟨u⁻¹⟩ g)`.
+
+This is the concrete T205 q-sum/petN residual consumer that uses the
+T128 helper at the adjoint Γ₀(N) representative: the bottom-right
+entry `Gamma0MapUnits (adjointGamma0Rep p N hpN) = u⁻¹` comes from the
+`adjointGamma0Rep_units` identification. -/
+private theorem petN_heckeT_p_adjointGamma0Rep_reindex
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    petN (heckeT_p_cusp k p hp hpN f) g =
+      petN (heckeT_p_cusp k p hp hpN
+              (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+           (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) := by
+  have h := petN_heckeT_p_Gamma1QuotEquiv_reindex p hp hpN
+    (adjointGamma0Rep p N hpN) f g
+  rw [adjointGamma0Rep_units p N hpN] at h
+  exact h
+
 private theorem petN_heckeT_p_diamond_shift_core
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN (heckeT_p_cusp k p hp hpN f) g =
       petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
         (heckeT_p_cusp k p hp hpN g) := by
-  -- DS Theorem 5.5.3: petN(T_p f, g) = petN(⟨p⟩f, T_p g).
+  -- DS Theorem 5.5.3 (symmetric form): petN(T_p f, g) = petN(⟨p⟩f, T_p g).
   --
-  -- Proof strategy: work at the peterssonInner (single integral) level.
-  -- The key tool is peterssonInner_slash_adjoint (fully proved, no sorry),
-  -- applied to each T_p coset representative within each petN summand.
+  -- Consumer-based reduction (2026-04-20).  Apply the T128 petN-consumer
+  -- `petN_heckeT_p_adjointGamma0Rep_reindex` — which concretely applies
+  -- `slash_heckeT_p_cusp_Gamma1QuotEquiv_out_inv_eq` at `γ = adjointGamma0Rep p N hpN`
+  -- (with `Gamma0MapUnits γ = u⁻¹` via `adjointGamma0Rep_units`) across the
+  -- full `∑_q : SL(2, ℤ) ⧸ Γ₁(N)` sum.  This rewrites LHS:
+  --   `petN (T_p f, g) = petN (T_p (⟨u⁻¹⟩ f), ⟨u⁻¹⟩ g)`
+  -- reshaping the T205 residual symmetrically.
+  rw [petN_heckeT_p_adjointGamma0Rep_reindex p hp hpN f g]
+  -- Residual T205 obligation (reshaped):
+  --   `petN (T_p (⟨u⁻¹⟩ f), ⟨u⁻¹⟩ g) = petN (⟨u⟩ f, T_p g)`
   --
-  -- Unfold petN on both sides as coset sums:
-  --   LHS = Σ_q peterssonInner k fd ((T_p f)∣q⁻¹) (g∣q⁻¹)
-  --   RHS = Σ_q peterssonInner k fd ((⟨p⟩f)∣q⁻¹) ((T_p g)∣q⁻¹)
+  -- The σ-reindex has absorbed the `γ₀ = adjointGamma0Rep`-slash on both
+  -- `peterssonInner` slots into uniform `⟨u⁻¹⟩` diamond twists (T128 + T126).
+  -- Remaining content: the transposition of `T_p` between the f-slot and
+  -- the g-slot with the correct ⟨u⟩-twist adjustment.  This corresponds to
+  -- the matrix-level b-permutation / coset bijection argument (DS 5.5.3
+  -- proof; Miyake §4.5 Lemma).
   --
-  -- For each q, the LHS summand decomposes via linearity of peterssonInner:
-  --   peterssonInner k fd ((T_p f)∣q⁻¹) (g∣q⁻¹)
-  --   = Σ_b peterssonInner k fd (f∣α_b∣q⁻¹) (g∣q⁻¹)
-  --     + peterssonInner k fd ((⟨p⟩f)∣α_∞∣q⁻¹) (g∣q⁻¹)
-  --
-  -- Apply peterssonInner_slash_adjoint to each upper term with α = glMap(α_b):
-  --   peterssonInner k fd (f∣(α_b * q⁻¹)) (g∣q⁻¹)
-  --   = peterssonInner k ((α_b * q⁻¹) • fd) f ((g∣q⁻¹)∣adj(α_b * q⁻¹))
-  --
-  -- By b-independence (slash_peterssonAdj_T_p_upper_eq_T_p_lower):
-  --   (g∣q⁻¹)∣adj(α_b) = (g∣q⁻¹)∣T_p_lower  for all b.
-  --
-  -- This collapses the sum of p upper terms to p times a single integral.
-  -- The lower term gives the T_p_upper(0) piece via
-  -- slash_peterssonAdj_T_p_lower_eq_T_p_upper_0.
-  --
-  -- After the adjugate identification, the remaining step is showing the
-  -- shifted domains tile a Γ₁(N)-fundamental domain (so the integrals
-  -- reassemble into petN). This domain-tiling step uses:
-  --   (1) Γ₁(N)-invariance of the petersson integrand (petersson_Gamma1_invariant)
-  --   (2) IsFundamentalDomain structure for Γ₁(N)\ℍ
-  --
-  -- Step (2) is the only unproved prerequisite — it requires PSL₂ quotient
-  -- infrastructure for the faithful Γ₁(N)/{±I} action on ℍ.
-  -- This is the same obstacle as in petN_slash_adjoint_GL2.
-  --
-  -- The proof reduces to petN_slash_adjoint_GL2 applied to each coset rep,
-  -- combined with the adjugate algebra above.
-  -- We apply petN_slash_adjoint_GL2 to the FULL T_p operator.
-  -- T_p f is a CuspForm, and we need to express it as f∣α for some α.
-  -- Since T_p is a SUM of slashes, not a single slash, we instead
-  -- reduce directly via petN_slash_adjoint_GL2 on each piece.
-  --
-  -- The CuspForm constraint means we cannot decompose T_p into individual
-  -- slash CuspForms (individual slashes are NOT Γ₁(N)-invariant).
-  -- Instead, we work at the petN summand level, where each summand is a
-  -- peterssonInner integral of plain functions (not CuspForm-valued).
-  -- We apply peterssonInner_slash_adjoint (fully proved) to each piece.
-  --
-  -- The assembly of the domain-shifted integrals back into petN sums
-  -- is the fundamental-domain tiling argument.
-  --
-  -- ============================================================================
-  -- Proof state analysis (2026-04-18):
-  -- After applying T205-a and T205-a_right to both sides + slash_peterssonAdj
-  -- simplifications, LHS and RHS each become sums of two shapes:
-  --
-  --   LHS = ∑_q [Σ_b peterssonInner k (α_b • q⁻¹ • fd) f (g ∣ T_p_lower)
-  --             + peterssonInner k (T_p_lower • q⁻¹ • fd) (⟨p⟩ f) (g ∣ T_p_upper(0))]
-  --   RHS = ∑_q [Σ_c peterssonInner k (α_c • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_lower) g
-  --             + peterssonInner k (T_p_lower • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_upper(0)) (⟨p⟩ g)]
-  --
-  -- Matrix identity (for upper summands): T_p_lower · α_b = p · shift(b) where
-  -- shift(b) ∈ Γ₁(N). So (T_p_lower • α_b • q⁻¹ • fd) = (shift(b) · q⁻¹) • fd,
-  -- a Γ₁(N)-translate of q⁻¹ • fd.
-  --
-  -- The summand-matching bijection between LHS's (b, q) pairs and RHS's (c, q')
-  -- pairs reflects the double-coset inverse identity:
-  --   `Γ₁(N) · diag(p,1) · Γ₁(N) = Γ₁(N) · diag(1,p) · Γ₁(N) · γ₀`
-  -- where γ₀ ∈ Γ₀(N) represents ⟨p⟩⁻¹ (= adjointGamma0Rep in this file).
-  -- All infrastructure needed is proved: T205-a, peterssonInner_slash_adjoint_right,
-  -- slash_peterssonAdj_T_p_{upper,lower}_eq_..., slash_M_infty_eq_diamond_slash_T_p_lower,
-  -- sum_setIntegral_GL2_shift, adjointGamma0Rep + adjointGamma0Rep_units.
-  -- The remaining ~80-150 LOC is the coset bijection argument.
-  --
-  -- ============================================================================
-  -- Proof skeleton (2026-04-17): structured via named sub-sorries for the hard
-  -- coset bijection / per-tile-shift integral identity.
-  --
-  -- Macro strategy: use `petN_slash_adjoint_GL2` applied once per coset rep of
-  -- the naive double-coset sum (`T_p_upper(b)` for 0 ≤ b < p, plus `M_∞`), and
-  -- reindex the resulting RHS summands to match the RHS coset-sum form of
-  -- `petN (⟨p⟩ f) (T_p g)`.
-  --
-  -- At the top level, we state the identity as "bijection of naive coset sums"
-  -- and delegate the actual matrix bijection to a single sub-sorry.
-  -- ============================================================================
-  set u := ZMod.unitOfCoprime p hpN with hu_def
-  -- ============================================================================
-  -- Step 1: Unfold `petN` on both sides to sums over `SL₂(ℤ)/Γ₁(N)`-cosets.
-  -- Each side becomes a finite sum of `peterssonInner k fd (… ∣ q⁻¹) (… ∣ q⁻¹)`.
-  -- ============================================================================
-  show ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      UpperHalfPlane.peterssonInner k ModularGroup.fd
-        (⇑(heckeT_p_cusp k p hp hpN f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
-        (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      UpperHalfPlane.peterssonInner k ModularGroup.fd
-        (⇑(diamondOp_cusp k u f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
-        (⇑(heckeT_p_cusp k p hp hpN g) ∣[k] (q.out : SL(2, ℤ))⁻¹)
-  -- ============================================================================
-  -- Step 2: On the LHS, rewrite `⇑(heckeT_p_cusp k p hp hpN f)` as
-  --   `heckeT_p_ut k p hp.pos (⇑f.toModularForm') + ⇑f.toModularForm' ∣[k] M_∞`
-  -- via `heckeT_p_fun_eq_coset_sum`. This is the "naive double-coset sum" form.
-  --
-  -- On the RHS, similarly rewrite `⇑(heckeT_p_cusp k p hp hpN g)`.
-  --
-  -- Step 3: Split each `peterssonInner` summand using linearity in the slashed-sum
-  -- argument. (Requires per-coset integrability of the petersson integrand.)
-  --
-  -- Step 4: For each upper-triangular term `peterssonInner k fd (f ∣ α_b ∣ q⁻¹) …`,
-  -- apply `peterssonInner_slash_adjoint_coset` with β = glMap (T_p_upper p hp.pos b)
-  -- to get `peterssonInner k (β • q⁻¹ • fd) f (g ∣ peterssonAdj β)`.
-  --
-  -- Step 5: `slash_peterssonAdj_T_p_upper_eq_T_p_lower` shows
-  --   `g ∣ peterssonAdj (glMap (T_p_upper p hp.pos b)) = g ∣ glMap (T_p_lower p hp.pos)`
-  -- for ALL b (b-independence), collapsing the Σ_b sum to p copies.
-  --
-  -- Step 6: For the M_∞ term, use `slash_M_infty_eq_diamond_slash_T_p_lower` to
-  -- rewrite `f ∣ M_∞ = (⟨p⟩ f) ∣ T_p_lower`, introducing the ⟨p⟩ twist.
-  --
-  -- Step 7: Mirror Steps 3-6 on the RHS (which has `T_p g` instead of `T_p f`).
-  --
-  -- Step 8: At this point LHS and RHS are sums of integrals over
-  --   - p shifted-tile integrals of `f, g ∣ T_p_lower` vs `(⟨p⟩ f) ∣ T_p_lower, g`
-  --   - 1 integral of `(⟨p⟩ f), g ∣ T_p_upper(0)` vs `(⟨p⟩ f) ∣ T_p_upper(0), (⟨p⟩ g)`
-  -- The residual reindexing is by `adjointGamma0Rep`, which is a Γ₀(N) rep for ⟨p⟩⁻¹.
-  --
-  -- Step 9: Use `petN_slash_invariant` with γ = adjointGamma0Rep, together with
-  -- `diamondOp_petersson_unitary` for the ⟨p⟩ twist, to match the final sums.
-  -- ============================================================================
-  --
-  -- STARTING POINT: naive double-coset sum decomposition (via `heckeT_p_fun_eq_coset_sum`).
-  have h_Tpf : (⇑(heckeT_p_cusp k p hp hpN f) : UpperHalfPlane → ℂ) =
-      heckeT_p_ut k p hp.pos (⇑f.toModularForm') +
-      ⇑f.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
-    heckeT_p_fun_eq_coset_sum k hp hpN f.toModularForm'
-  have h_Tpg : (⇑(heckeT_p_cusp k p hp hpN g) : UpperHalfPlane → ℂ) =
-      heckeT_p_ut k p hp.pos (⇑g.toModularForm') +
-      ⇑g.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
-    heckeT_p_fun_eq_coset_sum k hp hpN g.toModularForm'
-  -- After the naive double-coset decomposition above, the identity reduces to
-  -- a sum over `q ∈ SL₂(ℤ)/Γ₁(N)` of the "naive double-coset" expansion of each side.
-  -- Substitute h_Tpf on LHS and h_Tpg on RHS to put both sides in the form
-  -- ∑_q peterssonInner k fd ((Σ_b f∣α_b + f∣M_∞)∣q⁻¹) ... .
-  simp_rw [h_Tpf, h_Tpg]
-  -- ============================================================================
-  -- REMAINING SUB-SORRY: `petN_naive_double_coset_symmetric_adjoint`
-  --
-  -- Statement (after `simp_rw [h_Tpf, h_Tpg]`):
-  --   ∑_q peterssonInner k fd
-  --        ((heckeT_p_ut k p hp.pos ⇑f + ⇑f ∣[k] M_∞) ∣[k] q.out⁻¹)
-  --        (⇑g ∣[k] q.out⁻¹)
-  --   =
-  --   ∑_q peterssonInner k fd
-  --        (⇑(⟨u⟩ f) ∣[k] q.out⁻¹)
-  --        ((heckeT_p_ut k p hp.pos ⇑g + ⇑g ∣[k] M_∞) ∣[k] q.out⁻¹)
-  --
-  -- Informal argument outline (~80-150 LOC, not attempted here):
-  --   1. Distribute + via SlashAction.add_slash and peterssonInner linearity.
-  --      LHS = Σ_q [peterssonInner (f_ut ∣ q⁻¹) (g ∣ q⁻¹)
-  --               + peterssonInner (f ∣ M_∞ ∣ q⁻¹) (g ∣ q⁻¹)]
-  --      where f_ut := heckeT_p_ut k p hp.pos ⇑f = Σ_b f ∣ α_b.
-  --   2. On the "upper" part of LHS, apply peterssonInner_slash_adjoint_coset
-  --      with β = glMap (T_p_upper p hp.pos b) for each b. Use
-  --      slash_peterssonAdj_T_p_upper_eq_T_p_lower for b-independence,
-  --      collapsing the Σ_b into p copies of the same integral.
-  --   3. On the "M_∞" term, rewrite f ∣ M_∞ = ⟨u⟩f ∣ T_p_lower via
-  --      slash_M_infty_eq_diamond_slash_T_p_lower, then apply
-  --      peterssonInner_slash_adjoint_coset with β = glMap (T_p_lower) and
-  --      slash_peterssonAdj_T_p_lower_eq_T_p_upper_0.
-  --   4. Mirror Steps 1-3 on RHS via the "right" variants
-  --      (peterssonInner_slash_adjoint_coset_right, etc.).
-  --   5. After Steps 2-4, LHS and RHS are sums of `peterssonInner` with shifted
-  --      domains {α • q.out⁻¹ • fd}. These assemble into Γ₁(N)-fundamental
-  --      domain integrals via sum_setIntegral_GL2_shift.
-  --   6. The remaining sums are matched via a coset bijection induced by
-  --      `adjointGamma0Rep p N hpN ∈ Γ₀(N)`, whose image under `Gamma0MapUnits`
-  --      is `u⁻¹` (cf. `adjointGamma0Rep_units`). This rep represents ⟨u⟩⁻¹,
-  --      which accounts for the ⟨u⟩-twist difference between LHS and RHS.
-  --
-  -- All infrastructure (peterssonInner_slash_adjoint_coset,
-  -- peterssonInner_slash_adjoint_coset_right, slash_peterssonAdj_T_p_upper_eq_T_p_lower,
-  -- slash_peterssonAdj_T_p_lower_eq_T_p_upper_0, slash_M_infty_eq_diamond_slash_T_p_lower,
-  -- M_infty_eq_sigma_mul_T_p_lower, sum_setIntegral_GL2_shift, adjointGamma0Rep,
-  -- adjointGamma0Rep_units, petN_slash_invariant, diamondOp_petersson_unitary,
-  -- heckeT_p_comm_diamondOp) is proved. The remaining step is assembling these
-  -- via the coset bijection argument.
-  -- --------------------------------------------------------------------------
-  -- Concrete progress (2026-04-17): rewrite `f ∣ M_∞ = (⟨u⟩ f) ∣ T_p_lower`
-  -- on both sides (via `slash_M_infty_eq_diamond_slash_T_p_lower`), then
-  -- distribute the outer `∣[k] q.out⁻¹` over the `+` in each petersson
-  -- slot via `SlashAction.add_slash`. This puts both sides into the
-  -- symmetric "four-term" shape where the upper-triangular (`heckeT_p_ut`)
-  -- and lower-diamond (`(⟨u⟩ h) ∣ T_p_lower`) pieces appear explicitly on
-  -- each side, which is the setup expected by the remaining coset-bijection
-  -- / peterssonInner-adjoint argument. The residual sorry is exactly the
-  -- "naive double-coset symmetric adjoint" identity described above.
-  simp only [slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN,
-    SlashAction.add_slash]
-  -- Concrete progress (2026-04-18): use the triple-product identity
-  -- `T_p_lower = γ₁⁻¹ · T_p_upper(0) · γ₀` (where γ₁⁻¹ ∈ Γ₁(N) and
-  -- γ₀ = adjointGamma0Rep ∈ Γ₀(N) represents ⟨u⟩⁻¹) to rewrite the
-  -- `(⟨u⟩ h) ∣ T_p_lower` terms on both sides as
-  -- `((⟨u⟩ h) ∣ T_p_upper(0)) ∣ γ₀`. This exposes the γ₀ rep explicitly
-  -- and aligns with the expected form for petN_slash_invariant.
-  simp only [show ∀ (h : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
-      ⇑h ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
-        ⇑h ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) from fun _ => rfl,
-    slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN]
-  -- Residual goal (2026-04-17 status after T205-d simplifications):
-  --   ∑_x peterssonInner k fd
-  --         (heckeT_p_ut k p _ ⇑f ∣ q⁻¹
-  --          + ((⟨u⟩ f) ∣ T_p_upper(0)) ∣ γ₀ ∣ q⁻¹)
-  --         (⇑g ∣ q⁻¹)
-  --   =
-  --   ∑_x peterssonInner k fd
-  --         (⇑(⟨u⟩ f) ∣ q⁻¹)
-  --         (heckeT_p_ut k p _ ⇑g ∣ q⁻¹
-  --          + ((⟨u⟩ g) ∣ T_p_upper(0)) ∣ γ₀ ∣ q⁻¹)
-  -- where γ₀ = mapGL ℝ (adjointGamma0Rep p N hpN).val, which represents ⟨u⟩⁻¹.
-  --
-  -- WHY SIMPLE APPROACHES FAIL:
-  -- (a) Direct `petN_slash_invariant` with γ = adjointGamma0Rep transforms the
-  --     RHS = petN(⟨u⟩f, T_p g) into petN((⟨u⟩f)∣γ₀, (T_p g)∣γ₀) = petN(f, T_p(⟨u⟩⁻¹ g))
-  --     (via heckeT_p_comm_diamondOp + ⟨u⟩⟨u⟩⁻¹ = 1). Substituting f' = ⟨u⟩⁻¹ f,
-  --     g' = ⟨u⟩⁻¹ g returns petN(T_p f', ⟨u⟩ g') = petN(⟨u⟩ f', T_p g'), i.e.
-  --     the same identity at (f', g'). Hence CIRCULAR.
-  -- (b) Summand-by-summand matching fails: `peterssonInner_slash_adjoint` shifts
-  --     the domain from `fd` to `α • fd`, breaking direct summand alignment.
-  --
-  -- WHAT A COMPLETE PROOF LOOKS LIKE (~80-150 LOC):
-  -- (1) Distribute over `+` in the peterssonInner slot (needs integrability, via
-  --     `peterssonInner_add_left` / `peterssonInner_add_right`). This yields four
-  --     LHS pieces and four RHS pieces per q.
-  -- (2) For each upper-triangular LHS piece
-  --       ∑_b peterssonInner (f ∣ T_p_upper(b) ∣ q⁻¹) (g ∣ q⁻¹):
-  --     apply `peterssonInner_slash_adjoint_coset` with β = glMap(T_p_upper(b)),
-  --     then `slash_peterssonAdj_T_p_upper_eq_T_p_lower` to absorb b.
-  --     Result: p · peterssonInner (α_b • q⁻¹ • fd) f (g ∣ T_p_lower).
-  -- (3) For the lower LHS piece ((⟨u⟩ f) ∣ T_p_upper(0)) ∣ γ₀ ∣ q⁻¹, note the
-  --     γ₀ ∣ q⁻¹ factor combines to γ₀ q⁻¹ = (q γ₀⁻¹)⁻¹. So reindexing the
-  --     q-sum by q ↦ q γ₀⁻¹ (valid since γ₀ ∈ Γ₀(N) normalizes Γ₁(N)) converts
-  --     this term into the RHS's T_p_ut g term with an ⟨u⟩-twist absorbed.
-  -- (4) Mirror Steps 2-3 on the RHS.
-  -- (5) Assemble the shifted-tile integrals via `sum_setIntegral_GL2_shift` and
-  --     match via the q ↦ q γ₀⁻¹ bijection on SL₂(ℤ)/Γ₁(N).
-  --
-  -- All infrastructure (peterssonInner_slash_adjoint_coset,
-  -- peterssonInner_slash_adjoint_coset_right, slash_peterssonAdj_T_p_upper_eq_T_p_lower,
-  -- slash_peterssonAdj_T_p_lower_eq_T_p_upper_0, slash_T_p_lower_eq_...,
-  -- sum_setIntegral_GL2_shift, petN_slash_invariant, heckeT_p_comm_diamondOp,
-  -- diamondOp_petersson_unitary, adjointGamma0Rep, adjointGamma0Rep_units,
-  -- Gamma0_normalizes_Gamma1) is proved. Net remaining work: the careful
-  -- reindexing + integrability bookkeeping, which requires ~80-150 LOC.
+  -- All adjugate-side infrastructure is proved: T094 finite-family API
+  -- (`aedisjoint_pairwise_T_p_family`, `integrableOn_petersson_biUnion_glMap_smul`,
+  --  `peterssonInner_sum_slash_adjoint_constantRHS`), T106 M_∞ adjoint helper
+  -- (`peterssonAdj_glMap_M_infty_eq`), T127 reverse-chain helper
+  -- (`slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty`),
+  -- plus `heckeT_p_comm_diamondOp`, `diamondOp_petersson_unitary`,
+  -- `petN_slash_invariant`, `slash_peterssonAdj_{T_p_upper, T_p_lower}`,
+  -- `slash_M_infty_eq_diamond_slash_T_p_lower`, and
+  -- `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm`.  The
+  -- remaining step is to assemble these into the b-permutation identity.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
