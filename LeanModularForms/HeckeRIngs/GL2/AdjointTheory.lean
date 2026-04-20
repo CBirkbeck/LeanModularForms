@@ -1622,6 +1622,76 @@ theorem aedisjoint_glMap_T_p_upper_pair
     (glMap_T_p_upper_inv_mul_eq_mapGL_shift hp b₁ b₂)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: `μ_hyp` is invariant under positive-det `GL (Fin 2) ℝ` translates.** -/
+theorem measure_glPos_smul_eq (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
+    {S : Set ℍ} (hS : NullMeasurableSet S μ_hyp) :
+    μ_hyp (α • S) = μ_hyp S := by
+  have hα_inv : 0 < (α⁻¹ : GL (Fin 2) ℝ).det.val := by
+    show 0 < (((α⁻¹).det : ℝˣ) : ℝ)
+    rw [show ((α⁻¹ : GL (Fin 2) ℝ)).det = α.det⁻¹ from map_inv _ _,
+      Units.val_inv_eq_inv_val]
+    exact inv_pos.mpr hα
+  have h_mp_inv := measurePreserving_glPos_smul α⁻¹ hα_inv
+  have h_eq : ((α⁻¹ • ·) : ℍ → ℍ) ⁻¹' S = α • S := by
+    ext τ; simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+  rw [← h_eq]
+  exact h_mp_inv.measure_preimage hS
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: finite hyperbolic measure of a `glMap`-translate of Γ₁(N)-FD.** -/
+theorem measure_glPos_smul_Gamma1_fundDomain_lt_top
+    {N : ℕ} [NeZero N] (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) :
+    μ_hyp (α • (Gamma1_fundDomain_PSL N : Set ℍ)) < ⊤ := by
+  rw [measure_glPos_smul_eq α hα
+    isFundamentalDomain_Gamma1_PSL.nullMeasurableSet]
+  exact hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: Petersson integrand integrable on a single `glMap`-translate of
+`Gamma1_fundDomain_PSL N`.** -/
+theorem integrableOn_petersson_glMap_smul_Gamma1_fundDomain
+    {N : ℕ} [NeZero N] (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    IntegrableOn (fun τ => petersson k ⇑f ⇑g τ)
+      (α • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
+  obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
+    ((Gamma1 N).map (mapGL ℝ)) f g
+  exact IntegrableOn.of_bound (measure_glPos_smul_Gamma1_fundDomain_lt_top α hα)
+    ((petersson_continuous k (ModularFormClass.continuous f)
+      (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
+    C (ae_of_all _ fun τ => hC τ)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: Petersson integrand integrable on a `Finset`-biUnion of
+positive-det `glMap`-translates.** -/
+theorem integrableOn_petersson_biUnion_glMap_smul
+    {N : ℕ} [NeZero N] {ι : Type*} (s : Finset ι) (α : ι → GL (Fin 2) ℝ)
+    (hα : ∀ i ∈ s, 0 < (α i).det.val)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    IntegrableOn (fun τ => petersson k ⇑f ⇑g τ)
+      (⋃ i ∈ s, α i • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
+  obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
+    ((Gamma1 N).map (mapGL ℝ)) f g
+  have h_finite : μ_hyp (⋃ i ∈ s, α i • (Gamma1_fundDomain_PSL N : Set ℍ)) < ⊤ := by
+    refine lt_of_le_of_lt (measure_biUnion_finset_le s _) ?_
+    refine ENNReal.sum_lt_top.mpr fun i hi => ?_
+    exact measure_glPos_smul_Gamma1_fundDomain_lt_top (α i) (hα i hi)
+  exact IntegrableOn.of_bound h_finite
+    ((petersson_continuous k (ModularFormClass.continuous f)
+      (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
+    C (ae_of_all _ fun τ => hC τ)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: pairwise AE-disjoint finite family, parametrized by per-pair
+hypotheses.** -/
+theorem aedisjoint_pairwise_family_of_pair_ae_disjoint
+    {ι : Type*} {D : Set ℍ} (s : Finset ι) (α : ι → GL (Fin 2) ℝ)
+    (h_pair : ∀ i ∈ s, ∀ j ∈ s, i ≠ j →
+      AEDisjoint μ_hyp (α i • D) (α j • D)) :
+    (↑s : Set ι).Pairwise (fun i j => AEDisjoint μ_hyp (α i • D) (α j • D)) :=
+  fun i hi j hj hij => h_pair i (Finset.mem_coe.mp hi) j (Finset.mem_coe.mp hj) hij
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a (right variant)**: Per-summand slash adjoint when the right argument
 is slashed by a coset rep. Mirrors `peterssonInner_slash_adjoint_coset`. -/
 private lemma peterssonInner_slash_adjoint_coset_right
