@@ -1523,6 +1523,105 @@ theorem aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
   exact h_pre_aedisjoint
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094 matrix identity M1: `T_p_upper` inverse-product factors through
+`shiftSL_loc`.**
+
+`(glMap T_p_upper(b₁))⁻¹ * (glMap T_p_upper(b₂)) = mapGL ℝ (shiftSL_loc (b₂ - b₁))`
+in `GL (Fin 2) ℝ`. Proved via `A * (shift) = B` computation, inverted. -/
+theorem glMap_T_p_upper_inv_mul_eq_mapGL_shift
+    {p : ℕ} (hp : 0 < p) (b₁ b₂ : ℕ) :
+    (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹ *
+        (glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) =
+      ((mapGL ℝ : SL(2, ℤ) →* _) (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)))) := by
+  -- Strategy: show `glMap T_p_upper(b₂) = glMap T_p_upper(b₁) * mapGL ℝ (shift)`.
+  have h_mul : (glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) =
+      (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* _) (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)))) := by
+    apply Units.ext
+    ext i j
+    have h_L : ((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) = !![(1 : ℝ), (b₂ : ℝ); 0, (p : ℝ)] := by
+      ext i' j'; fin_cases i' <;> fin_cases j' <;>
+        simp [glMap, T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+          Matrix.GeneralLinearGroup.map, Matrix.of_apply]
+    have h_R1 : ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) = !![(1 : ℝ), (b₁ : ℝ); 0, (p : ℝ)] := by
+      ext i' j'; fin_cases i' <;> fin_cases j' <;>
+        simp [glMap, T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+          Matrix.GeneralLinearGroup.map, Matrix.of_apply]
+    have h_R2 : (((mapGL ℝ : SL(2, ℤ) →* _) (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)))) :
+        Matrix (Fin 2) (Fin 2) ℝ) = !![(1 : ℝ), (b₂ : ℝ) - (b₁ : ℝ); 0, 1] := by
+      ext i' j'; fin_cases i' <;> fin_cases j' <;>
+        simp [mapGL_coe_matrix, shiftSL_loc, algebraMap_int_eq, Matrix.of_apply]
+    show ((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) : Matrix _ _ ℝ) i j =
+      ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
+       ((mapGL ℝ : SL(2, ℤ) →* _) (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)))) :
+       GL (Fin 2) ℝ).val i j
+    rw [h_L, Units.val_mul, h_R1, h_R2]
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply] <;> ring
+  rw [h_mul, ← mul_assoc, inv_mul_cancel, one_mul]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T094: AE-disjoint for two `T_p_upper`-translates.** -/
+theorem aedisjoint_glMap_T_p_upper_pair
+    {N : ℕ} [NeZero N] {p : ℕ} (hp : 0 < p) {b₁ b₂ : ℕ}
+    (hne : (b₂ : ℤ) - (b₁ : ℤ) ≠ 0) :
+    AEDisjoint μ_hyp
+      ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) •
+        (Gamma1_fundDomain_PSL N : Set ℍ))
+      ((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) •
+        (Gamma1_fundDomain_PSL N : Set ℍ)) := by
+  have h_det_pos : ∀ b, 0 < (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ).det.val := by
+    intro b
+    show 0 < ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+    rw [show (((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+      (algebraMap ℚ ℝ) (((T_p_upper p hp b : GL (Fin 2) ℚ).val).det) from
+        (RingHom.map_det _ _).symm]
+    rw [show ((T_p_upper p hp b : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+      simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.det_fin_two, Matrix.of_apply]]
+    show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+    rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+    exact_mod_cast hp
+  have h_inv_det_pos : 0 <
+      ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹).det.val := by
+    have hα_pos := h_det_pos b₁
+    show 0 < ((((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹).det : ℝˣ) : ℝ)
+    rw [show (((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹).det : ℝˣ) =
+        ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ).det : ℝˣ)⁻¹ from map_inv _ _]
+    show 0 < (((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ).det : ℝˣ))⁻¹.val
+    rw [Units.val_inv_eq_inv_val]
+    exact inv_pos.mpr hα_pos
+  have h_psl_ne : (QuotientGroup.mk (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ))) :
+      PSL(2, ℤ)) ≠ 1 := by
+    intro heq
+    rw [QuotientGroup.eq_one_iff] at heq
+    have hS : (!![(0 : ℤ), -1; 1, 0] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+      simp [Matrix.det_fin_two]
+    set S_mat : SL(2, ℤ) := ⟨!![0, -1; 1, 0], hS⟩
+    have hcomm : shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) * S_mat =
+        S_mat * shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) := heq.comm S_mat
+    have hcomm_val :
+        (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) : SL(2, ℤ)).val * S_mat.val =
+        S_mat.val * (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) : SL(2, ℤ)).val :=
+      congr_arg Subtype.val hcomm
+    have h_00 := congr_fun (congr_fun hcomm_val 0) 0
+    simp only [S_mat, shiftSL_loc, Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.head_cons, Matrix.head_fin_const] at h_00
+    apply hne; linarith
+  exact aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
+    (glMap (T_p_upper p hp b₁)) (glMap (T_p_upper p hp b₂))
+    (measurePreserving_glPos_smul _ h_inv_det_pos)
+    (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ))) (shiftSL_loc_mem_Gamma1 _) h_psl_ne
+    (glMap_T_p_upper_inv_mul_eq_mapGL_shift hp b₁ b₂)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-a (right variant)**: Per-summand slash adjoint when the right argument
 is slashed by a coset rep. Mirrors `peterssonInner_slash_adjoint_coset`. -/
 private lemma peterssonInner_slash_adjoint_coset_right
