@@ -110,8 +110,6 @@ import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.Basic
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.EndpointCorner
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.Main
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OrbitPairing
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OrbitSum
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.ArcContribution
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.Assembly

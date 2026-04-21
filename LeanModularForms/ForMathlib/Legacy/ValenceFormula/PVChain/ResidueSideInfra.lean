@@ -604,7 +604,7 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
       rw [Complex.normSq_apply] at h_sq ⊢
       nlinarith [h_sq]
     have h_ord : orderOfVanishingAt' (⇑f) s ≠ 0 :=
-      orderOfVanishingAt'_ne_zero_of_eq_zero f hf s h_fs
+      orderOfVanishingAt'_ne_zero_of_eq_zeroFM f hf s h_fs
     exact hz₀_not_S s (hS_complete s h_fd h_ord) rfl
   have h_off : ∀ t ∈ Icc (0:ℝ) 5, fdBoundary_H H t ≠ z₀ :=
     off_curve_of_not_in_fd_H hH z₀ hz₀_not_fd

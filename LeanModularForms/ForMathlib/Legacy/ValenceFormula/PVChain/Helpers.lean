@@ -7,7 +7,7 @@ import LeanModularForms.ForMathlib.Legacy.FDBoundaryH
 import LeanModularForms.ForMathlib.EllipticPoints
 import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.Main
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OrbitSum
+import LeanModularForms.ForMathlib.Orbits
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.Residue
 
 /-!
@@ -277,7 +277,7 @@ private theorem zeros_complete_of_hS_complete (S : Finset UpperHalfPlane)
     ∀ s, s ∈ 𝒟 → f s = 0 → s ∈ S.filter (fun p => f p = 0) := by
   intro s hs_fd hs_zero
   exact Finset.mem_filter.mpr
-    ⟨hS_complete s hs_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf s hs_zero), hs_zero⟩
+    ⟨hS_complete s hs_fd (orderOfVanishingAt'_ne_zero_of_eq_zeroFM f hf s hs_zero), hs_zero⟩
 
 omit hf in
 /-- Summing `gWN · ord` over all of `S` equals summing over just zeros. -/

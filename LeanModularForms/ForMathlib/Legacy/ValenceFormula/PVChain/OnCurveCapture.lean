@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.Helpers
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OrbitSum
+import LeanModularForms.ForMathlib.Orbits
 
 /-!
 # On-Curve Capture Lemmas
@@ -58,7 +58,7 @@ theorem oncurve_arc_capture
   have hp_zero : f p = 0 := by
     simp only [modularFormCompOfComplex, Function.comp_apply] at h_zero
     rwa [UpperHalfPlane.ofComplex_apply_of_im_pos h_im_pos] at h_zero
-  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf p hp_zero)
+  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zeroFM f hf p hp_zero)
   show z ∈ (↑(sArcOfS S) : Set ℂ)
   simp only [sArcOfS, Finset.coe_union, Finset.coe_image, Finset.coe_insert,
     Finset.coe_singleton, Set.mem_union, Set.mem_image]
@@ -101,7 +101,7 @@ theorem oncurve_vert_capture
   have hp_zero : f p = 0 := by
     simp only [modularFormCompOfComplex, Function.comp_apply] at h_zero
     rwa [UpperHalfPlane.ofComplex_apply_of_im_pos h_im_pos] at h_zero
-  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf p hp_zero)
+  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zeroFM f hf p hp_zero)
   show z ∈ (↑(sVertOfS S) : Set ℂ)
   unfold sVertOfS
   rw [Finset.coe_union, Finset.coe_union, Finset.coe_union]
@@ -125,7 +125,7 @@ theorem height_contradiction
   have hp_zero : f p = 0 := by
     simp only [modularFormCompOfComplex, Function.comp_apply] at h_zero
     rwa [UpperHalfPlane.ofComplex_apply_of_im_pos h_im_pos] at h_zero
-  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf p hp_zero)
+  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zeroFM f hf p hp_zero)
   have h_p_im : (↑p : ℂ).im = z.im := rfl
   linarith [hH_bound p hp_in_S]
 
@@ -185,7 +185,7 @@ theorem oncurve_seg4_capture
   have hp_zero : f p = 0 := by
     simp only [modularFormCompOfComplex, Function.comp_apply] at h_zero_seg1
     rwa [UpperHalfPlane.ofComplex_apply_of_im_pos h_im_pos] at h_zero_seg1
-  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zero f hf p hp_zero)
+  have hp_in_S := hS_complete p hp_fd (orderOfVanishingAt'_ne_zero_of_eq_zeroFM f hf p hp_zero)
   show z ∈ (↑(sVertOfS S) : Set ℂ)
   rw [h_seg_eq]
   unfold sVertOfS
