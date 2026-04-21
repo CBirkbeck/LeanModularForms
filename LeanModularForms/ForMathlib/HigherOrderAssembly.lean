@@ -192,7 +192,11 @@ theorem hPV_sing_of_avoids
 
 the CPV of `f` equals the winding-residue formula.
 
-This decomposes `f = (f - pp) + pp` and applies `hasCauchyPVOn_of_tendsto_sub`. -/
+This decomposes `f = (f - pp) + pp` and applies `hasCauchyPVOn_of_tendsto_sub`.
+
+TODO (legacy-port-plan Phase 1): derive the four oracle hypotheses from
+Condition A'/B hypotheses. See
+`docs/superpowers/plans/2026-04-20-legacy-port-plan.md`. -/
 theorem generalizedResidueTheorem_composed
     (S : Finset ℂ) (f : ℂ → ℂ)
     (γ : PiecewiseC1Path x x)

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.Helpers
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.ModularInvariance
+import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.Boundary.Smooth
 
 /-!

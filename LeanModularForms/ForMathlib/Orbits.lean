@@ -54,8 +54,8 @@ theorem ord_smul_eqFM (g : SL(2, ℤ)) (p : ℍ) :
   | mem x hx =>
     intro q
     rcases hx with rfl | rfl
-    · exact ord_S_eqFM f q
-    · rw [UpperHalfPlane.modular_T_smul]; exact ord_add_one_eqFM f q
+    · exact ord_S_eq f q
+    · rw [UpperHalfPlane.modular_T_smul]; exact ord_add_one_eq f q
   | one =>
     intro q; simp only [one_smul]
   | mul x y _ _ ihx ihy =>
@@ -164,83 +164,11 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zeroFM (hf : f ≠ 0) (p : ℍ) (hp : 
     (h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
       h_preconn p.im_pos h_top.frequently z.im_pos)
 
-/-! ### Cusp nonvanishing -/
-
-/-- The cusp function is not eventually zero near `q = 0` for a nonzero modular form. -/
-private theorem cuspFunction_not_eventually_zeroFM (hf : f ≠ 0) :
-    ¬∀ᶠ q in 𝓝 (0 : ℂ), SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q = 0 := by
-  intro h_freq
-  have h_diff : DifferentiableOn ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f))
-      (Metric.ball 0 1) := fun q hq =>
-    (ModularFormClass.differentiableAt_cuspFunction f
-      (by norm_num : (0 : ℝ) < 1) ModularFormClass.one_mem_strictPeriods_SL2Z
-      (by rwa [Metric.mem_ball, dist_zero_right] at hq)).differentiableWithinAt
-  have h_anal : AnalyticOnNhd ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f))
-      (Metric.ball 0 1) := h_diff.analyticOnNhd Metric.isOpen_ball
-  have h_eqOn : EqOn (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f)) 0
-      (Metric.ball 0 1) :=
-    h_anal.eqOn_zero_of_preconnected_of_eventuallyEq_zero
-      (convex_ball 0 1).isPreconnected (Metric.mem_ball_self (by norm_num : (0:ℝ) < 1)) h_freq
-  apply hf; ext τ
-  simp only [ModularForm.coe_zero, Pi.zero_apply]
-  rw [← SlashInvariantFormClass.eq_cuspFunction f τ
-    ModularFormClass.one_mem_strictPeriods_SL2Z (by norm_num : (1:ℝ) ≠ 0)]
-  have h_qmem : Function.Periodic.qParam (1 : ℝ) (↑τ : ℂ) ∈ Metric.ball (0 : ℂ) 1 := by
-    rw [Metric.mem_ball, dist_zero_right]
-    exact_mod_cast UpperHalfPlane.norm_qParam_lt_one 1 τ
-  exact h_eqOn h_qmem
-
-/-- The cusp function is eventually nonzero near `q = 0` (punctured). -/
-private theorem cuspFunction_eventually_ne_zeroFM (hf : f ≠ 0) :
-    ∀ᶠ q in 𝓝[≠] (0 : ℂ),
-      SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
-  have h_anal : AnalyticAt ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f)) 0 :=
-    ModularFormClass.analyticAt_cuspFunction_zero f
-      (by norm_num : (0 : ℝ) < 1) ModularFormClass.one_mem_strictPeriods_SL2Z
-  exact h_anal.eventually_eq_zero_or_eventually_ne_zero.resolve_left
-    (cuspFunction_not_eventually_zeroFM f hf)
-
-/-- Existence of a nonvanishing radius for the cusp function. -/
-private theorem exists_radius_cusp_nonvanishingFM (hf : f ≠ 0) :
-    ∃ r : ℝ, 0 < r ∧ ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) r →
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
-  obtain ⟨s, hs_prop, hs_open, hs_zero⟩ := eventually_nhds_iff.mp
-    (eventually_nhdsWithin_iff.mp (cuspFunction_eventually_ne_zeroFM f hf))
-  obtain ⟨r, hr_pos, hr_ball⟩ := Metric.isOpen_iff.mp hs_open 0 hs_zero
-  exact ⟨r / 2, by linarith, fun q hq hq_ne =>
-    hs_prop q (hr_ball (lt_of_le_of_lt (Metric.mem_closedBall.mp hq) (by linarith)))
-      (mem_compl_singleton_iff.mpr hq_ne)⟩
-
-/-- Convert a q-radius to a FD boundary height. -/
-private noncomputable def heightOfRadius (r : ℝ) : ℝ := -Real.log r / (2 * Real.pi)
-
-/-- For a nonzero modular form, there exists `H > √3/2` with cusp nonvanishing. -/
-private theorem exists_height_cusp_nonvanishingFM (hf : f ≠ 0) :
-    ∃ H : ℝ, Real.sqrt 3 / 2 < H ∧
-      ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H)) →
-        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
-  obtain ⟨r, hr_pos, hr_nonvan⟩ := exists_radius_cusp_nonvanishingFM f hf
-  let H₀ := max (heightOfRadius r) (Real.sqrt 3 / 2 + 1)
-  refine ⟨H₀, ?_, ?_⟩
-  · calc Real.sqrt 3 / 2 < Real.sqrt 3 / 2 + 1 := by linarith
-      _ ≤ H₀ := le_max_right _ _
-  · intro q hq hq_ne
-    apply hr_nonvan q _ hq_ne
-    apply Metric.closedBall_subset_closedBall _ hq
-    have hH₀_ge : heightOfRadius r ≤ H₀ := le_max_left _ _
-    calc Real.exp (-2 * Real.pi * H₀)
-        ≤ Real.exp (-2 * Real.pi * heightOfRadius r) :=
-          Real.exp_le_exp.mpr (by nlinarith [Real.pi_pos])
-      _ = r := by
-          rw [show -2 * Real.pi * heightOfRadius r = Real.log r from by
-            unfold heightOfRadius; field_simp]
-          exact Real.exp_log hr_pos
-
 /-! ### Finiteness of zeros -/
 
 private theorem modularFormCompOfComplexFM_eq' (p : ℍ) :
-    modularFormCompOfComplexFM f (p : ℂ) = f p := by
-  simp only [modularFormCompOfComplexFM, Function.comp_apply]
+    modularFormCompOfComplex f (p : ℂ) = f p := by
+  simp only [modularFormCompOfComplex, Function.comp_apply]
   congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
 
 theorem fd_im_gt_halfFM (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
@@ -260,7 +188,7 @@ theorem fd_im_gt_halfFM (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im :
 private theorem no_zeros_above_height' (hf : f ≠ 0) :
     ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
       ∀ (p : ℍ), H₀ ≤ (p : ℂ).im → f p ≠ 0 := by
-  obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishingFM f hf
+  obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
   refine ⟨H₀, hH₀_gt, fun p hp hfp => ?_⟩
   have h_eq := SlashInvariantFormClass.eq_cuspFunction f p
       ModularFormClass.one_mem_strictPeriods_SL2Z one_ne_zero
@@ -284,18 +212,18 @@ theorem finite_zeros_in_fdFM (hf : f ≠ 0) :
   obtain ⟨H₀, hH₀_gt, hH₀_no_zeros⟩ := no_zeros_above_height' f hf
   have hM_half : (1:ℝ)/2 < H₀ + 1 := by
     linarith [Real.sqrt_pos_of_pos (by norm_num : (0:ℝ) < 3)]
-  have h_fin := modularForm_finitely_many_zeros_in_fdBoxFM f hf hM_half
+  have h_fin := modularForm_finitely_many_zeros_in_fdBox f hf hM_half
   have h_coe_inj : Function.Injective (UpperHalfPlane.coe : ℍ → ℂ) :=
     fun _ _ h => UpperHalfPlane.ext_iff.mpr h
   apply (h_fin.preimage (h_coe_inj.injOn)).subset
   intro p ⟨hp_fd, hp_zero⟩
-  show (p : ℂ) ∈ {z ∈ fdBoxFM (H₀ + 1) | modularFormCompOfComplexFM f z = 0}
+  show (p : ℂ) ∈ {z ∈ fdBox (H₀ + 1) | modularFormCompOfComplex f z = 0}
   have habs_re := hp_fd.2
   have him_gt := fd_im_gt_halfFM p hp_fd
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
   have hre := abs_le.mp habs_re
   constructor
-  · simp only [fdBoxFM, Set.mem_setOf_eq]
+  · simp only [fdBox, Set.mem_setOf_eq]
     refine ⟨by linarith [hre_bridge], by linarith [hre_bridge], him_gt, ?_⟩
     by_contra h_ge; push Not at h_ge
     have : H₀ ≤ (↑p : ℂ).im := by linarith

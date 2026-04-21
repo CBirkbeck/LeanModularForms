@@ -7,7 +7,7 @@ import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.OnCurveCapture
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.Seg5CuspIntegral
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.ArcContribution
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.ResidueSideInfra
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.ModularInvariance
+import LeanModularForms.ForMathlib.ModularInvariance
 
 /-!
 # PV Chain Assembly

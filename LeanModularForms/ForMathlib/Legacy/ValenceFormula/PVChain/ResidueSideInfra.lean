@@ -5,7 +5,7 @@ Authors:
 -/
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.OnCurveCapture
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.Residue.GeneralizedTheoremBase
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.ModularInvariance
+import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.Boundary.Smooth
 
 /-!
