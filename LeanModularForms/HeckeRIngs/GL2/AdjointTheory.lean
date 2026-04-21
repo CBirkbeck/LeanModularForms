@@ -1655,6 +1655,93 @@ private lemma peterssonInner_add_left (D : Set ℍ) (f₁ f₂ g : ℍ → ℂ)
   have h3b := peterssonInner_conj_symm k D f₂ g
   rw [← h1, h2, map_add, h3a, h3b]
 
+open UpperHalfPlane ModularGroup MeasureTheory ConjAct Pointwise in
+/-- **T205 integrability helper (mixed SL/GL slash bridge).**
+For `Γ₁(N)` cusp forms `f, g`, a rational matrix `α : GL (Fin 2) ℚ`, and an
+`SL(2, ℤ)` element `δ`, the petersson integrand
+`petersson k (⇑f ∣[k] δ) ((⇑g ∣[k] α) ∣[k] δ)` is integrable on the
+`SL(2, ℤ)`-fundamental domain `fd`.
+
+**Proof.** After rewriting via `petersson_slash_SL k _ _ δ` (since `δ` is SL,
+the outer slash pulls out as a change of variables `δ • τ`), the integrand
+equals `petersson k ⇑f (⇑g ∣[k] α) (δ • τ)`. The inner `⇑g ∣[k] α` is the
+coercion of the translated cusp form `CuspForm.translate g α` of the
+arithmetic conjugate subgroup `toConjAct α⁻¹ • Γ₁(N)` (arithmeticity via
+`Subgroup.IsArithmetic.conj`). Applying `CuspFormClass.petersson_bounded_left`
+separately to `f` with itself and to the translated `g` with itself yields
+global bounds `‖petersson k f f τ‖ ≤ C_f` and `‖petersson k (g ∣ α) (g ∣ α)
+τ‖ ≤ C_g`. AM-GM (`2|ab| ≤ a² + b²`) combines these into a global bound
+`‖petersson k f (g ∣ α) τ‖ ≤ (C_f + C_g) / 2`, invariant under the `δ • τ`
+shift. Combined with `hyperbolicMeasure_fd_lt_top`, `IntegrableOn.of_bound`
+closes.
+
+**Role in T205.** This is the single theorem-local bridge consumed to
+discharge the four inline integrability witnesses in
+`petN_heckeT_p_diamond_shift_core`, which land in the mixed-slash shape
+`petersson k (cuspform ∣ SL) (cuspform ∣ GL ℚ ∣ SL)` that does not
+match the existing T094 `integrableOn_petersson_slash` /
+`integrableOn_petersson_glMap_smul_Gamma1_fundDomain` shapes. -/
+private theorem integrableOn_petersson_cuspform_mixed_slash_on_fd
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (α : GL (Fin 2) ℚ) (δ : SL(2, ℤ)) :
+    IntegrableOn (fun τ => UpperHalfPlane.petersson k (⇑f ∣[k] δ)
+        ((⇑g ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) ∣[k] δ) τ)
+      (ModularGroup.fd : Set UpperHalfPlane) μ_hyp := by
+  -- Step 1: Rewrite integrand using `petersson_slash_SL` (SL slash pulls out).
+  rw [show (fun τ => UpperHalfPlane.petersson k (⇑f ∣[k] δ)
+        ((⇑g ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) ∣[k] δ) τ) =
+      (fun τ => UpperHalfPlane.petersson k ⇑f
+        (⇑g ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) (δ • τ)) from
+      funext fun τ => petersson_slash_SL k _ _ δ τ]
+  -- Step 2: Arithmeticity of the conjugate subgroup.
+  haveI hArith :
+      ((toConjAct ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))⁻¹) •
+        ((Gamma1 N).map (mapGL ℝ))).IsArithmetic := by
+    have h := Subgroup.IsArithmetic.conj ((Gamma1 N).map (mapGL ℝ)) α⁻¹
+    have h_inv : ((α⁻¹ : GL (Fin 2) ℚ).map (Rat.castHom ℝ) : GL (Fin 2) ℝ) =
+        ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))⁻¹ := map_inv _ _
+    rwa [h_inv] at h
+  -- Step 3: The translated cusp form.
+  let g_tr : CuspForm
+      ((toConjAct ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))⁻¹) •
+        ((Gamma1 N).map (mapGL ℝ))) k :=
+    CuspForm.translate g ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)
+  have h_gtr_coe : (⇑g_tr : UpperHalfPlane → ℂ) =
+      ⇑g ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) := rfl
+  -- Step 4: Global bounds via `petersson_bounded_left` on each form with itself.
+  obtain ⟨C_f, hC_f⟩ := CuspFormClass.petersson_bounded_left k
+    ((Gamma1 N).map (mapGL ℝ)) f f
+  obtain ⟨C_g, hC_g⟩ := CuspFormClass.petersson_bounded_left k _ g_tr g_tr
+  -- Step 5: AM-GM combines the two bounds globally.
+  have h_AM_GM : ∀ τ,
+      ‖UpperHalfPlane.petersson k ⇑f
+          (⇑g ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) τ‖ ≤
+        (C_f + C_g) / 2 := by
+    intro τ
+    rw [← h_gtr_coe]
+    -- AM-GM at the integrand level: ‖petersson k f g_tr τ‖ ≤
+    -- (‖petersson k f f τ‖ + ‖petersson k g_tr g_tr τ‖) / 2.
+    have h_norm_ineq : ‖UpperHalfPlane.petersson k ⇑f ⇑g_tr τ‖ ≤
+        (‖UpperHalfPlane.petersson k ⇑f ⇑f τ‖ +
+         ‖UpperHalfPlane.petersson k ⇑g_tr ⇑g_tr τ‖) / 2 := by
+      -- Expand all three `petersson` expressions as norm products.
+      simp only [UpperHalfPlane.petersson, norm_mul, Complex.norm_conj]
+      -- Goal now: ‖f τ‖ * ‖g_tr τ‖ * c ≤ (‖f τ‖ * ‖f τ‖ * c + ‖g_tr τ‖ * ‖g_tr τ‖ * c) / 2
+      -- where c is some complex norm ≥ 0.  Use AM-GM `(a - b)² · c ≥ 0`.
+      have h_im_nn : (0 : ℝ) ≤ ‖((τ.im : ℂ) ^ k)‖ := norm_nonneg _
+      nlinarith [mul_nonneg (sq_nonneg (‖(⇑f) τ‖ - ‖(⇑g_tr) τ‖)) h_im_nn,
+        sq_nonneg (‖(⇑f) τ‖ - ‖(⇑g_tr) τ‖), norm_nonneg (⇑f τ),
+        norm_nonneg (⇑g_tr τ), h_im_nn]
+    linarith [hC_f τ, hC_g τ]
+  -- Step 6: Apply `IntegrableOn.of_bound` with the composed bound.
+  refine IntegrableOn.of_bound hyperbolicMeasure_fd_lt_top ?_ ((C_f + C_g) / 2) ?_
+  · -- AEStronglyMeasurable: the composed function is continuous.
+    refine ((petersson_continuous k (ModularFormClass.continuous f)
+      ?_).comp (continuous_const_smul δ)).aestronglyMeasurable.restrict
+    rw [← h_gtr_coe]
+    exact ModularFormClass.continuous g_tr
+  · exact ae_of_all _ fun τ => h_AM_GM (δ • τ)
+
 /-! ### T092 / T094: Finset-additivity, finite-union bridge, and T_p-specific
 AE-disjointness (DS Theorem 5.5.2(b) / T205 instantiation) -/
 
@@ -3079,7 +3166,14 @@ private theorem petN_heckeT_p_diamond_shift_core
           (q.out : SL(2, ℤ))⁻¹)
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
           (q.out : SL(2, ℤ))⁻¹)
-        (by sorry) (by sorry)]
+        -- heckeT_p_ut(F) is a ∑_b which needs `sum_slash`-induction to
+        -- distribute past the outer SL slash; the existing `sum_slash`
+        -- lemma is GL ℝ-only.  Parked as sorry; helper is ready to consume.
+        (by sorry)
+        (integrableOn_petersson_cuspform_mixed_slash_on_fd
+          (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
+          (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
+          (M_infty N p hp.pos hpN) ((q.out : SL(2, ℤ))⁻¹))]
   rw [Finset.sum_add_distrib]
   rw [Finset.sum_congr rfl fun q (_ : q ∈ (Finset.univ :
         Finset (SL(2, ℤ) ⧸ Gamma1 N))) =>
@@ -3092,7 +3186,10 @@ private theorem petN_heckeT_p_diamond_shift_core
         ((⇑g.toModularForm' ∣[k]
           (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
           (q.out : SL(2, ℤ))⁻¹)
-        (by sorry) (by sorry)]
+        (by sorry)
+        (integrableOn_petersson_cuspform_mixed_slash_on_fd
+          (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) g
+          (M_infty N p hp.pos hpN) ((q.out : SL(2, ℤ))⁻¹))]
   rw [Finset.sum_add_distrib]
   -- Goal: (∑_q upper_L) + (∑_q Minf_L) = (∑_q upper_R) + (∑_q Minf_R).
   -- Split into UPPER and M_∞ sum-level sub-equalities.
