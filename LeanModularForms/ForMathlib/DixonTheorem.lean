@@ -271,4 +271,50 @@ theorem cauchyIntegralFormula_contourIntegral {f : ℂ → ℂ} {U : Set ℂ}
       2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w :=
   cauchyIntegralFormula_nullHomologous h_zero w hw hoff h_cauchy_int h_base_int
 
+/-! ## Cauchy's theorem for null-homologous curves: `∮_γ f = 0` -/
+
+/-- **Cauchy's theorem for null-homologous curves.** For `f` holomorphic on `U`
+and `γ` a closed piecewise C¹ path in `U` whose Dixon function is identically
+zero (guaranteed by null-homologous γ and `f` differentiable on `U`), the
+contour integral `∮_γ f = 0`.
+
+The proof uses a classical trick: given any `w₀ ∈ U` off the curve, apply the
+Cauchy integral formula to `g(z) := (z - w₀) · f(z)`. Since `g(w₀) = 0`, the
+formula gives `dixonH2 g γ w₀ = 2πi · n(γ, w₀) · g(w₀) = 0`. But
+`dixonH2 g γ w₀ = ∮_γ g(z)/(z - w₀) dz = ∮_γ f(z) dz` because γ avoids `w₀`.
+
+Takes the Dixon-zero hypothesis for `g` as input; callers discharge it via
+`dixonFunction_eq_zero_of_bounds` applied to the twisted function `g`.
+
+An existence witness for `w₀ ∈ U \ γ.image` is produced by the helper
+`exists_point_in_open_off_compact_curve` (any non-empty open set contains a
+point off the compact curve image, which follows from `U` being open and
+γ.image having empty interior). -/
+theorem contourIntegral_eq_zero_of_nullHomologous
+    {f : ℂ → ℂ} {U : Set ℂ} {γ : PiecewiseC1Path x x}
+    (w₀ : ℂ) (hw₀_in_U : w₀ ∈ U)
+    (hw₀_off : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀)
+    (h_zero : ∀ w, dixonFunction (fun z => (z - w₀) * f z) U γ w = 0)
+    (h_cauchy_int : IntervalIntegrable
+      (fun t => (γ t - w₀) * f (γ t) / (γ t - w₀) *
+        deriv γ.toPath.extend t) volume 0 1)
+    (h_base_int : IntervalIntegrable
+      (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
+    γ.contourIntegral f = 0 := by
+  set g : ℂ → ℂ := fun z => (z - w₀) * f z with hg_def
+  have h_cif := cauchyIntegralFormula_nullHomologous (f := g) h_zero w₀ hw₀_in_U
+    hw₀_off h_cauchy_int h_base_int
+  have hg_w₀ : g w₀ = 0 := by simp [hg_def]
+  rw [hg_w₀, mul_zero] at h_cif
+  have h_rewrite : dixonH2 g γ w₀ = γ.contourIntegral f := by
+    simp only [dixonH2, PiecewiseC1Path.contourIntegral]
+    apply intervalIntegral.integral_congr
+    intro t ht
+    rw [Set.uIcc_of_le (zero_le_one' ℝ)] at ht
+    have hne : γ t - w₀ ≠ 0 := sub_ne_zero.mpr (hw₀_off t ht)
+    simp only [hg_def]
+    field_simp
+  rw [h_rewrite] at h_cif
+  exact h_cif
+
 end

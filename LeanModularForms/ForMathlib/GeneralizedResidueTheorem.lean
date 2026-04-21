@@ -247,16 +247,28 @@ of the principal part sum, computable via `integral_sum_simple_poles_eq_winding`
 
 This is the most general form.
 
-TODO (legacy-port-plan Phase 1): close the `hCancel` / `hPV_sing` / `hI_sing` /
-`hI_rem` oracle hypotheses so the theorem takes only `hCondA` / `hCondB` /
-`hMero`. The pieces needed are:
-* `hI_sing` / `hI_rem`: integrability from `SectorCurve.lean` bounds under A'.
-* `hPV_sing`: reduce to `SimplePoleIntegral.pv_integral_simple_pole` via
-  `HasCauchyPVOn.add`/`smul` on the principal-part sum.
-* `hCancel`: Dixon (`DixonTheorem.dixonFunction_eq_zero`) applied in a nbhd of
-  the curve gives zero CPV for the analytic remainder.
+## Status of oracle hypotheses
 
-See `docs/superpowers/plans/2026-04-20-legacy-port-plan.md`. -/
+**Simple poles case (fully closed):** see
+`hasCauchyPVOn_simplePoles_convex_closed` in `HigherOrderAssembly.lean`.
+For simple poles in a convex domain with avoidance, no oracle hypotheses
+are needed — they are all discharged internally:
+* `hI_sing` / `hI_rem` are derived from continuity of `f` on `U \ S`
+  via `contourIntegrand_intervalIntegrable_of_continuousOn`.
+* `hPV_sing` is derived via `hPV_sing_of_avoids`.
+* `hCancel` is derived via `hCancel_of_simplePoles_convex` using
+  `contourIntegral_eq_zero_of_differentiableOn_convex_aux`.
+
+**Simple poles, null-homologous case (pending):** the `hCancel`
+discharge for non-convex `U` requires a null-homologous Cauchy theorem
+`∮_γ f = 0` for `f` holomorphic on `U` and γ null-homologous in `U`.
+The proof is available via Dixon's theorem applied to
+`g(z) = (z - w₀) · f(z)` for any `w₀ ∈ U \ γ.image`, but the
+infrastructure setup to plug this into the pure-FM chain is deferred.
+
+**Higher-order poles case (pending):** the A'/B closure via sector
+curves and Laurent compatibility is the genuine remaining work.
+Applies only to poles of order > 1; not needed for the valence formula. -/
 theorem generalizedResidueTheorem
     {U : Set ℂ} (_hU : IsOpen U)
     (S : Finset ℂ) (_hS_in_U : ↑S ⊆ U)
