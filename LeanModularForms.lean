@@ -26,7 +26,7 @@ import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.CurveAvoidanc
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.Homotopy.Integrality
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.Homotopy.Invariance
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.Homotopy.ParametricDiff
-import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.LogDerivFTC
+import LeanModularForms.ForMathlib.SegmentFTC
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.OnCurvePV.Basic
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.PVInfrastructure.AnnulusBounds
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.PVInfrastructure.SingularAnnulus
@@ -118,7 +118,7 @@ import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.Helpers
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.OnCurveCapture
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.ResidueSideInfra
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.PVChain.Seg5CuspIntegral
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.TrigLemmas
+import LeanModularForms.ForMathlib.TrigLemmas
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.WindingWeights.Common
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.WindingWeights.I
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.WindingWeights.Rho

@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.Boundary.Smooth
-import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.LogDerivFTC
+import LeanModularForms.ForMathlib.SegmentFTC
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.TrigLemmas
+import LeanModularForms.ForMathlib.TrigLemmas
 
 /-!
 # Shared Infrastructure for Winding Weight Computations
@@ -90,7 +90,7 @@ theorem fdBoundary_H_eq_arc {H : ℝ} {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
   · simp only [h2, ↓reduceIte]; congr 1; push_cast; ring
   · simp only [h2, ↓reduceIte, show t ≤ 3 from le_of_lt ht3]; congr 1; push_cast; ring
 
-lemma ftc_log_piece {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b) (hh_cont : ContinuousOn h (Icc a b))
+lemma ftc_log_pieceFM {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b) (hh_cont : ContinuousOn h (Icc a b))
     (hh_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ h t)
     (hh_deriv_cont : ContinuousOn (deriv h) (Icc a b))
     (hh_slit : ∀ t ∈ Icc a b, h t ∈ Complex.slitPlane)
@@ -98,7 +98,7 @@ lemma ftc_log_piece {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b) (hh_cont : C
     (heq_a : g a = h a) (heq_b : g b = h b) :
     IntervalIntegrable (fun t => deriv g t / g t) volume a b ∧
     ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) :=
-  LogDerivFTC.ftc_log_piece hab hh_cont hh_diff hh_deriv_cont hh_slit heq heq_a heq_b
+  LogDerivFTC.ftc_log_pieceFM hab hh_cont hh_diff hh_deriv_cont hh_slit heq heq_a heq_b
 
 lemma continuousOn_arg_im_nonneg :
     ContinuousOn Complex.arg {z : ℂ | 0 ≤ z.im ∧ z ≠ 0} := by
@@ -222,7 +222,7 @@ lemma ftc_piece_of_hasDerivAt {g h : ℝ → ℂ} {a b : ℝ} {d : ℝ → ℂ}
     (hh_slit : ∀ t ∈ Icc a b, h t ∈ Complex.slitPlane) :
     IntervalIntegrable (fun t => deriv g t / g t) volume a b ∧
     ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) :=
-  ftc_log_piece hab (fun t _ => (hd t).continuousAt.continuousWithinAt)
+  ftc_log_pieceFM hab (fun t _ => (hd t).continuousAt.continuousWithinAt)
     (fun t _ => (hd t).differentiableAt)
     (by rw [show deriv h = d from funext fun t => (hd t).deriv]; exact hd_cont.continuousOn)
     hh_slit (fun t ht => ⟨hg_eq t (le_of_lt ht.1) (le_of_lt ht.2), (hg_eq_nhds t ht).deriv_eq⟩)

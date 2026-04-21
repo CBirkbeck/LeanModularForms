@@ -545,15 +545,15 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
       exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by norm_num, by norm_num⟩ (by norm_num)
     · rw [← hg_eq_h₃ t ht4']
       exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by linarith, ht5⟩ (by linarith)
-  have piece₀ := ftc_log_piece (by norm_num : (0:ℝ) ≤ 1)
+  have piece₀ := ftc_log_pieceFM (by norm_num : (0:ℝ) ≤ 1)
     hh₀_cont hh₀_diff hh₀_deriv_cont hh₀_slit heq_01 hg0 hg1_0
-  have piece₁ := ftc_log_piece (by linarith : (1:ℝ) ≤ 3 - δ_L)
+  have piece₁ := ftc_log_pieceFM (by linarith : (1:ℝ) ≤ 3 - δ_L)
     hh₁_cont hh₁_diff hh₁_deriv_cont
     hh₁_slit heq_1_3mδ (hg1_0.symm ▸ hg1_1) hg3mδ
-  have piece₂ := ftc_log_piece (by linarith : (3 + δ_R) ≤ 4)
+  have piece₂ := ftc_log_pieceFM (by linarith : (3 + δ_R) ≤ 4)
     hh₂_cont hh₂_diff hh₂_deriv_cont
     hh₂_slit heq_3pδ_4 hg3pδ (hg4_3.symm ▸ hg4_2)
-  have piece₃ := ftc_log_piece (by norm_num : (4:ℝ) ≤ 5)
+  have piece₃ := ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5)
     hh₃_cont hh₃_diff hh₃_deriv_cont hh₃_slit heq_45 hg4_3 hg5
   refine ⟨piece₀.1.trans piece₁.1, piece₂.1.trans piece₃.1, ?_⟩
   rw [(intervalIntegral.integral_add_adjacent_intervals piece₀.1 piece₁.1).symm,
