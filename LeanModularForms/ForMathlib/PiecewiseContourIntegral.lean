@@ -258,6 +258,29 @@ theorem contourIntegral_eq_sub_of_hasDerivAt {F f : ℂ → ℂ}
   have h := ftc_induction γ _ 0 1 hFγ_cont hFγ_deriv h_int le_rfl zero_le_one (Subset.refl _)
   rwa [γ.apply_one, γ.apply_zero] at h
 
+/-! ### Integrability from continuity -/
+
+/-- If `f` is continuous on the image of `γ` restricted to `[0,1]`, and the derivative of
+`γ.toPath.extend` is `IntervalIntegrable` on `[0,1]`, then the contour integrand
+`f(γ(t)) · γ'(t)` is `IntervalIntegrable` on `[0,1]`.
+
+The derivative integrability hypothesis is the minimal requirement: for `PwC1Immersion`
+with one-sided derivative limits, it is automatic via `IntervalIntegrable` of a piecewise
+continuous bounded function, but stated here as a hypothesis to cover general
+`PiecewiseC1Path`. -/
+theorem contourIntegrand_intervalIntegrable_of_continuousOn
+    {f : ℂ → ℂ} (γ : PiecewiseC1Path x y) {K : Set ℂ}
+    (hf_cont : ContinuousOn f K)
+    (h_img : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ K)
+    (h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend) volume 0 1) :
+    IntervalIntegrable (contourIntegrand f γ) volume 0 1 := by
+  have h_comp : ContinuousOn (fun t => f (γ.toPath.extend t)) (Icc (0 : ℝ) 1) := by
+    apply hf_cont.comp γ.toPath.continuous_extend.continuousOn
+    intro t ht
+    exact h_img t ht
+  show IntervalIntegrable (fun t => f (γ.toPath.extend t) * deriv γ.toPath.extend t) volume 0 1
+  exact h_deriv_int.continuousOn_mul (by rw [uIcc_of_le (zero_le_one' ℝ)]; exact h_comp)
+
 /-- **FTC for closed piecewise C¹ paths.** If `F' = f` along a closed path, then `∮_γ f = 0`. -/
 theorem contourIntegral_eq_zero_of_hasDerivAt_of_closed {F f : ℂ → ℂ}
     (γ : PiecewiseC1Path x y) (hclosed : x = y) {U : Set ℂ}
