@@ -2171,6 +2171,156 @@ theorem aedisjoint_glMap_T_p_upper_pair_fd_per_q
     h_psl_conj_ne h_inv_mul
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205 per-`q` upper-family union-collapse (peterssonInner form)**.
+
+For fixed `q : SL(2, ℤ)` and Γ₁(N)-cusp forms `f, g`, the sum of
+`peterssonInner` over per-`b` upper-family fd-tiles collapses to a single
+`peterssonInner` on the union-domain with the b-INDEPENDENT `g`-slot
+`G := (⇑g ∣[k] glMap T_p_upper(p, 0)) ∣[k] mapGL γ₀`.
+
+Directly invokes `peterssonInner_biUnion_finset_ae`, with:
+- `hd` supplied by `aedisjoint_glMap_T_p_upper_pair_fd_per_q`;
+- `hm` by a pointwise preimage identification
+  `α_b • fd = (α_b⁻¹ • ·) ⁻¹' fd` + `NullMeasurableSet.preimage` via
+  `QuasiMeasurePreserving` (from `measurePreserving_glPos_smul` on positive
+  determinant `α_b⁻¹`) + `MeasurableSet fd` (fd as closed intersection of
+  `|z| ≥ 1 ∩ |Re(z)| ≤ 1/2`);
+- `hfi` (integrability of `petersson k ⇑f G` over the union) is taken as a
+  hypothesis, to be supplied by a separate integrability helper (the second
+  blocker identified in the obstruction report).
+
+**Role in T205 closure.** This is the finite-family collapse that turns the
+upper `∑_b peterssonInner` into a single union-domain integral, the final
+step before `peterssonInner_sum_slash_adjoint_constantRHS`-style assembly. -/
+theorem peterssonInner_T_p_upper_family_union_collapse_per_q
+    {p : ℕ} [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hfi : IntegrableOn
+      (fun τ => petersson k ⇑f
+        ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) τ)
+      (⋃ b ∈ Finset.range p,
+        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
+            (ModularGroup.fd : Set ℍ)) μ_hyp) :
+    ∑ b ∈ Finset.range p,
+      peterssonInner k
+        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
+            (ModularGroup.fd : Set ℍ))
+        ⇑f
+        ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
+    peterssonInner k
+      (⋃ b ∈ Finset.range p,
+        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
+            (ModularGroup.fd : Set ℍ))
+      ⇑f
+      ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
+  -- `fd` is measurable (closed intersection of two half-planes).
+  have h_fd_mset : MeasurableSet (ModularGroup.fd : Set ℍ) :=
+    ((isClosed_le continuous_const
+        (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
+      (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
+        continuous_const)).measurableSet
+  have h_fd_null : NullMeasurableSet (ModularGroup.fd : Set ℍ) μ_hyp :=
+    h_fd_mset.nullMeasurableSet
+  -- Positive determinants of α_b and α_b⁻¹.
+  have h_Tp_det_pos :
+      ∀ b, 0 < (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ).det.val := by
+    intro b
+    show 0 < ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+    rw [show (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+        (algebraMap ℚ ℝ) (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det) from
+          (RingHom.map_det _ _).symm]
+    rw [show ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+      simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.det_fin_two, Matrix.of_apply]]
+    show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+    rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+    exact_mod_cast hp.pos
+  have h_mapGL_mat_det_eq_one :
+      (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ).det = 1 := by
+    rw [show (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((Int.castRingHom ℝ).mapMatrix (q⁻¹ : SL(2, ℤ)).val) by
+      rw [mapGL_coe_matrix]; rfl]
+    rw [← RingHom.map_det, (q⁻¹ : SL(2, ℤ)).property]
+    simp
+  have h_α_det_pos : ∀ b, 0 <
+      ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)).det.val := fun b => by
+    show 0 < (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) :
+          Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) :
+            Matrix (Fin 2) (Fin 2) ℝ) =
+        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+          Matrix (Fin 2) (Fin 2) ℝ) *
+        (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ) :
+          Matrix (Fin 2) (Fin 2) ℝ) from Units.val_mul _ _,
+      Matrix.det_mul, h_mapGL_mat_det_eq_one, mul_one]
+    exact h_Tp_det_pos b
+  have h_α_inv_det_pos : ∀ b, 0 <
+      (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ :
+          GL (Fin 2) ℝ).det.val := fun b => by
+    have hα_pos := h_α_det_pos b
+    show 0 < (((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹).det : ℝˣ) : ℝ)
+    rw [show (((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹).det : ℝˣ)) =
+        ((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)).det : ℝˣ))⁻¹ from
+          map_inv _ _]
+    show 0 < ((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)).det : ℝˣ))⁻¹.val
+    rw [Units.val_inv_eq_inv_val]
+    exact inv_pos.mpr hα_pos
+  -- `hm`: NullMeasurableSet for each per-b tile via α_b⁻¹-smul preimage.
+  have hm : ∀ b ∈ Finset.range p, NullMeasurableSet
+      (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
+          (ModularGroup.fd : Set ℍ)) μ_hyp := fun b _ => by
+    have h_eq : (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
+            (ModularGroup.fd : Set ℍ)) =
+        (((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ • ·) :
+              ℍ → ℍ) ⁻¹' (ModularGroup.fd : Set ℍ)) := by
+      ext τ; simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+    rw [h_eq]
+    exact h_fd_null.preimage
+      (measurePreserving_glPos_smul _ (h_α_inv_det_pos b)).quasiMeasurePreserving
+  -- `hd`: pairwise AE-disjointness from `aedisjoint_glMap_T_p_upper_pair_fd_per_q`.
+  have hd : (↑(Finset.range p) : Set ℕ).Pairwise fun b₁ b₂ =>
+      AEDisjoint μ_hyp
+        (((glMap (T_p_upper p hp.pos b₁) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
+            (ModularGroup.fd : Set ℍ))
+        (((glMap (T_p_upper p hp.pos b₂) : GL (Fin 2) ℝ) *
+          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
+            (ModularGroup.fd : Set ℍ)) := fun b₁ _ b₂ _ hne => by
+    apply aedisjoint_glMap_T_p_upper_pair_fd_per_q hp.pos q
+    intro h
+    apply hne
+    exact_mod_cast (sub_eq_zero.mp h).symm
+  -- Invoke `peterssonInner_biUnion_finset_ae` in reverse (union → sum direction)
+  -- to obtain `∑_b = peterssonInner (⋃_b ·)`.
+  exact (peterssonInner_biUnion_finset_ae (Finset.range p) hm hd ⇑f _ hfi).symm
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T094: `μ_hyp` is invariant under positive-det `GL (Fin 2) ℝ` translates.**
 
 Uses the `(α⁻¹ • ·)` preimage formula and `MeasurePreserving.measure_preimage` on
