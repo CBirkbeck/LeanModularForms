@@ -2928,55 +2928,58 @@ private theorem petN_heckeT_p_diamond_shift_core
   --   `petN (T_p f, g) = petN (T_p (⟨u⁻¹⟩ f), ⟨u⁻¹⟩ g)`
   -- reshaping the T205 residual symmetrically.
   rw [petN_heckeT_p_adjointGamma0Rep_reindex p hp hpN f g]
-  -- Invoke the T205 upper-family b-collapse per `q`: for every q : SL(2, ℤ),
-  -- the Σ_b upper-triangular `peterssonInner` contributions equal the Σ_b
-  -- domain-shifted `peterssonInner`s with b-INDEPENDENT g-slot
-  -- `(⇑g' ∣ glMap T_p_upper(p, 0)) ∣ mapGL γ₀`.  This is supplied by
-  -- `sum_peterssonInner_upper_family_per_b_rewrite` (line ~1624), which
-  -- transitively invokes the b-coset-bijection
-  -- `slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero`
-  -- via `peterssonInner_slash_adj_T_p_upper_q_summand_eq` and
-  -- `slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0`.
-  have _h_upper_family_collapse :
-      ∀ q : SL(2, ℤ), ∑ b ∈ Finset.range p,
-        UpperHalfPlane.peterssonInner k ModularGroup.fd
-          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-            ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-              (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
-          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-            (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
-        ∑ b ∈ Finset.range p,
-          UpperHalfPlane.peterssonInner k
-              ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-                ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) •
-                  (ModularGroup.fd : Set UpperHalfPlane)))
-            ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-            ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) :=
-    fun q => sum_peterssonInner_upper_family_per_b_rewrite p hp hpN q
-      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
-  -- Residual T205 obligation (reshaped):
-  --   `petN (T_p (⟨u⁻¹⟩ f), ⟨u⁻¹⟩ g) = petN (⟨u⟩ f, T_p g)`
-  --
-  -- Remaining assembly to close T205 (not attempted in this pass, ~80-150 LOC):
-  -- (1) `show` to unfold `petN` on both sides to `∑_q peterssonInner fd ...`;
-  -- (2) `simp_rw [heckeT_p_fun_eq_coset_sum]` to unfold `T_p` to
-  --     `heckeT_p_ut + (· ∣ M_∞)`;
-  -- (3) distribute `+` via `SlashAction.add_slash` + `peterssonInner_add_left/right`
-  --     (needs per-b integrability hypotheses);
-  -- (4) apply `_h_upper_family_collapse q` on the exposed Σ_b upper-family sum for
-  --     each q (this consumes the b-coset bijection via the above helper chain);
-  -- (5) apply `peterssonInner_biUnion_finset_ae` with `aedisjoint_pairwise_T_p_family`
-  --     (T094) and `integrableOn_petersson_biUnion_glMap_smul` (T094) to fuse the
-  --     Σ_b domain-shifted `peterssonInner`s into a single union-domain integral;
-  -- (6) handle the `M_∞` term via `slash_M_infty_eq_diamond_slash_T_p_lower` +
-  --     `peterssonInner_M_infty_slash_adjoint_coset` (T106);
-  -- (7) mirror steps (3)-(6) on the RHS via the right-slash variants
-  --     (`peterssonInner_slash_adjoint_coset_right`, etc.);
-  -- (8) match the two ∑_q union-domain integrals.
+  -- Step 1: unfold `petN` on both sides to `∑_q peterssonInner k fd ...`.
+  show ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      UpperHalfPlane.peterssonInner k ModularGroup.fd
+        (⇑(heckeT_p_cusp k p hp hpN
+          (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+          (q.out : SL(2, ℤ))⁻¹) =
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      UpperHalfPlane.peterssonInner k ModularGroup.fd
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        (⇑(heckeT_p_cusp k p hp hpN g) ∣[k] (q.out : SL(2, ℤ))⁻¹)
+  -- Step 2: unfold `T_p f` on LHS via `heckeT_p_fun_eq_coset_sum` and distribute
+  -- `SlashAction.add_slash` so each summand exposes the `heckeT_p_ut + (· ∣ M_∞)`
+  -- shape inside `peterssonInner`.  The analogous unfold on RHS sets up the
+  -- symmetric `q`-sum form.
+  have h_Tpf : (⇑(heckeT_p_cusp k p hp hpN
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) :
+      UpperHalfPlane → ℂ) =
+      heckeT_p_ut k p hp.pos
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm') +
+      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm' ∣[k]
+        (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
+    heckeT_p_fun_eq_coset_sum k hp hpN
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm'
+  have h_Tpg : (⇑(heckeT_p_cusp k p hp hpN g) : UpperHalfPlane → ℂ) =
+      heckeT_p_ut k p hp.pos (⇑g.toModularForm') +
+      ⇑g.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
+    heckeT_p_fun_eq_coset_sum k hp hpN g.toModularForm'
+  simp_rw [h_Tpf, h_Tpg, SlashAction.add_slash]
+  -- Step 3: both sides are now `∑_q peterssonInner fd (A_q + B_q) (C_q)` /
+  -- `∑_q peterssonInner fd (C_q') (A_q + B_q)` where A_q is the
+  -- `heckeT_p_ut ⇑· ∣ q.out⁻¹` piece and B_q the `(⇑· ∣ M_∞) ∣ q.out⁻¹` piece.
+  -- Applying `Finset.sum_congr rfl` reduces to a per-`q` equality:
+  -- `peterssonInner fd (A_q + B_q) (C_q) = peterssonInner fd (C_q') (A'_q + B'_q)`.
+  refine Finset.sum_congr rfl fun q _ => ?_
+  -- Per-`q` residual (after unfold + distribution): the direct peterssonInner
+  -- equality per q, still containing the unsplit `+` summands.  To apply
+  -- `_h_upper_family_collapse q` requires first splitting via
+  -- `peterssonInner_add_left` / `_add_right`, which needs per-summand
+  -- integrability.  The existing T094 API
+  -- (`integrableOn_petersson_biUnion_glMap_smul`) is for `CuspForm × CuspForm`
+  -- on `α • Gamma1_fundDomain_PSL N`; for the per-summand form on `fd` with
+  -- mixed cusp-form + slashed-cusp-form arguments, `integrableOn_petersson_slash`
+  -- (PeterssonLevelN.lean:107) applies only when BOTH arguments share the
+  -- same `SL(2, ℤ)` slash — not our case where one is `∣ q.out⁻¹`
+  -- (SL) and the other `∣ (T_p_upper(b) * q.out⁻¹)` / `∣ (M_∞ * q.out⁻¹)`
+  -- (GL+, det = p or p).  Pushing further requires either (a) aggregating
+  -- first over `q` to reach the `⋃_b α_b • Gamma1_fundDomain_PSL N` shape
+  -- (swapping ∑_q and ∑_b, then using biUnion across q), or (b) a new
+  -- bound lemma bridging the mixed-slash integrability gap.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
