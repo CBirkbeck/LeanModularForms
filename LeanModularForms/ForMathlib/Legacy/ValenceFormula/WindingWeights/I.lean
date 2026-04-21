@@ -561,7 +561,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hh₀_slit : ∀ t ∈ Icc (0:ℝ) 1, h₀ t ∈ slitPlane := by
     intro t ⟨ht0, ht1⟩; rw [← hg_eq_h₀ t ht1]
     exact g_i_slitPlane_left ht0 (by linarith)
-  have piece₀ := ftc_log_piece (by norm_num : (0:ℝ) ≤ 1) hh₀_cont hh₀_diff
+  have piece₀ := ftc_log_pieceFM (by norm_num : (0:ℝ) ≤ 1) hh₀_cont hh₀_diff
     hh₀_deriv_cont hh₀_slit heq_01 hg0 hg1_0
   have hh₁_slit_12 : ∀ t ∈ Icc (1:ℝ) (2 - δ), h₁ t ∈ slitPlane := by
     intro t ⟨ht1, ht2⟩
@@ -569,7 +569,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     · rw [← hg1_1]; exact g_i_slitPlane_left (by norm_num) (by linarith)
     · rw [← hg_eq_h₁ t ht1' (by linarith)]
       exact g_i_slitPlane_left (by linarith) (by linarith)
-  have piece₁ := ftc_log_piece (by linarith : (1:ℝ) ≤ 2 - δ) hh₁_cont_12 hh₁_diff_12
+  have piece₁ := ftc_log_pieceFM (by linarith : (1:ℝ) ≤ 2 - δ) hh₁_cont_12 hh₁_diff_12
     (hh₁_deriv_cont 1 (2-δ)) hh₁_slit_12 heq_1_2mδ hg1_1 hg2mδ
   have hh₁_slit_23 : ∀ t ∈ Icc (2 + δ) (3:ℝ), h₁ t ∈ slitPlane := by
     intro t ⟨ht2, ht3⟩
@@ -577,7 +577,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     · rw [← hg3_1]; exact g_i_slitPlane_arc_right (by linarith) (le_refl 3)
     · rw [← hg_eq_h₁ t (by linarith) ht3']
       exact g_i_slitPlane_arc_right (by linarith) (le_of_lt ht3')
-  have piece₂ := ftc_log_piece (by linarith : (2 + δ) ≤ 3) hh₁_cont_23 hh₁_diff_23
+  have piece₂ := ftc_log_pieceFM (by linarith : (2 + δ) ≤ 3) hh₁_cont_23 hh₁_diff_23
     (hh₁_deriv_cont (2+δ) 3) hh₁_slit_23 heq_2pδ_3 hg2pδ hg3_1
   have hh₂_im_np_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, (h₂ t).im ≤ 0 := by
     intro t ⟨ht3, ht_t0⟩
@@ -641,7 +641,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       simp only [show g t = h₃ t from hg_eq_h₃ t ht4', h₃, Complex.add_im, Complex.ofReal_im,
         Complex.mul_im, Complex.ofReal_re, Complex.I_re, Complex.I_im, mul_zero, mul_one, add_zero]
       linarith
-  have piece₅ := ftc_log_piece (by norm_num : (4:ℝ) ≤ 5) hh₃_cont hh₃_diff
+  have piece₅ := ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5) hh₃_cont hh₃_diff
     hh₃_deriv_cont hh₃_slit heq_45 hg4_3 hg5
   have hint_left : IntervalIntegrable (fun t => deriv g t / g t) volume 0 (2 - δ) :=
     piece₀.1.trans piece₁.1
