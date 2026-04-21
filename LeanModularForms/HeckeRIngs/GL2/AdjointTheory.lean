@@ -3059,41 +3059,53 @@ private theorem petN_heckeT_p_diamond_shift_core
   -- `heckeT_p_ut ⇑· ∣ q.out⁻¹` piece and B_q the `(⇑· ∣ M_∞) ∣ q.out⁻¹` piece.
   -- Applying `Finset.sum_congr rfl` reduces to a per-`q` equality:
   -- `peterssonInner fd (A_q + B_q) (C_q) = peterssonInner fd (C_q') (A'_q + B'_q)`.
-  refine Finset.sum_congr rfl fun q _ => ?_
-  -- Per-`q` residual (after unfold + distribution): peterssonInner fd (A + B) C
-  -- vs peterssonInner fd C' (A' + B'), where A/A' are the upper-family pieces
-  -- (`heckeT_p_ut(·) ∣ q⁻¹ = ∑_b · ∣ (T_p_upper(b) * q⁻¹)`), B/B' the M_∞
-  -- pieces (`· ∣ M_∞ ∣ q⁻¹ = · ∣ (M_∞ * q⁻¹)`).
+  -- **Sum-level split** (2026-04-20 refactor): stay at outer `∑_q` level to
+  -- enable σ-reindex absorbing the `⟨u⁻²⟩` diamond factor asymmetry that breaks
+  -- per-q upper-family closure.  Distribute `+` inside each outer sum via
+  -- `peterssonInner_add_left/_right` per-q, then `Finset.sum_add_distrib` to
+  -- separate UPPER and M_∞ branches at sum level.
   --
-  -- **PER-q EQUALITY OBSTRUCTION (2026-04-20 analysis).**  Applying the full
-  -- per-q collapse chain:
-  --   (a) unfold heckeT_p_ut → ∑_b;
-  --   (b) apply `sum_peterssonInner_upper_family_per_b_rewrite` (via
-  --       `peterssonInner_slash_adj_T_p_upper_q_summand_eq`) + union collapse
-  --       → LHS per-q reduces to
-  --         `peterssonInner (⋃_b (T_p_upper(b) * q⁻¹) • fd) (⟨u⁻¹⟩ f)
-  --            ((⟨u⁻¹⟩ g ∣ T_p_upper(0)) ∣ γ₀)`;
-  --   (c) RHS upper (via Hermitian + same chain swapped) reduces to
-  --         `peterssonInner (⋃_b) (f ∣ M_∞) g`;
-  --   (d) via `slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty`:
-  --         `(⟨u⁻¹⟩ g ∣ T_p_upper(0)) ∣ γ₀ = ⟨u⁻²⟩ g ∣ M_∞` on LHS vs
-  --         `f ∣ M_∞` on RHS — integrands DO NOT match per-q due to
-  --         `⟨u⁻²⟩` vs identity diamond factor asymmetry.
-  --
-  -- The CORRECT closure route requires a SUM-level argument: `petN_slash_invariant`-
-  -- style σ-reindex (σ : q ↦ q · γ⁻¹ for γ = adjointGamma0Rep) on the outer
-  -- `∑_q` to absorb the `⟨u⁻²⟩` shift into a coset relabeling.  The
-  -- `petN_heckeT_p_adjointGamma0Rep_reindex` step at the top does ONE such
-  -- reindex already; completing T205 requires EITHER a second σ-reindex
-  -- with different γ or a direct DS 5.5.2(b) sum-of-slashes adjoint
-  -- identity applied across the `(T_p_upper(0), ..., T_p_upper(p-1), M_∞)`
-  -- family (which packages the σ-reindex into the adjugate permutation).
-  --
-  -- Until the SUM-level σ-reindex is implemented, `Finset.sum_congr rfl`
-  -- (per-q) cannot close — the per-q equality genuinely fails.  The
-  -- remaining sorry is therefore parked at the per-q level pending a
-  -- sum-level refactor.
-  sorry
+  -- Integrability witnesses are inline `by sorry` (to be discharged in
+  -- follow-up via `integrableOn_petersson_slash_of_adj_image` + T094
+  -- `integrableOn_petersson_biUnion_glMap_smul` + per-b expansion).
+  rw [Finset.sum_congr rfl fun q (_ : q ∈ (Finset.univ :
+        Finset (SL(2, ℤ) ⧸ Gamma1 N))) =>
+      peterssonInner_add_left (ModularGroup.fd : Set UpperHalfPlane)
+        (heckeT_p_ut k p hp.pos
+          ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm' ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm' ∣[k]
+          (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        (by sorry) (by sorry)]
+  rw [Finset.sum_add_distrib]
+  rw [Finset.sum_congr rfl fun q (_ : q ∈ (Finset.univ :
+        Finset (SL(2, ℤ) ⧸ Gamma1 N))) =>
+      UpperHalfPlane.peterssonInner_add_right k
+        (ModularGroup.fd : Set UpperHalfPlane)
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        (heckeT_p_ut k p hp.pos ⇑g.toModularForm' ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        ((⇑g.toModularForm' ∣[k]
+          (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
+          (q.out : SL(2, ℤ))⁻¹)
+        (by sorry) (by sorry)]
+  rw [Finset.sum_add_distrib]
+  -- Goal: (∑_q upper_L) + (∑_q Minf_L) = (∑_q upper_R) + (∑_q Minf_R).
+  -- Split into UPPER and M_∞ sum-level sub-equalities.
+  refine congr_arg₂ (· + ·) ?_ ?_
+  · -- UPPER sum equality.  This is the actual target for σ-reindex closure:
+    -- apply `sum_peterssonInner_upper_family_per_b_rewrite` +
+    -- `peterssonInner_T_p_upper_family_union_collapse_per_q` per-q to normalize
+    -- each summand, then reindex the outer `∑_q` via `Gamma1QuotEquivOfGamma0`
+    -- / `petN_heckeT_p_Gamma1QuotEquiv_reindex` pattern to absorb the
+    -- `⟨u⁻²⟩` shift.
+    sorry
+  · -- M_∞ sum equality (parked per manager guidance; close upper first).
+    sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
 `petN(T_p f, g) = petN(f, ⟨p⟩⁻¹ T_p g)`.
