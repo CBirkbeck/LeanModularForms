@@ -246,6 +246,54 @@ theorem generalizedWindingNumber_eq_neg_three_halves_of_external_neg_one_smooth
   field_simp
   ring
 
+/-! ### Integer external winding (HW Proposition 2.3 content) -/
+
+/-- **Predicate**: the external winding contribution is an integer. This is the
+mathematical content of HW Proposition 2.3 — the "external" part of the
+decomposition `n_{z₀}(γ) = N - α/(2π)` is integer-valued.
+
+In HW, this is proved by constructing a perturbed curve that avoids `z₀` (by
+detouring around the crossing) and observing that the integer winding number of
+that curve equals the external contribution. The proof uses Dixon's theorem /
+homotopy invariance.
+
+This file exposes the PREDICATE and its key consequences; an instance proof for
+specific curve families can be produced via the `_zero_of_windingNumber_eq`
+or `_zero_of_neg_half` helpers above, or via Dixon applied to a perturbation. -/
+def HasIntegerExternalWinding (γ : PwC1Immersion x y) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) : Prop :=
+  ∃ n : ℤ, externalWindingContribution γ z₀ t₀ ht₀ = (n : ℂ)
+
+/-- When external winding is zero, the predicate holds with `n = 0`. -/
+theorem HasIntegerExternalWinding.of_zero
+    {γ : PwC1Immersion x y} {z₀ : ℂ}
+    {t₀ : ℝ} {ht₀ : t₀ ∈ Ioo (0 : ℝ) 1}
+    (h : externalWindingContribution γ z₀ t₀ ht₀ = 0) :
+    HasIntegerExternalWinding γ z₀ t₀ ht₀ :=
+  ⟨0, by rw [h]; simp⟩
+
+/-- At a smooth crossing where the generalized winding number is `-1/2`, the
+external winding is 0, hence integer. -/
+theorem HasIntegerExternalWinding.of_neg_half_smooth
+    {γ : PwC1Immersion x y} {z₀ : ℂ}
+    {t₀ : ℝ} {ht₀ : t₀ ∈ Ioo (0 : ℝ) 1}
+    (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition)
+    (h_gWN : (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) = -(1 / 2)) :
+    HasIntegerExternalWinding γ z₀ t₀ ht₀ :=
+  of_zero (externalWindingContribution_zero_of_neg_half γ z₀ t₀ ht₀ hsmooth h_gWN)
+
+/-- **HW Proposition 2.3 in complete form.** Given that the external winding is
+integer-valued (`HasIntegerExternalWinding`), the generalized winding number
+decomposes as an integer minus the crossing angle contribution. -/
+theorem generalizedWindingNumber_eq_int_sub_angle_of_hasInt
+    {γ : PwC1Immersion x y} {z₀ : ℂ}
+    {t₀ : ℝ} {ht₀ : t₀ ∈ Ioo (0 : ℝ) 1}
+    (h : HasIntegerExternalWinding γ z₀ t₀ ht₀) :
+    ∃ n : ℤ, (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
+      (n : ℂ) - (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi) := by
+  obtain ⟨n, hn⟩ := h
+  exact ⟨n, generalizedWindingNumber_of_external_int γ z₀ t₀ ht₀ n hn⟩
+
 /-! ### Angle-based winding number at a single crossing -/
 
 /-- The winding number contribution from a single crossing, defined as

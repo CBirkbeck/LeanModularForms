@@ -413,6 +413,95 @@ theorem contourIntegral_eq_of_hasCauchyPVOn_avoids
     hasCauchyPVOn_of_avoids hδ
   exact HasCauchyPVOn.unique h_avoids h_pvon
 
+/-! ## Fully-closed form: only minimal hypotheses (item 1 of HW 3.3 closure) -/
+
+/-- **Item 1 — Fully-closed HW 3.3 for simple poles in convex domains.**
+
+This theorem takes ONLY the minimal geometric/analytic hypotheses — no oracle
+hypotheses (`hCancel`, `hPV_sing`, `hI_sing`, `hI_rem`) and no integrability
+hypotheses on `f ∘ γ * γ'`. The integrability is derived from continuity of `f`
+on `U \ S` (from differentiability) via `contourIntegrand_intervalIntegrable_of_continuousOn`,
+and the four oracle hypotheses are discharged via
+`hasCauchyPVOn_simplePoles_convex_auto`.
+
+This is the cleanest form of HW 3.3 for the simple-pole convex-domain case:
+only convexity, openness, simple poles, avoidance, and integrable derivative. -/
+theorem hasCauchyPVOn_simplePoles_convex_closed
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend) volume 0 1) :
+    HasCauchyPVOn S f γ
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ s * residue f s) := by
+  -- γ's image lies in U \ S
+  have h_img : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U \ (↑S : Set ℂ) := fun t ht =>
+    ⟨hγ_in_U t ht, fun hmem => hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
+  -- f is continuous on U \ S (from differentiability)
+  have hf_cont : ContinuousOn f (U \ ↑S) := hf.continuousOn
+  -- Principal part sum is differentiable on (↑S)ᶜ, hence continuous
+  have h_pp_cont : ContinuousOn (principalPartSum S (fun s => residue f s))
+      (↑S : Set ℂ)ᶜ := (principalPartSum_differentiableOn S _).continuousOn
+  have h_img_off_S : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ (↑S : Set ℂ)ᶜ := fun t ht =>
+    fun hmem => hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl
+  -- Derive integrability of principal-part-sum integrand
+  have h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1 :=
+    PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn γ h_pp_cont h_img_off_S h_deriv_int
+  -- Derive integrability of the remainder integrand on U \ S
+  have h_rem_cont : ContinuousOn (fun z => f z -
+      principalPartSum S (fun s => residue f s) z) (U \ ↑S) := by
+    apply hf_cont.sub
+    exact h_pp_cont.mono (fun z hz hmem =>
+      hz.2 (Finset.mem_coe.mpr (Finset.mem_coe.mp hmem)))
+  have h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1 :=
+    PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn γ h_rem_cont h_img h_deriv_int
+  -- Per-pole integrability: each simple-pole term c/(z-s) is continuous on (s)ᶜ
+  have hI : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (residue f s / (γ.toPath.extend t - s)) *
+        deriv γ.toPath.extend t) volume 0 1 := by
+    intro s hs
+    have h_single_cont : ContinuousOn
+        (fun z => residue f s / (z - s)) ({s} : Set ℂ)ᶜ :=
+      (differentiableOn_div_sub s (residue f s)).continuousOn
+    have h_img_off_s : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t ∈ ({s} : Set ℂ)ᶜ :=
+      fun t ht hmem => hγ_avoids s hs t ht (mem_singleton_iff.mp hmem)
+    have := PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn
+      (f := fun z => residue f s / (z - s)) γ h_single_cont h_img_off_s h_deriv_int
+    show IntervalIntegrable
+      (fun t => residue f s / (γ.toPath.extend t - s) * deriv γ.toPath.extend t) volume 0 1
+    exact this
+  exact hasCauchyPVOn_simplePoles_convex_auto hU_convex hU_open hU_ne S hS_in_U f hf γ
+    hSimplePoles hγ_in_U hγ_avoids hδ h_rem_int h_pp_int hI
+
+/-- **Item 1 + 4 combined**: contour-integral-form HW 3.3 for simple poles in convex
+domains with only minimal hypotheses. -/
+theorem contourIntegral_simplePoles_convex_closed
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend) volume 0 1) :
+    γ.contourIntegral f =
+      ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
+        residue f s :=
+  contourIntegral_eq_of_hasCauchyPVOn_avoids hδ
+    (hasCauchyPVOn_simplePoles_convex_closed hU_convex hU_open hU_ne S hS_in_U
+      f hf γ hSimplePoles hγ_in_U hγ_avoids hδ h_deriv_int)
+
 /-! ## Convex corollary derived as specialization of the general theorem -/
 
 /-- **Generalized Residue Theorem for simple poles in convex domains (via general
