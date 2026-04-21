@@ -3,8 +3,8 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.Legacy.FDBoundaryReparametrization
-import LeanModularForms.ForMathlib.Legacy.ResidueSide
+import LeanModularForms.ForMathlib.FDBoundaryReparametrization
+import LeanModularForms.ForMathlib.ResidueSide
 
 /-!
 # ForMathlib-native Residue and Modular Sides via the Reparametrization Bridge
