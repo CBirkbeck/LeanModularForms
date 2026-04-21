@@ -538,6 +538,62 @@ theorem contourIntegral_simplePoles_convex_closed
     (hasCauchyPVOn_simplePoles_convex_closed hU_convex hU_open hU_ne S hS_in_U
       f hf γ hSimplePoles hγ_in_U hγ_avoids hδ h_deriv_int)
 
+/-! ## Null-homologous closed form (Dixon-zero supplied as one oracle) -/
+
+/-- **HW 3.3 closed form for simple poles in null-homologous null-homologous domains.**
+
+Counterpart of `hasCauchyPVOn_simplePoles_convex_closed` for general
+null-homologous curves (not just convex domains). The only remaining input
+beyond the null-hom geometric data is the Dixon-zero oracle for the twisted
+function `g(z) = (z − w₀) · (f(z) − pp(z))`; callers discharge it via
+`dixonFunction_eq_zero_of_bounds` applied to `g`. -/
+theorem hasCauchyPVOn_simplePoles_nullHomologous_closed
+    {U : Set ℂ} (hU_open : IsOpen U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    -- Existence of w₀ off the curve
+    (w₀ : ℂ) (hw₀_in_U : w₀ ∈ U)
+    (hw₀_off : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀)
+    -- Dixon-zero oracle for the twisted holomorphic remainder
+    (h_dixon_zero : ∀ w, dixonFunction
+      (fun z => (z - w₀) *
+        (f z - principalPartSum S (fun s => residue f s) z)) U γ w = 0)
+    -- Integrability hypotheses (can be derived from continuity via
+    -- contourIntegrand_intervalIntegrable_of_continuousOn)
+    (h_cauchy_int : IntervalIntegrable
+      (fun t => (γ t - w₀) *
+        (f (γ t) - principalPartSum S (fun s => residue f s) (γ t))
+        / (γ t - w₀) * deriv γ.toPath.extend t) volume 0 1)
+    (h_base_int : IntervalIntegrable
+      (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1)
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1)
+    (h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
+    (hI : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (residue f s / (γ.toPath.extend t - s)) *
+        deriv γ.toPath.extend t) volume 0 1) :
+    HasCauchyPVOn S f γ
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ s * residue f s) := by
+  obtain ⟨δ, hδ_pos, hδ_bound⟩ := hδ
+  have h_cancel := hCancel_of_simplePoles_nullHomologous hU_open S hS_in_U f hf γ
+    hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩
+    w₀ hw₀_in_U hw₀_off h_dixon_zero h_cauchy_int h_base_int
+  have h_sing := hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI
+  simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
+  have h_lim := h_cancel.add h_sing
+  simp only [zero_add] at h_lim
+  exact h_lim.congr' (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+
 /-! ## Convex corollary derived as specialization of the general theorem -/
 
 /-- **Generalized Residue Theorem for simple poles in convex domains (via general
