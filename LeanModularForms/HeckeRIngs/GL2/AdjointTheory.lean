@@ -3166,10 +3166,55 @@ private theorem petN_heckeT_p_diamond_shift_core
           (q.out : SL(2, ℤ))⁻¹)
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
           (q.out : SL(2, ℤ))⁻¹)
-        -- heckeT_p_ut(F) is a ∑_b which needs `sum_slash`-induction to
-        -- distribute past the outer SL slash; the existing `sum_slash`
-        -- lemma is GL ℝ-only.  Parked as sorry; helper is ready to consume.
-        (by sorry)
+        -- Upper integrability via subtraction route (manager 2026-04-20):
+        -- heckeT_p_ut F = ⇑heckeT_p_cusp F - F ∣ M_∞ (from `h_Tpf`).  Then
+        -- the upper integrand equals `petersson k G (⇑heckeT_p_cusp ∣ δ) -
+        -- petersson k G ((F ∣ M_∞) ∣ δ)`, and `Integrable.sub` closes.
+        (by
+          have h_total := integrableOn_petersson_slash
+            (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
+            (heckeT_p_cusp k p hp hpN
+              (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+            ((q.out : SL(2, ℤ))⁻¹)
+          have h_minf := integrableOn_petersson_cuspform_mixed_slash_on_fd
+            (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
+            (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
+            (M_infty N p hp.pos hpN) ((q.out : SL(2, ℤ))⁻¹)
+          have h_slash : (⇑(heckeT_p_cusp k p hp hpN
+              (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹ : UpperHalfPlane → ℂ) =
+              heckeT_p_ut k p hp.pos
+                ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm' ∣[k]
+                (q.out : SL(2, ℤ))⁻¹ +
+              (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm' ∣[k]
+                (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹ := by
+            rw [h_Tpf]; simp only [SlashAction.add_slash]
+          have h_fn_eq : (fun τ => UpperHalfPlane.petersson k
+              (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹)
+              (heckeT_p_ut k p hp.pos
+                ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm' ∣[k]
+                (q.out : SL(2, ℤ))⁻¹) τ) =
+            (fun τ => UpperHalfPlane.petersson k
+              (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹)
+              (⇑(heckeT_p_cusp k p hp hpN
+                (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹) τ) -
+            (fun τ => UpperHalfPlane.petersson k
+              (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹)
+              ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f).toModularForm' ∣[k]
+                (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹) τ) := by
+            funext τ
+            have h_slash_τ := congrFun h_slash τ
+            simp only [Pi.add_apply] at h_slash_τ
+            simp only [UpperHalfPlane.petersson, Pi.sub_apply]
+            rw [h_slash_τ]; ring
+          rw [h_fn_eq]
+          exact h_total.sub h_minf)
         (integrableOn_petersson_cuspform_mixed_slash_on_fd
           (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
           (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
@@ -3186,7 +3231,42 @@ private theorem petN_heckeT_p_diamond_shift_core
         ((⇑g.toModularForm' ∣[k]
           (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
           (q.out : SL(2, ℤ))⁻¹)
-        (by sorry)
+        (by
+          have h_total := integrableOn_petersson_slash
+            (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
+            (heckeT_p_cusp k p hp hpN g) ((q.out : SL(2, ℤ))⁻¹)
+          have h_minf := integrableOn_petersson_cuspform_mixed_slash_on_fd
+            (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) g
+            (M_infty N p hp.pos hpN) ((q.out : SL(2, ℤ))⁻¹)
+          have h_slash : (⇑(heckeT_p_cusp k p hp hpN g) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹ : UpperHalfPlane → ℂ) =
+              heckeT_p_ut k p hp.pos ⇑g.toModularForm' ∣[k] (q.out : SL(2, ℤ))⁻¹ +
+              (⇑g.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹ := by
+            rw [h_Tpg]; simp only [SlashAction.add_slash]
+          have h_fn_eq : (fun τ => UpperHalfPlane.petersson k
+              (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹)
+              (heckeT_p_ut k p hp.pos ⇑g.toModularForm' ∣[k]
+                (q.out : SL(2, ℤ))⁻¹) τ) =
+            (fun τ => UpperHalfPlane.petersson k
+              (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹)
+              (⇑(heckeT_p_cusp k p hp hpN g) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹) τ) -
+            (fun τ => UpperHalfPlane.petersson k
+              (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹)
+              ((⇑g.toModularForm' ∣[k]
+                (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k]
+                (q.out : SL(2, ℤ))⁻¹) τ) := by
+            funext τ
+            have h_slash_τ := congrFun h_slash τ
+            simp only [Pi.add_apply] at h_slash_τ
+            simp only [UpperHalfPlane.petersson, Pi.sub_apply]
+            rw [h_slash_τ]; ring
+          rw [h_fn_eq]
+          exact h_total.sub h_minf)
         (integrableOn_petersson_cuspform_mixed_slash_on_fd
           (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) g
           (M_infty N p hp.pos hpN) ((q.out : SL(2, ℤ))⁻¹))]
