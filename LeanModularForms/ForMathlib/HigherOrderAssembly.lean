@@ -413,4 +413,40 @@ theorem contourIntegral_eq_of_hasCauchyPVOn_avoids
     hasCauchyPVOn_of_avoids hδ
   exact HasCauchyPVOn.unique h_avoids h_pvon
 
+/-! ## Convex corollary derived as specialization of the general theorem -/
+
+/-- **Generalized Residue Theorem for simple poles in convex domains (via general
+theorem).**
+
+Same statement as `generalizedResidueTheorem_simplePoles_convex` but derived as a
+specialization of the CPV-form generalized residue theorem
+(`hasCauchyPVOn_simplePoles_convex_auto`) + avoidance equivalence
+(`contourIntegral_eq_of_hasCauchyPVOn_avoids`). This makes the convex corollary
+a bona-fide corollary of the general HW 3.3 machinery rather than a parallel proof. -/
+theorem generalizedResidueTheorem_simplePoles_convex_fromGeneral
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1)
+    (h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
+    (hI : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (residue f s / (γ.toPath.extend t - s)) *
+        deriv γ.toPath.extend t) volume 0 1) :
+    γ.contourIntegral f =
+      ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
+        residue f s :=
+  contourIntegral_eq_of_hasCauchyPVOn_avoids hδ
+    (hasCauchyPVOn_simplePoles_convex_auto hU_convex hU_open hU_ne S hS_in_U
+      f hf γ hSimplePoles hγ_in_U hγ_avoids hδ h_rem_int h_pp_int hI)
+
 end
