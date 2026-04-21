@@ -45,6 +45,27 @@ Legacy breakdown by mass:
 
 ---
 
+## KEY INSIGHT: the valence formula theorem is ALREADY in pure ForMathlib
+
+The file `ForMathlib/ValenceFormulaBridged.lean` proves:
+
+```lean
+theorem valence_formula_textbook_orbit_finsum_FM :
+    (orderAtCusp' f : ℂ) +
+    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
+    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
+    ∑ᶠ (q : NonEllOrbitFM), ordOrbitQFM f q = (k : ℂ) / 12
+```
+
+Every symbol in this statement is pure-FM. The theorem verifies with **0 custom
+axioms** (only standard `propext`, `Classical.choice`, `Quot.sound`). It's
+re-exported as `valence_formula_textbook` in `ValenceFormulaFinal.lean`.
+
+**The valence formula has been proven** in a file that lives under
+`LeanModularForms/ForMathlib/`. What remains (the Legacy subdirectory under
+ForMathlib/) is implementation detail that supplies the analytic Tendsto proofs
+used internally.
+
 ## Status audit (2026-04-21): most phases are already done
 
 A careful audit of pure ForMathlib versus the Legacy chain reveals that **81 of 82
