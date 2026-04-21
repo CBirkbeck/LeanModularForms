@@ -3060,21 +3060,39 @@ private theorem petN_heckeT_p_diamond_shift_core
   -- Applying `Finset.sum_congr rfl` reduces to a per-`q` equality:
   -- `peterssonInner fd (A_q + B_q) (C_q) = peterssonInner fd (C_q') (A'_q + B'_q)`.
   refine Finset.sum_congr rfl fun q _ => ?_
-  -- Per-`q` residual (after unfold + distribution): the direct peterssonInner
-  -- equality per q, still containing the unsplit `+` summands.  To apply
-  -- `_h_upper_family_collapse q` requires first splitting via
-  -- `peterssonInner_add_left` / `_add_right`, which needs per-summand
-  -- integrability.  The existing T094 API
-  -- (`integrableOn_petersson_biUnion_glMap_smul`) is for `CuspForm × CuspForm`
-  -- on `α • Gamma1_fundDomain_PSL N`; for the per-summand form on `fd` with
-  -- mixed cusp-form + slashed-cusp-form arguments, `integrableOn_petersson_slash`
-  -- (PeterssonLevelN.lean:107) applies only when BOTH arguments share the
-  -- same `SL(2, ℤ)` slash — not our case where one is `∣ q.out⁻¹`
-  -- (SL) and the other `∣ (T_p_upper(b) * q.out⁻¹)` / `∣ (M_∞ * q.out⁻¹)`
-  -- (GL+, det = p or p).  Pushing further requires either (a) aggregating
-  -- first over `q` to reach the `⋃_b α_b • Gamma1_fundDomain_PSL N` shape
-  -- (swapping ∑_q and ∑_b, then using biUnion across q), or (b) a new
-  -- bound lemma bridging the mixed-slash integrability gap.
+  -- Per-`q` residual (after unfold + distribution): peterssonInner fd (A + B) C
+  -- vs peterssonInner fd C' (A' + B'), where A/A' are the upper-family pieces
+  -- (`heckeT_p_ut(·) ∣ q⁻¹ = ∑_b · ∣ (T_p_upper(b) * q⁻¹)`), B/B' the M_∞
+  -- pieces (`· ∣ M_∞ ∣ q⁻¹ = · ∣ (M_∞ * q⁻¹)`).
+  --
+  -- **PER-q EQUALITY OBSTRUCTION (2026-04-20 analysis).**  Applying the full
+  -- per-q collapse chain:
+  --   (a) unfold heckeT_p_ut → ∑_b;
+  --   (b) apply `sum_peterssonInner_upper_family_per_b_rewrite` (via
+  --       `peterssonInner_slash_adj_T_p_upper_q_summand_eq`) + union collapse
+  --       → LHS per-q reduces to
+  --         `peterssonInner (⋃_b (T_p_upper(b) * q⁻¹) • fd) (⟨u⁻¹⟩ f)
+  --            ((⟨u⁻¹⟩ g ∣ T_p_upper(0)) ∣ γ₀)`;
+  --   (c) RHS upper (via Hermitian + same chain swapped) reduces to
+  --         `peterssonInner (⋃_b) (f ∣ M_∞) g`;
+  --   (d) via `slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty`:
+  --         `(⟨u⁻¹⟩ g ∣ T_p_upper(0)) ∣ γ₀ = ⟨u⁻²⟩ g ∣ M_∞` on LHS vs
+  --         `f ∣ M_∞` on RHS — integrands DO NOT match per-q due to
+  --         `⟨u⁻²⟩` vs identity diamond factor asymmetry.
+  --
+  -- The CORRECT closure route requires a SUM-level argument: `petN_slash_invariant`-
+  -- style σ-reindex (σ : q ↦ q · γ⁻¹ for γ = adjointGamma0Rep) on the outer
+  -- `∑_q` to absorb the `⟨u⁻²⟩` shift into a coset relabeling.  The
+  -- `petN_heckeT_p_adjointGamma0Rep_reindex` step at the top does ONE such
+  -- reindex already; completing T205 requires EITHER a second σ-reindex
+  -- with different γ or a direct DS 5.5.2(b) sum-of-slashes adjoint
+  -- identity applied across the `(T_p_upper(0), ..., T_p_upper(p-1), M_∞)`
+  -- family (which packages the σ-reindex into the adjugate permutation).
+  --
+  -- Until the SUM-level σ-reindex is implemented, `Finset.sum_congr rfl`
+  -- (per-q) cannot close — the per-q equality genuinely fails.  The
+  -- remaining sorry is therefore parked at the per-q level pending a
+  -- sum-level refactor.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
