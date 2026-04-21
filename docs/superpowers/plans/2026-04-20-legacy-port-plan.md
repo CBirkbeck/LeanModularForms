@@ -45,7 +45,33 @@ Legacy breakdown by mass:
 
 ---
 
-## Phase structure (≈ 6–8 weeks, single focused developer)
+## Status audit (2026-04-21): most phases are already done
+
+A careful audit of pure ForMathlib versus the Legacy chain reveals that **81 of 82
+pure ForMathlib files are already fully Legacy-free** — their transitive import
+closure stays entirely within `ForMathlib/` (non-`Legacy/`). Only
+`ValenceFormulaFinal.lean` touches Legacy, via a single bridge edge to
+`Legacy/ValenceFormulaBridged`.
+
+Mapping to the phase structure below:
+
+| Phase | Status | Notes |
+|---|---|---|
+| **0 Consolidation** | ✅ Done | Commit `7b0a76a` |
+| **1 Close oracle** | ✅ Done for convex + avoidance | `hasCauchyPVOn_simplePoles_convex_auto` in `HigherOrderAssembly.lean` already derives hCancel / hPV_sing / integrability from simple-pole + convex-domain + avoidance. Crossing case = Phase 6. |
+| **2 Port `fdBoundary`** | ⚠️ Partial | Pure FM has `fdBoundaryFun`, `fdBoundaryPath`, `FDWindingDataFull`. The bridges `FDBoundaryH` + `FDBoundaryReparametrization` exist in Legacy as legacy-implementation; they're only reachable from `ValenceFormulaFinal` via the bridged proof path. |
+| **3 Winding weights** | ✅ Done | `WindingWeightsUnconditional.hasWindingNumber_at{I,Rho,RhoPlusOne}_of_scd` + instantiations via `ArcFTCAtI`, `CornerFTCAtRho`, `SingleCrossing`. All in pure FM. |
+| **4 Interior winding** | ✅ Done | `InteriorWindingProof.lean` + `InteriorContourIntegral.lean` in pure FM. `fdBoundary_interior_winding_complete` wired into `fdWindingData_unconditional`. |
+| **5 Modular side** | ✅ Done | `ModularInvariance`, `OrbitPairing`, `Orbits`, `ModularSideProof`, `HorizontalContribution`, `ModularContourIntegral` all in pure FM. |
+| **6 PV chain assembly** | ❌ Not done (the one genuine blocker) | The CPV of `logDeriv f` in the **crossing** case (γ crosses zeros of f) is proved in Legacy `PVChain/Assembly/ResidueSide.cpv_residue_side_tendsto` (3377 lines of support under old API). Pure FM has the abstract infrastructure (`ResidueSideData`, `ModularSideData`, `residueSide_tendsto_of_data`, `modularSide_tendsto_of_data`, `pvChainIdentity`, `discharge_pvChain_full`) but no constructor. |
+| **7 Delete Legacy substrate** | ⏳ Blocked on 6 | Will happen naturally once Phase 6 lands. |
+| **8 Mathlib PR polish** | 🟢 Can start now for Chain 1 | The 81 Legacy-free pure FM files are PR-ready today, independent of Phase 6. |
+
+**Conclusion:** The one genuinely remaining technical hurdle is Phase 6 (crossing-case
+residue side in new API). Phases 2, 7 will fall out from Phase 6. Phase 8 (Chain 1
+PR submissions) can proceed in parallel immediately.
+
+## Phase structure (original, with status above)
 
 ### Phase 0 — Consolidation & cleanup (3 days)
 
