@@ -1571,7 +1571,7 @@ private lemma peterssonInner_slash_adj_T_p_upper_q_summand_eq
           (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
         (⇑g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
     peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set ℍ)))
+        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
       ⇑f
       ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
@@ -1633,7 +1633,7 @@ private lemma sum_peterssonInner_upper_family_per_b_rewrite
         (⇑g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
     ∑ b ∈ Finset.range p,
       peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-          ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set ℍ)))
+          ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
         ⇑f
         ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
           ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
@@ -1990,8 +1990,8 @@ theorem aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne
     (σ : SL(2, ℤ)) (hσ_ne : (QuotientGroup.mk σ : PSL(2, ℤ)) ≠ 1)
     (h_inv_mul : α₁⁻¹ * α₂ =
       ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) σ : GL (Fin 2) ℝ)) :
-    AEDisjoint μ_hyp (α₁ • (ModularGroup.fd : Set ℍ))
-      (α₂ • (ModularGroup.fd : Set ℍ)) := by
+    AEDisjoint μ_hyp (α₁ • (ModularGroup.fd : Set UpperHalfPlane))
+      (α₂ • (ModularGroup.fd : Set UpperHalfPlane)) := by
   set q : PSL(2, ℤ) := QuotientGroup.mk σ with hq_def
   -- Step 1: `AEDisjoint fdo (q • fdo)` from `isFundamentalDomain_fdo_PSL`.
   have h_fdo_aedisjoint : AEDisjoint μ_hyp (fdo : Set ℍ) (q • (fdo : Set ℍ)) := by
@@ -2003,33 +2003,33 @@ theorem aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne
   -- Step 2: `q`-smul of `fd` and `fdo` agree a.e. (since `fd =ᵐ fdo` and
   -- `q`-smul is measure-preserving on `ℍ` via `instSMulInvMeasure_PSL`).
   have h_q_smul_aeeq :
-      (q • (ModularGroup.fd : Set ℍ) : Set ℍ) =ᵐ[μ_hyp] (q • (fdo : Set ℍ)) := by
+      (q • (ModularGroup.fd : Set UpperHalfPlane) : Set ℍ) =ᵐ[μ_hyp] (q • (fdo : Set ℍ)) := by
     refine ae_eq_set.mpr ⟨?_, ?_⟩
     · -- μ (q • fd \ q • fdo) = μ (q • (fd \ fdo)) = μ (fd \ fdo) = 0
       -- (using `measure_smul` via `instSMulInvMeasure_PSL`).
-      have h_sdiff : (q • (ModularGroup.fd : Set ℍ) \ q • (fdo : Set ℍ) : Set ℍ) =
-          q • ((ModularGroup.fd : Set ℍ) \ fdo) := by
+      have h_sdiff : (q • (ModularGroup.fd : Set UpperHalfPlane) \ q • (fdo : Set ℍ) : Set ℍ) =
+          q • ((ModularGroup.fd : Set UpperHalfPlane) \ fdo) := by
         ext x
         simp only [Set.mem_diff, Set.mem_smul_set_iff_inv_smul_mem]
       rw [h_sdiff, measure_smul]
       exact hyperbolicMeasure_fd_boundary
     · -- μ (q • fdo \ q • fd) = 0 because `fdo ⊆ fd` makes this set empty.
-      have h_fdo_sub_fd : q • (fdo : Set ℍ) ⊆ q • (ModularGroup.fd : Set ℍ) := by
+      have h_fdo_sub_fd : q • (fdo : Set ℍ) ⊆ q • (ModularGroup.fd : Set UpperHalfPlane) := by
         intro x hx
         rcases hx with ⟨y, hy, rfl⟩
         exact ⟨y, fdo_subset_fd hy, rfl⟩
       rw [Set.diff_eq_empty.mpr h_fdo_sub_fd]
       exact measure_empty
   -- Step 3: `AEDisjoint fd (q • fd)` by transferring from Step 1 via Step 2.
-  have h_inner : AEDisjoint μ_hyp (ModularGroup.fd : Set ℍ)
-      (q • (ModularGroup.fd : Set ℍ)) :=
+  have h_inner : AEDisjoint μ_hyp (ModularGroup.fd : Set UpperHalfPlane)
+      (q • (ModularGroup.fd : Set UpperHalfPlane)) :=
     h_fdo_aedisjoint.congr fd_ae_eq_fdo h_q_smul_aeeq
   -- Step 4: Preimage identifications (same as Gamma1 version).
-  have h_pre_α₁ : ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set ℍ) : Set ℍ) =
-      α₁ • (ModularGroup.fd : Set ℍ) := by
+  have h_pre_α₁ : ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set UpperHalfPlane) : Set ℍ) =
+      α₁ • (ModularGroup.fd : Set UpperHalfPlane) := by
     ext τ; simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
-  have h_pre_α₂ : ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set ℍ)) : Set ℍ) =
-      α₂ • (ModularGroup.fd : Set ℍ) := by
+  have h_pre_α₂ : ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set UpperHalfPlane)) : Set ℍ) =
+      α₂ • (ModularGroup.fd : Set UpperHalfPlane) := by
     ext τ
     simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
     have hq_smul : ∀ z : ℍ, (q⁻¹ • z : ℍ) =
@@ -2050,8 +2050,8 @@ theorem aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne
       ((α₁⁻¹ • ·) : ℍ → ℍ) μ_hyp μ_hyp :=
     h_mp_inv.quasiMeasurePreserving
   have h_pre_aedisjoint : AEDisjoint μ_hyp
-      ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set ℍ))
-      ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set ℍ))) :=
+      ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set UpperHalfPlane))
+      ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set UpperHalfPlane))) :=
     h_inner.preimage h_QMP
   rw [h_pre_α₁, h_pre_α₂] at h_pre_aedisjoint
   exact h_pre_aedisjoint
@@ -2232,10 +2232,10 @@ theorem aedisjoint_glMap_T_p_upper_pair_fd_per_q
     AEDisjoint μ_hyp
       (((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set ℍ))
+          (ModularGroup.fd : Set UpperHalfPlane))
       (((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) *
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set ℍ)) := by
+          (ModularGroup.fd : Set UpperHalfPlane)) := by
   set α₁ : GL (Fin 2) ℝ :=
     (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
       ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)
@@ -2385,12 +2385,12 @@ theorem peterssonInner_T_p_upper_family_union_collapse_per_q
       (⋃ b ∈ Finset.range p,
         ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
           ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set ℍ)) μ_hyp) :
+            (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp) :
     ∑ b ∈ Finset.range p,
       peterssonInner k
         (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
           ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set ℍ))
+            (ModularGroup.fd : Set UpperHalfPlane))
         ⇑f
         ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
           ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
@@ -2399,18 +2399,18 @@ theorem peterssonInner_T_p_upper_family_union_collapse_per_q
       (⋃ b ∈ Finset.range p,
         ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
           ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set ℍ))
+            (ModularGroup.fd : Set UpperHalfPlane))
       ⇑f
       ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
           ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
   -- `fd` is measurable (closed intersection of two half-planes).
-  have h_fd_mset : MeasurableSet (ModularGroup.fd : Set ℍ) :=
+  have h_fd_mset : MeasurableSet (ModularGroup.fd : Set UpperHalfPlane) :=
     ((isClosed_le continuous_const
         (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
       (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
         continuous_const)).measurableSet
-  have h_fd_null : NullMeasurableSet (ModularGroup.fd : Set ℍ) μ_hyp :=
+  have h_fd_null : NullMeasurableSet (ModularGroup.fd : Set UpperHalfPlane) μ_hyp :=
     h_fd_mset.nullMeasurableSet
   -- Positive determinants of α_b and α_b⁻¹.
   have h_Tp_det_pos :
@@ -2474,13 +2474,13 @@ theorem peterssonInner_T_p_upper_family_union_collapse_per_q
   have hm : ∀ b ∈ Finset.range p, NullMeasurableSet
       (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
         ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set ℍ)) μ_hyp := fun b _ => by
+          (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp := fun b _ => by
     have h_eq : (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
           ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set ℍ)) =
+            (ModularGroup.fd : Set UpperHalfPlane)) =
         (((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
             ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ • ·) :
-              ℍ → ℍ) ⁻¹' (ModularGroup.fd : Set ℍ)) := by
+              ℍ → ℍ) ⁻¹' (ModularGroup.fd : Set UpperHalfPlane)) := by
       ext τ; simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
     rw [h_eq]
     exact h_fd_null.preimage
@@ -2490,10 +2490,10 @@ theorem peterssonInner_T_p_upper_family_union_collapse_per_q
       AEDisjoint μ_hyp
         (((glMap (T_p_upper p hp.pos b₁) : GL (Fin 2) ℝ) *
           ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set ℍ))
+            (ModularGroup.fd : Set UpperHalfPlane))
         (((glMap (T_p_upper p hp.pos b₂) : GL (Fin 2) ℝ) *
           ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set ℍ)) := fun b₁ _ b₂ _ hne => by
+            (ModularGroup.fd : Set UpperHalfPlane)) := fun b₁ _ b₂ _ hne => by
     apply aedisjoint_glMap_T_p_upper_pair_fd_per_q hp.pos q
     intro h
     apply hne
@@ -3228,28 +3228,123 @@ private theorem petN_heckeT_p_diamond_shift_core
   -- Integrability witnesses are inline `by sorry` (to be discharged in
   -- follow-up via `integrableOn_petersson_slash_of_adj_image` + T094
   -- `integrableOn_petersson_biUnion_glMap_smul` + per-b expansion).
-  -- **Per-q Option (Fin p) coupled collapse** (2026-04-21 refactor,
-  -- manager option (c)).  Instead of distributing `peterssonInner_add_left/
-  -- _right` to split UPPER/M_∞ and produce two sum-level sorries, stay
-  -- coupled at the per-q level: the `heckeT_p_ut + ·∣M_∞` sum is the
-  -- `Option (Fin p)`-indexed coset family
-  --   `α : Option (Fin p) → GL(Fin 2) ℝ`,
-  --   `α none = glMap M_∞`, `α (some b) = glMap T_p_upper(b)`.
-  -- Applying `peterssonInner_sum_slash_adjoint_constantRHS` per-q on the LHS
-  -- f-slot (hypothesis `hadj` at `i = none` discharged via the new alignment
-  -- helper `slash_peterssonAdj_glMap_M_infty_eq_slash_T_p_upper_zero_slash_gamma0`,
-  -- at `i = some b` via
-  -- `slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0`)
-  -- collapses the sum into a single union-domain `peterssonInner` with
-  -- constant `g' = (⇑(⟨u⁻¹⟩g) ∣[k] glMap T_p_upper(0)) ∣[k] mapGL γ₀`.
-  -- Symmetric treatment on the RHS g-slot via the Hermitian swap gives a
-  -- matching union-domain `peterssonInner` with constant
-  -- `f' = (⇑(⟨u⟩f) ∣[k] glMap T_p_upper(0)) ∣[k] mapGL γ₀`.
-  --
-  -- The final residual — a single coupled per-q equality of the two
-  -- post-collapse `peterssonInner` union-domain integrals — replaces the
-  -- previous UPPER/M_∞ sum-level split.
+  -- **Per-q Option (Fin p) coupled collapse** (2026-04-22 refactor):
+  -- instantiate `peterssonInner_sum_slash_adjoint_constantRHS` on the
+  -- `Option (Fin p)` family `α none = glMap M_∞`, `α (some b) = glMap T_p_upper(b)`
+  -- on BOTH sides (LHS via direct f-slot, RHS via Hermitian symmetry).
   refine Finset.sum_congr rfl fun q _ => ?_
+  -- Names for clarity.
+  set u := ZMod.unitOfCoprime p hpN with hu_def
+  set δq : SL(2, ℤ) := (q.out : SL(2, ℤ))⁻¹ with hδq_def
+  -- Option family.
+  let α : Option (Fin p) → GL (Fin 2) ℝ := fun i =>
+    match i with
+    | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+    | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)
+  -- Per-q β(i) := α(i) * mapGL ℝ δq.
+  let β : Option (Fin p) → GL (Fin 2) ℝ := fun i =>
+    α i * ((mapGL ℝ : SL(2, ℤ) →* _) δq : GL (Fin 2) ℝ)
+  -- LHS sum-in-Option-form identity (sum-of-slashes at SL level collapses to
+  -- the Option family `∑_i f ∣[k] β i`).  Structurally `Fintype.sum_option` +
+  -- `heckeT_p_ut` unfold + `SlashAction.sum_slash` + `SlashAction.slash_mul`
+  -- reorder of the summands; pattern mismatch at the SL/GL type coercion
+  -- boundary is handled at the next rewrite layer.
+  have h_LHS_sum :
+      heckeT_p_ut k p hp.pos
+            ⇑(diamondOp_cusp k u⁻¹ f).toModularForm' ∣[k] δq +
+        (⇑(diamondOp_cusp k u⁻¹ f).toModularForm' ∣[k]
+            (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k] δq =
+      ∑ i : Option (Fin p),
+        ⇑(diamondOp_cusp k u⁻¹ f).toModularForm' ∣[k] β i := by
+    sorry
+  -- RHS sum-in-Option-form identity (analogous).
+  have h_RHS_sum :
+      heckeT_p_ut k p hp.pos ⇑g.toModularForm' ∣[k] δq +
+        (⇑g.toModularForm' ∣[k]
+            (M_infty N p hp.pos hpN : GL (Fin 2) ℚ)) ∣[k] δq =
+      ∑ i : Option (Fin p),
+        ⇑g.toModularForm' ∣[k] β i := by
+    sorry
+  rw [h_LHS_sum, h_RHS_sum]
+  -- Common constants for the two collapses.
+  set g'_L : UpperHalfPlane → ℂ :=
+    (⇑(diamondOp_cusp k u⁻¹ g) ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) with hg'_L_def
+  set f'_R : UpperHalfPlane → ℂ :=
+    (⇑(diamondOp_cusp k u f) ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) with hf'_R_def
+  -- **Actual application of `peterssonInner_sum_slash_adjoint_constantRHS`
+  -- on LHS (f-slot sum)**.  Instantiated at:
+  -- * `s = Finset.univ : Finset (Option (Fin p))`,
+  -- * `α = β` (Option family β i = α i * mapGL δq),
+  -- * `D = fd`, `f = ⇑(⟨u⁻¹⟩f).toModularForm'`,
+  -- * `g = ⇑(⟨u⁻¹⟩g) ∣[k] δq`, `g' = g'_L`.
+  -- Hypothesis discharge plan: `hα` from det-pos of each β i; `hadj` by
+  -- cases (none ↦ new alignment helper, some b ↦
+  -- `slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0`);
+  -- `h_int` via `integrableOn_petersson_cuspform_mixed_slash_on_fd`;
+  -- `hm`/`hd`/`hfi` via the per-q fd variants (T094 family).
+  have h_LHS_collapse :
+      UpperHalfPlane.peterssonInner k (ModularGroup.fd : Set UpperHalfPlane)
+        (∑ i : Option (Fin p),
+          ⇑(diamondOp_cusp k u⁻¹ f).toModularForm' ∣[k] β i)
+        (⇑(diamondOp_cusp k u⁻¹ g) ∣[k] δq) =
+      UpperHalfPlane.peterssonInner k
+        (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))), β i • ModularGroup.fd)
+        (⇑(diamondOp_cusp k u⁻¹ f).toModularForm') g'_L :=
+    peterssonInner_sum_slash_adjoint_constantRHS
+      (s := (Finset.univ : Finset (Option (Fin p))))
+      (α := β)
+      (hα := by sorry)
+      (D := (ModularGroup.fd : Set UpperHalfPlane))
+      (f := ⇑(diamondOp_cusp k u⁻¹ f).toModularForm')
+      (g := ⇑(diamondOp_cusp k u⁻¹ g) ∣[k] δq)
+      (g' := g'_L)
+      (hadj := by sorry)
+      (h_int := by sorry)
+      (hm := by sorry)
+      (hd := by sorry)
+      (hfi := by sorry)
+  -- **Actual application of `peterssonInner_sum_slash_adjoint_constantRHS`
+  -- on RHS (g-slot sum)** via Hermitian symmetry
+  -- (`UpperHalfPlane.peterssonInner_conj_symm` swap before/after collapse).
+  have h_RHS_collapse :
+      UpperHalfPlane.peterssonInner k (ModularGroup.fd : Set UpperHalfPlane)
+        (⇑(diamondOp_cusp k u f) ∣[k] δq)
+        (∑ i : Option (Fin p), ⇑g.toModularForm' ∣[k] β i) =
+      UpperHalfPlane.peterssonInner k
+        (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))), β i • ModularGroup.fd)
+        f'_R (⇑g.toModularForm') := by
+    -- Hermitian swap: peterssonInner D x y = conj (peterssonInner D y x).
+    rw [← UpperHalfPlane.peterssonInner_conj_symm k
+      (ModularGroup.fd : Set UpperHalfPlane)
+      (⇑(diamondOp_cusp k u f) ∣[k] δq)
+      (∑ i : Option (Fin p), ⇑g.toModularForm' ∣[k] β i)]
+    -- Apply LHS-form collapse on the swapped (sum-on-f-slot) form.
+    rw [peterssonInner_sum_slash_adjoint_constantRHS
+      (s := (Finset.univ : Finset (Option (Fin p))))
+      (α := β)
+      (hα := by sorry)
+      (D := (ModularGroup.fd : Set UpperHalfPlane))
+      (f := ⇑g.toModularForm')
+      (g := ⇑(diamondOp_cusp k u f) ∣[k] δq)
+      (g' := f'_R)
+      (hadj := by sorry)
+      (h_int := by sorry)
+      (hm := by sorry)
+      (hd := by sorry)
+      (hfi := by sorry)]
+    -- Hermitian swap back to get `peterssonInner D f'_R g`.
+    rw [UpperHalfPlane.peterssonInner_conj_symm k
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))), β i • ModularGroup.fd)
+      f'_R ⇑g.toModularForm']
+  rw [h_LHS_collapse, h_RHS_collapse]
+  -- Final residual: the post-collapse matching on common union-domain.
+  -- peterssonInner D (⟨u⁻¹⟩f) g'_L = peterssonInner D f'_R g
+  -- where D = ⋃_i β_i • fd, g'_L = (⟨u⁻¹⟩g ∣ T_p_upper(0)) ∣ γ₀,
+  -- f'_R = (⟨u⟩f ∣ T_p_upper(0)) ∣ γ₀, g = ⇑g.
   sorry
 
 /-- **Adjoint form of `T_p`** (DS Theorem 5.5.3):
