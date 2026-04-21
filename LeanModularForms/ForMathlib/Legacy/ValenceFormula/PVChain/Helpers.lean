@@ -5,7 +5,7 @@ Authors:
 -/
 import LeanModularForms.ForMathlib.Legacy.FDBoundaryH
 import LeanModularForms.ForMathlib.EllipticPoints
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.ModularInvariance
+import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.Main
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OrbitSum
 import LeanModularForms.ForMathlib.Legacy.GeneralizedResidueTheory.Residue

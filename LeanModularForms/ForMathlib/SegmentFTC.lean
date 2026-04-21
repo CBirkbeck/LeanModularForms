@@ -30,7 +30,7 @@ and log-derivative FTC. These are the building blocks for computing integrals of
 ### Log-derivative FTC on segments
 
 * `intervalIntegrable_logDeriv_of_slitPlane` — integrability when `f` stays in slitPlane
-* `integral_logDeriv_eq_log_sub_FM` — `∫ f'/f = log f(b) - log f(a)` in slitPlane
+* `integral_logDeriv_eq_log_sub` — `∫ f'/f = log f(b) - log f(a)` in slitPlane
 * `ftc_log_on_segment` — combined integrability + FTC for a single C^1 function
 * `ftc_log_neg_on_segment` — same when `-f` stays in slitPlane
 * `integral_logDeriv_eq_neg_log_sub` — bare FTC when `-f` stays in slitPlane
@@ -184,7 +184,7 @@ end SegmentFTC
 Fundamental theorem of calculus for integrals of `f'/f` along curves,
 generalizing the specific computations used in winding number calculations. -/
 
-namespace LogDerivFTCFM
+namespace LogDerivFTC
 
 /-! ### Basic integrability and FTC for C^1 curves staying in the slit plane -/
 
@@ -205,7 +205,7 @@ theorem intervalIntegrable_logDeriv_of_slitPlane {f : ℝ → ℂ} {a b : ℝ} (
 If `f : ℝ → ℂ` is differentiable on `(a,b)` with derivative continuous on `[a,b]`,
 and `f(t) ∈ slitPlane` for all `t ∈ [a,b]`, then
 `∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a)`. -/
-theorem integral_logDeriv_eq_log_sub_FM {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
+theorem integral_logDeriv_eq_log_sub {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
     (hf_cont : ContinuousOn f (Icc a b))
     (hf_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ f t)
     (hf_deriv_cont : ContinuousOn (deriv f) (Icc a b))
@@ -229,7 +229,7 @@ theorem ftc_log_on_segment {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
     IntervalIntegrable (fun t => deriv f t / f t) volume a b ∧
     ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a) :=
   ⟨intervalIntegrable_logDeriv_of_slitPlane hab hf_cont hf_deriv_cont hf_slit,
-   integral_logDeriv_eq_log_sub_FM hab hf_cont hf_diff hf_deriv_cont hf_slit⟩
+   integral_logDeriv_eq_log_sub hab hf_cont hf_diff hf_deriv_cont hf_slit⟩
 
 /-- Combined integrability and FTC when `-f` stays in slitPlane.
 
@@ -307,11 +307,11 @@ theorem ftc_log_pieceFM {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
           (h_congr.mono (fun t ht hm => (ht (uIoc_of_le hab ▸ hm)).symm)))
     · rw [show Ioc b a = ∅ from Set.Ioc_eq_empty (not_lt.mpr hab)]
       exact MeasureTheory.integrableOn_empty
-  have h_ftc := integral_logDeriv_eq_log_sub_FM hab hh_cont hh_diff hh_deriv_cont hh_slit
+  have h_ftc := integral_logDeriv_eq_log_sub hab hh_cont hh_diff hh_deriv_cont hh_slit
   exact ⟨hint_g, by
     calc ∫ t in a..b, deriv g t / g t
         = ∫ t in a..b, deriv h t / h t := intervalIntegral.integral_congr_ae h_congr
       _ = Complex.log (h b) - Complex.log (h a) := h_ftc
       _ = Complex.log (g b) - Complex.log (g a) := by rw [heq_a, heq_b]⟩
 
-end LogDerivFTCFM
+end LogDerivFTC

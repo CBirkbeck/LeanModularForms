@@ -258,7 +258,7 @@ theorem seg1_ftc_I (H : ℝ) {a : ℝ} (ha : 0 ≤ a) (ha' : a ≤ 1/5) :
     ∫ t in (0 : ℝ)..a, deriv (fun s => fdBoundaryFun H s - I) t /
       (fdBoundaryFun H t - I) =
       Complex.log (fdBoundaryFun H a - I) - Complex.log (fdBoundaryFun H 0 - I) :=
-  LogDerivFTCFM.ftc_log_pieceFM ha
+  LogDerivFTC.ftc_log_pieceFM ha
     (ref_seg1_I_contDiff H).continuous.continuousOn
     (fun t _ => ((ref_seg1_I_contDiff H).differentiable (by norm_num)).differentiableAt)
     ((ref_seg1_I_contDiff H).continuous_deriv le_top).continuousOn
@@ -275,7 +275,7 @@ theorem seg5_ftc_I (H : ℝ) (hH : 1 < H) {b : ℝ} (hb : 4/5 < b) (hb1 : b ≤ 
     ∫ t in b..1, deriv (fun s => fdBoundaryFun H s - I) t /
       (fdBoundaryFun H t - I) =
       Complex.log (fdBoundaryFun H 1 - I) - Complex.log (fdBoundaryFun H b - I) :=
-  LogDerivFTCFM.ftc_log_pieceFM hb1
+  LogDerivFTC.ftc_log_pieceFM hb1
     (ref_seg5_I_contDiff H).continuous.continuousOn
     (fun t _ => ((ref_seg5_I_contDiff H).differentiable (by norm_num)).differentiableAt)
     ((ref_seg5_I_contDiff H).continuous_deriv le_top).continuousOn

@@ -149,7 +149,7 @@ theorem horizontalContribution_eq
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
     (h_seg5 : ∫ t in (4/5 : ℝ)..1,
-      logDeriv (modularFormCompOfComplexFM f) (fdBoundaryFun H t) *
+      logDeriv (modularFormCompOfComplex f) (fdBoundaryFun H t) *
         deriv (fdBoundaryFun H) t =
       2 * ↑Real.pi * I * (orderAtCusp' f : ℂ)) :
     ∫ t in (4/5 : ℝ)..1,
@@ -162,7 +162,7 @@ theorem horizontalContribution_eq
       t ∈ Set.uIoc (4/5 : ℝ) 1 →
         logDeriv (⇑f ∘ UpperHalfPlane.ofComplex) (γ.toPath.extend t) *
           deriv γ.toPath.extend t =
-        logDeriv (modularFormCompOfComplexFM f) (fdBoundaryFun H t) *
+        logDeriv (modularFormCompOfComplex f) (fdBoundaryFun H t) *
           deriv (fdBoundaryFun H) t := by
     -- We use that {1} is a null set to reduce to t ∈ Ioo (4/5) 1.
     have h_null : (volume : Measure ℝ) {(1 : ℝ)} = 0 := by simp
@@ -201,7 +201,7 @@ theorem horizontalContributionData_of_seg5_eq
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
     (h_seg5 : ∫ t in (4/5 : ℝ)..1,
-      logDeriv (modularFormCompOfComplexFM f) (fdBoundaryFun H t) *
+      logDeriv (modularFormCompOfComplex f) (fdBoundaryFun H t) *
         deriv (fdBoundaryFun H) t =
       2 * ↑Real.pi * I * (orderAtCusp' f : ℂ)) :
     HorizontalContributionData f γ where
@@ -219,7 +219,7 @@ theorem horizontalContribution_horiz_eq
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
     (h_seg5 : ∫ t in (4/5 : ℝ)..1,
-      logDeriv (modularFormCompOfComplexFM f) (fdBoundaryFun H t) *
+      logDeriv (modularFormCompOfComplex f) (fdBoundaryFun H t) *
         deriv (fdBoundaryFun H) t =
       2 * ↑Real.pi * I * (orderAtCusp' f : ℂ)) :
     ∫ t in (4/5 : ℝ)..1,

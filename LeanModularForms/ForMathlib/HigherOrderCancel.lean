@@ -373,7 +373,11 @@ theorem hCancel_structural_gateway
 Given the `hCancel` discharge and all other components, this assembles
 the full generalized residue theorem. This is equivalent to
 `generalizedResidueTheorem_composed` but with the cancellation produced
-from the structural gateway. -/
+from the structural gateway.
+
+TODO (legacy-port-plan Phase 1): discharge `hCancel` from A'+B via Dixon
+(`DixonTheorem.dixonFunction_eq_zero`). See
+`docs/superpowers/plans/2026-04-20-legacy-port-plan.md`. -/
 theorem generalizedResidueTheorem_with_hCancel
     (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x)
     (hCancel : HasCauchyPVOn S

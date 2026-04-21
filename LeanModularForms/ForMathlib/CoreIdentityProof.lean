@@ -85,12 +85,12 @@ structure FDWindingDataFull (H : ℝ) extends FDWindingData H where
 /-! ### Elliptic point geometric facts -/
 
 omit f hf in
-private lemma ellipticPointRho_re_negFM : (ellipticPointRho' : ℂ).re < 0 := by
+private lemma ellipticPointRho_re_neg : (ellipticPointRho' : ℂ).re < 0 := by
   change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0
   simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
 
 omit f hf in
-private lemma ellipticPointRhoPlusOne_re_posFM :
+private lemma ellipticPointRhoPlusOne_re_pos :
     (ellipticPointRhoPlusOne' : ℂ).re > 0 := by
   change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re > 0
   simp only [add_re, mul_re, I_re, I_im, mul_zero, mul_one]; norm_num
@@ -108,7 +108,7 @@ private lemma ellipticPoint_ne_ρρ1FM : ellipticPointRho' ≠ ellipticPointRhoP
 /-! ### Elliptic point filter lemma -/
 
 omit f hf in
-private lemma elliptic_finset_sum_eq_threeFM (S : Finset UpperHalfPlane)
+private lemma elliptic_finset_sum_eq_three (S : Finset UpperHalfPlane)
     (g : UpperHalfPlane → ℂ) (_hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete_zero : ∀ p, p ∈ 𝒟 → p ∉ S → g p = 0) :
     let P := fun (p : UpperHalfPlane) =>
@@ -171,7 +171,7 @@ private theorem explicit_coefficients_of_pvChain
   have h_split := (Finset.sum_filter_add_sum_filter_not S P g).symm
   have h_ell_sum : ∑ s ∈ S.filter P, g s =
       g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
-    elliptic_finset_sum_eq_threeFM S g hS (fun p hp hp_not => by
+    elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
       simp [hg_def, h_ord_zero p hp hp_not, Int.cast_zero, mul_zero])
   have hg_i : g ellipticPointI' =
       (-1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
@@ -204,7 +204,7 @@ private theorem explicit_coefficients_of_pvChain
 /-! ### Unit circle classification lemmas -/
 
 omit f hf in
-private lemma unit_circle_re_neg_half_eq_rhoFM (s : ℍ)
+private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = -1/2) : s = ellipticPointRho' := by
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
@@ -223,7 +223,7 @@ private lemma unit_circle_re_neg_half_eq_rhoFM (s : ℍ)
     linarith
 
 omit f hf in
-private lemma unit_circle_re_pos_half_eq_rho_plus_oneFM (s : ℍ)
+private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 1/2) :
     s = ellipticPointRhoPlusOne' := by
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
@@ -243,7 +243,7 @@ private lemma unit_circle_re_pos_half_eq_rho_plus_oneFM (s : ℍ)
     linarith
 
 omit f hf in
-private lemma unit_circle_re_zero_eq_iFM (s : ℍ)
+private lemma unit_circle_re_zero_eq_i (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 0) : s = ellipticPointI' := by
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
@@ -283,7 +283,7 @@ private theorem boundary_weight_at
 
 /-! ### Rho singleton sum equality -/
 
-private lemma rho_singleton_sum_eqFM (S : Finset UpperHalfPlane)
+private lemma rho_singleton_sum_eq (S : Finset UpperHalfPlane)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     (h_ord : orderOfVanishingAt' (⇑f) ellipticPointRho' ≠ 0) :
     ∑ s ∈ (if ellipticPointRhoPlusOne' ∈ sRightArcFM S
@@ -295,17 +295,17 @@ private lemma rho_singleton_sum_eqFM (S : Finset UpperHalfPlane)
   have hρ_in_LA : ellipticPointRho' ∈ sLeftArcFM S := by
     simp only [sLeftArcFM, Finset.mem_filter]
     exact ⟨hS_complete _ ellipticPointRho_mem_fd h_ord,
-      ellipticPointRho_norm, ellipticPointRho_re_negFM⟩
+      ellipticPointRho_norm, ellipticPointRho_re_neg⟩
   have hρ1_in_RA : ellipticPointRhoPlusOne' ∈ sRightArcFM S := by
     simp only [sRightArcFM, Finset.mem_filter]
     exact ⟨hS_complete _ ellipticPointRhoPlusOne_mem_fdFM
       (by rwa [ord_rho_plus_one_eq_ord_rho_via_vAddFM]),
-      ellipticPointRhoPlusOne_norm, ellipticPointRhoPlusOne_re_posFM⟩
+      ellipticPointRhoPlusOne_norm, ellipticPointRhoPlusOne_re_pos⟩
   rw [if_pos hρ1_in_RA, if_pos hρ_in_LA, Finset.sum_singleton, Finset.sum_singleton]
   exact_mod_cast congr_arg (Int.cast (R := ℂ)) (ord_rho_plus_one_eq_ord_rho_via_vAddFM f)
 
 /-- Non-elliptic right-arc ord sum equals non-elliptic left-arc ord sum. -/
-private theorem sum_nonEllArc_right_eq_leftFM
+private theorem sum_nonEllArc_right_eq_left
     (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     let RA_ne := S.filter (fun p =>
@@ -343,12 +343,12 @@ private theorem sum_nonEllArc_right_eq_leftFM
     have hf2 : f_ord ellipticPointRhoPlusOne' = 0 := by
       simp [hf_ord_def, ord_rho_plus_one_eq_ord_rho_via_vAddFM f ▸ h_ord]
     split_ifs <;> simp [Finset.sum_singleton, Finset.sum_empty, hf1, hf2]
-  · simp only [hf_ord_def]; exact rho_singleton_sum_eqFM f S hS_complete h_ord
+  · simp only [hf_ord_def]; exact rho_singleton_sum_eq f S hS_complete h_ord
 
 /-! ### Boundary decomposition lemmas -/
 
 omit f hf in
-private theorem bdry_ne_mem_unionFM (S : Finset UpperHalfPlane) (s : UpperHalfPlane)
+private theorem bdry_ne_mem_union (S : Finset UpperHalfPlane) (s : UpperHalfPlane)
     (hS : ∀ p ∈ S, p ∈ 𝒟) (hs_S : s ∈ S) (hsi : s ≠ ellipticPointI')
     (hsρ : s ≠ ellipticPointRho') (hsρ1 : s ≠ ellipticPointRhoPlusOne')
     (h_not_int : ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2)) :
@@ -361,7 +361,7 @@ private theorem bdry_ne_mem_unionFM (S : Finset UpperHalfPlane) (s : UpperHalfPl
   rcases eq_or_lt_of_le hnorm_ge with h_eq | h_gt
   · rcases lt_trichotomy (s : ℂ).re 0 with hre_neg | hre_zero | hre_pos
     · exact Or.inr (Or.inr (Or.inr ⟨hs_S, hsρ, h_eq.symm, hre_neg⟩))
-    · exact absurd (unit_circle_re_zero_eq_iFM s h_eq.symm hre_zero) hsi
+    · exact absurd (unit_circle_re_zero_eq_i s h_eq.symm hre_zero) hsi
     · exact Or.inr (Or.inr (Or.inl ⟨hs_S, hsρ1, h_eq.symm, hre_pos⟩))
   · have h_abs_eq : |(s : ℂ).re| = 1/2 := by
       by_contra h_ne; exact h_not_int ⟨h_gt, lt_of_le_of_ne hs_fd.2 h_ne⟩
@@ -370,7 +370,7 @@ private theorem bdry_ne_mem_unionFM (S : Finset UpperHalfPlane) (s : UpperHalfPl
     · exact Or.inr (Or.inl (Finset.mem_filter.mpr ⟨hs_S, by linarith, h_gt⟩))
 
 omit f hf in
-private theorem bdry_ne_eq_unionFM (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟) :
+private theorem bdry_ne_eq_union (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟) :
     let S_NE := S.filter (fun p =>
       p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne')
     S_NE.filter (fun (p : ℍ) => ¬(‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2)) =
@@ -385,7 +385,7 @@ private theorem bdry_ne_eq_unionFM (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S
   ext s; simp only [S_NE, sRightVertFM, sLeftVertFM, Finset.mem_union, Finset.mem_filter]
   constructor
   · intro ⟨⟨hs_S, hsi, hsρ, hsρ1⟩, h_not_int⟩
-    have := bdry_ne_mem_unionFM S s hS hs_S hsi hsρ hsρ1 h_not_int
+    have := bdry_ne_mem_union S s hS hs_S hsi hsρ hsρ1 h_not_int
     simp only [sRightVertFM, sLeftVertFM, Finset.mem_filter] at this; tauto
   · intro h
     rcases h with
@@ -404,17 +404,17 @@ private theorem bdry_ne_eq_unionFM (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S
         fun ⟨_, h⟩ => by have := (abs_lt.mp h).1; linarith⟩
     · exact ⟨⟨hs,
         fun h => by rw [h] at hre; simp [ellipticPointI'] at hre,
-        fun h => by rw [h] at hre; linarith [ellipticPointRho_re_negFM],
+        fun h => by rw [h] at hre; linarith [ellipticPointRho_re_neg],
         hne⟩,
         fun ⟨h, _⟩ => by linarith⟩
     · exact ⟨⟨hs,
         fun h => by rw [h] at hre; simp [ellipticPointI'] at hre,
         hne,
-        fun h => by rw [h] at hre; linarith [ellipticPointRhoPlusOne_re_posFM]⟩,
+        fun h => by rw [h] at hre; linarith [ellipticPointRhoPlusOne_re_pos]⟩,
         fun ⟨h, _⟩ => by linarith⟩
 
 omit f hf in
-private lemma bdry_four_disjointFM (S : Finset UpperHalfPlane)
+private lemma bdry_four_disjoint (S : Finset UpperHalfPlane)
     (RA_ne LA_ne : Finset UpperHalfPlane)
     (hRA : RA_ne = S.filter (fun p =>
       p ≠ ellipticPointRhoPlusOne' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0))
@@ -432,7 +432,7 @@ private lemma bdry_four_disjointFM (S : Finset UpperHalfPlane)
       fun s _ ⟨_, _, hre1⟩ ⟨_, _, hre2⟩ => by linarith⟩
 
 /-- Half the boundary-sum equals left-vert plus left-arc. -/
-private theorem half_bdry_sum_eq_leftVert_plus_leftArcFM
+private theorem half_bdry_sum_eq_leftVert_plus_leftArc
     (S : Finset UpperHalfPlane)
     (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
@@ -461,12 +461,12 @@ private theorem half_bdry_sum_eq_leftVert_plus_leftArcFM
       ∑ s ∈ RA_ne, (orderOfVanishingAt' (⇑f) s : ℂ) +
       ∑ s ∈ LA_ne, (orderOfVanishingAt' (⇑f) s : ℂ) := by
     have h_bdry_decomp : BDRY =
-        sRightVertFM S ∪ sLeftVertFM S ∪ RA_ne ∪ LA_ne := bdry_ne_eq_unionFM S hS
+        sRightVertFM S ∪ sLeftVertFM S ∪ RA_ne ∪ LA_ne := bdry_ne_eq_union S hS
     rw [h_bdry_decomp,
-      Finset.sum_union (bdry_four_disjointFM S RA_ne LA_ne hRA_ne_def rfl),
+      Finset.sum_union (bdry_four_disjoint S RA_ne LA_ne hRA_ne_def rfl),
       Finset.sum_union h12, Finset.sum_union h_disj_RV_LV]
   rw [h_sum_decomp, sum_ord_rightVert_eq_sum_ord_leftVertFM f S hS hS_complete,
-    sum_nonEllArc_right_eq_leftFM f S hS hS_complete]; ring
+    sum_nonEllArc_right_eq_left f S hS hS_complete]; ring
 
 /-! ### The Main Theorem -/
 
@@ -555,7 +555,7 @@ theorem valence_formula_orbit_sum_of_pvChain
   have h_ne_int : S_NE.filter
       (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) = INT := by
     ext s; simp only [hS_NE_def, INT, Finset.mem_filter]; tauto
-  have h_bdry_identity := half_bdry_sum_eq_leftVert_plus_leftArcFM f S hS hS_complete
+  have h_bdry_identity := half_bdry_sum_eq_leftVert_plus_leftArc f S hS hS_complete
   have h_split := Finset.sum_filter_add_sum_filter_not S_NE
     (fun (p : ℍ) => ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2) (fun s =>
       (if ‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2 then (1:ℂ) else 1/2) *

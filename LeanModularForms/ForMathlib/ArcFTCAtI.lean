@@ -113,7 +113,7 @@ private theorem seg2_ftc_I (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 1/5)
       (fdBoundaryFun H t - I) =
       Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
       Complex.log (fdBoundaryFun H (1/5) - I) :=
-  LogDerivFTCFM.ftc_log_pieceFM (by linarith)
+  LogDerivFTC.ftc_log_pieceFM (by linarith)
     arcRef_I_contDiff.continuous.continuousOn
     (fun t _ => arcRef_I_contDiff.differentiable (by norm_num) |>.differentiableAt)
     (arcRef_I_contDiff.continuous_deriv le_top).continuousOn
@@ -132,7 +132,7 @@ private theorem seg3_ftc_neg_I (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 
       Complex.log (-(fdBoundaryFun H (3/5) - I)) -
       Complex.log (-(fdBoundaryFun H (2/5 + δ) - I)) := by
   have hab : (2/5 + δ) ≤ (3/5 : ℝ) := by linarith
-  have h_piece := @LogDerivFTCFM.ftc_log_neg_on_segment arcRef_I (2/5 + δ) (3/5) hab
+  have h_piece := @LogDerivFTC.ftc_log_neg_on_segment arcRef_I (2/5 + δ) (3/5) hab
     arcRef_I_contDiff.continuous.continuousOn
     (fun t _ => arcRef_I_contDiff.differentiable (by norm_num) |>.differentiableAt)
     (arcRef_I_contDiff.continuous_deriv le_top).continuousOn
@@ -205,7 +205,7 @@ private theorem seg4_ftc_neg_I (H : ℝ) :
       (fdBoundaryFun H t - I) =
       Complex.log (-(fdBoundaryFun H (4/5) - I)) -
       Complex.log (-(fdBoundaryFun H (3/5) - I)) := by
-  have h_piece := LogDerivFTCFM.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
+  have h_piece := LogDerivFTC.ftc_log_neg_on_segment (by norm_num : (3/5 : ℝ) ≤ 4/5)
     (seg4Ref_I_contDiff H).continuous.continuousOn
     (fun t _ => (seg4Ref_I_contDiff H).differentiable (by norm_num) |>.differentiableAt)
     ((seg4Ref_I_contDiff H).continuous_deriv le_top).continuousOn
@@ -268,7 +268,7 @@ private theorem seg5_ftc_full_I (H : ℝ) (hH : 1 < H) :
       (fdBoundaryFun H t - I) =
       Complex.log (fdBoundaryFun H 1 - I) -
       Complex.log (fdBoundaryFun H (4/5) - I) :=
-  LogDerivFTCFM.ftc_log_pieceFM (by norm_num)
+  LogDerivFTC.ftc_log_pieceFM (by norm_num)
     (seg5Ref_I_contDiff H).continuous.continuousOn
     (fun t _ => (seg5Ref_I_contDiff H).differentiable (by norm_num) |>.differentiableAt)
     ((seg5Ref_I_contDiff H).continuous_deriv le_top).continuousOn

@@ -18,8 +18,8 @@ pairing left/right vertical and arc contributions.
 * `vAdd_neg_one_mem_fd_of_right_vertFM` — T⁻¹-translation preserves 𝒟 for right-vertical points
 * `sum_ord_rightVert_eq_sum_ord_leftVertFM` — orders on right vertical equal orders on left
 * `sum_ord_rightArc_eq_sum_ord_leftArcFM` — orders on right arc equal orders on left arc
-* `orb_vAdd_neg_one_eqFM` — T⁻¹-translation preserves orbits
-* `orb_S_smul_eqFM` — S-action preserves orbits
+* `orb_vAdd_neg_one_eq` — T⁻¹-translation preserves orbits
+* `orb_S_smul_eq` — S-action preserves orbits
 -/
 
 open Complex MeasureTheory Set Filter Topology CongruenceSubgroup
@@ -159,7 +159,7 @@ theorem ord_rho_plus_one_eq_ord_rho_via_vAddFM :
     orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne' =
     orderOfVanishingAt' (⇑f) ellipticPointRho' := by
   rw [← vAdd_one_rho_eq_rho_plus_oneFM]
-  exact ord_add_one_eqFM f ellipticPointRho'
+  exact ord_add_one_eq f ellipticPointRho'
 
 /-! ### S-action lemmas -/
 
@@ -209,7 +209,7 @@ lemma S_smul_injectiveFM : Function.Injective (ModularGroup.S • · : ℍ → �
 /-! ### OrbitFM equivalences -/
 
 /-- T⁻¹-translation preserves orbits: `orbFM((-1)+ᵥp) = orbFM(p)`. -/
-lemma orb_vAdd_neg_one_eqFM (p : ℍ) :
+lemma orb_vAdd_neg_one_eq (p : ℍ) :
     orbFM ((-1 : ℝ) +ᵥ p) = orbFM p := by
   have h_eq : ModularGroup.T⁻¹ • p = (-1 : ℝ) +ᵥ p := by
     have h1 : ModularGroup.T • (ModularGroup.T⁻¹ • p) = p :=
@@ -230,7 +230,7 @@ lemma orb_vAdd_one_eq (p : ℍ) :
   exact ⟨ModularGroup.T, by rw [UpperHalfPlane.modular_T_smul]⟩
 
 /-- S-action preserves orbits: `orbFM(S • p) = orbFM(p)`. -/
-lemma orb_S_smul_eqFM (p : ℍ) :
+lemma orb_S_smul_eq (p : ℍ) :
     orbFM (ModularGroup.S • p) = orbFM p := by
   show Quotient.mk'' (ModularGroup.S • p) = Quotient.mk'' p
   rw [Quotient.eq'', MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
@@ -259,7 +259,7 @@ def sRightArcFM (S : Finset ℍ) : Finset ℍ :=
 /-- T⁻¹-invariance of vanishing order: `ord(f, (-1)+ᵥp) = ord(f, p)`. -/
 lemma ord_vAdd_neg_one_eqFM (p : ℍ) :
     orderOfVanishingAt' (⇑f) ((-1 : ℝ) +ᵥ p) = orderOfVanishingAt' (⇑f) p := by
-  have h := ord_add_one_eqFM f ((-1 : ℝ) +ᵥ p)
+  have h := ord_add_one_eq f ((-1 : ℝ) +ᵥ p)
   rw [show (1 : ℝ) +ᵥ ((-1 : ℝ) +ᵥ p) = p from by
     ext; show ((1 : ℝ) : ℂ) + (((-1 : ℝ) : ℂ) + (p : ℂ)) = (p : ℂ)
     push_cast; ring] at h
@@ -284,7 +284,7 @@ theorem vAdd_one_leftVert_subset_rightVertFM (S : Finset ℍ)
     rw [show p.re = (p : ℂ).re from rfl, hre]; norm_num
   have hp1_fd := vAdd_one_mem_fd_of_left_vertFM p hp_fd hre
   have hp1_ord : orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ p) ≠ 0 := by
-    rwa [ord_add_one_eqFM f p]
+    rwa [ord_add_one_eq f p]
   have hp1_in_S := hS_complete _ hp1_fd hp1_ord
   simp only [sRightVertFM, Finset.mem_filter]
   refine ⟨hp1_in_S, ?_, ?_⟩
@@ -297,7 +297,7 @@ theorem vAdd_one_leftVert_subset_rightVertFM (S : Finset ℍ)
 theorem sum_ord_leftVert_eq_sum_T_imageFM (S : Finset ℍ) :
     ∑ p ∈ sLeftVertFM S, (orderOfVanishingAt' (⇑f) p : ℂ) =
     ∑ p ∈ sLeftVertFM S, (orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ p) : ℂ) :=
-  Finset.sum_congr rfl fun p _ => by rw [ord_add_one_eqFM f p]
+  Finset.sum_congr rfl fun p _ => by rw [ord_add_one_eq f p]
 
 /-- Orders on right vertical edge equal orders on left vertical edge. -/
 theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)
@@ -327,13 +327,13 @@ theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)
     have ⟨hq_S, hre, hnorm⟩ := Finset.mem_filter.mp hq_lv
     refine ⟨(1 : ℝ) +ᵥ q, Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨
       hS_complete _ (vAdd_one_mem_fd_of_left_vertFM q (hS q hq_S) hre)
-        (by rw [ord_add_one_eqFM f q]; exact ord_ne_zero_of_cast_ne_zeroFM hord),
+        (by rw [ord_add_one_eq f q]; exact ord_ne_zero_of_cast_ne_zeroFM hord),
       ?_, ?_⟩, ?_⟩, ?_⟩
     · show ((1 : ℝ) +ᵥ q : ℂ).re = 1 / 2
       rw [vAdd_one_coeFM, add_re, one_re, hre]; norm_num
     · show ‖((1 : ℝ) +ᵥ q : ℂ)‖ > 1
       rw [vAdd_one_norm_eq_of_re_neg_halfFM q hre]; exact hnorm
-    · rw [ord_add_one_eqFM f q]; exact hord
+    · rw [ord_add_one_eq f q]; exact hord
     · show (-1 : ℝ) +ᵥ ((1 : ℝ) +ᵥ q) = q
       rw [← add_vadd, show (-1 : ℝ) + 1 = 0 from by ring, zero_vadd]
   · intro p _; rw [ord_vAdd_neg_one_eqFM f p]
@@ -352,22 +352,22 @@ theorem sum_ord_rightArc_eq_sum_ord_leftArcFM (S : Finset ℍ) (hS : ∀ p ∈ S
     have ⟨hp_S, hnorm, hre_pos⟩ := Finset.mem_filter.mp hp_ra
     refine Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨
       hS_complete _ (S_smul_mem_fd_of_unitFM p (hS p hp_S) hnorm)
-        (by rw [ord_S_eqFM f p]; exact ord_ne_zero_of_cast_ne_zeroFM hord),
+        (by rw [ord_S_eq f p]; exact ord_ne_zero_of_cast_ne_zeroFM hord),
       S_smul_norm_of_unitFM p hnorm, ?_⟩, ?_⟩
     · show (ModularGroup.S • p : ℍ).re < 0
       rw [S_smul_re_neg_of_unitFM p hnorm, show p.re = (p : ℂ).re from rfl]; linarith
-    · rw [ord_S_eqFM f p]; exact hord
+    · rw [ord_S_eq f p]; exact hord
   · exact S_smul_injectiveFM.injOn
   · intro q hq
     have ⟨hq_la, hord⟩ := Finset.mem_filter.mp hq
     have ⟨hq_S, hnorm, hre_neg⟩ := Finset.mem_filter.mp hq_la
     refine ⟨ModularGroup.S • q, Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨
       hS_complete _ (S_smul_mem_fd_of_unitFM q (hS q hq_S) hnorm)
-        (by rw [ord_S_eqFM f q]; exact ord_ne_zero_of_cast_ne_zeroFM hord),
+        (by rw [ord_S_eq f q]; exact ord_ne_zero_of_cast_ne_zeroFM hord),
       S_smul_norm_of_unitFM q hnorm, ?_⟩, ?_⟩, S_smul_S_smulFM q⟩
     · show (ModularGroup.S • q : ℍ).re > 0
       rw [S_smul_re_neg_of_unitFM q hnorm, show q.re = (q : ℂ).re from rfl]; linarith
-    · rw [ord_S_eqFM f q]; exact hord
-  · intro p _; rw [ord_S_eqFM f p]
+    · rw [ord_S_eq f q]; exact hord
+  · intro p _; rw [ord_S_eq f p]
 
 end

@@ -245,7 +245,18 @@ The `hPV_sing` hypothesis gives the CPV of the singular part. For the avoidance
 case (curve does not cross `S`), this reduces to the ordinary contour integral
 of the principal part sum, computable via `integral_sum_simple_poles_eq_winding`.
 
-This is the most general form. -/
+This is the most general form.
+
+TODO (legacy-port-plan Phase 1): close the `hCancel` / `hPV_sing` / `hI_sing` /
+`hI_rem` oracle hypotheses so the theorem takes only `hCondA` / `hCondB` /
+`hMero`. The pieces needed are:
+* `hI_sing` / `hI_rem`: integrability from `SectorCurve.lean` bounds under A'.
+* `hPV_sing`: reduce to `SimplePoleIntegral.pv_integral_simple_pole` via
+  `HasCauchyPVOn.add`/`smul` on the principal-part sum.
+* `hCancel`: Dixon (`DixonTheorem.dixonFunction_eq_zero`) applied in a nbhd of
+  the curve gives zero CPV for the analytic remainder.
+
+See `docs/superpowers/plans/2026-04-20-legacy-port-plan.md`. -/
 theorem generalizedResidueTheorem
     {U : Set ℂ} (_hU : IsOpen U)
     (S : Finset ℂ) (_hS_in_U : ↑S ⊆ U)
