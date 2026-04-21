@@ -1779,6 +1779,101 @@ theorem measurePreserving_glPos_smul (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val
   measurePreserving_smul (⟨α, hα⟩ : GL(2, ℝ)⁺) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205/T128 integrability bridge**: integrability of
+`petersson k g (f ∣[k] α)` on `D` follows from integrability of
+`petersson k f g'` on `α • D` + the adjoint identity
+`g ∣[k] peterssonAdj α = g'`.
+
+This is the `h_int` shape needed by
+`peterssonInner_sum_slash_adjoint_constantRHS`: it transports
+integrability from the RHS union-domain form (where T094's
+`integrableOn_petersson_biUnion_glMap_smul` applies for cusp forms)
+back to the per-summand fd form needed for `peterssonInner_add_left`
+distribution of `+` across a Σ_b sum.
+
+**Proof pattern** (mirrors `peterssonInner_slash_adjoint`):
+1. Decompose `g = (g ∣ α⁻¹) ∣ α`, apply `petersson_slash` (with
+   `σ α = id` for positive det) to get pointwise
+   `petersson k (f ∣ α) g τ = |α.det|^(k-2) · petersson k f (g ∣ α⁻¹) (α • τ)`.
+2. Use `slash_peterssonAdj_eq` + `hadj` to identify
+   `|α.det|^(k-2) • (g ∣ α⁻¹) = g'`, yielding
+   `|α.det|^(k-2) · petersson k f (g ∣ α⁻¹) = petersson k f g'` (petersson
+   linearity in 2nd arg).
+3. Conjugate via `petersson_symm`: `petersson k g (f ∣ α) τ =
+   conj(petersson k f g' (α • τ)) = petersson k g' f (α • τ)`.
+4. Transfer integrability via `MeasurePreserving.integrableOn_image`
+   (setIntegral pattern) + `petersson_symm` (norm-preserving conjugate). -/
+private lemma integrableOn_petersson_slash_of_adj_image
+    (D : Set ℍ) (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
+    (f g g' : ℍ → ℂ)
+    (hadj : g ∣[k] peterssonAdj α = g')
+    (hfi : IntegrableOn (fun τ => petersson k f g' τ) (α • D) μ_hyp) :
+    IntegrableOn (fun τ => petersson k g (f ∣[k] α) τ) D μ_hyp := by
+  -- Step 1: establish pointwise identity.
+  -- `petersson k g (f ∣ α) τ = petersson k g' f (α • τ)`.
+  have hg_decomp : g = (g ∣[k] α⁻¹) ∣[k] α := by
+    rw [← SlashAction.slash_mul, inv_mul_cancel, SlashAction.slash_one]
+  set g_inv := g ∣[k] α⁻¹ with hg_inv_def
+  have h_pointwise : ∀ τ, petersson k g (f ∣[k] α) τ =
+      petersson k g' f (α • τ) := by
+    intro τ
+    -- `petersson k g (f ∣ α) τ = conj (petersson k (f ∣ α) g τ)`.
+    rw [petersson_symm k (f ∣[k] α) g]
+    -- `petersson k (f ∣ α) g τ = petersson k (f ∣ α) (g_inv ∣ α) τ`.
+    conv_lhs => rw [show g = g_inv ∣[k] α from hg_decomp]
+    -- Apply `petersson_slash` + `σ α = id`.
+    rw [petersson_slash, show σ α = RingHom.id ℂ from if_pos hα, RingHom.id_apply]
+    -- Goal: `conj (|α.det|^(k-2) * petersson k f g_inv (α • τ)) = petersson k g' f (α • τ)`.
+    -- First: `|α.det|^(k-2) * petersson k f g_inv = petersson k f (|α.det|^(k-2) • g_inv)`.
+    have h_scalar : (↑|α.det.val| ^ (k - 2) : ℂ) * petersson k f g_inv (α • τ) =
+        petersson k f ((↑(|α.det.val| ^ (k - 2)) : ℂ) • g_inv) (α • τ) := by
+      simp [petersson, Pi.smul_apply, smul_eq_mul]; ring
+    rw [h_scalar]
+    -- `|α.det|^(k-2) • g_inv = g ∣ peterssonAdj α = g'` (by slash_peterssonAdj_eq + hadj).
+    rw [show ((↑(|α.det.val| ^ (k - 2)) : ℂ) • g_inv) = g' from by
+      rw [← hadj, hg_inv_def, slash_peterssonAdj_eq α hα]]
+    -- Goal: `conj (petersson k f g' (α • τ)) = petersson k g' f (α • τ)`.
+    exact (petersson_symm k f g' (α • τ)).symm
+  -- Step 2: transfer integrability via change of variables + petersson_symm.
+  have h_fn_eq : (fun τ => petersson k g (f ∣[k] α) τ) =
+      fun τ => petersson k g' f (α • τ) := funext h_pointwise
+  rw [h_fn_eq]
+  -- Use `MeasurePreserving.integrableOn_image` (reverse): from
+  -- `IntegrableOn h (α • D)` to `IntegrableOn (h ∘ (α • ·)) D`.
+  set α' : GL(2, ℝ)⁺ := ⟨α, hα⟩
+  have h_α_eq : (α : GL (Fin 2) ℝ) • D = (fun τ => α' • τ) '' D := by
+    rw [Set.image_smul]; rfl
+  rw [show (fun τ => petersson k g' f (α • τ)) =
+      petersson k g' f ∘ (fun τ => α' • τ) from rfl]
+  rw [← (measurePreserving_smul α' μ_hyp).integrableOn_image
+      (measurableEmbedding_const_smul α')]
+  -- Goal: `IntegrableOn (petersson k g' f) (α • D) μ_hyp`.
+  rw [h_α_eq] at hfi
+  -- Use `petersson_symm`: `petersson k g' f τ = conj (petersson k f g' τ)`.
+  -- Rewrite the goal's integrand via pointwise-equality.
+  have h_symm_fn : (petersson k g' f : ℍ → ℂ) =
+      fun τ => starRingEnd ℂ (petersson k f g' τ) :=
+    funext fun τ => petersson_symm k f g' τ
+  rw [h_symm_fn]
+  -- Use that `starRingEnd ℂ` is a continuous linear map with norm 1, so integrability transfers.
+  -- Actually `IntegrableOn h S μ` for `h = star ∘ f` follows from `IntegrableOn f S μ`
+  -- since `‖star z‖ = ‖z‖` (norm preservation) + `star` continuous (measurability preservation).
+  refine ⟨?_, ?_⟩
+  · -- AEStronglyMeasurable: continuous conj composed with a measurable function.
+    exact Complex.continuous_conj.comp_aestronglyMeasurable hfi.aestronglyMeasurable
+  · -- HasFiniteIntegral: ∫ ‖conj ∘ h‖ₑ = ∫ ‖h‖ₑ since `‖conj z‖ = ‖z‖`.
+    have h_finite := hfi.2
+    show HasFiniteIntegral _ _
+    unfold HasFiniteIntegral at h_finite ⊢
+    refine lt_of_le_of_lt (le_of_eq ?_) h_finite
+    apply lintegral_congr_ae
+    filter_upwards with τ
+    show ‖(starRingEnd ℂ) (petersson k f g' τ)‖ₑ = ‖petersson k f g' τ‖ₑ
+    rw [enorm_eq_nnnorm, enorm_eq_nnnorm]
+    congr 1
+    exact Subtype.ext (Complex.norm_conj _)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205/T128 bridge: GL-pair AE-disjoint on the SL(2, ℤ)-fundamental
 domain `ModularGroup.fd` via `mapGL ℝ σ`-factored inverse product**.
 
