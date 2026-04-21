@@ -106,7 +106,7 @@ import LeanModularForms.ForMathlib.Legacy.FDBoundaryH
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.Boundary.Bounds
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.Boundary.Smooth
 import LeanModularForms.ForMathlib.EllipticPoints
-import LeanModularForms.ForMathlib.Legacy.ValenceFormula.ModularInvariance
+import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.Basic
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.EndpointCorner
 import LeanModularForms.ForMathlib.Legacy.ValenceFormula.OnCurvePV.Main

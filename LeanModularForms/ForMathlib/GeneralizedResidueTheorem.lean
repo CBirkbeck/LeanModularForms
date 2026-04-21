@@ -302,6 +302,84 @@ theorem generalizedResidueTheorem
   -- Decompose: CPV(f) = CPV(f - pp) + CPV(pp) = 0 + formula
   exact hasCauchyPVOn_of_tendsto_sub hCancel hPV_sing hI_rem hI_sing
 
+/-! ## CPV version (avoidance case) -/
+
+/-- **Generalized Residue Theorem, CPV form (simple poles, convex domain, avoidance).**
+
+When `γ` avoids all poles `S`, the multi-point Cauchy principal value coincides with
+the ordinary contour integral, and the classical residue theorem on a convex domain
+gives the winding-number-weighted residue sum as the value.
+
+This is the `HasCauchyPVOn` variant of `generalizedResidueTheorem_simplePoles_convex`,
+suitable for applications where the CPV predicate is the desired output. -/
+theorem generalizedResidueTheorem_simplePoles_convex_CPV
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    -- Integrability of the decomposition
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1)
+    (h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
+    (hI : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (residue f s / (γ.toPath.extend t - s)) *
+        deriv γ.toPath.extend t) volume 0 1) :
+    HasCauchyPVOn S f γ
+      (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
+        residue f s) := by
+  have h_contour := generalizedResidueTheorem_simplePoles_convex
+    hU_convex hU_open hU_ne S hS_in_U f hf γ hSimplePoles
+    hγ_in_U hγ_avoids hδ h_rem_int h_pp_int hI
+  exact h_contour ▸ hasCauchyPVOn_of_avoids hδ
+
+/-- **Generalized Residue Theorem, CPV form (simple poles, avoidance,
+abstract Cauchy-vanishing).**
+
+Factored form of the residue theorem that takes the holomorphic remainder's
+contour-integral vanishing as a hypothesis. Callers supply this from the
+ambient topology (convex, null-homologous via Dixon, etc.).
+
+This is the CPV analogue of `generalizedResidueTheorem_simplePoles_structural`. -/
+theorem generalizedResidueTheorem_simplePoles_CPV_structural
+    {U : Set ℂ} (hU : IsOpen U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    -- Cauchy-vanishing hypothesis: the holomorphic remainder has zero contour integral
+    (g : ℂ → ℂ) (hg_diff : DifferentiableOn ℂ g U)
+    (hg_agree : ∀ z ∈ U \ (↑S : Set ℂ),
+      g z = f z - principalPartSum S (fun s => residue f s) z)
+    (hg_zero : γ.contourIntegral g = 0)
+    -- Integrability for the decomposition
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1)
+    (h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
+    (hI : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (residue f s / (γ.toPath.extend t - s)) *
+        deriv γ.toPath.extend t) volume 0 1) :
+    HasCauchyPVOn S f γ
+      (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
+        residue f s) := by
+  have h_contour := generalizedResidueTheorem_simplePoles_structural hU S hS_in_U f hf γ
+    hSimplePoles hγ_in_U hγ_avoids hδ g hg_diff hg_agree hg_zero h_rem_int h_pp_int hI
+  exact h_contour ▸ hasCauchyPVOn_of_avoids hδ
+
 /-! ## Automatic conditions for simple poles -/
 
 /-- **Conditions (A') and (B) are automatic for simple poles.**
