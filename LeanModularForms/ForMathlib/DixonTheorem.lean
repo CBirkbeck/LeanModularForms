@@ -428,4 +428,41 @@ theorem dixonFunction_eq_zero_of_nullHomologous_bounded
     (h_null.winding_eventually_zero_cocompact_of_bounded hU_bounded)
     hM_f_nn hR hM_f hM_d
 
+/-- **B-5 variant auto-discharging `h2_diff` via B-3**: Given a Lipschitz PwC1Immersion
+γ and `f` differentiable on bounded open U, the `h2_diff` hypothesis is discharged
+automatically via `dixonH2_differentiableAt_of_regular` (B-3). -/
+theorem dixonFunction_eq_zero_of_nullHomologous_autoH2
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
+    (h_cauchy_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => f (γ.toPiecewiseC1Path t) /
+        (γ.toPiecewiseC1Path t - w) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_base_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0)
+    {R M_f M_d : ℝ} (hM_f_nn : 0 ≤ M_f)
+    (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPiecewiseC1Path t‖ ≤ R)
+    (hM_f : ∀ t ∈ Icc (0 : ℝ) 1, ‖f (γ.toPiecewiseC1Path t)‖ ≤ M_f)
+    (hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
+      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ M_d) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
+  have hf_cont : ContinuousOn f
+      (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
+    hf.continuousOn.mono
+      (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)
+  have h2_diff : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      DifferentiableAt ℂ (dixonH2 f γ.toPiecewiseC1Path) w :=
+    fun _ hoff => dixonH2_differentiableAt_of_regular hoff hf_cont hLip
+  exact dixonFunction_eq_zero_of_nullHomologous_bounded hU hU_bounded hf γ h_null
+    h1_diff h2_diff h_cauchy_int h_base_int h_winding_zero_near
+    hM_f_nn hR hM_f hM_d
+
 end
