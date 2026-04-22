@@ -99,13 +99,16 @@
 
 ### [B-5] Dixon-zero aggregator
 
-- **Status**: done (via `dixonFunction_eq_zero_of_nullHomologous` in `ForMathlib/DixonTheorem.lean`)
+- **Status**: done with progressive variants
 - **File**: `ForMathlib/DixonTheorem.lean`
-- **Depends on**: takes B-1, B-2, B-3, B-4 as oracle hypotheses
-- **Description**: Aggregator `dixonFunction_eq_zero_of_nullHomologous` takes the
-  differentiability-on-U (B-2), differentiability-off-curve (B-3), integrability for
-  identity, winding-zero-near (B-1), winding-zero-cocompact, and bounds. Downstream
-  clients supply these; tickets B-1..B-4 will progressively automate them.
+- **Depends on**: takes B-1, B-2, B-3, B-4 as oracle hypotheses at most
+- **Variants**:
+  - `dixonFunction_eq_zero_of_nullHomologous` — base aggregator, all oracles explicit
+  - `..._bounded` — drops `h_winding_evt` via B-4 auto-discharge (requires U bounded)
+  - `..._autoH2` — also drops `h2_diff` via B-3 auto-discharge (Lipschitz γ)
+  - `..._autoBounds` — also drops bounds (R, M_f, M_d) and integrability
+    auto-discharged from continuity + Lipschitz. Only `h1_diff` (B-2) and
+    `h_winding_zero_near` (B-1 full) remain as oracles.
 
 ### [CLEANUP-B] Run /cleanup on Dixon files
 
