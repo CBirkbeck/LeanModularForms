@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 16 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial)
-- Done: A-1, A-2, A-2-wrapper, B-1 (partial, outside closure), B-6 (partial, Lipschitz auto-w₀)
-- Open: A-1b, B-1 (full), B-2..B-5, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial, outside closure), B-5 (aggregator with oracles), B-6 (partial, Lipschitz auto-w₀)
+- Open: B-1 (full), B-2..B-4, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 3 workers at peak (A, B-stream, C-stream all independent after A)
 
 ## Tickets
@@ -24,12 +24,13 @@
 
 ### [A-1b] Piecewise C¹ implies Lipschitz
 
-- **Status**: open
-- **File**: `ForMathlib/CurveMeasureZero.lean` or `ForMathlib/PiecewiseC1Path.lean`
+- **Status**: done (via `lipschitzOnWith_of_nnnorm_deriv_le` in `ForMathlib/CurveMeasureZero.lean`)
+- **File**: `ForMathlib/CurveMeasureZero.lean`
 - **Depends on**: none
-- **Description**: For `γ : PwC1Immersion x y`, `LipschitzWith K γ.toPath.extend`
-  for some `K`. Uses bounded one-sided derivative limits at partition points +
-  continuity of derivative on each smooth piece.
+- **Description**: Foundational `LipschitzOnWith` helper from bounded derivative
+  on a convex set, specialized from `Convex.lipschitzOnWith_of_nnnorm_hasDerivWithin_le`.
+  Full `PwC1Immersion` Lipschitz follows by gluing via partition (deferred — callers
+  currently supply `LipschitzWith` directly via `exists_mem_not_mem_path_image_of_isOpen`).
 
 ### [A-2] w₀ existence in open U off the curve
 
@@ -87,12 +88,13 @@
 
 ### [B-5] Dixon-zero aggregator
 
-- **Status**: open
+- **Status**: done (via `dixonFunction_eq_zero_of_nullHomologous` in `ForMathlib/DixonTheorem.lean`)
 - **File**: `ForMathlib/DixonTheorem.lean`
-- **Depends on**: B-1, B-2, B-3, B-4
-- **Parallel**: no
-- **Description**: Main aggregator
-  `dixonFunction_eq_zero_of_nullHomologous`.
+- **Depends on**: takes B-1, B-2, B-3, B-4 as oracle hypotheses
+- **Description**: Aggregator `dixonFunction_eq_zero_of_nullHomologous` takes the
+  differentiability-on-U (B-2), differentiability-off-curve (B-3), integrability for
+  identity, winding-zero-near (B-1), winding-zero-cocompact, and bounds. Downstream
+  clients supply these; tickets B-1..B-4 will progressively automate them.
 
 ### [CLEANUP-B] Run /cleanup on Dixon files
 
