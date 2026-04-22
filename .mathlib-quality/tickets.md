@@ -70,7 +70,7 @@
 - **Status**: partial done (via `dixonH1_differentiableOn_of_regular` in
   `ForMathlib/DixonDiff.lean`)
 - **File**: `ForMathlib/DixonDiff.lean`
-- **Depends on**: none
+- **Depends on**: D-1 (for joint continuity)
 - **Description**: Wraps `dixonH1_differentiableOn` auto-discharging 5 of 6
   oracles (integrability, measurability near w, `h_deriv_bound`,
   `h_dslope_hasDerivAt`) from simple inputs:
@@ -81,9 +81,26 @@
   `dixonH1_differentiableOn`.
 - **Still oracles**: `h_F'_meas` (measurability of `t ↦ deriv (dslope f (γt)) w₀`)
   and `h_dslope_deriv_bound` (local uniform bound on `deriv (dslope f (γt)) w`)
-  — both second-order structure of dslope, requiring joint-continuity or
-  Cauchy estimates.
+  — both second-order structure of dslope, now tractable via D-1.
 - **API**: `dixonH1_differentiableOn_of_regular`.
+
+### [D-1] dslope integral representation
+
+- **Status**: core done (via `Complex.dslope_eq_integral_deriv` in
+  `ForMathlib/DslopeIntegral.lean`); joint continuity open
+- **File**: `ForMathlib/DslopeIntegral.lean`
+- **Depends on**: none
+- **Parallel**: yes
+- **Done**:
+  - `Complex.dslope_eq_integral_deriv` — FTC representation:
+    `dslope f c w = ∫₀¹ deriv f (c + t • (w - c))` on convex open `U`
+- **Open (follow-up tickets):**
+  - D-1a: `continuousOn_dslope_first_arg` — via dominated convergence on
+    closed ball + convex hull + analyticity of `deriv f`
+  - D-1b: `continuous_dslope_prod` — joint continuity on `U × U` (convex)
+  - D-1c: `deriv_dslope_bounded_locally` — Cauchy estimates for
+    `deriv (dslope f c) w` on compact × closed-ball subsets
+- **Unblocks**: B-2 full (`h_F'_meas`, `h_dslope_deriv_bound`)
 
 ### [B-3] h2 differentiability from regularity
 
