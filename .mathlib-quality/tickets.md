@@ -44,9 +44,9 @@
 
 ### [B-1] h_winding_zero_near from null-hom + compact curve
 
-- **Status**: partial done (outside-closure case + cocompact-bounded case);
-  full boundary case open
-- **File**: `ForMathlib/NullHomologous.lean`
+- **Status**: partial done (outside-closure case + cocompact-bounded case +
+  continuity); full boundary case open
+- **File**: `ForMathlib/NullHomologous.lean`, `ForMathlib/GeneralizedWindingNumber.lean`
 - **Depends on**: none
 - **Parallel**: yes
 - **Description**: Prove that for `γ` null-homologous in `U`, for any `w ∉ U`
@@ -58,8 +58,11 @@
     the case `w ∉ closure U` (the easy case; ball stays outside U).
   - `IsNullHomologous.winding_eventually_zero_cocompact_of_bounded` — for
     bounded U, winding eventually zero in `cocompact ℂ`.
-- **Open**: boundary case `w ∈ closure U \ U` — needs locally-constant winding
-  theory (winding integer off closed curve + continuity).
+  - `generalizedWindingNumber_continuousAt_of_avoids` — winding is
+    continuous at any point off a Lipschitz PwC1 curve. Uses dominated
+    convergence via `intervalIntegral.continuousAt_of_dominated_interval`.
+- **Open**: boundary case `w ∈ closure U \ U` — needs **integer-valued winding**
+  (local constancy requires this + continuity).
 - **API**: `generalizedWindingNumber_eventually_zero_of_nullHomologous`.
 
 ### [B-2] h1 differentiability from regularity
