@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 16 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded), B-4, B-5 (aggregator with oracles + bounded variant), B-6 (partial, Lipschitz auto-w₀)
-- Open: B-1 (full boundary case), B-2, B-3, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded), B-3, B-4, B-5 (aggregator with oracles + bounded variant), B-6 (partial, Lipschitz auto-w₀)
+- Open: B-1 (full boundary case), B-2, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 3 workers at peak (A, B-stream, C-stream all independent after A)
 
 ## Tickets
@@ -75,11 +75,16 @@
 
 ### [B-3] h2 differentiability from regularity
 
-- **Status**: open
+- **Status**: done (via `dixonH2_differentiableAt_of_regular` in `ForMathlib/DixonDiff.lean`)
 - **File**: `ForMathlib/DixonDiff.lean`
 - **Depends on**: none
 - **Parallel**: yes
-- **Description**: Wrap `dixonH2_differentiableAt` similarly.
+- **Description**: Wraps `dixonH2_differentiableAt` deriving its 6 oracle
+  hypotheses (integrability, boundedness, measurability) from:
+  * `ContinuousOn f (γ.image)`
+  * `LipschitzWith K γ.toPath.extend`
+  via `stronglyMeasurable_deriv`, `norm_deriv_le_of_lipschitz`, and
+  product-continuity.
 - **API**: `dixonH2_differentiableAt_of_regular`.
 
 ### [B-4] dixonFunction eventually equals dixonH2 (auto)
