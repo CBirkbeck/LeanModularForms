@@ -1,8 +1,9 @@
 # Ticket Board: Chain 1 Extended (HW 3.3 Full Closure)
 
 ## Summary
-- Total: 12 tickets
-- Open: 10 | In Progress: 0 | Done: 2
+- Total: 16 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial)
+- Done: A-1, A-2, A-2-wrapper, B-1 (partial, outside closure), B-6 (partial, Lipschitz auto-w₀)
+- Open: A-1b, B-1 (full), B-2..B-5, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 3 workers at peak (A, B-stream, C-stream all independent after A)
 
 ## Tickets
