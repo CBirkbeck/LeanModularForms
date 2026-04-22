@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 16 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded), B-3, B-4, B-5 (aggregator with oracles + bounded variant), B-6 (partial, Lipschitz auto-w₀)
-- Open: B-1 (full boundary case), B-2, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded), B-2 partial, B-3, B-4, B-5 (5 variants), B-6 (partial, Lipschitz auto-w₀)
+- Open: B-1 (full boundary case), B-2 full (2 oracles remain), CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 3 workers at peak (A, B-stream, C-stream all independent after A)
 
 ## Tickets
@@ -64,13 +64,22 @@
 
 ### [B-2] h1 differentiability from regularity
 
-- **Status**: open
+- **Status**: partial done (via `dixonH1_differentiableOn_of_regular` in
+  `ForMathlib/DixonDiff.lean`)
 - **File**: `ForMathlib/DixonDiff.lean`
 - **Depends on**: none
-- **Parallel**: yes
-- **Description**: Wrap `dixonH1_differentiableOn` with hypotheses derivable
-  from "γ PwC1Immersion + γ image ⊆ U + f differentiable on U + deriv γ
-  bounded".
+- **Description**: Wraps `dixonH1_differentiableOn` auto-discharging 5 of 6
+  oracles (integrability, measurability near w, `h_deriv_bound`,
+  `h_dslope_hasDerivAt`) from simple inputs:
+  * `DifferentiableOn ℂ f U`, `IsOpen U`, `γ : PwC1Immersion`, `γ.image ⊆ U`
+  * `LipschitzWith K γ.toPath.extend`
+  Uses `Complex.differentiableOn_dslope`, `dslope_comm`,
+  `stronglyMeasurable_deriv`. Removed unused `_h_dslope_bound` from
+  `dixonH1_differentiableOn`.
+- **Still oracles**: `h_F'_meas` (measurability of `t ↦ deriv (dslope f (γt)) w₀`)
+  and `h_dslope_deriv_bound` (local uniform bound on `deriv (dslope f (γt)) w`)
+  — both second-order structure of dslope, requiring joint-continuity or
+  Cauchy estimates.
 - **API**: `dixonH1_differentiableOn_of_regular`.
 
 ### [B-3] h2 differentiability from regularity

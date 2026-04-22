@@ -6,6 +6,7 @@ import LeanModularForms.ForMathlib.DixonDef
 import LeanModularForms.ForMathlib.NullHomologous
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Complex.Liouville
+import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
 
 /-!
@@ -276,6 +277,43 @@ theorem dixonH2_differentiableAt_of_regular {f : ℂ → ℂ}
 
 /-! ## h1 differentiability -/
 
+/-- **Symmetry of `dslope`**: `dslope f a b = dslope f b a`. Follows from `slope_comm`
+for distinct points and from `dslope f a a = deriv f a` otherwise. -/
+private lemma dslope_comm (f : ℂ → ℂ) (a b : ℂ) : dslope f a b = dslope f b a := by
+  by_cases h : b = a
+  · rw [h]
+  · rw [dslope_of_ne f h, dslope_of_ne f (Ne.symm h), slope_comm]
+
+/-- `dslope f w' c`, viewed as a function of the first argument `w'`, has derivative
+`deriv (dslope f c) w` at `w ∈ U`. Uses `dslope_comm` to reduce to the standard
+`Complex.differentiableOn_dslope`. -/
+private lemma dslope_hasDerivAt_first_arg {f : ℂ → ℂ} {U : Set ℂ}
+    (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    {c w : ℂ} (hc : c ∈ U) (hw : w ∈ U) :
+    HasDerivAt (fun w' => dslope f w' c) (deriv (dslope f c) w) w := by
+  have h_ds_diff : DifferentiableOn ℂ (dslope f c) U :=
+    (Complex.differentiableOn_dslope (hU.mem_nhds hc)).mpr hf
+  have h_ds_da : DifferentiableAt ℂ (dslope f c) w :=
+    (h_ds_diff w hw).differentiableAt (hU.mem_nhds hw)
+  exact h_ds_da.hasDerivAt.congr_of_eventuallyEq
+    (Filter.Eventually.of_forall fun _ => dslope_comm f _ _)
+
+/-- Continuity of `fun t => dslope f w (γ t)` on `Icc 0 1` when γ avoids the curve
+into U and f is differentiable on U. Uses `dslope_comm` + `Complex.differentiableOn_dslope`
++ composition with continuous γ. -/
+private lemma dslope_fixed_continuousOn {f : ℂ → ℂ} {U : Set ℂ}
+    (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    {γ : PiecewiseC1Path x x} (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    {w : ℂ} (hw : w ∈ U) :
+    ContinuousOn (fun t => dslope f w (γ t)) (Icc (0 : ℝ) 1) := by
+  have h_ds_cont : ContinuousOn (dslope f w) U :=
+    ((Complex.differentiableOn_dslope (hU.mem_nhds hw)).mpr hf).continuousOn
+  have h_ds_comm : (fun t => dslope f w (γ t)) =
+      fun t => dslope f (γ t) w := by
+    funext t; exact dslope_comm f w (γ t)
+  rw [show (fun t => dslope f w (γ t)) = (dslope f w) ∘ γ.toPath.extend from rfl]
+  exact h_ds_cont.comp γ.toPath.continuous_extend.continuousOn hγ
+
 /-- The ball of radius `min (min a b) c / 2` is contained in balls of radius `a`, `b`, and `c`. -/
 private lemma min3_ball_subsets (w₀ : ℂ) {ε_m ε_d δ_C : ℝ}
     (hε_m_pos : 0 < ε_m) (hε_d_pos : 0 < ε_d) (hδ_C_pos : 0 < δ_C) :
@@ -319,9 +357,6 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
         (fun t => dslope f w (γ.toPiecewiseC1Path t) *
           deriv γ.toPiecewiseC1Path.toPath.extend t)
         (volume.restrict (Set.uIoc 0 1)))
-    (_h_dslope_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
-      ∀ c ∈ γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1,
-        ∀ w ∈ Metric.ball w₀ δ, ‖dslope f c w‖ ≤ C)
     (h_deriv_bound : ∃ D : ℝ, ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ D)
     (h_dslope_hasDerivAt : ∀ w₀ ∈ U, ∃ ε > 0,
@@ -357,6 +392,99 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
     (intervalIntegrable_const (c := C * D))
     (by filter_upwards with t ht w hw; rw [Set.uIoc_of_le zero_le_one] at ht
         exact h_dslope_hda t (Ioc_subset_Icc_self ht) w (hball_sub_εd hw))).2.differentiableAt
+
+/-! ### B-2 partial regularity bundle -/
+
+/-- Strong measurability of the `dixonH1` integrand, from f DifferentiableOn U +
+γ.image ⊆ U. Uses `dslope_fixed_continuousOn`. -/
+private lemma dixonH1_integrand_stronglyMeasurable
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    {γ : PiecewiseC1Path x x} (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    {w : ℂ} (hw : w ∈ U) :
+    AEStronglyMeasurable
+      (fun t => dslope f w (γ t) * deriv γ.toPath.extend t)
+      (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
+  rw [Set.uIoc_of_le (zero_le_one' ℝ)]
+  have h_cont : ContinuousOn (fun t => dslope f w (γ t)) (Icc (0 : ℝ) 1) :=
+    dslope_fixed_continuousOn hU hf hγ hw
+  have h_meas_prod : AEStronglyMeasurable
+      (fun t => dslope f w (γ t)) (volume.restrict (Ioc (0 : ℝ) 1)) :=
+    (h_cont.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
+  exact h_meas_prod.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+
+/-- **B-2 partial bundle**: `dixonH1 f γ` is differentiable on `U` when
+f is differentiable on open U, γ is a PwC1Immersion with image in U, and
+γ.toPath.extend is Lipschitz, given two remaining oracle hypotheses on the
+second-order structure of `dslope`:
+
+* `h_F'_meas` — measurability of `t ↦ deriv (dslope f (γt)) w₀`
+* `h_dslope_deriv_bound` — local uniform bound on `deriv (dslope f (γt)) w`.
+
+Auto-discharges the other 5 oracles of `dixonH1_differentiableOn`:
+* `h_int`, `h_meas` — via strong measurability + bounded + finite volume
+* `_h_dslope_bound` — via continuity of dslope on compact γ.image
+* `h_deriv_bound` — via `norm_deriv_le_of_lipschitz`
+* `h_dslope_hasDerivAt` — via `dslope_hasDerivAt_first_arg`. -/
+theorem dixonH1_differentiableOn_of_regular {f : ℂ → ℂ} {U : Set ℂ}
+    (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
+      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t)
+      (volume.restrict (Set.uIoc 0 1)))
+    (h_dslope_deriv_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
+      ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
+        ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C) :
+    DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U := by
+  have h_deriv_bound : ∃ D : ℝ, ∀ t ∈ Icc (0 : ℝ) 1,
+      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ D :=
+    ⟨K, fun _ _ => norm_deriv_le_of_lipschitz hLip⟩
+  have h_γ_cont : ContinuousOn (γ.toPiecewiseC1Path : ℝ → ℂ) (Icc (0 : ℝ) 1) :=
+    γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
+  have h_int : ∀ w ∈ U, IntervalIntegrable
+      (fun t => dslope f w (γ.toPiecewiseC1Path t) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1 := by
+    intro w hw
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
+    have h_meas : AEStronglyMeasurable
+        (fun t => dslope f w (γ.toPiecewiseC1Path t) *
+          deriv γ.toPiecewiseC1Path.toPath.extend t)
+        (volume.restrict (Ioc (0 : ℝ) 1)) := by
+      have := dixonH1_integrand_stronglyMeasurable hU hf hγ hw
+      rwa [Set.uIoc_of_le (zero_le_one' ℝ)] at this
+    haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
+      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+    obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
+      (dslope_fixed_continuousOn hU hf hγ hw).norm
+    refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+    rw [norm_mul]
+    refine mul_le_mul (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
+      (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _)
+      (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
+  have h_meas : ∀ w₀ ∈ U, ∃ ε > 0, ∀ w ∈ Metric.ball w₀ ε,
+      AEStronglyMeasurable
+        (fun t => dslope f w (γ.toPiecewiseC1Path t) *
+          deriv γ.toPiecewiseC1Path.toPath.extend t)
+        (volume.restrict (Set.uIoc 0 1)) := by
+    intro w₀ hw₀
+    obtain ⟨ε, hε_pos, hball_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
+    exact ⟨ε, hε_pos, fun w hw =>
+      dixonH1_integrand_stronglyMeasurable hU hf hγ (hball_sub hw)⟩
+  have h_dslope_hasDerivAt : ∀ w₀ ∈ U, ∃ ε > 0,
+      ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ ε,
+        HasDerivAt (fun w' => dslope f w' (γ.toPiecewiseC1Path t) *
+          deriv γ.toPiecewiseC1Path.toPath.extend t)
+          (deriv (dslope f (γ.toPiecewiseC1Path t)) w *
+            deriv γ.toPiecewiseC1Path.toPath.extend t) w := by
+    intro w₀ hw₀
+    obtain ⟨ε, hε_pos, hball_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
+    refine ⟨ε, hε_pos, fun t ht w hw => ?_⟩
+    exact (dslope_hasDerivAt_first_arg hU hf (hγ t ht) (hball_sub hw)).mul_const _
+  exact dixonH1_differentiableOn hU hf γ hγ h_int h_meas
+    h_deriv_bound h_dslope_hasDerivAt h_F'_meas h_dslope_deriv_bound
 
 /-! ## Dixon function is entire -/
 
