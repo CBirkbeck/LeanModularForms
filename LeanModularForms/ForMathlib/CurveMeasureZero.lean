@@ -87,4 +87,21 @@ theorem exists_mem_not_mem_image_of_isOpen_of_lipschitz
   have h_pos : 0 < MeasureTheory.volume U := hU_open.measure_pos _ hU_ne
   exact (h_zero.trans_lt h_pos).false
 
+/-! ### Specialized to `PiecewiseC1Path` -/
+
+/-- **A-2 specialization for `PiecewiseC1Path`.** If `γ.toPath.extend` is Lipschitz
+and `U` is open nonempty, there exists `w₀ ∈ U` with γ avoiding `w₀`.
+
+The Lipschitz hypothesis is supplied by the caller; it holds automatically for
+`PwC1Immersion` with bounded derivative (typical case). -/
+theorem exists_mem_not_mem_path_image_of_isOpen
+    {x y : ℂ} (γ : PiecewiseC1Path x y)
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    ∃ w₀ ∈ U, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t ≠ w₀ := by
+  obtain ⟨w₀, hw₀_mem, hw₀_off⟩ :=
+    exists_mem_not_mem_image_of_isOpen_of_lipschitz hU_open hU_ne hLip
+      (Icc (0 : ℝ) 1)
+  refine ⟨w₀, hw₀_mem, fun t ht heq => hw₀_off ⟨t, ht, heq⟩⟩
+
 end ForMathlib
