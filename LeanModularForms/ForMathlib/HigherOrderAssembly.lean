@@ -3,6 +3,7 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.GeneralizedResidueTheorem
+import LeanModularForms.ForMathlib.CurveMeasureZero
 
 /-!
 # Higher-Order Cancellation Assembly
@@ -593,6 +594,60 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed
   have h_lim := h_cancel.add h_sing
   simp only [zero_add] at h_lim
   exact h_lim.congr' (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+
+/-! ## Null-homologous closed form with automatic w₀ from Lipschitz -/
+
+/-- **Variant of `hasCauchyPVOn_simplePoles_nullHomologous_closed` auto-deriving w₀.**
+
+If `γ.toPath.extend` is Lipschitz, the w₀ hypothesis is automatic via A-2's
+`exists_mem_not_mem_image_of_isOpen_of_lipschitz`. The existence is packaged
+as a classical choice so the returned theorem uses only the same Lipschitz
+hypothesis plus the Dixon-zero oracle (plus integrability). -/
+theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_of_lipschitz
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    -- Lipschitz hypothesis — supplied by caller for the specific curve
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend)
+    -- For each valid w₀, the caller supplies Dixon-zero + integrability
+    (dixon_zero_for :
+      ∀ w₀ ∈ U, (∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀) →
+        (∀ w, dixonFunction
+          (fun z => (z - w₀) *
+            (f z - principalPartSum S (fun s => residue f s) z)) U γ w = 0) ∧
+        IntervalIntegrable
+          (fun t => (γ t - w₀) *
+            (f (γ t) - principalPartSum S (fun s => residue f s) (γ t))
+            / (γ t - w₀) * deriv γ.toPath.extend t) volume 0 1 ∧
+        IntervalIntegrable
+          (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1)
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1)
+    (h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
+    (hI : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (residue f s / (γ.toPath.extend t - s)) *
+        deriv γ.toPath.extend t) volume 0 1) :
+    HasCauchyPVOn S f γ
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ s * residue f s) := by
+  -- Derive w₀ from A-2
+  obtain ⟨w₀, hw₀_in_U, hw₀_off⟩ :=
+    ForMathlib.exists_mem_not_mem_path_image_of_isOpen γ hU_open hU_ne hLip
+  -- Unpack Dixon-zero + integrability
+  obtain ⟨h_dixon_zero, h_cauchy_int, h_base_int⟩ :=
+    dixon_zero_for w₀ hw₀_in_U hw₀_off
+  exact hasCauchyPVOn_simplePoles_nullHomologous_closed hU_open S hS_in_U f hf γ
+    hSimplePoles hγ_in_U hγ_avoids hδ w₀ hw₀_in_U hw₀_off h_dixon_zero
+    h_cauchy_int h_base_int h_rem_int h_pp_int hI
 
 /-! ## Convex corollary derived as specialization of the general theorem -/
 
