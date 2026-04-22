@@ -146,4 +146,88 @@ theorem HasGeneralizedWindingNumber.const_mul {γ : PiecewiseC1Path x y} {z₀ w
     HasCauchyPV (fun z => c * (z - z₀)⁻¹) γ z₀ (c * (2 * ↑Real.pi * I * w)) :=
   h.smul c
 
+/-! ### Continuity off the curve -/
+
+/-- Helper: distance lower bound for points in a small ball around `w₀` (off the curve). -/
+private lemma ball_dist_to_curve_lb {γ : PiecewiseC1Path x y} {w₀ : ℂ}
+    (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀) :
+    ∃ ε > 0, ∀ w ∈ Metric.ball w₀ ε, ∀ t ∈ Icc (0 : ℝ) 1, ε ≤ ‖γ t - w‖ := by
+  have h_compact : IsCompact (γ.toPath.extend '' Icc (0 : ℝ) 1) :=
+    isCompact_Icc.image γ.toPath.continuous_extend
+  have h_nonempty : (γ.toPath.extend '' Icc (0 : ℝ) 1).Nonempty :=
+    ⟨γ.toPath.extend 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩
+  have h_not_mem : w₀ ∉ γ.toPath.extend '' Icc (0 : ℝ) 1 :=
+    fun ⟨t, ht, heq⟩ => hoff t ht heq
+  have hδ_pos : 0 < Metric.infDist w₀ (γ.toPath.extend '' Icc (0 : ℝ) 1) :=
+    (h_compact.isClosed.notMem_iff_infDist_pos h_nonempty).mp h_not_mem
+  refine ⟨Metric.infDist w₀ (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2, by linarith, ?_⟩
+  intro w hw t ht
+  have h1 : Metric.infDist w₀ (γ.toPath.extend '' Icc (0 : ℝ) 1) ≤ dist w₀ (γ t) :=
+    Metric.infDist_le_dist_of_mem (mem_image_of_mem _ ht)
+  have h2 := Metric.mem_ball.mp hw
+  rw [Complex.dist_eq] at h1 h2
+  have h3 : ‖γ t - w₀‖ ≤ ‖γ t - w‖ + ‖w - w₀‖ := by
+    have h_eq : γ t - w₀ = (γ t - w) + (w - w₀) := by ring
+    rw [h_eq]; exact norm_add_le _ _
+  rw [show ‖γ t - w₀‖ = ‖w₀ - γ t‖ from norm_sub_rev _ _] at h3
+  rw [show ‖w - w₀‖ = ‖w₀ - w‖ from norm_sub_rev _ _] at h3
+  have h4 : ‖w₀ - w‖ < Metric.infDist w₀ (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2 := by
+    rw [← norm_sub_rev]; exact h2
+  linarith [h1, h4]
+
+/-- The generalized winding number is continuous at any point off a Lipschitz
+piecewise C¹ curve. Uses parametric continuity of the contour integral
+(`intervalIntegral.continuousAt_of_dominated_interval`) with the bound
+`‖(γt - w)⁻¹ * γ'(t)‖ ≤ ε⁻¹ · K` for `w` in a ball around `w₀`. -/
+theorem generalizedWindingNumber_continuousAt_of_avoids
+    {γ : PiecewiseC1Path x y} {w₀ : ℂ}
+    (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    ContinuousAt (generalizedWindingNumber γ) w₀ := by
+  obtain ⟨ε, hε_pos, h_dist_lb⟩ := ball_dist_to_curve_lb hoff
+  set F : ℂ → ℝ → ℂ := fun w t => (γ t - w)⁻¹ * deriv γ.toPath.extend t
+  have h_integrand_meas : ∀ w ∈ Metric.ball w₀ ε,
+      AEStronglyMeasurable (F w) (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
+    intro w hw
+    rw [Set.uIoc_of_le (zero_le_one' ℝ)]
+    have h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ t - w ≠ 0 := fun t ht h => by
+      have hε_le : ε ≤ ‖γ t - w‖ := h_dist_lb w hw t ht
+      rw [h, norm_zero] at hε_le; linarith
+    have h_cont_inv : ContinuousOn (fun t => (γ t - w)⁻¹) (Icc (0 : ℝ) 1) :=
+      (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const).inv₀ h_avoid
+    exact ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
+      measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+  have h_eq_nbhd : (fun w => generalizedWindingNumber γ w) =ᶠ[nhds w₀]
+      fun w => (2 * ↑Real.pi * I)⁻¹ * ∫ t in (0 : ℝ)..1, F w t := by
+    filter_upwards [Metric.ball_mem_nhds w₀ hε_pos] with w hw
+    have hγ_avoids : ∃ δ' > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ' ≤ ‖γ t - w‖ :=
+      ⟨ε, hε_pos, h_dist_lb w hw⟩
+    rw [(hasGeneralizedWindingNumber_of_avoids hγ_avoids).eq]
+    simp only [PiecewiseC1Path.contourIntegral, F]
+  refine (ContinuousAt.congr ?_ h_eq_nbhd.symm)
+  refine ContinuousAt.mul continuousAt_const ?_
+  refine intervalIntegral.continuousAt_of_dominated_interval
+    (bound := fun _ => ε⁻¹ * K) ?_ ?_
+    (intervalIntegrable_const (c := ε⁻¹ * K)) ?_
+  · filter_upwards [Metric.ball_mem_nhds w₀ hε_pos] with w hw
+    exact h_integrand_meas w hw
+  · filter_upwards [Metric.ball_mem_nhds w₀ hε_pos] with w hw
+    filter_upwards with t ht
+    rw [Set.uIoc_of_le (zero_le_one' ℝ)] at ht
+    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+    simp only [F, norm_mul, norm_inv]
+    exact mul_le_mul
+      (inv_anti₀ hε_pos (h_dist_lb w hw t ht_Icc))
+      (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _)
+      (inv_nonneg.mpr hε_pos.le)
+  · filter_upwards with t ht
+    rw [Set.uIoc_of_le (zero_le_one' ℝ)] at ht
+    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+    have h_avoid : γ t - w₀ ≠ 0 := fun h => by
+      have hε_le : ε ≤ ‖γ t - w₀‖ :=
+        h_dist_lb w₀ (Metric.mem_ball_self hε_pos) t ht_Icc
+      rw [h, norm_zero] at hε_le; linarith
+    exact ((continuous_const.sub continuous_id).continuousAt.inv₀ h_avoid).mul
+      continuousAt_const
+
 end
