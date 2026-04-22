@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 16 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial, outside closure), B-5 (aggregator with oracles), B-6 (partial, Lipschitz auto-w₀)
-- Open: B-1 (full), B-2..B-4, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded), B-4, B-5 (aggregator with oracles + bounded variant), B-6 (partial, Lipschitz auto-w₀)
+- Open: B-1 (full boundary case), B-2, B-3, CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 3 workers at peak (A, B-stream, C-stream all independent after A)
 
 ## Tickets
@@ -44,16 +44,22 @@
 
 ### [B-1] h_winding_zero_near from null-hom + compact curve
 
-- **Status**: open
-- **File**: `ForMathlib/DixonTheorem.lean`
+- **Status**: partial done (outside-closure case + cocompact-bounded case);
+  full boundary case open
+- **File**: `ForMathlib/NullHomologous.lean`
 - **Depends on**: none
 - **Parallel**: yes
 - **Description**: Prove that for `γ` null-homologous in `U`, for any `w ∉ U`
   off the curve, there exists `ε > 0` such that for all `w' ∈ ball w ε`,
   `generalizedWindingNumber γ w' = 0`. Requires: winding is integer and
   continuous on ℂ \ γ.image, hence locally constant on connected components.
-- **Mathlib check**: winding integer off closed curve + continuity — these
-  are NOT currently in pure FM and would need to be proved.
+- **Done partial**:
+  - `IsNullHomologous.winding_zero_nhds_of_not_mem_closure` — handles
+    the case `w ∉ closure U` (the easy case; ball stays outside U).
+  - `IsNullHomologous.winding_eventually_zero_cocompact_of_bounded` — for
+    bounded U, winding eventually zero in `cocompact ℂ`.
+- **Open**: boundary case `w ∈ closure U \ U` — needs locally-constant winding
+  theory (winding integer off closed curve + continuity).
 - **API**: `generalizedWindingNumber_eventually_zero_of_nullHomologous`.
 
 ### [B-2] h1 differentiability from regularity
@@ -78,12 +84,12 @@
 
 ### [B-4] dixonFunction eventually equals dixonH2 (auto)
 
-- **Status**: open
+- **Status**: done (via `dixonFunction_eventually_eq_dixonH2_of_nullHomologous` in `ForMathlib/DixonTheorem.lean`)
 - **File**: `ForMathlib/DixonTheorem.lean`
-- **Depends on**: B-1
-- **Parallel**: no
-- **Description**: Package `dixonFunction_eventually_eq_dixonH2` with
-  hypotheses derived from null-hom + regularity.
+- **Depends on**: B-1 cocompact (done)
+- **Description**: For null-hom γ in bounded open U, the `h_winding_evt`
+  hypothesis is discharged automatically via
+  `IsNullHomologous.winding_eventually_zero_cocompact_of_bounded`.
 - **API**: `dixonFunction_eventually_eq_dixonH2_of_nullHomologous`.
 
 ### [B-5] Dixon-zero aggregator

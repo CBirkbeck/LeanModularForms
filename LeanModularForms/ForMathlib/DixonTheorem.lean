@@ -207,6 +207,27 @@ theorem dixonFunction_eventually_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ}
   · rw [h_identity w hoff, hwn]; ring
   · rfl
 
+/-- **B-4 bundle**: `dixonFunction_eventually_eq_dixonH2` for null-homologous curves
+in bounded open sets. The `h_winding_evt` premise is discharged automatically via
+`IsNullHomologous.winding_eventually_zero_cocompact_of_bounded`.
+
+Takes the `h_identity` hypothesis (which follows from the integrability and
+`dixonH1_eq_dixonH2_sub_winding_f`) and null-homologous + bounded U, producing
+the eventual equality in `cocompact ℂ`. -/
+theorem dixonFunction_eventually_eq_dixonH2_of_nullHomologous
+    {f : ℂ → ℂ} {U : Set ℂ}
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (hU_bounded : Bornology.IsBounded U)
+    (h_identity : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      dixonH1 f γ.toPiecewiseC1Path w =
+        dixonH2 f γ.toPiecewiseC1Path w -
+          2 * ↑Real.pi * I * generalizedWindingNumber γ.toPiecewiseC1Path w * f w) :
+    ∀ᶠ w in Filter.cocompact ℂ,
+      dixonFunction f U γ.toPiecewiseC1Path w =
+        dixonH2 f γ.toPiecewiseC1Path w :=
+  dixonFunction_eventually_eq_dixonH2 γ h_identity
+    (h_null.winding_eventually_zero_cocompact_of_bounded hU_bounded)
+
 /-! ## Cauchy integral formula -/
 
 /-- **Cauchy integral formula for null-homologous curves.**
@@ -374,5 +395,37 @@ theorem dixonFunction_eq_zero_of_nullHomologous
         dixonH2 f γ.toPiecewiseC1Path w :=
     dixonFunction_eventually_eq_dixonH2 γ h_identity h_winding_evt
   exact dixonFunction_eq_zero_of_bounds h_entire h_evt hM_f_nn hR hM_f hM_d
+
+/-- **B-5 variant for bounded U**: `dixonFunction_eq_zero_of_nullHomologous` specialized
+to bounded open sets. The cocompact-winding-zero hypothesis is discharged automatically
+via B-4 / `IsNullHomologous.winding_eventually_zero_cocompact_of_bounded`. -/
+theorem dixonFunction_eq_zero_of_nullHomologous_bounded
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
+    (h2_diff : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      DifferentiableAt ℂ (dixonH2 f γ.toPiecewiseC1Path) w)
+    (h_cauchy_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => f (γ.toPiecewiseC1Path t) /
+        (γ.toPiecewiseC1Path t - w) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_base_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0)
+    {R M_f M_d : ℝ} (hM_f_nn : 0 ≤ M_f)
+    (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPiecewiseC1Path t‖ ≤ R)
+    (hM_f : ∀ t ∈ Icc (0 : ℝ) 1, ‖f (γ.toPiecewiseC1Path t)‖ ≤ M_f)
+    (hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
+      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ M_d) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
+  dixonFunction_eq_zero_of_nullHomologous hU hf γ h_null h1_diff h2_diff
+    h_cauchy_int h_base_int h_winding_zero_near
+    (h_null.winding_eventually_zero_cocompact_of_bounded hU_bounded)
+    hM_f_nn hR hM_f hM_d
 
 end
