@@ -574,4 +574,30 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
     hLip h1_diff h_cauchy_int h_base_int h_winding_zero_near
     hM_f_nn hR hM_f hM_d
 
+/-- **B-5 variant with B-2 partial auto-discharge**: Discharges `h1_diff` via B-2's
+`dixonH1_differentiableOn_of_regular`. Remaining oracles:
+* `h_F'_meas`, `h_dslope_deriv_bound` — second-order structure of `dslope`
+* `h_winding_zero_near` — B-1 full (boundary case)
+-/
+theorem dixonFunction_eq_zero_of_nullHomologous_autoH1 {f : ℂ → ℂ} {U : Set ℂ}
+    (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
+      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t)
+      (volume.restrict (Set.uIoc 0 1)))
+    (h_dslope_deriv_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
+      ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
+        ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
+  dixonFunction_eq_zero_of_nullHomologous_autoBounds hU hU_bounded hf γ h_null
+    hLip (dixonH1_differentiableOn_of_regular hU hf γ h_null.image_subset hLip
+      h_F'_meas h_dslope_deriv_bound) h_winding_zero_near
+
 end
