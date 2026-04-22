@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 import Mathlib.Analysis.Calculus.DSlope
 import Mathlib.Analysis.Calculus.Deriv.Shift
 import Mathlib.Analysis.Complex.Convex
+import Mathlib.Analysis.Complex.Liouville
 import Mathlib.Analysis.Complex.RemovableSingularity
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Analysis.SpecificLimits.RCLike
@@ -256,6 +257,75 @@ theorem continuousOn_dslope_prod {U : Set ℂ} (hU : Convex ℝ U) (hU_open : Is
     have h2 : ContinuousAt (deriv f) (c₀ + t • (w₀ - c₀)) :=
       h_deriv_contU.continuousAt (hU_open.mem_nhds hmem)
     exact h2.comp_of_eq h1 rfl
+
+/-! ### Cauchy estimates for the derivative of `dslope` -/
+
+/-- Uniform bound on `deriv (dslope f c) w` for `(c, w)` in a compact product neighborhood
+of `(c₀, w₀)`, via Cauchy's estimate applied to `dslope f c` (analytic on `U` by
+`Complex.differentiableOn_dslope`).
+
+The bound is `2M/ρ` where `M = sup_{(c, z) ∈ closedBall c₀ ρ × closedBall w₀ (3ρ/2)} ‖dslope f c z‖`
+(finite by joint continuity D-1b on a compact set) and `ρ` is chosen so
+`closedBall c₀ (2ρ), closedBall w₀ (2ρ) ⊆ U`. -/
+theorem deriv_dslope_bounded_locally {U : Set ℂ} (hU : Convex ℝ U) (hU_open : IsOpen U)
+    (hf : DifferentiableOn ℂ f U) {c₀ w₀ : ℂ} (hc₀ : c₀ ∈ U) (hw₀ : w₀ ∈ U) :
+    ∃ C > 0, ∃ δ > 0, ∀ c ∈ Metric.ball c₀ δ, ∀ w ∈ Metric.ball w₀ δ,
+      ‖deriv (dslope f c) w‖ ≤ C := by
+  obtain ⟨ρ_c, hρ_c_pos, hρ_c_sub⟩ := Metric.isOpen_iff.mp hU_open c₀ hc₀
+  obtain ⟨ρ_w, hρ_w_pos, hρ_w_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
+  set ρ := min ρ_c ρ_w / 4
+  have hρ_pos : 0 < ρ := by simp only [ρ]; positivity
+  -- Compact K = closedBall c₀ ρ × closedBall w₀ (3ρ/2) ⊆ U × U
+  have h_cB_w_sub : Metric.closedBall w₀ (3 * ρ / 2) ⊆ U := fun z hz =>
+    hρ_w_sub (by
+      rw [Metric.mem_closedBall] at hz
+      rw [Metric.mem_ball]
+      simp only [ρ] at hz ⊢
+      linarith [min_le_right ρ_c ρ_w])
+  have h_cB_c_sub : Metric.closedBall c₀ ρ ⊆ U := fun z hz =>
+    hρ_c_sub (by
+      rw [Metric.mem_closedBall] at hz
+      rw [Metric.mem_ball]
+      simp only [ρ] at hz ⊢
+      linarith [min_le_left ρ_c ρ_w])
+  have hK_sub : Metric.closedBall c₀ ρ ×ˢ Metric.closedBall w₀ (3 * ρ / 2) ⊆ U ×ˢ U :=
+    fun ⟨c, z⟩ ⟨hc, hz⟩ => ⟨h_cB_c_sub hc, h_cB_w_sub hz⟩
+  have hK_compact : IsCompact
+      (Metric.closedBall c₀ ρ ×ˢ Metric.closedBall w₀ (3 * ρ / 2)) :=
+    (isCompact_closedBall _ _).prod (isCompact_closedBall _ _)
+  have h_cont := continuousOn_dslope_prod hU hU_open hf
+  obtain ⟨M, hM⟩ := hK_compact.bddAbove_image (h_cont.mono hK_sub).norm
+  refine ⟨max M 0 / (ρ / 2) + 1, by positivity, ρ / 2, by positivity, ?_⟩
+  intro c hc w hw
+  rw [Metric.mem_ball] at hc hw
+  have hc_cB : c ∈ Metric.closedBall c₀ ρ := by
+    rw [Metric.mem_closedBall]; linarith
+  have hc_U : c ∈ U := h_cB_c_sub hc_cB
+  have h_ds_diff_U : DifferentiableOn ℂ (dslope f c) U :=
+    (Complex.differentiableOn_dslope (hU_open.mem_nhds hc_U)).mpr hf
+  -- Cauchy estimate on ball w (ρ/2)
+  have hρ2_pos : 0 < ρ / 2 := by positivity
+  have h_cB_w_w0 : Metric.closedBall w (ρ / 2) ⊆ Metric.closedBall w₀ (3 * ρ / 2) := by
+    intro z hz
+    rw [Metric.mem_closedBall] at hz ⊢
+    calc dist z w₀ ≤ dist z w + dist w w₀ := dist_triangle _ _ _
+      _ ≤ ρ / 2 + ρ / 2 := by linarith
+      _ ≤ 3 * ρ / 2 := by linarith
+  have h_diff_ball : DifferentiableOn ℂ (dslope f c) (Metric.ball w (ρ / 2)) :=
+    h_ds_diff_U.mono fun z hz =>
+      h_cB_w_sub (h_cB_w_w0 (Metric.ball_subset_closedBall hz))
+  have h_DC : DiffContOnCl ℂ (dslope f c) (Metric.ball w (ρ / 2)) :=
+    ⟨h_diff_ball,
+     (h_ds_diff_U.mono fun z hz =>
+       h_cB_w_sub (h_cB_w_w0 (Metric.closure_ball_subset_closedBall hz))).continuousOn⟩
+  have h_sphere_bound : ∀ z ∈ Metric.sphere w (ρ / 2), ‖dslope f c z‖ ≤ max M 0 := by
+    intro z hz
+    have hz_cB : z ∈ Metric.closedBall w₀ (3 * ρ / 2) :=
+      h_cB_w_w0 (Metric.sphere_subset_closedBall hz)
+    exact le_max_of_le_left (hM ⟨(c, z), ⟨hc_cB, hz_cB⟩, rfl⟩)
+  have h_est := Complex.norm_deriv_le_of_forall_mem_sphere_norm_le hρ2_pos h_DC
+    h_sphere_bound
+  linarith
 
 end Complex
 
