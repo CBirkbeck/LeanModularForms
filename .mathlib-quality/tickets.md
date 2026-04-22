@@ -86,21 +86,22 @@
 
 ### [D-1] dslope integral representation
 
-- **Status**: core done (via `Complex.dslope_eq_integral_deriv` in
-  `ForMathlib/DslopeIntegral.lean`); joint continuity open
+- **Status**: core + D-1a/b/c done; D-1d open (continuity of `c ↦ deriv (dslope f c) w₀`)
 - **File**: `ForMathlib/DslopeIntegral.lean`
 - **Depends on**: none
 - **Parallel**: yes
 - **Done**:
   - `Complex.dslope_eq_integral_deriv` — FTC representation:
     `dslope f c w = ∫₀¹ deriv f (c + t • (w - c))` on convex open `U`
-- **Open (follow-up tickets):**
-  - D-1a: `continuousOn_dslope_first_arg` — via dominated convergence on
-    closed ball + convex hull + analyticity of `deriv f`
-  - D-1b: `continuous_dslope_prod` — joint continuity on `U × U` (convex)
-  - D-1c: `deriv_dslope_bounded_locally` — Cauchy estimates for
-    `deriv (dslope f c) w` on compact × closed-ball subsets
-- **Unblocks**: B-2 full (`h_F'_meas`, `h_dslope_deriv_bound`)
+  - D-1a: `continuousOn_dslope_first_arg` — continuity in first arg
+  - D-1b: `continuousOn_dslope_prod` — joint continuity on `U × U`
+  - D-1c: `deriv_dslope_bounded_locally` and `deriv_dslope_bounded_on_compact`
+    — Cauchy estimates via D-1b + `norm_deriv_le_of_forall_mem_sphere_norm_le`
+- **Open (D-1d)**: `continuousOn_deriv_dslope` — continuity of `c ↦ deriv (dslope f c) w₀`.
+  Requires proving continuity of the circle integral
+  `(1/2πi) ∮_{|z-w₀|=R} dslope f c z / (z-w₀)² dz` in c (via dominated
+  convergence on the interval integral form).
+- **Unblocks**: B-2 full `h_F'_meas` (via D-1d + γ continuity)
 
 ### [B-3] h2 differentiability from regularity
 
