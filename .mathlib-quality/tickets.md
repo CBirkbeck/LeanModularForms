@@ -86,7 +86,8 @@
 
 ### [D-1] dslope integral representation
 
-- **Status**: core + D-1a/b/c done; D-1d open (continuity of `c ↦ deriv (dslope f c) w₀`)
+- **Status**: core + D-1a/b/c done + B-2 convex auto-discharged via D-1c;
+  D-1d (continuity of `c ↦ deriv (dslope f c) w₀`) open
 - **File**: `ForMathlib/DslopeIntegral.lean`
 - **Depends on**: none
 - **Parallel**: yes
@@ -97,11 +98,16 @@
   - D-1b: `continuousOn_dslope_prod` — joint continuity on `U × U`
   - D-1c: `deriv_dslope_bounded_locally` and `deriv_dslope_bounded_on_compact`
     — Cauchy estimates via D-1b + `norm_deriv_le_of_forall_mem_sphere_norm_le`
+  - **B-2 convex wired**: `dixonH1_differentiableOn_of_regular_convex` uses D-1c
+    to auto-discharge `h_dslope_deriv_bound`
+  - **B-5 convex wired**: `dixonFunction_eq_zero_of_nullHomologous_convex` wires
+    B-2 convex into the Dixon pipeline for convex bounded U
 - **Open (D-1d)**: `continuousOn_deriv_dslope` — continuity of `c ↦ deriv (dslope f c) w₀`.
   Requires proving continuity of the circle integral
   `(1/2πi) ∮_{|z-w₀|=R} dslope f c z / (z-w₀)² dz` in c (via dominated
-  convergence on the interval integral form).
-- **Unblocks**: B-2 full `h_F'_meas` (via D-1d + γ continuity)
+  convergence on the interval integral form). Alternative: pointwise limit
+  of continuous difference quotients for measurability-only.
+- **Unblocks**: B-2 full `h_F'_meas`
 
 ### [B-3] h2 differentiability from regularity
 
