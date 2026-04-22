@@ -168,12 +168,40 @@ theorem hCancel_of_simplePoles_convex
     f hf γ hSimplePoles hγ_in_U hγ_avoids h_rem_int]
   exact hasCauchyPVOn_of_avoids hδ
 
-/-- Null-homologous analog of `hCancel_of_simplePoles_convex`.
+/-- **Pointwise variant of `hCancel_of_simplePoles_nullHomologous`**:
+requires only `dixonFunction ((z-w₀)·(f-pp)) U γ w₀ = 0` at `w₀`. Used when
+`h_dixon_zero` comes from B-5 applied to a corrected remainder that agrees
+with `f - pp` only on `U \ S`. Null-homologous analog of
+`hCancel_of_simplePoles_convex`. -/
+theorem hCancel_of_simplePoles_nullHomologous_at
+    {U : Set ℂ} (_hU_open : IsOpen U)
+    (S : Finset ℂ) (_hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (_hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PiecewiseC1Path x x)
+    (_hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (_hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
+    (_hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (w₀ : ℂ) (hw₀_in_U : w₀ ∈ U)
+    (hw₀_off : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀)
+    (h_dixon_zero_at : dixonFunction
+      (fun z => (z - w₀) *
+        (f z - principalPartSum S (fun s => residue f s) z)) U γ w₀ = 0)
+    (h_cauchy_int : IntervalIntegrable
+      (fun t => (γ t - w₀) *
+        (f (γ t) - principalPartSum S (fun s => residue f s) (γ t))
+        / (γ t - w₀) * deriv γ.toPath.extend t) volume 0 1)
+    (h_base_int : IntervalIntegrable
+      (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
+    HasCauchyPVOn S
+      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
+  have h_zero : γ.contourIntegral
+      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0 :=
+    contourIntegral_eq_zero_of_nullHomologous_at w₀ hw₀_in_U hw₀_off
+      h_dixon_zero_at h_cauchy_int h_base_int
+  rw [← h_zero]
+  exact hasCauchyPVOn_of_avoids hδ
 
-Given null-homologous γ (rather than convex U), we use
-`contourIntegral_eq_zero_of_nullHomologous` to establish that the holomorphic
-remainder has zero contour integral. The caller supplies the Dixon-zero
-hypothesis for the twisted function `g = (z - w₀) · (f - pp)`. -/
 theorem hCancel_of_simplePoles_nullHomologous
     {U : Set ℂ} (hU_open : IsOpen U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
@@ -196,13 +224,10 @@ theorem hCancel_of_simplePoles_nullHomologous
     (h_base_int : IntervalIntegrable
       (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
     HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
-  have h_zero : γ.contourIntegral
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0 :=
-    contourIntegral_eq_zero_of_nullHomologous w₀ hw₀_in_U hw₀_off h_dixon_zero
-      h_cauchy_int h_base_int
-  rw [← h_zero]
-  exact hasCauchyPVOn_of_avoids hδ
+      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
+  hCancel_of_simplePoles_nullHomologous_at hU_open S hS_in_U f hf γ hSimplePoles
+    hγ_in_U hγ_avoids hδ w₀ hw₀_in_U hw₀_off (h_dixon_zero w₀)
+    h_cauchy_int h_base_int
 
 /-- The CPV of the singular part equals the winding number formula when `gamma`
 avoids all poles. -/
