@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 16 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded), B-2 partial, B-3, B-4, B-5 (5 variants), B-6 (partial, Lipschitz auto-w₀)
-- Open: B-1 (full boundary case), B-2 full (2 oracles remain), CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**
+- Open: B-1 (full boundary case = integer-valued winding), CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 3 workers at peak (A, B-stream, C-stream all independent after A)
 
 ## Tickets
@@ -65,49 +65,38 @@
   (local constancy requires this + continuity).
 - **API**: `generalizedWindingNumber_eventually_zero_of_nullHomologous`.
 
-### [B-2] h1 differentiability from regularity
+### [B-2] h1 differentiability from regularity — DONE for convex U
 
-- **Status**: partial done (via `dixonH1_differentiableOn_of_regular` in
-  `ForMathlib/DixonDiff.lean`)
+- **Status**: done via `dixonH1_differentiableOn_of_regular_convex_full` for
+  convex U (all oracles auto-discharged); general open U still has 2 oracles
 - **File**: `ForMathlib/DixonDiff.lean`
-- **Depends on**: D-1 (for joint continuity)
-- **Description**: Wraps `dixonH1_differentiableOn` auto-discharging 5 of 6
-  oracles (integrability, measurability near w, `h_deriv_bound`,
-  `h_dslope_hasDerivAt`) from simple inputs:
-  * `DifferentiableOn ℂ f U`, `IsOpen U`, `γ : PwC1Immersion`, `γ.image ⊆ U`
-  * `LipschitzWith K γ.toPath.extend`
-  Uses `Complex.differentiableOn_dslope`, `dslope_comm`,
-  `stronglyMeasurable_deriv`. Removed unused `_h_dslope_bound` from
-  `dixonH1_differentiableOn`.
-- **Still oracles**: `h_F'_meas` (measurability of `t ↦ deriv (dslope f (γt)) w₀`)
-  and `h_dslope_deriv_bound` (local uniform bound on `deriv (dslope f (γt)) w`)
-  — both second-order structure of dslope, now tractable via D-1.
-- **API**: `dixonH1_differentiableOn_of_regular`.
+- **Depends on**: D-1
+- **Variants**:
+  - `dixonH1_differentiableOn_of_regular`: takes `h_F'_meas` + `h_dslope_deriv_bound`
+    as oracles
+  - `dixonH1_differentiableOn_of_regular_convex`: drops `h_dslope_deriv_bound` via D-1c
+  - `dixonH1_differentiableOn_of_regular_convex_full`: drops `h_F'_meas` via D-1d.
+    **Fully closed for convex open U.**
 
-### [D-1] dslope integral representation
+### [D-1] dslope theory API — CLOSED
 
-- **Status**: core + D-1a/b/c done + B-2 convex auto-discharged via D-1c;
-  D-1d (continuity of `c ↦ deriv (dslope f c) w₀`) open
+- **Status**: D-1 core + D-1a/b/c/d all done; B-2 full + B-5 full closed for convex U
 - **File**: `ForMathlib/DslopeIntegral.lean`
 - **Depends on**: none
 - **Parallel**: yes
-- **Done**:
-  - `Complex.dslope_eq_integral_deriv` — FTC representation:
-    `dslope f c w = ∫₀¹ deriv f (c + t • (w - c))` on convex open `U`
+- **All Done**:
+  - `Complex.dslope_eq_integral_deriv` — FTC representation
   - D-1a: `continuousOn_dslope_first_arg` — continuity in first arg
   - D-1b: `continuousOn_dslope_prod` — joint continuity on `U × U`
-  - D-1c: `deriv_dslope_bounded_locally` and `deriv_dslope_bounded_on_compact`
-    — Cauchy estimates via D-1b + `norm_deriv_le_of_forall_mem_sphere_norm_le`
-  - **B-2 convex wired**: `dixonH1_differentiableOn_of_regular_convex` uses D-1c
-    to auto-discharge `h_dslope_deriv_bound`
-  - **B-5 convex wired**: `dixonFunction_eq_zero_of_nullHomologous_convex` wires
-    B-2 convex into the Dixon pipeline for convex bounded U
-- **Open (D-1d)**: `continuousOn_deriv_dslope` — continuity of `c ↦ deriv (dslope f c) w₀`.
-  Requires proving continuity of the circle integral
-  `(1/2πi) ∮_{|z-w₀|=R} dslope f c z / (z-w₀)² dz` in c (via dominated
-  convergence on the interval integral form). Alternative: pointwise limit
-  of continuous difference quotients for measurability-only.
-- **Unblocks**: B-2 full `h_F'_meas`
+  - D-1c: `deriv_dslope_bounded_locally`/`_on_compact` — Cauchy estimates
+  - **D-1d: `aestronglyMeasurable_deriv_dslope`** — AE measurability of
+    `c ↦ deriv (dslope f c) w₀` via pointwise limit of continuous difference
+    quotients (using D-1a + `HasDerivAt.tendsto_slope` +
+    `aestronglyMeasurable_of_tendsto_ae`)
+  - **B-2 convex wired**: `dixonH1_differentiableOn_of_regular_convex_full`
+    auto-discharges all 6 oracles
+  - **B-5 convex wired**: `dixonFunction_eq_zero_of_nullHomologous_convex_full`
+    — only `h_winding_zero_near` (B-1 full) remains
 
 ### [B-3] h2 differentiability from regularity
 
