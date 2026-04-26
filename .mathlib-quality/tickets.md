@@ -1,10 +1,10 @@
 # Ticket Board: Chain 1 Extended (HW 3.3 Full Closure)
 
 ## Summary
-- Total: 16 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial)
+- Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
 - Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**
-- Open: B-1 (full boundary case = integer-valued winding), CLEANUP-B, B-6 (full), C-1..C-4, CLEANUP-C, CLEANUP-FINAL
-- Parallel capacity: 3 workers at peak (A, B-stream, C-stream all independent after A)
+- Open: **W-0..W-5** (B-1 full path, sequential), B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
 
@@ -45,25 +45,92 @@
 ### [B-1] h_winding_zero_near from null-hom + compact curve
 
 - **Status**: partial done (outside-closure case + cocompact-bounded case +
-  continuity); full boundary case open
+  continuity); full boundary case = W-5 below
 - **File**: `ForMathlib/NullHomologous.lean`, `ForMathlib/GeneralizedWindingNumber.lean`
-- **Depends on**: none
+- **Depends on**: W-1, W-2, W-3, W-4
 - **Parallel**: yes
-- **Description**: Prove that for `γ` null-homologous in `U`, for any `w ∉ U`
-  off the curve, there exists `ε > 0` such that for all `w' ∈ ball w ε`,
-  `generalizedWindingNumber γ w' = 0`. Requires: winding is integer and
-  continuous on ℂ \ γ.image, hence locally constant on connected components.
-- **Done partial**:
-  - `IsNullHomologous.winding_zero_nhds_of_not_mem_closure` — handles
-    the case `w ∉ closure U` (the easy case; ball stays outside U).
-  - `IsNullHomologous.winding_eventually_zero_cocompact_of_bounded` — for
-    bounded U, winding eventually zero in `cocompact ℂ`.
-  - `generalizedWindingNumber_continuousAt_of_avoids` — winding is
-    continuous at any point off a Lipschitz PwC1 curve. Uses dominated
-    convergence via `intervalIntegral.continuousAt_of_dominated_interval`.
-- **Open**: boundary case `w ∈ closure U \ U` — needs **integer-valued winding**
-  (local constancy requires this + continuity).
-- **API**: `generalizedWindingNumber_eventually_zero_of_nullHomologous`.
+- **Description**: Decomposed into W-series tickets (continuous arg lift +
+  integer-valued winding + locally constant). See [W-5] for final assembly.
+
+### [W-0] Partition lemma for arg lifting
+
+- **Status**: open
+- **File**: `ForMathlib/WindingInteger.lean` (NEW)
+- **Depends on**: none
+- **Parallel**: yes (independent of C-stream)
+- **Description**: For continuous `γ : [0,1] → ℂ` avoiding `w`, there is a
+  partition `0 = t₀ < ... < t_n = 1` of [0,1] such that each segment
+  `γ([t_i, t_{i+1}])` is contained in a half-plane disjoint from `{w}`.
+  Uses Lebesgue number lemma applied to the open cover of γ([0,1]) by
+  ε-balls (each in a half-plane), where ε = (1/2)·infDist(w, γ.image).
+- **Mathlib check**: `IsCompact.exists_lebesgue_number`, `Metric.isCompact_iff_isClosed_bounded`.
+- **API**: `exists_partition_arg_halfplanes`
+
+### [W-1] Continuous arg lift along γ
+
+- **Status**: open
+- **File**: `ForMathlib/WindingInteger.lean`
+- **Depends on**: W-0
+- **Parallel**: no (same file as W-0)
+- **Description**: For continuous `γ : [0,1] → ℂ` avoiding `w`, there exists
+  continuous `θ : [0,1] → ℝ` with `γ(t) - w = ‖γ(t) - w‖ · exp(i θ(t))`.
+  Built using W-0 + `Complex.log` on each half-plane segment; stitch using
+  the fact that on overlaps, two `log`-branches differ by `2πi · k` for
+  some integer `k`.
+- **Mathlib check**: `Complex.log_eq_log_abs_add_arg_mul_I`,
+  `Complex.continuousAt_log`. The full lift is **not** in mathlib.
+- **API**: `Continuous.exists_arg_lift`
+- **Generality**: Should work for any continuous `γ : C([0,1], ℂ \ {w})`.
+
+### [W-2] Winding via arg difference
+
+- **Status**: open
+- **File**: `ForMathlib/WindingInteger.lean`
+- **Depends on**: W-1
+- **Parallel**: no (same file)
+- **Description**: For closed `γ : PiecewiseC1Path x x` avoiding `w` with
+  positive distance, the generalized winding equals `(θ(1) - θ(0))/(2π)`
+  where `θ` is the continuous arg lift from W-1.
+  Proof: FTC for `log(γ - w)` along γ pieces. The contour integral
+  `∮_γ (z-w)⁻¹ dz = ∫₀¹ deriv γ.extend t / (γ(t) - w) dt = log(γ(1) - w) - log(γ(0) - w)`
+  along compatible branches, which simplifies via the lift.
+- **API**: `generalizedWindingNumber_eq_arg_diff`
+
+### [W-3] Winding integer-valued
+
+- **Status**: open
+- **File**: `ForMathlib/WindingInteger.lean`
+- **Depends on**: W-2
+- **Parallel**: no (same file)
+- **Description**: For closed `γ : PiecewiseC1Path x x` (with γ(0) = γ(1))
+  avoiding `w` with positive distance, `∃ n : ℤ, generalizedWindingNumber γ w = n`.
+  Proof: From W-2, `winding = (θ(1) - θ(0))/(2π)`. Closedness means
+  `γ(0) - w = γ(1) - w`, so `exp(i θ(0)) = exp(i θ(1))`, i.e., `θ(1) - θ(0) ∈ 2π·ℤ`.
+- **API**: `generalizedWindingNumber_integer_of_closed_avoiding`
+
+### [W-4] Winding locally constant
+
+- **Status**: open
+- **File**: `ForMathlib/WindingInteger.lean` or extend
+  `ForMathlib/GeneralizedWindingNumber.lean`
+- **Depends on**: W-3 + existing `generalizedWindingNumber_continuousAt_of_avoids`
+- **Parallel**: no
+- **Description**: For γ closed Lipschitz avoiding `w` with positive distance,
+  there exists `ε > 0` such that `winding γ w'` is constant for `w' ∈ ball w ε`.
+  Proof: continuity (existing) + integer-valued (W-3) + ℤ is discrete.
+- **API**: `generalizedWindingNumber_locally_const_of_closed`
+
+### [W-5] B-1 full = h_winding_zero_near
+
+- **Status**: open
+- **File**: `ForMathlib/NullHomologous.lean`
+- **Depends on**: W-4
+- **Parallel**: no
+- **Description**: For γ null-homologous in `U`, `w ∉ U`, `w ∉ γ.image`,
+  there exists `ε > 0` with `winding γ w' = 0` for all `w' ∈ ball w ε`.
+  Proof: W-4 gives `winding γ w' = winding γ w` near `w`; null-hom gives
+  `winding γ w = 0`.
+- **API**: `IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed`
 
 ### [B-2] h1 differentiability from regularity — DONE for convex U
 
