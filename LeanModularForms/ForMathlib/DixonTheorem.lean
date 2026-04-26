@@ -648,4 +648,27 @@ theorem dixonFunction_eq_zero_of_nullHomologous_convex
     hLip (dixonH1_differentiableOn_of_regular_convex hU_convex hU hf γ
       h_null.image_subset hLip h_F'_meas) h_winding_zero_near
 
+/-- **B-5 fully automatic for convex U (only h_winding_zero_near remains)**:
+the maximum auto-discharge variant — combines all of D-1a/b/c/d, B-2 convex full,
+B-3, and B-4 to leave only `h_winding_zero_near` (B-1 full, integer-valued winding)
+as remaining oracle.
+
+For convex bounded open `U` (e.g., `ℍ` for the valence formula) with γ : PwC1Immersion
+Lipschitz and `f` differentiable on `U`, the Dixon function is identically zero
+modulo the single B-1 full oracle. -/
+theorem dixonFunction_eq_zero_of_nullHomologous_convex_full
+    {f : ℂ → ℂ} {U : Set ℂ} (hU_convex : Convex ℝ U) (hU : IsOpen U)
+    (hU_bounded : Bornology.IsBounded U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
+  dixonFunction_eq_zero_of_nullHomologous_autoBounds hU hU_bounded hf γ h_null
+    hLip (dixonH1_differentiableOn_of_regular_convex_full hU_convex hU hf γ
+      h_null.image_subset hLip) h_winding_zero_near
+
 end
