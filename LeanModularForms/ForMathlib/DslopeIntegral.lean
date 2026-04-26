@@ -378,6 +378,80 @@ theorem deriv_dslope_bounded_on_compact {U : Set ℂ} (hU : Convex ℝ U) (hU_op
     h_sphere_bound
   linarith
 
+/-! ### Measurability via pointwise limit -/
+
+/-- For `f` differentiable on convex open `U` and `w₀ ∈ U`, the function
+`c ↦ deriv (dslope f c) w₀` is AE strongly measurable on the restriction of any
+measure to `U`. Proof: pointwise limit of continuous difference quotients
+(each continuous by D-1a) using a scaled sequence `h_n = (ρ/2)/(n+1)` chosen
+so that `w₀ + h_n ∈ U` for all `n`. -/
+theorem aestronglyMeasurable_deriv_dslope {U : Set ℂ} (hU : Convex ℝ U)
+    (hU_open : IsOpen U) (hf : DifferentiableOn ℂ f U) {w₀ : ℂ} (hw₀ : w₀ ∈ U)
+    (μ : Measure ℂ) :
+    AEStronglyMeasurable (fun c => deriv (dslope f c) w₀) (μ.restrict U) := by
+  obtain ⟨ρ, hρ_pos, hρ_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
+  -- Sequence `h_n = ((ρ/2) / ((n:ℝ)+1) : ℂ)` — always small, nonzero
+  set h_seq : ℕ → ℂ := fun n => ((ρ / 2 / ((n : ℝ) + 1) : ℝ) : ℂ)
+  have h_seq_real_pos : ∀ n : ℕ, 0 < ρ / 2 / ((n : ℝ) + 1) := fun n => by
+    have : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+    positivity
+  have h_seq_ne : ∀ n : ℕ, h_seq n ≠ 0 := fun n => by
+    simp only [h_seq, ne_eq, Complex.ofReal_eq_zero]
+    exact (h_seq_real_pos n).ne'
+  have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
+    simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
+    have hge1 : (1 : ℝ) ≤ (n : ℝ) + 1 := by
+      have : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+      linarith
+    have : ρ / 2 / ((n : ℝ) + 1) ≤ ρ / 2 := by
+      apply div_le_self (by linarith) hge1
+    linarith
+  have h_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
+    rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]
+    exact h_seq_norm_lt n
+  -- h_seq tends to 0
+  have h_seq_tendsto : Tendsto h_seq atTop (𝓝 0) := by
+    have h_real : Tendsto (fun n : ℕ => ρ / 2 / ((n : ℝ) + 1)) atTop (𝓝 0) := by
+      have h_inv : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
+        (tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds).inv_tendsto_atTop
+      have := h_inv.const_mul (ρ / 2)
+      simpa [div_eq_mul_inv] using this
+    rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
+    exact (Complex.continuous_ofReal.tendsto _).comp h_real
+  -- Approximating sequence
+  set q : ℕ → ℂ → ℂ := fun n c => (dslope f c (w₀ + h_seq n) - dslope f c w₀) / h_seq n
+  -- Each q n is continuous on U
+  have h_q_aemeas : ∀ n : ℕ, AEStronglyMeasurable (q n) (μ.restrict U) := fun n =>
+    (((continuousOn_dslope_first_arg hU hU_open hf (h_in_U n)).sub
+      (continuousOn_dslope_first_arg hU hU_open hf hw₀)).div_const _).aestronglyMeasurable
+      hU_open.measurableSet
+  -- Pointwise limit: q n c → deriv (dslope f c) w₀ for c ∈ U
+  refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
+  filter_upwards [ae_restrict_mem hU_open.measurableSet] with c hc
+  -- For c ∈ U, dslope f c is differentiable at w₀
+  have h_diff : DifferentiableAt ℂ (dslope f c) w₀ :=
+    ((Complex.differentiableOn_dslope (hU_open.mem_nhds hc)).mpr hf w₀ hw₀).differentiableAt
+      (hU_open.mem_nhds hw₀)
+  -- Use HasDerivAt.tendsto_slope at w₀, parameterized by y → w₀
+  have h_slope_tendsto :
+      Tendsto (slope (dslope f c) w₀) (𝓝[≠] w₀) (𝓝 (deriv (dslope f c) w₀)) :=
+    h_diff.hasDerivAt.tendsto_slope
+  -- y_n = w₀ + h_seq n → w₀, y_n ≠ w₀
+  have hy_tendsto : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝 w₀) := by
+    simpa using h_seq_tendsto.const_add w₀
+  have hy_ne : ∀ n, w₀ + h_seq n ≠ w₀ := fun n h => h_seq_ne n (by
+    have := add_left_cancel (a := w₀) (h.trans (add_zero w₀).symm)
+    exact this)
+  have hy_in_compl : ∀ᶠ n : ℕ in atTop, w₀ + h_seq n ∈ ({w₀}ᶜ : Set ℂ) :=
+    Eventually.of_forall fun n => hy_ne n
+  have hy_within : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝[≠] w₀) :=
+    tendsto_nhdsWithin_iff.mpr ⟨hy_tendsto, hy_in_compl⟩
+  have h_comp := h_slope_tendsto.comp hy_within
+  convert h_comp using 1
+  ext n
+  simp only [slope_def_field, Function.comp_apply, q]
+  rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul, mul_comm]
+
 end Complex
 
 end
