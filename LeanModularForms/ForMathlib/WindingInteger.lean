@@ -162,6 +162,32 @@ theorem continuousOn_segRatio {γ : ℝ → ℂ} (hγ : ContinuousOn γ (Icc (0 
   exact ⟨le_trans hsj.1 (segClamp_mem_Icc s_j s_jp1 t h_le).1,
     le_trans (segClamp_mem_Icc s_j s_jp1 t h_le).2 hsjp1.2⟩
 
+/-- Combined: for partition with mesh < δ', `segRatio j t ∈ slitPlane`. -/
+theorem segRatio_mem_slitPlane
+    {γ : ℝ → ℂ} {w : ℂ} {δ' ρ : ℝ} (hρ_pos : 0 < ρ)
+    (h_dist_lb : ∀ t ∈ Icc (0 : ℝ) 1, ρ ≤ ‖γ t - w‖)
+    (h_unif : ∀ t s : ℝ, t ∈ Icc (0 : ℝ) 1 → s ∈ Icc (0 : ℝ) 1 →
+      |t - s| < δ' → ‖γ t - γ s‖ < ρ / 2)
+    {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc (0 : ℝ) 1) (hsjp1 : s_jp1 ∈ Icc (0 : ℝ) 1)
+    (h_le : s_j ≤ s_jp1) (h_mesh : s_jp1 - s_j < δ') (t : ℝ) :
+    segRatio γ w s_j s_jp1 t ∈ Complex.slitPlane :=
+  mem_slitPlane_of_ball_one _
+    (segRatio_mem_ball_one hρ_pos h_dist_lb h_unif hsj hsjp1 h_le h_mesh t)
+
+/-- Each summand in the telescoping arg-lift sum is continuous. -/
+theorem continuousOn_im_log_segRatio {γ : ℝ → ℂ}
+    (hγ : ContinuousOn γ (Icc (0 : ℝ) 1)) {w : ℂ} {δ' ρ : ℝ} (hρ_pos : 0 < ρ)
+    (h_dist_lb : ∀ t ∈ Icc (0 : ℝ) 1, ρ ≤ ‖γ t - w‖)
+    (h_unif : ∀ t s : ℝ, t ∈ Icc (0 : ℝ) 1 → s ∈ Icc (0 : ℝ) 1 →
+      |t - s| < δ' → ‖γ t - γ s‖ < ρ / 2)
+    {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc (0 : ℝ) 1) (hsjp1 : s_jp1 ∈ Icc (0 : ℝ) 1)
+    (h_le : s_j ≤ s_jp1) (h_mesh : s_jp1 - s_j < δ') :
+    ContinuousOn (fun t => (Complex.log (segRatio γ w s_j s_jp1 t)).im)
+      (Icc (0 : ℝ) 1) := by
+  refine Complex.continuous_im.comp_continuousOn ?_
+  exact (continuousOn_segRatio hγ hsj hsjp1 h_le).clog
+    fun t _ => segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif hsj hsjp1 h_le h_mesh t
+
 end Complex
 
 end
