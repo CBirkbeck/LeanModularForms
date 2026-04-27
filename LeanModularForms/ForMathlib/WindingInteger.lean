@@ -74,6 +74,50 @@ theorem exists_uniform_modulus_avoiding {γ : ℝ → ℂ} {w : ℂ}
   rw [← Complex.dist_eq]
   exact h_unif t ht s hs (by rwa [Real.dist_eq])
 
+/-! ### Slit-plane containment for small balls -/
+
+/-- The closed ball of radius `1/2` around `1` is contained in `Complex.slitPlane`. -/
+theorem mem_slitPlane_of_ball_one (z : ℂ) (hz : ‖z - 1‖ < 1 / 2) :
+    z ∈ Complex.slitPlane := by
+  rw [Complex.mem_slitPlane_iff]
+  left
+  have h_re : |(z - 1).re| ≤ ‖z - 1‖ := Complex.abs_re_le_norm _
+  have h_re_eq : (z - 1).re = z.re - 1 := by simp
+  rw [h_re_eq] at h_re
+  have : |z.re - 1| < 1 / 2 := lt_of_le_of_lt h_re hz
+  rw [abs_sub_lt_iff] at this
+  linarith
+
+/-! ### W-1 sketch (continuous arg lift, not yet implemented)
+
+The continuous arg lift theorem to be proved next:
+
+```
+theorem Complex.exists_continuous_arg_lift_of_avoids
+    {γ : ℝ → ℂ} (hγ : ContinuousOn γ (Icc (0 : ℝ) 1)) {w : ℂ}
+    (h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
+    ∃ θ : ℝ → ℝ, ContinuousOn θ (Icc 0 1) ∧
+      ∀ t ∈ Icc 0 1, γ t - w = (‖γ t - w‖ : ℂ) * Complex.exp (θ t * Complex.I)
+```
+
+**Proof outline (deferred):**
+
+1. Use `exists_uniform_modulus_avoiding` (W-0) to get `δ', ρ > 0`.
+2. Choose `N : ℕ` with `1 / N < δ'`. Partition `[0,1]` as `s_i = i/N`.
+3. By W-0: on `[s_i, s_{i+1}]`, `‖γ t - γ s_i‖ < ρ/2 ≤ ‖γ s_i - w‖/2`,
+   so `(γ t - w) / (γ s_i - w) ∈ ball(1, 1/2) ⊆ Complex.slitPlane`
+   (by `mem_slitPlane_of_ball_one`).
+4. Define `θ(s_i)` recursively: `θ(s_0) := 0`,
+   `θ(s_{i+1}) := θ(s_i) + (Complex.log ((γ s_{i+1} - w) / (γ s_i - w))).im`.
+5. For `t ∈ [s_i, s_{i+1}]`, set
+   `θ(t) := θ(s_i) + (Complex.log ((γ t - w) / (γ s_i - w))).im`.
+6. Continuity of `θ`: continuous on each segment via `Complex.continuousAt_log`
+   (and the slit-plane containment), gluing at `s_{i+1}` by definition.
+7. The lift property `γ(t) - w = ‖γ(t) - w‖ · exp(i θ(t))` follows from
+   `Complex.exp_log` on each segment, plus induction over partition points.
+
+Implementation deferred — substantial recursive construction. -/
+
 end Complex
 
 end
