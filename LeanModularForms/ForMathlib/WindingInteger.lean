@@ -149,6 +149,19 @@ theorem segRatio_mem_ball_one
     _ ≤ ‖γ s_j - w‖ / 2 := by linarith
     _ = 1 / 2 * ‖γ s_j - w‖ := by ring
 
+/-- Continuity of `t ↦ segRatio γ w s_j s_jp1 t` on `Icc (0 : ℝ) 1`. -/
+theorem continuousOn_segRatio {γ : ℝ → ℂ} (hγ : ContinuousOn γ (Icc (0 : ℝ) 1))
+    {w : ℂ} {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc (0 : ℝ) 1)
+    (hsjp1 : s_jp1 ∈ Icc (0 : ℝ) 1) (h_le : s_j ≤ s_jp1) :
+    ContinuousOn (fun t => segRatio γ w s_j s_jp1 t) (Icc (0 : ℝ) 1) := by
+  unfold segRatio
+  refine ContinuousOn.div_const ?_ _
+  refine ContinuousOn.sub ?_ continuousOn_const
+  refine hγ.comp (segClamp_continuous s_j s_jp1).continuousOn ?_
+  intro t _
+  exact ⟨le_trans hsj.1 (segClamp_mem_Icc s_j s_jp1 t h_le).1,
+    le_trans (segClamp_mem_Icc s_j s_jp1 t h_le).2 hsjp1.2⟩
+
 end Complex
 
 end
