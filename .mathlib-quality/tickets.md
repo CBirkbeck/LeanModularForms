@@ -68,19 +68,23 @@
 
 ### [W-1] Continuous arg lift along γ
 
-- **Status**: open
+- **Status**: helpers all done; main theorem deferred (substantial telescoping induction)
 - **File**: `ForMathlib/WindingInteger.lean`
-- **Depends on**: W-0
-- **Parallel**: no (same file as W-0)
-- **Description**: For continuous `γ : [0,1] → ℂ` avoiding `w`, there exists
-  continuous `θ : [0,1] → ℝ` with `γ(t) - w = ‖γ(t) - w‖ · exp(i θ(t))`.
-  Built using W-0 + `Complex.log` on each half-plane segment; stitch using
-  the fact that on overlaps, two `log`-branches differ by `2πi · k` for
-  some integer `k`.
-- **Mathlib check**: `Complex.log_eq_log_abs_add_arg_mul_I`,
-  `Complex.continuousAt_log`. The full lift is **not** in mathlib.
-- **API**: `Continuous.exists_arg_lift`
-- **Generality**: Should work for any continuous `γ : C([0,1], ℂ \ {w})`.
+- **Depends on**: W-0 ✅
+- **Done helpers**:
+  - `mem_slitPlane_of_ball_one` — geometry
+  - `segClamp`, `segClamp_continuous`, `segClamp_mem_Icc`
+  - `segRatio` definition + `segRatio_mem_ball_one`
+  - `segRatio_mem_slitPlane`
+  - `continuousOn_segRatio`
+  - `continuousOn_im_log_segRatio` — each θ-summand continuous
+- **Open (main theorem)**: `exists_continuous_arg_lift_of_avoids`
+  - Define `θ(t) := arg(γ 0 - w) + ∑_j Im(log(segRatio γ w (s j) (s (j+1)) t))`
+  - Continuity: `Finset.sum` of `continuousOn_im_log_segRatio` (mechanical)
+  - **Lift property** (the hard part): requires telescoping product lemma
+    `∏_j segRatio_j t = (γ t - w)/(γ 0 - w)` proved by induction over Finset.range
+    + per-segment case analysis on whether `t ≤ s_j`, `t ∈ [s_j, s_{j+1}]`, `t ≥ s_{j+1}`.
+- **API target**: `Complex.exists_continuous_arg_lift_of_avoids`
 
 ### [W-2] Winding via arg difference
 
