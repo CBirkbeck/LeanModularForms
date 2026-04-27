@@ -88,35 +88,66 @@ theorem mem_slitPlane_of_ball_one (z : ℂ) (hz : ‖z - 1‖ < 1 / 2) :
   rw [abs_sub_lt_iff] at this
   linarith
 
-/-! ### W-1 sketch (continuous arg lift, not yet implemented)
+/-! ### W-1 helpers (deferred main theorem)
 
-The continuous arg lift theorem to be proved next:
+The main `exists_continuous_arg_lift_of_avoids` theorem is deferred — it uses
+the telescoping-sum approach with `Finset.sum` over `N` partition segments,
+each contributing `Im(log(segRatio j t))` where `segRatio j t` lies in
+`ball(1, 1/2) ⊆ slitPlane` by W-0 + `mem_slitPlane_of_ball_one`.
 
-```
-theorem Complex.exists_continuous_arg_lift_of_avoids
-    {γ : ℝ → ℂ} (hγ : ContinuousOn γ (Icc (0 : ℝ) 1)) {w : ℂ}
-    (h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
-    ∃ θ : ℝ → ℝ, ContinuousOn θ (Icc 0 1) ∧
-      ∀ t ∈ Icc 0 1, γ t - w = (‖γ t - w‖ : ℂ) * Complex.exp (θ t * Complex.I)
-```
+Helper definitions and theorems for this construction are below. -/
 
-**Proof outline (deferred):**
+/-- Helper: clamp `t` to `[s_j, s_{j+1}]`. For partition segment `j`. -/
+def segClamp (s_j s_jp1 t : ℝ) : ℝ := max s_j (min t s_jp1)
 
-1. Use `exists_uniform_modulus_avoiding` (W-0) to get `δ', ρ > 0`.
-2. Choose `N : ℕ` with `1 / N < δ'`. Partition `[0,1]` as `s_i = i/N`.
-3. By W-0: on `[s_i, s_{i+1}]`, `‖γ t - γ s_i‖ < ρ/2 ≤ ‖γ s_i - w‖/2`,
-   so `(γ t - w) / (γ s_i - w) ∈ ball(1, 1/2) ⊆ Complex.slitPlane`
-   (by `mem_slitPlane_of_ball_one`).
-4. Define `θ(s_i)` recursively: `θ(s_0) := 0`,
-   `θ(s_{i+1}) := θ(s_i) + (Complex.log ((γ s_{i+1} - w) / (γ s_i - w))).im`.
-5. For `t ∈ [s_i, s_{i+1}]`, set
-   `θ(t) := θ(s_i) + (Complex.log ((γ t - w) / (γ s_i - w))).im`.
-6. Continuity of `θ`: continuous on each segment via `Complex.continuousAt_log`
-   (and the slit-plane containment), gluing at `s_{i+1}` by definition.
-7. The lift property `γ(t) - w = ‖γ(t) - w‖ · exp(i θ(t))` follows from
-   `Complex.exp_log` on each segment, plus induction over partition points.
+theorem segClamp_continuous (s_j s_jp1 : ℝ) :
+    Continuous (segClamp s_j s_jp1) :=
+  continuous_const.max (continuous_id.min continuous_const)
 
-Implementation deferred — substantial recursive construction. -/
+theorem segClamp_mem_Icc (s_j s_jp1 t : ℝ) (h : s_j ≤ s_jp1) :
+    segClamp s_j s_jp1 t ∈ Icc s_j s_jp1 := by
+  refine ⟨le_max_left _ _, ?_⟩
+  unfold segClamp
+  rcases le_total t s_jp1 with ht | ht
+  · simp only [min_eq_left ht]; exact max_le h ht
+  · rw [min_eq_right ht, max_le_iff]; exact ⟨h, le_refl _⟩
+
+/-- Helper: the segment ratio `(γ(clamp t) - w) / (γ s_j - w)`. -/
+noncomputable def segRatio (γ : ℝ → ℂ) (w : ℂ) (s_j s_jp1 t : ℝ) : ℂ :=
+  (γ (segClamp s_j s_jp1 t) - w) / (γ s_j - w)
+
+/-- For partition with mesh < δ' and segments [s_j, s_{j+1}] of length ≤ mesh,
+on the j-th segment, `γ(clamp t) - γ s_j` is small, so `segRatio j t ∈ ball(1, 1/2)`. -/
+theorem segRatio_mem_ball_one
+    {γ : ℝ → ℂ} {w : ℂ} {δ' ρ : ℝ} (hρ_pos : 0 < ρ)
+    (h_dist_lb : ∀ t ∈ Icc (0 : ℝ) 1, ρ ≤ ‖γ t - w‖)
+    (h_unif : ∀ t s : ℝ, t ∈ Icc (0 : ℝ) 1 → s ∈ Icc (0 : ℝ) 1 →
+      |t - s| < δ' → ‖γ t - γ s‖ < ρ / 2)
+    {s_j s_jp1 : ℝ} (hsj : s_j ∈ Icc (0 : ℝ) 1) (hsjp1 : s_jp1 ∈ Icc (0 : ℝ) 1)
+    (h_le : s_j ≤ s_jp1) (h_mesh : s_jp1 - s_j < δ') (t : ℝ) :
+    ‖segRatio γ w s_j s_jp1 t - 1‖ < 1 / 2 := by
+  have h_clamp_mem : segClamp s_j s_jp1 t ∈ Icc s_j s_jp1 :=
+    segClamp_mem_Icc s_j s_jp1 t h_le
+  have h_clamp_in_01 : segClamp s_j s_jp1 t ∈ Icc (0 : ℝ) 1 :=
+    ⟨le_trans hsj.1 h_clamp_mem.1, le_trans h_clamp_mem.2 hsjp1.2⟩
+  have h_dist : |segClamp s_j s_jp1 t - s_j| < δ' := by
+    have h_nn : 0 ≤ segClamp s_j s_jp1 t - s_j := by linarith [h_clamp_mem.1]
+    rw [abs_of_nonneg h_nn]
+    linarith [h_clamp_mem.2]
+  have h_diff : ‖γ (segClamp s_j s_jp1 t) - γ s_j‖ < ρ / 2 :=
+    h_unif _ _ h_clamp_in_01 hsj h_dist
+  have h_lb : ρ ≤ ‖γ s_j - w‖ := h_dist_lb _ hsj
+  have h_pos : 0 < ‖γ s_j - w‖ := lt_of_lt_of_le hρ_pos h_lb
+  have h_ne : γ s_j - w ≠ 0 := norm_pos_iff.mp h_pos
+  unfold segRatio
+  have h_rewrite : (γ (segClamp s_j s_jp1 t) - w) / (γ s_j - w) - 1 =
+      (γ (segClamp s_j s_jp1 t) - γ s_j) / (γ s_j - w) := by
+    rw [div_sub_one h_ne, sub_sub_sub_cancel_right]
+  rw [h_rewrite, norm_div, div_lt_iff₀ h_pos]
+  calc ‖γ (segClamp s_j s_jp1 t) - γ s_j‖
+      < ρ / 2 := h_diff
+    _ ≤ ‖γ s_j - w‖ / 2 := by linarith
+    _ = 1 / 2 * ‖γ s_j - w‖ := by ring
 
 end Complex
 
