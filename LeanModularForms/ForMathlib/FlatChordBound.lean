@@ -139,4 +139,32 @@ theorem real_sqrt_shortfall_le {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) (hl
   rw [h_diff_eq]
   apply div_le_div_of_nonneg_left (by positivity) hε (by linarith)
 
+/-- **Norm shortfall from Pythagoras.** When `‖w‖ > 0`, the norm of the
+parallel projection `‖orthogonalProj w L‖` is at most `‖w‖`, with shortfall
+bounded by `‖tangentDev‖² / ‖w‖`:
+
+`‖w‖ − ‖orthogonalProj w L‖ ≤ ‖tangentDev w L‖² / ‖w‖`.
+
+Proof: From Pythagoras, `‖proj‖² = ‖w‖² − ‖tangentDev‖²`, so
+`‖proj‖ = √(‖w‖² − ‖tangentDev‖²)`. Apply `real_sqrt_shortfall_le`. -/
+theorem norm_orthogonalProjection_shortfall_le {w : ℂ} (L : ℂ) (hw : 0 < ‖w‖) :
+    ‖w‖ - ‖orthogonalProjectionComplex w L‖ ≤ ‖tangentDeviation w L‖ ^ 2 / ‖w‖ := by
+  have h_pyth := orthogonal_pythagoras w L
+  have h_proj_sq :
+      ‖orthogonalProjectionComplex w L‖ ^ 2 = ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 := by
+    linarith
+  have h_proj_nonneg : 0 ≤ ‖orthogonalProjectionComplex w L‖ := norm_nonneg _
+  have h_dev_nonneg : 0 ≤ ‖tangentDeviation w L‖ := norm_nonneg _
+  have h_sq_diff_nonneg : 0 ≤ ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 :=
+    h_proj_sq ▸ sq_nonneg _
+  have h_dev_le : ‖tangentDeviation w L‖ ≤ ‖w‖ := by
+    nlinarith [h_sq_diff_nonneg, sq_nonneg ‖w‖]
+  have h_sqrt := real_sqrt_shortfall_le hw h_dev_nonneg h_dev_le
+  have h_sqrt_eq :
+      Real.sqrt (‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2) =
+        ‖orthogonalProjectionComplex w L‖ := by
+    rw [← h_proj_sq]; exact Real.sqrt_sq h_proj_nonneg
+  rw [h_sqrt_eq] at h_sqrt
+  exact h_sqrt
+
 end LeanModularForms
