@@ -1083,4 +1083,38 @@ theorem norm_segment_to_pole_lower_bound_half
   have := abs_le_of_sq_le_sq' h_le_sq h_norm_nonneg
   linarith [this.2, abs_of_pos h_d2]
 
+/-- **F-diff pointwise bound at tangent target.** For γ(t) ≠ s and chord-to-target
+bounded by ‖γ(t) - s‖, the antiderivative difference between γ(t) and the natural
+tangent target `s + (‖γ(t)-s‖/‖L‖)·L` is bounded by
+
+  ‖F(γ(t)) − F(target(t))‖ ≤ (1/(‖γ(t)−s‖/2)^k) · chord(t)
+
+This combines Phase 3.5b (F-diff bound on segment) with Phase 3.6c
+(segment-distance lower bound). -/
+theorem norm_F_diff_at_tangent_target_le
+    {γ : ℝ → ℂ} {t : ℝ} {s L : ℂ} {k : ℕ} (hk : 2 ≤ k)
+    (hL : L ≠ 0) (hw_ne : γ t ≠ s)
+    (h_chord_le : ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ ≤ ‖γ t - s‖) :
+    ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ t - s) ^ (k - 1))⁻¹) -
+      (-(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ t - s‖ / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹)‖ ≤
+      (1 / (‖γ t - s‖ / 2) ^ k) * ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ := by
+  have hd_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr hw_ne)
+  have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  set d := ‖γ t - s‖ with hd_def
+  set tgt := s + (d / ‖L‖ : ℝ) • L with htgt_def
+  have h_tgt_simpl : tgt - s = (d / ‖L‖ : ℝ) • L := by simp [htgt_def]
+  have h_tgt : ‖tgt - s‖ = d := by
+    rw [h_tgt_simpl, norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+    field_simp
+  have h_seg : ∀ z ∈ segment ℝ (γ t) tgt, d / 2 ≤ ‖z - s‖ :=
+    fun z hz => norm_segment_to_pole_lower_bound_half hd_pos rfl h_tgt h_chord_le hz
+  have h_F_diff := norm_F_diff_le_segment_bound (z₁ := γ t) (z₂ := tgt) (s := s) hk
+    (by linarith : 0 < d / 2) h_seg
+  rw [show (-(↑(k - 1) : ℂ)⁻¹ * ((γ t - s) ^ (k - 1))⁻¹) -
+      (-(↑(k - 1) : ℂ)⁻¹ * ((tgt - s) ^ (k - 1))⁻¹) =
+      -((-(↑(k - 1) : ℂ)⁻¹ * ((tgt - s) ^ (k - 1))⁻¹) -
+        (-(↑(k - 1) : ℂ)⁻¹ * ((γ t - s) ^ (k - 1))⁻¹)) by ring]
+  rw [norm_neg, show ‖γ t - tgt‖ = ‖tgt - γ t‖ from norm_sub_rev _ _]
+  exact h_F_diff
+
 end
