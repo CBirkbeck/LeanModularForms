@@ -1065,4 +1065,22 @@ theorem norm_sq_segment_to_pole_lower_bound
   have h_norm_nonneg : 0 ≤ ‖z₁ - z₂‖ ^ 2 := sq_nonneg _
   nlinarith [h_quad, h_ab_le, h_norm_nonneg]
 
+/-- **Segment distance corollary (chord ≤ d).** When the chord is at most `d`,
+the segment from `z₁` to `z₂` stays at distance ≥ `d/2` from `s`. -/
+theorem norm_segment_to_pole_lower_bound_half
+    {z₁ z₂ s : ℂ} {d : ℝ} (hd_pos : 0 < d)
+    (h₁ : ‖z₁ - s‖ = d) (h₂ : ‖z₂ - s‖ = d) (h_chord : ‖z₁ - z₂‖ ≤ d)
+    {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
+    d / 2 ≤ ‖z - s‖ := by
+  have h_lower := norm_sq_segment_to_pole_lower_bound h₁ h₂ hz
+  have h_norm_nonneg : 0 ≤ ‖z - s‖ := norm_nonneg _
+  have h_d2 : 0 < d / 2 := by linarith
+  have h_le_sq : (d / 2) ^ 2 ≤ ‖z - s‖ ^ 2 := by
+    have h_chord_sq : ‖z₁ - z₂‖ ^ 2 ≤ d ^ 2 := by
+      have := mul_self_le_mul_self (norm_nonneg _) h_chord
+      nlinarith
+    nlinarith
+  have := abs_le_of_sq_le_sq' h_le_sq h_norm_nonneg
+  linarith [this.2, abs_of_pos h_d2]
+
 end
