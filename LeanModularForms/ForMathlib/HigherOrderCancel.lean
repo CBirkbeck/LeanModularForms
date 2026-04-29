@@ -1392,4 +1392,47 @@ theorem F_curve_diff_tendsto_zero_odd
   rw [h_targets_eq]
   exact h_triangle
 
+/-- **Excised CPV → 0 for k odd transverse.** Combining the closed-curve
+excised integral formula (Phase 3.5a) with the combined curve F-diff →0
+(Phase 3.8): for closed γ with smooth pieces avoiding s outside a
+shrinking-radius excision, and given that the curve F-diff at the excision
+boundaries tends to 0, the parameter-excised integral
+
+  ∫_a^{t_eps_minus(ε)} γ'/(γ-s)^k + ∫_{t_eps_plus(ε)}^b γ'/(γ-s)^k
+
+tends to 0 as ε → 0⁺. This is **the curve PV result for k odd transverse**:
+the higher-order pole CPV vanishes when γ is flat of order n ≥ k. -/
+theorem cpv_excised_tendsto_zero_of_F_diff_zero
+    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {a b : ℝ} {s : ℂ} {k : ℕ}
+    (h_close : γ a = γ b) (hk : 2 ≤ k)
+    (t_eps_plus t_eps_minus : ℝ → ℝ)
+    (h_minus_smooth : ∀ ε > 0, ∀ t ∈ uIcc a (t_eps_minus ε), HasDerivAt γ (γ' t) t)
+    (h_minus_avoids : ∀ ε > 0, ∀ t ∈ uIcc a (t_eps_minus ε), γ t ≠ s)
+    (h_minus_int : ∀ ε > 0,
+      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume a (t_eps_minus ε))
+    (h_plus_smooth : ∀ ε > 0, ∀ t ∈ uIcc (t_eps_plus ε) b, HasDerivAt γ (γ' t) t)
+    (h_plus_avoids : ∀ ε > 0, ∀ t ∈ uIcc (t_eps_plus ε) b, γ t ≠ s)
+    (h_plus_int : ∀ ε > 0,
+      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume (t_eps_plus ε) b)
+    (h_F_diff_to_zero : Tendsto (fun ε =>
+      ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹) -
+        (-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹)‖)
+      (𝓝[>] 0) (𝓝 0)) :
+    Tendsto (fun ε =>
+      (∫ t in a..(t_eps_minus ε), γ' t / (γ t - s) ^ k) +
+        (∫ t in (t_eps_plus ε)..b, γ' t / (γ t - s) ^ k))
+      (𝓝[>] 0) (𝓝 0) := by
+  rw [tendsto_zero_iff_norm_tendsto_zero]
+  apply h_F_diff_to_zero.congr'
+  filter_upwards [self_mem_nhdsWithin] with ε hε
+  have hε_pos : 0 < ε := hε
+  have h_integral_eq := closed_excised_integral_eq_antideriv_diff hk h_close
+      (hγ_left := h_minus_smooth ε hε_pos)
+      (hγ_right := h_plus_smooth ε hε_pos)
+      (h_avoids_left := h_minus_avoids ε hε_pos)
+      (h_avoids_right := h_plus_avoids ε hε_pos)
+      (h_int_left := h_minus_int ε hε_pos)
+      (h_int_right := h_plus_int ε hε_pos)
+  rw [h_integral_eq]
+
 end
