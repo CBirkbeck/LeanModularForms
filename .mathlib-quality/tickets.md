@@ -2,8 +2,9 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2/B-5/B-6 fully closed for arbitrary open U**, B-3, B-4, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**, **C-1**, **C-2 Steps A+B (antiderivative + FTC on smooth pieces)**
-- Open: C-2 Steps C+D (homotopy/length-based comparison to sector model), C-3..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2/B-5/B-6 fully closed for arbitrary open U**, B-3, B-4, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**, **C-1**, **C-2 Steps A+B (antiderivative + FTC on smooth pieces)**, **higher-order avoidance closed**, **Phase 3.1-3.6 (analytical kernel of HW Theorem 3.3 higher-order)**, **C-2 Step C done (F_curve - F_line → 0)**
+- Open: C-2 Step D (assemble PV equality), C-3..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Phase 3 status: **fully proven analytical kernel** including: exit time, arc integral bound, chord-to-tangent (5 lemmas including Pythagoras + sqrt shortfall + chord), closed-γ excised integral via FTC, F-diff segment bound, sign + non-vanishing eventual conditions, asymptotic chord bound, segment-distance lower bounds, F-diff pointwise bound, asymptotic ratio helper, and **MAIN: F-diff → 0 limit at tangent target** (both right and left sides).
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
