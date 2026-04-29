@@ -1317,4 +1317,79 @@ theorem F_line_diff_eq_zero_of_odd
   have h2 : (s + (ε / ‖L‖ : ℝ) • L) - s = ((ε / ‖L‖ : ℝ) • L) := by ring
   rw [h1, h2, neg_pow, h_even.neg_one_pow, one_mul]
 
+/-! ## Phase 3.8: Combined curve F-diff → 0 for k odd transverse
+
+The MAIN COMBINED THEOREM: under HW's flatness condition and given exit-time
+functions parametrizing γ at radius ε on both sides, the curve antiderivative
+difference
+
+  F(γ(t_ε^-)) - F(γ(t_ε^+))
+
+tends to 0 as ε → 0+ for k odd transverse. Combines:
+- F-diff right (Phase 3.6 main, right side)
+- F-diff left (Phase 3.6 main, left side)
+- Line-model F-diff vanishing for k odd (Phase 3.7)
+via triangle inequality on the common line target. -/
+
+/-- **Combined curve F-difference → 0 for k odd.** Given exit-time functions
+`t_eps_plus`, `t_eps_minus` parametrizing γ at radius ε on the right and left
+of t₀ respectively (each with `‖γ(t_eps_±(ε)) - s‖ = ε` eventually), the
+curve antiderivative difference tends to 0 as ε → 0⁺.
+
+This is the **PHASE 3 ENDPOINT**: combining both F-diff asymptotics with
+the k-odd line-model symmetric vanishing gives the curve-side
+"F(γ(t_-)) - F(γ(t_+)) → 0" needed for the closed-curve PV result. -/
+theorem F_curve_diff_tendsto_zero_odd
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} {n k : ℕ}
+    (h_flat : IsFlatOfOrder γ t₀ n) (hL : L ≠ 0)
+    (h_deriv_right : HasDerivWithinAt γ L (Ioi t₀) t₀)
+    (h_deriv_left : HasDerivWithinAt γ L (Iio t₀) t₀)
+    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
+    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
+    (h_s : γ t₀ = s) (hk : 2 ≤ k) (hk_odd : Odd k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
+    (t_eps_plus t_eps_minus : ℝ → ℝ)
+    (h_plus_to : Tendsto t_eps_plus (𝓝[>] 0) (𝓝[>] t₀))
+    (h_plus_radius : ∀ᶠ ε in 𝓝[>] 0, ‖γ (t_eps_plus ε) - s‖ = ε)
+    (h_minus_to : Tendsto t_eps_minus (𝓝[>] 0) (𝓝[<] t₀))
+    (h_minus_radius : ∀ᶠ ε in 𝓝[>] 0, ‖γ (t_eps_minus ε) - s‖ = ε) :
+    Tendsto (fun ε =>
+      ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹) -
+        (-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹)‖)
+      (𝓝[>] 0) (𝓝 0) := by
+  have h_right := F_diff_at_tangent_target_tendsto_zero_right
+    h_flat hL h_deriv_right hL_right h_s hk hkn hn1
+  have h_right_comp := h_right.comp h_plus_to
+  have h_left := F_diff_at_tangent_target_tendsto_zero_left
+    h_flat hL h_deriv_left hL_left h_s hk hkn hn1
+  have h_left_comp := h_left.comp h_minus_to
+  have h_sum_raw := h_right_comp.add h_left_comp
+  have h_sum : Tendsto (fun ε =>
+      ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹ -
+          -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹‖ +
+        ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹ -
+          -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L)‖ : ℝ) • (-L)) - s) ^ (k - 1))⁻¹‖)
+      (𝓝[>] 0) (𝓝 0) := by
+    convert h_sum_raw using 2; simp
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_sum
+      (Eventually.of_forall fun _ => norm_nonneg _) ?_
+  filter_upwards [h_plus_radius, h_minus_radius] with ε hpr hmr
+  have h_neg_norm : ‖(-L)‖ = ‖L‖ := norm_neg L
+  have h_targets_eq :
+      -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L)‖ : ℝ) • (-L)) - s) ^ (k - 1))⁻¹ =
+      -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹ := by
+    rw [hmr, h_neg_norm, hpr]
+    have heq : (s + (ε / ‖L‖ : ℝ) • (-L) : ℂ) - s = (s - (ε / ‖L‖ : ℝ) • L) - s := by simp
+    rw [heq]
+    exact F_line_diff_eq_zero_of_odd s L k hk hk_odd ε
+  set TR := -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹
+  set A := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹
+  set B := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹
+  have h_triangle : ‖A - B‖ ≤ ‖B - TR‖ + ‖A - TR‖ := by
+    calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by ring_nf
+      _ ≤ ‖A - TR‖ + ‖B - TR‖ := norm_sub_le _ _
+      _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
+  show ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
+  rw [h_targets_eq]
+  exact h_triangle
+
 end
