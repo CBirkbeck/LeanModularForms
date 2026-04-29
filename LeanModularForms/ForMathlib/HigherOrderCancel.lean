@@ -652,6 +652,41 @@ theorem PiecewiseC1Path.contourIntegral_pow_inv_eq_zero
     (fun _ hz => hasDerivAt_antiderivative_pow_inv_complex hk hz)
     h_int
 
+/-! ## Phase 3.5a: Excised integral via antiderivative for closed γ
+
+For a closed curve `γ` (with `γ a = γ b`) that avoids `s` outside the
+interval `[t_minus, t_plus]`, the parameter-excised integral
+`∫_a^{t_minus} + ∫_{t_plus}^b` of `γ'/(γ-s)^k` equals an antiderivative
+difference at the excision boundaries. This is Step B applied to each
+smooth piece, with the closed-curve cancellation `F(γ a) = F(γ b)`. -/
+
+/-- **Closed-γ excised integral via FTC.** For a closed curve avoiding `s` on
+two smooth pieces flanking a crossing, the parameter-excised integral equals
+`F(γ(t_minus)) - F(γ(t_plus))` where `F` is the antiderivative
+`-1/[(k-1)(z-s)^{k-1}]`. This is the FTC + closure form of HW's
+
+  PV(γ excised) = boundary contributions − crossing contributions
+
+with the closed-curve property eliminating the boundary contribution. -/
+theorem closed_excised_integral_eq_antideriv_diff
+    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {s : ℂ} {k : ℕ} {a t_minus t_plus b : ℝ}
+    (hk : 2 ≤ k)
+    (h_close : γ a = γ b)
+    (hγ_left : ∀ t ∈ uIcc a t_minus, HasDerivAt γ (γ' t) t)
+    (hγ_right : ∀ t ∈ uIcc t_plus b, HasDerivAt γ (γ' t) t)
+    (h_avoids_left : ∀ t ∈ uIcc a t_minus, γ t ≠ s)
+    (h_avoids_right : ∀ t ∈ uIcc t_plus b, γ t ≠ s)
+    (h_int_left : IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume a t_minus)
+    (h_int_right : IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume t_plus b) :
+    (∫ t in a..t_minus, γ' t / (γ t - s) ^ k) +
+      (∫ t in t_plus..b, γ' t / (γ t - s) ^ k) =
+      (-(↑(k - 1) : ℂ)⁻¹ * ((γ t_minus - s) ^ (k - 1))⁻¹) -
+      (-(↑(k - 1) : ℂ)⁻¹ * ((γ t_plus - s) ^ (k - 1))⁻¹) := by
+  rw [integral_pow_inv_eq_FTC hk hγ_left h_avoids_left h_int_left]
+  rw [integral_pow_inv_eq_FTC hk hγ_right h_avoids_right h_int_right]
+  rw [h_close]
+  ring
+
 /-- **Higher-order avoidance: CPV is zero.** For `k ≥ 2`, the CPV of `1/(z-s)^k`
 along a closed `γ` avoiding `s` (with positive margin) is zero. Combines
 `hasCauchyPVOn_of_avoids` with the contour-integral-vanishing result. -/
