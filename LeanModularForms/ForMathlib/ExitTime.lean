@@ -137,4 +137,38 @@ theorem firstExitTimeRight_mem_Icc
     · exact ⟨t₀, fun t ⟨hmem, _⟩ => hmem.1⟩
     · exact firstExitTimeRight_set_nonempty hδ hε_le
 
+/-- **Radius lower bound at first exit time.** For γ continuous on `[t₀, t₀+δ]`
+with `γ(t₀+δ)` at distance ≥ ε from s, the radius at the first exit time
+satisfies `ε ≤ ‖γ (firstExitTimeRight ...) - s‖`.
+
+This shows the first exit time IS an exit time (membership in S is preserved
+at the infimum). -/
+theorem ε_le_norm_at_firstExitTimeRight
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
+    (hδ : 0 < δ) (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
+    (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
+    ε ≤ ‖γ (firstExitTimeRight γ t₀ δ s ε) - s‖ := by
+  set S := {t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖}
+  have h_S_closed : IsClosed S := by
+    apply IsSeqClosed.isClosed
+    intro t_seq x ht_seq_mem ht_seq_to_x
+    have hx_in_Icc : x ∈ Set.Icc t₀ (t₀ + δ) :=
+      isClosed_Icc.mem_of_tendsto ht_seq_to_x
+        (Filter.Eventually.of_forall (fun n => (ht_seq_mem n).1))
+    refine ⟨hx_in_Icc, ?_⟩
+    have h_tendsto_within : Tendsto t_seq Filter.atTop (𝓝[Set.Icc t₀ (t₀ + δ)] x) :=
+      tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ht_seq_to_x
+        (Filter.Eventually.of_forall (fun n => (ht_seq_mem n).1))
+    have h_γ_tendsto : Tendsto (fun n => γ (t_seq n)) Filter.atTop (𝓝 (γ x)) :=
+      (hγ_cont x hx_in_Icc).tendsto.comp h_tendsto_within
+    have h_norm_tendsto :
+        Tendsto (fun n => ‖γ (t_seq n) - s‖) Filter.atTop (𝓝 ‖γ x - s‖) :=
+      (continuous_norm.tendsto _).comp (h_γ_tendsto.sub_const s)
+    exact ge_of_tendsto h_norm_tendsto
+      (Filter.Eventually.of_forall (fun n => (ht_seq_mem n).2))
+  have h_S_nonempty : S.Nonempty :=
+    ⟨t₀ + δ, firstExitTimeRight_set_nonempty hδ.le hε_le⟩
+  have h_S_bdd : BddBelow S := ⟨t₀, firstExitTimeRight_set_lb γ t₀ δ ε s⟩
+  exact (h_S_closed.csInf_mem h_S_nonempty h_S_bdd).2
+
 end LeanModularForms
