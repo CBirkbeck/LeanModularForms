@@ -713,4 +713,40 @@ theorem hasCauchyPVOn_pow_inv_of_avoids
     exact hδ_bd t ht
   exact h_zero ▸ hasCauchyPVOn_of_avoids hδ'
 
+/-! ## Phase 3.5b: F-difference bound on a segment avoiding s -/
+
+/-- **F-difference bound on segment.** When the line segment from `z₁` to `z₂`
+stays at distance ≥ ε from `s`, the antiderivative difference
+
+  `‖F(z₂) − F(z₁)‖ ≤ ‖z₂ − z₁‖ / ε^k`
+
+where `F(z) = -1/[(k-1)(z-s)^{k-1}]`.
+
+This is the analytical step for Phase 3 limit analysis: combined with the
+chord bound `‖z₂ − z₁‖ = o(ε^n)` (Phase 3.3 chord_to_tangent_target_le applied
+at radius ε), we get `‖F(z₂) − F(z₁)‖ = o(ε^{n−k})`, vanishing for `n ≥ k`. -/
+theorem norm_F_diff_le_segment_bound
+    {z₁ z₂ s : ℂ} {k : ℕ} {ε : ℝ} (hk : 2 ≤ k) (hε : 0 < ε)
+    (h_seg_avoids : ∀ z ∈ segment ℝ z₁ z₂, ε ≤ ‖z - s‖) :
+    ‖(-(↑(k - 1) : ℂ)⁻¹ * ((z₂ - s) ^ (k - 1))⁻¹) -
+      (-(↑(k - 1) : ℂ)⁻¹ * ((z₁ - s) ^ (k - 1))⁻¹)‖ ≤
+      (1 / ε ^ k) * ‖z₂ - z₁‖ := by
+  have h_deriv : ∀ z ∈ segment ℝ z₁ z₂,
+      HasDerivWithinAt (fun w => -(↑(k - 1) : ℂ)⁻¹ * ((w - s) ^ (k - 1))⁻¹)
+        (1 / (z - s) ^ k) (segment ℝ z₁ z₂) z := by
+    intro z hz
+    have h_dist : ε ≤ ‖z - s‖ := h_seg_avoids z hz
+    have h_ne : z ≠ s := by
+      intro heq; rw [heq, sub_self, norm_zero] at h_dist; linarith
+    exact (hasDerivAt_antiderivative_pow_inv_complex hk h_ne).hasDerivWithinAt
+  have h_bound : ∀ z ∈ segment ℝ z₁ z₂, ‖1 / (z - s) ^ k‖ ≤ 1 / ε ^ k := by
+    intro z hz
+    rw [norm_div, norm_one, norm_pow]
+    apply div_le_div_of_nonneg_left zero_le_one (pow_pos hε k)
+    exact pow_le_pow_left₀ hε.le (h_seg_avoids z hz) k
+  have h_convex : Convex ℝ (segment ℝ z₁ z₂) := convex_segment z₁ z₂
+  have h_z₁_in : z₁ ∈ segment ℝ z₁ z₂ := left_mem_segment _ _ _
+  have h_z₂_in : z₂ ∈ segment ℝ z₁ z₂ := right_mem_segment _ _ _
+  exact h_convex.norm_image_sub_le_of_norm_hasDerivWithin_le h_deriv h_bound h_z₁_in h_z₂_in
+
 end
