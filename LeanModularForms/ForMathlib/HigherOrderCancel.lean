@@ -1117,4 +1117,40 @@ theorem norm_F_diff_at_tangent_target_le
   rw [norm_neg, show ‖γ t - tgt‖ = ‖tgt - γ t‖ from norm_sub_rev _ _]
   exact h_F_diff
 
+/-! ## Phase 3.6e: F-diff → 0 limit -/
+
+/-- **Asymptotic helper.** If `chord = o(d^n)`, `d → 0`, `d > 0` eventually, and
+`k ≤ n`, then `chord/d^k → 0`. This is the abstract version of the asymptotic
+ratio that drives the F-diff limit. -/
+theorem tendsto_div_pow_zero_of_isLittleO {chord d : ℝ → ℝ} {l : Filter ℝ} {n k : ℕ}
+    (h_chord : chord =o[l] (fun t => d t ^ n)) (h_d : Tendsto d l (𝓝 0))
+    (h_d_pos : ∀ᶠ t in l, 0 < d t) (hkn : k ≤ n) :
+    Tendsto (fun t => chord t / d t ^ k) l (𝓝 0) := by
+  rw [Metric.tendsto_nhds]
+  intro ε hε
+  have h_eps_half : 0 < ε / 2 := by linarith
+  have h_d_le : ∀ᶠ t in l, d t < 1 :=
+    h_d.eventually (gt_mem_nhds (by norm_num : (0 : ℝ) < 1))
+  have h_bound := h_chord.bound h_eps_half
+  filter_upwards [h_bound, h_d_le, h_d_pos] with t hb hd hdp
+  have hd_n_pos : 0 < d t ^ n := pow_pos hdp n
+  have hd_k_pos : 0 < d t ^ k := pow_pos hdp k
+  rw [Real.dist_eq, sub_zero]
+  have h_pow : d t ^ n = d t ^ k * d t ^ (n - k) := by
+    rw [← pow_add, Nat.add_sub_cancel' hkn]
+  rw [Real.norm_eq_abs] at hb
+  rw [Real.norm_eq_abs, abs_of_nonneg (le_of_lt hd_n_pos)] at hb
+  rw [abs_div, abs_of_pos hd_k_pos]
+  have h_pow_le : d t ^ (n - k) ≤ 1 := by
+    rcases Nat.eq_zero_or_pos (n - k) with h_eq | h_pos
+    · rw [h_eq]; simp
+    · exact pow_le_one₀ (le_of_lt hdp) (le_of_lt hd) |>.trans_eq (by simp)
+  calc |chord t| / d t ^ k
+      ≤ ε / 2 * d t ^ (n - k) := by
+          rw [div_le_iff₀ hd_k_pos]
+          calc |chord t| ≤ ε / 2 * d t ^ n := hb
+            _ = ε / 2 * d t ^ (n - k) * d t ^ k := by rw [h_pow]; ring
+    _ ≤ ε / 2 * 1 := by gcongr
+    _ < ε := by linarith
+
 end
