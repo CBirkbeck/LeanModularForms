@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.GeneralizedWindingNumber
 import LeanModularForms.ForMathlib.PoincareBridge
 import LeanModularForms.ForMathlib.CurveUtilities
+import LeanModularForms.ForMathlib.WindingArgDiff
 
 /-!
 # Null-Homologous Curves
@@ -160,6 +161,29 @@ theorem IsNullHomologous.winding_eventually_zero_cocompact_of_bounded
   filter_upwards [h_compl] with w hw_notin
   refine ⟨fun t ht heq => hw_notin (heq ▸ h_null.image_subset t ht),
     h_null.winding_zero w hw_notin⟩
+
+/-! ### Full B-1: locally constant near boundary points -/
+
+/-- **B-1 (full form).** For a Lipschitz null-homologous closed immersion `γ` and
+a point `w ∉ U` with `γ` avoiding `w`, the generalized winding number vanishes on
+a whole neighborhood of `w`.
+
+Combines W-4 (locally constant) with the null-homologous vanishing at `w`. Unlike
+`winding_zero_nhds_of_not_mem_closure`, this works even when `w ∈ closure U \ U`
+(e.g., a boundary point of `U`), at the cost of needing γ Lipschitz. -/
+theorem IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed
+    {γ : PwC1Immersion x x} {U : Set ℂ} (h_null : IsNullHomologous γ U)
+    {w : ℂ} (hw : w ∉ U)
+    (h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+      generalizedWindingNumber γ.toPiecewiseC1Path w' = 0 := by
+  obtain ⟨ε, hε_pos, h_const⟩ :=
+    Complex.generalizedWindingNumber_locally_const_of_closed
+      γ.toPiecewiseC1Path h_avoid hLip
+  have h_w_zero : generalizedWindingNumber γ.toPiecewiseC1Path w = 0 :=
+    h_null.winding_zero w hw
+  exact ⟨ε, hε_pos, fun w' hw' => by rw [h_const w' hw', h_w_zero]⟩
 
 /-! ### Convex domains -/
 

@@ -236,6 +236,148 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
   rw [h_value_eq]
   exact h_w
 
+/-! ### W-3: integer-valued winding number for closed curves -/
+
+/-- **W-3 (Winding integer-valued).** For a closed piecewise C¹ path `γ` avoiding `w`
+with positive distance, the generalized winding number is an integer. -/
+theorem hasGeneralizedWindingNumber_integer_of_closed
+    (γ : PiecewiseC1Path x x) {w : ℂ}
+    (hδ : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - w‖)
+    (h_int : IntervalIntegrable
+      (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - w))
+      MeasureTheory.volume 0 1) :
+    ∃ n : ℤ, HasGeneralizedWindingNumber γ w (n : ℂ) := by
+  obtain ⟨θ, _, h_lift, h_winding⟩ :=
+    hasGeneralizedWindingNumber_eq_arg_diff_W1_closed γ hδ h_int
+  -- Closedness gives γ(0) = γ(1), so equating the two lift evaluations forces
+  -- exp(I θ(0)) = exp(I θ(1)).
+  have h_eq_endpoints : γ.toPath.extend 1 = γ.toPath.extend 0 := by
+    rw [γ.toPath.extend_one, γ.toPath.extend_zero]
+  obtain ⟨d, hd_pos, hd_bd⟩ := hδ
+  have h_avoid_0 : γ.toPath.extend 0 - w ≠ 0 := by
+    intro heq
+    have := hd_bd 0 ⟨le_refl _, zero_le_one⟩
+    rw [heq, norm_zero] at this; linarith
+  have h_norm_ne : ((‖γ.toPath.extend 0 - w‖ : ℝ) : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr h_avoid_0)
+  have h_lift_0 := h_lift 0 ⟨le_refl _, zero_le_one⟩
+  have h_lift_1 := h_lift 1 ⟨zero_le_one, le_refl _⟩
+  have h_eq_diff : γ.toPath.extend 0 - w = γ.toPath.extend 1 - w := by rw [h_eq_endpoints]
+  have h_exp_eq : Complex.exp (Complex.I * (θ 0 : ℂ)) =
+      Complex.exp (Complex.I * (θ 1 : ℂ)) := by
+    have h_eq : (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 0 : ℂ)) =
+        (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 1 : ℂ)) := by
+      calc (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 0 : ℂ))
+          = γ.toPath.extend 0 - w := h_lift_0.symm
+        _ = γ.toPath.extend 1 - w := h_eq_diff
+        _ = (‖γ.toPath.extend 1 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 1 : ℂ)) := h_lift_1
+        _ = (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 1 : ℂ)) := by
+            rw [h_eq_endpoints]
+    exact mul_left_cancel₀ h_norm_ne h_eq
+  -- Hence exp(I (θ(1) − θ(0))) = 1.
+  have h_exp_diff_one : Complex.exp (Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ)) = 1 := by
+    have h_split : Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ) =
+        Complex.I * (θ 1 : ℂ) - Complex.I * (θ 0 : ℂ) := by push_cast; ring
+    rw [h_split, Complex.exp_sub, h_exp_eq, div_self (Complex.exp_ne_zero _)]
+  -- `Complex.exp_eq_one_iff` gives the integer; cancel I and 2π to extract n.
+  obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp h_exp_diff_one
+  have h_diff_eq : ((θ 1 - θ 0 : ℝ) : ℂ) = (n : ℂ) * (2 * (Real.pi : ℂ)) := by
+    have h_recast : Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ) =
+        Complex.I * ((n : ℂ) * (2 * (Real.pi : ℂ))) := by rw [hn]; ring
+    exact mul_left_cancel₀ Complex.I_ne_zero h_recast
+  have h_winding_eq : ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) = (n : ℂ) := by
+    rw [h_diff_eq]
+    have hπ : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
+    field_simp
+  refine ⟨n, ?_⟩
+  rw [← h_winding_eq]
+  exact h_winding
+
+/-! ### Integrability helper from Lipschitz curve
+
+For a Lipschitz `γ` avoiding `w` with positive distance, the integrand
+`γ'(t)/(γ(t) − w)` is interval-integrable on `[0, 1]`. -/
+theorem intervalIntegrable_div_lipschitz
+    (γ : PiecewiseC1Path x y) {w : ℂ}
+    {δ : ℝ} (_hδ_pos : 0 < δ)
+    (h_dist_lb : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - w‖)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    IntervalIntegrable
+      (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - w))
+      MeasureTheory.volume 0 1 := by
+  have h_meas : MeasureTheory.StronglyMeasurable (deriv γ.toPath.extend) :=
+    stronglyMeasurable_deriv _
+  have h_bd : ∀ t : ℝ, ‖deriv γ.toPath.extend t‖ ≤ (K : ℝ) := fun _ =>
+    norm_deriv_le_of_lipschitz hLip
+  have h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend)
+      MeasureTheory.volume 0 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
+    exact MeasureTheory.Measure.integrableOn_of_bounded
+      measure_Ioc_lt_top.ne h_meas.aestronglyMeasurable
+      (ae_restrict_of_ae (Filter.Eventually.of_forall h_bd))
+  have h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t - w ≠ 0 := fun t ht heq => by
+    have := h_dist_lb t ht
+    rw [heq, norm_zero] at this; linarith
+  have h_cont : ContinuousOn (fun t => (γ.toPath.extend t - w)⁻¹) (uIcc (0 : ℝ) 1) := by
+    rw [uIcc_of_le (zero_le_one' ℝ)]
+    exact (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const).inv₀ h_avoid
+  rw [show (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - w)) =
+        (fun t => deriv γ.toPath.extend t * (γ.toPath.extend t - w)⁻¹) from
+      funext (fun t => div_eq_mul_inv _ _)]
+  exact h_deriv_int.mul_continuousOn h_cont
+
+/-! ### W-4: locally constant winding -/
+
+/-- **W-4 (Winding locally constant).** For a closed Lipschitz piecewise C¹ path `γ`
+avoiding `w`, the generalized winding number is constant on a neighborhood of `w`. -/
+theorem generalizedWindingNumber_locally_const_of_closed
+    (γ : PiecewiseC1Path x x) {w : ℂ}
+    (h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t ≠ w)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+      generalizedWindingNumber γ w' = generalizedWindingNumber γ w := by
+  obtain ⟨ε₀, hε₀_pos, h_dist_lb⟩ := ball_dist_to_curve_lb h_avoid
+  have h_cont := generalizedWindingNumber_continuousAt_of_avoids h_avoid hLip
+  rw [Metric.continuousAt_iff] at h_cont
+  obtain ⟨ε, hε_pos, h_close⟩ := h_cont (1 / 2) (by norm_num)
+  refine ⟨min ε ε₀, lt_min hε_pos hε₀_pos, ?_⟩
+  intro w' hw'
+  rw [Metric.mem_ball] at hw'
+  -- w' is close enough that |winding γ w' − winding γ w| < 1/2
+  have h_close_w' :
+      dist (generalizedWindingNumber γ w') (generalizedWindingNumber γ w) < 1 / 2 :=
+    h_close (lt_of_lt_of_le hw' (min_le_left _ _))
+  -- Both winding values are integers (by W-3)
+  have hw'_in_ε₀ : w' ∈ Metric.ball w ε₀ :=
+    Metric.mem_ball.mpr (lt_of_lt_of_le hw' (min_le_right _ _))
+  have hw_in : w ∈ Metric.ball w ε₀ := Metric.mem_ball_self hε₀_pos
+  obtain ⟨n_w', h_n_w'⟩ : ∃ n : ℤ, HasGeneralizedWindingNumber γ w' (n : ℂ) := by
+    refine hasGeneralizedWindingNumber_integer_of_closed γ
+      ⟨ε₀, hε₀_pos, h_dist_lb w' hw'_in_ε₀⟩ ?_
+    exact intervalIntegrable_div_lipschitz γ hε₀_pos (h_dist_lb w' hw'_in_ε₀) hLip
+  obtain ⟨n_w, h_n_w⟩ : ∃ n : ℤ, HasGeneralizedWindingNumber γ w (n : ℂ) := by
+    refine hasGeneralizedWindingNumber_integer_of_closed γ
+      ⟨ε₀, hε₀_pos, h_dist_lb w hw_in⟩ ?_
+    exact intervalIntegrable_div_lipschitz γ hε₀_pos (h_dist_lb w hw_in) hLip
+  have h_eq_w' : generalizedWindingNumber γ w' = (n_w' : ℂ) := h_n_w'.eq
+  have h_eq_w : generalizedWindingNumber γ w = (n_w : ℂ) := h_n_w.eq
+  -- |((n_w' - n_w : ℤ) : ℂ)| < 1/2 < 1, so n_w' - n_w = 0
+  have h_dist_int : dist ((n_w' : ℂ)) ((n_w : ℂ)) < 1 / 2 := by
+    rw [← h_eq_w', ← h_eq_w]; exact h_close_w'
+  have h_int_eq : n_w' = n_w := by
+    by_contra h_ne
+    have h_diff_ne : (n_w' - n_w : ℤ) ≠ 0 := sub_ne_zero.mpr h_ne
+    have h_one_le : (1 : ℝ) ≤ |((n_w' - n_w : ℤ) : ℝ)| := by
+      have := Int.one_le_abs h_diff_ne
+      exact_mod_cast this
+    have h_norm_eq : ‖((n_w' : ℂ) - (n_w : ℂ))‖ = |((n_w' - n_w : ℤ) : ℝ)| := by
+      rw [show ((n_w' : ℂ) - (n_w : ℂ)) = (((n_w' - n_w : ℤ) : ℂ)) by push_cast; ring,
+          Complex.norm_intCast]
+    rw [Complex.dist_eq] at h_dist_int
+    rw [h_norm_eq] at h_dist_int
+    linarith
+  rw [h_eq_w', h_eq_w, h_int_eq]
+
 end Complex
 
 end

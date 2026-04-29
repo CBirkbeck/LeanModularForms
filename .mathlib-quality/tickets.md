@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**, **W-0**, **W-1**, **W-2**
-- Open: **W-3..W-5** (B-1 full path, sequential), B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**
+- Open: B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
@@ -104,39 +104,36 @@
 
 ### [W-3] Winding integer-valued
 
-- **Status**: open
-- **File**: `ForMathlib/WindingInteger.lean`
-- **Depends on**: W-2
-- **Parallel**: no (same file)
-- **Description**: For closed `γ : PiecewiseC1Path x x` (with γ(0) = γ(1))
-  avoiding `w` with positive distance, `∃ n : ℤ, generalizedWindingNumber γ w = n`.
-  Proof: From W-2, `winding = (θ(1) - θ(0))/(2π)`. Closedness means
-  `γ(0) - w = γ(1) - w`, so `exp(i θ(0)) = exp(i θ(1))`, i.e., `θ(1) - θ(0) ∈ 2π·ℤ`.
-- **API**: `generalizedWindingNumber_integer_of_closed_avoiding`
+- **Status**: **done** —
+  `Complex.hasGeneralizedWindingNumber_integer_of_closed`
+  (standard axioms only)
+- **File**: `ForMathlib/WindingArgDiff.lean`
+- **Depends on**: W-2 ✅
+- **Done**: from W-2's θ, closedness + lift property gives
+  `exp(I (θ(1) − θ(0))) = 1`, then `Complex.exp_eq_one_iff` produces the
+  integer.
 
 ### [W-4] Winding locally constant
 
-- **Status**: open
-- **File**: `ForMathlib/WindingInteger.lean` or extend
-  `ForMathlib/GeneralizedWindingNumber.lean`
-- **Depends on**: W-3 + existing `generalizedWindingNumber_continuousAt_of_avoids`
-- **Parallel**: no
-- **Description**: For γ closed Lipschitz avoiding `w` with positive distance,
-  there exists `ε > 0` such that `winding γ w'` is constant for `w' ∈ ball w ε`.
-  Proof: continuity (existing) + integer-valued (W-3) + ℤ is discrete.
-- **API**: `generalizedWindingNumber_locally_const_of_closed`
+- **Status**: **done** —
+  `Complex.generalizedWindingNumber_locally_const_of_closed`
+  (standard axioms only)
+- **File**: `ForMathlib/WindingArgDiff.lean`
+- **Depends on**: W-3 ✅, existing `generalizedWindingNumber_continuousAt_of_avoids`
+- **Done**: integer-valuedness near `w` (W-3 + Lipschitz integrability helper
+  `intervalIntegrable_div_lipschitz`) plus continuity at `w` plus ℤ being
+  discrete forces `winding γ w' = winding γ w` near `w`.
 
 ### [W-5] B-1 full = h_winding_zero_near
 
-- **Status**: open
+- **Status**: **done** —
+  `IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed`
+  (standard axioms only)
 - **File**: `ForMathlib/NullHomologous.lean`
-- **Depends on**: W-4
-- **Parallel**: no
-- **Description**: For γ null-homologous in `U`, `w ∉ U`, `w ∉ γ.image`,
-  there exists `ε > 0` with `winding γ w' = 0` for all `w' ∈ ball w ε`.
-  Proof: W-4 gives `winding γ w' = winding γ w` near `w`; null-hom gives
-  `winding γ w = 0`.
-- **API**: `IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed`
+- **Depends on**: W-4 ✅
+- **Done**: combine W-4 (locally constant) with the null-hom hypothesis
+  (winding vanishes outside U). Requires γ Lipschitz on the interval.
+  Unblocks the full B-1 / B-5 closure for arbitrary open U.
 
 ### [B-2] h1 differentiability from regularity — DONE for convex U
 
