@@ -532,4 +532,43 @@ theorem tangentApproximation_of_isFlatOfOrder_left
     exact h_pow.norm_left.norm_right
   exact h_flat_asym.trans_isBigO h_pow_norm
 
+/-! ## C-2 Step A: Antiderivative for `γ'/(γ-s)^k` with `k ≥ 2`
+
+For higher-order poles `1/(z-s)^k` with `k ≥ 2`, the integrand
+`γ'(t)/(γ(t)-s)^k` admits an antiderivative `-1/[(k-1)(γ(t)-s)^{k-1}]`
+on the open set where `γ(t) ≠ s`. This is the key fact behind the
+Hungerbühler-Wasem treatment of higher-order poles: away from
+singularities, the integral is fully controlled by boundary values,
+so PV computations reduce to comparing the antiderivative endpoints. -/
+
+/-- **Antiderivative for `γ'/(γ-s)^k` (k ≥ 2).** When `γ` is differentiable
+at `t` with derivative `γ'` and `γ(t) ≠ s`, the function
+`u ↦ -1/[(k-1)(γ(u)-s)^{k-1}]` has derivative `γ'/(γ(t)-s)^k` at `t`.
+
+This is HW's antiderivative formula used to handle higher-order poles via
+the Fundamental Theorem of Calculus on smooth pieces of the curve. -/
+theorem hasDerivAt_antiderivative_pow_inv
+    {γ : ℝ → ℂ} {γ' s : ℂ} {t : ℝ} {k : ℕ}
+    (hk : 2 ≤ k) (hγ : HasDerivAt γ γ' t) (h_ne : γ t - s ≠ 0) :
+    HasDerivAt (fun u => -(↑(k - 1) : ℂ)⁻¹ * ((γ u - s) ^ (k - 1))⁻¹)
+      (γ' / (γ t - s) ^ k) t := by
+  have h_sub : HasDerivAt (fun u => γ u - s) γ' t := hγ.sub_const s
+  have h_pow_raw : HasDerivAt (fun u => (γ u - s) ^ (k - 1))
+      (↑(k - 1) * (γ t - s) ^ (k - 1 - 1) * γ') t := h_sub.pow (k - 1)
+  have hk_norm : k - 1 - 1 = k - 2 := by omega
+  rw [hk_norm] at h_pow_raw
+  have h_pow_ne : (γ t - s) ^ (k - 1) ≠ 0 := pow_ne_zero _ h_ne
+  have h_inv := hasDerivAt_inv h_pow_ne
+  have h_comp := h_inv.scomp t h_pow_raw
+  have h_const := h_comp.const_mul (-(↑(k - 1) : ℂ)⁻¹)
+  convert h_const using 1
+  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by
+    have : 0 < k - 1 := by omega
+    exact_mod_cast this.ne'
+  have h_pow2 : ((γ t - s) ^ (k - 1)) ^ 2 = (γ t - s) ^ k * (γ t - s) ^ (k - 2) := by
+    rw [← pow_mul, ← pow_add]; congr 1; omega
+  simp only [smul_eq_mul]
+  rw [h_pow2]
+  field_simp
+
 end
