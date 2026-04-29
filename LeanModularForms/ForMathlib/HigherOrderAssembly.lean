@@ -674,6 +674,174 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_of_lipschitz
     hSimplePoles hγ_in_U hγ_avoids hδ w₀ hw₀_in_U hw₀_off h_dixon_zero
     h_cauchy_int h_base_int h_rem_int h_pp_int hI
 
+/-! ## B-6: fully-closed null-homologous simple-pole HW 3.3
+
+Combines the W-stream closure (W-5) with the convex-domain B-5 closure
+(`dixonFunction_eq_zero_of_nullHomologous_convex_full`) and A-2's automatic
+choice of `w₀` to discharge **both** oracle hypotheses of
+`hasCauchyPVOn_simplePoles_nullHomologous_closed`. Lipschitz `γ` is the only
+non-geometric input. -/
+
+/-- **B-6 (full closure).** For a closed Lipschitz piecewise C¹ immersion `γ`
+null-homologous in a convex bounded open set `U`, with simple poles at `S ⊆ U`
+avoided by `γ`, the CPV residue formula holds with no oracle hypotheses. -/
+theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ.toPiecewiseC1Path t - s‖)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S f γ.toPiecewiseC1Path
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) := by
+  obtain ⟨δ, hδ_pos, hδ_bound⟩ := hδ
+  have hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U :=
+    h_null.image_subset
+  -- Lipschitz ⇒ deriv γ ∈ IntervalIntegrable
+  have h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend)
+      MeasureTheory.volume 0 1 := by
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
+    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
+      (stronglyMeasurable_deriv _).aestronglyMeasurable
+      (ae_restrict_of_ae (Filter.Eventually.of_forall
+        (fun _ => norm_deriv_le_of_lipschitz hLip)))
+  -- A-2: pick w₀ ∈ U off the curve
+  obtain ⟨w₀, hw₀_in_U, hw₀_off⟩ :=
+    ForMathlib.exists_mem_not_mem_path_image_of_isOpen
+      γ.toPiecewiseC1Path hU_open hU_ne hLip
+  -- Holomorphic extension `g` of `f - pp` on `U`
+  obtain ⟨g, hg_diff, hg_agree⟩ :=
+    remainder_differentiableOn_of_simplePoles hU_open S hS_in_U f hf hSimplePoles
+  -- B-5 + W-5: dixonFunction (z↦(z-w₀)·g(z)) U γ w = 0 for all w
+  have hG_diff : DifferentiableOn ℂ (fun z => (z - w₀) * g z) U := fun z hz =>
+    ((differentiableAt_id.sub_const w₀).differentiableWithinAt).mul (hg_diff z hz)
+  have h_dixon_G : ∀ w,
+      dixonFunction (fun z => (z - w₀) * g z) U γ.toPiecewiseC1Path w = 0 :=
+    dixonFunction_eq_zero_of_nullHomologous_convex_full hU_convex hU_open
+      hU_bounded hG_diff γ h_null hLip
+      (fun w hw_notin h_avoid_local =>
+        h_null.winding_zero_nhds_of_not_mem_of_closed hw_notin h_avoid_local hLip)
+  -- Pointwise dslope equality on the curve
+  have h_dslope_eq : ∀ t ∈ Icc (0 : ℝ) 1,
+      dslope (fun z => (z - w₀) *
+        (f z - principalPartSum S (fun s => residue f s) z)) w₀
+        (γ.toPiecewiseC1Path t) =
+      dslope (fun z => (z - w₀) * g z) w₀ (γ.toPiecewiseC1Path t) := by
+    intro t ht
+    have ht_off_w₀ : γ.toPiecewiseC1Path t ≠ w₀ := hw₀_off t ht
+    have ht_off_S : γ.toPiecewiseC1Path t ∉ (↑S : Set ℂ) := fun hmem =>
+      hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl
+    have ht_in_USmS : γ.toPiecewiseC1Path t ∈ U \ (↑S : Set ℂ) :=
+      ⟨hγ_in_U t ht, ht_off_S⟩
+    rw [dslope_of_ne _ ht_off_w₀, dslope_of_ne _ ht_off_w₀,
+        slope_def_field, slope_def_field, sub_self, zero_mul, zero_mul,
+        sub_zero, sub_zero, hg_agree _ ht_in_USmS]
+  -- Transfer dixonFunction = 0 at w₀ from h_dixon_G
+  have h_dixon_zero_at : dixonFunction
+      (fun z => (z - w₀) *
+        (f z - principalPartSum S (fun s => residue f s) z))
+      U γ.toPiecewiseC1Path w₀ = 0 := by
+    have h_eq : dixonFunction
+        (fun z => (z - w₀) *
+          (f z - principalPartSum S (fun s => residue f s) z))
+        U γ.toPiecewiseC1Path w₀ =
+        dixonFunction (fun z => (z - w₀) * g z) U γ.toPiecewiseC1Path w₀ := by
+      simp only [dixonFunction, hw₀_in_U, if_true, dixonH1]
+      refine intervalIntegral.integral_congr (fun t ht => ?_)
+      rw [uIcc_of_le (zero_le_one' ℝ)] at ht
+      rw [h_dslope_eq t ht]
+    rw [h_eq, h_dixon_G w₀]
+  -- Avoidance: γ stays away from w₀ with a positive distance δ'
+  obtain ⟨δ', hδ'_pos, hδ'_bound⟩ := avoids_delta_bound γ.toPiecewiseC1Path w₀ hw₀_off
+  -- Continuity / integrability bookkeeping
+  have hf_cont : ContinuousOn f (U \ ↑S) := hf.continuousOn
+  have h_pp_cont : ContinuousOn (principalPartSum S (fun s => residue f s))
+      (↑S : Set ℂ)ᶜ := (principalPartSum_differentiableOn S _).continuousOn
+  have h_img_off_S : ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPiecewiseC1Path t ∈ (↑S : Set ℂ)ᶜ := fun t ht hmem =>
+    hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl
+  have h_img_off_S' : ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPiecewiseC1Path t ∈ U \ (↑S : Set ℂ) :=
+    fun t ht => ⟨hγ_in_U t ht, h_img_off_S t ht⟩
+  have h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ.toPiecewiseC1Path)
+      MeasureTheory.volume 0 1 :=
+    PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn _
+      h_pp_cont h_img_off_S h_deriv_int
+  have h_rem_cont : ContinuousOn (fun z => f z -
+      principalPartSum S (fun s => residue f s) z) (U \ ↑S) := by
+    refine hf_cont.sub (h_pp_cont.mono fun z hz hmem => ?_)
+    exact hz.2 (Finset.mem_coe.mpr (Finset.mem_coe.mp hmem))
+  have h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z)
+        γ.toPiecewiseC1Path) MeasureTheory.volume 0 1 :=
+    PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn _
+      h_rem_cont h_img_off_S' h_deriv_int
+  have hI : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (residue f s / (γ.toPiecewiseC1Path.toPath.extend t - s)) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) MeasureTheory.volume 0 1 := by
+    intro s hs
+    have h_single_cont : ContinuousOn
+        (fun z => residue f s / (z - s)) ({s} : Set ℂ)ᶜ :=
+      (differentiableOn_div_sub s (residue f s)).continuousOn
+    have h_img_off_s : ∀ t ∈ Icc (0 : ℝ) 1,
+        γ.toPiecewiseC1Path.toPath.extend t ∈ ({s} : Set ℂ)ᶜ :=
+      fun t ht hmem => hγ_avoids s hs t ht (mem_singleton_iff.mp hmem)
+    have := PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn
+      (f := fun z => residue f s / (z - s)) γ.toPiecewiseC1Path h_single_cont
+      h_img_off_s h_deriv_int
+    show IntervalIntegrable
+      (fun t => residue f s / (γ.toPiecewiseC1Path.toPath.extend t - s) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) MeasureTheory.volume 0 1
+    exact this
+  -- Continuous (γ - w₀)⁻¹ on uIcc 0 1
+  have h_inv_cont : ContinuousOn
+      (fun t => (γ.toPiecewiseC1Path t - w₀)⁻¹) (uIcc (0 : ℝ) 1) := by
+    rw [uIcc_of_le (zero_le_one' ℝ)]
+    refine ContinuousOn.inv₀
+      (γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn.sub continuousOn_const) ?_
+    intro t ht heq
+    have := hδ'_bound t ht
+    rw [heq, norm_zero] at this; linarith
+  -- h_base_int: continuous (γ-w₀)⁻¹ × integrable deriv ⇒ integrable
+  have h_base_int : IntervalIntegrable
+      (fun t => (γ.toPiecewiseC1Path t - w₀)⁻¹ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t)
+      MeasureTheory.volume 0 1 :=
+    h_deriv_int.continuousOn_mul h_inv_cont
+  -- h_cauchy_int: simplifies (γ-w₀)·(f-pp)·γ'/(γ-w₀) = (f-pp)·γ' = contourIntegrand (f - pp)
+  have h_cauchy_int : IntervalIntegrable
+      (fun t => (γ.toPiecewiseC1Path t - w₀) *
+        (f (γ.toPiecewiseC1Path t) -
+          principalPartSum S (fun s => residue f s) (γ.toPiecewiseC1Path t))
+        / (γ.toPiecewiseC1Path t - w₀) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) MeasureTheory.volume 0 1 := by
+    refine h_rem_int.congr (fun t ht => ?_)
+    rw [uIoc_of_le (zero_le_one' ℝ)] at ht
+    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+    have ht_off_w₀ : γ.toPiecewiseC1Path t ≠ w₀ := hw₀_off t ht_Icc
+    have h_ne : γ.toPiecewiseC1Path t - w₀ ≠ 0 := sub_ne_zero.mpr ht_off_w₀
+    simp only [PiecewiseC1Path.contourIntegrand]
+    rw [mul_div_cancel_left₀ _ h_ne]
+  -- Finally: assemble via hCancel_at + hPV_sing + composition
+  have h_cancel := hCancel_of_simplePoles_nullHomologous_at hU_open S hS_in_U f hf
+    γ.toPiecewiseC1Path hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ w₀
+    hw₀_in_U hw₀_off h_dixon_zero_at h_cauchy_int h_base_int
+  have h_sing := hPV_sing_of_avoids S f γ.toPiecewiseC1Path
+    ⟨δ, hδ_pos, hδ_bound⟩ hI
+  simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
+  have h_lim := h_cancel.add h_sing
+  simp only [zero_add] at h_lim
+  exact h_lim.congr'
+    (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+
 /-! ## Convex corollary derived as specialization of the general theorem -/
 
 /-- **Generalized Residue Theorem for simple poles in convex domains (via general

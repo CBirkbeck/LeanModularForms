@@ -78,7 +78,7 @@ theorem IsNullHomologous.mono {γ : PwC1Immersion x x} {U V : Set ℂ}
 /-! ### Auxiliary lemmas -/
 
 /-- If a piecewise C^1 path avoids a point, there is a positive distance lower bound. -/
-private theorem avoids_delta_bound (γ : PiecewiseC1Path x x) (z₀ : ℂ)
+theorem avoids_delta_bound (γ : PiecewiseC1Path x x) (z₀ : ℂ)
     (h_avoids : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ z₀) :
     ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - z₀‖ := by
   have h_compact : IsCompact (γ.toPath.extend '' Icc (0 : ℝ) 1) :=
