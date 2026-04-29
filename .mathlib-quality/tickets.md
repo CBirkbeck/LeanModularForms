@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**, **W-0**, **W-1**
-- Open: **W-2..W-5** (B-1 full path, sequential), B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**, **W-0**, **W-1**, **W-2**
+- Open: **W-3..W-5** (B-1 full path, sequential), B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
@@ -84,17 +84,23 @@
 
 ### [W-2] Winding via arg difference
 
-- **Status**: open
-- **File**: `ForMathlib/WindingInteger.lean`
-- **Depends on**: W-1
-- **Parallel**: no (same file)
-- **Description**: For closed `γ : PiecewiseC1Path x x` avoiding `w` with
-  positive distance, the generalized winding equals `(θ(1) - θ(0))/(2π)`
-  where `θ` is the continuous arg lift from W-1.
-  Proof: FTC for `log(γ - w)` along γ pieces. The contour integral
-  `∮_γ (z-w)⁻¹ dz = ∫₀¹ deriv γ.extend t / (γ(t) - w) dt = log(γ(1) - w) - log(γ(0) - w)`
-  along compatible branches, which simplifies via the lift.
-- **API**: `generalizedWindingNumber_eq_arg_diff`
+- **Status**: **done** — `Complex.hasGeneralizedWindingNumber_eq_arg_diff_W1_closed`
+  (standard axioms only)
+- **File**: `ForMathlib/WindingArgDiff.lean` (NEW), built on
+  `ForMathlib/WindingInteger.lean` strengthened helpers
+- **Depends on**: W-1 ✅
+- **Done**:
+  - `segment_log_FTC` — per-segment FTC using
+    `MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le` + `clog_real`
+  - `contourIntegral_inv_eq_sum_log_segRatio` — sum of segment logs over
+    fine partition
+  - `contourIntegral_inv_decomp` — split into ↑(log‖γ 1−w‖ − log‖γ 0−w‖) +
+    I·↑(Σ Im(log z_j))
+  - `exists_continuous_arg_lift_with_partition` — strengthened W-1 returning
+    full partition data + slit-plane condition
+  - `hasGeneralizedWindingNumber_eq_arg_diff_W1_closed` — for closed γ at
+    positive distance from `w`, `winding γ w = (θ(1) − θ(0))/(2π)` with the
+    W-1 explicit θ.
 
 ### [W-3] Winding integer-valued
 

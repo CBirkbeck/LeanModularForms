@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import Mathlib.Analysis.SpecialFunctions.Complex.Log
+import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+import Mathlib.MeasureTheory.Integral.DivergenceTheorem
 import Mathlib.Topology.MetricSpace.Lipschitz
 
 /-!
@@ -434,3 +436,168 @@ theorem exists_continuous_arg_lift_of_avoids
     rw [h_exp_split, h_arg, Finset.prod_congr rfl h_z_eq, Finset.prod_div_distrib,
         div_mul_div_comm, ← Complex.ofReal_prod, ← Complex.ofReal_mul,
         h_norm_prod_real, h_prod_eq, mul_div_cancel₀ _ h_norm_t_ne]
+
+/-! ### Strengthened W-1: continuous arg lift with explicit partition data
+
+Same conclusion as `exists_continuous_arg_lift_of_avoids` but exposes the underlying
+partition `s : ℕ → ℝ` and the slit-plane condition for each segment. This is needed
+for downstream W-2 (winding number via FTC). -/
+
+theorem exists_continuous_arg_lift_with_partition
+    {γ : ℝ → ℂ} {w : ℂ}
+    (hγ : ContinuousOn γ (Icc (0 : ℝ) 1))
+    (h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
+    ∃ (N : ℕ) (s : ℕ → ℝ),
+      0 < N ∧ s 0 = 0 ∧ s N = 1 ∧ Monotone s ∧
+      (∀ j ≤ N, s j ∈ Icc (0 : ℝ) 1) ∧
+      (∀ j ≤ N, γ (s j) - w ≠ 0) ∧
+      (∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
+        (γ t - w) / (γ (s j) - w) ∈ Complex.slitPlane) ∧
+      ContinuousOn
+        (fun t => Complex.arg (γ 0 - w) +
+          ∑ j ∈ Finset.range N, (Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im)
+        (Icc (0 : ℝ) 1) ∧
+      (∀ t ∈ Icc (0 : ℝ) 1, γ t - w = (‖γ t - w‖ : ℂ) * Complex.exp (Complex.I *
+        ((Complex.arg (γ 0 - w) +
+          ∑ j ∈ Finset.range N,
+            (Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℝ) : ℂ))) := by
+  obtain ⟨δ', hδ'_pos, ρ, hρ_pos, h_dist_lb, h_unif⟩ :=
+    exists_uniform_modulus_avoiding hγ h_avoid
+  obtain ⟨N, hN⟩ := exists_nat_gt (1 / δ')
+  have hN_pos : 0 < N := by
+    have h0 : (0 : ℝ) ≤ 1 / δ' := div_nonneg zero_le_one hδ'_pos.le
+    have : (0 : ℝ) < N := lt_of_le_of_lt h0 hN
+    exact_mod_cast this
+  have hN_real : (0 : ℝ) < N := Nat.cast_pos.mpr hN_pos
+  have hN_mesh : (1 : ℝ) / N < δ' := by
+    rw [div_lt_iff₀ hN_real]
+    rw [div_lt_iff₀ hδ'_pos] at hN
+    linarith
+  set s : ℕ → ℝ := fun j => (j : ℝ) / N with hs_def
+  have hs_zero : s 0 = 0 := by simp [hs_def]
+  have hs_N : s N = 1 := by simp only [hs_def]; exact div_self hN_real.ne'
+  have hs_mono : Monotone s := fun a b hab =>
+    div_le_div_of_nonneg_right (by exact_mod_cast hab) hN_real.le
+  have hs_in : ∀ j, j ≤ N → s j ∈ Icc (0 : ℝ) 1 := by
+    intro j hj
+    refine ⟨div_nonneg (by exact_mod_cast Nat.zero_le j) hN_real.le, ?_⟩
+    rw [div_le_one hN_real]; exact_mod_cast hj
+  have hs_avoid : ∀ j ≤ N, γ (s j) - w ≠ 0 := fun j hj =>
+    sub_ne_zero.mpr (h_avoid (s j) (hs_in j hj))
+  have hs_mesh : ∀ j, s (j + 1) - s j = 1 / N := by
+    intro j; simp only [hs_def]; push_cast; ring
+  have hs_le : ∀ j, s j ≤ s (j + 1) := fun j => hs_mono (Nat.le_succ _)
+  have h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
+      (γ t - w) / (γ (s j) - w) ∈ Complex.slitPlane := by
+    intro j hj t ht
+    rw [show (γ t - w) / (γ (s j) - w) = segRatio γ w (s j) (s (j + 1)) t from
+      (segRatio_eq_self_div ht.1 ht.2).symm]
+    exact segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
+      (hs_in j hj.le) (hs_in (j + 1) hj) (hs_le j)
+      (by rw [hs_mesh j]; exact hN_mesh) t
+  refine ⟨N, s, hN_pos, hs_zero, hs_N, hs_mono, hs_in, hs_avoid, h_slit, ?_, ?_⟩
+  -- Continuity of θ
+  · refine ContinuousOn.add continuousOn_const ?_
+    refine continuousOn_finset_sum _ ?_
+    intro j hj
+    refine continuousOn_im_log_segRatio hγ hρ_pos h_dist_lb h_unif
+      (hs_in j (Finset.mem_range.mp hj).le) (hs_in (j + 1) (Finset.mem_range.mp hj))
+      (hs_le j) ?_
+    rw [hs_mesh j]; exact hN_mesh
+  -- Lift property
+  · intro t ht
+    have h_avoid_t : γ t - w ≠ 0 := sub_ne_zero.mpr (h_avoid t ht)
+    have h_avoid_0 : γ 0 - w ≠ 0 :=
+      sub_ne_zero.mpr (h_avoid 0 ⟨le_refl _, zero_le_one⟩)
+    obtain ⟨k, hk_lt, hk_lo, hk_hi⟩ := partition_segment_exists hN_pos ht
+    have hk_lo' : s k ≤ t := hk_lo
+    have hk_hi' : t ≤ s (k + 1) := hk_hi
+    have h_telescope := prod_segRatio_telescope hs_zero hs_mono hs_avoid hk_lt hk_lo' hk_hi'
+    have h_ratio_ne : ∀ j ∈ Finset.range N,
+        segRatio γ w (s j) (s (j + 1)) t ≠ 0 := fun j hj =>
+      Complex.slitPlane_ne_zero
+        (segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
+          (hs_in j (Finset.mem_range.mp hj).le)
+          (hs_in (j + 1) (Finset.mem_range.mp hj))
+          (hs_le j) (by rw [hs_mesh j]; exact hN_mesh) t)
+    have h_prod_eq : (γ 0 - w) *
+        ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t = γ t - w := by
+      rw [h_telescope, mul_div_cancel₀ _ h_avoid_0]
+    have h_theta_cast :
+        ((Complex.arg (γ 0 - w) +
+          ∑ j ∈ Finset.range N,
+            (Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℝ) : ℂ) =
+        (Complex.arg (γ 0 - w) : ℂ) +
+        ∑ j ∈ Finset.range N,
+          ((Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℂ) := by
+      push_cast; rfl
+    have h_exp_split :
+        Complex.exp (Complex.I *
+          ((Complex.arg (γ 0 - w) +
+            ∑ j ∈ Finset.range N,
+              (Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℝ) : ℂ)) =
+        Complex.exp (Complex.I * (Complex.arg (γ 0 - w) : ℂ)) *
+          ∏ j ∈ Finset.range N,
+            Complex.exp (Complex.I *
+              ((Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℂ)) := by
+      rw [h_theta_cast, mul_add, Complex.exp_add, Finset.mul_sum, Complex.exp_sum]
+    have h_arg : Complex.exp (Complex.I * (Complex.arg (γ 0 - w) : ℂ)) =
+        (γ 0 - w) / ((‖γ 0 - w‖ : ℝ) : ℂ) := by
+      rw [show (Complex.arg (γ 0 - w) : ℂ) = ((Complex.log (γ 0 - w)).im : ℂ) by
+            rw [Complex.log_im]]
+      exact exp_I_log_im_eq_div_norm h_avoid_0
+    have h_z_eq : ∀ j ∈ Finset.range N,
+        Complex.exp (Complex.I *
+          ((Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℂ)) =
+          segRatio γ w (s j) (s (j + 1)) t /
+            ((‖segRatio γ w (s j) (s (j + 1)) t‖ : ℝ) : ℂ) :=
+      fun j hj => exp_I_log_im_eq_div_norm (h_ratio_ne j hj)
+    have h_norm_prod_real : (‖γ 0 - w‖ : ℝ) *
+        (∏ j ∈ Finset.range N, ‖segRatio γ w (s j) (s (j + 1)) t‖) = ‖γ t - w‖ := by
+      rw [← Complex.norm_prod, ← norm_mul, h_prod_eq]
+    have h_norm_t_ne : ((‖γ t - w‖ : ℝ) : ℂ) ≠ 0 :=
+      Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr h_avoid_t)
+    rw [h_exp_split, h_arg, Finset.prod_congr rfl h_z_eq, Finset.prod_div_distrib,
+        div_mul_div_comm, ← Complex.ofReal_prod, ← Complex.ofReal_mul,
+        h_norm_prod_real, h_prod_eq, mul_div_cancel₀ _ h_norm_t_ne]
+
+/-! ### Per-segment FTC for `1/(γ(t) − w)` (W-2 building block)
+
+If on `[a, b]` the curve `γ` is continuous, differentiable off a countable set `P`,
+avoids `w`, and `(γ(t) − w)/(γ(a) − w) ∈ slitPlane` for all `t ∈ [a,b]`, then
+`∫_a^b γ'(t)/(γ(t) − w) dt = log((γ(b) − w)/(γ(a) − w))`. -/
+
+theorem segment_log_FTC
+    {γ : ℝ → ℂ} {w : ℂ} {a b : ℝ} (hab : a ≤ b) {P : Set ℝ} (hP_count : P.Countable)
+    (hγ_cont : ContinuousOn γ (Icc a b))
+    (hγ_diff : ∀ t ∈ Ioo a b \ P, HasDerivAt γ (deriv γ t) t)
+    (h_a_ne : γ a - w ≠ 0)
+    (h_slit : ∀ t ∈ Icc a b, (γ t - w) / (γ a - w) ∈ Complex.slitPlane)
+    (h_int : IntervalIntegrable
+      (fun t => deriv γ t / (γ t - w)) MeasureTheory.volume a b) :
+    ∫ t in a..b, deriv γ t / (γ t - w) = Complex.log ((γ b - w) / (γ a - w)) := by
+  set F : ℝ → ℂ := fun t => Complex.log ((γ t - w) / (γ a - w)) with hF_def
+  have hF_cont : ContinuousOn F (Icc a b) :=
+    ContinuousOn.clog ((hγ_cont.sub continuousOn_const).div_const _)
+      fun t ht => h_slit t ht
+  have hF_deriv : ∀ t ∈ Ioo a b \ P,
+      HasDerivAt F (deriv γ t / (γ t - w)) t := by
+    intro t ht
+    have ht_Icc : t ∈ Icc a b := Ioo_subset_Icc_self ht.1
+    have h_inner : HasDerivAt (fun t => (γ t - w) / (γ a - w))
+        (deriv γ t / (γ a - w)) t :=
+      ((hγ_diff t ht).sub_const w).div_const _
+    have h_slit_t : (γ t - w) / (γ a - w) ∈ Complex.slitPlane := h_slit t ht_Icc
+    have h_log := h_inner.clog_real h_slit_t
+    have h_t_minus_ne : γ t - w ≠ 0 := by
+      intro h
+      apply Complex.slitPlane_ne_zero h_slit_t
+      rw [h, zero_div]
+    convert h_log using 1
+    field_simp
+  have h_FTC := MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le _ _ hab hP_count
+    hF_cont hF_deriv h_int
+  rw [h_FTC]
+  show Complex.log ((γ b - w) / (γ a - w)) - Complex.log ((γ a - w) / (γ a - w)) =
+       Complex.log ((γ b - w) / (γ a - w))
+  rw [div_self h_a_ne, Complex.log_one, sub_zero]
