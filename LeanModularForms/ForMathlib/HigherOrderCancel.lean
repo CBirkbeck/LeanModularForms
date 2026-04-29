@@ -571,4 +571,24 @@ theorem hasDerivAt_antiderivative_pow_inv
   rw [h_pow2]
   field_simp
 
+/-! ## C-2 Step B: FTC for the higher-order pole integrand on a smooth piece -/
+
+/-- **FTC for `γ'/(γ-s)^k` on a smooth piece (k ≥ 2).** When `γ` is differentiable
+on `uIcc a b` and avoids `s`, the integral of `γ'/(γ-s)^k` equals the antiderivative
+endpoints. This is the FTC application of Step A on a single smooth segment between
+crossings of `s`. -/
+theorem integral_pow_inv_eq_FTC
+    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {s : ℂ} {k : ℕ} {a b : ℝ}
+    (hk : 2 ≤ k)
+    (hγ : ∀ t ∈ uIcc a b, HasDerivAt γ (γ' t) t)
+    (h_avoids : ∀ t ∈ uIcc a b, γ t ≠ s)
+    (h_int : IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume a b) :
+    ∫ t in a..b, γ' t / (γ t - s) ^ k =
+      (-(↑(k - 1) : ℂ)⁻¹ * ((γ b - s) ^ (k - 1))⁻¹) -
+      (-(↑(k - 1) : ℂ)⁻¹ * ((γ a - s) ^ (k - 1))⁻¹) := by
+  apply intervalIntegral.integral_eq_sub_of_hasDerivAt
+  · intro t ht
+    exact hasDerivAt_antiderivative_pow_inv hk (hγ t ht) (sub_ne_zero.mpr (h_avoids t ht))
+  · exact h_int
+
 end
