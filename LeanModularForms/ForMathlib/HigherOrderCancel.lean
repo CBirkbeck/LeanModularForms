@@ -836,4 +836,57 @@ theorem eventually_re_neg_left
     nlinarith [abs_le.mp (habs.trans hbd)]
   nlinarith [hLsq_pos]
 
+/-! ## Phase 3.6a: Eventually `γ ≠ s`
+
+For γ with one-sided derivative L ≠ 0 and γ(t₀) = s, the curve moves away
+from s on either side of t₀. Used to apply the chord bound (which requires
+γ(t) ≠ s, equivalently `‖γ(t) − s‖ > 0`). -/
+
+/-- **Eventually `γ ≠ s` (right side).** With right-derivative L ≠ 0, the
+curve cannot stay at s past t₀. -/
+theorem eventually_ne_right
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_s : γ t₀ = s) :
+    ∀ᶠ t in 𝓝[>] t₀, γ t ≠ s := by
+  have h_asymp := h_deriv.isLittleO
+  have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  have h_bound : ∀ᶠ t in 𝓝[>] t₀,
+      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
+    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
+    exact h_asymp.bound h_eps_pos
+  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  have h_pos : 0 < t - t₀ := sub_pos.mpr ht
+  have h_norm_eq : ‖t - t₀‖ = t - t₀ := by
+    rw [Real.norm_eq_abs, abs_of_pos h_pos]
+  rw [h_norm_eq] at h_b
+  intro h_eq
+  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  have h_expr : γ t - γ t₀ - (t - t₀) • L = -((t - t₀) • L) := by
+    rw [h_diff_zero, zero_sub]
+  rw [h_expr, norm_neg, norm_smul, Real.norm_eq_abs, abs_of_pos h_pos] at h_b
+  nlinarith
+
+/-- **Eventually `γ ≠ s` (left side).** Symmetric. -/
+theorem eventually_ne_left
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_s : γ t₀ = s) :
+    ∀ᶠ t in 𝓝[<] t₀, γ t ≠ s := by
+  have h_asymp := h_deriv.isLittleO
+  have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  have h_bound : ∀ᶠ t in 𝓝[<] t₀,
+      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
+    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
+    exact h_asymp.bound h_eps_pos
+  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  have h_neg : t - t₀ < 0 := sub_neg.mpr ht
+  have h_norm_eq : ‖t - t₀‖ = -(t - t₀) := by
+    rw [Real.norm_eq_abs, abs_of_neg h_neg]
+  rw [h_norm_eq] at h_b
+  intro h_eq
+  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  have h_expr : γ t - γ t₀ - (t - t₀) • L = -((t - t₀) • L) := by
+    rw [h_diff_zero, zero_sub]
+  rw [h_expr, norm_neg, norm_smul, Real.norm_eq_abs, abs_of_neg h_neg] at h_b
+  nlinarith
+
 end
