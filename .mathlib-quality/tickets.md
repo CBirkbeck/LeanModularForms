@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, **B-6 full (convex)**, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**
-- Open: C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2/B-5/B-6 fully closed for arbitrary open U**, B-3, B-4, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**, **C-1**
+- Open: C-2..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
@@ -234,11 +234,17 @@
 
 ### [C-1] Tangent-approximation around a crossing
 
-- **Status**: open
+- **Status**: **done** —
+  `tangentApproximation_of_isFlatOfOrder_right`/`_left`
+  (standard axioms only)
 - **File**: `ForMathlib/HigherOrderCancel.lean`
-- **Depends on**: none
-- **Parallel**: yes
-- **API**: `tangentApproximation_of_isFlatOfOrder`.
+- **Depends on**: none (uses existing `IsFlatOfOrder` + asymptotic helpers)
+- **Done**: package `IsFlatOfOrder γ t₀ n` (which gives tangent deviation
+  `o(‖γ − γ₀‖^n)`) into the form `o(|t − t₀|^n)` by combining with the
+  one-sided derivative existence (`hasDerivWithinAt_Ioi/Iio_iff` +
+  `hasDerivWithinAt_Ici/Iic_of_tendsto_deriv`) and `IsBigO.pow`. The
+  conversion `‖γ − γ₀‖^n = O(|t − t₀|^n)` follows from
+  `DifferentiableWithinAt.isBigO_sub` raised to the n-th power.
 
 ### [C-2] Curve CPV reduces to line CPV under A'
 
