@@ -454,4 +454,82 @@ theorem hCancel_of_remainder_eq
     HasCauchyPVOn S (fun z => f₂ z - principalPartSum S c₂ z) γ 0 :=
   hCancel_congr S _ _ γ h_eq hf₁
 
+/-! ## C-1: Tangent approximation around a crossing
+
+For a curve `γ` flat of order `n` at `t₀` with right (resp. left) one-sided
+derivative limit `L ≠ 0`, `IsFlatOfOrder` says the tangent deviation is
+`o(‖γ(t) − γ(t₀)‖^n)`. The right-side derivative limit gives
+`(γ t − γ t₀) =O (t − t₀)` near `t₀` from the right (and similarly from the
+left), so `‖γ(t) − γ(t₀)‖^n =O |t − t₀|^n`. Combining gives the more
+usable form `o(|t − t₀|^n)` for the tangent deviation. -/
+
+/-- **C-1 (right-side).** Under right-side flatness of order `n`, the tangent
+deviation is `o(|t - t₀|^n)` from the right. -/
+theorem tangentApproximation_of_isFlatOfOrder_right
+    {γ : ℝ → ℂ} {t₀ : ℝ} {n : ℕ}
+    (h_flat : IsFlatOfOrder γ t₀ n)
+    {L : ℂ} (hL : L ≠ 0)
+    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
+    (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
+    (hγ_cont : ContinuousAt γ t₀) :
+    (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[𝓝[>] t₀]
+      (fun t => |t - t₀| ^ n) := by
+  -- Flatness gives the o(‖γ-γ₀‖^n) form.
+  have h_flat_asym := h_flat.right_flat L hL hL_right
+  -- Differentiability from the right at t₀ + Tendsto deriv → L gives the
+  -- one-sided derivative existence.
+  obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
+  have hderiv : HasDerivWithinAt γ L (Ioi t₀) t₀ :=
+    hasDerivWithinAt_Ioi_iff_Ici.mpr
+      (hasDerivWithinAt_Ici_of_tendsto_deriv
+        (fun t ht => (hs_diff t ht).differentiableWithinAt)
+        hγ_cont.continuousWithinAt hs_mem hL_right)
+  have h_bigO : (fun t => γ t - γ t₀) =O[𝓝[>] t₀] (fun t => t - t₀) :=
+    hderiv.differentiableWithinAt.isBigO_sub
+  -- Take n-th power
+  have h_pow : (fun t => (γ t - γ t₀) ^ n) =O[𝓝[>] t₀] (fun t => (t - t₀) ^ n) :=
+    h_bigO.pow n
+  -- Convert to norm form: (γ-γ₀)^n has norm ‖γ-γ₀‖^n; (t-t₀)^n has norm |t-t₀|^n.
+  have h_lhs : (fun t : ℝ => ‖(γ t - γ t₀) ^ n‖) = (fun t => ‖γ t - γ t₀‖ ^ n) :=
+    funext fun t => norm_pow _ _
+  have h_rhs : (fun t : ℝ => ‖(t - t₀) ^ n‖) = (fun t => |t - t₀| ^ n) :=
+    funext fun t => by rw [norm_pow, Real.norm_eq_abs]
+  have h_pow_norm : (fun t => ‖γ t - γ t₀‖ ^ n) =O[𝓝[>] t₀]
+      (fun t => |t - t₀| ^ n) := by
+    rw [← h_lhs, ← h_rhs]
+    exact h_pow.norm_left.norm_right
+  exact h_flat_asym.trans_isBigO h_pow_norm
+
+/-- **C-1 (left-side).** Under left-side flatness of order `n`, the tangent
+deviation is `o(|t - t₀|^n)` from the left. -/
+theorem tangentApproximation_of_isFlatOfOrder_left
+    {γ : ℝ → ℂ} {t₀ : ℝ} {n : ℕ}
+    (h_flat : IsFlatOfOrder γ t₀ n)
+    {L : ℂ} (hL : L ≠ 0)
+    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
+    (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
+    (hγ_cont : ContinuousAt γ t₀) :
+    (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[𝓝[<] t₀]
+      (fun t => |t - t₀| ^ n) := by
+  have h_flat_asym := h_flat.left_flat L hL hL_left
+  obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
+  have hderiv : HasDerivWithinAt γ L (Iio t₀) t₀ :=
+    hasDerivWithinAt_Iio_iff_Iic.mpr
+      (hasDerivWithinAt_Iic_of_tendsto_deriv
+        (fun t ht => (hs_diff t ht).differentiableWithinAt)
+        hγ_cont.continuousWithinAt hs_mem hL_left)
+  have h_bigO : (fun t => γ t - γ t₀) =O[𝓝[<] t₀] (fun t => t - t₀) :=
+    hderiv.differentiableWithinAt.isBigO_sub
+  have h_pow : (fun t => (γ t - γ t₀) ^ n) =O[𝓝[<] t₀] (fun t => (t - t₀) ^ n) :=
+    h_bigO.pow n
+  have h_lhs : (fun t : ℝ => ‖(γ t - γ t₀) ^ n‖) = (fun t => ‖γ t - γ t₀‖ ^ n) :=
+    funext fun t => norm_pow _ _
+  have h_rhs : (fun t : ℝ => ‖(t - t₀) ^ n‖) = (fun t => |t - t₀| ^ n) :=
+    funext fun t => by rw [norm_pow, Real.norm_eq_abs]
+  have h_pow_norm : (fun t => ‖γ t - γ t₀‖ ^ n) =O[𝓝[<] t₀]
+      (fun t => |t - t₀| ^ n) := by
+    rw [← h_lhs, ← h_rhs]
+    exact h_pow.norm_left.norm_right
+  exact h_flat_asym.trans_isBigO h_pow_norm
+
 end
