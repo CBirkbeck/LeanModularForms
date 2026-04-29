@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**
-- Open: B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, **B-6 full (convex)**, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**
+- Open: C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
@@ -213,11 +213,23 @@
 
 ### [B-6] Close null-hom simple-pole theorem
 
-- **Status**: open
+- **Status**: **done** —
+  `hasCauchyPVOn_simplePoles_nullHomologous_closed_full`
+  (standard axioms only, convex bounded U + Lipschitz γ)
 - **File**: `ForMathlib/HigherOrderAssembly.lean`
-- **Depends on**: A-2 ✅, B-5, CLEANUP-B
-- **Description**: Upgrade `hasCauchyPVOn_simplePoles_nullHomologous_closed`
-  to discharge the w₀ and Dixon-zero oracles using A-2 (done) and B-5.
+- **Depends on**: A-2 ✅, B-5 (convex_full ✅ via W-5), avoids_delta_bound
+- **Done**: w₀ from A-2; Dixon-zero from B-5_convex_full applied to the
+  twisted holomorphic extension `(z − w₀) · g(z)` (where `g` is the
+  removable-singularity extension of `f − pp` from
+  `remainder_differentiableOn_of_simplePoles`); h_winding_zero_near
+  from W-5 (`IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed`);
+  pointwise transfer at `w₀` via `intervalIntegral.integral_congr` on
+  `dslope` (both vanish at `w₀`, agree on the curve via `g = f − pp`
+  on `U \ S`); integrabilities from Lipschitz + continuity.
+- **Side change**: `avoids_delta_bound` made non-private in
+  `NullHomologous.lean`.
+- **Limitation**: convex U only, since B-5_convex_full requires convex.
+  Full non-convex closure awaits B-2 non-convex closure.
 
 ### [C-1] Tangent-approximation around a crossing
 
