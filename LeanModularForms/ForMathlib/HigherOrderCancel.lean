@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.HigherOrderAssembly
 import LeanModularForms.ForMathlib.SectorCurve
+import LeanModularForms.ForMathlib.FlatChordBound
 
 /-!
 # Higher-Order Cancellation from Conditions (A') + (B)
@@ -888,5 +889,122 @@ theorem eventually_ne_left
     rw [h_diff_zero, zero_sub]
   rw [h_expr, norm_neg, norm_smul, Real.norm_eq_abs, abs_of_neg h_neg] at h_b
   nlinarith
+
+/-! ## Phase 3.6b: Asymptotic chord bound
+
+The parameter-based asymptotic statement: for γ flat of order n with right
+(or left) derivative L ≠ 0 and γ(t₀) = s, the chord from γ(t) to its
+"natural" tangent target on the +L (or −L) ray is `o(‖γ(t) − s‖^n)` as
+`t → t₀±`. This is the parameter-based packaging of Phase 3.3's pointwise
+chord bound combined with flatness. -/
+
+/-- **Asymptotic chord-to-tangent bound (right side).** Combining
+flatness + the chord bound + the eventual sign/non-zero conditions, the
+chord `‖γ(t) − s − (‖γ(t)−s‖/‖L‖)·L‖` is `o(‖γ(t)−s‖^n)` as `t → t₀⁺`. -/
+theorem chord_to_tangent_isLittleO_right
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} {n : ℕ}
+    (h_flat : IsFlatOfOrder γ t₀ n) (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀)
+    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
+    (h_s : γ t₀ = s) :
+    (fun t => ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖) =o[𝓝[>] t₀]
+      (fun t => ‖γ t - s‖ ^ n) := by
+  have h_ortho :=
+    LeanModularForms.orthogonal_deviation_at_radius_right h_flat hL hL_right h_s
+  have h_eventually_bound : ∀ᶠ t in 𝓝[>] t₀,
+      ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ ≤ 3 * ‖tangentDeviation (γ t - s) L‖ := by
+    filter_upwards [eventually_re_pos_right hL h_deriv h_s,
+                    eventually_ne_right hL h_deriv h_s] with t h_pos h_ne
+    have hw_ne : γ t - s ≠ 0 := sub_ne_zero.mpr h_ne
+    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr hw_ne
+    have h_chord :=
+      LeanModularForms.norm_chord_to_tangent_target_le hL hw_pos h_pos
+    have h_dev_le : ‖tangentDeviation (γ t - s) L‖ ≤ 2 * ‖γ t - s‖ :=
+      norm_tangentDeviation_le _ _ hL
+    have h_div_bound : ‖tangentDeviation (γ t - s) L‖ ^ 2 / ‖γ t - s‖ ≤
+        2 * ‖tangentDeviation (γ t - s) L‖ := by
+      rw [pow_two, mul_div_assoc]
+      have hd_div : ‖tangentDeviation (γ t - s) L‖ / ‖γ t - s‖ ≤ 2 := by
+        rw [div_le_iff₀ hw_pos]; linarith
+      have h_dev_nonneg : 0 ≤ ‖tangentDeviation (γ t - s) L‖ := norm_nonneg _
+      nlinarith
+    linarith [h_chord]
+  have h_chord_isBigO :
+      (fun t => ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖) =O[𝓝[>] t₀]
+        (fun t => ‖tangentDeviation (γ t - s) L‖) := by
+    apply Asymptotics.IsBigO.of_bound 3
+    filter_upwards [h_eventually_bound] with t ht
+    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
+      abs_of_nonneg (norm_nonneg _)]
+    exact ht
+  exact h_chord_isBigO.trans_isLittleO h_ortho
+
+/-- **Asymptotic chord-to-tangent bound (left side).** Symmetric: the chord
+is bounded by `o(‖γ(t)−s‖^n)` as `t → t₀⁻`, with target on the `−L` ray. -/
+theorem chord_to_tangent_isLittleO_left
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} {n : ℕ}
+    (h_flat : IsFlatOfOrder γ t₀ n) (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀)
+    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
+    (h_s : γ t₀ = s) :
+    (fun t => ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖) =o[𝓝[<] t₀]
+      (fun t => ‖γ t - s‖ ^ n) := by
+  have hLneg : (-L) ≠ 0 := neg_ne_zero.mpr hL
+  have h_ortho :=
+    LeanModularForms.orthogonal_deviation_at_radius_left h_flat hL hL_left h_s
+  -- tangentDeviation (γ t - s) L = tangentDeviation (γ t - s) (-L) (orthogonality
+  -- to the line is invariant under L ↦ -L since `orthogonalProjection w (-L)`
+  -- equals `orthogonalProjection w L`).
+  have h_dev_eq : ∀ t, tangentDeviation (γ t - s) (-L) = tangentDeviation (γ t - s) L := by
+    intro t
+    unfold tangentDeviation orthogonalProjectionComplex
+    have h_normSq : Complex.normSq (-L) = Complex.normSq L := Complex.normSq_neg L
+    rw [h_normSq]
+    have h_re_neg : ((γ t - s) * starRingEnd ℂ (-L)).re = -((γ t - s) * starRingEnd ℂ L).re := by
+      rw [map_neg, mul_neg]; exact Complex.neg_re _
+    rw [h_re_neg]
+    module
+  -- Eventually re((γ t - s) · conj (-L)) ≥ 0 (since left-side gives ≤ 0 for L,
+  -- equivalently ≥ 0 for -L).
+  have h_pos_neg : ∀ᶠ t in 𝓝[<] t₀, 0 ≤ ((γ t - s) * starRingEnd ℂ (-L)).re := by
+    filter_upwards [eventually_re_neg_left hL h_deriv h_s] with t h_neg
+    rw [map_neg, mul_neg, Complex.neg_re]
+    linarith
+  have h_eventually_bound : ∀ᶠ t in 𝓝[<] t₀,
+      ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ ≤
+        3 * ‖tangentDeviation (γ t - s) (-L)‖ := by
+    filter_upwards [h_pos_neg, eventually_ne_left hL h_deriv h_s] with t h_pos h_ne
+    have hw_ne : γ t - s ≠ 0 := sub_ne_zero.mpr h_ne
+    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr hw_ne
+    have h_chord :=
+      LeanModularForms.norm_chord_to_tangent_target_le hLneg hw_pos h_pos
+    have h_dev_le : ‖tangentDeviation (γ t - s) (-L)‖ ≤ 2 * ‖γ t - s‖ :=
+      norm_tangentDeviation_le _ _ hLneg
+    have h_div_bound :
+        ‖tangentDeviation (γ t - s) (-L)‖ ^ 2 / ‖γ t - s‖ ≤
+          2 * ‖tangentDeviation (γ t - s) (-L)‖ := by
+      rw [pow_two, mul_div_assoc]
+      have hd_div : ‖tangentDeviation (γ t - s) (-L)‖ / ‖γ t - s‖ ≤ 2 := by
+        rw [div_le_iff₀ hw_pos]; linarith
+      have h_dev_nonneg : 0 ≤ ‖tangentDeviation (γ t - s) (-L)‖ := norm_nonneg _
+      nlinarith
+    linarith [h_chord]
+  -- Convert tangentDeviation (γ t - s) (-L) = tangentDeviation (γ t - s) L
+  -- on the eventual bound, so we can use h_ortho.
+  have h_eventually_bound' : ∀ᶠ t in 𝓝[<] t₀,
+      ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ ≤
+        3 * ‖tangentDeviation (γ t - s) L‖ := by
+    filter_upwards [h_eventually_bound] with t ht
+    rw [h_dev_eq t] at ht
+    exact ht
+  have h_chord_isBigO :
+      (fun t => ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖) =O[𝓝[<] t₀]
+        (fun t => ‖tangentDeviation (γ t - s) L‖) := by
+    apply Asymptotics.IsBigO.of_bound 3
+    filter_upwards [h_eventually_bound'] with t ht
+    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
+      abs_of_nonneg (norm_nonneg _)]
+    exact ht
+  exact h_chord_isBigO.trans_isLittleO h_ortho
 
 end
