@@ -269,8 +269,10 @@ to the holomorphic twist `g(z) = (z − w₀) · (f − pp)(z)` for `w₀ ∈ U`
 turn discharged by W-5
 (`IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed`) using the
 continuous arg lift + integer-valued winding chain in
-`ForMathlib/WindingArgDiff.lean`. Non-convex `U` closure remains pending
-the non-convex closure of B-2 (the `dixonH1` differentiability oracles).
+`ForMathlib/WindingArgDiff.lean`. Non-convex `U` is also handled: the
+non-convex `dixonFunction_eq_zero_of_nullHomologous_open_full` (built on
+`continuousOn_dslope_prod_open` and `dixonH1_differentiableOn_of_regular_open_full`)
+discharges the same Dixon-zero oracle without requiring `Convex ℝ U`.
 
 **Higher-order poles case (pending):** the A'/B closure via sector
 curves and Laurent compatibility is the genuine remaining work.

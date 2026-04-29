@@ -671,4 +671,22 @@ theorem dixonFunction_eq_zero_of_nullHomologous_convex_full
     hLip (dixonH1_differentiableOn_of_regular_convex_full hU_convex hU hf γ
       h_null.image_subset hLip) h_winding_zero_near
 
+/-- **B-5 fully closed for general open U** (no `Convex`). Same conclusion as
+`dixonFunction_eq_zero_of_nullHomologous_convex_full`, with B-2 closed via
+`dixonH1_differentiableOn_of_regular_open_full`. -/
+theorem dixonFunction_eq_zero_of_nullHomologous_open_full
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
+    (hU_bounded : Bornology.IsBounded U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
+  dixonFunction_eq_zero_of_nullHomologous_autoBounds hU hU_bounded hf γ h_null
+    hLip (dixonH1_differentiableOn_of_regular_open_full hU hf γ
+      h_null.image_subset hLip) h_winding_zero_near
+
 end

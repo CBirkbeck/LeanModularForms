@@ -682,11 +682,12 @@ choice of `w₀` to discharge **both** oracle hypotheses of
 `hasCauchyPVOn_simplePoles_nullHomologous_closed`. Lipschitz `γ` is the only
 non-geometric input. -/
 
-/-- **B-6 (full closure).** For a closed Lipschitz piecewise C¹ immersion `γ`
-null-homologous in a convex bounded open set `U`, with simple poles at `S ⊆ U`
-avoided by `γ`, the CPV residue formula holds with no oracle hypotheses. -/
+/-- **B-6 (full closure for general open `U`).** For a closed Lipschitz piecewise C¹
+immersion `γ` null-homologous in a bounded open set `U`, with simple poles at
+`S ⊆ U` avoided by `γ`, the CPV residue formula holds with no oracle hypotheses.
+**Non-convex variant** — built on `dixonFunction_eq_zero_of_nullHomologous_open_full`. -/
 theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (hU_bounded : Bornology.IsBounded U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -722,8 +723,8 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full
     ((differentiableAt_id.sub_const w₀).differentiableWithinAt).mul (hg_diff z hz)
   have h_dixon_G : ∀ w,
       dixonFunction (fun z => (z - w₀) * g z) U γ.toPiecewiseC1Path w = 0 :=
-    dixonFunction_eq_zero_of_nullHomologous_convex_full hU_convex hU_open
-      hU_bounded hG_diff γ h_null hLip
+    dixonFunction_eq_zero_of_nullHomologous_open_full hU_open hU_bounded
+      hG_diff γ h_null hLip
       (fun w hw_notin h_avoid_local =>
         h_null.winding_zero_nhds_of_not_mem_of_closed hw_notin h_avoid_local hLip)
   -- Pointwise dslope equality on the curve
@@ -848,7 +849,7 @@ ordinary contour integral equals the winding-residue formula. The CPV
 predicate collapses to the contour integral via avoidance
 (`contourIntegral_eq_of_hasCauchyPVOn_avoids`). -/
 theorem contourIntegral_simplePoles_nullHomologous_closed_full
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (hU_bounded : Bornology.IsBounded U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -862,7 +863,7 @@ theorem contourIntegral_simplePoles_nullHomologous_closed_full
       ∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s :=
   contourIntegral_eq_of_hasCauchyPVOn_avoids hδ
-    (hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_convex hU_open hU_ne
+    (hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_open hU_ne
       hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids hδ hLip)
 
 /-- **Closed null-homologous form of `generalizedResidueTheorem` for simple poles.**
@@ -872,7 +873,7 @@ Discharges every oracle of the abstract `generalizedResidueTheorem` (`hCancel`,
 which are automatic for simple poles) and returns the value with `2πi`
 factored to the front of the sum, matching the abstract theorem's signature. -/
 theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (hU_bounded : Bornology.IsBounded U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -892,7 +893,7 @@ theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed
     rw [Finset.mul_sum]
     exact Finset.sum_congr rfl fun s _ => by ring
   rw [h_target_eq]
-  exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_convex hU_open
+  exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_open
     hU_ne hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids hδ hLip
 
 /-! ## δ-free wrappers (deriving the distance bound from pointwise avoidance) -/
@@ -901,7 +902,7 @@ theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed
 the positive-distance hypothesis `hδ` is auto-derived from pointwise avoidance
 and finite `S` via `avoids_finset_delta_bound`. -/
 theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (hU_bounded : Bornology.IsBounded U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -912,13 +913,13 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids
     HasCauchyPVOn S f γ.toPiecewiseC1Path
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
-  hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_convex hU_open hU_ne
+  hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_open hU_ne
     hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
     (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
 
 /-- δ-free variant of `contourIntegral_simplePoles_nullHomologous_closed_full`. -/
 theorem contourIntegral_simplePoles_nullHomologous_closed_full_avoids
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (hU_bounded : Bornology.IsBounded U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -929,13 +930,13 @@ theorem contourIntegral_simplePoles_nullHomologous_closed_full_avoids
     γ.toPiecewiseC1Path.contourIntegral f =
       ∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s :=
-  contourIntegral_simplePoles_nullHomologous_closed_full hU_convex hU_open hU_ne
+  contourIntegral_simplePoles_nullHomologous_closed_full hU_open hU_ne
     hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
     (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
 
 /-- δ-free variant of `generalizedResidueTheorem_simplePoles_nullHomologous_closed`. -/
 theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed_avoids
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (hU_bounded : Bornology.IsBounded U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -946,7 +947,7 @@ theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed_avoids
     HasCauchyPVOn S f γ.toPiecewiseC1Path
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
-  generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_convex hU_open hU_ne
+  generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_open hU_ne
     hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
     (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
 

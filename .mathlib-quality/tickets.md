@@ -213,23 +213,24 @@
 
 ### [B-6] Close null-hom simple-pole theorem
 
-- **Status**: **done** —
+- **Status**: **done — fully closed for arbitrary open U** —
   `hasCauchyPVOn_simplePoles_nullHomologous_closed_full`
-  (standard axioms only, convex bounded U + Lipschitz γ)
+  (standard axioms only, bounded open U + Lipschitz γ; **no convex hypothesis**)
 - **File**: `ForMathlib/HigherOrderAssembly.lean`
-- **Depends on**: A-2 ✅, B-5 (convex_full ✅ via W-5), avoids_delta_bound
-- **Done**: w₀ from A-2; Dixon-zero from B-5_convex_full applied to the
-  twisted holomorphic extension `(z − w₀) · g(z)` (where `g` is the
-  removable-singularity extension of `f − pp` from
-  `remainder_differentiableOn_of_simplePoles`); h_winding_zero_near
-  from W-5 (`IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed`);
-  pointwise transfer at `w₀` via `intervalIntegral.integral_congr` on
-  `dslope` (both vanish at `w₀`, agree on the curve via `g = f − pp`
-  on `U \ S`); integrabilities from Lipschitz + continuity.
+- **Depends on**: A-2 ✅, B-5 (open_full ✅ via W-5 + non-convex D-1c),
+  avoids_delta_bound
+- **Done**: w₀ from A-2; Dixon-zero from B-5_open_full applied to the
+  twisted holomorphic extension `(z − w₀) · g(z)`; h_winding_zero_near
+  from W-5; pointwise transfer at `w₀` via `intervalIntegral.integral_congr`
+  on `dslope`. The convex hypothesis was lifted by extending
+  `Complex.continuousOn_dslope_prod_open` (off-diagonal via continuity of
+  `f`, diagonal via convex theorem on a local disk inside `U`),
+  `Complex.deriv_dslope_bounded_locally_open`,
+  `Complex.deriv_dslope_bounded_on_compact_open`,
+  `dixonH1_differentiableOn_of_regular_open_full`,
+  `dixonFunction_eq_zero_of_nullHomologous_open_full` to non-convex `U`.
 - **Side change**: `avoids_delta_bound` made non-private in
   `NullHomologous.lean`.
-- **Limitation**: convex U only, since B-5_convex_full requires convex.
-  Full non-convex closure awaits B-2 non-convex closure.
 
 ### [C-1] Tangent-approximation around a crossing
 
