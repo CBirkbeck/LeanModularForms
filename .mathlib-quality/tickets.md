@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2/B-5/B-6 fully closed for arbitrary open U**, B-3, B-4, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**, **C-1**
-- Open: C-2..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2/B-5/B-6 fully closed for arbitrary open U**, B-3, B-4, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**, **C-1**, **C-2 Steps A+B (antiderivative + FTC on smooth pieces)**
+- Open: C-2 Steps C+D (homotopy/length-based comparison to sector model), C-3..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
@@ -248,10 +248,37 @@
 
 ### [C-2] Curve CPV reduces to line CPV under A'
 
-- **Status**: open
+- **Status**: partial — Steps A, B done; Step C (asymptotic) open.
 - **File**: `ForMathlib/HigherOrderCancel.lean`
 - **Depends on**: C-1
 - **API**: `cpv_near_crossing_eq_cpv_tangent_of_flat`.
+- **Done**:
+  - **Step A**: `hasDerivAt_antiderivative_pow_inv` — antiderivative
+    `F(t) = -1/[(k-1)(γ(t) - s)^{k-1}]` of `γ'/(γ-s)^k` for `k ≥ 2`,
+    when `γ` is differentiable at `t` and `γ(t) ≠ s`.
+  - **Step B**: `integral_pow_inv_eq_FTC` — FTC application of Step A
+    on a smooth piece (γ avoids s on `uIcc a b`):
+    `∫_a^b γ'/(γ-s)^k = F(b) - F(a)`.
+- **Open (Step C/D — homotopy/length-based comparison)**:
+  - HW's argument compares the actual flat curve `Γ` to the sector
+    model `γ_sector` via short connecting arcs at the boundary
+    `{|z - s| = ε}`. By flatness of order `n` at the crossing,
+    `Length(connecting arcs) = o(ε^n)`, while the integrand
+    `1/z^k` has magnitude `1/ε^k` on the boundary. For HW's
+    condition (A) (flatness order = pole order), this gives
+    `(1/ε^k) · o(ε^k) = o(1) → 0`.
+  - This requires:
+    - Defining "exit time" parametrization at radius ε (when does
+      Γ(t) first leave/enter `B_ε(s)`)
+    - Comparing `Γ(t_ε)` vs `γ_sector(t_ε)` via flatness +
+      tangent approximation (C-1)
+    - Length-bound integral lemma: `|∫_arc 1/z^k dz| ≤ Length · sup|1/z^k|`
+    - Homotopy invariance gluing `Γ\B_ε` and `γ_sector\B_ε` via
+      connecting arcs.
+  - Once Step C is done, Step D assembles via existing
+    `SectorCurve.cpv_lineCurve_inv_pow_odd` (k odd, no extra
+    condition) and `higherOrderFactor_eq_of_angle_condition`
+    (k even, condition (B)).
 
 ### [C-3] A'+B give higher-order cancellation
 
