@@ -842,6 +842,114 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full
   exact h_lim.congr'
     (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
 
+/-- **Contour integral form of B-6.** Same hypotheses as
+`hasCauchyPVOn_simplePoles_nullHomologous_closed_full`, but states the
+ordinary contour integral equals the winding-residue formula. The CPV
+predicate collapses to the contour integral via avoidance
+(`contourIntegral_eq_of_hasCauchyPVOn_avoids`). -/
+theorem contourIntegral_simplePoles_nullHomologous_closed_full
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ.toPiecewiseC1Path t - s‖)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    γ.toPiecewiseC1Path.contourIntegral f =
+      ∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s :=
+  contourIntegral_eq_of_hasCauchyPVOn_avoids hδ
+    (hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_convex hU_open hU_ne
+      hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids hδ hLip)
+
+/-- **Closed null-homologous form of `generalizedResidueTheorem` for simple poles.**
+
+Discharges every oracle of the abstract `generalizedResidueTheorem` (`hCancel`,
+`hPV_sing`, `hI_sing`, `hI_rem`, plus the higher-order condition hypotheses
+which are automatic for simple poles) and returns the value with `2πi`
+factored to the front of the sum, matching the abstract theorem's signature. -/
+theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
+    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ.toPiecewiseC1Path t - s‖)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S f γ.toPiecewiseC1Path
+      (2 * ↑Real.pi * I * ∑ s ∈ S,
+        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) := by
+  have h_target_eq : 2 * ↑Real.pi * I * ∑ s ∈ S,
+      generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s =
+    ∑ s ∈ S, 2 * ↑Real.pi * I *
+      generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s := by
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun s _ => by ring
+  rw [h_target_eq]
+  exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_convex hU_open
+    hU_ne hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids hδ hLip
+
+/-! ## δ-free wrappers (deriving the distance bound from pointwise avoidance) -/
+
+/-- δ-free variant of `hasCauchyPVOn_simplePoles_nullHomologous_closed_full`:
+the positive-distance hypothesis `hδ` is auto-derived from pointwise avoidance
+and finite `S` via `avoids_finset_delta_bound`. -/
+theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S f γ.toPiecewiseC1Path
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
+  hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_convex hU_open hU_ne
+    hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
+    (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
+
+/-- δ-free variant of `contourIntegral_simplePoles_nullHomologous_closed_full`. -/
+theorem contourIntegral_simplePoles_nullHomologous_closed_full_avoids
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    γ.toPiecewiseC1Path.contourIntegral f =
+      ∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s :=
+  contourIntegral_simplePoles_nullHomologous_closed_full hU_convex hU_open hU_ne
+    hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
+    (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
+
+/-- δ-free variant of `generalizedResidueTheorem_simplePoles_nullHomologous_closed`. -/
+theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed_avoids
+    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S f γ.toPiecewiseC1Path
+      (2 * ↑Real.pi * I * ∑ s ∈ S,
+        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
+  generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_convex hU_open hU_ne
+    hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
+    (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
+
 /-! ## Convex corollary derived as specialization of the general theorem -/
 
 /-- **Generalized Residue Theorem for simple poles in convex domains (via general

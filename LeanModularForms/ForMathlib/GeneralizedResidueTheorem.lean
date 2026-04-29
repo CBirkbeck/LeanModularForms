@@ -259,12 +259,18 @@ are needed — they are all discharged internally:
 * `hCancel` is derived via `hCancel_of_simplePoles_convex` using
   `contourIntegral_eq_zero_of_differentiableOn_convex_aux`.
 
-**Simple poles, null-homologous case (pending):** the `hCancel`
-discharge for non-convex `U` requires a null-homologous Cauchy theorem
-`∮_γ f = 0` for `f` holomorphic on `U` and γ null-homologous in `U`.
-The proof is available via Dixon's theorem applied to
-`g(z) = (z - w₀) · f(z)` for any `w₀ ∈ U \ γ.image`, but the
-infrastructure setup to plug this into the pure-FM chain is deferred.
+**Simple poles, null-homologous case (fully closed for convex U):** see
+`generalizedResidueTheorem_simplePoles_nullHomologous_closed` in
+`HigherOrderAssembly.lean`. For convex bounded open `U` with γ Lipschitz,
+no oracle hypotheses are needed — `hCancel` is discharged via the Dixon
+mechanism (`dixonFunction_eq_zero_of_nullHomologous_convex_full`) applied
+to the holomorphic twist `g(z) = (z − w₀) · (f − pp)(z)` for `w₀ ∈ U`
+(supplied by A-2). The Dixon-zero hypothesis `h_winding_zero_near` is in
+turn discharged by W-5
+(`IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed`) using the
+continuous arg lift + integer-valued winding chain in
+`ForMathlib/WindingArgDiff.lean`. Non-convex `U` closure remains pending
+the non-convex closure of B-2 (the `dixonH1` differentiability oracles).
 
 **Higher-order poles case (pending):** the A'/B closure via sector
 curves and Laurent compatibility is the genuine remaining work.
