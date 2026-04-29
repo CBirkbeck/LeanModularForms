@@ -73,4 +73,39 @@ theorem orthogonal_deviation_at_radius_left
   simp only [h_eq] at h
   exact h
 
+/-! ### Pythagoras for the orthogonal decomposition -/
+
+/-- **Pythagoras for `orthogonalProjectionComplex` and `tangentDeviation`.**
+The squared norm of `w` decomposes into the squared norms of its parallel
+projection on `L` and its orthogonal complement: this is the standard
+orthogonal-decomposition identity in ℝ² (viewing ℂ as ℝ²). -/
+theorem orthogonal_pythagoras (w L : ℂ) :
+    ‖orthogonalProjectionComplex w L‖^2 + ‖tangentDeviation w L‖^2 = ‖w‖^2 := by
+  rcases eq_or_ne L 0 with rfl | hL
+  · simp [orthogonalProjectionComplex, tangentDeviation]
+  rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm]
+  unfold tangentDeviation orthogonalProjectionComplex
+  simp only [Complex.real_smul]
+  have hL_sq : Complex.normSq L ≠ 0 := (Complex.normSq_pos.mpr hL).ne'
+  set u := (w * starRingEnd ℂ L).re with hu
+  set N := Complex.normSq L with hN
+  have h1 : Complex.normSq ((↑(u / N) : ℂ) * L) = (u / N) ^ 2 * N := by
+    rw [Complex.normSq_mul, Complex.normSq_ofReal]; ring
+  have h2 : (w * starRingEnd ℂ ((↑(u / N) : ℂ) * L)).re = (u / N) * u := by
+    rw [map_mul, Complex.conj_ofReal]
+    rw [show w * ((↑(u / N) : ℂ) * starRingEnd ℂ L) =
+      (↑(u / N) : ℂ) * (w * starRingEnd ℂ L) from by ring]
+    rw [Complex.mul_re]
+    simp [hu]
+  rw [Complex.normSq_sub, h1, h2]
+  field_simp
+  ring
+
+/-- **Norm of the parallel projection.** From Pythagoras:
+`‖orthogonalProjection w L‖² = ‖w‖² − ‖tangentDeviation w L‖²`. -/
+theorem norm_sq_orthogonalProjection (w L : ℂ) :
+    ‖orthogonalProjectionComplex w L‖ ^ 2 = ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 := by
+  have := orthogonal_pythagoras w L
+  linarith
+
 end LeanModularForms
