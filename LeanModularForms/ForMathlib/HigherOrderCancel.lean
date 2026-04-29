@@ -1293,4 +1293,28 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
 
+/-! ## Phase 3.7: Line-model F-difference for k odd vanishes
+
+For k odd ≥ 3, the line-model antiderivative values at the symmetric exit
+points `s ± (ε/‖L‖)·L` are equal. This is the symmetric cancellation of
+HW's eq. (3.4) for odd-order poles: the line PV is exactly 0 (not just in
+the limit) because `(-x)^{k-1} = x^{k-1}` for k-1 even. -/
+
+/-- **Line-model F-difference vanishing for k odd.** For `k` odd ≥ 2, the
+antiderivative of `1/(z-s)^k` at the two symmetric line-exit-points
+`s ± (ε/‖L‖)·L` are equal. This is the source of the line PV = 0 for
+odd-order poles in the transverse case. -/
+theorem F_line_diff_eq_zero_of_odd
+    (s L : ℂ) (k : ℕ) (hk : 2 ≤ k) (hk_odd : Odd k) (ε : ℝ) :
+    -(↑(k - 1) : ℂ)⁻¹ * (((s - (ε / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹ =
+      -(↑(k - 1) : ℂ)⁻¹ * (((s + (ε / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹ := by
+  have h_even : Even (k - 1) := by
+    obtain ⟨m, hm⟩ := hk_odd
+    have : k - 1 = 2 * m := by omega
+    rw [this]; exact ⟨m, by ring⟩
+  congr 1; congr 1
+  have h1 : (s - (ε / ‖L‖ : ℝ) • L) - s = -((ε / ‖L‖ : ℝ) • L) := by ring
+  have h2 : (s + (ε / ‖L‖ : ℝ) • L) - s = ((ε / ‖L‖ : ℝ) • L) := by ring
+  rw [h1, h2, neg_pow, h_even.neg_one_pow, one_mul]
+
 end
