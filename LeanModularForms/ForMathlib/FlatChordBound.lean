@@ -108,4 +108,35 @@ theorem norm_sq_orthogonalProjection (w L : ℂ) :
   have := orthogonal_pythagoras w L
   linarith
 
+/-! ### sqrt asymptotic: `ε − √(ε² − δ²) ≤ δ²/ε`
+
+This is the key arithmetic estimate behind the parallel-projection-to-target
+distance bound: when γ(t) is at radius ε from s with orthogonal deviation δ,
+the parallel-component magnitude is `√(ε² − δ²)`, which is close to ε. The
+shortfall `ε − √(ε² − δ²)` is bounded by `δ²/ε` (rationalization). -/
+
+/-- **Sqrt shortfall bound.** For `0 ≤ δ ≤ ε` with `ε > 0`:
+`ε − √(ε² − δ²) ≤ δ²/ε`.
+
+Proof: rationalize `ε − √(ε² − δ²) = δ² / (ε + √(ε² − δ²)) ≤ δ²/ε` since
+`√(ε² − δ²) ≥ 0`. -/
+theorem real_sqrt_shortfall_le {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) (hle : δ ≤ ε) :
+    ε - Real.sqrt (ε ^ 2 - δ ^ 2) ≤ δ ^ 2 / ε := by
+  have h_sq_nonneg : 0 ≤ ε ^ 2 - δ ^ 2 := by nlinarith
+  have h_sqrt_nonneg : 0 ≤ Real.sqrt (ε ^ 2 - δ ^ 2) := Real.sqrt_nonneg _
+  have h_sqrt_sq : Real.sqrt (ε ^ 2 - δ ^ 2) ^ 2 = ε ^ 2 - δ ^ 2 :=
+    Real.sq_sqrt h_sq_nonneg
+  have h_eq :
+      (ε - Real.sqrt (ε ^ 2 - δ ^ 2)) * (ε + Real.sqrt (ε ^ 2 - δ ^ 2)) = δ ^ 2 := by
+    have : ε ^ 2 - Real.sqrt (ε ^ 2 - δ ^ 2) ^ 2 = δ ^ 2 := by
+      rw [h_sqrt_sq]; ring
+    linarith [this, sq_nonneg ε, sq_nonneg (Real.sqrt (ε ^ 2 - δ ^ 2))]
+  have h_pos : 0 < ε + Real.sqrt (ε ^ 2 - δ ^ 2) := by linarith
+  have h_diff_eq :
+      ε - Real.sqrt (ε ^ 2 - δ ^ 2) = δ ^ 2 / (ε + Real.sqrt (ε ^ 2 - δ ^ 2)) := by
+    field_simp
+    linarith [h_eq]
+  rw [h_diff_eq]
+  apply div_le_div_of_nonneg_left (by positivity) hε (by linarith)
+
 end LeanModularForms
