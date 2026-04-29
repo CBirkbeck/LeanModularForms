@@ -1435,4 +1435,61 @@ theorem cpv_excised_tendsto_zero_of_F_diff_zero
       (h_int_right := h_plus_int ε hε_pos)
   rw [h_integral_eq]
 
+/-! ## HW Theorem 3.3 — k-odd transverse case
+
+The complete unified statement: for a closed flat curve crossing a higher-order
+pole transversally with k odd, the symmetric-excision PV vanishes. -/
+
+/-- **HW Theorem 3.3 — k-odd transverse case.** For closed γ (γ a = γ b) with
+single transverse crossing at t₀ and `γ(t₀) = s`, k odd ≥ 3, flatness order
+n ≥ k:
+
+  ∫_{[a, t_eps_minus(ε)] ∪ [t_eps_plus(ε), b]} γ'/(γ-s)^k → 0  as ε → 0⁺
+
+This is the **curve-side conclusion of HW Theorem 3.3 higher-order** for the
+k-odd transverse case, fully proven from:
+- Phase 3 analytical kernel (chord bound, F-diff segment bound, asymptotics)
+- Phase 3.7 (line F-diff = 0 for k odd, symmetric cancellation)
+- Phase 3.8 (combined curve F-diff → 0)
+- Phase 3.5a (FTC excision)
+
+Combines `F_curve_diff_tendsto_zero_odd` with
+`cpv_excised_tendsto_zero_of_F_diff_zero` to give the final PV statement.
+
+This is the **Lean formalization of HW eq. (3.4)** for k odd transverse with
+flatness order matching the pole order. -/
+theorem hw_theorem_3_3_odd_transverse_parametric
+    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {a b t₀ : ℝ} {s L : ℂ} {n k : ℕ}
+    (h_close : γ a = γ b)
+    (h_flat : IsFlatOfOrder γ t₀ n) (hL : L ≠ 0)
+    (h_deriv_right : HasDerivWithinAt γ L (Ioi t₀) t₀)
+    (h_deriv_left : HasDerivWithinAt γ L (Iio t₀) t₀)
+    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
+    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
+    (h_s : γ t₀ = s) (hk : 2 ≤ k) (hk_odd : Odd k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
+    (t_eps_plus t_eps_minus : ℝ → ℝ)
+    (h_plus_to : Tendsto t_eps_plus (𝓝[>] 0) (𝓝[>] t₀))
+    (h_plus_radius : ∀ᶠ ε in 𝓝[>] 0, ‖γ (t_eps_plus ε) - s‖ = ε)
+    (h_minus_to : Tendsto t_eps_minus (𝓝[>] 0) (𝓝[<] t₀))
+    (h_minus_radius : ∀ᶠ ε in 𝓝[>] 0, ‖γ (t_eps_minus ε) - s‖ = ε)
+    (h_minus_smooth : ∀ ε > 0, ∀ t ∈ uIcc a (t_eps_minus ε), HasDerivAt γ (γ' t) t)
+    (h_minus_avoids : ∀ ε > 0, ∀ t ∈ uIcc a (t_eps_minus ε), γ t ≠ s)
+    (h_minus_int : ∀ ε > 0,
+      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume a (t_eps_minus ε))
+    (h_plus_smooth : ∀ ε > 0, ∀ t ∈ uIcc (t_eps_plus ε) b, HasDerivAt γ (γ' t) t)
+    (h_plus_avoids : ∀ ε > 0, ∀ t ∈ uIcc (t_eps_plus ε) b, γ t ≠ s)
+    (h_plus_int : ∀ ε > 0,
+      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume (t_eps_plus ε) b) :
+    Tendsto (fun ε =>
+      (∫ t in a..(t_eps_minus ε), γ' t / (γ t - s) ^ k) +
+        (∫ t in (t_eps_plus ε)..b, γ' t / (γ t - s) ^ k))
+      (𝓝[>] 0) (𝓝 0) := by
+  apply cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
+      t_eps_plus t_eps_minus
+      h_minus_smooth h_minus_avoids h_minus_int
+      h_plus_smooth h_plus_avoids h_plus_int
+  exact F_curve_diff_tendsto_zero_odd h_flat hL h_deriv_right h_deriv_left
+      hL_right hL_left h_s hk hk_odd hkn hn1
+      t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius
+
 end
