@@ -167,4 +167,68 @@ theorem norm_orthogonalProjection_shortfall_le {w : ℂ} (L : ℂ) (hw : 0 < ‖
   rw [h_sqrt_eq] at h_sqrt
   exact h_sqrt
 
+/-! ### Geometric identity: `‖proj − target‖ = ‖w‖ − ‖proj‖`
+
+When `w` is in the `+L` hemisphere (i.e., `Re(w · conj L) ≥ 0`), the
+parallel projection `proj = c·L` has `c ≥ 0`, so `proj` and the target
+`(‖w‖/‖L‖)·L` lie on the same ray from `0`. Their difference's norm is
+the difference of magnitudes. -/
+
+/-- **Same-direction shortfall.** If `Re(w · conj L) ≥ 0`, then the parallel
+projection's distance to the same-magnitude target on the +L ray equals the
+difference in magnitudes:
+
+`‖orthogonalProj w L − (‖w‖/‖L‖) • L‖ = ‖w‖ − ‖orthogonalProj w L‖`. -/
+theorem norm_orthogonalProjection_minus_target_eq {w L : ℂ} (hL : L ≠ 0)
+    (h_pos : 0 ≤ (w * starRingEnd ℂ L).re) :
+    ‖orthogonalProjectionComplex w L - (‖w‖ / ‖L‖ : ℝ) • L‖ =
+      ‖w‖ - ‖orthogonalProjectionComplex w L‖ := by
+  set c := (w * starRingEnd ℂ L).re / Complex.normSq L with hc_def
+  have hN_pos : 0 < Complex.normSq L := Complex.normSq_pos.mpr hL
+  have hc_nonneg : 0 ≤ c := div_nonneg h_pos hN_pos.le
+  have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  have h_proj_le_w : ‖orthogonalProjectionComplex w L‖ ≤ ‖w‖ := by
+    have h_pyth := orthogonal_pythagoras w L
+    have h_proj_sq : ‖orthogonalProjectionComplex w L‖ ^ 2 ≤ ‖w‖ ^ 2 := by
+      linarith [sq_nonneg (‖tangentDeviation w L‖)]
+    exact (abs_le_of_sq_le_sq' h_proj_sq (norm_nonneg w)).2
+  have h_proj_norm : ‖orthogonalProjectionComplex w L‖ = c * ‖L‖ := by
+    show ‖(c : ℝ) • L‖ = c * ‖L‖
+    rw [norm_smul]; simp [abs_of_nonneg hc_nonneg]
+  have h_c_le_div : c ≤ ‖w‖ / ‖L‖ := by
+    rw [le_div_iff₀ hL_norm_pos, ← h_proj_norm]
+    exact h_proj_le_w
+  have h_factor :
+      (c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L = (c - ‖w‖ / ‖L‖ : ℝ) • L := by
+    module
+  show ‖(c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L‖ = ‖w‖ - ‖orthogonalProjectionComplex w L‖
+  rw [h_factor, norm_smul, Real.norm_eq_abs]
+  rw [abs_of_nonpos (sub_nonpos.mpr h_c_le_div), h_proj_norm]
+  field_simp
+  ring
+
+/-! ### The full chord-to-tangent bound -/
+
+/-- **Chord-to-tangent bound.** When `w` is in the `+L` hemisphere
+(`Re(w · conj L) ≥ 0`) and `‖w‖ > 0`, the chord from `w` to the
+"natural" tangent target `(‖w‖/‖L‖) • L` is bounded by
+
+  `‖tangentDev w L‖ + ‖tangentDev w L‖² / ‖w‖`
+
+via the triangle inequality combined with `norm_orthogonalProjection_shortfall_le`
+and `norm_orthogonalProjection_minus_target_eq`. -/
+theorem norm_chord_to_tangent_target_le {w L : ℂ} (hL : L ≠ 0) (hw : 0 < ‖w‖)
+    (h_pos : 0 ≤ (w * starRingEnd ℂ L).re) :
+    ‖w - (‖w‖ / ‖L‖ : ℝ) • L‖ ≤
+      ‖tangentDeviation w L‖ + ‖tangentDeviation w L‖ ^ 2 / ‖w‖ := by
+  have h_decomp : w - (‖w‖ / ‖L‖ : ℝ) • L =
+      (orthogonalProjectionComplex w L - (‖w‖ / ‖L‖ : ℝ) • L) +
+        tangentDeviation w L := by
+    unfold tangentDeviation; ring
+  rw [h_decomp]
+  refine (norm_add_le _ _).trans ?_
+  rw [norm_orthogonalProjection_minus_target_eq hL h_pos]
+  have h_short := norm_orthogonalProjection_shortfall_le L hw
+  linarith
+
 end LeanModularForms
