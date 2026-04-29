@@ -149,7 +149,7 @@ theorem HasGeneralizedWindingNumber.const_mul {γ : PiecewiseC1Path x y} {z₀ w
 /-! ### Continuity off the curve -/
 
 /-- Helper: distance lower bound for points in a small ball around `w₀` (off the curve). -/
-private lemma ball_dist_to_curve_lb {γ : PiecewiseC1Path x y} {w₀ : ℂ}
+lemma ball_dist_to_curve_lb {γ : PiecewiseC1Path x y} {w₀ : ℂ}
     (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀) :
     ∃ ε > 0, ∀ w ∈ Metric.ball w₀ ε, ∀ t ∈ Icc (0 : ℝ) 1, ε ≤ ‖γ t - w‖ := by
   have h_compact : IsCompact (γ.toPath.extend '' Icc (0 : ℝ) 1) :=
