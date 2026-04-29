@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**
-- Open: **W-0..W-5** (B-1 full path, sequential), B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2 full convex**, B-3, B-4, **B-5 (6 variants incl. convex full)**, B-6 (partial, Lipschitz auto-w₀), **D-1 (a/b/c/d all done)**, **W-0**, **W-1**
+- Open: **W-2..W-5** (B-1 full path, sequential), B-6 (full), C-1..C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
 ## Tickets
@@ -68,23 +68,19 @@
 
 ### [W-1] Continuous arg lift along γ
 
-- **Status**: helpers all done; main theorem deferred (substantial telescoping induction)
+- **Status**: **done** — `Complex.exists_continuous_arg_lift_of_avoids` (standard axioms only)
 - **File**: `ForMathlib/WindingInteger.lean`
 - **Depends on**: W-0 ✅
-- **Done helpers**:
-  - `mem_slitPlane_of_ball_one` — geometry
-  - `segClamp`, `segClamp_continuous`, `segClamp_mem_Icc`
-  - `segRatio` definition + `segRatio_mem_ball_one`
-  - `segRatio_mem_slitPlane`
-  - `continuousOn_segRatio`
-  - `continuousOn_im_log_segRatio` — each θ-summand continuous
-- **Open (main theorem)**: `exists_continuous_arg_lift_of_avoids`
-  - Define `θ(t) := arg(γ 0 - w) + ∑_j Im(log(segRatio γ w (s j) (s (j+1)) t))`
-  - Continuity: `Finset.sum` of `continuousOn_im_log_segRatio` (mechanical)
-  - **Lift property** (the hard part): requires telescoping product lemma
-    `∏_j segRatio_j t = (γ t - w)/(γ 0 - w)` proved by induction over Finset.range
-    + per-segment case analysis on whether `t ≤ s_j`, `t ∈ [s_j, s_{j+1}]`, `t ≥ s_{j+1}`.
-- **API target**: `Complex.exists_continuous_arg_lift_of_avoids`
+- **Done**:
+  - Geometry: `mem_slitPlane_of_ball_one`
+  - `segClamp` (+ `_continuous`, `_mem_Icc`, `_eq_left/self/right`)
+  - `segRatio` (+ `_eq_one_of_le`, `_eq_self_div`, `_eq_full`,
+    `_mem_ball_one`, `_mem_slitPlane`)
+  - `continuousOn_segRatio`, `continuousOn_im_log_segRatio`
+  - Telescoping: `prod_segRatio_telescope` —
+    `∏_j segRatio_j t = (γ t - w)/(γ 0 - w)` for any `t ∈ [s_k, s_{k+1}]`
+  - Helpers: `exp_I_log_im_eq_div_norm`, `partition_segment_exists`
+  - **Main theorem**: `exists_continuous_arg_lift_of_avoids` ✅
 
 ### [W-2] Winding via arg difference
 
