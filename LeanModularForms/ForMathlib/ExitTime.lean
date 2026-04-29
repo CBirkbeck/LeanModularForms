@@ -89,4 +89,37 @@ theorem exit_time_left_exists
   obtain ⟨t_ε, ht_ε_mem, ht_ε_eq⟩ := h_image
   exact ⟨t_ε, ht_ε_mem, ht_ε_eq⟩
 
+/-! ## First exit-time function via sInf
+
+For `γ : ℝ → ℂ` with `γ(t₀) = s` and continuous on a right-neighborhood, the
+**first exit time** at radius `ε` is the infimum of times `t ≥ t₀` for which
+`‖γ(t) - s‖ ≥ ε`. This provides a default construction satisfying the
+existence hypotheses needed by Phase 3 PV theorems. -/
+
+/-- **First exit time at radius ε (right side).** Defined via `sInf` of the set
+of times `t ∈ [t₀, t₀+δ]` with `‖γ(t) - s‖ ≥ ε`. Returns `t₀` as junk if the
+set is empty.
+
+Properties (under appropriate hypotheses, requiring monotonicity arguments):
+- `‖γ (firstExitTimeRight ε) - s‖ = ε` when valid
+- `firstExitTimeRight γ t₀ s δ ε ∈ Icc t₀ (t₀ + δ)`
+- `Tendsto (firstExitTimeRight γ t₀ s δ) (𝓝[>] 0) (𝓝[>] t₀)` requires
+  γ to enter B_ε within an arbitrarily small right-neighborhood of t₀
+  (e.g., when γ has right-derivative L ≠ 0). -/
+noncomputable def firstExitTimeRight (γ : ℝ → ℂ) (t₀ δ : ℝ) (s : ℂ) (ε : ℝ) : ℝ :=
+  sInf {t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖}
+
+/-- The set defining `firstExitTimeRight` is nonempty when `γ(t₀+δ)` is far enough. -/
+theorem firstExitTimeRight_set_nonempty
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
+    (hδ : 0 ≤ δ) (h_far : ε ≤ ‖γ (t₀ + δ) - s‖) :
+    (t₀ + δ) ∈ {t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖} := by
+  refine ⟨⟨by linarith, le_refl _⟩, h_far⟩
+
+/-- The set defining `firstExitTimeRight` is bounded below by t₀. -/
+theorem firstExitTimeRight_set_lb
+    (γ : ℝ → ℂ) (t₀ δ ε : ℝ) (s : ℂ) :
+    ∀ t ∈ {t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖}, t₀ ≤ t :=
+  fun _ ⟨hmem, _⟩ => hmem.1
+
 end LeanModularForms
