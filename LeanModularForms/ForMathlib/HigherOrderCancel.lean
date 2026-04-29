@@ -1007,4 +1007,62 @@ theorem chord_to_tangent_isLittleO_left
     exact ht
   exact h_chord_isBigO.trans_isLittleO h_ortho
 
+/-! ## Phase 3.6c: Segment-distance lower bound
+
+For two points `z₁, z₂` at the same distance `d` from `s`, every point on the
+line segment from `z₁` to `z₂` is at distance ≥ `√(d² − c²/4)` from `s`,
+where `c = ‖z₁ − z₂‖`. This is the geometric fact behind applying the
+F-difference bound (Phase 3.5b) on the chord between γ-exit-point and
+sector-exit-point at radius ε. -/
+
+/-- **Segment distance bound (squared).** If `z₁, z₂` are equidistant from `s`
+(distance `d`), then any point `z` on the segment from `z₁` to `z₂` satisfies
+`‖z − s‖² ≥ d² − ‖z₁ − z₂‖²/4`.
+
+This follows from the parallelogram identity: writing
+`z = α z₁ + β z₂` with `α + β = 1, α, β ≥ 0`, and `z − s = α(z₁−s) + β(z₂−s)`,
+we get `‖z−s‖² = d² − αβ‖z₁−z₂‖² ≥ d² − ‖z₁−z₂‖²/4` since `αβ ≤ 1/4` by
+AM-GM (using `α + β = 1`). -/
+theorem norm_sq_segment_to_pole_lower_bound
+    {z₁ z₂ s : ℂ} {d : ℝ}
+    (h₁ : ‖z₁ - s‖ = d) (h₂ : ‖z₂ - s‖ = d)
+    {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
+    d ^ 2 - ‖z₁ - z₂‖ ^ 2 / 4 ≤ ‖z - s‖ ^ 2 := by
+  obtain ⟨α, β, hα, hβ, h_sum, rfl⟩ := hz
+  have h_decomp : α • z₁ + β • z₂ - s = α • (z₁ - s) + β • (z₂ - s) := by
+    have hβ_eq : β = 1 - α := by linarith
+    rw [hβ_eq]; module
+  rw [h_decomp]
+  have h_expand : ‖α • (z₁ - s) + β • (z₂ - s)‖ ^ 2 =
+      α ^ 2 * ‖z₁ - s‖ ^ 2 +
+        2 * α * β * ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re +
+        β ^ 2 * ‖z₂ - s‖ ^ 2 := by
+    rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm]
+    rw [show α • (z₁ - s) = (α : ℂ) * (z₁ - s) from Complex.real_smul ..,
+        show β • (z₂ - s) = (β : ℂ) * (z₂ - s) from Complex.real_smul ..]
+    rw [Complex.normSq_add]
+    rw [Complex.normSq_mul, Complex.normSq_mul, Complex.normSq_ofReal,
+        Complex.normSq_ofReal]
+    rw [show (((α : ℂ) * (z₁ - s)) * starRingEnd ℂ ((β : ℂ) * (z₂ - s))) =
+        ((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s)) by
+          rw [map_mul, Complex.conj_ofReal]; push_cast; ring]
+    rw [show (((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s))).re =
+        α * β * ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re by
+          rw [Complex.mul_re]; simp]
+    ring
+  have h_cross : ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re =
+      (‖z₁ - s‖ ^ 2 + ‖z₂ - s‖ ^ 2 - ‖z₁ - z₂‖ ^ 2) / 2 := by
+    have h_ns := Complex.normSq_sub (z₁ - s) (z₂ - s)
+    rw [← Complex.sq_norm, ← Complex.sq_norm, ← Complex.sq_norm] at h_ns
+    have h_sub_eq : (z₁ - s) - (z₂ - s) = z₁ - z₂ := by ring
+    rw [h_sub_eq] at h_ns
+    linarith
+  rw [h_expand, h_cross, h₁, h₂]
+  have h_ab_le : α * β ≤ 1 / 4 := by nlinarith [sq_nonneg (α - β)]
+  have h_quad : α ^ 2 + 2 * α * β + β ^ 2 = 1 := by
+    have : (α + β) ^ 2 = 1 := by rw [h_sum]; ring
+    nlinarith [this]
+  have h_norm_nonneg : 0 ≤ ‖z₁ - z₂‖ ^ 2 := sq_nonneg _
+  nlinarith [h_quad, h_ab_le, h_norm_nonneg]
+
 end
