@@ -591,4 +591,91 @@ theorem integral_pow_inv_eq_FTC
     exact hasDerivAt_antiderivative_pow_inv hk (hγ t ht) (sub_ne_zero.mpr (h_avoids t ht))
   · exact h_int
 
+/-! ## ℂ→ℂ antiderivative: complex-differentiable form
+
+For the higher-order avoidance result (PV of `1/(z-s)^k` along a closed curve
+avoiding `s` is zero), we need the antiderivative as a function `ℂ → ℂ` (not
+`ℝ → ℂ`) so we can apply `contourIntegral_eq_zero_of_hasDerivAt_of_closed`. -/
+
+/-- **Antiderivative of `1/(z-s)^k` as a function `ℂ → ℂ` (k ≥ 2).** The function
+`F(z) = -1/[(k-1)(z-s)^{k-1}]` has complex derivative `1/(z-s)^k` at any
+`z ≠ s`. This is the ℂ → ℂ form of `hasDerivAt_antiderivative_pow_inv` and is the
+key fact behind closed-path FTC for higher-order poles. -/
+theorem hasDerivAt_antiderivative_pow_inv_complex
+    {s : ℂ} {k : ℕ} (hk : 2 ≤ k) {z : ℂ} (hz : z ≠ s) :
+    HasDerivAt (fun w => -(↑(k - 1) : ℂ)⁻¹ * ((w - s) ^ (k - 1))⁻¹)
+      (1 / (z - s) ^ k) z := by
+  have h_sub : HasDerivAt (fun w : ℂ => w - s) 1 z := (hasDerivAt_id z).sub_const s
+  have h_pow : HasDerivAt (fun w : ℂ => (w - s) ^ (k - 1))
+      (↑(k - 1) * (z - s) ^ (k - 1 - 1) * 1) z := h_sub.pow (k - 1)
+  have hk_norm : k - 1 - 1 = k - 2 := by omega
+  rw [hk_norm] at h_pow
+  have h_pow_ne : (z - s) ^ (k - 1) ≠ 0 := pow_ne_zero _ (sub_ne_zero.mpr hz)
+  have h_inv := h_pow.inv h_pow_ne
+  have h_const := h_inv.const_mul (-(↑(k - 1) : ℂ)⁻¹)
+  convert h_const using 1
+  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by
+    have : 0 < k - 1 := by omega
+    exact_mod_cast this.ne'
+  have h_pow_k2_ne : (z - s) ^ (k - 2) ≠ 0 := pow_ne_zero _ (sub_ne_zero.mpr hz)
+  have h_pow2 : ((z - s) ^ (k - 1)) ^ 2 = (z - s) ^ k * (z - s) ^ (k - 2) := by
+    rw [← pow_mul, ← pow_add]; congr 1; omega
+  rw [h_pow2]
+  field_simp
+
+/-! ## Higher-order pole CPV vanishes in the avoidance case
+
+For `k ≥ 2` and a closed curve `γ` avoiding `s` (with positive margin), the CPV of
+`1/(z-s)^k` is zero. Unlike the simple-pole case (k = 1), this does NOT require
+null-homologous Cauchy or convex U: the function `1/(z-s)^k` has a single-valued
+antiderivative on `ℂ \ {s}`, so its integral over any closed loop avoiding `s`
+vanishes by FTC.
+
+This complements the existing simple-pole machinery: the simple pole contributes
+`2πi · n_γ(s) · residue`, while higher-order poles contribute `0` whenever
+the curve avoids them. -/
+
+/-- **Higher-order avoidance: contour integral vanishes.** For `k ≥ 2`, the contour
+integral of `1/(z-s)^k` along a closed `γ` avoiding `s` is zero. Follows from FTC
+applied to the antiderivative `-1/[(k-1)(z-s)^{k-1}]`, which is single-valued on
+`ℂ \ {s}`. -/
+theorem PiecewiseC1Path.contourIntegral_pow_inv_eq_zero
+    {x : ℂ} (γ : PiecewiseC1Path x x) {s : ℂ} {k : ℕ} (hk : 2 ≤ k)
+    (h_avoids : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    (h_int : IntervalIntegrable
+      (fun t => (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t)
+      volume 0 1) :
+    γ.contourIntegral (fun z => 1 / (z - s) ^ k) = 0 :=
+  γ.contourIntegral_eq_zero_of_hasDerivAt_of_closed rfl
+    (U := {z : ℂ | z ≠ s})
+    (fun t ht => h_avoids t ht)
+    (fun _ hz => hasDerivAt_antiderivative_pow_inv_complex hk hz)
+    h_int
+
+/-- **Higher-order avoidance: CPV is zero.** For `k ≥ 2`, the CPV of `1/(z-s)^k`
+along a closed `γ` avoiding `s` (with positive margin) is zero. Combines
+`hasCauchyPVOn_of_avoids` with the contour-integral-vanishing result. -/
+theorem hasCauchyPVOn_pow_inv_of_avoids
+    {x : ℂ} (γ : PiecewiseC1Path x x) {s : ℂ} {k : ℕ} (hk : 2 ≤ k)
+    (hδ : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_int : IntervalIntegrable
+      (fun t => (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t)
+      volume 0 1) :
+    HasCauchyPVOn {s} (fun z => 1 / (z - s) ^ k) γ 0 := by
+  have h_avoids : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s := by
+    obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
+    intro t ht hγt
+    have : δ ≤ ‖γ t - s‖ := hδ_bd t ht
+    rw [hγt, sub_self, norm_zero] at this
+    linarith
+  have h_zero := γ.contourIntegral_pow_inv_eq_zero hk h_avoids h_int
+  have hδ' : ∃ δ > 0, ∀ s' ∈ ({s} : Finset ℂ), ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s'‖ := by
+    obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
+    refine ⟨δ, hδ_pos, ?_⟩
+    intro s' hs' t ht
+    rw [Finset.mem_singleton] at hs'
+    rw [hs']
+    exact hδ_bd t ht
+  exact h_zero ▸ hasCauchyPVOn_of_avoids hδ'
+
 end
