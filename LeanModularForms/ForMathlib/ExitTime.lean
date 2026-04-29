@@ -122,4 +122,19 @@ theorem firstExitTimeRight_set_lb
     ∀ t ∈ {t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖}, t₀ ≤ t :=
   fun _ ⟨hmem, _⟩ => hmem.1
 
+/-- **First exit time lies in `[t₀, t₀+δ]`.** -/
+theorem firstExitTimeRight_mem_Icc
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ} (hδ : 0 ≤ δ)
+    (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
+    t₀ ≤ firstExitTimeRight γ t₀ δ s ε ∧
+    firstExitTimeRight γ t₀ δ s ε ≤ t₀ + δ := by
+  unfold firstExitTimeRight
+  refine ⟨?_, ?_⟩
+  · apply le_csInf
+    · exact ⟨t₀ + δ, firstExitTimeRight_set_nonempty hδ hε_le⟩
+    · exact firstExitTimeRight_set_lb γ t₀ δ ε s
+  · apply csInf_le
+    · exact ⟨t₀, fun t ⟨hmem, _⟩ => hmem.1⟩
+    · exact firstExitTimeRight_set_nonempty hδ hε_le
+
 end LeanModularForms
