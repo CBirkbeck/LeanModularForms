@@ -749,4 +749,91 @@ theorem norm_F_diff_le_segment_bound
   have h_z₂_in : z₂ ∈ segment ℝ z₁ z₂ := right_mem_segment _ _ _
   exact h_convex.norm_image_sub_le_of_norm_hasDerivWithin_le h_deriv h_bound h_z₁_in h_z₂_in
 
+/-! ## Phase 3.5c: Eventual sign condition for the chord bound
+
+For γ with one-sided derivative `L` at `t₀` from the right and `γ(t₀) = s`,
+the inner product `Re((γ(t) - s) · conj L)` is eventually nonnegative for
+`t` in `𝓝[>] t₀`. This is the hypothesis required by Phase 3.3's chord
+bound (`norm_chord_to_tangent_target_le`). -/
+
+/-- **Eventual `+L`-hemisphere condition (right side).** When `γ` has
+right-derivative `L ≠ 0` at `t₀` and `γ(t₀) = s`, for `t` close to `t₀` from
+the right, `γ(t) − s` lies in the `+L` hemisphere
+(`Re((γ(t) − s) · conj L) ≥ 0`).
+
+Proof: From `HasDerivWithinAt γ L (Ioi t₀) t₀`,
+`γ(t) - γ(t₀) - (t-t₀)·L = o(t-t₀)`. Hence
+`Re((γ(t)-s)·conj L) = (t-t₀)·‖L‖² + Re(o(t-t₀)·conj L)`,
+which is bounded below by `(t-t₀)·‖L‖²/2 ≥ 0` for `t > t₀` close enough. -/
+theorem eventually_re_pos_right
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_s : γ t₀ = s) :
+    ∀ᶠ t in 𝓝[>] t₀, 0 ≤ ((γ t - s) * starRingEnd ℂ L).re := by
+  have h_asymp := h_deriv.isLittleO
+  have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  have hLsq_pos : 0 < ‖L‖ ^ 2 := by positivity
+  have h_bound : ∀ᶠ t in 𝓝[>] t₀,
+      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
+    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
+    exact h_asymp.bound h_eps_pos
+  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  have h_pos : 0 < t - t₀ := sub_pos.mpr ht
+  have h_norm_eq : ‖t - t₀‖ = t - t₀ := by
+    rw [Real.norm_eq_abs, abs_of_pos h_pos]
+  rw [h_norm_eq] at h_b
+  have h_decomp : (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
+    rw [h_s]; ring
+  rw [h_decomp, add_mul, Complex.add_re]
+  have h1 : ((((t - t₀) : ℝ) • L) * starRingEnd ℂ L).re = (t - t₀) * ‖L‖ ^ 2 := by
+    rw [Complex.real_smul, mul_assoc, Complex.mul_conj, ← Complex.ofReal_mul,
+      Complex.ofReal_re, Complex.normSq_eq_norm_sq]
+  rw [h1]
+  have h_norm_conj : ‖starRingEnd ℂ L‖ = ‖L‖ := Complex.norm_conj _
+  have h2 : -(‖L‖ / 2 * (t - t₀)) * ‖L‖ ≤
+      ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L).re := by
+    have habs := Complex.abs_re_le_norm
+      ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L)
+    rw [norm_mul, h_norm_conj] at habs
+    have hbd := mul_le_mul_of_nonneg_right h_b (norm_nonneg L)
+    nlinarith [abs_le.mp (habs.trans hbd)]
+  nlinarith [hLsq_pos]
+
+/-- **Eventual `−L`-hemisphere condition (left side).** Symmetric counterpart:
+`Re((γ(t) − s) · conj L) ≤ 0` for `t` close to `t₀` from the left.
+
+Equivalently, `Re((γ(t) − s) · conj (−L)) ≥ 0`, so Phase 3.3's chord bound
+applies with `−L` as the tangent direction. -/
+theorem eventually_re_neg_left
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_s : γ t₀ = s) :
+    ∀ᶠ t in 𝓝[<] t₀, ((γ t - s) * starRingEnd ℂ L).re ≤ 0 := by
+  have h_asymp := h_deriv.isLittleO
+  have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+  have hLsq_pos : 0 < ‖L‖ ^ 2 := by positivity
+  have h_bound : ∀ᶠ t in 𝓝[<] t₀,
+      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
+    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
+    exact h_asymp.bound h_eps_pos
+  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  have h_neg : t - t₀ < 0 := sub_neg.mpr ht
+  have h_norm_eq : ‖t - t₀‖ = -(t - t₀) := by
+    rw [Real.norm_eq_abs, abs_of_neg h_neg]
+  rw [h_norm_eq] at h_b
+  have h_decomp : (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
+    rw [h_s]; ring
+  rw [h_decomp, add_mul, Complex.add_re]
+  have h1 : ((((t - t₀) : ℝ) • L) * starRingEnd ℂ L).re = (t - t₀) * ‖L‖ ^ 2 := by
+    rw [Complex.real_smul, mul_assoc, Complex.mul_conj, ← Complex.ofReal_mul,
+      Complex.ofReal_re, Complex.normSq_eq_norm_sq]
+  rw [h1]
+  have h_norm_conj : ‖starRingEnd ℂ L‖ = ‖L‖ := Complex.norm_conj _
+  have h2 : ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L).re ≤
+      ‖L‖ / 2 * -(t - t₀) * ‖L‖ := by
+    have habs := Complex.abs_re_le_norm
+      ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L)
+    rw [norm_mul, h_norm_conj] at habs
+    have hbd := mul_le_mul_of_nonneg_right h_b (norm_nonneg L)
+    nlinarith [abs_le.mp (habs.trans hbd)]
+  nlinarith [hLsq_pos]
+
 end
