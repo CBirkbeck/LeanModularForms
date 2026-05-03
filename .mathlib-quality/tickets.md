@@ -2,8 +2,8 @@
 
 ## Summary
 - Total: 22 tickets (incl. sub-tickets A-1b, B-1 partial, B-6 partial, D-1, W-0..W-5)
-- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2/B-5/B-6 fully closed for arbitrary open U**, B-3, B-4, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**, **C-1**, **C-2 ALL Steps (A, B, C, D)**, **higher-order avoidance closed**, **Phase 3.1-3.8 (analytical kernel + main asymptotic theorems for HW Theorem 3.3 higher-order, k-odd transverse)**
-- Open: C-3, C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL, plus exit-time function construction (Classical.choose + Tendsto), HW 3.3 final statement composition, k-even sector PV under angle (B)
+- Done: A-1, A-1b, A-2, A-2-wrapper, B-1 (partial + cocompact-bounded + continuity), **B-2/B-5/B-6 fully closed for arbitrary open U**, B-3, B-4, **D-1 (a/b/c/d all done)**, **W-0..W-5 (entire W-stream — B-1 full closed)**, **C-1**, **C-2 ALL Steps (A, B, C, D)**, **higher-order avoidance closed**, **Phase 3.1-3.8 (analytical kernel + main asymptotic theorems for HW Theorem 3.3 higher-order, k-odd transverse)**, **ExitTime.lean (full two-sided API: existence, exact-radius equality, continuity modulus, witness bounds, monotonicity, asymptotic Tendsto, eventual radius equality, HW33ExitData bundle)**, **HW33ExitTimeWrapper.lean (bundled + concrete forms of `hw_theorem_3_3_odd_transverse_*`)**
+- Open: C-3, C-4, CLEANUP-B, CLEANUP-C, CLEANUP-FINAL, HW 3.3 final statement composition, k-even sector PV under angle (B)
 - Phase 3 status: **fully proven analytical kernel + PV theorem (parametric form)** for k-odd transverse case. Includes `F_curve_diff_tendsto_zero_odd` (combined curve F-diff → 0) and `cpv_excised_tendsto_zero_of_F_diff_zero` (PV → 0 for the parameter-excised integral), giving the curve-side conclusion of HW eq. (3.4) for k-odd transverse with γ flat of order n ≥ k.
 - Parallel capacity: 2 workers (W-stream and C-stream are independent)
 
