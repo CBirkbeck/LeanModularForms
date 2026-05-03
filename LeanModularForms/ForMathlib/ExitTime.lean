@@ -722,4 +722,47 @@ theorem firstExitTimeLeft_radius_eventually
   have hε_le : ε ≤ ‖γ (t₀ - δ) - s‖ := le_of_lt hε.2
   exact norm_at_firstExitTimeLeft_eq hδ hγ_cont h_s hε_pos hε_le
 
+/-! ## Bundled exit-time data for HW Theorem 3.3 -/
+
+/-- **Bundled exit-time data.** The four hypotheses on `t_eps_plus`/`t_eps_minus`
+required by `hw_theorem_3_3_odd_transverse_parametric`, packaged as a single
+structure. -/
+structure HW33ExitData (γ : ℝ → ℂ) (t₀ : ℝ) (s : ℂ) where
+  /-- Exit-time function on the right side. -/
+  tPlus : ℝ → ℝ
+  /-- Exit-time function on the left side. -/
+  tMinus : ℝ → ℝ
+  /-- `tPlus ε → t₀⁺` as `ε → 0⁺`. -/
+  plus_to : Tendsto tPlus (𝓝[>] (0 : ℝ)) (𝓝[>] t₀)
+  /-- Eventually, `‖γ(tPlus ε) - s‖ = ε`. -/
+  plus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (tPlus ε) - s‖ = ε
+  /-- `tMinus ε → t₀⁻` as `ε → 0⁺`. -/
+  minus_to : Tendsto tMinus (𝓝[>] (0 : ℝ)) (𝓝[<] t₀)
+  /-- Eventually, `‖γ(tMinus ε) - s‖ = ε`. -/
+  minus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (tMinus ε) - s‖ = ε
+
+/-- **Build `HW33ExitData` from `firstExitTimeRight` and `firstExitTimeLeft`.**
+This is the canonical construction: given continuity of `γ` near `t₀` and the
+"γ leaves `s` away from `t₀`" hypothesis on each side, the first-exit-time
+functions provide all four asymptotic conditions. -/
+noncomputable def HW33ExitData.ofExitTimes
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s : ℂ}
+    {δPlus δMinus : ℝ} (hδPlus : 0 < δPlus) (hδMinus : 0 < δMinus)
+    (hγ_cont_right : ContinuousOn γ (Set.Icc t₀ (t₀ + δPlus)))
+    (hγ_cont_left : ContinuousOn γ (Set.Icc (t₀ - δMinus) t₀))
+    (h_s : γ t₀ = s)
+    (h_leave_right : ∀ t ∈ Set.Ioc t₀ (t₀ + δPlus), γ t ≠ s)
+    (h_leave_left : ∀ t ∈ Set.Ico (t₀ - δMinus) t₀, γ t ≠ s) :
+    HW33ExitData γ t₀ s where
+  tPlus := firstExitTimeRight γ t₀ δPlus s
+  tMinus := firstExitTimeLeft γ t₀ δMinus s
+  plus_to :=
+    firstExitTimeRight_tendsto_t₀ hδPlus hγ_cont_right h_s h_leave_right
+  plus_radius :=
+    firstExitTimeRight_radius_eventually hδPlus hγ_cont_right h_s h_leave_right
+  minus_to :=
+    firstExitTimeLeft_tendsto_t₀ hδMinus hγ_cont_left h_s h_leave_left
+  minus_radius :=
+    firstExitTimeLeft_radius_eventually hδMinus hγ_cont_left h_s h_leave_left
+
 end LeanModularForms
