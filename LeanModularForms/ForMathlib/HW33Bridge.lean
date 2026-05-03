@@ -221,6 +221,40 @@ theorem hasCauchyPVOn_singleton_of_excision_tendsto
   exact (cpvIntegrandOn_singleton_integral_eq_excision γ
     h_ε.1 h_ε.2.1 h_ε.2.2.1 h_ε.2.2.2.1 h_ε.2.2.2.2.1 h_ε.2.2.2.2.2 h_int).symm
 
+/-! ## Specialization to firstExitTimeLeft / firstExitTimeRight -/
+
+/-- **Bridge using the canonical exit times.** Specializes
+`hasCauchyPVOn_singleton_of_excision_tendsto` to `α = firstExitTimeLeft` and
+`β = firstExitTimeRight`. -/
+theorem hasCauchyPVOn_singleton_of_exitTime_excision
+    (γ : PiecewiseC1Path x x) (s : ℂ) (f : ℂ → ℂ)
+    {t₀ δMinus δPlus : ℝ}
+    (h_shape : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+      0 ≤ firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε ∧
+      firstExitTimeRight γ.toPath.extend t₀ δPlus s ε ≤ 1 ∧
+      firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε ≤
+        firstExitTimeRight γ.toPath.extend t₀ δPlus s ε ∧
+      (∀ t ∈ Ioo (0 : ℝ) (firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
+        ε < ‖γ.toPath.extend t - s‖) ∧
+      (∀ t ∈ Ioo (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε) (1 : ℝ),
+        ε < ‖γ.toPath.extend t - s‖) ∧
+      (∀ t ∈ Ioo (firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε)
+        (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε),
+        ‖γ.toPath.extend t - s‖ ≤ ε))
+    (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
+      (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1)
+    (h_excision : Tendsto (fun ε =>
+      (∫ t in (0 : ℝ)..(firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
+        f (γ.toPath.extend t) * deriv γ.toPath.extend t) +
+      ∫ t in (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε)..(1 : ℝ),
+        f (γ.toPath.extend t) * deriv γ.toPath.extend t)
+      (𝓝[>] (0 : ℝ)) (𝓝 0)) :
+    HasCauchyPVOn {s} f γ 0 :=
+  hasCauchyPVOn_singleton_of_excision_tendsto γ s f
+    (firstExitTimeLeft γ.toPath.extend t₀ δMinus s)
+    (firstExitTimeRight γ.toPath.extend t₀ δPlus s)
+    h_shape h_int_full h_excision
+
 end LeanModularForms
 
 end
