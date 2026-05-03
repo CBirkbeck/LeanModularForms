@@ -255,7 +255,7 @@ theorem cauchyIntegralFormula_nullHomologous {f : ℂ → ℂ} {U : Set ℂ}
   rw [dixonFunction_eq_dixonH1 hw] at h_dx_zero
   have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
   rw [h_dx_zero] at h_identity
-  linear_combination -h_identity
+  exact (sub_eq_zero.mp h_identity.symm).symm.symm
 
 /-- **Cauchy integral formula from pointwise Dixon-zero.** Weakened version of
 `cauchyIntegralFormula_nullHomologous` requiring only `dixonFunction f U γ w = 0`
@@ -273,7 +273,7 @@ theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : Set ℂ}
   rw [dixonFunction_eq_dixonH1 hw] at h_zero_at
   have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
   rw [h_zero_at] at h_identity
-  linear_combination -h_identity
+  exact (sub_eq_zero.mp h_identity.symm).symm.symm
 
 /-- `dixonH1 f γ w = 0` when the Dixon function is identically zero and `w ∈ U`. -/
 theorem dixonH1_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
@@ -281,8 +281,7 @@ theorem dixonH1_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
     (h_zero : ∀ w, dixonFunction f U γ w = 0)
     (w : ℂ) (hw : w ∈ U) :
     dixonH1 f γ w = 0 := by
-  have h_dx_zero := h_zero w
-  rwa [dixonFunction_eq_dixonH1 hw] at h_dx_zero
+  simp [← dixonFunction_eq_dixonH1 hw, h_zero w]
 
 /-- `dixonH2 f γ w = 0` when the Dixon function is identically zero and `w ∉ U`. -/
 theorem dixonH2_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
@@ -290,8 +289,7 @@ theorem dixonH2_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
     (h_zero : ∀ w, dixonFunction f U γ w = 0)
     (w : ℂ) (hw : w ∉ U) :
     dixonH2 f γ w = 0 := by
-  have h_dx_zero := h_zero w
-  rwa [dixonFunction_eq_dixonH2 hw] at h_dx_zero
+  simp [← dixonFunction_eq_dixonH2 hw, h_zero w]
 
 /-- **Cauchy integral formula, contour integral form.**
 
@@ -406,20 +404,12 @@ theorem dixonFunction_eq_zero_of_nullHomologous
     (hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ M_d) :
     ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
-  have h_identity : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      dixonH1 f γ.toPiecewiseC1Path w =
-        dixonH2 f γ.toPiecewiseC1Path w -
-          2 * ↑Real.pi * I * generalizedWindingNumber γ.toPiecewiseC1Path w * f w :=
-    fun w hoff =>
-      dixonH1_eq_dixonH2_sub_winding_f w hoff (h_cauchy_int w hoff) (h_base_int w hoff)
-  have h_entire : Differentiable ℂ (dixonFunction f U γ.toPiecewiseC1Path) :=
-    dixonFunction_differentiable hU hf γ h_null h1_diff h2_diff h_identity
-      h_winding_zero_near
-  have h_evt : ∀ᶠ w in Filter.cocompact ℂ,
-      dixonFunction f U γ.toPiecewiseC1Path w =
-        dixonH2 f γ.toPiecewiseC1Path w :=
-    dixonFunction_eventually_eq_dixonH2 γ h_identity h_winding_evt
-  exact dixonFunction_eq_zero_of_bounds h_entire h_evt hM_f_nn hR hM_f hM_d
+  exact dixonFunction_eq_zero_of_bounds
+    (dixonFunction_differentiable hU hf γ h_null h1_diff h2_diff
+      (fun w hoff => dixonH1_eq_dixonH2_sub_winding_f w hoff (h_cauchy_int w hoff) (h_base_int w hoff))
+      h_winding_zero_near)
+    (dixonFunction_eventually_eq_dixonH2 γ (fun w hoff => dixonH1_eq_dixonH2_sub_winding_f w hoff (h_cauchy_int w hoff) (h_base_int w hoff)) h_winding_evt)
+    hM_f_nn hR hM_f hM_d
 
 /-- **B-5 variant for bounded U**: `dixonFunction_eq_zero_of_nullHomologous` specialized
 to bounded open sets. The cocompact-winding-zero hypothesis is discharged automatically

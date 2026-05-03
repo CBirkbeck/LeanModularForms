@@ -140,11 +140,7 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
   obtain ⟨D, hD⟩ := h_deriv_bound
   have h_ball_avoids := ball_avoids_curve γ w hε_pos h2ε
   have h_dist_lb := ball_dist_lower_bound γ w h2ε
-  have h_eq : dixonH2 f γ = fun w' =>
-      ∫ t in (0 : ℝ)..1, f (γ t) * (γ t - w')⁻¹ * deriv γ.toPath.extend t := by
-    ext w'; simp only [dixonH2, div_eq_mul_inv]
-  rw [h_eq]
-  exact (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le (𝕜 := ℂ)
+  convert (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le (𝕜 := ℂ)
     (F := fun w' t => f (γ t) * (γ t - w')⁻¹ * deriv γ.toPath.extend t)
     (F' := fun w' t => f (γ t) * (γ t - w')⁻¹ ^ 2 * deriv γ.toPath.extend t)
     (bound := fun _ => M * ε⁻¹ ^ 2 * D)
@@ -178,15 +174,10 @@ private lemma dixonH2_integrand_stronglyMeasurable
     ContinuousOn.inv₀
       (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const)
       fun t ht => sub_ne_zero.mpr (hoff t ht)
-  have h_cont_prod : ContinuousOn (fun t => f (γ t) * (γ t - w')⁻¹) (Icc (0 : ℝ) 1) :=
-    h_cont_fγ.mul h_cont_inv
   have h_meas_prod : AEStronglyMeasurable
       (fun t => f (γ t) * (γ t - w')⁻¹) (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    (h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
-  have h_meas_deriv : AEStronglyMeasurable (deriv γ.toPath.extend)
-      (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    (stronglyMeasurable_deriv _).aestronglyMeasurable
-  exact h_meas_prod.mul h_meas_deriv
+    ((h_cont_fγ.mul h_cont_inv).mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
+  exact h_meas_prod.mul ((stronglyMeasurable_deriv _).aestronglyMeasurable)
 
 /-- Strong measurability of the `dixonH2` derivative integrand (second-order variant). -/
 private lemma dixonH2_deriv_integrand_stronglyMeasurable
@@ -203,15 +194,10 @@ private lemma dixonH2_deriv_integrand_stronglyMeasurable
     (ContinuousOn.inv₀
       (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const)
       fun t ht => sub_ne_zero.mpr (hoff t ht)).pow 2
-  have h_cont_prod : ContinuousOn (fun t => f (γ t) * (γ t - w)⁻¹ ^ 2)
-      (Icc (0 : ℝ) 1) := h_cont_fγ.mul h_cont_inv2
   have h_meas_prod : AEStronglyMeasurable
       (fun t => f (γ t) * (γ t - w)⁻¹ ^ 2) (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    (h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
-  have h_meas_deriv : AEStronglyMeasurable (deriv γ.toPath.extend)
-      (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    (stronglyMeasurable_deriv _).aestronglyMeasurable
-  exact h_meas_prod.mul h_meas_deriv
+    ((h_cont_fγ.mul h_cont_inv2).mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
+  exact h_meas_prod.mul ((stronglyMeasurable_deriv _).aestronglyMeasurable)
 
 /-- **B-3 bundle**: `dixonH2` is holomorphic at points off the curve, from simple
 continuity + Lipschitz regularity hypotheses.
@@ -251,9 +237,6 @@ theorem dixonH2_differentiableAt_of_regular {f : ℂ → ℂ}
         deriv γ.toPath.extend t) (volume.restrict (Set.uIoc (0 : ℝ) 1)) :=
     fun w' hw' => dixonH2_integrand_stronglyMeasurable hf_cont (h_ball_avoids w' hw')
   -- Integrability: AEStronglyMeasurable + bounded + finite volume ⟹ integrable
-  obtain ⟨M₀, hM₀_nn, hM_bd⟩ := h_fγ_bound
-  obtain ⟨D, hD⟩ := h_deriv_bound
-  have hD_nn : 0 ≤ D := le_trans (norm_nonneg _) (hD 0 (left_mem_Icc.mpr zero_le_one))
   have h_ε_lb := ball_dist_lower_bound γ w h2ε w (Metric.mem_ball_self hε_pos)
   have h_int : IntervalIntegrable
       (fun t => f (γ t) * (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1 := by
@@ -265,6 +248,8 @@ theorem dixonH2_differentiableAt_of_regular {f : ℂ → ℂ}
       rwa [Set.uIoc_of_le (zero_le_one' ℝ)] at this
     haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
       ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+    obtain ⟨M₀, hM₀_nn, hM_bd⟩ := h_fγ_bound
+    obtain ⟨D, hD⟩ := h_deriv_bound
     refine MeasureTheory.Integrable.of_bound h_meas_Ioc (M₀ * ε⁻¹ * D) ?_
     filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
     have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
@@ -274,6 +259,8 @@ theorem dixonH2_differentiableAt_of_regular {f : ℂ → ℂ}
         (by positivity) hM₀_nn)
       (hD t ht_Icc) (norm_nonneg _)
       (mul_nonneg hM₀_nn (inv_nonneg.mpr hε_pos.le))
+  obtain ⟨M₀, hM₀_nn, hM_bd⟩ := h_fγ_bound
+  obtain ⟨D, hD⟩ := h_deriv_bound
   exact dixonH2_differentiableAt hoff h_int ⟨M₀, hM₀_nn, hM_bd⟩ ⟨D, hD⟩ h_meas h_F'_meas
 
 /-! ## h1 differentiability -/
@@ -292,11 +279,8 @@ private lemma dslope_hasDerivAt_first_arg {f : ℂ → ℂ} {U : Set ℂ}
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     {c w : ℂ} (hc : c ∈ U) (hw : w ∈ U) :
     HasDerivAt (fun w' => dslope f w' c) (deriv (dslope f c) w) w := by
-  have h_ds_diff : DifferentiableOn ℂ (dslope f c) U :=
-    (Complex.differentiableOn_dslope (hU.mem_nhds hc)).mpr hf
-  have h_ds_da : DifferentiableAt ℂ (dslope f c) w :=
-    (h_ds_diff w hw).differentiableAt (hU.mem_nhds hw)
-  exact h_ds_da.hasDerivAt.congr_of_eventuallyEq
+  exact (((Complex.differentiableOn_dslope (hU.mem_nhds hc)).mpr hf w hw).differentiableAt
+    (hU.mem_nhds hw)).hasDerivAt.congr_of_eventuallyEq
     (Filter.Eventually.of_forall fun _ => dslope_comm f _ _)
 
 /-- Continuity of `fun t => dslope f w (γ t)` on `Icc 0 1` when γ avoids the curve
@@ -309,10 +293,6 @@ private lemma dslope_fixed_continuousOn {f : ℂ → ℂ} {U : Set ℂ}
     ContinuousOn (fun t => dslope f w (γ t)) (Icc (0 : ℝ) 1) := by
   have h_ds_cont : ContinuousOn (dslope f w) U :=
     ((Complex.differentiableOn_dslope (hU.mem_nhds hw)).mpr hf).continuousOn
-  have h_ds_comm : (fun t => dslope f w (γ t)) =
-      fun t => dslope f (γ t) w := by
-    funext t; exact dslope_comm f w (γ t)
-  rw [show (fun t => dslope f w (γ t)) = (dslope f w) ∘ γ.toPath.extend from rfl]
   exact h_ds_cont.comp γ.toPath.continuous_extend.continuousOn hγ
 
 /-- The ball of radius `min (min a b) c / 2` is contained in balls of radius `a`, `b`, and `c`. -/
@@ -406,11 +386,9 @@ private lemma dixonH1_integrand_stronglyMeasurable
       (fun t => dslope f w (γ t) * deriv γ.toPath.extend t)
       (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
   rw [Set.uIoc_of_le (zero_le_one' ℝ)]
-  have h_cont : ContinuousOn (fun t => dslope f w (γ t)) (Icc (0 : ℝ) 1) :=
-    dslope_fixed_continuousOn hU hf hγ hw
   have h_meas_prod : AEStronglyMeasurable
       (fun t => dslope f w (γ t)) (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    (h_cont.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
+    ((dslope_fixed_continuousOn hU hf hγ hw).mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
   exact h_meas_prod.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
 
 /-- **B-2 partial bundle**: `dixonH1 f γ` is differentiable on `U` when
@@ -438,9 +416,6 @@ theorem dixonH1_differentiableOn_of_regular {f : ℂ → ℂ} {U : Set ℂ}
       ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
         ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C) :
     DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U := by
-  have h_deriv_bound : ∃ D : ℝ, ∀ t ∈ Icc (0 : ℝ) 1,
-      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ D :=
-    ⟨K, fun _ _ => norm_deriv_le_of_lipschitz hLip⟩
   have h_γ_cont : ContinuousOn (γ.toPiecewiseC1Path : ℝ → ℂ) (Icc (0 : ℝ) 1) :=
     γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
   have h_int : ∀ w ∈ U, IntervalIntegrable
@@ -485,7 +460,7 @@ theorem dixonH1_differentiableOn_of_regular {f : ℂ → ℂ} {U : Set ℂ}
     refine ⟨ε, hε_pos, fun t ht w hw => ?_⟩
     exact (dslope_hasDerivAt_first_arg hU hf (hγ t ht) (hball_sub hw)).mul_const _
   exact dixonH1_differentiableOn hU hf γ hγ h_int h_meas
-    h_deriv_bound h_dslope_hasDerivAt h_F'_meas h_dslope_deriv_bound
+    ⟨K, fun _ _ => norm_deriv_le_of_lipschitz hLip⟩ h_dslope_hasDerivAt h_F'_meas h_dslope_deriv_bound
 
 /-- **B-2 bundle with D-1c auto-discharge for convex U**: `dixonH1 f γ` is differentiable
 on `U` when `U` is convex open, `f` is differentiable on `U`, and γ has image in `U`
