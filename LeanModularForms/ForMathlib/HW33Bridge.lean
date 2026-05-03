@@ -188,6 +188,39 @@ theorem cpvIntegrandOn_singleton_integral_eq_excision
       integral_cpvIntegrandOn_singleton_eq_contour_right γ hβ h_outside_right,
       add_zero]
 
+/-! ## Bridge to `HasCauchyPVOn` -/
+
+/-- **Bridge from parametric symmetric-excision PV to `HasCauchyPVOn`.**
+Given functions `α, β : ℝ → ℝ` (the exit-time functions, e.g.,
+`firstExitTimeLeft` and `firstExitTimeRight`) such that:
+
+* `α ε ∈ [0, 1]`, `β ε ∈ [0, 1]`, `α ε ≤ β ε` for small `ε > 0`,
+* on `(0, α ε)` and `(β ε, 1)`, γ is far from s (`ε < ‖γ - s‖`),
+* on `(α ε, β ε)`, γ is close to s (`‖γ - s‖ ≤ ε`),
+* the CPV integrand is interval-integrable for each ε,
+* the symmetric-excision integral tends to `0`,
+
+then `HasCauchyPVOn {s} f γ 0`. -/
+theorem hasCauchyPVOn_singleton_of_excision_tendsto
+    (γ : PiecewiseC1Path x x) (s : ℂ) (f : ℂ → ℂ)
+    (α β : ℝ → ℝ)
+    (h_shape : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+      0 ≤ α ε ∧ β ε ≤ 1 ∧ α ε ≤ β ε ∧
+      (∀ t ∈ Ioo (0 : ℝ) (α ε), ε < ‖γ.toPath.extend t - s‖) ∧
+      (∀ t ∈ Ioo (β ε) (1 : ℝ), ε < ‖γ.toPath.extend t - s‖) ∧
+      (∀ t ∈ Ioo (α ε) (β ε), ‖γ.toPath.extend t - s‖ ≤ ε))
+    (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
+      (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1)
+    (h_excision : Tendsto (fun ε =>
+      (∫ t in (0 : ℝ)..(α ε), f (γ.toPath.extend t) * deriv γ.toPath.extend t) +
+      ∫ t in (β ε)..(1 : ℝ), f (γ.toPath.extend t) * deriv γ.toPath.extend t)
+      (𝓝[>] (0 : ℝ)) (𝓝 0)) :
+    HasCauchyPVOn {s} f γ 0 := by
+  refine h_excision.congr' ?_
+  filter_upwards [h_shape, h_int_full] with ε h_ε h_int
+  exact (cpvIntegrandOn_singleton_integral_eq_excision γ
+    h_ε.1 h_ε.2.1 h_ε.2.2.1 h_ε.2.2.2.1 h_ε.2.2.2.2.1 h_ε.2.2.2.2.2 h_int).symm
+
 end LeanModularForms
 
 end
