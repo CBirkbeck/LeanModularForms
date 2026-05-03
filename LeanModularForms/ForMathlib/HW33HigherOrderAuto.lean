@@ -98,6 +98,22 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip
   exact intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
     hδ_bd_extend hLip
 
+/-! ## CPV integrand norm bound -/
+
+/-- **CPV integrand is dominated by the contour integrand.** Pointwise:
+`‖cpvIntegrandOn S f γ ε t‖ ≤ ‖contourIntegrand f γ t‖`, since the CPV integrand
+is either 0 or equal to the contour integrand. This is the pointwise step
+toward dominated-convergence integrability arguments for `cpvIntegrandOn`. -/
+theorem norm_cpvIntegrandOn_le_norm_contourIntegrand
+    {y : ℂ} (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (ε : ℝ) (t : ℝ) :
+    ‖cpvIntegrandOn S f γ.toPath.extend ε t‖ ≤
+      ‖PiecewiseC1Path.contourIntegrand f γ t‖ := by
+  simp only [cpvIntegrandOn, PiecewiseC1Path.contourIntegrand,
+    PiecewiseC1Path.extendedPath_eq]
+  split_ifs
+  · rw [norm_zero]; exact norm_nonneg _
+  · exact le_refl _
+
 /-- **C-3 single-power avoidance, δ-free + Lipschitz form.** Same as
 `hasCauchyPVOn_finset_pow_inv_of_avoids_lip` but with the positive margin
 auto-derived from pointwise avoidance via `avoids_finset_delta_bound`. -/
