@@ -130,16 +130,12 @@ theorem integral_cpvIntegrandOn_singleton_eq_zero_middle
     (h_le : α ≤ β)
     (h_inside : ∀ t ∈ Ioo α β, ‖γ.toPath.extend t - s‖ ≤ ε) :
     ∫ t in α..β, cpvIntegrandOn {s} f γ.toPath.extend ε t = 0 := by
-  rw [intervalIntegral.integral_of_le h_le,
-      MeasureTheory.integral_Ioc_eq_integral_Ioo]
-  rw [show (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) =
-    fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t from rfl]
+  rw [intervalIntegral.integral_of_le h_le, MeasureTheory.integral_Ioc_eq_integral_Ioo]
   rw [show (∫ t in Ioo α β, cpvIntegrandOn {s} f γ.toPath.extend ε t ∂volume) =
-    ∫ t in Ioo α β, (0 : ℂ) ∂volume from ?_]
-  · simp
-  · apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioo
-    intro t ht
-    exact cpvIntegrandOn_singleton_eq_zero_of_close γ (h_inside t ht)
+    ∫ t in Ioo α β, (0 : ℂ) ∂volume from by
+    apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioo
+    exact fun t ht => cpvIntegrandOn_singleton_eq_zero_of_close γ (h_inside t ht)]
+  simp
 
 /-- **Full integral splitting (excision form).** Under the shape hypothesis on
 `(0, α) ∪ (α, β) ∪ (β, 1)`, the cpvIntegrandOn integral on `[0, 1]` equals the
@@ -217,9 +213,9 @@ theorem hasCauchyPVOn_singleton_of_excision_tendsto
       (𝓝[>] (0 : ℝ)) (𝓝 0)) :
     HasCauchyPVOn {s} f γ 0 := by
   refine h_excision.congr' ?_
-  filter_upwards [h_shape, h_int_full] with ε h_ε h_int
+  filter_upwards [h_shape, h_int_full] with ε ⟨ha, hb, hc, hd, he, hf⟩ h_int
   exact (cpvIntegrandOn_singleton_integral_eq_excision γ
-    h_ε.1 h_ε.2.1 h_ε.2.2.1 h_ε.2.2.2.1 h_ε.2.2.2.2.1 h_ε.2.2.2.2.2 h_int).symm
+    ha hb hc hd he hf h_int).symm
 
 /-! ## Specialization to firstExitTimeLeft / firstExitTimeRight -/
 
@@ -276,31 +272,18 @@ theorem shape_left_of_strictAntiOn
     0 ≤ firstExitTimeLeft γ t₀ δMinus s ε ∧
     ∀ t ∈ Ioo (0 : ℝ) (firstExitTimeLeft γ t₀ δMinus s ε),
       ε < ‖γ t - s‖ := by
-  have h_inIcc :
-      t₀ - δMinus ≤ firstExitTimeLeft γ t₀ δMinus s ε ∧
-        firstExitTimeLeft γ t₀ δMinus s ε ≤ t₀ :=
-    firstExitTimeLeft_mem_Icc hδMinus.le hε_le_max
+  have h_inIcc := firstExitTimeLeft_mem_Icc hδMinus.le hε_le_max
   refine ⟨h_t₀_minus_pos.trans h_inIcc.1, ?_⟩
   intro t ⟨ht_pos, ht_lt⟩
   by_cases h_outer : t ≤ t₀ - δMinus
-  · -- Outer region [0, t₀ - δMinus]: use avoidance with margin δ_avoid
-    calc ε < δ_avoid := hε_lt_avoid
+  · calc ε < δ_avoid := hε_lt_avoid
       _ ≤ ‖γ t - s‖ := h_avoid t ⟨le_of_lt ht_pos, h_outer⟩
-  · -- Middle region (t₀ - δMinus, firstExitTimeLeft): use strict anti-monotonicity
-    push Not at h_outer
+  · push Not at h_outer
     have ht_in_Icc : t ∈ Icc (t₀ - δMinus) t₀ :=
       ⟨le_of_lt h_outer, le_of_lt (lt_of_lt_of_le ht_lt h_inIcc.2)⟩
-    have h_exit_in_Icc : firstExitTimeLeft γ t₀ δMinus s ε ∈ Icc (t₀ - δMinus) t₀ :=
-      h_inIcc
-    -- by strict anti-mono on [t₀-δMinus, t₀]:
-    --   t < firstExitTimeLeft ⇒ ‖γ at firstExitTimeLeft‖ < ‖γ at t‖
     have h_strict : ‖γ (firstExitTimeLeft γ t₀ δMinus s ε) - s‖ < ‖γ t - s‖ :=
-      hγ_anti ht_in_Icc h_exit_in_Icc ht_lt
-    -- ε ≤ ‖γ at firstExitTimeLeft - s‖ from the radius lower bound
-    have h_at_exit_ge :
-        ε ≤ ‖γ (firstExitTimeLeft γ t₀ δMinus s ε) - s‖ :=
-      ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max
-    linarith
+      hγ_anti ht_in_Icc h_inIcc ht_lt
+    linarith [ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max]
 
 /-- **Right-side shape from strict monotonicity (γ continuous).** Symmetric of
 `shape_left_of_strictAntiOn`: γ continuous on `[t₀, t₀ + δPlus]` with
@@ -318,30 +301,18 @@ theorem shape_right_of_strictMonoOn
     firstExitTimeRight γ t₀ δPlus s ε ≤ 1 ∧
     ∀ t ∈ Ioo (firstExitTimeRight γ t₀ δPlus s ε) (1 : ℝ),
       ε < ‖γ t - s‖ := by
-  have h_inIcc :
-      t₀ ≤ firstExitTimeRight γ t₀ δPlus s ε ∧
-        firstExitTimeRight γ t₀ δPlus s ε ≤ t₀ + δPlus :=
-    firstExitTimeRight_mem_Icc hδPlus.le hε_le_max
+  have h_inIcc := firstExitTimeRight_mem_Icc hδPlus.le hε_le_max
   refine ⟨h_inIcc.2.trans h_t₀_plus_le, ?_⟩
   intro t ⟨ht_lt, ht_lt_one⟩
   by_cases h_outer : t₀ + δPlus ≤ t
-  · -- Outer region [t₀ + δPlus, 1]: use avoidance margin
-    calc ε < δ_avoid := hε_lt_avoid
+  · calc ε < δ_avoid := hε_lt_avoid
       _ ≤ ‖γ t - s‖ := h_avoid t ⟨h_outer, le_of_lt ht_lt_one⟩
-  · -- Middle region (firstExitTimeRight, t₀ + δPlus): use strict monotonicity
-    push Not at h_outer
+  · push Not at h_outer
     have ht_in_Icc : t ∈ Icc t₀ (t₀ + δPlus) :=
       ⟨le_of_lt (lt_of_le_of_lt h_inIcc.1 ht_lt), le_of_lt h_outer⟩
-    have h_exit_in_Icc : firstExitTimeRight γ t₀ δPlus s ε ∈ Icc t₀ (t₀ + δPlus) :=
-      h_inIcc
-    -- by strict mono: firstExitTimeRight < t ⇒ ‖γ at exit‖ < ‖γ at t‖
     have h_strict : ‖γ (firstExitTimeRight γ t₀ δPlus s ε) - s‖ < ‖γ t - s‖ :=
-      hγ_mono h_exit_in_Icc ht_in_Icc ht_lt
-    -- ε ≤ ‖γ at firstExitTimeRight - s‖
-    have h_at_exit_ge :
-        ε ≤ ‖γ (firstExitTimeRight γ t₀ δPlus s ε) - s‖ :=
-      ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max
-    linarith
+      hγ_mono h_inIcc ht_in_Icc ht_lt
+    linarith [ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max]
 
 end LeanModularForms
 

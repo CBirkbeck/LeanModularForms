@@ -67,7 +67,6 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
       · intro h
         exact ⟨le_of_lt h, ne_of_gt h⟩
     rwa [h_diff] at h
-  -- inner ⟪slope, deriv γ⟫_ℝ → ⟪L, L⟫_ℝ = ‖L‖²
   have h_inner_tendsto :
       Tendsto (fun t => @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t))
         (𝓝[>] t₀) (𝓝 (‖L‖ ^ 2)) := by
