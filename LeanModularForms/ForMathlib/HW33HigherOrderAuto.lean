@@ -267,6 +267,86 @@ theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids_lip
   exact hasCauchyPVOn_add_higherOrderPolar_of_avoids S f γ
     ⟨δ, hδ_pos, hδ_bd⟩ h_f h_f_int k hk c h_int_HO h_HO_int
 
+/-- **`hasCauchyPVOn_add_higherOrderPolarSum_of_avoids` with all integrability
+auto-discharged from Lipschitz + avoidance (multi-power version).** -/
+theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids_lip
+    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) {L : ℂ}
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_f : HasCauchyPVOn S f γ L)
+    (h_f_int : ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1)
+    (M : ℕ) (c_HO : ℕ → ℂ → ℂ)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S
+      (fun z => f z +
+        ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ L := by
+  have h_int_HO : ∀ k ∈ Finset.Ico 2 (M + 1), ∀ s ∈ S, IntervalIntegrable
+      (fun t => (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t)
+      volume 0 1 := fun k _ s hs => by
+    have hδ_bd_extend : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - s‖ :=
+      fun t ht => by
+        have := hδ_bd s hs t ht
+        rwa [PiecewiseC1Path.extendedPath_eq] at this
+    exact intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
+      hδ_bd_extend hLip
+  have h_HO_int : ∀ k ∈ Finset.Ico 2 (M + 1), ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S
+        (fun z => ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ.toPath.extend ε t)
+      volume 0 1 := fun k _ ε _ =>
+    cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γ ε
+      (contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
+        S k (c_HO k) γ hδ_pos hδ_bd hLip)
+  exact hasCauchyPVOn_add_higherOrderPolarSum_of_avoids S f γ
+    ⟨δ, hδ_pos, hδ_bd⟩ h_f h_f_int M c_HO h_int_HO h_HO_int
+
+/-! ## Fully auto-discharged C-4 closed form -/
+
+/-- **C-4 closed avoidance form, fully auto-discharged.** Same as
+`generalizedResidueTheorem_higherOrder_avoids_closed` but with the higher-order
+integrability hypotheses (`h_int_HO` and `h_HO_int`) auto-discharged from the
+Lipschitz + avoidance assumptions already present.
+
+The user supplies only:
+* `f_simple` differentiable with simple poles at `S`,
+* the higher-order coefficients `c_HO`,
+* `f_simple`'s CPV-integrand integrability (a single hypothesis on f_simple
+  alone — much smaller than the original four),
+* γ closed null-homologous Lipschitz avoiding `S`.
+
+The conclusion is the same residue formula as the simple-pole case:
+the higher-order terms contribute zero. -/
+theorem generalizedResidueTheorem_higherOrder_avoids_closed_lip
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    (f_simple : ℂ → ℂ) (hf_simple : DifferentiableOn ℂ f_simple (U \ ↑S))
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f_simple s)
+    (M : ℕ) (c_HO : ℕ → ℂ → ℂ)
+    (h_simple_int : ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S f_simple
+        γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S
+      (fun z => f_simple z +
+        ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k)
+      γ.toPiecewiseC1Path
+      (2 * ↑Real.pi * I * ∑ s ∈ S,
+        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f_simple s) := by
+  obtain ⟨δ, hδ_pos, hδ_bd⟩ :=
+    avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids
+  have h_simple :
+      HasCauchyPVOn S f_simple γ.toPiecewiseC1Path
+        (2 * ↑Real.pi * I * ∑ s ∈ S,
+          generalizedWindingNumber γ.toPiecewiseC1Path s * residue f_simple s) :=
+    generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_open hU_ne
+      hU_bounded S hS_in_U f_simple hf_simple γ h_null hSimplePoles hγ_avoids
+      ⟨δ, hδ_pos, hδ_bd⟩ hLip
+  exact hasCauchyPVOn_add_higherOrderPolarSum_of_avoids_lip
+    S f_simple γ.toPiecewiseC1Path hδ_pos hδ_bd h_simple h_simple_int M c_HO hLip
+
 end LeanModularForms
 
 end
