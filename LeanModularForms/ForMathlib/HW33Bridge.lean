@@ -255,6 +255,94 @@ theorem hasCauchyPVOn_singleton_of_exitTime_excision
     (firstExitTimeRight γ.toPath.extend t₀ δPlus s)
     h_shape h_int_full h_excision
 
+/-! ## Shape hypothesis from local strict monotonicity -/
+
+/-- **Left-side shape from strict anti-monotonicity (γ continuous).** If γ is
+continuous on `[t₀ - δMinus, t₀]` with `‖γ - s‖` strictly anti-monotone there,
+and γ avoids `s` on `[0, t₀ - δMinus]` with margin `δ_avoid > 0`, then for
+sufficiently small `ε > 0`:
+
+* `0 ≤ firstExitTimeLeft γ t₀ δMinus s ε`,
+* For `t ∈ Ioo 0 (firstExitTimeLeft γ t₀ δMinus s ε)`, `ε < ‖γ(t) - s‖`. -/
+theorem shape_left_of_strictAntiOn
+    {γ : ℝ → ℂ} {s : ℂ} {t₀ δMinus : ℝ}
+    (h_t₀_minus_pos : 0 ≤ t₀ - δMinus)
+    (hδMinus : 0 < δMinus)
+    (hγ_cont : ContinuousOn γ (Icc (t₀ - δMinus) t₀))
+    (hγ_anti : StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
+    {δ_avoid : ℝ} (h_avoid : ∀ t ∈ Icc (0 : ℝ) (t₀ - δMinus), δ_avoid ≤ ‖γ t - s‖)
+    {ε : ℝ} (hε_lt_avoid : ε < δ_avoid)
+    (hε_le_max : ε ≤ ‖γ (t₀ - δMinus) - s‖) :
+    0 ≤ firstExitTimeLeft γ t₀ δMinus s ε ∧
+    ∀ t ∈ Ioo (0 : ℝ) (firstExitTimeLeft γ t₀ δMinus s ε),
+      ε < ‖γ t - s‖ := by
+  have h_inIcc :
+      t₀ - δMinus ≤ firstExitTimeLeft γ t₀ δMinus s ε ∧
+        firstExitTimeLeft γ t₀ δMinus s ε ≤ t₀ :=
+    firstExitTimeLeft_mem_Icc hδMinus.le hε_le_max
+  refine ⟨h_t₀_minus_pos.trans h_inIcc.1, ?_⟩
+  intro t ⟨ht_pos, ht_lt⟩
+  by_cases h_outer : t ≤ t₀ - δMinus
+  · -- Outer region [0, t₀ - δMinus]: use avoidance with margin δ_avoid
+    calc ε < δ_avoid := hε_lt_avoid
+      _ ≤ ‖γ t - s‖ := h_avoid t ⟨le_of_lt ht_pos, h_outer⟩
+  · -- Middle region (t₀ - δMinus, firstExitTimeLeft): use strict anti-monotonicity
+    push Not at h_outer
+    have ht_in_Icc : t ∈ Icc (t₀ - δMinus) t₀ :=
+      ⟨le_of_lt h_outer, le_of_lt (lt_of_lt_of_le ht_lt h_inIcc.2)⟩
+    have h_exit_in_Icc : firstExitTimeLeft γ t₀ δMinus s ε ∈ Icc (t₀ - δMinus) t₀ :=
+      h_inIcc
+    -- by strict anti-mono on [t₀-δMinus, t₀]:
+    --   t < firstExitTimeLeft ⇒ ‖γ at firstExitTimeLeft‖ < ‖γ at t‖
+    have h_strict : ‖γ (firstExitTimeLeft γ t₀ δMinus s ε) - s‖ < ‖γ t - s‖ :=
+      hγ_anti ht_in_Icc h_exit_in_Icc ht_lt
+    -- ε ≤ ‖γ at firstExitTimeLeft - s‖ from the radius lower bound
+    have h_at_exit_ge :
+        ε ≤ ‖γ (firstExitTimeLeft γ t₀ δMinus s ε) - s‖ :=
+      ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max
+    linarith
+
+/-- **Right-side shape from strict monotonicity (γ continuous).** Symmetric of
+`shape_left_of_strictAntiOn`: γ continuous on `[t₀, t₀ + δPlus]` with
+`‖γ - s‖` strictly monotone there, plus avoidance margin on `[t₀ + δPlus, 1]`,
+gives the right-side shape. -/
+theorem shape_right_of_strictMonoOn
+    {γ : ℝ → ℂ} {s : ℂ} {t₀ δPlus : ℝ}
+    (h_t₀_plus_le : t₀ + δPlus ≤ 1)
+    (hδPlus : 0 < δPlus)
+    (hγ_cont : ContinuousOn γ (Icc t₀ (t₀ + δPlus)))
+    (hγ_mono : StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
+    {δ_avoid : ℝ} (h_avoid : ∀ t ∈ Icc (t₀ + δPlus) (1 : ℝ), δ_avoid ≤ ‖γ t - s‖)
+    {ε : ℝ} (hε_lt_avoid : ε < δ_avoid)
+    (hε_le_max : ε ≤ ‖γ (t₀ + δPlus) - s‖) :
+    firstExitTimeRight γ t₀ δPlus s ε ≤ 1 ∧
+    ∀ t ∈ Ioo (firstExitTimeRight γ t₀ δPlus s ε) (1 : ℝ),
+      ε < ‖γ t - s‖ := by
+  have h_inIcc :
+      t₀ ≤ firstExitTimeRight γ t₀ δPlus s ε ∧
+        firstExitTimeRight γ t₀ δPlus s ε ≤ t₀ + δPlus :=
+    firstExitTimeRight_mem_Icc hδPlus.le hε_le_max
+  refine ⟨h_inIcc.2.trans h_t₀_plus_le, ?_⟩
+  intro t ⟨ht_lt, ht_lt_one⟩
+  by_cases h_outer : t₀ + δPlus ≤ t
+  · -- Outer region [t₀ + δPlus, 1]: use avoidance margin
+    calc ε < δ_avoid := hε_lt_avoid
+      _ ≤ ‖γ t - s‖ := h_avoid t ⟨h_outer, le_of_lt ht_lt_one⟩
+  · -- Middle region (firstExitTimeRight, t₀ + δPlus): use strict monotonicity
+    push Not at h_outer
+    have ht_in_Icc : t ∈ Icc t₀ (t₀ + δPlus) :=
+      ⟨le_of_lt (lt_of_le_of_lt h_inIcc.1 ht_lt), le_of_lt h_outer⟩
+    have h_exit_in_Icc : firstExitTimeRight γ t₀ δPlus s ε ∈ Icc t₀ (t₀ + δPlus) :=
+      h_inIcc
+    -- by strict mono: firstExitTimeRight < t ⇒ ‖γ at exit‖ < ‖γ at t‖
+    have h_strict : ‖γ (firstExitTimeRight γ t₀ δPlus s ε) - s‖ < ‖γ t - s‖ :=
+      hγ_mono h_exit_in_Icc ht_in_Icc ht_lt
+    -- ε ≤ ‖γ at firstExitTimeRight - s‖
+    have h_at_exit_ge :
+        ε ≤ ‖γ (firstExitTimeRight γ t₀ δPlus s ε) - s‖ :=
+      ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max
+    linarith
+
 end LeanModularForms
 
 end
