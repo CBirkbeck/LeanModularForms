@@ -687,4 +687,39 @@ theorem firstExitTimeLeft_tendsto_t₀
     have hε_le : ε ≤ ‖γ (t₀ - δ) - s‖ := le_of_lt hε.2
     exact firstExitTimeLeft_lt_t₀ hδ hγ_cont h_s hε_pos hε_le
 
+/-! ## Eventual radius equality (matches parametric theorem signatures) -/
+
+/-- **Right-side eventual exact radius.** For `γ` continuous with `γ(t₀) = s`
+and `γ` leaving `s` on `(t₀, t₀+δ]`, the equality `‖γ (firstExitTimeRight ε) - s‖ = ε`
+holds for all sufficiently small `ε > 0`. This is the form expected by
+`hw_theorem_3_3_odd_transverse_parametric`. -/
+theorem firstExitTimeRight_radius_eventually
+    {γ : ℝ → ℂ} {t₀ δ : ℝ} {s : ℂ} (hδ : 0 < δ)
+    (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
+    (h_s : γ t₀ = s)
+    (h_leave : ∀ t ∈ Set.Ioc t₀ (t₀ + δ), γ t ≠ s) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+      ‖γ (firstExitTimeRight γ t₀ δ s ε) - s‖ = ε := by
+  have h_far_pos : (0 : ℝ) < ‖γ (t₀ + δ) - s‖ :=
+    norm_pos_iff.mpr (sub_ne_zero.mpr (h_leave _ ⟨by linarith, le_refl _⟩))
+  filter_upwards [Ioo_mem_nhdsGT h_far_pos] with ε hε
+  have hε_pos : 0 < ε := hε.1
+  have hε_le : ε ≤ ‖γ (t₀ + δ) - s‖ := le_of_lt hε.2
+  exact norm_at_firstExitTimeRight_eq hδ hγ_cont h_s hε_pos hε_le
+
+/-- **Left-side eventual exact radius.** Symmetric to the right-side. -/
+theorem firstExitTimeLeft_radius_eventually
+    {γ : ℝ → ℂ} {t₀ δ : ℝ} {s : ℂ} (hδ : 0 < δ)
+    (hγ_cont : ContinuousOn γ (Set.Icc (t₀ - δ) t₀))
+    (h_s : γ t₀ = s)
+    (h_leave : ∀ t ∈ Set.Ico (t₀ - δ) t₀, γ t ≠ s) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ),
+      ‖γ (firstExitTimeLeft γ t₀ δ s ε) - s‖ = ε := by
+  have h_far_pos : (0 : ℝ) < ‖γ (t₀ - δ) - s‖ :=
+    norm_pos_iff.mpr (sub_ne_zero.mpr (h_leave _ ⟨le_refl _, by linarith⟩))
+  filter_upwards [Ioo_mem_nhdsGT h_far_pos] with ε hε
+  have hε_pos : 0 < ε := hε.1
+  have hε_le : ε ≤ ‖γ (t₀ - δ) - s‖ := le_of_lt hε.2
+  exact norm_at_firstExitTimeLeft_eq hδ hγ_cont h_s hε_pos hε_le
+
 end LeanModularForms
