@@ -74,6 +74,80 @@ theorem intervalIntegrable_pow_inv_mul_deriv_of_avoids
     exact pow_le_pow_left₀ (le_of_lt hδ_pos) (hδ_bd t ht_Icc) k
   exact h_deriv_int.bdd_mul h_meas h_bound_ae
 
+/-! ## Measurability of the "ε-ball" set -/
+
+/-- The "ε-ball" set `{t | ∃ s ∈ S, ‖γ(t) - s‖ ≤ ε}` is measurable. -/
+theorem measurableSet_cpvIntegrandOn_zero
+    {y : ℂ} (S : Finset ℂ) (γ : PiecewiseC1Path x y) (ε : ℝ) :
+    MeasurableSet {t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε} := by
+  classical
+  have h_eq : {t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε} =
+      ⋃ s ∈ (S : Set ℂ), {t | ‖γ.toPath.extend t - s‖ ≤ ε} := by
+    ext t; simp
+  rw [h_eq]
+  refine S.finite_toSet.measurableSet_biUnion (fun s _ => ?_)
+  exact (γ.toPath.continuous_extend.measurable.sub_const s).norm measurableSet_Iic
+
+/-! ## CPV integrand norm bound -/
+
+/-- **CPV integrand is dominated by the contour integrand.** Pointwise:
+`‖cpvIntegrandOn S f γ ε t‖ ≤ ‖contourIntegrand f γ t‖`, since the CPV integrand
+is either 0 or equal to the contour integrand. This is the pointwise step
+toward dominated-convergence integrability arguments for `cpvIntegrandOn`. -/
+theorem norm_cpvIntegrandOn_le_norm_contourIntegrand
+    {y : ℂ} (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (ε : ℝ) (t : ℝ) :
+    ‖cpvIntegrandOn S f γ.toPath.extend ε t‖ ≤
+      ‖PiecewiseC1Path.contourIntegrand f γ t‖ := by
+  simp only [cpvIntegrandOn, PiecewiseC1Path.contourIntegrand,
+    PiecewiseC1Path.extendedPath_eq]
+  split_ifs
+  · rw [norm_zero]; exact norm_nonneg _
+  · exact le_refl _
+
+/-! ## CPV integrand interval-integrability from contour integrand -/
+
+/-- **CPV integrand AEStronglyMeasurable from contour integrand AEStronglyMeasurable.**
+The CPV integrand `cpvIntegrandOn S f γ ε` is `Set.piecewise A 0 (contourIntegrand f γ)`
+where `A = {t | ∃ s ∈ S, ‖γ(t) - s‖ ≤ ε}` is measurable. -/
+theorem aestronglyMeasurable_cpvIntegrandOn
+    {y : ℂ} (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (ε : ℝ)
+    {μ : MeasureTheory.Measure ℝ}
+    (h_contour_meas : AEStronglyMeasurable
+      (PiecewiseC1Path.contourIntegrand f γ) μ) :
+    AEStronglyMeasurable
+      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) μ := by
+  have h_meas : MeasurableSet
+      {t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε} :=
+    measurableSet_cpvIntegrandOn_zero S γ ε
+  have h_eq : (fun t : ℝ => cpvIntegrandOn S f γ.toPath.extend ε t) =
+      ({t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε}).piecewise
+        (fun _ => 0) (PiecewiseC1Path.contourIntegrand f γ) := by
+    funext t
+    simp only [cpvIntegrandOn, Set.piecewise, PiecewiseC1Path.contourIntegrand,
+      PiecewiseC1Path.extendedPath_eq, Set.mem_setOf_eq]
+  rw [h_eq]
+  exact AEStronglyMeasurable.piecewise h_meas
+    aestronglyMeasurable_const
+    (h_contour_meas.mono_measure Measure.restrict_le_self)
+
+/-- **CPV integrand interval-integrability from contour integrand integrability.**
+For any `ε`, if the contour integrand `f(γ(t)) · γ'(t)` is interval-integrable
+on `[0, 1]`, so is the CPV integrand `cpvIntegrandOn S f γ ε`. The proof uses
+the pointwise norm bound (`norm_cpvIntegrandOn_le_norm_contourIntegrand`)
+and `IntervalIntegrable.mono_fun`. -/
+theorem cpvIntegrandOn_intervalIntegrable_of_contourIntegrand
+    {y : ℂ} (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (ε : ℝ)
+    (h_contour_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand f γ) volume 0 1) :
+    IntervalIntegrable
+      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1 := by
+  refine h_contour_int.mono_fun ?_ ?_
+  · have h := h_contour_int.aestronglyMeasurable
+    rw [show Ioc (0 : ℝ) 1 = Ι (0 : ℝ) 1 from (uIoc_of_le (zero_le_one' ℝ)).symm] at h
+    exact aestronglyMeasurable_cpvIntegrandOn S f γ ε h
+  · refine ae_of_all _ fun t => ?_
+    exact norm_cpvIntegrandOn_le_norm_contourIntegrand S f γ ε t
+
 /-! ## Auto-discharge wrappers for the higher-order avoidance theorems -/
 
 /-- **C-3 single-power avoidance, integrability auto-derived (Lipschitz form).**
@@ -97,22 +171,6 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip
     rwa [PiecewiseC1Path.extendedPath_eq] at this
   exact intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
     hδ_bd_extend hLip
-
-/-! ## CPV integrand norm bound -/
-
-/-- **CPV integrand is dominated by the contour integrand.** Pointwise:
-`‖cpvIntegrandOn S f γ ε t‖ ≤ ‖contourIntegrand f γ t‖`, since the CPV integrand
-is either 0 or equal to the contour integrand. This is the pointwise step
-toward dominated-convergence integrability arguments for `cpvIntegrandOn`. -/
-theorem norm_cpvIntegrandOn_le_norm_contourIntegrand
-    {y : ℂ} (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (ε : ℝ) (t : ℝ) :
-    ‖cpvIntegrandOn S f γ.toPath.extend ε t‖ ≤
-      ‖PiecewiseC1Path.contourIntegrand f γ t‖ := by
-  simp only [cpvIntegrandOn, PiecewiseC1Path.contourIntegrand,
-    PiecewiseC1Path.extendedPath_eq]
-  split_ifs
-  · rw [norm_zero]; exact norm_nonneg _
-  · exact le_refl _
 
 /-- **C-3 single-power avoidance, δ-free + Lipschitz form.** Same as
 `hasCauchyPVOn_finset_pow_inv_of_avoids_lip` but with the positive margin
