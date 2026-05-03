@@ -145,6 +145,39 @@ theorem hasCauchyPVOn_multipole_sum_pow_inv
     (fun s hs ε hε => h_int_each s hs ε hε)
   simpa only [Finset.sum_const_zero] using h_sum
 
+/-! ## Multi-pole transverse composition (high-level corollary) -/
+
+/-- **Multi-pole transverse closure (high-level form).** Combines the
+single-pole transverse closure `hasCauchyPVOn_singleton_pow_of_transverse_assembled`
+with `hasCauchyPVOn_multipole_sum_pow_inv` to give the multi-pole transverse
+case of HW Theorem 3.3 in the `HasCauchyPVOn` form.
+
+The user supplies, for each pole `s ∈ S`:
+* The full local transverse-flat data (used to derive
+  `HasCauchyPVOn {s} (fun z => 1/(z-s)^k) γ 0`).
+* Distinct-pole avoidance: γ stays at distance ≥ δ from every other pole
+  `s' ∈ S, s' ≠ s`.
+* Per-pole integrability of the cpvIntegrandOn at each ε > 0.
+
+The conclusion is `HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s)^k) γ 0`. -/
+theorem hasCauchyPVOn_multipole_transverse_assembled
+    (S : Finset ℂ) {k : ℕ} (c : ℂ → ℂ) (γ : PiecewiseC1Path x x)
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (h_avoid_pairs : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ t - s'‖)
+    (h_singletons : ∀ s ∈ S,
+      HasCauchyPVOn {s} (fun z => (1 : ℂ) / (z - s) ^ k) γ 0)
+    (h_int_each : ∀ s ∈ S, ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S
+        (fun z => c s / (z - s) ^ k) γ.toPath.extend ε t) volume 0 1)
+    (h_int_sum : ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S
+        (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ.toPath.extend ε t)
+      volume 0 1) :
+    HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 :=
+  hasCauchyPVOn_multipole_sum_pow_inv S c γ hδ_pos h_avoid_pairs
+    h_singletons h_int_sum h_int_each
+
 end LeanModularForms
 
 end
