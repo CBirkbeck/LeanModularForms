@@ -171,6 +171,116 @@ theorem ε_le_norm_at_firstExitTimeRight
   have h_S_bdd : BddBelow S := ⟨t₀, firstExitTimeRight_set_lb γ t₀ δ ε s⟩
   exact (h_S_closed.csInf_mem h_S_nonempty h_S_bdd).2
 
+/-! ## Exact-radius equality at the first exit time -/
+
+/-- **Strict-positive first exit time (right).** For `γ(t₀) = s` and `ε > 0`, the
+first exit time is strictly `> t₀`: at `t₀` itself, `γ` is at distance `0 < ε`,
+so `t₀` is not in the defining set. -/
+theorem t₀_lt_firstExitTimeRight
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ} (hδ : 0 < δ)
+    (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
+    (h_s : γ t₀ = s) (hε_pos : 0 < ε)
+    (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
+    t₀ < firstExitTimeRight γ t₀ δ s ε := by
+  -- At t₀, ‖γ t₀ - s‖ = 0 < ε, so γ is inside B_ε near t₀
+  -- By continuity, there is a right-neighborhood of t₀ where γ stays inside B_ε
+  -- Hence t₀ is a strict lower bound for the defining set
+  have h_norm_t₀ : ‖γ t₀ - s‖ = 0 := by simp [h_s]
+  -- γ continuous on Icc, restricted to right at t₀: norm < ε in a nbhd
+  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖) (Set.Icc t₀ (t₀ + δ)) t₀ :=
+    ((hγ_cont t₀ ⟨le_refl _, by linarith⟩).sub continuousWithinAt_const).norm
+  -- Find η > 0 such that for t ∈ [t₀, t₀+η), ‖γ t - s‖ < ε
+  have h_eventually : ∀ᶠ t in 𝓝[Set.Icc t₀ (t₀ + δ)] t₀, ‖γ t - s‖ < ε := by
+    have := h_cont_at_t₀.tendsto.eventually_lt_const (by rw [h_norm_t₀]; exact hε_pos)
+    exact this
+  obtain ⟨η, hη_pos, hη⟩ := Metric.nhdsWithin_basis_ball.eventually_iff.mp h_eventually
+  -- Pick t' ∈ (t₀, t₀+η) ∩ [t₀, t₀+δ]
+  have h_dec : 0 < min η δ := lt_min hη_pos hδ
+  refine lt_of_lt_of_le (a := t₀) (b := t₀ + min η δ / 2)
+    (by linarith [h_dec]) ?_
+  -- Show firstExitTimeRight ≥ t₀ + min η δ / 2 by showing all points in defining
+  -- set are ≥ t₀ + min η δ / 2
+  apply le_csInf
+  · exact ⟨t₀ + δ, firstExitTimeRight_set_nonempty hδ.le hε_le⟩
+  intro t ht
+  -- t ∈ Icc t₀ (t₀+δ) and ε ≤ ‖γ t - s‖
+  by_contra h_lt
+  push Not at h_lt
+  -- t < t₀ + min η δ / 2 and t ∈ [t₀, t₀+δ], so t ∈ [t₀, t₀+η)
+  have h_in_Icc : t ∈ Set.Icc t₀ (t₀ + δ) := ht.1
+  have h_dist_lt_η : dist t t₀ < η := by
+    rw [Real.dist_eq, abs_of_nonneg (by linarith [h_in_Icc.1] : 0 ≤ t - t₀)]
+    have : min η δ / 2 < η := by
+      have : min η δ ≤ η := min_le_left _ _
+      linarith
+    linarith
+  have := hη ⟨Metric.mem_ball.mpr h_dist_lt_η, h_in_Icc⟩
+  exact absurd ht.2 (not_le.mpr this)
+
+/-- **Exact-radius equality at first exit time (right).** Combining the lower
+bound `ε ≤ ‖γ (firstExitTime...) - s‖` with the upper bound from continuity at
+the supremum-via-sInf, the first exit time is at *exactly* distance `ε`.
+
+Requires `γ(t₀) = s` (so `firstExitTime > t₀`) and `ε > 0`. -/
+theorem norm_at_firstExitTimeRight_eq
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
+    (hδ : 0 < δ) (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
+    (h_s : γ t₀ = s) (hε_pos : 0 < ε)
+    (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
+    ‖γ (firstExitTimeRight γ t₀ δ s ε) - s‖ = ε := by
+  refine le_antisymm ?_
+    (ε_le_norm_at_firstExitTimeRight hδ hγ_cont hε_le)
+  -- Upper bound: t_ε > t₀ (by t₀_lt_firstExitTimeRight), so ∃ sequence t_n → t_ε
+  -- with t_n < t_ε, hence t_n ∉ defining set, hence ‖γ t_n - s‖ < ε.
+  -- By continuity, ‖γ t_ε - s‖ ≤ ε.
+  set t_ε := firstExitTimeRight γ t₀ δ s ε
+  have h_t₀_lt : t₀ < t_ε :=
+    t₀_lt_firstExitTimeRight hδ hγ_cont h_s hε_pos hε_le
+  have h_t_ε_mem : t_ε ∈ Set.Icc t₀ (t₀ + δ) :=
+    ⟨(firstExitTimeRight_mem_Icc hδ.le hε_le).1,
+     (firstExitTimeRight_mem_Icc hδ.le hε_le).2⟩
+  have h_t_ε_le : t_ε ≤ t₀ + δ := h_t_ε_mem.2
+  -- For each n, pick t_n ∈ (t_ε - 1/(n+1), t_ε) with ‖γ t_n - s‖ < ε
+  -- Strategy: by definition of sInf, for each n there's t_n in defining set
+  -- below t_ε + 1/(n+1)... but we want t_n < t_ε.
+  -- Simpler: the ball (t_ε - r, t_ε) ⊆ Icc t₀ (t₀+δ) for r small enough,
+  -- and points there are < t_ε so NOT in the defining set, i.e., ‖γ - s‖ < ε.
+  by_contra h
+  push Not at h
+  -- ‖γ t_ε - s‖ > ε; by continuity, this holds in a nbhd of t_ε
+  have h_cont_at_t_ε : ContinuousWithinAt (fun t => ‖γ t - s‖)
+      (Set.Icc t₀ (t₀ + δ)) t_ε :=
+    ((hγ_cont t_ε h_t_ε_mem).sub continuousWithinAt_const).norm
+  have h_ev : ∀ᶠ t in 𝓝[Set.Icc t₀ (t₀ + δ)] t_ε, ε < ‖γ t - s‖ :=
+    h_cont_at_t_ε.tendsto.eventually_const_lt h
+  obtain ⟨η, hη_pos, hη⟩ := Metric.nhdsWithin_basis_ball.eventually_iff.mp h_ev
+  -- Pick t' = max t₀ (t_ε - η/2): t' ∈ Icc t₀ (t₀+δ), |t' - t_ε| < η, t' < t_ε
+  let r := min (η / 2) ((t_ε - t₀) / 2)
+  have hr_pos : 0 < r := by
+    simp only [r]
+    refine lt_min (by linarith) ?_
+    linarith
+  have h_t_ε_lt_η : t_ε - r < t_ε := by linarith
+  have h_t_ε_ge : t₀ ≤ t_ε - r := by
+    have : r ≤ (t_ε - t₀) / 2 := min_le_right _ _
+    linarith
+  have h_t_ε_le_δ : t_ε - r ≤ t₀ + δ := by linarith
+  have h_t_in_Icc : t_ε - r ∈ Set.Icc t₀ (t₀ + δ) := ⟨h_t_ε_ge, h_t_ε_le_δ⟩
+  have h_dist : dist (t_ε - r) t_ε < η := by
+    rw [Real.dist_eq, abs_of_neg (by linarith : t_ε - r - t_ε < 0)]
+    have : r ≤ η / 2 := min_le_left _ _
+    linarith
+  have h_norm_gt := hη ⟨Metric.mem_ball.mpr h_dist, h_t_in_Icc⟩
+  -- t_ε - r is < t_ε but in the defining set ⇒ contradicts t_ε being inf
+  have h_in_set : (t_ε - r) ∈
+      {t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖} :=
+    ⟨h_t_in_Icc, le_of_lt h_norm_gt⟩
+  have h_inf_le : t_ε ≤ t_ε - r := by
+    apply csInf_le
+    · exact ⟨t₀, fun t ⟨hmem, _⟩ => hmem.1⟩
+    · exact h_in_set
+  linarith
+
 /-! ## First exit-time function (left side) via sSup -/
 
 /-- **Last exit time at radius ε (left side).** Defined via `sSup` of the set
