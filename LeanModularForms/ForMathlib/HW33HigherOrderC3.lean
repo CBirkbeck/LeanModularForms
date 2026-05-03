@@ -50,7 +50,6 @@ theorem contourIntegral_finset_sum {ι : Type*} (s : Finset ι) (f : ι → ℂ 
       (PiecewiseC1Path.contourIntegrand (f i) γ) volume 0 1) :
     γ.contourIntegral (fun z => ∑ i ∈ s, f i z) =
       ∑ i ∈ s, γ.contourIntegral (f i) := by
-  classical
   induction s using Finset.induction_on with
   | empty =>
     simp only [Finset.sum_empty]
@@ -102,7 +101,6 @@ theorem cpvIntegrandOn_finset_sum_intervalIntegrable
     IntervalIntegrable
       (fun t => cpvIntegrandOn S (fun z => ∑ i ∈ ι_set, f i z) γ.toPath.extend ε t)
       volume 0 1 := by
-  classical
   have heq : (fun t : ℝ =>
       cpvIntegrandOn S (fun z => ∑ i ∈ ι_set, f i z) γ.toPath.extend ε t) =
       fun t => ∑ i ∈ ι_set, cpvIntegrandOn S (f i) γ.toPath.extend ε t := by
@@ -112,14 +110,9 @@ theorem cpvIntegrandOn_finset_sum_intervalIntegrable
     · rw [Finset.sum_const_zero]
     · rw [Finset.sum_mul]
   rw [heq]
-  have h_sum := IntervalIntegrable.sum ι_set hf
-  have hfun : (∑ i ∈ ι_set, fun t : ℝ =>
-      cpvIntegrandOn S (f i) γ.toPath.extend ε t) =
-      fun t => ∑ i ∈ ι_set, cpvIntegrandOn S (f i) γ.toPath.extend ε t := by
-    funext t
-    rw [Finset.sum_apply]
-  rw [hfun] at h_sum
-  exact h_sum
+  convert IntervalIntegrable.sum ι_set hf using 1
+  funext t
+  rw [Finset.sum_apply]
 
 /-- **Finset sum closure of `HasCauchyPVOn`.** If `HasCauchyPVOn S (f i) γ (L i)`
 holds for each `i ∈ ι`, with appropriate integrability of the CPV integrands
@@ -131,7 +124,6 @@ theorem HasCauchyPVOn.finset_sum {ι : Type*} (ι_set : Finset ι)
     (hf_int : ∀ i ∈ ι_set, ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S (f i) γ.toPath.extend ε t) volume 0 1) :
     HasCauchyPVOn S (fun z => ∑ i ∈ ι_set, f i z) γ (∑ i ∈ ι_set, L i) := by
-  classical
   induction ι_set using Finset.induction_on with
   | empty =>
     simp only [Finset.sum_empty]
@@ -166,11 +158,8 @@ theorem HasCauchyPVOn.finset_sum {ι : Type*} (ι_set : Finset ι)
       exact cpvIntegrandOn_finset_sum_intervalIntegrable t S
         (fun i him => hf_int_t i him ε hε)
     have ih_app := ih hf_t hf_int_t
-    rw [Finset.sum_insert j_t_disj]
-    have heq : (fun z => ∑ i ∈ insert j t, f i z) =
-        (fun z => f j z + ∑ i ∈ t, f i z) :=
-      funext (fun z => Finset.sum_insert j_t_disj)
-    rw [heq]
+    rw [Finset.sum_insert j_t_disj, show (fun z => ∑ i ∈ insert j t, f i z) =
+        (fun z => f j z + ∑ i ∈ t, f i z) from funext (fun z => Finset.sum_insert j_t_disj)]
     exact hf_j.add ih_app hf_int_j hf_int_sum
 
 /-! ## Higher-order polar cancellation: avoidance case -/
@@ -193,7 +182,6 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids
       volume 0 1) :
     HasCauchyPVOn S
       (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
-  classical
   have h_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s := by
     obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
     intro s hs t ht hγt
@@ -222,10 +210,8 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids
       γ.contourIntegral_pow_inv_eq_zero hk h_avoids_s (h_int s hs)
     have h_eq : γ.contourIntegral (fun z => c s / (z - s) ^ k) =
         c s * γ.contourIntegral (fun z => 1 / (z - s) ^ k) := by
-      have heq : (fun z => c s / (z - s) ^ k) =
-          (fun z => c s * (1 / (z - s) ^ k)) := by
-        funext z; ring
-      rw [heq, PiecewiseC1Path.contourIntegral_smul]
+      rw [show (fun z => c s / (z - s) ^ k) = (fun z => c s * (1 / (z - s) ^ k)) from
+        funext fun z => by ring, PiecewiseC1Path.contourIntegral_smul]
     rw [h_eq, h_zero, mul_zero]
   have h_sum_zero : γ.contourIntegral
       (fun z => ∑ s ∈ S, c s / (z - s) ^ k) = 0 := by

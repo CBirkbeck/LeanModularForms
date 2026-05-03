@@ -64,9 +64,7 @@ theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids
   have h_HO :
       HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 :=
     hasCauchyPVOn_finset_pow_inv_of_avoids S k hk c γ hδ h_int_HO
-  have h_sum := HasCauchyPVOn.add h_f h_HO h_f_int h_HO_int
-  rw [show L = L + 0 from (add_zero L).symm]
-  exact h_sum
+  simpa only [add_zero] using HasCauchyPVOn.add h_f h_HO h_f_int h_HO_int
 
 /-! ## Closure under adding multi-power higher-order polar terms -/
 
@@ -89,7 +87,6 @@ theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids
     HasCauchyPVOn S
       (fun z => f z +
         ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ L := by
-  classical
   -- Build the higher-order sum's CPV (= 0)
   have h_HOsum :
       HasCauchyPVOn S
@@ -106,9 +103,8 @@ theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids
           (fun z => ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ.toPath.extend ε t)
         volume 0 1 :=
       fun k hk_mem ε hε => h_HO_int k hk_mem ε hε
-    have h := HasCauchyPVOn.finset_sum (Finset.Ico 2 (M + 1)) h_each_k h_each_int
-    simp only [Finset.sum_const_zero] at h
-    exact h
+    simpa only [Finset.sum_const_zero] using
+      HasCauchyPVOn.finset_sum (Finset.Ico 2 (M + 1)) h_each_k h_each_int
   -- Add f and HOsum
   have h_HOsum_int : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S
@@ -118,9 +114,8 @@ theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids
     exact cpvIntegrandOn_finset_sum_intervalIntegrable
       (Finset.Ico 2 (M + 1)) S
       (fun k hk_mem => h_HO_int k hk_mem ε hε)
-  have h_sum := HasCauchyPVOn.add h_f h_HOsum h_f_int h_HOsum_int
-  rw [show L = L + 0 from (add_zero L).symm]
-  exact h_sum
+  simpa only [add_zero] using
+    HasCauchyPVOn.add h_f h_HOsum h_f_int h_HOsum_int
 
 /-! ## C-4: closed-form higher-order residue theorem (avoidance) -/
 
