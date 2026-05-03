@@ -185,6 +185,88 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip_avoids
   obtain ⟨δ, hδ_pos, hδ_bd⟩ := avoids_finset_delta_bound γ S hγ_avoids
   exact hasCauchyPVOn_finset_pow_inv_of_avoids_lip S k hk c γ hδ_pos hδ_bd hLip
 
+/-! ## Auto-discharge: contour integrability for the higher-order polar sum -/
+
+/-- **Contour integrand integrability for the higher-order polar sum.** When `γ`
+is Lipschitz and avoids `S` with positive margin, the contour integrand
+`(∑ s ∈ S, c s / (γ(t) - s)^k) · γ'(t)` is interval-integrable on `[0, 1]`. -/
+theorem contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
+    (S : Finset ℂ) (k : ℕ) (c : ℂ → ℂ)
+    (γ : PiecewiseC1Path x x) {δ : ℝ} (hδ_pos : 0 < δ)
+    (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ) volume 0 1 := by
+  have h_each : ∀ s ∈ S, IntervalIntegrable
+      (fun t => c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
+      volume 0 1 := fun s hs => by
+    have hδ_bd_extend : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - s‖ :=
+      fun t ht => by
+        have := hδ_bd s hs t ht
+        rwa [PiecewiseC1Path.extendedPath_eq] at this
+    have h_one := intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
+      hδ_bd_extend hLip
+    have h_eq : (fun t : ℝ =>
+        c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) =
+        fun t => c s *
+          (1 / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) := by
+      funext t; ring
+    rw [h_eq]
+    exact h_one.const_mul (c s)
+  show IntervalIntegrable
+    (fun t => (∑ s ∈ S, c s / (γ.toPath.extend t - s) ^ k) *
+      deriv γ.toPath.extend t) volume 0 1
+  have heq : (fun t : ℝ =>
+      (∑ s ∈ S, c s / (γ.toPath.extend t - s) ^ k) *
+        deriv γ.toPath.extend t) =
+      fun t => ∑ s ∈ S,
+        c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t := by
+    funext t; rw [Finset.sum_mul]
+  rw [heq]
+  have h_sum := IntervalIntegrable.sum S h_each
+  have hfun : (∑ i ∈ S, fun t : ℝ =>
+      c i / (γ.toPath.extend t - i) ^ k * deriv γ.toPath.extend t) =
+      fun t => ∑ i ∈ S,
+        c i / (γ.toPath.extend t - i) ^ k * deriv γ.toPath.extend t := by
+    funext t; rw [Finset.sum_apply]
+  rw [hfun] at h_sum
+  exact h_sum
+
+/-! ## Auto-discharged C-3/C-4 add forms -/
+
+/-- **`hasCauchyPVOn_add_higherOrderPolar_of_avoids` with all integrability
+auto-discharged from Lipschitz + avoidance.** -/
+theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids_lip
+    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) {L : ℂ}
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_f : HasCauchyPVOn S f γ L)
+    (h_f_int : ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1)
+    (k : ℕ) (hk : 2 ≤ k) (c : ℂ → ℂ)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S
+      (fun z => f z + ∑ s ∈ S, c s / (z - s) ^ k) γ L := by
+  have h_int_HO : ∀ s ∈ S, IntervalIntegrable
+      (fun t => (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t)
+      volume 0 1 := fun s hs => by
+    have hδ_bd_extend : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - s‖ :=
+      fun t ht => by
+        have := hδ_bd s hs t ht
+        rwa [PiecewiseC1Path.extendedPath_eq] at this
+    exact intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
+      hδ_bd_extend hLip
+  have h_HO_contour := contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
+    S k c γ hδ_pos hδ_bd hLip
+  have h_HO_int : ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S
+        (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ.toPath.extend ε t)
+      volume 0 1 := fun ε _ =>
+    cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γ ε h_HO_contour
+  exact hasCauchyPVOn_add_higherOrderPolar_of_avoids S f γ
+    ⟨δ, hδ_pos, hδ_bd⟩ h_f h_f_int k hk c h_int_HO h_HO_int
+
 end LeanModularForms
 
 end
