@@ -1038,8 +1038,7 @@ theorem norm_sq_segment_to_pole_lower_bound
         2 * α * β * ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re +
         β ^ 2 * ‖z₂ - s‖ ^ 2 := by
     rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm]
-    rw [show α • (z₁ - s) = (α : ℂ) * (z₁ - s) from Complex.real_smul ..,
-        show β • (z₂ - s) = (β : ℂ) * (z₂ - s) from Complex.real_smul ..]
+    simp only [Complex.real_smul]
     rw [Complex.normSq_add]
     rw [Complex.normSq_mul, Complex.normSq_mul, Complex.normSq_ofReal,
         Complex.normSq_ofReal]
@@ -1054,8 +1053,7 @@ theorem norm_sq_segment_to_pole_lower_bound
       (‖z₁ - s‖ ^ 2 + ‖z₂ - s‖ ^ 2 - ‖z₁ - z₂‖ ^ 2) / 2 := by
     have h_ns := Complex.normSq_sub (z₁ - s) (z₂ - s)
     rw [← Complex.sq_norm, ← Complex.sq_norm, ← Complex.sq_norm] at h_ns
-    have h_sub_eq : (z₁ - s) - (z₂ - s) = z₁ - z₂ := by ring
-    rw [h_sub_eq] at h_ns
+    rw [show (z₁ - s) - (z₂ - s) = z₁ - z₂ by ring] at h_ns
     linarith
   rw [h_expand, h_cross, h₁, h₂]
   have h_ab_le : α * β ≤ 1 / 4 := by nlinarith [sq_nonneg (α - β)]
@@ -1068,20 +1066,15 @@ theorem norm_sq_segment_to_pole_lower_bound
 /-- **Segment distance corollary (chord ≤ d).** When the chord is at most `d`,
 the segment from `z₁` to `z₂` stays at distance ≥ `d/2` from `s`. -/
 theorem norm_segment_to_pole_lower_bound_half
-    {z₁ z₂ s : ℂ} {d : ℝ} (hd_pos : 0 < d)
+    {z₁ z₂ s : ℂ} {d : ℝ} (_hd_pos : 0 < d)
     (h₁ : ‖z₁ - s‖ = d) (h₂ : ‖z₂ - s‖ = d) (h_chord : ‖z₁ - z₂‖ ≤ d)
     {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
     d / 2 ≤ ‖z - s‖ := by
   have h_lower := norm_sq_segment_to_pole_lower_bound h₁ h₂ hz
-  have h_norm_nonneg : 0 ≤ ‖z - s‖ := norm_nonneg _
-  have h_d2 : 0 < d / 2 := by linarith
   have h_le_sq : (d / 2) ^ 2 ≤ ‖z - s‖ ^ 2 := by
-    have h_chord_sq : ‖z₁ - z₂‖ ^ 2 ≤ d ^ 2 := by
-      have := mul_self_le_mul_self (norm_nonneg _) h_chord
-      nlinarith
-    nlinarith
-  have := abs_le_of_sq_le_sq' h_le_sq h_norm_nonneg
-  linarith [this.2, abs_of_pos h_d2]
+    nlinarith [mul_self_le_mul_self (norm_nonneg _) h_chord]
+  have := abs_le_of_sq_le_sq' h_le_sq (norm_nonneg _)
+  linarith [this.2, abs_of_pos (by linarith : 0 < d / 2)]
 
 /-- **F-diff pointwise bound at tangent target.** For γ(t) ≠ s and chord-to-target
 bounded by ‖γ(t) - s‖, the antiderivative difference between γ(t) and the natural
@@ -1143,13 +1136,10 @@ theorem tendsto_div_pow_zero_of_isLittleO {chord d : ℝ → ℝ} {l : Filter �
   rw [abs_div, abs_of_pos hd_k_pos]
   have h_pow_le : d t ^ (n - k) ≤ 1 := by
     rcases Nat.eq_zero_or_pos (n - k) with h_eq | h_pos
-    · rw [h_eq]; simp
+    · simp [h_eq]
     · exact pow_le_one₀ (le_of_lt hdp) (le_of_lt hd) |>.trans_eq (by simp)
   calc |chord t| / d t ^ k
-      ≤ ε / 2 * d t ^ (n - k) := by
-          rw [div_le_iff₀ hd_k_pos]
-          calc |chord t| ≤ ε / 2 * d t ^ n := hb
-            _ = ε / 2 * d t ^ (n - k) * d t ^ k := by rw [h_pow]; ring
+      ≤ ε / 2 * d t ^ (n - k) := by rw [div_le_iff₀ hd_k_pos]; nlinarith [hb, h_pow]
     _ ≤ ε / 2 * 1 := by gcongr
     _ < ε := by linarith
 
@@ -1208,20 +1198,16 @@ theorem F_diff_at_tangent_target_tendsto_zero_right
     filter_upwards [eventually_ne_right hL h_deriv h_s, h_chord_le_d] with t h_ne hcd
     have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr h_ne)
     have hcd' : ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ ≤ ‖γ t - s‖ := by
-      have h_eq :
-          γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L) =
-            γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L := by ring
-      rw [h_eq]; exact hcd
+      rw [show γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L) =
+            γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L by ring]
+      exact hcd
     have h_bound := norm_F_diff_at_tangent_target_le hk hL h_ne hcd'
-    have h_norm_eq :
-        ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ =
-          ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := by congr 1; ring
-    rw [h_norm_eq] at h_bound
-    have h_pow_eq : (1 : ℝ) / (‖γ t - s‖ / 2) ^ k = 2 ^ k / ‖γ t - s‖ ^ k := by
-      rw [div_pow]; field_simp
+    rw [show ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ =
+          ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ by congr 1; ring] at h_bound
     calc ‖_‖
         ≤ (1 : ℝ) / (‖γ t - s‖ / 2) ^ k * ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := h_bound
-      _ = 2 ^ k / ‖γ t - s‖ ^ k * ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := by rw [h_pow_eq]
+      _ = 2 ^ k / ‖γ t - s‖ ^ k * ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := by
+          congr 1; rw [div_pow]; field_simp
       _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ / ‖γ t - s‖ ^ k) := by ring
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
@@ -1272,24 +1258,18 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
     filter_upwards [eventually_ne_left hL h_deriv h_s, h_chord_le_d] with t h_ne hcd
     have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr h_ne)
     have hcd' : ‖γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L))‖ ≤ ‖γ t - s‖ := by
-      have h_eq :
-          γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)) =
-            γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L) := by ring
-      rw [h_eq]; exact hcd
+      rw [show γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)) =
+            γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L) by ring]
+      exact hcd
     have h_bound := norm_F_diff_at_tangent_target_le hk hLneg h_ne hcd'
-    have h_norm_eq :
-        ‖γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L))‖ =
-          ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ := by congr 1; ring
-    rw [h_norm_eq] at h_bound
-    have h_pow_eq : (1 : ℝ) / (‖γ t - s‖ / 2) ^ k = 2 ^ k / ‖γ t - s‖ ^ k := by
-      rw [div_pow]; field_simp
+    rw [show ‖γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L))‖ =
+          ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ by congr 1; ring] at h_bound
     calc ‖_‖
         ≤ (1 : ℝ) / (‖γ t - s‖ / 2) ^ k * ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ :=
           h_bound
       _ = 2 ^ k / ‖γ t - s‖ ^ k * ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ := by
-          rw [h_pow_eq]
-      _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ / ‖γ t - s‖ ^ k) := by
-          ring
+          congr 1; rw [div_pow]; field_simp
+      _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ / ‖γ t - s‖ ^ k) := by ring
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
 
