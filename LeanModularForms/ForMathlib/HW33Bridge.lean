@@ -90,6 +90,104 @@ theorem cpvIntegrandOn_singleton_eq_indicator
     push Not at h
     exact cpvIntegrandOn_singleton_eq_zero_of_close γ h
 
+/-! ## Integral splitting under the shape hypothesis -/
+
+/-- **CPV integrand integral on `[0, α]` equals contour integrand integral**
+when `ε < ‖γ(t) - s‖` on `(0, α)`. Boundary points are measure-zero, so the
+equality is via Ioc → Ioo conversion. -/
+theorem integral_cpvIntegrandOn_singleton_eq_contour_left
+    (γ : PiecewiseC1Path x x) {s : ℂ} {f : ℂ → ℂ} {ε α : ℝ}
+    (hα : 0 ≤ α)
+    (h_outside : ∀ t ∈ Ioo (0 : ℝ) α, ε < ‖γ.toPath.extend t - s‖) :
+    ∫ t in (0 : ℝ)..α, cpvIntegrandOn {s} f γ.toPath.extend ε t =
+      ∫ t in (0 : ℝ)..α, f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
+  rw [intervalIntegral.integral_of_le hα, intervalIntegral.integral_of_le hα,
+      MeasureTheory.integral_Ioc_eq_integral_Ioo,
+      MeasureTheory.integral_Ioc_eq_integral_Ioo]
+  apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioo
+  intro t ht
+  exact cpvIntegrandOn_singleton_eq_contour_of_far γ (h_outside t ht)
+
+/-- **CPV integrand integral on `[β, 1]` equals contour integrand integral**
+when `ε < ‖γ(t) - s‖` on `(β, 1)`. -/
+theorem integral_cpvIntegrandOn_singleton_eq_contour_right
+    (γ : PiecewiseC1Path x x) {s : ℂ} {f : ℂ → ℂ} {ε β : ℝ}
+    (hβ : β ≤ 1)
+    (h_outside : ∀ t ∈ Ioo β (1 : ℝ), ε < ‖γ.toPath.extend t - s‖) :
+    ∫ t in β..(1 : ℝ), cpvIntegrandOn {s} f γ.toPath.extend ε t =
+      ∫ t in β..(1 : ℝ), f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
+  rw [intervalIntegral.integral_of_le hβ, intervalIntegral.integral_of_le hβ,
+      MeasureTheory.integral_Ioc_eq_integral_Ioo,
+      MeasureTheory.integral_Ioc_eq_integral_Ioo]
+  apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioo
+  intro t ht
+  exact cpvIntegrandOn_singleton_eq_contour_of_far γ (h_outside t ht)
+
+/-- **CPV integrand integral on `[α, β]` is zero** when `‖γ(t) - s‖ ≤ ε` on
+`(α, β)`. -/
+theorem integral_cpvIntegrandOn_singleton_eq_zero_middle
+    (γ : PiecewiseC1Path x x) {s : ℂ} {f : ℂ → ℂ} {ε α β : ℝ}
+    (h_le : α ≤ β)
+    (h_inside : ∀ t ∈ Ioo α β, ‖γ.toPath.extend t - s‖ ≤ ε) :
+    ∫ t in α..β, cpvIntegrandOn {s} f γ.toPath.extend ε t = 0 := by
+  rw [intervalIntegral.integral_of_le h_le,
+      MeasureTheory.integral_Ioc_eq_integral_Ioo]
+  rw [show (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) =
+    fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t from rfl]
+  rw [show (∫ t in Ioo α β, cpvIntegrandOn {s} f γ.toPath.extend ε t ∂volume) =
+    ∫ t in Ioo α β, (0 : ℂ) ∂volume from ?_]
+  · simp
+  · apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioo
+    intro t ht
+    exact cpvIntegrandOn_singleton_eq_zero_of_close γ (h_inside t ht)
+
+/-- **Full integral splitting (excision form).** Under the shape hypothesis on
+`(0, α) ∪ (α, β) ∪ (β, 1)`, the cpvIntegrandOn integral on `[0, 1]` equals the
+symmetric-excision integral. -/
+theorem cpvIntegrandOn_singleton_integral_eq_excision
+    (γ : PiecewiseC1Path x x) {s : ℂ} {f : ℂ → ℂ} {ε : ℝ}
+    {α β : ℝ} (hα : 0 ≤ α) (hβ : β ≤ 1) (h_le : α ≤ β)
+    (h_outside_left : ∀ t ∈ Ioo (0 : ℝ) α, ε < ‖γ.toPath.extend t - s‖)
+    (h_outside_right : ∀ t ∈ Ioo β (1 : ℝ), ε < ‖γ.toPath.extend t - s‖)
+    (h_inside : ∀ t ∈ Ioo α β, ‖γ.toPath.extend t - s‖ ≤ ε)
+    (h_int_full : IntervalIntegrable
+      (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1) :
+    ∫ t in (0 : ℝ)..1, cpvIntegrandOn {s} f γ.toPath.extend ε t =
+      (∫ t in (0 : ℝ)..α, f (γ.toPath.extend t) * deriv γ.toPath.extend t) +
+      ∫ t in β..(1 : ℝ), f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
+  have h_split :
+      ∫ t in (0 : ℝ)..1, cpvIntegrandOn {s} f γ.toPath.extend ε t =
+      (∫ t in (0 : ℝ)..α, cpvIntegrandOn {s} f γ.toPath.extend ε t) +
+      (∫ t in α..β, cpvIntegrandOn {s} f γ.toPath.extend ε t) +
+      ∫ t in β..(1 : ℝ), cpvIntegrandOn {s} f γ.toPath.extend ε t := by
+    have hα1 : α ≤ 1 := h_le.trans hβ
+    have h0β : (0 : ℝ) ≤ β := hα.trans h_le
+    have h_int_α : IntervalIntegrable
+        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 α := by
+      apply h_int_full.mono_set
+      rw [Set.uIcc_of_le hα, Set.uIcc_of_le (zero_le_one' ℝ)]
+      exact Set.Icc_subset_Icc le_rfl hα1
+    have h_int_β : IntervalIntegrable
+        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume α β := by
+      apply h_int_full.mono_set
+      rw [Set.uIcc_of_le h_le, Set.uIcc_of_le (zero_le_one' ℝ)]
+      exact Set.Icc_subset_Icc hα hβ
+    have h_int_1 : IntervalIntegrable
+        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 := by
+      apply h_int_full.mono_set
+      rw [Set.uIcc_of_le hβ, Set.uIcc_of_le (zero_le_one' ℝ)]
+      exact Set.Icc_subset_Icc h0β le_rfl
+    have h_int_αβ : IntervalIntegrable
+        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 β :=
+      h_int_α.trans h_int_β
+    rw [← intervalIntegral.integral_add_adjacent_intervals h_int_αβ h_int_1,
+        ← intervalIntegral.integral_add_adjacent_intervals h_int_α h_int_β]
+  rw [h_split,
+      integral_cpvIntegrandOn_singleton_eq_contour_left γ hα h_outside_left,
+      integral_cpvIntegrandOn_singleton_eq_zero_middle γ h_le h_inside,
+      integral_cpvIntegrandOn_singleton_eq_contour_right γ hβ h_outside_right,
+      add_zero]
+
 end LeanModularForms
 
 end
