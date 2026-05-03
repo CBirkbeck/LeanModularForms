@@ -98,6 +98,19 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip
   exact intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
     hδ_bd_extend hLip
 
+/-- **C-3 single-power avoidance, δ-free + Lipschitz form.** Same as
+`hasCauchyPVOn_finset_pow_inv_of_avoids_lip` but with the positive margin
+auto-derived from pointwise avoidance via `avoids_finset_delta_bound`. -/
+theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip_avoids
+    (S : Finset ℂ) (k : ℕ) (hk : 2 ≤ k) (c : ℂ → ℂ)
+    (γ : PiecewiseC1Path x x)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S
+      (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
+  obtain ⟨δ, hδ_pos, hδ_bd⟩ := avoids_finset_delta_bound γ S hγ_avoids
+  exact hasCauchyPVOn_finset_pow_inv_of_avoids_lip S k hk c γ hδ_pos hδ_bd hLip
+
 end LeanModularForms
 
 end
