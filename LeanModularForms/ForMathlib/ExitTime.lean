@@ -526,4 +526,39 @@ theorem firstExitTimeLeft_ge_of_mem
   · exact ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε s⟩
   · exact ⟨ht₁, h_far⟩
 
+/-! ## Monotonicity in `ε` (under nonemptiness witness) -/
+
+/-- **First exit time (right) is monotone in `ε` when bounded by a witness.**
+For `ε₁ ≤ ε₂` with `ε₂` reachable (i.e., `∃ t ∈ [t₀, t₀+δ]` with
+`ε₂ ≤ ‖γ t - s‖`), `firstExitTimeRight ε₁ ≤ firstExitTimeRight ε₂`.
+
+Larger excision radius → later first exit. The condition `ε ≤ ‖γ t - s‖` is
+harder to satisfy for larger ε, so the defining set shrinks, and `sInf`
+increases. -/
+theorem firstExitTimeRight_mono_of_witness
+    (γ : ℝ → ℂ) (t₀ δ : ℝ) (s : ℂ) {ε₁ ε₂ : ℝ} (h_le : ε₁ ≤ ε₂)
+    (h_witness : ∃ t ∈ Set.Icc t₀ (t₀ + δ), ε₂ ≤ ‖γ t - s‖) :
+    firstExitTimeRight γ t₀ δ s ε₁ ≤ firstExitTimeRight γ t₀ δ s ε₂ := by
+  obtain ⟨t₂, ht₂_mem, ht₂_far⟩ := h_witness
+  unfold firstExitTimeRight
+  apply csInf_le_csInf
+  · exact ⟨t₀, fun t ⟨hmem, _⟩ => hmem.1⟩
+  · exact ⟨t₂, ht₂_mem, ht₂_far⟩
+  · intro t ⟨hmem, h_far⟩
+    exact ⟨hmem, le_trans h_le h_far⟩
+
+/-- **First exit time (left) is anti-monotone in `ε` under nonemptiness.**
+Symmetric to the right-side: larger ε shrinks the set, so `sSup` decreases. -/
+theorem firstExitTimeLeft_anti_of_witness
+    (γ : ℝ → ℂ) (t₀ δ : ℝ) (s : ℂ) {ε₁ ε₂ : ℝ} (h_le : ε₁ ≤ ε₂)
+    (h_witness : ∃ t ∈ Set.Icc (t₀ - δ) t₀, ε₂ ≤ ‖γ t - s‖) :
+    firstExitTimeLeft γ t₀ δ s ε₂ ≤ firstExitTimeLeft γ t₀ δ s ε₁ := by
+  obtain ⟨t₂, ht₂_mem, ht₂_far⟩ := h_witness
+  unfold firstExitTimeLeft
+  apply csSup_le_csSup
+  · exact ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε₁ s⟩
+  · exact ⟨t₂, ht₂_mem, ht₂_far⟩
+  · intro t ⟨hmem, h_far⟩
+    exact ⟨hmem, le_trans h_le h_far⟩
+
 end LeanModularForms
