@@ -170,6 +170,133 @@ theorem exists_strictMonoOn_norm_right_of_transverse
   nlinarith [ha_sq, h1, h2, sq_nonneg (‖γ a - s‖ - ‖γ b - s‖),
              sq_nonneg (‖γ a - s‖ + ‖γ b - s‖)]
 
+/-! ## Symmetric left-side versions -/
+
+/-- **Strict anti-monotonicity of `‖γ - s‖²` to the left of `t₀`** (symmetric of
+`exists_strictMonoOn_normSq_right_of_transverse`). -/
+theorem exists_strictAntiOn_normSq_left_of_transverse
+    {γ : ℝ → ℂ} {s : ℂ} {t₀ : ℝ} {L : ℂ} (hL : L ≠ 0)
+    (h_s : γ t₀ = s)
+    (h_deriv_left : HasDerivWithinAt γ L (Iic t₀) t₀)
+    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
+    (h_smooth : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
+    (hγ_cont : ContinuousAt γ t₀) :
+    ∃ δ > (0 : ℝ),
+      StrictAntiOn (fun t => ‖γ t - s‖ ^ 2) (Icc (t₀ - δ) t₀) := by
+  have hL_normSq_pos : (0 : ℝ) < ‖L‖ ^ 2 := pow_pos (norm_pos_iff.mpr hL) 2
+  -- slope γ t₀ → L on 𝓝[<] t₀
+  have h_slope :
+      Tendsto (slope γ t₀) (𝓝[<] t₀) (𝓝 L) := by
+    have h := (hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_left)
+    have h_diff : Iic t₀ \ {t₀} = Iio t₀ := by
+      ext t
+      simp only [mem_diff, mem_Iic, mem_singleton_iff, mem_Iio]
+      constructor
+      · rintro ⟨h1, h2⟩
+        exact lt_of_le_of_ne h1 h2
+      · intro h
+        exact ⟨le_of_lt h, ne_of_lt h⟩
+    rwa [h_diff] at h
+  have h_inner_tendsto :
+      Tendsto (fun t => @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t))
+        (𝓝[<] t₀) (𝓝 (‖L‖ ^ 2)) := by
+    have h_prod : Tendsto (fun t => (slope γ t₀ t, deriv γ t)) (𝓝[<] t₀)
+        (𝓝 (L, L)) := h_slope.prodMk_nhds hL_left
+    have h_inner : Tendsto (fun p : ℂ × ℂ => @inner ℝ ℂ _ p.1 p.2)
+        (𝓝 (L, L)) (𝓝 (@inner ℝ ℂ _ L L)) :=
+      continuous_inner.tendsto _
+    have := h_inner.comp h_prod
+    rwa [show @inner ℝ ℂ _ L L = ‖L‖ ^ 2 from real_inner_self_eq_norm_sq L] at this
+  have h_ev_pos :
+      ∀ᶠ t in 𝓝[<] t₀,
+        ‖L‖ ^ 2 / 2 < @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t) :=
+    h_inner_tendsto.eventually (eventually_gt_nhds (by linarith))
+  have h_combined :
+      ∀ᶠ t in 𝓝[<] t₀,
+        DifferentiableAt ℝ γ t ∧
+        ‖L‖ ^ 2 / 2 < @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t) :=
+    h_smooth.and h_ev_pos
+  rw [eventually_nhdsWithin_iff, Metric.eventually_nhds_iff] at h_combined
+  obtain ⟨δ, hδ_pos, h_uniform⟩ := h_combined
+  refine ⟨δ / 2, by linarith, ?_⟩
+  -- Apply strictAntiOn_of_hasDerivWithinAt_neg
+  apply strictAntiOn_of_hasDerivWithinAt_neg (convex_Icc _ _)
+    (f' := fun t => 2 * @inner ℝ ℂ _ (γ t - s) (deriv γ t))
+  · -- ContinuousOn (‖γ - s‖²) (Icc (t₀ - δ/2) t₀)
+    apply ContinuousOn.pow
+    apply ContinuousOn.norm
+    refine ContinuousOn.sub ?_ continuousOn_const
+    intro t ht
+    rcases eq_or_lt_of_le ht.2 with ht_eq | ht_lt
+    · rw [ht_eq]; exact hγ_cont.continuousWithinAt
+    · have ht_in_ball : dist t t₀ < δ := by
+        rw [Real.dist_eq, abs_of_neg (sub_neg.mpr ht_lt)]
+        linarith [ht.1]
+      exact (h_uniform ht_in_ball ht_lt).1.continuousAt.continuousWithinAt
+  · -- HasDerivWithinAt at each t in interior
+    intro t ht
+    rw [interior_Icc] at ht
+    have ht_in_ball : dist t t₀ < δ := by
+      rw [Real.dist_eq, abs_of_neg (sub_neg.mpr ht.2)]
+      linarith [ht.1]
+    have h_diff : DifferentiableAt ℝ γ t := (h_uniform ht_in_ball ht.2).1
+    have h_hd : HasDerivAt (fun t => γ t - s) (deriv γ t) t :=
+      h_diff.hasDerivAt.sub_const s
+    exact h_hd.norm_sq.hasDerivWithinAt
+  · -- Negativity of derivative on interior
+    intro t ht
+    rw [interior_Icc] at ht
+    have ht_in_ball : dist t t₀ < δ := by
+      rw [Real.dist_eq, abs_of_neg (sub_neg.mpr ht.2)]
+      linarith [ht.1]
+    have h_inner_gt := (h_uniform ht_in_ball ht.2).2
+    have ht_neg : t - t₀ < 0 := sub_neg.mpr ht.2
+    have h_slope_def : slope γ t₀ t = (t - t₀)⁻¹ • (γ t - s) := by
+      unfold slope
+      rw [h_s, vsub_eq_sub]
+      rfl
+    rw [h_slope_def] at h_inner_gt
+    have h_smul_inner :
+        @inner ℝ ℂ _ ((t - t₀)⁻¹ • (γ t - s)) (deriv γ t) =
+        (t - t₀)⁻¹ * @inner ℝ ℂ _ (γ t - s) (deriv γ t) :=
+      real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹
+    rw [h_smul_inner] at h_inner_gt
+    -- For (t - t₀) < 0: multiply by (t - t₀), flip inequality
+    -- (t - t₀) · ‖L‖²/2 > ⟪γ t - s, deriv γ t⟫
+    -- LHS < 0, so ⟪γ t - s, deriv γ t⟫ < 0
+    have h_neg_inner : @inner ℝ ℂ _ (γ t - s) (deriv γ t) < 0 := by
+      have h := mul_lt_mul_of_neg_left h_inner_gt ht_neg
+      have h_simp : (t - t₀) * ((t - t₀)⁻¹ * @inner ℝ ℂ _ (γ t - s) (deriv γ t)) =
+          @inner ℝ ℂ _ (γ t - s) (deriv γ t) := by
+        rw [← mul_assoc, mul_inv_cancel₀ ht_neg.ne, one_mul]
+      rw [h_simp] at h
+      have h_lhs_neg : (t - t₀) * (‖L‖ ^ 2 / 2) < 0 := by
+        have : ‖L‖ ^ 2 / 2 > 0 := by linarith
+        nlinarith
+      linarith
+    linarith
+
+/-- **Strict anti-monotonicity of `‖γ - s‖` to the left of `t₀`** (from
+`‖γ - s‖²`). -/
+theorem exists_strictAntiOn_norm_left_of_transverse
+    {γ : ℝ → ℂ} {s : ℂ} {t₀ : ℝ} {L : ℂ} (hL : L ≠ 0)
+    (h_s : γ t₀ = s)
+    (h_deriv_left : HasDerivWithinAt γ L (Iic t₀) t₀)
+    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
+    (h_smooth : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
+    (hγ_cont : ContinuousAt γ t₀) :
+    ∃ δ > (0 : ℝ),
+      StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - δ) t₀) := by
+  obtain ⟨δ, hδ_pos, h_anti_sq⟩ := exists_strictAntiOn_normSq_left_of_transverse
+    hL h_s h_deriv_left hL_left h_smooth hγ_cont
+  refine ⟨δ, hδ_pos, ?_⟩
+  intro a ha b hb hab
+  have ha_sq : ‖γ b - s‖ ^ 2 < ‖γ a - s‖ ^ 2 := h_anti_sq ha hb hab
+  have h1 : 0 ≤ ‖γ a - s‖ := norm_nonneg _
+  have h2 : 0 ≤ ‖γ b - s‖ := norm_nonneg _
+  nlinarith [ha_sq, h1, h2, sq_nonneg (‖γ a - s‖ - ‖γ b - s‖),
+             sq_nonneg (‖γ a - s‖ + ‖γ b - s‖)]
+
 end LeanModularForms
 
 end
