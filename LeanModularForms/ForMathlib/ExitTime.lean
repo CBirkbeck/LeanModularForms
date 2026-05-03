@@ -171,4 +171,80 @@ theorem ε_le_norm_at_firstExitTimeRight
   have h_S_bdd : BddBelow S := ⟨t₀, firstExitTimeRight_set_lb γ t₀ δ ε s⟩
   exact (h_S_closed.csInf_mem h_S_nonempty h_S_bdd).2
 
+/-! ## First exit-time function (left side) via sSup -/
+
+/-- **Last exit time at radius ε (left side).** Defined via `sSup` of the set
+of times `t ∈ [t₀-δ, t₀]` with `‖γ(t) - s‖ ≥ ε`. Returns `t₀-δ` (or junk) when
+the set is empty.
+
+The left-side analog of `firstExitTimeRight`: as `t` increases toward `t₀`,
+the curve approaches `s`, so the LATEST time in `[t₀-δ, t₀]` where `γ` is at
+distance `≥ ε` is the supremum. This equals the "first" exit time when
+approaching `t₀` from the left. -/
+noncomputable def firstExitTimeLeft (γ : ℝ → ℂ) (t₀ δ : ℝ) (s : ℂ) (ε : ℝ) : ℝ :=
+  sSup {t ∈ Set.Icc (t₀ - δ) t₀ | ε ≤ ‖γ t - s‖}
+
+/-- The set defining `firstExitTimeLeft` is nonempty when `γ(t₀-δ)` is far enough. -/
+theorem firstExitTimeLeft_set_nonempty
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
+    (hδ : 0 ≤ δ) (h_far : ε ≤ ‖γ (t₀ - δ) - s‖) :
+    (t₀ - δ) ∈ {t ∈ Set.Icc (t₀ - δ) t₀ | ε ≤ ‖γ t - s‖} := by
+  refine ⟨⟨le_refl _, by linarith⟩, h_far⟩
+
+/-- The set defining `firstExitTimeLeft` is bounded above by `t₀`. -/
+theorem firstExitTimeLeft_set_ub
+    (γ : ℝ → ℂ) (t₀ δ ε : ℝ) (s : ℂ) :
+    ∀ t ∈ {t ∈ Set.Icc (t₀ - δ) t₀ | ε ≤ ‖γ t - s‖}, t ≤ t₀ :=
+  fun _ ⟨hmem, _⟩ => hmem.2
+
+/-- **First exit time (left) lies in `[t₀-δ, t₀]`.** -/
+theorem firstExitTimeLeft_mem_Icc
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ} (hδ : 0 ≤ δ)
+    (hε_le : ε ≤ ‖γ (t₀ - δ) - s‖) :
+    t₀ - δ ≤ firstExitTimeLeft γ t₀ δ s ε ∧
+    firstExitTimeLeft γ t₀ δ s ε ≤ t₀ := by
+  unfold firstExitTimeLeft
+  refine ⟨?_, ?_⟩
+  · apply le_csSup
+    · exact ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε s⟩
+    · exact firstExitTimeLeft_set_nonempty hδ hε_le
+  · apply csSup_le
+    · exact ⟨t₀ - δ, firstExitTimeLeft_set_nonempty hδ hε_le⟩
+    · exact firstExitTimeLeft_set_ub γ t₀ δ ε s
+
+/-- **Radius lower bound at first exit time (left).** For `γ` continuous on
+`[t₀-δ, t₀]` with `γ(t₀-δ)` at distance ≥ ε from `s`, the radius at the (left)
+first exit time satisfies `ε ≤ ‖γ (firstExitTimeLeft ...) - s‖`.
+
+The closed-and-bounded set of "outside-the-ball" times has a supremum that
+itself is "outside the ball" (closed under sequential limits). -/
+theorem ε_le_norm_at_firstExitTimeLeft
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
+    (hδ : 0 < δ) (hγ_cont : ContinuousOn γ (Set.Icc (t₀ - δ) t₀))
+    (hε_le : ε ≤ ‖γ (t₀ - δ) - s‖) :
+    ε ≤ ‖γ (firstExitTimeLeft γ t₀ δ s ε) - s‖ := by
+  set S := {t ∈ Set.Icc (t₀ - δ) t₀ | ε ≤ ‖γ t - s‖}
+  have h_S_closed : IsClosed S := by
+    apply IsSeqClosed.isClosed
+    intro t_seq x ht_seq_mem ht_seq_to_x
+    have hx_in_Icc : x ∈ Set.Icc (t₀ - δ) t₀ :=
+      isClosed_Icc.mem_of_tendsto ht_seq_to_x
+        (Filter.Eventually.of_forall (fun n => (ht_seq_mem n).1))
+    refine ⟨hx_in_Icc, ?_⟩
+    have h_tendsto_within :
+        Tendsto t_seq Filter.atTop (𝓝[Set.Icc (t₀ - δ) t₀] x) :=
+      tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ht_seq_to_x
+        (Filter.Eventually.of_forall (fun n => (ht_seq_mem n).1))
+    have h_γ_tendsto : Tendsto (fun n => γ (t_seq n)) Filter.atTop (𝓝 (γ x)) :=
+      (hγ_cont x hx_in_Icc).tendsto.comp h_tendsto_within
+    have h_norm_tendsto :
+        Tendsto (fun n => ‖γ (t_seq n) - s‖) Filter.atTop (𝓝 ‖γ x - s‖) :=
+      (continuous_norm.tendsto _).comp (h_γ_tendsto.sub_const s)
+    exact ge_of_tendsto h_norm_tendsto
+      (Filter.Eventually.of_forall (fun n => (ht_seq_mem n).2))
+  have h_S_nonempty : S.Nonempty :=
+    ⟨t₀ - δ, firstExitTimeLeft_set_nonempty hδ.le hε_le⟩
+  have h_S_bdd : BddAbove S := ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε s⟩
+  exact (h_S_closed.csSup_mem h_S_nonempty h_S_bdd).2
+
 end LeanModularForms
