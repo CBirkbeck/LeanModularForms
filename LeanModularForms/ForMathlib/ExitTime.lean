@@ -561,4 +561,130 @@ theorem firstExitTimeLeft_anti_of_witness
   · intro t ⟨hmem, h_far⟩
     exact ⟨hmem, le_trans h_le h_far⟩
 
+/-! ## Asymptotic: first exit time tends to `t₀` as `ε → 0⁺` -/
+
+/-- **Right-side asymptotic.** For `γ` continuous on `[t₀, t₀+δ]` with `γ(t₀) = s`
+and `γ(t) ≠ s` for `t ∈ (t₀, t₀+δ]`, the first exit time tends to `t₀` (from above)
+as `ε → 0⁺`.
+
+The "γ leaves the pole" hypothesis ensures the defining set is nonempty for
+arbitrarily small ε, and convergence to `t₀` follows from continuity. -/
+theorem firstExitTimeRight_tendsto_t₀
+    {γ : ℝ → ℂ} {t₀ δ : ℝ} {s : ℂ} (hδ : 0 < δ)
+    (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
+    (h_s : γ t₀ = s)
+    (h_leave : ∀ t ∈ Set.Ioc t₀ (t₀ + δ), γ t ≠ s) :
+    Tendsto (fun ε => firstExitTimeRight γ t₀ δ s ε) (𝓝[>] 0) (𝓝[>] t₀) := by
+  rw [tendsto_nhdsWithin_iff]
+  refine ⟨?_, ?_⟩
+  · -- firstExitTimeRight ε → t₀ as ε → 0⁺
+    rw [Metric.tendsto_nhdsWithin_nhds]
+    intro η hη_pos
+    -- Pick t₁ ∈ (t₀, t₀+min(η,δ)] with γ t₁ ≠ s
+    have hη_min : 0 < min η δ := lt_min hη_pos hδ
+    set t₁ := t₀ + min η δ / 2 with ht₁_def
+    have ht₁_mem : t₁ ∈ Set.Ioc t₀ (t₀ + δ) := by
+      refine ⟨by linarith [hη_min], ?_⟩
+      have : min η δ / 2 ≤ δ / 2 := by
+        have : min η δ ≤ δ := min_le_right _ _
+        linarith
+      linarith
+    have ht₁_ne : γ t₁ ≠ s := h_leave t₁ ht₁_mem
+    -- Bound: |firstExitTime - t₀| < ‖γ t₁ - s‖ → 0 wait we need other direction
+    refine ⟨‖γ t₁ - s‖, by simpa [norm_pos_iff, sub_ne_zero] using ht₁_ne, ?_⟩
+    intro ε hε_pos hε_lt
+    rw [Real.dist_eq, sub_zero, abs_of_pos hε_pos] at hε_lt
+    -- We have ε > 0 and ε < ‖γ t₁ - s‖
+    -- Need: |firstExitTimeRight - t₀| < η
+    have h_t₁_le : t₁ ≤ t₀ + δ := ht₁_mem.2
+    have h_t₀_le_t₁ : t₀ ≤ t₁ := le_of_lt ht₁_mem.1
+    -- Use witness bound
+    have h_inf_le : firstExitTimeRight γ t₀ δ s ε ≤ t₁ :=
+      firstExitTimeRight_le_of_mem ⟨h_t₀_le_t₁, h_t₁_le⟩ (le_of_lt hε_lt)
+    -- And t₀ < firstExitTime via continuity
+    have hε_le_t₁ : ε ≤ ‖γ t₁ - s‖ := le_of_lt hε_lt
+    -- For t₀_lt_firstExitTimeRight, need ε ≤ ‖γ(t₀+δ) - s‖
+    -- Get this from t₁'s witness via firstExitTimeRight_le_of_mem
+    -- Actually we don't strictly need it here. Reformulate.
+    -- We need 0 < firstExitTime - t₀ for the abs_of_pos rewrite.
+    -- Use: firstExitTime ≥ t₀ from firstExitTimeRight_set_lb (always true)
+    have h_t₀_le : t₀ ≤ firstExitTimeRight γ t₀ δ s ε := by
+      unfold firstExitTimeRight
+      apply le_csInf
+      · exact ⟨t₁, ⟨h_t₀_le_t₁, h_t₁_le⟩, hε_le_t₁⟩
+      · exact firstExitTimeRight_set_lb γ t₀ δ ε s
+    -- firstExitTime - t₀ ≥ 0
+    rw [Real.dist_eq, abs_of_nonneg (by linarith : 0 ≤ firstExitTimeRight γ t₀ δ s ε - t₀)]
+    -- t₁ - t₀ < η, so firstExitTime - t₀ ≤ t₁ - t₀ < η
+    have h_t₁_diff : t₁ - t₀ < η := by
+      simp only [ht₁_def]
+      have : min η δ ≤ η := min_le_left _ _
+      linarith
+    linarith
+  · -- firstExitTimeRight ε > t₀ in a neighborhood (eventually)
+    -- Use: for ε ∈ (0, ‖γ(t₀+δ) - s‖], t₀ < firstExitTimeRight ε
+    have h_far_pos : (0 : ℝ) < ‖γ (t₀ + δ) - s‖ := by
+      have h_ne : γ (t₀ + δ) - s ≠ 0 :=
+        sub_ne_zero.mpr (h_leave _ ⟨by linarith, le_refl _⟩)
+      exact norm_pos_iff.mpr h_ne
+    rw [eventually_iff_exists_mem]
+    refine ⟨Set.Ioo 0 ‖γ (t₀ + δ) - s‖, Ioo_mem_nhdsGT h_far_pos, ?_⟩
+    intro ε hε
+    have hε_pos : 0 < ε := hε.1
+    have hε_le : ε ≤ ‖γ (t₀ + δ) - s‖ := le_of_lt hε.2
+    exact t₀_lt_firstExitTimeRight hδ hγ_cont h_s hε_pos hε_le
+
+/-- **Left-side asymptotic.** Symmetric to `firstExitTimeRight_tendsto_t₀`:
+the left first exit time tends to `t₀` (from below) as `ε → 0⁺`, given
+`γ(t) ≠ s` for `t ∈ [t₀-δ, t₀)`. -/
+theorem firstExitTimeLeft_tendsto_t₀
+    {γ : ℝ → ℂ} {t₀ δ : ℝ} {s : ℂ} (hδ : 0 < δ)
+    (hγ_cont : ContinuousOn γ (Set.Icc (t₀ - δ) t₀))
+    (h_s : γ t₀ = s)
+    (h_leave : ∀ t ∈ Set.Ico (t₀ - δ) t₀, γ t ≠ s) :
+    Tendsto (fun ε => firstExitTimeLeft γ t₀ δ s ε) (𝓝[>] 0) (𝓝[<] t₀) := by
+  rw [tendsto_nhdsWithin_iff]
+  refine ⟨?_, ?_⟩
+  · rw [Metric.tendsto_nhdsWithin_nhds]
+    intro η hη_pos
+    have hη_min : 0 < min η δ := lt_min hη_pos hδ
+    set t₁ := t₀ - min η δ / 2 with ht₁_def
+    have ht₁_mem : t₁ ∈ Set.Ico (t₀ - δ) t₀ := by
+      refine ⟨?_, by linarith [hη_min]⟩
+      have : min η δ / 2 ≤ δ / 2 := by
+        have : min η δ ≤ δ := min_le_right _ _
+        linarith
+      linarith
+    have ht₁_ne : γ t₁ ≠ s := h_leave t₁ ht₁_mem
+    refine ⟨‖γ t₁ - s‖, by simpa [norm_pos_iff, sub_ne_zero] using ht₁_ne, ?_⟩
+    intro ε hε_pos hε_lt
+    rw [Real.dist_eq, sub_zero, abs_of_pos hε_pos] at hε_lt
+    have h_t₀_le_t₁ : t₀ - δ ≤ t₁ := ht₁_mem.1
+    have h_t₁_le_t₀ : t₁ ≤ t₀ := le_of_lt ht₁_mem.2
+    have h_inf_le : t₁ ≤ firstExitTimeLeft γ t₀ δ s ε :=
+      firstExitTimeLeft_ge_of_mem ⟨h_t₀_le_t₁, h_t₁_le_t₀⟩ (le_of_lt hε_lt)
+    have hε_le_t₁ : ε ≤ ‖γ t₁ - s‖ := le_of_lt hε_lt
+    have h_t_le : firstExitTimeLeft γ t₀ δ s ε ≤ t₀ := by
+      unfold firstExitTimeLeft
+      apply csSup_le
+      · exact ⟨t₁, ⟨h_t₀_le_t₁, h_t₁_le_t₀⟩, hε_le_t₁⟩
+      · exact firstExitTimeLeft_set_ub γ t₀ δ ε s
+    rw [Real.dist_eq, abs_of_nonpos
+      (by linarith : firstExitTimeLeft γ t₀ δ s ε - t₀ ≤ 0)]
+    have h_t₁_diff : t₀ - t₁ < η := by
+      simp only [ht₁_def]
+      have : min η δ ≤ η := min_le_left _ _
+      linarith
+    linarith
+  · have h_far_pos : (0 : ℝ) < ‖γ (t₀ - δ) - s‖ := by
+      have h_ne : γ (t₀ - δ) - s ≠ 0 :=
+        sub_ne_zero.mpr (h_leave _ ⟨le_refl _, by linarith⟩)
+      exact norm_pos_iff.mpr h_ne
+    rw [eventually_iff_exists_mem]
+    refine ⟨Set.Ioo 0 ‖γ (t₀ - δ) - s‖, Ioo_mem_nhdsGT h_far_pos, ?_⟩
+    intro ε hε
+    have hε_pos : 0 < ε := hε.1
+    have hε_le : ε ≤ ‖γ (t₀ - δ) - s‖ := le_of_lt hε.2
+    exact firstExitTimeLeft_lt_t₀ hδ hγ_cont h_s hε_pos hε_le
+
 end LeanModularForms
