@@ -500,4 +500,30 @@ theorem exists_left_modulus
     · have h_min : min (η₀ / 2) (δ / 2) ≤ δ / 2 := min_le_right _ _
       linarith [ht.1]
 
+/-! ## Upper bounds: first exit time ≤ any witness in the defining set -/
+
+/-- **Right-side upper bound.** For any `t₁ ∈ [t₀, t₀+δ]` with `ε ≤ ‖γ t₁ - s‖`,
+the first exit time is at most `t₁`. -/
+theorem firstExitTimeRight_le_of_mem
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
+    {t₁ : ℝ} (ht₁ : t₁ ∈ Set.Icc t₀ (t₀ + δ))
+    (h_far : ε ≤ ‖γ t₁ - s‖) :
+    firstExitTimeRight γ t₀ δ s ε ≤ t₁ := by
+  unfold firstExitTimeRight
+  apply csInf_le
+  · exact ⟨t₀, fun t ⟨hmem, _⟩ => hmem.1⟩
+  · exact ⟨ht₁, h_far⟩
+
+/-- **Left-side lower bound.** For any `t₁ ∈ [t₀-δ, t₀]` with `ε ≤ ‖γ t₁ - s‖`,
+the first exit time (sup) is at least `t₁`. -/
+theorem firstExitTimeLeft_ge_of_mem
+    {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
+    {t₁ : ℝ} (ht₁ : t₁ ∈ Set.Icc (t₀ - δ) t₀)
+    (h_far : ε ≤ ‖γ t₁ - s‖) :
+    t₁ ≤ firstExitTimeLeft γ t₀ δ s ε := by
+  unfold firstExitTimeLeft
+  apply le_csSup
+  · exact ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε s⟩
+  · exact ⟨ht₁, h_far⟩
+
 end LeanModularForms
