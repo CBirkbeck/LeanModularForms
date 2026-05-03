@@ -446,4 +446,58 @@ theorem norm_at_firstExitTimeLeft_eq
     · exact h_in_set
   linarith
 
+/-! ## Continuity-derived modulus and basic asymptotic ingredients -/
+
+/-- **Right-side continuity modulus.** For `γ : ℝ → ℂ` continuous on
+`[t₀, t₀+δ]` with `γ(t₀) = s` and any `ε > 0`, there exists `η ∈ (0, δ)` such
+that `‖γ t - s‖ < ε` for all `t ∈ [t₀, t₀+η]`. This is the `(ε, δ)` form of
+continuity of `t ↦ ‖γ t - s‖` at `t₀`. -/
+theorem exists_right_modulus
+    {γ : ℝ → ℂ} {t₀ δ : ℝ} {s : ℂ} (hδ : 0 < δ)
+    (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
+    (h_s : γ t₀ = s) {ε : ℝ} (hε_pos : 0 < ε) :
+    ∃ η ∈ Set.Ioc (0 : ℝ) δ, ∀ t ∈ Set.Icc t₀ (t₀ + η), ‖γ t - s‖ < ε := by
+  have h_norm_t₀ : ‖γ t₀ - s‖ = 0 := by simp [h_s]
+  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖) (Set.Icc t₀ (t₀ + δ)) t₀ :=
+    ((hγ_cont t₀ ⟨le_refl _, by linarith⟩).sub continuousWithinAt_const).norm
+  have h_eventually : ∀ᶠ t in 𝓝[Set.Icc t₀ (t₀ + δ)] t₀, ‖γ t - s‖ < ε := by
+    have := h_cont_at_t₀.tendsto.eventually_lt_const (by rw [h_norm_t₀]; exact hε_pos)
+    exact this
+  obtain ⟨η₀, hη₀_pos, hη₀⟩ := Metric.nhdsWithin_basis_ball.eventually_iff.mp h_eventually
+  refine ⟨min (η₀ / 2) (δ / 2), ⟨by positivity, ?_⟩, ?_⟩
+  · exact min_le_of_right_le (by linarith)
+  · intro t ht
+    apply hη₀
+    refine ⟨Metric.mem_ball.mpr ?_, ⟨ht.1, ?_⟩⟩
+    · rw [Real.dist_eq, abs_of_nonneg (by linarith [ht.1] : 0 ≤ t - t₀)]
+      have h_min : min (η₀ / 2) (δ / 2) ≤ η₀ / 2 := min_le_left _ _
+      linarith [ht.2]
+    · have h_min : min (η₀ / 2) (δ / 2) ≤ δ / 2 := min_le_right _ _
+      linarith [ht.2]
+
+/-- **Left-side continuity modulus.** Symmetric to `exists_right_modulus`. -/
+theorem exists_left_modulus
+    {γ : ℝ → ℂ} {t₀ δ : ℝ} {s : ℂ} (hδ : 0 < δ)
+    (hγ_cont : ContinuousOn γ (Set.Icc (t₀ - δ) t₀))
+    (h_s : γ t₀ = s) {ε : ℝ} (hε_pos : 0 < ε) :
+    ∃ η ∈ Set.Ioc (0 : ℝ) δ, ∀ t ∈ Set.Icc (t₀ - η) t₀, ‖γ t - s‖ < ε := by
+  have h_norm_t₀ : ‖γ t₀ - s‖ = 0 := by simp [h_s]
+  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖) (Set.Icc (t₀ - δ) t₀) t₀ :=
+    ((hγ_cont t₀ ⟨by linarith, le_refl _⟩).sub continuousWithinAt_const).norm
+  have h_eventually : ∀ᶠ t in 𝓝[Set.Icc (t₀ - δ) t₀] t₀, ‖γ t - s‖ < ε := by
+    have := h_cont_at_t₀.tendsto.eventually_lt_const (by rw [h_norm_t₀]; exact hε_pos)
+    exact this
+  obtain ⟨η₀, hη₀_pos, hη₀⟩ := Metric.nhdsWithin_basis_ball.eventually_iff.mp h_eventually
+  refine ⟨min (η₀ / 2) (δ / 2), ⟨by positivity, ?_⟩, ?_⟩
+  · exact min_le_of_right_le (by linarith)
+  · intro t ht
+    apply hη₀
+    refine ⟨Metric.mem_ball.mpr ?_, ⟨?_, ht.2⟩⟩
+    · rw [Real.dist_eq]
+      rw [abs_of_nonpos (by linarith [ht.2] : t - t₀ ≤ 0)]
+      have h_min : min (η₀ / 2) (δ / 2) ≤ η₀ / 2 := min_le_left _ _
+      linarith [ht.1]
+    · have h_min : min (η₀ / 2) (δ / 2) ≤ δ / 2 := min_le_right _ _
+      linarith [ht.1]
+
 end LeanModularForms
