@@ -178,9 +178,8 @@ theorem norm_at_firstExitTimeRight_eq
   set t_ε := firstExitTimeRight γ t₀ δ s ε
   have h_t₀_lt : t₀ < t_ε :=
     t₀_lt_firstExitTimeRight hδ hγ_cont h_s hε_pos hε_le
-  have h_t_ε_mem : t_ε ∈ Set.Icc t₀ (t₀ + δ) := by
-    have := firstExitTimeRight_mem_Icc hδ.le hε_le
-    exact ⟨this.1, this.2⟩
+  have h_t_ε_mem : t_ε ∈ Set.Icc t₀ (t₀ + δ) :=
+    (firstExitTimeRight_mem_Icc hδ.le hε_le)
   by_contra! h
   have h_cont_at_t_ε : ContinuousWithinAt (fun t => ‖γ t - s‖)
       (Set.Icc t₀ (t₀ + δ)) t_ε :=
@@ -192,12 +191,10 @@ theorem norm_at_firstExitTimeRight_eq
   have hr_pos : 0 < r := lt_min (by linarith) (by linarith)
   have h_t_in_Icc : t_ε - r ∈ Set.Icc t₀ (t₀ + δ) := by
     refine ⟨?_, by linarith [h_t_ε_mem.2]⟩
-    have : r ≤ (t_ε - t₀) / 2 := min_le_right _ _
-    linarith
+    linarith [min_le_right (η / 2) ((t_ε - t₀) / 2)]
   have h_dist : dist (t_ε - r) t_ε < η := by
     rw [Real.dist_eq, abs_of_neg (by linarith : t_ε - r - t_ε < 0)]
-    have : r ≤ η / 2 := min_le_left _ _
-    linarith
+    linarith [min_le_left (η / 2) ((t_ε - t₀) / 2)]
   have h_norm_gt := hη ⟨Metric.mem_ball.mpr h_dist, h_t_in_Icc⟩
   have h_inf_le : t_ε ≤ t_ε - r :=
     csInf_le ⟨t₀, firstExitTimeRight_set_lb γ t₀ δ ε s⟩
@@ -304,9 +301,8 @@ theorem norm_at_firstExitTimeLeft_eq
   set t_ε := firstExitTimeLeft γ t₀ δ s ε
   have h_t_ε_lt : t_ε < t₀ :=
     firstExitTimeLeft_lt_t₀ hδ hγ_cont h_s hε_pos hε_le
-  have h_t_ε_mem : t_ε ∈ Set.Icc (t₀ - δ) t₀ := by
-    have := firstExitTimeLeft_mem_Icc hδ.le hε_le
-    exact ⟨this.1, this.2⟩
+  have h_t_ε_mem : t_ε ∈ Set.Icc (t₀ - δ) t₀ :=
+    (firstExitTimeLeft_mem_Icc hδ.le hε_le)
   by_contra! h
   have h_cont_at_t_ε : ContinuousWithinAt (fun t => ‖γ t - s‖)
       (Set.Icc (t₀ - δ) t₀) t_ε :=
@@ -318,12 +314,10 @@ theorem norm_at_firstExitTimeLeft_eq
   have hr_pos : 0 < r := lt_min (by linarith) (by linarith)
   have h_t_in_Icc : t_ε + r ∈ Set.Icc (t₀ - δ) t₀ := by
     refine ⟨by linarith [h_t_ε_mem.1], ?_⟩
-    have : r ≤ (t₀ - t_ε) / 2 := min_le_right _ _
-    linarith
+    linarith [min_le_right (η / 2) ((t₀ - t_ε) / 2)]
   have h_dist : dist (t_ε + r) t_ε < η := by
     rw [Real.dist_eq, abs_of_pos (by linarith : 0 < t_ε + r - t_ε)]
-    have : r ≤ η / 2 := min_le_left _ _
-    linarith
+    linarith [min_le_left (η / 2) ((t₀ - t_ε) / 2)]
   have h_norm_gt := hη ⟨Metric.mem_ball.mpr h_dist, h_t_in_Icc⟩
   have h_sup_ge : t_ε + r ≤ t_ε :=
     le_csSup ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε s⟩
