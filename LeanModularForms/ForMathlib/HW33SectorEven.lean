@@ -3,6 +3,7 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.SectorCurve
+import LeanModularForms.ForMathlib.HigherOrderCancel
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 
@@ -388,6 +389,93 @@ theorem F_line_diff_eq_zero_under_conditionB
       field_simp
     rw [h_smul_eq, mul_pow]
   rw [h_lhs, h_rhs, h_B]
+
+/-! ## Curve F-difference under condition (B), general angle -/
+
+/-- **Combined curve F-difference → 0 under condition (B), general angle.**
+The general-angle analog of `F_curve_diff_tendsto_zero_odd` from
+`HigherOrderCancel.lean`, replacing the odd-power-symmetry with condition (B).
+
+For curve γ flat of order n at t₀ with tangents `L_minus` (left) and `L_plus`
+(right), under condition (B) `(L_plus/‖L_plus‖)^(k-1) = ((-L_minus)/‖L_minus‖)^(k-1)`:
+
+  `‖F(γ(t_eps_minus(ε))) - F(γ(t_eps_plus(ε)))‖ → 0` as ε → 0⁺
+
+where `F(z) = -1/((k-1)(z-s)^(k-1))` and `t_eps_plus`, `t_eps_minus` are the
+exit-time functions on each side.
+
+Proof: triangle inequality `‖A - B‖ ≤ ‖A - TR‖ + ‖B - TR‖` where `TR` is
+the common tangent target. Both `‖A - TR‖` (left F-diff) and `‖B - TR‖`
+(right F-diff) tend to 0 by `F_diff_at_tangent_target_tendsto_zero_right/_left`.
+Under condition (B), the two side targets are EQUAL (by
+`F_line_diff_eq_zero_under_conditionB`), so we can use a common `TR`. -/
+theorem F_curve_diff_tendsto_zero_under_conditionB
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L_minus L_plus : ℂ} {n k : ℕ}
+    (h_flat : IsFlatOfOrder γ t₀ n)
+    (hL_minus : L_minus ≠ 0) (hL_plus : L_plus ≠ 0)
+    (h_deriv_right : HasDerivWithinAt γ L_plus (Set.Ioi t₀) t₀)
+    (h_deriv_left : HasDerivWithinAt γ L_minus (Set.Iio t₀) t₀)
+    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_plus))
+    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_minus))
+    (h_s : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
+    (h_B :
+      (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1) =
+      ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1))
+    (t_eps_plus t_eps_minus : ℝ → ℝ)
+    (h_plus_to : Tendsto t_eps_plus (𝓝[>] (0 : ℝ)) (𝓝[>] t₀))
+    (h_plus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (t_eps_plus ε) - s‖ = ε)
+    (h_minus_to : Tendsto t_eps_minus (𝓝[>] (0 : ℝ)) (𝓝[<] t₀))
+    (h_minus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (t_eps_minus ε) - s‖ = ε) :
+    Tendsto (fun ε =>
+      ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹) -
+        (-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹)‖)
+      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
+  -- Right-side F-diff at chord target (with L_plus) → 0
+  have h_right := F_diff_at_tangent_target_tendsto_zero_right
+    h_flat hL_plus h_deriv_right hL_right h_s hk hkn hn1
+  have h_right_comp := h_right.comp h_plus_to
+  -- Left-side F-diff at chord target (with L_minus) → 0
+  have h_left := F_diff_at_tangent_target_tendsto_zero_left
+    h_flat hL_minus h_deriv_left hL_left h_s hk hkn hn1
+  have h_left_comp := h_left.comp h_minus_to
+  have h_sum_raw := h_right_comp.add h_left_comp
+  -- The summed F-diffs tend to 0
+  have h_sum : Tendsto (fun ε =>
+      ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹ -
+          -(↑(k - 1) : ℂ)⁻¹ *
+            (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹‖ +
+        ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹ -
+          -(↑(k - 1) : ℂ)⁻¹ *
+            (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L_minus)‖ : ℝ) • (-L_minus)) - s)
+              ^ (k - 1))⁻¹‖)
+      (𝓝[>] 0) (𝓝 0) := by
+    convert h_sum_raw using 2; simp
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_sum
+    (Eventually.of_forall fun _ => norm_nonneg _) ?_
+  filter_upwards [h_plus_radius, h_minus_radius] with ε hpr hmr
+  -- Use F_line_diff_eq_zero_under_conditionB to identify the two side targets
+  have h_neg_norm : ‖(-L_minus)‖ = ‖L_minus‖ := norm_neg L_minus
+  have h_targets_eq :
+      -(↑(k - 1) : ℂ)⁻¹ *
+        (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L_minus)‖ : ℝ) • (-L_minus)) - s)
+          ^ (k - 1))⁻¹ =
+      -(↑(k - 1) : ℂ)⁻¹ *
+        (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹ := by
+    rw [hmr, h_neg_norm, hpr]
+    -- Now show: F at (s + (ε / ‖L_minus‖) • (-L_minus)) = F at (s + (ε / ‖L_plus‖) • L_plus)
+    exact (F_line_diff_eq_zero_under_conditionB s L_minus L_plus k hk
+      hL_minus hL_plus h_B ε).symm
+  set TR := -(↑(k - 1) : ℂ)⁻¹ *
+    (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹
+  set A := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹
+  set B := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹
+  have h_triangle : ‖A - B‖ ≤ ‖B - TR‖ + ‖A - TR‖ := by
+    calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by ring_nf
+      _ ≤ ‖A - TR‖ + ‖B - TR‖ := norm_sub_le _ _
+      _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
+  show ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
+  rw [h_targets_eq]
+  exact h_triangle
 
 end LeanModularForms
 
