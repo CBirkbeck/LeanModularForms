@@ -97,18 +97,12 @@ theorem cpvIntegrandOn_finset_sum_intervalIntegrable
     IntervalIntegrable
       (fun t => cpvIntegrandOn S (fun z => ∑ i ∈ ι_set, f i z) γ.toPath.extend ε t)
       volume 0 1 := by
-  have heq : (fun t : ℝ =>
-      cpvIntegrandOn S (fun z => ∑ i ∈ ι_set, f i z) γ.toPath.extend ε t) =
-      fun t => ∑ i ∈ ι_set, cpvIntegrandOn S (f i) γ.toPath.extend ε t := by
-    funext t
-    simp only [cpvIntegrandOn]
-    split_ifs with h
-    · rw [Finset.sum_const_zero]
-    · rw [Finset.sum_mul]
-  rw [heq]
   convert IntervalIntegrable.sum ι_set hf using 1
   funext t
-  rw [Finset.sum_apply]
+  simp only [cpvIntegrandOn, Finset.sum_apply]
+  split_ifs with h
+  · rw [Finset.sum_const_zero]
+  · rw [Finset.sum_mul]
 
 /-- **Finset sum closure of `HasCauchyPVOn`.** If `HasCauchyPVOn S (f i) γ (L i)`
 holds for each `i ∈ ι`, with appropriate integrability of the CPV integrands
@@ -188,26 +182,18 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids
       (PiecewiseC1Path.contourIntegrand
         (fun z => c s / (z - s) ^ k) γ) volume 0 1 := by
     intro s hs
-    have h_eq : (fun t : ℝ =>
-        c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) =
-        fun t => c s *
-          (1 / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) := by
-      funext t; ring
     show IntervalIntegrable
       (fun t => c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
       volume 0 1
-    rw [h_eq]
-    exact (h_int s hs).const_mul (c s)
+    convert (h_int s hs).const_mul (c s) using 1
+    funext t; ring
   have h_zero_each : ∀ s ∈ S, γ.contourIntegral
       (fun z => c s / (z - s) ^ k) = 0 := by
     intro s hs
     have h_zero : γ.contourIntegral (fun z => 1 / (z - s) ^ k) = 0 :=
       γ.contourIntegral_pow_inv_eq_zero hk (h_avoids s hs) (h_int s hs)
-    have h_eq : γ.contourIntegral (fun z => c s / (z - s) ^ k) =
-        c s * γ.contourIntegral (fun z => 1 / (z - s) ^ k) := by
-      rw [show (fun z => c s / (z - s) ^ k) = (fun z => c s * (1 / (z - s) ^ k)) from
-        funext fun z => by ring, PiecewiseC1Path.contourIntegral_smul]
-    rw [h_eq, h_zero, mul_zero]
+    rw [show (fun z => c s / (z - s) ^ k) = (fun z => c s * (1 / (z - s) ^ k)) from
+      funext fun z => by ring, PiecewiseC1Path.contourIntegral_smul, h_zero, mul_zero]
   have h_sum_zero : γ.contourIntegral
       (fun z => ∑ s ∈ S, c s / (z - s) ^ k) = 0 := by
     rw [contourIntegral_finset_sum S (fun s z => c s / (z - s) ^ k) γ h_term_int]
