@@ -58,9 +58,9 @@ theorem cpvIntegrandOn_singleton_eq_contour_of_far
     {t : ℝ} (h_far : ε < ‖γ.toPath.extend t - s‖) :
     cpvIntegrandOn {s} f γ.toPath.extend ε t =
       f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
-  refine cpvIntegrandOn_of_forall_gt fun s' hs' => ?_
-  rw [Finset.mem_singleton] at hs'
-  rwa [hs']
+  refine cpvIntegrandOn_of_forall_gt fun s' hs' => by
+    simp only [Finset.mem_singleton] at hs'
+    rwa [hs']
 
 /-- **CPV integrand for a singleton is zero when γ is close to `s`.** -/
 theorem cpvIntegrandOn_singleton_eq_zero_of_close
@@ -164,10 +164,7 @@ theorem cpvIntegrandOn_singleton_integral_eq_excision
     have h_int_1 : IntervalIntegrable
         (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 :=
       h_int_full.mono_set (by rw [Set.uIcc_of_le hβ, h01]; exact Set.Icc_subset_Icc h0β le_rfl)
-    have h_int_αβ : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 β :=
-      h_int_α.trans h_int_β
-    rw [← intervalIntegral.integral_add_adjacent_intervals h_int_αβ h_int_1,
+    rw [← intervalIntegral.integral_add_adjacent_intervals (h_int_α.trans h_int_β) h_int_1,
         ← intervalIntegral.integral_add_adjacent_intervals h_int_α h_int_β]
   rw [h_split,
       integral_cpvIntegrandOn_singleton_eq_contour_left γ hα h_outside_left,
@@ -267,14 +264,10 @@ theorem shape_left_of_strictAntiOn
   refine ⟨h_t₀_minus_pos.trans h_inIcc.1, ?_⟩
   intro t ⟨ht_pos, ht_lt⟩
   by_cases h_outer : t ≤ t₀ - δMinus
-  · calc ε < δ_avoid := hε_lt_avoid
-      _ ≤ ‖γ t - s‖ := h_avoid t ⟨ht_pos.le, h_outer⟩
+  · linarith [h_avoid t ⟨ht_pos.le, h_outer⟩]
   · push Not at h_outer
-    have ht_in_Icc : t ∈ Icc (t₀ - δMinus) t₀ :=
-      ⟨h_outer.le, (ht_lt.trans_le h_inIcc.2).le⟩
-    have h_strict : ‖γ (firstExitTimeLeft γ t₀ δMinus s ε) - s‖ < ‖γ t - s‖ :=
-      hγ_anti ht_in_Icc h_inIcc ht_lt
-    linarith [ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max]
+    linarith [ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max,
+      hγ_anti ⟨h_outer.le, (ht_lt.trans_le h_inIcc.2).le⟩ h_inIcc ht_lt]
 
 /-- **Right-side shape from strict monotonicity (γ continuous).** Symmetric of
 `shape_left_of_strictAntiOn`: γ continuous on `[t₀, t₀ + δPlus]` with
@@ -296,14 +289,10 @@ theorem shape_right_of_strictMonoOn
   refine ⟨h_inIcc.2.trans h_t₀_plus_le, ?_⟩
   intro t ⟨ht_lt, ht_lt_one⟩
   by_cases h_outer : t₀ + δPlus ≤ t
-  · calc ε < δ_avoid := hε_lt_avoid
-      _ ≤ ‖γ t - s‖ := h_avoid t ⟨h_outer, ht_lt_one.le⟩
+  · linarith [h_avoid t ⟨h_outer, ht_lt_one.le⟩]
   · push Not at h_outer
-    have ht_in_Icc : t ∈ Icc t₀ (t₀ + δPlus) :=
-      ⟨(h_inIcc.1.trans_lt ht_lt).le, h_outer.le⟩
-    have h_strict : ‖γ (firstExitTimeRight γ t₀ δPlus s ε) - s‖ < ‖γ t - s‖ :=
-      hγ_mono h_inIcc ht_in_Icc ht_lt
-    linarith [ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max]
+    linarith [ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max,
+      hγ_mono h_inIcc ⟨(h_inIcc.1.trans_lt ht_lt).le, h_outer.le⟩ ht_lt]
 
 end LeanModularForms
 
