@@ -51,13 +51,11 @@ theorem exp_neg_I_eq_one_of_conditionB (n : ℕ) (α : ℝ)
     Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) = 1 := by
   obtain ⟨k, hk⟩ := h_angle
   rw [show (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) =
-    -(↑(((n - 1 : ℕ) : ℝ) * α) * Complex.I) from by push_cast; ring]
-  rw [hk]
+    -(↑(((n - 1 : ℕ) : ℝ) * α) * Complex.I) from by push_cast; ring, hk]
   push_cast
   rw [show ((-(↑k * (2 * ↑Real.pi) * Complex.I)) : ℂ) =
     (((-k : ℤ) : ℂ) * (2 * ↑Real.pi * Complex.I)) from by push_cast; ring]
-  rw [Complex.exp_int_mul, Complex.exp_two_pi_mul_I]
-  exact one_zpow _
+  rw [Complex.exp_int_mul, Complex.exp_two_pi_mul_I]; exact one_zpow _
 
 /-- **The HW Theorem 3.3 (eq. 3.4) sector-PV formula vanishes under condition (B).**
 
@@ -72,8 +70,7 @@ theorem sector_pv_formula_vanishes_under_conditionB
       (1 - Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I)) /
         ((↑(n - 1) : ℂ) * (↑ε : ℂ) ^ (n - 1)) = 0 := by
   intro ε _
-  rw [exp_neg_I_eq_one_of_conditionB n α h_angle]
-  rw [sub_self, zero_div]
+  rw [exp_neg_I_eq_one_of_conditionB n α h_angle, sub_self, zero_div]
 
 /-- **Tendsto form**: the explicit formula tends to 0 as ε → 0⁺ under condition (B).
 Combined with the explicit closed-form sector integral (3 pieces: two rays plus
@@ -121,19 +118,10 @@ theorem real_ray_inv_pow_integral
   have h_neg_n_plus_one : (-(n : ℤ)) + 1 = -((n - 1 : ℕ) : ℤ) := by omega
   rw [h_neg_n_plus_one]
   rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
-  have ha_pow : a ^ (n - 1) > 0 := pow_pos ha (n - 1)
-  have hb_pow : b ^ (n - 1) > 0 := pow_pos (lt_of_lt_of_le ha hab) (n - 1)
-  have hn1_pos : (0 : ℝ) < (n - 1 : ℕ) := by
-    have h1 : (1 : ℕ) ≤ n - 1 := by omega
-    exact_mod_cast Nat.lt_of_lt_of_le Nat.zero_lt_one h1
   have h_denom_eq : ((↑(-(n : ℤ)) + 1 : ℝ)) = -((n - 1 : ℕ) : ℝ) := by
     push_cast
-    have hn1_real : ((n - 1 : ℕ) : ℝ) = (n : ℝ) - 1 := by
-      have h1 : 1 ≤ n := by omega
-      rw [Nat.cast_sub h1]
-      push_cast; rfl
-    rw [hn1_real]
-    ring
+    have h1 : 1 ≤ n := by omega
+    rw [Nat.cast_sub h1]; ring
   rw [h_denom_eq]
   field_simp
   ring
@@ -165,16 +153,11 @@ theorem complex_ray_inv_pow_integral
       c * ∫ t in a..b, (↑(1 / t ^ n : ℝ) : ℂ) :=
     intervalIntegral.integral_const_mul c (fun t : ℝ => (↑(1 / t ^ n : ℝ) : ℂ))
   rw [h_step2]
-  rw [intervalIntegral.integral_ofReal]
-  rw [real_ray_inv_pow_integral a b ha hab n hn]
+  rw [intervalIntegral.integral_ofReal, real_ray_inv_pow_integral a b ha hab n hn]
   push_cast
-  have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := by rw [Nat.cast_ne_zero]; omega
   have ha_ne : (↑a : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ha.ne'
-  have hb_ne : (↑b : ℂ) ≠ 0 :=
-    Complex.ofReal_ne_zero.mpr (lt_of_lt_of_le ha hab).ne'
-  have ha_pow : (↑a : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ ha_ne
-  have hb_pow : (↑b : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hb_ne
-  field_simp
+  have hb_ne : (↑b : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (lt_of_lt_of_le ha hab).ne'
+  field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0), ha_ne, hb_ne]
 
 /-! ## Arc integral (γ_2 piece) -/
 
@@ -274,12 +257,9 @@ theorem sector_inv_pow_integral_combined
   rw [complex_ray_inv_pow_integral ε r hε hεr
     (Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) n hn]
   -- Algebraic simplification: combine the three closed forms
-  have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := by rw [Nat.cast_ne_zero]; omega
   have hε_ne : (↑ε : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hε.ne'
   have hr_ne : (↑r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
-  have hε_pow : (↑ε : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hε_ne
-  have hr_pow : (↑r : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hr_ne
-  field_simp
+  field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0), hε_ne, hr_ne]
   ring
 
 /-- **Sector PV vanishing under condition (B).** Combining the explicit formula
@@ -331,10 +311,8 @@ theorem sector_inv_pow_integral_tendsto_zero_under_conditionB
       (𝓝[>] (0 : ℝ)) (𝓝 0) := by
   apply Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) _ tendsto_const_nhds
   filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
-  have hε_pos : 0 < ε := hε.1
-  have hε_le_r : ε ≤ r := le_of_lt hε.2
-  exact (sector_inv_pow_integral_vanishes_under_conditionB r hr ε hε_pos
-    hε_le_r α n hn h_angle).symm
+  exact (sector_inv_pow_integral_vanishes_under_conditionB r hr ε hε.1
+    (le_of_lt hε.2) α n hn h_angle).symm
 
 /-! ## F-line difference under condition (B) — generalizes the k-odd case -/
 
@@ -367,27 +345,19 @@ theorem F_line_diff_eq_zero_under_conditionB
   -- Reduce to ((s + ε • L_plus / ‖L_plus‖) - s)^(k-1) = ((s + ε • (-L_minus / ‖L_minus‖)) - s)^(k-1)
   -- which simplifies to (ε • L_plus / ‖L_plus‖)^(k-1) = (ε • (-L_minus / ‖L_minus‖))^(k-1)
   -- which factors out ε^(k-1), giving (L_plus/‖L_plus‖)^(k-1) = (-L_minus/‖L_minus‖)^(k-1) (B).
-  have hLp_norm_ne : (‖L_plus‖ : ℝ) ≠ 0 := norm_ne_zero_iff.mpr hL_plus
-  have hLm_norm_ne : (‖L_minus‖ : ℝ) ≠ 0 := norm_ne_zero_iff.mpr hL_minus
-  have hLp_norm_ne_C : (↑‖L_plus‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hLp_norm_ne
-  have hLm_norm_ne_C : (↑‖L_minus‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hLm_norm_ne
   have h_lhs : ((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * ((L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1)) := by
     rw [add_sub_cancel_left]
     have h_smul_eq : ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) =
         (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ)) := by
-      rw [Complex.real_smul]
-      push_cast
-      field_simp
+      rw [Complex.real_smul]; push_cast; field_simp
     rw [h_smul_eq, mul_pow]
   have h_rhs : ((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * (((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1)) := by
     rw [add_sub_cancel_left]
     have h_smul_eq : ((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ) =
         (↑ε : ℂ) * ((-L_minus) / (↑‖L_minus‖ : ℂ)) := by
-      rw [Complex.real_smul]
-      push_cast
-      field_simp
+      rw [Complex.real_smul]; push_cast; field_simp
     rw [h_smul_eq, mul_pow]
   rw [h_lhs, h_rhs, h_B]
 
