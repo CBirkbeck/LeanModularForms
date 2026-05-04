@@ -67,9 +67,8 @@ theorem sector_pv_formula_vanishes_under_conditionB
     (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
     ∀ ε > (0 : ℝ),
       (1 - Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I)) /
-        ((↑(n - 1) : ℂ) * (↑ε : ℂ) ^ (n - 1)) = 0 := by
-  intro ε _
-  rw [exp_neg_I_eq_one_of_conditionB n α h_angle, sub_self, zero_div]
+        ((↑(n - 1) : ℂ) * (↑ε : ℂ) ^ (n - 1)) = 0 := fun ε _ =>
+  by rw [exp_neg_I_eq_one_of_conditionB n α h_angle, sub_self, zero_div]
 
 /-- **Tendsto form**: the explicit formula tends to 0 as ε → 0⁺ under condition (B).
 Combined with the explicit closed-form sector integral (3 pieces: two rays plus
@@ -104,9 +103,7 @@ theorem real_ray_inv_pow_integral
     intervalIntegral.integral_congr fun t _ => by
       rw [zpow_neg, zpow_natCast, ← one_div]
   rw [h_int_eq]
-  have h_zero_not_in : (0 : ℝ) ∉ Set.uIcc a b :=
-    Set.uIcc_of_le hab ▸ fun h => absurd h.1 (not_le.mpr ha)
-  rw [integral_zpow (Or.inr ⟨by intro h; omega, h_zero_not_in⟩),
+  rw [integral_zpow (Or.inr ⟨by intro h; omega, Set.uIcc_of_le hab ▸ fun h => absurd h.1 (not_le.mpr ha)⟩),
     show (-(n : ℤ)) + 1 = -((n - 1 : ℕ) : ℤ) from by omega,
     zpow_neg, zpow_neg, zpow_natCast, zpow_natCast,
     show ((↑(-(n : ℤ)) + 1 : ℝ)) = -((n - 1 : ℕ) : ℝ) from by
@@ -224,10 +221,10 @@ theorem sector_inv_pow_integral_combined
         (↑t : ℂ) ^ n) =
     (1 - Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) /
       ((↑(n - 1 : ℕ) : ℂ) * (↑ε : ℂ) ^ (n - 1)) := by
-  rw [complex_ray_inv_pow_integral ε r hε hεr 1 n hn]
-  rw [arc_inv_pow_integral r hr α n hn]
-  rw [complex_ray_inv_pow_integral ε r hε hεr
-    (Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) n hn]
+  rw [complex_ray_inv_pow_integral ε r hε hεr 1 n hn,
+    arc_inv_pow_integral r hr α n hn,
+    complex_ray_inv_pow_integral ε r hε hεr
+      (Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) n hn]
   -- Algebraic simplification: combine the three closed forms
   field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0),
     Complex.ofReal_ne_zero.mpr hε.ne', Complex.ofReal_ne_zero.mpr hr.ne']
@@ -310,18 +307,18 @@ theorem F_line_diff_eq_zero_under_conditionB
   -- Reduce to ((s + ε • L_plus / ‖L_plus‖) - s)^(k-1) = ((s + ε • (-L_minus / ‖L_minus‖)) - s)^(k-1)
   -- which simplifies to (ε • L_plus / ‖L_plus‖)^(k-1) = (ε • (-L_minus / ‖L_minus‖))^(k-1)
   -- which factors out ε^(k-1), giving (L_plus/‖L_plus‖)^(k-1) = (-L_minus/‖L_minus‖)^(k-1) (B).
-  have h_lhs : ((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1) =
-      ((↑ε : ℂ) ^ (k - 1)) * ((L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1)) := by
+  rw [show ((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1) =
+      ((↑ε : ℂ) ^ (k - 1)) * ((L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1)) by
     rw [add_sub_cancel_left,
       show ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) = (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ))
-        from by rw [Complex.real_smul]; push_cast; field_simp, mul_pow]
-  have h_rhs : ((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1) =
-      ((↑ε : ℂ) ^ (k - 1)) * (((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1)) := by
+        from by rw [Complex.real_smul]; push_cast; field_simp, mul_pow],
+    show ((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1) =
+      ((↑ε : ℂ) ^ (k - 1)) * (((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1)) by
     rw [add_sub_cancel_left,
       show ((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ) =
           (↑ε : ℂ) * ((-L_minus) / (↑‖L_minus‖ : ℂ))
-        from by rw [Complex.real_smul]; push_cast; field_simp, mul_pow]
-  rw [h_lhs, h_rhs, h_B]
+        from by rw [Complex.real_smul]; push_cast; field_simp, mul_pow],
+    h_B]
 
 /-! ## Curve F-difference under condition (B), general angle -/
 
@@ -445,8 +442,8 @@ theorem hw_theorem_3_3_under_conditionB_parametric
     Tendsto (fun ε =>
       (∫ t in a..(t_eps_minus ε), γ' t / (γ t - s) ^ k) +
         (∫ t in (t_eps_plus ε)..b, γ' t / (γ t - s) ^ k))
-      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  exact cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
+      (𝓝[>] (0 : ℝ)) (𝓝 0) :=
+  cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
     t_eps_plus t_eps_minus
     h_minus_smooth h_minus_avoids h_minus_int
     h_plus_smooth h_plus_avoids h_plus_int
