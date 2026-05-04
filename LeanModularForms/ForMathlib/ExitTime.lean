@@ -432,8 +432,7 @@ theorem firstExitTimeRight_tendsto_t₀
     set t₁ := t₀ + min η δ / 2 with ht₁_def
     have ht₁_mem : t₁ ∈ Set.Ioc t₀ (t₀ + δ) := by
       refine ⟨by linarith, ?_⟩
-      have : min η δ ≤ δ := min_le_right _ _
-      linarith
+      linarith [min_le_right η δ]
     have ht₁_ne : γ t₁ ≠ s := h_leave t₁ ht₁_mem
     refine ⟨‖γ t₁ - s‖, by simpa [norm_pos_iff, sub_ne_zero] using ht₁_ne, ?_⟩
     intro ε hε_pos hε_lt
@@ -473,8 +472,7 @@ theorem firstExitTimeLeft_tendsto_t₀
     set t₁ := t₀ - min η δ / 2 with ht₁_def
     have ht₁_mem : t₁ ∈ Set.Ico (t₀ - δ) t₀ := by
       refine ⟨?_, by linarith⟩
-      have : min η δ ≤ δ := min_le_right _ _
-      linarith
+      linarith [min_le_right η δ]
     have ht₁_ne : γ t₁ ≠ s := h_leave t₁ ht₁_mem
     refine ⟨‖γ t₁ - s‖, by simpa [norm_pos_iff, sub_ne_zero] using ht₁_ne, ?_⟩
     intro ε hε_pos hε_lt
