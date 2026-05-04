@@ -35,7 +35,7 @@ sector-curve integral, one obtains `PV ∮_γ dz/z^n = 0` for the sector curve
 under condition (B).
 -/
 
-open Filter Topology Set Complex Real
+open Filter Topology Set Complex Real MeasureTheory
 
 noncomputable section
 
@@ -87,6 +87,54 @@ theorem sector_pv_formula_tendsto_zero_under_conditionB
   apply Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) _ tendsto_const_nhds
   filter_upwards [self_mem_nhdsWithin] with ε hε
   exact (sector_pv_formula_vanishes_under_conditionB n _hn α h_angle ε hε).symm
+
+/-! ## Line integral along a ray at angle α (real factor) -/
+
+/-- **Real ray integral closed form.** For `n ≥ 2` and `0 < a ≤ b`:
+
+  `∫_a^b 1/t^n dt = (1/(n-1)) · (1/a^(n-1) - 1/b^(n-1))`.
+
+This is the **real-valued** integral underlying HW eq. (3.4)'s line piece.
+Converting to the complex form `∫_a^b c/(↑t : ℂ)^n dt = c · (above)` is the
+remaining bookkeeping step. -/
+theorem real_ray_inv_pow_integral
+    (a b : ℝ) (ha : 0 < a) (hab : a ≤ b) (n : ℕ) (hn : 2 ≤ n) :
+    (∫ t in a..b, (1 / t ^ n : ℝ)) =
+      (1 / (n - 1 : ℕ) : ℝ) *
+        (1 / a ^ (n - 1) - 1 / b ^ (n - 1)) := by
+  have h_zpow_eq : ∀ t : ℝ, t > 0 → (1 / t ^ n : ℝ) = t ^ (-(n : ℤ)) := by
+    intro t ht
+    rw [zpow_neg, zpow_natCast, ← one_div]
+  have h_int_eq : ∫ t in a..b, (1 / t ^ n : ℝ) = ∫ t in a..b, t ^ (-(n : ℤ)) := by
+    apply intervalIntegral.integral_congr
+    intro t ht
+    rw [Set.uIcc_of_le hab] at ht
+    exact h_zpow_eq t (lt_of_lt_of_le ha ht.1)
+  rw [h_int_eq]
+  have h_not_neg_one : (-(n : ℤ)) ≠ -1 := by intro h; omega
+  have h_zero_not_in : (0 : ℝ) ∉ Set.uIcc a b := by
+    rw [Set.uIcc_of_le hab]
+    exact fun h => absurd h.1 (not_le.mpr ha)
+  rw [integral_zpow (Or.inr ⟨h_not_neg_one, h_zero_not_in⟩)]
+  have h_neg_n_plus_one : (-(n : ℤ)) + 1 = -((n - 1 : ℕ) : ℤ) := by omega
+  rw [h_neg_n_plus_one]
+  rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
+  have ha_pow : a ^ (n - 1) > 0 := pow_pos ha (n - 1)
+  have hb_pow : b ^ (n - 1) > 0 := pow_pos (lt_of_lt_of_le ha hab) (n - 1)
+  have hn1_pos : (0 : ℝ) < (n - 1 : ℕ) := by
+    have h1 : (1 : ℕ) ≤ n - 1 := by omega
+    exact_mod_cast Nat.lt_of_lt_of_le Nat.zero_lt_one h1
+  have h_denom_eq : ((↑(-(n : ℤ)) + 1 : ℝ)) = -((n - 1 : ℕ) : ℝ) := by
+    push_cast
+    have hn1_real : ((n - 1 : ℕ) : ℝ) = (n : ℝ) - 1 := by
+      have h1 : 1 ≤ n := by omega
+      rw [Nat.cast_sub h1]
+      push_cast; rfl
+    rw [hn1_real]
+    ring
+  rw [h_denom_eq]
+  field_simp
+  ring
 
 end LeanModularForms
 
