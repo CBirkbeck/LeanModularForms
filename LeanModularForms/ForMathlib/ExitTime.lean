@@ -340,10 +340,8 @@ theorem exists_right_modulus
   intro t ht
   refine hη₀ ⟨Metric.mem_ball.mpr ?_, ht.1, ?_⟩
   · rw [Real.dist_eq, abs_of_nonneg (by linarith [ht.1] : 0 ≤ t - t₀)]
-    have : min (η₀ / 2) (δ / 2) ≤ η₀ / 2 := min_le_left _ _
-    linarith [ht.2]
-  · have : min (η₀ / 2) (δ / 2) ≤ δ / 2 := min_le_right _ _
-    linarith [ht.2]
+    linarith [min_le_left (η₀ / 2) (δ / 2), ht.2]
+  · linarith [min_le_right (η₀ / 2) (δ / 2), ht.2]
 
 /-- **Left-side continuity modulus.** Symmetric to `exists_right_modulus`. -/
 theorem exists_left_modulus
@@ -360,10 +358,8 @@ theorem exists_left_modulus
   intro t ht
   refine hη₀ ⟨Metric.mem_ball.mpr ?_, ?_, ht.2⟩
   · rw [Real.dist_eq, abs_of_nonpos (by linarith [ht.2] : t - t₀ ≤ 0)]
-    have : min (η₀ / 2) (δ / 2) ≤ η₀ / 2 := min_le_left _ _
-    linarith [ht.1]
-  · have : min (η₀ / 2) (δ / 2) ≤ δ / 2 := min_le_right _ _
-    linarith [ht.1]
+    linarith [min_le_left (η₀ / 2) (δ / 2), ht.1]
+  · linarith [min_le_right (η₀ / 2) (δ / 2), ht.1]
 
 /-! ## Upper bounds: first exit time ≤ any witness in the defining set -/
 
