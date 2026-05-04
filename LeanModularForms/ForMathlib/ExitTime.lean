@@ -447,8 +447,7 @@ theorem firstExitTimeRight_tendsto_t₀
     rw [Real.dist_eq, abs_of_nonneg (by linarith : 0 ≤ firstExitTimeRight γ t₀ δ s ε - t₀)]
     have h_t₁_diff : t₁ - t₀ < η := by
       simp only [ht₁_def]
-      have : min η δ ≤ η := min_le_left _ _
-      linarith
+      linarith [min_le_left η δ]
     linarith
   · have h_far_pos : (0 : ℝ) < ‖γ (t₀ + δ) - s‖ :=
       norm_pos_iff.mpr (sub_ne_zero.mpr (h_leave _ ⟨by linarith, le_rfl⟩))
@@ -490,8 +489,7 @@ theorem firstExitTimeLeft_tendsto_t₀
       (by linarith : firstExitTimeLeft γ t₀ δ s ε - t₀ ≤ 0)]
     have h_t₁_diff : t₀ - t₁ < η := by
       simp only [ht₁_def]
-      have : min η δ ≤ η := min_le_left _ _
-      linarith
+      linarith [min_le_left η δ]
     linarith
   · have h_far_pos : (0 : ℝ) < ‖γ (t₀ - δ) - s‖ :=
       norm_pos_iff.mpr (sub_ne_zero.mpr (h_leave _ ⟨le_rfl, by linarith⟩))
