@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.SectorCurve
 import LeanModularForms.ForMathlib.HigherOrderCancel
+import LeanModularForms.ForMathlib.HW33Final
 import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 
@@ -526,6 +527,130 @@ theorem hw_theorem_3_3_under_conditionB_parametric
   exact F_curve_diff_tendsto_zero_under_conditionB h_flat hL_minus hL_plus
     h_deriv_right h_deriv_left hL_right hL_left h_s hk hkn hn1 h_B
     t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius
+
+/-! ## HW Theorem 3.3 — final HasCauchyPVOn closure under condition (B) -/
+
+/-- **HW Theorem 3.3 — fully assembled k-even/general angle case under (B).**
+The general-angle analog of `hasCauchyPVOn_singleton_pow_of_transverse_assembled`
+(in `HW33Final.lean`).
+
+For closed `γ : PiecewiseC1Path x x` with single corner crossing at `t₀ ∈ (0, 1)`
+of pole `s` with TWO tangent directions `L_minus` (left) and `L_plus` (right),
+condition (B) holds, γ flat of order n ≥ k, plus strict (anti-)monotonicity
+of `‖γ - s‖` on each side and avoidance margins on the outer regions:
+
+  `HasCauchyPVOn {s} (fun z => 1/(z-s)^k) γ 0`.
+
+This is the **fully assembled HW 3.3 closure for the general (B) case** in the
+`HasCauchyPVOn` form. The k-odd transverse case is the special case `L_plus = L_minus`. -/
+theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
+    {x : ℂ} {γ : PiecewiseC1Path x x} {s L_minus L_plus : ℂ}
+    {t₀ δMinus δPlus : ℝ} {n k : ℕ}
+    (h_t₀_minus_pos : 0 ≤ t₀ - δMinus) (h_t₀_plus_le : t₀ + δPlus ≤ 1)
+    (hδMinus : 0 < δMinus) (hδPlus : 0 < δPlus)
+    -- Closure
+    (h_close : γ.toPath.extend 0 = γ.toPath.extend 1)
+    -- Flatness and tangent data
+    (h_flat : IsFlatOfOrder γ.toPath.extend t₀ n)
+    (hL_minus : L_minus ≠ 0) (hL_plus : L_plus ≠ 0)
+    (h_deriv_right : HasDerivWithinAt γ.toPath.extend L_plus (Set.Ioi t₀) t₀)
+    (h_deriv_left : HasDerivWithinAt γ.toPath.extend L_minus (Set.Iio t₀) t₀)
+    (hL_right : Tendsto (deriv γ.toPath.extend) (𝓝[>] t₀) (𝓝 L_plus))
+    (hL_left : Tendsto (deriv γ.toPath.extend) (𝓝[<] t₀) (𝓝 L_minus))
+    (h_s : γ.toPath.extend t₀ = s)
+    (hk : 2 ≤ k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
+    -- Condition (B)
+    (h_B :
+      (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1) =
+      ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1))
+    -- Continuity / smoothness on each side
+    (hγ_cont_right : ContinuousOn γ.toPath.extend (Set.Icc t₀ (t₀ + δPlus)))
+    (hγ_cont_left : ContinuousOn γ.toPath.extend (Set.Icc (t₀ - δMinus) t₀))
+    (h_leave_right : ∀ t ∈ Set.Ioc t₀ (t₀ + δPlus), γ.toPath.extend t ≠ s)
+    (h_leave_left : ∀ t ∈ Set.Ico (t₀ - δMinus) t₀, γ.toPath.extend t ≠ s)
+    -- Strict monotonicity (from transverse via L_minus / L_plus respectively)
+    (hγ_anti : StrictAntiOn (fun t => ‖γ.toPath.extend t - s‖)
+      (Set.Icc (t₀ - δMinus) t₀))
+    (hγ_mono : StrictMonoOn (fun t => ‖γ.toPath.extend t - s‖)
+      (Set.Icc t₀ (t₀ + δPlus)))
+    -- Avoidance margins on outer regions
+    {δ_avoid_left δ_avoid_right : ℝ}
+    (h_avoid_left_pos : 0 < δ_avoid_left)
+    (h_avoid_right_pos : 0 < δ_avoid_right)
+    (h_avoid_left : ∀ t ∈ Set.Icc (0 : ℝ) (t₀ - δMinus),
+      δ_avoid_left ≤ ‖γ.toPath.extend t - s‖)
+    (h_avoid_right : ∀ t ∈ Set.Icc (t₀ + δPlus) (1 : ℝ),
+      δ_avoid_right ≤ ‖γ.toPath.extend t - s‖)
+    -- Smoothness on outer punctured intervals
+    (h_minus_smooth : ∀ ε > 0,
+      ∀ t ∈ Set.uIcc (0 : ℝ)
+        (firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
+      HasDerivAt γ.toPath.extend (deriv γ.toPath.extend t) t)
+    (h_minus_avoids : ∀ ε > 0,
+      ∀ t ∈ Set.uIcc (0 : ℝ)
+        (firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
+      γ.toPath.extend t ≠ s)
+    (h_minus_int : ∀ ε > 0,
+      IntervalIntegrable
+        (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k)
+        MeasureTheory.volume 0
+        (firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε))
+    (h_plus_smooth : ∀ ε > 0,
+      ∀ t ∈ Set.uIcc
+        (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε) (1 : ℝ),
+      HasDerivAt γ.toPath.extend (deriv γ.toPath.extend t) t)
+    (h_plus_avoids : ∀ ε > 0,
+      ∀ t ∈ Set.uIcc
+        (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε) (1 : ℝ),
+      γ.toPath.extend t ≠ s)
+    (h_plus_int : ∀ ε > 0,
+      IntervalIntegrable
+        (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k)
+        MeasureTheory.volume
+        (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε) (1 : ℝ))
+    -- CPV-integrand integrability (from contour integrability via auto-discharge helpers)
+    (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
+      (fun t => cpvIntegrandOn {s}
+        (fun z => (1 : ℂ) / (z - s) ^ k) γ.toPath.extend ε t)
+      MeasureTheory.volume 0 1) :
+    HasCauchyPVOn {s} (fun z => (1 : ℂ) / (z - s) ^ k) γ 0 := by
+  -- Step 1: Parametric PV under (B)
+  have h_parametric :=
+    hw_theorem_3_3_under_conditionB_parametric (γ := γ.toPath.extend)
+      (γ' := deriv γ.toPath.extend) (s := s) (L_minus := L_minus)
+      (L_plus := L_plus) (n := n) (k := k) (a := 0) (b := 1) (t₀ := t₀)
+      h_close h_flat hL_minus hL_plus h_deriv_right h_deriv_left
+      hL_right hL_left h_s hk hkn hn1 h_B
+      (firstExitTimeRight γ.toPath.extend t₀ δPlus s)
+      (firstExitTimeLeft γ.toPath.extend t₀ δMinus s)
+      (firstExitTimeRight_tendsto_t₀ hδPlus hγ_cont_right h_s h_leave_right)
+      (firstExitTimeRight_radius_eventually hδPlus hγ_cont_right h_s h_leave_right)
+      (firstExitTimeLeft_tendsto_t₀ hδMinus hγ_cont_left h_s h_leave_left)
+      (firstExitTimeLeft_radius_eventually hδMinus hγ_cont_left h_s h_leave_left)
+      h_minus_smooth h_minus_avoids h_minus_int
+      h_plus_smooth h_plus_avoids h_plus_int
+  -- Step 2: Shape hypothesis from strict mono
+  have h_shape := shape_eventually_of_strict_mono
+    h_t₀_minus_pos h_t₀_plus_le hδMinus hδPlus
+    hγ_cont_left hγ_cont_right hγ_anti hγ_mono h_s
+    h_avoid_left_pos h_avoid_right_pos h_avoid_left h_avoid_right
+  -- Step 3: Apply the bridge
+  refine hasCauchyPVOn_singleton_of_exitTime_excision γ s
+    (fun z => (1 : ℂ) / (z - s) ^ k) h_shape h_int_full ?_
+  -- Reconcile integrand: deriv γ / (γ - s)^k = (1/(γ-s)^k) · deriv γ
+  apply h_parametric.congr
+  intro ε
+  congr 1
+  · apply intervalIntegral.integral_congr
+    intro t _
+    show deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
+         (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
+    ring
+  · apply intervalIntegral.integral_congr
+    intro t _
+    show deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
+         (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
+    ring
 
 end LeanModularForms
 
