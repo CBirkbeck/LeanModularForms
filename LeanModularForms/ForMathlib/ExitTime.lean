@@ -151,16 +151,14 @@ theorem t₀_lt_firstExitTimeRight
   have h_eventually : ∀ᶠ t in 𝓝[Set.Icc t₀ (t₀ + δ)] t₀, ‖γ t - s‖ < ε :=
     h_cont_at_t₀.tendsto.eventually_lt_const (by simp [h_s, hε_pos])
   obtain ⟨η, hη_pos, hη⟩ := Metric.nhdsWithin_basis_ball.eventually_iff.mp h_eventually
-  have h_dec : 0 < min η δ := lt_min hη_pos hδ
-  refine lt_of_lt_of_le (a := t₀) (b := t₀ + min η δ / 2) (by linarith) ?_
+  refine lt_of_lt_of_le (a := t₀) (b := t₀ + min η δ / 2) (by linarith [lt_min hη_pos hδ]) ?_
   refine le_csInf ⟨t₀ + δ, firstExitTimeRight_set_nonempty hδ.le hε_le⟩ ?_
   intro t ht
   by_contra! h_lt
   have h_in_Icc : t ∈ Set.Icc t₀ (t₀ + δ) := ht.1
   have h_dist_lt_η : dist t t₀ < η := by
     rw [Real.dist_eq, abs_of_nonneg (by linarith [h_in_Icc.1] : 0 ≤ t - t₀)]
-    have : min η δ ≤ η := min_le_left _ _
-    linarith
+    linarith [min_le_left η δ]
   exact absurd ht.2 (not_le.mpr (hη ⟨Metric.mem_ball.mpr h_dist_lt_η, h_in_Icc⟩))
 
 /-- **Exact-radius equality at first exit time (right).** Combining the lower
@@ -275,17 +273,15 @@ theorem firstExitTimeLeft_lt_t₀
   have h_eventually : ∀ᶠ t in 𝓝[Set.Icc (t₀ - δ) t₀] t₀, ‖γ t - s‖ < ε :=
     h_cont_at_t₀.tendsto.eventually_lt_const (by simp [h_s, hε_pos])
   obtain ⟨η, hη_pos, hη⟩ := Metric.nhdsWithin_basis_ball.eventually_iff.mp h_eventually
-  have h_dec : 0 < min η δ := lt_min hη_pos hδ
   refine lt_of_le_of_lt (a := firstExitTimeLeft γ t₀ δ s ε)
-    (b := t₀ - min η δ / 2) ?_ (by linarith)
+    (b := t₀ - min η δ / 2) ?_ (by linarith [lt_min hη_pos hδ])
   refine csSup_le ⟨t₀ - δ, firstExitTimeLeft_set_nonempty hδ.le hε_le⟩ ?_
   intro t ht
   by_contra! h_lt
   have h_in_Icc : t ∈ Set.Icc (t₀ - δ) t₀ := ht.1
   have h_dist_lt_η : dist t t₀ < η := by
     rw [Real.dist_eq, abs_of_nonpos (by linarith [h_in_Icc.2] : t - t₀ ≤ 0)]
-    have : min η δ ≤ η := min_le_left _ _
-    linarith
+    linarith [min_le_left η δ]
   exact absurd ht.2 (not_le.mpr (hη ⟨Metric.mem_ball.mpr h_dist_lt_η, h_in_Icc⟩))
 
 /-- **Exact-radius equality at first exit time (left).** Combining the lower
