@@ -311,6 +311,29 @@ theorem sector_inv_pow_integral_vanishes_under_conditionB
   rw [h_exp_one]
   simp
 
+/-- **Sector PV Tendsto vanishing under condition (B).** The sector curve's
+excised integral tends to 0 as `ε → 0⁺` (and in fact equals 0 for all
+`0 < ε ≤ r`) under condition (B). This is the **end-state vanishing**
+for the k-even case of HW Theorem 3.3 in the model-sector form. -/
+theorem sector_inv_pow_integral_tendsto_zero_under_conditionB
+    (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2 ≤ n)
+    (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
+    Tendsto (fun ε : ℝ =>
+      (∫ t in ε..r, (1 : ℂ) / (↑t : ℂ) ^ n) +
+      (∫ t in (0 : ℝ)..α,
+        ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
+          ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n) -
+      (∫ t in ε..r,
+        Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I)) /
+          (↑t : ℂ) ^ n))
+      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
+  apply Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) _ tendsto_const_nhds
+  filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
+  have hε_pos : 0 < ε := hε.1
+  have hε_le_r : ε ≤ r := le_of_lt hε.2
+  exact (sector_inv_pow_integral_vanishes_under_conditionB r hr ε hε_pos
+    hε_le_r α n hn h_angle).symm
+
 end LeanModularForms
 
 end
