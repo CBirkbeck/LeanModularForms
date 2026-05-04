@@ -53,14 +53,13 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
       StrictMonoOn (fun t => ‖γ t - s‖ ^ 2) (Icc t₀ (t₀ + δ)) := by
   -- ‖L‖² > 0 since L ≠ 0
   have hL_normSq_pos : (0 : ℝ) < ‖L‖ ^ 2 := pow_pos (norm_pos_iff.mpr hL) 2
-  -- slope γ t₀ → L on 𝓝[>] t₀
-  have h_slope :
-      Tendsto (slope γ t₀) (𝓝[>] t₀) (𝓝 L) := by
-    have h := hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_right
-    rwa [Ici_diff_left] at h
+  -- slope γ t₀ → L on 𝓝[>] t₀ and ⟨slope·, deriv·⟩ → ‖L‖²
   have h_inner_tendsto :
       Tendsto (fun t => @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t))
         (𝓝[>] t₀) (𝓝 (‖L‖ ^ 2)) := by
+    have h_slope : Tendsto (slope γ t₀) (𝓝[>] t₀) (𝓝 L) := by
+      have h := hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_right
+      rwa [Ici_diff_left] at h
     have := ((continuous_inner (𝕜 := ℝ) (E := ℂ)).tendsto (L, L)).comp
       (h_slope.prodMk_nhds hL_right)
     rwa [show @inner ℝ ℂ _ L L = ‖L‖ ^ 2 from real_inner_self_eq_norm_sq L] at this
@@ -104,14 +103,8 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
     have h_inner_gt := (h_uniform ht_in_ball ht.1).2
     -- Convert: 2 * inner (γ t - s) (deriv γ t) = 2(t - t₀) * inner (slope) (deriv γ)
     have ht_pos : (0 : ℝ) < t - t₀ := sub_pos.mpr ht.1
-    have h_slope_def : slope γ t₀ t = (t - t₀)⁻¹ • (γ t - s) := by
-      rw [slope_def_module, h_s]; rfl
-    rw [h_slope_def] at h_inner_gt
-    have h_smul_inner :
-        @inner ℝ ℂ _ ((t - t₀)⁻¹ • (γ t - s)) (deriv γ t) =
-        (t - t₀)⁻¹ * @inner ℝ ℂ _ (γ t - s) (deriv γ t) :=
-      real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹
-    rw [h_smul_inner] at h_inner_gt
+    simp only [slope_def_module, h_s] at h_inner_gt
+    rw [real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹] at h_inner_gt
     -- h_inner_gt : ‖L‖² / 2 < (t - t₀)⁻¹ * ⟪γ t - s, deriv γ t⟫
     have h_pos : 0 < @inner ℝ ℂ _ (γ t - s) (deriv γ t) := by
       have h := mul_lt_mul_of_pos_left h_inner_gt ht_pos
@@ -137,9 +130,8 @@ theorem exists_strictMonoOn_norm_right_of_transverse
   refine ⟨δ, hδ_pos, ?_⟩
   intro a ha b hb hab
   have ha_sq : ‖γ a - s‖ ^ 2 < ‖γ b - s‖ ^ 2 := h_mono_sq ha hb hab
-  have h1 : 0 ≤ ‖γ a - s‖ := norm_nonneg _
-  have h2 : 0 ≤ ‖γ b - s‖ := norm_nonneg _
-  nlinarith [ha_sq, h1, h2, sq_nonneg (‖γ a - s‖ - ‖γ b - s‖),
+  nlinarith [ha_sq, norm_nonneg (γ a - s), norm_nonneg (γ b - s),
+             sq_nonneg (‖γ a - s‖ - ‖γ b - s‖),
              sq_nonneg (‖γ a - s‖ + ‖γ b - s‖)]
 
 /-! ## Symmetric left-side versions -/
@@ -155,15 +147,15 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
     (hγ_cont : ContinuousAt γ t₀) :
     ∃ δ > (0 : ℝ),
       StrictAntiOn (fun t => ‖γ t - s‖ ^ 2) (Icc (t₀ - δ) t₀) := by
+  -- ‖L‖² > 0 since L ≠ 0
   have hL_normSq_pos : (0 : ℝ) < ‖L‖ ^ 2 := pow_pos (norm_pos_iff.mpr hL) 2
-  -- slope γ t₀ → L on 𝓝[<] t₀
-  have h_slope :
-      Tendsto (slope γ t₀) (𝓝[<] t₀) (𝓝 L) := by
-    have h := hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_left
-    rwa [Iic_diff_right] at h
+  -- slope γ t₀ → L on 𝓝[<] t₀ and ⟨slope·, deriv·⟩ → ‖L‖²
   have h_inner_tendsto :
       Tendsto (fun t => @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t))
         (𝓝[<] t₀) (𝓝 (‖L‖ ^ 2)) := by
+    have h_slope : Tendsto (slope γ t₀) (𝓝[<] t₀) (𝓝 L) := by
+      have h := hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_left
+      rwa [Iic_diff_right] at h
     have := ((continuous_inner (𝕜 := ℝ) (E := ℂ)).tendsto (L, L)).comp
       (h_slope.prodMk_nhds hL_left)
     rwa [show @inner ℝ ℂ _ L L = ‖L‖ ^ 2 from real_inner_self_eq_norm_sq L] at this
@@ -204,14 +196,8 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
       linarith [ht.1]
     have h_inner_gt := (h_uniform ht_in_ball ht.2).2
     have ht_neg : t - t₀ < 0 := sub_neg.mpr ht.2
-    have h_slope_def : slope γ t₀ t = (t - t₀)⁻¹ • (γ t - s) := by
-      rw [slope_def_module, h_s]; rfl
-    rw [h_slope_def] at h_inner_gt
-    have h_smul_inner :
-        @inner ℝ ℂ _ ((t - t₀)⁻¹ • (γ t - s)) (deriv γ t) =
-        (t - t₀)⁻¹ * @inner ℝ ℂ _ (γ t - s) (deriv γ t) :=
-      real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹
-    rw [h_smul_inner] at h_inner_gt
+    simp only [slope_def_module, h_s] at h_inner_gt
+    rw [real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹] at h_inner_gt
     -- For (t - t₀) < 0: multiply by (t - t₀), flip inequality
     -- (t - t₀) · ‖L‖²/2 > ⟪γ t - s, deriv γ t⟫
     -- LHS < 0, so ⟪γ t - s, deriv γ t⟫ < 0
@@ -240,9 +226,8 @@ theorem exists_strictAntiOn_norm_left_of_transverse
   refine ⟨δ, hδ_pos, ?_⟩
   intro a ha b hb hab
   have ha_sq : ‖γ b - s‖ ^ 2 < ‖γ a - s‖ ^ 2 := h_anti_sq ha hb hab
-  have h1 : 0 ≤ ‖γ a - s‖ := norm_nonneg _
-  have h2 : 0 ≤ ‖γ b - s‖ := norm_nonneg _
-  nlinarith [ha_sq, h1, h2, sq_nonneg (‖γ a - s‖ - ‖γ b - s‖),
+  nlinarith [ha_sq, norm_nonneg (γ a - s), norm_nonneg (γ b - s),
+             sq_nonneg (‖γ a - s‖ - ‖γ b - s‖),
              sq_nonneg (‖γ a - s‖ + ‖γ b - s‖)]
 
 end LeanModularForms
