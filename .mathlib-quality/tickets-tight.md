@@ -2,8 +2,16 @@
 
 ## Summary
 - Total: 5 tickets
-- Open: 5 | In Progress: 0 | Done: 0
+- Open: 2 | In Progress: 0 | Done: 3
 - Parallel capacity: 1 (sequential by dependency)
+
+## Status
+
+* TIGHT-1 ✅ DONE — Laurent polar part extraction (`HW33LaurentPolarPart.lean`)
+* TIGHT-2 ✅ DONE — Decomposition identity (`f_minus_pp_eq_higherOrder_plus_holo`)
+* TIGHT-5 ✅ DONE — Tight theorem `hw_3_3_tight` (`HW33Tight.lean`)
+* TIGHT-3 ⏳ OPEN — Auto-discharge `h_polar_cancel`
+* TIGHT-4 ⏳ OPEN — Auto-discharge `h_holo_cancel` via dominated convergence
 
 ## Tickets
 
