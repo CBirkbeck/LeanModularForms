@@ -97,9 +97,8 @@ theorem norm_cpvIntegrandOn_le_norm_contourIntegrand
       ‖PiecewiseC1Path.contourIntegrand f γ t‖ := by
   simp only [cpvIntegrandOn, PiecewiseC1Path.contourIntegrand,
     PiecewiseC1Path.extendedPath_eq]
-  split_ifs
-  · rw [norm_zero]; exact norm_nonneg _
-  · rfl
+  split_ifs <;>
+  first | (rw [norm_zero]; exact norm_nonneg _) | rfl
 
 /-! ## CPV integrand interval-integrability from contour integrand -/
 

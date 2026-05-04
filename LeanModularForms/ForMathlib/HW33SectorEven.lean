@@ -394,7 +394,7 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
   set A := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹
   set B := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹
   have h_triangle : ‖A - B‖ ≤ ‖B - TR‖ + ‖A - TR‖ :=
-    calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by ring_nf
+    calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by ring
       _ ≤ ‖A - TR‖ + ‖B - TR‖ := norm_sub_le _ _
       _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
   show ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
