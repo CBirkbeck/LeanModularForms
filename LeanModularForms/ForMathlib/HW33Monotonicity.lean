@@ -56,38 +56,20 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
   -- slope γ t₀ → L on 𝓝[>] t₀
   have h_slope :
       Tendsto (slope γ t₀) (𝓝[>] t₀) (𝓝 L) := by
-    have h := (hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_right)
-    -- Ici t₀ \ {t₀} = Ioi t₀
-    have h_diff : Ici t₀ \ {t₀} = Ioi t₀ := by
-      ext t
-      simp only [mem_diff, mem_Ici, mem_singleton_iff, mem_Ioi]
-      constructor
-      · rintro ⟨h1, h2⟩
-        exact lt_of_le_of_ne h1 (Ne.symm h2)
-      · intro h
-        exact ⟨le_of_lt h, ne_of_gt h⟩
-    rwa [h_diff] at h
+    have h := hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_right
+    rwa [Ici_diff_left] at h
   have h_inner_tendsto :
       Tendsto (fun t => @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t))
         (𝓝[>] t₀) (𝓝 (‖L‖ ^ 2)) := by
-    have h_prod : Tendsto (fun t => (slope γ t₀ t, deriv γ t)) (𝓝[>] t₀)
-        (𝓝 (L, L)) := h_slope.prodMk_nhds hL_right
-    have h_inner : Tendsto (fun p : ℂ × ℂ => @inner ℝ ℂ _ p.1 p.2)
-        (𝓝 (L, L)) (𝓝 (@inner ℝ ℂ _ L L)) :=
-      continuous_inner.tendsto _
-    have := h_inner.comp h_prod
+    have := ((continuous_inner (𝕜 := ℝ) (E := ℂ)).tendsto (L, L)).comp
+      (h_slope.prodMk_nhds hL_right)
     rwa [show @inner ℝ ℂ _ L L = ‖L‖ ^ 2 from real_inner_self_eq_norm_sq L] at this
-  -- Eventually inner > ‖L‖² / 2
-  have h_ev_pos :
-      ∀ᶠ t in 𝓝[>] t₀,
-        ‖L‖ ^ 2 / 2 < @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t) :=
-    h_inner_tendsto.eventually (eventually_gt_nhds (by linarith))
   -- Combine eventually-pos with smoothness, both on 𝓝[>] t₀
   have h_combined :
       ∀ᶠ t in 𝓝[>] t₀,
         DifferentiableAt ℝ γ t ∧
         ‖L‖ ^ 2 / 2 < @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t) :=
-    h_smooth.and h_ev_pos
+    h_smooth.and (h_inner_tendsto.eventually (eventually_gt_nhds (by linarith)))
   -- Extract a uniform δ > 0
   rw [eventually_nhdsWithin_iff, Metric.eventually_nhds_iff] at h_combined
   obtain ⟨δ, hδ_pos, h_uniform⟩ := h_combined
@@ -112,10 +94,7 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
     have ht_in_ball : dist t t₀ < δ := by
       rw [Real.dist_eq, abs_of_pos (sub_pos.mpr ht.1)]
       linarith [ht.2]
-    have h_diff : DifferentiableAt ℝ γ t := (h_uniform ht_in_ball ht.1).1
-    have h_hd : HasDerivAt (fun t => γ t - s) (deriv γ t) t :=
-      h_diff.hasDerivAt.sub_const s
-    exact h_hd.norm_sq.hasDerivWithinAt
+    exact ((h_uniform ht_in_ball ht.1).1.hasDerivAt.sub_const s).norm_sq.hasDerivWithinAt
   · -- Positivity of derivative on interior
     intro t ht
     rw [interior_Icc] at ht
@@ -126,9 +105,7 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
     -- Convert: 2 * inner (γ t - s) (deriv γ t) = 2(t - t₀) * inner (slope) (deriv γ)
     have ht_pos : (0 : ℝ) < t - t₀ := sub_pos.mpr ht.1
     have h_slope_def : slope γ t₀ t = (t - t₀)⁻¹ • (γ t - s) := by
-      unfold slope
-      rw [h_s, vsub_eq_sub]
-      rfl
+      rw [slope_def_module, h_s]; rfl
     rw [h_slope_def] at h_inner_gt
     have h_smul_inner :
         @inner ℝ ℂ _ ((t - t₀)⁻¹ • (γ t - s)) (deriv γ t) =
@@ -136,13 +113,9 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
       real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹
     rw [h_smul_inner] at h_inner_gt
     -- h_inner_gt : ‖L‖² / 2 < (t - t₀)⁻¹ * ⟪γ t - s, deriv γ t⟫
-    -- Multiply by (t - t₀) > 0: ⟪γ t - s, deriv γ t⟫ > (t - t₀) * ‖L‖² / 2 > 0
     have h_pos : 0 < @inner ℝ ℂ _ (γ t - s) (deriv γ t) := by
       have h := mul_lt_mul_of_pos_left h_inner_gt ht_pos
-      have h_simp : (t - t₀) * ((t - t₀)⁻¹ * @inner ℝ ℂ _ (γ t - s) (deriv γ t)) =
-          @inner ℝ ℂ _ (γ t - s) (deriv γ t) := by
-        rw [← mul_assoc, mul_inv_cancel₀ ht_pos.ne', one_mul]
-      rw [h_simp] at h
+      rw [← mul_assoc, mul_inv_cancel₀ ht_pos.ne', one_mul] at h
       have : 0 < (t - t₀) * (‖L‖ ^ 2 / 2) := by positivity
       linarith
     linarith
@@ -186,35 +159,19 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
   -- slope γ t₀ → L on 𝓝[<] t₀
   have h_slope :
       Tendsto (slope γ t₀) (𝓝[<] t₀) (𝓝 L) := by
-    have h := (hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_left)
-    have h_diff : Iic t₀ \ {t₀} = Iio t₀ := by
-      ext t
-      simp only [mem_diff, mem_Iic, mem_singleton_iff, mem_Iio]
-      constructor
-      · rintro ⟨h1, h2⟩
-        exact lt_of_le_of_ne h1 h2
-      · intro h
-        exact ⟨le_of_lt h, ne_of_lt h⟩
-    rwa [h_diff] at h
+    have h := hasDerivWithinAt_iff_tendsto_slope.mp h_deriv_left
+    rwa [Iic_diff_right] at h
   have h_inner_tendsto :
       Tendsto (fun t => @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t))
         (𝓝[<] t₀) (𝓝 (‖L‖ ^ 2)) := by
-    have h_prod : Tendsto (fun t => (slope γ t₀ t, deriv γ t)) (𝓝[<] t₀)
-        (𝓝 (L, L)) := h_slope.prodMk_nhds hL_left
-    have h_inner : Tendsto (fun p : ℂ × ℂ => @inner ℝ ℂ _ p.1 p.2)
-        (𝓝 (L, L)) (𝓝 (@inner ℝ ℂ _ L L)) :=
-      continuous_inner.tendsto _
-    have := h_inner.comp h_prod
+    have := ((continuous_inner (𝕜 := ℝ) (E := ℂ)).tendsto (L, L)).comp
+      (h_slope.prodMk_nhds hL_left)
     rwa [show @inner ℝ ℂ _ L L = ‖L‖ ^ 2 from real_inner_self_eq_norm_sq L] at this
-  have h_ev_pos :
-      ∀ᶠ t in 𝓝[<] t₀,
-        ‖L‖ ^ 2 / 2 < @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t) :=
-    h_inner_tendsto.eventually (eventually_gt_nhds (by linarith))
   have h_combined :
       ∀ᶠ t in 𝓝[<] t₀,
         DifferentiableAt ℝ γ t ∧
         ‖L‖ ^ 2 / 2 < @inner ℝ ℂ _ (slope γ t₀ t) (deriv γ t) :=
-    h_smooth.and h_ev_pos
+    h_smooth.and (h_inner_tendsto.eventually (eventually_gt_nhds (by linarith)))
   rw [eventually_nhdsWithin_iff, Metric.eventually_nhds_iff] at h_combined
   obtain ⟨δ, hδ_pos, h_uniform⟩ := h_combined
   refine ⟨δ / 2, by linarith, ?_⟩
@@ -238,10 +195,7 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
     have ht_in_ball : dist t t₀ < δ := by
       rw [Real.dist_eq, abs_of_neg (sub_neg.mpr ht.2)]
       linarith [ht.1]
-    have h_diff : DifferentiableAt ℝ γ t := (h_uniform ht_in_ball ht.2).1
-    have h_hd : HasDerivAt (fun t => γ t - s) (deriv γ t) t :=
-      h_diff.hasDerivAt.sub_const s
-    exact h_hd.norm_sq.hasDerivWithinAt
+    exact ((h_uniform ht_in_ball ht.2).1.hasDerivAt.sub_const s).norm_sq.hasDerivWithinAt
   · -- Negativity of derivative on interior
     intro t ht
     rw [interior_Icc] at ht
@@ -251,9 +205,7 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
     have h_inner_gt := (h_uniform ht_in_ball ht.2).2
     have ht_neg : t - t₀ < 0 := sub_neg.mpr ht.2
     have h_slope_def : slope γ t₀ t = (t - t₀)⁻¹ • (γ t - s) := by
-      unfold slope
-      rw [h_s, vsub_eq_sub]
-      rfl
+      rw [slope_def_module, h_s]; rfl
     rw [h_slope_def] at h_inner_gt
     have h_smul_inner :
         @inner ℝ ℂ _ ((t - t₀)⁻¹ • (γ t - s)) (deriv γ t) =
@@ -265,10 +217,7 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
     -- LHS < 0, so ⟪γ t - s, deriv γ t⟫ < 0
     have h_neg_inner : @inner ℝ ℂ _ (γ t - s) (deriv γ t) < 0 := by
       have h := mul_lt_mul_of_neg_left h_inner_gt ht_neg
-      have h_simp : (t - t₀) * ((t - t₀)⁻¹ * @inner ℝ ℂ _ (γ t - s) (deriv γ t)) =
-          @inner ℝ ℂ _ (γ t - s) (deriv γ t) := by
-        rw [← mul_assoc, mul_inv_cancel₀ ht_neg.ne, one_mul]
-      rw [h_simp] at h
+      rw [← mul_assoc, mul_inv_cancel₀ ht_neg.ne, one_mul] at h
       have h_lhs_neg : (t - t₀) * (‖L‖ ^ 2 / 2) < 0 := by
         have : ‖L‖ ^ 2 / 2 > 0 := by linarith
         nlinarith

@@ -67,8 +67,7 @@ theorem contourIntegral_finset_sum {ι : Type*} (s : Finset ι) (f : ι → ℂ 
       have heq : (fun u : ℝ =>
           (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u) =
           fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
-        funext u
-        rw [Finset.sum_mul]
+        funext u; rw [Finset.sum_mul]
       show IntervalIntegrable
         (fun u => (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u)
         volume 0 1
@@ -76,11 +75,8 @@ theorem contourIntegral_finset_sum {ι : Type*} (s : Finset ι) (f : ι → ℂ 
       have h_sum := IntervalIntegrable.sum t h_t
       have hfun : (∑ i ∈ t, PiecewiseC1Path.contourIntegrand (f i) γ) =
           fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
-        funext u
-        rw [Finset.sum_apply]
-        rfl
-      rw [hfun] at h_sum
-      exact h_sum
+        funext u; rw [Finset.sum_apply]; rfl
+      rwa [hfun] at h_sum
     rw [Finset.sum_insert hi,
         show (fun z => ∑ i ∈ insert j t, f i z) =
              (fun z => f j z + ∑ i ∈ t, f i z) from
@@ -192,22 +188,21 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids
       (PiecewiseC1Path.contourIntegrand
         (fun z => c s / (z - s) ^ k) γ) volume 0 1 := by
     intro s hs
-    show IntervalIntegrable
-      (fun t => c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
-      volume 0 1
     have h_eq : (fun t : ℝ =>
         c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) =
         fun t => c s *
           (1 / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) := by
       funext t; ring
+    show IntervalIntegrable
+      (fun t => c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
+      volume 0 1
     rw [h_eq]
     exact (h_int s hs).const_mul (c s)
   have h_zero_each : ∀ s ∈ S, γ.contourIntegral
       (fun z => c s / (z - s) ^ k) = 0 := by
     intro s hs
-    have h_avoids_s : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s := h_avoids s hs
     have h_zero : γ.contourIntegral (fun z => 1 / (z - s) ^ k) = 0 :=
-      γ.contourIntegral_pow_inv_eq_zero hk h_avoids_s (h_int s hs)
+      γ.contourIntegral_pow_inv_eq_zero hk (h_avoids s hs) (h_int s hs)
     have h_eq : γ.contourIntegral (fun z => c s / (z - s) ^ k) =
         c s * γ.contourIntegral (fun z => 1 / (z - s) ^ k) := by
       rw [show (fun z => c s / (z - s) ^ k) = (fun z => c s * (1 / (z - s) ^ k)) from

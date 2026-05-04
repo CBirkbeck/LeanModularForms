@@ -45,11 +45,11 @@ theorem shape_right_eventually
       ∀ t ∈ Ioo (firstExitTimeRight γ t₀ δPlus s ε) (1 : ℝ),
         ε < ‖γ t - s‖ := by
   have h_far_pos : 0 < ‖γ (t₀ + δPlus) - s‖ :=
-    lt_of_lt_of_le h_avoid_pos (h_avoid (t₀ + δPlus) ⟨le_refl _, by linarith⟩)
+    h_avoid_pos.trans_le (h_avoid (t₀ + δPlus) ⟨le_rfl, by linarith⟩)
   filter_upwards [Ioo_mem_nhdsGT (lt_min h_far_pos h_avoid_pos)] with ε hε
   have hε_lt_far : ε < ‖γ (t₀ + δPlus) - s‖ := lt_min_iff.mp hε.2 |>.1
   exact shape_right_of_strictMonoOn h_t₀_plus_le hδPlus hγ_cont
-    hγ_mono h_avoid (lt_min_iff.mp hε.2 |>.2) (le_of_lt hε_lt_far)
+    hγ_mono h_avoid (lt_min_iff.mp hε.2 |>.2) hε_lt_far.le
 
 /-- **Eventual left-side shape from strict anti-monotonicity + avoidance margin.** -/
 theorem shape_left_eventually
@@ -65,11 +65,11 @@ theorem shape_left_eventually
       ∀ t ∈ Ioo (0 : ℝ) (firstExitTimeLeft γ t₀ δMinus s ε),
         ε < ‖γ t - s‖ := by
   have h_far_pos : 0 < ‖γ (t₀ - δMinus) - s‖ :=
-    lt_of_lt_of_le h_avoid_pos (h_avoid (t₀ - δMinus) ⟨h_t₀_minus_pos, le_refl _⟩)
+    h_avoid_pos.trans_le (h_avoid (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)
   filter_upwards [Ioo_mem_nhdsGT (lt_min h_far_pos h_avoid_pos)] with ε hε
   have hε_lt_far : ε < ‖γ (t₀ - δMinus) - s‖ := lt_min_iff.mp hε.2 |>.1
   exact shape_left_of_strictAntiOn h_t₀_minus_pos hδMinus hγ_cont
-    hγ_anti h_avoid (lt_min_iff.mp hε.2 |>.2) (le_of_lt hε_lt_far)
+    hγ_anti h_avoid (lt_min_iff.mp hε.2 |>.2) hε_lt_far.le
 
 /-- **Combined shape (left + right) eventually from strict monotonicity.**
 Bundles `shape_left_eventually` and `shape_right_eventually` plus the trivial
@@ -112,11 +112,11 @@ theorem shape_eventually_of_strict_mono
   -- Need eventually for the "tLeft ≤ tRight" and "‖γ - s‖ ≤ ε on Ioo (tLeft, tRight)"
   -- Both follow directly from the definitions when ε is small enough.
   have h_far_left : 0 < ‖γ (t₀ - δMinus) - s‖ :=
-    lt_of_lt_of_le h_avoid_left_pos
-      (h_avoid_left (t₀ - δMinus) ⟨h_t₀_minus_pos, le_refl _⟩)
+    h_avoid_left_pos.trans_le
+      (h_avoid_left (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)
   have h_far_right : 0 < ‖γ (t₀ + δPlus) - s‖ :=
-    lt_of_lt_of_le h_avoid_right_pos
-      (h_avoid_right (t₀ + δPlus) ⟨le_refl _, by linarith⟩)
+    h_avoid_right_pos.trans_le
+      (h_avoid_right (t₀ + δPlus) ⟨le_rfl, by linarith⟩)
   have h_in_brackets : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       firstExitTimeLeft γ t₀ δMinus s ε ≤
         firstExitTimeRight γ t₀ δPlus s ε ∧
@@ -125,9 +125,9 @@ theorem shape_eventually_of_strict_mono
         ‖γ t - s‖ ≤ ε := by
     filter_upwards [Ioo_mem_nhdsGT (lt_min h_far_left h_far_right)] with ε hε
     have hε_lt_far_left : ε ≤ ‖γ (t₀ - δMinus) - s‖ :=
-      le_of_lt (lt_min_iff.mp hε.2).1
+      (lt_min_iff.mp hε.2).1.le
     have hε_lt_far_right : ε ≤ ‖γ (t₀ + δPlus) - s‖ :=
-      le_of_lt (lt_min_iff.mp hε.2).2
+      (lt_min_iff.mp hε.2).2.le
     refine ⟨(firstExitTimeLeft_mem_Icc hδMinus.le hε_lt_far_left).2.trans
       (firstExitTimeRight_mem_Icc hδPlus.le hε_lt_far_right).1, ?_⟩
     intro t ht
@@ -135,27 +135,21 @@ theorem shape_eventually_of_strict_mono
     · have ht_in_Icc : t ∈ Icc (t₀ - δMinus) t₀ := by
         refine ⟨?_, h_t_t₀⟩
         linarith [(firstExitTimeLeft_mem_Icc hδMinus.le hε_lt_far_left).1, ht.1]
-      have h_lt_ε : ‖γ t - s‖ < ε := by
-        by_contra h_ge
-        have h_in_set : t ∈ {t' ∈ Set.Icc (t₀ - δMinus) t₀ | ε ≤ ‖γ t' - s‖} :=
-          ⟨ht_in_Icc, not_lt.mp h_ge⟩
-        have : t ≤ firstExitTimeLeft γ t₀ δMinus s ε := by
-          unfold firstExitTimeLeft
-          exact le_csSup ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δMinus ε s⟩ h_in_set
-        linarith [ht.1]
-      linarith
+      by_contra h_ge
+      have h_in_set : t ∈ {t' ∈ Set.Icc (t₀ - δMinus) t₀ | ε ≤ ‖γ t' - s‖} :=
+        ⟨ht_in_Icc, (not_le.mp h_ge).le⟩
+      have h_le : t ≤ firstExitTimeLeft γ t₀ δMinus s ε :=
+        le_csSup ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δMinus ε s⟩ h_in_set
+      linarith [ht.1]
     · have ht_in_Icc : t ∈ Icc t₀ (t₀ + δPlus) := by
-        refine ⟨le_of_lt (not_le.mp h_t_t₀), ?_⟩
+        refine ⟨(not_le.mp h_t_t₀).le, ?_⟩
         linarith [(firstExitTimeRight_mem_Icc hδPlus.le hε_lt_far_right).2, ht.2]
-      have h_lt_ε : ‖γ t - s‖ < ε := by
-        by_contra h_ge
-        have h_in_set : t ∈ {t' ∈ Set.Icc t₀ (t₀ + δPlus) | ε ≤ ‖γ t' - s‖} :=
-          ⟨ht_in_Icc, not_lt.mp h_ge⟩
-        have : firstExitTimeRight γ t₀ δPlus s ε ≤ t := by
-          unfold firstExitTimeRight
-          exact csInf_le ⟨t₀, firstExitTimeRight_set_lb γ t₀ δPlus ε s⟩ h_in_set
-        linarith [ht.2]
-      linarith
+      by_contra h_ge
+      have h_in_set : t ∈ {t' ∈ Set.Icc t₀ (t₀ + δPlus) | ε ≤ ‖γ t' - s‖} :=
+        ⟨ht_in_Icc, (not_le.mp h_ge).le⟩
+      have h_le : firstExitTimeRight γ t₀ δPlus s ε ≤ t :=
+        csInf_le ⟨t₀, firstExitTimeRight_set_lb γ t₀ δPlus ε s⟩ h_in_set
+      linarith [ht.2]
   filter_upwards [h_left, h_right, h_in_brackets] with ε hL hR hLR
   exact ⟨hL.1, hR.1, hLR.1, hL.2, hR.2, hLR.2⟩
 
@@ -269,19 +263,10 @@ theorem hasCauchyPVOn_singleton_pow_of_transverse_assembled
   -- Step 3: Apply the bridge. Use the integrand-equality step inline via Tendsto.congr
   refine hasCauchyPVOn_singleton_of_exitTime_excision γ s
     (fun z => (1 : ℂ) / (z - s) ^ k) h_shape h_int_full ?_
-  apply h_parametric.congr
-  intro ε
+  refine h_parametric.congr fun ε => ?_
   congr 1
-  · apply intervalIntegral.integral_congr
-    intro t _
-    show deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
-         (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
-    ring
-  · apply intervalIntegral.integral_congr
-    intro t _
-    show deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
-         (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
-    ring
+  · exact intervalIntegral.integral_congr fun t _ => by ring
+  · exact intervalIntegral.integral_congr fun t _ => by ring
 
 end LeanModularForms
 

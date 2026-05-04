@@ -61,10 +61,8 @@ theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids
       volume 0 1) :
     HasCauchyPVOn S
       (fun z => f z + ∑ s ∈ S, c s / (z - s) ^ k) γ L := by
-  have h_HO :
-      HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 :=
-    hasCauchyPVOn_finset_pow_inv_of_avoids S k hk c γ hδ h_int_HO
-  simpa only [add_zero] using HasCauchyPVOn.add h_f h_HO h_f_int h_HO_int
+  simpa only [add_zero] using HasCauchyPVOn.add h_f
+    (hasCauchyPVOn_finset_pow_inv_of_avoids S k hk c γ hδ h_int_HO) h_f_int h_HO_int
 
 /-! ## Closure under adding multi-power higher-order polar terms -/
 
@@ -93,27 +91,18 @@ theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids
         (fun z => ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k)
         γ 0 := by
     have h_each_k : ∀ k ∈ Finset.Ico 2 (M + 1),
-        HasCauchyPVOn S (fun z => ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ 0 := by
-      intro k hk_mem
-      have hk : 2 ≤ k := (Finset.mem_Ico.mp hk_mem).1
-      exact hasCauchyPVOn_finset_pow_inv_of_avoids S k hk (c_HO k) γ hδ
-        (h_int_HO k hk_mem)
-    have h_each_int : ∀ k ∈ Finset.Ico 2 (M + 1), ∀ ε > 0, IntervalIntegrable
-        (fun t => cpvIntegrandOn S
-          (fun z => ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ.toPath.extend ε t)
-        volume 0 1 :=
-      fun k hk_mem ε hε => h_HO_int k hk_mem ε hε
+        HasCauchyPVOn S (fun z => ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ 0 :=
+      fun k hk_mem => hasCauchyPVOn_finset_pow_inv_of_avoids S k
+        (Finset.mem_Ico.mp hk_mem).1 (c_HO k) γ hδ (h_int_HO k hk_mem)
     simpa only [Finset.sum_const_zero] using
-      HasCauchyPVOn.finset_sum (Finset.Ico 2 (M + 1)) h_each_k h_each_int
+      HasCauchyPVOn.finset_sum (Finset.Ico 2 (M + 1)) h_each_k h_HO_int
   -- Add f and HOsum
   have h_HOsum_int : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S
         (fun z => ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k)
-        γ.toPath.extend ε t) volume 0 1 := by
-    intro ε hε
-    exact cpvIntegrandOn_finset_sum_intervalIntegrable
-      (Finset.Ico 2 (M + 1)) S
-      (fun k hk_mem => h_HO_int k hk_mem ε hε)
+        γ.toPath.extend ε t) volume 0 1 :=
+    fun ε hε => cpvIntegrandOn_finset_sum_intervalIntegrable
+      (Finset.Ico 2 (M + 1)) S (fun k hk_mem => h_HO_int k hk_mem ε hε)
   simpa only [add_zero] using
     HasCauchyPVOn.add h_f h_HOsum h_f_int h_HOsum_int
 
@@ -161,16 +150,12 @@ theorem generalizedResidueTheorem_higherOrder_avoids_closed
   have hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
       δ ≤ ‖γ.toPiecewiseC1Path t - s‖ :=
     avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids
-  have h_simple :
-      HasCauchyPVOn S f_simple γ.toPiecewiseC1Path
-        (2 * ↑Real.pi * I * ∑ s ∈ S,
-          generalizedWindingNumber γ.toPiecewiseC1Path s * residue f_simple s) :=
-    generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_open hU_ne
-      hU_bounded S hS_in_U f_simple hf_simple γ h_null hSimplePoles hγ_avoids
-      hδ hLip
   exact hasCauchyPVOn_add_higherOrderPolarSum_of_avoids
-    S f_simple γ.toPiecewiseC1Path hδ h_simple h_simple_int M c_HO
-    h_int_HO h_HO_int
+    S f_simple γ.toPiecewiseC1Path hδ
+    (generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_open hU_ne
+      hU_bounded S hS_in_U f_simple hf_simple γ h_null hSimplePoles hγ_avoids
+      hδ hLip)
+    h_simple_int M c_HO h_int_HO h_HO_int
 
 end LeanModularForms
 

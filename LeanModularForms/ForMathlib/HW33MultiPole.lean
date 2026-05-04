@@ -51,8 +51,6 @@ theorem hasCauchyPVOn_extend_of_avoid
   rw [Filter.eventuallyEq_iff_exists_mem]
   refine ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, ?_⟩
   intro ε hε
-  have hε_pos : 0 < ε := hε.1
-  have hε_lt : ε < δ := hε.2
   apply intervalIntegral.integral_congr
   intro t ht
   rw [Set.uIcc_of_le (zero_le_one' ℝ)] at ht
@@ -65,21 +63,16 @@ theorem hasCauchyPVOn_extend_of_avoid
   simp only [cpvIntegrandOn]
   congr 1
   · -- if-condition: same set membership
-    apply propext
-    constructor
-    · rintro ⟨s, hs, hs_le⟩
-      exact ⟨s, hST hs, hs_le⟩
-    · rintro ⟨s, hs, hs_le⟩
-      by_cases h_in_S : s ∈ S
-      · exact ⟨s, h_in_S, hs_le⟩
-      · -- s ∈ T \ S — use avoidance
-        exfalso
-        have hs_in_diff : s ∈ T \ S := Finset.mem_sdiff.mpr ⟨hs, h_in_S⟩
-        have h_far : δ ≤ ‖γ t - s‖ := h_avoid s hs_in_diff t ht
-        have h_eq : γ.toPath.extend t = γ t := by
-          rw [PiecewiseC1Path.extendedPath_eq]
-        rw [h_eq] at hs_le
-        linarith
+    refine propext ⟨fun ⟨s, hs, hs_le⟩ => ⟨s, hST hs, hs_le⟩, ?_⟩
+    rintro ⟨s, hs, hs_le⟩
+    by_cases h_in_S : s ∈ S
+    · exact ⟨s, h_in_S, hs_le⟩
+    · -- s ∈ T \ S — use avoidance
+      exfalso
+      have h_far : δ ≤ ‖γ.extend t - s‖ := by
+        simpa [PiecewiseC1Path.extendedPath_eq] using
+          h_avoid s (Finset.mem_sdiff.mpr ⟨hs, h_in_S⟩) t ht
+      linarith [hε.2]
 
 /-- **Multi-pole extension for `1/(z-s)^k` terms.** Given:
 
@@ -96,8 +89,8 @@ theorem hasCauchyPVOn_multipole_pow_inv_of_singleton
     (h_avoid : ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s'‖)
     (h_singleton : HasCauchyPVOn {s} (fun z => (1 : ℂ) / (z - s) ^ k) γ 0) :
     HasCauchyPVOn S (fun z => (1 : ℂ) / (z - s) ^ k) γ 0 := by
-  apply hasCauchyPVOn_extend_of_avoid {s} S (Finset.singleton_subset_iff.mpr hs)
-    _ γ hδ_pos _ h_singleton
+  refine hasCauchyPVOn_extend_of_avoid {s} S (Finset.singleton_subset_iff.mpr hs)
+    _ γ hδ_pos ?_ h_singleton
   intro s' hs' t ht
   rw [Finset.mem_sdiff, Finset.mem_singleton] at hs'
   exact h_avoid s' hs'.1 hs'.2 t ht
@@ -125,25 +118,16 @@ theorem hasCauchyPVOn_multipole_sum_pow_inv
     HasCauchyPVOn S
       (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
   classical
-  -- Each singleton lifts to S via extension
-  have h_each_S : ∀ s ∈ S,
-      HasCauchyPVOn S (fun z => (1 : ℂ) / (z - s) ^ k) γ 0 := by
-    intro s hs
-    exact hasCauchyPVOn_multipole_pow_inv_of_singleton S hs γ hδ_pos
-      (fun s' hs' h_ne_s => h_avoid s hs s' hs' h_ne_s) (h_singletons s hs)
-  -- Multiply by c s: HasCauchyPVOn is closed under const_mul
-  -- Use HasCauchyPVOn.finset_sum
+  -- Each singleton lifts to S via extension, then is scaled by c s
   have h_each_scaled : ∀ s ∈ S,
-      HasCauchyPVOn S (fun z => c s / (z - s) ^ k) γ 0 := by
-    intro s hs
-    have h := (h_each_S s hs).smul (c s)
-    rw [show (fun z => c s * ((1 : ℂ) / (z - s) ^ k)) =
+      HasCauchyPVOn S (fun z => c s / (z - s) ^ k) γ 0 := fun s hs => by
+    have h := (hasCauchyPVOn_multipole_pow_inv_of_singleton S hs γ hδ_pos
+      (h_avoid s hs) (h_singletons s hs)).smul (c s)
+    rwa [show (fun z => c s * ((1 : ℂ) / (z - s) ^ k)) =
       (fun z => c s / (z - s) ^ k) from funext fun z => by ring,
       mul_zero] at h
-    exact h
-  have h_sum := HasCauchyPVOn.finset_sum S h_each_scaled
-    (fun s hs ε hε => h_int_each s hs ε hε)
-  simpa only [Finset.sum_const_zero] using h_sum
+  simpa only [Finset.sum_const_zero] using
+    HasCauchyPVOn.finset_sum S h_each_scaled h_int_each
 
 /-! ## Multi-pole transverse composition (high-level corollary) -/
 
