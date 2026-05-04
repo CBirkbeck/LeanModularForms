@@ -243,6 +243,74 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
   field_simp
   ring
 
+/-! ## Combined sector formula -/
+
+/-- **Combined sector PV formula (HW eq. 3.4).** For the sector curve with
+corner angle `α` and radii `ε ≤ r`, summing the three pieces (real-axis ray
++ arc + reversed-ray-at-angle-α) gives:
+
+  `∫_ε^r dt/t^n + ∫_0^α arc + (-1)·∫_ε^r e^(-i(n-1)α)/t^n dt
+    = (1 - e^(-i(n-1)α)) / ((n-1)·ε^(n-1))`.
+
+This is the explicit formula in equation 3.4 of HW (arXiv:1808.00997v2),
+identically equal as functions of `ε > 0`. Under condition (B), the prefactor
+`(1 - e^(-i(n-1)α)) = 0`, so the sector PV vanishes for every `ε > 0`. -/
+theorem sector_inv_pow_integral_combined
+    (r : ℝ) (hr : 0 < r) (ε : ℝ) (hε : 0 < ε) (hεr : ε ≤ r) (α : ℝ) (n : ℕ)
+    (hn : 2 ≤ n) :
+    (∫ t in ε..r, (1 : ℂ) / (↑t : ℂ) ^ n) +
+    (∫ t in (0 : ℝ)..α,
+      ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
+        ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n) -
+    (∫ t in ε..r,
+      Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I)) /
+        (↑t : ℂ) ^ n) =
+    (1 - Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) /
+      ((↑(n - 1 : ℕ) : ℂ) * (↑ε : ℂ) ^ (n - 1)) := by
+  rw [complex_ray_inv_pow_integral ε r hε hεr 1 n hn]
+  rw [arc_inv_pow_integral r hr α n hn]
+  rw [complex_ray_inv_pow_integral ε r hε hεr
+    (Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) n hn]
+  -- Algebraic simplification: combine the three closed forms
+  have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := by rw [Nat.cast_ne_zero]; omega
+  have hε_ne : (↑ε : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hε.ne'
+  have hr_ne : (↑r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
+  have hε_pow : (↑ε : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hε_ne
+  have hr_pow : (↑r : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hr_ne
+  field_simp
+  ring
+
+/-- **Sector PV vanishing under condition (B).** Combining the explicit formula
+`sector_inv_pow_integral_combined` with the algebraic vanishing
+`exp_neg_I_eq_one_of_conditionB`, the sector PV is **identically zero** for
+every `ε > 0` under condition (B).
+
+This closes the **k-even case** of HW Theorem 3.3 for the model sector
+curve under condition (B). The full closure for general curves follows
+from the curve→sector comparison via flatness (analog of
+`F_curve_diff_tendsto_zero_odd`, which is the remaining mechanical step). -/
+theorem sector_inv_pow_integral_vanishes_under_conditionB
+    (r : ℝ) (hr : 0 < r) (ε : ℝ) (hε : 0 < ε) (hεr : ε ≤ r) (α : ℝ) (n : ℕ)
+    (hn : 2 ≤ n)
+    (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
+    (∫ t in ε..r, (1 : ℂ) / (↑t : ℂ) ^ n) +
+    (∫ t in (0 : ℝ)..α,
+      ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
+        ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n) -
+    (∫ t in ε..r,
+      Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I)) /
+        (↑t : ℂ) ^ n) = 0 := by
+  rw [sector_inv_pow_integral_combined r hr ε hε hεr α n hn]
+  -- Under condition (B), exp(-(n-1) * α * I) = 1
+  have h_exp_one :
+      Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) = 1 :=
+    exp_neg_I_eq_one_of_conditionB n α h_angle
+  -- Match form
+  rw [show (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I) : ℂ) =
+    (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ)) * Complex.I from by push_cast; ring]
+  rw [h_exp_one]
+  simp
+
 end LeanModularForms
 
 end
