@@ -58,11 +58,9 @@ theorem cpvIntegrandOn_singleton_eq_contour_of_far
     {t : ℝ} (h_far : ε < ‖γ.toPath.extend t - s‖) :
     cpvIntegrandOn {s} f γ.toPath.extend ε t =
       f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
-  apply cpvIntegrandOn_of_forall_gt
-  intro s' hs'
+  refine cpvIntegrandOn_of_forall_gt fun s' hs' => ?_
   rw [Finset.mem_singleton] at hs'
-  rw [hs']
-  exact h_far
+  rwa [hs']
 
 /-- **CPV integrand for a singleton is zero when γ is close to `s`.** -/
 theorem cpvIntegrandOn_singleton_eq_zero_of_close
@@ -130,11 +128,9 @@ theorem integral_cpvIntegrandOn_singleton_eq_zero_middle
     (h_le : α ≤ β)
     (h_inside : ∀ t ∈ Ioo α β, ‖γ.toPath.extend t - s‖ ≤ ε) :
     ∫ t in α..β, cpvIntegrandOn {s} f γ.toPath.extend ε t = 0 := by
-  rw [intervalIntegral.integral_of_le h_le, MeasureTheory.integral_Ioc_eq_integral_Ioo]
-  rw [show (∫ t in Ioo α β, cpvIntegrandOn {s} f γ.toPath.extend ε t ∂volume) =
-    ∫ t in Ioo α β, (0 : ℂ) ∂volume from by
-    apply MeasureTheory.setIntegral_congr_fun measurableSet_Ioo
-    exact fun t ht => cpvIntegrandOn_singleton_eq_zero_of_close γ (h_inside t ht)]
+  rw [intervalIntegral.integral_of_le h_le, MeasureTheory.integral_Ioc_eq_integral_Ioo,
+    MeasureTheory.setIntegral_congr_fun (g := fun _ => (0 : ℂ)) measurableSet_Ioo
+      (fun t ht => cpvIntegrandOn_singleton_eq_zero_of_close γ (h_inside t ht))]
   simp
 
 /-- **Full integral splitting (excision form).** Under the shape hypothesis on
@@ -158,21 +154,16 @@ theorem cpvIntegrandOn_singleton_integral_eq_excision
       ∫ t in β..(1 : ℝ), cpvIntegrandOn {s} f γ.toPath.extend ε t := by
     have hα1 : α ≤ 1 := h_le.trans hβ
     have h0β : (0 : ℝ) ≤ β := hα.trans h_le
+    have h01 : Set.uIcc (0 : ℝ) 1 = Set.Icc 0 1 := Set.uIcc_of_le (zero_le_one' ℝ)
     have h_int_α : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 α := by
-      apply h_int_full.mono_set
-      rw [Set.uIcc_of_le hα, Set.uIcc_of_le (zero_le_one' ℝ)]
-      exact Set.Icc_subset_Icc le_rfl hα1
+        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 α :=
+      h_int_full.mono_set (by rw [Set.uIcc_of_le hα, h01]; exact Set.Icc_subset_Icc le_rfl hα1)
     have h_int_β : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume α β := by
-      apply h_int_full.mono_set
-      rw [Set.uIcc_of_le h_le, Set.uIcc_of_le (zero_le_one' ℝ)]
-      exact Set.Icc_subset_Icc hα hβ
+        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume α β :=
+      h_int_full.mono_set (by rw [Set.uIcc_of_le h_le, h01]; exact Set.Icc_subset_Icc hα hβ)
     have h_int_1 : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 := by
-      apply h_int_full.mono_set
-      rw [Set.uIcc_of_le hβ, Set.uIcc_of_le (zero_le_one' ℝ)]
-      exact Set.Icc_subset_Icc h0β le_rfl
+        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 :=
+      h_int_full.mono_set (by rw [Set.uIcc_of_le hβ, h01]; exact Set.Icc_subset_Icc h0β le_rfl)
     have h_int_αβ : IntervalIntegrable
         (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 β :=
       h_int_α.trans h_int_β
@@ -277,10 +268,10 @@ theorem shape_left_of_strictAntiOn
   intro t ⟨ht_pos, ht_lt⟩
   by_cases h_outer : t ≤ t₀ - δMinus
   · calc ε < δ_avoid := hε_lt_avoid
-      _ ≤ ‖γ t - s‖ := h_avoid t ⟨le_of_lt ht_pos, h_outer⟩
+      _ ≤ ‖γ t - s‖ := h_avoid t ⟨ht_pos.le, h_outer⟩
   · push Not at h_outer
     have ht_in_Icc : t ∈ Icc (t₀ - δMinus) t₀ :=
-      ⟨le_of_lt h_outer, le_of_lt (lt_of_lt_of_le ht_lt h_inIcc.2)⟩
+      ⟨h_outer.le, (ht_lt.trans_le h_inIcc.2).le⟩
     have h_strict : ‖γ (firstExitTimeLeft γ t₀ δMinus s ε) - s‖ < ‖γ t - s‖ :=
       hγ_anti ht_in_Icc h_inIcc ht_lt
     linarith [ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max]
@@ -306,10 +297,10 @@ theorem shape_right_of_strictMonoOn
   intro t ⟨ht_lt, ht_lt_one⟩
   by_cases h_outer : t₀ + δPlus ≤ t
   · calc ε < δ_avoid := hε_lt_avoid
-      _ ≤ ‖γ t - s‖ := h_avoid t ⟨h_outer, le_of_lt ht_lt_one⟩
+      _ ≤ ‖γ t - s‖ := h_avoid t ⟨h_outer, ht_lt_one.le⟩
   · push Not at h_outer
     have ht_in_Icc : t ∈ Icc t₀ (t₀ + δPlus) :=
-      ⟨le_of_lt (lt_of_le_of_lt h_inIcc.1 ht_lt), le_of_lt h_outer⟩
+      ⟨(h_inIcc.1.trans_lt ht_lt).le, h_outer.le⟩
     have h_strict : ‖γ (firstExitTimeRight γ t₀ δPlus s ε) - s‖ < ‖γ t - s‖ :=
       hγ_mono h_inIcc ht_in_Icc ht_lt
     linarith [ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max]

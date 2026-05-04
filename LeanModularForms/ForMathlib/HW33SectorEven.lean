@@ -50,12 +50,11 @@ theorem exp_neg_I_eq_one_of_conditionB (n : ℕ) (α : ℝ)
     (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
     Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) = 1 := by
   obtain ⟨k, hk⟩ := h_angle
+  have hk' : (↑((n - 1 : ℕ) : ℝ) * α : ℂ) = (↑k : ℂ) * (2 * ↑Real.pi) := by exact_mod_cast hk
   rw [show (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) =
-    -(↑(((n - 1 : ℕ) : ℝ) * α) * Complex.I) from by push_cast; ring, hk]
-  push_cast
-  rw [show ((-(↑k * (2 * ↑Real.pi) * Complex.I)) : ℂ) =
-    (((-k : ℤ) : ℂ) * (2 * ↑Real.pi * Complex.I)) from by push_cast; ring]
-  rw [Complex.exp_int_mul, Complex.exp_two_pi_mul_I]; exact one_zpow _
+    (((-k : ℤ) : ℂ) * (2 * ↑Real.pi * Complex.I)) from by rw [hk']; push_cast; ring,
+    Complex.exp_int_mul, Complex.exp_two_pi_mul_I]
+  exact one_zpow _
 
 /-- **The HW Theorem 3.3 (eq. 3.4) sector-PV formula vanishes under condition (B).**
 
@@ -83,7 +82,7 @@ theorem sector_pv_formula_tendsto_zero_under_conditionB
       (1 - Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I)) /
         ((↑(n - 1) : ℂ) * (↑ε : ℂ) ^ (n - 1)))
       (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  apply Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) _ tendsto_const_nhds
+  refine Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) ?_ tendsto_const_nhds
   filter_upwards [self_mem_nhdsWithin] with ε hε
   exact (sector_pv_formula_vanishes_under_conditionB n _hn α h_angle ε hε).symm
 
@@ -101,28 +100,17 @@ theorem real_ray_inv_pow_integral
     (∫ t in a..b, (1 / t ^ n : ℝ)) =
       (1 / (n - 1 : ℕ) : ℝ) *
         (1 / a ^ (n - 1) - 1 / b ^ (n - 1)) := by
-  have h_zpow_eq : ∀ t : ℝ, t > 0 → (1 / t ^ n : ℝ) = t ^ (-(n : ℤ)) := by
-    intro t ht
-    rw [zpow_neg, zpow_natCast, ← one_div]
-  have h_int_eq : ∫ t in a..b, (1 / t ^ n : ℝ) = ∫ t in a..b, t ^ (-(n : ℤ)) := by
-    apply intervalIntegral.integral_congr
-    intro t ht
-    rw [Set.uIcc_of_le hab] at ht
-    exact h_zpow_eq t (lt_of_lt_of_le ha ht.1)
+  have h_int_eq : ∫ t in a..b, (1 / t ^ n : ℝ) = ∫ t in a..b, t ^ (-(n : ℤ)) :=
+    intervalIntegral.integral_congr fun t _ => by
+      rw [zpow_neg, zpow_natCast, ← one_div]
   rw [h_int_eq]
-  have h_not_neg_one : (-(n : ℤ)) ≠ -1 := by intro h; omega
-  have h_zero_not_in : (0 : ℝ) ∉ Set.uIcc a b := by
-    rw [Set.uIcc_of_le hab]
-    exact fun h => absurd h.1 (not_le.mpr ha)
-  rw [integral_zpow (Or.inr ⟨h_not_neg_one, h_zero_not_in⟩)]
-  have h_neg_n_plus_one : (-(n : ℤ)) + 1 = -((n - 1 : ℕ) : ℤ) := by omega
-  rw [h_neg_n_plus_one]
-  rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
-  have h_denom_eq : ((↑(-(n : ℤ)) + 1 : ℝ)) = -((n - 1 : ℕ) : ℝ) := by
-    push_cast
-    have h1 : 1 ≤ n := by omega
-    rw [Nat.cast_sub h1]; ring
-  rw [h_denom_eq]
+  have h_zero_not_in : (0 : ℝ) ∉ Set.uIcc a b :=
+    Set.uIcc_of_le hab ▸ fun h => absurd h.1 (not_le.mpr ha)
+  rw [integral_zpow (Or.inr ⟨by intro h; omega, h_zero_not_in⟩),
+    show (-(n : ℤ)) + 1 = -((n - 1 : ℕ) : ℤ) from by omega,
+    zpow_neg, zpow_neg, zpow_natCast, zpow_natCast,
+    show ((↑(-(n : ℤ)) + 1 : ℝ)) = -((n - 1 : ℕ) : ℝ) from by
+      push_cast [Nat.cast_sub (show 1 ≤ n by omega)]; ring]
   field_simp
   ring
 
@@ -140,24 +128,20 @@ theorem complex_ray_inv_pow_integral
       (c / (↑t : ℂ) ^ n) = c * (↑(1 / t ^ n : ℝ) : ℂ) := by
     intro t ht
     rw [Set.uIcc_of_le hab] at ht
-    have ht_pos : 0 < t := lt_of_lt_of_le ha ht.1
-    have ht_ne : (↑t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ht_pos.ne'
-    have ht_pow_ne : (↑t : ℂ) ^ n ≠ 0 := pow_ne_zero _ ht_ne
+    have ht_ne : (↑t : ℂ) ≠ 0 :=
+      Complex.ofReal_ne_zero.mpr (lt_of_lt_of_le ha ht.1).ne'
     push_cast
     field_simp
-  have h_step1 : (∫ t in a..b, c / (↑t : ℂ) ^ n) =
-      ∫ t in a..b, c * (↑(1 / t ^ n : ℝ) : ℂ) :=
-    intervalIntegral.integral_congr h_eq
-  rw [h_step1]
+  rw [intervalIntegral.integral_congr h_eq]
   have h_step2 : (∫ t in a..b, c * (↑(1 / t ^ n : ℝ) : ℂ)) =
       c * ∫ t in a..b, (↑(1 / t ^ n : ℝ) : ℂ) :=
     intervalIntegral.integral_const_mul c (fun t : ℝ => (↑(1 / t ^ n : ℝ) : ℂ))
-  rw [h_step2]
-  rw [intervalIntegral.integral_ofReal, real_ray_inv_pow_integral a b ha hab n hn]
+  rw [h_step2, intervalIntegral.integral_ofReal,
+    real_ray_inv_pow_integral a b ha hab n hn]
   push_cast
-  have ha_ne : (↑a : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ha.ne'
-  have hb_ne : (↑b : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (lt_of_lt_of_le ha hab).ne'
-  field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0), ha_ne, hb_ne]
+  field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0),
+    Complex.ofReal_ne_zero.mpr ha.ne',
+    Complex.ofReal_ne_zero.mpr (lt_of_lt_of_le ha hab).ne']
 
 /-! ## Arc integral (γ_2 piece) -/
 
@@ -174,8 +158,7 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
       (1 - Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) /
         ((↑(n - 1 : ℕ) : ℂ) * (↑r : ℂ) ^ (n - 1)) := by
   have hr_ne : (↑r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
-  have hr_pow_ne : (↑r : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hr_ne
-  have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := by rw [Nat.cast_ne_zero]; omega
+  have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
   -- Simplify the integrand to (i/r^(n-1)) · exp(c · t) where c = -i(n-1)
   have h_eq : ∀ t : ℝ,
       ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
@@ -183,27 +166,20 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
       (Complex.I / (↑r : ℂ) ^ (n - 1)) *
         Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ)) := by
     intro t
-    have h_exp_ne : Complex.exp ((↑t : ℂ) * Complex.I) ≠ 0 := Complex.exp_ne_zero _
-    have h_prod_ne : (↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I) ≠ 0 :=
-      mul_ne_zero hr_ne h_exp_ne
-    rw [mul_pow]
-    have h_pow_n : (↑r : ℂ) ^ n = (↑r : ℂ) ^ (n - 1) * (↑r : ℂ) := by
-      conv_lhs => rw [show n = (n - 1) + 1 from by omega]
-      rw [pow_succ]
-    rw [h_pow_n]
-    -- exp factor: exp(it)^n = exp(int) = exp(i(n-1)t) · exp(it)
-    have h_exp_pow : Complex.exp ((↑t : ℂ) * Complex.I) ^ n =
+    rw [mul_pow,
+      show (↑r : ℂ) ^ n = (↑r : ℂ) ^ (n - 1) * (↑r : ℂ) by
+        conv_lhs => rw [show n = (n - 1) + 1 from by omega]
+        rw [pow_succ],
+      show Complex.exp ((↑t : ℂ) * Complex.I) ^ n =
         Complex.exp ((↑(n - 1 : ℕ) : ℂ) * (↑t : ℂ) * Complex.I) *
-          Complex.exp ((↑t : ℂ) * Complex.I) := by
-      rw [← Complex.exp_nat_mul, ← Complex.exp_add]
-      congr 1
-      rw [show n = (n - 1) + 1 from by omega]
-      push_cast; ring
-    rw [h_exp_pow]
-    rw [show -(↑(n - 1 : ℕ) : ℂ) * Complex.I * (↑t : ℂ) =
-      -((↑(n - 1 : ℕ) : ℂ) * (↑t : ℂ) * Complex.I) from by ring]
-    rw [Complex.exp_neg]
-    field_simp
+          Complex.exp ((↑t : ℂ) * Complex.I) by
+        rw [← Complex.exp_nat_mul, ← Complex.exp_add]
+        congr 1
+        rw [show n = (n - 1) + 1 from by omega]; push_cast; ring,
+      show -(↑(n - 1 : ℕ) : ℂ) * Complex.I * (↑t : ℂ) =
+        -((↑(n - 1 : ℕ) : ℂ) * (↑t : ℂ) * Complex.I) from by ring,
+      Complex.exp_neg]
+    field_simp [Complex.exp_ne_zero]
   rw [intervalIntegral.integral_congr (fun t _ => h_eq t)]
   -- Pull out (i/r^(n-1)) using integral_const_mul (with explicit f)
   have h_step :
@@ -215,16 +191,12 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
           Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ)) :=
     intervalIntegral.integral_const_mul (Complex.I / (↑r : ℂ) ^ (n - 1))
       (fun t => Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ)))
-  rw [h_step]
-  -- Now ∫_0^α exp(c · t) dt = (exp(c·α) - 1)/c where c = -i(n-1)
-  have h_c_ne : (-(↑(n - 1 : ℕ) : ℂ) * Complex.I) ≠ 0 := by
-    apply mul_ne_zero (neg_ne_zero.mpr hn1_ne) Complex.I_ne_zero
-  rw [integral_exp_mul_complex h_c_ne]
+  rw [h_step,
+    integral_exp_mul_complex (mul_ne_zero (neg_ne_zero.mpr hn1_ne) Complex.I_ne_zero)]
   push_cast
   rw [show (-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑α : ℂ) =
-    -(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I) from by ring]
-  rw [show (-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * ((0 : ℂ)) = 0 from by ring]
-  rw [Complex.exp_zero]
+    -(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I) from by ring,
+    mul_zero, Complex.exp_zero]
   field_simp
   ring
 
@@ -257,9 +229,8 @@ theorem sector_inv_pow_integral_combined
   rw [complex_ray_inv_pow_integral ε r hε hεr
     (Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) n hn]
   -- Algebraic simplification: combine the three closed forms
-  have hε_ne : (↑ε : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hε.ne'
-  have hr_ne : (↑r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
-  field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0), hε_ne, hr_ne]
+  field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0),
+    Complex.ofReal_ne_zero.mpr hε.ne', Complex.ofReal_ne_zero.mpr hr.ne']
   ring
 
 /-- **Sector PV vanishing under condition (B).** Combining the explicit formula
@@ -282,15 +253,10 @@ theorem sector_inv_pow_integral_vanishes_under_conditionB
     (∫ t in ε..r,
       Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I)) /
         (↑t : ℂ) ^ n) = 0 := by
-  rw [sector_inv_pow_integral_combined r hr ε hε hεr α n hn]
-  -- Under condition (B), exp(-(n-1) * α * I) = 1
-  have h_exp_one :
-      Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) = 1 :=
-    exp_neg_I_eq_one_of_conditionB n α h_angle
-  -- Match form
-  rw [show (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I) : ℂ) =
-    (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ)) * Complex.I from by push_cast; ring]
-  rw [h_exp_one]
+  rw [sector_inv_pow_integral_combined r hr ε hε hεr α n hn,
+    show (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I) : ℂ) =
+      (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ)) * Complex.I from by push_cast; ring,
+    exp_neg_I_eq_one_of_conditionB n α h_angle]
   simp
 
 /-- **Sector PV Tendsto vanishing under condition (B).** The sector curve's
@@ -309,10 +275,10 @@ theorem sector_inv_pow_integral_tendsto_zero_under_conditionB
         Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I)) /
           (↑t : ℂ) ^ n))
       (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  apply Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) _ tendsto_const_nhds
+  refine Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) ?_ tendsto_const_nhds
   filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
   exact (sector_inv_pow_integral_vanishes_under_conditionB r hr ε hε.1
-    (le_of_lt hε.2) α n hn h_angle).symm
+    hε.2.le α n hn h_angle).symm
 
 /-! ## F-line difference under condition (B) — generalizes the k-odd case -/
 
@@ -340,25 +306,21 @@ theorem F_line_diff_eq_zero_under_conditionB
       (((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹ =
     -((↑(k - 1) : ℂ))⁻¹ *
       (((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1))⁻¹ := by
-  congr 1
-  congr 1
+  congr 2
   -- Reduce to ((s + ε • L_plus / ‖L_plus‖) - s)^(k-1) = ((s + ε • (-L_minus / ‖L_minus‖)) - s)^(k-1)
   -- which simplifies to (ε • L_plus / ‖L_plus‖)^(k-1) = (ε • (-L_minus / ‖L_minus‖))^(k-1)
   -- which factors out ε^(k-1), giving (L_plus/‖L_plus‖)^(k-1) = (-L_minus/‖L_minus‖)^(k-1) (B).
   have h_lhs : ((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * ((L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1)) := by
-    rw [add_sub_cancel_left]
-    have h_smul_eq : ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) =
-        (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ)) := by
-      rw [Complex.real_smul]; push_cast; field_simp
-    rw [h_smul_eq, mul_pow]
+    rw [add_sub_cancel_left,
+      show ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) = (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ))
+        from by rw [Complex.real_smul]; push_cast; field_simp, mul_pow]
   have h_rhs : ((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * (((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1)) := by
-    rw [add_sub_cancel_left]
-    have h_smul_eq : ((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ) =
-        (↑ε : ℂ) * ((-L_minus) / (↑‖L_minus‖ : ℂ)) := by
-      rw [Complex.real_smul]; push_cast; field_simp
-    rw [h_smul_eq, mul_pow]
+    rw [add_sub_cancel_left,
+      show ((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ) =
+          (↑ε : ℂ) * ((-L_minus) / (↑‖L_minus‖ : ℂ))
+        from by rw [Complex.real_smul]; push_cast; field_simp, mul_pow]
   rw [h_lhs, h_rhs, h_B]
 
 /-! ## Curve F-difference under condition (B), general angle -/
@@ -401,15 +363,11 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
       ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹) -
         (-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹)‖)
       (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  -- Right-side F-diff at chord target (with L_plus) → 0
-  have h_right := F_diff_at_tangent_target_tendsto_zero_right
-    h_flat hL_plus h_deriv_right hL_right h_s hk hkn hn1
-  have h_right_comp := h_right.comp h_plus_to
-  -- Left-side F-diff at chord target (with L_minus) → 0
-  have h_left := F_diff_at_tangent_target_tendsto_zero_left
-    h_flat hL_minus h_deriv_left hL_left h_s hk hkn hn1
-  have h_left_comp := h_left.comp h_minus_to
-  have h_sum_raw := h_right_comp.add h_left_comp
+  -- Right- and left-side F-diff at chord target → 0; sum still → 0
+  have h_sum_raw := ((F_diff_at_tangent_target_tendsto_zero_right
+        h_flat hL_plus h_deriv_right hL_right h_s hk hkn hn1).comp h_plus_to).add
+      ((F_diff_at_tangent_target_tendsto_zero_left
+        h_flat hL_minus h_deriv_left hL_left h_s hk hkn hn1).comp h_minus_to)
   -- The summed F-diffs tend to 0
   have h_sum : Tendsto (fun ε =>
       ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹ -
@@ -425,22 +383,20 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
     (Eventually.of_forall fun _ => norm_nonneg _) ?_
   filter_upwards [h_plus_radius, h_minus_radius] with ε hpr hmr
   -- Use F_line_diff_eq_zero_under_conditionB to identify the two side targets
-  have h_neg_norm : ‖(-L_minus)‖ = ‖L_minus‖ := norm_neg L_minus
   have h_targets_eq :
       -(↑(k - 1) : ℂ)⁻¹ *
         (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L_minus)‖ : ℝ) • (-L_minus)) - s)
           ^ (k - 1))⁻¹ =
       -(↑(k - 1) : ℂ)⁻¹ *
         (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹ := by
-    rw [hmr, h_neg_norm, hpr]
-    -- Now show: F at (s + (ε / ‖L_minus‖) • (-L_minus)) = F at (s + (ε / ‖L_plus‖) • L_plus)
+    rw [hmr, norm_neg, hpr]
     exact (F_line_diff_eq_zero_under_conditionB s L_minus L_plus k hk
       hL_minus hL_plus h_B ε).symm
   set TR := -(↑(k - 1) : ℂ)⁻¹ *
     (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹
   set A := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹
   set B := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹
-  have h_triangle : ‖A - B‖ ≤ ‖B - TR‖ + ‖A - TR‖ := by
+  have h_triangle : ‖A - B‖ ≤ ‖B - TR‖ + ‖A - TR‖ :=
     calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by ring_nf
       _ ≤ ‖A - TR‖ + ‖B - TR‖ := norm_sub_le _ _
       _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
@@ -490,13 +446,13 @@ theorem hw_theorem_3_3_under_conditionB_parametric
       (∫ t in a..(t_eps_minus ε), γ' t / (γ t - s) ^ k) +
         (∫ t in (t_eps_plus ε)..b, γ' t / (γ t - s) ^ k))
       (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  apply cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
-      t_eps_plus t_eps_minus
-      h_minus_smooth h_minus_avoids h_minus_int
-      h_plus_smooth h_plus_avoids h_plus_int
-  exact F_curve_diff_tendsto_zero_under_conditionB h_flat hL_minus hL_plus
-    h_deriv_right h_deriv_left hL_right hL_left h_s hk hkn hn1 h_B
-    t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius
+  exact cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
+    t_eps_plus t_eps_minus
+    h_minus_smooth h_minus_avoids h_minus_int
+    h_plus_smooth h_plus_avoids h_plus_int
+    (F_curve_diff_tendsto_zero_under_conditionB h_flat hL_minus hL_plus
+      h_deriv_right h_deriv_left hL_right hL_left h_s hk hkn hn1 h_B
+      t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius)
 
 /-! ## HW Theorem 3.3 — final HasCauchyPVOn closure under condition (B) -/
 
@@ -599,25 +555,18 @@ theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
       (firstExitTimeLeft_radius_eventually hδMinus hγ_cont_left h_s h_leave_left)
       h_minus_smooth h_minus_avoids h_minus_int
       h_plus_smooth h_plus_avoids h_plus_int
-  -- Step 2: Shape hypothesis from strict mono
-  have h_shape := shape_eventually_of_strict_mono
-    h_t₀_minus_pos h_t₀_plus_le hδMinus hδPlus
-    hγ_cont_left hγ_cont_right hγ_anti hγ_mono h_s
-    h_avoid_left_pos h_avoid_right_pos h_avoid_left h_avoid_right
-  -- Step 3: Apply the bridge
+  -- Step 2 + 3: Shape hypothesis from strict mono, then apply the bridge
   refine hasCauchyPVOn_singleton_of_exitTime_excision γ s
-    (fun z => (1 : ℂ) / (z - s) ^ k) h_shape h_int_full ?_
+    (fun z => (1 : ℂ) / (z - s) ^ k)
+    (shape_eventually_of_strict_mono
+      h_t₀_minus_pos h_t₀_plus_le hδMinus hδPlus
+      hγ_cont_left hγ_cont_right hγ_anti hγ_mono h_s
+      h_avoid_left_pos h_avoid_right_pos h_avoid_left h_avoid_right)
+    h_int_full ?_
   -- Reconcile integrand: deriv γ / (γ - s)^k = (1/(γ-s)^k) · deriv γ
-  apply h_parametric.congr
-  intro ε
-  congr 1
-  · apply intervalIntegral.integral_congr
-    intro t _
-    show deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
-         (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
-    ring
-  · apply intervalIntegral.integral_congr
-    intro t _
+  refine h_parametric.congr fun ε => ?_
+  congr 1 <;>
+  · refine intervalIntegral.integral_congr fun t _ => ?_
     show deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
          (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
     ring

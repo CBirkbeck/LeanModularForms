@@ -64,7 +64,7 @@ theorem hCancel_of_higherOrder_decomposition_under_B
     HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
   hCancel_of_decomposition S f γ h_holo h_polar
-    (fun z => by rw [h_decomp z]; ring)
+    (fun z => (h_decomp z).trans (add_comm _ _))
     h_holo_cancel h_polar_cancel hI_holo hI_polar
 
 /-! ## End-of-line: full closure under condition (B) -/
@@ -119,9 +119,6 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     HasCauchyPVOn S f γ.toPiecewiseC1Path
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) := by
-  have hCancel := hCancel_of_higherOrder_decomposition_under_B S f
-    γ.toPiecewiseC1Path h_polar h_holo h_decomp h_polar_cancel h_holo_cancel
-    hI_polar hI_holo
   -- The cpvIntegrandOn integrability for f - principalPartSum follows from
   -- the decomposition: cpv(h_polar + h_holo) = cpv(h_polar) + cpv(h_holo).
   have hI_rem : ∀ ε > 0, IntervalIntegrable
@@ -129,15 +126,17 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
         (fun z => f z - principalPartSum S (fun s => residue f s) z)
         γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1 := by
     intro ε hε
-    have h_int_combined := (hI_polar ε hε).add (hI_holo ε hε)
-    refine h_int_combined.congr ?_
+    refine ((hI_polar ε hε).add (hI_holo ε hε)).congr ?_
     intro t _
     simp only [cpvIntegrandOn]
     by_cases h : ∃ s ∈ S, ‖γ.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
     · simp [h]
-    · simp [h, h_decomp]; ring
+    · simp [h, h_decomp, add_mul]
   exact generalizedResidueTheorem hU S hS_in_U f hf γ h_null hMero hCondA hCondB
-    h_no_endpt_cross h_unique_cross hCancel hPV_sing hI_sing hI_rem
+    h_no_endpt_cross h_unique_cross
+    (hCancel_of_higherOrder_decomposition_under_B S f γ.toPiecewiseC1Path
+      h_polar h_holo h_decomp h_polar_cancel h_holo_cancel hI_polar hI_holo)
+    hPV_sing hI_sing hI_rem
 
 end LeanModularForms
 
