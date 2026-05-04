@@ -174,6 +174,75 @@ theorem complex_ray_inv_pow_integral
   have hb_pow : (↑b : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hb_ne
   field_simp
 
+/-! ## Arc integral (γ_2 piece) -/
+
+/-- **Arc integral closed form.** For the arc `t ↦ r · e^(it)` on `[0, α]`,
+the integral `∫_arc dz/z^n` evaluates to:
+
+  `(1 - e^(-i(n-1)α)) / ((n-1) · r^(n-1))`.
+
+This is the γ_2 contribution in HW eq. (3.4)'s sector calculation. -/
+theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2 ≤ n) :
+    (∫ t in (0 : ℝ)..α,
+      ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
+        ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n) =
+      (1 - Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) /
+        ((↑(n - 1 : ℕ) : ℂ) * (↑r : ℂ) ^ (n - 1)) := by
+  have hr_ne : (↑r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
+  have hr_pow_ne : (↑r : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hr_ne
+  have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := by rw [Nat.cast_ne_zero]; omega
+  -- Simplify the integrand to (i/r^(n-1)) · exp(c · t) where c = -i(n-1)
+  have h_eq : ∀ t : ℝ,
+      ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
+        ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n =
+      (Complex.I / (↑r : ℂ) ^ (n - 1)) *
+        Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ)) := by
+    intro t
+    have h_exp_ne : Complex.exp ((↑t : ℂ) * Complex.I) ≠ 0 := Complex.exp_ne_zero _
+    have h_prod_ne : (↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I) ≠ 0 :=
+      mul_ne_zero hr_ne h_exp_ne
+    rw [mul_pow]
+    have h_pow_n : (↑r : ℂ) ^ n = (↑r : ℂ) ^ (n - 1) * (↑r : ℂ) := by
+      conv_lhs => rw [show n = (n - 1) + 1 from by omega]
+      rw [pow_succ]
+    rw [h_pow_n]
+    -- exp factor: exp(it)^n = exp(int) = exp(i(n-1)t) · exp(it)
+    have h_exp_pow : Complex.exp ((↑t : ℂ) * Complex.I) ^ n =
+        Complex.exp ((↑(n - 1 : ℕ) : ℂ) * (↑t : ℂ) * Complex.I) *
+          Complex.exp ((↑t : ℂ) * Complex.I) := by
+      rw [← Complex.exp_nat_mul, ← Complex.exp_add]
+      congr 1
+      rw [show n = (n - 1) + 1 from by omega]
+      push_cast; ring
+    rw [h_exp_pow]
+    rw [show -(↑(n - 1 : ℕ) : ℂ) * Complex.I * (↑t : ℂ) =
+      -((↑(n - 1 : ℕ) : ℂ) * (↑t : ℂ) * Complex.I) from by ring]
+    rw [Complex.exp_neg]
+    field_simp
+  rw [intervalIntegral.integral_congr (fun t _ => h_eq t)]
+  -- Pull out (i/r^(n-1)) using integral_const_mul (with explicit f)
+  have h_step :
+      (∫ t in (0 : ℝ)..α,
+        (Complex.I / (↑r : ℂ) ^ (n - 1)) *
+          Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ))) =
+      (Complex.I / (↑r : ℂ) ^ (n - 1)) *
+        ∫ t in (0 : ℝ)..α,
+          Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ)) :=
+    intervalIntegral.integral_const_mul (Complex.I / (↑r : ℂ) ^ (n - 1))
+      (fun t => Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ)))
+  rw [h_step]
+  -- Now ∫_0^α exp(c · t) dt = (exp(c·α) - 1)/c where c = -i(n-1)
+  have h_c_ne : (-(↑(n - 1 : ℕ) : ℂ) * Complex.I) ≠ 0 := by
+    apply mul_ne_zero (neg_ne_zero.mpr hn1_ne) Complex.I_ne_zero
+  rw [integral_exp_mul_complex h_c_ne]
+  push_cast
+  rw [show (-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑α : ℂ) =
+    -(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I) from by ring]
+  rw [show (-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * ((0 : ℂ)) = 0 from by ring]
+  rw [Complex.exp_zero]
+  field_simp
+  ring
+
 end LeanModularForms
 
 end
