@@ -66,10 +66,9 @@ theorem intervalIntegrable_pow_inv_mul_deriv_of_avoids
   have h_bound_ae : ∀ᵐ t ∂(volume.restrict (Ioc (0 : ℝ) 1)),
       ‖(1 : ℂ) / (γ.toPath.extend t - s) ^ k‖ ≤ 1 / δ ^ k := by
     refine (ae_restrict_iff' measurableSet_Ioc).mpr <| .of_forall fun t ht => ?_
-    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
     rw [norm_div, norm_one, norm_pow]
     exact div_le_div_of_nonneg_left zero_le_one (pow_pos hδ_pos k)
-      (pow_le_pow_left₀ hδ_pos.le (hδ_bd t ht_Icc) k)
+      (pow_le_pow_left₀ hδ_pos.le (hδ_bd t (Ioc_subset_Icc_self ht)) k)
   exact h_deriv_int.bdd_mul h_meas h_bound_ae
 
 /-! ## Measurability of the "ε-ball" set -/
@@ -79,12 +78,12 @@ theorem measurableSet_cpvIntegrandOn_zero
     {y : ℂ} (S : Finset ℂ) (γ : PiecewiseC1Path x y) (ε : ℝ) :
     MeasurableSet {t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε} := by
   classical
-  have h_eq : {t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε} =
-      ⋃ s ∈ (S : Set ℂ), {t | ‖γ.toPath.extend t - s‖ ≤ ε} := by
-    ext t; simp
-  rw [h_eq]
-  exact S.finite_toSet.measurableSet_biUnion fun s _ =>
-    (γ.toPath.continuous_extend.measurable.sub_const s).norm measurableSet_Iic
+  suffices {t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε} =
+      ⋃ s ∈ (S : Set ℂ), {t | ‖γ.toPath.extend t - s‖ ≤ ε} by
+    rw [this]
+    exact S.finite_toSet.measurableSet_biUnion fun s _ =>
+      (γ.toPath.continuous_extend.measurable.sub_const s).norm measurableSet_Iic
+  ext t; simp
 
 /-! ## CPV integrand norm bound -/
 
@@ -117,16 +116,16 @@ theorem aestronglyMeasurable_cpvIntegrandOn
   have h_meas : MeasurableSet
       {t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε} :=
     measurableSet_cpvIntegrandOn_zero S γ ε
-  have h_eq : (fun t : ℝ => cpvIntegrandOn S f γ.toPath.extend ε t) =
+  suffices (fun t : ℝ => cpvIntegrandOn S f γ.toPath.extend ε t) =
       ({t : ℝ | ∃ s ∈ S, ‖γ.toPath.extend t - s‖ ≤ ε}).piecewise
-        (fun _ => 0) (PiecewiseC1Path.contourIntegrand f γ) := by
-    funext t
-    simp only [cpvIntegrandOn, Set.piecewise, PiecewiseC1Path.contourIntegrand,
-      PiecewiseC1Path.extendedPath_eq, Set.mem_setOf_eq]
-  rw [h_eq]
-  exact AEStronglyMeasurable.piecewise h_meas
-    aestronglyMeasurable_const
-    (h_contour_meas.mono_measure Measure.restrict_le_self)
+        (fun _ => 0) (PiecewiseC1Path.contourIntegrand f γ) by
+    rw [this]
+    exact AEStronglyMeasurable.piecewise h_meas
+      aestronglyMeasurable_const
+      (h_contour_meas.mono_measure Measure.restrict_le_self)
+  funext t
+  simp only [cpvIntegrandOn, Set.piecewise, PiecewiseC1Path.contourIntegrand,
+    PiecewiseC1Path.extendedPath_eq, Set.mem_setOf_eq]
 
 /-- **CPV integrand interval-integrability from contour integrand integrability.**
 For any `ε`, if the contour integrand `f(γ(t)) · γ'(t)` is interval-integrable
@@ -198,15 +197,13 @@ theorem contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
       fun t ht => by
         have := hδ_bd s hs t ht
         rwa [PiecewiseC1Path.extendedPath_eq] at this
-    have h_one := intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
-      hδ_bd_extend hLip
-    have h_eq : (fun t : ℝ =>
+    rw [show (fun t : ℝ =>
         c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) =
         fun t => c s *
-          (1 / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) := by
-      funext t; ring
-    rw [h_eq]
-    exact h_one.const_mul (c s)
+          (1 / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) by
+      funext t; ring]
+    exact (intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
+      hδ_bd_extend hLip).const_mul (c s)
   have heq : PiecewiseC1Path.contourIntegrand
       (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ =
       fun t => ∑ s ∈ S,
@@ -247,15 +244,12 @@ theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids_lip
         rwa [PiecewiseC1Path.extendedPath_eq] at this
     exact intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
       hδ_bd_extend hLip
-  have h_HO_contour := contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
-    S k c γ hδ_pos hδ_bd hLip
-  have h_HO_int : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S
-        (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ.toPath.extend ε t)
-      volume 0 1 := fun ε _ =>
-    cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γ ε h_HO_contour
   exact hasCauchyPVOn_add_higherOrderPolar_of_avoids S f γ
-    ⟨δ, hδ_pos, hδ_bd⟩ h_f h_f_int k hk c h_int_HO h_HO_int
+    ⟨δ, hδ_pos, hδ_bd⟩ h_f h_f_int k hk c h_int_HO
+    (fun ε _ =>
+      cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γ ε
+        (contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
+          S k c γ hδ_pos hδ_bd hLip))
 
 /-- **`hasCauchyPVOn_add_higherOrderPolarSum_of_avoids` with all integrability
 auto-discharged from Lipschitz + avoidance (multi-power version).** -/
@@ -280,15 +274,12 @@ theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids_lip
         rwa [PiecewiseC1Path.extendedPath_eq] at this
     exact intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
       hδ_bd_extend hLip
-  have h_HO_int : ∀ k ∈ Finset.Ico 2 (M + 1), ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S
-        (fun z => ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ.toPath.extend ε t)
-      volume 0 1 := fun k _ ε _ =>
-    cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γ ε
-      (contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
-        S k (c_HO k) γ hδ_pos hδ_bd hLip)
   exact hasCauchyPVOn_add_higherOrderPolarSum_of_avoids S f γ
-    ⟨δ, hδ_pos, hδ_bd⟩ h_f h_f_int M c_HO h_int_HO h_HO_int
+    ⟨δ, hδ_pos, hδ_bd⟩ h_f h_f_int M c_HO h_int_HO
+    (fun k _ ε _ =>
+      cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γ ε
+        (contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
+          S k (c_HO k) γ hδ_pos hδ_bd hLip))
 
 /-! ## Fully auto-discharged C-4 closed form -/
 
@@ -327,15 +318,12 @@ theorem generalizedResidueTheorem_higherOrder_avoids_closed_lip
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f_simple s) := by
   obtain ⟨δ, hδ_pos, hδ_bd⟩ :=
     avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids
-  have h_simple :
-      HasCauchyPVOn S f_simple γ.toPiecewiseC1Path
-        (2 * ↑Real.pi * I * ∑ s ∈ S,
-          generalizedWindingNumber γ.toPiecewiseC1Path s * residue f_simple s) :=
-    generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_open hU_ne
-      hU_bounded S hS_in_U f_simple hf_simple γ h_null hSimplePoles hγ_avoids
-      ⟨δ, hδ_pos, hδ_bd⟩ hLip
   exact hasCauchyPVOn_add_higherOrderPolarSum_of_avoids_lip
-    S f_simple γ.toPiecewiseC1Path hδ_pos hδ_bd h_simple h_simple_int M c_HO hLip
+    S f_simple γ.toPiecewiseC1Path hδ_pos hδ_bd
+    (generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_open hU_ne
+      hU_bounded S hS_in_U f_simple hf_simple γ h_null hSimplePoles hγ_avoids
+      ⟨δ, hδ_pos, hδ_bd⟩ hLip)
+    h_simple_int M c_HO hLip
 
 end LeanModularForms
 
