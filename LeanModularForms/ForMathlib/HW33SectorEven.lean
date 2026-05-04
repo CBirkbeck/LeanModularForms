@@ -136,6 +136,44 @@ theorem real_ray_inv_pow_integral
   field_simp
   ring
 
+/-- **Complex ray integral closed form.** Multiplying the real ray integral by
+a complex constant `c` (typically `e^(-i(n-1)α)` for a ray at angle α):
+
+  `∫_a^b c / (↑t : ℂ)^n dt = c · (1/(n-1)) · (1/a^(n-1) - 1/b^(n-1))`. -/
+theorem complex_ray_inv_pow_integral
+    (a b : ℝ) (ha : 0 < a) (hab : a ≤ b) (c : ℂ) (n : ℕ) (hn : 2 ≤ n) :
+    (∫ t in a..b, c / (↑t : ℂ) ^ n) =
+      c * ((1 : ℂ) / (↑(n - 1 : ℕ) : ℂ)) *
+        ((1 / (↑a : ℂ) ^ (n - 1)) - (1 / (↑b : ℂ) ^ (n - 1))) := by
+  -- Rewrite c/t^n = c * (↑(1/t^n : ℝ) : ℂ) on (a, b) (where t > 0)
+  have h_eq : ∀ t : ℝ, t ∈ Set.uIcc a b →
+      (c / (↑t : ℂ) ^ n) = c * (↑(1 / t ^ n : ℝ) : ℂ) := by
+    intro t ht
+    rw [Set.uIcc_of_le hab] at ht
+    have ht_pos : 0 < t := lt_of_lt_of_le ha ht.1
+    have ht_ne : (↑t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ht_pos.ne'
+    have ht_pow_ne : (↑t : ℂ) ^ n ≠ 0 := pow_ne_zero _ ht_ne
+    push_cast
+    field_simp
+  have h_step1 : (∫ t in a..b, c / (↑t : ℂ) ^ n) =
+      ∫ t in a..b, c * (↑(1 / t ^ n : ℝ) : ℂ) :=
+    intervalIntegral.integral_congr h_eq
+  rw [h_step1]
+  have h_step2 : (∫ t in a..b, c * (↑(1 / t ^ n : ℝ) : ℂ)) =
+      c * ∫ t in a..b, (↑(1 / t ^ n : ℝ) : ℂ) :=
+    intervalIntegral.integral_const_mul c (fun t : ℝ => (↑(1 / t ^ n : ℝ) : ℂ))
+  rw [h_step2]
+  rw [intervalIntegral.integral_ofReal]
+  rw [real_ray_inv_pow_integral a b ha hab n hn]
+  push_cast
+  have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := by rw [Nat.cast_ne_zero]; omega
+  have ha_ne : (↑a : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ha.ne'
+  have hb_ne : (↑b : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (lt_of_lt_of_le ha hab).ne'
+  have ha_pow : (↑a : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ ha_ne
+  have hb_pow : (↑b : ℂ) ^ (n - 1) ≠ 0 := pow_ne_zero _ hb_ne
+  field_simp
+
 end LeanModularForms
 
 end
