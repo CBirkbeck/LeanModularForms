@@ -142,6 +142,38 @@ noncomputable def laurentHolomorphicRemainder
     (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
   f z - laurentPolarPartTotal hCondB z
 
+/-! ## Decomposition identity (TIGHT-2 building block) -/
+
+/-- **Fundamental identity**: by definition,
+`f z = laurentPolarPartTotal hCondB z + laurentHolomorphicRemainder hCondB z`. -/
+theorem f_eq_polar_plus_holo
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) :
+    f z =
+      laurentPolarPartTotal hCondB z + laurentHolomorphicRemainder hCondB z := by
+  simp [laurentHolomorphicRemainder]
+
+/-! ## Decomposition relative to simple-pole `principalPartSum` -/
+
+/-- The **higher-order polar part**: `laurentPolarPartTotal` with the
+simple-pole `principalPartSum` subtracted. This is the input to the
+(B)-closure machinery for the higher-order Laurent terms. -/
+noncomputable def laurentHigherOrderPolar
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
+  laurentPolarPartTotal hCondB z -
+    principalPartSum S (fun s => residue f s) z
+
+/-- **Decomposition for `hCancel` discharge**:
+`f - principalPartSum = laurentHigherOrderPolar + laurentHolomorphicRemainder`. -/
+theorem f_minus_pp_eq_higherOrder_plus_holo
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) :
+    f z - principalPartSum S (fun s => residue f s) z =
+      laurentHigherOrderPolar hCondB z +
+        laurentHolomorphicRemainder hCondB z := by
+  simp only [laurentHigherOrderPolar, laurentHolomorphicRemainder]; ring
+
 end LeanModularForms
 
 end
