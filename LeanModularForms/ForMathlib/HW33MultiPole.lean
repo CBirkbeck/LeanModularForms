@@ -162,6 +162,31 @@ theorem hasCauchyPVOn_multipole_transverse_assembled
   hasCauchyPVOn_multipole_sum_pow_inv S c γ hδ_pos h_avoid_pairs
     h_singletons h_int_sum h_int_each
 
+/-- **Multi-pole (B)-case closure (discoverability alias).**
+Identical to `hasCauchyPVOn_multipole_transverse_assembled`, but named for the
+general (B) case to aid discoverability. The underlying composition is the
+same — both transverse k-odd singletons (from
+`hasCauchyPVOn_singleton_pow_of_transverse_assembled`) and general-angle (B)
+singletons (from `hasCauchyPVOn_singleton_pow_of_conditionB_assembled`)
+satisfy the singleton input shape, so the composition is uniform. -/
+theorem hasCauchyPVOn_multipole_pow_of_conditionB_assembled
+    (S : Finset ℂ) {k : ℕ} (c : ℂ → ℂ) (γ : PiecewiseC1Path x x)
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (h_avoid_pairs : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ t - s'‖)
+    (h_singletons : ∀ s ∈ S,
+      HasCauchyPVOn {s} (fun z => (1 : ℂ) / (z - s) ^ k) γ 0)
+    (h_int_each : ∀ s ∈ S, ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S
+        (fun z => c s / (z - s) ^ k) γ.toPath.extend ε t) volume 0 1)
+    (h_int_sum : ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S
+        (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ.toPath.extend ε t)
+      volume 0 1) :
+    HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 :=
+  hasCauchyPVOn_multipole_transverse_assembled S c γ hδ_pos
+    h_avoid_pairs h_singletons h_int_each h_int_sum
+
 end LeanModularForms
 
 end
