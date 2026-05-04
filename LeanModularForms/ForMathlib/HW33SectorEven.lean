@@ -334,6 +334,61 @@ theorem sector_inv_pow_integral_tendsto_zero_under_conditionB
   exact (sector_inv_pow_integral_vanishes_under_conditionB r hr ε hε_pos
     hε_le_r α n hn h_angle).symm
 
+/-! ## F-line difference under condition (B) — generalizes the k-odd case -/
+
+/-- **F-line difference vanishing under condition (B), general angle.**
+For pole `s`, two tangent directions `L_plus` (right tangent, pointing AWAY
+from `t₀` on `t > t₀` side) and `L_minus` (left tangent, also pointing away
+from `t₀` on `t < t₀` side, so we use `-L_minus` for the inward direction),
+and `k ≥ 2`, the antiderivative `F(z) = -1/((k-1)(z-s)^(k-1))` evaluated at
+the chord-targets `s + ε · (L_plus / ‖L_plus‖)` and `s + ε · ((-L_minus) / ‖L_minus‖)`
+is **equal** under condition (B):
+
+  `((L_plus / ‖L_plus‖))^(k-1) = ((-L_minus / ‖L_minus‖))^(k-1)`.
+
+This generalizes `F_line_diff_eq_zero_of_odd` (which assumes `L_plus = L_minus`,
+i.e., the transverse case): for k odd, `(-L/|L|)^(k-1) = (L/|L|)^(k-1)` holds
+automatically (k-1 is even), recovering condition (B). -/
+theorem F_line_diff_eq_zero_under_conditionB
+    (s : ℂ) (L_minus L_plus : ℂ) (k : ℕ) (_hk : 2 ≤ k)
+    (hL_minus : L_minus ≠ 0) (hL_plus : L_plus ≠ 0)
+    (h_B :
+      (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1) =
+      ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1))
+    (ε : ℝ) :
+    -((↑(k - 1) : ℂ))⁻¹ *
+      (((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹ =
+    -((↑(k - 1) : ℂ))⁻¹ *
+      (((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1))⁻¹ := by
+  congr 1
+  congr 1
+  -- Reduce to ((s + ε • L_plus / ‖L_plus‖) - s)^(k-1) = ((s + ε • (-L_minus / ‖L_minus‖)) - s)^(k-1)
+  -- which simplifies to (ε • L_plus / ‖L_plus‖)^(k-1) = (ε • (-L_minus / ‖L_minus‖))^(k-1)
+  -- which factors out ε^(k-1), giving (L_plus/‖L_plus‖)^(k-1) = (-L_minus/‖L_minus‖)^(k-1) (B).
+  have hLp_norm_ne : (‖L_plus‖ : ℝ) ≠ 0 := norm_ne_zero_iff.mpr hL_plus
+  have hLm_norm_ne : (‖L_minus‖ : ℝ) ≠ 0 := norm_ne_zero_iff.mpr hL_minus
+  have hLp_norm_ne_C : (↑‖L_plus‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hLp_norm_ne
+  have hLm_norm_ne_C : (↑‖L_minus‖ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hLm_norm_ne
+  have h_lhs : ((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1) =
+      ((↑ε : ℂ) ^ (k - 1)) * ((L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1)) := by
+    rw [add_sub_cancel_left]
+    have h_smul_eq : ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) =
+        (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ)) := by
+      rw [Complex.real_smul]
+      push_cast
+      field_simp
+    rw [h_smul_eq, mul_pow]
+  have h_rhs : ((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1) =
+      ((↑ε : ℂ) ^ (k - 1)) * (((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1)) := by
+    rw [add_sub_cancel_left]
+    have h_smul_eq : ((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ) =
+        (↑ε : ℂ) * ((-L_minus) / (↑‖L_minus‖ : ℂ)) := by
+      rw [Complex.real_smul]
+      push_cast
+      field_simp
+    rw [h_smul_eq, mul_pow]
+  rw [h_lhs, h_rhs, h_B]
+
 end LeanModularForms
 
 end
