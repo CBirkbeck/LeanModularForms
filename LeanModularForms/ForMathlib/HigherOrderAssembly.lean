@@ -432,11 +432,6 @@ theorem generalizedResidueTheorem_of_cancel_oracle
     (hMero : ∀ s ∈ S, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (hCondB : SatisfiesConditionB γ f S)
-    (h_no_endpt_cross : ∀ s ∈ S,
-      γ.toPiecewiseC1Path 0 ≠ s ∧ γ.toPiecewiseC1Path 1 ≠ s)
-    (h_unique_cross : ∀ s ∈ S,
-      ∀ t₁ ∈ Icc (0 : ℝ) 1, ∀ t₂ ∈ Icc (0 : ℝ) 1,
-        γ.toPiecewiseC1Path t₁ = s → γ.toPiecewiseC1Path t₂ = s → t₁ = t₂)
     -- Cancellation oracle: the single analytic hypothesis
     (hCancel : HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z)
@@ -459,7 +454,7 @@ theorem generalizedResidueTheorem_of_cancel_oracle
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
   generalizedResidueTheorem hU S hS_in_U f hf γ h_null hMero hCondA hCondB
-    h_no_endpt_cross h_unique_cross hCancel hPV_sing hI_sing hI_rem
+    hCancel hPV_sing hI_sing hI_rem
 
 /-! ## Equivalence: ordinary contour integral vs CPV for avoidance -/
 

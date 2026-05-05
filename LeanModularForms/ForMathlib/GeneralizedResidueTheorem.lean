@@ -285,11 +285,6 @@ theorem generalizedResidueTheorem
     (_hMero : ∀ s ∈ S, MeromorphicAt f s)
     (_hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (_hCondB : SatisfiesConditionB γ f S)
-    (_h_no_endpt_cross : ∀ s ∈ S,
-      γ.toPiecewiseC1Path 0 ≠ s ∧ γ.toPiecewiseC1Path 1 ≠ s)
-    (_h_unique_cross : ∀ s ∈ S,
-      ∀ t₁ ∈ Icc (0 : ℝ) 1, ∀ t₂ ∈ Icc (0 : ℝ) 1,
-        γ.toPiecewiseC1Path t₁ = s → γ.toPiecewiseC1Path t₂ = s → t₁ = t₂)
     -- Higher-order cancellation (guaranteed by conditions A'+B)
     (hCancel : HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z)

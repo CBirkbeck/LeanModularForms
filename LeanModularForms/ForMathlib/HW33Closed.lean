@@ -89,11 +89,6 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     (hMero : ∀ s ∈ S, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (hCondB : SatisfiesConditionB γ f S)
-    (h_no_endpt_cross : ∀ s ∈ S,
-      γ.toPiecewiseC1Path 0 ≠ s ∧ γ.toPiecewiseC1Path 1 ≠ s)
-    (h_unique_cross : ∀ s ∈ S,
-      ∀ t₁ ∈ Icc (0 : ℝ) 1, ∀ t₂ ∈ Icc (0 : ℝ) 1,
-        γ.toPiecewiseC1Path t₁ = s → γ.toPiecewiseC1Path t₂ = s → t₁ = t₂)
     -- Laurent decomposition: f - simple_pp = higher_order_polar + holomorphic
     (h_polar h_holo : ℂ → ℂ)
     (h_decomp : ∀ z,
@@ -133,7 +128,6 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     · simp [h]
     · simp [h, h_decomp, add_mul]
   exact generalizedResidueTheorem hU S hS_in_U f hf γ h_null hMero hCondA hCondB
-    h_no_endpt_cross h_unique_cross
     (hCancel_of_higherOrder_decomposition_under_B S f γ.toPiecewiseC1Path
       h_polar h_holo h_decomp h_polar_cancel h_holo_cancel hI_polar hI_holo)
     hPV_sing hI_sing hI_rem
