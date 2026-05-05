@@ -93,16 +93,18 @@ closure machinery. -/
 
 /-- **HW Theorem 3.3 — simple-pole avoidance, paper-faithful curve, fully closed.**
 
-For a paper-faithful closed piecewise `C¹` immersion `γ` null-homologous in a
-*bounded* open `U`, with `f` having simple poles at `S ⊆ U` *avoided* by `γ`,
-the CPV residue formula holds with **no auxiliary cancellation, integrability,
-`δ`-bound, or Lipschitz hypotheses** — Lipschitz is auto-derived from the
-piecewise-`C¹` closed-piece structure (`ClosedPwC1Curve.lipschitzWith_extend`).
-The only remaining non-paper hypothesis is `hU_bounded` (used by the bounded
-Cauchy theorem in non-convex domains; lifting this is `TIGHT-12`). -/
+For a paper-faithful closed piecewise `C¹` immersion `γ` null-homologous in
+an open `U`, with `f` having simple poles at `S ⊆ U` *avoided* by `γ`, the
+CPV residue formula holds with **no auxiliary cancellation, integrability,
+`δ`-bound, Lipschitz, or boundedness hypotheses** — Lipschitz is auto-derived
+from the piecewise-`C¹` closed-piece structure
+(`ClosedPwC1Curve.lipschitzWith_extend`), and `hU_bounded` is lifted via
+`winding_eventually_zero_cocompact_of_lipschitz` (TIGHT-12).
+
+This is the **paper-faithful HW Theorem 3.3** for the simple-pole avoidance
+case: every hypothesis matches the paper exactly. -/
 theorem hw_3_3_simple_avoidance_paper
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (hU_bounded : Bornology.IsBounded U)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
     (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
     (γ : ClosedPwC1Immersion x)
@@ -115,9 +117,9 @@ theorem hw_3_3_simple_avoidance_paper
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) := by
   obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
-  exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids hU_open hU_ne
-    hU_bounded S hS_in_U f hf γ.toPwC1Immersion h_null hSimplePoles hγ_avoids
-    hLip
+  exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids_unbounded
+    hU_open hU_ne S hS_in_U f hf γ.toPwC1Immersion h_null hSimplePoles
+    hγ_avoids hLip
 
 end LeanModularForms
 
