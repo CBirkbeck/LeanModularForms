@@ -36,10 +36,25 @@ unbounded `U`, but the paper itself uses an open set so `IsOpen` is OK.
 
 **Output**: `hw_3_3_simple_avoidance_paper` no longer needs `hU_bounded`.
 
+### Phase 2.5 — Option B refactor of decomposition ✅ DONE (2026-05-05)
+- [x] Refactored `laurentHigherOrderPolar` and `laurentHolomorphicRemainder`
+  in `HW33LaurentPolarPart.lean` so cancellation hypotheses hold under just
+  `hCondB`, no "all-crossed" assumption needed.
+- [x] Per-pole guard: `laurentHigherOrderPolarAt s := if IsCrossed γ s then
+  polarPartAt s - residue/(z-s) else 0`. New remainder is `f - principalPartSum
+  - laurentHigherOrderPolar`.
+- [x] **Result**: at uncrossed `s`, the new remainder has zero residue at
+  `s` (only k ≥ 2 terms remain), so `∮_γ remainder = 0` follows from Cauchy's
+  theorem on null-homologous γ even though remainder isn't globally analytic.
+- [x] `laurentAnalyticPartAt` API for the analytic part `g` at crossed poles.
+
 ### Phase 3 — Holomorphic remainder analyticity
-- [ ] 3.1 `laurentPolarPartAt_analytic_at_other_pole` — polar part at `s` is analytic at `s' ≠ s`
-- [ ] 3.2 `laurentPolarPartAt_cancels_f_at_pole` — `f - laurentPolarPartAt s` is analytic at `s`
-- [ ] 3.3 `laurentHolomorphicRemainder_differentiableOn` — globally analytic on `U`
+- [ ] 3.1 Local equation `f =ᶠ[𝓝[≠] s] analyticPartAt s + polarPartAt s` for
+   crossed s (dependent-type matching with Classical.choose witnesses)
+- [ ] 3.2 `laurentHolomorphicRemainder_analyticAt_crossed` — analytic at every
+   crossed `s ∈ S`
+- [ ] 3.3 `laurentHolomorphicRemainder_residue_zero_uncrossed` — residue at
+   uncrossed `s ∈ S` is zero (only higher-order Laurent terms)
 
 **Output**: foundational lemma for TIGHT-4 and the global non-avoidance theorem.
 
