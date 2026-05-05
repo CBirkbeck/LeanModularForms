@@ -29,10 +29,36 @@ unbounded `U`, but the paper itself uses an open set so `IsOpen` is OK.
 
 **Output**: `hw_3_3_simple_avoidance_paper` no longer needs `hLip` argument.
 
-### Phase 2 — Bounded-domain reduction [TIGHT-12]
-- [ ] 2.1 Pick a δ-thickening `V := { z : ∃ t, |z - γ t| < δ }` for sufficient `δ`
-- [ ] 2.2 Show `γ` is null-homologous in `V` and `V` is bounded open
-- [ ] 2.3 Wrap closed-full theorem on `V`, conclude on `U`
+### Phase 2 — Drop `hU_bounded` [TIGHT-12] (REVISED PLAN)
+
+**Investigation (2026-05-05).** `hU_bounded` enters the chain via:
+* `hw_3_3_simple_avoidance_paper`
+  → `hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids`
+  → `dixonFunction_eq_zero_of_nullHomologous_open_full`
+  → `IsNullHomologous.winding_eventually_zero_cocompact_of_bounded`.
+
+The bottleneck is the last step: bounded U gives `Uᶜ ∈ cocompact`, hence
+winding = 0 for cocompact w (since γ avoids w outside U). For unbounded U,
+we instead use γ's image being bounded (Lipschitz γ).
+
+**Lemma chain to build**:
+- [ ] 2.1 `winding_eventually_zero_cocompact_of_lipschitz` —
+  for Lipschitz γ closed, the generalized winding number vanishes for `‖w‖`
+  larger than `sup ‖γ.image‖ + (curve length)/(2π)`.
+  Proof: combine `dixonH2_norm_le` (gives `|winding| ≤ M_d / (2π(‖w‖ - R))`)
+  + `hasGeneralizedWindingNumber_integer_of_closed` (W-3, integer-valued)
+  + "integer + < 1 ⟹ = 0".
+  ~50 lines.
+- [ ] 2.2 `dixonFunction_eq_zero_of_nullHomologous_open_full_unbounded` —
+  variant of Dixon's full closure not requiring bounded U.
+  Replaces use of `winding_eventually_zero_cocompact_of_bounded` with 2.1.
+  ~30 lines (mirrors existing proof structure).
+- [ ] 2.3 `hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids_unbounded`
+  using 2.2. ~20 lines.
+- [ ] 2.4 Update `hw_3_3_simple_avoidance_paper` to drop `hU_bounded`.
+  ~10 lines.
+
+**Estimated total**: ~110 lines, one focused session.
 
 **Output**: `hw_3_3_simple_avoidance_paper` no longer needs `hU_bounded`.
 
