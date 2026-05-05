@@ -177,6 +177,57 @@ theorem contourIntegral_higherOrder_eq_zero_of_avoids
     ring
   exact PiecewiseC1Path.contourIntegral_eq_zero_of_hasDerivAt_of_closed γ rfl hU_img hF h_int
 
+/-! ## Higher-order part contour integral vanishes -/
+
+/-- The contour integral of `higherOrderPart a s` along a closed γ avoiding `s`
+vanishes: each term `a_k/(z-s)^(k+1)` for `k ≥ 1` (i.e. `k+1 ≥ 2`) has a
+single-valued antiderivative on `ℂ \ {s}`, so its contour integral is zero. -/
+theorem contourIntegral_higherOrderPart_eq_zero_of_avoids
+    {x s : ℂ} (γ : PiecewiseC1Path x x)
+    (h_avoids : ∀ t ∈ Set.Icc (0 : ℝ) 1, γ.toPath.extend t ≠ s)
+    {N : ℕ} (a : Fin N → ℂ)
+    (h_int_each : ∀ k : Fin N, k.val ≥ 1 → IntervalIntegrable
+      (fun t => a k / (γ.toPath.extend t - s) ^ (k.val + 1) *
+        deriv γ.toPath.extend t) volume 0 1) :
+    γ.contourIntegral (higherOrderPart a s) = 0 := by
+  classical
+  -- Apply finset_sum_linearity, then each integral is 0.
+  have h_int : ∀ k : Fin N, IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0) γ) volume 0 1 := by
+    intro k
+    by_cases hk : k.val ≥ 1
+    · simp only [if_pos hk]
+      show IntervalIntegrable
+        (fun t => a k / (γ.toPath.extend t - s) ^ (k.val + 1) *
+          deriv γ.toPath.extend t) volume 0 1
+      exact h_int_each k hk
+    · simp only [if_neg hk]
+      show IntervalIntegrable
+        (fun t => (0 : ℂ) * deriv γ.toPath.extend t) volume 0 1
+      simp only [zero_mul]
+      exact intervalIntegrable_const
+  show PiecewiseC1Path.contourIntegral
+    (fun z => ∑ k : Fin N, if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0) γ = 0
+  rw [contourIntegral_finset_sum Finset.univ _ γ (fun k _ => h_int k)]
+  apply Finset.sum_eq_zero
+  intro k _
+  by_cases hk : k.val ≥ 1
+  · -- Apply higher-order vanishing.
+    have hk_ge_2 : 2 ≤ k.val + 1 := by omega
+    have h_term_eq : (fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0) =
+        fun z => a k / (z - s) ^ (k.val + 1) := by
+      ext z; simp [hk]
+    rw [h_term_eq]
+    exact contourIntegral_higherOrder_eq_zero_of_avoids γ h_avoids hk_ge_2 (a k)
+      (h_int_each k hk)
+  · -- k.val = 0: integrand is 0, integral is 0.
+    have h_term_eq : (fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0) =
+        fun _ => (0 : ℂ) := by
+      ext z; simp [hk]
+    rw [h_term_eq]
+    exact PiecewiseC1Path.contourIntegral_zero γ
+
 end LeanModularForms
 
 end
