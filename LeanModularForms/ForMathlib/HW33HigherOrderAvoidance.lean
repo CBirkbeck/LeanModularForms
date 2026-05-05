@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.HigherOrderAssembly
 import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.HW33MultiPole
+import LeanModularForms.ForMathlib.PiecewiseContourIntegral
 
 /-!
 # HW Theorem 3.3 — higher-order pole avoidance form
@@ -78,6 +79,49 @@ structure PolarPartDecomposition (f : ℂ → ℂ) (S : Finset ℂ) (U : Set ℂ
   analyticRemainder_diff : DifferentiableOn ℂ analyticRemainder U
   decomp : ∀ z ∈ U \ (↑S : Set ℂ),
     f z = analyticRemainder z + ∑ s ∈ S, polarPart s z
+
+/-! ## Higher-order Laurent term: contour integral vanishes -/
+
+/-- For `k ≥ 2`, the function `c / (z - s)^k` has the single-valued antiderivative
+`-c / ((k-1)(z-s)^(k-1))` on `ℂ \ {s}`. Hence its contour integral along any
+closed piecewise-`C¹` path avoiding `s` vanishes. -/
+theorem contourIntegral_higherOrder_eq_zero_of_avoids
+    {x s : ℂ} (γ : PiecewiseC1Path x x)
+    (h_avoids : ∀ t ∈ Set.Icc (0 : ℝ) 1, γ.toPath.extend t ≠ s)
+    {k : ℕ} (hk : 2 ≤ k) (c : ℂ)
+    (h_int : IntervalIntegrable
+      (fun t => c / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
+      volume 0 1) :
+    γ.contourIntegral (fun z => c / (z - s) ^ k) = 0 := by
+  -- Antiderivative via `zpow`: F(z) := (-c/(k-1)) * (z - s)^{-(k-1) : ℤ}.
+  -- Its derivative: (-c/(k-1)) * (-(k-1)) * (z-s)^{-(k-1)-1 : ℤ} = c * (z-s)^{-k : ℤ}.
+  have hk_pos : 0 < (k : ℤ) - 1 := by omega
+  have hk_natcast : ((k - 1 : ℕ) : ℂ) ≠ 0 := by
+    rw [Nat.cast_ne_zero]; omega
+  set F : ℂ → ℂ := fun z =>
+    (-c / ((k - 1 : ℕ) : ℂ)) * (z - s) ^ (-((k - 1 : ℕ) : ℤ))
+  have hU_img : ∀ t ∈ Set.Icc (0 : ℝ) 1, γ t ∈ ({s} : Set ℂ)ᶜ :=
+    fun t ht => h_avoids t ht
+  have hF : ∀ z ∈ ({s} : Set ℂ)ᶜ, HasDerivAt F (c / (z - s) ^ k) z := by
+    intro z hz
+    have hz_sub : z - s ≠ 0 := sub_ne_zero.mpr hz
+    have h_id_sub : HasDerivAt (fun w => w - s) 1 z :=
+      (hasDerivAt_id z).sub_const s
+    -- Derivative of `(z - s)^n` for negative integer n.
+    have h_inner :=
+      (hasDerivAt_zpow (-((k - 1 : ℕ) : ℤ)) (z - s) (Or.inl hz_sub)).comp z h_id_sub
+    simp only [Function.comp_def, mul_one] at h_inner
+    have h_total := h_inner.const_mul (-c / ((k - 1 : ℕ) : ℂ))
+    convert h_total using 1
+    -- Goal: c/(z-s)^k = (-c/(k-1)) * (-(k-1) * (z-s)^(-(k-1)-1))
+    have hk_eq : -((k - 1 : ℕ) : ℤ) - 1 = -(k : ℤ) := by omega
+    rw [hk_eq]
+    rw [zpow_neg, zpow_natCast]
+    have h_pow_ne : (z - s) ^ k ≠ 0 := pow_ne_zero _ hz_sub
+    field_simp
+    push_cast
+    ring
+  exact PiecewiseC1Path.contourIntegral_eq_zero_of_hasDerivAt_of_closed γ rfl hU_img hF h_int
 
 end LeanModularForms
 
