@@ -63,6 +63,33 @@ unbounded `U`, but the paper itself uses an open set so `IsOpen` is OK.
 - [ ] 3.5.3 `residue_smul_const` — scalar multiplication respects residue
 - [ ] 3.5.4 `residue_finset_sum`
 
+### Phase 4-AVOIDANCE — Higher-order avoidance via Dixon (NEW, achievable)
+The user observed Dixon's theorem (`dixonFunction_eq_zero_of_nullHomologous_open_full`)
+applies to *any* analytic function on `U`, not just simple-pole settings. So
+the avoidance case extends from simple-pole to arbitrary-order using
+PolarPartDecomposition data.
+
+- [x] 4-AV.1 `PolarPartDecomposition` data structure (DONE)
+- [x] 4-AV.2 `contourIntegral_higherOrder_eq_zero_of_avoids` — `∮_γ c/(z-s)^k = 0`
+  for `k ≥ 2`, γ closed avoiding `s`, via single-valued antiderivative (DONE)
+- [x] 4-AV.3 `simplePolePart` / `higherOrderPart` split + `polarPart_eq_simplePole_add_higherOrder`
+  algebraic decomposition (DONE)
+- [x] 4-AV.4 `contourIntegral_higherOrderPart_eq_zero_of_avoids` —
+  `∮_γ higherOrderPart_s = 0` (DONE)
+- [ ] 4-AV.5 `HasSimplePoleAt (f - ∑_s higherOrderPart_s) s` for each `s ∈ S`
+  (route through PolarPartDecomposition's analyticRemainder)
+- [ ] 4-AV.6 `hw_3_3_higherOrder_avoidance_paper` — final theorem composing
+  Phase 4-AV.5 + `hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids`
+  + Phase 4-AV.4
+
+### Final extension to MeromorphicAt (paper-faithful)
+- [ ] M.1 Build `MeromorphicAt → PolarPartDecomposition` extraction:
+  - Use `meromorphicOrderAt_ne_top_iff` to get `f =ᶠ (z-s)^n · g_s` with `g_s` analytic
+  - Compute Taylor expansion of `g_s` at `s` (mathlib `iteratedFDeriv`)
+  - Construct polar part as `∑_{k=0}^{|n|-1} taylorCoeff_k(g_s) / (z-s)^(|n|-k)`
+  - Verify residue (`k = -1` Laurent coefficient) matches mathlib's `residue f s`
+- [ ] M.2 `hw_3_3_higherOrder_avoidance_paper` directly from `hMero`
+
 **Output**: foundational lemma for TIGHT-4 and the global non-avoidance theorem.
 
 ### Phase 4 — TIGHT-4 (holo cancel)
