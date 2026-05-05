@@ -443,6 +443,47 @@ theorem dixonFunction_eq_zero_of_nullHomologous_bounded
     (h_null.winding_eventually_zero_cocompact_of_bounded hU_bounded)
     hM_f_nn hR hM_f hM_d
 
+/-! ### Unbounded U variants (TIGHT-12)
+
+Parallel to the `_bounded` chain, but discharging the cocompact-winding-zero
+hypothesis via `winding_eventually_zero_cocompact_of_lipschitz` (which uses
+γ being Lipschitz, not U being bounded). This lifts the `hU_bounded`
+restriction in Dixon-based theorems. -/
+
+/-- **B-5 variant for unbounded U with Lipschitz γ**:
+`dixonFunction_eq_zero_of_nullHomologous` specialized to the case where U
+need not be bounded but γ is Lipschitz. The cocompact-winding-zero hypothesis
+is discharged via `winding_eventually_zero_cocompact_of_lipschitz`. -/
+theorem dixonFunction_eq_zero_of_nullHomologous_unbounded
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
+    (h2_diff : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      DifferentiableAt ℂ (dixonH2 f γ.toPiecewiseC1Path) w)
+    (h_cauchy_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => f (γ.toPiecewiseC1Path t) /
+        (γ.toPiecewiseC1Path t - w) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_base_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0)
+    {R M_f M_d : ℝ} (hM_f_nn : 0 ≤ M_f)
+    (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPiecewiseC1Path t‖ ≤ R)
+    (hM_f : ∀ t ∈ Icc (0 : ℝ) 1, ‖f (γ.toPiecewiseC1Path t)‖ ≤ M_f)
+    (hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
+      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ M_d) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
+  dixonFunction_eq_zero_of_nullHomologous hU hf γ h_null h1_diff h2_diff
+    h_cauchy_int h_base_int h_winding_zero_near
+    (winding_eventually_zero_cocompact_of_lipschitz hLip)
+    hM_f_nn hR hM_f hM_d
+
 /-- **B-5 variant auto-discharging `h2_diff` via B-3**: Given a Lipschitz PwC1Immersion
 γ and `f` differentiable on bounded open U, the `h2_diff` hypothesis is discharged
 automatically via `dixonH2_differentiableAt_of_regular` (B-3). -/
@@ -676,6 +717,160 @@ theorem dixonFunction_eq_zero_of_nullHomologous_open_full
         generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
     ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
   dixonFunction_eq_zero_of_nullHomologous_autoBounds hU hU_bounded hf γ h_null
+    hLip (dixonH1_differentiableOn_of_regular_open_full hU hf γ
+      h_null.image_subset hLip) h_winding_zero_near
+
+/-! ## Unbounded U full chain (TIGHT-12) -/
+
+/-- **B-5 autoH2 variant for unbounded U with Lipschitz γ.** -/
+theorem dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
+    (h_cauchy_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => f (γ.toPiecewiseC1Path t) /
+        (γ.toPiecewiseC1Path t - w) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_base_int : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0)
+    {R M_f M_d : ℝ} (hM_f_nn : 0 ≤ M_f)
+    (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPiecewiseC1Path t‖ ≤ R)
+    (hM_f : ∀ t ∈ Icc (0 : ℝ) 1, ‖f (γ.toPiecewiseC1Path t)‖ ≤ M_f)
+    (hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
+      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ M_d) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
+  have hf_cont : ContinuousOn f
+      (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
+    hf.continuousOn.mono
+      (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)
+  have h2_diff : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      DifferentiableAt ℂ (dixonH2 f γ.toPiecewiseC1Path) w :=
+    fun _ hoff => dixonH2_differentiableAt_of_regular hoff hf_cont hLip
+  exact dixonFunction_eq_zero_of_nullHomologous_unbounded hU hf γ h_null hLip
+    h1_diff h2_diff h_cauchy_int h_base_int h_winding_zero_near
+    hM_f_nn hR hM_f hM_d
+
+/-- **B-5 autoBounds variant for unbounded U with Lipschitz γ.** -/
+theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
+  have hf_cont : ContinuousOn f
+      (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
+    hf.continuousOn.mono
+      (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)
+  have h_fγ_cont : ContinuousOn
+      (fun t => f (γ.toPiecewiseC1Path t)) (Icc (0 : ℝ) 1) :=
+    hf_cont.comp γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
+      (fun t ht => ⟨t, ht, rfl⟩)
+  have h_γ_cont : ContinuousOn (γ.toPiecewiseC1Path : ℝ → ℂ) (Icc (0 : ℝ) 1) :=
+    γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
+  obtain ⟨R, hR_bd⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
+    h_γ_cont.norm
+  obtain ⟨M_f, hM_f_bd⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
+    h_fγ_cont.norm
+  have hR_curve : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPiecewiseC1Path t‖ ≤ R :=
+    fun t ht => hR_bd ⟨t, ht, rfl⟩
+  have hM_f_curve : ∀ t ∈ Icc (0 : ℝ) 1,
+      ‖f (γ.toPiecewiseC1Path t)‖ ≤ max M_f 0 :=
+    fun t ht => le_max_of_le_left (hM_f_bd ⟨t, ht, rfl⟩)
+  have hM_f_nn : (0 : ℝ) ≤ max M_f 0 := le_max_right _ _
+  have hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
+      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ K :=
+    fun _ _ => norm_deriv_le_of_lipschitz hLip
+  have h_cauchy_int : ∀ w,
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable
+        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w) *
+          deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1 := by
+    intro w hoff
+    have h_cont_inv : ContinuousOn (fun t => (γ.toPiecewiseC1Path t - w)⁻¹)
+        (Icc (0 : ℝ) 1) := ContinuousOn.inv₀
+      (h_γ_cont.sub continuousOn_const)
+      (fun t ht => sub_ne_zero.mpr (hoff t ht))
+    have h_cont_prod : ContinuousOn
+        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w))
+        (Icc (0 : ℝ) 1) := by
+      simp_rw [div_eq_mul_inv]
+      exact h_fγ_cont.mul h_cont_inv
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
+    have h_meas : AEStronglyMeasurable
+        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w) *
+          deriv γ.toPiecewiseC1Path.toPath.extend t)
+        (volume.restrict (Ioc (0 : ℝ) 1)) :=
+      ((h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable
+        measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+    haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
+      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+    obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
+      h_cont_prod.norm
+    refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+    rw [norm_mul]
+    exact mul_le_mul
+      (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
+      (hM_d t ht_Icc) (norm_nonneg _)
+      (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
+  have h_base_int : ∀ w,
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      IntervalIntegrable (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1 := by
+    intro w hoff
+    have h_cont_inv : ContinuousOn (fun t => (γ.toPiecewiseC1Path t - w)⁻¹)
+        (Icc (0 : ℝ) 1) := ContinuousOn.inv₀
+      (h_γ_cont.sub continuousOn_const)
+      (fun t ht => sub_ne_zero.mpr (hoff t ht))
+    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
+    have h_meas : AEStronglyMeasurable
+        (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
+          deriv γ.toPiecewiseC1Path.toPath.extend t)
+        (volume.restrict (Ioc (0 : ℝ) 1)) :=
+      ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
+        measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+    haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
+      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+    obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
+      h_cont_inv.norm
+    refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+    rw [norm_mul]
+    exact mul_le_mul
+      (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
+      (hM_d t ht_Icc) (norm_nonneg _)
+      (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
+  exact dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded hU hf γ h_null
+    hLip h1_diff h_cauchy_int h_base_int h_winding_zero_near
+    hM_f_nn hR_curve hM_f_curve hM_d
+
+/-- **B-5 fully closed for general open (possibly unbounded) U with Lipschitz γ.**
+This is the unbounded analog of `dixonFunction_eq_zero_of_nullHomologous_open_full`. -/
+theorem dixonFunction_eq_zero_of_nullHomologous_open_full_unbounded
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
+    (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
+    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
+    (h_winding_zero_near : ∀ w, w ∉ U →
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
+        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
+    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
+  dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded hU hf γ h_null
     hLip (dixonH1_differentiableOn_of_regular_open_full hU hf γ
       h_null.image_subset hLip) h_winding_zero_near
 
