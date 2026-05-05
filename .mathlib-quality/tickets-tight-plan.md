@@ -48,13 +48,20 @@ unbounded `U`, but the paper itself uses an open set so `IsOpen` is OK.
   theorem on null-homologous γ even though remainder isn't globally analytic.
 - [x] `laurentAnalyticPartAt` API for the analytic part `g` at crossed poles.
 
-### Phase 3 — Holomorphic remainder analyticity
-- [ ] 3.1 Local equation `f =ᶠ[𝓝[≠] s] analyticPartAt s + polarPartAt s` for
-   crossed s (dependent-type matching with Classical.choose witnesses)
-- [ ] 3.2 `laurentHolomorphicRemainder_analyticAt_crossed` — analytic at every
-   crossed `s ∈ S`
-- [ ] 3.3 `laurentHolomorphicRemainder_residue_zero_uncrossed` — residue at
-   uncrossed `s ∈ S` is zero (only higher-order Laurent terms)
+### Phase 3 — Holomorphic remainder analyticity ✅ partial
+- [x] 3.1 `f_eq_analyticPart_plus_polarPart_eventually` — local Laurent
+  equation in punctured nbhd of crossed `s`. (DONE)
+- [x] 3.2 `laurentHolomorphicRemainder_differentiableOn` on `U \ S`. (DONE)
+- [ ] 3.3 `laurentHolomorphicRemainder_residue_zero` — residue at every `s ∈ S`
+  is zero. **Needs**: residue calculus API (linearity, residue of `c/(z-s)`,
+  analytic ⇒ residue 0). Some of this exists in `ResidueCircleIntegral.lean`
+  for analytic functions; linearity for add/sub does not.
+
+### Phase 3.5 — Residue calculus prerequisite (NEW, DEPENDENCY)
+- [ ] 3.5.1 `residue_add`, `residue_sub` (linearity)
+- [ ] 3.5.2 `residue_const_div_sub` — residue of `c/(z-s)` at `s` equals `c`
+- [ ] 3.5.3 `residue_smul_const` — scalar multiplication respects residue
+- [ ] 3.5.4 `residue_finset_sum`
 
 **Output**: foundational lemma for TIGHT-4 and the global non-avoidance theorem.
 
