@@ -189,6 +189,41 @@ theorem f_eq_analyticPart_plus_polarPart_eventually
   congr 1
   exact congrArg (· z) (laurentAnalyticPartAt_eq_data hCondB hs h_cross).symm
 
+/-- **Corollary**: `f - laurentPolarPartAt s = laurentAnalyticPartAt s`
+eventually in the punctured neighborhood of a crossed pole `s`. -/
+theorem f_minus_polarPartAt_eventuallyEq_analyticPartAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+    (h_cross : IsCrossed γ s) :
+    (fun z => f z - laurentPolarPartAt hCondB s hs z) =ᶠ[𝓝[≠] s]
+      laurentAnalyticPartAt hCondB s hs := by
+  filter_upwards [f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross]
+    with z hz
+  rw [hz]; ring
+
+/-- `laurentPolarPartAt s` is differentiable at any point `z ≠ s`. The terms
+`a_k / (z - s)^(k+1)` are differentiable when `z ≠ s`, and a finite sum of
+differentiable functions is differentiable. -/
+theorem laurentPolarPartAt_differentiableAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) {z : ℂ}
+    (hz : z ≠ s) :
+    DifferentiableAt ℂ (laurentPolarPartAt hCondB s hs) z := by
+  classical
+  unfold laurentPolarPartAt
+  by_cases h : IsCrossed γ s
+  · simp only [dif_pos h]
+    -- Sum of `c_k / (z - s)^(k+1)` differentiable at z ≠ s.
+    apply DifferentiableAt.fun_sum
+    intro k _
+    have h_pow_ne : (z - s) ^ (k.val + 1) ≠ 0 :=
+      pow_ne_zero _ (sub_ne_zero.mpr hz)
+    -- d/dz [c / (z - s)^n] exists when (z - s)^n ≠ 0.
+    exact ((differentiableAt_const _).div
+      ((differentiableAt_id.sub (differentiableAt_const _)).pow _) h_pow_ne)
+  · simp only [dif_neg h]
+    exact differentiableAt_const _
+
 /-! ## Decomposition relative to simple-pole `principalPartSum`
 
 **Crossed-vs-uncrossed split.** The decomposition
