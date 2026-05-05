@@ -92,42 +92,23 @@ private theorem laurent_data_exists
   exact hCondB.laurent_compatible s hs (crossingParam γ s) ht_mem
     (γ_at_crossingParam h_cross) (crossingParam_mem_Ioo h_cross)
 
-/-- Extracted pole order at a crossed pole `s ∈ S` from condition (B).
-Returns `0` if `s` is not crossed (vacuous case). -/
-noncomputable def laurentPolarOrderAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) : ℕ :=
-  open Classical in
-  if h : IsCrossed γ s then
-    (laurent_data_exists hCondB hs h).choose
-  else 0
+/-- Local polar part at pole `s`: `∑ k ∈ Fin N, a_k / (z - s)^(k+1)`, where
+`N` and `a_k` come from condition (B)'s Laurent compatibility data at the
+crossing parameter. Zero for uncrossed `s`.
 
-/-- Extracted Laurent coefficients at a crossed pole. -/
-noncomputable def laurentPolarCoeffAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) :
-    Fin (laurentPolarOrderAt hCondB s hs) → ℂ :=
-  open Classical in
-  if h : IsCrossed γ s then by
-    have h_data := (laurent_data_exists hCondB hs h).choose_spec
-    have h_eq : laurentPolarOrderAt hCondB s hs =
-        (laurent_data_exists hCondB hs h).choose := by
-      simp only [laurentPolarOrderAt, h, ↓reduceDIte]
-    rw [h_eq]
-    exact h_data.choose
-  else by
-    -- When not crossed, laurentPolarOrderAt = 0, so Fin 0 is empty
-    have h_zero : laurentPolarOrderAt hCondB s hs = 0 := by
-      simp only [laurentPolarOrderAt, h, ↓reduceDIte]
-    rw [h_zero]
-    exact Fin.elim0
-
-/-- Local polar part at pole `s`: `∑ k ∈ Fin N, a_k / (z - s)^(k+1)`. -/
+The single `if-then-else` (rather than separate `laurentPolarOrderAt` /
+`laurentPolarCoeffAt` definitions) avoids dependent-type clashes when
+unfolding: the `Fin` index, the coefficients, and the sum all live inside
+the same conditional, so `dif_pos` reduces the whole expression cleanly. -/
 noncomputable def laurentPolarPartAt
     {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
     (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) (z : ℂ) : ℂ :=
-  ∑ k : Fin (laurentPolarOrderAt hCondB s hs),
-    laurentPolarCoeffAt hCondB s hs k / (z - s) ^ (k.val + 1)
+  open Classical in
+  if h : IsCrossed γ s then
+    ∑ k : Fin (laurent_data_exists hCondB hs h).choose,
+      (laurent_data_exists hCondB hs h).choose_spec.choose k /
+        (z - s) ^ (k.val + 1)
+  else 0
 
 /-- Total polar part: sum over all poles in `S`. -/
 noncomputable def laurentPolarPartTotal
@@ -175,6 +156,38 @@ private lemma laurentAnalyticPartAt_eq_data
   classical
   unfold laurentAnalyticPartAt
   simp only [dif_pos h_cross]
+
+/-- Helper: `laurentPolarPartAt` unfolds to the data-defined sum (for crossed `s`). -/
+private lemma laurentPolarPartAt_eq_data
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+    (h_cross : IsCrossed γ s) (z : ℂ) :
+    laurentPolarPartAt hCondB s hs z =
+      ∑ k : Fin (laurent_data_exists hCondB hs h_cross).choose,
+        (laurent_data_exists hCondB hs h_cross).choose_spec.choose k /
+          (z - s) ^ (k.val + 1) := by
+  classical
+  unfold laurentPolarPartAt
+  simp only [dif_pos h_cross]
+
+/-- **Local Laurent decomposition**: near a crossed pole `s`, `f` decomposes
+as `analyticPartAt s + polarPartAt s` (eventually equal in the punctured
+neighborhood). This is the core consequence of condition (B)'s
+`laurent_compatible` field, repackaged as a working theorem on our extracted
+`laurentAnalyticPartAt` and `laurentPolarPartAt`. -/
+theorem f_eq_analyticPart_plus_polarPart_eventually
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+    (h_cross : IsCrossed γ s) :
+    ∀ᶠ z in 𝓝[≠] s, f z =
+      laurentAnalyticPartAt hCondB s hs z +
+        laurentPolarPartAt hCondB s hs z := by
+  have h_data :=
+    (laurent_data_exists hCondB hs h_cross).choose_spec.choose_spec.choose_spec.2.1
+  filter_upwards [h_data] with z hz
+  rw [hz, laurentPolarPartAt_eq_data hCondB hs h_cross z]
+  congr 1
+  exact congrArg (· z) (laurentAnalyticPartAt_eq_data hCondB hs h_cross).symm
 
 /-! ## Decomposition relative to simple-pole `principalPartSum`
 
