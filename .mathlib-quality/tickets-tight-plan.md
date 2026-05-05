@@ -116,6 +116,43 @@ PolarPartDecomposition data.
   - Verify residue (`k = -1` Laurent coefficient) matches mathlib's `residue f s`
 - [ ] M.2 `hw_3_3_higherOrder_avoidance_paper` directly from `hMero`
 
+## Concrete proof sketch for TIGHT-12 step 2.1
+
+For future-session execution, the core lemma is:
+
+```lean
+private theorem generalizedWindingNumber_eventually_zero_cocompact_of_lipschitz
+    {γ : PwC1Immersion x x} {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+    ∀ᶠ w in Filter.cocompact ℂ,
+      (∀ t ∈ Icc (0:ℝ) 1, γ.toPiecewiseC1Path t ≠ w) ∧
+        generalizedWindingNumber γ.toPiecewiseC1Path w = 0
+```
+
+Proof outline (~50 lines):
+1. Set `R := ‖γ.toPath.extend 0‖ + K`. Then `∀ t ∈ Icc 0 1, ‖γ(t)‖ ≤ R` from Lipschitz.
+2. Set `M_d := K`. Then `∀ t ∈ Icc 0 1, ‖deriv γ.extend t‖ ≤ M_d` from Lipschitz.
+3. Set `RR := R + M_d / (2π) + 1`. Filter eventually: `‖w‖ > RR ⟹ ‖w‖ > R`.
+4. For `‖w‖ > R`: γ avoids w (`‖γ(t) - w‖ ≥ ‖w‖ - R > 0`). Hence
+   `hδ : ∃ δ > 0, ∀ t, δ ≤ ‖γ(t) - w‖` with `δ := ‖w‖ - R`.
+5. `intervalIntegrable_div_lipschitz γ hδ.2.1 hδ.2.2 hLip` gives integrability
+   of `γ'/(γ - w)`.
+6. `hasGeneralizedWindingNumber_integer_of_closed γ hδ h_int` gives
+   `∃ n : ℤ, HasGeneralizedWindingNumber γ w n`. Hence
+   `generalizedWindingNumber γ w = (n : ℂ)`.
+7. From `HasGeneralizedWindingNumber γ w n` (avoidance) extract
+   `∮_γ 1/(z - w) dz = 2πi · n` (this is the `HasCauchyPV` reduction;
+   project's `cauchyPV_eq_contourIntegral_of_avoids` or build inline).
+8. Bound `|∮_γ 1/(z - w) dz| ≤ M_d/(‖w‖ - R)` (mirrors `dixonH2_norm_le`'s
+   proof with `f = const 1`).
+9. Hence `|2π · n| ≤ M_d/(‖w‖ - R)`, i.e. `|n| ≤ M_d/(2π·(‖w‖-R))`.
+10. For `‖w‖ > RR = R + M_d/(2π) + 1`, `‖w‖ - R > M_d/(2π) + 1`, so
+    `M_d/(2π·(‖w‖-R)) < 1/(1 + 2π/M_d) < 1`. Hence `|n| < 1`.
+11. Integer `n` with `|n| < 1` ⟹ `n = 0` (by `Int.lt_one_iff` or similar).
+12. Therefore `generalizedWindingNumber γ w = 0`.
+
+Steps 5–7 may need supporting lemmas already in the project. Step 8's
+norm bound mirrors `dixonH2_norm_le` exactly.
+
 **Output**: foundational lemma for TIGHT-4 and the global non-avoidance theorem.
 
 ### Phase 4 — TIGHT-4 (holo cancel)
