@@ -292,6 +292,65 @@ theorem f_minus_pp_eq_higherOrder_plus_holo
         laurentHolomorphicRemainder hCondB z := by
   simp only [laurentHolomorphicRemainder]; ring
 
+/-! ## Differentiability of the decomposition pieces -/
+
+/-- `laurentHigherOrderPolarAt s` is differentiable at any point `z ≠ s`. -/
+theorem laurentHigherOrderPolarAt_differentiableAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) {z : ℂ}
+    (hz : z ≠ s) :
+    DifferentiableAt ℂ (laurentHigherOrderPolarAt hCondB s hs) z := by
+  classical
+  unfold laurentHigherOrderPolarAt
+  by_cases h : IsCrossed γ s
+  · simp only [if_pos h]
+    refine (laurentPolarPartAt_differentiableAt hCondB hs hz).fun_sub ?_
+    have h_sub_ne : z - s ≠ 0 := sub_ne_zero.mpr hz
+    exact ((differentiableAt_const _).div
+      (differentiableAt_id.sub (differentiableAt_const _)) h_sub_ne)
+  · simp only [if_neg h]
+    exact differentiableAt_const _
+
+/-- `laurentHigherOrderPolar` is differentiable at any point `z ∉ S`. -/
+theorem laurentHigherOrderPolar_differentiableAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {z : ℂ} (hz : z ∉ (↑S : Set ℂ)) :
+    DifferentiableAt ℂ (laurentHigherOrderPolar hCondB) z := by
+  unfold laurentHigherOrderPolar
+  apply DifferentiableAt.fun_sum
+  intro s _
+  refine laurentHigherOrderPolarAt_differentiableAt hCondB s.2 ?_
+  intro h_eq
+  exact hz (h_eq ▸ Finset.mem_coe.mpr s.2)
+
+/-- `principalPartSum S c` is differentiable at any point `z ∉ S`. -/
+theorem principalPartSum_differentiableAt
+    (S : Finset ℂ) (c : ℂ → ℂ) {z : ℂ} (hz : z ∉ (↑S : Set ℂ)) :
+    DifferentiableAt ℂ (principalPartSum S c) z := by
+  unfold principalPartSum
+  apply DifferentiableAt.fun_sum
+  intro s hs
+  have h_sub_ne : z - s ≠ 0 := sub_ne_zero.mpr (fun h_eq =>
+    hz (h_eq ▸ Finset.mem_coe.mpr hs))
+  exact (differentiableAt_const _).div
+    (differentiableAt_id.sub (differentiableAt_const _)) h_sub_ne
+
+/-- `laurentHolomorphicRemainder` is differentiable on `U \ S`. -/
+theorem laurentHolomorphicRemainder_differentiableOn
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S)
+    {U : Set ℂ} (hU : IsOpen U)
+    (hf : DifferentiableOn ℂ f (U \ ↑S)) :
+    DifferentiableOn ℂ (laurentHolomorphicRemainder hCondB) (U \ ↑S) := by
+  intro z hz
+  have hU_open_diff : IsOpen (U \ ↑S) :=
+    hU.sdiff (Set.Finite.isClosed (Set.toFinite (↑S : Set ℂ)))
+  have hf_at : DifferentiableAt ℂ f z :=
+    (hf z hz).differentiableAt (hU_open_diff.mem_nhds hz)
+  unfold laurentHolomorphicRemainder
+  exact ((hf_at.sub (principalPartSum_differentiableAt S _ hz.2)).sub
+    (laurentHigherOrderPolar_differentiableAt hCondB hz.2)).differentiableWithinAt
+
 end LeanModularForms
 
 end
