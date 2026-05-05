@@ -135,24 +135,6 @@ noncomputable def laurentPolarPartTotal
     (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
   ∑ s ∈ S.attach, laurentPolarPartAt hCondB s.1 s.2 z
 
-/-- Holomorphic remainder: `f - laurentPolarPartTotal`. By condition (B)'s
-Laurent compatibility, this is analytic at each pole `s ∈ S`. -/
-noncomputable def laurentHolomorphicRemainder
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
-  f z - laurentPolarPartTotal hCondB z
-
-/-! ## Decomposition identity (TIGHT-2 building block) -/
-
-/-- **Fundamental identity**: by definition,
-`f z = laurentPolarPartTotal hCondB z + laurentHolomorphicRemainder hCondB z`. -/
-theorem f_eq_polar_plus_holo
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) :
-    f z =
-      laurentPolarPartTotal hCondB z + laurentHolomorphicRemainder hCondB z := by
-  simp [laurentHolomorphicRemainder]
-
 /-! ## Analytic part of the Laurent decomposition
 
 The analytic remainder `g` from condition (B)'s `laurent_compatible` data is
@@ -183,26 +165,73 @@ theorem laurentAnalyticPartAt_analyticAt
   rw [dif_pos h_cross]
   exact (laurent_data_exists hCondB hs h_cross).choose_spec.choose_spec.choose_spec.1
 
-/-! ## Decomposition relative to simple-pole `principalPartSum` -/
+/-! ## Decomposition relative to simple-pole `principalPartSum`
 
-/-- The **higher-order polar part**: `laurentPolarPartTotal` with the
-simple-pole `principalPartSum` subtracted. This is the input to the
-(B)-closure machinery for the higher-order Laurent terms. -/
+**Crossed-vs-uncrossed split.** The decomposition
+`f - principalPartSum = laurentHigherOrderPolar + laurentHolomorphicRemainder`
+must work uniformly whether or not `γ` crosses each `s ∈ S`. We achieve this by
+defining the higher-order polar part *per pole* with a guard:
+
+* **Crossed `s`**: `laurentHigherOrderPolarAt s z = laurentPolarPartAt s z -
+  residue f s / (z - s)` — the Laurent terms `aₖ / (z-s)^(k+1)` for `k ≥ 1`,
+  which (B)'s angle-compatibility cancels under CPV.
+* **Uncrossed `s`**: `laurentHigherOrderPolarAt s z = 0`. Higher-order Laurent
+  terms `1/(z-s)^k` for `k ≥ 2` integrate to zero along *any* closed curve
+  (the antiderivative `-1/((k-1)(z-s)^{k-1})` is single-valued), so they need
+  no separate cancellation; they live in `laurentHolomorphicRemainder` and
+  vanish via the path-of-residues structure.
+
+With this split, both `h_polar_cancel` and `h_holo_cancel` are individually
+zero under just `hCondB` + null-homology, with no "all crossed" assumption. -/
+
+/-- The per-pole higher-order polar part, guarded on `IsCrossed γ s`.
+At crossed poles, this is `laurentPolarPartAt s - residue/(z-s)` — the Laurent
+terms `k ≥ 1` from condition (B), which CPV-cancel under (B). At uncrossed
+poles, this is `0` — there's no on-curve singularity to cancel. -/
+noncomputable def laurentHigherOrderPolarAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) (z : ℂ) : ℂ :=
+  open Classical in
+  if IsCrossed γ s then
+    laurentPolarPartAt hCondB s hs z - residue f s / (z - s)
+  else 0
+
+/-- The total higher-order polar part: sum over `s ∈ S` of the per-pole
+guarded higher-order parts. Only crossed poles contribute. -/
 noncomputable def laurentHigherOrderPolar
     {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
     (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
-  laurentPolarPartTotal hCondB z -
-    principalPartSum S (fun s => residue f s) z
+  ∑ s ∈ S.attach, laurentHigherOrderPolarAt hCondB s.1 s.2 z
+
+/-- The **holomorphic remainder** in the refactored decomposition:
+`f - principalPartSum - laurentHigherOrderPolar`.
+
+Per-pole contributions:
+* **At crossed `s`**: `f - residue/(z-s) - (polarPartAt - residue/(z-s)) =
+  f - polarPartAt`, which is the analytic part `g_s` from condition (B)'s
+  Laurent compatibility — analytic at `s`.
+* **At uncrossed `s`**: `f - residue/(z-s) - 0`, which has the higher-order
+  Laurent terms `1/(z-s)^k` for `k ≥ 2`. These are *not* analytic at `s`,
+  but they integrate to zero along any closed curve (single-valued
+  antiderivative), so they don't affect the residue formula. -/
+noncomputable def laurentHolomorphicRemainder
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
+  f z - principalPartSum S (fun s => residue f s) z -
+    laurentHigherOrderPolar hCondB z
 
 /-- **Decomposition for `hCancel` discharge**:
-`f - principalPartSum = laurentHigherOrderPolar + laurentHolomorphicRemainder`. -/
+`f - principalPartSum = laurentHigherOrderPolar + laurentHolomorphicRemainder`.
+
+Holds by construction (the new `laurentHolomorphicRemainder` is defined as the
+remainder after subtracting `principalPartSum + laurentHigherOrderPolar`). -/
 theorem f_minus_pp_eq_higherOrder_plus_holo
     {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
     (hCondB : SatisfiesConditionB γ f S) (z : ℂ) :
     f z - principalPartSum S (fun s => residue f s) z =
       laurentHigherOrderPolar hCondB z +
         laurentHolomorphicRemainder hCondB z := by
-  simp only [laurentHigherOrderPolar, laurentHolomorphicRemainder]; ring
+  simp only [laurentHolomorphicRemainder]; ring
 
 end LeanModularForms
 
