@@ -165,6 +165,17 @@ theorem laurentAnalyticPartAt_analyticAt
   rw [dif_pos h_cross]
   exact (laurent_data_exists hCondB hs h_cross).choose_spec.choose_spec.choose_spec.1
 
+/-- Helper: `laurentAnalyticPartAt` unfolds to the data-defined `g`. -/
+private lemma laurentAnalyticPartAt_eq_data
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+    (h_cross : IsCrossed γ s) :
+    laurentAnalyticPartAt hCondB s hs =
+      (laurent_data_exists hCondB hs h_cross).choose_spec.choose_spec.choose := by
+  classical
+  unfold laurentAnalyticPartAt
+  simp only [dif_pos h_cross]
+
 /-! ## Decomposition relative to simple-pole `principalPartSum`
 
 **Crossed-vs-uncrossed split.** The decomposition
