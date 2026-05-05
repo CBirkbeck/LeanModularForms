@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.HigherOrderAssembly
 import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.HW33MultiPole
+import LeanModularForms.ForMathlib.HW33HigherOrderC3
 import LeanModularForms.ForMathlib.PiecewiseContourIntegral
 
 /-!
@@ -79,6 +80,59 @@ structure PolarPartDecomposition (f : ℂ → ℂ) (S : Finset ℂ) (U : Set ℂ
   analyticRemainder_diff : DifferentiableOn ℂ analyticRemainder U
   decomp : ∀ z ∈ U \ (↑S : Set ℂ),
     f z = analyticRemainder z + ∑ s ∈ S, polarPart s z
+
+/-! ## The "higher-order" part of a polar decomposition
+
+A polar part `polarPart s z = ∑ k, a_k/(z-s)^(k+1)` (`k = 0, ..., N-1`) splits
+into the simple-pole part `a_0/(z-s)` (the residue contribution) and the
+higher-order part `∑_{k≥1} a_k/(z-s)^(k+1)`. The higher-order part integrates
+to zero along any closed curve avoiding `s`. -/
+
+/-- The strictly-higher-order part of a polar part: `∑_{k≥1} a_k/(z-s)^(k+1)`. -/
+noncomputable def higherOrderPart {N : ℕ} (a : Fin N → ℂ) (s z : ℂ) : ℂ :=
+  ∑ k : Fin N, if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0
+
+/-- The simple-pole part of a polar part: `a_0/(z-s)` (or 0 if N = 0). -/
+noncomputable def simplePolePart {N : ℕ} (a : Fin N → ℂ) (s z : ℂ) : ℂ :=
+  if h : 0 < N then a ⟨0, h⟩ / (z - s) else 0
+
+/-- The polar part decomposes into simple-pole + higher-order. -/
+theorem polarPart_eq_simplePole_add_higherOrder {N : ℕ} (a : Fin N → ℂ) (s z : ℂ) :
+    (∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) =
+      simplePolePart a s z + higherOrderPart a s z := by
+  classical
+  unfold simplePolePart higherOrderPart
+  by_cases h : 0 < N
+  · simp only [dif_pos h]
+    -- Split sum: k = 0 contributes a₀/(z-s); k ≥ 1 contributes higherOrderPart.
+    have hsplit : ∀ k : Fin N,
+        a k / (z - s) ^ (k.val + 1) =
+          (if k.val = 0 then a ⟨0, h⟩ / (z - s) else 0) +
+          (if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0) := by
+      intro k
+      by_cases hk : k.val = 0
+      · have : k = ⟨0, h⟩ := Fin.ext hk
+        simp [this]
+      · have hk1 : k.val ≥ 1 := by omega
+        simp [hk, hk1]
+    rw [show (∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) =
+        ∑ k : Fin N, ((if k.val = 0 then a ⟨0, h⟩ / (z - s) else 0) +
+          (if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0)) from
+        Finset.sum_congr rfl (fun k _ => hsplit k)]
+    rw [Finset.sum_add_distrib]
+    have h_first : (∑ k : Fin N,
+        if k.val = 0 then a ⟨0, h⟩ / (z - s) else 0) = a ⟨0, h⟩ / (z - s) := by
+      rw [Finset.sum_eq_single ⟨0, h⟩]
+      · simp
+      · intro k _ hk
+        have hk0 : k.val ≠ 0 := fun h_eq => hk (Fin.ext h_eq)
+        simp [hk0]
+      · simp
+    rw [h_first]
+  · simp only [dif_neg h]
+    have hN : N = 0 := Nat.eq_zero_of_not_pos h
+    subst hN
+    simp
 
 /-! ## Higher-order Laurent term: contour integral vanishes -/
 
