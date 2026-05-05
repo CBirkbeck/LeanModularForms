@@ -153,6 +153,36 @@ theorem f_eq_polar_plus_holo
       laurentPolarPartTotal hCondB z + laurentHolomorphicRemainder hCondB z := by
   simp [laurentHolomorphicRemainder]
 
+/-! ## Analytic part of the Laurent decomposition
+
+The analytic remainder `g` from condition (B)'s `laurent_compatible` data is
+the holomorphic part of the local decomposition `f = g + ∑ aₖ / (z-s)^(k+1)`
+near a crossed pole `s ∈ S`. Extracting this `g` as a separate function
+provides the building block for proving global analyticity of
+`laurentHolomorphicRemainder` (TIGHT-4). -/
+
+/-- The analytic remainder `g` from condition (B)'s Laurent compatibility data
+at a crossed pole `s ∈ S`. By definition, `f z = g z + ∑ a_k / (z-s)^(k+1)`
+holds eventually near `s`. For uncrossed `s`, this is the zero function. -/
+noncomputable def laurentAnalyticPartAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) : ℂ → ℂ :=
+  open Classical in
+  if h : IsCrossed γ s then
+    (laurent_data_exists hCondB hs h).choose_spec.choose_spec.choose
+  else 0
+
+/-- The analytic part is `AnalyticAt ℂ` at `s` (for crossed `s`). -/
+theorem laurentAnalyticPartAt_analyticAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+    (h_cross : IsCrossed γ s) :
+    AnalyticAt ℂ (laurentAnalyticPartAt hCondB s hs) s := by
+  unfold laurentAnalyticPartAt
+  classical
+  rw [dif_pos h_cross]
+  exact (laurent_data_exists hCondB hs h_cross).choose_spec.choose_spec.choose_spec.1
+
 /-! ## Decomposition relative to simple-pole `principalPartSum` -/
 
 /-- The **higher-order polar part**: `laurentPolarPartTotal` with the

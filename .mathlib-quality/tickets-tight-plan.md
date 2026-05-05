@@ -1,0 +1,89 @@
+# Master Plan: Paper-Faithful HW Theorem 3.3
+
+## End Goal
+
+```lean
+theorem hw_3_3_clean
+    {U : Set ℂ} (hU : IsOpen U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : ClosedPwC1Immersion x) (h_null : IsNullHomologous γ.toPwC1Immersion U)
+    (hMero : ∀ s ∈ S, MeromorphicAt f s)
+    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S (fun s => poleOrderAt f s))
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S) :
+    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
+      (2 * ↑Real.pi * I * ∑ s ∈ S,
+        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s * residue f s)
+```
+
+**Stretch goal** (matching paper exactly): drop `hU` to allow non-open or
+unbounded `U`, but the paper itself uses an open set so `IsOpen` is OK.
+
+## Phases
+
+### Phase 1 — Foundations [TIGHT-11] ✅ DONE (2026-05-05)
+- [x] 1.1 `ClosedPwC1Curve.lipschitzOnWith_piece` — bound on each closed piece via continuity (`Convex.lipschitzOnWith_of_nnnorm_derivWithin_le`)
+- [x] 1.2 `lipschitzOnWith_of_consecutive_pieces` (private) — gluing lemma via strong induction on partition cardinality
+- [x] 1.3 `ClosedPwC1Curve.lipschitzWith_extend` — global Lipschitz on ℝ via clamping
+- [x] **Outcome**: `hw_3_3_simple_avoidance_paper` no longer needs `hLip`
+
+**Output**: `hw_3_3_simple_avoidance_paper` no longer needs `hLip` argument.
+
+### Phase 2 — Bounded-domain reduction [TIGHT-12]
+- [ ] 2.1 Pick a δ-thickening `V := { z : ∃ t, |z - γ t| < δ }` for sufficient `δ`
+- [ ] 2.2 Show `γ` is null-homologous in `V` and `V` is bounded open
+- [ ] 2.3 Wrap closed-full theorem on `V`, conclude on `U`
+
+**Output**: `hw_3_3_simple_avoidance_paper` no longer needs `hU_bounded`.
+
+### Phase 3 — Holomorphic remainder analyticity
+- [ ] 3.1 `laurentPolarPartAt_analytic_at_other_pole` — polar part at `s` is analytic at `s' ≠ s`
+- [ ] 3.2 `laurentPolarPartAt_cancels_f_at_pole` — `f - laurentPolarPartAt s` is analytic at `s`
+- [ ] 3.3 `laurentHolomorphicRemainder_differentiableOn` — globally analytic on `U`
+
+**Output**: foundational lemma for TIGHT-4 and the global non-avoidance theorem.
+
+### Phase 4 — TIGHT-4 (holo cancel)
+- [ ] 4.1 `cauchyIntegral_zero_for_analytic_nullHomologous` — `∮_γ g = 0` for `g` analytic + γ null-hom
+- [ ] 4.2 `cpv_tendsto_contour_for_analytic` — CPV → contour integral as ε → 0 (DCT)
+- [ ] 4.3 `h_holo_cancel_of_conditionB` — combines 4.1 + 4.2 + 3.3
+
+**Output**: `h_holo_cancel` is provable from `hCondB`.
+
+### Phase 5 — Simple-pole CPV with crossings [hPV_sing for non-avoidance]
+- [ ] 5.1 Per-pole CPV at on-curve singularity using generalized winding number
+- [ ] 5.2 Multi-pole sum
+- [ ] 5.3 `hPV_sing_of_conditionB` final form
+
+**Output**: `hPV_sing` provable.
+
+### Phase 6 — TIGHT-3 (polar cancel)
+- [ ] 6.1 Derive geometric data at each crossing from `ClosedPwC1Immersion + hCondB`:
+  - [ ] 6.1.1 Tangent existence (left/right derivative limits)
+  - [ ] 6.1.2 Tangent non-vanishing
+  - [ ] 6.1.3 Continuity on each side (from ContDiffOn)
+  - [ ] 6.1.4 Local strict (anti-)monotonicity from non-vanishing tangent + flatness
+  - [ ] 6.1.5 Avoidance margin (Proposition 2.2 — finite crossings + compactness)
+  - [ ] 6.1.6 Smoothness on outer regions
+- [ ] 6.2 Per-pole-per-index singleton CPV via `hasCauchyPVOn_singleton_pow_of_conditionB_assembled`
+- [ ] 6.3 Multi-pole multi-index sum: HasCauchyPVOn S laurentHigherOrderPolar
+- [ ] 6.4 `h_polar_cancel_of_conditionB` final form
+
+**Output**: `h_polar_cancel` provable.
+
+### Phase 7 — Integrability of `cpvIntegrandOn`
+- [ ] 7.1 General lemma: `cpvIntegrandOn` is integrable when integrand is continuous on `U \ S`
+- [ ] 7.2 Apply to `laurentHigherOrderPolar`, `laurentHolomorphicRemainder`, `principalPartSum`
+
+**Output**: `hI_polar`, `hI_holo`, `hI_sing` discharged.
+
+### Phase 8 — Compose
+- [ ] 8.1 Wrap Phases 4–7 into `hw_3_3_clean` via `hw_3_3_paper`
+- [ ] 8.2 Add doc, update `MEMORY.md`, commit
+
+---
+
+## Execution Order
+
+Execute Phase 1 first (Lipschitz foundations), then 2, then in order. Each
+phase produces a checkpoint; all phases produce axiom-clean theorems.

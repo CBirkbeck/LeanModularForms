@@ -67,11 +67,6 @@ theorem hw_3_3_tight
     (hMero : ∀ s ∈ S, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (hCondB : SatisfiesConditionB γ f S)
-    (h_no_endpt_cross : ∀ s ∈ S,
-      γ.toPiecewiseC1Path 0 ≠ s ∧ γ.toPiecewiseC1Path 1 ≠ s)
-    (h_unique_cross : ∀ s ∈ S,
-      ∀ t₁ ∈ Icc (0 : ℝ) 1, ∀ t₂ ∈ Icc (0 : ℝ) 1,
-        γ.toPiecewiseC1Path t₁ = s → γ.toPiecewiseC1Path t₂ = s → t₁ = t₂)
     -- Cancellation of the (definitionally-extracted) decomposition pieces:
     (h_polar_cancel : HasCauchyPVOn S
       (laurentHigherOrderPolar hCondB) γ.toPiecewiseC1Path 0)
@@ -95,7 +90,7 @@ theorem hw_3_3_tight
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
   generalizedResidueTheorem_higherOrder_under_B_closed hU S hS_in_U f hf γ
-    h_null hMero hCondA hCondB h_no_endpt_cross h_unique_cross
+    h_null hMero hCondA hCondB
     (laurentHigherOrderPolar hCondB)
     (laurentHolomorphicRemainder hCondB)
     (f_minus_pp_eq_higherOrder_plus_holo hCondB)
