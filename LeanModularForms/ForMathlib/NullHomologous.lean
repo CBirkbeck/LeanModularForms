@@ -183,6 +183,209 @@ theorem IsNullHomologous.winding_eventually_zero_cocompact_of_bounded
   refine ⟨fun t ht heq => hw_notin (heq ▸ h_null.image_subset t ht),
     h_null.winding_zero w hw_notin⟩
 
+/-! ### Lipschitz implies bounded image -/
+
+/-- Lipschitz `γ.toPath.extend` on `[0, 1]` has norm bounded by
+`‖γ(0)‖ + K`. -/
+lemma lipschitzWith_norm_bound_on_Icc01
+    {x : ℂ} {γ : PwC1Immersion x x} {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
+    ‖γ.toPath.extend t‖ ≤ ‖γ.toPath.extend 0‖ + (K : ℝ) := by
+  have hd : dist t 0 ≤ 1 := by
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg ht.1]
+    exact ht.2
+  have h_close : dist (γ.toPath.extend t) (γ.toPath.extend 0) ≤ (K : ℝ) := by
+    calc dist (γ.toPath.extend t) (γ.toPath.extend 0)
+        ≤ K * dist t 0 := hLip.dist_le_mul _ _
+      _ ≤ K * 1 := by
+          apply mul_le_mul_of_nonneg_left hd (NNReal.coe_nonneg _)
+      _ = (K : ℝ) := mul_one _
+  have h_norm_close : ‖γ.toPath.extend t - γ.toPath.extend 0‖ ≤ (K : ℝ) := by
+    rw [← dist_eq_norm]; exact h_close
+  calc ‖γ.toPath.extend t‖
+      = ‖γ.toPath.extend 0 + (γ.toPath.extend t - γ.toPath.extend 0)‖ := by
+        congr 1; ring
+    _ ≤ ‖γ.toPath.extend 0‖ + ‖γ.toPath.extend t - γ.toPath.extend 0‖ := norm_add_le _ _
+    _ ≤ ‖γ.toPath.extend 0‖ + (K : ℝ) := by linarith
+
+/-! ### Norm bound for `γ.contourIntegral (z-w)⁻¹` -/
+
+/-- For γ contained in a ball of radius `R`, the contour integral of `1/(z-w)`
+along γ is bounded by `M_d / (‖w‖ - R)` for `‖w‖ > R`, where `M_d` bounds γ's
+derivative. Mirrors `dixonH2_norm_le` with `f = const 1`. -/
+private lemma contourIntegral_inv_norm_le_of_far
+    {x : ℂ} {γ : PiecewiseC1Path x x}
+    {R M_d : ℝ}
+    (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPath.extend t‖ ≤ R)
+    (hM_d : ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv γ.toPath.extend t‖ ≤ M_d)
+    {w : ℂ} (hw : R < ‖w‖) :
+    ‖γ.contourIntegral (fun z => (z - w)⁻¹)‖ ≤ M_d / (‖w‖ - R) := by
+  have hpos : 0 < ‖w‖ - R := by linarith
+  have h_dist_lb : ∀ t ∈ Icc (0 : ℝ) 1, ‖w‖ - R ≤ ‖γ.toPath.extend t - w‖ := by
+    intro t ht
+    have h1 : ‖w‖ - ‖γ.toPath.extend t‖ ≤ ‖γ.toPath.extend t - w‖ := by
+      rw [show γ.toPath.extend t - w = -(w - γ.toPath.extend t) from by ring,
+          norm_neg]
+      exact norm_sub_norm_le _ _
+    linarith [hR t ht]
+  -- Contour integral = ∫₀¹ (γ(t)-w)⁻¹ * γ'(t) dt
+  unfold PiecewiseC1Path.contourIntegral
+  -- The integrand is `(γ.extend t - w)⁻¹ * γ'(t)`.
+  set integrand : ℝ → ℂ := fun t => (γ.toPath.extend t - w)⁻¹ * deriv γ.toPath.extend t
+  -- Pointwise bound
+  have h_ptwise : ∀ t ∈ Set.uIoc (0 : ℝ) 1, ‖integrand t‖ ≤ M_d / (‖w‖ - R) := by
+    intro t ht_ui
+    have ht : t ∈ Icc (0 : ℝ) 1 := by
+      rw [Set.uIoc_of_le (zero_le_one' ℝ)] at ht_ui
+      exact Ioc_subset_Icc_self ht_ui
+    show ‖(γ.toPath.extend t - w)⁻¹ * deriv γ.toPath.extend t‖ ≤ M_d / (‖w‖ - R)
+    rw [norm_mul, norm_inv]
+    have h_dist := h_dist_lb t ht
+    have h_inv_le : ‖γ.toPath.extend t - w‖⁻¹ ≤ (‖w‖ - R)⁻¹ :=
+      inv_anti₀ hpos h_dist
+    calc ‖γ.toPath.extend t - w‖⁻¹ * ‖deriv γ.toPath.extend t‖
+        ≤ (‖w‖ - R)⁻¹ * M_d := by
+          apply mul_le_mul h_inv_le (hM_d t ht) (norm_nonneg _)
+            (le_of_lt (inv_pos.mpr hpos))
+      _ = M_d / (‖w‖ - R) := by rw [inv_mul_eq_div]
+  have h_bound := intervalIntegral.norm_integral_le_of_norm_le_const h_ptwise
+  rw [show |(1 : ℝ) - 0| = 1 from by norm_num, mul_one] at h_bound
+  exact h_bound
+
+/-! ### Generalized winding number vanishes for `w` far from γ (Lipschitz form) -/
+
+/-- **Generalized winding number vanishes for `w` far from γ.**
+
+For a Lipschitz closed piecewise-`C¹` immersion `γ`, the generalized winding
+number around `w` is `0` whenever `‖w‖` exceeds `‖γ(0)‖ + K + K/(2π)`. -/
+theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
+    {x : ℂ} {γ : PwC1Immersion x x} {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) {w : ℂ}
+    (hw : ‖γ.toPath.extend 0‖ + (K : ℝ) + (K : ℝ) / (2 * Real.pi) < ‖w‖) :
+    generalizedWindingNumber γ.toPiecewiseC1Path w = 0 := by
+  set R : ℝ := ‖γ.toPath.extend 0‖ + (K : ℝ) with hR_def
+  have h_2pi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
+  have h_K_div_2pi_nn : (0 : ℝ) ≤ (K : ℝ) / (2 * Real.pi) :=
+    div_nonneg (NNReal.coe_nonneg _) h_2pi_pos.le
+  have hR_w : R < ‖w‖ := by linarith
+  have hpos : 0 < ‖w‖ - R := by linarith
+  -- γ stays in ball of radius R.
+  have hR_bound : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPath.extend t‖ ≤ R :=
+    lipschitzWith_norm_bound_on_Icc01 hLip
+  -- γ's derivative bounded by K.
+  have hM_d : ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv γ.toPath.extend t‖ ≤ (K : ℝ) :=
+    fun _ _ => norm_deriv_le_of_lipschitz hLip
+  -- Distance lower bound for γ - w.
+  have h_dist_lb : ∀ t ∈ Icc (0 : ℝ) 1,
+      (‖w‖ - R) ≤ ‖γ.toPath.extend t - w‖ := by
+    intro t ht
+    have h1 : ‖w‖ - ‖γ.toPath.extend t‖ ≤ ‖γ.toPath.extend t - w‖ := by
+      rw [show γ.toPath.extend t - w = -(w - γ.toPath.extend t) from by ring,
+          norm_neg]
+      exact norm_sub_norm_le _ _
+    linarith [hR_bound t ht]
+  -- δ-bound: γ avoids w with positive distance.
+  have hδ : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ.toPiecewiseC1Path t - w‖ := ⟨‖w‖ - R, hpos, h_dist_lb⟩
+  -- Integrability of γ'/(γ - w).
+  have h_int : IntervalIntegrable
+      (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - w))
+      MeasureTheory.volume 0 1 :=
+    intervalIntegrable_div_lipschitz γ.toPiecewiseC1Path hpos h_dist_lb hLip
+  -- Get integer winding number.
+  obtain ⟨n, hn⟩ :=
+    hasGeneralizedWindingNumber_integer_of_closed γ.toPiecewiseC1Path hδ h_int
+  have h_winding_eq : generalizedWindingNumber γ.toPiecewiseC1Path w = (n : ℂ) := hn.eq
+  -- HasCauchyPV by avoidance: contour integral form.
+  have h_avoid_pv : HasCauchyPV (fun z => (z - w)⁻¹) γ.toPiecewiseC1Path w
+      (γ.toPiecewiseC1Path.contourIntegral (fun z => (z - w)⁻¹)) :=
+    hasCauchyPV_of_avoids hδ
+  -- Uniqueness of Tendsto: contour integral = 2πi · n.
+  have h_eq_int : γ.toPiecewiseC1Path.contourIntegral (fun z => (z - w)⁻¹) =
+      2 * ↑Real.pi * I * (n : ℂ) :=
+    tendsto_nhds_unique h_avoid_pv hn
+  -- Bound on contour integral.
+  have h_bound : ‖γ.toPiecewiseC1Path.contourIntegral (fun z => (z - w)⁻¹)‖
+      ≤ (K : ℝ) / (‖w‖ - R) :=
+    contourIntegral_inv_norm_le_of_far hR_bound hM_d hR_w
+  -- Translate to bound on |n|.
+  have h_norm_2piIn : ‖(2 : ℂ) * (↑Real.pi : ℂ) * I * (n : ℂ)‖ =
+      2 * Real.pi * (|n| : ℝ) := by
+    have h1 : (2 : ℂ) * (↑Real.pi : ℂ) * I * (n : ℂ) =
+        ((2 * Real.pi : ℝ) : ℂ) * (I * (n : ℂ)) := by push_cast; ring
+    rw [h1, norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs,
+        abs_of_pos h_2pi_pos, Complex.norm_I, one_mul, Complex.norm_intCast]
+  have hL : ‖(2 : ℂ) * ↑Real.pi * I * (n : ℂ)‖ ≤ (K : ℝ) / (‖w‖ - R) := by
+    rw [← h_eq_int]; exact h_bound
+  rw [h_norm_2piIn] at hL
+  -- Hence 2π · |n| ≤ K/(‖w‖ - R) < 2π (since ‖w‖ - R > K/(2π)).
+  have h_div_lt : (K : ℝ) / (‖w‖ - R) < 2 * Real.pi := by
+    have h_K_lt : (K : ℝ) / (2 * Real.pi) < ‖w‖ - R := by linarith
+    rw [div_lt_iff₀ h_2pi_pos] at h_K_lt
+    rw [div_lt_iff₀ hpos]
+    nlinarith
+  have h_2pi_n_lt : 2 * Real.pi * (|n| : ℝ) < 2 * Real.pi :=
+    lt_of_le_of_lt hL h_div_lt
+  have h_n_abs_lt_1 : (|n| : ℝ) < 1 := by
+    have h_2pi_n_lt' : 2 * Real.pi * (|n| : ℝ) < 2 * Real.pi * 1 := by
+      rw [mul_one]; exact h_2pi_n_lt
+    exact lt_of_mul_lt_mul_left h_2pi_n_lt' h_2pi_pos.le
+  -- Integer with |n| < 1 ⟹ n = 0.
+  have h_n_zero : n = 0 := by
+    have hint : |n| < 1 := by exact_mod_cast h_n_abs_lt_1
+    have h1 : -1 < n := by
+      by_contra h
+      push Not at h
+      have : |n| ≥ 1 := by rw [abs_of_nonpos (by linarith)]; linarith
+      omega
+    have h2 : n < 1 := by
+      by_contra h
+      push Not at h
+      have : |n| ≥ 1 := by rw [abs_of_nonneg (by linarith)]; exact h
+      omega
+    omega
+  rw [h_winding_eq, h_n_zero, Int.cast_zero]
+
+/-! ### Cocompact form: winding eventually zero from Lipschitz γ -/
+
+/-- For a Lipschitz `PwC1Immersion`, the conjunction
+"γ avoids w AND generalized winding γ w = 0" holds eventually in cocompact ℂ.
+This is the **Lipschitz analog** of `winding_eventually_zero_cocompact_of_bounded`
+(which used bounded U). Crucially, this version does **not** require U to be
+bounded — it only uses γ being Lipschitz, which is automatic for
+`ClosedPwC1Immersion`. -/
+theorem winding_eventually_zero_cocompact_of_lipschitz
+    {x : ℂ} {γ : PwC1Immersion x x} {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) :
+    ∀ᶠ w in Filter.cocompact ℂ,
+      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) ∧
+        generalizedWindingNumber γ.toPiecewiseC1Path w = 0 := by
+  set R : ℝ := ‖γ.toPath.extend 0‖ + (K : ℝ) with hR_def
+  set RR : ℝ := R + (K : ℝ) / (2 * Real.pi) with hRR_def
+  -- {w : ‖w‖ > RR} ∈ cocompact ℂ.
+  have h_mem : {w : ℂ | RR < ‖w‖} ∈ Filter.cocompact ℂ := by
+    rw [Filter.mem_cocompact]
+    refine ⟨Metric.closedBall 0 RR, isCompact_closedBall 0 RR, ?_⟩
+    intro w hw
+    simp only [mem_compl_iff, Metric.mem_closedBall, dist_zero_right, not_le] at hw
+    exact hw
+  apply Filter.Eventually.mono h_mem
+  intro w (hw : RR < ‖w‖)
+  have h_2pi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
+  have h_K_div_2pi_nn : (0 : ℝ) ≤ (K : ℝ) / (2 * Real.pi) :=
+    div_nonneg (NNReal.coe_nonneg _) h_2pi_pos.le
+  have hR_w : R < ‖w‖ := by linarith
+  have hR_bound : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPath.extend t‖ ≤ R :=
+    lipschitzWith_norm_bound_on_Icc01 hLip
+  refine ⟨?_, ?_⟩
+  · intro t ht heq
+    have hbd := hR_bound t ht
+    -- heq says γ.extendedPath t = w; but extendedPath = extend.
+    have h_eq_form : γ.toPath.extend t = w := heq
+    rw [h_eq_form] at hbd
+    linarith
+  · exact generalizedWindingNumber_eq_zero_of_far_lipschitz hLip hw
+
 /-! ### Full B-1: locally constant near boundary points -/
 
 /-- **B-1 (full form).** For a Lipschitz null-homologous closed immersion `γ` and
