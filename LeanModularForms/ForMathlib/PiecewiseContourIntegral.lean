@@ -74,19 +74,13 @@ theorem contourIntegral_add (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
     (hg : IntervalIntegrable (contourIntegrand g γ) volume 0 1) :
     contourIntegral (fun z => f z + g z) γ =
       contourIntegral f γ + contourIntegral g γ := by
-  simp only [contourIntegral] at *
-  rw [show (fun t => (f (γ t) + g (γ t)) * deriv γ.toPath.extend t) =
-    (fun t => f (γ t) * deriv γ.toPath.extend t + g (γ t) * deriv γ.toPath.extend t)
-    from funext fun t => add_mul _ _ _]
+  simp only [contourIntegral, add_mul]
   exact intervalIntegral.integral_add hf hg
 
 /-- Scalar multiplication: `∮_γ (c • f) = c • ∮_γ f`. -/
 theorem contourIntegral_smul (c : ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) :
     contourIntegral (fun z => c * f z) γ = c * contourIntegral f γ := by
-  simp only [contourIntegral]
-  rw [show (fun t => c * f (γ t) * deriv γ.toPath.extend t) =
-    (fun t => c * (f (γ t) * deriv γ.toPath.extend t))
-    from funext fun t => mul_assoc _ _ _]
+  simp only [contourIntegral, mul_assoc]
   exact intervalIntegral.integral_const_mul c _
 
 /-- The contour integral of the zero function is zero. -/
@@ -100,14 +94,8 @@ theorem contourIntegral_sub (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
     (hg : IntervalIntegrable (contourIntegrand g γ) volume 0 1) :
     contourIntegral (fun z => f z - g z) γ =
       contourIntegral f γ - contourIntegral g γ := by
-  have hg' : IntervalIntegrable (contourIntegrand (fun z => -g z) γ) volume 0 1 := by
-    show IntervalIntegrable (fun t => -g (γ t) * deriv γ.toPath.extend t) volume 0 1
-    rw [show (fun t => -g (γ t) * deriv γ.toPath.extend t) =
-      (fun t => -(g (γ t) * deriv γ.toPath.extend t))
-      from funext fun t => neg_mul _ _]
-    exact hg.neg
-  simp only [sub_eq_add_neg]
-  rw [contourIntegral_add f (fun z => -g z) γ hf hg', contourIntegral_neg]
+  simp only [contourIntegral, sub_mul]
+  exact intervalIntegral.integral_sub hf hg
 
 /-! ### FTC for piecewise C¹ paths
 
@@ -278,8 +266,11 @@ theorem contourIntegrand_intervalIntegrable_of_continuousOn
     apply hf_cont.comp γ.toPath.continuous_extend.continuousOn
     intro t ht
     exact h_img t ht
-  show IntervalIntegrable (fun t => f (γ.toPath.extend t) * deriv γ.toPath.extend t) volume 0 1
-  exact h_deriv_int.continuousOn_mul (by rw [uIcc_of_le (zero_le_one' ℝ)]; exact h_comp)
+  change IntervalIntegrable (fun t => f (γ.toPath.extend t) * deriv γ.toPath.extend t) volume 0 1
+  have h_comp' : ContinuousOn (fun t => f (γ.toPath.extend t)) (uIcc (0 : ℝ) 1) := by
+    rw [uIcc_of_le (zero_le_one' ℝ)]
+    exact h_comp
+  exact h_deriv_int.continuousOn_mul h_comp'
 
 /-- **FTC for closed piecewise C¹ paths.** If `F' = f` along a closed path, then `∮_γ f = 0`. -/
 theorem contourIntegral_eq_zero_of_hasDerivAt_of_closed {F f : ℂ → ℂ}

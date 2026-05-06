@@ -181,10 +181,14 @@ theorem hCancel_of_decomposition
         principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t) =
       (fun ε => ∫ t in (0 : ℝ)..1,
         cpvIntegrandOn S (fun z => h₁ z + h₂ z) γ.toPath.extend ε t) := by
-    ext ε; congr 1; ext t
-    simp only [cpvIntegrandOn]; split_ifs with h
+    ext ε
+    congr 1
+    ext t
+    simp only [cpvIntegrandOn]
+    split_ifs with h
     · rfl
-    · congr 1; exact h_decomp _
+    · congr 1
+      exact h_decomp _
   simp only [HasCauchyPVOn] at h_add ⊢
   rwa [h_congr]
 
@@ -437,10 +441,14 @@ theorem hCancel_congr
       cpvIntegrandOn S g γ.toPath.extend ε t) =
       (fun ε => ∫ t in (0 : ℝ)..1,
         cpvIntegrandOn S f γ.toPath.extend ε t) := by
-    ext ε; congr 1; ext t
-    simp only [cpvIntegrandOn]; split_ifs with h
+    ext ε
+    congr 1
+    ext t
+    simp only [cpvIntegrandOn]
+    split_ifs with h
     · rfl
-    · congr 1; exact (h_eq _).symm
+    · congr 1
+      exact (h_eq _).symm
   simp only [HasCauchyPVOn] at hf ⊢
   rwa [h_congr]
 
@@ -567,7 +575,9 @@ theorem hasDerivAt_antiderivative_pow_inv
     have : 0 < k - 1 := by omega
     exact_mod_cast this.ne'
   have h_pow2 : ((γ t - s) ^ (k - 1)) ^ 2 = (γ t - s) ^ k * (γ t - s) ^ (k - 2) := by
-    rw [← pow_mul, ← pow_add]; congr 1; omega
+    rw [← pow_mul, ← pow_add]
+    congr 1
+    omega
   simp only [smul_eq_mul]
   rw [h_pow2]
   field_simp
@@ -620,7 +630,9 @@ theorem hasDerivAt_antiderivative_pow_inv_complex
     exact_mod_cast this.ne'
   have h_pow_k2_ne : (z - s) ^ (k - 2) ≠ 0 := pow_ne_zero _ (sub_ne_zero.mpr hz)
   have h_pow2 : ((z - s) ^ (k - 1)) ^ 2 = (z - s) ^ k * (z - s) ^ (k - 2) := by
-    rw [← pow_mul, ← pow_add]; congr 1; omega
+    rw [← pow_mul, ← pow_add]
+    congr 1
+    omega
   rw [h_pow2]
   field_simp
 
@@ -738,7 +750,9 @@ theorem norm_F_diff_le_segment_bound
     intro z hz
     have h_dist : ε ≤ ‖z - s‖ := h_seg_avoids z hz
     have h_ne : z ≠ s := by
-      intro heq; rw [heq, sub_self, norm_zero] at h_dist; linarith
+      intro heq
+      rw [heq, sub_self, norm_zero] at h_dist
+      linarith
     exact (hasDerivAt_antiderivative_pow_inv_complex hk h_ne).hasDerivWithinAt
   have h_bound : ∀ z ∈ segment ℝ z₁ z₂, ‖1 / (z - s) ^ k‖ ≤ 1 / ε ^ k := by
     intro z hz
@@ -783,7 +797,8 @@ theorem eventually_re_pos_right
     rw [Real.norm_eq_abs, abs_of_pos h_pos]
   rw [h_norm_eq] at h_b
   have h_decomp : (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_s]; ring
+    rw [h_s]
+    ring
   rw [h_decomp, add_mul, Complex.add_re]
   have h1 : ((((t - t₀) : ℝ) • L) * starRingEnd ℂ L).re = (t - t₀) * ‖L‖ ^ 2 := by
     rw [Complex.real_smul, mul_assoc, Complex.mul_conj, ← Complex.ofReal_mul,
@@ -821,7 +836,8 @@ theorem eventually_re_neg_left
     rw [Real.norm_eq_abs, abs_of_neg h_neg]
   rw [h_norm_eq] at h_b
   have h_decomp : (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_s]; ring
+    rw [h_s]
+    ring
   rw [h_decomp, add_mul, Complex.add_re]
   have h1 : ((((t - t₀) : ℝ) • L) * starRingEnd ℂ L).re = (t - t₀) * ‖L‖ ^ 2 := by
     rw [Complex.real_smul, mul_assoc, Complex.mul_conj, ← Complex.ofReal_mul,
@@ -861,7 +877,9 @@ theorem eventually_ne_right
     rw [Real.norm_eq_abs, abs_of_pos h_pos]
   rw [h_norm_eq] at h_b
   intro h_eq
-  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  have h_diff_zero : γ t - γ t₀ = 0 := by
+    rw [h_s]
+    exact sub_eq_zero.mpr h_eq
   have h_expr : γ t - γ t₀ - (t - t₀) • L = -((t - t₀) • L) := by
     rw [h_diff_zero, zero_sub]
   rw [h_expr, norm_neg, norm_smul, Real.norm_eq_abs, abs_of_pos h_pos] at h_b
@@ -884,7 +902,9 @@ theorem eventually_ne_left
     rw [Real.norm_eq_abs, abs_of_neg h_neg]
   rw [h_norm_eq] at h_b
   intro h_eq
-  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  have h_diff_zero : γ t - γ t₀ = 0 := by
+    rw [h_s]
+    exact sub_eq_zero.mpr h_eq
   have h_expr : γ t - γ t₀ - (t - t₀) • L = -((t - t₀) • L) := by
     rw [h_diff_zero, zero_sub]
   rw [h_expr, norm_neg, norm_smul, Real.norm_eq_abs, abs_of_neg h_neg] at h_b
@@ -925,7 +945,8 @@ theorem chord_to_tangent_isLittleO_right
         2 * ‖tangentDeviation (γ t - s) L‖ := by
       rw [pow_two, mul_div_assoc]
       have hd_div : ‖tangentDeviation (γ t - s) L‖ / ‖γ t - s‖ ≤ 2 := by
-        rw [div_le_iff₀ hw_pos]; linarith
+        rw [div_le_iff₀ hw_pos]
+        linarith
       have h_dev_nonneg : 0 ≤ ‖tangentDeviation (γ t - s) L‖ := norm_nonneg _
       nlinarith
     linarith [h_chord]
@@ -961,7 +982,8 @@ theorem chord_to_tangent_isLittleO_left
     have h_normSq : Complex.normSq (-L) = Complex.normSq L := Complex.normSq_neg L
     rw [h_normSq]
     have h_re_neg : ((γ t - s) * starRingEnd ℂ (-L)).re = -((γ t - s) * starRingEnd ℂ L).re := by
-      rw [map_neg, mul_neg]; exact Complex.neg_re _
+      rw [map_neg, mul_neg]
+      exact Complex.neg_re _
     rw [h_re_neg]
     module
   -- Eventually re((γ t - s) · conj (-L)) ≥ 0 (since left-side gives ≤ 0 for L,
@@ -985,7 +1007,8 @@ theorem chord_to_tangent_isLittleO_left
           2 * ‖tangentDeviation (γ t - s) (-L)‖ := by
       rw [pow_two, mul_div_assoc]
       have hd_div : ‖tangentDeviation (γ t - s) (-L)‖ / ‖γ t - s‖ ≤ 2 := by
-        rw [div_le_iff₀ hw_pos]; linarith
+        rw [div_le_iff₀ hw_pos]
+        linarith
       have h_dev_nonneg : 0 ≤ ‖tangentDeviation (γ t - s) (-L)‖ := norm_nonneg _
       nlinarith
     linarith [h_chord]
@@ -1031,7 +1054,8 @@ theorem norm_sq_segment_to_pole_lower_bound
   obtain ⟨α, β, hα, hβ, h_sum, rfl⟩ := hz
   have h_decomp : α • z₁ + β • z₂ - s = α • (z₁ - s) + β • (z₂ - s) := by
     have hβ_eq : β = 1 - α := by linarith
-    rw [hβ_eq]; module
+    rw [hβ_eq]
+    module
   rw [h_decomp]
   have h_expand : ‖α • (z₁ - s) + β • (z₂ - s)‖ ^ 2 =
       α ^ 2 * ‖z₁ - s‖ ^ 2 +
@@ -1044,10 +1068,13 @@ theorem norm_sq_segment_to_pole_lower_bound
         Complex.normSq_ofReal]
     rw [show (((α : ℂ) * (z₁ - s)) * starRingEnd ℂ ((β : ℂ) * (z₂ - s))) =
         ((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s)) by
-          rw [map_mul, Complex.conj_ofReal]; push_cast; ring]
+          rw [map_mul, Complex.conj_ofReal]
+          push_cast
+          ring]
     rw [show (((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s))).re =
         α * β * ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re by
-          rw [Complex.mul_re]; simp]
+          rw [Complex.mul_re]
+          simp]
     ring
   have h_cross : ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re =
       (‖z₁ - s‖ ^ 2 + ‖z₂ - s‖ ^ 2 - ‖z₁ - z₂‖ ^ 2) / 2 := by
@@ -1058,7 +1085,9 @@ theorem norm_sq_segment_to_pole_lower_bound
   rw [h_expand, h_cross, h₁, h₂]
   have h_ab_le : α * β ≤ 1 / 4 := by nlinarith [sq_nonneg (α - β)]
   have h_quad : α ^ 2 + 2 * α * β + β ^ 2 = 1 := by
-    have : (α + β) ^ 2 = 1 := by rw [h_sum]; ring
+    have : (α + β) ^ 2 = 1 := by
+      rw [h_sum]
+      ring
     nlinarith [this]
   have h_norm_nonneg : 0 ≤ ‖z₁ - z₂‖ ^ 2 := sq_nonneg _
   nlinarith [h_quad, h_ab_le, h_norm_nonneg]
@@ -1139,7 +1168,9 @@ theorem tendsto_div_pow_zero_of_isLittleO {chord d : ℝ → ℝ} {l : Filter �
     · simp [h_eq]
     · exact pow_le_one₀ (le_of_lt hdp) (le_of_lt hd) |>.trans_eq (by simp)
   calc |chord t| / d t ^ k
-      ≤ ε / 2 * d t ^ (n - k) := by rw [div_le_iff₀ hd_k_pos]; nlinarith [hb, h_pow]
+      ≤ ε / 2 * d t ^ (n - k) := by
+        rw [div_le_iff₀ hd_k_pos]
+        nlinarith [hb, h_pow]
     _ ≤ ε / 2 * 1 := by gcongr
     _ < ε := by linarith
 
@@ -1179,7 +1210,8 @@ theorem F_diff_at_tangent_target_tendsto_zero_right
   have h_const_ratio : Tendsto
       (fun t => 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ / ‖γ t - s‖ ^ k))
       (𝓝[>] t₀) (𝓝 0) := by
-    have := h_ratio.const_mul (2 ^ k : ℝ); simpa using this
+    have := h_ratio.const_mul (2 ^ k : ℝ)
+    simpa using this
   have h_chord_le_d : ∀ᶠ t in 𝓝[>] t₀,
       ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ ≤ ‖γ t - s‖ := by
     have h_d_le_1 : ∀ᶠ t in 𝓝[>] t₀, ‖γ t - s‖ ≤ 1 :=
@@ -1207,7 +1239,9 @@ theorem F_diff_at_tangent_target_tendsto_zero_right
     calc ‖_‖
         ≤ (1 : ℝ) / (‖γ t - s‖ / 2) ^ k * ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := h_bound
       _ = 2 ^ k / ‖γ t - s‖ ^ k * ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := by
-          congr 1; rw [div_pow]; field_simp
+          congr 1
+          rw [div_pow]
+          field_simp
       _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ / ‖γ t - s‖ ^ k) := by ring
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
@@ -1238,7 +1272,8 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
   have h_const_ratio : Tendsto
       (fun t => 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ / ‖γ t - s‖ ^ k))
       (𝓝[<] t₀) (𝓝 0) := by
-    have := h_ratio.const_mul (2 ^ k : ℝ); simpa using this
+    have := h_ratio.const_mul (2 ^ k : ℝ)
+    simpa using this
   have h_chord_le_d : ∀ᶠ t in 𝓝[<] t₀,
       ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ ≤ ‖γ t - s‖ := by
     have h_d_le_1 : ∀ᶠ t in 𝓝[<] t₀, ‖γ t - s‖ ≤ 1 :=
@@ -1268,7 +1303,9 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
         ≤ (1 : ℝ) / (‖γ t - s‖ / 2) ^ k * ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ :=
           h_bound
       _ = 2 ^ k / ‖γ t - s‖ ^ k * ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ := by
-          congr 1; rw [div_pow]; field_simp
+          congr 1
+          rw [div_pow]
+          field_simp
       _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ / ‖γ t - s‖ ^ k) := by ring
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
@@ -1291,8 +1328,10 @@ theorem F_line_diff_eq_zero_of_odd
   have h_even : Even (k - 1) := by
     obtain ⟨m, hm⟩ := hk_odd
     have : k - 1 = 2 * m := by omega
-    rw [this]; exact ⟨m, by ring⟩
-  congr 1; congr 1
+    rw [this]
+    exact ⟨m, by ring⟩
+  congr 1
+  congr 1
   have h1 : (s - (ε / ‖L‖ : ℝ) • L) - s = -((ε / ‖L‖ : ℝ) • L) := by ring
   have h2 : (s + (ε / ‖L‖ : ℝ) • L) - s = ((ε / ‖L‖ : ℝ) • L) := by ring
   rw [h1, h2, neg_pow, h_even.neg_one_pow, one_mul]
@@ -1349,7 +1388,8 @@ theorem F_curve_diff_tendsto_zero_odd
         ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹ -
           -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L)‖ : ℝ) • (-L)) - s) ^ (k - 1))⁻¹‖)
       (𝓝[>] 0) (𝓝 0) := by
-    convert h_sum_raw using 2; simp
+    convert h_sum_raw using 2
+    simp
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_sum
       (Eventually.of_forall fun _ => norm_nonneg _) ?_
   filter_upwards [h_plus_radius, h_minus_radius] with ε hpr hmr
@@ -1368,7 +1408,7 @@ theorem F_curve_diff_tendsto_zero_odd
     calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by ring_nf
       _ ≤ ‖A - TR‖ + ‖B - TR‖ := norm_sub_le _ _
       _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
-  show ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
+  change ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
   rw [h_targets_eq]
   exact h_triangle
 

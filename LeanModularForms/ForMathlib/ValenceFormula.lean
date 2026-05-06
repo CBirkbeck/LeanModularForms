@@ -45,23 +45,25 @@ private lemma ellipticPointI'_coe : (ellipticPointI' : ℂ) = Complex.I := rfl
 private lemma ellipticPointI'_im : (ellipticPointI' : ℍ).im = 1 := Complex.I_im
 
 private lemma ellipticPointRho'_re : (ellipticPointRho' : ℍ).re = -1/2 := by
-  show (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
-  simp only [add_re, mul_re, I_re, I_im]; norm_num
+  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
+  simp only [add_re, mul_re, I_re, I_im]
+  norm_num
 
 private lemma ellipticPointRho'_im :
     (ellipticPointRho' : ℍ).im = Real.sqrt 3 / 2 := by
-  show (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
+  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
   simp only [add_im, mul_im, I_re, I_im, ofReal_im, mul_zero, mul_one, zero_add,
     neg_im, one_im, div_ofNat_im, zero_div, neg_zero, div_ofNat_re, ofReal_re, add_zero]
 
 private lemma ellipticPointRhoPlusOne'_re :
     (ellipticPointRhoPlusOne' : ℍ).re = 1/2 := by
-  show (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
-  simp only [add_re, mul_re, I_re, I_im]; norm_num
+  change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
+  simp only [add_re, mul_re, I_re, I_im]
+  norm_num
 
 private lemma ellipticPointRhoPlusOne'_im :
     (ellipticPointRhoPlusOne' : ℍ).im = Real.sqrt 3 / 2 := by
-  show (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
+  change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
   simp only [add_im, mul_im, I_re, I_im, ofReal_im, mul_zero, mul_one, zero_add,
     one_im, div_ofNat_im, zero_div, div_ofNat_re, ofReal_re, add_zero]
 
@@ -72,7 +74,8 @@ private lemma sl2_det (g : SL(2, ℤ)) :
     (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
     (g : Matrix (Fin 2) (Fin 2) ℤ) 0 1 *
       (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
-  have h := g.prop; rwa [Matrix.det_fin_two] at h
+  have h := g.prop
+  rwa [Matrix.det_fin_two] at h
 
 omit f hf in
 private lemma denom_at_I (g : SL(2, ℤ)) :
@@ -90,7 +93,8 @@ private lemma normSq_denom_at_I (g : SL(2, ℤ)) :
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) ^ 2 := by
   rw [denom_at_I, Complex.normSq_apply]
   simp only [add_re, mul_re, add_im, mul_im, Complex.I_re, Complex.I_im,
-    Complex.intCast_re, Complex.intCast_im]; ring
+    Complex.intCast_re, Complex.intCast_im]
+  ring
 
 omit f hf in
 private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
@@ -100,14 +104,18 @@ private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
   let c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0
   let d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1
   have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointI'
-  rw [ellipticPointI'_im, show (ellipticPointI' : ℂ) = I from rfl, normSq_denom_at_I] at h_im
+  rw [ellipticPointI'_im, ellipticPointI'_coe, normSq_denom_at_I] at h_im
   have h_gt : (1 : ℝ)/2 < 1 / ((c : ℝ) ^ 2 + (d : ℝ) ^ 2) := by
-    rw [← h_im]; exact fd_im_gt_halfFM _ h_fd
+    rw [← h_im]
+    exact fd_im_gt_halfFM _ h_fd
   have h_ge : c ^ 2 + d ^ 2 ≥ 1 := by
-    by_contra h; push Not at h
+    by_contra h
+    push Not at h
     have hc0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by nlinarith [sq_nonneg c]
     have hd0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 = 0 := by nlinarith [sq_nonneg d]
-    have := sl2_det g; rw [hc0, hd0] at this; norm_num at this
+    have := sl2_det g
+    rw [hc0, hd0] at this
+    norm_num at this
   have h_pos : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 > 0 :=
     by exact_mod_cast show (0 : ℤ) < c ^ 2 + d ^ 2 by omega
   have h_lt2 : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 < 2 := by
@@ -138,21 +146,24 @@ theorem fd_orbit_i_eq_i (p : ℍ) (hp : p ∈ 𝒟) (horb : orbFM p = oiFM) :
     p = ellipticPointI' := by
   obtain ⟨g, hg⟩ := (Quotient.exact' horb : ∃ g : SL(2, ℤ), g • ellipticPointI' = p)
   subst hg
-  set c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 with hc_def
-  set d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 with hd_def
-  set a := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0 with ha_def
-  set b := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 1 with hb_def
+  set c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0
+  set d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1
+  set a := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0
+  set b := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 1
   have h_cd1 := normSq_denom_eq_one_of_smul_i_in_fd g hp
   have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointI'
-  rw [ellipticPointI'_im, show (ellipticPointI' : ℂ) = I from rfl,
-      normSq_denom_at_I, h_cd1, div_one] at h_im
+  rw [ellipticPointI'_im, ellipticPointI'_coe, normSq_denom_at_I, h_cd1, div_one] at h_im
   have h_re := re_smul_ellipticPointI g
   rw [h_cd1, div_one] at h_re
   obtain ⟨n, hn⟩ : ∃ n : ℤ, (g • ellipticPointI').re = (n : ℝ) :=
-    ⟨a * c + b * d, by rw [h_re]; push_cast; ring⟩
+    ⟨a * c + b * d, by
+      rw [h_re]
+      push_cast
+      ring⟩
   have h_n_zero : n = 0 := by
     by_contra h_ne
-    have h2 := hp.2; rw [hn] at h2
+    have h2 := hp.2
+    rw [hn] at h2
     linarith [show (1 : ℝ) ≤ |(n : ℝ)| from by exact_mod_cast Int.one_le_abs h_ne]
   exact UpperHalfPlane.ext_re_im
     (by rw [hn, h_n_zero, Int.cast_zero]
@@ -182,7 +193,8 @@ private lemma normSq_denom_at_rho (g : SL(2, ℤ)) :
   simp only [add_re, mul_re, neg_re, one_re, div_ofNat_re, ofReal_re, mul_zero, I_re, I_im,
     sub_zero, mul_one, add_im, neg_im, one_im, div_ofNat_im, ofReal_im, zero_div, mul_im,
     zero_mul, add_zero, Complex.intCast_re, Complex.intCast_im]
-  ring_nf; nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
+  ring_nf
+  nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
 
 omit f hf in
 private lemma normSq_denom_eq_one_of_smul_rho_in_fd (g : SL(2, ℤ))
@@ -197,7 +209,8 @@ private lemma normSq_denom_eq_one_of_smul_rho_in_fd (g : SL(2, ℤ))
   have h_gt : (1 : ℝ)/2 < (g • ellipticPointRho').im := fd_im_gt_halfFM _ h_fd
   rw [h_im] at h_gt
   have h_pos : (c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2 > 0 := by
-    by_contra h; push Not at h
+    by_contra h
+    push Not at h
     have : Real.sqrt 3 / 2 / ((c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2) ≤ 0 :=
       div_nonpos_iff.mpr (Or.inl ⟨by positivity, h⟩)
     linarith
@@ -220,17 +233,21 @@ private lemma abs_re_eq_half_of_smul_rho_in_fd (g : SL(2, ℤ))
     |(g • ellipticPointRho').re| = 1/2 := by
   have h_im_eq : (g • ellipticPointRho').im = Real.sqrt 3 / 2 := by
     have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
-    rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at h_im; exact h_im
+    rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at h_im
+    exact h_im
   have h_im_sq : (g • ellipticPointRho').im ^ 2 = 3/4 := by
-    rw [h_im_eq]; nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
+    rw [h_im_eq]
+    nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
   have h_nsq : (g • ellipticPointRho').re ^ 2 +
       (g • ellipticPointRho').im ^ 2 ≥ 1 := by
     have h_apply := Complex.normSq_apply (↑(g • ellipticPointRho') : ℂ)
     rw [UpperHalfPlane.coe_re, UpperHalfPlane.coe_im] at h_apply
     nlinarith [h_fd.1, h_apply]
-  exact le_antisymm h_fd.2 (by
-    by_contra h_lt; push Not at h_lt; nlinarith [sq_abs (g • ellipticPointRho').re,
-      abs_nonneg (g • ellipticPointRho').re, h_im_sq, h_nsq])
+  refine le_antisymm h_fd.2 ?_
+  by_contra h_lt
+  push Not at h_lt
+  nlinarith [sq_abs (g • ellipticPointRho').re,
+    abs_nonneg (g • ellipticPointRho').re, h_im_sq, h_nsq]
 
 /-! ### FD orbit rigidity: ρ -/
 
@@ -240,19 +257,18 @@ theorem fd_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orbFM p = orhoFM) :
     p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne' := by
   obtain ⟨g, hg⟩ := (Quotient.exact' horb : ∃ g : SL(2, ℤ), g • ellipticPointRho' = p)
   rw [← hg] at hp ⊢
-  set c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 with hc_def
-  set d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 with hd_def
-  set a := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0 with ha_def
-  set b := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 1 with hb_def
   have h_cd1 := normSq_denom_eq_one_of_smul_rho_in_fd g hp
   have h_im : (g • ellipticPointRho').im = Real.sqrt 3 / 2 := by
     have := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
-    rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at this; exact this
+    rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at this
+    exact this
   have h_re_eq : (g • ellipticPointRho').re = -1/2 ∨ (g • ellipticPointRho').re = 1/2 := by
     have h_re_abs := abs_re_eq_half_of_smul_rho_in_fd g hp h_cd1
     rcases le_or_gt (g • ellipticPointRho').re 0 with h_neg | h_pos
-    · left; linarith [abs_of_nonpos h_neg]
-    · right; linarith [abs_of_pos h_pos]
+    · left
+      linarith [abs_of_nonpos h_neg]
+    · right
+      linarith [abs_of_pos h_pos]
   rcases h_re_eq with h_re_left | h_re_right
   · left
     exact UpperHalfPlane.ext_re_im (by linarith [h_re_left, ellipticPointRho'_re])
@@ -285,9 +301,12 @@ theorem finsum_nonell_eq_repCanon_sum :
   set φ : (p : ℍ) → p ∈ R → NonEllOrbitFM :=
     fun p hp => ⟨orbFM p, orb_repCanon_nonEll f hf p hp⟩ with hφ_def
   have h_im : ∀ p (hp : p ∈ R), φ p hp ∈ S := fun p hp => by
-    rw [Set.Finite.mem_toFinset]; change ordOrbitFM f (orbFM p) ≠ 0; rw [ordOrbit_mkFM]
+    rw [Set.Finite.mem_toFinset]
+    change ordOrbitFM f (orbFM p) ≠ 0
+    rw [ordOrbit_mkFM]
     have hp_s₀ := repCanon_mem_s₀ f hf hp
-    rw [s₀FM, Set.Finite.mem_toFinset] at hp_s₀; exact hp_s₀.2
+    rw [s₀FM, Set.Finite.mem_toFinset] at hp_s₀
+    exact hp_s₀.2
   have h_surj : ∀ q ∈ S, ∃ p, ∃ hp : p ∈ R, φ p hp = q := fun q hq => by
     obtain ⟨p, hp_mem, hp_orb⟩ := exists_repCanon_of_nonEllOrbit f hf q
       ((Set.Finite.mem_toFinset _).mp hq)
@@ -295,7 +314,8 @@ theorem finsum_nonell_eq_repCanon_sum :
   exact (Finset.sum_bij φ h_im
     (fun _ h₁ _ h₂ heq => orb_injOn_repCanon f hf h₁ h₂ (congr_arg Subtype.val heq))
     h_surj (fun p hp => by
-      simp only [ordOrbitQ, hφ_def]; exact_mod_cast (ordOrbit_mkFM f p).symm)).symm
+      simp only [ordOrbitQ, hφ_def]
+      exact_mod_cast (ordOrbit_mkFM f p).symm)).symm
 
 /-! ### repCanon sum decomposition -/
 
@@ -305,7 +325,8 @@ theorem repCanon_sum_split :
     ∑ s ∈ repStrict f hf, (orderOfVanishingAt' (⇑f) s : ℂ) +
     ∑ s ∈ repLeftVert f hf, (orderOfVanishingAt' (⇑f) s : ℂ) +
     ∑ s ∈ repLeftArc f hf, (orderOfVanishingAt' (⇑f) s : ℂ) := by
-  simp only [repCanon]; rw [Finset.sum_union (disjoint_union_repLeftArc f hf),
+  simp only [repCanon]
+  rw [Finset.sum_union (disjoint_union_repLeftArc f hf),
     Finset.sum_union (disjoint_repStrict_repLeftVert f hf)]
 
 /-! ### The Valence Formula -/

@@ -55,22 +55,17 @@ variable {x y : ℂ}
 /-- At any single crossing with limit `L = -(π * I)`, the generalized winding
 number is `-1/2`. This is the universal smooth-crossing result: the angle
 swept from entry to exit is `π`, giving `-(π * I) / (2 * π * I) = -1/2`. -/
-theorem hasGeneralizedWindingNumber_neg_half_of_scd
-    {γ : PiecewiseC1Path x y} {z₀ : ℂ}
-    (D : SingleCrossingData γ z₀)
-    (hL : D.L = -(↑Real.pi * I)) :
+theorem hasGeneralizedWindingNumber_neg_half_of_scd {γ : PiecewiseC1Path x y} {z₀ : ℂ}
+    (D : SingleCrossingData γ z₀) (hL : D.L = -(↑Real.pi * I)) :
     HasGeneralizedWindingNumber γ z₀ (-1 / 2) := by
   convert D.hasWindingNumber using 1
   rw [hL]
-  have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp
+  field_simp [Complex.ofReal_ne_zero.mpr Real.pi_ne_zero]
 
 /-- The `generalizedWindingNumber` value version: if `SingleCrossingData` has
 limit `L = -(π * I)`, then `generalizedWindingNumber γ z₀ = -1/2`. -/
-theorem generalizedWindingNumber_neg_half_of_scd
-    {γ : PiecewiseC1Path x y} {z₀ : ℂ}
-    (D : SingleCrossingData γ z₀)
-    (hL : D.L = -(↑Real.pi * I)) :
+theorem generalizedWindingNumber_neg_half_of_scd {γ : PiecewiseC1Path x y} {z₀ : ℂ}
+    (D : SingleCrossingData γ z₀) (hL : D.L = -(↑Real.pi * I)) :
     generalizedWindingNumber γ z₀ = -1 / 2 :=
   D.windingNumber_neg_half hL
 
@@ -87,19 +82,15 @@ and an analytical `ArcFTCHyp`. -/
 - `h_near`: inside the δ-window, the curve is ε-close to `z₀`
 
 **Analytic parameter** (`ArcFTCHyp`): the FTC identity, integrability, and limit. -/
-def mkSingleCrossingData_smooth {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (z₀ : ℂ) (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo 0 1)
-    (δ : ℝ → ℝ) (threshold : ℝ) (hthresh : 0 < threshold)
+def mkSingleCrossingData_smooth {H : ℝ} (γ : PiecewiseC1Path (fdStart H) (fdStart H)) (z₀ : ℂ)
+    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo 0 1) (δ : ℝ → ℝ) (threshold : ℝ) (hthresh : 0 < threshold)
     (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
     (hδ_small : ∀ ε, 0 < ε → ε < threshold → δ ε < min t₀ (1 - t₀))
     (h_far : ∀ ε, 0 < ε → ε < threshold →
       ∀ t ∈ Icc 0 1, δ ε < |t - t₀| → ε < ‖γ.toPath.extend t - z₀‖)
     (h_near : ∀ ε, 0 < ε → ε < threshold →
       ∀ t, |t - t₀| ≤ δ ε → ‖γ.toPath.extend t - z₀‖ ≤ ε)
-    (L : ℂ)
-    (ftcHyp : ArcFTCHyp γ z₀ t₀ δ threshold L) :
-    SingleCrossingData γ z₀ where
+    (L : ℂ) (ftcHyp : ArcFTCHyp γ z₀ t₀ δ threshold L) : SingleCrossingData γ z₀ where
   L := L
   t₀ := t₀
   ht₀ := ht₀
@@ -118,10 +109,8 @@ def mkSingleCrossingData_smooth {H : ℝ}
 
 /-- From a generic smooth crossing `SingleCrossingData` with limit `L = -(π * I)`,
 extract `HasGeneralizedWindingNumber γ z₀ (-1/2)`. -/
-theorem boundaryWinding_of_smoothFTCHyp {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (z₀ : ℂ) (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo 0 1)
-    (δ : ℝ → ℝ) (threshold : ℝ) (hthresh : 0 < threshold)
+theorem boundaryWinding_of_smoothFTCHyp {H : ℝ} (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (z₀ : ℂ) (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo 0 1) (δ : ℝ → ℝ) (threshold : ℝ) (hthresh : 0 < threshold)
     (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
     (hδ_small : ∀ ε, 0 < ε → ε < threshold → δ ε < min t₀ (1 - t₀))
     (h_far : ∀ ε, 0 < ε → ε < threshold →
@@ -144,8 +133,8 @@ This bundles a crossing parameter, cutoff, geometric bounds, and the analytical
 
 Bundles a crossing parameter, cutoff, geometric bounds, and an `ArcFTCHyp`
 with limit `-(π * I)`. -/
-structure SmoothBoundaryWindingData {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H)) (z₀ : ℂ) where
+structure SmoothBoundaryWindingData {H : ℝ} (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+    (z₀ : ℂ) where
   /-- Crossing parameter in `(0, 1)`. -/
   t₀ : ℝ
   ht₀ : t₀ ∈ Ioo 0 1
@@ -170,8 +159,7 @@ structure SmoothBoundaryWindingData {H : ℝ}
 /-- From `SmoothBoundaryWindingData`, extract `HasGeneralizedWindingNumber γ z₀ (-1/2)`. -/
 theorem SmoothBoundaryWindingData.hasWindingNumber {H : ℝ}
     {γ : PiecewiseC1Path (fdStart H) (fdStart H)} {z₀ : ℂ}
-    (D : SmoothBoundaryWindingData γ z₀) :
-    HasGeneralizedWindingNumber γ z₀ (-1 / 2) :=
+    (D : SmoothBoundaryWindingData γ z₀) : HasGeneralizedWindingNumber γ z₀ (-1 / 2) :=
   boundaryWinding_of_smoothFTCHyp γ z₀ D.t₀ D.ht₀ D.δ D.threshold D.hthresh
     D.hδ_pos D.hδ_small D.h_far D.h_near D.ftcHyp
 
@@ -183,13 +171,12 @@ the distance from `z₀ = γ(t₀)` satisfies `‖γ(t) - z₀‖ = C·|t - t₀
 positive constant `C`. The cutoff `linDelta C ε = ε / C` inverts this. -/
 def linDelta (C : ℝ) (ε : ℝ) : ℝ := ε / C
 
-theorem linDelta_pos {C ε : ℝ} (hC : 0 < C) (hε : 0 < ε) :
-    0 < linDelta C ε :=
+theorem linDelta_pos {C ε : ℝ} (hC : 0 < C) (hε : 0 < ε) : 0 < linDelta C ε :=
   div_pos hε hC
 
 theorem linDelta_small {C ε bound : ℝ} (hC : 0 < C) (hε_lt : ε < C * bound) :
     linDelta C ε < bound := by
-  simp only [linDelta, div_lt_iff₀ hC]
+  rw [linDelta, div_lt_iff₀ hC]
   linarith
 
 end

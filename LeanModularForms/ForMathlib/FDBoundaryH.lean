@@ -37,7 +37,8 @@ lemma one_lt_heightCutoff : 1 < heightCutoff := by
 
 lemma sqrt3_div2_lt_heightCutoff :
     Real.sqrt 3 / 2 < heightCutoff := by
-  unfold heightCutoff; linarith
+  unfold heightCutoff
+  linarith
 
 /-- Segment 1: right vertical from (1/2 + H·i) down to ρ+1. -/
 def fdBoundary_seg1 : ℝ → ℂ := fun t =>
@@ -89,21 +90,25 @@ def fdBoundaryFullPartition : Finset ℝ := {0, 1, 2, 3, 4, 5}
 lemma fdBoundary_at_zero :
     fdBoundary 0 = 1 / 2 + heightCutoff * I := by
   simp only [fdBoundary, show (0 : ℝ) ≤ 1 from by norm_num, ite_true]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_at_one :
     fdBoundary 1 = ellipticPointRhoPlusOne := by
   simp only [fdBoundary, show (1 : ℝ) ≤ 1 from le_refl _, ite_true,
     ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
     UpperHalfPlane.coe_mk, heightCutoff]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_at_two :
     fdBoundary 2 = ellipticPointI := by
   simp only [fdBoundary, show ¬(2 : ℝ) ≤ 1 from by norm_num,
     show (2 : ℝ) ≤ 2 from le_refl _, ite_true, ite_false]
   have h : (↑Real.pi / 3 + (↑(2 : ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      ↑(Real.pi / 2) * I := by push_cast; ring
+      ↑(Real.pi / 2) * I := by
+    push_cast
+    ring
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_two, Real.sin_pi_div_two]
   simp [ellipticPointI, ellipticPointI']
@@ -114,7 +119,9 @@ lemma fdBoundary_at_three :
     show ¬(3 : ℝ) ≤ 2 from by norm_num, show (3 : ℝ) ≤ 3 from le_refl _,
     ite_true, ite_false]
   have h : (↑Real.pi / 2 + (↑(3 : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-      ↑(2 * Real.pi / 3) * I := by push_cast; ring
+      ↑(2 * Real.pi / 3) * I := by
+    push_cast
+    ring
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
@@ -126,14 +133,16 @@ lemma fdBoundary_at_four :
   simp only [fdBoundary, show ¬(4 : ℝ) ≤ 1 from by norm_num,
     show ¬(4 : ℝ) ≤ 2 from by norm_num, show ¬(4 : ℝ) ≤ 3 from by norm_num,
     show (4 : ℝ) ≤ 4 from le_refl _, ite_true, ite_false, heightCutoff]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_at_five :
     fdBoundary 5 = 1 / 2 + heightCutoff * I := by
   simp only [fdBoundary, show ¬(5 : ℝ) ≤ 1 from by norm_num,
     show ¬(5 : ℝ) ≤ 2 from by norm_num, show ¬(5 : ℝ) ≤ 3 from by norm_num,
     show ¬(5 : ℝ) ≤ 4 from by norm_num, ite_false]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_closed : fdBoundary 0 = fdBoundary 5 := by
   rw [fdBoundary_at_zero, fdBoundary_at_five]
@@ -185,26 +194,31 @@ def seg5_q_radius_H (H : ℝ) : ℝ := Real.exp (-2 * Real.pi * H)
 
 theorem fdBoundary_eq_fdBoundary_H :
     fdBoundary = fdBoundary_H heightCutoff := by
-  ext t; simp only [fdBoundary, fdBoundary_H, heightCutoff]
+  ext t
+  simp only [fdBoundary, fdBoundary_H, heightCutoff]
 
 lemma fdBoundary_H_at_zero (H : ℝ) :
     fdBoundary_H H 0 = 1 / 2 + H * I := by
   simp only [fdBoundary_H, show (0 : ℝ) ≤ 1 from by norm_num, ite_true]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_H_at_one (H : ℝ) :
     fdBoundary_H H 1 = ellipticPointRhoPlusOne := by
   simp only [fdBoundary_H, show (1 : ℝ) ≤ 1 from le_refl _, ite_true,
     ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
     UpperHalfPlane.coe_mk]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_H_at_two (H : ℝ) :
     fdBoundary_H H 2 = ellipticPointI := by
   simp only [fdBoundary_H, show ¬(2 : ℝ) ≤ 1 from by norm_num,
     show (2 : ℝ) ≤ 2 from le_refl _, ite_true, ite_false]
   have h : (↑Real.pi / 3 + (↑(2 : ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      ↑(Real.pi / 2) * I := by push_cast; ring
+      ↑(Real.pi / 2) * I := by
+    push_cast
+    ring
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_two, Real.sin_pi_div_two]
   simp [ellipticPointI, ellipticPointI']
@@ -215,7 +229,9 @@ lemma fdBoundary_H_at_three (H : ℝ) :
     show ¬(3 : ℝ) ≤ 2 from by norm_num, show (3 : ℝ) ≤ 3 from le_refl _,
     ite_true, ite_false]
   have h : (↑Real.pi / 2 + (↑(3 : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-      ↑(2 * Real.pi / 3) * I := by push_cast; ring
+      ↑(2 * Real.pi / 3) * I := by
+    push_cast
+    ring
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
@@ -227,14 +243,16 @@ lemma fdBoundary_H_at_four (H : ℝ) :
   simp only [fdBoundary_H, show ¬(4 : ℝ) ≤ 1 from by norm_num,
     show ¬(4 : ℝ) ≤ 2 from by norm_num, show ¬(4 : ℝ) ≤ 3 from by norm_num,
     show (4 : ℝ) ≤ 4 from le_refl _, ite_true, ite_false]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_H_at_five (H : ℝ) :
     fdBoundary_H H 5 = 1 / 2 + H * I := by
   simp only [fdBoundary_H, show ¬(5 : ℝ) ≤ 1 from by norm_num,
     show ¬(5 : ℝ) ≤ 2 from by norm_num, show ¬(5 : ℝ) ≤ 3 from by norm_num,
     show ¬(5 : ℝ) ≤ 4 from by norm_num, ite_false]
-  push_cast; ring
+  push_cast
+  ring
 
 lemma fdBoundary_H_closed (H : ℝ) :
     fdBoundary_H H 0 = fdBoundary_H H 5 := by
@@ -277,7 +295,10 @@ private def fdBoundary_H_inner34 (H : ℝ) : ℝ → ℂ := fun t =>
 
 private lemma fdBoundary_H_inner34_cont (H : ℝ) : Continuous (fdBoundary_H_inner34 H) :=
   Continuous.if_le (fdBoundary_H_seg4_cont H) (fdBoundary_H_seg5_cont H)
-    continuous_id continuous_const (fun t (ht : t = 4) => by subst ht; push_cast; ring)
+    continuous_id continuous_const (fun t (ht : t = 4) => by
+      subst ht
+      push_cast
+      ring)
 
 private def fdBoundary_H_inner234 (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 3 then
@@ -287,16 +308,21 @@ private def fdBoundary_H_inner234 (H : ℝ) : ℝ → ℂ := fun t =>
 private lemma fdBoundary_H_inner234_cont (H : ℝ) : Continuous (fdBoundary_H_inner234 H) := by
   apply Continuous.if_le fdBoundary_H_seg23b_cont
     (fdBoundary_H_inner34_cont H) continuous_id continuous_const
-  intro t ht; simp only [id] at ht
+  intro t ht
+  simp only [id] at ht
   have : t = 3 := by linarith
-  subst this; unfold fdBoundary_H_inner34
+  subst this
+  unfold fdBoundary_H_inner34
   simp only [show (3 : ℝ) ≤ 4 from by norm_num, ite_true]
   have h : (↑Real.pi / 2 + (↑(3 : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-      ↑(2 * Real.pi / 3) * I := by push_cast; ring
+      ↑(2 * Real.pi / 3) * I := by
+    push_cast
+    ring
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-  push_cast; ring
+  push_cast
+  ring
 
 private def fdBoundary_H_inner1234 (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 2 then
@@ -306,14 +332,20 @@ private def fdBoundary_H_inner1234 (H : ℝ) : ℝ → ℂ := fun t =>
 private lemma fdBoundary_H_inner1234_cont (H : ℝ) : Continuous (fdBoundary_H_inner1234 H) := by
   apply Continuous.if_le fdBoundary_H_seg23_cont
     (fdBoundary_H_inner234_cont H) continuous_id continuous_const
-  intro t ht; simp only [id] at ht
+  intro t ht
+  simp only [id] at ht
   have : t = 2 := by linarith
-  subst this; unfold fdBoundary_H_inner234
+  subst this
+  unfold fdBoundary_H_inner234
   simp only [show (2 : ℝ) ≤ 3 from by norm_num, ite_true]
   have h1 : (↑Real.pi / 3 + (↑(2 : ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      ↑(Real.pi / 2) * I := by push_cast; ring
+      ↑(Real.pi / 2) * I := by
+    push_cast
+    ring
   have h2 : (↑Real.pi / 2 + (↑(2 : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-      ↑(Real.pi / 2) * I := by push_cast; ring
+      ↑(Real.pi / 2) * I := by
+    push_cast
+    ring
   rw [h1, h2]
 
 private lemma fdBoundary_H_eq_layered (H : ℝ) (t : ℝ) :
@@ -328,18 +360,24 @@ theorem fdBoundary_H_continuous (H : ℝ) :
   have : (fdBoundary_H H) = (fun t => if t ≤ 1 then
       1 / 2 + (↑H - ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I
       else fdBoundary_H_inner1234 H t) := by
-    ext t; exact fdBoundary_H_eq_layered H t
+    ext t
+    exact fdBoundary_H_eq_layered H t
   rw [this]
   apply Continuous.if_le (fdBoundary_H_seg1_cont H) (fdBoundary_H_inner1234_cont H)
     continuous_id continuous_const
-  intro t ht; simp only [id] at ht
+  intro t ht
+  simp only [id] at ht
   have : t = 1 := by linarith
-  subst this; unfold fdBoundary_H_inner1234
+  subst this
+  unfold fdBoundary_H_inner1234
   simp only [show (1 : ℝ) ≤ 2 from by norm_num, ite_true]
   have h : (↑Real.pi / 3 + (↑(1 : ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      ↑(Real.pi / 3) * I := by push_cast; ring
+      ↑(Real.pi / 3) * I := by
+    push_cast
+    ring
   rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_three, Real.sin_pi_div_three]
-  push_cast; ring
+  push_cast
+  ring
 
 end

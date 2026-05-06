@@ -75,21 +75,14 @@ boundary at height `H` converges to `2πi · Σ gWN(γ, s) · ord(f, s)`.
 
 For `H ≥ H₀` (where `H₀` depends on the zeros of `f` in `𝒟`), the limit
 exists and equals the winding-number-weighted sum of orders. -/
-theorem cpv_residue_side_forMathlib
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+theorem cpv_residue_side_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
-      ∀ {H : ℝ}, H₀ ≤ H →
-        Tendsto (fun ε =>
-          ∫ t in (0:ℝ)..5,
-            pvIntegrand f (fdBoundary_H H)
-              (sArcOfS S ∪ sVertOfS S) ε t)
-          (𝓝[>] 0)
-          (𝓝 (2 * ↑Real.pi * I *
-            ∑ s ∈ S,
-              generalizedWindingNumber'
-                (fdBoundary_H H) 0 5 (↑s : ℂ) *
-                (orderOfVanishingAt' (⇑f) s : ℂ))) :=
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
+      Tendsto (fun ε => ∫ t in (0:ℝ)..5,
+          pvIntegrand f (fdBoundary_H H) (sArcOfS S ∪ sVertOfS S) ε t)
+        (𝓝[>] 0)
+        (𝓝 (2 * ↑Real.pi * I * ∑ s ∈ S, generalizedWindingNumber'
+          (fdBoundary_H H) 0 5 (↑s : ℂ) * (orderOfVanishingAt' (⇑f) s : ℂ))) :=
   cpv_residue_side_tendsto f hf S hS hS_complete
 
 /-! ### Modular side
@@ -105,19 +98,13 @@ This combines:
 1. T-cancellation of vertical segments (periodicity of `logDeriv f`)
 2. S-arc contribution `-(2πi)(k/12)` (modular identity `f(Sz) = z^k f(z)`)
 3. Horizontal contribution `2πi · ord_∞` (q-expansion winding number) -/
-theorem cpv_modular_side_forMathlib
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+theorem cpv_modular_side_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
-      ∀ {H : ℝ}, H₀ ≤ H →
-        Tendsto (fun ε =>
-          ∫ t in (0:ℝ)..5,
-            pvIntegrand f (fdBoundary_H H)
-              (sArcOfS S ∪ sVertOfS S) ε t)
-          (𝓝[>] 0)
-          (𝓝 (-(2 * ↑Real.pi * I *
-            ((k : ℂ) / 12 -
-              (orderAtCusp' f : ℂ))))) :=
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
+      Tendsto (fun ε => ∫ t in (0:ℝ)..5,
+          pvIntegrand f (fdBoundary_H H) (sArcOfS S ∪ sVertOfS S) ε t)
+        (𝓝[>] 0)
+        (𝓝 (-(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))))) :=
   cpv_modular_side_tendsto f hf S hS hS_complete
 
 /-! ### The PV chain identity
@@ -134,13 +121,11 @@ The result is:
 
 This is the fundamental identity underlying the valence formula, before
 substituting explicit winding weights. -/
-theorem pv_chain_identity_forMathlib
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+theorem pv_chain_identity_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
       ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
-        (orderOfVanishingAt' (⇑f) s : ℂ) =
-      -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) :=
+        (orderOfVanishingAt' (⇑f) s : ℂ) = -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) :=
   pv_chain_identity f hf S hS hS_complete
 
 /-! ### Algebraic rearrangement helpers
@@ -150,16 +135,19 @@ These pure-algebra lemmas convert between different forms of the identity. -/
 /-- Rearrangement: from `Σ wt = -(k/12 - ord_∞)` derive `ord_∞ + (-Σ wt) = k/12`. -/
 theorem residue_side_rearrange (ord_inf weighted_sum : ℂ)
     (h : weighted_sum = -((k : ℂ) / 12 - ord_inf)) :
-    ord_inf + (-weighted_sum) = (k : ℂ) / 12 := by rw [h]; ring
+    ord_inf + (-weighted_sum) = (k : ℂ) / 12 := by
+  rw [h]
+  ring
 
 /-- Cancel `2πi` from both sides: if `2πi · L = -(2πi · R)` then `L = -R`. -/
 theorem cancel_two_pi_I {L R : ℂ}
     (h : 2 * ↑Real.pi * I * L = -(2 * ↑Real.pi * I * R)) :
     L = -R := by
   have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
-      ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero, or_self]
-  rw [show -(2 * ↑Real.pi * I * R) = 2 * ↑Real.pi * I * (-R) from by ring] at h
-  exact mul_left_cancel₀ hpi h
+    norm_num [Real.pi_ne_zero, I_ne_zero]
+  have h' : 2 * ↑Real.pi * I * L = 2 * ↑Real.pi * I * (-R) := by
+    rw [h]
+    ring
+  exact mul_left_cancel₀ hpi h'
 
 end

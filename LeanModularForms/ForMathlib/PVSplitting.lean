@@ -35,8 +35,7 @@ namespace PVSplitting
 /-! ### Helper lemmas -/
 
 /-- The cutoff integrand is zero wherever the curve is within `ε` of `s`. -/
-private theorem cutoff_eq_zero_of_near {γ : ℝ → ℂ} {s : ℂ} {ε : ℝ}
-    {a b : ℝ} (hab : a ≤ b)
+private theorem cutoff_eq_zero_of_near {γ : ℝ → ℂ} {s : ℂ} {ε a b : ℝ} (hab : a ≤ b)
     (h_near : ∀ t ∈ Icc a b, ‖γ t - s‖ ≤ ε) :
     ∀ t ∈ uIoc a b,
       (fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) t = 0 := by
@@ -48,13 +47,13 @@ private theorem cutoff_eq_zero_of_near {γ : ℝ → ℂ} {s : ℂ} {ε : ℝ}
 /-- On a left segment `(0, a]` where the curve is `ε`-far from `s`,
 the cutoff integrand agrees a.e. with the raw integrand. -/
 private theorem cutoff_eq_integrand_ae_left {γ : ℝ → ℂ} {s : ℂ} {ε a : ℝ}
-    (ha : 0 < a)
-    (h_far : ∀ t ∈ Ico 0 a, ε < ‖γ t - s‖) :
+    (ha : 0 < a) (h_far : ∀ t ∈ Ico 0 a, ε < ‖γ t - s‖) :
     ∀ᵐ t ∂volume, t ∈ uIoc 0 a →
       (fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) t =
         (γ t - s)⁻¹ * deriv γ t := by
   have h_ne : ({a} : Set ℝ)ᶜ ∈ ae volume := by
-    rw [mem_ae_iff, compl_compl]; exact (Set.finite_singleton _).measure_zero volume
+    rw [mem_ae_iff, compl_compl]
+    exact (Set.finite_singleton _).measure_zero volume
   filter_upwards [h_ne] with t ht_ne ht_mem
   rw [uIoc_of_le (le_of_lt ha)] at ht_mem
   rw [if_pos (h_far t ⟨le_of_lt ht_mem.1,
@@ -63,13 +62,13 @@ private theorem cutoff_eq_integrand_ae_left {γ : ℝ → ℂ} {s : ℂ} {ε a :
 /-- On a right segment `(b, 1]` where the curve is `ε`-far from `s`,
 the cutoff integrand agrees a.e. with the raw integrand. -/
 private theorem cutoff_eq_integrand_ae_right {γ : ℝ → ℂ} {s : ℂ} {ε b : ℝ}
-    (hb : b < 1)
-    (h_far : ∀ t ∈ Ioc b 1, ε < ‖γ t - s‖) :
+    (hb : b < 1) (h_far : ∀ t ∈ Ioc b 1, ε < ‖γ t - s‖) :
     ∀ᵐ t ∂volume, t ∈ uIoc b 1 →
       (fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) t =
         (γ t - s)⁻¹ * deriv γ t := by
   have h_ne : ({b} : Set ℝ)ᶜ ∈ ae volume := by
-    rw [mem_ae_iff, compl_compl]; exact (Set.finite_singleton _).measure_zero volume
+    rw [mem_ae_iff, compl_compl]
+    exact (Set.finite_singleton _).measure_zero volume
   filter_upwards [h_ne] with t ht_ne ht_mem
   rw [uIoc_of_le (le_of_lt hb)] at ht_mem
   rw [if_pos (h_far t ⟨ht_mem.1, ht_mem.2⟩)]
@@ -88,16 +87,13 @@ private theorem cutoff_intervalIntegrable_of_ae {F g : ℝ → ℂ} {a b : ℝ}
 /-- Core asymmetric splitting: the PV cutoff integral on `[0,1]` equals left + right
 integrals when the middle window `[t₀ - δL, t₀ + δR]` has the curve within `ε` of `s`,
 and the outer segments have the curve `ε`-far from `s`. -/
-private theorem pv_split_asymmetric {γ : ℝ → ℂ} {s : ℂ} {ε δL δR : ℝ}
-    {t₀ : ℝ} (hδL : 0 < δL) (hδR : 0 < δR)
-    (hδL_bd : δL < t₀) (hδR_bd : δR < 1 - t₀)
+private theorem pv_split_asymmetric {γ : ℝ → ℂ} {s : ℂ} {ε δL δR t₀ : ℝ}
+    (hδL : 0 < δL) (hδR : 0 < δR) (hδL_bd : δL < t₀) (hδR_bd : δR < 1 - t₀)
     (h_far_left : ∀ t ∈ Ico 0 (t₀ - δL), ε < ‖γ t - s‖)
     (h_far_right : ∀ t ∈ Ioc (t₀ + δR) 1, ε < ‖γ t - s‖)
     (h_near : ∀ t ∈ Icc (t₀ - δL) (t₀ + δR), ‖γ t - s‖ ≤ ε)
-    (hint_left : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t)
-      volume 0 (t₀ - δL))
-    (hint_right : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t)
-      volume (t₀ + δR) 1) :
+    (hint_left : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume 0 (t₀ - δL))
+    (hint_right : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume (t₀ + δR) 1) :
     (∫ t in (0 : ℝ)..1,
       if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) =
     (∫ t in (0 : ℝ)..(t₀ - δL), (γ t - s)⁻¹ * deriv γ t) +
@@ -137,44 +133,47 @@ For `ε, δ > 0` with `δ < min t₀ (1 - t₀)`, if:
 then the full cutoff integral equals the sum of the left and right integrals of
 `(γ t - s)⁻¹ * deriv γ t`. The middle piece vanishes because the cutoff sets the
 integrand to `0` whenever `‖γ t - s‖ ≤ ε`. -/
-theorem pv_split_at_crossing {γ : ℝ → ℂ} {s : ℂ} {ε δ : ℝ}
-    {t₀ : ℝ} (_ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (_hε : 0 < ε) (hδ : 0 < δ)
+theorem pv_split_at_crossing {γ : ℝ → ℂ} {s : ℂ} {ε δ t₀ : ℝ}
+    (_ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (_hε : 0 < ε) (hδ : 0 < δ)
     (hδ_small : δ < min t₀ (1 - t₀))
     (h_far : ∀ t ∈ Icc (0 : ℝ) 1, δ < |t - t₀| → ε < ‖γ t - s‖)
     (h_near : ∀ t, |t - t₀| ≤ δ → ‖γ t - s‖ ≤ ε)
-    (hint_left : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t)
-      volume 0 (t₀ - δ))
-    (hint_right : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t)
-      volume (t₀ + δ) 1) :
+    (hint_left : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume 0 (t₀ - δ))
+    (hint_right : IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume (t₀ + δ) 1) :
     (∫ t in (0 : ℝ)..1,
       if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) =
     (∫ t in (0 : ℝ)..(t₀ - δ), (γ t - s)⁻¹ * deriv γ t) +
     (∫ t in (t₀ + δ)..1, (γ t - s)⁻¹ * deriv γ t) := by
   have hδ_lt_left : δ < t₀ := lt_of_lt_of_le hδ_small (min_le_left _ _)
   have hδ_lt_right : δ < 1 - t₀ := lt_of_lt_of_le hδ_small (min_le_right _ _)
-  exact pv_split_asymmetric hδ hδ hδ_lt_left hδ_lt_right
-    (fun t ht => h_far t ⟨ht.1, le_trans (le_of_lt ht.2) (by linarith)⟩
-      (by rw [abs_of_nonpos (by linarith [ht.2])]; linarith [ht.2]))
-    (fun t ht => h_far t ⟨le_trans (by linarith) (le_of_lt ht.1), ht.2⟩
-      (by rw [abs_of_nonneg (by linarith [ht.1])]; linarith [ht.1]))
-    (fun t ht => h_near t (by rw [abs_le]; constructor <;> linarith [ht.1, ht.2]))
-    hint_left hint_right
+  refine pv_split_asymmetric hδ hδ hδ_lt_left hδ_lt_right ?_ ?_ ?_ hint_left hint_right
+  · intro t ht
+    refine h_far t ⟨ht.1, le_trans (le_of_lt ht.2) (by linarith)⟩ ?_
+    rw [abs_of_nonpos (by linarith [ht.2])]
+    linarith [ht.2]
+  · intro t ht
+    refine h_far t ⟨le_trans (by linarith) (le_of_lt ht.1), ht.2⟩ ?_
+    rw [abs_of_nonneg (by linarith [ht.1])]
+    linarith [ht.1]
+  · intro t ht
+    refine h_near t ?_
+    rw [abs_le]
+    refine ⟨?_, ?_⟩
+    · linarith [ht.1]
+    · linarith [ht.2]
 
 /-- Master crossing limit theorem on `[0,1]`: the PV integral of `(γ-s)⁻¹ · γ'`
 along a curve with unique crossing at `t₀` tends to `L`, provided:
 1. For small `ε`, the curve is `ε`-far from `s` except near `t₀`
 2. The far-segment integrals sum to some expression `E(ε)`
 3. `E(ε) → L` as `ε → 0⁺` -/
-theorem pv_tendsto_of_crossing_limit
-    {γ : ℝ → ℂ} {s : ℂ} {L : ℂ}
-    {t₀ : ℝ} (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    {δ : ℝ → ℝ} {threshold : ℝ} (hthresh : 0 < threshold)
+theorem pv_tendsto_of_crossing_limit {γ : ℝ → ℂ} {s L : ℂ} {t₀ : ℝ}
+    (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) {δ : ℝ → ℝ} {threshold : ℝ} (hthresh : 0 < threshold)
     (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
     (hδ_small : ∀ ε, 0 < ε → ε < threshold → δ ε < min t₀ (1 - t₀))
     (h_far : ∀ ε, 0 < ε → ε < threshold →
       ∀ t ∈ Icc (0 : ℝ) 1, δ ε < |t - t₀| → ε < ‖γ t - s‖)
-    (h_near : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t, |t - t₀| ≤ δ ε → ‖γ t - s‖ ≤ ε)
+    (h_near : ∀ ε, 0 < ε → ε < threshold → ∀ t, |t - t₀| ≤ δ ε → ‖γ t - s‖ ≤ ε)
     {E : ℝ → ℂ}
     (h_ftc : ∀ ε, 0 < ε → ε < threshold →
       (∫ t in (0 : ℝ)..(t₀ - δ ε), (γ t - s)⁻¹ * deriv γ t) +
@@ -204,11 +203,9 @@ set_option linter.unusedVariables false in
 /-- Asymmetric crossing limit: allows different cutoff radii on left and right
 of the crossing point. Needed for corner crossings (e.g., `ρ`, `ρ+1`) where
 the geometry differs on each side (e.g., vertical segment vs arc). -/
-theorem pv_tendsto_of_crossing_limit_asymmetric
-    {γ : ℝ → ℂ} {s : ℂ} {L : ℂ}
-    {t₀ : ℝ} (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    {δ_left δ_right : ℝ → ℝ}
-    {threshold : ℝ} (hthresh : 0 < threshold)
+theorem pv_tendsto_of_crossing_limit_asymmetric {γ : ℝ → ℂ} {s L : ℂ} {t₀ : ℝ}
+    (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) {δ_left δ_right : ℝ → ℝ} {threshold : ℝ}
+    (hthresh : 0 < threshold)
     (hδL_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_left ε)
     (hδR_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_right ε)
     (hδL_small : ∀ ε, 0 < ε → ε < threshold → δ_left ε < t₀)
@@ -224,11 +221,9 @@ theorem pv_tendsto_of_crossing_limit_asymmetric
       (∫ t in (0 : ℝ)..(t₀ - δ_left ε), (γ t - s)⁻¹ * deriv γ t) +
       (∫ t in (t₀ + δ_right ε)..1, (γ t - s)⁻¹ * deriv γ t) = E ε)
     (hint_left : ∀ ε, 0 < ε → ε < threshold →
-      IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t)
-        volume 0 (t₀ - δ_left ε))
+      IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume 0 (t₀ - δ_left ε))
     (hint_right : ∀ ε, 0 < ε → ε < threshold →
-      IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t)
-        volume (t₀ + δ_right ε) 1)
+      IntervalIntegrable (fun t => (γ t - s)⁻¹ * deriv γ t) volume (t₀ + δ_right ε) 1)
     (h_limit : Tendsto E (nhdsWithin 0 (Ioi 0)) (nhds L)) :
     Tendsto (fun ε =>
       ∫ t in (0 : ℝ)..1,

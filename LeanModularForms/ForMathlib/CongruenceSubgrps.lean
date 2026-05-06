@@ -54,7 +54,8 @@ lemma T_zpow_mem_iff {n : ℤ} : T ^ n ∈ Γ ↔ ↑Γ.width ∣ n := by
   rw [h₂, (by rfl : T ^ n ∈ Γ ↔ n ∈ A), hm, ← AddSubgroup.zmultiples_eq_closure,
     Int.mem_zmultiples_iff, Int.index_zmultiples, Int.natAbs_dvd]
 
-/-- The integers `n` such that `[1, n; 0, 1] ∈ Γ` are precisely the multiples of `Γ.width`. -/
+/-- The natural numbers `n` such that `[1, n; 0, 1] ∈ Γ` are precisely the multiples of
+`Γ.width`. -/
 lemma T_pow_mem_iff (n : ℕ) : T ^ n ∈ Γ ↔ Γ.width ∣ n := by
   simpa [Int.natCast_dvd_natCast] using Γ.T_zpow_mem_iff (n := n)
 

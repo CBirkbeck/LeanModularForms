@@ -55,19 +55,22 @@ noncomputable def poleOrderAt (f : ℂ → ℂ) (z₀ : ℂ) : ℕ :=
 
 theorem poleOrderAt_eq_zero_of_not_meromorphicAt {f : ℂ → ℂ} {z₀ : ℂ}
     (h : ¬MeromorphicAt f z₀) : poleOrderAt f z₀ = 0 := by
-  unfold poleOrderAt; exact dif_neg h
+  unfold poleOrderAt
+  exact dif_neg h
 
 theorem poleOrderAt_eq_zero_of_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
     (h : AnalyticAt ℂ f z₀) : poleOrderAt f z₀ = 0 := by
-  unfold poleOrderAt; rw [dif_pos h.meromorphicAt]
+  unfold poleOrderAt
+  rw [dif_pos h.meromorphicAt]
   have h_ord := h.meromorphicOrderAt_nonneg
   exact Int.toNat_eq_zero.mpr (neg_nonpos_of_nonneg (WithTop.untop₀_nonneg.mpr h_ord))
 
 theorem poleOrderAt_eq_one_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
-    (hf : MeromorphicAt f z₀)
-    (hord : meromorphicOrderAt f z₀ = (-1 : ℤ)) :
+    (hf : MeromorphicAt f z₀) (hord : meromorphicOrderAt f z₀ = (-1 : ℤ)) :
     poleOrderAt f z₀ = 1 := by
-  unfold poleOrderAt; rw [dif_pos hf, hord]; rfl
+  unfold poleOrderAt
+  rw [dif_pos hf, hord]
+  rfl
 
 theorem poleOrderAt_eq_one_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
     (h : HasSimplePoleAt f z₀) (hc : h.coeff ≠ 0) :
@@ -131,7 +134,10 @@ theorem sub_simplePole_analyticAt {f : ℂ → ℂ} {z₀ : ℂ} {c : ℂ} {g : 
     (hev : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
     ∃ h : ℂ → ℂ, AnalyticAt ℂ h z₀ ∧
       ∀ᶠ z in 𝓝[≠] z₀, f z - c / (z - z₀) = h z := by
-  exact ⟨g, hg, by filter_upwards [hev] with z hz; rw [hz]; ring⟩
+  refine ⟨g, hg, ?_⟩
+  filter_upwards [hev] with z hz
+  rw [hz]
+  ring
 
 /-- If `f` has a simple pole at `z₀`, then `f(z) - h.coeff/(z - z₀)` extends analytically
 to `z₀`. -/
@@ -146,7 +152,9 @@ theorem HasSimplePoleAt.sub_pole_term_meromorphicAt {f : ℂ → ℂ} {z₀ : �
     (h : HasSimplePoleAt f z₀) :
     MeromorphicAt (fun z => f z - h.coeff / (z - z₀)) z₀ := by
   obtain ⟨g, hg_an, hg_eq⟩ := h.sub_pole_analyticAt
-  exact hg_an.meromorphicAt.congr (by filter_upwards [hg_eq] with z hz; rw [← hz])
+  refine hg_an.meromorphicAt.congr ?_
+  filter_upwards [hg_eq] with z hz
+  rw [← hz]
 
 /-! ### Subtracting the full principal part sum -/
 
@@ -229,7 +237,8 @@ theorem poleOrderAt_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
     (h : HasSimplePoleAt f z₀) :
     poleOrderAt f z₀ = if h.coeff = 0 then 0 else 1 := by
   split_ifs with hc
-  · unfold poleOrderAt; rw [dif_pos h.meromorphicAt]
+  · unfold poleOrderAt
+    rw [dif_pos h.meromorphicAt]
     have := meromorphicOrderAt_nonneg_of_hasSimplePoleAt_coeff_zero h hc
     exact Int.toNat_eq_zero.mpr (neg_nonpos_of_nonneg (WithTop.untop₀_nonneg.mpr this))
   · exact poleOrderAt_eq_one_of_hasSimplePoleAt h hc
@@ -240,7 +249,7 @@ theorem poleOrderAt_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
 theorem principalPartSum_analyticAt {S : Finset ℂ} {c : ℂ → ℂ} {z : ℂ}
     (hz : z ∉ S) :
     AnalyticAt ℂ (principalPartSum S c) z := by
-  show AnalyticAt ℂ (fun w => ∑ s ∈ S, c s / (w - s)) z
+  change AnalyticAt ℂ (fun w => ∑ s ∈ S, c s / (w - s)) z
   apply Finset.analyticAt_fun_sum
   intro s hs
   exact analyticAt_const.div (analyticAt_id.sub analyticAt_const)
@@ -263,16 +272,16 @@ theorem principalPartSum_meromorphicAt (S : Finset ℂ) (c : ℂ → ℂ) (z : �
     have h_pole : MeromorphicAt (fun w => c z / (w - z)) z := by
       rw [MeromorphicAt.iff_eventuallyEq_zpow_smul_analyticAt]
       refine ⟨-1, fun _ => c z, analyticAt_const, ?_⟩
-      filter_upwards [self_mem_nhdsWithin] with w hw
-      have hne : w - z ≠ 0 := sub_ne_zero.mpr hw
-      simp only [zpow_neg_one, smul_eq_mul]; rw [div_eq_mul_inv, mul_comm]
+      filter_upwards [self_mem_nhdsWithin] with w _
+      simp only [zpow_neg_one, smul_eq_mul]
+      rw [div_eq_mul_inv, mul_comm]
     have h_sum_eq : ∀ᶠ w in 𝓝[≠] z,
         principalPartSum S c w = c z / (w - z) + ∑ t ∈ S.erase z, c t / (w - t) := by
       filter_upwards [self_mem_nhdsWithin] with w _
       exact principalPartSum_eq_term_add_rest hz c w
-    exact (h_pole.add h_rest_an.meromorphicAt).congr (by
-      filter_upwards [h_sum_eq] with w hw
-      rw [Pi.add_apply, ← hw])
+    refine (h_pole.add h_rest_an.meromorphicAt).congr ?_
+    filter_upwards [h_sum_eq] with w hw
+    rw [Pi.add_apply, ← hw]
   · exact (principalPartSum_analyticAt hz).meromorphicAt
 
 /-- The principal part sum has a simple pole at `s ∈ S` when `c s ≠ 0`. -/

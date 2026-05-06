@@ -60,7 +60,8 @@ lemma fdBoundary_H_eq_seg5_H {H t : ℝ} (ht4 : 4 < t) :
 private lemma seg2_angle_in_range {t : ℝ} (ht1 : 1 ≤ t) (ht2 : t ≤ 2) :
     Real.pi / 3 ≤ Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) ∧
     Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) ≤ 2 * Real.pi / 3 := by
-  have hpi := Real.pi_pos; constructor
+  have hpi := Real.pi_pos
+  constructor
   · nlinarith [mul_nonneg (show (0:ℝ) ≤ t - 1 by linarith)
       (show (0:ℝ) ≤ Real.pi / 6 by linarith)]
   · nlinarith [mul_le_mul_of_nonneg_right (show t - 1 ≤ 1 by linarith)
@@ -86,7 +87,8 @@ private lemma sin_ge_sqrt3_div_2_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 
   rw [show Real.sqrt 3 / 2 = Real.sin (Real.pi / 3) from Real.sin_pi_div_three.symm]
   by_cases h : θ ≤ Real.pi / 2
   · exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith) h h1
-  · push Not at h; rw [show Real.sin θ = Real.sin (Real.pi - θ) from (Real.sin_pi_sub θ).symm]
+  · push Not at h
+    rw [show Real.sin θ = Real.sin (Real.pi - θ) from (Real.sin_pi_sub θ).symm]
     exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith) (by linarith) (by linarith)
 
 private lemma abs_cos_le_half_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
@@ -110,7 +112,9 @@ private lemma seg2_as_trig (t : ℝ) :
       ↑(Real.sin (Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3))) * I := by
   unfold fdBoundary_seg2
   conv_lhs => rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3) : ℂ) * I =
-    ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by push_cast; ring]
+    ↑(Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I from by
+      push_cast
+      ring]
   rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin]
 
 private lemma seg3_as_trig (t : ℝ) :
@@ -120,33 +124,37 @@ private lemma seg3_as_trig (t : ℝ) :
   conv_lhs =>
     rw [show (↑Real.pi / 2 + (↑t - 2) *
       (2 * ↑Real.pi / 3 - ↑Real.pi / 2) : ℂ) * I =
-    ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by push_cast; ring]
+    ↑(Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I from by
+      push_cast
+      ring]
   rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin]
 
 private lemma seg2_im {t : ℝ} :
     (fdBoundary_seg2 t).im = Real.sin (Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) := by
-  rw [seg2_as_trig, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]; ring
+  rw [seg2_as_trig, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]
+  ring
 
 private lemma seg3_im {t : ℝ} :
     (fdBoundary_seg3 t).im =
       Real.sin (Real.pi / 2 +
         (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) := by
-  rw [seg3_as_trig, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]; ring
+  rw [seg3_as_trig, add_im, ofReal_im, mul_im, ofReal_re, ofReal_im, I_re, I_im]
+  ring
 
 private lemma seg2_re {t : ℝ} :
     (fdBoundary_seg2 t).re = Real.cos (Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) := by
-  rw [seg2_as_trig, add_re, ofReal_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]; ring
+  rw [seg2_as_trig, add_re, ofReal_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]
+  ring
 
 private lemma seg3_re {t : ℝ} :
     (fdBoundary_seg3 t).re =
       Real.cos (Real.pi / 2 +
         (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) := by
-  rw [seg3_as_trig, add_re, ofReal_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]; ring
+  rw [seg3_as_trig, add_re, ofReal_re, mul_re, ofReal_re, ofReal_im, I_re, I_im]
+  ring
 
-lemma fdBoundary_H_im_pos (H : ℝ)
-    (hH : Real.sqrt 3 / 2 < H) :
-    ∀ t ∈ Icc (0 : ℝ) 5,
-      0 < (fdBoundary_H H t).im := by
+lemma fdBoundary_H_im_pos (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    ∀ t ∈ Icc (0 : ℝ) 5, 0 < (fdBoundary_H H t).im := by
   intro t ⟨ht0, ht5⟩
   have hsqrt : 0 < Real.sqrt 3 / 2 := by positivity
   by_cases h1 : t ≤ 1
@@ -164,14 +172,14 @@ lemma fdBoundary_H_im_pos (H : ℝ)
           (seg3_angle_in_range (le_of_lt h2) h3).2
       · push Not at h3
         by_cases h4 : t ≤ 4
-        · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]; nlinarith
+        · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]
+          nlinarith
         · push Not at h4
-          rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]; linarith
+          rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]
+          linarith
 
-lemma fdBoundary_H_im_ge_sqrt3_div_2 (H : ℝ)
-    (hH : Real.sqrt 3 / 2 ≤ H) :
-    ∀ t ∈ Icc (0 : ℝ) 5,
-      Real.sqrt 3 / 2 ≤ (fdBoundary_H H t).im := by
+lemma fdBoundary_H_im_ge_sqrt3_div_2 (H : ℝ) (hH : Real.sqrt 3 / 2 ≤ H) :
+    ∀ t ∈ Icc (0 : ℝ) 5, Real.sqrt 3 / 2 ≤ (fdBoundary_H H t).im := by
   intro t ⟨ht0, ht5⟩
   by_cases h1 : t ≤ 1
   · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_im ht0 h1]
@@ -191,7 +199,8 @@ lemma fdBoundary_H_im_ge_sqrt3_div_2 (H : ℝ)
         · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]
           nlinarith
         · push Not at h4
-          rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]; exact hH
+          rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]
+          exact hH
 
 private lemma seg1_H_re {H t : ℝ} : (fdBoundary_seg1_H H t).re = 1 / 2 := by
   simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
@@ -203,11 +212,11 @@ private lemma seg5_H_re {H t : ℝ} : (fdBoundary_seg5_H H t).re = t - 9 / 2 := 
   simp [fdBoundary_seg5_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
 
 lemma fdBoundary_H_re_abs_le_half (H : ℝ) :
-    ∀ t ∈ Icc (0 : ℝ) 5,
-      |Complex.re (fdBoundary_H H t)| ≤ 1 / 2 := by
+    ∀ t ∈ Icc (0 : ℝ) 5, |Complex.re (fdBoundary_H H t)| ≤ 1 / 2 := by
   intro t ⟨ht0, ht5⟩
   by_cases h1 : t ≤ 1
-  · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_re]; norm_num
+  · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_re]
+    norm_num
   · push Not at h1
     by_cases h2 : t ≤ 2
     · rw [fdBoundary_H_eq_seg2_H H h1 h2, fdBoundary_seg2_H, seg2_re]
@@ -220,9 +229,11 @@ lemma fdBoundary_H_re_abs_le_half (H : ℝ) :
           (seg3_angle_in_range (le_of_lt h2) h3).1 (seg3_angle_in_range (le_of_lt h2) h3).2
       · push Not at h3
         by_cases h4 : t ≤ 4
-        · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_re]; norm_num
+        · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_re]
+          norm_num
         · push Not at h4
-          rw [fdBoundary_H_eq_seg5_H h4, seg5_H_re]; rw [abs_le]; constructor <;> linarith
+          rw [fdBoundary_H_eq_seg5_H h4, seg5_H_re, abs_le]
+          constructor <;> linarith
 
 lemma fdBoundary_eq_seg1 {t : ℝ} (ht : t ≤ 1) :
     fdBoundary t = fdBoundary_seg1 t := by
@@ -256,8 +267,7 @@ theorem fdBoundary_continuous : Continuous fdBoundary := by
   exact fdBoundary_H_continuous heightCutoff
 
 lemma fdBoundary_im_pos :
-    ∀ t ∈ Icc (0 : ℝ) 5,
-      0 < (fdBoundary t).im := by
+    ∀ t ∈ Icc (0 : ℝ) 5, 0 < (fdBoundary t).im := by
   rw [fdBoundary_eq_fdBoundary_H]
   exact fdBoundary_H_im_pos heightCutoff sqrt3_div2_lt_heightCutoff
 
@@ -267,7 +277,8 @@ lemma fdBoundary_H_im_le_H {H : ℝ} (hH : 1 ≤ H) :
   have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
     nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
   by_cases h1 : t ≤ 1
-  · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_im ht0 h1]; nlinarith
+  · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_im ht0 h1]
+    nlinarith
   · push Not at h1
     by_cases h2 : t ≤ 2
     · rw [fdBoundary_H_eq_seg2_H H h1 h2, fdBoundary_seg2_H, seg2_im]
@@ -280,7 +291,8 @@ lemma fdBoundary_H_im_le_H {H : ℝ} (hH : 1 ≤ H) :
           _ ≤ H := hH
       · push Not at h3
         by_cases h4 : t ≤ 4
-        · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]; nlinarith
+        · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]
+          nlinarith
         · push Not at h4
           rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]
 
@@ -310,30 +322,25 @@ lemma fdBoundary_im_le_heightCutoff :
           rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]
 
 lemma fdBoundary_re_abs_le_half :
-    ∀ t ∈ Icc (0 : ℝ) 5,
-      |Complex.re (fdBoundary t)| ≤ 1 / 2 := by
+    ∀ t ∈ Icc (0 : ℝ) 5, |Complex.re (fdBoundary t)| ≤ 1 / 2 := by
   rw [fdBoundary_eq_fdBoundary_H]
   exact fdBoundary_H_re_abs_le_half heightCutoff
 
 lemma fdBoundary_im_ge_sqrt3_div_2 :
-    ∀ t ∈ Icc (0 : ℝ) 5,
-      Real.sqrt 3 / 2 ≤ (fdBoundary t).im := by
+    ∀ t ∈ Icc (0 : ℝ) 5, Real.sqrt 3 / 2 ≤ (fdBoundary t).im := by
   rw [fdBoundary_eq_fdBoundary_H]
   exact fdBoundary_H_im_ge_sqrt3_div_2 heightCutoff (le_of_lt sqrt3_div2_lt_heightCutoff)
 
 lemma fdBoundary_passes_through_i :
-    ∃ t ∈ Icc (0 : ℝ) 5,
-      fdBoundary t = ellipticPointI := by
-  exact ⟨2, by norm_num, fdBoundary_at_two⟩
+    ∃ t ∈ Icc (0 : ℝ) 5, fdBoundary t = ellipticPointI :=
+  ⟨2, by norm_num, fdBoundary_at_two⟩
 
 lemma fdBoundary_passes_through_rho :
-    ∃ t ∈ Icc (0 : ℝ) 5,
-      fdBoundary t = ellipticPointRho := by
-  exact ⟨3, by norm_num, fdBoundary_at_three⟩
+    ∃ t ∈ Icc (0 : ℝ) 5, fdBoundary t = ellipticPointRho :=
+  ⟨3, by norm_num, fdBoundary_at_three⟩
 
 lemma fdBoundary_passes_through_rho_plus_one :
-    ∃ t ∈ Icc (0 : ℝ) 5,
-      fdBoundary t = ellipticPointRhoPlusOne := by
-  exact ⟨1, by norm_num, fdBoundary_at_one⟩
+    ∃ t ∈ Icc (0 : ℝ) 5, fdBoundary t = ellipticPointRhoPlusOne :=
+  ⟨1, by norm_num, fdBoundary_at_one⟩
 
 end

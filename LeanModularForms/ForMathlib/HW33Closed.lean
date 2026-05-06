@@ -89,7 +89,6 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     (hMero : ∀ s ∈ S, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (hCondB : SatisfiesConditionB γ f S)
-    -- Laurent decomposition: f - simple_pp = higher_order_polar + holomorphic
     (h_polar h_holo : ℂ → ℂ)
     (h_decomp : ∀ z,
       f z - principalPartSum S (fun s => residue f s) z =
@@ -102,7 +101,6 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     (hI_holo : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S h_holo γ.toPiecewiseC1Path.toPath.extend ε t)
       volume 0 1)
-    -- hPV_sing for the singular part (typically from simple-pole closure)
     (hPV_sing : HasCauchyPVOn S
       (principalPartSum S (fun s => residue f s))
       γ.toPiecewiseC1Path
@@ -114,8 +112,6 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     HasCauchyPVOn S f γ.toPiecewiseC1Path
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) := by
-  -- The cpvIntegrandOn integrability for f - principalPartSum follows from
-  -- the decomposition: cpv(h_polar + h_holo) = cpv(h_polar) + cpv(h_holo).
   have hI_rem : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S
         (fun z => f z - principalPartSum S (fun s => residue f s) z)
@@ -125,8 +121,8 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     intro t _
     simp only [cpvIntegrandOn]
     by_cases h : ∃ s ∈ S, ‖γ.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
-    · simp [h]
-    · simp [h, h_decomp, add_mul]
+    · simp only [if_pos h, add_zero]
+    · simp only [if_neg h, h_decomp, add_mul]
   exact generalizedResidueTheorem hU S hS_in_U f hf γ h_null hMero hCondA hCondB
     (hCancel_of_higherOrder_decomposition_under_B S f γ.toPiecewiseC1Path
       h_polar h_holo h_decomp h_polar_cancel h_holo_cancel hI_polar hI_holo)

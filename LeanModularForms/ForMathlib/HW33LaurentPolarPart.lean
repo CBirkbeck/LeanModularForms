@@ -52,20 +52,15 @@ def IsCrossed (γ : PwC1Immersion x x) (s : ℂ) : Prop :=
 /-- Selector for the crossing parameter `t₀` of pole `s`. Under the uniqueness
 hypothesis, this is the unique `t₀ ∈ (0, 1)` with `γ(t₀) = s` if any exists,
 or `0` (default) otherwise. -/
-noncomputable def crossingParam
-    (γ : PwC1Immersion x x) (s : ℂ) : ℝ :=
+noncomputable def crossingParam (γ : PwC1Immersion x x) (s : ℂ) : ℝ :=
   open Classical in if h : IsCrossed γ s then Classical.choose h else 0
 
-theorem crossingParam_mem_Ioo
-    {γ : PwC1Immersion x x} {s : ℂ}
-    (h : IsCrossed γ s) :
+theorem crossingParam_mem_Ioo {γ : PwC1Immersion x x} {s : ℂ} (h : IsCrossed γ s) :
     crossingParam γ s ∈ Set.Ioo (0 : ℝ) 1 := by
   simp only [crossingParam, h, ↓reduceDIte]
   exact (Classical.choose_spec h).1
 
-theorem γ_at_crossingParam
-    {γ : PwC1Immersion x x} {s : ℂ}
-    (h : IsCrossed γ s) :
+theorem γ_at_crossingParam {γ : PwC1Immersion x x} {s : ℂ} (h : IsCrossed γ s) :
     (γ : ℝ → ℂ) (crossingParam γ s) = s := by
   simp only [crossingParam, h, ↓reduceDIte]
   exact (Classical.choose_spec h).2
@@ -75,10 +70,8 @@ theorem γ_at_crossingParam
 /-- Helper: when `s ∈ S`, `γ` crosses `s`, and `hCondB.laurent_compatible`
 holds, extract the existential at `s`. Returns the existential statement
 to be unpacked by `Classical.choose`. -/
-private theorem laurent_data_exists
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S)
-    {s : ℂ} (hs : s ∈ S) (h_cross : IsCrossed γ s) :
+private theorem laurent_data_exists {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) (h_cross : IsCrossed γ s) :
     ∃ (N : ℕ) (a : Fin N → ℂ) (g : ℂ → ℂ),
       AnalyticAt ℂ g s ∧
       (∀ᶠ z in 𝓝[≠] s, f z = g z +
@@ -100,8 +93,7 @@ The single `if-then-else` (rather than separate `laurentPolarOrderAt` /
 `laurentPolarCoeffAt` definitions) avoids dependent-type clashes when
 unfolding: the `Fin` index, the coefficients, and the sum all live inside
 the same conditional, so `dif_pos` reduces the whole expression cleanly. -/
-noncomputable def laurentPolarPartAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+noncomputable def laurentPolarPartAt {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
     (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) (z : ℂ) : ℂ :=
   open Classical in
   if h : IsCrossed γ s then
@@ -111,8 +103,7 @@ noncomputable def laurentPolarPartAt
   else 0
 
 /-- Total polar part: sum over all poles in `S`. -/
-noncomputable def laurentPolarPartTotal
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+noncomputable def laurentPolarPartTotal {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
     (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
   ∑ s ∈ S.attach, laurentPolarPartAt hCondB s.1 s.2 z
 
@@ -127,8 +118,7 @@ provides the building block for proving global analyticity of
 /-- The analytic remainder `g` from condition (B)'s Laurent compatibility data
 at a crossed pole `s ∈ S`. By definition, `f z = g z + ∑ a_k / (z-s)^(k+1)`
 holds eventually near `s`. For uncrossed `s`, this is the zero function. -/
-noncomputable def laurentAnalyticPartAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+noncomputable def laurentAnalyticPartAt {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
     (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) : ℂ → ℂ :=
   open Classical in
   if h : IsCrossed γ s then
@@ -136,21 +126,17 @@ noncomputable def laurentAnalyticPartAt
   else 0
 
 /-- The analytic part is `AnalyticAt ℂ` at `s` (for crossed `s`). -/
-theorem laurentAnalyticPartAt_analyticAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
-    (h_cross : IsCrossed γ s) :
+theorem laurentAnalyticPartAt_analyticAt {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) (h_cross : IsCrossed γ s) :
     AnalyticAt ℂ (laurentAnalyticPartAt hCondB s hs) s := by
-  unfold laurentAnalyticPartAt
   classical
+  unfold laurentAnalyticPartAt
   rw [dif_pos h_cross]
   exact (laurent_data_exists hCondB hs h_cross).choose_spec.choose_spec.choose_spec.1
 
 /-- Helper: `laurentAnalyticPartAt` unfolds to the data-defined `g`. -/
-private lemma laurentAnalyticPartAt_eq_data
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
-    (h_cross : IsCrossed γ s) :
+private lemma laurentAnalyticPartAt_eq_data {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) (h_cross : IsCrossed γ s) :
     laurentAnalyticPartAt hCondB s hs =
       (laurent_data_exists hCondB hs h_cross).choose_spec.choose_spec.choose := by
   classical
@@ -158,10 +144,9 @@ private lemma laurentAnalyticPartAt_eq_data
   simp only [dif_pos h_cross]
 
 /-- Helper: `laurentPolarPartAt` unfolds to the data-defined sum (for crossed `s`). -/
-private lemma laurentPolarPartAt_eq_data
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
-    (h_cross : IsCrossed γ s) (z : ℂ) :
+private lemma laurentPolarPartAt_eq_data {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) (h_cross : IsCrossed γ s)
+    (z : ℂ) :
     laurentPolarPartAt hCondB s hs z =
       ∑ k : Fin (laurent_data_exists hCondB hs h_cross).choose,
         (laurent_data_exists hCondB hs h_cross).choose_spec.choose k /
@@ -175,9 +160,8 @@ as `analyticPartAt s + polarPartAt s` (eventually equal in the punctured
 neighborhood). This is the core consequence of condition (B)'s
 `laurent_compatible` field, repackaged as a working theorem on our extracted
 `laurentAnalyticPartAt` and `laurentPolarPartAt`. -/
-theorem f_eq_analyticPart_plus_polarPart_eventually
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+theorem f_eq_analyticPart_plus_polarPart_eventually {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
     (h_cross : IsCrossed γ s) :
     ∀ᶠ z in 𝓝[≠] s, f z =
       laurentAnalyticPartAt hCondB s hs z +
@@ -191,34 +175,31 @@ theorem f_eq_analyticPart_plus_polarPart_eventually
 
 /-- **Corollary**: `f - laurentPolarPartAt s = laurentAnalyticPartAt s`
 eventually in the punctured neighborhood of a crossed pole `s`. -/
-theorem f_minus_polarPartAt_eventuallyEq_analyticPartAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+theorem f_minus_polarPartAt_eventuallyEq_analyticPartAt {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
     (h_cross : IsCrossed γ s) :
     (fun z => f z - laurentPolarPartAt hCondB s hs z) =ᶠ[𝓝[≠] s]
       laurentAnalyticPartAt hCondB s hs := by
   filter_upwards [f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross]
     with z hz
-  rw [hz]; ring
+  rw [hz]
+  ring
 
 /-- `laurentPolarPartAt s` is differentiable at any point `z ≠ s`. The terms
 `a_k / (z - s)^(k+1)` are differentiable when `z ≠ s`, and a finite sum of
 differentiable functions is differentiable. -/
-theorem laurentPolarPartAt_differentiableAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) {z : ℂ}
+theorem laurentPolarPartAt_differentiableAt {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) {z : ℂ}
     (hz : z ≠ s) :
     DifferentiableAt ℂ (laurentPolarPartAt hCondB s hs) z := by
   classical
   unfold laurentPolarPartAt
   by_cases h : IsCrossed γ s
   · simp only [dif_pos h]
-    -- Sum of `c_k / (z - s)^(k+1)` differentiable at z ≠ s.
     apply DifferentiableAt.fun_sum
     intro k _
     have h_pow_ne : (z - s) ^ (k.val + 1) ≠ 0 :=
       pow_ne_zero _ (sub_ne_zero.mpr hz)
-    -- d/dz [c / (z - s)^n] exists when (z - s)^n ≠ 0.
     exact ((differentiableAt_const _).div
       ((differentiableAt_id.sub (differentiableAt_const _)).pow _) h_pow_ne)
   · simp only [dif_neg h]
@@ -247,9 +228,8 @@ zero under just `hCondB` + null-homology, with no "all crossed" assumption. -/
 At crossed poles, this is `laurentPolarPartAt s - residue/(z-s)` — the Laurent
 terms `k ≥ 1` from condition (B), which CPV-cancel under (B). At uncrossed
 poles, this is `0` — there's no on-curve singularity to cancel. -/
-noncomputable def laurentHigherOrderPolarAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) (z : ℂ) : ℂ :=
+noncomputable def laurentHigherOrderPolarAt {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (hs : s ∈ S) (z : ℂ) : ℂ :=
   open Classical in
   if IsCrossed γ s then
     laurentPolarPartAt hCondB s hs z - residue f s / (z - s)
@@ -257,9 +237,8 @@ noncomputable def laurentHigherOrderPolarAt
 
 /-- The total higher-order polar part: sum over `s ∈ S` of the per-pole
 guarded higher-order parts. Only crossed poles contribute. -/
-noncomputable def laurentHigherOrderPolar
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
+noncomputable def laurentHigherOrderPolar {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
   ∑ s ∈ S.attach, laurentHigherOrderPolarAt hCondB s.1 s.2 z
 
 /-- The **holomorphic remainder** in the refactored decomposition:
@@ -273,9 +252,8 @@ Per-pole contributions:
   Laurent terms `1/(z-s)^k` for `k ≥ 2`. These are *not* analytic at `s`,
   but they integrate to zero along any closed curve (single-valued
   antiderivative), so they don't affect the residue formula. -/
-noncomputable def laurentHolomorphicRemainder
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
+noncomputable def laurentHolomorphicRemainder {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
   f z - principalPartSum S (fun s => residue f s) z -
     laurentHigherOrderPolar hCondB z
 
@@ -284,20 +262,19 @@ noncomputable def laurentHolomorphicRemainder
 
 Holds by construction (the new `laurentHolomorphicRemainder` is defined as the
 remainder after subtracting `principalPartSum + laurentHigherOrderPolar`). -/
-theorem f_minus_pp_eq_higherOrder_plus_holo
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) (z : ℂ) :
+theorem f_minus_pp_eq_higherOrder_plus_holo {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) (z : ℂ) :
     f z - principalPartSum S (fun s => residue f s) z =
       laurentHigherOrderPolar hCondB z +
         laurentHolomorphicRemainder hCondB z := by
-  simp only [laurentHolomorphicRemainder]; ring
+  simp only [laurentHolomorphicRemainder]
+  ring
 
 /-! ## Differentiability of the decomposition pieces -/
 
 /-- `laurentHigherOrderPolarAt s` is differentiable at any point `z ≠ s`. -/
-theorem laurentHigherOrderPolarAt_differentiableAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) {z : ℂ}
+theorem laurentHigherOrderPolarAt_differentiableAt {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) {z : ℂ}
     (hz : z ≠ s) :
     DifferentiableAt ℂ (laurentHigherOrderPolarAt hCondB s hs) z := by
   classical
@@ -312,9 +289,8 @@ theorem laurentHigherOrderPolarAt_differentiableAt
     exact differentiableAt_const _
 
 /-- `laurentHigherOrderPolar` is differentiable at any point `z ∉ S`. -/
-theorem laurentHigherOrderPolar_differentiableAt
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S) {z : ℂ} (hz : z ∉ (↑S : Set ℂ)) :
+theorem laurentHigherOrderPolar_differentiableAt {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {z : ℂ} (hz : z ∉ (↑S : Set ℂ)) :
     DifferentiableAt ℂ (laurentHigherOrderPolar hCondB) z := by
   unfold laurentHigherOrderPolar
   apply DifferentiableAt.fun_sum
@@ -324,8 +300,8 @@ theorem laurentHigherOrderPolar_differentiableAt
   exact hz (h_eq ▸ Finset.mem_coe.mpr s.2)
 
 /-- `principalPartSum S c` is differentiable at any point `z ∉ S`. -/
-theorem principalPartSum_differentiableAt
-    (S : Finset ℂ) (c : ℂ → ℂ) {z : ℂ} (hz : z ∉ (↑S : Set ℂ)) :
+theorem principalPartSum_differentiableAt (S : Finset ℂ) (c : ℂ → ℂ) {z : ℂ}
+    (hz : z ∉ (↑S : Set ℂ)) :
     DifferentiableAt ℂ (principalPartSum S c) z := by
   unfold principalPartSum
   apply DifferentiableAt.fun_sum
@@ -336,10 +312,8 @@ theorem principalPartSum_differentiableAt
     (differentiableAt_id.sub (differentiableAt_const _)) h_sub_ne
 
 /-- `laurentHolomorphicRemainder` is differentiable on `U \ S`. -/
-theorem laurentHolomorphicRemainder_differentiableOn
-    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
-    (hCondB : SatisfiesConditionB γ f S)
-    {U : Set ℂ} (hU : IsOpen U)
+theorem laurentHolomorphicRemainder_differentiableOn {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {U : Set ℂ} (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f (U \ ↑S)) :
     DifferentiableOn ℂ (laurentHolomorphicRemainder hCondB) (U \ ↑S) := by
   intro z hz

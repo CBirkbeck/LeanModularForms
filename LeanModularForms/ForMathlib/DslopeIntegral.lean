@@ -105,7 +105,7 @@ private lemma exists_compact_tube {U : Set ℂ} (hU : Convex ℝ U) (hU_open : I
     · rw [Metric.mem_closedBall, Complex.dist_eq] at *
       rw [Metric.mem_ball, Complex.dist_eq] at hc
       linarith
-    · show (1 - t) • c + t • w₀ = c + t • (w₀ - c)
+    · change (1 - t) • c + t • w₀ = c + t • (w₀ - c)
       module
 
 /-- Continuity of `c ↦ dslope f c w₀` on a convex open set `U` for `f` differentiable
@@ -125,7 +125,7 @@ theorem continuousOn_dslope_first_arg {U : Set ℂ} (hU : Convex ℝ U) (hU_open
     filter_upwards [hU_open.mem_nhds hc₀] with c hc
     exact dslope_eq_integral_deriv hU hU_open hf hc hw₀
   refine (ContinuousAt.congr ?_ h_eq_nbhd.symm).continuousWithinAt
-  refine intervalIntegral.continuousAt_of_dominated_interval
+  refine continuousAt_of_dominated_interval
     (bound := fun _ => max M 0) ?_ ?_ intervalIntegral.intervalIntegrable_const ?_
   · filter_upwards [Metric.ball_mem_nhds c₀ hε_pos] with c hc
     rw [uIoc_of_le (zero_le_one' ℝ)]
@@ -143,9 +143,8 @@ theorem continuousOn_dslope_first_arg {U : Set ℂ} (hU : Convex ℝ U) (hU_open
     have ht_Icc := Ioc_subset_Icc_self ht
     have hmem : c₀ + t • (w₀ - c₀) ∈ U :=
       hK_sub (hK_tube c₀ (Metric.mem_ball_self hε_pos) t ht_Icc)
-    have h1 : ContinuousAt (fun c : ℂ => c + t • (w₀ - c)) c₀ := by
-      have : Continuous (fun c : ℂ => c + t • (w₀ - c)) := by continuity
-      exact this.continuousAt
+    have h1 : ContinuousAt (fun c : ℂ => c + t • (w₀ - c)) c₀ :=
+      (by continuity : Continuous _).continuousAt
     have h2 : ContinuousAt (deriv f) (c₀ + t • (w₀ - c₀)) :=
       h_deriv_contU.continuousAt (hU_open.mem_nhds hmem)
     exact h2.comp_of_eq h1 rfl
@@ -164,7 +163,7 @@ private lemma exists_compact_tube_prod {U : Set ℂ} (hU : Convex ℝ U) (hU_ope
   obtain ⟨ρ_c, hρ_c_pos, hρ_c_sub⟩ := Metric.isOpen_iff.mp hU_open c₀ hc₀
   obtain ⟨ρ_w, hρ_w_pos, hρ_w_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
   set ρ := min ρ_c ρ_w / 2
-  have hρ_pos : 0 < ρ := by simp only [ρ]; positivity
+  have hρ_pos : 0 < ρ := by positivity
   refine ⟨ρ, hρ_pos,
     (fun p : ℂ × ℂ × ℝ => (1 - p.2.2) • p.1 + p.2.2 • p.2.1) ''
       (Metric.closedBall c₀ ρ ×ˢ Metric.closedBall w₀ ρ ×ˢ Icc (0 : ℝ) 1),
@@ -193,7 +192,7 @@ private lemma exists_compact_tube_prod {U : Set ℂ} (hU : Convex ℝ U) (hU_ope
     refine ⟨(c, w, t), ⟨?_, ?_, ht⟩, ?_⟩
     · rw [Metric.mem_closedBall]; rw [Metric.mem_ball] at hc; linarith
     · rw [Metric.mem_closedBall]; rw [Metric.mem_ball] at hw; linarith
-    · show (1 - t) • c + t • w = c + t • (w - c)
+    · change (1 - t) • c + t • w = c + t • (w - c)
       module
 
 /-- Joint continuity of `(c, w) ↦ dslope f c w` on `U × U` for `f` differentiable
@@ -209,11 +208,11 @@ theorem continuousOn_dslope_prod {U : Set ℂ} (hU : Convex ℝ U) (hU_open : Is
   obtain ⟨M, hM⟩ := hK_compact.bddAbove_image (h_deriv_contU.norm.mono hK_sub)
   have h_eq_nbhd : (fun p : ℂ × ℂ => dslope f p.1 p.2) =ᶠ[nhds (c₀, w₀)]
       fun p => ∫ t in (0 : ℝ)..1, deriv f (p.1 + t • (p.2 - p.1)) := by
-    filter_upwards [(hU_open.prod hU_open).mem_nhds (by exact ⟨hc₀, hw₀⟩ : (c₀, w₀) ∈ U ×ˢ U)]
-      with p hp
+    filter_upwards [(hU_open.prod hU_open).mem_nhds
+      (⟨hc₀, hw₀⟩ : (c₀, w₀) ∈ U ×ˢ U)] with p hp
     exact dslope_eq_integral_deriv hU hU_open hf hp.1 hp.2
   refine (ContinuousAt.congr ?_ h_eq_nbhd.symm).continuousWithinAt
-  refine intervalIntegral.continuousAt_of_dominated_interval
+  refine continuousAt_of_dominated_interval
     (bound := fun _ => max M 0) ?_ ?_ intervalIntegral.intervalIntegrable_const ?_
   · filter_upwards [Metric.ball_mem_nhds (c₀, w₀) hε_pos] with p hp
     rw [uIoc_of_le (zero_le_one' ℝ)]
@@ -251,9 +250,8 @@ theorem continuousOn_dslope_prod {U : Set ℂ} (hU : Convex ℝ U) (hU_open : Is
     have hmem : c₀ + t • (w₀ - c₀) ∈ U :=
       hK_sub (hK_tube c₀ (Metric.mem_ball_self hε_pos) w₀
         (Metric.mem_ball_self hε_pos) t ht_Icc)
-    have h1 : ContinuousAt (fun p : ℂ × ℂ => p.1 + t • (p.2 - p.1)) (c₀, w₀) := by
-      have : Continuous (fun p : ℂ × ℂ => p.1 + t • (p.2 - p.1)) := by continuity
-      exact this.continuousAt
+    have h1 : ContinuousAt (fun p : ℂ × ℂ => p.1 + t • (p.2 - p.1)) (c₀, w₀) :=
+      (by continuity : Continuous _).continuousAt
     have h2 : ContinuousAt (deriv f) (c₀ + t • (w₀ - c₀)) :=
       h_deriv_contU.continuousAt (hU_open.mem_nhds hmem)
     exact h2.comp_of_eq h1 rfl
@@ -277,8 +275,7 @@ theorem continuousOn_dslope_prod_open {U : Set ℂ} (hU_open : IsOpen U)
     ContinuousOn (fun p : ℂ × ℂ => dslope f p.1 p.2) (U ×ˢ U) := by
   rintro ⟨c₀, w₀⟩ ⟨hc₀, hw₀⟩
   by_cases h_eq : c₀ = w₀
-  · -- Diagonal: use convex theorem on a local ball ⊆ U
-    subst h_eq
+  · subst h_eq
     obtain ⟨ρ, hρ_pos, hρ_sub⟩ := Metric.isOpen_iff.mp hU_open c₀ hc₀
     have h_diff_ball : DifferentiableOn ℂ f (Metric.ball c₀ ρ) := hf.mono hρ_sub
     have h_cont_ball := continuousOn_dslope_prod (convex_ball c₀ ρ)
@@ -288,12 +285,10 @@ theorem continuousOn_dslope_prod_open {U : Set ℂ} (hU_open : IsOpen U)
       Metric.isOpen_ball.prod Metric.isOpen_ball
     exact (h_cont_ball.continuousAt
       (h_open_prod.mem_nhds ⟨h_self, h_self⟩)).continuousWithinAt
-  · -- Off-diagonal: use `dslope = (f w − f c)/(w − c)` eventually
-    have hf_diff_at : ∀ z ∈ U, DifferentiableAt ℂ f z := fun z hz =>
+  · have hf_diff_at : ∀ z ∈ U, DifferentiableAt ℂ f z := fun z hz =>
       (hf z hz).differentiableAt (hU_open.mem_nhds hz)
     have hf_cont_at_c : ContinuousAt f c₀ := (hf_diff_at c₀ hc₀).continuousAt
     have hf_cont_at_w : ContinuousAt f w₀ := (hf_diff_at w₀ hw₀).continuousAt
-    -- Eventually p.1 ≠ p.2 near (c₀, w₀)
     have h_ne : c₀ ≠ w₀ := h_eq
     have h_eventually_ne : ∀ᶠ p : ℂ × ℂ in nhds (c₀, w₀), p.2 ≠ p.1 := by
       have h_diff_cont : Continuous (fun p : ℂ × ℂ => p.2 - p.1) := by continuity
@@ -301,12 +296,10 @@ theorem continuousOn_dslope_prod_open {U : Set ℂ} (hU_open : IsOpen U)
         sub_ne_zero.mpr (Ne.symm h_ne)
       have := h_diff_cont.continuousAt.tendsto.eventually_ne h_val_ne
       filter_upwards [this] with p hp using sub_ne_zero.mp hp
-    -- Eventually dslope = (f w - f c)/(w - c)
     have h_eq_nbhd : (fun p : ℂ × ℂ => dslope f p.1 p.2) =ᶠ[nhds (c₀, w₀)]
         fun p => (f p.2 - f p.1) / (p.2 - p.1) := by
       filter_upwards [h_eventually_ne] with p hp
       rw [dslope_of_ne f hp, slope_def_field]
-    -- Continuity of (f p.2 - f p.1)/(p.2 - p.1) at (c₀, w₀)
     have h_quot_cont : ContinuousAt
         (fun p : ℂ × ℂ => (f p.2 - f p.1) / (p.2 - p.1)) (c₀, w₀) := by
       refine ContinuousAt.div ?_ ?_ ?_
@@ -345,8 +338,7 @@ theorem deriv_dslope_bounded_locally {U : Set ℂ} (hU : Convex ℝ U) (hU_open 
   obtain ⟨ρ_c, hρ_c_pos, hρ_c_sub⟩ := Metric.isOpen_iff.mp hU_open c₀ hc₀
   obtain ⟨ρ_w, hρ_w_pos, hρ_w_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
   set ρ := min ρ_c ρ_w / 4
-  have hρ_pos : 0 < ρ := by simp only [ρ]; positivity
-  -- Compact K = closedBall c₀ ρ × closedBall w₀ (3ρ/2) ⊆ U × U
+  have hρ_pos : 0 < ρ := by positivity
   have h_cB_w_sub : Metric.closedBall w₀ (3 * ρ / 2) ⊆ U := fun z hz =>
     hρ_w_sub (by
       rw [Metric.mem_closedBall] at hz
@@ -374,7 +366,6 @@ theorem deriv_dslope_bounded_locally {U : Set ℂ} (hU : Convex ℝ U) (hU_open 
   have hc_U : c ∈ U := h_cB_c_sub hc_cB
   have h_ds_diff_U : DifferentiableOn ℂ (dslope f c) U :=
     (Complex.differentiableOn_dslope (hU_open.mem_nhds hc_U)).mpr hf
-  -- Cauchy estimate on ball w (ρ/2)
   have hρ2_pos : 0 < ρ / 2 := by positivity
   have h_cB_w_w0 : Metric.closedBall w (ρ / 2) ⊆ Metric.closedBall w₀ (3 * ρ / 2) := by
     intro z hz
@@ -408,7 +399,7 @@ theorem deriv_dslope_bounded_locally_open {U : Set ℂ} (hU_open : IsOpen U)
   obtain ⟨ρ_c, hρ_c_pos, hρ_c_sub⟩ := Metric.isOpen_iff.mp hU_open c₀ hc₀
   obtain ⟨ρ_w, hρ_w_pos, hρ_w_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
   set ρ := min ρ_c ρ_w / 4
-  have hρ_pos : 0 < ρ := by simp only [ρ]; positivity
+  have hρ_pos : 0 < ρ := by positivity
   have h_cB_w_sub : Metric.closedBall w₀ (3 * ρ / 2) ⊆ U := fun z hz =>
     hρ_w_sub (by
       rw [Metric.mem_closedBall] at hz
@@ -469,7 +460,7 @@ theorem deriv_dslope_bounded_on_compact {U : Set ℂ} (hU : Convex ℝ U) (hU_op
       ‖deriv (dslope f c) w‖ ≤ C := by
   obtain ⟨ρ_w, hρ_w_pos, hρ_w_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
   set ρ := ρ_w / 4
-  have hρ_pos : 0 < ρ := by simp only [ρ]; positivity
+  have hρ_pos : 0 < ρ := by positivity
   have h_cB_w_sub : Metric.closedBall w₀ (3 * ρ / 2) ⊆ U := fun z hz =>
     hρ_w_sub (by
       rw [Metric.mem_closedBall] at hz
@@ -519,7 +510,7 @@ theorem deriv_dslope_bounded_on_compact_open {U : Set ℂ} (hU_open : IsOpen U)
       ‖deriv (dslope f c) w‖ ≤ C := by
   obtain ⟨ρ_w, hρ_w_pos, hρ_w_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
   set ρ := ρ_w / 4
-  have hρ_pos : 0 < ρ := by simp only [ρ]; positivity
+  have hρ_pos : 0 < ρ := by positivity
   have h_cB_w_sub : Metric.closedBall w₀ (3 * ρ / 2) ⊆ U := fun z hz =>
     hρ_w_sub (by
       rw [Metric.mem_closedBall] at hz
@@ -572,7 +563,6 @@ theorem aestronglyMeasurable_deriv_dslope {U : Set ℂ} (hU : Convex ℝ U)
     (μ : Measure ℂ) :
     AEStronglyMeasurable (fun c => deriv (dslope f c) w₀) (μ.restrict U) := by
   obtain ⟨ρ, hρ_pos, hρ_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
-  -- Sequence `h_n = ((ρ/2) / ((n:ℝ)+1) : ℂ)` — always small, nonzero
   set h_seq : ℕ → ℂ := fun n => ((ρ / 2 / ((n : ℝ) + 1) : ℝ) : ℂ)
   have h_seq_real_pos : ∀ n : ℕ, 0 < ρ / 2 / ((n : ℝ) + 1) := fun n => by
     have : (0 : ℝ) < (n : ℝ) + 1 := by positivity
@@ -591,7 +581,6 @@ theorem aestronglyMeasurable_deriv_dslope {U : Set ℂ} (hU : Convex ℝ U)
   have h_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
     rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]
     exact h_seq_norm_lt n
-  -- h_seq tends to 0
   have h_seq_tendsto : Tendsto h_seq atTop (𝓝 0) := by
     have h_real : Tendsto (fun n : ℕ => ρ / 2 / ((n : ℝ) + 1)) atTop (𝓝 0) := by
       have h_inv : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
@@ -600,32 +589,25 @@ theorem aestronglyMeasurable_deriv_dslope {U : Set ℂ} (hU : Convex ℝ U)
       simpa [div_eq_mul_inv] using this
     rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
     exact (Complex.continuous_ofReal.tendsto _).comp h_real
-  -- Approximating sequence
   set q : ℕ → ℂ → ℂ := fun n c => (dslope f c (w₀ + h_seq n) - dslope f c w₀) / h_seq n
-  -- Each q n is continuous on U
   have h_q_aemeas : ∀ n : ℕ, AEStronglyMeasurable (q n) (μ.restrict U) := fun n =>
     (((continuousOn_dslope_first_arg hU hU_open hf (h_in_U n)).sub
       (continuousOn_dslope_first_arg hU hU_open hf hw₀)).div_const _).aestronglyMeasurable
       hU_open.measurableSet
-  -- Pointwise limit: q n c → deriv (dslope f c) w₀ for c ∈ U
   refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
   filter_upwards [ae_restrict_mem hU_open.measurableSet] with c hc
-  -- For c ∈ U, dslope f c is differentiable at w₀
   have h_diff : DifferentiableAt ℂ (dslope f c) w₀ :=
     ((Complex.differentiableOn_dslope (hU_open.mem_nhds hc)).mpr hf w₀ hw₀).differentiableAt
       (hU_open.mem_nhds hw₀)
-  -- Use HasDerivAt.tendsto_slope at w₀, parameterized by y → w₀
   have h_slope_tendsto :
       Tendsto (slope (dslope f c) w₀) (𝓝[≠] w₀) (𝓝 (deriv (dslope f c) w₀)) :=
     h_diff.hasDerivAt.tendsto_slope
-  -- y_n = w₀ + h_seq n → w₀, y_n ≠ w₀
   have hy_tendsto : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝 w₀) := by
     simpa using h_seq_tendsto.const_add w₀
-  have hy_ne : ∀ n, w₀ + h_seq n ≠ w₀ := fun n h => h_seq_ne n (by
-    have := add_left_cancel (a := w₀) (h.trans (add_zero w₀).symm)
-    exact this)
+  have hy_ne : ∀ n, w₀ + h_seq n ≠ w₀ := fun n h =>
+    h_seq_ne n (add_left_cancel (h.trans (add_zero w₀).symm))
   have hy_in_compl : ∀ᶠ n : ℕ in atTop, w₀ + h_seq n ∈ ({w₀}ᶜ : Set ℂ) :=
-    Eventually.of_forall fun n => hy_ne n
+    .of_forall hy_ne
   have hy_within : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝[≠] w₀) :=
     tendsto_nhdsWithin_iff.mpr ⟨hy_tendsto, hy_in_compl⟩
   have h_comp := h_slope_tendsto.comp hy_within

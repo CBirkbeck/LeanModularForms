@@ -31,18 +31,17 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 /-! ### Residue side -/
 
 include hf in
-private lemma fd_point_mem_fdBox
-    (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    {H M : ℝ} (hM_half : (1:ℝ)/2 < M) (hH_lt_M : H < M)
-    (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
+private lemma fd_point_mem_fdBox (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    {H M : ℝ} (hM_half : (1:ℝ)/2 < M) (hH_lt_M : H < M) (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     (p : UpperHalfPlane) (hp_S : p ∈ S) (hp_zero : f p = 0) :
     (↑p : ℂ) ∈ allZerosInFdBox f hf hM_half := by
   rw [mem_allZerosInFdBox_iff]
   have h_fd := hS p hp_S
   refine ⟨⟨?_, ?_, ?_, by linarith [hH_bound p hp_S]⟩, ?_⟩
-  · rw [UpperHalfPlane.coe_re]; linarith [(abs_le.mp h_fd.2).1]
-  · rw [UpperHalfPlane.coe_re]; linarith [(abs_le.mp h_fd.2).2]
+  · rw [UpperHalfPlane.coe_re]
+    linarith [(abs_le.mp h_fd.2).1]
+  · rw [UpperHalfPlane.coe_re]
+    linarith [(abs_le.mp h_fd.2).2]
   · by_contra h_le
     have h_le' : (↑p : ℂ).im ≤ 1/2 := le_of_not_gt h_le
     rw [UpperHalfPlane.coe_im] at h_le'
@@ -54,14 +53,14 @@ private lemma fd_point_mem_fdBox
     nlinarith [(abs_le.mp h_fd.2).1, (abs_le.mp h_fd.2).2, p.im_pos]
   · have h_mfcc_eq : modularFormCompOfComplex f (↑p : ℂ) = f p := by
       simp only [modularFormCompOfComplex, Function.comp_apply]
-      congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
-    rw [h_mfcc_eq]; exact hp_zero
+      congr 1
+      exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
+    rw [h_mfcc_eq]
+    exact hp_zero
 
 omit f hf in
-private lemma exists_height_above_sqrt3_and_S
-    (S : Finset UpperHalfPlane) :
-    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ 1 ≤ H₀ ∧
-      ∀ s ∈ S, (s : ℂ).im < H₀ := by
+private lemma exists_height_above_sqrt3_and_S (S : Finset UpperHalfPlane) :
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ 1 ≤ H₀ ∧ ∀ s ∈ S, (s : ℂ).im < H₀ := by
   rcases S.eq_empty_or_nonempty with rfl | hne
   · exact ⟨1, by nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)],
       le_refl _, fun s hs => absurd hs (Finset.notMem_empty s)⟩
@@ -75,15 +74,13 @@ private lemma exists_height_above_sqrt3_and_S
         (lt_of_lt_of_le (lt_add_one _) (le_max_right _ _))
 
 include hf in
-private lemma cpv_residue_side_simplePoles
-    (S : Finset UpperHalfPlane)
-    {H : ℝ} (_hH_sqrt3 : Real.sqrt 3 / 2 < H)
-    {M : ℝ} (hM_half : (1:ℝ)/2 < M)
+private lemma cpv_residue_side_simplePoles (S : Finset UpperHalfPlane)
+    {H : ℝ} (_hH_sqrt3 : Real.sqrt 3 / 2 < H) {M : ℝ} (hM_half : (1:ℝ)/2 < M)
     (Sbox : Finset ℂ) (hSbox : Sbox = allZerosInFdBox f hf hM_half)
     (S_on : Finset ℂ) (hS_on : S_on = sArcOfS S ∪ sVertOfS S) :
-    ∀ s ∈ Sbox ∪ S_on,
-      HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) s := by
-  intro s hs; rw [Finset.mem_union] at hs
+    ∀ s ∈ Sbox ∪ S_on, HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) s := by
+  intro s hs
+  rw [Finset.mem_union] at hs
   rcases hs with h_box | h_on
   · have h_im : 0 < s.im :=
       fdBox_im_pos ((mem_allZerosInFdBox_iff f hf hM_half).mp
@@ -97,14 +94,11 @@ private lemma cpv_residue_side_simplePoles
     exact hasSimplePoleAt_logDeriv_at_point f hf s h_im
 
 include hf in
-private lemma cpv_residue_side_Fp_diffOn
-    (_S : Finset UpperHalfPlane)
+private lemma cpv_residue_side_Fp_diffOn (_S : Finset UpperHalfPlane)
     {M : ℝ} (hM_half : (1:ℝ)/2 < M)
     (Sbox : Finset ℂ) (hSbox : Sbox = allZerosInFdBox f hf hM_half)
-    (S_on : Finset ℂ)
-    (S0 : Finset ℂ) (hS0 : S0 = Sbox ∪ S_on)
-    (hSimplePoles : ∀ s ∈ S0,
-      HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) s) :
+    (S_on : Finset ℂ) (S0 : Finset ℂ) (hS0 : S0 = Sbox ∪ S_on)
+    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) s) :
     let F := logDeriv (modularFormCompOfComplex f)
     let Fp := logDerivPatched F S0 hSimplePoles
     DifferentiableOn ℂ Fp (fdBox M \ ↑S0) := by
@@ -123,12 +117,9 @@ private lemma cpv_residue_side_Fp_diffOn
     (analyticAt_logDeriv_off_zeros' f z (fdBox_im_pos hz.1)
       hz_not_zero).differentiableAt).differentiableWithinAt
 
-private lemma cpv_residue_side_cpvExists
-    (_S : Finset UpperHalfPlane)
-    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H)
-    (S0 : Finset ℂ)
-    (hSimplePoles : ∀ s ∈ S0,
-      HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) s) :
+private lemma cpv_residue_side_cpvExists (_S : Finset UpperHalfPlane)
+    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H) (S0 : Finset ℂ)
+    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) s) :
     let F := logDeriv (modularFormCompOfComplex f)
     let _γ := fdBoundary_H H
     let Fp := logDerivPatched F S0 hSimplePoles
@@ -150,14 +141,10 @@ private lemma cpv_residue_side_cpvExists
       (by norm_num) h_on_curve
 
 include hf in
-private lemma cpv_residue_side_off_curve_min_dist
-    (S : Finset UpperHalfPlane)
+private lemma cpv_residue_side_off_curve_min_dist (S : Finset UpperHalfPlane)
     (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 →
-        orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H)
-    (hH_ge1 : 1 ≤ H)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H) (hH_ge1 : 1 ≤ H)
     (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     {M : ℝ} (hM_half : (1:ℝ)/2 < M) (_hHM : H < M)
     (Sbox : Finset ℂ) (hSbox : Sbox = allZerosInFdBox f hf hM_half)
@@ -186,14 +173,10 @@ private lemma cpv_residue_side_off_curve_min_dist
     fun t ht => ht₀_min ht⟩
 
 include hf in
-private lemma cpv_residue_side_eventually_eq
-    (S : Finset UpperHalfPlane)
+private lemma cpv_residue_side_eventually_eq (S : Finset UpperHalfPlane)
     (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 →
-        orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H)
-    (hH_ge1 : 1 ≤ H)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H) (hH_ge1 : 1 ≤ H)
     (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     {M : ℝ} (hM_half : (1:ℝ)/2 < M) (hHM : H < M)
     (Sbox : Finset ℂ) (hSbox : Sbox = allZerosInFdBox f hf hM_half)
@@ -215,11 +198,14 @@ private lemma cpv_residue_side_eventually_eq
         f hf S hS hS_complete hH_sqrt3 hH_ge1 hH_bound hM_half hHM
         Sbox hSbox S_on hS_on s hs
       filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
-      intro t ht; exact lt_of_lt_of_le hε.2 (hδ_bound t ht)
+      intro t ht
+      exact lt_of_lt_of_le hε.2 (hδ_bound t ht)
     have h_all : ∀ᶠ ε in 𝓝[>] (0:ℝ),
         ∀ (s : ((Sbox \ S_on : Finset ℂ) : Set ℂ)),
           ∀ t ∈ Icc (0:ℝ) 5, ε < ‖γ t - (s : ℂ)‖ := by
-      rw [Filter.eventually_all]; intro ⟨s, hs⟩; exact this s hs
+      rw [Filter.eventually_all]
+      intro ⟨s, hs⟩
+      exact this s hs
     exact h_all.mono (fun ε hε s hs => hε ⟨s, hs⟩)
   filter_upwards [h_finite_family] with ε hε t ht
   rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)] at ht
@@ -244,14 +230,10 @@ private lemma cpv_residue_side_eventually_eq
   · rfl
 
 include hf in
-private lemma cpv_residue_side_sum_convert
-    (S : Finset UpperHalfPlane)
+private lemma cpv_residue_side_sum_convert (S : Finset UpperHalfPlane)
     (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 →
-        orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H)
-    (hH_ge1 : 1 ≤ H)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
+    {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H) (hH_ge1 : 1 ≤ H)
     (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     (S_on : Finset ℂ) (hS_on : S_on = sArcOfS S ∪ sVertOfS S) :
     let hM_half : (1:ℝ)/2 < H + 1 := by linarith
@@ -268,7 +250,8 @@ private lemma cpv_residue_side_sum_convert
   have h_sarc_zero : ∑ s ∈ S_on \ Sbox,
       generalizedWindingNumber' γ 0 5 s *
         residueSimplePole F s = 0 := by
-    apply Finset.sum_eq_zero; intro s hs
+    apply Finset.sum_eq_zero
+    intro s hs
     have hs_on := (Finset.mem_sdiff.mp hs).1
     have h_nz : modularFormCompOfComplex f s ≠ 0 := by
       intro h_zero
@@ -297,7 +280,8 @@ private lemma cpv_residue_side_sum_convert
       intro p hp h_eq
       have h_mfcc_eq : modularFormCompOfComplex f (↑p : ℂ) = f p := by
         simp only [modularFormCompOfComplex, Function.comp_apply]
-        congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
+        congr 1
+        exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
       exact hs_ni (Finset.mem_image.mpr ⟨p, Finset.mem_filter.mpr ⟨hp, by
         rw [← h_mfcc_eq, h_eq]
         exact ((mem_allZerosInFdBox_iff f hf hM_half).mp hs).2⟩, h_eq⟩)
@@ -316,8 +300,10 @@ private lemma cpv_residue_side_sum_convert
     _ = ∑ p ∈ S_zeros,
           generalizedWindingNumber' γ 0 5 (↑p : ℂ) *
             (orderOfVanishingAt' (⇑f) p : ℂ) := by
-        apply Finset.sum_congr rfl; intro p hp
-        congr 1; exact residueSimplePole_logDeriv_eq_order f hf p
+        apply Finset.sum_congr rfl
+        intro p hp
+        congr 1
+        exact residueSimplePole_logDeriv_eq_order f hf p
           (Finset.mem_filter.mp hp).2
     _ = ∑ p ∈ S,
           generalizedWindingNumber' γ 0 5 (↑p : ℂ) *
@@ -326,12 +312,8 @@ private lemma cpv_residue_side_sum_convert
 
 include hf in
 /-- Residue side: ε-truncated integral of `f'/f` tends to `2πi · Σ gWN · ord`. -/
-theorem cpv_residue_side_tendsto
-    (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete :
-      ∀ p, p ∈ 𝒟 →
-        orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
+theorem cpv_residue_side_tendsto (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
       ∀ {H : ℝ}, H₀ ≤ H →
         Tendsto (fun ε =>
@@ -366,14 +348,16 @@ theorem cpv_residue_side_tendsto
       modularFormCompOfComplex f (γ t) = 0 → γ t ∈ (↑S0 : Set ℂ) := by
     intro t ht h_zero
     rw [Finset.mem_coe, hS0_def, Finset.mem_union]
-    left; rw [hSbox_def, mem_allZerosInFdBox_iff]
+    left
+    rw [hSbox_def, mem_allZerosInFdBox_iff]
     exact ⟨fdBoundary_H_mem_fdBox' hH_ge1 hHM t ht, h_zero⟩
   set γ_imm := fdBoundary_HImmersion H hH_sqrt3 with hγ_imm_def
   have hFp_diff : DifferentiableOn ℂ Fp (fdBox M \ ↑S0) :=
     cpv_residue_side_Fp_diffOn f hf S hM_half Sbox hSbox_def S_on S0
       hS0_def hSimplePoles
   have hS0_in_U : ∀ s ∈ (↑S0 : Set ℂ), s ∈ fdBox M := by
-    intro s hs; rw [Finset.mem_coe, hS0_def, Finset.mem_union] at hs
+    intro s hs
+    rw [Finset.mem_coe, hS0_def, Finset.mem_union] at hs
     rcases hs with h | h
     · exact ((mem_allZerosInFdBox_iff f hf hM_half).mp (hSbox_def ▸ h)).1
     · exact fdBox_of_on_curve S hS hH_sqrt3 hHM hH_ge1 hH_bound s
@@ -394,8 +378,11 @@ theorem cpv_residue_side_tendsto
   have hL_tendsto_F : Tendsto (fun ε =>
       ∫ t in (0:ℝ)..5, cauchyPrincipalValueIntegrandOn S0 F γ ε t)
       (𝓝[>] 0) (𝓝 L) := by
-    apply hL_tendsto.congr'; filter_upwards [self_mem_nhdsWithin]
-    intro ε hε; apply intervalIntegral.integral_congr; intro t _
+    apply hL_tendsto.congr'
+    filter_upwards [self_mem_nhdsWithin]
+    intro ε hε
+    apply intervalIntegral.integral_congr
+    intro t _
     simp only [cauchyPrincipalValueIntegrandOn]
     split_ifs with h
     · rfl
@@ -406,7 +393,8 @@ theorem cpv_residue_side_tendsto
         simp [sub_self] at this
         linarith [mem_Ioi.mp hε]
       change Fp (γ t) * _ = F (γ t) * _
-      congr 1; exact logDerivPatched_eq_raw_off F S0 hSimplePoles h_not
+      congr 1
+      exact logDerivPatched_eq_raw_off F S0 hSimplePoles h_not
   have hL_tendsto_S_on : Tendsto (fun ε =>
       ∫ t in (0:ℝ)..5, cauchyPrincipalValueIntegrandOn S_on F γ ε t)
       (𝓝[>] 0) (𝓝 L) :=
@@ -418,19 +406,24 @@ theorem cpv_residue_side_tendsto
       ∑ s ∈ S, generalizedWindingNumber' γ 0 5 (↑s : ℂ) *
         (orderOfVanishingAt' (⇑f) s : ℂ) := by
     rw [show L = cauchyPrincipalValueOn S0 Fp γ 0 5 from
-      (Filter.Tendsto.limUnder_eq hL_tendsto).symm, h_val]; congr 1
+      (Filter.Tendsto.limUnder_eq hL_tendsto).symm, h_val]
+    congr 1
     have h_res_congr : ∀ s ∈ S0,
         generalizedWindingNumber' γ 0 5 s * residueSimplePole Fp s =
         generalizedWindingNumber' γ 0 5 s * residueSimplePole F s := by
-      intro s hs; congr 1; exact residue_logDerivPatched_eq_raw F S0 hSimplePoles s hs
+      intro s hs
+      congr 1
+      exact residue_logDerivPatched_eq_raw F S0 hSimplePoles s hs
     rw [Finset.sum_congr rfl h_res_congr,
       show S0 = Sbox ∪ (S_on \ Sbox) from by
-      rw [hS0_def]; exact Finset.union_sdiff_self_eq_union.symm]
+      rw [hS0_def]
+      exact Finset.union_sdiff_self_eq_union.symm]
     rw [Finset.sum_union Finset.disjoint_sdiff]
     have h_sarc_zero : ∑ s ∈ S_on \ Sbox,
         generalizedWindingNumber' γ 0 5 s *
           residueSimplePole F s = 0 := by
-      apply Finset.sum_eq_zero; intro s hs
+      apply Finset.sum_eq_zero
+      intro s hs
       have hs_on := (Finset.mem_sdiff.mp hs).1
       have h_nz : modularFormCompOfComplex f s ≠ 0 := by
         intro h_zero
@@ -450,6 +443,8 @@ theorem cpv_residue_side_tendsto
       hH_sqrt3 hH_ge1 hH_bound S_on hS_on_def
   rw [h_sum_convert] at hL_tendsto_S_on
   exact hL_tendsto_S_on.congr (fun ε => by
-    apply intervalIntegral.integral_congr; intro t _; rfl)
+    apply intervalIntegral.integral_congr
+    intro t _
+    rfl)
 
 end

@@ -37,24 +37,28 @@ noncomputable section
 /-- On segment 1 (right vertical, `Re = 1/2`), `γ(t) - i ∈ slitPlane`. -/
 theorem fdBoundaryFun_sub_i_slitPlane_seg1 (H : ℝ) (t : ℝ) (ht : t ≤ 1/5) :
     fdBoundaryFun H t - I ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; left
-  simp only [sub_re, fdBoundaryFun_seg1_re H t ht, I_re]; norm_num
+  rw [Complex.mem_slitPlane_iff]
+  left
+  simp only [sub_re, fdBoundaryFun_seg1_re H t ht, I_re]
+  norm_num
 
 /-- On segment 2 (arc before `i`, angle `< π/2`), `γ(t) - i ∈ slitPlane`. -/
-theorem fdBoundaryFun_sub_i_slitPlane_seg2 (H : ℝ) (t : ℝ)
-    (ht1 : 1/5 < t) (ht2 : t < 2/5) :
+theorem fdBoundaryFun_sub_i_slitPlane_seg2 (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t < 2/5) :
     fdBoundaryFun H t - I ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; left
+  rw [Complex.mem_slitPlane_iff]
+  left
   rw [fdBoundaryFun_arc_eq_exp H t (by linarith) (by linarith),
     exp_mul_I, ← ofReal_cos, ← ofReal_sin]
   simp only [add_re, sub_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
     mul_zero, sub_zero, add_zero, mul_one]
-  exact Real.cos_pos_of_mem_Ioo ⟨by unfold fdArcAngle; nlinarith [Real.pi_pos],
-    by unfold fdArcAngle; nlinarith [Real.pi_pos]⟩
+  refine Real.cos_pos_of_mem_Ioo ⟨?_, ?_⟩
+  · unfold fdArcAngle
+    nlinarith [Real.pi_pos]
+  · unfold fdArcAngle
+    nlinarith [Real.pi_pos]
 
 /-- On segment 3 (arc after `i`), `γ(t) - i ≠ 0` (cos is strictly negative). -/
-theorem fdBoundaryFun_sub_i_ne_zero_seg3 (H : ℝ) (t : ℝ)
-    (ht2 : 2/5 < t) (ht3 : t ≤ 3/5) :
+theorem fdBoundaryFun_sub_i_ne_zero_seg3 (H : ℝ) (t : ℝ) (ht2 : 2/5 < t) (ht3 : t ≤ 3/5) :
     fdBoundaryFun H t - I ≠ 0 := by
   rw [fdBoundaryFun_arc_eq_exp H t (by linarith) ht3,
     exp_mul_I, ← ofReal_cos, ← ofReal_sin]
@@ -63,32 +67,37 @@ theorem fdBoundaryFun_sub_i_ne_zero_seg3 (H : ℝ) (t : ℝ)
   simp only [add_re, sub_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
     mul_zero, sub_zero, add_zero, zero_re, mul_one] at hre
   have hgt : Real.pi / 2 < fdArcAngle t := by
-    unfold fdArcAngle; nlinarith [Real.pi_pos]
+    unfold fdArcAngle
+    nlinarith [Real.pi_pos]
   have hlt : fdArcAngle t < Real.pi + Real.pi / 2 := by
-    unfold fdArcAngle; nlinarith [Real.pi_pos]
+    unfold fdArcAngle
+    nlinarith [Real.pi_pos]
   linarith [Real.cos_neg_of_pi_div_two_lt_of_lt hgt hlt]
 
 /-- On segment 3 (arc after `i`), `-(γ(t) - i) ∈ slitPlane`. -/
-theorem fdBoundaryFun_sub_i_neg_slitPlane_seg3 (H : ℝ) (t : ℝ)
-    (ht2 : 2/5 < t) (ht3 : t ≤ 3/5) :
-    -(fdBoundaryFun H t - I) ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; left
+theorem fdBoundaryFun_sub_i_neg_slitPlane_seg3 (H : ℝ) (t : ℝ) (ht2 : 2/5 < t)
+    (ht3 : t ≤ 3/5) : -(fdBoundaryFun H t - I) ∈ Complex.slitPlane := by
+  rw [Complex.mem_slitPlane_iff]
+  left
   rw [fdBoundaryFun_arc_eq_exp H t (by linarith) ht3,
     exp_mul_I, ← ofReal_cos, ← ofReal_sin]
   simp only [neg_sub, sub_re, I_re, add_re, ofReal_re, mul_re, ofReal_im, I_im,
     mul_zero, sub_zero, add_zero, mul_one]
   have hgt : Real.pi / 2 < fdArcAngle t := by
-    unfold fdArcAngle; nlinarith [Real.pi_pos]
+    unfold fdArcAngle
+    nlinarith [Real.pi_pos]
   have hlt : fdArcAngle t < Real.pi + Real.pi / 2 := by
-    unfold fdArcAngle; nlinarith [Real.pi_pos]
+    unfold fdArcAngle
+    nlinarith [Real.pi_pos]
   linarith [Real.cos_neg_of_pi_div_two_lt_of_lt hgt hlt]
 
 /-- On segment 5 (horizontal at height `H`), `γ(t) - i ∈ slitPlane` when `H > 1`. -/
-theorem fdBoundaryFun_sub_i_slitPlane_seg5 (H : ℝ) (hH : 1 < H)
-    (t : ℝ) (ht : 4/5 < t) :
+theorem fdBoundaryFun_sub_i_slitPlane_seg5 (H : ℝ) (hH : 1 < H) (t : ℝ) (ht : 4/5 < t) :
     fdBoundaryFun H t - I ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
-  simp only [sub_im, fdBoundaryFun_seg5_im H t ht, I_im]; linarith
+  rw [Complex.mem_slitPlane_iff]
+  right
+  simp only [sub_im, fdBoundaryFun_seg5_im H t ht, I_im]
+  linarith
 
 /-! ## Part 2: Arc norm symmetry -/
 
@@ -98,7 +107,8 @@ theorem fdBoundaryFun_sub_i_norm_left (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs 
   rw [fdBoundaryFun_arc_dist_I H (2/5 - δ) (by linarith) (by linarith)]
   congr 1
   rw [show fdArcAngle (2/5 - δ) - Real.pi / 2 = -(5 * δ * Real.pi / 6) from by
-    unfold fdArcAngle; ring]
+    unfold fdArcAngle
+    ring]
   rw [show -(5 * δ * Real.pi / 6) / 2 = -(5 * δ * Real.pi / 12) from by ring,
     Real.sin_neg, abs_neg]
 
@@ -108,7 +118,8 @@ theorem fdBoundaryFun_sub_i_norm_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs
   rw [fdBoundaryFun_arc_dist_I H (2/5 + δ) (by linarith) (by linarith)]
   congr 1
   rw [show fdArcAngle (2/5 + δ) - Real.pi / 2 = 5 * δ * Real.pi / 6 from by
-    unfold fdArcAngle; ring]
+    unfold fdArcAngle
+    ring]
   rw [show 5 * δ * Real.pi / 6 / 2 = 5 * δ * Real.pi / 12 from by ring]
 
 /-- The norms are equal: `‖γ(2/5-δ) - i‖ = ‖γ(2/5+δ) - i‖`. -/
@@ -122,11 +133,11 @@ theorem fdBoundaryFun_sub_i_norm_symm (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs 
 /-- When two nonzero complex numbers have equal norms, their log difference
 equals `↑(arg z - arg w) * I`. -/
 theorem log_sub_eq_of_equal_norm {z w : ℂ} (_hz : z ≠ 0) (_hw : w ≠ 0)
-    (hnorm : ‖z‖ = ‖w‖) :
-    Complex.log z - Complex.log w = ↑(z.arg - w.arg) * I := by
+    (hnorm : ‖z‖ = ‖w‖) : Complex.log z - Complex.log w = ↑(z.arg - w.arg) * I := by
   apply Complex.ext
   · simp only [sub_re, mul_re, ofReal_re, I_re, ofReal_im, I_im, mul_zero,
-      Complex.log_re, hnorm, sub_self]; ring
+      Complex.log_re, hnorm, sub_self]
+    ring
   · simp only [sub_im, mul_im, ofReal_re, I_re, ofReal_im, I_im, mul_zero, add_zero,
       mul_one, Complex.log_im]
 
@@ -143,32 +154,37 @@ theorem fdBoundaryFun_arg_left (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 
   set α := 5 * δ * Real.pi / 12
   have hα_pos : 0 < α := by positivity
   have hα_small : α < Real.pi := by
-    change 5 * δ * Real.pi / 12 < Real.pi; nlinarith [Real.pi_pos]
+    change 5 * δ * Real.pi / 12 < Real.pi
+    nlinarith [Real.pi_pos]
   have h_sinα_pos : 0 < Real.sin α := Real.sin_pos_of_pos_of_lt_pi hα_pos hα_small
   have h_cosθ : Real.cos (fdArcAngle (2/5 - δ)) = Real.sin (5 * δ * Real.pi / 6) := by
     rw [show fdArcAngle (2/5 - δ) = Real.pi / 2 - 5 * δ * Real.pi / 6 from by
-      unfold fdArcAngle; ring]
+      unfold fdArcAngle
+      ring]
     exact Real.cos_pi_div_two_sub _
   have h_sinθ : Real.sin (fdArcAngle (2/5 - δ)) = Real.cos (5 * δ * Real.pi / 6) := by
     rw [show fdArcAngle (2/5 - δ) = Real.pi / 2 - 5 * δ * Real.pi / 6 from by
-      unfold fdArcAngle; ring]
+      unfold fdArcAngle
+      ring]
     exact Real.sin_pi_div_two_sub _
   have h2α : (5 * δ * Real.pi / 6 : ℝ) = 2 * α := by ring
-  have h_sin_double : Real.sin (5 * δ * Real.pi / 6) =
-      2 * Real.sin α * Real.cos α := by rw [h2α, Real.sin_two_mul]
-  have h_cos_double : Real.cos (5 * δ * Real.pi / 6) - 1 =
-      -(2 * Real.sin α ^ 2) := by
-    rw [h2α, Real.cos_two_mul]; nlinarith [Real.sin_sq_add_cos_sq α]
+  have h_sin_double : Real.sin (5 * δ * Real.pi / 6) = 2 * Real.sin α * Real.cos α := by
+    rw [h2α, Real.sin_two_mul]
+  have h_cos_double : Real.cos (5 * δ * Real.pi / 6) - 1 = -(2 * Real.sin α ^ 2) := by
+    rw [h2α, Real.cos_two_mul]
+    nlinarith [Real.sin_sq_add_cos_sq α]
   have h_eq : ↑(Real.cos (fdArcAngle (2/5 - δ))) +
       ↑(Real.sin (fdArcAngle (2/5 - δ))) * I - I =
       ↑(2 * Real.sin α) * (↑(Real.cos α) + ↑(-(Real.sin α)) * I) := by
     apply Complex.ext
     · simp only [add_re, sub_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
         mul_zero, sub_zero, add_zero, mul_one]
-      rw [h_cosθ]; linarith [h_sin_double]
+      rw [h_cosθ]
+      linarith [h_sin_double]
     · simp only [add_im, sub_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
         mul_zero, add_zero, mul_one, zero_add]
-      rw [h_sinθ]; nlinarith [h_cos_double]
+      rw [h_sinθ]
+      nlinarith [h_cos_double]
   rw [h_eq]
   have h_trig : (↑(Real.cos α) : ℂ) + ↑(-(Real.sin α)) * I =
       Complex.cos ↑(-α) + Complex.sin ↑(-α) * I := by
@@ -188,32 +204,39 @@ theorem fdBoundaryFun_arg_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ <
   set α := 5 * δ * Real.pi / 12
   have hα_pos : 0 < α := by positivity
   have hα_small : α < Real.pi := by
-    change 5 * δ * Real.pi / 12 < Real.pi; nlinarith [Real.pi_pos]
+    change 5 * δ * Real.pi / 12 < Real.pi
+    nlinarith [Real.pi_pos]
   have h_sinα_pos : 0 < Real.sin α := Real.sin_pos_of_pos_of_lt_pi hα_pos hα_small
   have h_cosθ : Real.cos (fdArcAngle (2/5 + δ)) = -(Real.sin (5 * δ * Real.pi / 6)) := by
     rw [show fdArcAngle (2/5 + δ) = Real.pi / 2 + 5 * δ * Real.pi / 6 from by
-      unfold fdArcAngle; ring, Real.cos_add, Real.cos_pi_div_two, Real.sin_pi_div_two]
+        unfold fdArcAngle
+        ring,
+      Real.cos_add, Real.cos_pi_div_two, Real.sin_pi_div_two]
     ring
   have h_sinθ : Real.sin (fdArcAngle (2/5 + δ)) = Real.cos (5 * δ * Real.pi / 6) := by
     rw [show fdArcAngle (2/5 + δ) = Real.pi / 2 + 5 * δ * Real.pi / 6 from by
-      unfold fdArcAngle; ring, Real.sin_add, Real.sin_pi_div_two, Real.cos_pi_div_two]
+        unfold fdArcAngle
+        ring,
+      Real.sin_add, Real.sin_pi_div_two, Real.cos_pi_div_two]
     ring
   have h2α : (5 * δ * Real.pi / 6 : ℝ) = 2 * α := by ring
-  have h_sin_double : Real.sin (5 * δ * Real.pi / 6) =
-      2 * Real.sin α * Real.cos α := by rw [h2α, Real.sin_two_mul]
-  have h_cos_double : Real.cos (5 * δ * Real.pi / 6) - 1 =
-      -(2 * Real.sin α ^ 2) := by
-    rw [h2α, Real.cos_two_mul]; nlinarith [Real.sin_sq_add_cos_sq α]
+  have h_sin_double : Real.sin (5 * δ * Real.pi / 6) = 2 * Real.sin α * Real.cos α := by
+    rw [h2α, Real.sin_two_mul]
+  have h_cos_double : Real.cos (5 * δ * Real.pi / 6) - 1 = -(2 * Real.sin α ^ 2) := by
+    rw [h2α, Real.cos_two_mul]
+    nlinarith [Real.sin_sq_add_cos_sq α]
   have h_eq : ↑(Real.cos (fdArcAngle (2/5 + δ))) +
       ↑(Real.sin (fdArcAngle (2/5 + δ))) * I - I =
       -(↑(2 * Real.sin α) * (↑(Real.cos α) + ↑(Real.sin α) * I)) := by
     apply Complex.ext
     · simp only [add_re, sub_re, neg_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
         mul_zero, sub_zero, add_zero, mul_one]
-      rw [h_cosθ]; linarith [h_sin_double]
+      rw [h_cosθ]
+      linarith [h_sin_double]
     · simp only [add_im, sub_im, neg_im, ofReal_im, mul_im, ofReal_re, I_re, I_im,
         mul_zero, add_zero, mul_one, zero_add]
-      rw [h_sinθ]; nlinarith [h_cos_double]
+      rw [h_sinθ]
+      nlinarith [h_cos_double]
   rw [h_eq]
   have h_trig : (↑(Real.cos α) : ℂ) + ↑(Real.sin α) * I =
       Complex.cos ↑α + Complex.sin ↑α * I := by
@@ -221,8 +244,7 @@ theorem fdBoundaryFun_arg_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ <
   rw [h_trig]
   have hw_arg := Complex.arg_mul_cos_add_sin_mul_I (show (0:ℝ) < 2 * Real.sin α by positivity)
     (show α ∈ Ioc (-Real.pi) Real.pi from ⟨by nlinarith [Real.pi_pos], by linarith⟩)
-  have hrw_im_pos : 0 < (↑(2 * Real.sin α) *
-      (Complex.cos ↑α + Complex.sin ↑α * I)).im := by
+  have hrw_im_pos : 0 < (↑(2 * Real.sin α) * (Complex.cos ↑α + Complex.sin ↑α * I)).im := by
     rw [mul_im, ofReal_re, ofReal_im, ← Complex.ofReal_cos, ← Complex.ofReal_sin]
     simp only [ofReal_re, ofReal_im, add_re, mul_re, I_re, I_im, mul_zero, sub_zero,
       add_im, mul_im, zero_mul, add_zero, mul_one]
@@ -233,7 +255,8 @@ theorem fdBoundaryFun_arg_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ <
 theorem fdBoundaryFun_arg_diff (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 1/5) :
     (fdBoundaryFun H (2/5 - δ) - I).arg -
     (fdBoundaryFun H (2/5 + δ) - I).arg = Real.pi - 5 * δ * Real.pi / 6 := by
-  rw [fdBoundaryFun_arg_left H hδ hδs, fdBoundaryFun_arg_right H hδ hδs]; ring
+  rw [fdBoundaryFun_arg_left H hδ hδs, fdBoundaryFun_arg_right H hδ hδs]
+  ring
 
 /-! ## Part 5: The limit -/
 
@@ -249,18 +272,24 @@ theorem fdBoundaryFun_log_diff_core_tendsto (H : ℝ) :
       ↑(Real.pi - 5 * δ * Real.pi / 6) * I := by
     rw [eventually_nhdsWithin_iff]
     filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1/5 from by norm_num)] with δ hδ hδ_pos
-    rw [mem_Ioi] at hδ_pos; rw [mem_Iio] at hδ
+    rw [mem_Ioi] at hδ_pos
+    rw [mem_Iio] at hδ
     rw [log_sub_eq_of_equal_norm
       (sub_ne_zero.mpr (by
         rw [fdBoundaryFun_arc_eq_exp H _ (by linarith) (by linarith),
           exp_mul_I, ← ofReal_cos, ← ofReal_sin]
-        intro heq; have := congr_arg Complex.re heq
+        intro heq
+        have := congr_arg Complex.re heq
         simp only [add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
           mul_zero] at this
         linarith [Real.cos_pos_of_mem_Ioo
           (show fdArcAngle (2/5 - δ) ∈ Ioo (-(Real.pi / 2)) (Real.pi / 2) from
-            ⟨by unfold fdArcAngle; nlinarith [Real.pi_pos],
-             by unfold fdArcAngle; nlinarith [Real.pi_pos]⟩)]))
+            ⟨by
+              unfold fdArcAngle
+              nlinarith [Real.pi_pos],
+             by
+              unfold fdArcAngle
+              nlinarith [Real.pi_pos]⟩)]))
       (fdBoundaryFun_sub_i_ne_zero_seg3 H _ (by linarith) (by linarith))
       (fdBoundaryFun_sub_i_norm_symm H hδ_pos hδ),
       fdBoundaryFun_arg_diff H hδ_pos hδ]

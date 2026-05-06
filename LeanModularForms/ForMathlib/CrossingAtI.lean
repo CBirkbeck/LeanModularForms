@@ -36,8 +36,7 @@ def arcsinDelta (ε : ℝ) : ℝ := 12 / (5 * Real.pi) * Real.arcsin (ε / 2)
 
 theorem arcsinDelta_pos {ε : ℝ} (hε : 0 < ε) : 0 < arcsinDelta ε := by
   unfold arcsinDelta
-  exact mul_pos (div_pos (by positivity) (by positivity))
-    (Real.arcsin_pos.mpr (by linarith))
+  exact mul_pos (by positivity) (Real.arcsin_pos.mpr (by linarith))
 
 /-- `5π/12 · arcsinDelta(ε) = arcsin(ε/2)`. -/
 theorem half_angle_arcsinDelta (ε : ℝ) :
@@ -97,20 +96,17 @@ theorem arc_near_at_I_arcsin (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 
     ‖fdBoundaryFun H t - I‖ ≤ ε := by
   have hpi := Real.pi_pos
   have hδ_small := arcsinDelta_lt_one_fifth hε hε_lt
-  -- t is on the arc: 1/5 < t ≤ 3/5
   have ht1 : (1 : ℝ)/5 < t := by
     have := (abs_le.mp ht).1; have := arcsinDelta_pos hε; nlinarith
   have ht2 : t ≤ 3/5 := by
     have := (abs_le.mp ht).2; nlinarith
   rw [fdBoundaryFun_arc_dist_I H t ht1 ht2, halfAngle_eq]
   set α := 5 * (t - 2/5) * Real.pi / 12
-  -- |α| ≤ arcsin(ε/2) ≤ π/2 ≤ π
   have hα_le_asin : |α| ≤ Real.arcsin (ε / 2) := by
     rw [abs_halfAngle_eq, ← half_angle_arcsinDelta]
     exact mul_le_mul_of_nonneg_left ht (by positivity)
   have harc_le : Real.arcsin (ε / 2) ≤ Real.pi / 2 := Real.arcsin_le_pi_div_two _
   have hα_le_pi : |α| ≤ Real.pi := by linarith
-  -- |sin α| = sin |α| ≤ sin(arcsin(ε/2)) = ε/2
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
   have h_sin_le : Real.sin |α| ≤ ε / 2 := by
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
@@ -125,21 +121,18 @@ theorem arc_far_at_I_arcsin (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1
     {t : ℝ} (ht_arc : t ∈ Icc (1/5 : ℝ) (3/5)) (hδt : arcsinDelta ε < |t - 2/5|) :
     ε < ‖fdBoundaryFun H t - I‖ := by
   have hpi := Real.pi_pos
-  -- Handle t = 1/5 separately (boundary of arc, use seg1 bound)
   rcases eq_or_lt_of_le ht_arc.1 with rfl | ht1
   · calc ε < 1/3 := hε_lt
       _ < 1/2 := by norm_num
       _ ≤ ‖fdBoundaryFun H (1/5) - I‖ := fdBoundaryFun_seg1_dist_I_lower H (1/5) le_rfl
   rw [fdBoundaryFun_arc_dist_I H t ht1 ht_arc.2, halfAngle_eq]
   set α := 5 * (t - 2/5) * Real.pi / 12
-  -- arcsin(ε/2) < |α| ≤ π/12 ≤ π
   have hα_gt_asin : Real.arcsin (ε / 2) < |α| := by
     rw [abs_halfAngle_eq, ← half_angle_arcsinDelta]
     exact mul_lt_mul_of_pos_left hδt (by positivity)
   have hα_le_pi12 := abs_halfAngle_le_pi12 ht_arc
   have hα_le_pi : |α| ≤ Real.pi := by linarith
   have harc_nn : 0 ≤ Real.arcsin (ε / 2) := Real.arcsin_nonneg.mpr (by linarith)
-  -- |sin α| = sin |α| > sin(arcsin(ε/2)) = ε/2
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
   have h_sin_gt : ε / 2 < Real.sin |α| := by
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
@@ -176,8 +169,7 @@ theorem windingNumber_atI_of_ftcHyp {H : ℝ} (hH : 1 < H)
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
     (ftcHyp : ArcFTCHyp γ I (2/5) arcsinDelta (min (1/3) (H - 1))
       (-(↑Real.pi * I))) :
-    generalizedWindingNumber γ I = -1 / 2 := by
-  exact (singleCrossingData_atI_of_ftcHyp hH γ hγ ftcHyp).windingNumber_neg_half
-    (show (singleCrossingData_atI_of_ftcHyp hH γ hγ ftcHyp).L = -(↑Real.pi * I) from rfl)
+    generalizedWindingNumber γ I = -1 / 2 :=
+  (singleCrossingData_atI_of_ftcHyp hH γ hγ ftcHyp).windingNumber_neg_half rfl
 
 end

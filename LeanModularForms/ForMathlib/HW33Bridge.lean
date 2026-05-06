@@ -157,13 +157,19 @@ theorem cpvIntegrandOn_singleton_integral_eq_excision
     have h01 : Set.uIcc (0 : ℝ) 1 = Set.Icc 0 1 := Set.uIcc_of_le (zero_le_one' ℝ)
     have h_int_α : IntervalIntegrable
         (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 α :=
-      h_int_full.mono_set (by rw [Set.uIcc_of_le hα, h01]; exact Set.Icc_subset_Icc le_rfl hα1)
+      h_int_full.mono_set <| by
+        rw [Set.uIcc_of_le hα, h01]
+        exact Set.Icc_subset_Icc le_rfl hα1
     have h_int_β : IntervalIntegrable
         (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume α β :=
-      h_int_full.mono_set (by rw [Set.uIcc_of_le h_le, h01]; exact Set.Icc_subset_Icc hα hβ)
+      h_int_full.mono_set <| by
+        rw [Set.uIcc_of_le h_le, h01]
+        exact Set.Icc_subset_Icc hα hβ
     have h_int_1 : IntervalIntegrable
         (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 :=
-      h_int_full.mono_set (by rw [Set.uIcc_of_le hβ, h01]; exact Set.Icc_subset_Icc h0β le_rfl)
+      h_int_full.mono_set <| by
+        rw [Set.uIcc_of_le hβ, h01]
+        exact Set.Icc_subset_Icc h0β le_rfl
     rw [← intervalIntegral.integral_add_adjacent_intervals (h_int_α.trans h_int_β) h_int_1,
         ← intervalIntegral.integral_add_adjacent_intervals h_int_α h_int_β]
   rw [h_split,

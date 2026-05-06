@@ -117,7 +117,7 @@ theorem ftc_telescope_transfer {g h : ℝ → ℂ} {a b : ℝ}
   have h_int : IntervalIntegrable (fun t => deriv g t / g t) volume a b :=
     ftc_telescope_integrability hint_h h_ae
   refine ⟨h_int, ?_⟩
-  rw [intervalIntegral.integral_congr_ae (h_ae.mono (fun t ht hm => ht hm)),
+  rw [intervalIntegral.integral_congr_ae (h_ae.mono (fun _ => id)),
       h_ftc, h_ga, h_gb]
 
 /-! ### Piecewise FTC with local comparison functions -/
@@ -140,10 +140,10 @@ theorem ftc_telescope_piecewise_two {g h₁ h₂ : ℝ → ℂ} {a p b : ℝ}
   have hint_g₁ := ftc_telescope_integrability hint₁ h_ae₁
   have hint_g₂ := ftc_telescope_integrability hint₂ h_ae₂
   have h_eq₁ : ∫ t in a..p, deriv g t / g t = Complex.log (g p) - Complex.log (g a) := by
-    rw [intervalIntegral.integral_congr_ae (h_ae₁.mono (fun t ht hm => ht hm)),
+    rw [intervalIntegral.integral_congr_ae (h_ae₁.mono (fun _ => id)),
         h_ftc₁, h_ga, h_gp_left]
   have h_eq₂ : ∫ t in p..b, deriv g t / g t = Complex.log (g b) - Complex.log (g p) := by
-    rw [intervalIntegral.integral_congr_ae (h_ae₂.mono (fun t ht hm => ht hm)),
+    rw [intervalIntegral.integral_congr_ae (h_ae₂.mono (fun _ => id)),
         h_ftc₂, h_gp_right, h_gb]
   exact ⟨hint_g₁.trans hint_g₂, ftc_telescope_two hint_g₁ hint_g₂ h_eq₁ h_eq₂⟩
 
@@ -166,13 +166,13 @@ theorem ftc_telescope_piecewise_three {g h₁ h₂ h₃ : ℝ → ℂ} {a p q b 
   have hint_g₂ := ftc_telescope_integrability hint₂ h_ae₂
   have hint_g₃ := ftc_telescope_integrability hint₃ h_ae₃
   have h_eq₁ : ∫ t in a..p, deriv g t / g t = Complex.log (g p) - Complex.log (g a) := by
-    rw [intervalIntegral.integral_congr_ae (h_ae₁.mono (fun t ht hm => ht hm)),
+    rw [intervalIntegral.integral_congr_ae (h_ae₁.mono (fun _ => id)),
         h_ftc₁, h_ga, h_gp]
   have h_eq₂ : ∫ t in p..q, deriv g t / g t = Complex.log (g q) - Complex.log (g p) := by
-    rw [intervalIntegral.integral_congr_ae (h_ae₂.mono (fun t ht hm => ht hm)),
+    rw [intervalIntegral.integral_congr_ae (h_ae₂.mono (fun _ => id)),
         h_ftc₂, h_gp', h_gq]
   have h_eq₃ : ∫ t in q..b, deriv g t / g t = Complex.log (g b) - Complex.log (g q) := by
-    rw [intervalIntegral.integral_congr_ae (h_ae₃.mono (fun t ht hm => ht hm)),
+    rw [intervalIntegral.integral_congr_ae (h_ae₃.mono (fun _ => id)),
         h_ftc₃, h_gq', h_gb]
   exact ⟨(hint_g₁.trans hint_g₂).trans hint_g₃,
          ftc_telescope_three hint_g₁ hint_g₂ hint_g₃ h_eq₁ h_eq₂ h_eq₃⟩
@@ -210,8 +210,8 @@ theorem integral_logDeriv_eq_log_sub {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ 
     (hf_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ f t)
     (hf_deriv_cont : ContinuousOn (deriv f) (Icc a b))
     (hf_slit : ∀ t ∈ Icc a b, f t ∈ Complex.slitPlane) :
-    ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a) := by
-  exact intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab
+    ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a) :=
+  intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab
     (ContinuousOn.clog hf_cont hf_slit)
     (fun t ht => (hf_diff t ht).hasDerivAt.clog_real (hf_slit t (Ioo_subset_Icc_self ht)))
     (intervalIntegrable_logDeriv_of_slitPlane hab hf_cont hf_deriv_cont hf_slit)
@@ -245,7 +245,7 @@ theorem ftc_log_neg_on_segment {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
   have hf_ne : ∀ t ∈ Icc a b, f t ≠ 0 := fun t ht =>
     neg_ne_zero.mp (Complex.slitPlane_ne_zero (hf_slit t ht))
   have hF_cont : ContinuousOn (fun t => Complex.log (-(f t))) (Icc a b) :=
-    hf_cont.neg.clog (fun t ht => hf_slit t ht)
+    hf_cont.neg.clog hf_slit
   have hF_deriv : ∀ x ∈ Ioo a b, HasDerivAt (fun t => Complex.log (-(f t)))
       (deriv f x / f x) x := by
     intro x hx
@@ -292,7 +292,9 @@ theorem ftc_log_pieceFM {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
     (hh_div_cont.mono (uIcc_of_le hab ▸ Subset.rfl)).intervalIntegrable
   -- The set {b} has measure zero, so g and h agree a.e. on Ι a b
   have hb_ae : ({b} : Set ℝ)ᶜ ∈ ae volume :=
-    mem_ae_iff.mpr (by rw [compl_compl]; exact measure_singleton b)
+    mem_ae_iff.mpr (by
+      rw [compl_compl]
+      exact measure_singleton b)
   have h_congr : ∀ᵐ t ∂volume, t ∈ Ι a b → deriv g t / g t = deriv h t / h t := by
     filter_upwards [hb_ae] with t ht_ne_b ht_mem
     have ht_ne : t ≠ b := fun h => ht_ne_b (mem_singleton_iff.mpr h)

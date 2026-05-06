@@ -47,8 +47,6 @@ Reference: Hungerbuhler-Wasem, arXiv:1808.00997v2, Lemma 3.1.
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
 
-attribute [local instance] Classical.propDecidable
-
 noncomputable section
 
 /-! ### Definition of the sector curve -/
@@ -94,7 +92,10 @@ theorem sectorCurve_two (r : ℝ) (α : ℝ) :
     sectorCurve r α 2 = ↑r * exp (I * ↑α) := by
   simp only [sectorCurve, show ¬(2 : ℝ) ≤ 1 from by norm_num,
     show (2 : ℝ) ≤ 2 from le_refl 2, ↓reduceIte]
-  congr 1; congr 1; push_cast; ring
+  congr 1
+  congr 1
+  push_cast
+  ring
 
 /-- Segment 1: for t in [0,1], the sector curve is `t * r`. -/
 theorem sectorCurve_seg1 (r : ℝ) (α : ℝ) (t : ℝ) (ht : t ∈ Icc 0 1) :
@@ -112,10 +113,10 @@ theorem sectorCurve_seg2 (r : ℝ) (α : ℝ) (t : ℝ) (ht : t ∈ Icc 1 2) :
 theorem sectorCurve_seg3 (r : ℝ) (α : ℝ) (t : ℝ) (ht : t ∈ Icc 2 3) :
     sectorCurve r α t = ↑((3 - t) * r) * exp (I * ↑α) := by
   rcases eq_or_lt_of_le ht.1 with rfl | h2
-  · -- t = 2: second branch applies (2 ≤ 2), result matches by computation
-    simp only [sectorCurve, show ¬(2 : ℝ) ≤ 1 from by norm_num,
+  · simp only [sectorCurve, show ¬(2 : ℝ) ≤ 1 from by norm_num,
       show (2 : ℝ) ≤ 2 from le_refl 2, ↓reduceIte]
-    push_cast; ring_nf
+    push_cast
+    ring_nf
   · simp only [sectorCurve, if_neg (not_le.mpr (lt_trans one_lt_two h2)),
       if_neg (not_le.mpr h2)]
 
@@ -123,14 +124,22 @@ theorem sectorCurve_seg3 (r : ℝ) (α : ℝ) (t : ℝ) (ht : t ∈ Icc 2 3) :
 theorem sectorCurve_continuousOn (r : ℝ) (α : ℝ) :
     ContinuousOn (sectorCurve r α) (Icc 0 3) := by
   have h_union : Icc (0 : ℝ) 3 = Icc 0 1 ∪ Icc 1 2 ∪ Icc 2 3 := by
-    ext x; simp only [mem_Icc, mem_union]; constructor
+    ext x
+    simp only [mem_Icc, mem_union]
+    constructor
     · intro ⟨h0, h3⟩
       by_cases h1 : x ≤ 1
-      · left; left; exact ⟨h0, h1⟩
+      · left
+        left
+        exact ⟨h0, h1⟩
       · push Not at h1
         by_cases h2 : x ≤ 2
-        · left; right; exact ⟨le_of_lt h1, h2⟩
-        · push Not at h2; right; exact ⟨le_of_lt h2, h3⟩
+        · left
+          right
+          exact ⟨le_of_lt h1, h2⟩
+        · push Not at h2
+          right
+          exact ⟨le_of_lt h2, h3⟩
     · rintro ((⟨h0, h1⟩ | ⟨h1, h2⟩) | ⟨h2, h3⟩)
       · exact ⟨h0, le_trans h1 (by norm_num)⟩
       · exact ⟨le_trans (by norm_num) h1, le_trans h2 (by norm_num)⟩
@@ -207,8 +216,10 @@ theorem deriv_sectorCurve_seg2 (r : ℝ) (α : ℝ) (t : ℝ) (ht : t ∈ Ioo 1 
   have h_full : HasDerivAt (fun s => ↑r * exp (I * ↑((s - 1) * α)))
       (↑r * (I * ↑α * exp (I * ↑((t - 1) * α)))) t := by
     have := (hasDerivAt_const t (↑r : ℂ)).mul h_exp
-    convert this using 1; ring
-  rw [h_full.deriv]; ring
+    convert this using 1
+    ring
+  rw [h_full.deriv]
+  ring
 
 /-- Derivative on segment 3 (t in (2,3)):
   `deriv (sectorCurve r alpha) t = -r * exp(I * alpha)`. -/
@@ -224,12 +235,15 @@ theorem deriv_sectorCurve_seg3 (r : ℝ) (α : ℝ) (t : ℝ) (ht : t ∈ Ioo 2 
   have h_inner : HasDerivAt (fun s => (↑((3 - s) * r) : ℂ)) (↑(-r)) t := by
     have h1 : HasDerivAt (fun s => (3 - s) * r) (-r) t := by
       have := ((hasDerivAt_const t 3).sub (hasDerivAt_id t)).mul_const r
-      convert this using 1; ring
+      convert this using 1
+      ring
     exact h1.ofReal_comp
   have h_full : HasDerivAt (fun s => ↑((3 - s) * r) * exp (I * ↑α))
       (↑(-r) * exp (I * ↑α)) t :=
     h_inner.mul_const _
-  rw [h_full.deriv]; push_cast; ring
+  rw [h_full.deriv]
+  push_cast
+  ring
 
 /-! ### PV integrand analysis -/
 
@@ -241,7 +255,8 @@ theorem pv_integrand_seg1 (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) (ht : t �
       deriv_sectorCurve_seg1 r α t ht]
   have ht_ne : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt ht.1)
   have hr_ne : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr)
-  push_cast; field_simp
+  push_cast
+  field_simp
 
 /-- The integrand on segment 2 (t in (1,2)) simplifies to `I * alpha`. -/
 theorem pv_integrand_seg2 (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) (ht : t ∈ Ioo 1 2) :
@@ -261,7 +276,8 @@ theorem pv_integrand_seg3 (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) (ht : t �
   have h_exp_ne : exp (I * ↑α) ≠ 0 := Complex.exp_ne_zero _
   have h3t_ne : (3 - t : ℝ) ≠ 0 := by linarith [ht.2]
   have h3t_ne' : (↑(3 - t) : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr h3t_ne
-  push_cast; field_simp
+  push_cast
+  field_simp
 
 /-! ### PV computation: Lemma 3.1 -/
 
@@ -310,7 +326,9 @@ theorem log_cancellation (r : ℝ) (hr : 0 < r) (ε : ℝ) (hε : 0 < ε) (hεr 
     have h_sub : ∫ t in (2 : ℝ)..(3 - ε / r), (3 - t)⁻¹ = ∫ u in (ε / r)..1, u⁻¹ := by
       have := intervalIntegral.integral_comp_sub_left (fun u => u⁻¹) (3 : ℝ)
         (a := (2 : ℝ)) (b := 3 - ε / r)
-      simp only at this; rw [this]; congr 1 <;> ring
+      simp only at this
+      rw [this]
+      congr 1 <;> ring
     rw [h_sub, integral_inv_of_pos hεr_pos one_pos, Real.log_div one_ne_zero
       (ne_of_gt hεr_pos), Real.log_one, zero_sub, neg_neg]
   have h1c : ∫ t in (ε / r)..(1 : ℝ), (↑(t⁻¹) : ℂ) = ↑(-(Real.log (ε / r))) := by
@@ -318,7 +336,9 @@ theorem log_cancellation (r : ℝ) (hr : 0 < r) (ε : ℝ) (hε : 0 < ε) (hεr 
   have h2c : ∫ t in (2 : ℝ)..(3 - ε / r), (-(↑((3 - t)⁻¹)) : ℂ) =
       ↑(Real.log (ε / r)) := by
     have : ∀ t : ℝ, (-(↑((3 - t)⁻¹) : ℂ)) = (↑((-((3 - t)⁻¹)) : ℝ)) := by
-      intro t; push_cast; ring
+      intro t
+      push_cast
+      ring
     simp_rw [this, intervalIntegral.integral_ofReal, h2]
   rw [h1c, h2c, ← Complex.ofReal_add, neg_add_cancel, Complex.ofReal_zero]
 
@@ -333,11 +353,15 @@ private theorem pv_cutoff_F_integrable_0_delta (r : ℝ) (hr : 0 < r) (α : ℝ)
   have hδ : 0 < δ := div_pos hε hr
   have hδ1 : δ < 1 := by rwa [div_lt_one hr]
   apply (intervalIntegrable_const (c := (0 : ℂ))).congr
-  intro t ht; rw [Set.uIoc_of_le hδ.le] at ht
-  dsimp only [F]; simp only [sub_zero]; rw [if_neg (not_lt.mpr _)]
+  intro t ht
+  rw [Set.uIoc_of_le hδ.le] at ht
+  dsimp only [F]
+  simp only [sub_zero]
+  rw [if_neg (not_lt.mpr _)]
   rw [sectorCurve_norm_seg1 r hr α t ⟨le_of_lt ht.1, le_trans ht.2 (le_of_lt hδ1)⟩]
-  exact le_trans (mul_le_mul_of_nonneg_right ht.2 hr.le)
-    (le_of_eq (by rw [hδ_def]; field_simp))
+  refine le_trans (mul_le_mul_of_nonneg_right ht.2 hr.le) (le_of_eq ?_)
+  rw [hδ_def]
+  field_simp
 
 private theorem pv_cutoff_F_integrable_3delta_3 (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
     (hε : 0 < ε) (hεr : ε < r) :
@@ -350,12 +374,18 @@ private theorem pv_cutoff_F_integrable_3delta_3 (r : ℝ) (hr : 0 < r) (α : ℝ
   have hδ : 0 < δ := div_pos hε hr
   have hδ1 : δ < 1 := by rwa [div_lt_one hr]
   apply (intervalIntegrable_const (c := (0 : ℂ))).congr
-  intro t ht; rw [Set.uIoc_of_le (by linarith : 3 - δ ≤ 3)] at ht
-  dsimp only [F]; simp only [sub_zero]; rw [if_neg (not_lt.mpr _)]
+  intro t ht
+  rw [Set.uIoc_of_le (by linarith : 3 - δ ≤ 3)] at ht
+  dsimp only [F]
+  simp only [sub_zero]
+  rw [if_neg (not_lt.mpr _)]
   have h2 : 2 ≤ t := by linarith [ht.1]
   rw [sectorCurve_norm_seg3' r hr α t ⟨h2, ht.2⟩]
   have : (3 - t) * r ≤ δ * r := mul_le_mul_of_nonneg_right (by linarith [ht.1]) hr.le
-  linarith [show δ * r = ε from by rw [hδ_def]; field_simp]
+  have hδr : δ * r = ε := by
+    rw [hδ_def]
+    field_simp
+  linarith [hδr]
 
 private theorem pv_cutoff_F_integrable_delta_1 (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
     (hε : 0 < ε) (hεr : ε < r) :
@@ -368,24 +398,31 @@ private theorem pv_cutoff_F_integrable_delta_1 (r : ℝ) (hr : 0 < r) (α : ℝ)
   have hδ : 0 < δ := div_pos hε hr
   have hδ1 : δ < 1 := by rwa [div_lt_one hr]
   have hcont : ContinuousOn (fun t : ℝ => (↑(t⁻¹) : ℂ)) (Set.uIcc δ 1) := by
-    intro t ht; rw [Set.uIcc_of_le hδ1.le] at ht
+    intro t ht
+    rw [Set.uIcc_of_le hδ1.le] at ht
     have ht_pos : 0 < t := lt_of_lt_of_le hδ ht.1
     exact (Complex.continuous_ofReal.continuousAt.comp
       (continuousAt_inv₀ (ne_of_gt ht_pos))).continuousWithinAt
   rw [intervalIntegrable_iff, Set.uIoc_of_le hδ1.le]
   have h_eq : ∀ t ∈ Ioo δ (1 : ℝ), F t = (↑(t⁻¹) : ℂ) := fun t ⟨htδ, ht1⟩ => by
-    dsimp only [F]; simp only [sub_zero]; rw [if_pos]
+    dsimp only [F]
+    simp only [sub_zero]
+    rw [if_pos]
     · exact pv_integrand_seg1 r hr α t ⟨lt_trans hδ htδ, ht1⟩
     · rw [sectorCurve_norm_seg1 r hr α t ⟨le_of_lt (lt_trans hδ htδ), le_of_lt ht1⟩]
-      calc ε = δ * r := by rw [hδ_def]; field_simp
+      calc ε = δ * r := by
+            rw [hδ_def]
+            field_simp
         _ < t * r := by nlinarith
   have h_g_Ioo : IntegrableOn (fun t : ℝ => (↑(t⁻¹) : ℂ)) (Ioo δ 1) volume :=
-    (intervalIntegrable_iff.mp hcont.intervalIntegrable).mono_set
-      (by rw [Set.uIoc_of_le hδ1.le]; exact Ioo_subset_Ioc_self)
+    (intervalIntegrable_iff.mp hcont.intervalIntegrable).mono_set (by
+      rw [Set.uIoc_of_le hδ1.le]
+      exact Ioo_subset_Ioc_self)
   have h_F_Ioo : IntegrableOn F (Ioo δ 1) volume :=
     Integrable.congr h_g_Ioo
       ((ae_restrict_mem measurableSet_Ioo).mono fun t ht => (h_eq t ht).symm)
-  rw [IntegrableOn, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]; exact h_F_Ioo
+  rw [IntegrableOn, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]
+  exact h_F_Ioo
 
 private theorem pv_cutoff_F_integrable_1_2 (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
     (_hε : 0 < ε) (hεr : ε < r) :
@@ -397,7 +434,9 @@ private theorem pv_cutoff_F_integrable_1_2 (r : ℝ) (hr : 0 < r) (α : ℝ) (ε
   rw [intervalIntegrable_iff, Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 2)]
   have h_eq : ∀ t ∈ Ioo (1 : ℝ) 2, F t = I * ↑α := by
     intro t ⟨ht1, ht2⟩
-    dsimp only [F]; simp only [sub_zero]; rw [if_pos]
+    dsimp only [F]
+    simp only [sub_zero]
+    rw [if_pos]
     · rw [sectorCurve_seg2 r α t ⟨le_of_lt ht1, le_of_lt ht2⟩,
           deriv_sectorCurve_seg2 r α t ⟨ht1, ht2⟩]
       have : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr)
@@ -405,15 +444,18 @@ private theorem pv_cutoff_F_integrable_1_2 (r : ℝ) (hr : 0 < r) (α : ℝ) (ε
       field_simp
     · rw [sectorCurve_seg2 r α t ⟨le_of_lt ht1, le_of_lt ht2⟩]
       simp only [norm_mul, Complex.norm_exp_I_mul_ofReal, mul_one]
-      rw [Complex.norm_of_nonneg (le_of_lt hr)]; linarith
+      rw [Complex.norm_of_nonneg (le_of_lt hr)]
+      linarith
   have h_const_Ioo : IntegrableOn (fun (_ : ℝ) => I * (↑α : ℂ)) (Ioo (1 : ℝ) 2) volume :=
     (intervalIntegrable_iff.mp (intervalIntegrable_const :
-      IntervalIntegrable (fun _ => I * (↑α : ℂ)) volume 1 2)).mono_set
-      (by rw [Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 2)]; exact Ioo_subset_Ioc_self)
+      IntervalIntegrable (fun _ => I * (↑α : ℂ)) volume 1 2)).mono_set (by
+        rw [Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 2)]
+        exact Ioo_subset_Ioc_self)
   have h_F_Ioo : IntegrableOn F (Ioo (1 : ℝ) 2) volume :=
     Integrable.congr h_const_Ioo
       ((ae_restrict_mem measurableSet_Ioo).mono fun t ht => (h_eq t ht).symm)
-  rw [IntegrableOn, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]; exact h_F_Ioo
+  rw [IntegrableOn, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]
+  exact h_F_Ioo
 
 private theorem pv_cutoff_F_integrable_2_3delta (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
     (hε : 0 < ε) (hεr : ε < r) :
@@ -429,17 +471,22 @@ private theorem pv_cutoff_F_integrable_2_3delta (r : ℝ) (hr : 0 < r) (α : ℝ
   rw [intervalIntegrable_iff, Set.uIoc_of_le h3δ.le]
   have h_eq : ∀ t ∈ Ioo (2 : ℝ) (3 - δ), F t = -(↑((3 - t)⁻¹) : ℂ) := by
     intro t ⟨ht2, ht3δ⟩
-    dsimp only [F]; simp only [sub_zero]; rw [if_pos]
+    dsimp only [F]
+    simp only [sub_zero]
+    rw [if_pos]
     · have h3 : t < 3 := by linarith
       rw [sectorCurve_seg3 r α t ⟨le_of_lt ht2, le_of_lt h3⟩,
           deriv_sectorCurve_seg3 r α t ⟨ht2, h3⟩]
       have : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr)
       have : exp (I * ↑α) ≠ 0 := Complex.exp_ne_zero _
       have : (3 - t : ℝ) ≠ 0 := by linarith
-      push_cast; field_simp
+      push_cast
+      field_simp
     · have h3 : t < 3 := by linarith
       rw [sectorCurve_norm_seg3' r hr α t ⟨le_of_lt ht2, le_of_lt h3⟩]
-      calc ε = δ * r := by rw [hδ_def]; field_simp
+      calc ε = δ * r := by
+            rw [hδ_def]
+            field_simp
         _ < (3 - t) * r := by nlinarith
   have hcont : ContinuousOn (fun t : ℝ => -(↑((3 - t)⁻¹) : ℂ)) (Set.uIcc 2 (3 - δ)) := by
     rw [Set.uIcc_of_le h3δ.le]
@@ -451,12 +498,14 @@ private theorem pv_cutoff_F_integrable_2_3delta (r : ℝ) (hr : 0 < r) (α : ℝ
          (continuousAt_const.sub continuousAt_id)))
   have h_g_Ioo : IntegrableOn (fun t : ℝ => -(↑((3 - t)⁻¹) : ℂ))
       (Ioo (2 : ℝ) (3 - δ)) volume :=
-    (intervalIntegrable_iff.mp hcont.intervalIntegrable).mono_set
-      (by rw [Set.uIoc_of_le h3δ.le]; exact Ioo_subset_Ioc_self)
+    (intervalIntegrable_iff.mp hcont.intervalIntegrable).mono_set (by
+      rw [Set.uIoc_of_le h3δ.le]
+      exact Ioo_subset_Ioc_self)
   have h_F_Ioo : IntegrableOn F (Ioo (2 : ℝ) (3 - δ)) volume :=
     Integrable.congr h_g_Ioo
       ((ae_restrict_mem measurableSet_Ioo).mono fun t ht => (h_eq t ht).symm)
-  rw [IntegrableOn, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]; exact h_F_Ioo
+  rw [IntegrableOn, ← Measure.restrict_congr_set Ioo_ae_eq_Ioc]
+  exact h_F_Ioo
 
 private theorem pv_sector_cutoff_base_integrabilities (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
     (hε : 0 < ε) (hεr : ε < r) :
@@ -481,8 +530,10 @@ private lemma intervalIntegrable_union_adjacent {f : ℝ → ℂ} {a b c : ℝ}
     (h2 : IntervalIntegrable f volume b c) :
     IntervalIntegrable f volume a c := by
   rw [intervalIntegrable_iff]
-  have h1' := h1.def'; rw [Set.uIoc_of_le hab] at h1'
-  have h2' := h2.def'; rw [Set.uIoc_of_le hbc] at h2'
+  have h1' := h1.def'
+  rw [Set.uIoc_of_le hab] at h1'
+  have h2' := h2.def'
+  rw [Set.uIoc_of_le hbc] at h2'
   rw [Set.uIoc_of_le (le_trans hab hbc)]
   exact (h1'.union h2').mono_set fun t ht =>
     (le_or_gt t b).elim (fun h => .inl ⟨ht.1, h⟩) (fun h => .inr ⟨h, ht.2⟩)
@@ -520,14 +571,19 @@ private theorem pv_cutoff_integral_seg1_eq_inv (r : ℝ) (hr : 0 < r) (α : ℝ)
   have hδ : 0 < δ := div_pos hε hr
   have hδ1 : δ < 1 := by rwa [div_lt_one hr]
   have h_on_Ioo : ∀ t ∈ Ioo δ 1, F t = (↑(t⁻¹) : ℂ) := fun t ⟨htδ, ht1⟩ => by
-    dsimp only [F]; simp only [sub_zero]; rw [if_pos]
+    dsimp only [F]
+    simp only [sub_zero]
+    rw [if_pos]
     · rw [sectorCurve_seg1 r α t ⟨le_of_lt (lt_trans hδ htδ), le_of_lt ht1⟩,
           deriv_sectorCurve_seg1 r α t ⟨lt_trans hδ htδ, ht1⟩]
       have ht_ne : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt (lt_trans hδ htδ))
       have hr_ne : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr)
-      push_cast; field_simp
+      push_cast
+      field_simp
     · rw [sectorCurve_norm_seg1 r hr α t ⟨le_of_lt (lt_trans hδ htδ), le_of_lt ht1⟩]
-      calc ε = δ * r := by rw [hδ_def]; field_simp
+      calc ε = δ * r := by
+            rw [hδ_def]
+            field_simp
         _ < t * r := by nlinarith
   apply intervalIntegral.integral_congr_ae
   filter_upwards [(Filter.eventuallyEq_set.mp Ioo_ae_eq_Ioc)] with t ht
@@ -543,7 +599,9 @@ private theorem pv_cutoff_integral_seg2_eq_Ialpha (r : ℝ) (hr : 0 < r) (α : �
       then (sectorCurve r α t)⁻¹ * deriv (sectorCurve r α) t else 0
   have h_on_Ioo : ∀ t ∈ Ioo 1 2, F t = I * ↑α := by
     intro t ⟨ht1, ht2⟩
-    dsimp only [F]; simp only [sub_zero]; rw [if_pos]
+    dsimp only [F]
+    simp only [sub_zero]
+    rw [if_pos]
     · rw [sectorCurve_seg2 r α t ⟨le_of_lt ht1, le_of_lt ht2⟩,
           deriv_sectorCurve_seg2 r α t ⟨ht1, ht2⟩]
       have : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr)
@@ -551,13 +609,15 @@ private theorem pv_cutoff_integral_seg2_eq_Ialpha (r : ℝ) (hr : 0 < r) (α : �
       field_simp
     · rw [sectorCurve_seg2 r α t ⟨le_of_lt ht1, le_of_lt ht2⟩]
       simp only [norm_mul, Complex.norm_exp_I_mul_ofReal, mul_one]
-      rw [Complex.norm_of_nonneg (le_of_lt hr)]; linarith
+      rw [Complex.norm_of_nonneg (le_of_lt hr)]
+      linarith
   have h_ae : ∀ᵐ t, t ∈ Ι 1 2 → F t = I * ↑α := by
     filter_upwards [(Filter.eventuallyEq_set.mp Ioo_ae_eq_Ioc)] with t ht
     rw [Set.uIoc_of_le (by norm_num : (1 : ℝ) ≤ 2)]
     exact fun ht_mem => h_on_Ioo t (ht.mpr ht_mem)
   change ∫ (t : ℝ) in (1 : ℝ)..2, F t = I * ↑α
-  rw [intervalIntegral.integral_congr_ae h_ae, intervalIntegral.integral_const]; norm_num
+  rw [intervalIntegral.integral_congr_ae h_ae, intervalIntegral.integral_const]
+  norm_num
 
 private theorem pv_cutoff_integral_seg3_eq_neg_inv (r : ℝ) (hr : 0 < r) (α : ℝ) (ε : ℝ)
     (hε : 0 < ε) (hεr : ε < r) :
@@ -574,17 +634,22 @@ private theorem pv_cutoff_integral_seg3_eq_neg_inv (r : ℝ) (hr : 0 < r) (α : 
   have h3δ : 2 < 3 - δ := by linarith
   have h_on_Ioo : ∀ t ∈ Ioo 2 (3 - δ), F t = -(↑((3 - t)⁻¹) : ℂ) := by
     intro t ⟨ht2, ht3δ⟩
-    dsimp only [F]; simp only [sub_zero]; rw [if_pos]
+    dsimp only [F]
+    simp only [sub_zero]
+    rw [if_pos]
     · have h3 : t < 3 := by linarith
       rw [sectorCurve_seg3 r α t ⟨le_of_lt ht2, le_of_lt h3⟩,
           deriv_sectorCurve_seg3 r α t ⟨ht2, h3⟩]
       have : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr)
       have : exp (I * ↑α) ≠ 0 := Complex.exp_ne_zero _
       have : (3 - t : ℝ) ≠ 0 := by linarith
-      push_cast; field_simp
+      push_cast
+      field_simp
     · have h3 : t < 3 := by linarith
       rw [sectorCurve_norm_seg3' r hr α t ⟨le_of_lt ht2, le_of_lt h3⟩]
-      calc ε = δ * r := by rw [hδ_def]; field_simp
+      calc ε = δ * r := by
+            rw [hδ_def]
+            field_simp
         _ < (3 - t) * r := by nlinarith
   apply intervalIntegral.integral_congr_ae
   filter_upwards [(Filter.eventuallyEq_set.mp Ioo_ae_eq_Ioc)] with t ht
@@ -610,21 +675,31 @@ theorem pv_sector_cutoff_eq (r : ℝ) (hr : 0 < r) (α : ℝ)
     pv_sector_cutoff_composed_integrabilities r hr α ε hε hεr
   have hI1 : ∫ t in (0 : ℝ)..δ, F t = 0 := by
     rw [show ∫ t in (0 : ℝ)..δ, F t = ∫ t in (0 : ℝ)..δ, (0 : ℂ) from by
-      apply intervalIntegral.integral_congr; intro t ht
+      apply intervalIntegral.integral_congr
+      intro t ht
       rw [Set.uIcc_of_le (le_of_lt hδ)] at ht
-      dsimp only [F]; simp only [sub_zero]; rw [if_neg (not_lt.mpr _)]
+      dsimp only [F]
+      simp only [sub_zero]
+      rw [if_neg (not_lt.mpr _)]
       rw [sectorCurve_norm_seg1 r hr α t ⟨ht.1, le_trans ht.2 (le_of_lt hδ1)⟩]
       calc t * r ≤ δ * r := by nlinarith [ht.2]
-        _ = ε := by rw [hδ_def]; field_simp]
+        _ = ε := by
+              rw [hδ_def]
+              field_simp]
     exact intervalIntegral.integral_zero
   have hI5 : ∫ t in (3 - δ)..(3 : ℝ), F t = 0 := by
     rw [show ∫ t in (3 - δ)..(3 : ℝ), F t = ∫ t in (3 - δ)..(3 : ℝ), (0 : ℂ) from by
-      apply intervalIntegral.integral_congr; intro t ht
+      apply intervalIntegral.integral_congr
+      intro t ht
       rw [Set.uIcc_of_le (by linarith : 3 - δ ≤ 3)] at ht
-      dsimp only [F]; simp only [sub_zero]; rw [if_neg (not_lt.mpr _)]
+      dsimp only [F]
+      simp only [sub_zero]
+      rw [if_neg (not_lt.mpr _)]
       rw [sectorCurve_norm_seg3' r hr α t ⟨by linarith [ht.1], ht.2⟩]
       calc (3 - t) * r ≤ δ * r := by nlinarith [ht.1]
-        _ = ε := by rw [hδ_def]; field_simp]
+        _ = ε := by
+              rw [hδ_def]
+              field_simp]
     exact intervalIntegral.integral_zero
   have hI2 := pv_cutoff_integral_seg1_eq_inv r hr α ε hε hεr
   have hI3 := pv_cutoff_integral_seg2_eq_Ialpha r hr α ε hε hεr
@@ -637,7 +712,8 @@ theorem pv_sector_cutoff_eq (r : ℝ) (hr : 0 < r) (α : ℝ)
         ← intervalIntegral.integral_add_adjacent_intervals hFint_01 hFint_12,
         ← intervalIntegral.integral_add_adjacent_intervals hFint_0δ hFint_δ1]
   rw [h_split, hI1, hI2, hI3, hI4, hI5, zero_add, add_zero]
-  have := log_cancellation r hr ε hε hεr; linear_combination this
+  have := log_cancellation r hr ε hε hεr
+  linear_combination this
 
 /-- **Lemma 3.1 (dz/z part)**: The principal value of `dz/z` along the sector curve
 from 0 to 3 equals `I * alpha`.
@@ -663,13 +739,8 @@ theorem pv_sector_dz_over_z (r : ℝ) (hr : 0 < r) (α : ℝ)
           else 0)
       (𝓝[>] 0) (𝓝 (I * ↑α)) :=
     tendsto_const_nhds.congr' (h_ev.mono (fun ε h => h.symm))
-  constructor
-  · -- The PV exists
-    exact ⟨I * ↑α, h_tendsto⟩
-  · -- The PV value is I * α
-    have : cauchyPrincipalValue' (fun z => z⁻¹) (sectorCurve r α) 0 3 0 = I * ↑α := by
-      unfold cauchyPrincipalValue'
-      exact h_tendsto.limUnder_eq
-    exact this
+  refine ⟨⟨I * ↑α, h_tendsto⟩, ?_⟩
+  unfold cauchyPrincipalValue'
+  exact h_tendsto.limUnder_eq
 
 end

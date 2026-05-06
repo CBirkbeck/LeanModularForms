@@ -59,7 +59,8 @@ theorem crossingSet_subset_Icc (γ : PwC1Immersion x y) (z₀ : E) :
 theorem crossingSet_isClosed (γ : PwC1Immersion x y) (z₀ : E) :
     _root_.IsClosed (γ.crossingSet z₀) := by
   have : γ.crossingSet z₀ = Icc (0 : ℝ) 1 ∩ (γ : ℝ → E) ⁻¹' {z₀} := by
-    ext t; simp only [crossingSet, mem_sep_iff, mem_inter_iff, mem_preimage, mem_singleton_iff]
+    ext t
+    simp only [crossingSet, mem_sep_iff, mem_inter_iff, mem_preimage, mem_singleton_iff]
   rw [this]
   exact isClosed_Icc.inter (isClosed_singleton.preimage γ.toPiecewiseC1Path.continuous)
 
@@ -101,10 +102,8 @@ private theorem Icc_subset_of_Ioo_subset {q p : ℝ} (hqp : q < p)
 
 /-- At a smooth point where `γ(t₀) = z₀`, there is a punctured neighborhood in which
 `γ(t) ≠ z₀`. -/
-theorem crossing_isolated_smooth
-    (γ : PwC1Immersion x y) (z₀ : E)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    (hcross : (γ : ℝ → E) t₀ = z₀)
+theorem crossing_isolated_smooth (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
+    (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (hcross : (γ : ℝ → E) t₀ = z₀)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition) :
     ∀ᶠ t in 𝓝[≠] t₀, (γ : ℝ → E) t ≠ z₀ := by
   rw [← hcross]
@@ -115,15 +114,15 @@ theorem crossing_isolated_smooth
 
 /-- At a partition point `p` with `0 < p`, `γ(t) ≠ γ(p)` for `t` sufficiently close
 to `p` from the left. -/
-theorem crossing_isolated_left
-    (γ : PwC1Immersion x y) (z₀ : E)
-    (p : ℝ) (hp_part : p ∈ γ.toPiecewiseC1Path.partition)
-    (hp_pos : 0 < p)
+theorem crossing_isolated_left (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
+    (hp_part : p ∈ γ.toPiecewiseC1Path.partition) (hp_pos : 0 < p)
     (hcross : (γ : ℝ → E) p = z₀) :
     ∀ᶠ t in 𝓝[<] p, (γ : ℝ → E) t ≠ z₀ := by
   obtain ⟨L, hL_ne, hL_tendsto⟩ := γ.left_deriv_limit p hp_part
   obtain ⟨f, _, hf_L⟩ := exists_dual_vector ℝ L (norm_ne_zero_iff.mpr hL_ne)
-  have hfL_pos : (0 : ℝ) < f L := by rw [hf_L]; exact_mod_cast norm_pos_iff.mpr hL_ne
+  have hfL_pos : (0 : ℝ) < f L := by
+    rw [hf_L]
+    exact_mod_cast norm_pos_iff.mpr hL_ne
   set h : ℝ → ℝ := fun t => f ((γ : ℝ → E) t - z₀) with hh_def
   have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, map_zero]
   have hp_Ioo := γ.toPiecewiseC1Path.partition_subset hp_part
@@ -147,7 +146,8 @@ theorem crossing_isolated_left
     f.continuous.comp_continuousOn
       ((γ.toPiecewiseC1Path.continuous.continuousOn.mono hqp_sub).sub continuousOn_const)
   have hh_deriv_pos : ∀ s ∈ interior (Icc q p), 0 < deriv h s := by
-    rw [interior_Icc]; intro s hs
+    rw [interior_Icc]
+    intro s hs
     obtain ⟨hs_smooth, hs_Ioo, hs_dpos⟩ := hq_cond hs
     have h_sub : HasDerivAt (fun t => (γ : ℝ → E) t - z₀) (deriv (γ : ℝ → E) s - 0) s :=
       (γ.toPiecewiseC1Path.differentiable_off s hs_Ioo hs_smooth).hasDerivAt.sub
@@ -163,15 +163,15 @@ theorem crossing_isolated_left
 
 /-- At a partition point `p` with `p < 1`, `γ(t) ≠ γ(p)` for `t` sufficiently close
 to `p` from the right. -/
-theorem crossing_isolated_right
-    (γ : PwC1Immersion x y) (z₀ : E)
-    (p : ℝ) (hp_part : p ∈ γ.toPiecewiseC1Path.partition)
-    (hp_lt_one : p < 1)
+theorem crossing_isolated_right (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
+    (hp_part : p ∈ γ.toPiecewiseC1Path.partition) (hp_lt_one : p < 1)
     (hcross : (γ : ℝ → E) p = z₀) :
     ∀ᶠ t in 𝓝[>] p, (γ : ℝ → E) t ≠ z₀ := by
   obtain ⟨L, hL_ne, hL_tendsto⟩ := γ.right_deriv_limit p hp_part
   obtain ⟨f, _, hf_L⟩ := exists_dual_vector ℝ L (norm_ne_zero_iff.mpr hL_ne)
-  have hfL_pos : (0 : ℝ) < f L := by rw [hf_L]; exact_mod_cast norm_pos_iff.mpr hL_ne
+  have hfL_pos : (0 : ℝ) < f L := by
+    rw [hf_L]
+    exact_mod_cast norm_pos_iff.mpr hL_ne
   set h : ℝ → ℝ := fun t => f ((γ : ℝ → E) t - z₀) with hh_def
   have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, map_zero]
   have hp_Ioo := γ.toPiecewiseC1Path.partition_subset hp_part
@@ -195,7 +195,8 @@ theorem crossing_isolated_right
     f.continuous.comp_continuousOn
       ((γ.toPiecewiseC1Path.continuous.continuousOn.mono hpr_sub).sub continuousOn_const)
   have hh_deriv_pos : ∀ s ∈ interior (Icc p r), 0 < deriv h s := by
-    rw [interior_Icc]; intro s hs
+    rw [interior_Icc]
+    intro s hs
     obtain ⟨hs_smooth, hs_Ioo, hs_dpos⟩ := hr_cond hs
     have h_sub : HasDerivAt (fun t => (γ : ℝ → E) t - z₀) (deriv (γ : ℝ → E) s - 0) s :=
       (γ.toPiecewiseC1Path.differentiable_off s hs_Ioo hs_smooth).hasDerivAt.sub
@@ -213,10 +214,8 @@ theorem crossing_isolated_right
 
 /-- At any crossing `t₀ ∈ (0, 1)`, there is a punctured neighborhood with no other
 crossings in `[0, 1]`. Combines the smooth-point and partition-point cases. -/
-theorem crossing_isolated
-    (γ : PwC1Immersion x y) (z₀ : E)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    (hcross : (γ : ℝ → E) t₀ = z₀) :
+theorem crossing_isolated (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
+    (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (hcross : (γ : ℝ → E) t₀ = z₀) :
     ∀ᶠ t in 𝓝[≠] t₀, (γ : ℝ → E) t ≠ z₀ ∨ t ∉ Icc (0 : ℝ) 1 := by
   by_cases hpart : t₀ ∈ γ.toPiecewiseC1Path.partition
   · rw [punctured_nhds_eq_nhdsWithin_sup_nhdsWithin, Filter.eventually_sup]
@@ -227,10 +226,8 @@ theorem crossing_isolated
 /-! ### No accumulation points -/
 
 /-- No point of the crossing set in `(0, 1)` is an accumulation point. -/
-theorem crossing_not_accPt
-    (γ : PwC1Immersion x y) (z₀ : E)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    (hcross : (γ : ℝ → E) t₀ = z₀) :
+theorem crossing_not_accPt (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
+    (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (hcross : (γ : ℝ → E) t₀ = z₀) :
     ¬AccPt t₀ (𝓟 (γ.crossingSet z₀)) := by
   rw [accPt_iff_frequently_nhdsNE, Filter.not_frequently]
   exact (crossing_isolated γ z₀ t₀ ht₀ hcross).mono fun t ht ht_mem => by
@@ -241,8 +238,7 @@ theorem crossing_not_accPt
 
 /-- **Proposition 2.2** (Hungerbühler–Wasem): The crossing set of a piecewise C¹
 immersion is finite, provided the endpoints avoid `z₀`. -/
-theorem crossingSet_finite
-    (γ : PwC1Immersion x y) (z₀ : E)
+theorem crossingSet_finite (γ : PwC1Immersion x y) (z₀ : E)
     (h0 : (γ : ℝ → E) 0 ≠ z₀) (h1 : (γ : ℝ → E) 1 ≠ z₀) :
     Set.Finite (γ.crossingSet z₀) := by
   by_contra hS_inf

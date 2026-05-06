@@ -44,10 +44,13 @@ theorem im_gt_sqrt3_div_two_of_interior {z : ℂ}
   have hnsq := Complex.one_lt_normSq_iff.mpr hz_norm
   simp only [Complex.normSq_apply] at hnsq
   have h_resq : z.re ^ 2 < 1/4 := by
-    have h1 := sq_abs z.re; have h2 := sq_nonneg (|z.re| - 1/2)
+    have h1 := sq_abs z.re
+    have h2 := sq_nonneg (|z.re| - 1/2)
     nlinarith [sq_abs z.re, abs_nonneg z.re]
   have h_imsq : (Real.sqrt 3 / 2) ^ 2 < z.im ^ 2 := by
-    rw [div_pow, Real.sq_sqrt (by norm_num : (3:ℝ) ≥ 0).le]; norm_num; nlinarith
+    rw [div_pow, Real.sq_sqrt (by norm_num : (3:ℝ) ≥ 0).le]
+    norm_num
+    nlinarith
   nlinarith [sq_nonneg (z.im - Real.sqrt 3 / 2)]
 
 /-! ### Reference functions for segments 1, 4, 5 -/
@@ -56,7 +59,8 @@ private def ref1 (z : ℂ) (H : ℝ) (t : ℝ) : ℂ :=
   (1/2 - z.re : ℝ) + (H - 5 * t * (H - Real.sqrt 3 / 2) - z.im : ℝ) * I
 
 private lemma ref1_cd (z : ℂ) (H : ℝ) : ContDiff ℝ ⊤ (ref1 z H) := by
-  unfold ref1; apply ContDiff.add contDiff_const
+  unfold ref1
+  apply ContDiff.add contDiff_const
   exact (Complex.ofRealCLM.contDiff.comp
     ((contDiff_const.sub ((contDiff_const.mul contDiff_id).mul contDiff_const)).sub
       contDiff_const)).mul contDiff_const
@@ -69,14 +73,17 @@ private lemma ref1_eq (z : ℂ) (H : ℝ) {t : ℝ} (ht : t ≤ 1/5) :
 
 private lemma ref1_slit (z : ℂ) (H : ℝ) (hz : z.re < 1/2) (t : ℝ) :
     ref1 z H t ∈ slitPlane := by
-  rw [mem_slitPlane_iff]; left
-  simp only [ref1, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im, mul_zero]; linarith
+  rw [mem_slitPlane_iff]
+  left
+  simp only [ref1, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im, mul_zero]
+  linarith
 
 private def ref5 (z : ℂ) (H : ℝ) (t : ℝ) : ℂ :=
   (5 * t - 9/2 - z.re : ℝ) + (H - z.im : ℝ) * I
 
 private lemma ref5_cd (z : ℂ) (H : ℝ) : ContDiff ℝ ⊤ (ref5 z H) := by
-  unfold ref5; exact (Complex.ofRealCLM.contDiff.comp
+  unfold ref5
+  exact (Complex.ofRealCLM.contDiff.comp
     (((contDiff_const.mul contDiff_id).sub contDiff_const).sub contDiff_const)).add
     contDiff_const
 
@@ -89,17 +96,20 @@ private lemma ref5_eq (z : ℂ) (H : ℝ) {t : ℝ} (ht : 4/5 < t) :
 
 private lemma ref5_slit (z : ℂ) (H : ℝ) (hz : z.im < H) (t : ℝ) :
     ref5 z H t ∈ slitPlane := by
-  rw [mem_slitPlane_iff]; right
+  rw [mem_slitPlane_iff]
+  right
   unfold ref5
   simp only [add_im, ofReal_im, mul_im, I_re, I_im, mul_zero, add_zero, mul_one, ne_eq]
-  simp only [ofReal_re]; linarith
+  simp only [ofReal_re]
+  linarith
 
 private def ref4n (z : ℂ) (H : ℝ) (t : ℝ) : ℂ :=
   (z.re + 1/2 : ℝ) +
     (z.im - Real.sqrt 3 / 2 - (5 * t - 3) * (H - Real.sqrt 3 / 2) : ℝ) * I
 
 private lemma ref4n_cd (z : ℂ) (H : ℝ) : ContDiff ℝ ⊤ (ref4n z H) := by
-  unfold ref4n; apply ContDiff.add contDiff_const
+  unfold ref4n
+  apply ContDiff.add contDiff_const
   exact (Complex.ofRealCLM.contDiff.comp
     (contDiff_const.sub (((contDiff_const.mul contDiff_id).sub contDiff_const).mul
       contDiff_const))).mul contDiff_const
@@ -113,8 +123,10 @@ private lemma ref4n_eq (z : ℂ) (H : ℝ) {t : ℝ} (ht3 : 3/5 < t) (ht4 : t �
 
 private lemma ref4n_slit (z : ℂ) (H : ℝ) (hz : -1/2 < z.re) (t : ℝ) :
     ref4n z H t ∈ slitPlane := by
-  rw [mem_slitPlane_iff]; left
-  simp only [ref4n, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im, mul_zero]; linarith
+  rw [mem_slitPlane_iff]
+  left
+  simp only [ref4n, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im, mul_zero]
+  linarith
 
 /-! ### FTC on linear segments -/
 
@@ -149,7 +161,8 @@ private theorem seg5F (z : ℂ) (H : ℝ) (hz : z.im < H) :
         (Ioi_mem_nhds (by linarith [ht.1] : 4/5 < t))
         fun s hs => ref5_eq z H hs)⟩)
     (by -- ref5_eq doesn't apply at t=4/5 (needs strict ineq), compute directly
-      unfold ref5; rw [fdBoundaryFun_at_four_fifths]
+      unfold ref5
+      rw [fdBoundaryFun_at_four_fifths]
       apply Complex.ext
       · push_cast
         simp [sub_re, mul_re, ofReal_re, ofReal_im, I_re, I_im, sub_im]
@@ -180,8 +193,9 @@ private theorem seg4F (z : ℂ) (H : ℝ) (hz : -1/2 < z.re) :
             (le_of_lt (mem_Iio.mp hs4)))).symm]
     have hd : deriv (fun s => -(fdBoundaryFun H s - z)) t =
         -(deriv (fun s => fdBoundaryFun H s - z) t) := by
-      rw [show (fun s => -(fdBoundaryFun H s - z)) = (-(fun s => fdBoundaryFun H s - z)) from
-        by ext; simp]
+      rw [show (fun s => -(fdBoundaryFun H s - z)) = (-(fun s => fdBoundaryFun H s - z)) by
+        ext
+        simp]
       exact deriv.neg
     rw [hd, neg_div_neg_eq]
   -- ftc_log_pieceFM with g = h = ref4n gives ∫ ref4n'/ref4n = log(ref4n(b)) - log(ref4n(a))
@@ -201,7 +215,8 @@ private theorem seg4F (z : ℂ) (H : ℝ) (hz : -1/2 < z.re) :
     rw [← ref4n_eq z H (by norm_num : (3:ℝ)/5 < 4/5) le_rfl]
   · -- ref4n(3/5) = -(fdBoundaryFun H (3/5) - z) by direct computation
     congr 1
-    unfold ref4n; rw [fdBoundaryFun_at_three_fifths]
+    unfold ref4n
+    rw [fdBoundaryFun_at_three_fifths]
     simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     apply Complex.ext <;> push_cast <;> simp [neg_re, neg_im, add_re, sub_re, mul_re, mul_im,
       ofReal_re, ofReal_im, I_re, I_im, add_im, sub_im] <;> (ring_nf; try tauto)
@@ -209,35 +224,44 @@ private theorem seg4F (z : ℂ) (H : ℝ) (hz : -1/2 < z.re) :
 /-! ### Arc slit-plane membership -/
 
 private lemma fdArcAngle_contDiff' : ContDiff ℝ ⊤ fdArcAngle := by
-  unfold fdArcAngle; fun_prop
+  unfold fdArcAngle
+  fun_prop
 
 private def arcRef (z : ℂ) (t : ℝ) : ℂ := exp (↑(fdArcAngle t) * I) - z
 
 private lemma arcRef_cd (z : ℂ) : ContDiff ℝ ⊤ (arcRef z) := by
-  unfold arcRef; exact (Complex.contDiff_exp.comp
+  unfold arcRef
+  exact (Complex.contDiff_exp.comp
     ((Complex.ofRealCLM.contDiff.comp fdArcAngle_contDiff').mul contDiff_const)).sub
     contDiff_const
 
 private lemma arcRef_eq (z : ℂ) (H : ℝ) {t : ℝ} (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     fdBoundaryFun H t - z = arcRef z t := by
-  unfold arcRef; rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
+  unfold arcRef
+  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
 
 private lemma arcRef_eq15 (z : ℂ) (H : ℝ) :
     fdBoundaryFun H (1/5) - z = arcRef z (1/5) := by
-  unfold arcRef; rw [fdArcAngle_at_one_fifth, fdBoundaryFun_at_one_fifth]
+  unfold arcRef
+  rw [fdArcAngle_at_one_fifth, fdBoundaryFun_at_one_fifth]
   simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin, Real.cos_pi_div_three, Real.sin_pi_div_three]
-  push_cast; ring
+  push_cast
+  ring
 
 private lemma arcRef_eq35 (z : ℂ) (H : ℝ) :
     fdBoundaryFun H (3/5) - z = arcRef z (3/5) := by
-  unfold arcRef; rw [fdBoundaryFun_at_three_fifths]
+  unfold arcRef
+  rw [fdBoundaryFun_at_three_fifths]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
-  have : fdArcAngle (3/5) = 2 * Real.pi / 3 := by unfold fdArcAngle; ring
+  have : fdArcAngle (3/5) = 2 * Real.pi / 3 := by
+    unfold fdArcAngle
+    ring
   rw [this, show 2 * Real.pi / 3 = Real.pi - Real.pi / 3 from by ring,
     exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_sub, Real.sin_pi_sub, Real.cos_pi_div_three, Real.sin_pi_div_three]
-  push_cast; ring
+  push_cast
+  ring
 
 private lemma arcRef_ee (z : ℂ) (H : ℝ) {t : ℝ} (ht1 : 1/5 < t) (ht2 : t < 3/5) :
     (fun s => fdBoundaryFun H s - z) =ᶠ[𝓝 t] arcRef z :=
@@ -249,7 +273,8 @@ private lemma arcRef_slit_nonpos {z : ℂ}
     (hz_norm : 1 < ‖z‖) (hz_re : z.re ≤ 0) (_hz_im : 0 < z.im)
     {t : ℝ} (_ht1 : 1/5 ≤ t) (_ht2 : t ≤ 3/5) :
     arcRef z t ∈ slitPlane := by
-  unfold arcRef; rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin, mem_slitPlane_iff]
+  unfold arcRef
+  rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin, mem_slitPlane_iff]
   simp only [add_re, sub_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
     mul_zero, sub_zero, add_zero, mul_one, add_im, sub_im, mul_im, zero_add]
   by_cases him : Real.sin (fdArcAngle t) - z.im = 0
@@ -264,14 +289,16 @@ private lemma arcRef_slit_nonpos {z : ℂ}
       rw [show -z.re = |z.re| from (abs_of_nonpos hz_re).symm]
       exact abs_lt_of_sq_lt (by nlinarith [sq_abs (Real.cos (fdArcAngle t)), sq_abs z.re])
     linarith [neg_abs_le (Real.cos (fdArcAngle t))]
-  · right; exact him
+  · right
+    exact him
 
 set_option maxHeartbeats 800000 in
 private lemma arcRef_neg_slit_pos {z : ℂ}
     (hz_norm : 1 < ‖z‖) (hz_re : 0 < z.re) (_hz_im : 0 < z.im)
     {t : ℝ} (_ht1 : 1/5 ≤ t) (_ht2 : t ≤ 3/5) :
     -(arcRef z t) ∈ slitPlane := by
-  unfold arcRef; rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin, mem_slitPlane_iff]
+  unfold arcRef
+  rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin, mem_slitPlane_iff]
   simp only [neg_sub, sub_re, sub_im, ofReal_re, ofReal_im, add_re, add_im, mul_re, mul_im,
     I_re, I_im, mul_zero, sub_zero, add_zero, mul_one, zero_add]
   by_cases him : z.im - Real.sin (fdArcAngle t) = 0
@@ -286,7 +313,8 @@ private lemma arcRef_neg_slit_pos {z : ℂ}
       rw [show z.re = |z.re| from (abs_of_pos hz_re).symm]
       exact abs_lt_of_sq_lt (by nlinarith [sq_abs (Real.cos (fdArcAngle t)), sq_abs z.re])
     linarith [le_abs_self (Real.cos (fdArcAngle t))]
-  · right; exact him
+  · right
+    exact him
 
 /-! ### Arc FTC -/
 
@@ -309,9 +337,12 @@ private theorem arcF_standard {z : ℂ} (hz_norm : 1 < ‖z‖)
 /-- Branch correction: `log(-w) = log(w) + πi` when `w.im < 0`. -/
 private lemma log_neg_add_pi_of_im_neg {w : ℂ} (him : w.im < 0) :
     Complex.log (-w) = Complex.log w + ↑Real.pi * I := by
-  show ↑(Real.log ‖-w‖) + ↑((-w).arg) * I =
+  change ↑(Real.log ‖-w‖) + ↑((-w).arg) * I =
     ↑(Real.log ‖w‖) + ↑(w.arg) * I + ↑Real.pi * I
-  simp only [norm_neg]; rw [arg_neg_eq_arg_add_pi_of_im_neg him]; push_cast; ring
+  simp only [norm_neg]
+  rw [arg_neg_eq_arg_add_pi_of_im_neg him]
+  push_cast
+  ring
 
 /-- At the arc endpoints `t = 1/5` and `t = 3/5`, the imaginary part of `γ(t) - z` is
 negative for strict interior `z`. -/
@@ -324,12 +355,14 @@ private lemma arcEndpoint_im_neg {z : ℂ}
       rw [fdBoundaryFun_at_one_fifth]
       simp [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk,
         add_im, mul_im, I_re, I_im]
-    simp only [sub_im]; linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
+    simp only [sub_im]
+    linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
   · have : (fdBoundaryFun H (3/5)).im = Real.sqrt 3 / 2 := by
       rw [fdBoundaryFun_at_three_fifths]
       simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
         add_im, neg_im, mul_im, I_re, I_im]
-    simp only [sub_im]; linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
+    simp only [sub_im]
+    linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
 
 set_option maxHeartbeats 800000 in
 private theorem arcF_negated {z : ℂ} (hz_norm : 1 < ‖z‖)
@@ -355,11 +388,12 @@ private theorem arcF_negated {z : ℂ} (hz_norm : 1 < ‖z‖)
       (arcRef_ee z H (by linarith [hm.1]) hlt).deriv_eq]
   have hint := hp.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       (hae.mono fun t ht hm => (ht hm).symm))
-  exact ⟨hint, by
-    rw [intervalIntegral.integral_congr_ae hae, hp.2, arcRef_eq15 z H, arcRef_eq35 z H]
-    have him1 := arcRef_eq15 z H ▸ arcEndpoint_im_neg hz_norm hz_re hz_im H _ (Or.inl rfl)
-    have him3 := arcRef_eq35 z H ▸ arcEndpoint_im_neg hz_norm hz_re hz_im H _ (Or.inr rfl)
-    rw [log_neg_add_pi_of_im_neg him3, log_neg_add_pi_of_im_neg him1]; ring⟩
+  refine ⟨hint, ?_⟩
+  rw [intervalIntegral.integral_congr_ae hae, hp.2, arcRef_eq15 z H, arcRef_eq35 z H]
+  have him1 := arcRef_eq15 z H ▸ arcEndpoint_im_neg hz_norm hz_re hz_im H _ (Or.inl rfl)
+  have him3 := arcRef_eq35 z H ▸ arcEndpoint_im_neg hz_norm hz_re hz_im H _ (Or.inr rfl)
+  rw [log_neg_add_pi_of_im_neg him3, log_neg_add_pi_of_im_neg him1]
+  ring
 
 private theorem arcF {z : ℂ} (hz_norm : 1 < ‖z‖)
     (hz_re : |z.re| < 1/2) (hz_im : 0 < z.im) (H : ℝ) :
@@ -384,10 +418,14 @@ private lemma bc35 {z : ℂ} {H : ℝ}
       rw [fdBoundaryFun_at_three_fifths]
       simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
         add_im, neg_im, mul_im, I_re, I_im]
-    simp only [sub_im]; linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
-  show ↑(Real.log ‖-(fdBoundaryFun H (3/5) - z)‖) + ↑((-(fdBoundaryFun H (3/5) - z)).arg) * I =
+    simp only [sub_im]
+    linarith [im_gt_sqrt3_div_two_of_interior hz_norm hz_re hz_im]
+  change ↑(Real.log ‖-(fdBoundaryFun H (3/5) - z)‖) + ↑((-(fdBoundaryFun H (3/5) - z)).arg) * I =
     ↑(Real.log ‖fdBoundaryFun H (3/5) - z‖) + ↑((fdBoundaryFun H (3/5) - z).arg) * I + ↑Real.pi * I
-  simp only [norm_neg]; rw [arg_neg_eq_arg_add_pi_of_im_neg him]; push_cast; ring
+  simp only [norm_neg]
+  rw [arg_neg_eq_arg_add_pi_of_im_neg him]
+  push_cast
+  ring
 
 private lemma bc45 {z : ℂ} {H : ℝ} (hz_im : z.im < H) :
     Complex.log (-(fdBoundaryFun H (4/5) - z)) =
@@ -396,10 +434,14 @@ private lemma bc45 {z : ℂ} {H : ℝ} (hz_im : z.im < H) :
     have : (fdBoundaryFun H (4/5)).im = H := by
       rw [fdBoundaryFun_at_four_fifths]
       simp [add_im, neg_im, ofReal_im, mul_im, I_re, I_im]
-    simp only [sub_im]; linarith
-  show ↑(Real.log ‖-(fdBoundaryFun H (4/5) - z)‖) + ↑((-(fdBoundaryFun H (4/5) - z)).arg) * I =
+    simp only [sub_im]
+    linarith
+  change ↑(Real.log ‖-(fdBoundaryFun H (4/5) - z)‖) + ↑((-(fdBoundaryFun H (4/5) - z)).arg) * I =
     ↑(Real.log ‖fdBoundaryFun H (4/5) - z‖) + ↑((fdBoundaryFun H (4/5) - z).arg) * I - ↑Real.pi * I
-  simp only [norm_neg]; rw [arg_neg_eq_arg_sub_pi_of_im_pos him]; push_cast; ring
+  simp only [norm_neg]
+  rw [arg_neg_eq_arg_sub_pi_of_im_pos him]
+  push_cast
+  ring
 
 /-! ### Full telescope and main results -/
 
@@ -410,30 +452,36 @@ private theorem ftc_full {z : ℂ} {H : ℝ}
         (fdBoundaryFun H t - z)⁻¹ * deriv (fdBoundaryFun H) t = -(2 * ↑Real.pi * I) := by
   have hconv : ∀ t, (fdBoundaryFun H t - z)⁻¹ * deriv (fdBoundaryFun H) t =
       deriv (fun s => fdBoundaryFun H s - z) t / (fdBoundaryFun H t - z) := by
-    intro t; rw [show (fun s => fdBoundaryFun H s - z) = (fun s => fdBoundaryFun H s + (-z)) from
-      by ext; ring, deriv_add_const, div_eq_mul_inv, mul_comm]
+    intro t
+    rw [show (fun s => fdBoundaryFun H s - z) = (fun s => fdBoundaryFun H s + (-z)) by
+      ext
+      ring, deriv_add_const, div_eq_mul_inv, mul_comm]
   simp_rw [hconv]
   have p1 := seg1F z H (by linarith [abs_lt.mp hz_re])
   have p23 := arcF hz_norm hz_re hz_im H
   have p4 := seg4F z H (by linarith [abs_lt.mp hz_re])
   have p5 := seg5F z H hzH
   set F : ℝ → ℂ := fun t => deriv (fun s => fdBoundaryFun H s - z) t / (fdBoundaryFun H t - z)
-    with hF_def
   have h13 : ∫ t in (0 : ℝ)..(3/5), F t = Complex.log (fdBoundaryFun H (3/5) - z) -
       Complex.log (fdBoundaryFun H 0 - z) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals p1.1 p23.1, p1.2, p23.2]; ring
+    rw [← intervalIntegral.integral_add_adjacent_intervals p1.1 p23.1, p1.2, p23.2]
+    ring
   have h4 : ∫ t in (3/5 : ℝ)..(4/5), F t = Complex.log (fdBoundaryFun H (4/5) - z) -
       Complex.log (fdBoundaryFun H (3/5) - z) - 2 * ↑Real.pi * I := by
-    rw [p4.2, bc45 hzH, bc35 hz_norm hz_re hz_im]; ring
+    rw [p4.2, bc45 hzH, bc35 hz_norm hz_re hz_im]
+    ring
   calc ∫ t in (0 : ℝ)..1, F t
       = (∫ t in (0 : ℝ)..(4/5), F t) + (∫ t in (4/5 : ℝ)..1, F t) :=
         (intervalIntegral.integral_add_adjacent_intervals
           ((p1.1.trans p23.1).trans p4.1) p5.1).symm
     _ = ((∫ t in (0 : ℝ)..(3/5), F t) + (∫ t in (3/5 : ℝ)..(4/5), F t)) +
         (∫ t in (4/5 : ℝ)..1, F t) := by
-        congr 1; exact (intervalIntegral.integral_add_adjacent_intervals
+        congr 1
+        exact (intervalIntegral.integral_add_adjacent_intervals
           (p1.1.trans p23.1) p4.1).symm
-    _ = _ := by rw [h13, h4, p5.2, fdBoundaryFun_closed H]; ring
+    _ = _ := by
+        rw [h13, h4, p5.2, fdBoundaryFun_closed H]
+        ring
 
 private theorem xfer {z : ℂ} {H : ℝ}
     {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
@@ -449,7 +497,7 @@ private theorem xfer {z : ℂ} {H : ℝ}
   have hee : γ.toPath.extend =ᶠ[𝓝 t] fdBoundaryFun H :=
     Filter.eventually_of_mem (Ioo_mem_nhds ht01.1 ht01.2) fun s hs =>
       hγ s (Ioo_subset_Icc_self hs)
-  show (γ.extendedPath t - z)⁻¹ * deriv γ.toPath.extend t =
+  change (γ.extendedPath t - z)⁻¹ * deriv γ.toPath.extend t =
     (fdBoundaryFun H t - z)⁻¹ * deriv (fdBoundaryFun H) t
   rw [show γ.extendedPath t = γ.toPath.extend t from rfl,
     hγ t (Ioo_subset_Icc_self ht01), hee.deriv_eq]
@@ -460,7 +508,8 @@ theorem fdBoundary_contourIntegral_interior_eq {H : ℝ}
     {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t) :
     γ.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I) := by
-  rw [xfer hγ]; exact ftc_full hz.norm_gt hz.re_abs_lt hz.im_pos hz.im_lt
+  rw [xfer hγ]
+  exact ftc_full hz.norm_gt hz.re_abs_lt hz.im_pos hz.im_lt
 
 /-- The interior contour integral for the canonical `fdBoundaryPC1Path`. -/
 theorem fdBoundaryPC1Path_contourIntegral_interior_eq {H : ℝ} (hH : H > Real.sqrt 3 / 2)

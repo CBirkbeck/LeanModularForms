@@ -204,7 +204,8 @@ theorem dixonFunction_eventually_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ}
   intro w ⟨hoff, hwn⟩
   simp only [dixonFunction]
   split_ifs with hw
-  · rw [h_identity w hoff, hwn]; ring
+  · rw [h_identity w hoff, hwn]
+    ring
   · rfl
 
 /-- **B-4 bundle**: `dixonFunction_eventually_eq_dixonH2` for null-homologous curves
@@ -404,11 +405,16 @@ theorem dixonFunction_eq_zero_of_nullHomologous
     (hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ M_d) :
     ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
+  have h_id : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
+      dixonH1 f γ.toPiecewiseC1Path w =
+        dixonH2 f γ.toPiecewiseC1Path w -
+          2 * ↑Real.pi * I * generalizedWindingNumber γ.toPiecewiseC1Path w * f w :=
+    fun w hoff => dixonH1_eq_dixonH2_sub_winding_f w hoff
+      (h_cauchy_int w hoff) (h_base_int w hoff)
   exact dixonFunction_eq_zero_of_bounds
-    (dixonFunction_differentiable hU hf γ h_null h1_diff h2_diff
-      (fun w hoff => dixonH1_eq_dixonH2_sub_winding_f w hoff (h_cauchy_int w hoff) (h_base_int w hoff))
+    (dixonFunction_differentiable hU hf γ h_null h1_diff h2_diff h_id
       h_winding_zero_near)
-    (dixonFunction_eventually_eq_dixonH2 γ (fun w hoff => dixonH1_eq_dixonH2_sub_winding_f w hoff (h_cauchy_int w hoff) (h_base_int w hoff)) h_winding_evt)
+    (dixonFunction_eventually_eq_dixonH2 γ h_id h_winding_evt)
     hM_f_nn hR hM_f hM_d
 
 /-- **B-5 variant for bounded U**: `dixonFunction_eq_zero_of_nullHomologous` specialized
@@ -538,7 +544,6 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
       ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
         generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
     ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
-  -- Continuity bundle
   have hf_cont : ContinuousOn f
       (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
     hf.continuousOn.mono
@@ -549,7 +554,6 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
       (fun t ht => ⟨t, ht, rfl⟩)
   have h_γ_cont : ContinuousOn (γ.toPiecewiseC1Path : ℝ → ℂ) (Icc (0 : ℝ) 1) :=
     γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
-  -- Auto-bounds
   obtain ⟨R, hR_bd⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
     h_γ_cont.norm
   obtain ⟨M_f, hM_f_bd⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
@@ -563,7 +567,6 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
   have hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ K :=
     fun _ _ => norm_deriv_le_of_lipschitz hLip
-  -- Auto-integrability via continuity + measurable deriv
   have h_cauchy_int : ∀ w,
       (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
       IntervalIntegrable
@@ -587,7 +590,9 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
       ((h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable
         measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
     haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+      ⟨by
+        rw [Measure.restrict_apply_univ]
+        exact measure_Ioc_lt_top⟩
     obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
       h_cont_prod.norm
     refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
@@ -615,7 +620,9 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
       ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
         measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
     haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+      ⟨by
+        rw [Measure.restrict_apply_univ]
+        exact measure_Ioc_lt_top⟩
     obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
       h_cont_inv.norm
     refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
@@ -815,7 +822,9 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded
       ((h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable
         measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
     haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+      ⟨by
+        rw [Measure.restrict_apply_univ]
+        exact measure_Ioc_lt_top⟩
     obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
       h_cont_prod.norm
     refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
@@ -843,7 +852,9 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded
       ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
         measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
     haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+      ⟨by
+        rw [Measure.restrict_apply_univ]
+        exact measure_Ioc_lt_top⟩
     obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
       h_cont_inv.norm
     refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_

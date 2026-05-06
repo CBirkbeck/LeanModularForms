@@ -146,12 +146,14 @@ theorem t₀_lt_firstExitTimeRight
     (h_s : γ t₀ = s) (hε_pos : 0 < ε)
     (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
     t₀ < firstExitTimeRight γ t₀ δ s ε := by
-  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖) (Set.Icc t₀ (t₀ + δ)) t₀ :=
+  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖)
+      (Set.Icc t₀ (t₀ + δ)) t₀ :=
     ((hγ_cont t₀ ⟨le_rfl, by linarith⟩).sub continuousWithinAt_const).norm
   have h_eventually : ∀ᶠ t in 𝓝[Set.Icc t₀ (t₀ + δ)] t₀, ‖γ t - s‖ < ε :=
     h_cont_at_t₀.tendsto.eventually_lt_const (by simp [h_s, hε_pos])
   obtain ⟨η, hη_pos, hη⟩ := Metric.nhdsWithin_basis_ball.eventually_iff.mp h_eventually
-  refine lt_of_lt_of_le (a := t₀) (b := t₀ + min η δ / 2) (by linarith [lt_min hη_pos hδ]) ?_
+  refine lt_of_lt_of_le (a := t₀) (b := t₀ + min η δ / 2)
+    (by linarith [lt_min hη_pos hδ]) ?_
   refine le_csInf ⟨t₀ + δ, firstExitTimeRight_set_nonempty hδ.le hε_le⟩ ?_
   intro t ht
   by_contra! h_lt
@@ -268,7 +270,8 @@ theorem firstExitTimeLeft_lt_t₀
     (h_s : γ t₀ = s) (hε_pos : 0 < ε)
     (hε_le : ε ≤ ‖γ (t₀ - δ) - s‖) :
     firstExitTimeLeft γ t₀ δ s ε < t₀ := by
-  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖) (Set.Icc (t₀ - δ) t₀) t₀ :=
+  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖)
+      (Set.Icc (t₀ - δ) t₀) t₀ :=
     ((hγ_cont t₀ ⟨by linarith, le_rfl⟩).sub continuousWithinAt_const).norm
   have h_eventually : ∀ᶠ t in 𝓝[Set.Icc (t₀ - δ) t₀] t₀, ‖γ t - s‖ < ε :=
     h_cont_at_t₀.tendsto.eventually_lt_const (by simp [h_s, hε_pos])
@@ -331,7 +334,8 @@ theorem exists_right_modulus
     (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
     (h_s : γ t₀ = s) {ε : ℝ} (hε_pos : 0 < ε) :
     ∃ η ∈ Set.Ioc (0 : ℝ) δ, ∀ t ∈ Set.Icc t₀ (t₀ + η), ‖γ t - s‖ < ε := by
-  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖) (Set.Icc t₀ (t₀ + δ)) t₀ :=
+  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖)
+      (Set.Icc t₀ (t₀ + δ)) t₀ :=
     ((hγ_cont t₀ ⟨le_rfl, by linarith⟩).sub continuousWithinAt_const).norm
   have h_eventually : ∀ᶠ t in 𝓝[Set.Icc t₀ (t₀ + δ)] t₀, ‖γ t - s‖ < ε :=
     h_cont_at_t₀.tendsto.eventually_lt_const (by simp [h_s, hε_pos])
@@ -349,7 +353,8 @@ theorem exists_left_modulus
     (hγ_cont : ContinuousOn γ (Set.Icc (t₀ - δ) t₀))
     (h_s : γ t₀ = s) {ε : ℝ} (hε_pos : 0 < ε) :
     ∃ η ∈ Set.Ioc (0 : ℝ) δ, ∀ t ∈ Set.Icc (t₀ - η) t₀, ‖γ t - s‖ < ε := by
-  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖) (Set.Icc (t₀ - δ) t₀) t₀ :=
+  have h_cont_at_t₀ : ContinuousWithinAt (fun t => ‖γ t - s‖)
+      (Set.Icc (t₀ - δ) t₀) t₀ :=
     ((hγ_cont t₀ ⟨by linarith, le_rfl⟩).sub continuousWithinAt_const).norm
   have h_eventually : ∀ᶠ t in 𝓝[Set.Icc (t₀ - δ) t₀] t₀, ‖γ t - s‖ < ε :=
     h_cont_at_t₀.tendsto.eventually_lt_const (by simp [h_s, hε_pos])

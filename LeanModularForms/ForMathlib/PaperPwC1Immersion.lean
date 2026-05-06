@@ -166,7 +166,8 @@ private theorem intervalIntegrable_of_consecutive_pieces
   | H s ih =>
     intro a b ha hb hab hbds hpc
     rcases eq_or_lt_of_le hab with hab_eq | hab_lt
-    · subst hab_eq; exact IntervalIntegrable.refl
+    · subst hab_eq
+      exact IntervalIntegrable.refl
     -- Pick the smallest partition member strictly above `a`.
     set t : Finset ℝ := s.filter (a < ·) with ht_def
     have hb_in_t : b ∈ t := Finset.mem_filter.mpr ⟨hb, hab_lt⟩
@@ -279,6 +280,26 @@ private lemma legacy_partition_subset_Ioo (γ : ClosedPwC1Curve x) :
   exact ⟨lt_of_le_of_ne h_in_Icc.1 (Ne.symm h_ne_0),
          lt_of_le_of_ne h_in_Icc.2 h_ne_1⟩
 
+/-- If `t ∈ Ioo 0 1` and `t ∉ (γ.partition.erase 0).erase 1`, then `t ∉ γ.partition`. -/
+private lemma not_mem_partition_of_not_mem_legacy (γ : ClosedPwC1Curve x) {t : ℝ}
+    (ht : t ∈ Ioo (0 : ℝ) 1) (htn : t ∉ (γ.partition.erase 0).erase 1) :
+    t ∉ γ.partition := fun h_in => htn <| by
+  refine Finset.mem_erase.mpr ⟨ne_of_lt ht.2, Finset.mem_erase.mpr ⟨?_, h_in⟩⟩
+  exact (ne_of_lt ht.1).symm
+
+/-- Unpack a legacy interior partition point: it lies strictly inside `(0, 1)`
+and belongs to the original paper partition. -/
+private lemma legacy_mem_unpack (γ : ClosedPwC1Curve x) {p : ℝ}
+    (hp : p ∈ (γ.partition.erase 0).erase 1) :
+    0 < p ∧ p < 1 ∧ p ∈ γ.partition := by
+  have hp_ne_1 : p ≠ 1 := (Finset.mem_erase.mp hp).1
+  have hp_in_e0 := (Finset.mem_erase.mp hp).2
+  have hp_ne_0 : p ≠ 0 := (Finset.mem_erase.mp hp_in_e0).1
+  have hp_in : p ∈ γ.partition := (Finset.mem_erase.mp hp_in_e0).2
+  have hp_in_Icc := γ.partition_subset hp_in
+  exact ⟨lt_of_le_of_ne hp_in_Icc.1 (Ne.symm hp_ne_0),
+         lt_of_le_of_ne hp_in_Icc.2 hp_ne_1, hp_in⟩
+
 /-- A `ClosedPwC1Curve` produces a legacy `PiecewiseC1Path`. -/
 def toPiecewiseC1Path (γ : ClosedPwC1Curve x) : PiecewiseC1Path x x where
   toPath := γ.toPath
@@ -286,18 +307,14 @@ def toPiecewiseC1Path (γ : ClosedPwC1Curve x) : PiecewiseC1Path x x where
   partition_subset := γ.legacy_partition_subset_Ioo
   differentiable_off := by
     intro t ht htn
-    have htn' : t ∉ γ.partition := fun h_in => htn <| by
-      refine Finset.mem_erase.mpr ⟨ne_of_lt ht.2, Finset.mem_erase.mpr ⟨?_, h_in⟩⟩
-      exact (ne_of_lt ht.1).symm
+    have htn' : t ∉ γ.partition := γ.not_mem_partition_of_not_mem_legacy ht htn
     obtain ⟨a, b, hcons, ht_Ioo⟩ := γ.exists_consecutive_pair_containing ht htn'
     have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc a b) := γ.contDiffOn_pieces a b hcons
     exact (hcd.differentiableOn_one t (Ioo_subset_Icc_self ht_Ioo)).differentiableAt
       (Icc_mem_nhds ht_Ioo.1 ht_Ioo.2)
   deriv_continuous_off := by
     intro t ht htn
-    have htn' : t ∉ γ.partition := fun h_in => htn <| by
-      refine Finset.mem_erase.mpr ⟨ne_of_lt ht.2, Finset.mem_erase.mpr ⟨?_, h_in⟩⟩
-      exact (ne_of_lt ht.1).symm
+    have htn' : t ∉ γ.partition := γ.not_mem_partition_of_not_mem_legacy ht htn
     obtain ⟨a, b, hcons, ht_Ioo⟩ := γ.exists_consecutive_pair_containing ht htn'
     have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc a b) := γ.contDiffOn_pieces a b hcons
     have h_dw_cont : ContinuousOn (derivWithin γ.toPath.extend (Icc a b)) (Icc a b) :=
@@ -358,24 +375,18 @@ def toPwC1Immersion (γ : ClosedPwC1Immersion x) : PwC1Immersion x x where
   toPiecewiseC1Path := γ.toClosedPwC1Curve.toPiecewiseC1Path
   deriv_ne_zero := by
     intro t ht htn
-    have htn' : t ∉ γ.partition := fun h_in => htn <| by
-      refine Finset.mem_erase.mpr ⟨ne_of_lt ht.2, Finset.mem_erase.mpr ⟨?_, h_in⟩⟩
-      exact (ne_of_lt ht.1).symm
+    have htn' : t ∉ γ.partition :=
+      γ.toClosedPwC1Curve.not_mem_partition_of_not_mem_legacy ht htn
     obtain ⟨a, b, hcons, ht_Ioo⟩ :=
       γ.toClosedPwC1Curve.exists_consecutive_pair_containing ht htn'
     have h_dw_ne :=
       γ.derivWithin_ne_zero_pieces a b hcons t (Ioo_subset_Icc_self ht_Ioo)
     -- `Path.extend` is a coercion-overloaded `toPath.extend`; both forms agree.
-    show deriv γ.toPath.extend t ≠ 0
+    change deriv γ.toPath.extend t ≠ 0
     rwa [ClosedPwC1Curve.derivWithin_eq_deriv_on_Ioo _ ht_Ioo] at h_dw_ne
   left_deriv_limit := by
     intro p hp
-    have hp_ne_1 : p ≠ 1 := (Finset.mem_erase.mp hp).1
-    have hp_in_e0 := (Finset.mem_erase.mp hp).2
-    have hp_ne_0 : p ≠ 0 := (Finset.mem_erase.mp hp_in_e0).1
-    have hp_in : p ∈ γ.partition := (Finset.mem_erase.mp hp_in_e0).2
-    have hp_in_Icc := γ.partition_subset hp_in
-    have hp_pos : 0 < p := lt_of_le_of_ne hp_in_Icc.1 (Ne.symm hp_ne_0)
+    obtain ⟨hp_pos, _, hp_in⟩ := γ.toClosedPwC1Curve.legacy_mem_unpack hp
     obtain ⟨a, hcons⟩ := γ.exists_predecessor hp_in hp_pos
     have ha_lt : a < p := hcons.2.2.1
     have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc a p) := γ.contDiffOn_pieces a p hcons
@@ -385,13 +396,9 @@ def toPwC1Immersion (γ : ClosedPwC1Immersion x) : PwC1Immersion x x where
     have hL_ne : L ≠ 0 :=
       γ.derivWithin_ne_zero_pieces a p hcons p (right_mem_Icc.mpr ha_lt.le)
     refine ⟨L, hL_ne, ?_⟩
-    -- 𝓝[<] p localizes to 𝓝[Ooo a p] p (intersect with Ioi a, which is a nhd of p).
-    have h_set : (Set.Ioo a p : Set ℝ) = Set.Iio p ∩ Set.Ioi a := by
-      ext c
-      simp only [Set.mem_Ioo, Set.mem_inter_iff, Set.mem_Iio, Set.mem_Ioi]
-      exact ⟨fun ⟨h1, h2⟩ => ⟨h2, h1⟩, fun ⟨h1, h2⟩ => ⟨h2, h1⟩⟩
+    -- 𝓝[<] p localizes to 𝓝[Ioo a p] p (intersect with Ioi a, which is a nhd of p).
     have h_eq : 𝓝[<] p = 𝓝[Ioo a p] p := by
-      rw [h_set,
+      rw [← Set.Iio_inter_Ioi (a := p) (b := a),
         nhdsWithin_inter_of_mem'
           (mem_nhdsWithin_of_mem_nhds (Ioi_mem_nhds ha_lt))]
     have h_at_p : Tendsto (derivWithin γ.toPath.extend (Icc a p))
@@ -407,12 +414,7 @@ def toPwC1Immersion (γ : ClosedPwC1Immersion x) : PwC1Immersion x x where
     exact ClosedPwC1Curve.derivWithin_eq_deriv_on_Ioo _ hu
   right_deriv_limit := by
     intro p hp
-    have hp_ne_1 : p ≠ 1 := (Finset.mem_erase.mp hp).1
-    have hp_in_e0 := (Finset.mem_erase.mp hp).2
-    have hp_ne_0 : p ≠ 0 := (Finset.mem_erase.mp hp_in_e0).1
-    have hp_in : p ∈ γ.partition := (Finset.mem_erase.mp hp_in_e0).2
-    have hp_in_Icc := γ.partition_subset hp_in
-    have hp_lt_1 : p < 1 := lt_of_le_of_ne hp_in_Icc.2 hp_ne_1
+    obtain ⟨_, hp_lt_1, hp_in⟩ := γ.toClosedPwC1Curve.legacy_mem_unpack hp
     obtain ⟨b, hcons⟩ := γ.exists_successor hp_in hp_lt_1
     have hp_lt_b : p < b := hcons.2.2.1
     have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc p b) := γ.contDiffOn_pieces p b hcons
@@ -422,11 +424,8 @@ def toPwC1Immersion (γ : ClosedPwC1Immersion x) : PwC1Immersion x x where
     have hL_ne : L ≠ 0 :=
       γ.derivWithin_ne_zero_pieces p b hcons p (left_mem_Icc.mpr hp_lt_b.le)
     refine ⟨L, hL_ne, ?_⟩
-    have h_set : (Set.Ioo p b : Set ℝ) = Set.Ioi p ∩ Set.Iio b := by
-      ext c
-      simp only [Set.mem_Ioo, Set.mem_inter_iff, Set.mem_Ioi, Set.mem_Iio]
     have h_eq : 𝓝[>] p = 𝓝[Ioo p b] p := by
-      rw [h_set,
+      rw [← Set.Ioi_inter_Iio (a := p) (b := b),
         nhdsWithin_inter_of_mem'
           (mem_nhdsWithin_of_mem_nhds (Iio_mem_nhds hp_lt_b))]
     have h_at_p : Tendsto (derivWithin γ.toPath.extend (Icc p b))
@@ -645,7 +644,7 @@ theorem lipschitzWith_extend (γ : ClosedPwC1Curve x) :
   -- The clamp s' := projIcc 0 1 _ s ∈ Icc 0 1, similarly t'.
   -- γ.extend s = γ.toPath.toFun s' = γ.extend s' for s' ∈ Icc 0 1.
   -- |s' - t'| ≤ |s - t| since projIcc is 1-Lipschitz.
-  -- Therefore ‖γ.extend s - γ.extend t‖ = ‖γ.extend s' - γ.extend t'‖ ≤ K |s' - t'| ≤ K |s - t|.
+  -- ‖γ.extend s - γ.extend t‖ = ‖γ.extend s' - γ.extend t'‖ ≤ K |s' - t'| ≤ K |s - t|.
   set s' : ℝ := max 0 (min s 1)
   set t' : ℝ := max 0 (min t 1)
   have hs'_in : s' ∈ Icc (0 : ℝ) 1 :=

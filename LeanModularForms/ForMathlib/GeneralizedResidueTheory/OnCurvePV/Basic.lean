@@ -39,7 +39,9 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
   have hδ_pos : 0 < δ := by positivity
   have h_dyadic_lt : ∀ n : ℕ, δ / 2 ^ n < δ_P1 := fun n =>
     calc δ / 2 ^ n ≤ δ := div_le_self hδ_pos.le (one_le_pow₀ (by norm_num : (1 : ℝ) ≤ 2))
-      _ < δ_P1 := by simp only [δ]; linarith
+      _ < δ_P1 := by
+        simp only [δ]
+        linarith
   let I : ℝ → ℂ := fun ε => ∫ t in a..b,
     if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0
   have h_step : ∀ n, ‖I (δ / 2 ^ (n + 1)) - I (δ / 2 ^ n)‖ ≤ K * δ / 2 ^ n := fun n => by
@@ -47,7 +49,10 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     have h_le : δ / 2 ^ (n + 1) ≤ δ / 2 ^ n :=
       div_le_div_of_nonneg_left hδ_pos.le (by positivity)
         (pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 2) (Nat.le_succ n))
-    have h_ratio : δ / 2 ^ n ≤ 2 * (δ / 2 ^ (n + 1)) := by rw [pow_succ]; ring_nf; linarith
+    have h_ratio : δ / 2 ^ n ≤ 2 * (δ / 2 ^ (n + 1)) := by
+      rw [pow_succ]
+      ring_nf
+      linarith
     have h_bound := h_step_uniform (δ / 2 ^ n) (δ / 2 ^ (n + 1)) hε₂_pos h_le h_ratio
       (h_dyadic_lt n)
     calc ‖I (δ / 2 ^ (n + 1)) - I (δ / 2 ^ n)‖
@@ -70,8 +75,11 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       have h_tendsto_pow : Tendsto (fun n : ℕ => (2 : ℝ) ^ n) atTop atTop :=
         tendsto_pow_atTop_atTop_of_one_lt (by norm_num : (1 : ℝ) < 2)
       have h_tendsto_inv : Tendsto (fun n : ℕ => 1 / (2 : ℝ) ^ n) atTop (𝓝 0) := by
-        simp_rw [one_div]; exact tendsto_inv_atTop_zero.comp h_tendsto_pow
-      convert Tendsto.const_mul (K * δ) h_tendsto_inv using 1 <;> [ext n; skip] <;> ring
+        simp_rw [one_div]
+        exact tendsto_inv_atTop_zero.comp h_tendsto_pow
+      have h := (Tendsto.const_mul (K * δ) h_tendsto_inv).congr
+        (fun n => show K * δ * (1 / (2 : ℝ) ^ n) = K * δ / 2 ^ n by ring)
+      simpa using h
     rw [Metric.tendsto_atTop] at this
     obtain ⟨N₂, hN₂⟩ := this (η / 4) (by linarith)
     refine ⟨N₂, ?_⟩
@@ -106,7 +114,9 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
         linarith
       have h_first_piece : ‖I ε - I (δ / 2 ^ M)‖ ≤ K * δ / 2 ^ M := by
         have h_ratio_M : δ / 2 ^ M ≤ 2 * ε := by
-          have : δ / 2 ^ M = 2 * (δ / 2 ^ (M + 1)) := by rw [pow_succ]; ring
+          have : δ / 2 ^ M = 2 * (δ / 2 ^ (M + 1)) := by
+            rw [pow_succ]
+            ring
           linarith
         have h_bound := h_step_uniform (δ / 2 ^ M) ε hε_pos' hM_upper h_ratio_M (h_dyadic_lt M)
         calc ‖I ε - I (δ / 2 ^ M)‖
@@ -127,11 +137,13 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
           exact norm_add_le _ _
         let J : ℕ → ℂ := fun n => I (δ / 2 ^ n)
         have h_step_J : ∀ n, ‖J (n + 1) - J n‖ ≤ K * δ / 2 ^ n := fun n => by
-          simp only [J]; exact h_step n
+          simp only [J]
+          exact h_step n
         have h_sum_bound : ‖I (δ / 2 ^ M) - I (δ / 2 ^ N)‖ ≤
             2 * K * δ / 2 ^ N - 2 * K * δ / 2 ^ M := by
           have h_bound := telescoping_sum_bound hK_pos hδ_pos h_step_J N M hM_gt_N
-          simp only [J] at h_bound; exact h_bound
+          simp only [J] at h_bound
+          exact h_bound
         calc ‖I ε - I (δ / 2 ^ N)‖
             ≤ ‖I ε - I (δ / 2 ^ M)‖ + ‖I (δ / 2 ^ M) - I (δ / 2 ^ N)‖ := h_tri_inner
           _ ≤ K * δ / 2 ^ M + (2 * K * δ / 2 ^ N - 2 * K * δ / 2 ^ M) := by
@@ -170,14 +182,18 @@ lemma measurableSet_norm_gt_of_continuousOn {f : ℝ → ℂ} {s : Set ℝ}
     · intro ⟨hx_far, hx_s⟩
       refine ⟨?_, hx_s⟩
       have h1 : (⟨x, hx_s⟩ : ↑s) ∈ (s.restrict (fun t => ‖f t‖)) ⁻¹' Ioi ε := by
-        simp only [mem_preimage, restrict_apply, mem_Ioi]; exact hx_far
-      rw [← hU_eq] at h1; exact h1
+        simp only [mem_preimage, restrict_apply, mem_Ioi]
+        exact hx_far
+      rw [← hU_eq] at h1
+      exact h1
     · intro ⟨hx_U, hx_s⟩
       refine ⟨?_, hx_s⟩
       have h1 : (⟨x, hx_s⟩ : ↑s) ∈ Subtype.val ⁻¹' U := hx_U
       rw [hU_eq] at h1
-      simp only [mem_preimage, restrict_apply, mem_Ioi] at h1; exact h1
-  rw [h_eq]; exact hU_open.measurableSet.inter hs
+      simp only [mem_preimage, restrict_apply, mem_Ioi] at h1
+      exact h1
+  rw [h_eq]
+  exact hU_open.measurableSet.inter hs
 
 lemma measurableSet_norm_gt_Icc {f : ℝ → ℂ} {a b : ℝ}
     (ε : ℝ) (hf : ContinuousOn f (Icc a b)) :
@@ -199,7 +215,8 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
     intro t ⟨⟨ht_S, ht_Icc⟩, ht_nP⟩
     have hγt_not_ball : γ t ∉ Metric.ball z₀ ε := by
       simp only [S, mem_setOf_eq] at ht_S
-      simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact le_of_lt ht_S
+      simp only [Metric.mem_ball, not_lt, dist_eq_norm]
+      exact le_of_lt ht_S
     have hγt_in : γ t ∈ γ '' Icc a b \ Metric.ball z₀ ε :=
       ⟨mem_image_of_mem γ ht_Icc, hγt_not_ball⟩
     have h_maps : MapsTo γ ((S ∩ Icc a b) \ P)
@@ -207,11 +224,12 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       intro s ⟨⟨hs_S, hs_Icc⟩, _⟩
       refine ⟨mem_image_of_mem γ hs_Icc, ?_⟩
       simp only [S, mem_setOf_eq] at hs_S
-      simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact le_of_lt hs_S
+      simp only [Metric.mem_ball, not_lt, dist_eq_norm]
+      exact le_of_lt hs_S
     exact ((hf (γ t) hγt_in).comp
       ((hγ t ht_Icc).mono (diff_subset.trans inter_subset_right)) h_maps).mul
       ((hγ'_off_P t ⟨ht_Icc, ht_nP⟩).mono
-        (by intro x ⟨⟨_, hx_Icc⟩, hx_nP⟩; exact ⟨hx_Icc, hx_nP⟩))
+        (fun x ⟨⟨_, hx_Icc⟩, hx_nP⟩ => ⟨hx_Icc, hx_nP⟩))
   have h_base_meas : AEStronglyMeasurable (fun t => f (γ t) * deriv γ t)
       (volume.restrict (S ∩ Icc a b)) := by
     have h_diff_meas : MeasurableSet ((S ∩ Icc a b) \ P) :=
@@ -221,12 +239,17 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
     have hP_inter_meas : MeasurableSet (↑P ∩ (S ∩ Icc a b)) :=
       P.finite_toSet.measurableSet.inter hS_meas
     have h_disj : Disjoint ((S ∩ Icc a b) \ P) (↑P ∩ (S ∩ Icc a b)) := by
-      rw [disjoint_left]; intro x ⟨_, hx_nP⟩ ⟨hx_P, _⟩; exact hx_nP hx_P
+      rw [disjoint_left]
+      intro x ⟨_, hx_nP⟩ ⟨hx_P, _⟩
+      exact hx_nP hx_P
     have h_eq : volume.restrict (S ∩ Icc a b) =
         volume.restrict ((S ∩ Icc a b) \ P) +
           volume.restrict (↑P ∩ (S ∩ Icc a b)) := by
       rw [← Measure.restrict_union h_disj hP_inter_meas]
-      congr 1; ext x; simp only [mem_union, mem_diff, mem_inter_iff]; tauto
+      congr 1
+      ext x
+      simp only [mem_union, mem_diff, mem_inter_iff]
+      tauto
     rw [h_eq]
     apply AEStronglyMeasurable.add_measure (h_cont.aestronglyMeasurable (μ := volume) h_diff_meas)
     simp only [Measure.restrict_eq_zero.mpr hP_meas_zero]
@@ -252,7 +275,8 @@ lemma indicator_integrand_deriv_eq (γ : ℝ → ℂ) (c : ℂ) (ε : ℝ) (t : 
     (if ‖γ t - c‖ > ε then (γ t - c)⁻¹ * deriv (fun s => γ s - c) t else 0) =
     (if ‖γ t - c‖ > ε then (γ t - c)⁻¹ * deriv γ t else 0) := by
   split_ifs with h
-  · congr 1; exact deriv_sub_const c
+  · congr 1
+    exact deriv_sub_const c
   · rfl
 
 lemma cpv_exists_from_shifted_tendsto (γ : ℝ → ℂ) (a b : ℝ) (c : ℂ) (L : ℂ)
@@ -272,7 +296,9 @@ lemma arc_angle_injective {t t' : ℝ}
   have h_vals : Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6 = 2 * Real.pi * ↑n := by
     have : (↑(Real.pi * (1 + t) / 6) : ℂ) * I - ↑(Real.pi * (1 + t') / 6) * I =
         ↑(2 * Real.pi * ↑n) * I := by
-      rw [hn]; push_cast; ring
+      rw [hn]
+      push_cast
+      ring
     have h2 : (↑(Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6) : ℂ) * I =
         ↑(2 * Real.pi * ↑n) * I := by
       rw [show (↑(Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6) : ℂ) * I =
@@ -280,7 +306,8 @@ lemma arc_angle_injective {t t' : ℝ}
       exact this
     exact_mod_cast Complex.ofReal_injective (mul_right_cancel₀ I_ne_zero h2)
   have h_diff_small : |Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6| < Real.pi := by
-    rw [abs_lt]; constructor <;> nlinarith [Real.pi_pos, ht.1, ht.2, ht'.1, ht'.2]
+    rw [abs_lt]
+    constructor <;> nlinarith [Real.pi_pos, ht.1, ht.2, ht'.1, ht'.2]
   have hn0 : n = 0 := by
     by_contra h_ne
     have h1 : |(n : ℝ)| ≥ 1 := by exact_mod_cast Int.one_le_abs h_ne
@@ -289,7 +316,8 @@ lemma arc_angle_injective {t t' : ℝ}
       exact le_mul_of_one_le_right (by positivity) h1
     have h3 : |2 * Real.pi * (n : ℝ)| < Real.pi := by rwa [h_vals] at h_diff_small
     linarith [Real.pi_pos]
-  rw [hn0] at h_vals; simp only [Int.cast_zero, mul_zero] at h_vals
+  rw [hn0] at h_vals
+  simp only [Int.cast_zero, mul_zero] at h_vals
   nlinarith [Real.pi_ne_zero, Real.pi_pos]
 
 /-- CPV trivially exists when the curve avoids `z₀` on `[a, b]`. -/
@@ -332,8 +360,10 @@ lemma cpv_concat (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
   have hac := hab.trans hbc
   exact intervalIntegral.integral_add_adjacent_intervals
     (hII.mono_set (by
-      rw [Set.uIcc_of_le hab, Set.uIcc_of_le hac]; exact Set.Icc_subset_Icc_right hbc))
+      rw [Set.uIcc_of_le hab, Set.uIcc_of_le hac]
+      exact Set.Icc_subset_Icc_right hbc))
     (hII.mono_set (by
-      rw [Set.uIcc_of_le hbc, Set.uIcc_of_le hac]; exact Set.Icc_subset_Icc_left hab))
+      rw [Set.uIcc_of_le hbc, Set.uIcc_of_le hac]
+      exact Set.Icc_subset_Icc_left hab))
 
 end

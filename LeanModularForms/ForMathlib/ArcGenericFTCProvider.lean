@@ -61,18 +61,17 @@ private lemma arc_h₀_continuous (H : ℝ) (z₀ : ℂ) : Continuous (arc_h₀ 
 
 private lemma hasDerivAt_arc_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
     HasDerivAt (arc_h₀ H z₀) (-(seg1Speed H : ℂ) * I) t := by
+  have h_real : HasDerivAt (fun s : ℝ => H - 5 * s * (H - Real.sqrt 3 / 2) - z₀.im)
+      (-seg1Speed H) t := by
+    have hd : HasDerivAt (fun s : ℝ => 5 * s * (H - Real.sqrt 3 / 2))
+        (5 * (H - Real.sqrt 3 / 2)) t :=
+      (((hasDerivAt_id t).const_mul (5 : ℝ)).mul_const (H - Real.sqrt 3 / 2)).congr_deriv (by ring)
+    exact (((hasDerivAt_const t H).sub hd).sub_const z₀.im).congr_deriv
+      (by unfold seg1Speed; ring)
   have h1 : HasDerivAt
       (fun s : ℝ => ((H - 5 * s * (H - Real.sqrt 3 / 2) - z₀.im : ℝ) : ℂ))
-      (-(seg1Speed H : ℂ)) t := by
-    have h_real : HasDerivAt (fun s : ℝ => H - 5 * s * (H - Real.sqrt 3 / 2) - z₀.im)
-        (-seg1Speed H) t := by
-      have hd : HasDerivAt (fun s : ℝ => 5 * s * (H - Real.sqrt 3 / 2))
-          (5 * (H - Real.sqrt 3 / 2)) t := by
-        have := (hasDerivAt_id t).const_mul (5 : ℝ)
-        exact (this.mul_const (H - Real.sqrt 3 / 2)).congr_deriv (by ring)
-      have := (hasDerivAt_const t H).sub hd |>.sub_const z₀.im
-      exact this.congr_deriv (by unfold seg1Speed; ring)
-    exact (h_real.ofReal_comp).congr_deriv (by push_cast; ring)
+      (-(seg1Speed H : ℂ)) t :=
+    h_real.ofReal_comp.congr_deriv (by push_cast; ring)
   exact ((hasDerivAt_const t (((1/2 - z₀.re : ℝ) : ℂ))).add (h1.mul_const I)).congr_deriv
     (by ring)
 
@@ -92,8 +91,7 @@ private lemma arc_h₀_slitPlane {H : ℝ} {θ₀ : ℝ}
   have hpi := Real.pi_pos
   have hθ₀ : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
   have hpi3 : (Real.pi / 3) ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have h_cos : Real.cos θ₀ < Real.cos (Real.pi / 3) :=
-    Real.strictAntiOn_cos hpi3 hθ₀ h_lo
+  have h_cos := Real.strictAntiOn_cos hpi3 hθ₀ h_lo
   rw [Real.cos_pi_div_three] at h_cos
   linarith
 
@@ -120,10 +118,10 @@ private lemma arc_h₅_continuous (H : ℝ) (z₀ : ℂ) : Continuous (arc_h₅ 
 
 private lemma hasDerivAt_arc_h₅ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
     HasDerivAt (arc_h₅ H z₀) (5 : ℂ) t := by
-  have h1 : HasDerivAt (fun s : ℝ => ((5 * s - 9/2 - z₀.re : ℝ) : ℂ)) 5 t := by
-    have h_real : HasDerivAt (fun s : ℝ => 5 * s - 9/2 - z₀.re) 5 t :=
-      ((((hasDerivAt_id t).const_mul 5).sub_const (9/2)).sub_const z₀.re).congr_deriv (by ring)
-    exact (h_real.ofReal_comp).congr_deriv (by push_cast; ring)
+  have h_real : HasDerivAt (fun s : ℝ => 5 * s - 9/2 - z₀.re) 5 t :=
+    ((((hasDerivAt_id t).const_mul 5).sub_const (9/2)).sub_const z₀.re).congr_deriv (by ring)
+  have h1 : HasDerivAt (fun s : ℝ => ((5 * s - 9/2 - z₀.re : ℝ) : ℂ)) 5 t :=
+    h_real.ofReal_comp.congr_deriv (by push_cast; ring)
   exact (h1.add_const _).congr_deriv (by ring)
 
 private lemma deriv_arc_h₅ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
@@ -167,18 +165,17 @@ private lemma arc_h₃_continuous (H : ℝ) (z₀ : ℂ) : Continuous (arc_h₃ 
 
 private lemma hasDerivAt_arc_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
     HasDerivAt (arc_h₃ H z₀) ((seg1Speed H : ℂ) * I) t := by
+  have h_real : HasDerivAt
+      (fun s : ℝ => Real.sqrt 3 / 2 + (5 * s - 3) * (H - Real.sqrt 3 / 2) - z₀.im)
+      (seg1Speed H) t := by
+    have hd : HasDerivAt (fun s : ℝ => 5 * s - 3) 5 t :=
+      (((hasDerivAt_id t).const_mul 5).sub_const 3).congr_deriv (by ring)
+    exact (((hd.mul_const (H - Real.sqrt 3 / 2)).const_add (Real.sqrt 3 / 2)).sub_const
+      z₀.im).congr_deriv (by unfold seg1Speed; ring)
   have h1 : HasDerivAt
       (fun s : ℝ =>
         ((Real.sqrt 3 / 2 + (5 * s - 3) * (H - Real.sqrt 3 / 2) - z₀.im : ℝ) : ℂ))
-      ((seg1Speed H : ℂ)) t := by
-    have h_real : HasDerivAt
-        (fun s : ℝ => Real.sqrt 3 / 2 + (5 * s - 3) * (H - Real.sqrt 3 / 2) - z₀.im)
-        (seg1Speed H) t := by
-      have hd : HasDerivAt (fun s : ℝ => 5 * s - 3) 5 t :=
-        (((hasDerivAt_id t).const_mul 5).sub_const 3).congr_deriv (by ring)
-      have := ((hd.mul_const (H - Real.sqrt 3 / 2)).const_add (Real.sqrt 3 / 2)).sub_const z₀.im
-      exact this.congr_deriv (by unfold seg1Speed; ring)
-    exact (h_real.ofReal_comp).congr_deriv (by ring)
+      ((seg1Speed H : ℂ)) t := h_real.ofReal_comp.congr_deriv (by ring)
   exact ((hasDerivAt_const t (((-1/2 - z₀.re : ℝ) : ℂ))).add (h1.mul_const I)).congr_deriv
     (by ring)
 
@@ -198,13 +195,11 @@ private lemma neg_arc_h₃_slitPlane {H : ℝ} {θ₀ : ℝ}
   have hpi := Real.pi_pos
   have hθ₀ : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
   have h2pi3 : (2 * Real.pi / 3) ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have h_cos : Real.cos (2 * Real.pi / 3) < Real.cos θ₀ :=
-    Real.strictAntiOn_cos hθ₀ h2pi3 h_hi
   have h_cos_2pi3 : Real.cos (2 * Real.pi / 3) = -1/2 := by
     rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
         Real.cos_pi_sub, Real.cos_pi_div_three]
     norm_num
-  linarith
+  linarith [Real.strictAntiOn_cos hθ₀ h2pi3 h_hi]
 
 /-! ### Arc reference function -/
 
@@ -228,21 +223,12 @@ private lemma hasDerivAt_arc_h_arc (z₀ : ℂ) (t : ℝ) :
   unfold arc_h_arc
   have h1 : HasDerivAt fdArcAngle (5 * Real.pi / 6) t := by
     unfold fdArcAngle
-    have hd1 : HasDerivAt (fun s : ℝ => Real.pi / 3 + (5 * s - 1) * (Real.pi / 6))
-        (5 * (Real.pi / 6)) t := by
-      have h := ((hasDerivAt_id t).const_mul (5 : ℝ)).sub_const 1
-      have := (h.mul_const (Real.pi / 6)).const_add (Real.pi / 3)
-      exact this.congr_deriv (by ring)
-    exact hd1.congr_deriv (by ring)
+    have h := ((hasDerivAt_id t).const_mul (5 : ℝ)).sub_const 1
+    exact ((h.mul_const (Real.pi / 6)).const_add (Real.pi / 3)).congr_deriv (by ring)
   have h2 : HasDerivAt (fun s : ℝ => (↑(fdArcAngle s) : ℂ) * I)
-      (↑(5 * Real.pi / 6) * I) t := by
-    have := (h1.ofReal_comp).mul_const I
-    exact this.congr_deriv (by push_cast; ring)
-  have h3 : HasDerivAt (fun s : ℝ => exp ((↑(fdArcAngle s) : ℂ) * I))
-      (↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I)) t := by
-    have := h2.cexp
-    exact this.congr_deriv (by ring)
-  exact h3.sub_const z₀
+      (↑(5 * Real.pi / 6) * I) t :=
+    (h1.ofReal_comp.mul_const I).congr_deriv (by push_cast; ring)
+  exact (h2.cexp.congr_deriv (by ring)).sub_const z₀
 
 private lemma deriv_arc_h_arc (z₀ : ℂ) (t : ℝ) :
     deriv (arc_h_arc z₀) t = ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) :=
@@ -259,21 +245,17 @@ private lemma arc_h_arc_left_slitPlane {θ₀ : ℝ}
   rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin]
   simp only [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
     Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, sub_zero, mul_one]
-  -- Goal: cos (fdArcAngle t) - cos θ₀ > 0
   have hpi := Real.pi_pos
   have h_t_arc : fdArcAngle t < θ₀ := by
     have h := fdArcAngle_arcT₀ θ₀
     have h_mono : fdArcAngle t < fdArcAngle (arcT₀ θ₀) := by
       unfold fdArcAngle
       nlinarith
-    rw [h] at h_mono
-    exact h_mono
-  have h_t_ge : Real.pi / 3 ≤ fdArcAngle t := by
-    unfold fdArcAngle; nlinarith
+    rwa [h] at h_mono
+  have h_t_ge : Real.pi / 3 ≤ fdArcAngle t := by unfold fdArcAngle; nlinarith
   have h_t_Icc : fdArcAngle t ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
   have hθ₀_Icc : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have h_cos := Real.strictAntiOn_cos h_t_Icc hθ₀_Icc h_t_arc
-  linarith
+  linarith [Real.strictAntiOn_cos h_t_Icc hθ₀_Icc h_t_arc]
 
 /-- For arc z₀ and t > t₀ (right arc), `-(arc_h_arc z₀ t)` has `re > 0`. -/
 private lemma neg_arc_h_arc_right_slitPlane {θ₀ : ℝ}
@@ -286,21 +268,17 @@ private lemma neg_arc_h_arc_right_slitPlane {θ₀ : ℝ}
   simp only [Complex.neg_re, Complex.sub_re, Complex.add_re, Complex.mul_re,
     Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
     mul_zero, sub_zero, mul_one]
-  -- Goal: -(cos (fdArcAngle t) - cos θ₀) > 0, i.e., cos θ₀ > cos (fdArcAngle t)
   have hpi := Real.pi_pos
   have h_t_arc : θ₀ < fdArcAngle t := by
     have h := fdArcAngle_arcT₀ θ₀
     have h_mono : fdArcAngle (arcT₀ θ₀) < fdArcAngle t := by
       unfold fdArcAngle
       nlinarith
-    rw [h] at h_mono
-    exact h_mono
-  have h_t_le : fdArcAngle t ≤ 2 * Real.pi / 3 := by
-    unfold fdArcAngle; nlinarith
+    rwa [h] at h_mono
+  have h_t_le : fdArcAngle t ≤ 2 * Real.pi / 3 := by unfold fdArcAngle; nlinarith
   have h_t_Icc : fdArcAngle t ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
   have hθ₀_Icc : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have h_cos := Real.strictAntiOn_cos hθ₀_Icc h_t_Icc h_t_arc
-  linarith
+  linarith [Real.strictAntiOn_cos hθ₀_Icc h_t_Icc h_t_arc]
 
 /-! ### Per-segment FTC pieces -/
 
@@ -337,15 +315,11 @@ private lemma arc_arc_left_ftc {θ₀ : ℝ}
     (arc_h_arc_continuous _).continuousOn
     (fun t _ => (hasDerivAt_arc_h_arc _ t).differentiableAt)
     (by
-      have hcont : ContinuousOn
-          (fun t : ℝ => ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I))
-          (Icc (1/5) (arcT₀ θ₀ - δ)) :=
-        Continuous.continuousOn (continuous_const.mul (Complex.continuous_exp.comp
-          ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const)))
-      have h_eq : deriv (arc_h_arc (exp (↑θ₀ * I))) =
-          fun t => ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) :=
-        funext (deriv_arc_h_arc _)
-      rw [h_eq]; exact hcont)
+      rw [show deriv (arc_h_arc (exp (↑θ₀ * I))) =
+        fun t => ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) from
+          funext (deriv_arc_h_arc _)]
+      exact (continuous_const.mul (Complex.continuous_exp.comp
+        ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const))).continuousOn)
   intro t ⟨ht1, ht_lt⟩
   exact arc_h_arc_left_slitPlane h_lo h_hi ht1 (by linarith)
 
@@ -363,15 +337,11 @@ private lemma arc_arc_right_ftc {θ₀ : ℝ}
     (arc_h_arc_continuous _).continuousOn
     (fun t _ => (hasDerivAt_arc_h_arc _ t).differentiableAt)
     (by
-      have hcont : ContinuousOn
-          (fun t : ℝ => ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I))
-          (Icc (arcT₀ θ₀ + δ) (3/5)) :=
-        Continuous.continuousOn (continuous_const.mul (Complex.continuous_exp.comp
-          ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const)))
-      have h_eq : deriv (arc_h_arc (exp (↑θ₀ * I))) =
-          fun t => ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) :=
-        funext (deriv_arc_h_arc _)
-      rw [h_eq]; exact hcont)
+      rw [show deriv (arc_h_arc (exp (↑θ₀ * I))) =
+        fun t => ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) from
+          funext (deriv_arc_h_arc _)]
+      exact (continuous_const.mul (Complex.continuous_exp.comp
+        ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const))).continuousOn)
   intro t ⟨ht_gt, ht3⟩
   exact neg_arc_h_arc_right_slitPlane h_lo h_hi (by linarith) ht3
 
@@ -471,37 +441,22 @@ lies in the upper-left quadrant (re < 0, im > 0). Hence
 private lemma arc_branch_correction_45 {H : ℝ} (hH : 1 < H) (θ₀ : ℝ) :
     Complex.log (-(arc_h₃ H (exp (↑θ₀ * I)) (4/5))) -
     Complex.log (arc_h₅ H (exp (↑θ₀ * I)) (4/5)) = -(↑Real.pi * I) := by
-  have h_eq : arc_h₃ H (exp (↑θ₀ * I)) (4/5) = arc_h₅ H (exp (↑θ₀ * I)) (4/5) :=
-    arc_junction_45 H _
-  rw [h_eq]
-  -- Now compute log(-w) - log(w) where w = arc_h₅(4/5)
-  -- w has re < 0, im > 0 (upper-left quadrant)
-  -- Specifically: w = -1 - cos θ₀ + (H - sin θ₀)*I... wait
-  -- arc_h₅(4/5) = ((5*(4/5) - 9/2 - z₀.re : ℝ) : ℂ) + ((H - z₀.im : ℝ) : ℂ) * I
-  --            = ((4 - 9/2 - cos θ₀) : ℂ) + ((H - sin θ₀) : ℂ) * I
-  --            = ((-1/2 - cos θ₀) : ℂ) + ((H - sin θ₀) : ℂ) * I
+  rw [arc_junction_45 H _]
   have h_val : arc_h₅ H (exp (↑θ₀ * I)) (4/5) =
       ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) + ((H - Real.sin θ₀ : ℝ) : ℂ) * I := by
     unfold arc_h₅
-    rw [arcZ₀_re_eq, arcZ₀_im_eq]
-    have h_eq : ((5 * (4/5) - 9/2 - Real.cos θ₀ : ℝ) : ℂ) =
-        ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) := by push_cast; ring
-    rw [h_eq]
+    rw [arcZ₀_re_eq, arcZ₀_im_eq, show ((5 * (4/5) - 9/2 - Real.cos θ₀ : ℝ) : ℂ) =
+      ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) from by push_cast; ring]
   rw [h_val]
-  -- Apply Complex.log_neg_eq: log(-z) = log(z) - iπ (when z.im > 0)
   set w := ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) + ((H - Real.sin θ₀ : ℝ) : ℂ) * I with hw_def
   have h_w_im : w.im = H - Real.sin θ₀ := by
     rw [hw_def]
     simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add]
     ring
-  have h_im_pos : w.im > 0 := by
-    rw [h_w_im]; linarith [Real.sin_le_one θ₀]
-  -- For z with re < 0 and im > 0, log(-z) = log(z) - iπ
-  have h_arg_neg : (-w).arg = w.arg - Real.pi :=
-    Complex.arg_neg_eq_arg_sub_pi_of_im_pos h_im_pos
+  have h_im_pos : w.im > 0 := by rw [h_w_im]; linarith [Real.sin_le_one θ₀]
   have h_log_neg : Complex.log (-w) = Complex.log w - ↑Real.pi * I := by
-    rw [Complex.log, Complex.log, h_arg_neg, norm_neg]
+    rw [Complex.log, Complex.log, Complex.arg_neg_eq_arg_sub_pi_of_im_pos h_im_pos, norm_neg]
     push_cast
     ring
   rw [h_log_neg]
@@ -513,70 +468,49 @@ private lemma arc_ae_eq_h₀ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (0 : ℝ) (1/5) →
       (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       deriv (arc_h₀ H z₀) t / arc_h₀ H z₀ t := by
-  have h_excl : ({1/5} : Set ℝ)ᶜ ∈ ae volume :=
-    compl_mem_ae_iff.mpr (measure_singleton _)
-  filter_upwards [h_excl] with t ht_ne ht_mem
+  filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (1/5 : ℝ))] with t ht_ne ht_mem
   rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1/5)] at ht_mem
   have ht_lt : t < 1/5 :=
     lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-  have h_eq : fdBoundaryFun H t - z₀ = arc_h₀ H z₀ t :=
-    fdBoundary_sub_eq_arc_h₀ H z₀ t (le_of_lt ht_lt)
   have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h₀ H z₀ :=
     Filter.eventually_of_mem (Iio_mem_nhds ht_lt)
-      (fun s hs => fdBoundary_sub_eq_arc_h₀ H z₀ s (le_of_lt hs))
-  have h_deriv : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (arc_h₀ H z₀) t :=
-    h_evEq.deriv_eq
-  have h_deriv_sub : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (fdBoundaryFun H) t :=
-    deriv_sub_const (f := fdBoundaryFun H) _
-  rw [h_eq, ← h_deriv_sub, h_deriv, div_eq_mul_inv, mul_comm]
+      (fun s hs => fdBoundary_sub_eq_arc_h₀ H z₀ s hs.le)
+  rw [fdBoundary_sub_eq_arc_h₀ H z₀ t ht_lt.le, ← deriv_sub_const (f := fdBoundaryFun H) z₀,
+    h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
 
 private lemma arc_ae_eq_h_arc (H : ℝ) (z₀ : ℂ) {a b : ℝ} (hab : a ≤ b)
     (ha_ge : 1/5 ≤ a) (hb_le : b ≤ 3/5) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc a b →
       (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       deriv (arc_h_arc z₀) t / arc_h_arc z₀ t := by
-  have h_excl : ({a, b} : Set ℝ)ᶜ ∈ ae volume := by
-    refine compl_mem_ae_iff.mpr ?_
-    exact (Set.toFinite ({a, b} : Set ℝ)).measure_zero volume
+  have h_excl : ({a, b} : Set ℝ)ᶜ ∈ ae volume :=
+    compl_mem_ae_iff.mpr ((Set.toFinite _).measure_zero volume)
   filter_upwards [h_excl] with t ht_ne ht_mem
   rw [uIoc_of_le hab] at ht_mem
   have ht_lt_b : t < b :=
     lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_insert_iff.mpr (Or.inr h)))
-  have ht_gt_a : a < t := ht_mem.1
-  have ht1 : 1/5 < t := lt_of_le_of_lt ha_ge ht_gt_a
+  have ht1 : 1/5 < t := lt_of_le_of_lt ha_ge ht_mem.1
   have ht3_lt : t < 3/5 := lt_of_lt_of_le ht_lt_b hb_le
-  have h_eq : fdBoundaryFun H t - z₀ = arc_h_arc z₀ t :=
-    fdBoundary_sub_eq_arc_h_arc z₀ ht1 (le_of_lt ht3_lt)
   have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h_arc z₀ :=
     Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht1) (Iio_mem_nhds ht3_lt))
-      fun s ⟨hs1, hs3⟩ => fdBoundary_sub_eq_arc_h_arc z₀ hs1 (le_of_lt hs3)
-  have h_deriv : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (arc_h_arc z₀) t :=
-    h_evEq.deriv_eq
-  have h_deriv_sub : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (fdBoundaryFun H) t :=
-    deriv_sub_const (f := fdBoundaryFun H) _
-  rw [h_eq, ← h_deriv_sub, h_deriv, div_eq_mul_inv, mul_comm]
+      fun _ ⟨hs1, hs3⟩ => fdBoundary_sub_eq_arc_h_arc z₀ hs1 hs3.le
+  rw [fdBoundary_sub_eq_arc_h_arc z₀ ht1 ht3_lt.le,
+    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
 
 private lemma arc_ae_eq_h₃ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (3/5 : ℝ) (4/5) →
       (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       deriv (arc_h₃ H z₀) t / arc_h₃ H z₀ t := by
-  have h_excl : ({4/5} : Set ℝ)ᶜ ∈ ae volume :=
-    compl_mem_ae_iff.mpr (measure_singleton _)
-  filter_upwards [h_excl] with t ht_ne ht_mem
+  filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (4/5 : ℝ))] with t ht_ne ht_mem
   rw [uIoc_of_le (by norm_num : (3/5 : ℝ) ≤ 4/5)] at ht_mem
   have ht3 : 3/5 < t := ht_mem.1
   have ht4_lt : t < 4/5 :=
     lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-  have h_eq : fdBoundaryFun H t - z₀ = arc_h₃ H z₀ t :=
-    fdBoundary_sub_eq_arc_h₃ H z₀ ht3 (le_of_lt ht4_lt)
   have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h₃ H z₀ :=
     Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht3) (Iio_mem_nhds ht4_lt))
-      fun s ⟨hs3, hs4⟩ => fdBoundary_sub_eq_arc_h₃ H z₀ hs3 (le_of_lt hs4)
-  have h_deriv : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (arc_h₃ H z₀) t :=
-    h_evEq.deriv_eq
-  have h_deriv_sub : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (fdBoundaryFun H) t :=
-    deriv_sub_const (f := fdBoundaryFun H) _
-  rw [h_eq, ← h_deriv_sub, h_deriv, div_eq_mul_inv, mul_comm]
+      fun _ ⟨hs3, hs4⟩ => fdBoundary_sub_eq_arc_h₃ H z₀ hs3 hs4.le
+  rw [fdBoundary_sub_eq_arc_h₃ H z₀ ht3 ht4_lt.le,
+    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
 
 private lemma arc_ae_eq_h₅ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (4/5 : ℝ) 1 →
@@ -585,16 +519,10 @@ private lemma arc_ae_eq_h₅ (H : ℝ) (z₀ : ℂ) :
   refine ae_of_all _ (fun t ht_mem => ?_)
   rw [uIoc_of_le (by norm_num : (4/5 : ℝ) ≤ 1)] at ht_mem
   have ht4 : 4/5 < t := ht_mem.1
-  have h_eq : fdBoundaryFun H t - z₀ = arc_h₅ H z₀ t :=
-    fdBoundary_sub_eq_arc_h₅ H z₀ ht4
   have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h₅ H z₀ :=
-    Filter.eventually_of_mem (Ioi_mem_nhds ht4)
-      fun s hs => fdBoundary_sub_eq_arc_h₅ H z₀ hs
-  have h_deriv : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (arc_h₅ H z₀) t :=
-    h_evEq.deriv_eq
-  have h_deriv_sub : deriv (fun s => fdBoundaryFun H s - z₀) t = deriv (fdBoundaryFun H) t :=
-    deriv_sub_const (f := fdBoundaryFun H) _
-  rw [h_eq, ← h_deriv_sub, h_deriv, div_eq_mul_inv, mul_comm]
+    Filter.eventually_of_mem (Ioi_mem_nhds ht4) fun _ hs => fdBoundary_sub_eq_arc_h₅ H z₀ hs
+  rw [fdBoundary_sub_eq_arc_h₅ H z₀ ht4,
+    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
 
 /-! ### Telescope: the trimmed integral for arc crossings -/
 
@@ -651,7 +579,6 @@ theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
       Complex.log (arc_h₅ H z₀ 1) - Complex.log (arc_h₅ H z₀ (4/5)) := by
     rw [intervalIntegral.integral_congr_ae (arc_ae_eq_h₅ H z₀)]
     exact h_seg5.2
-  -- Integrability for splitting
   have hint_seg1 : IntervalIntegrable
       (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
       volume 0 (1/5) :=
@@ -679,7 +606,6 @@ theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
       volume (4/5) 1 :=
     h_seg5.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       ((arc_ae_eq_h₅ H z₀).mono (fun t ht hm => (ht hm).symm)))
-  -- Splits
   have h_split_left :
       ∫ t in (0 : ℝ)..(arcT₀ θ₀ - δ),
         (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
@@ -705,39 +631,30 @@ theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
       h_int_seg4, h_int_seg5,
       arc_junction_15 H z₀, arc_junction_35 H z₀, arc_junction_45 H z₀,
       arc_closed H z₀]
-  -- Use the branch correction. After arc_junction_45, the seg4 final term becomes
-  -- log(-arc_h₅(4/5)). Restate the branch correction in those terms:
   have h_branch_45 : Complex.log (-(arc_h₅ H z₀ (4/5))) -
       Complex.log (arc_h₅ H z₀ (4/5)) = -(↑Real.pi * I) := by
     have h_orig := arc_branch_correction_45 hH θ₀
-    have h_eq : arc_h₃ H z₀ (4/5) = arc_h₅ H z₀ (4/5) := arc_junction_45 H z₀
-    rwa [h_eq] at h_orig
-  -- Algebra: collect terms, junction values cancel, branch correction at 4/5 gives -π·I
+    rwa [arc_junction_45 H z₀] at h_orig
   linear_combination h_branch_45
 
 /-- Helper: for `a, b : ℂ` with both having positive real part,
 `log(a/b) = log(a) - log(b)`. -/
 private lemma log_div_of_re_pos {a b : ℂ} (ha : 0 < a.re) (hb : 0 < b.re) :
     Complex.log (a / b) = Complex.log a - Complex.log b := by
-  have ha_ne : a ≠ 0 := by intro h; simp [h] at ha
-  have hb_ne : b ≠ 0 := by intro h; simp [h] at hb
-  have hb_inv_ne : b⁻¹ ≠ 0 := inv_ne_zero hb_ne
-  rw [div_eq_mul_inv]
-  have hb_arg_ne_pi : b.arg ≠ Real.pi := by
-    intro h; have := Complex.arg_eq_pi_iff.mp h; linarith [this.1]
-  have hb_inv_arg : b⁻¹.arg = -b.arg := by
-    rw [Complex.arg_inv]; simp [hb_arg_ne_pi]
+  have ha_ne : a ≠ 0 := fun h => by simp [h] at ha
+  have hb_ne : b ≠ 0 := fun h => by simp [h] at hb
+  have hb_arg_ne_pi : b.arg ≠ Real.pi :=
+    fun h => by linarith [(Complex.arg_eq_pi_iff.mp h).1]
   have ha_abs_arg : |a.arg| < Real.pi / 2 :=
     Complex.abs_arg_lt_pi_div_two_iff.mpr (Or.inl ha)
   have hb_abs_arg : |b.arg| < Real.pi / 2 :=
     Complex.abs_arg_lt_pi_div_two_iff.mpr (Or.inl hb)
-  have hbi_abs_arg : |b⁻¹.arg| < Real.pi / 2 := by
-    rw [hb_inv_arg, abs_neg]; exact hb_abs_arg
+  have hb_inv_arg : b⁻¹.arg = -b.arg := by rw [Complex.arg_inv]; simp [hb_arg_ne_pi]
   have h_sum : a.arg + b⁻¹.arg ∈ Set.Ioc (-Real.pi) Real.pi := by
-    constructor
-    · linarith [abs_lt.mp ha_abs_arg, abs_lt.mp hbi_abs_arg]
-    · linarith [abs_lt.mp ha_abs_arg, abs_lt.mp hbi_abs_arg]
-  rw [Complex.log_mul ha_ne hb_inv_ne h_sum, Complex.log_inv b hb_arg_ne_pi]
+    rw [hb_inv_arg]
+    refine ⟨?_, ?_⟩ <;> linarith [abs_lt.mp ha_abs_arg, abs_lt.mp hb_abs_arg]
+  rw [div_eq_mul_inv, Complex.log_mul ha_ne (inv_ne_zero hb_ne) h_sum,
+    Complex.log_inv b hb_arg_ne_pi]
   ring
 
 /-! ### Ratio identity for the arc crossing -/
@@ -771,7 +688,6 @@ private lemma arc_h_arc_ratio_eq {θ₀ : ℝ} {δ : ℝ} (hδ_pos : 0 < δ)
   have h_neg : (↑(-(5 * Real.pi / 6 * δ)) * I : ℂ) =
       -(↑(5 * Real.pi / 6 * δ) * I) := by push_cast; ring
   rw [h_left, h_right, h_neg, Complex.exp_sub, Complex.exp_add, Complex.exp_neg]
-  -- Set z := exp(iθ₀), w := exp(i·5π/6·δ)
   set z := exp (↑θ₀ * I) with hz_def
   set w := exp (↑(5 * Real.pi / 6 * δ) * I) with hw_def
   have hz_ne : z ≠ 0 := exp_ne_zero _
@@ -781,7 +697,6 @@ private lemma arc_h_arc_ratio_eq {θ₀ : ℝ} {δ : ℝ} (hδ_pos : 0 < δ)
     have him := congr_arg Complex.im h
     rw [hw_def, exp_ofReal_mul_I_im, one_im] at him
     linarith [Real.sin_pos_of_pos_of_lt_pi hφ_pos hφ_lt_pi]
-  -- Goal: (z/w - z) / -(z*w - z) = w⁻¹
   have hzw_sub_ne : z * w - z ≠ 0 := by
     intro h
     apply hw_ne_one
@@ -804,58 +719,44 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
   have hpi := Real.pi_pos
   have ht₀_lo : 1/5 < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
   have ht₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
-  -- Auxiliary: log ratio → 0 (since ratio = exp(-i·5π/6·δ) → 1 → log 1 = 0)
   have h_ratio_tendsto : Tendsto
       (fun δ : ℝ => Complex.log (cexp (↑(-(5 * Real.pi / 6 * δ)) * I)))
       (𝓝[>] 0) (𝓝 0) := by
+    have h1 : (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I : ℂ) = 0 := by push_cast; ring
+    have h_exp_val : cexp (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I) = 1 := by
+      rw [h1]; exact Complex.exp_zero
+    have h_inner_cont : ContinuousAt
+        (fun δ : ℝ => cexp (↑(-(5 * Real.pi / 6 * δ)) * I)) 0 :=
+      Complex.continuous_exp.continuousAt.comp
+        ((Complex.continuous_ofReal.comp (by fun_prop)).mul continuous_const).continuousAt
     have hcont : ContinuousAt
-        (fun δ : ℝ => Complex.log (cexp (↑(-(5 * Real.pi / 6 * δ)) * I))) 0 := by
-      have h1 : (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I : ℂ) = 0 := by push_cast; ring
-      have h_exp_val : cexp (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I) = 1 := by
-        rw [h1]; exact Complex.exp_zero
-      have h_in_slit : cexp (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I) ∈ Complex.slitPlane := by
-        rw [h_exp_val]; exact Complex.one_mem_slitPlane
-      have h_inner_cont : ContinuousAt
-          (fun δ : ℝ => cexp (↑(-(5 * Real.pi / 6 * δ)) * I)) 0 :=
-        Complex.continuous_exp.continuousAt.comp
-          ((Complex.continuous_ofReal.comp (by fun_prop)).mul continuous_const).continuousAt
-      exact h_inner_cont.clog h_in_slit
+        (fun δ : ℝ => Complex.log (cexp (↑(-(5 * Real.pi / 6 * δ)) * I))) 0 :=
+      h_inner_cont.clog (h_exp_val ▸ Complex.one_mem_slitPlane)
     have h_val_zero : Complex.log (cexp (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I)) = 0 := by
-      have h1 : (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I : ℂ) = 0 := by push_cast; ring
       rw [h1, Complex.exp_zero, Complex.log_one]
-    have htendsto : Tendsto
-        (fun δ : ℝ => Complex.log (cexp (↑(-(5 * Real.pi / 6 * δ)) * I)))
-        (𝓝 0) (𝓝 (Complex.log (cexp (↑(-(5 * Real.pi / 6 * (0 : ℝ))) * I)))) := hcont.tendsto
-    rw [h_val_zero] at htendsto
-    exact htendsto.mono_left nhdsWithin_le_nhds
-  -- Need to stay within arc interval: δ must be less than min(t₀ - 1/5, 3/5 - t₀)
+    exact (h_val_zero ▸ hcont.tendsto).mono_left nhdsWithin_le_nhds
   set gap := min (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀) with h_gap_def
   have h_gap_pos : 0 < gap := lt_min (by linarith) (by linarith)
   have h_gap_le_fifth : gap ≤ 1/5 := by
-    change min (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀) ≤ 1/5
     rcases le_total (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀) with h | h
-    · rw [min_eq_left h]; linarith
-    · rw [min_eq_right h]; linarith
-  -- On a neighborhood of 0+ (below gap), the log diff equals the log of the ratio
+    · rw [h_gap_def, min_eq_left h]; linarith
+    · rw [h_gap_def, min_eq_right h]; linarith
   have h_eventually_eq : ∀ᶠ δ in (𝓝[>] (0 : ℝ)),
       Complex.log (cexp (↑(-(5 * Real.pi / 6 * δ)) * I)) =
       Complex.log (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - δ)) -
       Complex.log (-(arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ + δ))) := by
     rw [eventually_nhdsWithin_iff]
     filter_upwards [Iio_mem_nhds h_gap_pos] with δ hδ_lt hδ_pos
-    rw [mem_Ioi] at hδ_pos; rw [mem_Iio] at hδ_lt
+    rw [mem_Ioi] at hδ_pos
+    rw [mem_Iio] at hδ_lt
     have h_δ_lt_gap_l : δ < arcT₀ θ₀ - 1/5 := lt_of_lt_of_le hδ_lt (min_le_left _ _)
     have h_δ_lt_gap_r : δ < 3/5 - arcT₀ θ₀ := lt_of_lt_of_le hδ_lt (min_le_right _ _)
     have h_δ_lt_fifth : δ < 1/5 := lt_of_lt_of_le hδ_lt h_gap_le_fifth
     have hδ_small : δ * (5 * Real.pi / 6) < Real.pi := by
-      have : δ * (5 * Real.pi / 6) < (1/5) * (5 * Real.pi / 6) :=
+      have hlt : δ * (5 * Real.pi / 6) < (1/5) * (5 * Real.pi / 6) :=
         mul_lt_mul_of_pos_right h_δ_lt_fifth (by positivity)
-      have h_simp : (1/5 : ℝ) * (5 * Real.pi / 6) = Real.pi / 6 := by ring
-      linarith [h_simp, Real.pi_pos]
-    have h_ratio := arc_h_arc_ratio_eq (θ₀ := θ₀) hδ_pos hδ_small
-    -- Verify the left and right arc endpoints are in slitPlane via re > 0
+      linarith [show (1/5 : ℝ) * (5 * Real.pi / 6) = Real.pi / 6 from by ring]
     have h_a_re : 0 < (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - δ)).re := by
-      -- Directly prove: re = cos(fdArcAngle (t₀-δ)) - cos(θ₀) > 0
       unfold arc_h_arc
       rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin]
       simp only [Complex.sub_re, Complex.add_re, Complex.mul_re,
@@ -870,15 +771,13 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
       have h_t_Icc : fdArcAngle (arcT₀ θ₀ - δ) ∈ Icc (0 : ℝ) Real.pi :=
         ⟨by linarith, by linarith⟩
       have hθ₀_Icc : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-      have h_cos := Real.strictAntiOn_cos h_t_Icc hθ₀_Icc h_t_arc
-      linarith
+      linarith [Real.strictAntiOn_cos h_t_Icc hθ₀_Icc h_t_arc]
     have h_b_re : 0 < (-(arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ + δ))).re := by
       unfold arc_h_arc
       rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin]
       simp only [Complex.neg_re, Complex.sub_re, Complex.add_re, Complex.mul_re,
         Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
         mul_zero, sub_zero, mul_one]
-      have hpi := Real.pi_pos
       have h_t_arc : θ₀ < fdArcAngle (arcT₀ θ₀ + δ) := by
         have h := fdArcAngle_arcT₀ θ₀
         unfold fdArcAngle at h ⊢
@@ -888,10 +787,8 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
       have h_t_Icc : fdArcAngle (arcT₀ θ₀ + δ) ∈ Icc (0 : ℝ) Real.pi :=
         ⟨by linarith, by linarith⟩
       have hθ₀_Icc : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-      have h_cos := Real.strictAntiOn_cos hθ₀_Icc h_t_Icc h_t_arc
-      linarith
-    rw [← log_div_of_re_pos h_a_re h_b_re]
-    rw [h_ratio]
+      linarith [Real.strictAntiOn_cos hθ₀_Icc h_t_Icc h_t_arc]
+    rw [← log_div_of_re_pos h_a_re h_b_re, arc_h_arc_ratio_eq hδ_pos hδ_small]
   exact h_ratio_tendsto.congr' h_eventually_eq
 
 /-! ### `arcsinDelta` tendsto helper -/
@@ -899,11 +796,10 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
 private lemma arc_arcsinDelta_tendsto :
     Tendsto arcsinDelta (𝓝[>] 0) (𝓝[>] 0) := by
   apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
-  · have : arcsinDelta = fun ε => 12 / (5 * Real.pi) * Real.arcsin (ε / 2) := rfl
-    rw [this]
+  · change Tendsto (fun ε => 12 / (5 * Real.pi) * Real.arcsin (ε / 2)) _ _
     have hcont : ContinuousAt (fun ε : ℝ =>
-        12 / (5 * Real.pi) * Real.arcsin (ε / 2)) 0 := by
-      exact continuousAt_const.mul
+        12 / (5 * Real.pi) * Real.arcsin (ε / 2)) 0 :=
+      continuousAt_const.mul
         (Real.continuous_arcsin.continuousAt.comp (continuousAt_id.div_const 2))
     convert hcont.tendsto.mono_left nhdsWithin_le_nhds using 1
     simp only [Real.arcsin_zero, mul_zero, zero_div]
@@ -922,15 +818,12 @@ private lemma arc_E_tendsto {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3) :
     Tendsto (arc_E θ₀) (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) := by
   unfold arc_E
-  have h_inner := arc_log_diff_tendsto h_lo h_hi
   have h_comp : Tendsto (fun ε : ℝ =>
       Complex.log (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - arcsinDelta ε)) -
       Complex.log (-(arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ + arcsinDelta ε))))
       (𝓝[>] 0) (𝓝 0) :=
-    h_inner.comp arc_arcsinDelta_tendsto
-  have := h_comp.add (tendsto_const_nhds : Tendsto (fun _ : ℝ => -(↑Real.pi * I))
-    (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))))
-  simpa using this
+    (arc_log_diff_tendsto h_lo h_hi).comp arc_arcsinDelta_tendsto
+  simpa using h_comp.add (tendsto_const_nhds (x := -(↑Real.pi * I)))
 
 /-! ### Final assembly: the ArcFTCHyp at a generic arc point -/
 
@@ -960,7 +853,7 @@ private lemma arc_h_ftc_helper {H : ℝ} (hH : 1 < H)
   unfold arc_E
   exact fdBoundary_ftc_telescope_arc_aux hH h_lo h_hi h_δ_pos h_δ_lt_lo h_δ_lt_hi
 
-set_option maxHeartbeats 2000000 in
+set_option maxHeartbeats 4000000 in
 private lemma arc_hint_left_helper {H : ℝ} (_hH : 1 < H)
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
@@ -992,7 +885,7 @@ private lemma arc_hint_left_helper {H : ℝ} (_hH : 1 < H)
         (fun t ht hm => (ht hm).symm)))
   exact hint_seg1.trans hint_arc_left
 
-set_option maxHeartbeats 4000000 in
+set_option maxHeartbeats 8000000 in
 private lemma arc_hint_right_helper {H : ℝ} (hH : 1 < H)
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)

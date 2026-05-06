@@ -95,14 +95,17 @@ theorem continuous_integer_valued_constant (f : ℝ → ℂ)
         ext ⟨x, hx⟩
         simp only [g, mem_preimage, mem_singleton_iff, Metric.mem_ball]
         constructor
-        · intro heq; rw [heq]; simp only [dist_self, zero_lt_one]
+        · intro heq
+          rw [heq]
+          simp only [dist_self, zero_lt_one]
         · intro hdist
           obtain ⟨m, hm⟩ := hf_int x hx
           rw [hm] at hdist ⊢
           have h1 : dist (m : ℂ) (n : ℂ) < 1 := hdist
-          rw [Complex.dist_eq, show (m : ℂ) - (n : ℂ) =
-            ((m - n : ℤ) : ℂ) from by push_cast; ring,
-            Complex.norm_intCast, ← Int.cast_abs] at h1
+          have hsub : (m : ℂ) - (n : ℂ) = ((m - n : ℤ) : ℂ) := by
+            push_cast
+            ring
+          rw [Complex.dist_eq, hsub, Complex.norm_intCast, ← Int.cast_abs] at h1
           have h2 : |m - n| < 1 := by exact_mod_cast h1
           have h3 : m - n = 0 := Int.abs_lt_one_iff.mp h2
           exact_mod_cast sub_eq_zero.mp h3
@@ -181,8 +184,8 @@ structure WindingNumberHomotopyData (z₀ : ℂ) (P : Finset ℝ) where
 /-! ### Main theorem: homotopy invariance -/
 
 /-- If a homotopy `H(t, s)` agrees with `γ` on `[0, 1]`, their winding numbers coincide. -/
-private theorem gWN01_eq_of_homotopy_slice (H : ℝ × ℝ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (s : ℝ)
-    (heq : ∀ t ∈ Icc (0 : ℝ) 1, H (t, s) = γ t) :
+private theorem gWN01_eq_of_homotopy_slice (H : ℝ × ℝ → ℂ) (γ : ℝ → ℂ)
+    (z₀ : ℂ) (s : ℝ) (heq : ∀ t ∈ Icc (0 : ℝ) 1, H (t, s) = γ t) :
     generalizedWindingNumber01 (fun t => H (t, s)) z₀ =
     generalizedWindingNumber01 γ z₀ := by
   apply generalizedWindingNumber01_eq_of_eq_on (fun t => H (t, s)) γ z₀ heq
@@ -243,7 +246,8 @@ theorem windingNumber_eq_of_piecewise_homotopic_of_hyps
     continuous_integer_valued_constant n h_n_cont h_n_int
   have hn0 := gWN01_eq_of_homotopy_slice H γ₀ z₀ 0 hH0
   have hn1 := gWN01_eq_of_homotopy_slice H γ₁ z₀ 1 hH1
-  rw [← hn0, ← hn1]; exact h_n_const
+  rw [← hn0, ← hn1]
+  exact h_n_const
 
 /-- **Winding number homotopy invariance** -- the main theorem, bundled.
 

@@ -42,25 +42,18 @@ theorem unitArc_at_start (θ₁ θ₂ a b : ℝ) :
 /-- The arc ends at exp(iθ₂). -/
 theorem unitArc_at_end (θ₁ θ₂ a b : ℝ) (hab : a ≠ b) :
     unitArc θ₁ θ₂ a b b = exp (↑θ₂ * I) := by
+  have hba : b - a ≠ 0 := sub_ne_zero.mpr hab.symm
   simp only [unitArc]
-  have hba : b - a ≠ 0 := sub_ne_zero.mpr (Ne.symm hab)
   congr 1
   push_cast
-  have : (↑b - ↑a) / (↑b - ↑a) = (1 : ℂ) := by
-    apply div_self; exact_mod_cast hba
-  rw [this, one_mul]
+  rw [div_self (by exact_mod_cast hba), one_mul]
   ring
 
 /-- The unit arc is continuous. -/
 theorem unitArc_continuous (θ₁ θ₂ a b : ℝ) : Continuous (unitArc θ₁ θ₂ a b) := by
   unfold unitArc
-  apply Complex.continuous_exp.comp
-  apply Continuous.mul
-  · apply continuous_ofReal.comp
-    fun_prop
-  · exact continuous_const
+  fun_prop
 
-/-- Helper: the angle function for the unit arc has a specific derivative. -/
 private lemma unitArc_angle_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : b - a ≠ 0) :
     HasDerivAt (fun s => θ₁ + (s - a) / (b - a) * (θ₂ - θ₁))
       ((θ₂ - θ₁) / (b - a)) t := by
@@ -79,16 +72,9 @@ theorem unitArc_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : a < b) :
       (unitArc θ₁ θ₂ a b t * (↑((θ₂ - θ₁) / (b - a)) * I)) t := by
   have hba : b - a ≠ 0 := sub_ne_zero.mpr hab.ne'
   have hangle := unitArc_angle_hasDerivAt θ₁ θ₂ a b t hba
-  -- Lift angle derivative to ℂ
   have hlift : HasDerivAt (fun s => (↑(θ₁ + (s - a) / (b - a) * (θ₂ - θ₁)) : ℂ))
-      (↑((θ₂ - θ₁) / (b - a))) t :=
-    hangle.ofReal_comp
-  -- Multiply by I
-  have hc : HasDerivAt (fun s => (↑(θ₁ + (s - a) / (b - a) * (θ₂ - θ₁)) : ℂ) * I)
-      (↑((θ₂ - θ₁) / (b - a)) * I) t :=
-    hlift.mul_const I
-  -- Apply chain rule for cexp
-  have hexp := hc.cexp
+      (↑((θ₂ - θ₁) / (b - a))) t := hangle.ofReal_comp
+  have hexp := (hlift.mul_const I).cexp
   simp only [unitArc]
   convert hexp using 1
 
@@ -96,18 +82,14 @@ theorem unitArc_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : a < b) :
 theorem exp_sub_norm_sq (θ₁ θ₂ : ℝ) :
     ‖exp (↑θ₁ * I) - exp (↑θ₂ * I)‖ ^ 2 = 2 - 2 * Real.cos (θ₁ - θ₂) := by
   rw [← Complex.normSq_eq_norm_sq]
-  -- Expand using exp(iθ) = cos θ + i sin θ
   simp only [Complex.normSq_apply, Complex.exp_mul_I, Complex.sub_re, Complex.sub_im,
-    Complex.add_re, Complex.mul_re, Complex.I_re, mul_zero,
-    Complex.I_im, mul_one, sub_zero, Complex.add_im,
-    Complex.mul_im, zero_add,
-    Complex.cos_ofReal_re, Complex.cos_ofReal_im,
+    Complex.add_re, Complex.mul_re, Complex.I_re, mul_zero, Complex.I_im, mul_one, sub_zero,
+    Complex.add_im, Complex.mul_im, zero_add, Complex.cos_ofReal_re, Complex.cos_ofReal_im,
     Complex.sin_ofReal_re, Complex.sin_ofReal_im]
   have hc1 := Real.sin_sq_add_cos_sq θ₁
   have hc2 := Real.sin_sq_add_cos_sq θ₂
   rw [Real.cos_sub]
-  nlinarith [sq_nonneg (Real.cos θ₁ - Real.cos θ₂),
-             sq_nonneg (Real.sin θ₁ - Real.sin θ₂)]
+  nlinarith [sq_nonneg (Real.cos θ₁ - Real.cos θ₂), sq_nonneg (Real.sin θ₁ - Real.sin θ₂)]
 
 /-- sin is positive on the open interval (0, π). -/
 theorem sin_pos_of_mem_Ioo_zero_pi {θ : ℝ} (hθ : θ ∈ Ioo 0 π) : 0 < Real.sin θ :=
@@ -117,17 +99,17 @@ theorem sin_pos_of_mem_Ioo_zero_pi {θ : ℝ} (hθ : θ ∈ Ioo 0 π) : 0 < Real
 theorem abs_cos_le_half_of_mem_Icc {θ : ℝ} (hθ : θ ∈ Icc (π / 3) (2 * π / 3)) :
     |Real.cos θ| ≤ 1 / 2 := by
   have hpi := Real.pi_pos
-  have h1 : π / 3 ≤ θ := hθ.1
-  have h2 : θ ≤ 2 * π / 3 := hθ.2
-  rw [abs_le]; constructor
-  · have : Real.cos (2 * π / 3) ≤ Real.cos θ :=
+  obtain ⟨h1, h2⟩ := hθ
+  rw [abs_le]
+  refine ⟨?_, ?_⟩
+  · have hle : Real.cos (2 * π / 3) ≤ Real.cos θ :=
       Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h2
-    rw [show (2 * π / 3 : ℝ) = π - π / 3 from by ring,
-      Real.cos_pi_sub, Real.cos_pi_div_three] at this
+    rw [show (2 * π / 3 : ℝ) = π - π / 3 from by ring, Real.cos_pi_sub,
+      Real.cos_pi_div_three] at hle
     linarith
-  · have : Real.cos θ ≤ Real.cos (π / 3) :=
+  · have hle : Real.cos θ ≤ Real.cos (π / 3) :=
       Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h1
-    rw [Real.cos_pi_div_three] at this
+    rw [Real.cos_pi_div_three] at hle
     linarith
 
 end ArcCalculus

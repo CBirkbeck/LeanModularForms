@@ -59,42 +59,28 @@ The hypotheses still required (until full automation):
   Cauchy + null-homology for the now-analytic `f - laurentPolarPartTotal`.
 * Standard integrability conditions on the cpvIntegrandOn at each ε.
 * `hPV_sing` for the simple-pole part (typically from `B-6`). -/
-theorem hw_3_3_tight
-    {U : Set ℂ} (hU : IsOpen U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
+theorem hw_3_3_tight {U : Set ℂ} (hU : IsOpen U) (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S)) (γ : PwC1Immersion x x)
+    (h_null : IsNullHomologous γ U) (hMero : ∀ s ∈ S, MeromorphicAt f s)
     (hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (hCondB : SatisfiesConditionB γ f S)
-    -- Cancellation of the (definitionally-extracted) decomposition pieces:
-    (h_polar_cancel : HasCauchyPVOn S
-      (laurentHigherOrderPolar hCondB) γ.toPiecewiseC1Path 0)
-    (h_holo_cancel : HasCauchyPVOn S
-      (laurentHolomorphicRemainder hCondB) γ.toPiecewiseC1Path 0)
-    (hI_polar : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S (laurentHigherOrderPolar hCondB)
-        γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
-    (hI_holo : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S (laurentHolomorphicRemainder hCondB)
-        γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
-    (hPV_sing : HasCauchyPVOn S
+    (h_polar_cancel : HasCauchyPVOn S (laurentHigherOrderPolar hCondB) γ.toPiecewiseC1Path 0)
+    (h_holo_cancel : HasCauchyPVOn S (laurentHolomorphicRemainder hCondB) γ.toPiecewiseC1Path 0)
+    (hI_polar : ∀ ε > 0, IntervalIntegrable (fun t => cpvIntegrandOn S
+      (laurentHigherOrderPolar hCondB) γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
+    (hI_holo : ∀ ε > 0, IntervalIntegrable (fun t => cpvIntegrandOn S
+      (laurentHolomorphicRemainder hCondB) γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
+    (hPV_sing : HasCauchyPVOn S (principalPartSum S (fun s => residue f s)) γ.toPiecewiseC1Path
+      (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s))
+    (hI_sing : ∀ ε > 0, IntervalIntegrable (fun t => cpvIntegrandOn S
       (principalPartSum S (fun s => residue f s))
-      γ.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s))
-    (hI_sing : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
-        γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1) :
-    HasCauchyPVOn S f γ.toPiecewiseC1Path
-      (2 * ↑Real.pi * I * ∑ s ∈ S,
-        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
-  generalizedResidueTheorem_higherOrder_under_B_closed hU S hS_in_U f hf γ
-    h_null hMero hCondA hCondB
-    (laurentHigherOrderPolar hCondB)
-    (laurentHolomorphicRemainder hCondB)
-    (f_minus_pp_eq_higherOrder_plus_holo hCondB)
-    h_polar_cancel h_holo_cancel hI_polar hI_holo hPV_sing hI_sing
+      γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1) :
+    HasCauchyPVOn S f γ.toPiecewiseC1Path (2 * ↑Real.pi * I *
+      ∑ s ∈ S, generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
+  generalizedResidueTheorem_higherOrder_under_B_closed hU S hS_in_U f hf γ h_null hMero hCondA
+    hCondB (laurentHigherOrderPolar hCondB) (laurentHolomorphicRemainder hCondB)
+    (f_minus_pp_eq_higherOrder_plus_holo hCondB) h_polar_cancel h_holo_cancel hI_polar hI_holo
+    hPV_sing hI_sing
 
 end LeanModularForms
 

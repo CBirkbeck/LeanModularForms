@@ -168,9 +168,6 @@ theorem norm_sub_one_le_im_sub_sqrt3 {z₀ : ℂ} (hz_re : z₀.re = 1/2)
     Real.mul_self_sqrt (by norm_num : (3 : ℝ) ≥ 0)
   have h_nn_rhs : 0 ≤ z₀.im + 1 - Real.sqrt 3 / 2 := by
     nlinarith [h_sqrt3_sq, hc_lo, Real.sqrt_nonneg 3]
-  -- It suffices to show `‖z₀‖² ≤ (z₀.im + 1 - √3/2)²`, since both sides are
-  -- nonneg. Expanding, this reduces to `√3 - 3/2 ≤ z₀.im * (2 - √3)`, which
-  -- follows from `z₀.im ≥ √3/2`.
   have h_sq_ineq : ‖z₀‖ ^ 2 ≤ (z₀.im + 1 - Real.sqrt 3 / 2) ^ 2 := by
     have h_norm_sq : ‖z₀‖ ^ 2 = 1/4 + z₀.im ^ 2 := by
       rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hz_re]; ring

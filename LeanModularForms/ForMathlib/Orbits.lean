@@ -45,23 +45,30 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k)
 theorem ord_smul_eqFM (g : SL(2, ℤ)) (p : ℍ) :
     orderOfVanishingAt' (⇑f) (g • p) = orderOfVanishingAt' (⇑f) p := by
   have hg_mem : g ∈ Subgroup.closure {ModularGroup.S, ModularGroup.T} := by
-    rw [SpecialLinearGroup.SL2Z_generators]; exact Subgroup.mem_top g
+    rw [SpecialLinearGroup.SL2Z_generators]
+    exact Subgroup.mem_top g
   suffices h : ∀ q : ℍ, orderOfVanishingAt' (⇑f) (g • q) =
       orderOfVanishingAt' (⇑f) q from h p
-  revert g hg_mem
-  intro g hg_mem
+  clear p
   induction hg_mem using Subgroup.closure_induction with
   | mem x hx =>
     intro q
     rcases hx with rfl | rfl
     · exact ord_S_eq f q
-    · rw [UpperHalfPlane.modular_T_smul]; exact ord_add_one_eq f q
+    · rw [UpperHalfPlane.modular_T_smul]
+      exact ord_add_one_eq f q
   | one =>
-    intro q; simp only [one_smul]
+    intro q
+    simp only [one_smul]
   | mul x y _ _ ihx ihy =>
-    intro q; rw [mul_smul, ihx (y • q)]; exact ihy q
+    intro q
+    rw [mul_smul, ihx (y • q)]
+    exact ihy q
   | inv x _ ihx =>
-    intro q; have := ihx (x⁻¹ • q); rw [smul_inv_smul] at this; exact this.symm
+    intro q
+    have := ihx (x⁻¹ • q)
+    rw [smul_inv_smul] at this
+    exact this.symm
 
 /-! ### OrbitFM definitions -/
 
@@ -76,7 +83,8 @@ def ordOrbitFM (q : OrbitFM) : ℤ :=
   Quotient.liftOn' q (fun p => orderOfVanishingAt' (⇑f) p) (fun a b hab => by
       rw [MulAction.orbitRel_apply] at hab
       obtain ⟨g, hg⟩ := hab
-      rw [← hg]; exact ord_smul_eqFM f g b)
+      rw [← hg]
+      exact ord_smul_eqFM f g b)
 
 @[simp]
 theorem ordOrbit_mkFM (p : ℍ) : ordOrbitFM f (orbFM p) = orderOfVanishingAt' (⇑f) p := rfl
@@ -117,7 +125,7 @@ private theorem G_analyticAtFM (p : ℍ) :
 
 private theorem G_eval_eq_fFM (p : ℍ) :
     (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (p : ℂ) = f p := by
-  simp only []
+  beta_reduce
   split_ifs with h
   · congr 1
   · exact absurd p.im_pos h
@@ -130,13 +138,16 @@ theorem orderOfVanishingAt'_eq_zero_of_ne_zero' (p : ℍ) (hp : f p ≠ 0) :
   unfold orderOfVanishingAt'
   have h_nf : MeromorphicNFAt _ (p : ℂ) := AnalyticAt.meromorphicNFAt (G_analyticAtFM f p)
   have hGp : (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (p : ℂ) ≠ 0 := by
-    rw [G_eval_eq_fFM]; exact hp
-  rw [h_nf.meromorphicOrderAt_eq_zero_iff.mpr hGp]; rfl
+    rw [G_eval_eq_fFM]
+    exact hp
+  rw [h_nf.meromorphicOrderAt_eq_zero_iff.mpr hGp]
+  rfl
 
 /-- `orderOfVanishingAt' f p ≠ 0` implies `f p = 0`. -/
 theorem eq_zero_of_orderOfVanishingAt'_ne_zero' (p : ℍ)
     (hp : orderOfVanishingAt' (⇑f) p ≠ 0) : f p = 0 := by
-  by_contra h; exact hp (orderOfVanishingAt'_eq_zero_of_ne_zero' f p h)
+  by_contra h
+  exact hp (orderOfVanishingAt'_eq_zero_of_ne_zero' f p h)
 
 /-- `f ≠ 0` and `f p = 0` implies `orderOfVanishingAt' f p ≠ 0`. -/
 theorem orderOfVanishingAt'_ne_zero_of_eq_zeroFM (hf : f ≠ 0) (p : ℍ) (hp : f p = 0) :
@@ -147,7 +158,8 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zeroFM (hf : f ≠ 0) (p : ℍ) (hp : 
     (G_analyticAtFM f p).meromorphicNFAt
   have h_ord_ne : meromorphicOrderAt
       (fun w : ℂ => if h : 0 < w.im then f ⟨w, h⟩ else 0) (↑p) ≠ (0 : WithTop ℤ) := by
-    intro h0; apply h_nf.meromorphicOrderAt_eq_zero_iff.mp h0
+    intro h0
+    apply h_nf.meromorphicOrderAt_eq_zero_iff.mp h0
     split_ifs with h
     · exact_mod_cast hp
     · exact absurd p.im_pos h
@@ -157,8 +169,11 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zeroFM (hf : f ≠ 0) (p : ℍ) (hp : 
       {w | 0 < w.im} := fun w hw => G_analyticAtFM f ⟨w, hw⟩
   have h_preconn : IsPreconnected {w : ℂ | 0 < w.im} :=
     ((convex_halfSpace_im_gt 0).isConnected
-      ⟨I, by simp only [Set.mem_setOf_eq, I_im]; exact one_pos⟩).isPreconnected
-  apply hf; ext z
+      ⟨I, by
+        simp only [Set.mem_setOf_eq, I_im]
+        exact one_pos⟩).isPreconnected
+  apply hf
+  ext z
   change f z = 0
   exact (G_eval_eq_fFM f z).symm.trans
     (h_analOn.eqOn_zero_of_preconnected_of_frequently_eq_zero
@@ -169,15 +184,18 @@ theorem orderOfVanishingAt'_ne_zero_of_eq_zeroFM (hf : f ≠ 0) (p : ℍ) (hp : 
 private theorem modularFormCompOfComplexFM_eq' (p : ℍ) :
     modularFormCompOfComplex f (p : ℂ) = f p := by
   simp only [modularFormCompOfComplex, Function.comp_apply]
-  congr 1; rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
+  congr 1
+  rw [UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
 
 theorem fd_im_gt_halfFM (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
-  by_contra h_le; push Not at h_le
+  by_contra h_le
+  push Not at h_le
   obtain ⟨hnormSq, habs_re⟩ := hp
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
   have him_bridge : p.im = (↑p : ℂ).im := rfl
   have h_nsq : 1 ≤ (p : ℂ).re * (p : ℂ).re + (p : ℂ).im * (p : ℂ).im := by
-    have := normSq_apply (↑p : ℂ); linarith [this]
+    have := normSq_apply (↑p : ℂ)
+    linarith [this]
   have h_re_sq : (p : ℂ).re * (p : ℂ).re ≤ 1/4 := by
     have hre := abs_le.mp habs_re
     nlinarith [mul_self_nonneg (p : ℂ).re, hre_bridge]
@@ -217,7 +235,7 @@ theorem finite_zeros_in_fdFM (hf : f ≠ 0) :
     fun _ _ h => UpperHalfPlane.ext_iff.mpr h
   apply (h_fin.preimage (h_coe_inj.injOn)).subset
   intro p ⟨hp_fd, hp_zero⟩
-  show (p : ℂ) ∈ {z ∈ fdBox (H₀ + 1) | modularFormCompOfComplex f z = 0}
+  change (p : ℂ) ∈ {z ∈ fdBox (H₀ + 1) | modularFormCompOfComplex f z = 0}
   have habs_re := hp_fd.2
   have him_gt := fd_im_gt_halfFM p hp_fd
   have hre_bridge : UpperHalfPlane.re p = (↑p : ℂ).re := rfl
@@ -225,7 +243,8 @@ theorem finite_zeros_in_fdFM (hf : f ≠ 0) :
   constructor
   · simp only [fdBox, Set.mem_setOf_eq]
     refine ⟨by linarith [hre_bridge], by linarith [hre_bridge], him_gt, ?_⟩
-    by_contra h_ge; push Not at h_ge
+    by_contra h_ge
+    push Not at h_ge
     have : H₀ ≤ (↑p : ℂ).im := by linarith
     exact absurd hp_zero (hH₀_no_zeros p this)
   · exact (modularFormCompOfComplexFM_eq' f p).symm ▸ hp_zero
@@ -240,11 +259,14 @@ theorem finite_support_ordOrbitFM (hf : f ≠ 0) :
   have h_image : rep '' S ⊆
       {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt' (⇑f) p ≠ 0} := by
     rintro _ ⟨q, hq, rfl⟩
-    exact ⟨(hrep q).2, by rw [← ordOrbit_mkFM f (rep q), (hrep q).1]; exact hq⟩
+    exact ⟨(hrep q).2, by
+      rw [← ordOrbit_mkFM f (rep q), (hrep q).1]
+      exact hq⟩
   have h_inj : Set.InjOn rep S := by
     intro q₁ _ q₂ _ h
     have : orbFM (rep q₁) = orbFM (rep q₂) := congrArg orbFM h
-    rw [(hrep q₁).1, (hrep q₂).1] at this; exact this
+    rw [(hrep q₁).1, (hrep q₂).1] at this
+    exact this
   exact (finite_zeros_in_fdFM f hf).subset h_image |>.of_finite_image h_inj
 
 /-- The set of non-elliptic orbits with nonzero `ordOrbitFM` is finite. -/
@@ -264,25 +286,30 @@ noncomputable def s₀FM (hf : f ≠ 0) : Finset ℍ := (finite_zeros_in_fdFM f 
 
 /-- Every point in `s₀` lies in the fundamental domain `𝒟`. -/
 theorem s₀FM_mem_fd (hf : f ≠ 0) : ∀ p ∈ s₀FM f hf, p ∈ 𝒟 := by
-  intro p hp; rw [s₀FM, Set.Finite.mem_toFinset] at hp; exact hp.1
+  intro p hp
+  rw [s₀FM, Set.Finite.mem_toFinset] at hp
+  exact hp.1
 
 /-- `s₀` captures all points in `𝒟` with nonzero order of vanishing. -/
 theorem s₀FM_complete (hf : f ≠ 0) :
     ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ s₀FM f hf := by
-  intro p hp hord; rw [s₀FM, Set.Finite.mem_toFinset]; exact ⟨hp, hord⟩
+  intro p hp hord
+  rw [s₀FM, Set.Finite.mem_toFinset]
+  exact ⟨hp, hord⟩
 
 /-! ### Elliptic orbit T-equivalence -/
 
 /-- The orbit of `ρ+1` equals the orbit of `ρ`. -/
 theorem orb_rho_plus_one_eq_orb_rhoFM :
     orbFM ellipticPointRhoPlusOne' = (orhoFM : OrbitFM) := by
-  show Quotient.mk'' ellipticPointRhoPlusOne' = Quotient.mk'' ellipticPointRho'
+  change Quotient.mk'' ellipticPointRhoPlusOne' = Quotient.mk'' ellipticPointRho'
   rw [Quotient.eq'']
   rw [MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
   exact ⟨ModularGroup.T, by
     rw [UpperHalfPlane.modular_T_smul]
     ext
     simp only [ellipticPointRho', ellipticPointRhoPlusOne', UpperHalfPlane.coe_vadd]
-    push_cast; ring⟩
+    push_cast
+    ring⟩
 
 end

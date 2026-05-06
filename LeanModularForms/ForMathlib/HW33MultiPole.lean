@@ -54,21 +54,13 @@ theorem hasCauchyPVOn_extend_of_avoid
   apply intervalIntegral.integral_congr
   intro t ht
   rw [Set.uIcc_of_le (zero_le_one' ℝ)] at ht
-  -- For t ∈ [0,1] and ε < δ:
-  -- cpvIntegrandOn S = 0 ↔ ∃ s ∈ S, ‖γ t - s‖ ≤ ε
-  -- cpvIntegrandOn T = 0 ↔ ∃ s' ∈ T, ‖γ t - s'‖ ≤ ε
-  -- The latter is iff (∃ s ∈ S, ...) ∨ (∃ s' ∈ T \ S, ...)
-  -- For s' ∈ T \ S: ‖γ t - s'‖ ≥ δ > ε, so the second disjunct is false
-  -- Hence cpvIntegrandOn T = cpvIntegrandOn S
   simp only [cpvIntegrandOn]
   congr 1
-  · -- if-condition: same set membership
-    refine propext ⟨fun ⟨s, hs, hs_le⟩ => ⟨s, hST hs, hs_le⟩, ?_⟩
+  · refine propext ⟨fun ⟨s, hs, hs_le⟩ => ⟨s, hST hs, hs_le⟩, ?_⟩
     rintro ⟨s, hs, hs_le⟩
     by_cases h_in_S : s ∈ S
     · exact ⟨s, h_in_S, hs_le⟩
-    · -- s ∈ T \ S — use avoidance
-      exfalso
+    · exfalso
       have h_far : δ ≤ ‖γ.extend t - s‖ := by
         simpa [PiecewiseC1Path.extendedPath_eq] using
           h_avoid s (Finset.mem_sdiff.mpr ⟨hs, h_in_S⟩) t ht
@@ -118,7 +110,6 @@ theorem hasCauchyPVOn_multipole_sum_pow_inv
     HasCauchyPVOn S
       (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
   classical
-  -- Each singleton lifts to S via extension, then is scaled by c s
   have h_each_scaled : ∀ s ∈ S,
       HasCauchyPVOn S (fun z => c s / (z - s) ^ k) γ 0 := fun s hs => by
     have h := (hasCauchyPVOn_multipole_pow_inv_of_singleton S hs γ hδ_pos

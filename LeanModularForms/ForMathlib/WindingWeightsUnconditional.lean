@@ -44,7 +44,8 @@ construction. -/
 def arcDelta (ε : ℝ) : ℝ := 6 * ε / (5 * Real.pi)
 
 theorem arcDelta_pos {ε : ℝ} (hε : 0 < ε) : 0 < arcDelta ε := by
-  unfold arcDelta; positivity
+  unfold arcDelta
+  positivity
 
 theorem arcDelta_lt_one_fifth {ε : ℝ} (hε_lt : ε < 1/2) :
     arcDelta ε < 1/5 := by
@@ -55,7 +56,9 @@ theorem arcDelta_lt_one_fifth {ε : ℝ} (hε_lt : ε < 1/2) :
 
 theorem half_angle_factor (ε : ℝ) :
     5 * Real.pi / 12 * arcDelta ε = ε / 2 := by
-  unfold arcDelta; field_simp; ring
+  unfold arcDelta
+  field_simp
+  ring
 
 /-! ## Part 2: Arc near bound for `i` -/
 
@@ -71,7 +74,8 @@ theorem arc_near_at_I (H : ℝ) {ε : ℝ} (hε_lt : ε < 1/2)
   have hle' := abs_le.mp ht
   rw [fdBoundaryFun_arc_dist_I H t (by nlinarith [hle'.1, hδ]) (by linarith [hle.2]),
     show (fdArcAngle t - Real.pi / 2) / 2 = 5 * (t - 2/5) * Real.pi / 12 from by
-      simp only [fdArcAngle]; ring]
+      simp only [fdArcAngle]
+      ring]
   set α := 5 * (t - 2/5) * Real.pi / 12
   have hα_abs : |α| = 5 * Real.pi / 12 * |t - 2/5| := by
     rw [show α = 5 * Real.pi / 12 * (t - 2/5) from by ring, abs_mul, abs_of_pos (by positivity)]
@@ -93,7 +97,8 @@ theorem hasWindingNumber_atI_of_scd
     (hL : D.L = -(↑Real.pi * I)) :
     HasGeneralizedWindingNumber γ I (-1/2) := by
   convert D.hasWindingNumber using 1
-  rw [hL]; field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
+  rw [hL]
+  field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
 
 /-- Winding number at `ρ` is `-1/6` from `SingleCrossingData` with limit `-(πi/3)`. -/
 theorem hasWindingNumber_atRho_of_scd
@@ -101,7 +106,9 @@ theorem hasWindingNumber_atRho_of_scd
     (hL : D.L = -(↑Real.pi / 3 * I)) :
     HasGeneralizedWindingNumber γ ellipticPointRho (-1/6) := by
   convert D.hasWindingNumber using 1
-  rw [hL]; field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]; ring
+  rw [hL]
+  field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
+  ring
 
 /-- Winding number at `ρ+1` is `-1/6` from `SingleCrossingData` with limit `-(πi/3)`. -/
 theorem hasWindingNumber_atRhoPlusOne_of_scd
@@ -109,7 +116,9 @@ theorem hasWindingNumber_atRhoPlusOne_of_scd
     (hL : D.L = -(↑Real.pi / 3 * I)) :
     HasGeneralizedWindingNumber γ ellipticPointRhoPlusOne (-1/6) := by
   convert D.hasWindingNumber using 1
-  rw [hL]; field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]; ring
+  rw [hL]
+  field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
+  ring
 
 /-! ## Part 4: Full FDWindingData assembly -/
 
@@ -119,15 +128,12 @@ interior winding. This is the top-level assembler.
 The three `SingleCrossingData` instances bundle all geometric and analytic
 ingredients (cutoff functions, far/near bounds, FTC, integrability, and limits).
 The winding weights `-1/2` and `-1/6` follow from the limit values. -/
-def fdWindingData_of_singleCrossingData {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
+def fdWindingData_of_singleCrossingData {H : ℝ} (γ : PiecewiseC1Path (fdStart H) (fdStart H))
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
     (h_int : ∀ z : ℂ, ‖z‖ > 1 → |z.re| < 1/2 → z.im > 0 → z.im < H →
       HasGeneralizedWindingNumber γ z (-1))
-    (D_i : SingleCrossingData γ I)
-    (hL_i : D_i.L = -(↑Real.pi * I))
-    (D_rho : SingleCrossingData γ ellipticPointRho)
-    (hL_rho : D_rho.L = -(↑Real.pi / 3 * I))
+    (D_i : SingleCrossingData γ I) (hL_i : D_i.L = -(↑Real.pi * I))
+    (D_rho : SingleCrossingData γ ellipticPointRho) (hL_rho : D_rho.L = -(↑Real.pi / 3 * I))
     (D_rho1 : SingleCrossingData γ ellipticPointRhoPlusOne)
     (hL_rho1 : D_rho1.L = -(↑Real.pi / 3 * I)) :
     FDWindingData H where

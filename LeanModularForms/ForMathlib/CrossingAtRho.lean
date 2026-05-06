@@ -39,13 +39,17 @@ theorem vertDelta_pos {H ε : ℝ} (hH : fdHeightValid H) (hε : 0 < ε) :
     0 < vertDelta H ε := by
   unfold vertDelta
   apply div_pos hε
-  have : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   positivity
 
 theorem vertDelta_lt_one_fifth {H ε : ℝ} (hH : fdHeightValid H)
     (hε_lt : ε < H - Real.sqrt 3 / 2) :
     vertDelta H ε < 1 / 5 := by
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   unfold vertDelta
   have h5pos : (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) := by positivity
   rw [div_lt_div_iff₀ h5pos (by norm_num : (0 : ℝ) < 5)]
@@ -73,7 +77,8 @@ theorem arc_near_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
   rw [fdBoundaryFun_arc_dist_rho H t ht1 ht2]
   have halfAngle_eq : (fdArcAngle t - 2 * Real.pi / 3) / 2 =
       5 * (t - 3/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]; ring
+    simp only [fdArcAngle]
+    ring
   rw [halfAngle_eq]
   set α := 5 * (t - 3/5) * Real.pi / 12
   have hpi := Real.pi_pos
@@ -96,20 +101,22 @@ theorem arc_far_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     (hδt : arcsinDelta ε < |t - 3/5|) :
     ε < ‖fdBoundaryFun H t - ellipticPointRho‖ := by
   have hpi := Real.pi_pos
-  -- t must be strictly less than 3/5 (otherwise |t - 3/5| = 0)
   have ht3 : t < 3/5 := by
-    by_contra h; push Not at h
-    have : t = 3/5 := le_antisymm ht_arc.2 h
-    subst this; simp only [sub_self, abs_zero] at hδt; linarith [arcsinDelta_pos hε]
+    by_contra h
+    push Not at h
+    have ht_eq : t = 3/5 := le_antisymm ht_arc.2 h
+    subst ht_eq
+    simp only [sub_self, abs_zero] at hδt
+    linarith [arcsinDelta_pos hε]
   rcases eq_or_lt_of_le ht_arc.1 with rfl | ht1
-  · -- t = 1/5: distance to rho is 1
-    calc ε < 1/3 := hε_lt
+  · calc ε < 1/3 := hε_lt
       _ ≤ 1 := by norm_num
       _ ≤ _ := fdBoundaryFun_seg1_dist_rho_lower H (1/5) (le_refl _)
   rw [fdBoundaryFun_arc_dist_rho H t ht1 (le_of_lt ht3)]
   have halfAngle_eq : (fdArcAngle t - 2 * Real.pi / 3) / 2 =
       5 * (t - 3/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]; ring
+    simp only [fdArcAngle]
+    ring
   rw [halfAngle_eq]
   set α := 5 * (t - 3/5) * Real.pi / 12
   have hα_gt_asin : Real.arcsin (ε / 2) < |α| := by
@@ -117,7 +124,8 @@ theorem arc_far_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
       abs_of_pos (by positivity), ← half_angle_arcsinDelta]
     exact mul_lt_mul_of_pos_left hδt (by positivity)
   have h_abs_bound : |t - 3/5| ≤ 2/5 := by
-    rw [abs_le]; exact ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
+    rw [abs_le]
+    exact ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
   have hα_le_pi6 : |α| ≤ Real.pi / 6 := by
     rw [show α = 5 * Real.pi / 12 * (t - 3/5) from by ring, abs_mul,
       abs_of_pos (by positivity)]
@@ -136,7 +144,9 @@ theorem fdBoundaryFun_seg4_dist_rho (hH : fdHeightValid H) (t : ℝ)
     (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     ‖fdBoundaryFun H t - ellipticPointRho‖ =
       5 * (t - 3/5) * (H - Real.sqrt 3 / 2) := by
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
     show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
     ht4, ite_true, ite_false,
@@ -145,8 +155,14 @@ theorem fdBoundaryFun_seg4_dist_rho (hH : fdHeightValid H) (t : ℝ)
       (↑(Real.sqrt 3) / 2 + (5 * ↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I -
       (-1 / 2 + ↑(Real.sqrt 3) / 2 * I) =
       ↑(5 * (t - 3/5) * (H - Real.sqrt 3 / 2)) * I := by
-    push_cast; ring
-  rw [h_eq, norm_ofReal_mul_I_eq _ (by apply mul_nonneg; apply mul_nonneg; linarith; linarith; linarith)]
+    push_cast
+    ring
+  rw [h_eq, norm_ofReal_mul_I_eq _ (by
+    apply mul_nonneg
+    · apply mul_nonneg
+      · linarith
+      · linarith
+    · linarith)]
 
 /-- Near bound on vertical for rho. -/
 theorem vert_near_at_rho (hH : fdHeightValid H)
@@ -154,7 +170,9 @@ theorem vert_near_at_rho (hH : fdHeightValid H)
     (hδ : t - 3/5 ≤ vertDelta H ε) :
     ‖fdBoundaryFun H t - ellipticPointRho‖ ≤ ε := by
   rw [fdBoundaryFun_seg4_dist_rho H hH t ht3 ht4]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   have h1 : 5 * (t - 3/5) * (H - Real.sqrt 3 / 2) ≤
       5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
     apply mul_le_mul_of_nonneg_right _ hH'.le
@@ -171,7 +189,9 @@ theorem vert_far_at_rho (hH : fdHeightValid H)
     (hδt : vertDelta H ε < t - 3/5) :
     ε < ‖fdBoundaryFun H t - ellipticPointRho‖ := by
   rw [fdBoundaryFun_seg4_dist_rho H hH t ht3 ht4]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   have h1 : ε = 5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
     unfold vertDelta
     field_simp [ne_of_gt (show (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) from by positivity)]
@@ -194,12 +214,13 @@ theorem arc_near_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1
   have hle := abs_le.mp ht
   have ht2 : t ≤ 3/5 := by nlinarith [hle.2, arcsinDelta_lt_one_fifth hε hε_lt]
   rcases eq_or_lt_of_le ht1 with rfl | ht1'
-  · -- At t = 1/5, the point is exactly rho+1
-    rw [fdBoundaryFun_at_one_fifth, sub_self, norm_zero]; linarith
+  · rw [fdBoundaryFun_at_one_fifth, sub_self, norm_zero]
+    linarith
   rw [fdBoundaryFun_arc_dist_rhoPlusOne H t ht1' ht2]
   have halfAngle_eq : (fdArcAngle t - Real.pi / 3) / 2 =
       5 * (t - 1/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]; ring
+    simp only [fdArcAngle]
+    ring
   rw [halfAngle_eq]
   set α := 5 * (t - 1/5) * Real.pi / 12
   have hα_le_asin : |α| ≤ Real.arcsin (ε / 2) := by
@@ -221,15 +242,18 @@ theorem arc_far_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/
     (hδt : arcsinDelta ε < |t - 1/5|) :
     ε < ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ := by
   have hpi := Real.pi_pos
-  -- t must be strictly greater than 1/5
   have ht1 : 1/5 < t := by
-    by_contra h; push Not at h
-    have : t = 1/5 := le_antisymm h ht_arc.1
-    subst this; simp only [sub_self, abs_zero] at hδt; linarith [arcsinDelta_pos hε]
+    by_contra h
+    push Not at h
+    have ht_eq : t = 1/5 := le_antisymm h ht_arc.1
+    subst ht_eq
+    simp only [sub_self, abs_zero] at hδt
+    linarith [arcsinDelta_pos hε]
   rw [fdBoundaryFun_arc_dist_rhoPlusOne H t ht1 ht_arc.2]
   have halfAngle_eq : (fdArcAngle t - Real.pi / 3) / 2 =
       5 * (t - 1/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]; ring
+    simp only [fdArcAngle]
+    ring
   rw [halfAngle_eq]
   set α := 5 * (t - 1/5) * Real.pi / 12
   have hα_gt_asin : Real.arcsin (ε / 2) < |α| := by
@@ -237,7 +261,8 @@ theorem arc_far_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/
       abs_of_pos (by positivity), ← half_angle_arcsinDelta]
     exact mul_lt_mul_of_pos_left hδt (by positivity)
   have h_abs_bound : |t - 1/5| ≤ 2/5 := by
-    rw [abs_le]; exact ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
+    rw [abs_le]
+    exact ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
   have hα_le_pi6 : |α| ≤ Real.pi / 6 := by
     rw [show α = 5 * Real.pi / 12 * (t - 1/5) from by ring, abs_mul,
       abs_of_pos (by positivity)]
@@ -256,15 +281,23 @@ theorem fdBoundaryFun_seg1_dist_rhoPlusOne (hH : fdHeightValid H) (t : ℝ)
     (_ht0 : 0 ≤ t) (ht1 : t < 1/5) :
     ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ =
       5 * (1/5 - t) * (H - Real.sqrt 3 / 2) := by
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   simp only [fdBoundaryFun, show t ≤ 1/5 from by linarith, ite_true,
     ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   have h_eq : (1 : ℂ) / 2 +
       (↑H - 5 * ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I -
       (1 / 2 + ↑(Real.sqrt 3) / 2 * I) =
       ↑(5 * (1/5 - t) * (H - Real.sqrt 3 / 2)) * I := by
-    push_cast; ring
-  rw [h_eq, norm_ofReal_mul_I_eq _ (by apply mul_nonneg; apply mul_nonneg; linarith; linarith; linarith)]
+    push_cast
+    ring
+  rw [h_eq, norm_ofReal_mul_I_eq _ (by
+    apply mul_nonneg
+    · apply mul_nonneg
+      · linarith
+      · linarith
+    · linarith)]
 
 /-- Near bound on vertical for rho+1. -/
 theorem vert_near_at_rhoPlusOne (hH : fdHeightValid H)
@@ -272,7 +305,9 @@ theorem vert_near_at_rhoPlusOne (hH : fdHeightValid H)
     (hδ : 1/5 - t ≤ vertDelta H ε) :
     ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ ≤ ε := by
   rw [fdBoundaryFun_seg1_dist_rhoPlusOne H hH t ht0 ht1]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   have h1 : 5 * (1/5 - t) * (H - Real.sqrt 3 / 2) ≤
       5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
     apply mul_le_mul_of_nonneg_right _ hH'.le
@@ -289,7 +324,9 @@ theorem vert_far_at_rhoPlusOne (hH : fdHeightValid H)
     (hδt : vertDelta H ε < 1/5 - t) :
     ε < ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ := by
   rw [fdBoundaryFun_seg1_dist_rhoPlusOne H hH t ht0 ht1]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH
+    linarith
   have h1 : ε = 5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
     unfold vertDelta
     field_simp [ne_of_gt (show (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) from by positivity)]
@@ -466,8 +503,10 @@ theorem hasWindingNumber_atRho_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (-(↑Real.pi / 3 * I))) :
     HasGeneralizedWindingNumber γ ellipticPointRho (-1/6) := by
   have hH_valid : fdHeightValid H := fdHeightValid_of_one_lt H hH
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH_valid; linarith
-  set threshold := min (1/3 : ℝ) (H - Real.sqrt 3 / 2) with threshold_def
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH_valid
+    linarith
+  set threshold := min (1/3 : ℝ) (H - Real.sqrt 3 / 2)
   have hthresh : 0 < threshold := lt_min (by norm_num) hH'
   have h_pv : HasCauchyPV (fun z => (z - ellipticPointRho)⁻¹) γ ellipticPointRho
       (-(↑Real.pi / 3 * I)) := by
@@ -497,7 +536,8 @@ theorem hasWindingNumber_atRho_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (h_limit := ftcHyp.h_limit))
   convert hasGeneralizedWindingNumber_of_hasCauchyPV h_pv using 1
   have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp; ring
+  field_simp
+  ring
 
 /-- The winding number at rho+1 is `-1/6`, constructed via the asymmetric
 crossing limit theorem. -/
@@ -509,8 +549,10 @@ theorem hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (-(↑Real.pi / 3 * I))) :
     HasGeneralizedWindingNumber γ ellipticPointRhoPlusOne (-1/6) := by
   have hH_valid : fdHeightValid H := fdHeightValid_of_one_lt H hH
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH_valid; linarith
-  set threshold := min (1/3 : ℝ) (H - Real.sqrt 3 / 2) with threshold_def
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by
+    unfold fdHeightValid at hH_valid
+    linarith
+  set threshold := min (1/3 : ℝ) (H - Real.sqrt 3 / 2)
   have hthresh : 0 < threshold := lt_min (by norm_num) hH'
   have h_pv : HasCauchyPV (fun z => (z - ellipticPointRhoPlusOne)⁻¹) γ
       ellipticPointRhoPlusOne (-(↑Real.pi / 3 * I)) := by
@@ -540,6 +582,7 @@ theorem hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (h_limit := ftcHyp.h_limit))
   convert hasGeneralizedWindingNumber_of_hasCauchyPV h_pv using 1
   have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp; ring
+  field_simp
+  ring
 
 end

@@ -112,10 +112,12 @@ private lemma neg_inv_rho_eq_rho_plus_one :
   apply Complex.ext
   · simp only [neg_div, Complex.neg_re, Complex.div_re,
       Complex.one_re, Complex.one_im, Complex.normSq_apply,
-      hre, him, hre2, hnormSq]; ring
+      hre, him, hre2, hnormSq]
+    ring
   · simp only [neg_div, Complex.neg_im, Complex.div_im,
       Complex.one_re, Complex.one_im, Complex.normSq_apply,
-      hre, him, him2, hnormSq]; ring
+      hre, him, him2, hnormSq]
+    ring
 
 omit f hf in
 private lemma neg_inv_rho_plus_one_eq_rho :
@@ -133,10 +135,12 @@ private lemma neg_inv_rho_plus_one_eq_rho :
   apply Complex.ext
   · simp only [neg_div, Complex.neg_re, Complex.div_re,
       Complex.one_re, Complex.one_im, Complex.normSq_apply,
-      hre, him, hre2, hnormSq]; ring
+      hre, him, hre2, hnormSq]
+    ring
   · simp only [neg_div, Complex.neg_im, Complex.div_im,
       Complex.one_re, Complex.one_im, Complex.normSq_apply,
-      hre, him, him2, hnormSq]; ring
+      hre, him, him2, hnormSq]
+    ring
 
 omit f hf in
 lemma sArcOfS_closed (S : Finset UpperHalfPlane) :
@@ -145,13 +149,24 @@ lemma sArcOfS_closed (S : Finset UpperHalfPlane) :
   simp only [sArcOfS, Finset.mem_union, Finset.mem_image,
     Finset.mem_filter, Finset.mem_insert, Finset.mem_singleton] at hs ⊢
   rcases hs with ⟨⟨p, hp, rfl⟩ | ⟨p, hp, rfl⟩⟩ | hs
-  · left; right; exact ⟨p, hp, rfl⟩
+  · left
+    right
+    exact ⟨p, hp, rfl⟩
   · have hp_ne : (↑p : ℂ) ≠ 0 := by
-      intro h; have := hp.2; rw [h, norm_zero] at this; norm_num at this
-    left; left; exact ⟨p, hp, by field_simp⟩
+      intro h
+      have := hp.2
+      rw [h, norm_zero] at this
+      norm_num at this
+    left
+    left
+    exact ⟨p, hp, by field_simp⟩
   · rcases hs with rfl | rfl
-    · right; right; exact neg_inv_rho_eq_rho_plus_one
-    · right; left; exact neg_inv_rho_plus_one_eq_rho
+    · right
+      right
+      exact neg_inv_rho_eq_rho_plus_one
+    · right
+      left
+      exact neg_inv_rho_plus_one_eq_rho
 
 omit f hf in
 lemma sVertOfS_re (S : Finset UpperHalfPlane) :
@@ -162,14 +177,18 @@ lemma sVertOfS_re (S : Finset UpperHalfPlane) :
   · rcases Finset.mem_union.mp h with h | hC
     · rcases Finset.mem_union.mp h with hA | hB
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hA
-        left; exact (Finset.mem_filter.mp hp).2.1
+        left
+        exact (Finset.mem_filter.mp hp).2.1
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hB
-        right; simp only [Complex.sub_re, (Finset.mem_filter.mp hp).2.1]
+        right
+        simp only [Complex.sub_re, (Finset.mem_filter.mp hp).2.1]
         norm_num
     · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hC
-      right; exact (Finset.mem_filter.mp hp).2.1
+      right
+      exact (Finset.mem_filter.mp hp).2.1
   · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hD
-    left; simp only [Complex.add_re, (Finset.mem_filter.mp hp).2.1]
+    left
+    simp only [Complex.add_re, (Finset.mem_filter.mp hp).2.1]
     norm_num
 
 omit f hf in
@@ -181,21 +200,29 @@ lemma sVertOfS_pair_left (S : Finset UpperHalfPlane) :
   · rcases Finset.mem_union.mp h with h | hC
     · rcases Finset.mem_union.mp h with hA | hB
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hA
-        apply Finset.mem_union.mpr; left
-        apply Finset.mem_union.mpr; left
-        apply Finset.mem_union.mpr; right
+        apply Finset.mem_union.mpr
+        left
+        apply Finset.mem_union.mpr
+        left
+        apply Finset.mem_union.mpr
+        right
         exact Finset.mem_image.mpr ⟨p, hp, rfl⟩
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hB
-        exfalso; obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
+        exfalso
+        obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
         simp only [Complex.sub_re] at hre
-        rw [hp_re] at hre; norm_num at hre
+        rw [hp_re] at hre
+        norm_num at hre
     · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hC
-      exfalso; obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
+      exfalso
+      obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
       linarith
   · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hD
     rw [show (↑p : ℂ) + 1 - 1 = (↑p : ℂ) from by ring]
-    apply Finset.mem_union.mpr; left
-    apply Finset.mem_union.mpr; right
+    apply Finset.mem_union.mpr
+    left
+    apply Finset.mem_union.mpr
+    right
     exact Finset.mem_image.mpr ⟨p, hp, rfl⟩
 
 omit f hf in
@@ -207,21 +234,28 @@ lemma sVertOfS_pair_right (S : Finset UpperHalfPlane) :
   · rcases Finset.mem_union.mp h with h | hC
     · rcases Finset.mem_union.mp h with hA | hB
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hA
-        exfalso; obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
+        exfalso
+        obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
         linarith
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hB
         rw [show (↑p : ℂ) - 1 + 1 = (↑p : ℂ) from by ring]
-        apply Finset.mem_union.mpr; left
-        apply Finset.mem_union.mpr; left
-        apply Finset.mem_union.mpr; left
+        apply Finset.mem_union.mpr
+        left
+        apply Finset.mem_union.mpr
+        left
+        apply Finset.mem_union.mpr
+        left
         exact Finset.mem_image.mpr ⟨p, hp, rfl⟩
     · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hC
-      apply Finset.mem_union.mpr; right
+      apply Finset.mem_union.mpr
+      right
       exact Finset.mem_image.mpr ⟨p, hp, rfl⟩
   · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hD
-    exfalso; obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
+    exfalso
+    obtain ⟨_, hp_re, _⟩ := Finset.mem_filter.mp hp
     simp only [Complex.add_re] at hre
-    rw [hp_re] at hre; norm_num at hre
+    rw [hp_re] at hre
+    norm_num at hre
 
 omit hf in
 /-- `modularFormCompOfComplex f` is periodic with period 1. -/
@@ -286,7 +320,8 @@ theorem sum_gWN_ord_eq_filter_zeros (S : Finset UpperHalfPlane) (g : ℂ → ℂ
     ∑ s ∈ S.filter (fun p => f p = 0),
       g (↑s : ℂ) * (orderOfVanishingAt' (⇑f) s : ℂ) := by
   rw [Finset.sum_filter]
-  apply Finset.sum_congr rfl; intro p _
+  apply Finset.sum_congr rfl
+  intro p _
   split_ifs with h
   · rfl
   · simp only [orderOfVanishingAt'_eq_zero_of_ne_zero' f p h, Int.cast_zero, mul_zero]
@@ -298,15 +333,19 @@ lemma sArcOfS_im_pos (S : Finset UpperHalfPlane) (s : ℂ) (hs : s ∈ sArcOfS S
     Finset.mem_filter, Finset.mem_insert, Finset.mem_singleton] at hs
   rcases hs with ⟨⟨p, ⟨_, _⟩, rfl⟩ | ⟨p, ⟨_, hp_norm⟩, rfl⟩⟩ | hs
   · exact p.2
-  · have hz_ne : (↑p : ℂ) ≠ 0 := by intro h; simp [h] at hp_norm
+  · have hz_ne : (↑p : ℂ) ≠ 0 := by
+      intro h
+      simp [h] at hp_norm
     rw [show -(1:ℂ) / (↑p : ℂ) = (-(↑p : ℂ))⁻¹ from by field_simp, Complex.inv_im]
     simp only [neg_im, neg_neg]
     exact div_pos p.2 (Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne))
   · rcases hs with rfl | rfl
-    · show (0 : ℝ) < (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
-      simp only [add_im, neg_im, one_im, div_im, mul_im, I_re, I_im]; norm_num
-    · show (0 : ℝ) < (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
-      simp only [add_im, one_im, div_im, mul_im, I_re, I_im]; norm_num
+    · change (0 : ℝ) < (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
+      simp only [add_im, neg_im, one_im, div_im, mul_im, I_re, I_im]
+      norm_num
+    · change (0 : ℝ) < (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
+      simp only [add_im, one_im, div_im, mul_im, I_re, I_im]
+      norm_num
 
 omit f hf in
 /-- All elements of `sVertOfS S` have positive imaginary part. -/
@@ -315,12 +354,16 @@ lemma sVertOfS_im_pos (S : Finset UpperHalfPlane) (s : ℂ) (hs : s ∈ sVertOfS
   rcases Finset.mem_union.mp hs with h | hD
   · rcases Finset.mem_union.mp h with h | hC
     · rcases Finset.mem_union.mp h with hA | hB
-      · obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp hA; exact p.2
+      · obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp hA
+        exact p.2
       · obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp hB
-        simp only [Complex.sub_im, Complex.one_im, sub_zero]; exact p.2
-    · obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp hC; exact p.2
+        simp only [Complex.sub_im, Complex.one_im, sub_zero]
+        exact p.2
+    · obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp hC
+      exact p.2
   · obtain ⟨p, _, rfl⟩ := Finset.mem_image.mp hD
-    simp only [Complex.add_im, Complex.one_im, add_zero]; exact p.2
+    simp only [Complex.add_im, Complex.one_im, add_zero]
+    exact p.2
 
 omit f hf in
 private lemma sVertOfS_re_bound (S : Finset UpperHalfPlane) (s : ℂ)
@@ -330,15 +373,19 @@ private lemma sVertOfS_re_bound (S : Finset UpperHalfPlane) (s : ℂ)
   · rcases Finset.mem_union.mp h with h | hC
     · rcases Finset.mem_union.mp h with hA | hB
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hA
-        rw [(Finset.mem_filter.mp hp).2.1]; norm_num
+        rw [(Finset.mem_filter.mp hp).2.1]
+        norm_num
       · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hB
         simp only [Complex.sub_re, Complex.one_re]
-        rw [(Finset.mem_filter.mp hp).2.1]; norm_num
+        rw [(Finset.mem_filter.mp hp).2.1]
+        norm_num
     · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hC
-      rw [(Finset.mem_filter.mp hp).2.1]; norm_num
+      rw [(Finset.mem_filter.mp hp).2.1]
+      norm_num
   · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hD
     simp only [Complex.add_re, Complex.one_re]
-    rw [(Finset.mem_filter.mp hp).2.1]; norm_num
+    rw [(Finset.mem_filter.mp hp).2.1]
+    norm_num
 
 omit f hf in
 private lemma im_gt_sqrt3_half_of_re_half_and_norm_gt_one (p : ℍ)
@@ -350,9 +397,13 @@ private lemma im_gt_sqrt3_half_of_re_half_and_norm_gt_one (p : ℍ)
       rw [Complex.sq_norm, Complex.normSq_apply]
       ring
     linarith
-  have h_re_sq : (↑p : ℂ).re ^ 2 = 1/4 := by rcases hre with h | h <;> (rw [h]; ring)
+  have h_re_sq : (↑p : ℂ).re ^ 2 = 1/4 := by
+    rcases hre with h | h <;>
+    · rw [h]
+      ring
   have h_im_sq' : (Real.sqrt 3 / 2) ^ 2 < (↑p : ℂ).im ^ 2 := by
-    rw [div_pow, Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]; linarith
+    rw [div_pow, Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+    linarith
   have h_sqrt_ineq := Real.sqrt_lt_sqrt (sq_nonneg (Real.sqrt 3 / 2)) h_im_sq'
   have : Real.sqrt ((↑p : ℂ).im ^ 2) = (↑p : ℂ).im := Real.sqrt_sq p.2.le
   rw [Real.sqrt_sq (by positivity : (0:ℝ) ≤ Real.sqrt 3 / 2), this] at h_sqrt_ineq
@@ -384,17 +435,21 @@ omit f hf in
 private lemma im_ge_sqrt3_half_of_re_half_and_norm_eq_one (p : ℍ)
     (hre : |(↑p : ℂ).re| ≤ 1/2) (hnorm : ‖(↑p : ℂ)‖ = 1) : (↑p : ℂ).im ≥ Real.sqrt 3 / 2 := by
   have h_nsq : (↑p : ℂ).re ^ 2 + (↑p : ℂ).im ^ 2 = 1 := by
-    have h_norm_sq : ‖(↑p : ℂ)‖ ^ 2 = 1 := by rw [hnorm]; norm_num
+    have h_norm_sq : ‖(↑p : ℂ)‖ ^ 2 = 1 := by
+      rw [hnorm]
+      norm_num
     have : ‖(↑p : ℂ)‖ ^ 2 = (↑p : ℂ).re ^ 2 + (↑p : ℂ).im ^ 2 := by
       rw [Complex.sq_norm, Complex.normSq_apply]
       ring
     linarith
   have h_im_sq : (↑p : ℂ).im ^ 2 ≥ 3/4 := by
     have h_re2 : (↑p : ℂ).re ^ 2 ≤ 1 / 4 := by
-      have ⟨h1, h2⟩ := abs_le.mp hre; nlinarith [h1, h2]
+      have ⟨h1, h2⟩ := abs_le.mp hre
+      nlinarith [h1, h2]
     nlinarith [h_nsq, h_re2]
   have h_im_sq' : (Real.sqrt 3 / 2) ^ 2 ≤ (↑p : ℂ).im ^ 2 := by
-    rw [div_pow, Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]; linarith
+    rw [div_pow, Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
+    linarith
   rcases eq_or_lt_of_le h_im_sq' with h_eq | h_lt
   · have h_sqrt_eq := congr_arg Real.sqrt h_eq
     have : Real.sqrt ((↑p : ℂ).im ^ 2) = (↑p : ℂ).im := Real.sqrt_sq p.2.le
@@ -416,7 +471,8 @@ lemma fdBox_of_on_curve (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ �
     have h_im_pos := sArcOfS_im_pos S s h_arc
     have h_nsq : s.re ^ 2 + s.im ^ 2 = 1 := by
       have h_sq : ‖s‖ ^ 2 = (s.re ^ 2 + s.im ^ 2) := by
-        rw [Complex.sq_norm, Complex.normSq_apply]; ring
+        rw [Complex.sq_norm, Complex.normSq_apply]
+        ring
       nlinarith [h_unit, h_sq]
     have h_re_sq_lt : s.re ^ 2 < 1 := by nlinarith
     have h_im_le : s.im ≤ 1 := by nlinarith
@@ -425,14 +481,17 @@ lemma fdBox_of_on_curve (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ �
         Finset.mem_filter, Finset.mem_insert, Finset.mem_singleton] at h_arc
       rcases h_arc with ⟨⟨p, ⟨hp_mem, hp_norm⟩, rfl⟩ | ⟨p, ⟨hp_mem, hp_norm⟩, rfl⟩⟩ | h_ell
       · exact im_ge_sqrt3_half_of_re_half_and_norm_eq_one p (hS p hp_mem).2 hp_norm
-      · have hz_ne : (↑p : ℂ) ≠ 0 := by intro h; simp [h] at hp_norm
+      · have hz_ne : (↑p : ℂ) ≠ 0 := by
+          intro h
+          simp [h] at hp_norm
         have h_eq : (-(1:ℂ) / (↑p : ℂ)).im = (↑p : ℂ).im := by
           rw [show -(1:ℂ) / (↑p : ℂ) = (-(↑p : ℂ))⁻¹ from by field_simp, Complex.inv_im]
           simp only [neg_im, neg_neg]
           have h_nsq_val : Complex.normSq (-(↑p : ℂ)) = 1 := by
             rw [Complex.normSq_neg]
             have h_norm_sq : ‖(↑p : ℂ)‖ ^ 2 = 1 := by
-              rw [hp_norm]; norm_num
+              rw [hp_norm]
+              norm_num
             have : ‖(↑p : ℂ)‖ ^ 2 = (↑p : ℂ).re ^ 2 + (↑p : ℂ).im ^ 2 := by
               rw [Complex.sq_norm, Complex.normSq_apply]
               ring
@@ -443,10 +502,12 @@ lemma fdBox_of_on_curve (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ �
         rw [h_eq]
         exact im_ge_sqrt3_half_of_re_half_and_norm_eq_one p (hS p hp_mem).2 hp_norm
       · rcases h_ell with rfl | rfl
-        · show (Real.sqrt 3 / 2 : ℝ) ≤ (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
-          simp only [add_im, neg_im, one_im, div_im, mul_im, I_re, I_im]; norm_num
-        · show (Real.sqrt 3 / 2 : ℝ) ≤ (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
-          simp only [add_im, one_im, div_im, mul_im, I_re, I_im]; norm_num
+        · change (Real.sqrt 3 / 2 : ℝ) ≤ (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
+          simp only [add_im, neg_im, one_im, div_im, mul_im, I_re, I_im]
+          norm_num
+        · change (Real.sqrt 3 / 2 : ℝ) ≤ (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im
+          simp only [add_im, one_im, div_im, mul_im, I_re, I_im]
+          norm_num
     have h_re_bound : -1 < s.re ∧ s.re < 1 := by
       constructor
       · nlinarith [sq_abs s.re]

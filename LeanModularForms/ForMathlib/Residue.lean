@@ -43,13 +43,12 @@ def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=
     ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z
 
 /-- Extract the pole coefficient from a simple pole decomposition. -/
-noncomputable def HasSimplePoleAt.coeff {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) : ℂ :=
+def HasSimplePoleAt.coeff {f : ℂ → ℂ} {z₀ : ℂ} (h : HasSimplePoleAt f z₀) : ℂ :=
   h.choose
 
 /-- The analytic part of a simple pole decomposition. -/
-noncomputable def HasSimplePoleAt.regularPart {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) : ℂ → ℂ :=
+def HasSimplePoleAt.regularPart {f : ℂ → ℂ} {z₀ : ℂ} (h : HasSimplePoleAt f z₀) :
+    ℂ → ℂ :=
   h.choose_spec.choose
 
 theorem HasSimplePoleAt.regularPart_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
@@ -62,7 +61,7 @@ theorem HasSimplePoleAt.eventually_eq {f : ℂ → ℂ} {z₀ : ℂ}
   h.choose_spec.choose_spec.2
 
 /-- A simple pole can be constructed from explicit data. -/
-theorem hasSimplePoleAt_of_decomposition {f : ℂ → ℂ} {z₀ : ℂ} {c : ℂ} {g : ℂ → ℂ}
+theorem hasSimplePoleAt_of_decomposition {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ → ℂ}
     (hg : AnalyticAt ℂ g z₀) (hf : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
     HasSimplePoleAt f z₀ :=
   ⟨c, g, hg, hf⟩
@@ -71,9 +70,8 @@ theorem hasSimplePoleAt_of_decomposition {f : ℂ → ℂ} {z₀ : ℂ} {c : ℂ
 
 /-- The residue of `f` at `z₀`, defined as the limit of normalized circle integrals:
 `Res(f, z₀) = lim_{r→0⁺} (2πi)⁻¹ ∮_{|z-z₀|=r} f(z) dz`. -/
-noncomputable def residue (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
-  limUnder (𝓝[>] (0 : ℝ)) fun r =>
-    (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(z₀, r), f z
+def residue (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
+  limUnder (𝓝[>] (0 : ℝ)) fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(z₀, r), f z
 
 /-! ### CPV of simple pole = winding × coefficient -/
 
@@ -83,8 +81,7 @@ residues to winding numbers.
 
 The proof factors out the constant `c` from the CPV integrand and uses the
 definition of the generalized winding number. -/
-theorem hasCauchyPV_simple_pole {s : ℂ} {c : ℂ}
-    {γ : PiecewiseC1Path x y} {w : ℂ}
+theorem hasCauchyPV_simple_pole {s c : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
     (hw : HasGeneralizedWindingNumber γ s w) :
     HasCauchyPV (fun z => c / (z - s)) γ s (2 * ↑Real.pi * I * w * c) := by
   simp only [div_eq_mul_inv]
@@ -92,12 +89,9 @@ theorem hasCauchyPV_simple_pole {s : ℂ} {c : ℂ}
   exact hw.const_mul c
 
 /-- Variant with zero coefficient: `HasCauchyPV` of `0/(z-s)` is trivially 0. -/
-theorem hasCauchyPV_simple_pole_zero {s : ℂ}
-    {γ : PiecewiseC1Path x y} {w : ℂ}
+theorem hasCauchyPV_simple_pole_zero {s : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
     (hw : HasGeneralizedWindingNumber γ s w) :
     HasCauchyPV (fun z => (0 : ℂ) / (z - s)) γ s 0 := by
-  have h := hasCauchyPV_simple_pole (c := (0 : ℂ)) hw
-  simp only [mul_zero] at h
-  exact h
+  simpa using hasCauchyPV_simple_pole (c := (0 : ℂ)) hw
 
 end

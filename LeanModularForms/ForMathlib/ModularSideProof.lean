@@ -118,7 +118,8 @@ theorem modularSide_tendsto_of_data {H : ℝ}
         ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))))) := by
   have h_eq : data.arc_value + data.horiz_value =
       -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) := by
-    rw [data.arc_eq, data.horiz_eq]; ring
+    rw [data.arc_eq, data.horiz_eq]
+    ring
   rw [← h_eq]
   exact data.h_tendsto
 
@@ -134,7 +135,8 @@ theorem modularSide_three_piece {ord_cusp : ℂ} (arc_val horiz_val : ℂ)
     (h_horiz : horiz_val = 2 * ↑Real.pi * I * ord_cusp) :
     arc_val + horiz_val =
     -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - ord_cusp)) := by
-  rw [h_arc, h_horiz]; ring
+  rw [h_arc, h_horiz]
+  ring
 
 omit f hf in
 /-- From the individual segment equations, derive the modular side. -/
@@ -147,7 +149,8 @@ theorem modularSide_from_segments {ord_cusp : ℂ}
     -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - ord_cusp)) := by
   have : seg1_val + seg2_val + seg3_val + seg4_val + seg5_val =
     (seg1_val + seg4_val) + (seg2_val + seg3_val) + seg5_val := by ring
-  rw [this, h_T_cancel, h_arc, h_horiz]; ring
+  rw [this, h_T_cancel, h_arc, h_horiz]
+  ring
 
 /-! ### Bridge to discharge_pvChain_full -/
 

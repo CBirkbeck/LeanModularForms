@@ -103,12 +103,10 @@ theorem generalizedResidueTheorem_simplePoles_structural
     (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
     (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    -- Holomorphic remainder
     (g : ℂ → ℂ) (_hg_diff : DifferentiableOn ℂ g U)
     (hg_agree : ∀ z ∈ U \ (↑S : Set ℂ),
       g z = f z - principalPartSum S (fun s => residue f s) z)
     (hg_zero : γ.contourIntegral g = 0)
-    -- Integrability
     (h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
         (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
@@ -122,7 +120,7 @@ theorem generalizedResidueTheorem_simplePoles_structural
     γ.contourIntegral f =
       ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
         residue f s := by
-  set c := fun s => residue f s with hc_def
+  set c := fun s => residue f s
   have h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
       g (γ t) = f (γ t) - principalPartSum S c (γ t) :=
     fun t ht => hg_agree (γ t) ⟨hγ_in_U t ht, fun hmem =>
@@ -130,10 +128,11 @@ theorem generalizedResidueTheorem_simplePoles_structural
   have h_integrals_eq : γ.contourIntegral g =
       γ.contourIntegral (fun z => f z - principalPartSum S c z) := by
     simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
-    apply intervalIntegral.integral_congr; intro t ht
+    apply intervalIntegral.integral_congr
+    intro t ht
     rw [uIcc_of_le (zero_le_one' ℝ)] at ht
     simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
-    show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
+    change g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
     rw [h_g_on_curve t ht]
   have h_rem_zero : γ.contourIntegral (fun z => f z - principalPartSum S c z) = 0 :=
     h_integrals_eq ▸ hg_zero
@@ -155,7 +154,6 @@ theorem generalizedResidueTheorem_simplePoles_convex
     (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
     (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    -- Integrability
     (h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
         (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
@@ -169,10 +167,8 @@ theorem generalizedResidueTheorem_simplePoles_convex
     γ.contourIntegral f =
       ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
         residue f s := by
-  -- Obtain the corrected holomorphic remainder
   obtain ⟨g, hg_diff, hg_agree⟩ := remainder_differentiableOn_of_simplePoles
     hU_open S hS_in_U f hf hSimplePoles
-  -- Integrability of g on the curve (agrees with f - pp, which is integrable)
   have h_g_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand g γ) volume 0 1 := by
     apply h_rem_int.congr
@@ -182,7 +178,6 @@ theorem generalizedResidueTheorem_simplePoles_convex
     rw [hg_agree (γ t) ⟨hγ_in_U t (Ioc_subset_Icc_self ht),
       fun hmem => hγ_avoids _ (Finset.mem_coe.mp hmem) t
         (Ioc_subset_Icc_self ht) rfl⟩]
-  -- g integral vanishes by convex Cauchy theorem
   have hg_zero : γ.contourIntegral g = 0 :=
     γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
       hg_diff hγ_in_U h_g_int
@@ -204,7 +199,6 @@ theorem generalizedResidueTheorem_simplePoles_convex_alt
     (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
     (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    -- Integrability
     (h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
         (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
@@ -285,17 +279,14 @@ theorem generalizedResidueTheorem
     (_hMero : ∀ s ∈ S, MeromorphicAt f s)
     (_hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
     (_hCondB : SatisfiesConditionB γ f S)
-    -- Higher-order cancellation (guaranteed by conditions A'+B)
     (hCancel : HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z)
       γ.toPiecewiseC1Path 0)
-    -- CPV of the singular part exists and equals the formula
     (hPV_sing : HasCauchyPVOn S
       (principalPartSum S (fun s => residue f s))
       γ.toPiecewiseC1Path
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s))
-    -- Integrability for the decomposition
     (hI_sing : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
         γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
@@ -306,7 +297,6 @@ theorem generalizedResidueTheorem
     HasCauchyPVOn S f γ.toPiecewiseC1Path
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) := by
-  -- Factor 2πi into the sum
   have h_target_eq : 2 * ↑Real.pi * I * ∑ s ∈ S,
       generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s =
     ∑ s ∈ S, 2 * ↑Real.pi * I *
@@ -314,7 +304,6 @@ theorem generalizedResidueTheorem
     rw [Finset.mul_sum]
     exact Finset.sum_congr rfl fun s _ => by ring
   rw [h_target_eq]
-  -- Decompose: CPV(f) = CPV(f - pp) + CPV(pp) = 0 + formula
   exact hasCauchyPVOn_of_tendsto_sub hCancel hPV_sing hI_rem hI_sing
 
 /-! ## CPV version (avoidance case) -/
@@ -336,7 +325,6 @@ theorem generalizedResidueTheorem_simplePoles_convex_CPV
     (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
     (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    -- Integrability of the decomposition
     (h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
         (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
@@ -372,12 +360,10 @@ theorem generalizedResidueTheorem_simplePoles_CPV_structural
     (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
     (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    -- Cauchy-vanishing hypothesis: the holomorphic remainder has zero contour integral
     (g : ℂ → ℂ) (hg_diff : DifferentiableOn ℂ g U)
     (hg_agree : ∀ z ∈ U \ (↑S : Set ℂ),
       g z = f z - principalPartSum S (fun s => residue f s) z)
     (hg_zero : γ.contourIntegral g = 0)
-    -- Integrability for the decomposition
     (h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
         (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)

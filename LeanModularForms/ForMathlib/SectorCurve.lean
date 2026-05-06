@@ -80,7 +80,8 @@ theorem lineCurve_hasDerivAt (r : ℝ) (α : ℝ) (t : ℝ) :
   unfold lineCurve
   have h1 : HasDerivAt (fun s => (↑(r * s) : ℂ)) (↑r) t := by
     have := ((hasDerivAt_id t).const_mul r).ofReal_comp
-    convert this using 1; simp
+    convert this using 1
+    simp
   exact h1.mul_const _
 
 theorem lineCurve_differentiableAt (r : ℝ) (α : ℝ) (t : ℝ) :
@@ -125,11 +126,15 @@ theorem exp_factor_eq_one_of_angle_condition (k : ℕ) (α : ℝ)
     (h : ∃ m : ℤ, (↑k : ℝ) * α = ↑m * (2 * Real.pi)) :
     exp (-(↑k : ℂ) * (↑α * I)) = 1 := by
   obtain ⟨m, hm⟩ := h
-  rw [show -(↑k : ℂ) * (↑α * I) = ↑(-m) * (2 * ↑Real.pi * I) from by
+  have hcast : (↑k : ℂ) * ↑α = (↑((↑k : ℝ) * α) : ℂ) := by
     push_cast
-    rw [show -(↑k : ℂ) * (↑α * I) = -((↑k * ↑α) * I) from by ring,
-        show (↑k : ℂ) * ↑α = (↑(↑k * α) : ℂ) from by push_cast; ring, hm]
-    push_cast; ring]
+    ring
+  have hmain : -(↑k : ℂ) * (↑α * I) = ↑(-m) * (2 * ↑Real.pi * I) := by
+    push_cast
+    rw [show -(↑k : ℂ) * (↑α * I) = -((↑k * ↑α) * I) from by ring, hcast, hm]
+    push_cast
+    ring
+  rw [hmain]
   exact exp_int_mul_two_pi_mul_I (-m)
 
 /-- The higher-order factor simplifies when the angle condition holds. -/
@@ -159,7 +164,10 @@ private theorem pv_odd_cancel_aux {f : ℝ → ℂ} (hodd : ∀ t, f (-t) = -f t
     intro ε
     calc ∫ t in (-1 : ℝ)..(-ε), f t
         = ∫ t in ε..1, f (-t) := (intervalIntegral.integral_comp_neg f).symm
-      _ = ∫ t in ε..1, -f t := by congr 1; ext t; exact hodd t
+      _ = ∫ t in ε..1, -f t := by
+            congr 1
+            ext t
+            exact hodd t
       _ = -(∫ t in ε..1, f t) := intervalIntegral.integral_neg
   funext ε
   have h := key ε
@@ -200,7 +208,9 @@ theorem cpv_lineCurve_inv_pow_odd (r : ℝ) (hr : 0 < r) (α : ℝ) (k : ℕ)
       ∫ t in ε..(1 : ℝ),
         (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t)
       (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  have hk3 : 3 ≤ k := by obtain ⟨m, hm⟩ := hk_odd; omega
+  have hk3 : 3 ≤ k := by
+    obtain ⟨m, hm⟩ := hk_odd
+    omega
   exact higherOrder_terms_odd_vanish r hr α k hk3 hk_odd
 
 /-! ### Integrability of line-curve integrand -/
@@ -218,7 +228,8 @@ theorem lineCurve_integrand_intervalIntegrable (r : ℝ) (hr : 0 < r) (α : ℝ)
     exact ContinuousAt.continuousWithinAt
       (ContinuousAt.inv₀ ((lineCurve_continuous r α).continuousAt)
         (lineCurve_ne_zero r hr α t (ne_of_gt (lt_of_lt_of_le hε ht.1))))
-  · rw [lineCurve_deriv_const]; exact continuousOn_const
+  · rw [lineCurve_deriv_const]
+    exact continuousOn_const
 
 /-- The integrand is interval-integrable on `[-1, -ε]` for `ε > 0`. -/
 theorem lineCurve_integrand_intervalIntegrable_neg (r : ℝ) (hr : 0 < r) (α : ℝ) (k : ℕ)
@@ -233,6 +244,7 @@ theorem lineCurve_integrand_intervalIntegrable_neg (r : ℝ) (hr : 0 < r) (α : 
     exact ContinuousAt.continuousWithinAt
       (ContinuousAt.inv₀ ((lineCurve_continuous r α).continuousAt)
         (lineCurve_ne_zero r hr α t (by linarith [ht.2])))
-  · rw [lineCurve_deriv_const]; exact continuousOn_const
+  · rw [lineCurve_deriv_const]
+    exact continuousOn_const
 
 end SectorCurve

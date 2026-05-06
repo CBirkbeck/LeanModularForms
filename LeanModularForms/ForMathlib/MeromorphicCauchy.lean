@@ -97,7 +97,8 @@ theorem contourIntegral_decomp_of_simple_poles {f : ℂ → ℂ} {S : Finset ℂ
         ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s * c s := by
   rw [← contourIntegral_principalPartSum_eq hδ hI,
       ← γ.contourIntegral_add _ _ h_rem_int h_pp_int]
-  congr 1 with z; ring
+  congr 1 with z
+  ring
 
 /-! ## Analyticity of the remainder at poles -/
 
@@ -132,13 +133,13 @@ private lemma correction_eventuallyEq_analyticExt {S : Finset ℂ} {z : ℂ}
     (S.erase z).finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_erase
   apply Filter.mem_of_superset (Filter.inter_mem (hV_open.mem_nhds hz_V) h_erase_away)
   intro w ⟨hw_V, hw_erase⟩
-  show correction w = g_z w
+  change correction w = g_z w
   by_cases hwz : w = z
   · rw [hwz, h_at_z]
   · have hw_not_S : w ∉ (↑S : Set ℂ) := by
       intro hmem
       exact hw_erase (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwz, Finset.mem_coe.mp hmem⟩))
-    show (if w ∈ (↑S : Set ℂ) then _ else rem w) = g_z w
+    change (if w ∈ (↑S : Set ℂ) then _ else rem w) = g_z w
     rw [if_neg hw_not_S]
     exact hV_eq ⟨hw_V, hwz⟩
 
@@ -148,7 +149,7 @@ private lemma correction_eventuallyEq_rem {S : Finset ℂ} {z : ℂ}
     (fun w => if w ∈ (↑S : Set ℂ) then limUnder (𝓝[≠] w) rem else rem w) =ᶠ[𝓝 z] rem := by
   apply Filter.mem_of_superset (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
   intro w hw
-  show (if w ∈ (↑S : Set ℂ) then _ else rem w) = rem w
+  change (if w ∈ (↑S : Set ℂ) then _ else rem w) = rem w
   rw [if_neg hw]
 
 /-- **The corrected remainder is DifferentiableOn U.**
@@ -185,7 +186,7 @@ theorem sub_principalPartSum_corrected_differentiableOn {f : ℂ → ℂ} {U : S
       exact (h_rem_diff.congr_of_eventuallyEq
         (correction_eventuallyEq_rem rem hzS)).differentiableWithinAt
   · intro z ⟨_, hzS⟩
-    show (if z ∈ (↑S : Set ℂ) then _ else rem z) = rem z
+    change (if z ∈ (↑S : Set ℂ) then _ else rem z) = rem z
     rw [if_neg hzS]
 
 /-! ## Residue theorem for convex domains -/
@@ -203,7 +204,7 @@ private lemma contourIntegral_corrected_eq_rem {f : ℂ → ℂ} {S : Finset ℂ
   intro t ht
   rw [uIcc_of_le (zero_le_one' ℝ)] at ht
   simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
-  show g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
+  change g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
   rw [h_g_on_curve t ht]
 
 /-- The contour integrand of the corrected remainder is EqOn the integrand of the

@@ -86,25 +86,33 @@ theorem repCanon_mem_fd {p : ℍ} (hp : p ∈ repCanon f hf) : p ∈ 𝒟 :=
 
 /-- Elements of `repCanon` are distinct from all three elliptic points. -/
 theorem repCanon_ne_elliptic (p : ℍ) (hp : p ∈ repCanon f hf) :
-    p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧
-    p ≠ ellipticPointRhoPlusOne' := by
+    p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' := by
   simp only [repCanon, Finset.mem_union] at hp
   rcases hp with (h | h) | h
-  · have h2 := (Finset.mem_filter.mp h).2; exact ⟨h2.1, h2.2.1, h2.2.2.1⟩
-  · have h2 := (Finset.mem_filter.mp h).2; refine ⟨?_, ?_, ?_⟩
-    · intro heq; rw [heq] at h2
-      have : (ellipticPointI' : ℂ).re = 0 := Complex.I_re; linarith [h2.1]
-    · intro heq; rw [heq] at h2; linarith [h2.2, ellipticPointRho_norm]
-    · intro heq; rw [heq] at h2
-      have : (ellipticPointRhoPlusOne' : ℂ).re = 1/2 := by
-        show (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2; simp [add_re, mul_re, I_re, I_im]
+  · obtain ⟨_, h1, h2, h3, _⟩ := Finset.mem_filter.mp h
+    exact ⟨h1, h2, h3⟩
+  · have h2 := (Finset.mem_filter.mp h).2
+    refine ⟨?_, ?_, ?_⟩
+    · intro heq
+      rw [heq] at h2
+      have : (ellipticPointI' : ℂ).re = 0 := Complex.I_re
       linarith [h2.1]
-  · have h2 := (Finset.mem_filter.mp h).2; refine ⟨?_, h2.1, ?_⟩
-    · intro heq; rw [heq] at h2
-      have : (ellipticPointI' : ℂ).re = 0 := Complex.I_re; linarith [h2.2.2]
-    · intro heq; rw [heq] at h2
-      have : (ellipticPointRhoPlusOne' : ℂ).re = 1/2 := by
-        show (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2; simp [add_re, mul_re, I_re, I_im]
+    · intro heq
+      rw [heq] at h2
+      linarith [h2.2, ellipticPointRho_norm]
+    · intro heq
+      rw [heq] at h2
+      have : (ellipticPointRhoPlusOne' : ℂ).re = 1/2 := by simp [ellipticPointRhoPlusOne']
+      linarith [h2.1]
+  · have h2 := (Finset.mem_filter.mp h).2
+    refine ⟨?_, h2.1, ?_⟩
+    · intro heq
+      rw [heq] at h2
+      have : (ellipticPointI' : ℂ).re = 0 := Complex.I_re
+      linarith [h2.2.2]
+    · intro heq
+      rw [heq] at h2
+      have : (ellipticPointRhoPlusOne' : ℂ).re = 1/2 := by simp [ellipticPointRhoPlusOne']
       linarith [h2.2.2]
 
 /-! ### Disjointness -/
@@ -112,16 +120,16 @@ theorem repCanon_ne_elliptic (p : ℍ) (hp : p ∈ repCanon f hf) :
 /-- `repStrict` and `repLeftVert` are disjoint. -/
 theorem disjoint_repStrict_repLeftVert :
     Disjoint (repStrict f hf) (repLeftVert f hf) := by
-  apply Finset.disjoint_left.mpr; intro p hp_s hp_lv
+  refine Finset.disjoint_left.mpr fun p hp_s hp_lv => ?_
   have h1 : |(p : ℂ).re| < 1/2 := (Finset.mem_filter.mp hp_s).2.2.2.2.2
-  rw [(Finset.mem_filter.mp hp_lv).2.1] at h1; norm_num at h1
+  rw [(Finset.mem_filter.mp hp_lv).2.1] at h1
+  norm_num at h1
 
 /-- `repStrict ∪ repLeftVert` and `repLeftArc` are disjoint. -/
 theorem disjoint_union_repLeftArc :
     Disjoint (repStrict f hf ∪ repLeftVert f hf) (repLeftArc f hf) := by
-  apply Finset.disjoint_left.mpr; intro p hp_u hp_a
-  have h_arc := (Finset.mem_filter.mp hp_a).2
-  have h_norm_eq : ‖(p : ℂ)‖ = 1 := h_arc.2.1
+  refine Finset.disjoint_left.mpr fun p hp_u hp_a => ?_
+  have h_norm_eq : ‖(p : ℂ)‖ = 1 := (Finset.mem_filter.mp hp_a).2.2.1
   simp only [Finset.mem_union] at hp_u
   rcases hp_u with hp_s | hp_lv
   · have h_gt : ‖(p : ℂ)‖ > 1 := (Finset.mem_filter.mp hp_s).2.2.2.2.1
@@ -134,7 +142,7 @@ theorem disjoint_union_repLeftArc :
 private lemma uhp_norm_one_re_zero_eq_i (p : ℍ)
     (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = 0) :
     p = ellipticPointI' := by
-  apply UpperHalfPlane.ext; show (p : ℂ) = I
+  refine UpperHalfPlane.ext (show (p : ℂ) = I from ?_)
   have h_nsq : Complex.normSq (p : ℂ) = 1 := by
     rw [Complex.normSq_eq_norm_sq, hn, one_pow]
   rw [Complex.normSq_apply, hr] at h_nsq
@@ -144,48 +152,6 @@ private lemma uhp_norm_one_re_zero_eq_i (p : ℍ)
     · linarith
     · exact absurd h (ne_of_gt (add_pos p.2 one_pos))
   exact Complex.ext (hr.trans Complex.I_re.symm) (h_im.trans Complex.I_im.symm)
-
-private lemma uhp_norm_one_re_neg_half_eq_rho (p : ℍ)
-    (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = -1/2) :
-    p = ellipticPointRho' := by
-  apply UpperHalfPlane.ext
-  show (p : ℂ) = (ellipticPointRho' : ℂ)
-  have h_nsq : Complex.normSq (p : ℂ) = 1 := by
-    rw [Complex.normSq_eq_norm_sq, hn, one_pow]
-  rw [Complex.normSq_apply, hr] at h_nsq
-  have h_im : (p : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_sq : (p : ℂ).im ^ 2 = 3 / 4 := by nlinarith
-    have h_im_sq : (p : ℂ).im ^ 2 = (Real.sqrt 3 / 2) ^ 2 := by
-      rw [h_sq, div_pow, Real.sq_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]; norm_num
-    rcases sq_eq_sq_iff_eq_or_eq_neg.mp h_im_sq with h | h
-    · exact h
-    · exact absurd h (by
-        have : (↑p : ℂ).im > 0 := p.2
-        linarith [Real.sqrt_pos.mpr (show (3 : ℝ) > 0 by norm_num)])
-  apply Complex.ext
-  · simp [ellipticPointRho']; have : p.re = (↑p : ℂ).re := rfl; linarith
-  · simp [ellipticPointRho']; have : p.im = (↑p : ℂ).im := rfl; linarith
-
-private lemma uhp_norm_one_re_half_eq_rho_plus_one (p : ℍ)
-    (hn : ‖(p : ℂ)‖ = 1) (hr : (p : ℂ).re = 1/2) :
-    p = ellipticPointRhoPlusOne' := by
-  apply UpperHalfPlane.ext
-  show (p : ℂ) = (ellipticPointRhoPlusOne' : ℂ)
-  have h_nsq : Complex.normSq (p : ℂ) = 1 := by
-    rw [Complex.normSq_eq_norm_sq, hn, one_pow]
-  rw [Complex.normSq_apply, hr] at h_nsq
-  have h_im : (p : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_sq : (p : ℂ).im ^ 2 = 3 / 4 := by nlinarith
-    have h_im_sq : (p : ℂ).im ^ 2 = (Real.sqrt 3 / 2) ^ 2 := by
-      rw [h_sq, div_pow, Real.sq_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]; norm_num
-    rcases sq_eq_sq_iff_eq_or_eq_neg.mp h_im_sq with h | h
-    · exact h
-    · exact absurd h (by
-        have : (↑p : ℂ).im > 0 := p.2
-        linarith [Real.sqrt_pos.mpr (show (3 : ℝ) > 0 by norm_num)])
-  apply Complex.ext
-  · simp [ellipticPointRhoPlusOne']; have : p.re = (↑p : ℂ).re := rfl; linarith
-  · simp [ellipticPointRhoPlusOne']; have : p.im = (↑p : ℂ).im := rfl; linarith
 
 /-! ### Case lemmas for exists_repCanon_of_nonEllOrbit -/
 
@@ -199,14 +165,14 @@ private lemma case_right_vertical_via_tInv (q : NonEllOrbitFM) (p0 : ℍ)
   have hp1_s₀ : p1 ∈ s₀FM f hf :=
     s₀FM_complete f hf p1 (vAdd_neg_one_mem_fd_of_right_vertFM p0 hp0_fd h_half) hp1_ord
   have hp1_re : (↑p1 : ℂ).re = -1/2 := by
-    show (↑((-1 : ℝ) +ᵥ p0 : ℍ) : ℂ).re = -1/2
-    rw [vAdd_neg_one_coeFM, sub_re, one_re]; linarith
+    rw [vAdd_neg_one_coeFM, sub_re, one_re]
+    linarith
   have hp1_norm : ‖(↑p1 : ℂ)‖ > 1 := by
-    show ‖(↑((-1 : ℝ) +ᵥ p0 : ℍ) : ℂ)‖ > 1
-    rw [vAdd_neg_one_norm_eq_of_re_halfFM p0 h_half]; exact h_gt
+    rw [vAdd_neg_one_norm_eq_of_re_halfFM p0 h_half]
+    exact h_gt
   refine ⟨p1, ?_, orb_vAdd_neg_one_eq p0 ▸ hp0_orb⟩
-  simp only [repCanon, Finset.mem_union]; left; right
-  exact Finset.mem_filter.mpr ⟨hp1_s₀, hp1_re, hp1_norm⟩
+  simp only [repCanon, Finset.mem_union]
+  exact Or.inl (Or.inr (Finset.mem_filter.mpr ⟨hp1_s₀, hp1_re, hp1_norm⟩))
 
 private lemma case_right_arc_via_S (q : NonEllOrbitFM) (p0 : ℍ)
     (hp0_fd : p0 ∈ 𝒟) (hp0_ord : orderOfVanishingAt' (⇑f) p0 ≠ 0)
@@ -220,17 +186,18 @@ private lemma case_right_arc_via_S (q : NonEllOrbitFM) (p0 : ℍ)
   have h_re_S : (ModularGroup.S • p0 : ℍ).re = -p0.re :=
     S_smul_re_neg_of_unitFM p0 h_norm_eq
   have hp1_re_neg : (↑p1 : ℂ).re < 0 := by
-    show (ModularGroup.S • p0 : ℍ).re < 0; rw [h_re_S]
-    have : p0.re = (↑p0 : ℂ).re := rfl; linarith
+    change (ModularGroup.S • p0 : ℍ).re < 0
+    rw [h_re_S]
+    have : p0.re = (↑p0 : ℂ).re := rfl
+    linarith
   have hp1_ne_rho : p1 ≠ ellipticPointRho' := by
     intro h
-    have : orbFM ellipticPointRho' = q.val := by
-      rw [← h, show orbFM (ModularGroup.S • p0) = orbFM p0 from orb_S_smul_eq p0, hp0_orb]
-    exact hq_ne_rho this
+    refine hq_ne_rho ?_
+    rw [← h, show orbFM (ModularGroup.S • p0) = orbFM p0 from orb_S_smul_eq p0, hp0_orb]
   refine ⟨p1, ?_, orb_S_smul_eq p0 ▸ hp0_orb⟩
-  simp only [repCanon, Finset.mem_union]; right
-  exact Finset.mem_filter.mpr ⟨hp1_s₀, hp1_ne_rho,
-    S_smul_norm_of_unitFM p0 h_norm_eq, hp1_re_neg⟩
+  simp only [repCanon, Finset.mem_union]
+  exact Or.inr (Finset.mem_filter.mpr ⟨hp1_s₀, hp1_ne_rho,
+    S_smul_norm_of_unitFM p0 h_norm_eq, hp1_re_neg⟩)
 
 /-! ### The key existence theorem -/
 
@@ -243,44 +210,55 @@ theorem exists_repCanon_of_nonEllOrbit :
   obtain ⟨hq_ne_i, hq_ne_rho⟩ := q.2
   obtain ⟨p0, hp0_orb, hp0_fd⟩ := orbit_has_fd_repFM q.val
   have hp0_ord : orderOfVanishingAt' (⇑f) p0 ≠ 0 := by
-    rw [← ordOrbit_mkFM f p0, hp0_orb]; exact hord
+    rw [← ordOrbit_mkFM f p0, hp0_orb]
+    exact hord
   have hp0_s₀ : p0 ∈ s₀FM f hf := s₀FM_complete f hf p0 hp0_fd hp0_ord
-  have hp0_ne_i : p0 ≠ ellipticPointI' :=
-    fun h ↦ by rw [h] at hp0_orb; exact hq_ne_i hp0_orb.symm
-  have hp0_ne_rho : p0 ≠ ellipticPointRho' :=
-    fun h ↦ by rw [h] at hp0_orb; exact hq_ne_rho hp0_orb.symm
-  have hp0_ne_rho1 : p0 ≠ ellipticPointRhoPlusOne' := fun h ↦ by
-    rw [h] at hp0_orb; exact hq_ne_rho (hp0_orb.symm.trans orb_rho_plus_one_eq_orb_rhoFM)
-  rcases (by nlinarith [Complex.normSq_eq_norm_sq (p0 : ℂ),
-      norm_nonneg (p0 : ℂ), sq_nonneg (‖(p0 : ℂ)‖ - 1),
-      hp0_fd.1] : ‖(p0 : ℂ)‖ ≥ 1).lt_or_eq with h_gt | h_eq
+  have hp0_ne_i : p0 ≠ ellipticPointI' := fun h => by
+    rw [h] at hp0_orb
+    exact hq_ne_i hp0_orb.symm
+  have hp0_ne_rho : p0 ≠ ellipticPointRho' := fun h => by
+    rw [h] at hp0_orb
+    exact hq_ne_rho hp0_orb.symm
+  have hp0_ne_rho1 : p0 ≠ ellipticPointRhoPlusOne' := fun h => by
+    rw [h] at hp0_orb
+    exact hq_ne_rho (hp0_orb.symm.trans orb_rho_plus_one_eq_orb_rhoFM)
+  have h_norm_ge_one : ‖(p0 : ℂ)‖ ≥ 1 := by
+    nlinarith [Complex.normSq_eq_norm_sq (p0 : ℂ), norm_nonneg (p0 : ℂ),
+      sq_nonneg (‖(p0 : ℂ)‖ - 1), hp0_fd.1]
+  rcases h_norm_ge_one.lt_or_eq with h_gt | h_eq
   · rcases hp0_fd.2.lt_or_eq with h_re_lt | h_re_eq
     · refine ⟨p0, ?_, hp0_orb⟩
-      simp only [repCanon, Finset.mem_union]; left; left
-      exact Finset.mem_filter.mpr ⟨hp0_s₀, hp0_ne_i, hp0_ne_rho, hp0_ne_rho1, h_gt, h_re_lt⟩
+      simp only [repCanon, Finset.mem_union]
+      exact Or.inl (Or.inl (Finset.mem_filter.mpr
+        ⟨hp0_s₀, hp0_ne_i, hp0_ne_rho, hp0_ne_rho1, h_gt, h_re_lt⟩))
     · rcases (abs_eq (by norm_num : (0 : ℝ) ≤ 1/2)).mp h_re_eq with h_half | h_neg_half
       · exact case_right_vertical_via_tInv f hf q p0 hp0_fd hp0_ord h_half h_gt hp0_orb
       · refine ⟨p0, ?_, hp0_orb⟩
-        simp only [repCanon, Finset.mem_union]; left; right
-        exact Finset.mem_filter.mpr ⟨hp0_s₀, by change p0.re = -1/2; linarith, h_gt⟩
+        simp only [repCanon, Finset.mem_union]
+        refine Or.inl (Or.inr (Finset.mem_filter.mpr ⟨hp0_s₀, ?_, h_gt⟩))
+        change p0.re = -1/2
+        linarith
   · have h_norm_eq : ‖(↑p0 : ℂ)‖ = 1 := h_eq.symm
     have h_re_ne_zero : (↑p0 : ℂ).re ≠ 0 :=
       fun h => hp0_ne_i (uhp_norm_one_re_zero_eq_i p0 h_norm_eq h)
     rcases lt_or_gt_of_ne h_re_ne_zero with h_neg | h_pos
     · refine ⟨p0, ?_, hp0_orb⟩
-      simp only [repCanon, Finset.mem_union]; right
-      exact Finset.mem_filter.mpr ⟨hp0_s₀, hp0_ne_rho, h_norm_eq, h_neg⟩
+      simp only [repCanon, Finset.mem_union]
+      exact Or.inr (Finset.mem_filter.mpr ⟨hp0_s₀, hp0_ne_rho, h_norm_eq, h_neg⟩)
     · exact case_right_arc_via_S f hf q p0 hp0_fd hp0_ord h_norm_eq h_pos hp0_orb hq_ne_rho.symm
 
 /-! ### Injectivity helpers -/
 
 /-- Elements of `repCanon` have real part strictly less than `1/2`. -/
 private lemma repCanon_re_lt_half (p : ℍ) (hp : p ∈ repCanon f hf) : p.re < 1/2 := by
-  simp only [repCanon, Finset.mem_union] at hp; rcases hp with (h | h) | h
+  simp only [repCanon, Finset.mem_union] at hp
+  have hpre : p.re = (↑p : ℂ).re := rfl
+  rcases hp with (h | h) | h
   · exact lt_of_abs_lt (Finset.mem_filter.mp h).2.2.2.2.2
   · simp only [repLeftVert, sLeftVertFM, Finset.mem_filter] at h
-    have : p.re = (↑p : ℂ).re := rfl; linarith [h.2.1]
-  · have := (Finset.mem_filter.mp h).2.2.2; have : p.re = (↑p : ℂ).re := rfl; linarith
+    linarith [h.2.1]
+  · have := (Finset.mem_filter.mp h).2.2.2
+    linarith
 
 /-- Elements of `repCanon` on the unit circle have negative real part. -/
 private lemma repCanon_norm_one_re_neg (p : ℍ) (hp : p ∈ repCanon f hf)
@@ -295,7 +273,8 @@ private lemma denom_formula_general (h : SL(2, ℤ)) (p : ℍ) :
     UpperHalfPlane.denom h p = ((h : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℂ) * ↑p +
       ((h : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℂ) := by
   simp only [UpperHalfPlane.denom, Matrix.SpecialLinearGroup.toGL,
-    Matrix.SpecialLinearGroup.map, RingHom.mapMatrix_apply]; rfl
+    Matrix.SpecialLinearGroup.map, RingHom.mapMatrix_apply]
+  rfl
 
 private lemma normSq_denom_expand_general (h : SL(2, ℤ)) (p : ℍ) :
     Complex.normSq (UpperHalfPlane.denom h p) =
@@ -317,7 +296,8 @@ private lemma d_mul_linear_nonneg {c d : ℤ} {z : ℍ}
     (d : ℝ) * (2 * (c : ℝ) * (z : ℂ).re + (d : ℝ)) ≥ 0 := by
   have h_bound : |2 * (c : ℝ) * (z : ℂ).re| ≤ 1 := by
     rw [abs_mul, abs_mul, abs_of_pos (by norm_num : (2:ℝ) > 0), h_c_abs, mul_one]
-    have h_re : |(z : ℂ).re| ≤ 1/2 := hz.2; linarith
+    have h_re : |(z : ℂ).re| ≤ 1/2 := hz.2
+    linarith
   rcases le_or_gt (d : ℤ) 0 with hd | hd
   · rcases eq_or_lt_of_le hd with hd0 | hd_neg
     · simp [show (d : ℝ) = 0 from by exact_mod_cast hd0]
@@ -350,36 +330,46 @@ private lemma inv_c_sq_eq (g : SL(2, ℤ)) :
     change (↑g⁻¹ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = _
     rw [Matrix.SpecialLinearGroup.coe_inv g, Matrix.adjugate_fin_two]
     simp only [Fin.isValue, Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero,
-               Matrix.cons_val_fin_one, Matrix.cons_val_one]
-  rw [this]; ring
+      Matrix.cons_val_fin_one, Matrix.cons_val_one]
+  rw [this]
+  ring
 
 private lemma c_abs_le_one_of_smul_fd (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     (hg : g • p₂ = p₁) (hp₁ : p₁ ∈ 𝒟) (hp₂ : p₂ ∈ 𝒟) :
     |(g : Matrix (Fin 2) (Fin 2) ℤ) 1 0| ≤ 1 := by
   set c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0
   have h_p1_im_eq : p₁.im = p₂.im / Complex.normSq (UpperHalfPlane.denom g p₂) := by
-    have := ModularGroup.im_smul_eq_div_normSq g p₂; rw [hg] at this; exact this
+    have := ModularGroup.im_smul_eq_div_normSq g p₂
+    rw [hg] at this
+    exact this
   have h_nsq_eq : Complex.normSq (UpperHalfPlane.denom g p₂) = p₂.im / p₁.im := by
-    rw [h_p1_im_eq]; field_simp
-  by_contra h_gt; push Not at h_gt
+    rw [h_p1_im_eq]
+    field_simp
+  by_contra! h_gt
   have h_c2 : c ^ 2 ≥ 4 := by nlinarith [sq_abs c]
   have h1 : (↑c : ℝ) ^ 2 * p₂.im ^ 2 ≤ p₂.im / p₁.im := by
-    rw [← h_nsq_eq]; convert p₂.c_mul_im_sq_le_normSq_denom g using 1; simp [c]; ring
+    rw [← h_nsq_eq]
+    convert p₂.c_mul_im_sq_le_normSq_denom g using 1
+    simp [c]
+    ring
   have h2 : (↑c : ℝ) ^ 2 * p₂.im ^ 2 * p₁.im ≤ p₂.im := by
     have := mul_le_mul_of_nonneg_right h1 p₁.im_pos.le
     rwa [div_mul_cancel₀ _ (ne_of_gt p₁.im_pos)] at this
   have h3 : (↑c : ℝ) ^ 2 * p₂.im * p₁.im ≤ 1 := by
     have h_eq : (↑c : ℝ) ^ 2 * p₂.im * p₁.im =
         (↑c : ℝ) ^ 2 * p₂.im ^ 2 * p₁.im / p₂.im := by field_simp
-    rw [h_eq]; exact (div_le_one p₂.im_pos).mpr h2
+    rw [h_eq]
+    exact (div_le_one p₂.im_pos).mpr h2
   have h_prod : 4 * (p₂.im * p₁.im) ≤ 1 := by
     have h_c2_real : (↑c : ℝ) ^ 2 ≥ 4 := by exact_mod_cast h_c2
     nlinarith [mul_nonneg (show (0 : ℝ) ≤ (↑c : ℝ) ^ 2 - 4 from by linarith)
       (mul_nonneg p₂.im_pos.le p₁.im_pos.le)]
   have hp1_im : (1 : ℝ) / 2 < p₁.im := by
-    rw [← UpperHalfPlane.coe_im]; exact fd_im_gt_halfFM _ hp₁
+    rw [← UpperHalfPlane.coe_im]
+    exact fd_im_gt_halfFM _ hp₁
   have hp2_im : (1 : ℝ) / 2 < p₂.im := by
-    rw [← UpperHalfPlane.coe_im]; exact fd_im_gt_halfFM _ hp₂
+    rw [← UpperHalfPlane.coe_im]
+    exact fd_im_gt_halfFM _ hp₂
   nlinarith [mul_pos (by linarith : (0:ℝ) < p₁.im - 1/2)
     (by linarith : (0:ℝ) < p₂.im - 1/2)]
 
@@ -390,7 +380,9 @@ private lemma normSq_denom_one_of_im_eq (g : SL(2, ℤ))
   have h := ModularGroup.im_smul_eq_div_normSq g p₁
   rw [h_smul, h_im] at h
   have hne : Complex.normSq (UpperHalfPlane.denom g p₁) ≠ 0 := by
-    intro h0; simp [h0] at h; linarith [p₂.im_pos]
+    intro h0
+    simp [h0] at h
+    linarith [p₂.im_pos]
   rw [eq_div_iff hne] at h
   nlinarith [p₂.im_pos]
 
@@ -399,20 +391,25 @@ private lemma injOn_c_eq_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     (hc : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0) :
     p₁ = p₂ := by
   obtain ⟨n, hn⟩ := ModularGroup.exists_eq_T_zpow_of_c_eq_zero hc
-  have hTn : p₁ = ModularGroup.T ^ n • p₂ := by rw [hn] at hg; exact hg.symm
+  have hTn : p₁ = ModularGroup.T ^ n • p₂ := by
+    rw [hn] at hg
+    exact hg.symm
   have h_re_shift : p₁.re = p₂.re + (n : ℝ) := by
-    rw [hTn]; exact ModularGroup.re_T_zpow_smul p₂ n
+    rw [hTn]
+    exact ModularGroup.re_T_zpow_smul p₂ n
   have h_n_zero : n = 0 := by
     have h1 := repCanon_re_lt_half f hf p₁ hp₁
     have h3 := repCanon_re_lt_half f hf p₂ hp₂
     have h4 : -(1 / 2) ≤ p₂.re := by
-      have := (repCanon_mem_fd f hf hp₂).2; rw [← UpperHalfPlane.coe_re] at this
+      have := (repCanon_mem_fd f hf hp₂).2
+      rw [← UpperHalfPlane.coe_re] at this
       exact (abs_le.mp this).1
     have h5 : -(1 / 2) ≤ p₁.re := by
-      have := (repCanon_mem_fd f hf hp₁).2; rw [← UpperHalfPlane.coe_re] at this
+      have := (repCanon_mem_fd f hf hp₁).2
+      rw [← UpperHalfPlane.coe_re] at this
       exact (abs_le.mp this).1
-    have : n < 1 := by exact_mod_cast (show (↑n : ℝ) < 1 by linarith)
-    have : -1 < n := by exact_mod_cast (show (-1 : ℝ) < (↑n : ℝ) by linarith)
+    have h_lt : n < 1 := by exact_mod_cast (show (↑n : ℝ) < 1 by linarith)
+    have h_gt : -1 < n := by exact_mod_cast (show (-1 : ℝ) < (↑n : ℝ) by linarith)
     omega
   rw [hTn, h_n_zero, zpow_zero, one_smul]
 
@@ -425,14 +422,20 @@ private lemma injOn_c_ne_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
   have h_csq : ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0) ^ 2 = 1 := by
     nlinarith [sq_abs ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0), Int.one_le_abs h_c_ne]
   have h_nsq_eq : Complex.normSq (UpperHalfPlane.denom g p₂) = p₂.im / p₁.im := by
-    have h := ModularGroup.im_smul_eq_div_normSq g p₂; rw [hg] at h; rw [h]; field_simp
-  have h_im_eq : p₁.im = p₂.im := le_antisymm
-    (by have h := normSq_denom_ge_one g p₂ hp₂_fd h_csq
-        rw [h_nsq_eq] at h; rwa [ge_iff_le, le_div_iff₀ p₁.im_pos, one_mul] at h)
-    (by have h := ModularGroup.im_smul_eq_div_normSq g⁻¹ p₁
-        rw [inv_smul_eq_iff.mpr hg.symm] at h; rw [h]
-        exact div_le_self p₁.im_pos.le
-          (normSq_denom_ge_one g⁻¹ p₁ hp₁_fd ((inv_c_sq_eq g).trans h_csq)))
+    have h := ModularGroup.im_smul_eq_div_normSq g p₂
+    rw [hg] at h
+    rw [h]
+    field_simp
+  have h_im_eq : p₁.im = p₂.im := by
+    refine le_antisymm ?_ ?_
+    · have h := normSq_denom_ge_one g p₂ hp₂_fd h_csq
+      rw [h_nsq_eq] at h
+      rwa [ge_iff_le, le_div_iff₀ p₁.im_pos, one_mul] at h
+    · have h := ModularGroup.im_smul_eq_div_normSq g⁻¹ p₁
+      rw [inv_smul_eq_iff.mpr hg.symm] at h
+      rw [h]
+      exact div_le_self p₁.im_pos.le
+        (normSq_denom_ge_one g⁻¹ p₁ hp₁_fd ((inv_c_sq_eq g).trans h_csq))
   have h_p2_nsq := normSq_eq_one_of_denom_one g p₂ hp₂_fd h_csq
     (by rw [h_nsq_eq, h_im_eq, div_self (ne_of_gt p₂.im_pos)])
   have h_p1_nsq := normSq_eq_one_of_denom_one g⁻¹ p₁ hp₁_fd
