@@ -23,13 +23,13 @@ A single new file `LeanModularForms/ForMathlib/HungerbuhlerWasem.lean` exposing:
 
 | # | Theorem | Hypotheses (sketch) | Status |
 |---|---|---|---|
-| **A** | `hw_3_3_avoidance` (central) | open `U` + null-hom γ + γ avoids `S` + `PolarPartDecomposition f S U` | proved |
-| **B** | `hw_3_3_simplePoles_convex` (central) | convex `U` + simple poles + γ may cross + 2 CPV/continuity oracles | proved (= cleaned `generalizedResidueTheorem'`) |
-| 1 | `hw_3_3_simplePoles_avoidance` | A specialized: simple poles drop the decomposition argument | proved |
-| 2 | `hw_3_3_convex_avoidance` | A specialized: convex drops null-hom | proved |
-| 3 | `hw_3_3_classicalResidue` | 1 + 2 combined: convex + simple poles + avoidance | proved |
-| 4 | `hw_3_3_simplePoles_convex_transverse` | B specialized: discharges crossing oracles via project's transverse-crossing machinery | proved (entry point for valence formula) |
-| C | `hw_3_3_crossing` | full crossing + higher-order, no oracles | **deferred** — placeholder `sorry`, requires TIGHT-3 + TIGHT-4 |
+| **A** | `HungerbuhlerWasem.residueTheorem_avoidance` (central) | open `U` + null-hom γ + γ avoids `S` + `PolarPartDecomposition f S U` | proved |
+| **B** | `HungerbuhlerWasem.residueTheorem_simplePoles_convex` (central) | convex `U` + simple poles + γ may cross + 2 CPV/continuity oracles | proved (= cleaned `generalizedResidueTheorem'`) |
+| 1 | `HungerbuhlerWasem.residueTheorem_simplePoles_avoidance` | A specialized: simple poles drop the decomposition argument | proved |
+| 2 | `HungerbuhlerWasem.residueTheorem_convex_avoidance` | A specialized: convex drops null-hom | proved |
+| 3 | `HungerbuhlerWasem.residueTheorem_simplePoles_convex_avoidance` | 1 + 2 combined: convex + simple poles + avoidance ("classical residue theorem") | proved |
+| 4 | `HungerbuhlerWasem.residueTheorem_simplePoles_convex_transverse` | B specialized: discharges crossing oracles via project's transverse-crossing machinery | proved (entry point for valence formula) |
+| C | `HungerbuhlerWasem.residueTheorem_crossing` | full crossing + higher-order, no oracles | **deferred** — placeholder `sorry`, requires TIGHT-3 + TIGHT-4 |
 
 A and B are incomparable (A has any pole order but requires avoidance; B has simple poles but allows crossings on a convex domain). C unifies them and is future work.
 
@@ -59,7 +59,7 @@ Constructors / API to provide alongside:
 ### Central theorem A signature
 
 ```lean
-theorem hw_3_3_avoidance
+theorem HungerbuhlerWasem.residueTheorem_avoidance
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
     {f : ℂ → ℂ} {x : ℂ} (γ : ClosedPwC1Immersion x)
@@ -77,25 +77,23 @@ theorem hw_3_3_avoidance
 
 ### Central theorem B signature
 
-(Replacement for `generalizedResidueTheorem'`, renamed and cleaned.)
+(Replacement for `generalizedResidueTheorem'`, renamed and cleaned. Curve type stays as `PiecewiseC1Immersion` — see Risk section.)
 
 ```lean
-theorem hw_3_3_simplePoles_convex
+theorem HungerbuhlerWasem.residueTheorem_simplePoles_convex
     {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U) {f : ℂ → ℂ}
     (hf : DifferentiableOn ℂ f (U \ ↑S))
-    {x : ℂ} (γ : ClosedPwC1Immersion x)
-    (hγ_in_U : ∀ t ∈ Icc (0:ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t ∈ U)
+    (γ : PiecewiseC1Immersion)
+    (hγ_closed : γ.toPiecewiseC1Curve.IsClosed)
+    (hγ_in_U : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ∈ U)
     (h_simple : ∀ s ∈ S, HasSimplePoleAt f s)
     (h_ext : ∀ s ∈ S,
       ContinuousAt (fun z => f z - residue f s / (z - s)) s)
     (h_PV_at_crossing : ∀ s ∈ S, CauchyPrincipalValueExists'
-      (fun z => residue f s / (z - s))
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 1 s) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * π * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
+      (fun z => residue f s / (z - s)) γ.toFun γ.a γ.b s) :
+    HasCauchyPVOn S f γ.toFun
+      (∑ s ∈ S, 2 * π * I * generalizedWindingNumber' γ.toFun γ.a γ.b s *
           residue f s)
 ```
 
@@ -162,11 +160,11 @@ Genuine reusable infrastructure — **touched only minimally** (caller migration
 
 Sites that currently call deleted theorems:
 
-- `LeanModularForms/ForMathlib/ValenceFormula/PVChain/Assembly/ResidueSide.lean:365` — calls `generalizedResidueTheorem'`. Migrates to `hw_3_3_simplePoles_convex_transverse` (Corollary 4).
+- `LeanModularForms/ForMathlib/ValenceFormula/PVChain/Assembly/ResidueSide.lean:365` — calls `generalizedResidueTheorem'`. Migrates to `HungerbuhlerWasem.residueTheorem_simplePoles_convex_transverse` (Corollary 4).
 - `LeanModularForms/ForMathlib/ValenceFormulaBridged.lean` — uses the same chain via `valence_formula_textbook_orbit_finsum_FM`. Migrates by transitive update.
 - `LeanModularForms/ForMathlib/ValenceFormulaFinal.lean` — uses `valence_formula_textbook_orbit_finsum_FM`. No direct change needed once the bridged file builds.
-- Any sites currently calling `hw_3_3_simple_avoidance_paper` → migrate to `hw_3_3_simplePoles_avoidance`.
-- Any sites currently calling `hw_3_3_higherOrder_avoidance_paper` → migrate to `hw_3_3_avoidance`.
+- Any sites currently calling `hw_3_3_simple_avoidance_paper` → migrate to `HungerbuhlerWasem.residueTheorem_simplePoles_avoidance`.
+- Any sites currently calling `hw_3_3_higherOrder_avoidance_paper` → migrate to `HungerbuhlerWasem.residueTheorem_avoidance`.
 - Any sites currently calling deleted `hw_3_3_*` variants → migrate to whichever corollary fits.
 
 Estimated ~10–20 callsites total. Mechanical renames with type adjustments.
@@ -203,7 +201,7 @@ The implementation plan picks (1) initially (lower risk, ships sooner) and notes
 
 After this refactor:
 - `lake build` passes with 0 errors, 0 warnings, 0 added sorries (the one `sorry` for Central C is intentional).
-- The new `HungerbuhlerWasem.lean` compiles standalone and exports exactly 7 theorems + the `PolarPartDecomposition` structure + ≤ 4 small constructor lemmas.
+- The new `HungerbuhlerWasem.lean` compiles standalone and exports exactly 7 theorems (`residueTheorem_avoidance`, `residueTheorem_simplePoles_convex`, `residueTheorem_simplePoles_avoidance`, `residueTheorem_convex_avoidance`, `residueTheorem_simplePoles_convex_avoidance`, `residueTheorem_simplePoles_convex_transverse`, `residueTheorem_crossing`) + the `PolarPartDecomposition` structure + ≤ 4 small constructor lemmas.
 - The 15 listed files are deleted.
 - Valence-formula chain compiles and produces identical output (same `valence_formula_textbook` axiom set).
-- Spot check: `#print axioms HungerbuhlerWasem.hw_3_3_avoidance` returns `[propext, Classical.choice, Quot.sound]` (axiom-clean).
+- Spot check: `#print axioms HungerbuhlerWasem.residueTheorem_avoidance` returns `[propext, Classical.choice, Quot.sound]` (axiom-clean).
