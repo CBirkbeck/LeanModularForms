@@ -59,13 +59,9 @@ theorem image_compact (γ : PiecewiseC1Path x y) :
 path image is positive. -/
 theorem infDist_pos_of_avoids (γ : PiecewiseC1Path x y) (z₀ : ℂ)
     (hav : γ.Avoids z₀) : 0 < γ.infDist z₀ := by
-  unfold infDist
-  have h_compact := γ.image_compact
-  have h_closed := h_compact.isClosed
-  have h_nonempty : (γ.toPath.extend '' Icc (0 : ℝ) 1).Nonempty :=
-    ⟨γ.toPath.extend 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩
-  rw [← h_closed.notMem_iff_infDist_pos h_nonempty]
-  intro ⟨t, ht, heq⟩
+  rw [infDist, ← γ.image_compact.isClosed.notMem_iff_infDist_pos
+    ⟨γ.toPath.extend 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩]
+  rintro ⟨t, ht, heq⟩
   exact hav t ht heq
 
 /-! ### Avoidance criteria -/
@@ -73,25 +69,20 @@ theorem infDist_pos_of_avoids (γ : PiecewiseC1Path x y) (z₀ : ℂ)
 /-- If every point on the path has imaginary part strictly greater than `z_0.im`,
 then the path avoids `z_0`. -/
 theorem avoids_of_im_lt (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (h : ∀ t ∈ Icc (0 : ℝ) 1, z₀.im < (γ t).im) : γ.Avoids z₀ := by
-  intro t ht heq
-  have := h t ht
-  rw [heq] at this
-  exact lt_irrefl _ this
+    (h : ∀ t ∈ Icc (0 : ℝ) 1, z₀.im < (γ t).im) : γ.Avoids z₀ :=
+  fun t ht heq => (h t ht).ne' (by rw [heq])
 
 /-- If every point on the path has real part different from `z_0.re`,
 then the path avoids `z_0`. -/
 theorem avoids_of_re_ne (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (h : ∀ t ∈ Icc (0 : ℝ) 1, (γ t).re ≠ z₀.re) : γ.Avoids z₀ := by
-  intro t ht heq
-  exact h t ht (by rw [heq])
+    (h : ∀ t ∈ Icc (0 : ℝ) 1, (γ t).re ≠ z₀.re) : γ.Avoids z₀ :=
+  fun t ht heq => h t ht (by rw [heq])
 
 /-- If every point on the path has norm different from `‖z_0‖`,
 then the path avoids `z_0`. Useful for curves on circles. -/
 theorem avoids_of_norm_ne (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (h : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ t‖ ≠ ‖z₀‖) : γ.Avoids z₀ := by
-  intro t ht heq
-  exact h t ht (by rw [heq])
+    (h : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ t‖ ≠ ‖z₀‖) : γ.Avoids z₀ :=
+  fun t ht heq => h t ht (by rw [heq])
 
 /-! ### Full partition -/
 
@@ -135,9 +126,24 @@ theorem fullPartition_sorted (γ : PiecewiseC1Path x y) :
 /-- Membership in `fullPartition` is equivalent to being `0`, `1`, or a partition point. -/
 theorem mem_fullPartition (γ : PiecewiseC1Path x y) (t : ℝ) :
     t ∈ γ.fullPartition ↔ t = 0 ∨ t = 1 ∨ t ∈ γ.partition := by
-  show t ∈ γ.fullPartitionFinset.sort (· ≤ ·) ↔ _
+  change t ∈ γ.fullPartitionFinset.sort (· ≤ ·) ↔ _
   rw [Finset.mem_sort]
   simp [fullPartitionFinset]
+
+/-- `0` is in the full partition. -/
+theorem zero_mem_fullPartition (γ : PiecewiseC1Path x y) :
+    (0 : ℝ) ∈ γ.fullPartition := by
+  rw [mem_fullPartition]
+  left
+  rfl
+
+/-- `1` is in the full partition. -/
+theorem one_mem_fullPartition (γ : PiecewiseC1Path x y) :
+    (1 : ℝ) ∈ γ.fullPartition := by
+  rw [mem_fullPartition]
+  right
+  left
+  rfl
 
 /-- Every element of the full partition lies in `[0, 1]`. -/
 theorem fullPartition_mem_Icc (γ : PiecewiseC1Path x y) (t : ℝ)
@@ -146,50 +152,28 @@ theorem fullPartition_mem_Icc (γ : PiecewiseC1Path x y) (t : ℝ)
   rcases ht with rfl | rfl | hpart
   · exact ⟨le_refl _, zero_le_one⟩
   · exact ⟨zero_le_one, le_refl _⟩
-  · have := γ.partition_subset hpart
-    exact ⟨le_of_lt this.1, le_of_lt this.2⟩
+  · exact ⟨(γ.partition_subset hpart).1.le, (γ.partition_subset hpart).2.le⟩
 
 /-- The first element of the full partition is `0`. -/
 theorem fullPartition_head_eq_zero (γ : PiecewiseC1Path x y) :
-    γ.fullPartition.head (γ.fullPartition_ne_nil) = 0 := by
-  set hd := γ.fullPartition.head γ.fullPartition_ne_nil with hd_def
-  have h_mem : hd ∈ γ.fullPartition := List.head_mem _
-  have h0_mem : (0 : ℝ) ∈ γ.fullPartition := by
-    rw [mem_fullPartition]; left; rfl
-  have h_le_0 : hd ≤ 0 := γ.fullPartition_sorted.rel_head h0_mem
-  have h_0_le : 0 ≤ hd := (γ.fullPartition_mem_Icc hd h_mem).1
-  linarith
+    γ.fullPartition.head γ.fullPartition_ne_nil = 0 := by
+  have h_mem := List.head_mem γ.fullPartition_ne_nil
+  have h_le := γ.fullPartition_sorted.rel_head γ.zero_mem_fullPartition
+  linarith [(γ.fullPartition_mem_Icc _ h_mem).1]
 
 /-- The last element of the full partition is `1`. -/
 theorem fullPartition_last_eq_one (γ : PiecewiseC1Path x y) :
-    γ.fullPartition.getLast (γ.fullPartition_ne_nil) = 1 := by
-  set lst := γ.fullPartition.getLast γ.fullPartition_ne_nil with lst_def
-  have h_mem : lst ∈ γ.fullPartition := List.getLast_mem _
-  have h1_mem : (1 : ℝ) ∈ γ.fullPartition := by
-    rw [mem_fullPartition]; right; left; rfl
-  have h_1_le : 1 ≤ lst := γ.fullPartition_sorted.rel_getLast h1_mem
-  have h_le_1 : lst ≤ 1 := (γ.fullPartition_mem_Icc lst h_mem).2
-  linarith
+    γ.fullPartition.getLast γ.fullPartition_ne_nil = 1 := by
+  have h_mem := List.getLast_mem γ.fullPartition_ne_nil
+  have h_ge := γ.fullPartition_sorted.rel_getLast γ.one_mem_fullPartition
+  linarith [(γ.fullPartition_mem_Icc _ h_mem).2]
 
 /-- The full partition has at least two elements (it contains both 0 and 1). -/
 theorem fullPartition_length_ge_two (γ : PiecewiseC1Path x y) :
     2 ≤ γ.fullPartition.length := by
-  have hcard : 2 ≤ γ.fullPartitionFinset.card := by
-    apply Finset.one_lt_card.mpr
-    exact ⟨0, γ.zero_mem_fullPartitionFinset, 1, γ.one_mem_fullPartitionFinset,
-      zero_ne_one⟩
   simp only [fullPartition, Finset.length_sort]
-  exact hcard
-
-/-- `0` is in the full partition. -/
-theorem zero_mem_fullPartition (γ : PiecewiseC1Path x y) :
-    (0 : ℝ) ∈ γ.fullPartition := by
-  rw [mem_fullPartition]; left; rfl
-
-/-- `1` is in the full partition. -/
-theorem one_mem_fullPartition (γ : PiecewiseC1Path x y) :
-    (1 : ℝ) ∈ γ.fullPartition := by
-  rw [mem_fullPartition]; right; left; rfl
+  exact Finset.one_lt_card.mpr
+    ⟨0, γ.zero_mem_fullPartitionFinset, 1, γ.one_mem_fullPartitionFinset, zero_ne_one⟩
 
 /-- The full partition has no duplicate elements. -/
 theorem fullPartition_nodup (γ : PiecewiseC1Path x y) :

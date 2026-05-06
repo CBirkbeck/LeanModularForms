@@ -144,11 +144,13 @@ theorem smooth_boundary_classification (z : ℂ)
     (hz_re : |z.re| ≤ 1/2) :
     (|z.re| = 1/2 ∧ ‖z‖ > 1) ∨ (‖z‖ = 1 ∧ z.re ≠ 0 ∧ |z.re| ≠ 1/2) := by
   have hnorm_ge : (1 : ℝ) ≤ ‖z‖ := by
-    rw [Complex.norm_def]; exact Real.one_le_sqrt.mpr (by linarith)
+    rw [Complex.norm_def]
+    exact Real.one_le_sqrt.mpr (by linarith)
   rcases hnorm_ge.eq_or_lt with h_eq | h_gt
   · -- `‖z‖ = 1`: on the unit circle arc.
     have h_nsq_1 : Complex.normSq z = 1 := by
-      rw [Complex.normSq_eq_norm_sq, h_eq.symm]; ring
+      rw [Complex.normSq_eq_norm_sq, h_eq.symm]
+      ring
     refine Or.inr ⟨h_eq.symm, fun hre_zero => ?_, fun hre_half => ?_⟩
     · -- `re = 0` forces `z = I`.
       rw [Complex.normSq_apply, hre_zero, mul_zero, zero_add] at h_nsq_1
@@ -158,10 +160,13 @@ theorem smooth_boundary_classification (z : ℂ)
       have h_re_sq : z.re * z.re = 1/4 := by nlinarith [sq_abs z.re, hre_half]
       have h_im_val := im_eq_sqrt3_half_of_normSq_one_of_absRe_half h_nsq_1 hz_im h_re_sq
       rcases abs_eq (by norm_num : (0:ℝ) ≤ 1/2) |>.mp hre_half with h_pos | h_neg
-      · exact hz_ne_rho1 <| Complex.ext
-          (by rw [h_pos, ellipticPointRhoPlusOne_re]) (by rw [h_im_val, ellipticPointRhoPlusOne_im])
-      · exact hz_ne_rho <| Complex.ext
-          (by rw [h_neg, ellipticPointRho_re]; ring) (by rw [h_im_val, ellipticPointRho_im])
+      · refine hz_ne_rho1 <| Complex.ext ?_ ?_
+        · rw [h_pos, ellipticPointRhoPlusOne_re]
+        · rw [h_im_val, ellipticPointRhoPlusOne_im]
+      · refine hz_ne_rho <| Complex.ext ?_ ?_
+        · rw [h_neg, ellipticPointRho_re]
+          ring
+        · rw [h_im_val, ellipticPointRho_im]
   · -- `‖z‖ > 1`: interior exclusion forces `|re| = 1/2`.
     refine Or.inl ⟨le_antisymm hz_re ?_, h_gt⟩
     by_contra h
@@ -189,7 +194,9 @@ theorem boundary_point_on_arc_range {z : ℂ}
     0 < z.re * z.re ∧ 1/4 < z.re * z.re := by
   have h_pos : 0 < z.re * z.re := mul_self_pos.mpr hz_re_ne
   refine (lt_or_gt_of_ne fun h => hz_re_half ?_).imp (⟨h_pos, ·⟩) (⟨h_pos, ·⟩)
-  have habs : |z.re| ^ 2 = (1/2 : ℝ) ^ 2 := by rw [sq_abs]; linarith
+  have habs : |z.re| ^ 2 = (1/2 : ℝ) ^ 2 := by
+    rw [sq_abs]
+    linarith
   exact (sq_eq_sq₀ (abs_nonneg _) (by norm_num)).mp habs
 
 /-! ### BoundaryWindingHyp is exactly the gap for FDWindingDataFull -/

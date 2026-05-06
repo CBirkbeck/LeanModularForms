@@ -58,11 +58,11 @@ theorem orthogonalProjectionComplex_zero_left (L : ℂ) :
 
 theorem tangentDeviation_zero_left (L : ℂ) :
     tangentDeviation 0 L = 0 := by
-  simp [tangentDeviation, orthogonalProjectionComplex_zero_left]
+  simp [tangentDeviation, orthogonalProjectionComplex]
 
 theorem tangentDeviation_zero_right (w : ℂ) :
     tangentDeviation w 0 = w := by
-  simp [tangentDeviation, orthogonalProjectionComplex, Complex.normSq_zero]
+  simp [tangentDeviation, orthogonalProjectionComplex]
 
 /-- Projection onto a nonzero direction `L` gives a real multiple of `L`. -/
 theorem orthogonalProjectionComplex_smul (w L : ℂ) :
@@ -165,11 +165,13 @@ theorem isFlatOfOrder_zero (γ : ℝ → ℂ) (t₀ : ℝ)
     (hγ_cont : ContinuousAt γ t₀) :
     IsFlatOfOrder γ t₀ 0 where
   right_flat L hL _ := by
-    simp only [pow_zero]; rw [Asymptotics.isLittleO_one_iff]
+    simp only [pow_zero]
+    rw [Asymptotics.isLittleO_one_iff]
     have h_tend : Tendsto (fun t => ‖γ t - γ t₀‖) (𝓝[>] t₀) (𝓝 0) := by
       rw [← norm_zero (E := ℂ), ← sub_self (γ t₀)]
       exact ((hγ_cont.sub continuousAt_const).mono_left nhdsWithin_le_nhds).norm
-    rw [Metric.tendsto_nhds]; intro ε hε
+    rw [Metric.tendsto_nhds]
+    intro ε hε
     have h_ev : ∀ᶠ t in 𝓝[>] t₀, ‖γ t - γ t₀‖ < ε / 2 :=
       h_tend (Iio_mem_nhds (half_pos hε))
     filter_upwards [h_ev] with t ht
@@ -179,11 +181,13 @@ theorem isFlatOfOrder_zero (γ : ℝ → ℂ) (t₀ : ℝ)
       _ < 2 * (ε / 2) := by linarith
       _ = ε := by ring
   left_flat L hL _ := by
-    simp only [pow_zero]; rw [Asymptotics.isLittleO_one_iff]
+    simp only [pow_zero]
+    rw [Asymptotics.isLittleO_one_iff]
     have h_tend : Tendsto (fun t => ‖γ t - γ t₀‖) (𝓝[<] t₀) (𝓝 0) := by
       rw [← norm_zero (E := ℂ), ← sub_self (γ t₀)]
       exact ((hγ_cont.sub continuousAt_const).mono_left nhdsWithin_le_nhds).norm
-    rw [Metric.tendsto_nhds]; intro ε hε
+    rw [Metric.tendsto_nhds]
+    intro ε hε
     have h_ev : ∀ᶠ t in 𝓝[<] t₀, ‖γ t - γ t₀‖ < ε / 2 :=
       h_tend (Iio_mem_nhds (half_pos hε))
     filter_upwards [h_ev] with t ht
@@ -235,7 +239,8 @@ private theorem tangentDeviation_isLittleO_right
     have h1 : ‖t - t₀‖ * ‖L‖ = ‖(t - t₀) • L‖ := (norm_smul _ _).symm
     have h2 : ‖(t - t₀) • L‖ ≤ ‖γ t - γ t₀‖ + ‖r t‖ := by
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
-      rw [this]; exact norm_sub_le _ _
+      rw [this]
+      exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
     have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
@@ -275,7 +280,8 @@ private theorem tangentDeviation_isLittleO_left
     have h1 : ‖t - t₀‖ * ‖L‖ = ‖(t - t₀) • L‖ := (norm_smul _ _).symm
     have h2 : ‖(t - t₀) • L‖ ≤ ‖γ t - γ t₀‖ + ‖r t‖ := by
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
-      rw [this]; exact norm_sub_le _ _
+      rw [this]
+      exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
     have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
@@ -368,9 +374,8 @@ for any piecewise C¹ immersion. -/
 theorem satisfiesConditionA'_of_simplePoles
     (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
     (_hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s) :
-    SatisfiesConditionA' γ f S0 (fun _ => 1) := by
-  intro _s _hs _t₀ _ht₀ _hcross ht₀_Ioo
-  exact isFlatOfOrder_one γ _t₀ ht₀_Ioo
+    SatisfiesConditionA' γ f S0 (fun _ => 1) :=
+  fun _ _ t₀ _ _ ht => isFlatOfOrder_one γ t₀ ht
 
 /-- Condition (B) for simple poles requires angle rationality at corner crossings
 as an explicit hypothesis. The Laurent coefficient condition is vacuously true
@@ -402,10 +407,8 @@ theorem satisfiesConditionB_of_simplePoles
     obtain ⟨c, g, hg, hf_eq⟩ := hSimplePoles s hs
     refine ⟨1, ![c], g, hg, ?_, ?_⟩
     · filter_upwards [hf_eq] with z hz
-      rw [hz]
-      simp [pow_one]
-      ring
-    · intro ⟨k, hk⟩ _ hk1
+      simp [hz, pow_one, add_comm]
+    · intro ⟨_, hk⟩ _ hk1
       exact absurd hk1 (by omega)
 
 /-- Both conditions (A') and (B) are satisfied for simple poles, provided

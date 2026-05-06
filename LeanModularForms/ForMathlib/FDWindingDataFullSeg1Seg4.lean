@@ -40,8 +40,7 @@ noncomputable section
 
 /-- `√3 / 2 < H` whenever `1 < H`, used to feed the seg1/seg4 FTC providers. -/
 private lemma sqrt_three_div_two_lt_of_one_lt {H : ℝ} (hH : 1 < H) : Real.sqrt 3 / 2 < H := by
-  have : Real.sqrt 3 < 2 := (Real.sqrt_lt' (by norm_num)).mpr (by norm_num)
-  linarith
+  nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num), Real.sqrt_nonneg (3:ℝ)]
 
 /-- `FDWindingDataFull H` constructor where seg1 and seg4 FTC providers are
 filled in unconditionally; only the arc FTC provider is required. -/
@@ -105,12 +104,10 @@ This is `valence_formula_of_two_sides_Hgt1` with the `mkD` parameter
 supplied unconditionally via `fdWindingDataFull_unconditional`. The
 only remaining hypotheses are the residue-side and modular-side
 Tendsto results. -/
-theorem valence_formula_unconditional_mkD {k : ℤ}
-    (f : ModularForm (Gamma 1) k)
+theorem valence_formula_unconditional_mkD {k : ℤ} (f : ModularForm (Gamma 1) k)
     (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S)
-    (F : ℝ → ℝ → ℂ)
+    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S) (F : ℝ → ℝ → ℂ)
     (H_res : ℝ) (hH_res_gt : 1 < H_res)
     (h_res : ∀ (H : ℝ), H_res ≤ H → (hH : 1 < H) →
       Tendsto (F H) (𝓝[>] 0)

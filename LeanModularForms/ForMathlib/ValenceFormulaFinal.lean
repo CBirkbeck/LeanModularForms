@@ -59,13 +59,12 @@ $$\operatorname{ord}_\infty(f) + \tfrac{1}{2}\operatorname{ord}_i(f)
   + \sum_{q\;\text{non-ell}} \operatorname{ord}_q(f) = \frac{k}{12}$$
 
 where the sum runs over all non-elliptic `SL₂(ℤ)`-orbits. -/
-theorem valence_formula_textbook {k : ℤ}
-    (f : ModularForm (Gamma 1) k) (hf : f ≠ 0) :
+theorem valence_formula_textbook {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0) :
     (orderAtCusp' f : ℂ) +
     (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
     (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
     ∑ᶠ (q : NonEllOrbitFM), ordOrbitQ f q =
     (k : ℂ) / 12 :=
-  valence_formula_textbook_orbit_finsum f hf
+  valence_formula_textbook_orbit_finsum_FM f hf
 
 end

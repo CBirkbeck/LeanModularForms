@@ -45,31 +45,27 @@ of `γ(t) - s` from the tangent direction `L` is
 
 This is the bound used in Phase 3.3 chord analysis. -/
 theorem orthogonal_deviation_at_radius_right
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} {n : ℕ}
-    (h_flat : IsFlatOfOrder γ t₀ n)
-    (hL : L ≠ 0)
-    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
-    (h_s : γ t₀ = s) :
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} {n : ℕ} (h_flat : IsFlatOfOrder γ t₀ n)
+    (hL : L ≠ 0) (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L)) (h_s : γ t₀ = s) :
     (fun t : ℝ => ‖tangentDeviation (γ t - s) L‖) =o[𝓝[>] t₀]
       (fun t => ‖γ t - s‖ ^ n) := by
   have h := h_flat.right_flat L hL hL_right
   have h_eq : ∀ t, γ t - γ t₀ = γ t - s := by
-    intro t; rw [h_s]
+    intro t
+    rw [h_s]
   simp only [h_eq] at h
   exact h
 
 /-- **Orthogonal deviation at exit-radius (left side).** Symmetric version. -/
 theorem orthogonal_deviation_at_radius_left
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} {n : ℕ}
-    (h_flat : IsFlatOfOrder γ t₀ n)
-    (hL : L ≠ 0)
-    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
-    (h_s : γ t₀ = s) :
+    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} {n : ℕ} (h_flat : IsFlatOfOrder γ t₀ n)
+    (hL : L ≠ 0) (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L)) (h_s : γ t₀ = s) :
     (fun t : ℝ => ‖tangentDeviation (γ t - s) L‖) =o[𝓝[<] t₀]
       (fun t => ‖γ t - s‖ ^ n) := by
   have h := h_flat.left_flat L hL hL_left
   have h_eq : ∀ t, γ t - γ t₀ = γ t - s := by
-    intro t; rw [h_s]
+    intro t
+    rw [h_s]
   simp only [h_eq] at h
   exact h
 
@@ -90,7 +86,8 @@ theorem orthogonal_pythagoras (w L : ℂ) :
   set u := (w * starRingEnd ℂ L).re with hu
   set N := Complex.normSq L with hN
   have h1 : Complex.normSq ((↑(u / N) : ℂ) * L) = (u / N) ^ 2 * N := by
-    rw [Complex.normSq_mul, Complex.normSq_ofReal]; ring
+    rw [Complex.normSq_mul, Complex.normSq_ofReal]
+    ring
   have h2 : (w * starRingEnd ℂ ((↑(u / N) : ℂ) * L)).re = (u / N) * u := by
     rw [map_mul, Complex.conj_ofReal]
     rw [show w * ((↑(u / N) : ℂ) * starRingEnd ℂ L) =
@@ -129,7 +126,8 @@ theorem real_sqrt_shortfall_le {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) (hl
   have h_eq :
       (ε - Real.sqrt (ε ^ 2 - δ ^ 2)) * (ε + Real.sqrt (ε ^ 2 - δ ^ 2)) = δ ^ 2 := by
     have : ε ^ 2 - Real.sqrt (ε ^ 2 - δ ^ 2) ^ 2 = δ ^ 2 := by
-      rw [h_sqrt_sq]; ring
+      rw [h_sqrt_sq]
+      ring
     linarith [this, sq_nonneg ε, sq_nonneg (Real.sqrt (ε ^ 2 - δ ^ 2))]
   have h_pos : 0 < ε + Real.sqrt (ε ^ 2 - δ ^ 2) := by linarith
   have h_diff_eq :
@@ -163,7 +161,8 @@ theorem norm_orthogonalProjection_shortfall_le {w : ℂ} (L : ℂ) (hw : 0 < ‖
   have h_sqrt_eq :
       Real.sqrt (‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2) =
         ‖orthogonalProjectionComplex w L‖ := by
-    rw [← h_proj_sq]; exact Real.sqrt_sq h_proj_nonneg
+    rw [← h_proj_sq]
+    exact Real.sqrt_sq h_proj_nonneg
   rw [h_sqrt_eq] at h_sqrt
   exact h_sqrt
 
@@ -193,15 +192,16 @@ theorem norm_orthogonalProjection_minus_target_eq {w L : ℂ} (hL : L ≠ 0)
       linarith [sq_nonneg (‖tangentDeviation w L‖)]
     exact (abs_le_of_sq_le_sq' h_proj_sq (norm_nonneg w)).2
   have h_proj_norm : ‖orthogonalProjectionComplex w L‖ = c * ‖L‖ := by
-    show ‖(c : ℝ) • L‖ = c * ‖L‖
-    rw [norm_smul]; simp [abs_of_nonneg hc_nonneg]
+    change ‖(c : ℝ) • L‖ = c * ‖L‖
+    rw [norm_smul]
+    simp [abs_of_nonneg hc_nonneg]
   have h_c_le_div : c ≤ ‖w‖ / ‖L‖ := by
     rw [le_div_iff₀ hL_norm_pos, ← h_proj_norm]
     exact h_proj_le_w
   have h_factor :
       (c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L = (c - ‖w‖ / ‖L‖ : ℝ) • L := by
     module
-  show ‖(c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L‖ = ‖w‖ - ‖orthogonalProjectionComplex w L‖
+  change ‖(c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L‖ = ‖w‖ - ‖orthogonalProjectionComplex w L‖
   rw [h_factor, norm_smul, Real.norm_eq_abs]
   rw [abs_of_nonpos (sub_nonpos.mpr h_c_le_div), h_proj_norm]
   field_simp
@@ -224,7 +224,8 @@ theorem norm_chord_to_tangent_target_le {w L : ℂ} (hL : L ≠ 0) (hw : 0 < ‖
   have h_decomp : w - (‖w‖ / ‖L‖ : ℝ) • L =
       (orthogonalProjectionComplex w L - (‖w‖ / ‖L‖ : ℝ) • L) +
         tangentDeviation w L := by
-    unfold tangentDeviation; ring
+    unfold tangentDeviation
+    ring
   rw [h_decomp]
   refine (norm_add_le _ _).trans ?_
   rw [norm_orthogonalProjection_minus_target_eq hL h_pos]

@@ -85,7 +85,8 @@ private lemma hasDerivAt_seg1_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
       (fun s : ℝ => ((H - 5 * s * (H - Real.sqrt 3 / 2) - z₀.im : ℝ) : ℂ))
       (-(seg1Speed H : ℂ)) t :=
     (h_real.ofReal_comp).congr_deriv (by push_cast; ring)
-  exact ((h2.mul_const I).add (hasDerivAt_const t (((1/2 - z₀.re : ℝ) : ℂ)))).congr_deriv (by ring)
+  exact ((h2.mul_const I).add (hasDerivAt_const t (((1/2 - z₀.re : ℝ) : ℂ)))).congr_deriv
+    (by ring)
 
 private lemma seg1_h₀_continuous (H : ℝ) (z₀ : ℂ) : Continuous (seg1_h₀ H z₀) :=
   (seg1_h₀_contDiff H z₀).continuous
@@ -103,7 +104,8 @@ private lemma neg_seg1_h₀_left_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {δ : ℝ} (hδ_pos : 0 < δ)
     {t : ℝ} (htd : t ≤ seg1T₀ H z₀.im - δ) :
     -(seg1_h₀ H z₀ t) ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
+  rw [Complex.mem_slitPlane_iff]
+  right
   rw [seg1_h₀_eq_pure_im hz_re]
   simp only [Complex.neg_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
     Complex.I_re, Complex.I_im, mul_one, mul_zero, add_zero]
@@ -122,7 +124,8 @@ private lemma neg_seg1_h₀_right_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {δ : ℝ} (hδ_pos : 0 < δ)
     {t : ℝ} (htd : seg1T₀ H z₀.im + δ ≤ t) :
     -(seg1_h₀ H z₀ t) ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
+  rw [Complex.mem_slitPlane_iff]
+  right
   rw [seg1_h₀_eq_pure_im hz_re]
   simp only [Complex.neg_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
     Complex.I_re, Complex.I_im, mul_one, mul_zero, add_zero]
@@ -142,7 +145,8 @@ private def seg1_h_arc (z₀ : ℂ) (t : ℝ) : ℂ :=
 private lemma fdBoundary_sub_eq_seg1_h_arc {H : ℝ} (z₀ : ℂ) {t : ℝ}
     (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     fdBoundaryFun H t - z₀ = seg1_h_arc z₀ t := by
-  unfold seg1_h_arc; rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
+  unfold seg1_h_arc
+  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
 
 private lemma seg1_h_arc_continuous (z₀ : ℂ) : Continuous (seg1_h_arc z₀) := by
   unfold seg1_h_arc
@@ -186,7 +190,8 @@ private lemma neg_seg1_h_arc_slitPlane {z₀ : ℂ} (hz_re : z₀.re = 1/2)
   unfold seg1_h_arc
   rcases eq_or_lt_of_le ht1 with h_eq | ht1_lt
   · -- t = 1/5: γ = ρ+1
-    rw [Complex.mem_slitPlane_iff]; right
+    rw [Complex.mem_slitPlane_iff]
+    right
     rw [← h_eq]
     have hpi := Real.pi_pos
     rw [show (fdArcAngle (1/5) : ℝ) = Real.pi / 3 from by unfold fdArcAngle; ring]
@@ -197,7 +202,8 @@ private lemma neg_seg1_h_arc_slitPlane {z₀ : ℂ} (hz_re : z₀.re = 1/2)
     intro h_eq
     -- Goal: -(0 - z₀.im) = 0, but z₀.im > √3/2 > 0
     nlinarith [Real.sqrt_pos.mpr (show (0 : ℝ) < 3 by norm_num)]
-  · rw [Complex.mem_slitPlane_iff]; left
+  · rw [Complex.mem_slitPlane_iff]
+    left
     have hpi := Real.pi_pos
     have hθ_lo : Real.pi / 3 < fdArcAngle t := by unfold fdArcAngle; nlinarith
     have hθ_hi : fdArcAngle t ≤ 2 * Real.pi / 3 := by unfold fdArcAngle; nlinarith
@@ -209,7 +215,8 @@ private lemma neg_seg1_h_arc_slitPlane {z₀ : ℂ} (hz_re : z₀.re = 1/2)
     simp only [Complex.neg_re, Complex.sub_re, Complex.add_re, Complex.mul_re,
       Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
       mul_zero, sub_zero, mul_one]
-    rw [hz_re]; linarith
+    rw [hz_re]
+    linarith
 
 /-! ### Seg4 reference function -/
 
@@ -256,11 +263,13 @@ private lemma deriv_seg1_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
 /-- For `z₀.re = 1/2`, `-(seg4 - z₀)` has `re = 1`, in slitPlane. -/
 private lemma neg_seg1_h₃_slitPlane {H : ℝ} {z₀ : ℂ} (hz_re : z₀.re = 1/2) (t : ℝ) :
     -(seg1_h₃ H z₀ t) ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; left
+  rw [Complex.mem_slitPlane_iff]
+  left
   unfold seg1_h₃
   simp only [Complex.neg_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
     Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero]
-  rw [hz_re]; norm_num
+  rw [hz_re]
+  norm_num
 
 /-! ### Seg5 reference function -/
 
@@ -295,11 +304,13 @@ private lemma deriv_seg1_h₅ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
 /-- For `z₀.im < H`, `-(seg5 - z₀)` has `im = z₀.im - H < 0`, in slitPlane. -/
 private lemma neg_seg1_h₅_slitPlane {H : ℝ} {z₀ : ℂ} (hc_hi : z₀.im < H) (t : ℝ) :
     -(seg1_h₅ H z₀ t) ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
+  rw [Complex.mem_slitPlane_iff]
+  right
   unfold seg1_h₅
   simp only [Complex.neg_im, Complex.add_im, Complex.mul_im, Complex.ofReal_re,
     Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add]
-  intro h; linarith
+  intro h
+  linarith
 
 /-! ### Per-segment FTC pieces (using `ftc_log_neg_on_segment`) -/
 
@@ -324,8 +335,8 @@ private lemma seg1_left_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
 private lemma seg1_right_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {z₀ : ℂ} (hz_re : z₀.re = 1/2)
     {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt : δ < 1/5 - seg1T₀ H z₀.im) :
-    IntervalIntegrable
-      (fun t => deriv (seg1_h₀ H z₀) t / seg1_h₀ H z₀ t) volume (seg1T₀ H z₀.im + δ) (1/5) ∧
+    IntervalIntegrable (fun t => deriv (seg1_h₀ H z₀) t / seg1_h₀ H z₀ t) volume
+        (seg1T₀ H z₀.im + δ) (1/5) ∧
     ∫ t in (seg1T₀ H z₀.im + δ)..(1/5 : ℝ),
         deriv (seg1_h₀ H z₀) t / seg1_h₀ H z₀ t =
       Complex.log (-(seg1_h₀ H z₀ (1/5))) -
@@ -422,7 +433,8 @@ private lemma seg1_junction_45 (H : ℝ) (z₀ : ℂ) :
 private lemma seg1_closed (H : ℝ) (z₀ : ℂ) :
     seg1_h₀ H z₀ 0 = seg1_h₅ H z₀ 1 := by
   unfold seg1_h₀ seg1_h₅
-  refine Complex.ext ?_ ?_ <;> simp; ring
+  refine Complex.ext ?_ ?_ <;> simp
+  ring
 
 /-! ### Final log computation: `E(ε) = -π · I` -/
 

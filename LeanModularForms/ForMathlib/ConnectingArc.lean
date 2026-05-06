@@ -55,10 +55,7 @@ theorem norm_subarc_integral_le {f : ℂ → ℂ} {c : ℂ} {R : ℝ} {θ₁ θ�
       ‖f (circleMap c R θ) * deriv (circleMap c R) θ‖ ≤ |R| * C := by
     intro θ hθ
     rw [norm_mul, norm_deriv_circleMap]
-    have hθ' : θ ∈ uIcc θ₁ θ₂ := uIoc_subset_uIcc hθ
-    have h_C : ‖f (circleMap c R θ)‖ ≤ C := hf θ hθ'
-    have h_C_nonneg : 0 ≤ C := (norm_nonneg _).trans h_C
-    calc ‖f (circleMap c R θ)‖ * |R| ≤ C * |R| := by gcongr
+    calc ‖f (circleMap c R θ)‖ * |R| ≤ C * |R| := by gcongr; exact hf θ (uIoc_subset_uIcc hθ)
       _ = |R| * C := by ring
   calc ‖∫ θ in θ₁..θ₂, f (circleMap c R θ) * deriv (circleMap c R) θ‖
       ≤ |R| * C * |θ₂ - θ₁| :=

@@ -44,10 +44,11 @@ theorem shape_right_eventually
       firstExitTimeRight γ t₀ δPlus s ε ≤ 1 ∧
       ∀ t ∈ Ioo (firstExitTimeRight γ t₀ δPlus s ε) (1 : ℝ),
         ε < ‖γ t - s‖ := by
-  filter_upwards [Ioo_mem_nhdsGT (lt_min
-    (h_avoid_pos.trans_le (h_avoid (t₀ + δPlus) ⟨le_rfl, by linarith⟩)) h_avoid_pos)] with ε hε
+  have h := h_avoid_pos.trans_le (h_avoid (t₀ + δPlus) ⟨le_rfl, by linarith⟩)
+  filter_upwards [Ioo_mem_nhdsGT (lt_min h h_avoid_pos)] with ε hε
+  obtain ⟨h1, h2⟩ := lt_min_iff.mp hε.2
   exact shape_right_of_strictMonoOn h_t₀_plus_le hδPlus hγ_cont
-    hγ_mono h_avoid (lt_min_iff.mp hε.2 |>.2) (lt_min_iff.mp hε.2 |>.1).le
+    hγ_mono h_avoid h2 h1.le
 
 /-- **Eventual left-side shape from strict anti-monotonicity + avoidance margin.** -/
 theorem shape_left_eventually
@@ -62,10 +63,11 @@ theorem shape_left_eventually
       0 ≤ firstExitTimeLeft γ t₀ δMinus s ε ∧
       ∀ t ∈ Ioo (0 : ℝ) (firstExitTimeLeft γ t₀ δMinus s ε),
         ε < ‖γ t - s‖ := by
-  filter_upwards [Ioo_mem_nhdsGT (lt_min
-    (h_avoid_pos.trans_le (h_avoid (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)) h_avoid_pos)] with ε hε
+  have h := h_avoid_pos.trans_le (h_avoid (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)
+  filter_upwards [Ioo_mem_nhdsGT (lt_min h h_avoid_pos)] with ε hε
+  obtain ⟨h1, h2⟩ := lt_min_iff.mp hε.2
   exact shape_left_of_strictAntiOn h_t₀_minus_pos hδMinus hγ_cont
-    hγ_anti h_avoid (lt_min_iff.mp hε.2 |>.2) (lt_min_iff.mp hε.2 |>.1).le
+    hγ_anti h_avoid h2 h1.le
 
 /-- **Combined shape (left + right) eventually from strict monotonicity.**
 Bundles `shape_left_eventually` and `shape_right_eventually` plus the trivial
@@ -105,17 +107,17 @@ theorem shape_eventually_of_strict_mono
     hγ_anti h_s h_avoid_left_pos h_avoid_left
   have h_right := shape_right_eventually h_t₀_plus_le hδPlus hγ_cont_right
     hγ_mono h_s h_avoid_right_pos h_avoid_right
-  -- Need eventually for the "tLeft ≤ tRight" and "‖γ - s‖ ≤ ε on Ioo (tLeft, tRight)"
-  -- Both follow directly from the definitions when ε is small enough.
   have h_in_brackets : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       firstExitTimeLeft γ t₀ δMinus s ε ≤
         firstExitTimeRight γ t₀ δPlus s ε ∧
       ∀ t ∈ Ioo (firstExitTimeLeft γ t₀ δMinus s ε)
         (firstExitTimeRight γ t₀ δPlus s ε),
         ‖γ t - s‖ ≤ ε := by
-    filter_upwards [Ioo_mem_nhdsGT (lt_min
-      (h_avoid_left_pos.trans_le (h_avoid_left (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩))
-      (h_avoid_right_pos.trans_le (h_avoid_right (t₀ + δPlus) ⟨le_rfl, by linarith⟩)))] with ε hε
+    have hL := h_avoid_left_pos.trans_le
+      (h_avoid_left (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)
+    have hR := h_avoid_right_pos.trans_le
+      (h_avoid_right (t₀ + δPlus) ⟨le_rfl, by linarith⟩)
+    filter_upwards [Ioo_mem_nhdsGT (lt_min hL hR)] with ε hε
     refine ⟨(firstExitTimeLeft_mem_Icc hδMinus.le ((lt_min_iff.mp hε.2).1.le)).2.trans
       (firstExitTimeRight_mem_Icc hδPlus.le ((lt_min_iff.mp hε.2).2.le)).1, ?_⟩
     intro t ht
@@ -171,7 +173,6 @@ theorem hasCauchyPVOn_singleton_pow_of_transverse_assembled
     {t₀ δMinus δPlus : ℝ} {n k : ℕ}
     (h_t₀_minus_pos : 0 ≤ t₀ - δMinus) (h_t₀_plus_le : t₀ + δPlus ≤ 1)
     (hδMinus : 0 < δMinus) (hδPlus : 0 < δPlus)
-    -- Transverse-flat data
     (h_close : γ.toPath.extend 0 = γ.toPath.extend 1)
     (h_flat : IsFlatOfOrder γ.toPath.extend t₀ n) (hL : L ≠ 0)
     (h_deriv_right : HasDerivWithinAt γ.toPath.extend L (Set.Ioi t₀) t₀)
@@ -180,18 +181,14 @@ theorem hasCauchyPVOn_singleton_pow_of_transverse_assembled
     (hL_left : Tendsto (deriv γ.toPath.extend) (𝓝[<] t₀) (𝓝 L))
     (h_s : γ.toPath.extend t₀ = s)
     (hk : 2 ≤ k) (hk_odd : Odd k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
-    -- Continuity / smoothness on the relevant intervals
     (hγ_cont_right : ContinuousOn γ.toPath.extend (Set.Icc t₀ (t₀ + δPlus)))
     (hγ_cont_left : ContinuousOn γ.toPath.extend (Set.Icc (t₀ - δMinus) t₀))
-    -- "γ leaves s" near t₀
     (h_leave_right : ∀ t ∈ Set.Ioc t₀ (t₀ + δPlus), γ.toPath.extend t ≠ s)
     (h_leave_left : ∀ t ∈ Set.Ico (t₀ - δMinus) t₀, γ.toPath.extend t ≠ s)
-    -- Strict (anti-)monotonicity (from transverse via HW33Monotonicity.lean)
     (hγ_anti : StrictAntiOn (fun t => ‖γ.toPath.extend t - s‖)
       (Set.Icc (t₀ - δMinus) t₀))
     (hγ_mono : StrictMonoOn (fun t => ‖γ.toPath.extend t - s‖)
       (Set.Icc t₀ (t₀ + δPlus)))
-    -- Avoidance with positive margins on outer regions
     {δ_avoid_left δ_avoid_right : ℝ}
     (h_avoid_left_pos : 0 < δ_avoid_left)
     (h_avoid_right_pos : 0 < δ_avoid_right)
@@ -199,7 +196,6 @@ theorem hasCauchyPVOn_singleton_pow_of_transverse_assembled
       δ_avoid_left ≤ ‖γ.toPath.extend t - s‖)
     (h_avoid_right : ∀ t ∈ Set.Icc (t₀ + δPlus) (1 : ℝ),
       δ_avoid_right ≤ ‖γ.toPath.extend t - s‖)
-    -- Smoothness on the outer (away-from-pole) intervals
     (h_minus_smooth : ∀ ε > 0,
       ∀ t ∈ Set.uIcc (0 : ℝ)
         (firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
@@ -226,8 +222,6 @@ theorem hasCauchyPVOn_singleton_pow_of_transverse_assembled
         (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k)
         MeasureTheory.volume
         (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε) (1 : ℝ))
-    -- CPV-integrand integrability (from contour integrability via
-    -- `cpvIntegrandOn_intervalIntegrable_of_contourIntegrand`)
     (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
       (fun t => cpvIntegrandOn {s}
         (fun z => (1 : ℂ) / (z - s) ^ k) γ.toPath.extend ε t)

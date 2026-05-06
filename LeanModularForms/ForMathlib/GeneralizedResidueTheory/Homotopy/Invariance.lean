@@ -30,30 +30,20 @@ open scoped Real Interval
 noncomputable section
 
 private theorem homotopy_uniform_avoidance
-    (H : ℝ × ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
-    (hH_cont : Continuous H)
-    (hH_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      H (t, s) ≠ z₀) :
-    ∃ δ > 0, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      δ ≤ ‖H (t, s) - z₀‖ := by
+    (H : ℝ × ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b) (hH_cont : Continuous H)
+    (hH_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, H (t, s) ≠ z₀) :
+    ∃ δ > 0, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, δ ≤ ‖H (t, s) - z₀‖ := by
   have hcompact : IsCompact (H '' (Icc a b ×ˢ Icc (0:ℝ) 1)) :=
     (isCompact_Icc.prod isCompact_Icc).image hH_cont
   have hnonempty : (H '' (Icc a b ×ˢ Icc (0:ℝ) 1)).Nonempty :=
-    ⟨H (a, 0), (a, 0),
-      ⟨left_mem_Icc.mpr (hab.le),
-       left_mem_Icc.mpr zero_le_one⟩, rfl⟩
+    ⟨H (a, 0), (a, 0), ⟨left_mem_Icc.mpr hab.le, left_mem_Icc.mpr zero_le_one⟩, rfl⟩
   have hz_notin : z₀ ∉ H '' (Icc a b ×ˢ Icc (0:ℝ) 1) :=
-    fun ⟨⟨t, s⟩, ⟨ht, hs⟩, heq⟩ =>
-      hH_avoid t ht s hs heq
-  have hδ := (hcompact.isClosed.notMem_iff_infDist_pos
-    hnonempty).mp hz_notin
+    fun ⟨⟨t, s⟩, ⟨ht, hs⟩, heq⟩ => hH_avoid t ht s hs heq
+  have hδ := (hcompact.isClosed.notMem_iff_infDist_pos hnonempty).mp hz_notin
   refine ⟨_, hδ, fun t ht s hs => ?_⟩
-  have hmem : H (t, s) ∈ H '' (Icc a b ×ˢ Icc (0:ℝ) 1) :=
-    ⟨(t, s), ⟨ht, hs⟩, rfl⟩
-  calc Metric.infDist z₀ _ ≤ dist z₀ (H (t, s)) :=
-        Metric.infDist_le_dist_of_mem hmem
-    _ = ‖H (t, s) - z₀‖ := by
-        rw [Complex.dist_eq, norm_sub_rev]
+  have hmem : H (t, s) ∈ H '' (Icc a b ×ˢ Icc (0:ℝ) 1) := ⟨(t, s), ⟨ht, hs⟩, rfl⟩
+  calc Metric.infDist z₀ _ ≤ dist z₀ (H (t, s)) := Metric.infDist_le_dist_of_mem hmem
+    _ = ‖H (t, s) - z₀‖ := by rw [Complex.dist_eq, norm_sub_rev]
 
 private lemma homotopy_integrand_continuousOn_t
     {H : ℝ × ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {P : Finset ℝ}
@@ -99,7 +89,6 @@ private lemma homotopy_integrand_continuousOn_t
 
 private lemma homotopy_integrand_continuousWithinAt_s
     {H : ℝ × ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {P : Finset ℝ}
-    (_hab : a < b)
     (hH_cont : Continuous H)
     (hH_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, H (t, s) ≠ z₀)
     (hH_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ →
@@ -144,13 +133,15 @@ private lemma homotopy_pv_eq_integral
     (2 * Real.pi * I)⁻¹ * ∫ t in a..b, f t s := by
   intro f
   unfold generalizedWindingNumber' cauchyPrincipalValue'
-  simp only [sub_zero]; congr 1
+  simp only [sub_zero]
+  congr 1
   apply limUnder_eventually_eq_const
   filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
   apply intervalIntegral.integral_congr_ae
   filter_upwards with t ht
   have ht' : t ∈ Icc a b := by
-    rw [Set.uIoc_of_le hab.le] at ht; exact Ioc_subset_Icc_self ht
+    rw [Set.uIoc_of_le hab.le] at ht
+    exact Ioc_subset_Icc_self ht
   simp only [f, ((mem_Ioo.mp hε).2.trans_le (hδ_bound t ht' s hs)), ↓reduceIte, deriv_sub_const]
 
 private lemma homotopy_piecewise_aestronglyMeasurable
@@ -169,7 +160,7 @@ private lemma homotopy_piecewise_aestronglyMeasurable
   have hf_cont_off_P' : ContinuousOn (fun t => f t s) ((Icc a b) \ P') :=
     homotopy_integrand_continuousOn_t hH_cont hH_avoid hH_deriv_cont hs
   have h_union : Icc a b = (Icc a b \ (P' : Set ℝ)) ∪ ((P' : Set ℝ) ∩ Icc a b) := by
-    ext x; simp [and_comm]; tauto
+    rw [Set.inter_comm, Set.diff_union_inter]
   rw [h_union, aestronglyMeasurable_union_iff]
   constructor
   · exact hf_cont_off_P'.aestronglyMeasurable
@@ -183,8 +174,6 @@ private theorem windingNumber_continuousOn_param_piecewise_with_bound
     {H : ℝ × ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {P : Finset ℝ} {M : ℝ} (hab : a < b)
     (hH_cont : Continuous H)
     (hH_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, H (t, s) ≠ z₀)
-    (_hH_diff : ∀ t ∈ Ioo a b, t ∉ P → ∀ s ∈ Icc (0:ℝ) 1,
-      DifferentiableAt ℝ (fun t' => H (t', s)) t)
     (hH_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ →
       (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo a b →
       ContinuousOn (fun (p : ℝ × ℝ) => deriv (fun t' => H (t', p.2)) p.1)
@@ -217,7 +206,7 @@ private theorem windingNumber_continuousOn_param_piecewise_with_bound
       have ht_Ioo : t ∈ Ioo a b :=
         ⟨lt_of_le_of_ne ht_Icc.1 (Ne.symm ht_notB.1.1),
          lt_of_le_of_ne ht_Icc.2 ht_notB.1.2⟩
-      exact homotopy_integrand_continuousWithinAt_s hab hH_cont hH_avoid hH_deriv_cont
+      exact homotopy_integrand_continuousWithinAt_s hH_cont hH_avoid hH_deriv_cont
         hs₀ ht_Icc ht_Ioo ht_notB.2
     have h_ae_not_B : ∀ᵐ t ∂(volume.restrict (Icc a b)), t ∉ B := by
       rw [ae_restrict_iff' measurableSet_Icc, ae_iff]
@@ -242,18 +231,20 @@ private theorem continuous_integer_valued_constant
         simp only [g, mem_preimage, mem_singleton_iff,
           Metric.mem_ball]
         constructor
-        · intro heq; rw [heq]; simp only [dist_self, zero_lt_one]
+        · intro heq
+          rw [heq]
+          simp only [dist_self, zero_lt_one]
         · intro hdist
           obtain ⟨m, hm⟩ := hf_int x hx
           rw [hm] at hdist ⊢
           have h1 : dist (m : ℂ) (n : ℂ) < 1 := hdist
-          rw [Complex.dist_eq, show (m : ℂ) - (n : ℂ) =
-            ((m - n : ℤ) : ℂ) from by push_cast; ring,
-            Complex.norm_intCast, ← Int.cast_abs] at h1
+          have hcast : (m : ℂ) - (n : ℂ) = ((m - n : ℤ) : ℂ) := by
+            push_cast
+            ring
+          rw [Complex.dist_eq, hcast, Complex.norm_intCast, ← Int.cast_abs] at h1
           have h2 : |m - n| < 1 := by exact_mod_cast h1
           have h3 : m - n = 0 := Int.abs_lt_one_iff.mp h2
-          have h4 : m = n := sub_eq_zero.mp h3
-          exact_mod_cast h4
+          exact_mod_cast sub_eq_zero.mp h3
       rw [heq]
       exact hf_cont.restrict.isOpen_preimage _ Metric.isOpen_ball
     · convert isOpen_empty
@@ -263,12 +254,8 @@ private theorem continuous_integer_valued_constant
       intro heq
       obtain ⟨n, hn⟩ := hf_int x hx
       exact hy ⟨n, heq.symm.trans hn⟩
-  have h0 : (⟨0, left_mem_Icc.mpr (by norm_num : (0:ℝ) ≤ 1)⟩ :
-      Icc (0:ℝ) 1) ∈ (Set.univ : Set (Icc (0:ℝ) 1)) := trivial
-  have h1 : (⟨1, right_mem_Icc.mpr (by norm_num : (0:ℝ) ≤ 1)⟩ :
-      Icc (0:ℝ) 1) ∈ (Set.univ : Set (Icc (0:ℝ) 1)) := trivial
-  exact hg_loc.apply_eq_of_isPreconnected
-    isPreconnected_univ h0 h1
+  exact hg_loc.apply_eq_of_isPreconnected (x := ⟨0, by norm_num⟩) (y := ⟨1, by norm_num⟩)
+    isPreconnected_univ trivial trivial
 
 private theorem generalizedWindingNumber'_eq_of_eq_on
     (f g : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
@@ -289,7 +276,7 @@ private theorem generalizedWindingNumber'_eq_of_eq_on
     funext ε
     apply intervalIntegral.integral_congr_ae
     have h_uIoc : Set.uIoc a b = Ioc a b :=
-      Set.uIoc_of_le (hab.le)
+      Set.uIoc_of_le hab.le
     rw [h_uIoc]
     rw [h_uIoc] at heq_deriv
     have h_ae : ∀ᵐ t ∂volume.restrict (Ioc a b),
@@ -302,18 +289,15 @@ private theorem generalizedWindingNumber'_eq_of_eq_on
 
 /-- Winding number is invariant under piecewise C¹ homotopy. -/
 theorem windingNumber_eq_of_piecewise_homotopic
-    (γ₀ γ₁ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (P : Finset ℝ) (hab : a < b)
-    (hhom : PiecewiseCurvesHomotopicAvoiding
-      γ₀ γ₁ a b z₀ P) :
-    generalizedWindingNumber' γ₀ a b z₀ =
-    generalizedWindingNumber' γ₁ a b z₀ := by
+    (γ₀ γ₁ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (P : Finset ℝ) (hab : a < b)
+    (hhom : PiecewiseCurvesHomotopicAvoiding γ₀ γ₁ a b z₀ P) :
+    generalizedWindingNumber' γ₀ a b z₀ = generalizedWindingNumber' γ₁ a b z₀ := by
   obtain ⟨H, hH_cont, hH0, hH1, hH_closed, hH_avoid, hH_diff, hH_deriv_cont,
     M, hM_bound⟩ := hhom
   let n : ℝ → ℂ := fun s => generalizedWindingNumber' (fun t => H (t, s)) a b z₀
   have hn_cont : ContinuousOn n (Icc 0 1) :=
     windingNumber_continuousOn_param_piecewise_with_bound hab hH_cont hH_avoid
-      hH_diff hH_deriv_cont hM_bound
+      hH_deriv_cont hM_bound
   have hn_int : ∀ s ∈ Icc (0:ℝ) 1, ∃ m : ℤ, n s = m := by
     intro s hs
     apply windingNumber_integer_of_piecewise_closed_avoiding (fun t => H (t, s)) a b z₀ P hab
@@ -324,31 +308,28 @@ theorem windingNumber_eq_of_piecewise_homotopic
     · intro p₁ p₂ hp₁p₂ hpiece h_sub
       convert (hH_deriv_cont p₁ p₂ hp₁p₂ hpiece h_sub).comp
         (continuous_id.prodMk continuous_const).continuousOn
-        (fun t (ht : t ∈ Ioo p₁ p₂) => (show (t, s) ∈ Ioo p₁ p₂ ×ˢ Icc 0 1 from ⟨ht, hs⟩))
+        (fun t (ht : t ∈ Ioo p₁ p₂) =>
+          (show (t, s) ∈ Ioo p₁ p₂ ×ˢ Icc 0 1 from ⟨ht, hs⟩))
         using 1
     · exact fun t ht => hH_avoid t ht s hs
     · exact ⟨M, fun t ht => hM_bound t ht s hs⟩
   have heq : n 0 = n 1 := continuous_integer_valued_constant n hn_cont hn_int
   have hn0_eq : n 0 = generalizedWindingNumber' γ₀ a b z₀ := by
     apply generalizedWindingNumber'_eq_of_eq_on (fun t => H (t, 0)) γ₀ a b z₀ hab hH0
-    rw [Set.uIoc_of_le (hab.le)]
+    rw [Set.uIoc_of_le hab.le]
     have h_eq_on_Ioo : Set.EqOn (fun t => H (t, 0)) γ₀ (Ioo a b) :=
       fun t' ht' => hH0 t' (Ioo_subset_Icc_self ht')
-    have h_deriv_eq_on : Set.EqOn (deriv (fun t => H (t, 0))) (deriv γ₀) (Ioo a b) :=
-      h_eq_on_Ioo.deriv isOpen_Ioo
     rw [ae_restrict_iff' measurableSet_Ioc]
     filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
-    exact h_deriv_eq_on (ht.mpr ht_Ioc)
+    exact (h_eq_on_Ioo.deriv isOpen_Ioo) (ht.mpr ht_Ioc)
   have hn1_eq : n 1 = generalizedWindingNumber' γ₁ a b z₀ := by
     apply generalizedWindingNumber'_eq_of_eq_on (fun t => H (t, 1)) γ₁ a b z₀ hab hH1
-    rw [Set.uIoc_of_le (hab.le)]
+    rw [Set.uIoc_of_le hab.le]
     have h_eq_on_Ioo : Set.EqOn (fun t => H (t, 1)) γ₁ (Ioo a b) :=
       fun t' ht' => hH1 t' (Ioo_subset_Icc_self ht')
-    have h_deriv_eq_on : Set.EqOn (deriv (fun t => H (t, 1))) (deriv γ₁) (Ioo a b) :=
-      h_eq_on_Ioo.deriv isOpen_Ioo
     rw [ae_restrict_iff' measurableSet_Ioc]
     filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
-    exact h_deriv_eq_on (ht.mpr ht_Ioc)
+    exact (h_eq_on_Ioo.deriv isOpen_Ioo) (ht.mpr ht_Ioc)
   rw [← hn0_eq, ← hn1_eq, heq]
 
 private lemma smooth_winding_pv_eq_integral
@@ -361,13 +342,15 @@ private lemma smooth_winding_pv_eq_integral
     (2 * Real.pi * I)⁻¹ * ∫ t in a..b, f t s := by
   intro f
   unfold generalizedWindingNumber' cauchyPrincipalValue'
-  simp only [sub_zero]; congr 1
+  simp only [sub_zero]
+  congr 1
   apply limUnder_eventually_eq_const
   filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
   apply intervalIntegral.integral_congr_ae
   filter_upwards with t ht
   have ht' : t ∈ Icc a b := by
-    rw [Set.uIoc_of_le hab.le] at ht; exact Ioc_subset_Icc_self ht
+    rw [Set.uIoc_of_le hab.le] at ht
+    exact Ioc_subset_Icc_self ht
   simp only [f, ((mem_Ioo.mp hε).2.trans_le (hδ_bound t ht' s hs)), ↓reduceIte, deriv_sub_const]
 
 private lemma smooth_winding_integral_continuousOn
@@ -390,12 +373,16 @@ private lemma smooth_winding_integral_continuousOn
       (ContinuousOn.inv₀
         ((hγ_cont.comp (continuous_id.prodMk continuous_const)).sub
           continuous_const).continuousOn
-        (fun t ht => by simp only [ne_eq, sub_eq_zero]; exact hγ_avoid t (hab' ▸ ht) s hs))
+        (fun t ht => by
+          simp only [ne_eq, sub_eq_zero]
+          exact hγ_avoid t (hab' ▸ ht) s hs))
       (hγ_deriv_cont.comp (continuous_id.prodMk continuous_const)).continuousOn
       |>.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
   · apply eventually_of_mem self_mem_nhdsWithin
-    intro s hs; filter_upwards with t ht
-    rw [Set.uIoc_of_le hab.le] at ht; exact hM t (Ioc_subset_Icc_self ht) s hs
+    intro s hs
+    filter_upwards with t ht
+    rw [Set.uIoc_of_le hab.le] at ht
+    exact hM t (Ioc_subset_Icc_self ht) s hs
   · exact intervalIntegrable_const
   · filter_upwards with t ht
     apply ContinuousAt.continuousWithinAt
@@ -408,24 +395,19 @@ private lemma smooth_winding_integral_continuousOn
       (hγ_deriv_cont.comp (continuous_const.prodMk continuous_id) |>.continuousAt)
 
 private theorem windingNumber_continuous_in_param
-    (γ : ℝ × ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
-    (hγ_cont : Continuous γ)
+    (γ : ℝ × ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b) (hγ_cont : Continuous γ)
     (hγ_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, γ (t, s) ≠ z₀)
-    (hγ_deriv_cont : Continuous (fun p : ℝ × ℝ =>
-      deriv (fun t' => γ (t', p.2)) p.1)) :
-    ContinuousOn (fun s =>
-      generalizedWindingNumber' (fun t => γ (t, s)) a b z₀) (Icc 0 1) := by
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ :=
-    homotopy_uniform_avoidance γ a b z₀ hab hγ_cont hγ_avoid
-  let f : ℝ → ℝ → ℂ := fun t s =>
-    (γ (t, s) - z₀)⁻¹ * deriv (fun t' => γ (t', s)) t
-  have hf_cont_on : ContinuousOn
-      (fun p : ℝ × ℝ => f p.1 p.2) (Icc a b ×ˢ Icc 0 1) :=
+    (hγ_deriv_cont : Continuous (fun p : ℝ × ℝ => deriv (fun t' => γ (t', p.2)) p.1)) :
+    ContinuousOn (fun s => generalizedWindingNumber' (fun t => γ (t, s)) a b z₀) (Icc 0 1) := by
+  obtain ⟨δ, hδ_pos, hδ_bound⟩ := homotopy_uniform_avoidance γ a b z₀ hab hγ_cont hγ_avoid
+  let f : ℝ → ℝ → ℂ := fun t s => (γ (t, s) - z₀)⁻¹ * deriv (fun t' => γ (t', s)) t
+  have hf_cont_on : ContinuousOn (fun p : ℝ × ℝ => f p.1 p.2) (Icc a b ×ˢ Icc 0 1) :=
     ContinuousOn.mul
       (ContinuousOn.inv₀
         (hγ_cont.sub continuous_const).continuousOn
         (fun ⟨t, s⟩ ⟨ht, hs⟩ => by
-          simp only [ne_eq, sub_eq_zero]; exact hγ_avoid t ht s hs))
+          simp only [ne_eq, sub_eq_zero]
+          exact hγ_avoid t ht s hs))
       hγ_deriv_cont.continuousOn
   obtain ⟨M, hM⟩ : ∃ M, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, ‖f t s‖ ≤ M := by
     obtain ⟨M, hM⟩ := (isCompact_Icc.prod isCompact_Icc).exists_bound_of_continuousOn hf_cont_on
@@ -440,71 +422,50 @@ private theorem windingNumber_continuous_in_param
 
 /-- Winding number is invariant under smooth homotopy. -/
 theorem windingNumber_eq_of_homotopic_closed
-    (γ₀ γ₁ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (hab : a < b)
-    (hhom : ClosedCurvesHomotopicAvoiding
-      γ₀ γ₁ a b z₀) :
-    generalizedWindingNumber' γ₀ a b z₀ =
-    generalizedWindingNumber' γ₁ a b z₀ := by
-  obtain ⟨H, hH_cont, hH0, hH1, hH_closed, hH_avoid,
-    hH_diff_t, hH_deriv_cont⟩ := hhom
-  let n : ℝ → ℂ := fun s =>
-    generalizedWindingNumber' (fun t => H (t, s)) a b z₀
-  have hn_int :
-      ∀ s ∈ Icc (0:ℝ) 1, ∃ m : ℤ, n s = m := by
+    (γ₀ γ₁ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
+    (hhom : ClosedCurvesHomotopicAvoiding γ₀ γ₁ a b z₀) :
+    generalizedWindingNumber' γ₀ a b z₀ = generalizedWindingNumber' γ₁ a b z₀ := by
+  obtain ⟨H, hH_cont, hH0, hH1, hH_closed, hH_avoid, hH_diff_t, hH_deriv_cont⟩ := hhom
+  let n : ℝ → ℂ := fun s => generalizedWindingNumber' (fun t => H (t, s)) a b z₀
+  have hn_int : ∀ s ∈ Icc (0:ℝ) 1, ∃ m : ℤ, n s = m := by
     intro s hs
-    apply windingNumber_integer_of_closed_avoiding
-      (fun t => H (t, s)) a b z₀ hab
+    apply windingNumber_integer_of_closed_avoiding (fun t => H (t, s)) a b z₀ hab
     · exact hH_closed s hs
-    · exact hH_cont.comp
-        (continuous_id.prodMk continuous_const)
-        |>.continuousOn
+    · exact hH_cont.comp (continuous_id.prodMk continuous_const) |>.continuousOn
     · exact fun t ht => hH_diff_t t ht s hs
-    · exact hH_deriv_cont.comp
-        (continuous_id.prodMk continuous_const)
-        |>.continuousOn
+    · exact hH_deriv_cont.comp (continuous_id.prodMk continuous_const) |>.continuousOn
     · exact fun t ht => hH_avoid t ht s hs
   have hn_cont : ContinuousOn n (Icc 0 1) :=
-    windingNumber_continuous_in_param H a b z₀ hab
-      hH_cont hH_avoid hH_deriv_cont
-  have heq : n 0 = n 1 :=
-    continuous_integer_valued_constant n hn_cont hn_int
+    windingNumber_continuous_in_param H a b z₀ hab hH_cont hH_avoid hH_deriv_cont
+  have heq : n 0 = n 1 := continuous_integer_valued_constant n hn_cont hn_int
   have hn0_eq : n 0 = generalizedWindingNumber' γ₀ a b z₀ := by
-    apply generalizedWindingNumber'_eq_of_eq_on
-      (fun t => H (t, 0)) γ₀ a b z₀ hab hH0
-    rw [Set.uIoc_of_le (hab.le)]
-    have h_eq_on_Ioo :
-        Set.EqOn (fun t => H (t, 0)) γ₀ (Ioo a b) :=
+    apply generalizedWindingNumber'_eq_of_eq_on (fun t => H (t, 0)) γ₀ a b z₀ hab hH0
+    rw [Set.uIoc_of_le hab.le]
+    have h_eq_on_Ioo : Set.EqOn (fun t => H (t, 0)) γ₀ (Ioo a b) :=
       fun t' ht' => hH0 t' (Ioo_subset_Icc_self ht')
     rw [ae_restrict_iff' measurableSet_Ioc]
     filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
     exact (h_eq_on_Ioo.deriv isOpen_Ioo) (ht.mpr ht_Ioc)
   have hn1_eq : n 1 = generalizedWindingNumber' γ₁ a b z₀ := by
-    apply generalizedWindingNumber'_eq_of_eq_on
-      (fun t => H (t, 1)) γ₁ a b z₀ hab hH1
-    rw [Set.uIoc_of_le (hab.le)]
-    have h_eq_on_Ioo :
-        Set.EqOn (fun t => H (t, 1)) γ₁ (Ioo a b) :=
+    apply generalizedWindingNumber'_eq_of_eq_on (fun t => H (t, 1)) γ₁ a b z₀ hab hH1
+    rw [Set.uIoc_of_le hab.le]
+    have h_eq_on_Ioo : Set.EqOn (fun t => H (t, 1)) γ₁ (Ioo a b) :=
       fun t' ht' => hH1 t' (Ioo_subset_Icc_self ht')
     rw [ae_restrict_iff' measurableSet_Ioc]
     filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
     exact (h_eq_on_Ioo.deriv isOpen_Ioo) (ht.mpr ht_Ioc)
   rw [← hn0_eq, ← hn1_eq, heq]
 
-/-- When γ avoids z₀, the PV winding number equals the
-classical contour integral. -/
+/-- When γ avoids z₀, the PV winding number equals the classical contour integral. -/
 theorem generalizedWindingNumber_eq_classical_away
-    (γ : PiecewiseC1Curve) (z₀ : ℂ)
-    (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀) :
+    (γ : PiecewiseC1Curve) (z₀ : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀) :
     generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
-    (2 * Real.pi * I)⁻¹ *
-      ∫ t in γ.a..γ.b,
-        (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t := by
+    (2 * Real.pi * I)⁻¹ * ∫ t in γ.a..γ.b, (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t := by
   unfold generalizedWindingNumber' cauchyPrincipalValue'
   have hcompact : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
     isCompact_Icc.image_of_continuousOn γ.continuous_toFun
   have hnonempty : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
-    Set.image_nonempty.mpr (Set.nonempty_Icc.mpr (le_of_lt γ.hab))
+    Set.image_nonempty.mpr (Set.nonempty_Icc.mpr γ.hab.le)
   have hz₀_notin : z₀ ∉ γ.toFun '' Icc γ.a γ.b :=
     fun ⟨t, ht, htw⟩ => hoff t ht htw
   have hδ : 0 < Metric.infDist z₀ (γ.toFun '' Icc γ.a γ.b) :=
@@ -520,14 +481,12 @@ theorem generalizedWindingNumber_eq_classical_away
   apply limUnder_eventually_eq_const
   filter_upwards [h_cutoff_trivial] with ε hε
   apply intervalIntegral.integral_congr_ae
-  filter_upwards with t
-  intro ht
+  filter_upwards with t ht
   simp only [sub_zero]
   have ht' : t ∈ Icc γ.a γ.b := by
-    rw [Set.uIoc_of_le (le_of_lt γ.hab)] at ht
+    rw [Set.uIoc_of_le γ.hab.le] at ht
     exact Ioc_subset_Icc_self ht
-  have h_cond : ε < ‖γ.toFun t - z₀‖ := hε t ht'
-  simp only [h_cond, ↓reduceIte, deriv_sub_const]
+  simp only [hε t ht', ↓reduceIte, deriv_sub_const]
 
 private lemma integral_congr_homotopy_endpoint
     {f : ℂ → ℂ} {γ : ℝ → ℂ} {H : ℝ × ℝ → ℂ} {a b : ℝ} {s : ℝ}
@@ -577,37 +536,25 @@ theorem contourIntegral_eq_of_homotopic
     ∫ t in a..b, f (H (t, s)) *
       deriv (fun t' => H (t', s)) t
   suffices h : I 0 = I 1 from h
-  have hH_diff : Differentiable ℝ H :=
-    hH_smooth.differentiable
-      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
-  have h_deriv_t_cont : Continuous
-      (fun p : ℝ × ℝ =>
-        deriv (fun t => H (t, p.2)) p.1) :=
-    (contDiff_partialDeriv_fst_of_contDiff_two
-      H hH_smooth).continuous
+  have h_deriv_t_cont : Continuous (fun p : ℝ × ℝ => deriv (fun t => H (t, p.2)) p.1) :=
+    (contDiff_partialDeriv_fst_of_contDiff_two H hH_smooth).continuous
   have h_integrand_cont : Continuous
-      (fun p : ℝ × ℝ => f (H p) *
-        deriv (fun t => H (t, p.2)) p.1) :=
+      (fun p : ℝ × ℝ => f (H p) * deriv (fun t => H (t, p.2)) p.1) :=
     hfH_cont.mul h_deriv_t_cont
   have hI_cont : ContinuousOn I (Icc 0 1) :=
     intervalIntegral_continuous_on_param
-      (fun t s => f (H (t, s)) *
-        deriv (fun t' => H (t', s)) t)
-      a b (Icc 0 1) (hab.le) h_integrand_cont
+      (fun t s => f (H (t, s)) * deriv (fun t' => H (t', s)) t)
+      a b (Icc 0 1) hab.le h_integrand_cont
       (fun s _ => by
         apply Continuous.intervalIntegrable
-        exact h_integrand_cont.comp
-          (continuous_id.prodMk continuous_const))
-  have hI_deriv_zero : ∀ s ∈ Ico (0:ℝ) 1,
-      HasDerivWithinAt I 0 (Ici s) s := by
+        exact h_integrand_cont.comp (continuous_id.prodMk continuous_const))
+  have hI_deriv_zero : ∀ s ∈ Ico (0:ℝ) 1, HasDerivWithinAt I 0 (Ici s) s := by
     intro s ⟨hs_ge, hs_lt⟩
-    have hs : s ∈ Icc (0:ℝ) 1 := ⟨hs_ge, le_of_lt hs_lt⟩
+    have hs : s ∈ Icc (0:ℝ) 1 := ⟨hs_ge, hs_lt.le⟩
     obtain ⟨hda, hdb⟩ := hH_deriv_s_zero_at_ends s hs
-    exact (hasDerivAt_homotopy_integral_zero
-      f H a b s hab hH_smooth hf_holo hfH_cont
+    exact (hasDerivAt_homotopy_integral_zero f H a b s hab hH_smooth hf_holo hfH_cont
       hs hda hdb hf_differentiable).hasDerivWithinAt
-  exact (constant_of_has_deriv_right_zero
-    hI_cont hI_deriv_zero 1
+  exact (constant_of_has_deriv_right_zero hI_cont hI_deriv_zero 1
     (by norm_num : (1:ℝ) ∈ Icc 0 1)).symm
 
 end

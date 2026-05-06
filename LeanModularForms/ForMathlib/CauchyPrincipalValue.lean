@@ -78,14 +78,15 @@ theorem cpvIntegrand_of_gt {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε
 theorem cpvIntegrand_of_le {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
     (h : ‖γ t - z₀‖ ≤ ε) :
     cpvIntegrand f γ z₀ ε t = 0 := by
-  simp only [cpvIntegrand, not_lt.mpr h, ite_false]
+  simp only [cpvIntegrand, h.not_gt, ite_false]
 
 theorem cpvIntegrand_nonneg_eps {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε₁ ε₂ : ℝ} {t : ℝ}
     (hε : ε₂ ≤ ε₁) (h : cpvIntegrand f γ z₀ ε₁ t ≠ 0) :
     cpvIntegrand f γ z₀ ε₂ t = cpvIntegrand f γ z₀ ε₁ t := by
   have h₁ : ε₁ < ‖γ t - z₀‖ := by
-    simp only [cpvIntegrand] at h; split_ifs at h with hgt <;> [exact hgt; exact absurd rfl h]
-  simp only [cpvIntegrand, lt_of_le_of_lt hε h₁, ite_true, h₁, ite_true]
+    simp only [cpvIntegrand] at h
+    split_ifs at h with hgt <;> [exact hgt; exact absurd rfl h]
+  simp only [cpvIntegrand, lt_of_le_of_lt hε h₁, h₁, ite_true]
 
 /-! ### HasCauchyPV: the primary Tendsto-based predicate -/
 
@@ -118,7 +119,9 @@ theorem HasCauchyPV.neg {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : ℂ
       fun ε => -(∫ t in (0 : ℝ)..1, cpvIntegrand f γ.toPath.extend z₀ ε t) := by
     ext ε
     simp only [cpvIntegrand, neg_mul, ← intervalIntegral.integral_neg]
-    congr 1; ext t; split_ifs <;> simp only [neg_zero]
+    congr 1
+    ext t
+    split_ifs <;> simp only [neg_zero]
   rw [heq]
   exact h.neg
 
@@ -132,8 +135,9 @@ theorem HasCauchyPV.smul {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : �
       fun ε => c * (∫ t in (0 : ℝ)..1, cpvIntegrand f γ.toPath.extend z₀ ε t) := by
     ext ε
     rw [show (fun t => cpvIntegrand (fun z => c * f z) γ.toPath.extend z₀ ε t) =
-      (fun t => c * cpvIntegrand f γ.toPath.extend z₀ ε t)
-      from funext fun t => by simp only [cpvIntegrand]; split_ifs <;> ring]
+      (fun t => c * cpvIntegrand f γ.toPath.extend z₀ ε t) from funext fun t => by
+        simp only [cpvIntegrand]
+        split_ifs <;> ring]
     exact intervalIntegral.integral_const_mul c _
   rw [heq]
   exact h.const_mul c
@@ -151,9 +155,8 @@ theorem hasCauchyPV_of_avoids {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀
     fun ε hε => by
       apply intervalIntegral.integral_congr
       intro t ht
-      simp only [Set.uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht
-      have h_gt : ε < ‖γ.toPath.extend t - z₀‖ :=
-        lt_of_lt_of_le hε.2 (hδ_bound t ht)
+      simp only [Set.uIcc_of_le zero_le_one] at ht
+      have h_gt : ε < ‖γ.toPath.extend t - z₀‖ := hε.2.trans_le (hδ_bound t ht)
       exact (cpvIntegrand_of_gt h_gt).symm⟩
 
 /-! ### Multi-point CPV integrand -/
@@ -221,7 +224,9 @@ theorem HasCauchyPVOn.neg {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Pa
       fun ε => -(∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) := by
     ext ε
     simp only [cpvIntegrandOn, neg_mul, ← intervalIntegral.integral_neg]
-    congr 1; ext t; split_ifs <;> simp only [neg_zero]
+    congr 1
+    ext t
+    split_ifs <;> simp only [neg_zero]
   rw [heq]
   exact h.neg
 
@@ -235,8 +240,9 @@ theorem HasCauchyPVOn.smul {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1P
       fun ε => c * (∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) := by
     ext ε
     rw [show (fun t => cpvIntegrandOn S (fun z => c * f z) γ.toPath.extend ε t) =
-      (fun t => c * cpvIntegrandOn S f γ.toPath.extend ε t)
-      from funext fun t => by simp only [cpvIntegrandOn]; split_ifs <;> ring]
+      (fun t => c * cpvIntegrandOn S f γ.toPath.extend ε t) from funext fun t => by
+        simp only [cpvIntegrandOn]
+        split_ifs <;> ring]
     exact intervalIntegral.integral_const_mul c _
   rw [heq]
   exact h.const_mul c
@@ -254,9 +260,9 @@ theorem hasCauchyPVOn_of_avoids {S : Finset ℂ} {f : ℂ → ℂ} {γ : Piecewi
     fun ε hε => by
       apply intervalIntegral.integral_congr
       intro t ht
-      simp only [Set.uIcc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht
+      simp only [Set.uIcc_of_le zero_le_one] at ht
       have h_forall : ∀ s ∈ S, ε < ‖γ.toPath.extend t - s‖ :=
-        fun s hs => lt_of_lt_of_le hε.2 (hδ_bound s hs t ht)
+        fun s hs => hε.2.trans_le (hδ_bound s hs t ht)
       exact (cpvIntegrandOn_of_forall_gt h_forall).symm⟩
 
 /-- The multi-point CPV for an empty set equals the ordinary contour integral. -/

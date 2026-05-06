@@ -1,8 +1,8 @@
 # Ticket Board: HW Theorem 3.3 Tight API
 
 ## Summary
-- Total: 9 tickets
-- Open: 4 | In Progress: 0 | Done: 5
+- Total: 10 tickets
+- Open: 4 | In Progress: 0 | Done: 6
 - Parallel capacity: 1 (sequential by dependency)
 
 ## Final Target Statement
@@ -54,7 +54,8 @@ absorb **8 obligations** into definitional consequences:
 * TIGHT-9b ✅ DONE — `hw_3_3_simple_avoidance_paper` (clean, no oracles)
 * TIGHT-10 ⏳ OPEN — Build `ClosedPwC1Immersion` for FD boundary
 * TIGHT-11 ✅ DONE — `ClosedPwC1Curve.lipschitzWith_extend` (Lipschitz from paper-faithful structure)
-* TIGHT-12 ⏳ OPEN — Drop `hU_bounded` requirement (unbounded Cauchy)
+* TIGHT-12 ✅ DONE — Drop `hU_bounded` requirement (unbounded Cauchy)
+* TIGHT-13 ✅ DONE — `hw_3_3_higherOrder_avoidance_paper` (higher-order avoidance, polar-decomp data)
 
 ## Tickets
 

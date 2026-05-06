@@ -201,11 +201,14 @@ lemma lipschitzWith_norm_bound_on_Icc01
           apply mul_le_mul_of_nonneg_left hd (NNReal.coe_nonneg _)
       _ = (K : ℝ) := mul_one _
   have h_norm_close : ‖γ.toPath.extend t - γ.toPath.extend 0‖ ≤ (K : ℝ) := by
-    rw [← dist_eq_norm]; exact h_close
+    rw [← dist_eq_norm]
+    exact h_close
   calc ‖γ.toPath.extend t‖
       = ‖γ.toPath.extend 0 + (γ.toPath.extend t - γ.toPath.extend 0)‖ := by
-        congr 1; ring
-    _ ≤ ‖γ.toPath.extend 0‖ + ‖γ.toPath.extend t - γ.toPath.extend 0‖ := norm_add_le _ _
+        congr 1
+        ring
+    _ ≤ ‖γ.toPath.extend 0‖ + ‖γ.toPath.extend t - γ.toPath.extend 0‖ :=
+          norm_add_le _ _
     _ ≤ ‖γ.toPath.extend 0‖ + (K : ℝ) := by linarith
 
 /-! ### Norm bound for `γ.contourIntegral (z-w)⁻¹` -/
@@ -238,7 +241,7 @@ private lemma contourIntegral_inv_norm_le_of_far
     have ht : t ∈ Icc (0 : ℝ) 1 := by
       rw [Set.uIoc_of_le (zero_le_one' ℝ)] at ht_ui
       exact Ioc_subset_Icc_self ht_ui
-    show ‖(γ.toPath.extend t - w)⁻¹ * deriv γ.toPath.extend t‖ ≤ M_d / (‖w‖ - R)
+    change ‖(γ.toPath.extend t - w)⁻¹ * deriv γ.toPath.extend t‖ ≤ M_d / (‖w‖ - R)
     rw [norm_mul, norm_inv]
     have h_dist := h_dist_lb t ht
     have h_inv_le : ‖γ.toPath.extend t - w‖⁻¹ ≤ (‖w‖ - R)⁻¹ :=
@@ -312,11 +315,14 @@ theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
   have h_norm_2piIn : ‖(2 : ℂ) * (↑Real.pi : ℂ) * I * (n : ℂ)‖ =
       2 * Real.pi * (|n| : ℝ) := by
     have h1 : (2 : ℂ) * (↑Real.pi : ℂ) * I * (n : ℂ) =
-        ((2 * Real.pi : ℝ) : ℂ) * (I * (n : ℂ)) := by push_cast; ring
+        ((2 * Real.pi : ℝ) : ℂ) * (I * (n : ℂ)) := by
+      push_cast
+      ring
     rw [h1, norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs,
         abs_of_pos h_2pi_pos, Complex.norm_I, one_mul, Complex.norm_intCast]
   have hL : ‖(2 : ℂ) * ↑Real.pi * I * (n : ℂ)‖ ≤ (K : ℝ) / (‖w‖ - R) := by
-    rw [← h_eq_int]; exact h_bound
+    rw [← h_eq_int]
+    exact h_bound
   rw [h_norm_2piIn] at hL
   -- Hence 2π · |n| ≤ K/(‖w‖ - R) < 2π (since ‖w‖ - R > K/(2π)).
   have h_div_lt : (K : ℝ) / (‖w‖ - R) < 2 * Real.pi := by
@@ -328,7 +334,8 @@ theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
     lt_of_le_of_lt hL h_div_lt
   have h_n_abs_lt_1 : (|n| : ℝ) < 1 := by
     have h_2pi_n_lt' : 2 * Real.pi * (|n| : ℝ) < 2 * Real.pi * 1 := by
-      rw [mul_one]; exact h_2pi_n_lt
+      rw [mul_one]
+      exact h_2pi_n_lt
     exact lt_of_mul_lt_mul_left h_2pi_n_lt' h_2pi_pos.le
   -- Integer with |n| < 1 ⟹ n = 0.
   have h_n_zero : n = 0 := by
@@ -336,12 +343,16 @@ theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
     have h1 : -1 < n := by
       by_contra h
       push Not at h
-      have : |n| ≥ 1 := by rw [abs_of_nonpos (by linarith)]; linarith
+      have : |n| ≥ 1 := by
+        rw [abs_of_nonpos (by linarith)]
+        linarith
       omega
     have h2 : n < 1 := by
       by_contra h
       push Not at h
-      have : |n| ≥ 1 := by rw [abs_of_nonneg (by linarith)]; exact h
+      have : |n| ≥ 1 := by
+        rw [abs_of_nonneg (by linarith)]
+        exact h
       omega
     omega
   rw [h_winding_eq, h_n_zero, Int.cast_zero]

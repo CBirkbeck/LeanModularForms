@@ -62,7 +62,8 @@ when `z.re < 1/2`, because the real part is `1/2 - z.re > 0`. -/
 theorem fdBoundary_seg1_in_slitPlane {z : ℂ} {H : ℝ}
     (hz_re : z.re < 1/2) (t : ℝ) (ht : t ≤ 1/5) :
     fdBoundaryFun H t - z ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; left
+  rw [Complex.mem_slitPlane_iff]
+  left
   have hre : (fdBoundaryFun H t - z).re = 1/2 - z.re := by
     rw [sub_re, fdBoundaryFun_seg1_re H t ht]
   linarith
@@ -72,7 +73,8 @@ when `z.im < H`, because `(γ(t) - z).im = H - z.im > 0`. -/
 theorem fdBoundary_seg5_in_slitPlane {z : ℂ} {H : ℝ}
     (hz_im : z.im < H) (t : ℝ) (ht : 4/5 < t) :
     fdBoundaryFun H t - z ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
+  rw [Complex.mem_slitPlane_iff]
+  right
   have him : (fdBoundaryFun H t - z).im = H - z.im := by
     rw [sub_im, fdBoundaryFun_seg5_im H t ht]
   linarith
@@ -83,7 +85,9 @@ theorem fdBoundary_seg4_in_slitPlane_of_im_ne {z : ℂ} {H : ℝ}
     (t : ℝ) (_ht3 : 3/5 < t) (_ht4 : t ≤ 4/5)
     (him_ne : (fdBoundaryFun H t - z).im ≠ 0) :
     fdBoundaryFun H t - z ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right; exact him_ne
+  rw [Complex.mem_slitPlane_iff]
+  right
+  exact him_ne
 
 /-! ### Segment integral decomposition
 
@@ -110,11 +114,16 @@ theorem fdBoundary_contourIntegral_split {z : ℂ} {H : ℝ}
       (∫ t in (3/5 : ℝ)..4/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t) +
       (∫ t in (4/5 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t) := by
   unfold PiecewiseC1Path.contourIntegral
-  have hint1 := segment_integrability hint (a := 0) (b := 1/5) (by norm_num) (by norm_num) (by norm_num)
-  have hint2 := segment_integrability hint (a := 1/5) (b := 2/5) (by norm_num) (by norm_num) (by norm_num)
-  have hint3 := segment_integrability hint (a := 2/5) (b := 3/5) (by norm_num) (by norm_num) (by norm_num)
-  have hint4 := segment_integrability hint (a := 3/5) (b := 4/5) (by norm_num) (by norm_num) (by norm_num)
-  have hint5 := segment_integrability hint (a := 4/5) (b := 1) (by norm_num) (by norm_num) (by norm_num)
+  have hint1 := segment_integrability hint (a := 0) (b := 1/5)
+    (by norm_num) (by norm_num) (by norm_num)
+  have hint2 := segment_integrability hint (a := 1/5) (b := 2/5)
+    (by norm_num) (by norm_num) (by norm_num)
+  have hint3 := segment_integrability hint (a := 2/5) (b := 3/5)
+    (by norm_num) (by norm_num) (by norm_num)
+  have hint4 := segment_integrability hint (a := 3/5) (b := 4/5)
+    (by norm_num) (by norm_num) (by norm_num)
+  have hint5 := segment_integrability hint (a := 4/5) (b := 1)
+    (by norm_num) (by norm_num) (by norm_num)
   rw [show (∫ t in (0 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t) =
       (∫ t in (0 : ℝ)..1/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t) +
       (∫ t in (1/5 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t) from
@@ -248,7 +257,9 @@ theorem contourIntegral_inv_sub_of_winding_neg_one
       n * (2 * ↑Real.pi * I) → n = -1) :
     γ.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I) := by
   obtain ⟨n, hn_eq⟩ := h_val
-  rw [hn_eq, hn n hn_eq]; push_cast; ring
+  rw [hn_eq, hn n hn_eq]
+  push_cast
+  ring
 
 /-! ### FTC on segments 1 and 5
 

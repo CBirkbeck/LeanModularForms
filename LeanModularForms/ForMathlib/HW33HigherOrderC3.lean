@@ -67,15 +67,18 @@ theorem contourIntegral_finset_sum {ι : Type*} (s : Finset ι) (f : ι → ℂ 
       have heq : (fun u : ℝ =>
           (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u) =
           fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
-        funext u; rw [Finset.sum_mul]
-      show IntervalIntegrable
+        funext u
+        rw [Finset.sum_mul]
+      change IntervalIntegrable
         (fun u => (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u)
         volume 0 1
       rw [heq]
       have h_sum := IntervalIntegrable.sum t h_t
       have hfun : (∑ i ∈ t, PiecewiseC1Path.contourIntegrand (f i) γ) =
           fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
-        funext u; rw [Finset.sum_apply]; rfl
+        funext u
+        rw [Finset.sum_apply]
+        rfl
       rwa [hfun] at h_sum
     rw [Finset.sum_insert hi,
         show (fun z => ∑ i ∈ insert j t, f i z) =
@@ -117,7 +120,7 @@ theorem HasCauchyPVOn.finset_sum {ι : Type*} (ι_set : Finset ι)
   induction ι_set using Finset.induction_on with
   | empty =>
     simp only [Finset.sum_empty]
-    show HasCauchyPVOn S (fun _ => 0) γ 0
+    change HasCauchyPVOn S (fun _ => 0) γ 0
     simp only [HasCauchyPVOn]
     apply Filter.Tendsto.congr' (f₁ := fun _ => (0 : ℂ)) _ tendsto_const_nhds
     rw [Filter.eventuallyEq_iff_exists_mem]
@@ -128,7 +131,7 @@ theorem HasCauchyPVOn.finset_sum {ι : Type*} (ι_set : Finset ι)
       funext t
       simp only [cpvIntegrandOn]
       split_ifs <;> simp
-    show (0 : ℂ) = ∫ (t : ℝ) in (0 : ℝ)..1,
+    change (0 : ℂ) = ∫ (t : ℝ) in (0 : ℝ)..1,
         cpvIntegrandOn S (fun (_ : ℂ) => (0 : ℂ)) γ.toPath.extend ε t
     rw [h1, intervalIntegral.integral_zero]
   | @insert j t j_t_disj ih =>
@@ -182,11 +185,12 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids
       (PiecewiseC1Path.contourIntegrand
         (fun z => c s / (z - s) ^ k) γ) volume 0 1 := by
     intro s hs
-    show IntervalIntegrable
+    change IntervalIntegrable
       (fun t => c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
       volume 0 1
     convert (h_int s hs).const_mul (c s) using 1
-    funext t; ring
+    funext t
+    ring
   have h_zero_each : ∀ s ∈ S, γ.contourIntegral
       (fun z => c s / (z - s) ^ k) = 0 := by
     intro s hs

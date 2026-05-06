@@ -32,18 +32,23 @@ private theorem cpv_exists_at_I_H_lt_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   · intro t ht h_eq
     by_cases ht1 : t ≤ 1
     · have := fdBoundary_H_seg1_re' H ht.1 ht1
-      rw [h_eq] at this; norm_num [Complex.I_re] at this
+      rw [h_eq] at this
+      norm_num [Complex.I_re] at this
     · push Not at ht1
-      rw [(h_arc_I_iff ht1 (by linarith [ht.2])).mp h_eq] at ht; linarith [ht.2]
+      rw [(h_arc_I_iff ht1 (by linarith [ht.2])).mp h_eq] at ht
+      linarith [ht.2]
   · intro t ht h_eq
     by_cases ht3 : t < 3
     · have ht1 : 1 < t := by linarith [ht.1]
-      rw [(h_arc_I_iff ht1 ht3).mp h_eq] at ht; linarith [ht.1]
+      rw [(h_arc_I_iff ht1 ht3).mp h_eq] at ht
+      linarith [ht.1]
     · push Not at ht3
       by_cases ht4 : t ≤ 4
       · rcases eq_or_lt_of_le ht3 with rfl | ht3'
         · exact hγ3_ne_I h_eq
-        · have := fdBoundary_H_seg4_re' H ht3' ht4; rw [h_eq] at this; norm_num at this
+        · have := fdBoundary_H_seg4_re' H ht3' ht4
+          rw [h_eq] at this
+          norm_num at this
       · push Not at ht4
         exact h_seg5_ne_I ht4 ht.2 h_eq
 
@@ -74,7 +79,8 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
     · erw [(fdBoundary_H_hasDerivAt_seg5 1 (show (4:ℝ) < 9/2 from by norm_num)).deriv]
       exact one_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_45 1).mono
-      intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+      intro t ht
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
       have ht4 : 4 < t := by linarith [ht.1]
       have ht5 : t ≤ 5 := by linarith [ht.2]
@@ -90,9 +96,11 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
       intro t ht h_eq
       by_cases ht1 : t ≤ 1
       · have := fdBoundary_H_seg1_re' 1 ht.1 ht1
-        rw [h_eq] at this; norm_num [Complex.I_re] at this
+        rw [h_eq] at this
+        norm_num [Complex.I_re] at this
       · push Not at ht1
-        rw [(h_arc_I_iff ht1 (by linarith [ht.2])).mp h_eq] at ht; linarith [ht.2]
+        rw [(h_arc_I_iff ht1 (by linarith [ht.2])).mp h_eq] at ht
+        linarith [ht.2]
     · exact h_arc_cpv
     · norm_num
     · norm_num
@@ -108,15 +116,20 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
       intro t ht h_eq
       by_cases ht3 : t < 3
       · have ht1 : 1 < t := by linarith [ht.1]
-        rw [(h_arc_I_iff ht1 ht3).mp h_eq] at ht; linarith [ht.1]
+        rw [(h_arc_I_iff ht1 ht3).mp h_eq] at ht
+        linarith [ht.1]
       · push Not at ht3
         by_cases ht4 : t ≤ 4
         · rcases eq_or_lt_of_le ht3 with rfl | ht3'
           · exact hγ3_ne_I h_eq
-          · have := fdBoundary_H_seg4_re' 1 ht3' ht4; rw [h_eq] at this; norm_num at this
+          · have := fdBoundary_H_seg4_re' 1 ht3' ht4
+            rw [h_eq] at this
+            norm_num at this
         · push Not at ht4
           have := fdBoundary_H_seg5_re' 1 ht4 (by linarith [ht.2])
-          rw [h_eq] at this; simp only [Complex.I_re] at this; linarith [ht.2]
+          rw [h_eq] at this
+          simp only [Complex.I_re] at this
+          linarith [ht.2]
     · exact h_seg5_cpv
     · norm_num
     · norm_num
@@ -140,10 +153,13 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
     intro t ht h_eq
     have ht4 : 4 < t := by linarith [ht.1]
     have := fdBoundary_H_seg5_re' 1 ht4 ht.2
-    rw [h_eq] at this; simp only [Complex.I_re] at this; linarith [ht.1]
+    rw [h_eq] at this
+    simp only [Complex.I_re] at this
+    linarith [ht.1]
   apply cpv_concat _ _ 0 (19/4) 5 I h_cpv_0_194 h_cpv_194_5
     (by norm_num) (by norm_num)
-  intro ε hε; exact fdBoundary_H_cutout_ii 1 hH I ε hε
+  intro ε hε
+  exact fdBoundary_H_cutout_ii 1 hH I ε hε
 
 /-! ### Helper: generic case, t₀ on seg1 (0 < t₀ < 1) -/
 
@@ -172,7 +188,8 @@ private theorem cpv_exists_generic_seg1 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
       · exact neg_ne_zero.mpr (sub_ne_zero.mpr (by exact_mod_cast hH.ne'))
       · exact I_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_01 H).mono
-      intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+      intro t ht
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
       have ht1 : t ≤ 1 := by linarith [ht.2]
       rw [fdBoundary_H_eq_seg1_H ht1,
@@ -229,7 +246,8 @@ private theorem cpv_exists_generic_seg1 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
           rw [fdBoundary_H_eq_arc ht1 ht3, Complex.normSq_apply,
             Complex.exp_ofReal_mul_I_re, Complex.exp_ofReal_mul_I_im]
           linarith [Real.sin_sq_add_cos_sq (Real.pi * (1 + t) / 6)]
-        rw [h_eq] at h_norm_arc; linarith
+        rw [h_eq] at h_norm_arc
+        linarith
       · push Not at ht3
         by_cases ht4 : t ≤ 4
         · rcases eq_or_lt_of_le ht3 with rfl | ht3'
@@ -239,10 +257,12 @@ private theorem cpv_exists_generic_seg1 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
             rw [hγ3_eq, fdBoundary_at_three] at h_eq
             exact hs_rho h_eq.symm
           · have h_re_t := fdBoundary_H_seg4_re' H ht3' ht4
-            rw [h_eq] at h_re_t; linarith
+            rw [h_eq] at h_re_t
+            linarith
         · push Not at ht4
           have h_im_t := fdBoundary_H_seg5_im' H ht4 ht.2
-          rw [h_eq] at h_im_t; linarith
+          rw [h_eq] at h_im_t
+          linarith
 
 /-! ### Helper: generic case, t₀ on arc (1 < t₀ < 3) with seg5 crossing -/
 
@@ -256,8 +276,12 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
     (h_seg5_cross : s.im = H) :
     CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s := by
   set t₁ := s.re + 9/2 with ht₁_def
-  have ht₁_gt4 : 4 < t₁ := by simp [ht₁_def]; linarith [h_re_s_gt]
-  have ht₁_lt5 : t₁ < 5 := by simp [ht₁_def]; linarith [h_re_s_lt]
+  have ht₁_gt4 : 4 < t₁ := by
+    simp [ht₁_def]
+    linarith [h_re_s_gt]
+  have ht₁_lt5 : t₁ < 5 := by
+    simp [ht₁_def]
+    linarith [h_re_s_lt]
   have hγt₁ : fdBoundary_H H t₁ = s := by
     rw [fdBoundary_H_eq_seg5_H (by linarith : 4 < t₁)]
     apply Complex.ext
@@ -281,9 +305,11 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
       apply ContDiffAt.congr_of_eventuallyEq _ heq
       exact (Complex.ofRealCLM.contDiff.contDiffAt.comp t₁
         (contDiffAt_id.sub contDiffAt_const)).add contDiffAt_const
-    · erw [(fdBoundary_H_hasDerivAt_seg5 H ht₁_gt4).deriv]; exact one_ne_zero
+    · erw [(fdBoundary_H_hasDerivAt_seg5 H ht₁_gt4).deriv]
+      exact one_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_45 H).mono
-      intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+      intro t ht
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
       have ht4 : 4 < t := by linarith [ht.1]
       have ht5 : t ≤ 5 := by linarith [ht.2]
@@ -298,7 +324,8 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
       intro t ht h_eq
       by_cases ht1 : t ≤ 1
       · have := fdBoundary_H_seg1_re' H ht.1 ht1
-        rw [h_eq] at this; linarith
+        rw [h_eq] at this
+        linarith
       · push Not at ht1
         have ht3 : t < 3 := by linarith [ht.2]
         have h_ne : t ≠ t₀ := by linarith [ht.2]
@@ -309,7 +336,8 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
     · exact h_arc_cpv
     · linarith
     · linarith
-    · intro ε hε; exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
+    · intro ε hε
+      exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
         rw [Set.uIcc_of_le (by linarith : (0:ℝ) ≤ (t₀ + 3) / 2),
           Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
         exact Set.Icc_subset_Icc_right (by linarith))
@@ -333,16 +361,19 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
           rw [hγ3_eq, fdBoundary_at_three] at h_eq
           exact hs_rho h_eq.symm
         · have := fdBoundary_H_seg4_re' H ht3' ht4
-          rw [h_eq] at this; linarith
+          rw [h_eq] at this
+          linarith
       · push Not at ht4
         have := fdBoundary_H_seg5_re' H ht4 (by linarith [ht.2])
         rw [h_eq] at this
-        simp [ht₁_def] at *; linarith [ht.2]
+        simp [ht₁_def] at *
+        linarith [ht.2]
   have h_cpv_mid : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) ((t₀ + 3) / 2) ((t₁ + 5) / 2) s := by
     apply cpv_concat _ _ ((t₀ + 3) / 2) ((t₁ + 4) / 2) ((t₁ + 5) / 2) s
       h_cpv_mid_avoid h_seg5_cpv (by linarith) (by linarith)
-    intro ε hε; exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
+    intro ε hε
+    exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
       rw [Set.uIcc_of_le (by linarith : (t₀ + 3) / 2 ≤ (t₁ + 5) / 2),
         Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
       exact Set.Icc_subset_Icc (by linarith) (by linarith))
@@ -350,7 +381,8 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
       (fdBoundary_H H) 0 ((t₁ + 5) / 2) s := by
     apply cpv_concat _ _ 0 ((t₀ + 3) / 2) ((t₁ + 5) / 2) s
       h_cpv_0_t0h h_cpv_mid (by linarith) (by linarith)
-    intro ε hε; exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
+    intro ε hε
+    exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
       rw [Set.uIcc_of_le (by linarith : (0:ℝ) ≤ (t₁ + 5) / 2),
         Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
       exact Set.Icc_subset_Icc_right (by linarith))
@@ -361,7 +393,8 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
     have ht4 : 4 < t := by linarith [ht.1]
     have := fdBoundary_H_seg5_re' H ht4 ht.2
     rw [h_eq] at this
-    simp [ht₁_def] at *; linarith [ht.1]
+    simp [ht₁_def] at *
+    linarith [ht.1]
   exact cpv_concat _ _ 0 ((t₁ + 5) / 2) 5 s h_cpv_0_t1h h_cpv_end
     (by linarith) (by linarith) (fun ε hε => fdBoundary_H_cutout_ii H hH s ε hε)
 
@@ -380,7 +413,9 @@ private theorem cpv_exists_generic_arc_no_cross (H : ℝ) (hH : Real.sqrt 3 / 2 
     (by linarith) (by linarith) (by linarith) h_arc_cpv
   · intro t ht h_eq
     by_cases ht1 : t ≤ 1
-    · have := fdBoundary_H_seg1_re' H ht.1 ht1; rw [h_eq] at this; linarith
+    · have := fdBoundary_H_seg1_re' H ht.1 ht1
+      rw [h_eq] at this
+      linarith
     · push Not at ht1
       have ht3 : t < 3 := by linarith [ht.2]
       have h_ne : t ≠ t₀ := by linarith [ht.2]
@@ -405,10 +440,12 @@ private theorem cpv_exists_generic_arc_no_cross (H : ℝ) (hH : Real.sqrt 3 / 2 
           rw [hγ3_eq, fdBoundary_at_three] at h_eq
           exact hs_rho h_eq.symm
         · have := fdBoundary_H_seg4_re' H ht3' ht4
-          rw [h_eq] at this; linarith
+          rw [h_eq] at this
+          linarith
       · push Not at ht4
         have := fdBoundary_H_seg5_im' H ht4 ht.2
-        rw [h_eq] at this; exact h_seg5_cross this
+        rw [h_eq] at this
+        exact h_seg5_cross this
 
 /-! ### Helper: generic case, t₀ on arc (1 < t₀ < 3), dispatches to cross/no-cross -/
 
@@ -418,9 +455,11 @@ private theorem cpv_exists_generic_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s :
     (ht₀_gt_1 : 1 < t₀) (ht₀_lt_3 : t₀ < 3) :
     CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s := by
   have h_re_s : s.re = Real.cos (Real.pi * (1 + t₀) / 6) := by
-    rw [← hγt₀]; exact fdBoundary_H_arc_re' H ht₀_gt_1 ht₀_lt_3
+    rw [← hγt₀]
+    exact fdBoundary_H_arc_re' H ht₀_gt_1 ht₀_lt_3
   have h_im_s_arc : s.im = Real.sin (Real.pi * (1 + t₀) / 6) := by
-    rw [← hγt₀]; exact fdBoundary_H_arc_im' H ht₀_gt_1 ht₀_lt_3
+    rw [← hγt₀]
+    exact fdBoundary_H_arc_im' H ht₀_gt_1 ht₀_lt_3
   have h_normSq_s : Complex.normSq s = 1 := by
     rw [Complex.normSq_apply, h_re_s, h_im_s_arc]
     linarith [Real.sin_sq_add_cos_sq (Real.pi * (1 + t₀) / 6)]
@@ -441,7 +480,8 @@ private theorem cpv_exists_generic_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s :
     have := Real.strictAntiOn_cos h1 h2 (by nlinarith [Real.pi_pos])
     have h_cos23 : Real.cos (Real.pi * 2 / 3) = -(1:ℝ)/2 := by
       rw [show Real.pi * 2 / 3 = Real.pi - Real.pi / 3 from by ring,
-        Real.cos_pi_sub, Real.cos_pi_div_three]; ring
+        Real.cos_pi_sub, Real.cos_pi_div_three]
+      ring
     linarith
   have h_arc_cpv : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) ((t₀ + 1) / 2) ((t₀ + 3) / 2) s := by
@@ -462,12 +502,14 @@ private theorem cpv_exists_generic_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s :
       · exact by norm_num [Complex.ofReal_ne_zero]
       · exact I_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_13 H).mono
-      intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+      intro t ht
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
       have ht' : t ∈ Set.Ioo (1:ℝ) 3 := ⟨by linarith [ht.1], by linarith [ht.2]⟩
       exact arc_angle_injective ht' ⟨ht₀_gt_1, ht₀_lt_3⟩
         (by rw [fdBoundary_H_eq_arc ht'.1 ht'.2,
-            fdBoundary_H_eq_arc ht₀_gt_1 ht₀_lt_3] at hγt; exact hγt)
+              fdBoundary_H_eq_arc ht₀_gt_1 ht₀_lt_3] at hγt
+            exact hγt)
   by_cases h_seg5_cross : s.im = H
   · exact cpv_exists_generic_arc_seg5_cross H hH s hs_rho t₀ hγt₀
       ht₀_gt_1 ht₀_lt_3 h_re_s_lt h_re_s_gt h_arc_cpv h_seg5_cross
@@ -490,7 +532,8 @@ private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
             ↑(Real.sqrt 3 / 2 + (u - 3) * (H - Real.sqrt 3 / 2)) * I) := by
         intro u hu
         rw [fdBoundary_H_eq_seg4_H hu.1 (le_of_lt hu.2)]
-        simp [fdBoundary_seg4_H]; norm_num
+        simp [fdBoundary_seg4_H]
+        norm_num
       have heq : fdBoundary_H H =ᶠ[𝓝 t₀] (fun t => -(1/2 : ℂ) +
             ↑(Real.sqrt 3 / 2 + (t - 3) * (H - Real.sqrt 3 / 2)) * I) :=
         Filter.eventuallyEq_iff_exists_mem.mpr ⟨Set.Ioo 3 4,
@@ -504,7 +547,8 @@ private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
       · exact sub_ne_zero.mpr (by exact_mod_cast hH.ne')
       · exact I_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_34 H).mono
-      intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+      intro t ht
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
       have ht3 : 3 < t := by linarith [ht.1]
       have ht4 : t ≤ 4 := by linarith [ht.2]
@@ -525,7 +569,8 @@ private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
           (t₀ - 3) * (H - Real.sqrt 3 / 2) := by linarith
       linarith [mul_right_cancel₀ hH_pos.ne' h_mul_eq]
   · have h_re_s : s.re = -1/2 := by
-      rw [← hγt₀]; exact fdBoundary_H_seg4_re' H ht₀_gt_3 (le_of_lt ht₀_lt_4)
+      rw [← hγt₀]
+      exact fdBoundary_H_seg4_re' H ht₀_gt_3 (le_of_lt ht₀_lt_4)
     have h_norm_s_gt : 1 < Complex.normSq s := by
       rw [Complex.normSq_apply, h_re_s]
       have h_im_s_gt : Real.sqrt 3 / 2 < s.im := by
@@ -538,14 +583,17 @@ private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
         mul_self_lt_mul_self (by positivity : (0:ℝ) ≤ Real.sqrt 3 / 2) h_im_s_gt]
     intro t ht h_eq
     by_cases ht1 : t ≤ 1
-    · have := fdBoundary_H_seg1_re' H ht.1 ht1; rw [h_eq] at this; linarith
+    · have := fdBoundary_H_seg1_re' H ht.1 ht1
+      rw [h_eq] at this
+      linarith
     · push Not at ht1
       by_cases ht3 : t < 3
       · have h_norm_arc : Complex.normSq (fdBoundary_H H t) = 1 := by
           rw [fdBoundary_H_eq_arc ht1 ht3, Complex.normSq_apply,
             Complex.exp_ofReal_mul_I_re, Complex.exp_ofReal_mul_I_im]
           linarith [Real.sin_sq_add_cos_sq (Real.pi * (1 + t) / 6)]
-        rw [h_eq] at h_norm_arc; linarith
+        rw [h_eq] at h_norm_arc
+        linarith
       · push Not at ht3
         by_cases ht4 : t ≤ 4
         · rcases eq_or_lt_of_le ht3 with rfl | ht3'
@@ -564,13 +612,16 @@ private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
             rcases h_im with rfl | h_abs
             · linarith [ht.2]
             · linarith
-        · push Not at ht4; linarith [ht.2]
+        · push Not at ht4
+          linarith [ht.2]
   · have h_re_s : s.re = -1/2 := by
-      rw [← hγt₀]; exact fdBoundary_H_seg4_re' H ht₀_gt_3 (le_of_lt ht₀_lt_4)
+      rw [← hγt₀]
+      exact fdBoundary_H_seg4_re' H ht₀_gt_3 (le_of_lt ht₀_lt_4)
     intro t ht h_eq
     by_cases ht4' : 4 < t
     · have := fdBoundary_H_seg5_re' H ht4' ht.2
-      rw [h_eq] at this; linarith
+      rw [h_eq] at this
+      linarith
     · push Not at ht4'
       have ht3' : 3 < t := by linarith [ht.1]
       by_cases ht4_eq : t = 4
@@ -615,31 +666,37 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
         (by fun_prop : Continuous (fun t => Real.pi * (1 + t) / 6))).continuousOn
     · constructor
       · rw [show Real.pi * (1 + 3) / 6 = Real.pi - Real.pi / 3 from by ring,
-          Real.cos_pi_sub, Real.cos_pi_div_three]; linarith
+          Real.cos_pi_sub, Real.cos_pi_div_three]
+        linarith
       · rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
-          Real.cos_pi_div_three]; linarith
+          Real.cos_pi_div_three]
+        linarith
   obtain ⟨t₁, ht₁_mem, ht₁_cos⟩ := h_ivt
   simp only [] at ht₁_cos
   have ht₁_gt1 : 1 < t₁ := by
     rcases eq_or_lt_of_le ht₁_mem.1 with rfl | h
     · rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 from by ring,
-        Real.cos_pi_div_three] at ht₁_cos; linarith
+        Real.cos_pi_div_three] at ht₁_cos
+      linarith
     · exact h
   have ht₁_lt3 : t₁ < 3 := by
     rcases eq_or_lt_of_le ht₁_mem.2 with rfl | h
     · rw [show Real.pi * (1 + 3) / 6 = Real.pi - Real.pi / 3 from by ring,
-        Real.cos_pi_sub, Real.cos_pi_div_three] at ht₁_cos; linarith
+        Real.cos_pi_sub, Real.cos_pi_div_three] at ht₁_cos
+      linarith
     · exact h
   have hγt₁ : fdBoundary_H H t₁ = s := by
     rw [fdBoundary_H_eq_arc ht₁_gt1 ht₁_lt3]
     apply Complex.ext
-    · rw [Complex.exp_ofReal_mul_I_re]; exact ht₁_cos
+    · rw [Complex.exp_ofReal_mul_I_re]
+      exact ht₁_cos
     · rw [Complex.exp_ofReal_mul_I_im]
       have h_sin_pos : 0 < Real.sin (Real.pi * (1 + t₁) / 6) :=
         Real.sin_pos_of_pos_of_lt_pi
           (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
       exact (sq_eq_sq₀ (le_of_lt h_sin_pos)
-        (by rw [h_im_s]; linarith [hH, Real.sqrt_nonneg 3] : (0:ℝ) ≤ s.im)).mp (by
+        (by rw [h_im_s]
+            linarith [hH, Real.sqrt_nonneg 3] : (0:ℝ) ≤ s.im)).mp (by
         have h1 := Real.sin_sq_add_cos_sq (Real.pi * (1 + t₁) / 6)
         rw [ht₁_cos] at h1
         rw [Complex.normSq_apply] at h_normSq
@@ -665,26 +722,30 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
       · exact by norm_num [Complex.ofReal_ne_zero]
       · exact I_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_13 H).mono
-      intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+      intro t ht
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
       have ht' : t ∈ Set.Ioo (1:ℝ) 3 :=
         ⟨by linarith [ht.1], by linarith [ht.2]⟩
       exact arc_angle_injective ht' ⟨ht₁_gt1, ht₁_lt3⟩
         (by rw [fdBoundary_H_eq_arc ht'.1 ht'.2,
-            fdBoundary_H_eq_arc ht₁_gt1 ht₁_lt3] at hγt; exact hγt)
+              fdBoundary_H_eq_arc ht₁_gt1 ht₁_lt3] at hγt
+            exact hγt)
   have h_avoid_start : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) 0 ((t₁ + 1) / 2) s := by
     apply cpv_avoidance _ _ _ _ _ (fdBoundary_H_continuous H).continuousOn (by linarith)
     intro t ht h_eq
     by_cases ht0 : t = 0
-    · subst ht0; exact hs_endpoint (by rw [← h_eq, fdBoundary_H_at_zero])
+    · subst ht0
+      exact hs_endpoint (by rw [← h_eq, fdBoundary_H_at_zero])
     · by_cases ht1 : t ≤ 1
       · have h_im_t : (fdBoundary_H H t).im < H := by
           rw [fdBoundary_H_eq_seg1_H ht1]
           simp [fdBoundary_seg1_H, Complex.add_im, Complex.ofReal_im,
             Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re]
           nlinarith [ht.1, lt_of_le_of_ne ht.1 (Ne.symm ht0)]
-        rw [h_eq] at h_im_t; linarith [h_im_s]
+        rw [h_eq] at h_im_t
+        linarith [h_im_s]
       · push Not at ht1
         have ht3 : t < 3 := by linarith [ht.2]
         have h_ne : t ≠ t₁ := by linarith [ht.2]
@@ -696,7 +757,8 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
       (fdBoundary_H H) 0 ((t₁ + 3) / 2) s := by
     apply cpv_concat _ _ 0 ((t₁ + 1) / 2) ((t₁ + 3) / 2) s
       h_avoid_start h_arc_cpv (by linarith) (by linarith)
-    intro ε hε; exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
+    intro ε hε
+    exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
       rw [Set.uIcc_of_le (by linarith : (0:ℝ) ≤ (t₁ + 3) / 2),
         Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
       exact Set.Icc_subset_Icc_right (by linarith))
@@ -720,15 +782,18 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
           rw [hγ3_eq, fdBoundary_at_three] at h_eq
           exact hs_rho h_eq.symm
         · have := fdBoundary_H_seg4_re' H ht3' ht4
-          rw [h_eq] at this; linarith [h_re_s]
+          rw [h_eq] at this
+          linarith [h_re_s]
       · push Not at ht4
         have := fdBoundary_H_seg5_re' H ht4 (by linarith [ht.2])
-        rw [h_eq] at this; linarith [h_re_s, ht.2]
+        rw [h_eq] at this
+        linarith [h_re_s, ht.2]
   have h_cpv_mid : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) ((t₁ + 3) / 2) ((t₀ + 5) / 2) s := by
     apply cpv_concat _ _ ((t₁ + 3) / 2) ((t₀ + 4) / 2) ((t₀ + 5) / 2) s
       h_avoid_mid h_seg5_cpv (by linarith) (by linarith)
-    intro ε hε; exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
+    intro ε hε
+    exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
       rw [Set.uIcc_of_le (by linarith : (t₁ + 3) / 2 ≤ (t₀ + 5) / 2),
         Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
       exact Set.Icc_subset_Icc (by linarith) (by linarith))
@@ -736,7 +801,8 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
       (fdBoundary_H H) 0 ((t₀ + 5) / 2) s := by
     apply cpv_concat _ _ 0 ((t₁ + 3) / 2) ((t₀ + 5) / 2) s
       h_cpv_0_t1h h_cpv_mid (by linarith) (by linarith)
-    intro ε hε; exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
+    intro ε hε
+    exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
       rw [Set.uIcc_of_le (by linarith : (0:ℝ) ≤ (t₀ + 5) / 2),
         Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
       exact Set.Icc_subset_Icc_right (by linarith))
@@ -746,7 +812,8 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
     intro t ht h_eq
     have ht4 : 4 < t := by linarith [ht.1]
     have := fdBoundary_H_seg5_re' H ht4 ht.2
-    rw [h_eq] at this; linarith [h_re_s, ht.1]
+    rw [h_eq] at this
+    linarith [h_re_s, ht.1]
   exact cpv_concat _ _ 0 ((t₀ + 5) / 2) 5 s h_cpv_0_t0h h_cpv_end
     (by linarith) (by linarith) (fun ε hε => fdBoundary_H_cutout_ii H hH s ε hε)
 
@@ -767,34 +834,41 @@ private theorem cpv_exists_generic_seg5_normSq_ne_one (H : ℝ) (hH : Real.sqrt 
     (by linarith) (by linarith) (by linarith) h_seg5_cpv
   · intro t ht h_eq
     by_cases ht0 : t = 0
-    · subst ht0; exact hs_endpoint (by rw [← h_eq, fdBoundary_H_at_zero])
+    · subst ht0
+      exact hs_endpoint (by rw [← h_eq, fdBoundary_H_at_zero])
     · by_cases ht1 : t ≤ 1
       · have h_im_t : (fdBoundary_H H t).im < H := by
           rw [fdBoundary_H_eq_seg1_H ht1]
           simp [fdBoundary_seg1_H, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
             Complex.I_re, Complex.I_im, Complex.ofReal_re]
           nlinarith [ht.1, lt_of_le_of_ne ht.1 (Ne.symm ht0)]
-        rw [h_eq] at h_im_t; linarith [h_im_s]
+        rw [h_eq] at h_im_t
+        linarith [h_im_s]
       · push Not at ht1
         by_cases ht3 : t < 3
         · have h_norm_arc : Complex.normSq (fdBoundary_H H t) = 1 := by
             rw [fdBoundary_H_eq_arc ht1 ht3, Complex.normSq_apply,
               Complex.exp_ofReal_mul_I_re, Complex.exp_ofReal_mul_I_im]
             linarith [Real.sin_sq_add_cos_sq (Real.pi * (1 + t) / 6)]
-          rw [h_eq] at h_norm_arc; exact h_normSq h_norm_arc
+          rw [h_eq] at h_norm_arc
+          exact h_normSq h_norm_arc
         · push Not at ht3
           by_cases ht4 : t ≤ 4
           · rcases eq_or_lt_of_le ht3 with rfl | ht3'
-            · rw [fdBoundary_H_at_three] at h_eq; exact hs_rho h_eq.symm
+            · rw [fdBoundary_H_at_three] at h_eq
+              exact hs_rho h_eq.symm
             · have := fdBoundary_H_seg4_re' H ht3' ht4
-              rw [h_eq] at this; linarith [h_re_s]
+              rw [h_eq] at this
+              linarith [h_re_s]
           · push Not at ht4
             have := fdBoundary_H_seg5_re' H ht4 (by linarith [ht.2])
-            rw [h_eq] at this; linarith [h_re_s, ht.2]
+            rw [h_eq] at this
+            linarith [h_re_s, ht.2]
   · intro t ht h_eq
     have ht4 : 4 < t := by linarith [ht.1]
     have := fdBoundary_H_seg5_re' H ht4 ht.2
-    rw [h_eq] at this; linarith [h_re_s, ht.1]
+    rw [h_eq] at this
+    linarith [h_re_s, ht.1]
 
 /-! ### Helper: generic case, t₀ on seg5 (4 < t₀ < 5), dispatches -/
 
@@ -807,9 +881,11 @@ private theorem cpv_exists_generic_seg5 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
     CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s := by
   have ht₀_lt_5 : t₀ < 5 := lt_of_le_of_ne ht₀_mem.2 ht₀_ne_5
   have h_im_s : s.im = H := by
-    rw [← hγt₀]; exact fdBoundary_H_seg5_im' H ht₀_gt_4 (le_of_lt ht₀_lt_5)
+    rw [← hγt₀]
+    exact fdBoundary_H_seg5_im' H ht₀_gt_4 (le_of_lt ht₀_lt_5)
   have h_re_s : s.re = t₀ - 9/2 := by
-    rw [← hγt₀]; exact fdBoundary_H_seg5_re' H ht₀_gt_4 (le_of_lt ht₀_lt_5)
+    rw [← hγt₀]
+    exact fdBoundary_H_seg5_re' H ht₀_gt_4 (le_of_lt ht₀_lt_5)
   have h_seg5_cpv : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) ((t₀ + 4) / 2) ((t₀ + 5) / 2) s := by
     apply cpv_exists_on_smooth_subinterval H hH s
@@ -817,16 +893,19 @@ private theorem cpv_exists_generic_seg5 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
     · have heq_fn : ∀ u ∈ Set.Ioi (4:ℝ), fdBoundary_H H u =
           (↑(u - 9/2) : ℂ) + ↑H * I := by
         intro u (hu : 4 < u)
-        rw [fdBoundary_H_eq_seg5_H hu]; simp [fdBoundary_seg5_H]
+        rw [fdBoundary_H_eq_seg5_H hu]
+        simp [fdBoundary_seg5_H]
       have heq : fdBoundary_H H =ᶠ[𝓝 t₀] (fun t => (↑(t - 9/2) : ℂ) + ↑H * I) :=
         Filter.eventuallyEq_iff_exists_mem.mpr
           ⟨Set.Ioi 4, Ioi_mem_nhds ht₀_gt_4, heq_fn⟩
       apply ContDiffAt.congr_of_eventuallyEq _ heq
       exact (Complex.ofRealCLM.contDiff.contDiffAt.comp t₀
         (contDiffAt_id.sub contDiffAt_const)).add contDiffAt_const
-    · erw [(fdBoundary_H_hasDerivAt_seg5 H ht₀_gt_4).deriv]; exact one_ne_zero
+    · erw [(fdBoundary_H_hasDerivAt_seg5 H ht₀_gt_4).deriv]
+      exact one_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_45 H).mono
-      intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+      intro t ht
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
     · intro t ht hγt
       have ht4 : 4 < t := by linarith [ht.1]
       have ht5 : t ≤ 5 := by linarith [ht.2]
@@ -863,7 +942,9 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
       have hγ2 : fdBoundary_H H 2 = I := by
         rw [fdBoundary_H_eq_arc (by norm_num : (1:ℝ) < 2) (by norm_num : (2:ℝ) < 3)]
         have : Real.pi * (1 + 2) / 6 = Real.pi / 2 := by ring
-        rw [this, show (↑(Real.pi / 2) : ℂ) * I = ↑Real.pi / 2 * I from by push_cast; ring]
+        rw [this, show (↑(Real.pi / 2) : ℂ) * I = ↑Real.pi / 2 * I from by
+              push_cast
+              ring]
         exact Complex.exp_pi_div_two_mul_I
       have h_arc_cpv : CauchyPrincipalValueExists' (fun z => (z - I)⁻¹)
           (fdBoundary_H H) (3/2) (5/2) I := by
@@ -886,7 +967,8 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
           · exact by norm_num [Complex.ofReal_ne_zero]
           · exact I_ne_zero
         · apply (fdBoundary_H_deriv_continuousOn_Ioo_13 H).mono
-          intro t ht; exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
+          intro t ht
+          exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
         · intro t ht hγt
           have ht' : t ∈ Set.Ioo (1:ℝ) 3 := ⟨by linarith [ht.1], by linarith [ht.2]⟩
           have h2' : (2:ℝ) ∈ Set.Ioo (1:ℝ) 3 := ⟨by norm_num, by norm_num⟩
@@ -902,13 +984,16 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
             (by norm_num : (1:ℝ) < 2) (by norm_num : (2:ℝ) < 3)
           exact arc_angle_injective ⟨ht1, ht3⟩ ⟨by norm_num, by norm_num⟩
             ((h1.symm.trans h_eq).trans (h2.symm.trans hγ2).symm)
-        · rintro rfl; exact hγ2
+        · rintro rfl
+          exact hγ2
       have hγ3_ne_I : fdBoundary_H H 3 ≠ I := by
         rw [fdBoundary_H_at_three H]
-        intro h_eq; exact hs_rho h_eq.symm
+        intro h_eq
+        exact hs_rho h_eq.symm
       have hγ4_ne_I : fdBoundary_H H 4 ≠ I := by
         rw [fdBoundary_H_at_four H]
-        intro h_eq; have h_re := congr_arg Complex.re h_eq
+        intro h_eq
+        have h_re := congr_arg Complex.re h_eq
         simp only [Complex.add_re, Complex.neg_re, Complex.div_ofNat_re, Complex.one_re,
                    Complex.mul_re, Complex.ofReal_re, Complex.I_re, mul_zero, sub_zero,
                    Complex.I_im, Complex.ofReal_im, mul_one, Complex.I_re] at h_re
@@ -919,7 +1004,9 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
           (fun {t} ht4 ht5 => by
             intro h_eq
             have := fdBoundary_H_seg5_im' H ht4 ht5
-            rw [h_eq] at this; simp only [Complex.I_im] at this; linarith)
+            rw [h_eq] at this
+            simp only [Complex.I_im] at this
+            linarith)
           hγ3_ne_I
       · subst hH_eq
         exact cpv_exists_at_I_H_eq_one hH h_arc_cpv
@@ -932,16 +1019,26 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
     · subst hs_corner
       exact cpv_at_corner H hH
     · have ht₀_ne_0 : t₀ ≠ 0 := by
-        intro h; subst h; exact hs_endpoint (by rw [← hγt₀, fdBoundary_H_at_zero])
+        intro h
+        subst h
+        exact hs_endpoint (by rw [← hγt₀, fdBoundary_H_at_zero])
       have ht₀_ne_1 : t₀ ≠ 1 := by
-        intro h; subst h
+        intro h
+        subst h
         exact hs_rho' (by rw [← hγt₀, fdBoundary_H_at_one])
       have ht₀_ne_3 : t₀ ≠ 3 := by
-        intro h; subst h; exact hs_rho (by rw [← hγt₀, fdBoundary_H_at_three])
+        intro h
+        subst h
+        exact hs_rho (by rw [← hγt₀, fdBoundary_H_at_three])
       have ht₀_ne_4 : t₀ ≠ 4 := by
-        intro h; subst h; exact hs_corner (by rw [← hγt₀, fdBoundary_H_at_four]; ring)
+        intro h
+        subst h
+        exact hs_corner (by rw [← hγt₀, fdBoundary_H_at_four]
+                            ring)
       have ht₀_ne_5 : t₀ ≠ 5 := by
-        intro h; subst h; exact hs_endpoint (by rw [← hγt₀, fdBoundary_H_at_five])
+        intro h
+        subst h
+        exact hs_endpoint (by rw [← hγt₀, fdBoundary_H_at_five])
       rw [Set.mem_Icc] at ht₀_mem
       have hh₀ : (0 : ℝ) < H - Real.sqrt 3 / 2 := by linarith
       by_cases ht₀_lt_1 : t₀ < 1

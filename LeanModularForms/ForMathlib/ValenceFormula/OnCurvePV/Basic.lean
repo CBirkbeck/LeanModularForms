@@ -96,7 +96,10 @@ private lemma fdBoundary_H_cutout_cont_inv (s : ℂ) (H : ℝ) (ε : ℝ) (hε :
   · exact continuousOn_id.sub continuousOn_const
   · intro z ⟨_, hz_ball⟩
     simp only [Metric.mem_ball, not_lt] at hz_ball
-    exact sub_ne_zero.mpr (fun heq => by subst heq; simp [dist_self] at hz_ball; linarith)
+    refine sub_ne_zero.mpr (fun heq => ?_)
+    subst heq
+    simp [dist_self] at hz_ball
+    linarith
 
 private lemma fdBoundary_H_cutout_bound (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     (s : ℂ) (ε : ℝ) (hε : 0 < ε) :
@@ -120,11 +123,13 @@ private lemma fdBoundary_H_cutout_bound (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
               · exact fdBoundary_H_not_differentiableAt_1 hH
               · exact fdBoundary_H_not_differentiableAt_3 hH
               · exact fdBoundary_H_not_differentiableAt_4 hH
-            erw [deriv_zero_of_not_differentiableAt this]; simp [le_of_lt hM_pos]
+            erw [deriv_zero_of_not_differentiableAt this]
+            simp [le_of_lt hM_pos]
           · exact hM_bound t htp
         · exact norm_nonneg _
         · exact le_of_lt (inv_pos_of_pos hε)
-  · simp only [norm_zero]; exact mul_nonneg (le_of_lt (inv_pos_of_pos hε)) (le_of_lt hM_pos)
+  · simp only [norm_zero]
+    exact mul_nonneg (le_of_lt (inv_pos_of_pos hε)) (le_of_lt hM_pos)
 
 private lemma fdBoundary_H_cutout_meas (H : ℝ) (s : ℂ) (ε : ℝ) (hε : 0 < ε) :
     AEStronglyMeasurable (fun t => if ε < ‖fdBoundary_H H t - s‖ then

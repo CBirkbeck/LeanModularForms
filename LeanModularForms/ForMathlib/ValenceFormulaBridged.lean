@@ -98,12 +98,10 @@ theorem valence_formula_textbook_unconditional_FM
   -- Choose `H_res := max(H₀_res, H₀_mod, H_S, 1) + 1` so it exceeds every bound.
   set M := max (max (max H₀_res H₀_mod) H_S) 1
   set H_res := M + 1
-  have hM_res : H₀_res ≤ M :=
-    (le_max_left _ _ |>.trans (le_max_left _ _)).trans (le_max_left _ _)
-  have hM_mod : H₀_mod ≤ M :=
-    (le_max_right _ _ |>.trans (le_max_left _ _)).trans (le_max_left _ _)
-  have hM_S : H_S ≤ M := (le_max_right _ _).trans (le_max_left _ _)
-  have hM_one : (1 : ℝ) ≤ M := le_max_right _ _
+  have hM_res : H₀_res ≤ M := by simp [M]
+  have hM_mod : H₀_mod ≤ M := by simp [M]
+  have hM_S : H_S ≤ M := by simp [M]
+  have hM_one : (1 : ℝ) ≤ M := by simp [M]
   have hH_res_gt : (1 : ℝ) < H_res := by linarith
   have hH₀_res_le : H₀_res ≤ H_res := by linarith
   have hH₀_mod_le : H₀_mod ≤ H_res := by linarith
@@ -157,7 +155,7 @@ theorem valence_formula_textbook_orbit_finsum_FM :
     (orderAtCusp' f : ℂ) +
     (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
     (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
-    ∑ᶠ (q : NonEllOrbitFM), ordOrbitQFM f q =
+    ∑ᶠ (q : NonEllOrbitFM), ordOrbitQ f q =
     (k : ℂ) / 12 := by
   refine valence_formula_textbook_orbit_finsum f hf fun S hS hS_complete => ?_
   -- Pick a height bound strictly above every imaginary part in `S`.

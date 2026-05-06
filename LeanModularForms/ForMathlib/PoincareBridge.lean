@@ -47,7 +47,7 @@ theorem DifferentiableOn.hasPrimitive_of_convex {f : ℂ → ℂ} {U : Set ℂ}
     (_ : U.Nonempty) :
     ∃ F : ℂ → ℂ, ∀ z ∈ U, HasDerivAt F (f z) z := by
   obtain ⟨F, hF⟩ := hU.exists_forall_hasDerivWithinAt hf
-  exact ⟨F, fun z hz => (hF z hz).hasDerivAt (hUo.mem_nhds hz)⟩
+  exact ⟨F, fun z hz ↦ (hF z hz).hasDerivAt (hUo.mem_nhds hz)⟩
 
 /-- A holomorphic function on a convex open set has a primitive, stated using
 mathlib's `Complex.IsExactOn`. -/
@@ -63,7 +63,7 @@ theorem DifferentiableOn.primitive_differentiableOn {f : ℂ → ℂ} {U : Set �
     (hUne : U.Nonempty) :
     ∃ F : ℂ → ℂ, DifferentiableOn ℂ F U ∧ ∀ z ∈ U, HasDerivAt F (f z) z := by
   obtain ⟨F, hF⟩ := hf.hasPrimitive_of_convex hU hUo hUne
-  exact ⟨F, fun z hz => (hF z hz).differentiableAt.differentiableWithinAt, hF⟩
+  exact ⟨F, fun z hz ↦ (hF z hz).differentiableAt.differentiableWithinAt, hF⟩
 
 /-! ### Cauchy's theorem for convex domains -/
 
@@ -88,8 +88,7 @@ theorem contourIntegral_eq_zero_of_differentiableOn_convex_aux {f : ℂ → ℂ}
       (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1) :
     γ.contourIntegral f = 0 := by
   obtain ⟨F, hF⟩ := hf.hasPrimitive_of_convex hU hUo hUne
-  exact contourIntegral_eq_zero_of_hasDerivAt_of_closed γ hclosed hγ
-    (fun z hz => hF z hz) h_int
+  exact contourIntegral_eq_zero_of_hasDerivAt_of_closed γ hclosed hγ hF h_int
 
 /-- **Cauchy's theorem for convex domains (FTC formulation).**
 
@@ -108,7 +107,7 @@ theorem contourIntegral_eq_sub_of_differentiableOn_convex {f : ℂ → ℂ}
     ∃ F : ℂ → ℂ, γ.contourIntegral f = F y - F x ∧
       ∀ z ∈ U, HasDerivAt F (f z) z := by
   obtain ⟨F, hF⟩ := hf.hasPrimitive_of_convex hU hUo hUne
-  exact ⟨F, contourIntegral_eq_sub_of_hasDerivAt γ hγ (fun z hz => hF z hz) h_int, hF⟩
+  exact ⟨F, contourIntegral_eq_sub_of_hasDerivAt γ hγ hF h_int, hF⟩
 
 end PiecewiseC1Path
 
@@ -125,7 +124,7 @@ theorem Complex.IsExactOn.contourIntegral_eq_sub {f : ℂ → ℂ} {U : Set ℂ}
     ∃ F : ℂ → ℂ, γ.contourIntegral f = F y - F x ∧
       ∀ z ∈ U, HasDerivAt F (f z) z := by
   obtain ⟨F, hF⟩ := hf
-  exact ⟨F, γ.contourIntegral_eq_sub_of_hasDerivAt hγ (fun z hz => hF z hz) h_int, hF⟩
+  exact ⟨F, γ.contourIntegral_eq_sub_of_hasDerivAt hγ hF h_int, hF⟩
 
 /-- If `f` is exact (has a primitive) on `U`, then the contour integral of `f` along any
 closed piecewise C¹ path in `U` is zero. -/
@@ -137,7 +136,6 @@ theorem Complex.IsExactOn.contourIntegral_eq_zero_of_closed {f : ℂ → ℂ} {U
       (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1) :
     γ.contourIntegral f = 0 := by
   obtain ⟨F, hF⟩ := hf
-  exact γ.contourIntegral_eq_zero_of_hasDerivAt_of_closed rfl hγ
-    (fun z hz => hF z hz) h_int
+  exact γ.contourIntegral_eq_zero_of_hasDerivAt_of_closed rfl hγ hF h_int
 
 end

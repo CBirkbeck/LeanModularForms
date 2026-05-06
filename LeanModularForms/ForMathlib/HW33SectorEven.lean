@@ -50,7 +50,8 @@ theorem exp_neg_I_eq_one_of_conditionB (n : ℕ) (α : ℝ)
     (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
     Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) = 1 := by
   obtain ⟨k, hk⟩ := h_angle
-  have hk' : (↑((n - 1 : ℕ) : ℝ) * α : ℂ) = (↑k : ℂ) * (2 * ↑Real.pi) := by exact_mod_cast hk
+  have hk' : (↑((n - 1 : ℕ) : ℝ) * α : ℂ) = (↑k : ℂ) * (2 * ↑Real.pi) := by
+    exact_mod_cast hk
   rw [show (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) =
     (((-k : ℤ) : ℂ) * (2 * ↑Real.pi * Complex.I)) from by rw [hk']; push_cast; ring,
     Complex.exp_int_mul, Complex.exp_two_pi_mul_I]
@@ -103,7 +104,8 @@ theorem real_ray_inv_pow_integral
     intervalIntegral.integral_congr fun t _ => by
       rw [zpow_neg, zpow_natCast, ← one_div]
   rw [h_int_eq]
-  rw [integral_zpow (Or.inr ⟨by intro h; omega, Set.uIcc_of_le hab ▸ fun h => absurd h.1 (not_le.mpr ha)⟩),
+  rw [integral_zpow (Or.inr ⟨by intro h; omega,
+      Set.uIcc_of_le hab ▸ fun h => absurd h.1 (not_le.mpr ha)⟩),
     show (-(n : ℤ)) + 1 = -((n - 1 : ℕ) : ℤ) from by omega,
     zpow_neg, zpow_neg, zpow_natCast, zpow_natCast,
     show ((↑(-(n : ℤ)) + 1 : ℝ)) = -((n - 1 : ℕ) : ℝ) from by
@@ -120,7 +122,6 @@ theorem complex_ray_inv_pow_integral
     (∫ t in a..b, c / (↑t : ℂ) ^ n) =
       c * ((1 : ℂ) / (↑(n - 1 : ℕ) : ℂ)) *
         ((1 / (↑a : ℂ) ^ (n - 1)) - (1 / (↑b : ℂ) ^ (n - 1))) := by
-  -- Rewrite c/t^n = c * (↑(1/t^n : ℝ) : ℂ) on (a, b) (where t > 0)
   have h_eq : ∀ t : ℝ, t ∈ Set.uIcc a b →
       (c / (↑t : ℂ) ^ n) = c * (↑(1 / t ^ n : ℝ) : ℂ) := by
     intro t ht
@@ -156,7 +157,6 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
         ((↑(n - 1 : ℕ) : ℂ) * (↑r : ℂ) ^ (n - 1)) := by
   have hr_ne : (↑r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
   have hn1_ne : (↑(n - 1 : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
-  -- Simplify the integrand to (i/r^(n-1)) · exp(c · t) where c = -i(n-1)
   have h_eq : ∀ t : ℝ,
       ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
         ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n =
@@ -178,7 +178,6 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
       Complex.exp_neg]
     field_simp [Complex.exp_ne_zero]
   rw [intervalIntegral.integral_congr (fun t _ => h_eq t)]
-  -- Pull out (i/r^(n-1)) using integral_const_mul (with explicit f)
   have h_step :
       (∫ t in (0 : ℝ)..α,
         (Complex.I / (↑r : ℂ) ^ (n - 1)) *
@@ -225,7 +224,6 @@ theorem sector_inv_pow_integral_combined
     arc_inv_pow_integral r hr α n hn,
     complex_ray_inv_pow_integral ε r hε hεr
       (Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I))) n hn]
-  -- Algebraic simplification: combine the three closed forms
   field_simp [Nat.cast_ne_zero.mpr (by omega : n - 1 ≠ 0),
     Complex.ofReal_ne_zero.mpr hε.ne', Complex.ofReal_ne_zero.mpr hr.ne']
   ring
@@ -304,13 +302,11 @@ theorem F_line_diff_eq_zero_under_conditionB
     -((↑(k - 1) : ℂ))⁻¹ *
       (((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1))⁻¹ := by
   congr 2
-  -- Reduce to ((s + ε • L_plus / ‖L_plus‖) - s)^(k-1) = ((s + ε • (-L_minus / ‖L_minus‖)) - s)^(k-1)
-  -- which simplifies to (ε • L_plus / ‖L_plus‖)^(k-1) = (ε • (-L_minus / ‖L_minus‖))^(k-1)
-  -- which factors out ε^(k-1), giving (L_plus/‖L_plus‖)^(k-1) = (-L_minus/‖L_minus‖)^(k-1) (B).
   rw [show ((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * ((L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1)) by
     rw [add_sub_cancel_left,
-      show ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) = (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ))
+      show ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) =
+          (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ))
         from by rw [Complex.real_smul]; push_cast; field_simp, mul_pow],
     show ((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * (((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1)) by
@@ -360,32 +356,32 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
       ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹) -
         (-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹)‖)
       (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  -- Right- and left-side F-diff at chord target → 0; sum still → 0
   have h_sum_raw := ((F_diff_at_tangent_target_tendsto_zero_right
         h_flat hL_plus h_deriv_right hL_right h_s hk hkn hn1).comp h_plus_to).add
       ((F_diff_at_tangent_target_tendsto_zero_left
         h_flat hL_minus h_deriv_left hL_left h_s hk hkn hn1).comp h_minus_to)
-  -- The summed F-diffs tend to 0
   have h_sum : Tendsto (fun ε =>
       ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹ -
           -(↑(k - 1) : ℂ)⁻¹ *
-            (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹‖ +
+            (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s)
+              ^ (k - 1))⁻¹‖ +
         ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹ -
           -(↑(k - 1) : ℂ)⁻¹ *
             (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L_minus)‖ : ℝ) • (-L_minus)) - s)
               ^ (k - 1))⁻¹‖)
       (𝓝[>] 0) (𝓝 0) := by
-    convert h_sum_raw using 2; simp
+    convert h_sum_raw using 2
+    simp
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_sum
     (Eventually.of_forall fun _ => norm_nonneg _) ?_
   filter_upwards [h_plus_radius, h_minus_radius] with ε hpr hmr
-  -- Use F_line_diff_eq_zero_under_conditionB to identify the two side targets
   have h_targets_eq :
       -(↑(k - 1) : ℂ)⁻¹ *
         (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L_minus)‖ : ℝ) • (-L_minus)) - s)
           ^ (k - 1))⁻¹ =
       -(↑(k - 1) : ℂ)⁻¹ *
-        (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1))⁻¹ := by
+        (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L_plus‖ : ℝ) • L_plus) - s)
+          ^ (k - 1))⁻¹ := by
     rw [hmr, norm_neg, hpr]
     exact (F_line_diff_eq_zero_under_conditionB s L_minus L_plus k hk
       hL_minus hL_plus h_B ε).symm
@@ -394,10 +390,10 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
   set A := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹
   set B := -(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹
   have h_triangle : ‖A - B‖ ≤ ‖B - TR‖ + ‖A - TR‖ :=
-    calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by ring
+    calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by rw [sub_sub_sub_cancel_right]
       _ ≤ ‖A - TR‖ + ‖B - TR‖ := norm_sub_le _ _
       _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
-  show ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
+  change ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
   rw [h_targets_eq]
   exact h_triangle
 
@@ -471,9 +467,7 @@ theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
     {t₀ δMinus δPlus : ℝ} {n k : ℕ}
     (h_t₀_minus_pos : 0 ≤ t₀ - δMinus) (h_t₀_plus_le : t₀ + δPlus ≤ 1)
     (hδMinus : 0 < δMinus) (hδPlus : 0 < δPlus)
-    -- Closure
     (h_close : γ.toPath.extend 0 = γ.toPath.extend 1)
-    -- Flatness and tangent data
     (h_flat : IsFlatOfOrder γ.toPath.extend t₀ n)
     (hL_minus : L_minus ≠ 0) (hL_plus : L_plus ≠ 0)
     (h_deriv_right : HasDerivWithinAt γ.toPath.extend L_plus (Set.Ioi t₀) t₀)
@@ -482,21 +476,17 @@ theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
     (hL_left : Tendsto (deriv γ.toPath.extend) (𝓝[<] t₀) (𝓝 L_minus))
     (h_s : γ.toPath.extend t₀ = s)
     (hk : 2 ≤ k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
-    -- Condition (B)
     (h_B :
       (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1) =
       ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1))
-    -- Continuity / smoothness on each side
     (hγ_cont_right : ContinuousOn γ.toPath.extend (Set.Icc t₀ (t₀ + δPlus)))
     (hγ_cont_left : ContinuousOn γ.toPath.extend (Set.Icc (t₀ - δMinus) t₀))
     (h_leave_right : ∀ t ∈ Set.Ioc t₀ (t₀ + δPlus), γ.toPath.extend t ≠ s)
     (h_leave_left : ∀ t ∈ Set.Ico (t₀ - δMinus) t₀, γ.toPath.extend t ≠ s)
-    -- Strict monotonicity (from transverse via L_minus / L_plus respectively)
     (hγ_anti : StrictAntiOn (fun t => ‖γ.toPath.extend t - s‖)
       (Set.Icc (t₀ - δMinus) t₀))
     (hγ_mono : StrictMonoOn (fun t => ‖γ.toPath.extend t - s‖)
       (Set.Icc t₀ (t₀ + δPlus)))
-    -- Avoidance margins on outer regions
     {δ_avoid_left δ_avoid_right : ℝ}
     (h_avoid_left_pos : 0 < δ_avoid_left)
     (h_avoid_right_pos : 0 < δ_avoid_right)
@@ -504,7 +494,6 @@ theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
       δ_avoid_left ≤ ‖γ.toPath.extend t - s‖)
     (h_avoid_right : ∀ t ∈ Set.Icc (t₀ + δPlus) (1 : ℝ),
       δ_avoid_right ≤ ‖γ.toPath.extend t - s‖)
-    -- Smoothness on outer punctured intervals
     (h_minus_smooth : ∀ ε > 0,
       ∀ t ∈ Set.uIcc (0 : ℝ)
         (firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
@@ -531,13 +520,11 @@ theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
         (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k)
         MeasureTheory.volume
         (firstExitTimeRight γ.toPath.extend t₀ δPlus s ε) (1 : ℝ))
-    -- CPV-integrand integrability (from contour integrability via auto-discharge helpers)
     (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
       (fun t => cpvIntegrandOn {s}
         (fun z => (1 : ℂ) / (z - s) ^ k) γ.toPath.extend ε t)
       MeasureTheory.volume 0 1) :
     HasCauchyPVOn {s} (fun z => (1 : ℂ) / (z - s) ^ k) γ 0 := by
-  -- Step 1: Parametric PV under (B)
   have h_parametric :=
     hw_theorem_3_3_under_conditionB_parametric (γ := γ.toPath.extend)
       (γ' := deriv γ.toPath.extend) (s := s) (L_minus := L_minus)
@@ -552,7 +539,6 @@ theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
       (firstExitTimeLeft_radius_eventually hδMinus hγ_cont_left h_s h_leave_left)
       h_minus_smooth h_minus_avoids h_minus_int
       h_plus_smooth h_plus_avoids h_plus_int
-  -- Step 2 + 3: Shape hypothesis from strict mono, then apply the bridge
   refine hasCauchyPVOn_singleton_of_exitTime_excision γ s
     (fun z => (1 : ℂ) / (z - s) ^ k)
     (shape_eventually_of_strict_mono
@@ -560,11 +546,10 @@ theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
       hγ_cont_left hγ_cont_right hγ_anti hγ_mono h_s
       h_avoid_left_pos h_avoid_right_pos h_avoid_left h_avoid_right)
     h_int_full ?_
-  -- Reconcile integrand: deriv γ / (γ - s)^k = (1/(γ-s)^k) · deriv γ
   refine h_parametric.congr fun ε => ?_
   congr 1 <;>
   · refine intervalIntegral.integral_congr fun t _ => ?_
-    show deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
+    change deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
          (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
     ring
 

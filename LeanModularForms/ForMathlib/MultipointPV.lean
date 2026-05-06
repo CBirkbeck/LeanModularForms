@@ -58,24 +58,20 @@ theorem finset_discrete_min_sep (S : Finset ℂ) (hS_nonempty : S.Nonempty)
     ∃ δ > 0, ∀ s ∈ S, ∀ s' ∈ S, s ≠ s' → δ ≤ ‖s' - s‖ := by
   by_cases h_singleton : S.card ≤ 1
   · refine ⟨1, one_pos, fun s hs s' hs' hne => ?_⟩
-    have h_card_eq : S.card = 1 := by have := hS_nonempty.card_pos; omega
+    have h_card_eq : S.card = 1 := by
+      have := hS_nonempty.card_pos
+      omega
     obtain ⟨a, hS_eq⟩ := Finset.card_eq_one.mp h_card_eq
-    have hs_eq : s = a := by rw [hS_eq] at hs; exact Finset.mem_singleton.mp hs
-    have hs'_eq : s' = a := by rw [hS_eq] at hs'; exact Finset.mem_singleton.mp hs'
-    exact (hne (hs_eq.trans hs'_eq.symm)).elim
+    rw [hS_eq, Finset.mem_singleton] at hs hs'
+    exact absurd (hs.trans hs'.symm) hne
   · push Not at h_singleton
     classical
     let dists : Finset ℝ := S.biUnion (fun s =>
       S.filter (· ≠ s) |>.image (fun s' => ‖s' - s‖))
     have h_nonempty : dists.Nonempty := by
       obtain ⟨a, ha⟩ := hS_nonempty
-      have h_exists_b : ∃ b ∈ S, b ≠ a := by
-        by_contra h_all; push Not at h_all
-        have : S.card ≤ 1 := (Finset.card_le_card
-          (fun z hz => Finset.mem_singleton.mpr (h_all z hz))).trans
-          (by simp only [Finset.card_singleton, le_refl])
-        omega
-      obtain ⟨b, hb, hne⟩ := h_exists_b; refine ⟨‖b - a‖, ?_⟩
+      obtain ⟨b, hb, hne⟩ := Finset.exists_mem_ne h_singleton a
+      refine ⟨‖b - a‖, ?_⟩
       simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]
       exact ⟨a, ha, b, ⟨hb, hne⟩, rfl⟩
     let δ := dists.min' h_nonempty
@@ -84,8 +80,7 @@ theorem finset_discrete_min_sep (S : Finset ℂ) (hS_nonempty : S.Nonempty)
       simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter] at h_mem
       obtain ⟨s, hs, s', ⟨hs', hne⟩, heq⟩ := h_mem
       have h_pos : 0 < ‖s' - s‖ := hS_discrete s hs s' hs' hne.symm
-      calc δ = ‖s' - s‖ := heq.symm
-        _ > 0 := h_pos
+      linarith [heq.symm]
     refine ⟨δ, hδ_pos, fun s hs s' hs' hne => ?_⟩
     have h_in : ‖s' - s‖ ∈ dists := by
       simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]
@@ -109,9 +104,12 @@ theorem disjoint_balls_of_small_epsilon (S : Finset ℂ) (ε : ℝ) (δ : ℝ)
     (h_sep : ∀ s ∈ S, ∀ s' ∈ S, s ≠ s' → δ ≤ ‖s' - s‖) :
     ∀ s ∈ S, ∀ s' ∈ S, s ≠ s' →
       Disjoint (Metric.ball s ε) (Metric.ball s' ε) := by
-  intro s hs s' hs' hne; apply Metric.ball_disjoint_ball
+  intro s hs s' hs' hne
+  apply Metric.ball_disjoint_ball
   have h_sep' := h_sep s hs s' hs' hne
-  have h2 : δ ≤ dist s s' := by rw [dist_eq_norm, norm_sub_rev]; exact h_sep'
+  have h2 : δ ≤ dist s s' := by
+    rw [dist_eq_norm, norm_sub_rev]
+    exact h_sep'
   linarith
 
 /-! ## Algebraic Operations on `cpvIntegrandOn` -/
@@ -120,18 +118,21 @@ theorem disjoint_balls_of_small_epsilon (S : Finset ℂ) (ε : ℝ) (δ : ℝ)
 theorem cpvIntegrandOn_sub (S : Finset ℂ) (f g : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => f z - g z) γ ε t =
       cpvIntegrandOn S f γ ε t - cpvIntegrandOn S g γ ε t := by
-  simp only [cpvIntegrandOn]; split_ifs <;> ring
+  simp only [cpvIntegrandOn]
+  split_ifs <;> ring
 
 /-- The multi-point CPV integrand distributes over addition pointwise. -/
 theorem cpvIntegrandOn_add (S : Finset ℂ) (f g : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => f z + g z) γ ε t =
       cpvIntegrandOn S f γ ε t + cpvIntegrandOn S g γ ε t := by
-  simp only [cpvIntegrandOn]; split_ifs <;> ring
+  simp only [cpvIntegrandOn]
+  split_ifs <;> ring
 
 /-- The multi-point CPV integrand commutes with negation pointwise. -/
 theorem cpvIntegrandOn_neg (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => -f z) γ ε t = -cpvIntegrandOn S f γ ε t := by
-  simp only [cpvIntegrandOn]; split_ifs <;> ring
+  simp only [cpvIntegrandOn]
+  split_ifs <;> ring
 
 /-- If there are no singularities near `γ(t)` for the larger set `T ⊇ S`,
 then there are none for `S` either, so both integrands equal the full integrand. -/
@@ -182,10 +183,12 @@ theorem HasCauchyPVOn.sub {S : Finset ℂ} {f g : ℂ → ℂ}
       (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) -
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    rw [show (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) =
-      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t -
-        cpvIntegrandOn S g γ.toPath.extend ε t) from by
-      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring]
+    have h_pt : (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) =
+        (fun t => cpvIntegrandOn S f γ.toPath.extend ε t -
+          cpvIntegrandOn S g γ.toPath.extend ε t) := by
+      funext t
+      exact cpvIntegrandOn_sub S f g γ.toPath.extend ε t
+    rw [h_pt]
     exact intervalIntegral.integral_sub (hfi ε hε) (hgi ε hε)
   exact (hf.sub hg).congr' heq.symm
 
@@ -205,10 +208,12 @@ theorem HasCauchyPVOn.add {S : Finset ℂ} {f g : ℂ → ℂ}
       (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) +
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    rw [show (fun t => cpvIntegrandOn S (fun z => f z + g z) γ.toPath.extend ε t) =
-      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t +
-        cpvIntegrandOn S g γ.toPath.extend ε t) from by
-      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring]
+    have h_pt : (fun t => cpvIntegrandOn S (fun z => f z + g z) γ.toPath.extend ε t) =
+        (fun t => cpvIntegrandOn S f γ.toPath.extend ε t +
+          cpvIntegrandOn S g γ.toPath.extend ε t) := by
+      funext t
+      exact cpvIntegrandOn_add S f g γ.toPath.extend ε t
+    rw [h_pt]
     exact intervalIntegral.integral_add (hfi ε hε) (hgi ε hε)
   exact (hf.add hg).congr' heq.symm
 
@@ -235,10 +240,13 @@ theorem hasCauchyPVOn_of_tendsto_sub {S : Finset ℂ} {f g : ℂ → ℂ}
           cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) +
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    rw [show (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
-      (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t +
-        cpvIntegrandOn S g γ.toPath.extend ε t) from by
-      ext t; simp only [cpvIntegrandOn]; split_ifs <;> ring]
+    have h_pt : (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
+        (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t +
+          cpvIntegrandOn S g γ.toPath.extend ε t) := by
+      funext t
+      rw [cpvIntegrandOn_sub]
+      ring
+    rw [h_pt]
     exact intervalIntegral.integral_add (hfgi ε hε) (hgi ε hε)
   have h_sum : Tendsto
       (fun ε =>
@@ -246,7 +254,8 @@ theorem hasCauchyPVOn_of_tendsto_sub {S : Finset ℂ} {f g : ℂ → ℂ}
           cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) +
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t))
       (𝓝[>] 0) (𝓝 L) := by
-    convert hfg.add hg using 1; simp only [zero_add]
+    convert hfg.add hg using 1
+    simp only [zero_add]
   exact h_sum.congr' heq.symm
 
 /-! ## Connection between single-point and multi-point CPV -/

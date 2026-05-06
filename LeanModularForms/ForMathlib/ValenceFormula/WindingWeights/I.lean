@@ -232,12 +232,14 @@ private lemma g_i_seg3_value {t : ℝ} (ht3 : 3 < t) (ht4 : t ≤ 4) :
     fdBoundary_H H t - I =
       -1/2 + ↑(Real.sqrt 3 / 2 - 1 + (t - 3) * (H - Real.sqrt 3 / 2)) * I := by
   rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith) ht4]
-  push_cast; ring
+  push_cast
+  ring
 
 private lemma g_i_seg4_value {t : ℝ} (ht4 : 4 < t) :
     fdBoundary_H H t - I = ↑(t - 9/2) + ↑(H - 1) * I := by
   rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
-  push_cast; ring
+  push_cast
+  ring
 
 private lemma g_i_norm_ge_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) :
     1 / 2 ≤ ‖fdBoundary_H H t - I‖ := by
@@ -363,7 +365,8 @@ private lemma g_i_seg3_im_pos {t : ℝ} (ht_t0 : t₀_i H < t) (ht4 : t ≤ 4)
 
 private lemma g_i_ne_zero_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) :
     fdBoundary_H H t - I ≠ 0 := by
-  intro h; have := congr_arg Complex.re h
+  intro h
+  have := congr_arg Complex.re h
   simp only [Complex.zero_re] at this
   rcases eq_or_lt_of_le ht3 with rfl | ht3'
   · rw [fdBoundary_H_at_three_eq_rho] at this
@@ -380,11 +383,12 @@ private lemma g_i_ne_zero_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) :
 
 private lemma log_neg_eq_add_pi_I {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : z.im < 0) :
     Complex.log (-z) = Complex.log z + ↑Real.pi * I := by
-  show ↑(Real.log ‖-z‖) + ↑((-z).arg) * I =
+  change ↑(Real.log ‖-z‖) + ↑((-z).arg) * I =
     ↑(Real.log ‖z‖) + ↑z.arg * I + ↑Real.pi * I
   simp only [norm_neg]
   rw [Complex.arg_neg_eq_arg_add_pi_of_im_neg hz_im]
-  push_cast; ring
+  push_cast
+  ring
 
 private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     let g := fun t => fdBoundary_H H t - I
@@ -405,10 +409,14 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     fun t => -1/2 + ↑(Real.sqrt 3 / 2 - 1 + (t - 3) * (H - Real.sqrt 3 / 2)) * I
   set h₃ : ℝ → ℂ := fun t => ↑(t - 9/2) + ↑(H - 1) * I
   have hg_eq_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := by
-    intro t ht; show fdBoundary_H H t - I = h₀ t
-    rw [fdBoundary_H_seg0 H ht]; simp only [h₀]; ring
+    intro t ht
+    change fdBoundary_H H t - I = h₀ t
+    rw [fdBoundary_H_seg0 H ht]
+    simp only [h₀]
+    ring
   have hg_eq_h₁ : ∀ t, 1 < t → t < 3 → g t = h₁ t := by
-    intro t ht1 ht3; show fdBoundary_H H t - I = h₁ t
+    intro t ht1 ht3
+    change fdBoundary_H H t - I = h₁ t
     rw [fdBoundary_H_eq_arc ht1 ht3]
   have hg_eq_h₂ : ∀ t, 3 < t → t ≤ 4 → g t = h₂ t := by
     intro t ht3 ht4; exact g_i_seg3_value ht3 ht4
@@ -417,7 +425,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hg0 : g 0 = h₀ 0 := hg_eq_h₀ 0 (by norm_num)
   have hg1_0 : g 1 = h₀ 1 := hg_eq_h₀ 1 (le_refl 1)
   have hg1_1 : g 1 = h₁ 1 := by
-    show fdBoundary_H H 1 - I = h₁ 1
+    change fdBoundary_H H 1 - I = h₁ 1
     rw [fdBoundary_H_at_one_eq_rho_plus_one]
     simp only [h₁, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
       UpperHalfPlane.coe_mk]
@@ -428,7 +436,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hg2mδ : g (2 - δ) = h₁ (2 - δ) := hg_eq_h₁ (2 - δ) (by linarith) (by linarith)
   have hg2pδ : g (2 + δ) = h₁ (2 + δ) := hg_eq_h₁ (2 + δ) (by linarith) (by linarith)
   have hg3_1 : g 3 = h₁ 3 := by
-    show fdBoundary_H H 3 - I = h₁ 3
+    change fdBoundary_H H 3 - I = h₁ 3
     rw [fdBoundary_H_at_three_eq_rho]
     simp only [h₁, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     rw [show Real.pi * (1 + 3) / 6 = 2 * Real.pi / 3 from by ring]
@@ -436,7 +444,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
         exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
     push_cast; ring
   have hg3_2 : g 3 = h₂ 3 := by
-    show fdBoundary_H H 3 - I = h₂ 3
+    change fdBoundary_H H 3 - I = h₂ 3
     rw [fdBoundary_H_at_three_eq_rho]
     simp only [h₂, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     push_cast; ring
@@ -444,8 +452,11 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hgt₀_val : g t₀ = (-1 : ℂ) / 2 := g_i_at_t₀ hH
   have hg4_2 : g 4 = h₂ 4 := hg_eq_h₂ 4 (by linarith) (le_refl 4)
   have hg4_3 : g 4 = h₃ 4 := by
-    show fdBoundary_H H 4 - I = h₃ 4
-    rw [fdBoundary_H_at_four H]; simp only [h₃]; push_cast; ring
+    change fdBoundary_H H 4 - I = h₃ 4
+    rw [fdBoundary_H_at_four H]
+    simp only [h₃]
+    push_cast
+    ring
   have hg5 : g 5 = h₃ 5 := hg_eq_h₃ 5 (by norm_num)
   have hd_h₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by
     intro t; simp only [h₀]
@@ -476,7 +487,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       (hf.ofReal_comp.mul_const I)).congr_deriv (by push_cast; ring)
   have hd_h₃ : ∀ t : ℝ, HasDerivAt h₃ 1 t := by
     intro t
-    show HasDerivAt (fun s => ↑(s - 9/2) + ↑(H - 1) * I) (1 : ℂ) t
+    change HasDerivAt (fun s => ↑(s - 9/2) + ↑(H - 1) * I) (1 : ℂ) t
     have h1 : HasDerivAt (fun s : ℝ => s - 9/2) (1 : ℝ) t := by
       have := (hasDerivAt_id t).sub (hasDerivAt_const t (9/2:ℝ))
       convert this using 1
@@ -582,18 +593,18 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hh₂_im_np_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, (h₂ t).im ≤ 0 := by
     intro t ⟨ht3, ht_t0⟩
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
-    · show (h₂ 3).im ≤ 0
+    · change (h₂ 3).im ≤ 0
       simp only [h₂, Complex.add_im, Complex.neg_im, Complex.div_ofNat_im,
         Complex.one_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
         Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one]
       nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
                 sq_nonneg (2 - Real.sqrt 3)]
     · rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
-      · show (h₂ t₀).im ≤ 0
+      · change (h₂ t₀).im ≤ 0
         rw [← hg_eq_h₂ t₀ (by linarith [t₀_i_gt_three hH]) (by linarith [t₀_i_lt_four hH]),
           hgt₀_val]
         norm_num
-      · show (h₂ t).im ≤ 0
+      · change (h₂ t).im ≤ 0
         rw [← hg_eq_h₂ t ht3' (by linarith)]
         exact le_of_lt (g_i_seg3_im_neg ht3' ht_t0' hH)
   have hh₂_ne_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, h₂ t ≠ 0 := by
@@ -636,8 +647,9 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       simp only [h₃, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.ofReal_re,
         Complex.I_re, Complex.I_im, mul_zero, mul_one, add_zero]
       linarith
-    · rw [show h₃ t = g t from (hg_eq_h₃ t ht4').symm, Complex.mem_slitPlane_iff]; right
-      show (g t).im ≠ 0
+    · rw [show h₃ t = g t from (hg_eq_h₃ t ht4').symm, Complex.mem_slitPlane_iff]
+      right
+      change (g t).im ≠ 0
       simp only [show g t = h₃ t from hg_eq_h₃ t ht4', h₃, Complex.add_im, Complex.ofReal_im,
         Complex.mul_im, Complex.ofReal_re, Complex.I_re, Complex.I_im, mul_zero, mul_one, add_zero]
       linarith
@@ -675,10 +687,12 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
         ← Complex.ofReal_log (show (0:ℝ) ≤ 1/2 from by norm_num)]
     ring
   have hg_closed : g 0 = g 5 := by
-    show fdBoundary_H H 0 - I = fdBoundary_H H 5 - I; rw [fdBoundary_H_closed H]
+    change fdBoundary_H H 0 - I = fdBoundary_H H 5 - I
+    rw [fdBoundary_H_closed H]
   have h_branch_t₀' : Complex.log (-(g t₀)) = Complex.log (g t₀) - ↑Real.pi * I := by
     linear_combination h_branch_t₀
-  rw [hg_closed, h_branch_3, h_branch_t₀']; ring
+  rw [hg_closed, h_branch_3, h_branch_t₀']
+  ring
 
 private lemma i_h_far (H : ℝ) (hH : 1 < H) :
     let threshold := min (min (min (1/2 : ℝ) (H - 1)) (2 * Real.sin (Real.pi / 12))) 1
@@ -730,7 +744,7 @@ private lemma i_h_far (H : ℝ) (hH : 1 < H) :
     rcases le_or_gt t 1 with ht1 | ht1
     · calc ε < 1 / 2 := hε_lt_half
         _ ≤ ‖fdBoundary_H H t - I‖ := g_i_norm_ge_seg0 ht_mem.1 ht1
-    · show ε < ‖fdBoundary_H H t - I‖
+    · change ε < ‖fdBoundary_H H t - I‖
       rw [g_i_norm_arc_left ht1 (by linarith)]
       rw [← h_norm_L, g_i_norm_left hδ_pos hδ_lt_one]
       apply mul_lt_mul_of_pos_left _ (by norm_num : (0:ℝ) < 2)
@@ -747,7 +761,7 @@ private lemma i_h_far (H : ℝ) (hH : 1 < H) :
         rw [abs_of_neg (by linarith)] at h_abs
         linarith
     rcases lt_or_ge t 3 with ht3 | ht3
-    · show ε < ‖fdBoundary_H H t - I‖
+    · change ε < ‖fdBoundary_H H t - I‖
       rw [g_i_norm_arc_right (by linarith) ht3]
       rw [← h_norm_R, g_i_norm_right hδ_pos hδ_lt_one]
       apply mul_lt_mul_of_pos_left _ (by norm_num : (0:ℝ) < 2)

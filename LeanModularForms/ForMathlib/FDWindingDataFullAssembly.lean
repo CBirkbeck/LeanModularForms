@@ -33,7 +33,9 @@ the argument `arg z` lies in `(π/3, 2π/3)`. -/
 theorem arg_mem_arc_range {z : ℂ} (hz_norm : ‖z‖ = 1) (hz_im : 0 < z.im)
     (hz_re : |z.re| < 1/2) :
     Real.pi / 3 < z.arg ∧ z.arg < 2 * Real.pi / 3 := by
-  have hz_ne : z ≠ 0 := by rintro rfl; simp at hz_im
+  have hz_ne : z ≠ 0 := by
+    rintro rfl
+    simp at hz_im
   have h_cos : Real.cos z.arg = z.re := by rw [Complex.cos_arg hz_ne, hz_norm, div_one]
   have h_sin : Real.sin z.arg = z.im := by rw [Complex.sin_arg, hz_norm, div_one]
   have h_arg_pos : 0 < z.arg := (Complex.arg_nonneg_iff.mpr hz_im.le).lt_of_ne fun h => by
@@ -44,9 +46,8 @@ theorem arg_mem_arc_range {z : ℂ} (hz_norm : ‖z‖ = 1) (hz_im : 0 < z.im)
     linarith
   have h_cos_2pi3 : Real.cos (2 * Real.pi / 3) = -(1/2) := by
     rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
-        Real.cos_pi_sub, Real.cos_pi_div_three]
+      Real.cos_pi_sub, Real.cos_pi_div_three]
   have hpi := Real.pi_pos
-  -- `cos` is strictly decreasing on `[0, π]`, so `|cos z.arg| < 1/2` forces `z.arg ∈ (π/3, 2π/3)`.
   refine ⟨?_, ?_⟩
   · by_contra! h_not
     have := Real.cos_le_cos_of_nonneg_of_le_pi h_arg_pos.le (by linarith) h_not
@@ -86,8 +87,7 @@ def mkFDWindingDataFull_of_ftcProviders {H : ℝ} (hH : 1 < H)
   intro z hz_im_pos hz_im_lt hz_ne_I hz_ne_rho hz_ne_rho1 hz_not_int hz_nsq hz_re
   rcases smooth_boundary_classification z hz_im_pos hz_ne_I hz_ne_rho hz_ne_rho1 hz_not_int
       hz_nsq hz_re with ⟨h_re_half, h_norm_gt⟩ | ⟨h_norm, _, h_re_half_ne⟩
-  · -- Vertical case: `z.re = ±1/2`. Derive `z.im > √3/2` from `‖z‖ > 1` and `z.re² = 1/4`.
-    have h_im_gt : Real.sqrt 3 / 2 < z.im := by
+  · have h_im_gt : Real.sqrt 3 / 2 < z.im := by
       have h_re_sq : z.re ^ 2 = 1/4 := by
         rcases abs_eq (by norm_num : (0 : ℝ) ≤ 1/2) |>.mp h_re_half with h | h <;> nlinarith
       have hn := Complex.normSq_apply z
@@ -95,15 +95,12 @@ def mkFDWindingDataFull_of_ftcProviders {H : ℝ} (hH : 1 < H)
         Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 3), Real.sqrt_nonneg (3 : ℝ), hz_im_pos,
         sq_nonneg (z.im - Real.sqrt 3 / 2)]
     rcases abs_eq (by norm_num : (0 : ℝ) ≤ 1/2) |>.mp h_re_half with h_pos | h_neg
-    · -- `z.re = 1/2`: seg1.
-      exact (smoothBoundaryData_seg1_of_ftcHyp hH_sqrt3 D.boundary D.boundary_eq
+    · exact (smoothBoundaryData_seg1_of_ftcHyp hH_sqrt3 D.boundary D.boundary_eq
         h_pos h_im_gt hz_im_lt (ftc_seg1 z h_pos h_im_gt hz_im_lt)).hasWindingNumber
-    · -- `z.re = -1/2`: seg4.
-      have h_neg' : z.re = -1/2 := by linarith
+    · have h_neg' : z.re = -1/2 := by linarith
       exact (smoothBoundaryData_seg4_of_ftcHyp hH_sqrt3 D.boundary D.boundary_eq
         h_neg' h_im_gt hz_im_lt (ftc_seg4 z h_neg' h_im_gt hz_im_lt)).hasWindingNumber
-  · -- Arc case: `‖z‖ = 1`.
-    obtain ⟨h_arg_lo, h_arg_hi⟩ :=
+  · obtain ⟨h_arg_lo, h_arg_hi⟩ :=
       arg_mem_arc_range h_norm hz_im_pos (hz_re.lt_of_ne h_re_half_ne)
     rw [eq_exp_arg_mul_I h_norm]
     exact (smoothBoundaryData_arc_of_ftcHyp hH D.boundary D.boundary_eq

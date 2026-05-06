@@ -36,24 +36,23 @@ Proof: `1/(γ - s)^k` is `ContinuousOn (Icc 0 1)` (since `γ - s` is continuous 
 nonzero by avoidance) hence essentially bounded by `1/δ^k`. The Lipschitz
 hypothesis gives integrability of `deriv γ` on `Ioc 0 1` (via the Lipschitz
 norm bound `K`). Combining via `Integrable.bdd_mul`. -/
-theorem intervalIntegrable_pow_inv_mul_deriv_of_avoids
-    (γ : PiecewiseC1Path x x) (s : ℂ) (k : ℕ) {δ : ℝ} (hδ_pos : 0 < δ)
-    (hδ_bd : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - s‖)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+theorem intervalIntegrable_pow_inv_mul_deriv_of_avoids (γ : PiecewiseC1Path x x)
+    (s : ℂ) (k : ℕ) {δ : ℝ} (hδ_pos : 0 < δ)
+    (hδ_bd : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - s‖) {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) :
     IntervalIntegrable
       (fun t => 1 / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
       volume 0 1 := by
   rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-  -- deriv γ is integrable on Ioc 0 1 (Lipschitz ⇒ bounded by K)
   have h_deriv_int : IntegrableOn (deriv γ.toPath.extend) (Ioc (0 : ℝ) 1) volume :=
     MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
       (stronglyMeasurable_deriv _).aestronglyMeasurable
       (ae_restrict_of_ae (Filter.Eventually.of_forall
         (fun _ => norm_deriv_le_of_lipschitz hLip)))
-  -- The factor 1/(γ - s)^k is continuous on Icc 0 1 with the right bound
   have h_ne : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t - s ≠ 0 := fun t ht hzero => by
     have := hδ_bd t ht
-    rw [hzero, norm_zero] at this; linarith
+    rw [hzero, norm_zero] at this
+    linarith
   have h_cont : ContinuousOn
       (fun t => (1 : ℂ) / (γ.toPath.extend t - s) ^ k) (Icc (0 : ℝ) 1) :=
     continuousOn_const.div
@@ -83,7 +82,8 @@ theorem measurableSet_cpvIntegrandOn_zero
     rw [this]
     exact S.finite_toSet.measurableSet_biUnion fun s _ =>
       (γ.toPath.continuous_extend.measurable.sub_const s).norm measurableSet_Iic
-  ext t; simp
+  ext t
+  simp
 
 /-! ## CPV integrand norm bound -/
 
@@ -150,13 +150,11 @@ For `γ` Lipschitz avoiding `S` with positive margin, the higher-order polar sum
 `∑ s ∈ S, c s / (z - s)^k` (`k ≥ 2`) has CPV zero. The interval-integrability
 hypothesis of `hasCauchyPVOn_finset_pow_inv_of_avoids` is auto-discharged via
 `intervalIntegrable_pow_inv_mul_deriv_of_avoids`. -/
-theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip
-    (S : Finset ℂ) (k : ℕ) (hk : 2 ≤ k) (c : ℂ → ℂ)
-    (γ : PiecewiseC1Path x x) {δ : ℝ} (hδ_pos : 0 < δ)
-    (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
-    HasCauchyPVOn S
-      (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
+theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip (S : Finset ℂ) (k : ℕ)
+    (hk : 2 ≤ k) (c : ℂ → ℂ) (γ : PiecewiseC1Path x x) {δ : ℝ} (hδ_pos : 0 < δ)
+    (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖) {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
   refine hasCauchyPVOn_finset_pow_inv_of_avoids S k hk c γ ⟨δ, hδ_pos, hδ_bd⟩ fun s hs => ?_
   refine intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
     (fun t ht => ?_) hLip
@@ -166,13 +164,11 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip
 /-- **C-3 single-power avoidance, δ-free + Lipschitz form.** Same as
 `hasCauchyPVOn_finset_pow_inv_of_avoids_lip` but with the positive margin
 auto-derived from pointwise avoidance via `avoids_finset_delta_bound`. -/
-theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip_avoids
-    (S : Finset ℂ) (k : ℕ) (hk : 2 ≤ k) (c : ℂ → ℂ)
-    (γ : PiecewiseC1Path x x)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
-    HasCauchyPVOn S
-      (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
+theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip_avoids (S : Finset ℂ) (k : ℕ)
+    (hk : 2 ≤ k) (c : ℂ → ℂ) (γ : PiecewiseC1Path x x)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s) {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) :
+    HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
   obtain ⟨δ, hδ_pos, hδ_bd⟩ := avoids_finset_delta_bound γ S hγ_avoids
   exact hasCauchyPVOn_finset_pow_inv_of_avoids_lip S k hk c γ hδ_pos hδ_bd hLip
 
@@ -182,9 +178,8 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids_lip_avoids
 is Lipschitz and avoids `S` with positive margin, the contour integrand
 `(∑ s ∈ S, c s / (γ(t) - s)^k) · γ'(t)` is interval-integrable on `[0, 1]`. -/
 theorem contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
-    (S : Finset ℂ) (k : ℕ) (c : ℂ → ℂ)
-    (γ : PiecewiseC1Path x x) {δ : ℝ} (hδ_pos : 0 < δ)
-    (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (S : Finset ℂ) (k : ℕ) (c : ℂ → ℂ) (γ : PiecewiseC1Path x x) {δ : ℝ}
+    (hδ_pos : 0 < δ) (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
     {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
     IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
@@ -200,7 +195,8 @@ theorem contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
         c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) =
         fun t => c s *
           (1 / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t) by
-      funext t; ring]
+      funext t
+      ring]
     exact (intervalIntegrable_pow_inv_mul_deriv_of_avoids γ s k hδ_pos
       hδ_bd_extend hLip).const_mul (c s)
   have heq : PiecewiseC1Path.contourIntegrand
@@ -216,22 +212,22 @@ theorem contourIntegrand_finset_pow_inv_intervalIntegrable_of_avoids_lip
       c i / (γ.toPath.extend t - i) ^ k * deriv γ.toPath.extend t) =
       fun t => ∑ i ∈ S,
         c i / (γ.toPath.extend t - i) ^ k * deriv γ.toPath.extend t := by
-    funext t; rw [Finset.sum_apply]
+    funext t
+    rw [Finset.sum_apply]
   rwa [hfun] at h_sum
 
 /-! ## Auto-discharged C-3/C-4 add forms -/
 
 /-- **`hasCauchyPVOn_add_higherOrderPolar_of_avoids` with all integrability
 auto-discharged from Lipschitz + avoidance.** -/
-theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids_lip
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) {L : ℂ}
-    {δ : ℝ} (hδ_pos : 0 < δ)
+theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids_lip (S : Finset ℂ)
+    (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) {L : ℂ} {δ : ℝ} (hδ_pos : 0 < δ)
     (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
     (h_f : HasCauchyPVOn S f γ L)
     (h_f_int : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1)
-    (k : ℕ) (hk : 2 ≤ k) (c : ℂ → ℂ)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1) (k : ℕ)
+    (hk : 2 ≤ k) (c : ℂ → ℂ) {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) :
     HasCauchyPVOn S
       (fun z => f z + ∑ s ∈ S, c s / (z - s) ^ k) γ L := by
   have h_int_HO : ∀ s ∈ S, IntervalIntegrable
@@ -252,15 +248,14 @@ theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids_lip
 
 /-- **`hasCauchyPVOn_add_higherOrderPolarSum_of_avoids` with all integrability
 auto-discharged from Lipschitz + avoidance (multi-power version).** -/
-theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids_lip
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) {L : ℂ}
-    {δ : ℝ} (hδ_pos : 0 < δ)
+theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids_lip (S : Finset ℂ)
+    (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) {L : ℂ} {δ : ℝ} (hδ_pos : 0 < δ)
     (hδ_bd : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
     (h_f : HasCauchyPVOn S f γ L)
     (h_f_int : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1)
-    (M : ℕ) (c_HO : ℕ → ℂ → ℂ)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
+      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1) (M : ℕ)
+    (c_HO : ℕ → ℂ → ℂ) {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend) :
     HasCauchyPVOn S
       (fun z => f z +
         ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ L := by
@@ -296,15 +291,13 @@ The user supplies only:
 
 The conclusion is the same residue formula as the simple-pole case:
 the higher-order terms contribute zero. -/
-theorem generalizedResidueTheorem_higherOrder_avoids_closed_lip
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (hU_bounded : Bornology.IsBounded U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    (f_simple : ℂ → ℂ) (hf_simple : DifferentiableOn ℂ f_simple (U \ ↑S))
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f_simple s)
-    (M : ℕ) (c_HO : ℕ → ℂ → ℂ)
-    (h_simple_int : ∀ ε > 0, IntervalIntegrable
+theorem generalizedResidueTheorem_higherOrder_avoids_closed_lip {U : Set ℂ}
+    (hU_open : IsOpen U) (hU_ne : U.Nonempty) (hU_bounded : Bornology.IsBounded U)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U) (γ : PwC1Immersion x x)
+    (h_null : IsNullHomologous γ U) (f_simple : ℂ → ℂ)
+    (hf_simple : DifferentiableOn ℂ f_simple (U \ ↑S))
+    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f_simple s) (M : ℕ)
+    (c_HO : ℕ → ℂ → ℂ) (h_simple_int : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S f_simple
         γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
     (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)

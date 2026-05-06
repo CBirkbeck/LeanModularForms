@@ -88,7 +88,8 @@ private lemma h2_pointwise_hasDerivAt (fz c z w : ℂ) (hne : z - w ≠ 0) :
   have h_inv : HasDerivAt (fun w' => (z - w')⁻¹) ((z - w)⁻¹ ^ 2) w := by
     have h := HasDerivAt.inv h_sub hne
     simp only [neg_neg, one_div] at h
-    convert h using 1; rw [inv_pow]
+    convert h using 1
+    rw [inv_pow]
   exact ((h_inv.const_mul fz).mul_const c).congr_deriv (by ring)
 
 /-- Norm bound for the h2 integrand: `‖f(γ t) * (γ t - w')⁻¹ ^ 2 * γ'(t)‖ ≤ M * ε⁻¹² * D`
@@ -133,9 +134,12 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
     DifferentiableAt ℂ (dixonH2 f γ) w := by
   have hid_pos := curveImage_infDist_pos γ w hoff
   set ε := Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2
-  have hε_pos : 0 < ε := by simp only [ε]; linarith
+  have hε_pos : 0 < ε := by
+    simp only [ε]
+    linarith
   have h2ε : 2 * ε ≤ Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) := by
-    simp only [ε]; linarith
+    simp only [ε]
+    linarith
   obtain ⟨M, hM_nn, hM⟩ := h_fγ_bound
   obtain ⟨D, hD⟩ := h_deriv_bound
   have h_ball_avoids := ball_avoids_curve γ w hε_pos h2ε
@@ -145,7 +149,9 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
     (F' := fun w' t => f (γ t) * (γ t - w')⁻¹ ^ 2 * deriv γ.toPath.extend t)
     (bound := fun _ => M * ε⁻¹ ^ 2 * D)
     (Metric.ball_mem_nhds w hε_pos)
-    (by filter_upwards [Metric.ball_mem_nhds w hε_pos] with w' hw'; exact h_meas w' hw')
+    (by
+      filter_upwards [Metric.ball_mem_nhds w hε_pos] with w' hw'
+      exact h_meas w' hw')
     h_int h_F'_meas
     (by filter_upwards with t ht w' hw'
         rw [Set.uIoc_of_le zero_le_one] at ht
@@ -228,9 +234,11 @@ theorem dixonH2_differentiableAt_of_regular {f : ℂ → ℂ}
   -- Measurability on a neighborhood of w (every w' in the ball avoids γ)
   set ε := Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2
   have hε_pos : 0 < ε := by
-    simp only [ε]; linarith [curveImage_infDist_pos γ w hoff]
+    simp only [ε]
+    linarith [curveImage_infDist_pos γ w hoff]
   have h2ε : 2 * ε ≤ Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) := by
-    simp only [ε]; linarith
+    simp only [ε]
+    linarith
   have h_ball_avoids := ball_avoids_curve γ w hε_pos h2ε
   have h_meas : ∀ w' ∈ Metric.ball w ε,
       AEStronglyMeasurable (fun t => f (γ t) * (γ t - w')⁻¹ *
@@ -247,7 +255,9 @@ theorem dixonH2_differentiableAt_of_regular {f : ℂ → ℂ}
       have := dixonH2_integrand_stronglyMeasurable hf_cont hoff
       rwa [Set.uIoc_of_le (zero_le_one' ℝ)] at this
     haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+      ⟨by
+        rw [Measure.restrict_apply_univ]
+        exact measure_Ioc_lt_top⟩
     obtain ⟨M₀, hM₀_nn, hM_bd⟩ := h_fγ_bound
     obtain ⟨D, hD⟩ := h_deriv_bound
     refine MeasureTheory.Integrable.of_bound h_meas_Ioc (M₀ * ε⁻¹ * D) ?_
@@ -353,7 +363,8 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
       ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
         ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C) :
     DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U := by
-  intro w₀ hw₀; apply DifferentiableAt.differentiableWithinAt
+  intro w₀ hw₀
+  apply DifferentiableAt.differentiableWithinAt
   obtain ⟨D, hD⟩ := h_deriv_bound
   obtain ⟨ε_m, hε_m_pos, h_meas_ball⟩ := h_meas w₀ hw₀
   obtain ⟨ε_d, hε_d_pos, h_dslope_hda⟩ := h_dslope_hasDerivAt w₀ hw₀
@@ -371,8 +382,10 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
     (h_int w₀ hw₀) (h_F'_meas w₀ hw₀)
     (dslope_deriv_product_bound h_deriv_bd hD hball_sub_δC)
     (intervalIntegrable_const (c := C * D))
-    (by filter_upwards with t ht w hw; rw [Set.uIoc_of_le zero_le_one] at ht
-        exact h_dslope_hda t (Ioc_subset_Icc_self ht) w (hball_sub_εd hw))).2.differentiableAt
+    (by
+      filter_upwards with t ht w hw
+      rw [Set.uIoc_of_le zero_le_one] at ht
+      exact h_dslope_hda t (Ioc_subset_Icc_self ht) w (hball_sub_εd hw))).2.differentiableAt
 
 /-! ### B-2 partial regularity bundle -/
 
@@ -388,7 +401,8 @@ private lemma dixonH1_integrand_stronglyMeasurable
   rw [Set.uIoc_of_le (zero_le_one' ℝ)]
   have h_meas_prod : AEStronglyMeasurable
       (fun t => dslope f w (γ t)) (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    ((dslope_fixed_continuousOn hU hf hγ hw).mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
+    ((dslope_fixed_continuousOn hU hf hγ hw).mono
+      Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
   exact h_meas_prod.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
 
 /-- **B-2 partial bundle**: `dixonH1 f γ` is differentiable on `U` when
@@ -430,7 +444,9 @@ theorem dixonH1_differentiableOn_of_regular {f : ℂ → ℂ} {U : Set ℂ}
       have := dixonH1_integrand_stronglyMeasurable hU hf hγ hw
       rwa [Set.uIoc_of_le (zero_le_one' ℝ)] at this
     haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+      ⟨by
+        rw [Measure.restrict_apply_univ]
+        exact measure_Ioc_lt_top⟩
     obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
       (dslope_fixed_continuousOn hU hf hγ hw).norm
     refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
@@ -460,7 +476,8 @@ theorem dixonH1_differentiableOn_of_regular {f : ℂ → ℂ} {U : Set ℂ}
     refine ⟨ε, hε_pos, fun t ht w hw => ?_⟩
     exact (dslope_hasDerivAt_first_arg hU hf (hγ t ht) (hball_sub hw)).mul_const _
   exact dixonH1_differentiableOn hU hf γ hγ h_int h_meas
-    ⟨K, fun _ _ => norm_deriv_le_of_lipschitz hLip⟩ h_dslope_hasDerivAt h_F'_meas h_dslope_deriv_bound
+    ⟨K, fun _ _ => norm_deriv_le_of_lipschitz hLip⟩ h_dslope_hasDerivAt h_F'_meas
+    h_dslope_deriv_bound
 
 /-- **B-2 bundle with D-1c auto-discharge for convex U**: `dixonH1 f γ` is differentiable
 on `U` when `U` is convex open, `f` is differentiable on `U`, and γ has image in `U`
@@ -478,7 +495,8 @@ theorem dixonH1_differentiableOn_of_regular_convex {f : ℂ → ℂ} {U : Set �
   have h_γ_compact : IsCompact (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
     isCompact_Icc.image γ.toPiecewiseC1Path.toPath.continuous_extend
   have h_γ_sub : γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1 ⊆ U := by
-    rintro _ ⟨t, ht, rfl⟩; exact hγ t ht
+    rintro _ ⟨t, ht, rfl⟩
+    exact hγ t ht
   have h_dslope_deriv_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
       ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
         ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C := by
@@ -505,7 +523,8 @@ theorem dixonH1_differentiableOn_of_regular_open {f : ℂ → ℂ} {U : Set ℂ}
   have h_γ_compact : IsCompact (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
     isCompact_Icc.image γ.toPiecewiseC1Path.toPath.continuous_extend
   have h_γ_sub : γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1 ⊆ U := by
-    rintro _ ⟨t, ht, rfl⟩; exact hγ t ht
+    rintro _ ⟨t, ht, rfl⟩
+    exact hγ t ht
   have h_dslope_deriv_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
       ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
         ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C := by
@@ -543,7 +562,8 @@ theorem dixonH1_differentiableOn_of_regular_convex_full {f : ℂ → ℂ} {U : S
     have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
       simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
       have hge1 : (1 : ℝ) ≤ (n : ℝ) + 1 := by
-        have : (0 : ℝ) ≤ n := Nat.cast_nonneg n; linarith
+        have : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+        linarith
       have : ρ / 2 / ((n : ℝ) + 1) ≤ ρ / 2 := by apply div_le_self (by linarith) hge1
       linarith
     have h_w_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
@@ -557,7 +577,6 @@ theorem dixonH1_differentiableOn_of_regular_convex_full {f : ℂ → ℂ} {U : S
         simpa [div_eq_mul_inv] using this
       rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
       exact (Complex.continuous_ofReal.tendsto _).comp h_real
-    -- Approximating sequence in t
     set q : ℕ → ℝ → ℂ := fun n t =>
       (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
        dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n *
@@ -589,8 +608,8 @@ theorem dixonH1_differentiableOn_of_regular_convex_full {f : ℂ → ℂ} {U : S
     -- Pointwise limit
     refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
     have h_uIoc : Set.uIoc (0 : ℝ) 1 = Ioc 0 1 := Set.uIoc_of_le zero_le_one
-    filter_upwards [ae_restrict_mem (h_uIoc ▸ measurableSet_Ioc : MeasurableSet (Set.uIoc (0 : ℝ) 1))]
-      with t ht
+    filter_upwards [ae_restrict_mem
+      (h_uIoc ▸ measurableSet_Ioc : MeasurableSet (Set.uIoc (0 : ℝ) 1))] with t ht
     rw [h_uIoc] at ht
     have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
     have hγt_U : γ.toPiecewiseC1Path t ∈ U := hγ t ht_Icc
@@ -613,7 +632,8 @@ theorem dixonH1_differentiableOn_of_regular_convex_full {f : ℂ → ℂ} {U : S
           deriv γ.toPiecewiseC1Path.toPath.extend t := by
       intro n
       simp only [q, slope_def_field]
-      rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul, mul_comm (h_seq n)⁻¹]
+      rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul,
+        mul_comm (h_seq n)⁻¹]
     simp_rw [h_q_eq]
     exact h_comp.mul_const _
 
@@ -642,7 +662,8 @@ theorem dixonH1_differentiableOn_of_regular_open_full {f : ℂ → ℂ} {U : Set
     have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
       simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
       have hge1 : (1 : ℝ) ≤ (n : ℝ) + 1 := by
-        have : (0 : ℝ) ≤ n := Nat.cast_nonneg n; linarith
+        have : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+        linarith
       have : ρ / 2 / ((n : ℝ) + 1) ≤ ρ / 2 := by apply div_le_self (by linarith) hge1
       linarith
     have h_w_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
@@ -686,8 +707,8 @@ theorem dixonH1_differentiableOn_of_regular_open_full {f : ℂ → ℂ} {U : Set
       exact h_factor1_meas.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
     refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
     have h_uIoc : Set.uIoc (0 : ℝ) 1 = Ioc 0 1 := Set.uIoc_of_le zero_le_one
-    filter_upwards [ae_restrict_mem (h_uIoc ▸ measurableSet_Ioc : MeasurableSet (Set.uIoc (0 : ℝ) 1))]
-      with t ht
+    filter_upwards [ae_restrict_mem
+      (h_uIoc ▸ measurableSet_Ioc : MeasurableSet (Set.uIoc (0 : ℝ) 1))] with t ht
     rw [h_uIoc] at ht
     have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
     have hγt_U : γ.toPiecewiseC1Path t ∈ U := hγ t ht_Icc
@@ -710,7 +731,8 @@ theorem dixonH1_differentiableOn_of_regular_open_full {f : ℂ → ℂ} {U : Set
           deriv γ.toPiecewiseC1Path.toPath.extend t := by
       intro n
       simp only [q, slope_def_field]
-      rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul, mul_comm (h_seq n)⁻¹]
+      rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul,
+        mul_comm (h_seq n)⁻¹]
     simp_rw [h_q_eq]
     exact h_comp.mul_const _
   exact dixonH1_differentiableOn_of_regular_open hU hf γ hγ hLip h_F'_meas
@@ -751,7 +773,9 @@ theorem dixonFunction_differentiable {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpe
     -- The curve avoids a ball around w
     have hid_pos := curveImage_infDist_pos γ.toPiecewiseC1Path w hoff
     set ε₂ := Metric.infDist w (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) / 2
-    have hε₂_pos : 0 < ε₂ := by simp only [ε₂]; linarith
+    have hε₂_pos : 0 < ε₂ := by
+      simp only [ε₂]
+      linarith
     set ε := min ε₁ ε₂
     have hε_pos : 0 < ε := lt_min hε₁_pos hε₂_pos
     have h_wn_zero : ∀ w' ∈ Metric.ball w ε,
@@ -760,7 +784,9 @@ theorem dixonFunction_differentiable {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpe
     have hoff' : ∀ w' ∈ Metric.ball w ε,
         ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w' :=
       ball_avoids_curve γ.toPiecewiseC1Path w (lt_min hε₁_pos hε₂_pos) (by
-        simp only [ε, ε₂]; nlinarith [min_le_right ε₁ (Metric.infDist w (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) / 2)])
+        simp only [ε, ε₂]
+        nlinarith [min_le_right ε₁
+          (Metric.infDist w (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) / 2)])
     have heq_near : ∀ᶠ w' in 𝓝 w,
         dixonFunction f U γ.toPiecewiseC1Path w' =
           dixonH2 f γ.toPiecewiseC1Path w' := by

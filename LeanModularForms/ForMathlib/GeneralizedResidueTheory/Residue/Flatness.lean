@@ -88,7 +88,7 @@ theorem tangentDeviation_add (w₁ w₂ L : ℂ) :
     tangentDeviation (w₁ + w₂) L = tangentDeviation w₁ L + tangentDeviation w₂ L := by
   simp only [tangentDeviation, orthogonalProjectionComplex, add_mul, Complex.add_re,
     add_div]
-  erw [add_smul]; abel
+  module
 
 /-- Norm bound: ‖tangentDeviation w L‖ ≤ 2 * ‖w‖ for L ≠ 0. -/
 theorem norm_tangentDeviation_le (w L : ℂ) (hL : L ≠ 0) :
@@ -195,7 +195,8 @@ theorem tangentDeviation_isLittleO_of_hasDerivAt
     have h1 : ‖t - t₀‖ * ‖L‖ = ‖(t - t₀) • L‖ := (norm_smul _ _).symm
     have h2 : ‖(t - t₀) • L‖ ≤ ‖γ t - γ t₀‖ + ‖r t‖ := by
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
-      rw [this]; exact norm_sub_le _ _
+      rw [this]
+      exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
     have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
@@ -236,7 +237,8 @@ theorem tangentDeviation_isLittleO_right
     have h1 : ‖t - t₀‖ * ‖L‖ = ‖(t - t₀) • L‖ := (norm_smul _ _).symm
     have h2 : ‖(t - t₀) • L‖ ≤ ‖γ t - γ t₀‖ + ‖r t‖ := by
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
-      rw [this]; exact norm_sub_le _ _
+      rw [this]
+      exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
     have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
@@ -277,7 +279,8 @@ theorem tangentDeviation_isLittleO_left
     have h1 : ‖t - t₀‖ * ‖L‖ = ‖(t - t₀) • L‖ := (norm_smul _ _).symm
     have h2 : ‖(t - t₀) • L‖ ≤ ‖γ t - γ t₀‖ + ‖r t‖ := by
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
-      rw [this]; exact norm_sub_le _ _
+      rw [this]
+      exact norm_sub_le _ _
     rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
     have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
     nlinarith [norm_nonneg (γ t - γ t₀)]
@@ -321,7 +324,7 @@ theorem isFlatOfOrder_one (γ : PiecewiseC1Immersion) (t₀ : ℝ)
 /-- The pole order of a meromorphic function at a point, as a natural number.
 Returns 0 if `f` is analytic at `x` (including the case where `f` is identically zero
 near `x`). Returns `n` if `f` has a pole of order `n` (i.e., `meromorphicOrderAt f x = -n`). -/
-noncomputable def poleOrderAt (f : ℂ → ℂ) (x : ℂ) : ℕ :=
+def poleOrderAt (f : ℂ → ℂ) (x : ℂ) : ℕ :=
   (-(meromorphicOrderAt f x).untop₀).toNat
 
 /-! ### Condition (A): Flatness condition for higher-order poles -/
@@ -367,7 +370,7 @@ structure SatisfiesConditionB (γ : PiecewiseC1Immersion) (f : ℂ → ℂ)
   angle_rational : ∀ s ∈ S0, ∀ t₀ ∈ Icc γ.a γ.b, γ.toFun t₀ = s →
     ∀ ht₀_Ioo : t₀ ∈ Ioo γ.a γ.b,
       ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-        angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q
+        angleAtCrossing γ t₀ ht₀_Ioo = ↑p * π / ↑q
   /-- Laurent coefficient compatibility: there exists a Laurent decomposition of `f`
       near each pole `s` into `f(z) = Σ_{k=1}^{N} aₖ/(z-s)^k + g(z)` where `g` is
       analytic, and each nonzero coefficient `aₖ` with `k ≥ 2` satisfies
@@ -382,7 +385,7 @@ structure SatisfiesConditionB (γ : PiecewiseC1Immersion) (f : ℂ → ℂ)
           ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) ∧
         (∀ k : Fin N, a k ≠ 0 → k.val ≥ 1 →
           ∃ m : ℤ, (↑k.val : ℝ) * angleAtCrossing γ t₀ ht₀_Ioo =
-            ↑m * (2 * Real.pi))
+            ↑m * (2 * π))
 
 /-! ### Conditions are automatic for simple poles
 
@@ -423,15 +426,13 @@ theorem satisfiesConditionB_of_simple_poles
       ∀ ht₀_Ioo : t₀ ∈ Ioo γ.a γ.b,
         t₀ ∈ γ.toPiecewiseC1Curve.partition →
           ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q) :
+            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * π / ↑q) :
     SatisfiesConditionB γ f S0 := by
   constructor
-  · -- angle_rational
-    intro s hs t₀ ht₀ hcross ht₀_Ioo
+  · intro s hs t₀ ht₀ hcross ht₀_Ioo
     by_cases hp : t₀ ∈ γ.toPiecewiseC1Curve.partition
     · exact hAngles s hs t₀ ht₀ hcross ht₀_Ioo hp
-    · -- Smooth point: angle = pi = 1*pi/1
-      refine ⟨1, 1, one_ne_zero, Nat.coprime_one_left 1, ?_⟩
+    · refine ⟨1, 1, one_ne_zero, Nat.coprime_one_left 1, ?_⟩
       rw [angleAtCrossing_smooth γ t₀ ht₀_Ioo hp]
       push_cast
       ring
@@ -458,7 +459,7 @@ theorem conditions_automatic_simple_poles
       ∀ ht₀_Ioo : t₀ ∈ Ioo γ.a γ.b,
         t₀ ∈ γ.toPiecewiseC1Curve.partition →
           ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q) :
+            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * π / ↑q) :
     SatisfiesConditionA γ f S0 ∧ SatisfiesConditionB γ f S0 :=
   ⟨satisfiesConditionA_of_simple_poles γ f S0 hSimplePoles,
    satisfiesConditionB_of_simple_poles γ f S0 hSimplePoles hAngles⟩

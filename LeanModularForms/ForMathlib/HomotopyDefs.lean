@@ -99,7 +99,8 @@ theorem ClosedCurvesHomotopicAvoiding.toPiecewise
     PiecewiseCurvesHomotopicAvoiding γ₀ γ₁ z₀ ∅ := by
   obtain ⟨H, hcont, hH0, hH1, hclosed, havoid, hdiff, hderiv_cont, hbound⟩ := h
   refine ⟨H, hcont, hH0, hH1, hclosed, havoid, ?_, ?_, hbound⟩
-  · intro t ht _ s hs; exact hdiff t ht s hs
+  · intro t ht _ s hs
+    exact hdiff t ht s hs
   · intro p₁ p₂ _ _ hI
     exact hderiv_cont.mono (prod_mono hI Subset.rfl)
 
@@ -122,13 +123,13 @@ theorem PiecewiseCurvesHomotopicAvoiding.refl
   refine ⟨fun p => γ p.1, hγ_cont.comp continuous_fst, fun _ _ => rfl,
     fun _ _ => rfl, fun _ _ => hγ_closed, fun t ht _ _ => hγ_avoid t ht,
     fun t ht htp _ _ => hγ_diff t ht htp, ?_, ?_⟩
-  · -- The t-derivative of H(t', s) = γ(t') is just deriv γ, independent of s.
-    intro p₁ p₂ hp hvac hI
+  · intro p₁ p₂ hp hvac hI
     have h_eq : ∀ (q : ℝ × ℝ), q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1 →
         deriv (fun t' => (fun p : ℝ × ℝ => γ p.1) (t', q.2)) q.1 = deriv γ q.1 :=
       fun _ _ => rfl
     exact ContinuousOn.congr
-      ((hγ_deriv_cont p₁ p₂ hp hvac hI).comp continuousOn_fst (fun q hq => hq.1)) h_eq
+      ((hγ_deriv_cont p₁ p₂ hp hvac hI).comp continuousOn_fst
+        (fun q hq => hq.1)) h_eq
   · obtain ⟨M, hM⟩ := hγ_bound
     exact ⟨M, fun t ht _ _ => hM t ht⟩
 
@@ -145,24 +146,25 @@ theorem PiecewiseCurvesHomotopicAvoiding.symm
     PiecewiseCurvesHomotopicAvoiding γ₁ γ₀ z₀ P := by
   obtain ⟨H, hcont, hH0, hH1, hclosed, havoid, hdiff, hderiv_cont, ⟨M, hbound⟩⟩ := h
   refine ⟨fun p => H (p.1, 1 - p.2), ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  · -- Continuity: compose H with (t, s) ↦ (t, 1 - s).
-    exact hcont.comp (continuous_fst.prodMk (continuous_const.sub continuous_snd))
-  · -- H'(t, 0) = H(t, 1) = γ₁(t).
-    intro t ht; simp only [sub_zero]; exact hH1 t ht
-  · -- H'(t, 1) = H(t, 0) = γ₀(t).
-    intro t ht; simp only [sub_self]; exact hH0 t ht
-  · -- Closure: H'(0, s) = H(0, 1 - s) = H(1, 1 - s) = H'(1, s).
-    intro s hs; exact hclosed (1 - s) (one_sub_mem_Icc hs)
-  · -- Avoidance: H'(t, s) = H(t, 1 - s) ≠ z₀.
-    intro t ht s hs; exact havoid t ht (1 - s) (one_sub_mem_Icc hs)
-  · -- Differentiability in t.
-    intro t ht htp s hs; exact hdiff t ht htp (1 - s) (one_sub_mem_Icc hs)
-  · -- Piecewise continuity of the t-derivative.
-    intro p₁ p₂ hp hvac hI
+  · exact hcont.comp (continuous_fst.prodMk (continuous_const.sub continuous_snd))
+  · intro t ht
+    simp only [sub_zero]
+    exact hH1 t ht
+  · intro t ht
+    simp only [sub_self]
+    exact hH0 t ht
+  · intro s hs
+    exact hclosed (1 - s) (one_sub_mem_Icc hs)
+  · intro t ht s hs
+    exact havoid t ht (1 - s) (one_sub_mem_Icc hs)
+  · intro t ht htp s hs
+    exact hdiff t ht htp (1 - s) (one_sub_mem_Icc hs)
+  · intro p₁ p₂ hp hvac hI
     let φ : ℝ × ℝ → ℝ × ℝ := fun q => (q.1, 1 - q.2)
     have hφ_cont : Continuous φ :=
       continuous_fst.prodMk (continuous_const.sub continuous_snd)
-    have hφ_maps : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1, φ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1 :=
+    have hφ_maps : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1,
+        φ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1 :=
       fun ⟨_, _⟩ ⟨ht, hs⟩ => ⟨ht, one_sub_mem_Icc hs⟩
     have h_eq : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1,
         deriv (fun t' => H (t', 1 - q.2)) q.1 =
@@ -171,8 +173,7 @@ theorem PiecewiseCurvesHomotopicAvoiding.symm
     exact ContinuousOn.congr
       ((hderiv_cont p₁ p₂ hp hvac hI).comp hφ_cont.continuousOn hφ_maps)
       (fun q hq => (h_eq q hq).symm)
-  · -- Uniform derivative bound.
-    exact ⟨M, fun t ht s hs => hbound t ht (1 - s) (one_sub_mem_Icc hs)⟩
+  · exact ⟨M, fun t ht s hs => hbound t ht (1 - s) (one_sub_mem_Icc hs)⟩
 
 /-! ### Uniform avoidance from compactness -/
 

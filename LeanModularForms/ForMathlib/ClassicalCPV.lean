@@ -64,13 +64,13 @@ def cauchyPrincipalValueIntegrand' (f : ℂ → ℂ) (γ : ℝ → ℂ)
 theorem cauchyPrincipalValueIntegrand'_of_gt {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
     (h : ε < ‖γ t - z₀‖) :
     cauchyPrincipalValueIntegrand' f γ z₀ ε t = f (γ t) * deriv γ t := by
-  simp only [cauchyPrincipalValueIntegrand', show ‖γ t - z₀‖ > ε from h, ite_true]
+  simp only [cauchyPrincipalValueIntegrand', if_pos h]
 
 @[simp]
 theorem cauchyPrincipalValueIntegrand'_of_le {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
     (h : ‖γ t - z₀‖ ≤ ε) :
     cauchyPrincipalValueIntegrand' f γ z₀ ε t = 0 := by
-  simp only [cauchyPrincipalValueIntegrand', show ¬(‖γ t - z₀‖ > ε) from not_lt.mpr h, ite_false]
+  simp only [cauchyPrincipalValueIntegrand', if_neg (not_lt.mpr h)]
 
 /-- The Cauchy principal value of ∮_γ f(z) dz, excluding ε-neighborhoods of z₀. -/
 def cauchyPrincipalValue' (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
@@ -112,7 +112,7 @@ private theorem aestronglyMeasurable_of_continuousOn_off_finite
     AEStronglyMeasurable f (volume.restrict (Icc a b)) := by
   have h_union : Icc a b =
       (Icc a b \ (P : Set ℝ)) ∪ ((P : Set ℝ) ∩ Icc a b) := by
-    ext x; simp [and_comm]; tauto
+    rw [Set.inter_comm, Set.diff_union_inter]
   rw [h_union, aestronglyMeasurable_union_iff]
   constructor
   · exact hf_cont.aestronglyMeasurable
@@ -131,9 +131,10 @@ theorem intervalIntegrable_of_piecewise_continuousOn_bounded
   have hf_int : IntegrableOn f (Icc a b) volume :=
     ⟨aestronglyMeasurable_of_continuousOn_off_finite hf_cont,
      MeasureTheory.HasFiniteIntegral.restrict_of_bounded M
-       (by rw [Real.volume_Icc]; exact ENNReal.ofReal_lt_top)
-       (by filter_upwards [ae_restrict_mem measurableSet_Icc]
-           with t ht; exact hf_bound t ht)⟩
+       (by rw [Real.volume_Icc]
+           exact ENNReal.ofReal_lt_top)
+       (by filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
+           exact hf_bound t ht)⟩
   rw [← uIcc_of_le hab] at hf_int
   exact hf_int.intervalIntegrable
 
@@ -163,7 +164,6 @@ private theorem exists_min_above_in_finite_union
     hs_min_le b ⟨Set.mem_union_left _ rfl, ht_lt_b⟩,
     fun x hx hxS => by linarith [hs_min_le x ⟨hxS, hx.1⟩, hx.2]⟩
 
--- FIXME: [STRUCTURE] 33 lines
 private theorem eq_on_Ioo_of_deriv_zero
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     {f : ℝ → E} {a b t s_min : ℝ}
@@ -191,12 +191,13 @@ private theorem eq_on_Ioo_of_deriv_zero
     exact ⟨le_refl t, le_of_lt ht_lt_s⟩
   have h_ft : f t = f ((t + s_min) / 2) := tendsto_nhds_unique
     (h_cont_Ioo.tendsto.congr' (by
-      filter_upwards [self_mem_nhdsWithin]
-        with y hy; exact h_eq_mid y hy))
+      filter_upwards [self_mem_nhdsWithin] with y hy
+      exact h_eq_mid y hy))
     tendsto_const_nhds
-  intro x hx; rw [h_ft]; exact h_eq_mid x hx
+  intro x hx
+  rw [h_ft]
+  exact h_eq_mid x hx
 
--- FIXME: [STRUCTURE] 34 lines
 /-- If f is continuous on [a,b], differentiable on (a,b)\P with f'=0 there,
 then f has zero right derivative at every point of [a,b). -/
 theorem hasDerivWithinAt_zero_of_deriv_zero_off_finite
@@ -240,11 +241,10 @@ theorem continuousWithinAt_integral_of_dominated_piecewise
     (hF_bound : ∀ x ∈ S, ∀ t ∈ Icc a b, ‖F x t‖ ≤ M)
     (hF_cont : ∀ᵐ t ∂volume.restrict (Icc a b), ContinuousWithinAt (fun x => F x t) S x₀) :
     ContinuousWithinAt (fun x => ∫ t in a..b, F x t) S x₀ := by
-  let bound : ℝ → ℝ := fun _ => M
   have h_uIoc_sub : Set.uIoc a b ⊆ Icc a b := by
     rw [uIoc_of_le hab]
     exact Ioc_subset_Icc_self
-  apply intervalIntegral.continuousWithinAt_of_dominated_interval (bound := bound)
+  apply intervalIntegral.continuousWithinAt_of_dominated_interval (bound := fun _ => M)
   · filter_upwards [self_mem_nhdsWithin (s := S)] with x hx
     exact (hF_meas x hx).mono_set h_uIoc_sub
   · filter_upwards [self_mem_nhdsWithin (s := S)] with x hx

@@ -165,8 +165,7 @@ theorem fdBoundaryFun_minDist_interior_pos {z : ℂ} {H : ℝ}
     rwa [← h_closed.notMem_iff_infDist_pos h_nonempty]
   -- infDist is a lower bound on distances
   refine ⟨Metric.infDist z (fdBoundaryFun H '' Icc 0 1), h_pos, fun t ht => ?_⟩
-  rw [← dist_eq_norm]
-  rw [dist_comm]
+  rw [← dist_eq_norm, dist_comm]
   exact Metric.infDist_le_dist_of_mem (mem_image_of_mem _ ht)
 
 /-! ### Avoidance for PiecewiseC1Path agreeing with fdBoundaryFun -/
@@ -179,9 +178,10 @@ theorem piecewiseC1Path_avoids_interior {H : ℝ}
     {z : ℂ} (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H) :
     ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - z‖ := by
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := fdBoundaryFun_minDist_interior_pos hz_norm hz_re hz_im
-  exact ⟨δ, hδ_pos, fun t ht => by
-    show δ ≤ ‖γ.toPath.extend t - z‖
-    rw [hγ t ht]; exact hδ_bound t ht⟩
+  refine ⟨δ, hδ_pos, fun t ht => ?_⟩
+  change δ ≤ ‖γ.toPath.extend t - z‖
+  rw [hγ t ht]
+  exact hδ_bound t ht
 
 /-! ### Interior winding number from contour integral -/
 
@@ -320,7 +320,7 @@ theorem fdBoundaryFun_seg5_im_dist {z : ℂ} (hz_im : z.im < H)
     H - z.im ≤ ‖fdBoundaryFun H t - z‖ := by
   have h1 := fdBoundaryFun_seg5_im H t ht
   calc H - z.im = |(fdBoundaryFun H t - z).im| := by
-        rw [sub_im, h1]; rw [abs_of_pos (by linarith)]
+        rw [sub_im, h1, abs_of_pos (by linarith)]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_im_le_norm _
 
 /-! ### Explicit minimum distance bound -/
@@ -355,12 +355,8 @@ theorem fdBoundaryFun_minDist_explicit {z : ℂ} {H : ℝ}
 /-- The explicit minimum distance is positive for strict interior points. -/
 theorem fdBoundaryFun_minDist_explicit_pos {z : ℂ} {H : ℝ}
     (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H) :
-    0 < min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im) := by
-  apply lt_min
-  · apply lt_min
-    · linarith
-    · linarith
-  · linarith
+    0 < min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im) :=
+  lt_min (lt_min (by linarith) (by linarith)) (by linarith)
 
 /-- The explicit minimum distance formulation as an existential, directly usable
 by `hasGeneralizedWindingNumber_of_avoids`. -/
@@ -371,7 +367,7 @@ theorem fdBoundaryFun_avoids_with_explicit_bound {z : ℂ} {H : ℝ}
     ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - z‖ := by
   refine ⟨min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im),
     fdBoundaryFun_minDist_explicit_pos hz_norm hz_re hz_im, fun t ht => ?_⟩
-  show _ ≤ ‖γ.toPath.extend t - z‖
+  change _ ≤ ‖γ.toPath.extend t - z‖
   rw [hγ t ht]
   exact fdBoundaryFun_minDist_explicit hz_norm hz_re hz_im t ht
 

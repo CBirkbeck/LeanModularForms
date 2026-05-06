@@ -30,7 +30,8 @@ noncomputable section
 
 private lemma fdBoundaryPath_extend_eq (H : ℝ) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     (fdBoundaryPath H).extend t = fdBoundaryFun H t := by
-  rw [Path.extend_apply _ ht]; rfl
+  rw [Path.extend_apply _ ht]
+  rfl
 
 private lemma fdBoundaryPath_extend_eventuallyEq (H : ℝ) (t : ℝ) (ht : t ∈ Ioo (0 : ℝ) 1) :
     (fdBoundaryPath H).extend =ᶠ[𝓝 t] fdBoundaryFun H :=
@@ -178,7 +179,8 @@ private lemma fdBoundaryFun_differentiableAt_off (H : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
     DifferentiableAt ℝ (fdBoundaryFun H) t := by
   simp only [fdBoundaryPartition, Finset.mem_insert, Finset.mem_singleton] at htp
-  push Not at htp; obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
+  push Not at htp
+  obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
   by_cases h1 : t < 1/5
   · exact (seg1Fun_differentiableAt H t).congr_of_eventuallyEq
       (fdBoundaryFun_eventuallyEq_seg1 H t h1)
@@ -204,7 +206,8 @@ private lemma fdBoundaryFun_deriv_continuousAt_off (H : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
     ContinuousAt (deriv (fdBoundaryFun H)) t := by
   simp only [fdBoundaryPartition, Finset.mem_insert, Finset.mem_singleton] at htp
-  push Not at htp; obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
+  push Not at htp
+  obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
   by_cases h1 : t < 1/5
   · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg1 H t h1).deriv).mpr
       ((seg1Fun_contDiff H).continuous_deriv le_top).continuousAt
@@ -250,10 +253,8 @@ def fdBoundaryPC1Path (H : ℝ) (_hH : H > Real.sqrt 3 / 2) :
   toPath := fdBoundaryPath H
   partition := fdBoundaryPartition
   partition_subset := fdBoundaryPartition_subset_Ioo
-  differentiable_off := fun t ht htp =>
-    fdBoundaryPath_differentiableAt_off H t ht htp
-  deriv_continuous_off := fun t ht htp =>
-    fdBoundaryPath_deriv_continuousAt_off H t ht htp
+  differentiable_off := fdBoundaryPath_differentiableAt_off H
+  deriv_continuous_off := fdBoundaryPath_deriv_continuousAt_off H
 
 /-- The `PiecewiseC1Path` agrees with `fdBoundaryFun` on `[0, 1]`. -/
 theorem fdBoundaryPC1Path_eq (H : ℝ) (hH : H > Real.sqrt 3 / 2) (t : ℝ)

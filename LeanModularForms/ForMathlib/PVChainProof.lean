@@ -70,8 +70,7 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
 omit f hf in
 private lemma pvChain_two_pi_I_ne_zero : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-  simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
-    ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero, or_self]
+  simp [Real.pi_ne_zero]
 
 /-! ### PVChainData: the bundled Tendsto hypotheses -/
 
@@ -275,7 +274,8 @@ theorem eq_neg_of_two_pi_I_mul_eq_neg {a b : ℂ}
     (h : 2 * ↑Real.pi * I * a = -(2 * ↑Real.pi * I * b)) :
     a = -b := by
   have : 2 * ↑Real.pi * I * a = 2 * ↑Real.pi * I * (-b) := by
-    rw [mul_neg]; exact h
+    rw [mul_neg]
+    exact h
   exact mul_left_cancel₀ pvChain_two_pi_I_ne_zero this
 
 /-! ### Height bound utilities -/
@@ -286,10 +286,10 @@ above the imaginary parts of all points. -/
 theorem exists_height_above_finset (S : Finset UpperHalfPlane) :
     ∃ H_S : ℝ, ∀ s ∈ S, (s : ℂ).im < H_S := by
   by_cases hne : S.Nonempty
-  · set M := S.sup' hne (fun s : UpperHalfPlane => (s : ℂ).im) with hM_def
+  · set M := S.sup' hne (fun s : UpperHalfPlane => (s : ℂ).im)
     refine ⟨M + 1, fun s hs => ?_⟩
-    have : (s : ℂ).im ≤ M := by
-      exact Finset.le_sup' (fun s : UpperHalfPlane => (s : ℂ).im) hs
+    have : (s : ℂ).im ≤ M :=
+      Finset.le_sup' (fun s : UpperHalfPlane => (s : ℂ).im) hs
     linarith
   · rw [Finset.not_nonempty_iff_eq_empty] at hne
     exact ⟨1, fun s hs => by simp [hne] at hs⟩

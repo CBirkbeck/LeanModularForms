@@ -33,13 +33,17 @@ theorem seg4T₀_gt_three_fifths {H c : ℝ} (hH : Real.sqrt 3 / 2 < H)
     (hc : Real.sqrt 3 / 2 < c) : 3/5 < seg4T₀ H c := by
   have : 0 < (c - Real.sqrt 3 / 2) / seg1Speed H :=
     div_pos (by linarith) (seg1Speed_pos hH)
-  unfold seg4T₀; linarith
+  unfold seg4T₀
+  linarith
 
 theorem seg4T₀_lt_four_fifths {H c : ℝ} (hH : Real.sqrt 3 / 2 < H) (hc : c < H) :
     seg4T₀ H c < 4/5 := by
   have : (c - Real.sqrt 3 / 2) / seg1Speed H < 1/5 := by
-    rw [div_lt_iff₀ (seg1Speed_pos hH)]; unfold seg1Speed; linarith
-  unfold seg4T₀; linarith
+    rw [div_lt_iff₀ (seg1Speed_pos hH)]
+    unfold seg1Speed
+    linarith
+  unfold seg4T₀
+  linarith
 
 theorem seg4T₀_mem_Ioo {H c : ℝ} (hH : Real.sqrt 3 / 2 < H)
     (hc_lo : Real.sqrt 3 / 2 < c) (hc_hi : c < H) :
@@ -59,7 +63,9 @@ private theorem fdBoundaryFun_seg4_im_speed (H t : ℝ)
       show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
       ht4, ite_true, ite_false]
     simp [add_im, sub_im, mul_im, ofReal_re, ofReal_im, I_re, I_im, div_ofNat, neg_im]
-  rw [h]; unfold seg1Speed; ring
+  rw [h]
+  unfold seg1Speed
+  ring
 
 /-- For `z₀` on seg4 (`z₀.re = -1/2` and `z₀.im = c`), the distance from
 `fdBoundaryFun H t` to `z₀` on seg4 equals `seg1Speed H · |t - seg4T₀ H c|`. -/
@@ -70,19 +76,26 @@ theorem fdBoundaryFun_seg4_dist_eq {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     rw [sub_re, fdBoundaryFun_seg4_re H t ht3 ht4, hz_re, sub_self]
   have h_im_eq : (fdBoundaryFun H t - z₀).im = seg1Speed H * (t - seg4T₀ H z₀.im) := by
     rw [sub_im, fdBoundaryFun_seg4_im_speed H t ht3 ht4]
-    unfold seg4T₀; field_simp [(seg1Speed_pos hH).ne']; ring
+    unfold seg4T₀
+    field_simp [(seg1Speed_pos hH).ne']
+    ring
   rw [Complex.norm_def, Complex.normSq_apply, h_re_zero, mul_zero, zero_add,
     ← sq, Real.sqrt_sq_eq_abs, h_im_eq, abs_mul, abs_of_pos (seg1Speed_pos hH)]
 
 /-- `K · (t₀ - 3/5) = z₀.im - √3/2` for the seg4 crossing parameter. -/
 theorem seg1Speed_mul_t₀_sub_three_fifths {H c : ℝ} (hH : Real.sqrt 3 / 2 < H) :
     seg1Speed H * (seg4T₀ H c - 3/5) = c - Real.sqrt 3 / 2 := by
-  unfold seg4T₀; field_simp [(seg1Speed_pos hH).ne']; ring
+  unfold seg4T₀
+  field_simp [(seg1Speed_pos hH).ne']
+  ring
 
 /-- `K · (4/5 - t₀) = H - c` for the seg4 crossing parameter. -/
 theorem seg1Speed_mul_four_fifths_sub_t₀ {H c : ℝ} (hH : Real.sqrt 3 / 2 < H) :
     seg1Speed H * (4/5 - seg4T₀ H c) = H - c := by
-  unfold seg4T₀; field_simp [(seg1Speed_pos hH).ne']; unfold seg1Speed; ring
+  unfold seg4T₀
+  field_simp [(seg1Speed_pos hH).ne']
+  unfold seg1Speed
+  ring
 
 /-! ### Near bound -/
 
@@ -95,9 +108,11 @@ theorem seg4_near_of_linDelta {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     ‖fdBoundaryFun H t - z₀‖ ≤ ε := by
   have hK_pos : 0 < seg1Speed H := seg1Speed_pos hH
   have h_lo_gap : ε / seg1Speed H < seg4T₀ H z₀.im - 3/5 := by
-    rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_t₀_sub_three_fifths hH]; exact hε_lo
+    rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_t₀_sub_three_fifths hH]
+    exact hε_lo
   have h_hi_gap : ε / seg1Speed H < 4/5 - seg4T₀ H z₀.im := by
-    rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_four_fifths_sub_t₀ hH]; exact hε_hi
+    rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_four_fifths_sub_t₀ hH]
+    exact hε_hi
   have h_t_lo : 3/5 < t := by linarith [(abs_le.mp ht).1]
   have h_t_hi : t ≤ 4/5 := by linarith [(abs_le.mp ht).2]
   rw [fdBoundaryFun_seg4_dist_eq hH hz_re h_t_lo h_t_hi]
@@ -115,7 +130,9 @@ theorem seg4_far_on_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   rw [fdBoundaryFun_seg4_dist_eq hH hz_re ht3 ht4]
   calc ε = seg1Speed H * (ε / seg1Speed H) :=
         (mul_div_cancel₀ _ (seg1Speed_pos hH).ne').symm
-    _ < seg1Speed H * |t - seg4T₀ H z₀.im| := by gcongr; exact seg1Speed_pos hH
+    _ < seg1Speed H * |t - seg4T₀ H z₀.im| := by
+        gcongr
+        exact seg1Speed_pos hH
 
 /-! ### Off-seg4 distance bounds -/
 
@@ -140,7 +157,8 @@ theorem norm_sub_one_le_im_sub_sqrt3_seg4 {z₀ : ℂ} (hz_re : z₀.re = -1/2)
     nlinarith [h_sqrt3_sq, hc_lo, Real.sqrt_nonneg 3]
   have h_sq_ineq : ‖z₀‖ ^ 2 ≤ (z₀.im + 1 - Real.sqrt 3 / 2) ^ 2 := by
     have h_norm_sq : ‖z₀‖ ^ 2 = 1/4 + z₀.im ^ 2 := by
-      rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hz_re]; ring
+      rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hz_re]
+      ring
     rw [h_norm_sq]
     nlinarith [h_sqrt3_sq, hc_lo]
   have h_target := Real.sqrt_le_sqrt h_sq_ineq
@@ -158,8 +176,11 @@ theorem seg4_dist_arc {z₀ : ℂ} (hz_re : z₀.re = -1/2)
 theorem seg4_dist_seg1 {z₀ : ℂ} (hz_re : z₀.re = -1/2) {H t : ℝ}
     (ht : t ≤ 1/5) : 1 ≤ ‖fdBoundaryFun H t - z₀‖ := by
   have hre : (fdBoundaryFun H t - z₀).re = 1 := by
-    rw [sub_re, fdBoundaryFun_seg1_re H t ht, hz_re]; norm_num
-  calc (1 : ℝ) = |(fdBoundaryFun H t - z₀).re| := by rw [hre]; norm_num
+    rw [sub_re, fdBoundaryFun_seg1_re H t ht, hz_re]
+    norm_num
+  calc (1 : ℝ) = |(fdBoundaryFun H t - z₀).re| := by
+        rw [hre]
+        norm_num
     _ ≤ ‖fdBoundaryFun H t - z₀‖ := Complex.abs_re_le_norm _
 
 /-- Distance from a seg4 interior point to seg5: at least `H - z₀.im`. -/
@@ -239,7 +260,8 @@ def smoothBoundaryData_seg4_of_ftcHyp {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     refine lt_min (by linarith) ?_
     linarith [show (1 : ℝ) - seg4T₀ H z₀.im = (4/5 - seg4T₀ H z₀.im) + 1/5 from by ring]
   h_far := fun _ _ hε_thr t ht hδt => by
-    rw [hγ t ht]; exact seg4_far_bound hH hz_re hc_lo hc_hi hε_thr ht hδt
+    rw [hγ t ht]
+    exact seg4_far_bound hH hz_re hc_lo hc_hi hε_thr ht hδt
   h_near := fun ε _ hε_thr t ht => by
     have h_eps_top : ε < H - z₀.im := hε_thr.trans_le (min_le_right _ _)
     have h_eps_arc : ε < ‖z₀‖ - 1 :=

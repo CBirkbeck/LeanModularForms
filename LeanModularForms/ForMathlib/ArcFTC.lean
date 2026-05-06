@@ -70,12 +70,7 @@ theorem arg_exp_mul_I (θ : ℝ) (hθ : θ ∈ Ioc (-Real.pi) Real.pi) :
 /-- The argument of `r * I` is `π/2` for `r > 0`. -/
 theorem arg_ofReal_mul_I (r : ℝ) (hr : 0 < r) :
     arg (↑r * I) = Real.pi / 2 := by
-  have h : ↑r * I = exp (↑(Real.pi / 2) * I) * ↑r := by
-    rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-      Real.cos_pi_div_two, Real.sin_pi_div_two]
-    push_cast; ring
-  rw [h, Complex.arg_mul_real hr]
-  exact arg_exp_mul_I _ ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
+  rw [Complex.arg_real_mul _ hr, Complex.arg_I]
 
 /-! ## Part 2: Arc tangent directions -/
 
@@ -84,27 +79,21 @@ theorem arg_ofReal_mul_I (r : ℝ) (hr : 0 < r) :
 theorem fdBoundary_arc_deriv_eq (t : ℝ) :
     deriv (fun s => exp (↑(fdArcAngle s) * I)) t =
       ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) := by
-  have h1 : (fun s => exp (↑(fdArcAngle s) * I)) =
-      (fun s => exp (↑(Real.pi / 3 + (5 * s - 1) * (Real.pi / 6)) * I)) := by
-    ext s; simp only [fdArcAngle]
-  rw [h1]
+  simp only [fdArcAngle]
   have hd : HasDerivAt (fun s : ℝ =>
       Real.pi / 3 + (5 * s - 1) * (Real.pi / 6)) (5 * Real.pi / 6) t := by
     have := ((hasDerivAt_id t).const_mul 5).sub_const 1 |>.mul_const (Real.pi / 6)
       |>.const_add (Real.pi / 3)
     convert this using 1; ring
-  rw [(hd.ofReal_comp.mul_const I).cexp.deriv]
-  simp only [fdArcAngle]; push_cast; ring
+  rw [(hd.ofReal_comp.mul_const I).cexp.deriv]; push_cast; ring
 
 /-- Arc tangent at `t = 2/5`: `γ'(2/5) = -(5π/6)` (leftward at `i`). -/
 theorem fdBoundary_arc_deriv_at_two_fifths :
     deriv (fun s => exp (↑(fdArcAngle s) * I)) (2/5 : ℝ) =
       -(↑(5 * Real.pi / 6) : ℂ) := by
-  rw [fdBoundary_arc_deriv_eq, fdArcAngle_at_two_fifths,
-    exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+  rw [fdBoundary_arc_deriv_eq, fdArcAngle_at_two_fifths, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_two, Real.sin_pi_div_two]
-  simp only [ofReal_zero, ofReal_one, zero_add, one_mul, mul_assoc, I_mul_I]
-  push_cast; ring
+  simp [mul_assoc]
 
 /-- Arc tangent at `t = 1/5` (right tangent at `ρ+1`). -/
 theorem fdBoundary_arc_deriv_at_one_fifth :
@@ -128,8 +117,7 @@ theorem fdBoundary_seg1_deriv (H t : ℝ) :
   have h1 : HasDerivAt (fun s : ℝ => (s : ℂ)) 1 t := Complex.ofRealCLM.hasDerivAt
   have h2 : HasDerivAt (fun s : ℝ => (H : ℂ) - 5 * ↑s * (↑H - ↑(Real.sqrt 3) / 2))
       (-(5 * (↑H - ↑(Real.sqrt 3) / 2))) t := by
-    have hd := h1.const_mul ((5 : ℂ) * (↑H - ↑(Real.sqrt 3) / 2))
-    have := hd.const_sub (H : ℂ)
+    have := (h1.const_mul ((5 : ℂ) * (↑H - ↑(Real.sqrt 3) / 2))).const_sub (H : ℂ)
     convert this using 1
     · funext s; ring
     · ring
@@ -154,12 +142,8 @@ theorem fdBoundary_seg4_deriv (H t : ℝ) :
 /-- `i · exp(iπ/3) = exp(i·5π/6)`. -/
 theorem I_mul_exp_pi_third :
     I * exp (↑(Real.pi / 3) * I) = exp (↑(5 * Real.pi / 6) * I) := by
-  rw [show (5 * Real.pi / 6 : ℝ) = Real.pi / 2 + Real.pi / 3 from by ring,
-    ofReal_add, add_mul, exp_add]
-  congr 1
-  rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-    Real.cos_pi_div_two, Real.sin_pi_div_two]
-  push_cast; ring
+  rw [show ((5 * Real.pi / 6 : ℝ) : ℂ) * I = ↑Real.pi / 2 * I + ↑(Real.pi / 3) * I
+      from by push_cast; ring, exp_add, Complex.exp_pi_div_two_mul_I]
 
 /-- The arg of the right tangent at `ρ+1`: `5π/6`. -/
 theorem arg_right_tangent_rhoPlusOne :
@@ -170,10 +154,10 @@ theorem arg_right_tangent_rhoPlusOne :
 /-- The arg of the negated left tangent at `ρ+1` is `π/2`. -/
 theorem arg_neg_left_tangent_rhoPlusOne (H : ℝ) (hH : fdHeightValid H) :
     arg (5 * (↑H - ↑(Real.sqrt 3) / 2) * I) = Real.pi / 2 := by
-  have hH' : (0 : ℝ) < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  unfold fdHeightValid at hH
   rw [show (5 * (↑H - ↑(Real.sqrt 3) / 2) * I : ℂ) =
       ↑(5 * (H - Real.sqrt 3 / 2)) * I from by push_cast; ring]
-  exact arg_ofReal_mul_I _ (by positivity)
+  exact arg_ofReal_mul_I _ (by linarith)
 
 /-- The crossing angle at `ρ+1` is `π/3`. -/
 theorem fdBoundary_crossing_angle_at_rhoPlusOne (H : ℝ) (hH : fdHeightValid H) :
@@ -184,15 +168,9 @@ theorem fdBoundary_crossing_angle_at_rhoPlusOne (H : ℝ) (hH : fdHeightValid H)
 /-- `i · exp(i·2π/3) = exp(i·(-5π/6))`. -/
 theorem I_mul_exp_two_pi_third :
     I * exp (↑(2 * Real.pi / 3) * I) = exp (↑(-5 * Real.pi / 6) * I) := by
-  rw [exp_mul_I, exp_mul_I]
-  simp only [← ofReal_cos, ← ofReal_sin]
-  rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
-    Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-  rw [show (-5 * Real.pi / 6 : ℝ) = -(Real.pi - Real.pi / 6) from by ring,
-    Real.cos_neg, Real.sin_neg, Real.cos_pi_sub, Real.sin_pi_sub,
-    Real.cos_pi_div_six, Real.sin_pi_div_six]
-  apply Complex.ext <;> simp [Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-    Complex.add_re, Complex.add_im, ofReal_re, ofReal_im]
+  rw [show (↑(-5 * Real.pi / 6) * I : ℂ) = ↑Real.pi / 2 * I + ↑(2 * Real.pi / 3) * I -
+      2 * Real.pi * I from by push_cast; ring,
+    exp_sub, exp_add, Complex.exp_two_pi_mul_I, div_one, Complex.exp_pi_div_two_mul_I]
 
 /-- The arg of the left tangent at `ρ`: `-5π/6`. -/
 theorem arg_left_tangent_rho :
@@ -239,14 +217,12 @@ theorem fdBoundary_angle_at_I_partition :
 /-- `-(πi)/(2πi) = -1/2`. -/
 theorem arcFTC_limit_target_I :
     -(↑Real.pi * I) / (2 * ↑Real.pi * I) = (-1 / 2 : ℂ) := by
-  have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp
+  field_simp [Real.pi_ne_zero]
 
 /-- `-(πi/3)/(2πi) = -1/6`. -/
 theorem arcFTC_limit_target_rho :
     -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 / 6 : ℂ) := by
-  have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp; ring
+  field_simp [Real.pi_ne_zero]; ring
 
 /-- `2πi · (-1/2) = -πi`. -/
 theorem arcFTC_pv_target_I :

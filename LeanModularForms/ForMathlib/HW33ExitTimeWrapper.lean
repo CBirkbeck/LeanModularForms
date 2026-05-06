@@ -46,20 +46,14 @@ theorem hw_theorem_3_3_odd_transverse_bundled
     (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
     (h_s : γ t₀ = s) (hk : 2 ≤ k) (hk_odd : Odd k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
     (data : HW33ExitData γ t₀ s)
-    (h_minus_smooth : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc a (data.tMinus ε), HasDerivAt γ (γ' t) t)
-    (h_minus_avoids : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc a (data.tMinus ε), γ t ≠ s)
-    (h_minus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) MeasureTheory.volume
-        a (data.tMinus ε))
-    (h_plus_smooth : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc (data.tPlus ε) b, HasDerivAt γ (γ' t) t)
-    (h_plus_avoids : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc (data.tPlus ε) b, γ t ≠ s)
-    (h_plus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) MeasureTheory.volume
-        (data.tPlus ε) b) :
+    (h_minus_smooth : ∀ ε > 0, ∀ t ∈ Set.uIcc a (data.tMinus ε), HasDerivAt γ (γ' t) t)
+    (h_minus_avoids : ∀ ε > 0, ∀ t ∈ Set.uIcc a (data.tMinus ε), γ t ≠ s)
+    (h_minus_int : ∀ ε > 0, IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k)
+      MeasureTheory.volume a (data.tMinus ε))
+    (h_plus_smooth : ∀ ε > 0, ∀ t ∈ Set.uIcc (data.tPlus ε) b, HasDerivAt γ (γ' t) t)
+    (h_plus_avoids : ∀ ε > 0, ∀ t ∈ Set.uIcc (data.tPlus ε) b, γ t ≠ s)
+    (h_plus_int : ∀ ε > 0, IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k)
+      MeasureTheory.volume (data.tPlus ε) b) :
     Tendsto (fun ε =>
       (∫ t in a..(data.tMinus ε), γ' t / (γ t - s) ^ k) +
         (∫ t in (data.tPlus ε)..b, γ' t / (γ t - s) ^ k))
@@ -98,21 +92,17 @@ theorem hw_theorem_3_3_odd_transverse_concrete
     (h_leave_right : ∀ t ∈ Set.Ioc t₀ (t₀ + δPlus), γ t ≠ s)
     (h_leave_left : ∀ t ∈ Set.Ico (t₀ - δMinus) t₀, γ t ≠ s)
     (h_minus_smooth : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc a (firstExitTimeLeft γ t₀ δMinus s ε),
-      HasDerivAt γ (γ' t) t)
+      ∀ t ∈ Set.uIcc a (firstExitTimeLeft γ t₀ δMinus s ε), HasDerivAt γ (γ' t) t)
     (h_minus_avoids : ∀ ε > 0,
       ∀ t ∈ Set.uIcc a (firstExitTimeLeft γ t₀ δMinus s ε), γ t ≠ s)
-    (h_minus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) MeasureTheory.volume
-        a (firstExitTimeLeft γ t₀ δMinus s ε))
+    (h_minus_int : ∀ ε > 0, IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k)
+      MeasureTheory.volume a (firstExitTimeLeft γ t₀ δMinus s ε))
     (h_plus_smooth : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc (firstExitTimeRight γ t₀ δPlus s ε) b,
-      HasDerivAt γ (γ' t) t)
+      ∀ t ∈ Set.uIcc (firstExitTimeRight γ t₀ δPlus s ε) b, HasDerivAt γ (γ' t) t)
     (h_plus_avoids : ∀ ε > 0,
       ∀ t ∈ Set.uIcc (firstExitTimeRight γ t₀ δPlus s ε) b, γ t ≠ s)
-    (h_plus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) MeasureTheory.volume
-        (firstExitTimeRight γ t₀ δPlus s ε) b) :
+    (h_plus_int : ∀ ε > 0, IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k)
+      MeasureTheory.volume (firstExitTimeRight γ t₀ δPlus s ε) b) :
     Tendsto (fun ε =>
       (∫ t in a..(firstExitTimeLeft γ t₀ δMinus s ε), γ' t / (γ t - s) ^ k) +
         (∫ t in (firstExitTimeRight γ t₀ δPlus s ε)..b, γ' t / (γ t - s) ^ k))

@@ -38,19 +38,15 @@ This is the result from the old chain bridged through the
 reparametrization. It can be further post-processed to replace
 `generalizedWindingNumber'` with `generalizedWindingNumber` via
 `generalizedWindingNumber_eq_generalizedWindingNumber'`. -/
-theorem cpv_residue_side_HasCauchyPVOn
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+theorem cpv_residue_side_HasCauchyPVOn (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
-      ∀ {H : ℝ}, H₀ ≤ H →
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
       ∀ (γ : PiecewiseC1Path (fdStart H) (fdStart H))
         (_hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t),
-        HasCauchyPVOn (sArcOfS S ∪ sVertOfS S)
-          (logDeriv (modularFormCompOfComplex f)) γ
-          (2 * ↑Real.pi * I *
-            ∑ s ∈ S,
-              generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
-                (orderOfVanishingAt' (⇑f) s : ℂ)) := by
+        HasCauchyPVOn (sArcOfS S ∪ sVertOfS S) (logDeriv (modularFormCompOfComplex f)) γ
+          (2 * ↑Real.pi * I * ∑ s ∈ S,
+            generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
+              (orderOfVanishingAt' (⇑f) s : ℂ)) := by
   obtain ⟨H₀, hH₀, h_old⟩ := cpv_residue_side_forMathlib f hf S hS hS_complete
   exact ⟨H₀, hH₀, fun hH γ hγ => hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ (h_old hH)⟩
 
@@ -58,17 +54,13 @@ include hf in
 /-- **Modular side (ForMathlib form)**: the ε-truncated integral of
 `logDeriv(f)` around any `PiecewiseC1Path` agreeing with `fdBoundaryFun H`
 converges to `-(2πi)(k/12 - ord_∞)`. -/
-theorem cpv_modular_side_HasCauchyPVOn
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+theorem cpv_modular_side_HasCauchyPVOn (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧
-      ∀ {H : ℝ}, H₀ ≤ H →
+    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
       ∀ (γ : PiecewiseC1Path (fdStart H) (fdStart H))
         (_hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t),
-        HasCauchyPVOn (sArcOfS S ∪ sVertOfS S)
-          (logDeriv (modularFormCompOfComplex f)) γ
-          (-(2 * ↑Real.pi * I *
-            ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))) := by
+        HasCauchyPVOn (sArcOfS S ∪ sVertOfS S) (logDeriv (modularFormCompOfComplex f)) γ
+          (-(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))) := by
   obtain ⟨H₀, hH₀, h_old⟩ := cpv_modular_side_forMathlib f hf S hS hS_complete
   exact ⟨H₀, hH₀, fun hH γ hγ => hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ (h_old hH)⟩
 

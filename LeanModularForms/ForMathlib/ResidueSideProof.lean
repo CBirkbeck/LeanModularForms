@@ -182,7 +182,8 @@ theorem residueSide_sum_convert_of_residue_eq_order
       ∑ s ∈ S.image (↑· : UpperHalfPlane → ℂ),
         2 * ↑Real.pi * I *
         generalizedWindingNumber γ s * residue F s := by
-    symm; apply Finset.sum_subset h_S_sub
+    symm
+    apply Finset.sum_subset h_S_sub
     intro s hs hs_ni
     have := h_non_S_zero s hs hs_ni
     rw [show 2 * ↑Real.pi * I * generalizedWindingNumber γ s * residue F s =
@@ -195,7 +196,8 @@ theorem residueSide_sum_convert_of_residue_eq_order
   rw [Finset.mul_sum]
   apply Finset.sum_congr rfl
   intro p hp
-  rw [h_res_eq p hp]; ring
+  rw [h_res_eq p hp]
+  ring
 
 /-! ### Layer 3: Bridge to `discharge_pvChain_full`
 
@@ -389,7 +391,8 @@ theorem factor_two_pi_I_from_sum {γ : PiecewiseC1Path x₀ x₀}
     2 * ↑Real.pi * I * ∑ s ∈ S, generalizedWindingNumber γ s * c s := by
   rw [Finset.mul_sum]
   apply Finset.sum_congr rfl
-  intro s _; ring
+  intro s _
+  ring
 
 omit f hf in
 /-- Cancel `2πi` from both sides of a sum equation. -/

@@ -59,7 +59,9 @@ theorem HasSimplePoleAt.meromorphicAt {f : ℂ → ℂ} {z₀ : ℂ}
     analyticAt_const.add (analyticAt_id.sub analyticAt_const |>.mul hg_an), ?_⟩
   filter_upwards [hf_eq, self_mem_nhdsWithin] with z hz hne
   have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-  rw [hz]; simp only [zpow_neg_one, smul_eq_mul]; field_simp
+  rw [hz]
+  simp only [zpow_neg_one, smul_eq_mul]
+  field_simp
 
 /-! ### Meromorphic order of simple poles -/
 
@@ -77,7 +79,9 @@ theorem meromorphicOrderAt_eq_neg_one_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀
     by simp [hc], ?_⟩
   filter_upwards [h.eventually_eq, self_mem_nhdsWithin] with z hz hne
   have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-  rw [hz]; simp only [zpow_neg_one, smul_eq_mul]; field_simp
+  rw [hz]
+  simp only [zpow_neg_one, smul_eq_mul]
+  field_simp
 
 /-- A simple pole with zero coefficient has non-negative meromorphic order: the
 function is eventually equal to its analytic regular part. -/
@@ -112,9 +116,11 @@ theorem hasSimplePoleAt_of_meromorphicAt_order_neg_one {f : ℂ → ℂ} {z₀ :
   filter_upwards [hg_eq, hh_eq.filter_mono nhdsWithin_le_nhds, self_mem_nhdsWithin]
     with z hz hh hne
   have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-  rw [hz]; simp only [zpow_neg_one, smul_eq_mul, pow_one] at *
+  rw [hz]
+  simp only [zpow_neg_one, smul_eq_mul, pow_one] at *
   have hg_val : g z = g z₀ + (z - z₀) * h_fn z := by linear_combination hh
-  rw [hg_val]; field_simp
+  rw [hg_val]
+  field_simp
 
 /-! ### Residue bridge -/
 
@@ -139,9 +145,11 @@ theorem residue_eq_leadingCoeff_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
     filter_upwards [hg_eq, hh_eq.filter_mono nhdsWithin_le_nhds, self_mem_nhdsWithin]
       with z hz hh hne
     have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-    rw [hz]; simp only [zpow_neg_one, smul_eq_mul, pow_one] at *
+    rw [hz]
+    simp only [zpow_neg_one, smul_eq_mul, pow_one] at *
     have hg_val : g z = g z₀ + (z - z₀) * h_fn z := by linear_combination hh
-    rw [hg_val]; field_simp
+    rw [hg_val]
+    field_simp
   exact residue_eq_of_simple_pole_decomp hh_an hf_decomp
 
 /-- The residue of a simple pole equals the meromorphic leading coefficient.
@@ -178,7 +186,7 @@ theorem meromorphicOrderAt_eq_neg_one_iff_hasSimplePoleAt_nonzero {f : ℂ → �
     intro hc
     have hge := meromorphicOrderAt_nonneg_of_hasSimplePoleAt_coeff_zero hsimple hc
     rw [hord] at hge
-    exact absurd hge (by exact_mod_cast (by norm_num : ¬(0 : ℤ) ≤ -1))
+    exact absurd hge (by decide)
   · rintro ⟨h, hc⟩
     exact meromorphicOrderAt_eq_neg_one_of_hasSimplePoleAt h hc
 

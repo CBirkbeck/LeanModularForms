@@ -88,10 +88,10 @@ private lemma dslope_integrand_eq {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {
   have ht_Icc : t ∈ Icc (0 : ℝ) 1 := by rwa [Set.uIcc_of_le zero_le_one] at ht
   have hne : γ t ≠ w := hoff t ht_Icc
   rw [dslope_of_ne _ hne, slope_def_field]
-  have hsub : γ t - w ≠ 0 := sub_ne_zero.mpr hne
-  field_simp
+  ring
 
-/-- The winding integrand `f(w)/(γ(t) - w) · γ'(t)` equals `f(w) · (γ(t) - w)⁻¹ · γ'(t)`. -/
+/-- The winding integrand `f(w)/(γ(t) - w) · γ'(t)` equals
+`f(w) · (γ(t) - w)⁻¹ · γ'(t)`. -/
 private lemma winding_integrand_eq_const_mul (f : ℂ → ℂ)
     (γ : PiecewiseC1Path x x) (w : ℂ) :
     (fun t => f w / (γ t - w) * deriv γ.toPath.extend t) =
@@ -159,15 +159,11 @@ theorem dixonH1_eq_dixonH2_sub_winding_f {f : ℂ → ℂ}
     dixonH1 f γ w =
       dixonH2 f γ w - 2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w := by
   simp only [dixonH1, dixonH2]
-  -- Step 1: expand dslope and split the integral
-  rw [intervalIntegral.integral_congr (dslope_integrand_eq hoff)]
-  rw [intervalIntegral.integral_sub h_cauchy_int
-    (winding_integrand_intervalIntegrable f γ w h_base_int)]
-  -- Step 2: identify the winding number term
+  rw [intervalIntegral.integral_congr (dslope_integrand_eq hoff),
+    intervalIntegral.integral_sub h_cauchy_int
+      (winding_integrand_intervalIntegrable f γ w h_base_int)]
   congr 1
-  -- Goal: ∫ f(w)/(γ t - w) · γ'(t) dt = 2πi · n(γ,w) · f(w)
   rw [contourIntegral_fw_div_eq f γ w]
-  -- Now need: f(w) * ∮ (z-w)⁻¹ = 2πi · n(γ,w) · f(w)
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := avoids_delta_bound γ w hoff
   rw [integral_inv_sub_eq_winding ⟨δ, hδ_pos, hδ_bound⟩]
   ring

@@ -76,7 +76,8 @@ private def seg4_h_arc (z₀ : ℂ) (t : ℝ) : ℂ :=
 private lemma fdBoundary_sub_eq_seg4_h_arc {H : ℝ} (z₀ : ℂ) {t : ℝ}
     (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     fdBoundaryFun H t - z₀ = seg4_h_arc z₀ t := by
-  unfold seg4_h_arc; rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
+  unfold seg4_h_arc
+  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
 
 private lemma seg4_h_arc_continuous (z₀ : ℂ) : Continuous (seg4_h_arc z₀) := by
   unfold seg4_h_arc
@@ -114,7 +115,8 @@ private lemma seg4_h_arc_slitPlane {z₀ : ℂ} (hz_re : z₀.re = -1/2)
   unfold seg4_h_arc
   rcases eq_or_lt_of_le ht3 with h_eq | ht3_lt
   · -- t = 3/5: γ = ρ
-    rw [Complex.mem_slitPlane_iff]; right
+    rw [Complex.mem_slitPlane_iff]
+    right
     rw [h_eq]
     have hpi := Real.pi_pos
     rw [show (fdArcAngle (3/5) : ℝ) = 2 * Real.pi / 3 from by unfold fdArcAngle; ring]
@@ -126,12 +128,15 @@ private lemma seg4_h_arc_slitPlane {z₀ : ℂ} (hz_re : z₀.re = -1/2)
       mul_zero, mul_one, zero_add, add_zero]
     intro h_eq2
     nlinarith
-  · rw [Complex.mem_slitPlane_iff]; left
+  · rw [Complex.mem_slitPlane_iff]
+    left
     have hpi := Real.pi_pos
     have hθ_lo : Real.pi / 3 ≤ fdArcAngle t := by
-      unfold fdArcAngle; nlinarith
+      unfold fdArcAngle
+      nlinarith
     have hθ_hi : fdArcAngle t < 2 * Real.pi / 3 := by
-      unfold fdArcAngle; nlinarith
+      unfold fdArcAngle
+      nlinarith
     have h_cos_gt : Real.cos (fdArcAngle t) > -1/2 := by
       have h_2pi3 : (2 * Real.pi / 3) ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
       have hθ_Icc : fdArcAngle t ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
@@ -145,17 +150,20 @@ private lemma seg4_h_arc_slitPlane {z₀ : ℂ} (hz_re : z₀.re = -1/2)
     simp only [Complex.sub_re, Complex.add_re, Complex.mul_re,
       Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
       mul_zero, sub_zero, mul_one]
-    rw [hz_re]; linarith
+    rw [hz_re]
+    linarith
 
 /-- For `z₀.re = -1/2`, `seg4_h₀(t)` (the seg1 reference) has `re = 1`,
 hence is in `slitPlane`. -/
 private lemma seg4_h₀_slitPlane {H : ℝ} {z₀ : ℂ} (hz_re : z₀.re = -1/2) (t : ℝ) :
     seg4_h₀ H z₀ t ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; left
+  rw [Complex.mem_slitPlane_iff]
+  left
   unfold seg4_h₀
   simp only [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
     Complex.I_re, Complex.I_im, mul_zero]
-  rw [hz_re]; norm_num
+  rw [hz_re]
+  norm_num
 
 /-- Seg4 reference (the crossing segment for seg4 z₀). -/
 private def seg4_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
@@ -215,17 +223,21 @@ private lemma seg4_h₃_left_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {δ : ℝ} (hδ_pos : 0 < δ)
     {t : ℝ} (htd : t ≤ seg4T₀ H z₀.im - δ) :
     seg4_h₃ H z₀ t ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
+  rw [Complex.mem_slitPlane_iff]
+  right
   rw [seg4_h₃_eq_pure_im hz_re]
   simp only [Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
     mul_one, mul_zero, add_zero]
   intro h_eq
   have hK : 0 < seg1Speed H := seg1Speed_pos hH
   have hK_eq_seg4 : seg1Speed H * (seg4T₀ H z₀.im - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
-    unfold seg4T₀; field_simp; ring
+    unfold seg4T₀
+    field_simp
+    ring
   have h_t : t = seg4T₀ H z₀.im := by
     have h_speed_eq : seg1Speed H * (t - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
-      unfold seg1Speed; linarith
+      unfold seg1Speed
+      linarith
     have hcancel : t - 3/5 = seg4T₀ H z₀.im - 3/5 :=
       mul_left_cancel₀ (ne_of_gt hK) (h_speed_eq.trans hK_eq_seg4.symm)
     linarith
@@ -237,17 +249,21 @@ private lemma seg4_h₃_right_slitPlane {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {δ : ℝ} (hδ_pos : 0 < δ)
     {t : ℝ} (htd : seg4T₀ H z₀.im + δ ≤ t) :
     seg4_h₃ H z₀ t ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
+  rw [Complex.mem_slitPlane_iff]
+  right
   rw [seg4_h₃_eq_pure_im hz_re]
   simp only [Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
     mul_one, mul_zero, add_zero]
   intro h_eq
   have hK : 0 < seg1Speed H := seg1Speed_pos hH
   have hK_eq_seg4 : seg1Speed H * (seg4T₀ H z₀.im - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
-    unfold seg4T₀; field_simp; ring
+    unfold seg4T₀
+    field_simp
+    ring
   have h_t : t = seg4T₀ H z₀.im := by
     have h_speed_eq : seg1Speed H * (t - 3/5) = z₀.im - Real.sqrt 3 / 2 := by
-      unfold seg1Speed; linarith
+      unfold seg1Speed
+      linarith
     have hcancel : t - 3/5 = seg4T₀ H z₀.im - 3/5 :=
       mul_left_cancel₀ (ne_of_gt hK) (h_speed_eq.trans hK_eq_seg4.symm)
     linarith
@@ -288,11 +304,13 @@ private lemma deriv_seg4_h₅ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
 /-- For `z₀.im < H`, `seg4_h₅ ∈ slitPlane` (positive imaginary). -/
 private lemma seg4_h₅_slitPlane {H : ℝ} {z₀ : ℂ} (hc_hi : z₀.im < H) (t : ℝ) :
     seg4_h₅ H z₀ t ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]; right
+  rw [Complex.mem_slitPlane_iff]
+  right
   unfold seg4_h₅
   simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re,
     Complex.ofReal_im, Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add]
-  intro h; linarith
+  intro h
+  linarith
 
 /-! ### Per-segment FTC pieces (using `ftc_log_on_segment`) -/
 

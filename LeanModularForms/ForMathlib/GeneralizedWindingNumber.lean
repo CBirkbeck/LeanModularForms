@@ -105,8 +105,9 @@ theorem hasGeneralizedWindingNumber_of_avoids {γ : PiecewiseC1Path x y} {z₀ :
       ((2 * ↑Real.pi * I)⁻¹ * γ.contourIntegral (fun z => (z - z₀)⁻¹)) := by
   simp only [HasGeneralizedWindingNumber]
   have hpi := Complex.two_pi_I_ne_zero
-  rw [show 2 * ↑Real.pi * I * ((2 * ↑Real.pi * I)⁻¹ * γ.contourIntegral (fun z => (z - z₀)⁻¹)) =
-    γ.contourIntegral (fun z => (z - z₀)⁻¹) from by field_simp]
+  rw [show 2 * ↑Real.pi * I *
+      ((2 * ↑Real.pi * I)⁻¹ * γ.contourIntegral (fun z => (z - z₀)⁻¹)) =
+      γ.contourIntegral (fun z => (z - z₀)⁻¹) from by field_simp]
   exact hasCauchyPV_of_avoids hδ
 
 /-! ### Value from HasGeneralizedWindingNumber -/
@@ -168,11 +169,13 @@ lemma ball_dist_to_curve_lb {γ : PiecewiseC1Path x y} {w₀ : ℂ}
   rw [Complex.dist_eq] at h1 h2
   have h3 : ‖γ t - w₀‖ ≤ ‖γ t - w‖ + ‖w - w₀‖ := by
     have h_eq : γ t - w₀ = (γ t - w) + (w - w₀) := by ring
-    rw [h_eq]; exact norm_add_le _ _
+    rw [h_eq]
+    exact norm_add_le _ _
   rw [show ‖γ t - w₀‖ = ‖w₀ - γ t‖ from norm_sub_rev _ _] at h3
   rw [show ‖w - w₀‖ = ‖w₀ - w‖ from norm_sub_rev _ _] at h3
   have h4 : ‖w₀ - w‖ < Metric.infDist w₀ (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2 := by
-    rw [← norm_sub_rev]; exact h2
+    rw [← norm_sub_rev]
+    exact h2
   linarith [h1, h4]
 
 /-- The generalized winding number is continuous at any point off a Lipschitz
@@ -192,7 +195,8 @@ theorem generalizedWindingNumber_continuousAt_of_avoids
     rw [Set.uIoc_of_le (zero_le_one' ℝ)]
     have h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ t - w ≠ 0 := fun t ht h => by
       have hε_le : ε ≤ ‖γ t - w‖ := h_dist_lb w hw t ht
-      rw [h, norm_zero] at hε_le; linarith
+      rw [h, norm_zero] at hε_le
+      linarith
     have h_cont_inv : ContinuousOn (fun t => (γ t - w)⁻¹) (Icc (0 : ℝ) 1) :=
       (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const).inv₀ h_avoid
     exact ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
@@ -226,7 +230,8 @@ theorem generalizedWindingNumber_continuousAt_of_avoids
     have h_avoid : γ t - w₀ ≠ 0 := fun h => by
       have hε_le : ε ≤ ‖γ t - w₀‖ :=
         h_dist_lb w₀ (Metric.mem_ball_self hε_pos) t ht_Icc
-      rw [h, norm_zero] at hε_le; linarith
+      rw [h, norm_zero] at hε_le
+      linarith
     exact ((continuous_const.sub continuous_id).continuousAt.inv₀ h_avoid).mul
       continuousAt_const
 

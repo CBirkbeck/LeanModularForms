@@ -45,17 +45,22 @@ omit f hf in
 private lemma norm_sub_one_le {z s : ℂ} (hz : z.re = 1/2) (hs : s.re = -1/2) :
     ‖(z - 1) - s‖ ≤ ‖z - s‖ := by
   have hre1 : ((z - 1) - s).re = 0 := by
-    simp only [Complex.sub_re, Complex.one_re]; linarith
+    simp only [Complex.sub_re, Complex.one_re]
+    linarith
   have him1 : ((z - 1) - s).im = z.im - s.im := by
-    simp only [Complex.sub_im, Complex.one_im]; ring
+    simp only [Complex.sub_im, Complex.one_im]
+    ring
   have hre2 : (z - s).re = 1 := by
-    simp only [Complex.sub_re]; linarith
+    simp only [Complex.sub_re]
+    linarith
   have him2 : (z - s).im = z.im - s.im := by
     simp only [Complex.sub_im]
   have h1 : ‖(z - 1) - s‖ ^ 2 = (z.im - s.im) ^ 2 := by
-    rw [Complex.sq_norm, Complex.normSq_apply, hre1, him1]; ring
+    rw [Complex.sq_norm, Complex.normSq_apply, hre1, him1]
+    ring
   have h2 : ‖z - s‖ ^ 2 = 1 + (z.im - s.im) ^ 2 := by
-    rw [Complex.sq_norm, Complex.normSq_apply, hre2, him2]; ring
+    rw [Complex.sq_norm, Complex.normSq_apply, hre2, him2]
+    ring
   have h_sq : ‖(z - 1) - s‖ ^ 2 ≤ ‖z - s‖ ^ 2 := by linarith
   have h_le := Real.sqrt_le_sqrt h_sq
   rwa [Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq (norm_nonneg _)] at h_le
@@ -64,17 +69,22 @@ omit f hf in
 private lemma norm_sub_le_sub_one {z s : ℂ} (hz : z.re = 1/2) (hs : s.re = 1/2) :
     ‖z - s‖ ≤ ‖(z - 1) - s‖ := by
   have hre1 : (z - s).re = 0 := by
-    simp only [Complex.sub_re]; linarith
+    simp only [Complex.sub_re]
+    linarith
   have him1 : (z - s).im = z.im - s.im := by
     simp only [Complex.sub_im]
   have hre2 : ((z - 1) - s).re = -1 := by
-    simp only [Complex.sub_re, Complex.one_re]; linarith
+    simp only [Complex.sub_re, Complex.one_re]
+    linarith
   have him2 : ((z - 1) - s).im = z.im - s.im := by
-    simp only [Complex.sub_im, Complex.one_im]; ring
+    simp only [Complex.sub_im, Complex.one_im]
+    ring
   have h1 : ‖z - s‖ ^ 2 = (z.im - s.im) ^ 2 := by
-    rw [Complex.sq_norm, Complex.normSq_apply, hre1, him1]; ring
+    rw [Complex.sq_norm, Complex.normSq_apply, hre1, him1]
+    ring
   have h2 : ‖(z - 1) - s‖ ^ 2 = 1 + (z.im - s.im) ^ 2 := by
-    rw [Complex.sq_norm, Complex.normSq_apply, hre2, him2]; ring
+    rw [Complex.sq_norm, Complex.normSq_apply, hre2, him2]
+    ring
   have h_sq : ‖z - s‖ ^ 2 ≤ ‖(z - 1) - s‖ ^ 2 := by linarith
   have h_le := Real.sqrt_le_sqrt h_sq
   rwa [Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq (norm_nonneg _)] at h_le
@@ -99,36 +109,50 @@ private lemma truncation_iff_shift
 omit f hf in
 private lemma norm_shift_neg_inv_eq {z s : ℂ} (hz_re : z.re = 1/2) (hs_unit : ‖s‖ = 1) :
     ‖(z - 1) - (-(1 : ℂ) / s)‖ = ‖z - s‖ := by
-  have hs_ne : s ≠ 0 := by intro h; rw [h, norm_zero] at hs_unit; norm_num at hs_unit
+  have hs_ne : s ≠ 0 := by
+    intro h
+    rw [h, norm_zero] at hs_unit
+    norm_num at hs_unit
   have h_normSq : s.re ^ 2 + s.im ^ 2 = 1 := by
-    have h := Complex.sq_norm s; rw [hs_unit, one_pow] at h
+    have h := Complex.sq_norm s
+    rw [hs_unit, one_pow] at h
     rw [Complex.normSq_apply] at h
     nlinarith [sq s.re, sq s.im]
   have h_mul : s.re * s.re + s.im * s.im = 1 := by nlinarith [sq s.re, sq s.im]
   have h_neg_inv_re : (-(1 : ℂ) / s).re = -s.re := by
     rw [neg_div, Complex.neg_re, Complex.div_re, Complex.one_re, Complex.one_im,
-      Complex.normSq_apply, h_mul, div_one]; ring
+      Complex.normSq_apply, h_mul, div_one]
+    ring
   have h_neg_inv_im : (-(1 : ℂ) / s).im = s.im := by
     rw [neg_div, Complex.neg_im, Complex.div_im, Complex.one_re, Complex.one_im,
-      Complex.normSq_apply, h_mul, div_one]; ring
+      Complex.normSq_apply, h_mul, div_one]
+    ring
   have h1_re : ((z - 1) - (-(1 : ℂ) / s)).re = z.re - 1 + s.re := by
-    simp only [Complex.sub_re, Complex.one_re, h_neg_inv_re]; ring
+    simp only [Complex.sub_re, Complex.one_re, h_neg_inv_re]
+    ring
   have h1_im : ((z - 1) - (-(1 : ℂ) / s)).im = z.im - s.im := by
-    simp only [Complex.sub_im, Complex.one_im, h_neg_inv_im]; ring
+    simp only [Complex.sub_im, Complex.one_im, h_neg_inv_im]
+    ring
   have h_sq1 : ‖(z - 1) - (-(1 : ℂ) / s)‖ ^ 2 =
       (z.re - 1 + s.re) ^ 2 + (z.im - s.im) ^ 2 := by
-    rw [Complex.sq_norm, Complex.normSq_apply, h1_re, h1_im]; ring
+    rw [Complex.sq_norm, Complex.normSq_apply, h1_re, h1_im]
+    ring
   have h_sq2 : ‖z - s‖ ^ 2 = (z.re - s.re) ^ 2 + (z.im - s.im) ^ 2 := by
-    rw [Complex.sq_norm, Complex.normSq_apply, Complex.sub_re z s, Complex.sub_im z s]; ring
+    rw [Complex.sq_norm, Complex.normSq_apply, Complex.sub_re z s, Complex.sub_im z s]
+    ring
   have h_eq : ‖(z - 1) - (-(1 : ℂ) / s)‖ ^ 2 = ‖z - s‖ ^ 2 := by
-    rw [h_sq1, h_sq2, hz_re]; ring
+    rw [h_sq1, h_sq2, hz_re]
+    ring
   nlinarith [sq_nonneg (‖(z - 1) - (-(1 : ℂ) / s)‖ - ‖z - s‖),
     norm_nonneg ((z - 1) - (-(1 : ℂ) / s)), norm_nonneg (z - s)]
 
 omit f hf in
 private lemma neg_inv_involution {s : ℂ} (hs_unit : ‖s‖ = 1) :
     -(1 : ℂ) / (-(1 : ℂ) / s) = s := by
-  have hs_ne : s ≠ 0 := by intro h; rw [h, norm_zero] at hs_unit; norm_num at hs_unit
+  have hs_ne : s ≠ 0 := by
+    intro h
+    rw [h, norm_zero] at hs_unit
+    norm_num at hs_unit
   field_simp
 
 omit f hf in
@@ -213,7 +237,8 @@ private lemma pvIntegrand_seg4_eq_neg_seg1 (_S : Finset UpperHalfPlane) (Sx : Fi
   have h_trunc := h_trunc_iff u hu
   simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn]
   by_cases h_trunc_u : ∃ s ∈ Sx, ‖fdBoundary_H H u - s‖ ≤ ε
-  · rw [if_pos h_trunc_u, if_pos (h_trunc.mpr h_trunc_u)]; simp only [neg_zero]
+  · rw [if_pos h_trunc_u, if_pos (h_trunc.mpr h_trunc_u)]
+    simp only [neg_zero]
   · rw [if_neg h_trunc_u, if_neg (mt h_trunc.mp h_trunc_u)]
     have h_shift : fdBoundary_H H (4 - u) = fdBoundary_H H u - 1 := by
       rw [fdBoundary_H_eq_seg4_H h4u_gt3 (by linarith [hu.1]),
@@ -268,11 +293,14 @@ private theorem pvIntegral_vertical_cancel (S : Finset UpperHalfPlane)
         (show 4 - u ≤ 4 from by linarith [hu.1]),
         seg4_eq_seg1_minus_one_H H u ⟨le_of_lt hu.1, le_of_lt hu.2⟩, h_seg1]
     have h_re_u : (fdBoundary_H H u).re = 1/2 := by
-      rw [h_seg1]; simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
-    rw [h_shift]; exact (truncation_iff_shift S (fdBoundary_H H u) h_re_u ε).symm
+      rw [h_seg1]
+      simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
+    rw [h_shift]
+    exact (truncation_iff_shift S (fdBoundary_H H u) h_re_u ε).symm
   rw [integral_neg_of_pw_neg _ (fun u hu =>
       pvIntegrand_seg4_eq_neg_seg1 f S (sVertOfS S) h_trunc_iff u hu),
-    intervalIntegral.integral_neg]; ring
+    intervalIntegral.integral_neg]
+  ring
 
 omit hf in
 private theorem pvIntegral_vertical_cancel_union (S : Finset UpperHalfPlane)
@@ -297,11 +325,14 @@ private theorem pvIntegral_vertical_cancel_union (S : Finset UpperHalfPlane)
         (show 4 - u ≤ 4 from by linarith [hu.1]),
         seg4_eq_seg1_minus_one_H H u ⟨le_of_lt hu.1, le_of_lt hu.2⟩, h_seg1]
     have h_re_u : (fdBoundary_H H u).re = 1/2 := by
-      rw [h_seg1]; simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
-    rw [h_shift]; exact (truncation_iff_shift_union S (fdBoundary_H H u) h_re_u ε).symm
+      rw [h_seg1]
+      simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
+    rw [h_shift]
+    exact (truncation_iff_shift_union S (fdBoundary_H H u) h_re_u ε).symm
   rw [integral_neg_of_pw_neg _ (fun u hu =>
     pvIntegrand_seg4_eq_neg_seg1 f S (sArcOfS S ∪ sVertOfS S) h_trunc_iff u hu),
-    intervalIntegral.integral_neg]; ring
+    intervalIntegral.integral_neg]
+  ring
 
 omit hf in
 private theorem tendsto_pvIntegral_arc (S : Finset UpperHalfPlane)
@@ -354,12 +385,15 @@ private theorem tendsto_pvIntegral_seg5
         ¬∃ s ∈ sArcOfS S ∪ sVertOfS S, ‖fdBoundary_H H t - s‖ ≤ ε := by
     rcases (sArcOfS S ∪ sVertOfS S).eq_empty_or_nonempty with h_empty | h_ne
     · filter_upwards [self_mem_nhdsWithin] with ε _
-      intro t _ _; simp [h_empty]
+      intro t _ _
+      simp [h_empty]
     · set δ := (sArcOfS S ∪ sVertOfS S).inf' h_ne (fun s => H - s.im)
       have hδ_pos : 0 < δ :=
         (Finset.lt_inf'_iff h_ne).mpr (fun s hs => by linarith [h_below s hs])
       filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
-      intro t ht4 _; push Not; intro s hs
+      intro t ht4 _
+      push Not
+      intro s hs
       calc ε < δ := hε.2
         _ ≤ H - s.im := Finset.inf'_le _ hs
         _ = |(fdBoundary_H H t - s).im| := by
@@ -379,9 +413,11 @@ private theorem tendsto_pvIntegral_seg5
           · exact Filter.Eventually.of_forall fun t ht => by
               rw [Set.mem_Ioc] at ht
               simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn,
-                if_neg (hε t ht.1 ht.2)]; rfl
+                if_neg (hε t ht.1 ht.2)]
+              rfl
           · exact Filter.Eventually.of_forall fun t ht => by
-              rw [Set.mem_Ioc] at ht; exact absurd ht.1 (by linarith [ht.2])
+              rw [Set.mem_Ioc] at ht
+              exact absurd ht.1 (by linarith [ht.2])
       _ = L := seg5_logDeriv_integral_value f hf hH hcusp_nonvan
   exact tendsto_const_nhds.congr' (h_ev.mono fun ε h => h.symm)
 
@@ -393,7 +429,8 @@ private lemma norm_deriv_fdBoundary_H_le
     ‖deriv (fdBoundary_H H) t‖ ≤ max H 1 := by
   have h_norm_cast : ‖(↑H - ↑(Real.sqrt 3) / 2 : ℂ)‖ = H - Real.sqrt 3 / 2 := by
     have hcast : (↑H - ↑(Real.sqrt 3) / 2 : ℂ) = ↑(H - Real.sqrt 3 / 2) := by
-      push_cast; ring
+      push_cast
+      ring
     rw [hcast, Complex.norm_real, Real.norm_of_nonneg (by
       linarith [Real.sqrt_pos_of_pos (by norm_num : (3:ℝ) > 0)])]
   by_cases h1 : t < 1
@@ -408,11 +445,15 @@ private lemma norm_deriv_fdBoundary_H_le
       simp only [norm_mul, Complex.norm_I, mul_one]
       have hexp : ‖exp ((↑Real.pi * (↑t + 1) / 6 : ℂ) * I)‖ = 1 := by
         rw [show (↑Real.pi * (↑t + 1) / 6 : ℂ) * I =
-          ↑(Real.pi * (t + 1) / 6) * I from by push_cast; ring]
+          ↑(Real.pi * (t + 1) / 6) * I from by
+            push_cast
+            ring]
         exact Complex.norm_exp_ofReal_mul_I _
       rw [hexp, one_mul]
       have hpi : ‖(↑Real.pi / 6 : ℂ)‖ = Real.pi / 6 := by
-        rw [show (↑Real.pi / 6 : ℂ) = ↑(Real.pi / 6) from by push_cast; ring,
+        rw [show (↑Real.pi / 6 : ℂ) = ↑(Real.pi / 6) from by
+              push_cast
+              ring,
           Complex.norm_real, Real.norm_of_nonneg (by positivity)]
       rw [hpi]
       exact le_max_of_le_right (by linarith [Real.pi_le_four])
@@ -424,7 +465,8 @@ private lemma norm_deriv_fdBoundary_H_le
         exact le_trans (by linarith [Real.sqrt_nonneg 3]) (le_max_left H 1)
       · push Not at h4
         have h4' : 4 < t := lt_of_le_of_ne h4 (Ne.symm ht_ne4)
-        erw [(fdBoundary_H_hasDerivAt_seg5 H h4').deriv]; rw [norm_one]
+        erw [(fdBoundary_H_hasDerivAt_seg5 H h4').deriv]
+        rw [norm_one]
         exact le_max_right H 1
 
 omit hf in
@@ -448,13 +490,18 @@ private lemma integrableOn_logDeriv_mul_deriv_farSet
       isClosed_iInter fun s => isClosed_iInter fun _ =>
         isClosed_le continuous_const
           (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
-    convert this using 1; ext t; simp only [mem_iInter, mem_setOf_eq]; exact Iff.rfl
+    convert this using 1
+    ext t
+    simp only [mem_iInter, mem_setOf_eq]
+    exact Iff.rfl
   have hK'_meas : MeasurableSet K' := hK'_compact.isClosed.measurableSet
   have h_ne : ∀ t ∈ K', g (γ t) ≠ 0 := by
     intro t ⟨ht_Icc, h_far⟩ h_zero
     have h_in := h_capture t ht_Icc h_zero
     rw [Finset.mem_coe] at h_in
-    have := h_far _ h_in; rw [sub_self, norm_zero] at this; linarith
+    have := h_far _ h_in
+    rw [sub_self, norm_zero] at this
+    linarith
   have h_cont : ContinuousOn (fun t => logDeriv g (γ t)) K' := by
     intro t ht
     apply ContinuousAt.continuousWithinAt
@@ -490,7 +537,8 @@ private lemma integrableOn_logDeriv_mul_deriv_farSet
     rw [norm_mul]
     exact mul_le_mul (ht_max ht) (norm_deriv_fdBoundary_H_le hH ht.1 ht_ne1 ht_ne3 ht_ne4)
       (norm_nonneg _) (norm_nonneg _)
-  · rw [Set.not_nonempty_iff_eq_empty.mp hK'_ne]; exact integrableOn_empty
+  · rw [Set.not_nonempty_iff_eq_empty.mp hK'_ne]
+    exact integrableOn_empty
 
 omit hf in
 private lemma pvIntegrand_intervalIntegrable
@@ -514,7 +562,8 @@ private lemma pvIntegrand_intervalIntegrable
     have ht_Icc : t ∈ Icc (0:ℝ) 5 :=
       uIcc_subset_Icc ha hb (uIoc_subset_uIcc ht_uioc)
     refine ⟨ht_Icc, fun s hs => ?_⟩
-    by_contra h_contra; push Not at h_contra
+    by_contra h_contra
+    push Not at h_contra
     exact h_not_near ⟨s, Finset.mem_coe.mpr hs, h_contra.le⟩
   have hF_K : EqOn F (fun t => logDeriv g (γ t) * deriv γ t) K := by
     intro t ⟨_, h_not_near⟩
@@ -527,7 +576,8 @@ private lemma pvIntegrand_intervalIntegrable
     change cauchyPrincipalValueIntegrandOn S₀ (logDeriv g) γ ε t = 0
     simp only [cauchyPrincipalValueIntegrandOn]
     have h_near : ∃ s ∈ (S₀ : Set ℂ), ‖γ t - s‖ ≤ ε := by
-      by_contra h_far; exact h_not_K ⟨ht_uioc, h_far⟩
+      by_contra h_far
+      exact h_not_K ⟨ht_uioc, h_far⟩
     simp only [Finset.mem_coe] at h_near
     exact if_pos h_near
   have h_int_K' := integrableOn_logDeriv_mul_deriv_farSet f S hH h_capture hε
@@ -536,7 +586,9 @@ private lemma pvIntegrand_intervalIntegrable
     apply MeasurableSet.compl
     suffices h : IsClosed (⋃ s ∈ (S₀ : Set ℂ), {t : ℝ | ‖γ t - s‖ ≤ ε}) by
       convert h.measurableSet using 1
-      ext t; simp only [mem_iUnion, mem_setOf_eq, Finset.mem_coe, exists_prop]; exact Iff.rfl
+      ext t
+      simp only [mem_iUnion, mem_setOf_eq, Finset.mem_coe, exists_prop]
+      exact Iff.rfl
     exact S₀.finite_toSet.isClosed_biUnion fun s _ =>
       isClosed_le (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
         continuous_const
@@ -593,12 +645,14 @@ private lemma modFormComp_ne_zero_at_height
   have hz_pos : 0 < z.im := hz_im ▸ hH_pos
   have h_bridge : modularFormCompOfComplex f z = f ⟨z, hz_pos⟩ := by
     simp only [modularFormCompOfComplex, Function.comp_apply]
-    congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos hz_pos
+    congr 1
+    exact UpperHalfPlane.ofComplex_apply_of_im_pos hz_pos
   intro h_zero
   have h_qmem : Function.Periodic.qParam (1 : ℝ) (↑(⟨z, hz_pos⟩ : ℍ) : ℂ) ∈
       Metric.closedBall (0 : ℂ) (seg5_q_radius_H H) := by
     rw [Metric.mem_closedBall, dist_zero_right, Function.Periodic.norm_qParam]
-    simp only [div_one, seg5_q_radius_H, hz_im]; exact le_refl _
+    simp only [div_one, seg5_q_radius_H, hz_im]
+    exact le_refl _
   have h_qne :
       Function.Periodic.qParam (1 : ℝ) (↑(⟨z, hz_pos⟩ : ℍ) : ℂ) ≠ 0 := by
     simp only [Function.Periodic.qParam, ne_eq]
@@ -642,7 +696,8 @@ private lemma modular_side_h_capture
         (Finset.mem_union_right _ (h_oncurve_vert t ⟨h0, h1⟩ h_zero))
     · push Not at h0
       have h_eq : t = 0 := le_antisymm h0 ht.1
-      subst h_eq; exfalso
+      subst h_eq
+      exfalso
       have h_im : (fdBoundary_H H 0).im = H := by
         rw [fdBoundary_H_eq_seg1_H (show (0:ℝ) ≤ 1 from by norm_num)]
         simp [fdBoundary_seg1_H, add_im, ofReal_im, mul_im, I_re, I_im]
@@ -666,7 +721,8 @@ private lemma modular_side_h_capture
     · push Not at h3
       by_cases h4 : t ≤ 4
       · by_cases h4' : t = 4
-        · subst h4'; exfalso
+        · subst h4'
+          exfalso
           have h_im : (fdBoundary_H H 4).im = H := by
             rw [fdBoundary_H_at_four]
             simp [add_im, ofReal_im, mul_im, I_re, I_im]
@@ -687,7 +743,8 @@ private lemma modular_side_h_capture
               modularFormCompOfComplex f (fdBoundary_H H (4 - t)) = 0 := by
             have := h_F_per (fdBoundary_H H (4 - t) - 1)
             simp only [sub_add_cancel] at this
-            rw [ht_seg4] at h_zero; rwa [this]
+            rw [ht_seg4] at h_zero
+            rwa [this]
           have h_re : (fdBoundary_H H (4 - t)).re = 1/2 := by
             rw [fdBoundary_H_eq_seg1_H (by linarith : 4 - t ≤ 1)]
             simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im,

@@ -113,13 +113,15 @@ def cpvCycle (S : Finset ℂ) (f : ℂ → ℂ) (Γ : ContourCycle) : ℂ :=
 /-- Contour integral of a single curve with multiplicity 1. -/
 theorem contourIntegralCycle_single (f : ℂ → ℂ) (γ : ClosedImmersion) :
     contourIntegralCycle f (Finsupp.single γ 1) = γ.toPath.contourIntegral f := by
-  unfold contourIntegralCycle; rw [Finsupp.sum_single_index] <;> simp
+  unfold contourIntegralCycle
+  rw [Finsupp.sum_single_index] <;> simp
 
 /-- Winding number of a single curve with multiplicity 1. -/
 theorem windingNumberCycle_single (γ : ClosedImmersion) (z : ℂ) :
     windingNumberCycle (Finsupp.single γ 1) z =
       generalizedWindingNumber γ.toPath z := by
-  unfold windingNumberCycle; rw [Finsupp.sum_single_index] <;> simp
+  unfold windingNumberCycle
+  rw [Finsupp.sum_single_index] <;> simp
 
 /-- A null-homologous single curve gives a null-homologous cycle. -/
 theorem isNullHomologousCycle_single (γ : ClosedImmersion) (U : Set ℂ)
@@ -131,7 +133,8 @@ theorem isNullHomologousCycle_single (γ : ClosedImmersion) (U : Set ℂ)
 /-- CPV integral of a single curve with multiplicity 1. -/
 theorem cpvCycle_single (S : Finset ℂ) (f : ℂ → ℂ) (γ : ClosedImmersion) :
     cpvCycle S f (Finsupp.single γ 1) = cauchyPVOn S f γ.toPath := by
-  unfold cpvCycle; rw [Finsupp.sum_single_index] <;> simp
+  unfold cpvCycle
+  rw [Finsupp.sum_single_index] <;> simp
 
 /-! ### Main theorems -/
 
@@ -140,11 +143,9 @@ theorem windingNumberCycle_eq_zero_outside
     {U : Set ℂ} (Γ : ContourCycle) (h_null : IsNullHomologousCycle Γ U)
     {z : ℂ} (hz : z ∉ U) :
     windingNumberCycle Γ z = 0 := by
-  simp only [windingNumberCycle, Finsupp.sum]
+  simp only [windingNumberCycle, Finsupp.sum, ClosedImmersion.toPath_eq]
   exact Finset.sum_eq_zero fun γ hγ => by
-    have := (h_null γ hγ).winding_zero z hz
-    simp only [ClosedImmersion.toPath_eq] at this ⊢
-    rw [this, mul_zero]
+    rw [(h_null γ hγ).winding_zero z hz, mul_zero]
 
 /-! ### Algebraic core for residue theorem -/
 
@@ -161,12 +162,11 @@ private theorem sum_swap_winding_residue (Γ : ContourCycle) (S : Finset ℂ)
   rw [← Finset.sum_comm]
   refine Finset.sum_congr rfl fun s _ => ?_
   simp only [windingNumberCycle, Finsupp.sum]
-  rw [Finset.sum_congr rfl (fun γ _ => show (↑(Γ γ) : ℂ) *
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ.toPath s *
-        residue f s) =
-      2 * ↑Real.pi * I *
-        (↑(Γ γ) * generalizedWindingNumber γ.toPath s *
-          residue f s)
+  rw [Finset.sum_congr rfl (fun γ _ =>
+    show (↑(Γ γ) : ℂ) * (2 * ↑Real.pi * I *
+      generalizedWindingNumber γ.toPath s * residue f s) =
+      2 * ↑Real.pi * I * (↑(Γ γ) *
+        generalizedWindingNumber γ.toPath s * residue f s)
     from by ring), ← Finset.mul_sum, ← Finset.sum_mul]
 
 /-! ### Residue theorem for cycles (simple poles, structural) -/
@@ -187,32 +187,31 @@ theorem generalizedResidueTheorem_simplePoles_cycle_structural
       2 * ↑Real.pi * I * ∑ s ∈ S,
         windingNumberCycle Γ s * residue f s := by
   simp only [contourIntegralCycle, Finsupp.sum]
-  rw [Finset.sum_congr rfl fun γ hγ => show (↑(Γ γ) : ℂ) *
-      γ.toPath.contourIntegral f = (↑(Γ γ) : ℂ) *
-      ∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPath s * residue f s
-    from congr_arg _ (h_comp γ hγ)]
+  rw [Finset.sum_congr rfl fun γ hγ =>
+    congr_arg ((↑(Γ γ) : ℂ) * ·) (h_comp γ hγ)]
   exact sum_swap_winding_residue Γ S f
 
 /-! ### Winding number integrality -/
 
 /-- Winding number of a cycle around a point is an integer, provided each component
-curve's winding number around that point is an integer.
-
-The per-component integrality hypothesis is a standard result for closed piecewise C^1
-curves avoiding the base point; it follows from the exponential trick
-(see `windingNumber_integer_of_piecewise_closed_avoiding` in the old chain). -/
+curve's winding number around that point is an integer. -/
 theorem windingNumberCycle_isInt (Γ : ContourCycle) (z : ℂ)
     (h_int : ∀ γ ∈ Γ.support,
       ∃ n : ℤ, generalizedWindingNumber γ.toPath z = ↑n) :
     ∃ n : ℤ, windingNumberCycle Γ z = ↑n := by
   simp only [windingNumberCycle, Finsupp.sum]
   apply Finset.sum_induction _ (fun x : ℂ => ∃ n : ℤ, x = ↑n)
-  · rintro _ _ ⟨a, rfl⟩ ⟨b, rfl⟩; exact ⟨a + b, by push_cast; ring⟩
+  · rintro _ _ ⟨a, rfl⟩ ⟨b, rfl⟩
+    refine ⟨a + b, ?_⟩
+    push_cast
+    ring
   · exact ⟨0, Int.cast_zero.symm⟩
   · intro γ hγ
     obtain ⟨m, hm⟩ := h_int γ hγ
-    exact ⟨Γ γ * m, by rw [hm]; push_cast; ring⟩
+    refine ⟨Γ γ * m, ?_⟩
+    rw [hm]
+    push_cast
+    ring
 
 /-! ### CPV cycle decomposition -/
 

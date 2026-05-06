@@ -109,8 +109,9 @@ private theorem cpvIntegrand_zero_on_middle (D : SingleCrossingData γ z₀)
   rw [Set.uIoc_of_le (le_of_lt h_mid_lt)] at ht
   simp only [cpvIntegrand]
   rw [if_neg (not_lt.mpr _)]
-  exact D.h_near ε hε_pos hε_lt t (by
-    rw [abs_le]; constructor <;> linarith [ht.1, ht.2])
+  refine D.h_near ε hε_pos hε_lt t ?_
+  rw [abs_le]
+  refine ⟨by linarith [ht.1], by linarith [ht.2]⟩
 
 /-- The cpvIntegrand agrees a.e. with the full integrand on `[0, t₀ - δ]`,
 because the curve is ε-far from `z₀` there (by `h_far`). -/
@@ -131,7 +132,8 @@ private theorem cpvIntegrand_eq_full_left_ae (D : SingleCrossingData γ z₀)
   have hδ_pos := D.hδ_pos ε hε_pos hε_lt
   apply D.h_far ε hε_pos hε_lt t
   · exact ⟨le_of_lt ht_mem.1, le_of_lt (by linarith [D.ht₀.2])⟩
-  · rw [abs_of_nonpos (by linarith)]; linarith
+  · rw [abs_of_nonpos (by linarith)]
+    linarith
 
 /-- The cpvIntegrand agrees a.e. with the full integrand on `[t₀ + δ, 1]`,
 because the curve is ε-far from `z₀` there (by `h_far`). -/
@@ -242,7 +244,8 @@ theorem windingNumber_neg_sixth (D : SingleCrossingData γ z₀)
   rw [D.windingNumber_eq, hL]
   have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
   have hI : (I : ℂ) ≠ 0 := I_ne_zero
-  field_simp; ring
+  field_simp
+  ring
 
 end SingleCrossingData
 

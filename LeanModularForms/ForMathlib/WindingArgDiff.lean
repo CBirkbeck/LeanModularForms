@@ -62,7 +62,7 @@ theorem contourIntegral_inv_eq_sum_log_segRatio
       ∫ t in (0 : ℝ)..1, deriv γ.toPath.extend t / (γ.toPath.extend t - w) := by
     rw [PiecewiseC1Path.contourIntegral]
     refine intervalIntegral.integral_congr (fun t _ => ?_)
-    show (γ.toPath.extend t - w)⁻¹ * deriv γ.toPath.extend t =
+    change (γ.toPath.extend t - w)⁻¹ * deriv γ.toPath.extend t =
          deriv γ.toPath.extend t / (γ.toPath.extend t - w)
     rw [div_eq_mul_inv, mul_comm]
   rw [h_eq_int]
@@ -164,7 +164,8 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
   obtain ⟨d, hd_pos, hd_bd⟩ := hδ
   have h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t ≠ w := fun t ht heq => by
     have := hd_bd t ht
-    rw [heq, sub_self, norm_zero] at this; linarith
+    rw [heq, sub_self, norm_zero] at this
+    linarith
   have hγ_cont : ContinuousOn γ.toPath.extend (Icc (0 : ℝ) 1) :=
     γ.toPath.continuous_extend.continuousOn
   obtain ⟨N, s, hN_pos, hs_zero, hs_N, hs_mono, hs_in, hs_avoid, h_slit, hθ_cont, h_lift⟩ :=
@@ -173,14 +174,14 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
   set θ : ℝ → ℝ := fun t =>
     Complex.arg (γ.toPath.extend 0 - w) +
       ∑ j ∈ Finset.range N,
-        (Complex.log (Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) t)).im with hθ_def
+        (Complex.log (Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) t)).im
   refine ⟨θ, hθ_cont, h_lift, ?_⟩
   -- contourIntegral = ↑(log ‖γ 1‖ - log ‖γ 0‖) + I · ↑(sum Im)
   have h_contour := contourIntegral_inv_decomp γ hN_pos hs_zero hs_N hs_mono hs_in
     hs_avoid h_slit h_int
   -- θ(0) = arg(γ 0 - w)
   have h_θ_zero : θ 0 = Complex.arg (γ.toPath.extend 0 - w) := by
-    show Complex.arg (γ.toPath.extend 0 - w) +
+    change Complex.arg (γ.toPath.extend 0 - w) +
       ∑ j ∈ Finset.range N,
         (Complex.log (Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) 0)).im =
       Complex.arg (γ.toPath.extend 0 - w)
@@ -191,14 +192,15 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
       have h_le : (0 : ℝ) ≤ s j := (hs_in j hj.le).1
       have h_eq_one : Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) 0 = 1 :=
         Complex.segRatio_eq_one_of_le (hs_mono (Nat.le_succ _)) h_le (hs_avoid j hj.le)
-      rw [h_eq_one, Complex.log_one]; rfl
+      rw [h_eq_one, Complex.log_one]
+      rfl
     rw [Finset.sum_eq_zero h_each, add_zero]
   -- θ(1) = arg(γ 0 - w) + sum
   have h_θ_one : θ 1 = Complex.arg (γ.toPath.extend 0 - w) +
       ∑ j ∈ Finset.range N,
         (Complex.log ((γ.toPath.extend (s (j + 1)) - w) /
                       (γ.toPath.extend (s j) - w))).im := by
-    show Complex.arg (γ.toPath.extend 0 - w) +
+    change Complex.arg (γ.toPath.extend 0 - w) +
       ∑ j ∈ Finset.range N,
         (Complex.log (Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) 1)).im = _
     apply congrArg (Complex.arg (γ.toPath.extend 0 - w) + ·)
@@ -214,13 +216,15 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
       ∑ j ∈ Finset.range N,
         (Complex.log ((γ.toPath.extend (s (j + 1)) - w) /
                       (γ.toPath.extend (s j) - w))).im := by
-    rw [h_θ_one, h_θ_zero]; ring
+    rw [h_θ_one, h_θ_zero]
+    ring
   -- For closed γ: real part of contour integral = 0
   have h_closed_eq : γ.toPath.extend 1 = γ.toPath.extend 0 := by
     rw [γ.toPath.extend_one, γ.toPath.extend_zero]
   have h_re_zero : Real.log ‖γ.toPath.extend 1 - w‖ -
       Real.log ‖γ.toPath.extend 0 - w‖ = 0 := by
-    rw [h_closed_eq]; ring
+    rw [h_closed_eq]
+    ring
   -- Apply hasGeneralizedWindingNumber_of_avoids
   have hδ' : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - w‖ :=
     ⟨d, hd_pos, hd_bd⟩
@@ -228,10 +232,9 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
   rw [h_contour, h_re_zero, Complex.ofReal_zero, zero_add, ← h_θ_diff] at h_w
   -- h_w : HasGeneralizedWindingNumber γ w ((2 π I)⁻¹ * (I * ↑(θ 1 - θ 0)))
   -- We want : HasGeneralizedWindingNumber γ w (↑(θ 1 - θ 0) / (2 π))
-  have hI : Complex.I ≠ 0 := Complex.I_ne_zero
-  have hπ : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
   have h_value_eq : ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) =
       (2 * ↑Real.pi * Complex.I)⁻¹ * (Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ)) := by
+    have : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
     field_simp
   rw [h_value_eq]
   exact h_w
@@ -253,11 +256,12 @@ theorem hasGeneralizedWindingNumber_integer_of_closed
   -- exp(I θ(0)) = exp(I θ(1)).
   have h_eq_endpoints : γ.toPath.extend 1 = γ.toPath.extend 0 := by
     rw [γ.toPath.extend_one, γ.toPath.extend_zero]
-  obtain ⟨d, hd_pos, hd_bd⟩ := hδ
+  obtain ⟨_, _, hd_bd⟩ := hδ
   have h_avoid_0 : γ.toPath.extend 0 - w ≠ 0 := by
     intro heq
     have := hd_bd 0 ⟨le_refl _, zero_le_one⟩
-    rw [heq, norm_zero] at this; linarith
+    rw [heq, norm_zero] at this
+    linarith
   have h_norm_ne : ((‖γ.toPath.extend 0 - w‖ : ℝ) : ℂ) ≠ 0 :=
     Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr h_avoid_0)
   have h_lift_0 := h_lift 0 ⟨le_refl _, zero_le_one⟩
@@ -277,17 +281,21 @@ theorem hasGeneralizedWindingNumber_integer_of_closed
   -- Hence exp(I (θ(1) − θ(0))) = 1.
   have h_exp_diff_one : Complex.exp (Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ)) = 1 := by
     have h_split : Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ) =
-        Complex.I * (θ 1 : ℂ) - Complex.I * (θ 0 : ℂ) := by push_cast; ring
+        Complex.I * (θ 1 : ℂ) - Complex.I * (θ 0 : ℂ) := by
+      push_cast
+      ring
     rw [h_split, Complex.exp_sub, h_exp_eq, div_self (Complex.exp_ne_zero _)]
   -- `Complex.exp_eq_one_iff` gives the integer; cancel I and 2π to extract n.
   obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp h_exp_diff_one
   have h_diff_eq : ((θ 1 - θ 0 : ℝ) : ℂ) = (n : ℂ) * (2 * (Real.pi : ℂ)) := by
     have h_recast : Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ) =
-        Complex.I * ((n : ℂ) * (2 * (Real.pi : ℂ))) := by rw [hn]; ring
+        Complex.I * ((n : ℂ) * (2 * (Real.pi : ℂ))) := by
+      rw [hn]
+      ring
     exact mul_left_cancel₀ Complex.I_ne_zero h_recast
   have h_winding_eq : ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) = (n : ℂ) := by
     rw [h_diff_eq]
-    have hπ : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
+    have : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
     field_simp
   refine ⟨n, ?_⟩
   rw [← h_winding_eq]
@@ -317,7 +325,8 @@ theorem intervalIntegrable_div_lipschitz
       (ae_restrict_of_ae (Filter.Eventually.of_forall h_bd))
   have h_avoid : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t - w ≠ 0 := fun t ht heq => by
     have := h_dist_lb t ht
-    rw [heq, norm_zero] at this; linarith
+    rw [heq, norm_zero] at this
+    linarith
   have h_cont : ContinuousOn (fun t => (γ.toPath.extend t - w)⁻¹) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
     exact (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const).inv₀ h_avoid
@@ -363,7 +372,8 @@ theorem generalizedWindingNumber_locally_const_of_closed
   have h_eq_w : generalizedWindingNumber γ w = (n_w : ℂ) := h_n_w.eq
   -- |((n_w' - n_w : ℤ) : ℂ)| < 1/2 < 1, so n_w' - n_w = 0
   have h_dist_int : dist ((n_w' : ℂ)) ((n_w : ℂ)) < 1 / 2 := by
-    rw [← h_eq_w', ← h_eq_w]; exact h_close_w'
+    rw [← h_eq_w', ← h_eq_w]
+    exact h_close_w'
   have h_int_eq : n_w' = n_w := by
     by_contra h_ne
     have h_diff_ne : (n_w' - n_w : ℤ) ≠ 0 := sub_ne_zero.mpr h_ne
@@ -371,8 +381,9 @@ theorem generalizedWindingNumber_locally_const_of_closed
       have := Int.one_le_abs h_diff_ne
       exact_mod_cast this
     have h_norm_eq : ‖((n_w' : ℂ) - (n_w : ℂ))‖ = |((n_w' - n_w : ℤ) : ℝ)| := by
-      rw [show ((n_w' : ℂ) - (n_w : ℂ)) = (((n_w' - n_w : ℤ) : ℂ)) by push_cast; ring,
-          Complex.norm_intCast]
+      rw [show ((n_w' : ℂ) - (n_w : ℂ)) = (((n_w' - n_w : ℤ) : ℂ)) by
+            push_cast
+            ring, Complex.norm_intCast]
     rw [Complex.dist_eq] at h_dist_int
     rw [h_norm_eq] at h_dist_int
     linarith
