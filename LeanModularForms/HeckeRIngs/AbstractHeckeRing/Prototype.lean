@@ -78,9 +78,13 @@ lemma eq_iff (g h : P.Δ) : (⟦g⟧ : HeckeCoset P) = ⟦h⟧ ↔
     toSet P (⟦g⟧ : HeckeCoset P) = doubleCoset (g : G) P.H P.H := rfl
 
 lemma toSet_eq_rep (D : HeckeCoset P) :
-    toSet P D = doubleCoset (rep P D : G) P.H P.H := by sorry
+    toSet P D = doubleCoset (rep P D : G) P.H P.H := by
+  conv_lhs => rw [← Quotient.out_eq D]
+  exact toSet_mk P (rep P D)
 
-lemma rep_mem (D : HeckeCoset P) : (rep P D : G) ∈ toSet P D := by sorry
+lemma rep_mem (D : HeckeCoset P) : (rep P D : G) ∈ toSet P D := by
+  rw [toSet_eq_rep]
+  exact mem_doubleCoset_self _ _ _
 
 /-- Induction: suffices to prove for `⟦g⟧`, all `g : Δ`. -/
 protected lemma ind {motive : HeckeCoset P → Prop}
