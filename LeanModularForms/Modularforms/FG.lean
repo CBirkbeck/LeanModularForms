@@ -105,10 +105,14 @@ theorem SerreF_holo : MDiff (serre_D 10 F) := by unfold F; fun_prop
 theorem SerreG_holo : MDiff (serre_D 10 G) := by rw [G_eq]; fun_prop
 
 theorem FReal_Differentiable {t : ℝ} (ht : 0 < t) : DifferentiableAt ℝ FReal t := by
-  sorry
+  have hF : DifferentiableAt ℝ F.resToImagAxis t :=
+    ResToImagAxis.Differentiable F F_holo t ht
+  exact (Complex.reCLM.differentiable.differentiableAt).comp t hF
 
 theorem GReal_Differentiable {t : ℝ} (ht : 0 < t) : DifferentiableAt ℝ GReal t := by
-  sorry
+  have hG : DifferentiableAt ℝ G.resToImagAxis t :=
+    ResToImagAxis.Differentiable G G_holo t ht
+  exact (Complex.reCLM.differentiable.differentiableAt).comp t hG
 
 theorem F_aux : D F = 5 * 6⁻¹ * E₂ ^ 3 * E₄.toFun ^ 2 - 5 * 2⁻¹ * E₂ ^ 2 * E₄.toFun * E₆.toFun
     + 5 * 6⁻¹ * E₂ * E₄.toFun ^ 3 + 5 * 3⁻¹ * E₂ * E₆.toFun ^ 2 - 5 * 6⁻¹ * E₄.toFun^2 * E₆.toFun
