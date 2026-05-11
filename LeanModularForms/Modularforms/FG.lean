@@ -70,12 +70,41 @@ noncomputable def GReal (t : ℝ) : ℝ := (G.resToImagAxis t).re
 
 noncomputable def FmodGReal (t : ℝ) : ℝ := (FReal t) / (GReal t)
 
-theorem F_eq_FReal {t : ℝ} (ht : 0 < t) : F.resToImagAxis t = FReal t := by sorry
+private lemma F_imag_axis_real_aux : ResToImagAxis.Real F :=
+  ResToImagAxis.Real.pow
+    (ResToImagAxis.Real.sub
+      (ResToImagAxis.Real.mul E₂_imag_axis_real E₄_imag_axis_real)
+      E₆_imag_axis_real) 2
 
-theorem G_eq_GReal {t : ℝ} (ht : 0 < t) : G.resToImagAxis t = GReal t := by sorry
+theorem F_eq_FReal {t : ℝ} (ht : 0 < t) : F.resToImagAxis t = FReal t := by
+  have him : (F.resToImagAxis t).im = 0 := F_imag_axis_real_aux t ht
+  rw [show (FReal t : ℂ) = ⟨(F.resToImagAxis t).re, 0⟩ from rfl]
+  exact Complex.ext rfl him
+
+private lemma G_imag_axis_real_aux : ResToImagAxis.Real G := by
+  have hH2_sq : ResToImagAxis.Real (H₂ ^ 2) :=
+    ResToImagAxis.Real.pow H₂_imag_axis_real 2
+  have hH2_cube : ResToImagAxis.Real (H₂ ^ 3) :=
+    ResToImagAxis.Real.pow H₂_imag_axis_real 3
+  have hH4_sq : ResToImagAxis.Real (H₄ ^ 2) :=
+    ResToImagAxis.Real.pow H₄_imag_axis_real 2
+  have hpoly : ResToImagAxis.Real ((2 : ℝ) • H₂ ^ 2 + (5 : ℝ) • H₂ * H₄ +
+      (5 : ℝ) • H₄ ^ 2) :=
+    ResToImagAxis.Real.add
+      (ResToImagAxis.Real.add hH2_sq.smul
+        (ResToImagAxis.Real.mul H₂_imag_axis_real.smul H₄_imag_axis_real))
+      hH4_sq.smul
+  exact ResToImagAxis.Real.mul hH2_cube hpoly
+
+theorem G_eq_GReal {t : ℝ} (ht : 0 < t) : G.resToImagAxis t = GReal t := by
+  have him : (G.resToImagAxis t).im = 0 := G_imag_axis_real_aux t ht
+  rw [show (GReal t : ℂ) = ⟨(G.resToImagAxis t).re, 0⟩ from rfl]
+  exact Complex.ext rfl him
 
 theorem FmodG_eq_FmodGReal {t : ℝ} (ht : 0 < t) :
-    FmodGReal t = (F.resToImagAxis t) / (G.resToImagAxis t) := by sorry
+    FmodGReal t = (F.resToImagAxis t) / (G.resToImagAxis t) := by
+  show ((FReal t / GReal t : ℝ) : ℂ) = F.resToImagAxis t / G.resToImagAxis t
+  rw [Complex.ofReal_div, ← F_eq_FReal ht, ← G_eq_GReal ht]
 
 /--
 `F = 9 * (D E₄)²` by Ramanujan's formula.
