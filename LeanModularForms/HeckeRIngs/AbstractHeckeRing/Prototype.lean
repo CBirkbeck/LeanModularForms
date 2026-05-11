@@ -207,12 +207,19 @@ noncomputable instance : Ring (HeckeAlg P) where
   left_distrib _ _ _ := by sorry
   right_distrib _ _ _ := by sorry
   zero_mul _ := by simp [HMul.hMul, Mul.mul, Finsupp.sum_zero_index]
-  mul_zero _ := by sorry
+  mul_zero _ := by simp [HMul.hMul, Mul.mul, Finsupp.sum_zero_index, Finsupp.sum_zero]
   natCast n := n • Finsupp.single (HeckeCoset.one P) 1
   intCast n := n • Finsupp.single (HeckeCoset.one P) 1
   natCast_zero := by simp
-  natCast_succ _ := by sorry
-  intCast_negSucc _ := by sorry
+  natCast_succ n := by
+    change (n + 1) • Finsupp.single (HeckeCoset.one P) 1 =
+      n • Finsupp.single (HeckeCoset.one P) 1 + Finsupp.single (HeckeCoset.one P) 1
+    rw [add_smul, one_smul]
+  intCast_negSucc n := by
+    change (Int.negSucc n) • Finsupp.single (HeckeCoset.one P) 1 =
+      -((n + 1 : ℕ) • Finsupp.single (HeckeCoset.one P) 1)
+    show ((Int.negSucc n : ℤ) • _ : HeckeAlg P) = _
+    rw [show (Int.negSucc n : ℤ) = -((n + 1 : ℕ) : ℤ) from rfl, neg_smul, natCast_zsmul]
   __ := inferInstanceAs (AddCommGroup (HeckeAlg P))
 
 -- ═══════════════════════════════════════════════════════════
