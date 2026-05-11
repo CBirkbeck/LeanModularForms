@@ -18322,6 +18322,24 @@ private lemma joint_eigenspace_orthogonal
   exact eigenforms_orthogonal_of_ne_eigenvalues χ f.prop g.prop hf_ne hg_ne hn_cop
     hf_eq hg_eq hn_diff
 
+private lemma joint_eigenspace_subset_isCommonEigenfunction
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    [FiniteDimensional ℂ (cuspFormCharSpace k χ)]
+    (ev : CoprimeIndex N → ℂ)
+    {f : cuspFormCharSpace k χ}
+    (hf : f ∈ ⨅ i, Module.End.eigenspace (heckeFamily k χ i) (ev i)) :
+    ∀ n : ℕ+, Nat.Coprime n.val N →
+      haveI : NeZero n.val := ⟨n.pos.ne'⟩
+      ∃ a : ℂ, heckeT_n_cusp k n.val (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
+        a • (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) := by
+  intro n hn_cop
+  haveI : NeZero n.val := ⟨n.pos.ne'⟩
+  refine ⟨ev ⟨n, hn_cop⟩, ?_⟩
+  have hf_mem : f ∈ Module.End.eigenspace (heckeFamily k χ ⟨n, hn_cop⟩) (ev ⟨n, hn_cop⟩) :=
+    (Submodule.mem_iInf _).mp hf _
+  have h_eq := Module.End.mem_eigenspace_iff.mp hf_mem
+  exact congr_arg Subtype.val h_eq
+
 theorem exists_simultaneous_eigenform_basis
     (χ : (ZMod N)ˣ →* ℂˣ)
     [FiniteDimensional ℂ (cuspFormCharSpace k χ)] :
@@ -18330,10 +18348,104 @@ theorem exists_simultaneous_eigenform_basis
       (∀ f ∈ B, IsCommonEigenfunctionCusp k f) ∧
       (∀ f g, f ∈ B → g ∈ B → f ≠ g → petN f g = 0) := by
   classical
-  have h_top := heckeFamily_joint_eigenspace_top k χ
+  letI ipCore : InnerProductSpace.Core ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
+    petN_innerProductCore
+  letI : NormedAddCommGroup (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
+    @InnerProductSpace.Core.toNormedAddCommGroup ℂ _ _ _ _ ipCore
+  letI : InnerProductSpace ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
+    InnerProductSpace.ofCore (𝕜 := ℂ)
+      (F := CuspForm ((Gamma1 N).map (mapGL ℝ)) k) inferInstance
   have h_internal := heckeFamily_directSum_isInternal (k := k) χ
-  have h_indep := heckeFamily_iSupIndep_iInf_eigenspace (k := k) χ
-  have h_iSup_top := heckeFamily_iSup_iInf_eigenspace_eq_top (k := k) χ
-  sorry
+  let W : (CoprimeIndex N → ℂ) → Submodule ℂ (cuspFormCharSpace k χ) :=
+    fun ev => ⨅ i, Module.End.eigenspace (heckeFamily k χ i) (ev i)
+  let evToBasis : (CoprimeIndex N → ℂ) → Type := fun ev => Fin (Module.finrank ℂ (W ev))
+  let basisAtEv : ∀ ev, Module.Basis (evToBasis ev) ℂ (W ev) :=
+    fun ev => (stdOrthonormalBasis ℂ (W ev)).toBasis
+  let onbAtEv : ∀ ev, OrthonormalBasis (evToBasis ev) ℂ (W ev) :=
+    fun ev => stdOrthonormalBasis ℂ (W ev)
+  let bigBasis : Module.Basis (Σ ev, evToBasis ev) ℂ (cuspFormCharSpace k χ) :=
+    h_internal.collectedBasis basisAtEv
+  have h_finite : Finite (Σ ev, evToBasis ev) := Module.Finite.finite_basis bigBasis
+  haveI : Fintype (Σ ev, evToBasis ev) := Fintype.ofFinite _
+  refine ⟨(Finset.univ : Finset (Σ ev, evToBasis ev)).image
+    (fun x => ((bigBasis x : cuspFormCharSpace k χ) :
+      CuspForm ((Gamma1 N).map (mapGL ℝ)) k)), ?_, ?_, ?_⟩
+  · intro f hf
+    rw [Finset.mem_image] at hf
+    obtain ⟨x, _, rfl⟩ := hf
+    exact (bigBasis x).property
+  · intro f hf
+    rw [Finset.mem_image] at hf
+    obtain ⟨x, _, rfl⟩ := hf
+    have hmem : (bigBasis x : cuspFormCharSpace k χ) ∈ W x.1 :=
+      h_internal.collectedBasis_mem basisAtEv x
+    intro n hn_cop
+    haveI : NeZero n.val := ⟨n.pos.ne'⟩
+    exact joint_eigenspace_subset_isCommonEigenfunction χ x.1 hmem n hn_cop
+  · intro f g hf hg hfg
+    rw [Finset.mem_image] at hf hg
+    obtain ⟨x, _, hx⟩ := hf
+    obtain ⟨y, _, hy⟩ := hg
+    subst hx hy
+    by_cases hxy_fst : x.1 = y.1
+    · obtain ⟨ev_x, ix⟩ := x
+      obtain ⟨ev_y, iy⟩ := y
+      simp only at hxy_fst
+      subst hxy_fst
+      have hi_ne : ix ≠ iy := fun h => hfg (by subst h; rfl)
+      have h_basis_eq_onb : ∀ (j : Fin (Module.finrank ℂ (W ev_x))),
+          (basisAtEv ev_x j : W ev_x) = onbAtEv ev_x j := by
+        intro j
+        show ((stdOrthonormalBasis ℂ (W ev_x)).toBasis j : W ev_x) =
+          stdOrthonormalBasis ℂ (W ev_x) j
+        exact OrthonormalBasis.coe_toBasis (stdOrthonormalBasis ℂ (W ev_x)) ▸ rfl
+      have h_inner_W : @inner ℂ (W ev_x) _ (onbAtEv ev_x ix) (onbAtEv ev_x iy) = 0 :=
+        (onbAtEv ev_x).orthonormal.2 hi_ne
+      have h_inner_eq : @inner ℂ (W ev_x) _ (basisAtEv ev_x ix) (basisAtEv ev_x iy) =
+          @inner ℂ (W ev_x) _ (onbAtEv ev_x ix) (onbAtEv ev_x iy) := by
+        congr 1 <;> exact h_basis_eq_onb _
+      have h_inner_zero : @inner ℂ (W ev_x) _ (basisAtEv ev_x ix) (basisAtEv ev_x iy) = 0 := by
+        rw [h_inner_eq, h_inner_W]
+      have h_collect_x :
+          (bigBasis ⟨ev_x, ix⟩ : cuspFormCharSpace k χ) =
+            ((basisAtEv ev_x ix : W ev_x) : cuspFormCharSpace k χ) := by
+        show (h_internal.collectedBasis basisAtEv ⟨ev_x, ix⟩ : cuspFormCharSpace k χ) = _
+        rw [h_internal.collectedBasis_coe basisAtEv]
+      have h_collect_y :
+          (bigBasis ⟨ev_x, iy⟩ : cuspFormCharSpace k χ) =
+            ((basisAtEv ev_x iy : W ev_x) : cuspFormCharSpace k χ) := by
+        show (h_internal.collectedBasis basisAtEv ⟨ev_x, iy⟩ : cuspFormCharSpace k χ) = _
+        rw [h_internal.collectedBasis_coe basisAtEv]
+      have h_pet_eq : petN
+          ((bigBasis ⟨ev_x, ix⟩ : cuspFormCharSpace k χ) :
+            CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+          ((bigBasis ⟨ev_x, iy⟩ : cuspFormCharSpace k χ) :
+            CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
+          @inner ℂ (cuspFormCharSpace k χ) _
+            (bigBasis ⟨ev_x, ix⟩) (bigBasis ⟨ev_x, iy⟩) := rfl
+      have h_inner_lift :
+          @inner ℂ (cuspFormCharSpace k χ) _
+            (bigBasis ⟨ev_x, ix⟩) (bigBasis ⟨ev_x, iy⟩) =
+          @inner ℂ (W ev_x) _ (basisAtEv ev_x ix) (basisAtEv ev_x iy) := by
+        rw [h_collect_x, h_collect_y]
+        rfl
+      rw [h_pet_eq, h_inner_lift, h_inner_zero]
+    · have hx_mem : (bigBasis x : cuspFormCharSpace k χ) ∈ W x.1 :=
+        h_internal.collectedBasis_mem basisAtEv x
+      have hy_mem : (bigBasis y : cuspFormCharSpace k χ) ∈ W y.1 :=
+        h_internal.collectedBasis_mem basisAtEv y
+      have hbb_x_ne : (bigBasis x : cuspFormCharSpace k χ) ≠ 0 := bigBasis.ne_zero x
+      have hbb_y_ne : (bigBasis y : cuspFormCharSpace k χ) ≠ 0 := bigBasis.ne_zero y
+      have hx_ne : ((bigBasis x : cuspFormCharSpace k χ) :
+          CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ≠ 0 := by
+        intro h
+        apply hbb_x_ne
+        exact Subtype.ext h
+      have hy_ne : ((bigBasis y : cuspFormCharSpace k χ) :
+          CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ≠ 0 := by
+        intro h
+        apply hbb_y_ne
+        exact Subtype.ext h
+      exact joint_eigenspace_orthogonal χ hxy_fst hx_mem hy_mem hx_ne hy_ne
 
 end HeckeRing.GL2
