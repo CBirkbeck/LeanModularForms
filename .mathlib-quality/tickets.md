@@ -991,6 +991,21 @@ Sorry inventory in SMO-critical files (after marathon):
 - Newforms.lean: 2 (mainLemma 2563, POST-5 4475) - unchanged
 - BlockBijection.lean: 1 (line 8851, unrelated)
 
+**Additional marathon contribution**:
+`strongMultiplicityOne_of_analyticContradiction_of_newSubspaceZeroCriterion`
+added at end of `Newforms.lean`.  Sorry-free conditional SMO taking two
+named obligations:
+- `h_zero` — newSubspace zero criterion (the spectral/adjoint side; would
+  be supplied by T205-d + T207 in the unconditional proof)
+- `h_ana` — `Newform.AnalyticContradiction` (the analytic L-function side)
+
+Axioms: `[propext, Classical.choice, Quot.sound]` — no `sorryAx`.
+
+This is the lowest-level conditional formulation of SMO available;
+discharging both hypotheses closes SMO unconditionally.  T207 closure
+brings the spectral hypothesis discharge within reach (modulo T205-d),
+and the analytic side awaits Mathlib's Hecke/L-function machinery.
+
 # Marathon recon results (2026-05-11)
 
 After detailed exploration of the codebase against the reviewer's plan,
