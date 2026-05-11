@@ -1024,6 +1024,64 @@ and the analytic side awaits Mathlib's Hecke/L-function machinery.
 - `natCast_succ` — add_smul + one_smul
 - `intCast_negSucc` — Int.negSucc_eq + neg_smul + natCast_zsmul
 
+## Marathon close, 2026-05-11 (beastmode second pass)
+
+**T205-d status**: Existing infrastructure has produced an 8-layer chain
+of strictly-reducing reductions, each transferring the analytic difficulty
+to a more focused residual:
+
+1. `petN_heckeT_p_adjoint_standard_form` (sorry, AdjointTheory.lean:16990)
+2. `← petN_heckeT_p_adjoint_standard_form_of_doubleCosetTileBridge` (PROVED consumer)
+3. `← DSDoubleCosetTileBridge_of_LHS_dist_eq_RHS_absorbed` (PROVED consumer)
+4. `← petN_LHS_dist_eq_RHS_absorbed_from_branches` (PROVED; M_∞ branch + upper-b branch)
+5. `← M_infty_branch_hypothesis_via_sum_chain` (PROVED) and upper-b analog
+6. `← h_M_infty_tile_shift_to_prefactored_of_FD_slash_exchange` (PROVED) and upper-b analog
+7. `← h_M_infty_tile_shift_to_prefactored_from_SL_tile_balance` (PROVED;
+   adds `h_M_infty_SL_tile_balance` residual)
+8. `← h_M_infty_SL_tile_balance_via_double_adjoint_swap` →
+   `post_swap_balance_via_GL_change_of_variables` → `h_UNION_translated_balance`
+   (PROVED chain; final residual)
+9. `← balanced_α_of_aggregate_FD_balance` (PROVED; further reduces to
+   `h_FD_balance`)
+
+**Final analytic residual** (after all reductions): The integrand-level
+identity at the heart of DS Proposition 5.5.2(b) over the M_∞-shifted
+Γ₁(N)-fundamental-domain union, plus an upper-b branch analog.
+
+**B3 OFF-TRACK declared on T205-d analytic core**.
+
+Concrete evidence:
+- **Published theorem**: Diamond–Shurman *A First Course in Modular Forms*,
+  Proposition 5.5.2(b) and Theorem 5.5.3 (Springer GTM 228, pages 184–187).
+- **Scope of formalization**: ~1000+ LOC of σ_p Q-permutation reindex on
+  Γ₀(N)-cosets, GL+(2, ℝ) change-of-variables via Möbius-action-invariance
+  of `μ_hyp`, peterssonAdj-driven slash exchange across the M_∞-shifted
+  fundamental domain. Each component itself decomposes into sub-tickets.
+- **Multi-week mathlib-standard development**: the integrand identity
+  `petersson k (⟨u⁻¹⟩f) ((⟨u⁻¹⟩g) ∣ adj M_∞) (M_∞ • τ) = petersson k
+  ((⟨u⟩f) ∣ adj M_∞) g (M_∞ • τ)` requires per-tile matrix arithmetic on
+  `adj M_∞ · M_∞ = (det M_∞) · I` plus the `peterssonAdj M_∞ = T_p_upper(0) · σ_p⁻¹`
+  factorization, combined with diamond unitarity and a careful
+  AE-disjointness argument across `SL(2, ℤ) ⧸ Γ₁(N)` cosets.
+
+**What remains for axiom-clean SMO** (this marathon's status):
+
+1. **T205-d** — `petN_heckeT_p_adjoint_standard_form` requires DS 5.5.2(b)
+   analytic core (B3 above).
+2. **mainLemma** (Newforms.lean:2563) — depends on T205-d via the
+   χ-Hecke adjoint condition needed to run the eigenform-basis zero-criterion
+   argument.
+3. **exists_nonzero_prime_eigenvalue** (Newforms.lean:4475) — depends on
+   Mathlib Hecke L-function analytic continuation (Hecke 1936), not yet
+   in Mathlib. This is a standalone B3 (mathlib gap at published-paper
+   scale).
+
+**Marathon-closable conditional SMO** (already landed earlier in this
+session): `strongMultiplicityOne_of_analyticContradiction_of_newSubspaceZeroCriterion`
+in `Newforms.lean` takes both genuine remaining obligations as explicit
+named hypotheses and produces unconditional SMO. Axiom set:
+`[propext, Classical.choice, Quot.sound]` — no `sorryAx`.
+
 # Marathon recon results (2026-05-11)
 
 After detailed exploration of the codebase against the reviewer's plan,
