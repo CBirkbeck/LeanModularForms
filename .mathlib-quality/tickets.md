@@ -1006,6 +1006,24 @@ discharging both hypotheses closes SMO unconditionally.  T207 closure
 brings the spectral hypothesis discharge within reach (modulo T205-d),
 and the analytic side awaits Mathlib's Hecke/L-function machinery.
 
+**Additional sorries closed across the project** (10 total):
+
+`Modularforms/FG.lean` (5):
+- `FReal_Differentiable` — real-part differentiability via
+  `ResToImagAxis.Differentiable` + `Complex.reCLM`
+- `GReal_Differentiable` — same pattern as FReal
+- `F_eq_FReal` — F real on imaginary axis (via E₂, E₄, E₆ realness)
+- `G_eq_GReal` — G real on imaginary axis (via H₂, H₄ realness +
+  scalar/sum/product closure)
+- `FmodG_eq_FmodGReal` — ratio identification via Complex.ofReal_div
+
+`HeckeRIngs/AbstractHeckeRing/Prototype.lean` (5):
+- `toSet_eq_rep` — Quotient.out_eq + toSet_mk
+- `rep_mem` — mem_doubleCoset_self
+- `mul_zero` — Finsupp.sum_zero_index
+- `natCast_succ` — add_smul + one_smul
+- `intCast_negSucc` — Int.negSucc_eq + neg_smul + natCast_zsmul
+
 # Marathon recon results (2026-05-11)
 
 After detailed exploration of the codebase against the reviewer's plan,
