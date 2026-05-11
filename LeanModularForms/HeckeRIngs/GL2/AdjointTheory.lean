@@ -18255,6 +18255,73 @@ private lemma heckeFamily_directSum_isInternal
     (heckeFamily_iSupIndep_iInf_eigenspace χ)
     (heckeFamily_iSup_iInf_eigenspace_eq_top χ)
 
+private lemma heckeT_n_eigenvalue_chi_hecke
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hf : f ∈ cuspFormCharSpace k χ) (hf_ne : f ≠ 0)
+    {n : ℕ} [NeZero n] (hn : Nat.Coprime n N) {a : ℂ}
+    (hf_eig : heckeT_n_cusp k n f = a • f) :
+    starRingEnd ℂ a = (↑(χ (ZMod.unitOfCoprime n hn))⁻¹ : ℂ) * a := by
+  have h_adj := heckeT_n_adjoint_on_charSpace χ n hn hf hf
+  rw [hf_eig] at h_adj
+  rw [petN_conj_smul_left', petN_smul_right] at h_adj
+  rw [← mul_assoc] at h_adj
+  have hpos : petN f f ≠ 0 := fun hpet => hf_ne (petN_definite f hpet)
+  exact mul_right_cancel₀ hpos h_adj
+
+private lemma eigenforms_orthogonal_of_ne_eigenvalues
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    {f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hf_char : f ∈ cuspFormCharSpace k χ) (hg_char : g ∈ cuspFormCharSpace k χ)
+    (hf_ne : f ≠ 0) (hg_ne : g ≠ 0)
+    {n : ℕ} [NeZero n] (hn : Nat.Coprime n N) {a b : ℂ}
+    (hf_eig : heckeT_n_cusp k n f = a • f)
+    (hg_eig : heckeT_n_cusp k n g = b • g)
+    (h_diff_ab : a ≠ b) :
+    petN f g = 0 := by
+  refine eigenforms_orthogonal_of_distinct_eigenvalues χ f g hf_char hg_char hn
+    a b hf_eig hg_eig ?_
+  intro h_eq
+  have h_chi_f : starRingEnd ℂ a = (↑(χ (ZMod.unitOfCoprime n hn))⁻¹ : ℂ) * a :=
+    heckeT_n_eigenvalue_chi_hecke χ hf_char hf_ne hn hf_eig
+  rw [h_chi_f] at h_eq
+  have hχ_ne : (↑(χ (ZMod.unitOfCoprime n hn))⁻¹ : ℂ) ≠ 0 := by
+    exact_mod_cast Units.ne_zero ((χ (ZMod.unitOfCoprime n hn))⁻¹ : ℂˣ)
+  exact h_diff_ab (mul_left_cancel₀ hχ_ne h_eq)
+
+private lemma joint_eigenspace_orthogonal
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    [FiniteDimensional ℂ (cuspFormCharSpace k χ)]
+    {ev₁ ev₂ : CoprimeIndex N → ℂ} (h_ne : ev₁ ≠ ev₂)
+    {f g : cuspFormCharSpace k χ}
+    (hf : f ∈ ⨅ i, Module.End.eigenspace (heckeFamily k χ i) (ev₁ i))
+    (hg : g ∈ ⨅ i, Module.End.eigenspace (heckeFamily k χ i) (ev₂ i))
+    (hf_ne : (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ≠ 0)
+    (hg_ne : (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ≠ 0) :
+    petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+      (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = 0 := by
+  obtain ⟨n_idx, hn_diff⟩ := Function.ne_iff.mp h_ne
+  obtain ⟨n_pn, hn_cop⟩ := n_idx
+  haveI : NeZero n_pn.val := ⟨n_pn.pos.ne'⟩
+  have hf_mem : f ∈ Module.End.eigenspace (heckeFamily k χ ⟨n_pn, hn_cop⟩) (ev₁ ⟨n_pn, hn_cop⟩) :=
+    (Submodule.mem_iInf _).mp hf _
+  have hg_mem : g ∈ Module.End.eigenspace (heckeFamily k χ ⟨n_pn, hn_cop⟩) (ev₂ ⟨n_pn, hn_cop⟩) :=
+    (Submodule.mem_iInf _).mp hg _
+  have hf_eq_sub : heckeFamily k χ ⟨n_pn, hn_cop⟩ f = ev₁ ⟨n_pn, hn_cop⟩ • f :=
+    Module.End.mem_eigenspace_iff.mp hf_mem
+  have hg_eq_sub : heckeFamily k χ ⟨n_pn, hn_cop⟩ g = ev₂ ⟨n_pn, hn_cop⟩ • g :=
+    Module.End.mem_eigenspace_iff.mp hg_mem
+  have hf_eq : heckeT_n_cusp k n_pn.val (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
+      ev₁ ⟨n_pn, hn_cop⟩ • (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) := by
+    have := congr_arg Subtype.val hf_eq_sub
+    exact this
+  have hg_eq : heckeT_n_cusp k n_pn.val (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
+      ev₂ ⟨n_pn, hn_cop⟩ • (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) := by
+    have := congr_arg Subtype.val hg_eq_sub
+    exact this
+  exact eigenforms_orthogonal_of_ne_eigenvalues χ f.prop g.prop hf_ne hg_ne hn_cop
+    hf_eq hg_eq hn_diff
+
 theorem exists_simultaneous_eigenform_basis
     (χ : (ZMod N)ˣ →* ℂˣ)
     [FiniteDimensional ℂ (cuspFormCharSpace k χ)] :
