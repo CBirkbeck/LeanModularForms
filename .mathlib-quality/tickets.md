@@ -33,6 +33,39 @@ See `docs/plans/strong-multiplicity-one.md` for the master 9-phase plan and
 | Blocked | 5 | Structural or gated on other epics |
 | Open | 15 | Path forward to SMO |
 
+## Reviewer feedback integrated 2026-05-11
+
+A frontier-LLM expert review (`.mathlib-quality/expert-review/2026-05-11/`)
+restructured the critical path. Key corrections:
+
+1. **T205-d refocus.** Stop pursuing per-tile balance identities — they are the
+   wrong granularity. Pursue a two-step API: a finite-index FD-transport lemma
+   (T205-d-API-1) and a Hecke-correspondence adjoint theorem (T205-d-API-2),
+   then specialize to α = diag(1,p) for `petN_heckeT_p_diamond_shift_core`.
+2. **Main Lemma route corrected.** POST-4 (`mainLemma`) does NOT depend on
+   T207. Prove it directly from existing Miyake sieve/conductor/support
+   machinery in `Eigenforms/MainLemma.lean` (~12 KLOC already in place).
+3. **MATHEMATICAL ERROR removed.** The previous proof plan asserted "newforms
+   have a_n = 0 for (n,N) > 1". This is FALSE in general — bad-prime newform
+   coefficients are often nonzero. Any proof relying on this is rejected.
+4. **Critical-path correction.** POST-5 (nonzero eigenvalue) and POST-3
+   (L-functions) are NOT on the Miyake finite-exception SMO critical path —
+   they become parallel analytic tracks. The Main Lemma directly handles the
+   sparse-support situation that arises from finite-exception agreement.
+5. **Spectral theorem (T207).** Use Mathlib's commuting-family eigenspace API,
+   not a from-scratch construction.
+6. **Status accounting.** Distinguish "consumer wrapper compiles" from
+   "foundational theorem proved" — several tickets marked done are conditional
+   on T205-d closing.
+
+The Γ₀(N)-pivot, the explicit T_p with diamond twist as the right character-
+space operator, and the parking of POST-1 (general-χ abstract ring hom) are
+all reaffirmed.
+
+POST-1, reverse support decomposition, and the full Atkin–Lehner involution
+remain as project goals (not just architectural cleanup), but are off the
+SMO critical path.
+
 **Blocked** (documented with diagnostic):
 - POST-1 (general-χ ring hom) — Quot.out structural issue
 - POST-2 (heckeT_p_all_comm_distinct refactor) — gated on POST-1
@@ -445,111 +478,126 @@ Target: `AdjointTheory.lean` sorry-free. Key theorems:
 
 ## Open — Core Adjoint (sorry #1, #2)
 
-### [T205 / T205-d] `petN_heckeT_p_diamond_shift_core` (sorry #2)
-- **Status**: in progress — stuck on combinatorial coset bijection
-- **File**: AdjointTheory.lean (sorry near line 1586)
-- **Depends on**: T205-a ✅ (both variants proved), triple product identity ✅
-- **Parallel**: ⚠️ **serialize with T207, T208, POST-4** (same file: AdjointTheory.lean).
-  Can run in parallel with T201/T202/T203 (PeterssonLevelN.lean) and POST-3 (new file).
-- **Statement** (at line 815, 1163):
+**REFOCUSED 2026-05-11 per expert review** — see top of file. The previous
+per-tile bijection plan is decommissioned; pursue the two-step API below
+(T205-d-API-1 → T205-d-API-2 → T205-d specialization).
+
+### [T205-d-API-1] `isFundamentalDomain_iUnion_smul_of_finiteIndex` (NEW)
+- **Status**: open
+- **File**: Modularforms/PeterssonLevelN.lean (new section)
+- **Depends on**: none (uses Mathlib `IsFundamentalDomain` API and the existing
+  `isFundamentalDomain_Gamma1_PSL` from PSL2Action.lean)
+- **Parallel**: ✅ yes — independent of existing T205-d scaffold
+- **Statement**:
+  ```lean
+  /-- If `K ≤ Γ₁(N)` has finite index and `D` is a fundamental domain for
+  `Γ₁(N)`, then the finite union over a transversal `R` for `K \ Γ₁(N)` is
+  a fundamental domain for `K`. -/
+  theorem isFundamentalDomain_iUnion_smul_of_finiteIndex
+      (hK : K ≤ (Gamma1 N).map (mapGL ℝ))
+      (R : Finset (GL (Fin 2) ℝ))
+      (hR : IsLeftTransversal K ((Gamma1 N).map (mapGL ℝ)) R)
+      (hD : IsFundamentalDomain ((Gamma1 N).map (mapGL ℝ)) D μ_hyp) :
+      IsFundamentalDomain K (⋃ r ∈ R, r • D) μ_hyp
+  ```
+- **Corollaries to expose**:
+  - AE-disjointness of the family `{r • D}_{r ∈ R}`
+  - NullMeasurableSet of `⋃ r • D`
+  - IntegrabilityOn transfer: `IntegrableOn f (⋃ r • D) ↔ ∀ r ∈ R, IntegrableOn f (r • D)`
+  - SetIntegral decomposition: `∫_{⋃ r • D} f = ∑ r ∈ R, ∫_{r • D} f`
+- **CAVEAT** (per Risk 5 of expert review): **prove the NARROW theorem first**.
+  Do NOT generalize to arbitrary measured group actions on arbitrary spaces.
+  The project only needs finite-index subgroups of Γ₁(N) acting on ℍ with
+  μ_hyp; over-abstraction will balloon LOC. Specialize even further to
+  `K = Γ₁(N) ∩ α⁻¹·Γ₁(N)·α` for α ∈ Δ₀(N) if the fully general statement
+  proves too expensive.
+- **Estimated**: 100-200 LOC.
+
+### [T205-d-API-2] `petN_doubleCoset_adjoint` (NEW)
+- **Status**: open
+- **File**: GL2/AdjointTheory.lean (new section, replaces current T205 scaffold)
+- **Depends on**: T205-d-API-1, `peterssonInner_slash_adjoint` (DS Prop 5.5.2(a), ✅ done)
+- **Parallel**: ⚠️ serialize with T205-d (same file)
+- **Statement**:
+  ```lean
+  /-- Petersson adjoint for a finite double-coset correspondence at level Γ₁(N). -/
+  theorem petN_doubleCoset_adjoint
+      (α : GL (Fin 2) ℚ)
+      (hα : α ∈ commensurator ((Gamma1 N).map (mapGL ℚ)))
+      (R : Finset (GL (Fin 2) ℝ))      -- reps for Γ \ ΓαΓ
+      (Rstar : Finset (GL (Fin 2) ℝ))  -- reps for Γ \ Γα*Γ
+      (hR : IsDoubleCosetRepFamily ((Gamma1 N).map (mapGL ℝ)) (mapGL ℝ α) R)
+      (hRstar : IsAdjugateRepFamily ((Gamma1 N).map (mapGL ℝ)) (mapGL ℝ α) R Rstar)
+      (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+      petN (∑ r ∈ R, slash k r f) g =
+        petN f (∑ rstar ∈ Rstar, slash k rstar g)
+  ```
+- **Proof sketch**: Apply T205-d-API-1 with `K = Γ ∩ α⁻¹Γα` (the Hecke
+  intersection subgroup, which is finite-index by commensurability). The
+  union `⋃_{r ∈ R} r • D` is then a K-fundamental domain. Use the existing
+  single-slash adjoint `peterssonInner_slash_adjoint` (Theorem 5.14 in
+  review brief) on each summand, with the transversal absorbed into the
+  domain reindexing.
+- **DEFENSIVE NOTES** (per Risks 2, 3 of expert review):
+  - **Risk 2 / scalar normalization**: with slash convention
+    `(f|k α)(τ) = det(α)^(k-1) (cτ+d)^(-k) f(ατ)`, the adjugate α* is
+    NOT interchangeable with α⁻¹ without tracking scalar factors.
+    Reuse `peterssonInner_slash_adjoint` rather than recomputing scalars.
+  - **Risk 3 / non-normalizing matrices**: Hecke representatives like
+    diag(1,p) do NOT normalize Γ₁(N). Use the intersection K = Γ ∩ α⁻¹Γα,
+    not Γ itself. The FD is for K (the intersection), not for Γ.
+- **Estimated**: 200-300 LOC.
+
+### [T205-d] `petN_heckeT_p_diamond_shift_core` (REFOCUSED 2026-05-11)
+- **Status**: open — refocused as a one-step specialization of T205-d-API-2
+- **File**: GL2/AdjointTheory.lean (the sorry currently near line 1586)
+- **Depends on**: T205-d-API-2
+- **Parallel**: ⚠️ serialize with T207, T208 (same file)
+- **Statement** (unchanged):
   ```lean
   petN (heckeT_p_cusp k p hp hpN f) g =
       petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
         (heckeT_p_cusp k p hp hpN g)
   ```
   i.e., `petN(T_p f, g) = petN(⟨p⟩f, T_p g)`.
-
-### Infrastructure closed sorry-free (as of 2026-04-18)
-
-All axiom-clean:
-- `sum_setIntegral_GL2_shift` (T204, ~75 LOC): GL₂⁺ fundamental-domain tiling
-- `petN_slash_adjoint_GL2` (T204 downstream)
-- `peterssonInner_slash_adjoint_coset` (T205-a, ~40 LOC) + right variant via Hermitian
-- `peterssonAdj_mul` (anti-multiplicativity of peterssonAdj)
-- `peterssonAdj_mapGL_SL_eq_inv` (adj = inv for SL elements cast to GL)
-- `peterssonInner_slash_adjoint_right` (via Hermitian symmetry)
-- `peterssonInner_add_left` (via Hermitian symmetry)
-- `adjointGamma1Rep` + `adjointGamma1Rep_mem_Gamma1` (explicit γ₁⁻¹ ∈ Γ₁(N))
-- `T_p_lower_triple_product_matrix`: T_p_lower = γ₁⁻¹ · T_p_upper(0) · γ₀
-- `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0` (CuspForm + ModularForm variants)
-
-### T205-d proof scaffold (lines 1222-1586 of AdjointTheory.lean)
-
-1. `show` unfolds petN to explicit SL-coset sum over `SL(2,ℤ) ⧸ Gamma1 N`.
-2. `h_Tpf`, `h_Tpg`: naive double-coset decomp via `heckeT_p_fun_eq_coset_sum`.
-3. `simp_rw [h_Tpf, h_Tpg]`: apply on both sides.
-4. `simp only [slash_M_infty_eq_diamond_slash_T_p_lower, SlashAction.add_slash]`.
-5. `simp only [slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm]`.
-
-Goal becomes a clean "4-term symmetric adjoint" identity with γ₀ = `adjointGamma0Rep`
-exposed explicitly on both sides.
-
-### Where we're stuck
-
-The residual sorry is the **combinatorial coset bijection** matching LHS's (b, q)
-pairs to RHS's (c, q') pairs.
-
-**Why local algebraic moves don't close it**:
-- Applying `petN_slash_invariant` with γ = adjointGamma0Rep is **circular**.
-- T205 symmetric ⟺ asymmetric `petN (T_p f) g = petN f (⟨u⟩⁻¹ T_p g)`; both need
-  the same combinatorial argument.
-- The σ-reindex in `petN_slash_invariant` (PeterssonLevelN.lean:887) is the template
-  but adaptation fails because `T_p_upper(0)` **doesn't normalize Γ₁(N)**.
-
-### What's genuinely needed (~80-150 LOC)
-
-A σ-reindex `Equiv.sum_comp` on `SL(2,ℤ) ⧸ Γ₁(N)` that absorbs γ₀ + the matrix
-identity `T_p_lower · α_b = p · shift(b)` (with `shift(b) ∈ Γ₁(N)`). The bijection
-matches summands via:
-- σ(q) = ⟦q.out · γ₀⁻¹⟧ on the quotient
-- Per summand: use `peterssonInner_slash_adjoint_coset` / `_right` + adjugate simplifications
-- Matrix bookkeeping: `T_p_upper(c) · σ(q).out⁻¹ = γ₁ · T_p_upper(c') · q.out⁻¹ · γ₀⁻¹`
-  for some c' ∈ {0,...,p-1}, γ₁ ∈ Γ₁(N)
-
-The proof is analogous to `Finset.sum_bij` applied at the sum level with bijection
-(b,q)↦(c',σ(q)).
-
-### Attempted strategies that failed
-1. Direct `petN_slash_invariant` application — circular.
-2. Diamond unitarity + `heckeT_p_comm_diamondOp` reduction — circular via substitution.
-3. Per-summand `peterssonInner_slash_adjoint` transforms to "common form" — both sides
-   invariant under the transformations; can't be unified by local moves.
-4. M_∞ substitution — helpful for scaffold but doesn't resolve the bijection.
-5. Triple product via T_p_lower = γ₁⁻¹·T_p_upper(0)·γ₀ — exposes γ₀ but still leaves
-   the per-summand matching.
-
-### Proof outline after applying T205-a / T205-a_right
-
-Both sides reduce to a sum of 4 explicit summands (per q : SL(2,ℤ) ⧸ Γ₁(N)):
-
-```
-LHS = ∑_q [Σ_b peterssonInner k (α_b • q⁻¹ • fd) f (g ∣ T_p_lower)
-          + peterssonInner k (T_p_lower • q⁻¹ • fd) (⟨p⟩ f) (g ∣ T_p_upper(0))]
-
-RHS = ∑_q [Σ_c peterssonInner k (α_c • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_lower) g
-          + peterssonInner k (T_p_lower • q⁻¹ • fd) ((⟨p⟩ f) ∣ T_p_upper(0)) (⟨p⟩ g)]
-```
-
-Summand matching requires:
-- **Matrix identity** (L_upper ↔ R_upper): `T_p_lower · α_b = p · shift(b)` where
-  shift(b) ∈ Γ₁(N). Transforms L_upper tiles into Γ₁(N)-translates of q⁻¹ • fd.
-  Bijection between (b, q) pairs reflects double coset structure
-  Γ₁ diag(1,p) Γ₁ ↔ Γ₁ diag(p,1) Γ₁ via γ₀ ∈ Γ₀(N) (= `adjointGamma0Rep`).
-- **L_lower ↔ R_lower**: via `slash_M_infty_eq_diamond_slash_T_p_lower`,
-  both rewrite in M_∞ form; reduces to Hermitian/reindexing.
-
-### Concrete next steps
-1. Adapt σ-reindex from `petN_slash_invariant` to scaffolded goal.
-2. Write explicit bijection (b, q) ↦ (c(b, q), σ(q)) with c(b, q) from decomposing
-   `γ₀⁻¹ · α_b · q.out⁻¹ · σ(q).out⁻¹⁻¹ ∈ Γ₁(N)`.
-3. Use `Finset.sum_bij_nested` to rewrite the sum.
-4. Per-summand matching via slash action composition.
-
-**Estimated effort**: 2-4 hour session with careful Lean matrix bookkeeping. All
-prerequisites in place.
-
-**Reference**: DS Theorem 5.5.3 (page 186): α = [1,0;0,p], α' = [p,0;0,1], factor
-[p,0;0,1] using T105, conclude T_p* acts as T_p · ⟨p⁻¹⟩.
+- **NEW proof outline** (per expert-review §"Mathematical idea"):
+  1. Apply T205-d-API-2 with α = diag(1, p). The double coset
+     Γ₁(N) · diag(1,p) · Γ₁(N) has the explicit (p+1)-rep family
+     `{T_p_upper(b)}_{b<p} ∪ {T_p_lower}` already in the codebase.
+  2. The adjugate is α* = diag(p, 1), with rep family obtained by adjugating
+     each member of R.
+  3. Identify the adjugate-side operator (slash by `diag(p,1)`-double-coset)
+     with the diamond-shifted T_p, using the already-proved triple-product
+     identity `T_p_lower = γ₁⁻¹ · T_p_upper(0) · γ₀` (line 1213 of
+     AdjointTheory.lean) and diamond unitarity (T100a, ✅ done).
+- **Existing supporting infrastructure** (sorry-free, retain):
+  - `sum_setIntegral_GL2_shift` (T204, ~75 LOC): GL₂⁺ fundamental-domain tiling
+  - `petN_slash_adjoint_GL2` (T204 downstream)
+  - `peterssonInner_slash_adjoint_coset` (T205-a, ~40 LOC) + right variant
+  - `peterssonAdj_mul`, `peterssonAdj_mapGL_SL_eq_inv`
+  - `peterssonInner_slash_adjoint_right` (via Hermitian symmetry)
+  - `adjointGamma1Rep` + `adjointGamma1Rep_mem_Gamma1` (explicit γ₁⁻¹ ∈ Γ₁(N))
+  - `T_p_lower_triple_product_matrix`: T_p_lower = γ₁⁻¹ · T_p_upper(0) · γ₀
+  - `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0` (CuspForm + ModularForm variants)
+- **DECOMMISSIONED approaches** (do NOT pursue further — keep code for
+  reference only):
+  1. Per-tile bijection (b,q) ↔ (c,σ(q)) on SL₂(ℤ)/Γ₁(N).
+     **Reviewer verdict**: wrong granularity. Individual Hecke representatives
+     do NOT balance in isolation; only the correspondence balances as a finite
+     aggregate. The per-tile chain of helpers (heckeFD_canonical_SL_tile_balance
+     etc., ~lines 14250-16576 of AdjointTheory.lean) is decommissioned.
+  2. Direct `petN_slash_invariant` application — circular.
+  3. Diamond unitarity + `heckeT_p_comm_diamondOp` reduction — circular.
+- **Estimated**: ~80-150 LOC for the specialization step itself, once
+  T205-d-API-1 and T205-d-API-2 are done.
+- **Reviewer guidance** (LLM expert review, 2026-05-11): "The clean adjoint
+  theorem is not a special identity for the p+1 matrices. It is the standard
+  Hecke correspondence adjoint statement. Stop proving per-representative
+  tile identities; those are the wrong granularity. The correspondence
+  balances as a finite aggregate."
+- **Reference**: DS Theorem 5.5.3 (page 186). Diamond–Shurman's actual proof
+  is exactly the finite-index FD-tiling + double-coset adjoint argument
+  formalized here.
 
 ### [CLEANUP-D2] /cleanup on AdjointTheory.lean T205 section
 - **Status**: open
@@ -708,20 +756,63 @@ T201 (IsFundDomain Γ₁ tiling) ──→ T202 (petN = ∫_{D_N})
 - **Cleanup impact**: would delete ~1000 LOC of helper lemmas (heckeT_p_all_comm_heckeT_ppow,
   heckeT_ppow_comm_same, heckeT_ppow_comm_heckeT_ppow, etc.).
 
-### [POST-4] Newforms.lean:1523 sorry (new-subspace forcing zero) ⛔ BLOCKED on Epic D
-- **File**: GL2/Newforms.lean:1523
-- **Depends on**: `heckeT_n_adjoint`, `exists_simultaneous_eigenform_basis` (Epic D).
-- **Description**: Once adjoint theory completes, closes as a short corollary.
+### [POST-4 / `mainLemma`] Newforms.lean:2563 sorry (REFOCUSED 2026-05-11)
+- **Status**: open — proof route corrected per expert review
+- **File**: GL2/Newforms.lean:2563
+- **Depends on**: existing Miyake sieve/conductor/support machinery in
+  `Eigenforms/MainLemma.lean` + `Eigenforms/HeckeLemma.lean` + `Eigenforms/ConductorTheorem.lean` + `Eigenforms/AtkinLehner.lean`
+  (~12 KLOC, mostly proved). **Does NOT depend on T207.**
+- **Statement**:
+  ```lean
+  theorem mainLemma
+      (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+      (h : ∀ n : ℕ, Nat.Coprime n N →
+        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      f ∈ cuspFormsOld N k
+  ```
+  *If f ∈ S_k(Γ₁(N), χ) has vanishing Fourier coefficients at all indices
+  coprime to N, then f is an oldform.*
+- **NEW proof route** (per expert review §"Mathematical idea"):
+  Proceed directly from the existing Miyake-style sieve/conductor/support
+  decomposition. Miyake 4.6.8 decomposes f as an old/lower-level combination
+  supported at primes dividing gcd(L, N/cond(χ)). The infrastructure for
+  this is already in place (4.6.3/4.6.4/4.6.5/4.6.7 all proved in
+  `Eigenforms/`). What remains is the final assembly step.
+- **MATHEMATICAL CORRECTION (CRITICAL)**: a previous proof plan asserted
+  that "newforms have a_n = 0 for (n,N) > 1". This is **FALSE in general**.
+  Bad-prime newform coefficients are often nonzero (Atkin–Lehner sign
+  considerations notwithstanding). Any proof of `mainLemma` or SMO that
+  relies on this assertion must be rejected. The Miyake route avoids this
+  trap entirely — it works with the sparse-support side, not with claims
+  about newform coefficients at bad primes.
+- **Estimated**: 200-400 LOC for the final assembly, leveraging the existing
+  ~12 KLOC of supporting machinery.
+- **Reviewer guidance** (LLM expert review, 2026-05-11): "Miyake's Main
+  Lemma should not depend on T207 if it is proved by Miyake's sieve/conductor
+  argument. ... The Main Lemma route should be finished directly using the
+  existing sieve/conductor/support infrastructure, not by waiting for the
+  spectral theorem."
 
-### [POST-5] Newforms.lean:1654 sorry (exists_nonzero_prime_eigenvalue) ⛔ BLOCKED on POST-3
-- **File**: GL2/Newforms.lean:1654
-- **Depends on**: L-function theory.
-- **Description**: Needs Euler product argument at bad primes to exclude vanishing.
+### [POST-5] Newforms.lean:4475 sorry (exists_nonzero_prime_eigenvalue) — PARALLEL ANALYTIC TRACK
+- **Status**: open, but **no longer on the Miyake finite-exception SMO critical path**
+  (per expert review 2026-05-11)
+- **File**: GL2/Newforms.lean:4475
+- **Depends on**: L-function theory (POST-3).
+- **Description**: Needs Euler product + functional equation + non-vanishing
+  on the critical line to exclude `a_q(f) = 0` for cofinitely many primes.
+- **Reviewer guidance** (LLM expert review, 2026-05-11): "POST-5 / analytic
+  nonzero prime eigenvalue is NOT necessary for Miyake finite-exception SMO
+  if Miyake 4.6.8 is available. Agreement outside a finite set of primes
+  gives agreement of coefficients whose indices are coprime to the product
+  of the level and exceptional primes; the Main Lemma is designed exactly
+  to handle that sparse support." Continue this work as parallel analytic
+  infrastructure, but do not gate SMO on it.
 
 ## Open tickets (can proceed now)
 
-### [POST-3] Phase 7: L-function infrastructure
-- **Status**: open, HIGH PRIORITY (independent of POST-1, Epic D).
+### [POST-3] Phase 7: L-function infrastructure — PARALLEL ANALYTIC TRACK
+- **Status**: open, **NOT on the Miyake finite-exception SMO critical path**
+  (per expert review 2026-05-11). Continue as a parallel analytic project.
 - **File**: new `GL2/LFunction.lean` or `Eigenforms/LFunction.lean`.
 - **Depends on**: nothing (Phase 3 complete).
 - **Parallel**: ✅ **yes — fully independent, NEW file, no contention with others.**
@@ -729,6 +820,9 @@ T201 (IsFundDomain Γ₁ tiling) ──→ T202 (petN = ∫_{D_N})
   prove Euler product ⟺ normalized eigenform.
 - **Reference**: [DS] §5.9, [Miy] Thm 4.5.16. See `docs/plans/strong-multiplicity-one.md` §Phase 7.
 - **Estimated**: 500 LOC.
+- **Reviewer guidance** (LLM expert review, 2026-05-11): "The L-function
+  track is valuable, but it should be parallel, not on the core Miyake-SMO
+  critical path. Keep POST-3 running only as a parallel analytic project."
 
 ### [CLEANUP-E1] /cleanup on LFunction.lean after POST-3
 - **Status**: open
@@ -782,11 +876,33 @@ T201 (IsFundDomain Γ₁ tiling) ──→ T202 (petN = ∫_{D_N})
 
 ### [POST-7] Phase 9: Strong Multiplicity One (Miyake Thm 4.6.12) — FINAL GOAL
 - **Status**: open.
-- **Depends on**: POST-4, POST-5, POST-6.
-- **File**: new `Eigenforms/StrongMultiplicityOne.lean`.
+- **Depends on**: POST-4 (`mainLemma`), POST-6 (Miyake Main Lemma 4.6.8).
+  **Does NOT depend on POST-5 or POST-3** (per expert review 2026-05-11).
+- **File**: new `Eigenforms/StrongMultiplicityOne.lean` (statement already
+  exists in `GL2/Newforms.lean:4490`).
 - **Parallel**: ❌ **must be LAST** — the one-person finale.
-- **Description**: Short ~400 LOC proof once Phases 6 and 8 are in place.
-- **Reference**: See `docs/plans/strong-multiplicity-one.md` §Phase 9.
+- **Description**: Short ~80-100 LOC proof. Use Main Lemma (POST-4 / POST-6)
+  plus newform/primitive decomposition and uniqueness (`newform_unique`,
+  already proved conditionally). The Miyake route handles finite-exception
+  agreement directly via sparse-support sieving — no nonzero-eigenvalue
+  lemma needed.
+- **Reference**: [Miy] Thm 4.6.12; see `docs/plans/strong-multiplicity-one.md` §Phase 9.
+
+### [final-SMO-character-framing] Common primitive character at lcm level
+- **Status**: open, low priority until SMO assembly approaches
+- **File**: TBD (likely a new prep file alongside `Eigenforms/StrongMultiplicityOne.lean`)
+- **Depends on**: existing `DirichletCharacter` API in Mathlib
+- **Description** (per Risk 7 of expert review 2026-05-11): For SMO across
+  levels N₁ ≠ N₂, "same χ" must be expressed through a common primitive/
+  conductor character or compatible induced characters at the common level
+  `N = lcm(N₁, N₂)`. Set up this framework explicitly to avoid an implicit
+  coercion problem at the final SMO assembly.
+- **Reviewer guidance** (LLM expert review, 2026-05-11): "If f and g have
+  levels N₁ and N₂, 'same χ' must be expressed through a common primitive/
+  conductor character or compatible induced characters at the common level.
+  Do not let this become an implicit coercion problem at the final SMO
+  assembly."
+- **Estimated**: 50-100 LOC.
 
 ### [CLEANUP-FINAL] Pre-PR full sweep
 - **Status**: open
@@ -808,30 +924,172 @@ T201 (IsFundDomain Γ₁ tiling) ──→ T202 (petN = ∫_{D_N})
 
 ---
 
-# Dependency graph
+# Dependency graph (REVISED 2026-05-11 per expert review)
 
 ```
 Epic A (CongruenceHecke/BlockBijection) ✅
    └──→ Epic B (Bridge + Commutativity) ✅
           └──→ Epic C (Shimura Prop 3.34) ⚠️
-                 ├──→ POST-1 (general-χ ring hom) ⛔
+                 ├──→ POST-1 (general-χ ring hom) ⛔ off-critical-path
                  │      └──→ POST-2 (comm_distinct refactor) ⛔
                  └──→ [stopping point — commutativity achieved]
 
-Epic D (Adjoint Theory) ⚠️ ACTIVE
-   ├──→ POST-4 (Newforms L1523) ⛔
-   └──→ T207 (eigenform basis) → POST-6 (Miyake Main Lemma)
-                                    └──→ POST-7 (SMO) ◄── FINAL GOAL
-Phase 3 (T_n+Fourier) ✅
-   └──→ POST-3 (L-functions) ◄── PARALLELIZABLE NOW
-          └──→ POST-5 (Newforms L1654) ⛔
-                 └──→ POST-6 → POST-7
+CORRECTED CRITICAL PATH (four parallel tracks):
+
+  Track 1 — Adjoint/spectral:
+    T205-d-API-1 (FD-transport) → T205-d-API-2 (correspondence adjoint)
+      → T205-d (heckeT_p adjoint) → T207 (eigenform basis)
+
+  Track 2 — Main Lemma (independent of T207):
+    Existing Miyake sieve/conductor/support machinery in Eigenforms/
+      → POST-4 (mainLemma, refocused) → POST-6 (Miyake 4.6.8)
+
+  Track 3 — SMO assembly:
+    POST-4 + POST-6 + newform_unique → POST-7 (SMO) ◄── FINAL GOAL
+
+  Track 4 — Parallel analytic (NOT on SMO critical path):
+    POST-3 (L-functions) → POST-5 (nonzero eigenvalue)
 ```
 
-**Critical path to SMO**: Epic D complete → POST-4 → POST-6 → POST-7.
-**Parallel track**: POST-3 (independent).
+**Critical path to SMO** (corrected): Track 2 + (newform_unique) → POST-7.
+**Track 1 (T205-d ladder)** is needed for `heckeT_n_adjoint` consumers and
+  for `newform_unique`'s orthogonality argument, so still on the path —
+  but the per-tile bijection scaffolding is decommissioned in favor of
+  the two-step API.
+**Parallel tracks**: POST-3 / POST-5 (analytic side); POST-1 / POST-2 / reverse
+  support / Atkin–Lehner (architectural).
 
 ---
+
+# Marathon results (2026-05-11)
+
+**T207 CLOSED.** `exists_simultaneous_eigenform_basis` is now sorry-free.
+
+10 new sorry-free helper lemmas added to `AdjointTheory.lean`:
+- `heckeFamily_commute_all`
+- `heckeFamily_mapsTo_maxGenEigenspace`
+- `heckeFamily_iSupIndep_iInf_maxGenEigenspace`
+- `heckeFamily_iInf_eq` (maxGenEigenspace = eigenspace under semisimplicity)
+- `heckeFamily_iSupIndep_iInf_eigenspace`
+- `heckeFamily_iSup_iInf_eigenspace_eq_top`
+- `heckeFamily_directSum_isInternal` (IsInternal decomposition)
+- `heckeT_n_eigenvalue_chi_hecke` (χ-Hecke condition on eigenvalues)
+- `eigenforms_orthogonal_of_ne_eigenvalues` (direct orthogonality from λ ≠ μ)
+- `joint_eigenspace_orthogonal` (different joint eigenspaces orthogonal)
+- `joint_eigenspace_subset_isCommonEigenfunction` (every joint eigenform is common)
+
+Also fixed BlockBijection.lean upstream (classical decidability).
+
+T207 proof structure: builds joint eigenspaces as IsInternal, chooses
+orthonormal basis of each via `stdOrthonormalBasis`, uses
+`IsInternal.collectedBasis` to assemble; pairwise orthogonality splits
+between same-eigenspace (orthonormality) and different-eigenspace
+(joint_eigenspace_orthogonal).
+
+Sorry inventory in SMO-critical files (after marathon):
+- AdjointTheory.lean: 1 (T205-d, line 16990) - was 2 before
+- Newforms.lean: 2 (mainLemma 2563, POST-5 4475) - unchanged
+- BlockBijection.lean: 1 (line 8851, unrelated)
+
+# Marathon recon results (2026-05-11)
+
+After detailed exploration of the codebase against the reviewer's plan,
+the following was discovered.  See `.mathlib-quality/marathon-2026-05-11.md`
+for the full notes.
+
+### T205-d-API-1 is essentially DONE (key finding)
+
+The reviewer's "narrow finite-index FD-transport lemma" already exists
+in the codebase in TWO forms:
+
+- **Abstract**: `MeasureTheory.IsFundamentalDomain.subgroup_iUnion_out_smul`
+  (`PeterssonLevelN.lean:304`) — generic version.
+- **Project-specific**: `Gamma_p_α_PSL_R_FD_finite_index_decomp_auto`
+  (`AdjointTheory.lean:1596`) — for the conjugate-intersection subgroup
+  `Gamma_p_α α = conjGL Γ₁(N) α ⊓ Γ₁(N)`, at PSL(2,ℝ) ambient (no ±I
+  kernel obstruction), with Countable/Fintype instances automatic.
+
+Plus the shift adapter: `Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted`
+(`AdjointTheory.lean:1667`).
+
+### T205-d residual is `DSDoubleCosetTileBridge` Prop
+
+The precise blocker for `petN_heckeT_p_adjoint_standard_form` is the
+explicit Prop `DSDoubleCosetTileBridge` (defined `AdjointTheory.lean:8159`).
+A PROVED consumer
+`petN_heckeT_p_adjoint_standard_form_of_doubleCosetTileBridge` (line 8228)
+closes the standard form via one `rw` once the Prop is provided.
+
+### POST-4 (mainLemma) for PRIME-POWER N is tractable
+
+For `N = p^r`, the closure is essentially mechanical:
+- `mainLemma_charSpace_primePower_via_divisor_iSup`
+  (`AtkinLehner.lean:1395`, PROVED) handles the char-space case.
+- Wrap via `exists_finsupp_charSpace_of_diamondOpCuspHom_invariant`
+  (`CharacterDecomp.lean:843`, PROVED) for the general case.
+
+Subtlety: must verify each character piece inherits the coprime-vanishing
+Fourier coefficient property (need to verify Fourier coefficient
+interaction with diamond operators).
+
+### POST-4 for COMPOSITE N requires TraceDescent witness
+
+The structure `TraceDescent` (`AtkinLehner.lean:1464`) abstracts the
+descent obligation: same-level decomposition into divisor-supported
+pieces in the character space.  PROVED consumer
+`mainLemma_charSpace_of_TraceDescent` (line 1501).
+
+The descent itself requires one of:
+- (a) refined trace operator with cusp-stabilizer correction (T124 gap)
+- (b) Atkin–Lehner–Li Petersson orthogonality (needs T205-d + T207)
+- (c) U_p-eigenspace decomposition at level N
+
+The reviewer's expectation that Miyake's machinery suffices is correct
+**only for prime-power N**; composite N requires the same-level descent
+which is a substantial open subproblem.
+
+### T207 (spectral theorem) proof structure clarified
+
+Plan: see task #6.  Pure Mathlib linear-algebra packaging on top of:
+- `heckeFamily_joint_eigenspace_top` (PROVED)
+- `heckeFamily_isFinitelySemisimple` (PROVED)
+- `joint_eigenspace_mem_isCommonEigenfunction` (PROVED)
+- `eigenforms_orthogonal_of_distinct_eigenvalues` (PROVED)
+- `petN_innerProductCore` (PROVED)
+
+Mathlib tools needed:
+- `DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top`
+- `DirectSum.IsInternal.collectedBasis`
+- `Module.End.iSupIndep_iInf_maxGenEigenspace_of_forall_mapsTo`
+  (or its joint analog in `Eigenspace/Pi.lean`)
+- Gram-Schmidt via the InnerProductSpace structure from `petN_innerProductCore`
+
+Result is conditional on T205-d closing (transitive dependency via
+`heckeT_n_adjoint_on_charSpace`).
+
+# Status accounting (added 2026-05-11 per expert review Risk 6)
+
+Several tickets currently marked ✅ done are actually **consumer wrappers
+that compile** but rely on a foundational lemma still sorry'd through
+`T205-d`. They will become genuinely closed once T205-d-API-2 lands.
+
+| Ticket | Wrapper compiles | Foundation proved | Effective status |
+|---|---|---|---|
+| T206 (`heckeT_n_adjoint`) | ✅ | ⛔ blocked on T205-d | conditional |
+| `heckeT_n_normal` | ✅ | ⛔ blocked on T205-d | conditional |
+| `heckeT_n_adjoint_on_charSpace` | ✅ | ⛔ blocked on T205-d | conditional |
+| `newform_unique` (DS 5.8.2) | ✅ | ⛔ blocked on POST-4 | conditional |
+| `strongMultiplicityOne_of_analyticContradiction` | ✅ | ⛔ blocked on POST-7 | conditional |
+| `strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificate` | ✅ | ⛔ blocked on analytic input | conditional |
+
+Sorry-free foundations on the critical track:
+- T103 / `peterssonInner_slash_adjoint` (DS Prop 5.5.2(a))
+- T204 / `petN_slash_adjoint_GL2`
+- T205-a / `peterssonInner_slash_adjoint_coset`
+- T100a / `diamondOp_petersson_unitary`
+- T_p_lower triple-product identity
+
+These remain genuine foundations regardless of what happens to T205-d.
 
 # Session commits (2026-04-17)
 
