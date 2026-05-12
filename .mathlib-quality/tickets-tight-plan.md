@@ -171,12 +171,21 @@ norm bound mirrors `dixonH2_norm_le` exactly.
   derivative) + `IsCompact + discrete ⇒ finite`. `h_holo_cancel_of_conditionB`
   is now fully clean (no preimage hypothesis).
 
-### Phase 5 — Simple-pole CPV with crossings [hPV_sing for non-avoidance]
-- [ ] 5.1 Per-pole CPV at on-curve singularity using generalized winding number
-- [ ] 5.2 Multi-pole sum
-- [ ] 5.3 `hPV_sing_of_conditionB` final form
+### Phase 5 — Simple-pole CPV with crossings [hPV_sing for non-avoidance] ✅ DONE (2026-05-12)
+- [x] 5.1 Per-pole CPV at on-curve singularity using generalized winding number
+  (`hasCauchyPVOn_div_sub_of_singleton_and_avoid_others` in `HW33PVSing.lean`).
+- [x] 5.2 Multi-pole sum (`hPV_sing_from_per_pole_cpv` via `HasCauchyPVOn.finset_sum`).
+- [x] 5.3 `hPV_sing_of_conditionB` final form — matches master template signature.
+- **Strategy**: per-pole CPV witnesses (`HasGeneralizedWindingNumber γ s w`) taken
+  as input; multi-pole assembly via `HasCauchyPVOn.finset_sum` and recognition that
+  `principalPartSum S c = (fun z => ∑ s, c s / (z - s))`. Single-crossing form built
+  via `hasCauchyPVOn_extend_of_avoid` from `HW33MultiPole.lean`.
+- **Residual hypothesis**: per-pole `HasGeneralizedWindingNumber γ s w` witness
+  (Phase 6.1 will construct these from `ClosedPwC1Immersion` geometric data),
+  plus global avoidance margin `δ` for other poles.
+- All theorems axiom-clean `[propext, Classical.choice, Quot.sound]`.
 
-**Output**: `hPV_sing` provable.
+**Output**: `hPV_sing` provable from per-pole winding-number witnesses.
 
 ### Phase 6 — TIGHT-3 (polar cancel)
 - [ ] 6.1 Derive geometric data at each crossing from `ClosedPwC1Immersion + hCondB`:
