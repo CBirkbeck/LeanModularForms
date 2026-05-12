@@ -280,4 +280,68 @@ theorem hasCauchyPV_of_hasCauchyPVOn_singleton {f : ℂ → ℂ}
   intro t _
   exact cpvIntegrand_eq_cpvIntegrandOn_singleton.symm
 
+/-! ## Zero and finite-sum forms of `HasCauchyPVOn` -/
+
+/-- The multi-point CPV of the zero function is zero. -/
+theorem HasCauchyPVOn.zero_fun {S : Finset ℂ} {γ : PiecewiseC1Path x y} :
+    HasCauchyPVOn S (fun _ => (0 : ℂ)) γ 0 := by
+  simp only [HasCauchyPVOn]
+  refine Tendsto.congr (f₁ := fun _ => (0 : ℂ)) ?_ tendsto_const_nhds
+  intro ε
+  have h_zero : (fun t => cpvIntegrandOn S (fun _ : ℂ => (0 : ℂ))
+      γ.toPath.extend ε t) = fun _ => (0 : ℂ) := by
+    funext t
+    simp only [cpvIntegrandOn]
+    split_ifs <;> simp
+  rw [h_zero]
+  exact intervalIntegral.integral_zero.symm
+
+/-- Finite sum of `HasCauchyPVOn`: if each `f i` has multi-point CPV `L i` along `γ`
+on `S` (with cutoff integrability), the sum `∑ i ∈ T, f i` has CPV `∑ i ∈ T, L i`. -/
+theorem HasCauchyPVOn.finset_sum {ι : Type*} [DecidableEq ι] (T : Finset ι)
+    {S : Finset ℂ} {γ : PiecewiseC1Path x y} {f : ι → ℂ → ℂ} {L : ι → ℂ}
+    (hf : ∀ i ∈ T, HasCauchyPVOn S (f i) γ (L i))
+    (hfi : ∀ i ∈ T, ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S (f i) γ.toPath.extend ε t) volume 0 1) :
+    HasCauchyPVOn S (fun z => ∑ i ∈ T, f i z) γ (∑ i ∈ T, L i) := by
+  induction T using Finset.induction_on with
+  | empty =>
+    simpa [Finset.sum_empty] using HasCauchyPVOn.zero_fun (S := S) (γ := γ)
+  | @insert a T' hia ih =>
+    have h_a : HasCauchyPVOn S (f a) γ (L a) := hf a (Finset.mem_insert_self a T')
+    have h_T' : HasCauchyPVOn S (fun z => ∑ i ∈ T', f i z) γ (∑ i ∈ T', L i) :=
+      ih (fun i hi => hf i (Finset.mem_insert_of_mem hi))
+        (fun i hi => hfi i (Finset.mem_insert_of_mem hi))
+    have h_a_int : ∀ ε > 0, IntervalIntegrable
+        (fun t => cpvIntegrandOn S (f a) γ.toPath.extend ε t) volume 0 1 :=
+      hfi a (Finset.mem_insert_self a T')
+    have h_T'_int : ∀ ε > 0, IntervalIntegrable
+        (fun t => cpvIntegrandOn S (fun z => ∑ i ∈ T', f i z) γ.toPath.extend ε t)
+        volume 0 1 := by
+      intro ε hε
+      have h_pt : (fun t => cpvIntegrandOn S (fun z => ∑ i ∈ T', f i z)
+          γ.toPath.extend ε t) =
+          (fun t => ∑ i ∈ T', cpvIntegrandOn S (f i) γ.toPath.extend ε t) := by
+        funext t
+        simp only [cpvIntegrandOn]
+        split_ifs with h
+        · exact Finset.sum_const_zero.symm
+        · rw [Finset.sum_mul]
+      rw [h_pt]
+      have h_sum_int := IntervalIntegrable.sum T'
+        (f := fun i t => cpvIntegrandOn S (f i) γ.toPath.extend ε t)
+        (fun i hi => hfi i (Finset.mem_insert_of_mem hi) ε hε)
+      have h_fn_eq : (∑ i ∈ T', fun t => cpvIntegrandOn S (f i) γ.toPath.extend ε t) =
+          fun t => ∑ i ∈ T', cpvIntegrandOn S (f i) γ.toPath.extend ε t :=
+        funext fun _ => Finset.sum_apply _ _ _
+      rwa [h_fn_eq] at h_sum_int
+    have h_sum : HasCauchyPVOn S (fun z => f a z + ∑ i ∈ T', f i z) γ
+        (L a + ∑ i ∈ T', L i) :=
+      HasCauchyPVOn.add h_a h_T' h_a_int h_T'_int
+    have h_eq : (fun z => ∑ i ∈ insert a T', f i z) =
+        (fun z => f a z + ∑ i ∈ T', f i z) :=
+      funext fun _ => Finset.sum_insert hia
+    rw [h_eq, Finset.sum_insert hia]
+    exact h_sum
+
 end

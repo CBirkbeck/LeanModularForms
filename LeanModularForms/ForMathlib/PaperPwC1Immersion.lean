@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import Mathlib.Analysis.Calculus.ContDiff.Deriv
+import Mathlib.Analysis.Calculus.ContDiff.Operations
 import Mathlib.Analysis.Calculus.Deriv.Basic
-import Mathlib.Analysis.Calculus.Deriv.Inverse
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
@@ -707,15 +707,892 @@ theorem lipschitzWith_extend (γ : ClosedPwC1Immersion x) :
     ∃ K : NNReal, LipschitzWith K γ.toPath.extend :=
   γ.toClosedPwC1Curve.lipschitzWith_extend
 
-/-! ## Finite preimage of a finite set
+end ClosedPwC1Immersion
 
-A closed piecewise `C¹` immersion `γ` has non-vanishing derivative on each
-closed piece between consecutive partition members. By the inverse-function
-theorem (in the form `HasDerivWithinAt.eventually_ne`), each point at which
-`γ` hits a given value `s` is isolated within its piece. Closed pieces are
-compact, hence each piece contributes only finitely many preimage points.
-Summing over a finite partition and a finite target set gives the global
-finite preimage. -/
+/-! ## Phase 2 — Cyclic shift of a closed piecewise-`C¹` immersion (T-BR-Y8c)
+
+For a closed piecewise-`C¹` immersion `γ : ClosedPwC1Immersion x` and a parameter
+`τ ∈ Ioo 0 1`, the **cyclic shift** is a reparametrization that starts the contour
+at `γ(τ)` instead of `γ(0) = x`. The shifted curve `γ'(t)` is defined by:
+
+  γ'(t) = γ(t + τ)      for `t ∈ [0, 1 - τ]`
+  γ'(t) = γ(t + τ - 1)  for `t ∈ [1 - τ, 1]`
+
+At `t = 1 - τ`, both pieces give `γ(1) = γ(0) = x` (closedness), so the path is
+continuous. The point `1 - τ` becomes a new partition corner.
+
+This file ships:
+* `cyclicShiftFun γ τ` — the raw piecewise function `ℝ → E`
+* `cyclicShiftFun_zero`, `cyclicShiftFun_one` — endpoint values
+* `Continuous.cyclicShiftFun` — continuity
+
+The full `ClosedPwC1Immersion.cyclicShift` constructor and the invariance lemmas
+for `HasCauchyPVOn` and `generalizedWindingNumber` are built on top of this. -/
+
+/-- The cyclic-shift function on `ℝ`: for a closed loop `f` based at `x` (i.e.
+`f(0) = f(1) = x`) and a shift parameter `τ`, `cyclicShiftFun f τ t` is:
+- `f(t + τ)` when `t + τ ≤ 1` (i.e. `t ≤ 1 - τ`)
+- `f(t + τ - 1)` when `t + τ ≥ 1` (i.e. `t ≥ 1 - τ`)
+
+Outside `[0, 1]`, the function naturally extends as a constant via the underlying
+`f = γ.toPath.extend` being constant on `(-∞, 0]` and `[1, ∞)`. -/
+noncomputable def cyclicShiftFun (f : ℝ → E) (τ : ℝ) : ℝ → E :=
+  fun t => if t + τ ≤ 1 then f (t + τ) else f (t + τ - 1)
+
+variable {x : E}
+
+omit [NormedSpace ℝ E] in
+/-- Value of `cyclicShiftFun` at `0` (in `Ioo 0 1`): equals `f τ`. -/
+@[simp]
+theorem cyclicShiftFun_zero (f : ℝ → E) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) :
+    cyclicShiftFun f τ 0 = f τ := by
+  simp only [cyclicShiftFun, zero_add, if_pos hτ.2.le]
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+/-- Value of `cyclicShiftFun` at `1`: equals `f τ` whenever `τ ∈ (0, 1)` and
+`f(0) = f(1)` (i.e. for closed loops). -/
+theorem cyclicShiftFun_one (f : ℝ → E) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) (_hclosed : f 0 = f 1) :
+    cyclicShiftFun f τ 1 = f τ := by
+  unfold cyclicShiftFun
+  -- `1 + τ ≤ 1` is false when `τ > 0`. So we take the else branch.
+  have h_not : ¬ (1 + τ ≤ 1) := by linarith [hτ.1]
+  rw [if_neg h_not]
+  -- The result is `f (1 + τ - 1) = f τ`.
+  congr 1; ring
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+/-- Value of `cyclicShiftFun` at `t = 1 - τ`: both pieces agree and equal `f(1)`. -/
+theorem cyclicShiftFun_at_breakpoint (f : ℝ → E) (τ : ℝ) :
+    cyclicShiftFun f τ (1 - τ) = f 1 := by
+  unfold cyclicShiftFun
+  -- `(1 - τ) + τ = 1`, so the condition is `1 ≤ 1` which is true.
+  rw [if_pos (by linarith : (1 - τ) + τ ≤ 1)]
+  congr 1; ring
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+/-- The `else`-branch limit at `1 - τ`: gives `f 0`. -/
+theorem cyclicShiftFun_at_breakpoint_else (f : ℝ → E) (τ : ℝ) :
+    f ((1 - τ) + τ - 1) = f 0 := by
+  congr 1; ring
+
+omit [NormedSpace ℝ E] in
+/-- Continuity of `cyclicShiftFun` for a continuous closed loop. -/
+theorem Continuous.cyclicShiftFun {f : ℝ → E} (hf : Continuous f) {τ : ℝ}
+    (hclosed : f 0 = f 1) : Continuous (cyclicShiftFun f τ) := by
+  -- Decompose: g(t) = if t + τ ≤ 1 then f (t + τ) else f (t + τ - 1).
+  -- At the gluing point t + τ = 1: f(t+τ) = f(1) = f(0) = f(t+τ-1). ✓
+  show Continuous (fun t => if t + τ ≤ 1 then f (t + τ) else f (t + τ - 1))
+  -- Apply `Continuous.if_le` with `f := (· + τ)`, `g := const 1`,
+  -- `f' := fun t => f (t + τ)`, `g' := fun t => f (t + τ - 1)`.
+  apply Continuous.if_le (f' := fun t => f (t + τ)) (g' := fun t => f (t + τ - 1))
+    (f := fun t => t + τ) (g := fun _ => (1 : ℝ))
+  · exact hf.comp (by fun_prop)
+  · exact hf.comp (by fun_prop)
+  · fun_prop
+  · exact continuous_const
+  -- Matching condition at `t + τ = 1`.
+  intro t ht_eq
+  rw [ht_eq, show (1 : ℝ) - 1 = 0 from by ring]
+  exact hclosed.symm
+
+/-- The cyclic-shift function preserves "closedness": `g(0) = g(1) = f(τ)`. -/
+theorem cyclicShiftFun_closed (f : ℝ → E) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) (hclosed : f 0 = f 1) :
+    cyclicShiftFun f τ 0 = cyclicShiftFun f τ 1 := by
+  rw [cyclicShiftFun_zero f hτ, cyclicShiftFun_one f hτ hclosed]
+
+/-! ### `cyclicShiftPath` — building a `Path` -/
+
+/-- The cyclic-shift `Path` from `γ(τ)` to `γ(τ)`. -/
+noncomputable def Path.cyclicShift {x : E} (γ : Path x x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) : Path (γ.extend τ) (γ.extend τ) where
+  toFun := fun t => cyclicShiftFun γ.extend τ (t : ℝ)
+  continuous_toFun := by
+    have h_outer : Continuous (cyclicShiftFun γ.extend τ) :=
+      Continuous.cyclicShiftFun γ.continuous_extend
+        (by rw [γ.extend_zero, γ.extend_one])
+    exact h_outer.comp continuous_subtype_val
+  source' := by
+    simp only [Set.Icc.coe_zero]
+    exact cyclicShiftFun_zero γ.extend hτ
+  target' := by
+    simp only [Set.Icc.coe_one]
+    exact cyclicShiftFun_one γ.extend hτ
+      (by rw [γ.extend_zero, γ.extend_one])
+
+/-- Endpoints of `Path.cyclicShift`. -/
+theorem Path.cyclicShift_apply {x : E} (γ : Path x x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) (t : ↑(Set.Icc (0 : ℝ) 1)) :
+    γ.cyclicShift hτ t = cyclicShiftFun γ.extend τ (t : ℝ) := rfl
+
+/-- The extend of `Path.cyclicShift` agrees with `cyclicShiftFun` on `[0, 1]`. -/
+theorem Path.cyclicShift_extend_on_Icc {x : E} (γ : Path x x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1) :
+    (γ.cyclicShift hτ).extend t = cyclicShiftFun γ.extend τ t := by
+  rw [Path.extend_apply _ ht, Path.cyclicShift_apply]
+
+/-! ### `cyclicShiftPath` — partition of the shifted curve
+
+The partition of the shifted curve `γ'` consists of:
+* `0`, `1`, and `1 - τ` (the new corner partition point);
+* shifted-back partition points of `γ` itself.
+
+Concretely, if `γ.partition = {0, p₁, p₂, …, pₙ, 1}` with `p₁ < … < pₙ`, and we
+let `j` be the unique index where `p_{j-1} ≤ τ < p_j` (or `0 ≤ τ < p₁`, or
+`pₙ ≤ τ ≤ 1`), then the partition of `γ'` is:
+
+  `{0} ∪ {p_j - τ, p_{j+1} - τ, …, pₙ - τ} ∪ {1 - τ}`
+  `   ∪ {1 - τ + p_1, 1 - τ + p_2, …, 1 - τ + p_{j-1}} ∪ {1}`
+
+That is, partition points after `τ` get shifted to `p - τ`, and partition points
+before `τ` get shifted to `p + (1 - τ)`, with `1 - τ` always added as a corner.
+
+We construct this set via a simple translate+filter+union. -/
+
+/-- The partition for the cyclic-shifted curve at shift `τ`. -/
+noncomputable def cyclicShiftPartition (P : Finset ℝ) (τ : ℝ) : Finset ℝ :=
+  ((P.image (fun p => p - τ)) ∪ (P.image (fun p => p - τ + 1)))
+    |>.filter (fun t => t ∈ Set.Icc (0 : ℝ) 1)
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+/-- A point `t ∈ Icc 0 1` lies in the cyclic-shift partition iff its "shifted-back"
+representative `t + τ` or `t + τ - 1` is in the original partition. -/
+theorem mem_cyclicShiftPartition_iff (P : Finset ℝ) (τ : ℝ) (t : ℝ) :
+    t ∈ cyclicShiftPartition P τ ↔
+      t ∈ Set.Icc (0 : ℝ) 1 ∧ ((t + τ ∈ P) ∨ (t + τ - 1 ∈ P)) := by
+  unfold cyclicShiftPartition
+  simp only [Finset.mem_filter, Finset.mem_union, Finset.mem_image]
+  constructor
+  · rintro ⟨h_or, ht_in⟩
+    refine ⟨ht_in, ?_⟩
+    rcases h_or with ⟨p, hp_in, hp_eq⟩ | ⟨p, hp_in, hp_eq⟩
+    · left; rw [← hp_eq]; convert hp_in using 1; ring
+    · right; rw [← hp_eq]; convert hp_in using 1; ring
+  · rintro ⟨ht_in, ht_or⟩
+    refine ⟨?_, ht_in⟩
+    rcases ht_or with hp | hp
+    · left; refine ⟨t + τ, hp, by ring⟩
+    · right; refine ⟨t + τ - 1, hp, by ring⟩
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+/-- The cyclic-shift partition lies inside `Icc 0 1`. -/
+theorem cyclicShiftPartition_subset_Icc (P : Finset ℝ) (τ : ℝ) :
+    ((cyclicShiftPartition P τ : Finset ℝ) : Set ℝ) ⊆ Set.Icc (0 : ℝ) 1 := by
+  intro t ht
+  have : t ∈ cyclicShiftPartition P τ := ht
+  exact ((mem_cyclicShiftPartition_iff P τ t).mp this).1
+
+/-! ### Consecutive-pair lifting under cyclic shift (T-BR-Y8d Step 1)
+
+For a cyclic shift by `τ ∈ Ioo 0 1`, the *new* partition is
+`cyclicShiftPartition γ.partition τ ∪ {0, 1, 1 - τ}`. For each consecutive pair
+`(a, b)` in the new partition, either:
+
+* `b ≤ 1 - τ`, in which case `[a + τ, b + τ] ⊆ Icc c d` for some consecutive
+  pair `(c, d)` in `γ.partition ∪ {τ}`, hence `[a + τ, b + τ]` is contained in a
+  single original γ-piece (possibly subdivided by `τ`); OR
+* `a ≥ 1 - τ`, in which case `[a + τ - 1, b + τ - 1] ⊆ Icc c d` for some
+  consecutive pair in `γ.partition ∪ {τ}`.
+
+The straddle case `a < 1 - τ < b` is impossible because `1 - τ` is added to the
+new partition explicitly. -/
+
+/-- The cyclic-shift augmented partition: includes `0`, `1`, and the cyclic-shift
+breakpoint `1 - τ`. This is the actual partition we use for the shifted curve. -/
+noncomputable def cyclicShiftPartitionExt (P : Finset ℝ) (τ : ℝ) : Finset ℝ :=
+  insert 0 (insert 1 (insert (1 - τ) (cyclicShiftPartition P τ)))
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+theorem mem_cyclicShiftPartitionExt_iff (P : Finset ℝ) (τ : ℝ) (t : ℝ) :
+    t ∈ cyclicShiftPartitionExt P τ ↔
+      t = 0 ∨ t = 1 ∨ t = 1 - τ ∨ t ∈ cyclicShiftPartition P τ := by
+  unfold cyclicShiftPartitionExt
+  simp [Finset.mem_insert]
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+theorem cyclicShiftPartitionExt_subset_Icc (P : Finset ℝ) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) :
+    ((cyclicShiftPartitionExt P τ : Finset ℝ) : Set ℝ) ⊆ Set.Icc (0 : ℝ) 1 := by
+  intro t ht
+  rcases (mem_cyclicShiftPartitionExt_iff P τ t).mp ht with rfl | rfl | rfl | h
+  · exact ⟨le_refl _, zero_le_one⟩
+  · exact ⟨zero_le_one, le_refl _⟩
+  · exact ⟨by linarith [hτ.2], by linarith [hτ.1]⟩
+  · exact cyclicShiftPartition_subset_Icc P τ h
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+@[simp]
+theorem zero_mem_cyclicShiftPartitionExt (P : Finset ℝ) (τ : ℝ) :
+    (0 : ℝ) ∈ cyclicShiftPartitionExt P τ := by
+  rw [mem_cyclicShiftPartitionExt_iff]; tauto
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+@[simp]
+theorem one_mem_cyclicShiftPartitionExt (P : Finset ℝ) (τ : ℝ) :
+    (1 : ℝ) ∈ cyclicShiftPartitionExt P τ := by
+  rw [mem_cyclicShiftPartitionExt_iff]; tauto
+
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
+@[simp]
+theorem oneSubTau_mem_cyclicShiftPartitionExt (P : Finset ℝ) (τ : ℝ) :
+    (1 - τ : ℝ) ∈ cyclicShiftPartitionExt P τ := by
+  rw [mem_cyclicShiftPartitionExt_iff]; tauto
+
+/-- Helper: under `P ⊆ Icc 0 1`, an element `t + τ - 1 ∈ P` with `t ∈ Icc 0 1`
+forces `t ≥ 1 - τ`. -/
+private theorem ge_one_sub_tau_of_second_clause (P : Finset ℝ)
+    (hP_sub : (P : Set ℝ) ⊆ Set.Icc (0 : ℝ) 1) {τ : ℝ} (_hτ : τ ∈ Ioo (0 : ℝ) 1)
+    {t : ℝ} (_ht_Icc : t ∈ Set.Icc (0 : ℝ) 1) (hp : t + τ - 1 ∈ P) :
+    t ≥ 1 - τ := by
+  have h_p_ge_0 : 0 ≤ t + τ - 1 := (hP_sub hp).1
+  linarith
+
+/-- Helper: under `P ⊆ Icc 0 1`, an element `t + τ ∈ P` with `t ∈ Icc 0 1`
+forces `t ≤ 1 - τ`. -/
+private theorem le_one_sub_tau_of_first_clause (P : Finset ℝ)
+    (hP_sub : (P : Set ℝ) ⊆ Set.Icc (0 : ℝ) 1) {τ : ℝ} (_hτ : τ ∈ Ioo (0 : ℝ) 1)
+    {t : ℝ} (_ht_Icc : t ∈ Set.Icc (0 : ℝ) 1) (hp : t + τ ∈ P) :
+    t ≤ 1 - τ := by
+  have h_p_le_1 : t + τ ≤ 1 := (hP_sub hp).2
+  linarith
+
+/-- Given a consecutive pair `(a, b)` in `cyclicShiftPartitionExt`, the new
+partition does not straddle `1 - τ` (since `1 - τ` itself is in the partition). -/
+private theorem not_straddle_oneSubTau (P : Finset ℝ) {τ : ℝ}
+    {a b : ℝ} (h_cons : (cyclicShiftPartitionExt P τ).IsConsecutive a b) :
+    b ≤ 1 - τ ∨ a ≥ 1 - τ := by
+  by_contra h
+  push_neg at h
+  obtain ⟨h_lt_b, h_a_lt⟩ := h
+  exact h_cons.2.2.2 (1 - τ) (oneSubTau_mem_cyclicShiftPartitionExt P τ) ⟨h_a_lt, h_lt_b⟩
+
+namespace ClosedPwC1Curve
+
+variable {x : E}
+
+/-- **Step 1: cyclicShift consecutive lift (case 1, no wraparound).** For a
+consecutive pair `(a, b)` in the cyclic-shift partition with `b ≤ 1 - τ`, the
+interval `[a + τ, b + τ]` lies inside a γ-piece of the original partition. -/
+theorem cyclicShift_consecutive_lift_no_wrap (γ : ClosedPwC1Curve x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0:ℝ) 1) {a b : ℝ}
+    (h_cons : (cyclicShiftPartitionExt γ.partition τ).IsConsecutive a b)
+    (h_b_le : b ≤ 1 - τ) :
+    ∃ c d, γ.partition.IsConsecutive c d ∧ Icc (a + τ) (b + τ) ⊆ Icc c d := by
+  classical
+  obtain ⟨ha_in, hb_in, h_ab_lt, h_no_between⟩ := h_cons
+  -- a ∈ Icc 0 1 and b ∈ Icc 0 1.
+  have ha_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ ha_in
+  have hb_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ hb_in
+  have ha_ge : 0 ≤ a := ha_Icc.1
+  -- a + τ ∈ [τ, 1], b + τ ∈ (τ, 1].
+  have h_aT_ge : τ ≤ a + τ := by linarith
+  have h_bT_le : b + τ ≤ 1 := by linarith
+  -- Define c := max {p ∈ γ.partition : p ≤ a + τ}.
+  set Pl : Finset ℝ := γ.partition.filter (· ≤ a + τ) with hPl_def
+  -- If a + τ ≥ τ ≥ 0, and 0 ∈ γ.partition, then 0 ∈ Pl.
+  have h0_in_Pl : (0 : ℝ) ∈ Pl := by
+    refine Finset.mem_filter.mpr ⟨γ.zero_mem_partition, ?_⟩
+    linarith [hτ.1]
+  set c : ℝ := Pl.max' ⟨0, h0_in_Pl⟩ with hc_def
+  have hc_mem : c ∈ Pl := Pl.max'_mem _
+  have hc_in_P : c ∈ γ.partition := (Finset.mem_filter.mp hc_mem).1
+  have hc_le : c ≤ a + τ := (Finset.mem_filter.mp hc_mem).2
+  -- Define d := min {p ∈ γ.partition : p ≥ b + τ}.
+  set Pr : Finset ℝ := γ.partition.filter (b + τ ≤ ·) with hPr_def
+  have h1_in_Pr : (1 : ℝ) ∈ Pr := Finset.mem_filter.mpr ⟨γ.one_mem_partition, h_bT_le⟩
+  set d : ℝ := Pr.min' ⟨1, h1_in_Pr⟩ with hd_def
+  have hd_mem : d ∈ Pr := Pr.min'_mem _
+  have hd_in_P : d ∈ γ.partition := (Finset.mem_filter.mp hd_mem).1
+  have hd_ge : b + τ ≤ d := (Finset.mem_filter.mp hd_mem).2
+  -- c ≤ a + τ < b + τ ≤ d, so c < d.
+  have hcd_lt : c < d := lt_of_le_of_lt hc_le (lt_of_lt_of_le (by linarith : a + τ < b + τ) hd_ge)
+  -- Show (c, d) consecutive in γ.partition.
+  refine ⟨c, d, ⟨hc_in_P, hd_in_P, hcd_lt, ?_⟩, ?_⟩
+  · -- No γ-partition element strictly between c and d.
+    intro e he_in he_Ioo
+    -- If e ≤ a + τ: then e ∈ Pl, so e ≤ c. But e > c, contradiction.
+    rcases le_or_gt e (a + τ) with he_le | he_gt
+    · have he_in_Pl : e ∈ Pl := Finset.mem_filter.mpr ⟨he_in, he_le⟩
+      exact absurd (Pl.le_max' e he_in_Pl) (not_le_of_gt he_Ioo.1)
+    -- If e ≥ b + τ: then e ∈ Pr, so d ≤ e. But e < d, contradiction.
+    rcases le_or_gt (b + τ) e with he_ge | he_lt
+    · have he_in_Pr : e ∈ Pr := Finset.mem_filter.mpr ⟨he_in, he_ge⟩
+      exact absurd (Pr.min'_le e he_in_Pr) (not_le_of_gt he_Ioo.2)
+    -- Otherwise a + τ < e < b + τ, hence a < e - τ < b.
+    -- And e - τ ∈ Icc 0 1 (since τ ≤ a + τ < e < b + τ ≤ 1, so 0 < e - τ < 1 - τ ≤ 1).
+    have h_e_in_Icc : e - τ ∈ Set.Icc (0 : ℝ) 1 := by
+      refine ⟨?_, ?_⟩
+      · linarith [hτ.1, ha_ge]
+      · linarith [hτ.1, h_b_le]
+    have h_e_minus_tau_in_csp : e - τ ∈ cyclicShiftPartition γ.partition τ := by
+      rw [mem_cyclicShiftPartition_iff]
+      refine ⟨h_e_in_Icc, Or.inl ?_⟩
+      convert he_in using 1
+      ring
+    have h_e_minus_tau_in_Q : e - τ ∈ cyclicShiftPartitionExt γ.partition τ := by
+      rw [mem_cyclicShiftPartitionExt_iff]
+      tauto
+    have h_in_Ioo : e - τ ∈ Set.Ioo a b := ⟨by linarith, by linarith⟩
+    exact h_no_between (e - τ) h_e_minus_tau_in_Q h_in_Ioo
+  · -- Subset claim: Icc (a + τ) (b + τ) ⊆ Icc c d.
+    intro t ht
+    exact ⟨hc_le.trans ht.1, ht.2.trans hd_ge⟩
+
+/-- **Step 1: cyclicShift consecutive lift (case 2, with wraparound).** For a
+consecutive pair `(a, b)` in the cyclic-shift partition with `a ≥ 1 - τ`, the
+interval `[a + τ - 1, b + τ - 1]` lies inside a γ-piece of the original
+partition. -/
+theorem cyclicShift_consecutive_lift_wrap (γ : ClosedPwC1Curve x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0:ℝ) 1) {a b : ℝ}
+    (h_cons : (cyclicShiftPartitionExt γ.partition τ).IsConsecutive a b)
+    (h_a_ge : a ≥ 1 - τ) :
+    ∃ c d, γ.partition.IsConsecutive c d ∧ Icc (a + τ - 1) (b + τ - 1) ⊆ Icc c d := by
+  classical
+  obtain ⟨ha_in, hb_in, h_ab_lt, h_no_between⟩ := h_cons
+  have ha_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ ha_in
+  have hb_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ hb_in
+  have hb_le_1 : b ≤ 1 := hb_Icc.2
+  -- a + τ - 1 ∈ [0, τ), b + τ - 1 ∈ (0, τ].
+  have h_aT_ge : 0 ≤ a + τ - 1 := by linarith
+  have h_bT_le : b + τ - 1 ≤ τ := by linarith
+  -- c := max {p ∈ γ.partition : p ≤ a + τ - 1}, 0 ∈ since a + τ - 1 ≥ 0.
+  set Pl : Finset ℝ := γ.partition.filter (· ≤ a + τ - 1) with hPl_def
+  have h0_in_Pl : (0 : ℝ) ∈ Pl :=
+    Finset.mem_filter.mpr ⟨γ.zero_mem_partition, h_aT_ge⟩
+  set c : ℝ := Pl.max' ⟨0, h0_in_Pl⟩ with hc_def
+  have hc_mem : c ∈ Pl := Pl.max'_mem _
+  have hc_in_P : c ∈ γ.partition := (Finset.mem_filter.mp hc_mem).1
+  have hc_le : c ≤ a + τ - 1 := (Finset.mem_filter.mp hc_mem).2
+  -- d := min {p ∈ γ.partition : p ≥ b + τ - 1}, 1 ∈ since b + τ - 1 ≤ τ ≤ 1.
+  set Pr : Finset ℝ := γ.partition.filter (b + τ - 1 ≤ ·) with hPr_def
+  have h1_in_Pr : (1 : ℝ) ∈ Pr := by
+    refine Finset.mem_filter.mpr ⟨γ.one_mem_partition, ?_⟩
+    linarith [hτ.2]
+  set d : ℝ := Pr.min' ⟨1, h1_in_Pr⟩ with hd_def
+  have hd_mem : d ∈ Pr := Pr.min'_mem _
+  have hd_in_P : d ∈ γ.partition := (Finset.mem_filter.mp hd_mem).1
+  have hd_ge : b + τ - 1 ≤ d := (Finset.mem_filter.mp hd_mem).2
+  have hcd_lt : c < d := lt_of_le_of_lt hc_le
+    (lt_of_lt_of_le (by linarith : a + τ - 1 < b + τ - 1) hd_ge)
+  refine ⟨c, d, ⟨hc_in_P, hd_in_P, hcd_lt, ?_⟩, ?_⟩
+  · intro e he_in he_Ioo
+    rcases le_or_gt e (a + τ - 1) with he_le | he_gt
+    · have he_in_Pl : e ∈ Pl := Finset.mem_filter.mpr ⟨he_in, he_le⟩
+      exact absurd (Pl.le_max' e he_in_Pl) (not_le_of_gt he_Ioo.1)
+    rcases le_or_gt (b + τ - 1) e with he_ge | he_lt
+    · have he_in_Pr : e ∈ Pr := Finset.mem_filter.mpr ⟨he_in, he_ge⟩
+      exact absurd (Pr.min'_le e he_in_Pr) (not_le_of_gt he_Ioo.2)
+    -- Otherwise a + τ - 1 < e < b + τ - 1. Then a < e + 1 - τ < b.
+    -- And e + 1 - τ ∈ Icc 0 1.
+    have h_shift_in_Icc : e + 1 - τ ∈ Set.Icc (0 : ℝ) 1 := by
+      refine ⟨?_, ?_⟩
+      · linarith [hτ.2, h_a_ge]
+      · linarith [hτ.1, hb_le_1]
+    -- e + 1 - τ ∈ cyclicShiftPartition since (e + 1 - τ) + τ - 1 = e ∈ γ.partition.
+    have h_csp : e + 1 - τ ∈ cyclicShiftPartition γ.partition τ := by
+      rw [mem_cyclicShiftPartition_iff]
+      refine ⟨h_shift_in_Icc, Or.inr ?_⟩
+      convert he_in using 1
+      ring
+    have h_in_Q : e + 1 - τ ∈ cyclicShiftPartitionExt γ.partition τ := by
+      rw [mem_cyclicShiftPartitionExt_iff]
+      tauto
+    have h_in_Ioo : e + 1 - τ ∈ Set.Ioo a b :=
+      ⟨by linarith, by linarith⟩
+    exact h_no_between (e + 1 - τ) h_in_Q h_in_Ioo
+  · intro t ht
+    exact ⟨hc_le.trans ht.1, ht.2.trans hd_ge⟩
+
+/-- **Step 1 (combined): cyclicShift consecutive lift.** For a consecutive pair
+`(a, b)` in the cyclic-shift partition, either there's no wraparound (`b ≤ 1-τ`)
+and `[a + τ, b + τ]` lies in a γ-piece, or there is wraparound (`a ≥ 1-τ`) and
+`[a + τ - 1, b + τ - 1]` lies in a γ-piece. -/
+theorem cyclicShift_consecutive_lift (γ : ClosedPwC1Curve x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0:ℝ) 1) {a b : ℝ}
+    (h_cons : (cyclicShiftPartitionExt γ.partition τ).IsConsecutive a b) :
+    (b ≤ 1 - τ ∧
+        ∃ c d, γ.partition.IsConsecutive c d ∧ Icc (a + τ) (b + τ) ⊆ Icc c d) ∨
+    (a ≥ 1 - τ ∧
+        ∃ c d, γ.partition.IsConsecutive c d ∧
+          Icc (a + τ - 1) (b + τ - 1) ⊆ Icc c d) := by
+  rcases not_straddle_oneSubTau γ.partition h_cons with h_b_le | h_a_ge
+  · left
+    refine ⟨h_b_le, ?_⟩
+    exact γ.cyclicShift_consecutive_lift_no_wrap hτ h_cons h_b_le
+  · right
+    refine ⟨h_a_ge, ?_⟩
+    exact γ.cyclicShift_consecutive_lift_wrap hτ h_cons h_a_ge
+
+end ClosedPwC1Curve
+
+/-! ### Step 2: `ClosedPwC1Curve.cyclicShift` constructor
+
+We build the shifted curve as a paper-faithful `ClosedPwC1Curve`. The partition
+is `cyclicShiftPartitionExt γ.partition τ` and the underlying path is
+`γ.toPath.cyclicShift hτ`. The `ContDiffOn` field on each piece is established
+by the consecutive-pair lift (Step 1). -/
+
+/-- The cyclic-shifted curve agrees on `Icc 0 (1 - τ)` with the original curve
+shifted by `+τ`. -/
+private lemma cyclicShiftFun_eq_on_no_wrap (f : ℝ → E) {τ : ℝ}
+    (_hτ : τ ∈ Ioo (0 : ℝ) 1) :
+    Set.EqOn (cyclicShiftFun f τ) (fun t => f (t + τ)) (Icc (0 : ℝ) (1 - τ)) := by
+  intro t ht
+  simp only [cyclicShiftFun]
+  rw [if_pos (by linarith [ht.2] : t + τ ≤ 1)]
+
+/-- The cyclic-shifted curve agrees on `Icc (1 - τ) 1` with the original curve
+shifted by `+τ - 1`, provided the curve is *closed* (`f 0 = f 1`). -/
+private lemma cyclicShiftFun_eq_on_wrap (f : ℝ → E) {τ : ℝ}
+    (_hτ : τ ∈ Ioo (0 : ℝ) 1) (hclosed : f 0 = f 1) :
+    Set.EqOn (cyclicShiftFun f τ) (fun t => f (t + τ - 1))
+      (Icc (1 - τ) 1) := by
+  intro t ht
+  simp only [cyclicShiftFun]
+  rcases eq_or_lt_of_le ht.1 with h_eq | h_lt
+  · -- t = 1 - τ: cyclicShiftFun gives f 1 (via if_pos with t + τ = 1)
+    rw [if_pos (by linarith : t + τ ≤ 1)]
+    -- f (t + τ) = f 1, and f (t + τ - 1) = f 0 = f 1
+    have h1 : t + τ = 1 := by linarith
+    have h2 : t + τ - 1 = 0 := by linarith
+    rw [h1]; rw [show (1 : ℝ) - 1 = 0 from by ring]; exact hclosed.symm
+  · -- t > 1 - τ: cyclicShiftFun gives f (t + τ - 1) via if_neg
+    rw [if_neg (by linarith : ¬ (t + τ ≤ 1))]
+
+namespace ClosedPwC1Curve
+
+variable {x : E}
+
+/-- The shifted curve is `ContDiffOn ℝ 1` on each consecutive piece (Step 2). -/
+private theorem cyclicShift_extend_contDiffOn_piece (γ : ClosedPwC1Curve x)
+    {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {a b : ℝ}
+    (h_cons : (cyclicShiftPartitionExt γ.partition τ).IsConsecutive a b) :
+    ContDiffOn ℝ 1 (γ.toPath.cyclicShift hτ).extend (Icc a b) := by
+  have ha_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ h_cons.1
+  have hb_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ h_cons.2.1
+  have hab_Icc : Icc a b ⊆ Icc (0:ℝ) 1 := fun t ht => ⟨ha_Icc.1.trans ht.1, ht.2.trans hb_Icc.2⟩
+  have hclosed : γ.toPath.extend 0 = γ.toPath.extend 1 := by
+    rw [γ.toPath.extend_zero, γ.toPath.extend_one]
+  -- First, the shifted curve `(γ.toPath.cyclicShift hτ).extend` agrees with
+  -- `cyclicShiftFun γ.toPath.extend τ` on `Icc 0 1`, hence on `Icc a b`.
+  have h_eq_csf : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+      (cyclicShiftFun γ.toPath.extend τ) (Icc a b) := by
+    intro t ht
+    exact Path.cyclicShift_extend_on_Icc γ.toPath hτ (hab_Icc ht)
+  -- Use the consecutive-pair lift to find a γ-piece containing the shifted interval.
+  rcases γ.cyclicShift_consecutive_lift hτ h_cons with
+    ⟨h_b_le, c, d, h_cons_cd, h_sub⟩ | ⟨h_a_ge, c, d, h_cons_cd, h_sub⟩
+  · -- No wraparound: cyclicShiftFun = γ.extend ∘ (· + τ) on Icc a b ⊆ Icc 0 (1 - τ).
+    have hab_sub : Icc a b ⊆ Icc (0:ℝ) (1 - τ) :=
+      fun t ht => ⟨ha_Icc.1.trans ht.1, ht.2.trans h_b_le⟩
+    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+        (fun t => γ.toPath.extend (t + τ)) (Icc a b) := by
+      intro t ht
+      rw [h_eq_csf ht]
+      exact cyclicShiftFun_eq_on_no_wrap γ.toPath.extend hτ (hab_sub ht)
+    -- ContDiffOn for γ.toPath.extend on Icc c d, pulled back via (· + τ).
+    have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc c d) := γ.contDiffOn_pieces c d h_cons_cd
+    have h_shift_contDiff : ContDiffOn ℝ 1 (fun t => γ.toPath.extend (t + τ)) (Icc a b) := by
+      have h_shift_smooth : ContDiff ℝ 1 (fun t : ℝ => t + τ) :=
+        contDiff_id.add contDiff_const
+      have h_maps_to : MapsTo (fun t : ℝ => t + τ) (Icc a b) (Icc c d) := by
+        intro t ht
+        refine h_sub ⟨?_, ?_⟩
+        · show a + τ ≤ t + τ; linarith [ht.1]
+        · show t + τ ≤ b + τ; linarith [ht.2]
+      exact hcd.comp h_shift_smooth.contDiffOn h_maps_to
+    -- Transfer ContDiffOn back to (γ.toPath.cyclicShift hτ).extend via EqOn.
+    exact h_shift_contDiff.congr (fun t ht => h_eq_shifted ht)
+  · -- Wraparound: cyclicShiftFun = γ.extend ∘ (· + τ - 1) on Icc a b ⊆ Icc (1 - τ) 1.
+    have hab_sub : Icc a b ⊆ Icc (1 - τ) 1 :=
+      fun t ht => ⟨h_a_ge.trans ht.1, ht.2.trans hb_Icc.2⟩
+    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+        (fun t => γ.toPath.extend (t + τ - 1)) (Icc a b) := by
+      intro t ht
+      rw [h_eq_csf ht]
+      exact cyclicShiftFun_eq_on_wrap γ.toPath.extend hτ hclosed (hab_sub ht)
+    have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc c d) := γ.contDiffOn_pieces c d h_cons_cd
+    have h_shift_contDiff :
+        ContDiffOn ℝ 1 (fun t => γ.toPath.extend (t + τ - 1)) (Icc a b) := by
+      have h_shift_smooth : ContDiff ℝ 1 (fun t : ℝ => t + τ - 1) :=
+        (contDiff_id.add contDiff_const).sub contDiff_const
+      have h_maps_to : MapsTo (fun t : ℝ => t + τ - 1) (Icc a b) (Icc c d) := by
+        intro t ht
+        refine h_sub ⟨?_, ?_⟩
+        · show a + τ - 1 ≤ t + τ - 1; linarith [ht.1]
+        · show t + τ - 1 ≤ b + τ - 1; linarith [ht.2]
+      exact hcd.comp h_shift_smooth.contDiffOn h_maps_to
+    exact h_shift_contDiff.congr (fun t ht => h_eq_shifted ht)
+
+/-- **Step 2: Cyclic shift of a `ClosedPwC1Curve`.** -/
+noncomputable def cyclicShift (γ : ClosedPwC1Curve x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) :
+    ClosedPwC1Curve (γ.toPath.extend τ) where
+  toPath := γ.toPath.cyclicShift hτ
+  partition := cyclicShiftPartitionExt γ.partition τ
+  zero_mem_partition := zero_mem_cyclicShiftPartitionExt γ.partition τ
+  one_mem_partition := one_mem_cyclicShiftPartitionExt γ.partition τ
+  partition_subset := cyclicShiftPartitionExt_subset_Icc γ.partition hτ
+  contDiffOn_pieces := fun _ _ h_cons => γ.cyclicShift_extend_contDiffOn_piece hτ h_cons
+
+end ClosedPwC1Curve
+
+/-! ### Step 3: `ClosedPwC1Immersion.cyclicShift`
+
+For an immersion, additionally we need `derivWithin _ (Icc a b) t ≠ 0` on each
+piece. We obtain this from the original immersion's `derivWithin_ne_zero_pieces`
+property by chain rule. -/
+
+namespace ClosedPwC1Immersion
+
+variable {x : E}
+
+/-- On each piece of the cyclic shift, the (within-`Icc a b`) derivative is
+nonzero. -/
+private theorem cyclicShift_derivWithin_ne_zero_piece (γ : ClosedPwC1Immersion x)
+    {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {a b : ℝ}
+    (h_cons : (cyclicShiftPartitionExt γ.partition τ).IsConsecutive a b)
+    {t : ℝ} (ht : t ∈ Icc a b) :
+    derivWithin (γ.toPath.cyclicShift hτ).extend (Icc a b) t ≠ 0 := by
+  have ha_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ h_cons.1
+  have hb_Icc := cyclicShiftPartitionExt_subset_Icc γ.partition hτ h_cons.2.1
+  have hab_Icc : Icc a b ⊆ Icc (0:ℝ) 1 :=
+    fun u hu => ⟨ha_Icc.1.trans hu.1, hu.2.trans hb_Icc.2⟩
+  have hab_lt : a < b := h_cons.2.2.1
+  have hclosed : γ.toPath.extend 0 = γ.toPath.extend 1 := by
+    rw [γ.toPath.extend_zero, γ.toPath.extend_one]
+  -- The shifted curve agrees with `cyclicShiftFun γ.toPath.extend τ` on `Icc 0 1`.
+  have h_eq_csf : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+      (cyclicShiftFun γ.toPath.extend τ) (Icc a b) := by
+    intro u hu
+    exact Path.cyclicShift_extend_on_Icc γ.toPath hτ (hab_Icc hu)
+  rcases γ.toClosedPwC1Curve.cyclicShift_consecutive_lift hτ h_cons with
+    ⟨h_b_le, c, d, h_cons_cd, h_sub⟩ | ⟨h_a_ge, c, d, h_cons_cd, h_sub⟩
+  · -- Case A: no wraparound; shift by τ.
+    have hab_sub : Icc a b ⊆ Icc (0:ℝ) (1 - τ) :=
+      fun u hu => ⟨ha_Icc.1.trans hu.1, hu.2.trans h_b_le⟩
+    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+        (fun u => γ.toPath.extend (u + τ)) (Icc a b) := by
+      intro u hu
+      rw [h_eq_csf hu]
+      exact cyclicShiftFun_eq_on_no_wrap γ.toPath.extend hτ (hab_sub hu)
+    -- t + τ ∈ Icc c d
+    have ht_shift : t + τ ∈ Icc c d := h_sub ⟨by linarith [ht.1], by linarith [ht.2]⟩
+    -- γ.toPath.extend has nonzero derivWithin on Icc c d at t + τ.
+    set L : E := derivWithin γ.toPath.extend (Icc c d) (t + τ)
+    have hL_ne : L ≠ 0 := γ.derivWithin_ne_zero_pieces c d h_cons_cd (t + τ) ht_shift
+    -- HasDerivWithinAt for γ on Icc c d.
+    have hγ_diff : DifferentiableWithinAt ℝ γ.toPath.extend (Icc c d) (t + τ) := by
+      have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc c d) := γ.contDiffOn_pieces c d h_cons_cd
+      exact hcd.differentiableOn_one (t + τ) ht_shift
+    have h_HDwa_γ : HasDerivWithinAt γ.toPath.extend L (Icc c d) (t + τ) :=
+      hγ_diff.hasDerivWithinAt
+    -- HasDerivWithinAt for (· + τ) at t with derivative 1.
+    have h_HDwa_shift : HasDerivWithinAt (fun u : ℝ => u + τ) 1 (Icc a b) t :=
+      (((hasDerivAt_id t).add_const τ) : HasDerivAt (fun u : ℝ => u + τ) 1 t).hasDerivWithinAt
+    -- MapsTo
+    have h_maps_to : MapsTo (fun u : ℝ => u + τ) (Icc a b) (Icc c d) := by
+      intro u hu
+      refine h_sub ⟨?_, ?_⟩
+      · show a + τ ≤ u + τ; linarith [hu.1]
+      · show u + τ ≤ b + τ; linarith [hu.2]
+    -- Composition: g ∘ h has derivative h' • g' = 1 • L = L.
+    have h_comp : HasDerivWithinAt (γ.toPath.extend ∘ (fun u : ℝ => u + τ))
+        ((1 : ℝ) • L) (Icc a b) t :=
+      h_HDwa_γ.scomp t h_HDwa_shift h_maps_to
+    have h_comp' : HasDerivWithinAt (fun u : ℝ => γ.toPath.extend (u + τ))
+        L (Icc a b) t := by
+      simpa [Function.comp_def, one_smul] using h_comp
+    -- Transfer to (γ.toPath.cyclicShift hτ).extend via EqOn.
+    have h_HDwa_csf : HasDerivWithinAt (γ.toPath.cyclicShift hτ).extend L (Icc a b) t :=
+      h_comp'.congr (fun u hu => h_eq_shifted hu) (h_eq_shifted ht)
+    -- Derive derivWithin equality.
+    have h_unique : UniqueDiffWithinAt ℝ (Icc a b) t := uniqueDiffOn_Icc hab_lt t ht
+    rw [h_HDwa_csf.derivWithin h_unique]
+    exact hL_ne
+  · -- Case B: wraparound; shift by τ - 1.
+    have hab_sub : Icc a b ⊆ Icc (1 - τ) 1 :=
+      fun u hu => ⟨h_a_ge.trans hu.1, hu.2.trans hb_Icc.2⟩
+    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+        (fun u => γ.toPath.extend (u + τ - 1)) (Icc a b) := by
+      intro u hu
+      rw [h_eq_csf hu]
+      exact cyclicShiftFun_eq_on_wrap γ.toPath.extend hτ hclosed (hab_sub hu)
+    have ht_shift : t + τ - 1 ∈ Icc c d := by
+      refine h_sub ⟨?_, ?_⟩
+      · show a + τ - 1 ≤ t + τ - 1; linarith [ht.1]
+      · show t + τ - 1 ≤ b + τ - 1; linarith [ht.2]
+    set L : E := derivWithin γ.toPath.extend (Icc c d) (t + τ - 1)
+    have hL_ne : L ≠ 0 := γ.derivWithin_ne_zero_pieces c d h_cons_cd (t + τ - 1) ht_shift
+    have hγ_diff : DifferentiableWithinAt ℝ γ.toPath.extend (Icc c d) (t + τ - 1) := by
+      have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc c d) := γ.contDiffOn_pieces c d h_cons_cd
+      exact hcd.differentiableOn_one (t + τ - 1) ht_shift
+    have h_HDwa_γ : HasDerivWithinAt γ.toPath.extend L (Icc c d) (t + τ - 1) :=
+      hγ_diff.hasDerivWithinAt
+    have h_HDwa_shift : HasDerivWithinAt (fun u : ℝ => u + τ - 1) 1 (Icc a b) t :=
+      ((((hasDerivAt_id t).add_const τ).sub_const 1) :
+        HasDerivAt (fun u : ℝ => u + τ - 1) 1 t).hasDerivWithinAt
+    have h_maps_to : MapsTo (fun u : ℝ => u + τ - 1) (Icc a b) (Icc c d) := by
+      intro u hu
+      refine h_sub ⟨?_, ?_⟩
+      · show a + τ - 1 ≤ u + τ - 1; linarith [hu.1]
+      · show u + τ - 1 ≤ b + τ - 1; linarith [hu.2]
+    have h_comp : HasDerivWithinAt (γ.toPath.extend ∘ (fun u : ℝ => u + τ - 1))
+        ((1 : ℝ) • L) (Icc a b) t :=
+      h_HDwa_γ.scomp t h_HDwa_shift h_maps_to
+    have h_comp' : HasDerivWithinAt (fun u : ℝ => γ.toPath.extend (u + τ - 1))
+        L (Icc a b) t := by
+      simpa [Function.comp_def, one_smul] using h_comp
+    have h_HDwa_csf : HasDerivWithinAt (γ.toPath.cyclicShift hτ).extend L (Icc a b) t :=
+      h_comp'.congr (fun u hu => h_eq_shifted hu) (h_eq_shifted ht)
+    have h_unique : UniqueDiffWithinAt ℝ (Icc a b) t := uniqueDiffOn_Icc hab_lt t ht
+    rw [h_HDwa_csf.derivWithin h_unique]
+    exact hL_ne
+
+/-- **Step 3: Cyclic shift of a `ClosedPwC1Immersion`.** -/
+noncomputable def cyclicShift (γ : ClosedPwC1Immersion x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) :
+    ClosedPwC1Immersion (γ.toPath.extend τ) where
+  toClosedPwC1Curve := γ.toClosedPwC1Curve.cyclicShift hτ
+  derivWithin_ne_zero_pieces := fun _ _ h_cons _ ht =>
+    γ.cyclicShift_derivWithin_ne_zero_piece hτ h_cons ht
+
+/-! ### Step 4: Cyclic-shift equation-on lemmas (parameter-level)
+
+These lemmas relate the cyclic-shifted curve `γ.cyclicShift hτ` to `γ` at the
+parameter level. The shifted curve equals `γ ∘ (· + τ)` on `Icc 0 (1 - τ)` and
+`γ ∘ (· + τ - 1)` on `Icc (1 - τ) 1`. -/
+
+/-- The shifted curve agrees with `γ ∘ (· + τ)` on `Icc 0 (1 - τ)`. -/
+theorem cyclicShift_extend_eq_no_wrap (γ : ClosedPwC1Immersion x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) (1 - τ)) :
+    (γ.cyclicShift hτ).toPath.extend t = γ.toPath.extend (t + τ) := by
+  have ht_Icc01 : t ∈ Icc (0 : ℝ) 1 :=
+    ⟨ht.1, by linarith [ht.2, hτ.1]⟩
+  rw [show (γ.cyclicShift hτ).toPath.extend = (γ.toPath.cyclicShift hτ).extend from rfl,
+      Path.cyclicShift_extend_on_Icc γ.toPath hτ ht_Icc01]
+  exact cyclicShiftFun_eq_on_no_wrap γ.toPath.extend hτ ht
+
+/-- The shifted curve agrees with `γ ∘ (· + τ - 1)` on `Icc (1 - τ) 1`. -/
+theorem cyclicShift_extend_eq_wrap (γ : ClosedPwC1Immersion x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ} (ht : t ∈ Icc (1 - τ) 1) :
+    (γ.cyclicShift hτ).toPath.extend t = γ.toPath.extend (t + τ - 1) := by
+  have ht_Icc01 : t ∈ Icc (0 : ℝ) 1 :=
+    ⟨by linarith [ht.1, hτ.2], ht.2⟩
+  have hclosed : γ.toPath.extend 0 = γ.toPath.extend 1 := by
+    rw [γ.toPath.extend_zero, γ.toPath.extend_one]
+  rw [show (γ.cyclicShift hτ).toPath.extend = (γ.toPath.cyclicShift hτ).extend from rfl,
+      Path.cyclicShift_extend_on_Icc γ.toPath hτ ht_Icc01]
+  exact cyclicShiftFun_eq_on_wrap γ.toPath.extend hτ hclosed ht
+
+/-- The cyclic-shifted path is differentiable on `Ioo 0 (1 - τ)` (off partition),
+with derivative `deriv γ.toPath.extend (· + τ)`.
+
+We package the no-wrap derivative behavior as a `HasDerivAt` statement on an open
+set `Ioo 0 (1 - τ)`, which suffices for almost-everywhere arguments. The full
+statement at every interior point requires a partition lookup. -/
+theorem cyclicShift_hasDerivAt_no_wrap (γ : ClosedPwC1Immersion x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ}
+    (ht : t ∈ Ioo (0 : ℝ) (1 - τ))
+    (htn : t ∉ (γ.cyclicShift hτ).partition) :
+    HasDerivAt (γ.cyclicShift hτ).toPath.extend
+      (deriv γ.toPath.extend (t + τ)) t := by
+  -- t lies in the open interior of some piece `(a, b)` of the shifted partition.
+  have ht_Ioo01 : t ∈ Ioo (0 : ℝ) 1 :=
+    ⟨ht.1, by linarith [ht.2, hτ.1]⟩
+  obtain ⟨a, b, hcons, ht_in_Ioo⟩ :=
+    (γ.cyclicShift hτ).toClosedPwC1Curve.exists_consecutive_pair_containing
+      ht_Ioo01 htn
+  -- The shifted curve is C¹ on Icc a b, so derivWithin = derivW.
+  have h_eq_csf : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+      (cyclicShiftFun γ.toPath.extend τ) (Icc a b) := by
+    intro u hu
+    -- a, b ∈ Icc 0 1
+    have ha_Icc : a ∈ Icc (0:ℝ) 1 := by
+      have := cyclicShiftPartitionExt_subset_Icc γ.partition hτ hcons.1
+      exact this
+    have hb_Icc : b ∈ Icc (0:ℝ) 1 := by
+      have := cyclicShiftPartitionExt_subset_Icc γ.partition hτ hcons.2.1
+      exact this
+    have hu_Icc : u ∈ Icc (0:ℝ) 1 :=
+      ⟨ha_Icc.1.trans hu.1, hu.2.trans hb_Icc.2⟩
+    exact Path.cyclicShift_extend_on_Icc γ.toPath hτ hu_Icc
+  have hab_lt : a < b := hcons.2.2.1
+  -- Use the consecutive-pair lift to find a γ-piece containing the shifted interval.
+  rcases γ.toClosedPwC1Curve.cyclicShift_consecutive_lift hτ hcons with
+    ⟨h_b_le, c, d, h_cons_cd, h_sub⟩ | ⟨h_a_ge, _c, _d, _h_cons_cd, _h_sub⟩
+  · -- No wraparound case: the piece is on Icc a b ⊆ Icc 0 (1 - τ).
+    have hab_sub : Icc a b ⊆ Icc (0:ℝ) (1 - τ) := by
+      have ha_nn : 0 ≤ a :=
+        (cyclicShiftPartitionExt_subset_Icc γ.partition hτ hcons.1).1
+      exact fun u hu => ⟨ha_nn.trans hu.1, hu.2.trans h_b_le⟩
+    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+        (fun u => γ.toPath.extend (u + τ)) (Icc a b) := by
+      intro u hu
+      rw [h_eq_csf hu]
+      exact cyclicShiftFun_eq_on_no_wrap γ.toPath.extend hτ (hab_sub hu)
+    -- t + τ ∈ Ioo c d (open interior).
+    have ht_shift : t + τ ∈ Ioo c d := by
+      have ha_eq : a + τ ≥ c := by
+        have hin : (a + τ : ℝ) ∈ Icc (a + τ) (b + τ) :=
+          ⟨le_refl _, by linarith [hab_lt]⟩
+        exact (h_sub hin).1
+      have hb_eq : b + τ ≤ d := by
+        have hin : (b + τ : ℝ) ∈ Icc (a + τ) (b + τ) :=
+          ⟨by linarith [hab_lt], le_refl _⟩
+        exact (h_sub hin).2
+      exact ⟨by linarith [ht_in_Ioo.1], by linarith [ht_in_Ioo.2]⟩
+    -- DifferentiableAt γ.extend (t + τ) (interior of piece).
+    have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc c d) := γ.contDiffOn_pieces c d h_cons_cd
+    have ht_shift_Icc : t + τ ∈ Icc c d := Ioo_subset_Icc_self ht_shift
+    have h_diff_within : DifferentiableWithinAt ℝ γ.toPath.extend (Icc c d) (t + τ) :=
+      hcd.differentiableOn_one (t + τ) ht_shift_Icc
+    have h_diff_at : DifferentiableAt ℝ γ.toPath.extend (t + τ) := by
+      have : Icc c d ∈ 𝓝 (t + τ) := Icc_mem_nhds ht_shift.1 ht_shift.2
+      exact h_diff_within.differentiableAt this
+    -- HasDerivAt γ.extend at (t + τ).
+    have h_γHDA : HasDerivAt γ.toPath.extend (deriv γ.toPath.extend (t + τ)) (t + τ) :=
+      h_diff_at.hasDerivAt
+    -- HasDerivAt (· + τ) 1 t.
+    have h_shift_HDA : HasDerivAt (fun u : ℝ => u + τ) 1 t :=
+      (hasDerivAt_id t).add_const τ
+    -- Composition: scomp gives (1 : ℝ) • L = L.
+    have h_comp : HasDerivAt (γ.toPath.extend ∘ (fun u : ℝ => u + τ))
+        ((1 : ℝ) • deriv γ.toPath.extend (t + τ)) t :=
+      h_γHDA.scomp t h_shift_HDA
+    have h_comp' : HasDerivAt (fun u : ℝ => γ.toPath.extend (u + τ))
+        (deriv γ.toPath.extend (t + τ)) t := by
+      simpa [Function.comp_def, one_smul] using h_comp
+    -- Transfer to (γ.cyclicShift hτ).extend via EqOn on a nhd of t.
+    have h_eqOn_nhd : (γ.cyclicShift hτ).toPath.extend =ᶠ[𝓝 t]
+        (fun u => γ.toPath.extend (u + τ)) := by
+      -- Icc a b is a nhd of t (interior)
+      have h_Icc_nhd : Icc a b ∈ 𝓝 t := Icc_mem_nhds ht_in_Ioo.1 ht_in_Ioo.2
+      filter_upwards [h_Icc_nhd] with u hu
+      show (γ.toPath.cyclicShift hτ).extend u = γ.toPath.extend (u + τ)
+      exact h_eq_shifted hu
+    -- congr_of_eventuallyEq: h : HasDerivAt f f' x, h₁ : f₁ =ᶠ f → HasDerivAt f₁
+    -- So we need the shifted-form-eq-fun-form, then conclude the LHS form has the deriv.
+    exact h_comp'.congr_of_eventuallyEq h_eqOn_nhd
+  · -- Wraparound case: but we're in Icc 0 (1 - τ), so a ≥ 1 - τ contradicts t < 1 - τ.
+    exfalso
+    have h_t_lt : t < 1 - τ := ht.2
+    have h_a_le_t : a ≤ t := ht_in_Ioo.1.le
+    linarith
+
+/-- Symmetric: derivative on the wrap region. -/
+theorem cyclicShift_hasDerivAt_wrap (γ : ClosedPwC1Immersion x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ}
+    (ht : t ∈ Ioo (1 - τ) 1)
+    (htn : t ∉ (γ.cyclicShift hτ).partition) :
+    HasDerivAt (γ.cyclicShift hτ).toPath.extend
+      (deriv γ.toPath.extend (t + τ - 1)) t := by
+  have ht_Ioo01 : t ∈ Ioo (0 : ℝ) 1 :=
+    ⟨by linarith [ht.1, hτ.2], ht.2⟩
+  obtain ⟨a, b, hcons, ht_in_Ioo⟩ :=
+    (γ.cyclicShift hτ).toClosedPwC1Curve.exists_consecutive_pair_containing
+      ht_Ioo01 htn
+  have hclosed : γ.toPath.extend 0 = γ.toPath.extend 1 := by
+    rw [γ.toPath.extend_zero, γ.toPath.extend_one]
+  have h_eq_csf : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+      (cyclicShiftFun γ.toPath.extend τ) (Icc a b) := by
+    intro u hu
+    have ha_Icc : a ∈ Icc (0:ℝ) 1 :=
+      cyclicShiftPartitionExt_subset_Icc γ.partition hτ hcons.1
+    have hb_Icc : b ∈ Icc (0:ℝ) 1 :=
+      cyclicShiftPartitionExt_subset_Icc γ.partition hτ hcons.2.1
+    have hu_Icc : u ∈ Icc (0:ℝ) 1 :=
+      ⟨ha_Icc.1.trans hu.1, hu.2.trans hb_Icc.2⟩
+    exact Path.cyclicShift_extend_on_Icc γ.toPath hτ hu_Icc
+  have hab_lt : a < b := hcons.2.2.1
+  rcases γ.toClosedPwC1Curve.cyclicShift_consecutive_lift hτ hcons with
+    ⟨h_b_le, _c, _d, _h_cons_cd, _h_sub⟩ | ⟨h_a_ge, c, d, h_cons_cd, h_sub⟩
+  · -- No wrap case: b ≤ 1 - τ contradicts t > 1 - τ and a ≤ t.
+    exfalso
+    have h_t_gt : t > 1 - τ := ht.1
+    have h_t_le_b : t ≤ b := ht_in_Ioo.2.le
+    linarith
+  · -- Wraparound case.
+    have hb_le_1 : b ≤ 1 :=
+      (cyclicShiftPartitionExt_subset_Icc γ.partition hτ hcons.2.1).2
+    have hab_sub : Icc a b ⊆ Icc (1 - τ) 1 :=
+      fun u hu => ⟨h_a_ge.trans hu.1, hu.2.trans hb_le_1⟩
+    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+        (fun u => γ.toPath.extend (u + τ - 1)) (Icc a b) := by
+      intro u hu
+      rw [h_eq_csf hu]
+      exact cyclicShiftFun_eq_on_wrap γ.toPath.extend hτ hclosed (hab_sub hu)
+    -- t + τ - 1 ∈ Ioo c d.
+    have ht_shift : t + τ - 1 ∈ Ioo c d := by
+      have ha_eq : a + τ - 1 ≥ c := by
+        have hin : (a + τ - 1 : ℝ) ∈ Icc (a + τ - 1) (b + τ - 1) :=
+          ⟨le_refl _, by linarith [hab_lt]⟩
+        exact (h_sub hin).1
+      have hb_eq : b + τ - 1 ≤ d := by
+        have hin : (b + τ - 1 : ℝ) ∈ Icc (a + τ - 1) (b + τ - 1) :=
+          ⟨by linarith [hab_lt], le_refl _⟩
+        exact (h_sub hin).2
+      exact ⟨by linarith [ht_in_Ioo.1], by linarith [ht_in_Ioo.2]⟩
+    have hcd : ContDiffOn ℝ 1 γ.toPath.extend (Icc c d) := γ.contDiffOn_pieces c d h_cons_cd
+    have ht_shift_Icc : t + τ - 1 ∈ Icc c d := Ioo_subset_Icc_self ht_shift
+    have h_diff_within : DifferentiableWithinAt ℝ γ.toPath.extend (Icc c d) (t + τ - 1) :=
+      hcd.differentiableOn_one (t + τ - 1) ht_shift_Icc
+    have h_diff_at : DifferentiableAt ℝ γ.toPath.extend (t + τ - 1) := by
+      have : Icc c d ∈ 𝓝 (t + τ - 1) := Icc_mem_nhds ht_shift.1 ht_shift.2
+      exact h_diff_within.differentiableAt this
+    have h_γHDA : HasDerivAt γ.toPath.extend (deriv γ.toPath.extend (t + τ - 1)) (t + τ - 1) :=
+      h_diff_at.hasDerivAt
+    have h_shift_HDA : HasDerivAt (fun u : ℝ => u + τ - 1) 1 t :=
+      ((hasDerivAt_id t).add_const τ).sub_const 1
+    have h_comp : HasDerivAt (γ.toPath.extend ∘ (fun u : ℝ => u + τ - 1))
+        ((1 : ℝ) • deriv γ.toPath.extend (t + τ - 1)) t :=
+      h_γHDA.scomp t h_shift_HDA
+    have h_comp' : HasDerivAt (fun u : ℝ => γ.toPath.extend (u + τ - 1))
+        (deriv γ.toPath.extend (t + τ - 1)) t := by
+      simpa [Function.comp_def, one_smul] using h_comp
+    have h_eqOn_nhd : (γ.cyclicShift hτ).toPath.extend =ᶠ[𝓝 t]
+        (fun u => γ.toPath.extend (u + τ - 1)) := by
+      have h_Icc_nhd : Icc a b ∈ 𝓝 t := Icc_mem_nhds ht_in_Ioo.1 ht_in_Ioo.2
+      filter_upwards [h_Icc_nhd] with u hu
+      show (γ.toPath.cyclicShift hτ).extend u = γ.toPath.extend (u + τ - 1)
+      exact h_eq_shifted hu
+    exact h_comp'.congr_of_eventuallyEq h_eqOn_nhd
+
+/-- Equality of derivatives on the open no-wrap interior, off the shifted partition. -/
+theorem cyclicShift_deriv_eq_no_wrap (γ : ClosedPwC1Immersion x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ}
+    (ht : t ∈ Ioo (0 : ℝ) (1 - τ))
+    (htn : t ∉ (γ.cyclicShift hτ).partition) :
+    deriv (γ.cyclicShift hτ).toPath.extend t =
+      deriv γ.toPath.extend (t + τ) :=
+  (γ.cyclicShift_hasDerivAt_no_wrap hτ ht htn).deriv
+
+/-- Equality of derivatives on the open wrap interior, off the shifted partition. -/
+theorem cyclicShift_deriv_eq_wrap (γ : ClosedPwC1Immersion x) {τ : ℝ}
+    (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ}
+    (ht : t ∈ Ioo (1 - τ) 1)
+    (htn : t ∉ (γ.cyclicShift hτ).partition) :
+    deriv (γ.cyclicShift hτ).toPath.extend t =
+      deriv γ.toPath.extend (t + τ - 1) :=
+  (γ.cyclicShift_hasDerivAt_wrap hτ ht htn).deriv
+
+end ClosedPwC1Immersion
+
+/-! ## Finite preimage of a finite set under a `ClosedPwC1Immersion`
+
+For a `ClosedPwC1Immersion γ` and finite `S : Finset E`, the parameter
+preimage `{t ∈ [0,1] | γ t ∈ S}` is finite. The proof uses
+`HasDerivWithinAt.eventually_ne` (isolated zeros from non-vanishing
+derivative) + `IsCompact + discrete ⇒ finite`.
+
+Eliminates the `h_preimage : Set.Countable …` hypothesis in
+`h_holo_cancel_of_conditionB` and related downstream theorems. -/
+
+namespace ClosedPwC1Immersion
+
+variable {x : E} {γ : ClosedPwC1Immersion x}
+
 
 /-- **Per-piece finite preimage at a single value.** On a closed piece `Icc a b`
 between consecutive partition members, the preimage of a single point `s ∈ E`
@@ -873,5 +1750,6 @@ theorem preimage_countable (γ : ClosedPwC1Immersion x) (S : Finset E) :
   (γ.preimage_finite S).countable
 
 end ClosedPwC1Immersion
+
 
 end

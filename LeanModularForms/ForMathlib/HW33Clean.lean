@@ -7,6 +7,7 @@ import LeanModularForms.ForMathlib.HW33SimpleClean
 import LeanModularForms.ForMathlib.HW33LaurentSimple
 import LeanModularForms.ForMathlib.SingleCrossing
 import LeanModularForms.ForMathlib.CrossingDataConstruction
+import LeanModularForms.ForMathlib.HungerbuhlerWasem.MultiCrossingCPV
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistence
 
 /-!
@@ -355,6 +356,65 @@ theorem hw_3_3_clean_truly_full
   -- Apply `hw_3_3_clean`.
   exact hw_3_3_clean hU_open hU_ne S hS_in_U f hf γ h_null hSimple hCondA hCondB
     s_star hs_star_in hγ_avoids_others hw_star
+
+/-! ## Multi-crossing form
+
+The fully general paper-faithful multi-crossing form: γ may cross **any
+number** of poles in S, each transversely (at smooth interior partition
+points). This routes through the ported
+`HungerbuhlerWasem.residueTheorem_crossing_full_spec`, which handles arbitrary
+multi-pole multi-crossing structure under conditions (A')+(B). -/
+
+/-- **HW Theorem 3.3 — paper-faithful, simple poles, multi-crossing, clean form.**
+
+The maximally general statement of HW Theorem 3.3 for **simple poles** with
+arbitrary transverse multi-pole multi-crossing. Compared to
+`hw_3_3_clean_truly_full` (single distinguished crossing only), γ may cross
+**any subset** of `S` at any number of parameters, provided:
+
+* `hx_notin_S` — the basepoint is off the singular set;
+* `h_no_corner_crossings` — crossings happen at smooth interior points (not at
+  piecewise-`C¹` partition corners).
+
+For a genuine `C¹` curve, `h_no_corner_crossings` is automatic (no partition
+interior points to begin with). For a piecewise-`C¹` curve, it can be ensured
+by choosing the partition to avoid the crossing parameters.
+
+**Hypotheses** (8 paper + 2 structural):
+
+* `hU_open, hU_ne, hS_in_U, hf, h_null, hSimple, hCondA, hCondB` — the 8
+  paper-faithful hypotheses.
+* `hx_notin_S, h_no_corner_crossings` — structural transversality/regularity.
+
+All cancellation, integrability, CPV-existence, and multi-pole aggregation
+oracles are discharged internally via the ported
+`HungerbuhlerWasem.residueTheorem_crossing_full_spec` machinery. -/
+theorem hw_3_3_clean_multi
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
+    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : ClosedPwC1Immersion x)
+    (h_null : IsNullHomologous γ.toPwC1Immersion U)
+    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
+    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
+      (fun s =>
+        (HungerbuhlerWasem.PolarPartDecomposition.ofMeromorphicWithCondB
+          hU_open hS_in_U hf
+          (γ := γ.toPwC1Immersion) (fun s hs => (hSimple s hs).meromorphicAt)
+          hCondB).order s))
+    (hx_notin_S : x ∉ (↑S : Set ℂ))
+    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
+      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
+      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) :
+    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
+          residue f s) := by
+  have hMero : ∀ s ∈ S, MeromorphicAt f s :=
+    fun s hs => (hSimple s hs).meromorphicAt
+  exact HungerbuhlerWasem.residueTheorem_crossing_full_spec hU_open hU_ne hS_in_U
+    hf γ h_null hMero hCondB hCondA hx_notin_S h_no_corner_crossings
 
 end LeanModularForms
 

@@ -97,6 +97,48 @@ theorem contourIntegral_sub (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
   simp only [contourIntegral, sub_mul]
   exact intervalIntegral.integral_sub hf hg
 
+/-- **Finset sum linearity for contour integrals.** When each integrand
+`contourIntegrand (f i) γ` is interval-integrable on `[0, 1]`,
+`∮_γ (∑ i ∈ ι, f i z) = ∑ i ∈ ι, ∮_γ f i z`. -/
+theorem contourIntegral_finset_sum {ι : Type*} [DecidableEq ι] (s : Finset ι)
+    (f : ι → ℂ → ℂ) (γ : PiecewiseC1Path x y)
+    (hf : ∀ i ∈ s, IntervalIntegrable (contourIntegrand (f i) γ) volume 0 1) :
+    contourIntegral (fun z => ∑ i ∈ s, f i z) γ =
+      ∑ i ∈ s, contourIntegral (f i) γ := by
+  induction s using Finset.induction_on with
+  | empty =>
+    simp only [Finset.sum_empty]
+    exact contourIntegral_zero γ
+  | @insert j t hi ih =>
+    have h_j : IntervalIntegrable (contourIntegrand (f j) γ) volume 0 1 :=
+      hf j (Finset.mem_insert_self _ _)
+    have h_t : ∀ i ∈ t, IntervalIntegrable (contourIntegrand (f i) γ) volume 0 1 :=
+      fun i hi => hf i (Finset.mem_insert_of_mem hi)
+    have h_t_int : IntervalIntegrable
+        (contourIntegrand (fun z => ∑ i ∈ t, f i z) γ) volume 0 1 := by
+      have heq : (fun u : ℝ =>
+          (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u) =
+          fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
+        funext u
+        rw [Finset.sum_mul]
+      change IntervalIntegrable
+        (fun u => (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u)
+        volume 0 1
+      rw [heq]
+      have h_sum := IntervalIntegrable.sum t h_t
+      have hfun : (∑ i ∈ t, contourIntegrand (f i) γ) =
+          fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
+        funext u
+        rw [Finset.sum_apply]
+        rfl
+      rwa [hfun] at h_sum
+    rw [Finset.sum_insert hi,
+        show (fun z => ∑ i ∈ insert j t, f i z) =
+             (fun z => f j z + ∑ i ∈ t, f i z) from
+          funext (fun z => Finset.sum_insert hi),
+        contourIntegral_add (f j) (fun z => ∑ i ∈ t, f i z) γ h_j h_t_int,
+        ih h_t]
+
 /-! ### FTC for piecewise C¹ paths
 
 The fundamental theorem of calculus for contour integrals. If `F` is a primitive of `f`
