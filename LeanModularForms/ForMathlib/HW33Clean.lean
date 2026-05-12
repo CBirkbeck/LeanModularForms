@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.HW33SimpleClean
 import LeanModularForms.ForMathlib.HW33LaurentSimple
 import LeanModularForms.ForMathlib.SingleCrossing
+import LeanModularForms.ForMathlib.CrossingDataConstruction
 
 /-!
 # HW Theorem 3.3 — final paper-faithful clean form
@@ -231,6 +232,51 @@ theorem hw_3_3_clean_full
   · -- Single-crossing case: extract the bundled `SingleCrossingData` and apply.
     exact hw_3_3_clean_with_scd hU_open hU_ne S hS_in_U f hf γ h_null hSimple
       hCondA hCondB s_star hs_star_in hγ_avoids_others D.some
+
+/-! ### `hw_3_3_clean_from_crossingGeometry`
+
+A higher-level entry point that takes `CrossingGeometry` + `ArcFTCHyp` +
+user-supplied δ-data instead of a fully-assembled `SingleCrossingData`. The
+geometric structure provides the `t₀`/`ht₀` automatically, the user supplies
+the cutoff bounds, and the analytic FTC piece provides the limit. -/
+
+/-- **HW Theorem 3.3 — single crossing from `CrossingGeometry`.**
+
+Takes the 8 paper hypotheses + `s_star ∈ S` + `hγ_avoids_others` +
+`CrossingGeometry γ s_star` + user-supplied δ-data + `ArcFTCHyp`. The
+`SingleCrossingData` is assembled automatically via
+`SingleCrossingData.ofGeometryAndFTC`. -/
+theorem hw_3_3_clean_from_crossingGeometry
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : ClosedPwC1Immersion x)
+    (h_null : IsNullHomologous γ.toPwC1Immersion U)
+    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
+      (fun s => poleOrderAt f s))
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
+    (s_star : ℂ) (hs_star_in : s_star ∈ S)
+    (hγ_avoids_others : ∀ s ∈ S, s ≠ s_star → ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s)
+    (G : CrossingGeometry γ s_star)
+    (L : ℂ) (δ : ℝ → ℝ) (threshold : ℝ) (hthresh : 0 < threshold)
+    (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
+    (hδ_small : ∀ ε, 0 < ε → ε < threshold → δ ε < min G.t₀ (1 - G.t₀))
+    (h_far : ∀ ε, 0 < ε → ε < threshold → ∀ t ∈ Icc (0 : ℝ) 1, δ ε < |t - G.t₀| →
+      ε < ‖γ.toPwC1Immersion.toPiecewiseC1Path t - s_star‖)
+    (h_near : ∀ ε, 0 < ε → ε < threshold → ∀ t, |t - G.t₀| ≤ δ ε →
+      ‖γ.toPwC1Immersion.toPiecewiseC1Path t - s_star‖ ≤ ε)
+    (ftcHyp : ArcFTCHyp γ.toPwC1Immersion.toPiecewiseC1Path s_star G.t₀
+      δ threshold L) :
+    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
+      (2 * ↑Real.pi * I * ∑ s ∈ S,
+        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
+          residue f s) :=
+  hw_3_3_clean_with_scd hU_open hU_ne S hS_in_U f hf γ h_null hSimple hCondA
+    hCondB s_star hs_star_in hγ_avoids_others
+    (SingleCrossingData.ofGeometryAndFTC γ s_star G L δ threshold hthresh
+      hδ_pos hδ_small h_far h_near ftcHyp)
 
 end LeanModularForms
 

@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.SingleCrossing
 import LeanModularForms.ForMathlib.WindingWeightProofs
+import LeanModularForms.ForMathlib.HW33LaurentPolarPart
 
 /-!
 # Automatic construction of `SingleCrossingData` geometric fields
@@ -86,6 +87,32 @@ structure CrossingGeometry (γ : ClosedPwC1Immersion x) (s : ℂ) where
   /-- Uniqueness: `t₀` is the only parameter in `[0, 1]` at which γ crosses `s`. -/
   unique_crossing : ∀ t ∈ Icc (0 : ℝ) 1,
     γ.toPwC1Immersion.toPiecewiseC1Path t = s → t = t₀
+
+/-- `CrossingGeometry γ s` implies `IsCrossed γ.toPwC1Immersion s`. -/
+theorem CrossingGeometry.toIsCrossed (γ : ClosedPwC1Immersion x) (s : ℂ)
+    (G : CrossingGeometry γ s) : IsCrossed γ.toPwC1Immersion s :=
+  ⟨G.t₀, G.ht₀, G.cross⟩
+
+/-! ### Construction from `IsCrossed` + uniqueness -/
+
+/-- Construct `CrossingGeometry γ s` from `IsCrossed (γ.toPwC1Immersion) s` plus
+a uniqueness-of-crossing hypothesis.
+
+This is the natural bridge from the existential `IsCrossed` predicate to the
+packaged `CrossingGeometry` structure: the user supplies uniqueness in `[0, 1]`
+(typically derivable from condition (B) when crossings are transverse), and the
+geometric data is extracted via `Classical.choose`. -/
+noncomputable def CrossingGeometry.of_isCrossed_unique
+    (γ : ClosedPwC1Immersion x) (s : ℂ)
+    (h_cross : IsCrossed γ.toPwC1Immersion s)
+    (h_unique : ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPwC1Immersion.toPiecewiseC1Path t = s →
+      t = crossingParam γ.toPwC1Immersion s) :
+    CrossingGeometry γ s where
+  t₀ := crossingParam γ.toPwC1Immersion s
+  ht₀ := crossingParam_mem_Ioo h_cross
+  cross := γ_at_crossingParam h_cross
+  unique_crossing := h_unique
 
 namespace CrossingGeometry
 
