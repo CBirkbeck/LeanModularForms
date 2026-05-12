@@ -67,6 +67,31 @@ absorb **8 obligations** into definitional consequences:
   framework `SingleCrossingData.hasWindingNumber` already lifts a user-supplied
   far-segment FTC limit `E(ε) → L` to `HasGeneralizedWindingNumber γ s (L/(2πi))`.
   All theorems axiom-clean `[propext, Classical.choice, Quot.sound]`.
+* PHASE-9 ✅ DONE (2026-05-12) — `hw_3_3_clean_with_scd`, `hw_3_3_clean_full`,
+  and `hw_3_3_clean_from_crossingGeometry` (`HW33Clean.lean`): API layers
+  refactoring the `hw_star` residual of `hw_3_3_clean`:
+  - `hw_3_3_clean_with_scd` takes a bundled `SingleCrossingData γ s_star`
+    instead of the raw `hw_star : HasGeneralizedWindingNumber` hypothesis.
+  - `hw_3_3_clean_full` unifies the avoidance and single-crossing cases
+    under a single disjunction `h_at_star`.
+  - `hw_3_3_clean_from_crossingGeometry` takes `CrossingGeometry γ s_star`
+    (uniqueness of crossing) + user-supplied δ-data + `ArcFTCHyp` and
+    assembles the `SingleCrossingData` automatically via
+    `SingleCrossingData.ofGeometryAndFTC`.
+  Also adds `CrossingDataConstruction.lean` with:
+  - `CrossingGeometry γ s` — packaged uniqueness-of-crossing structure;
+  - `CrossingGeometry.exists_farMin_pos` — far-bound minimum existence
+    via compactness + continuity + uniqueness;
+  - `CrossingGeometry.normFn_tendsto_zero` — near-bound continuity;
+  - `CrossingGeometry.exists_near_delta` — near-bound δ existence;
+  - `CrossingGeometry.of_isCrossed_unique` — bridge from `IsCrossed` +
+    uniqueness;
+  - `SingleCrossingData.ofGeometryAndFTC` — packaged constructor.
+  The full automatic discharge of `SingleCrossingData` from
+  `ClosedPwC1Immersion + IsCrossed + SatisfiesConditionB` requires the
+  deep chord-to-tangent + log-limit computation (Phase C); this PR
+  delivers Phase A (geometric uniqueness) and the bundled API surface.
+  All theorems axiom-clean `[propext, Classical.choice, Quot.sound]`.
 * PHASE-8 ✅ DONE (2026-05-12) — `hw_3_3_simple_with_crossData` (`HW33SimpleClean.lean`):
   composes the Phase 4 + Phase 5c dischargers into a single paper-faithful
   simple-pole theorem with `SingleCrossingData` crossings. Absorbs four oracle
