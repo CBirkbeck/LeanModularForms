@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.HW33LaurentPolarPart
 import LeanModularForms.ForMathlib.HW33Closed
+import LeanModularForms.ForMathlib.ResidueLinearity
 
 /-!
 # HW Theorem 3.3 — tight (paper-style) form
