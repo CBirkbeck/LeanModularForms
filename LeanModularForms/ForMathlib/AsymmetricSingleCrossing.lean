@@ -1,0 +1,405 @@
+/-
+Copyright (c) 2026. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
+import LeanModularForms.ForMathlib.SingleCrossing
+
+/-!
+# Asymmetric single-crossing winding-number framework
+
+Generalisation of `SingleCrossingData` allowing **independent left/right cutoffs**
+`δ_left, δ_right : ℝ → ℝ`. This admits crossings where the chord-to-tangent
+constants `‖L_-‖` and `‖L_+‖` differ — the symmetric `SingleCrossingData` was
+unable to express such crossings (a single δ cannot simultaneously satisfy
+`δ ≤ min(δ_R, δ_L)` for the near bound and `δ ≥ max(δ_R, δ_L)` for the far
+bound when `δ_R ≠ δ_L`).
+
+## Components
+
+* `AsymmetricSingleCrossingData γ z₀` — bundled data with separate left/right
+  cutoffs, near/far bounds, and an FTC-driven limit `E(ε) → L`.
+* `AsymmetricSingleCrossingData.hasCauchyPV` — the CPV of `(z - z₀)⁻¹` along
+  `γ` exists with limit `L`.
+* `AsymmetricSingleCrossingData.hasWindingNumber`,
+  `windingNumber_eq` — the `generalizedWindingNumber` equals `L / (2πi)`.
+* `SingleCrossingData.toAsymmetric` — every symmetric crossing data lifts to
+  an asymmetric one (taking `δ_left = δ_right = δ`). This makes the asymmetric
+  framework backwards compatible: existing FD-curve constructors continue to
+  work via this wrapper.
+
+## References
+
+* K. Hungerbuhler, J. Wasem, *A generalized notion of winding numbers*
+-/
+
+open Complex MeasureTheory Set Filter Topology
+open scoped Interval
+
+noncomputable section
+
+variable {x y : ℂ}
+
+/-- Data for computing the generalized winding number at a single crossing point,
+**with independent left/right cutoffs**. The curve `γ` crosses `z₀` at exactly
+one parameter `t₀ ∈ (0, 1)`; the left cutoff `δ_left ε` controls the
+parameter-space radius on `[t₀ - δ_left ε, t₀]`, and the right cutoff
+`δ_right ε` controls `[t₀, t₀ + δ_right ε]`. -/
+structure AsymmetricSingleCrossingData (γ : PiecewiseC1Path x y) (z₀ : ℂ) where
+  /-- Target PV limit value. -/
+  L : ℂ
+  /-- Unique crossing parameter in `(0, 1)`. -/
+  t₀ : ℝ
+  ht₀ : t₀ ∈ Ioo 0 1
+  /-- Left cutoff function. -/
+  δ_left : ℝ → ℝ
+  /-- Right cutoff function. -/
+  δ_right : ℝ → ℝ
+  /-- Threshold below which all bounds hold. -/
+  threshold : ℝ
+  hthresh : 0 < threshold
+  hδ_left_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_left ε
+  hδ_right_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_right ε
+  hδ_left_small : ∀ ε, 0 < ε → ε < threshold → δ_left ε < t₀
+  hδ_right_small : ∀ ε, 0 < ε → ε < threshold → δ_right ε < 1 - t₀
+  /-- Far bound on the left: outside `[t₀ - δ_left ε, t₀]`, γ is far from z₀. -/
+  h_far_left : ∀ ε, 0 < ε → ε < threshold →
+    ∀ t ∈ Icc (0 : ℝ) 1, t ≤ t₀ → δ_left ε < t₀ - t → ε < ‖γ.toPath.extend t - z₀‖
+  /-- Far bound on the right. -/
+  h_far_right : ∀ ε, 0 < ε → ε < threshold →
+    ∀ t ∈ Icc (0 : ℝ) 1, t₀ ≤ t → δ_right ε < t - t₀ → ε < ‖γ.toPath.extend t - z₀‖
+  /-- Near bound on the left. -/
+  h_near_left : ∀ ε, 0 < ε → ε < threshold →
+    ∀ t, t ≤ t₀ → t₀ - t ≤ δ_left ε → ‖γ.toPath.extend t - z₀‖ ≤ ε
+  /-- Near bound on the right. -/
+  h_near_right : ∀ ε, 0 < ε → ε < threshold →
+    ∀ t, t₀ ≤ t → t - t₀ ≤ δ_right ε → ‖γ.toPath.extend t - z₀‖ ≤ ε
+  /-- FTC expression. -/
+  E : ℝ → ℂ
+  /-- The far-segment integrals equal `E(ε)`. -/
+  h_ftc : ∀ ε, 0 < ε → ε < threshold →
+    (∫ t in (0 : ℝ)..(t₀ - δ_left ε),
+        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t) +
+    (∫ t in (t₀ + δ_right ε)..1,
+        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t) = E ε
+  /-- Integrability on the left segment. -/
+  hint_left : ∀ ε, 0 < ε → ε < threshold →
+    IntervalIntegrable
+      (fun t => (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t)
+      volume 0 (t₀ - δ_left ε)
+  /-- Integrability on the right segment. -/
+  hint_right : ∀ ε, 0 < ε → ε < threshold →
+    IntervalIntegrable
+      (fun t => (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t)
+      volume (t₀ + δ_right ε) 1
+  /-- `E(ε) → L` as `ε → 0⁺`. -/
+  h_limit : Tendsto E (𝓝[>] 0) (𝓝 L)
+
+namespace AsymmetricSingleCrossingData
+
+variable {γ : PiecewiseC1Path x y} {z₀ : ℂ}
+
+/-- The cpvIntegrand vanishes on the middle segment `(t₀ - δ_left ε, t₀ + δ_right ε)`,
+because the curve is ε-close to `z₀` there (by the near bounds). -/
+private theorem cpvIntegrand_zero_on_middle (D : AsymmetricSingleCrossingData γ z₀)
+    {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold)
+    (h_mid_lt : D.t₀ - D.δ_left ε < D.t₀ + D.δ_right ε) :
+    ∀ t ∈ Set.uIoc (D.t₀ - D.δ_left ε) (D.t₀ + D.δ_right ε),
+      cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t = 0 := by
+  intro t ht
+  rw [Set.uIoc_of_le (le_of_lt h_mid_lt)] at ht
+  simp only [cpvIntegrand]
+  rw [if_neg (not_lt.mpr _)]
+  by_cases h_t_le : t ≤ D.t₀
+  · refine D.h_near_left ε hε_pos hε_lt t h_t_le ?_
+    linarith [ht.1]
+  · push Not at h_t_le
+    refine D.h_near_right ε hε_pos hε_lt t (le_of_lt h_t_le) ?_
+    linarith [ht.2]
+
+/-- The cpvIntegrand agrees a.e. with the full integrand on `[0, t₀ - δ_left ε]`,
+because the curve is ε-far from `z₀` there (by `h_far_left`). -/
+private theorem cpvIntegrand_eq_full_left_ae (D : AsymmetricSingleCrossingData γ z₀)
+    {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold)
+    (h_left_lt : (0 : ℝ) < D.t₀ - D.δ_left ε) :
+    ∀ᵐ t ∂volume, t ∈ Set.uIoc 0 (D.t₀ - D.δ_left ε) →
+      cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t =
+        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t := by
+  have h_sing : ({D.t₀ - D.δ_left ε} : Set ℝ)ᶜ ∈ ae volume :=
+    compl_mem_ae_iff.mpr (by exact (Set.finite_singleton _).measure_zero volume)
+  filter_upwards [h_sing] with t ht_ne ht_mem
+  rw [Set.uIoc_of_le (le_of_lt h_left_lt)] at ht_mem
+  have ht_lt : t < D.t₀ - D.δ_left ε :=
+    lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+  simp only [cpvIntegrand]
+  rw [if_pos]
+  have hδ_pos := D.hδ_left_pos ε hε_pos hε_lt
+  apply D.h_far_left ε hε_pos hε_lt t
+  · exact ⟨le_of_lt ht_mem.1, le_of_lt (by linarith [D.ht₀.2])⟩
+  · linarith
+  · linarith
+
+/-- The cpvIntegrand agrees a.e. with the full integrand on `[t₀ + δ_right ε, 1]`,
+because the curve is ε-far from `z₀` there (by `h_far_right`). -/
+private theorem cpvIntegrand_eq_full_right_ae (D : AsymmetricSingleCrossingData γ z₀)
+    {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold)
+    (h_right_lt : D.t₀ + D.δ_right ε < 1) :
+    ∀ᵐ t ∂volume, t ∈ Set.uIoc (D.t₀ + D.δ_right ε) 1 →
+      cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t =
+        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t := by
+  have h_sing : ({D.t₀ + D.δ_right ε} : Set ℝ)ᶜ ∈ ae volume :=
+    compl_mem_ae_iff.mpr (by exact (Set.finite_singleton _).measure_zero volume)
+  filter_upwards [h_sing] with t ht_ne ht_mem
+  rw [Set.uIoc_of_le (le_of_lt h_right_lt)] at ht_mem
+  have hδ_pos := D.hδ_right_pos ε hε_pos hε_lt
+  have ht_gt_t₀ : D.t₀ < t := by linarith [ht_mem.1]
+  simp only [cpvIntegrand]
+  rw [if_pos]
+  apply D.h_far_right ε hε_pos hε_lt t
+  · exact ⟨by linarith [D.ht₀.1], ht_mem.2⟩
+  · linarith
+  · linarith [ht_mem.1]
+
+/-- The cutoff integral over `[0, 1]` equals `D.E ε` for valid `ε`:
+the middle piece vanishes, and the two outer pieces match the FTC expression. -/
+private theorem cutoff_integral_eq_E (D : AsymmetricSingleCrossingData γ z₀)
+    {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold) :
+    ∫ t in (0 : ℝ)..1, cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t =
+      D.E ε := by
+  have hδL_pos := D.hδ_left_pos ε hε_pos hε_lt
+  have hδR_pos := D.hδ_right_pos ε hε_pos hε_lt
+  have hδL_small := D.hδ_left_small ε hε_pos hε_lt
+  have hδR_small := D.hδ_right_small ε hε_pos hε_lt
+  have h_left_lt : (0 : ℝ) < D.t₀ - D.δ_left ε := by linarith
+  have h_mid_lt : D.t₀ - D.δ_left ε < D.t₀ + D.δ_right ε := by linarith
+  have h_right_lt : D.t₀ + D.δ_right ε < 1 := by linarith
+  set F := fun t => cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t
+  have hF_mid := D.cpvIntegrand_zero_on_middle hε_pos hε_lt h_mid_lt
+  have hF_left := D.cpvIntegrand_eq_full_left_ae hε_pos hε_lt h_left_lt
+  have hF_right := D.cpvIntegrand_eq_full_right_ae hε_pos hε_lt h_right_lt
+  -- Integrability of F on each piece
+  have hF_int_left : IntervalIntegrable F volume 0 (D.t₀ - D.δ_left ε) :=
+    (D.hint_left ε hε_pos hε_lt).congr_ae
+      ((ae_restrict_iff' measurableSet_uIoc).mpr
+        (hF_left.mono (fun t ht hm => (ht hm).symm)))
+  have hF_int_mid : IntervalIntegrable F volume (D.t₀ - D.δ_left ε)
+      (D.t₀ + D.δ_right ε) :=
+    (IntervalIntegrable.zero (μ := volume)
+      (a := D.t₀ - D.δ_left ε) (b := D.t₀ + D.δ_right ε)).congr
+      (fun t ht => (hF_mid t ht).symm)
+  have hF_int_right : IntervalIntegrable F volume (D.t₀ + D.δ_right ε) 1 :=
+    (D.hint_right ε hε_pos hε_lt).congr_ae
+      ((ae_restrict_iff' measurableSet_uIoc).mpr
+        (hF_right.mono (fun t ht hm => (ht hm).symm)))
+  -- Split, zero middle, congr left/right, apply FTC
+  rw [show ∫ t in (0 : ℝ)..1, F t =
+      (∫ t in (0 : ℝ)..(D.t₀ - D.δ_left ε), F t) +
+      (∫ t in (D.t₀ - D.δ_left ε)..(D.t₀ + D.δ_right ε), F t) +
+      (∫ t in (D.t₀ + D.δ_right ε)..1, F t) from by
+    rw [← intervalIntegral.integral_add_adjacent_intervals
+          (hF_int_left.trans hF_int_mid) hF_int_right,
+        ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid],
+    intervalIntegral.integral_zero_ae (ae_of_all _ (fun t ht => hF_mid t ht)),
+    intervalIntegral.integral_congr_ae hF_left,
+    intervalIntegral.integral_congr_ae hF_right, add_zero]
+  exact D.h_ftc ε hε_pos hε_lt
+
+/-- The CPV of `(z - z₀)⁻¹` along `γ` exists and equals `D.L`.
+
+The proof splits the cutoff integral into three pieces at `t₀ - δ_left(ε)` and
+`t₀ + δ_right(ε)`:
+- On `[0, t₀ - δ_left]` and `[t₀ + δ_right, 1]`: the cutoff is inactive
+  (by the far bounds), so the integrand matches the full function.
+- On `[t₀ - δ_left, t₀ + δ_right]`: the cutoff zeroes the integrand
+  (by the near bounds).
+The sum of the two outer pieces equals `E(ε)` (by `h_ftc`), which tends to
+`L`. -/
+theorem hasCauchyPV (D : AsymmetricSingleCrossingData γ z₀) :
+    HasCauchyPV (fun z => (z - z₀)⁻¹) γ z₀ D.L := by
+  simp only [HasCauchyPV]
+  have h_ev : (fun ε => ∫ t in (0 : ℝ)..1,
+      cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t)
+      =ᶠ[𝓝[>] 0] D.E := by
+    filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
+    exact D.cutoff_integral_eq_E hε.1 hε.2
+  exact D.h_limit.congr' h_ev.symm
+
+/-- The generalized winding number at `z₀` equals `L / (2πi)`. -/
+theorem hasWindingNumber (D : AsymmetricSingleCrossingData γ z₀) :
+    HasGeneralizedWindingNumber γ z₀ (D.L / (2 * ↑Real.pi * I)) := by
+  rw [show D.L / (2 * ↑Real.pi * I) = (2 * ↑Real.pi * I)⁻¹ * D.L from by ring]
+  exact hasGeneralizedWindingNumber_of_hasCauchyPV D.hasCauchyPV
+
+/-- The generalized winding number equals the concrete value determined by `L`. -/
+theorem windingNumber_eq (D : AsymmetricSingleCrossingData γ z₀) :
+    generalizedWindingNumber γ z₀ = D.L / (2 * ↑Real.pi * I) :=
+  D.hasWindingNumber.eq
+
+/-- If `L = -(π * I)`, then the generalized winding number is `-1/2`. -/
+theorem windingNumber_neg_half (D : AsymmetricSingleCrossingData γ z₀)
+    (hL : D.L = -(↑Real.pi * I)) :
+    generalizedWindingNumber γ z₀ = -1 / 2 := by
+  rw [D.windingNumber_eq, hL]
+  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+  have hI : (I : ℂ) ≠ 0 := I_ne_zero
+  field_simp
+
+/-- **Simple-pole CPV from `AsymmetricSingleCrossingData`.** Given an
+`AsymmetricSingleCrossingData γ z₀` witnessing a (possibly asymmetric) single
+crossing, the CPV of `c / (z - z₀)` along `γ` exists with value `c · D.L`. -/
+theorem hasCauchyPV_simplePole (D : AsymmetricSingleCrossingData γ z₀) (c : ℂ) :
+    HasCauchyPV (fun z => c / (z - z₀)) γ z₀ (c * D.L) := by
+  have h := D.hasCauchyPV
+  simpa [div_eq_mul_inv] using h.smul c
+
+/-- **Value form: CPV at simple pole equals `2πi · w · c`.** Given an
+`AsymmetricSingleCrossingData γ z₀`, the CPV of `c / (z - z₀)` along `γ` exists
+with value `2πi · w · c`, where `w = generalizedWindingNumber γ z₀`. -/
+theorem hasCauchyPV_simplePole_eq_two_pi_I_mul
+    (D : AsymmetricSingleCrossingData γ z₀) (c : ℂ) :
+    HasCauchyPV (fun z => c / (z - z₀)) γ z₀
+      (2 * ↑Real.pi * I * generalizedWindingNumber γ z₀ * c) := by
+  have h_eq : c * D.L =
+      2 * ↑Real.pi * I * generalizedWindingNumber γ z₀ * c := by
+    rw [D.windingNumber_eq]
+    have hpi : (2 * ↑Real.pi * I : ℂ) ≠ 0 := Complex.two_pi_I_ne_zero
+    field_simp
+  exact h_eq ▸ D.hasCauchyPV_simplePole c
+
+end AsymmetricSingleCrossingData
+
+namespace SingleCrossingData
+
+variable {γ : PiecewiseC1Path x y} {z₀ : ℂ}
+
+/-- A symmetric `SingleCrossingData` lifts to an `AsymmetricSingleCrossingData`
+by taking `δ_left = δ_right = δ`. This makes all existing FD-curve constructors
+(`mkSingleCrossingData_atI`, etc.) automatically usable in the asymmetric
+framework. -/
+def toAsymmetric (D : SingleCrossingData γ z₀) :
+    AsymmetricSingleCrossingData γ z₀ where
+  L := D.L
+  t₀ := D.t₀
+  ht₀ := D.ht₀
+  δ_left := D.δ
+  δ_right := D.δ
+  threshold := D.threshold
+  hthresh := D.hthresh
+  hδ_left_pos := D.hδ_pos
+  hδ_right_pos := D.hδ_pos
+  hδ_left_small := fun ε hε hεt => lt_of_lt_of_le (D.hδ_small ε hε hεt) (min_le_left _ _)
+  hδ_right_small :=
+    fun ε hε hεt => lt_of_lt_of_le (D.hδ_small ε hε hεt) (min_le_right _ _)
+  h_far_left := by
+    intro ε hε hεt t ht h_le h_gap
+    refine D.h_far ε hε hεt t ht ?_
+    rw [abs_of_nonpos (by linarith)]
+    linarith
+  h_far_right := by
+    intro ε hε hεt t ht h_ge h_gap
+    refine D.h_far ε hε hεt t ht ?_
+    rw [abs_of_nonneg (by linarith)]
+    linarith
+  h_near_left := by
+    intro ε hε hεt t h_le h_gap
+    refine D.h_near ε hε hεt t ?_
+    rw [abs_of_nonpos (by linarith)]
+    linarith
+  h_near_right := by
+    intro ε hε hεt t h_ge h_gap
+    refine D.h_near ε hε hεt t ?_
+    rw [abs_of_nonneg (by linarith)]
+    linarith
+  E := D.E
+  h_ftc := D.h_ftc
+  hint_left := D.hint_left
+  hint_right := D.hint_right
+  h_limit := D.h_limit
+
+end SingleCrossingData
+
+/-! ## Asymmetric `ArcFTCHyp` bundle
+
+Bundles the analytic content (FTC equality + integrability + limit) for an
+asymmetric crossing into one structure, parallel to `ArcFTCHyp` but with
+separate `δ_left, δ_right` cutoffs. -/
+
+/-- Bundled analytic content for an asymmetric crossing: integrability on the
+left/right segments, FTC equality `∫_0^{t₀-δ_left ε} + ∫_{t₀+δ_right ε}^1 = E ε`,
+and the limit `E(ε) → L`. -/
+structure AsymmetricArcFTCHyp {x y : ℂ} (γ : PiecewiseC1Path x y) (z₀ : ℂ)
+    (t₀ : ℝ) (δ_left δ_right : ℝ → ℝ) (threshold : ℝ) (L : ℂ) where
+  /-- The bookkeeping function whose limit is `L`. -/
+  E : ℝ → ℂ
+  /-- The two far-segment integrals sum to `E ε`. -/
+  h_ftc : ∀ ε, 0 < ε → ε < threshold →
+    (∫ t in (0 : ℝ)..(t₀ - δ_left ε),
+        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t) +
+    (∫ t in (t₀ + δ_right ε)..1,
+        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t) = E ε
+  /-- Integrability on the left segment. -/
+  hint_left : ∀ ε, 0 < ε → ε < threshold →
+    IntervalIntegrable
+      (fun t => (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t)
+      volume 0 (t₀ - δ_left ε)
+  /-- Integrability on the right segment. -/
+  hint_right : ∀ ε, 0 < ε → ε < threshold →
+    IntervalIntegrable
+      (fun t => (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t)
+      volume (t₀ + δ_right ε) 1
+  /-- `E(ε) → L` as `ε → 0⁺`. -/
+  h_limit : Tendsto E (𝓝[>] 0) (𝓝 L)
+
+/-- **Package builder for `AsymmetricSingleCrossingData`.** Given all the geometric
+ingredients (cutoffs, far/near bounds with independent left/right radii) together
+with the analytic content (FTC equality + integrability + limit), bundle them
+into an `AsymmetricSingleCrossingData`.
+
+The user is expected to supply `δ_left, δ_right` and the corresponding
+`h_far_left, h_far_right, h_near_left, h_near_right` bounds (e.g., constructed
+via IVT exit-time inversion on `‖γ(t) - z₀‖` using strict monotonicity on each
+side). The asymmetric form allows `δ_left ≠ δ_right` at every `ε`, accommodating
+crossings where the chord-to-tangent constants `‖L_-‖, ‖L_+‖` differ. -/
+def AsymmetricSingleCrossingData.mk_from_bounds
+    {x y : ℂ} {γ : PiecewiseC1Path x y} {z₀ : ℂ}
+    {t₀ : ℝ} (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
+    {δ_left δ_right : ℝ → ℝ} {threshold : ℝ} (hthresh : 0 < threshold)
+    (hδ_left_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_left ε)
+    (hδ_right_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_right ε)
+    (hδ_left_small : ∀ ε, 0 < ε → ε < threshold → δ_left ε < t₀)
+    (hδ_right_small : ∀ ε, 0 < ε → ε < threshold → δ_right ε < 1 - t₀)
+    (h_far_left : ∀ ε, 0 < ε → ε < threshold →
+      ∀ t ∈ Icc (0 : ℝ) 1, t ≤ t₀ → δ_left ε < t₀ - t →
+        ε < ‖γ.toPath.extend t - z₀‖)
+    (h_far_right : ∀ ε, 0 < ε → ε < threshold →
+      ∀ t ∈ Icc (0 : ℝ) 1, t₀ ≤ t → δ_right ε < t - t₀ →
+        ε < ‖γ.toPath.extend t - z₀‖)
+    (h_near_left : ∀ ε, 0 < ε → ε < threshold →
+      ∀ t, t ≤ t₀ → t₀ - t ≤ δ_left ε → ‖γ.toPath.extend t - z₀‖ ≤ ε)
+    (h_near_right : ∀ ε, 0 < ε → ε < threshold →
+      ∀ t, t₀ ≤ t → t - t₀ ≤ δ_right ε → ‖γ.toPath.extend t - z₀‖ ≤ ε)
+    {L : ℂ}
+    (ftcHyp : AsymmetricArcFTCHyp γ z₀ t₀ δ_left δ_right threshold L) :
+    AsymmetricSingleCrossingData γ z₀ where
+  L := L
+  t₀ := t₀
+  ht₀ := ht₀
+  δ_left := δ_left
+  δ_right := δ_right
+  threshold := threshold
+  hthresh := hthresh
+  hδ_left_pos := hδ_left_pos
+  hδ_right_pos := hδ_right_pos
+  hδ_left_small := hδ_left_small
+  hδ_right_small := hδ_right_small
+  h_far_left := h_far_left
+  h_far_right := h_far_right
+  h_near_left := h_near_left
+  h_near_right := h_near_right
+  E := ftcHyp.E
+  h_ftc := ftcHyp.h_ftc
+  hint_left := ftcHyp.hint_left
+  hint_right := ftcHyp.hint_right
+  h_limit := ftcHyp.h_limit
+
+end
