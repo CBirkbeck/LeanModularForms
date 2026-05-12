@@ -109,6 +109,22 @@ absorb **8 obligations** into definitional consequences:
   `laurentHigherOrderPolar` and `laurentHolomorphicRemainder` are not
   pointwise zero for simple poles without a separate Laurent-uniqueness
   argument. Axiom-clean `[propext, Classical.choice, Quot.sound]`.
+* PHASE-10 ✅ DONE (2026-05-12) — `hw_3_3_clean_truly_full` (`HW33Clean.lean`),
+  the paper-faithful endpoint of the HW 3.3 chain. Drops the disjunctive
+  `h_at_star` residual of `hw_3_3_clean_full`, replacing it with a single
+  **structural single-crossing** witness: `t₀ ∈ Ioo 0 1`, `γ(t₀) = s_star`,
+  uniqueness in `Icc 0 1`, and `IsFlatOfOrder γ.extend t₀ 1` (paper-faithful
+  transversality of order 1).
+  - The CPV existence at the crossing is discharged automatically via the
+    new `HungerbuhlerWasem.hasCauchyPV_inv_sub_of_flat_one_full` (ported
+    from `refactor/hw33-unify`), which proves that the Cauchy principal
+    value of `(z - s_star)⁻¹` along any transverse simple-pole crossing
+    exists.
+  - Infrastructure ported (~4900 LOC): `AsymmetricSingleCrossing.lean`,
+    `HungerbuhlerWasem/{HigherOrderAsymptotics,CrossingDataBuilder,CPVExistence}.lean`.
+  Final signature: 8 paper hypotheses + 4 structural single-crossing
+  hypotheses + `s_star ∈ S` + `hγ_avoids_others`. Axiom-clean
+  `[propext, Classical.choice, Quot.sound]`.
 
 ## Tickets
 
