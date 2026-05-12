@@ -74,20 +74,21 @@ we instead use γ's image being bounded (Lipschitz γ).
   theorem on null-homologous γ even though remainder isn't globally analytic.
 - [x] `laurentAnalyticPartAt` API for the analytic part `g` at crossed poles.
 
-### Phase 3 — Holomorphic remainder analyticity ✅ partial
+### Phase 3 — Holomorphic remainder analyticity ✅ DONE (2026-05-12)
 - [x] 3.1 `f_eq_analyticPart_plus_polarPart_eventually` — local Laurent
   equation in punctured nbhd of crossed `s`. (DONE)
 - [x] 3.2 `laurentHolomorphicRemainder_differentiableOn` on `U \ S`. (DONE)
-- [ ] 3.3 `laurentHolomorphicRemainder_residue_zero` — residue at every `s ∈ S`
-  is zero. **Needs**: residue calculus API (linearity, residue of `c/(z-s)`,
-  analytic ⇒ residue 0). Some of this exists in `ResidueCircleIntegral.lean`
-  for analytic functions; linearity for add/sub does not.
+- [x] 3.3 `laurentHolomorphicRemainder_residue_zero` — residue at every `s ∈ S`
+  is zero. (DONE 2026-05-12, commit `895bd2a`, `HW33LaurentPolarPart.lean:450`.)
+  In fact the proof shows the remainder is **locally analytic** at every `s ∈ S`,
+  which is strictly stronger than residue zero.
 
-### Phase 3.5 — Residue calculus prerequisite (NEW, DEPENDENCY)
-- [ ] 3.5.1 `residue_add`, `residue_sub` (linearity)
-- [ ] 3.5.2 `residue_const_div_sub` — residue of `c/(z-s)` at `s` equals `c`
-- [ ] 3.5.3 `residue_smul_const` — scalar multiplication respects residue
-- [ ] 3.5.4 `residue_finset_sum`
+### Phase 3.5 — Residue calculus prerequisite ✅ DONE (2026-05-12)
+- [x] 3.5.1 `residue_add`, `residue_sub` (linearity) — `ResidueLinearity.lean`
+- [x] 3.5.2 `residue_const_div_sub` — residue of `c/(z-s)` at `s` equals `c`
+- [x] 3.5.3 `residue_const_smul` — scalar multiplication respects residue
+- [x] 3.5.4 `residue_finset_sum`
+- Commit: `126cb03`. All axiom-clean `[propext, Classical.choice, Quot.sound]`.
 
 ### Phase 4-AVOIDANCE — Higher-order avoidance via Dixon (NEW, achievable)
 The user observed Dixon's theorem (`dixonFunction_eq_zero_of_nullHomologous_open_full`)
