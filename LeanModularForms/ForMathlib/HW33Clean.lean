@@ -7,6 +7,7 @@ import LeanModularForms.ForMathlib.HW33SimpleClean
 import LeanModularForms.ForMathlib.HW33LaurentSimple
 import LeanModularForms.ForMathlib.SingleCrossing
 import LeanModularForms.ForMathlib.CrossingDataConstruction
+import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistence
 
 /-!
 # HW Theorem 3.3 — final paper-faithful clean form
@@ -277,6 +278,83 @@ theorem hw_3_3_clean_from_crossingGeometry
     hCondB s_star hs_star_in hγ_avoids_others
     (SingleCrossingData.ofGeometryAndFTC γ s_star G L δ threshold hthresh
       hδ_pos hδ_small h_far h_near ftcHyp)
+
+/-! ### `hw_3_3_clean_truly_full` — minimal structural hypotheses
+
+This is the **paper-faithful endpoint** of the HW 3.3 chain. Compared to
+`hw_3_3_clean_full`, the disjunctive `h_at_star` residual (avoidance OR
+`SingleCrossingData`) is replaced by a single **structural single-crossing**
+witness: a unique transverse crossing parameter `t₀ ∈ Ioo 0 1` with
+`IsFlatOfOrder γ t₀ 1` (flatness/transversality of order 1).
+
+The CPV-existence at the crossing is discharged automatically via
+`HungerbuhlerWasem.hasCauchyPV_inv_sub_of_flat_one_full`, which proves
+that the Cauchy principal value of `(z - s_star)⁻¹` exists at any
+transverse simple-pole crossing.
+
+Hypotheses (8 paper + 4 structural):
+
+* `hU_open, hU_ne, hS_in_U, hf, h_null, hSimple, hCondA, hCondB` — paper.
+* `s_star ∈ S` — distinguished crossing pole.
+* `hγ_avoids_others` — γ avoids every pole except possibly `s_star`.
+* `t₀ ∈ Ioo 0 1`, `h_at : γ(t₀) = s_star`, `h_unique`, `h_flat` —
+  paper-faithful transverse crossing data.
+-/
+
+/-- **HW Theorem 3.3 — truly paper-faithful single-crossing form.**
+
+Compared to `hw_3_3_clean_full`, the `h_at_star` disjunction is dropped:
+instead of either avoidance or a `SingleCrossingData` witness, the user
+supplies only the **structural geometric data** — a unique transverse
+crossing parameter `t₀`. The CPV-existence at the crossing is proved
+internally via `HungerbuhlerWasem.hasCauchyPV_inv_sub_of_flat_one_full`.
+
+This is the paper-faithful endpoint: **8 paper hypotheses + minimal
+single-crossing structural data**, with no remaining oracle. -/
+theorem hw_3_3_clean_truly_full
+    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
+    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
+    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
+    (γ : ClosedPwC1Immersion x)
+    (h_null : IsNullHomologous γ.toPwC1Immersion U)
+    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
+      (fun s => poleOrderAt f s))
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
+    (s_star : ℂ) (hs_star_in : s_star ∈ S)
+    (hγ_avoids_others : ∀ s ∈ S, s ≠ s_star → ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s)
+    {t₀ : ℝ} (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
+    (h_at : γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s_star)
+    (h_unique : ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPwC1Immersion.toPiecewiseC1Path t = s_star → t = t₀)
+    (h_flat : IsFlatOfOrder
+      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ 1) :
+    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
+      (2 * ↑Real.pi * I * ∑ s ∈ S,
+        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
+          residue f s) := by
+  -- Discharge CPV existence at the crossing via the headline theorem.
+  -- Note: `γ.toPwC1Immersion.toPiecewiseC1Path t = γ...toPath.extend t` definitionally
+  -- via the `CoeFun` instance, so `h_at` and `h_unique` lift transparently.
+  obtain ⟨L, hL⟩ :=
+    HungerbuhlerWasem.hasCauchyPV_inv_sub_of_flat_one_full γ ht₀ h_at h_unique h_flat
+  -- Repackage as `HasGeneralizedWindingNumber γ s_star (L / (2πi))`.
+  set w : ℂ := L / (2 * ↑Real.pi * I) with hw_def
+  have hpi : (2 * ↑Real.pi * I) ≠ 0 := Complex.two_pi_I_ne_zero
+  have hL' : L = 2 * ↑Real.pi * I * w := by
+    rw [hw_def]; field_simp
+  rw [hL'] at hL
+  -- `hL : HasGeneralizedWindingNumber γ s_star w`.
+  have hw_star_raw : HasGeneralizedWindingNumber
+      γ.toPwC1Immersion.toPiecewiseC1Path s_star w := hL
+  have hw_star : HasGeneralizedWindingNumber
+      γ.toPwC1Immersion.toPiecewiseC1Path s_star
+      (generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s_star) :=
+    hw_star_raw.eq.symm ▸ hw_star_raw
+  -- Apply `hw_3_3_clean`.
+  exact hw_3_3_clean hU_open hU_ne S hS_in_U f hf γ h_null hSimple hCondA hCondB
+    s_star hs_star_in hγ_avoids_others hw_star
 
 end LeanModularForms
 
