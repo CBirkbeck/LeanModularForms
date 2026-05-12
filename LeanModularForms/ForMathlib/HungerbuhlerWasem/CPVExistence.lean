@@ -1245,7 +1245,7 @@ theorem arg_right_annular_tendsto
 /-- **Left annular quotient arg convergence.** -/
 theorem arg_left_annular_tendsto
     {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_at : γ t₀ = s) (hL : L ≠ 0)
+    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_at : γ t₀ = s) (_hL : L ≠ 0)
     {δ_left : ℝ → ℝ} {r : ℝ}
     (h_γnegr_div_L : (-L) / (γ (t₀ - r) - s) ∈ Complex.slitPlane)
     (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ_left ε)
@@ -1905,7 +1905,7 @@ theorem hasCauchyPV_inv_sub_of_flat_one_full
         rw [hΛR_def]
         apply Complex.ext
         · simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
-            Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, zero_mul, sub_zero, add_zero]
+            Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, sub_zero, add_zero]
           rw [Complex.log_re, norm_div]
           rw [Real.log_div (norm_ne_zero_iff.mpr h_γPlus_ne) (norm_ne_zero_iff.mpr h_γR_ne)]
         · simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
@@ -1918,7 +1918,7 @@ theorem hasCauchyPV_inv_sub_of_flat_one_full
         rw [hΛL_def]
         apply Complex.ext
         · simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
-            Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, zero_mul, sub_zero, add_zero]
+            Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, sub_zero, add_zero]
           rw [Complex.log_re, norm_div]
           rw [Real.log_div (norm_ne_zero_iff.mpr h_γL_ne) (norm_ne_zero_iff.mpr h_γMinus_ne)]
         · simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
