@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import LeanModularForms.ForMathlib.HW33SectorEven
 import LeanModularForms.ForMathlib.HW33MultiPole
 import LeanModularForms.ForMathlib.FlatnessConditions
+import LeanModularForms.ForMathlib.ResidueLinearity
 
 /-!
 # Laurent polar part extraction from condition (B)
@@ -324,6 +325,196 @@ theorem laurentHolomorphicRemainder_differentiableOn {γ : PwC1Immersion x x} {f
   unfold laurentHolomorphicRemainder
   exact ((hf_at.sub (principalPartSum_differentiableAt S _ hz.2)).sub
     (laurentHigherOrderPolar_differentiableAt hCondB hz.2)).differentiableWithinAt
+
+/-! ## Phase 3.3: residue of `laurentHolomorphicRemainder` at each `s ∈ S` is zero
+
+The decomposition `f = principalPartSum + laurentHigherOrderPolar + laurentHolomorphicRemainder`
+is designed so that the holomorphic remainder has zero residue at every pole `s ∈ S`. This is
+the key fact for TIGHT-4 (holo cancel): once we know the remainder integrates to zero along the
+curve, the residue formula reduces purely to the `principalPartSum` contribution.
+
+The proof routes through `residue_congr` to identify `laurentHolomorphicRemainder` near `s`
+with an explicit analytic function. -/
+
+/-- At a crossed pole `s ∈ S` and under the simple-pole hypothesis on `f` at `s`, the
+higher-order polar term `laurentHigherOrderPolarAt s` is eventually equal (in the punctured
+neighborhood of `s`) to the analytic difference `regularPart(f) - analyticPart(f)`. -/
+private theorem laurentHigherOrderPolarAt_eventuallyEq_analytic_of_crossed
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
+    (h_cross : IsCrossed γ s) (h_pole : HasSimplePoleAt f s) :
+    (fun z => laurentHigherOrderPolarAt hCondB s hs z) =ᶠ[𝓝[≠] s]
+      (fun z => h_pole.regularPart z - laurentAnalyticPartAt hCondB s hs z) := by
+  classical
+  have h_pole_eq := h_pole.eventually_eq
+  have h_coeff_eq : h_pole.coeff = residue f s := (residue_eq_coeff h_pole).symm
+  have h_laurent_eq := f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross
+  filter_upwards [h_pole_eq, h_laurent_eq] with z hpole hlaurent
+  -- From `hpole`: f z = coeff/(z-s) + regularPart z
+  -- From `hlaurent`: f z = analyticPart z + polarPartAt z
+  -- Hence: polarPartAt z - coeff/(z-s) = regularPart z - analyticPart z.
+  -- And `laurentHigherOrderPolarAt s = polarPartAt - residue f s/(z-s)` (crossed).
+  have h_higher_eq : laurentHigherOrderPolarAt hCondB s hs z =
+      laurentPolarPartAt hCondB s hs z - residue f s / (z - s) := by
+    unfold laurentHigherOrderPolarAt
+    rw [if_pos h_cross]
+  rw [h_higher_eq, ← h_coeff_eq]
+  -- coeff/(z-s) + regularPart = analyticPart + polarPartAt ⟹ polarPart - coeff/(z-s) = regular - analytic
+  linear_combination hpole - hlaurent
+
+/-- At any pole `t ≠ s` (both in `S`), the per-pole higher-order polar contribution
+`laurentHigherOrderPolarAt t` is analytic at `s` (it is differentiable at `s` because
+its only singularity is at `t ≠ s`). -/
+private theorem laurentHigherOrderPolarAt_analyticAt_of_ne
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s t : ℂ} (ht : t ∈ S) (h_ne : t ≠ s) :
+    AnalyticAt ℂ (laurentHigherOrderPolarAt hCondB t ht) s := by
+  rw [Complex.analyticAt_iff_eventually_differentiableAt]
+  have h_open : IsOpen ({t}ᶜ : Set ℂ) := isOpen_compl_singleton
+  have h_mem : s ∈ ({t}ᶜ : Set ℂ) := mem_compl_singleton_iff.mpr h_ne.symm
+  filter_upwards [h_open.mem_nhds h_mem] with z hz
+  exact laurentHigherOrderPolarAt_differentiableAt hCondB ht (mem_compl_singleton_iff.mp hz)
+
+/-- The "rest" of `laurentHigherOrderPolar` excluding the `s`-term — a finite sum over
+`t ∈ S \ {s}` of analytic-at-`s` contributions. -/
+private noncomputable def laurentHigherOrderPolar_rest
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (s : ℂ) (_hs : s ∈ S) (z : ℂ) : ℂ :=
+  ∑ t ∈ S.attach.filter (fun t => t.1 ≠ s),
+    laurentHigherOrderPolarAt hCondB t.1 t.2 z
+
+/-- The "rest" sum is analytic at `s` — it is a finite sum of differentiable-at-`s` terms. -/
+private theorem laurentHigherOrderPolar_rest_analyticAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) :
+    AnalyticAt ℂ (laurentHigherOrderPolar_rest hCondB s hs) s := by
+  classical
+  unfold laurentHigherOrderPolar_rest
+  apply Finset.analyticAt_fun_sum
+  intro t ht
+  have h_ne : t.1 ≠ s := (Finset.mem_filter.mp ht).2
+  exact laurentHigherOrderPolarAt_analyticAt_of_ne hCondB t.2 h_ne
+
+/-- Decomposition of `laurentHigherOrderPolar` at a pole `s ∈ S`:
+the `s`-term plus the rest sum. -/
+private theorem laurentHigherOrderPolar_eq_term_add_rest
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) (z : ℂ) :
+    laurentHigherOrderPolar hCondB z =
+      laurentHigherOrderPolarAt hCondB s hs z +
+        laurentHigherOrderPolar_rest hCondB s hs z := by
+  classical
+  unfold laurentHigherOrderPolar laurentHigherOrderPolar_rest
+  have h_mem : (⟨s, hs⟩ : {x // x ∈ S}) ∈ S.attach := Finset.mem_attach _ _
+  rw [← Finset.sum_filter_add_sum_filter_not S.attach (fun t => t.1 = s)
+        (fun t => laurentHigherOrderPolarAt hCondB t.1 t.2 z)]
+  -- The "= s" filter sums to a single element (s, hs)
+  have h_eq_singleton :
+      S.attach.filter (fun t : {x // x ∈ S} => t.1 = s) = {⟨s, hs⟩} := by
+    ext t
+    simp only [Finset.mem_filter, Finset.mem_attach, true_and, Finset.mem_singleton]
+    exact ⟨fun h => Subtype.ext h, fun h => h ▸ rfl⟩
+  rw [h_eq_singleton, Finset.sum_singleton]
+
+/-- The `principalPartSum`-rest excluding the `s`-term is analytic at `s`. This is the
+standard sum-of-other-terms analytic lemma, exposed for `principalPartSum`'s decomp. -/
+private theorem principalPartSum_rest_analyticAt_at_s
+    {S : Finset ℂ} {c : ℂ → ℂ} {s : ℂ} (_hs : s ∈ S) :
+    AnalyticAt ℂ (fun z => ∑ t ∈ S.erase s, c t / (z - t)) s := by
+  apply Finset.analyticAt_fun_sum
+  intro t ht
+  have hts : t ≠ s := Finset.ne_of_mem_erase ht
+  exact analyticAt_const.div (analyticAt_id.sub analyticAt_const)
+    (sub_ne_zero.mpr hts.symm)
+
+/-- **Phase 3.3 main theorem**: `laurentHolomorphicRemainder` has zero residue at every
+pole `s ∈ S`, under the assumption that `f` has a simple pole at every `s ∈ S`.
+
+**Proof structure**.
+
+We identify `laurentHolomorphicRemainder` near `s` (in a punctured neighborhood) with an
+explicit *analytic function* and apply `residue_congr` + `residue_eq_zero_of_analyticAt`.
+
+* **Crossed `s`**: Condition (B) gives `f =ᶠ analyticPart + polarPartAt`. Together with
+  `HasSimplePoleAt f s` (giving `f =ᶠ residue f s/(z-s) + regularPart`), one obtains
+  `polarPartAt - residue f s/(z-s) =ᶠ regularPart - analyticPart`. Thus
+  `laurentHigherOrderPolarAt s =ᶠ regularPart - analyticPart`, and the whole remainder
+  becomes `regularPart - rest_pp - rest_holo - (regularPart - analyticPart) =
+  analyticPart - rest_pp - rest_holo`, an analytic combination.
+
+* **Uncrossed `s`**: `laurentHigherOrderPolarAt s = 0`. From `HasSimplePoleAt`,
+  `f =ᶠ residue f s/(z-s) + regularPart`, so the remainder reduces to
+  `regularPart - rest_pp - rest_holo`, which is analytic at `s`.
+
+In both cases the local form is analytic, so the residue is zero. -/
+theorem laurentHolomorphicRemainder_residue_zero {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S)
+    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    {s : ℂ} (hs : s ∈ S) :
+    residue (laurentHolomorphicRemainder hCondB) s = 0 := by
+  classical
+  set h_pole := hSimple s hs with h_pole_def
+  -- Decompose principalPartSum as `c s/(z-s) + rest_pp`.
+  set rest_pp : ℂ → ℂ := fun z => ∑ t ∈ S.erase s, residue f t / (z - t) with rest_pp_def
+  have rest_pp_an : AnalyticAt ℂ rest_pp s := principalPartSum_rest_analyticAt_at_s hs
+  have pp_decomp : ∀ z, principalPartSum S (fun s => residue f s) z =
+      residue f s / (z - s) + rest_pp z :=
+    fun z => principalPartSum_eq_term_add_rest hs (fun s => residue f s) z
+  -- Decompose laurentHigherOrderPolar as `term + rest_holo`.
+  set rest_holo : ℂ → ℂ := laurentHigherOrderPolar_rest hCondB s hs with rest_holo_def
+  have rest_holo_an : AnalyticAt ℂ rest_holo s :=
+    laurentHigherOrderPolar_rest_analyticAt hCondB hs
+  have holo_decomp : ∀ z, laurentHigherOrderPolar hCondB z =
+      laurentHigherOrderPolarAt hCondB s hs z + rest_holo z :=
+    fun z => laurentHigherOrderPolar_eq_term_add_rest hCondB hs z
+  -- Build the candidate analytic function. We'll case on crossed vs uncrossed.
+  by_cases h_cross : IsCrossed γ s
+  · -- Crossed case: laurentHigherOrderPolarAt s = polarPartAt - residue f s/(z-s).
+    -- And f =ᶠ analyticPart + polarPartAt.
+    -- Local form: `analyticPart - rest_pp - rest_holo`, analytic at `s`.
+    set g : ℂ → ℂ :=
+      fun z => laurentAnalyticPartAt hCondB s hs z - rest_pp z - rest_holo z with g_def
+    have g_an : AnalyticAt ℂ g s := by
+      have h_analyticPart_an := laurentAnalyticPartAt_analyticAt hCondB hs h_cross
+      exact (h_analyticPart_an.sub rest_pp_an).sub rest_holo_an
+    have h_evEq : (laurentHolomorphicRemainder hCondB) =ᶠ[𝓝[≠] s] g := by
+      have h_pole_eq := h_pole.eventually_eq
+      have h_coeff_eq : h_pole.coeff = residue f s := (residue_eq_coeff h_pole).symm
+      have h_laurent := f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross
+      filter_upwards [h_pole_eq, h_laurent] with z hz_pole hz_laurent
+      -- laurentHigherOrderPolarAt s = polarPartAt - residue f s/(z-s) (crossed case).
+      have h_higher_eq : laurentHigherOrderPolarAt hCondB s hs z =
+          laurentPolarPartAt hCondB s hs z - residue f s / (z - s) := by
+        unfold laurentHigherOrderPolarAt
+        rw [if_pos h_cross]
+      simp only [laurentHolomorphicRemainder, pp_decomp z, holo_decomp z, h_higher_eq,
+        hz_laurent, g_def]
+      -- Now: (analyticPart + polarPart) - (c/(z-s) + rest_pp)
+      --      - ((polarPart - c/(z-s)) + rest_holo)
+      --    = analyticPart - rest_pp - rest_holo. Use h_pole eq: c/(z-s) = f - regularPart.
+      -- Actually no simpler: just ring it out — the polarPart cancels naturally.
+      ring
+    rw [residue_congr h_evEq]
+    exact residue_eq_zero_of_analyticAt g_an
+  · -- Uncrossed case: laurentHigherOrderPolarAt s = 0.
+    -- Local form: `regularPart - rest_pp - rest_holo`, analytic at `s`.
+    have h_term_zero : ∀ z, laurentHigherOrderPolarAt hCondB s hs z = 0 := by
+      intro z
+      unfold laurentHigherOrderPolarAt
+      rw [if_neg h_cross]
+    set g : ℂ → ℂ :=
+      fun z => h_pole.regularPart z - rest_pp z - rest_holo z with g_def
+    have g_an : AnalyticAt ℂ g s :=
+      (h_pole.regularPart_analyticAt.sub rest_pp_an).sub rest_holo_an
+    have h_evEq : (laurentHolomorphicRemainder hCondB) =ᶠ[𝓝[≠] s] g := by
+      have h_pole_eq := h_pole.eventually_eq
+      have h_coeff_eq : h_pole.coeff = residue f s := (residue_eq_coeff h_pole).symm
+      filter_upwards [h_pole_eq] with z hz_pole
+      simp only [laurentHolomorphicRemainder, pp_decomp z, holo_decomp z, h_term_zero z,
+        hz_pole, g_def, h_coeff_eq, zero_add]
+      ring
+    rw [residue_congr h_evEq]
+    exact residue_eq_zero_of_analyticAt g_an
 
 end LeanModularForms
 
