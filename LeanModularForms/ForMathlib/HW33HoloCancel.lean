@@ -346,13 +346,12 @@ theorem hasCauchyPVOn_continuousOn_of_countable_preimage
 
 /-- **Phase 4 main theorem**: discharge the `h_holo_cancel` oracle in
 `hw_3_3_paper` / `hw_3_3_tight` for the simple-pole case under condition (B),
-null-homology, and a countable preimage hypothesis.
+null-homology, and simple poles.
 
-The preimage hypothesis `h_preimage` states that the set of parameters `t` at
-which γ crosses `S` is at most countable. This is automatic for any piecewise
-`C¹` immersion (finitely many crossings per piece by the inverse-function
-theorem applied to the non-vanishing derivative) but is left as a hypothesis
-here to keep the result self-contained.
+The countable-preimage condition on `γ⁻¹(S) ∩ [0,1]` is discharged automatically
+via `ClosedPwC1Immersion.preimage_countable`: a paper-faithful piecewise `C¹`
+immersion has only finitely many crossings of any finite set `S`, hence the
+preimage is countable (in fact finite).
 
 The proof routes through three steps:
 1. The remainder admits a global analytic correction on `U`
@@ -370,9 +369,7 @@ theorem h_holo_cancel_of_conditionB
     (γ : ClosedPwC1Immersion x)
     (h_null : IsNullHomologous γ.toPwC1Immersion U)
     (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (h_preimage : Set.Countable
-      {t ∈ Icc (0 : ℝ) 1 | γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set ℂ)}) :
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S) :
     HasCauchyPVOn S (laurentHolomorphicRemainder hCondB)
       γ.toPwC1Immersion.toPiecewiseC1Path 0 := by
   classical
@@ -380,6 +377,10 @@ theorem h_holo_cancel_of_conditionB
   set γE := γP.toPath.extend with hγE_def
   set corr := laurentHolomorphicRemainderCorrection hCondB with hcorr_def
   set rem := laurentHolomorphicRemainder hCondB with hrem_def
+  -- Automatic finite preimage from the paper-faithful immersion structure.
+  have h_preimage : Set.Countable
+      {t ∈ Icc (0 : ℝ) 1 | γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set ℂ)} :=
+    γ.preimage_countable S
   -- Step 1+2: correction is differentiable on U.
   have hcorr_diff : DifferentiableOn ℂ corr U :=
     laurentHolomorphicRemainder_correction_differentiableOn hCondB hSimple hU_open hf
