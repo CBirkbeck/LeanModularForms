@@ -78,4 +78,25 @@ theorem preimage_singleton_measure_zero_of_deriv_ne_zero {γ : ℝ → ℂ} {a b
     exact Set.countable_setOf_isolated_points' h_iso
   exact h_countable.measure_zero _
 
+/-- Preimage of a finite set of points under a piecewise C¹ immersion has measure
+zero. Lifts `preimage_singleton_measure_zero_of_deriv_ne_zero` to a finset. -/
+theorem preimage_finset_measure_zero_of_deriv_ne_zero {γ : ℝ → ℂ} {a b : ℝ}
+    {P : Finset ℝ} (S : Finset ℂ) (hγ : ContinuousOn γ (Icc a b))
+    (hγ_diff : ∀ t ∈ Icc a b, t ∉ P → DifferentiableAt ℝ γ t)
+    (hγ'_ne : ∀ t ∈ Icc a b, t ∉ P → deriv γ t ≠ 0) :
+    volume ({t ∈ Icc a b | γ t ∈ (↑S : Set ℂ)}) = 0 := by
+  classical
+  have h_eq : {t ∈ Icc a b | γ t ∈ (↑S : Set ℂ)} =
+      ⋃ s ∈ (↑S : Set ℂ), {t ∈ Icc a b | γ t = s} := by
+    ext t
+    simp only [Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_coe]
+    constructor
+    · intro ⟨ht_Icc, hmem⟩
+      exact ⟨γ t, hmem, ht_Icc, rfl⟩
+    · intro ⟨s, hs, ht_Icc, hγt⟩
+      exact ⟨ht_Icc, hγt ▸ hs⟩
+  rw [h_eq, measure_biUnion_null_iff (Set.Finite.countable (Finset.finite_toSet S))]
+  intro s _
+  exact preimage_singleton_measure_zero_of_deriv_ne_zero s hγ hγ_diff hγ'_ne
+
 end
