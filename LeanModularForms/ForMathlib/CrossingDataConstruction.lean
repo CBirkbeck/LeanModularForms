@@ -249,6 +249,29 @@ theorem exists_near_delta_lt (G : CrossingGeometry γ s) {ε : ℝ} (hε_pos : 0
   have := h_bd t ht
   linarith
 
+/-! ### Bundled near/far bound for a fixed cap radius
+
+The natural fully-automatic δ(ε) function requires resolving an "exit time"
+existence problem: define δ(ε) = the unique δ such that
+`‖γ(t₀ ± δ) - s‖ = ε`. Provable via IVT but requires careful work because:
+
+* γ may be non-monotone in distance from s (the distance function can
+  oscillate while staying overall bounded);
+* The IVT requires the distance function to be continuous (it is) AND
+  to take the value ε at some δ (which it does if γ exits the ε-ball);
+* The "first" exit may not be well-defined without strict monotonicity.
+
+The pragmatic API: provide the user with a δ-of-ε that satisfies the
+NEAR bound (from continuity). The FAR bound for the *complement* of a
+**fixed** sub-window of `[0, 1]` is provided by `exists_farMin_pos`. The
+user combines these by choosing their δ-function and threshold to satisfy
+both bounds.
+
+For the FD-boundary applications (i, ρ, ρ+1), the user supplies an
+explicit linear or arc-based δ-function (e.g. `linDelta C ε = ε/C`,
+`arcDelta ε = 6ε/(5π)`). The geometric data here covers the *generic*
+case without specializing the δ-function. -/
+
 end CrossingGeometry
 
 /-! ## Bundled near/far bound constructor
