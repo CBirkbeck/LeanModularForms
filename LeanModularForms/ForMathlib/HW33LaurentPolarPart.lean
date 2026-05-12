@@ -427,13 +427,13 @@ private theorem principalPartSum_rest_analyticAt_at_s
   exact analyticAt_const.div (analyticAt_id.sub analyticAt_const)
     (sub_ne_zero.mpr hts.symm)
 
-/-- **Phase 3.3 main theorem**: `laurentHolomorphicRemainder` has zero residue at every
-pole `s ∈ S`, under the assumption that `f` has a simple pole at every `s ∈ S`.
+/-- **Phase 3.3 / Phase 4 preparation**: `laurentHolomorphicRemainder` is eventually equal
+(in the punctured neighborhood of each `s ∈ S`) to a function that is analytic at `s`.
 
 **Proof structure**.
 
 We identify `laurentHolomorphicRemainder` near `s` (in a punctured neighborhood) with an
-explicit *analytic function* and apply `residue_congr` + `residue_eq_zero_of_analyticAt`.
+explicit *analytic function*.
 
 * **Crossed `s`**: Condition (B) gives `f =ᶠ analyticPart + polarPartAt`. Together with
   `HasSimplePoleAt f s` (giving `f =ᶠ residue f s/(z-s) + regularPart`), one obtains
@@ -446,59 +446,47 @@ explicit *analytic function* and apply `residue_congr` + `residue_eq_zero_of_ana
   `f =ᶠ residue f s/(z-s) + regularPart`, so the remainder reduces to
   `regularPart - rest_pp - rest_holo`, which is analytic at `s`.
 
-In both cases the local form is analytic, so the residue is zero. -/
-theorem laurentHolomorphicRemainder_residue_zero {γ : PwC1Immersion x x} {f : ℂ → ℂ}
-    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S)
-    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+Together with `laurentHolomorphicRemainder_differentiableOn` (analytic away from `S`),
+this is the input to a Riemann-removable-singularity argument that builds a global
+analytic extension on `U` — see `laurentHolomorphicRemainder_correction_differentiableOn`. -/
+theorem laurentHolomorphicRemainder_eventuallyEq_analyticAt
+    {γ : PwC1Immersion x x} {f : ℂ → ℂ} {S : Finset ℂ}
+    (hCondB : SatisfiesConditionB γ f S) (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
     {s : ℂ} (hs : s ∈ S) :
-    residue (laurentHolomorphicRemainder hCondB) s = 0 := by
+    ∃ g : ℂ → ℂ, AnalyticAt ℂ g s ∧
+      (laurentHolomorphicRemainder hCondB) =ᶠ[𝓝[≠] s] g := by
   classical
   set h_pole := hSimple s hs with h_pole_def
-  -- Decompose principalPartSum as `c s/(z-s) + rest_pp`.
   set rest_pp : ℂ → ℂ := fun z => ∑ t ∈ S.erase s, residue f t / (z - t) with rest_pp_def
   have rest_pp_an : AnalyticAt ℂ rest_pp s := principalPartSum_rest_analyticAt_at_s hs
   have pp_decomp : ∀ z, principalPartSum S (fun s => residue f s) z =
       residue f s / (z - s) + rest_pp z :=
     fun z => principalPartSum_eq_term_add_rest hs (fun s => residue f s) z
-  -- Decompose laurentHigherOrderPolar as `term + rest_holo`.
   set rest_holo : ℂ → ℂ := laurentHigherOrderPolar_rest hCondB s hs with rest_holo_def
   have rest_holo_an : AnalyticAt ℂ rest_holo s :=
     laurentHigherOrderPolar_rest_analyticAt hCondB hs
   have holo_decomp : ∀ z, laurentHigherOrderPolar hCondB z =
       laurentHigherOrderPolarAt hCondB s hs z + rest_holo z :=
     fun z => laurentHigherOrderPolar_eq_term_add_rest hCondB hs z
-  -- Build the candidate analytic function. We'll case on crossed vs uncrossed.
   by_cases h_cross : IsCrossed γ s
-  · -- Crossed case: laurentHigherOrderPolarAt s = polarPartAt - residue f s/(z-s).
-    -- And f =ᶠ analyticPart + polarPartAt.
-    -- Local form: `analyticPart - rest_pp - rest_holo`, analytic at `s`.
-    set g : ℂ → ℂ :=
+  · set g : ℂ → ℂ :=
       fun z => laurentAnalyticPartAt hCondB s hs z - rest_pp z - rest_holo z with g_def
     have g_an : AnalyticAt ℂ g s := by
       have h_analyticPart_an := laurentAnalyticPartAt_analyticAt hCondB hs h_cross
       exact (h_analyticPart_an.sub rest_pp_an).sub rest_holo_an
-    have h_evEq : (laurentHolomorphicRemainder hCondB) =ᶠ[𝓝[≠] s] g := by
-      have h_pole_eq := h_pole.eventually_eq
-      have h_coeff_eq : h_pole.coeff = residue f s := (residue_eq_coeff h_pole).symm
-      have h_laurent := f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross
-      filter_upwards [h_pole_eq, h_laurent] with z hz_pole hz_laurent
-      -- laurentHigherOrderPolarAt s = polarPartAt - residue f s/(z-s) (crossed case).
-      have h_higher_eq : laurentHigherOrderPolarAt hCondB s hs z =
-          laurentPolarPartAt hCondB s hs z - residue f s / (z - s) := by
-        unfold laurentHigherOrderPolarAt
-        rw [if_pos h_cross]
-      simp only [laurentHolomorphicRemainder, pp_decomp z, holo_decomp z, h_higher_eq,
-        hz_laurent, g_def]
-      -- Now: (analyticPart + polarPart) - (c/(z-s) + rest_pp)
-      --      - ((polarPart - c/(z-s)) + rest_holo)
-      --    = analyticPart - rest_pp - rest_holo. Use h_pole eq: c/(z-s) = f - regularPart.
-      -- Actually no simpler: just ring it out — the polarPart cancels naturally.
-      ring
-    rw [residue_congr h_evEq]
-    exact residue_eq_zero_of_analyticAt g_an
-  · -- Uncrossed case: laurentHigherOrderPolarAt s = 0.
-    -- Local form: `regularPart - rest_pp - rest_holo`, analytic at `s`.
-    have h_term_zero : ∀ z, laurentHigherOrderPolarAt hCondB s hs z = 0 := by
+    refine ⟨g, g_an, ?_⟩
+    have h_pole_eq := h_pole.eventually_eq
+    have h_coeff_eq : h_pole.coeff = residue f s := (residue_eq_coeff h_pole).symm
+    have h_laurent := f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross
+    filter_upwards [h_pole_eq, h_laurent] with z hz_pole hz_laurent
+    have h_higher_eq : laurentHigherOrderPolarAt hCondB s hs z =
+        laurentPolarPartAt hCondB s hs z - residue f s / (z - s) := by
+      unfold laurentHigherOrderPolarAt
+      rw [if_pos h_cross]
+    simp only [laurentHolomorphicRemainder, pp_decomp z, holo_decomp z, h_higher_eq,
+      hz_laurent, g_def]
+    ring
+  · have h_term_zero : ∀ z, laurentHigherOrderPolarAt hCondB s hs z = 0 := by
       intro z
       unfold laurentHigherOrderPolarAt
       rw [if_neg h_cross]
@@ -506,15 +494,25 @@ theorem laurentHolomorphicRemainder_residue_zero {γ : PwC1Immersion x x} {f : �
       fun z => h_pole.regularPart z - rest_pp z - rest_holo z with g_def
     have g_an : AnalyticAt ℂ g s :=
       (h_pole.regularPart_analyticAt.sub rest_pp_an).sub rest_holo_an
-    have h_evEq : (laurentHolomorphicRemainder hCondB) =ᶠ[𝓝[≠] s] g := by
-      have h_pole_eq := h_pole.eventually_eq
-      have h_coeff_eq : h_pole.coeff = residue f s := (residue_eq_coeff h_pole).symm
-      filter_upwards [h_pole_eq] with z hz_pole
-      simp only [laurentHolomorphicRemainder, pp_decomp z, holo_decomp z, h_term_zero z,
-        hz_pole, g_def, h_coeff_eq, zero_add]
-      ring
-    rw [residue_congr h_evEq]
-    exact residue_eq_zero_of_analyticAt g_an
+    refine ⟨g, g_an, ?_⟩
+    have h_pole_eq := h_pole.eventually_eq
+    have h_coeff_eq : h_pole.coeff = residue f s := (residue_eq_coeff h_pole).symm
+    filter_upwards [h_pole_eq] with z hz_pole
+    simp only [laurentHolomorphicRemainder, pp_decomp z, holo_decomp z, h_term_zero z,
+      hz_pole, g_def, h_coeff_eq, zero_add]
+    ring
+
+/-- **Phase 3.3 main theorem**: `laurentHolomorphicRemainder` has zero residue at every
+pole `s ∈ S`, under the assumption that `f` has a simple pole at every `s ∈ S`. -/
+theorem laurentHolomorphicRemainder_residue_zero {γ : PwC1Immersion x x} {f : ℂ → ℂ}
+    {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S)
+    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    {s : ℂ} (hs : s ∈ S) :
+    residue (laurentHolomorphicRemainder hCondB) s = 0 := by
+  obtain ⟨g, g_an, h_evEq⟩ :=
+    laurentHolomorphicRemainder_eventuallyEq_analyticAt hCondB hSimple hs
+  rw [residue_congr h_evEq]
+  exact residue_eq_zero_of_analyticAt g_an
 
 end LeanModularForms
 
