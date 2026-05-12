@@ -8,6 +8,7 @@ import LeanModularForms.ForMathlib.HW33HoloCancel
 import LeanModularForms.ForMathlib.HW33HigherOrderAuto
 import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.SimplePoleIntegral
+import LeanModularForms.ForMathlib.SingleCrossing
 
 /-!
 # HW Theorem 3.3 — discharge `hPV_sing` (singular CPV)
@@ -291,6 +292,129 @@ theorem hPV_sing_of_conditionB_avoids
       hδ_pos hδ_bd_extend hLip ε
   exact hPV_sing_of_winding_and_avoid_others S (fun s => residue f s)
     (fun s => generalizedWindingNumber γP s) hw hδ_pos h_avoid_pairs h_int
+
+/-! ## Phase 6.1 — `hPV_sing` from `SingleCrossingData` (per-pole crossing CPV)
+
+When γ **crosses** a pole `s ∈ S` at a unique parameter `t₀ ∈ (0, 1)`, the
+generalized winding number `HasGeneralizedWindingNumber γ s w` at the crossing is
+not derivable from avoidance. Instead, it is derived from a `SingleCrossingData γ s`
+witness (in `ForMathlib/SingleCrossing.lean`), which packages:
+
+* the unique crossing parameter `t₀`;
+* far/near bounds (curve is ε-far / ε-close outside / inside a δ-window);
+* integrability of `(γ t - s)⁻¹ * γ'(t)` on each outer segment;
+* a closed-form FTC expression `E(ε)` for the sum of the outer-segment integrals;
+* a limit `E(ε) → L` as `ε → 0⁺`.
+
+The framework lemma `SingleCrossingData.hasWindingNumber` lifts this to
+`HasGeneralizedWindingNumber γ s (L / (2πi))`.
+
+This file's contribution is the **composition with `hPV_sing_of_conditionB`**: given
+per-pole `SingleCrossingData` witnesses, discharge the `hw` hypothesis automatically
+and produce the full `HasCauchyPVOn` conclusion. -/
+
+/-- **Bridge: `SingleCrossingData` to the canonical-value form.** If
+`D : SingleCrossingData γ s`, the generalized winding number `w := D.L / (2πi)` is
+realized as both `HasGeneralizedWindingNumber γ s w` and as
+`generalizedWindingNumber γ s` (by `.eq`). This bridge produces the canonical form
+needed by `hPV_sing_of_conditionB`:
+`HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s)`. -/
+theorem hasGeneralizedWindingNumber_canonical_of_singleCrossingData
+    {γ : PiecewiseC1Path x x} {s : ℂ} (D : SingleCrossingData γ s) :
+    HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s) := by
+  have hD := D.hasWindingNumber
+  -- `hD : HasGeneralizedWindingNumber γ s (D.L / (2πi))`
+  -- `hD.eq : generalizedWindingNumber γ s = D.L / (2πi)`
+  rw [hD.eq]
+  exact hD
+
+/-- **Bridge: `HasGeneralizedWindingNumber` to its canonical form.** If
+`hw : HasGeneralizedWindingNumber γ s w`, then it also realizes the
+`HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s)` form
+needed by `hPV_sing_of_conditionB`. -/
+theorem hasGeneralizedWindingNumber_canonical_of_value
+    {γ : PiecewiseC1Path x x} {s w : ℂ} (hw : HasGeneralizedWindingNumber γ s w) :
+    HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s) := by
+  rw [hw.eq]
+  exact hw
+
+/-- **`hPV_sing` discharge via `SingleCrossingData`.** Compose the per-pole
+crossing winding-number witnesses (provided as `SingleCrossingData`) with
+the `hPV_sing_of_conditionB` template.
+
+Hypotheses:
+* `γ : ClosedPwC1Immersion x` — the paper-faithful curve type.
+* `hSimple`, `hCondB` — kept for signature consistency.
+* `Dat s hs` — `SingleCrossingData` at the crossing of γ with pole `s`. This
+  encapsulates a unique transverse crossing at some `t₀ ∈ (0, 1)`, far/near
+  bounds, integrability, an FTC expression, and a limit `L`. The
+  generalized winding number value at `s` is then `(Dat s hs).L / (2πi)`.
+* `hδ_pos`, `h_avoid_pairs`, `h_int` — pairwise avoidance and integrability.
+
+Output: `HasCauchyPVOn` for the principal-part sum, with explicit values
+matching the canonical winding-number form. -/
+theorem hPV_sing_of_conditionB_singleCrossing
+    {U : Set ℂ} (hU_open : IsOpen U) {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
+    {f : ℂ → ℂ}
+    (γ : ClosedPwC1Immersion x)
+    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
+    (Dat : ∀ s ∈ S,
+      SingleCrossingData γ.toPwC1Immersion.toPiecewiseC1Path s)
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (h_avoid_pairs : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ.toPwC1Immersion.toPiecewiseC1Path t - s'‖)
+    (h_int : ∀ s ∈ S, ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S (fun z => residue f s / (z - s))
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) volume 0 1) :
+    HasCauchyPVOn S
+      (principalPartSum S (fun s => residue f s))
+      γ.toPwC1Immersion.toPiecewiseC1Path
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
+          residue f s) := by
+  have hw : ∀ s ∈ S, HasGeneralizedWindingNumber
+      γ.toPwC1Immersion.toPiecewiseC1Path s
+      (generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s) :=
+    fun s hs => hasGeneralizedWindingNumber_canonical_of_singleCrossingData (Dat s hs)
+  exact hPV_sing_of_conditionB hU_open hS_in_U γ hSimple hCondB hw hδ_pos
+    h_avoid_pairs h_int
+
+/-- **`hPV_sing` discharge via per-pole `HasGeneralizedWindingNumber` (general
+hypothesis form).** Variant of `hPV_sing_of_conditionB_singleCrossing` that
+accepts arbitrary `HasGeneralizedWindingNumber` witnesses at each pole
+(values unrestricted — the user may supply any value, not just
+`(SingleCrossingData.L) / (2πi)`). The conclusion uses the canonical
+`generalizedWindingNumber γ s` value, automatically extracted via `.eq`. -/
+theorem hPV_sing_of_conditionB_pointwise_winding
+    {U : Set ℂ} (hU_open : IsOpen U) {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
+    {f : ℂ → ℂ}
+    (γ : ClosedPwC1Immersion x)
+    (hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
+    (hw_val : ∀ s ∈ S, ∃ w : ℂ, HasGeneralizedWindingNumber
+      γ.toPwC1Immersion.toPiecewiseC1Path s w)
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (h_avoid_pairs : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ.toPwC1Immersion.toPiecewiseC1Path t - s'‖)
+    (h_int : ∀ s ∈ S, ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S (fun z => residue f s / (z - s))
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) volume 0 1) :
+    HasCauchyPVOn S
+      (principalPartSum S (fun s => residue f s))
+      γ.toPwC1Immersion.toPiecewiseC1Path
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
+          residue f s) := by
+  classical
+  have hw : ∀ s ∈ S, HasGeneralizedWindingNumber
+      γ.toPwC1Immersion.toPiecewiseC1Path s
+      (generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s) := by
+    intro s hs
+    obtain ⟨w, hwval⟩ := hw_val s hs
+    exact hasGeneralizedWindingNumber_canonical_of_value hwval
+  exact hPV_sing_of_conditionB hU_open hS_in_U γ hSimple hCondB hw hδ_pos
+    h_avoid_pairs h_int
 
 end LeanModularForms
 

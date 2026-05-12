@@ -59,6 +59,14 @@ absorb **8 obligations** into definitional consequences:
 * PHASE-5b ✅ DONE (2026-05-12) — `hPV_sing_of_conditionB_avoids` (`HW33PVSing.lean`):
   full discharge of `hw`, `h_avoid_pairs`, `h_int` residuals under avoidance.
   Signature reduced to paper hypotheses (`hSimple`, `hCondB`, `hγ_avoids`).
+* PHASE-6.1 ✅ DONE (2026-05-12) — `hPV_sing_of_conditionB_singleCrossing` and
+  `hPV_sing_of_conditionB_pointwise_winding` (`HW33PVSing.lean`): discharge `hw`
+  via per-pole `SingleCrossingData γ s` witnesses (the existing `SingleCrossing.lean`
+  framework). Composes the avoidance-free case with the standard crossing winding
+  number API. Audit confirms no native k=1 crossing CPV theorem exists; the
+  framework `SingleCrossingData.hasWindingNumber` already lifts a user-supplied
+  far-segment FTC limit `E(ε) → L` to `HasGeneralizedWindingNumber γ s (L/(2πi))`.
+  All theorems axiom-clean `[propext, Classical.choice, Quot.sound]`.
 
 ## Tickets
 
