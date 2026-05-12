@@ -234,6 +234,21 @@ theorem exists_near_delta (G : CrossingGeometry γ s) {ε : ℝ} (hε_pos : 0 < 
     rwa [abs_of_nonneg h_nn] at hb
   exact le_of_lt h_norm_lt
 
+/-! ### Strict near bound
+
+A variant of `exists_near_delta` giving strict `<` instead of `≤`. Useful
+for the "exit time" definition of `δ(ε)`. -/
+
+/-- For each `ε > 0`, there exists `δ > 0` (sub-min(t₀, 1-t₀)) such that
+`‖γ(t) - s‖ < ε` for all `t` with `|t - t₀| ≤ δ`. -/
+theorem exists_near_delta_lt (G : CrossingGeometry γ s) {ε : ℝ} (hε_pos : 0 < ε) :
+    ∃ δ, 0 < δ ∧ δ < min G.t₀ (1 - G.t₀) ∧
+      ∀ t, |t - G.t₀| ≤ δ → normFn γ s t < ε := by
+  obtain ⟨δ, hδ_pos, hδ_lt_M, h_bd⟩ := G.exists_near_delta (half_pos hε_pos)
+  refine ⟨δ, hδ_pos, hδ_lt_M, fun t ht => ?_⟩
+  have := h_bd t ht
+  linarith
+
 end CrossingGeometry
 
 /-! ## Bundled near/far bound constructor
