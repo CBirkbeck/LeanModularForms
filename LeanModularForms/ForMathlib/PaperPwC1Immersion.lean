@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 import Mathlib.Analysis.Calculus.ContDiff.Deriv
 import Mathlib.Analysis.Calculus.Deriv.Basic
+import Mathlib.Analysis.Calculus.Deriv.Inverse
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
@@ -705,6 +706,171 @@ variable {x : E}
 theorem lipschitzWith_extend (γ : ClosedPwC1Immersion x) :
     ∃ K : NNReal, LipschitzWith K γ.toPath.extend :=
   γ.toClosedPwC1Curve.lipschitzWith_extend
+
+/-! ## Finite preimage of a finite set
+
+A closed piecewise `C¹` immersion `γ` has non-vanishing derivative on each
+closed piece between consecutive partition members. By the inverse-function
+theorem (in the form `HasDerivWithinAt.eventually_ne`), each point at which
+`γ` hits a given value `s` is isolated within its piece. Closed pieces are
+compact, hence each piece contributes only finitely many preimage points.
+Summing over a finite partition and a finite target set gives the global
+finite preimage. -/
+
+/-- **Per-piece finite preimage at a single value.** On a closed piece `Icc a b`
+between consecutive partition members, the preimage of a single point `s ∈ E`
+under the extended path is finite.
+
+The proof uses `HasDerivWithinAt.eventually_ne`: non-vanishing `derivWithin`
+forces each preimage point to be isolated within `Icc a b`. The preimage is a
+closed subset of compact `Icc a b`, and discreteness + compactness gives
+finiteness via `IsCompact.finite_of_discrete`. -/
+private theorem preimage_finite_piece (γ : ClosedPwC1Immersion x) {a b : ℝ}
+    (h : γ.partition.IsConsecutive a b) (s : E) :
+    Set.Finite {t ∈ Icc a b | γ.toPath.extend t = s} := by
+  classical
+  let f : ℝ → E := γ.toPath.extend
+  let T : Set ℝ := {t ∈ Icc a b | f t = s}
+  show T.Finite
+  -- Differentiability + ContDiffOn ℝ 1 on Icc a b gives HasDerivWithinAt.
+  have hcd : ContDiffOn ℝ 1 f (Icc a b) := γ.contDiffOn_pieces a b h
+  have h_diff : DifferentiableOn ℝ f (Icc a b) := hcd.differentiableOn_one
+  -- T is closed in ℝ (continuous preimage of {s} ∩ closed Icc a b).
+  have hT_closed : IsClosed T := by
+    have h_eq : T = (Icc a b) ∩ (f ⁻¹' {s}) := by
+      ext t; simp [T, Set.mem_setOf_eq]
+    rw [h_eq]
+    exact isClosed_Icc.inter (isClosed_singleton.preimage γ.toPath.continuous_extend)
+  -- T is compact (closed in compact Icc a b).
+  have hT_compact : IsCompact T :=
+    isCompact_Icc.of_isClosed_subset hT_closed (fun t ht => ht.1)
+  -- T as a subtype is discrete. We use the noAccPts criterion: each point
+  -- t₀ ∈ T is not an accumulation point of T.
+  have hT_discrete : DiscreteTopology T := by
+    refine discreteTopology_of_noAccPts ?_
+    intro t₀ ht₀
+    have ht₀_Icc : t₀ ∈ Icc a b := ht₀.1
+    -- Get HasDerivWithinAt with nonzero derivative.
+    have h_diffAt : DifferentiableWithinAt ℝ f (Icc a b) t₀ :=
+      h_diff t₀ ht₀_Icc
+    let f'₀ : E := derivWithin f (Icc a b) t₀
+    have h_HD : HasDerivWithinAt f f'₀ (Icc a b) t₀ :=
+      h_diffAt.hasDerivWithinAt
+    have h_f'₀_ne : f'₀ ≠ 0 :=
+      γ.derivWithin_ne_zero_pieces a b h t₀ ht₀_Icc
+    -- Eventually `f z ≠ s` in `𝓝[Icc a b \ {t₀}] t₀`.
+    have h_eventually : ∀ᶠ z in 𝓝[(Icc a b) \ {t₀}] t₀, f z ≠ s :=
+      HasDerivWithinAt.eventually_ne h_HD h_f'₀_ne
+    -- Translate via accPt_principal_iff_nhdsWithin to filter language.
+    rw [accPt_principal_iff_nhdsWithin]
+    -- Goal: ¬(𝓝[T \ {t₀}] t₀).NeBot
+    intro h_neBot
+    -- T \ {t₀} ⊆ (Icc a b) \ {t₀}.
+    have hTsub : T \ {t₀} ⊆ (Icc a b) \ {t₀} :=
+      fun u hu => ⟨hu.1.1, hu.2⟩
+    have h_ev_T : ∀ᶠ z in 𝓝[T \ {t₀}] t₀, f z ≠ s :=
+      h_eventually.filter_mono (nhdsWithin_mono _ hTsub)
+    have h_ev_in_T : ∀ᶠ z in 𝓝[T \ {t₀}] t₀, z ∈ T \ {t₀} :=
+      self_mem_nhdsWithin
+    have h_combo : ∀ᶠ z in 𝓝[T \ {t₀}] t₀, False := by
+      filter_upwards [h_ev_T, h_ev_in_T] with z hz_ne hz_in
+      exact hz_ne hz_in.1.2
+    exact h_neBot.ne (Filter.eventually_false_iff_eq_bot.mp h_combo)
+  -- Compact + Discrete ⇒ Finite (via `Finite (T : Type)` and `Set.finite_coe_iff`).
+  have : CompactSpace T := isCompact_iff_compactSpace.mp hT_compact
+  have hT_finite_coe : Finite T := finite_of_compact_of_discrete
+  exact Set.finite_coe_iff.mp hT_finite_coe
+
+/-- **Per-piece finite preimage of a finite set.** On a closed piece `Icc a b`
+between consecutive partition members, the preimage of any finite set `S ⊆ E`
+under the extended path is finite. -/
+private theorem preimage_finite_piece_of_finset (γ : ClosedPwC1Immersion x) {a b : ℝ}
+    (h : γ.partition.IsConsecutive a b) (S : Finset E) :
+    Set.Finite {t ∈ Icc a b | γ.toPath.extend t ∈ (↑S : Set E)} := by
+  classical
+  have h_union :
+      {t ∈ Icc a b | γ.toPath.extend t ∈ (↑S : Set E)} =
+        ⋃ s ∈ S, {t ∈ Icc a b | γ.toPath.extend t = s} := by
+    ext t
+    constructor
+    · rintro ⟨htI, hts⟩
+      simp only [Finset.mem_coe] at hts
+      exact Set.mem_iUnion₂.mpr ⟨γ.toPath.extend t, hts, htI, rfl⟩
+    · intro ht
+      obtain ⟨s, hs, htI, hts⟩ := Set.mem_iUnion₂.mp ht
+      exact ⟨htI, by simp only [hts, Finset.mem_coe]; exact hs⟩
+  rw [h_union]
+  exact S.finite_toSet.biUnion fun s _ => γ.preimage_finite_piece h s
+
+/-- **Finite preimage of a finite set under a closed paper-piecewise `C¹` immersion.**
+The set of parameters `t ∈ [0, 1]` at which `γ t ∈ S` is finite, for any finite
+target `S ⊆ E`.
+
+The proof decomposes `[0, 1]` along the partition into closed pieces, applies
+`preimage_finite_piece_of_finset` on each piece, and takes the finite union. -/
+theorem preimage_finite (γ : ClosedPwC1Immersion x) (S : Finset E) :
+    Set.Finite {t ∈ Icc (0 : ℝ) 1 |
+      γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set E)} := by
+  classical
+  -- Set of consecutive pairs in γ.partition.
+  set pairs : Finset (ℝ × ℝ) := (γ.partition.product γ.partition).filter
+    (fun p => γ.partition.IsConsecutive p.1 p.2) with hpairs_def
+  -- The image of `γ.toPwC1Immersion.toPiecewiseC1Path` is `γ.toPath.extend`.
+  -- Every `t ∈ Icc 0 1` belongs to some piece `Icc a b` with `(a, b)` consecutive.
+  set f := γ.toPath.extend with hf_def
+  have h_eq : ∀ t, γ.toPwC1Immersion.toPiecewiseC1Path t = f t := fun _ => rfl
+  -- The target set is a subset of the union over consecutive pieces.
+  have h_subset :
+      {t ∈ Icc (0 : ℝ) 1 |
+          γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set E)} ⊆
+        ⋃ p ∈ pairs, {t ∈ Icc p.1 p.2 | f t ∈ (↑S : Set E)} := by
+    intro t ht
+    obtain ⟨ht_Icc, ht_S⟩ := ht
+    rw [h_eq] at ht_S
+    -- Find a consecutive pair (a, b) containing t.
+    by_cases htn : t ∈ γ.partition
+    · -- t is a partition point. Pick the piece [t, succ(t)] if t < 1, otherwise [pred(t), t].
+      by_cases ht1 : t = 1
+      · -- t = 1: use the predecessor piece.
+        have h0_lt : (0 : ℝ) < 1 := zero_lt_one
+        have h1_in : (1 : ℝ) ∈ γ.partition := γ.one_mem_partition
+        obtain ⟨a, hcons⟩ := γ.exists_predecessor h1_in h0_lt
+        refine Set.mem_iUnion₂.mpr ⟨(a, 1), ?_, ?_⟩
+        · exact Finset.mem_filter.mpr
+            ⟨Finset.mem_product.mpr ⟨hcons.1, hcons.2.1⟩, hcons⟩
+        · refine ⟨⟨?_, ?_⟩, ?_⟩
+          · rw [ht1]; exact hcons.2.2.1.le
+          · rw [ht1]
+          · exact ht_S
+      · -- t < 1: use the successor piece.
+        have ht_lt_1 : t < 1 := lt_of_le_of_ne ht_Icc.2 ht1
+        obtain ⟨b, hcons⟩ := γ.exists_successor htn ht_lt_1
+        refine Set.mem_iUnion₂.mpr ⟨(t, b), ?_, ?_⟩
+        · exact Finset.mem_filter.mpr
+            ⟨Finset.mem_product.mpr ⟨hcons.1, hcons.2.1⟩, hcons⟩
+        · refine ⟨⟨le_refl t, hcons.2.2.1.le⟩, ht_S⟩
+    · -- t not in partition: t ∈ (0, 1) (since 0, 1 ∈ partition, t ≠ 0 and t ≠ 1).
+      have ht_ne_0 : t ≠ 0 := fun h => htn (h ▸ γ.zero_mem_partition)
+      have ht_ne_1 : t ≠ 1 := fun h => htn (h ▸ γ.one_mem_partition)
+      have ht_Ioo : t ∈ Ioo (0 : ℝ) 1 :=
+        ⟨lt_of_le_of_ne ht_Icc.1 (Ne.symm ht_ne_0), lt_of_le_of_ne ht_Icc.2 ht_ne_1⟩
+      obtain ⟨a, b, hcons, ht_Ioo'⟩ :=
+        γ.toClosedPwC1Curve.exists_consecutive_pair_containing ht_Ioo htn
+      refine Set.mem_iUnion₂.mpr ⟨(a, b), ?_, ?_⟩
+      · exact Finset.mem_filter.mpr
+          ⟨Finset.mem_product.mpr ⟨hcons.1, hcons.2.1⟩, hcons⟩
+      · refine ⟨Ioo_subset_Icc_self ht_Ioo', ht_S⟩
+  refine Set.Finite.subset ?_ h_subset
+  refine pairs.finite_toSet.biUnion ?_
+  intro p hp
+  have hcons : γ.partition.IsConsecutive p.1 p.2 := (Finset.mem_filter.mp hp).2
+  exact γ.preimage_finite_piece_of_finset hcons S
+
+/-- Corollary: the preimage of a finite set is countable. -/
+theorem preimage_countable (γ : ClosedPwC1Immersion x) (S : Finset E) :
+    Set.Countable {t ∈ Icc (0 : ℝ) 1 |
+      γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set E)} :=
+  (γ.preimage_finite S).countable
 
 end ClosedPwC1Immersion
 
