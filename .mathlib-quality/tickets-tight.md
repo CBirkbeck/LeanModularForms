@@ -56,6 +56,9 @@ absorb **8 obligations** into definitional consequences:
 * TIGHT-11 ✅ DONE — `ClosedPwC1Curve.lipschitzWith_extend` (Lipschitz from paper-faithful structure)
 * TIGHT-12 ✅ DONE — Drop `hU_bounded` requirement (unbounded Cauchy)
 * TIGHT-13 ✅ DONE — `hw_3_3_higherOrder_avoidance_paper` (higher-order avoidance, polar-decomp data)
+* PHASE-5b ✅ DONE (2026-05-12) — `hPV_sing_of_conditionB_avoids` (`HW33PVSing.lean`):
+  full discharge of `hw`, `h_avoid_pairs`, `h_int` residuals under avoidance.
+  Signature reduced to paper hypotheses (`hSimple`, `hCondB`, `hγ_avoids`).
 
 ## Tickets
 

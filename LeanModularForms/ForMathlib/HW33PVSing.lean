@@ -5,6 +5,8 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.HW33LaurentPolarPart
 import LeanModularForms.ForMathlib.HW33HoloCancel
+import LeanModularForms.ForMathlib.HW33HigherOrderAuto
+import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.SimplePoleIntegral
 
 /-!
@@ -37,6 +39,11 @@ The strategy:
 * `hPV_sing_of_conditionB` — wrap with the master-template hypotheses
   (`SatisfiesConditionB`, `HasSimplePoleAt`, etc.) for direct plug-in into
   `hw_3_3_paper`.
+
+* `hPV_sing_of_conditionB_avoids` (**Phase 5b**) — full discharge of all three
+  residuals (`hw`, `h_avoid_pairs`, `h_int`) for the case when `γ` *avoids*
+  every pole in `S`. The resulting signature carries only paper-faithful
+  hypotheses (`hSimple`, `hCondB`, `hγ_avoids`).
 
 ## Why per-pole CPV is taken as input
 
@@ -165,6 +172,125 @@ theorem hPV_sing_of_conditionB
   hPV_sing_of_winding_and_avoid_others S (fun s => residue f s)
     (fun s => generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s)
     hw hδ_pos h_avoid_pairs h_int
+
+/-! ## Phase 5b — full discharge of residuals under avoidance
+
+For γ that **avoids every pole** in `S`, the three residual hypotheses of
+`hPV_sing_of_conditionB` (`hw`, `h_avoid_pairs`, `h_int`) all discharge
+automatically from the paper structure (`ClosedPwC1Immersion` + avoidance),
+yielding a clean paper-faithful form.
+-/
+
+/-- **Integrability of the CPV integrand for a single simple-pole term under
+avoidance.** For `γ` a `ClosedPwC1Immersion` avoiding a single pole `s ∈ S`
+with positive margin `δ`, the integrand `cpvIntegrandOn S (c / (z - s)) γ ε`
+is interval-integrable on `[0, 1]` for every `ε > 0`.
+
+The proof bounds the CPV integrand pointwise by the contour integrand
+`c / (γ(t) - s) · γ'(t)`, which is integrable by
+`intervalIntegrable_pow_inv_mul_deriv_of_avoids` (with `k = 1`). -/
+theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids
+    (γ : ClosedPwC1Immersion x) (S : Finset ℂ) (s : ℂ) (c : ℂ) {δ : ℝ}
+    (hδ_pos : 0 < δ)
+    (hδ_bd : ∀ t ∈ Icc (0 : ℝ) 1,
+      δ ≤ ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖)
+    {K : NNReal}
+    (hLip : LipschitzWith K γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
+    (ε : ℝ) :
+    IntervalIntegrable
+      (fun t => cpvIntegrandOn S (fun z => c / (z - s))
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) volume 0 1 := by
+  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
+  -- The contour integrand of `c / (z - s)` is `c / (γ(t) - s) · γ'(t)`, which
+  -- rewrites to `c * (1 / (γ(t) - s)^1 · γ'(t))`. Integrability follows from
+  -- `intervalIntegrable_pow_inv_mul_deriv_of_avoids` with `k = 1`.
+  have h_pow1 :=
+    intervalIntegrable_pow_inv_mul_deriv_of_avoids γP s 1 hδ_pos hδ_bd hLip
+  have h_const_mul : IntervalIntegrable
+      (fun t => c *
+        (1 / (γP.toPath.extend t - s) ^ 1 * deriv γP.toPath.extend t))
+      volume 0 1 := h_pow1.const_mul c
+  have h_contour_eq :
+      (fun t => c *
+        (1 / (γP.toPath.extend t - s) ^ 1 * deriv γP.toPath.extend t)) =
+      PiecewiseC1Path.contourIntegrand (fun z => c / (z - s)) γP := by
+    funext t
+    simp only [PiecewiseC1Path.contourIntegrand, PiecewiseC1Path.extendedPath_eq,
+      pow_one, one_div]
+    ring
+  rw [h_contour_eq] at h_const_mul
+  exact cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γP ε h_const_mul
+
+/-- **Phase 5b — full discharge of `hPV_sing` residuals under avoidance.**
+
+For γ a paper-faithful closed piecewise-`C¹` immersion **avoiding every pole**
+in `S`, the three residual hypotheses (`hw`, `h_avoid_pairs`, `h_int`) of
+`hPV_sing_of_conditionB` all discharge from the paper structure alone. The
+result is a clean paper-faithful `hPV_sing` discharge requiring only:
+
+* `γ : ClosedPwC1Immersion x` — the curve structure;
+* `hSimple` — simple poles at `S` (kept for signature consistency);
+* `hCondB` — condition (B) (kept for signature consistency);
+* `hγ_avoids` — γ avoids every pole in `S` (the paper-faithful avoidance
+  hypothesis).
+
+The three residuals discharge as follows:
+* **`hw`**: by avoidance, each pole has a winding number via
+  `hasGeneralizedWindingNumber_of_avoids`.
+* **`h_avoid_pairs`**: trivial — `h_avoid_pairs s s' h t ht` is just
+  `hδ_bd s' h.in_S t ht`, the global avoidance margin.
+* **`h_int`**: integrability of `cpvIntegrandOn` for the simple-pole integrand,
+  by `cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids`.
+
+The unused hypotheses `_hU_open`, `_hS_in_U`, `_hSimple`, `_hCondB` are kept
+for signature consistency with `hw_3_3_paper`. -/
+theorem hPV_sing_of_conditionB_avoids
+    {U : Set ℂ} (_hU_open : IsOpen U) {S : Finset ℂ} (_hS_in_U : ↑S ⊆ U)
+    {f : ℂ → ℂ}
+    (γ : ClosedPwC1Immersion x)
+    (_hSimple : ∀ s ∈ S, HasSimplePoleAt f s)
+    (_hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
+    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s) :
+    HasCauchyPVOn S
+      (principalPartSum S (fun s => residue f s))
+      γ.toPwC1Immersion.toPiecewiseC1Path
+      (∑ s ∈ S, 2 * ↑Real.pi * I *
+        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
+          residue f s) := by
+  classical
+  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
+  -- Lipschitz of the extended path from `ClosedPwC1Immersion`.
+  obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
+  -- Uniform avoidance margin `δ > 0` from finite-set avoidance.
+  obtain ⟨δ, hδ_pos, hδ_bd⟩ := avoids_finset_delta_bound γP S hγ_avoids
+  -- Each pole has a generalized winding number (existence via avoidance).
+  have hw : ∀ s ∈ S, HasGeneralizedWindingNumber γP s
+      (generalizedWindingNumber γP s) := fun s hs => by
+    have h_avoid_s : ∃ δ' > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ' ≤ ‖γP t - s‖ :=
+      ⟨δ, hδ_pos, fun t ht => hδ_bd s hs t ht⟩
+    have hgw := hasGeneralizedWindingNumber_of_avoids h_avoid_s
+    -- `hgw` gives a witness with value `(2πi)⁻¹ * ∮`, which by `.eq` agrees
+    -- with `generalizedWindingNumber γP s`.
+    have heq : (2 * ↑Real.pi * I)⁻¹ * γP.contourIntegral (fun z => (z - s)⁻¹) =
+        generalizedWindingNumber γP s := hgw.eq.symm
+    rw [← heq]; exact hgw
+  -- Pairwise avoidance from the uniform margin (trivial restriction).
+  have h_avoid_pairs : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s →
+      ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γP t - s'‖ :=
+    fun _ _ s' hs' _ t ht => hδ_bd s' hs' t ht
+  -- Per-pole CPV integrand integrability via the Lipschitz + avoidance bound.
+  have h_int : ∀ s ∈ S, ∀ ε > 0, IntervalIntegrable
+      (fun t => cpvIntegrandOn S (fun z => residue f s / (z - s))
+        γP.toPath.extend ε t) volume 0 1 := fun s hs ε _ => by
+    have hδ_bd_extend : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γP.toPath.extend t - s‖ :=
+      fun t ht => by
+        have := hδ_bd s hs t ht
+        rwa [PiecewiseC1Path.extendedPath_eq] at this
+    exact cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids γ S s (residue f s)
+      hδ_pos hδ_bd_extend hLip ε
+  exact hPV_sing_of_winding_and_avoid_others S (fun s => residue f s)
+    (fun s => generalizedWindingNumber γP s) hw hδ_pos h_avoid_pairs h_int
 
 end LeanModularForms
 
