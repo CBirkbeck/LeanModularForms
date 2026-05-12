@@ -156,12 +156,18 @@ norm bound mirrors `dixonH2_norm_le` exactly.
 
 **Output**: foundational lemma for TIGHT-4 and the global non-avoidance theorem.
 
-### Phase 4 — TIGHT-4 (holo cancel)
-- [ ] 4.1 `cauchyIntegral_zero_for_analytic_nullHomologous` — `∮_γ g = 0` for `g` analytic + γ null-hom
-- [ ] 4.2 `cpv_tendsto_contour_for_analytic` — CPV → contour integral as ε → 0 (DCT)
-- [ ] 4.3 `h_holo_cancel_of_conditionB` — combines 4.1 + 4.2 + 3.3
-
-**Output**: `h_holo_cancel` is provable from `hCondB`.
+### Phase 4 — TIGHT-4 (holo cancel) ✅ DONE (2026-05-12)
+- [x] 4.1 `contourIntegral_analytic_eq_zero_of_nullHomologous` — Cauchy's
+  theorem for analytic functions on null-homologous closed `PwC1Immersion`,
+  thin wrapper over Dixon's theorem. (`HW33HoloCancel.lean`)
+- [x] 4.2 `hasCauchyPVOn_continuousOn_of_countable_preimage` — CPV → contour
+  bridge via dominated convergence; requires countable preimage of `S` under `γ`.
+- [x] 4.3 `h_holo_cancel_of_conditionB` — combines 4.1 + 4.2 + 3.3 via
+  `laurentHolomorphicRemainderCorrection` (Riemann removable extension).
+- Commit: `8f331d0`. All axiom-clean.
+- **Residual hypothesis**: `h_preimage : Set.Countable {t ∈ Icc 0 1 | γ t ∈ ↑S}`.
+  Should be eliminated from `PwC1Immersion` structure (non-vanishing derivative ⇒
+  isolated zeros of `γ - s` ⇒ finite preimage on each closed piece ⇒ countable).
 
 ### Phase 5 — Simple-pole CPV with crossings [hPV_sing for non-avoidance]
 - [ ] 5.1 Per-pole CPV at on-curve singularity using generalized winding number
