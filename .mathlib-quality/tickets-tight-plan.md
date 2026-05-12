@@ -165,9 +165,11 @@ norm bound mirrors `dixonH2_norm_le` exactly.
 - [x] 4.3 `h_holo_cancel_of_conditionB` — combines 4.1 + 4.2 + 3.3 via
   `laurentHolomorphicRemainderCorrection` (Riemann removable extension).
 - Commit: `8f331d0`. All axiom-clean.
-- **Residual hypothesis**: `h_preimage : Set.Countable {t ∈ Icc 0 1 | γ t ∈ ↑S}`.
-  Should be eliminated from `PwC1Immersion` structure (non-vanishing derivative ⇒
-  isolated zeros of `γ - s` ⇒ finite preimage on each closed piece ⇒ countable).
+- **Residual hypothesis eliminated** (commit `66c2f6e`):
+  `ClosedPwC1Immersion.preimage_finite γ S` proves `Set.Finite {t ∈ Icc 0 1 | γ t ∈ ↑S}`
+  via `HasDerivWithinAt.eventually_ne` (isolated zeros from non-vanishing
+  derivative) + `IsCompact + discrete ⇒ finite`. `h_holo_cancel_of_conditionB`
+  is now fully clean (no preimage hypothesis).
 
 ### Phase 5 — Simple-pole CPV with crossings [hPV_sing for non-avoidance]
 - [ ] 5.1 Per-pole CPV at on-curve singularity using generalized winding number
