@@ -67,6 +67,23 @@ absorb **8 obligations** into definitional consequences:
   framework `SingleCrossingData.hasWindingNumber` already lifts a user-supplied
   far-segment FTC limit `E(ε) → L` to `HasGeneralizedWindingNumber γ s (L/(2πi))`.
   All theorems axiom-clean `[propext, Classical.choice, Quot.sound]`.
+* PHASE-8 ✅ DONE (2026-05-12) — `hw_3_3_simple_with_crossData` (`HW33SimpleClean.lean`):
+  composes the Phase 4 + Phase 5c dischargers into a single paper-faithful
+  simple-pole theorem with `SingleCrossingData` crossings. Absorbs four oracle
+  hypotheses (`hMero`, `h_holo_cancel`, `hPV_sing`, `hI_sing`) into automatic
+  derivations:
+  - `hMero` from `HasSimplePoleAt.meromorphicAt`;
+  - `h_holo_cancel` from `h_holo_cancel_of_conditionB` (Phase 4);
+  - `hPV_sing` from `hPV_sing_of_conditionB_singleCrossing` (Phase 5c);
+  - sum-form `hI_sing` from per-pole integrability via
+    `cpvIntegrandOn_finset_sum_intervalIntegrable`.
+  Remaining inputs: `h_polar_cancel`, `hI_polar`, `hI_holo`, plus geometric
+  crossing data (`crossData`, `hδ_pos`, `h_avoid_pairs`, `h_int_perpole`).
+  The first three are not yet auto-derivable because
+  `hCondB.laurent_compatible` is extracted via `Classical.choose`, so
+  `laurentHigherOrderPolar` and `laurentHolomorphicRemainder` are not
+  pointwise zero for simple poles without a separate Laurent-uniqueness
+  argument. Axiom-clean `[propext, Classical.choice, Quot.sound]`.
 
 ## Tickets
 
