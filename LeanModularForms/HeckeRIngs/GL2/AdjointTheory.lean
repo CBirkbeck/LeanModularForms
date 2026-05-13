@@ -10212,6 +10212,88 @@ private lemma peterssonInner_RHS_M_infty_per_q_to_tile_form
   rw [slash_peterssonAdj_glMap_M_infty_eq_slash_T_p_upper_zero_slash_gamma0 p hp hpN f]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b` RHS-absorbed per-q tile-form**: upper-`b` analog of
+`peterssonInner_RHS_M_infty_per_q_to_tile_form`. -/
+private lemma peterssonInner_RHS_upper_per_q_to_tile_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))) =
+    peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
+      ((⇑f ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+      (⇑g) := by
+  -- Step 1: reverse master identity on g-slot.
+  rw [← slash_T_p_upper_eq_diamond_slash_T_p_lower_factor p hp hpN b g q]
+  -- Step 2: prepare det positivity for T_p_upper(b) * q⁻¹.
+  have hβ : 0 < ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)).det.val := by
+    show 0 < ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) :
+      GL (Fin 2) ℝ).val.det
+    rw [Units.val_mul, Matrix.det_mul]
+    have h2 : ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ :
+        Matrix (Fin 2) (Fin 2) ℝ).det = 1 := by
+      rw [show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ :
+          Matrix (Fin 2) (Fin 2) ℝ) =
+          ((Int.castRingHom ℝ).mapMatrix (q⁻¹).val) from by
+        rw [mapGL_coe_matrix]; rfl]
+      rw [← RingHom.map_det, (q⁻¹).property]; simp
+    rw [h2, mul_one]
+    show 0 < ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+    rw [show (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+        (algebraMap ℚ ℝ) (((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det) from
+          (RingHom.map_det _ _).symm]
+    rw [show ((T_p_upper p hp.pos b : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+      simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.det_fin_two, Matrix.of_apply]]
+    show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+    rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+    exact_mod_cast hp.pos
+  -- Step 3: apply right-slash-adjoint.
+  have hslash := peterssonInner_slash_adjoint_right (k := k)
+    (D := (fd : Set ℍ))
+    (α := (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
+    hβ
+    ((⇑f : ℍ → ℂ) ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
+    (⇑g)
+  rw [hslash]
+  -- Step 4: Simplify domain.
+  rw [show ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
+        (fd : Set ℍ) =
+      (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) • fd from
+    mul_smul _ _ _]
+  -- Step 5: Simplify slot-1: peterssonAdj(T_p_upper(b) * q⁻¹) = q * peterssonAdj T_p_upper(b).
+  rw [peterssonAdj_mul, peterssonAdj_mapGL_SL_eq_inv,
+    show (mapGL ℝ q⁻¹)⁻¹ = (mapGL ℝ q : GL (Fin 2) ℝ) from by
+      rw [← map_inv, inv_inv]]
+  -- slot-1: (f ∣ q⁻¹) ∣ (q * peterssonAdj T_p_upper(b)) = f ∣ peterssonAdj T_p_upper(b).
+  rw [show ((⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ :
+        GL (Fin 2) ℝ)) ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q *
+        peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))) =
+      ⇑f ∣[k] peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) from by
+    rw [← SlashAction.slash_mul, ← mul_assoc,
+      show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q) = 1 from by
+        rw [← map_mul, inv_mul_cancel, map_one], one_mul]]
+  -- f ∣ peterssonAdj T_p_upper(b) = (f ∣ T_p_upper(0)) ∣ mapGL γ₀.
+  rw [slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0 p hp hpN b f]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-d upper-`b` tile-form sum_comm**: swaps the outer `q` and inner `b`
 sums in the LHS upper-b tile-form sum. Pure `Finset.sum_comm`. -/
 private lemma sum_peterssonInner_upper_tile_form_swap
