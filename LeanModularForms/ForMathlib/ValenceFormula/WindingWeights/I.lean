@@ -314,20 +314,19 @@ private lemma t₀_i_lt_four (hH : 1 < H) : t₀_i H < 4 := by
     rw [div_lt_one h_den_pos]; linarith
   linarith
 
+private lemma g_i_t₀_im_eq_zero (hH : 1 < H) :
+    Real.sqrt 3 / 2 - 1 + (t₀_i H - 3) * (H - Real.sqrt 3 / 2) = 0 := by
+  have h_den_pos : 0 < H - Real.sqrt 3 / 2 := by
+    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (2 - Real.sqrt 3)]
+  unfold t₀_i
+  rw [show 3 + (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) - 3 =
+    (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) from by ring]
+  rw [div_mul_cancel₀ _ (ne_of_gt h_den_pos)]; ring
+
 private lemma g_i_at_t₀ (hH : 1 < H) :
     fdBoundary_H H (t₀_i H) - I = -1/2 := by
-  have ht₀3 := t₀_i_gt_three hH
-  have ht₀4 := t₀_i_lt_four hH
-  rw [g_i_seg3_value (by linarith) (by linarith)]
-  have h_den_pos : 0 < H - Real.sqrt 3 / 2 := by
-    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-              sq_nonneg (2 - Real.sqrt 3)]
-  have h_im_zero : Real.sqrt 3 / 2 - 1 + (t₀_i H - 3) * (H - Real.sqrt 3 / 2) = 0 := by
-    unfold t₀_i
-    rw [show 3 + (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) - 3 =
-      (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) from by ring]
-    rw [div_mul_cancel₀ _ (ne_of_gt h_den_pos)]; ring
-  rw [h_im_zero]; simp only [ofReal_zero, zero_mul, add_zero]
+  rw [g_i_seg3_value (t₀_i_gt_three hH) (le_of_lt (t₀_i_lt_four hH))]
+  rw [g_i_t₀_im_eq_zero hH]; simp only [ofReal_zero, zero_mul, add_zero]
 
 private lemma g_i_seg3_im_neg {t : ℝ} (ht3 : 3 < t) (ht_t0 : t < t₀_i H)
     (hH : 1 < H) : (fdBoundary_H H t - I).im < 0 := by
@@ -337,14 +336,8 @@ private lemma g_i_seg3_im_neg {t : ℝ} (ht3 : 3 < t) (ht_t0 : t < t₀_i H)
     mul_zero, add_zero, mul_one]
   norm_num
   have h_den_pos : 0 < H - Real.sqrt 3 / 2 := by
-    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-              sq_nonneg (2 - Real.sqrt 3)]
-  have h_eq_zero : Real.sqrt 3 / 2 - 1 + (t₀_i H - 3) * (H - Real.sqrt 3 / 2) = 0 := by
-    unfold t₀_i
-    rw [show 3 + (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) - 3 =
-      (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) from by ring]
-    rw [div_mul_cancel₀ _ (ne_of_gt h_den_pos)]; ring
-  nlinarith
+    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (2 - Real.sqrt 3)]
+  nlinarith [g_i_t₀_im_eq_zero (H := H) hH]
 
 private lemma g_i_seg3_im_pos {t : ℝ} (ht_t0 : t₀_i H < t) (ht4 : t ≤ 4)
     (hH : 1 < H) : 0 < (fdBoundary_H H t - I).im := by
@@ -354,14 +347,8 @@ private lemma g_i_seg3_im_pos {t : ℝ} (ht_t0 : t₀_i H < t) (ht4 : t ≤ 4)
     mul_zero, add_zero, mul_one]
   norm_num
   have h_den_pos : 0 < H - Real.sqrt 3 / 2 := by
-    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-              sq_nonneg (2 - Real.sqrt 3)]
-  have h_eq_zero : Real.sqrt 3 / 2 - 1 + (t₀_i H - 3) * (H - Real.sqrt 3 / 2) = 0 := by
-    unfold t₀_i
-    rw [show 3 + (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) - 3 =
-      (1 - Real.sqrt 3 / 2) / (H - Real.sqrt 3 / 2) from by ring]
-    rw [div_mul_cancel₀ _ (ne_of_gt h_den_pos)]; ring
-  nlinarith
+    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (2 - Real.sqrt 3)]
+  nlinarith [g_i_t₀_im_eq_zero (H := H) hH]
 
 private lemma g_i_ne_zero_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) :
     fdBoundary_H H t - I ≠ 0 := by
