@@ -6763,6 +6763,24 @@ private theorem T_p_lower_smul_Hecke_FD_eq_iUnion_tile
     exact T_p_lower_mul_T_p_upper_smul_set_eq_shift_smul p hp b.val S
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM per-tile slash conversion**: applying
+`peterssonInner_mapGL_smul_eq_slash` to each tile of the
+`T_p_lower • Hecke_FD` decomposition converts each tile integral on
+`mapGL τ_X • S` into a slash form on `S` with both slots slashed by `τ_X`. -/
+private theorem peterssonInner_T_p_lower_tile_eq_slash
+    (p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (S : Set ℍ) (F G : ℍ → ℂ)
+    (i : Option (Fin p)) :
+    peterssonInner k
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) F G =
+    peterssonInner k S
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ))
+      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ)) :=
+  peterssonInner_mapGL_smul_eq_slash _ (T_p_lower_tile_family N p hpN i) F G
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
