@@ -55,8 +55,8 @@ noncomputable section
 
 namespace LeanModularForms
 
-open Set Filter Topology Complex MeasureTheory
-open scoped Real Interval
+open Set Complex
+open scoped Real
 
 variable {x : ℂ}
 
@@ -103,14 +103,13 @@ theorem hw_3_3_clean
     HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-  have h_polar_cancel := h_polar_cancel_of_conditionB_simple hU_open hU_ne hS_in_U γ
-    h_null hSimple hCondB
-  have hI_polar := hI_polar_of_conditionB_simple hU_open hS_in_U γ h_null hSimple hCondB
-  have hI_holo := hI_holo_of_conditionB_simple hU_open hS_in_U hf γ h_null hSimple hCondB
-  exact hw_3_3_simple_one_crossing_paper hU_open hU_ne S hS_in_U f hf γ h_null
-    hSimple hCondA hCondB h_polar_cancel hI_polar hI_holo s_star hs_star_in
-    hγ_avoids_others hw_star
+          residue f s) :=
+  hw_3_3_simple_one_crossing_paper hU_open hU_ne S hS_in_U f hf γ h_null
+    hSimple hCondA hCondB
+    (h_polar_cancel_of_conditionB_simple hU_open hU_ne hS_in_U γ h_null hSimple hCondB)
+    (hI_polar_of_conditionB_simple hU_open hS_in_U γ h_null hSimple hCondB)
+    (hI_holo_of_conditionB_simple hU_open hS_in_U hf γ h_null hSimple hCondB)
+    s_star hs_star_in hγ_avoids_others hw_star
 
 /-- **HW Theorem 3.3 — paper-faithful, simple poles, full avoidance, clean form.**
 
@@ -145,12 +144,8 @@ theorem hw_3_3_clean_avoids
     avoids_finset_delta_bound γ.toPwC1Immersion.toPiecewiseC1Path S hγ_avoids
   have hw_raw := hasGeneralizedWindingNumber_of_avoids
     ⟨δ, hδ_pos, hδ_bd s_star hs_star_in⟩
-  have hw_star : HasGeneralizedWindingNumber
-      γ.toPwC1Immersion.toPiecewiseC1Path s_star
-      (generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s_star) :=
-    hw_raw.eq.symm ▸ hw_raw
   exact hw_3_3_clean hU_open hU_ne S hS_in_U f hf γ h_null hSimple hCondA
-    hCondB s_star hs_star_in hγ_avoids_others hw_star
+    hCondB s_star hs_star_in hγ_avoids_others (hw_raw.eq.symm ▸ hw_raw)
 
 /-- **HW Theorem 3.3 — single crossing with `SingleCrossingData` witness.**
 
@@ -335,27 +330,16 @@ theorem hw_3_3_clean_truly_full
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) := by
-  -- Discharge CPV existence at the crossing via the headline theorem.
-  -- Note: `γ.toPwC1Immersion.toPiecewiseC1Path t = γ...toPath.extend t` definitionally
-  -- via the `CoeFun` instance, so `h_at` and `h_unique` lift transparently.
+  -- Discharge CPV existence at the crossing via the headline theorem; repackage
+  -- the witness as `HasGeneralizedWindingNumber γ s_star (L / (2πi))`.
   obtain ⟨L, hL⟩ :=
     HungerbuhlerWasem.hasCauchyPV_inv_sub_of_flat_one_full γ ht₀ h_at h_unique h_flat
-  -- Repackage as `HasGeneralizedWindingNumber γ s_star (L / (2πi))`.
-  set w : ℂ := L / (2 * ↑Real.pi * I) with hw_def
-  have hpi : (2 * ↑Real.pi * I) ≠ 0 := Complex.two_pi_I_ne_zero
-  have hL' : L = 2 * ↑Real.pi * I * w := by
-    rw [hw_def]; field_simp
+  have hL' : L = 2 * ↑Real.pi * I * (L / (2 * ↑Real.pi * I)) := by field_simp
   rw [hL'] at hL
-  -- `hL : HasGeneralizedWindingNumber γ s_star w`.
-  have hw_star_raw : HasGeneralizedWindingNumber
-      γ.toPwC1Immersion.toPiecewiseC1Path s_star w := hL
-  have hw_star : HasGeneralizedWindingNumber
-      γ.toPwC1Immersion.toPiecewiseC1Path s_star
-      (generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s_star) :=
-    hw_star_raw.eq.symm ▸ hw_star_raw
-  -- Apply `hw_3_3_clean`.
+  have hw_raw : HasGeneralizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path
+      s_star (L / (2 * ↑Real.pi * I)) := hL
   exact hw_3_3_clean hU_open hU_ne S hS_in_U f hf γ h_null hSimple hCondA hCondB
-    s_star hs_star_in hγ_avoids_others hw_star
+    s_star hs_star_in hγ_avoids_others (hw_raw.eq.symm ▸ hw_raw)
 
 /-! ## Multi-crossing form
 
