@@ -63,7 +63,7 @@ private lemma gamma_eventuallyEq {H : ℝ}
     (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
     {t : ℝ} (ht : t ∈ Ioo (0 : ℝ) 1) :
     γ.toPath.extend =ᶠ[𝓝 t] fdBoundaryFun H :=
-  Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun s hs =>
+  eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun s hs =>
     hγ s (Ioo_subset_Icc_self hs)
 
 /-- Transfer integrability from `fdBoundaryFun`-based to `γ`-based integrand. -/
@@ -76,11 +76,10 @@ theorem transfer_integrability {H : ℝ} (z : ℂ) {a b : ℝ}
     IntervalIntegrable
       (fun t => (γ.toPath.extend t - z)⁻¹ * deriv γ.toPath.extend t) volume a b := by
   apply hint.congr_ae
-  rw [Filter.EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
+  rw [EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
   filter_upwards [compl_mem_ae_iff.mpr (measure_singleton b)] with t ht_ne_b ht_mem
   rw [uIoc_of_le hab] at ht_mem
-  have htb : t < b := lt_of_le_of_ne ht_mem.2
-    (fun h => ht_ne_b (mem_singleton_iff.mpr h))
+  have htb : t < b := ht_mem.2.lt_of_ne fun h => ht_ne_b (mem_singleton_iff.mpr h)
   have ht01 : t ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [ht_mem.1], by linarith⟩
   change (fdBoundaryFun H t - z)⁻¹ * deriv (fdBoundaryFun H) t =
     (γ.toPath.extend t - z)⁻¹ * deriv γ.toPath.extend t
@@ -96,8 +95,7 @@ theorem transfer_integral {H : ℝ} (z : ℂ) {a b : ℝ}
   apply intervalIntegral.integral_congr_ae
   filter_upwards [compl_mem_ae_iff.mpr (measure_singleton b)] with t ht_ne_b ht_mem
   rw [uIoc_of_le hab] at ht_mem
-  have htb : t < b := lt_of_le_of_ne ht_mem.2
-    (fun h => ht_ne_b (mem_singleton_iff.mpr h))
+  have htb : t < b := ht_mem.2.lt_of_ne fun h => ht_ne_b (mem_singleton_iff.mpr h)
   have ht01 : t ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [ht_mem.1], by linarith⟩
   rw [← hγ t (Ioo_subset_Icc_self ht01), ← (gamma_eventuallyEq hγ ht01).deriv_eq]
 
@@ -112,12 +110,12 @@ private lemma ref_seg1_I_contDiff (H : ℝ) : ContDiff ℝ ⊤ (ref_seg1_I H) :=
   unfold ref_seg1_I
   exact contDiff_const.add
     ((contDiff_const.sub
-      ((contDiff_const.mul Complex.ofRealCLM.contDiff).mul contDiff_const)).mul
+      ((contDiff_const.mul ofRealCLM.contDiff).mul contDiff_const)).mul
       contDiff_const)
 
 private lemma ref_seg1_I_slitPlane (H : ℝ) (t : ℝ) :
-    ref_seg1_I H t ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]
+    ref_seg1_I H t ∈ slitPlane := by
+  rw [mem_slitPlane_iff]
   left
   simp only [ref_seg1_I, add_re, ofReal_re, mul_re, sub_re, ofReal_im, I_re, I_im,
     mul_zero, sub_zero, div_ofNat]
@@ -130,8 +128,8 @@ private lemma fdBoundary_sub_I_eq_ref_seg1 (H : ℝ) (t : ℝ) (ht : t ≤ 1/5) 
 
 private lemma fdBoundary_sub_I_eventuallyEq_ref_seg1 (H : ℝ) {t : ℝ} (ht : t < 1/5) :
     (fun s => fdBoundaryFun H s - I) =ᶠ[𝓝 t] ref_seg1_I H :=
-  Filter.eventually_of_mem (Iio_mem_nhds ht) fun s (hs : s < 1/5) =>
-    fdBoundary_sub_I_eq_ref_seg1 H s (le_of_lt hs)
+  eventually_of_mem (Iio_mem_nhds ht) fun s (hs : s < 1/5) =>
+    fdBoundary_sub_I_eq_ref_seg1 H s hs.le
 
 /-! ### Segment 4: Left vertical, `Re = -1/2` -/
 
@@ -142,15 +140,14 @@ private lemma ref_seg4_I_contDiff (H : ℝ) : ContDiff ℝ ⊤ (ref_seg4_I H) :=
   unfold ref_seg4_I
   exact contDiff_const.add
     ((contDiff_const.add
-      (((contDiff_const.mul Complex.ofRealCLM.contDiff).sub contDiff_const).mul
+      (((contDiff_const.mul ofRealCLM.contDiff).sub contDiff_const).mul
         contDiff_const)).mul contDiff_const)
 
 private lemma ref_seg4_I_ne_zero (H : ℝ) (t : ℝ) : ref_seg4_I H t ≠ 0 := by
   intro h
   have hre : (ref_seg4_I H t).re = -1/2 := by
     unfold ref_seg4_I
-    simp only [Complex.add_re, Complex.mul_re, Complex.sub_re, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, Complex.neg_re, Complex.one_re, Complex.div_ofNat]
+    simp only [add_re, mul_re, sub_re, ofReal_re, ofReal_im, I_re, I_im, neg_re, one_re, div_ofNat]
     norm_num
   rw [h] at hre
   simp only [zero_re] at hre
@@ -159,8 +156,8 @@ private lemma ref_seg4_I_ne_zero (H : ℝ) (t : ℝ) : ref_seg4_I H t ≠ 0 := b
 private lemma fdBoundary_sub_I_eventuallyEq_ref_seg4 (H : ℝ) {t : ℝ}
     (ht3 : 3/5 < t) (ht4 : t < 4/5) :
     (fun s => fdBoundaryFun H s - I) =ᶠ[𝓝 t] ref_seg4_I H :=
-  Filter.eventually_of_mem
-    (Filter.inter_mem (Ioi_mem_nhds ht3) (Iio_mem_nhds ht4))
+  eventually_of_mem
+    (inter_mem (Ioi_mem_nhds ht3) (Iio_mem_nhds ht4))
     fun s ⟨hs3, hs4⟩ => by
       rw [mem_Ioi] at hs3
       rw [mem_Iio] at hs4
@@ -175,21 +172,20 @@ private def ref_seg5_I (H : ℝ) (t : ℝ) : ℂ := (5 * ↑t - 9/2) + (↑H - 1
 
 private lemma ref_seg5_I_contDiff (H : ℝ) : ContDiff ℝ ⊤ (ref_seg5_I H) := by
   unfold ref_seg5_I
-  exact ((contDiff_const.mul Complex.ofRealCLM.contDiff).sub contDiff_const).add contDiff_const
+  exact ((contDiff_const.mul ofRealCLM.contDiff).sub contDiff_const).add contDiff_const
 
 private lemma ref_seg5_I_slitPlane (H : ℝ) (hH : 1 < H) (t : ℝ) :
-    ref_seg5_I H t ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]
+    ref_seg5_I H t ∈ slitPlane := by
+  rw [mem_slitPlane_iff]
   right
   -- Goal: (ref_seg5_I H t).im ≠ 0
   unfold ref_seg5_I
-  simp only [Complex.add_im, Complex.mul_im, Complex.sub_im, Complex.ofReal_re, Complex.ofReal_im,
-    Complex.I_re, Complex.I_im]
+  simp only [add_im, mul_im, sub_im, ofReal_re, ofReal_im, I_re, I_im]
   norm_num
   linarith
 
-private lemma ref_seg5_I_ne_zero (H : ℝ) (hH : 1 < H) (t : ℝ) : ref_seg5_I H t ≠ 0 := by
-  exact Complex.slitPlane_ne_zero (ref_seg5_I_slitPlane H hH t)
+private lemma ref_seg5_I_ne_zero (H : ℝ) (hH : 1 < H) (t : ℝ) : ref_seg5_I H t ≠ 0 :=
+  slitPlane_ne_zero (ref_seg5_I_slitPlane H hH t)
 
 private lemma fdBoundary_sub_I_eq_ref_seg5 (H : ℝ) (t : ℝ) (ht : 4/5 < t) :
     fdBoundaryFun H t - I = ref_seg5_I H t := by
@@ -200,20 +196,20 @@ private lemma fdBoundary_sub_I_eq_ref_seg5 (H : ℝ) (t : ℝ) (ht : 4/5 < t) :
 
 private lemma fdBoundary_sub_I_eventuallyEq_ref_seg5 (H : ℝ) {t : ℝ} (ht : 4/5 < t) :
     (fun s => fdBoundaryFun H s - I) =ᶠ[𝓝 t] ref_seg5_I H :=
-  Filter.eventually_of_mem (Ioi_mem_nhds ht) fun s (hs : 4/5 < s) =>
+  eventually_of_mem (Ioi_mem_nhds ht) fun s (hs : 4/5 < s) =>
     fdBoundary_sub_I_eq_ref_seg5 H s hs
 
 /-! ## Part 3: Arc segment infrastructure -/
 
 private lemma arc_exp_continuous :
     Continuous (fun t => exp (↑(fdArcAngle t) * I)) :=
-  Complex.continuous_exp.comp
-    ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const)
+  continuous_exp.comp
+    ((continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const)
 
 private lemma arc_sub_I_ne_zero_seg2 {t : ℝ} (ht1 : 1/5 ≤ t) (ht2 : t < 2/5) :
     exp (↑(fdArcAngle t) * I) - I ≠ 0 := by
   intro h
-  have hre := congr_arg Complex.re h
+  have hre := congr_arg re h
   rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin] at hre
   simp only [add_re, ofReal_re, mul_re, ofReal_im, I_re, I_im,
     mul_zero, sub_zero, sub_re, zero_re] at hre
@@ -235,12 +231,12 @@ private def arcIntegrand_I (t : ℝ) : ℂ :=
 private lemma fdBoundary_eventuallyEq_arc (H : ℝ) {t : ℝ}
     (ht1 : 1/5 < t) (ht2 : t < 3/5) :
     fdBoundaryFun H =ᶠ[𝓝 t] fun s => exp (↑(fdArcAngle s) * I) :=
-  Filter.eventually_of_mem
-    (Filter.inter_mem (Ioi_mem_nhds ht1) (Iio_mem_nhds ht2))
+  eventually_of_mem
+    (inter_mem (Ioi_mem_nhds ht1) (Iio_mem_nhds ht2))
     fun s ⟨hs1, hs2⟩ => by
       rw [mem_Ioi] at hs1
       rw [mem_Iio] at hs2
-      exact fdBoundaryFun_arc_eq_exp H s hs1 (le_of_lt hs2)
+      exact fdBoundaryFun_arc_eq_exp H s hs1 hs2.le
 
 /-! ## Part 4: Per-segment integrability and FTC -/
 
@@ -295,7 +291,6 @@ theorem fdBoundary_seg1_intervalIntegrable_I (H : ℝ) {a : ℝ}
 
 /-! ### Segment 2: Arc integrability via continuity -/
 
-set_option maxHeartbeats 400000 in
 /-- Integrability on seg2 `[1/5, a]` for `a < 2/5`, shifted by `I`. -/
 theorem seg2_intervalIntegrable_I (H : ℝ) {a : ℝ} (ha : 1/5 ≤ a) (ha' : a < 2/5) :
     IntervalIntegrable
@@ -308,12 +303,11 @@ theorem seg2_intervalIntegrable_I (H : ℝ) {a : ℝ} (ha : 1/5 ≤ a) (ha' : a 
       (fun t ht => arc_sub_I_ne_zero_seg2 ht.1 (by linarith [ht.2]))).mul
       (continuous_const.mul arc_exp_continuous).continuousOn)
   apply hint_arc.congr_ae
-  rw [Filter.EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
+  rw [EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
   filter_upwards [compl_mem_ae_iff.mpr (measure_singleton a)] with t ht_ne ht_mem
   rw [uIoc_of_le ha] at ht_mem
   have ht1 : 1/5 < t := ht_mem.1
-  have hta : t < a := lt_of_le_of_ne ht_mem.2
-    (fun h => ht_ne (mem_singleton_iff.mpr h))
+  have hta : t < a := ht_mem.2.lt_of_ne fun h => ht_ne (mem_singleton_iff.mpr h)
   change arcIntegrand_I t = (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t
   unfold arcIntegrand_I
   rw [fdBoundaryFun_arc_eq_exp H t ht1 (by linarith)]
@@ -322,7 +316,6 @@ theorem seg2_intervalIntegrable_I (H : ℝ) {a : ℝ} (ha : 1/5 ≤ a) (ha' : a 
 
 /-! ### Segment 3: Arc integrability via continuity -/
 
-set_option maxHeartbeats 400000 in
 /-- Integrability on seg3 `[a, 3/5]` for `2/5 < a`, shifted by `I`. -/
 theorem seg3_intervalIntegrable_I (H : ℝ) {a : ℝ} (ha : 2/5 < a) (ha' : a ≤ 3/5) :
     IntervalIntegrable
@@ -335,12 +328,11 @@ theorem seg3_intervalIntegrable_I (H : ℝ) {a : ℝ} (ha : 2/5 < a) (ha' : a �
       (fun t ht => arc_sub_I_ne_zero_seg3 H (by linarith [ht.1]) ht.2)).mul
       (continuous_const.mul arc_exp_continuous).continuousOn)
   apply hint_arc.congr_ae
-  rw [Filter.EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
+  rw [EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
   filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (3/5 : ℝ))] with t ht_ne ht_mem
   rw [uIoc_of_le ha'] at ht_mem
   have ht1 : 2/5 < t := by linarith [ht_mem.1]
-  have ht2 : t < 3/5 := lt_of_le_of_ne ht_mem.2
-    (fun h => ht_ne (mem_singleton_iff.mpr h))
+  have ht2 : t < 3/5 := ht_mem.2.lt_of_ne fun h => ht_ne (mem_singleton_iff.mpr h)
   change arcIntegrand_I t = (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t
   unfold arcIntegrand_I
   rw [fdBoundaryFun_arc_eq_exp H t (by linarith) (by linarith)]
@@ -349,7 +341,6 @@ theorem seg3_intervalIntegrable_I (H : ℝ) {a : ℝ} (ha : 2/5 < a) (ha' : a �
 
 /-! ### Segment 4: Full integrability via continuous reference -/
 
-set_option maxHeartbeats 400000 in
 /-- Integrability on seg4 `[3/5, 4/5]`, shifted by `I`.
 Uses the globally nonvanishing reference `ref_seg4_I` (Re = -1/2 ≠ 0). -/
 theorem seg4_full_intervalIntegrable_I (H : ℝ) :
@@ -360,12 +351,11 @@ theorem seg4_full_intervalIntegrable_I (H : ℝ) :
     ((((ref_seg4_I_contDiff H).continuous).inv₀ (ref_seg4_I_ne_zero H)).mul
       ((ref_seg4_I_contDiff H).continuous_deriv le_top)).continuousOn.intervalIntegrable
   apply hint_ref.congr_ae
-  rw [Filter.EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
+  rw [EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
   filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (4/5 : ℝ))] with t ht_ne ht_mem
   rw [uIoc_of_le (by norm_num : (3:ℝ)/5 ≤ 4/5)] at ht_mem
   have ht3 : 3/5 < t := ht_mem.1
-  have ht4 : t < 4/5 := lt_of_le_of_ne ht_mem.2
-    (fun h => ht_ne (mem_singleton_iff.mpr h))
+  have ht4 : t < 4/5 := ht_mem.2.lt_of_ne fun h => ht_ne (mem_singleton_iff.mpr h)
   change (ref_seg4_I H t)⁻¹ * deriv (ref_seg4_I H) t =
     (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t
   have h_val : fdBoundaryFun H t - I = ref_seg4_I H t := by
@@ -373,15 +363,13 @@ theorem seg4_full_intervalIntegrable_I (H : ℝ) :
       show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
       show t ≤ 4/5 from by linarith, ite_true, ite_false, ref_seg4_I]
     ring
-  have h_ee := fdBoundary_sub_I_eventuallyEq_ref_seg4 H ht3 ht4
-  rw [h_val, ← h_ee.deriv_eq]
+  rw [h_val, ← (fdBoundary_sub_I_eventuallyEq_ref_seg4 H ht3 ht4).deriv_eq]
   congr 1
   change deriv (fun s => fdBoundaryFun H s - I) t = deriv (fdBoundaryFun H) t
   simp only [deriv_sub_const]
 
 /-! ### Segment 5: Full integrability via continuous reference -/
 
-set_option maxHeartbeats 400000 in
 /-- Integrability on seg5 `[4/5, 1]`, shifted by `I`.
 Uses the globally nonvanishing reference `ref_seg5_I` (Im = H-1 > 0). -/
 theorem seg5_full_intervalIntegrable_I (H : ℝ) (hH : 1 < H) :
@@ -392,18 +380,16 @@ theorem seg5_full_intervalIntegrable_I (H : ℝ) (hH : 1 < H) :
     ((((ref_seg5_I_contDiff H).continuous).inv₀ (ref_seg5_I_ne_zero H hH)).mul
       ((ref_seg5_I_contDiff H).continuous_deriv le_top)).continuousOn.intervalIntegrable
   apply hint_ref.congr_ae
-  rw [Filter.EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
+  rw [EventuallyEq, ae_restrict_iff' measurableSet_uIoc]
   filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (1 : ℝ))] with t ht_ne ht_mem
   rw [uIoc_of_le (by norm_num : (4:ℝ)/5 ≤ 1)] at ht_mem
   have ht4 : 4/5 < t := ht_mem.1
-  have ht1 : t < 1 := lt_of_le_of_ne ht_mem.2
-    (fun h => ht_ne (mem_singleton_iff.mpr h))
+  have ht1 : t < 1 := ht_mem.2.lt_of_ne fun h => ht_ne (mem_singleton_iff.mpr h)
   change (ref_seg5_I H t)⁻¹ * deriv (ref_seg5_I H) t =
     (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t
   have h_val : fdBoundaryFun H t - I = ref_seg5_I H t :=
     fdBoundary_sub_I_eq_ref_seg5 H t ht4
-  have h_ee := fdBoundary_sub_I_eventuallyEq_ref_seg5 H ht4
-  rw [h_val, ← h_ee.deriv_eq]
+  rw [h_val, ← (fdBoundary_sub_I_eventuallyEq_ref_seg5 H ht4).deriv_eq]
   congr 1
   simp [deriv_sub_const]
 
