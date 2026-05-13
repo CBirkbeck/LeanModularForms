@@ -22549,6 +22549,70 @@ private theorem SigmaQPermResidual_M_infty_of_TileFormIntegralResidual
   exact h_tile
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d SigmaQPermResidual_M_infty from σ_p-reduced residual**:
+end-to-end chain from `TileFormIntegralResidual_M_infty_sigma_p_reduced`
+(the σ_p-pushed analytic content) plus the same AE-disjoint / integrability
+hypotheses as `SigmaQPermResidual_M_infty_of_TileFormIntegralResidual`.
+
+Composes:
+* `TileFormIntegralResidual_M_infty_of_sigma_p_reduced` (σ_p reduction),
+* `SigmaQPermResidual_M_infty_of_TileFormIntegralResidual` (sum-level
+  reduction).
+
+**Use**: this is the **end-to-end chain from the genuine remaining
+analytic content to the sum-level σ_p Q-permutation residual** in the
+M_∞ branch. The next proof pass only needs to:
+1. discharge `TileFormIntegralResidual_M_infty_sigma_p_reduced`
+   (the genuine analytic content, ADJ-CORR territory);
+2. provide the AE-disjoint / integrability hypotheses.
+
+All σ_p, diamond, slash composition, Γ_1(N) identifications, M_∞ ↔
+T_p_lower passages have been absorbed by the matrix-content layer. -/
+private theorem SigmaQPermResidual_M_infty_of_sigma_p_reduced
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_meas : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+      NullMeasurableSet
+        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp)
+    (h_disj : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) =>
+      AEDisjoint μ_hyp
+        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q₁.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q₂.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))))
+    (h_LHS_int : IntegrableOn
+      (fun τ => petersson k
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) τ)
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp)
+    (h_RHS_int : IntegrableOn
+      (fun τ => petersson k
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+        (⇑g) τ)
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp)
+    (h_reduced : TileFormIntegralResidual_M_infty_sigma_p_reduced p hp hpN f g) :
+    SigmaQPermResidual_M_infty p hp hpN f g :=
+  SigmaQPermResidual_M_infty_of_TileFormIntegralResidual p hp hpN f g
+    h_meas h_disj h_LHS_int h_RHS_int
+    (TileFormIntegralResidual_M_infty_of_sigma_p_reduced p hp hpN f g h_reduced)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-d upper-b branch SigmaQPermResidual from per-b TileFormIntegralResidual**:
 Upper-b analog of `SigmaQPermResidual_M_infty_of_TileFormIntegralResidual`.
 
