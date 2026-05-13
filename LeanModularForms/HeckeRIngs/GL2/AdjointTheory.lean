@@ -21440,10 +21440,22 @@ private theorem petN_heckeT_p_symmetric_form
   -- This is the genuine analytic σ_p Q-permutation content (DS 5.5.2(b)).
   rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
   refine congr_arg₂ (· + ·) ?_ ?_
-  · -- M_∞-branch sum residual `SigmaQPermResidual_M_infty p hp hpN f g`
+  · -- M_∞-branch sum residual `SigmaQPermResidual_M_infty p hp hpN f g`.
+    -- Reduction infrastructure landed (axiom-clean):
+    --  • LHS sum→per-q tile-form: `sum_peterssonInner_LHS_M_infty_to_tile_form`
+    --  • Per-q→union-tile: `sum_peterssonInner_M_infty_tile_form_collapse`
+    -- Remaining: parallel RHS reduction (with σ-reindex via `Equiv.sum_comp`),
+    -- then identification of the union-tile integrals (genuine σ_p content).
     show SigmaQPermResidual_M_infty p hp hpN f g
     sorry
-  · -- upper-b-branch sum residual `SigmaQPermResidual_upper p hp hpN f g`
+  · -- upper-b-branch sum residual `SigmaQPermResidual_upper p hp hpN f g`.
+    -- Reduction infrastructure landed (axiom-clean):
+    --  • LHS sum→per-(q,b) tile-form: `sum_peterssonInner_LHS_upper_to_tile_form`
+    --  • Sum_comm + per-b q-collapse:
+    --      `sum_peterssonInner_upper_tile_form_swap` +
+    --      `sum_peterssonInner_upper_tile_form_per_b_collapse`
+    -- Remaining: parallel RHS reduction (with σ-reindex),
+    -- then identification of the per-b union-tile integrals.
     show SigmaQPermResidual_upper p hp hpN f g
     sorry
 
