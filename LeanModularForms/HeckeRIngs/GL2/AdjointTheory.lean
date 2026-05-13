@@ -9894,6 +9894,111 @@ private lemma peterssonInner_LHS_M_infty_per_q_to_tile_form
     (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b` master-identity reverse** (CuspForm f-slot, per-b version):
+`f ∣ T_p_lower · γ_b · q⁻¹ = ⟨u⁻¹⟩f ∣ T_p_upper(b) · q⁻¹` where
+`γ_b = gamma0_T_p_upper_Gamma1_factor b`.
+
+Upper-`b` analog of `slash_T_p_lower_factor_eq_diamond_inv_slash_M_infty`.
+Derived from `slash_T_p_upper_eq_diamond_slash_T_p_lower_factor` applied to
+`⟨u⁻¹⟩f`, bridged via diamond cancellation `⟨u⟩∘⟨u⁻¹⟩ = id`. -/
+private lemma slash_T_p_lower_b_factor_eq_diamond_inv_slash_T_p_upper
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (q : SL(2, ℤ)) :
+    ⇑f ∣[k] ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) =
+    ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
+      ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) := by
+  have h := slash_T_p_upper_eq_diamond_slash_T_p_lower_factor p hp hpN b
+    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) q
+  rw [show (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) :
+      CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = f from by
+    show diamondOpCusp k (ZMod.unitOfCoprime p hpN)
+      (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) = f
+    rw [show diamondOpCusp k (ZMod.unitOfCoprime p hpN)
+        (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) =
+        ((diamondOpCusp k (ZMod.unitOfCoprime p hpN)).comp
+          (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹)) f from rfl,
+      ← diamondOpCusp_mul, mul_inv_cancel, diamondOpCusp_one]
+    rfl] at h
+  exact h.symm
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b` LHS-dist per-q tile-form**: upper-`b` analog of
+`peterssonInner_LHS_M_infty_per_q_to_tile_form`.
+
+```
+pet fd (f ∣ (T_p_lower · γ_b · q⁻¹)) (g ∣ γ₀ · q⁻¹)
+  = pet (T_p_upper(b) • q⁻¹ • fd) (⟨u⁻¹⟩f) ((⟨u⁻¹⟩g ∣ T_p_upper(0)) ∣ mapGL γ₀)
+```
+
+**Proof.** Three steps (parallel to M_∞ branch):
+1. f-slot master identity (`slash_T_p_lower_b_factor_eq_diamond_inv_slash_T_p_upper`).
+2. g-slot diamond identification ⟨u⁻¹⟩g = g ∣ γ₀.
+3. `peterssonInner_slash_adj_T_p_upper_q_summand_eq` at `(f := ⟨u⁻¹⟩f, g := ⟨u⁻¹⟩g)`. -/
+private lemma peterssonInner_LHS_upper_per_q_to_tile_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))) =
+    peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
+  -- Step 1: f-slot master identity (T_p_lower factor → ⟨u⁻¹⟩f · T_p_upper(b)).
+  rw [slash_T_p_lower_b_factor_eq_diamond_inv_slash_T_p_upper p hp hpN b f q]
+  -- Step 2: g-slot diamond identification (γ₀ · q⁻¹ → ⟨u⁻¹⟩g · q⁻¹).
+  have h_diamond_inv_g : (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) :
+        UpperHalfPlane → ℂ) = ⇑g ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) := by
+    have h := coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv p hp hpN
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
+    rw [show (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)
+        (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) :
+        CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = g from by
+      show diamondOpCusp k (ZMod.unitOfCoprime p hpN)
+        (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) = g
+      rw [show diamondOpCusp k (ZMod.unitOfCoprime p hpN)
+          (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) =
+          ((diamondOpCusp k (ZMod.unitOfCoprime p hpN)).comp
+            (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹)) g from rfl,
+        ← diamondOpCusp_mul, mul_inv_cancel, diamondOpCusp_one]
+      rfl] at h
+    have h2 := congr_arg (fun F : UpperHalfPlane → ℂ => F ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) h
+    simp only at h2
+    rw [← SlashAction.slash_mul, ← map_mul, inv_mul_cancel, map_one,
+      SlashAction.slash_one] at h2
+    exact h2.symm
+  rw [show (⇑g ∣[k]
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))) =
+      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) from by
+    rw [SlashAction.slash_mul, ← h_diamond_inv_g]]
+  -- Step 3: apply T_p_upper(b)-slash-adjoint at (⟨u⁻¹⟩f, ⟨u⁻¹⟩g).
+  exact peterssonInner_slash_adj_T_p_upper_q_summand_eq p hp hpN b q
+    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
+    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T024 sum-level joint absorption consumer**: applies the per-q
 M_∞/upper-b joint absorption helpers
 (`per_q_M_infty_branch_full_absorb`, `per_q_T_p_upper_branch_full_absorb`)
