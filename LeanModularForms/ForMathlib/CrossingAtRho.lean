@@ -72,8 +72,8 @@ variable (H : ℝ)
 theorem arc_near_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     {t : ℝ} (ht2 : t ≤ 3/5) (ht : |t - 3/5| ≤ arcsinDelta ε) :
     ‖fdBoundaryFun H t - ellipticPointRho‖ ≤ ε := by
-  have hle := abs_le.mp ht
-  have ht1 : (1 : ℝ)/5 < t := by nlinarith [hle.1, arcsinDelta_lt_one_fifth hε hε_lt]
+  have ht1 : (1 : ℝ)/5 < t := by
+    nlinarith [(abs_le.mp ht).1, arcsinDelta_lt_one_fifth hε hε_lt]
   rw [fdBoundaryFun_arc_dist_rho H t ht1 ht2]
   have halfAngle_eq : (fdArcAngle t - 2 * Real.pi / 3) / 2 =
       5 * (t - 3/5) * Real.pi / 12 := by
@@ -81,13 +81,12 @@ theorem arc_near_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     ring
   rw [halfAngle_eq]
   set α := 5 * (t - 3/5) * Real.pi / 12
-  have hpi := Real.pi_pos
   have hα_le_asin : |α| ≤ Real.arcsin (ε / 2) := by
     rw [show α = 5 * Real.pi / 12 * (t - 3/5) from by ring, abs_mul,
       abs_of_pos (by positivity), ← half_angle_arcsinDelta]
     exact mul_le_mul_of_nonneg_left ht (by positivity)
   have harc_le : Real.arcsin (ε / 2) ≤ Real.pi / 2 := Real.arcsin_le_pi_div_two _
-  have hα_le_pi : |α| ≤ Real.pi := by linarith
+  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
   have h_sin_le : Real.sin |α| ≤ ε / 2 := by
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
@@ -100,7 +99,6 @@ theorem arc_far_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     {t : ℝ} (ht_arc : t ∈ Icc (1/5 : ℝ) (3/5))
     (hδt : arcsinDelta ε < |t - 3/5|) :
     ε < ‖fdBoundaryFun H t - ellipticPointRho‖ := by
-  have hpi := Real.pi_pos
   have ht3 : t < 3/5 := by
     by_contra h
     push Not at h
@@ -129,8 +127,8 @@ theorem arc_far_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
   have hα_le_pi6 : |α| ≤ Real.pi / 6 := by
     rw [show α = 5 * Real.pi / 12 * (t - 3/5) from by ring, abs_mul,
       abs_of_pos (by positivity)]
-    nlinarith
-  have hα_le_pi : |α| ≤ Real.pi := by linarith
+    nlinarith [Real.pi_pos]
+  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
   have h_sin_gt : ε / 2 < Real.sin |α| := by
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
@@ -210,9 +208,8 @@ variable (H : ℝ)
 theorem arc_near_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     {t : ℝ} (ht1 : 1/5 ≤ t) (ht : |t - 1/5| ≤ arcsinDelta ε) :
     ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ ≤ ε := by
-  have hpi := Real.pi_pos
-  have hle := abs_le.mp ht
-  have ht2 : t ≤ 3/5 := by nlinarith [hle.2, arcsinDelta_lt_one_fifth hε hε_lt]
+  have ht2 : t ≤ 3/5 := by
+    nlinarith [(abs_le.mp ht).2, arcsinDelta_lt_one_fifth hε hε_lt]
   rcases eq_or_lt_of_le ht1 with rfl | ht1'
   · rw [fdBoundaryFun_at_one_fifth, sub_self, norm_zero]
     linarith
@@ -228,7 +225,7 @@ theorem arc_near_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1
       abs_of_pos (by positivity), ← half_angle_arcsinDelta]
     exact mul_le_mul_of_nonneg_left ht (by positivity)
   have harc_le : Real.arcsin (ε / 2) ≤ Real.pi / 2 := Real.arcsin_le_pi_div_two _
-  have hα_le_pi : |α| ≤ Real.pi := by linarith
+  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
   have h_sin_le : Real.sin |α| ≤ ε / 2 := by
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
@@ -241,7 +238,6 @@ theorem arc_far_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/
     {t : ℝ} (ht_arc : t ∈ Icc (1/5 : ℝ) (3/5))
     (hδt : arcsinDelta ε < |t - 1/5|) :
     ε < ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ := by
-  have hpi := Real.pi_pos
   have ht1 : 1/5 < t := by
     by_contra h
     push Not at h
@@ -266,8 +262,8 @@ theorem arc_far_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/
   have hα_le_pi6 : |α| ≤ Real.pi / 6 := by
     rw [show α = 5 * Real.pi / 12 * (t - 1/5) from by ring, abs_mul,
       abs_of_pos (by positivity)]
-    nlinarith
-  have hα_le_pi : |α| ≤ Real.pi := by linarith
+    nlinarith [Real.pi_pos]
+  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
   have h_sin_gt : ε / 2 < Real.sin |α| := by
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
@@ -535,7 +531,7 @@ theorem hasWindingNumber_atRho_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (hint_right := fun ε hε hεt => ftcHyp.hint_right ε hε hεt)
       (h_limit := ftcHyp.h_limit))
   convert hasGeneralizedWindingNumber_of_hasCauchyPV h_pv using 1
-  have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
+  have hpi : (Real.pi : ℂ) ≠ 0 := mod_cast Real.pi_ne_zero
   field_simp
   ring
 
@@ -581,7 +577,7 @@ theorem hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (hint_right := fun ε hε hεt => ftcHyp.hint_right ε hε hεt)
       (h_limit := ftcHyp.h_limit))
   convert hasGeneralizedWindingNumber_of_hasCauchyPV h_pv using 1
-  have hpi : (Real.pi : ℂ) ≠ 0 := ofReal_ne_zero.mpr Real.pi_ne_zero
+  have hpi : (Real.pi : ℂ) ≠ 0 := mod_cast Real.pi_ne_zero
   field_simp
   ring
 
