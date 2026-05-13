@@ -12,7 +12,13 @@
 
 Each step is one commit. After each step: `lake build LeanModularForms` must pass, axioms must remain clean.
 
-**Status (2026-05-13)**: A1, A3, A4, A5, A7, A9 done — 16 files deleted, ~4976 lines removed (23 files changed, 7 insertions, 4976 deletions vs baseline). ForMathlib down from 183 → 167 files. A2 deferred (curve-type mismatch makes it Priority 4 structural, not mechanical); A6 and A8 deferred to `/cleanup-all` per-file passes (better-suited to granular editing).
+**Status (2026-05-13 — Phase A complete)**: A1, A3, A4, A5, A7, A8, A9 done — 16 files deleted + 14 dead privates removed, ~5415 lines removed across 35 files changed. ForMathlib down from 183 → 167 files, ~88k → ~82.6k lines. All `lake build`s green.
+
+**A2 and A6 deferred to Priority 4 (structural refactor)**: both turn out to be more than mechanical mass-deletion.
+
+- **A2 (FlatnessConditions)**: 9 of ~17 declarations are byte-equal to `Residue/Flatness.lean`, but the remaining 8 use different curve types (`PwC1Immersion x y` vs `PiecewiseC1Immersion`). The 9 importers all rely on the `PwC1Immersion` variants; deleting `FlatnessConditions.lean` requires either migrating all importers (huge refactor) or restoring the `PwC1Immersion` versions in `Residue/Flatness.lean` (re-introduces duplication). Schedule alongside the broader `PiecewiseC1Curve` → `PiecewiseC1Path` collapse from `PROJECT_OVERVIEW.md` Priority 4 #21.
+
+- **A6 (HigherOrderCancel ↔ HigherOrderAsymptotics)**: 18 shared theorems scattered through `HigherOrderCancel.lean` (lines 477–1425) interleaved with ~26 unique theorems. Clean dedupe requires moving the unique theorems into a contiguous tail and importing `HigherOrderAsymptotics` for the rest — a per-file refactor, better-suited to `/cleanup-all`'s decompose-proof pass.
 
 ### A1. Delete fully-commented-out files (~1951 lines, zero risk)
 
