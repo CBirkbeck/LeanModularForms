@@ -124,16 +124,11 @@ theorem ε_le_norm_at_firstExitTimeRight
     {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
     (hδ : 0 < δ) (hγ_cont : ContinuousOn γ (Set.Icc t₀ (t₀ + δ)))
     (hε_le : ε ≤ ‖γ (t₀ + δ) - s‖) :
-    ε ≤ ‖γ (firstExitTimeRight γ t₀ δ s ε) - s‖ := by
-  have h_S_closed : IsClosed
-      (Set.Icc t₀ (t₀ + δ) ∩ (fun t => ‖γ t - s‖) ⁻¹' Set.Ici ε) :=
-    (hγ_cont.sub continuousOn_const).norm.preimage_isClosed_of_isClosed
-      isClosed_Icc isClosed_Ici
-  have h_S_nonempty : ({t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖}).Nonempty :=
+    ε ≤ ‖γ (firstExitTimeRight γ t₀ δ s ε) - s‖ :=
+  (((hγ_cont.sub continuousOn_const).norm.preimage_isClosed_of_isClosed
+      isClosed_Icc isClosed_Ici).csInf_mem
     ⟨t₀ + δ, firstExitTimeRight_set_nonempty hδ.le hε_le⟩
-  have h_S_bdd : BddBelow {t ∈ Set.Icc t₀ (t₀ + δ) | ε ≤ ‖γ t - s‖} :=
-    ⟨t₀, firstExitTimeRight_set_lb γ t₀ δ ε s⟩
-  exact (h_S_closed.csInf_mem h_S_nonempty h_S_bdd).2
+    ⟨t₀, firstExitTimeRight_set_lb γ t₀ δ ε s⟩).2
 
 /-! ## Exact-radius equality at the first exit time -/
 
@@ -179,7 +174,7 @@ theorem norm_at_firstExitTimeRight_eq
   have h_t₀_lt : t₀ < t_ε :=
     t₀_lt_firstExitTimeRight hδ hγ_cont h_s hε_pos hε_le
   have h_t_ε_mem : t_ε ∈ Set.Icc t₀ (t₀ + δ) :=
-    (firstExitTimeRight_mem_Icc hδ.le hε_le)
+    firstExitTimeRight_mem_Icc hδ.le hε_le
   by_contra! h
   have h_cont_at_t_ε : ContinuousWithinAt (fun t => ‖γ t - s‖)
       (Set.Icc t₀ (t₀ + δ)) t_ε :=
@@ -248,16 +243,11 @@ theorem ε_le_norm_at_firstExitTimeLeft
     {γ : ℝ → ℂ} {t₀ δ ε : ℝ} {s : ℂ}
     (hδ : 0 < δ) (hγ_cont : ContinuousOn γ (Set.Icc (t₀ - δ) t₀))
     (hε_le : ε ≤ ‖γ (t₀ - δ) - s‖) :
-    ε ≤ ‖γ (firstExitTimeLeft γ t₀ δ s ε) - s‖ := by
-  have h_S_closed : IsClosed
-      (Set.Icc (t₀ - δ) t₀ ∩ (fun t => ‖γ t - s‖) ⁻¹' Set.Ici ε) :=
-    (hγ_cont.sub continuousOn_const).norm.preimage_isClosed_of_isClosed
-      isClosed_Icc isClosed_Ici
-  have h_S_nonempty : ({t ∈ Set.Icc (t₀ - δ) t₀ | ε ≤ ‖γ t - s‖}).Nonempty :=
+    ε ≤ ‖γ (firstExitTimeLeft γ t₀ δ s ε) - s‖ :=
+  (((hγ_cont.sub continuousOn_const).norm.preimage_isClosed_of_isClosed
+      isClosed_Icc isClosed_Ici).csSup_mem
     ⟨t₀ - δ, firstExitTimeLeft_set_nonempty hδ.le hε_le⟩
-  have h_S_bdd : BddAbove {t ∈ Set.Icc (t₀ - δ) t₀ | ε ≤ ‖γ t - s‖} :=
-    ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε s⟩
-  exact (h_S_closed.csSup_mem h_S_nonempty h_S_bdd).2
+    ⟨t₀, firstExitTimeLeft_set_ub γ t₀ δ ε s⟩).2
 
 /-! ## Exact-radius equality at the first exit time (left side) -/
 
@@ -301,7 +291,7 @@ theorem norm_at_firstExitTimeLeft_eq
   have h_t_ε_lt : t_ε < t₀ :=
     firstExitTimeLeft_lt_t₀ hδ hγ_cont h_s hε_pos hε_le
   have h_t_ε_mem : t_ε ∈ Set.Icc (t₀ - δ) t₀ :=
-    (firstExitTimeLeft_mem_Icc hδ.le hε_le)
+    firstExitTimeLeft_mem_Icc hδ.le hε_le
   by_contra! h
   have h_cont_at_t_ε : ContinuousWithinAt (fun t => ‖γ t - s‖)
       (Set.Icc (t₀ - δ) t₀) t_ε :=
@@ -433,10 +423,9 @@ theorem firstExitTimeRight_tendsto_t₀
   refine ⟨?_, ?_⟩
   · rw [Metric.tendsto_nhdsWithin_nhds]
     intro η hη_pos
-    have hη_min : 0 < min η δ := lt_min hη_pos hδ
     set t₁ := t₀ + min η δ / 2 with ht₁_def
     have ht₁_mem : t₁ ∈ Set.Ioc t₀ (t₀ + δ) := by
-      refine ⟨by linarith, ?_⟩
+      refine ⟨by linarith [lt_min hη_pos hδ], ?_⟩
       linarith [min_le_right η δ]
     have ht₁_ne : γ t₁ ≠ s := h_leave t₁ ht₁_mem
     refine ⟨‖γ t₁ - s‖, by simpa [norm_pos_iff, sub_ne_zero] using ht₁_ne, ?_⟩
@@ -473,10 +462,9 @@ theorem firstExitTimeLeft_tendsto_t₀
   refine ⟨?_, ?_⟩
   · rw [Metric.tendsto_nhdsWithin_nhds]
     intro η hη_pos
-    have hη_min : 0 < min η δ := lt_min hη_pos hδ
     set t₁ := t₀ - min η δ / 2 with ht₁_def
     have ht₁_mem : t₁ ∈ Set.Ico (t₀ - δ) t₀ := by
-      refine ⟨?_, by linarith⟩
+      refine ⟨?_, by linarith [lt_min hη_pos hδ]⟩
       linarith [min_le_right η δ]
     have ht₁_ne : γ t₁ ≠ s := h_leave t₁ ht₁_mem
     refine ⟨‖γ t₁ - s‖, by simpa [norm_pos_iff, sub_ne_zero] using ht₁_ne, ?_⟩
