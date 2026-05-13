@@ -38,8 +38,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ### Reference function on seg1 -/
-
 private def arc_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
   ((1/2 - z₀.re : ℝ) : ℂ) +
   ((H - 5 * t * (H - Real.sqrt 3 / 2) - z₀.im : ℝ) : ℂ) * I
@@ -95,8 +93,6 @@ private lemma arc_h₀_slitPlane {H : ℝ} {θ₀ : ℝ}
   rw [Real.cos_pi_div_three] at h_cos
   linarith
 
-/-! ### Reference function on seg5 -/
-
 private def arc_h₅ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
   ((5 * t - 9/2 - z₀.re : ℝ) : ℂ) + ((H - z₀.im : ℝ) : ℂ) * I
 
@@ -138,8 +134,6 @@ private lemma arc_h₅_slitPlane {H : ℝ} (hH : 1 < H) {θ₀ : ℝ} (t : ℝ) 
   rw [arcZ₀_im_eq]
   have := Real.sin_le_one θ₀
   intro h; linarith
-
-/-! ### Reference function on seg4 -/
 
 private def arc_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
   ((-1/2 - z₀.re : ℝ) : ℂ) +
@@ -200,8 +194,6 @@ private lemma neg_arc_h₃_slitPlane {H : ℝ} {θ₀ : ℝ}
         Real.cos_pi_sub, Real.cos_pi_div_three]
     norm_num
   linarith [Real.strictAntiOn_cos hθ₀ h2pi3 h_hi]
-
-/-! ### Arc reference function -/
 
 private def arc_h_arc (z₀ : ℂ) (t : ℝ) : ℂ :=
   exp (↑(fdArcAngle t) * I) - z₀
@@ -279,8 +271,6 @@ private lemma neg_arc_h_arc_right_slitPlane {θ₀ : ℝ}
   have h_t_Icc : fdArcAngle t ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
   have hθ₀_Icc : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
   linarith [Real.strictAntiOn_cos hθ₀_Icc h_t_Icc h_t_arc]
-
-/-! ### Per-segment FTC pieces -/
 
 private lemma arc_seg1_ftc (H : ℝ) {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3) :
@@ -381,8 +371,6 @@ private lemma arc_seg5_ftc {H : ℝ} (hH : 1 < H) {θ₀ : ℝ} :
   intro t _
   exact arc_h₅_slitPlane hH t
 
-/-! ### Junction equalities -/
-
 private lemma arc_junction_15 (H : ℝ) (z₀ : ℂ) :
     arc_h₀ H z₀ (1/5) = arc_h_arc z₀ (1/5) := by
   unfold arc_h₀ arc_h_arc
@@ -433,8 +421,6 @@ private lemma arc_closed (H : ℝ) (z₀ : ℂ) :
       Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add, add_zero]
     ring
 
-/-! ### Branch correction at t = 4/5 -/
-
 /-- For arc z₀ with `θ₀ ∈ (π/3, 2π/3)` and `H > 1`, `arc_h₃(4/5) = arc_h₅(4/5)`
 lies in the upper-left quadrant (re < 0, im > 0). Hence
 `log(-h(4/5)) - log(h(4/5)) = -π · I`. -/
@@ -461,8 +447,6 @@ private lemma arc_branch_correction_45 {H : ℝ} (hH : 1 < H) (θ₀ : ℝ) :
     ring
   rw [h_log_neg]
   ring
-
-/-! ### A.e. equalities -/
 
 private lemma arc_ae_eq_h₀ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (0 : ℝ) (1/5) →
@@ -523,8 +507,6 @@ private lemma arc_ae_eq_h₅ (H : ℝ) (z₀ : ℂ) :
     Filter.eventually_of_mem (Ioi_mem_nhds ht4) fun _ hs => fdBoundary_sub_eq_arc_h₅ H z₀ hs
   rw [fdBoundary_sub_eq_arc_h₅ H z₀ ht4,
     ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
-
-/-! ### Telescope: the trimmed integral for arc crossings -/
 
 /-- The trimmed integral for an arc crossing equals
 `log(h_arc(t₀-δ)) - log(-h_arc(t₀+δ)) + (-π·I)`. The first part is the
@@ -657,8 +639,6 @@ private lemma log_div_of_re_pos {a b : ℂ} (ha : 0 < a.re) (hb : 0 < b.re) :
     Complex.log_inv b hb_arg_ne_pi]
   ring
 
-/-! ### Ratio identity for the arc crossing -/
-
 /-- The ratio `(h_arc(t₀-δ)) / (-h_arc(t₀+δ)) = exp(-i·5π/6·δ)`.
 
 By the half-angle factoring: both numerator and denominator factor as
@@ -707,8 +687,6 @@ private lemma arc_h_arc_ratio_eq {θ₀ : ℝ} {δ : ℝ} (hδ_pos : 0 < δ)
   rw [div_eq_iff (neg_ne_zero.mpr hzw_sub_ne)]
   field_simp
   ring
-
-/-! ### Log diff tends to 0 -/
 
 /-- As δ → 0+, `log(arc_h_arc(t₀-δ)) - log(-arc_h_arc(t₀+δ)) → 0`. -/
 private lemma arc_log_diff_tendsto {θ₀ : ℝ}
@@ -791,8 +769,6 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
     rw [← log_div_of_re_pos h_a_re h_b_re, arc_h_arc_ratio_eq hδ_pos hδ_small]
   exact h_ratio_tendsto.congr' h_eventually_eq
 
-/-! ### `arcsinDelta` tendsto helper -/
-
 private lemma arc_arcsinDelta_tendsto :
     Tendsto arcsinDelta (𝓝[>] 0) (𝓝[>] 0) := by
   apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
@@ -806,8 +782,6 @@ private lemma arc_arcsinDelta_tendsto :
   · rw [eventually_nhdsWithin_iff]
     filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1 from by norm_num)] with ε _ hε
     exact mem_Ioi.mpr (arcsinDelta_pos (by rwa [mem_Ioi] at hε))
-
-/-! ### Arc E function and its limit -/
 
 private def arc_E (θ₀ : ℝ) (ε : ℝ) : ℂ :=
   Complex.log (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - arcsinDelta ε)) -
@@ -824,10 +798,6 @@ private lemma arc_E_tendsto {θ₀ : ℝ}
       (𝓝[>] 0) (𝓝 0) :=
     (arc_log_diff_tendsto h_lo h_hi).comp arc_arcsinDelta_tendsto
   simpa using h_comp.add (tendsto_const_nhds (x := -(↑Real.pi * I)))
-
-/-! ### Final assembly: the ArcFTCHyp at a generic arc point -/
-
-/-! ### Helpers for ArcFTCHyp fields -/
 
 private lemma arc_h_ftc_helper {H : ℝ} (hH : 1 < H)
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
