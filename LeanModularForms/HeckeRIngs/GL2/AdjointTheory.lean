@@ -6970,6 +6970,33 @@ private theorem peterssonInner_swap_via_uniform_adj
       mapGL_tile_mul_peterssonAdj_Hecke_rep_eq_glMap_T_p_lower (N := N) p hp hpN i]]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM LHS-side per-X swap identity** via slot-1 slash-adjoint
++ uniformity.
+
+For each X, slot-1 slash-adjoint at α = α_X combined with the uniform
+identity yields:
+
+  pet Γ₁_FD (G ∣ α_X) (F ∣ τ_X) = pet (α_X • Γ₁_FD) G (F ∣ T_p_lower)
+
+Summing over X (AE-disjoint): converts the slot-1 sum into pet Hecke_FD G (F ∣ T_p_lower).
+
+This is the LHS analog of `peterssonInner_swap_via_uniform_adj`. -/
+private theorem peterssonInner_swap_via_uniform_adj_slot1
+    (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (F G : ℍ → ℂ) (i : Option (Fin p)) :
+    peterssonInner k (fd : Set ℍ)
+      (G ∣[k] (Hecke_rep_family N p hp.pos hpN i))
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ)) =
+    peterssonInner k (Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ)) G
+      (F ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
+  -- Apply petersson_symm twice: pet (G∣α_X) (F∣τ_X) = conj(pet (F∣τ_X) (G∣α_X))
+  -- Then use the slot-2 swap, then conj back.
+  rw [← peterssonInner_conj_symm,
+      peterssonInner_swap_via_uniform_adj (N := N) p hp hpN F G i,
+      peterssonInner_conj_symm]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
