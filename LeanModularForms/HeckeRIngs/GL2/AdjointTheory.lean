@@ -6781,6 +6781,36 @@ private theorem peterssonInner_T_p_lower_tile_eq_slash
   peterssonInner_mapGL_smul_eq_slash _ (T_p_lower_tile_family N p hpN i) F G
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM iUnion-to-sum conversion** for the T_p_lower•Hecke_FD
+tile decomposition under AE-disjoint + null-measurable + integrable hypotheses:
+
+`pet (⋃_X (mapGL τ_X)•Γ₁_FD) F G = ∑_X pet ((mapGL τ_X)•Γ₁_FD) F G`
+
+Direct application of `peterssonInner_iUnion_finite_aedisjoint`. -/
+private theorem peterssonInner_T_p_lower_iUnion_tile_eq_sum
+    (p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (S : Set ℍ) (F G : ℍ → ℂ)
+    (hm : ∀ i : Option (Fin p), NullMeasurableSet
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) μ_hyp)
+    (hd : Pairwise (fun i j : Option (Fin p) => AEDisjoint μ_hyp
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S)
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN j) : GL (Fin 2) ℝ) • S)))
+    (hfi : IntegrableOn (fun τ => petersson k F G τ)
+      (⋃ i : Option (Fin p),
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) μ_hyp) :
+    peterssonInner k
+      (⋃ i : Option (Fin p),
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) F G =
+    ∑ i : Option (Fin p), peterssonInner k
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) F G :=
+  peterssonInner_iUnion_finite_aedisjoint _ hm hd F G hfi
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
