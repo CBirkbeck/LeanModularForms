@@ -183,18 +183,17 @@ private theorem explicit_coefficients_of_pvChain
   have hg_i : g ellipticPointI' =
       (-1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
     simp only [hg_def]
-    have : (ellipticPointI' : ℂ) = I := rfl
-    rw [this, D.toFDWindingData.winding_at_i.eq]
+    rw [show (ellipticPointI' : ℂ) = I from rfl, D.toFDWindingData.winding_at_i.eq]
   have hg_ρ : g ellipticPointRho' =
       (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') := by
     simp only [hg_def]
-    have : (ellipticPointRho' : ℂ) = ellipticPointRho := rfl
-    rw [this, D.toFDWindingData.winding_at_rho.eq]
+    rw [show (ellipticPointRho' : ℂ) = ellipticPointRho from rfl,
+      D.toFDWindingData.winding_at_rho.eq]
   have hg_ρ1 : g ellipticPointRhoPlusOne' =
       (-1/6 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRhoPlusOne') := by
     simp only [hg_def]
-    have : (ellipticPointRhoPlusOne' : ℂ) = ellipticPointRhoPlusOne := rfl
-    rw [this, D.toFDWindingData.winding_at_rho_plus_one.eq]
+    rw [show (ellipticPointRhoPlusOne' : ℂ) = ellipticPointRhoPlusOne from rfl,
+      D.toFDWindingData.winding_at_rho_plus_one.eq]
   have h_filter_eq : S.filter (fun p => ¬P p) = S.filter (fun p =>
       p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne') := by
     ext x
@@ -222,8 +221,7 @@ private lemma unit_circle_re_zero_eq_i (s : ℍ)
   have h_le : (s : ℂ).im ≤ 1 := by nlinarith [mul_self_nonneg ((s : ℂ).im - 1), h_nsq]
   have h_ge : 1 ≤ (s : ℂ).im := by
     nlinarith [mul_le_of_le_one_right s.2.le h_le, h_nsq]
-  apply UpperHalfPlane.ext
-  apply Complex.ext
+  refine UpperHalfPlane.ext (Complex.ext ?_ ?_)
   · exact hs_re.trans Complex.I_re.symm
   · exact (le_antisymm h_le h_ge).trans Complex.I_im.symm
 
@@ -241,19 +239,17 @@ private theorem boundary_weight_at
     (h_not_int : ¬(‖(s : ℂ)‖ > 1 ∧ |(s : ℂ).re| < 1/2)) :
     generalizedWindingNumber D.boundary (↑s : ℂ) = -1/2 := by
   have hs_fd := hS s hs
-  have habs_re := hs_fd.2
   have hnorm_ge : 1 ≤ ‖(s : ℂ)‖ := by
     rw [Complex.norm_def]
     exact Real.sqrt_one ▸ Real.sqrt_le_sqrt hs_fd.1
-  have h_im_lt_H : (s : ℂ).im < H := hH_above s hs
   have h_nsq_ge : Complex.normSq (s : ℂ) ≥ 1 := by
     rw [Complex.normSq_eq_norm_sq]
     nlinarith [hnorm_ge, sq_nonneg (‖(s : ℂ)‖ - 1)]
-  exact (D.boundary_winding (↑s) s.2 h_im_lt_H
-    (fun h => hsi (by ext; change (s : ℂ) = I; exact h))
-    (fun h => hsρ (by ext; change (s : ℂ) = ellipticPointRho; exact h))
-    (fun h => hsρ1 (by ext; change (s : ℂ) = ellipticPointRhoPlusOne; exact h))
-    h_not_int h_nsq_ge habs_re).eq
+  exact (D.boundary_winding (↑s) s.2 (hH_above s hs)
+    (fun h => hsi (UpperHalfPlane.ext h))
+    (fun h => hsρ (UpperHalfPlane.ext h))
+    (fun h => hsρ1 (UpperHalfPlane.ext h))
+    h_not_int h_nsq_ge hs_fd.2).eq
 
 /-! ### Rho singleton sum equality -/
 
@@ -404,16 +400,12 @@ private lemma bdry_four_disjoint (S : Finset UpperHalfPlane)
     (hLA : LA_ne = S.filter (fun p =>
       p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0)) :
     Disjoint (sRightVertFM S ∪ sLeftVertFM S ∪ RA_ne) LA_ne := by
-  subst hRA
-  subst hLA
-  apply Finset.disjoint_union_left.mpr
-  exact ⟨Finset.disjoint_union_left.mpr
-    ⟨Finset.disjoint_filter.mpr
-        fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith,
-      Finset.disjoint_filter.mpr
-        fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith⟩,
-    Finset.disjoint_filter.mpr
-      fun s _ ⟨_, _, hre1⟩ ⟨_, _, hre2⟩ => by linarith⟩
+  subst hRA hLA
+  exact Finset.disjoint_union_left.mpr
+    ⟨Finset.disjoint_union_left.mpr
+      ⟨Finset.disjoint_filter.mpr fun s _ ⟨hre, _⟩ ⟨_, _, hre2⟩ => by linarith,
+        Finset.disjoint_filter.mpr fun s _ ⟨_, hn⟩ ⟨_, hn_eq, _⟩ => by linarith⟩,
+      Finset.disjoint_filter.mpr fun s _ ⟨_, _, hre1⟩ ⟨_, _, hre2⟩ => by linarith⟩
 
 /-- Half the boundary-sum equals left-vert plus left-arc. -/
 private theorem half_bdry_sum_eq_leftVert_plus_leftArc
