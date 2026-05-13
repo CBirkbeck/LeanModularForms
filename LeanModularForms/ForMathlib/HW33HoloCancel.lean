@@ -3,10 +3,10 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import LeanModularForms.ForMathlib.HW33LaurentPolarPart
 import LeanModularForms.ForMathlib.HigherOrderAssembly
 import LeanModularForms.ForMathlib.PaperPwC1Immersion
-import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
 /-!
 # HW Theorem 3.3 — discharge `h_holo_cancel` under (B) + null-homology + simple poles
@@ -47,8 +47,6 @@ namespace LeanModularForms
 
 variable {x : ℂ}
 
-/-! ## Step 1+2: global analytic correction via Riemann removable singularity -/
-
 /-- The "limit-corrected" remainder: equal to `laurentHolomorphicRemainder` away
 from `S`, and to the limit at each `s ∈ S`. Mirrors `MeromorphicCauchy.correction`
 for simple poles but routes through
@@ -83,16 +81,11 @@ private lemma laurentHolomorphicRemainderCorrection_eventuallyEq_analyticExt
   apply Filter.mem_of_superset (Filter.inter_mem (hV_open.mem_nhds hz_V) h_erase_away)
   intro w ⟨hw_V, hw_erase⟩
   by_cases hwz : w = z
-  · rw [hwz]; exact h_at_z
-  · have hw_not_S : w ∉ (↑S : Set ℂ) := by
-      intro hmem
-      exact hw_erase
-        (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwz, Finset.mem_coe.mp hmem⟩))
-    have hcorr : laurentHolomorphicRemainderCorrection hCondB w =
-        laurentHolomorphicRemainder hCondB w := by
-      simp only [laurentHolomorphicRemainderCorrection, hw_not_S, ↓reduceIte]
+  · exact hwz ▸ h_at_z
+  · have hw_not_S : w ∉ (↑S : Set ℂ) := fun hmem => hw_erase
+      (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwz, Finset.mem_coe.mp hmem⟩))
     show laurentHolomorphicRemainderCorrection hCondB w = g_z w
-    rw [hcorr]
+    simp only [laurentHolomorphicRemainderCorrection, hw_not_S, ↓reduceIte]
     exact hV_eq ⟨hw_V, hwz⟩
 
 /-- Away from `S`, the correction agrees with the remainder in a full neighbourhood. -/
@@ -102,8 +95,7 @@ private lemma laurentHolomorphicRemainderCorrection_eventuallyEq_rem
     laurentHolomorphicRemainderCorrection hCondB =ᶠ[𝓝 z]
       laurentHolomorphicRemainder hCondB := by
   apply Filter.mem_of_superset (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
-  intro w hw
-  have hw_not : w ∉ (↑S : Set ℂ) := hw
+  intro w (hw_not : w ∉ (↑S : Set ℂ))
   show laurentHolomorphicRemainderCorrection hCondB w = laurentHolomorphicRemainder hCondB w
   simp only [laurentHolomorphicRemainderCorrection, hw_not, ↓reduceIte]
 
@@ -123,15 +115,12 @@ theorem laurentHolomorphicRemainder_correction_differentiableOn
     have h_evEq :=
       laurentHolomorphicRemainderCorrection_eventuallyEq_analyticExt hCondB g_z hzS
         hg_z_an hg_z_eq
-    exact (hg_z_an.differentiableAt.congr_of_eventuallyEq
-      h_evEq).differentiableWithinAt
+    exact (hg_z_an.differentiableAt.congr_of_eventuallyEq h_evEq).differentiableWithinAt
   · have h_rem_diff : DifferentiableAt ℂ (laurentHolomorphicRemainder hCondB) z :=
       ((laurentHolomorphicRemainder_differentiableOn hCondB hU hf z ⟨hz, hzS⟩).differentiableAt
         ((hU.sdiff S.finite_toSet.isClosed).mem_nhds ⟨hz, hzS⟩))
     exact (h_rem_diff.congr_of_eventuallyEq
       (laurentHolomorphicRemainderCorrection_eventuallyEq_rem hCondB hzS)).differentiableWithinAt
-
-/-! ## Step 3: contour integral of the correction vanishes -/
 
 /-- For a null-homologous closed piecewise-`C¹` immersion `γ` and a function `g`
 differentiable on an open `U`, the contour integral of `g` along `γ` is zero. -/
@@ -174,12 +163,10 @@ theorem contourIntegral_analytic_eq_zero_of_nullHomologous
       (fun t => (γP t - w₀)⁻¹ * deriv γP.toPath.extend t)
       MeasureTheory.volume 0 1 :=
     h_deriv_int.continuousOn_mul h_inv_cont
-  have hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γP t ∈ U := h_null.image_subset
-  have h_g_curve_cont : ContinuousOn
-      (fun t => g (γP t)) (uIcc (0 : ℝ) 1) := by
+  have h_g_curve_cont : ContinuousOn (fun t => g (γP t)) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
     exact hg.continuousOn.comp γP.toPath.continuous_extend.continuousOn
-      (fun t ht => hγ_in_U t ht)
+      h_null.image_subset
   have h_g_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand g γP)
       MeasureTheory.volume 0 1 :=
@@ -190,18 +177,14 @@ theorem contourIntegral_analytic_eq_zero_of_nullHomologous
     refine h_g_int.congr ?_
     intro t ht
     rw [uIoc_of_le (zero_le_one' ℝ)] at ht
-    have h_ne : γP t - w₀ ≠ 0 :=
-      sub_ne_zero.mpr (hw₀_off t (Ioc_subset_Icc_self ht))
+    have : γP t - w₀ ≠ 0 := sub_ne_zero.mpr (hw₀_off t (Ioc_subset_Icc_self ht))
     change PiecewiseC1Path.contourIntegrand g γP t =
       (γP t - w₀) * g (γP t) / (γP t - w₀) *
         deriv γP.toPath.extend t
     unfold PiecewiseC1Path.contourIntegrand
-    rw [show (γP t - w₀) * g (γP t) / (γP t - w₀) = g (γP t)
-      from by field_simp]
+    rw [show (γP t - w₀) * g (γP t) / (γP t - w₀) = g (γP t) from by field_simp]
   exact contourIntegral_eq_zero_of_nullHomologous_at w₀ hw₀_in_U hw₀_off
     (h_dixon_G w₀) h_cauchy_int h_base_int
-
-/-! ## Step 4: CPV→contour bridge via dominated convergence -/
 
 /-- The cutoff condition `∃ s ∈ S, ‖γt - s‖ ≤ ε` defines a closed (hence measurable) set in `t`. -/
 private lemma cpvCutoff_isClosed {γE : ℝ → ℂ} (hγE : Continuous γE) (S : Finset ℂ)
@@ -230,23 +213,18 @@ private lemma cpvIntegrandOn_tendsto_pointwise_of_not_mem
       (𝓝 (g (γE t) * deriv γE t)) := by
   classical
   by_cases hS : S.Nonempty
-  · set δ : ℝ := S.inf' hS (fun s => ‖γE t - s‖) with hδ_def
-    have hδ_pos : 0 < δ := by
-      rw [hδ_def]
-      exact (Finset.lt_inf'_iff _).2 fun s hs => norm_pos_iff.mpr fun h_eq =>
+  · set δ : ℝ := S.inf' hS (fun s => ‖γE t - s‖)
+    have hδ_pos : 0 < δ :=
+      (Finset.lt_inf'_iff _).2 fun s hs => norm_pos_iff.mpr fun h_eq =>
         h_not_mem (sub_eq_zero.mp h_eq ▸ Finset.mem_coe.mpr hs)
     apply Tendsto.congr' _ tendsto_const_nhds
     rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
     refine ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, fun ε hε => ?_⟩
     simp only [mem_Ioo] at hε
-    have h_forall : ∀ s ∈ S, ε < ‖γE t - s‖ :=
-      fun s hs => hε.2.trans_le (Finset.inf'_le _ hs)
-    exact (cpvIntegrandOn_of_forall_gt h_forall).symm
-  · rw [Finset.not_nonempty_iff_eq_empty] at hS
-    subst hS
-    refine Tendsto.congr ?_ tendsto_const_nhds
-    intro ε
-    exact cpvIntegrandOn_empty.symm
+    exact (cpvIntegrandOn_of_forall_gt
+      fun s hs => hε.2.trans_le (Finset.inf'_le _ hs)).symm
+  · obtain rfl := Finset.not_nonempty_iff_eq_empty.mp hS
+    exact Tendsto.congr (fun _ => cpvIntegrandOn_empty.symm) tendsto_const_nhds
 
 /-- Bound: `‖cpvIntegrandOn S g γE ε t‖ ≤ ‖g(γE t)‖ · ‖γE'(t)‖`. -/
 private lemma norm_cpvIntegrandOn_le {S : Finset ℂ} {g : ℂ → ℂ} {γE : ℝ → ℂ}
@@ -255,7 +233,7 @@ private lemma norm_cpvIntegrandOn_le {S : Finset ℂ} {g : ℂ → ℂ} {γE : �
   simp only [cpvIntegrandOn]
   split_ifs
   · simpa using mul_nonneg (norm_nonneg _) (norm_nonneg _)
-  · rw [norm_mul]
+  · exact (norm_mul ..).le
 
 /-- **DCT-based CPV→contour bridge** for continuous `g` on the curve image,
 under the hypothesis that `γ⁻¹(S) ∩ [0,1]` is at most countable. The ε-truncated
@@ -267,19 +245,18 @@ theorem hasCauchyPVOn_continuousOn_of_countable_preimage
     (h_preimage : Set.Countable {t ∈ Icc (0 : ℝ) 1 | γ t ∈ (↑S : Set ℂ)}) :
     HasCauchyPVOn S g γ (γ.contourIntegral g) := by
   classical
-  set γE := γ.toPath.extend with hγE_def
+  set γE := γ.toPath.extend
   have hγE_cont : Continuous γE := γ.toPath.continuous_extend
   -- Bound the integrand by a constant.
   have h_compact : IsCompact (γE '' Icc (0 : ℝ) 1) :=
     isCompact_Icc.image hγE_cont
   obtain ⟨M, hM⟩ := h_compact.bddAbove_image h_g_cont.norm
-  set M' : ℝ := max M 0 with hM'_def
-  have hM'_nn : 0 ≤ M' := le_max_right _ _
+  set M' : ℝ := max M 0
   have hM_bound : ∀ t ∈ Icc (0 : ℝ) 1, ‖g (γE t)‖ ≤ M' := fun t ht =>
     le_max_of_le_left (hM ⟨γE t, ⟨t, ht, rfl⟩, rfl⟩)
   have h_deriv_bd : ∀ t, ‖deriv γE t‖ ≤ (K : ℝ) :=
     fun _ => norm_deriv_le_of_lipschitz hLip
-  set bound : ℝ → ℝ := fun _ => M' * (K : ℝ) with bound_def
+  set bound : ℝ → ℝ := fun _ => M' * (K : ℝ)
   have h_bound_int : IntervalIntegrable bound volume 0 1 :=
     intervalIntegrable_const
   -- AEStronglyMeasurable of `g ∘ γE` on `volume.restrict (Ioc 0 1)` via continuity.
@@ -314,16 +291,13 @@ theorem hasCauchyPVOn_continuousOn_of_countable_preimage
     refine intervalIntegral.tendsto_integral_filter_of_dominated_convergence
       bound ?_ ?_ h_bound_int ?_
     · -- Measurability: AEStronglyMeasurable on Ι 0 1 = Ioc 0 1.
-      filter_upwards [self_mem_nhdsWithin] with ε hε
-      have hε_pos : 0 < ε := hε
-      have : Ι (0 : ℝ) 1 = Ioc 0 1 := uIoc_of_le (zero_le_one' ℝ)
-      rw [this]
+      filter_upwards [self_mem_nhdsWithin] with ε _
+      rw [show Ι (0 : ℝ) 1 = Ioc 0 1 from uIoc_of_le (zero_le_one' ℝ)]
       exact h_cutoff_aem ε
     · -- Bound:
-      filter_upwards [self_mem_nhdsWithin] with ε hε
+      filter_upwards [self_mem_nhdsWithin] with ε _
       refine ae_of_all _ fun t ht_uIoc => ?_
-      have ht_Ioc : t ∈ Ioc (0 : ℝ) 1 := by
-        rw [uIoc_of_le (zero_le_one' ℝ)] at ht_uIoc; exact ht_uIoc
+      have ht_Ioc : t ∈ Ioc (0 : ℝ) 1 := by rwa [uIoc_of_le (zero_le_one' ℝ)] at ht_uIoc
       have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht_Ioc
       calc ‖cpvIntegrandOn S g γE ε t‖
           ≤ ‖g (γE t)‖ * ‖deriv γE t‖ := norm_cpvIntegrandOn_le
@@ -333,16 +307,11 @@ theorem hasCauchyPVOn_continuousOn_of_countable_preimage
             · exact h_deriv_bd t
     · -- Pointwise convergence: a.e., the cutoff tends to the full integrand.
       filter_upwards [h_preimage.ae_notMem volume] with t ht_notmem ht_uIoc
-      have ht_Ioc : t ∈ Ioc (0 : ℝ) 1 := by
-        rw [uIoc_of_le (zero_le_one' ℝ)] at ht_uIoc; exact ht_uIoc
+      have ht_Ioc : t ∈ Ioc (0 : ℝ) 1 := by rwa [uIoc_of_le (zero_le_one' ℝ)] at ht_uIoc
       have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht_Ioc
-      have h_not_in : γE t ∉ (↑S : Set ℂ) := by
-        intro h_in
-        exact ht_notmem ⟨ht_Icc, h_in⟩
-      exact cpvIntegrandOn_tendsto_pointwise_of_not_mem h_not_in
+      exact cpvIntegrandOn_tendsto_pointwise_of_not_mem
+        (fun h_in => ht_notmem ⟨ht_Icc, h_in⟩)
   exact h_DCT
-
-/-! ## Main theorem: discharge `h_holo_cancel` -/
 
 /-- **Phase 4 main theorem**: discharge the `h_holo_cancel` oracle in
 `hw_3_3_paper` / `hw_3_3_tight` for the simple-pole case under condition (B),
@@ -373,10 +342,10 @@ theorem h_holo_cancel_of_conditionB
     HasCauchyPVOn S (laurentHolomorphicRemainder hCondB)
       γ.toPwC1Immersion.toPiecewiseC1Path 0 := by
   classical
-  set γP := γ.toPwC1Immersion.toPiecewiseC1Path with hγP_def
-  set γE := γP.toPath.extend with hγE_def
-  set corr := laurentHolomorphicRemainderCorrection hCondB with hcorr_def
-  set rem := laurentHolomorphicRemainder hCondB with hrem_def
+  set γP := γ.toPwC1Immersion.toPiecewiseC1Path
+  set γE := γP.toPath.extend
+  set corr := laurentHolomorphicRemainderCorrection hCondB
+  set rem := laurentHolomorphicRemainder hCondB
   -- Automatic finite preimage from the paper-faithful immersion structure.
   have h_preimage : Set.Countable
       {t ∈ Icc (0 : ℝ) 1 | γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set ℂ)} :=
@@ -390,34 +359,27 @@ theorem h_holo_cancel_of_conditionB
     contourIntegral_analytic_eq_zero_of_nullHomologous hU_open hU_ne hcorr_diff
       γ.toPwC1Immersion h_null hLip
   -- Step 4: CPV of correction equals contour integral = 0.
-  have hcorr_cont : ContinuousOn corr (γE '' Icc (0 : ℝ) 1) := by
-    have hγE_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γE t ∈ U := h_null.image_subset
-    refine hcorr_diff.continuousOn.mono ?_
-    intro z hz
-    obtain ⟨t, ht, hzeq⟩ := hz
-    rw [← hzeq]
-    exact hγE_in_U t ht
+  have hcorr_cont : ContinuousOn corr (γE '' Icc (0 : ℝ) 1) :=
+    hcorr_diff.continuousOn.mono <| by
+      rintro _ ⟨t, ht, rfl⟩; exact h_null.image_subset t ht
   have h_cpv_corr : HasCauchyPVOn S corr γP (γP.contourIntegral corr) :=
     hasCauchyPVOn_continuousOn_of_countable_preimage S hcorr_cont hLip h_preimage
   -- Step 5: CPV of rem equals CPV of correction (cutoff integrands agree pointwise for ε ≥ 0).
-  have h_cpv_rem : HasCauchyPVOn S rem γP 0 := by
-    have h_target_eq : (0 : ℂ) = γP.contourIntegral corr := h_corr_zero.symm
-    rw [h_target_eq]
-    refine h_cpv_corr.congr' ?_
-    filter_upwards [self_mem_nhdsWithin] with ε hε_pos
-    apply intervalIntegral.integral_congr
-    intro t _
-    by_cases h_cutoff : ∃ s ∈ S, ‖γP.toPath.extend t - s‖ ≤ ε
-    · simp only [cpvIntegrandOn, if_pos h_cutoff]
-    · have h_not : γP.toPath.extend t ∉ (↑S : Set ℂ) := fun h_in =>
-        h_cutoff ⟨γP.toPath.extend t, Finset.mem_coe.mp h_in, by
-          simp only [sub_self, norm_zero]; exact le_of_lt hε_pos⟩
-      have h_rem_corr : corr (γP.toPath.extend t) = rem (γP.toPath.extend t) := by
-        show laurentHolomorphicRemainderCorrection hCondB _ =
-          laurentHolomorphicRemainder hCondB _
-        simp only [laurentHolomorphicRemainderCorrection, h_not, ↓reduceIte]
-      simp only [cpvIntegrandOn, if_neg h_cutoff, h_rem_corr]
-  exact h_cpv_rem
+  rw [show (0 : ℂ) = γP.contourIntegral corr from h_corr_zero.symm]
+  refine h_cpv_corr.congr' ?_
+  filter_upwards [self_mem_nhdsWithin] with ε hε_pos
+  apply intervalIntegral.integral_congr
+  intro t _
+  by_cases h_cutoff : ∃ s ∈ S, ‖γP.toPath.extend t - s‖ ≤ ε
+  · simp only [cpvIntegrandOn, if_pos h_cutoff]
+  · have h_not : γP.toPath.extend t ∉ (↑S : Set ℂ) := fun h_in =>
+      h_cutoff ⟨γP.toPath.extend t, Finset.mem_coe.mp h_in, by
+        simp only [sub_self, norm_zero]; exact le_of_lt hε_pos⟩
+    have h_rem_corr : corr (γP.toPath.extend t) = rem (γP.toPath.extend t) := by
+      show laurentHolomorphicRemainderCorrection hCondB _ =
+        laurentHolomorphicRemainder hCondB _
+      simp only [laurentHolomorphicRemainderCorrection, h_not, ↓reduceIte]
+    simp only [cpvIntegrandOn, if_neg h_cutoff, h_rem_corr]
 
 end LeanModularForms
 
