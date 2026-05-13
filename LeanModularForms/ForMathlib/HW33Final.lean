@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.HW33Monotonicity
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.ExitTimeExcision
+import LeanModularForms.ForMathlib.HW33ExitTimeWrapper
+import LeanModularForms.ForMathlib.FlatnessConditions
 
 /-!
 # HW Theorem 3.3 — eventual shape from monotonicity + avoidance margins
