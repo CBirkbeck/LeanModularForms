@@ -21849,6 +21849,94 @@ private def TileFormIntegralResidual_upper
         ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
     (⇑g)
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d M_∞ branch SigmaQPermResidual from TileFormIntegralResidual**:
+Discharges `SigmaQPermResidual_M_infty` from the bundled
+`TileFormIntegralResidual_M_infty` + AE-disjoint hypotheses on both sides.
+
+Chains all the per-q tile-form, σ-reindex, and AE-disjoint sum collapse
+infrastructure to reduce the σ_p Q-permutation M_∞-branch residual to the
+single tile-form integral identity on `⋃_q M_∞ • q⁻¹ • fd`. -/
+private theorem SigmaQPermResidual_M_infty_of_TileFormIntegralResidual
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_meas : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+      NullMeasurableSet
+        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp)
+    (h_disj : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) =>
+      AEDisjoint μ_hyp
+        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q₁.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q₂.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))))
+    (h_LHS_int : IntegrableOn
+      (fun τ => petersson k
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) τ)
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp)
+    (h_RHS_int : IntegrableOn
+      (fun τ => petersson k
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+        (⇑g) τ)
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp)
+    (h_tile : TileFormIntegralResidual_M_infty p hp hpN f g) :
+    SigmaQPermResidual_M_infty p hp hpN f g := by
+  unfold SigmaQPermResidual_M_infty
+  -- LHS reduction: LHS sum → per-q tile-form → union-tile integral.
+  rw [sum_peterssonInner_LHS_M_infty_to_tile_form p hp hpN f g,
+    sum_peterssonInner_M_infty_tile_form_collapse p hp hpN f g h_meas h_disj h_LHS_int]
+  -- RHS reduction: RHS sum → per-q tile-form (via σ-reindex chain) → union-tile integral.
+  rw [sum_peterssonInner_RHS_M_infty_to_tile_form_via_sigma p hp hpN f g]
+  -- Now the RHS is the per-q tile-form sum. Apply AE-disjoint sum collapse.
+  rw [show (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      peterssonInner k ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set UpperHalfPlane)))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+        (⇑g)) =
+      peterssonInner k
+        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+          (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+            ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+              (ModularGroup.fd : Set UpperHalfPlane)))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+        (⇑g) from
+    (peterssonInner_iUnion_finite_aedisjoint
+      (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      h_meas h_disj
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+      (⇑g) h_RHS_int).symm]
+  -- Now both sides are in tile-form integral form. Apply h_tile.
+  exact h_tile
+
 /-- **T205-d residual: DS Theorem 5.5.3 in symmetric form at petN level.**
 
 The single named analytic residual for `petN_heckeT_p_adjoint_standard_form`:
