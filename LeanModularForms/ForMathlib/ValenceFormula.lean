@@ -105,17 +105,12 @@ private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
   let d := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1
   have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointI'
   rw [ellipticPointI'_im, ellipticPointI'_coe, normSq_denom_at_I] at h_im
-  have h_gt : (1 : ℝ)/2 < 1 / ((c : ℝ) ^ 2 + (d : ℝ) ^ 2) := by
-    rw [← h_im]
-    exact fd_im_gt_halfFM _ h_fd
+  have h_gt : (1 : ℝ)/2 < 1 / ((c : ℝ) ^ 2 + (d : ℝ) ^ 2) := h_im ▸ fd_im_gt_halfFM _ h_fd
   have h_ge : c ^ 2 + d ^ 2 ≥ 1 := by
-    by_contra h
-    push Not at h
+    by_contra! h
     have hc0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by nlinarith [sq_nonneg c]
     have hd0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 = 0 := by nlinarith [sq_nonneg d]
-    have := sl2_det g
-    rw [hc0, hd0] at this
-    norm_num at this
+    simpa [hc0, hd0] using sl2_det g
   have h_pos : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 > 0 :=
     by exact_mod_cast show (0 : ℤ) < c ^ 2 + d ^ 2 by omega
   have h_lt2 : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 < 2 := by
@@ -209,8 +204,7 @@ private lemma normSq_denom_eq_one_of_smul_rho_in_fd (g : SL(2, ℤ))
   have h_gt : (1 : ℝ)/2 < (g • ellipticPointRho').im := fd_im_gt_halfFM _ h_fd
   rw [h_im] at h_gt
   have h_pos : (c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2 > 0 := by
-    by_contra h
-    push Not at h
+    by_contra! h
     have : Real.sqrt 3 / 2 / ((c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2) ≤ 0 :=
       div_nonpos_iff.mpr (Or.inl ⟨by positivity, h⟩)
     linarith
@@ -232,9 +226,8 @@ private lemma abs_re_eq_half_of_smul_rho_in_fd (g : SL(2, ℤ))
       ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) ^ 2 = 1) :
     |(g • ellipticPointRho').re| = 1/2 := by
   have h_im_eq : (g • ellipticPointRho').im = Real.sqrt 3 / 2 := by
-    have h_im := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
-    rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at h_im
-    exact h_im
+    rw [ModularGroup.im_smul_eq_div_normSq, ellipticPointRho'_im, normSq_denom_at_rho,
+      h_cd1, div_one]
   have h_im_sq : (g • ellipticPointRho').im ^ 2 = 3/4 := by
     rw [h_im_eq]
     nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
@@ -244,8 +237,7 @@ private lemma abs_re_eq_half_of_smul_rho_in_fd (g : SL(2, ℤ))
     rw [UpperHalfPlane.coe_re, UpperHalfPlane.coe_im] at h_apply
     nlinarith [h_fd.1, h_apply]
   refine le_antisymm h_fd.2 ?_
-  by_contra h_lt
-  push Not at h_lt
+  by_contra! h_lt
   nlinarith [sq_abs (g • ellipticPointRho').re,
     abs_nonneg (g • ellipticPointRho').re, h_im_sq, h_nsq]
 
@@ -259,9 +251,8 @@ theorem fd_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orbFM p = orhoFM) :
   rw [← hg] at hp ⊢
   have h_cd1 := normSq_denom_eq_one_of_smul_rho_in_fd g hp
   have h_im : (g • ellipticPointRho').im = Real.sqrt 3 / 2 := by
-    have := ModularGroup.im_smul_eq_div_normSq g ellipticPointRho'
-    rw [ellipticPointRho'_im, normSq_denom_at_rho, h_cd1, div_one] at this
-    exact this
+    rw [ModularGroup.im_smul_eq_div_normSq, ellipticPointRho'_im, normSq_denom_at_rho,
+      h_cd1, div_one]
   have h_re_eq : (g • ellipticPointRho').re = -1/2 ∨ (g • ellipticPointRho').re = 1/2 := by
     have h_re_abs := abs_re_eq_half_of_smul_rho_in_fd g hp h_cd1
     rcases le_or_gt (g • ellipticPointRho').re 0 with h_neg | h_pos
