@@ -66,11 +66,10 @@ lemma immersion_one_sided_setup
     let Q := γ.partition.filter (fun x => t₀ < x)
     by_cases hQ : Q.Nonempty
     · have hmem := Finset.mem_filter.mp (Finset.min'_mem Q hQ)
-      exact ⟨Q.min' hQ, hmem.2,
-        le_trans (γ.partition_subset hmem.1).2 (le_refl _),
+      exact ⟨Q.min' hQ, hmem.2, (γ.partition_subset hmem.1).2,
         fun s hs hc => by
           linarith [Finset.min'_le Q s (Finset.mem_filter.mpr ⟨hc, hs.1⟩), hs.2]⟩
-    · exact ⟨γ.b, ht₀.2, le_refl _,
+    · exact ⟨γ.b, ht₀.2, le_rfl,
         fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.1⟩⟩⟩
   -- Partition-free left neighborhood
   obtain ⟨l₀, hl₀, hl₀a, hno_L⟩ :
@@ -78,24 +77,23 @@ lemma immersion_one_sided_setup
     let Q := γ.partition.filter (fun x => x < t₀)
     by_cases hQ : Q.Nonempty
     · have hmem := Finset.mem_filter.mp (Finset.max'_mem Q hQ)
-      exact ⟨Q.max' hQ, hmem.2,
-        le_trans (γ.partition_subset hmem.1).1 (le_refl _),
+      exact ⟨Q.max' hQ, hmem.2, (γ.partition_subset hmem.1).1,
         fun s hs hc => by
           linarith [Finset.le_max' Q s (Finset.mem_filter.mpr ⟨hc, hs.2⟩), hs.1]⟩
-    · exact ⟨γ.a, ht₀.1, le_refl _,
+    · exact ⟨γ.a, ht₀.1, le_rfl,
         fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.2⟩⟩⟩
   -- HasDerivWithinAt from one-sided tendsto
   have hHDWA_R : HasDerivWithinAt γ.toFun L_R (Set.Ici t₀) t₀ :=
     hasDerivWithinAt_Ici_of_tendsto_deriv (s := Set.Ioo t₀ r₀)
       (fun s hs => (γ.smooth_off_partition s
-        ⟨le_trans ht₀.1.le (le_of_lt hs.1), le_trans hs.2.le hr₀b⟩
+        ⟨le_trans ht₀.1.le hs.1.le, le_trans hs.2.le hr₀b⟩
         (hno_R s hs)).differentiableWithinAt)
       (γ.continuous_toFun.continuousAt (Icc_mem_nhds ht₀.1 ht₀.2)).continuousWithinAt
       (Ioo_mem_nhdsGT hr₀) htend_R
   have hHDWA_L : HasDerivWithinAt γ.toFun L_L (Set.Iic t₀) t₀ :=
     hasDerivWithinAt_Iic_of_tendsto_deriv (s := Set.Ioo l₀ t₀)
       (fun s hs => (γ.smooth_off_partition s
-        ⟨le_trans hl₀a (le_of_lt hs.1), le_trans hs.2.le ht₀.2.le⟩
+        ⟨le_trans hl₀a hs.1.le, le_trans hs.2.le ht₀.2.le⟩
         (hno_L s hs)).differentiableWithinAt)
       (γ.continuous_toFun.continuousAt (Icc_mem_nhds ht₀.1 ht₀.2)).continuousWithinAt
       (Ioo_mem_nhdsLT hl₀) htend_L
@@ -154,7 +152,7 @@ lemma immersion_direction_tendsto_right
        (γ t - z₀) / ↑‖γ t - z₀‖
   rw [norm_div, Complex.norm_real, Real.norm_of_nonneg hd.le]
   push_cast
-  field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_gt hd,
+  field_simp [show (t : ℂ) - t₀ ≠ 0 by exact_mod_cast ne_of_gt hd,
     norm_ne_zero_iff.mpr hfne, ne_of_gt hd]
 
 /-- Direction convergence: `(γ(t) - z₀) / ‖γ(t) - z₀‖ → -L / ‖L‖` as `t → t₀⁻`. -/
@@ -183,7 +181,7 @@ lemma immersion_direction_tendsto_left
        (γ t - z₀) / ↑‖γ t - z₀‖
   rw [norm_div, Complex.norm_real, Real.norm_of_nonpos hd.le]
   push_cast
-  field_simp [show (t : ℂ) - t₀ ≠ 0 from by exact_mod_cast ne_of_lt hd,
+  field_simp [show (t : ℂ) - t₀ ≠ 0 by exact_mod_cast ne_of_lt hd,
     norm_ne_zero_iff.mpr hfne, ne_of_lt hd]
 
 /-- Helper: g = ‖γ(·) - z₀‖ is strictly decreasing on a left neighborhood of t₀ and
@@ -285,22 +283,20 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     let Q := γ.partition.filter (fun x => t₀ < x)
     by_cases hQ : Q.Nonempty
     · have hmem := Finset.mem_filter.mp (Finset.min'_mem Q hQ)
-      exact ⟨Q.min' hQ, hmem.2,
-        le_trans (γ.partition_subset hmem.1).2 (le_refl _),
+      exact ⟨Q.min' hQ, hmem.2, (γ.partition_subset hmem.1).2,
         fun s hs hc => by
           linarith [Finset.min'_le Q s (Finset.mem_filter.mpr ⟨hc, hs.1⟩), hs.2]⟩
-    · exact ⟨γ.b, ht₀.2, le_refl _,
+    · exact ⟨γ.b, ht₀.2, le_rfl,
         fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.1⟩⟩⟩
   obtain ⟨l₀, hl₀, hl₀a, hno_L⟩ :
       ∃ l₀ < t₀, γ.a ≤ l₀ ∧ ∀ s ∈ Set.Ioo l₀ t₀, s ∉ γ.partition := by
     let Q := γ.partition.filter (fun x => x < t₀)
     by_cases hQ : Q.Nonempty
     · have hmem := Finset.mem_filter.mp (Finset.max'_mem Q hQ)
-      exact ⟨Q.max' hQ, hmem.2,
-        le_trans (γ.partition_subset hmem.1).1 (le_refl _),
+      exact ⟨Q.max' hQ, hmem.2, (γ.partition_subset hmem.1).1,
         fun s hs hc => by
           linarith [Finset.le_max' Q s (Finset.mem_filter.mpr ⟨hc, hs.2⟩), hs.1]⟩
-    · exact ⟨γ.a, ht₀.1, le_refl _,
+    · exact ⟨γ.a, ht₀.1, le_rfl,
         fun s hs hc => hQ ⟨s, Finset.mem_filter.mpr ⟨hc, hs.2⟩⟩⟩
   -- Set the final interval endpoints
   set r₁ := min (t₀ + εR / 2) r₀
@@ -336,7 +332,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     · intro t ht
       rw [interior_Icc] at ht
       have hdiff := γ.smooth_off_partition t
-        ⟨le_trans hl₁_ge_a (le_of_lt ht.1), le_trans ht.2.le ht₀.2.le⟩ (hno_L₁ t ht)
+        ⟨le_trans hl₁_ge_a ht.1.le, le_trans ht.2.le ht₀.2.le⟩ (hno_L₁ t ht)
       have hne : γ.toFun t ≠ z₀ := by
         intro heq
         have := hneg_L t ht
@@ -350,7 +346,7 @@ lemma piecewiseC1Immersion_norm_strictMono_near_crossing
     · intro t ht
       rw [interior_Icc] at ht
       have hdiff := γ.smooth_off_partition t
-        ⟨le_trans ht₀.1.le (le_of_lt ht.1), le_trans ht.2.le hr₁_le_b⟩ (hno_R₁ t ht)
+        ⟨le_trans ht₀.1.le ht.1.le, le_trans ht.2.le hr₁_le_b⟩ (hno_R₁ t ht)
       have hne : γ.toFun t ≠ z₀ := by
         intro heq
         have := hpos_R t ht
@@ -370,10 +366,10 @@ lemma exists_cutoff_boundary_times
         (∀ t ∈ Ioc σ₂ γ.b, ε < ‖γ.toFun t - z₀‖) ∧
         (∀ t ∈ Icc σ₁ σ₂, ‖γ.toFun t - z₀‖ ≤ ε) := by
   -- g t = ‖γ(t) - z₀‖ is continuous on [a,b], g(t₀) = 0.
-  set g : ℝ → ℝ := fun t => ‖γ.toFun t - z₀‖ with hg_def
+  set g : ℝ → ℝ := fun t => ‖γ.toFun t - z₀‖
   have hg_cont : ContinuousOn g (Icc γ.a γ.b) :=
     continuous_norm.comp_continuousOn (γ.continuous_toFun.sub continuousOn_const)
-  have hg_t₀ : g t₀ = 0 := by simp only [hg_def, hcross, sub_self, norm_zero]
+  have hg_t₀ : g t₀ = 0 := by simp [g, hcross]
   -- Step 1: Get local strict monotonicity of g near t₀ from the immersion property.
   -- g is strictly decreasing on [l, t₀] and strictly increasing on [t₀, r].
   obtain ⟨l, r, hl_lt, hr_gt, hl_ge_a, hr_le_b, hg_anti, hg_mono⟩ :=
@@ -383,7 +379,7 @@ lemma exists_cutoff_boundary_times
   -- Minimum on [a, l]:
   have h_left_ne : (Icc γ.a l).Nonempty := ⟨γ.a, left_mem_Icc.mpr hl_ge_a⟩
   have h_left_sub : Icc γ.a l ⊆ Icc γ.a γ.b :=
-    Icc_subset_Icc_right (le_trans (le_of_lt hl_lt) (le_of_lt ht₀.2))
+    Icc_subset_Icc_right (le_trans hl_lt.le ht₀.2.le)
   obtain ⟨xm₁, hxm₁_mem, hxm₁_min⟩ :=
     isCompact_Icc.exists_isMinOn h_left_ne (hg_cont.mono h_left_sub)
   have hm₁_pos : 0 < g xm₁ := by
@@ -395,7 +391,7 @@ lemma exists_cutoff_boundary_times
   -- Minimum on [r, b]:
   have h_right_ne : (Icc r γ.b).Nonempty := ⟨γ.b, right_mem_Icc.mpr hr_le_b⟩
   have h_right_sub : Icc r γ.b ⊆ Icc γ.a γ.b :=
-    Icc_subset_Icc_left (le_trans (le_of_lt ht₀.1) (le_of_lt hr_gt))
+    Icc_subset_Icc_left (le_trans ht₀.1.le hr_gt.le)
   obtain ⟨xm₂, hxm₂_mem, hxm₂_min⟩ :=
     isCompact_Icc.exists_isMinOn h_right_ne (hg_cont.mono h_right_sub)
   have hm₂_pos : 0 < g xm₂ := by
@@ -430,10 +426,10 @@ lemma exists_cutoff_boundary_times
   -- so there exists σ₁ in [l, t₀] with g(σ₁) = ε.
   have hg_cont_l_t₀ : ContinuousOn g (Icc l t₀) :=
     hg_cont.mono (fun x ⟨hx₁, hx₂⟩ =>
-      ⟨le_trans hl_ge_a hx₁, le_trans hx₂ (le_of_lt ht₀.2)⟩)
+      ⟨le_trans hl_ge_a hx₁, le_trans hx₂ ht₀.2.le⟩)
   have h_ivt₁ : ε ∈ g '' Icc l t₀ :=
-    intermediate_value_Icc' (le_of_lt hl_lt) hg_cont_l_t₀
-      ⟨hg_t₀ ▸ le_of_lt hε_pos, le_of_lt hε_lt_l⟩
+    intermediate_value_Icc' hl_lt.le hg_cont_l_t₀
+      ⟨hg_t₀ ▸ hε_pos.le, hε_lt_l.le⟩
   obtain ⟨σ₁, hσ₁_mem, hσ₁_val⟩ := h_ivt₁
   -- σ₁ < t₀ since g(t₀) = 0 ≠ ε = g(σ₁)
   have hσ₁_ne_t₀ : σ₁ ≠ t₀ := fun h => by
@@ -448,48 +444,37 @@ lemma exists_cutoff_boundary_times
   -- so there exists σ₂ in [t₀, r] with g(σ₂) = ε.
   have hg_cont_t₀_r : ContinuousOn g (Icc t₀ r) :=
     hg_cont.mono (fun x ⟨hx₁, hx₂⟩ =>
-      ⟨le_trans (le_of_lt ht₀.1) hx₁, le_trans hx₂ hr_le_b⟩)
+      ⟨le_trans ht₀.1.le hx₁, le_trans hx₂ hr_le_b⟩)
   have h_ivt₂ : ε ∈ g '' Icc t₀ r :=
-    intermediate_value_Icc (le_of_lt hr_gt) hg_cont_t₀_r
-      ⟨hg_t₀ ▸ le_of_lt hε_pos, le_of_lt hε_lt_r⟩
+    intermediate_value_Icc hr_gt.le hg_cont_t₀_r
+      ⟨hg_t₀ ▸ hε_pos.le, hε_lt_r.le⟩
   obtain ⟨σ₂, hσ₂_mem, hσ₂_val⟩ := h_ivt₂
   have hσ₂_ne_t₀ : σ₂ ≠ t₀ := fun h => by
     rw [h, hg_t₀] at hσ₂_val
     linarith
   have hσ₂_gt_t₀ : t₀ < σ₂ := lt_of_le_of_ne hσ₂_mem.1 (Ne.symm hσ₂_ne_t₀)
-  -- Step 7: We want σ₁ to be the UNIQUE point in [l, t₀) with g(σ₁) = ε.
-  -- Since g is strictly antitone on [l, t₀], there is exactly one such point.
-  -- Use the strict antitonicity to get the canonical σ₁:
-  -- Actually, our σ₁ from IVT already works because g is strictly antitone:
-  -- - g > ε on [l, σ₁) (since g(σ₁) = ε and g is strictly decreasing)
-  -- - g < ε on (σ₁, t₀] (since g(σ₁) = ε and g is strictly decreasing)
-  -- Therefore g ≤ ε on [σ₁, t₀].
-  -- Similarly for σ₂.
-  -- However, σ₁ might not be unique from IVT alone; but since g is STRICT antitone,
-  -- if g(s) = ε for s ∈ [l, t₀] then s = σ₁ (uniqueness by strict antitonicity).
-  -- So any σ₁ from IVT with g(σ₁) = ε is the same.
-  -- For t ∈ [l, σ₁): hg_anti gives g(t) > g(σ₁) = ε.
+  -- Step 7: σ₁ is the unique point in [l, t₀) with g(σ₁) = ε (by strict antitonicity).
   have h_l_σ₁_gt : ∀ t ∈ Ico l σ₁, ε < g t := by
     intro t ⟨hlt, htσ₁⟩
-    have ht_Icc : t ∈ Icc l t₀ := ⟨hlt, le_trans (le_of_lt htσ₁) hσ₁_mem.2⟩
+    have ht_Icc : t ∈ Icc l t₀ := ⟨hlt, le_trans htσ₁.le hσ₁_mem.2⟩
     calc ε = g σ₁ := hσ₁_val.symm
       _ < g t := hg_anti ht_Icc hσ₁_mem htσ₁
   -- For t ∈ (σ₁, t₀]: hg_anti gives g(t) < g(σ₁) = ε.
   have h_σ₁_t₀_lt : ∀ t ∈ Ioc σ₁ t₀, g t < ε := by
     intro t ⟨hσ₁t, htt₀⟩
-    have ht_Icc : t ∈ Icc l t₀ := ⟨le_trans hσ₁_mem.1 (le_of_lt hσ₁t), htt₀⟩
+    have ht_Icc : t ∈ Icc l t₀ := ⟨le_trans hσ₁_mem.1 hσ₁t.le, htt₀⟩
     calc g t < g σ₁ := hg_anti hσ₁_mem ht_Icc hσ₁t
       _ = ε := hσ₁_val
   -- For t ∈ [t₀, σ₂): hg_mono gives g(t) < g(σ₂) = ε.
   have h_t₀_σ₂_lt : ∀ t ∈ Ico t₀ σ₂, g t < ε := by
     intro t ⟨htt₀, htσ₂⟩
-    have ht_Icc : t ∈ Icc t₀ r := ⟨htt₀, le_trans (le_of_lt htσ₂) hσ₂_mem.2⟩
+    have ht_Icc : t ∈ Icc t₀ r := ⟨htt₀, le_trans htσ₂.le hσ₂_mem.2⟩
     calc g t < g σ₂ := hg_mono ht_Icc hσ₂_mem htσ₂
       _ = ε := hσ₂_val
   -- For t ∈ (σ₂, r]: hg_mono gives g(t) > g(σ₂) = ε.
   have h_σ₂_r_gt : ∀ t ∈ Ioc σ₂ r, ε < g t := by
     intro t ⟨hσ₂t, htr⟩
-    have ht_Icc : t ∈ Icc t₀ r := ⟨le_trans hσ₂_mem.1 (le_of_lt hσ₂t), htr⟩
+    have ht_Icc : t ∈ Icc t₀ r := ⟨le_trans hσ₂_mem.1 hσ₂t.le, htr⟩
     calc ε = g σ₂ := hσ₂_val.symm
       _ < g t := hg_mono hσ₂_mem ht_Icc hσ₂t
   -- Now provide the witnesses σ₁ and σ₂.
@@ -501,25 +486,25 @@ lemma exists_cutoff_boundary_times
     · -- t ∈ [a, l]: use minimum on [a, l]
       exact lt_of_lt_of_le hε_lt_m₁ (hxm₁_min ⟨hat, htl⟩)
     · -- t ∈ (l, σ₁) ⊆ [l, t₀): use h_l_σ₁_gt
-      exact h_l_σ₁_gt t ⟨le_of_lt hlt, htσ₁⟩
+      exact h_l_σ₁_gt t ⟨hlt.le, htσ₁⟩
   · -- g > ε on (σ₂, b]
     intro t ⟨hσ₂t, htb⟩
     rcases le_or_gt r t with hrlt | htr
     · -- t ∈ [r, b]: use minimum on [r, b]
       exact lt_of_lt_of_le hε_lt_m₂ (hxm₂_min ⟨hrlt, htb⟩)
     · -- t ∈ (σ₂, r) ⊆ (σ₂, r]: use h_σ₂_r_gt
-      exact h_σ₂_r_gt t ⟨hσ₂t, le_of_lt htr⟩
+      exact h_σ₂_r_gt t ⟨hσ₂t, htr.le⟩
   · -- g ≤ ε on [σ₁, σ₂]
     intro t ⟨hσ₁t, htσ₂⟩
     rcases le_or_gt t t₀ with htt₀ | ht₀t
     · -- t ∈ [σ₁, t₀]: either t = σ₁ (g = ε) or t ∈ (σ₁, t₀] (g < ε)
       rcases eq_or_lt_of_le hσ₁t with rfl | hlt
-      · exact le_of_eq hσ₁_val
-      · exact le_of_lt (h_σ₁_t₀_lt t ⟨hlt, htt₀⟩)
+      · exact hσ₁_val.le
+      · exact (h_σ₁_t₀_lt t ⟨hlt, htt₀⟩).le
     · -- t ∈ (t₀, σ₂]: either t = σ₂ (g = ε) or t ∈ [t₀, σ₂) (g < ε)
       rcases eq_or_lt_of_le htσ₂ with rfl | hlt
-      · exact le_of_eq hσ₂_val
-      · exact le_of_lt (h_t₀_σ₂_lt t ⟨le_of_lt ht₀t, hlt⟩)
+      · exact hσ₂_val.le
+      · exact (h_t₀_σ₂_lt t ⟨ht₀t.le, hlt⟩).le
 
 /-- Extended version of `exists_cutoff_boundary_times` that also exposes the
 strict monotonicity interval and the bounds `δ ≤ ‖γ(l) - z₀‖`,
@@ -547,13 +532,13 @@ lemma exists_cutoff_boundary_times_with_mono
     apply norm_pos_iff.mpr
     apply sub_ne_zero.mpr
     intro heq
-    have := honly l ⟨hl_ge_a, le_trans hl_lt.le (le_of_lt ht₀.2)⟩ heq
+    have := honly l ⟨hl_ge_a, le_trans hl_lt.le ht₀.2.le⟩ heq
     linarith
   have hg_r_pos : 0 < ‖γ.toFun r - z₀‖ := by
     apply norm_pos_iff.mpr
     apply sub_ne_zero.mpr
     intro heq
-    have := honly r ⟨le_trans (le_of_lt ht₀.1) hr_gt.le, hr_le_b⟩ heq
+    have := honly r ⟨le_trans ht₀.1.le hr_gt.le, hr_le_b⟩ heq
     linarith
   exact ⟨min δ₁ (min ‖γ.toFun l - z₀‖ ‖γ.toFun r - z₀‖),
     lt_min hδ₁ (lt_min hg_l_pos hg_r_pos),
@@ -608,16 +593,12 @@ lemma exp_cutoff_integral_eq_ratio
     rcases eq_or_lt_of_le hσ₁ with rfl | h'
     · rw [h, sub_self, norm_zero] at hσ₁_val
       linarith
-    · have := h_left γ.a ⟨le_refl _, h'⟩
+    · have := h_left γ.a ⟨le_rfl, h'⟩
       rw [h, sub_self, norm_zero] at this
       linarith
   -- f equals γ'/(γ-z₀) wherever ‖γ-z₀‖ > ε
   have hf_val : ∀ t, ε < ‖γ.toFun t - z₀‖ →
-      f t = (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t := by
-    intro t h
-    simp only [f]
-    exact if_pos h
-  -- Membership helpers
+      f t = (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t := fun _ h => if_pos h
   have hσ₁_mem : σ₁ ∈ Set.uIcc γ.a γ.b := by
     rw [Set.uIcc_of_le γ.hab.le]
     exact ⟨hσ₁, hσ₁₂.le.trans hσ₂⟩
@@ -629,7 +610,7 @@ lemma exp_cutoff_integral_eq_ratio
     intro t ht
     simp only [f]
     split_ifs with h
-    · rw [norm_mul, norm_inv, show Md / ε = ε⁻¹ * Md from by ring]
+    · rw [norm_mul, norm_inv, show Md / ε = ε⁻¹ * Md by ring]
       exact mul_le_mul (inv_anti₀ hε h.le) (hMd t ht) (norm_nonneg _)
         (inv_nonneg.mpr hε.le)
     · rw [norm_zero]
@@ -849,13 +830,13 @@ lemma exp_cutoff_integral_eq_ratio
   have h1 : (γ.toFun σ₁ - z₀) * cexp (-F σ₁) = γ.toFun γ.a - z₀ := by
     calc (γ.toFun σ₁ - z₀) * cexp (-F σ₁)
         = G σ₁ := rfl
-      _ = G γ.a := hG_const₁ σ₁ ⟨hσ₁, le_refl _⟩
+      _ = G γ.a := hG_const₁ σ₁ ⟨hσ₁, le_rfl⟩
       _ = γ.toFun γ.a - z₀ := hGa
   have h2 : (γ.toFun γ.b - z₀) * cexp (-F γ.b) =
       (γ.toFun σ₂ - z₀) * cexp (-F σ₁) := by
     calc (γ.toFun γ.b - z₀) * cexp (-F γ.b)
         = G γ.b := rfl
-      _ = G σ₂ := hG_const₂ γ.b ⟨hσ₂, le_refl _⟩
+      _ = G σ₂ := hG_const₂ γ.b ⟨hσ₂, le_rfl⟩
       _ = (γ.toFun σ₂ - z₀) * cexp (-F σ₂) := rfl
       _ = (γ.toFun σ₂ - z₀) * cexp (-F σ₁) := by rw [hF_mid]
   -- Algebra: from h1 and h2 with closedness, derive exp(F b) = ratio
@@ -869,10 +850,9 @@ lemma exp_cutoff_integral_eq_ratio
     rw [mul_div_assoc', mul_comm (γ.toFun σ₂ - z₀), mul_div_assoc] at h2
     exact mul_left_cancel₀ hne_a h2
   -- exp(F b) = (γ σ₁ - z₀) / (γ σ₂ - z₀)
-  rw [show ∫ t_1 in γ.a..γ.b, f t_1 = F γ.b from rfl]
-  have h_inv : cexp (F γ.b) = (cexp (-F γ.b))⁻¹ := by rw [Complex.exp_neg, inv_inv]
-  rw [h_inv]
-  rw [h_expFb, inv_div]
+  change cexp (F γ.b) = _
+  rw [show cexp (F γ.b) = (cexp (-F γ.b))⁻¹ by rw [Complex.exp_neg, inv_inv],
+    h_expFb, inv_div]
 
 /-- Direction convergence: as ε → 0, the ratio (γ(σ₁(ε))-z₀)/(γ(σ₂(ε))-z₀)
 (where σ₁(ε), σ₂(ε) are the boundary times from `exists_cutoff_boundary_times`)
@@ -909,11 +889,11 @@ lemma crossing_ratio_tendsto
   -- σ₁(ε) ∈ Icc a b eventually
   have hσ₁_Icc : ∀ᶠ ε in 𝓝[>] (0:ℝ), σ₁ ε ∈ Icc γ.a γ.b := by
     filter_upwards [hσ₁_in, hσ₁_lt] with ε ha hlt
-    exact ⟨ha, le_of_lt (lt_trans hlt ht₀.2)⟩
+    exact ⟨ha, (lt_trans hlt ht₀.2).le⟩
   -- σ₂(ε) ∈ Icc a b eventually
   have hσ₂_Icc : ∀ᶠ ε in 𝓝[>] (0:ℝ), σ₂ ε ∈ Icc γ.a γ.b := by
     filter_upwards [hσ₂_in, hσ₂_gt] with ε hb hgt
-    exact ⟨le_of_lt (lt_trans ht₀.1 hgt), hb⟩
+    exact ⟨(lt_trans ht₀.1 hgt).le, hb⟩
   -- Helper: σ → t₀ using compactness + uniqueness of zero
   -- (used for both σ₁ and σ₂)
   have tendsto_of_Icc_and_val :
@@ -943,8 +923,7 @@ lemma crossing_ratio_tendsto
         norm_pos_iff.mpr (sub_ne_zero.mpr (hK_nonzero tm htm))
       filter_upwards [hσ_Icc, hσ_val, Ioo_mem_nhdsGT hm_pos] with ε hε_in hε_norm hε_lt
       simp only [Real.dist_eq]
-      by_contra h
-      push Not at h
+      by_contra! h
       have hσK : σ ε ∈ K := by
         refine ⟨hε_in, ?_⟩
         simp only [Metric.mem_ball, Real.dist_eq]

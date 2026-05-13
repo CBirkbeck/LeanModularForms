@@ -18,8 +18,6 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
-/-! ### Helper: s = I, H ≤ 1, H < 1 -/
-
 private theorem cpv_exists_at_I_H_lt_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     (h_arc_cpv : CauchyPrincipalValueExists' (fun z => (z - I)⁻¹)
         (fdBoundary_H H) (3/2) (5/2) I)
@@ -51,8 +49,6 @@ private theorem cpv_exists_at_I_H_lt_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
           norm_num at this
       · push Not at ht4
         exact h_seg5_ne_I ht4 ht.2 h_eq
-
-/-! ### Helper: s = I, H = 1 -/
 
 private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
     (h_arc_cpv : CauchyPrincipalValueExists' (fun z => (z - I)⁻¹)
@@ -161,8 +157,6 @@ private theorem cpv_exists_at_I_H_eq_one (hH : Real.sqrt 3 / 2 < (1 : ℝ))
   intro ε hε
   exact fdBoundary_H_cutout_ii 1 hH I ε hε
 
-/-! ### Helper: generic case, t₀ on seg1 (0 < t₀ < 1) -/
-
 private theorem cpv_exists_generic_seg1 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho) (t₀ : ℝ)
     (ht₀_mem : 0 ≤ t₀ ∧ t₀ ≤ 5) (hγt₀ : fdBoundary_H H t₀ = s)
@@ -263,8 +257,6 @@ private theorem cpv_exists_generic_seg1 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
           have h_im_t := fdBoundary_H_seg5_im' H ht4 ht.2
           rw [h_eq] at h_im_t
           linarith
-
-/-! ### Helper: generic case, t₀ on arc (1 < t₀ < 3) with seg5 crossing -/
 
 private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho) (t₀ : ℝ)
@@ -396,9 +388,7 @@ private theorem cpv_exists_generic_arc_seg5_cross (H : ℝ) (hH : Real.sqrt 3 / 
     simp [ht₁_def] at *
     linarith [ht.1]
   exact cpv_concat _ _ 0 ((t₁ + 5) / 2) 5 s h_cpv_0_t1h h_cpv_end
-    (by linarith) (by linarith) (fun ε hε => fdBoundary_H_cutout_ii H hH s ε hε)
-
-/-! ### Helper: generic case, t₀ on arc (1 < t₀ < 3) without seg5 crossing -/
+    (by linarith) (by linarith) (fdBoundary_H_cutout_ii H hH s)
 
 private theorem cpv_exists_generic_arc_no_cross (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho) (t₀ : ℝ)
@@ -446,8 +436,6 @@ private theorem cpv_exists_generic_arc_no_cross (H : ℝ) (hH : Real.sqrt 3 / 2 
         have := fdBoundary_H_seg5_im' H ht4 ht.2
         rw [h_eq] at this
         exact h_seg5_cross this
-
-/-! ### Helper: generic case, t₀ on arc (1 < t₀ < 3), dispatches to cross/no-cross -/
 
 private theorem cpv_exists_generic_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho) (t₀ : ℝ)
@@ -499,7 +487,7 @@ private theorem cpv_exists_generic_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s :
     · erw [(fdBoundary_H_hasDerivAt_arc H ht₀_gt_1 ht₀_lt_3).deriv]
       apply mul_ne_zero (exp_ne_zero _)
       apply mul_ne_zero
-      · exact by norm_num [Complex.ofReal_ne_zero]
+      · norm_num [Complex.ofReal_ne_zero]
       · exact I_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_13 H).mono
       intro t ht
@@ -515,8 +503,6 @@ private theorem cpv_exists_generic_arc (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s :
       ht₀_gt_1 ht₀_lt_3 h_re_s_lt h_re_s_gt h_arc_cpv h_seg5_cross
   · exact cpv_exists_generic_arc_no_cross H hH s hs_rho t₀ hγt₀
       ht₀_gt_1 ht₀_lt_3 h_re_s_lt h_re_s_gt h_arc_cpv h_seg5_cross
-
-/-! ### Helper: generic case, t₀ on seg4 (3 < t₀ < 4) -/
 
 private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho) (t₀ : ℝ)
@@ -646,8 +632,6 @@ private theorem cpv_exists_generic_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
         · linarith [ht.1]
         · linarith
 
-/-! ### Helper: generic case, t₀ on seg5 (4 < t₀ < 5) with normSq = 1 -/
-
 private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho) (hs_endpoint : ¬s = 1 / 2 + ↑H * I)
     (t₀ : ℝ)
@@ -719,7 +703,7 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
     · erw [(fdBoundary_H_hasDerivAt_arc H ht₁_gt1 ht₁_lt3).deriv]
       apply mul_ne_zero (exp_ne_zero _)
       apply mul_ne_zero
-      · exact by norm_num [Complex.ofReal_ne_zero]
+      · norm_num [Complex.ofReal_ne_zero]
       · exact I_ne_zero
     · apply (fdBoundary_H_deriv_continuousOn_Ioo_13 H).mono
       intro t ht
@@ -815,9 +799,7 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
     rw [h_eq] at this
     linarith [h_re_s, ht.1]
   exact cpv_concat _ _ 0 ((t₀ + 5) / 2) 5 s h_cpv_0_t0h h_cpv_end
-    (by linarith) (by linarith) (fun ε hε => fdBoundary_H_cutout_ii H hH s ε hε)
-
-/-! ### Helper: generic case, t₀ on seg5 (4 < t₀ < 5) without normSq = 1 -/
+    (by linarith) (by linarith) (fdBoundary_H_cutout_ii H hH s)
 
 private theorem cpv_exists_generic_seg5_normSq_ne_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho)
@@ -870,8 +852,6 @@ private theorem cpv_exists_generic_seg5_normSq_ne_one (H : ℝ) (hH : Real.sqrt 
     rw [h_eq] at this
     linarith [h_re_s, ht.1]
 
-/-! ### Helper: generic case, t₀ on seg5 (4 < t₀ < 5), dispatches -/
-
 private theorem cpv_exists_generic_seg5 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (hs_rho : ¬s = ellipticPointRho) (t₀ : ℝ)
     (ht₀_mem : 0 ≤ t₀ ∧ t₀ ≤ 5) (hγt₀ : fdBoundary_H H t₀ = s)
@@ -919,25 +899,20 @@ private theorem cpv_exists_generic_seg5 (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s 
   · exact cpv_exists_generic_seg5_normSq_ne_one H hH s hs_rho t₀
       ht₀_gt_4 ht₀_lt_5 h_re_s h_seg5_cpv h_normSq hs_endpoint h_im_s
 
-/-! ### Main theorem -/
-
 /-- For any point on `fdBoundary_H H`, the CPV integral of `(z - s)⁻¹` exists. -/
 theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (s : ℂ)
     (h_on : ∃ t ∈ Set.Icc (0:ℝ) 5, fdBoundary_H H t = s) :
     CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s := by
   by_cases hs_rho : s = ellipticPointRho
   · subst hs_rho
-    obtain ⟨L, hL⟩ := cpv_exists_at_rho H hH
-    exact ⟨L, hL.congr (fun ε => rfl)⟩
+    exact cpv_exists_at_rho H hH
   by_cases hs_rho' : s = ellipticPointRhoPlusOne
   · subst hs_rho'
-    obtain ⟨L, hL⟩ := cpv_exists_at_rho_plus_one H hH
-    exact ⟨L, hL.congr (fun ε => rfl)⟩
+    exact cpv_exists_at_rho_plus_one H hH
   by_cases hs_i : s = I
   · subst hs_i
     by_cases hH1 : 1 < H
-    · obtain ⟨L, hL⟩ := cpv_exists_at_i H hH1
-      exact ⟨L, hL.congr (fun ε => rfl)⟩
+    · exact cpv_exists_at_i H hH1
     · push Not at hH1
       have hγ2 : fdBoundary_H H 2 = I := by
         rw [fdBoundary_H_eq_arc (by norm_num : (1:ℝ) < 2) (by norm_num : (2:ℝ) < 3)]
@@ -964,7 +939,7 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
           erw [hd.deriv]
           apply mul_ne_zero (exp_ne_zero _)
           apply mul_ne_zero
-          · exact by norm_num [Complex.ofReal_ne_zero]
+          · norm_num [Complex.ofReal_ne_zero]
           · exact I_ne_zero
         · apply (fdBoundary_H_deriv_continuousOn_Ioo_13 H).mono
           intro t ht

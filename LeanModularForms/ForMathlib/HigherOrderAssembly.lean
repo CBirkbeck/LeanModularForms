@@ -73,10 +73,8 @@ theorem cpvIntegrandOn_eq_of_avoids
     {δ : ℝ} (hδ_bound : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
     {ε : ℝ} (hε : ε < δ) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     cpvIntegrandOn S f γ.toPath.extend ε t =
-      f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
-  apply cpvIntegrandOn_of_forall_gt
-  intro s hs
-  exact lt_of_lt_of_le hε (hδ_bound s hs t ht)
+      f (γ.toPath.extend t) * deriv γ.toPath.extend t :=
+  cpvIntegrandOn_of_forall_gt fun s hs => hε.trans_le (hδ_bound s hs t ht)
 
 /-- The CPV integrand is interval-integrable on `[0,1]` when `gamma` avoids `S`
 and `epsilon` is small, provided the contour integrand is integrable. -/
@@ -147,8 +145,7 @@ private theorem contourIntegral_remainder_eq_zero_of_simplePoles
     simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
     change g (γ.toPath.extend t) * _ = (f (γ.toPath.extend t) - _) * _
     rw [h_g_on_curve t ht]
-  rw [← h_integrals_eq]
-  exact hg_zero
+  exact h_integrals_eq ▸ hg_zero
 
 theorem hCancel_of_simplePoles_convex
     {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
@@ -164,10 +161,9 @@ theorem hCancel_of_simplePoles_convex
         (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
       volume 0 1) :
     HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
-  rw [← contourIntegral_remainder_eq_zero_of_simplePoles hU_convex hU_open hU_ne S hS_in_U
-    f hf γ hSimplePoles hγ_in_U hγ_avoids h_rem_int]
-  exact hasCauchyPVOn_of_avoids hδ
+      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
+  contourIntegral_remainder_eq_zero_of_simplePoles hU_convex hU_open hU_ne S hS_in_U
+    f hf γ hSimplePoles hγ_in_U hγ_avoids h_rem_int ▸ hasCauchyPVOn_of_avoids hδ
 
 /-- **Pointwise variant of `hCancel_of_simplePoles_nullHomologous`**:
 requires only `dixonFunction ((z-w₀)·(f-pp)) U γ w₀ = 0` at `w₀`. Used when
@@ -195,13 +191,9 @@ theorem hCancel_of_simplePoles_nullHomologous_at
     (h_base_int : IntervalIntegrable
       (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
     HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
-  have h_zero : γ.contourIntegral
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0 :=
-    contourIntegral_eq_zero_of_nullHomologous_at w₀ hw₀_in_U hw₀_off
-      h_dixon_zero_at h_cauchy_int h_base_int
-  rw [← h_zero]
-  exact hasCauchyPVOn_of_avoids hδ
+      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
+  contourIntegral_eq_zero_of_nullHomologous_at w₀ hw₀_in_U hw₀_off
+    h_dixon_zero_at h_cauchy_int h_base_int ▸ hasCauchyPVOn_of_avoids hδ
 
 theorem hCancel_of_simplePoles_nullHomologous
     {U : Set ℂ} (hU_open : IsOpen U)
@@ -241,9 +233,8 @@ theorem hPV_sing_of_avoids
     HasCauchyPVOn S
       (principalPartSum S (fun s => residue f s)) γ
       (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ s * residue f s) := by
-  rw [← contourIntegral_principalPartSum_eq hδ hI]
-  exact hasCauchyPVOn_of_avoids hδ
+        generalizedWindingNumber γ s * residue f s) :=
+  contourIntegral_principalPartSum_eq hδ hI ▸ hasCauchyPVOn_of_avoids hδ
 
 /-! ## Composition layer -/
 
@@ -389,6 +380,31 @@ private theorem cpvIntegrandOn_sum_eq_of_avoids
     (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_rem_int)
     (cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε_pos hε_lt h_pp_int)
 
+/-- Common assembly step: combine a remainder-cancellation result
+(`HasCauchyPVOn S (f - pp) γ 0`) with a singular-CPV result for the principal
+part to obtain a `HasCauchyPVOn` predicate for `f`, in the avoidance case. -/
+private theorem hasCauchyPVOn_of_cancel_sing_avoids
+    {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {L : ℂ}
+    {δ : ℝ} (hδ_pos : 0 < δ)
+    (hδ_bound : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
+    (h_rem_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
+      volume 0 1)
+    (h_pp_int : IntervalIntegrable
+      (PiecewiseC1Path.contourIntegrand
+        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
+    (h_cancel : HasCauchyPVOn S
+      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0)
+    (h_sing : HasCauchyPVOn S
+      (principalPartSum S (fun s => residue f s)) γ L) :
+    HasCauchyPVOn S f γ L := by
+  simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
+  have h_lim := h_cancel.add h_sing
+  simp only [zero_add] at h_lim
+  exact h_lim.congr'
+    (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+
 theorem hasCauchyPVOn_simplePoles_convex_auto
     {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
@@ -412,13 +428,10 @@ theorem hasCauchyPVOn_simplePoles_convex_auto
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ s * residue f s) := by
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := hδ
-  have h_cancel := hCancel_of_simplePoles_convex hU_convex hU_open hU_ne S hS_in_U f hf γ
-    hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ h_rem_int
-  have h_sing := hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI
-  simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
-  have h_lim := h_cancel.add h_sing
-  simp only [zero_add] at h_lim
-  exact h_lim.congr' (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+  exact hasCauchyPVOn_of_cancel_sing_avoids hδ_pos hδ_bound h_rem_int h_pp_int
+    (hCancel_of_simplePoles_convex hU_convex hU_open hU_ne S hS_in_U f hf γ
+      hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ h_rem_int)
+    (hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI)
 
 /-! ## Bridge to the full generalized residue theorem -/
 
@@ -466,10 +479,8 @@ theorem contourIntegral_eq_of_hasCauchyPVOn_avoids
     {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {L : ℂ}
     (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
     (h_pvon : HasCauchyPVOn S f γ L) :
-    γ.contourIntegral f = L := by
-  have h_avoids : HasCauchyPVOn S f γ (γ.contourIntegral f) :=
-    hasCauchyPVOn_of_avoids hδ
-  exact HasCauchyPVOn.unique h_avoids h_pvon
+    γ.contourIntegral f = L :=
+  HasCauchyPVOn.unique (hasCauchyPVOn_of_avoids hδ) h_pvon
 
 /-! ## Fully-closed form: only minimal hypotheses (item 1 of HW 3.3 closure) -/
 
@@ -599,14 +610,11 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ s * residue f s) := by
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := hδ
-  have h_cancel := hCancel_of_simplePoles_nullHomologous hU_open S hS_in_U f hf γ
-    hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩
-    w₀ hw₀_in_U hw₀_off h_dixon_zero h_cauchy_int h_base_int
-  have h_sing := hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI
-  simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
-  have h_lim := h_cancel.add h_sing
-  simp only [zero_add] at h_lim
-  exact h_lim.congr' (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+  exact hasCauchyPVOn_of_cancel_sing_avoids hδ_pos hδ_bound h_rem_int h_pp_int
+    (hCancel_of_simplePoles_nullHomologous hU_open S hS_in_U f hf γ
+      hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩
+      w₀ hw₀_in_U hw₀_off h_dixon_zero h_cauchy_int h_base_int)
+    (hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI)
 
 /-! ## Null-homologous closed form with automatic w₀ from Lipschitz -/
 
@@ -805,16 +813,11 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full
     have h_ne : γ.toPiecewiseC1Path t - w₀ ≠ 0 := sub_ne_zero.mpr ht_off_w₀
     simp only [PiecewiseC1Path.contourIntegrand]
     rw [mul_div_cancel_left₀ _ h_ne]
-  have h_cancel := hCancel_of_simplePoles_nullHomologous_at hU_open S hS_in_U f hf
-    γ.toPiecewiseC1Path hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ w₀
-    hw₀_in_U hw₀_off h_dixon_zero_at h_cauchy_int h_base_int
-  have h_sing := hPV_sing_of_avoids S f γ.toPiecewiseC1Path
-    ⟨δ, hδ_pos, hδ_bound⟩ hI
-  simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
-  have h_lim := h_cancel.add h_sing
-  simp only [zero_add] at h_lim
-  exact h_lim.congr'
-    (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+  exact hasCauchyPVOn_of_cancel_sing_avoids hδ_pos hδ_bound h_rem_int h_pp_int
+    (hCancel_of_simplePoles_nullHomologous_at hU_open S hS_in_U f hf
+      γ.toPiecewiseC1Path hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ w₀
+      hw₀_in_U hw₀_off h_dixon_zero_at h_cauchy_int h_base_int)
+    (hPV_sing_of_avoids S f γ.toPiecewiseC1Path ⟨δ, hδ_pos, hδ_bound⟩ hI)
 
 /-- **Contour integral form of B-6.** Same hypotheses as
 `hasCauchyPVOn_simplePoles_nullHomologous_closed_full`, but states the
@@ -859,13 +862,8 @@ theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed
     HasCauchyPVOn S f γ.toPiecewiseC1Path
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) := by
-  have h_target_eq : 2 * ↑Real.pi * I * ∑ s ∈ S,
-      generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s =
-    ∑ s ∈ S, 2 * ↑Real.pi * I *
-      generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s := by
-    rw [Finset.mul_sum]
-    exact Finset.sum_congr rfl fun s _ => by ring
-  rw [h_target_eq]
+  rw [Finset.mul_sum]
+  simp_rw [← mul_assoc]
   exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_open
     hU_ne hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids hδ hLip
 
@@ -1105,16 +1103,11 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full_unbounded
     have h_ne : γ.toPiecewiseC1Path t - w₀ ≠ 0 := sub_ne_zero.mpr ht_off_w₀
     simp only [PiecewiseC1Path.contourIntegrand]
     rw [mul_div_cancel_left₀ _ h_ne]
-  have h_cancel := hCancel_of_simplePoles_nullHomologous_at hU_open S hS_in_U f hf
-    γ.toPiecewiseC1Path hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ w₀
-    hw₀_in_U hw₀_off h_dixon_zero_at h_cauchy_int h_base_int
-  have h_sing := hPV_sing_of_avoids S f γ.toPiecewiseC1Path
-    ⟨δ, hδ_pos, hδ_bound⟩ hI
-  simp only [HasCauchyPVOn] at h_cancel h_sing ⊢
-  have h_lim := h_cancel.add h_sing
-  simp only [zero_add] at h_lim
-  exact h_lim.congr'
-    (cpvIntegrandOn_sum_eq_of_avoids hδ_pos hδ_bound h_rem_int h_pp_int).symm
+  exact hasCauchyPVOn_of_cancel_sing_avoids hδ_pos hδ_bound h_rem_int h_pp_int
+    (hCancel_of_simplePoles_nullHomologous_at hU_open S hS_in_U f hf
+      γ.toPiecewiseC1Path hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ w₀
+      hw₀_in_U hw₀_off h_dixon_zero_at h_cauchy_int h_base_int)
+    (hPV_sing_of_avoids S f γ.toPiecewiseC1Path ⟨δ, hδ_pos, hδ_bound⟩ hI)
 
 /-- δ-free unbounded variant: combines `_full_unbounded` with
 `avoids_finset_delta_bound`. -/
