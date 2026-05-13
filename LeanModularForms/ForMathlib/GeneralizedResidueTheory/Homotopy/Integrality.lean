@@ -12,6 +12,13 @@ import Mathlib.Analysis.Calculus.FDeriv.Extend
 Definitions for piecewise and smooth homotopies, plus the exp trick proof
 that winding numbers of closed curves avoiding a point are integers.
 
+The four homotopy notions in this development form a hierarchy (stronger → weaker):
+`ClosedCurvesHomotopicAvoiding` → `PiecewiseCurvesHomotopicAvoiding` (via `toPiecewise`),
+and `PiecewiseCurvesHomotopicAvoiding` → `CurvesHomotopicAvoiding` (via `toBasic`, under
+the extra hypothesis that the homotopy endpoints sit at `z₀`). The endpoint conditions
+of `CurvesHomotopicAvoiding` (`H(a,s) = H(b,s) = z₀`) and the Closed/Piecewise variants
+(`H(a,s) = H(b,s)`) differ, so there is no implication between the two groups in general.
+
 ## Main Definitions
 
 * `PiecewiseCurvesHomotopicAvoiding` — piecewise C¹ homotopy avoiding z₀
@@ -85,27 +92,6 @@ def ClosedCurvesHomotopicAvoiding (γ₀ γ₁ : ℝ → ℂ)
       DifferentiableAt ℝ (fun t' => H (t', s)) t) ∧
     (Continuous (fun p : ℝ × ℝ =>
       deriv (fun t' => H (t', p.2)) p.1))
-
-/-!
-### Conversion lemmas between homotopy definitions
-
-The four homotopy notions form the following hierarchy (stronger → weaker):
-
-```
-ClosedCurvesHomotopicAvoiding
-        |
-        v  (toPiecewise)
-PiecewiseCurvesHomotopicAvoiding   CurvesHomotopicAvoiding
-        |                                   ^
-        v  (toBasic, when endpoints = z₀)   |
-        (structurally different endpoint conditions)
-```
-
-`CurvesHomotopicAvoiding` (from `Basic.lean`) requires `H(a,s) = z₀` and
-`H(b,s) = z₀` (endpoints are the fixed point `z₀`), while the Closed/Piecewise
-variants require `H(a,s) = H(b,s)` (the curve is merely *closed*).  These are
-different conditions, so there is no general implication between the two groups.
--/
 
 /-- A smooth closed homotopy is a piecewise homotopy with empty partition.
 
@@ -444,8 +430,7 @@ private lemma winding_integer_from_exp_one
     rw [mul_comm, div_eq_mul_inv]
   rw [h_eq]
   have hFb' : ∫ t in a..b, deriv γ t / (γ t - z₀) = -(↑n * (2 * Real.pi * I)) := by
-    have h := hn
-    linear_combination -h
+    linear_combination -hn
   rw [hFb']
   have hne : (2 : ℂ) * Real.pi * I ≠ 0 := by
     simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, Complex.ofReal_eq_zero,
@@ -476,6 +461,7 @@ private lemma windingNumber_integer_of_piecewise_with_bound
   rw [Complex.exp_eq_one_iff] at h_exp
   exact winding_integer_from_exp_one hab hδ_pos hδ_bound h_exp
 
+/-- The winding number of a piecewise C¹ closed curve avoiding `z₀` is an integer. -/
 lemma windingNumber_integer_of_piecewise_closed_avoiding
     (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (P : Finset ℝ) (hab : a < b)
     (hγ_closed : γ a = γ b)
@@ -514,13 +500,11 @@ theorem exp_integral_eq_endpoint_ratio_piecewise
       (h_coe ▸ logDeriv_continuousOn_off_finset hγ_cont hγ_deriv_cont hγ_avoids)
       (fun t ht => logDeriv_integrand_bound hδ hδ_bd hM t ht)
   have hG_const := gFunc_constant_piecewise hab hγ_cont hγ_diff hγ_deriv_cont hγ_avoids h_int
-  have hne_a : γ a - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids a (left_mem_Icc.mpr hab.le))
   have hne_b : γ b - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoids b (right_mem_Icc.mpr hab.le))
   have hGb' : (γ b - z₀) *
       Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) = γ a - z₀ := by
-    have := hG_const b (right_mem_Icc.mpr hab.le)
-    simp [intervalIntegral.integral_same] at this
-    exact this
+    have h := hG_const b (right_mem_Icc.mpr hab.le)
+    simpa [intervalIntegral.integral_same] using h
   have h_neg : Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))) =
       (γ a - z₀) / (γ b - z₀) := by
     rw [eq_div_iff hne_b, mul_comm]
@@ -626,9 +610,8 @@ private lemma exp_endpoint_ratio_from_gFunc
   have hne_b : γ b - z₀ ≠ 0 := sub_ne_zero.mpr (hγ_avoid b (right_mem_Icc.mpr hab.le))
   have hGb' : (γ b - z₀) *
       Complex.exp (-(∫ s in a..b, deriv γ s / (γ s - z₀))) = γ a - z₀ := by
-    have := hG_const b (right_mem_Icc.mpr hab.le)
-    simp [intervalIntegral.integral_same] at this
-    exact this
+    have h := hG_const b (right_mem_Icc.mpr hab.le)
+    simpa [intervalIntegral.integral_same] using h
   have h_neg : Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))) =
       (γ a - z₀) / (γ b - z₀) := by
     rw [eq_div_iff hne_b, mul_comm]
@@ -637,6 +620,8 @@ private lemma exp_endpoint_ratio_from_gFunc
       (Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))))⁻¹ from by
     rw [Complex.exp_neg, inv_inv], h_neg, inv_div]
 
+/-- For a smooth curve avoiding `z₀`, the exponential of the log-derivative integral
+equals the ratio of endpoint values shifted by `z₀`. -/
 theorem exp_integral_eq_endpoint_ratio
     (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
     (hγ_cont : ContinuousOn γ (Icc a b))
@@ -666,13 +651,10 @@ private theorem integral_closed_curve_eq_two_pi_int
       (∫ t in a..b, deriv γ t / (γ t - z₀)) = 1 := by
     rw [exp_integral_eq_endpoint_ratio γ a b z₀ hab
       hγ_cont hγ_diff hγ_avoid hγ'_cont, hγ_closed]
-    exact div_self (sub_ne_zero.mpr
-      (hγ_avoid b (right_mem_Icc.mpr (le_of_lt hab))))
+    exact div_self (sub_ne_zero.mpr (hγ_avoid b (right_mem_Icc.mpr hab.le)))
   rw [Complex.exp_eq_one_iff] at hexp
   obtain ⟨n, hn⟩ := hexp
-  refine ⟨n, ?_⟩
-  rw [hn]
-  ring
+  exact ⟨n, by rw [hn]; ring⟩
 
 /-- The winding number of a smooth closed curve avoiding z₀
 is an integer. -/
@@ -687,23 +669,17 @@ theorem windingNumber_integer_of_closed_avoiding
     ∃ n : ℤ,
     generalizedWindingNumber' γ a b z₀ = n := by
   let τ := fun t => γ t - z₀
-  have hτ_closed : τ a = τ b := by
-    simp only [τ]
-    rw [hγ_closed]
-  have hτ_cont : ContinuousOn τ (Icc a b) :=
-    hγ_cont.sub continuousOn_const
-  have hτ_diff : ∀ t ∈ Ioo a b,
-      DifferentiableAt ℝ τ t := fun t ht =>
-    (hγ_diff t ht).sub (differentiableAt_const z₀)
+  have hτ_closed : τ a = τ b := by simp only [τ, hγ_closed]
+  have hτ_cont : ContinuousOn τ (Icc a b) := hγ_cont.sub continuousOn_const
+  have hτ_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ τ t :=
+    fun t ht => (hγ_diff t ht).sub (differentiableAt_const z₀)
   have hτ_avoid : ∀ t ∈ Icc a b, τ t ≠ 0 :=
     fun t ht => sub_ne_zero.mpr (hγ_avoid t ht)
   have hτ'_cont : ContinuousOn (deriv τ) (Icc a b) := by
-    rw [show deriv τ = deriv γ from
-      funext fun t => deriv_sub_const z₀]
+    rw [show deriv τ = deriv γ from funext fun _ => deriv_sub_const z₀]
     exact hγ'_cont
   obtain ⟨n, hn⟩ := integral_closed_curve_eq_two_pi_int
-    τ a b 0 hab hτ_closed hτ_cont hτ_diff hτ_avoid
-    hτ'_cont
+    τ a b 0 hab hτ_closed hτ_cont hτ_diff hτ_avoid hτ'_cont
   use n
   unfold generalizedWindingNumber'
   have h_eq : (fun t => deriv τ t / (τ t - 0)) = (fun t => deriv γ t / (γ t - z₀)) := by
