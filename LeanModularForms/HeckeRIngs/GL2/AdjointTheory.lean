@@ -21538,6 +21538,35 @@ private def TileFormIntegralResidual_M_infty
         ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
     (⇑g)
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b`-branch tile-form integral residual** — per-`b` analog
+of `TileFormIntegralResidual_M_infty`. The single integral identity on the
+T_p_upper(b)-translated union-tile that captures the σ_p Q-permutation
+content for the upper-b summand. -/
+private def TileFormIntegralResidual_upper
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set UpperHalfPlane)))
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set UpperHalfPlane)))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+    (⇑g)
+
 /-- **T205-d residual: DS Theorem 5.5.3 in symmetric form at petN level.**
 
 The single named analytic residual for `petN_heckeT_p_adjoint_standard_form`:
