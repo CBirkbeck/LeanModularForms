@@ -47,8 +47,6 @@ namespace HungerbuhlerWasem
 
 variable {x : ℂ}
 
-/-! ## Crossing parameter extraction -/
-
 /-- Predicate: pole `s` is crossed by `γ` in the open interval `(0, 1)`. -/
 def IsCrossed (γ : PwC1Immersion x x) (s : ℂ) : Prop :=
   ∃ t₀ ∈ Set.Ioo (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s
@@ -65,8 +63,6 @@ theorem crossingParam_mem_Ioo {γ : PwC1Immersion x x} {s : ℂ} (h : IsCrossed 
 theorem γ_at_crossingParam {γ : PwC1Immersion x x} {s : ℂ} (h : IsCrossed γ s) :
     (γ : ℝ → ℂ) (crossingParam γ s) = s := by
   simpa [crossingParam, h] using (Classical.choose_spec h).2
-
-/-! ## Laurent decomposition extraction from condition (B) -/
 
 /-- Helper: when `s ∈ S`, `γ` crosses `s`, and `hCondB.laurent_compatible`
 holds, extract the existential at `s`. -/
@@ -142,8 +138,6 @@ noncomputable def laurentAnalyticPartAt {γ : PwC1Immersion x x} {f : ℂ → �
     (laurent_data_exists hCondB hs h).choose_spec.choose_spec.choose
   else f
 
-/-! ## Unfolding lemmas -/
-
 private lemma laurentAnalyticPartAt_eq_data {γ : PwC1Immersion x x} {f : ℂ → ℂ}
     {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S)
     (h_cross : IsCrossed γ s) :
@@ -212,8 +206,6 @@ theorem f_minus_polarPartAt_eventuallyEq_analyticPartAt {γ : PwC1Immersion x x}
   rw [hz]
   ring
 
-/-! ## Differentiability of the polar part -/
-
 /-- `laurentPolarPartAt s` is differentiable at any point `z ≠ s`. -/
 theorem laurentPolarPartAt_differentiableAt {γ : PwC1Immersion x x} {f : ℂ → ℂ}
     {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) {s : ℂ} (hs : s ∈ S) {z : ℂ}
@@ -228,8 +220,6 @@ theorem laurentPolarPartAt_differentiableAt {γ : PwC1Immersion x x} {f : ℂ �
       (pow_ne_zero _ (sub_ne_zero.mpr hz))
   · simp only [dif_neg h]
     exact differentiableAt_const _
-
-/-! ## Polar part = explicit Laurent sum (using order/coeff) -/
 
 /-- The polar part `laurentPolarPartAt` written as the explicit Laurent sum
 using `laurentPolarOrderAt` (the order) and `laurentPolarCoeffAt` (the
@@ -252,18 +242,6 @@ theorem laurentPolarPartAt_eq_sum {γ : PwC1Immersion x x} {f : ℂ → ℂ}
     have h0 : laurentPolarOrderAt hCondB s hs = 0 :=
       laurentPolarOrderAt_uncrossed hCondB hs h
     exact absurd k.isLt (by omega)
-
-/-! ## Residue from the Laurent expansion
-
-For the residue formula `residue f s = a_0` from a Laurent expansion
-`f z = g z + ∑_k a_k / (z - s)^(k+1)`, we compute via the circle integral:
-
-* `g` analytic ⇒ `∮ g = 0`
-* `a_0 / (z - s)` ⇒ `∮ = 2πi · a_0`
-* `a_k / (z - s)^(k+1)` for `k ≥ 1` (i.e. exponent ≤ -2) ⇒ `∮ = 0` by
-  `circleIntegral.integral_sub_zpow_of_ne`
-
-Hence `(2πi)⁻¹ · ∮ f = a_0`, so `residue f s = a_0`. -/
 
 private lemma circleIntegral_higherOrder_eq_zero
     {s : ℂ} {r : ℝ} {n : ℕ} (hn : 2 ≤ n) (c : ℂ) :
@@ -467,20 +445,6 @@ theorem laurentPolarCoeffAt_zero_eq_residue {γ : PwC1Immersion x x} {f : ℂ �
   rw [hres]
   rfl
 
-/-! ## The `PolarPartDecomposition.ofConditionB` constructor
-
-Given a function `f : ℂ → ℂ` differentiable on `U \ S` with `SatisfiesConditionB`
-data and the additional hypothesis that γ crosses every pole in `S`, we
-construct a `PolarPartDecomposition`. The constructor uses condition (B)'s
-Laurent data via `Classical.choose` to extract the per-pole order, coefficients,
-and analytic remainder.
-
-The hypothesis `hAllCrossed : ∀ s ∈ S, IsCrossed γ s` is needed because
-condition (B) only provides Laurent data at crossed poles. For uncrossed
-poles (γ doesn't pass through them), separate Laurent data would be needed
-(e.g., from `MeromorphicAt`). The follow-up T-LE-02 generalizes this to
-mixed crossed/uncrossed poles using `MeromorphicAt`. -/
-
 /-- The total polar part across all poles. -/
 noncomputable def laurentPolarPartTotal {γ : PwC1Immersion x x} {f : ℂ → ℂ}
     {S : Finset ℂ} (hCondB : SatisfiesConditionB γ f S) (z : ℂ) : ℂ :=
@@ -678,25 +642,6 @@ noncomputable def PolarPartDecomposition.ofConditionB {U : Set ℂ} (hU_open : I
     rw [h_corr, h_rem, h_total]
     ring
 
-/-! ## Generalization to mixed crossed/uncrossed poles via `MeromorphicAt` (T-BR-01)
-
-For uncrossed poles, condition (B) does not provide Laurent data. Instead, we
-extract Laurent data from `MeromorphicAt` via `meromorphicOrderAt_ne_top_iff`.
-The strategy is:
-
-1. From `MeromorphicAt f s`, get the analytic factorization
-   `f =ᶠ[𝓝[≠] s] (z - s)^n • g₀(z)` where `g₀` is analytic at `s`.
-2. If `n ≥ 0`: removable singularity. Set `N = 0`, polar part empty,
-   analytic part `(z - s)^n · g₀(z)`.
-3. If `n < 0`: true pole of order `k = -n`. Taylor-expand `g₀` to depth `k`:
-   `g₀(z) = ∑_{j < k} c_j (z-s)^j + (z-s)^k · R(z)`. Then
-   `f(z) = ∑_{j < k} c_j / (z-s)^(k-j) + R(z)`. Reindex with `i = k-1-j` to get
-   the standard Laurent form `∑_{i < k} c_{k-1-i} / (z-s)^(i+1) + R(z)`.
-
-This yields a uniform Laurent decomposition `f = g + ∑ a_k / (z-s)^(k+1)` for
-ANY meromorphic function — independent of whether `γ` crosses `s`.
--/
-
 /-- Peeling lemma: if `g : ℂ → ℂ` is analytic at `s`, then
 `g(z) = g(s) + (z - s) * g₁(z)` near `s` for some `g₁` analytic at `s`. -/
 private lemma analyticAt_peel_one {g : ℂ → ℂ} {s : ℂ} (hg : AnalyticAt ℂ g s) :
@@ -712,10 +657,7 @@ private lemma analyticAt_peel_one {g : ℂ → ℂ} {s : ℂ} (hg : AnalyticAt �
     (natCast_le_analyticOrderAt h_diff).mp (by exact_mod_cast h_ge)
   refine ⟨g₁, hg₁_an, ?_⟩
   filter_upwards [hg₁_eq] with z hz
-  have heq : g z - g s = (z - s) * g₁ z := by
-    have := hz
-    simp [smul_eq_mul, pow_one] at this
-    exact this
+  have heq : g z - g s = (z - s) * g₁ z := by simpa using hz
   linear_combination heq
 
 /-- Taylor decomposition for an analytic function: for any `g` analytic at `s` and
@@ -787,8 +729,7 @@ theorem mero_laurent_data_exists {f : ℂ → ℂ} {s : ℂ} (hMero : Meromorphi
   obtain ⟨n, g₀, hg₀_an, hg₀_eq⟩ :=
     MeromorphicAt.iff_eventuallyEq_zpow_smul_analyticAt.mp hMero
   by_cases hn_neg : n < 0
-  · -- Pole case: n < 0
-    set k : ℕ := (-n).toNat with hk_def
+  · set k : ℕ := (-n).toNat with hk_def
     have hk_eq : (k : ℤ) = -n := by rw [hk_def]; omega
     have hk_pos : 0 < k := by rw [hk_def]; omega
     have hn_eq : n = -(k : ℤ) := by omega
@@ -821,8 +762,7 @@ theorem mero_laurent_data_exists {f : ℂ → ℂ} {s : ℂ} (hMero : Meromorphi
         ∑ j : Fin k, c j / (z - s) ^ (k - j.val) from
       Finset.sum_congr rfl fun j _ => h_target_term j]
     exact reindex_sum_fin_neg hk_pos c (z - s)
-  · -- Removable singularity case: n ≥ 0
-    have hn_nonneg : 0 ≤ n := not_lt.mp hn_neg
+  · have hn_nonneg : 0 ≤ n := not_lt.mp hn_neg
     set m : ℕ := n.toNat with hm_def
     have hm_eq : (m : ℤ) = n := by rw [hm_def]; omega
     refine ⟨0, Fin.elim0, fun z => (z - s) ^ m * g₀ z, ?_, ?_⟩
@@ -832,8 +772,6 @@ theorem mero_laurent_data_exists {f : ℂ → ℂ} {s : ℂ} (hMero : Meromorphi
       rw [hf_eq, smul_eq_mul]
       rw [show n = (m : ℤ) by omega]
       rw [zpow_natCast]
-
-/-! ## Mero-based Laurent data via `Classical.choose` -/
 
 /-- Local polar part at pole `s` from a `MeromorphicAt` hypothesis: extracted
 via `Classical.choose` on `mero_laurent_data_exists`. -/
@@ -929,8 +867,6 @@ theorem meroPolarCoeffAt_zero_eq_residue {f : ℂ → ℂ} {s : ℂ}
   unfold meroPolarCoeffAt
   rw [hres]
   rfl
-
-/-! ## The new constructor: `PolarPartDecomposition.ofMeromorphicWithCondB` -/
 
 /-- The total polar part across all poles, using `MeromorphicAt` data
 (uniform across crossed and uncrossed poles). -/
