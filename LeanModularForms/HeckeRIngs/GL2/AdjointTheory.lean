@@ -466,6 +466,40 @@ private lemma coe_diamondOp_inv_cusp_eq_slash_adjointGamma0Rep
     (adjointGamma0Rep p N hpN) (adjointGamma0Rep_units p N hpN)]
   rfl
 
+/-- **σ_p⁻¹ slash-as-diamond (forward)**: for a cusp form `f`, slashing
+by `mapGL σ_p⁻¹` realizes the inverse diamond `⟨u⁻¹⟩`.
+
+  ⇑(⟨u⁻¹⟩f) = ⇑f ∣[k] mapGL σ_p⁻¹
+
+Companion to `coe_diamondOp_cusp_eq_slash_sigma_p`. Derived by
+slashing `⇑(⟨u⟩f) = ⇑f ∣ σ_p` by σ_p⁻¹ then using
+`slash_sigma_p_inv_diamond_cusp_eq` (which gives `(⟨u⟩f) ∣ σ_p⁻¹ = f`).
+
+This is the σ_p analog of `coe_diamondOp_inv_cusp_eq_slash_adjointGamma0Rep`.
+Completes the slash-as-diamond identity layer:
+* σ_p: `⟨u⟩f = f ∣ σ_p`
+* σ_p⁻¹: `⟨u⁻¹⟩f = f ∣ σ_p⁻¹` (this)
+* γ₀⁻¹: `⟨u⟩f = f ∣ γ₀⁻¹`
+* γ₀: `⟨u⁻¹⟩f = f ∣ γ₀` -/
+private lemma coe_diamondOp_inv_cusp_eq_slash_sigma_p_inv
+    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) :
+        UpperHalfPlane → ℂ) =
+      ⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN)⁻¹ : GL (Fin 2) ℝ) := by
+  -- σ_p⁻¹ ∈ Γ_0(N) lifts u⁻¹ since Gamma0MapUnits σ_p = u.
+  show (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹ f :
+      UpperHalfPlane → ℂ) = _
+  have h_units : Gamma0MapUnits
+      (⟨sigma_p_specific N p hp hpN, sigma_p_specific_mem_Gamma0 N p hp hpN⟩ :
+        Gamma0 N)⁻¹ = (ZMod.unitOfCoprime p hpN)⁻¹ := by
+    rw [map_inv, Gamma0MapUnits_sigma_p_specific]
+  rw [diamondOpCusp_eq k (ZMod.unitOfCoprime p hpN)⁻¹
+    (⟨sigma_p_specific N p hp hpN, sigma_p_specific_mem_Gamma0 N p hp hpN⟩ :
+      Gamma0 N)⁻¹ h_units]
+  rfl
+
 /-- **σ_p companion of `coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv`**.
 `⇑(⟨u⟩ f) = ⇑f ∣[k] mapGL σ_p` where `u = ZMod.unitOfCoprime p hpN`.
 
