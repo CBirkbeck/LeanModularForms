@@ -7063,6 +7063,46 @@ private theorem peterssonInner_M_infty_iUnion_eq_sigma_p_slash
   rw [M_infty_iUnion_eq_mapGL_sigma_p_smul_T_p_lower_iUnion (N := N) p hp hpN]
   exact peterssonInner_mapGL_smul_eq_slash _ _ F G
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **σ_p Q-permutation applied to LHS of TileFormIntegralResidual_M_infty**:
+
+```
+pet (⋃_q M_∞ • q.out⁻¹ • fd) (⟨u⁻¹⟩f) G
+  = pet (⋃_q T_p_lower • q.out⁻¹ • fd) f (G ∣ σ_p)
+```
+
+After applying the iUnion σ_p Q-permutation
+(`peterssonInner_M_infty_iUnion_eq_sigma_p_slash`), slot 1 simplifies via
+`slash_sigma_p_diamond_inv_cusp_eq` (since `(⟨u⁻¹⟩f) ∣ σ_p = f`).
+Slot 2 receives an extra σ_p slash from the change of variables.
+
+**Direct consumer**: this is the LHS-side σ_p reduction for
+`TileFormIntegralResidual_M_infty`: after this rewrite, the LHS lives on
+the T_p_lower-side iUnion-tile with slot 1 = plain `f` and slot 2
+acquiring an additional σ_p slash. The RHS-side has a symmetric form
+(with ⟨u⟩f on slot 1 and `g` on slot 2 instead). -/
+private theorem peterssonInner_LHS_M_infty_residual_after_sigma_p
+    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (G : ℍ → ℂ) :
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) G =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      ⇑f
+      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ)) := by
+  rw [peterssonInner_M_infty_iUnion_eq_sigma_p_slash (N := N) p hp hpN,
+    slash_sigma_p_diamond_inv_cusp_eq p hp hpN f]
+
 /-- **T205-d-SYMM SL(2,ℤ) tile family**: the (p+1) SL(2,ℤ) elements
 that index the per-tile decomposition of `T_p_lower • Hecke_FD`. -/
 private noncomputable def T_p_lower_tile_family
