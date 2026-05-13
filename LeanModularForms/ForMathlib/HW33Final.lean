@@ -3,7 +3,7 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.HW33Monotonicity
-import LeanModularForms.ForMathlib.HW33Bridge
+import LeanModularForms.ForMathlib.HungerbuhlerWasem.ExitTimeExcision
 
 /-!
 # HW Theorem 3.3 — eventual shape from monotonicity + avoidance margins
@@ -23,7 +23,7 @@ The transverse-data → strict mono step is in `HW33Monotonicity.lean`; combinin
 gives the full chain transverse-data → shape eventually.
 -/
 
-open Filter Topology Set Complex MeasureTheory
+open Filter Topology Set Complex MeasureTheory HungerbuhlerWasem
 
 noncomputable section
 
