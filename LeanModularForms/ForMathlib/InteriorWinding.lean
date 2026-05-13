@@ -84,9 +84,7 @@ theorem fdBoundaryFun_avoids_seg1 {z : ℂ} (hz_re : |z.re| < 1/2)
     {H : ℝ} {t : ℝ} (ht : t ≤ 1/5) :
     fdBoundaryFun H t ≠ z := by
   intro heq
-  have h1 := fdBoundaryFun_seg1_re H t ht
-  rw [heq] at h1
-  rw [h1] at hz_re
+  rw [show z.re = 1/2 from heq ▸ fdBoundaryFun_seg1_re H t ht] at hz_re
   norm_num at hz_re
 
 /-! ### Segments 2 and 3 avoidance: arcs (norm = 1) -/
@@ -96,8 +94,7 @@ theorem fdBoundaryFun_avoids_arc {z : ℂ} (hz_norm : 1 < ‖z‖)
     {H : ℝ} {t : ℝ} (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     fdBoundaryFun H t ≠ z := by
   intro heq
-  have h1 := fdBoundaryFun_arc_norm H t ht1 ht2
-  rw [heq] at h1
+  have h1 : ‖z‖ = 1 := heq ▸ fdBoundaryFun_arc_norm H t ht1 ht2
   linarith
 
 /-! ### Segment 4 avoidance: left vertical (re = -1/2) -/
@@ -107,9 +104,7 @@ theorem fdBoundaryFun_avoids_seg4 {z : ℂ} (hz_re : |z.re| < 1/2)
     {H : ℝ} {t : ℝ} (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     fdBoundaryFun H t ≠ z := by
   intro heq
-  have h1 := fdBoundaryFun_seg4_re H t ht3 ht4
-  rw [heq] at h1
-  rw [h1] at hz_re
+  rw [show z.re = -1/2 from heq ▸ fdBoundaryFun_seg4_re H t ht3 ht4] at hz_re
   norm_num at hz_re
 
 /-! ### Segment 5 avoidance: horizontal (im = H) -/
@@ -119,8 +114,7 @@ theorem fdBoundaryFun_avoids_seg5 {z : ℂ} (hz_im : z.im < H)
     {t : ℝ} (ht : 4/5 < t) :
     fdBoundaryFun H t ≠ z := by
   intro heq
-  have h1 := fdBoundaryFun_seg5_im H t ht
-  rw [heq] at h1
+  have h1 : z.im = H := heq ▸ fdBoundaryFun_seg5_im H t ht
   linarith
 
 /-! ### Full boundary avoidance -/
@@ -149,21 +143,15 @@ is positive. This follows from avoidance + compactness. -/
 theorem fdBoundaryFun_minDist_interior_pos {z : ℂ} {H : ℝ}
     (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H) :
     ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖fdBoundaryFun H t - z‖ := by
-  -- The image of [0,1] under fdBoundaryFun is compact
-  have h_cont : Continuous (fdBoundaryFun H) := fdBoundaryFun_continuous H
-  have h_compact : IsCompact (fdBoundaryFun H '' Icc 0 1) :=
-    isCompact_Icc.image h_cont
-  have h_closed := h_compact.isClosed
+  have h_closed : IsClosed (fdBoundaryFun H '' Icc (0:ℝ) 1) :=
+    (isCompact_Icc.image (fdBoundaryFun_continuous H)).isClosed
   have h_nonempty : (fdBoundaryFun H '' Icc (0 : ℝ) 1).Nonempty :=
     ⟨fdBoundaryFun H 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩
-  -- z is not in the image (by avoidance)
   have h_nmem : z ∉ fdBoundaryFun H '' Icc (0 : ℝ) 1 := by
     intro ⟨t, ht, heq⟩
     exact fdBoundaryFun_avoids_interior hz_norm hz_re hz_im t ht heq
-  -- So infDist is positive
   have h_pos : 0 < Metric.infDist z (fdBoundaryFun H '' Icc 0 1) := by
     rwa [← h_closed.notMem_iff_infDist_pos h_nonempty]
-  -- infDist is a lower bound on distances
   refine ⟨Metric.infDist z (fdBoundaryFun H '' Icc 0 1), h_pos, fun t ht => ?_⟩
   rw [← dist_eq_norm, dist_comm]
   exact Metric.infDist_le_dist_of_mem (mem_image_of_mem _ ht)
@@ -199,14 +187,8 @@ theorem hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral {H : ℝ}
     (h_integral : γ.contourIntegral (fun w => (w - z)⁻¹) =
       -(2 * ↑Real.pi * I)) :
     HasGeneralizedWindingNumber γ z (-1) := by
-  -- The path avoids z with positive minimum distance
-  have hδ := piecewiseC1Path_avoids_interior γ hγ hz_norm hz_re hz_im_lt
-  -- So HasGeneralizedWindingNumber holds for the contour integral value
-  have h_gWN := hasGeneralizedWindingNumber_of_avoids hδ
-  -- The contour integral formula gives the winding number
-  -- h_gWN : HasGeneralizedWindingNumber γ z ((2 * pi * I)⁻¹ * contourIntegral ...)
-  -- We need to show (2 * pi * I)⁻¹ * (-(2 * pi * I)) = -1
-  convert h_gWN using 1
+  convert hasGeneralizedWindingNumber_of_avoids
+    (piecewiseC1Path_avoids_interior γ hγ hz_norm hz_re hz_im_lt) using 1
   rw [h_integral]
   have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
     simp [mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
@@ -278,49 +260,41 @@ for strict interior points. -/
 theorem fdBoundaryFun_seg1_re_dist {z : ℂ} (_hz_re : |z.re| < 1/2)
     {H : ℝ} {t : ℝ} (ht : t ≤ 1/5) :
     1/2 - |z.re| ≤ ‖fdBoundaryFun H t - z‖ := by
-  have h1 := fdBoundaryFun_seg1_re H t ht
-  have hre : (fdBoundaryFun H t - z).re = 1/2 - z.re := by rw [sub_re, h1]
-  have h2 : 1/2 - |z.re| ≤ |1/2 - z.re| := by
-    have := abs_sub_abs_le_abs_sub (1/2 : ℝ) z.re
-    simp only [show |(1 : ℝ)/2| = 1/2 from by norm_num] at this
-    linarith
-  calc 1/2 - |z.re| ≤ |1/2 - z.re| := h2
-    _ = |(fdBoundaryFun H t - z).re| := by rw [hre]
+  calc 1/2 - |z.re| ≤ |1/2 - z.re| := by
+        have := abs_sub_abs_le_abs_sub (1/2 : ℝ) z.re
+        simp only [show |(1 : ℝ)/2| = 1/2 from by norm_num] at this
+        linarith
+    _ = |(fdBoundaryFun H t - z).re| := by rw [sub_re, fdBoundaryFun_seg1_re H t ht]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_re_le_norm _
 
 /-- On segments 2-3, the distance to `z` is at least `‖z‖ - 1`, which is positive
 for strict interior points. -/
 theorem fdBoundaryFun_arc_dist {z : ℂ} (_hz_norm : 1 < ‖z‖)
     {H : ℝ} {t : ℝ} (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
-    ‖z‖ - 1 ≤ ‖fdBoundaryFun H t - z‖ := by
-  have h1 := fdBoundaryFun_arc_norm H t ht1 ht2
-  calc ‖z‖ - 1 = ‖z‖ - ‖fdBoundaryFun H t‖ := by rw [h1]
-    _ ≤ ‖z - fdBoundaryFun H t‖ := norm_sub_norm_le z (fdBoundaryFun H t)
-    _ = ‖fdBoundaryFun H t - z‖ := by rw [norm_sub_rev]
+    ‖z‖ - 1 ≤ ‖fdBoundaryFun H t - z‖ :=
+  calc ‖z‖ - 1 = ‖z‖ - ‖fdBoundaryFun H t‖ := by rw [fdBoundaryFun_arc_norm H t ht1 ht2]
+    _ ≤ ‖z - fdBoundaryFun H t‖ := norm_sub_norm_le z _
+    _ = ‖fdBoundaryFun H t - z‖ := norm_sub_rev _ _
 
 /-- On segment 4, the distance to `z` is at least `1/2 - |z.re|`, which is positive
 for strict interior points. -/
 theorem fdBoundaryFun_seg4_re_dist {z : ℂ} (_hz_re : |z.re| < 1/2)
     {H : ℝ} {t : ℝ} (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     1/2 - |z.re| ≤ ‖fdBoundaryFun H t - z‖ := by
-  have h1 := fdBoundaryFun_seg4_re H t ht3 ht4
-  have hre : (fdBoundaryFun H t - z).re = -1/2 - z.re := by rw [sub_re, h1]
-  have h2 : 1/2 - |z.re| ≤ |-1/2 - z.re| := by
-    have := abs_sub_abs_le_abs_sub (-1/2 : ℝ) z.re
-    simp only [show |(-1 : ℝ)/2| = 1/2 from by norm_num] at this
-    linarith
-  calc 1/2 - |z.re| ≤ |-1/2 - z.re| := h2
-    _ = |(fdBoundaryFun H t - z).re| := by rw [hre]
+  calc 1/2 - |z.re| ≤ |-1/2 - z.re| := by
+        have := abs_sub_abs_le_abs_sub (-1/2 : ℝ) z.re
+        simp only [show |(-1 : ℝ)/2| = 1/2 from by norm_num] at this
+        linarith
+    _ = |(fdBoundaryFun H t - z).re| := by rw [sub_re, fdBoundaryFun_seg4_re H t ht3 ht4]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_re_le_norm _
 
 /-- On segment 5, the distance to `z` is at least `H - z.im`, which is positive
 for strict interior points. -/
 theorem fdBoundaryFun_seg5_im_dist {z : ℂ} (hz_im : z.im < H)
     {t : ℝ} (ht : 4/5 < t) :
-    H - z.im ≤ ‖fdBoundaryFun H t - z‖ := by
-  have h1 := fdBoundaryFun_seg5_im H t ht
+    H - z.im ≤ ‖fdBoundaryFun H t - z‖ :=
   calc H - z.im = |(fdBoundaryFun H t - z).im| := by
-        rw [sub_im, h1, abs_of_pos (by linarith)]
+        rw [sub_im, fdBoundaryFun_seg5_im H t ht, abs_of_pos (by linarith)]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_im_le_norm _
 
 /-! ### Explicit minimum distance bound -/
@@ -335,17 +309,17 @@ theorem fdBoundaryFun_minDist_explicit {z : ℂ} {H : ℝ}
   intro t ⟨ht0, ht1⟩
   by_cases h1 : t ≤ 1/5
   · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
-        ≤ 1/2 - |z.re| := le_trans (min_le_left _ _) (min_le_left _ _)
+        ≤ 1/2 - |z.re| := (min_le_left _ _).trans (min_le_left _ _)
       _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg1_re_dist hz_re h1
   · push Not at h1
     by_cases h2 : t ≤ 3/5
     · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
-          ≤ ‖z‖ - 1 := le_trans (min_le_left _ _) (min_le_right _ _)
+          ≤ ‖z‖ - 1 := (min_le_left _ _).trans (min_le_right _ _)
         _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_arc_dist hz_norm h1 h2
     · push Not at h2
       by_cases h3 : t ≤ 4/5
       · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
-            ≤ 1/2 - |z.re| := le_trans (min_le_left _ _) (min_le_left _ _)
+            ≤ 1/2 - |z.re| := (min_le_left _ _).trans (min_le_left _ _)
           _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg4_re_dist hz_re h2 h3
       · push Not at h3
         calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
