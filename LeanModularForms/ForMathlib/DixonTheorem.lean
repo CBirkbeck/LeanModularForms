@@ -58,18 +58,13 @@ variable {x : ℂ}
 private lemma curve_dist_lower_bound {γ : PiecewiseC1Path x x} {R : ℝ} {w : ℂ}
     (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ t‖ ≤ R) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
     ‖w‖ - R ≤ ‖γ t - w‖ := by
-  have h1 : ‖w‖ - ‖γ t‖ ≤ ‖w - γ t‖ := norm_sub_norm_le w (γ t)
-  rw [norm_sub_rev] at h1
-  linarith [hR t ht]
+  linarith [norm_sub_norm_le w (γ t), norm_sub_rev w (γ t), hR t ht]
 
 /-- Cocompact membership: `{w : ℂ | R < ‖w‖}` belongs to the cocompact filter. -/
 private lemma norm_gt_mem_cocompact (R : ℝ) :
-    {w : ℂ | R < ‖w‖} ∈ Filter.cocompact ℂ := by
-  rw [Filter.mem_cocompact]
-  exact ⟨Metric.closedBall 0 R, isCompact_closedBall 0 R, by
-    intro w hw
-    simp only [mem_compl_iff, Metric.mem_closedBall, dist_zero_right, not_le] at hw
-    exact hw⟩
+    {w : ℂ | R < ‖w‖} ∈ Filter.cocompact ℂ :=
+  Filter.mem_cocompact.mpr ⟨Metric.closedBall 0 R, isCompact_closedBall 0 R,
+    fun _ hw => by simpa using hw⟩
 
 /-- **Norm bound for `dixonH2`.**
 
@@ -102,9 +97,7 @@ theorem dixonH2_norm_le {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
           · exact norm_nonneg _
           · exact div_nonneg hM_f_nn hpos.le
       _ = M_f * M_d / (‖w‖ - R) := by ring
-  have h_bound := intervalIntegral.norm_integral_le_of_norm_le_const h_ptwise
-  rw [show |(1 : ℝ) - 0| = 1 from by norm_num, mul_one] at h_bound
-  exact h_bound
+  simpa using intervalIntegral.norm_integral_le_of_norm_le_const h_ptwise
 
 /-! ## dixonH2 tends to zero at infinity -/
 
@@ -120,8 +113,8 @@ theorem dixonH2_tendsto_zero {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
   rw [Metric.tendsto_nhds]
   intro ε hε
   simp only [dist_zero_right]
-  apply Filter.Eventually.mono (norm_gt_mem_cocompact (max R (R + M_f * M_d / ε)))
-  intro w (hw : max R (R + M_f * M_d / ε) < ‖w‖)
+  filter_upwards [norm_gt_mem_cocompact (max R (R + M_f * M_d / ε))] with
+    w (hw : max R (R + M_f * M_d / ε) < ‖w‖)
   have hRw : R < ‖w‖ := lt_of_le_of_lt (le_max_left _ _) hw
   calc ‖dixonH2 f γ w‖
       ≤ M_f * M_d / (‖w‖ - R) := dixonH2_norm_le hM_f_nn hR hM_f hM_d hRw
@@ -148,9 +141,8 @@ theorem dixonFunction_tendsto_zero {f : ℂ → ℂ} {U : Set ℂ}
     (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ t‖ ≤ R)
     (hM_f : ∀ t ∈ Icc (0 : ℝ) 1, ‖f (γ t)‖ ≤ M_f)
     (hM_d : ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv γ.toPath.extend t‖ ≤ M_d) :
-    Tendsto (dixonFunction f U γ) (Filter.cocompact ℂ) (nhds 0) := by
-  have heq : dixonFunction f U γ =ᶠ[Filter.cocompact ℂ] dixonH2 f γ := h_evt
-  exact (dixonH2_tendsto_zero hM_f_nn hR hM_f hM_d).congr' heq.symm
+    Tendsto (dixonFunction f U γ) (Filter.cocompact ℂ) (nhds 0) :=
+  (dixonH2_tendsto_zero hM_f_nn hR hM_f hM_d).congr' (Filter.EventuallyEq.symm h_evt)
 
 /-! ## Dixon function is identically zero (Liouville) -/
 
@@ -200,12 +192,10 @@ theorem dixonFunction_eventually_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ}
     ∀ᶠ w in Filter.cocompact ℂ,
       dixonFunction f U γ.toPiecewiseC1Path w =
         dixonH2 f γ.toPiecewiseC1Path w := by
-  apply h_winding_evt.mono
-  intro w ⟨hoff, hwn⟩
+  filter_upwards [h_winding_evt] with w ⟨hoff, hwn⟩
   simp only [dixonFunction]
-  split_ifs with hw
-  · rw [h_identity w hoff, hwn]
-    ring
+  split_ifs
+  · simp [h_identity w hoff, hwn]
   · rfl
 
 /-- **B-4 bundle**: `dixonFunction_eventually_eq_dixonH2` for null-homologous curves
@@ -256,7 +246,7 @@ theorem cauchyIntegralFormula_nullHomologous {f : ℂ → ℂ} {U : Set ℂ}
   rw [dixonFunction_eq_dixonH1 hw] at h_dx_zero
   have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
   rw [h_dx_zero] at h_identity
-  exact (sub_eq_zero.mp h_identity.symm).symm.symm
+  exact sub_eq_zero.mp h_identity.symm
 
 /-- **Cauchy integral formula from pointwise Dixon-zero.** Weakened version of
 `cauchyIntegralFormula_nullHomologous` requiring only `dixonFunction f U γ w = 0`
@@ -274,7 +264,7 @@ theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : Set ℂ}
   rw [dixonFunction_eq_dixonH1 hw] at h_zero_at
   have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
   rw [h_zero_at] at h_identity
-  exact (sub_eq_zero.mp h_identity.symm).symm.symm
+  exact sub_eq_zero.mp h_identity.symm
 
 /-- `dixonH1 f γ w = 0` when the Dixon function is identically zero and `w ∈ U`. -/
 theorem dixonH1_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
@@ -345,8 +335,7 @@ theorem contourIntegral_eq_zero_of_nullHomologous_at
     have hne : γ t - w₀ ≠ 0 := sub_ne_zero.mpr (hw₀_off t ht)
     simp only [hg_def]
     field_simp
-  rw [h_rewrite] at h_cif
-  exact h_cif
+  exact h_rewrite ▸ h_cif
 
 theorem contourIntegral_eq_zero_of_nullHomologous
     {f : ℂ → ℂ} {U : Set ℂ} {γ : PiecewiseC1Path x x}
@@ -527,6 +516,68 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoH2
     h1_diff h2_diff h_cauchy_int h_base_int h_winding_zero_near
     hM_f_nn hR hM_f hM_d
 
+/-- Cauchy-type integrand `f(γ t)/(γ t - w) · γ'(t)` is interval-integrable on `[0,1]`
+when `f ∘ γ` and `γ` are continuous and `γ` is Lipschitz with bound `K`. -/
+private lemma cauchy_integrand_intervalIntegrable
+    {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend)
+    (h_fγ_cont : ContinuousOn (fun t => f (γ t)) (Icc (0 : ℝ) 1))
+    (h_γ_cont : ContinuousOn (γ : ℝ → ℂ) (Icc (0 : ℝ) 1))
+    {w : ℂ} (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
+    IntervalIntegrable
+      (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1 := by
+  have h_cont_inv : ContinuousOn (fun t => (γ t - w)⁻¹) (Icc (0 : ℝ) 1) :=
+    ContinuousOn.inv₀ (h_γ_cont.sub continuousOn_const)
+      (fun t ht => sub_ne_zero.mpr (hoff t ht))
+  have h_cont_prod : ContinuousOn (fun t => f (γ t) / (γ t - w)) (Icc (0 : ℝ) 1) := by
+    simp_rw [div_eq_mul_inv]
+    exact h_fγ_cont.mul h_cont_inv
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
+  have h_meas : AEStronglyMeasurable
+      (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t)
+      (volume.restrict (Ioc (0 : ℝ) 1)) :=
+    ((h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable
+      measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+  haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
+    ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+  obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image h_cont_prod.norm
+  refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+  have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+  rw [norm_mul]
+  exact mul_le_mul (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
+    (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _)
+    (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
+
+/-- Base integrand `(γ t - w)⁻¹ · γ'(t)` is interval-integrable on `[0,1]` when `γ` is
+continuous and Lipschitz with bound `K`. -/
+private lemma base_integrand_intervalIntegrable
+    {γ : PiecewiseC1Path x x} {K : NNReal}
+    (hLip : LipschitzWith K γ.toPath.extend)
+    (h_γ_cont : ContinuousOn (γ : ℝ → ℂ) (Icc (0 : ℝ) 1))
+    {w : ℂ} (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
+    IntervalIntegrable
+      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1 := by
+  have h_cont_inv : ContinuousOn (fun t => (γ t - w)⁻¹) (Icc (0 : ℝ) 1) :=
+    ContinuousOn.inv₀ (h_γ_cont.sub continuousOn_const)
+      (fun t ht => sub_ne_zero.mpr (hoff t ht))
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
+  have h_meas : AEStronglyMeasurable
+      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t)
+      (volume.restrict (Ioc (0 : ℝ) 1)) :=
+    ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
+      measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+  haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
+    ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
+  obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image h_cont_inv.norm
+  refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
+  filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
+  have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+  rw [norm_mul]
+  exact mul_le_mul (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
+    (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _)
+    (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
+
 /-- **B-5 fully automatic except h1_diff + h_winding_zero_near**: With γ Lipschitz,
 f differentiable on bounded open U, and γ null-hom in U, all bounds and integrability
 conditions are discharged automatically. Only the two deep oracles remain:
@@ -567,75 +618,11 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
   have hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ K :=
     fun _ _ => norm_deriv_le_of_lipschitz hLip
-  have h_cauchy_int : ∀ w,
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      IntervalIntegrable
-        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w) *
-          deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1 := by
-    intro w hoff
-    have h_cont_inv : ContinuousOn (fun t => (γ.toPiecewiseC1Path t - w)⁻¹)
-        (Icc (0 : ℝ) 1) := ContinuousOn.inv₀
-      (h_γ_cont.sub continuousOn_const)
-      (fun t ht => sub_ne_zero.mpr (hoff t ht))
-    have h_cont_prod : ContinuousOn
-        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w))
-        (Icc (0 : ℝ) 1) := by
-      simp_rw [div_eq_mul_inv]
-      exact h_fγ_cont.mul h_cont_inv
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
-    have h_meas : AEStronglyMeasurable
-        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w) *
-          deriv γ.toPiecewiseC1Path.toPath.extend t)
-        (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ((h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable
-        measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
-    haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by
-        rw [Measure.restrict_apply_univ]
-        exact measure_Ioc_lt_top⟩
-    obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
-      h_cont_prod.norm
-    refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
-    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
-    rw [norm_mul]
-    exact mul_le_mul
-      (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
-      (hM_d t ht_Icc) (norm_nonneg _)
-      (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
-  have h_base_int : ∀ w,
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      IntervalIntegrable (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
-        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1 := by
-    intro w hoff
-    have h_cont_inv : ContinuousOn (fun t => (γ.toPiecewiseC1Path t - w)⁻¹)
-        (Icc (0 : ℝ) 1) := ContinuousOn.inv₀
-      (h_γ_cont.sub continuousOn_const)
-      (fun t ht => sub_ne_zero.mpr (hoff t ht))
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
-    have h_meas : AEStronglyMeasurable
-        (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
-          deriv γ.toPiecewiseC1Path.toPath.extend t)
-        (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
-        measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
-    haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by
-        rw [Measure.restrict_apply_univ]
-        exact measure_Ioc_lt_top⟩
-    obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
-      h_cont_inv.norm
-    refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
-    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
-    rw [norm_mul]
-    exact mul_le_mul
-      (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
-      (hM_d t ht_Icc) (norm_nonneg _)
-      (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
   exact dixonFunction_eq_zero_of_nullHomologous_autoH2 hU hU_bounded hf γ h_null
-    hLip h1_diff h_cauchy_int h_base_int h_winding_zero_near
-    hM_f_nn hR hM_f hM_d
+    hLip h1_diff
+    (fun _ hoff => cauchy_integrand_intervalIntegrable hLip h_fγ_cont h_γ_cont hoff)
+    (fun _ hoff => base_integrand_intervalIntegrable hLip h_γ_cont hoff)
+    h_winding_zero_near hM_f_nn hR hM_f hM_d
 
 /-- **B-5 variant with B-2 partial auto-discharge**: Discharges `h1_diff` via B-2's
 `dixonH1_differentiableOn_of_regular`. Remaining oracles:
@@ -799,75 +786,11 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded
   have hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ K :=
     fun _ _ => norm_deriv_le_of_lipschitz hLip
-  have h_cauchy_int : ∀ w,
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      IntervalIntegrable
-        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w) *
-          deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1 := by
-    intro w hoff
-    have h_cont_inv : ContinuousOn (fun t => (γ.toPiecewiseC1Path t - w)⁻¹)
-        (Icc (0 : ℝ) 1) := ContinuousOn.inv₀
-      (h_γ_cont.sub continuousOn_const)
-      (fun t ht => sub_ne_zero.mpr (hoff t ht))
-    have h_cont_prod : ContinuousOn
-        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w))
-        (Icc (0 : ℝ) 1) := by
-      simp_rw [div_eq_mul_inv]
-      exact h_fγ_cont.mul h_cont_inv
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
-    have h_meas : AEStronglyMeasurable
-        (fun t => f (γ.toPiecewiseC1Path t) / (γ.toPiecewiseC1Path t - w) *
-          deriv γ.toPiecewiseC1Path.toPath.extend t)
-        (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ((h_cont_prod.mono Ioc_subset_Icc_self).aestronglyMeasurable
-        measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
-    haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by
-        rw [Measure.restrict_apply_univ]
-        exact measure_Ioc_lt_top⟩
-    obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
-      h_cont_prod.norm
-    refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
-    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
-    rw [norm_mul]
-    exact mul_le_mul
-      (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
-      (hM_d t ht_Icc) (norm_nonneg _)
-      (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
-  have h_base_int : ∀ w,
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      IntervalIntegrable (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
-        deriv γ.toPiecewiseC1Path.toPath.extend t) volume 0 1 := by
-    intro w hoff
-    have h_cont_inv : ContinuousOn (fun t => (γ.toPiecewiseC1Path t - w)⁻¹)
-        (Icc (0 : ℝ) 1) := ContinuousOn.inv₀
-      (h_γ_cont.sub continuousOn_const)
-      (fun t ht => sub_ne_zero.mpr (hoff t ht))
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
-    have h_meas : AEStronglyMeasurable
-        (fun t => (γ.toPiecewiseC1Path t - w)⁻¹ *
-          deriv γ.toPiecewiseC1Path.toPath.extend t)
-        (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
-        measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
-    haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-      ⟨by
-        rw [Measure.restrict_apply_univ]
-        exact measure_Ioc_lt_top⟩
-    obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
-      h_cont_inv.norm
-    refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
-    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
-    rw [norm_mul]
-    exact mul_le_mul
-      (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
-      (hM_d t ht_Icc) (norm_nonneg _)
-      (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
   exact dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded hU hf γ h_null
-    hLip h1_diff h_cauchy_int h_base_int h_winding_zero_near
-    hM_f_nn hR_curve hM_f_curve hM_d
+    hLip h1_diff
+    (fun _ hoff => cauchy_integrand_intervalIntegrable hLip h_fγ_cont h_γ_cont hoff)
+    (fun _ hoff => base_integrand_intervalIntegrable hLip h_γ_cont hoff)
+    h_winding_zero_near hM_f_nn hR_curve hM_f_curve hM_d
 
 /-- **B-5 fully closed for general open (possibly unbounded) U with Lipschitz γ.**
 This is the unbounded analog of `dixonFunction_eq_zero_of_nullHomologous_open_full`. -/
