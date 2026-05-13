@@ -10033,6 +10033,40 @@ private lemma sum_peterssonInner_LHS_M_infty_to_tile_form
     ((q.out : SL(2, ℤ)) : SL(2, ℤ)) f g
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b` LHS-dist sum to per-q,b tile-form sum**: upper-`b` analog
+of `sum_peterssonInner_LHS_M_infty_to_tile_form`. Applies the per-q upper-`b`
+tile-form lemma to each (q,b)-summand via `Finset.sum_congr`. -/
+private lemma sum_peterssonInner_LHS_upper_to_tile_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      ∑ b ∈ Finset.range p,
+        peterssonInner k ModularGroup.fd
+          (⇑f ∣[k] ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+          (⇑g ∣[k]
+            (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      ∑ b ∈ Finset.range p,
+        peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+            ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+              (ModularGroup.fd : Set UpperHalfPlane)))
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
+  refine Finset.sum_congr rfl (fun q _ => Finset.sum_congr rfl (fun b _ => ?_))
+  exact peterssonInner_LHS_upper_per_q_to_tile_form p hp hpN b
+    ((q.out : SL(2, ℤ)) : SL(2, ℤ)) f g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T024 sum-level joint absorption consumer**: applies the per-q
 M_∞/upper-b joint absorption helpers
 (`per_q_M_infty_branch_full_absorb`, `per_q_T_p_upper_branch_full_absorb`)
