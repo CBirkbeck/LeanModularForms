@@ -52,8 +52,6 @@ noncomputable section
 
 namespace HungerbuhlerWasem
 
-/-! ## `exp(-i(n-1)α) = 1` under condition (B) -/
-
 /-- **The complex exponential `exp(-i(n-1)α)` equals 1 under condition (B).**
 This is the key algebraic fact: `(n-1)α = 2πk` for some `k : ℤ` implies
 `exp(-i(n-1)α) = exp(-i · 2πk) = 1`. -/
@@ -61,15 +59,14 @@ theorem exp_neg_I_eq_one_of_conditionB (n : ℕ) (α : ℝ)
     (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
     Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) = 1 := by
   obtain ⟨k, hk⟩ := h_angle
-  have hk' : (↑((n - 1 : ℕ) : ℝ) * α : ℂ) = (↑k : ℂ) * (2 * ↑Real.pi) := by
-    exact_mod_cast hk
   have heq : (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I) =
       (((-k : ℤ) : ℂ) * (2 * ↑Real.pi * Complex.I)) := by
+    have hk' : (↑((n - 1 : ℕ) : ℝ) * α : ℂ) = (↑k : ℂ) * (2 * ↑Real.pi) :=
+      by exact_mod_cast hk
     rw [hk']
     push_cast
     ring
-  rw [heq, Complex.exp_int_mul, Complex.exp_two_pi_mul_I]
-  exact one_zpow _
+  rw [heq, Complex.exp_int_mul, Complex.exp_two_pi_mul_I, one_zpow]
 
 /-- **The HW Theorem 3.3 (eq. 3.4) sector-PV formula vanishes under condition (B).**
 Under condition (B) `(n-1)α ∈ 2πℤ`, `e^(-i(n-1)α) = 1`, so the numerator is
@@ -95,8 +92,6 @@ theorem sector_pv_formula_tendsto_zero_under_conditionB
   refine Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) ?_ tendsto_const_nhds
   filter_upwards [self_mem_nhdsWithin] with ε hε
   exact (sector_pv_formula_vanishes_under_conditionB n _hn α h_angle ε hε).symm
-
-/-! ## Line integral along a ray at angle α (real factor) -/
 
 /-- **Real ray integral closed form.** For `n ≥ 2` and `0 < a ≤ b`:
 
@@ -150,8 +145,6 @@ theorem complex_ray_inv_pow_integral
     Complex.ofReal_ne_zero.mpr ha.ne',
     Complex.ofReal_ne_zero.mpr (lt_of_lt_of_le ha hab).ne']
 
-/-! ## Arc integral (γ_2 piece) -/
-
 /-- **Arc integral closed form.** For the arc `t ↦ r · e^(it)` on `[0, α]`,
 the integral `∫_arc dz/z^n` evaluates to:
 
@@ -178,15 +171,15 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
     rw [show n = (n - 1) + 1 by omega]
     push_cast
     ring
-  have h_neg_mul : ∀ t : ℝ, -(↑(n - 1 : ℕ) : ℂ) * Complex.I * (↑t : ℂ) =
-      -((↑(n - 1 : ℕ) : ℂ) * (↑t : ℂ) * Complex.I) := fun _ => by ring
   have h_eq : ∀ t : ℝ,
       ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
         ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n =
       (Complex.I / (↑r : ℂ) ^ (n - 1)) *
         Complex.exp ((-(↑(n - 1 : ℕ) : ℂ) * Complex.I) * (↑t : ℂ)) := by
     intro t
-    rw [mul_pow, h_pow_r, h_pow_exp t, h_neg_mul t, Complex.exp_neg]
+    have h_neg_mul : -(↑(n - 1 : ℕ) : ℂ) * Complex.I * (↑t : ℂ) =
+        -((↑(n - 1 : ℕ) : ℂ) * (↑t : ℂ) * Complex.I) := by ring
+    rw [mul_pow, h_pow_r, h_pow_exp t, h_neg_mul, Complex.exp_neg]
     field_simp [Complex.exp_ne_zero, hr_ne]
   rw [intervalIntegral.integral_congr (fun t _ => h_eq t)]
   have h_step :
@@ -206,8 +199,6 @@ theorem arc_inv_pow_integral (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2
   rw [h_swap, mul_zero, Complex.exp_zero]
   field_simp
   ring
-
-/-! ## Combined sector formula -/
 
 /-- **Combined sector PV formula (HW eq. 3.4).** For the sector curve with
 corner angle `α` and radii `ε ≤ r`, summing the three pieces (real-axis ray
@@ -278,8 +269,6 @@ theorem sector_inv_pow_integral_tendsto_zero_under_conditionB
   exact (sector_inv_pow_integral_vanishes_under_conditionB r hr ε hε.1
     hε.2.le α n hn h_angle).symm
 
-/-! ## F-line difference under condition (B) — generalizes the k-odd case -/
-
 /-- **F-line difference vanishing under condition (B), general angle.**
 For pole `s`, two tangent directions `L_plus` (right) and `L_minus` (left, used
 inward as `-L_minus`), and `k ≥ 2`, the antiderivative
@@ -303,25 +292,23 @@ theorem F_line_diff_eq_zero_under_conditionB
     -((↑(k - 1) : ℂ))⁻¹ *
       (((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1))⁻¹ := by
   congr 2
-  have h_smul_plus : ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) =
-      (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ)) := by
-    rw [Complex.real_smul]
-    push_cast
-    field_simp
-  have h_smul_minus : ((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ) =
-      (↑ε : ℂ) * ((-L_minus) / (↑‖L_minus‖ : ℂ)) := by
-    rw [Complex.real_smul]
-    push_cast
-    field_simp
   have h_pow_plus : ((s + (ε / ‖L_plus‖ : ℝ) • L_plus) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * ((L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1)) := by
+    have h_smul_plus : ((ε / ‖L_plus‖ : ℝ) • L_plus : ℂ) =
+        (↑ε : ℂ) * (L_plus / (↑‖L_plus‖ : ℂ)) := by
+      rw [Complex.real_smul]
+      push_cast
+      field_simp
     rw [add_sub_cancel_left, h_smul_plus, mul_pow]
   have h_pow_minus : ((s + (ε / ‖L_minus‖ : ℝ) • (-L_minus)) - s) ^ (k - 1) =
       ((↑ε : ℂ) ^ (k - 1)) * (((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1)) := by
+    have h_smul_minus : ((ε / ‖L_minus‖ : ℝ) • (-L_minus) : ℂ) =
+        (↑ε : ℂ) * ((-L_minus) / (↑‖L_minus‖ : ℂ)) := by
+      rw [Complex.real_smul]
+      push_cast
+      field_simp
     rw [add_sub_cancel_left, h_smul_minus, mul_pow]
   rw [h_pow_plus, h_pow_minus, h_B]
-
-/-! ## Curve F-difference under condition (B), general angle -/
 
 /-- **Combined curve F-difference → 0 under condition (B), general angle.**
 For curve γ flat of order n at t₀ with tangents `L_minus` (left) and `L_plus`
@@ -398,8 +385,6 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
   rw [h_targets_eq]
   exact h_triangle
 
-/-! ## HW Theorem 3.3 — general angle under condition (B), parametric form -/
-
 /-- **HW Theorem 3.3 — general angle parametric form.** The general-angle
 analog of `hw_theorem_3_3_odd_transverse_parametric`.
 
@@ -447,8 +432,6 @@ theorem hw_theorem_3_3_under_conditionB_parametric
     (F_curve_diff_tendsto_zero_under_conditionB h_flat hL_minus hL_plus
       h_deriv_right h_deriv_left hL_right hL_left h_s hk hkn hn1 h_B
       t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius)
-
-/-! ## HW Theorem 3.3 — final HasCauchyPVOn closure under condition (B) -/
 
 /-- **HW Theorem 3.3 — fully assembled k-even/general angle case under (B).**
 The general-angle analog of `hasCauchyPVOn_singleton_pow_of_transverse_assembled`.
