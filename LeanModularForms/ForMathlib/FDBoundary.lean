@@ -80,11 +80,8 @@ theorem fdBoundaryFun_at_two_fifths (H : ℝ) :
     fdBoundaryFun H (2/5) = ellipticPointI := by
   simp only [fdBoundaryFun, show ¬(2/5 : ℝ) ≤ 1/5 from by norm_num,
     show (2/5 : ℝ) ≤ 2/5 from le_refl _, ite_true, ite_false]
-  have h : (↑Real.pi / 3 + (5 * (↑(2/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      ↑(Real.pi / 2) * I := by
-    push_cast
-    ring
-  rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+  rw [show ((↑Real.pi / 3 + (5 * (↑(2/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ) =
+      ↑(Real.pi / 2) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_two, Real.sin_pi_div_two]
   simp only [ellipticPointI, ellipticPointI']
   norm_num
@@ -94,12 +91,8 @@ theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
   simp only [fdBoundaryFun, show ¬(3/5 : ℝ) ≤ 1/5 from by norm_num,
     show ¬(3/5 : ℝ) ≤ 2/5 from by norm_num,
     show (3/5 : ℝ) ≤ 3/5 from le_refl _, ite_true, ite_false]
-  have h : (↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) *
-      (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-      ↑(2 * Real.pi / 3) * I := by
-    push_cast
-    ring
-  rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+  rw [show ((↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ)
+      = ↑(2 * Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
@@ -133,46 +126,34 @@ theorem fdBoundaryFun_closed (H : ℝ) :
 /-- Continuity of segment 1: right vertical. -/
 private lemma fdBoundaryFun_seg1_cont (H : ℝ) :
     Continuous (fun t : ℝ => (1 : ℂ) / 2 +
-      (↑H - 5 * ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I) :=
-  continuous_const.add
-    ((continuous_const.sub
-      ((continuous_const.mul Complex.continuous_ofReal).mul continuous_const)).mul
-      continuous_const)
+      (↑H - 5 * ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I) := by
+  fun_prop
 
 /-- Continuity of segment 2: unit-circle arc ρ+1 to i. -/
 private lemma fdBoundaryFun_seg2_cont :
     Continuous (fun t : ℝ => exp
       ((↑Real.pi / 3 + (5 * ↑t - 1) *
-        (↑Real.pi / 2 - ↑Real.pi / 3)) * I)) :=
-  Complex.continuous_exp.comp
-    ((continuous_const.add
-      (((continuous_const.mul Complex.continuous_ofReal).sub continuous_const).mul
-        continuous_const)).mul continuous_const)
+        (↑Real.pi / 2 - ↑Real.pi / 3)) * I)) := by
+  fun_prop
 
 /-- Continuity of segment 3: unit-circle arc i to ρ. -/
 private lemma fdBoundaryFun_seg3_cont :
     Continuous (fun t : ℝ => exp
       ((↑Real.pi / 2 + (5 * ↑t - 2) *
-        (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I)) :=
-  Complex.continuous_exp.comp
-    ((continuous_const.add
-      (((continuous_const.mul Complex.continuous_ofReal).sub continuous_const).mul
-        continuous_const)).mul continuous_const)
+        (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I)) := by
+  fun_prop
 
 /-- Continuity of segment 4: left vertical. -/
 private lemma fdBoundaryFun_seg4_cont (H : ℝ) :
     Continuous (fun t : ℝ =>
       (-1 : ℂ) / 2 + (↑(Real.sqrt 3) / 2 +
-        (5 * ↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I) :=
-  continuous_const.add
-    ((continuous_const.add
-      (((continuous_const.mul Complex.continuous_ofReal).sub continuous_const).mul
-        continuous_const)).mul continuous_const)
+        (5 * ↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I) := by
+  fun_prop
 
 /-- Continuity of segment 5: horizontal. -/
 private lemma fdBoundaryFun_seg5_cont (H : ℝ) :
-    Continuous (fun t : ℝ => (5 * ↑t - 9 / 2 : ℂ) + ↑H * I) :=
-  ((continuous_const.mul Complex.continuous_ofReal).sub continuous_const).add continuous_const
+    Continuous (fun t : ℝ => (5 * ↑t - 9 / 2 : ℂ) + ↑H * I) := by
+  fun_prop
 
 /-- Inner layering for continuity proof: segments 4-5. -/
 private def fdBoundaryFun_inner45 (H : ℝ) : ℝ → ℂ := fun t =>
@@ -200,16 +181,11 @@ private lemma fdBoundaryFun_inner345_cont (H : ℝ) :
     (fdBoundaryFun_inner45_cont H) continuous_id continuous_const
   intro t ht
   simp only [id] at ht
-  have : t = 3/5 := by linarith
-  subst this
+  obtain rfl : t = 3/5 := by linarith
   unfold fdBoundaryFun_inner45
   simp only [show (3/5 : ℝ) ≤ 4/5 from by norm_num, ite_true]
-  have h : (↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) *
-      (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-      ↑(2 * Real.pi / 3) * I := by
-    push_cast
-    ring
-  rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+  rw [show ((↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ)
+      = ↑(2 * Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
   push_cast
@@ -227,19 +203,13 @@ private lemma fdBoundaryFun_inner2345_cont (H : ℝ) :
     (fdBoundaryFun_inner345_cont H) continuous_id continuous_const
   intro t ht
   simp only [id] at ht
-  have : t = 2/5 := by linarith
-  subst this
+  obtain rfl : t = 2/5 := by linarith
   unfold fdBoundaryFun_inner345
   simp only [show (2/5 : ℝ) ≤ 3/5 from by norm_num, ite_true]
-  have h1 : (↑Real.pi / 3 + (5 * (↑(2/5 : ℝ)) - 1) *
-      (↑Real.pi / 2 - ↑Real.pi / 3)) * I = ↑(Real.pi / 2) * I := by
-    push_cast
-    ring
-  have h2 : (↑Real.pi / 2 + (5 * (↑(2/5 : ℝ)) - 2) *
-      (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I = ↑(Real.pi / 2) * I := by
-    push_cast
-    ring
-  rw [h1, h2]
+  rw [show ((↑Real.pi / 3 + (5 * (↑(2/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ)
+      = ↑(Real.pi / 2) * I by push_cast; ring,
+    show ((↑Real.pi / 2 + (5 * (↑(2/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ)
+      = ↑(Real.pi / 2) * I by push_cast; ring]
 
 private lemma fdBoundaryFun_eq_layered (H : ℝ) (t : ℝ) :
     fdBoundaryFun H t =
@@ -253,25 +223,18 @@ private lemma fdBoundaryFun_eq_layered (H : ℝ) (t : ℝ) :
 /-- The FD boundary is continuous as a function `ℝ → ℂ`. -/
 theorem fdBoundaryFun_continuous (H : ℝ) :
     Continuous (fdBoundaryFun H) := by
-  have : (fdBoundaryFun H) = (fun t => if t ≤ 1/5 then
+  rw [show (fdBoundaryFun H) = (fun t => if t ≤ 1/5 then
       1/2 + (↑H - 5 * ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I
-      else fdBoundaryFun_inner2345 H t) := by
-    ext t
-    exact fdBoundaryFun_eq_layered H t
-  rw [this]
+      else fdBoundaryFun_inner2345 H t) from funext (fdBoundaryFun_eq_layered H)]
   apply Continuous.if_le (fdBoundaryFun_seg1_cont H) (fdBoundaryFun_inner2345_cont H)
     continuous_id continuous_const
   intro t ht
   simp only [id] at ht
-  have : t = 1/5 := by linarith
-  subst this
+  obtain rfl : t = 1/5 := by linarith
   unfold fdBoundaryFun_inner2345
   simp only [show (1/5 : ℝ) ≤ 2/5 from by norm_num, ite_true]
-  have h : (↑Real.pi / 3 + (5 * (↑(1/5 : ℝ)) - 1) *
-      (↑Real.pi / 2 - ↑Real.pi / 3)) * I = ↑(Real.pi / 3) * I := by
-    push_cast
-    ring
-  rw [h, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+  rw [show ((↑Real.pi / 3 + (5 * (↑(1/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ)
+      = ↑(Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_three, Real.sin_pi_div_three]
   push_cast
   ring
@@ -282,12 +245,8 @@ theorem fdBoundaryFun_continuous (H : ℝ) :
 def fdBoundaryPath (H : ℝ) : Path (fdStart H) (fdStart H) where
   toFun t := fdBoundaryFun H t
   continuous_toFun := (fdBoundaryFun_continuous H).continuousOn.restrict
-  source' := by
-    change fdBoundaryFun H 0 = _
-    exact fdBoundaryFun_at_zero H
-  target' := by
-    change fdBoundaryFun H 1 = _
-    exact fdBoundaryFun_at_one H
+  source' := fdBoundaryFun_at_zero H
+  target' := fdBoundaryFun_at_one H
 
 /-! ### FD boundary partition -/
 
@@ -299,9 +258,7 @@ theorem fdBoundaryPartition_subset_Ioo :
   intro x hx
   simp only [fdBoundaryPartition, Finset.coe_insert, Finset.coe_singleton,
     mem_insert_iff, mem_singleton_iff] at hx
-  rcases hx with h | h | h | h <;>
-    · subst h
-      constructor <;> norm_num
+  rcases hx with rfl | rfl | rfl | rfl <;> constructor <;> norm_num
 
 /-! ### Winding weight specification structure -/
 
@@ -359,20 +316,14 @@ theorem fdBoundaryFun_arc_norm (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 
     ‖fdBoundaryFun H t‖ = 1 := by
   by_cases ht : t ≤ 2/5
   · simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith, ht, ite_true, ite_false]
-    have h : (↑Real.pi / 3 + (5 * ↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-        ↑(Real.pi / 3 + (5 * t - 1) * (Real.pi / 2 - Real.pi / 3)) * I := by
-      push_cast
-      ring
-    rw [h]
+    rw [show ((↑Real.pi / 3 + (5 * ↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ) =
+        ↑(Real.pi / 3 + (5 * t - 1) * (Real.pi / 2 - Real.pi / 3)) * I by push_cast; ring]
     exact Complex.norm_exp_ofReal_mul_I _
   · push Not at ht
     simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
       show ¬t ≤ 2/5 from by linarith, ht2, ite_true, ite_false]
-    have h : (↑Real.pi / 2 + (5 * ↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-        ↑(Real.pi / 2 + (5 * t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I := by
-      push_cast
-      ring
-    rw [h]
+    rw [show ((↑Real.pi / 2 + (5 * ↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ) =
+        ↑(Real.pi / 2 + (5 * t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I by push_cast; ring]
     exact Complex.norm_exp_ofReal_mul_I _
 
 /-- The right vertical imaginary part interpolates linearly. -/
@@ -386,8 +337,7 @@ def fdHeightValid (H : ℝ) : Prop := Real.sqrt 3 / 2 < H
 
 theorem fdHeightValid_of_one_lt (H : ℝ) (hH : 1 < H) : fdHeightValid H := by
   unfold fdHeightValid
-  have : Real.sqrt 3 < 2 := (Real.sqrt_lt' (by norm_num)).mpr (by norm_num)
-  linarith
+  linarith [(Real.sqrt_lt' (by norm_num : (0:ℝ) < 2)).mpr (by norm_num : (3:ℝ) < 2^2)]
 
 /-! ### Relationship to [0,5]-parameterized boundary
 
@@ -399,14 +349,10 @@ simple rescaling: each segment `[k/5, (k+1)/5]` maps to `[k, k+1]` under `t ↦ 
 /-! ### Construction of FDWindingData from SingleCrossingData -/
 
 private lemma pi_div_two_pi : -(↑Real.pi * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 2 := by
-  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  have hI : (I : ℂ) ≠ 0 := I_ne_zero
   field_simp
 
 private lemma pi_third_div_two_pi :
     -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 6 := by
-  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  have hI : (I : ℂ) ≠ 0 := I_ne_zero
   field_simp
   ring
 
@@ -435,14 +381,8 @@ def FDWindingData.mk_of_crossing {H : ℝ}
   boundary := boundary
   boundary_eq := hbdy
   interior_winding := h_int
-  winding_at_i := by
-    have := D_i.hasWindingNumber
-    rwa [hL_i, pi_div_two_pi] at this
-  winding_at_rho := by
-    have := D_rho.hasWindingNumber
-    rwa [hL_rho, pi_third_div_two_pi] at this
-  winding_at_rho_plus_one := by
-    have := D_rho1.hasWindingNumber
-    rwa [hL_rho1, pi_third_div_two_pi] at this
+  winding_at_i := pi_div_two_pi ▸ hL_i ▸ D_i.hasWindingNumber
+  winding_at_rho := pi_third_div_two_pi ▸ hL_rho ▸ D_rho.hasWindingNumber
+  winding_at_rho_plus_one := pi_third_div_two_pi ▸ hL_rho1 ▸ D_rho1.hasWindingNumber
 
 end
