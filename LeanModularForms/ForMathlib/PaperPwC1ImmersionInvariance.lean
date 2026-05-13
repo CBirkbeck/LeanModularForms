@@ -85,17 +85,9 @@ shifted by `-1`. -/
 private lemma cpvIntegrandOnPer_eq_on_Ico_one_two (γ : ClosedPwC1Immersion x)
     (S : Finset ℂ) (f : ℂ → ℂ) (ε : ℝ) {u : ℝ} (hu : u ∈ Ico (1 : ℝ) 2) :
     cpvIntegrandOnPer γ S f ε u = cpvIntegrandOn S f γ.toPath.extend ε (u - 1) := by
-  -- u - 1 ∈ [0, 1).
-  have h_sub : u - 1 ∈ Ico (0 : ℝ) 1 := by
-    constructor
-    · linarith [hu.1]
-    · linarith [hu.2]
-  -- u = (u - 1) + 1, so G(u) = G(u - 1) by periodicity.
-  have h_per := cpvIntegrandOnPer_periodic γ S f ε (u - 1)
-  -- h_per : G((u - 1) + 1) = G(u - 1). Rewrite u to (u - 1) + 1.
-  have h_u_eq : u = (u - 1) + 1 := by ring
-  conv_lhs => rw [h_u_eq]
-  rw [h_per]
+  have h_sub : u - 1 ∈ Ico (0 : ℝ) 1 := ⟨by linarith [hu.1], by linarith [hu.2]⟩
+  conv_lhs => rw [show u = (u - 1) + 1 from by ring]
+  rw [cpvIntegrandOnPer_periodic γ S f ε (u - 1)]
   exact cpvIntegrandOnPer_eq_on_Ico γ S f ε h_sub
 
 /-- The cutoff integrand for the cyclic-shifted curve equals
@@ -109,83 +101,47 @@ private lemma cpvIntegrandOn_cyclicShift_eq_per_ae (γ : ClosedPwC1Immersion x)
         cpvIntegrandOnPer γ S f ε (t + τ) := by
   classical
   -- The "bad" set: cyclicShift partition points (finite, hence measure-zero).
-  set P : Set ℝ := ((γ.cyclicShift hτ).partition : Set ℝ)
-  have hP_zero : volume P = 0 := Finset.measure_zero _ _
-  have hP_nmem : ∀ᵐ t ∂(volume : Measure ℝ), t ∉ P :=
-    MeasureTheory.compl_mem_ae_iff.mpr hP_zero
+  have hP_nmem : ∀ᵐ t ∂(volume : Measure ℝ),
+      t ∉ ((γ.cyclicShift hτ).partition : Set ℝ) :=
+    MeasureTheory.compl_mem_ae_iff.mpr (Finset.measure_zero _ _)
   filter_upwards [hP_nmem] with t ht_nmem ht_in
-  have h_t_Ioc : t ∈ Ioc (0 : ℝ) 1 := by
-    rwa [Set.uIoc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht_in
-  have ht_pos : 0 < t := h_t_Ioc.1
-  have ht_le : t ≤ 1 := h_t_Ioc.2
+  rw [Set.uIoc_of_le (by norm_num : (0:ℝ) ≤ 1)] at ht_in
+  obtain ⟨ht_pos, ht_le⟩ := ht_in
+  -- Contradiction helper for `t = c` where `c ∈ cyclicShiftPartitionExt`.
+  have h_contra : ∀ {c : ℝ}, t = c → c ∈ cyclicShiftPartitionExt γ.partition τ → False :=
+    fun ht_eq hc => ht_nmem (show t ∈ ((γ.cyclicShift hτ).partition : Set ℝ) by
+      rw [ht_eq]; exact_mod_cast hc)
   -- Case-split on t ≤ 1 - τ or t > 1 - τ.
   by_cases ht_le_oneSubTau : t ≤ 1 - τ
-  · -- No-wrap case: t ∈ Icc 0 (1-τ).
-    have ht_Icc : t ∈ Icc (0 : ℝ) (1 - τ) := ⟨ht_pos.le, ht_le_oneSubTau⟩
-    -- (γ_τ)(t) = γ(t + τ).
-    have h_extend : (γ.cyclicShift hτ).toPath.extend t = γ.toPath.extend (t + τ) :=
-      γ.cyclicShift_extend_eq_no_wrap hτ ht_Icc
-    -- (t + τ) ∈ [τ, 1] ⊆ [0, 1). When = 1, t = 1 - τ; this is a partition pt.
-    have h_tτ_lt_1 : t + τ < 1 := by
-      -- If t = 1 - τ, then t + τ = 1 and t ∈ partition (1 - τ ∈ cyclicShiftPartitionExt).
-      rcases lt_or_eq_of_le ht_le_oneSubTau with ht_lt | ht_eq
-      · linarith
-      · -- t = 1 - τ but we have ht_nmem : t ∉ partition, contradiction.
-        exfalso
-        apply ht_nmem
-        have h_mem : (1 - τ : ℝ) ∈ cyclicShiftPartitionExt γ.partition τ :=
-          oneSubTau_mem_cyclicShiftPartitionExt γ.partition τ
-        show t ∈ ((γ.cyclicShift hτ).partition : Set ℝ)
-        rw [ht_eq]
-        exact_mod_cast h_mem
-    have h_tτ_pos : 0 < t + τ := by linarith [hτ.1]
-    -- t + τ ∈ Ico 0 1, so G(t + τ) = cpvIntegrandOn (t + τ).
-    have h_per : cpvIntegrandOnPer γ S f ε (t + τ) =
-        cpvIntegrandOn S f γ.toPath.extend ε (t + τ) :=
-      cpvIntegrandOnPer_eq_on_Ico γ S f ε ⟨h_tτ_pos.le, h_tτ_lt_1⟩
-    rw [h_per]
-    -- Derivatives match on the open interior.
+  · -- No-wrap case: t ∈ Icc 0 (1-τ), and t < 1 - τ (else t is a partition point).
     have ht_Ioo : t ∈ Ioo (0 : ℝ) (1 - τ) := by
       refine ⟨ht_pos, ?_⟩
       rcases lt_or_eq_of_le ht_le_oneSubTau with ht_lt | ht_eq
       · exact ht_lt
-      · -- t = 1 - τ: contradicted as above
-        exfalso
-        apply ht_nmem
-        have h_mem : (1 - τ : ℝ) ∈ cyclicShiftPartitionExt γ.partition τ :=
-          oneSubTau_mem_cyclicShiftPartitionExt γ.partition τ
-        show t ∈ ((γ.cyclicShift hτ).partition : Set ℝ)
-        rw [ht_eq]
-        exact_mod_cast h_mem
+      · exact absurd (oneSubTau_mem_cyclicShiftPartitionExt γ.partition τ) (h_contra ht_eq)
+    have h_extend : (γ.cyclicShift hτ).toPath.extend t = γ.toPath.extend (t + τ) :=
+      γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_pos.le, ht_le_oneSubTau⟩
+    have h_per : cpvIntegrandOnPer γ S f ε (t + τ) =
+        cpvIntegrandOn S f γ.toPath.extend ε (t + τ) :=
+      cpvIntegrandOnPer_eq_on_Ico γ S f ε ⟨by linarith [hτ.1], by linarith [ht_Ioo.2]⟩
+    rw [h_per]
     have h_deriv : deriv (γ.cyclicShift hτ).toPath.extend t =
         deriv γ.toPath.extend (t + τ) :=
       γ.cyclicShift_deriv_eq_no_wrap hτ ht_Ioo ht_nmem
     simp only [cpvIntegrandOn, h_extend, h_deriv]
   · -- Wrap case: 1 - τ < t ≤ 1, so t ∈ Ioo (1-τ) 1 (need t < 1 from partition).
     push Not at ht_le_oneSubTau
-    -- (γ_τ)(t) = γ(t + τ - 1).
-    have h_t_lt_1 : t < 1 := by
-      rcases lt_or_eq_of_le ht_le with h_lt | h_eq
-      · exact h_lt
-      · exfalso
-        apply ht_nmem
-        have h_mem : (1 : ℝ) ∈ cyclicShiftPartitionExt γ.partition τ :=
-          one_mem_cyclicShiftPartitionExt γ.partition τ
-        show t ∈ ((γ.cyclicShift hτ).partition : Set ℝ)
-        rw [h_eq]
-        exact_mod_cast h_mem
-    have ht_Icc : t ∈ Icc (1 - τ) 1 := ⟨ht_le_oneSubTau.le, ht_le⟩
+    have h_t_lt_1 : t < 1 :=
+      lt_or_eq_of_le ht_le |>.resolve_right fun h_eq =>
+        h_contra h_eq (one_mem_cyclicShiftPartitionExt γ.partition τ)
+    have ht_Ioo : t ∈ Ioo (1 - τ) 1 := ⟨ht_le_oneSubTau, h_t_lt_1⟩
     have h_extend : (γ.cyclicShift hτ).toPath.extend t = γ.toPath.extend (t + τ - 1) :=
-      γ.cyclicShift_extend_eq_wrap hτ ht_Icc
-    -- (t + τ) ∈ (1, 1+τ) ⊆ [1, 2). So G(t + τ) = cpvIntegrandOn (t + τ - 1).
-    have h_tτ_ge_1 : 1 ≤ t + τ := by linarith
-    have h_tτ_lt_2 : t + τ < 2 := by linarith [hτ.2]
+      γ.cyclicShift_extend_eq_wrap hτ ⟨ht_le_oneSubTau.le, ht_le⟩
     have h_per : cpvIntegrandOnPer γ S f ε (t + τ) =
         cpvIntegrandOn S f γ.toPath.extend ε ((t + τ) - 1) :=
-      cpvIntegrandOnPer_eq_on_Ico_one_two γ S f ε ⟨h_tτ_ge_1, h_tτ_lt_2⟩
+      cpvIntegrandOnPer_eq_on_Ico_one_two γ S f ε
+        ⟨by linarith, by linarith [hτ.2]⟩
     rw [h_per]
-    -- Derivatives match on the open interior.
-    have ht_Ioo : t ∈ Ioo (1 - τ) 1 := ⟨ht_le_oneSubTau, h_t_lt_1⟩
     have h_deriv : deriv (γ.cyclicShift hτ).toPath.extend t =
         deriv γ.toPath.extend (t + τ - 1) :=
       γ.cyclicShift_deriv_eq_wrap hτ ht_Ioo ht_nmem
@@ -203,39 +159,29 @@ private lemma cpvIntegrandOn_cyclicShift_integral_eq (γ : ClosedPwC1Immersion x
       (∫ t in (0:ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) := by
   classical
   -- Step 1: rewrite the LHS as ∫_0^1 G(t + τ) dt by a.e. equality.
-  have h_ae_eq := γ.cpvIntegrandOn_cyclicShift_eq_per_ae hτ S f ε
   have h_step1 : (∫ t in (0:ℝ)..1, cpvIntegrandOn S f (γ.cyclicShift hτ).toPath.extend ε t) =
       ∫ t in (0:ℝ)..1, cpvIntegrandOnPer γ S f ε (t + τ) :=
-    intervalIntegral.integral_congr_ae h_ae_eq
+    intervalIntegral.integral_congr_ae (γ.cpvIntegrandOn_cyclicShift_eq_per_ae hτ S f ε)
   -- Step 2: substitute u = t + τ.
   have h_step2 : (∫ t in (0:ℝ)..1, cpvIntegrandOnPer γ S f ε (t + τ)) =
       ∫ u in (0 + τ)..(1 + τ), cpvIntegrandOnPer γ S f ε u :=
     intervalIntegral.integral_comp_add_right (cpvIntegrandOnPer γ S f ε) τ
   -- Step 3: use periodicity to shift the interval.
-  have h_per := cpvIntegrandOnPer_periodic γ S f ε
   have h_step3 : (∫ u in (0 + τ)..(1 + τ), cpvIntegrandOnPer γ S f ε u) =
       ∫ u in (0 : ℝ)..(0 + 1), cpvIntegrandOnPer γ S f ε u := by
-    -- intervalIntegral_add_eq: ∫_t^(t+T) = ∫_s^(s+T). Here T = 1, t = τ, s = 0.
-    have h_shifted : (∫ u in τ..(τ + 1), cpvIntegrandOnPer γ S f ε u) =
-        ∫ u in (0 : ℝ)..(0 + 1), cpvIntegrandOnPer γ S f ε u :=
-      h_per.intervalIntegral_add_eq τ 0
-    have h_τ_eq : (0 + τ : ℝ) = τ := zero_add τ
-    have h_1τ_eq : (1 + τ : ℝ) = τ + 1 := add_comm 1 τ
-    rw [h_τ_eq, h_1τ_eq, h_shifted]
+    have h_shifted := (cpvIntegrandOnPer_periodic γ S f ε).intervalIntegral_add_eq τ 0
+    simpa [zero_add, add_comm 1 τ] using h_shifted
   -- Step 4: relate G back to cpvIntegrandOn on [0, 1].
   have h_step4 : (∫ u in (0 : ℝ)..(0 + 1), cpvIntegrandOnPer γ S f ε u) =
       ∫ u in (0:ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε u := by
     rw [zero_add]
-    apply intervalIntegral.integral_congr_ae
-    -- a.e. wrt volume: if u ∈ uIoc 0 1 and u ≠ 1, then u ∈ Ico 0 1 and G(u) = cpvIntegrandOn(u).
-    have h_ae_not_one : ∀ᵐ u ∂(volume : Measure ℝ), u ≠ 1 := by
-      rw [MeasureTheory.ae_iff]
-      simp only [ne_eq, not_not]
-      exact Real.volume_singleton
+    refine intervalIntegral.integral_congr_ae ?_
+    have h_ae_not_one : ∀ᵐ u ∂(volume : Measure ℝ), u ≠ 1 :=
+      MeasureTheory.ae_iff.mpr (by simp)
     filter_upwards [h_ae_not_one] with u h_u_ne h_u_in
     rw [Set.uIoc_of_le (by norm_num : (0:ℝ) ≤ 1)] at h_u_in
-    have h_u_Ico : u ∈ Ico (0:ℝ) 1 := ⟨h_u_in.1.le, lt_of_le_of_ne h_u_in.2 h_u_ne⟩
-    exact cpvIntegrandOnPer_eq_on_Ico γ S f ε h_u_Ico
+    exact cpvIntegrandOnPer_eq_on_Ico γ S f ε
+      ⟨h_u_in.1.le, lt_of_le_of_ne h_u_in.2 h_u_ne⟩
   rw [h_step1, h_step2, h_step3, h_step4]
 
 /-- **Invariance of `HasCauchyPVOn` under cyclic shift.** -/
@@ -289,17 +235,13 @@ private lemma cauchyPV_cyclicShift {γ : ClosedPwC1Immersion x} {τ : ℝ}
   have h_lhs : (∫ t in (0:ℝ)..1, cpvIntegrand f
         (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path.toPath.extend z₀ ε t) =
       ∫ t in (0:ℝ)..1, cpvIntegrandOn {z₀} f
-        (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t := by
-    apply intervalIntegral.integral_congr
-    intro t _
-    exact cpvIntegrand_eq_cpvIntegrandOn_singleton
+        (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t :=
+    intervalIntegral.integral_congr fun _ _ => cpvIntegrand_eq_cpvIntegrandOn_singleton
   have h_rhs : (∫ t in (0:ℝ)..1, cpvIntegrand f
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend z₀ ε t) =
       ∫ t in (0:ℝ)..1, cpvIntegrandOn {z₀} f
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t := by
-    apply intervalIntegral.integral_congr
-    intro t _
-    exact cpvIntegrand_eq_cpvIntegrandOn_singleton
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t :=
+    intervalIntegral.integral_congr fun _ _ => cpvIntegrand_eq_cpvIntegrandOn_singleton
   show (∫ t in (0:ℝ)..1, cpvIntegrand f
         (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path.toPath.extend z₀ ε t) =
       ∫ t in (0:ℝ)..1, cpvIntegrand f
@@ -322,105 +264,50 @@ flatness of `f` at `t₀` whenever `f` agrees with `g ∘ (·+c)` on a neighborh
 of `t₀`. This handles the no-wrap region (`Ioo 0 (1-τ)`) where the shift is
 `(·+τ)`, and the wrap region (`Ioo (1-τ) 1`) where the shift is `(·+τ-1)`. -/
 
-/-- Derivative of `g ∘ (·+c)` equals `(deriv g) ∘ (·+c)` whenever `g` is
-differentiable at `t + c`, or when neither side is. -/
-private lemma deriv_comp_add_const (g : ℝ → ℂ) (c t : ℝ) :
-    deriv (fun s : ℝ => g (s + c)) t = deriv g (t + c) := by
-  by_cases hg : DifferentiableAt ℝ g (t + c)
-  · have h_shift : HasDerivAt (fun s : ℝ => s + c) 1 t :=
-      (hasDerivAt_id t).add_const c
-    -- Apply HasDerivAt.scomp (g₁ : ℝ → ℂ, h : ℝ → ℝ).
-    have hg_at : HasDerivAt g (deriv g (t + c)) ((fun s : ℝ => s + c) t) := hg.hasDerivAt
-    have h_comp : HasDerivAt (g ∘ (fun s : ℝ => s + c)) ((1 : ℝ) • deriv g (t + c)) t :=
-      hg_at.scomp t h_shift
-    have h_eq : (g ∘ (fun s : ℝ => s + c)) = (fun s : ℝ => g (s + c)) := rfl
-    rw [h_eq] at h_comp
-    have hd := h_comp.deriv
-    simpa using hd
-  · rw [deriv_zero_of_not_differentiableAt, deriv_zero_of_not_differentiableAt hg]
-    intro h_comp_diff
-    apply hg
-    have h_inv : DifferentiableAt ℝ (fun u : ℝ => u - c) (t + c) :=
-      ((hasDerivAt_id (t + c)).sub_const c).differentiableAt
-    have h_id_eq : (fun u : ℝ => (fun s : ℝ => g (s + c)) (u - c)) = g := by
-      funext u; show g (u - c + c) = g u; ring_nf
-    have h_pt_eq : (t + c) - c = t := by ring
-    have h_comp_diff' : DifferentiableAt ℝ (fun s : ℝ => g (s + c)) ((t + c) - c) := by
-      rw [h_pt_eq]; exact h_comp_diff
-    -- Compose: differentiableAt (h ∘ k) x ↔ differentiableAt h (k x) ∧ ...
-    -- Here h = (fun s => g (s + c)), k = (fun u => u - c), x = t + c, k x = (t+c) - c.
-    have hcomp : DifferentiableAt ℝ
-        ((fun s : ℝ => g (s + c)) ∘ (fun u : ℝ => u - c)) (t + c) :=
-      h_comp_diff'.comp (t + c) h_inv
-    have h_id_eq' : (fun s : ℝ => g (s + c)) ∘ (fun u : ℝ => u - c) = g := by
-      ext u; show g (u - c + c) = g u; ring_nf
-    rw [h_id_eq'] at hcomp
-    exact hcomp
-
 /-- Eventual derivative agreement: if `f =ᶠ[𝓝 t₀] g ∘ (·+c)`, then on a neighborhood
 of `t₀`, `deriv f = (deriv g) ∘ (·+c)`. -/
 private lemma deriv_eventuallyEq_of_shift {f g : ℝ → ℂ} {t₀ c : ℝ}
     (h_eq : ∀ᶠ t in 𝓝 t₀, f t = g (t + c)) :
     ∀ᶠ t in 𝓝 t₀, deriv f t = deriv g (t + c) := by
-  have h_self_nhd : ∀ᶠ t in 𝓝 t₀, ∀ᶠ s in 𝓝 t, f s = g (s + c) :=
-    eventually_eventually_nhds.mpr h_eq
-  filter_upwards [h_self_nhd] with t ht
-  have hf : f =ᶠ[𝓝 t] (fun s => g (s + c)) := ht
-  rw [Filter.EventuallyEq.deriv_eq hf]
+  filter_upwards [eventually_eventually_nhds.mpr h_eq] with t ht
+  rw [Filter.EventuallyEq.deriv_eq (ht : f =ᶠ[𝓝 t] _)]
   exact deriv_comp_add_const g c t
 
 /-- `(·+c)` tends from `𝓝[>] t₀` to `𝓝[>] (t₀+c)`. -/
 private lemma tendsto_add_const_nhdsGT (t₀ c : ℝ) :
     Tendsto (fun t : ℝ => t + c) (𝓝[>] t₀) (𝓝[>] (t₀ + c)) := by
   rw [tendsto_nhdsWithin_iff]
-  refine ⟨?_, ?_⟩
-  · have h_cont : Continuous (fun t : ℝ => t + c) :=
-      Continuous.add continuous_id continuous_const
-    exact (h_cont.continuousAt.tendsto (x := t₀)).mono_left nhdsWithin_le_nhds
-  · filter_upwards [self_mem_nhdsWithin] with t ht
-    exact (add_lt_add_iff_right c).mpr ht
+  refine ⟨((continuous_add_const c).tendsto t₀).mono_left nhdsWithin_le_nhds, ?_⟩
+  filter_upwards [self_mem_nhdsWithin] with t ht using (add_lt_add_iff_right c).mpr ht
 
 /-- `(·+c)` tends from `𝓝[<] t₀` to `𝓝[<] (t₀+c)`. -/
 private lemma tendsto_add_const_nhdsLT (t₀ c : ℝ) :
     Tendsto (fun t : ℝ => t + c) (𝓝[<] t₀) (𝓝[<] (t₀ + c)) := by
   rw [tendsto_nhdsWithin_iff]
-  refine ⟨?_, ?_⟩
-  · have h_cont : Continuous (fun t : ℝ => t + c) :=
-      Continuous.add continuous_id continuous_const
-    exact (h_cont.continuousAt.tendsto (x := t₀)).mono_left nhdsWithin_le_nhds
-  · filter_upwards [self_mem_nhdsWithin] with t ht
-    exact (add_lt_add_iff_right c).mpr ht
+  refine ⟨((continuous_add_const c).tendsto t₀).mono_left nhdsWithin_le_nhds, ?_⟩
+  filter_upwards [self_mem_nhdsWithin] with t ht using (add_lt_add_iff_right c).mpr ht
 
 /-- `(·-c)` tends from `𝓝[>] (t₀+c)` to `𝓝[>] t₀`. -/
 private lemma tendsto_sub_const_nhdsGT (t₀ c : ℝ) :
     Tendsto (fun t : ℝ => t - c) (𝓝[>] (t₀ + c)) (𝓝[>] t₀) := by
   rw [tendsto_nhdsWithin_iff]
   refine ⟨?_, ?_⟩
-  · -- (·-c) is continuous, and at t₀+c, equals t₀.
-    have h_eq_pt : (t₀ + c) - c = t₀ := by ring
-    have h_cont : Tendsto (fun t : ℝ => t - c) (𝓝 (t₀ + c)) (𝓝 ((t₀ + c) - c)) :=
-      ((continuous_id).sub continuous_const).continuousAt.tendsto
-    rw [h_eq_pt] at h_cont
-    exact h_cont.mono_left nhdsWithin_le_nhds
-  · filter_upwards [self_mem_nhdsWithin] with t ht
-    show t₀ < t - c
-    have : t₀ + c < t := ht
-    linarith
+  · have h_cont : Tendsto (fun t : ℝ => t - c) (𝓝 (t₀ + c)) (𝓝 ((t₀ + c) - c)) :=
+      Continuous.tendsto (by fun_prop) _
+    simpa using h_cont.mono_left nhdsWithin_le_nhds
+  · filter_upwards [self_mem_nhdsWithin] with t ht using by
+      change t₀ < t - c; linarith [show t₀ + c < t from ht]
 
 /-- `(·-c)` tends from `𝓝[<] (t₀+c)` to `𝓝[<] t₀`. -/
 private lemma tendsto_sub_const_nhdsLT (t₀ c : ℝ) :
     Tendsto (fun t : ℝ => t - c) (𝓝[<] (t₀ + c)) (𝓝[<] t₀) := by
   rw [tendsto_nhdsWithin_iff]
   refine ⟨?_, ?_⟩
-  · have h_eq_pt : (t₀ + c) - c = t₀ := by ring
-    have h_cont : Tendsto (fun t : ℝ => t - c) (𝓝 (t₀ + c)) (𝓝 ((t₀ + c) - c)) :=
-      ((continuous_id).sub continuous_const).continuousAt.tendsto
-    rw [h_eq_pt] at h_cont
-    exact h_cont.mono_left nhdsWithin_le_nhds
-  · filter_upwards [self_mem_nhdsWithin] with t ht
-    show t - c < t₀
-    have : t < t₀ + c := ht
-    linarith
+  · have h_cont : Tendsto (fun t : ℝ => t - c) (𝓝 (t₀ + c)) (𝓝 ((t₀ + c) - c)) :=
+      Continuous.tendsto (by fun_prop) _
+    simpa using h_cont.mono_left nhdsWithin_le_nhds
+  · filter_upwards [self_mem_nhdsWithin] with t ht using by
+      change t - c < t₀; linarith [show t < t₀ + c from ht]
 
 /-- Affine-shift transport of `IsFlatOfOrder`. -/
 private lemma isFlatOfOrder_of_eventuallyEq_shift {f g : ℝ → ℂ} {t₀ c : ℝ} {n : ℕ}
@@ -545,7 +432,7 @@ theorem satisfiesConditionA'_cyclicShift
   · -- No-wrap case: t₀' < 1 - τ.
     have ht_Ioo_nw : t₀' ∈ Ioo (0 : ℝ) (1 - τ) := ⟨ht_Ioo.1, ht_lt⟩
     -- Pull back to γ at t₀ = t₀' + τ ∈ Ioo τ 1 ⊆ Ioo 0 1.
-    set t₀ := t₀' + τ with ht₀_def
+    set t₀ := t₀' + τ
     have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 := by
       refine ⟨?_, ?_⟩
       · linarith [hτ.1, ht_Ioo.1]
@@ -594,7 +481,7 @@ theorem satisfiesConditionA'_cyclicShift
   · -- Wrap case: t₀' > 1 - τ.
     have ht_Ioo_w : t₀' ∈ Ioo (1 - τ) 1 := ⟨ht_gt, ht_Ioo.2⟩
     -- Pull back to γ at t₀ = t₀' + τ - 1 ∈ Ioo 0 τ ⊆ Ioo 0 1.
-    set t₀ := t₀' + τ - 1 with ht₀_def
+    set t₀ := t₀' + τ - 1
     have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 := by
       refine ⟨?_, ?_⟩
       · linarith [ht_gt]
@@ -706,21 +593,19 @@ private lemma exists_partition_isolating_nhd_no_wrap
     ∃ a b : ℝ, a < t₀' ∧ t₀' < b ∧ Ioo a b ⊆ Ioo (0 : ℝ) (1 - τ) ∧
       ((↑(γ.cyclicShift hτ).partition : Set ℝ) ∩ Ioo a b) ⊆ {t₀'} := by
   classical
-  set P : Finset ℝ := (γ.cyclicShift hτ).partition with hP_def
-  set P' : Finset ℝ := P.erase t₀' with hP'_def
+  set P : Finset ℝ := (γ.cyclicShift hτ).partition
+  set P' : Finset ℝ := P.erase t₀'
   -- Baseline radius from "stay inside (0, 1-τ)": min(t₀', 1-τ-t₀').
-  set δ_box : ℝ := min t₀' (1 - τ - t₀') with hδ_box_def
+  set δ_box : ℝ := min t₀' (1 - τ - t₀')
   have hδ_box_pos : 0 < δ_box := lt_min ht₀'.1 (by linarith [ht₀'.2])
   -- Refine with partition-isolation radius if P' nonempty.
   by_cases hP'_empty : P'.Nonempty
   · -- δ_pre = min p∈P', |t₀'-p| > 0.
     have h_min_pos : ∀ p ∈ P', |t₀' - p| > 0 := fun p hp =>
       abs_pos.mpr (sub_ne_zero.mpr (Ne.symm (Finset.mem_erase.mp hp).1))
-    set δ_pre : ℝ := P'.inf' hP'_empty (fun p => |t₀' - p|) with hδ_pre_def
-    have hδ_pre_pos : 0 < δ_pre := by
-      rw [hδ_pre_def]
-      exact (Finset.lt_inf'_iff hP'_empty).mpr h_min_pos
-    set δ : ℝ := min δ_box δ_pre with hδ_def
+    set δ_pre : ℝ := P'.inf' hP'_empty (fun p => |t₀' - p|)
+    have hδ_pre_pos : 0 < δ_pre := (Finset.lt_inf'_iff hP'_empty).mpr h_min_pos
+    set δ : ℝ := min δ_box δ_pre
     have hδ_pos : 0 < δ := lt_min hδ_box_pos hδ_pre_pos
     have hδ_le_box : δ ≤ δ_box := min_le_left _ _
     have hδ_le_pre : δ ≤ δ_pre := min_le_right _ _
@@ -764,18 +649,16 @@ private lemma exists_partition_isolating_nhd_wrap
     ∃ a b : ℝ, a < t₀' ∧ t₀' < b ∧ Ioo a b ⊆ Ioo (1 - τ) 1 ∧
       ((↑(γ.cyclicShift hτ).partition : Set ℝ) ∩ Ioo a b) ⊆ {t₀'} := by
   classical
-  set P : Finset ℝ := (γ.cyclicShift hτ).partition with hP_def
-  set P' : Finset ℝ := P.erase t₀' with hP'_def
-  set δ_box : ℝ := min (t₀' - (1 - τ)) (1 - t₀') with hδ_box_def
+  set P : Finset ℝ := (γ.cyclicShift hτ).partition
+  set P' : Finset ℝ := P.erase t₀'
+  set δ_box : ℝ := min (t₀' - (1 - τ)) (1 - t₀')
   have hδ_box_pos : 0 < δ_box := lt_min (by linarith [ht₀'.1]) (by linarith [ht₀'.2])
   by_cases hP'_empty : P'.Nonempty
   · have h_min_pos : ∀ p ∈ P', |t₀' - p| > 0 := fun p hp =>
       abs_pos.mpr (sub_ne_zero.mpr (Ne.symm (Finset.mem_erase.mp hp).1))
-    set δ_pre : ℝ := P'.inf' hP'_empty (fun p => |t₀' - p|) with hδ_pre_def
-    have hδ_pre_pos : 0 < δ_pre := by
-      rw [hδ_pre_def]
-      exact (Finset.lt_inf'_iff hP'_empty).mpr h_min_pos
-    set δ : ℝ := min δ_box δ_pre with hδ_def
+    set δ_pre : ℝ := P'.inf' hP'_empty (fun p => |t₀' - p|)
+    have hδ_pre_pos : 0 < δ_pre := (Finset.lt_inf'_iff hP'_empty).mpr h_min_pos
+    set δ : ℝ := min δ_box δ_pre
     have hδ_pos : 0 < δ := lt_min hδ_box_pos hδ_pre_pos
     have hδ_le_box : δ ≤ δ_box := min_le_left _ _
     have hδ_le_pre : δ ≤ δ_pre := min_le_right _ _
@@ -1163,7 +1046,7 @@ theorem satisfiesConditionB_cyclicShift
     rcases lt_trichotomy t₀' (1 - τ) with ht_lt | ht_eq | ht_gt
     · -- No-wrap case.
       have ht_Ioo_nw : t₀' ∈ Ioo (0 : ℝ) (1 - τ) := ⟨ht_Ioo.1, ht_lt⟩
-      set t₀ := t₀' + τ with ht₀_def
+      set t₀ := t₀' + τ
       have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
         ⟨by linarith [hτ.1, ht_Ioo.1], by linarith [ht_lt]⟩
       have ht₀_Icc : t₀ ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht₀_Ioo
@@ -1189,7 +1072,7 @@ theorem satisfiesConditionB_cyclicShift
       exact h_basepoint_angleB s hs h_s_eq ht_Ioo
     · -- Wrap case: t₀' > 1 - τ.
       have ht_Ioo_w : t₀' ∈ Ioo (1 - τ) 1 := ⟨ht_gt, ht_Ioo.2⟩
-      set t₀ := t₀' + τ - 1 with ht₀_def
+      set t₀ := t₀' + τ - 1
       have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
         ⟨by linarith [ht_gt], by linarith [hτ.2, ht_Ioo.2]⟩
       have ht₀_Icc : t₀ ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht₀_Ioo
@@ -1207,7 +1090,7 @@ theorem satisfiesConditionB_cyclicShift
     rcases lt_trichotomy t₀' (1 - τ) with ht_lt | ht_eq | ht_gt
     · -- No-wrap case.
       have ht_Ioo_nw : t₀' ∈ Ioo (0 : ℝ) (1 - τ) := ⟨ht_Ioo.1, ht_lt⟩
-      set t₀ := t₀' + τ with ht₀_def
+      set t₀ := t₀' + τ
       have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
         ⟨by linarith [hτ.1, ht_Ioo.1], by linarith [ht_lt]⟩
       have ht₀_Icc : t₀ ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht₀_Ioo
@@ -1237,7 +1120,7 @@ theorem satisfiesConditionB_cyclicShift
       exact h_basepoint_laurentB s hs h_s_eq ht_Ioo
     · -- Wrap case.
       have ht_Ioo_w : t₀' ∈ Ioo (1 - τ) 1 := ⟨ht_gt, ht_Ioo.2⟩
-      set t₀ := t₀' + τ - 1 with ht₀_def
+      set t₀ := t₀' + τ - 1
       have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
         ⟨by linarith [ht_gt], by linarith [hτ.2, ht_Ioo.2]⟩
       have ht₀_Icc : t₀ ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht₀_Ioo

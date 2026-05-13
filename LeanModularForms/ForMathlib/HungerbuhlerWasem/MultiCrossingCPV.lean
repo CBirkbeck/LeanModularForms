@@ -366,9 +366,8 @@ private theorem cpv_tendsto_along_sorted
           refine hγ_int_01.mono_set ?_
           rw [Set.uIcc_of_le hαβ, Set.uIcc_of_le zero_le_one]
           exact Set.Icc_subset_Icc hα_ge_0 hβ_le_1
-        have h_cont_γf : Continuous γf := by
-          show Continuous (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
-          exact γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+        have h_cont_γf : Continuous γf :=
+          γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
         have h_sm_γf : Measurable γf := h_cont_γf.measurable
         have h_sm_norm : Measurable (fun u => ‖γf u - s‖) :=
           ((h_sm_γf.sub measurable_const).norm)
@@ -650,9 +649,8 @@ private theorem cpv_tendsto_along_sorted_corner
           refine hγ_int_01.mono_set ?_
           rw [Set.uIcc_of_le hαβ, Set.uIcc_of_le zero_le_one]
           exact Set.Icc_subset_Icc hα_ge_0 hβ_le_1
-        have h_cont_γf : Continuous γf := by
-          show Continuous (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
-          exact γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+        have h_cont_γf : Continuous γf :=
+          γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
         have h_sm_γf : Measurable γf := h_cont_γf.measurable
         have h_sm_norm : Measurable (fun u => ‖γf u - s‖) :=
           ((h_sm_γf.sub measurable_const).norm)
@@ -745,9 +743,8 @@ theorem hasCauchyPV_inv_sub_multiCrossing
   by_cases h_empty : D.crossings = ∅
   · have h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1, γf t ≠ s :=
       fun t ht => D.avoids_of_crossings_empty h_empty t ht
-    have hγ_cont : Continuous γf := by
-      show Continuous (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
-      exact γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+    have hγ_cont : Continuous γf :=
+      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
     have h_norm_cont : ContinuousOn (fun t => ‖γf t - s‖) (Set.Icc (0 : ℝ) 1) :=
       ((hγ_cont.continuousOn).sub continuousOn_const).norm
     have h_compact : IsCompact (Set.Icc (0 : ℝ) 1) := isCompact_Icc
@@ -1238,7 +1235,7 @@ private theorem pow_inv_mul_deriv_intervalIntegrable
 /-- **Cutoff integrand bounded by `‖c‖ / ε^k · ‖γ'‖`**, integrable on `[a, b]`. -/
 private theorem cpvIntegrand_higherOrder_intervalIntegrable
     (γ : ClosedPwC1Immersion x) {s : ℂ} {a b : ℝ}
-    (c : ℂ) (k : ℕ) (hk_pos : 1 ≤ k)
+    (c : ℂ) (k : ℕ) (_hk_pos : 1 ≤ k)
     {ε : ℝ} (hε_pos : 0 < ε)
     (hab : a ≤ b) (h_in_Icc : Set.Icc a b ⊆ Set.Icc (0 : ℝ) 1) :
     IntervalIntegrable
@@ -1834,7 +1831,7 @@ private theorem perCrossing_higherOrder_window_integral_tendsto
       h_FTC_left, h_FTC_right]
     ring
   -- Conclude Tendsto.
-  show Tendsto _ (𝓝[>] (0 : ℝ))
+  change Tendsto _ (𝓝[>] (0 : ℝ))
     (𝓝 (c * (antiderivPow s k (f (t_i + r)) - antiderivPow s k (f (t_i - r)))))
   refine Tendsto.congr' h_eventually_eq.symm ?_
   have h_const_part : Tendsto (fun _ : ℝ =>
@@ -2316,7 +2313,7 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder
     -- HasCauchyPVOn from avoids: limit = contour integral = 0.
     have h_contour : γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
         (fun z => c / (z - s) ^ k) = 0 := by
-      show ∫ t in (0 : ℝ)..1,
+      change ∫ t in (0 : ℝ)..1,
           (fun z => c / (z - s) ^ k)
             (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
           deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = 0
@@ -3353,7 +3350,7 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
     rw [← h_split2, ← h_split1, h_mid_zero, add_zero, h_left_eq, h_right_eq,
       h_FTC_left, h_FTC_right]
     ring
-  show Tendsto _ (𝓝[>] (0 : ℝ))
+  change Tendsto _ (𝓝[>] (0 : ℝ))
     (𝓝 (c * (antiderivPow s k (f (t_i + r)) - antiderivPow s k (f (t_i - r)))))
   refine Tendsto.congr' h_eventually_eq.symm ?_
   have h_const_part : Tendsto (fun _ : ℝ =>
@@ -3520,7 +3517,7 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
     have h_closed : γf 0 = γf 1 := closed_immersion_extend_zero_eq_one γ
     have h_contour : γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
         (fun z => c / (z - s) ^ k) = 0 := by
-      show ∫ t in (0 : ℝ)..1,
+      change ∫ t in (0 : ℝ)..1,
           (fun z => c / (z - s) ^ k)
             (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
           deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = 0
@@ -4899,7 +4896,6 @@ multi-crossing **simple-pole** CPV existence
 admitting **BOTH multi-crossings AND corner crossings** with the per-pole
 simple-pole CPV existence hypothesis auto-discharged. -/
 
-set_option maxHeartbeats 1600000 in
 /-- **HW3.3 — Corner-friendly clean spec form (T-BR-Y11c).**
 
 The clean version of `residueTheorem_crossing_paper_faithful` admitting
@@ -5074,14 +5070,14 @@ theorem residueTheorem_crossing_paper_faithful_clean
         have h_L_eq := deriv_limit_eq_at_off_partition γ ht_Ioo h_part
         have hL_plus_unfold : L_plus t =
             deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t := by
-          show (if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+          change (if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
             Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part)
           else
             deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) = _
           rw [dif_neg h_part]
         have hL_minus_unfold : L_minus t =
             deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t := by
-          show (if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+          change (if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
             Classical.choose (γ.toPwC1Immersion.left_deriv_limit t h_part)
           else
             deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) = _
