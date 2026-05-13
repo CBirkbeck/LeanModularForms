@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.LaurentExtraction
-import LeanModularForms.ForMathlib.HW33HigherOrderAvoidance
 import LeanModularForms.ForMathlib.HigherOrderAssembly
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
