@@ -98,10 +98,9 @@ private lemma mero_neg_inv_fwd (g : ℂ → ℂ) (p : ℂ) (hp : p ≠ 0)
 private lemma mero_neg_inv_bwd (g : ℂ → ℂ) (p : ℂ) (hp : p ≠ 0)
     (hgφ : MeromorphicAt (fun z => g (-z⁻¹)) p) :
     MeromorphicAt g (-p⁻¹) := by
-  have hp_inv_ne : p⁻¹ ≠ 0 := inv_ne_zero hp
   change MeromorphicAt ((g ∘ Neg.neg) ∘ Inv.inv) p at hgφ
   rw [show p = p⁻¹⁻¹ from (inv_inv p).symm] at hgφ
-  have s1 := (hgφ.comp_analyticAt (analyticAt_inv hp_inv_ne)).congr (by
+  have s1 := (hgφ.comp_analyticAt (analyticAt_inv (inv_ne_zero hp))).congr (by
     filter_upwards with z
     change g (-((z⁻¹)⁻¹)) = g (-z)
     rw [inv_inv])
