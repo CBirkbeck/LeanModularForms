@@ -6644,6 +6644,39 @@ private theorem T_p_lower_mul_T_p_upper_smul_eq_shift_smul
     ring
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM M_∞-tile Möbius equivalence**: `T_p_lower · M_∞`
+acts on `ℍ` the same as `mapGL ℝ (M_infty_Gamma1_factor) ∈ Γ₁(N)`.
+
+Composes the upper-tile Möbius equivalence at `b = 0` with the
+matrix factorization
+`glMap M_∞ = glMap T_p_upper(0) · mapGL M_infty_Gamma1_factor`. -/
+private theorem T_p_lower_mul_M_infty_smul_eq_M_infty_Gamma1_factor_smul
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (τ : ℍ) :
+    ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) *
+      (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)) • τ =
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+      (M_infty_Gamma1_factor N p hpN 0) : GL (Fin 2) ℝ) • τ := by
+  -- glMap M_∞ = glMap T_p_upper(0) · mapGL M_infty_Gamma1_factor
+  have h_M_infty_eq : (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
+      (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (M_infty_Gamma1_factor N p hpN 0)) := by
+    rw [← glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1 N p hp hpN 0,
+      mul_inv_cancel_left]
+  rw [h_M_infty_eq, ← mul_assoc, mul_smul]
+  -- (T_p_lower · T_p_upper(0)) • (mapGL M_infty_Gamma1_factor • τ)
+  -- = shift(0) • (mapGL M_infty_Gamma1_factor • τ) [by tile equivalence]
+  rw [T_p_lower_mul_T_p_upper_smul_eq_shift_smul p hp 0]
+  -- shift(0) = id on ℍ
+  show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc ((0 : ℕ) : ℤ))
+    : GL (Fin 2) ℝ) • _ = _
+  rw [show shiftSL_loc ((0 : ℕ) : ℤ) = (1 : SL(2, ℤ)) from by
+    apply Subtype.ext; ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [shiftSL_loc, Matrix.of_apply, Nat.cast_zero]]
+  simp [MonoidHom.map_one, one_smul]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
