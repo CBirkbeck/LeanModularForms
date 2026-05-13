@@ -506,7 +506,7 @@ theorem residueSimplePole_eq_of_decomposition (f : ℂ → ℂ) (z₀ c : ℂ) (
   unfold residueSimplePole
   apply Tendsto.limUnder_eq
   have h_sub : Tendsto (fun z => z - z₀) (𝓝[≠] z₀) (𝓝 0) := by
-    rw [show (0 : ℂ) = z₀ - z₀ from (sub_self z₀).symm]
+    rw [← sub_self z₀]
     exact tendsto_nhdsWithin_of_tendsto_nhds
       (continuous_id.sub continuous_const).continuousAt.tendsto
   have h_g : Tendsto g (𝓝[≠] z₀) (𝓝 (g z₀)) :=
@@ -671,7 +671,7 @@ lemma cpv_eq_of_cancel_and_exists
   have h_f_tendsto : Tendsto
       (fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
       (𝓝[>] 0) (𝓝 L_res) := by
-    rw [h_eq, show L_res = 0 + L_res from (zero_add _).symm]
+    rw [h_eq, ← zero_add L_res]
     exact hCancel.add hL_res
   simp only [cauchyPrincipalValueOn]
   rw [h_f_tendsto.limUnder_eq, hL_res.limUnder_eq]
@@ -710,11 +710,8 @@ theorem generalizedResidueTheorem_higher_order_tendsto
          (fun z => ∑ s ∈ S0, residueAt f s / (z - s)) γ.toFun ε t)) := by
     ext ε
     ring
-  rw [h_eq, show (2 * Real.pi * I * ∑ s ∈ S0,
-      generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s) =
-    0 + (2 * Real.pi * I * ∑ s ∈ S0,
-      generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s)
-    from (zero_add _).symm]
+  rw [h_eq, ← zero_add (2 * Real.pi * I * ∑ s ∈ S0,
+      generalizedWindingNumber' γ.toFun γ.a γ.b s * residueAt f s)]
   exact hHigherOrderCancel.add hPV_res_tendsto
 
 end
