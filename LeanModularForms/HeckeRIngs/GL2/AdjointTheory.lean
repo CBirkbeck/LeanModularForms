@@ -7142,6 +7142,74 @@ private theorem peterssonInner_RHS_M_infty_residual_after_sigma_p
   rw [peterssonInner_M_infty_iUnion_eq_sigma_p_slash (N := N) p hp hpN,
     ← coe_diamondOp_cusp_eq_slash_sigma_p p hp hpN g]
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **iUnion-level inverse σ_p Q-permutation**: `T_p_lower • F_{Γ_1(N)} =
+mapGL σ_p⁻¹ • (M_∞ • F_{Γ_1(N)})`.
+
+Inverse companion to `M_infty_iUnion_eq_mapGL_sigma_p_smul_T_p_lower_iUnion`.
+Concretely, `⋃_q T_p_lower • (q.out⁻¹ • fd) = mapGL σ_p⁻¹ • ⋃_q M_∞ •
+(q.out⁻¹ • fd)`.
+
+This is the iUnion-level statement that σ_p⁻¹ is the explicit matrix
+bridge from the M_∞-side iUnion tile to the T_p_lower-side iUnion tile,
+directly mirroring the forward direction. -/
+private theorem T_p_lower_iUnion_eq_mapGL_sigma_p_inv_smul_M_infty_iUnion
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set ℍ))) =
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN)⁻¹ : GL (Fin 2) ℝ) •
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) := by
+  rw [Set.smul_set_iUnion]
+  refine Set.iUnion_congr fun q => ?_
+  rw [mapGL_sigma_p_inv_smul_M_infty_smul_set_eq_T_p_lower_smul (N := N) p hp hpN]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **peterssonInner-level inverse σ_p Q-permutation**: integrals over the
+T_p_lower-side iUnion tile equal integrals over the M_∞-side iUnion tile,
+with both slot forms slashed by `mapGL σ_p⁻¹`.
+
+```
+pet (⋃_q T_p_lower • q.out⁻¹ • fd) F G
+  = pet (⋃_q M_∞ • q.out⁻¹ • fd) (F ∣ mapGL σ_p⁻¹) (G ∣ mapGL σ_p⁻¹)
+```
+
+Inverse companion to `peterssonInner_M_infty_iUnion_eq_sigma_p_slash`.
+
+**Composition**:
+* `T_p_lower_iUnion_eq_mapGL_sigma_p_inv_smul_M_infty_iUnion` (geometric)
+* `peterssonInner_mapGL_smul_eq_slash` (analytic change of variables for
+  `σ_p⁻¹ ∈ SL(2, ℤ)`). -/
+private theorem peterssonInner_T_p_lower_iUnion_eq_sigma_p_inv_slash
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (F G : ℍ → ℂ) :
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      F G =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN)⁻¹ : GL (Fin 2) ℝ))
+      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN)⁻¹ : GL (Fin 2) ℝ)) := by
+  rw [T_p_lower_iUnion_eq_mapGL_sigma_p_inv_smul_M_infty_iUnion (N := N) p hp hpN]
+  exact peterssonInner_mapGL_smul_eq_slash _ _ F G
+
 /-- **T205-d-SYMM SL(2,ℤ) tile family**: the (p+1) SL(2,ℤ) elements
 that index the per-tile decomposition of `T_p_lower • Hecke_FD`. -/
 private noncomputable def T_p_lower_tile_family
