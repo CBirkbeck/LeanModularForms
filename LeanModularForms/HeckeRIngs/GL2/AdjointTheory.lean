@@ -7103,6 +7103,45 @@ private theorem peterssonInner_LHS_M_infty_residual_after_sigma_p
   rw [peterssonInner_M_infty_iUnion_eq_sigma_p_slash (N := N) p hp hpN,
     slash_sigma_p_diamond_inv_cusp_eq p hp hpN f]
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **σ_p Q-permutation applied to RHS of TileFormIntegralResidual_M_infty**:
+
+```
+pet (⋃_q M_∞ • q.out⁻¹ • fd) F g
+  = pet (⋃_q T_p_lower • q.out⁻¹ • fd) (F ∣ σ_p) (⟨u⟩g)
+```
+
+After applying `peterssonInner_M_infty_iUnion_eq_sigma_p_slash`, slot 2
+simplifies via `coe_diamondOp_cusp_eq_slash_sigma_p` (since
+`g ∣ σ_p = ⟨u⟩g` for `g ∈ S_k(Γ_1(N))`).
+
+**Direct consumer**: this is the RHS-side σ_p reduction for
+`TileFormIntegralResidual_M_infty`. Combined with
+`peterssonInner_LHS_M_infty_residual_after_sigma_p`, the residual now
+lives entirely on the T_p_lower-iUnion tile with slot 2 = ⟨u⟩g on the
+RHS and = (slot 2 ∣ σ_p) on the LHS. -/
+private theorem peterssonInner_RHS_M_infty_residual_after_sigma_p
+    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (F : ℍ → ℂ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      F ⇑g =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ))
+      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) := by
+  rw [peterssonInner_M_infty_iUnion_eq_sigma_p_slash (N := N) p hp hpN,
+    ← coe_diamondOp_cusp_eq_slash_sigma_p p hp hpN g]
+
 /-- **T205-d-SYMM SL(2,ℤ) tile family**: the (p+1) SL(2,ℤ) elements
 that index the per-tile decomposition of `T_p_lower • Hecke_FD`. -/
 private noncomputable def T_p_lower_tile_family
