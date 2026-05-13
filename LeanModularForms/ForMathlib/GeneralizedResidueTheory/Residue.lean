@@ -96,11 +96,9 @@ private lemma deriv_bounded_on_consecutive_pair
       ‖deriv γ.toFun t‖ ≤ M := by
   have h_cont : ContinuousOn (deriv γ.toFun) (Ioo p q) := by
     intro s hs
-    have hp_ge_a := (γ.toPiecewiseC1Curve.partition_subset hp).1
-    have hq_le_b := (γ.toPiecewiseC1Curve.partition_subset hq).2
     exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition s
-      ⟨lt_of_le_of_lt hp_ge_a hs.1,
-       lt_of_lt_of_le hs.2 hq_le_b⟩
+      ⟨lt_of_le_of_lt (γ.toPiecewiseC1Curve.partition_subset hp).1 hs.1,
+       lt_of_lt_of_le hs.2 (γ.toPiecewiseC1Curve.partition_subset hq).2⟩
       (fun hs_P => h_consec s hs_P ⟨hs.1, hs.2⟩))
       |>.continuousWithinAt
   have hp_lt_b : p < γ.b :=
@@ -183,8 +181,7 @@ lemma piecewiseC1Immersion_deriv_bounded
         (Finset.notMem_empty pq hpq).elim⟩
     | insert pq S' _ ih =>
       obtain ⟨M_S', hM_S'⟩ := ih (Finset.insert_subset_iff.mp hS).2
-      have hpq_in := (Finset.insert_subset_iff.mp hS).1
-      have hpq' := Finset.mem_filter.mp hpq_in
+      have hpq' := Finset.mem_filter.mp (Finset.insert_subset_iff.mp hS).1
       have hpq_prod := Finset.mem_product.mp hpq'.1
       obtain ⟨M_pq, hM_pq⟩ := deriv_bounded_on_consecutive_pair γ
         hpq_prod.1 hpq_prod.2 hpq'.2.1 hpq'.2.2
@@ -283,8 +280,7 @@ theorem residue_simple_pole_eq_laurent
       exact hz
     filter_upwards [hf, h_mem] with z hz hz_ne
     rw [hz]
-    have h_ne : z - z₀ ≠ 0 := sub_ne_zero.mpr hz_ne
-    field_simp [h_ne]
+    field_simp [sub_ne_zero.mpr hz_ne]
   have h_tendsto : Tendsto (fun z => c + (z - z₀) * g z) (𝓝[≠] z₀) (𝓝 c) := by
     have h_sub : Tendsto (fun z => z - z₀) (𝓝[≠] z₀) (𝓝 0) := by
       have : Tendsto (fun z => z - z₀) (𝓝 z₀) (𝓝 0) := by
@@ -341,10 +337,9 @@ private lemma differentiableAt_singular_sum
       (∑ s ∈ S0, fun v => residueSimplePole f s / (v - s)) w := by
     apply DifferentiableAt.sum
     intro s hs'
-    have hw_ne_s : w ≠ s := fun heq => hw_not_in_S0 (heq ▸ Finset.mem_coe.mpr hs')
     exact (differentiableAt_const _).div
       (differentiableAt_id.sub (differentiableAt_const s))
-      (sub_ne_zero.mpr hw_ne_s)
+      (sub_ne_zero.mpr fun heq => hw_not_in_S0 (heq ▸ Finset.mem_coe.mpr hs'))
   convert hh using 1
   ext v
   simp only [Finset.sum_apply]
@@ -420,12 +415,11 @@ private lemma diff_punctured_of_diff_off_poles
     have hδ_pos : 0 < δ := (Finset.lt_inf'_iff h_ne).mpr fun s hs =>
       norm_pos_iff.mpr (sub_ne_zero.mpr (Finset.mem_filter.mp hs).2)
     refine ⟨min ε₁ δ, lt_min hε₁_pos hδ_pos, fun w hw hw_ne => ?_⟩
-    have hw_ne_z : w ≠ z := Set.mem_compl_singleton_iff.mp hw_ne
     apply differentiableAt_g_off_poles U hU S0 f hf w
       (hε₁_subset (lt_of_lt_of_le hw (min_le_left _ _)))
     intro hw_in_S0
     rcases eq_or_ne w z with rfl | hw_eq
-    · exact hw_ne_z rfl
+    · exact Set.mem_compl_singleton_iff.mp hw_ne rfl
     · linarith [Finset.inf'_le (fun s => ‖s - z‖) (show w ∈ S0.filter (· ≠ z) from
         Finset.mem_filter.mpr ⟨Finset.mem_coe.mp hw_in_S0, hw_eq⟩),
         (dist_eq_norm w z ▸ show dist w z < δ from
@@ -444,12 +438,9 @@ lemma simple_poles_decomposition
   refine ⟨fun z hz => ?_, fun z ⟨_, _⟩ => by ring⟩
   by_cases hz_S0 : z ∈ (S0 : Set ℂ)
   · have hs : z ∈ S0 := Finset.mem_coe.mp hz_S0
-    have hg_cont_at_z : ContinuousAt g z :=
-      continuousAt_g_at_pole S0 f z hs (hf_ext z hs)
-    have hg_diff_punctured : ∀ᶠ w in 𝓝[≠] z, DifferentiableAt ℂ g w :=
-      diff_punctured_of_diff_off_poles U hU S0 f hf z hz
     exact (Complex.analyticAt_of_differentiable_on_punctured_nhds_of_continuousAt
-      hg_diff_punctured hg_cont_at_z).differentiableAt.differentiableWithinAt
+      (diff_punctured_of_diff_off_poles U hU S0 f hf z hz)
+      (continuousAt_g_at_pole S0 f z hs (hf_ext z hs))).differentiableAt.differentiableWithinAt
   · exact (differentiableAt_g_off_poles U hU S0 f hf z hz hz_S0).differentiableWithinAt
 
 private lemma holomorphic_closed_integral_zero
@@ -476,7 +467,7 @@ private lemma holomorphic_closed_integral_zero
       MeasureTheory.volume γ.a γ.b :=
     (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
       (Set.uIcc_of_le (le_of_lt γ.hab) ▸
-        hg_diff.continuousOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht))
+        hg_diff.continuousOn.comp γ.continuous_toFun hγ_in_U)
   rw [MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
     (F ∘ γ.toFun) _ (le_of_lt γ.hab) h_countable h_Fγ_cont h_deriv' h_int,
     Function.comp_apply, Function.comp_apply, hγ_closed, sub_self]
@@ -502,7 +493,7 @@ private lemma singular_sum_eq_winding_residues
           fun t ht => sub_ne_zero.mpr (hγ_avoids s hs t ht)))]
   exact Finset.sum_congr rfl fun s hs =>
     integral_singular_term_eq_winding_times_coeff γ s
-      (residueSimplePole f s) (fun t ht => hγ_avoids s hs t ht)
+      (residueSimplePole f s) (hγ_avoids s hs)
 
 /-- Classical residue theorem: when γ avoids all poles,
 the contour integral equals `2πi · Σ winding · residue`. -/
@@ -546,7 +537,7 @@ theorem integral_eq_sum_residues_of_avoids
       MeasureTheory.volume γ.a γ.b :=
     (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
       (Set.uIcc_of_le (le_of_lt γ.hab) ▸
-        hg_diff.continuousOn.comp γ.continuous_toFun (fun t ht => hγ_in_U t ht))
+        hg_diff.continuousOn.comp γ.continuous_toFun hγ_in_U)
   rw [intervalIntegral.integral_add
       (singular_sum_intervalIntegrable f S0 γ hγ_avoids hγ'_bdd) h_g_int,
     holomorphic_closed_integral_zero U hU hU_convex g hg_diff γ hγ_closed hγ_in_U hγ'_bdd,
@@ -675,7 +666,7 @@ lemma cauchyPrincipalValueOn_avoids
     apply limUnder_eventually_eq_const
     rw [Filter.eventually_iff_exists_mem]
     exact ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, fun ε hε =>
-      intervalIntegral.integral_congr fun t ht => hδ ε hε t ht⟩
+      intervalIntegral.integral_congr (hδ ε hε)⟩
 
 /-- PV of 1/z equals 2πi times winding number. -/
 theorem pv_integral_inverse
