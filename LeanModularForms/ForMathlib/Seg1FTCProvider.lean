@@ -235,9 +235,7 @@ private lemma fdBoundary_sub_eq_seg1_h₃ (H : ℝ) (z₀ : ℂ) {t : ℝ}
 
 private lemma seg1_h₃_continuous (H : ℝ) (z₀ : ℂ) : Continuous (seg1_h₃ H z₀) := by
   unfold seg1_h₃
-  refine Continuous.add continuous_const ?_
-  refine Continuous.mul ?_ continuous_const
-  exact Complex.continuous_ofReal.comp (by fun_prop)
+  fun_prop
 
 private lemma hasDerivAt_seg1_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
     HasDerivAt (seg1_h₃ H z₀) ((seg1Speed H : ℂ) * I) t := by
@@ -286,8 +284,7 @@ private lemma fdBoundary_sub_eq_seg1_h₅ (H : ℝ) (z₀ : ℂ) {t : ℝ} (ht :
 
 private lemma seg1_h₅_continuous (H : ℝ) (z₀ : ℂ) : Continuous (seg1_h₅ H z₀) := by
   unfold seg1_h₅
-  refine Continuous.add ?_ continuous_const
-  exact Complex.continuous_ofReal.comp (by fun_prop)
+  fun_prop
 
 private lemma hasDerivAt_seg1_h₅ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
     HasDerivAt (seg1_h₅ H z₀) (5 : ℂ) t := by
@@ -670,8 +667,8 @@ def arcFTCHyp_seg1 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     -- Transfer to fdBoundaryFun-based integrand
     have h_t₀_pos : 0 < seg1T₀ H z₀.im := seg1T₀_pos hH hc_hi
     have h_t₀_lt : seg1T₀ H z₀.im < 1/5 := seg1T₀_lt_one_fifth hH hc_lo
-    rw [transfer_integral z₀ (by linarith) (le_refl 0) (by linarith) hγ,
-        transfer_integral z₀ (by linarith) (by linarith) (le_refl 1) hγ]
+    rw [transfer_integral z₀ (by linarith) le_rfl (by linarith) hγ,
+        transfer_integral z₀ (by linarith) (by linarith) le_rfl hγ]
     exact fdBoundary_ftc_telescope_seg1 hH hz_re hc_lo hc_hi h_lin_pos
       h_lin_lt_t₀ h_lin_lt_one_fifth_sub
   hint_left := by
@@ -690,7 +687,7 @@ def arcFTCHyp_seg1 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       exact h_eps_top
     have h_t₀_pos : 0 < seg1T₀ H z₀.im := seg1T₀_pos hH hc_hi
     have h_t₀_lt : seg1T₀ H z₀.im < 1/5 := seg1T₀_lt_one_fifth hH hc_lo
-    apply transfer_integrability z₀ (by linarith) (le_refl 0) (by linarith) hγ
+    apply transfer_integrability z₀ (by linarith) le_rfl (by linarith) hγ
     have h_left := seg1_left_ftc hH hz_re h_lin_pos h_lin_lt_t₀
     exact h_left.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       ((ae_eq_seg1_h₀ H z₀ (by linarith) (by linarith)).mono (fun t ht hm => (ht hm).symm)))
@@ -715,7 +712,7 @@ def arcFTCHyp_seg1 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       exact h_eps_width
     have h_t₀_pos : 0 < seg1T₀ H z₀.im := seg1T₀_pos hH hc_hi
     have h_t₀_lt : seg1T₀ H z₀.im < 1/5 := seg1T₀_lt_one_fifth hH hc_lo
-    apply transfer_integrability z₀ (by linarith) (by linarith) (le_refl 1) hγ
+    apply transfer_integrability z₀ (by linarith) (by linarith) le_rfl hγ
     -- Need integrability on [t₀+δ, 1]; combine seg1_right + arc + seg4 + seg5
     have h_right := seg1_right_ftc hH hz_re h_lin_pos h_lin_lt_one_fifth_sub
     have h_arc := seg1_arc_ftc hz_re hc_lo
