@@ -6516,6 +6516,59 @@ private theorem peterssonInner_Hecke_FD_T_p_lower_residual_iff
         (N := N) p hp hpN D g' g]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM Möbius scalar invariance**: for `α, β ∈ GL(2,ℝ)⁺` with
+`α.val = c • β.val` for some real `c ≠ 0`, the Möbius actions on `ℍ` agree:
+`α • τ = β • τ`.
+
+Mathematical content: scalars are in the kernel of `GL+(2,ℝ) → PGL+(2,ℝ)`,
+which is the group acting faithfully on `ℍ`. -/
+private lemma UpperHalfPlane_smul_eq_of_matrix_smul_eq
+    (α β : GL (Fin 2) ℝ) (hα : 0 < α.det.val) (hβ : 0 < β.det.val)
+    (c : ℝ) (hc : c ≠ 0)
+    (hMat : (α : Matrix (Fin 2) (Fin 2) ℝ) = c • (β : Matrix (Fin 2) (Fin 2) ℝ))
+    (τ : ℍ) :
+    α • τ = β • τ := by
+  rw [UpperHalfPlane.ext_iff,
+      UpperHalfPlane.coe_smul_of_det_pos hα,
+      UpperHalfPlane.coe_smul_of_det_pos hβ]
+  simp only [UpperHalfPlane.num, UpperHalfPlane.denom]
+  have h00 : (α : Matrix (Fin 2) (Fin 2) ℝ) 0 0 =
+      c * (β : Matrix (Fin 2) (Fin 2) ℝ) 0 0 := by
+    rw [hMat, Matrix.smul_apply, smul_eq_mul]
+  have h01 : (α : Matrix (Fin 2) (Fin 2) ℝ) 0 1 =
+      c * (β : Matrix (Fin 2) (Fin 2) ℝ) 0 1 := by
+    rw [hMat, Matrix.smul_apply, smul_eq_mul]
+  have h10 : (α : Matrix (Fin 2) (Fin 2) ℝ) 1 0 =
+      c * (β : Matrix (Fin 2) (Fin 2) ℝ) 1 0 := by
+    rw [hMat, Matrix.smul_apply, smul_eq_mul]
+  have h11 : (α : Matrix (Fin 2) (Fin 2) ℝ) 1 1 =
+      c * (β : Matrix (Fin 2) (Fin 2) ℝ) 1 1 := by
+    rw [hMat, Matrix.smul_apply, smul_eq_mul]
+  rw [show ((α : Matrix (Fin 2) (Fin 2) ℝ) 0 0 : ℂ) =
+        (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 0 0 : ℂ) from by
+    exact_mod_cast h00,
+    show ((α : Matrix (Fin 2) (Fin 2) ℝ) 0 1 : ℂ) =
+        (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 0 1 : ℂ) from by
+      exact_mod_cast h01,
+    show ((α : Matrix (Fin 2) (Fin 2) ℝ) 1 0 : ℂ) =
+        (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 1 0 : ℂ) from by
+      exact_mod_cast h10,
+    show ((α : Matrix (Fin 2) (Fin 2) ℝ) 1 1 : ℂ) =
+        (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 1 1 : ℂ) from by
+      exact_mod_cast h11]
+  have hc_ne_zero : (c : ℂ) ≠ 0 := by exact_mod_cast hc
+  -- num/denom both scale by c, ratio unchanged
+  have h_num : (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 0 0 : ℂ) * (τ : ℂ) +
+      (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 0 1 : ℂ) =
+      (c : ℂ) * (((β : Matrix (Fin 2) (Fin 2) ℝ) 0 0 : ℂ) * (τ : ℂ) +
+        ((β : Matrix (Fin 2) (Fin 2) ℝ) 0 1 : ℂ)) := by ring
+  have h_den : (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 1 0 : ℂ) * (τ : ℂ) +
+      (c : ℂ) * ((β : Matrix (Fin 2) (Fin 2) ℝ) 1 1 : ℂ) =
+      (c : ℂ) * (((β : Matrix (Fin 2) (Fin 2) ℝ) 1 0 : ℂ) * (τ : ℂ) +
+        ((β : Matrix (Fin 2) (Fin 2) ℝ) 1 1 : ℂ)) := by ring
+  rw [h_num, h_den, mul_div_mul_left _ _ hc_ne_zero]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
