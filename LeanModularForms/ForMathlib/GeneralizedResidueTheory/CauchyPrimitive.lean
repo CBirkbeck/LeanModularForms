@@ -62,7 +62,7 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
     continuous_ofReal.continuousOn
   have hv_cont : ContinuousOn v (Set.uIcc 0 1) := by
     change ContinuousOn (f ∘ γ) (Set.uIcc 0 1)
-    apply ContinuousOn.comp hf.continuousOn hγ_cont.continuousOn
+    apply hf.continuousOn.comp hγ_cont.continuousOn
     intro t ht
     rw [Set.uIcc_of_le zero_le_one] at ht
     exact h_seg t ht
@@ -89,9 +89,8 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
     simp only [min_eq_left, max_eq_right,
       zero_le_one] at ht
     have ht' : t ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht
-    have h_in_S : γ t ∈ S := h_seg t ht'
     have h_diff_at : DifferentiableAt ℂ f (γ t) :=
-      hf.differentiableAt (hS_open.mem_nhds h_in_S)
+      hf.differentiableAt (hS_open.mem_nhds (h_seg t ht'))
     have h_chain : HasDerivAt (f ∘ γ)
         ((z - c) • deriv f (γ t)) t :=
       h_diff_at.hasDerivAt.scomp t (hγ_deriv t)
@@ -99,7 +98,7 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
     convert h_chain using 1
     ring
   have hu'_int : IntervalIntegrable u' MeasureTheory.volume 0 1 :=
-    ContinuousOn.intervalIntegrable continuousOn_const
+    continuousOn_const.intervalIntegrable
   have hv'_int : IntervalIntegrable v' MeasureTheory.volume 0 1 := by
     apply ContinuousOn.intervalIntegrable
     rw [Set.uIcc_of_le zero_le_one]
@@ -178,10 +177,7 @@ private lemma hasDerivAt_segmentIntegrand {f : ℂ → ℂ}
     simp only [smul_eq_mul, mul_one] at h1
     convert (hasDerivAt_const z c).add h1 using 1
     ring
-  have hf_at :=
-    (hf.differentiableAt (hS_open.mem_nhds hpt)).hasDerivAt
-  have hcomp := hf_at.comp z hg
-  convert hcomp using 1
+  convert (hf.differentiableAt (hS_open.mem_nhds hpt)).hasDerivAt.comp z hg using 1
   simp only [RCLike.real_smul_eq_coe_mul, mul_comm]
   rfl
 
@@ -223,8 +219,6 @@ private lemma segmentIntegrand_lipschitzOnWith {f : ℂ → ℂ}
       obtain ⟨s, hs, hp_eq⟩ :=
         segment_eq_image' ℝ
           (c + t • (x - c)) (c + t • (y - c)) ▸ hp
-      have hw' : x + s • (y - x) ∈ Metric.ball z ε :=
-        (convex_ball z ε).add_smul_sub_mem hx hy hs
       have hp_form :
           p = c + t • ((x + s • (y - x)) - c) := by
         rw [← hp_eq]
@@ -232,7 +226,7 @@ private lemma segmentIntegrand_lipschitzOnWith {f : ℂ → ℂ}
         simp only [smul_comm s t]
         module
       rw [hp_form]
-      exact hM_bound _ hw'
+      exact hM_bound _ ((convex_ball z ε).add_smul_sub_mem hx hy hs)
     exact Convex.norm_image_sub_le_of_norm_deriv_le
       h_diff_at h_deriv_bound hconv_seg
       (right_mem_segment ℝ _ _) (left_mem_segment ℝ _ _)
@@ -273,11 +267,9 @@ private lemma hasDerivAt_segmentIntegral_aux {f : ℂ → ℂ}
     fun t ht => segment_subset_convex hS_convex hc hz t ht
   let ε' := ε / 2
   have hε'_pos : 0 < ε' := by positivity
-  have hε'_lt_ε : ε' < ε := by
-    change ε / 2 < ε
-    linarith
+  have hε'_lt_ε : ε' < ε := half_lt_self hε_pos
   have hε'_ball : Metric.ball z ε' ⊆ Metric.ball z ε :=
-    Metric.ball_subset_ball (le_of_lt hε'_lt_ε)
+    Metric.ball_subset_ball hε'_lt_ε.le
   have hf'_cont : ContinuousOn (deriv f) S :=
     (hf.contDiffOn hS_open).continuousOn_deriv_of_isOpen
       hS_open le_rfl
@@ -294,8 +286,7 @@ private lemma hasDerivAt_segmentIntegral_aux {f : ℂ → ℂ}
     let K := segmentMap ''
       (Metric.closedBall z ε' ×ˢ Icc (0 : ℝ) 1)
     have hK_compact : IsCompact K :=
-      (IsCompact.prod (isCompact_closedBall z ε')
-        isCompact_Icc).image hcont
+      ((isCompact_closedBall z ε').prod isCompact_Icc).image hcont
     have hclosedBall_in_S :
         Metric.closedBall z ε' ⊆ S :=
       (Metric.closedBall_subset_ball hε'_lt_ε).trans hε_ball
@@ -386,17 +377,14 @@ private lemma hasDerivAt_segmentIntegral {f : ℂ → ℂ}
     ∫ t in (0 : ℝ)..1, t * deriv f (c + t • (w - c))
   have h_key : H' z * (z - c) = f z - H z := by
     simp only [H, H']
-    have h_ibp :=
-      integral_t_mul_deriv_eq hS_open hf h_seg_z
     rw [show (∫ (t : ℝ) in (0 : ℝ)..1, ↑t * deriv f (c + t • (z - c))) * (z - c) =
       ∫ (t : ℝ) in (0 : ℝ)..1, ↑t * deriv f (c + t • (z - c)) * (z - c) from
       (intervalIntegral.integral_mul_const (𝕜 := ℂ) _ _).symm]
-    convert h_ibp using 2
+    convert integral_t_mul_deriv_eq hS_open hf h_seg_z using 2
     ext t
     ring
   suffices hH : HasDerivAt H (H' z) z by
-    have h_prod := hH.mul h1
-    convert h_prod using 1
+    convert hH.mul h1 using 1
     simp only [mul_one]
     calc f z = (f z - H z) + H z := by ring
       _ = H' z * (z - c) + H z := by rw [← h_key]
