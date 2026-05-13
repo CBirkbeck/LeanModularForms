@@ -64,8 +64,6 @@ noncomputable section
 
 variable {x : ℂ}
 
-/-! ## Avoidance cancellation for general poles -/
-
 /-- When `gamma` avoids all points of `S`, the CPV of any function `f` equals
 its ordinary contour integral. In particular, if the contour integral is `L`,
 then `HasCauchyPVOn S f gamma L`.
@@ -94,8 +92,6 @@ theorem hCancel_of_avoids
     HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
   hCancel_of_contourIntegral_zero S _ γ hδ h_rem_zero
-
-/-! ## Holomorphic remainder cancellation -/
 
 /-- When a holomorphic function `g` agrees with the remainder on the curve
 and its contour integral vanishes, the CPV of the remainder is zero.
@@ -142,18 +138,14 @@ theorem hCancel_of_holomorphic_convex
     (h_g_int : IntervalIntegrable (PiecewiseC1Path.contourIntegrand g γ) volume 0 1) :
     HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
-  -- g integral vanishes by convex Cauchy theorem
   have hg_zero : γ.contourIntegral g = 0 :=
     γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
       hg_diff hγ_in_U h_g_int
-  -- g agrees with f - pp on the curve (curve avoids S, hence in U \ S)
   have hg_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
       g (γ t) = f (γ t) - principalPartSum S (fun s => residue f s) (γ t) :=
     fun t ht => hg_agree (γ t) ⟨hγ_in_U t ht, fun hmem =>
       hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
   exact hCancel_of_holomorphic_agree S f γ hδ g hg_zero hg_on_curve
-
-/-! ## Structural decomposition theorem -/
 
 /-- **Structural decomposition for cancellation.** If the remainder `f - pp`
 decomposes as a sum of two functions `h₁ + h₂` where each individually has
@@ -176,7 +168,6 @@ theorem hCancel_of_decomposition
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
   have h_add := hh₁.add hh₂ hI₁ hI₂
   simp only [add_zero] at h_add
-  -- The CPV of (h₁ + h₂) = CPV of (f - pp) since they agree pointwise
   have h_congr : (fun ε => ∫ t in (0 : ℝ)..1,
       cpvIntegrandOn S (fun z => f z -
         principalPartSum S (fun s => residue f s) z) γ.toPath.extend ε t) =
@@ -192,8 +183,6 @@ theorem hCancel_of_decomposition
       exact h_decomp _
   simp only [HasCauchyPVOn] at h_add ⊢
   rwa [h_congr]
-
-/-! ## Simple poles with avoidance (no convexity) -/
 
 /-- **Simple pole avoidance cancellation.** For simple poles in any open set `U`
 (not necessarily convex), when `gamma` avoids all poles, the CPV of the remainder
@@ -211,8 +200,6 @@ theorem hCancel_of_simplePoles_avoids
     HasCauchyPVOn S
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
   hCancel_of_avoids S f γ hδ h_rem_vanishes
-
-/-! ## Condition B sector analysis -/
 
 /-- The sector analysis for a single higher-order term: when the Laurent
 coefficient `a_k` satisfies the angle condition (`k * alpha in 2 pi Z`),
@@ -250,8 +237,6 @@ theorem higherOrder_sector_cancel_even_of_flat
     (h_angle : ∃ m : ℤ, (↑k : ℝ) * α = ↑m * (2 * Real.pi)) :
     SectorCurve.higherOrderFactor r α k = ↑(r⁻¹ ^ k) :=
   SectorCurve.higherOrderFactor_eq_of_angle_condition r α k h_angle
-
-/-! ## Full cancellation under conditions A'+B in convex domains -/
 
 /-- **Cancellation for simple poles in convex domains with avoidance (convenience).**
 
@@ -301,13 +286,6 @@ theorem odd_power_pv_vanishes (k : ℕ) (hk : 1 ≤ k) (hk_odd : Odd k) :
       (𝓝[>] (0 : ℝ)) (𝓝 0) :=
   SectorCurve.pv_odd_power_vanishes k hk hk_odd
 
-/-! ## Conditions A'+B discharge for simple poles (full API)
-
-For simple poles, we provide the complete chain:
-1. Conditions A'+B are automatic (from `FlatnessConditions`)
-2. The cancellation holds (from `HigherOrderAssembly`)
-3. Everything composes into a single theorem -/
-
 /-- **Full hCancel discharge for simple poles in convex domains.**
 
 This is the preferred entry point: given `f` with simple poles at `S` in a
@@ -331,20 +309,6 @@ theorem hCancel_of_simplePoles_convex_full
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
   hCancel_of_simplePoles_convex hU_convex hU_open hU_ne S hS_in_U f hf γ
     hSimplePoles hγ_in_U hγ_avoids hδ h_rem_int
-
-/-! ## Higher-order cancellation: structural gateway
-
-The following theorem provides the structural gateway for higher-order
-cancellation. It shows that `hCancel` can be discharged by providing:
-
-1. A proof that the *holomorphic part* of the remainder has vanishing CPV
-   (typically from Cauchy's theorem)
-2. A proof that each *higher-order polar term* has vanishing CPV
-   (from condition B + sector analysis)
-
-The actual sector analysis for higher-order poles (proving each term's
-CPV vanishes from the angle condition in B) involves integration over
-model curves, which is done in `SectorCurve.lean`. -/
 
 /-- **Structural gateway for higher-order cancellation.**
 
@@ -371,8 +335,6 @@ theorem hCancel_structural_gateway
       (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
   hCancel_of_decomposition S f γ h_holo r_polar h_decomp
     h_holo_cancel h_polar_cancel hI_holo hI_polar
-
-/-! ## Integration with generalizedResidueTheorem -/
 
 /-- **Fully assembled residue theorem with explicit cancellation.**
 
@@ -406,8 +368,6 @@ theorem generalizedResidueTheorem_with_hCancel
   generalizedResidueTheorem_composed S f γ hCancel
     (hPV_sing_of_avoids S f γ hδ hI) hI_cpv_rem hI_cpv_sing
 
-/-! ## Cancellation for empty pole set -/
-
 /-- When the pole set is empty, the CPV of any function equals the ordinary
 contour integral. -/
 theorem hasCauchyPVOn_empty_eq (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) :
@@ -428,8 +388,6 @@ theorem hCancel_of_empty_convex
       hf hγ_in_U h_int
   rw [← h_zero]
   exact hasCauchyPVOn_of_avoids ⟨1, one_pos, fun s hs => absurd hs (Finset.notMem_empty s)⟩
-
-/-! ## Cancellation transfer lemmas -/
 
 /-- If `HasCauchyPVOn S f gamma 0` holds for a function `f`, and `g` agrees with
 `f` pointwise, then `HasCauchyPVOn S g gamma 0`. -/
@@ -464,19 +422,6 @@ theorem hCancel_of_remainder_eq
     HasCauchyPVOn S (fun z => f₂ z - principalPartSum S c₂ z) γ 0 :=
   hCancel_congr S _ _ γ h_eq hf₁
 
-
-/-! ## Higher-order pole CPV vanishes in the avoidance case
-
-For `k ≥ 2` and a closed curve `γ` avoiding `s` (with positive margin), the CPV of
-`1/(z-s)^k` is zero. Unlike the simple-pole case (k = 1), this does NOT require
-null-homologous Cauchy or convex U: the function `1/(z-s)^k` has a single-valued
-antiderivative on `ℂ \ {s}`, so its integral over any closed loop avoiding `s`
-vanishes by FTC.
-
-This complements the existing simple-pole machinery: the simple pole contributes
-`2πi · n_γ(s) · residue`, while higher-order poles contribute `0` whenever
-the curve avoids them. -/
-
 /-- **Higher-order avoidance: contour integral vanishes.** For `k ≥ 2`, the contour
 integral of `1/(z-s)^k` along a closed `γ` avoiding `s` is zero. Follows from FTC
 applied to the antiderivative `-1/[(k-1)(z-s)^{k-1}]`, which is single-valued on
@@ -507,25 +452,16 @@ theorem hasCauchyPVOn_pow_inv_of_avoids
   have h_avoids : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s := by
     obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
     intro t ht hγt
-    have : δ ≤ ‖γ t - s‖ := hδ_bd t ht
-    rw [hγt, sub_self, norm_zero] at this
+    have hδ_norm : δ ≤ ‖γ t - s‖ := hδ_bd t ht
+    rw [hγt, sub_self, norm_zero] at hδ_norm
     linarith
-  have h_zero := γ.contourIntegral_pow_inv_eq_zero hk h_avoids h_int
   have hδ' : ∃ δ > 0, ∀ s' ∈ ({s} : Finset ℂ), ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s'‖ := by
     obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
     refine ⟨δ, hδ_pos, ?_⟩
     intro s' hs' t ht
-    rw [Finset.mem_singleton] at hs'
-    rw [hs']
+    rw [Finset.mem_singleton.mp hs']
     exact hδ_bd t ht
-  exact h_zero ▸ hasCauchyPVOn_of_avoids hδ'
-
-/-! ## Phase 3.7: Line-model F-difference for k odd vanishes
-
-For k odd ≥ 3, the line-model antiderivative values at the symmetric exit
-points `s ± (ε/‖L‖)·L` are equal. This is the symmetric cancellation of
-HW's eq. (3.4) for odd-order poles: the line PV is exactly 0 (not just in
-the limit) because `(-x)^{k-1} = x^{k-1}` for k-1 even. -/
+  exact (γ.contourIntegral_pow_inv_eq_zero hk h_avoids h_int) ▸ hasCauchyPVOn_of_avoids hδ'
 
 /-- **Line-model F-difference vanishing for k odd.** For `k` odd ≥ 2, the
 antiderivative of `1/(z-s)^k` at the two symmetric line-exit-points
@@ -545,20 +481,6 @@ theorem F_line_diff_eq_zero_of_odd
   have h1 : (s - (ε / ‖L‖ : ℝ) • L) - s = -((ε / ‖L‖ : ℝ) • L) := by ring
   have h2 : (s + (ε / ‖L‖ : ℝ) • L) - s = ((ε / ‖L‖ : ℝ) • L) := by ring
   rw [h1, h2, neg_pow, h_even.neg_one_pow, one_mul]
-
-/-! ## Phase 3.8: Combined curve F-diff → 0 for k odd transverse
-
-The MAIN COMBINED THEOREM: under HW's flatness condition and given exit-time
-functions parametrizing γ at radius ε on both sides, the curve antiderivative
-difference
-
-  F(γ(t_ε^-)) - F(γ(t_ε^+))
-
-tends to 0 as ε → 0+ for k odd transverse. Combines:
-- F-diff right (Phase 3.6 main, right side)
-- F-diff left (Phase 3.6 main, left side)
-- Line-model F-diff vanishing for k odd (Phase 3.7)
-via triangle inequality on the common line target. -/
 
 /-- **Combined curve F-difference → 0 for k odd.** Given exit-time functions
 `t_eps_plus`, `t_eps_minus` parametrizing γ at radius ε on the right and left
@@ -603,11 +525,10 @@ theorem F_curve_diff_tendsto_zero_odd
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_sum
       (Eventually.of_forall fun _ => norm_nonneg _) ?_
   filter_upwards [h_plus_radius, h_minus_radius] with ε hpr hmr
-  have h_neg_norm : ‖(-L)‖ = ‖L‖ := norm_neg L
   have h_targets_eq :
       -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_minus ε) - s‖ / ‖(-L)‖ : ℝ) • (-L)) - s) ^ (k - 1))⁻¹ =
       -(↑(k - 1) : ℂ)⁻¹ * (((s + (‖γ (t_eps_plus ε) - s‖ / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹ := by
-    rw [hmr, h_neg_norm, hpr]
+    rw [hmr, norm_neg, hpr]
     have heq : (s + (ε / ‖L‖ : ℝ) • (-L) : ℂ) - s = (s - (ε / ‖L‖ : ℝ) • L) - s := by simp
     rw [heq]
     exact F_line_diff_eq_zero_of_odd s L k hk hk_odd ε
@@ -621,11 +542,6 @@ theorem F_curve_diff_tendsto_zero_odd
   change ‖A - B‖ ≤ ‖B - TR‖ + ‖A - _‖
   rw [h_targets_eq]
   exact h_triangle
-
-/-! ## HW Theorem 3.3 — k-odd transverse case
-
-The complete unified statement: for a closed flat curve crossing a higher-order
-pole transversally with k odd, the symmetric-excision PV vanishes. -/
 
 /-- **HW Theorem 3.3 — k-odd transverse case.** For closed γ (γ a = γ b) with
 single transverse crossing at t₀ and `γ(t₀) = s`, k odd ≥ 3, flatness order
