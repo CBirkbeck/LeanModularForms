@@ -9778,6 +9778,43 @@ private lemma per_q_T_p_upper_branch_full_absorb
       (adjointGamma0Rep p N hpN).property q).out]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d M_∞ master-identity reverse** (CuspForm f-slot version):
+`f ∣ T_p_lower · γ · q⁻¹ = ⟨u⁻¹⟩f ∣ M_∞ · q⁻¹` where
+`γ = γ_T(0) · γ_M(0)` and `q : SL(2,ℤ)`.
+
+Direct consequence of `slash_M_infty_eq_diamond_slash_T_p_lower_factor`
+applied to `⟨u⁻¹⟩f` and bridging via diamond cancellation `⟨u⟩∘⟨u⁻¹⟩ = id`.
+
+Used in the M_∞-branch tile-shifted reduction of the LHS-distributed sum
+in `SigmaQPermResidual_M_infty`. -/
+private lemma slash_T_p_lower_factor_eq_diamond_inv_slash_M_infty
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (q : SL(2, ℤ)) :
+    ⇑f ∣[k] ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+            M_infty_Gamma1_factor N p hpN 0)) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) =
+    ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
+      ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) := by
+  have h := slash_M_infty_eq_diamond_slash_T_p_lower_factor p hp hpN
+    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) q
+  rw [show (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) :
+      CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = f from by
+    show diamondOpCusp k (ZMod.unitOfCoprime p hpN)
+      (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) = f
+    rw [show diamondOpCusp k (ZMod.unitOfCoprime p hpN)
+        (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) =
+        ((diamondOpCusp k (ZMod.unitOfCoprime p hpN)).comp
+          (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹)) f from rfl,
+      ← diamondOpCusp_mul, mul_inv_cancel, diamondOpCusp_one]
+    rfl] at h
+  exact h.symm
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T024 sum-level joint absorption consumer**: applies the per-q
 M_∞/upper-b joint absorption helpers
 (`per_q_M_infty_branch_full_absorb`, `per_q_T_p_upper_branch_full_absorb`)
