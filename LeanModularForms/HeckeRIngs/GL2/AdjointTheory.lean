@@ -7104,6 +7104,24 @@ private def Hecke_FD_integral_residual
       (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ⇑g
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM measure-preserving smul change of variables**:
+for `α ∈ GL(2,ℝ)⁺` (with det > 0), shifting the integration domain by `α`
+on the petersson integrand corresponds to a `τ → α·τ` substitution
+(GL+(2,ℝ)-invariance of `μ_hyp`). The integrand evaluated at `α•τ` matches
+the original integrand at `τ` via `petersson_slash`. -/
+private lemma peterssonInner_smul_set_GL_pos
+    (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
+    (D : Set ℍ) (F G : ℍ → ℂ) :
+    peterssonInner k (α • D) F G =
+      ∫ τ in D, petersson k F G ((⟨α, hα⟩ : GL(2, ℝ)⁺) • τ) ∂μ_hyp := by
+  simp only [peterssonInner]
+  set α' : GL(2, ℝ)⁺ := ⟨α, hα⟩
+  rw [show (α • D : Set ℍ) = (fun τ => α' • τ) '' D from by
+    rw [Set.image_smul]; rfl]
+  exact (measurePreserving_smul α' μ_hyp).setIntegral_image_emb
+    (measurableEmbedding_const_smul α') _ D
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
@@ -20801,6 +20819,80 @@ private theorem petN_heckeT_p_adjoint_standard_form_from_per_q_fd_balances
     (heckeFD_canonical_SL_tile_balance_upper_per_tile_from_per_q_fd_balance_family
       p hp hpN f g h_per_q_fd_T)
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d σ_p Q-permutation M_∞-branch sum residual.**  The M_∞-branch
+component of the σ_p Q-permutation aggregate residual: sum over `q` of
+LHS-distributed M_∞ summand equals sum over `q` of RHS-absorbed M_∞ summand
+(with σ-reindex). -/
+private def SigmaQPermResidual_M_infty
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+                M_infty_Gamma1_factor N p hpN 0)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+                M_infty_Gamma1_factor N p hpN 0)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d σ_p Q-permutation upper-`b` branch sum residual.**  The
+∑_b component of the σ_p Q-permutation aggregate residual: sum over `q` of
+∑_b LHS-distributed upper-`b` summand equals sum over `q` of ∑_b
+RHS-absorbed upper-`b` summand (with σ-reindex). -/
+private def SigmaQPermResidual_upper
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+        (⇑f ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
 /-- **T205-d residual: DS Theorem 5.5.3 in symmetric form at petN level.**
 
 The single named analytic residual for `petN_heckeT_p_adjoint_standard_form`:
@@ -20886,11 +20978,17 @@ private theorem petN_heckeT_p_symmetric_form
   -- σ_p-absorbed RHS form; the remaining content is the
   -- LHS-distributed / RHS-absorbed equality.
   refine DSDoubleCosetTileBridge_of_LHS_dist_eq_RHS_absorbed p hp hpN f g ?_
-  -- This is the σ_p Q-permutation aggregate residual: matches the
-  -- LHS-distributed sum (T_p_lower · γ_X · q.out⁻¹ on f-slot, γ₀ · q.out⁻¹
-  -- on g-slot) against the σ-reindexed absorbed RHS sum (q.out⁻¹ on
-  -- f-slot, T_p_lower · γ_X · (σ q).out⁻¹ on ⟨u⟩g-slot).
-  sorry
+  -- Reduce via branch decomposition: split into M_∞-branch and upper-b-branch
+  -- sum equalities (each a separate sub-residual). The genuine σ_p Q-permutation
+  -- aggregate content lives in each branch's sum equality.
+  rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
+  refine congr_arg₂ (· + ·) ?_ ?_
+  · -- M_∞-branch sum residual `SigmaQPermResidual_M_infty p hp hpN f g`
+    show SigmaQPermResidual_M_infty p hp hpN f g
+    sorry
+  · -- upper-b-branch sum residual `SigmaQPermResidual_upper p hp hpN f g`
+    show SigmaQPermResidual_upper p hp hpN f g
+    sorry
 
 /-- **T128 DS-standard aggregate consumer**: DS 5.5.3 in its canonical
 `T_p* = ⟨p⟩⁻¹ T_p` form at petN level: `petN(T_p f, g) = petN(f, ⟨p⟩⁻¹(T_p g))`.
