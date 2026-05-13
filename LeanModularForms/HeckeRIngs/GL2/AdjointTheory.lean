@@ -6962,6 +6962,50 @@ private theorem M_infty_iUnion_eq_mapGL_sigma_p_smul_T_p_lower_iUnion
   refine Set.iUnion_congr fun q => ?_
   rw [mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul (N := N) p hp hpN]
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **peterssonInner-level σ_p Q-permutation**: integrals over the M_∞-side
+iUnion tile equal integrals over the T_p_lower-side iUnion tile, with
+slot-1 and slot-2 forms both slashed by `mapGL σ_p`.
+
+Concretely:
+```
+pet (⋃_q M_∞ • q.out⁻¹ • fd) F G
+  = pet (⋃_q T_p_lower • q.out⁻¹ • fd) (F ∣ mapGL σ_p) (G ∣ mapGL σ_p)
+```
+
+**Composition**:
+* `M_infty_iUnion_eq_mapGL_sigma_p_smul_T_p_lower_iUnion` rewrites the
+  M_∞ iUnion-tile as `mapGL σ_p • (T_p_lower-iUnion-tile)`;
+* `peterssonInner_mapGL_smul_eq_slash` applies the SL(2, ℤ) change of
+  variables for `peterssonInner` (since `σ_p ∈ SL(2, ℤ)`).
+
+**Direct consumer for TileFormIntegralResidual_M_infty**: after this
+rewrite, both sides of the residual live on the T_p_lower-side
+iUnion tile with both forms σ_p-slashed; subsequent diamond/slash
+simplifications can then be applied. -/
+private theorem peterssonInner_M_infty_iUnion_eq_sigma_p_slash
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (F G : ℍ → ℂ) :
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      F G =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ))
+      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ)) := by
+  rw [M_infty_iUnion_eq_mapGL_sigma_p_smul_T_p_lower_iUnion (N := N) p hp hpN]
+  exact peterssonInner_mapGL_smul_eq_slash _ _ F G
+
 /-- **T205-d-SYMM SL(2,ℤ) tile family**: the (p+1) SL(2,ℤ) elements
 that index the per-tile decomposition of `T_p_lower • Hecke_FD`. -/
 private noncomputable def T_p_lower_tile_family
