@@ -674,6 +674,17 @@ private noncomputable def gamma1_of_gamma0_sigma_p
     sigma_p_specific N p hp hpN,
     adjointGamma0Rep_mul_sigma_p_mem_Gamma1 p N hp hpN⟩
 
+/-- **γ_1 ∈ Γ_1(N) as SL(2, ℤ) element**: the underlying SL value of
+`gamma1_of_gamma0_sigma_p` equals `γ₀ · σ_p` as SL(2, ℤ) elements.
+
+This is the definitional unwrapping of `gamma1_of_gamma0_sigma_p` at the
+SL(2, ℤ) level, useful when working with the matrix product directly. -/
+private lemma gamma1_of_gamma0_sigma_p_coe
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    ((gamma1_of_gamma0_sigma_p p N hp hpN : Gamma1 N) : SL(2, ℤ)) =
+      ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+        sigma_p_specific N p hp hpN := rfl
+
 /-- **Key product identity**: `γ₀ · M_∞ = γ_1 · T_p_lower` in GL(2, ℚ),
 where γ_1 = γ₀ · σ_p ∈ Γ₁(N).
 
