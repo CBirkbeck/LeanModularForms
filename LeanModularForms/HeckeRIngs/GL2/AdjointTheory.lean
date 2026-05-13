@@ -22707,6 +22707,79 @@ private theorem SigmaQPermResidual_M_infty_of_TileFormIntegralResidual
   exact h_tile
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **Per-q M_∞-tile-form integral residual** — the per-`q` analog of
+`TileFormIntegralResidual_M_infty`. Single tile residual on a specific
+`q`-shifted M_∞-tile rather than the full iUnion-tile.
+
+For each `q : SL(2, ℤ)`, the residual identity is:
+```
+pet (M_∞ • mapGL q⁻¹ • fd) (⟨u⁻¹⟩f) ((⟨u⁻¹⟩g ∣ T_p_upper(0)) ∣ γ₀)
+  = pet (M_∞ • mapGL q⁻¹ • fd) ((⟨u⟩f ∣ T_p_upper(0)) ∣ γ₀) g
+```
+
+**Significance**: avoids the iUnion structure entirely. The closure chain via
+`SigmaQPermResidual_M_infty_of_per_q_tile_form` only requires this per-q
+identity for every `q`, NOT the AE-disjointness or integrability over the
+full iUnion. This bypasses the SL(2, ℤ)/Γ_1(N) vs PSL/imageGamma1 indexing
+issue that obstructs the iUnion-collapse chain for N ≥ 3. -/
+private def TileFormIntegralResidual_M_infty_per_q
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (q : SL(2, ℤ)) : Prop :=
+  peterssonInner k
+    ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) •
+        (ModularGroup.fd : Set ℍ)))
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
+  peterssonInner k
+    ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) •
+        (ModularGroup.fd : Set ℍ)))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+    (⇑g)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **Per-q chain for SigmaQPermResidual_M_infty** (bypasses AE-disjoint).
+
+Given a per-`q` tile-form residual at each `q ∈ SL(2, ℤ) ⧸ Gamma1 N`,
+the sum equality `SigmaQPermResidual_M_infty` follows directly via
+`Finset.sum_congr` (no iUnion-tile collapse needed).
+
+Composes:
+* `sum_peterssonInner_LHS_M_infty_to_tile_form` — LHS sum→per-q tile-form,
+* `sum_peterssonInner_RHS_M_infty_to_tile_form_via_sigma` — RHS sum→per-q
+  tile-form via σ_p reindex,
+* per-q tile-form identity hypothesis,
+* `Finset.sum_congr` to combine.
+
+**Significance**: bypasses the AE-disjoint hypothesis required by
+`SigmaQPermResidual_M_infty_of_TileFormIntegralResidual`. Works for all N
+including N ≥ 3 where the SL/Γ_1 → PSL/imageGamma1 quotient is 2-to-1.
+
+The remaining work is the per-q tile-form identity, which is a single
+Petersson integral identity (no AE-disjoint, no integrability over iUnion). -/
+private theorem SigmaQPermResidual_M_infty_of_per_q_tile_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_per_q : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+      TileFormIntegralResidual_M_infty_per_q p hp hpN f g (q.out : SL(2, ℤ))) :
+    SigmaQPermResidual_M_infty p hp hpN f g := by
+  unfold SigmaQPermResidual_M_infty
+  -- LHS reduction: LHS sum → per-q tile-form sum.
+  rw [sum_peterssonInner_LHS_M_infty_to_tile_form p hp hpN f g]
+  -- RHS reduction: RHS sum → per-q tile-form sum (via σ_p reindex).
+  rw [sum_peterssonInner_RHS_M_infty_to_tile_form_via_sigma p hp hpN f g]
+  -- Apply Finset.sum_congr with the per-q identity.
+  exact Finset.sum_congr rfl fun q _ => h_per_q q
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-d SigmaQPermResidual_M_infty from σ_p-reduced residual**:
 end-to-end chain from `TileFormIntegralResidual_M_infty_sigma_p_reduced`
 (the σ_p-pushed analytic content) plus the same AE-disjoint / integrability
