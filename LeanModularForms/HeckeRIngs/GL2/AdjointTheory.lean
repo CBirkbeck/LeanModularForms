@@ -608,6 +608,45 @@ private lemma adjointGamma0Rep_mul_sigma_p_mem_Gamma1
       rw [ZMod.natCast_self]; ring]
     ring
 
+/-- The named Γ₁(N) element `γ_1 = γ₀ · σ_p`, witnessed concretely via
+`adjointGamma0Rep_mul_sigma_p_mem_Gamma1`. -/
+private noncomputable def gamma1_of_gamma0_sigma_p
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    ↥(Gamma1 N) :=
+  ⟨((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+    sigma_p_specific N p hp hpN,
+    adjointGamma0Rep_mul_sigma_p_mem_Gamma1 p N hp hpN⟩
+
+/-- **Key product identity**: `γ₀ · M_∞ = γ_1 · T_p_lower` in GL(2, ℚ),
+where γ_1 = γ₀ · σ_p ∈ Γ₁(N).
+
+This is matrix associativity combined with `M_∞ = σ_p · T_p_lower`:
+  γ₀ · M_∞ = γ₀ · (σ_p · T_p_lower) = (γ₀ · σ_p) · T_p_lower = γ_1 · T_p_lower.
+
+**Significance for σ_p Q-permutation**: this means left-multiplication by
+γ₀ on the M_∞ tile family rewrites as `mapGL γ_1 • (T_p_lower • Γ₁-FD)`,
+a Γ₁(N)-twisted version of the T_p_lower tile family. This is the concrete
+matrix-level statement underlying the transposed correspondence. -/
+private lemma adjointGamma0Rep_mul_M_infty_eq_gamma1_mul_T_p_lower
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    ((mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) :
+        GL (Fin 2) ℚ) *
+      (M_infty N p hp hpN : GL (Fin 2) ℚ) =
+    ((mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ)
+        ((gamma1_of_gamma0_sigma_p p N hp hpN : Gamma1 N) :
+          SL(2, ℤ))) *
+      (T_p_lower p hp : GL (Fin 2) ℚ) := by
+  -- γ₀ · M_∞ = γ₀ · (σ_p · T_p_lower) = (γ₀ · σ_p) · T_p_lower = γ_1 · T_p_lower.
+  rw [show (M_infty N p hp hpN : GL (Fin 2) ℚ) =
+      ((mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ)
+        (sigma_p_specific N p hp hpN)) *
+        (T_p_lower p hp : GL (Fin 2) ℚ) from
+    M_infty_eq_sigma_mul_T_p_lower N p hp hpN]
+  rw [← mul_assoc, ← map_mul]
+  -- (mapGL ℚ (γ₀ · σ_p)) = mapGL ℚ γ_1 (since γ_1 = γ₀ · σ_p as SL elements)
+  rfl
+
 /-! ### Hermitian adjoint of Hecke operators
 
 The adjoint is defined via the Petersson inner product:
