@@ -89,17 +89,14 @@ theorem contourIntegral_inv_eq_sum_log_segRatio
   have hγ_diff : ∀ t ∈ Ioo (s j) (s (j + 1)) \ (γ.partition : Set ℝ),
       HasDerivAt γ.toPath.extend (deriv γ.toPath.extend t) t := by
     intro t ht
-    have ht_open : t ∈ Ioo (0 : ℝ) 1 := by
-      have h_lo : (0 : ℝ) < t := lt_of_le_of_lt (hs_in j hj.le).1 ht.1.1
-      have h_hi : t < 1 := lt_of_lt_of_le ht.1.2 (hs_in (j + 1) hj).2
-      exact ⟨h_lo, h_hi⟩
+    have ht_open : t ∈ Ioo (0 : ℝ) 1 :=
+      ⟨lt_of_le_of_lt (hs_in j hj.le).1 ht.1.1, lt_of_lt_of_le ht.1.2 (hs_in (j + 1) hj).2⟩
     exact (γ.differentiable_off t ht_open ht.2).hasDerivAt
   have h_a_ne : γ.toPath.extend (s j) - w ≠ 0 := h_avoid j hj.le
   have h_slit_seg : ∀ t ∈ Icc (s j) (s (j + 1)),
       (γ.toPath.extend t - w) / (γ.toPath.extend (s j) - w) ∈ Complex.slitPlane :=
     h_slit j hj
-  have h_int_seg_j := h_int_seg j hj
-  exact segment_log_FTC hab hP_count hγ_cont hγ_diff h_a_ne h_slit_seg h_int_seg_j
+  exact segment_log_FTC hab hP_count hγ_cont hγ_diff h_a_ne h_slit_seg (h_int_seg j hj)
 
 /-- **Real-imaginary decomposition of contour integral.** Under the same fine-partition
 hypotheses, the contour integral splits as `↑(log‖γ 1 - w‖ - log‖γ 0 - w‖) + I · ↑(sum
@@ -219,22 +216,18 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
     rw [h_θ_one, h_θ_zero]
     ring
   -- For closed γ: real part of contour integral = 0
-  have h_closed_eq : γ.toPath.extend 1 = γ.toPath.extend 0 := by
-    rw [γ.toPath.extend_one, γ.toPath.extend_zero]
   have h_re_zero : Real.log ‖γ.toPath.extend 1 - w‖ -
       Real.log ‖γ.toPath.extend 0 - w‖ = 0 := by
-    rw [h_closed_eq]
+    rw [γ.toPath.extend_one, γ.toPath.extend_zero]
     ring
   -- Apply hasGeneralizedWindingNumber_of_avoids
-  have hδ' : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ.toPath.extend t - w‖ :=
-    ⟨d, hd_pos, hd_bd⟩
-  have h_w := hasGeneralizedWindingNumber_of_avoids (γ := γ) (z₀ := w) hδ'
+  have h_w := hasGeneralizedWindingNumber_of_avoids (γ := γ) (z₀ := w) ⟨d, hd_pos, hd_bd⟩
   rw [h_contour, h_re_zero, Complex.ofReal_zero, zero_add, ← h_θ_diff] at h_w
   -- h_w : HasGeneralizedWindingNumber γ w ((2 π I)⁻¹ * (I * ↑(θ 1 - θ 0)))
   -- We want : HasGeneralizedWindingNumber γ w (↑(θ 1 - θ 0) / (2 π))
   have h_value_eq : ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) =
       (2 * ↑Real.pi * Complex.I)⁻¹ * (Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ)) := by
-    have : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
+    have : (Real.pi : ℂ) ≠ 0 := mod_cast Real.pi_ne_zero
     field_simp
   rw [h_value_eq]
   exact h_w
@@ -259,21 +252,20 @@ theorem hasGeneralizedWindingNumber_integer_of_closed
   obtain ⟨_, _, hd_bd⟩ := hδ
   have h_avoid_0 : γ.toPath.extend 0 - w ≠ 0 := by
     intro heq
-    have := hd_bd 0 ⟨le_refl _, zero_le_one⟩
+    have := hd_bd 0 ⟨le_rfl, zero_le_one⟩
     rw [heq, norm_zero] at this
     linarith
   have h_norm_ne : ((‖γ.toPath.extend 0 - w‖ : ℝ) : ℂ) ≠ 0 :=
     Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr h_avoid_0)
-  have h_lift_0 := h_lift 0 ⟨le_refl _, zero_le_one⟩
-  have h_lift_1 := h_lift 1 ⟨zero_le_one, le_refl _⟩
-  have h_eq_diff : γ.toPath.extend 0 - w = γ.toPath.extend 1 - w := by rw [h_eq_endpoints]
+  have h_lift_0 := h_lift 0 ⟨le_rfl, zero_le_one⟩
+  have h_lift_1 := h_lift 1 ⟨zero_le_one, le_rfl⟩
   have h_exp_eq : Complex.exp (Complex.I * (θ 0 : ℂ)) =
       Complex.exp (Complex.I * (θ 1 : ℂ)) := by
     have h_eq : (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 0 : ℂ)) =
         (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 1 : ℂ)) := by
       calc (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 0 : ℂ))
           = γ.toPath.extend 0 - w := h_lift_0.symm
-        _ = γ.toPath.extend 1 - w := h_eq_diff
+        _ = γ.toPath.extend 1 - w := by rw [h_eq_endpoints]
         _ = (‖γ.toPath.extend 1 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 1 : ℂ)) := h_lift_1
         _ = (‖γ.toPath.extend 0 - w‖ : ℂ) * Complex.exp (Complex.I * (θ 1 : ℂ)) := by
             rw [h_eq_endpoints]
@@ -295,7 +287,7 @@ theorem hasGeneralizedWindingNumber_integer_of_closed
     exact mul_left_cancel₀ Complex.I_ne_zero h_recast
   have h_winding_eq : ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) = (n : ℂ) := by
     rw [h_diff_eq]
-    have : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
+    have : (Real.pi : ℂ) ≠ 0 := mod_cast Real.pi_ne_zero
     field_simp
   refine ⟨n, ?_⟩
   rw [← h_winding_eq]
@@ -330,9 +322,7 @@ theorem intervalIntegrable_div_lipschitz
   have h_cont : ContinuousOn (fun t => (γ.toPath.extend t - w)⁻¹) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
     exact (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const).inv₀ h_avoid
-  rw [show (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - w)) =
-        (fun t => deriv γ.toPath.extend t * (γ.toPath.extend t - w)⁻¹) from
-      funext (fun t => div_eq_mul_inv _ _)]
+  simp_rw [div_eq_mul_inv]
   exact h_deriv_int.mul_continuousOn h_cont
 
 /-! ### W-4: locally constant winding -/
