@@ -6811,6 +6811,52 @@ private theorem peterssonInner_T_p_lower_iUnion_tile_eq_sum
   peterssonInner_iUnion_finite_aedisjoint _ hm hd F G hfi
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM full chain: T_p_lower•Hecke_FD as Σ τ_X-slashed Γ₁_FD integrals**.
+
+Composes the entire chain:
+* `T_p_lower_smul_Hecke_FD_eq_iUnion_tile` (set decomposition);
+* `peterssonInner_T_p_lower_iUnion_tile_eq_sum` (iUnion to sum);
+* `peterssonInner_T_p_lower_tile_eq_slash` (per-tile slash conversion).
+
+Result: for `F G : ℍ → ℂ` with appropriate measure-theoretic hypotheses,
+```
+pet (T_p_lower • Hecke_FD) F G = ∑_X pet Γ₁_FD (F ∣ τ_X) (G ∣ τ_X)
+```
+where `τ_X` ranges over the SL(2,ℤ) family
+`{M_infty_Gamma1_factor} ∪ {shiftSL_loc(b)}_{b<p}`.
+
+This is the **final slash-form** of the T_p_lower•Hecke_FD integral —
+both sides of the symmetric form residual reduce to expressions of this
+shape, exposing the σ_p Q-permutation as a sum reindex on Option (Fin p). -/
+private theorem peterssonInner_T_p_lower_Hecke_FD_eq_sum_tile_slash
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (S : Set ℍ) (F G : ℍ → ℂ)
+    (hm : ∀ i : Option (Fin p), NullMeasurableSet
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) μ_hyp)
+    (hd : Pairwise (fun i j : Option (Fin p) => AEDisjoint μ_hyp
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S)
+      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN j) : GL (Fin 2) ℝ) • S)))
+    (hfi : IntegrableOn (fun τ => petersson k F G τ)
+      (⋃ i : Option (Fin p),
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) μ_hyp) :
+    peterssonInner k
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p), Hecke_rep_family N p hp hpN i • S)) F G =
+    ∑ i : Option (Fin p), peterssonInner k S
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ))
+      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ)) := by
+  rw [T_p_lower_smul_Hecke_FD_eq_iUnion_tile (N := N) p hp hpN S,
+      peterssonInner_T_p_lower_iUnion_tile_eq_sum (N := N) p hpN S F G hm hd hfi]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  exact peterssonInner_T_p_lower_tile_eq_slash (N := N) p hpN S F G i
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
