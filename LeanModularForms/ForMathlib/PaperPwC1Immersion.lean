@@ -485,8 +485,8 @@ private lemma lipschitzOnWith_Icc_trans {E : Type*} [NormedAddCommGroup E]
           _ = (C : ℝ) * ‖x - y‖ := by rw [← h_dist]
       · exact hf₂ ⟨hbx, hx.2⟩ ⟨hbx.trans hxy, hy.2⟩
   · -- y ≤ x: by symmetry
-    rw [show ‖f x - f y‖ = ‖f y - f x‖ from by rw [norm_sub_rev],
-        show ‖x - y‖ = ‖y - x‖ from by rw [norm_sub_rev]]
+    rw [show ‖f x - f y‖ = ‖f y - f x‖ by rw [norm_sub_rev],
+        show ‖x - y‖ = ‖y - x‖ by rw [norm_sub_rev]]
     rcases le_total x b with hxb | hbx
     · exact hf₁ ⟨hy.1, hxy.trans hxb⟩ ⟨hy.1.trans hxy, hxb⟩
     · rcases le_total y b with hyb | hby
@@ -741,7 +741,7 @@ noncomputable def cyclicShiftFun (f : ℝ → E) (τ : ℝ) : ℝ → E :=
 
 variable {x : E}
 
-omit [NormedSpace ℝ E] in
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
 /-- Value of `cyclicShiftFun` at `0` (in `Ioo 0 1`): equals `f τ`. -/
 @[simp]
 theorem cyclicShiftFun_zero (f : ℝ → E) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) :
@@ -793,9 +793,10 @@ theorem Continuous.cyclicShiftFun {f : ℝ → E} (hf : Continuous f) {τ : ℝ}
   · exact continuous_const
   -- Matching condition at `t + τ = 1`.
   intro t ht_eq
-  rw [ht_eq, show (1 : ℝ) - 1 = 0 from by ring]
+  rw [ht_eq, show (1 : ℝ) - 1 = 0 by ring]
   exact hclosed.symm
 
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
 /-- The cyclic-shift function preserves "closedness": `g(0) = g(1) = f(τ)`. -/
 theorem cyclicShiftFun_closed (f : ℝ → E) {τ : ℝ}
     (hτ : τ ∈ Ioo (0 : ℝ) 1) (hclosed : f 0 = f 1) :
@@ -821,11 +822,13 @@ noncomputable def Path.cyclicShift {x : E} (γ : Path x x) {τ : ℝ}
     exact cyclicShiftFun_one γ.extend hτ
       (by rw [γ.extend_zero, γ.extend_one])
 
+omit [NormedSpace ℝ E] in
 /-- Endpoints of `Path.cyclicShift`. -/
 theorem Path.cyclicShift_apply {x : E} (γ : Path x x) {τ : ℝ}
     (hτ : τ ∈ Ioo (0 : ℝ) 1) (t : ↑(Set.Icc (0 : ℝ) 1)) :
     γ.cyclicShift hτ t = cyclicShiftFun γ.extend τ (t : ℝ) := rfl
 
+omit [NormedSpace ℝ E] in
 /-- The extend of `Path.cyclicShift` agrees with `cyclicShiftFun` on `[0, 1]`. -/
 theorem Path.cyclicShift_extend_on_Icc {x : E} (γ : Path x x) {τ : ℝ}
     (hτ : τ ∈ Ioo (0 : ℝ) 1) {t : ℝ} (ht : t ∈ Set.Icc (0 : ℝ) 1) :
@@ -944,8 +947,7 @@ partition does not straddle `1 - τ` (since `1 - τ` itself is in the partition)
 private theorem not_straddle_oneSubTau (P : Finset ℝ) {τ : ℝ}
     {a b : ℝ} (h_cons : (cyclicShiftPartitionExt P τ).IsConsecutive a b) :
     b ≤ 1 - τ ∨ a ≥ 1 - τ := by
-  by_contra h
-  push_neg at h
+  by_contra! h
   obtain ⟨h_lt_b, h_a_lt⟩ := h
   exact h_cons.2.2.2 (1 - τ) (oneSubTau_mem_cyclicShiftPartitionExt P τ) ⟨h_a_lt, h_lt_b⟩
 
@@ -1115,6 +1117,7 @@ is `cyclicShiftPartitionExt γ.partition τ` and the underlying path is
 `γ.toPath.cyclicShift hτ`. The `ContDiffOn` field on each piece is established
 by the consecutive-pair lift (Step 1). -/
 
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
 /-- The cyclic-shifted curve agrees on `Icc 0 (1 - τ)` with the original curve
 shifted by `+τ`. -/
 private lemma cyclicShiftFun_eq_on_no_wrap (f : ℝ → E) {τ : ℝ}
@@ -1124,6 +1127,7 @@ private lemma cyclicShiftFun_eq_on_no_wrap (f : ℝ → E) {τ : ℝ}
   simp only [cyclicShiftFun]
   rw [if_pos (by linarith [ht.2] : t + τ ≤ 1)]
 
+omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
 /-- The cyclic-shifted curve agrees on `Icc (1 - τ) 1` with the original curve
 shifted by `+τ - 1`, provided the curve is *closed* (`f 0 = f 1`). -/
 private lemma cyclicShiftFun_eq_on_wrap (f : ℝ → E) {τ : ℝ}
@@ -1138,7 +1142,8 @@ private lemma cyclicShiftFun_eq_on_wrap (f : ℝ → E) {τ : ℝ}
     -- f (t + τ) = f 1, and f (t + τ - 1) = f 0 = f 1
     have h1 : t + τ = 1 := by linarith
     have h2 : t + τ - 1 = 0 := by linarith
-    rw [h1]; rw [show (1 : ℝ) - 1 = 0 from by ring]; exact hclosed.symm
+    rw [h1, show (1 : ℝ) - 1 = 0 by ring]
+    exact hclosed.symm
   · -- t > 1 - τ: cyclicShiftFun gives f (t + τ - 1) via if_neg
     rw [if_neg (by linarith : ¬ (t + τ ≤ 1))]
 

@@ -107,50 +107,28 @@ theorem exists_far_bound_compact
       (∀ t ∈ Icc (0 : ℝ) (t₀ - r), m ≤ ‖γ t - s‖) ∧
       (∀ t ∈ Icc (t₀ + r) (1 : ℝ), m ≤ ‖γ t - s‖) := by
   have h_norm_cont : ContinuousOn (fun t => ‖γ t - s‖) (univ : Set ℝ) :=
-    ((hγ.continuousOn).sub continuousOn_const).norm
-  -- Left compact: Icc 0 (t₀ - r)
-  have h_left_compact : IsCompact (Icc (0 : ℝ) (t₀ - r)) := isCompact_Icc
-  have h_left_nonempty : (Icc (0 : ℝ) (t₀ - r)).Nonempty :=
-    ⟨0, ⟨le_rfl, by linarith⟩⟩
+    (hγ.continuousOn.sub continuousOn_const).norm
   obtain ⟨t_l, ht_l_mem, ht_l_min⟩ :=
-    h_left_compact.exists_isMinOn h_left_nonempty
-      (h_norm_cont.mono (subset_univ _))
-  set m_l := ‖γ t_l - s‖ with hm_l_def
+    (isCompact_Icc (a := (0 : ℝ)) (b := t₀ - r)).exists_isMinOn
+      ⟨0, le_rfl, by linarith⟩ (h_norm_cont.mono (subset_univ _))
   have h_t_l_in_Icc01 : t_l ∈ Icc (0 : ℝ) 1 :=
     ⟨ht_l_mem.1, by linarith [ht_l_mem.2]⟩
-  have h_t_l_ne_t₀ : t_l ≠ t₀ := by
-    intro h_eq
-    have : t₀ ≤ t₀ - r := h_eq ▸ ht_l_mem.2
-    linarith
-  have hm_l_pos : 0 < m_l := by
-    rw [hm_l_def]
-    refine norm_pos_iff.mpr (sub_ne_zero.mpr ?_)
-    intro h_eq
-    exact h_t_l_ne_t₀ (h_unique t_l h_t_l_in_Icc01 h_eq)
-  -- Right compact: Icc (t₀ + r) 1
-  have h_right_compact : IsCompact (Icc (t₀ + r) (1 : ℝ)) := isCompact_Icc
-  have h_right_nonempty : (Icc (t₀ + r) (1 : ℝ)).Nonempty :=
-    ⟨1, ⟨by linarith, le_rfl⟩⟩
+  have hm_l_pos : 0 < ‖γ t_l - s‖ := by
+    refine norm_pos_iff.mpr (sub_ne_zero.mpr fun h_eq => ?_)
+    have h_ne : t_l ≠ t₀ := fun h => by linarith [h ▸ ht_l_mem.2]
+    exact h_ne (h_unique t_l h_t_l_in_Icc01 h_eq)
   obtain ⟨t_r, ht_r_mem, ht_r_min⟩ :=
-    h_right_compact.exists_isMinOn h_right_nonempty
-      (h_norm_cont.mono (subset_univ _))
-  set m_r := ‖γ t_r - s‖ with hm_r_def
+    (isCompact_Icc (a := t₀ + r) (b := (1 : ℝ))).exists_isMinOn
+      ⟨1, by linarith, le_rfl⟩ (h_norm_cont.mono (subset_univ _))
   have h_t_r_in_Icc01 : t_r ∈ Icc (0 : ℝ) 1 :=
     ⟨by linarith [ht_r_mem.1], ht_r_mem.2⟩
-  have h_t_r_ne_t₀ : t_r ≠ t₀ := by
-    intro h_eq
-    have : t₀ + r ≤ t₀ := h_eq ▸ ht_r_mem.1
-    linarith
-  have hm_r_pos : 0 < m_r := by
-    rw [hm_r_def]
-    refine norm_pos_iff.mpr (sub_ne_zero.mpr ?_)
-    intro h_eq
-    exact h_t_r_ne_t₀ (h_unique t_r h_t_r_in_Icc01 h_eq)
-  refine ⟨min m_l m_r, lt_min hm_l_pos hm_r_pos, ?_, ?_⟩
-  · intro t ht
-    exact le_trans (min_le_left _ _) (ht_l_min ht)
-  · intro t ht
-    exact le_trans (min_le_right _ _) (ht_r_min ht)
+  have hm_r_pos : 0 < ‖γ t_r - s‖ := by
+    refine norm_pos_iff.mpr (sub_ne_zero.mpr fun h_eq => ?_)
+    have h_ne : t_r ≠ t₀ := fun h => by linarith [h ▸ ht_r_mem.1]
+    exact h_ne (h_unique t_r h_t_r_in_Icc01 h_eq)
+  exact ⟨_, lt_min hm_l_pos hm_r_pos,
+    fun _ ht => (min_le_left _ _).trans (ht_l_min ht),
+    fun _ ht => (min_le_right _ _).trans (ht_r_min ht)⟩
 
 /-! ### One-sided derivative limits at interior points -/
 
@@ -162,13 +140,10 @@ theorem exists_right_deriv_limit
         (𝓝[>] t₀) (𝓝 L) := by
   by_cases h_part : t₀ ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
   · exact γ.toPwC1Immersion.right_deriv_limit t₀ h_part
-  · set f := γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend
-    have h_cont : ContinuousAt (deriv f) t₀ :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀ h_part
-    have h_ne_zero : deriv f t₀ ≠ 0 :=
-      γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_part
-    refine ⟨deriv f t₀, h_ne_zero, ?_⟩
-    exact (h_cont.tendsto).mono_left nhdsWithin_le_nhds
+  · refine ⟨deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀,
+      γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_part,
+      (γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀
+        h_part).tendsto.mono_left nhdsWithin_le_nhds⟩
 
 /-- At any `t₀ ∈ Ioo 0 1`, the left derivative limit `L_-` exists and is nonzero. -/
 theorem exists_left_deriv_limit
@@ -178,13 +153,10 @@ theorem exists_left_deriv_limit
         (𝓝[<] t₀) (𝓝 L) := by
   by_cases h_part : t₀ ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
   · exact γ.toPwC1Immersion.left_deriv_limit t₀ h_part
-  · set f := γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend
-    have h_cont : ContinuousAt (deriv f) t₀ :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀ h_part
-    have h_ne_zero : deriv f t₀ ≠ 0 :=
-      γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_part
-    refine ⟨deriv f t₀, h_ne_zero, ?_⟩
-    exact (h_cont.tendsto).mono_left nhdsWithin_le_nhds
+  · refine ⟨deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀,
+      γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_part,
+      (γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀
+        h_part).tendsto.mono_left nhdsWithin_le_nhds⟩
 
 /-! ### Eventual differentiability on each side -/
 
@@ -198,11 +170,11 @@ theorem eventually_differentiable_right
     (γ.toPwC1Immersion.toPiecewiseC1Path.partition.finite_toSet.subset
       diff_subset).isClosed
   filter_upwards [
-    nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl (fun h => h.2 rfl))),
+    nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl fun h => h.2 rfl)),
     nhdsWithin_le_nhds (Ioo_mem_nhds ht₀.1 ht₀.2),
     self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
   exact γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t ht₂
-    (fun hm => ht₁ ⟨hm, ne_of_gt (mem_Ioi.mp ht₃)⟩)
+    fun hm => ht₁ ⟨hm, ne_of_gt (mem_Ioi.mp ht₃)⟩
 
 /-- Differentiability is eventual on `𝓝[<] t₀` for an immersion at interior `t₀`. -/
 theorem eventually_differentiable_left
@@ -214,11 +186,11 @@ theorem eventually_differentiable_left
     (γ.toPwC1Immersion.toPiecewiseC1Path.partition.finite_toSet.subset
       diff_subset).isClosed
   filter_upwards [
-    nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl (fun h => h.2 rfl))),
+    nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl fun h => h.2 rfl)),
     nhdsWithin_le_nhds (Ioo_mem_nhds ht₀.1 ht₀.2),
     self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
   exact γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t ht₂
-    (fun hm => ht₁ ⟨hm, ne_of_lt (mem_Iio.mp ht₃)⟩)
+    fun hm => ht₁ ⟨hm, ne_of_lt (mem_Iio.mp ht₃)⟩
 
 /-! ### Chord-to-tangent eventual inequalities
 
@@ -239,37 +211,25 @@ theorem chord_lower_bound_right_eventually
     (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t) :
     ∀ᶠ t in 𝓝[>] t₀, (‖L‖/2) * (t - t₀) ≤ ‖γ t - s‖ := by
   obtain ⟨S, hS_mem, hS_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Ioi t₀) t₀ :=
-    hasDerivWithinAt_Ioi_iff_Ici.mpr
-      (hasDerivWithinAt_Ici_of_tendsto_deriv
-        (fun t ht => (hS_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hS_mem hL_right)
-  have hr := hasDerivWithinAt_iff_isLittleO.mp hderiv
-  have h_pos_const : (0 : ℝ) < ‖L‖/2 := by positivity
-  filter_upwards [hr.def h_pos_const, self_mem_nhdsWithin] with t h_bound h_t_gt
+  have hr := hasDerivWithinAt_iff_isLittleO.mp <| hasDerivWithinAt_Ioi_iff_Ici.mpr <|
+    hasDerivWithinAt_Ici_of_tendsto_deriv (fun t ht => (hS_diff t ht).differentiableWithinAt)
+      hγ_cont.continuousWithinAt hS_mem hL_right
+  filter_upwards [hr.def (by positivity : (0 : ℝ) < ‖L‖/2), self_mem_nhdsWithin]
+    with t h_bound h_t_gt
   have h_t_pos : 0 < t - t₀ := sub_pos.mpr h_t_gt
-  -- h_bound : ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖/2 * ‖t - t₀‖.
-  -- Note ‖t - t₀‖ = |t - t₀| = t - t₀ here.
-  have h_norm_real : ‖t - t₀‖ = t - t₀ := by
-    rw [Real.norm_eq_abs, abs_of_pos h_t_pos]
-  rw [h_norm_real] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_at]; ring
+  rw [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_bound
+  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
   have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t - t₀) * ‖L‖ := by
     rw [norm_smul, Real.norm_eq_abs, abs_of_pos h_t_pos]
-  -- Triangle inequality: ‖a + b‖ ≥ ‖a‖ - ‖b‖, derived from `norm_sub_norm_le a (-b)`.
   have h_tri : ‖((t - t₀) : ℝ) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≤
       ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by
     have h1 := norm_sub_norm_le (((t - t₀) : ℝ) • L) (-(γ t - γ t₀ - (t - t₀) • L))
-    rw [norm_neg, sub_neg_eq_add] at h1
-    exact h1
+    rwa [norm_neg, sub_neg_eq_add] at h1
   rw [h_eq]
   rw [h_norm_smul] at h_tri
   have h_alg : (t - t₀) * ‖L‖ - ‖L‖ / 2 * (t - t₀) = ‖L‖ / 2 * (t - t₀) := by ring
   have h_bound' : (t - t₀) * ‖L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≥
-      (t - t₀) * ‖L‖ - ‖L‖ / 2 * (t - t₀) := by
-    gcongr
-    exact h_bound
+      (t - t₀) * ‖L‖ - ‖L‖ / 2 * (t - t₀) := by gcongr; exact h_bound
   linarith [h_tri, h_bound', h_alg]
 
 /-- **Right-side chord-to-tangent eventual upper bound**: eventually on
@@ -282,29 +242,20 @@ theorem chord_upper_bound_right_eventually
     (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t) :
     ∀ᶠ t in 𝓝[>] t₀, ‖γ t - s‖ ≤ (3 * ‖L‖/2) * (t - t₀) := by
   obtain ⟨S, hS_mem, hS_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Ioi t₀) t₀ :=
-    hasDerivWithinAt_Ioi_iff_Ici.mpr
-      (hasDerivWithinAt_Ici_of_tendsto_deriv
-        (fun t ht => (hS_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hS_mem hL_right)
-  have hr := hasDerivWithinAt_iff_isLittleO.mp hderiv
-  have h_pos_const : (0 : ℝ) < ‖L‖/2 := by positivity
-  filter_upwards [hr.def h_pos_const, self_mem_nhdsWithin] with t h_bound h_t_gt
+  have hr := hasDerivWithinAt_iff_isLittleO.mp <| hasDerivWithinAt_Ioi_iff_Ici.mpr <|
+    hasDerivWithinAt_Ici_of_tendsto_deriv (fun t ht => (hS_diff t ht).differentiableWithinAt)
+      hγ_cont.continuousWithinAt hS_mem hL_right
+  filter_upwards [hr.def (by positivity : (0 : ℝ) < ‖L‖/2), self_mem_nhdsWithin]
+    with t h_bound h_t_gt
   have h_t_pos : 0 < t - t₀ := sub_pos.mpr h_t_gt
-  have h_norm_real : ‖t - t₀‖ = t - t₀ := by
-    rw [Real.norm_eq_abs, abs_of_pos h_t_pos]
-  rw [h_norm_real] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_at]; ring
+  rw [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_bound
+  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
   have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t - t₀) * ‖L‖ := by
     rw [norm_smul, Real.norm_eq_abs, abs_of_pos h_t_pos]
   rw [h_eq]
   calc ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖
       ≤ ‖((t - t₀) : ℝ) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := norm_add_le _ _
-    _ ≤ (t - t₀) * ‖L‖ + ‖L‖/2 * (t - t₀) := by
-        gcongr
-        · exact h_norm_smul.le
-        · exact h_bound
+    _ ≤ (t - t₀) * ‖L‖ + ‖L‖/2 * (t - t₀) := by gcongr <;> [exact h_norm_smul.le; exact h_bound]
     _ = (3 * ‖L‖/2) * (t - t₀) := by ring
 
 /-- **Left-side chord-to-tangent eventual lower bound**: eventually on
@@ -317,34 +268,26 @@ theorem chord_lower_bound_left_eventually
     (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t) :
     ∀ᶠ t in 𝓝[<] t₀, (‖L‖/2) * (t₀ - t) ≤ ‖γ t - s‖ := by
   obtain ⟨S, hS_mem, hS_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Iio t₀) t₀ :=
-    hasDerivWithinAt_Iio_iff_Iic.mpr
-      (hasDerivWithinAt_Iic_of_tendsto_deriv
-        (fun t ht => (hS_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hS_mem hL_left)
-  have hr := hasDerivWithinAt_iff_isLittleO.mp hderiv
-  have h_pos_const : (0 : ℝ) < ‖L‖/2 := by positivity
-  filter_upwards [hr.def h_pos_const, self_mem_nhdsWithin] with t h_bound h_t_lt
+  have hr := hasDerivWithinAt_iff_isLittleO.mp <| hasDerivWithinAt_Iio_iff_Iic.mpr <|
+    hasDerivWithinAt_Iic_of_tendsto_deriv (fun t ht => (hS_diff t ht).differentiableWithinAt)
+      hγ_cont.continuousWithinAt hS_mem hL_left
+  filter_upwards [hr.def (by positivity : (0 : ℝ) < ‖L‖/2), self_mem_nhdsWithin]
+    with t h_bound h_t_lt
   have h_t_pos : 0 < t₀ - t := sub_pos.mpr h_t_lt
   have h_norm_real : ‖t - t₀‖ = t₀ - t := by
     rw [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t_pos]
   rw [h_norm_real] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_at]; ring
-  have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t₀ - t) * ‖L‖ := by
-    rw [norm_smul, h_norm_real]
+  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
+  have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t₀ - t) * ‖L‖ := by rw [norm_smul, h_norm_real]
   have h_tri : ‖((t - t₀) : ℝ) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≤
       ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by
     have h1 := norm_sub_norm_le (((t - t₀) : ℝ) • L) (-(γ t - γ t₀ - (t - t₀) • L))
-    rw [norm_neg, sub_neg_eq_add] at h1
-    exact h1
+    rwa [norm_neg, sub_neg_eq_add] at h1
   rw [h_eq]
   rw [h_norm_smul] at h_tri
   have h_alg : (t₀ - t) * ‖L‖ - ‖L‖ / 2 * (t₀ - t) = ‖L‖ / 2 * (t₀ - t) := by ring
   have h_bound' : (t₀ - t) * ‖L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≥
-      (t₀ - t) * ‖L‖ - ‖L‖ / 2 * (t₀ - t) := by
-    gcongr
-    exact h_bound
+      (t₀ - t) * ‖L‖ - ‖L‖ / 2 * (t₀ - t) := by gcongr; exact h_bound
   linarith [h_tri, h_bound', h_alg]
 
 /-- **Left-side chord-to-tangent eventual upper bound**: eventually on
@@ -357,29 +300,21 @@ theorem chord_upper_bound_left_eventually
     (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t) :
     ∀ᶠ t in 𝓝[<] t₀, ‖γ t - s‖ ≤ (3 * ‖L‖/2) * (t₀ - t) := by
   obtain ⟨S, hS_mem, hS_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Iio t₀) t₀ :=
-    hasDerivWithinAt_Iio_iff_Iic.mpr
-      (hasDerivWithinAt_Iic_of_tendsto_deriv
-        (fun t ht => (hS_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hS_mem hL_left)
-  have hr := hasDerivWithinAt_iff_isLittleO.mp hderiv
-  have h_pos_const : (0 : ℝ) < ‖L‖/2 := by positivity
-  filter_upwards [hr.def h_pos_const, self_mem_nhdsWithin] with t h_bound h_t_lt
+  have hr := hasDerivWithinAt_iff_isLittleO.mp <| hasDerivWithinAt_Iio_iff_Iic.mpr <|
+    hasDerivWithinAt_Iic_of_tendsto_deriv (fun t ht => (hS_diff t ht).differentiableWithinAt)
+      hγ_cont.continuousWithinAt hS_mem hL_left
+  filter_upwards [hr.def (by positivity : (0 : ℝ) < ‖L‖/2), self_mem_nhdsWithin]
+    with t h_bound h_t_lt
   have h_t_pos : 0 < t₀ - t := sub_pos.mpr h_t_lt
   have h_norm_real : ‖t - t₀‖ = t₀ - t := by
     rw [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t_pos]
   rw [h_norm_real] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_at]; ring
-  have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t₀ - t) * ‖L‖ := by
-    rw [norm_smul, h_norm_real]
+  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
+  have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t₀ - t) * ‖L‖ := by rw [norm_smul, h_norm_real]
   rw [h_eq]
   calc ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖
       ≤ ‖((t - t₀) : ℝ) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := norm_add_le _ _
-    _ ≤ (t₀ - t) * ‖L‖ + ‖L‖/2 * (t₀ - t) := by
-        gcongr
-        · exact h_norm_smul.le
-        · exact h_bound
+    _ ≤ (t₀ - t) * ‖L‖ + ‖L‖/2 * (t₀ - t) := by gcongr <;> [exact h_norm_smul.le; exact h_bound]
     _ = (3 * ‖L‖/2) * (t₀ - t) := by ring
 
 /-! ### Strict monotonicity of `‖γ(t) - s‖` on a one-sided neighborhood
@@ -423,10 +358,7 @@ private lemma reInner_smul_left (r : ℝ) (a c : ℂ) :
   ring
 
 private lemma reInner_self (z : ℂ) : reInner z z = ‖z‖^2 := by
-  unfold reInner
-  rw [show ‖z‖^2 = z.re^2 + z.im^2 from by
-    rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply]; ring]
-  ring
+  rw [reInner, ← Complex.normSq_eq_norm_sq, Complex.normSq_apply]
 
 /-- **Inner-product positivity, right side**: for `t > t₀` close to `t₀`, with
 right derivative limit `L ≠ 0`, the real inner product
@@ -531,14 +463,10 @@ the bare `reInner z w = z.re * w.re + z.im * w.im` equals `⟪w, z⟫_ℝ` when 
 is viewed as a real inner-product space via `RCLike.toInnerProductSpaceReal`. -/
 private lemma reInner_eq_inner_real (z w : ℂ) :
     reInner z w = inner ℝ w z := by
-  unfold reInner
-  -- `inner ℝ w z` over the real-IPS structure on ℂ unfolds to `re ⟪w, z⟫_ℂ`.
-  -- And `⟪w, z⟫_ℂ = z * conj w`, so `re ⟪w, z⟫_ℂ = z.re * w.re + z.im * w.im`.
-  show z.re * w.re + z.im * w.im = (Inner.rclikeToReal ℂ ℂ).inner w z
+  change z.re * w.re + z.im * w.im = (Inner.rclikeToReal ℂ ℂ).inner w z
   rw [Inner.rclikeToReal]
-  show z.re * w.re + z.im * w.im = (z * (starRingEnd ℂ) w).re
-  simp only [Complex.mul_re, Complex.conj_re, Complex.conj_im]
-  ring
+  change z.re * w.re + z.im * w.im = (z * (starRingEnd ℂ) w).re
+  simp only [Complex.mul_re, Complex.conj_re, Complex.conj_im]; ring
 
 /-- **Strict monotonicity right side**: for some `r > 0`, the function
 `t ↦ ‖γ(t) - s‖` is strictly monotone-increasing on `[t₀, t₀+r]`.
@@ -882,41 +810,28 @@ private theorem exists_right_cutoff
     · linarith [ht₀_Ioo.1]
   have hr_le_r₀ : r ≤ r₀ := by rw [hr_def]; exact min_le_left _ _
   have hr_le_half : r ≤ (1 - t₀) / 2 := by
-    rw [hr_def]; exact le_trans (min_le_right _ _) (min_le_left _ _)
+    rw [hr_def]; exact (min_le_right _ _).trans (min_le_left _ _)
   have hr_le_t₀_half : r ≤ t₀ / 2 := by
-    rw [hr_def]; exact le_trans (min_le_right _ _) (min_le_right _ _)
+    rw [hr_def]; exact (min_le_right _ _).trans (min_le_right _ _)
   have hr_lt_one_sub : r < 1 - t₀ := by linarith [ht₀_Ioo.2]
   have hr_le_t₀ : r ≤ t₀ := by linarith [ht₀_Ioo.1]
-  -- Mono on `[t₀, t₀ + r]`.
   have hmono_r : StrictMonoOn (fun t => ‖γf t - s‖) (Icc t₀ (t₀ + r)) :=
     hmono.mono (Icc_subset_Icc le_rfl (by linarith))
   -- Define f(τ) := ‖γf (t₀ + τ) - s‖ on [0, r].
   set f : ℝ → ℝ := fun τ => ‖γf (t₀ + τ) - s‖ with hf_def
+  have hγ_cont_all : Continuous γf :=
+    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
   have hf₀ : f 0 = 0 := by
-    show ‖γf (t₀ + 0) - s‖ = 0
-    rw [add_zero]
-    have heq : γf t₀ = s := h_at
-    rw [heq, sub_self, norm_zero]
-  have hγ_cont_all : Continuous γf := by
-    show Continuous (fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
-    exact γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
-  have hf_cont : ContinuousOn f (Icc 0 r) := by
-    have h_total : Continuous f := by
-      show Continuous (fun τ => ‖γf (t₀ + τ) - s‖)
-      exact ((hγ_cont_all.comp (continuous_const.add continuous_id)).sub
-        continuous_const).norm
-    exact h_total.continuousOn
-  have hf_strict : StrictMonoOn f (Icc 0 r) := by
-    intro a ha b hb hab
-    have h_eq : f a = (fun t => ‖γf t - s‖) (t₀ + a) := rfl
-    have h_eq' : f b = (fun t => ‖γf t - s‖) (t₀ + b) := rfl
-    rw [h_eq, h_eq']
-    exact hmono_r ⟨by linarith [ha.1], by linarith [ha.2]⟩
+    change ‖γf (t₀ + 0) - s‖ = 0
+    rw [add_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
+  have hf_cont : ContinuousOn f (Icc 0 r) :=
+    (((hγ_cont_all.comp (continuous_const.add continuous_id)).sub
+      continuous_const).norm).continuousOn
+  have hf_strict : StrictMonoOn f (Icc 0 r) := fun a ha b hb hab =>
+    hmono_r ⟨by linarith [ha.1], by linarith [ha.2]⟩
       ⟨by linarith [hb.1], by linarith [hb.2]⟩ (by linarith)
-  have hf_r_pos : 0 < f r := by
-    rw [show (0 : ℝ) = f 0 from hf₀.symm]
-    apply hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le)
-    exact hr_pos
+  have hf_r_pos : 0 < f r :=
+    hf₀ ▸ hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le) hr_pos
   -- Compact far bound on the right portion [t₀ + r, 1].
   obtain ⟨m, hm_pos, _, h_right_far⟩ := exists_far_bound_compact γf hγ_cont_all s t₀
     h_unique hr_pos hr_le_t₀ (le_of_lt hr_lt_one_sub)
@@ -957,7 +872,7 @@ private theorem exists_right_cutoff
       have h_lt : f (δ_right ε) < f (t - t₀) := hf_strict hδ_τ_mem ht_τ_mem hgap
       rw [hfδ] at h_lt
       have h_eq : f (t - t₀) = ‖γf t - s‖ := by
-        show ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
+        change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
         rw [show t₀ + (t - t₀) = t from by ring]
       rwa [h_eq] at h_lt
     · -- t > t₀ + r: use the compact far bound.
@@ -990,7 +905,7 @@ private theorem exists_right_cutoff
           rw [this]
       rw [hfδ] at h_le
       have h_eq : f (t - t₀) = ‖γf t - s‖ := by
-        show ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
+        change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
         rw [show t₀ + (t - t₀) = t from by ring]
       rwa [h_eq] at h_le
 
@@ -1039,37 +954,19 @@ private theorem exists_left_cutoff
     hanti.mono (Icc_subset_Icc (by linarith) le_rfl)
   -- Define f(τ) := ‖γf (t₀ - τ) - s‖ on [0, r]; this is STRICTLY MONOTONE (incr).
   set f : ℝ → ℝ := fun τ => ‖γf (t₀ - τ) - s‖ with hf_def
+  have hγ_cont_all : Continuous γf :=
+    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
   have hf₀ : f 0 = 0 := by
-    show ‖γf (t₀ - 0) - s‖ = 0
-    rw [sub_zero]
-    have heq : γf t₀ = s := h_at
-    rw [heq, sub_self, norm_zero]
-  have hγ_cont_all : Continuous γf := by
-    show Continuous (fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
-    exact γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
-  have hf_cont : ContinuousOn f (Icc 0 r) := by
-    have h_total : Continuous f := by
-      show Continuous (fun τ => ‖γf (t₀ - τ) - s‖)
-      exact ((hγ_cont_all.comp (continuous_const.sub continuous_id)).sub
-        continuous_const).norm
-    exact h_total.continuousOn
-  -- f(a) < f(b) for a < b in [0, r]: γf(t₀ - a) - s vs γf(t₀ - b) - s.
-  --   t₀ - a > t₀ - b, so by StrictAntiOn, ‖γf (t₀ - a) - s‖ > ‖γf (t₀ - b) - s‖... wait
-  -- Actually StrictAntiOn says: t < t' ⟹ f t > f t'. So as t increases, f decreases.
-  -- For our f: t₀ - a > t₀ - b means ‖γf (t₀ - a) - s‖ < ‖γf (t₀ - b) - s‖.
-  -- i.e., f a < f b when a < b. Strictly monotone increasing.
-  have hf_strict : StrictMonoOn f (Icc 0 r) := by
-    intro a ha b hb hab
-    -- f a = ‖γf (t₀ - a) - s‖, f b = ‖γf (t₀ - b) - s‖
-    -- t₀ - b < t₀ - a since a < b
-    have h_ge : t₀ - b ∈ Icc (t₀ - r) t₀ := ⟨by linarith [hb.2], by linarith [hb.1]⟩
-    have h_le : t₀ - a ∈ Icc (t₀ - r) t₀ := ⟨by linarith [ha.2], by linarith [ha.1]⟩
-    have h_lt : t₀ - b < t₀ - a := by linarith
-    exact hanti_r h_ge h_le h_lt
-  have hf_r_pos : 0 < f r := by
-    rw [show (0 : ℝ) = f 0 from hf₀.symm]
-    apply hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le)
-    exact hr_pos
+    change ‖γf (t₀ - 0) - s‖ = 0
+    rw [sub_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
+  have hf_cont : ContinuousOn f (Icc 0 r) :=
+    (((hγ_cont_all.comp (continuous_const.sub continuous_id)).sub
+      continuous_const).norm).continuousOn
+  have hf_strict : StrictMonoOn f (Icc 0 r) := fun a ha b hb hab =>
+    hanti_r ⟨by linarith [hb.2], by linarith [hb.1]⟩
+      ⟨by linarith [ha.2], by linarith [ha.1]⟩ (by linarith)
+  have hf_r_pos : 0 < f r :=
+    hf₀ ▸ hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le) hr_pos
   -- Compact far bound on the left portion [0, t₀ - r].
   obtain ⟨m, hm_pos, h_left_far, _⟩ := exists_far_bound_compact γf hγ_cont_all s t₀
     h_unique hr_pos (le_of_lt hr_lt_t₀) hr_le_one_sub
@@ -1106,7 +1003,7 @@ private theorem exists_left_cutoff
       have h_lt : f (δ_left ε) < f (t₀ - t) := hf_strict hδ_τ_mem ht_τ_mem hgap
       rw [hfδ] at h_lt
       have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
-        show ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
+        change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
         rw [show t₀ - (t₀ - t) = t from by ring]
       rwa [h_eq] at h_lt
     · push Not at ht_ge_neg
@@ -1138,7 +1035,7 @@ private theorem exists_left_cutoff
           rw [this]
       rw [hfδ] at h_le
       have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
-        show ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
+        change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
         rw [show t₀ - (t₀ - t) = t from by ring]
       rwa [h_eq] at h_le
 
@@ -1196,36 +1093,7 @@ noncomputable def deriveAsymmetricCutoffs
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s → t = t₀)
     (_h_part_off : t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) :
     DerivedAsymmetricCutoffs γ s t₀ :=
-  let dR := exists_right_cutoff γ ht₀_Ioo h_at h_unique
-  let dL := exists_left_cutoff γ ht₀_Ioo h_at h_unique
-  let δR := dR.choose
-  let dR' := dR.choose_spec
-  let threshR := dR'.choose
-  let dR_props := dR'.choose_spec
-  let δL := dL.choose
-  let dL' := dL.choose_spec
-  let threshL := dL'.choose
-  let dL_props := dL'.choose_spec
-  { δ_left := δL
-    δ_right := δR
-    threshold := min threshR threshL
-    hthresh := lt_min dR_props.1 dL_props.1
-    hδ_left_pos := fun ε hε hεt =>
-      dL_props.2.1 ε hε (lt_of_lt_of_le hεt (min_le_right _ _))
-    hδ_right_pos := fun ε hε hεt =>
-      dR_props.2.1 ε hε (lt_of_lt_of_le hεt (min_le_left _ _))
-    hδ_left_small := fun ε hε hεt =>
-      dL_props.2.2.1 ε hε (lt_of_lt_of_le hεt (min_le_right _ _))
-    hδ_right_small := fun ε hε hεt =>
-      dR_props.2.2.1 ε hε (lt_of_lt_of_le hεt (min_le_left _ _))
-    h_far_left := fun ε hε hεt =>
-      dL_props.2.2.2.1 ε hε (lt_of_lt_of_le hεt (min_le_right _ _))
-    h_far_right := fun ε hε hεt =>
-      dR_props.2.2.2.1 ε hε (lt_of_lt_of_le hεt (min_le_left _ _))
-    h_near_left := fun ε hε hεt =>
-      dL_props.2.2.2.2 ε hε (lt_of_lt_of_le hεt (min_le_right _ _))
-    h_near_right := fun ε hε hεt =>
-      dR_props.2.2.2.2 ε hε (lt_of_lt_of_le hεt (min_le_left _ _)) }
+  deriveAsymmetricCutoffs_anywhere γ ht₀_Ioo h_at h_unique
 
 /-- **Combine derived geometric cutoffs with analytic FTC content** to produce a
 full `AsymmetricSingleCrossingData`. The geometric scaffolding
@@ -1449,28 +1317,15 @@ theorem inv_sub_mul_deriv_intervalIntegrable
       MeasureTheory.volume a b := by
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
     with hγf_def
-  -- γ' is interval-integrable on [a, b] by restriction from [0, 1].
-  have hγ_int_01 : IntervalIntegrable (deriv γf) MeasureTheory.volume 0 1 :=
-    γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable
-  have hγ_int : IntervalIntegrable (deriv γf) MeasureTheory.volume a b := by
-    refine hγ_int_01.mono_set ?_
-    rw [Set.uIcc_of_le hab, Set.uIcc_of_le zero_le_one]
-    exact h_in_Icc
-  -- `(γ - s)⁻¹` is continuous on uIcc a b.
-  have hγ_cont : Continuous γf :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+  have hγ_int : IntervalIntegrable (deriv γf) MeasureTheory.volume a b :=
+    γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable.mono_set <| by
+      rw [Set.uIcc_of_le hab, Set.uIcc_of_le zero_le_one]; exact h_in_Icc
   have h_cont : ContinuousOn (fun t => (γf t - s)⁻¹) (Set.uIcc a b) := by
     rw [Set.uIcc_of_le hab]
-    refine (hγ_cont.continuousOn.sub continuousOn_const).inv₀ ?_
-    intro t ht h_eq
-    have : γf t = s := by linear_combination h_eq
-    exact h_ne t ht this
-  -- IntervalIntegrable.mul_continuousOn: (integrable f) * (continuous g) integrable.
-  -- Here f = deriv γf is integrable, g = (γf - s)⁻¹ is continuous.
-  -- Result: t ↦ deriv γf t * (γf t - s)⁻¹ is integrable. We want the other order:
-  -- (γf t - s)⁻¹ * deriv γf t. Use `IntervalIntegrable.congr` with `ring`.
-  have h_prod := hγ_int.mul_continuousOn h_cont
-  exact h_prod.congr (fun t _ => by ring)
+    refine (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousOn.sub
+      continuousOn_const).inv₀ fun t ht h_eq => h_ne t ht ?_
+    linear_combination h_eq
+  exact (hγ_int.mul_continuousOn h_cont).congr (fun t _ => by ring)
 
 /-- **The integrand `(γ - s)⁻¹ * γ'` is interval-integrable on `[a, b]` when
 `γ(t) ≠ s` on the closed interval and `0 ≤ a, b ≤ 1`.** Specialisation of
@@ -1488,14 +1343,9 @@ theorem inv_sub_mul_deriv_intervalIntegrable_left
   have hab : (0 : ℝ) ≤ t₀ - δ_left_ε := by linarith
   have h_in_Icc : Set.Icc (0 : ℝ) (t₀ - δ_left_ε) ⊆ Set.Icc (0 : ℝ) 1 :=
     Set.Icc_subset_Icc le_rfl (by linarith [ht₀_Ioo.2])
-  have h_ne : ∀ t ∈ Set.Icc (0 : ℝ) (t₀ - δ_left_ε),
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t ≠ s := by
-    intro t ht h_eq
-    have ht_in_01 : t ∈ Set.Icc (0 : ℝ) 1 := h_in_Icc ht
-    have h_t_eq : t = t₀ := h_unique t ht_in_01 h_eq
-    have : t = t₀ - δ_left_ε := by linarith [ht.2, h_t_eq.symm ▸ ht.2]
-    linarith
-  exact inv_sub_mul_deriv_intervalIntegrable γ hab h_in_Icc h_ne
+  refine inv_sub_mul_deriv_intervalIntegrable γ hab h_in_Icc fun t ht h_eq => ?_
+  have h_t_eq : t = t₀ := h_unique t (h_in_Icc ht) h_eq
+  linarith [ht.2, h_t_eq.symm ▸ ht.2]
 
 /-- Symmetric to `inv_sub_mul_deriv_intervalIntegrable_left`. -/
 theorem inv_sub_mul_deriv_intervalIntegrable_right
@@ -1511,14 +1361,9 @@ theorem inv_sub_mul_deriv_intervalIntegrable_right
   have hab : t₀ + δ_right_ε ≤ 1 := by linarith
   have h_in_Icc : Set.Icc (t₀ + δ_right_ε) (1 : ℝ) ⊆ Set.Icc (0 : ℝ) 1 :=
     Set.Icc_subset_Icc (by linarith [ht₀_Ioo.1]) le_rfl
-  have h_ne : ∀ t ∈ Set.Icc (t₀ + δ_right_ε) (1 : ℝ),
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t ≠ s := by
-    intro t ht h_eq
-    have ht_in_01 : t ∈ Set.Icc (0 : ℝ) 1 := h_in_Icc ht
-    have h_t_eq : t = t₀ := h_unique t ht_in_01 h_eq
-    have : t = t₀ + δ_right_ε := by linarith [ht.1, h_t_eq.symm ▸ ht.1]
-    linarith
-  exact inv_sub_mul_deriv_intervalIntegrable γ hab h_in_Icc h_ne
+  refine inv_sub_mul_deriv_intervalIntegrable γ hab h_in_Icc fun t ht h_eq => ?_
+  have h_t_eq : t = t₀ := h_unique t (h_in_Icc ht) h_eq
+  linarith [ht.1, h_t_eq.symm ▸ ht.1]
 
 /-- **The cutoff integral equals the outer-integral sum** when the geometric
 scaffolding holds and the integrand is integrable on the outer pieces. This
@@ -1558,18 +1403,16 @@ theorem cutoff_integral_eq_outer_sum
   -- Step 1: F = integrand a.e. on [0, t₀ - δ_left ε].
   have hF_left_ae : ∀ᵐ t ∂MeasureTheory.volume,
       t ∈ Set.uIoc 0 (t₀ - D.δ_left ε) → F t = integrand t := by
-    have h_sing : ({t₀ - D.δ_left ε} : Set ℝ)ᶜ ∈ MeasureTheory.ae MeasureTheory.volume :=
-      MeasureTheory.compl_mem_ae_iff.mpr
-        (by exact (Set.finite_singleton _).measure_zero MeasureTheory.volume)
-    filter_upwards [h_sing] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (le_of_lt h_left_lt)] at ht_mem
+    filter_upwards [MeasureTheory.compl_mem_ae_iff.mpr
+      ((Set.finite_singleton (t₀ - D.δ_left ε)).measure_zero MeasureTheory.volume)]
+      with t ht_ne ht_mem
+    rw [Set.uIoc_of_le h_left_lt.le] at ht_mem
     have ht_lt : t < t₀ - D.δ_left ε :=
-      lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+      lt_of_le_of_ne ht_mem.2 fun h => ht_ne (Set.mem_singleton_iff.mpr h)
     simp only [hF_def, hI_def, cpvIntegrand]
     rw [if_pos]
     refine D.h_far_left ε hε_pos hε_lt t
-      ⟨le_of_lt ht_mem.1, le_of_lt (by linarith [ht₀_Ioo.2])⟩
-      (by linarith) (by linarith)
+      ⟨ht_mem.1.le, (by linarith [ht₀_Ioo.2] : t ≤ 1)⟩ (by linarith) (by linarith)
   -- Step 2: F = 0 on [t₀ - δ_left ε, t₀ + δ_right ε].
   have hF_mid : ∀ t ∈ Set.uIoc (t₀ - D.δ_left ε) (t₀ + D.δ_right ε), F t = 0 := by
     intro t ht
@@ -1585,11 +1428,10 @@ theorem cutoff_integral_eq_outer_sum
   -- Step 3: F = integrand a.e. on [t₀ + δ_right ε, 1].
   have hF_right_ae : ∀ᵐ t ∂MeasureTheory.volume,
       t ∈ Set.uIoc (t₀ + D.δ_right ε) 1 → F t = integrand t := by
-    have h_sing : ({t₀ + D.δ_right ε} : Set ℝ)ᶜ ∈ MeasureTheory.ae MeasureTheory.volume :=
-      MeasureTheory.compl_mem_ae_iff.mpr
-        (by exact (Set.finite_singleton _).measure_zero MeasureTheory.volume)
-    filter_upwards [h_sing] with t ht_ne ht_mem
-    rw [Set.uIoc_of_le (le_of_lt h_right_lt)] at ht_mem
+    filter_upwards [MeasureTheory.compl_mem_ae_iff.mpr
+      ((Set.finite_singleton (t₀ + D.δ_right ε)).measure_zero MeasureTheory.volume)]
+      with t _ ht_mem
+    rw [Set.uIoc_of_le h_right_lt.le] at ht_mem
     have ht_gt_t₀ : t₀ < t := by linarith [ht_mem.1]
     simp only [hF_def, hI_def, cpvIntegrand]
     rw [if_pos]
@@ -1678,8 +1520,7 @@ noncomputable def AsymmetricArcFTCHyp.ofHasCauchyPV
               deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) := by
       filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
       exact cutoff_integral_eq_outer_sum γ ht₀_Ioo D h_unique hε.1 hε.2
-    exact (show HasCauchyPV (fun z => (z - s)⁻¹)
-            γ.toPwC1Immersion.toPiecewiseC1Path s L from hCPV).congr' h_ev
+    exact hCPV.congr' h_ev
 
 /-- **Generic `AsymmetricSingleCrossingData` builder from
 `HasCauchyPV`** (T-BR-Y3c).
