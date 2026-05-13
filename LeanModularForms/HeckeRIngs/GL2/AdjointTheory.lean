@@ -6461,6 +6461,61 @@ private theorem peterssonInner_Hecke_FD_T_p_lower_slot1_slash_adjoint
   exact h
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM unified residual on T_p_lower•Hecke_FD**: applies both
+slot-1 and slot-2 slash-adjoint reductions to express the symmetric form
+residual (`pet Hecke_FD f (g∣T_p_lower) = pet Hecke_FD (⟨u⟩f∣T_p_lower) g`)
+as an equality of integrals on the **same** T_p_lower-shifted Hecke FD with
+**symmetrically-structured** integrands:
+
+  `pet (T_p_lower•Hecke_FD) (f∣T_p_upper(0)) g
+     = pet (T_p_lower•Hecke_FD) (⟨u⟩f) (g∣T_p_upper(0))`
+
+Both sides integrate over T_p_lower•Hecke_FD with `f` resp. `⟨u⟩f` on slot-1
+and `g` resp. `g∣T_p_upper(0)` on slot-2 (or vice versa), exposing the
+"slash-symmetric" form predicted by the reviewer (expert review 2026-05-11)
+as the natural σ_p Q-permutation setting.
+
+**Mathematical interpretation**. The (p+1) Γ₁(N)-tile decomposition
+`T_p_lower•Hecke_FD = ⋃_X (T_p_lower·α_X)•Γ₁_FD` (where each tile is a
+left-translate by some SL(2,ℤ) element acting via Möbius) makes the
+σ_p Q-permutation explicit: per-tile change of variables via
+`peterssonInner_smul_set_eq_slash` converts `f∣T_p_upper(0)·shift(b)`
+into `f∣T_p_upper(b)`, recovering the original Hecke double-coset reps. -/
+private theorem peterssonInner_Hecke_FD_T_p_lower_residual_iff
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (D : Set ℍ) (f g : ℍ → ℂ) (g' : ℍ → ℂ) :
+    peterssonInner k
+      (⋃ i : Option (Fin p),
+        (match i with
+          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
+      f (g ∣[k] (glMap (T_p_lower p hp) : GL (Fin 2) ℝ)) =
+    peterssonInner k
+      (⋃ i : Option (Fin p),
+        (match i with
+          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
+      (g' ∣[k] (glMap (T_p_lower p hp) : GL (Fin 2) ℝ)) g ↔
+    peterssonInner k
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p),
+          (match i with
+            | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D))
+      (f ∣[k] (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ)) g =
+    peterssonInner k
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p),
+          (match i with
+            | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D))
+      g' (g ∣[k] (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ)) := by
+  rw [peterssonInner_Hecke_FD_T_p_lower_slot2_slash_adjoint
+        (N := N) p hp hpN D f g,
+      peterssonInner_Hecke_FD_T_p_lower_slot1_slash_adjoint
+        (N := N) p hp hpN D g' g]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
