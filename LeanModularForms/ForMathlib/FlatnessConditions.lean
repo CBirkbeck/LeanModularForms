@@ -41,8 +41,6 @@ noncomputable section
 
 variable {x y : ℂ}
 
-/-! ### Orthogonal projection in ℂ (viewed as ℝ²) -/
-
 /-- The orthogonal projection of `w` onto the real line spanned by `L` in `ℂ`,
 where `ℂ` is viewed as `ℝ²`. Computes `(Re(w * conj L) / ‖L‖²) • L`. -/
 def orthogonalProjectionComplex (w L : ℂ) : ℂ :=
@@ -112,13 +110,6 @@ theorem norm_tangentDeviation_le (w L : ℂ) (hL : L ≠ 0) :
     _ = ‖w‖ * (‖L‖ * ‖L‖ / Complex.normSq L) := by ring
     _ = ‖w‖ := by
         rw [Complex.norm_mul_self_eq_normSq L, div_self hns.ne', mul_one]
-
-/-! ### Flatness of order n (Definition 3.2)
-
-A piecewise C¹ curve `γ` is flat of order `n` at parameter `t₀` if the
-orthogonal deviation from the tangent line at `γ(t₀)` is `o(‖γ(t) - γ(t₀)‖ⁿ)`
-as `t → t₀`, where the tangent line is determined by the one-sided derivative
-limits. -/
 
 /-- A curve `γ` is **flat of order `n`** at parameter `t₀` if:
 - From the right: the deviation from the right tangent is `o(‖γ(t) - γ(t₀)‖ⁿ)`.
@@ -197,14 +188,6 @@ theorem isFlatOfOrder_zero (γ : ℝ → ℂ) (t₀ : ℝ)
       _ < 2 * (ε / 2) := by linarith
       _ = ε := by ring
 
-/-! ### Flatness of order 1 from derivative limits
-
-Every piecewise C¹ immersion is flat of order 1 at every interior point. The key
-argument: `γ(t) - γ(t₀) = (t - t₀) · L + o(t - t₀)` from differentiability, and
-the tangent deviation of the leading term `(t - t₀) · L` from `L` vanishes, so the
-deviation is `o(t - t₀)`. Meanwhile `‖γ(t) - γ(t₀)‖ ≥ (‖L‖/2)|t - t₀|` eventually,
-giving `o(t - t₀) = o(‖γ(t) - γ(t₀)‖)`. -/
-
 /-- Right-sided flatness of order 1 from a right derivative limit. -/
 private theorem tangentDeviation_isLittleO_right
     (γ : ℝ → ℂ) (t₀ : ℝ) (L : ℂ) (hL : L ≠ 0)
@@ -232,18 +215,16 @@ private theorem tangentDeviation_isLittleO_right
       ⟨2, Eventually.of_forall fun t => norm_tangentDeviation_le _ _ hL⟩
   have ho1 := hO.trans_isLittleO hr
   have hO2 : (fun t => t - t₀) =O[𝓝[>] t₀] (fun t => γ t - γ t₀) := by
-    have hL_pos : (0 : ℝ) < ‖L‖ := norm_pos_iff.mpr hL
     rw [Asymptotics.isBigO_iff]
     refine ⟨2 / ‖L‖, ?_⟩
     filter_upwards [hr.def (by positivity : (0 : ℝ) < ‖L‖ / 2)] with t ht
-    have h1 : ‖t - t₀‖ * ‖L‖ = ‖(t - t₀) • L‖ := (norm_smul _ _).symm
     have h2 : ‖(t - t₀) • L‖ ≤ ‖γ t - γ t₀‖ + ‖r t‖ := by
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
       rw [this]
       exact norm_sub_le _ _
-    rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
+    rw [div_mul_eq_mul_div, le_div_iff₀ (norm_pos_iff.mpr hL)]
     have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
-    nlinarith [norm_nonneg (γ t - γ t₀)]
+    nlinarith [norm_nonneg (γ t - γ t₀), (norm_smul (t - t₀) L).symm]
   exact (ho1.trans_isBigO hO2).congr_left fun t => (h_eq t).symm
 
 /-- Left-sided flatness of order 1 from a left derivative limit. -/
@@ -273,18 +254,16 @@ private theorem tangentDeviation_isLittleO_left
       ⟨2, Eventually.of_forall fun t => norm_tangentDeviation_le _ _ hL⟩
   have ho1 := hO.trans_isLittleO hr
   have hO2 : (fun t => t - t₀) =O[𝓝[<] t₀] (fun t => γ t - γ t₀) := by
-    have hL_pos : (0 : ℝ) < ‖L‖ := norm_pos_iff.mpr hL
     rw [Asymptotics.isBigO_iff]
     refine ⟨2 / ‖L‖, ?_⟩
     filter_upwards [hr.def (by positivity : (0 : ℝ) < ‖L‖ / 2)] with t ht
-    have h1 : ‖t - t₀‖ * ‖L‖ = ‖(t - t₀) • L‖ := (norm_smul _ _).symm
     have h2 : ‖(t - t₀) • L‖ ≤ ‖γ t - γ t₀‖ + ‖r t‖ := by
       have : (t - t₀) • L = (γ t - γ t₀) - r t := by simp [hr_def]
       rw [this]
       exact norm_sub_le _ _
-    rw [div_mul_eq_mul_div, le_div_iff₀ hL_pos]
+    rw [div_mul_eq_mul_div, le_div_iff₀ (norm_pos_iff.mpr hL)]
     have hr_eq : ‖r t‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := ht
-    nlinarith [norm_nonneg (γ t - γ t₀)]
+    nlinarith [norm_nonneg (γ t - γ t₀), (norm_smul (t - t₀) L).symm]
   exact (ho1.trans_isBigO hO2).congr_left fun t => (h_eq t).symm
 
 /-- Every piecewise C¹ immersion is flat of order 1 at any interior point.
@@ -293,33 +272,25 @@ tangent line, so the deviation is the remainder `o(t - t₀) = o(‖γ(t) - γ(t
 theorem isFlatOfOrder_one (γ : PwC1Immersion x y) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) :
     IsFlatOfOrder (γ : ℝ → ℂ) t₀ 1 := by
-  have hcont : ContinuousAt (γ : ℝ → ℂ) t₀ :=
-    γ.continuous.continuousAt
+  have hcont : ContinuousAt (γ : ℝ → ℂ) t₀ := γ.continuous.continuousAt
+  have hcl : IsClosed ((↑γ.toPiecewiseC1Path.partition : Set ℝ) \ {t₀}) :=
+    (γ.toPiecewiseC1Path.partition.finite_toSet.subset diff_subset).isClosed
+  have hmem : (↑γ.toPiecewiseC1Path.partition \ {t₀} : Set ℝ)ᶜ ∈ 𝓝 t₀ :=
+    hcl.isOpen_compl.mem_nhds (mem_compl (fun h => h.2 rfl))
+  have hIoo : Ioo (0 : ℝ) 1 ∈ 𝓝 t₀ := Ioo_mem_nhds ht₀.1 ht₀.2
   have hdiff_right : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ (γ : ℝ → ℂ) t := by
-    have hcl : IsClosed ((↑γ.toPiecewiseC1Path.partition : Set ℝ) \ {t₀}) :=
-      (γ.toPiecewiseC1Path.partition.finite_toSet.subset diff_subset).isClosed
-    filter_upwards [
-      nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl (fun h => h.2 rfl))),
-      nhdsWithin_le_nhds (Ioo_mem_nhds ht₀.1 ht₀.2),
+    filter_upwards [nhdsWithin_le_nhds hmem, nhdsWithin_le_nhds hIoo,
       self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
-    exact (γ.toPiecewiseC1Path.differentiable_off t ht₂
-      fun hm => ht₁ ⟨hm, ne_of_gt (mem_Ioi.mp ht₃)⟩)
+    exact γ.toPiecewiseC1Path.differentiable_off t ht₂
+      fun hm => ht₁ ⟨hm, ne_of_gt (mem_Ioi.mp ht₃)⟩
   have hdiff_left : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ (γ : ℝ → ℂ) t := by
-    have hcl : IsClosed ((↑γ.toPiecewiseC1Path.partition : Set ℝ) \ {t₀}) :=
-      (γ.toPiecewiseC1Path.partition.finite_toSet.subset diff_subset).isClosed
-    filter_upwards [
-      nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl (fun h => h.2 rfl))),
-      nhdsWithin_le_nhds (Ioo_mem_nhds ht₀.1 ht₀.2),
+    filter_upwards [nhdsWithin_le_nhds hmem, nhdsWithin_le_nhds hIoo,
       self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
-    exact (γ.toPiecewiseC1Path.differentiable_off t ht₂
-      fun hm => ht₁ ⟨hm, ne_of_lt (mem_Iio.mp ht₃)⟩)
-  constructor
-  · intro L hL hL_right
-    exact tangentDeviation_isLittleO_right (γ : ℝ → ℂ) t₀ L hL hL_right hcont hdiff_right
-  · intro L hL hL_left
-    exact tangentDeviation_isLittleO_left (γ : ℝ → ℂ) t₀ L hL hL_left hcont hdiff_left
-
-/-! ### Condition (A'): Variable-order flatness at each pole crossing -/
+    exact γ.toPiecewiseC1Path.differentiable_off t ht₂
+      fun hm => ht₁ ⟨hm, ne_of_lt (mem_Iio.mp ht₃)⟩
+  refine ⟨fun L hL hL_right => ?_, fun L hL hL_left => ?_⟩
+  · exact tangentDeviation_isLittleO_right (γ : ℝ → ℂ) t₀ L hL hL_right hcont hdiff_right
+  · exact tangentDeviation_isLittleO_left (γ : ℝ → ℂ) t₀ L hL hL_left hcont hdiff_left
 
 /-- **Condition (A')** from Hungerbuhler-Wasem: for each singular point `s` in `S₀`
 and each parameter `t₀` where `γ(t₀) = s`, the curve must be flat of order
@@ -329,8 +300,6 @@ def SatisfiesConditionA' (γ : PwC1Immersion x y) (_f : ℂ → ℂ)
   ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
     t₀ ∈ Ioo (0 : ℝ) 1 →
     IsFlatOfOrder (γ : ℝ → ℂ) t₀ (poleOrder s)
-
-/-! ### Condition (B): Angle/Laurent compatibility -/
 
 /-- **Condition (B)** from Hungerbuhler-Wasem (Theorem 3.3): at each crossing point,
 the angle `α` is a rational multiple of `π`, and the Laurent coefficients of `f` satisfy
@@ -357,17 +326,6 @@ structure SatisfiesConditionB (γ : PwC1Immersion x y) (f : ℂ → ℂ)
           ∃ m : ℤ, (↑k.val : ℝ) * angleAtCrossing γ t₀ ht₀ =
             ↑m * (2 * Real.pi))
 
-/-! ### Conditions automatic for simple poles
-
-For simple poles (order 1), both conditions are automatically satisfied:
-
-- **(A')**: Simple poles have pole order 1, and every piecewise C¹ curve is flat
-  of order 1 (proved above as `isFlatOfOrder_one`).
-
-- **(B)**: A simple pole has Laurent series `f(z) = c₁/(z - z₀) + g(z)`, so
-  the only singular term is `k = 0` (the residue). The condition
-  `k ≥ 1 → ...` is vacuously true since `k = 0 < 1`. -/
-
 /-- Condition (A') is automatically satisfied when all poles are simple and the
 pole order function assigns order 1 to each pole. Flatness of order 1 is automatic
 for any piecewise C¹ immersion. -/
@@ -392,24 +350,19 @@ theorem satisfiesConditionB_of_simplePoles
           ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
             angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q) :
     SatisfiesConditionB γ f S0 := by
-  constructor
-  · -- angle_rational
-    intro s hs t₀ ht₀ hcross ht₀_Ioo
-    by_cases hp : t₀ ∈ γ.toPiecewiseC1Path.partition
+  refine ⟨fun s hs t₀ ht₀ hcross ht₀_Ioo => ?_, fun s hs t₀ _ _ _ => ?_⟩
+  · by_cases hp : t₀ ∈ γ.toPiecewiseC1Path.partition
     · exact hAngles s hs t₀ ht₀ hcross ht₀_Ioo hp
-    · -- Smooth point: angle = π = 1 · π / 1
-      refine ⟨1, 1, one_ne_zero, Nat.coprime_one_left 1, ?_⟩
+    · refine ⟨1, 1, one_ne_zero, Nat.coprime_one_left 1, ?_⟩
       rw [angleAtCrossing_smooth γ t₀ ht₀_Ioo hp]
       push_cast
       ring
-  · -- laurent_compatible (vacuous for simple poles)
-    intro s hs t₀ _ht₀ _hcross _ht₀_Ioo
-    obtain ⟨c, g, hg, hf_eq⟩ := hSimplePoles s hs
+  · obtain ⟨c, g, hg, hf_eq⟩ := hSimplePoles s hs
     refine ⟨1, ![c], g, hg, ?_, ?_⟩
     · filter_upwards [hf_eq] with z hz
       simp [hz, pow_one, add_comm]
     · intro ⟨_, hk⟩ _ hk1
-      exact absurd hk1 (by omega)
+      exact absurd hk1 (by lia)
 
 /-- Both conditions (A') and (B) are satisfied for simple poles, provided
 corner crossing angles are rational multiples of `π`. Condition (A') is fully
@@ -425,8 +378,6 @@ theorem conditions_automatic_simple_poles
     SatisfiesConditionA' γ f S0 (fun _ => 1) ∧ SatisfiesConditionB γ f S0 :=
   ⟨satisfiesConditionA'_of_simplePoles γ f S0 hSimplePoles,
    satisfiesConditionB_of_simplePoles γ f S0 hSimplePoles hAngles⟩
-
-/-! ### Flatness monotonicity convenience -/
 
 /-- Condition (A') with pole order `p` is implied by condition (A') with any
 larger pole order `q ≥ p`, provided `γ` is continuous. -/
