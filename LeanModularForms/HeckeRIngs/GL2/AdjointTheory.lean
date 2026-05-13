@@ -488,6 +488,126 @@ private lemma adjointGamma1Rep_mem_Gamma1 (p N : ℕ) [NeZero N]
     show (((adjointGamma1Rep p N hpN).val 1 0 : ℤ) : ZMod N) = 0
     unfold adjointGamma1Rep; simp
 
+/-- **Key matrix identity for σ_p Q-permutation**: `γ₀ · σ_p ∈ Γ₁(N)`.
+
+`γ₀ = adjointGamma0Rep p N hpN ∈ Γ₀(N)` lifts `p⁻¹ mod N`.
+`σ_p = sigma_p_specific N p hp hpN ∈ Γ₀(N)` lifts `p mod N`.
+Their product is in `Γ₁(N)` since the diamond images `p⁻¹ · p = 1`.
+
+This is the concrete bridge: in `Γ₀(N)/Γ₁(N) ≅ (ℤ/N)^×`, `γ₀` and
+`σ_p⁻¹` represent the same coset. -/
+private lemma adjointGamma0Rep_mul_sigma_p_mem_Gamma1
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  -- Set up Bezout for γ₀: gcdA·p + gcdB·N = 1
+  have hbez := Int.gcd_eq_gcd_ab p N
+  rw [show (Int.gcd (↑p) (↑N) : ℤ) = 1 from by exact_mod_cast hpN] at hbez
+  -- γ₀ entries: [[p, -gcdB], [N, gcdA]]
+  -- σ_p entries: [[a, 1], [Nm', p]] where a = aInvOfCoprime, m' = mIdxOfCoprime
+  -- and a·p - Nm' = 1 (Bezout for σ_p)
+  -- Product γ₀ · σ_p has entries:
+  --   (0,0): p·a + (-gcdB)·(Nm')   ≡ pa mod N ≡ 1
+  --   (1,0): N·a + gcdA·(Nm') = N(a + gcdA·m')  ≡ 0 mod N
+  --   (1,1): N + gcdA·p   ≡ gcdA·p mod N ≡ 1
+  refine ⟨?_, ?_, ?_⟩
+  · -- (γ₀ · σ_p)[0][0] mod N = 1
+    -- Entry: γ₀[0][0]·σ_p[0][0] + γ₀[0][1]·σ_p[1][0]
+    --      = p · a + (-gcdB) · (N · m')
+    show (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val 0 0 : ℤ) : ZMod N) = 1
+    have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+        sigma_p_specific N p hp hpN).val =
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
+          (sigma_p_specific N p hp hpN).val := by
+      rfl
+    rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
+    -- Now: γ₀[0][0] · σ_p[0][0] + γ₀[0][1] · σ_p[1][0]
+    have h_γ₀_00 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 0 0 : ℤ)
+        = (p : ℤ) := by
+      simp [adjointGamma0Rep]
+    have h_γ₀_01 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 0 1 : ℤ)
+        = -(Int.gcdB p N) := by
+      simp [adjointGamma0Rep]
+    have h_σp_00 : ((sigma_p_specific N p hp hpN).val 0 0 : ℤ) =
+        (aInvOfCoprime N p hpN : ℤ) := by
+      simp [sigma_p_specific]
+    have h_σp_10 : ((sigma_p_specific N p hp hpN).val 1 0 : ℤ) =
+        (N : ℤ) * mIdxOfCoprime N p hpN := by
+      simp [sigma_p_specific]
+    rw [h_γ₀_00, h_γ₀_01, h_σp_00, h_σp_10]
+    -- Need: (p · a + (-gcdB) · (N · m') : ZMod N) = 1
+    push_cast
+    -- Modulo N: -gcdB · N · m' ≡ 0, p · a ≡ 1
+    have h_ap : ((aInvOfCoprime N p hpN : ZMod N)) * (p : ZMod N) = 1 :=
+      aInvOfCoprime_mul_eq_one N p hpN
+    have h_N : (N : ZMod N) = 0 := ZMod.natCast_self N
+    -- (p * a + (-gcdB) * (N * m')) mod N
+    -- = p * a + 0 = p * a = a * p (commute)
+    rw [show (-(Int.gcdB ↑p ↑N : ZMod N)) * ((N : ZMod N) * (mIdxOfCoprime N p hpN : ZMod N))
+        = 0 from by rw [h_N]; ring]
+    rw [add_zero, mul_comm]
+    exact h_ap
+  · -- (γ₀ · σ_p)[1][1] mod N = 1
+    show (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val 1 1 : ℤ) : ZMod N) = 1
+    have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+        sigma_p_specific N p hp hpN).val =
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
+          (sigma_p_specific N p hp hpN).val := rfl
+    rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
+    have h_γ₀_10 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 0 : ℤ)
+        = (N : ℤ) := by
+      simp [adjointGamma0Rep]
+    have h_γ₀_11 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 1 : ℤ)
+        = Int.gcdA p N := by
+      simp [adjointGamma0Rep]
+    have h_σp_01 : ((sigma_p_specific N p hp hpN).val 0 1 : ℤ) = 1 := by
+      simp [sigma_p_specific]
+    have h_σp_11 : ((sigma_p_specific N p hp hpN).val 1 1 : ℤ) = (p : ℤ) := by
+      simp [sigma_p_specific]
+    rw [h_γ₀_10, h_γ₀_11, h_σp_01, h_σp_11]
+    -- Need: (N · 1 + gcdA · p : ZMod N) = 1
+    push_cast
+    rw [show (((N : ZMod N)) * 1) = 0 from by rw [ZMod.natCast_self]; ring]
+    rw [zero_add]
+    -- Need: gcdA * p ≡ 1 mod N from Bezout
+    have h_bez_mod : ((Int.gcdA p N : ZMod N)) * (p : ZMod N) = 1 := by
+      have := congr_arg (Int.cast : ℤ → ZMod N) hbez
+      simp only [Int.cast_one, Int.cast_add, Int.cast_mul, Int.cast_natCast,
+        ZMod.natCast_self, mul_zero, add_zero] at this
+      linear_combination -this
+    exact h_bez_mod
+  · -- (γ₀ · σ_p)[1][0] mod N = 0
+    show (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val 1 0 : ℤ) : ZMod N) = 0
+    have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+        sigma_p_specific N p hp hpN).val =
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
+          (sigma_p_specific N p hp hpN).val := rfl
+    rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
+    have h_γ₀_10 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 0 : ℤ)
+        = (N : ℤ) := by
+      simp [adjointGamma0Rep]
+    have h_γ₀_11 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 1 : ℤ)
+        = Int.gcdA p N := by
+      simp [adjointGamma0Rep]
+    have h_σp_00 : ((sigma_p_specific N p hp hpN).val 0 0 : ℤ) =
+        (aInvOfCoprime N p hpN : ℤ) := by
+      simp [sigma_p_specific]
+    have h_σp_10 : ((sigma_p_specific N p hp hpN).val 1 0 : ℤ) =
+        (N : ℤ) * mIdxOfCoprime N p hpN := by
+      simp [sigma_p_specific]
+    rw [h_γ₀_10, h_γ₀_11, h_σp_00, h_σp_10]
+    -- Need: (N · a + gcdA · (N · m') : ZMod N) = 0
+    push_cast
+    rw [show ((N : ZMod N)) * (aInvOfCoprime N p hpN : ZMod N) = 0 from by
+      rw [ZMod.natCast_self]; ring]
+    rw [show ((Int.gcdA ↑p ↑N : ZMod N)) * ((N : ZMod N) * (mIdxOfCoprime N p hpN : ZMod N)) = 0 from by
+      rw [ZMod.natCast_self]; ring]
+    ring
+
 /-! ### Hermitian adjoint of Hecke operators
 
 The adjoint is defined via the Petersson inner product:
