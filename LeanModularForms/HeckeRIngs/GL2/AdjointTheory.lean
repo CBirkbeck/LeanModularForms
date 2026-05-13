@@ -6857,6 +6857,70 @@ private theorem peterssonInner_T_p_lower_Hecke_FD_eq_sum_tile_slash
   exact peterssonInner_T_p_lower_tile_eq_slash (N := N) p hpN S F G i
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM uniform identity** `mapGL τ_X · peterssonAdj α_X = glMap T_p_lower`.
+
+For each `X : Option (Fin p)`, the product `mapGL τ_X · peterssonAdj α_X`
+collapses **uniformly** to `glMap T_p_lower`:
+
+- `X = some b`: shift(b) · peterssonAdj T_p_upper(b)
+              = shift(b) · (mapGL shift(-b) · glMap T_p_lower)
+              = mapGL (shift(b)·shift(-b)) · glMap T_p_lower = glMap T_p_lower ✓
+- `X = none`: M_infty_Gamma1_factor · peterssonAdj M_∞
+            = M_infty_Gamma1_factor · (mapGL M_infty_Gamma1_factor⁻¹ · glMap T_p_lower)
+            = mapGL 1 · glMap T_p_lower = glMap T_p_lower ✓
+
+This is the key algebraic identity making the per-X slash-adjoint reduction
+collapse to a single uniform target (analog of the `g∣peterssonAdj α_X = g∣T_p_lower`
+uniformity, but at the matrix level). -/
+private theorem mapGL_tile_mul_peterssonAdj_Hecke_rep_eq_glMap_T_p_lower
+    (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (i : Option (Fin p)) :
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+      (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) *
+      peterssonAdj (Hecke_rep_family N p hp.pos hpN i) =
+    (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) := by
+  match i with
+  | none =>
+    show ((mapGL ℝ : SL(2, ℤ) →* _) (M_infty_Gamma1_factor N p hpN 0)
+      : GL (Fin 2) ℝ) *
+      peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
+      (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)
+    -- M_∞ = T_p_upper(0) · M_infty_Gamma1_factor
+    rw [show (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0)) from by
+      rw [← glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1 N p hp.pos hpN 0,
+        mul_inv_cancel_left]]
+    rw [peterssonAdj_mul, peterssonAdj_mapGL_SL_eq_inv,
+      peterssonAdj_glMap_T_p_upper_zero_eq_glMap_T_p_lower]
+    rw [show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0)) *
+        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0))⁻¹ *
+          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0) *
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0))⁻¹) *
+          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) from by group]
+    rw [mul_inv_cancel, one_mul]
+  | some b =>
+    show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b.val : ℤ))
+      : GL (Fin 2) ℝ) *
+      peterssonAdj (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) =
+      (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)
+    rw [peterssonAdj_T_p_upper_eq_shift_mul_lower p hp.pos b.val]
+    rw [show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b.val : ℤ))) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (-(b.val : ℤ))) *
+          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b.val : ℤ)) *
+          (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (-(b.val : ℤ)))) *
+          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) from by group]
+    rw [← map_mul]
+    rw [show shiftSL_loc (b.val : ℤ) * shiftSL_loc (-(b.val : ℤ)) =
+        (1 : SL(2, ℤ)) from by
+      apply Subtype.ext; ext i j
+      fin_cases i <;> fin_cases j <;>
+        simp [shiftSL_loc, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply]]
+    rw [map_one, one_mul]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
