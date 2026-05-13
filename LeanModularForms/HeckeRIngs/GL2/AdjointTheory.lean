@@ -6324,6 +6324,40 @@ private theorem peterssonInner_gamma0_smul_Hecke_FD_eq_T_p_lower_smul
   rw [gamma0_smul_Hecke_FD_eq_T_p_lower_smul_iUnion (N := N) p hp hpN D]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM master geometric identity**: combining all four geometric
+primitives, this lemma expresses `pet (T_p_lower • ⋃_X γ_X • Γ₁_FD) F G`
+equivalently as `pet (Hecke_FD) (F∣γ₀) (G∣γ₀)`.
+
+Composes:
+* `peterssonInner_gamma0_smul_Hecke_FD_eq_T_p_lower_smul` (set identity); and
+* `peterssonInner_gamma0_smul_Hecke_FD_eq_slash` (γ₀ SL(2,ℤ) smul-to-slash).
+
+This is the **unifying** lemma: it expresses the `T_p_lower`-shifted
+fundamental domain integral in terms of the `γ₀`-slashed integral on the
+original `Hecke_FD`.  This identification is the geometric heart of the
+DS Prop 5.5.2(b) σ_p Q-permutation. -/
+private theorem peterssonInner_T_p_lower_smul_eq_gamma0_slash
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (D : Set ℍ) (F G : ℍ → ℂ) :
+    peterssonInner k
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p),
+          ((mapGL ℝ : SL(2, ℤ) →* _)
+            (ds_p_plus_one_family_Gamma1_factor N p hpN i) : GL (Fin 2) ℝ) • D))
+      F G =
+    peterssonInner k
+      (⋃ i : Option (Fin p),
+        (match i with
+          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* _)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ))
+      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* _)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ)) := by
+  rw [← peterssonInner_gamma0_smul_Hecke_FD_eq_T_p_lower_smul (N := N) p hp hpN D]
+  exact peterssonInner_gamma0_smul_Hecke_FD_eq_slash (N := N) p hp hpN D F G
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
