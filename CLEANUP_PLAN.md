@@ -12,6 +12,8 @@
 
 Each step is one commit. After each step: `lake build LeanModularForms` must pass, axioms must remain clean.
 
+**Status (2026-05-13)**: A1, A3, A4, A5, A7, A9 done — 16 files deleted, ~4976 lines removed (23 files changed, 7 insertions, 4976 deletions vs baseline). ForMathlib down from 183 → 167 files. A2 deferred (curve-type mismatch makes it Priority 4 structural, not mechanical); A6 and A8 deferred to `/cleanup-all` per-file passes (better-suited to granular editing).
+
 ### A1. Delete fully-commented-out files (~1951 lines, zero risk)
 
 Files whose entire body is `/- ... -/`-wrapped:
