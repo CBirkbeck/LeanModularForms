@@ -21500,6 +21500,44 @@ private def SigmaQPermResidual_upper
                 (adjointGamma0Rep p N hpN).property q).out :
                 SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d M_∞-branch tile-form integral residual** — the minimal
+analytic content of the M_∞ branch of σ_p Q-permutation, after applying
+all per-q tile-form reductions + σ-reindex + AE-disjoint sum collapse on
+both LHS and RHS.
+
+```
+pet D (⟨u⁻¹⟩f) ((⟨u⁻¹⟩g ∣ T_p_upper(0)) ∣ mapGL γ₀)
+  = pet D ((⟨u⟩f ∣ T_p_upper(0)) ∣ mapGL γ₀) g
+```
+
+where `D = ⋃_q M_∞ • q.out⁻¹ • fd`. This is the single integral identity
+on a common union-tile that captures the σ_p Q-permutation content
+of DS 5.5.2(b) for the M_∞ branch. -/
+private def TileFormIntegralResidual_M_infty
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set UpperHalfPlane)))
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set UpperHalfPlane)))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+    (⇑g)
+
 /-- **T205-d residual: DS Theorem 5.5.3 in symmetric form at petN level.**
 
 The single named analytic residual for `petN_heckeT_p_adjoint_standard_form`:
