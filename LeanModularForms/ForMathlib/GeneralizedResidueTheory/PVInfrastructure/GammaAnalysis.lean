@@ -54,26 +54,6 @@ private lemma farSet_isCompact (a b t₀ δ : ℝ) (_hab : a < b) (_hδ : 0 < δ
   refine IsCompact.inter_right isCompact_Icc ?_
   exact isClosed_le continuous_const (continuous_abs.comp (continuous_sub_right t₀))
 
-private lemma norm_sub_pos_on_farSet (γ : ℝ → ℂ) (a b t₀ δ : ℝ) (hab : a < b) (hδ : 0 < δ)
-    (hγ_cont : ContinuousOn γ (Set.Icc a b))
-    (h_inj_far : ∀ t ∈ Set.Icc a b, δ ≤ |t - t₀| → γ t ≠ γ t₀) :
-    ∃ m > 0, ∀ t ∈ Set.Icc a b, δ ≤ |t - t₀| → m ≤ ‖γ t - γ t₀‖ := by
-  let farSet := {t | t ∈ Set.Icc a b ∧ δ ≤ |t - t₀|}
-  have h_compact : IsCompact farSet := farSet_isCompact a b t₀ δ hab hδ
-  have h_cont_norm : ContinuousOn (fun t => ‖γ t - γ t₀‖) (Set.Icc a b) := by
-    refine Continuous.comp_continuousOn continuous_norm ?_
-    exact hγ_cont.sub continuousOn_const
-  by_cases h_nonempty : farSet.Nonempty
-  · have h_cont_on_far : ContinuousOn (fun t => ‖γ t - γ t₀‖) farSet :=
-      h_cont_norm.mono (fun t ht => ht.1)
-    obtain ⟨t_min', ht_min'_mem, ht_min'_min⟩ :=
-      h_compact.exists_isMinOn h_nonempty h_cont_on_far
-    have h_min_pos : 0 < ‖γ t_min' - γ t₀‖ :=
-      norm_pos_iff.mpr (sub_ne_zero.mpr (h_inj_far t_min' ht_min'_mem.1 ht_min'_mem.2))
-    exact ⟨‖γ t_min' - γ t₀‖, h_min_pos, fun t ht1 ht2 => ht_min'_min ⟨ht1, ht2⟩⟩
-  · refine ⟨1, one_pos, fun t ht1 ht2 => ?_⟩
-    exact (h_nonempty ⟨t, ht1, ht2⟩).elim
-
 /-- The integrand times (t-t₀) tends to 1.
 This is the key estimate:
 (t-t₀) * (γ-γ₀)⁻¹ * γ' → 1 as t → t₀. -/
