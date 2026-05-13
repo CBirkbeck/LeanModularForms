@@ -685,6 +685,23 @@ private lemma gamma1_of_gamma0_sigma_p_coe
       ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
         sigma_p_specific N p hp hpN := rfl
 
+/-- **SL identity** `σ_p⁻¹ = γ_1⁻¹ · γ₀` in SL(2, ℤ).
+
+Derived from `γ₀ · σ_p = γ_1` (definitional via `gamma1_of_gamma0_sigma_p`)
+by left-inversion: `σ_p = γ₀⁻¹ · γ_1` → `σ_p⁻¹ = γ_1⁻¹ · γ₀`.
+
+**Use**: this is the algebraic identity that connects σ_p⁻¹ (the
+"natural" σ_p Q-permutation matrix) to the γ_1, γ₀ decomposition
+(separating Γ_1(N)-invariance and Γ_0(N)/Γ_1(N) diamond character).
+Used by `peterssonAdj_glMap_M_infty_eq_via_gamma1` to derive the
+γ_1-form factorization of the M_∞ adjoint. -/
+private lemma sigma_p_inv_eq_gamma1_inv_mul_gamma0
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    (sigma_p_specific N p hp hpN)⁻¹ =
+      ((gamma1_of_gamma0_sigma_p p N hp hpN : Gamma1 N) : SL(2, ℤ))⁻¹ *
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) := by
+  rw [gamma1_of_gamma0_sigma_p_coe, mul_inv_rev, inv_mul_cancel_right]
+
 /-- **Key product identity**: `γ₀ · M_∞ = γ_1 · T_p_lower` in GL(2, ℚ),
 where γ_1 = γ₀ · σ_p ∈ Γ₁(N).
 
@@ -3759,16 +3776,8 @@ private theorem peterssonAdj_glMap_M_infty_eq_via_gamma1
         ((mapGL ℝ : SL(2, ℤ) →* _)
           ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) := by
   -- σ_p⁻¹ = γ_1⁻¹ · γ₀ via γ₀ · σ_p = γ_1.
-  have h_sigma_inv : (sigma_p_specific N p hp hpN)⁻¹ =
-      ((gamma1_of_gamma0_sigma_p p N hp hpN : Gamma1 N) : SL(2, ℤ))⁻¹ *
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) := by
-    -- From γ_1 = γ₀ · σ_p (as SL elements), σ_p⁻¹ = (γ₀ · σ_p)⁻¹ · γ₀
-    -- = γ_1⁻¹ · γ₀ after canceling.
-    have h_coe : ((gamma1_of_gamma0_sigma_p p N hp hpN : Gamma1 N) :
-        SL(2, ℤ)) = ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-        sigma_p_specific N p hp hpN := rfl
-    rw [h_coe, mul_inv_rev, inv_mul_cancel_right]
-  rw [peterssonAdj_glMap_M_infty_eq N p hp hpN, h_sigma_inv, map_mul, ← mul_assoc]
+  rw [peterssonAdj_glMap_M_infty_eq N p hp hpN,
+    sigma_p_inv_eq_gamma1_inv_mul_gamma0 p N hp hpN, map_mul, ← mul_assoc]
 
 /-- The shift matrix `[[1, m; 0, 1]]` as an SL₂(ℤ) element. -/
 private def shiftSL_loc (m : ℤ) : SL(2, ℤ) :=
