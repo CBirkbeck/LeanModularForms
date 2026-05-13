@@ -7073,6 +7073,22 @@ private theorem peterssonInner_per_X_sum_iff_Hecke_FD_residual
       hm hd (f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) g hfi_RHS).symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM GL+ scalar invariance on peterssonInner**: applying
+`UpperHalfPlane_smul_eq_of_matrix_smul_eq` extended to set-level.
+
+For any `α, β ∈ GL(2,ℝ)⁺` differing by a positive scalar `c`,
+`peterssonInner k (α • D) F G = peterssonInner k (β • D) F G`. -/
+private lemma peterssonInner_smul_eq_of_matrix_proportional
+    {α β : GL (Fin 2) ℝ} (hα : 0 < α.det.val) (hβ : 0 < β.det.val)
+    (c : ℝ) (hc : c ≠ 0)
+    (hMat : (α : Matrix (Fin 2) (Fin 2) ℝ) = c • (β : Matrix (Fin 2) (Fin 2) ℝ))
+    (D : Set ℍ) (F G : ℍ → ℂ) :
+    peterssonInner k (α • D) F G = peterssonInner k (β • D) F G := by
+  congr 1
+  exact smul_set_eq_of_smul_eq
+    (UpperHalfPlane_smul_eq_of_matrix_smul_eq α β hα hβ c hc hMat) D
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
