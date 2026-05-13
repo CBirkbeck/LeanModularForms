@@ -243,13 +243,12 @@ private lemma contourIntegral_inv_norm_le_of_far
       exact Ioc_subset_Icc_self ht_ui
     change ‖(γ.toPath.extend t - w)⁻¹ * deriv γ.toPath.extend t‖ ≤ M_d / (‖w‖ - R)
     rw [norm_mul, norm_inv]
-    have h_dist := h_dist_lb t ht
     have h_inv_le : ‖γ.toPath.extend t - w‖⁻¹ ≤ (‖w‖ - R)⁻¹ :=
-      inv_anti₀ hpos h_dist
+      inv_anti₀ hpos (h_dist_lb t ht)
     calc ‖γ.toPath.extend t - w‖⁻¹ * ‖deriv γ.toPath.extend t‖
         ≤ (‖w‖ - R)⁻¹ * M_d := by
           apply mul_le_mul h_inv_le (hM_d t ht) (norm_nonneg _)
-            (le_of_lt (inv_pos.mpr hpos))
+            (inv_pos.mpr hpos).le
       _ = M_d / (‖w‖ - R) := by rw [inv_mul_eq_div]
   have h_bound := intervalIntegral.norm_integral_le_of_norm_le_const h_ptwise
   rw [show |(1 : ℝ) - 0| = 1 from by norm_num, mul_one] at h_bound
@@ -331,7 +330,7 @@ theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
     rw [div_lt_iff₀ hpos]
     nlinarith
   have h_2pi_n_lt : 2 * Real.pi * (|n| : ℝ) < 2 * Real.pi :=
-    lt_of_le_of_lt hL h_div_lt
+    hL.trans_lt h_div_lt
   have h_n_abs_lt_1 : (|n| : ℝ) < 1 := by
     have h_2pi_n_lt' : 2 * Real.pi * (|n| : ℝ) < 2 * Real.pi * 1 := by
       rw [mul_one]
@@ -346,15 +345,15 @@ theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
       have : |n| ≥ 1 := by
         rw [abs_of_nonpos (by linarith)]
         linarith
-      omega
+      lia
     have h2 : n < 1 := by
       by_contra h
       push Not at h
       have : |n| ≥ 1 := by
         rw [abs_of_nonneg (by linarith)]
         exact h
-      omega
-    omega
+      lia
+    lia
   rw [h_winding_eq, h_n_zero, Int.cast_zero]
 
 /-! ### Cocompact form: winding eventually zero from Lipschitz γ -/
