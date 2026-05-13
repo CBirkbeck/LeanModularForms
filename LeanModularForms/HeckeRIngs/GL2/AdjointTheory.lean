@@ -6264,6 +6264,66 @@ private theorem gamma0_smul_Hecke_FD_eq_T_p_lower_smul_iUnion
   exact gamma0_smul_ds_family_eq_T_p_lower_smul_gamma_X (N := N) p hp hpN i D
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM Hecke-FD integral form**: combining the geometric set
+identity `γ₀ • Hecke_FD = T_p_lower • (⋃_X γ_X • D)` with
+`peterssonInner_mapGL_smul_eq_slash` gives the integral identity:
+
+`peterssonInner (γ₀ • Hecke_FD) F G = peterssonInner Hecke_FD (F∣γ₀) (G∣γ₀)`
+
+The LHS uses the geometric identification of `γ₀•Hecke_FD` via the magic
+matrix identity; the RHS pulls back via the SL(2,ℤ) slash-invariance. This
+is the first step toward expressing the σ_p Q-permutation identity as
+an integral over the Hecke FD with γ₀-slashed integrands.
+
+This is a direct corollary of `peterssonInner_mapGL_smul_eq_slash` since
+γ₀ = adjointGamma0Rep is in SL(2,ℤ). -/
+private theorem peterssonInner_gamma0_smul_Hecke_FD_eq_slash
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (D : Set ℍ) (F G : ℍ → ℂ) :
+    peterssonInner k
+      (((mapGL ℝ : SL(2, ℤ) →* _)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p),
+          (match i with
+            | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D))
+      F G =
+    peterssonInner k
+      (⋃ i : Option (Fin p),
+        (match i with
+          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
+      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* _)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ))
+      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* _)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ)) :=
+  peterssonInner_mapGL_smul_eq_slash _
+    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) F G
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM Hecke-FD vs Γ_p-FD integral bridge**: the geometric
+`γ₀•Hecke_FD = T_p_lower•(⋃_X γ_X•D)` identity (`gamma0_smul_Hecke_FD_eq_T_p_lower_smul_iUnion`)
+gives a peterssonInner equality across these AE-equal domains. -/
+private theorem peterssonInner_gamma0_smul_Hecke_FD_eq_T_p_lower_smul
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (D : Set ℍ) (F G : ℍ → ℂ) :
+    peterssonInner k
+      (((mapGL ℝ : SL(2, ℤ) →* _)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p),
+          (match i with
+            | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D))
+      F G =
+    peterssonInner k
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p),
+          ((mapGL ℝ : SL(2, ℤ) →* _)
+            (ds_p_plus_one_family_Gamma1_factor N p hpN i) : GL (Fin 2) ℝ) • D))
+      F G := by
+  rw [gamma0_smul_Hecke_FD_eq_T_p_lower_smul_iUnion (N := N) p hp hpN D]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
