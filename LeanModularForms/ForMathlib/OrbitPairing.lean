@@ -29,8 +29,6 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
-/-! ### normSq helpers -/
-
 private lemma normSq_add_one_eq_of_re_neg_halfFM (z : ℂ) (hre : z.re = -1/2) :
     Complex.normSq (z + 1) = Complex.normSq z := by
   simp only [normSq_apply, add_re, one_re, add_im, one_im, add_zero, hre]
@@ -48,10 +46,8 @@ private lemma eq_of_sq_eq_of_nonnegFM {a b : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b)
 
 private lemma norm_eq_of_normSq_eqFM {z w : ℂ}
     (h : Complex.normSq z = Complex.normSq w) : ‖z‖ = ‖w‖ :=
-  eq_of_sq_eq_of_nonnegFM (norm_nonneg z) (norm_nonneg w) (by
-    have hz := normSq_eq_norm_sq z
-    have hw := normSq_eq_norm_sq w
-    linarith)
+  eq_of_sq_eq_of_nonnegFM (norm_nonneg z) (norm_nonneg w) <| by
+    linarith [normSq_eq_norm_sq z, normSq_eq_norm_sq w]
 
 private lemma one_le_normSq_of_norm_gt_oneFM {z : ℂ} (h : ‖z‖ > 1) :
     1 ≤ Complex.normSq z := by
@@ -63,49 +59,27 @@ private lemma normSq_eq_one_of_norm_eq_oneFM {z : ℂ} (h : ‖z‖ = 1) :
   rw [normSq_eq_norm_sq, h]
   norm_num
 
-/-! ### T-translation coercion identities -/
-
 /-- Coercion identity for T-translation: `((1:ℝ) +ᵥ p : ℂ) = (p : ℂ) + 1`. -/
 lemma vAdd_one_coeFM (p : ℍ) : ((1 : ℝ) +ᵥ p : ℂ) = (p : ℂ) + 1 := by
-  change ((1 : ℝ) : ℂ) + (p : ℂ) = (p : ℂ) + 1
-  push_cast
-  ring
+  simp [add_comm]
 
 /-- T-translation shifts real part by 1. -/
 lemma vAdd_one_reFM (p : ℍ) : ((1 : ℝ) +ᵥ p : ℍ).re = p.re + 1 := by
-  change ((1 : ℝ) +ᵥ p : ℂ).re = p.re + 1
-  rw [vAdd_one_coeFM]
-  simp only [add_re, one_re]
-  rfl
+  simp [add_comm]
 
 /-- T-translation preserves imaginary part. -/
-lemma vAdd_one_im_eqFM (p : ℍ) : ((1 : ℝ) +ᵥ p : ℍ).im = p.im := by
-  change ((1 : ℝ) +ᵥ p : ℂ).im = p.im
-  rw [vAdd_one_coeFM]
-  simp only [add_im, one_im, add_zero]
-  rfl
+lemma vAdd_one_im_eqFM (p : ℍ) : ((1 : ℝ) +ᵥ p : ℍ).im = p.im := by simp
 
 /-- T⁻¹-translation coercion: `((-1:ℝ) +ᵥ p : ℂ) = (p : ℂ) - 1`. -/
 lemma vAdd_neg_one_coeFM (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℂ) = (p : ℂ) - 1 := by
-  change ((-1 : ℝ) : ℂ) + (p : ℂ) = (p : ℂ) - 1
-  push_cast
-  ring
+  simp [sub_eq_add_neg, add_comm]
 
 /-- T⁻¹-translation shifts real part by -1. -/
 lemma vAdd_neg_one_reFM (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℍ).re = p.re - 1 := by
-  change ((-1 : ℝ) +ᵥ p : ℂ).re = p.re - 1
-  rw [vAdd_neg_one_coeFM]
-  simp only [sub_re, one_re]
-  rfl
+  simp [sub_eq_add_neg, add_comm]
 
 /-- T⁻¹-translation preserves imaginary part. -/
-lemma vAdd_neg_one_im_eqFM (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℍ).im = p.im := by
-  change ((-1 : ℝ) +ᵥ p : ℂ).im = p.im
-  rw [vAdd_neg_one_coeFM]
-  simp only [sub_im, one_im, sub_zero]
-  rfl
-
-/-! ### Norm preservation under T-translation -/
+lemma vAdd_neg_one_im_eqFM (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℍ).im = p.im := by simp
 
 /-- T-translation preserves norm for left-vertical points (`re = -1/2`). -/
 lemma norm_add_one_eq_of_re_neg_halfFM (z : ℂ) (hre : z.re = -1/2) :
@@ -119,26 +93,21 @@ lemma norm_sub_one_eq_of_re_halfFM (z : ℂ) (hre : z.re = 1/2) :
 
 /-- T-translation preserves norm for UpperHalfPlane points with `re = -1/2`. -/
 lemma vAdd_one_norm_eq_of_re_neg_halfFM (p : ℍ) (hre : (p : ℂ).re = -1/2) :
-    ‖((1 : ℝ) +ᵥ p : ℂ)‖ = ‖(p : ℂ)‖ := by
-  rw [vAdd_one_coeFM]
-  exact norm_add_one_eq_of_re_neg_halfFM _ hre
+    ‖((1 : ℝ) +ᵥ p : ℂ)‖ = ‖(p : ℂ)‖ :=
+  vAdd_one_coeFM p ▸ norm_add_one_eq_of_re_neg_halfFM _ hre
 
 /-- T⁻¹-translation preserves norm for UpperHalfPlane points with `re = 1/2`. -/
 lemma vAdd_neg_one_norm_eq_of_re_halfFM (p : ℍ) (hre : (p : ℂ).re = 1/2) :
-    ‖((-1 : ℝ) +ᵥ p : ℂ)‖ = ‖(p : ℂ)‖ := by
-  rw [vAdd_neg_one_coeFM]
-  exact norm_sub_one_eq_of_re_halfFM _ hre
-
-/-! ### FD membership under T-translation -/
+    ‖((-1 : ℝ) +ᵥ p : ℂ)‖ = ‖(p : ℂ)‖ :=
+  vAdd_neg_one_coeFM p ▸ norm_sub_one_eq_of_re_halfFM _ hre
 
 /-- T-translation sends left-vertical FD points to 𝒟. -/
 theorem vAdd_one_mem_fd_of_left_vertFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = -1/2) :
     (1 : ℝ) +ᵥ p ∈ 𝒟 := by
-  obtain ⟨hnormSq, _⟩ := hp_fd
   refine ⟨?_, ?_⟩
   · change 1 ≤ Complex.normSq ((1 : ℝ) +ᵥ p : ℂ)
     rw [vAdd_one_coeFM, normSq_add_one_eq_of_re_neg_halfFM _ hre]
-    exact hnormSq
+    exact hp_fd.1
   · change |((1 : ℝ) +ᵥ p : ℂ).re| ≤ 1 / 2
     rw [vAdd_one_coeFM, add_re, one_re, hre]
     norm_num
@@ -146,23 +115,18 @@ theorem vAdd_one_mem_fd_of_left_vertFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p 
 /-- T⁻¹-translation sends right-vertical FD points to 𝒟. -/
 theorem vAdd_neg_one_mem_fd_of_right_vertFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = 1/2) :
     (-1 : ℝ) +ᵥ p ∈ 𝒟 := by
-  obtain ⟨hnormSq, _⟩ := hp_fd
   refine ⟨?_, ?_⟩
   · change 1 ≤ Complex.normSq ((-1 : ℝ) +ᵥ p : ℂ)
     rw [vAdd_neg_one_coeFM, normSq_sub_one_eq_of_re_halfFM _ hre]
-    exact hnormSq
+    exact hp_fd.1
   · change |((-1 : ℝ) +ᵥ p : ℂ).re| ≤ 1 / 2
     rw [vAdd_neg_one_coeFM, sub_re, one_re, hre]
     norm_num
 
-/-! ### Elliptic point T-translation -/
-
 /-- `(1:ℝ) +ᵥ ρ' = ρ'+1` as UpperHalfPlane elements. -/
 theorem vAdd_one_rho_eq_rho_plus_oneFM :
-    (1 : ℝ) +ᵥ ellipticPointRho' = ellipticPointRhoPlusOne' := by
-  refine UpperHalfPlane.ext ?_
-  rw [vAdd_one_coeFM]
-  exact ellipticPointRho_add_one_eq
+    (1 : ℝ) +ᵥ ellipticPointRho' = ellipticPointRhoPlusOne' :=
+  UpperHalfPlane.ext <| vAdd_one_coeFM _ ▸ ellipticPointRho_add_one_eq
 
 /-- `(-1:ℝ) +ᵥ (ρ'+1) = ρ'` as UpperHalfPlane elements. -/
 theorem vAdd_neg_one_rho_plus_one_eq_rhoFM :
@@ -178,8 +142,6 @@ theorem ellipticPointRhoPlusOne_mem_fdFM : ellipticPointRhoPlusOne' ∈ 𝒟 := 
   simp only [ellipticPointRho']
   norm_num
 
-/-! ### Vanishing order identities -/
-
 variable {k : ℤ} (f : ModularForm (Gamma 1) k)
 
 /-- `ord(f, ρ+1) = ord(f, ρ)` via the T-translation identity. -/
@@ -188,8 +150,6 @@ theorem ord_rho_plus_one_eq_ord_rho_via_vAddFM :
     orderOfVanishingAt' (⇑f) ellipticPointRho' := by
   rw [← vAdd_one_rho_eq_rho_plus_oneFM]
   exact ord_add_one_eq f ellipticPointRho'
-
-/-! ### S-action lemmas -/
 
 /-- S-action coe: `(S·z : ℂ) = (-z)⁻¹`. -/
 lemma S_smul_coeFM (p : ℍ) : ((ModularGroup.S • p : ℍ) : ℂ) = (-(p : ℂ))⁻¹ := by
@@ -203,26 +163,20 @@ theorem S_smul_norm_of_unitFM (p : ℍ) (hp : ‖(p : ℂ)‖ = 1) :
 /-- S-action negates real part on the unit circle. -/
 theorem S_smul_re_neg_of_unitFM (p : ℍ) (hp : ‖(p : ℂ)‖ = 1) :
     (ModularGroup.S • p : ℍ).re = -p.re := by
-  have hns := normSq_eq_one_of_norm_eq_oneFM hp
   change ((ModularGroup.S • p : ℍ) : ℂ).re = -p.re
   rw [S_smul_coeFM]
-  simp only [Complex.inv_re, Complex.neg_re, Complex.normSq_neg, hns, div_one]
-  rfl
+  simp [normSq_eq_one_of_norm_eq_oneFM hp]
 
 /-- S-action preserves 𝒟 for unit-circle points. -/
 theorem S_smul_mem_fd_of_unitFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hp_norm : ‖(p : ℂ)‖ = 1) :
     ModularGroup.S • p ∈ 𝒟 := by
-  obtain ⟨_, habs_re⟩ := hp_fd
   have hns : Complex.normSq (p : ℂ) = 1 := normSq_eq_one_of_norm_eq_oneFM hp_norm
   refine ⟨?_, ?_⟩
   · change 1 ≤ Complex.normSq ((ModularGroup.S • p : ℍ) : ℂ)
     rw [S_smul_coeFM, map_inv₀, Complex.normSq_neg, hns, inv_one]
   · change |((ModularGroup.S • p : ℍ) : ℂ).re| ≤ 1 / 2
-    simp only [S_smul_coeFM, Complex.inv_re, Complex.neg_re,
-      Complex.normSq_neg, hns, div_one, abs_neg]
-    exact habs_re
-
-/-! ### S-involution properties -/
+    simpa only [S_smul_coeFM, Complex.inv_re, Complex.neg_re,
+      Complex.normSq_neg, hns, div_one, abs_neg] using hp_fd.2
 
 private lemma S_mul_SFM : ModularGroup.S * ModularGroup.S = -1 := by
   ext i j
@@ -236,14 +190,11 @@ lemma S_smul_S_smulFM (p : ℍ) : ModularGroup.S • (ModularGroup.S • p) = p 
 lemma S_smul_injectiveFM : Function.Injective (ModularGroup.S • · : ℍ → ℍ) :=
   Function.HasLeftInverse.injective ⟨(ModularGroup.S • ·), S_smul_S_smulFM⟩
 
-/-! ### OrbitFM equivalences -/
-
 /-- T⁻¹-translation preserves orbits: `orbFM((-1)+ᵥp) = orbFM(p)`. -/
 lemma orb_vAdd_neg_one_eq (p : ℍ) :
     orbFM ((-1 : ℝ) +ᵥ p) = orbFM p := by
   have h_eq : ModularGroup.T⁻¹ • p = (-1 : ℝ) +ᵥ p := by
-    have h1 : ModularGroup.T • (ModularGroup.T⁻¹ • p) = p :=
-      smul_inv_smul _ p
+    have h1 : ModularGroup.T • (ModularGroup.T⁻¹ • p) = p := smul_inv_smul _ p
     rw [UpperHalfPlane.modular_T_smul] at h1
     have h2 : ModularGroup.T⁻¹ • p = (-1 : ℝ) +ᵥ ((1 : ℝ) +ᵥ (ModularGroup.T⁻¹ • p)) := by
       rw [← add_vadd, show (-1 : ℝ) + 1 = 0 from by ring, zero_vadd]
@@ -266,8 +217,6 @@ lemma orb_S_smul_eq (p : ℍ) :
   rw [Quotient.eq'', MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
   exact ⟨ModularGroup.S, rfl⟩
 
-/-! ### Finset filters for edges and arcs -/
-
 /-- The left-vertical filter of S: points with `re = -1/2` and `‖p‖ > 1`. -/
 def sLeftVertFM (S : Finset ℍ) : Finset ℍ :=
   S.filter (fun p => (p : ℂ).re = -1/2 ∧ ‖(p : ℂ)‖ > 1)
@@ -284,24 +233,15 @@ def sLeftArcFM (S : Finset ℍ) : Finset ℍ :=
 def sRightArcFM (S : Finset ℍ) : Finset ℍ :=
   S.filter (fun p => ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re > 0)
 
-/-! ### T-translation order identities -/
-
 /-- T⁻¹-invariance of vanishing order: `ord(f, (-1)+ᵥp) = ord(f, p)`. -/
 lemma ord_vAdd_neg_one_eqFM (p : ℍ) :
     orderOfVanishingAt' (⇑f) ((-1 : ℝ) +ᵥ p) = orderOfVanishingAt' (⇑f) p := by
   have h := ord_add_one_eq f ((-1 : ℝ) +ᵥ p)
-  rw [show (1 : ℝ) +ᵥ ((-1 : ℝ) +ᵥ p) = p from by
-    ext
-    change ((1 : ℝ) : ℂ) + (((-1 : ℝ) : ℂ) + (p : ℂ)) = (p : ℂ)
-    push_cast
-    ring] at h
-  exact h.symm
-
-/-! ### Vertical edge pairing -/
+  simpa using h.symm
 
 private lemma ord_ne_zero_of_cast_ne_zeroFM {p : ℍ} {g : ℍ → ℂ}
-    (h : (orderOfVanishingAt' g p : ℂ) ≠ 0) :
-    orderOfVanishingAt' g p ≠ 0 := by exact_mod_cast h
+    (h : (orderOfVanishingAt' g p : ℂ) ≠ 0) : orderOfVanishingAt' g p ≠ 0 :=
+  mod_cast h
 
 /-- T-translation maps `sLeftVertFM S` into `sRightVertFM S`. -/
 theorem vAdd_one_leftVert_subset_rightVertFM (S : Finset ℍ)
@@ -315,12 +255,9 @@ theorem vAdd_one_leftVert_subset_rightVertFM (S : Finset ℍ)
     refine ⟨one_le_normSq_of_norm_gt_oneFM hnorm, ?_⟩
     rw [show p.re = (p : ℂ).re from rfl, hre]
     norm_num
-  have hp1_fd := vAdd_one_mem_fd_of_left_vertFM p hp_fd hre
-  have hp1_ord : orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ p) ≠ 0 := by
-    rwa [ord_add_one_eq f p]
-  have hp1_in_S := hS_complete _ hp1_fd hp1_ord
   simp only [sRightVertFM, Finset.mem_filter]
-  refine ⟨hp1_in_S, ?_, ?_⟩
+  refine ⟨hS_complete _ (vAdd_one_mem_fd_of_left_vertFM p hp_fd hre)
+    (by rwa [ord_add_one_eq f p]), ?_, ?_⟩
   · change ((1 : ℝ) +ᵥ p : ℂ).re = 1 / 2
     rw [vAdd_one_coeFM, add_re, one_re]
     linarith [hre]
@@ -343,8 +280,8 @@ theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)
   rw [← Finset.sum_filter_ne_zero, ← Finset.sum_filter_ne_zero (s := sLeftVertFM S)]
   apply Finset.sum_nbij ((-1 : ℝ) +ᵥ ·)
   · intro p hp
-    have ⟨hp_rv, hord⟩ := Finset.mem_filter.mp hp
-    have ⟨hp_S, hre, hnorm⟩ := Finset.mem_filter.mp hp_rv
+    obtain ⟨⟨hp_S, hre, hnorm⟩, hord⟩ := Finset.mem_filter.mp hp
+      |>.imp_left Finset.mem_filter.mp
     refine Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨
       hS_complete _ (vAdd_neg_one_mem_fd_of_right_vertFM p (hS p hp_S) hre)
         (by rw [ord_vAdd_neg_one_eqFM f p]
@@ -358,13 +295,10 @@ theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)
       exact hnorm
     · rw [ord_vAdd_neg_one_eqFM f p]
       exact hord
-  · exact fun _ _ _ _ h => by
-      have : (1 : ℝ) +ᵥ ((-1 : ℝ) +ᵥ _) = (1 : ℝ) +ᵥ ((-1 : ℝ) +ᵥ _) := congrArg _ h
-      rwa [← add_vadd, show (1 : ℝ) + (-1) = 0 from by ring, zero_vadd,
-           ← add_vadd, show (1 : ℝ) + (-1) = 0 from by ring, zero_vadd] at this
+  · exact fun _ _ _ _ h => IsLeftCancelVAdd.left_cancel _ _ _ h
   · intro q hq
-    have ⟨hq_lv, hord⟩ := Finset.mem_filter.mp hq
-    have ⟨hq_S, hre, hnorm⟩ := Finset.mem_filter.mp hq_lv
+    obtain ⟨⟨hq_S, hre, hnorm⟩, hord⟩ := Finset.mem_filter.mp hq
+      |>.imp_left Finset.mem_filter.mp
     refine ⟨(1 : ℝ) +ᵥ q, Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨
       hS_complete _ (vAdd_one_mem_fd_of_left_vertFM q (hS q hq_S) hre)
         (by rw [ord_add_one_eq f q]
@@ -383,8 +317,6 @@ theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)
   · intro p _
     rw [ord_vAdd_neg_one_eqFM f p]
 
-/-! ### Arc pairing -/
-
 /-- Orders on right arc equal orders on left arc (via S-action). -/
 theorem sum_ord_rightArc_eq_sum_ord_leftArcFM (S : Finset ℍ) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
@@ -393,8 +325,8 @@ theorem sum_ord_rightArc_eq_sum_ord_leftArcFM (S : Finset ℍ) (hS : ∀ p ∈ S
   rw [← Finset.sum_filter_ne_zero, ← Finset.sum_filter_ne_zero (s := sLeftArcFM S)]
   apply Finset.sum_nbij (ModularGroup.S • ·)
   · intro p hp
-    have ⟨hp_ra, hord⟩ := Finset.mem_filter.mp hp
-    have ⟨hp_S, hnorm, hre_pos⟩ := Finset.mem_filter.mp hp_ra
+    obtain ⟨⟨hp_S, hnorm, hre_pos⟩, hord⟩ := Finset.mem_filter.mp hp
+      |>.imp_left Finset.mem_filter.mp
     refine Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨
       hS_complete _ (S_smul_mem_fd_of_unitFM p (hS p hp_S) hnorm)
         (by rw [ord_S_eq f p]
@@ -407,8 +339,8 @@ theorem sum_ord_rightArc_eq_sum_ord_leftArcFM (S : Finset ℍ) (hS : ∀ p ∈ S
       exact hord
   · exact S_smul_injectiveFM.injOn
   · intro q hq
-    have ⟨hq_la, hord⟩ := Finset.mem_filter.mp hq
-    have ⟨hq_S, hnorm, hre_neg⟩ := Finset.mem_filter.mp hq_la
+    obtain ⟨⟨hq_S, hnorm, hre_neg⟩, hord⟩ := Finset.mem_filter.mp hq
+      |>.imp_left Finset.mem_filter.mp
     refine ⟨ModularGroup.S • q, Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨
       hS_complete _ (S_smul_mem_fd_of_unitFM q (hS q hq_S) hnorm)
         (by rw [ord_S_eq f q]
