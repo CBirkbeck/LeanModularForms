@@ -22393,6 +22393,74 @@ private def TileFormIntegralResidual_upper
     (⇑g)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **σ_p-reduced form of `TileFormIntegralResidual_M_infty`**: the
+σ_p-pushed analytic residual, living entirely on the T_p_lower-side
+iUnion-tile.
+
+```
+pet (T_p_lower-iUnion) f (((⟨u⁻¹⟩g ∣ T_p_upper(0)) ∣ γ₀) ∣ σ_p)
+  = pet (T_p_lower-iUnion) (((⟨u⟩f ∣ T_p_upper(0)) ∣ γ₀) ∣ σ_p) (⟨u⟩g)
+```
+
+After the σ_p Q-permutation absorbs the M_∞ ↔ T_p_lower passage and the
+diamond ⟨u⁻¹⟩/⟨u⟩ asymmetry, this is the **genuine remaining analytic
+content** of the M_∞-branch of DS Theorem 5.5.3 — the slash-adjoint
+identity on the T_p_lower-side iUnion-tile with shared σ_p-slashed slot
+data on both sides. -/
+private def TileFormIntegralResidual_M_infty_sigma_p_reduced
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) •
+        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set ℍ)))
+    ⇑f
+    (((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp.pos hpN) : GL (Fin 2) ℝ)) =
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) •
+        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set ℍ)))
+    (((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp.pos hpN) : GL (Fin 2) ℝ))
+    ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **σ_p-reduced residual discharges the M_∞-branch tile-form residual**:
+proving `TileFormIntegralResidual_M_infty_sigma_p_reduced` suffices for
+`TileFormIntegralResidual_M_infty`.
+
+Composes:
+* `peterssonInner_LHS_M_infty_residual_after_sigma_p` (LHS reduction),
+* `peterssonInner_RHS_M_infty_residual_after_sigma_p` (RHS reduction).
+
+**Use**: this lemma isolates the genuine analytic content of the M_∞
+branch into the named `TileFormIntegralResidual_M_infty_sigma_p_reduced`
+residual — the σ_p Q-permutation infrastructure absorbs all the
+M_∞-side ↔ T_p_lower-side and diamond ⟨u⁻¹⟩/⟨u⟩ asymmetries. -/
+private theorem TileFormIntegralResidual_M_infty_of_sigma_p_reduced
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h : TileFormIntegralResidual_M_infty_sigma_p_reduced p hp hpN f g) :
+    TileFormIntegralResidual_M_infty p hp hpN f g := by
+  unfold TileFormIntegralResidual_M_infty
+  rw [peterssonInner_LHS_M_infty_residual_after_sigma_p p hp.pos hpN f,
+    peterssonInner_RHS_M_infty_residual_after_sigma_p p hp.pos hpN _ g]
+  exact h
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-d M_∞ branch SigmaQPermResidual from TileFormIntegralResidual**:
 Discharges `SigmaQPermResidual_M_infty` from the bundled
 `TileFormIntegralResidual_M_infty` + AE-disjoint hypotheses on both sides.
