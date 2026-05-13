@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.SingleCrossing
 import LeanModularForms.ForMathlib.WindingWeightProofs
-import LeanModularForms.ForMathlib.HW33LaurentPolarPart
+import LeanModularForms.ForMathlib.HungerbuhlerWasem.LaurentExtraction
 
 /-!
 # Automatic construction of `SingleCrossingData` geometric fields
