@@ -288,8 +288,8 @@ private lemma dslope_comm (f : ℂ → ℂ) (a b : ℂ) : dslope f a b = dslope 
 private lemma dslope_hasDerivAt_first_arg {f : ℂ → ℂ} {U : Set ℂ}
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     {c w : ℂ} (hc : c ∈ U) (hw : w ∈ U) :
-    HasDerivAt (fun w' => dslope f w' c) (deriv (dslope f c) w) w := by
-  exact (((Complex.differentiableOn_dslope (hU.mem_nhds hc)).mpr hf w hw).differentiableAt
+    HasDerivAt (fun w' => dslope f w' c) (deriv (dslope f c) w) w :=
+  (((Complex.differentiableOn_dslope (hU.mem_nhds hc)).mpr hf w hw).differentiableAt
     (hU.mem_nhds hw)).hasDerivAt.congr_of_eventuallyEq
     (Filter.Eventually.of_forall fun _ => dslope_comm f _ _)
 
@@ -535,6 +535,103 @@ theorem dixonH1_differentiableOn_of_regular_open {f : ℂ → ℂ} {U : Set ℂ}
       h_bd (γ.toPiecewiseC1Path t) ⟨t, ht, rfl⟩ w hw⟩
   exact dixonH1_differentiableOn_of_regular hU hf γ hγ hLip h_F'_meas h_dslope_deriv_bound
 
+/-- Measurability of `t ↦ deriv (dslope f (γt)) w₀ · γ'(t)` on `[0,1]`, obtained as the
+pointwise a.e. limit of continuous difference quotients `q_n` in `t`. Used to discharge
+`h_F'_meas` in the fully-closed B-2 wrappers; works on any open `U` (no convexity). -/
+private lemma dslope_deriv_mul_extend_aestronglyMeasurable
+    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
+    (γ : PwC1Immersion x x) (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
+    {w₀ : ℂ} (hw₀ : w₀ ∈ U) :
+    AEStronglyMeasurable
+      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
+        deriv γ.toPiecewiseC1Path.toPath.extend t)
+      (volume.restrict (Set.uIoc 0 1)) := by
+  -- Build a pointwise-tendsto sequence of continuous difference quotients in `t`.
+  obtain ⟨ρ, hρ_pos, hρ_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
+  set h_seq : ℕ → ℂ := fun n => ((ρ / 2 / ((n : ℝ) + 1) : ℝ) : ℂ)
+  have h_seq_real_pos : ∀ n : ℕ, 0 < ρ / 2 / ((n : ℝ) + 1) := fun n => by
+    have : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+    positivity
+  have h_seq_ne : ∀ n : ℕ, h_seq n ≠ 0 := fun n => by
+    simp only [h_seq, ne_eq, Complex.ofReal_eq_zero]
+    exact (h_seq_real_pos n).ne'
+  have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
+    simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
+    have hge1 : (1 : ℝ) ≤ (n : ℝ) + 1 := by
+      have : (0 : ℝ) ≤ n := Nat.cast_nonneg n
+      linarith
+    have : ρ / 2 / ((n : ℝ) + 1) ≤ ρ / 2 := by apply div_le_self (by linarith) hge1
+    linarith
+  have h_w_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
+    rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]
+    exact h_seq_norm_lt n
+  have h_seq_tendsto : Tendsto h_seq atTop (𝓝 0) := by
+    have h_real : Tendsto (fun n : ℕ => ρ / 2 / ((n : ℝ) + 1)) atTop (𝓝 0) := by
+      have h_inv : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
+        (tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds).inv_tendsto_atTop
+      have := h_inv.const_mul (ρ / 2)
+      simpa [div_eq_mul_inv] using this
+    rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
+    exact (Complex.continuous_ofReal.tendsto _).comp h_real
+  set q : ℕ → ℝ → ℂ := fun n t =>
+    (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
+     dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n *
+    deriv γ.toPiecewiseC1Path.toPath.extend t
+  have h_γ_cont : Continuous (γ.toPiecewiseC1Path : ℝ → ℂ) :=
+    γ.toPiecewiseC1Path.toPath.continuous_extend
+  have h_q_aemeas : ∀ n : ℕ,
+      AEStronglyMeasurable (q n) (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
+    intro n
+    have h_factor1 : ContinuousOn
+        (fun t : ℝ =>
+          (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
+           dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n)
+        (Icc (0 : ℝ) 1) := by
+      refine ContinuousOn.div_const ?_ _
+      refine ContinuousOn.sub ?_ ?_
+      · exact (Complex.continuousOn_dslope_first_arg_open hU hf
+          (h_w_in_U n)).comp h_γ_cont.continuousOn hγ
+      · exact (Complex.continuousOn_dslope_first_arg_open hU hf hw₀).comp
+          h_γ_cont.continuousOn hγ
+    have h_factor1_meas : AEStronglyMeasurable
+        (fun t : ℝ =>
+          (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
+           dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n)
+        (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
+      rw [Set.uIoc_of_le (zero_le_one' ℝ)]
+      exact (h_factor1.mono Set.Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
+    exact h_factor1_meas.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+  refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
+  have h_uIoc : Set.uIoc (0 : ℝ) 1 = Ioc 0 1 := Set.uIoc_of_le zero_le_one
+  filter_upwards [ae_restrict_mem
+    (h_uIoc ▸ measurableSet_Ioc : MeasurableSet (Set.uIoc (0 : ℝ) 1))] with t ht
+  rw [h_uIoc] at ht
+  have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
+  have hγt_U : γ.toPiecewiseC1Path t ∈ U := hγ t ht_Icc
+  have h_diff : DifferentiableAt ℂ (dslope f (γ.toPiecewiseC1Path t)) w₀ :=
+    ((Complex.differentiableOn_dslope (hU.mem_nhds hγt_U)).mpr hf w₀ hw₀).differentiableAt
+      (hU.mem_nhds hw₀)
+  have h_slope_tendsto :
+      Tendsto (slope (dslope f (γ.toPiecewiseC1Path t)) w₀) (𝓝[≠] w₀)
+        (𝓝 (deriv (dslope f (γ.toPiecewiseC1Path t)) w₀)) :=
+    h_diff.hasDerivAt.tendsto_slope
+  have hy_tendsto : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝 w₀) := by
+    simpa using h_seq_tendsto.const_add w₀
+  have hy_ne : ∀ n, w₀ + h_seq n ≠ w₀ := fun n h =>
+    h_seq_ne n (add_left_cancel (a := w₀) (h.trans (add_zero w₀).symm))
+  have hy_within : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝[≠] w₀) :=
+    tendsto_nhdsWithin_iff.mpr ⟨hy_tendsto, Eventually.of_forall fun n => hy_ne n⟩
+  have h_comp := h_slope_tendsto.comp hy_within
+  have h_q_eq : ∀ n, q n t =
+      (slope (dslope f (γ.toPiecewiseC1Path t)) w₀ (w₀ + h_seq n)) *
+        deriv γ.toPiecewiseC1Path.toPath.extend t := by
+    intro n
+    simp only [q, slope_def_field]
+    rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul,
+      mul_comm (h_seq n)⁻¹]
+  simp_rw [h_q_eq]
+  exact h_comp.mul_const _
+
 /-- **B-2 fully closed for convex U**: `dixonH1 f γ` is differentiable on `U` for
 convex open `U`, `f` differentiable on `U`, γ a Lipschitz `PwC1Immersion` with image
 in `U`. All oracle hypotheses are auto-discharged via D-1a/c/d. -/
@@ -542,102 +639,9 @@ theorem dixonH1_differentiableOn_of_regular_convex_full {f : ℂ → ℂ} {U : S
     (hU_convex : Convex ℝ U) (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
     {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend) :
-    DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U := by
-  -- Build h_F'_meas via composition: t ↦ deriv (dslope f (γt)) w₀ is AE measurable
-  -- using D-1d (measurability of c ↦ deriv (dslope f c) w₀) + γ continuous
-  have h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
-      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
-        deriv γ.toPiecewiseC1Path.toPath.extend t)
-      (volume.restrict (Set.uIoc 0 1)) := by
-    intro w₀ hw₀
-    -- Use pointwise limit of continuous difference quotients in t
-    obtain ⟨ρ, hρ_pos, hρ_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
-    set h_seq : ℕ → ℂ := fun n => ((ρ / 2 / ((n : ℝ) + 1) : ℝ) : ℂ)
-    have h_seq_real_pos : ∀ n : ℕ, 0 < ρ / 2 / ((n : ℝ) + 1) := fun n => by
-      have : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-      positivity
-    have h_seq_ne : ∀ n : ℕ, h_seq n ≠ 0 := fun n => by
-      simp only [h_seq, ne_eq, Complex.ofReal_eq_zero]
-      exact (h_seq_real_pos n).ne'
-    have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
-      simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
-      have hge1 : (1 : ℝ) ≤ (n : ℝ) + 1 := by
-        have : (0 : ℝ) ≤ n := Nat.cast_nonneg n
-        linarith
-      have : ρ / 2 / ((n : ℝ) + 1) ≤ ρ / 2 := by apply div_le_self (by linarith) hge1
-      linarith
-    have h_w_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
-      rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]
-      exact h_seq_norm_lt n
-    have h_seq_tendsto : Tendsto h_seq atTop (𝓝 0) := by
-      have h_real : Tendsto (fun n : ℕ => ρ / 2 / ((n : ℝ) + 1)) atTop (𝓝 0) := by
-        have h_inv : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
-          (tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds).inv_tendsto_atTop
-        have := h_inv.const_mul (ρ / 2)
-        simpa [div_eq_mul_inv] using this
-      rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
-      exact (Complex.continuous_ofReal.tendsto _).comp h_real
-    set q : ℕ → ℝ → ℂ := fun n t =>
-      (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
-       dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n *
-      deriv γ.toPiecewiseC1Path.toPath.extend t
-    have h_γ_cont : Continuous (γ.toPiecewiseC1Path : ℝ → ℂ) :=
-      γ.toPiecewiseC1Path.toPath.continuous_extend
-    have h_q_aemeas : ∀ n : ℕ,
-        AEStronglyMeasurable (q n) (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
-      intro n
-      have h_factor1 : ContinuousOn
-          (fun t : ℝ =>
-            (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
-             dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n)
-          (Icc (0 : ℝ) 1) := by
-        refine ContinuousOn.div_const ?_ _
-        refine ContinuousOn.sub ?_ ?_
-        · exact (Complex.continuousOn_dslope_first_arg hU_convex hU hf
-            (h_w_in_U n)).comp h_γ_cont.continuousOn hγ
-        · exact (Complex.continuousOn_dslope_first_arg hU_convex hU hf hw₀).comp
-            h_γ_cont.continuousOn hγ
-      have h_factor1_meas : AEStronglyMeasurable
-          (fun t : ℝ =>
-            (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
-             dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n)
-          (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
-        rw [Set.uIoc_of_le (zero_le_one' ℝ)]
-        exact (h_factor1.mono Set.Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
-      exact h_factor1_meas.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
-    -- Pointwise limit
-    refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
-    have h_uIoc : Set.uIoc (0 : ℝ) 1 = Ioc 0 1 := Set.uIoc_of_le zero_le_one
-    filter_upwards [ae_restrict_mem
-      (h_uIoc ▸ measurableSet_Ioc : MeasurableSet (Set.uIoc (0 : ℝ) 1))] with t ht
-    rw [h_uIoc] at ht
-    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
-    have hγt_U : γ.toPiecewiseC1Path t ∈ U := hγ t ht_Icc
-    have h_diff : DifferentiableAt ℂ (dslope f (γ.toPiecewiseC1Path t)) w₀ :=
-      ((Complex.differentiableOn_dslope (hU.mem_nhds hγt_U)).mpr hf w₀ hw₀).differentiableAt
-        (hU.mem_nhds hw₀)
-    have h_slope_tendsto :
-        Tendsto (slope (dslope f (γ.toPiecewiseC1Path t)) w₀) (𝓝[≠] w₀)
-          (𝓝 (deriv (dslope f (γ.toPiecewiseC1Path t)) w₀)) :=
-      h_diff.hasDerivAt.tendsto_slope
-    have hy_tendsto : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝 w₀) := by
-      simpa using h_seq_tendsto.const_add w₀
-    have hy_ne : ∀ n, w₀ + h_seq n ≠ w₀ := fun n h =>
-      h_seq_ne n (add_left_cancel (a := w₀) (h.trans (add_zero w₀).symm))
-    have hy_within : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝[≠] w₀) :=
-      tendsto_nhdsWithin_iff.mpr ⟨hy_tendsto, Eventually.of_forall fun n => hy_ne n⟩
-    have h_comp := h_slope_tendsto.comp hy_within
-    have h_q_eq : ∀ n, q n t =
-        (slope (dslope f (γ.toPiecewiseC1Path t)) w₀ (w₀ + h_seq n)) *
-          deriv γ.toPiecewiseC1Path.toPath.extend t := by
-      intro n
-      simp only [q, slope_def_field]
-      rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul,
-        mul_comm (h_seq n)⁻¹]
-    simp_rw [h_q_eq]
-    exact h_comp.mul_const _
-
-  exact dixonH1_differentiableOn_of_regular_convex hU_convex hU hf γ hγ hLip h_F'_meas
+    DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U :=
+  dixonH1_differentiableOn_of_regular_convex hU_convex hU hf γ hγ hLip
+    (fun _ hw₀ => dslope_deriv_mul_extend_aestronglyMeasurable hU hf γ hγ hw₀)
 
 /-- **B-2 fully closed for general open U** (no `Convex` hypothesis): same conclusion
 as `dixonH1_differentiableOn_of_regular_convex_full` but on any open `U`. -/
@@ -645,97 +649,9 @@ theorem dixonH1_differentiableOn_of_regular_open_full {f : ℂ → ℂ} {U : Set
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
     {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend) :
-    DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U := by
-  have h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
-      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
-        deriv γ.toPiecewiseC1Path.toPath.extend t)
-      (volume.restrict (Set.uIoc 0 1)) := by
-    intro w₀ hw₀
-    obtain ⟨ρ, hρ_pos, hρ_sub⟩ := Metric.isOpen_iff.mp hU w₀ hw₀
-    set h_seq : ℕ → ℂ := fun n => ((ρ / 2 / ((n : ℝ) + 1) : ℝ) : ℂ)
-    have h_seq_real_pos : ∀ n : ℕ, 0 < ρ / 2 / ((n : ℝ) + 1) := fun n => by
-      have : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-      positivity
-    have h_seq_ne : ∀ n : ℕ, h_seq n ≠ 0 := fun n => by
-      simp only [h_seq, ne_eq, Complex.ofReal_eq_zero]
-      exact (h_seq_real_pos n).ne'
-    have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
-      simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
-      have hge1 : (1 : ℝ) ≤ (n : ℝ) + 1 := by
-        have : (0 : ℝ) ≤ n := Nat.cast_nonneg n
-        linarith
-      have : ρ / 2 / ((n : ℝ) + 1) ≤ ρ / 2 := by apply div_le_self (by linarith) hge1
-      linarith
-    have h_w_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
-      rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]
-      exact h_seq_norm_lt n
-    have h_seq_tendsto : Tendsto h_seq atTop (𝓝 0) := by
-      have h_real : Tendsto (fun n : ℕ => ρ / 2 / ((n : ℝ) + 1)) atTop (𝓝 0) := by
-        have h_inv : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
-          (tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds).inv_tendsto_atTop
-        have := h_inv.const_mul (ρ / 2)
-        simpa [div_eq_mul_inv] using this
-      rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
-      exact (Complex.continuous_ofReal.tendsto _).comp h_real
-    set q : ℕ → ℝ → ℂ := fun n t =>
-      (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
-       dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n *
-      deriv γ.toPiecewiseC1Path.toPath.extend t
-    have h_γ_cont : Continuous (γ.toPiecewiseC1Path : ℝ → ℂ) :=
-      γ.toPiecewiseC1Path.toPath.continuous_extend
-    have h_q_aemeas : ∀ n : ℕ,
-        AEStronglyMeasurable (q n) (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
-      intro n
-      have h_factor1 : ContinuousOn
-          (fun t : ℝ =>
-            (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
-             dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n)
-          (Icc (0 : ℝ) 1) := by
-        refine ContinuousOn.div_const ?_ _
-        refine ContinuousOn.sub ?_ ?_
-        · exact (Complex.continuousOn_dslope_first_arg_open hU hf
-            (h_w_in_U n)).comp h_γ_cont.continuousOn hγ
-        · exact (Complex.continuousOn_dslope_first_arg_open hU hf hw₀).comp
-            h_γ_cont.continuousOn hγ
-      have h_factor1_meas : AEStronglyMeasurable
-          (fun t : ℝ =>
-            (dslope f (γ.toPiecewiseC1Path t) (w₀ + h_seq n) -
-             dslope f (γ.toPiecewiseC1Path t) w₀) / h_seq n)
-          (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
-        rw [Set.uIoc_of_le (zero_le_one' ℝ)]
-        exact (h_factor1.mono Set.Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
-      exact h_factor1_meas.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
-    refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
-    have h_uIoc : Set.uIoc (0 : ℝ) 1 = Ioc 0 1 := Set.uIoc_of_le zero_le_one
-    filter_upwards [ae_restrict_mem
-      (h_uIoc ▸ measurableSet_Ioc : MeasurableSet (Set.uIoc (0 : ℝ) 1))] with t ht
-    rw [h_uIoc] at ht
-    have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
-    have hγt_U : γ.toPiecewiseC1Path t ∈ U := hγ t ht_Icc
-    have h_diff : DifferentiableAt ℂ (dslope f (γ.toPiecewiseC1Path t)) w₀ :=
-      ((Complex.differentiableOn_dslope (hU.mem_nhds hγt_U)).mpr hf w₀ hw₀).differentiableAt
-        (hU.mem_nhds hw₀)
-    have h_slope_tendsto :
-        Tendsto (slope (dslope f (γ.toPiecewiseC1Path t)) w₀) (𝓝[≠] w₀)
-          (𝓝 (deriv (dslope f (γ.toPiecewiseC1Path t)) w₀)) :=
-      h_diff.hasDerivAt.tendsto_slope
-    have hy_tendsto : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝 w₀) := by
-      simpa using h_seq_tendsto.const_add w₀
-    have hy_ne : ∀ n, w₀ + h_seq n ≠ w₀ := fun n h =>
-      h_seq_ne n (add_left_cancel (a := w₀) (h.trans (add_zero w₀).symm))
-    have hy_within : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝[≠] w₀) :=
-      tendsto_nhdsWithin_iff.mpr ⟨hy_tendsto, Eventually.of_forall fun n => hy_ne n⟩
-    have h_comp := h_slope_tendsto.comp hy_within
-    have h_q_eq : ∀ n, q n t =
-        (slope (dslope f (γ.toPiecewiseC1Path t)) w₀ (w₀ + h_seq n)) *
-          deriv γ.toPiecewiseC1Path.toPath.extend t := by
-      intro n
-      simp only [q, slope_def_field]
-      rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul,
-        mul_comm (h_seq n)⁻¹]
-    simp_rw [h_q_eq]
-    exact h_comp.mul_const _
-  exact dixonH1_differentiableOn_of_regular_open hU hf γ hγ hLip h_F'_meas
+    DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U :=
+  dixonH1_differentiableOn_of_regular_open hU hf γ hγ hLip
+    (fun _ hw₀ => dslope_deriv_mul_extend_aestronglyMeasurable hU hf γ hγ hw₀)
 
 /-! ## Dixon function is entire -/
 
