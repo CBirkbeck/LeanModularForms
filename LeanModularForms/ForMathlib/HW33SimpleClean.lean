@@ -163,35 +163,6 @@ theorem hw_3_3_simple_with_crossData
   exact hw_3_3_paper hU_open S hS_in_U f hf γ h_null hMero hCondA hCondB
     h_polar_cancel h_holo_cancel hI_polar hI_holo hPV_sing hI_sing
 
-/-! ## Avoidance specialization (no `crossData` needed)
-
-When `γ` avoids every pole in `S`, the simple-pole crossings degenerate and
-the full theorem reduces to `hw_3_3_simple_avoidance_paper`. This avoidance
-form is already provided by `hw_3_3_simple_avoidance_paper` (in `HW33Paper.lean`)
-with no oracle hypotheses at all. -/
-
-/-! ## Per-pole CPV specialization (paper-faithful, no `h_avoid_pairs`)
-
-The `h_avoid_pairs` hypothesis of `hw_3_3_simple_with_crossData` is essentially
-unsatisfiable when γ crosses any pole: for any `s ∈ S` and `s' ∈ S` with
-`s' ≠ s`, it forces γ to be uniformly δ-far from `s'` — which fails as soon as γ
-crosses `s'`. The original theorem is therefore only satisfiable in the vacuous
-(empty `S`) and avoidance scenarios.
-
-The realistic generalisation: replace the per-pole crossing data + pairwise
-avoidance scaffolding by **per-pole CPV witnesses** directly. Concretely, the
-user supplies, for each pole `s ∈ S`, the multi-pole CPV
-`HasCauchyPVOn S (residue f s / (z - s)) γ (2πi · w_s · residue f s)`, plus the
-per-pole CPV integrand integrability is auto-discharged from `γ`'s structure.
-
-* `hw_3_3_simple_with_perPoleCPV` — takes per-pole CPV witnesses, composes via
-  `HasCauchyPVOn.finset_sum` + `hw_3_3_paper`.
-* `hw_3_3_simple_with_perPoleCPV_avoids` — avoidance specialization with the
-  per-pole CPV auto-discharged via `hasCauchyPVOn_div_sub_of_singleton_and_avoid_others`.
-
-The four Phase-3-style hypotheses (`h_polar_cancel`, `hI_polar`, `hI_holo`,
-`hCondA`) remain because they are not yet auto-derivable (TIGHT-3 / TIGHT-4). -/
-
 /-- **CPV integrand integrability for the term `c / (z - s)`, `s ∈ S`.**
 
 For a paper-faithful `γ : ClosedPwC1Immersion` and a pole `s ∈ S`, the CPV
@@ -224,9 +195,6 @@ theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_mem
     · push Not at h
       have h_s_bnd : ε < ‖γE t - s‖ := h s hs
       rw [norm_mul, norm_div]
-      have hpos : 0 < ‖γE t - s‖ := lt_of_lt_of_le hε_pos h_s_bnd.le
-      have hne : ‖γE t - s‖ ≠ 0 := ne_of_gt hpos
-      have hεne : ε ≠ 0 := ne_of_gt hε_pos
       have h_div_le : ‖c‖ / ‖γE t - s‖ ≤ ‖c‖ / ε :=
         div_le_div_of_nonneg_left (norm_nonneg _) hε_pos h_s_bnd.le
       exact mul_le_mul_of_nonneg_right h_div_le (norm_nonneg _)
@@ -250,10 +218,9 @@ theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_mem
     · exact (stronglyMeasurable_deriv _).aestronglyMeasurable
   refine IntervalIntegrable.mono_fun h_bound_int h_meas
     (Filter.Eventually.of_forall fun t => ?_)
-  have h_bnd_t := h_norm_bound t
   simp only [Real.norm_eq_abs, abs_of_nonneg
     (mul_nonneg (div_nonneg (norm_nonneg _) hε_pos.le) (norm_nonneg _))]
-  exact h_bnd_t
+  exact h_norm_bound t
 
 /-- **HW Theorem 3.3 — simple poles, per-pole CPV witnesses (paper-faithful).**
 
@@ -342,17 +309,6 @@ theorem hw_3_3_simple_with_perPoleCPV
   exact hw_3_3_paper hU_open S hS_in_U f hf γ h_null hMero hCondA hCondB
     h_polar_cancel h_holo_cancel hI_polar hI_holo hPV_sing hI_sing
 
-/-! ### Avoidance specialization of `hw_3_3_simple_with_perPoleCPV`
-
-When `γ` avoids every pole in `S`, the per-pole CPV witnesses are automatic via
-`hasCauchyPVOn_div_sub_of_singleton_and_avoid_others` + the uniform avoidance
-margin from `avoids_finset_delta_bound`. This sits between
-`hw_3_3_simple_avoidance_paper` (which discharges everything including the
-Phase-3 oracles via the closed-form avoidance machinery) and
-`hw_3_3_simple_with_perPoleCPV` (general per-pole CPV). It keeps the Phase-3
-oracles explicit, suitable when the user has Phase-3 witnesses but wants
-automatic CPV-witness discharge under avoidance. -/
-
 /-- **HW Theorem 3.3 — simple-pole avoidance, paper-faithful curve, per-pole
 CPV auto-discharge.** -/
 theorem hw_3_3_simple_with_perPoleCPV_avoids
@@ -402,26 +358,6 @@ theorem hw_3_3_simple_with_perPoleCPV_avoids
       hδ_pos h_avoid_others
   exact hw_3_3_simple_with_perPoleCPV hU_open hU_ne S hS_in_U f hf γ h_null
     hSimple hCondA hCondB h_polar_cancel hI_polar hI_holo h_per_pole_cpv
-
-/-! ## "At most one pole crossed" specialization
-
-A useful refinement of `hw_3_3_simple_with_perPoleCPV` when γ may cross **one
-distinguished pole** `s* ∈ S` and avoids every other pole. In this case:
-
-* For `s = s*`, the per-pole multi-pole CPV comes from a singleton CPV witness
-  at `s*` (e.g., built from a `SingleCrossingData γ s*`) lifted via
-  `hasCauchyPVOn_div_sub_of_singleton_and_avoid_others`.
-* For `s ≠ s*`, γ avoids `s` and the per-pole CPV comes from
-  `hasGeneralizedWindingNumber_of_avoids` + the singleton-plus-avoidance lift.
-
-Note: if γ crosses two or more distinct poles, this lift cannot be used —
-the singleton-to-multi-pole lift requires γ to avoid all OTHER poles, which
-fails as soon as a second pole is crossed. The at-most-one-crossing case is the
-natural transversal scope where the per-pole assembly cleanly composes.
-
-This theorem accepts a singleton CPV witness at `s*` (which may be built from
-a `SingleCrossingData γ s*` via `SingleCrossingData.hasCauchyPV`) and derives
-the multi-pole CPV automatically. -/
 
 /-- **HW Theorem 3.3 — simple poles, at most one pole crossed (paper-faithful).**
 
@@ -535,9 +471,7 @@ theorem hw_3_3_simple_one_crossing_paper
   -- equals the contour integral.
   --
   -- This is `hasCauchyPVOn_continuousOn_of_countable_preimage`!
-  have hLip : ∃ K : NNReal, LipschitzWith K γP.toPath.extend := by
-    exact ClosedPwC1Immersion.lipschitzWith_extend γ
-  obtain ⟨K, hLip⟩ := hLip
+  obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
   -- Finite preimage of S under γ (TIGHT-6 extension).
   have h_preimage : Set.Countable
       {t ∈ Icc (0 : ℝ) 1 | γP t ∈ (↑S : Set ℂ)} :=
@@ -560,17 +494,8 @@ theorem hw_3_3_simple_one_crossing_paper
         Finset.mem_erase.mpr ⟨hs_eq, hs⟩
       have h_avoid_s : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γP t - s‖ :=
         fun t ht => hδ_bd s hs_in_erase t ht
-      -- The integrand `c / (z - s)` is continuous on the image of γ (γ avoids s).
-      -- Use the continuous + finite-preimage machinery to get the multi-pole CPV
-      -- equals the contour integral.
-      have h_avoid_ne : ∀ t ∈ Icc (0 : ℝ) 1, γP t ≠ s := fun t ht hzero => by
-        have := h_avoid_s t ht
-        rw [hzero, sub_self, norm_zero] at this
-        linarith
-      -- Build the winding witness for s.
-      have hw_s := hasGeneralizedWindingNumber_of_avoids
-        ⟨δ, hδ_pos, h_avoid_s⟩
-      -- The continuous-on-γ-image integrand `residue f s / (z - s)`.
+      -- The integrand `residue f s / (z - s)` is continuous on the image of γ
+      -- (γ avoids s); combine with the countable-preimage CPV machinery.
       have h_cont_on : ContinuousOn (fun z => residue f s / (z - s))
           (γP.toPath.extend '' Icc (0 : ℝ) 1) := by
         refine continuousOn_const.div
