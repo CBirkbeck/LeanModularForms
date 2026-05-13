@@ -10294,6 +10294,56 @@ private lemma peterssonInner_RHS_upper_per_q_to_tile_form
   rw [slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0 p hp hpN b f]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d M_∞ after-σ-reindex per-q tile-form**: rewrites the per-q
+form `pet fd (⟨u⟩f ∣ q⁻¹) (g ∣ M_∞ · q⁻¹)` (which arises after applying
+`per_q_M_infty_branch_full_absorb` in reverse + σ-reindex to the RHS of
+`SigmaQPermResidual_M_infty`) into the tile-shifted form on
+`M_∞ • q⁻¹ • fd` with q-INDEPENDENT slot-1.
+
+```
+pet fd (⟨u⟩f ∣ q⁻¹) (g ∣ M_∞ · q⁻¹) =
+  pet (M_∞ • q⁻¹ • fd) ((⟨u⟩f ∣ T_p_upper(0)) ∣ mapGL γ₀) g
+```
+
+**Proof.** Hermitian symmetry from `peterssonInner_slash_adj_M_infty_q_summand_eq`
+applied at `(f := g, g := ⟨u⟩f)`. -/
+private lemma peterssonInner_RHS_M_infty_sigma_reindex_per_q_to_tile_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k ModularGroup.fd
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
+        (⇑g ∣[k]
+          ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))) =
+    peterssonInner k ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+      (⇑g) := by
+  have h := peterssonInner_slash_adj_M_infty_q_summand_eq p hp hpN q g
+    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
+  -- h: pet fd (g ∣ M_∞ * q⁻¹) (⟨u⟩f ∣ q⁻¹) =
+  --    pet (M_∞ • q⁻¹ • fd) g ((⟨u⟩f ∣ T_p_upper(0)) ∣ mapGL γ₀)
+  -- Apply Hermitian symmetry to both sides.
+  have h1 := peterssonInner_conj_symm k ModularGroup.fd
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) : ℍ → ℂ) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
+    ((⇑g : ℍ → ℂ) ∣[k] ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)))
+  have h2 := peterssonInner_conj_symm k
+    ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+      ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set ℍ)))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+    (⇑g)
+  rw [← h1, h, h2]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-d upper-`b` tile-form sum_comm**: swaps the outer `q` and inner `b`
 sums in the LHS upper-b tile-form sum. Pure `Finset.sum_comm`. -/
 private lemma sum_peterssonInner_upper_tile_form_swap
