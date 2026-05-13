@@ -6358,6 +6358,57 @@ private theorem peterssonInner_T_p_lower_smul_eq_gamma0_slash
   exact peterssonInner_gamma0_smul_Hecke_FD_eq_slash (N := N) p hp hpN D F G
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM Hecke-FD slot-2 slash-adjoint reduction**: applies
+`peterssonInner_slash_adjoint_right` with α = `glMap T_p_lower` to convert
+the slot-2 T_p_lower-slashed integral over Hecke_FD into a slot-1
+T_p_upper(0)-slashed integral over `T_p_lower • Hecke_FD`.
+
+This is the first step in reducing the σ_p Q-permutation aggregate residual
+(LHS of `TpUniformSigmaPermBlocker M` at M = T_p_lower) to an integral over
+the T_p_lower-shifted Hecke FD. Combined with the master geometric identity
+`peterssonInner_T_p_lower_smul_eq_gamma0_slash`, this expresses the residual
+as a γ₀-slashed integral on Hecke FD. -/
+private theorem peterssonInner_Hecke_FD_T_p_lower_slot2_slash_adjoint
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (D : Set ℍ) (F G : ℍ → ℂ) :
+    peterssonInner k
+      (⋃ i : Option (Fin p),
+        (match i with
+          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
+      F (G ∣[k] (glMap (T_p_lower p hp) : GL (Fin 2) ℝ)) =
+    peterssonInner k
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+        (⋃ i : Option (Fin p),
+          (match i with
+            | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D))
+      (F ∣[k] (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ)) G := by
+  have hα : 0 < (glMap (T_p_lower p hp) : GL (Fin 2) ℝ).det.val := by
+    show 0 < ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((T_p_lower p hp : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+    rw [show (((T_p_lower p hp : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+        (algebraMap ℚ ℝ) (((T_p_lower p hp : GL (Fin 2) ℚ).val).det) from
+          (RingHom.map_det _ _).symm]
+    rw [show ((T_p_lower p hp : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+      simp [T_p_lower, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+        Matrix.det_fin_two, Matrix.of_apply]]
+    show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
+    rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+    exact_mod_cast hp
+  have h := peterssonInner_slash_adjoint_right (k := k)
+    (⋃ i : Option (Fin p),
+      (match i with
+        | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+        | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
+    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) hα F G
+  rw [peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero] at h
+  exact h
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
