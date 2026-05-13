@@ -6997,6 +6997,82 @@ private theorem peterssonInner_swap_via_uniform_adj_slot1
       peterssonInner_conj_symm]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM aggregate-form characterization**: combining the per-X
+swap identities (slot-1 and slot-2) under AE-disjoint hypotheses converts the
+σ_p Q-permutation aggregate residual
+
+  `∑_X pet Γ₁_FD (f∣α_X) (g∣τ_X) = ∑_X pet Γ₁_FD ((⟨u⟩f)∣τ_X) (g∣α_X)`
+
+(itself equivalent to the symmetric form `petN(T_p f, g) = petN(⟨u⟩f, T_p g)`)
+into a SINGLE integral equality on the Hecke FD:
+
+  `pet Hecke_FD f (g∣T_p_lower) = pet Hecke_FD ((⟨u⟩f)∣T_p_lower) g`
+
+This is the FINAL form of the residual at the integral level — both sides
+are integrals on the SAME Hecke FD with different (slot-1, slot-2) slash
+structure. The remaining content is to prove this integral equality
+directly via measure-theoretic change of variables.
+
+The wrapper composes:
+* `peterssonInner_swap_via_uniform_adj_slot1` (LHS per-X collapse)
+* `peterssonInner_swap_via_uniform_adj` (RHS per-X collapse)
+* `peterssonInner_iUnion_finite_aedisjoint` (sum-to-iUnion absorption,
+  requires the AE-disjoint hypothesis). -/
+private theorem peterssonInner_per_X_sum_iff_Hecke_FD_residual
+    (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : ℍ → ℂ)
+    (hm : ∀ i : Option (Fin p), NullMeasurableSet
+      (Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ)) μ_hyp)
+    (hd : Pairwise (fun i j : Option (Fin p) => AEDisjoint μ_hyp
+      (Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+      (Hecke_rep_family N p hp.pos hpN j • (fd : Set ℍ))))
+    (hfi_LHS : IntegrableOn (fun τ => petersson k f
+        (g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)
+      (⋃ i : Option (Fin p), Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ)) μ_hyp)
+    (hfi_RHS : IntegrableOn (fun τ => petersson k
+        (f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) g τ)
+      (⋃ i : Option (Fin p), Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ)) μ_hyp) :
+    (∑ i : Option (Fin p), peterssonInner k (fd : Set ℍ)
+      (f ∣[k] (Hecke_rep_family N p hp.pos hpN i))
+      (g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ))) =
+      peterssonInner k
+        (⋃ i : Option (Fin p), Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+        f (g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∧
+    (∑ i : Option (Fin p), peterssonInner k (fd : Set ℍ)
+      (f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ))
+      (g ∣[k] (Hecke_rep_family N p hp.pos hpN i))) =
+      peterssonInner k
+        (⋃ i : Option (Fin p), Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+        (f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) g := by
+  refine ⟨?_, ?_⟩
+  · -- LHS aggregation: ∑_X pet Γ₁_FD (f∣α_X) (g∣τ_X) = pet Hecke_FD f (g∣T_p_lower)
+    have h_per_X : ∀ i : Option (Fin p), peterssonInner k (fd : Set ℍ)
+        (f ∣[k] (Hecke_rep_family N p hp.pos hpN i))
+        (g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ)) =
+        peterssonInner k (Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+          f (g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := fun i =>
+      peterssonInner_swap_via_uniform_adj_slot1 (N := N) p hp hpN g f i
+    rw [Finset.sum_congr rfl (fun i _ => h_per_X i)]
+    exact (peterssonInner_iUnion_finite_aedisjoint
+      (fun i : Option (Fin p) => Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+      hm hd f (g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) hfi_LHS).symm
+  · -- RHS aggregation: ∑_X pet Γ₁_FD (f∣τ_X) (g∣α_X) = pet Hecke_FD (f∣T_p_lower) g
+    have h_per_X : ∀ i : Option (Fin p), peterssonInner k (fd : Set ℍ)
+        (f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ))
+        (g ∣[k] (Hecke_rep_family N p hp.pos hpN i)) =
+        peterssonInner k (Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+          (f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) g := fun i =>
+      peterssonInner_swap_via_uniform_adj (N := N) p hp hpN f g i
+    rw [Finset.sum_congr rfl (fun i _ => h_per_X i)]
+    exact (peterssonInner_iUnion_finite_aedisjoint
+      (fun i : Option (Fin p) => Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+      hm hd (f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) g hfi_RHS).symm
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
