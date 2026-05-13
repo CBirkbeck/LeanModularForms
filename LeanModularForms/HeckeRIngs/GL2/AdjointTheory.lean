@@ -20981,6 +20981,18 @@ private theorem petN_heckeT_p_symmetric_form
   -- Reduce via branch decomposition: split into M_∞-branch and upper-b-branch
   -- sum equalities (each a separate sub-residual). The genuine σ_p Q-permutation
   -- aggregate content lives in each branch's sum equality.
+  -- Each branch residual: ∑_q LHS-dist@q = ∑_q RHS-σ-absorbed@q.
+  -- These reduce to a single integral equality on the union-tile
+  -- `(T_p_lower · γ_X) • FD_{Γ₁(N)}` after applying:
+  --  • slash-adjoint per q (moves `T_p_lower · γ_X` from f-slash to domain shift),
+  --  • SL slash-invariance for `q.out⁻¹` (absorbs the q-shift into domain),
+  --  • Γ₁(N)-slash invariance (kills the γ_X factor on q-independent slot),
+  --  • σ-reindex on RHS sum (changes `(σq).out⁻¹` → `q'.out⁻¹` via Equiv.sum_comp),
+  --  • AE-disjoint sum collapse (turns ∑_q into a single integral over union-tile).
+  -- The remaining content is the integral identity (in the M_∞ branch case):
+  --   ∫_{(T_p_lower·γ_X)•FD} pet f (⟨u⁻¹⟩g ∣ T_p_upper(0)) dμ
+  --     = ∫_{(T_p_lower·γ_X)•FD} pet (⟨u⁻¹⟩f ∣ T_p_upper(0)) (⟨u⟩g) dμ
+  -- This is the genuine analytic σ_p Q-permutation content (DS 5.5.2(b)).
   rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
   refine congr_arg₂ (· + ·) ?_ ?_
   · -- M_∞-branch sum residual `SigmaQPermResidual_M_infty p hp hpN f g`
