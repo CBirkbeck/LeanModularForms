@@ -81,17 +81,14 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
     (orderAtCusp' f).toNat := by
   set p := ModularFormClass.qExpansionFormalMultilinearSeries 1 f
   set ps := ModularFormClass.qExpansion 1 f
-  have hp_ne := qExpFMS_ne_zero f hf
   have h_norm : ∀ n, ‖p n‖ = ‖ps.coeff n‖ :=
     ModularFormClass.qExpansionFormalMultilinearSeries_apply_norm f
   have h_zero_iff : ∀ n, p n = 0 ↔ ps.coeff n = 0 := by
     intro n
     rw [← norm_eq_zero, h_norm, norm_eq_zero]
-  have h_sets : {n | p n ≠ 0} = {n | ps.coeff n ≠ 0} :=
-    Set.ext fun n => (h_zero_iff n).not
   have hps_ne : ps ≠ 0 := by
     intro h
-    apply hp_ne
+    apply qExpFMS_ne_zero f hf
     refine FormalMultilinearSeries.ext fun n => (h_zero_iff n).mpr ?_
     rw [h]
     simp only [map_zero]
@@ -103,11 +100,10 @@ private lemma qExpFMS_order_eq (hf : f ≠ 0) :
   set m := ps.order.toNat
   have hm := (PowerSeries.order_eq_nat.mp (by exact_mod_cast hps_order) :
     ps.coeff m ≠ 0 ∧ ∀ i, i < m → ps.coeff i = 0)
-  have hp_m_ne : p m ≠ 0 := (h_zero_iff m).not.mpr hm.1
   have hp_lt : ∀ i, i < m → p i = 0 := fun i hi => (h_zero_iff i).mpr (hm.2 i hi)
   change p.order = m
   unfold FormalMultilinearSeries.order
-  have hm_mem : m ∈ {n | p n ≠ 0} := hp_m_ne
+  have hm_mem : m ∈ {n | p n ≠ 0} := (h_zero_iff m).not.mpr hm.1
   apply le_antisymm
   · exact Nat.sInf_le hm_mem
   · -- m ≤ sInf {n | p n ≠ 0}: if sInf < m, then p (sInf) ≠ 0 but also = 0
@@ -129,7 +125,6 @@ private lemma cuspFunction_factored (hf : f ≠ 0) :
   have hp : HasFPowerSeriesOnBall F p 0 1 :=
     ModularFormClass.hasFPowerSeries_cuspFunction f one_pos
       ModularFormClass.one_mem_strictPeriods_SL2Z
-  have hp_ne : p ≠ 0 := qExpFMS_ne_zero f hf
   have hp_order : p.order = (orderAtCusp' f).toNat := qExpFMS_order_eq f hf
   set g₀ := (Function.swap dslope 0)^[p.order] F
   have hF_diff : DifferentiableOn ℂ F (Metric.ball 0 1) :=
@@ -146,7 +141,7 @@ private lemma cuspFunction_factored (hf : f ≠ 0) :
       simp only [Function.iterate_succ', Function.comp_def]
       exact (Complex.differentiableOn_dslope hball_nhds).mpr ih
   have hg_ne : g₀ 0 ≠ 0 :=
-    hp.hasFPowerSeriesAt.iterate_dslope_fslope_ne_zero hp_ne
+    hp.hasFPowerSeriesAt.iterate_dslope_fslope_ne_zero (qExpFMS_ne_zero f hf)
   have hF_local : ∀ᶠ z in 𝓝 (0 : ℂ),
       F z = (z - 0) ^ p.order • g₀ z :=
     hp.hasFPowerSeriesAt.eq_pow_order_mul_iterate_dslope
@@ -481,8 +476,8 @@ theorem seg5_logDeriv_integral_value_bridge {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
         logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
           deriv (fdBoundary_H H) t
       = ∫ t in (4:ℝ)..5,
-        logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) := by
-        exact intervalIntegral.integral_congr_ae h_eq_ae
+        logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) :=
+        intervalIntegral.integral_congr_ae h_eq_ae
     _ = 2 * ↑Real.pi * I * (orderAtCusp' f : ℂ) :=
         seg5_logDeriv_integral_eq_H f hf hH_pos hcusp_nonvan
 
