@@ -445,6 +445,30 @@ private lemma coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv
   -- `diamondOpCuspAux k g f = f ∣[k] mapGL (g : SL(2, ℤ))` at function level.
   rfl
 
+/-- **σ_p companion of `coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv`**.
+`⇑(⟨u⟩ f) = ⇑f ∣[k] mapGL σ_p` where `u = ZMod.unitOfCoprime p hpN`.
+
+Direct application of `diamondOpCusp_eq` with `σ_p = sigma_p_specific`
+as the representative, using `Gamma0MapUnits_sigma_p_specific` which
+gives `Gamma0MapUnits σ_p = u` directly (no inversion needed).
+
+**Significance**: this is the σ_p slash-as-diamond identity, the slash
+companion to the geometric `mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul`.
+Combined with `peterssonInner_M_infty_iUnion_eq_sigma_p_slash`, this
+identifies σ_p-slashed slot data with diamond-translated forms. -/
+private lemma coe_diamondOp_cusp_eq_slash_sigma_p
+    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) :
+        UpperHalfPlane → ℂ) =
+      ⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) := by
+  show (diamondOpCusp k (ZMod.unitOfCoprime p hpN) f : UpperHalfPlane → ℂ) = _
+  rw [diamondOpCusp_eq k (ZMod.unitOfCoprime p hpN)
+    ⟨sigma_p_specific N p hp hpN, sigma_p_specific_mem_Gamma0 N p hp hpN⟩
+    (Gamma0MapUnits_sigma_p_specific N p hp hpN)]
+  rfl
+
 /-- The Γ₁(N) representative γ₁⁻¹ for the triple product identity. Constructed
 using Bezout coefficients `gcdA·p + gcdB·N = 1`, this is the matrix
 `[[p·gcdA, gcdB], [-N, 1]] ∈ SL(2,ℤ)` with determinant `p·gcdA - gcdB·(-N) =
