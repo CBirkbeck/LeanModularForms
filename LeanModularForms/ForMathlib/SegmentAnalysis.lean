@@ -156,14 +156,6 @@ private lemma ref_seg4_I_ne_zero (H : ℝ) (t : ℝ) : ref_seg4_I H t ≠ 0 := b
   simp only [zero_re] at hre
   linarith
 
-private lemma ref_seg4_I_neg_slitPlane (H : ℝ) (t : ℝ) :
-    -(ref_seg4_I H t) ∈ Complex.slitPlane := by
-  rw [Complex.mem_slitPlane_iff]
-  left
-  simp only [ref_seg4_I, neg_re, add_re, ofReal_re, mul_re, sub_re, ofReal_im,
-    I_re, I_im, mul_zero, sub_zero, div_ofNat, neg_add_rev]
-  norm_num
-
 private lemma fdBoundary_sub_I_eventuallyEq_ref_seg4 (H : ℝ) {t : ℝ}
     (ht3 : 3/5 < t) (ht4 : t < 4/5) :
     (fun s => fdBoundaryFun H s - I) =ᶠ[𝓝 t] ref_seg4_I H :=

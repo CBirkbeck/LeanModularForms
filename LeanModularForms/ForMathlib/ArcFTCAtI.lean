@@ -319,15 +319,6 @@ private lemma log_neg_eq_sub_pi_I {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : 0 < z.im
 
 /-! ## Part 4: Branch point imaginary parts -/
 
-private lemma fdBoundary_sub_I_at_35_im_neg (H : ℝ) :
-    (fdBoundaryFun H (3/5) - I).im < 0 := by
-  rw [fdBoundaryFun_at_three_fifths]
-  simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
-    sub_im, add_im, neg_im, ofReal_im, one_im, div_ofNat, mul_im,
-    ofReal_re, I_re, I_im, mul_zero, mul_one, add_zero]
-  nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-    sq_nonneg (Real.sqrt 3 - 2)]
-
 private lemma fdBoundary_sub_I_at_45_im_pos (H : ℝ) (hH : 1 < H) :
     0 < (fdBoundaryFun H (4/5) - I).im := by
   rw [fdBoundaryFun_at_four_fifths]

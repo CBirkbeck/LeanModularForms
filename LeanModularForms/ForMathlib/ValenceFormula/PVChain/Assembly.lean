@@ -273,36 +273,6 @@ private lemma integral_neg_of_pw_neg (g : ℝ → ℂ)
   · exact MeasureTheory.measure_singleton _
 
 omit hf in
-private theorem pvIntegral_vertical_cancel (S : Finset UpperHalfPlane)
-    {H : ℝ} (_hH : Real.sqrt 3 / 2 < H)
-    (_h_oncurve_vert : ∀ t ∈ Set.Ioo (0 : ℝ) 1,
-      modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
-      (fdBoundary_H H t : ℂ) ∈ (↑(sVertOfS S) : Set ℂ)) :
-    ∀ ε > 0,
-      (∫ t in (0:ℝ)..1, pvIntegrand f (fdBoundary_H H) (sVertOfS S) ε t) +
-      (∫ t in (3:ℝ)..4, pvIntegrand f (fdBoundary_H H) (sVertOfS S) ε t) = 0 := by
-  intro ε hε
-  rw [integral_seg4_cov]
-  have h_trunc_iff : ∀ u ∈ Set.Ioo (0:ℝ) 1,
-      (∃ s ∈ sVertOfS S, ‖fdBoundary_H H (4 - u) - s‖ ≤ ε) ↔
-      (∃ s ∈ sVertOfS S, ‖fdBoundary_H H u - s‖ ≤ ε) := by
-    intro u hu
-    have h_seg1 := fdBoundary_H_eq_seg1_H (H := H) (show u ≤ 1 from le_of_lt hu.2)
-    have h_shift : fdBoundary_H H (4 - u) = fdBoundary_H H u - 1 := by
-      rw [fdBoundary_H_eq_seg4_H (H := H) (show (3:ℝ) < 4 - u from by linarith [hu.2])
-        (show 4 - u ≤ 4 from by linarith [hu.1]),
-        seg4_eq_seg1_minus_one_H H u ⟨le_of_lt hu.1, le_of_lt hu.2⟩, h_seg1]
-    have h_re_u : (fdBoundary_H H u).re = 1/2 := by
-      rw [h_seg1]
-      simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
-    rw [h_shift]
-    exact (truncation_iff_shift S (fdBoundary_H H u) h_re_u ε).symm
-  rw [integral_neg_of_pw_neg _ (fun u hu =>
-      pvIntegrand_seg4_eq_neg_seg1 f S (sVertOfS S) h_trunc_iff u hu),
-    intervalIntegral.integral_neg]
-  ring
-
-omit hf in
 private theorem pvIntegral_vertical_cancel_union (S : Finset UpperHalfPlane)
     {H : ℝ} (_hH : Real.sqrt 3 / 2 < H)
     (_h_oncurve_vert : ∀ t ∈ Set.Ioo (0 : ℝ) 1,

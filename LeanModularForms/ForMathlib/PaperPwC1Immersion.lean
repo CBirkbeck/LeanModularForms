@@ -939,24 +939,6 @@ theorem oneSubTau_mem_cyclicShiftPartitionExt (P : Finset ℝ) (τ : ℝ) :
     (1 - τ : ℝ) ∈ cyclicShiftPartitionExt P τ := by
   rw [mem_cyclicShiftPartitionExt_iff]; tauto
 
-/-- Helper: under `P ⊆ Icc 0 1`, an element `t + τ - 1 ∈ P` with `t ∈ Icc 0 1`
-forces `t ≥ 1 - τ`. -/
-private theorem ge_one_sub_tau_of_second_clause (P : Finset ℝ)
-    (hP_sub : (P : Set ℝ) ⊆ Set.Icc (0 : ℝ) 1) {τ : ℝ} (_hτ : τ ∈ Ioo (0 : ℝ) 1)
-    {t : ℝ} (_ht_Icc : t ∈ Set.Icc (0 : ℝ) 1) (hp : t + τ - 1 ∈ P) :
-    t ≥ 1 - τ := by
-  have h_p_ge_0 : 0 ≤ t + τ - 1 := (hP_sub hp).1
-  linarith
-
-/-- Helper: under `P ⊆ Icc 0 1`, an element `t + τ ∈ P` with `t ∈ Icc 0 1`
-forces `t ≤ 1 - τ`. -/
-private theorem le_one_sub_tau_of_first_clause (P : Finset ℝ)
-    (hP_sub : (P : Set ℝ) ⊆ Set.Icc (0 : ℝ) 1) {τ : ℝ} (_hτ : τ ∈ Ioo (0 : ℝ) 1)
-    {t : ℝ} (_ht_Icc : t ∈ Set.Icc (0 : ℝ) 1) (hp : t + τ ∈ P) :
-    t ≤ 1 - τ := by
-  have h_p_le_1 : t + τ ≤ 1 := (hP_sub hp).2
-  linarith
-
 /-- Given a consecutive pair `(a, b)` in `cyclicShiftPartitionExt`, the new
 partition does not straddle `1 - τ` (since `1 - τ` itself is in the partition). -/
 private theorem not_straddle_oneSubTau (P : Finset ℝ) {τ : ℝ}

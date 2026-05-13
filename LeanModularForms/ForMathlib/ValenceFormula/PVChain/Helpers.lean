@@ -257,13 +257,6 @@ lemma sVertOfS_pair_right (S : Finset UpperHalfPlane) :
     rw [hp_re] at hre
     norm_num at hre
 
-omit hf in
-/-- `modularFormCompOfComplex f` is periodic with period 1. -/
-private theorem modularFormCompOfComplex_periodic :
-    Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
-  exact SlashInvariantFormClass.periodic_comp_ofComplex f
-    ModularFormClass.one_mem_strictPeriods_SL2Z
-
 omit f hf in
 /-- There exists a height above √3/2 exceeding all points in `S`. -/
 theorem exists_height_bound_S (S : Finset UpperHalfPlane) :

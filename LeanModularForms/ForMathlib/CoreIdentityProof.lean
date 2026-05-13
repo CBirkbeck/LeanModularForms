@@ -214,47 +214,6 @@ private theorem explicit_coefficients_of_pvChain
 /-! ### Unit circle classification lemmas -/
 
 omit f hf in
-private lemma unit_circle_re_neg_half_eq_rho (s : ℍ)
-    (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = -1/2) : s = ellipticPointRho' := by
-  have h_nsq : Complex.normSq (s : ℂ) = 1 := by
-    rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
-  rw [Complex.normSq_apply, hs_re] at h_nsq
-  have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
-        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
-      nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
-    rcases mul_eq_zero.mp h_prod with h | h
-    · linarith
-    · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
-  apply UpperHalfPlane.ext
-  apply Complex.ext <;>
-    simp only [ellipticPointRho', UpperHalfPlane.coe_mk, add_re, add_im, neg_re, neg_im, one_re,
-      one_im, div_ofNat_re, div_ofNat_im, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im,
-      mul_zero, mul_one, sub_zero, add_zero, zero_add, zero_div, neg_zero] <;>
-    linarith
-
-omit f hf in
-private lemma unit_circle_re_pos_half_eq_rho_plus_one (s : ℍ)
-    (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 1/2) :
-    s = ellipticPointRhoPlusOne' := by
-  have h_nsq : Complex.normSq (s : ℂ) = 1 := by
-    rw [Complex.normSq_eq_norm_sq, hs_norm, one_pow]
-  rw [Complex.normSq_apply, hs_re] at h_nsq
-  have h_im : (s : ℂ).im = Real.sqrt 3 / 2 := by
-    have h_prod : ((s : ℂ).im - Real.sqrt 3 / 2) *
-        ((s : ℂ).im + Real.sqrt 3 / 2) = 0 := by
-      nlinarith [Real.mul_self_sqrt (show (3:ℝ) ≥ 0 by norm_num)]
-    rcases mul_eq_zero.mp h_prod with h | h
-    · linarith
-    · exact absurd h (ne_of_gt (add_pos s.2 (by positivity)))
-  apply UpperHalfPlane.ext
-  apply Complex.ext <;>
-    simp only [ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_re, add_im, one_re, one_im,
-      div_ofNat_re, div_ofNat_im, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im, mul_zero,
-      mul_one, sub_zero, add_zero, zero_add, zero_div] <;>
-    linarith
-
-omit f hf in
 private lemma unit_circle_re_zero_eq_i (s : ℍ)
     (hs_norm : ‖(s : ℂ)‖ = 1) (hs_re : (s : ℂ).re = 0) : s = ellipticPointI' := by
   have h_nsq : Complex.normSq (s : ℂ) = 1 := by

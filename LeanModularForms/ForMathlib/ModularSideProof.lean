@@ -71,11 +71,6 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
 /-! ### Two-pi-I nonzero -/
 
-omit f hf in
-private lemma two_pi_I_ne_zero_ms : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-  simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
-    ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero, or_self]
-
 /-! ### ModularSideData: bundled analytical ingredients -/
 
 /-- Bundled data for the modular side at a given height `H`.
