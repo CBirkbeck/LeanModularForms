@@ -10380,6 +10380,109 @@ private lemma peterssonInner_RHS_upper_sigma_reindex_per_q_to_tile_form
   rw [← h1, h, h2]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d M_∞ RHS sum to tile-form sum via σ-reindex chain**. Composes:
+1. `per_q_M_infty_branch_full_absorb.symm` per-q (dist → absorbed form);
+2. `← Equiv.sum_comp σ` (σ-reindex: replaces (σq) → q' in sum index);
+3. `peterssonInner_RHS_M_infty_sigma_reindex_per_q_to_tile_form` per-q (tile-form).
+
+After this rewrite, the RHS sum of `SigmaQPermResidual_M_infty` becomes:
+```
+∑_q pet (M_∞ • q.out⁻¹ • fd) ((⟨u⟩f ∣ T_p_upper(0)) ∣ mapGL γ₀) g
+```
+with q-INDEPENDENT slot-1 expression, ready for AE-disjoint sum collapse. -/
+private lemma sum_peterssonInner_RHS_M_infty_to_tile_form_via_sigma
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      peterssonInner k ModularGroup.fd
+          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹))
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
+            ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+                  M_infty_Gamma1_factor N p hpN 0)) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                ((Gamma1QuotEquivOfGamma0
+                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                  (adjointGamma0Rep p N hpN).property q).out :
+                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      peterssonInner k ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set UpperHalfPlane)))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+        (⇑g) := by
+  -- Step 1: per-q rewrite distributed → absorbed via per_q_M_infty_branch_full_absorb.symm.
+  rw [show (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+                M_infty_Gamma1_factor N p hpN 0)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) =
+      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      peterssonInner k ModularGroup.fd
+        ((⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))⁻¹) :
+            GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((Gamma1QuotEquivOfGamma0
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+              (adjointGamma0Rep p N hpN).property q).out :
+              SL(2, ℤ))⁻¹))
+        (⇑g ∣[k]
+          ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) from
+    Finset.sum_congr rfl (fun q _ =>
+      (per_q_M_infty_branch_full_absorb p hp hpN f g q).symm)]
+  -- Step 2: σ-reindex via Equiv.sum_comp (removes σ from sum indices).
+  rw [Equiv.sum_comp (Gamma1QuotEquivOfGamma0
+    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+    (adjointGamma0Rep p N hpN).property)
+    (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+      peterssonInner k ModularGroup.fd
+        ((⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))⁻¹) :
+            GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹))
+        (⇑g ∣[k]
+          ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))))]
+  -- Step 3: per-q rewrite to tile-form via σ-reindex tile-form lemma.
+  refine Finset.sum_congr rfl (fun q _ => ?_)
+  -- Goal: pet fd ((f ∣ γ₀⁻¹) ∣ q⁻¹) (g ∣ M_∞ · q⁻¹) =
+  --       pet (M_∞ • q⁻¹ • fd) ((⟨u⟩f ∣ T_p_upper(0)) ∣ mapGL γ₀) g
+  -- Use slash_mul to combine the slot-1 slashes, then diamond identification.
+  rw [show ((⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))⁻¹) :
+        GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ)) =
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ)) from by
+    congr 1
+    exact (coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv p hp hpN f).symm]
+  exact peterssonInner_RHS_M_infty_sigma_reindex_per_q_to_tile_form
+    p hp hpN (q.out : SL(2, ℤ)) f g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-d upper-`b` tile-form sum_comm**: swaps the outer `q` and inner `b`
 sums in the LHS upper-b tile-form sum. Pure `Finset.sum_comm`. -/
 private lemma sum_peterssonInner_upper_tile_form_swap
