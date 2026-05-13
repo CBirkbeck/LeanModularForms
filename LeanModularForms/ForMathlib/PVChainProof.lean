@@ -126,20 +126,9 @@ theorem pvChainIdentity
       generalizedWindingNumber data.D.boundary (↑s : ℂ) *
         (orderOfVanishingAt' (⇑f) s : ℂ) =
     -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
-  -- Both sides are limits of the same F_eps as eps -> 0+
-  haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
-  -- By uniqueness of limits in a Hausdorff space:
-  have h_eq :
-      2 * ↑Real.pi * I *
-        ∑ s ∈ S, generalizedWindingNumber data.D.boundary (↑s : ℂ) *
-          (orderOfVanishingAt' (⇑f) s : ℂ) =
-      -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) :=
-    tendsto_nhds_unique data.h_res data.h_mod
-  -- Cancel 2 pi i from both sides
-  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := pvChain_two_pi_I_ne_zero
-  rw [show -(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) =
-    2 * ↑Real.pi * I * (-((k : ℂ) / 12 - (orderAtCusp' f : ℂ))) from by ring] at h_eq
-  exact mul_left_cancel₀ hpi h_eq
+  haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot le_rfl
+  refine mul_left_cancel₀ pvChain_two_pi_I_ne_zero ?_
+  linear_combination tendsto_nhds_unique data.h_res data.h_mod
 
 /-! ### Discharge h_pvChain -/
 
@@ -207,14 +196,14 @@ theorem discharge_pvChain_full
       -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
   set H := max (max H_res H_mod) H_S + 1
   have hH_ge_res : H_res ≤ H := le_trans (le_max_left _ _)
-    (le_trans (le_max_left _ _) (le_of_lt (lt_add_one _)))
+    (le_trans (le_max_left _ _) ((lt_add_one _).le))
   have hH_ge_mod : H_mod ≤ H := le_trans (le_max_right _ _)
-    (le_trans (le_max_left _ _) (le_of_lt (lt_add_one _)))
+    (le_trans (le_max_left _ _) ((lt_add_one _).le))
   have hH_gt_sqrt3 : Real.sqrt 3 / 2 < H :=
     lt_of_lt_of_le hH_res_gt hH_ge_res
   have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
     lt_of_lt_of_le (hH_S s hs)
-      (le_trans (le_max_right _ _) (le_of_lt (lt_add_one _)))
+      (le_trans (le_max_right _ _) ((lt_add_one _).le))
   refine ⟨H, mkD H hH_gt_sqrt3, hH_above, ?_⟩
   exact pvChainIdentity f S
     { D := mkD H hH_gt_sqrt3
@@ -235,8 +224,7 @@ theorem pvChain_rearranged
         generalizedWindingNumber data.D.boundary (↑s : ℂ) *
           (orderOfVanishingAt' (⇑f) s : ℂ))) =
     (k : ℂ) / 12 := by
-  have h := pvChainIdentity f S data
-  linear_combination -h
+  linear_combination -pvChainIdentity f S data
 
 /-! ### FDWindingDataFull construction from FDWindingData + boundary winding -/
 
@@ -272,11 +260,8 @@ omit f hf in
 /-- If `2 pi i * a = -(2 pi i * b)` then `a = -b`. -/
 theorem eq_neg_of_two_pi_I_mul_eq_neg {a b : ℂ}
     (h : 2 * ↑Real.pi * I * a = -(2 * ↑Real.pi * I * b)) :
-    a = -b := by
-  have : 2 * ↑Real.pi * I * a = 2 * ↑Real.pi * I * (-b) := by
-    rw [mul_neg]
-    exact h
-  exact mul_left_cancel₀ pvChain_two_pi_I_ne_zero this
+    a = -b :=
+  mul_left_cancel₀ pvChain_two_pi_I_ne_zero (by rw [mul_neg]; exact h)
 
 /-! ### Height bound utilities -/
 
@@ -286,11 +271,8 @@ above the imaginary parts of all points. -/
 theorem exists_height_above_finset (S : Finset UpperHalfPlane) :
     ∃ H_S : ℝ, ∀ s ∈ S, (s : ℂ).im < H_S := by
   by_cases hne : S.Nonempty
-  · set M := S.sup' hne (fun s : UpperHalfPlane => (s : ℂ).im)
-    refine ⟨M + 1, fun s hs => ?_⟩
-    have : (s : ℂ).im ≤ M :=
-      Finset.le_sup' (fun s : UpperHalfPlane => (s : ℂ).im) hs
-    linarith
+  · refine ⟨S.sup' hne (fun s : UpperHalfPlane => (s : ℂ).im) + 1, fun s hs => ?_⟩
+    linarith [Finset.le_sup' (fun s : UpperHalfPlane => (s : ℂ).im) hs]
   · rw [Finset.not_nonempty_iff_eq_empty] at hne
     exact ⟨1, fun s hs => by simp [hne] at hs⟩
 
@@ -303,7 +285,7 @@ theorem exists_height_above_finset_and_sqrt3
   exact ⟨max H₁ (Real.sqrt 3 / 2) + 1,
     by linarith [le_max_right H₁ (Real.sqrt 3 / 2)],
     fun s hs => lt_of_lt_of_le (hH₁ s hs)
-      (le_trans (le_max_left _ _) (le_of_lt (lt_add_one _)))⟩
+      (le_trans (le_max_left _ _) ((lt_add_one _).le))⟩
 
 /-! ### Integration of PVChainData with CoreIdentityProof -/
 
@@ -414,14 +396,14 @@ theorem discharge_pvChain_full_Hgt1
       -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
   set H := max (max H_res H_mod) H_S + 1
   have hH_ge_res : H_res ≤ H := le_trans (le_max_left _ _)
-    (le_trans (le_max_left _ _) (le_of_lt (lt_add_one _)))
+    (le_trans (le_max_left _ _) ((lt_add_one _).le))
   have hH_ge_mod : H_mod ≤ H := le_trans (le_max_right _ _)
-    (le_trans (le_max_left _ _) (le_of_lt (lt_add_one _)))
+    (le_trans (le_max_left _ _) ((lt_add_one _).le))
   have hH_gt_1 : 1 < H :=
     lt_of_lt_of_le hH_res_gt hH_ge_res
   have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
     lt_of_lt_of_le (hH_S s hs)
-      (le_trans (le_max_right _ _) (le_of_lt (lt_add_one _)))
+      (le_trans (le_max_right _ _) ((lt_add_one _).le))
   refine ⟨H, mkD H hH_gt_1, hH_above, ?_⟩
   exact pvChainIdentity f S
     { D := mkD H hH_gt_1
