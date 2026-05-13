@@ -86,16 +86,13 @@ theorem laurentHigherOrderPolarAt_eventuallyEq_analyticAt
     refine ⟨fun z => (hSimple s hs).regularPart z - laurentAnalyticPartAt hCondB s hs z,
       (hSimple s hs).regularPart_analyticAt.sub
         (laurentAnalyticPartAt_analyticAt hCondB hs h_cross), ?_⟩
-    have h_pole_eq := (hSimple s hs).eventually_eq
-    have h_coeff_eq : (hSimple s hs).coeff = residue f s :=
-      (residue_eq_coeff (hSimple s hs)).symm
-    have h_laurent_eq := f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross
-    filter_upwards [h_pole_eq, h_laurent_eq] with z hz_pole hz_laurent
+    filter_upwards [(hSimple s hs).eventually_eq,
+      f_eq_analyticPart_plus_polarPart_eventually hCondB hs h_cross] with z hz_pole hz_laurent
     have h_higher_eq : laurentHigherOrderPolarAt hCondB s hs z =
         laurentPolarPartAt hCondB s hs z - residue f s / (z - s) := by
       unfold laurentHigherOrderPolarAt
       rw [if_pos h_cross]
-    rw [h_higher_eq, ← h_coeff_eq]
+    rw [h_higher_eq, residue_eq_coeff (hSimple s hs)]
     linear_combination hz_pole - hz_laurent
   · -- Uncrossed: laurentHigherOrderPolarAt = 0 (trivially analytic).
     refine ⟨fun _ => 0, analyticAt_const, ?_⟩
@@ -170,30 +167,24 @@ private lemma laurentHigherOrderPolarCorrection_eventuallyEq_analyticExt
     (hg_z_eq : (laurentHigherOrderPolar hCondB) =ᶠ[𝓝[≠] z] g_z) :
     laurentHigherOrderPolarCorrection hCondB =ᶠ[𝓝 z] g_z := by
   classical
-  have h_lim_eq : limUnder (𝓝[≠] z) (laurentHigherOrderPolar hCondB) = g_z z :=
-    (hg_z_an.continuousAt.tendsto.mono_left nhdsWithin_le_nhds
-      |>.congr' (hg_z_eq.mono fun _ h => h.symm)).limUnder_eq
   have h_at_z : laurentHigherOrderPolarCorrection hCondB z = g_z z := by
+    have h_lim_eq : limUnder (𝓝[≠] z) (laurentHigherOrderPolar hCondB) = g_z z :=
+      (hg_z_an.continuousAt.tendsto.mono_left nhdsWithin_le_nhds
+        |>.congr' (hg_z_eq.mono fun _ h => h.symm)).limUnder_eq
     simp only [laurentHigherOrderPolarCorrection, hzS, ↓reduceIte, h_lim_eq]
   have hz_not_erase : z ∉ (↑(S.erase z) : Set ℂ) := by
     simp only [Finset.mem_coe, Finset.mem_erase, ne_eq, not_true_eq_false, false_and,
       not_false_eq_true]
   obtain ⟨V, hV_open, hz_V, hV_eq⟩ := mem_nhdsWithin.mp hg_z_eq
-  have h_erase_away : (↑(S.erase z) : Set ℂ)ᶜ ∈ 𝓝 z :=
-    (S.erase z).finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_erase
-  apply Filter.mem_of_superset (Filter.inter_mem (hV_open.mem_nhds hz_V) h_erase_away)
+  apply mem_of_superset (inter_mem (hV_open.mem_nhds hz_V)
+    ((S.erase z).finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_erase))
   intro w ⟨hw_V, hw_erase⟩
   by_cases hwz : w = z
   · rw [hwz]; exact h_at_z
-  · have hw_not_S : w ∉ (↑S : Set ℂ) := by
-      intro hmem
-      exact hw_erase
-        (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwz, Finset.mem_coe.mp hmem⟩))
-    have hcorr : laurentHigherOrderPolarCorrection hCondB w =
-        laurentHigherOrderPolar hCondB w := by
-      simp only [laurentHigherOrderPolarCorrection, hw_not_S, ↓reduceIte]
+  · have hw_not_S : w ∉ (↑S : Set ℂ) := fun hmem => hw_erase
+      (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hwz, Finset.mem_coe.mp hmem⟩))
     show laurentHigherOrderPolarCorrection hCondB w = g_z w
-    rw [hcorr]
+    simp only [laurentHigherOrderPolarCorrection, hw_not_S, ↓reduceIte]
     exact hV_eq ⟨hw_V, hwz⟩
 
 /-- Away from `S`, the correction agrees with the polar in a full neighbourhood. -/
@@ -202,11 +193,10 @@ private lemma laurentHigherOrderPolarCorrection_eventuallyEq_polar
     (hCondB : SatisfiesConditionB γ f S) {z : ℂ} (hzS : z ∉ (↑S : Set ℂ)) :
     laurentHigherOrderPolarCorrection hCondB =ᶠ[𝓝 z]
       laurentHigherOrderPolar hCondB := by
-  apply Filter.mem_of_superset (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
+  apply mem_of_superset (S.finite_toSet.isClosed.isOpen_compl.mem_nhds hzS)
   intro w hw
-  have hw_not : w ∉ (↑S : Set ℂ) := hw
   show laurentHigherOrderPolarCorrection hCondB w = laurentHigherOrderPolar hCondB w
-  simp only [laurentHigherOrderPolarCorrection, hw_not, ↓reduceIte]
+  simp only [laurentHigherOrderPolarCorrection, show w ∉ (↑S : Set ℂ) from hw, ↓reduceIte]
 
 /-- The corrected higher-order polar part is differentiable on all of `U`.
 Riemann removable-singularity bridge. -/
@@ -247,17 +237,10 @@ private lemma cpvIntegrandOn_polar_eq_correction
       ∃ s ∈ S, ‖γ.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
   · simp only [cpvIntegrandOn, if_pos h_cutoff]
   · simp only [cpvIntegrandOn, if_neg h_cutoff]
-    have h_not : γ.toPiecewiseC1Path.toPath.extend t ∉ (↑S : Set ℂ) := by
-      intro h_in
-      apply h_cutoff
-      refine ⟨γ.toPiecewiseC1Path.toPath.extend t, Finset.mem_coe.mp h_in, ?_⟩
-      simp only [sub_self, norm_zero]
-      exact le_of_lt hε_pos
-    have h_eq : laurentHigherOrderPolarCorrection hCondB
-        (γ.toPiecewiseC1Path.toPath.extend t) =
-          laurentHigherOrderPolar hCondB (γ.toPiecewiseC1Path.toPath.extend t) := by
-      simp only [laurentHigherOrderPolarCorrection, h_not, ↓reduceIte]
-    rw [h_eq]
+    have h_not : γ.toPiecewiseC1Path.toPath.extend t ∉ (↑S : Set ℂ) := fun h_in =>
+      h_cutoff ⟨γ.toPiecewiseC1Path.toPath.extend t, Finset.mem_coe.mp h_in, by
+        simp only [sub_self, norm_zero]; exact hε_pos.le⟩
+    simp only [laurentHigherOrderPolarCorrection, h_not, ↓reduceIte]
 
 /-- Likewise for `laurentHolomorphicRemainder` and its correction. -/
 private lemma cpvIntegrandOn_holo_eq_correction
@@ -271,17 +254,10 @@ private lemma cpvIntegrandOn_holo_eq_correction
       ∃ s ∈ S, ‖γ.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
   · simp only [cpvIntegrandOn, if_pos h_cutoff]
   · simp only [cpvIntegrandOn, if_neg h_cutoff]
-    have h_not : γ.toPiecewiseC1Path.toPath.extend t ∉ (↑S : Set ℂ) := by
-      intro h_in
-      apply h_cutoff
-      refine ⟨γ.toPiecewiseC1Path.toPath.extend t, Finset.mem_coe.mp h_in, ?_⟩
-      simp only [sub_self, norm_zero]
-      exact le_of_lt hε_pos
-    have h_eq : laurentHolomorphicRemainderCorrection hCondB
-        (γ.toPiecewiseC1Path.toPath.extend t) =
-          laurentHolomorphicRemainder hCondB (γ.toPiecewiseC1Path.toPath.extend t) := by
-      simp only [laurentHolomorphicRemainderCorrection, h_not, ↓reduceIte]
-    rw [h_eq]
+    have h_not : γ.toPiecewiseC1Path.toPath.extend t ∉ (↑S : Set ℂ) := fun h_in =>
+      h_cutoff ⟨γ.toPiecewiseC1Path.toPath.extend t, Finset.mem_coe.mp h_in, by
+        simp only [sub_self, norm_zero]; exact hε_pos.le⟩
+    simp only [laurentHolomorphicRemainderCorrection, h_not, ↓reduceIte]
 
 /-! ## Step 4: Discharge `h_polar_cancel` via Dixon-on-correction + integrand equality -/
 
@@ -312,23 +288,19 @@ theorem h_polar_cancel_of_conditionB_simple
     contourIntegral_analytic_eq_zero_of_nullHomologous hU_open hU_ne hcorr_diff
       γ.toPwC1Immersion h_null hLip
   have hcorr_cont : ContinuousOn corr (γE '' Icc (0 : ℝ) 1) := by
-    have hγE_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γE t ∈ U := h_null.image_subset
     refine hcorr_diff.continuousOn.mono ?_
     intro z hz
     obtain ⟨t, ht, hzeq⟩ := hz
     rw [← hzeq]
-    exact hγE_in_U t ht
+    exact h_null.image_subset t ht
   have h_cpv_corr : HasCauchyPVOn S corr γP (γP.contourIntegral corr) :=
     hasCauchyPVOn_continuousOn_of_countable_preimage S hcorr_cont hLip h_preimage
-  have h_cpv_polar : HasCauchyPVOn S polar γP 0 := by
-    have h_target_eq : (0 : ℂ) = γP.contourIntegral corr := h_corr_zero.symm
-    rw [h_target_eq]
-    refine h_cpv_corr.congr' ?_
-    filter_upwards [self_mem_nhdsWithin] with ε hε_pos
-    apply intervalIntegral.integral_congr
-    intro t _
-    exact (cpvIntegrandOn_polar_eq_correction hCondB hε_pos t).symm
-  exact h_cpv_polar
+  rw [← h_corr_zero]
+  refine h_cpv_corr.congr' ?_
+  filter_upwards [self_mem_nhdsWithin] with ε hε_pos
+  apply intervalIntegral.integral_congr
+  intro t _
+  exact (cpvIntegrandOn_polar_eq_correction hCondB hε_pos t).symm
 
 /-! ## Step 5: Discharge `hI_polar` and `hI_holo` -/
 
@@ -352,19 +324,18 @@ theorem hI_polar_of_conditionB_simple
   have hcorr_diff : DifferentiableOn ℂ corr U :=
     laurentHigherOrderPolar_correction_differentiableOn hCondB hSimple hU_open hS_in_U
   have hcorr_cont_image : ContinuousOn corr (γE '' Icc (0 : ℝ) 1) := by
-    have hγE_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γE t ∈ U := h_null.image_subset
     refine hcorr_diff.continuousOn.mono ?_
     intro z hz
     obtain ⟨t, ht, hzeq⟩ := hz
     rw [← hzeq]
-    exact hγE_in_U t ht
+    exact h_null.image_subset t ht
   -- contour integrand `corr(γE t) · γE'(t)` is interval-integrable
   obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
   have h_deriv_int : IntervalIntegrable (deriv γE) volume 0 1 := by
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
+    refine Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
       (stronglyMeasurable_deriv _).aestronglyMeasurable
-      (ae_restrict_of_ae (Filter.Eventually.of_forall
+      (ae_restrict_of_ae (Eventually.of_forall
         (fun _ => norm_deriv_le_of_lipschitz hLip)))
   have h_corr_γE_cont : ContinuousOn (fun t => corr (γE t)) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
@@ -373,11 +344,8 @@ theorem hI_polar_of_conditionB_simple
   have h_contour_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand corr γP) volume 0 1 :=
     h_deriv_int.continuousOn_mul h_corr_γE_cont
-  have h_corr_intIntegrable :
-      IntervalIntegrable (fun t => cpvIntegrandOn S corr γE ε t) volume 0 1 :=
-    cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S corr γP ε h_contour_int
-  -- Now use the pointwise equality of integrands.
-  refine h_corr_intIntegrable.congr ?_
+  refine (cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S corr γP ε h_contour_int).congr
+    ?_
   intro t _
   exact (cpvIntegrandOn_polar_eq_correction hCondB hε_pos t).symm
 
@@ -401,18 +369,17 @@ theorem hI_holo_of_conditionB_simple
   have hcorr_diff : DifferentiableOn ℂ corr U :=
     laurentHolomorphicRemainder_correction_differentiableOn hCondB hSimple hU_open hf
   have hcorr_cont_image : ContinuousOn corr (γE '' Icc (0 : ℝ) 1) := by
-    have hγE_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γE t ∈ U := h_null.image_subset
     refine hcorr_diff.continuousOn.mono ?_
     intro z hz
     obtain ⟨t, ht, hzeq⟩ := hz
     rw [← hzeq]
-    exact hγE_in_U t ht
+    exact h_null.image_subset t ht
   obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
   have h_deriv_int : IntervalIntegrable (deriv γE) volume 0 1 := by
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
+    refine Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
       (stronglyMeasurable_deriv _).aestronglyMeasurable
-      (ae_restrict_of_ae (Filter.Eventually.of_forall
+      (ae_restrict_of_ae (Eventually.of_forall
         (fun _ => norm_deriv_le_of_lipschitz hLip)))
   have h_corr_γE_cont : ContinuousOn (fun t => corr (γE t)) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
@@ -421,10 +388,8 @@ theorem hI_holo_of_conditionB_simple
   have h_contour_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand corr γP) volume 0 1 :=
     h_deriv_int.continuousOn_mul h_corr_γE_cont
-  have h_corr_intIntegrable :
-      IntervalIntegrable (fun t => cpvIntegrandOn S corr γE ε t) volume 0 1 :=
-    cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S corr γP ε h_contour_int
-  refine h_corr_intIntegrable.congr ?_
+  refine (cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S corr γP ε h_contour_int).congr
+    ?_
   intro t _
   exact (cpvIntegrandOn_holo_eq_correction hCondB hε_pos t).symm
 
@@ -465,14 +430,11 @@ theorem hw_3_3_simple_with_crossData_no_laurent_oracles
       (2 * ↑Real.pi * I * ∑ s ∈ S,
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) := by
-  -- Discharge the three Laurent oracles, then call `hw_3_3_simple_with_crossData`.
-  have h_polar_cancel := h_polar_cancel_of_conditionB_simple hU_open hU_ne hS_in_U γ
-    h_null hSimple hCondB
-  have hI_polar := hI_polar_of_conditionB_simple hU_open hS_in_U γ h_null hSimple hCondB
-  have hI_holo := hI_holo_of_conditionB_simple hU_open hS_in_U hf γ h_null hSimple hCondB
-  exact hw_3_3_simple_with_crossData hU_open hU_ne S hS_in_U f hf γ h_null
-    hSimple hCondA hCondB h_polar_cancel hI_polar hI_holo crossData hδ_pos
-    h_avoid_pairs h_int_perpole
+  exact hw_3_3_simple_with_crossData hU_open hU_ne S hS_in_U f hf γ h_null hSimple hCondA hCondB
+    (h_polar_cancel_of_conditionB_simple hU_open hU_ne hS_in_U γ h_null hSimple hCondB)
+    (hI_polar_of_conditionB_simple hU_open hS_in_U γ h_null hSimple hCondB)
+    (hI_holo_of_conditionB_simple hU_open hS_in_U hf γ h_null hSimple hCondB)
+    crossData hδ_pos h_avoid_pairs h_int_perpole
 
 end LeanModularForms
 
