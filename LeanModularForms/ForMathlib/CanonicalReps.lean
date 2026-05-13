@@ -150,7 +150,7 @@ private lemma uhp_norm_one_re_zero_eq_i (p : ℍ)
     have h_prod : ((p : ℂ).im - 1) * ((p : ℂ).im + 1) = 0 := by nlinarith
     rcases mul_eq_zero.mp h_prod with h | h
     · linarith
-    · exact absurd h (ne_of_gt (add_pos p.2 one_pos))
+    · exact absurd h (add_pos p.2 one_pos).ne'
   exact Complex.ext (hr.trans Complex.I_re.symm) (h_im.trans Complex.I_im.symm)
 
 /-! ### Case lemmas for exists_repCanon_of_nonEllOrbit -/
@@ -265,8 +265,8 @@ private lemma repCanon_norm_one_re_neg (p : ℍ) (hp : p ∈ repCanon f hf)
     (h_norm : ‖(p : ℂ)‖ = 1) : (p : ℂ).re < 0 := by
   simp only [repCanon, Finset.mem_union] at hp
   rcases hp with (h | h) | h
-  · exact absurd h_norm (ne_of_gt (Finset.mem_filter.mp h).2.2.2.2.1)
-  · exact absurd h_norm (ne_of_gt (Finset.mem_filter.mp h).2.2)
+  · exact absurd h_norm (Finset.mem_filter.mp h).2.2.2.2.1.ne'
+  · exact absurd h_norm (Finset.mem_filter.mp h).2.2.ne'
   · exact (Finset.mem_filter.mp h).2.2.2
 
 private lemma denom_formula_general (h : SL(2, ℤ)) (p : ℍ) :
@@ -338,10 +338,8 @@ private lemma c_abs_le_one_of_smul_fd (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     (hg : g • p₂ = p₁) (hp₁ : p₁ ∈ 𝒟) (hp₂ : p₂ ∈ 𝒟) :
     |(g : Matrix (Fin 2) (Fin 2) ℤ) 1 0| ≤ 1 := by
   set c := (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0
-  have h_p1_im_eq : p₁.im = p₂.im / Complex.normSq (UpperHalfPlane.denom g p₂) := by
-    have := ModularGroup.im_smul_eq_div_normSq g p₂
-    rw [hg] at this
-    exact this
+  have h_p1_im_eq : p₁.im = p₂.im / Complex.normSq (UpperHalfPlane.denom g p₂) :=
+    hg ▸ ModularGroup.im_smul_eq_div_normSq g p₂
   have h_nsq_eq : Complex.normSq (UpperHalfPlane.denom g p₂) = p₂.im / p₁.im := by
     rw [h_p1_im_eq]
     field_simp
@@ -354,7 +352,7 @@ private lemma c_abs_le_one_of_smul_fd (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
     ring
   have h2 : (↑c : ℝ) ^ 2 * p₂.im ^ 2 * p₁.im ≤ p₂.im := by
     have := mul_le_mul_of_nonneg_right h1 p₁.im_pos.le
-    rwa [div_mul_cancel₀ _ (ne_of_gt p₁.im_pos)] at this
+    rwa [div_mul_cancel₀ _ p₁.im_pos.ne'] at this
   have h3 : (↑c : ℝ) ^ 2 * p₂.im * p₁.im ≤ 1 := by
     have h_eq : (↑c : ℝ) ^ 2 * p₂.im * p₁.im =
         (↑c : ℝ) ^ 2 * p₂.im ^ 2 * p₁.im / p₂.im := by field_simp
@@ -410,7 +408,7 @@ private lemma injOn_c_eq_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
       exact (abs_le.mp this).1
     have h_lt : n < 1 := by exact_mod_cast (show (↑n : ℝ) < 1 by linarith)
     have h_gt : -1 < n := by exact_mod_cast (show (-1 : ℝ) < (↑n : ℝ) by linarith)
-    omega
+    lia
   rw [hTn, h_n_zero, zpow_zero, one_smul]
 
 private lemma injOn_c_ne_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
@@ -437,7 +435,7 @@ private lemma injOn_c_ne_zero (g : SL(2, ℤ)) (p₁ p₂ : ℍ)
       exact div_le_self p₁.im_pos.le
         (normSq_denom_ge_one g⁻¹ p₁ hp₁_fd ((inv_c_sq_eq g).trans h_csq))
   have h_p2_nsq := normSq_eq_one_of_denom_one g p₂ hp₂_fd h_csq
-    (by rw [h_nsq_eq, h_im_eq, div_self (ne_of_gt p₂.im_pos)])
+    (by rw [h_nsq_eq, h_im_eq, div_self p₂.im_pos.ne'])
   have h_p1_nsq := normSq_eq_one_of_denom_one g⁻¹ p₁ hp₁_fd
     ((inv_c_sq_eq g).trans h_csq)
     (normSq_denom_one_of_im_eq g⁻¹ p₁ p₂ (inv_smul_eq_iff.mpr hg.symm) h_im_eq)
