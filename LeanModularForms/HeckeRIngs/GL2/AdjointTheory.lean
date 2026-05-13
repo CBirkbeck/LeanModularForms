@@ -6212,6 +6212,58 @@ private theorem mapGL_gamma0_mul_ds_family_eq_T_p_lower_mul_mapGL_factor
     exact mapGL_gamma0_mul_T_p_upper_eq_T_p_lower_mul_mapGL_delta N p hp hpN b.val
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM geometric step**: `γ₀ • (α_X • D) = T_p_lower • (γ_X • D)`
+as sets on `ℍ`, derived from the matrix identity
+`mapGL_gamma0_mul_ds_family_eq_T_p_lower_mul_mapGL_factor` by `mul_smul`
+associativity.
+
+For each Hecke representative `α_X ∈ {M_∞} ∪ {T_p_upper(b)}_{b∈Fin p}` and
+the corresponding Γ₁(N)-correction factor `γ_X = ds_p_plus_one_family_Gamma1_factor X`,
+γ₀-left-translation of the α_X-shifted set D equals T_p_lower-left-translation of
+the γ_X-shifted set D.
+
+**Use in σ_p Q-permutation reduction.** Summing over X yields
+`γ₀ • Hecke_FD = T_p_lower • (⋃_X γ_X • Γ₁_FD)`, the key geometric identity
+underlying the genuine DS Prop 5.5.2(b) σ_p Q-permutation. -/
+private theorem gamma0_smul_ds_family_eq_T_p_lower_smul_gamma_X
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (i : Option (Fin p)) (D : Set ℍ) :
+    ((mapGL ℝ : SL(2, ℤ) →* _)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ) •
+      ((match i with
+        | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+        | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D) =
+    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+      (((mapGL ℝ : SL(2, ℤ) →* _)
+        (ds_p_plus_one_family_Gamma1_factor N p hpN i) : GL (Fin 2) ℝ) • D) := by
+  rw [← mul_smul, ← mul_smul,
+    mapGL_gamma0_mul_ds_family_eq_T_p_lower_mul_mapGL_factor N p hp hpN i]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM iUnion geometric step**: `γ₀ • (⋃_X α_X • D) = T_p_lower • (⋃_X γ_X • D)`.
+
+The `γ₀`-translate of the Hecke FD (= ⋃_X α_X • Γ₁_FD) equals the `T_p_lower`-translate
+of the union of `γ_X`-shifted Γ₁_FD tiles (where γ_X ∈ Γ₁(N) for each X). This is
+the key set-level identity for the σ_p Q-permutation: combined with measure-preserving
+GL+ action and Γ₁(N)-tile invariance, it converts integrals on `γ₀ • Hecke_FD` to
+integrals on `T_p_lower • (Γ_p_α-FD)`. -/
+private theorem gamma0_smul_Hecke_FD_eq_T_p_lower_smul_iUnion
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (D : Set ℍ) :
+    ((mapGL ℝ : SL(2, ℤ) →* _)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ) •
+      (⋃ i : Option (Fin p),
+        (match i with
+          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D) =
+    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+      (⋃ i : Option (Fin p),
+        ((mapGL ℝ : SL(2, ℤ) →* _)
+          (ds_p_plus_one_family_Gamma1_factor N p hpN i) : GL (Fin 2) ℝ) • D) := by
+  rw [Set.smul_set_iUnion, Set.smul_set_iUnion]
+  refine Set.iUnion_congr fun i => ?_
+  exact gamma0_smul_ds_family_eq_T_p_lower_smul_gamma_X (N := N) p hp hpN i D
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
