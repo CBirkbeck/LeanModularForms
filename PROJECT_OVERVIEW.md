@@ -1,476 +1,437 @@
-# Project Overview: LeanModularForms
+# Project Overview — LeanModularForms/ForMathlib
 
-Generated: 2026-03-31
+**Generated**: 2026-05-13 via `/mathlib-quality:overview`
+**Scope**: `LeanModularForms/ForMathlib/` (183 `.lean` files, ~132k lines)
+**Method**: per-file inventory by 47 worker subagents, then 5 cross-cutting analysis phases (mathlib API audit, duplication detection, generalization analysis, API design review, junk identification).
+**Supersedes**: previous PROJECT_OVERVIEW.md from 2026-03-31.
 
-## 1. Executive Summary
+---
 
-This project formalizes the **generalized residue theorem** of Hungerbuhler-Wasem
-(arXiv:1808.00997v2, Theorem 3.3) and applies it to prove the **valence formula for
-modular forms** on SL_2(Z). The two main components total **46,586 lines of Lean 4**
-across **81 files** with approximately **1,614 top-level declarations**, **zero sorries**,
-and **no non-standard axioms** (only `propext`, `Classical.choice`, `Quot.sound`).
+## Executive Summary
 
-The **GeneralizedResidueTheory** component (37 files, 23,427 lines, ~669 declarations)
-builds a complete framework for Cauchy principal value integrals on piecewise C^1 curves
-that pass through poles. It includes a Dixon-style proof of the Cauchy integral formula
-for null-homologous curves, generalized winding numbers with the Hungerbuhler-Wasem
-crossing-angle decomposition (Proposition 2.2), higher-order pole support via flatness
-conditions (A') and (B), and an extension to formal Z-linear combinations of curves
-(contour cycles). The public API exposes two main theorems:
-`generalizedResidueTheorem` (full conditions) and
-`generalizedResidueTheorem_simplePoles` (simple pole corollary).
+`ForMathlib/` is the project's "candidates-for-mathlib" library. It contains three large independently-developed threads with substantial mutual duplication: the **Hungerbühler–Wasem Theorem 3.3** formalization (split between top-level `HW33*` files and the `HungerbuhlerWasem/` subdirectory, ~30 files, ~50k lines), the **valence-formula** apparatus (`ValenceFormula/` subtree + top-level FD / boundary / winding files, ~50 files, ~25k lines), and an older **GeneralizedResidueTheory** chain (28 files, 15k lines, partly superseded but still active). A small "for-mathlib" shim layer (7 files: `UpperHalfPlane`, `SlashActions`, `AtImInfty`, `Instances`, `TrigLemmas`, `CongruenceSubgrps`, `FunctionsBoundedAtInfty`) is PR-ready and should be moved upstream.
 
-The **ValenceFormula** component (44 files, 23,159 lines, ~945 declarations) applies this
-machinery to the standard fundamental domain of SL_2(Z), proving:
-`ord_cusp(f) + (1/2) ord_i(f) + (1/3) ord_rho(f) + sum_q ord_q(f) = k/12`.
-This requires: explicit construction of the fundamental domain boundary as a piecewise
-C^1 immersion; computation of generalized winding numbers at the three elliptic points
-(i, rho, rho+1) and at boundary edges; a homotopy argument showing interior winding
-number equals -1; modular invariance of the vanishing order under T and S; orbit-pairing
-to collapse left/right edge and arc contributions; and assembly into textbook form with
-`finsum` over non-elliptic orbits.
+The project compiles cleanly with **no `sorry`s in source**, only **4 files** using `set_option maxHeartbeats`, and axiom-clean main theorems (`[propext, Classical.choice, Quot.sound]`). The cross-cutting health issues are not correctness, but **structure** — there is significant duplication and missing automation that adds friction to every downstream proof.
 
-## 2. Statistics
+### The seven headline findings
 
-| Metric | GeneralizedResidueTheory | ValenceFormula | Total |
-|---|---|---|---|
-| Files | 37 | 44 | 81 |
-| Lines of code | 23,427 | 23,159 | 46,586 |
-| Top-level declarations | ~669 | ~945 | ~1,614 |
-| `private` declarations | ~290 | ~388 | ~678 |
-| Sorries | 0 | 0 | 0 |
-| Non-standard axioms | 0 | 0 | 0 |
-| Files > 1,000 lines | 8 | 3 | 11 |
-| Files > 500 lines | 19 | 21 | 40 |
-| `set_option maxHeartbeats` overrides | 0 | 0 | 0 |
+1. **~1620 lines of source code are entirely inert.** Seven files (`hassumunifon.lean` 1023 lines, `Bounds.lean` 340, `IsBoundedAtImInfty.lean` 78, `LevelOne.lean` 55, `Identities.lean` 40, `Petersson.lean` 136, `QExpansion.lean` 264) have their **entire body wrapped in a `/- ... -/` block comment** — the Lean parser sees them as empty. Add `CongruenceSubgroupsCopy.lean` (15-line explicit placeholder stub) and Tier-1 deletion is **8 files** for essentially no risk.
 
-### Subdirectory Breakdown
+2. **Massive cross-tree duplication.** Phase 4 found **105 unify candidates** including byte-equal duplicates differing only in namespace:
+   - `HW33SectorEven.lean` ≡ `HungerbuhlerWasem/SectorCancellation.lean` (one line differs: the `namespace` line; 558 vs 562 lines)
+   - `FlatnessConditions.lean` ≡ `GeneralizedResidueTheory/Residue/Flatness.lean` (17 byte-equal declarations)
+   - `HW33LaurentPolarPart.lean` is a **strict subset** of `HungerbuhlerWasem/LaurentExtraction.lean`
+   - `HigherOrderCancel.lean` shares 17 verbatim theorems with `HungerbuhlerWasem/HigherOrderAsymptotics.lean`
+   - `HW33Bridge.lean` ⊆ `HungerbuhlerWasem/ExitTimeExcision.lean` (10+ theorems)
+   - `HungerbuhlerWasem.lean` redeclares ~6 things from `HW33HigherOrderAvoidance.lean`
+   - **Estimated deletable: 5–6 files ≈ 2500–3000 lines.**
 
-**GeneralizedResidueTheory** (23,427 lines):
+3. **Two parallel piecewise-C¹ chains.** `PiecewiseC1Path`/`PwC1Immersion` (on `[0,1]`) and `PiecewiseC1Curve`/`PiecewiseC1Immersion` (on `[a,b]`, in `ClassicalCPV.lean`) duplicate ~960 lines. The `'`-suffix `cauchyPrincipalValue'` / `generalizedWindingNumber'` are precomposed copies, eliminable by routing through the `[0,1]` chain via `Path.extend`.
 
-| Subdirectory/File | Files | Lines | Purpose |
-|---|---|---|---|
-| Root-level files | 12 | 6,381 | Core definitions (Basic), CPV, winding numbers, residues, cycle theory, curve avoidance, etc. |
-| `Homotopy/` | 4 | 2,845 | Parametric differentiation, homotopy invariance, integrality, circle parameterization |
-| `PVInfrastructure/` | 5 | 3,450 | Annulus bounds, step bounds, gamma/remainder analysis, uniform step bounds |
-| `Residue/` | 6 | 3,830 | Meromorphic principal parts, sector curves, generalized theorem base, measure helpers |
-| `Residue/FlatnessTransfer/` | 4 | 3,649 | Higher-order cancellation: boundary vanishing, per-term vanishing, CPV existence, assembly |
-| `OnCurvePV/` | 1 | 339 | On-curve principal value basics |
-| `WindingNumber/` | 1 | 747 | Proposition 2.2 (angle decomposition) |
+4. **Three parallel CPV definition families.** `Residue.lean` (`cauchyPrincipalValueOn`), `CauchyPrincipalValue.lean` (`cauchyPVOn`, primary), and `ClassicalCPV.lean` (`cauchyPrincipalValue'`) — same content, three names per concept. Plus `cauchyPV`/`cauchyPVOn` are `limUnder`-defined and dead weight; project memory and downstream callers all use the `HasCauchyPV*` `Tendsto` predicates instead.
 
-**ValenceFormula** (23,159 lines):
+5. **Two parallel `HasSimplePoleAt` libraries** (`Residue.lean` 97 lines vs `GeneralizedResidueTheory/Residue.lean` 760 lines). The `HungerbuhlerWasem.lean` docstring explicitly flags this. **Mathlib's `meromorphicTrailingCoeffAt` + `MeromorphicAt` subsume both** and carry `@[fun_prop]`.
 
-| Subdirectory/File | Files | Lines | Purpose |
-|---|---|---|---|
-| Root-level files | 10 | 2,878 | Definitions, core identity, orbit sum/pairing, modular invariance, textbook forms |
-| `Boundary/` | 3 | 1,584 | FD boundary definition (Basic), bounds, smoothness/immersion construction |
-| `Boundary/Winding/` | 4 | 2,975 | Edge/arc winding numbers: RightEdge, LeftEdge, UnitArc, UnitArcHelpers |
-| `RectHomotopy/` | 14 | 7,122 | Homotopy from curved FD boundary to rectilinear polygon, proving winding = -1 |
-| `PVChain/` | 6 | 3,921 | Assembly of residue/modular sides, arc contribution, cusp integral, helpers |
-| `OnCurvePV/` | 3 | 1,768 | CPV existence at on-curve singularities: endpoint, corner, main theorem |
-| `WindingWeights/` | 4 | 3,301 | Winding number weights at i, rho, rho+1, plus common infrastructure |
+6. **Zero `@[fun_prop]` annotations** project-wide despite ~50+ project lemmas about `Continuous`/`Differentiable`/`MeromorphicAt` of `PiecewiseC1Path`, `principalPartSum`, `laurentPolarPartAt`, `laurentHigherOrderPolar`, `laurentHolomorphicRemainder`, `PolarPartDecomposition.analyticRemainder`. Tagging these unlocks `fun_prop` automation across the project.
 
-## 3. Structural Issues
+7. **No structural `@[ext]` lemmas** for `PolarPartDecomposition`, `SingleCrossingData`, `PerPoleCrossData`, `AsymmetricSingleCrossingData`, `ClosedPwC1Curve`, etc. Many of these are heavily bundled records (7–13 fields); ext lets decomposition-uniqueness reasoning short-circuit.
 
-### 3.1 Extremely Long Proofs
+### Top 10 concrete actions
 
-The project contains monolithic proofs that are the single biggest barrier to
-maintainability. Most follow a pattern: they case-split on the 5 segments of
-`fdBoundary_H` or partition points {1, 2, 3, 4}, then repeat similar subgoal work per
-case. This is the classic symptom of missing extraction of a parametric helper lemma.
+1. **Delete 8 commented-out / placeholder files** (~1951 lines, mechanical, zero downstream impact).
+2. **Delete `FlatnessConditions.lean`** (~441 lines, byte-equal duplicate).
+3. **Delete `HW33SectorEven.lean`** (~558 lines, one-line-different duplicate).
+4. **Delete `HW33LaurentPolarPart.lean`** (~519 lines, strict subset of `LaurentExtraction.lean`).
+5. **Delete `HW33Bridge.lean`** (~305 lines, duplicates 10+ theorems of `ExitTimeExcision.lean`).
+6. **Dedupe `HigherOrderCancel.lean` ↔ `HigherOrderAsymptotics.lean`** (~300 lines, 17 shared theorems).
+7. **Replace `residueSimplePole`/`HasSimplePoleAt`/`poleOrderAt`** with mathlib's `meromorphicTrailingCoeffAt`/`MeromorphicAt`/`meromorphicOrderAt`.
+8. **Collapse `PiecewiseC1Curve`/`PiecewiseC1Immersion`** onto `PiecewiseC1Path` (~960 lines saved).
+9. **Tag project `Continuous`/`Differentiable`/`MeromorphicAt` lemmas with `@[fun_prop]`**.
+10. **Move 7 PR-ready shims to upstream mathlib PRs** (`UpperHalfPlane`, `AtImInfty`, `SlashActions`, `FunctionsBoundedAtInfty`, `TrigLemmas`, `CongruenceSubgrps`, `Instances`).
 
-**Over 800 lines (single proof):**
+**Total potential deletion: ~5000+ lines of project code through items 1–6 alone**, with proof reuse unchanged.
 
-| Proof | File | ~Lines | Description |
-|---|---|---|---|
-| `dominated_convergence_multipoint_helper` | `Residue/MultipointPV.lean:643` | 1,010 | Dominated convergence for multipoint PV integrals |
-| `singular_annulus_bound_explicit` | `PVInfrastructure/AnnulusBounds.lean:888` | 836 | Annulus integration bounds for singular terms |
+---
 
-**500-700 lines:**
+## Statistics
 
-| Proof | File | ~Lines | Description |
-|---|---|---|---|
-| `fdBoundaryToPolygonHomotopy_deriv_bound` | `RectHomotopy/MainTheoremBound.lean:16` | 686 | Derivative bound for homotopy (5-segment case split) |
-| `fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces` | `RectHomotopy/MainTheoremDerivCont.lean:15` | 637 | Continuity of homotopy derivative on each piece |
-| `fdBoundaryToPolygonHomotopy_not_diffAt_134` | `RectHomotopy/BoundaryHomotopySmooth.lean:20` | 630 | Non-differentiability at partition corners (1, 3, 4) |
-
-**200-500 lines:**
-
-| Proof | File | ~Lines |
-|---|---|---|
-| `hasDerivAt_homotopy_param` | `Homotopy/ParametricDiff.lean:273` | 460 |
-| `hasDerivAt_homotopy_integral_zero` | `Homotopy/ParametricDiff.lean:738` | 360 |
-| `rightEdge_ftc_telescope` | `Boundary/Winding/RightEdge.lean` | ~298 |
-| `cpv_at_corner` | `OnCurvePV/EndpointCorner.lean` | ~297 |
-| `cpv_at_endpoint` | `OnCurvePV/EndpointCorner.lean` | ~296 |
-| `ftc_logDeriv_telescope_i` | `WindingWeights/I.lean` | ~293 |
-
-### 3.2 Large Files
-
-Eleven files exceed 1,000 lines.
-
-**GeneralizedResidueTheory (8 files over 1,000 lines):**
-- `PVInfrastructure/AnnulusBounds.lean` -- 1,724 lines
-- `HomologicalCauchy.lean` -- 1,710 lines
-- `Residue/MultipointPV.lean` -- 1,653 lines
-- `WindingNumber.lean` -- 1,553 lines
-- `Residue/FlatnessTransfer/PerTermVanishing.lean` -- 1,260 lines
-- `Residue/FlatnessTransfer/BoundaryVanishing.lean` -- 1,206 lines
-- `Homotopy/ParametricDiff.lean` -- 1,103 lines
-- `Residue/FlatnessTransfer/HigherOrderAssembly.lean` -- 1,084 lines
-
-**ValenceFormula (3 files over 1,000 lines):**
-- `PVChain/Assembly.lean` -- 1,255 lines
-- `WindingWeights/Rho.lean` -- 1,098 lines
-- `WindingWeights/I.lean` -- 1,061 lines
-
-### 3.3 High Private-to-Public Ratio
-
-Across both components, ~678 of ~1,614 declarations (42%) are `private`. Many are
-utility lemmas about complex arithmetic, norm bounds, and trigonometry that could serve
-other projects. The files with the highest private counts:
-
-| File | Private Count |
+| Metric | Value |
 |---|---|
-| `HomologicalCauchy.lean` | 38 |
-| `Residue/SectorCurveLemma.lean` | 33 |
-| `Residue/FlatnessTransfer/HigherOrderAssembly.lean` | 32 |
-| `Residue/FlatnessTransfer/BoundaryVanishing.lean` | 30 |
-| `TextbookForm.lean` | 37 |
-| `PVChain/Assembly.lean` | 34 |
-| `WindingWeights/I.lean` | 28 |
-| `WindingWeights/RhoPlusOne.lean` | 24 |
+| Total `.lean` files (ForMathlib) | 183 |
+| Total lines | ~132,000 |
+| Total declarations | 2,757 |
+| &nbsp;&nbsp;`def` + `abbrev` | 219 |
+| &nbsp;&nbsp;`structure`/`class`/`inductive` | 32 |
+| &nbsp;&nbsp;`instance` | 9 |
+| &nbsp;&nbsp;`theorem`/`lemma` | 1,706 |
+| `sorry` in source | 0 |
+| Files using `set_option maxHeartbeats` | 4 |
+| Files fully commented out (`/- ... -/` wrapping body) | 7 |
+| Dead orphan files (no importer, not headline/PR-ready) | 4 |
+| Dead private declarations | ~24 |
+| Unify candidates (Phase 4) | **105** |
 
-### 3.4 ContinuousSMul Instance Duplication
+### Subdirectory breakdown
 
-The instance chain `NormSMulClass R C -> IsBoundedSMul R C -> ContinuousSMul R C` is
-manually declared in 6 files:
-- `GeneralizedResidueTheory/LogDerivFTC.lean`
-- `GeneralizedResidueTheory/Homotopy/CircleParam.lean`
-- `GeneralizedResidueTheory/Homotopy/ParametricDiff.lean`
-- `GeneralizedResidueTheory/CauchyPrimitive.lean`
-- `ValenceFormula/Boundary/Smooth.lean`
-- `ValenceFormula/RectHomotopy/HomotopyDef.lean`
+| Subdir | Files | Lines |
+|---|---|---|
+| Top-level `ForMathlib/` | 121 | ~44k |
+| `HungerbuhlerWasem/` | 13 | 39k |
+| `GeneralizedResidueTheory/` | 28 | 15k |
+| `ValenceFormula/` | 17 | 11k |
+| `ContourIntegral/` | 4 | 1k |
 
-This should be a single file or import providing the instance.
+### Top-imported files (project centrality)
 
-## 4. Missing API / Generalization Opportunities
+| Rank | File | Importers |
+|---|---|---|
+| 1 | `ClassicalCPV` | 14 |
+| 2 | `SegmentFTC` | 11 |
+| 3 | `SingleCrossing` | 9 |
+| 3 | `FlatnessConditions` | 9 |
+| 5 | `ModularInvariance` | 8 |
+| 5 | `GeneralizedWindingNumber` | 8 |
+| 7 | `WindingWeightProofs` | 7 |
+| 7 | `PiecewiseContourIntegral` | 7 |
+| 7 | `PaperPwC1Immersion` | 7 |
 
-### 4.1 PiecewiseC1Curve vs Mathlib's Path / ContinuousMap
+The top-imported files are the **structural pinch points**: any refactor of `ClassicalCPV` (rec'd in this report) or `FlatnessConditions` (rec'd for deletion) ripples through 9–14 dependents.
 
-`PiecewiseC1Curve` and `PiecewiseC1Immersion` (defined in `Basic.lean`) are bespoke
-structures: a function `R -> C` on `[a, b]` with a `Finset R` partition and piecewise
-differentiability. Mathlib provides `Path x y` (continuous map from `[0,1]`) and
-`ContinuousMap.Homotopy`.
+---
 
-**Gap:** No `toPath` or `toContinuousMap` coercions exist. The project builds its own
-homotopy invariance from scratch (the entire `Homotopy/` subdirectory: 2,845 lines in
-GenRes, plus the 7,122-line `RectHomotopy/` in ValenceFormula).
+## Part 1: Declaration Inventory
 
-**Recommendation:** Add `PiecewiseC1Curve.toPath` and `toContinuousMap` (rescaling
-`[a,b]` to `[0,1]`). This does not require rewriting proofs but enables future
-interoperability with mathlib's homotopy theory.
+Full per-file inventories are at `/tmp/overview-inventory/*.md` (~180 files, 2.7MB, 3029 declaration entries). Each entry has:
 
-### 4.2 CurveAvoids / curveInfDist vs Mathlib's Metric.infDist
+- `Type` (full signature)
+- `What` (plain math English description)
+- `How` (key proof technique / mathlib lemma used)
+- `Hypotheses` (key mathematical assumptions)
+- `Uses from project` (every project decl referenced in proof body)
+- `Used by` (other decls in same file)
+- `Visibility` / `Lines` / `Notes`
 
-`CurveAvoids gamma a b z0` is defined as `forall t in Icc a b, gamma t /= z0` and
-`curveInfDist` is literally `Metric.infDist z0 (gamma '' Icc a b)`. The 98-line
-`CurveAvoidance.lean` is a thin wrapper around standard mathlib API.
+Each inventory ends with a File Summary (total decls, key API, unused decls, sorries, set_options, long proofs, one-paragraph purpose).
 
-**Gap:** These wrappers add a naming layer without adding functionality. The key theorem
-`curveInfDist_pos_of_avoids` restates `IsClosed.notMem_iff_infDist_pos` for curve images.
+The inventories are the source-of-truth for Phases 3–7.
 
-**Recommendation:** Consider deprecating `CurveAvoids` in favor of
-`z0 not-in gamma '' Icc a b` and using `Metric.infDist` directly. Keep only genuinely
-useful convenience lemmas (e.g., `curveAvoids_of_im_lt`).
+---
 
-### 4.3 Winding Number and circleIntegral
+## Part 2: Cross-File Dependencies
 
-The generalized winding number is defined as a CPV integral. For curves avoiding `z0` it
-reduces to the classical contour integral `(1/(2*pi*I)) integral_gamma dz/(z - z0)`.
-Mathlib's `Complex.windingNumber` uses `circleIntegral`.
+**Forward import graph**: 163 project-internal edges across 174 files with ≥1 project import.
+**Reverse import map**: 168 files have ≥1 importer; 15 files have NO IMPORTERS.
 
-**Gap:** No bridge lemma equating `generalizedWindingNumber'` on a circle to
-`Complex.windingNumber`. The project does use `circleIntegral` internally
-(in `HigherOrderAssembly.lean` and `PerTermVanishing.lean`) but never connects its
-winding number to mathlib's.
+NO-IMPORTERS files split as:
+- **Headline / root theorems** (KEEP) — `HW33Clean`, `ValenceFormulaFinal`, `HungerbuhlerWasem`, `WindingWeightsUnconditional`, etc.
+- **PR-ready shims** (KEEP, target upstream) — `UpperHalfPlane`, `SlashActions`, `AtImInfty`, `Instances`, `TrigLemmas`, `CongruenceSubgrps`, `FunctionsBoundedAtInfty`.
+- **Orphaned content** (DELETE) — `WindingHomotopy` (superseded by GRT.Homotopy), `ResidueSideProof` (covered by ValenceFormulaBridged), `Cycles`, `HorizontalContribution`.
 
-**Recommendation:** Add `generalizedWindingNumber_eq_windingNumber_of_circle`.
+Raw graphs: `/tmp/overview-inventory/_phase2/{imports,reverse-imports}.txt`.
 
-### 4.4 IsNullHomologous vs Mathlib's Homology
+### Key dependency observations
 
-`IsNullHomologous gamma U` is a three-field structure (closedness, image in U, vanishing
-winding around complement). This is the correct definition for Hungerbuhler-Wasem but
-is disconnected from mathlib's algebraic topology.
+- `ClassicalCPV` is the top-imported file (14 importers) and is also the file that contains the duplicate `PiecewiseC1Curve`/`PiecewiseC1Immersion` chain. **Refactor target: route 14 importers through `PiecewiseC1Path` instead.**
+- `PaperPwC1Immersion.lean` (1755 lines) and its `Invariance` companion (1260 lines) are foundational for the HW33 subtree; restructuring here ripples through ~21 files.
+- The `HungerbuhlerWasem/` subtree is a **deeply layered internal-dependency graph** (`MultiCrossingCPV` ← `Crossing` ← `CPVExistence` ← `LocalCutoffs` ← …). Phase 7 confirms this is genuine layering, not proliferation.
 
-**Gap:** No bridge to `FundamentalGroup` or singular homology.
+---
 
-**Recommendation:** Long-term. A connecting lemma would require homology infrastructure
-for open subsets of C that may not yet exist in mathlib.
+## Part 3: Mathlib API Audit (most important)
 
-### 4.5 Concreteness of fdBoundary_H
+Full audit at `/tmp/overview-inventory/_phase3/mathlib-api-audit.md` (583 lines).
 
-The fundamental domain boundary `fdBoundary_H H` is a piecewise function with 5 explicit
-segments parameterized on `[0, 5]`. Every property is proved with a 5-way case split.
-At least 20 proofs across the ValenceFormula component contain:
+### A. Project definitions catalog (high-impact subset)
 
+| # | Declaration | File | What | Used by | Mathlib status |
+|---|---|---|---|---|---|
+| 1 | `PwC1Immersion` | `PiecewiseC1Path.lean` | piecewise-C¹ path w/ nonzero deriv | 104 | KEEP |
+| 2 | `ClosedPwC1Curve`/`ClosedPwC1Immersion` | `PaperPwC1Immersion.lean` | endpoints-in-partition variant | 81 | KEEP (consolidate) |
+| 3 | `firstExitTime*` + `HW33ExitData` | `ExitTime.lean` | exit time `inf {t : ε ≤ ‖γt−s‖}` | 54 | KEEP |
+| 4 | `cpvIntegrandOn` | `CauchyPrincipalValue.lean` | ε-cutoff CPV integrand | 54 | KEEP |
+| 5 | `tangentDeviation`/`orthogonalProjectionComplex` | `FlatnessConditions.lean` | ℝ-orthogonal projection on `ℝ·L ⊂ ℂ` | 46 | **GENERALIZE → `orthogonalProjection`** |
+| 6 | `generalizedWindingNumber'`/`generalizedWindingNumber01` | `ClassicalCPV.lean` | `(2πi)⁻¹·PV ∫ dz/(z−z₀)` | 39 | KEEP (PV variant novel) |
+| 7 | `cauchyPV`/`cauchyPVOn` | `CauchyPrincipalValue.lean` | `limUnder` of cutoff integrals | 36 | **REPLACE: delete, use `Tendsto` only** |
+| 8 | `HasCauchyPV`/`HasCauchyPVOn` | same | `Tendsto` predicate | 32 | KEEP (the good one) |
+| 9 | `principalPartSum` | `PrincipalPart.lean` | `∑ s ∈ S, c s / (z − s)` | 28 | KEEP |
+| 10 | `cauchyPrincipalValue'` | `ClassicalCPV.lean` | duplicate of (7) | 28 | **REPLACE: delete primed pair** |
+| 11 | `PiecewiseC1Path` | `PiecewiseC1Path.lean` | abstract `[0,1]` piecewise-C¹ | 26 | KEEP (already extends mathlib's `Path`) |
+| 14 | `cpvIntegrand` (single-pole) | `CauchyPrincipalValue.lean` | special case of (4) | 15 | **REPLACE: delete (proof of `= cpvIntegrandOn {z₀}` exists)** |
+| 15 | `PiecewiseC1Curve`/`PiecewiseC1Immersion` | `ClassicalCPV.lean` | open-interior-partition variant on `[a,b]` | 10+2 | **REPLACE: collapse onto `PiecewiseC1Path`** |
+| 17 | `residueSimplePole`/`HasSimplePoleAt` | `Residue.lean` | simple-pole limit & decomp | 8+8 | **GENERALIZE → `meromorphicTrailingCoeffAt` + `MeromorphicAt`** |
+| 19 | `poleOrderAt` | `PrincipalPart.lean` | `WithTop ℤ → ℕ` pole order | 6 | **REPLACE → `(-meromorphicOrderAt _ _).untop₀.toNat`** |
+| 23 | `Finset.IsConsecutive` | `PaperPwC1Immersion.lean` | `a,b ∈ s`, nothing strictly between | 10+ | **REPLACE / upstream: `Finset.Ioo a b ∩ s = ∅`** |
+
+### B. Top REPLACE / GENERALIZE actions
+
+- **B-1. Two parallel piecewise-C¹ chains.** Collapse `PiecewiseC1Curve`/`PiecewiseC1Immersion` onto `PiecewiseC1Path` via `Path.extend`. **~960 lines deletable.**
+- **B-2. Delete `cauchyPV` / `cauchyPVOn` / `cauchyPrincipalValue'`** (`limUnder`-defined). Every caller wants the `HasCauchyPV*` `Tendsto` predicates anyway. Project memory already designates these as primary.
+- **B-3. Replace `residueSimplePole` + `HasSimplePoleAt`** with mathlib's `meromorphicTrailingCoeffAt` + `MeromorphicAt`. Unlocks `@[fun_prop]` and the full mathlib `MeromorphicAt` combinator API. ~50 lines deletable in `Residue.lean`.
+- **B-4. Replace `orthogonalProjectionComplex`/`tangentDeviation`** with mathlib's `orthogonalProjection (ℝ ∙ L)` over `Complex.instInnerProductSpaceReal`. ~60 lines saved.
+- **B-5. Drop the `IsFlatOfOrder` structure wrapper** — switch to a `def` alias over raw `Asymptotics.IsLittleO`. Lets `fun_prop` see through.
+
+### C. API-poor → API-rich
+
+- `limUnder` (in `cauchyPV`, `cauchyPVOn`, `generalizedWindingNumber01`) → `Tendsto`. Mathlib has ~200 lemmas for `Tendsto`; ~20 for `limUnder`.
+- `∃ ε > 0, ∀ x, ‖x−x₀‖ < ε → ‖f x − f x₀‖ < ε` (manual ε-δ) → `ContinuousAt`.
+- Custom finite-set predicates → `Finset` / `Fintype`.
+
+### D. Hand-rolled patterns to refactor
+
+- 66-line `intervalIntegrable_of_consecutive_pieces` + 55-line `lipschitzOnWith_of_consecutive_pieces` (`PaperPwC1Immersion.lean`) share a `Finset.strongInductionOn`-with-consecutive-pair template. Should be one shared `Finset.consecutive_induction` lemma.
+- ε-δ scaffolding in `ExitTime.lean` (≥40 lines) replicable in 3 lines via mathlib's `IsClosed.csInf_mem` + `Tendsto.eventually_lt_const`.
+- `PiecewiseContourIntegral.contourIntegral` (329 lines) — long-term target: mathlib's `curveIntegral` (in `Mathlib.MeasureTheory.Integral.CurveIntegral.Basic`).
+
+### E. Missing automation hooks
+
+**Zero `@[fun_prop]` annotations in the entire `ForMathlib/` tree.** 14 most-impactful candidates: `PiecewiseC1Path.continuous`, `PwC1Immersion.continuous`, `ClosedPwC1Curve.continuous`, `principalPartSum_differentiableOn/AnalyticAt/MeromorphicAt`, `laurentPolarPartAt_differentiableAt`, `laurentHigherOrderPolar_differentiableAt`, `laurentHolomorphicRemainder_differentiableOn`, `PolarPartDecomposition.analyticRemainder_diff`, `HasSimplePoleAt.meromorphicAt`. Tagging collapses ~80 hand-written proof chains.
+
+---
+
+## Part 4: Moral Duplication
+
+Full pairwise table (105 candidates) at `/tmp/overview-inventory/_phase4/duplication.md`.
+
+### A. Byte-equal / namespace-different duplicates (DELETE one side)
+
+| # | Pair | Verdict |
+|---|---|---|
+| 1 | `FlatnessConditions.lean` vs `GeneralizedResidueTheory/Residue/Flatness.lean` | DELETE FlatnessConditions (~441 lines, ~17 byte-equal decls) |
+| 2 | `HW33SectorEven.lean` vs `HungerbuhlerWasem/SectorCancellation.lean` | DELETE HW33SectorEven (~558 lines, only `namespace` line differs) |
+| 3 | `HW33LaurentPolarPart.lean` vs `HungerbuhlerWasem/LaurentExtraction.lean` | DELETE HW33LaurentPolarPart (~519 lines, strict subset of LaurentExtraction's 1130) |
+| 4 | `HW33Bridge.lean` vs `HungerbuhlerWasem/ExitTimeExcision.lean` | DELETE HW33Bridge (~305 lines, 10+ verbatim theorems) |
+| 5 | `HigherOrderCancel.lean` vs `HungerbuhlerWasem/HigherOrderAsymptotics.lean` | DEDUPE (17 verbatim theorems = ~300 lines) |
+| 6 | `HungerbuhlerWasem.lean` vs `HW33HigherOrderAvoidance.lean` | DEDUPE (~150 lines: `PolarPartDecomposition`, `polarPart_eq_simplePole_add_higherOrder`, `contourIntegral_higherOrder*_eq_zero_of_avoids`) |
+| 7 | `ClassicalCPV.lean` (`cauchyPrincipalValue'`, etc.) vs `CauchyPrincipalValue.lean` | DELETE the `'`-suffix definitions |
+| 8 | `Residue.lean` CPV defs vs `CauchyPrincipalValue.lean` | DEDUPE / merge |
+
+**Estimated total deletion: 5–6 files ≈ 2500–3000 lines.**
+
+### B. Parametrization opportunities (`_at_i` / `_at_rho` / `_at_rho_plus_one` triples)
+
+10 triples found, each ~120 lines = **~1200 lines** of mechanical parametric duplication:
+
+1. `arc_near_at_{I,rho,rhoPlusOne}_arcsin` (arc near-distance bound)
+2. `arc_far_at_{I,rho,rhoPlusOne}_arcsin` (arc far-distance bound)
+3. `vert_{near,far}_at_{rho,rhoPlusOne}` (vert pair)
+4. `mkSingleCrossingData_at{I,Rho,RhoPlusOne}` (constructor triple)
+5. `gWN_fdBoundary_H_at_{i,rho,rho_plus_one}` (winding number triple)
+6. `pv_integral_at_{i,rho,rhoPlusOne}_tendsto` (PV integral tendsto triple)
+7. `rho_{far,near}_{left,right}` + `rhoPlusOne_{far,near}_{left,right}` (six-lemma pattern)
+8. `norm_trig_sub_{I,rho,rhoPlusOne}` (arc-distance lemmas)
+9. `fdBoundary_crosses_{I,rho,rhoPlusOne}_at` (boundary crossing)
+10. `fdBoundaryFun_arc_dist_{I,rho,rhoPlusOne}` (boundary distance)
+
+A single `(P : EllipticPoint)` parameter would collapse each triple.
+
+### C. Segment-index parametrization
+
+- `Seg1FTCProvider.lean` / `Seg4FTCProvider.lean` / `ArcGenericFTCProvider.lean` — ~40 declarations each, structurally isomorphic, name-suffixed by segment index. Parametrizing on `segIdx : Fin 5` collapses ~2700 lines.
+- Inside `WindingWeights/Rho.lean`: `fdBoundary_H_sub_rho_seg{0,1,2,3,4}_re/_slitPlane` (5-segment family) — same pattern.
+- Inside `InteriorContourIntegral.lean`: `seg1F` / `seg5F` / `seg4F` (3-fold), `ref1` / `ref5` / `ref4n` / `arcRef` (4-fold).
+
+### D. Within-file derivable wrappers (KEEP-DERIVE)
+
+- `hw_3_3_clean` vs `_avoids` vs `_with_scd` vs `_full` vs `_truly_full` vs `_multi` vs `_full_mero` in `HW33Clean.lean`: pick one primary; the rest are auto-derivable.
+- `residueTheorem_crossing` vs `_asymmetric` vs `_singleton` vs `_singleton_asymmetric` in `Crossing.lean`: same pattern.
+- `hPV_sing_of_conditionB` vs `_avoids` vs `_singleCrossing` vs `_pointwise_winding` in `HW33PVSing.lean`.
+
+### E. Parallel infrastructure analysis
+
+There are **two parallel "residue / HW3.3" infrastructures** plus the legacy top-level HW33* sequence:
+
+1. **`HungerbuhlerWasem/` subdir** — 13 files, clean modular HW Theorem 3.3 development.
+2. **`HW33*.lean` top-level** — 18 files (HW33Clean, HW33Closed, HW33Paper, HW33Tight, HW33Final, etc.). Several are **direct copies of subdir files** (e.g. HW33SectorEven = SectorCancellation).
+3. **`GeneralizedResidueTheory/` subdir** — older, partly superseded.
+
+**Strategy**: keep subdirs + only the bridging top-level HW33 files (HW33Tight, HW33Paper, HW33Closed, HW33Final, HW33Clean — wrappers with non-trivial conversion). Delete: `HW33SectorEven`, `HW33LaurentPolarPart`, `HW33Bridge`, `FlatnessConditions`, `ClassicalCPV`.
+
+---
+
+## Part 5: Generalization Opportunities
+
+Full analysis at `/tmp/overview-inventory/_phase5/generalization.md`.
+
+### LOW-difficulty (just retype the type parameters)
+
+- **`Avoids` / Lipschitz / homotopy avoidance** (`NullHomologous`, `CurveUtilities`, `HomotopyDefs`): pure metric facts about paths in `[0,1]`; lift to any `[NormedAddCommGroup E] [NormedSpace ℝ E]`. Proofs work as-is. **Mathlib-upstreamable.**
+- **`PiecewiseC1Path` / `PwC1Immersion` / `ClosedPwC1Immersion`**: already generic in target `E`; just audit `Avoids`/`infDist`/`image_compact` to thread `E` through. No proof changes needed.
+
+### MEDIUM-difficulty
+
+- **`hausdorffMeasure_two_lipschitz_image_zero`**: replace ℂ-specific `finrank` with generic `finrank ℝ E`. Mathlib-upstream candidate.
+- **`IsFlatOfOrder` / `tangentDeviation` to any `[InnerProductSpace ℝ E]`**: replace ad-hoc `orthogonalProjectionComplex` with mathlib's `Submodule.orthogonalProjection (ℝ ∙ L)`.
+- **`HasSimplePoleAt` / `residue` / `HasCauchyPV` over Banach-valued targets `f : 𝕜 → E`**: align with mathlib's `MeromorphicAt` (already supports `f : 𝕜 → E`).
+
+### HIGH-difficulty (correctly ℂ-specific — KEEP)
+
+- `generalizedWindingNumber` value (Cauchy integral of `1/z`), `PolarPartDecomposition`, `angleAtCrossing`, Dixon–Liouville chain, FD geometry for the valence formula — all genuinely use ℂ-specific residue calculus / holomorphicity.
+- Hungerbühler–Wasem 3.3 is ℂ-only by design.
+
+### Universe polymorphism / typeclass weakening
+
+- Audit `Finset ℂ S → (S : Set ℂ) [S.Finite]` use sites.
+- `Convex ℝ U → StarConvex ℝ z₀ U` (mild secondary win).
+- `[NormedSpace ℝ E]` → `[NormedAddCommGroup E]` where smul not used (exemplified by `translatePath`'s `omit` pattern).
+
+---
+
+## Part 6: API Design Review
+
+Full review at `/tmp/overview-inventory/_phase6/api-design.md`.
+
+### Top 15 API additions by impact
+
+| # | Name | Signature | Simplifies |
+|---|---|---|---|
+| 1 | `Finset.consecutive_induction` | strong-induction on consecutive pairs | 2 >30-line proofs in `PaperPwC1Immersion.lean` plus future similar; **foundational** |
+| 2 | `@[ext] PolarPartDecomposition` + `Coe ClosedPwC1Immersion PiecewiseC1Path` | structural | 50+ explicit `γ.toPwC1Immersion.toPiecewiseC1Path` projections in HW33-* |
+| 3 | `cpvIntegrandOn_anti` | `S ⊆ T → far → eq` (pointwise) | ≥5 callers manually `split_ifs` |
+| 4 | `@[fun_prop]` across all CPV/Diff/Cont lemmas | annotation only | 50+ proofs simplify |
+| 5 | `IsFlatOfOrder.congr` | `IsFlatOfOrder γ₁ → γ₁ =ᶠ γ₂ → IsFlatOfOrder γ₂` | `isFlatOfOrder_of_eventuallyEq_shift` + ≥2 more |
+| 6 | `Filter.tendsto_const_add_nhdsLT/GT` | shift-of-filter | 4 private copies in `PaperPwC1ImmersionInvariance` |
+| 7 | `Finset.IsConsecutive.{mem_left,mem_right,lt,not_mem_Ioo}` + dot notation | trivial | ~15+ manual destructures |
+| 8 | `cpvIntegrandOn_empty/zero_fun` tagged `@[simp]` | trivial | `HasCauchyPVOn.zero_fun`, induction bases |
+| 9 | `Path.cyclicShift_deriv_eventuallyEq` unified | `Tendsto`/`EventuallyEq` joint | 4 private cases in `PaperPwC1ImmersionInvariance` |
+| 10 | `principalPartSum_rest_analyticAt` made public | promotion | 2 duplicate private copies (HW33LaurentPolarPart, HungerbuhlerWasem) |
+| 11 | `SatisfiesConditionA'.mono`, `SatisfiesConditionB.mono` | `S₂ ⊆ S₁ → Sat γ f S₁ p → Sat γ f S₂ p` | excision-style HW33 proofs |
+| 12 | `IsFlatOfOrder.zero`/`.one` (dot notation) | rename + alias | ~10 call sites |
+| 13 | `FunLike (PiecewiseC1Path x y) ℝ E` | instance | 295+ `γ.toPath.extend` uses |
+| 14 | `@[simp]` on `laurentPolarPartAt_uncrossed` etc. | promotion + tagging | 5+ inline `simp [laurentX, h_not_cross]` |
+| 15 | `cauchyPV_eq_cauchyPVOn_singleton` value-level bridge | `cauchyPV f γ z₀ = cauchyPVOn {z₀} f γ` | HW33-* form-switching |
+
+### Missing `@[ext]` on structures
+
+- `PolarPartDecomposition` (7 fields) — high-impact: enables decomposition-uniqueness.
+- `SingleCrossingData` (13 fields)
+- `PerPoleCrossData` / `MultiPoleCrossData`
+- `AsymmetricSingleCrossingData` / `DerivedAsymmetricCutoffs`
+- `ClosedPwC1Curve` / `ClosedPwC1Immersion`
+- `PiecewiseC1Path` / `PwC1Immersion`
+
+### Missing `Coe` / `FunLike`
+
+- `ClosedPwC1Curve` / `ClosedPwC1Immersion` → `PiecewiseC1Path` coercion (currently 2–3 manual `.toPwC1Immersion.toPiecewiseC1Path` projections, 50+ occurrences).
+- `FunLike (PiecewiseC1Path x y) ℝ E` to replace `CoeFun` (would shrink 295+ `γ.toPath.extend` sites).
+- `ContinuousMapClass` instance to integrate with `fun_prop`.
+
+---
+
+## Part 7: Junk / Removable
+
+Full report at `/tmp/overview-inventory/_phase7/junk.md`.
+
+### Tier 1 — Immediate deletion (~1951 lines, zero downstream impact)
+
+Files compiling to **nothing** (entire body wrapped in `/- ... -/`):
+
+| File | Lines | Status |
+|---|---|---|
+| `hassumunifon.lean` | 1023 | block-commented |
+| `Bounds.lean` | 340 | block-commented |
+| `QExpansion.lean` | 264 | block-commented |
+| `Petersson.lean` | 136 | block-commented |
+| `IsBoundedAtImInfty.lean` | 78 | block-commented |
+| `LevelOne.lean` | 55 | block-commented |
+| `Identities.lean` | 40 | block-commented |
+| `CongruenceSubgroupsCopy.lean` | 15 | explicit placeholder stub |
+
+### Tier 2 — Orphan files with real content
+
+| File | Lines | Status |
+|---|---|---|
+| `WindingHomotopy.lean` | 266 | superseded by `GeneralizedResidueTheory.Homotopy.*` |
+| `ResidueSideProof.lean` | 454 | old chain artifact; covered by `ValenceFormulaBridged` |
+| `Cycles.lean` | 284 | orphan `ContourCycle` API; no callers |
+| `HorizontalContribution.lean` | 131 | orphan seg5 horizontal-line; integrate or delete |
+
+### Tier 3 — Dead private declarations (~24 across ~16 files)
+
+`fdBoundary_sub_I_at_35_im_neg` (ArcFTCAtI); `NormSMulClass ℝ ℂ` × 3 instances (Boundary-Smooth); `unit_circle_re_*_eq_*` (CoreIdentityProof); `volume_ball_preimage_tendsto_zero` (Crossing); `norm_sub_pos_on_farSet` (GammaAnalysis); `pv_piecewise_*` × 3, `pv_simple_pole_*` × 2 (GRT-PrincipalValue); `laurentHigherOrderPolarAt_eventuallyEq_analytic_of_crossed` (HW33LaurentPolarPart); `two_pi_I_ne_zero_ms` (ModularSideProof); `ge_one_sub_tau_of_*`, `le_one_sub_tau_of_*` (PaperPwC1Immersion); `pvIntegral_vertical_cancel` (PVChain-Assembly); `modularFormCompOfComplex_periodic` (PVChain-Helpers); duplicate `IsScalarTower ℝ ℂ ℂ` (PVChain-ResidueSideInfra); `A_int_eq_greg_mul_deriv` (Residue-MultipointPV-DominatedConvergence); `ref_seg4_I_neg_slitPlane` (SegmentAnalysis); `limUnder_eventually_eq_const` (WindingHomotopy); `cutoff_integral_eq_ftc` (WindingWeights-Rho).
+
+### Tier 4 — Structural consolidation (defer, but track)
+
+- **Unify the two Residue libraries** (Residue.lean vs GRT/Residue.lean). HungerbuhlerWasem.lean docstring already flags this.
+- **HW33 chain consolidation** — 21 files, ~3500+ lines connected for one theorem. Target for split-file restructure once HW33 stable.
+- **ForMathlib PR pipeline** — files ready for mathlib PR: `UpperHalfPlane`, `FunctionsBoundedAtInfty`, `AtImInfty`, `SlashActions`, `TrigLemmas`, `Instances`, `CongruenceSubgrps`.
+
+### "Headline" files (NO IMPORTERS by design — KEEP)
+
+`HW33Clean.lean`, `ValenceFormulaFinal.lean`, `WindingWeightsUnconditional.lean`, `WindingWeightProofs.lean`, `HungerbuhlerWasem.lean`, the 7 PR-ready shims.
+
+---
+
+## Recommended Action Plan
+
+### Priority 1 — Quick wins (mechanical, ~2 days)
+
+1. **Delete 8 commented-out / placeholder files** (Tier 1, ~1951 lines).
+2. **Delete 4 orphan-with-content files** (Tier 2, ~1135 lines, after verifying no callers via `grep`).
+3. **Remove 24 dead private declarations** (Tier 3).
+4. **Delete `FlatnessConditions.lean`** (441 lines, byte-equal duplicate of `GeneralizedResidueTheory/Residue/Flatness.lean`).
+5. **Delete `HW33SectorEven.lean`** (558 lines, one-line-different copy of `HungerbuhlerWasem/SectorCancellation.lean`).
+6. **Tag project's `Continuous`/`Differentiable`/`MeromorphicAt` lemmas with `@[fun_prop]`** (zero-risk annotation pass).
+7. **Add `@[ext]` to bundled structures** (`PolarPartDecomposition`, `SingleCrossingData`, `AsymmetricSingleCrossingData`, `ClosedPwC1Curve`, etc.).
+8. **Add `@[simp]` to `_uncrossed` / `_empty` / `_zero_fun` lemmas** where the form is canonical.
+
+**Subtotal**: ~5000 lines removed, ~50 annotation additions, zero proof rewrites.
+
+### Priority 2 — API improvements (~1 week)
+
+9. **Delete `HW33LaurentPolarPart.lean`** (519 lines, strict subset of `LaurentExtraction.lean`).
+10. **Delete `HW33Bridge.lean`** (305 lines, duplicates 10+ theorems of `ExitTimeExcision.lean`).
+11. **Dedupe `HigherOrderCancel.lean` ↔ `HigherOrderAsymptotics.lean`** (17 verbatim theorems, ~300 lines).
+12. **Extract `Finset.consecutive_induction`** — collapses 2 >30-line proofs.
+13. **Unify the 4 `tendsto_*_const_nhds{GT,LT}` private lemmas** and the 4 `deriv_cyclicShift_*` private lemmas in `PaperPwC1ImmersionInvariance.lean`.
+14. **Make `principalPartSum_rest_analyticAt` public**, delete the 2 duplicate private copies.
+15. **Add `cpvIntegrandOn_anti`** to subsume the 5+ ad-hoc subset rewrites.
+16. **Add `SatisfiesConditionA'.mono` / `SatisfiesConditionB.mono`** in `S` — enables excision-style HW33 proofs.
+
+### Priority 3 — Generalizations (~2 weeks)
+
+17. **Generalize `Avoids` / Lipschitz / homotopy avoidance** to `[NormedAddCommGroup E] [NormedSpace ℝ E]`. Mathlib-upstreamable.
+18. **Generalize `hausdorffMeasure_two_lipschitz_image_zero`** to arbitrary `[FiniteDimensional ℝ E]`. Mathlib-upstreamable.
+19. **Replace `orthogonalProjectionComplex` / `tangentDeviation`** with mathlib's `orthogonalProjection (ℝ ∙ L)`. ~60 lines saved.
+20. **Move 7 PR-ready shims to upstream mathlib PRs** (`UpperHalfPlane`, `AtImInfty`, `SlashActions`, `FunctionsBoundedAtInfty`, `TrigLemmas`, `CongruenceSubgrps`, `Instances`).
+
+### Priority 4 — Structural refactors (~1 month)
+
+21. **Collapse `PiecewiseC1Curve`/`PiecewiseC1Immersion` onto `PiecewiseC1Path`** via `Path.extend` (~960 lines deletable; breaks 14 importers, mostly in `Residue.lean`/`ClassicalCPV.lean`).
+22. **Delete `cauchyPV`/`cauchyPVOn`/`cauchyPrincipalValue'`** (`limUnder`-defined), keep only `HasCauchyPV*` predicates.
+23. **Replace `residueSimplePole` + `HasSimplePoleAt` + `poleOrderAt`** with mathlib's `meromorphicTrailingCoeffAt` + `MeromorphicAt` + `meromorphicOrderAt`. Unlocks `@[fun_prop]` + full mathlib `MeromorphicAt` API.
+24. **Unify the two `HasSimplePoleAt` chains** (`Residue.lean` vs `GeneralizedResidueTheory/Residue.lean`). Pick one, migrate downstream.
+25. **Parametrize the `_at_i` / `_at_rho` / `_at_rho_plus_one` triples** (10 families, ~1200 lines of duplication) on `(P : EllipticPoint)`.
+26. **Parametrize the `Seg1/Seg4/ArcGeneric FTCProvider` triple** on `segIdx : Fin 5` (~2700 lines).
+27. **Long-term: route `PiecewiseContourIntegral.contourIntegral` (329 lines) onto mathlib's `curveIntegral`** when that API stabilizes.
+
+### Cumulative line-count impact
+
+| Priority | Lines deletable | Lines simplified |
+|---|---|---|
+| P1 (mechanical) | ~5000 | (annotations only) |
+| P2 (API) | ~1200 | + ~100 |
+| P3 (generalization) | ~60 | + 7 files upstreamed |
+| P4 (structural) | ~6500 | major |
+| **Total** | **~12,700** | major |
+
+---
+
+## Appendix A: Raw Outputs
+
+Persisted analysis artifacts:
+
+- **Per-file inventory**: `/tmp/overview-inventory/*.md` (~180 files, 2.7MB, 3029 declarations)
+- **Forward import graph**: `/tmp/overview-inventory/_phase2/imports.txt`
+- **Reverse import map**: `/tmp/overview-inventory/_phase2/reverse-imports.txt`
+- **Phase 3 Mathlib API audit**: `/tmp/overview-inventory/_phase3/mathlib-api-audit.md` (583 lines)
+- **Phase 4 duplication analysis**: `/tmp/overview-inventory/_phase4/duplication.md` (319 lines, 105 unify candidates)
+- **Phase 5 generalization**: `/tmp/overview-inventory/_phase5/generalization.md` (138 lines)
+- **Phase 6 API design**: `/tmp/overview-inventory/_phase6/api-design.md` (168 lines)
+- **Phase 7 junk identification**: `/tmp/overview-inventory/_phase7/junk.md` (221 lines)
+
+These are in `/tmp/` and will be wiped on reboot. Move to `docs/overview/` for persistence:
+
+```bash
+mkdir -p docs/overview
+cp -r /tmp/overview-inventory docs/overview/2026-05-13
 ```
-by_cases h1 : t <= 1  -- right vertical
-by_cases h2 : t <= 2  -- first arc half
-by_cases h3 : t <= 3  -- second arc half
-by_cases h4 : t <= 4  -- left vertical
-                       -- top horizontal
-```
-
-**Gap:** No abstract segment-builder combinator exists.
-
-**Recommendation:** Introduce a combinator that builds `PiecewiseC1Curve` from a list of
-segments, each carrying differentiability/derivative data. Prove properties by induction
-over the segment list. This is the highest-impact structural refactoring for the
-ValenceFormula component.
-
-### 4.6 Residue Definitions
-
-The project defines both `residueSimplePole f z0` (limit of `(z - z0) * f z`) and
-`residueAt f s` (via `meromorphicOrderAt`). Mathlib now has `MeromorphicAt.residue`.
-
-**Gap:** No lemma connects `residueAt` to `MeromorphicAt.residue`.
-
-**Recommendation:** Add `residueAt_eq_meromorphicAt_residue` and consider deprecating
-`residueSimplePole`.
-
-## 5. Duplication Patterns
-
-### 5.1 Edge/Arc Winding Number Proofs (High Impact)
-
-`Boundary/Winding/RightEdge.lean` (939 lines), `LeftEdge.lean` (788 lines),
-`UnitArc.lean` (559 lines), and `UnitArcHelpers.lean` (689 lines) all follow the same
-proof pattern:
-
-1. Identify the unique crossing parameter `t0` on `[0, 5]`
-2. Prove `fdBoundary_H H t0 = s` and uniqueness of crossing
-3. Compute the FTC telescope: `log(gamma(t0-delta) - s) - log(gamma(t0+delta) - s) -> L`
-4. Show the PV integral converges (from step 3 plus non-crossing bounds)
-5. Extract `generalizedWindingNumber' = PV / (-2*pi*I)`
-
-A unified `singleCrossingWindingNumber` framework parameterized by the crossing data
-could reduce this by 30-40%.
-
-### 5.2 WindingWeights at i / rho / rho+1 (High Impact)
-
-`WindingWeights/I.lean` (1,061 lines), `Rho.lean` (1,098 lines), and `RhoPlusOne.lean`
-(915 lines) share extensive structural overlap. Each file:
-
-- Computes `fdBoundary_H H t - s` for each of the 5 segments
-- Establishes `slitPlane` membership for `gamma(t) - s` away from crossing
-- Performs FTC telescoping with `Complex.log`
-- Extracts `pv_integral_at_*_tendsto` and `gWN_fdBoundary_H_at_*`
-
-The common infrastructure (`Common.lean`, 227 lines) captures shared definitions but
-not the proof pattern. Factoring out a `windingWeight_at_elliptic_point` parameterized
-by the crossing geometry would eliminate most of the repetition.
-
-### 5.3 FTC Log Telescoping (Medium Impact)
-
-The `ftc_log` pattern (applying the fundamental theorem of calculus to `Complex.log(gamma(t) - s)`)
-appears in at least 7 files with references to `ftc_log`-named lemmas in:
-- `WindingWeights/{I, Rho, RhoPlusOne}.lean`
-- `Boundary/Winding/{LeftEdge, RightEdge}.lean`
-- `Boundary/Winding/UnitArcHelpers.lean`
-- `WindingWeights/Common.lean`
-
-Each instance reproves: (a) `gamma(t) - s` lies in `slitPlane`, (b) `Complex.log` is
-differentiable there, (c) the chain rule gives the log-derivative, and (d) the integral
-telescopes to a log difference. A single lemma:
-
-```
-theorem ftc_log_on_segment {gamma : R -> C} {a b : R} {s : C}
-    (h_slit : forall t in Icc a b, gamma t - s in slitPlane)
-    (h_diff : ...) (h_deriv_cont : ...) :
-    integral t in a..b, deriv gamma t / (gamma t - s) =
-      Complex.log (gamma b - s) - Complex.log (gamma a - s)
-```
-
-could replace all of these instances.
-
-### 5.4 Five-Segment Case Analysis (Pervasive)
-
-Beyond individual proof lengths, the 5-segment structure of `fdBoundary_H` generates
-recurring case-analysis boilerplate throughout the ValenceFormula component. At least 20
-proofs perform some variant of the `by_cases` chain over segment boundaries. Each case
-typically involves: rewriting with the segment's definition (`fdBoundary_H_seg*`),
-simplifying complex arithmetic, and applying segment-specific bounds. The fix is the
-abstract segment builder described in Section 4.5.
-
-### 5.5 Instance and Attribute Boilerplate (Low Impact, Easy Fix)
-
-- `ContinuousSMul R C` instance: duplicated in 6 files (see Section 3.4)
-- `attribute [local instance] Classical.propDecidable`: appears in nearly every file
-- `open Complex MeasureTheory Set Filter Topology` / `open scoped Real Interval`: the
-  same `open` block is repeated verbatim in most files
-
-A shared prelude file (`Imports.lean`) could consolidate all three.
-
-## 6. Recommended Action Plan
-
-### Priority 1: Quick Wins (1-2 days each)
-
-**P1.1 -- Consolidate ContinuousSMul instance.**
-Create a shared file with the `NormSMulClass -> IsBoundedSMul -> ContinuousSMul` chain
-for `R` and `C`. Replace the 6 duplicated instance declarations with a single import.
-
-**P1.2 -- Audit private declarations.**
-Review the ~678 private declarations, focusing on files with highest counts
-(HomologicalCauchy: 38, SectorCurveLemma: 33, HigherOrderAssembly: 32, TextbookForm: 37).
-Promote general-purpose complex arithmetic/trig/norm lemmas to public. Zero proof risk.
-
-**P1.3 -- Clean up CurveAvoidance API.**
-Either deprecate `CurveAvoids`/`curveInfDist` in favor of direct `Metric.infDist` usage,
-or add `@[simp]` lemmas making the equivalence transparent. Naming cleanup, not a refactor.
-
-**P1.4 -- Previously identified quick wins (from prior audit).**
-- Delete `ftc_log_piece` wrapper in `ValenceFormula/WindingWeights/Common.lean`
-- Unify `H_height` and `heightCutoff` constants
-- Delete `cos/sin_two_pi_div_three'` primed copies in `RectHomotopy/HomotopyDef.lean`
-- Unify `exp_real_angle_I` and `exp_real_mul_I`
-- Make `fd_im_gt_half` public (currently private in both `OrbitSum.lean` and `TextbookForm.lean`)
-
-### Priority 2: API Improvements (1-2 weeks each)
-
-**P2.1 -- Extract ftc_log_on_segment.**
-A single lemma for FTC applied to `Complex.log (gamma(t) - s)` on a segment where
-`gamma(t) - s` stays in the slit plane. Would be used in 7+ files.
-
-**P2.2 -- Add PiecewiseC1Curve.toPath and toContinuousMap.**
-Bridge coercions to mathlib types. No existing proofs change; enables future
-interoperability.
-
-**P2.3 -- Connect residueAt to MeromorphicAt.residue.**
-A bridge lemma `residueAt_eq_meromorphicAt_residue` connecting to mathlib's evolving
-meromorphic function library.
-
-**P2.4 -- Connect generalizedWindingNumber to Complex.windingNumber.**
-For the special case of circular contours, equate the project's CPV-based winding number
-with mathlib's `circleIntegral`-based definition.
-
-### Priority 3: Structural Refactoring (1-3 months)
-
-**P3.1 -- Decompose the longest proofs.**
-Break each proof exceeding 500 lines into per-case helper lemmas. Targets in priority
-order:
-
-1. `dominated_convergence_multipoint_helper` (~1,010 lines): Extract per-point dominated
-   convergence, then combine with a summation step.
-2. `singular_annulus_bound_explicit` (~836 lines): Factor annulus geometry into separate
-   lemmas for the inner/outer/boundary regions.
-3. `fdBoundaryToPolygonHomotopy_deriv_bound` (~686 lines): One helper per segment.
-4. `fdBoundaryToPolygonHomotopy_deriv_continuousOn_pieces` (~637 lines): Same strategy.
-5. `fdBoundaryToPolygonHomotopy_not_diffAt_134` (~630 lines): One helper per corner.
-
-**P3.2 -- Unify edge/arc winding number proofs.**
-Create a `singleCrossingWindingNumber` framework taking the crossing parameter,
-uniqueness proof, and log-ratio limit as inputs. Apply it in `RightEdge.lean`,
-`LeftEdge.lean`, and `UnitArc.lean`.
-
-**P3.3 -- Unify WindingWeights/I, Rho, RhoPlusOne.**
-Factor out a `windingWeight_at_point` parameterized by the elliptic point's geometric
-properties (crossing time, segment membership, angle).
-
-**P3.4 -- Abstract fdBoundary_H segment builder.**
-A combinator that builds `PiecewiseC1Curve` from a list of segments and lifts
-per-segment properties to the full curve. This would tame the 5-way case splits
-throughout the 14-file `RectHomotopy/` subdirectory.
-
-**P3.5 -- Split the 8 GenRes files over 1,000 lines.**
-Most urgent: `HomologicalCauchy.lean` (1,710 lines) contains the Dixon proof,
-null-homologous bridge lemmas, FTC machinery, and the Cauchy integral formula --
-logically distinct components. `MultipointPV.lean` (1,653 lines) and
-`AnnulusBounds.lean` (1,724 lines) similarly contain independent proof chains.
-
-### Priority 4: Mathlib Contributions (Long-term)
-
-**P4.1 -- PiecewiseC1Curve and PiecewiseCurveAPI.**
-After adding `toPath`/`toContinuousMap` (P2.2), the core structures plus the sorted
-partition / consecutive-pairs API would fit in mathlib's
-`Analysis.Calculus.PiecewiseC1` or `Topology.ContinuousOn.Piecewise`.
-
-**P4.2 -- Generalized winding number.**
-The CPV-based winding number and angle decomposition (Proposition 2.2) are of
-independent interest. After connecting to `Complex.windingNumber` (P2.4), this could
-join mathlib's complex analysis library.
-
-**P4.3 -- Generalized residue theorem.**
-The theorems `generalizedResidueTheorem` and `generalizedResidueTheorem_simplePoles`,
-together with `ContourCycle` extensions, formalize Theorem 3.3 of Hungerbuhler-Wasem.
-After refactoring (P3.1-P3.5), the dependency chain would be clean enough for a
-mathlib PR.
-
-**P4.4 -- ContinuousSMul instance upstream.**
-If `ContinuousSMul R C` is not already derivable in mathlib from `NormedSpace`, file
-an issue or contribute the missing instance.
-
-## 7. Dependency Graph (Simplified)
-
-```
-GeneralizedResidueTheory/
-  Basic.lean  <----  PiecewiseCurveAPI.lean
-    |                CurveAvoidance.lean
-    |                ArcCalculus.lean
-    v
-  CauchyPrimitive.lean
-  PrincipalValue.lean
-  LogDerivFTC.lean
-    |
-    v
-  Residue.lean  <----  Residue/{MultipointPV, SectorCurve, MeromorphicPrincipalPart, ...}
-    |                   Residue/FlatnessTransfer/{PerTermVanishing, BoundaryVanishing, ...}
-    v
-  HomologicalCauchy.lean  (Dixon proof, null-homologous Cauchy integral)
-    |
-    v
-  WindingNumber.lean  <----  WindingNumber/Proposition2_2.lean
-  Homotopy/{ParametricDiff, Invariance, Integrality, CircleParam}
-    |
-    v
-  GeneralizedResidueTheorem.lean  (public API: Theorem 3.3)
-  Cycle.lean  (contour cycles: Z-linear combinations)
-
-ValenceFormula/
-  Definitions.lean  (elliptic points i/rho/rho+1, order of vanishing, FD)
-  ModularInvariance.lean  (T/S invariance of vanishing order)
-    |
-    v
-  Boundary/{Basic, Bounds, Smooth}  (fdBoundary_H curve construction + PiecewiseC1Immersion)
-  Boundary/Winding/{RightEdge, LeftEdge, UnitArc, UnitArcHelpers}
-    |
-    v
-  RectHomotopy/{HomotopyDef, Geometry, ..., MainTheorem}  (winding = -1 via homotopy)
-  InteriorWinding.lean
-    |
-    v
-  OnCurvePV/{Basic, EndpointCorner, Main}  (CPV existence at on-curve singularities)
-  WindingWeights/{Common, I, Rho, RhoPlusOne}  (gWN at elliptic points)
-    |
-    v
-  PVChain/{Helpers, Assembly, ArcContribution, ...}  (residue side + modular side assembly)
-  OrbitPairing.lean  (T/S orbit cancellation)
-  OrbitSum.lean
-    |
-    v
-  CoreIdentity.lean  (orbit-sum form of valence formula)
-  TextbookExistence.lean  (canonical representative finsets)
-  TextbookForm.lean  (final textbook statement with finsum)
-```
-
-### Cross-Component Dependencies
-
-The ValenceFormula imports from GeneralizedResidueTheory at 14 points:
-- **Basic.lean** -- `PiecewiseC1Curve` structure
-- **PiecewiseCurveAPI.lean**, **CurveAvoidance.lean**, **ArcCalculus.lean** -- curve utilities
-- **PrincipalValue.lean** -- CPV definitions
-- **LogDerivFTC.lean** -- FTC for log-derivative
-- **Residue.lean** -- residue definitions and classical theorem
-- **Residue/GeneralizedTheoremBase.lean** -- base theorem machinery
-- **PVInfrastructure/UniformStepBound.lean** -- step bound infrastructure
-- **OnCurvePV/Basic.lean** -- on-curve PV foundations
-- **Homotopy/{Invariance, CircleParam}** -- homotopy invariance tools
