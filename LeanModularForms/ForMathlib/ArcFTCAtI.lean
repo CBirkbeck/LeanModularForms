@@ -40,8 +40,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ## Part 1: Arc reference function -/
-
 private def arcRef_I (t : ℝ) : ℂ := exp (↑(fdArcAngle t) * I) - I
 
 private lemma fdArcAngle_contDiff : ContDiff ℝ ⊤ fdArcAngle := by
@@ -104,8 +102,6 @@ private lemma arcRef_I_neg_slitPlane_seg3 {t : ℝ} (ht2 : 2/5 < t) (ht3 : t ≤
     nlinarith [Real.pi_pos]
   linarith [Real.cos_neg_of_pi_div_two_lt_of_lt hgt hlt]
 
-/-! ## Part 2: Per-segment FTC -/
-
 private lemma integrand_form_eq (f : ℝ → ℂ) (z : ℂ) (t : ℝ) :
     (f t - z)⁻¹ * deriv f t = deriv (fun s => f s - z) t / (f t - z) := by
   rw [show (fun s => f s - z) = (fun s => f s + (-z)) from by ext; ring,
@@ -157,8 +153,6 @@ private theorem seg3_ftc_neg_I (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 
     by rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2,
       arcRef_I_eq H (by linarith) le_rfl,
       arcRef_I_eq H (by linarith) (by linarith)]⟩
-
-/-! ### Seg4: left vertical -/
 
 private def seg4Ref_I (H : ℝ) (t : ℝ) : ℂ := (-1/2 : ℂ) +
   (↑(Real.sqrt 3 / 2 - 1 + (5 * t - 3) * (H - Real.sqrt 3 / 2))) * I
@@ -235,8 +229,6 @@ private theorem seg4_ftc_neg_I (H : ℝ) :
     by rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2,
       seg4Ref_I_eq_35 H, seg4Ref_I_eq_45 H]⟩
 
-/-! ### Seg5: horizontal -/
-
 private def seg5Ref_I (H : ℝ) (t : ℝ) : ℂ := (5 * ↑t - 9/2) + (↑H - 1) * I
 
 private lemma seg5Ref_I_contDiff (H : ℝ) : ContDiff ℝ ⊤ (seg5Ref_I H) := by
@@ -299,8 +291,6 @@ private theorem seg5_ftc_full_I (H : ℝ) (hH : 1 < H) :
     (seg5Ref_I_eq_45 H)
     (seg5Ref_I_eq_1 H)
 
-/-! ## Part 3: Branch correction lemmas -/
-
 private lemma log_neg_eq_add_pi_IFM {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : z.im < 0) :
     Complex.log (-z) = Complex.log z + ↑Real.pi * I := by
   change ↑(Real.log ‖-z‖) + ↑((-z).arg) * I = ↑(Real.log ‖z‖) + ↑z.arg * I + ↑Real.pi * I
@@ -316,8 +306,6 @@ private lemma log_neg_eq_sub_pi_I {z : ℂ} (_hz_ne : z ≠ 0) (hz_im : 0 < z.im
   rw [Complex.arg_neg_eq_arg_sub_pi_of_im_pos hz_im]
   push_cast
   ring
-
-/-! ## Part 4: Branch point imaginary parts -/
 
 private lemma fdBoundary_sub_I_at_45_im_pos (H : ℝ) (hH : 1 < H) :
     0 < (fdBoundaryFun H (4/5) - I).im := by
@@ -345,8 +333,6 @@ private lemma fdBoundary_sub_I_at_2p_im_neg (H : ℝ) {δ : ℝ} (hδ : 0 < δ) 
     Real.sin_lt_sin_of_lt_of_le_pi_div_two (by linarith) le_rfl h2
   rw [Real.sin_pi_div_two] at h3
   linarith [h1]
-
-/-! ## Part 5: Full FTC telescope -/
 
 /-- Branch correction: the integral over `[2/5+delta, 4/5]` equals
 `log(f(4/5)-I) - log(f(2/5+delta)-I) - 2*pi*I` after resolving the two log-of-neg
@@ -385,11 +371,8 @@ theorem fdBoundary_ftc_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ}
         (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t) =
     Complex.log (fdBoundaryFun H (2/5 - δ) - I) -
     Complex.log (fdBoundaryFun H (2/5 + δ) - I) - 2 * ↑Real.pi * I := by
-  have h_form : ∀ t, (fdBoundaryFun H t - I)⁻¹ * deriv (fdBoundaryFun H) t =
-      deriv (fun s => fdBoundaryFun H s - I) t / (fdBoundaryFun H t - I) :=
-    integrand_form_eq (fdBoundaryFun H) I
-  simp_rw [h_form]
-  have p1 := seg1_ftc_I H (by norm_num) (le_refl (1/5 : ℝ))
+  simp_rw [integrand_form_eq (fdBoundaryFun H) I]
+  have p1 := seg1_ftc_I H (by norm_num) le_rfl
   have p2 := seg2_ftc_I H hδ hδ'
   have p3 := seg3_ftc_neg_I H hδ hδ'
   have p4 := seg4_ftc_neg_I H
@@ -412,8 +395,6 @@ theorem fdBoundary_ftc_telescope_I (H : ℝ) (hH : 1 < H) {δ : ℝ}
   rw [hleft, hright, fdBoundaryFun_closed H]
   ring
 
-/-! ## Part 6: E function and limit -/
-
 private def E_atI (H : ℝ) (ε : ℝ) : ℂ :=
   Complex.log (fdBoundaryFun H (2/5 - arcsinDelta ε) - I) -
   Complex.log (fdBoundaryFun H (2/5 + arcsinDelta ε) - I) - 2 * ↑Real.pi * I
@@ -434,22 +415,15 @@ private lemma arcsinDelta_tendsto_nhdsWithin :
 private theorem E_atI_tendsto (H : ℝ) :
     Tendsto (E_atI H) (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) := by
   unfold E_atI
-  have hcore := fdBoundaryFun_log_diff_core_tendsto H
-  have h1 : Tendsto (fun ε =>
-      Complex.log (fdBoundaryFun H (2/5 - arcsinDelta ε) - I) -
-      Complex.log (fdBoundaryFun H (2/5 + arcsinDelta ε) - I))
-      (𝓝[>] 0) (𝓝 (↑Real.pi * I)) :=
-    hcore.comp arcsinDelta_tendsto_nhdsWithin
   have h2 : Tendsto (fun ε =>
       Complex.log (fdBoundaryFun H (2/5 - arcsinDelta ε) - I) -
       Complex.log (fdBoundaryFun H (2/5 + arcsinDelta ε) - I) -
       2 * ↑Real.pi * I)
       (𝓝[>] 0) (𝓝 (↑Real.pi * I - 2 * ↑Real.pi * I)) :=
-    h1.sub tendsto_const_nhds
+    ((fdBoundaryFun_log_diff_core_tendsto H).comp arcsinDelta_tendsto_nhdsWithin).sub
+      tendsto_const_nhds
   convert h2 using 2
   ring_nf
-
-/-! ## Part 7: Assembly -/
 
 /-- The complete `ArcFTCHyp` at `i` for the FD boundary. -/
 def arcFTCHyp_atI {H : ℝ} (hH : 1 < H) {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
@@ -461,8 +435,8 @@ def arcFTCHyp_atI {H : ℝ} (hH : 1 < H) {γ : PiecewiseC1Path (fdStart H) (fdSt
     have hε_lt : ε < 1/3 := lt_of_lt_of_le hεt (min_le_left _ _)
     have hδ := arcsinDelta_pos hε
     have hδ' := arcsinDelta_lt_one_fifth hε hε_lt
-    rw [transfer_integral I (by linarith) (le_refl 0) (by linarith) hγ,
-      transfer_integral I (by linarith) (by linarith) (le_refl 1) hγ]
+    rw [transfer_integral I (by linarith) le_rfl (by linarith) hγ,
+      transfer_integral I (by linarith) (by linarith) le_rfl hγ]
     exact fdBoundary_ftc_telescope_I H hH hδ hδ'
   hint_left := by
     intro ε hε hεt
