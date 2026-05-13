@@ -502,6 +502,30 @@ private lemma slash_sigma_p_diamond_inv_cusp_eq
   rw [← diamondOpCusp_mul, mul_inv_cancel, diamondOpCusp_one]
   rfl
 
+/-- **σ_p⁻¹ kills the diamond at the slash level**: for a cusp form `f`,
+slashing `⟨u⟩f` by `mapGL σ_p⁻¹` recovers `f`. Inverse companion to
+`slash_sigma_p_diamond_inv_cusp_eq`.
+
+  ⇑(⟨u⟩f) ∣[k] mapGL σ_p⁻¹ = ⇑f
+
+Chain: from `⇑f ∣ σ_p = ⇑(⟨u⟩f)` (`coe_diamondOp_cusp_eq_slash_sigma_p`),
+slash both sides by σ_p⁻¹ and use slash composition / one. -/
+private lemma slash_sigma_p_inv_diamond_cusp_eq
+    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) :
+        UpperHalfPlane → ℂ) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN)⁻¹ : GL (Fin 2) ℝ) = ⇑f := by
+  -- Rewrite ⇑(⟨u⟩f) as ⇑f ∣ σ_p via the forward σ_p slash-diamond identity.
+  rw [coe_diamondOp_cusp_eq_slash_sigma_p p hp hpN f]
+  -- Goal: ⇑f ∣ mapGL σ_p ∣ mapGL σ_p⁻¹ = ⇑f
+  rw [show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN)⁻¹ : GL (Fin 2) ℝ) =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN))⁻¹ from by rw [map_inv]]
+  rw [← SlashAction.slash_mul, mul_inv_cancel, SlashAction.slash_one]
+
 /-- The Γ₁(N) representative γ₁⁻¹ for the triple product identity. Constructed
 using Bezout coefficients `gcdA·p + gcdB·N = 1`, this is the matrix
 `[[p·gcdA, gcdB], [-N, 1]] ∈ SL(2,ℤ)` with determinant `p·gcdA - gcdB·(-N) =
