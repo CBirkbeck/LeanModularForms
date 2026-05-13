@@ -66,6 +66,114 @@ POST-1, reverse support decomposition, and the full Atkin–Lehner involution
 remain as project goals (not just architectural cleanup), but are off the
 SMO critical path.
 
+## Reviewer feedback integrated 2026-05-11 (T205-d follow-up)
+
+A second-round expert review (`.mathlib-quality/expert-review/2026-05-11-T205d/`)
+focused entirely on T205-d. Verified findings and refinements:
+
+1. **Pointwise identity ALREADY uses adjugate.** The existing
+   `peterssonInner_slash_adjoint` (line 779) and `peterssonInner_slash_adjoint_coset`
+   (line 3730) are both stated with `peterssonAdj α` (the adjugate α* = det(α) α⁻¹),
+   not α⁻¹. The reviewer's "scalar misalignment" diagnosis applied to the brief's
+   wording, not to the code itself. **Current scaffold is in the recommended form.**
+
+2. **Step 2 must stay determinant/character-free.** State T205-d-API-2 as
+   `petN(Σ_r f|r, g) = petN(f, Σ_{r*} g|r*)` over reps of Γ\ΓαΓ vs Γ\Γα*Γ.
+   Determinant and character factors enter ONLY at Step 3 specialisation.
+
+3. **Layers 5–8 of the old 8-layer chain are formally superseded.** Keep only:
+   triple-product identity (Layer 2), σ_p/diamond-coset permutation (Layer 3),
+   reusable FD/iUnion lemmas. Decommission M_∞ stockpile, iUnion bookkeeping,
+   branch closure.
+
+4. **Step 3 (specialisation to diag(1,p)) is NOT mechanical.** diag(p,1) is
+   NOT the same Γ₁(N)-double coset as diag(1,p). Central scalar matrices
+   act by λ^{k-2}, not trivially. Must use σ_p Q-permutation + triple-product
+   identity + diamond unitarity ⟨p⟩* = ⟨p⟩⁻¹.
+
+5. **Alternative routes ruled out.** Atkin–Lehner–Li orthogonality circular
+   w.r.t. T205-d; U_p decomposition is a bad-prime tool, not a good-prime
+   substitute. Direct adjugate/Petersson correspondence is the cleanest path.
+
+6. **Index of `Gamma_p_α` verified correct.** Defined as `conjGL Γ₁(N) α ⊓ Γ₁(N)`
+   — symmetric intersection. For α = diag(1,p), p ∤ N, [Γ₁(N) : Γ_p(α)] = p+1
+   (Shimura Prop 3.32), matching the full T_p correspondence. Reviewer's
+   "Risk 3" (index p vs p+1) confirmed non-issue.
+
+7. **Revised scale estimate.** With adjugate form + reuse of existing
+   `peterssonInner_slash_adjoint`: 150–300 LOC for the new pointwise/aggregate
+   algebra, plus a few hundred more for the specialisation. Lower than the
+   500–1000 LOC originally budgeted.
+
+8. **New sub-tickets added below**: T205-d-API-2-INT (integrated domain-level
+   adjoint, mostly an API wrapper around existing theorem) and
+   T205-d-API-2-DC (the double-coset assembly — the real content).
+
+## T205-d restructuring landed 2026-05-11 (beastmode)
+
+Concentrated the entire T205-d analytic residual into a single clean named
+theorem. After tracing the 14-layer scaffold:
+
+- The OLD sorry was at `petN_heckeT_p_adjoint_standard_form` (line ~17454)
+  embedded inside a per-q decomposition + iUnion-form + σ_p reindex chain.
+- The NEW sorry is at `petN_heckeT_p_symmetric_form` (line ~17422) which
+  states the **DS 5.5.3 symmetric form** directly:
+  `petN(T_p f, g) = petN(⟨p⟩ f, T_p g)`.
+
+The bypass goes via `petN_heckeT_p_adjoint_standard_form_from_petN_symmetric_form`
+(line ~13508), which proves the unsymmetric DS standard form from the
+symmetric form via existing `petN_heckeT_p_adjoint_standard_form_via_sum_chain`
++ `h_LHS_dist_eq_RHS_absorbed_from_petN_symmetric_form` machinery.
+
+**Sorry count: unchanged (1).** But the conceptual location is now clean
+and the closure path is explicit. Build clean (3092 jobs).
+
+## T205-d-SYMM closure chain — restructured per expert review 2026-05-11
+
+**Status update 2026-05-11**: Second expert review (frontier LLM, DS conventions)
+ruled all prior closure paths inadequate as primitive worker targets. The
+correct chain is:
+
+1. **T205-d-ADJ-WRAPPER** — light wrapper around existing
+   `peterssonInner_slash_adjoint` for a single Hecke representative β
+   (Step 1, 30–100 LOC).
+2. **T205-d-ADJ-CORR** — finite-correspondence aggregation theorem
+   `petN_doubleCoset_adjoint_adjugate` for Γ₁(N), α = diag(1,p)
+   (Step 2, 150–300 LOC — this is the real analytic content).
+3. **T205-d-DIAMOND-SPEC** — T_p-specific identification of the
+   adjugate-side aggregate with `⟨u⟩⁻¹ T_p`, where the σ_p / diamond
+   bookkeeping lives (Step 3, 150–250 LOC).
+4. **T205-d-UNSYMM** — DS 5.5.3 unsymmetric form
+   `petN(T_p f, g) = petN(f, ⟨u⟩⁻¹ T_p g)`, derived from ADJ-CORR +
+   DIAMOND-SPEC (Step 4a, 30–50 LOC).
+5. **T205-d-SYMM** — DS 5.5.3 symmetric form
+   `petN(T_p f, g) = petN(⟨u⟩ f, T_p g)`, derived from UNSYMM + diamond
+   unitarity (Step 4b, 30–50 LOC).
+
+**Total: 350–650 LOC.** Acceptance for next worker pass: a compiling
+ADJ-CORR theorem for Γ₁(N), α = diag(1,p), or one exact missing
+FD/integrability/transversal lemma blocking that theorem.
+
+**Superseded routes** (do NOT pursue):
+- `T205-d-API-2-DC-IUNION-M/T/CLOSE` — bundled the analytic correspondence
+  step with the σ_p Q-permutation; ADJ-CORR/DIAMOND-SPEC separation is
+  cleaner.
+- **T205-d-SYMM-DIRECT** — direct monolithic σ_p reindex on the unfolded
+  sums is the wrong primitive target.
+- Path B (Atkin–Lehner–Li orthogonality) — uses the same analytic adjoint
+  infrastructure; not a shortcut.
+- Path C (U_p decomposition) — bad-prime theory, does not prove good-prime
+  T_p adjoint.
+
+**Critical warning** (from reviewer): the naive map `β_b ↦ β_b'` on
+displayed upper-triangular left representatives **does not work**.
+Adjugates of a left transversal collapse as left cosets (e.g.
+`β_b* = shift(-b) · diag(p,1)` are all in the same left coset). The
+bijection lives on transposed correspondence data / right-left quotient
+data, not on the displayed reps. The ADJ-CORR ticket parameterises on
+both `R` (left transversal for Γ \ ΓαΓ) and `Rstar` (transposed
+correspondence data for Γ \ Γα*Γ) precisely to dodge this trap.
+
 **Blocked** (documented with diagnostic):
 - POST-1 (general-χ ring hom) — Quot.out structural issue
 - POST-2 (heckeT_p_all_comm_distinct refactor) — gated on POST-1
@@ -513,8 +621,238 @@ per-tile bijection plan is decommissioned; pursue the two-step API below
   proves too expensive.
 - **Estimated**: 100-200 LOC.
 
-### [T205-d-API-2] `petN_doubleCoset_adjoint` (NEW)
+### [T205-d-API-2-INT] domain-level adjugate slash adjoint (API wrapper)
+- **Status**: ✅ effectively DONE (existing `peterssonInner_slash_adjoint`)
+- **File**: GL2/AdjointTheory.lean (line 779)
+- **Statement** (already proved):
+  ```lean
+  theorem peterssonInner_slash_adjoint
+      (D : Set ℍ) (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
+      (f g : ℍ → ℂ) :
+      peterssonInner k D (f ∣[k] α) g =
+        peterssonInner k (α • D) f (g ∣[k] peterssonAdj α)
+  ```
+- **Note**: This is the integrated form of the reviewer's "pointwise adjugate
+  identity → integral over D" Step 2 input. **Already in adjugate form.** No
+  new work needed; T205-d-API-2-DC consumes this directly.
+- **Reviewer guidance** (2026-05-11-T205d): "If an existing
+  `peterssonInner_slash_adjoint` theorem already states this with α*, use it
+  instead of reproving the pointwise calculation."
+
+### [T205-d-API-2-DC-IUNION-M] M_∞-branch iUnion σ_p Q-permutation residual (sub-ticket)
+- **Parent**: T205-d-API-2-DC
+- **Status**: SUPERSEDED 2026-05-11 by T205-d-ADJ-CORR / T205-d-DIAMOND-SPEC
+  split. The σ_p Q-permutation step has been pulled out of the analytic
+  correspondence-adjoint theorem (it now lives in T205-d-DIAMOND-SPEC) per
+  the second expert review.
+
+### [T205-d-API-2-DC-IUNION-T] T_p_upper(b)-branch iUnion σ_p Q-permutation residual (sub-ticket)
+- **Parent**: T205-d-API-2-DC
+- **Status**: SUPERSEDED 2026-05-11 by T205-d-ADJ-CORR / T205-d-DIAMOND-SPEC
+  split (same reason as IUNION-M).
+
+### [T205-d-API-2-DC-CLOSE] Close T205-d via via_iUnion_residuals consumer (sub-ticket)
+- **Parent**: T205-d-API-2-DC
+- **Status**: SUPERSEDED 2026-05-11 by T205-d-UNSYMM / T205-d-SYMM closure
+  chain (after ADJ-CORR + DIAMOND-SPEC). The via_iUnion_residuals consumer
+  bundled too much; the new chain separates analytic correspondence,
+  T_p-specific diamond identification, and final symmetric-form closure.
+
+### [T205-d-ADJ-WRAPPER] Hecke-rep wrapper around integrated slash adjoint
+- **Status**: DONE 2026-05-11 (beastmode session, ~1 cycle)
+- **Result**:
+  - `peterssonInner_slash_adjoint_for_heckeRep` at
+    `LeanModularForms/HeckeRIngs/GL2/AdjointTheory.lean` line ~844 (between
+    `peterssonInner_slash_adjoint` and `peterssonInner_mapGL_smul_eq_of_slash_invariant`).
+    Axioms `[propext, Classical.choice, Quot.sound]`. Full build clean (3550 jobs).
+  - `peterssonInner_slash_adjoint_for_heckeRep_per_q` (companion lemma,
+    line ~866) — per-`q`-coset form consumable directly by T205-d-ADJ-CORR.
+    Combines `peterssonInner_smul_set_eq_slash` (SL-domain swap) with the
+    base ADJ-WRAPPER. Axioms `[propext, Classical.choice, Quot.sound]`.
+- **(was Step 1 of T205-d-SYMM chain, 2026-05-11)**
+- **File**: GL2/AdjointTheory.lean (near existing `peterssonInner_slash_adjoint`)
+- **Depends on**: `peterssonInner_slash_adjoint` (✅ existing, integrated DS Prop 5.5.2(b))
+- **Parallel**: ⚠️ serialize with T205-d-* family (same file)
+- **Statement** (illustrative):
+  ```lean
+  theorem peterssonInner_slash_adjoint_for_heckeRep
+      (β : GL (Fin 2) ℝ) (hβ : ... β is a Hecke representative for diag(1,p) at Γ₁(N) ...)
+      (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+      (hf : Integrable ... ) (hg : Integrable ... ) :
+      ∫ z in FΓ, petersson k (f ∣[k] β) g z ∂μ
+        =
+      ∫ z in β • FΓ, petersson k f (g ∣[k] peterssonAdj β) z ∂μ
+  ```
+- **Proof sketch**: light wrapper / specialisation of existing
+  `peterssonInner_slash_adjoint` to the Hecke-representative setting.
+  Supply only the required integrability hypotheses and the FD form.
+  **DO NOT re-prove the pointwise kernel.**
+- **Reviewer guidance** (2026-05-11): "If `peterssonInner_slash_adjoint`
+  already gives this, the ticket should only produce the
+  specialization/wrapper and the required integrability hypotheses."
+- **Estimated**: 30–100 LOC.
+
+### [T205-d-ADJ-CORR] Finite-correspondence aggregation: adjugate double-coset adjoint
+- **Status**: in_progress (Step 2 of T205-d-SYMM chain, 2026-05-11) — **the real work**
+- **Progress 2026-05-11/12** (beastmode session — sorry-free additions):
+  1. `peterssonInner_LHS_distributed_summand_to_tile_form` (line ~880):
+     per-(`β`, `q`) ADJ-WRAPPER consumer rewriting a single summand of
+     `petN_T_p_heckeT_p_LHS_sum_distributed` into tile-translated form.
+  2. `petN_heckeT_p_LHS_as_tile_aggregate` (line ~12421): full LHS expansion
+     of `petN(T_p f, g)` as a sum over `(q, β)` of `β`-translated tile
+     integrals over `fd`, with `peterssonAdj β` on the g-slot.
+  3. `petN_heckeT_p_LHS_as_tile_aggregate_g_slot_simplified` (line ~12469):
+     applies per-β g-slot identifications. T_p_upper(b) branches now have
+     b-INDEPENDENT integrand `petersson k ⇑f (⇑g ∣[k] glMap T_p_lower)`;
+     M_∞ branch has integrand `petersson k ⇑f ((⇑g ∣ glMap T_p_upper(0)) ∣
+     mapGL ℝ σ_p⁻¹)` (via direct `peterssonAdj_glMap_M_infty_eq`).
+  - All axioms `[propext, Classical.choice, Quot.sound]`. Build clean (3550 jobs).
+- **Convergence with existing chain**: the existing chain already builds up
+  to `petN_heckeT_p_eq_per_alpha_HeckeFD_form` (line ~6664) via a parallel
+  route through `slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0` (triple
+  product). Both routes reach a per-α aggregate form — mine via direct
+  `peterssonAdj_M_infty_eq`, existing via T_p_lower triple product. The
+  M_∞-branch g-slot differs (`(g∣T_p_upper(0))∣σ_p⁻¹` vs `g∣T_p_lower`).
+- **Remaining work for ADJ-CORR**: aggregate the family of β-translated tiles
+  via FD-transport (T205-d-API-1) to identify the result as petN of a
+  g-side aggregate. The reviewer's "transposed correspondence data" lives
+  here — the σ_p Q-permutation absorption + Γ_p(α) FD union → Γ₁(N)-FD
+  multiplicity argument. Existing infrastructure
+  (`peterssonInner_iUnion_finite_aedisjoint`, `Gamma_p_α_fundDomain_PSL` FD
+  theorem) provides the analytic substrate.
+- **File**: GL2/AdjointTheory.lean (new section, replaces old T205-d-API-2-DC content)
+- **Depends on**: T205-d-API-1 (✅ FD-transport), T205-d-ADJ-WRAPPER
+- **Parallel**: ⚠️ serialize with T205-d-* family (same file)
+- **Statement** (illustrative — specialise to Γ₁(N), α = diag(1,p); generalise later only if cheap):
+  ```lean
+  theorem petN_doubleCoset_adjoint_adjugate
+      (Γ := Gamma1 N) (α := diag(1, p))
+      (R : Finset (GL (Fin 2) ℝ))
+      (hR : R is a left-transversal for Γ \ ΓαΓ)
+      (Rstar : Finset (GL (Fin 2) ℝ))
+      (hRstar : Rstar is transposed-correspondence data for Γ \ Γα*Γ)
+      (f g : CuspForm Γ k) :
+      petN (∑ β ∈ R, f ∣[k] β) g
+        =
+      petN f (∑ β' ∈ Rstar, g ∣[k] β')
+  ```
+- **Proof sketch**:
+  1. Expand the LHS via `peterssonInner_slash_adjoint_for_heckeRep` per β.
+  2. Sum the tile-shifted integrals over β; apply T205-d-API-1 (FD transport)
+     so the family `{β • FΓ}_β` tiles a Γ-FD covered by Rstar.
+  3. Identify the aggregated g-slot sum as `∑_{β' ∈ Rstar} g ∣[k] β'` via
+     the transposed correspondence data.
+- **CRITICAL** (per reviewer 2026-05-11):
+  - `Rstar` is **transposed correspondence data**, NOT the naive image
+    of `R` under adjugation. At level 1 already, `β_b* = shift(-b)·diag(p,1)`
+    are all in the same left coset, so a literal `β_b ↦ β_b'` left-rep
+    map cannot exist. The aggregation lives on right-left quotient data.
+  - Phrase `Rstar` parametrically — let the worker prove the right
+    transversal version first if needed, then convert.
+- **Acceptance**: theorem above for Γ = Γ₁(N), α = diag(1,p) suffices.
+  Do NOT block on general α ∈ Δ₀(N).
+- **Risks** (per reviewer):
+  - Underestimating the AE-disjointness / integrability discharge of the
+    finite tile family. Separate these into wrappers around T205-d-API-1
+    rather than fold into this proof.
+- **Estimated**: 150–300 LOC.
+
+### [T205-d-DIAMOND-SPEC] T_p-specific identification: adjugate aggregate ↔ ⟨u⟩⁻¹ T_p
+- **Status**: open (Step 3 of T205-d-SYMM chain, 2026-05-11)
+- **File**: GL2/AdjointTheory.lean
+- **Depends on**: T205-d-ADJ-CORR, existing diamond/T_p infrastructure
+  (`heckeT_p_comm_diamondOp`, `slash_diamond_inv_M_infty_eq_T_p_lower_epsilon`,
+  `slash_M_infty_eq_diamond_slash_T_p_lower_factor`, Gamma1QuotEquivOfGamma0, ...)
+- **Parallel**: ⚠️ serialize with T205-d-* family (same file)
+- **Statement** (illustrative):
+  ```lean
+  theorem heckeT_p_adjugate_correspondence_eq_diamond_inv_T_p :
+      (∑ β' ∈ Rstar, g ∣[k] β')
+        =
+      (diamondOp u⁻¹ (heckeT_p p g))   -- or equivalent T_p∘⟨u⟩⁻¹ form
+  ```
+  where `u = p ∈ (ℤ/N)^×` and `Rstar` is the transposed correspondence
+  data of T205-d-ADJ-CORR specialised to α = diag(1,p).
+- **Proof sketch** (per reviewer 2026-05-11):
+  - Identify the adjugate double coset Γαdiag*Γ with the original
+    T_p-double-coset after the `⟨u⟩⁻¹` correction.
+  - This is **where σ_p, the Γ₀/Γ₁ quotient action, and the triple-product
+    identities belong** — they should NOT be mixed into ADJ-CORR.
+  - Organise at the level of **double-coset / transversal equality**, not as a
+    naive map `b ↦ b'` on displayed upper-triangular left reps.
+  - If an explicit map is unavoidable: **first prove a right-transversal
+    version, then convert to the existing left-transversal Hecke operator.**
+- **Warning** (from reviewer): the example
+  ```
+  β_b* = (diag(p, -b; 0, 1)) = T^(-b) · diag(p, 0; 0, 1)
+  ```
+  showing adjugates collapse as left cosets is a sign that **the indexing
+  object is wrong** if the proof tries to map displayed left reps directly.
+- **Estimated**: 150–250 LOC.
+
+### [T205-d-UNSYMM] DS 5.5.3 unsymmetric form (Step 4a)
+- **Status**: open (Step 4a of T205-d-SYMM chain, 2026-05-11)
+- **File**: GL2/AdjointTheory.lean (near `petN_heckeT_p_symmetric_form`)
+- **Depends on**: T205-d-ADJ-CORR, T205-d-DIAMOND-SPEC, T205-d-ADJ-WRAPPER
+- **Parallel**: ⚠️ serialize with T205-d-* family (same file)
+- **Statement**:
+  ```lean
+  theorem petN_heckeT_p_adjoint_standard_form
+      (p : ℕ) [Fact p.Prime] (hpN : ¬ p ∣ N)
+      (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+      petN (heckeT_p p f) g = petN f ((diamondOp u⁻¹) (heckeT_p p g))
+  ```
+  (or the equivalent canonical orientation depending on project's diamond
+  convention; reviewer notes both are equivalent modulo
+  `heckeT_p_comm_diamondOp`).
+- **Proof sketch**: chain T205-d-ADJ-CORR (specialised to α = diag(1,p))
+  with T205-d-DIAMOND-SPEC, then unfold T_p as `∑_β slash β` on both sides.
+- **Note**: this is the **non-circular target**. Going via this route
+  rather than directly through `petN_heckeT_p_symmetric_form` ensures
+  the unsymmetric/canonical form is independently established before the
+  symmetric form is derived from it.
+- **Estimated**: 30–50 LOC (light closure once ADJ-CORR + DIAMOND-SPEC land).
+
+### [T205-d-API-2-DC] double-coset assembly into adjugate correspondence (NEW)
 - **Status**: open
+- **File**: GL2/AdjointTheory.lean (new section)
+- **Depends on**: T205-d-API-1 (✅ done), T205-d-API-2-INT (✅ existing)
+- **Parallel**: ⚠️ serialize with T205-d, T207 (same file)
+- **Statement**:
+  ```lean
+  /-- Adjugate Hecke-correspondence adjoint at Γ₁(N), determinant/character-free. -/
+  theorem petN_doubleCoset_adjoint_adjugate
+      (α : GL (Fin 2) ℚ) (hα : α ∈ Δ₀ N)
+      (R : Finset (GL (Fin 2) ℝ))     -- reps for Γ₁(N) \ Γ₁(N) α Γ₁(N), size p+1
+      (Rstar : Finset (GL (Fin 2) ℝ)) -- reps for Γ₁(N) \ Γ₁(N) α* Γ₁(N)
+      (hR : IsDoubleCosetRepFamily ((Gamma1 N).map (mapGL ℝ)) (mapGL ℝ α) R)
+      (hRstar : IsAdjugateRepFamily ((Gamma1 N).map (mapGL ℝ)) (mapGL ℝ α) R Rstar)
+      (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+      petN (∑ r ∈ R, slash k r f) g =
+        petN f (∑ rstar ∈ Rstar, slash k rstar g)
+  ```
+- **Proof sketch**:
+  1. Expand petN as Σ_q ∫_{fd} (·)|_k q⁻¹ ⋅ (·)|_k q⁻¹ dμ.
+  2. For each q-coset and each r ∈ R, apply `peterssonInner_slash_adjoint_coset`
+     (T205-a, ✅ done) to transfer the adjoint into the g-slot, giving an integral
+     over r • q⁻¹ • fd with g-slot = g ∣[k] peterssonAdj r.
+  3. Reindex r over the double-coset transversal, then apply T205-d-API-1
+     (FD-transport, ✅ done) to identify ⋃_r r • fd with a Γ_p(α)-FD.
+  4. Use the Γ₁(N)/Γ_p(α) coset transversal of size p+1 to reorganise the
+     g-slot sum as Σ_{r* ∈ R*} g|_k r*.
+- **DEFENSIVE NOTES** (per Risks of expert review):
+  - **NO determinant/character factor** at this layer.
+  - Use only the existing `peterssonInner_slash_adjoint` and
+    `peterssonInner_slash_adjoint_coset` for the per-tile transfer.
+  - Keep narrow: Γ₁(N), α ∈ Δ₀(N). Do NOT generalise to arbitrary
+    congruence subgroups or arbitrary α ∈ commensurator.
+- **Estimated**: 150–250 LOC.
+- **Reviewer guidance** (2026-05-11-T205d): "Consume finite-index FD transport;
+  domain-level slash adjoint; finite-sum linearity; integrability preservation
+  for cusp forms under slash by Hecke representatives."
+
+### [T205-d-API-2] `petN_doubleCoset_adjoint` (NEW)
+- **Status**: open — split into T205-d-API-2-INT (✅) and T205-d-API-2-DC (open)
 - **File**: GL2/AdjointTheory.lean (new section, replaces current T205 scaffold)
 - **Depends on**: T205-d-API-1, `peterssonInner_slash_adjoint` (DS Prop 5.5.2(a), ✅ done)
 - **Parallel**: ⚠️ serialize with T205-d (same file)
@@ -548,11 +886,81 @@ per-tile bijection plan is decommissioned; pursue the two-step API below
     not Γ itself. The FD is for K (the intersection), not for Γ.
 - **Estimated**: 200-300 LOC.
 
-### [T205-d] `petN_heckeT_p_diamond_shift_core` (REFOCUSED 2026-05-11)
-- **Status**: open — refocused as a one-step specialization of T205-d-API-2
+### [T205-d-SYMM] DS 5.5.3 symmetric form closure (Step 4b)
+- **Status**: open (Step 4b of T205-d-SYMM chain, 2026-05-11) — sole remaining
+  sorry on SMO critical path at `petN_heckeT_p_symmetric_form` (AdjointTheory.lean
+  ~line 17422).
+- **Progress 2026-05-13 (matrix-content layer beastmode session)** — 22 concrete
+  sorry-free additions building the σ_p Q-permutation matrix layer:
+  1. `adjointGamma0Rep_mul_sigma_p_mem_Gamma1` — γ₀ · σ_p ∈ Γ₁(N) (concrete proof)
+  2. `gamma1_of_gamma0_sigma_p` — named Γ₁(N) element γ_1 := γ₀ · σ_p
+  3. `gamma1_of_gamma0_sigma_p_coe` — SL coe definitional unwrap
+  4. `sigma_p_inv_eq_gamma1_inv_mul_gamma0` — σ_p⁻¹ = γ_1⁻¹ · γ₀ (SL identity)
+  5. `adjointGamma0Rep_mul_M_infty_eq_gamma1_mul_T_p_lower` — γ₀ · M_∞ = γ_1 · T_p_lower (ℚ)
+  6. `glMap_M_infty_eq_mapGL_sigma_p_mul_glMap_T_p_lower` — ℝ-lift of M_∞ = σ_p · T_p_lower
+  7. `mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul` — set-level Q-perm
+  8. `mapGL_sigma_p_inv_smul_M_infty_smul_set_eq_T_p_lower_smul` — inverse set-level
+  9. `M_infty_iUnion_eq_mapGL_sigma_p_smul_T_p_lower_iUnion` — iUnion Q-perm
+  10. `T_p_lower_iUnion_eq_mapGL_sigma_p_inv_smul_M_infty_iUnion` — inverse iUnion
+  11. `peterssonInner_M_infty_iUnion_eq_sigma_p_slash` — pet-level Q-perm
+  12. `peterssonInner_T_p_lower_iUnion_eq_sigma_p_inv_slash` — inverse pet-level
+  13. `coe_diamondOp_cusp_eq_slash_sigma_p` — σ_p slash-as-diamond
+  14. `coe_diamondOp_inv_cusp_eq_slash_adjointGamma0Rep` — γ₀ forward slash-diamond
+  15. `slash_sigma_p_diamond_inv_cusp_eq` — `(⟨u⁻¹⟩f) ∣ σ_p = f`
+  16. `slash_sigma_p_inv_diamond_cusp_eq` — `(⟨u⟩f) ∣ σ_p⁻¹ = f`
+  17. `peterssonInner_LHS_M_infty_residual_after_sigma_p` — LHS chain
+  18. `peterssonInner_RHS_M_infty_residual_after_sigma_p` — RHS chain
+  19. `peterssonAdj_glMap_M_infty_eq_via_gamma1` — γ_1-form M_∞ adjoint
+  20. `TileFormIntegralResidual_M_infty_sigma_p_reduced` — **named target** for
+      the genuine remaining analytic content (the σ_p-pushed M_∞ residual on
+      the T_p_lower-iUnion tile)
+  21. `TileFormIntegralResidual_M_infty_of_sigma_p_reduced` — discharger from
+      the named target
+  22. `SigmaQPermResidual_M_infty_of_sigma_p_reduced` — **end-to-end chain**
+      from the σ_p-reduced residual + AE-disjoint hypotheses to the sum-level
+      `SigmaQPermResidual_M_infty` (the M_∞-branch sorry target)
+  - Build clean: 3550 jobs (full project).
+  - Discharges the σ_p Q-permutation infrastructure for the M_∞ branch.
+    Remaining work: ADJ-CORR-level analytic content of
+    `TileFormIntegralResidual_M_infty_sigma_p_reduced` (150-300 LOC per
+    reviewer estimate).
+- **File**: GL2/AdjointTheory.lean (at the named theorem)
+- **Depends on**: T205-d-UNSYMM, diamond unitarity (T100a ✅), `heckeT_p_comm_diamondOp` (✅)
+- **Parallel**: ⚠️ serialize with T205-d-* family (same file)
+- **Statement** (current Lean signature):
+  ```lean
+  theorem petN_heckeT_p_symmetric_form
+      (p : ℕ) [hp : Fact p.Prime] (hpN : ¬ p ∣ N)
+      (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+      petN (heckeT_p_cusp k p hp hpN f) g =
+        petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
+          (heckeT_p_cusp k p hp hpN g)
+  ```
+- **Proof sketch** (per reviewer 2026-05-11):
+  - Take the unsymmetric form
+    `petN(T_p f, g) = petN(f, ⟨u⟩⁻¹ T_p g)` (from T205-d-UNSYMM).
+  - Apply diamond unitarity `petN(⟨u⟩f, h) = petN(f, ⟨u⟩⁻¹ h)` (with h = T_p g):
+    `petN(f, ⟨u⟩⁻¹ T_p g) = petN(⟨u⟩f, T_p g)`.
+  - Combine.
+- **Note**: ALL existing closure-path code from the previous restructuring
+  (the `_from_petN_symmetric_form` consumers in AdjointTheory.lean ~lines
+  13508+ etc.) remains valid — this ticket plugs the bottom of the chain.
+- **Estimated**: 30–50 LOC.
+- **Reviewer guidance**: "Since the current code already has the reverse
+  implication, this should be a short closure once the adjugate
+  correspondence theorem lands."
+
+### [T205-d] `petN_heckeT_p_diamond_shift_core` (REFOCUSED 2026-05-11, REFINED 2026-05-11-T205d)
+- **Status**: open
 - **File**: GL2/AdjointTheory.lean (the sorry currently near line 1586)
-- **Depends on**: T205-d-API-2
+- **Depends on**: T205-d-API-2-DC
 - **Parallel**: ⚠️ serialize with T207, T208 (same file)
+- **REVIEWER CORRECTION 2026-05-11-T205d**: Specialisation is NOT mechanical.
+  Three non-trivial bookkeeping facts:
+  1. diag(p,1) is NOT the same Γ₁(N)-double coset as diag(1,p).
+  2. Central scalar matrices act by λ^{k-2}, not trivially (slash convention).
+  3. Must use σ_p ∈ (ℤ/N)× Q-permutation + diamond unitarity ⟨p⟩* = ⟨p⟩⁻¹
+     to identify the adjugate-side correspondence with the target.
 - **Statement** (unchanged):
   ```lean
   petN (heckeT_p_cusp k p hp hpN f) g =
