@@ -35,8 +35,7 @@ noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
-/-! ### fdBox properties -/
-
+/-- The box `fdBox M` is open as an intersection of open half-planes. -/
 lemma fdBox_isOpen (M : ℝ) : IsOpen (fdBox M) := by
   refine IsOpen.inter ?_ (IsOpen.inter ?_ (IsOpen.inter ?_ ?_))
   · exact isOpen_lt continuous_const Complex.continuous_re
@@ -68,6 +67,7 @@ private lemma strict_convex_comb_ub {a b x y U : ℝ} (ha : 0 ≤ a) (hb : 0 ≤
     have : a * U + b * U = U := by rw [← add_mul, hab, one_mul]
     linarith
 
+/-- The box `fdBox M` is convex. -/
 lemma fdBox_convex (M : ℝ) : Convex ℝ (fdBox M) := by
   intro x hx y hy a b ha hb hab
   simp only [fdBox, Set.mem_setOf_eq] at hx hy ⊢
@@ -81,22 +81,22 @@ lemma fdBox_convex (M : ℝ) : Convex ℝ (fdBox M) := by
 private lemma fdBox_im_pos' {M : ℝ} {z : ℂ} (hz : z ∈ fdBox M) : 0 < z.im := by
   linarith [hz.2.2.1]
 
-/-! ### allZerosInFdBox -/
-
+/-- The finite set of zeros of `f` lying in `fdBox M`. -/
 noncomputable def allZerosInFdBox {M : ℝ} (hM : (1:ℝ)/2 < M) : Finset ℂ :=
   (modularForm_finitely_many_zeros_in_fdBox f hf hM).toFinset
 
+/-- Membership in `allZerosInFdBox` unfolds to membership in `fdBox M` together with the
+zero condition. -/
 lemma mem_allZerosInFdBox_iff {M : ℝ} (hM : (1:ℝ)/2 < M) {z : ℂ} :
     z ∈ allZerosInFdBox f hf hM ↔ z ∈ fdBox M ∧ modularFormCompOfComplex f z = 0 := by
   simp only [allZerosInFdBox, Set.Finite.mem_toFinset, Set.mem_sep_iff]
-
-/-! ### HasSimplePoleAt for logDeriv at zeros -/
 
 private lemma analyticAt_modform (z : ℂ) (hz : 0 < z.im) :
     AnalyticAt ℂ (modularFormCompOfComplex f) z :=
   (UpperHalfPlane.mdifferentiable_iff.mp f.holo').analyticAt
     (UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hz)
 
+/-- `logDeriv f` is analytic at any point of the upper half-plane where `f` does not vanish. -/
 lemma analyticAt_logDeriv_off_zeros' (z : ℂ) (hz : 0 < z.im)
     (hfz : modularFormCompOfComplex f z ≠ 0) :
     AnalyticAt ℂ (logDeriv (modularFormCompOfComplex f)) z :=
@@ -168,13 +168,11 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
     have h_logDeriv_pow :
         logDeriv (fun w => (w - (s : ℂ)) ^ n) z = ↑↑n / (z - (s : ℂ)) := by
       have hzs : z - (s : ℂ) ≠ 0 := sub_ne_zero.mpr hz_ne_s
-      have hn' : 0 < n := by exact_mod_cast hn_pos
       have h_hd : HasDerivAt (fun w => (w - (s : ℂ)) ^ n) (↑n * (z - (s : ℂ)) ^ (n - 1)) z := by
         convert ((hasDerivAt_id z).sub (hasDerivAt_const z (s : ℂ))).pow n using 1
         simp only [Pi.sub_apply, id_eq, sub_zero, mul_one]
-      rw [logDeriv_apply, h_hd.deriv]
-      rw [div_eq_div_iff (pow_ne_zero _ hzs) hzs]
-      rw [mul_assoc, ← pow_succ, show n - 1 + 1 = n from by omega]
+      rw [logDeriv_apply, h_hd.deriv, div_eq_div_iff (pow_ne_zero _ hzs) hzs,
+        mul_assoc, ← pow_succ, show n - 1 + 1 = n from by omega]
     calc logDeriv (modularFormCompOfComplex f) z
         = logDeriv (fun w => (w - (s : ℂ)) ^ n * g w) z := by
           unfold logDeriv
@@ -224,10 +222,6 @@ lemma hasSimplePoleAt_logDeriv_at_point (z : ℂ) (hz_im : 0 < z.im) :
     exact hz
   · exact hasSimplePoleAt_logDeriv_at_nonzero f z hz_im hz
 
-/-! ### ContinuousAt of the regular part (for hf_ext) -/
-
-/-! ### orderOfVanishingAt' = analyticOrderNatAt -/
-
 include hf in
 private lemma orderOfVanishingAt'_eq_analyticOrderNatAt (s : ℍ) (_hs : f s = 0) :
     orderOfVanishingAt' (⇑f) s = (analyticOrderNatAt (modularFormCompOfComplex f) (s : ℂ) : ℤ) := by
@@ -246,8 +240,6 @@ private lemma orderOfVanishingAt'_eq_analyticOrderNatAt (s : ℍ) (_hs : f s = 0
   | coe n =>
     simp only [analyticOrderNatAt, h, ENat.toNat_coe]
     norm_cast
-
-/-! ### residueSimplePole lemmas -/
 
 include hf in
 /-- At a zero `s` of `f`, `residueSimplePole(logDeriv f, s) = orderOfVanishingAt'(f, s)`. -/
@@ -274,14 +266,13 @@ lemma residueSimplePole_logDeriv_eq_zero_at_nonzero (z : ℂ) (hz_im : 0 < z.im)
     residueSimplePole (logDeriv (modularFormCompOfComplex f)) z = 0 := by
   have h_prod : Tendsto (fun w => (w - z) * logDeriv (modularFormCompOfComplex f) w)
       (𝓝[≠] z) (𝓝 (0 * logDeriv (modularFormCompOfComplex f) z)) := by
-    refine Tendsto.mul ?_ (((analyticAt_logDeriv_off_zeros' f z hz_im hz_nz).continuousAt).tendsto.mono_left nhdsWithin_le_nhds)
+    refine Tendsto.mul ?_ ((analyticAt_logDeriv_off_zeros' f z hz_im hz_nz).continuousAt.tendsto.mono_left
+      nhdsWithin_le_nhds)
     rw [show (0 : ℂ) = z - z from (sub_self z).symm]
     exact (continuous_id.sub continuous_const).continuousAt.tendsto.mono_left
       nhdsWithin_le_nhds
   rw [zero_mul] at h_prod
   exact h_prod.limUnder_eq
-
-/-! ### fdBoundary_H ∈ fdBox -/
 
 omit f hf in
 /-- For `H ≥ 1` and `M > H`, `fdBoundary_H H t ∈ fdBox M` for `t ∈ [0, 5]`. -/
@@ -301,9 +292,9 @@ lemma fdBoundary_H_mem_fdBox' {H M : ℝ} (hH : 1 ≤ H) (hM : H < M)
     exact lt_of_lt_of_le h_half_lt_sqrt3 (fdBoundary_H_im_ge_sqrt3_div_2 H hH_sqrt3 t ht)
   · exact lt_of_le_of_lt (fdBoundary_H_im_le_H hH t ht) hM
 
-/-! ### Discrete set separation -/
-
 omit f hf in
+/-- A finite set of complex numbers is discrete: each point has a positive distance to every
+other point. -/
 lemma finset_discrete (S0 : Finset ℂ) :
     ∀ s ∈ (↑S0 : Set ℂ), ∃ ε > 0, ∀ s' ∈ (↑S0 : Set ℂ), s' ≠ s → ε ≤ ‖s' - s‖ := by
   intro s hs
@@ -320,8 +311,6 @@ lemma finset_discrete (S0 : Finset ℂ) :
     · intro s' hs' hne
       exact Finset.min'_le _ _
         (Finset.mem_image.mpr ⟨s', Finset.mem_erase.mpr ⟨hne, Finset.mem_coe.mp hs'⟩, rfl⟩)
-
-/-! ### CPV existence at off-curve singular points -/
 
 omit f hf in
 /-- CPV of `c/(z - s)` exists when the curve avoids `s` (limit is just the regular integral). -/
@@ -364,16 +353,6 @@ lemma cpvExists_scale (γ : ℝ → ℂ) (a b : ℝ) (s c : ℂ)
   erw [h_eq]
   exact hL.const_mul c
 
-/-! ### logDeriv_patched — patched logDeriv for ContinuousAt at zeros
-
-At zeros of `f`, Lean's `div_zero` convention makes `logDeriv f(z) = 0/0 = 0`,
-but the limit from the punctured neighborhood is `g(z) ≠ 0`. This breaks the
-`ContinuousAt` hypothesis of `generalizedResidueTheorem'`.
-
-The fix: define `logDerivPatched F S0` which equals `F` away from `S0` and
-equals the regular part `g(z)` at each `z ∈ S0` (from the `HasSimplePoleAt`
-decomposition). This makes the ContinuousAt hypothesis hold. -/
-
 omit f hf in
 private lemma residueSimplePole_congr_local (F G : ℂ → ℂ) (z₀ : ℂ)
     (h : F =ᶠ[𝓝[≠] z₀] G) : residueSimplePole F z₀ = residueSimplePole G z₀ := by
@@ -381,6 +360,15 @@ private lemma residueSimplePole_congr_local (F G : ℂ → ℂ) (z₀ : ℂ)
   exact congrArg lim (Filter.map_congr (h.mono fun z hz => congr_arg _ hz))
 
 omit f hf in
+/-- Patched `logDeriv` for `ContinuousAt` at zeros.
+
+At zeros of `f`, Lean's `div_zero` convention makes `logDeriv f(z) = 0/0 = 0`,
+but the limit from the punctured neighborhood is `g(z) ≠ 0`. This breaks the
+`ContinuousAt` hypothesis of `generalizedResidueTheorem'`.
+
+The fix: define `logDerivPatched F S0` which equals `F` away from `S0` and
+equals the regular part `g(z)` at each `z ∈ S0` (from the `HasSimplePoleAt`
+decomposition). This makes the `ContinuousAt` hypothesis hold. -/
 noncomputable def logDerivPatched (F : ℂ → ℂ) (S0 : Finset ℂ)
     (hsp : ∀ s ∈ S0, HasSimplePoleAt F s) : ℂ → ℂ := fun z =>
   if h : z ∈ S0 then
@@ -388,6 +376,7 @@ noncomputable def logDerivPatched (F : ℂ → ℂ) (S0 : Finset ℂ)
   else F z
 
 omit f hf in
+/-- Off the patching set `S0`, `logDerivPatched F S0 = F`. -/
 lemma logDerivPatched_eq_raw_off (F : ℂ → ℂ) (S0 : Finset ℂ)
     (hsp : ∀ s ∈ S0, HasSimplePoleAt F s) {z : ℂ} (hz : z ∉ S0) :
     logDerivPatched F S0 hsp z = F z :=
@@ -405,6 +394,7 @@ private lemma logDerivPatched_eventuallyEq_raw_punctured (F : ℂ → ℂ) (S0 :
   exact dif_neg (fun habs => hz (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hzne, habs⟩)))
 
 omit f hf in
+/-- The patched logDeriv still has a simple pole at every point of `S0`. -/
 lemma hasSimplePoleAt_logDerivPatched (F : ℂ → ℂ) (S0 : Finset ℂ)
     (hsp : ∀ s ∈ S0, HasSimplePoleAt F s) (s : ℂ) (hs : s ∈ S0) :
     HasSimplePoleAt (logDerivPatched F S0 hsp) s := by
@@ -416,6 +406,7 @@ lemma hasSimplePoleAt_logDerivPatched (F : ℂ → ℂ) (S0 : Finset ℂ)
     exact h2⟩
 
 omit f hf in
+/-- The residue of the patched logDeriv matches the residue of `F` itself. -/
 lemma residue_logDerivPatched_eq_raw (F : ℂ → ℂ) (S0 : Finset ℂ)
     (hsp : ∀ s ∈ S0, HasSimplePoleAt F s) (s : ℂ) (hs : s ∈ S0) :
     residueSimplePole (logDerivPatched F S0 hsp) s = residueSimplePole F s :=
@@ -427,8 +418,8 @@ lemma logDerivPatched_hf_ext (F : ℂ → ℂ) (S0 : Finset ℂ) (hsp : ∀ s �
     ∀ s ∈ S0, ContinuousAt (fun z => logDerivPatched F S0 hsp z -
         residueSimplePole (logDerivPatched F S0 hsp) s / (z - s)) s := by
   intro s hs
-  set c := (hsp s hs).choose with hc_def
-  set g := (hsp s hs).choose_spec.choose with hg_def
+  set c := (hsp s hs).choose
+  set g := (hsp s hs).choose_spec.choose
   have hg_an : AnalyticAt ℂ g s := (hsp s hs).choose_spec.choose_spec.1
   have hF_eq : ∀ᶠ z in 𝓝[≠] s, F z = c / (z - s) + g z := (hsp s hs).choose_spec.choose_spec.2
   have h_res : residueSimplePole (logDerivPatched F S0 hsp) s = c := by
@@ -451,11 +442,9 @@ lemma logDerivPatched_hf_ext (F : ℂ → ℂ) (S0 : Finset ℂ) (hsp : ∀ s �
   · have hz_not_S0 : z ∉ S0 :=
       fun habs =>
         hz_compl (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨hzs, habs⟩))
-    rw [logDerivPatched_eq_raw_off F S0 hsp hz_not_S0]
-    rw [show F z = c / (z - s) + g z from hz_F hzs]
+    rw [logDerivPatched_eq_raw_off F S0 hsp hz_not_S0,
+      show F z = c / (z - s) + g z from hz_F hzs]
     ring
-
-/-! ### Norm bounds for fdBoundary_H -/
 
 omit f hf in
 /-- On the arc segments (1 < t ≤ 3), `fdBoundary_H H = fdBoundary`. -/
@@ -653,13 +642,8 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
     off_curve_of_not_in_fd_H hH z₀ hz₀_not_fd
   have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
     nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
-  have h_classical := generalizedWindingNumber_eq_classical_away
-    (fdBoundary_HCurve H) z₀ (by
-      intro t ht
-      exact h_off t ht)
-  rw [show (fdBoundary_HCurve H).toFun = fdBoundary_H H from rfl,
-      show (fdBoundary_HCurve H).a = (0:ℝ) from rfl,
-      show (fdBoundary_HCurve H).b = (5:ℝ) from rfl] at h_classical
+  have h_classical := generalizedWindingNumber_eq_classical_away (fdBoundary_HCurve H) z₀ h_off
+  simp only [fdBoundary_HCurve] at h_classical
   rw [h_classical]
   suffices h_int : ∫ t in (0:ℝ)..5, (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t = 0 by
     erw [h_int]
