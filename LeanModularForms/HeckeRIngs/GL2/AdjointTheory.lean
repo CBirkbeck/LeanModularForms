@@ -6713,6 +6713,55 @@ private theorem T_p_lower_mul_M_infty_smul_set_eq_M_infty_Gamma1_factor_smul
   smul_set_eq_of_smul_eq
     (T_p_lower_mul_M_infty_smul_eq_M_infty_Gamma1_factor_smul (N := N) p hp hpN) S
 
+/-- **T205-d-SYMM SL(2,ℤ) tile family**: the (p+1) SL(2,ℤ) elements
+that index the per-tile decomposition of `T_p_lower • Hecke_FD`. -/
+private noncomputable def T_p_lower_tile_family
+    (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
+    Option (Fin p) → SL(2, ℤ)
+  | none => M_infty_Gamma1_factor N p hpN 0
+  | some b => shiftSL_loc (b.val : ℤ)
+
+/-- **T205-d-SYMM Hecke representative family** as a function. -/
+private noncomputable def Hecke_rep_family
+    (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    Option (Fin p) → GL (Fin 2) ℝ
+  | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
+  | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM Hecke FD tile decomposition under T_p_lower**:
+`T_p_lower • (⋃_X α_X • S) = ⋃_X (mapGL τ_X) • S` where each τ_X is the
+corresponding SL(2,ℤ) element (`shiftSL_loc(b)` for the upper branches,
+`M_infty_Gamma1_factor` for the M_∞ branch).
+
+This is the geometric heart of the per-tile σ_p Q-permutation: the Hecke
+FD shifted by T_p_lower decomposes as a union of (p+1) SL(2,ℤ)-tiles. -/
+private theorem T_p_lower_smul_Hecke_FD_eq_iUnion_tile
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (S : Set ℍ) :
+    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+      (⋃ i : Option (Fin p), Hecke_rep_family N p hp hpN i • S) =
+    ⋃ i : Option (Fin p),
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S := by
+  rw [Set.smul_set_iUnion]
+  refine Set.iUnion_congr fun i => ?_
+  match i with
+  | none =>
+    show (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+      ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) • S) =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (M_infty_Gamma1_factor N p hpN 0) : GL (Fin 2) ℝ) • S
+    rw [← mul_smul]
+    exact T_p_lower_mul_M_infty_smul_set_eq_M_infty_Gamma1_factor_smul
+      (N := N) p hp hpN S
+  | some b =>
+    show (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+      ((glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ) • S) =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (shiftSL_loc (b.val : ℤ)) : GL (Fin 2) ℝ) • S
+    rw [← mul_smul]
+    exact T_p_lower_mul_T_p_upper_smul_set_eq_shift_smul p hp b.val S
+
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
