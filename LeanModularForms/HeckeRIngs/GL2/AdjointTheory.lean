@@ -469,6 +469,39 @@ private lemma coe_diamondOp_cusp_eq_slash_sigma_p
     (Gamma0MapUnits_sigma_p_specific N p hp hpN)]
   rfl
 
+/-- **σ_p kills the inverse-diamond at the slash level**: for a cusp form
+`f`, slashing the inverse-diamond `⟨u⁻¹⟩f` by `mapGL σ_p` recovers `f`.
+
+  ⇑(⟨u⁻¹⟩f) ∣[k] mapGL σ_p = ⇑f
+
+Chain: `coe_diamondOp_cusp_eq_slash_sigma_p` (applied to `⟨u⁻¹⟩f`) gives
+`⇑(⟨u⁻¹⟩f) ∣ σ_p = ⇑(⟨u⟩(⟨u⁻¹⟩f))`; then `diamondOpCusp_mul` collapses
+the composition to `⟨u · u⁻¹⟩ = ⟨1⟩`, and `diamondOpCusp_one` yields `f`.
+
+**Direct consumer**: this is the slot-1 simplification needed after
+applying `peterssonInner_M_infty_iUnion_eq_sigma_p_slash` to the LHS of
+`TileFormIntegralResidual_M_infty` — the σ_p-slashed `⟨u⁻¹⟩f` reduces
+to plain `f`. -/
+private lemma slash_sigma_p_diamond_inv_cusp_eq
+    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) :
+        UpperHalfPlane → ℂ) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) = ⇑f := by
+  -- Apply σ_p slash-diamond identity to `⟨u⁻¹⟩f`:
+  -- ⇑(⟨u⁻¹⟩f) ∣ σ_p = ⇑(⟨u⟩(⟨u⁻¹⟩f))
+  rw [← coe_diamondOp_cusp_eq_slash_sigma_p p hp hpN
+    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)]
+  -- Collapse `⟨u⟩(⟨u⁻¹⟩f) = f` via diamondOpCusp_mul + inv_mul_cancel + one.
+  show ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) = ⇑f
+  show (((diamondOpCusp k (ZMod.unitOfCoprime p hpN)).comp
+      (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹) f) :
+        UpperHalfPlane → ℂ) = ⇑f
+  rw [← diamondOpCusp_mul, mul_inv_cancel, diamondOpCusp_one]
+  rfl
+
 /-- The Γ₁(N) representative γ₁⁻¹ for the triple product identity. Constructed
 using Bezout coefficients `gcdA·p + gcdB·N = 1`, this is the matrix
 `[[p·gcdA, gcdB], [-N, 1]] ∈ SL(2,ℤ)` with determinant `p·gcdA - gcdB·(-N) =
