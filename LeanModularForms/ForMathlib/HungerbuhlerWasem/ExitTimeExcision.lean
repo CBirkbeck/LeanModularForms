@@ -317,8 +317,8 @@ theorem shape_right_eventually
       LeanModularForms.firstExitTimeRight γ t₀ δPlus s ε ≤ 1 ∧
       ∀ t ∈ Ioo (LeanModularForms.firstExitTimeRight γ t₀ δPlus s ε) (1 : ℝ),
         ε < ‖γ t - s‖ := by
-  have h := h_avoid_pos.trans_le (h_avoid (t₀ + δPlus) ⟨le_rfl, by linarith⟩)
-  filter_upwards [Ioo_mem_nhdsGT (lt_min h h_avoid_pos)] with ε hε
+  filter_upwards [Ioo_mem_nhdsGT (lt_min (h_avoid_pos.trans_le
+    (h_avoid (t₀ + δPlus) ⟨le_rfl, by linarith⟩)) h_avoid_pos)] with ε hε
   obtain ⟨h1, h2⟩ := lt_min_iff.mp hε.2
   exact shape_right_of_strictMonoOn h_t₀_plus_le hδPlus hγ_cont
     hγ_mono h_avoid h2 h1.le
@@ -337,8 +337,8 @@ theorem shape_left_eventually
       0 ≤ LeanModularForms.firstExitTimeLeft γ t₀ δMinus s ε ∧
       ∀ t ∈ Ioo (0 : ℝ) (LeanModularForms.firstExitTimeLeft γ t₀ δMinus s ε),
         ε < ‖γ t - s‖ := by
-  have h := h_avoid_pos.trans_le (h_avoid (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)
-  filter_upwards [Ioo_mem_nhdsGT (lt_min h h_avoid_pos)] with ε hε
+  filter_upwards [Ioo_mem_nhdsGT (lt_min (h_avoid_pos.trans_le
+    (h_avoid (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)) h_avoid_pos)] with ε hε
   obtain ⟨h1, h2⟩ := lt_min_iff.mp hε.2
   exact shape_left_of_strictAntiOn h_t₀_minus_pos hδMinus hγ_cont
     hγ_anti h_avoid h2 h1.le
