@@ -39,8 +39,8 @@ private theorem homotopy_uniform_avoidance
     ⟨H (a, 0), (a, 0), ⟨left_mem_Icc.mpr hab.le, left_mem_Icc.mpr zero_le_one⟩, rfl⟩
   have hz_notin : z₀ ∉ H '' (Icc a b ×ˢ Icc (0:ℝ) 1) :=
     fun ⟨⟨t, s⟩, ⟨ht, hs⟩, heq⟩ => hH_avoid t ht s hs heq
-  have hδ := (hcompact.isClosed.notMem_iff_infDist_pos hnonempty).mp hz_notin
-  refine ⟨_, hδ, fun t ht s hs => ?_⟩
+  refine ⟨_, (hcompact.isClosed.notMem_iff_infDist_pos hnonempty).mp hz_notin,
+    fun t ht s hs => ?_⟩
   have hmem : H (t, s) ∈ H '' (Icc a b ×ˢ Icc (0:ℝ) 1) := ⟨(t, s), ⟨ht, hs⟩, rfl⟩
   calc Metric.infDist z₀ _ ≤ dist z₀ (H (t, s)) := Metric.infDist_le_dist_of_mem hmem
     _ = ‖H (t, s) - z₀‖ := by rw [Complex.dist_eq, norm_sub_rev]
@@ -242,9 +242,7 @@ private theorem continuous_integer_valued_constant
             push_cast
             ring
           rw [Complex.dist_eq, hcast, Complex.norm_intCast, ← Int.cast_abs] at h1
-          have h2 : |m - n| < 1 := by exact_mod_cast h1
-          have h3 : m - n = 0 := Int.abs_lt_one_iff.mp h2
-          exact_mod_cast sub_eq_zero.mp h3
+          exact_mod_cast sub_eq_zero.mp (Int.abs_lt_one_iff.mp (by exact_mod_cast h1))
       rw [heq]
       exact hf_cont.restrict.isOpen_preimage _ Metric.isOpen_ball
     · convert isOpen_empty
@@ -473,9 +471,9 @@ theorem generalizedWindingNumber_eq_classical_away
   have h_cutoff_trivial : ∀ᶠ ε in 𝓝[>] (0:ℝ),
       ∀ t ∈ Icc γ.a γ.b, ε < ‖γ.toFun t - z₀‖ := by
     filter_upwards [Ioo_mem_nhdsGT hδ] with ε hε t ht
-    have hmem : γ.toFun t ∈ γ.toFun '' Icc γ.a γ.b := mem_image_of_mem γ.toFun ht
     calc ε < Metric.infDist z₀ (γ.toFun '' Icc γ.a γ.b) := (mem_Ioo.mp hε).2
-      _ ≤ dist z₀ (γ.toFun t) := Metric.infDist_le_dist_of_mem hmem
+      _ ≤ dist z₀ (γ.toFun t) :=
+            Metric.infDist_le_dist_of_mem (mem_image_of_mem γ.toFun ht)
       _ = ‖γ.toFun t - z₀‖ := by rw [Complex.dist_eq, norm_sub_rev]
   congr 1
   apply limUnder_eventually_eq_const
