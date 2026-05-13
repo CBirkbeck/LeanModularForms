@@ -6569,6 +6569,81 @@ private lemma UpperHalfPlane_smul_eq_of_matrix_smul_eq
   rw [h_num, h_den, mul_div_mul_left _ _ hc_ne_zero]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM upper-tile Möbius equivalence**: `T_p_lower · T_p_upper(b)`
+acts on `ℍ` the same as `shiftSL_loc(b) ∈ SL(2,ℤ)`.
+
+Composes `UpperHalfPlane_smul_eq_of_matrix_smul_eq` with the matrix identity
+`(T_p_lower · T_p_upper(b)).val = p • shiftSL_loc(b).val` (entry-wise: both
+sides equal `!![p, pb; 0, p]`). -/
+private theorem T_p_lower_mul_T_p_upper_smul_eq_shift_smul
+    (p : ℕ) (hp : 0 < p) (b : ℕ) (τ : ℍ) :
+    ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) *
+      (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ)) • τ =
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+      (shiftSL_loc (b : ℤ)) : GL (Fin 2) ℝ) • τ := by
+  have hp_real : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp
+  have h_det_pos_LHS : 0 <
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) *
+        (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ)).det.val := by
+    show 0 < (((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) *
+      (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : GL (Fin 2) ℝ) :
+      Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show (((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) *
+        (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) : Matrix _ _ ℝ) *
+        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix _ _ ℝ) from rfl,
+      Matrix.det_mul]
+    have h_T_p_lower : ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ).det = (p : ℝ) := by
+      rw [show ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) :
+          Matrix (Fin 2) (Fin 2) ℝ) =
+          ((T_p_lower p hp : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+      rw [show (((T_p_lower p hp : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+          (algebraMap ℚ ℝ) (((T_p_lower p hp : GL (Fin 2) ℚ).val).det) from
+            (RingHom.map_det _ _).symm]
+      rw [show ((T_p_lower p hp : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+        simp [T_p_lower, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+          Matrix.det_fin_two, Matrix.of_apply]]
+      show (algebraMap ℚ ℝ) ((p : ℚ)) = _
+      rfl
+    have h_T_p_upper : ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
+        Matrix (Fin 2) (Fin 2) ℝ).det = (p : ℝ) := by
+      rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
+          Matrix (Fin 2) (Fin 2) ℝ) =
+          ((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
+      rw [show (((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
+          (algebraMap ℚ ℝ) (((T_p_upper p hp b : GL (Fin 2) ℚ).val).det) from
+            (RingHom.map_det _ _).symm]
+      rw [show ((T_p_upper p hp b : GL (Fin 2) ℚ).val).det = (p : ℚ) from by
+        simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
+          Matrix.det_fin_two, Matrix.of_apply]]
+      show (algebraMap ℚ ℝ) ((p : ℚ)) = _
+      rfl
+    rw [h_T_p_lower, h_T_p_upper]
+    positivity
+  have h_det_pos_RHS : 0 <
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b : ℤ)) :
+        GL (Fin 2) ℝ).det.val := by
+    show 0 < (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b : ℤ)) :
+        GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det
+    rw [show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b : ℤ)) :
+        GL (Fin 2) ℝ).val = ((Int.castRingHom ℝ).mapMatrix
+        (shiftSL_loc (b : ℤ)).val) from by rw [mapGL_coe_matrix]; rfl]
+    rw [← RingHom.map_det, (shiftSL_loc (b : ℤ)).property]
+    norm_num
+  refine UpperHalfPlane_smul_eq_of_matrix_smul_eq _ _ h_det_pos_LHS h_det_pos_RHS
+    (p : ℝ) (by exact_mod_cast hp.ne') ?_ τ
+  -- Matrix entry equality: (T_p_lower · T_p_upper(b)).val = p • shiftSL_loc(b).val
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [glMap, T_p_lower, T_p_upper, mapGL_coe_matrix, shiftSL_loc,
+      Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.GeneralLinearGroup.map,
+      Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Units.val_mul,
+      algebraMap_int_eq, Matrix.smul_apply] <;>
+    ring
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
