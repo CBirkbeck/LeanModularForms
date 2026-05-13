@@ -6932,6 +6932,36 @@ private lemma mapGL_sigma_p_inv_smul_M_infty_smul_set_eq_T_p_lower_smul
   rw [← mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul (N := N) p hp hpN S,
     smul_smul, smul_smul, ← map_mul, inv_mul_cancel, map_one, one_mul]
 
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **iUnion-level σ_p Q-permutation**: `M_∞ • F_{Γ_1(N)} = mapGL σ_p •
+(T_p_lower • F_{Γ_1(N)})`, where the Γ_1(N)-FD is realized as
+`⋃_q q.out⁻¹ • fd` over `q : SL(2, ℤ) ⧸ Gamma1 N`.
+
+Concretely, the iUnion-tile `⋃_q M_∞ • (q.out⁻¹ • fd)` (the M_∞-side
+tile family) equals σ_p applied to the iUnion-tile `⋃_q T_p_lower •
+(q.out⁻¹ • fd)` (the T_p_lower-side tile family).
+
+**Direct consumer**: this is the iUnion-level σ_p Q-permutation that
+reduces the TileFormIntegralResidual_M_infty residual to one over the
+T_p_lower-side iUnion tile, prior to the diamond identification step. -/
+private theorem M_infty_iUnion_eq_mapGL_sigma_p_smul_T_p_lower_iUnion
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
+        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set ℍ))) =
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) •
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) := by
+  rw [Set.smul_set_iUnion]
+  refine Set.iUnion_congr fun q => ?_
+  rw [mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul (N := N) p hp hpN]
+
 /-- **T205-d-SYMM SL(2,ℤ) tile family**: the (p+1) SL(2,ℤ) elements
 that index the per-tile decomposition of `T_p_lower • Hecke_FD`. -/
 private noncomputable def T_p_lower_tile_family
