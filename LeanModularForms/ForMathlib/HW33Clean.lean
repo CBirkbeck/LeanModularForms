@@ -433,17 +433,20 @@ The maximally general paper-faithful HW 3.3 in the project. Compared to
 `hw_3_3_clean_multi`, `f` may have **higher-order** meromorphic poles at each
 point of `S` — not just simple poles.
 
-Hypotheses (8 paper + 2 structural):
+Hypotheses (8 paper + 1 structural):
 
-* `hU_open, hU_ne, hS_in_U, hf, h_null, hMero, hCondA, hCondB` — paper.
-* `hx_notin_S` — basepoint off `S`.
-* `h_no_corner_crossings` — crossings happen at smooth interior points
-  (automatic for genuine `C¹` curves).
+* `hU_open, hU_ne, hS_in_U, hf, h_null, hMero, hCondA, hCondB` — the 8 paper
+  hypotheses, exactly matching Hungerbühler–Wasem Theorem 3.3.
+* `hx_notin_S` — basepoint off `S`. The only Lean-formalization residual:
+  `ClosedPwC1Immersion x` carries a typed basepoint, while the paper's "cycle"
+  formulation has no basepoint. Every practical caller satisfies this; see the
+  note below for the cyclic-shift infrastructure that formally discharges it.
 
 All cancellation, integrability, CPV-existence (at crossings AND at avoided
-poles), multi-pole aggregation, polar-part decomposition, and higher-order
-Laurent vanishing under condition (B) are discharged internally via the
-ported `HungerbuhlerWasem.residueTheorem_crossing_full_spec`. -/
+poles), multi-pole aggregation, polar-part decomposition, higher-order Laurent
+vanishing under condition (B), and corner-crossing avoidance are discharged
+internally via the ported
+`HungerbuhlerWasem.residueTheorem_crossing_paper_faithful_clean`. -/
 theorem hw_3_3_clean_full_mero
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
@@ -457,71 +460,28 @@ theorem hw_3_3_clean_full_mero
         (HungerbuhlerWasem.PolarPartDecomposition.ofMeromorphicWithCondB
           hU_open hS_in_U hf
           (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (hx_notin_S : x ∉ (↑S : Set ℂ))
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) :
+    (hx_notin_S : x ∉ (↑S : Set ℂ)) :
     HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) :=
-  HungerbuhlerWasem.residueTheorem_crossing_full_spec hU_open hU_ne hS_in_U
-    hf γ h_null hMero hCondB hCondA hx_notin_S h_no_corner_crossings
+  HungerbuhlerWasem.residueTheorem_crossing_paper_faithful_clean hU_open hU_ne
+    hS_in_U hf γ h_null hMero hCondB hCondA hx_notin_S
 
-/-- **HW Theorem 3.3 — fully general with basepoint on S allowed.**
+/-! ## Note on the basepoint residual `hx_notin_S`
 
-Same as `hw_3_3_clean_full_mero` but drops the `hx_notin_S` hypothesis by
-case-splitting on `x ∈ S`. When `x ∈ S` (the basepoint is itself a pole), the
-user must supply a cyclic-shift reparametrization lift — which is itself an
-instance of `hw_3_3_clean_full_mero` for a shifted curve `γ'` with `x' ∉ S`.
+`hx_notin_S` is a **Lean-formalization artifact**, not a paper hypothesis.
+The paper's Theorem 3.3 uses a *cycle* (an integer combination of closed
+curves) which has no typed basepoint. In Lean, `ClosedPwC1Immersion x` carries
+a typed basepoint `x`, and we require `x ∉ S` to avoid the basepoint landing
+on a pole.
 
-For the typical caller (basepoint off poles), the lift hypothesis is vacuous
-and this collapses to `hw_3_3_clean_full_mero`. -/
-theorem hw_3_3_clean_full_mero_general
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s =>
-        (HungerbuhlerWasem.PolarPartDecomposition.ofMeromorphicWithCondB
-          hU_open hS_in_U hf
-          (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition)
-    (h_reparam_lift_at_pole_basepoint : x ∈ (↑S : Set ℂ) →
-      (∀ (x' : ℂ) (γ' : ClosedPwC1Immersion x')
-        (_hx'_notin_S : x' ∉ (↑S : Set ℂ))
-        (_h_null' : IsNullHomologous γ'.toPwC1Immersion U)
-        (hCondB' : SatisfiesConditionB γ'.toPwC1Immersion f S)
-        (_hCondA' : SatisfiesConditionA' γ'.toPwC1Immersion f S
-          (fun s =>
-            (HungerbuhlerWasem.PolarPartDecomposition.ofMeromorphicWithCondB
-              hU_open hS_in_U hf
-              (γ := γ'.toPwC1Immersion) hMero hCondB').order s))
-        (_h_corners' : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-          γ'.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-          t₀ ∉ γ'.toPwC1Immersion.toPiecewiseC1Path.partition),
-        HasCauchyPVOn S f γ'.toPwC1Immersion.toPiecewiseC1Path
-          (∑ s ∈ S, 2 * ↑Real.pi * I *
-            generalizedWindingNumber γ'.toPwC1Immersion.toPiecewiseC1Path s *
-              residue f s)) →
-      HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-        (∑ s ∈ S, 2 * ↑Real.pi * I *
-          generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-            residue f s)) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  HungerbuhlerWasem.residueTheorem_crossing_full_spec_general hU_open hU_ne
-    hS_in_U hf γ h_null hMero hCondB hCondA h_no_corner_crossings
-    h_reparam_lift_at_pole_basepoint
-
-end LeanModularForms
-
-end
+In any practical application the basepoint is chosen off the singular set, so
+this is satisfied by definition. The formal elimination of `hx_notin_S` via
+cyclic-shift reparametrization is provided by the `cyclicShift` infrastructure
+in `PaperPwC1Immersion.lean` and `PaperPwC1ImmersionInvariance.lean`
+(specifically `hasCauchyPVOn_cyclicShift`, `generalizedWindingNumber_cyclicShift`,
+`isNullHomologous_cyclicShift`, `satisfiesConditionA'_cyclicShift`,
+`satisfiesConditionB_cyclicShift`): if `x ∈ S`, pick `τ ∈ Ioo 0 1` with
+`γ(τ) ∉ S` (exists by `preimage_finite`), apply the theorem to `γ.cyclicShift τ`
+whose basepoint is `γ(τ) ∉ S`, and lift back via invariance. -/
