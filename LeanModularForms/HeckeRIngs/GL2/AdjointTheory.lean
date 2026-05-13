@@ -3609,6 +3609,28 @@ theorem glMap_mapGL_Q_eq_mapGL_R (γ : SL(2, ℤ)) :
     Matrix.SpecialLinearGroup.map, algebraMap_int_eq,
     IsScalarTower.algebraMap_apply ℤ ℚ ℝ, Matrix.map_apply]
 
+/-- **ℝ-level matrix product**: `glMap M_∞ = mapGL ℝ σ_p · glMap T_p_lower`
+in GL(2, ℝ).
+
+ℝ-lift of `M_infty_eq_sigma_mul_T_p_lower` (stated over ℚ) via the
+MonoidHom `glMap : GL(2, ℚ) →* GL(2, ℝ)` and `glMap_mapGL_Q_eq_mapGL_R`.
+
+This is the rank-1 matrix-product identity at GL(2, ℝ) level used by the
+σ_p smul identities `mapGL_sigma_p_smul_T_p_lower_smul_eq_M_infty_smul`
+and its inverse companion. -/
+private lemma glMap_M_infty_eq_mapGL_sigma_p_mul_glMap_T_p_lower
+    (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) *
+        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) := by
+  rw [show (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
+      (glMap ((mapGL ℚ : SL(2, ℤ) →* _) (sigma_p_specific N p hp hpN)) *
+        glMap (T_p_lower p hp) : GL (Fin 2) ℝ) from by
+    rw [← map_mul]; exact congr_arg _
+      (M_infty_eq_sigma_mul_T_p_lower N p hp hpN)]
+  rw [glMap_mapGL_Q_eq_mapGL_R]
+
 /-- **T106 M_∞ adjoint helper**: `peterssonAdj (glMap M_∞) =
 glMap T_p_upper(0) * mapGL ℝ σ_p⁻¹`.
 
@@ -6871,6 +6893,44 @@ private theorem T_p_lower_mul_M_infty_smul_set_eq_M_infty_Gamma1_factor_smul
       (M_infty_Gamma1_factor N p hpN 0) : GL (Fin 2) ℝ) • S :=
   smul_set_eq_of_smul_eq
     (T_p_lower_mul_M_infty_smul_eq_M_infty_Gamma1_factor_smul (N := N) p hp hpN) S
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **σ_p set-level smul identity**: `mapGL ℝ σ_p • (T_p_lower • S) = M_∞ • S`
+for any `S : Set ℍ`.
+
+Direct consequence of the matrix factorization
+`glMap_M_infty_eq_mapGL_sigma_p_mul_glMap_T_p_lower` via `mul_smul`.
+
+**σ_p Q-permutation at the set level**: the σ_p action on GL(2, ℝ)
+carries the T_p_lower-tile to the M_∞-tile. Concrete matrix bridge
+between the M_∞ and T_p_lower tile families. -/
+private lemma mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (S : Set ℍ) :
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) •
+      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) • S) =
+    (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) • S := by
+  rw [smul_smul,
+    ← glMap_M_infty_eq_mapGL_sigma_p_mul_glMap_T_p_lower (N := N) p hp hpN]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **Inverse σ_p set-level smul identity**: `mapGL ℝ σ_p⁻¹ • (M_∞ • S) =
+T_p_lower • S` for any `S : Set ℍ`.
+
+Apply `mapGL ℝ σ_p⁻¹` to both sides of
+`mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul` and cancel the
+σ_p · σ_p⁻¹ pair (using `map_inv` to push inversion through `mapGL ℝ`).
+
+**Transposed correspondence link at the set level**: σ_p⁻¹ is the explicit
+matrix bridge from the M_∞ tile family to the T_p_lower tile family. -/
+private lemma mapGL_sigma_p_inv_smul_M_infty_smul_set_eq_T_p_lower_smul
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (S : Set ℍ) :
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (sigma_p_specific N p hp hpN)⁻¹ : GL (Fin 2) ℝ) •
+      ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) • S) =
+    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) • S := by
+  rw [← mapGL_sigma_p_smul_T_p_lower_smul_set_eq_M_infty_smul (N := N) p hp hpN S,
+    smul_smul, smul_smul, ← map_mul, inv_mul_cancel, map_one, one_mul]
 
 /-- **T205-d-SYMM SL(2,ℤ) tile family**: the (p+1) SL(2,ℤ) elements
 that index the per-tile decomposition of `T_p_lower • Hecke_FD`. -/
