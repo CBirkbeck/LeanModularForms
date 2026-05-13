@@ -12,13 +12,22 @@
 
 Each step is one commit. After each step: `lake build LeanModularForms` must pass, axioms must remain clean.
 
-**Status (2026-05-13 — Phase A complete)**: A1, A3, A4, A5, A7, A8, A9 done — 16 files deleted + 14 dead privates removed, ~5415 lines removed across 35 files changed. ForMathlib down from 183 → 167 files, ~88k → ~82.6k lines. All `lake build`s green.
+**Status (2026-05-13 — Phase A fully complete)**: A1, A2, A3, A4, A5, A6, A7, A8, A9 all done.
 
-**A2 and A6 deferred to Priority 4 (structural refactor)**: both turn out to be more than mechanical mass-deletion.
+* 17 ForMathlib files deleted (8 commented-out + 4 orphans + 5 duplicates)
+* 14 dead private declarations removed
+* 1 file (`HigherOrderCancel.lean`) deduped via import + open, 833 lines saved
+* **Total ≈ 6,714 lines removed**
+* **ForMathlib: 183 → 166 files**, ~88k → ~81.8k lines
+* All `lake build`s green throughout
+* Headline theorems verified axiom-clean after each major change:
+  - `hw_3_3_clean_full_mero` (most general HW3.3): `[propext, Classical.choice, Quot.sound]`
+  - `hw_3_3_clean_multi`, `hw_3_3_clean`, `hw_3_3_clean_truly_full`: same
+  - `valence_formula_textbook` (ValenceFormulaFinal): same
 
-- **A2 (FlatnessConditions)**: 9 of ~17 declarations are byte-equal to `Residue/Flatness.lean`, but the remaining 8 use different curve types (`PwC1Immersion x y` vs `PiecewiseC1Immersion`). The 9 importers all rely on the `PwC1Immersion` variants; deleting `FlatnessConditions.lean` requires either migrating all importers (huge refactor) or restoring the `PwC1Immersion` versions in `Residue/Flatness.lean` (re-introduces duplication). Schedule alongside the broader `PiecewiseC1Curve` → `PiecewiseC1Path` collapse from `PROJECT_OVERVIEW.md` Priority 4 #21.
+**A2 notes**: Phase 4's verdict was inverted — `FlatnessConditions.lean` (8 importers, the modern PwC1Immersion variant) is canonical; `Residue/Flatness.lean` (1 importer with no direct name uses) is legacy. Deleted `Residue/Flatness.lean` (467 lines) instead. The single importer `GeneralizedTheoremBase.lean` had a dead transitive import; just removed it.
 
-- **A6 (HigherOrderCancel ↔ HigherOrderAsymptotics)**: 18 shared theorems scattered through `HigherOrderCancel.lean` (lines 477–1425) interleaved with ~26 unique theorems. Clean dedupe requires moving the unique theorems into a contiguous tail and importing `HigherOrderAsymptotics` for the rest — a per-file refactor, better-suited to `/cleanup-all`'s decompose-proof pass.
+**A6 notes**: The two files declare 20 byte-equivalent theorems but in DIFFERENT namespaces (HigherOrderCancel at root, HigherOrderAsymptotics in `HungerbuhlerWasem`), so they were technically distinct decls. Made HigherOrderCancel `import` HigherOrderAsymptotics and `open HungerbuhlerWasem`, then removed the 20 duplicates. The 5 remaining unique theorems in HigherOrderCancel resolve their references via the new `open`.
 
 ### A1. Delete fully-commented-out files (~1951 lines, zero risk)
 
