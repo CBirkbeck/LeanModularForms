@@ -4,11 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.CauchyPrincipalValue
+import LeanModularForms.ForMathlib.ClassicalCPV
 import LeanModularForms.ForMathlib.FDBoundary
+import LeanModularForms.ForMathlib.FDBoundaryH
 import LeanModularForms.ForMathlib.FDBoundaryPath
 import LeanModularForms.ForMathlib.GeneralizedWindingNumber
-import LeanModularForms.ForMathlib.FDBoundaryH
-import LeanModularForms.ForMathlib.ClassicalCPV
 
 /-!
 # Bridge: `fdBoundaryFun` ↔ `fdBoundary_H`
@@ -68,19 +68,15 @@ theorem fdBoundaryFun_eq_comp (H : ℝ) :
     fdBoundaryFun H = fun t => fdBoundary_H H (5 * t) :=
   funext (fdBoundaryFun_eq_fdBoundary_H_scaled H)
 
-/-! ### Integral change of variables for `[0, 1] ↔ [0, 5]` -/
-
 /-- Linear change-of-variable identity:
 `∫_{0}^{5} F u du = 5 * ∫_{0}^{1} F(5t) dt`.
 
-This is a specialization of `intervalIntegral.smul_integral_comp_mul_add`
-with `c = 5, d = 0, a = 0, b = 1`. -/
+This is a specialization of `intervalIntegral.smul_integral_comp_mul_left`
+with `a = 0, b = 1, c = 5`. -/
 theorem integral_zero_to_five_eq_five_smul_zero_to_one (F : ℝ → ℂ) :
     ∫ u in (0 : ℝ)..5, F u = (5 : ℝ) • ∫ t in (0 : ℝ)..1, F (5 * t) := by
-  have h := intervalIntegral.smul_integral_comp_mul_add (a := (0 : ℝ)) (b := 1) F 5 0
-  simpa only [add_zero, mul_zero, mul_one] using h.symm
-
-/-! ### Derivative chain rule for the reparametrization -/
+  simpa only [mul_zero, mul_one] using
+    (intervalIntegral.smul_integral_comp_mul_left (a := (0 : ℝ)) (b := 1) (f := F) 5).symm
 
 /-- The derivative of `fdBoundaryFun H` is 5 times the derivative of
 `fdBoundary_H H` at the reparametrized point. Works everywhere thanks to
@@ -94,11 +90,7 @@ theorem deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H (H : ℝ) (t : ℝ) :
 /-- Complex-valued version: `deriv (fdBoundaryFun H) t = 5 * deriv (fdBoundary_H H) (5*t)`. -/
 theorem deriv_fdBoundaryFun_eq (H : ℝ) (t : ℝ) :
     deriv (fdBoundaryFun H) t = (5 : ℂ) * deriv (fdBoundary_H H) (5 * t) := by
-  rw [deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H, Complex.real_smul]
-  push_cast
-  ring
-
-/-! ### Integrand equivalence for Cauchy PV -/
+  exact_mod_cast deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H H t
 
 /-- The Cauchy PV integrand using `fdBoundaryFun` and `[0,1]` equals
 `5` times the integrand using `fdBoundary_H` and `[0,5]` after reparametrization.
@@ -111,8 +103,7 @@ theorem cpvIntegrand_fdBoundaryFun_eq_smul_cpvIntegrand_fdBoundary_H
     cpvIntegrand f (fdBoundaryFun H) z₀ ε t =
     (5 : ℂ) * (if ‖fdBoundary_H H (5 * t) - z₀‖ > ε
       then f (fdBoundary_H H (5 * t)) * deriv (fdBoundary_H H) (5 * t) else 0) := by
-  simp only [cpvIntegrand]
-  rw [fdBoundaryFun_eq_fdBoundary_H_scaled, deriv_fdBoundaryFun_eq]
+  simp only [cpvIntegrand, fdBoundaryFun_eq_fdBoundary_H_scaled, deriv_fdBoundaryFun_eq]
   split_ifs <;> ring
 
 /-- The integral of the old-chain CPV integrand from 0 to 5 equals
@@ -136,7 +127,9 @@ theorem integral_cpvIntegrand_fdBoundary_H_eq_fdBoundaryFun
   exact intervalIntegral.integral_congr fun t _ =>
     (cpvIntegrand_fdBoundaryFun_eq_smul_cpvIntegrand_fdBoundary_H f z₀ ε t H).symm
 
-/-! ### Cauchy PV bridge -/
+private lemma mem_Ioo_zero_one_of_uIoc {t : ℝ} (ht_ne_1 : t ∈ ({1} : Set ℝ)ᶜ)
+    (ht_mem : t ∈ Ioc (0 : ℝ) 1) : t ∈ Ioo (0 : ℝ) 1 :=
+  ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 fun h => ht_ne_1 (mem_singleton_iff.mpr h)⟩
 
 /-- Helper: a path agreeing with `fdBoundaryFun H` on `Icc 0 1` is eventually
 equal to `fdBoundaryFun H` in a punctured neighborhood of any interior point. -/
@@ -176,15 +169,10 @@ theorem hasCauchyPV_of_cauchyPV'_tendsto
     apply intervalIntegral.integral_congr_ae
     filter_upwards [compl_mem_ae_iff.mpr (measure_singleton 1)] with t ht_ne_1 ht_mem
     rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht_mem
-    have ht_open : t ∈ Ioo (0 : ℝ) 1 :=
-      ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 fun h => ht_ne_1 (mem_singleton_iff.mpr h)⟩
-    change cpvIntegrand (fun z => (z - z₀)⁻¹) (fdBoundaryFun H) z₀ ε t =
-      cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t
+    have ht_open : t ∈ Ioo (0 : ℝ) 1 := mem_Ioo_zero_one_of_uIoc ht_ne_1 ht_mem
     simp only [cpvIntegrand, hγ t (Ioo_subset_Icc_self ht_open)]
     rw [(extend_eventuallyEq_fdBoundaryFun γ hγ ht_open).symm.deriv_eq]
   simpa [HasCauchyPV] using h_old.congr h_eq
-
-/-! ### Multi-point CPV integrand equivalence -/
 
 /-- Multi-point version: the integrand at parameter `t` on the new chain
 equals 5 times the integrand at parameter `5*t` on the old chain. -/
@@ -193,8 +181,7 @@ theorem cpvIntegrandOn_fdBoundaryFun_eq_smul_fdBoundary_H
     cpvIntegrandOn S f (fdBoundaryFun H) ε t =
     (5 : ℂ) * (if ∃ s ∈ S, ‖fdBoundary_H H (5 * t) - s‖ ≤ ε then 0
       else f (fdBoundary_H H (5 * t)) * deriv (fdBoundary_H H) (5 * t)) := by
-  simp only [cpvIntegrandOn]
-  rw [fdBoundaryFun_eq_fdBoundary_H_scaled, deriv_fdBoundaryFun_eq]
+  simp only [cpvIntegrandOn, fdBoundaryFun_eq_fdBoundary_H_scaled, deriv_fdBoundaryFun_eq]
   split_ifs <;> ring
 
 /-- Multi-point integral equivalence: the integral over `[0, 5]` of the
@@ -242,15 +229,10 @@ theorem hasCauchyPVOn_of_cauchyPVOn'_tendsto
     apply intervalIntegral.integral_congr_ae
     filter_upwards [compl_mem_ae_iff.mpr (measure_singleton 1)] with t ht_ne_1 ht_mem
     rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht_mem
-    have ht_open : t ∈ Ioo (0 : ℝ) 1 :=
-      ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 fun h => ht_ne_1 (mem_singleton_iff.mpr h)⟩
-    change cpvIntegrandOn S f (fdBoundaryFun H) ε t =
-      cpvIntegrandOn S f γ.toPath.extend ε t
+    have ht_open : t ∈ Ioo (0 : ℝ) 1 := mem_Ioo_zero_one_of_uIoc ht_ne_1 ht_mem
     simp only [cpvIntegrandOn, hγ t (Ioo_subset_Icc_self ht_open)]
     rw [(extend_eventuallyEq_fdBoundaryFun γ hγ ht_open).symm.deriv_eq]
   simpa [HasCauchyPVOn] using h_old.congr h_eq
-
-/-! ### Winding number equivalence -/
 
 /-- Bridge: from an old-chain `CauchyPrincipalValueExists'` result, derive the
 new-chain `HasGeneralizedWindingNumber`. -/
@@ -310,17 +292,15 @@ theorem generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber
       apply intervalIntegral.integral_congr_ae
       filter_upwards [compl_mem_ae_iff.mpr (measure_singleton 1)] with t ht_ne_1 ht_mem
       rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1)] at ht_mem
-      have ht_open : t ∈ Ioo (0 : ℝ) 1 :=
-        ⟨ht_mem.1, lt_of_le_of_ne ht_mem.2 fun h => ht_ne_1 (mem_singleton_iff.mpr h)⟩
+      have ht_open : t ∈ Ioo (0 : ℝ) 1 := mem_Ioo_zero_one_of_uIoc ht_ne_1 ht_mem
       simp only [cpvIntegrand, hγ t (Ioo_subset_Icc_self ht_open)]
       rw [(extend_eventuallyEq_fdBoundaryFun γ hγ ht_open).symm.deriv_eq]
     rw [h_swap,
       ← integral_cpvIntegrand_fdBoundary_H_eq_fdBoundaryFun (fun z => (z - z₀)⁻¹) z₀ ε H]
-  have h_old := h.congr h_eq
   have h_pv_val : cauchyPrincipalValue' (·⁻¹) (fun t => fdBoundary_H H t - z₀) 0 5 0 =
       2 * ↑Real.pi * I * w := by
     simp only [cauchyPrincipalValue']
-    refine (h_old.congr' ?_).limUnder_eq
+    refine ((h.congr h_eq).congr' ?_).limUnder_eq
     filter_upwards with ε
     exact intervalIntegral.integral_congr fun t _ => by simp [deriv_sub_const]
   simp only [generalizedWindingNumber', h_pv_val]
