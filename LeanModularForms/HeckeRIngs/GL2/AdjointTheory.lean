@@ -5869,6 +5869,76 @@ theorem glMap_M_infty_det_pos
   exact_mod_cast hp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **M_∞-iUnion tile null-measurability**: each tile
+`(glMap M_∞) • (mapGL q.out⁻¹) • fd` is `μ_hyp`-null-measurable.
+
+For each `q : SL(2, ℤ) ⧸ Gamma1 N`, the M_∞-side tile in the M_∞-branch
+iUnion-tile residual is null-measurable. Proof pattern (per the existing
+T_p_upper tile measurability):
+* `fd` is closed-set-based ⇒ measurable ⇒ null-measurable.
+* Rewrite `α • S = (α⁻¹ • ·)⁻¹ ' S` (preimage form).
+* Use `measurePreserving_glPos_smul α⁻¹` (positive det) to get the
+  preimage as null-measurable via `NullMeasurableSet.preimage`.
+
+This is one of the four standard hypotheses required by
+`SigmaQPermResidual_M_infty_of_TileFormIntegralResidual` (the M_∞-side
+sum-collapse), now provided concretely for the M_∞ branch. -/
+private theorem nullMeasurableSet_M_infty_q_tile
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (q : SL(2, ℤ) ⧸ Gamma1 N) :
+    NullMeasurableSet
+      ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set ℍ))) μ_hyp := by
+  -- fd is null-measurable.
+  have h_fd_null : NullMeasurableSet (ModularGroup.fd : Set ℍ) μ_hyp :=
+    ((isClosed_le continuous_const
+        (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
+      (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
+        continuous_const)).measurableSet.nullMeasurableSet
+  -- Compose nested smul into a single product α := M_∞ · mapGL q.out⁻¹.
+  set α : GL (Fin 2) ℝ := (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) ((q.out : SL(2, ℤ))⁻¹) :
+      GL (Fin 2) ℝ) with hα_def
+  -- Positive determinant of α.
+  have hα_det : 0 < α.det.val := by
+    show 0 < (α : GL (Fin 2) ℝ).val.det
+    rw [hα_def, Units.val_mul, Matrix.det_mul]
+    have h_M_pos := glMap_M_infty_det_pos N p hp.pos hpN
+    have h_q_pos : 0 < ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ).det.val := by
+      show 0 < ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) :
+          Matrix (Fin 2) (Fin 2) ℝ).det
+      rw [show ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) :
+            Matrix (Fin 2) (Fin 2) ℝ) =
+          ((Int.castRingHom ℝ).mapMatrix ((q.out : SL(2, ℤ))⁻¹).val) from by
+        rw [mapGL_coe_matrix]; rfl]
+      rw [← RingHom.map_det, ((q.out : SL(2, ℤ))⁻¹).property]; norm_num
+    exact mul_pos h_M_pos h_q_pos
+  -- α⁻¹ has positive determinant.
+  have hα_inv_det : 0 < (α⁻¹ : GL (Fin 2) ℝ).det.val := by
+    show 0 < (((α⁻¹).det : ℝˣ) : ℝ)
+    rw [show ((α⁻¹ : GL (Fin 2) ℝ)).det = α.det⁻¹ from map_inv _ _,
+      Units.val_inv_eq_inv_val]
+    exact inv_pos.mpr hα_det
+  -- Rewrite nested smul as α • fd.
+  have h_nested : ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set ℍ))) =
+      α • (ModularGroup.fd : Set ℍ) := by
+    rw [hα_def, mul_smul]
+  rw [h_nested]
+  -- α • fd = (α⁻¹ • ·) ⁻¹' fd; preimage under measure-preserving is null-measurable.
+  have h_eq : (α • (ModularGroup.fd : Set ℍ)) =
+      ((α⁻¹ • ·) : ℍ → ℍ) ⁻¹' (ModularGroup.fd : Set ℍ) := by
+    ext τ; simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+  rw [h_eq]
+  exact h_fd_null.preimage
+    (measurePreserving_glPos_smul _ hα_inv_det).quasiMeasurePreserving
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-`q` M_∞ vs T_p_upper(b) fd-AE-disjoint helper**.
 
 For the Option `(Fin p)` family at fixed `q : SL(2, ℤ)`, the `none` tile
