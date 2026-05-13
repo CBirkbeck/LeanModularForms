@@ -31,7 +31,7 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     ∃ limit : ℂ, Tendsto (fun ε =>
       ∫ t in a..b, if ε < ‖γ t - γ t₀‖ then (γ t - γ t₀)⁻¹ * deriv γ t else 0)
       (𝓝[>] 0) (𝓝 limit) := by
-  have hab : a < b := lt_trans (Set.mem_Ioo.mp hat₀).1 (Set.mem_Ioo.mp hat₀).2
+  have hab : a < b := hat₀.1.trans hat₀.2
   obtain ⟨K, hK_pos, δ_P1, hδ_P1_pos, h_step_uniform⟩ :=
     pv_step_bound_ratio_two_uniform hab hat₀ hγ_C2 hγ_deriv hL
       hγ_meas hγ_cont_deriv hγ_cont h_inj
@@ -60,40 +60,34 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       _ = K * δ / 2 ^ n := by ring
   have h_cauchy_seq : CauchySeq (fun n => I (δ / 2 ^ n)) :=
     cauchySeq_pv_dyadic hδ_pos hK_pos h_step
-  obtain ⟨limit_dyadic, h_limit_dyadic⟩ :=
+  obtain ⟨limit_dyadic, h_limit_tendsto⟩ : ∃ L, Tendsto (fun n => I (δ / 2 ^ n)) atTop (𝓝 L) :=
     CompleteSpace.complete h_cauchy_seq
-  have h_limit_tendsto : Tendsto (fun n => I (δ / 2 ^ n)) atTop (𝓝 limit_dyadic) :=
-    h_limit_dyadic
   use limit_dyadic
   rw [Metric.tendsto_nhdsWithin_nhds]
   intro η hη_pos
   have h_half_pos : 0 < η / 2 := by linarith
   rw [Metric.tendsto_atTop] at h_limit_tendsto
   obtain ⟨N₁, hN₁⟩ := h_limit_tendsto (η / 2) h_half_pos
-  have h_pow_unbounded : ∃ N₂ : ℕ, K * δ / 2 ^ N₂ < η / 4 := by
+  obtain ⟨N₂, hN₂⟩ : ∃ N₂ : ℕ, K * δ / 2 ^ N₂ < η / 4 := by
     have : Tendsto (fun n : ℕ => K * δ / 2 ^ n) atTop (𝓝 0) := by
-      have h_tendsto_pow : Tendsto (fun n : ℕ => (2 : ℝ) ^ n) atTop atTop :=
-        tendsto_pow_atTop_atTop_of_one_lt (by norm_num : (1 : ℝ) < 2)
       have h_tendsto_inv : Tendsto (fun n : ℕ => 1 / (2 : ℝ) ^ n) atTop (𝓝 0) := by
         simp_rw [one_div]
-        exact tendsto_inv_atTop_zero.comp h_tendsto_pow
-      have h := (Tendsto.const_mul (K * δ) h_tendsto_inv).congr
+        exact tendsto_inv_atTop_zero.comp
+          (tendsto_pow_atTop_atTop_of_one_lt (by norm_num : (1 : ℝ) < 2))
+      simpa using (Tendsto.const_mul (K * δ) h_tendsto_inv).congr
         (fun n => show K * δ * (1 / (2 : ℝ) ^ n) = K * δ / 2 ^ n by ring)
-      simpa using h
     rw [Metric.tendsto_atTop] at this
     obtain ⟨N₂, hN₂⟩ := this (η / 4) (by linarith)
     refine ⟨N₂, ?_⟩
     specialize hN₂ N₂ le_rfl
-    rw [Real.dist_eq, sub_zero,
+    rwa [Real.dist_eq, sub_zero,
       abs_of_pos (div_pos (mul_pos hK_pos hδ_pos) (by positivity))] at hN₂
-    exact hN₂
-  obtain ⟨N₂, hN₂⟩ := h_pow_unbounded
   let N := max N₁ N₂
   use δ / 2 ^ N
   constructor
   · exact div_pos hδ_pos (by positivity)
   · intro ε hε_dist hε_pos
-    have hε_pos' : 0 < ε := Set.mem_Ioi.mp hε_dist
+    have hε_pos' : 0 < ε := hε_dist
     have hε_lt_dyadic : ε < δ / 2 ^ N := by
       rwa [Real.dist_eq, sub_zero, abs_of_pos hε_pos'] at hε_pos
     have h_tri := dist_triangle (I ε) (I (δ / 2 ^ N)) limit_dyadic
@@ -106,11 +100,9 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       have hM_ge_N : M ≥ N := by
         by_contra h_lt
         push Not at h_lt
-        have hM1_le_N : M + 1 ≤ N := h_lt
-        have h_pow_le : (2 : ℝ) ^ (M + 1) ≤ 2 ^ N :=
-          pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 2) hM1_le_N
         have h_div_ge : δ / 2 ^ (M + 1) ≥ δ / 2 ^ N :=
-          div_le_div_of_nonneg_left hδ_pos.le (by positivity) h_pow_le
+          div_le_div_of_nonneg_left hδ_pos.le (by positivity)
+            (pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 2) h_lt)
         linarith
       have h_first_piece : ‖I ε - I (δ / 2 ^ M)‖ ≤ K * δ / 2 ^ M := by
         have h_ratio_M : δ / 2 ^ M ≤ 2 * ε := by
@@ -270,14 +262,10 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       simp only [not_lt.mpr ht_S, ↓reduceIte]
   exact (h_piecewise.mono_measure Measure.restrict_le_self).congr h_eq.symm
 
-
 lemma indicator_integrand_deriv_eq (γ : ℝ → ℂ) (c : ℂ) (ε : ℝ) (t : ℝ) :
     (if ‖γ t - c‖ > ε then (γ t - c)⁻¹ * deriv (fun s => γ s - c) t else 0) =
     (if ‖γ t - c‖ > ε then (γ t - c)⁻¹ * deriv γ t else 0) := by
-  split_ifs with h
-  · congr 1
-    exact deriv_sub_const c
-  · rfl
+  simp [deriv_sub_const]
 
 lemma cpv_exists_from_shifted_tendsto (γ : ℝ → ℂ) (a b : ℝ) (c : ℂ) (L : ℂ)
     (h : Tendsto (fun ε => ∫ t in a..b, if ‖γ t - c‖ > ε
@@ -294,16 +282,13 @@ lemma arc_angle_injective {t t' : ℝ}
   rw [Complex.exp_eq_exp_iff_exists_int] at h_eq
   obtain ⟨n, hn⟩ := h_eq
   have h_vals : Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6 = 2 * Real.pi * ↑n := by
-    have : (↑(Real.pi * (1 + t) / 6) : ℂ) * I - ↑(Real.pi * (1 + t') / 6) * I =
-        ↑(2 * Real.pi * ↑n) * I := by
-      rw [hn]
-      push_cast
-      ring
     have h2 : (↑(Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6) : ℂ) * I =
         ↑(2 * Real.pi * ↑n) * I := by
       rw [show (↑(Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6) : ℂ) * I =
-          ↑(Real.pi * (1 + t) / 6) * I - ↑(Real.pi * (1 + t') / 6) * I from by push_cast; ring]
-      exact this
+            ↑(Real.pi * (1 + t) / 6) * I - ↑(Real.pi * (1 + t') / 6) * I from
+          by push_cast; ring, hn]
+      push_cast
+      ring
     exact_mod_cast Complex.ofReal_injective (mul_right_cancel₀ I_ne_zero h2)
   have h_diff_small : |Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6| < Real.pi := by
     rw [abs_lt]
@@ -325,17 +310,14 @@ lemma cpv_avoidance (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ
     (h_cont : ContinuousOn γ (Set.Icc a b)) (hab : a ≤ b)
     (h_avoid : ∀ t ∈ Set.Icc a b, γ t ≠ z₀) :
     CauchyPrincipalValueExists' f γ a b z₀ := by
-  have h_cont_norm : ContinuousOn (fun t => ‖γ t - z₀‖) (Set.Icc a b) :=
-    (h_cont.sub continuousOn_const).norm
   obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn
-    ⟨a, Set.left_mem_Icc.mpr hab⟩ h_cont_norm
-  have hδ : 0 < ‖γ t₀ - z₀‖ :=
-    norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t₀ ht₀))
+    ⟨a, Set.left_mem_Icc.mpr hab⟩ (h_cont.sub continuousOn_const).norm
   set C := ∫ t in a..b, f (γ t) * deriv γ t
   refine ⟨C, ?_⟩
   apply Tendsto.congr' _ tendsto_const_nhds
   rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
-  refine ⟨Set.Ioo 0 ‖γ t₀ - z₀‖, Ioo_mem_nhdsGT hδ, fun ε hε => ?_⟩
+  refine ⟨Set.Ioo 0 ‖γ t₀ - z₀‖,
+    Ioo_mem_nhdsGT (norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t₀ ht₀))), fun ε hε => ?_⟩
   simp only [Set.mem_Ioo] at hε
   exact intervalIntegral.integral_congr (fun t ht => by
     rw [Set.uIcc_of_le hab] at ht
