@@ -90,8 +90,6 @@ structure PolarPartDecomposition (f : ℂ → ℂ) (S : Finset ℂ) (U : Set ℂ
   decomp : ∀ z ∈ U \ (↑S : Set ℂ),
     f z = analyticRemainder z + ∑ s ∈ S, polarPart s z
 
-/-! ## Polar-part split helpers -/
-
 /-- The strictly-higher-order part of a polar part: `∑_{k≥1} a_k/(z-s)^(k+1)`. -/
 noncomputable def higherOrderPart {N : ℕ} (a : Fin N → ℂ) (s z : ℂ) : ℂ :=
   ∑ k : Fin N, if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0
@@ -137,8 +135,6 @@ theorem polarPart_eq_simplePole_add_higherOrder {N : ℕ} (a : Fin N → ℂ) (s
     subst hN
     simp
 
-/-! ## Higher-order Laurent term: contour integral vanishes -/
-
 /-- For `k ≥ 2`, the function `c / (z - s)^k` has the single-valued antiderivative
 `-c / ((k-1)(z-s)^(k-1))` on `ℂ \ {s}`. Hence its contour integral along any
 closed piecewise-`C¹` path avoiding `s` vanishes. -/
@@ -173,8 +169,6 @@ theorem contourIntegral_higherOrder_eq_zero_of_avoids
     push_cast
     ring
   exact PiecewiseC1Path.contourIntegral_eq_zero_of_hasDerivAt_of_closed γ rfl hU_img hF h_int
-
-/-! ## Higher-order part contour integral vanishes -/
 
 /-- The contour integral of `higherOrderPart a s` along a closed γ avoiding `s`
 vanishes: each term `a_k/(z-s)^(k+1)` for `k ≥ 1` (i.e. `k+1 ≥ 2`) has a
@@ -224,9 +218,18 @@ theorem contourIntegral_higherOrderPart_eq_zero_of_avoids
     rw [h_term_eq]
     exact PiecewiseC1Path.contourIntegral_zero γ
 
-/-! ## Analytic remainder Cauchy under crossings (T-AR-01) -/
-
 variable {x : ℂ}
+
+/-- The derivative of a Lipschitz extended piecewise-`C¹` path is interval-integrable
+on `[0, 1]`: derivatives of Lipschitz functions are bounded by the Lipschitz constant. -/
+private theorem deriv_intervalIntegrable_of_lipschitz (γP : PiecewiseC1Path x x) {K : NNReal}
+    (hLip : LipschitzWith K γP.toPath.extend) :
+    IntervalIntegrable (deriv γP.toPath.extend) MeasureTheory.volume 0 1 := by
+  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
+  refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
+    (stronglyMeasurable_deriv _).aestronglyMeasurable
+    (ae_restrict_of_ae (Filter.Eventually.of_forall
+      (fun _ => norm_deriv_le_of_lipschitz hLip)))
 
 /-- The contour integral of the analytic remainder along a null-homologous
 closed γ in U vanishes — even when γ passes through poles of f, because the
@@ -245,13 +248,7 @@ theorem analyticRemainder_contourIntegral_zero
   obtain ⟨w₀, hw₀_in_U, hw₀_off⟩ :=
     ForMathlib.exists_mem_not_mem_path_image_of_isOpen γP hU_open hU_ne hLip
   obtain ⟨δ', hδ'_pos, hδ'_bound⟩ := avoids_delta_bound γP w₀ hw₀_off
-  have h_deriv_int : IntervalIntegrable (deriv γP.toPath.extend)
-      MeasureTheory.volume 0 1 := by
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
-      (stronglyMeasurable_deriv _).aestronglyMeasurable
-      (ae_restrict_of_ae (Filter.Eventually.of_forall
-        (fun _ => norm_deriv_le_of_lipschitz hLip)))
+  have h_deriv_int := deriv_intervalIntegrable_of_lipschitz γP hLip
   have hG_diff : DifferentiableOn ℂ (fun z => (z - w₀) * decomp.analyticRemainder z) U :=
     fun z hz => ((differentiableAt_id.sub_const w₀).differentiableWithinAt).mul
       (decomp.analyticRemainder_diff z hz)
@@ -279,7 +276,7 @@ theorem analyticRemainder_contourIntegral_zero
       (fun t => decomp.analyticRemainder (γP t)) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
     exact decomp.analyticRemainder_diff.continuousOn.comp
-      γP.toPath.continuous_extend.continuousOn (fun t ht => hγ_in_U t ht)
+      γP.toPath.continuous_extend.continuousOn hγ_in_U
   have h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand decomp.analyticRemainder γP)
       MeasureTheory.volume 0 1 :=
@@ -300,14 +297,6 @@ theorem analyticRemainder_contourIntegral_zero
       decomp.analyticRemainder (γP t) from by field_simp]
   exact contourIntegral_eq_zero_of_nullHomologous_at w₀ hw₀_in_U hw₀_off
     (h_dixon_G w₀) h_cauchy_int h_base_int
-
-/-! ## Analytic remainder CPV (T-BR-05)
-
-The two oracle hypotheses `h_rem_cpv` / `h_rem_int` of `residueTheorem_crossing` —
-asserting the multi-point CPV of the analytic remainder along γ vanishes and that
-its cutoff integrand is interval-integrable — are derivable from
-`analyticRemainder_contourIntegral_zero` plus differentiability of the remainder
-on all of `U`. -/
 
 /-- The bad set `γ⁻¹(S) ∩ Icc 0 1` for a piecewise-`C¹` immersion `γ` and a
 finite set `S` has Lebesgue measure zero. -/
@@ -354,17 +343,11 @@ private theorem contourIntegrand_diff_intervalIntegrable
         γ.toPwC1Immersion.toPiecewiseC1Path) MeasureTheory.volume 0 1 := by
   obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
-  have h_deriv_int : IntervalIntegrable (deriv γP.toPath.extend)
-      MeasureTheory.volume 0 1 := by
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
-      (stronglyMeasurable_deriv _).aestronglyMeasurable
-      (ae_restrict_of_ae (Filter.Eventually.of_forall
-        (fun _ => norm_deriv_le_of_lipschitz hLip)))
+  have h_deriv_int := deriv_intervalIntegrable_of_lipschitz γP hLip
   have h_curve_cont : ContinuousOn (fun t => g (γP t)) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
     exact h_diff.continuousOn.comp γP.toPath.continuous_extend.continuousOn
-      (fun t ht => hγ_in_U t ht)
+      hγ_in_U
   exact h_deriv_int.continuousOn_mul h_curve_cont
 
 /-- The "bad set" of times where γ comes within ε of some pole. -/
@@ -511,7 +494,6 @@ theorem analyticRemainder_hasCauchyPVOn_zero
     decomp.analyticRemainder_diff hγ_in_U
   have h_zero := analyticRemainder_contourIntegral_zero hU_open hU_ne hS_in_U
     γ h_null decomp
-  -- Now apply DCT: the cutoff integrals tend to ∫ contourIntegrand = 0.
   have h_meas : ∀ᶠ ε in 𝓝[>] (0 : ℝ), AEStronglyMeasurable
       (fun t => cpvIntegrandOn S decomp.analyticRemainder
         γP.toPath.extend ε t)
@@ -543,18 +525,8 @@ theorem analyticRemainder_hasCauchyPVOn_zero
     (fun t => ‖PiecewiseC1Path.contourIntegrand decomp.analyticRemainder γP t‖)
     h_meas h_bound h_full.norm h_pointwise
   unfold HasCauchyPVOn
-  rw [show (0 : ℂ) = γP.contourIntegral decomp.analyticRemainder from h_zero.symm]
+  rw [← h_zero]
   exact h_dct
-
-/-! ## Polar-part cutoff integrability (T-BR-05b)
-
-The cutoff integrand `cpvIntegrandOn S (decomp.polarPart s) γ.extend ε` is
-interval-integrable on `[0, 1]` for every `ε > 0`. Unlike the analytic
-remainder, the polar part is not differentiable on all of `U` (it has a
-singularity at `s ∈ S`); however, the cutoff zeroes the integrand on the
-"bad set" `{t : ∃ s' ∈ S, ‖γ(t) - s'‖ ≤ ε}`, and on its complement the polar
-part's value is bounded by the explicit Laurent estimate
-`∑_k ‖coeff s k‖ / ε^(k+1)`. -/
 
 /-- Interval-integrability of the cutoff integrand of a polar part of the
 decomposition. Eliminates the `h_polar_int` oracle from
@@ -573,14 +545,9 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   set N : ℕ := decomp.order s
   set a : Fin N → ℂ := decomp.coeff s
-  -- Patched Laurent-sum function (well-defined globally; equals `polarPart s`
-  -- off `{s}` by `polarPart_eq`).
   set laurentSum : ℂ → ℂ := fun z => ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)
-  -- Patched integrand using `laurentSum` everywhere.
   set h_curve : ℝ → ℂ := fun t =>
     laurentSum (γP.toPath.extend t) * deriv γP.toPath.extend t
-  -- Step 1: cpvIntegrandOn rewritten as indicator of (badSet)ᶜ applied to
-  -- the contour integrand of `polarPart s`.
   have h_indicator_eq :
       (fun t => cpvIntegrandOn S (decomp.polarPart s)
         γP.toPath.extend ε t) =
@@ -588,8 +555,6 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
         (PiecewiseC1Path.contourIntegrand (decomp.polarPart s) γP) :=
     funext fun t =>
       cpvIntegrandOn_eq_indicator_compl γP S (decomp.polarPart s) ε t
-  -- Step 2: on (badSet)ᶜ, contour integrand of polarPart equals h_curve
-  -- (because γ(t) ≠ s, so polarPart_eq applies).
   have h_indicator_eq' :
       (fun t => cpvIntegrandOn S (decomp.polarPart s)
         γP.toPath.extend ε t) =
@@ -614,7 +579,6 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
         laurentSum (γP.toPath.extend t) * deriv γP.toPath.extend t
       rw [decomp.polarPart_eq s hs (γP.toPath.extend t) h_ne]
     · rw [Set.indicator_of_notMem ht_in, Set.indicator_of_notMem ht_in]
-  -- Step 3: bound h_curve on (badSet)ᶜ
   set M_polar : ℝ := ∑ k : Fin N, ‖a k‖ / ε ^ (k.val + 1)
   set M : ℝ := M_polar * K
   have h_M_polar_nonneg : 0 ≤ M_polar :=
@@ -643,7 +607,6 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
           ‖deriv γP.toPath.extend t‖ := norm_mul _ _
       _ ≤ M_polar * K := by
           apply mul_le_mul h_lap_bound h_deriv_bound (norm_nonneg _) h_M_polar_nonneg
-  -- Step 4: bound the indicator everywhere
   have h_bound_indicator : ∀ t,
       ‖(cpv_badSet γP S ε)ᶜ.indicator h_curve t‖ ≤ M := by
     intro t
@@ -653,7 +616,6 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
     · rw [Set.indicator_of_notMem ht_in]
       simp only [norm_zero]
       exact h_M_nonneg
-  -- Step 5: measurability of h_curve
   have h_γ_meas : Measurable γP.toPath.extend :=
     γP.toPath.continuous_extend.measurable
   have h_γ'_meas : Measurable (deriv γP.toPath.extend) := measurable_deriv _
@@ -664,19 +626,15 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
     exact h_γ_meas.sub_const s
   have h_curve_meas : Measurable h_curve :=
     h_laurentSum_meas.mul h_γ'_meas
-  -- Step 6: indicator is AEStronglyMeasurable
   have h_aemeas : AEStronglyMeasurable
       ((cpv_badSet γP S ε)ᶜ.indicator h_curve)
       (MeasureTheory.volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
     refine (h_curve_meas.aestronglyMeasurable).indicator ?_
     exact (cpv_badSet_measurableSet γP S ε).compl
-  -- Step 7: integrability
   rw [intervalIntegrable_iff, h_indicator_eq']
   refine MeasureTheory.IntegrableOn.of_bound measure_Ioc_lt_top h_aemeas M ?_
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t _
   exact h_bound_indicator t
-
-/-! ## Central theorem A: avoidance form -/
 
 /-- **Hungerbühler–Wasem Theorem 3.3 — avoidance form (central A).**
 
@@ -719,13 +677,7 @@ theorem residueTheorem_avoidance
       · intro t ht hzero
         exact h_avoid_s t ht
           (sub_eq_zero.mp (pow_eq_zero_iff (Nat.succ_pos _).ne' |>.mp hzero))
-    have h_deriv_int : IntervalIntegrable (deriv γP.toPath.extend)
-        MeasureTheory.volume 0 1 := by
-      rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-      refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
-        (stronglyMeasurable_deriv _).aestronglyMeasurable
-        (ae_restrict_of_ae (Filter.Eventually.of_forall
-          (fun _ => norm_deriv_le_of_lipschitz hLip)))
+    have h_deriv_int := deriv_intervalIntegrable_of_lipschitz γP hLip
     exact h_deriv_int.continuousOn_mul (h_cont_inv.mono
       (by rw [uIcc_of_le (zero_le_one' ℝ)]))
   have h_polarPart_integral : ∀ s ∈ S,
@@ -771,13 +723,7 @@ theorem residueTheorem_avoidance
           · intro t ht hzero
             exact h_avoid_s t ht
               (sub_eq_zero.mp (pow_eq_zero_iff (Nat.succ_pos _).ne' |>.mp hzero))
-        have h_deriv_int : IntervalIntegrable (deriv γP.toPath.extend)
-            MeasureTheory.volume 0 1 := by
-          rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-          refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
-            (stronglyMeasurable_deriv _).aestronglyMeasurable
-            (ae_restrict_of_ae (Filter.Eventually.of_forall
-              (fun _ => norm_deriv_le_of_lipschitz hLip)))
+        have h_deriv_int := deriv_intervalIntegrable_of_lipschitz γP hLip
         exact h_deriv_int.continuousOn_mul (h_cont_inv.mono
           (by rw [uIcc_of_le (zero_le_one' ℝ)]))
     rw [PiecewiseC1Path.contourIntegral_finset_sum Finset.univ _ γP (fun k _ => h_int_each k)]
@@ -827,19 +773,13 @@ theorem residueTheorem_avoidance
       exfalso
       have := k.isLt
       omega
-  have h_deriv_int : IntervalIntegrable (deriv γP.toPath.extend)
-      MeasureTheory.volume 0 1 := by
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
-      (stronglyMeasurable_deriv _).aestronglyMeasurable
-      (ae_restrict_of_ae (Filter.Eventually.of_forall
-        (fun _ => norm_deriv_le_of_lipschitz hLip)))
+  have h_deriv_int := deriv_intervalIntegrable_of_lipschitz γP hLip
   have hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γP t ∈ U := h_null.image_subset
   have h_rem_curve_cont : ContinuousOn
       (fun t => decomp.analyticRemainder (γP t)) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
     exact decomp.analyticRemainder_diff.continuousOn.comp
-      γP.toPath.continuous_extend.continuousOn (fun t ht => hγ_in_U t ht)
+      γP.toPath.continuous_extend.continuousOn hγ_in_U
   have h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand decomp.analyticRemainder γP)
       MeasureTheory.volume 0 1 :=
@@ -887,7 +827,7 @@ theorem residueTheorem_avoidance
       (fun t => (∑ s ∈ S, decomp.polarPart s (γP.toPath.extend t)) *
         deriv γP.toPath.extend t) volume 0 1
     rw [h_eq]
-    have h_sum := IntervalIntegrable.sum S (fun s hs => h_polar_int s hs)
+    have h_sum := IntervalIntegrable.sum S h_polar_int
     have hfun : (∑ s ∈ S, PiecewiseC1Path.contourIntegrand (decomp.polarPart s) γP) =
         fun t => ∑ s ∈ S, decomp.polarPart s (γP.toPath.extend t) *
           deriv γP.toPath.extend t := by
@@ -913,13 +853,10 @@ theorem residueTheorem_avoidance
         generalizedWindingNumber γP s * residue f s := by
     rw [h_int_eq, PiecewiseC1Path.contourIntegral_add _ _ γP h_rem_int h_total_polar_int,
         h_rem_zero, zero_add,
-        PiecewiseC1Path.contourIntegral_finset_sum S (fun s z => decomp.polarPart s z) γP
-          h_polar_int]
-    exact Finset.sum_congr rfl (fun s hs => h_polarPart_integral s hs)
+        PiecewiseC1Path.contourIntegral_finset_sum S decomp.polarPart γP h_polar_int]
+    exact Finset.sum_congr rfl h_polarPart_integral
   rw [← h_total]
   exact hasCauchyPVOn_of_avoids ⟨δ, hδ_pos, hδ_bound⟩
-
-/-! ## Constructors for `PolarPartDecomposition` -/
 
 /-- Build a `PolarPartDecomposition` from the hypothesis that every pole is
 simple. The simple-pole coefficient is the residue, and the analytic
@@ -965,8 +902,6 @@ noncomputable def PolarPartDecomposition.ofSimplePoles
     rw [h_pps] at h_g
     linear_combination -h_g
 
-/-! ## Corollary: simple-pole avoidance form -/
-
 /-- **Hungerbühler–Wasem — simple-pole avoidance form (corollary).**
 
 Specialization of `residueTheorem_avoidance` to simple poles. The
@@ -987,8 +922,6 @@ theorem residueTheorem_simplePoles_avoidance
           residue f s) :=
   residueTheorem_avoidance hU_open hU_ne S hS_in_U f hf γ h_null hγ_avoids
     (PolarPartDecomposition.ofSimplePoles hU_open hS_in_U hf h_simple)
-
-/-! ## Corollary: convex-domain avoidance form -/
 
 /-- **Hungerbühler–Wasem — convex-domain avoidance form (corollary).**
 
@@ -1012,8 +945,6 @@ theorem residueTheorem_convex_avoidance
     (isNullHomologous_of_convex hU_convex hU_open hU_ne γ.toPwC1Immersion hγ_in_U)
     hγ_avoids decomp
 
-/-! ## Corollary: classical residue theorem (convex + simple poles) -/
-
 /-- **Classical residue theorem (corollary).**
 
 Convex `U`, simple poles only, γ avoids the poles. The textbook form. -/
@@ -1034,16 +965,6 @@ theorem residueTheorem_simplePoles_convex_avoidance
   residueTheorem_convex_avoidance hU_convex hU_open hU_ne S hS_in_U f hf γ
     hγ_in_U hγ_avoids
     (PolarPartDecomposition.ofSimplePoles hU_open hS_in_U hf h_simple)
-
-/-! ## Full crossing form
-
-The unified Hungerbühler–Wasem Theorem 3.3 — `residueTheorem_crossing` —
-lives in `LeanModularForms.ForMathlib.HungerbuhlerWasem.Crossing` (which
-imports this file via `LaurentExtraction → CrossingCPV → Crossing`). The
-unified form admits γ that may cross poles of any order under conditions
-(A') and (B) at each crossing, and returns the same residue formula as the
-avoidance form. Both `residueTheorem_avoidance` and the simple-pole
-specializations in this file are corollaries. -/
 
 end HungerbuhlerWasem
 
