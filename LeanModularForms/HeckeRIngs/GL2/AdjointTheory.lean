@@ -7089,6 +7089,21 @@ private lemma peterssonInner_smul_eq_of_matrix_proportional
     (UpperHalfPlane_smul_eq_of_matrix_smul_eq α β hα hβ c hc hMat) D
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM Hecke FD residual statement** — the final integral
+equality that closes the symmetric form. This is the genuine analytic
+content of DS Prop 5.5.2(b) at the Hecke FD level. -/
+private def Hecke_FD_integral_residual
+    (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+    (⋃ i : Option (Fin p), Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+    ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
+  peterssonInner k
+    (⋃ i : Option (Fin p), Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+      (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ⇑g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
