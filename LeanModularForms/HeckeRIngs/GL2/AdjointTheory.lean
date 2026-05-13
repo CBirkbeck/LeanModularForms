@@ -10132,6 +10132,97 @@ private lemma sum_peterssonInner_M_infty_tile_form_collapse
     h_int).symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b` tile-form sum_comm**: swaps the outer `q` and inner `b`
+sums in the LHS upper-b tile-form sum. Pure `Finset.sum_comm`. -/
+private lemma sum_peterssonInner_upper_tile_form_swap
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      ∑ b ∈ Finset.range p,
+        peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+            ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+              (ModularGroup.fd : Set UpperHalfPlane)))
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
+    ∑ b ∈ Finset.range p,
+      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+        peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+            ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+              (ModularGroup.fd : Set UpperHalfPlane)))
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) :=
+  Finset.sum_comm
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b` per-b q-collapse**: for each fixed `b`, collapses the
+q-sum into a single peterssonInner on the q-union of T_p_upper(b)-translated
+tiles, via `peterssonInner_iUnion_finite_aedisjoint`. -/
+private lemma sum_peterssonInner_upper_tile_form_per_b_collapse
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) (hb : b ∈ Finset.range p)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_meas : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+      NullMeasurableSet
+        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp)
+    (h_disj : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) =>
+      AEDisjoint μ_hyp
+        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q₁.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))
+        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q₂.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ)))))
+    (h_int : IntegrableOn
+      (fun τ => petersson k
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) τ)
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set ℍ))) μ_hyp) :
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set UpperHalfPlane)))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set UpperHalfPlane)))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) :=
+  (peterssonInner_iUnion_finite_aedisjoint
+    (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+      (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+          (ModularGroup.fd : Set ℍ)))
+    h_meas h_disj
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+    h_int).symm
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T024 sum-level joint absorption consumer**: applies the per-q
 M_∞/upper-b joint absorption helpers
 (`per_q_M_infty_branch_full_absorb`, `per_q_T_p_upper_branch_full_absorb`)
