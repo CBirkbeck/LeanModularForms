@@ -3,22 +3,20 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import LeanModularForms.ForMathlib.ValenceFormula.PVChain.OnCurveCapture
-import LeanModularForms.ForMathlib.ValenceFormula.PVChain.Seg5CuspIntegral
-import LeanModularForms.ForMathlib.ValenceFormula.PVChain.ArcContribution
-import LeanModularForms.ForMathlib.ValenceFormula.PVChain.ResidueSideInfra
 import LeanModularForms.ForMathlib.ModularInvariance
+import LeanModularForms.ForMathlib.ValenceFormula.PVChain.ArcContribution
+import LeanModularForms.ForMathlib.ValenceFormula.PVChain.OnCurveCapture
+import LeanModularForms.ForMathlib.ValenceFormula.PVChain.ResidueSideInfra
+import LeanModularForms.ForMathlib.ValenceFormula.PVChain.Seg5CuspIntegral
 
 /-!
 # PV Chain Assembly
 
-Assembles the residue side and modular side of the PV chain
-using `Tendsto` statements for the ε-truncated integrals.
+Assembles the modular side of the PV chain using `Tendsto` statements for the
+ε-truncated integrals.
 
-## Main Results
+## Main results
 
-* `cpv_residue_side_tendsto` — the ε-truncated integral of `f'/f` around
-    `fdBoundary_H H` tends to `2πi · Σ gWN · ord`.
 * `cpv_modular_side_tendsto` — the ε-truncated integral of `f'/f` around
     `fdBoundary_H H` tends to `-(2πi · (k/12 - ord_∞(f)))`.
 -/
@@ -31,15 +29,6 @@ attribute [local instance] Classical.propDecidable
 noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
-
-/-! ### Modular side sub-lemmas
-
-The modular side decomposes into:
-1. Vertical seg1+seg4 integrands cancel pointwise for each ε (T-invariance)
-2. Arc seg2+seg3 integral tends to -(2πi·k/12) (S-transformation)
-3. Horizontal seg5 integral tends to 2πi·ord_∞ (q-expansion)
-4. Combine via `Tendsto.add`
--/
 
 omit f hf in
 private lemma norm_sub_one_le {z s : ℂ} (hz : z.re = 1/2) (hs : s.re = -1/2) :
@@ -99,26 +88,20 @@ private lemma truncation_iff_shift
     rcases sVertOfS_re S s hs with hre | hre
     · exact ⟨s - 1, sVertOfS_pair_left S s hs hre,
         by rwa [show (z - 1) - (s - 1) = z - s from by ring]⟩
-    · exact ⟨s, hs, le_trans (norm_sub_one_le hz_re hre) h_near⟩
+    · exact ⟨s, hs, (norm_sub_one_le hz_re hre).trans h_near⟩
   · rintro ⟨s, hs, h_near⟩
     rcases sVertOfS_re S s hs with hre | hre
-    · exact ⟨s, hs, le_trans (norm_sub_le_sub_one hz_re hre) h_near⟩
+    · exact ⟨s, hs, (norm_sub_le_sub_one hz_re hre).trans h_near⟩
     · exact ⟨s + 1, sVertOfS_pair_right S s hs hre,
         by rwa [show z - (s + 1) = (z - 1) - s from by ring]⟩
 
 omit f hf in
 private lemma norm_shift_neg_inv_eq {z s : ℂ} (hz_re : z.re = 1/2) (hs_unit : ‖s‖ = 1) :
     ‖(z - 1) - (-(1 : ℂ) / s)‖ = ‖z - s‖ := by
-  have hs_ne : s ≠ 0 := by
-    intro h
-    rw [h, norm_zero] at hs_unit
-    norm_num at hs_unit
-  have h_normSq : s.re ^ 2 + s.im ^ 2 = 1 := by
+  have h_mul : s.re * s.re + s.im * s.im = 1 := by
     have h := Complex.sq_norm s
-    rw [hs_unit, one_pow] at h
-    rw [Complex.normSq_apply] at h
-    nlinarith [sq s.re, sq s.im]
-  have h_mul : s.re * s.re + s.im * s.im = 1 := by nlinarith [sq s.re, sq s.im]
+    rw [hs_unit, one_pow, Complex.normSq_apply] at h
+    linarith
   have h_neg_inv_re : (-(1 : ℂ) / s).re = -s.re := by
     rw [neg_div, Complex.neg_re, Complex.div_re, Complex.one_re, Complex.one_im,
       Complex.normSq_apply, h_mul, div_one]
@@ -242,14 +225,12 @@ private lemma pvIntegrand_seg4_eq_neg_seg1 (_S : Finset UpperHalfPlane) (Sx : Fi
   · rw [if_neg h_trunc_u, if_neg (mt h_trunc.mp h_trunc_u)]
     have h_shift : fdBoundary_H H (4 - u) = fdBoundary_H H u - 1 := by
       rw [fdBoundary_H_eq_seg4_H h4u_gt3 (by linarith [hu.1]),
-        seg4_eq_seg1_minus_one_H H u ⟨le_of_lt hu.1, hu_le1⟩,
+        seg4_eq_seg1_minus_one_H H u ⟨hu.1.le, hu_le1⟩,
         fdBoundary_H_eq_seg1_H hu_le1]
     have h_logDeriv : logDeriv (modularFormCompOfComplex f) (fdBoundary_H H (4 - u)) =
         logDeriv (modularFormCompOfComplex f) (fdBoundary_H H u) := by
       rw [h_shift]
-      have h_per := logDeriv_modFormComp_periodic f
-      have := h_per (fdBoundary_H H u - 1)
-      simp only [Function.Periodic] at h_per
+      have := logDeriv_modFormComp_periodic f (fdBoundary_H H u - 1)
       rw [show fdBoundary_H H u - 1 + 1 = fdBoundary_H H u from by ring] at this
       exact this.symm
     erw [h_logDeriv, deriv_fdBoundary_H_on_seg4 H (4 - u) ⟨h4u_gt3, h4u_lt4⟩,
@@ -266,10 +247,10 @@ private lemma integral_neg_of_pw_neg (g : ℝ → ℂ)
   · intro u hu
     simp only [Set.mem_compl_iff, Set.mem_setOf_eq, not_forall] at hu
     obtain ⟨hu_mem, hu_ne⟩ := hu
-    rw [Set.uIoc_of_le (show (0:ℝ) ≤ 1 from by norm_num)] at hu_mem
+    rw [Set.uIoc_of_le (by norm_num : (0:ℝ) ≤ 1)] at hu_mem
     rw [Set.mem_singleton_iff]
     by_contra h
-    exact hu_ne (h_pw u ⟨hu_mem.1, lt_of_le_of_ne hu_mem.2 h⟩)
+    exact hu_ne (h_pw u ⟨hu_mem.1, hu_mem.2.lt_of_ne h⟩)
   · exact MeasureTheory.measure_singleton _
 
 omit hf in
@@ -289,11 +270,11 @@ private theorem pvIntegral_vertical_cancel_union (S : Finset UpperHalfPlane)
       (∃ s ∈ sArcOfS S ∪ sVertOfS S, ‖fdBoundary_H H (4 - u) - s‖ ≤ ε) ↔
       (∃ s ∈ sArcOfS S ∪ sVertOfS S, ‖fdBoundary_H H u - s‖ ≤ ε) := by
     intro u hu
-    have h_seg1 := fdBoundary_H_eq_seg1_H (H := H) (show u ≤ 1 from le_of_lt hu.2)
+    have h_seg1 := fdBoundary_H_eq_seg1_H (H := H) hu.2.le
     have h_shift : fdBoundary_H H (4 - u) = fdBoundary_H H u - 1 := by
       rw [fdBoundary_H_eq_seg4_H (H := H) (show (3:ℝ) < 4 - u from by linarith [hu.2])
         (show 4 - u ≤ 4 from by linarith [hu.1]),
-        seg4_eq_seg1_minus_one_H H u ⟨le_of_lt hu.1, le_of_lt hu.2⟩, h_seg1]
+        seg4_eq_seg1_minus_one_H H u ⟨hu.1.le, hu.2.le⟩, h_seg1]
     have h_re_u : (fdBoundary_H H u).re = 1/2 := by
       rw [h_seg1]
       simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
@@ -401,15 +382,14 @@ private lemma norm_deriv_fdBoundary_H_le
     have hcast : (↑H - ↑(Real.sqrt 3) / 2 : ℂ) = ↑(H - Real.sqrt 3 / 2) := by
       push_cast
       ring
-    rw [hcast, Complex.norm_real, Real.norm_of_nonneg (by
-      linarith [Real.sqrt_pos_of_pos (by norm_num : (3:ℝ) > 0)])]
+    rw [hcast, Complex.norm_real, Real.norm_of_nonneg (by linarith [Real.sqrt_nonneg 3])]
   by_cases h1 : t < 1
   · erw [(fdBoundary_H_hasDerivAt_seg1 H h1).deriv]
     rw [neg_mul, norm_neg, norm_mul, Complex.norm_I, mul_one,
         h_norm_cast]
-    exact le_trans (by linarith [Real.sqrt_nonneg 3]) (le_max_left H 1)
+    exact le_max_of_le_left (by linarith [Real.sqrt_nonneg 3])
   · push Not at h1
-    have h1' : 1 < t := lt_of_le_of_ne h1 (Ne.symm ht_ne1)
+    have h1' : 1 < t := h1.lt_of_ne ht_ne1.symm
     by_cases h3 : t < 3
     · erw [(fdBoundary_H_hasDerivAt_arc H h1' h3).deriv]
       simp only [norm_mul, Complex.norm_I, mul_one]
@@ -428,13 +408,13 @@ private lemma norm_deriv_fdBoundary_H_le
       rw [hpi]
       exact le_max_of_le_right (by linarith [Real.pi_le_four])
     · push Not at h3
-      have h3' : 3 < t := lt_of_le_of_ne h3 (Ne.symm ht_ne3)
+      have h3' : 3 < t := h3.lt_of_ne ht_ne3.symm
       by_cases h4 : t < 4
       · erw [(fdBoundary_H_hasDerivAt_seg4 H h3' h4).deriv]
         rw [norm_mul, Complex.norm_I, mul_one, h_norm_cast]
-        exact le_trans (by linarith [Real.sqrt_nonneg 3]) (le_max_left H 1)
+        exact le_max_of_le_left (by linarith [Real.sqrt_nonneg 3])
       · push Not at h4
-        have h4' : 4 < t := lt_of_le_of_ne h4 (Ne.symm ht_ne4)
+        have h4' : 4 < t := h4.lt_of_ne ht_ne4.symm
         erw [(fdBoundary_H_hasDerivAt_seg5 H h4').deriv]
         rw [norm_one]
         exact le_max_right H 1
@@ -669,7 +649,7 @@ private lemma modular_side_h_capture
       subst h_eq
       exfalso
       have h_im : (fdBoundary_H H 0).im = H := by
-        rw [fdBoundary_H_eq_seg1_H (show (0:ℝ) ≤ 1 from by norm_num)]
+        rw [fdBoundary_H_eq_seg1_H (by norm_num : (0:ℝ) ≤ 1)]
         simp [fdBoundary_seg1_H, add_im, ofReal_im, mul_im, I_re, I_im]
       exact modFormComp_ne_zero_at_height f hH_pos hcusp h_im h_zero
   · push Not at h1
@@ -751,7 +731,7 @@ theorem cpv_modular_side_tendsto
   obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
   obtain ⟨H₁, hH₁_gt, hH₁_gt_one, hH₁_bound⟩ := exists_height_bound_S S
   set H₂ := max H₀ H₁ with hH₂_def
-  refine ⟨H₂, lt_of_lt_of_le hH₀_gt (le_max_left _ _), fun {H} hH => ?_⟩
+  refine ⟨H₂, hH₀_gt.trans_le (le_max_left _ _), fun {H} hH => ?_⟩
   have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
     calc Real.sqrt 3 / 2 < H₀ := hH₀_gt
       _ ≤ H₂ := le_max_left _ _
@@ -761,7 +741,7 @@ theorem cpv_modular_side_tendsto
     _ ≤ H₂ := le_max_right _ _
     _ ≤ H := hH
   have hcusp := cusp_nonvanishing_height_mono f
-    (le_trans (le_max_left _ _) hH) hH₀_nonvan
+    ((le_max_left _ _).trans hH) hH₀_nonvan
   have h_vert_below : ∀ s ∈ sVertOfS S, s.im < H := by
     intro s hs
     calc s.im < H₁ := sVertOfS_im_lt_height_bound S s hs hH₁_bound
@@ -828,6 +808,5 @@ theorem cpv_modular_side_tendsto
     exact Filter.Tendsto.congr (fun ε => by ring)
       (h_vert_tendsto.add (h_arc.add h_seg5))
   exact h_sum.congr' (h_split.mono (fun ε h => h.symm))
-
 
 end
