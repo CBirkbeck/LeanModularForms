@@ -10344,6 +10344,42 @@ private lemma peterssonInner_RHS_M_infty_sigma_reindex_per_q_to_tile_form
   rw [← h1, h, h2]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d upper-`b` after-σ-reindex per-q tile-form**: upper-`b` analog of
+`peterssonInner_RHS_M_infty_sigma_reindex_per_q_to_tile_form`. -/
+private lemma peterssonInner_RHS_upper_sigma_reindex_per_q_to_tile_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k ModularGroup.fd
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
+        (⇑g ∣[k]
+          ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))) =
+    peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+      (⇑g) := by
+  have h := peterssonInner_slash_adj_T_p_upper_q_summand_eq p hp hpN b q g
+    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
+  have h1 := peterssonInner_conj_symm k ModularGroup.fd
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) : ℍ → ℂ) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
+    ((⇑g : ℍ → ℂ) ∣[k] ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)))
+  have h2 := peterssonInner_conj_symm k
+    ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+      ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set ℍ)))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
+    (⇑g)
+  rw [← h1, h, h2]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T205-d upper-`b` tile-form sum_comm**: swaps the outer `q` and inner `b`
 sums in the LHS upper-b tile-form sum. Pure `Finset.sum_comm`. -/
 private lemma sum_peterssonInner_upper_tile_form_swap
