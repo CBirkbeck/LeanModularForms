@@ -6677,6 +6677,43 @@ private theorem T_p_lower_mul_M_infty_smul_eq_M_infty_Gamma1_factor_smul
   simp [MonoidHom.map_one, one_smul]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM Möbius equivalence on sets**: scalar invariance lifts
+to set-level smul equality. If `α, β ∈ GL(2,ℝ)⁺` satisfy
+`α • τ = β • τ` for all τ ∈ ℍ, then `α • S = β • S` for any `S ⊆ ℍ`. -/
+private lemma smul_set_eq_of_smul_eq
+    {α β : GL (Fin 2) ℝ} (hsmul : ∀ τ : ℍ, α • τ = β • τ) (S : Set ℍ) :
+    α • S = β • S := by
+  ext τ
+  constructor
+  · rintro ⟨σ, hσ, rfl⟩
+    exact ⟨σ, hσ, (hsmul σ).symm⟩
+  · rintro ⟨σ, hσ, rfl⟩
+    exact ⟨σ, hσ, hsmul σ⟩
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM upper-tile set equivalence**:
+`(T_p_lower · T_p_upper(b)) • S = shiftSL_loc(b) • S` for any `S : Set ℍ`. -/
+private theorem T_p_lower_mul_T_p_upper_smul_set_eq_shift_smul
+    (p : ℕ) (hp : 0 < p) (b : ℕ) (S : Set ℍ) :
+    ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) *
+      (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ)) • S =
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+      (shiftSL_loc (b : ℤ)) : GL (Fin 2) ℝ) • S :=
+  smul_set_eq_of_smul_eq (T_p_lower_mul_T_p_upper_smul_eq_shift_smul p hp b) S
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **T205-d-SYMM M_∞-tile set equivalence**:
+`(T_p_lower · M_∞) • S = mapGL ℝ M_infty_Gamma1_factor • S` for any `S : Set ℍ`. -/
+private theorem T_p_lower_mul_M_infty_smul_set_eq_M_infty_Gamma1_factor_smul
+    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (S : Set ℍ) :
+    ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) *
+      (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)) • S =
+    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+      (M_infty_Gamma1_factor N p hpN 0) : GL (Fin 2) ℝ) • S :=
+  smul_set_eq_of_smul_eq
+    (T_p_lower_mul_M_infty_smul_eq_M_infty_Gamma1_factor_smul (N := N) p hp hpN) S
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **T128 per-q `M_∞` slash-adjoint reduction** (M_∞ analog of
 `peterssonInner_slash_adj_T_p_upper_q_summand_eq`).
 
