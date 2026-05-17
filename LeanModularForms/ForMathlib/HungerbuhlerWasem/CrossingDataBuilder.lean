@@ -90,12 +90,6 @@ namespace HungerbuhlerWasem
 
 variable {x : ℂ}
 
-/-! ### Compact-set far bound from uniqueness
-
-When `γ` crosses `s` only at `t₀` on `[0, 1]`, the function `t ↦ ‖γ(t) - s‖`
-has a positive minimum on the compact set `[0, t₀ - r] ∪ [t₀ + r, 1]` for any
-`r > 0`. -/
-
 /-- **Far bound from uniqueness**: if `γ` is continuous and crosses `s` only at
 `t₀ ∈ [0, 1]`, then on any compact set `Icc 0 (t₀ - r) ∪ Icc (t₀ + r) 1` (with
 `r > 0`), the distance `‖γ(t) - s‖` has a positive minimum. -/
@@ -130,8 +124,6 @@ theorem exists_far_bound_compact
     fun _ ht => (min_le_left _ _).trans (ht_l_min ht),
     fun _ ht => (min_le_right _ _).trans (ht_r_min ht)⟩
 
-/-! ### One-sided derivative limits at interior points -/
-
 /-- At any `t₀ ∈ Ioo 0 1`, the right derivative limit `L_+` exists and is nonzero. -/
 theorem exists_right_deriv_limit
     (γ : ClosedPwC1Immersion x) {t₀ : ℝ} (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) :
@@ -157,8 +149,6 @@ theorem exists_left_deriv_limit
       γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_part,
       (γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀
         h_part).tendsto.mono_left nhdsWithin_le_nhds⟩
-
-/-! ### Eventual differentiability on each side -/
 
 /-- Differentiability is eventual on `𝓝[>] t₀` for an immersion at interior `t₀`. -/
 theorem eventually_differentiable_right
@@ -192,15 +182,6 @@ theorem eventually_differentiable_left
   exact γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t ht₂
     fun hm => ht₁ ⟨hm, ne_of_lt (mem_Iio.mp ht₃)⟩
 
-/-! ### Chord-to-tangent eventual inequalities
-
-From the right derivative limit `L_+` at `t₀`, we get the eventual two-sided
-bound `(‖L_+‖/2)·(t - t₀) ≤ ‖γ(t) - s‖ ≤ (3‖L_+‖/2)·(t - t₀)` for `t > t₀`
-close to `t₀`. Symmetric on the left.
-
-These follow from the differentiability `o(t - t₀)` bound and the triangle
-inequality. -/
-
 /-- **Right-side chord-to-tangent eventual lower bound**: eventually on
 `𝓝[>] t₀`, `(‖L_+‖/2) · (t - t₀) ≤ ‖γ(t) - s‖`. -/
 theorem chord_lower_bound_right_eventually
@@ -218,19 +199,18 @@ theorem chord_lower_bound_right_eventually
     with t h_bound h_t_gt
   have h_t_pos : 0 < t - t₀ := sub_pos.mpr h_t_gt
   rw [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
   have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t - t₀) * ‖L‖ := by
     rw [norm_smul, Real.norm_eq_abs, abs_of_pos h_t_pos]
   have h_tri : ‖((t - t₀) : ℝ) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≤
       ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by
     have h1 := norm_sub_norm_le (((t - t₀) : ℝ) • L) (-(γ t - γ t₀ - (t - t₀) • L))
     rwa [norm_neg, sub_neg_eq_add] at h1
-  rw [h_eq]
+  rw [show γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) by rw [h_at]; ring]
   rw [h_norm_smul] at h_tri
   have h_alg : (t - t₀) * ‖L‖ - ‖L‖ / 2 * (t - t₀) = ‖L‖ / 2 * (t - t₀) := by ring
   have h_bound' : (t - t₀) * ‖L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≥
       (t - t₀) * ‖L‖ - ‖L‖ / 2 * (t - t₀) := by gcongr; exact h_bound
-  linarith [h_tri, h_bound', h_alg]
+  linarith
 
 /-- **Right-side chord-to-tangent eventual upper bound**: eventually on
 `𝓝[>] t₀`, `‖γ(t) - s‖ ≤ (3‖L_+‖/2) · (t - t₀)`. -/
@@ -249,10 +229,9 @@ theorem chord_upper_bound_right_eventually
     with t h_bound h_t_gt
   have h_t_pos : 0 < t - t₀ := sub_pos.mpr h_t_gt
   rw [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
   have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t - t₀) * ‖L‖ := by
     rw [norm_smul, Real.norm_eq_abs, abs_of_pos h_t_pos]
-  rw [h_eq]
+  rw [show γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) by rw [h_at]; ring]
   calc ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖
       ≤ ‖((t - t₀) : ℝ) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := norm_add_le _ _
     _ ≤ (t - t₀) * ‖L‖ + ‖L‖/2 * (t - t₀) := by gcongr <;> [exact h_norm_smul.le; exact h_bound]
@@ -277,18 +256,17 @@ theorem chord_lower_bound_left_eventually
   have h_norm_real : ‖t - t₀‖ = t₀ - t := by
     rw [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t_pos]
   rw [h_norm_real] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
   have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t₀ - t) * ‖L‖ := by rw [norm_smul, h_norm_real]
   have h_tri : ‖((t - t₀) : ℝ) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≤
       ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by
     have h1 := norm_sub_norm_le (((t - t₀) : ℝ) • L) (-(γ t - γ t₀ - (t - t₀) • L))
     rwa [norm_neg, sub_neg_eq_add] at h1
-  rw [h_eq]
+  rw [show γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) by rw [h_at]; ring]
   rw [h_norm_smul] at h_tri
   have h_alg : (t₀ - t) * ‖L‖ - ‖L‖ / 2 * (t₀ - t) = ‖L‖ / 2 * (t₀ - t) := by ring
   have h_bound' : (t₀ - t) * ‖L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ ≥
       (t₀ - t) * ‖L‖ - ‖L‖ / 2 * (t₀ - t) := by gcongr; exact h_bound
-  linarith [h_tri, h_bound', h_alg]
+  linarith
 
 /-- **Left-side chord-to-tangent eventual upper bound**: eventually on
 `𝓝[<] t₀`, `‖γ(t) - s‖ ≤ (3‖L_-‖/2) · (t₀ - t)`. -/
@@ -309,65 +287,39 @@ theorem chord_upper_bound_left_eventually
   have h_norm_real : ‖t - t₀‖ = t₀ - t := by
     rw [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t_pos]
   rw [h_norm_real] at h_bound
-  have h_eq : γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by rw [h_at]; ring
   have h_norm_smul : ‖((t - t₀) : ℝ) • L‖ = (t₀ - t) * ‖L‖ := by rw [norm_smul, h_norm_real]
-  rw [h_eq]
+  rw [show γ t - s = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) by rw [h_at]; ring]
   calc ‖((t - t₀) : ℝ) • L + (γ t - γ t₀ - (t - t₀) • L)‖
       ≤ ‖((t - t₀) : ℝ) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := norm_add_le _ _
     _ ≤ (t₀ - t) * ‖L‖ + ‖L‖/2 * (t₀ - t) := by gcongr <;> [exact h_norm_smul.le; exact h_bound]
     _ = (3 * ‖L‖/2) * (t₀ - t) := by ring
 
-/-! ### Strict monotonicity of `‖γ(t) - s‖` on a one-sided neighborhood
-
-From the differentiability `o(t-t₀)` bound at `t₀`, the squared-norm function
-`t ↦ ‖γ(t) - s‖²` has positive derivative on `(t₀, t₀+r)` for some `r > 0`.
-This gives strict monotonicity of `‖γ(t) - s‖` itself on the one-sided
-neighborhood, which is the key ingredient for inverting the norm via IVT
-to define the exit-time cutoff `δ(ε)`. -/
-
-/-- The real "inner product" of two complex numbers viewed as ℝ²:
-`reInner z w := z.re * w.re + z.im * w.im`. This equals `Re(z * conj w)`. -/
 private def reInner (z w : ℂ) : ℝ := z.re * w.re + z.im * w.im
 
 private lemma reInner_le_norm_mul_norm (z w : ℂ) :
     |reInner z w| ≤ ‖z‖ * ‖w‖ := by
   have h_id : reInner z w = (z * (starRingEnd ℂ) w).re := by
-    unfold reInner
-    simp only [Complex.mul_re, Complex.conj_re, Complex.conj_im]
-    ring
+    simp only [reInner, Complex.mul_re, Complex.conj_re, Complex.conj_im]; ring
   have h_norm_eq : ‖z‖ * ‖w‖ = ‖z * (starRingEnd ℂ) w‖ := by
     rw [norm_mul, Complex.norm_conj]
-  rw [h_id, h_norm_eq]
-  exact Complex.abs_re_le_norm _
+  rw [h_id, h_norm_eq]; exact Complex.abs_re_le_norm _
 
 private lemma reInner_add_left (a b c : ℂ) :
     reInner (a + b) c = reInner a c + reInner b c := by
-  unfold reInner
-  simp only [Complex.add_re, Complex.add_im]; ring
+  simp only [reInner, Complex.add_re, Complex.add_im]; ring
 
 private lemma reInner_add_right (a b c : ℂ) :
     reInner a (b + c) = reInner a b + reInner a c := by
-  unfold reInner
-  simp only [Complex.add_re, Complex.add_im]; ring
+  simp only [reInner, Complex.add_re, Complex.add_im]; ring
 
 private lemma reInner_smul_left (r : ℝ) (a c : ℂ) :
     reInner ((r : ℝ) • a) c = r * reInner a c := by
-  unfold reInner
-  simp only [Complex.real_smul, Complex.mul_re, Complex.mul_im,
-    Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero]
-  ring
+  simp only [reInner, Complex.real_smul, Complex.mul_re, Complex.mul_im,
+    Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero]; ring
 
 private lemma reInner_self (z : ℂ) : reInner z z = ‖z‖^2 := by
   rw [reInner, ← Complex.normSq_eq_norm_sq, Complex.normSq_apply]
 
-/-- **Inner-product positivity, right side**: for `t > t₀` close to `t₀`, with
-right derivative limit `L ≠ 0`, the real inner product
-`reInner (γ(t)-s) (γ'(t))` (which equals `(γ(t)-s).re·γ'(t).re + (γ(t)-s).im·γ'(t).im`)
-is bounded below by `(t - t₀) · ‖L‖² / 2 > 0`.
-
-This is the key positive-derivative bound: the derivative of `t ↦ ‖γ(t)-s‖²` is
-`2·reInner(γ(t)-s, γ'(t))`, and the leading-order term is `(t-t₀)·‖L‖²`, which
-dominates the `o(t-t₀)` corrections eventually. -/
 private theorem reInner_lower_bound_right_eventually
     {γ : ℝ → ℂ} {t₀ : ℝ} {s : ℂ} (h_at : γ t₀ = s)
     {L : ℂ} (hL : L ≠ 0)
@@ -376,91 +328,43 @@ private theorem reInner_lower_bound_right_eventually
     (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t) :
     ∀ᶠ t in 𝓝[>] t₀,
       (t - t₀) * ‖L‖^2 / 2 ≤ reInner (γ t - s) (deriv γ t) := by
-  -- Build chord-tangent and deriv-tangent eventual bounds.
   obtain ⟨S, hS_mem, hS_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Ioi t₀) t₀ :=
-    hasDerivWithinAt_Ioi_iff_Ici.mpr
-      (hasDerivWithinAt_Ici_of_tendsto_deriv
-        (fun t ht => (hS_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hS_mem hL_right)
-  have hr := hasDerivWithinAt_iff_isLittleO.mp hderiv
-  -- Choose tolerance η = ‖L‖/8 so 2η‖L‖ + η² = ‖L‖²/4 + ‖L‖²/64 < ‖L‖²/2.
+  have hr := hasDerivWithinAt_iff_isLittleO.mp <| hasDerivWithinAt_Ioi_iff_Ici.mpr
+    (hasDerivWithinAt_Ici_of_tendsto_deriv
+      (fun t ht => (hS_diff t ht).differentiableWithinAt)
+      hγ_cont.continuousWithinAt hS_mem hL_right)
   set η : ℝ := ‖L‖ / 8 with hη_def
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hη_pos : 0 < η := by rw [hη_def]; positivity
-  -- Eventually `‖γ(t) - γ(t₀) - (t - t₀) • L‖ ≤ η · |t - t₀|`.
-  have h_chord := hr.def hη_pos
-  -- Eventually `deriv γ t` is η-close to L.
   have h_deriv_close : ∀ᶠ t in 𝓝[>] t₀, ‖deriv γ t - L‖ < η := by
-    have := (Metric.tendsto_nhds.mp hL_right) η hη_pos
-    filter_upwards [this] with t ht
+    filter_upwards [(Metric.tendsto_nhds.mp hL_right) η hη_pos] with t ht
     rw [dist_eq_norm] at ht; exact ht
-  filter_upwards [h_chord, h_deriv_close, self_mem_nhdsWithin] with
+  filter_upwards [hr.def hη_pos, h_deriv_close, self_mem_nhdsWithin] with
     t h_chord_t h_dclose_t h_t_gt
   have h_t_pos : 0 < t - t₀ := sub_pos.mpr h_t_gt
-  -- Decompose: γ(t) - s = (t-t₀) • L + R, deriv γ t = L + D.
   set R : ℂ := γ t - γ t₀ - (t - t₀) • L with hR_def
   set D : ℂ := deriv γ t - L with hD_def
   have hR_norm : ‖R‖ ≤ η * (t - t₀) := by
-    rw [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_chord_t
-    exact h_chord_t
+    rw [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_chord_t; exact h_chord_t
   have hD_norm : ‖D‖ ≤ η := le_of_lt h_dclose_t
-  have h_gamma_decomp : γ t - s = (t - t₀) • L + R := by
-    rw [hR_def, h_at]; ring
-  have h_deriv_decomp : deriv γ t = L + D := by
-    rw [hD_def]; ring
-  -- Expand reInner via bilinearity:
-  -- reInner (γ t - s) (deriv γ t) = reInner ((t-t₀)•L + R) (L + D)
-  --   = reInner ((t-t₀)•L) L + reInner ((t-t₀)•L) D + reInner R L + reInner R D
-  --   = (t-t₀)·‖L‖² + (t-t₀)·reInner L D + reInner R L + reInner R D.
-  rw [h_gamma_decomp, h_deriv_decomp]
-  rw [reInner_add_left, reInner_add_right, reInner_add_right]
-  rw [reInner_smul_left, reInner_smul_left, reInner_self]
-  -- Goal: (t-t₀)*‖L‖²/2 ≤ (t-t₀)*‖L‖² + ((t-t₀)*reInner L D + (reInner R L + reInner R D))
-  -- Bound errors:
-  have h_err_LD : |reInner L D| ≤ ‖L‖ * η := by
-    refine le_trans (reInner_le_norm_mul_norm L D) ?_
-    exact mul_le_mul_of_nonneg_left hD_norm (norm_nonneg _)
-  have h_err_RL : |reInner R L| ≤ η * (t - t₀) * ‖L‖ := by
-    refine le_trans (reInner_le_norm_mul_norm R L) ?_
-    exact mul_le_mul_of_nonneg_right hR_norm (norm_nonneg _)
-  have h_err_RD : |reInner R D| ≤ η * (t - t₀) * η := by
-    refine le_trans (reInner_le_norm_mul_norm R D) ?_
-    exact mul_le_mul hR_norm hD_norm (norm_nonneg _) (by positivity)
-  -- Sign-flipped versions for linarith:
+  rw [show γ t - s = (t - t₀) • L + R by rw [hR_def, h_at]; ring,
+      show deriv γ t = L + D by rw [hD_def]; ring,
+      reInner_add_left, reInner_add_right, reInner_add_right,
+      reInner_smul_left, reInner_smul_left, reInner_self]
+  have h_err_LD : |reInner L D| ≤ ‖L‖ * η :=
+    (reInner_le_norm_mul_norm L D).trans (mul_le_mul_of_nonneg_left hD_norm (norm_nonneg _))
+  have h_err_RL : |reInner R L| ≤ η * (t - t₀) * ‖L‖ :=
+    (reInner_le_norm_mul_norm R L).trans (mul_le_mul_of_nonneg_right hR_norm (norm_nonneg _))
+  have h_err_RD : |reInner R D| ≤ η * (t - t₀) * η :=
+    (reInner_le_norm_mul_norm R D).trans
+      (mul_le_mul hR_norm hD_norm (norm_nonneg _) (by positivity))
   have h_LD_lower : -(‖L‖ * η) ≤ reInner L D := neg_le_of_abs_le h_err_LD
   have h_RL_lower : -(η * (t - t₀) * ‖L‖) ≤ reInner R L := neg_le_of_abs_le h_err_RL
   have h_RD_lower : -(η * (t - t₀) * η) ≤ reInner R D := neg_le_of_abs_le h_err_RD
-  -- For η = ‖L‖/8: 2η‖L‖ + η² = ‖L‖²/4 + ‖L‖²/64 < ‖L‖²/2.
-  have h_eta_bound : 2 * η * ‖L‖ + η^2 ≤ ‖L‖^2 / 2 := by
-    rw [hη_def]; nlinarith [hL_pos]
-  -- Multiply h_LD_lower by (t-t₀) ≥ 0:
-  have h_t_LD : -((t - t₀) * (‖L‖ * η)) ≤ (t - t₀) * reInner L D := by
-    have := mul_le_mul_of_nonneg_left h_LD_lower h_t_pos.le
-    linarith [this, show (t - t₀) * -(‖L‖ * η) = -((t - t₀) * (‖L‖ * η)) from by ring]
-  -- Combine bounds. Total error lower bound:
-  -- (t-t₀)*reInner L D + reInner R L + reInner R D
-  --   ≥ -(t-t₀)*‖L‖*η - η*(t-t₀)*‖L‖ - η*(t-t₀)*η = -(t-t₀)*(2η‖L‖ + η²).
-  -- Need this ≥ -(t-t₀)*‖L‖²/2.
-  have h_combined :
-      -((t - t₀) * (2 * η * ‖L‖ + η^2))
-        ≤ (t - t₀) * reInner L D + (reInner R L + reInner R D) := by
-    have h1 : -((t - t₀) * (2 * η * ‖L‖ + η^2)) =
-        -((t - t₀) * (‖L‖ * η)) + (-(η * (t - t₀) * ‖L‖) + -(η * (t - t₀) * η)) := by
-      ring
-    rw [h1]
-    linarith
-  have h_err_le : -((t - t₀) * (‖L‖^2 / 2))
-      ≤ (t - t₀) * reInner L D + (reInner R L + reInner R D) := by
-    refine le_trans ?_ h_combined
-    have h_le : (t - t₀) * (2 * η * ‖L‖ + η^2) ≤ (t - t₀) * (‖L‖^2 / 2) :=
-      mul_le_mul_of_nonneg_left h_eta_bound h_t_pos.le
-    linarith
-  linarith
+  have h_eta_bound : 2 * η * ‖L‖ + η^2 ≤ ‖L‖^2 / 2 := by rw [hη_def]; nlinarith [hL_pos]
+  nlinarith [mul_le_mul_of_nonneg_left h_LD_lower h_t_pos.le,
+    mul_le_mul_of_nonneg_left h_eta_bound h_t_pos.le, h_RL_lower, h_RD_lower]
 
-/-- **Equivalence of `reInner` with the real-valued inner product on `ℂ`**:
-the bare `reInner z w = z.re * w.re + z.im * w.im` equals `⟪w, z⟫_ℝ` when `ℂ`
-is viewed as a real inner-product space via `RCLike.toInnerProductSpaceReal`. -/
 private lemma reInner_eq_inner_real (z w : ℂ) :
     reInner z w = inner ℝ w z := by
   change z.re * w.re + z.im * w.im = (Inner.rclikeToReal ℂ ℂ).inner w z
@@ -480,59 +384,37 @@ theorem norm_sub_strictMonoOn_right
     (hγ_cont : ContinuousAt γ t₀)
     (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t) :
     ∃ r > 0, StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + r)) := by
-  -- Get a right interval where positive-deriv bound and differentiability hold.
-  have h_pos := reInner_lower_bound_right_eventually h_at hL hL_right hγ_cont hγ_diff
   have h_combined : ∀ᶠ t in 𝓝[>] t₀,
-      DifferentiableAt ℝ γ t ∧
-      (t - t₀) * ‖L‖^2 / 2 ≤ reInner (γ t - s) (deriv γ t) := by
-    filter_upwards [hγ_diff, h_pos] with t h1 h2
+      DifferentiableAt ℝ γ t ∧ (t - t₀) * ‖L‖^2 / 2 ≤ reInner (γ t - s) (deriv γ t) := by
+    filter_upwards [hγ_diff,
+      reInner_lower_bound_right_eventually h_at hL hL_right hγ_cont hγ_diff] with t h1 h2
     exact ⟨h1, h2⟩
-  -- Extract `r > 0` with the bounds holding on `(t₀, t₀+r)`.
   rw [eventually_nhdsWithin_iff] at h_combined
   obtain ⟨r₀, hr₀_pos, hr₀_sub⟩ := Metric.eventually_nhds_iff_ball.mp h_combined
-  -- We use `r := r₀ / 2` so endpoint `t₀ + r` is also strictly inside the open ball.
   set r := r₀ / 2 with hr_def
   have hr_pos : 0 < r := by rw [hr_def]; linarith
-  have hr_lt : r < r₀ := by rw [hr_def]; linarith
   have hr_data : ∀ t ∈ Ioc t₀ (t₀ + r),
-      DifferentiableAt ℝ γ t ∧
-      (t - t₀) * ‖L‖^2 / 2 ≤ reInner (γ t - s) (deriv γ t) := by
+      DifferentiableAt ℝ γ t ∧ (t - t₀) * ‖L‖^2 / 2 ≤ reInner (γ t - s) (deriv γ t) := by
     intro t ht
-    have h_t_in_ball : t ∈ Metric.ball t₀ r₀ := by
-      rw [Metric.mem_ball, Real.dist_eq, abs_of_pos (sub_pos.mpr ht.1)]
-      linarith [ht.2]
-    exact hr₀_sub t h_t_in_ball ht.1
+    refine hr₀_sub t ?_ ht.1
+    rw [Metric.mem_ball, Real.dist_eq, abs_of_pos (sub_pos.mpr ht.1)]
+    linarith [ht.2]
   refine ⟨r, hr_pos, ?_⟩
-  -- Squared-norm strict mono ⟹ norm strict mono.
   set f : ℝ → ℝ := fun t => ‖γ t - s‖^2 with hf_def
-  -- Continuity of γ on Icc.
-  have h_γ_continuousOn : ContinuousOn γ (Icc t₀ (t₀ + r)) := by
-    intro t ht
+  have h_γ_continuousOn : ContinuousOn γ (Icc t₀ (t₀ + r)) := fun t ht => by
     rcases eq_or_lt_of_le ht.1 with h_eq | h_gt
     · rw [← h_eq]; exact hγ_cont.continuousWithinAt
-    · -- t > t₀, so t ∈ Ioc t₀ (t₀+r), giving differentiability and continuity.
-      have h_in_Ioc : t ∈ Ioc t₀ (t₀ + r) := ⟨h_gt, ht.2⟩
-      exact (hr_data t h_in_Ioc).1.continuousAt.continuousWithinAt
-  -- f continuous on Icc
-  have h_f_cont : ContinuousOn f (Icc t₀ (t₀ + r)) := by
-    intro t ht
-    have hγt := h_γ_continuousOn t ht
-    exact ((hγt.sub continuousWithinAt_const).norm).pow 2
-  -- Interior of Icc t₀ (t₀+r) is Ioo t₀ (t₀+r) (since t₀ < t₀+r).
-  have h_int : interior (Icc t₀ (t₀ + r)) = Ioo t₀ (t₀ + r) := by
-    rw [interior_Icc]
+    · exact (hr_data t ⟨h_gt, ht.2⟩).1.continuousAt.continuousWithinAt
+  have h_f_cont : ContinuousOn f (Icc t₀ (t₀ + r)) := fun t ht =>
+    (((h_γ_continuousOn t ht).sub continuousWithinAt_const).norm).pow 2
+  have h_int : interior (Icc t₀ (t₀ + r)) = Ioo t₀ (t₀ + r) := interior_Icc
   have h_f_strictMono : StrictMonoOn f (Icc t₀ (t₀ + r)) := by
     apply strictMonoOn_of_hasDerivWithinAt_pos (convex_Icc _ _)
-      (f' := fun t => 2 * reInner (γ t - s) (deriv γ t))
-      h_f_cont
+      (f' := fun t => 2 * reInner (γ t - s) (deriv γ t)) h_f_cont
     · intro t ht
       rw [h_int] at ht
-      have h_in_Ioc : t ∈ Ioc t₀ (t₀ + r) := ⟨ht.1, le_of_lt ht.2⟩
-      have h_diff : DifferentiableAt ℝ γ t := (hr_data t h_in_Ioc).1
-      -- HasDerivAt for ‖γ(·) - s‖² with derivative 2 * ⟪γ(t) - s, γ'(t)⟫_ℝ.
-      have h_d_sub : HasDerivAt (fun u => γ u - s) (deriv γ t) t :=
-        h_diff.hasDerivAt.sub_const s
-      have h_d_normSq := h_d_sub.norm_sq
+      have h_d_normSq :=
+        ((hr_data t ⟨ht.1, le_of_lt ht.2⟩).1.hasDerivAt.sub_const s).norm_sq
       have h_re_eq : (2 : ℝ) * inner ℝ (γ t - s) (deriv γ t) =
           2 * reInner (γ t - s) (deriv γ t) := by
         rw [reInner_eq_inner_real, real_inner_comm]
@@ -540,21 +422,13 @@ theorem norm_sub_strictMonoOn_right
       exact h_d_normSq.hasDerivWithinAt
     · intro t ht
       rw [h_int] at ht
-      have h_in_Ioc : t ∈ Ioc t₀ (t₀ + r) := ⟨ht.1, le_of_lt ht.2⟩
-      have h_pos_inner : 0 < (t - t₀) * ‖L‖^2 / 2 := by
-        have h_t_pos : 0 < t - t₀ := sub_pos.mpr ht.1
-        have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-        positivity
-      linarith [(hr_data t h_in_Ioc).2]
-  -- Reduce: ‖γ(·) - s‖² strict mono ⟹ ‖γ(·) - s‖ strict mono (both nonneg).
+      have h_t_pos : 0 < t - t₀ := sub_pos.mpr ht.1
+      have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+      have h_pos_inner : 0 < (t - t₀) * ‖L‖^2 / 2 := by positivity
+      linarith [(hr_data t ⟨ht.1, le_of_lt ht.2⟩).2]
   intro a ha b hb hab
-  have h_sq_lt : ‖γ a - s‖^2 < ‖γ b - s‖^2 := h_f_strictMono ha hb hab
-  exact lt_of_pow_lt_pow_left₀ 2 (norm_nonneg _) h_sq_lt
+  exact lt_of_pow_lt_pow_left₀ 2 (norm_nonneg _) (h_f_strictMono ha hb hab)
 
-/-- **Inner-product upper bound, left side**: for `t < t₀` close to `t₀`, with
-left derivative limit `L ≠ 0`, `reInner (γ(t) - s) (γ'(t)) ≤ (t - t₀) · ‖L‖² / 2 < 0`.
-
-The leading-order term is `(t - t₀) · ‖L‖²` which is negative since `t < t₀`. -/
 private theorem reInner_upper_bound_left_eventually
     {γ : ℝ → ℂ} {t₀ : ℝ} {s : ℂ} (h_at : γ t₀ = s)
     {L : ℂ} (hL : L ≠ 0)
@@ -564,69 +438,41 @@ private theorem reInner_upper_bound_left_eventually
     ∀ᶠ t in 𝓝[<] t₀,
       reInner (γ t - s) (deriv γ t) ≤ (t - t₀) * ‖L‖^2 / 2 := by
   obtain ⟨S, hS_mem, hS_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Iio t₀) t₀ :=
-    hasDerivWithinAt_Iio_iff_Iic.mpr
-      (hasDerivWithinAt_Iic_of_tendsto_deriv
-        (fun t ht => (hS_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hS_mem hL_left)
-  have hr := hasDerivWithinAt_iff_isLittleO.mp hderiv
+  have hr := hasDerivWithinAt_iff_isLittleO.mp <| hasDerivWithinAt_Iio_iff_Iic.mpr
+    (hasDerivWithinAt_Iic_of_tendsto_deriv
+      (fun t ht => (hS_diff t ht).differentiableWithinAt)
+      hγ_cont.continuousWithinAt hS_mem hL_left)
   set η : ℝ := ‖L‖ / 8 with hη_def
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hη_pos : 0 < η := by rw [hη_def]; positivity
-  have h_chord := hr.def hη_pos
   have h_deriv_close : ∀ᶠ t in 𝓝[<] t₀, ‖deriv γ t - L‖ < η := by
-    have := (Metric.tendsto_nhds.mp hL_left) η hη_pos
-    filter_upwards [this] with t ht
+    filter_upwards [(Metric.tendsto_nhds.mp hL_left) η hη_pos] with t ht
     rw [dist_eq_norm] at ht; exact ht
-  filter_upwards [h_chord, h_deriv_close, self_mem_nhdsWithin] with
+  filter_upwards [hr.def hη_pos, h_deriv_close, self_mem_nhdsWithin] with
     t h_chord_t h_dclose_t h_t_lt
-  have h_t_neg : t - t₀ < 0 := sub_neg_of_lt h_t_lt
   have h_t₀t_pos : 0 < t₀ - t := sub_pos.mpr h_t_lt
   set R : ℂ := γ t - γ t₀ - (t - t₀) • L with hR_def
   set D : ℂ := deriv γ t - L with hD_def
   have hR_norm : ‖R‖ ≤ η * (t₀ - t) := by
-    rw [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t₀t_pos] at h_chord_t
-    exact h_chord_t
+    rw [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t₀t_pos] at h_chord_t; exact h_chord_t
   have hD_norm : ‖D‖ ≤ η := le_of_lt h_dclose_t
-  have h_gamma_decomp : γ t - s = (t - t₀) • L + R := by
-    rw [hR_def, h_at]; ring
-  have h_deriv_decomp : deriv γ t = L + D := by rw [hD_def]; ring
-  rw [h_gamma_decomp, h_deriv_decomp]
-  rw [reInner_add_left, reInner_add_right, reInner_add_right]
-  rw [reInner_smul_left, reInner_smul_left, reInner_self]
-  -- Goal: (t-t₀)*‖L‖² + ((t-t₀)*reInner L D + (reInner R L + reInner R D)) ≤ (t-t₀)*‖L‖²/2.
-  -- Equivalent: (t-t₀)*reInner L D + reInner R L + reInner R D ≤ (t₀-t)*‖L‖²/2.
-  -- Strategy: sum of |error terms| ≤ (t₀-t)·(2η‖L‖ + η²) ≤ (t₀-t)·‖L‖²/2.
-  have h_err_LD : |reInner L D| ≤ ‖L‖ * η := by
-    refine le_trans (reInner_le_norm_mul_norm L D) ?_
-    exact mul_le_mul_of_nonneg_left hD_norm (norm_nonneg _)
-  have h_err_RL : |reInner R L| ≤ η * (t₀ - t) * ‖L‖ := by
-    refine le_trans (reInner_le_norm_mul_norm R L) ?_
-    exact mul_le_mul_of_nonneg_right hR_norm (norm_nonneg _)
-  have h_err_RD : |reInner R D| ≤ η * (t₀ - t) * η := by
-    refine le_trans (reInner_le_norm_mul_norm R D) ?_
-    exact mul_le_mul hR_norm hD_norm (norm_nonneg _) (by positivity)
-  -- Bound (t-t₀)*reInner L D in absolute value: |(t-t₀)| = t₀-t.
-  have h_t_LD_abs : |(t - t₀) * reInner L D| ≤ (t₀ - t) * (‖L‖ * η) := by
-    rw [abs_mul, abs_sub_comm, abs_of_pos h_t₀t_pos]
+  rw [show γ t - s = (t - t₀) • L + R by rw [hR_def, h_at]; ring,
+      show deriv γ t = L + D by rw [hD_def]; ring,
+      reInner_add_left, reInner_add_right, reInner_add_right,
+      reInner_smul_left, reInner_smul_left, reInner_self]
+  have h_err_LD : |reInner L D| ≤ ‖L‖ * η :=
+    (reInner_le_norm_mul_norm L D).trans (mul_le_mul_of_nonneg_left hD_norm (norm_nonneg _))
+  have h_err_RL : |reInner R L| ≤ η * (t₀ - t) * ‖L‖ :=
+    (reInner_le_norm_mul_norm R L).trans (mul_le_mul_of_nonneg_right hR_norm (norm_nonneg _))
+  have h_err_RD : |reInner R D| ≤ η * (t₀ - t) * η :=
+    (reInner_le_norm_mul_norm R D).trans
+      (mul_le_mul hR_norm hD_norm (norm_nonneg _) (by positivity))
+  have h_t_LD_upper : (t - t₀) * reInner L D ≤ (t₀ - t) * (‖L‖ * η) := by
+    refine le_of_abs_le ?_; rw [abs_mul, abs_sub_comm, abs_of_pos h_t₀t_pos]
     exact mul_le_mul_of_nonneg_left h_err_LD h_t₀t_pos.le
-  have h_RL_upper : reInner R L ≤ η * (t₀ - t) * ‖L‖ := le_of_abs_le h_err_RL
-  have h_RD_upper : reInner R D ≤ η * (t₀ - t) * η := le_of_abs_le h_err_RD
-  have h_t_LD_upper : (t - t₀) * reInner L D ≤ (t₀ - t) * (‖L‖ * η) :=
-    le_of_abs_le h_t_LD_abs
-  have h_eta_bound : 2 * η * ‖L‖ + η^2 ≤ ‖L‖^2 / 2 := by
-    rw [hη_def]; nlinarith [hL_pos]
-  -- Sum of upper bounds: (t₀-t)·(‖L‖·η + η·‖L‖ + η·η) = (t₀-t)·(2η‖L‖ + η²)
-  --                   ≤ (t₀-t)·‖L‖²/2.
-  have h_sum_le : (t - t₀) * reInner L D + (reInner R L + reInner R D)
-        ≤ (t₀ - t) * (2 * η * ‖L‖ + η^2) := by
-    have h1 : (t₀ - t) * (‖L‖ * η) + (η * (t₀ - t) * ‖L‖ + η * (t₀ - t) * η)
-        = (t₀ - t) * (2 * η * ‖L‖ + η^2) := by ring
-    linarith
-  have h_le_main : (t₀ - t) * (2 * η * ‖L‖ + η^2) ≤ (t₀ - t) * (‖L‖^2 / 2) :=
-    mul_le_mul_of_nonneg_left h_eta_bound h_t₀t_pos.le
-  have h_neg_eq : (t₀ - t) * (‖L‖^2 / 2) = -((t - t₀) * (‖L‖^2 / 2)) := by ring
-  linarith
+  have h_eta_bound : 2 * η * ‖L‖ + η^2 ≤ ‖L‖^2 / 2 := by rw [hη_def]; nlinarith [hL_pos]
+  nlinarith [h_t_LD_upper, le_of_abs_le h_err_RL, le_of_abs_le h_err_RD,
+    mul_le_mul_of_nonneg_left h_eta_bound h_t₀t_pos.le]
 
 /-- **Strict ANTI-monotonicity left side**: for some `r > 0`, the function
 `t ↦ ‖γ(t) - s‖` is strictly anti-monotone (decreasing) on `[t₀ - r, t₀]`.
@@ -639,51 +485,37 @@ theorem norm_sub_strictAntiOn_left
     (hγ_cont : ContinuousAt γ t₀)
     (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t) :
     ∃ r > 0, StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - r) t₀) := by
-  have h_neg := reInner_upper_bound_left_eventually h_at hL hL_left hγ_cont hγ_diff
   have h_combined : ∀ᶠ t in 𝓝[<] t₀,
-      DifferentiableAt ℝ γ t ∧
-      reInner (γ t - s) (deriv γ t) ≤ (t - t₀) * ‖L‖^2 / 2 := by
-    filter_upwards [hγ_diff, h_neg] with t h1 h2
+      DifferentiableAt ℝ γ t ∧ reInner (γ t - s) (deriv γ t) ≤ (t - t₀) * ‖L‖^2 / 2 := by
+    filter_upwards [hγ_diff,
+      reInner_upper_bound_left_eventually h_at hL hL_left hγ_cont hγ_diff] with t h1 h2
     exact ⟨h1, h2⟩
   rw [eventually_nhdsWithin_iff] at h_combined
   obtain ⟨r₀, hr₀_pos, hr₀_sub⟩ := Metric.eventually_nhds_iff_ball.mp h_combined
   set r := r₀ / 2 with hr_def
   have hr_pos : 0 < r := by rw [hr_def]; linarith
-  have hr_lt : r < r₀ := by rw [hr_def]; linarith
   have hr_data : ∀ t ∈ Ico (t₀ - r) t₀,
-      DifferentiableAt ℝ γ t ∧
-      reInner (γ t - s) (deriv γ t) ≤ (t - t₀) * ‖L‖^2 / 2 := by
+      DifferentiableAt ℝ γ t ∧ reInner (γ t - s) (deriv γ t) ≤ (t - t₀) * ‖L‖^2 / 2 := by
     intro t ht
-    have h_t_in_ball : t ∈ Metric.ball t₀ r₀ := by
-      rw [Metric.mem_ball, Real.dist_eq, abs_sub_comm,
-        abs_of_pos (sub_pos.mpr ht.2)]
-      linarith [ht.1]
-    exact hr₀_sub t h_t_in_ball ht.2
+    refine hr₀_sub t ?_ ht.2
+    rw [Metric.mem_ball, Real.dist_eq, abs_sub_comm, abs_of_pos (sub_pos.mpr ht.2)]
+    linarith [ht.1]
   refine ⟨r, hr_pos, ?_⟩
   set f : ℝ → ℝ := fun t => ‖γ t - s‖^2 with hf_def
-  have h_γ_continuousOn : ContinuousOn γ (Icc (t₀ - r) t₀) := by
-    intro t ht
+  have h_γ_continuousOn : ContinuousOn γ (Icc (t₀ - r) t₀) := fun t ht => by
     rcases eq_or_lt_of_le ht.2 with h_eq | h_lt
     · rw [h_eq]; exact hγ_cont.continuousWithinAt
-    · have h_in_Ico : t ∈ Ico (t₀ - r) t₀ := ⟨ht.1, h_lt⟩
-      exact (hr_data t h_in_Ico).1.continuousAt.continuousWithinAt
-  have h_f_cont : ContinuousOn f (Icc (t₀ - r) t₀) := by
-    intro t ht
-    have hγt := h_γ_continuousOn t ht
-    exact ((hγt.sub continuousWithinAt_const).norm).pow 2
-  have h_int : interior (Icc (t₀ - r) t₀) = Ioo (t₀ - r) t₀ := by
-    rw [interior_Icc]
+    · exact (hr_data t ⟨ht.1, h_lt⟩).1.continuousAt.continuousWithinAt
+  have h_f_cont : ContinuousOn f (Icc (t₀ - r) t₀) := fun t ht =>
+    (((h_γ_continuousOn t ht).sub continuousWithinAt_const).norm).pow 2
+  have h_int : interior (Icc (t₀ - r) t₀) = Ioo (t₀ - r) t₀ := interior_Icc
   have h_f_strictAnti : StrictAntiOn f (Icc (t₀ - r) t₀) := by
     apply strictAntiOn_of_hasDerivWithinAt_neg (convex_Icc _ _)
-      (f' := fun t => 2 * reInner (γ t - s) (deriv γ t))
-      h_f_cont
+      (f' := fun t => 2 * reInner (γ t - s) (deriv γ t)) h_f_cont
     · intro t ht
       rw [h_int] at ht
-      have h_in_Ico : t ∈ Ico (t₀ - r) t₀ := ⟨le_of_lt ht.1, ht.2⟩
-      have h_diff : DifferentiableAt ℝ γ t := (hr_data t h_in_Ico).1
-      have h_d_sub : HasDerivAt (fun u => γ u - s) (deriv γ t) t :=
-        h_diff.hasDerivAt.sub_const s
-      have h_d_normSq := h_d_sub.norm_sq
+      have h_d_normSq :=
+        ((hr_data t ⟨le_of_lt ht.1, ht.2⟩).1.hasDerivAt.sub_const s).norm_sq
       have h_re_eq : (2 : ℝ) * inner ℝ (γ t - s) (deriv γ t) =
           2 * reInner (γ t - s) (deriv γ t) := by
         rw [reInner_eq_inner_real, real_inner_comm]
@@ -691,27 +523,14 @@ theorem norm_sub_strictAntiOn_left
       exact h_d_normSq.hasDerivWithinAt
     · intro t ht
       rw [h_int] at ht
-      have h_in_Ico : t ∈ Ico (t₀ - r) t₀ := ⟨le_of_lt ht.1, ht.2⟩
+      have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
+      have hL_sq_pos : 0 < ‖L‖^2 := by positivity
       have h_neg_inner : (t - t₀) * ‖L‖^2 / 2 < 0 := by
-        have h_t_neg : t - t₀ < 0 := sub_neg_of_lt ht.2
-        have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-        have : ‖L‖^2 > 0 := by positivity
-        nlinarith
-      linarith [(hr_data t h_in_Ico).2]
-  -- Reduce: ‖γ(·) - s‖² strict anti ⟹ ‖γ(·) - s‖ strict anti.
+        nlinarith [sub_neg_of_lt ht.2, hL_sq_pos]
+      linarith [(hr_data t ⟨le_of_lt ht.1, ht.2⟩).2]
   intro a ha b hb hab
-  have h_sq_lt : ‖γ b - s‖^2 < ‖γ a - s‖^2 := h_f_strictAnti ha hb hab
-  exact lt_of_pow_lt_pow_left₀ 2 (norm_nonneg _) h_sq_lt
+  exact lt_of_pow_lt_pow_left₀ 2 (norm_nonneg _) (h_f_strictAnti ha hb hab)
 
-/-! ### IVT exit-time inversion (T-BR-Y3b)
-
-Given strict monotonicity of `f` on `[0, r]` with `f 0 = 0` and continuity, the
-intermediate value theorem produces, for each `ε ∈ (0, f r)`, a unique
-`τ ∈ (0, r)` with `f τ = ε`. This is the inverse function defining the
-exit-time cutoff `δ(ε)` from the level set `‖γ(t) - s‖ = ε`. -/
-
-/-- **IVT exit-time inversion**: a strictly monotone continuous function with
-`f 0 = 0` admits a unique preimage `τ ∈ (0, r)` for every `ε ∈ (0, f r)`. -/
 private theorem strict_mono_inverse_exists
     (f : ℝ → ℝ) {r : ℝ} (hr : 0 < r) (hf₀ : f 0 = 0)
     (hf_strict : StrictMonoOn f (Icc 0 r))
@@ -730,16 +549,6 @@ private theorem strict_mono_inverse_exists
   -- Uniqueness: StrictMonoOn implies InjOn.
   exact hf_strict.injOn (Ioo_subset_Icc_self hτ'_mem)
     (Ioo_subset_Icc_self hτ_mem) (hfτ'.trans hfτ.symm)
-
-/-! ### Geometric scaffolding bundle (T-BR-Y3b)
-
-This bundles the derived geometric output `(δ_left, δ_right, threshold, ...,
-h_far_*, h_near_*)` from immersion data into a single structure. The user of
-the asymmetric framework can extract individual fields if they need to
-construct the analytic content (`AsymmetricArcFTCHyp`) themselves; alternatively
-the `AsymmetricSingleCrossingData.ofClosedImmersion_flat_one_derived` constructor
-below packages everything (including the user-supplied analytic content) into
-the full structure. -/
 
 /-- Bundled geometric scaffolding: cutoffs and far/near bounds derived from
 immersion data (`γ, t₀, h_at, h_unique, h_flat`). -/
@@ -769,10 +578,6 @@ structure DerivedAsymmetricCutoffs {x : ℂ} (γ : ClosedPwC1Immersion x) (s : �
     ∀ t, t₀ ≤ t → t - t₀ ≤ δ_right ε →
       ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
 
-/-- **Derive geometric scaffolding (right side).** From the strict monotonicity
-of `‖γ(t) - s‖` on a right neighborhood and the compact far bound from
-uniqueness, produce a right cutoff function `δ_right : ℝ → ℝ` with positive
-threshold satisfying the `h_far_right` and `h_near_right` axioms. -/
 private theorem exists_right_cutoff
     (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ : ℝ}
     (ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1)
@@ -790,34 +595,26 @@ private theorem exists_right_cutoff
           ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε) := by
   classical
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-    with hγf_def
-  -- Establish smoothness ingredients at t₀: continuity, differentiability,
-  -- and a nonzero right derivative limit.
   obtain ⟨L, hL_ne, hL_right⟩ := exists_right_deriv_limit γ ht₀_Ioo
   have hγf_cont : ContinuousAt γf t₀ :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousAt
   have hγf_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γf t :=
     eventually_differentiable_right γ ht₀_Ioo
-  -- Strict monotonicity on `[t₀, t₀ + r₀]`.
   obtain ⟨r₀, hr₀_pos, hmono⟩ :=
     norm_sub_strictMonoOn_right h_at hL_ne hL_right hγf_cont hγf_diff
-  -- Shrink r so r ≤ min t₀ (1 - t₀) (so [t₀+r, 1] and [0, t₀-r] both fit).
   set r : ℝ := min r₀ (min ((1 - t₀) / 2) (t₀ / 2)) with hr_def
   have hr_pos : 0 < r := by
     rw [hr_def]
-    refine lt_min hr₀_pos (lt_min ?_ ?_)
-    · linarith [ht₀_Ioo.2]
-    · linarith [ht₀_Ioo.1]
+    exact lt_min hr₀_pos (lt_min (by linarith [ht₀_Ioo.2]) (by linarith [ht₀_Ioo.1]))
   have hr_le_r₀ : r ≤ r₀ := by rw [hr_def]; exact min_le_left _ _
-  have hr_le_half : r ≤ (1 - t₀) / 2 := by
-    rw [hr_def]; exact (min_le_right _ _).trans (min_le_left _ _)
-  have hr_le_t₀_half : r ≤ t₀ / 2 := by
-    rw [hr_def]; exact (min_le_right _ _).trans (min_le_right _ _)
+  have hr_le_half : r ≤ (1 - t₀) / 2 :=
+    (min_le_right _ _).trans (min_le_left _ _)
+  have hr_le_t₀_half : r ≤ t₀ / 2 :=
+    (min_le_right _ _).trans (min_le_right _ _)
   have hr_lt_one_sub : r < 1 - t₀ := by linarith [ht₀_Ioo.2]
   have hr_le_t₀ : r ≤ t₀ := by linarith [ht₀_Ioo.1]
   have hmono_r : StrictMonoOn (fun t => ‖γf t - s‖) (Icc t₀ (t₀ + r)) :=
     hmono.mono (Icc_subset_Icc le_rfl (by linarith))
-  -- Define f(τ) := ‖γf (t₀ + τ) - s‖ on [0, r].
   set f : ℝ → ℝ := fun τ => ‖γf (t₀ + τ) - s‖ with hf_def
   have hγ_cont_all : Continuous γf :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
@@ -832,85 +629,54 @@ private theorem exists_right_cutoff
       ⟨by linarith [hb.1], by linarith [hb.2]⟩ (by linarith)
   have hf_r_pos : 0 < f r :=
     hf₀ ▸ hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le) hr_pos
-  -- Compact far bound on the right portion [t₀ + r, 1].
   obtain ⟨m, hm_pos, _, h_right_far⟩ := exists_far_bound_compact γf hγ_cont_all s t₀
     h_unique hr_pos hr_le_t₀ (le_of_lt hr_lt_one_sub)
   set threshold : ℝ := min (f r) m with hthresh_def
-  have hthresh_pos : 0 < threshold := lt_min hf_r_pos hm_pos
   have hthresh_le_fr : threshold ≤ f r := by rw [hthresh_def]; exact min_le_left _ _
   have hthresh_le_m : threshold ≤ m := by rw [hthresh_def]; exact min_le_right _ _
-  -- Define δ_right via Classical.choose on strict_mono_inverse_exists.
   set δ_right : ℝ → ℝ := fun ε =>
     if h : ε ∈ Ioo (0 : ℝ) (f r) then
       (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε h).choose
     else r / 2 with hδ_def
-  -- Properties of δ_right when ε ∈ Ioo 0 (f r).
   have hδ_spec : ∀ ε, 0 < ε → ε < f r →
       δ_right ε ∈ Ioo (0 : ℝ) r ∧ f (δ_right ε) = ε := by
     intro ε hε_pos hε_lt
     have hε_in : ε ∈ Ioo (0 : ℝ) (f r) := ⟨hε_pos, hε_lt⟩
     simp only [hδ_def, dif_pos hε_in]
-    exact
-      (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
-  refine ⟨δ_right, threshold, hthresh_pos, ?_, ?_, ?_, ?_⟩
-  · -- hδ_right_pos
-    intro ε hε_pos hε_lt
+    exact (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
+  refine ⟨δ_right, threshold, lt_min hf_r_pos hm_pos, ?_, ?_, ?_, ?_⟩
+  · intro ε hε_pos hε_lt
     exact (hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.1
-  · -- hδ_right_small : δ_right ε < 1 - t₀
-    intro ε hε_pos hε_lt
-    have h_in_Ioo := (hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1
-    linarith [h_in_Ioo.2]
-  · -- h_far_right
-    intro ε hε_pos hε_lt t ht_Icc ht_ge hgap
-    have hε_lt_fr : ε < f r := lt_of_lt_of_le hε_lt hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
+  · intro ε hε_pos hε_lt
+    linarith [(hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.2]
+  · intro ε hε_pos hε_lt t ht_Icc ht_ge hgap
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
     by_cases ht_le_r : t ≤ t₀ + r
-    · -- Use strict monotonicity: t - t₀ > δ_right ε ⟹ f (t - t₀) > f (δ_right ε) = ε.
-      have ht_τ_mem : t - t₀ ∈ Icc (0 : ℝ) r := ⟨by linarith, by linarith⟩
-      have hδ_τ_mem : δ_right ε ∈ Icc (0 : ℝ) r :=
+    · have h_lt : f (δ_right ε) < f (t - t₀) := hf_strict
         ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩
-      have h_lt : f (δ_right ε) < f (t - t₀) := hf_strict hδ_τ_mem ht_τ_mem hgap
+        ⟨by linarith, by linarith⟩ hgap
       rw [hfδ] at h_lt
       have h_eq : f (t - t₀) = ‖γf t - s‖ := by
         change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
         rw [show t₀ + (t - t₀) = t from by ring]
       rwa [h_eq] at h_lt
-    · -- t > t₀ + r: use the compact far bound.
-      push Not at ht_le_r
-      have hε_lt_m : ε < m := lt_of_lt_of_le hε_lt hthresh_le_m
-      have h_ge_m : m ≤ ‖γf t - s‖ := h_right_far t ⟨le_of_lt ht_le_r, ht_Icc.2⟩
-      linarith
-  · -- h_near_right
-    intro ε hε_pos hε_lt t ht_ge hgap
-    have hε_lt_fr : ε < f r := lt_of_lt_of_le hε_lt hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
-    have ht_τ_mem : t - t₀ ∈ Icc (0 : ℝ) r := by
-      refine ⟨by linarith, ?_⟩
-      linarith [hδ_in.2]
-    have hδ_τ_mem : δ_right ε ∈ Icc (0 : ℝ) r :=
-      ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩
+    · push Not at ht_le_r
+      linarith [h_right_far t ⟨le_of_lt ht_le_r, ht_Icc.2⟩, lt_of_lt_of_le hε_lt hthresh_le_m]
+  · intro ε hε_pos hε_lt t ht_ge hgap
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]
-      exact le_of_lt hε_pos
-    · have ht_τ_pos : (0 : ℝ) < t - t₀ := by
-        cases lt_or_eq_of_le ht_ge with
-        | inl h => linarith
-        | inr h => exact absurd h.symm h_t_eq
-      have h_le : f (t - t₀) ≤ f (δ_right ε) := by
-        cases lt_or_eq_of_le hgap with
-        | inl h_lt =>
-          exact le_of_lt (hf_strict ht_τ_mem hδ_τ_mem h_lt)
-        | inr h_eq =>
-          have : t - t₀ = δ_right ε := h_eq
-          rw [this]
-      rw [hfδ] at h_le
-      have h_eq : f (t - t₀) = ‖γf t - s‖ := by
-        change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
-        rw [show t₀ + (t - t₀) = t from by ring]
-      rwa [h_eq] at h_le
+    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact le_of_lt hε_pos
+    have h_le : f (t - t₀) ≤ f (δ_right ε) := by
+      rcases lt_or_eq_of_le hgap with h_lt | h_eq
+      · exact le_of_lt (hf_strict ⟨by linarith [lt_of_le_of_ne ht_ge (Ne.symm h_t_eq)],
+          by linarith [hδ_in.2]⟩ ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩ h_lt)
+      · rw [h_eq]
+    rw [hfδ] at h_le
+    have h_eq : f (t - t₀) = ‖γf t - s‖ := by
+      change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
+      rw [show t₀ + (t - t₀) = t from by ring]
+    rwa [h_eq] at h_le
 
-/-- **Derive geometric scaffolding (left side).** Symmetric to
-`exists_right_cutoff`. -/
 private theorem exists_left_cutoff
     (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ : ℝ}
     (ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1)
@@ -928,7 +694,6 @@ private theorem exists_left_cutoff
           ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε) := by
   classical
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-    with hγf_def
   obtain ⟨L, hL_ne, hL_left⟩ := exists_left_deriv_limit γ ht₀_Ioo
   have hγf_cont : ContinuousAt γf t₀ :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousAt
@@ -939,20 +704,16 @@ private theorem exists_left_cutoff
   set r : ℝ := min r₀ (min (t₀ / 2) ((1 - t₀) / 2)) with hr_def
   have hr_pos : 0 < r := by
     rw [hr_def]
-    refine lt_min hr₀_pos (lt_min ?_ ?_)
-    · linarith [ht₀_Ioo.1]
-    · linarith [ht₀_Ioo.2]
+    exact lt_min hr₀_pos (lt_min (by linarith [ht₀_Ioo.1]) (by linarith [ht₀_Ioo.2]))
   have hr_le_r₀ : r ≤ r₀ := by rw [hr_def]; exact min_le_left _ _
-  have hr_le_t₀_half : r ≤ t₀ / 2 := by
-    rw [hr_def]; exact le_trans (min_le_right _ _) (min_le_left _ _)
-  have hr_le_one_sub_half : r ≤ (1 - t₀) / 2 := by
-    rw [hr_def]; exact le_trans (min_le_right _ _) (min_le_right _ _)
+  have hr_le_t₀_half : r ≤ t₀ / 2 :=
+    (min_le_right _ _).trans (min_le_left _ _)
+  have hr_le_one_sub_half : r ≤ (1 - t₀) / 2 :=
+    (min_le_right _ _).trans (min_le_right _ _)
   have hr_lt_t₀ : r < t₀ := by linarith [ht₀_Ioo.1]
   have hr_le_one_sub : r ≤ 1 - t₀ := by linarith [ht₀_Ioo.2]
-  -- Anti-mono on `[t₀ - r, t₀]`.
   have hanti_r : StrictAntiOn (fun t => ‖γf t - s‖) (Icc (t₀ - r) t₀) :=
     hanti.mono (Icc_subset_Icc (by linarith) le_rfl)
-  -- Define f(τ) := ‖γf (t₀ - τ) - s‖ on [0, r]; this is STRICTLY MONOTONE (incr).
   set f : ℝ → ℝ := fun τ => ‖γf (t₀ - τ) - s‖ with hf_def
   have hγ_cont_all : Continuous γf :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
@@ -967,14 +728,11 @@ private theorem exists_left_cutoff
       ⟨by linarith [ha.2], by linarith [ha.1]⟩ (by linarith)
   have hf_r_pos : 0 < f r :=
     hf₀ ▸ hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le) hr_pos
-  -- Compact far bound on the left portion [0, t₀ - r].
   obtain ⟨m, hm_pos, h_left_far, _⟩ := exists_far_bound_compact γf hγ_cont_all s t₀
     h_unique hr_pos (le_of_lt hr_lt_t₀) hr_le_one_sub
   set threshold : ℝ := min (f r) m with hthresh_def
-  have hthresh_pos : 0 < threshold := lt_min hf_r_pos hm_pos
   have hthresh_le_fr : threshold ≤ f r := by rw [hthresh_def]; exact min_le_left _ _
   have hthresh_le_m : threshold ≤ m := by rw [hthresh_def]; exact min_le_right _ _
-  -- Define δ_left via Classical.choose.
   set δ_left : ℝ → ℝ := fun ε =>
     if h : ε ∈ Ioo (0 : ℝ) (f r) then
       (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε h).choose
@@ -984,60 +742,39 @@ private theorem exists_left_cutoff
     intro ε hε_pos hε_lt
     have hε_in : ε ∈ Ioo (0 : ℝ) (f r) := ⟨hε_pos, hε_lt⟩
     simp only [hδ_def, dif_pos hε_in]
-    exact
-      (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
-  refine ⟨δ_left, threshold, hthresh_pos, ?_, ?_, ?_, ?_⟩
+    exact (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
+  refine ⟨δ_left, threshold, lt_min hf_r_pos hm_pos, ?_, ?_, ?_, ?_⟩
   · intro ε hε_pos hε_lt
     exact (hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.1
   · intro ε hε_pos hε_lt
-    have h_in_Ioo := (hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1
-    linarith [h_in_Ioo.2]
-  · -- h_far_left
-    intro ε hε_pos hε_lt t ht_Icc ht_le hgap
-    have hε_lt_fr : ε < f r := lt_of_lt_of_le hε_lt hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
+    linarith [(hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.2]
+  · intro ε hε_pos hε_lt t ht_Icc ht_le hgap
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
     by_cases ht_ge_neg : t₀ - r ≤ t
-    · have ht_τ_mem : t₀ - t ∈ Icc (0 : ℝ) r := ⟨by linarith, by linarith⟩
-      have hδ_τ_mem : δ_left ε ∈ Icc (0 : ℝ) r :=
-        ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩
-      have h_lt : f (δ_left ε) < f (t₀ - t) := hf_strict hδ_τ_mem ht_τ_mem hgap
+    · have h_lt : f (δ_left ε) < f (t₀ - t) := hf_strict
+        ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩ ⟨by linarith, by linarith⟩ hgap
       rw [hfδ] at h_lt
       have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
         change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
         rw [show t₀ - (t₀ - t) = t from by ring]
       rwa [h_eq] at h_lt
     · push Not at ht_ge_neg
-      have hε_lt_m : ε < m := lt_of_lt_of_le hε_lt hthresh_le_m
-      have h_ge_m : m ≤ ‖γf t - s‖ := h_left_far t ⟨ht_Icc.1, le_of_lt ht_ge_neg⟩
-      linarith
-  · -- h_near_left
-    intro ε hε_pos hε_lt t ht_le hgap
-    have hε_lt_fr : ε < f r := lt_of_lt_of_le hε_lt hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
-    have ht_τ_mem : t₀ - t ∈ Icc (0 : ℝ) r := by
-      refine ⟨by linarith, ?_⟩
-      linarith [hδ_in.2]
-    have hδ_τ_mem : δ_left ε ∈ Icc (0 : ℝ) r :=
-      ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩
+      linarith [h_left_far t ⟨ht_Icc.1, le_of_lt ht_ge_neg⟩, lt_of_lt_of_le hε_lt hthresh_le_m]
+  · intro ε hε_pos hε_lt t ht_le hgap
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]
-      exact le_of_lt hε_pos
-    · have ht_τ_pos : (0 : ℝ) < t₀ - t := by
-        cases lt_or_eq_of_le ht_le with
-        | inl h => linarith
-        | inr h => exact absurd h h_t_eq
-      have h_le : f (t₀ - t) ≤ f (δ_left ε) := by
-        cases lt_or_eq_of_le hgap with
-        | inl h_lt =>
-          exact le_of_lt (hf_strict ht_τ_mem hδ_τ_mem h_lt)
-        | inr h_eq =>
-          have : t₀ - t = δ_left ε := h_eq
-          rw [this]
-      rw [hfδ] at h_le
-      have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
-        change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
-        rw [show t₀ - (t₀ - t) = t from by ring]
-      rwa [h_eq] at h_le
+    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact le_of_lt hε_pos
+    have h_le : f (t₀ - t) ≤ f (δ_left ε) := by
+      rcases lt_or_eq_of_le hgap with h_lt | h_eq
+      · exact le_of_lt (hf_strict
+          ⟨by linarith [lt_of_le_of_ne ht_le h_t_eq], by linarith [hδ_in.2]⟩
+          ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩ h_lt)
+      · rw [h_eq]
+    rw [hfδ] at h_le
+    have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
+      change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
+      rw [show t₀ - (t₀ - t) = t from by ring]
+    rwa [h_eq] at h_le
 
 /-- **Derive the full geometric scaffolding bundle** from immersion data —
 **corner-friendly form**. This is the same as `deriveAsymmetricCutoffs` but
@@ -1111,10 +848,6 @@ def AsymmetricSingleCrossingData.ofDerivedCutoffs
   L := L
   t₀ := t₀
   ht₀ := by
-    -- t₀ ∈ Ioo 0 1: derivable from hδ_left_small, hδ_right_small at ε = threshold/2.
-    -- We don't have direct access to ht₀_Ioo here, but it's encoded in the bundle.
-    -- Provide it via: pick any ε in (0, threshold), get δ_left ε < t₀ and δ_right ε < 1 - t₀.
-    -- We need a concrete ε. Use threshold/2.
     have hε_pos : 0 < D.threshold / 2 := by linarith [D.hthresh]
     have hε_lt : D.threshold / 2 < D.threshold := by linarith [D.hthresh]
     have hδL_pos := D.hδ_left_pos (D.threshold / 2) hε_pos hε_lt
@@ -1226,15 +959,6 @@ def SingleCrossingData.ofClosedImmersion_flat_one
   hint_right := ftcHyp.hint_right
   h_limit := ftcHyp.h_limit
 
-/-! ## T-BR-Y3 — generic asymmetric `AsymmetricSingleCrossingData` builder
-
-The asymmetric form of `SingleCrossingData.ofClosedImmersion_flat_one`: takes the
-same geometric inputs (immersion, crossing parameter, uniqueness, flatness)
-but with **independent left/right cutoffs** `δ_left, δ_right : ℝ → ℝ` and
-corresponding asymmetric far/near bounds. Each side is controlled independently,
-admitting crossings where the chord-to-tangent constants `‖L_-‖, ‖L_+‖` on the
-two sides differ — which the symmetric form cannot express. -/
-
 /-- **Generic asymmetric builder.** Given a closed piecewise-`C¹` immersion `γ`
 crossing the pole `s` at parameter `t₀ ∈ Ioo 0 1` with `IsFlatOfOrder _ _ 1`
 and uniquely on `[0, 1]`, together with **independent left/right cutoffs**
@@ -1283,22 +1007,6 @@ def AsymmetricSingleCrossingData.ofClosedImmersion_flat_one
     hδ_left_pos hδ_right_pos hδ_left_small hδ_right_small
     h_far_left h_far_right h_near_left h_near_right ftcHyp
 
-/-! ## T-BR-Y3c — `AsymmetricArcFTCHyp` from `HasCauchyPV`
-
-The `AsymmetricArcFTCHyp` analytic oracle packs `(L, E, h_ftc, h_limit,
-hint_left, hint_right)`. T-BR-Y3c shows this bundle can be derived from a
-single `HasCauchyPV` hypothesis (plus the auto-derived geometric scaffolding
-from T-BR-Y3b), eliminating the 5-field FTC oracle in favour of a single
-CPV-existence statement.
-
-The strategy:
-* `E(ε) := outer-integral sum`. Then `h_ftc` is definitional (`rfl`).
-* `hint_left, hint_right`: integrability of `(γ - s)⁻¹ * γ'` on segments away
-  from the singularity follows from `(γ - s)⁻¹` being bounded/continuous
-  (norm bounded below by some `m > 0`) and `γ'` being interval-integrable.
-* `h_limit`: the cutoff integral equals `E(ε)` plus a vanishing middle piece.
-  Since `HasCauchyPV` gives `cutoff_integral → L`, we get `E(ε) → L`. -/
-
 /-- **Integrability of `(γ - s)⁻¹ * γ'` on segments away from the
 singularity**. If `γ(t) ≠ s` on the closed interval `[a, b] ⊆ [0, 1]`, then
 the integrand `(γ(t) - s)⁻¹ * γ'(t)` is interval-integrable on `[a, b]`.
@@ -1316,7 +1024,6 @@ theorem inv_sub_mul_deriv_intervalIntegrable
         deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
       MeasureTheory.volume a b := by
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-    with hγf_def
   have hγ_int : IntervalIntegrable (deriv γf) MeasureTheory.volume a b :=
     γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable.mono_set <| by
       rw [Set.uIcc_of_le hab, Set.uIcc_of_le zero_le_one]; exact h_in_Icc
@@ -1387,7 +1094,6 @@ theorem cutoff_integral_eq_outer_sum
           deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) := by
   classical
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-    with hγf_def
   have hδL_pos := D.hδ_left_pos ε hε_pos hε_lt
   have hδR_pos := D.hδ_right_pos ε hε_pos hε_lt
   have hδL_small := D.hδ_left_small ε hε_pos hε_lt
@@ -1395,12 +1101,8 @@ theorem cutoff_integral_eq_outer_sum
   have h_left_lt : (0 : ℝ) < t₀ - D.δ_left ε := by linarith
   have h_mid_lt : t₀ - D.δ_left ε < t₀ + D.δ_right ε := by linarith
   have h_right_lt : t₀ + D.δ_right ε < 1 := by linarith
-  -- Define F := cpvIntegrand restricted to [0, 1].
-  set F : ℝ → ℂ := fun t =>
-    cpvIntegrand (fun z => (z - s)⁻¹) γf s ε t with hF_def
-  -- Helper: the integrand on each piece.
+  set F : ℝ → ℂ := fun t => cpvIntegrand (fun z => (z - s)⁻¹) γf s ε t with hF_def
   set integrand : ℝ → ℂ := fun t => (γf t - s)⁻¹ * deriv γf t with hI_def
-  -- Step 1: F = integrand a.e. on [0, t₀ - δ_left ε].
   have hF_left_ae : ∀ᵐ t ∂MeasureTheory.volume,
       t ∈ Set.uIoc 0 (t₀ - D.δ_left ε) → F t = integrand t := by
     filter_upwards [MeasureTheory.compl_mem_ae_iff.mpr
@@ -1413,19 +1115,15 @@ theorem cutoff_integral_eq_outer_sum
     rw [if_pos]
     refine D.h_far_left ε hε_pos hε_lt t
       ⟨ht_mem.1.le, (by linarith [ht₀_Ioo.2] : t ≤ 1)⟩ (by linarith) (by linarith)
-  -- Step 2: F = 0 on [t₀ - δ_left ε, t₀ + δ_right ε].
   have hF_mid : ∀ t ∈ Set.uIoc (t₀ - D.δ_left ε) (t₀ + D.δ_right ε), F t = 0 := by
     intro t ht
     rw [Set.uIoc_of_le (le_of_lt h_mid_lt)] at ht
     simp only [hF_def, cpvIntegrand]
     rw [if_neg (not_lt.mpr _)]
     by_cases h_t_le : t ≤ t₀
-    · refine D.h_near_left ε hε_pos hε_lt t h_t_le ?_
-      linarith [ht.1]
+    · exact D.h_near_left ε hε_pos hε_lt t h_t_le (by linarith [ht.1])
     · push Not at h_t_le
-      refine D.h_near_right ε hε_pos hε_lt t (le_of_lt h_t_le) ?_
-      linarith [ht.2]
-  -- Step 3: F = integrand a.e. on [t₀ + δ_right ε, 1].
+      exact D.h_near_right ε hε_pos hε_lt t (le_of_lt h_t_le) (by linarith [ht.2])
   have hF_right_ae : ∀ᵐ t ∂MeasureTheory.volume,
       t ∈ Set.uIoc (t₀ + D.δ_right ε) 1 → F t = integrand t := by
     filter_upwards [MeasureTheory.compl_mem_ae_iff.mpr
@@ -1437,36 +1135,30 @@ theorem cutoff_integral_eq_outer_sum
     rw [if_pos]
     refine D.h_far_right ε hε_pos hε_lt t
       ⟨by linarith [ht₀_Ioo.1], ht_mem.2⟩ (by linarith) (by linarith [ht_mem.1])
-  -- Step 4: Integrability of integrand on outer pieces (from uniqueness).
   have h_int_left :
       IntervalIntegrable integrand MeasureTheory.volume 0 (t₀ - D.δ_left ε) :=
     inv_sub_mul_deriv_intervalIntegrable_left γ ht₀_Ioo hδL_pos hδL_small h_unique
   have h_int_right :
       IntervalIntegrable integrand MeasureTheory.volume (t₀ + D.δ_right ε) 1 :=
     inv_sub_mul_deriv_intervalIntegrable_right γ ht₀_Ioo hδR_pos hδR_small h_unique
-  -- Step 5: Integrability of F on each piece via congr_ae.
   have hF_int_left : IntervalIntegrable F MeasureTheory.volume 0 (t₀ - D.δ_left ε) :=
-    h_int_left.congr_ae
-      ((MeasureTheory.ae_restrict_iff' measurableSet_uIoc).mpr
-        (hF_left_ae.mono (fun t ht hm => (ht hm).symm)))
+    h_int_left.congr_ae ((MeasureTheory.ae_restrict_iff' measurableSet_uIoc).mpr
+      (hF_left_ae.mono (fun t ht hm => (ht hm).symm)))
   have hF_int_mid :
       IntervalIntegrable F MeasureTheory.volume (t₀ - D.δ_left ε) (t₀ + D.δ_right ε) :=
     (IntervalIntegrable.zero (μ := MeasureTheory.volume)
       (a := t₀ - D.δ_left ε) (b := t₀ + D.δ_right ε)).congr
       (fun t ht => (hF_mid t ht).symm)
   have hF_int_right : IntervalIntegrable F MeasureTheory.volume (t₀ + D.δ_right ε) 1 :=
-    h_int_right.congr_ae
-      ((MeasureTheory.ae_restrict_iff' measurableSet_uIoc).mpr
-        (hF_right_ae.mono (fun t ht hm => (ht hm).symm)))
-  -- Step 6: Split, simplify pieces.
-  have h_split : ∫ t in (0 : ℝ)..1, F t =
+    h_int_right.congr_ae ((MeasureTheory.ae_restrict_iff' measurableSet_uIoc).mpr
+      (hF_right_ae.mono (fun t ht hm => (ht hm).symm)))
+  rw [show ∫ t in (0 : ℝ)..1, F t =
       (∫ t in (0 : ℝ)..(t₀ - D.δ_left ε), F t) +
       (∫ t in (t₀ - D.δ_left ε)..(t₀ + D.δ_right ε), F t) +
-      (∫ t in (t₀ + D.δ_right ε)..1, F t) := by
+      (∫ t in (t₀ + D.δ_right ε)..1, F t) by
     rw [← intervalIntegral.integral_add_adjacent_intervals
           (hF_int_left.trans hF_int_mid) hF_int_right,
-        ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid]
-  rw [h_split,
+        ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid],
       intervalIntegral.integral_zero_ae (MeasureTheory.ae_of_all _ (fun t ht => hF_mid t ht)),
       intervalIntegral.integral_congr_ae hF_left_ae,
       intervalIntegral.integral_congr_ae hF_right_ae, add_zero]
@@ -1506,8 +1198,7 @@ noncomputable def AsymmetricArcFTCHyp.ofHasCauchyPV
       (D.hδ_left_pos ε hε_pos hε_lt) (D.hδ_left_small ε hε_pos hε_lt) h_unique
   · exact inv_sub_mul_deriv_intervalIntegrable_right γ ht₀_Ioo
       (D.hδ_right_pos ε hε_pos hε_lt) (D.hδ_right_small ε hε_pos hε_lt) h_unique
-  · -- h_limit: E(ε) → L from HasCauchyPV via cutoff_integral_eq_outer_sum.
-    have h_ev :
+  · have h_ev :
         (fun ε => ∫ t in (0 : ℝ)..1,
           cpvIntegrand (fun z => (z - s)⁻¹)
             γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend s ε t)
