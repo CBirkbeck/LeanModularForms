@@ -84,7 +84,7 @@ private lemma sin_pos_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
 private lemma sin_ge_sqrt3_div_2_of_angle_in_range {θ : ℝ} (h1 : Real.pi / 3 ≤ θ)
     (h2 : θ ≤ 2 * Real.pi / 3) : Real.sqrt 3 / 2 ≤ Real.sin θ := by
   have hpi := Real.pi_pos
-  rw [show Real.sqrt 3 / 2 = Real.sin (Real.pi / 3) from Real.sin_pi_div_three.symm]
+  rw [← Real.sin_pi_div_three]
   by_cases h : θ ≤ Real.pi / 2
   · exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith) h h1
   · push Not at h
@@ -163,13 +163,13 @@ lemma fdBoundary_H_im_pos (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   · push Not at h1
     by_cases h2 : t ≤ 2
     · rw [fdBoundary_H_eq_seg2_H H h1 h2, fdBoundary_seg2_H, seg2_im]
-      exact sin_pos_of_angle_in_range (seg2_angle_in_range (le_of_lt h1) h2).1
-        (seg2_angle_in_range (le_of_lt h1) h2).2
+      exact sin_pos_of_angle_in_range (seg2_angle_in_range h1.le h2).1
+        (seg2_angle_in_range h1.le h2).2
     · push Not at h2
       by_cases h3 : t ≤ 3
       · rw [fdBoundary_H_eq_seg3_H H h2 h3, fdBoundary_seg3_H, seg3_im]
-        exact sin_pos_of_angle_in_range (seg3_angle_in_range (le_of_lt h2) h3).1
-          (seg3_angle_in_range (le_of_lt h2) h3).2
+        exact sin_pos_of_angle_in_range (seg3_angle_in_range h2.le h3).1
+          (seg3_angle_in_range h2.le h3).2
       · push Not at h3
         by_cases h4 : t ≤ 4
         · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]
@@ -188,12 +188,12 @@ lemma fdBoundary_H_im_ge_sqrt3_div_2 (H : ℝ) (hH : Real.sqrt 3 / 2 ≤ H) :
     by_cases h2 : t ≤ 2
     · rw [fdBoundary_H_eq_seg2_H H h1 h2, fdBoundary_seg2_H, seg2_im]
       exact sin_ge_sqrt3_div_2_of_angle_in_range
-        (seg2_angle_in_range (le_of_lt h1) h2).1 (seg2_angle_in_range (le_of_lt h1) h2).2
+        (seg2_angle_in_range h1.le h2).1 (seg2_angle_in_range h1.le h2).2
     · push Not at h2
       by_cases h3 : t ≤ 3
       · rw [fdBoundary_H_eq_seg3_H H h2 h3, fdBoundary_seg3_H, seg3_im]
         exact sin_ge_sqrt3_div_2_of_angle_in_range
-          (seg3_angle_in_range (le_of_lt h2) h3).1 (seg3_angle_in_range (le_of_lt h2) h3).2
+          (seg3_angle_in_range h2.le h3).1 (seg3_angle_in_range h2.le h3).2
       · push Not at h3
         by_cases h4 : t ≤ 4
         · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]
@@ -221,12 +221,12 @@ lemma fdBoundary_H_re_abs_le_half (H : ℝ) :
     by_cases h2 : t ≤ 2
     · rw [fdBoundary_H_eq_seg2_H H h1 h2, fdBoundary_seg2_H, seg2_re]
       exact abs_cos_le_half_of_angle_in_range
-        (seg2_angle_in_range (le_of_lt h1) h2).1 (seg2_angle_in_range (le_of_lt h1) h2).2
+        (seg2_angle_in_range h1.le h2).1 (seg2_angle_in_range h1.le h2).2
     · push Not at h2
       by_cases h3 : t ≤ 3
       · rw [fdBoundary_H_eq_seg3_H H h2 h3, fdBoundary_seg3_H, seg3_re]
         exact abs_cos_le_half_of_angle_in_range
-          (seg3_angle_in_range (le_of_lt h2) h3).1 (seg3_angle_in_range (le_of_lt h2) h3).2
+          (seg3_angle_in_range h2.le h3).1 (seg3_angle_in_range h2.le h3).2
       · push Not at h3
         by_cases h4 : t ≤ 4
         · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_re]
@@ -308,12 +308,12 @@ lemma fdBoundary_im_le_heightCutoff :
     by_cases h2 : t ≤ 2
     · rw [fdBoundary_H_eq_seg2_H heightCutoff h1 h2, fdBoundary_seg2_H, seg2_im]
       calc Real.sin _ ≤ 1 := Real.sin_le_one _
-        _ ≤ heightCutoff := le_of_lt one_lt_heightCutoff
+        _ ≤ heightCutoff := one_lt_heightCutoff.le
     · push Not at h2
       by_cases h3 : t ≤ 3
       · rw [fdBoundary_H_eq_seg3_H heightCutoff h2 h3, fdBoundary_seg3_H, seg3_im]
         calc Real.sin _ ≤ 1 := Real.sin_le_one _
-          _ ≤ heightCutoff := le_of_lt one_lt_heightCutoff
+          _ ≤ heightCutoff := one_lt_heightCutoff.le
       · push Not at h3
         by_cases h4 : t ≤ 4
         · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]
@@ -329,7 +329,7 @@ lemma fdBoundary_re_abs_le_half :
 lemma fdBoundary_im_ge_sqrt3_div_2 :
     ∀ t ∈ Icc (0 : ℝ) 5, Real.sqrt 3 / 2 ≤ (fdBoundary t).im := by
   rw [fdBoundary_eq_fdBoundary_H]
-  exact fdBoundary_H_im_ge_sqrt3_div_2 heightCutoff (le_of_lt sqrt3_div2_lt_heightCutoff)
+  exact fdBoundary_H_im_ge_sqrt3_div_2 heightCutoff sqrt3_div2_lt_heightCutoff.le
 
 lemma fdBoundary_passes_through_i :
     ∃ t ∈ Icc (0 : ℝ) 5, fdBoundary t = ellipticPointI :=

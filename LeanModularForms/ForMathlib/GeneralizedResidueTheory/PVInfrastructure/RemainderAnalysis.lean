@@ -28,25 +28,16 @@ open scoped Real Interval
 noncomputable section
 
 /-- C¹ regularity of `deriv γ` from C² regularity of `γ`. -/
-lemma contDiffAt_one_deriv_of_contDiffAt_two
-    {γ : ℝ → ℂ} {t₀ : ℝ}
-    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) :
-    ContDiffAt ℝ 1 (deriv γ) t₀ := by
+lemma contDiffAt_one_deriv_of_contDiffAt_two {γ : ℝ → ℂ} {t₀ : ℝ}
+    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) : ContDiffAt ℝ 1 (deriv γ) t₀ := by
   have hC2 : ContDiffAt ℝ (1 + 1) γ t₀ := hγ_C2
-  have h_apply :=
-    hC2.fderiv_right_succ.clm_apply (contDiffAt_const (c := (1 : ℝ)))
-  have h_eq : (fun t => (fderiv ℝ γ t) 1) = deriv γ := by
-    ext t
-    exact fderiv_apply_one_eq_deriv.symm
-  rwa [h_eq] at h_apply
+  have h_apply := hC2.fderiv_right_succ.clm_apply (contDiffAt_const (c := (1 : ℝ)))
+  simpa [fderiv_apply_one_eq_deriv] using h_apply
 
 /-- Lipschitz-type bound on `deriv γ` deviation from C². -/
-lemma deriv_deviation_bound_of_C2
-    {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
-    (hγ_C2 : ContDiffAt ℝ 2 γ t₀)
-    (hγ_deriv : deriv γ t₀ = L) :
-    ∃ K δ, 0 < δ ∧ ∀ t, |t - t₀| < δ →
-      ‖deriv γ t - L‖ ≤ K * |t - t₀| := by
+lemma deriv_deviation_bound_of_C2 {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
+    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L) :
+    ∃ K δ, 0 < δ ∧ ∀ t, |t - t₀| < δ → ‖deriv γ t - L‖ ≤ K * |t - t₀| := by
   obtain ⟨K, s, hs_nhds, h_lip⟩ :=
     (contDiffAt_one_deriv_of_contDiffAt_two hγ_C2).exists_lipschitzOnWith
   obtain ⟨δ, hδ_pos, hball_sub⟩ := Metric.mem_nhds_iff.mp hs_nhds
@@ -57,40 +48,27 @@ lemma deriv_deviation_bound_of_C2
   rwa [dist_eq_norm, hγ_deriv, Real.dist_eq] at h
 
 /-- Quadratic Taylor approximation from C² smoothness. -/
-lemma quadratic_approx_of_contDiffAt_two
-    {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
-    (hγ_C2 : ContDiffAt ℝ 2 γ t₀)
-    (hγ_deriv : deriv γ t₀ = L) :
+lemma quadratic_approx_of_contDiffAt_two {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
+    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L) :
     ∃ K δ, 0 < δ ∧ 0 < K ∧ ∀ t, |t - t₀| < δ →
-      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤
-        K * |t - t₀| ^ 2 := by
-  obtain ⟨M, δ₁, hδ₁_pos, h_deriv_dev⟩ :=
-    deriv_deviation_bound_of_C2 hγ_C2 hγ_deriv
-  have h_C1_at : ContDiffAt ℝ 1 γ t₀ := hγ_C2.of_le one_le_two
-  have h1_ne_top : (1 : WithTop ℕ∞) ≠ ↑(⊤ : ℕ∞) := by simp
-  have h_evt_C1 : ∀ᶠ s in 𝓝 t₀, ContDiffAt ℝ 1 γ s :=
-    h_C1_at.eventually h1_ne_top
-  have h_evt_diff :
-      ∀ᶠ s in 𝓝 t₀, DifferentiableAt ℝ γ s :=
-    h_evt_C1.mono (fun s hs => hs.differentiableAt one_ne_zero)
-  obtain ⟨δ₂, hδ₂_pos, h_diff_ball⟩ :=
-    Metric.eventually_nhds_iff.mp h_evt_diff
+      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ K * |t - t₀| ^ 2 := by
+  obtain ⟨M, δ₁, hδ₁_pos, h_deriv_dev⟩ := deriv_deviation_bound_of_C2 hγ_C2 hγ_deriv
+  have h_evt_diff : ∀ᶠ s in 𝓝 t₀, DifferentiableAt ℝ γ s :=
+    ((hγ_C2.of_le one_le_two).eventually (by simp : (1 : WithTop ℕ∞) ≠ ↑(⊤ : ℕ∞))).mono
+      (fun _ hs => hs.differentiableAt one_ne_zero)
+  obtain ⟨δ₂, hδ₂_pos, h_diff_ball⟩ := Metric.eventually_nhds_iff.mp h_evt_diff
   let δ := min δ₁ δ₂
   have hδ_pos : 0 < δ := lt_min hδ₁_pos hδ₂_pos
   let K := M + 1
   have hM_nonneg : 0 ≤ M := by
     by_contra hM_neg
     push Not at hM_neg
-    have ⟨t, ht_pos, ht_lt⟩ :
-        ∃ t, 0 < |t - t₀| ∧ |t - t₀| < δ₁ := by
-      use t₀ + δ₁ / 2
-      simp only [add_sub_cancel_left,
-        abs_of_pos (half_pos hδ₁_pos)]
-      exact ⟨half_pos hδ₁_pos, half_lt_self hδ₁_pos⟩
-    have h := h_deriv_dev t ht_lt
-    have h_neg : M * |t - t₀| < 0 :=
-      mul_neg_of_neg_of_pos hM_neg ht_pos
-    linarith [norm_nonneg (deriv γ t - L)]
+    have ⟨t, ht_pos, ht_lt⟩ : ∃ t, 0 < |t - t₀| ∧ |t - t₀| < δ₁ :=
+      ⟨t₀ + δ₁ / 2, by
+        simpa [abs_of_pos (half_pos hδ₁_pos)] using half_pos hδ₁_pos, by
+        simpa [abs_of_pos (half_pos hδ₁_pos)] using half_lt_self hδ₁_pos⟩
+    have h_neg : M * |t - t₀| < 0 := mul_neg_of_neg_of_pos hM_neg ht_pos
+    linarith [norm_nonneg (deriv γ t - L), h_deriv_dev t ht_lt]
   have hK_pos : 0 < K := by linarith
   use K, δ, hδ_pos, hK_pos
   intro t ht
@@ -100,97 +78,56 @@ lemma quadratic_approx_of_contDiffAt_two
   let f₂ : ℝ → ℂ := fun _ => γ t₀
   let f₃ : ℝ → ℂ := fun s => (s - t₀) • L
   let h := fun s => f₁ s - f₂ s - f₃ s
-  have ht_lt_δ₁ : |t - t₀| < δ₁ :=
-    lt_of_lt_of_le ht (min_le_left _ _)
-  have ht_lt_δ₂ : |t - t₀| < δ₂ :=
-    lt_of_lt_of_le ht (min_le_right _ _)
-  have h_uIcc_sub_ball :
-      Set.uIcc t₀ t ⊆ Metric.ball t₀ δ₂ := by
+  have ht_lt_δ₁ : |t - t₀| < δ₁ := lt_of_lt_of_le ht (min_le_left _ _)
+  have ht_lt_δ₂ : |t - t₀| < δ₂ := lt_of_lt_of_le ht (min_le_right _ _)
+  have h_uIcc_sub_ball : Set.uIcc t₀ t ⊆ Metric.ball t₀ δ₂ := by
     intro s hs
     rw [Metric.mem_ball, Real.dist_eq]
-    exact lt_of_le_of_lt
-      (Set.abs_sub_left_of_mem_uIcc hs) ht_lt_δ₂
-  have h_γ_diff_on :
-      ∀ s ∈ Set.uIcc t₀ t,
-        DifferentiableAt ℝ γ s := by
-    intro s hs
-    exact h_diff_ball (h_uIcc_sub_ball hs)
-  have h_f₂_diff :
-      ∀ s, DifferentiableAt ℝ f₂ s :=
-    fun _ => differentiableAt_const _
-  have h_f₃_diff :
-      ∀ s, DifferentiableAt ℝ f₃ s := fun _ =>
-    (differentiableAt_id.sub
-      (differentiableAt_const _)).smul_const _
-  have h_diff :
-      ∀ s ∈ Set.uIcc t₀ t,
-        DifferentiableAt ℝ h s := by
-    intro s hs
-    exact ((h_γ_diff_on s hs).sub
-      (h_f₂_diff s)).sub (h_f₃_diff s)
-  have h_deriv_f₂ : ∀ s, deriv f₂ s = 0 :=
-    fun s => deriv_const s (γ t₀)
+    exact lt_of_le_of_lt (Set.abs_sub_left_of_mem_uIcc hs) ht_lt_δ₂
+  have h_γ_diff_on : ∀ s ∈ Set.uIcc t₀ t, DifferentiableAt ℝ γ s :=
+    fun s hs => h_diff_ball (h_uIcc_sub_ball hs)
+  have h_f₂_diff : ∀ s, DifferentiableAt ℝ f₂ s := fun _ => differentiableAt_const _
+  have h_f₃_diff : ∀ s, DifferentiableAt ℝ f₃ s :=
+    fun _ => (differentiableAt_id.sub (differentiableAt_const _)).smul_const _
+  have h_diff : ∀ s ∈ Set.uIcc t₀ t, DifferentiableAt ℝ h s :=
+    fun s hs => ((h_γ_diff_on s hs).sub (h_f₂_diff s)).sub (h_f₃_diff s)
+  have h_deriv_f₂ : ∀ s, deriv f₂ s = 0 := fun s => deriv_const s (γ t₀)
   have h_deriv_f₃ : ∀ s, deriv f₃ s = L := fun s => by
     simp only [f₃]
     have hid : deriv (fun x : ℝ => x) s = 1 := deriv_id s
-    have hsub : deriv (fun x => x - t₀) s = 1 := by
-      rw [deriv_sub_const, hid]
-    have hsmul : deriv (fun s => (s - t₀) • L) s
-        = deriv (fun s => s - t₀) s • L :=
+    have hsub : deriv (fun x => x - t₀) s = 1 := by rw [deriv_sub_const, hid]
+    have hsmul : deriv (fun s => (s - t₀) • L) s = deriv (fun s => s - t₀) s • L :=
       deriv_smul_const (differentiableAt_id.sub (differentiableAt_const _)) L
     rw [hsmul, hsub]
     simp
-  have h_deriv :
-      ∀ s ∈ Set.uIcc t₀ t,
-        deriv h s = deriv γ s - L := by
+  have h_deriv : ∀ s ∈ Set.uIcc t₀ t, deriv h s = deriv γ s - L := by
     intro s hs
-    have hs_diff : DifferentiableAt ℝ γ s :=
-      h_γ_diff_on s hs
-    have h_eq_sub : h = fun s => (f₁ s - f₂ s) - f₃ s := rfl
-    have h_diff_f1f2 :
-        DifferentiableAt ℝ (fun s => f₁ s - f₂ s) s :=
+    have hs_diff : DifferentiableAt ℝ γ s := h_γ_diff_on s hs
+    have h_diff_f1f2 : DifferentiableAt ℝ (fun s => f₁ s - f₂ s) s :=
       hs_diff.sub (h_f₂_diff s)
-    have step1 :
-        deriv h s =
-          deriv (fun s => (f₁ s - f₂ s) - f₃ s) s := by
-      rw [← h_eq_sub]
-    have step2 :
-        deriv (fun s => (f₁ s - f₂ s) - f₃ s) s =
-          deriv (fun s => f₁ s - f₂ s) s -
-            deriv f₃ s :=
+    have step2 : deriv (fun s => (f₁ s - f₂ s) - f₃ s) s =
+        deriv (fun s => f₁ s - f₂ s) s - deriv f₃ s :=
       deriv_sub h_diff_f1f2 (h_f₃_diff s)
-    have step3 :
-        deriv (fun s => f₁ s - f₂ s) s =
-          deriv f₁ s - deriv f₂ s :=
+    have step3 : deriv (fun s => f₁ s - f₂ s) s = deriv f₁ s - deriv f₂ s :=
       deriv_sub hs_diff (h_f₂_diff s)
-    simp only [step1, step2, step3,
+    simp only [show h = fun s => (f₁ s - f₂ s) - f₃ s from rfl, step2, step3,
       h_deriv_f₂, h_deriv_f₃, sub_zero, f₁]
   have h_at_t₀ : h t₀ = 0 := by simp [h, f₁, f₂, f₃]
-  have h_deriv_bound :
-      ∀ s ∈ Set.uIcc t₀ t,
-        ‖deriv h s‖ ≤ M * |t - t₀| := by
+  have h_deriv_bound : ∀ s ∈ Set.uIcc t₀ t, ‖deriv h s‖ ≤ M * |t - t₀| := by
     intro s hs
     rw [h_deriv s hs]
-    have hs_bound : |s - t₀| ≤ |t - t₀| :=
-      Set.abs_sub_left_of_mem_uIcc hs
-    have hs_lt : |s - t₀| < δ₁ :=
-      lt_of_le_of_lt hs_bound ht_lt_δ₁
+    have hs_bound : |s - t₀| ≤ |t - t₀| := Set.abs_sub_left_of_mem_uIcc hs
     calc ‖deriv γ s - L‖
-        ≤ M * |s - t₀| := h_deriv_dev s hs_lt
-      _ ≤ M * |t - t₀| :=
-        mul_le_mul_of_nonneg_left hs_bound hM_nonneg
-  have h_bound :=
-    Convex.norm_image_sub_le_of_norm_deriv_le h_diff
-      h_deriv_bound (convex_uIcc t₀ t)
-      Set.left_mem_uIcc Set.right_mem_uIcc
+        ≤ M * |s - t₀| := h_deriv_dev s (lt_of_le_of_lt hs_bound ht_lt_δ₁)
+      _ ≤ M * |t - t₀| := mul_le_mul_of_nonneg_left hs_bound hM_nonneg
+  have h_bound := Convex.norm_image_sub_le_of_norm_deriv_le h_diff h_deriv_bound
+    (convex_uIcc t₀ t) Set.left_mem_uIcc Set.right_mem_uIcc
   rw [h_at_t₀, sub_zero, Real.norm_eq_abs] at h_bound
-  have h_eq : h t = γ t - γ t₀ - (t - t₀) • L := rfl
   calc ‖γ t - γ t₀ - (t - t₀) • L‖
-      = ‖h t‖ := by rw [h_eq]
+      = ‖h t‖ := rfl
     _ ≤ M * |t - t₀| * |t - t₀| := h_bound
     _ = M * |t - t₀| ^ 2 := by ring
-    _ ≤ K * |t - t₀| ^ 2 := by
-        nlinarith [sq_nonneg |t - t₀|]
+    _ ≤ K * |t - t₀| ^ 2 := by nlinarith [sq_nonneg |t - t₀|]
 
 /-- Bounded slope deviation from C² smoothness. -/
 lemma bounded_slope_deviation_of_contDiffAt_two

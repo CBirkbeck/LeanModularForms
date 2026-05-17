@@ -1,6 +1,7 @@
 /-
-Copyright (c) 2026. All rights reserved.
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.CauchyPrincipalValue
 
@@ -47,8 +48,6 @@ open scoped Interval
 noncomputable section
 
 variable {x y : ℂ}
-
-/-! ## Finite Set Separation -/
 
 /-- Positive minimum separation in a finite set of distinct complex numbers. Given a
 nonempty finite set `S` where all distinct pairs have positive distance, there exists
@@ -112,8 +111,6 @@ theorem disjoint_balls_of_small_epsilon (S : Finset ℂ) (ε : ℝ) (δ : ℝ)
     exact h_sep'
   linarith
 
-/-! ## Algebraic Operations on `cpvIntegrandOn` -/
-
 /-- The multi-point CPV integrand distributes over subtraction pointwise. -/
 theorem cpvIntegrandOn_sub (S : Finset ℂ) (f g : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => f z - g z) γ ε t =
@@ -152,17 +149,6 @@ theorem cpvIntegrandOn_const_mul (S : Finset ℂ) (c : ℂ) (f : ℂ → ℂ) (�
   split_ifs with h
   · simp
   · ring
-
-/-! ## Algebraic Operations on `HasCauchyPVOn`
-
-The algebra lemmas below require `IntervalIntegrable` hypotheses for the individual
-CPV integrands. This is needed because `intervalIntegral.integral_sub` and
-`intervalIntegral.integral_add` require integrability of both summands.
-
-In practice, the downstream code (generalized residue theorem) will provide these
-via continuity of the integrand away from the singular set, combined with boundedness
-on compact sets.
--/
 
 /-- Subtraction of multi-point CPV limits: if `HasCauchyPVOn S f γ L₁` and
 `HasCauchyPVOn S g γ L₂`, then `HasCauchyPVOn S (f - g) γ (L₁ - L₂)`.
@@ -258,8 +244,6 @@ theorem hasCauchyPVOn_of_tendsto_sub {S : Finset ℂ} {f g : ℂ → ℂ}
     simp only [zero_add]
   exact h_sum.congr' heq.symm
 
-/-! ## Connection between single-point and multi-point CPV -/
-
 /-- A `HasCauchyPV` at a single point implies `HasCauchyPVOn` for the singleton set. -/
 theorem hasCauchyPVOn_singleton_of_hasCauchyPV {f : ℂ → ℂ}
     {γ : PiecewiseC1Path x y} {z₀ : ℂ} {L : ℂ}
@@ -279,8 +263,6 @@ theorem hasCauchyPV_of_hasCauchyPVOn_singleton {f : ℂ → ℂ}
   apply intervalIntegral.integral_congr
   intro t _
   exact cpvIntegrand_eq_cpvIntegrandOn_singleton.symm
-
-/-! ## Zero and finite-sum forms of `HasCauchyPVOn` -/
 
 /-- The multi-point CPV of the zero function is zero. -/
 theorem HasCauchyPVOn.zero_fun {S : Finset ℂ} {γ : PiecewiseC1Path x y} :
