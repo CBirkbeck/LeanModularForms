@@ -3,8 +3,6 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import LeanModularForms.GeneralizedResidueTheory.GeneralizedResidueTheorem
-import LeanModularForms.GeneralizedResidueTheory.Cycle
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.Modularforms.Eisenstein
 import LeanModularForms.SpherePacking.PhiHolomorphic
@@ -92,24 +90,6 @@ instance instIsScalarTowerRealComplexComplex : IsScalarTower ℝ ℂ ℂ := IsSc
 
 noncomputable section
 
-/-! ## Modular form ingredients
-
-We use `φ₀''` (the ℂ-extended version of φ₀) from `Modularforms/Eisenstein.lean`.
-This is defined as `φ₀''(z) = φ₀(z)` when `Im(z) > 0`, and `0` otherwise.
-The underlying `φ₀(z) = (E₂E₄ - E₆)² / Δ(z)` is defined on the upper half-plane ℍ.
-
-Key properties (proven in Eisenstein.lean and Delta.lean):
-- `φ₀` is holomorphic on ℍ (since Δ ≠ 0 on ℍ)
-- Periodic: `φ₀(z+1) = φ₀(z)`
-- S-transform: `φ₀(-1/z) = φ₀(z) - (12i/π)·(1/z)·φ₋₂(z) - (36/π²)·(1/z²)·φ₋₄(z)`
-- Vanishing: `φ₀(z) = O(e^{-2πIm(z)})` as `Im(z) → ∞`
--/
-
-/-! ## Original Viazovska contour integrals
-
-The four integrals defining a_rad(r), using straight-line contours
-from the real axis to i. -/
-
 /-- The integrand for I₁+I₂: φ₀(-1/(z+1)) · (z+1)² · e^{πirz}.
 At z = -1 (the cusp), (z+1)² = 0 cancels the singularity of φ₀. -/
 def viazovska_integrand_left (r : ℝ) (z : ℂ) : ℂ :=
@@ -139,10 +119,6 @@ def contour_1_to_i (t : ℝ) : ℂ := 1 + (-1 + I) * ↑t
 /-- The straight-line contour from 0 to i (vertical segment). -/
 def contour_0_to_i (t : ℝ) : ℂ := I * ↑t
 
-/-! ## The magic function a_rad(r)
-
-Defined using the original Viazovska contours. -/
-
 /-- I₁₂(r) = ∫_{-1}^{i} φ₀(-1/(z+1)) · (z+1)² · e^{πirz} dz -/
 def I12 (r : ℝ) : ℂ :=
   ∫ t in (0:ℝ)..1, viazovska_integrand_left r (contour_neg1_to_i t) *
@@ -166,36 +142,21 @@ def I6 (r : ℝ) : ℂ :=
 /-- The radial magic function a_rad(r) from Viazovska [Via2017]. -/
 def a_rad (r : ℝ) : ℂ := I12 r + I34 r + I5 r + I6 r
 
-/-! ## Holomorphicity of φ₀
-
-φ₀ = (E₂·E₄ - E₆)² / Δ is holomorphic on ℍ because:
-- E₂ is holomorphic (proved in PhiHolomorphic.lean via `E₂ = const · logDeriv(η)`)
-- E₄, E₆ are modular forms (holomorphic by `.holo'`)
-- Δ is a cusp form (holomorphic) and Δ ≠ 0 on ℍ
-- Products, differences, squares, and ratios of holomorphic functions
-  (with nonzero denominator) are holomorphic -/
-
 /-- φ₀'' is holomorphic on the upper half-plane. -/
 theorem φ₀''_differentiableOn : DifferentiableOn ℂ φ₀'' {z : ℂ | 0 < z.im} := by
-  have hE₂ := E₂_differentiableOn
   have hE₄ := UpperHalfPlane.mdifferentiable_iff.mp E₄.holo'
   have hE₆ := UpperHalfPlane.mdifferentiable_iff.mp E₆.holo'
   have hΔ := UpperHalfPlane.mdifferentiable_iff.mp Delta.holo'
   intro z hz
   have hz' : 0 < z.im := hz
-  have hE₂z := (E₂_differentiableOn z hz).differentiableAt
-    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
-  have hE₄z := (hE₄ z hz).differentiableAt
-    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
-  have hE₆z := (hE₆ z hz).differentiableAt
-    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
-  have hΔz := (hΔ z hz).differentiableAt
-    ((isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz')
+  have hopen := (isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz'
+  have hE₂z := (E₂_differentiableOn z hz).differentiableAt hopen
+  have hE₄z := (hE₄ z hz).differentiableAt hopen
+  have hE₆z := (hE₆ z hz).differentiableAt hopen
+  have hΔz := (hΔ z hz).differentiableAt hopen
   have hΔ_ne : (Delta.toSlashInvariantForm ∘ UpperHalfPlane.ofComplex) z ≠ 0 := by
     simp [Function.comp, UpperHalfPlane.ofComplex_apply_of_im_pos hz']; exact Δ_ne_zero ⟨z, hz'⟩
-  have hdiff := ((hE₂z.mul hE₄z).sub hE₆z).pow 2 |>.div hΔz hΔ_ne
-  have hopen := (isOpen_lt continuous_const Complex.continuous_im).mem_nhds hz'
-  apply hdiff.differentiableWithinAt.congr_of_eventuallyEq
+  apply (((hE₂z.mul hE₄z).sub hE₆z).pow 2 |>.div hΔz hΔ_ne).differentiableWithinAt.congr_of_eventuallyEq
   rw [nhdsWithin_eq_nhds.mpr (Filter.mem_of_superset hopen (fun _ h => h))]
   filter_upwards [hopen] with w hw
   simp only [φ₀'', hw, dif_pos, φ₀, Function.comp,
@@ -205,47 +166,27 @@ theorem φ₀''_differentiableOn : DifferentiableOn ℂ φ₀'' {z : ℂ | 0 < z
       UpperHalfPlane.ofComplex_apply_of_im_pos hz', Pi.mul_apply, Pi.sub_apply,
       Pi.pow_apply, Pi.div_apply]; rfl
 
-/-! ## Upper half-plane: convexity and openness -/
-
--- `isOpen_upperHalfPlaneSet` from mathlib (`UpperHalfPlane.isOpen_upperHalfPlaneSet`)
-alias isOpen_upperHalfPlaneSet := UpperHalfPlane.isOpen_upperHalfPlaneSet
-
 /-- The upper half-plane `{z : ℂ | 0 < z.im}` is convex. -/
-theorem convex_upperHalfPlaneSet : Convex ℝ {z : ℂ | 0 < z.im} := by
-  intro x hx y hy a b ha hb hab
-  show 0 < (a • x + b • y).im
-  have him : (a • x + b • y).im = a * x.im + b * y.im := by
-    simp [Complex.add_im]
-  rw [him]
-  have hx' : (0 : ℝ) < x.im := hx
-  have hy' : (0 : ℝ) < y.im := hy
-  rcases eq_or_lt_of_le ha with rfl | ha'
-  · simp at hab; subst hab; simp; linarith
-  · linarith [mul_pos ha' hx', mul_nonneg hb (le_of_lt hy')]
-
-/-! ## Holomorphicity of the integrand -/
+theorem convex_upperHalfPlaneSet : Convex ℝ {z : ℂ | 0 < z.im} := convex_halfSpace_im_gt 0
 
 /-- When `Im(z) > 0`, the point `-1/(z+1)` also has positive imaginary part. -/
 theorem neg_inv_add_one_im_pos {z : ℂ} (hz : 0 < z.im) : 0 < (-1 / (z + 1)).im := by
-  have hne : z + 1 ≠ 0 := by
-    intro h; have := (Complex.ext_iff.mp h).2; simp at this; linarith
-  rw [neg_div, Complex.neg_im, Complex.div_im]
-  rw [Complex.one_im, Complex.one_re, zero_mul, zero_div, one_mul, zero_sub, neg_neg]
+  have hne : z + 1 ≠ 0 := fun h => by
+    have := (Complex.ext_iff.mp h).2; simp at this; linarith
+  rw [neg_div, Complex.neg_im, Complex.div_im, Complex.one_im, Complex.one_re,
+    zero_mul, zero_div, one_mul, zero_sub, neg_neg]
   exact div_pos (by simp [Complex.add_im]; linarith) (Complex.normSq_pos.mpr hne)
 
-/-- The integrand `viazovska_integrand_left r` is holomorphic on the upper half-plane.
-This follows from holomorphicity of `φ₀''` and the algebraic factors. -/
+/-- The integrand `viazovska_integrand_left r` is holomorphic on the upper half-plane. -/
 theorem viazovska_integrand_left_differentiableOn (r : ℝ) :
-    DifferentiableOn ℂ (viazovska_integrand_left r) {z : ℂ | 0 < z.im} := by
-  intro z hz
+    DifferentiableOn ℂ (viazovska_integrand_left r) {z : ℂ | 0 < z.im} := fun z hz => by
   unfold viazovska_integrand_left
   have hz' : 0 < z.im := hz
-  have hne : z + 1 ≠ 0 := by
-    intro h; have := (Complex.ext_iff.mp h).2; simp at this; linarith
+  have hne : z + 1 ≠ 0 := fun h => by
+    have := (Complex.ext_iff.mp h).2; simp at this; linarith
   have him := neg_inv_add_one_im_pos hz'
   have hφ : DifferentiableAt ℂ φ₀'' (-1 / (z + 1)) :=
-    (φ₀''_differentiableOn _ him).differentiableAt
-      (isOpen_upperHalfPlaneSet.mem_nhds him)
+    (φ₀''_differentiableOn _ him).differentiableAt (UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds him)
   have hinv : DifferentiableAt ℂ (fun w => -1 / (w + 1)) z :=
     (differentiableAt_const _).div
       (differentiableAt_id.add (differentiableAt_const _)) hne
@@ -254,28 +195,13 @@ theorem viazovska_integrand_left_differentiableOn (r : ℝ) :
     (Complex.differentiable_exp.differentiableAt.comp z
       ((differentiableAt_const _).mul differentiableAt_id))).differentiableWithinAt
 
-/-! ## Contour equivalence infrastructure
-
-### Segment integrals and the fundamental theorem of calculus
-
-Given a holomorphic function `f` on a convex open set `S` with primitive `G`
-(i.e., `G' = f` on `S`), the segment integral from `a` to `b` equals `G(b) - G(a)`.
-This gives path independence: for `a, b, c ∈ S`,
-```
-∫_{a→b} f dz = ∫_{a→c} f dz + ∫_{c→b} f dz
-```
-since both sides equal `G(b) - G(a)`. -/
-
-/-- FTC for segment integrals: if `G' = f` on a convex open set,
+/-- FTC for segment integrals: if `G' = f` on a convex set,
 then the segment integral of `f` from `a` to `b` equals `G(b) - G(a)`. -/
 theorem segment_integral_eq_sub_of_hasDerivAt {f G : ℂ → ℂ} {S : Set ℂ}
-    (_hS_open : IsOpen S) (hS_convex : Convex ℝ S)
-    {a b : ℂ} (ha : a ∈ S) (hb : b ∈ S)
-    (hG : ∀ z ∈ S, HasDerivAt G (f z) z)
-    (hf_cont : ContinuousOn f S) :
+    (hS_convex : Convex ℝ S) {a b : ℂ} (ha : a ∈ S) (hb : b ∈ S)
+    (hG : ∀ z ∈ S, HasDerivAt G (f z) z) (hf_cont : ContinuousOn f S) :
     ∫ t in (0:ℝ)..1, f (a + t • (b - a)) * (b - a) = G b - G a := by
-  have h_mem : ∀ t ∈ Icc (0 : ℝ) 1, a + ↑t • (b - a) ∈ S := by
-    intro t ht
+  have h_mem : ∀ t ∈ Icc (0 : ℝ) 1, a + ↑t • (b - a) ∈ S := fun t ht => by
     have : a + ↑t • (b - a) = (1 - t) • a + t • b := by
       simp only [smul_sub, sub_smul, one_smul]; ring
     rw [this]
@@ -284,9 +210,8 @@ theorem segment_integral_eq_sub_of_hasDerivAt {f G : ℂ → ℂ} {S : Set ℂ}
     hf_cont.comp (continuous_const.add
       (continuous_ofReal.smul continuous_const)).continuousOn h_mem
   have key := @intervalIntegral.integral_unitInterval_deriv_eq_sub ℂ ℂ _ _ _ _ _
-    IsScalarTower.right G f a (b - a)
-    hcont (fun t ht => hG _ (h_mem t ht))
-  rw [show a + (b - a) = b from by ring] at key
+    IsScalarTower.right G f a (b - a) hcont (fun t ht => hG _ (h_mem t ht))
+  rw [show a + (b - a) = b by ring] at key
   rw [smul_eq_mul] at key
   erw [intervalIntegral.integral_mul_const]; rw [mul_comm]
   exact key
@@ -302,24 +227,22 @@ theorem segment_integral_add_of_holomorphic {f : ℂ → ℂ} {S : Set ℂ}
     (∫ t in (0:ℝ)..1, f (a + t • (c - a)) * (c - a)) +
     (∫ t in (0:ℝ)..1, f (c + t • (b - c)) * (b - c)) := by
   obtain ⟨G, hG⟩ := holomorphic_convex_primitive hS_convex hS_open ⟨a, ha⟩ hf
-  rw [segment_integral_eq_sub_of_hasDerivAt hS_open hS_convex ha hb hG hf.continuousOn,
-      segment_integral_eq_sub_of_hasDerivAt hS_open hS_convex ha hc hG hf.continuousOn,
-      segment_integral_eq_sub_of_hasDerivAt hS_open hS_convex hc hb hG hf.continuousOn]
+  rw [segment_integral_eq_sub_of_hasDerivAt hS_convex ha hb hG hf.continuousOn,
+      segment_integral_eq_sub_of_hasDerivAt hS_convex ha hc hG hf.continuousOn,
+      segment_integral_eq_sub_of_hasDerivAt hS_convex hc hb hG hf.continuousOn]
   ring
 
-/-! ### Contour parameterization lemmas -/
+/-- The derivative of `contour_neg1_to_i` as a `HasDerivAt` statement. -/
+theorem hasDerivAt_contour_neg1_to_i (t : ℝ) :
+    HasDerivAt contour_neg1_to_i (1 + I : ℂ) t := by
+  change HasDerivAt (fun s : ℝ => (-1 : ℂ) + (1 + I) * ↑s) _ _
+  have h1 := (ofRealCLM.hasDerivAt (x := t)).const_mul (1 + I : ℂ)
+  simp [ofRealCLM] at h1
+  convert (hasDerivAt_const t (-1 : ℂ)).add h1 using 1; ring
 
 /-- The derivative of `contour_neg1_to_i` is the constant `1 + I`. -/
-theorem deriv_contour_neg1_to_i (t : ℝ) : deriv contour_neg1_to_i t = 1 + I := by
-  have h1 : HasDerivAt (fun s : ℝ => (-1 : ℂ) + (1 + I) * ↑s) (1 + I) t := by
-    have h := (ofRealCLM.hasDerivAt (x := t)).const_mul (1 + I : ℂ)
-    have hv : (1 + I) * ofRealCLM (1 : ℝ) = 1 + I := by
-      simp [ofRealCLM, Complex.ofReal_one]
-    rw [hv] at h
-    exact (hasDerivAt_const t (-1 : ℂ)).add h |>.congr_deriv (by ring)
-  have h2 : (fun s : ℝ => (-1 : ℂ) + (1 + I) * ↑s) = contour_neg1_to_i := by
-    ext s; simp [contour_neg1_to_i]
-  rw [h2] at h1; exact h1.deriv
+theorem deriv_contour_neg1_to_i (t : ℝ) : deriv contour_neg1_to_i t = 1 + I :=
+  (hasDerivAt_contour_neg1_to_i t).deriv
 
 /-- `I12` expressed as a segment integral from `-1` to `I`. -/
 theorem I12_eq_segment_integral (r : ℝ) :
@@ -330,9 +253,7 @@ theorem I12_eq_segment_integral (r : ℝ) :
   rw [deriv_contour_neg1_to_i]
   have h1 : contour_neg1_to_i t = (-1 : ℂ) + ↑t • ((I : ℂ) - (-1)) := by
     simp [contour_neg1_to_i, Complex.real_smul, sub_neg_eq_add]; ring
-  rw [h1, show (1 : ℂ) + I = (I : ℂ) - (-1) from by ring]
-
-/-! ### Rectangular decomposition integrals -/
+  rw [h1, show (1 : ℂ) + I = (I : ℂ) - (-1) by ring]
 
 /-- The vertical integral from `-1` to `-1+I`: left side of the rectangular path. -/
 def I12_vert (r : ℝ) : ℂ :=
@@ -362,27 +283,18 @@ theorem I12_horiz_eq_segment (r : ℝ) :
   rw [h1, mul_one]
   congr 1; simp [Complex.real_smul]
 
-/-! ### Truncated contour equivalence
-
-For `δ > 0`, the diagonal integral from `-1 + δI` to `I` equals the
-vertical integral from `-1 + δI` to `-1 + I` plus the horizontal integral
-from `-1 + I` to `I`. All three segments lie in the upper half-plane,
-so path independence (from `holomorphic_convex_primitive`) applies. -/
-
 /-- The point `-1 + δI` lies in the upper half-plane for `δ > 0`. -/
 theorem neg_one_add_delta_I_mem_uhp {δ : ℝ} (hδ : 0 < δ) :
     (-1 + ↑δ * I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
-  show 0 < (-1 + ↑δ * I : ℂ).im
-  simp [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im,
-        Complex.ofReal_re, Complex.ofReal_im]; linarith
+  change 0 < (-1 + ↑δ * I : ℂ).im; simp; linarith
 
 /-- The point `-1 + I` lies in the upper half-plane. -/
 theorem neg_one_add_I_mem_uhp : (-1 + I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
-  show 0 < (-1 + I : ℂ).im; simp [Complex.add_im, Complex.I_im]
+  change 0 < (-1 + I : ℂ).im; simp
 
 /-- The point `I` lies in the upper half-plane. -/
 theorem I_mem_uhp : (I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
-  show 0 < (I : ℂ).im; simp [Complex.I_im]
+  change 0 < (I : ℂ).im; simp
 
 /-- Truncated contour equivalence: for `δ > 0`, the diagonal segment integral from
 `-1 + δI` to `I` equals the vertical from `-1 + δI` to `-1 + I` plus the
@@ -395,146 +307,77 @@ theorem truncated_contour_equivalence (r : ℝ) (δ : ℝ) (hδ : 0 < δ) :
     let F := viazovska_integrand_left r
     (∫ t in (0:ℝ)..1, F (a + t • (b - a)) * (b - a)) =
     (∫ t in (0:ℝ)..1, F (a + t • (c - a)) * (c - a)) +
-    (∫ t in (0:ℝ)..1, F (c + t • (b - c)) * (b - c)) := by
-  exact segment_integral_add_of_holomorphic
-    isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+    (∫ t in (0:ℝ)..1, F (c + t • (b - c)) * (b - c)) :=
+  segment_integral_add_of_holomorphic UpperHalfPlane.isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
     (viazovska_integrand_left_differentiableOn r)
     (neg_one_add_delta_I_mem_uhp hδ) I_mem_uhp neg_one_add_I_mem_uhp
 
-/-- The horizontal part of the truncated equivalence equals `I12_horiz`.
-The segment from `-1+I` to `I` does not depend on `δ`. -/
-theorem truncated_horiz_eq_I12_horiz (r : ℝ) :
-    (∫ t in (0:ℝ)..1, viazovska_integrand_left r
-      ((-1 + I : ℂ) + t • ((I : ℂ) - (-1 + I))) * ((I : ℂ) - (-1 + I))) =
-    I12_horiz r := by
-  rw [I12_horiz_eq_segment]
-
-/-- φ₀ is bounded at Im -> infinity. -/
-private theorem phi0_bounded_at_infty : UpperHalfPlane.IsBoundedAtImInfty φ₀ :=
-  phi0_isBoundedAtImInfty
-
-/-! ### Path-specific cusp decay
-
-Along the diagonal contour `t -> -1 + t(1+I)` and the vertical contour
-`t -> -1 + tI`, as `t -> 0+` the substitution `w = -1/(z+1)` sends
-`Im(w) -> +infty`. So `phi0_isBoundedAtImInfty` gives a bound on
-`phi_0(w)`, and the `(z+1)^2 = O(t^2)` factor drives the integrand to 0. -/
-
-/-- The integrand at `contour_neg1_to_i 0 = -1` equals zero, because `(z+1)^2 = 0`. -/
 private theorem integrand_at_zero_diag (r : ℝ) :
     viazovska_integrand_left r (contour_neg1_to_i 0) * (1 + I) = 0 := by
   simp [viazovska_integrand_left, contour_neg1_to_i]
 
-/-- The integrand at vertical contour parameter 0 equals zero. -/
 private theorem integrand_at_zero_vert (r : ℝ) :
     viazovska_integrand_left r (-1 + I * (0 : ℝ)) * I = 0 := by
   simp [viazovska_integrand_left]
 
-/-- The diagonal contour point has positive imaginary part for `t > 0`. -/
 private theorem contour_neg1_to_i_im_pos {t : ℝ} (ht : 0 < t) :
     0 < (contour_neg1_to_i t).im := by
-  simp [contour_neg1_to_i, Complex.add_im, Complex.mul_im,
-    Complex.I_im, Complex.I_re, Complex.ofReal_im, Complex.ofReal_re]
-  linarith
+  simp [contour_neg1_to_i]; linarith
 
-/-- The vertical contour point has positive imaginary part for `t > 0`. -/
 private theorem vertical_contour_im_pos {t : ℝ} (ht : 0 < t) :
     0 < (-1 + I * (↑t : ℂ)).im := by
-  simp [Complex.add_im, Complex.mul_im, Complex.I_im,
-    Complex.I_re, Complex.ofReal_im, Complex.ofReal_re]
-  linarith
+  simp; linarith
 
-/-! ### Step 5: Cusp decay and integrand boundary behavior
-
-To pass from the truncated contour equivalence (δ > 0) to the full equivalence
-(starting at -1), we need the integrand to vanish at z = -1. This follows from
-the cusp behavior of φ₀: as z → -1, the substitution w = -1/(z+1) sends
-Im(w) → +∞, and the q-expansion of φ₀ shows φ₀(w) = O(e^{-2πIm(w)}).
-The factor (z+1)² cancels the 1/w² from the change of variables, leaving
-the integrand → 0.
-
-We state the key cusp estimates as sorry'd lemmas (requiring q-expansion
-infrastructure) and prove the contour equivalence from them. -/
-
-/-! The general statement `Tendsto (viazovska_integrand_left r) (𝓝[ℍ] (-1)) (𝓝 0)` requires
-T-periodicity of φ₀ and compactness arguments on the fundamental domain. Since the main
-theorem `I12_eq_rectangular` uses a direct bound on the connecting segment (where
-Im(w) ≥ 1/(2δ) → ∞) via `phi0_isBoundedAtImInfty`, this general tendsto is not needed. -/
-
-/-! ### Helpers for cusp-decay continuity at t = 0
-
-Both `continuousOn_diagonal_integrand` and `continuousOn_vertical_integrand` need
-an epsilon-delta squeeze at `t = 0` using `phi0_isBoundedAtImInfty`. We factor out
-the common sub-arguments into reusable helpers. -/
-
-/-- Along the diagonal contour, `contour_neg1_to_i t + 1 = (1+I) * t`. -/
 private theorem diag_contour_add_one (t : ℝ) :
     contour_neg1_to_i t + 1 = (1 + I) * ↑t := by
   simp [contour_neg1_to_i]
 
-/-- Along the vertical contour, `(-1 + I*t) + 1 = I * t`. -/
 private theorem vert_contour_add_one (t : ℝ) :
     (-1 : ℂ) + I * ↑t + 1 = I * ↑t := by ring
 
-/-- Along the diagonal contour, `Im(-1/(z+1)) = 1/(2t)` for `t > 0`. -/
 private theorem im_neg_inv_diag {t : ℝ} (ht : 0 < t) :
     (-1 / (contour_neg1_to_i t + 1)).im = 1 / (2 * t) := by
   rw [diag_contour_add_one, neg_div, Complex.neg_im, Complex.div_im]
-  simp [Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-    Complex.ofReal_re, Complex.ofReal_im, Complex.one_re, Complex.one_im]
-  rw [Complex.normSq_mk]
-  simp only [Complex.I_re, Complex.I_im, Complex.add_re, Complex.one_re,
-    Complex.add_im, Complex.one_im]
-  field_simp; ring
+  simp [Complex.mul_re, Complex.mul_im]
+  rw [Complex.normSq_mk]; simp; field_simp; ring
 
-/-- Along the vertical contour, `Im(-1/(z+1)) = 1/t` for `t > 0`. -/
 private theorem im_neg_inv_vert {t : ℝ} (_ht : 0 < t) :
     (-1 / ((-1 : ℂ) + I * ↑t + 1)).im = 1 / t := by
   rw [vert_contour_add_one, neg_div, Complex.neg_im, Complex.div_im]
-  simp [Complex.mul_re, Complex.mul_im, Complex.I_re, Complex.I_im,
-    Complex.ofReal_re, Complex.ofReal_im, Complex.one_re, Complex.one_im]
+  simp [Complex.mul_re, Complex.mul_im]
 
-/-- Norm bound for `(z+1)^2` along the diagonal: `‖((1+I)t)^2‖ ≤ 2t^2`. -/
 private theorem norm_sq_diag {t : ℝ} (ht : 0 < t) :
     ‖(contour_neg1_to_i t + 1) ^ 2‖ ≤ 2 * t ^ 2 := by
   rw [diag_contour_add_one]
   simp only [norm_pow, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos ht]
   rw [mul_pow]; gcongr ?_ * _
-  rw [← Complex.normSq_eq_norm_sq]
-  norm_num [Complex.normSq_apply, Complex.add_re, Complex.add_im,
-    Complex.one_re, Complex.one_im, Complex.I_re, Complex.I_im]
+  rw [← Complex.normSq_eq_norm_sq]; norm_num [Complex.normSq_apply]
 
-/-- Norm bound for `(z+1)^2` along the vertical: `‖(It)^2‖ ≤ t^2`. -/
 private theorem norm_sq_vert {t : ℝ} (ht : 0 < t) :
     ‖((-1 : ℂ) + I * ↑t + 1) ^ 2‖ ≤ t ^ 2 := by
   rw [vert_contour_add_one]
-  simp only [norm_pow, norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos ht]
-  simp [Complex.norm_I]
+  simp [norm_pow, Complex.norm_real, abs_of_pos ht, Complex.norm_I]
 
-/-- Exponential bound along the diagonal contour for `t ∈ (0, 1]`. -/
 private theorem exp_bound_diag {r : ℝ} {t : ℝ} (ht : 0 < t) (ht1 : t ≤ 1) :
     ‖Complex.exp (↑Real.pi * I * ↑r * contour_neg1_to_i t)‖ ≤
       Real.exp (Real.pi * |r| * 2) := by
-  rw [Complex.norm_exp]; apply Real.exp_le_exp_of_le
-  simp [contour_neg1_to_i, Complex.mul_im, Complex.I_re, Complex.I_im,
-    Complex.add_im, Complex.ofReal_re, Complex.ofReal_im]
+  rw [Complex.norm_exp]
+  apply Real.exp_le_exp_of_le
+  simp [contour_neg1_to_i]
   nlinarith [Real.pi_pos, neg_abs_le r, abs_nonneg r, ht1,
     mul_le_mul_of_nonneg_right (neg_abs_le r) ht.le,
-    mul_le_mul_of_nonneg_left (show t ≤ 2 from by linarith) (abs_nonneg r)]
+    mul_le_mul_of_nonneg_left (show t ≤ 2 by linarith) (abs_nonneg r)]
 
-/-- Exponential bound along the vertical contour for `t ∈ (0, 1]`. -/
 private theorem exp_bound_vert {r : ℝ} {t : ℝ} (ht : 0 < t) (ht1 : t ≤ 1) :
     ‖Complex.exp (↑Real.pi * I * ↑r * ((-1 : ℂ) + I * ↑t))‖ ≤
       Real.exp (Real.pi * |r|) := by
-  rw [Complex.norm_exp]; apply Real.exp_le_exp_of_le
-  simp [Complex.mul_im, Complex.I_re, Complex.I_im,
-    Complex.add_im, Complex.ofReal_re, Complex.ofReal_im]
+  rw [Complex.norm_exp]
+  apply Real.exp_le_exp_of_le
+  simp
   nlinarith [Real.pi_pos, neg_abs_le r, abs_nonneg r, ht1,
     mul_le_mul_of_nonneg_right (neg_abs_le r) ht.le,
     mul_le_mul_of_nonneg_left ht1 (abs_nonneg r)]
 
-/-- For small `t > 0`, the phi0 bound `M` applies along the diagonal contour,
-because `Im(-1/(z+1)) = 1/(2t) >= A`. -/
 private theorem phi0_bound_of_small_diag {t A : ℝ} (ht : 0 < t) (ht_lt : t < 1 / (2 * max A 1))
     (M : ℝ) (hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M) :
     ‖φ₀'' (-1 / (contour_neg1_to_i t + 1))‖ ≤ M := by
@@ -548,8 +391,6 @@ private theorem phi0_bound_of_small_diag {t A : ℝ} (ht : 0 < t) (ht_lt : t < 1
     rw [le_div_iff₀ (by positivity : (0:ℝ) < 2 * t)]; linarith
   linarith [le_max_left A 1]
 
-/-- For small `t > 0`, the phi0 bound `M` applies along the vertical contour,
-because `Im(-1/(z+1)) = 1/t >= A`. -/
 private theorem phi0_bound_of_small_vert {t A : ℝ} (ht : 0 < t) (ht_lt : t < 1 / max A 1)
     (M : ℝ) (hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M) :
     ‖φ₀'' (-1 / ((-1 : ℂ) + I * ↑t + 1))‖ ≤ M := by
@@ -564,7 +405,6 @@ private theorem phi0_bound_of_small_vert {t A : ℝ} (ht : 0 < t) (ht_lt : t < 1
     rw [le_div_iff₀ (by positivity : (0:ℝ) < t)]; linarith
   linarith [le_max_left A 1]
 
-/-- The integrand norm along the diagonal is bounded by `C * t^2` for small `t > 0`. -/
 private theorem integrand_norm_bound_diag {r : ℝ} {t : ℝ} (ht : 0 < t) (ht1 : t ≤ 1)
     {M A : ℝ} (hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M) (hM_nn : 0 ≤ M)
     (ht_lt_A : t < 1 / (2 * max A 1)) :
@@ -591,7 +431,6 @@ private theorem integrand_norm_bound_diag {r : ℝ} {t : ℝ} (ht : 0 < t) (ht1 
           sq_nonneg t,
           mul_nonneg (Real.exp_pos (Real.pi * |r| * 2)).le (norm_nonneg ((1:ℂ) + I))]
 
-/-- The integrand norm along the vertical is bounded by `C * t^2` for small `t > 0`. -/
 private theorem integrand_norm_bound_vert {r : ℝ} {t : ℝ} (ht : 0 < t) (ht1 : t ≤ 1)
     {M A : ℝ} (hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M) (hM_nn : 0 ≤ M)
     (ht_lt_A : t < 1 / max A 1) :
@@ -618,9 +457,6 @@ private theorem integrand_norm_bound_vert {r : ℝ} {t : ℝ} (ht : 0 < t) (ht1 
           sq_nonneg t,
           mul_nonneg (Real.exp_pos (Real.pi * |r|)).le (norm_nonneg (I : ℂ))]
 
-/-- At `t = 0`, the diagonal integrand is `ContinuousWithinAt` on `[0, 1]`.
-The value is 0 (since `(z+1)^2 = 0`), and the squeeze bound `C * t^2 < epsilon`
-holds for small `t`. -/
 private theorem continuousWithinAt_zero_diag (r : ℝ) :
     ContinuousWithinAt (fun t : ℝ =>
       viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I : ℂ))
@@ -628,7 +464,7 @@ private theorem continuousWithinAt_zero_diag (r : ℝ) :
   have hval := integrand_at_zero_diag r
   rw [ContinuousWithinAt, hval, Metric.tendsto_nhds]
   intro ε hε
-  obtain ⟨M₀, A, hMA₀⟩ := UpperHalfPlane.isBoundedAtImInfty_iff.mp phi0_bounded_at_infty
+  obtain ⟨M₀, A, hMA₀⟩ := UpperHalfPlane.isBoundedAtImInfty_iff.mp phi0_isBoundedAtImInfty
   set M := max M₀ 0
   have hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M :=
     fun z hz => (hMA₀ z hz).trans (le_max_left _ _)
@@ -654,7 +490,6 @@ private theorem continuousWithinAt_zero_diag (r : ℝ) :
             _ = ε / C_bd := Real.sq_sqrt (by positivity)
       _ = ε := by field_simp
 
-/-- At `t = 0`, the vertical integrand is `ContinuousWithinAt` on `[0, 1]`. -/
 private theorem continuousWithinAt_zero_vert (r : ℝ) :
     ContinuousWithinAt (fun t : ℝ =>
       viazovska_integrand_left r (-1 + I * ↑t) * I)
@@ -662,7 +497,7 @@ private theorem continuousWithinAt_zero_vert (r : ℝ) :
   have hval := integrand_at_zero_vert r
   rw [ContinuousWithinAt, hval, Metric.tendsto_nhds]
   intro ε hε
-  obtain ⟨M₀, A, hMA₀⟩ := UpperHalfPlane.isBoundedAtImInfty_iff.mp phi0_bounded_at_infty
+  obtain ⟨M₀, A, hMA₀⟩ := UpperHalfPlane.isBoundedAtImInfty_iff.mp phi0_isBoundedAtImInfty
   set M := max M₀ 0
   have hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M :=
     fun z hz => (hMA₀ z hz).trans (le_max_left _ _)
@@ -692,44 +527,33 @@ private theorem continuousWithinAt_zero_vert (r : ℝ) :
 theorem continuousOn_diagonal_integrand (r : ℝ) :
     ContinuousOn (fun t : ℝ =>
       viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I : ℂ))
-      (Icc 0 1) := by
-  intro x hx
+      (Icc 0 1) := fun x hx => by
   rcases eq_or_lt_of_le hx.1 with rfl | hx_pos
   · exact continuousWithinAt_zero_diag r
   · exact ((viazovska_integrand_left_differentiableOn r).continuousOn.comp
       (continuous_const.add (continuous_const.mul continuous_ofReal)).continuousOn
-      (fun t ht => contour_neg1_to_i_im_pos ht) |>.mul continuousOn_const
+      (fun _ ht => contour_neg1_to_i_im_pos ht) |>.mul continuousOn_const
       |>.continuousAt (Ioi_mem_nhds hx_pos)).continuousWithinAt
 
 /-- The parameterized vertical integrand is continuous on `[0,1]`. -/
 theorem continuousOn_vertical_integrand (r : ℝ) :
     ContinuousOn (fun t : ℝ =>
       viazovska_integrand_left r (-1 + I * ↑t) * I)
-      (Icc 0 1) := by
-  intro x hx
+      (Icc 0 1) := fun x hx => by
   rcases eq_or_lt_of_le hx.1 with rfl | hx_pos
   · exact continuousWithinAt_zero_vert r
   · exact ((viazovska_integrand_left_differentiableOn r).continuousOn.comp
       (continuous_const.add (continuous_const.mul continuous_ofReal)).continuousOn
-      (fun t ht => vertical_contour_im_pos ht) |>.mul continuousOn_const
+      (fun _ ht => vertical_contour_im_pos ht) |>.mul continuousOn_const
       |>.continuousAt (Ioi_mem_nhds hx_pos)).continuousWithinAt
-
-/-! ### Step 5b: FTC-based limit argument
-
-The key observation is that all segment integrals equal `G(endpoint) - G(startpoint)`
-for a primitive `G` on the upper half-plane. As `δ → 0`, the starting point
-`-1 + δI` approaches `-1`, and `G(-1 + δI)` converges by continuity.
-
-We work with the primitive directly to avoid dominated convergence. -/
 
 /-- The primitive `G` of `viazovska_integrand_left r` on the upper half-plane,
 whose existence follows from `holomorphic_convex_primitive`. -/
 theorem exists_primitive_viazovska_integrand_left (r : ℝ) :
     ∃ G : ℂ → ℂ, ∀ z ∈ {z : ℂ | 0 < z.im},
-      HasDerivAt G (viazovska_integrand_left r z) z := by
-  obtain ⟨G, hG⟩ := holomorphic_convex_primitive convex_upperHalfPlaneSet
-    isOpen_upperHalfPlaneSet ⟨I, I_mem_uhp⟩ (viazovska_integrand_left_differentiableOn r)
-  exact ⟨G, hG⟩
+      HasDerivAt G (viazovska_integrand_left r z) z :=
+  holomorphic_convex_primitive convex_upperHalfPlaneSet UpperHalfPlane.isOpen_upperHalfPlaneSet
+    ⟨I, I_mem_uhp⟩ (viazovska_integrand_left_differentiableOn r)
 
 /-- The truncated diagonal integral from `-1 + δI` to `I` equals `G(I) - G(-1+δI)`
 for the primitive `G` of the integrand. -/
@@ -739,7 +563,7 @@ theorem truncated_diagonal_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
     (∫ t in (0:ℝ)..1, viazovska_integrand_left r
       ((-1 + ↑δ * I) + t • ((I : ℂ) - (-1 + ↑δ * I))) *
         ((I : ℂ) - (-1 + ↑δ * I))) = G I - G (-1 + ↑δ * I) :=
-  segment_integral_eq_sub_of_hasDerivAt isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+  segment_integral_eq_sub_of_hasDerivAt convex_upperHalfPlaneSet
     (neg_one_add_delta_I_mem_uhp hδ) I_mem_uhp hG
     (viazovska_integrand_left_differentiableOn r).continuousOn
 
@@ -751,7 +575,7 @@ theorem truncated_vertical_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
     (∫ t in (0:ℝ)..1, viazovska_integrand_left r
       ((-1 + ↑δ * I) + t • ((-1 + I) - (-1 + ↑δ * I))) *
         ((-1 + I) - (-1 + ↑δ * I))) = G (-1 + I) - G (-1 + ↑δ * I) :=
-  segment_integral_eq_sub_of_hasDerivAt isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+  segment_integral_eq_sub_of_hasDerivAt convex_upperHalfPlaneSet
     (neg_one_add_delta_I_mem_uhp hδ) neg_one_add_I_mem_uhp hG
     (viazovska_integrand_left_differentiableOn r).continuousOn
 
@@ -760,21 +584,9 @@ theorem horizontal_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z) :
     I12_horiz r = G I - G (-1 + I) := by
   rw [I12_horiz_eq_segment]
-  exact segment_integral_eq_sub_of_hasDerivAt isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
+  exact segment_integral_eq_sub_of_hasDerivAt convex_upperHalfPlaneSet
     neg_one_add_I_mem_uhp I_mem_uhp hG
     (viazovska_integrand_left_differentiableOn r).continuousOn
-
-/-! ### Step 6: Full contour equivalence via primitive cancellation
-
-The full contour equivalence `I12 = I12_vert + I12_horiz` follows from
-the primitive approach: both sides equal `G(I) - lim_{δ→0} G(-1+δI)`.
-
-The truncated versions give:
-- Diagonal: `G(I) - G(-1+δI)`
-- Vertical + Horizontal: `(G(-1+I) - G(-1+δI)) + (G(I) - G(-1+I)) = G(I) - G(-1+δI)`
-
-So truncated diagonal = truncated vertical + horizontal for all δ > 0.
-Taking δ → 0 and using continuity of the integrals gives the result. -/
 
 /-- `I12` equals the integral restricted to `[δ, 1]` plus the integral on `[0, δ]`.
 For continuous integrands (from `continuousOn_diagonal_integrand`), the `[0, δ]` part
@@ -811,31 +623,12 @@ theorem I12_vert_split_at_delta (r : ℝ) (δ : ℝ) (hδ₀ : 0 ≤ δ) (hδ₁
     (hint.mono_set (Set.uIcc_subset_uIcc_left hδ_mem))
     (hint.mono_set (Set.uIcc_subset_uIcc_right hδ_mem))).symm
 
-/-! ### Helpers for I12_eq_rectangular
-
-The proof of `I12_eq_rectangular` decomposes into:
-1. Chain rule / FTC for tail integrals
-2. An algebraic identity expressing the difference as three small terms
-3. Each of those three terms tending to zero as delta -> 0+
-4. Tendsto uniqueness to conclude -/
-
-/-- The derivative of the diagonal contour map. -/
-private theorem hasDerivAt_contour_neg1_to_i (t : ℝ) :
-    HasDerivAt (fun s : ℝ => contour_neg1_to_i s) (1 + I : ℂ) t := by
-  simp only [contour_neg1_to_i]
-  have h1 := (ofRealCLM.hasDerivAt (x := t)).const_mul (1 + I : ℂ)
-  simp [ofRealCLM] at h1
-  convert (hasDerivAt_const t (-1 : ℂ)).add h1 using 1; ring
-
-/-- The derivative of the vertical contour map. -/
 private theorem hasDerivAt_vert_contour (t : ℝ) :
     HasDerivAt (fun s : ℝ => (-1 : ℂ) + I * ↑s) (I : ℂ) t := by
   have h1 := (ofRealCLM.hasDerivAt (x := t)).const_mul (I : ℂ)
   simp [ofRealCLM] at h1
   convert (hasDerivAt_const t (-1 : ℂ)).add h1 using 1; ring
 
-/-- FTC for the tail diagonal integral: for delta in (0, 1], the integral from
-delta to 1 of the diagonal integrand equals G(I) - G(contour(delta)). -/
 private theorem ftc_tail_diag (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
     (δ : ℝ) (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
@@ -855,8 +648,6 @@ private theorem ftc_tail_diag (r : ℝ) (G : ℂ → ℂ)
       (by linarith))
   simpa [Function.comp] using h
 
-/-- FTC for the tail vertical integral: for delta in (0, 1], the integral from
-delta to 1 of the vertical integrand equals G(-1+I) - G(-1+delta*I). -/
 private theorem ftc_tail_vert (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
     (δ : ℝ) (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
@@ -875,8 +666,6 @@ private theorem ftc_tail_vert (r : ℝ) (G : ℂ → ℂ)
     ((hcont.mono (fun x hx => ⟨by linarith [hx.1], hx.2⟩)).intervalIntegrable_of_Icc
       (by linarith))
 
-/-- For each delta in (0, 1], the difference `I12 - (I12_vert + I12_horiz)` equals
-the sum of two head integrals plus a G-difference. -/
 private theorem D_eq_three_terms (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
     (δ : ℝ) (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
@@ -884,10 +673,8 @@ private theorem D_eq_three_terms (r : ℝ) (G : ℂ → ℂ)
       (∫ t in (0:ℝ)..δ, viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I)) -
       (∫ t in (0:ℝ)..δ, viazovska_integrand_left r (-1 + I * ↑t) * I) +
       (G (-1 + ↑δ * I) - G (contour_neg1_to_i δ)) := by
-  have hcont_diag := continuousOn_diagonal_integrand r
-  have hcont_vert := continuousOn_vertical_integrand r
-  have hsd := I12_split_at_delta r δ hδ.le hδ1 hcont_diag
-  have hsv := I12_vert_split_at_delta r δ hδ.le hδ1 hcont_vert
+  have hsd := I12_split_at_delta r δ hδ.le hδ1 (continuousOn_diagonal_integrand r)
+  have hsv := I12_vert_split_at_delta r δ hδ.le hδ1 (continuousOn_vertical_integrand r)
   have htd := ftc_tail_diag r G hG δ hδ hδ1
   have hc1 : contour_neg1_to_i 1 = I := by simp [contour_neg1_to_i]
   rw [hc1] at htd
@@ -899,13 +686,11 @@ private theorem D_eq_three_terms (r : ℝ) (G : ℂ → ℂ)
   rw [hcomm]
   linear_combination hsd + htd - hsv - htv - hhoriz
 
-/-- A bounded continuous integrand on `[0,1]` has its head integral
-`integral_0^delta` tending to zero as `delta -> 0+`. -/
 private theorem head_integral_tendsto_zero {f : ℝ → ℂ}
     (hcont : ContinuousOn f (Icc 0 1)) :
     Filter.Tendsto (fun δ => ∫ t in (0:ℝ)..δ, f t) (𝓝[>] 0) (𝓝 0) := by
   obtain ⟨C, hC⟩ := isCompact_Icc.exists_bound_of_continuousOn hcont
-  have hC_nn : 0 ≤ C := le_trans (norm_nonneg _) (hC 0 ⟨le_refl _, zero_le_one⟩)
+  have hC_nn : 0 ≤ C := (norm_nonneg _).trans (hC 0 ⟨le_refl _, zero_le_one⟩)
   rw [Metric.tendsto_nhds]; intro ε hε
   rw [eventually_nhdsWithin_iff]
   filter_upwards [Metric.ball_mem_nhds 0 (show 0 < min (ε / (C + 1)) 1 by positivity)]
@@ -927,8 +712,6 @@ private theorem head_integral_tendsto_zero {f : ℝ → ℂ}
           (lt_of_lt_of_le hball (min_le_left _ _)) (by linarith)
     _ = ε := by field_simp
 
-/-- The norm of the integrand on the connecting segment from `-1+delta(1+I)` to
-`-1+delta*I` is bounded by `delta`, for sufficiently small `delta`. -/
 private theorem segment_integrand_norm_bound (r : ℝ) {δ : ℝ} (hδ_pos : 0 < δ)
     (hδ1 : δ ≤ 1) {M A : ℝ}
     (hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M) (hM_nn : 0 ≤ M)
@@ -940,23 +723,12 @@ private theorem segment_integrand_norm_bound (r : ℝ) {δ : ℝ} (hδ_pos : 0 <
     ‖viazovska_integrand_left r (a + ↑t • dir) * dir‖ ≤ δ := by
   intro a dir
   set z₀ := a + ↑t • dir
-  have him : 0 < z₀.im := by
-    simp [z₀, a, dir, Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im,
-      Complex.ofReal_re, Complex.ofReal_im,
-      Complex.neg_im, Complex.one_im, Complex.one_re]; linarith
-  have hz_plus_1 : z₀ + 1 = ↑δ * ((1 - ↑t : ℂ) + I) := by
-    simp [z₀, a, dir]; ring
+  have him : 0 < z₀.im := by simp [z₀, a, dir]; linarith
+  have hz_plus_1 : z₀ + 1 = ↑δ * ((1 - ↑t : ℂ) + I) := by simp [z₀, a, dir]; ring
   have him_w : 0 < (-1 / (z₀ + 1)).im := neg_inv_add_one_im_pos him
   have hnsq : Complex.normSq (z₀ + 1) = δ ^ 2 * ((1 - t) ^ 2 + 1) := by
-    rw [hz_plus_1, Complex.normSq_apply]
-    simp [Complex.add_re, Complex.add_im, Complex.mul_re, Complex.mul_im,
-      Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-      Complex.one_re, Complex.one_im, Complex.sub_re, Complex.sub_im]; ring
-  have him_eq : (z₀ + 1).im = δ := by
-    rw [hz_plus_1]
-    simp [Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.add_im, Complex.sub_im, Complex.one_im]
-  -- Im(-1/(z+1)) >= 1/(2*delta) >= A
+    rw [hz_plus_1, Complex.normSq_apply]; simp; ring
+  have him_eq : (z₀ + 1).im = δ := by rw [hz_plus_1]; simp
   have h1t_sq : (1 - t) ^ 2 + 1 ≤ 2 := by nlinarith
   have him_lb : 1 / (2 * δ) ≤ (-1 / (z₀ + 1)).im := by
     rw [neg_div, Complex.neg_im, Complex.div_im]
@@ -970,7 +742,6 @@ private theorem segment_integrand_norm_bound (r : ℝ) {δ : ℝ} (hδ_pos : 0 <
       rw [lt_div_iff₀ (by positivity : (0:ℝ) < 2 * max A 1)] at hδ_lt_A
       rw [le_div_iff₀ (by positivity : (0:ℝ) < 2 * δ)]; linarith
     linarith [le_max_left A 1]
-  -- Bound phi0, (z+1)^2, exp
   have hφ : ‖φ₀'' (-1 / (z₀ + 1))‖ ≤ M := by
     simp only [φ₀'', him_w, dif_pos]
     exact hMA ⟨_, him_w⟩ (by simp [UpperHalfPlane.im]; linarith)
@@ -979,14 +750,12 @@ private theorem segment_integrand_norm_bound (r : ℝ) {δ : ℝ} (hδ_pos : 0 <
     nlinarith [sq_nonneg δ, h1t_sq]
   have hexp : ‖Complex.exp (↑Real.pi * I * ↑r * z₀)‖ ≤
       Real.exp (Real.pi * |r| * 2) := by
-    rw [Complex.norm_exp]; apply Real.exp_le_exp_of_le
-    simp [z₀, a, dir, Complex.mul_im, Complex.I_re, Complex.I_im,
-      Complex.add_im, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.neg_im, Complex.one_im, Complex.one_re]
+    rw [Complex.norm_exp]
+    apply Real.exp_le_exp_of_le
+    simp [z₀, a, dir]
     nlinarith [Real.pi_pos, neg_abs_le r, abs_nonneg r,
       mul_le_mul_of_nonneg_right (neg_abs_le r) hδ_pos.le,
       mul_le_mul_of_nonneg_left hδ1 (abs_nonneg r)]
-  -- ||F(z0)|| <= C_seg * delta^2 <= 1
   set C_seg := (M + 1) * 2 * Real.exp (Real.pi * |r| * 2)
   have hC_seg_pos : 0 < C_seg := by positivity
   have hFb : ‖viazovska_integrand_left r z₀‖ ≤ 1 := by
@@ -1009,7 +778,6 @@ private theorem segment_integrand_norm_bound (r : ℝ) {δ : ℝ} (hδ_pos : 0 <
           simp only [C_seg]
           nlinarith [hM_nn, Real.exp_pos (Real.pi * |r| * 2), sq_nonneg δ]
       _ ≤ 1 := hCδ
-  -- ||F(z0) * dir|| = ||F(z0)|| * delta <= 1 * delta = delta
   have hneg_norm : ‖dir‖ = δ := by
     show ‖(-(↑δ : ℂ))‖ = δ
     rw [norm_neg, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hδ_pos]
@@ -1018,15 +786,12 @@ private theorem segment_integrand_norm_bound (r : ℝ) {δ : ℝ} (hδ_pos : 0 <
     _ ≤ 1 * δ := by rw [hneg_norm]; exact mul_le_mul_of_nonneg_right hFb hδ_pos.le
     _ = δ := one_mul _
 
-/-- The G-difference `G(-1 + delta*I) - G(contour_neg1_to_i delta)` tends to 0
-as `delta -> 0+`. This is the hardest piece: we express the difference as a
-segment integral and bound the integrand using the phi0 cusp decay. -/
 private theorem G_diff_tendsto_zero (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z) :
     Filter.Tendsto
       (fun δ : ℝ => G (-1 + ↑δ * I) - G (contour_neg1_to_i δ)) (𝓝[>] 0) (𝓝 0) := by
   rw [Metric.tendsto_nhds]; intro ε hε
-  obtain ⟨M₀, A, hMA₀⟩ := UpperHalfPlane.isBoundedAtImInfty_iff.mp phi0_bounded_at_infty
+  obtain ⟨M₀, A, hMA₀⟩ := UpperHalfPlane.isBoundedAtImInfty_iff.mp phi0_isBoundedAtImInfty
   set M := max M₀ 0
   have hMA : ∀ z : UpperHalfPlane, A ≤ z.im → ‖φ₀ z‖ ≤ M :=
     fun z hz => (hMA₀ z hz).trans (le_max_left _ _)
@@ -1046,23 +811,19 @@ private theorem G_diff_tendsto_zero (r : ℝ) (G : ℂ → ℂ)
     lt_of_lt_of_le hball_δ (min_le_right _ _ |>.trans (min_le_left _ _))
   have hδ1 : δ ≤ 1 :=
     le_of_lt (lt_of_lt_of_le hball_δ (min_le_right _ _ |>.trans (min_le_right _ _)))
-  -- Express G-diff as segment integral via FTC
   have hcδ : contour_neg1_to_i δ = -1 + ↑δ * ((1 : ℂ) + I) := by
     simp [contour_neg1_to_i]; ring
   rw [dist_zero_right, hcδ]
   set a : ℂ := -1 + ↑δ * ((1 : ℂ) + I)
   set dir : ℂ := -(↑δ : ℂ)
-  have ha_uhp : a ∈ {z : ℂ | 0 < z.im} := by
-    simp only [a, Set.mem_setOf_eq, Complex.add_im, Complex.neg_im, Complex.one_im,
-      Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, Complex.add_re, Complex.one_re,
-      Complex.I_re, Complex.I_im]; nlinarith
+  have ha_uhp : a ∈ {z : ℂ | 0 < z.im} := by simp [a]; nlinarith
   have hb_uhp := neg_one_add_delta_I_mem_uhp hδ_pos
   have hdir_eq : (-1 + ↑δ * I : ℂ) - a = dir := by simp [a, dir]; ring
   have hG_seg : G (-1 + ↑δ * I) - G a =
       ∫ t in (0:ℝ)..1, viazovska_integrand_left r (a + ↑t • dir) * dir := by
     rw [show dir = (-1 + ↑δ * I : ℂ) - a from hdir_eq.symm]
-    symm; exact segment_integral_eq_sub_of_hasDerivAt isOpen_upperHalfPlaneSet
-      convex_upperHalfPlaneSet ha_uhp hb_uhp hG
+    symm
+    exact segment_integral_eq_sub_of_hasDerivAt convex_upperHalfPlaneSet ha_uhp hb_uhp hG
       (viazovska_integrand_left_differentiableOn r).continuousOn
   rw [hG_seg]
   have hpt_bound : ∀ t ∈ Set.uIoc (0:ℝ) 1,
@@ -1082,10 +843,8 @@ theorem I12_eq_rectangular (r : ℝ) : I12 r = I12_vert r + I12_horiz r := by
   suffices hsuff : I12 r - (I12_vert r + I12_horiz r) = 0 from eq_of_sub_eq_zero hsuff
   obtain ⟨G, hG⟩ := exists_primitive_viazovska_integrand_left r
   set F := viazovska_integrand_left r
-  -- Abbreviation for the three-term sum that each delta maps to
   set S := fun δ : ℝ => (∫ t in (0:ℝ)..δ, F (contour_neg1_to_i t) * (1 + I)) -
     (∫ t in (0:ℝ)..δ, F (-1 + I * ↑t) * I) + (G (-1 + ↑δ * I) - G (contour_neg1_to_i δ))
-  -- D = S(delta) for all delta in (0,1], and S(delta) -> 0
   have heq : ∀ᶠ δ in 𝓝[>] 0, I12 r - (I12_vert r + I12_horiz r) = S δ := by
     filter_upwards [self_mem_nhdsWithin,
       nhdsWithin_le_nhds (Metric.ball_mem_nhds (0:ℝ) one_pos)] with δ hδ hδ_ball
@@ -1095,19 +854,7 @@ theorem I12_eq_rectangular (r : ℝ) : I12 r = I12_vert r + I12_horiz r := by
     have := (head_integral_tendsto_zero (continuousOn_diagonal_integrand r)).sub
       (head_integral_tendsto_zero (continuousOn_vertical_integrand r))
       |>.add (G_diff_tendsto_zero r G hG)
-    convert this using 1; ext; ring
+    simpa using this
   exact tendsto_nhds_unique (tendsto_const_nhds.congr' heq) hS
-
-/-! ### Summary of sorry dependencies
-
-Remaining sorry'd lemmas:
-
-All sorries have been filled:
-- `phi0_bounded_at_infty` — via `CuspDecay.lean` import
-- `continuousOn_diagonal_integrand` — direct squeeze bound using `phi0_isBoundedAtImInfty`
-- `continuousOn_vertical_integrand` — same pattern as diagonal
-- `I12_eq_rectangular` — primitive + FTC + limit argument, with direct segment bound
-  (avoids `viazovska_integrand_left_tendsto_zero` by bounding φ₀ on the connecting
-  segment where Im(w) ≥ 1/(2δ) → ∞) -/
 
 end
