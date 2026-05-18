@@ -30,38 +30,51 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ## Part 1: Vertical cutoff function -/
-
 /-- Vertical delta: `delta(eps) = eps / (5 * (H - sqrt(3)/2))`. -/
 def vertDelta (H : ℝ) (ε : ℝ) : ℝ := ε / (5 * (H - Real.sqrt 3 / 2))
 
 theorem vertDelta_pos {H ε : ℝ} (hH : fdHeightValid H) (hε : 0 < ε) :
     0 < vertDelta H ε := by
-  unfold vertDelta
-  apply div_pos hε
-  have : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
+  unfold vertDelta fdHeightValid at *
+  have : 0 < H - Real.sqrt 3 / 2 := by linarith
   positivity
 
 theorem vertDelta_lt_one_fifth {H ε : ℝ} (hH : fdHeightValid H)
     (hε_lt : ε < H - Real.sqrt 3 / 2) :
     vertDelta H ε < 1 / 5 := by
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
-  unfold vertDelta
-  have h5pos : (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) := by positivity
-  rw [div_lt_div_iff₀ h5pos (by norm_num : (0 : ℝ) < 5)]
+  unfold vertDelta fdHeightValid at *
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by linarith
+  rw [div_lt_div_iff₀ (by positivity) (by norm_num : (0 : ℝ) < 5)]
   linarith
 
-/-! ## Part 2: Norm lemma for pure imaginary -/
+private theorem vertDelta_mul_eq {H : ℝ} (hH : fdHeightValid H) (ε : ℝ) :
+    5 * vertDelta H ε * (H - Real.sqrt 3 / 2) = ε := by
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  unfold vertDelta
+  field_simp [ne_of_gt (show (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) from by positivity)]
+  exact mul_div_cancel_right₀ _ (by nlinarith)
 
 private theorem norm_ofReal_mul_I_eq (r : ℝ) (hr : 0 ≤ r) :
     ‖(↑r : ℂ) * I‖ = r := by
   rw [norm_mul, Complex.norm_I, mul_one, Complex.norm_real, Real.norm_of_nonneg hr]
 
-/-! ## Part 3: Near and far bounds for rho (t0 = 3/5) -/
+private theorem two_sin_abs_le_of_le_arcsin {α ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
+    (hα : |α| ≤ Real.arcsin (ε/2)) : 2 * Real.sin |α| ≤ ε := by
+  have : Real.sin |α| ≤ ε / 2 := by
+    rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
+    exact Real.sin_le_sin_of_le_of_le_pi_div_two
+      (by linarith [abs_nonneg α, Real.pi_pos])
+      (Real.arcsin_le_pi_div_two _) hα
+  linarith
+
+private theorem ε_lt_two_sin_abs {α ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
+    (hα_pi2 : |α| ≤ Real.pi / 2) (hα : Real.arcsin (ε/2) < |α|) :
+    ε < 2 * Real.sin |α| := by
+  have : ε / 2 < Real.sin |α| := by
+    rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
+    exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
+      (by linarith [Real.arcsin_nonneg.mpr (show (0 : ℝ) ≤ ε / 2 by linarith)]) hα_pi2 hα
+  linarith
 
 section RhoBounds
 
@@ -74,25 +87,18 @@ theorem arc_near_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     ‖fdBoundaryFun H t - ellipticPointRho‖ ≤ ε := by
   have ht1 : (1 : ℝ)/5 < t := by
     nlinarith [(abs_le.mp ht).1, arcsinDelta_lt_one_fifth hε hε_lt]
-  rw [fdBoundaryFun_arc_dist_rho H t ht1 ht2]
-  have halfAngle_eq : (fdArcAngle t - 2 * Real.pi / 3) / 2 =
-      5 * (t - 3/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]
-    ring
-  rw [halfAngle_eq]
+  rw [fdBoundaryFun_arc_dist_rho H t ht1 ht2,
+    show (fdArcAngle t - 2 * Real.pi / 3) / 2 = 5 * (t - 3/5) * Real.pi / 12 from by
+      simp only [fdArcAngle]; ring]
   set α := 5 * (t - 3/5) * Real.pi / 12
   have hα_le_asin : |α| ≤ Real.arcsin (ε / 2) := by
     rw [show α = 5 * Real.pi / 12 * (t - 3/5) from by ring, abs_mul,
       abs_of_pos (by positivity), ← half_angle_arcsinDelta]
     exact mul_le_mul_of_nonneg_left ht (by positivity)
-  have harc_le : Real.arcsin (ε / 2) ≤ Real.pi / 2 := Real.arcsin_le_pi_div_two _
-  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
+  have hα_le_pi : |α| ≤ Real.pi :=
+    (hα_le_asin.trans (Real.arcsin_le_pi_div_two _)).trans (by linarith [Real.pi_pos])
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
-  have h_sin_le : Real.sin |α| ≤ ε / 2 := by
-    rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
-    exact Real.sin_le_sin_of_le_of_le_pi_div_two
-      (by linarith [abs_nonneg α]) harc_le hα_le_asin
-  linarith
+  exact two_sin_abs_le_of_le_arcsin hε hε_lt hα_le_asin
 
 /-- Far bound on arc for rho: `arcsinDelta(eps) < |t - 3/5|` implies `eps < norm`. -/
 theorem arc_far_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
@@ -110,41 +116,28 @@ theorem arc_far_at_rho_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
   · calc ε < 1/3 := hε_lt
       _ ≤ 1 := by norm_num
       _ ≤ _ := fdBoundaryFun_seg1_dist_rho_lower H (1/5) (le_refl _)
-  rw [fdBoundaryFun_arc_dist_rho H t ht1 (le_of_lt ht3)]
-  have halfAngle_eq : (fdArcAngle t - 2 * Real.pi / 3) / 2 =
-      5 * (t - 3/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]
-    ring
-  rw [halfAngle_eq]
+  rw [fdBoundaryFun_arc_dist_rho H t ht1 (le_of_lt ht3),
+    show (fdArcAngle t - 2 * Real.pi / 3) / 2 = 5 * (t - 3/5) * Real.pi / 12 from by
+      simp only [fdArcAngle]; ring]
   set α := 5 * (t - 3/5) * Real.pi / 12
-  have hα_gt_asin : Real.arcsin (ε / 2) < |α| := by
-    rw [show α = 5 * Real.pi / 12 * (t - 3/5) from by ring, abs_mul,
-      abs_of_pos (by positivity), ← half_angle_arcsinDelta]
-    exact mul_lt_mul_of_pos_left hδt (by positivity)
-  have h_abs_bound : |t - 3/5| ≤ 2/5 := by
-    rw [abs_le]
-    exact ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
-  have hα_le_pi6 : |α| ≤ Real.pi / 6 := by
+  have hα_abs : |α| = 5 * Real.pi / 12 * |t - 3/5| := by
     rw [show α = 5 * Real.pi / 12 * (t - 3/5) from by ring, abs_mul,
       abs_of_pos (by positivity)]
-    nlinarith [Real.pi_pos]
-  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
-  rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
-  have h_sin_gt : ε / 2 < Real.sin |α| := by
-    rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
-    exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
-      (by linarith [Real.arcsin_nonneg.mpr (show (0 : ℝ) ≤ ε / 2 by linarith)])
-      (by linarith) hα_gt_asin
-  linarith
+  have hα_gt_asin : Real.arcsin (ε / 2) < |α| := by
+    rw [hα_abs, ← half_angle_arcsinDelta]
+    exact mul_lt_mul_of_pos_left hδt (by positivity)
+  have h_abs_bound : |t - 3/5| ≤ 2/5 :=
+    abs_le.mpr ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
+  have hα_le_pi6 : |α| ≤ Real.pi / 6 := by rw [hα_abs]; nlinarith [Real.pi_pos]
+  rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi (by linarith [Real.pi_pos])]
+  exact ε_lt_two_sin_abs hε hε_lt (by linarith [Real.pi_pos]) hα_gt_asin
 
 /-- Distance from rho on segment 4 (left vertical). -/
 theorem fdBoundaryFun_seg4_dist_rho (hH : fdHeightValid H) (t : ℝ)
     (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     ‖fdBoundaryFun H t - ellipticPointRho‖ =
       5 * (t - 3/5) * (H - Real.sqrt 3 / 2) := by
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
   simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
     show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
     ht4, ite_true, ite_false,
@@ -152,15 +145,8 @@ theorem fdBoundaryFun_seg4_dist_rho (hH : fdHeightValid H) (t : ℝ)
   have h_eq : (-1 : ℂ) / 2 +
       (↑(Real.sqrt 3) / 2 + (5 * ↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I -
       (-1 / 2 + ↑(Real.sqrt 3) / 2 * I) =
-      ↑(5 * (t - 3/5) * (H - Real.sqrt 3 / 2)) * I := by
-    push_cast
-    ring
-  rw [h_eq, norm_ofReal_mul_I_eq _ (by
-    apply mul_nonneg
-    · apply mul_nonneg
-      · linarith
-      · linarith
-    · linarith)]
+      ↑(5 * (t - 3/5) * (H - Real.sqrt 3 / 2)) * I := by push_cast; ring
+  rw [h_eq, norm_ofReal_mul_I_eq _ (by nlinarith)]
 
 /-- Near bound on vertical for rho. -/
 theorem vert_near_at_rho (hH : fdHeightValid H)
@@ -168,18 +154,11 @@ theorem vert_near_at_rho (hH : fdHeightValid H)
     (hδ : t - 3/5 ≤ vertDelta H ε) :
     ‖fdBoundaryFun H t - ellipticPointRho‖ ≤ ε := by
   rw [fdBoundaryFun_seg4_dist_rho H hH t ht3 ht4]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
   have h1 : 5 * (t - 3/5) * (H - Real.sqrt 3 / 2) ≤
-      5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
-    apply mul_le_mul_of_nonneg_right _ hH'.le
-    exact mul_le_mul_of_nonneg_left hδ (by norm_num)
-  have h2 : 5 * vertDelta H ε * (H - Real.sqrt 3 / 2) = ε := by
-    unfold vertDelta
-    field_simp [ne_of_gt (show (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) from by positivity)]
-    exact mul_div_cancel_right₀ _ (by nlinarith)
-  linarith
+      5 * vertDelta H ε * (H - Real.sqrt 3 / 2) :=
+    mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hδ (by norm_num)) hH'.le
+  linarith [vertDelta_mul_eq hH ε]
 
 /-- Far bound on vertical for rho. -/
 theorem vert_far_at_rho (hH : fdHeightValid H)
@@ -187,18 +166,11 @@ theorem vert_far_at_rho (hH : fdHeightValid H)
     (hδt : vertDelta H ε < t - 3/5) :
     ε < ‖fdBoundaryFun H t - ellipticPointRho‖ := by
   rw [fdBoundaryFun_seg4_dist_rho H hH t ht3 ht4]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
-  have h1 : ε = 5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
-    unfold vertDelta
-    field_simp [ne_of_gt (show (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) from by positivity)]
-    exact (mul_div_cancel_right₀ _ (by nlinarith)).symm
-  linarith [mul_lt_mul_of_pos_right (mul_lt_mul_of_pos_left hδt (by norm_num : (0:ℝ) < 5)) hH']
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  linarith [vertDelta_mul_eq hH ε,
+    mul_lt_mul_of_pos_right (mul_lt_mul_of_pos_left hδt (by norm_num : (0:ℝ) < 5)) hH']
 
 end RhoBounds
-
-/-! ## Part 4: Near and far bounds for rho+1 (t0 = 1/5) -/
 
 section RhoPlusOneBounds
 
@@ -213,25 +185,18 @@ theorem arc_near_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1
   rcases eq_or_lt_of_le ht1 with rfl | ht1'
   · rw [fdBoundaryFun_at_one_fifth, sub_self, norm_zero]
     linarith
-  rw [fdBoundaryFun_arc_dist_rhoPlusOne H t ht1' ht2]
-  have halfAngle_eq : (fdArcAngle t - Real.pi / 3) / 2 =
-      5 * (t - 1/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]
-    ring
-  rw [halfAngle_eq]
+  rw [fdBoundaryFun_arc_dist_rhoPlusOne H t ht1' ht2,
+    show (fdArcAngle t - Real.pi / 3) / 2 = 5 * (t - 1/5) * Real.pi / 12 from by
+      simp only [fdArcAngle]; ring]
   set α := 5 * (t - 1/5) * Real.pi / 12
   have hα_le_asin : |α| ≤ Real.arcsin (ε / 2) := by
     rw [show α = 5 * Real.pi / 12 * (t - 1/5) from by ring, abs_mul,
       abs_of_pos (by positivity), ← half_angle_arcsinDelta]
     exact mul_le_mul_of_nonneg_left ht (by positivity)
-  have harc_le : Real.arcsin (ε / 2) ≤ Real.pi / 2 := Real.arcsin_le_pi_div_two _
-  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
+  have hα_le_pi : |α| ≤ Real.pi :=
+    (hα_le_asin.trans (Real.arcsin_le_pi_div_two _)).trans (by linarith [Real.pi_pos])
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
-  have h_sin_le : Real.sin |α| ≤ ε / 2 := by
-    rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
-    exact Real.sin_le_sin_of_le_of_le_pi_div_two
-      (by linarith [abs_nonneg α]) harc_le hα_le_asin
-  linarith
+  exact two_sin_abs_le_of_le_arcsin hε hε_lt hα_le_asin
 
 /-- Far bound on arc for rho+1. -/
 theorem arc_far_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
@@ -245,55 +210,35 @@ theorem arc_far_at_rhoPlusOne_arcsin {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/
     subst ht_eq
     simp only [sub_self, abs_zero] at hδt
     linarith [arcsinDelta_pos hε]
-  rw [fdBoundaryFun_arc_dist_rhoPlusOne H t ht1 ht_arc.2]
-  have halfAngle_eq : (fdArcAngle t - Real.pi / 3) / 2 =
-      5 * (t - 1/5) * Real.pi / 12 := by
-    simp only [fdArcAngle]
-    ring
-  rw [halfAngle_eq]
+  rw [fdBoundaryFun_arc_dist_rhoPlusOne H t ht1 ht_arc.2,
+    show (fdArcAngle t - Real.pi / 3) / 2 = 5 * (t - 1/5) * Real.pi / 12 from by
+      simp only [fdArcAngle]; ring]
   set α := 5 * (t - 1/5) * Real.pi / 12
-  have hα_gt_asin : Real.arcsin (ε / 2) < |α| := by
-    rw [show α = 5 * Real.pi / 12 * (t - 1/5) from by ring, abs_mul,
-      abs_of_pos (by positivity), ← half_angle_arcsinDelta]
-    exact mul_lt_mul_of_pos_left hδt (by positivity)
-  have h_abs_bound : |t - 1/5| ≤ 2/5 := by
-    rw [abs_le]
-    exact ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
-  have hα_le_pi6 : |α| ≤ Real.pi / 6 := by
+  have hα_abs : |α| = 5 * Real.pi / 12 * |t - 1/5| := by
     rw [show α = 5 * Real.pi / 12 * (t - 1/5) from by ring, abs_mul,
       abs_of_pos (by positivity)]
-    nlinarith [Real.pi_pos]
-  have hα_le_pi : |α| ≤ Real.pi := by linarith [Real.pi_pos]
-  rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
-  have h_sin_gt : ε / 2 < Real.sin |α| := by
-    rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
-    exact Real.sin_lt_sin_of_lt_of_le_pi_div_two
-      (by linarith [Real.arcsin_nonneg.mpr (show (0 : ℝ) ≤ ε / 2 by linarith)])
-      (by linarith) hα_gt_asin
-  linarith
+  have hα_gt_asin : Real.arcsin (ε / 2) < |α| := by
+    rw [hα_abs, ← half_angle_arcsinDelta]
+    exact mul_lt_mul_of_pos_left hδt (by positivity)
+  have h_abs_bound : |t - 1/5| ≤ 2/5 :=
+    abs_le.mpr ⟨by linarith [ht_arc.1], by linarith [ht_arc.2]⟩
+  have hα_le_pi6 : |α| ≤ Real.pi / 6 := by rw [hα_abs]; nlinarith [Real.pi_pos]
+  rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi (by linarith [Real.pi_pos])]
+  exact ε_lt_two_sin_abs hε hε_lt (by linarith [Real.pi_pos]) hα_gt_asin
 
 /-- Distance from rho+1 on segment 1 (right vertical). -/
 theorem fdBoundaryFun_seg1_dist_rhoPlusOne (hH : fdHeightValid H) (t : ℝ)
     (_ht0 : 0 ≤ t) (ht1 : t < 1/5) :
     ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ =
       5 * (1/5 - t) * (H - Real.sqrt 3 / 2) := by
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
   simp only [fdBoundaryFun, show t ≤ 1/5 from by linarith, ite_true,
     ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   have h_eq : (1 : ℂ) / 2 +
       (↑H - 5 * ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I -
       (1 / 2 + ↑(Real.sqrt 3) / 2 * I) =
-      ↑(5 * (1/5 - t) * (H - Real.sqrt 3 / 2)) * I := by
-    push_cast
-    ring
-  rw [h_eq, norm_ofReal_mul_I_eq _ (by
-    apply mul_nonneg
-    · apply mul_nonneg
-      · linarith
-      · linarith
-    · linarith)]
+      ↑(5 * (1/5 - t) * (H - Real.sqrt 3 / 2)) * I := by push_cast; ring
+  rw [h_eq, norm_ofReal_mul_I_eq _ (by nlinarith)]
 
 /-- Near bound on vertical for rho+1. -/
 theorem vert_near_at_rhoPlusOne (hH : fdHeightValid H)
@@ -301,18 +246,11 @@ theorem vert_near_at_rhoPlusOne (hH : fdHeightValid H)
     (hδ : 1/5 - t ≤ vertDelta H ε) :
     ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ ≤ ε := by
   rw [fdBoundaryFun_seg1_dist_rhoPlusOne H hH t ht0 ht1]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
   have h1 : 5 * (1/5 - t) * (H - Real.sqrt 3 / 2) ≤
-      5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
-    apply mul_le_mul_of_nonneg_right _ hH'.le
-    exact mul_le_mul_of_nonneg_left hδ (by norm_num)
-  have h2 : 5 * vertDelta H ε * (H - Real.sqrt 3 / 2) = ε := by
-    unfold vertDelta
-    field_simp [ne_of_gt (show (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) from by positivity)]
-    exact mul_div_cancel_right₀ _ (by nlinarith)
-  linarith
+      5 * vertDelta H ε * (H - Real.sqrt 3 / 2) :=
+    mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hδ (by norm_num)) hH'.le
+  linarith [vertDelta_mul_eq hH ε]
 
 /-- Far bound on vertical for rho+1. -/
 theorem vert_far_at_rhoPlusOne (hH : fdHeightValid H)
@@ -320,18 +258,11 @@ theorem vert_far_at_rhoPlusOne (hH : fdHeightValid H)
     (hδt : vertDelta H ε < 1/5 - t) :
     ε < ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ := by
   rw [fdBoundaryFun_seg1_dist_rhoPlusOne H hH t ht0 ht1]
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH
-    linarith
-  have h1 : ε = 5 * vertDelta H ε * (H - Real.sqrt 3 / 2) := by
-    unfold vertDelta
-    field_simp [ne_of_gt (show (0 : ℝ) < 5 * (H - Real.sqrt 3 / 2) from by positivity)]
-    exact (mul_div_cancel_right₀ _ (by nlinarith)).symm
-  linarith [mul_lt_mul_of_pos_right (mul_lt_mul_of_pos_left hδt (by norm_num : (0:ℝ) < 5)) hH']
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH; linarith
+  linarith [vertDelta_mul_eq hH ε,
+    mul_lt_mul_of_pos_right (mul_lt_mul_of_pos_left hδt (by norm_num : (0:ℝ) < 5)) hH']
 
 end RhoPlusOneBounds
-
-/-! ## Part 5: Asymmetric FTC hypothesis -/
 
 /-- Analytic hypotheses for the asymmetric FTC telescope at a corner crossing. -/
 structure CornerFTCHyp {x y : ℂ} (γ : PiecewiseC1Path x y) (z₀ : ℂ)
@@ -356,8 +287,6 @@ structure CornerFTCHyp {x y : ℂ} (γ : PiecewiseC1Path x y) (z₀ : ℂ)
       volume (t₀ + δ_right ε) 1
   /-- `E(epsilon) -> L` as `epsilon -> 0+`. -/
   h_limit : Tendsto E (𝓝[>] 0) (𝓝 L)
-
-/-! ## Part 6: Helper lemmas for the far/near bounds at rho -/
 
 /-- Far bound on the left (arc) side of the rho crossing. -/
 private theorem rho_far_left {H : ℝ}
@@ -407,10 +336,9 @@ private theorem rho_near {H : ℝ} (hH : 1 < H)
     (ht : t ∈ Icc (3/5 - arcsinDelta ε) (3/5 + vertDelta H ε)) :
     ‖γ.toPath.extend t - ellipticPointRho‖ ≤ ε := by
   have hH_valid := fdHeightValid_of_one_lt H hH
-  have ht01 : t ∈ Icc (0 : ℝ) 1 := by
-    constructor
-    · linarith [ht.1, arcsinDelta_lt_one_fifth hε hε_13]
-    · linarith [ht.2, vertDelta_lt_one_fifth hH_valid hε_H]
+  have ht01 : t ∈ Icc (0 : ℝ) 1 :=
+    ⟨by linarith [ht.1, arcsinDelta_lt_one_fifth hε hε_13],
+     by linarith [ht.2, vertDelta_lt_one_fifth hH_valid hε_H]⟩
   rw [hγ t ht01]
   by_cases ht35 : t ≤ 3/5
   · exact arc_near_at_rho_arcsin H hε hε_13 ht35 (by
@@ -418,11 +346,8 @@ private theorem rho_near {H : ℝ} (hH : 1 < H)
         abs_of_nonneg (by linarith)]
       linarith [ht.1])
   · push Not at ht35
-    have ht4 : t ≤ 4/5 := by
-      linarith [ht.2, vertDelta_lt_one_fifth hH_valid hε_H]
+    have ht4 : t ≤ 4/5 := by linarith [ht.2, vertDelta_lt_one_fifth hH_valid hε_H]
     exact vert_near_at_rho H hH_valid ht35 ht4 (by linarith [ht.2])
-
-/-! ## Part 7: Helper lemmas for the far/near bounds at rho+1 -/
 
 /-- Far bound on the left (vertical) side of the rho+1 crossing. -/
 private theorem rhoPlusOne_far_left {H : ℝ} (hH : 1 < H)
@@ -473,21 +398,17 @@ private theorem rhoPlusOne_near {H : ℝ} (hH : 1 < H)
     (ht : t ∈ Icc (1/5 - vertDelta H ε) (1/5 + arcsinDelta ε)) :
     ‖γ.toPath.extend t - ellipticPointRhoPlusOne‖ ≤ ε := by
   have hH_valid := fdHeightValid_of_one_lt H hH
-  have ht01 : t ∈ Icc (0 : ℝ) 1 := by
-    constructor
-    · linarith [ht.1, vertDelta_lt_one_fifth hH_valid hε_H]
-    · linarith [ht.2, arcsinDelta_lt_one_fifth hε hε_13]
+  have ht01 : t ∈ Icc (0 : ℝ) 1 :=
+    ⟨by linarith [ht.1, vertDelta_lt_one_fifth hH_valid hε_H],
+     by linarith [ht.2, arcsinDelta_lt_one_fifth hε hε_13]⟩
   rw [hγ t ht01]
   by_cases ht15 : 1/5 ≤ t
   · exact arc_near_at_rhoPlusOne_arcsin H hε hε_13 ht15 (by
       rw [abs_of_nonneg (by linarith)]
       linarith [ht.2])
   · push Not at ht15
-    have ht0 : 0 ≤ t := by
-      linarith [ht.1, vertDelta_lt_one_fifth hH_valid hε_H]
+    have ht0 : 0 ≤ t := by linarith [ht.1, vertDelta_lt_one_fifth hH_valid hε_H]
     exact vert_near_at_rhoPlusOne H hH_valid ht0 ht15 (by linarith [ht.1])
-
-/-! ## Part 8: Winding number at rho via asymmetric PV -/
 
 /-- The winding number at rho is `-1/6`, constructed via the asymmetric
 crossing limit theorem. -/
@@ -499,23 +420,19 @@ theorem hasWindingNumber_atRho_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (-(↑Real.pi / 3 * I))) :
     HasGeneralizedWindingNumber γ ellipticPointRho (-1/6) := by
   have hH_valid : fdHeightValid H := fdHeightValid_of_one_lt H hH
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH_valid
-    linarith
-  set threshold := min (1/3 : ℝ) (H - Real.sqrt 3 / 2)
-  have hthresh : 0 < threshold := lt_min (by norm_num) hH'
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH_valid; linarith
+  have hthresh : 0 < min (1/3 : ℝ) (H - Real.sqrt 3 / 2) := lt_min (by norm_num) hH'
   have h_pv : HasCauchyPV (fun z => (z - ellipticPointRho)⁻¹) γ ellipticPointRho
       (-(↑Real.pi / 3 * I)) := by
     simp only [HasCauchyPV]
-    apply (PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
+    apply PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
       (ht₀ := show (3/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
-      (threshold := threshold) (hthresh := hthresh)
+      (hthresh := hthresh)
       (δ_left := arcsinDelta) (δ_right := vertDelta H)
       (hδL_pos := fun ε hε _ => arcsinDelta_pos hε)
       (hδR_pos := fun ε hε _ => vertDelta_pos hH_valid hε)
       (hδL_small := fun ε hε hεt => by
-        linarith [arcsinDelta_lt_one_fifth hε
-          (lt_of_lt_of_le hεt (min_le_left _ _))])
+        linarith [arcsinDelta_lt_one_fifth hε (lt_of_lt_of_le hεt (min_le_left _ _))])
       (hδR_small := fun ε hε hεt => by
         linarith [vertDelta_lt_one_fifth hH_valid
           (lt_of_lt_of_le hεt (min_le_right _ _))])
@@ -526,10 +443,10 @@ theorem hasWindingNumber_atRho_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (h_near := fun ε hε hεt t ht =>
         rho_near hH γ hγ hε (lt_of_lt_of_le hεt (min_le_left _ _))
           (lt_of_lt_of_le hεt (min_le_right _ _)) ht)
-      (h_ftc := fun ε hε hεt => ftcHyp.h_ftc ε hε hεt)
-      (hint_left := fun ε hε hεt => ftcHyp.hint_left ε hε hεt)
-      (hint_right := fun ε hε hεt => ftcHyp.hint_right ε hε hεt)
-      (h_limit := ftcHyp.h_limit))
+      (h_ftc := ftcHyp.h_ftc)
+      (hint_left := ftcHyp.hint_left)
+      (hint_right := ftcHyp.hint_right)
+      (h_limit := ftcHyp.h_limit)
   convert hasGeneralizedWindingNumber_of_hasCauchyPV h_pv using 1
   have hpi : (Real.pi : ℂ) ≠ 0 := mod_cast Real.pi_ne_zero
   field_simp
@@ -545,37 +462,32 @@ theorem hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
       (-(↑Real.pi / 3 * I))) :
     HasGeneralizedWindingNumber γ ellipticPointRhoPlusOne (-1/6) := by
   have hH_valid : fdHeightValid H := fdHeightValid_of_one_lt H hH
-  have hH' : 0 < H - Real.sqrt 3 / 2 := by
-    unfold fdHeightValid at hH_valid
-    linarith
-  set threshold := min (1/3 : ℝ) (H - Real.sqrt 3 / 2)
-  have hthresh : 0 < threshold := lt_min (by norm_num) hH'
+  have hH' : 0 < H - Real.sqrt 3 / 2 := by unfold fdHeightValid at hH_valid; linarith
+  have hthresh : 0 < min (1/3 : ℝ) (H - Real.sqrt 3 / 2) := lt_min (by norm_num) hH'
   have h_pv : HasCauchyPV (fun z => (z - ellipticPointRhoPlusOne)⁻¹) γ
       ellipticPointRhoPlusOne (-(↑Real.pi / 3 * I)) := by
     simp only [HasCauchyPV]
-    apply (PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
+    apply PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
       (ht₀ := show (1/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
-      (threshold := threshold) (hthresh := hthresh)
+      (hthresh := hthresh)
       (δ_left := vertDelta H) (δ_right := arcsinDelta)
       (hδL_pos := fun ε hε _ => vertDelta_pos hH_valid hε)
       (hδR_pos := fun ε hε _ => arcsinDelta_pos hε)
       (hδL_small := fun ε hε hεt =>
         vertDelta_lt_one_fifth hH_valid (lt_of_lt_of_le hεt (min_le_right _ _)))
       (hδR_small := fun ε hε hεt => by
-        linarith [arcsinDelta_lt_one_fifth hε
-          (lt_of_lt_of_le hεt (min_le_left _ _))])
-      (h_far_left := fun ε hε hεt t ht =>
-        rhoPlusOne_far_left hH γ hγ hε ht)
+        linarith [arcsinDelta_lt_one_fifth hε (lt_of_lt_of_le hεt (min_le_left _ _))])
+      (h_far_left := fun ε hε _ t ht => rhoPlusOne_far_left hH γ hγ hε ht)
       (h_far_right := fun ε hε hεt t ht =>
         rhoPlusOne_far_right hH γ hγ hε (lt_of_lt_of_le hεt (min_le_left _ _))
           (lt_of_lt_of_le hεt (min_le_right _ _)) ht)
       (h_near := fun ε hε hεt t ht =>
         rhoPlusOne_near hH γ hγ hε (lt_of_lt_of_le hεt (min_le_left _ _))
           (lt_of_lt_of_le hεt (min_le_right _ _)) ht)
-      (h_ftc := fun ε hε hεt => ftcHyp.h_ftc ε hε hεt)
-      (hint_left := fun ε hε hεt => ftcHyp.hint_left ε hε hεt)
-      (hint_right := fun ε hε hεt => ftcHyp.hint_right ε hε hεt)
-      (h_limit := ftcHyp.h_limit))
+      (h_ftc := ftcHyp.h_ftc)
+      (hint_left := ftcHyp.hint_left)
+      (hint_right := ftcHyp.hint_right)
+      (h_limit := ftcHyp.h_limit)
   convert hasGeneralizedWindingNumber_of_hasCauchyPV h_pv using 1
   have hpi : (Real.pi : ℂ) ≠ 0 := mod_cast Real.pi_ne_zero
   field_simp
