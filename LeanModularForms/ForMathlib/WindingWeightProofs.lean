@@ -25,8 +25,7 @@ from `SingleCrossing.lean`. For each crossing point, we need:
    integrability, and the limit of the FTC expression.
 
 The geometric facts are fully proved. The analytic facts (FTC + integrability + limit)
-are the inputs to the constructors `mkSingleCrossingData_atI`,
-`mkSingleCrossingData_atRho`, and `mkSingleCrossingData_atRhoPlusOne`.
+are the inputs to the constructor `mkSingleCrossingData_atI`.
 
 ## Main definitions
 
@@ -43,9 +42,6 @@ are the inputs to the constructors `mkSingleCrossingData_atI`,
 
 ### Assembly
 * `mkSingleCrossingData_atI` -- `SingleCrossingData` at `i` from geometric + analytic data
-* `mkSingleCrossingData_atRho` -- `SingleCrossingData` at `rho`
-* `mkSingleCrossingData_atRhoPlusOne` -- `SingleCrossingData` at `rho+1`
-* `mkFDWindingData` -- assembles three `SingleCrossingData` into `FDWindingData`
 
 ## References
 
@@ -63,60 +59,24 @@ angle `pi/3` (at `t = 1/5`) through `pi/2` (at `t = 2/5`) to `2pi/3` (at `t = 3/
 def fdArcAngle (t : ℝ) : ℝ := Real.pi / 3 + (5 * t - 1) * (Real.pi / 6)
 
 theorem fdArcAngle_at_one_fifth : fdArcAngle (1/5) = Real.pi / 3 := by
-  unfold fdArcAngle
-  ring
+  unfold fdArcAngle; ring
 
 theorem fdArcAngle_at_two_fifths : fdArcAngle (2/5) = Real.pi / 2 := by
-  unfold fdArcAngle
-  ring
+  unfold fdArcAngle; ring
 
 theorem fdArcAngle_at_three_fifths : fdArcAngle (3/5) = 2 * Real.pi / 3 := by
-  unfold fdArcAngle
-  ring
-
-theorem fdArcAngle_deriv (t : ℝ) : deriv fdArcAngle t = 5 * Real.pi / 6 := by
-  change deriv (fun t => Real.pi / 3 + (5 * t - 1) * (Real.pi / 6)) t = 5 * Real.pi / 6
-  simp [mul_comm]
-  ring
+  unfold fdArcAngle; ring
 
 theorem fdArcAngle_continuous : Continuous fdArcAngle := by
-  unfold fdArcAngle
-  fun_prop
-
-/-- The arc angle shifted by the crossing at `t = 2/5`. -/
-theorem fdArcAngle_offset (s : ℝ) :
-    fdArcAngle (2/5 + s) - Real.pi / 2 = s * (5 * Real.pi / 6) := by
-  unfold fdArcAngle
-  ring
-
-/-- The arc angle shifted by the crossing at `t = 1/5` (for `rho+1`). -/
-theorem fdArcAngle_offset_one_fifth (s : ℝ) :
-    fdArcAngle (1/5 + s) - Real.pi / 3 = s * (5 * Real.pi / 6) := by
-  unfold fdArcAngle
-  ring
-
-/-- The arc angle shifted by the crossing at `t = 3/5` (for `rho`). -/
-theorem fdArcAngle_offset_three_fifths (s : ℝ) :
-    fdArcAngle (3/5 + s) - 2 * Real.pi / 3 = s * (5 * Real.pi / 6) := by
-  unfold fdArcAngle
-  ring
-
-/-- The arc angle is strictly between 0 and pi for `t` in `(1/5, 3/5)`. -/
-theorem fdArcAngle_mem_Ioo (t : ℝ) (ht1 : 1/5 < t) (ht2 : t < 3/5) :
-    fdArcAngle t ∈ Ioo 0 Real.pi := by
-  unfold fdArcAngle
-  constructor <;> nlinarith [Real.pi_pos]
+  unfold fdArcAngle; fun_prop
 
 private theorem cos_sin_sub_sq_eq_half_angle_sq (θ φ : ℝ) :
     (Real.cos θ - Real.cos φ) ^ 2 + (Real.sin θ - Real.sin φ) ^ 2 =
       (2 * |Real.sin ((θ - φ) / 2)|) ^ 2 := by
-  have hcos_sub : Real.cos (θ - φ) = 1 - 2 * Real.sin ((θ - φ) / 2) ^ 2 := by
-    have hcs := Real.cos_sq ((θ - φ) / 2)
-    have hsc := Real.sin_sq_add_cos_sq ((θ - φ) / 2)
-    rw [show 2 * ((θ - φ) / 2) = θ - φ from by ring] at hcs
-    nlinarith
+  have hcos_2 := (show 2 * ((θ - φ) / 2) = θ - φ by ring) ▸ Real.cos_two_mul ((θ - φ) / 2)
   rw [mul_pow, sq_abs]
-  nlinarith [Real.sin_sq_add_cos_sq θ, Real.sin_sq_add_cos_sq φ, Real.cos_sub θ φ]
+  nlinarith [Real.sin_sq_add_cos_sq θ, Real.sin_sq_add_cos_sq φ, Real.cos_sub θ φ,
+    Real.sin_sq_add_cos_sq ((θ - φ) / 2), hcos_2]
 
 /-- Distance between two points on the unit circle:
 `norm(exp(i*theta) - exp(i*phi)) = 2|sin((theta-phi)/2)|`.
@@ -131,72 +91,46 @@ theorem norm_exp_sub_exp (θ φ : ℝ) :
     norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
   exact Real.sqrt_sq (by positivity)
 
-private theorem norm_trig_sub_I (θ : ℝ) :
-    ‖(↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - I‖ =
-      2 * |Real.sin ((θ - Real.pi / 2) / 2)| := by
-  have h_eq : (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - I =
-      ↑(Real.cos θ - Real.cos (Real.pi / 2)) +
-      ↑(Real.sin θ - Real.sin (Real.pi / 2)) * (I : ℂ) := by
-    rw [Real.cos_pi_div_two, Real.sin_pi_div_two]; push_cast; ring
-  rw [h_eq, norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
-  exact Real.sqrt_sq (by positivity)
-
-private theorem norm_trig_sub_rho (θ : ℝ) :
-    ‖(↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRho‖ =
-      2 * |Real.sin ((θ - 2 * Real.pi / 3) / 2)| := by
-  have hsub : (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRho =
-      ↑(Real.cos θ - Real.cos (2 * Real.pi / 3)) +
-      ↑(Real.sin θ - Real.sin (2 * Real.pi / 3)) * I := by
-    simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
-    rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
-        Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-    push_cast; ring
-  rw [hsub, norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
-  exact Real.sqrt_sq (by positivity)
-
-private theorem norm_trig_sub_rhoPlusOne (θ : ℝ) :
-    ‖(↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRhoPlusOne‖ =
-      2 * |Real.sin ((θ - Real.pi / 3) / 2)| := by
-  have hsub : (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRhoPlusOne =
-      ↑(Real.cos θ - Real.cos (Real.pi / 3)) +
-      ↑(Real.sin θ - Real.sin (Real.pi / 3)) * I := by
-    simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
-    rw [Real.cos_pi_div_three, Real.sin_pi_div_three]
-    push_cast; ring
-  rw [hsub, norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
-  exact Real.sqrt_sq (by positivity)
-
 /-- On segments 2-3 (`t` in `(1/5, 3/5]`), the FD boundary is `exp(i * fdArcAngle t)`. -/
 theorem fdBoundaryFun_arc_eq_exp (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     fdBoundaryFun H t = exp (↑(fdArcAngle t) * I) := by
-  by_cases ht : t ≤ 2/5
-  · simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith, ht, ite_true, ite_false]
-    congr 1
-    simp only [fdArcAngle]
-    push_cast
-    ring
-  · push Not at ht
-    simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
-      show ¬t ≤ 2/5 from by linarith, ht2, ite_true, ite_false]
-    congr 1
-    simp only [fdArcAngle]
-    push_cast
-    ring
+  have hh : ¬ t ≤ 1/5 := by linarith
+  rcases le_or_gt t (2/5) with ht | ht
+  · simp only [fdBoundaryFun, fdArcAngle, hh, ht, ite_false, ite_true]
+    congr 1; push_cast; ring
+  · simp only [fdBoundaryFun, fdArcAngle, hh, ht2, show ¬t ≤ 2/5 from by linarith,
+      ite_false, ite_true]
+    congr 1; push_cast; ring
 
 /-- The arc distance to `I`:
 `norm(fdBoundaryFun H t - I) = 2|sin((fdArcAngle t - pi/2)/2)|` for `t` in `(1/5, 3/5]`. -/
 theorem fdBoundaryFun_arc_dist_I (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     ‖fdBoundaryFun H t - I‖ = 2 * |Real.sin ((fdArcAngle t - Real.pi / 2) / 2)| := by
-  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin]
-  exact norm_trig_sub_I (fdArcAngle t)
+  set θ := fdArcAngle t
+  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+    show (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - I =
+        ↑(Real.cos θ - Real.cos (Real.pi / 2)) +
+        ↑(Real.sin θ - Real.sin (Real.pi / 2)) * I from by
+      rw [Real.cos_pi_div_two, Real.sin_pi_div_two]; push_cast; ring,
+    norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
+  exact Real.sqrt_sq (by positivity)
 
 /-- The arc distance to `rho`:
 `norm(fdBoundaryFun H t - rho) = 2|sin((fdArcAngle t - 2pi/3)/2)|` for `t` in `(1/5, 3/5]`. -/
 theorem fdBoundaryFun_arc_dist_rho (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     ‖fdBoundaryFun H t - ellipticPointRho‖ =
       2 * |Real.sin ((fdArcAngle t - 2 * Real.pi / 3) / 2)| := by
-  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin]
-  exact norm_trig_sub_rho (fdArcAngle t)
+  set θ := fdArcAngle t
+  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+    show (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRho =
+        ↑(Real.cos θ - Real.cos (2 * Real.pi / 3)) +
+        ↑(Real.sin θ - Real.sin (2 * Real.pi / 3)) * I from by
+      simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
+      rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
+          Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
+      push_cast; ring,
+    norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
+  exact Real.sqrt_sq (by positivity)
 
 /-- The arc distance to `rho+1`:
 `norm(fdBoundaryFun H t - (rho+1)) = 2|sin((fdArcAngle t - pi/3)/2)|` for `t` in `(1/5, 3/5]`. -/
@@ -204,8 +138,16 @@ theorem fdBoundaryFun_arc_dist_rhoPlusOne (H : ℝ) (t : ℝ)
     (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ =
       2 * |Real.sin ((fdArcAngle t - Real.pi / 3) / 2)| := by
-  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin]
-  exact norm_trig_sub_rhoPlusOne (fdArcAngle t)
+  set θ := fdArcAngle t
+  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+    show (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRhoPlusOne =
+        ↑(Real.cos θ - Real.cos (Real.pi / 3)) +
+        ↑(Real.sin θ - Real.sin (Real.pi / 3)) * I from by
+      simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
+      rw [Real.cos_pi_div_three, Real.sin_pi_div_three]
+      push_cast; ring,
+    norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
+  exact Real.sqrt_sq (by positivity)
 
 section DistanceBounds
 
@@ -238,9 +180,7 @@ theorem fdBoundaryFun_seg5_dist_I_lower (hH : 1 < H) (t : ℝ) (ht : 4/5 < t) :
 theorem fdBoundaryFun_seg1_dist_rho_lower (t : ℝ) (ht : t ≤ 1/5) :
     (1 : ℝ) ≤ ‖fdBoundaryFun H t - ellipticPointRho‖ := by
   have h1 : (fdBoundaryFun H t - ellipticPointRho).re = 1 := by
-    simp only [sub_re, fdBoundaryFun_seg1_re H t ht, ellipticPointRho, ellipticPointRho',
-      UpperHalfPlane.coe_mk, add_re, neg_re, one_re, div_ofNat, mul_re, ofReal_re,
-      ofReal_im, I_re, I_im, mul_zero]
+    simp [ellipticPointRho, ellipticPointRho', fdBoundaryFun_seg1_re H t ht, sub_re]
     norm_num
   simpa [h1] using Complex.abs_re_le_norm (fdBoundaryFun H t - ellipticPointRho)
 
@@ -248,10 +188,7 @@ theorem fdBoundaryFun_seg1_dist_rho_lower (t : ℝ) (ht : t ≤ 1/5) :
 theorem fdBoundaryFun_seg5_dist_rho_lower (hH : fdHeightValid H) (t : ℝ) (ht : 4/5 < t) :
     H - Real.sqrt 3 / 2 ≤ ‖fdBoundaryFun H t - ellipticPointRho‖ := by
   have h1 : (fdBoundaryFun H t - ellipticPointRho).im = H - Real.sqrt 3 / 2 := by
-    simp only [sub_im, fdBoundaryFun_seg5_im H t ht, ellipticPointRho, ellipticPointRho',
-      UpperHalfPlane.coe_mk, add_im, neg_im, one_im, div_ofNat, mul_im, ofReal_re,
-      ofReal_im, I_re, I_im]
-    norm_num
+    simp [ellipticPointRho, ellipticPointRho', fdBoundaryFun_seg5_im H t ht, sub_im]
   unfold fdHeightValid at hH
   simpa [h1, abs_of_pos (by linarith : (0 : ℝ) < H - Real.sqrt 3 / 2)] using
     Complex.abs_im_le_norm (fdBoundaryFun H t - ellipticPointRho)
@@ -260,9 +197,8 @@ theorem fdBoundaryFun_seg5_dist_rho_lower (hH : fdHeightValid H) (t : ℝ) (ht :
 theorem fdBoundaryFun_seg4_dist_rhoPlusOne_lower (t : ℝ) (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     (1 : ℝ) ≤ ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ := by
   have h1 : (fdBoundaryFun H t - ellipticPointRhoPlusOne).re = -1 := by
-    simp only [sub_re, fdBoundaryFun_seg4_re H t ht3 ht4, ellipticPointRhoPlusOne,
-      ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_re, one_re, div_ofNat, mul_re,
-      ofReal_re, I_re, I_im, mul_zero]
+    simp [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+      fdBoundaryFun_seg4_re H t ht3 ht4, sub_re]
     norm_num
   simpa [h1, show |(-1 : ℝ)| = 1 by norm_num] using
     Complex.abs_re_le_norm (fdBoundaryFun H t - ellipticPointRhoPlusOne)
@@ -272,10 +208,8 @@ theorem fdBoundaryFun_seg5_dist_rhoPlusOne_lower (hH : fdHeightValid H) (t : ℝ
     (ht : 4/5 < t) :
     H - Real.sqrt 3 / 2 ≤ ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ := by
   have h1 : (fdBoundaryFun H t - ellipticPointRhoPlusOne).im = H - Real.sqrt 3 / 2 := by
-    simp only [sub_im, fdBoundaryFun_seg5_im H t ht, ellipticPointRhoPlusOne,
-      ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk, add_im, one_im, div_ofNat, mul_im,
-      ofReal_re, ofReal_im, I_re, I_im]
-    norm_num
+    simp [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
+      fdBoundaryFun_seg5_im H t ht, sub_im]
   unfold fdHeightValid at hH
   simpa [h1, abs_of_pos (by linarith : (0 : ℝ) < H - Real.sqrt 3 / 2)] using
     Complex.abs_im_le_norm (fdBoundaryFun H t - ellipticPointRhoPlusOne)
@@ -310,25 +244,6 @@ structure ArcFTCHyp {x y : ℂ} (γ : PiecewiseC1Path x y) (z₀ : ℂ)
   /-- `E(epsilon) -> L` as `epsilon -> 0+`. -/
   h_limit : Tendsto E (𝓝[>] 0) (𝓝 L)
 
-/-- Far-bound at `I`: on every segment of the FD boundary at distance `> δ ε` from `t = 2/5`,
-the distance to `I` exceeds `ε`. -/
-private lemma fdBoundary_far_atI {H : ℝ} (hH : 1 < H)
-    {ε : ℝ} (hε_half : ε < 1/2) (hε_Hm1 : ε < H - 1) {δε : ℝ}
-    (h_arc_far : ∀ t ∈ Icc (1/5 : ℝ) (3/5), δε < |t - 2/5| →
-      ε < ‖fdBoundaryFun H t - I‖)
-    {t : ℝ} (hδt : δε < |t - 2/5|) :
-    ε < ‖fdBoundaryFun H t - I‖ := by
-  by_cases ht1 : t ≤ 1/5
-  · linarith [fdBoundaryFun_seg1_dist_I_lower H t ht1]
-  · push Not at ht1
-    by_cases ht2 : t ≤ 3/5
-    · exact h_arc_far t ⟨ht1.le, ht2⟩ hδt
-    · push Not at ht2
-      by_cases ht3 : t ≤ 4/5
-      · linarith [fdBoundaryFun_seg4_dist_I_lower H t ht2 ht3]
-      · push Not at ht3
-        linarith [fdBoundaryFun_seg5_dist_I_lower H hH t ht3]
-
 /-- Construct `SingleCrossingData` at `i` from geometric bounds and `ArcFTCHyp`.
 
 The crossing occurs at `t0 = 2/5` in the middle of the arc. -/
@@ -357,12 +272,20 @@ def mkSingleCrossingData_atI {H : ℝ} (hH : 1 < H)
     simp only [show (1 : ℝ) - 2/5 = 3/5 from by norm_num]
     exact lt_min (by linarith) (by linarith)
   h_far := fun ε hε hεt t ht hδt => by
+    have hε_half : ε < 1/2 := hεt.trans_le (hthresh_le.trans (min_le_left _ _))
+    have hε_Hm1 : ε < H - 1 := hεt.trans_le (hthresh_le.trans (min_le_right _ _))
     change ε < ‖γ.toPath.extend t - I‖
     rw [hγ t ht]
-    exact fdBoundary_far_atI hH
-      (hεt.trans_le (hthresh_le.trans (min_le_left _ _)))
-      (hεt.trans_le (hthresh_le.trans (min_le_right _ _)))
-      (h_arc_far ε hε hεt) hδt
+    by_cases ht1 : t ≤ 1/5
+    · linarith [fdBoundaryFun_seg1_dist_I_lower H t ht1]
+    · push Not at ht1
+      by_cases ht2 : t ≤ 3/5
+      · exact h_arc_far ε hε hεt t ⟨ht1.le, ht2⟩ hδt
+      · push Not at ht2
+        by_cases ht3 : t ≤ 4/5
+        · linarith [fdBoundaryFun_seg4_dist_I_lower H t ht2 ht3]
+        · push Not at ht3
+          linarith [fdBoundaryFun_seg5_dist_I_lower H hH t ht3]
   h_near := fun ε hε hεt t hδt => by
     have ht01 : t ∈ Icc (0 : ℝ) 1 := by
       have hδ := hδ_small ε hε hεt
@@ -376,171 +299,5 @@ def mkSingleCrossingData_atI {H : ℝ} (hH : 1 < H)
   hint_left := ftcHyp.hint_left
   hint_right := ftcHyp.hint_right
   h_limit := ftcHyp.h_limit
-
-/-- Construct `SingleCrossingData` at `rho` from geometric bounds and `ArcFTCHyp`.
-
-The crossing occurs at `t0 = 3/5` at the junction of arc and left vertical. -/
-def mkSingleCrossingData_atRho {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
-    (δ : ℝ → ℝ) (threshold : ℝ) (hthresh : 0 < threshold)
-    (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
-    (hδ_small : ∀ ε, 0 < ε → ε < threshold → δ ε < 1/5)
-    (h_far : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t ∈ Icc (0 : ℝ) 1, δ ε < |t - 3/5| →
-        ε < ‖fdBoundaryFun H t - ellipticPointRho‖)
-    (h_near : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t, |t - 3/5| ≤ δ ε → ‖fdBoundaryFun H t - ellipticPointRho‖ ≤ ε)
-    (ftcHyp : ArcFTCHyp γ ellipticPointRho (3/5) δ threshold (-(↑Real.pi / 3 * I))) :
-    SingleCrossingData γ ellipticPointRho where
-  L := -(↑Real.pi / 3 * I)
-  t₀ := 3/5
-  ht₀ := by constructor <;> norm_num
-  δ := δ
-  threshold := threshold
-  hthresh := hthresh
-  hδ_pos := hδ_pos
-  hδ_small := fun ε hε hεt => by
-    have hδ := hδ_small ε hε hεt
-    simp only [show (1 : ℝ) - 3/5 = 2/5 from by norm_num]
-    exact lt_min (by linarith) (by linarith)
-  h_far := fun ε hε hεt t ht hδt => by
-    change ε < ‖γ.toPath.extend t - ellipticPointRho‖
-    rw [hγ t ht]
-    exact h_far ε hε hεt t ht hδt
-  h_near := fun ε hε hεt t hδt => by
-    have ht01 : t ∈ Icc (0 : ℝ) 1 := by
-      have hδ := hδ_small ε hε hεt
-      rw [abs_le] at hδt
-      exact ⟨by linarith, by linarith⟩
-    change ‖γ.toPath.extend t - ellipticPointRho‖ ≤ ε
-    rw [hγ t ht01]
-    exact h_near ε hε hεt t hδt
-  E := ftcHyp.E
-  h_ftc := ftcHyp.h_ftc
-  hint_left := ftcHyp.hint_left
-  hint_right := ftcHyp.hint_right
-  h_limit := ftcHyp.h_limit
-
-/-- Construct `SingleCrossingData` at `rho+1` from geometric bounds and `ArcFTCHyp`.
-
-The crossing occurs at `t0 = 1/5` at the junction of right vertical and arc. -/
-def mkSingleCrossingData_atRhoPlusOne {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
-    (δ : ℝ → ℝ) (threshold : ℝ) (hthresh : 0 < threshold)
-    (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
-    (hδ_small : ∀ ε, 0 < ε → ε < threshold → δ ε < 1/5)
-    (h_far : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t ∈ Icc (0 : ℝ) 1, δ ε < |t - 1/5| →
-        ε < ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖)
-    (h_near : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t, |t - 1/5| ≤ δ ε → ‖fdBoundaryFun H t - ellipticPointRhoPlusOne‖ ≤ ε)
-    (ftcHyp : ArcFTCHyp γ ellipticPointRhoPlusOne (1/5) δ threshold
-        (-(↑Real.pi / 3 * I))) :
-    SingleCrossingData γ ellipticPointRhoPlusOne where
-  L := -(↑Real.pi / 3 * I)
-  t₀ := 1/5
-  ht₀ := by constructor <;> norm_num
-  δ := δ
-  threshold := threshold
-  hthresh := hthresh
-  hδ_pos := hδ_pos
-  hδ_small := fun ε hε hεt => by
-    have hδ := hδ_small ε hε hεt
-    simp only [show (1 : ℝ) - 1/5 = 4/5 from by norm_num]
-    exact lt_min hδ (by linarith)
-  h_far := fun ε hε hεt t ht hδt => by
-    change ε < ‖γ.toPath.extend t - ellipticPointRhoPlusOne‖
-    rw [hγ t ht]
-    exact h_far ε hε hεt t ht hδt
-  h_near := fun ε hε hεt t hδt => by
-    have ht01 : t ∈ Icc (0 : ℝ) 1 := by
-      have hδ := hδ_small ε hε hεt
-      rw [abs_le] at hδt
-      exact ⟨by linarith, by linarith⟩
-    change ‖γ.toPath.extend t - ellipticPointRhoPlusOne‖ ≤ ε
-    rw [hγ t ht01]
-    exact h_near ε hε hεt t hδt
-  E := ftcHyp.E
-  h_ftc := ftcHyp.h_ftc
-  hint_left := ftcHyp.hint_left
-  hint_right := ftcHyp.hint_right
-  h_limit := ftcHyp.h_limit
-
-/-- Assemble `FDWindingData` from `SingleCrossingData` at each elliptic point.
-
-This is the top-level assembler: given a `PiecewiseC1Path` agreeing with `fdBoundaryFun`,
-interior winding numbers, and `SingleCrossingData` at `i`, `rho`, and `rho+1` with the
-correct limits, we obtain the full `FDWindingData`. -/
-def mkFDWindingData {H : ℝ}
-    (boundary : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hbdy : ∀ t ∈ Icc (0 : ℝ) 1, boundary.toPath.extend t = fdBoundaryFun H t)
-    (h_int : ∀ z : ℂ, ‖z‖ > 1 → |z.re| < 1/2 → z.im > 0 → z.im < H →
-      HasGeneralizedWindingNumber boundary z (-1))
-    (D_i : SingleCrossingData boundary I)
-    (hL_i : D_i.L = -(↑Real.pi * I))
-    (D_rho : SingleCrossingData boundary ellipticPointRho)
-    (hL_rho : D_rho.L = -(↑Real.pi / 3 * I))
-    (D_rho1 : SingleCrossingData boundary ellipticPointRhoPlusOne)
-    (hL_rho1 : D_rho1.L = -(↑Real.pi / 3 * I)) :
-    FDWindingData H :=
-  FDWindingData.mk_of_crossing boundary hbdy h_int D_i hL_i D_rho hL_rho D_rho1 hL_rho1
-
-/-- The winding number at `i` is `-1/2`, from `SingleCrossingData` with limit `-pi*i`. -/
-theorem windingNumber_at_I_eq {H : ℝ}
-    {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
-    (D : SingleCrossingData γ I) (hL : D.L = -(↑Real.pi * I)) :
-    generalizedWindingNumber γ I = -1/2 :=
-  D.windingNumber_neg_half hL
-
-/-- The winding number at `rho` is `-1/6`, from `SingleCrossingData` with limit `-pi/3*i`. -/
-theorem windingNumber_at_rho_eq {H : ℝ}
-    {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
-    (D : SingleCrossingData γ ellipticPointRho)
-    (hL : D.L = -(↑Real.pi / 3 * I)) :
-    generalizedWindingNumber γ ellipticPointRho = -1/6 :=
-  D.windingNumber_neg_sixth hL
-
-/-- The winding number at `rho+1` is `-1/6`, from `SingleCrossingData` with limit `-pi/3*i`. -/
-theorem windingNumber_at_rhoPlusOne_eq {H : ℝ}
-    {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
-    (D : SingleCrossingData γ ellipticPointRhoPlusOne)
-    (hL : D.L = -(↑Real.pi / 3 * I)) :
-    generalizedWindingNumber γ ellipticPointRhoPlusOne = -1/6 :=
-  D.windingNumber_neg_sixth hL
-
-/-- The crossing parameter for `i` on the FD boundary is `t0 = 2/5`. -/
-theorem fdBoundary_crosses_I_at (H : ℝ) : fdBoundaryFun H (2/5) = I :=
-  fdBoundaryFun_at_two_fifths H
-
-/-- The crossing parameter for `rho+1` on the FD boundary is `t0 = 1/5`. -/
-theorem fdBoundary_crosses_rhoPlusOne_at (H : ℝ) :
-    fdBoundaryFun H (1/5) = ellipticPointRhoPlusOne :=
-  fdBoundaryFun_at_one_fifth H
-
-/-- The crossing parameter for `rho` on the FD boundary is `t0 = 3/5`. -/
-theorem fdBoundary_crosses_rho_at (H : ℝ) :
-    fdBoundaryFun H (3/5) = ellipticPointRho :=
-  fdBoundaryFun_at_three_fifths H
-
-/-- `rho+1` as a unit-circle exponential. -/
-theorem ellipticPointRhoPlusOne_eq_exp :
-    ellipticPointRhoPlusOne = exp (↑(Real.pi / 3) * I) := by
-  rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-    Real.cos_pi_div_three, Real.sin_pi_div_three]
-  simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
-  push_cast
-  ring
-
-/-- `rho` as a unit-circle exponential. -/
-theorem ellipticPointRho_eq_exp :
-    ellipticPointRho = exp (↑(2 * Real.pi / 3) * I) := by
-  rw [exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-    show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
-    Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-  simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
-  push_cast
-  ring
 
 end
