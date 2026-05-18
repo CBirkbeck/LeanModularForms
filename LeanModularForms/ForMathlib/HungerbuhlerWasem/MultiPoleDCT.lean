@@ -61,23 +61,17 @@ def badSetIcc (γP : PiecewiseC1Path x x) (T : Finset ℂ) (ε : ℝ) : Set ℝ 
 theorem badSetIcc_measurableSet (γP : PiecewiseC1Path x x) (T : Finset ℂ)
     (ε : ℝ) : MeasurableSet (badSetIcc γP T ε) := by
   classical
-  unfold badSetIcc
-  have h_eq : {t ∈ Icc (0 : ℝ) 1 | ∃ s' ∈ T, ‖γP.toPath.extend t - s'‖ ≤ ε} =
+  have h_eq : badSetIcc γP T ε =
       Icc (0 : ℝ) 1 ∩ ⋃ s' ∈ T, {t : ℝ | ‖γP.toPath.extend t - s'‖ ≤ ε} := by
-    ext t
-    simp only [Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iUnion]
-    tauto
+    ext t; simp only [badSetIcc, Set.mem_setOf_eq, Set.mem_inter_iff, Set.mem_iUnion]; tauto
   rw [h_eq]
-  refine measurableSet_Icc.inter ?_
-  refine MeasurableSet.biUnion T.countable_toSet fun s' _ => ?_
+  refine measurableSet_Icc.inter (MeasurableSet.biUnion T.countable_toSet fun s' _ => ?_)
   exact (isClosed_le ((γP.toPath.continuous_extend.sub continuous_const).norm)
     continuous_const).measurableSet
 
 theorem badSetIcc_mono (γP : PiecewiseC1Path x x) (T : Finset ℂ) :
-    Monotone (badSetIcc γP T) := by
-  intro ε₁ ε₂ hε t ht
-  obtain ⟨ht_Icc, s', hs'T, h_le⟩ := ht
-  exact ⟨ht_Icc, s', hs'T, h_le.trans hε⟩
+    Monotone (badSetIcc γP T) :=
+  fun _ _ hε _ ⟨ht_Icc, s', hs'T, h_le⟩ => ⟨ht_Icc, s', hs'T, h_le.trans hε⟩
 
 theorem badSetIcc_subset_Icc (γP : PiecewiseC1Path x x) (T : Finset ℂ) (ε : ℝ) :
     badSetIcc γP T ε ⊆ Icc (0 : ℝ) 1 := fun _ ht => ht.1
@@ -98,27 +92,20 @@ theorem badSetIcc_iInter_pos (γP : PiecewiseC1Path x x) (T : Finset ℂ) :
     refine ⟨(h 1 zero_lt_one).1, ?_⟩
     by_contra h_notin
     by_cases hT_ne : T.Nonempty
-    · have h_pos : ∀ s' ∈ T, 0 < ‖γP.toPath.extend t - s'‖ := by
-        intro s' hs'
-        refine norm_pos_iff.mpr (sub_ne_zero.mpr ?_)
-        intro heq
-        exact h_notin (heq ▸ Finset.mem_coe.mpr hs')
+    · have h_pos : ∀ s' ∈ T, 0 < ‖γP.toPath.extend t - s'‖ := fun s' hs' =>
+        norm_pos_iff.mpr (sub_ne_zero.mpr fun heq =>
+          h_notin (heq ▸ Finset.mem_coe.mpr hs'))
       obtain ⟨s_min, hs_min_mem, hs_min⟩ := Finset.exists_min_image T
         (fun s' => ‖γP.toPath.extend t - s'‖) hT_ne
-      have h_min_pos : 0 < ‖γP.toPath.extend t - s_min‖ := h_pos s_min hs_min_mem
-      set ε₀ : ℝ := ‖γP.toPath.extend t - s_min‖ / 2 with hε₀_def
-      have hε₀_pos : 0 < ε₀ := by rw [hε₀_def]; linarith
-      obtain ⟨_, s', hs'T, h_close⟩ := h ε₀ hε₀_pos
+      have h_min_pos := h_pos s_min hs_min_mem
+      obtain ⟨_, s', hs'T, h_close⟩ :=
+        h (‖γP.toPath.extend t - s_min‖ / 2) (by linarith)
       linarith [hs_min s' hs'T, h_close]
-    · have hT_empty : T = ∅ := Finset.not_nonempty_iff_eq_empty.mp hT_ne
-      obtain ⟨_, s', hs'T, _⟩ := h 1 zero_lt_one
-      subst hT_empty
-      exact absurd hs'T (Finset.notMem_empty s')
+    · obtain rfl := Finset.not_nonempty_iff_eq_empty.mp hT_ne
+      exact absurd (h 1 zero_lt_one).2.choose_spec.1 (Finset.notMem_empty _)
   · intro ⟨ht_Icc, ht_in_T⟩ ε hε_pos
-    have ⟨s', hs'T, h_eq⟩ : ∃ s' ∈ T, γP.toPath.extend t = s' :=
-      ⟨γP.toPath.extend t, Finset.mem_coe.mp ht_in_T, rfl⟩
-    refine ⟨ht_Icc, s', hs'T, ?_⟩
-    rw [h_eq, sub_self, norm_zero]
+    refine ⟨ht_Icc, _, Finset.mem_coe.mp ht_in_T, ?_⟩
+    rw [sub_self, norm_zero]
     exact hε_pos.le
 
 /-- The volume of the bad set tends to zero as `ε → 0+` for a closed piecewise-`C¹`
@@ -128,21 +115,15 @@ theorem badSet_volume_tendsto_zero (γ : ClosedPwC1Immersion x) (T : Finset ℂ)
       (𝓝[>] 0) (𝓝 0) := by
   classical
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
-  have h_meas : ∀ r > (0 : ℝ), NullMeasurableSet (badSetIcc γP T r) volume := fun r _ =>
-    (badSetIcc_measurableSet γP T r).nullMeasurableSet
-  have h_mono : ∀ i j : ℝ, (0 : ℝ) < i → i ≤ j →
-      badSetIcc γP T i ⊆ badSetIcc γP T j := fun i j _ hij =>
-    badSetIcc_mono γP T hij
-  have h_finite : ∃ r > (0 : ℝ), volume (badSetIcc γP T r) ≠ ⊤ :=
-    ⟨1, zero_lt_one, badSetIcc_volume_ne_top γP T 1⟩
   have h_lim := MeasureTheory.tendsto_measure_biInter_gt
     (μ := MeasureTheory.volume) (s := badSetIcc γP T) (a := (0 : ℝ))
-    h_meas h_mono h_finite
+    (fun r _ => (badSetIcc_measurableSet γP T r).nullMeasurableSet)
+    (fun _ _ _ hij => badSetIcc_mono γP T hij)
+    ⟨1, zero_lt_one, badSetIcc_volume_ne_top γP T 1⟩
   have h_iInter_eq : volume (⋂ r, ⋂ (_ : r > (0 : ℝ)), badSetIcc γP T r) = 0 := by
-    have h_set_eq : (⋂ r, ⋂ (_ : r > (0 : ℝ)), badSetIcc γP T r) =
-        {t ∈ Icc (0 : ℝ) 1 | γP.toPath.extend t ∈ (↑T : Set ℂ)} := by
-      convert badSetIcc_iInter_pos γP T using 1
-    rw [h_set_eq]
+    rw [show (⋂ r, ⋂ (_ : r > (0 : ℝ)), badSetIcc γP T r) =
+        {t ∈ Icc (0 : ℝ) 1 | γP.toPath.extend t ∈ (↑T : Set ℂ)}
+      from badSetIcc_iInter_pos γP T]
     exact volume_preimage_finset_in_Icc01_zero γ T
   rwa [h_iInter_eq] at h_lim
 
@@ -171,19 +152,16 @@ theorem cpvIntegrand_polarPart_intervalIntegrable
     funext t
     unfold cpvIntegrand
     by_cases h : ε < ‖γP.toPath.extend t - s‖
-    · simp only [h, ite_true]
-      rw [Set.indicator_of_mem (show t ∈ {t : ℝ | ε < ‖γP.toPath.extend t - s‖} from h)]
-      have h_ne : γP.toPath.extend t ≠ s := by
-        intro heq
+    · have h_ne : γP.toPath.extend t ≠ s := fun heq => by
         rw [heq, sub_self, norm_zero] at h; linarith
+      rw [if_pos h, Set.indicator_of_mem (a := t) h]
       change decomp.polarPart s (γP.toPath.extend t) * deriv γP.toPath.extend t =
         laurentSum (γP.toPath.extend t) * deriv γP.toPath.extend t
       rw [decomp.polarPart_eq s hs _ h_ne]
-    · simp only [h, ite_false]
-      rw [Set.indicator_of_notMem (show t ∉ {t : ℝ | ε < ‖γP.toPath.extend t - s‖} from h)]
-  have h_meas_set : MeasurableSet {t : ℝ | ε < ‖γP.toPath.extend t - s‖} := by
-    refine (isOpen_lt continuous_const ?_).measurableSet
-    exact (γP.toPath.continuous_extend.sub continuous_const).norm
+    · rw [if_neg h, Set.indicator_of_notMem (a := t) h]
+  have h_meas_set : MeasurableSet {t : ℝ | ε < ‖γP.toPath.extend t - s‖} :=
+    (isOpen_lt continuous_const
+      (γP.toPath.continuous_extend.sub continuous_const).norm).measurableSet
   set M_polar : ℝ := ∑ k : Fin N, ‖a k‖ / ε ^ (k.val + 1)
   set M : ℝ := M_polar * K
   have h_M_polar_nonneg : 0 ≤ M_polar :=
@@ -192,31 +170,25 @@ theorem cpvIntegrand_polarPart_intervalIntegrable
   have h_bound_on_set : ∀ t ∈ {t : ℝ | ε < ‖γP.toPath.extend t - s‖},
       ‖h_curve t‖ ≤ M := by
     intro t h_far_s
-    have h_lap_bound : ‖laurentSum (γP.toPath.extend t)‖ ≤ M_polar := by
-      change ‖∑ k : Fin N, a k / (γP.toPath.extend t - s) ^ (k.val + 1)‖ ≤ M_polar
-      refine (norm_sum_le _ _).trans ?_
-      refine Finset.sum_le_sum fun k _ => ?_
-      rw [norm_div, norm_pow]
-      apply div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
-      exact pow_le_pow_left₀ hε.le h_far_s.le _
-    calc ‖h_curve t‖ = ‖laurentSum (γP.toPath.extend t)‖ *
-          ‖deriv γP.toPath.extend t‖ := norm_mul _ _
-      _ ≤ M_polar * K := mul_le_mul h_lap_bound (norm_deriv_le_of_lipschitz hLip)
-          (norm_nonneg _) h_M_polar_nonneg
+    have h_lap_bound : ‖laurentSum (γP.toPath.extend t)‖ ≤ M_polar :=
+      (norm_sum_le _ _).trans <| Finset.sum_le_sum fun k _ => by
+        rw [norm_div, norm_pow]
+        exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
+          (pow_le_pow_left₀ hε.le h_far_s.le _)
+    rw [show ‖h_curve t‖ = ‖laurentSum (γP.toPath.extend t)‖ * ‖deriv γP.toPath.extend t‖
+      from norm_mul _ _]
+    exact mul_le_mul h_lap_bound (norm_deriv_le_of_lipschitz hLip)
+      (norm_nonneg _) h_M_polar_nonneg
   have h_bound_indicator : ∀ t,
       ‖{t : ℝ | ε < ‖γP.toPath.extend t - s‖}.indicator h_curve t‖ ≤ M := by
     intro t
     by_cases ht_in : t ∈ {t : ℝ | ε < ‖γP.toPath.extend t - s‖}
-    · rw [Set.indicator_of_mem ht_in]
-      exact h_bound_on_set t ht_in
-    · rw [Set.indicator_of_notMem ht_in]
-      simp only [norm_zero]
-      exact h_M_nonneg
+    · rw [Set.indicator_of_mem ht_in]; exact h_bound_on_set t ht_in
+    · rw [Set.indicator_of_notMem ht_in, norm_zero]; exact h_M_nonneg
   have h_γ_meas : Measurable γP.toPath.extend := γP.toPath.continuous_extend.measurable
-  have h_curve_meas : Measurable h_curve := by
-    refine Measurable.mul ?_ (measurable_deriv _)
-    refine Finset.measurable_sum (Finset.univ : Finset (Fin N)) fun k _ => ?_
-    exact ((h_γ_meas.sub_const s).pow_const _).const_div _
+  have h_curve_meas : Measurable h_curve :=
+    (Finset.measurable_sum _ fun k _ => ((h_γ_meas.sub_const s).pow_const _).const_div _).mul
+      (measurable_deriv _)
   rw [intervalIntegrable_iff, h_indicator_eq]
   refine MeasureTheory.IntegrableOn.of_bound measure_Ioc_lt_top
     (h_curve_meas.aestronglyMeasurable.indicator h_meas_set) M ?_
@@ -252,45 +224,29 @@ theorem hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
   by_cases hT_ne : T.Nonempty
   swap
   · have hT_empty : T = ∅ := Finset.not_nonempty_iff_eq_empty.mp hT_ne
-    have hS_eq : S = {s} := by
-      ext s'
-      simp only [Finset.mem_singleton]
-      refine ⟨fun hs' => ?_, fun hs' => hs' ▸ hs⟩
+    have hS_eq : S = {s} := Finset.eq_singleton_iff_unique_mem.mpr ⟨hs, fun s' hs' => by
       by_contra h_ne
-      have h_mem : s' ∈ T := Finset.mem_erase.mpr ⟨h_ne, hs'⟩
-      rw [hT_empty] at h_mem
-      exact absurd h_mem (Finset.notMem_empty _)
+      exact (Finset.eq_empty_iff_forall_notMem.mp hT_empty) _
+        (Finset.mem_erase.mpr ⟨h_ne, hs'⟩)⟩
     simp only [HasCauchyPVOn, HasCauchyPV] at h ⊢
-    refine h.congr ?_
-    intro ε
-    apply intervalIntegral.integral_congr
-    intro t _
+    refine h.congr fun ε => intervalIntegral.integral_congr fun t _ => ?_
     unfold cpvIntegrand cpvIntegrandOn
     by_cases h_far : ε < ‖γP.toPath.extend t - s‖
-    · rw [if_pos h_far]
-      rw [if_neg]
-      push Not
-      intro s' hs'
+    · rw [if_pos h_far, if_neg]
+      rintro ⟨s', hs', h_le⟩
       rw [hS_eq, Finset.mem_singleton] at hs'
-      subst hs'
-      exact h_far
-    · push Not at h_far
-      rw [if_neg (not_lt.mpr h_far)]
-      rw [if_pos]
-      refine ⟨s, ?_, h_far⟩
-      rw [hS_eq, Finset.mem_singleton]
+      exact absurd h_far (not_lt.mpr (hs' ▸ h_le))
+    · rw [if_neg h_far, if_pos ⟨s, by rw [hS_eq, Finset.mem_singleton], not_lt.mp h_far⟩]
   obtain ⟨s'_min, hs'_min_mem, hs'_min⟩ := Finset.exists_min_image T
     (fun s' => ‖s - s'‖) hT_ne
-  have h_s'_min_ne_s : s'_min ≠ s := Finset.ne_of_mem_erase hs'_min_mem
-  have h_pos_min : 0 < ‖s - s'_min‖ := by
-    refine norm_pos_iff.mpr (sub_ne_zero.mpr ?_)
-    intro heq
-    exact h_s'_min_ne_s heq.symm
-  set R : ℝ := ‖s - s'_min‖ / 4 with hR_def
-  have hR_pos : 0 < R := by rw [hR_def]; linarith
+  have h_pos_min : 0 < ‖s - s'_min‖ :=
+    norm_pos_iff.mpr (sub_ne_zero.mpr fun heq =>
+      Finset.ne_of_mem_erase hs'_min_mem heq.symm)
+  set R : ℝ := ‖s - s'_min‖ / 4
+  have hR_pos : 0 < R := by positivity
   have h_3R_pos : 0 < 3 * R := by linarith
   have h_dist_ge : ∀ s' ∈ T, 4 * R ≤ ‖s - s'‖ := fun s' hs'_mem => by
-    have h2 : 4 * R = ‖s - s'_min‖ := by rw [hR_def]; ring
+    have : (4 : ℝ) * R = ‖s - s'_min‖ := by simp [R]; ring
     linarith [hs'_min s' hs'_mem]
   set M_polar : ℝ := ∑ k : Fin N, ‖a k‖ / (3 * R) ^ (k.val + 1)
   set M : ℝ := M_polar * K
@@ -305,29 +261,21 @@ theorem hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
           ε < ‖γP.toPath.extend t - s‖
         then decomp.polarPart s (γP.toPath.extend t) * deriv γP.toPath.extend t
         else 0 := by
-    intro ε _hε_pos t
+    intro ε _hε t
     unfold cpvIntegrand cpvIntegrandOn
     by_cases h_far_s : ε < ‖γP.toPath.extend t - s‖
-    · rw [if_pos h_far_s]
-      by_cases h_S : ∃ s'' ∈ S, ‖γP.toPath.extend t - s''‖ ≤ ε
-      · rw [if_pos h_S]
-        obtain ⟨s'', hs''_mem, h_close⟩ := h_S
-        have hs''_ne_s : s'' ≠ s := by
-          intro heq; rw [heq] at h_close; linarith
+    · by_cases h_S : ∃ s'' ∈ S, ‖γP.toPath.extend t - s''‖ ≤ ε
+      · obtain ⟨s'', hs''_mem, h_close⟩ := h_S
+        have hs''_ne_s : s'' ≠ s := fun heq => by rw [heq] at h_close; linarith
         have hs''_in_T : s'' ∈ T := Finset.mem_erase.mpr ⟨hs''_ne_s, hs''_mem⟩
-        rw [if_pos ⟨⟨s'', hs''_in_T, h_close⟩, h_far_s⟩]
+        rw [if_pos h_far_s, if_pos ⟨s'', hs''_mem, h_close⟩,
+          if_pos ⟨⟨s'', hs''_in_T, h_close⟩, h_far_s⟩]
         ring
-      · rw [if_neg h_S]
-        have h_T_far : ¬ ∃ s' ∈ T, ‖γP.toPath.extend t - s'‖ ≤ ε := by
-          intro ⟨s', hs'_mem, h_close⟩
-          exact h_S ⟨s', Finset.mem_of_mem_erase hs'_mem, h_close⟩
-        rw [if_neg (fun hT' => h_T_far hT'.1)]
+      · rw [if_pos h_far_s, if_neg h_S, if_neg (fun ⟨⟨s', hs'_mem, h_close⟩, _⟩ =>
+          h_S ⟨s', Finset.mem_of_mem_erase hs'_mem, h_close⟩)]
         ring
-    · push Not at h_far_s
-      rw [if_neg (not_lt.mpr h_far_s)]
-      have h_S : ∃ s'' ∈ S, ‖γP.toPath.extend t - s''‖ ≤ ε := ⟨s, hs, h_far_s⟩
-      rw [if_pos h_S]
-      rw [if_neg (fun ⟨_, hh⟩ => absurd hh (not_lt.mpr h_far_s))]
+    · rw [if_neg h_far_s, if_pos ⟨s, hs, not_lt.mp h_far_s⟩,
+        if_neg (fun ⟨_, hh⟩ => h_far_s hh)]
       ring
   have h_diff_norm_bound_on_Icc : ∀ ε ∈ Set.Ioo (0 : ℝ) R, ∀ t ∈ Icc (0 : ℝ) 1,
       ‖cpvIntegrand (decomp.polarPart s) γP.toPath.extend s ε t -
@@ -340,51 +288,31 @@ theorem hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
     · rw [if_pos h_cond]
       obtain ⟨⟨s', hs'_mem, h_close_s'⟩, h_far_s⟩ := h_cond
       have h_dist_far : 3 * R ≤ ‖γP.toPath.extend t - s‖ := by
-        have h_tri : ‖s - s'‖ ≤ ‖γP.toPath.extend t - s‖ +
-            ‖γP.toPath.extend t - s'‖ := by
-          calc ‖s - s'‖ = ‖(γP.toPath.extend t - s') - (γP.toPath.extend t - s)‖ := by
-                congr 1; ring
-            _ ≤ ‖γP.toPath.extend t - s'‖ + ‖γP.toPath.extend t - s‖ :=
-                norm_sub_le _ _
-            _ = ‖γP.toPath.extend t - s‖ + ‖γP.toPath.extend t - s'‖ := by ring
-        have h_s_far : 4 * R ≤ ‖s - s'‖ := h_dist_ge s' hs'_mem
-        linarith [h_close_s'.trans hε_lt_R.le]
+        have h_tri : ‖s - s'‖ ≤ ‖γP.toPath.extend t - s‖ + ‖γP.toPath.extend t - s'‖ := by
+          have := norm_sub_le (γP.toPath.extend t - s') (γP.toPath.extend t - s)
+          have heq : (γP.toPath.extend t - s') - (γP.toPath.extend t - s) = s - s' := by ring
+          rw [heq] at this; linarith
+        linarith [h_dist_ge s' hs'_mem, h_close_s'.trans hε_lt_R.le]
       have h_polarPart_eq : decomp.polarPart s (γP.toPath.extend t) =
-          ∑ k : Fin N, a k / (γP.toPath.extend t - s) ^ (k.val + 1) := by
-        refine decomp.polarPart_eq s hs _ ?_
-        intro heq; rw [heq, sub_self, norm_zero] at h_far_s; linarith
-      rw [h_polarPart_eq]
-      have h_norm_poly : ‖∑ k : Fin N,
-          a k / (γP.toPath.extend t - s) ^ (k.val + 1)‖ ≤ M_polar := by
-        refine (norm_sum_le _ _).trans ?_
-        refine Finset.sum_le_sum fun k _ => ?_
-        rw [norm_div, norm_pow]
-        apply div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos h_3R_pos _)
-        exact pow_le_pow_left₀ h_3R_pos.le h_dist_far _
-      have h_bound_M : ‖(∑ k : Fin N, a k / (γP.toPath.extend t - s) ^ (k.val + 1)) *
-            deriv γP.toPath.extend t‖ ≤ M := by
-        calc ‖(∑ k : Fin N, a k / (γP.toPath.extend t - s) ^ (k.val + 1)) *
-            deriv γP.toPath.extend t‖
-            = ‖∑ k : Fin N, a k / (γP.toPath.extend t - s) ^ (k.val + 1)‖ *
-              ‖deriv γP.toPath.extend t‖ := norm_mul _ _
-          _ ≤ M_polar * K := mul_le_mul h_norm_poly (h_deriv_le t)
-              (norm_nonneg _) hM_polar_nonneg
-      rw [Set.indicator_of_mem (show t ∈ badSetIcc γP T ε from
-        ⟨ht_Icc, s', hs'_mem, h_close_s'⟩)]
-      exact h_bound_M
-    · rw [if_neg h_cond]
-      simp only [norm_zero]
-      by_cases h_t_bad : t ∈ badSetIcc γP T ε
-      · rw [Set.indicator_of_mem h_t_bad]; exact hM_nonneg
-      · rw [Set.indicator_of_notMem h_t_bad]
+          ∑ k : Fin N, a k / (γP.toPath.extend t - s) ^ (k.val + 1) :=
+        decomp.polarPart_eq s hs _ fun heq => by
+          rw [heq, sub_self, norm_zero] at h_far_s; linarith
+      rw [h_polarPart_eq, Set.indicator_of_mem (show t ∈ badSetIcc γP T ε from
+        ⟨ht_Icc, s', hs'_mem, h_close_s'⟩), norm_mul]
+      refine mul_le_mul ?_ (h_deriv_le t) (norm_nonneg _) hM_polar_nonneg
+      refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun k _ => ?_)
+      rw [norm_div, norm_pow]
+      exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos h_3R_pos _)
+        (pow_le_pow_left₀ h_3R_pos.le h_dist_far _)
+    · rw [if_neg h_cond, norm_zero]
+      exact Set.indicator_nonneg (fun _ _ => hM_nonneg) t
   have h_int_bound : ∀ ε ∈ Set.Ioo (0 : ℝ) R,
       ‖(∫ t in (0 : ℝ)..1, cpvIntegrand (decomp.polarPart s)
           γP.toPath.extend s ε t) -
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S (decomp.polarPart s)
           γP.toPath.extend ε t)‖ ≤
       M * (volume (badSetIcc γP T ε)).toReal := by
-    intro ε hε_in
-    obtain ⟨hε_pos, hε_lt_R⟩ := hε_in
+    rintro ε ⟨hε_pos, hε_lt_R⟩
     have h_int_cpv : IntervalIntegrable
         (fun t => cpvIntegrand (decomp.polarPart s) γP.toPath.extend s ε t)
         MeasureTheory.volume 0 1 :=
@@ -416,17 +344,13 @@ theorem hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
           M * (volume (badSetIcc γP T ε ∩ Set.Ioc 0 1)).toReal := by
       rw [intervalIntegral.integral_of_le zero_le_one,
           MeasureTheory.integral_indicator (badSetIcc_measurableSet γP T ε),
-          MeasureTheory.setIntegral_const]
-      simp only [smul_eq_mul, mul_comm]
-      congr 1
-      simp only [MeasureTheory.Measure.real,
-        MeasureTheory.Measure.restrict_apply (badSetIcc_measurableSet γP T ε)]
+          MeasureTheory.setIntegral_const, MeasureTheory.Measure.real,
+          MeasureTheory.Measure.restrict_apply (badSetIcc_measurableSet γP T ε),
+          smul_eq_mul, mul_comm]
     rw [h_ind_int] at h_bound_aux
-    have h_le_vol : (volume (badSetIcc γP T ε ∩ Set.Ioc 0 1)).toReal ≤
-        (volume (badSetIcc γP T ε)).toReal :=
-      ENNReal.toReal_mono (badSetIcc_volume_ne_top γP T ε)
-        (measure_mono Set.inter_subset_left)
-    linarith [mul_le_mul_of_nonneg_left h_le_vol hM_nonneg]
+    exact h_bound_aux.trans (mul_le_mul_of_nonneg_left
+      (ENNReal.toReal_mono (badSetIcc_volume_ne_top γP T ε)
+        (measure_mono Set.inter_subset_left)) hM_nonneg)
   have h_vol_lim : Tendsto (fun ε => (volume (badSetIcc γP T ε)).toReal)
       (𝓝[>] 0) (𝓝 0) := by
     simpa using (ENNReal.continuousAt_toReal ENNReal.zero_ne_top).tendsto.comp
@@ -443,25 +367,7 @@ theorem hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
     exact h_int_bound ε hε
   unfold HasCauchyPVOn
   unfold HasCauchyPV at h
-  have h_multi_eq :
-      (fun ε => ∫ t in (0 : ℝ)..1, cpvIntegrandOn S (decomp.polarPart s)
-        γP.toPath.extend ε t) =
-      (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrand (decomp.polarPart s)
-        γP.toPath.extend s ε t) -
-        ((∫ t in (0 : ℝ)..1, cpvIntegrand (decomp.polarPart s)
-          γP.toPath.extend s ε t) -
-          (∫ t in (0 : ℝ)..1, cpvIntegrandOn S (decomp.polarPart s)
-            γP.toPath.extend ε t))) := by
-    funext ε; ring
-  rw [h_multi_eq]
-  have : Tendsto (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrand (decomp.polarPart s)
-        γP.toPath.extend s ε t) -
-        ((∫ t in (0 : ℝ)..1, cpvIntegrand (decomp.polarPart s)
-          γP.toPath.extend s ε t) -
-          (∫ t in (0 : ℝ)..1, cpvIntegrandOn S (decomp.polarPart s)
-            γP.toPath.extend ε t)))
-      (𝓝[>] 0) (𝓝 (L - 0)) := h.sub h_diff_tendsto
-  simpa using this
+  simpa [sub_sub_self] using (h.sub h_diff_tendsto)
 
 end MultiPoleDCT
 
