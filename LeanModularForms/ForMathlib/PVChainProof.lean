@@ -47,10 +47,6 @@ via uniqueness of limits and algebraic manipulation.
 Assembles `h_pvChain` from `PVChainData` by packaging the identity with
 the height bound.
 
-## Imports
-
-Only from `LeanModularForms.ForMathlib.*` and `Mathlib.*`.
-
 ## References
 
 * Diamond--Shurman, *A First Course in Modular Forms*, Theorem 3.1.1
@@ -66,13 +62,9 @@ noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
-/-! ### Two-pi-I nonzero -/
-
 omit f hf in
 private lemma pvChain_two_pi_I_ne_zero : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
   simp [Real.pi_ne_zero]
-
-/-! ### PVChainData: the bundled Tendsto hypotheses -/
 
 /-- Data for the PV chain identity at height `H`.
 
@@ -107,8 +99,6 @@ structure PVChainData
     (𝓝 (-(2 * ↑Real.pi * I *
       ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))))
 
-/-! ### Core identity from PVChainData -/
-
 /-- **The PV chain identity**: from `PVChainData`, extract
 
   `Sigma gWN(gamma, s) * ord(f, s) = -(k/12 - ord_cusp)`
@@ -126,11 +116,8 @@ theorem pvChainIdentity
       generalizedWindingNumber data.D.boundary (↑s : ℂ) *
         (orderOfVanishingAt' (⇑f) s : ℂ) =
     -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
-  haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot le_rfl
   refine mul_left_cancel₀ pvChain_two_pi_I_ne_zero ?_
   linear_combination tendsto_nhds_unique data.h_res data.h_mod
-
-/-! ### Discharge h_pvChain -/
 
 /-- **Discharge `h_pvChain`**: given `PVChainData` for some `H`, produce
 the existential hypothesis needed by `valence_formula_orbit_sum_of_pvChain`
@@ -149,8 +136,6 @@ theorem discharge_pvChain
           (orderOfVanishingAt' (⇑f) s : ℂ) =
       -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) :=
   ⟨H, data.D, data.hH_above, pvChainIdentity f S data⟩
-
-/-! ### Full discharge: from residue + modular sides to h_pvChain -/
 
 /-- **Full discharge of `h_pvChain`** from residue and modular side existentials.
 
@@ -195,127 +180,16 @@ theorem discharge_pvChain_full
           (orderOfVanishingAt' (⇑f) s : ℂ) =
       -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
   set H := max (max H_res H_mod) H_S + 1
-  have hH_ge_res : H_res ≤ H := le_trans (le_max_left _ _)
-    (le_trans (le_max_left _ _) ((lt_add_one _).le))
-  have hH_ge_mod : H_mod ≤ H := le_trans (le_max_right _ _)
-    (le_trans (le_max_left _ _) ((lt_add_one _).le))
-  have hH_gt_sqrt3 : Real.sqrt 3 / 2 < H :=
-    lt_of_lt_of_le hH_res_gt hH_ge_res
+  have hH_ge_res : H_res ≤ H :=
+    ((le_max_left _ _).trans (le_max_left _ _)).trans (lt_add_one _).le
+  have hH_ge_mod : H_mod ≤ H :=
+    ((le_max_right _ _).trans (le_max_left _ _)).trans (lt_add_one _).le
+  have hH_gt_sqrt3 : Real.sqrt 3 / 2 < H := hH_res_gt.trans_le hH_ge_res
   have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
-    lt_of_lt_of_le (hH_S s hs)
-      (le_trans (le_max_right _ _) ((lt_add_one _).le))
-  refine ⟨H, mkD H hH_gt_sqrt3, hH_above, ?_⟩
-  exact pvChainIdentity f S
-    { D := mkD H hH_gt_sqrt3
-      hH_above := hH_above
-      F_eps := F H
-      h_res := h_res H hH_ge_res hH_gt_sqrt3
-      h_mod := h_mod H hH_ge_mod hH_gt_sqrt3 }
-
-/-! ### Winding sum rearrangement -/
-
-/-- From the PV chain identity, rearrange to the form used downstream:
-  `ord_cusp + (- weighted_sum) = k / 12`. -/
-theorem pvChain_rearranged
-    (S : Finset UpperHalfPlane)
-    {H : ℝ} (data : PVChainData f S H) :
-    (orderAtCusp' f : ℂ) +
-    (-(∑ s ∈ S,
-        generalizedWindingNumber data.D.boundary (↑s : ℂ) *
-          (orderOfVanishingAt' (⇑f) s : ℂ))) =
-    (k : ℂ) / 12 := by
-  linear_combination -pvChainIdentity f S data
-
-/-! ### FDWindingDataFull construction from FDWindingData + boundary winding -/
-
-/-- Extend `FDWindingData` to `FDWindingDataFull` by providing the smooth
-boundary winding number hypothesis.
-
-The boundary winding (`gWN = -1/2` at non-elliptic on-curve points) comes
-from `BoundaryWinding.lean`: at any such point the FD boundary passes through
-as a smooth curve with crossing angle `pi`, so the generalized winding number
-is `-(pi * i) / (2 * pi * i) = -1/2`. -/
-def FDWindingDataFull.ofWindingData {H : ℝ}
-    (D : FDWindingData H)
-    (h_bdry : ∀ z : ℂ, z.im > 0 → z.im < H →
-      z ≠ I → z ≠ ellipticPointRho → z ≠ ellipticPointRhoPlusOne →
-      ¬(‖z‖ > 1 ∧ |z.re| < 1/2) →
-      Complex.normSq z ≥ 1 → |z.re| ≤ 1/2 →
-      HasGeneralizedWindingNumber D.boundary z (-1/2)) :
-    FDWindingDataFull H :=
-  { toFDWindingData := D
-    boundary_winding := h_bdry }
-
-/-! ### Uniqueness of limits: algebraic alternatives -/
-
-omit f hf in
-/-- If two complex numbers agree after multiplying by `2 pi i`, they are equal.
-A variant of the cancellation lemma. -/
-theorem eq_of_two_pi_I_mul_eq {a b : ℂ}
-    (h : 2 * ↑Real.pi * I * a = 2 * ↑Real.pi * I * b) :
-    a = b :=
-  mul_left_cancel₀ pvChain_two_pi_I_ne_zero h
-
-omit f hf in
-/-- If `2 pi i * a = -(2 pi i * b)` then `a = -b`. -/
-theorem eq_neg_of_two_pi_I_mul_eq_neg {a b : ℂ}
-    (h : 2 * ↑Real.pi * I * a = -(2 * ↑Real.pi * I * b)) :
-    a = -b :=
-  mul_left_cancel₀ pvChain_two_pi_I_ne_zero (by rw [mul_neg]; exact h)
-
-/-! ### Height bound utilities -/
-
-omit f hf in
-/-- For a finite set `S` of upper half plane points, there exists `H_S`
-above the imaginary parts of all points. -/
-theorem exists_height_above_finset (S : Finset UpperHalfPlane) :
-    ∃ H_S : ℝ, ∀ s ∈ S, (s : ℂ).im < H_S := by
-  by_cases hne : S.Nonempty
-  · refine ⟨S.sup' hne (fun s : UpperHalfPlane => (s : ℂ).im) + 1, fun s hs => ?_⟩
-    linarith [Finset.le_sup' (fun s : UpperHalfPlane => (s : ℂ).im) hs]
-  · rw [Finset.not_nonempty_iff_eq_empty] at hne
-    exact ⟨1, fun s hs => by simp [hne] at hs⟩
-
-omit f hf in
-/-- Combine height bound with sqrt(3)/2 lower bound. -/
-theorem exists_height_above_finset_and_sqrt3
-    (S : Finset UpperHalfPlane) :
-    ∃ H_S : ℝ, Real.sqrt 3 / 2 < H_S ∧ ∀ s ∈ S, (s : ℂ).im < H_S := by
-  obtain ⟨H₁, hH₁⟩ := exists_height_above_finset S
-  exact ⟨max H₁ (Real.sqrt 3 / 2) + 1,
-    by linarith [le_max_right H₁ (Real.sqrt 3 / 2)],
-    fun s hs => lt_of_lt_of_le (hH₁ s hs)
-      (le_trans (le_max_left _ _) ((lt_add_one _).le))⟩
-
-/-! ### Integration of PVChainData with CoreIdentityProof -/
-
-omit hf in
-/-- The orbit-sum valence formula, given `PVChainData`.
-
-Combines `discharge_pvChain` with `valence_formula_orbit_sum_of_pvChain`
-from `CoreIdentityProof.lean`, yielding the textbook formula:
-
-  `ord_inf + (1/2) * ord_i + (1/3) * ord_rho + non-ell sum = k / 12` -/
-theorem valence_formula_of_pvChainData
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    {H : ℝ} (data : PVChainData f S H) :
-    (orderAtCusp' f : ℂ) +
-    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
-    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
-    ∑ s ∈ S.filter (fun p =>
-        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
-        ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
-      ↑(orderOfVanishingAt' (⇑f) s) +
-    ∑ s ∈ sLeftVertFM S, ↑(orderOfVanishingAt' (⇑f) s) +
-    ∑ s ∈ S.filter (fun p =>
-        p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
-      ↑(orderOfVanishingAt' (⇑f) s) =
-    (k : ℂ) / 12 :=
-  valence_formula_orbit_sum_of_pvChain f S hS hS_complete
-    (discharge_pvChain f S hS hS_complete data)
-
-/-! ### Summary theorem: the complete discharge interface -/
+    (hH_S s hs).trans_le ((le_max_right _ _).trans (lt_add_one _).le)
+  exact ⟨H, mkD H hH_gt_sqrt3, hH_above, pvChainIdentity f S
+    ⟨mkD H hH_gt_sqrt3, hH_above, F H,
+      h_res H hH_ge_res hH_gt_sqrt3, h_mod H hH_ge_mod hH_gt_sqrt3⟩⟩
 
 omit hf in
 /-- **Complete interface for discharging `h_pvChain`**.
@@ -360,57 +234,10 @@ theorem valence_formula_of_two_sides
     ∑ s ∈ S.filter (fun p =>
         p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
-    (k : ℂ) / 12 := by
-  have h_pvChain := discharge_pvChain_full f S hS hS_complete mkD H_S hH_S
-    F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod
-  exact valence_formula_orbit_sum_of_pvChain f S hS hS_complete h_pvChain
-
-/-! ### Stronger-bound variants with `1 < H` -/
-
-omit hf in
-/-- Variant of `discharge_pvChain_full` with `mkD` over `H > 1` instead of
-`H > √3/2`. -/
-theorem discharge_pvChain_full_Hgt1
-    (S : Finset UpperHalfPlane) (_hS : ∀ p ∈ S, p ∈ 𝒟)
-    (_hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    (mkD : ∀ H : ℝ, 1 < H → FDWindingDataFull H)
-    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S)
-    (F : ℝ → ℝ → ℂ)
-    (H_res : ℝ) (hH_res_gt : 1 < H_res)
-    (h_res : ∀ (H : ℝ), H_res ≤ H → (hH : 1 < H) →
-      Tendsto (F H) (𝓝[>] 0)
-        (𝓝 (2 * ↑Real.pi * I *
-          ∑ s ∈ S,
-            generalizedWindingNumber (mkD H hH).boundary (↑s : ℂ) *
-              (orderOfVanishingAt' (⇑f) s : ℂ))))
-    (H_mod : ℝ) (_hH_mod_gt : 1 < H_mod)
-    (h_mod : ∀ (H : ℝ), H_mod ≤ H → (hH : 1 < H) →
-      Tendsto (F H) (𝓝[>] 0)
-        (𝓝 (-(2 * ↑Real.pi * I *
-          ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))))) :
-    ∃ H' : ℝ, ∃ D : FDWindingDataFull H',
-      (∀ s ∈ S, (s : ℂ).im < H') ∧
-      ∑ s ∈ S,
-        generalizedWindingNumber D.boundary (↑s : ℂ) *
-          (orderOfVanishingAt' (⇑f) s : ℂ) =
-      -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
-  set H := max (max H_res H_mod) H_S + 1
-  have hH_ge_res : H_res ≤ H := le_trans (le_max_left _ _)
-    (le_trans (le_max_left _ _) ((lt_add_one _).le))
-  have hH_ge_mod : H_mod ≤ H := le_trans (le_max_right _ _)
-    (le_trans (le_max_left _ _) ((lt_add_one _).le))
-  have hH_gt_1 : 1 < H :=
-    lt_of_lt_of_le hH_res_gt hH_ge_res
-  have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
-    lt_of_lt_of_le (hH_S s hs)
-      (le_trans (le_max_right _ _) ((lt_add_one _).le))
-  refine ⟨H, mkD H hH_gt_1, hH_above, ?_⟩
-  exact pvChainIdentity f S
-    { D := mkD H hH_gt_1
-      hH_above := hH_above
-      F_eps := F H
-      h_res := h_res H hH_ge_res hH_gt_1
-      h_mod := h_mod H hH_ge_mod hH_gt_1 }
+    (k : ℂ) / 12 :=
+  valence_formula_orbit_sum_of_pvChain f S hS hS_complete
+    (discharge_pvChain_full f S hS hS_complete mkD H_S hH_S
+      F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod)
 
 /-- Variant of `valence_formula_of_two_sides` with `mkD` over `H > 1` instead
 of `H > √3/2`. Useful when the `FDWindingDataFull` constructor only works
@@ -428,7 +255,7 @@ theorem valence_formula_of_two_sides_Hgt1
           ∑ s ∈ S,
             generalizedWindingNumber (mkD H hH).boundary (↑s : ℂ) *
               (orderOfVanishingAt' (⇑f) s : ℂ))))
-    (H_mod : ℝ) (hH_mod_gt : 1 < H_mod)
+    (H_mod : ℝ) (_hH_mod_gt : 1 < H_mod)
     (h_mod : ∀ (H : ℝ), H_mod ≤ H → (hH : 1 < H) →
       Tendsto (F H) (𝓝[>] 0)
         (𝓝 (-(2 * ↑Real.pi * I *
@@ -445,8 +272,17 @@ theorem valence_formula_of_two_sides_Hgt1
         p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 := by
-  have h_pvChain := discharge_pvChain_full_Hgt1 f S hS hS_complete mkD H_S hH_S
-    F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod
-  exact valence_formula_orbit_sum_of_pvChain f S hS hS_complete h_pvChain
+  refine valence_formula_orbit_sum_of_pvChain f S hS hS_complete ?_
+  set H := max (max H_res H_mod) H_S + 1
+  have hH_ge_res : H_res ≤ H :=
+    ((le_max_left _ _).trans (le_max_left _ _)).trans (lt_add_one _).le
+  have hH_ge_mod : H_mod ≤ H :=
+    ((le_max_right _ _).trans (le_max_left _ _)).trans (lt_add_one _).le
+  have hH_gt_1 : 1 < H := hH_res_gt.trans_le hH_ge_res
+  have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
+    (hH_S s hs).trans_le ((le_max_right _ _).trans (lt_add_one _).le)
+  exact ⟨H, mkD H hH_gt_1, hH_above, pvChainIdentity f S
+    ⟨mkD H hH_gt_1, hH_above, F H,
+      h_res H hH_ge_res hH_gt_1, h_mod H hH_ge_mod hH_gt_1⟩⟩
 
 end
