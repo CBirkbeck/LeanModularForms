@@ -54,12 +54,6 @@ variable {x : ℂ}
 
 /-! ## Norm bound for dixonH2 -/
 
-/-- Distance lower bound: when `‖γ t‖ ≤ R`, we have `‖w‖ - R ≤ ‖γ t - w‖`. -/
-private lemma curve_dist_lower_bound {γ : PiecewiseC1Path x x} {R : ℝ} {w : ℂ}
-    (hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ t‖ ≤ R) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
-    ‖w‖ - R ≤ ‖γ t - w‖ := by
-  linarith [norm_sub_norm_le w (γ t), norm_sub_rev w (γ t), hR t ht]
-
 /-- Cocompact membership: `{w : ℂ | R < ‖w‖}` belongs to the cocompact filter. -/
 private lemma norm_gt_mem_cocompact (R : ℝ) :
     {w : ℂ | R < ‖w‖} ∈ Filter.cocompact ℂ :=
@@ -87,15 +81,10 @@ theorem dixonH2_norm_le {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
       rw [Set.uIoc_of_le (zero_le_one' ℝ)] at ht_ui
       exact Ioc_subset_Icc_self ht_ui
     rw [norm_mul, norm_div]
-    have h_dist_lb := curve_dist_lower_bound (w := w) hR ht
+    have h_dist_lb : ‖w‖ - R ≤ ‖γ t - w‖ := by
+      linarith [norm_sub_norm_le w (γ t), norm_sub_rev w (γ t), hR t ht]
     calc ‖f (γ t)‖ / ‖γ t - w‖ * ‖deriv γ.toPath.extend t‖
-        ≤ M_f / (‖w‖ - R) * M_d := by
-          apply mul_le_mul
-          · exact (div_le_div_of_nonneg_left (norm_nonneg _) hpos h_dist_lb).trans
-              (div_le_div_of_nonneg_right (hM_f t ht) hpos.le)
-          · exact hM_d t ht
-          · exact norm_nonneg _
-          · exact div_nonneg hM_f_nn hpos.le
+        ≤ M_f / (‖w‖ - R) * M_d := by gcongr; exacts [hM_f t ht, hM_d t ht]
       _ = M_f * M_d / (‖w‖ - R) := by ring
   simpa using intervalIntegral.norm_integral_le_of_norm_le_const h_ptwise
 
@@ -120,8 +109,8 @@ theorem dixonH2_tendsto_zero {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
       ≤ M_f * M_d / (‖w‖ - R) := dixonH2_norm_le hM_f_nn hR hM_f hM_d hRw
     _ < ε := by
         rw [div_lt_iff₀ (by linarith : 0 < ‖w‖ - R)]
-        have h1 : R + M_f * M_d / ε < ‖w‖ := lt_of_le_of_lt (le_max_right _ _) hw
-        have h2 : M_f * M_d / ε < ‖w‖ - R := by linarith
+        have h2 : M_f * M_d / ε < ‖w‖ - R := by
+          linarith [lt_of_le_of_lt (le_max_right _ _) hw]
         rw [div_lt_iff₀ hε] at h2
         linarith [mul_comm ε (‖w‖ - R)]
 
@@ -221,6 +210,24 @@ theorem dixonFunction_eventually_eq_dixonH2_of_nullHomologous
 
 /-! ## Cauchy integral formula -/
 
+/-- **Cauchy integral formula from pointwise Dixon-zero.** Weakened version of
+`cauchyIntegralFormula_nullHomologous` requiring only `dixonFunction f U γ w = 0`
+at the specific point `w` (not globally). -/
+theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : Set ℂ}
+    {γ : PiecewiseC1Path x x}
+    {w : ℂ} (h_zero_at : dixonFunction f U γ w = 0)
+    (hw : w ∈ U) (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
+    (h_cauchy_int : IntervalIntegrable
+      (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1)
+    (h_base_int : IntervalIntegrable
+      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
+    dixonH2 f γ w =
+      2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w := by
+  rw [dixonFunction_eq_dixonH1 hw] at h_zero_at
+  have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
+  rw [h_zero_at] at h_identity
+  exact sub_eq_zero.mp h_identity.symm
+
 /-- **Cauchy integral formula for null-homologous curves.**
 
 For a closed piecewise C^1 path `γ` with `f` holomorphic on `U`:
@@ -241,30 +248,8 @@ theorem cauchyIntegralFormula_nullHomologous {f : ℂ → ℂ} {U : Set ℂ}
     (h_base_int : IntervalIntegrable
       (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
     dixonH2 f γ w =
-      2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w := by
-  have h_dx_zero := h_zero w
-  rw [dixonFunction_eq_dixonH1 hw] at h_dx_zero
-  have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
-  rw [h_dx_zero] at h_identity
-  exact sub_eq_zero.mp h_identity.symm
-
-/-- **Cauchy integral formula from pointwise Dixon-zero.** Weakened version of
-`cauchyIntegralFormula_nullHomologous` requiring only `dixonFunction f U γ w = 0`
-at the specific point `w` (not globally). -/
-theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : Set ℂ}
-    {γ : PiecewiseC1Path x x}
-    {w : ℂ} (h_zero_at : dixonFunction f U γ w = 0)
-    (hw : w ∈ U) (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
-    (h_cauchy_int : IntervalIntegrable
-      (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1)
-    (h_base_int : IntervalIntegrable
-      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
-    dixonH2 f γ w =
-      2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w := by
-  rw [dixonFunction_eq_dixonH1 hw] at h_zero_at
-  have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
-  rw [h_zero_at] at h_identity
-  exact sub_eq_zero.mp h_identity.symm
+      2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w :=
+  cauchyIntegralFormula_nullHomologous_at (h_zero w) hw hoff h_cauchy_int h_base_int
 
 /-- `dixonH1 f γ w = 0` when the Dixon function is identically zero and `w ∈ U`. -/
 theorem dixonH1_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
@@ -322,20 +307,15 @@ theorem contourIntegral_eq_zero_of_nullHomologous_at
     (h_base_int : IntervalIntegrable
       (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
     γ.contourIntegral f = 0 := by
-  set g : ℂ → ℂ := fun z => (z - w₀) * f z with hg_def
-  have h_cif := cauchyIntegralFormula_nullHomologous_at (f := g) h_zero_at
+  have h_cif := cauchyIntegralFormula_nullHomologous_at
+    (f := fun z => (z - w₀) * f z) h_zero_at
     hw₀_in_U hw₀_off h_cauchy_int h_base_int
-  have hg_w₀ : g w₀ = 0 := by simp [hg_def]
-  rw [hg_w₀, mul_zero] at h_cif
-  have h_rewrite : dixonH2 g γ w₀ = γ.contourIntegral f := by
-    simp only [dixonH2, PiecewiseC1Path.contourIntegral]
-    apply intervalIntegral.integral_congr
-    intro t ht
-    rw [Set.uIcc_of_le (zero_le_one' ℝ)] at ht
-    have hne : γ t - w₀ ≠ 0 := sub_ne_zero.mpr (hw₀_off t ht)
-    simp only [hg_def]
-    field_simp
-  exact h_rewrite ▸ h_cif
+  simp only [sub_self, zero_mul, mul_zero] at h_cif
+  refine h_cif ▸ ?_
+  simp only [dixonH2, PiecewiseC1Path.contourIntegral]
+  refine intervalIntegral.integral_congr (fun t ht => ?_)
+  rw [Set.uIcc_of_le (zero_le_one' ℝ)] at ht
+  rw [mul_div_cancel_left₀ _ (sub_ne_zero.mpr (hw₀_off t ht))]
 
 theorem contourIntegral_eq_zero_of_nullHomologous
     {f : ℂ → ℂ} {U : Set ℂ} {γ : PiecewiseC1Path x x}
@@ -558,25 +538,9 @@ private lemma base_integrand_intervalIntegrable
     {w : ℂ} (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
     IntervalIntegrable
       (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1 := by
-  have h_cont_inv : ContinuousOn (fun t => (γ t - w)⁻¹) (Icc (0 : ℝ) 1) :=
-    ContinuousOn.inv₀ (h_γ_cont.sub continuousOn_const)
-      (fun t ht => sub_ne_zero.mpr (hoff t ht))
-  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le zero_le_one]
-  have h_meas : AEStronglyMeasurable
-      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t)
-      (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    ((h_cont_inv.mono Ioc_subset_Icc_self).aestronglyMeasurable
-      measurableSet_Ioc).mul (stronglyMeasurable_deriv _).aestronglyMeasurable
-  haveI : IsFiniteMeasure (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    ⟨by rw [Measure.restrict_apply_univ]; exact measure_Ioc_lt_top⟩
-  obtain ⟨C, hC⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image h_cont_inv.norm
-  refine MeasureTheory.Integrable.of_bound h_meas (max C 0 * K) ?_
-  filter_upwards [ae_restrict_mem measurableSet_Ioc] with t ht
-  have ht_Icc : t ∈ Icc (0 : ℝ) 1 := Ioc_subset_Icc_self ht
-  rw [norm_mul]
-  exact mul_le_mul (le_max_of_le_left (hC ⟨t, ht_Icc, rfl⟩))
-    (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _)
-    (le_max_of_le_left (le_trans (norm_nonneg _) (hC ⟨t, ht_Icc, rfl⟩)))
+  have := cauchy_integrand_intervalIntegrable (f := fun _ => 1) hLip
+    continuousOn_const h_γ_cont hoff
+  simpa [one_div] using this
 
 /-- **B-5 fully automatic except h1_diff + h_winding_zero_near**: With γ Lipschitz,
 f differentiable on bounded open U, and γ null-hom in U, all bounds and integrability
