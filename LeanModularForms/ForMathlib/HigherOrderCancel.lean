@@ -2,10 +2,10 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.HigherOrderAssembly
-import LeanModularForms.ForMathlib.SectorCurve
 import LeanModularForms.ForMathlib.FlatChordBound
+import LeanModularForms.ForMathlib.HigherOrderAssembly
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.HigherOrderAsymptotics
+import LeanModularForms.ForMathlib.SectorCurve
 
 /-!
 # Higher-Order Cancellation from Conditions (A') + (B)
@@ -14,42 +14,15 @@ This file proves that under conditions (A') and (B) from Hungerbuhler-Wasem,
 the CPV of the remainder `f - principalPartSum` tends to 0. This discharges
 the `hCancel` hypothesis in `generalizedResidueTheorem`.
 
-## Mathematical overview
-
-For a meromorphic function `f` with poles at `S` in an open set `U`:
-
-### Avoidance case (gamma avoids S)
-
-When `gamma` avoids all poles with positive margin `delta`, the CPV integrand
-equals the ordinary contour integrand for small `epsilon`, so CPV convergence
-reduces to ordinary integrability. Combined with a holomorphic extension
-`g` of the remainder `f - principalPartSum` to all of `U`, the Cauchy
-integral theorem gives `contourIntegral g = 0`, which transfers to the
-CPV limit of the remainder being 0.
-
-### General cancellation framework
-
-For the general case (where `gamma` may cross poles), we provide:
-
-1. **Decomposition**: If `f - pp = h + r` where `h` has `HasCauchyPVOn S h gamma 0`
-   and `r` has `HasCauchyPVOn S r gamma 0`, then `HasCauchyPVOn S (f - pp) gamma 0`.
-
-2. **Holomorphic component**: A holomorphic function in a convex domain has
-   vanishing CPV (the CPV equals the contour integral, which is 0 by Cauchy).
-
-3. **Higher-order polar terms**: Under condition (B), each Laurent coefficient
-   `a_k` with `k >= 1` satisfies the angle condition, making the sector
-   integral vanish by odd-power symmetry.
-
 ## Main results
 
-* `hCancel_of_avoids` -- avoidance cancellation for general poles
-* `hCancel_of_holomorphic_convex` -- cancellation for holomorphic remainders
-  in convex domains
-* `hCancel_of_decomposition` -- structural decomposition theorem
-* `hCancel_of_simplePoles_avoids` -- simple poles with avoidance (no convexity)
-* `hCancel_of_conditionsAB_convex` -- full cancellation under A'+B in convex
-  domains (main unconditional theorem)
+* `hCancel_of_contourIntegral_zero` -- if the contour integral vanishes and
+  `gamma` avoids `S`, then the CPV is zero.
+* `hCancel_of_decomposition` -- structural decomposition for cancellation.
+* `hasCauchyPVOn_pow_inv_of_avoids` -- CPV of `1/(z-s)^k` for `k ≥ 2` along
+  a closed curve avoiding `s`.
+* `hw_theorem_3_3_odd_transverse_parametric` -- HW Theorem 3.3 for the
+  k-odd transverse case (curve-side conclusion).
 
 ## References
 
@@ -76,76 +49,6 @@ theorem hCancel_of_contourIntegral_zero
     (h_zero : γ.contourIntegral f = 0) :
     HasCauchyPVOn S f γ 0 :=
   h_zero ▸ hasCauchyPVOn_of_avoids hδ
-
-/-- **Avoidance cancellation for general poles.** When `gamma` avoids `S` with
-positive margin and the contour integral of the remainder vanishes, the CPV of
-`f - principalPartSum` tends to zero.
-
-This generalizes `hCancel_of_simplePoles_convex` by not requiring simple poles:
-the only input is that the contour integral of the remainder vanishes (which
-can be verified by any method: convex Cauchy, null-homologous Cauchy, etc.). -/
-theorem hCancel_of_avoids
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_rem_zero : γ.contourIntegral
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0) :
-    HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
-  hCancel_of_contourIntegral_zero S _ γ hδ h_rem_zero
-
-/-- When a holomorphic function `g` agrees with the remainder on the curve
-and its contour integral vanishes, the CPV of the remainder is zero.
-
-This is the key bridge lemma: one constructs `g` with `g = f - pp` off `S`,
-proves `contourIntegral g = 0` (by Cauchy in a convex/null-homologous setting),
-and deduces `HasCauchyPVOn S (f - pp) gamma 0` via avoidance. -/
-theorem hCancel_of_holomorphic_agree
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (g : ℂ → ℂ) (hg_zero : γ.contourIntegral g = 0)
-    (hg_agree : ∀ t ∈ Icc (0 : ℝ) 1,
-      g (γ t) = f (γ t) - principalPartSum S (fun s => residue f s) (γ t)) :
-    HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
-  have h_int_eq : γ.contourIntegral
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0 := by
-    rw [← hg_zero]
-    simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
-    apply intervalIntegral.integral_congr
-    intro t ht
-    rw [Set.uIcc_of_le (zero_le_one' ℝ)] at ht
-    simp only [PiecewiseC1Path.extendedPath_eq] at hg_agree
-    show (f (γ.toPath.extend t) - principalPartSum S (fun s => residue f s) (γ.toPath.extend t)) *
-      deriv γ.toPath.extend t =
-      g (γ.toPath.extend t) * deriv γ.toPath.extend t
-    rw [hg_agree t ht]
-  exact hCancel_of_avoids S f γ hδ h_int_eq
-
-/-- **Holomorphic remainder in a convex domain.** For a holomorphic function
-`g` on a convex open set `U` that agrees with `f - pp` on the curve, the CPV
-of the remainder vanishes.
-
-This combines the holomorphic agreement lemma with the convex Cauchy theorem. -/
-theorem hCancel_of_holomorphic_convex
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (g : ℂ → ℂ) (hg_diff : DifferentiableOn ℂ g U)
-    (hg_agree : ∀ z ∈ U \ (↑S : Set ℂ),
-      g z = f z - principalPartSum S (fun s => residue f s) z)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (h_g_int : IntervalIntegrable (PiecewiseC1Path.contourIntegrand g γ) volume 0 1) :
-    HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 := by
-  have hg_zero : γ.contourIntegral g = 0 :=
-    γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
-      hg_diff hγ_in_U h_g_int
-  have hg_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
-      g (γ t) = f (γ t) - principalPartSum S (fun s => residue f s) (γ t) :=
-    fun t ht => hg_agree (γ t) ⟨hγ_in_U t ht, fun hmem =>
-      hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
-  exact hCancel_of_holomorphic_agree S f γ hδ g hg_zero hg_on_curve
 
 /-- **Structural decomposition for cancellation.** If the remainder `f - pp`
 decomposes as a sum of two functions `h₁ + h₂` where each individually has
@@ -184,244 +87,6 @@ theorem hCancel_of_decomposition
   simp only [HasCauchyPVOn] at h_add ⊢
   rwa [h_congr]
 
-/-- **Simple pole avoidance cancellation.** For simple poles in any open set `U`
-(not necessarily convex), when `gamma` avoids all poles, the CPV of the remainder
-is zero, provided the remainder's contour integral vanishes.
-
-For convex domains, the contour integral vanishes automatically by Cauchy.
-For non-convex domains, one needs a separate argument (null-homologous, etc.)
-to establish that the contour integral is zero. -/
-theorem hCancel_of_simplePoles_avoids
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (_hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (h_rem_vanishes : γ.contourIntegral
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) = 0) :
-    HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
-  hCancel_of_avoids S f γ hδ h_rem_vanishes
-
-/-- The sector analysis for a single higher-order term: when the Laurent
-coefficient `a_k` satisfies the angle condition (`k * alpha in 2 pi Z`),
-the CPV of `a_k / (z - s)^(k+1)` along a model line curve vanishes.
-
-For odd `k`, this follows directly from the odd-power symmetry
-(`SectorCurve.pv_odd_power_vanishes`). The angle condition from (B)
-ensures the exponential prefactor equals 1, leaving only the symmetric
-integral. -/
-theorem higherOrder_sector_cancel_odd
-    (r : ℝ) (hr : 0 < r) (α : ℝ) (k : ℕ) (hk : 2 ≤ k)
-    (hk_odd : Odd k)
-    (_h_angle : ∃ m : ℤ, (↑k : ℝ) * α = ↑m * (2 * Real.pi)) :
-    Tendsto (fun ε =>
-      (∫ t in (-1 : ℝ)..(-ε),
-        (SectorCurve.lineCurve r α t)⁻¹ ^ k * deriv (SectorCurve.lineCurve r α) t) +
-      ∫ t in ε..(1 : ℝ),
-        (SectorCurve.lineCurve r α t)⁻¹ ^ k * deriv (SectorCurve.lineCurve r α) t)
-      (𝓝[>] (0 : ℝ)) (𝓝 0) :=
-  SectorCurve.cpv_lineCurve_inv_pow_odd r hr α k hk hk_odd
-
-/-- **Even-power sector cancellation.** For even `k >= 2`, the PV integral
-of `t^(-k)` on a symmetric interval `[-1, 1]` may not vanish by
-symmetry alone; however, the angle condition from (B) combined with the
-exponential prefactor `exp(-ikα) = 1` ensures that the integrand
-reduces to a form where the integral cancels.
-
-The even case requires the full angle condition: `k * α ∈ 2πZ` forces
-the exponential factor `exp(-ikα) = 1`. Combined with flatness (A'),
-the deviation from the tangent line is small enough that the integral
-converges absolutely to 0 as the excision radius shrinks. -/
-theorem higherOrder_sector_cancel_even_of_flat
-    (r : ℝ) (_hr : 0 < r) (α : ℝ) (k : ℕ) (_hk : 2 ≤ k)
-    (_hk_even : Even k)
-    (h_angle : ∃ m : ℤ, (↑k : ℝ) * α = ↑m * (2 * Real.pi)) :
-    SectorCurve.higherOrderFactor r α k = ↑(r⁻¹ ^ k) :=
-  SectorCurve.higherOrderFactor_eq_of_angle_condition r α k h_angle
-
-/-- **Cancellation for simple poles in convex domains with avoidance (convenience).**
-
-A slight reorganization of `hCancel_of_simplePoles_convex` that factors through
-`hCancel_of_holomorphic_convex`. The proof is the same: construct a holomorphic
-extension, apply convex Cauchy, use avoidance.
-
-Provided here to complete the API alongside the general-pole versions. -/
-theorem hCancel_simplePoles_convex'
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
-      volume 0 1) :
-    HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
-  hCancel_of_simplePoles_convex hU_convex hU_open hU_ne S hS_in_U f hf γ
-    hSimplePoles hγ_in_U hγ_avoids hδ h_rem_int
-
-/-- **Condition B implies the exponential prefactor is 1 for each Laurent term.**
-
-This is the bridge between the abstract condition (B) and the concrete sector
-analysis. For each pole `s`, each Laurent coefficient index `k >= 1`, the
-angle condition `k * α ∈ 2πZ` gives `exp(-ikα) = 1`, so the higher-order
-factor simplifies to the pure power `r^(-k)`. -/
-theorem conditionB_higherOrder_factor_eq
-    (r : ℝ) (α : ℝ) (k : ℕ) (_hk : 1 ≤ k)
-    (h_angle : ∃ m : ℤ, (↑k : ℝ) * α = ↑m * (2 * Real.pi)) :
-    SectorCurve.higherOrderFactor r α k = ↑(r⁻¹ ^ k) :=
-  SectorCurve.higherOrderFactor_eq_of_angle_condition r α k h_angle
-
-/-- **Odd-power terms vanish by symmetry, independent of conditions.**
-
-For odd `k >= 1`, the PV integral of `t^(-k)` on a symmetric interval
-vanishes by odd symmetry. This does not require any angle condition. -/
-theorem odd_power_pv_vanishes (k : ℕ) (hk : 1 ≤ k) (hk_odd : Odd k) :
-    Tendsto (fun ε =>
-      (∫ t in (-1 : ℝ)..(-ε), (↑t : ℂ)⁻¹ ^ k) +
-      ∫ t in ε..(1 : ℝ), (↑t : ℂ)⁻¹ ^ k)
-      (𝓝[>] (0 : ℝ)) (𝓝 0) :=
-  SectorCurve.pv_odd_power_vanishes k hk hk_odd
-
-/-- **Full hCancel discharge for simple poles in convex domains.**
-
-This is the preferred entry point: given `f` with simple poles at `S` in a
-convex open set `U`, with `gamma` in `U` avoiding `S`, the CPV of the
-remainder vanishes. No conditions A' or B needed (they are automatic for
-simple poles). -/
-theorem hCancel_of_simplePoles_convex_full
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
-      volume 0 1) :
-    HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
-  hCancel_of_simplePoles_convex hU_convex hU_open hU_ne S hS_in_U f hf γ
-    hSimplePoles hγ_in_U hγ_avoids hδ h_rem_int
-
-/-- **Structural gateway for higher-order cancellation.**
-
-If the remainder `f - pp` can be written as `h + r` where:
-- `h` is the holomorphic part with vanishing CPV (e.g., from Cauchy)
-- `r` collects all higher-order polar terms with vanishing CPV
-  (e.g., from condition B + sector symmetry)
-
-then the full remainder has vanishing CPV. This is the main composition
-lemma for higher-order cancellation. -/
-theorem hCancel_structural_gateway
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (h_holo r_polar : ℂ → ℂ)
-    (h_decomp : ∀ z,
-      f z - principalPartSum S (fun s => residue f s) z =
-        h_holo z + r_polar z)
-    (h_holo_cancel : HasCauchyPVOn S h_holo γ 0)
-    (h_polar_cancel : HasCauchyPVOn S r_polar γ 0)
-    (hI_holo : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S h_holo γ.toPath.extend ε t) volume 0 1)
-    (hI_polar : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S r_polar γ.toPath.extend ε t) volume 0 1) :
-    HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0 :=
-  hCancel_of_decomposition S f γ h_holo r_polar h_decomp
-    h_holo_cancel h_polar_cancel hI_holo hI_polar
-
-/-- **Fully assembled residue theorem with explicit cancellation.**
-
-Given the `hCancel` discharge and all other components, this assembles
-the full generalized residue theorem. This is equivalent to
-`generalizedResidueTheorem_composed` but with the cancellation produced
-from the structural gateway.
-
-TODO (legacy-port-plan Phase 1): discharge `hCancel` from A'+B via Dixon
-(`DixonTheorem.dixonFunction_eq_zero`). See
-`docs/superpowers/plans/2026-04-20-legacy-port-plan.md`. -/
-theorem generalizedResidueTheorem_with_hCancel
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (hCancel : HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z) γ 0)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (hI : ∀ s ∈ S, IntervalIntegrable
-      (fun t => (residue f s / (γ.toPath.extend t - s)) *
-        deriv γ.toPath.extend t) volume 0 1)
-    (hI_cpv_rem : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S (fun z => f z -
-        principalPartSum S (fun s => residue f s) z)
-        γ.toPath.extend ε t) volume 0 1)
-    (hI_cpv_sing : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S
-        (principalPartSum S (fun s => residue f s))
-        γ.toPath.extend ε t) volume 0 1) :
-    HasCauchyPVOn S f γ
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ s * residue f s) :=
-  generalizedResidueTheorem_composed S f γ hCancel
-    (hPV_sing_of_avoids S f γ hδ hI) hI_cpv_rem hI_cpv_sing
-
-/-- When the pole set is empty, the CPV of any function equals the ordinary
-contour integral. -/
-theorem hasCauchyPVOn_empty_eq (f : ℂ → ℂ) (γ : PiecewiseC1Path x x) :
-    HasCauchyPVOn ∅ f γ (γ.contourIntegral f) :=
-  hasCauchyPVOn_of_avoids ⟨1, one_pos, fun s hs => absurd hs (Finset.notMem_empty s)⟩
-
-/-- When the pole set is empty and `f` is holomorphic on a convex domain,
-the CPV of the remainder is zero. -/
-theorem hCancel_of_empty_convex
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f U)
-    (γ : PiecewiseC1Path x x)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (h_int : IntervalIntegrable (PiecewiseC1Path.contourIntegrand f γ) volume 0 1) :
-    HasCauchyPVOn ∅ f γ 0 := by
-  have h_zero : γ.contourIntegral f = 0 :=
-    γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
-      hf hγ_in_U h_int
-  rw [← h_zero]
-  exact hasCauchyPVOn_of_avoids ⟨1, one_pos, fun s hs => absurd hs (Finset.notMem_empty s)⟩
-
-/-- If `HasCauchyPVOn S f gamma 0` holds for a function `f`, and `g` agrees with
-`f` pointwise, then `HasCauchyPVOn S g gamma 0`. -/
-theorem hCancel_congr
-    (S : Finset ℂ) (f g : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (h_eq : ∀ z, f z = g z)
-    (hf : HasCauchyPVOn S f γ 0) :
-    HasCauchyPVOn S g γ 0 := by
-  have h_congr : (fun ε => ∫ t in (0 : ℝ)..1,
-      cpvIntegrandOn S g γ.toPath.extend ε t) =
-      (fun ε => ∫ t in (0 : ℝ)..1,
-        cpvIntegrandOn S f γ.toPath.extend ε t) := by
-    ext ε
-    congr 1
-    ext t
-    simp only [cpvIntegrandOn]
-    split_ifs with h
-    · rfl
-    · congr 1
-      exact (h_eq _).symm
-  simp only [HasCauchyPVOn] at hf ⊢
-  rwa [h_congr]
-
-/-- Transfer `hCancel` through a pointwise equality of remainders. If
-the remainder `f₁ - pp₁` equals `f₂ - pp₂` pointwise and hCancel holds
-for `f₁`, then it holds for `f₂`. -/
-theorem hCancel_of_remainder_eq
-    (S : Finset ℂ) (f₁ f₂ : ℂ → ℂ) (γ : PiecewiseC1Path x x)
-    (c₁ c₂ : ℂ → ℂ)
-    (h_eq : ∀ z, f₁ z - principalPartSum S c₁ z = f₂ z - principalPartSum S c₂ z)
-    (hf₁ : HasCauchyPVOn S (fun z => f₁ z - principalPartSum S c₁ z) γ 0) :
-    HasCauchyPVOn S (fun z => f₂ z - principalPartSum S c₂ z) γ 0 :=
-  hCancel_congr S _ _ γ h_eq hf₁
-
 /-- **Higher-order avoidance: contour integral vanishes.** For `k ≥ 2`, the contour
 integral of `1/(z-s)^k` along a closed `γ` avoiding `s` is zero. Follows from FTC
 applied to the antiderivative `-1/[(k-1)(z-s)^{k-1}]`, which is single-valued on
@@ -449,18 +114,14 @@ theorem hasCauchyPVOn_pow_inv_of_avoids
       (fun t => (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t)
       volume 0 1) :
     HasCauchyPVOn {s} (fun z => 1 / (z - s) ^ k) γ 0 := by
+  obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
   have h_avoids : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s := by
-    obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
     intro t ht hγt
     have hδ_norm : δ ≤ ‖γ t - s‖ := hδ_bd t ht
     rw [hγt, sub_self, norm_zero] at hδ_norm
     linarith
-  have hδ' : ∃ δ > 0, ∀ s' ∈ ({s} : Finset ℂ), ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s'‖ := by
-    obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
-    refine ⟨δ, hδ_pos, ?_⟩
-    intro s' hs' t ht
-    rw [Finset.mem_singleton.mp hs']
-    exact hδ_bd t ht
+  have hδ' : ∃ δ > 0, ∀ s' ∈ ({s} : Finset ℂ), ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s'‖ :=
+    ⟨δ, hδ_pos, fun s' hs' t ht => Finset.mem_singleton.mp hs' ▸ hδ_bd t ht⟩
   exact (γ.contourIntegral_pow_inv_eq_zero hk h_avoids h_int) ▸ hasCauchyPVOn_of_avoids hδ'
 
 /-- **Line-model F-difference vanishing for k odd.** For `k` odd ≥ 2, the
@@ -473,9 +134,7 @@ theorem F_line_diff_eq_zero_of_odd
       -(↑(k - 1) : ℂ)⁻¹ * (((s + (ε / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹ := by
   have h_even : Even (k - 1) := by
     obtain ⟨m, hm⟩ := hk_odd
-    have : k - 1 = 2 * m := by omega
-    rw [this]
-    exact ⟨m, by ring⟩
+    exact ⟨m, by omega⟩
   congr 1
   congr 1
   have h1 : (s - (ε / ‖L‖ : ℝ) • L) - s = -((ε / ‖L‖ : ℝ) • L) := by ring
@@ -507,12 +166,10 @@ theorem F_curve_diff_tendsto_zero_odd
       ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹) -
         (-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹)‖)
       (𝓝[>] 0) (𝓝 0) := by
-  have h_right := F_diff_at_tangent_target_tendsto_zero_right
-    h_flat hL h_deriv_right hL_right h_s hk hkn hn1
-  have h_right_comp := h_right.comp h_plus_to
-  have h_left := F_diff_at_tangent_target_tendsto_zero_left
-    h_flat hL h_deriv_left hL_left h_s hk hkn hn1
-  have h_left_comp := h_left.comp h_minus_to
+  have h_right_comp := (F_diff_at_tangent_target_tendsto_zero_right
+    h_flat hL h_deriv_right hL_right h_s hk hkn hn1).comp h_plus_to
+  have h_left_comp := (F_diff_at_tangent_target_tendsto_zero_left
+    h_flat hL h_deriv_left hL_left h_s hk hkn hn1).comp h_minus_to
   have h_sum_raw := h_right_comp.add h_left_comp
   have h_sum : Tendsto (fun ε =>
       ‖-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹ -
@@ -586,13 +243,13 @@ theorem hw_theorem_3_3_odd_transverse_parametric
     Tendsto (fun ε =>
       (∫ t in a..(t_eps_minus ε), γ' t / (γ t - s) ^ k) +
         (∫ t in (t_eps_plus ε)..b, γ' t / (γ t - s) ^ k))
-      (𝓝[>] 0) (𝓝 0) := by
-  apply cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
-      t_eps_plus t_eps_minus
-      h_minus_smooth h_minus_avoids h_minus_int
-      h_plus_smooth h_plus_avoids h_plus_int
-  exact F_curve_diff_tendsto_zero_odd h_flat hL h_deriv_right h_deriv_left
+      (𝓝[>] 0) (𝓝 0) :=
+  cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
+    t_eps_plus t_eps_minus
+    h_minus_smooth h_minus_avoids h_minus_int
+    h_plus_smooth h_plus_avoids h_plus_int
+    (F_curve_diff_tendsto_zero_odd h_flat hL h_deriv_right h_deriv_left
       hL_right hL_left h_s hk hk_odd hkn hn1
-      t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius
+      t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius)
 
 end
