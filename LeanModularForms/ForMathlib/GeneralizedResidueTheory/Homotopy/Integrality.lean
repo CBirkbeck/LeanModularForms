@@ -130,7 +130,7 @@ lemma exists_ball_avoiding_finset {P : Finset ℝ} {t : ℝ} (ht : t ∉ P) :
 
 /-- Around `t ∈ Ioo a b \ P` there is an open sub-interval `Ioo p₁ p₂ ⊆ Ioo a b`
 disjoint from `P` containing `t`. -/
-private lemma exists_subinterval_avoiding_finset {P : Finset ℝ} {a b t : ℝ}
+lemma exists_subinterval_avoiding_finset {P : Finset ℝ} {a b t : ℝ}
     (ht : t ∈ Ioo a b) (ht_notP : t ∉ P) :
     ∃ p₁ p₂ : ℝ, p₁ < p₂ ∧ t ∈ Ioo p₁ p₂ ∧
       (∀ s ∈ Ioo p₁ p₂, s ∉ P) ∧ Ioo p₁ p₂ ⊆ Ioo a b := by
