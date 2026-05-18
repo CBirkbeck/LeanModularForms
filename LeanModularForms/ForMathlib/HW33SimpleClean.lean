@@ -120,45 +120,28 @@ theorem hw_3_3_simple_with_crossData
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) := by
   classical
+  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   -- 1. Derive `hMero` from `hSimple`.
   have hMero : ∀ s ∈ S, MeromorphicAt f s :=
     fun s hs => (hSimple s hs).meromorphicAt
   -- 2. Discharge `h_holo_cancel` via Phase 4.
-  have h_holo_cancel :
-      HasCauchyPVOn S (laurentHolomorphicRemainder hCondB)
-        γ.toPwC1Immersion.toPiecewiseC1Path 0 :=
+  have h_holo_cancel : HasCauchyPVOn S (laurentHolomorphicRemainder hCondB) γP 0 :=
     h_holo_cancel_of_conditionB hU_open hU_ne hS_in_U hf γ h_null hSimple hCondB
   -- 3. Discharge `hPV_sing` via Phase 5c.
-  have hPV_sing :
-      HasCauchyPVOn S
-        (principalPartSum S (fun s => residue f s))
-        γ.toPwC1Immersion.toPiecewiseC1Path
-        (∑ s ∈ S, 2 * ↑Real.pi * I *
-          generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-            residue f s) :=
+  have hPV_sing : HasCauchyPVOn S (principalPartSum S (fun s => residue f s)) γP
+      (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γP s * residue f s) :=
     hPV_sing_of_conditionB_singleCrossing hU_open hS_in_U γ hSimple hCondB
       crossData hδ_pos h_avoid_pairs h_int_perpole
-  -- 4. Derive sum-form `hI_sing` from per-pole `h_int_perpole` via
-  -- `cpvIntegrandOn_finset_sum_intervalIntegrable`. The `principalPartSum`
-  -- unfolds to a finite sum of `residue f s / (z - s)` terms.
+  -- 4. Derive sum-form `hI_sing` from per-pole `h_int_perpole` (rfl-unfolding
+  -- of `principalPartSum`).
   have hI_sing : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S
         (principalPartSum S (fun s => residue f s))
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) volume 0 1 := by
-    intro ε hε
-    have h_sum := cpvIntegrandOn_finset_sum_intervalIntegrable
-      (ι_set := S) (S := S) (γ := γ.toPwC1Immersion.toPiecewiseC1Path) (ε := ε)
+        γP.toPath.extend ε t) volume 0 1 := fun ε hε =>
+    cpvIntegrandOn_finset_sum_intervalIntegrable
+      (ι_set := S) (S := S) (γ := γP) (ε := ε)
       (f := fun s z => residue f s / (z - s))
       (fun s hs => h_int_perpole s hs ε hε)
-    -- `principalPartSum S (residue f) z = ∑ s ∈ S, residue f s / (z - s)`
-    have h_eq : (fun t => cpvIntegrandOn S
-        (principalPartSum S (fun s => residue f s))
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) =
-      (fun t => cpvIntegrandOn S
-        (fun z => ∑ s ∈ S, residue f s / (z - s))
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) := rfl
-    rw [h_eq]
-    exact h_sum
   -- 5. Compose via `hw_3_3_paper`.
   exact hw_3_3_paper hU_open S hS_in_U f hf γ h_null hMero hCondA hCondB
     h_polar_cancel h_holo_cancel hI_polar hI_holo hPV_sing hI_sing
@@ -181,8 +164,8 @@ theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_mem
       (fun t => cpvIntegrandOn S (fun z => c / (z - s))
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) volume 0 1 := by
   classical
-  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path with hγP_def
-  set γE := γP.toPath.extend with hγE_def
+  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
+  set γE := γP.toPath.extend
   -- Pointwise norm bound `‖cpvIntegrandOn‖ ≤ |c|/ε · ‖γ'‖`.
   have h_norm_bound : ∀ t,
       ‖cpvIntegrandOn S (fun z => c / (z - s)) γE ε t‖ ≤
@@ -193,29 +176,21 @@ theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_mem
     · rw [norm_zero]
       exact mul_nonneg (div_nonneg (norm_nonneg _) hε_pos.le) (norm_nonneg _)
     · push Not at h
-      have h_s_bnd : ε < ‖γE t - s‖ := h s hs
       rw [norm_mul, norm_div]
-      have h_div_le : ‖c‖ / ‖γE t - s‖ ≤ ‖c‖ / ε :=
-        div_le_div_of_nonneg_left (norm_nonneg _) hε_pos h_s_bnd.le
-      exact mul_le_mul_of_nonneg_right h_div_le (norm_nonneg _)
-  -- γ' is interval-integrable on [0,1].
-  have h_deriv_int : IntervalIntegrable (deriv γE) volume 0 1 :=
-    γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable
-  have h_norm_deriv_int : IntervalIntegrable (fun t => ‖deriv γE t‖) volume 0 1 :=
-    h_deriv_int.norm
+      exact mul_le_mul_of_nonneg_right
+        (div_le_div_of_nonneg_left (norm_nonneg _) hε_pos (h s hs).le) (norm_nonneg _)
+  -- γ' is interval-integrable on [0,1]; combine into the dominating bound.
   have h_bound_int : IntervalIntegrable
       (fun t => (‖c‖ / ε * ‖deriv γE t‖ : ℝ)) volume 0 1 :=
-    h_norm_deriv_int.const_mul _
+    (γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable.norm).const_mul _
   -- Measurability of the CPV integrand.
   have h_meas : AEStronglyMeasurable
       (fun t => cpvIntegrandOn S (fun z => c / (z - s)) γE ε t)
-      (volume.restrict (Ι (0 : ℝ) 1)) := by
-    apply aestronglyMeasurable_cpvIntegrandOn S _ γP ε
-    apply AEStronglyMeasurable.mul
-    · apply Measurable.aestronglyMeasurable
-      apply Measurable.div measurable_const
-      exact (γP.toPath.continuous_extend.measurable.sub measurable_const)
-    · exact (stronglyMeasurable_deriv _).aestronglyMeasurable
+      (volume.restrict (Ι (0 : ℝ) 1)) :=
+    aestronglyMeasurable_cpvIntegrandOn S _ γP ε <|
+      (measurable_const.div (γP.toPath.continuous_extend.measurable.sub
+        measurable_const)).aestronglyMeasurable.mul
+        (stronglyMeasurable_deriv _).aestronglyMeasurable
   refine IntervalIntegrable.mono_fun h_bound_int h_meas
     (Filter.Eventually.of_forall fun t => ?_)
   simp only [Real.norm_eq_abs, abs_of_nonneg
@@ -268,13 +243,12 @@ theorem hw_3_3_simple_with_perPoleCPV
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) := by
   classical
-  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path with hγP_def
+  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   -- 1. Derive `hMero` from `hSimple`.
   have hMero : ∀ s ∈ S, MeromorphicAt f s :=
     fun s hs => (hSimple s hs).meromorphicAt
   -- 2. Discharge `h_holo_cancel` via Phase 4.
-  have h_holo_cancel :
-      HasCauchyPVOn S (laurentHolomorphicRemainder hCondB) γP 0 :=
+  have h_holo_cancel : HasCauchyPVOn S (laurentHolomorphicRemainder hCondB) γP 0 :=
     h_holo_cancel_of_conditionB hU_open hU_ne hS_in_U hf γ h_null hSimple hCondB
   -- 3. Auto-discharge per-pole integrability.
   have h_per_pole_int : ∀ s ∈ S, ∀ ε > 0, IntervalIntegrable
@@ -282,29 +256,18 @@ theorem hw_3_3_simple_with_perPoleCPV
         γP.toPath.extend ε t) volume 0 1 := fun s hs ε hε_pos =>
     cpvIntegrandOn_div_sub_intervalIntegrable_of_mem γ S hs (residue f s) hε_pos
   -- 4. Assemble `hPV_sing` via per-pole CPV finset sum.
-  have hPV_sing : HasCauchyPVOn S
-      (principalPartSum S (fun s => residue f s)) γP
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γP s * residue f s) :=
+  have hPV_sing : HasCauchyPVOn S (principalPartSum S (fun s => residue f s)) γP
+      (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γP s * residue f s) :=
     HasCauchyPVOn.finset_sum S h_per_pole_cpv h_per_pole_int
   -- 5. Derive sum-form `hI_sing`.
   have hI_sing : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S
         (principalPartSum S (fun s => residue f s))
-        γP.toPath.extend ε t) volume 0 1 := by
-    intro ε hε
-    have h_sum := cpvIntegrandOn_finset_sum_intervalIntegrable
+        γP.toPath.extend ε t) volume 0 1 := fun ε hε =>
+    cpvIntegrandOn_finset_sum_intervalIntegrable
       (ι_set := S) (S := S) (γ := γP) (ε := ε)
       (f := fun s z => residue f s / (z - s))
       (fun s hs => h_per_pole_int s hs ε hε)
-    have h_eq : (fun t => cpvIntegrandOn S
-        (principalPartSum S (fun s => residue f s))
-        γP.toPath.extend ε t) =
-      (fun t => cpvIntegrandOn S
-        (fun z => ∑ s ∈ S, residue f s / (z - s))
-        γP.toPath.extend ε t) := rfl
-    rw [h_eq]
-    exact h_sum
   -- 6. Compose via `hw_3_3_paper`.
   exact hw_3_3_paper hU_open S hS_in_U f hf γ h_null hMero hCondA hCondB
     h_polar_cancel h_holo_cancel hI_polar hI_holo hPV_sing hI_sing
@@ -337,25 +300,21 @@ theorem hw_3_3_simple_with_perPoleCPV_avoids
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) := by
   classical
-  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path with hγP_def
+  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   -- Uniform avoidance margin `δ > 0`.
   obtain ⟨δ, hδ_pos, hδ_bd⟩ := avoids_finset_delta_bound γP S hγ_avoids
   -- Per-pole generalized winding number witnesses (existence via avoidance).
   have hw : ∀ s ∈ S, HasGeneralizedWindingNumber γP s
       (generalizedWindingNumber γP s) := fun s hs => by
-    have h_avoid_s : ∃ δ' > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ' ≤ ‖γP t - s‖ :=
+    have hgw := hasGeneralizedWindingNumber_of_avoids
       ⟨δ, hδ_pos, fun t ht => hδ_bd s hs t ht⟩
-    have hgw := hasGeneralizedWindingNumber_of_avoids h_avoid_s
     rw [hgw.eq]; exact hgw
   -- Per-pole CPV witnesses via singleton-plus-avoidance lift.
   have h_per_pole_cpv : ∀ s ∈ S, HasCauchyPVOn S
       (fun z => residue f s / (z - s)) γP
-      (2 * ↑Real.pi * I * generalizedWindingNumber γP s * residue f s) := by
-    intro s hs
-    have h_avoid_others : ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1,
-        δ ≤ ‖γP t - s'‖ := fun s' hs' _ t ht => hδ_bd s' hs' t ht
-    exact hasCauchyPVOn_div_sub_of_singleton_and_avoid_others S hs (hw s hs)
-      hδ_pos h_avoid_others
+      (2 * ↑Real.pi * I * generalizedWindingNumber γP s * residue f s) :=
+    fun s hs => hasCauchyPVOn_div_sub_of_singleton_and_avoid_others S hs (hw s hs)
+      hδ_pos (fun s' hs' _ t ht => hδ_bd s' hs' t ht)
   exact hw_3_3_simple_with_perPoleCPV hU_open hU_ne S hS_in_U f hf γ h_null
     hSimple hCondA hCondB h_polar_cancel hI_polar hI_holo h_per_pole_cpv
 
@@ -406,71 +365,21 @@ theorem hw_3_3_simple_one_crossing_paper
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) := by
   classical
-  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path with hγP_def
+  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   -- Get the avoidance margin `δ > 0` for the OTHER poles.
-  have hT_avoids : ∀ s' ∈ (S.erase s_star), ∀ t ∈ Icc (0 : ℝ) 1, γP t ≠ s' := by
-    intro s' hs' t ht
-    have hs'_in : s' ∈ S := (Finset.mem_erase.mp hs').2
-    have hs'_ne : s' ≠ s_star := (Finset.mem_erase.mp hs').1
-    exact hγ_avoids_others s' hs'_in hs'_ne t ht
+  have hT_avoids : ∀ s' ∈ (S.erase s_star), ∀ t ∈ Icc (0 : ℝ) 1, γP t ≠ s' :=
+    fun s' hs' t ht =>
+      hγ_avoids_others s' (Finset.mem_erase.mp hs').2 (Finset.mem_erase.mp hs').1 t ht
   obtain ⟨δ, hδ_pos, hδ_bd⟩ :=
     avoids_finset_delta_bound γP (S.erase s_star) hT_avoids
-  -- For every pole s ∈ S, build the per-pole multi-pole CPV.
-  --
-  -- Case 1: s = s_star. We have the singleton winding witness `hw_star`. We need γ to
-  -- avoid `S \ {s_star}` with margin δ, which is `hδ_bd` (using `S.erase s_star = S \ {s_star}`).
-  --
-  -- Case 2: s ≠ s_star. Then s ∈ S.erase s_star, so γ avoids s with margin δ.
-  -- We build the singleton CPV witness via `hasGeneralizedWindingNumber_of_avoids`,
-  -- then lift to multi-pole. But the lift requires γ to avoid `S \ {s}`, which includes
-  -- s_star (we don't have avoidance of s_star). HOWEVER, the per-pole CPV at s ≠ s_star
-  -- has integrand `c / (z - s)`. As ε → 0, the cutoff at s_star (where γ may cross)
-  -- doesn't matter for THIS integrand because the integrand is bounded near s_star
-  -- (γ avoids s, so 1/(γ(t)-s) is bounded). The cutoff at s ≠ s_star fires only when
-  -- γ is within ε of s, which never happens (γ avoids s with margin δ). So for ε < δ,
-  -- the cutoff sets cpvIntegrandOn = 0 in the ε-balls around poles in S — including
-  -- s_star, where γ may have a crossing. The integrand `c / (γ(t) - s) * γ'(t)` is
-  -- bounded near s_star (γ avoids s), so the cutoff at s_star doesn't cause issues
-  -- with integrability, but it does AFFECT the integral value: as ε → 0, the cutoff
-  -- at s_star shrinks to a measure-zero set (γ crosses s_star at finitely many points
-  -- by `preimage_finite`), so by dominated convergence, the integral converges to
-  -- the contour integral.
-  --
-  -- BUT the cleaner argument: use `hasCauchyPVOn_div_sub_of_singleton_and_avoid_others`
-  -- with the singleton-set being `{s}` (NOT `S`). The hypothesis `h_avoid_others`
-  -- requires γ to avoid `S \ {s}` — which includes s_star. We DON'T have this.
-  --
-  -- Actually, looking at the API more carefully:
-  -- `hasCauchyPVOn_div_sub_of_singleton_and_avoid_others`:
-  --   given hw : HasGeneralizedWindingNumber γ s w, hδ_pos, h_avoid : γ avoids S \ {s},
-  --   gives HasCauchyPVOn S (c/(z-s)) γ (2πi·w·c).
-  -- For s ≠ s_star: we have hw (by avoids), but h_avoid would need γ avoid S \ {s},
-  -- which includes s_star — fails.
-  --
-  -- So Case 2 cannot be handled by avoidance alone. We need a DIFFERENT lift that uses
-  -- the fact that γ crosses s_star, not s.
-  --
-  -- The realistic lift: when γ avoids s but may cross s_star ≠ s, the contour integral
-  -- of `c/(z-s)` along γ is well-defined (γ avoids s ⇒ integrand bounded). The CPV
-  -- with cutoff at S can still equal this contour integral provided the cutoff at
-  -- s_star doesn't contribute. Since γ crosses s_star at finitely many points
-  -- (`preimage_finite`), the cutoff at s_star is a measure-zero issue — its
-  -- contribution to the integral tends to 0 as ε → 0.
-  --
-  -- This is the genuine ε → 0 dominated convergence argument. The cleanest way:
-  -- use `hasCauchyPVOn_continuousOn_of_countable_preimage`-style machinery.
-  -- The integrand `c/(z - s) · γ'(t)` is continuous on the image of γ minus {s_star},
-  -- which (since γ avoids s, not s_star) lies in... well, the integrand IS continuous
-  -- on the image of γ minus the singularity at s, which γ avoids. So the integrand
-  -- restricted to γ's image is continuous! No singularity issue at all.
-  --
-  -- Therefore the integrand is bounded on γ's image. The CPV with cutoff at S (which
-  -- includes both s and s_star) zeroes the integrand on the ε-near sets. As ε → 0,
-  -- the ε-near sets shrink to γ⁻¹({s} ∪ {s_star}), which is FINITE (by preimage_finite).
-  -- By bounded convergence, the cutoff integral converges to the full integral, which
-  -- equals the contour integral.
-  --
-  -- This is `hasCauchyPVOn_continuousOn_of_countable_preimage`!
+  -- Per-pole CPV at each `s ∈ S`:
+  --   * `s = s_star`: combine `hw_star` with avoidance of `S \ {s_star}` via
+  --     `hasCauchyPVOn_div_sub_of_singleton_and_avoid_others`.
+  --   * `s ≠ s_star`: γ avoids `s` with margin δ, so the integrand
+  --     `residue f s / (z - s)` is continuous on the image of γ. The CPV cutoff at
+  --     `s_star` (where γ may cross) shrinks to a finite set as `ε → 0`, so dominated
+  --     convergence via `hasCauchyPVOn_continuousOn_of_countable_preimage` yields the
+  --     contour integral, which equals `2πi · w_s · residue f s`.
   obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
   -- Finite preimage of S under γ (TIGHT-6 extension).
   have h_preimage : Set.Countable
@@ -484,40 +393,27 @@ theorem hw_3_3_simple_one_crossing_paper
     by_cases hs_eq : s = s_star
     · -- Case 1: s = s_star, use hw_star + avoidance of others.
       subst hs_eq
-      have h_avoid_others : ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1,
-          δ ≤ ‖γP t - s'‖ := fun s' hs' hs'_ne t ht =>
-        hδ_bd s' (Finset.mem_erase.mpr ⟨hs'_ne, hs'⟩) t ht
-      exact hasCauchyPVOn_div_sub_of_singleton_and_avoid_others S hs hw_star
-        hδ_pos h_avoid_others
+      exact hasCauchyPVOn_div_sub_of_singleton_and_avoid_others S hs hw_star hδ_pos
+        fun s' hs' hs'_ne t ht => hδ_bd s' (Finset.mem_erase.mpr ⟨hs'_ne, hs'⟩) t ht
     · -- Case 2: s ≠ s_star. γ avoids s with margin δ.
-      have hs_in_erase : s ∈ S.erase s_star :=
-        Finset.mem_erase.mpr ⟨hs_eq, hs⟩
       have h_avoid_s : ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γP t - s‖ :=
-        fun t ht => hδ_bd s hs_in_erase t ht
+        fun t ht => hδ_bd s (Finset.mem_erase.mpr ⟨hs_eq, hs⟩) t ht
       -- The integrand `residue f s / (z - s)` is continuous on the image of γ
       -- (γ avoids s); combine with the countable-preimage CPV machinery.
       have h_cont_on : ContinuousOn (fun z => residue f s / (z - s))
           (γP.toPath.extend '' Icc (0 : ℝ) 1) := by
         refine continuousOn_const.div
           (continuousOn_id.sub continuousOn_const) ?_
-        intro z hz
-        obtain ⟨t, ht, hzeq⟩ := hz
-        rw [← hzeq, sub_ne_zero]
-        intro h_eq
+        rintro _ ⟨t, ht, rfl⟩ h_eq
         have h_p := h_avoid_s t ht
-        rw [PiecewiseC1Path.extendedPath_eq] at h_p
-        rw [h_eq, sub_self, norm_zero] at h_p
+        rw [PiecewiseC1Path.extendedPath_eq, sub_eq_zero.mp h_eq, sub_self,
+          norm_zero] at h_p
         linarith
-      -- Get CPV via continuous + countable preimage.
-      have h_cpv_cont : HasCauchyPVOn S (fun z => residue f s / (z - s)) γP
-          (γP.contourIntegral (fun z => residue f s / (z - s))) :=
-        hasCauchyPVOn_continuousOn_of_countable_preimage S h_cont_on hLip h_preimage
-      -- The contour integral equals `2πi · w_s · residue f s` (γ avoids s).
-      have h_contour_eq : γP.contourIntegral (fun z => residue f s / (z - s)) =
-          2 * ↑Real.pi * I * generalizedWindingNumber γP s * residue f s :=
-        integral_simple_pole_eq_winding ⟨δ, hδ_pos, h_avoid_s⟩
-      rw [← h_contour_eq]
-      exact h_cpv_cont
+      -- CPV via continuous + countable preimage; contour integral equals
+      -- `2πi · w_s · residue f s` (γ avoids s).
+      rw [← integral_simple_pole_eq_winding (c := residue f s) (s := s)
+        ⟨δ, hδ_pos, h_avoid_s⟩]
+      exact hasCauchyPVOn_continuousOn_of_countable_preimage S h_cont_on hLip h_preimage
   exact hw_3_3_simple_with_perPoleCPV hU_open hU_ne S hS_in_U f hf γ h_null
     hSimple hCondA hCondB h_polar_cancel hI_polar hI_holo h_per_pole_cpv
 
