@@ -42,14 +42,6 @@ noncomputable section
 
 namespace HungerbuhlerWasem
 
-/-! ## Tangent approximation under flatness
-
-Flatness of order `n` is stated in terms of the tangent deviation
-`o(‖γ(t) − γ(t₀)‖^n)`. The right-side derivative limit gives
-`(γ t − γ t₀) =O (t − t₀)` near `t₀` from the right (and similarly from the
-left), so `‖γ(t) − γ(t₀)‖^n =O |t − t₀|^n`. Combining gives the more
-usable form `o(|t − t₀|^n)` for the tangent deviation. -/
-
 /-- Under right-side flatness of order `n`, the tangent deviation is `o(|t - t₀|^n)`
 from the right. -/
 theorem tangentApproximation_of_isFlatOfOrder_right
@@ -61,17 +53,12 @@ theorem tangentApproximation_of_isFlatOfOrder_right
     (hγ_cont : ContinuousAt γ t₀) :
     (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[𝓝[>] t₀]
       (fun t => |t - t₀| ^ n) := by
-  have h_flat_asym := h_flat.right_flat L hL hL_right
   obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
   have hderiv : HasDerivWithinAt γ L (Ioi t₀) t₀ :=
     hasDerivWithinAt_Ioi_iff_Ici.mpr
       (hasDerivWithinAt_Ici_of_tendsto_deriv
         (fun t ht => (hs_diff t ht).differentiableWithinAt)
         hγ_cont.continuousWithinAt hs_mem hL_right)
-  have h_bigO : (fun t => γ t - γ t₀) =O[𝓝[>] t₀] (fun t => t - t₀) :=
-    hderiv.differentiableWithinAt.isBigO_sub
-  have h_pow : (fun t => (γ t - γ t₀) ^ n) =O[𝓝[>] t₀] (fun t => (t - t₀) ^ n) :=
-    h_bigO.pow n
   have h_lhs : (fun t : ℝ => ‖(γ t - γ t₀) ^ n‖) = (fun t => ‖γ t - γ t₀‖ ^ n) :=
     funext fun t => norm_pow _ _
   have h_rhs : (fun t : ℝ => ‖(t - t₀) ^ n‖) = (fun t => |t - t₀| ^ n) :=
@@ -79,8 +66,8 @@ theorem tangentApproximation_of_isFlatOfOrder_right
   have h_pow_norm : (fun t => ‖γ t - γ t₀‖ ^ n) =O[𝓝[>] t₀]
       (fun t => |t - t₀| ^ n) := by
     rw [← h_lhs, ← h_rhs]
-    exact h_pow.norm_left.norm_right
-  exact h_flat_asym.trans_isBigO h_pow_norm
+    exact (hderiv.differentiableWithinAt.isBigO_sub.pow n).norm_left.norm_right
+  exact (h_flat.right_flat L hL hL_right).trans_isBigO h_pow_norm
 
 /-- Under left-side flatness of order `n`, the tangent deviation is `o(|t - t₀|^n)`
 from the left. -/
@@ -93,17 +80,12 @@ theorem tangentApproximation_of_isFlatOfOrder_left
     (hγ_cont : ContinuousAt γ t₀) :
     (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[𝓝[<] t₀]
       (fun t => |t - t₀| ^ n) := by
-  have h_flat_asym := h_flat.left_flat L hL hL_left
   obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
   have hderiv : HasDerivWithinAt γ L (Iio t₀) t₀ :=
     hasDerivWithinAt_Iio_iff_Iic.mpr
       (hasDerivWithinAt_Iic_of_tendsto_deriv
         (fun t ht => (hs_diff t ht).differentiableWithinAt)
         hγ_cont.continuousWithinAt hs_mem hL_left)
-  have h_bigO : (fun t => γ t - γ t₀) =O[𝓝[<] t₀] (fun t => t - t₀) :=
-    hderiv.differentiableWithinAt.isBigO_sub
-  have h_pow : (fun t => (γ t - γ t₀) ^ n) =O[𝓝[<] t₀] (fun t => (t - t₀) ^ n) :=
-    h_bigO.pow n
   have h_lhs : (fun t : ℝ => ‖(γ t - γ t₀) ^ n‖) = (fun t => ‖γ t - γ t₀‖ ^ n) :=
     funext fun t => norm_pow _ _
   have h_rhs : (fun t : ℝ => ‖(t - t₀) ^ n‖) = (fun t => |t - t₀| ^ n) :=
@@ -111,14 +93,8 @@ theorem tangentApproximation_of_isFlatOfOrder_left
   have h_pow_norm : (fun t => ‖γ t - γ t₀‖ ^ n) =O[𝓝[<] t₀]
       (fun t => |t - t₀| ^ n) := by
     rw [← h_lhs, ← h_rhs]
-    exact h_pow.norm_left.norm_right
-  exact h_flat_asym.trans_isBigO h_pow_norm
-
-/-! ## Antiderivative for `γ'/(γ-s)^k` with `k ≥ 2`
-
-For higher-order poles `1/(z-s)^k` with `k ≥ 2`, the integrand
-`γ'(t)/(γ(t)-s)^k` admits an antiderivative `-1/[(k-1)(γ(t)-s)^{k-1}]`
-on the open set where `γ(t) ≠ s`. -/
+    exact (hderiv.differentiableWithinAt.isBigO_sub.pow n).norm_left.norm_right
+  exact (h_flat.left_flat L hL hL_left).trans_isBigO h_pow_norm
 
 /-- When `γ` is differentiable at `t` with derivative `γ'` and `γ(t) ≠ s`, the function
 `u ↦ -1/[(k-1)(γ(u)-s)^{k-1}]` has derivative `γ'/(γ(t)-s)^k` at `t`. -/
@@ -127,28 +103,18 @@ theorem hasDerivAt_antiderivative_pow_inv
     (hk : 2 ≤ k) (hγ : HasDerivAt γ γ' t) (h_ne : γ t - s ≠ 0) :
     HasDerivAt (fun u => -(↑(k - 1) : ℂ)⁻¹ * ((γ u - s) ^ (k - 1))⁻¹)
       (γ' / (γ t - s) ^ k) t := by
-  have h_sub : HasDerivAt (fun u => γ u - s) γ' t := hγ.sub_const s
   have h_pow_raw : HasDerivAt (fun u => (γ u - s) ^ (k - 1))
-      (↑(k - 1) * (γ t - s) ^ (k - 1 - 1) * γ') t := h_sub.pow (k - 1)
-  have hk_norm : k - 1 - 1 = k - 2 := by omega
-  rw [hk_norm] at h_pow_raw
-  have h_pow_ne : (γ t - s) ^ (k - 1) ≠ 0 := pow_ne_zero _ h_ne
-  have h_inv := hasDerivAt_inv h_pow_ne
-  have h_comp := h_inv.scomp t h_pow_raw
-  have h_const := h_comp.const_mul (-(↑(k - 1) : ℂ)⁻¹)
+      (↑(k - 1) * (γ t - s) ^ (k - 1 - 1) * γ') t := (hγ.sub_const s).pow (k - 1)
+  rw [show k - 1 - 1 = k - 2 from by omega] at h_pow_raw
+  have h_const := ((hasDerivAt_inv (pow_ne_zero _ h_ne)).scomp t h_pow_raw).const_mul
+    (-(↑(k - 1) : ℂ)⁻¹)
   convert h_const using 1
-  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by
-    have : 0 < k - 1 := by omega
-    exact_mod_cast this.ne'
+  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by exact_mod_cast (by omega : 0 < k - 1).ne'
   have h_pow2 : ((γ t - s) ^ (k - 1)) ^ 2 = (γ t - s) ^ k * (γ t - s) ^ (k - 2) := by
-    rw [← pow_mul, ← pow_add]
-    congr 1
-    omega
+    rw [← pow_mul, ← pow_add]; congr 1; omega
   simp only [smul_eq_mul]
   rw [h_pow2]
   field_simp
-
-/-! ## FTC for the higher-order pole integrand on a smooth piece -/
 
 /-- FTC for `γ'/(γ-s)^k` on a smooth piece (`k ≥ 2`): when `γ` is differentiable on
 `uIcc a b` and avoids `s`, the integral of `γ'/(γ-s)^k` equals the antiderivative at
@@ -166,35 +132,25 @@ theorem integral_pow_inv_eq_FTC
     (fun t ht => hasDerivAt_antiderivative_pow_inv hk (hγ t ht)
       (sub_ne_zero.mpr (h_avoids t ht))) h_int
 
-/-! ## ℂ → ℂ antiderivative: complex-differentiable form -/
-
 /-- Antiderivative of `1/(z-s)^k` as a function `ℂ → ℂ` (`k ≥ 2`): the function
 `F(z) = -1/[(k-1)(z-s)^{k-1}]` has complex derivative `1/(z-s)^k` at any `z ≠ s`. -/
 theorem hasDerivAt_antiderivative_pow_inv_complex
     {s : ℂ} {k : ℕ} (hk : 2 ≤ k) {z : ℂ} (hz : z ≠ s) :
     HasDerivAt (fun w => -(↑(k - 1) : ℂ)⁻¹ * ((w - s) ^ (k - 1))⁻¹)
       (1 / (z - s) ^ k) z := by
-  have h_sub : HasDerivAt (fun w : ℂ => w - s) 1 z := (hasDerivAt_id z).sub_const s
   have h_pow : HasDerivAt (fun w : ℂ => (w - s) ^ (k - 1))
-      (↑(k - 1) * (z - s) ^ (k - 1 - 1) * 1) z := h_sub.pow (k - 1)
-  have hk_norm : k - 1 - 1 = k - 2 := by omega
-  rw [hk_norm] at h_pow
-  have h_pow_ne : (z - s) ^ (k - 1) ≠ 0 := pow_ne_zero _ (sub_ne_zero.mpr hz)
-  have h_inv := h_pow.inv h_pow_ne
-  have h_const := h_inv.const_mul (-(↑(k - 1) : ℂ)⁻¹)
+      (↑(k - 1) * (z - s) ^ (k - 1 - 1) * 1) z :=
+    ((hasDerivAt_id z).sub_const s).pow (k - 1)
+  rw [show k - 1 - 1 = k - 2 from by omega] at h_pow
+  have h_const := (h_pow.inv (pow_ne_zero _ (sub_ne_zero.mpr hz))).const_mul
+    (-(↑(k - 1) : ℂ)⁻¹)
   convert h_const using 1
-  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by
-    have : 0 < k - 1 := by omega
-    exact_mod_cast this.ne'
+  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by exact_mod_cast (by omega : 0 < k - 1).ne'
   have h_pow_k2_ne : (z - s) ^ (k - 2) ≠ 0 := pow_ne_zero _ (sub_ne_zero.mpr hz)
   have h_pow2 : ((z - s) ^ (k - 1)) ^ 2 = (z - s) ^ k * (z - s) ^ (k - 2) := by
-    rw [← pow_mul, ← pow_add]
-    congr 1
-    omega
+    rw [← pow_mul, ← pow_add]; congr 1; omega
   rw [h_pow2]
   field_simp
-
-/-! ## Closed-γ excised integral via FTC -/
 
 /-- For a closed curve avoiding `s` on two smooth pieces flanking a crossing, the
 parameter-excised integral equals `F(γ(t_minus)) - F(γ(t_plus))` where `F` is the
@@ -217,8 +173,6 @@ theorem closed_excised_integral_eq_antideriv_diff
     integral_pow_inv_eq_FTC hk hγ_right h_avoids_right h_int_right, h_close]
   ring
 
-/-! ## F-difference bound on a segment avoiding `s` -/
-
 /-- When the line segment from `z₁` to `z₂` stays at distance `≥ ε` from `s`, the
 antiderivative difference satisfies `‖F(z₂) − F(z₁)‖ ≤ ‖z₂ − z₁‖ / ε^k`, where
 `F(z) = -1/[(k-1)(z-s)^{k-1}]`. -/
@@ -232,23 +186,16 @@ theorem norm_F_diff_le_segment_bound
       HasDerivWithinAt (fun w => -(↑(k - 1) : ℂ)⁻¹ * ((w - s) ^ (k - 1))⁻¹)
         (1 / (z - s) ^ k) (segment ℝ z₁ z₂) z := by
     intro z hz
-    have h_dist : ε ≤ ‖z - s‖ := h_seg_avoids z hz
-    have h_ne : z ≠ s := by
-      intro heq
-      rw [heq, sub_self, norm_zero] at h_dist
-      linarith
+    have h_ne : z ≠ s := fun heq => by
+      have := h_seg_avoids z hz; rw [heq, sub_self, norm_zero] at this; linarith
     exact (hasDerivAt_antiderivative_pow_inv_complex hk h_ne).hasDerivWithinAt
   have h_bound : ∀ z ∈ segment ℝ z₁ z₂, ‖1 / (z - s) ^ k‖ ≤ 1 / ε ^ k := by
     intro z hz
     rw [norm_div, norm_one, norm_pow]
-    apply div_le_div_of_nonneg_left zero_le_one (pow_pos hε k)
-    exact pow_le_pow_left₀ hε.le (h_seg_avoids z hz) k
-  have h_convex : Convex ℝ (segment ℝ z₁ z₂) := convex_segment z₁ z₂
-  have h_z₁_in : z₁ ∈ segment ℝ z₁ z₂ := left_mem_segment _ _ _
-  have h_z₂_in : z₂ ∈ segment ℝ z₁ z₂ := right_mem_segment _ _ _
-  exact h_convex.norm_image_sub_le_of_norm_hasDerivWithin_le h_deriv h_bound h_z₁_in h_z₂_in
-
-/-! ## Eventual sign condition for the chord bound -/
+    exact div_le_div_of_nonneg_left zero_le_one (pow_pos hε k)
+      (pow_le_pow_left₀ hε.le (h_seg_avoids z hz) k)
+  exact (convex_segment z₁ z₂).norm_image_sub_le_of_norm_hasDerivWithin_le h_deriv h_bound
+    (left_mem_segment _ _ _) (right_mem_segment _ _ _)
 
 /-- When `γ` has right-derivative `L ≠ 0` at `t₀` and `γ(t₀) = s`, for `t` close to
 `t₀` from the right, `γ(t) − s` lies in the `+L` hemisphere
@@ -257,34 +204,24 @@ theorem eventually_re_pos_right
     {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
     (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_s : γ t₀ = s) :
     ∀ᶠ t in 𝓝[>] t₀, 0 ≤ ((γ t - s) * starRingEnd ℂ L).re := by
-  have h_asymp := h_deriv.isLittleO
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hLsq_pos : 0 < ‖L‖ ^ 2 := by positivity
-  have h_bound : ∀ᶠ t in 𝓝[>] t₀,
-      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
-    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
-    exact h_asymp.bound h_eps_pos
-  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  filter_upwards [h_deriv.isLittleO.bound (by linarith : (0 : ℝ) < ‖L‖ / 2),
+    self_mem_nhdsWithin] with t h_b ht
   have h_pos : 0 < t - t₀ := sub_pos.mpr ht
-  have h_norm_eq : ‖t - t₀‖ = t - t₀ := by
-    rw [Real.norm_eq_abs, abs_of_pos h_pos]
-  rw [h_norm_eq] at h_b
-  have h_decomp : (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_s]
-    ring
-  rw [h_decomp, add_mul, Complex.add_re]
+  rw [Real.norm_eq_abs, abs_of_pos h_pos] at h_b
+  rw [show (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) by rw [h_s]; ring,
+    add_mul, Complex.add_re]
   have h1 : ((((t - t₀) : ℝ) • L) * starRingEnd ℂ L).re = (t - t₀) * ‖L‖ ^ 2 := by
     rw [Complex.real_smul, mul_assoc, Complex.mul_conj, ← Complex.ofReal_mul,
       Complex.ofReal_re, Complex.normSq_eq_norm_sq]
   rw [h1]
-  have h_norm_conj : ‖starRingEnd ℂ L‖ = ‖L‖ := Complex.norm_conj _
   have h2 : -(‖L‖ / 2 * (t - t₀)) * ‖L‖ ≤
       ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L).re := by
     have habs := Complex.abs_re_le_norm
       ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L)
-    rw [norm_mul, h_norm_conj] at habs
-    have hbd := mul_le_mul_of_nonneg_right h_b (norm_nonneg L)
-    nlinarith [abs_le.mp (habs.trans hbd)]
+    rw [norm_mul, Complex.norm_conj] at habs
+    nlinarith [abs_le.mp (habs.trans (mul_le_mul_of_nonneg_right h_b (norm_nonneg L)))]
   nlinarith [hLsq_pos]
 
 /-- Symmetric counterpart of `eventually_re_pos_right`: `Re((γ(t) − s) · conj L) ≤ 0`
@@ -293,61 +230,39 @@ theorem eventually_re_neg_left
     {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
     (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_s : γ t₀ = s) :
     ∀ᶠ t in 𝓝[<] t₀, ((γ t - s) * starRingEnd ℂ L).re ≤ 0 := by
-  have h_asymp := h_deriv.isLittleO
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hLsq_pos : 0 < ‖L‖ ^ 2 := by positivity
-  have h_bound : ∀ᶠ t in 𝓝[<] t₀,
-      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
-    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
-    exact h_asymp.bound h_eps_pos
-  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  filter_upwards [h_deriv.isLittleO.bound (by linarith : (0 : ℝ) < ‖L‖ / 2),
+    self_mem_nhdsWithin] with t h_b ht
   have h_neg : t - t₀ < 0 := sub_neg.mpr ht
-  have h_norm_eq : ‖t - t₀‖ = -(t - t₀) := by
-    rw [Real.norm_eq_abs, abs_of_neg h_neg]
-  rw [h_norm_eq] at h_b
-  have h_decomp : (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) := by
-    rw [h_s]
-    ring
-  rw [h_decomp, add_mul, Complex.add_re]
+  rw [Real.norm_eq_abs, abs_of_neg h_neg] at h_b
+  rw [show (γ t - s) = (t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L) by rw [h_s]; ring,
+    add_mul, Complex.add_re]
   have h1 : ((((t - t₀) : ℝ) • L) * starRingEnd ℂ L).re = (t - t₀) * ‖L‖ ^ 2 := by
     rw [Complex.real_smul, mul_assoc, Complex.mul_conj, ← Complex.ofReal_mul,
       Complex.ofReal_re, Complex.normSq_eq_norm_sq]
   rw [h1]
-  have h_norm_conj : ‖starRingEnd ℂ L‖ = ‖L‖ := Complex.norm_conj _
   have h2 : ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L).re ≤
       ‖L‖ / 2 * -(t - t₀) * ‖L‖ := by
     have habs := Complex.abs_re_le_norm
       ((γ t - γ t₀ - (t - t₀) • L) * starRingEnd ℂ L)
-    rw [norm_mul, h_norm_conj] at habs
-    have hbd := mul_le_mul_of_nonneg_right h_b (norm_nonneg L)
-    nlinarith [abs_le.mp (habs.trans hbd)]
+    rw [norm_mul, Complex.norm_conj] at habs
+    nlinarith [abs_le.mp (habs.trans (mul_le_mul_of_nonneg_right h_b (norm_nonneg L)))]
   nlinarith [hLsq_pos]
-
-/-! ## Eventually `γ ≠ s` -/
 
 /-- With right-derivative `L ≠ 0`, the curve cannot stay at `s` past `t₀`. -/
 theorem eventually_ne_right
     {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
     (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_s : γ t₀ = s) :
     ∀ᶠ t in 𝓝[>] t₀, γ t ≠ s := by
-  have h_asymp := h_deriv.isLittleO
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have h_bound : ∀ᶠ t in 𝓝[>] t₀,
-      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
-    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
-    exact h_asymp.bound h_eps_pos
-  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  filter_upwards [h_deriv.isLittleO.bound (by linarith : (0 : ℝ) < ‖L‖ / 2),
+    self_mem_nhdsWithin] with t h_b ht
   have h_pos : 0 < t - t₀ := sub_pos.mpr ht
-  have h_norm_eq : ‖t - t₀‖ = t - t₀ := by
-    rw [Real.norm_eq_abs, abs_of_pos h_pos]
-  rw [h_norm_eq] at h_b
   intro h_eq
-  have h_diff_zero : γ t - γ t₀ = 0 := by
-    rw [h_s]
-    exact sub_eq_zero.mpr h_eq
-  have h_expr : γ t - γ t₀ - (t - t₀) • L = -((t - t₀) • L) := by
-    rw [h_diff_zero, zero_sub]
-  rw [h_expr, norm_neg, norm_smul, Real.norm_eq_abs, abs_of_pos h_pos] at h_b
+  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  simp only [h_diff_zero, zero_sub, norm_neg, norm_smul, Real.norm_eq_abs,
+    abs_of_pos h_pos] at h_b
   nlinarith
 
 /-- Left-side counterpart of `eventually_ne_right`. -/
@@ -355,27 +270,15 @@ theorem eventually_ne_left
     {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ} (hL : L ≠ 0)
     (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_s : γ t₀ = s) :
     ∀ᶠ t in 𝓝[<] t₀, γ t ≠ s := by
-  have h_asymp := h_deriv.isLittleO
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have h_bound : ∀ᶠ t in 𝓝[<] t₀,
-      ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ / 2 * ‖t - t₀‖ := by
-    have h_eps_pos : 0 < ‖L‖ / 2 := by linarith
-    exact h_asymp.bound h_eps_pos
-  filter_upwards [h_bound, self_mem_nhdsWithin] with t h_b ht
+  filter_upwards [h_deriv.isLittleO.bound (by linarith : (0 : ℝ) < ‖L‖ / 2),
+    self_mem_nhdsWithin] with t h_b ht
   have h_neg : t - t₀ < 0 := sub_neg.mpr ht
-  have h_norm_eq : ‖t - t₀‖ = -(t - t₀) := by
-    rw [Real.norm_eq_abs, abs_of_neg h_neg]
-  rw [h_norm_eq] at h_b
   intro h_eq
-  have h_diff_zero : γ t - γ t₀ = 0 := by
-    rw [h_s]
-    exact sub_eq_zero.mpr h_eq
-  have h_expr : γ t - γ t₀ - (t - t₀) • L = -((t - t₀) • L) := by
-    rw [h_diff_zero, zero_sub]
-  rw [h_expr, norm_neg, norm_smul, Real.norm_eq_abs, abs_of_neg h_neg] at h_b
+  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  simp only [h_diff_zero, zero_sub, norm_neg, norm_smul, Real.norm_eq_abs,
+    abs_of_neg h_neg] at h_b
   nlinarith
-
-/-! ## Asymptotic chord bound -/
 
 /-- Combining flatness with the chord bound and the eventual sign/non-zero conditions,
 the chord `‖γ(t) − s − (‖γ(t)−s‖/‖L‖)·L‖` is `o(‖γ(t)−s‖^n)` as `t → t₀⁺`. -/
@@ -387,36 +290,28 @@ theorem chord_to_tangent_isLittleO_right
     (h_s : γ t₀ = s) :
     (fun t => ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖) =o[𝓝[>] t₀]
       (fun t => ‖γ t - s‖ ^ n) := by
-  have h_ortho :=
-    LeanModularForms.orthogonal_deviation_at_radius_right h_flat hL hL_right h_s
   have h_eventually_bound : ∀ᶠ t in 𝓝[>] t₀,
       ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ ≤ 3 * ‖tangentDeviation (γ t - s) L‖ := by
     filter_upwards [eventually_re_pos_right hL h_deriv h_s,
                     eventually_ne_right hL h_deriv h_s] with t h_pos h_ne
-    have hw_ne : γ t - s ≠ 0 := sub_ne_zero.mpr h_ne
-    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr hw_ne
-    have h_chord :=
-      LeanModularForms.norm_chord_to_tangent_target_le hL hw_pos h_pos
+    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr h_ne)
+    have h_chord := LeanModularForms.norm_chord_to_tangent_target_le hL hw_pos h_pos
     have h_dev_le : ‖tangentDeviation (γ t - s) L‖ ≤ 2 * ‖γ t - s‖ :=
       norm_tangentDeviation_le _ _ hL
     have h_div_bound : ‖tangentDeviation (γ t - s) L‖ ^ 2 / ‖γ t - s‖ ≤
         2 * ‖tangentDeviation (γ t - s) L‖ := by
       rw [pow_two, mul_div_assoc]
       have hd_div : ‖tangentDeviation (γ t - s) L‖ / ‖γ t - s‖ ≤ 2 := by
-        rw [div_le_iff₀ hw_pos]
-        linarith
-      have h_dev_nonneg : 0 ≤ ‖tangentDeviation (γ t - s) L‖ := norm_nonneg _
-      nlinarith
+        rw [div_le_iff₀ hw_pos]; linarith
+      nlinarith [norm_nonneg (tangentDeviation (γ t - s) L)]
     linarith [h_chord]
-  have h_chord_isBigO :
-      (fun t => ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖) =O[𝓝[>] t₀]
-        (fun t => ‖tangentDeviation (γ t - s) L‖) := by
-    apply Asymptotics.IsBigO.of_bound 3
-    filter_upwards [h_eventually_bound] with t ht
-    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
-      abs_of_nonneg (norm_nonneg _)]
-    exact ht
-  exact h_chord_isBigO.trans_isLittleO h_ortho
+  refine Asymptotics.IsBigO.trans_isLittleO ?_
+    (LeanModularForms.orthogonal_deviation_at_radius_right h_flat hL hL_right h_s)
+  refine Asymptotics.IsBigO.of_bound 3 ?_
+  filter_upwards [h_eventually_bound] with t ht
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
+    abs_of_nonneg (norm_nonneg _)]
+  exact ht
 
 /-- Left-side counterpart of `chord_to_tangent_isLittleO_right`: the chord is bounded
 by `o(‖γ(t)−s‖^n)` as `t → t₀⁻`, with target on the `−L` ray. -/
@@ -429,31 +324,22 @@ theorem chord_to_tangent_isLittleO_left
     (fun t => ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖) =o[𝓝[<] t₀]
       (fun t => ‖γ t - s‖ ^ n) := by
   have hLneg : (-L) ≠ 0 := neg_ne_zero.mpr hL
-  have h_ortho :=
-    LeanModularForms.orthogonal_deviation_at_radius_left h_flat hL hL_left h_s
   have h_dev_eq : ∀ t, tangentDeviation (γ t - s) (-L) = tangentDeviation (γ t - s) L := by
     intro t
     unfold tangentDeviation orthogonalProjectionComplex
-    have h_normSq : Complex.normSq (-L) = Complex.normSq L := Complex.normSq_neg L
-    rw [h_normSq]
-    have h_re_neg :
-        ((γ t - s) * starRingEnd ℂ (-L)).re = -((γ t - s) * starRingEnd ℂ L).re := by
-      rw [map_neg, mul_neg]
-      exact Complex.neg_re _
-    rw [h_re_neg]
+    rw [Complex.normSq_neg L,
+      show ((γ t - s) * starRingEnd ℂ (-L)).re = -((γ t - s) * starRingEnd ℂ L).re by
+        rw [map_neg, mul_neg]; exact Complex.neg_re _]
     module
   have h_pos_neg : ∀ᶠ t in 𝓝[<] t₀, 0 ≤ ((γ t - s) * starRingEnd ℂ (-L)).re := by
     filter_upwards [eventually_re_neg_left hL h_deriv h_s] with t h_neg
-    rw [map_neg, mul_neg, Complex.neg_re]
-    linarith
+    rw [map_neg, mul_neg, Complex.neg_re]; linarith
   have h_eventually_bound : ∀ᶠ t in 𝓝[<] t₀,
       ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ ≤
-        3 * ‖tangentDeviation (γ t - s) (-L)‖ := by
+        3 * ‖tangentDeviation (γ t - s) L‖ := by
     filter_upwards [h_pos_neg, eventually_ne_left hL h_deriv h_s] with t h_pos h_ne
-    have hw_ne : γ t - s ≠ 0 := sub_ne_zero.mpr h_ne
-    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr hw_ne
-    have h_chord :=
-      LeanModularForms.norm_chord_to_tangent_target_le hLneg hw_pos h_pos
+    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr h_ne)
+    have h_chord := LeanModularForms.norm_chord_to_tangent_target_le hLneg hw_pos h_pos
     have h_dev_le : ‖tangentDeviation (γ t - s) (-L)‖ ≤ 2 * ‖γ t - s‖ :=
       norm_tangentDeviation_le _ _ hLneg
     have h_div_bound :
@@ -461,28 +347,16 @@ theorem chord_to_tangent_isLittleO_left
           2 * ‖tangentDeviation (γ t - s) (-L)‖ := by
       rw [pow_two, mul_div_assoc]
       have hd_div : ‖tangentDeviation (γ t - s) (-L)‖ / ‖γ t - s‖ ≤ 2 := by
-        rw [div_le_iff₀ hw_pos]
-        linarith
-      have h_dev_nonneg : 0 ≤ ‖tangentDeviation (γ t - s) (-L)‖ := norm_nonneg _
-      nlinarith
-    linarith [h_chord]
-  have h_eventually_bound' : ∀ᶠ t in 𝓝[<] t₀,
-      ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ ≤
-        3 * ‖tangentDeviation (γ t - s) L‖ := by
-    filter_upwards [h_eventually_bound] with t ht
-    rw [h_dev_eq t] at ht
-    exact ht
-  have h_chord_isBigO :
-      (fun t => ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖) =O[𝓝[<] t₀]
-        (fun t => ‖tangentDeviation (γ t - s) L‖) := by
-    apply Asymptotics.IsBigO.of_bound 3
-    filter_upwards [h_eventually_bound'] with t ht
-    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
-      abs_of_nonneg (norm_nonneg _)]
-    exact ht
-  exact h_chord_isBigO.trans_isLittleO h_ortho
-
-/-! ## Segment-distance lower bound -/
+        rw [div_le_iff₀ hw_pos]; linarith
+      nlinarith [norm_nonneg (tangentDeviation (γ t - s) (-L))]
+    rw [← h_dev_eq t]; linarith [h_chord]
+  refine Asymptotics.IsBigO.trans_isLittleO ?_
+    (LeanModularForms.orthogonal_deviation_at_radius_left h_flat hL hL_left h_s)
+  refine Asymptotics.IsBigO.of_bound 3 ?_
+  filter_upwards [h_eventually_bound] with t ht
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _),
+    abs_of_nonneg (norm_nonneg _)]
+  exact ht
 
 /-- If `z₁, z₂` are equidistant from `s` (distance `d`), then any point `z` on the
 segment from `z₁` to `z₂` satisfies `‖z − s‖² ≥ d² − ‖z₁ − z₂‖²/4`. -/
@@ -492,45 +366,35 @@ theorem norm_sq_segment_to_pole_lower_bound
     {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
     d ^ 2 - ‖z₁ - z₂‖ ^ 2 / 4 ≤ ‖z - s‖ ^ 2 := by
   obtain ⟨α, β, hα, hβ, h_sum, rfl⟩ := hz
-  have h_decomp : α • z₁ + β • z₂ - s = α • (z₁ - s) + β • (z₂ - s) := by
-    have hβ_eq : β = 1 - α := by linarith
-    rw [hβ_eq]
-    module
-  rw [h_decomp]
+  rw [show α • z₁ + β • z₂ - s = α • (z₁ - s) + β • (z₂ - s) by
+    rw [show β = 1 - α by linarith]; module]
   have h_expand : ‖α • (z₁ - s) + β • (z₂ - s)‖ ^ 2 =
       α ^ 2 * ‖z₁ - s‖ ^ 2 +
         2 * α * β * ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re +
         β ^ 2 * ‖z₂ - s‖ ^ 2 := by
     rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm]
     simp only [Complex.real_smul]
-    rw [Complex.normSq_add]
-    rw [Complex.normSq_mul, Complex.normSq_mul, Complex.normSq_ofReal,
-        Complex.normSq_ofReal]
-    rw [show (((α : ℂ) * (z₁ - s)) * starRingEnd ℂ ((β : ℂ) * (z₂ - s))) =
-        ((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s)) by
-          rw [map_mul, Complex.conj_ofReal]
-          push_cast
-          ring]
-    rw [show (((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s))).re =
-        α * β * ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re by
-          rw [Complex.mul_re]
-          simp]
+    rw [Complex.normSq_add, Complex.normSq_mul, Complex.normSq_mul,
+      Complex.normSq_ofReal, Complex.normSq_ofReal,
+      show (((α : ℂ) * (z₁ - s)) * starRingEnd ℂ ((β : ℂ) * (z₂ - s))) =
+          ((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s)) by
+        rw [map_mul, Complex.conj_ofReal]; push_cast; ring,
+      show (((α * β : ℝ) : ℂ) * ((z₁ - s) * starRingEnd ℂ (z₂ - s))).re =
+          α * β * ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re by
+        rw [Complex.mul_re]; simp]
     ring
   have h_cross : ((z₁ - s) * starRingEnd ℂ (z₂ - s)).re =
       (‖z₁ - s‖ ^ 2 + ‖z₂ - s‖ ^ 2 - ‖z₁ - z₂‖ ^ 2) / 2 := by
     have h_ns := Complex.normSq_sub (z₁ - s) (z₂ - s)
-    rw [← Complex.sq_norm, ← Complex.sq_norm, ← Complex.sq_norm] at h_ns
-    rw [show (z₁ - s) - (z₂ - s) = z₁ - z₂ by ring] at h_ns
+    rw [← Complex.sq_norm, ← Complex.sq_norm, ← Complex.sq_norm,
+      show (z₁ - s) - (z₂ - s) = z₁ - z₂ by ring] at h_ns
     linarith
   rw [h_expand, h_cross, h₁, h₂]
   have h_ab_le : α * β ≤ 1 / 4 := by nlinarith [sq_nonneg (α - β)]
   have h_quad : α ^ 2 + 2 * α * β + β ^ 2 = 1 := by
-    have : (α + β) ^ 2 = 1 := by
-      rw [h_sum]
-      ring
+    have : (α + β) ^ 2 = 1 := by rw [h_sum]; ring
     nlinarith [this]
-  have h_norm_nonneg : 0 ≤ ‖z₁ - z₂‖ ^ 2 := sq_nonneg _
-  nlinarith [h_quad, h_ab_le, h_norm_nonneg]
+  nlinarith [h_quad, h_ab_le, sq_nonneg (‖z₁ - z₂‖)]
 
 /-- When the chord between two equidistant points is at most `d`, the segment from
 `z₁` to `z₂` stays at distance `≥ d/2` from `s`. -/
@@ -539,9 +403,9 @@ theorem norm_segment_to_pole_lower_bound_half
     (h₁ : ‖z₁ - s‖ = d) (h₂ : ‖z₂ - s‖ = d) (h_chord : ‖z₁ - z₂‖ ≤ d)
     {z : ℂ} (hz : z ∈ segment ℝ z₁ z₂) :
     d / 2 ≤ ‖z - s‖ := by
-  have h_lower := norm_sq_segment_to_pole_lower_bound h₁ h₂ hz
   have h_le_sq : (d / 2) ^ 2 ≤ ‖z - s‖ ^ 2 := by
-    nlinarith [mul_self_le_mul_self (norm_nonneg _) h_chord]
+    nlinarith [norm_sq_segment_to_pole_lower_bound h₁ h₂ hz,
+      mul_self_le_mul_self (norm_nonneg _) h_chord]
   have := abs_le_of_sq_le_sq' h_le_sq (norm_nonneg _)
   linarith [this.2, abs_of_pos (by linarith : 0 < d / 2)]
 
@@ -557,24 +421,21 @@ theorem norm_F_diff_at_tangent_target_le
       (1 / (‖γ t - s‖ / 2) ^ k) * ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ := by
   have hd_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr hw_ne)
   have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  set d := ‖γ t - s‖ with hd_def
+  set d := ‖γ t - s‖
   set tgt := s + (d / ‖L‖ : ℝ) • L with htgt_def
-  have h_tgt_simpl : tgt - s = (d / ‖L‖ : ℝ) • L := by simp [htgt_def]
   have h_tgt : ‖tgt - s‖ = d := by
-    rw [h_tgt_simpl, norm_smul, Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+    rw [show tgt - s = (d / ‖L‖ : ℝ) • L by simp [htgt_def], norm_smul, Real.norm_eq_abs,
+      abs_of_nonneg (by positivity)]
     field_simp
-  have h_seg : ∀ z ∈ segment ℝ (γ t) tgt, d / 2 ≤ ‖z - s‖ :=
-    fun z hz => norm_segment_to_pole_lower_bound_half hd_pos rfl h_tgt h_chord_le hz
   have h_F_diff := norm_F_diff_le_segment_bound (z₁ := γ t) (z₂ := tgt) (s := s) hk
-    (by linarith : 0 < d / 2) h_seg
+    (by linarith : 0 < d / 2)
+    (fun z hz => norm_segment_to_pole_lower_bound_half hd_pos rfl h_tgt h_chord_le hz)
   rw [show (-(↑(k - 1) : ℂ)⁻¹ * ((γ t - s) ^ (k - 1))⁻¹) -
       (-(↑(k - 1) : ℂ)⁻¹ * ((tgt - s) ^ (k - 1))⁻¹) =
       -((-(↑(k - 1) : ℂ)⁻¹ * ((tgt - s) ^ (k - 1))⁻¹) -
-        (-(↑(k - 1) : ℂ)⁻¹ * ((γ t - s) ^ (k - 1))⁻¹)) by ring]
-  rw [norm_neg, show ‖γ t - tgt‖ = ‖tgt - γ t‖ from norm_sub_rev _ _]
+        (-(↑(k - 1) : ℂ)⁻¹ * ((γ t - s) ^ (k - 1))⁻¹)) by ring,
+    norm_neg, show ‖γ t - tgt‖ = ‖tgt - γ t‖ from norm_sub_rev _ _]
   exact h_F_diff
-
-/-! ## F-diff → 0 limit -/
 
 /-- If `chord = o(d^n)`, `d → 0`, `d > 0` eventually, and `k ≤ n`, then
 `chord/d^k → 0`. -/
@@ -585,23 +446,20 @@ theorem tendsto_div_pow_zero_of_isLittleO
     Tendsto (fun t => chord t / d t ^ k) l (𝓝 0) := by
   rw [Metric.tendsto_nhds]
   intro ε hε
-  have h_eps_half : 0 < ε / 2 := by linarith
-  have h_d_le : ∀ᶠ t in l, d t < 1 :=
-    h_d.eventually (gt_mem_nhds (by norm_num : (0 : ℝ) < 1))
-  have h_bound := h_chord.bound h_eps_half
-  filter_upwards [h_bound, h_d_le, h_d_pos] with t hb hd hdp
+  filter_upwards [h_chord.bound (by linarith : 0 < ε / 2),
+    h_d.eventually (gt_mem_nhds (by norm_num : (0 : ℝ) < 1)), h_d_pos] with t hb hd hdp
   have hd_n_pos : 0 < d t ^ n := pow_pos hdp n
   have hd_k_pos : 0 < d t ^ k := pow_pos hdp k
   rw [Real.dist_eq, sub_zero]
   have h_pow : d t ^ n = d t ^ k * d t ^ (n - k) := by
     rw [← pow_add, Nat.add_sub_cancel' hkn]
   rw [Real.norm_eq_abs] at hb
-  rw [Real.norm_eq_abs, abs_of_nonneg (le_of_lt hd_n_pos)] at hb
+  rw [Real.norm_eq_abs, abs_of_nonneg hd_n_pos.le] at hb
   rw [abs_div, abs_of_pos hd_k_pos]
   have h_pow_le : d t ^ (n - k) ≤ 1 := by
     rcases Nat.eq_zero_or_pos (n - k) with h_eq | h_pos
     · simp [h_eq]
-    · exact pow_le_one₀ (le_of_lt hdp) (le_of_lt hd) |>.trans_eq (by simp)
+    · exact pow_le_one₀ hdp.le hd.le |>.trans_eq (by simp)
   calc |chord t| / d t ^ k
       ≤ ε / 2 * d t ^ (n - k) := by
         rw [div_le_iff₀ hd_k_pos]
@@ -630,21 +488,18 @@ theorem F_diff_at_tangent_target_tendsto_zero_right
   have h_d_pos : ∀ᶠ t in 𝓝[>] t₀, 0 < ‖γ t - s‖ := by
     filter_upwards [eventually_ne_right hL h_deriv h_s] with t h
     exact norm_pos_iff.mpr (sub_ne_zero.mpr h)
-  have h_ratio := tendsto_div_pow_zero_of_isLittleO h_chord h_d_to_zero h_d_pos hkn
   have h_const_ratio : Tendsto
       (fun t => 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ / ‖γ t - s‖ ^ k))
       (𝓝[>] t₀) (𝓝 0) := by
-    have := h_ratio.const_mul (2 ^ k : ℝ)
-    simpa using this
+    simpa using
+      (tendsto_div_pow_zero_of_isLittleO h_chord h_d_to_zero h_d_pos hkn).const_mul (2 ^ k : ℝ)
   have h_chord_le_d : ∀ᶠ t in 𝓝[>] t₀,
       ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ ≤ ‖γ t - s‖ := by
-    have h_d_le_1 : ∀ᶠ t in 𝓝[>] t₀, ‖γ t - s‖ ≤ 1 :=
-      h_d_to_zero.eventually (Iic_mem_nhds (by norm_num : (0 : ℝ) < 1))
-    have h_chord_bound := h_chord.bound one_pos
-    filter_upwards [h_chord_bound, h_d_le_1, h_d_pos] with t hb hd hdp
-    have hb' : ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ ≤ ‖γ t - s‖ ^ n := by simpa using hb
+    filter_upwards [h_chord.bound one_pos,
+      h_d_to_zero.eventually (Iic_mem_nhds (by norm_num : (0 : ℝ) < 1)),
+      h_d_pos] with t hb hd hdp
     calc ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖
-        ≤ ‖γ t - s‖ ^ n := hb'
+        ≤ ‖γ t - s‖ ^ n := by simpa using hb
       _ ≤ ‖γ t - s‖ ^ 1 := pow_le_pow_of_le_one (norm_nonneg _) hd hn1
       _ = ‖γ t - s‖ := pow_one _
   have h_F_diff_le : ∀ᶠ t in 𝓝[>] t₀,
@@ -666,9 +521,7 @@ theorem F_diff_at_tangent_target_tendsto_zero_right
             ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := h_bound
       _ = 2 ^ k / ‖γ t - s‖ ^ k *
             ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ := by
-          congr 1
-          rw [div_pow]
-          field_simp
+          congr 1; rw [div_pow]; field_simp
       _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ / ‖γ t - s‖ ^ k) := by ring
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
@@ -693,23 +546,19 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
   have h_d_pos : ∀ᶠ t in 𝓝[<] t₀, 0 < ‖γ t - s‖ := by
     filter_upwards [eventually_ne_left hL h_deriv h_s] with t h
     exact norm_pos_iff.mpr (sub_ne_zero.mpr h)
-  have h_ratio := tendsto_div_pow_zero_of_isLittleO h_chord h_d_to_zero h_d_pos hkn
   have h_const_ratio : Tendsto
       (fun t => 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ /
         ‖γ t - s‖ ^ k))
       (𝓝[<] t₀) (𝓝 0) := by
-    have := h_ratio.const_mul (2 ^ k : ℝ)
-    simpa using this
+    simpa using
+      (tendsto_div_pow_zero_of_isLittleO h_chord h_d_to_zero h_d_pos hkn).const_mul (2 ^ k : ℝ)
   have h_chord_le_d : ∀ᶠ t in 𝓝[<] t₀,
       ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ ≤ ‖γ t - s‖ := by
-    have h_d_le_1 : ∀ᶠ t in 𝓝[<] t₀, ‖γ t - s‖ ≤ 1 :=
-      h_d_to_zero.eventually (Iic_mem_nhds (by norm_num : (0 : ℝ) < 1))
-    have h_chord_bound := h_chord.bound one_pos
-    filter_upwards [h_chord_bound, h_d_le_1, h_d_pos] with t hb hd hdp
-    have hb' : ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ ≤ ‖γ t - s‖ ^ n := by
-      simpa using hb
+    filter_upwards [h_chord.bound one_pos,
+      h_d_to_zero.eventually (Iic_mem_nhds (by norm_num : (0 : ℝ) < 1)),
+      h_d_pos] with t hb hd hdp
     calc ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖
-        ≤ ‖γ t - s‖ ^ n := hb'
+        ≤ ‖γ t - s‖ ^ n := by simpa using hb
       _ ≤ ‖γ t - s‖ ^ 1 := pow_le_pow_of_le_one (norm_nonneg _) hd hn1
       _ = ‖γ t - s‖ := pow_one _
   have h_F_diff_le : ∀ᶠ t in 𝓝[<] t₀,
@@ -731,24 +580,11 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
             ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ := h_bound
       _ = 2 ^ k / ‖γ t - s‖ ^ k *
             ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ := by
-          congr 1
-          rw [div_pow]
-          field_simp
+          congr 1; rw [div_pow]; field_simp
       _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ /
             ‖γ t - s‖ ^ k) := by ring
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
-
-/-! ## Excised CPV → 0
-
-Combining the closed-curve excised integral formula with a hypothesis that the
-curve F-diff at the excision boundaries tends to 0: the parameter-excised
-integral
-
-  `∫_a^{t_eps_minus(ε)} γ'/(γ-s)^k + ∫_{t_eps_plus(ε)}^b γ'/(γ-s)^k`
-
-tends to 0 as `ε → 0⁺`. This is the curve PV result for higher-order poles
-when `γ` is closed and the F-diff hypothesis holds. -/
 
 /-- Combining the closed-curve excised integral formula with the F-diff Tendsto
 hypothesis: the parameter-excised integral tends to 0 as `ε → 0⁺`. -/
