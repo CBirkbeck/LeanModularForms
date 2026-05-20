@@ -3,8 +3,8 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.CanonicalReps
 import Mathlib.Algebra.BigOperators.Finprod
+import LeanModularForms.ForMathlib.CanonicalReps
 
 /-!
 # The Valence Formula for Modular Forms
@@ -39,35 +39,27 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 /-- The order of vanishing on non-elliptic orbits, cast to `ℂ`. -/
 def ordOrbitQ (q : NonEllOrbitFM) : ℂ := (ordOrbitFM f q.val : ℂ)
 
-/-! ### Elliptic point auxiliary lemmas -/
-
 private lemma ellipticPointI'_coe : (ellipticPointI' : ℂ) = Complex.I := rfl
 private lemma ellipticPointI'_im : (ellipticPointI' : ℍ).im = 1 := Complex.I_im
 
 private lemma ellipticPointRho'_re : (ellipticPointRho' : ℍ).re = -1/2 := by
   change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = -1/2
-  simp only [add_re, mul_re, I_re, I_im]
-  norm_num
+  simp
 
 private lemma ellipticPointRho'_im :
     (ellipticPointRho' : ℍ).im = Real.sqrt 3 / 2 := by
   change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
-  simp only [add_im, mul_im, I_re, I_im, ofReal_im, mul_zero, mul_one, zero_add,
-    neg_im, one_im, div_ofNat_im, zero_div, neg_zero, div_ofNat_re, ofReal_re, add_zero]
+  simp
 
 private lemma ellipticPointRhoPlusOne'_re :
     (ellipticPointRhoPlusOne' : ℍ).re = 1/2 := by
   change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re = 1/2
-  simp only [add_re, mul_re, I_re, I_im]
-  norm_num
+  simp
 
 private lemma ellipticPointRhoPlusOne'_im :
     (ellipticPointRhoPlusOne' : ℍ).im = Real.sqrt 3 / 2 := by
   change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).im = Real.sqrt 3 / 2
-  simp only [add_im, mul_im, I_re, I_im, ofReal_im, mul_zero, mul_one, zero_add,
-    one_im, div_ofNat_im, zero_div, div_ofNat_re, ofReal_re, add_zero]
-
-/-! ### SL₂(ℤ) denominator computations at i -/
+  simp
 
 omit f hf in
 private lemma sl2_det (g : SL(2, ℤ)) :
@@ -92,8 +84,7 @@ private lemma normSq_denom_at_I (g : SL(2, ℤ)) :
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) ^ 2 +
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) ^ 2 := by
   rw [denom_at_I, Complex.normSq_apply]
-  simp only [add_re, mul_re, add_im, mul_im, Complex.I_re, Complex.I_im,
-    Complex.intCast_re, Complex.intCast_im]
+  simp
   ring
 
 omit f hf in
@@ -111,8 +102,8 @@ private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
     have hc0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by nlinarith [sq_nonneg c]
     have hd0 : (g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 = 0 := by nlinarith [sq_nonneg d]
     simpa [hc0, hd0] using sl2_det g
-  have h_pos : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 > 0 :=
-    by exact_mod_cast show (0 : ℤ) < c ^ 2 + d ^ 2 by omega
+  have h_pos : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 > 0 := by
+    exact_mod_cast show (0 : ℤ) < c ^ 2 + d ^ 2 by omega
   have h_lt2 : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 < 2 := by
     nlinarith [mul_lt_mul_of_pos_right h_gt h_pos, div_mul_cancel₀ (1 : ℝ) (ne_of_gt h_pos)]
   have : c ^ 2 + d ^ 2 < 2 := by exact_mod_cast h_lt2
@@ -129,11 +120,8 @@ private lemma re_smul_ellipticPointI (g : SL(2, ℤ)) :
   rw [UpperHalfPlane.coe_specialLinearGroup_apply, ellipticPointI'_coe]
   simp only [algebraMap_int_eq, Int.coe_castRingHom]
   rw [Complex.div_re, Complex.normSq_apply]
-  simp only [add_re, mul_re, ofReal_re, I_re, mul_zero, ofReal_im,
-    I_im, mul_one, sub_zero, add_im, mul_im, add_zero]
+  simp
   ring
-
-/-! ### FD orbit rigidity: i -/
 
 omit f hf in
 /-- If `p ∈ 𝒟` and `orbFM p = oiFM`, then `p = i`. -/
@@ -159,13 +147,10 @@ theorem fd_orbit_i_eq_i (p : ℍ) (hp : p ∈ 𝒟) (horb : orbFM p = oiFM) :
     by_contra h_ne
     have h2 := hp.2
     rw [hn] at h2
-    linarith [show (1 : ℝ) ≤ |(n : ℝ)| from by exact_mod_cast Int.one_le_abs h_ne]
-  exact UpperHalfPlane.ext_re_im
-    (by rw [hn, h_n_zero, Int.cast_zero]
-        exact (Complex.I_re : (I : ℂ).re = 0).symm)
-    (by linarith [h_im, ellipticPointI'_im])
-
-/-! ### SL₂(ℤ) denominator computations at ρ -/
+    linarith [show (1 : ℝ) ≤ |(n : ℝ)| by exact_mod_cast Int.one_le_abs h_ne]
+  refine UpperHalfPlane.ext_re_im ?_ (by linarith [h_im, ellipticPointI'_im])
+  rw [hn, h_n_zero, Int.cast_zero]
+  exact (Complex.I_re : (I : ℂ).re = 0).symm
 
 omit f hf in
 private lemma denom_at_rho (g : SL(2, ℤ)) :
@@ -185,9 +170,7 @@ private lemma normSq_denom_at_rho (g : SL(2, ℤ)) :
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) * ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) +
     ((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℝ) ^ 2 := by
   rw [denom_at_rho, Complex.normSq_apply]
-  simp only [add_re, mul_re, neg_re, one_re, div_ofNat_re, ofReal_re, mul_zero, I_re, I_im,
-    sub_zero, mul_one, add_im, neg_im, one_im, div_ofNat_im, ofReal_im, zero_div, mul_im,
-    zero_mul, add_zero, Complex.intCast_re, Complex.intCast_im]
+  simp
   ring_nf
   nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
 
@@ -241,8 +224,6 @@ private lemma abs_re_eq_half_of_smul_rho_in_fd (g : SL(2, ℤ))
   nlinarith [sq_abs (g • ellipticPointRho').re,
     abs_nonneg (g • ellipticPointRho').re, h_im_sq, h_nsq]
 
-/-! ### FD orbit rigidity: ρ -/
-
 omit f hf in
 /-- If `p ∈ 𝒟` and `orbFM p = orhoFM`, then `p = ρ` or `p = ρ+1`. -/
 theorem fd_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orbFM p = orhoFM) :
@@ -268,8 +249,6 @@ theorem fd_orbit_rho_eq (p : ℍ) (hp : p ∈ 𝒟) (horb : orbFM p = orhoFM) :
     exact UpperHalfPlane.ext_re_im (by linarith [h_re_right, ellipticPointRhoPlusOne'_re])
       (by linarith [h_im, ellipticPointRhoPlusOne'_im])
 
-/-! ### Non-elliptic orbit classification -/
-
 /-- Elements of `repCanon` map to non-elliptic orbits. -/
 theorem orb_repCanon_nonEll (p : ℍ) (hp : p ∈ repCanon f hf) :
     orbFM p ≠ oiFM ∧ orbFM p ≠ orhoFM := by
@@ -278,13 +257,11 @@ theorem orb_repCanon_nonEll (p : ℍ) (hp : p ∈ repCanon f hf) :
   exact ⟨fun h => hne_i (fd_orbit_i_eq_i p hp_fd h),
     fun h => (fd_orbit_rho_eq p hp_fd h).elim hne_rho hne_rho1⟩
 
-/-! ### Finsum equals repCanon sum -/
-
 /-- The `∑ᶠ` over non-elliptic orbits equals the `repCanon` Finset sum. -/
 theorem finsum_nonell_eq_repCanon_sum :
     ∑ᶠ (q : NonEllOrbitFM), ordOrbitQ f q =
     ∑ s ∈ repCanon f hf, (orderOfVanishingAt' (⇑f) s : ℂ) := by
-  set S := (finite_support_ordOrbit_nonEllFM f hf).toFinset with hS_def
+  set S := (finite_support_ordOrbit_nonEllFM f hf).toFinset
   rw [finsum_eq_sum_of_support_subset _ (fun q hq => by
     rw [Finset.mem_coe, Set.Finite.mem_toFinset]
     exact Int.cast_ne_zero.mp (Function.mem_support.mp hq))]
@@ -308,8 +285,6 @@ theorem finsum_nonell_eq_repCanon_sum :
       simp only [ordOrbitQ, hφ_def]
       exact_mod_cast (ordOrbit_mkFM f p).symm)).symm
 
-/-! ### repCanon sum decomposition -/
-
 /-- The `repCanon` sum splits into strict interior + left vertical + left arc. -/
 theorem repCanon_sum_split :
     ∑ s ∈ repCanon f hf, (orderOfVanishingAt' (⇑f) s : ℂ) =
@@ -319,8 +294,6 @@ theorem repCanon_sum_split :
   simp only [repCanon]
   rw [Finset.sum_union (disjoint_union_repLeftArc f hf),
     Finset.sum_union (disjoint_repStrict_repLeftVert f hf)]
-
-/-! ### The Valence Formula -/
 
 include hf in
 /-- **The Valence Formula** for weight-`k` modular forms on `SL₂(ℤ)`, in textbook orbit-sum
