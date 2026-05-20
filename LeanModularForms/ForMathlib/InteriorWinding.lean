@@ -2,8 +2,8 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.FDBoundary
 import LeanModularForms.ForMathlib.CurveUtilities
+import LeanModularForms.ForMathlib.FDBoundary
 
 /-!
 # Interior Winding Number for the Fundamental Domain Boundary
@@ -58,8 +58,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ### Strict interior predicate -/
-
 /-- A point `z` is in the strict interior of the fundamental domain at height `H`.
 This means `‖z‖ > 1`, `|z.re| < 1/2`, `0 < z.im`, and `z.im < H`. -/
 def FDStrictInterior (z : ℂ) (H : ℝ) : Prop :=
@@ -77,86 +75,64 @@ theorem FDStrictInterior.im_pos {z : ℂ} {H : ℝ} (h : FDStrictInterior z H) :
 theorem FDStrictInterior.im_lt {z : ℂ} {H : ℝ} (h : FDStrictInterior z H) :
     z.im < H := h.2.2.2
 
-/-! ### Segment 1 avoidance: right vertical (re = 1/2) -/
-
 /-- The right vertical segment has `re = 1/2`, so it avoids any point with `|re| < 1/2`. -/
 theorem fdBoundaryFun_avoids_seg1 {z : ℂ} (hz_re : |z.re| < 1/2)
-    {H : ℝ} {t : ℝ} (ht : t ≤ 1/5) :
-    fdBoundaryFun H t ≠ z := by
-  intro heq
+    {H : ℝ} {t : ℝ} (ht : t ≤ 1/5) : fdBoundaryFun H t ≠ z := fun heq => by
   rw [show z.re = 1/2 from heq ▸ fdBoundaryFun_seg1_re H t ht] at hz_re
   norm_num at hz_re
-
-/-! ### Segments 2 and 3 avoidance: arcs (norm = 1) -/
 
 /-- The arc segments lie on the unit circle, so they avoid any point with `‖z‖ > 1`. -/
 theorem fdBoundaryFun_avoids_arc {z : ℂ} (hz_norm : 1 < ‖z‖)
     {H : ℝ} {t : ℝ} (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
-    fdBoundaryFun H t ≠ z := by
-  intro heq
+    fdBoundaryFun H t ≠ z := fun heq => by
   have h1 : ‖z‖ = 1 := heq ▸ fdBoundaryFun_arc_norm H t ht1 ht2
   linarith
-
-/-! ### Segment 4 avoidance: left vertical (re = -1/2) -/
 
 /-- The left vertical segment has `re = -1/2`, so it avoids any point with `|re| < 1/2`. -/
 theorem fdBoundaryFun_avoids_seg4 {z : ℂ} (hz_re : |z.re| < 1/2)
     {H : ℝ} {t : ℝ} (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
-    fdBoundaryFun H t ≠ z := by
-  intro heq
+    fdBoundaryFun H t ≠ z := fun heq => by
   rw [show z.re = -1/2 from heq ▸ fdBoundaryFun_seg4_re H t ht3 ht4] at hz_re
   norm_num at hz_re
 
-/-! ### Segment 5 avoidance: horizontal (im = H) -/
-
 /-- The horizontal segment has `im = H`, so it avoids any point with `im < H`. -/
 theorem fdBoundaryFun_avoids_seg5 {z : ℂ} (hz_im : z.im < H)
-    {t : ℝ} (ht : 4/5 < t) :
-    fdBoundaryFun H t ≠ z := by
-  intro heq
+    {t : ℝ} (ht : 4/5 < t) : fdBoundaryFun H t ≠ z := fun heq => by
   have h1 : z.im = H := heq ▸ fdBoundaryFun_seg5_im H t ht
   linarith
-
-/-! ### Full boundary avoidance -/
 
 /-- The FD boundary avoids every point in the strict interior of the fundamental domain.
 This follows by case-splitting on the segment and applying the segment-specific avoidance. -/
 theorem fdBoundaryFun_avoids_interior {z : ℂ} {H : ℝ}
     (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H) :
     ∀ t ∈ Icc (0 : ℝ) 1, fdBoundaryFun H t ≠ z := by
-  intro t ⟨ht0, ht1⟩
+  intro t _
   by_cases h1 : t ≤ 1/5
   · exact fdBoundaryFun_avoids_seg1 hz_re h1
-  · push Not at h1
-    by_cases h2 : t ≤ 3/5
-    · exact fdBoundaryFun_avoids_arc hz_norm h1 h2
-    · push Not at h2
-      by_cases h3 : t ≤ 4/5
-      · exact fdBoundaryFun_avoids_seg4 hz_re h2 h3
-      · push Not at h3
-        exact fdBoundaryFun_avoids_seg5 hz_im h3
-
-/-! ### Minimum distance to boundary -/
+  push Not at h1
+  by_cases h2 : t ≤ 3/5
+  · exact fdBoundaryFun_avoids_arc hz_norm h1 h2
+  push Not at h2
+  by_cases h3 : t ≤ 4/5
+  · exact fdBoundaryFun_avoids_seg4 hz_re h2 h3
+  push Not at h3
+  exact fdBoundaryFun_avoids_seg5 hz_im h3
 
 /-- For a strict interior point, the minimum distance to the FD boundary on `[0, 1]`
 is positive. This follows from avoidance + compactness. -/
 theorem fdBoundaryFun_minDist_interior_pos {z : ℂ} {H : ℝ}
     (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H) :
     ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖fdBoundaryFun H t - z‖ := by
-  have h_closed : IsClosed (fdBoundaryFun H '' Icc (0:ℝ) 1) :=
+  have h_closed : IsClosed (fdBoundaryFun H '' Icc (0 : ℝ) 1) :=
     (isCompact_Icc.image (fdBoundaryFun_continuous H)).isClosed
   have h_nonempty : (fdBoundaryFun H '' Icc (0 : ℝ) 1).Nonempty :=
     ⟨fdBoundaryFun H 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩
-  have h_nmem : z ∉ fdBoundaryFun H '' Icc (0 : ℝ) 1 := by
-    intro ⟨t, ht, heq⟩
-    exact fdBoundaryFun_avoids_interior hz_norm hz_re hz_im t ht heq
-  have h_pos : 0 < Metric.infDist z (fdBoundaryFun H '' Icc 0 1) := by
-    rwa [← h_closed.notMem_iff_infDist_pos h_nonempty]
-  refine ⟨Metric.infDist z (fdBoundaryFun H '' Icc 0 1), h_pos, fun t ht => ?_⟩
+  have h_nmem : z ∉ fdBoundaryFun H '' Icc (0 : ℝ) 1 := fun ⟨t, ht, heq⟩ =>
+    fdBoundaryFun_avoids_interior hz_norm hz_re hz_im t ht heq
+  refine ⟨Metric.infDist z (fdBoundaryFun H '' Icc 0 1),
+    (h_closed.notMem_iff_infDist_pos h_nonempty).mp h_nmem, fun t ht => ?_⟩
   rw [← dist_eq_norm, dist_comm]
   exact Metric.infDist_le_dist_of_mem (mem_image_of_mem _ ht)
-
-/-! ### Avoidance for PiecewiseC1Path agreeing with fdBoundaryFun -/
 
 /-- If a `PiecewiseC1Path` agrees with `fdBoundaryFun` on `[0, 1]`, then it also
 avoids every strict interior point. -/
@@ -170,8 +146,6 @@ theorem piecewiseC1Path_avoids_interior {H : ℝ}
   change δ ≤ ‖γ.toPath.extend t - z‖
   rw [hγ t ht]
   exact hδ_bound t ht
-
-/-! ### Interior winding number from contour integral -/
 
 /-- **Reduction to contour integral**: if a `PiecewiseC1Path` agrees with `fdBoundaryFun`
 on `[0, 1]`, and the contour integral of `(z - z₀)⁻¹` equals `-2πi`, then the
@@ -190,11 +164,7 @@ theorem hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral {H : ℝ}
   convert hasGeneralizedWindingNumber_of_avoids
     (piecewiseC1Path_avoids_interior γ hγ hz_norm hz_re hz_im_lt) using 1
   rw [h_integral]
-  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    simp [mul_eq_zero, Complex.ofReal_eq_zero, Real.pi_ne_zero, I_ne_zero]
   field_simp
-
-/-! ### Interior winding from contour integral, all-quantified version -/
 
 /-- **All-quantified interior winding**: if a `PiecewiseC1Path` agrees with `fdBoundaryFun`,
 and for every strict interior point the contour integral of `(w - z)⁻¹` equals `-2πi`,
@@ -205,12 +175,10 @@ theorem hasGeneralizedWindingNumber_fdBoundary_interior_of_contourIntegral {H : 
     (h_int : ∀ z : ℂ, 1 < ‖z‖ → |z.re| < 1/2 → 0 < z.im → z.im < H →
       γ.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I)) :
     ∀ z : ℂ, ‖z‖ > 1 → |z.re| < 1/2 → z.im > 0 → z.im < H →
-      HasGeneralizedWindingNumber γ z (-1) := by
-  intro z hz_norm hz_re hz_im_pos hz_im_lt
-  exact hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral γ hγ
-    hz_norm hz_re hz_im_pos hz_im_lt (h_int z hz_norm hz_re hz_im_pos hz_im_lt)
-
-/-! ### FDWindingData constructor from contour integral hypothesis -/
+      HasGeneralizedWindingNumber γ z (-1) :=
+  fun z hz_norm hz_re hz_im_pos hz_im_lt =>
+    hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral γ hγ
+      hz_norm hz_re hz_im_pos hz_im_lt (h_int z hz_norm hz_re hz_im_pos hz_im_lt)
 
 /-- Build `FDWindingData` by providing the interior contour integral identity as a
 hypothesis, together with `SingleCrossingData` for the three elliptic points.
@@ -238,8 +206,6 @@ def FDWindingData.mk_of_interior_contourIntegral {H : ℝ}
       boundary hbdy h_int)
     D_i hL_i D_rho hL_rho D_rho1 hL_rho1
 
-/-! ### Avoidance: alternative formulations -/
-
 /-- The FD boundary function at any parameter in `[0, 1]` is different from any
 strict interior point. This is the raw function-level avoidance. -/
 theorem fdBoundaryFun_ne_of_strictInterior {z : ℂ} {H : ℝ}
@@ -252,8 +218,6 @@ theorem fdBoundaryFun_minDist_of_strictInterior {z : ℂ} {H : ℝ}
     (hz : FDStrictInterior z H) :
     ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖fdBoundaryFun H t - z‖ :=
   fdBoundaryFun_minDist_interior_pos hz.norm_gt hz.re_abs_lt hz.im_lt
-
-/-! ### Segment-by-segment distance lower bounds -/
 
 /-- On segment 1, the distance to `z` is at least `1/2 - |z.re|`, which is positive
 for strict interior points. -/
@@ -297,8 +261,6 @@ theorem fdBoundaryFun_seg5_im_dist {z : ℂ} (hz_im : z.im < H)
         rw [sub_im, fdBoundaryFun_seg5_im H t ht, abs_of_pos (by linarith)]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_im_le_norm _
 
-/-! ### Explicit minimum distance bound -/
-
 /-- An explicit positive lower bound on the minimum distance from a strict interior
 point to the FD boundary: `min(1/2 - |z.re|, ‖z‖ - 1, H - z.im)`. -/
 theorem fdBoundaryFun_minDist_explicit {z : ℂ} {H : ℝ}
@@ -306,25 +268,20 @@ theorem fdBoundaryFun_minDist_explicit {z : ℂ} {H : ℝ}
     ∀ t ∈ Icc (0 : ℝ) 1,
       min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im) ≤
         ‖fdBoundaryFun H t - z‖ := by
-  intro t ⟨ht0, ht1⟩
+  intro t _
   by_cases h1 : t ≤ 1/5
-  · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
-        ≤ 1/2 - |z.re| := (min_le_left _ _).trans (min_le_left _ _)
-      _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg1_re_dist hz_re h1
-  · push Not at h1
-    by_cases h2 : t ≤ 3/5
-    · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
-          ≤ ‖z‖ - 1 := (min_le_left _ _).trans (min_le_right _ _)
-        _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_arc_dist hz_norm h1 h2
-    · push Not at h2
-      by_cases h3 : t ≤ 4/5
-      · calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
-            ≤ 1/2 - |z.re| := (min_le_left _ _).trans (min_le_left _ _)
-          _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg4_re_dist hz_re h2 h3
-      · push Not at h3
-        calc min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im)
-            ≤ H - z.im := min_le_right _ _
-          _ ≤ ‖fdBoundaryFun H t - z‖ := fdBoundaryFun_seg5_im_dist hz_im h3
+  · exact ((min_le_left _ _).trans (min_le_left _ _)).trans
+      (fdBoundaryFun_seg1_re_dist hz_re h1)
+  push Not at h1
+  by_cases h2 : t ≤ 3/5
+  · exact ((min_le_left _ _).trans (min_le_right _ _)).trans
+      (fdBoundaryFun_arc_dist hz_norm h1 h2)
+  push Not at h2
+  by_cases h3 : t ≤ 4/5
+  · exact ((min_le_left _ _).trans (min_le_left _ _)).trans
+      (fdBoundaryFun_seg4_re_dist hz_re h2 h3)
+  push Not at h3
+  exact (min_le_right _ _).trans (fdBoundaryFun_seg5_im_dist hz_im h3)
 
 /-- The explicit minimum distance is positive for strict interior points. -/
 theorem fdBoundaryFun_minDist_explicit_pos {z : ℂ} {H : ℝ}
