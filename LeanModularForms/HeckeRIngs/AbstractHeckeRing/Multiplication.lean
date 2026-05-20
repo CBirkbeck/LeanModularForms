@@ -177,6 +177,27 @@ noncomputable def heckeMultiplicity (g₁ g₂ d : P.Δ) : ℤ :=
       {(j.out : G) * (g₂ : G)} * P.H =
     {(d : G)} * (P.H : Set G)}
 
+/-- **`mulMap`-form Hecke multiplicity** (T001 Option C compatibility prototype).
+
+Alternative formulation of `heckeMultiplicity` using the **rep-invariant**
+`mulMap`-equality predicate `mulMap P g₁ g₂ ⟨i, j⟩ = ⟦d⟧` (in `HeckeCoset P`)
+instead of the rep-dependent left-coset/set-form predicate
+`{i.out * g₁} * {j.out * g₂} * H = {d} * H`.
+
+The `mulMap`-form predicate is class-invariant by construction (since
+`HeckeCoset P` is a quotient and `mulMap` produces a class), so this count
+depends only on the input quotient classes and on the target double coset
+`⟦d⟧ ∈ HeckeCoset P`.
+
+**Compatibility note.**  The existing `heckeMultiplicity` (set-form) is
+**not deleted** by this prototype.  Instead, this definition is added in
+parallel, and the bridge `heckeMultiplicity_le_heckeMultiplicityMulMap`
+below shows the set-form count is at most the `mulMap` count (a one-way
+inclusion via `doubleCoset_eq_of_rightCoset_eq`). -/
+noncomputable def heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) : ℤ :=
+  Nat.card {⟨i, j⟩ : decompQuot P g₁ × decompQuot P g₂ |
+    mulMap P g₁ g₂ ⟨i, j⟩ = (⟦d⟧ : HeckeCoset P)}
+
 /-- The finite set of double cosets appearing in the product `D1 * D2`. -/
 noncomputable def mulSupport (g₁ g₂ : P.Δ) : Finset (HeckeCoset P) :=
   Finset.image (mulMap P g₁ g₂) ⊤
@@ -202,6 +223,54 @@ lemma doubleCoset_eq_of_rightCoset_eq (g₁ g₂ d : P.Δ)
   dsimp only at hprod ⊢
   rw [← hprod]
   exact DoubleCoset.doubleCoset_mul_right_eq_self P ⟨h, hh⟩ _
+
+/-- **Set-form ⊆ mulMap-form bridge** (T001 Option C bridge — easy direction).
+
+The set-form Hecke multiplicity is at most the `mulMap`-form multiplicity:
+every pair satisfying the (rep-dependent) set-form predicate also satisfies
+the (rep-invariant) `mulMap` predicate (via `doubleCoset_eq_of_rightCoset_eq`).
+Hence the set-form-witness set is a subset of the `mulMap`-witness set, and
+the cardinalities satisfy `≤`.
+
+This is the **first half of the set-form ↔ mulMap-form bridge**: the bridge
+established here is **one-way only**.  The reverse inequality
+(`heckeMultiplicityMulMap ≤ heckeMultiplicity`) is not provided by this lemma
+and would require extra hypotheses on `d` (or a separate compensation
+construction).  The intuition is structural: `mulMap p = ⟦d⟧` only constrains
+the product `p.1.out * g₁ * p.2.out * g₂` to land somewhere in the full
+double coset `HdH`, whereas the set-form predicate fixes the product to a
+single left-coset representative `dH`.  Since `HdH` decomposes into a finite
+disjoint union of left cosets, the mulMap-form witness set is in general a
+strict superset of the set-form witness set, and the cardinality inequality
+runs only in the direction proved below.
+
+Downstream consumers in `BlockBijection.lean` use this bridge to expose
+mulMap-form parallels of the existing diagMat `_le_` and `_ge_` directions:
+`heckeMultiplicity_block_embed_le_diagMat_target_mulMap` and
+`heckeMultiplicity_block_embed_ge_diagMat_target_mulMap`. -/
+lemma heckeMultiplicity_le_heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) :
+    heckeMultiplicity P g₁ g₂ d ≤ heckeMultiplicityMulMap P g₁ g₂ d := by
+  unfold heckeMultiplicity heckeMultiplicityMulMap
+  -- Both sides are casts of `Nat.card` of subtypes; reduce to Nat-level cardinality.
+  have h_sub : {p : decompQuot P g₁ × decompQuot P g₂ |
+        ({(p.1.out : G) * (g₁ : G)} : Set G) *
+          {(p.2.out : G) * (g₂ : G)} * P.H =
+        {(d : G)} * (P.H : Set G)} ⊆
+      {p : decompQuot P g₁ × decompQuot P g₂ |
+        mulMap P g₁ g₂ p = (⟦d⟧ : HeckeCoset P)} := by
+    intro p hp
+    -- `hp` is the set-form predicate; conclude `mulMap p = ⟦d⟧` via
+    -- `doubleCoset_eq_of_rightCoset_eq`.
+    exact doubleCoset_eq_of_rightCoset_eq P g₁ g₂ d p hp
+  have h_card : Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
+        ({(p.1.out : G) * (g₁ : G)} : Set G) *
+          {(p.2.out : G) * (g₂ : G)} * P.H =
+        {(d : G)} * (P.H : Set G)} ≤
+      Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
+        mulMap P g₁ g₂ p = (⟦d⟧ : HeckeCoset P)} :=
+    Nat.card_le_card_of_injective (fun ⟨p, hp⟩ => ⟨p, h_sub hp⟩)
+      (fun ⟨_, _⟩ ⟨_, _⟩ heq => Subtype.ext (Subtype.mk.inj heq))
+  exact_mod_cast h_card
 
 private lemma mulMap_T_one_eq (g₁ : P.Δ)
     (i : decompQuot P g₁)

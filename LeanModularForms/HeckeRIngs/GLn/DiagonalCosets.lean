@@ -843,7 +843,7 @@ private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d 
         (R₁ : Matrix _ _ ℤ)) * (slSuccEmbed R_tail : Matrix _ _ ℤ)
         by simp [Matrix.mul_assoc], hmul₁, hmul_embed]
 
-private theorem exists_divchain_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ)
+theorem exists_divchain_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ)
     (hdet : 0 < A.det) :
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i)
       (_ : ∀ (i : ℕ) (hi : i + 1 < n), d ⟨i, by omega⟩ ∣ d ⟨i + 1, hi⟩),

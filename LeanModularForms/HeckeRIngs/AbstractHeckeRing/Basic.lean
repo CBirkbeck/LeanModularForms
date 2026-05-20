@@ -110,6 +110,10 @@ noncomputable def toSet (D : HeckeCoset P) : Set G :=
 /-- A representative `g : Δ` (via `Quotient.out`). -/
 noncomputable def rep (D : HeckeCoset P) : P.Δ := Quotient.out D
 
+/-- The representative of a `HeckeCoset` maps back to the coset under `⟦·⟧`. -/
+lemma mk_rep (D : HeckeCoset P) : (⟦HeckeCoset.rep D⟧ : HeckeCoset P) = D :=
+  Quotient.out_eq D
+
 /-- `⟦g⟧ = ⟦h⟧ ↔ HgH = HhH`. -/
 lemma eq_iff (g h : P.Δ) : (⟦g⟧ : HeckeCoset P) = ⟦h⟧ ↔
     DoubleCoset.doubleCoset (g : G) P.H P.H = DoubleCoset.doubleCoset (h : G) P.H P.H :=
@@ -358,8 +362,18 @@ lemma DoubleCoset.doubleCoset_one_mul (h : G) :
 /-- The Hecke ring type: formal `Z`-linear combinations of double cosets `HeckeCoset P`. -/
 def 𝕋 (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeCoset P) Z
 
+/-- `FunLike` instance for `𝕋 P Z`: treat elements as functions `HeckeCoset P → Z`. -/
+instance instFunLike𝕋 (P : HeckePair G) (Z : Type*) [CommRing Z] :
+    FunLike (𝕋 P Z) (HeckeCoset P) Z :=
+  inferInstanceAs (FunLike (HeckeCoset P →₀ Z) (HeckeCoset P) Z)
+
 /-- The Hecke module type: formal `Z`-linear combinations of left cosets `HeckeLeftCoset P`. -/
 def HeckeModule (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeLeftCoset P) Z
+
+/-- `FunLike` instance for `HeckeModule P Z`: treat as functions `HeckeLeftCoset P → Z`. -/
+instance instFunLikeHeckeModule (P : HeckePair G) (Z : Type*) [CommRing Z] :
+    FunLike (HeckeModule P Z) (HeckeLeftCoset P) Z :=
+  inferInstanceAs (FunLike (HeckeLeftCoset P →₀ Z) (HeckeLeftCoset P) Z)
 
 variable (P : HeckePair G) (Z : Type*) [CommRing Z]
 

@@ -83,6 +83,42 @@ lemma Gamma0MapUnits_unitsMap_of_Gamma0_mul (N k : ℕ) [NeZero N] [NeZero (k * 
   rw [Gamma0MapUnits_val, ZMod.unitsMap_val, Gamma0MapUnits_val]
   exact (ZMod.cast_intCast (Nat.dvd_mul_left N k) (γ.val 1 1)).symm
 
+/-- **Diamond lift across a level inclusion.**  For any nebentypus value
+`d : (ZMod N)ˣ` at level `N`, there exists `β ∈ Γ₀(k · N)` whose
+`Γ₀(N)`-nebentypus value is `d` (equivalently, its `Γ₀(k · N)`-value
+projects onto `d` along `ZMod.unitsMap`).
+
+This is the reusable building block for descending diamond operators
+from a deeper level `k · N` back to `N`: it supplies a single
+representative `β` that is simultaneously in `Γ₀(k · N)` (so it
+normalises `Γ₁(k · N)`) and represents the class `d` at level `N`.
+The argument is a direct two-step lift via `ZMod.unitsMap_surjective`
+and `Gamma0MapUnits_surjective` combined through the compatibility
+lemma `Gamma0MapUnits_unitsMap_of_Gamma0_mul`. -/
+theorem exists_Gamma0_mul_lift_unitsMap
+    (N k : ℕ) [NeZero N] [NeZero (k * N)] (d : (ZMod N)ˣ) :
+    ∃ β : ↥(Gamma0 (k * N)),
+      ZMod.unitsMap (Nat.dvd_mul_left N k) (Gamma0MapUnits β) = d := by
+  -- Lift `d` to `(ZMod (k · N))ˣ` along `ZMod.unitsMap`.
+  obtain ⟨d', hd'⟩ :=
+    ZMod.unitsMap_surjective (m := k * N) (n := N) (Nat.dvd_mul_left N k) d
+  -- Realise `d'` as the `Γ₀(k · N)`-nebentypus of some `β`.
+  obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective (N := k * N) d'
+  exact ⟨β, by rw [hβ, hd']⟩
+
+/-- **Diamond lift across a level inclusion, `N ∣ M` form.**  Variant of
+`exists_Gamma0_mul_lift_unitsMap` stated directly in terms of a
+divisibility `N ∣ M` (rather than an explicit product `k · N`).  The
+proof is the same two-step lift via `ZMod.unitsMap_surjective` and
+`Gamma0MapUnits_surjective`. -/
+theorem exists_Gamma0_lift_of_dvd
+    {M N : ℕ} [NeZero M] (h : N ∣ M) (d : (ZMod N)ˣ) :
+    ∃ β : ↥(Gamma0 M),
+      ZMod.unitsMap h (Gamma0MapUnits β) = d := by
+  obtain ⟨d', hd'⟩ := ZMod.unitsMap_surjective (m := M) (n := N) h d
+  obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective (N := M) d'
+  exact ⟨β, by rw [hβ, hd']⟩
+
 /-! ### Diagonal-case surjectivity -/
 
 /-- **Gamma0MapUnits is surjective on the diagonal stabilizer**.

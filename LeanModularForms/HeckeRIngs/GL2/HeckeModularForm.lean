@@ -444,17 +444,10 @@ private lemma heckeSlash_one (k : ℤ) (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮�
   -- glMap of an H-element gives an element of 𝒮ℒ
   obtain ⟨s, hs⟩ := htr_mem
   have hmap : glMap (tRep (HeckeCoset.one (GL_pair 2)) q) = mapGL ℝ s := by
-    apply Units.ext; ext i j
-    -- The tRep q is (GL_transposeEquiv 2 (q.out * rep(one))).unop, which by hs equals (mapGL ℚ s)
-    have hrep : (tRep (HeckeCoset.one (GL_pair 2)) q : GL (Fin 2) ℚ) =
-        (mapGL ℚ s : GL (Fin 2) ℚ) := by
+    have hrep : (tRep (HeckeCoset.one (GL_pair 2)) q : GL (Fin 2) ℚ) = mapGL ℚ s := by
       show ((GL_transposeEquiv 2 _).unop : GL (Fin 2) ℚ) = _
       rw [← hs]
-    simp only [glMap, GeneralLinearGroup.map, Units.coe_map,
-      mapGL_coe_matrix, algebraMap_int_eq]
-    rw [show (tRep (HeckeCoset.one (GL_pair 2)) q : Matrix (Fin 2) (Fin 2) ℚ) =
-        ((mapGL ℚ s : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) from by rw [hrep]]
-    rfl
+    rw [hrep]; exact glMap_mapGL_eq s
   rw [hmap]
   exact hf _ (MonoidHom.mem_range.mpr ⟨s, rfl⟩)
 

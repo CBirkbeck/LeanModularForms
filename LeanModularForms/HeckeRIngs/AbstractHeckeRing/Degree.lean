@@ -224,6 +224,39 @@ lemma deg_add (f g : 𝕋 P ℤ) :
 @[simp] lemma deg_intCast (n : ℤ) : deg P (n : 𝕋 P ℤ) = n := by
   simp [deg, deg_fun, HeckeCoset_deg_T_one]
 
+/-- **Generic multiplicity-degree-sum identity**: when the support of the
+multiplication finsupp `m P D₁ D₂` is contained in `{D_out1, D_out2}`, the
+weighted sum of multiplicities by degrees equals the product of degrees. -/
+lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset P)
+    (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
+      heckeMultiplicity P (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+        (HeckeCoset.rep A) = 0) :
+    heckeMultiplicity P (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+      (HeckeCoset.rep D_out1) * HeckeCoset_deg P D_out1 +
+      heckeMultiplicity P (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+        (HeckeCoset.rep D_out2) * HeckeCoset_deg P D_out2 =
+      HeckeCoset_deg P D1 * HeckeCoset_deg P D2 := by
+  have h1 : deg P (m P (HeckeCoset.rep D1) (HeckeCoset.rep D2)) =
+      HeckeCoset_deg P D1 * HeckeCoset_deg P D2 := by
+    rw [← T_single_one_mul_T_single_one, deg_mul, deg_T_single, deg_T_single]; ring
+  have h2 : deg P (m P (HeckeCoset.rep D1) (HeckeCoset.rep D2)) =
+      heckeMultiplicity P (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+        (HeckeCoset.rep D_out1) * HeckeCoset_deg P D_out1 +
+        heckeMultiplicity P (HeckeCoset.rep D1) (HeckeCoset.rep D2)
+          (HeckeCoset.rep D_out2) * HeckeCoset_deg P D_out2 := by
+    open scoped Classical in
+    simp only [deg, RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk, deg_fun]
+    have hsub : (m P (HeckeCoset.rep D1) (HeckeCoset.rep D2)).support ⊆
+        ({D_out1, D_out2} : Finset _) := by
+      intro A hA; simp only [Finset.mem_insert, Finset.mem_singleton]
+      rw [Finsupp.mem_support_iff] at hA
+      exact (or_iff_not_imp_left.mpr fun h1 =>
+        (Classical.em (A = D_out2)).elim id fun h2 => absurd (h_zero A h1 h2) hA)
+    exact Finset.sum_subset hsub (by
+      intro A _ hA; rw [Finsupp.notMem_support_iff.mp hA]; simp) |>.trans
+      (Finset.sum_pair h_ne)
+  linarith
+
 end API
 
 end HeckeRing
