@@ -38,12 +38,8 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ### Starting point -/
-
 /-- The starting (and ending) point of the FD boundary contour. -/
 def fdStart (H : ℝ) : ℂ := 1 / 2 + ↑H * I
-
-/-! ### The 5-segment boundary function -/
 
 /-- Boundary of the standard fundamental domain for SL₂(ℤ) at height `H`,
 parameterized on `[0, 1]` with breakpoints at `1/5, 2/5, 3/5, 4/5`.
@@ -61,36 +57,32 @@ def fdBoundaryFun (H : ℝ) : ℝ → ℂ := fun t =>
   else
     (5 * ↑t - 9/2) + ↑H * I
 
-/-! ### Junction values -/
-
+/-- At `t = 0` the boundary function equals the starting point `fdStart H`. -/
 theorem fdBoundaryFun_at_zero (H : ℝ) :
     fdBoundaryFun H 0 = fdStart H := by
-  simp only [fdBoundaryFun, fdStart, show (0 : ℝ) ≤ 1/5 from by norm_num, ite_true]
-  push_cast
-  ring
+  simp [fdBoundaryFun, fdStart]
 
+/-- At `t = 1/5` the boundary function equals the elliptic point `ρ + 1`. -/
 theorem fdBoundaryFun_at_one_fifth (H : ℝ) :
     fdBoundaryFun H (1/5) = ellipticPointRhoPlusOne := by
-  simp only [fdBoundaryFun, show (1/5 : ℝ) ≤ 1/5 from le_refl _, ite_true,
-    ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
-  push_cast
-  ring
+  simp [fdBoundaryFun, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne']
 
+/-- At `t = 2/5` the boundary function equals the elliptic point `i`. -/
 theorem fdBoundaryFun_at_two_fifths (H : ℝ) :
     fdBoundaryFun H (2/5) = ellipticPointI := by
-  simp only [fdBoundaryFun, show ¬(2/5 : ℝ) ≤ 1/5 from by norm_num,
-    show (2/5 : ℝ) ≤ 2/5 from le_refl _, ite_true, ite_false]
+  simp only [fdBoundaryFun, show ¬(2/5 : ℝ) ≤ 1/5 from by norm_num, le_refl,
+    ite_true, ite_false]
   rw [show ((↑Real.pi / 3 + (5 * (↑(2/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ) =
       ↑(Real.pi / 2) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_two, Real.sin_pi_div_two]
   simp only [ellipticPointI, ellipticPointI']
   norm_num
 
+/-- At `t = 3/5` the boundary function equals the elliptic point `ρ`. -/
 theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
     fdBoundaryFun H (3/5) = ellipticPointRho := by
   simp only [fdBoundaryFun, show ¬(3/5 : ℝ) ≤ 1/5 from by norm_num,
-    show ¬(3/5 : ℝ) ≤ 2/5 from by norm_num,
-    show (3/5 : ℝ) ≤ 3/5 from le_refl _, ite_true, ite_false]
+    show ¬(3/5 : ℝ) ≤ 2/5 from by norm_num, le_refl, ite_true, ite_false]
   rw [show ((↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ)
       = ↑(2 * Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
@@ -98,15 +90,16 @@ theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   norm_num
 
+/-- At `t = 4/5` the boundary function equals the upper-left corner `-1/2 + Hi`. -/
 theorem fdBoundaryFun_at_four_fifths (H : ℝ) :
     fdBoundaryFun H (4/5) = -1/2 + ↑H * I := by
   simp only [fdBoundaryFun, show ¬(4/5 : ℝ) ≤ 1/5 from by norm_num,
     show ¬(4/5 : ℝ) ≤ 2/5 from by norm_num,
-    show ¬(4/5 : ℝ) ≤ 3/5 from by norm_num,
-    show (4/5 : ℝ) ≤ 4/5 from le_refl _, ite_true, ite_false]
+    show ¬(4/5 : ℝ) ≤ 3/5 from by norm_num, le_refl, ite_true, ite_false]
   push_cast
   ring
 
+/-- At `t = 1` the boundary function returns to the starting point `fdStart H`. -/
 theorem fdBoundaryFun_at_one (H : ℝ) :
     fdBoundaryFun H 1 = fdStart H := by
   simp only [fdBoundaryFun, show ¬(1 : ℝ) ≤ 1/5 from by norm_num,
@@ -121,41 +114,30 @@ theorem fdBoundaryFun_closed (H : ℝ) :
     fdBoundaryFun H 0 = fdBoundaryFun H 1 := by
   rw [fdBoundaryFun_at_zero, fdBoundaryFun_at_one]
 
-/-! ### Continuity -/
-
-/-- Continuity of segment 1: right vertical. -/
 private lemma fdBoundaryFun_seg1_cont (H : ℝ) :
     Continuous (fun t : ℝ => (1 : ℂ) / 2 +
       (↑H - 5 * ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I) := by
   fun_prop
 
-/-- Continuity of segment 2: unit-circle arc ρ+1 to i. -/
 private lemma fdBoundaryFun_seg2_cont :
-    Continuous (fun t : ℝ => exp
-      ((↑Real.pi / 3 + (5 * ↑t - 1) *
-        (↑Real.pi / 2 - ↑Real.pi / 3)) * I)) := by
+    Continuous (fun t : ℝ =>
+      exp ((↑Real.pi / 3 + (5 * ↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I)) := by
   fun_prop
 
-/-- Continuity of segment 3: unit-circle arc i to ρ. -/
 private lemma fdBoundaryFun_seg3_cont :
-    Continuous (fun t : ℝ => exp
-      ((↑Real.pi / 2 + (5 * ↑t - 2) *
-        (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I)) := by
+    Continuous (fun t : ℝ =>
+      exp ((↑Real.pi / 2 + (5 * ↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I)) := by
   fun_prop
 
-/-- Continuity of segment 4: left vertical. -/
 private lemma fdBoundaryFun_seg4_cont (H : ℝ) :
     Continuous (fun t : ℝ =>
-      (-1 : ℂ) / 2 + (↑(Real.sqrt 3) / 2 +
-        (5 * ↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I) := by
+      (-1 : ℂ) / 2 + (↑(Real.sqrt 3) / 2 + (5 * ↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I) := by
   fun_prop
 
-/-- Continuity of segment 5: horizontal. -/
 private lemma fdBoundaryFun_seg5_cont (H : ℝ) :
     Continuous (fun t : ℝ => (5 * ↑t - 9 / 2 : ℂ) + ↑H * I) := by
   fun_prop
 
-/-- Inner layering for continuity proof: segments 4-5. -/
 private def fdBoundaryFun_inner45 (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 4/5 then
     -1/2 + (↑(Real.sqrt 3) / 2 + (5 * ↑t - 3) * (↑H - ↑(Real.sqrt 3) / 2)) * I
@@ -169,7 +151,6 @@ private lemma fdBoundaryFun_inner45_cont (H : ℝ) :
       push_cast
       ring)
 
-/-- Inner layering: segments 3-4-5. -/
 private def fdBoundaryFun_inner345 (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 3/5 then
     exp ((↑Real.pi / 2 + (5 * ↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I)
@@ -184,14 +165,13 @@ private lemma fdBoundaryFun_inner345_cont (H : ℝ) :
   obtain rfl : t = 3/5 := by linarith
   unfold fdBoundaryFun_inner45
   simp only [show (3/5 : ℝ) ≤ 4/5 from by norm_num, ite_true]
-  rw [show ((↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ)
-      = ↑(2 * Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
+  rw [show ((↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ) =
+      ↑(2 * Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
   push_cast
   ring
 
-/-- Inner layering: segments 2-3-4-5. -/
 private def fdBoundaryFun_inner2345 (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 2/5 then
     exp ((↑Real.pi / 3 + (5 * ↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I)
@@ -239,8 +219,6 @@ theorem fdBoundaryFun_continuous (H : ℝ) :
   push_cast
   ring
 
-/-! ### Path construction -/
-
 /-- The FD boundary as a `Path` from `fdStart H` to `fdStart H`. -/
 def fdBoundaryPath (H : ℝ) : Path (fdStart H) (fdStart H) where
   toFun t := fdBoundaryFun H t
@@ -248,19 +226,16 @@ def fdBoundaryPath (H : ℝ) : Path (fdStart H) (fdStart H) where
   source' := fdBoundaryFun_at_zero H
   target' := fdBoundaryFun_at_one H
 
-/-! ### FD boundary partition -/
-
 /-- The partition points (segment junctions) for the FD boundary on `[0, 1]`. -/
 def fdBoundaryPartition : Finset ℝ := {1/5, 2/5, 3/5, 4/5}
 
+/-- The FD boundary partition points lie strictly inside the open interval `(0, 1)`. -/
 theorem fdBoundaryPartition_subset_Ioo :
     (fdBoundaryPartition : Set ℝ) ⊆ Ioo 0 1 := by
   intro x hx
   simp only [fdBoundaryPartition, Finset.coe_insert, Finset.coe_singleton,
     mem_insert_iff, mem_singleton_iff] at hx
   rcases hx with rfl | rfl | rfl | rfl <;> constructor <;> norm_num
-
-/-! ### Winding weight specification structure -/
 
 /-- Winding weight data for the valence formula at height `H`.
 
@@ -286,13 +261,10 @@ structure FDWindingData (H : ℝ) where
   winding_at_rho_plus_one :
     HasGeneralizedWindingNumber boundary ellipticPointRhoPlusOne (-1/6)
 
-/-! ### Geometric facts about the boundary -/
-
 /-- The right vertical segment stays at `re = 1/2`. -/
 theorem fdBoundaryFun_seg1_re (H : ℝ) (t : ℝ) (ht : t ≤ 1/5) :
     (fdBoundaryFun H t).re = 1/2 := by
-  simp only [fdBoundaryFun, ht, ite_true]
-  simp [add_re, sub_re, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im, div_ofNat]
+  simp only [fdBoundaryFun, ht, ite_true]; simp
 
 /-- The left vertical segment stays at `re = -1/2`. -/
 theorem fdBoundaryFun_seg4_re (H : ℝ) (t : ℝ) (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
@@ -300,8 +272,7 @@ theorem fdBoundaryFun_seg4_re (H : ℝ) (t : ℝ) (ht3 : 3/5 < t) (ht4 : t ≤ 4
   simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
     show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
     ht4, ite_true, ite_false]
-  simp [add_re, sub_re, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im,
-    neg_re, div_ofNat]
+  simp
 
 /-- The horizontal segment stays at `im = H`. -/
 theorem fdBoundaryFun_seg5_im (H : ℝ) (t : ℝ) (ht : 4/5 < t) :
@@ -309,7 +280,7 @@ theorem fdBoundaryFun_seg5_im (H : ℝ) (t : ℝ) (ht : 4/5 < t) :
   simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
     show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
     show ¬t ≤ 4/5 from by linarith, ite_false]
-  simp [add_im, sub_im, mul_im, ofReal_re, ofReal_im, I_re, I_im, div_ofNat]
+  simp
 
 /-- Arc segments (2 and 3) lie on the unit circle. -/
 theorem fdBoundaryFun_arc_norm (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
@@ -329,24 +300,15 @@ theorem fdBoundaryFun_arc_norm (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 
 /-- The right vertical imaginary part interpolates linearly. -/
 theorem fdBoundaryFun_seg1_im (H : ℝ) (t : ℝ) (ht : t ≤ 1/5) :
     (fdBoundaryFun H t).im = H - 5 * t * (H - Real.sqrt 3 / 2) := by
-  simp only [fdBoundaryFun, ht, ite_true]
-  simp [add_im, sub_im, mul_re, mul_im, ofReal_re, ofReal_im, I_re, I_im, div_ofNat]
+  simp only [fdBoundaryFun, ht, ite_true]; simp
 
 /-- Height hypothesis: we need `H > √3/2` for the boundary to be well-formed. -/
 def fdHeightValid (H : ℝ) : Prop := Real.sqrt 3 / 2 < H
 
+/-- Any height greater than `1` is a valid FD boundary height. -/
 theorem fdHeightValid_of_one_lt (H : ℝ) (hH : 1 < H) : fdHeightValid H := by
   unfold fdHeightValid
   linarith [(Real.sqrt_lt' (by norm_num : (0:ℝ) < 2)).mpr (by norm_num : (3:ℝ) < 2^2)]
-
-/-! ### Relationship to [0,5]-parameterized boundary
-
-The `[0,1]`-parameterized boundary `fdBoundaryFun H t` equals the `[0,5]`-parameterized
-boundary `fdBoundary_H H (5 * t)` from `ValenceFormula/Boundary/Basic.lean`. This is a
-simple rescaling: each segment `[k/5, (k+1)/5]` maps to `[k, k+1]` under `t ↦ 5t`.
--/
-
-/-! ### Construction of FDWindingData from SingleCrossingData -/
 
 private lemma pi_div_two_pi : -(↑Real.pi * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 2 := by
   field_simp
