@@ -2,8 +2,8 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.ExitTime
 import LeanModularForms.ForMathlib.CauchyPrincipalValue
+import LeanModularForms.ForMathlib.ExitTime
 import LeanModularForms.ForMathlib.MultipointPV
 
 /-!
@@ -56,8 +56,6 @@ namespace HungerbuhlerWasem
 
 variable {x : ℂ}
 
-/-! ## Pointwise CPV-integrand identification -/
-
 /-- The CPV integrand for a singleton equals the contour integrand when `γ` is far
 from `s`. -/
 theorem cpvIntegrandOn_singleton_eq_contour_of_far
@@ -65,9 +63,7 @@ theorem cpvIntegrandOn_singleton_eq_contour_of_far
     {t : ℝ} (h_far : ε < ‖γ.toPath.extend t - s‖) :
     cpvIntegrandOn {s} f γ.toPath.extend ε t =
       f (γ.toPath.extend t) * deriv γ.toPath.extend t :=
-  cpvIntegrandOn_of_forall_gt fun s' hs' => by
-    rw [Finset.mem_singleton.mp hs']
-    exact h_far
+  cpvIntegrandOn_of_forall_gt fun _ hs' => Finset.mem_singleton.mp hs' ▸ h_far
 
 /-- The CPV integrand for a singleton is zero when `γ` is close to `s`. -/
 theorem cpvIntegrandOn_singleton_eq_zero_of_close
@@ -88,10 +84,7 @@ theorem cpvIntegrandOn_singleton_eq_indicator
   · rw [Set.indicator_of_mem (h : t ∈ _)]
     exact cpvIntegrandOn_singleton_eq_contour_of_far γ h
   · rw [Set.indicator_of_notMem (h : t ∉ _)]
-    push Not at h
-    exact cpvIntegrandOn_singleton_eq_zero_of_close γ h
-
-/-! ## Integral splitting under the shape hypothesis -/
+    exact cpvIntegrandOn_singleton_eq_zero_of_close γ (not_lt.mp h)
 
 /-- The CPV integrand integral on `[0, α]` equals the contour integrand integral when
 `ε < ‖γ(t) - s‖` on `(0, α)`. Boundary points are measure-zero, so the equality goes
@@ -144,38 +137,21 @@ theorem cpvIntegrandOn_singleton_integral_eq_excision
     ∫ t in (0 : ℝ)..1, cpvIntegrandOn {s} f γ.toPath.extend ε t =
       (∫ t in (0 : ℝ)..α, f (γ.toPath.extend t) * deriv γ.toPath.extend t) +
       ∫ t in β..(1 : ℝ), f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
-  have h_split :
-      ∫ t in (0 : ℝ)..1, cpvIntegrandOn {s} f γ.toPath.extend ε t =
-      (∫ t in (0 : ℝ)..α, cpvIntegrandOn {s} f γ.toPath.extend ε t) +
-      (∫ t in α..β, cpvIntegrandOn {s} f γ.toPath.extend ε t) +
-      ∫ t in β..(1 : ℝ), cpvIntegrandOn {s} f γ.toPath.extend ε t := by
-    have hα1 : α ≤ 1 := h_le.trans hβ
-    have h0β : (0 : ℝ) ≤ β := hα.trans h_le
-    have h01 : Set.uIcc (0 : ℝ) 1 = Set.Icc 0 1 := Set.uIcc_of_le (zero_le_one' ℝ)
-    have h_int_α : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 α :=
-      h_int_full.mono_set <| by
-        rw [Set.uIcc_of_le hα, h01]
-        exact Set.Icc_subset_Icc le_rfl hα1
-    have h_int_β : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume α β :=
-      h_int_full.mono_set <| by
-        rw [Set.uIcc_of_le h_le, h01]
-        exact Set.Icc_subset_Icc hα hβ
-    have h_int_1 : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 :=
-      h_int_full.mono_set <| by
-        rw [Set.uIcc_of_le hβ, h01]
-        exact Set.Icc_subset_Icc h0β le_rfl
-    rw [← intervalIntegral.integral_add_adjacent_intervals (h_int_α.trans h_int_β) h_int_1,
-        ← intervalIntegral.integral_add_adjacent_intervals h_int_α h_int_β]
-  rw [h_split,
+  have hα1 : α ≤ 1 := h_le.trans hβ
+  have h0β : (0 : ℝ) ≤ β := hα.trans h_le
+  have h_sub : ∀ {a b : ℝ}, 0 ≤ a → a ≤ b → b ≤ 1 → Set.uIcc a b ⊆ Set.uIcc (0 : ℝ) 1 :=
+    fun ha hab hb1 => by
+      rw [Set.uIcc_of_le hab, Set.uIcc_of_le (zero_le_one' ℝ)]
+      exact Set.Icc_subset_Icc ha hb1
+  have h_int_α := h_int_full.mono_set (h_sub le_rfl hα hα1)
+  have h_int_β := h_int_full.mono_set (h_sub hα h_le hβ)
+  have h_int_1 := h_int_full.mono_set (h_sub h0β hβ le_rfl)
+  rw [← intervalIntegral.integral_add_adjacent_intervals (h_int_α.trans h_int_β) h_int_1,
+      ← intervalIntegral.integral_add_adjacent_intervals h_int_α h_int_β,
       integral_cpvIntegrandOn_singleton_eq_contour_left γ hα h_outside_left,
       integral_cpvIntegrandOn_singleton_eq_zero_middle γ h_le h_inside,
       integral_cpvIntegrandOn_singleton_eq_contour_right γ hβ h_outside_right,
       add_zero]
-
-/-! ## Bridge to `HasCauchyPVOn` -/
 
 /-- Bridge from parametric symmetric-excision PV to `HasCauchyPVOn`: given functions
 `α, β : ℝ → ℝ` (the exit-time functions, e.g., `firstExitTimeLeft` and
@@ -207,8 +183,6 @@ theorem hasCauchyPVOn_singleton_of_excision_tendsto
   filter_upwards [h_shape, h_int_full] with ε ⟨ha, hb, hc, hd, he, hf⟩ h_int
   exact (cpvIntegrandOn_singleton_integral_eq_excision γ
     ha hb hc hd he hf h_int).symm
-
-/-! ## Specialization to firstExitTimeLeft / firstExitTimeRight -/
 
 /-- Specialization of `hasCauchyPVOn_singleton_of_excision_tendsto` to the canonical
 exit times `α = firstExitTimeLeft` and `β = firstExitTimeRight`. -/
@@ -248,61 +222,47 @@ theorem hasCauchyPVOn_singleton_of_exitTime_excision
     (LeanModularForms.firstExitTimeRight γ.toPath.extend t₀ δPlus s)
     h_shape h_int_full h_excision
 
-/-! ## Shape hypothesis from local strict monotonicity -/
-
 /-- Left-side shape from strict anti-monotonicity. If `γ` is continuous on
 `[t₀ - δMinus, t₀]` with `‖γ - s‖` strictly anti-monotone there, and `γ` avoids `s`
 on `[0, t₀ - δMinus]` with margin `δ_avoid > 0`, then for sufficiently small `ε > 0`,
 `0 ≤ firstExitTimeLeft γ t₀ δMinus s ε` and for `t ∈ Ioo 0 (firstExitTimeLeft …)`,
 `ε < ‖γ(t) - s‖`. -/
 theorem shape_left_of_strictAntiOn
-    {γ : ℝ → ℂ} {s : ℂ} {t₀ δMinus : ℝ}
-    (h_t₀_minus_pos : 0 ≤ t₀ - δMinus)
-    (hδMinus : 0 < δMinus)
-    (hγ_cont : ContinuousOn γ (Icc (t₀ - δMinus) t₀))
+    {γ : ℝ → ℂ} {s : ℂ} {t₀ δMinus : ℝ} (h_t₀_minus_pos : 0 ≤ t₀ - δMinus)
+    (hδMinus : 0 < δMinus) (hγ_cont : ContinuousOn γ (Icc (t₀ - δMinus) t₀))
     (hγ_anti : StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
     {δ_avoid : ℝ} (h_avoid : ∀ t ∈ Icc (0 : ℝ) (t₀ - δMinus), δ_avoid ≤ ‖γ t - s‖)
-    {ε : ℝ} (hε_lt_avoid : ε < δ_avoid)
-    (hε_le_max : ε ≤ ‖γ (t₀ - δMinus) - s‖) :
+    {ε : ℝ} (hε_lt_avoid : ε < δ_avoid) (hε_le_max : ε ≤ ‖γ (t₀ - δMinus) - s‖) :
     0 ≤ LeanModularForms.firstExitTimeLeft γ t₀ δMinus s ε ∧
     ∀ t ∈ Ioo (0 : ℝ) (LeanModularForms.firstExitTimeLeft γ t₀ δMinus s ε),
       ε < ‖γ t - s‖ := by
-  have h_inIcc :=
-    LeanModularForms.firstExitTimeLeft_mem_Icc hδMinus.le hε_le_max
+  have h_inIcc := LeanModularForms.firstExitTimeLeft_mem_Icc hδMinus.le hε_le_max
   refine ⟨h_t₀_minus_pos.trans h_inIcc.1, ?_⟩
   intro t ⟨ht_pos, ht_lt⟩
   by_cases h_outer : t ≤ t₀ - δMinus
   · linarith [h_avoid t ⟨ht_pos.le, h_outer⟩]
-  · push Not at h_outer
-    linarith [LeanModularForms.ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max,
-      hγ_anti ⟨h_outer.le, (ht_lt.trans_le h_inIcc.2).le⟩ h_inIcc ht_lt]
+  · linarith [LeanModularForms.ε_le_norm_at_firstExitTimeLeft hδMinus hγ_cont hε_le_max,
+      hγ_anti ⟨(not_le.mp h_outer).le, (ht_lt.trans_le h_inIcc.2).le⟩ h_inIcc ht_lt]
 
 /-- Right-side counterpart of `shape_left_of_strictAntiOn`: `γ` continuous on
 `[t₀, t₀ + δPlus]` with `‖γ - s‖` strictly monotone there, plus an avoidance margin on
 `[t₀ + δPlus, 1]`, gives the right-side shape. -/
 theorem shape_right_of_strictMonoOn
-    {γ : ℝ → ℂ} {s : ℂ} {t₀ δPlus : ℝ}
-    (h_t₀_plus_le : t₀ + δPlus ≤ 1)
-    (hδPlus : 0 < δPlus)
-    (hγ_cont : ContinuousOn γ (Icc t₀ (t₀ + δPlus)))
+    {γ : ℝ → ℂ} {s : ℂ} {t₀ δPlus : ℝ} (h_t₀_plus_le : t₀ + δPlus ≤ 1)
+    (hδPlus : 0 < δPlus) (hγ_cont : ContinuousOn γ (Icc t₀ (t₀ + δPlus)))
     (hγ_mono : StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
     {δ_avoid : ℝ} (h_avoid : ∀ t ∈ Icc (t₀ + δPlus) (1 : ℝ), δ_avoid ≤ ‖γ t - s‖)
-    {ε : ℝ} (hε_lt_avoid : ε < δ_avoid)
-    (hε_le_max : ε ≤ ‖γ (t₀ + δPlus) - s‖) :
+    {ε : ℝ} (hε_lt_avoid : ε < δ_avoid) (hε_le_max : ε ≤ ‖γ (t₀ + δPlus) - s‖) :
     LeanModularForms.firstExitTimeRight γ t₀ δPlus s ε ≤ 1 ∧
     ∀ t ∈ Ioo (LeanModularForms.firstExitTimeRight γ t₀ δPlus s ε) (1 : ℝ),
       ε < ‖γ t - s‖ := by
-  have h_inIcc :=
-    LeanModularForms.firstExitTimeRight_mem_Icc hδPlus.le hε_le_max
+  have h_inIcc := LeanModularForms.firstExitTimeRight_mem_Icc hδPlus.le hε_le_max
   refine ⟨h_inIcc.2.trans h_t₀_plus_le, ?_⟩
   intro t ⟨ht_lt, ht_lt_one⟩
   by_cases h_outer : t₀ + δPlus ≤ t
   · linarith [h_avoid t ⟨h_outer, ht_lt_one.le⟩]
-  · push Not at h_outer
-    linarith [LeanModularForms.ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max,
-      hγ_mono h_inIcc ⟨(h_inIcc.1.trans_lt ht_lt).le, h_outer.le⟩ ht_lt]
-
-/-! ## Eventual shape from monotonicity + avoidance margins -/
+  · linarith [LeanModularForms.ε_le_norm_at_firstExitTimeRight hδPlus hγ_cont hε_le_max,
+      hγ_mono h_inIcc ⟨(h_inIcc.1.trans_lt ht_lt).le, (not_le.mp h_outer).le⟩ ht_lt]
 
 /-- Eventual right-side shape from strict monotonicity plus an avoidance margin. -/
 theorem shape_right_eventually
@@ -320,8 +280,7 @@ theorem shape_right_eventually
   filter_upwards [Ioo_mem_nhdsGT (lt_min (h_avoid_pos.trans_le
     (h_avoid (t₀ + δPlus) ⟨le_rfl, by linarith⟩)) h_avoid_pos)] with ε hε
   obtain ⟨h1, h2⟩ := lt_min_iff.mp hε.2
-  exact shape_right_of_strictMonoOn h_t₀_plus_le hδPlus hγ_cont
-    hγ_mono h_avoid h2 h1.le
+  exact shape_right_of_strictMonoOn h_t₀_plus_le hδPlus hγ_cont hγ_mono h_avoid h2 h1.le
 
 /-- Eventual left-side shape from strict anti-monotonicity plus an avoidance
 margin. -/
@@ -340,8 +299,7 @@ theorem shape_left_eventually
   filter_upwards [Ioo_mem_nhdsGT (lt_min (h_avoid_pos.trans_le
     (h_avoid (t₀ - δMinus) ⟨h_t₀_minus_pos, le_rfl⟩)) h_avoid_pos)] with ε hε
   obtain ⟨h1, h2⟩ := lt_min_iff.mp hε.2
-  exact shape_left_of_strictAntiOn h_t₀_minus_pos hδMinus hγ_cont
-    hγ_anti h_avoid h2 h1.le
+  exact shape_left_of_strictAntiOn h_t₀_minus_pos hδMinus hγ_cont hγ_anti h_avoid h2 h1.le
 
 /-- Combined shape (left + right) eventually from strict monotonicity, bundling
 `shape_left_eventually` and `shape_right_eventually` plus the trivial `α ε ≤ β ε`
@@ -389,31 +347,25 @@ theorem shape_eventually_of_strict_mono
     have hR := h_avoid_right_pos.trans_le
       (h_avoid_right (t₀ + δPlus) ⟨le_rfl, by linarith⟩)
     filter_upwards [Ioo_mem_nhdsGT (lt_min hL hR)] with ε hε
-    refine ⟨(LeanModularForms.firstExitTimeLeft_mem_Icc hδMinus.le
-      ((lt_min_iff.mp hε.2).1.le)).2.trans
-      (LeanModularForms.firstExitTimeRight_mem_Icc hδPlus.le
-        ((lt_min_iff.mp hε.2).2.le)).1, ?_⟩
+    obtain ⟨hε_lt_L, hε_lt_R⟩ := lt_min_iff.mp hε.2
+    have h_L_mem := LeanModularForms.firstExitTimeLeft_mem_Icc hδMinus.le hε_lt_L.le
+    have h_R_mem := LeanModularForms.firstExitTimeRight_mem_Icc hδPlus.le hε_lt_R.le
+    refine ⟨h_L_mem.2.trans h_R_mem.1, ?_⟩
     intro t ht
     by_cases h_t_t₀ : t ≤ t₀
-    · have ht_in_Icc : t ∈ Icc (t₀ - δMinus) t₀ := by
-        refine ⟨?_, h_t_t₀⟩
-        linarith [(LeanModularForms.firstExitTimeLeft_mem_Icc hδMinus.le
-          ((lt_min_iff.mp hε.2).1.le)).1, ht.1]
+    · have ht_in_Icc : t ∈ Icc (t₀ - δMinus) t₀ :=
+        ⟨by linarith [h_L_mem.1, ht.1], h_t_t₀⟩
       by_contra h_ge
-      have h_in_set : t ∈ {t' ∈ Set.Icc (t₀ - δMinus) t₀ | ε ≤ ‖γ t' - s‖} :=
-        ⟨ht_in_Icc, (not_le.mp h_ge).le⟩
       have h_le : t ≤ LeanModularForms.firstExitTimeLeft γ t₀ δMinus s ε :=
-        le_csSup ⟨t₀, LeanModularForms.firstExitTimeLeft_set_ub γ t₀ δMinus ε s⟩ h_in_set
+        le_csSup ⟨t₀, LeanModularForms.firstExitTimeLeft_set_ub γ t₀ δMinus ε s⟩
+          ⟨ht_in_Icc, (not_le.mp h_ge).le⟩
       linarith [ht.1]
-    · have ht_in_Icc : t ∈ Icc t₀ (t₀ + δPlus) := by
-        refine ⟨(not_le.mp h_t_t₀).le, ?_⟩
-        linarith [(LeanModularForms.firstExitTimeRight_mem_Icc hδPlus.le
-          ((lt_min_iff.mp hε.2).2.le)).2, ht.2]
+    · have ht_in_Icc : t ∈ Icc t₀ (t₀ + δPlus) :=
+        ⟨(not_le.mp h_t_t₀).le, by linarith [h_R_mem.2, ht.2]⟩
       by_contra h_ge
-      have h_in_set : t ∈ {t' ∈ Set.Icc t₀ (t₀ + δPlus) | ε ≤ ‖γ t' - s‖} :=
-        ⟨ht_in_Icc, (not_le.mp h_ge).le⟩
       have h_le : LeanModularForms.firstExitTimeRight γ t₀ δPlus s ε ≤ t :=
-        csInf_le ⟨t₀, LeanModularForms.firstExitTimeRight_set_lb γ t₀ δPlus ε s⟩ h_in_set
+        csInf_le ⟨t₀, LeanModularForms.firstExitTimeRight_set_lb γ t₀ δPlus ε s⟩
+          ⟨ht_in_Icc, (not_le.mp h_ge).le⟩
       linarith [ht.2]
   filter_upwards [h_left, h_right, h_in_brackets] with ε ⟨hL1, hL2⟩ ⟨hR1, hR2⟩ ⟨hLR1, hLR2⟩
   exact ⟨hL1, hR1, hLR1, hL2, hR2, hLR2⟩
