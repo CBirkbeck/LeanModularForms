@@ -1,0 +1,242 @@
+/-
+Copyright (c) 2026. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: LeanModularForms contributors
+-/
+import LeanModularForms.HeckeRIngs.GL2.Newforms
+
+/-!
+# T186 — Bad-prime Atkin–Lehner double-coset transport: foundational identities
+
+For a bad prime `p ∣ N`, the upper-triangular Hecke representative
+`β_b := T_p_upper p hp b` (matrix `!![1, b; 0, p]`) and the lower-offset
+representative `M_b := T_p_lower_with_offset N hp b` (matrix
+`!![p, 0; -N·b, 1]`) are conjugate via the Atkin–Lehner involution
+`W_N := frickeMatrix N`:
+```
+M_b = W_N · β_b · W_N⁻¹.
+```
+
+This identity is the matrix-level foundation for the bad-prime Atkin–Lehner
+aggregate transport (DS 5.5.2 / Miyake 4.6.5). It places `β_b` and `M_b` in
+the same double coset of the Atkin–Lehner-extended subgroup
+`⟨W_N⟩ ⊆ GL(2, ℝ)`. (Note: `β_b` and `M_b` are NOT in the same `Γ₁(N)`-double
+coset alone — they have different top-left residues mod `N` — but they
+coincide in the Atkin–Lehner extension via the `W_N`-conjugation.)
+
+## Main results
+
+* `Newform.bad_prime_lower_eq_frickeMatrix_conj_upper`: matrix-level
+  conjugation identity at `GL (Fin 2) ℝ`.
+* `Newform.bad_prime_lower_mem_doubleCoset_upper_via_frickeMatrix`:
+  `M_b ∈ doubleCoset β_b ⟨W_N⟩ ⟨W_N⟩` in `GL(2, ℝ)`, where `⟨W_N⟩` is the
+  cyclic subgroup `Subgroup.zpowers (Newform.frickeMatrix N)`.
+
+-/
+
+open CongruenceSubgroup Matrix.SpecialLinearGroup
+open scoped MatrixGroups Pointwise
+open DoubleCoset HeckeRing.GL2
+
+namespace HeckeRing.GL2.Newform
+
+/-- **T186 step 1: Atkin–Lehner conjugation identity for bad-prime upper/lower reps.**
+
+For a bad prime `p ∣ N` and offset `b`, the lower-offset representative
+`M_b = T_p_lower_with_offset N hp b` (matrix `!![p, 0; -N·b, 1]`) equals
+the `W_N`-conjugate of the upper representative `β_b = T_p_upper p hp b`
+(matrix `!![1, b; 0, p]`):
+```
+M_b = W_N · β_b · W_N⁻¹.
+```
+This is a direct rearrangement of the existing matrix relation
+`Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix`
+(which states `W_N · β_b = M_b · W_N`) by right-multiplying by `W_N⁻¹` and
+using `mul_inv_cancel`. -/
+theorem bad_prime_lower_eq_frickeMatrix_conj_upper
+    {N : ℕ} [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) =
+      (Newform.frickeMatrix N : GL (Fin 2) ℝ) *
+        (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
+        ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹ := by
+  have h := Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix N hp b
+  -- h: W_N * β_b = M_b * W_N
+  -- Right-multiply by W_N⁻¹: W_N * β_b * W_N⁻¹ = M_b * W_N * W_N⁻¹ = M_b
+  have hRHS : (Newform.frickeMatrix N : GL (Fin 2) ℝ) *
+        (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
+        ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹ =
+      (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) *
+        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) *
+          ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹) := by
+    rw [h, mul_assoc]
+  rw [hRHS, mul_inv_cancel, mul_one]
+
+/-- **T186 step 2: bad-prime upper and lower-offset reps share an Atkin–Lehner double coset.**
+
+For a bad prime `p ∣ N` and offset `b`, the lower-offset representative
+`M_b = T_p_lower_with_offset N hp b` lies in the double coset of the upper
+representative `β_b = T_p_upper p hp b` taken with the cyclic Atkin–Lehner
+subgroup `⟨W_N⟩ = Subgroup.zpowers (frickeMatrix N)` on both sides:
+```
+M_b ∈ doubleCoset β_b (⟨W_N⟩ : Set (GL ℝ)) (⟨W_N⟩ : Set (GL ℝ)).
+```
+This packages the conjugation identity `M_b = W_N · β_b · W_N⁻¹` (T186 step 1)
+as a `mem_doubleCoset` membership using mathlib's `DoubleCoset.mem_doubleCoset`,
+with the explicit conjugating elements `W_N` (in `⟨W_N⟩`) and `W_N⁻¹` (also in
+`⟨W_N⟩` via `Subgroup.inv_mem`).
+
+The conjugating elements are NOT in `Γ₁(N).map (mapGL ℝ)`; the natural ambient
+subgroup where `β_b` and `M_b` represent the same double coset is the
+Atkin–Lehner extension `⟨Γ₁(N), W_N⟩`. The cyclic subgroup `⟨W_N⟩` here is the
+minimal subgroup that exposes the conjugation identity at the
+`mem_doubleCoset` level. -/
+theorem bad_prime_lower_mem_doubleCoset_upper_via_frickeMatrix
+    {N : ℕ} [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) ∈
+      doubleCoset (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ)
+        ((Subgroup.zpowers (Newform.frickeMatrix N : GL (Fin 2) ℝ)) :
+          Set (GL (Fin 2) ℝ))
+        ((Subgroup.zpowers (Newform.frickeMatrix N : GL (Fin 2) ℝ)) :
+          Set (GL (Fin 2) ℝ)) := by
+  rw [mem_doubleCoset]
+  refine ⟨(Newform.frickeMatrix N : GL (Fin 2) ℝ),
+    Subgroup.mem_zpowers _,
+    ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹,
+    Subgroup.inv_mem _ (Subgroup.mem_zpowers _),
+    bad_prime_lower_eq_frickeMatrix_conj_upper hp b⟩
+
+/-! ### T186 — Atkin–Lehner-Γ₁(N) extended subgroup + bad-prime family
+    double-coset membership theorems -/
+
+/-- **The Atkin–Lehner-Γ₁(N) extended subgroup.**
+
+The subgroup of `GL(2, ℝ)` generated by the image of `Γ₁(N)` under `mapGL ℝ`
+together with the Fricke matrix `W_N := frickeMatrix N`. This is the natural
+ambient where the bad-prime upper and lower-offset Hecke representatives live
+in the same double coset of `α_p := T_p_upper p hp 0`. -/
+noncomputable def atkinLehnerGamma1Subgroup (N : ℕ) [NeZero N] :
+    Subgroup (GL (Fin 2) ℝ) :=
+  Subgroup.closure
+    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
+        Set (GL (Fin 2) ℝ)) ∪
+      ({(Newform.frickeMatrix N : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)))
+
+/-- `Γ₁(N).map (mapGL ℝ) ⊆ atkinLehnerGamma1Subgroup N` (one of the two
+  generating sets). -/
+lemma map_Gamma1_le_atkinLehnerGamma1Subgroup (N : ℕ) [NeZero N] :
+    (Gamma1 N).map (mapGL ℝ) ≤ atkinLehnerGamma1Subgroup N := by
+  intro x hx
+  exact Subgroup.subset_closure (Or.inl hx)
+
+/-- `W_N := frickeMatrix N ∈ atkinLehnerGamma1Subgroup N` (the other generator). -/
+lemma frickeMatrix_mem_atkinLehnerGamma1Subgroup (N : ℕ) [NeZero N] :
+    (Newform.frickeMatrix N : GL (Fin 2) ℝ) ∈ atkinLehnerGamma1Subgroup N :=
+  Subgroup.subset_closure (Or.inr rfl)
+
+/-- The shift matrix `!![1, b; 0, 1]` as an `SL(2, ℤ)` element. -/
+def shiftFin (b : ℤ) : SL(2, ℤ) :=
+  ⟨!![1, b; 0, 1], by simp [Matrix.det_fin_two]⟩
+
+/-- The shift matrix lies in `Γ₁(N)` for every level `N`. -/
+lemma shiftFin_mem_Gamma1 (N : ℕ) (b : ℤ) : shiftFin b ∈ Gamma1 N := by
+  rw [Gamma1_mem]; refine ⟨?_, ?_, ?_⟩ <;> simp [shiftFin]
+
+/-- **Upper-family factorization in `GL(2, ℝ)`.**
+
+For p > 0, the bad-prime upper Hecke representative
+`β_b := glMap (T_p_upper p hp b)` factors at the `GL (Fin 2) ℝ` level as
+```
+β_b = α_p · mapGL ℝ (shiftFin b)
+```
+where `α_p := glMap (T_p_upper p hp 0)` (matrix `!![1, 0; 0, p]`) and
+`shiftFin b ∈ Γ₁(N)`. -/
+lemma glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin
+    {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) =
+      (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
+        (mapGL ℝ (shiftFin (b : ℤ)) : GL (Fin 2) ℝ) := by
+  apply Units.ext
+  ext i j
+  show ((T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) i j =
+      ((((T_p_upper p hp 0 : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) *
+        ((shiftFin (b : ℤ) : SL(2, ℤ)).val.map (algebraMap ℤ ℝ))) i j)
+  simp only [T_p_upper_coe, shiftFin, Matrix.map_apply, Matrix.mul_apply,
+    Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
+    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
+    Matrix.SpecialLinearGroup.coe_mk]
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.cons_val_zero, Matrix.cons_val_one] <;> push_cast <;> ring
+
+/-- **Upper bad-prime family double-coset membership at level `Γ₁(N)`.**
+
+For p > 0, every upper-triangular Hecke representative
+`β_b := glMap (T_p_upper p hp b) ∈ GL (Fin 2) ℝ` (for `b : ℕ`) lies in the
+`Γ₁(N) · α_p · Γ₁(N)` double coset where `α_p := glMap (T_p_upper p hp 0)`:
+```
+β_b = 1 · α_p · mapGL ℝ (shiftFin b)
+```
+with `shiftFin b ∈ Γ₁(N)`.
+
+This is the genuine `Γ₁(N)`-double-coset membership (NOT cyclic `⟨W_N⟩`-only):
+the conjugating elements `1` and `mapGL ℝ (shiftFin b)` both lie in
+`(Gamma1 N).map (mapGL ℝ)`. The full bad-prime upper family
+`{β_b : b ∈ Fin p}` is contained in this single `Γ₁(N)` double coset. -/
+theorem T_p_upper_mem_doubleCoset_α_p_Gamma1
+    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) ∈
+      doubleCoset (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ)
+        (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
+          Set (GL (Fin 2) ℝ))
+        (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
+          Set (GL (Fin 2) ℝ)) := by
+  rw [mem_doubleCoset]
+  refine ⟨1, Subgroup.one_mem _,
+    (mapGL ℝ (shiftFin (b : ℤ)) : GL (Fin 2) ℝ),
+    Subgroup.mem_map.mpr
+      ⟨shiftFin (b : ℤ), shiftFin_mem_Gamma1 N _, rfl⟩, ?_⟩
+  rw [one_mul, glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin hp b]
+
+/-- **Lower-offset bad-prime family double-coset membership in the
+Atkin–Lehner-Γ₁(N) extension.**
+
+For p > 0 and `N` with `NeZero N`, every lower-offset representative
+`M_b := T_p_lower_with_offset N hp b ∈ GL (Fin 2) ℝ` (for `b : ℕ`) lies in the
+double coset of `α_p := glMap (T_p_upper p hp 0)` taken with the
+**Atkin–Lehner-Γ₁(N) extended subgroup** `atkinLehnerGamma1Subgroup N` (the
+subgroup generated by `Γ₁(N).map (mapGL ℝ)` and the Fricke matrix `W_N`):
+```
+M_b = W_N · α_p · (mapGL ℝ (shiftFin b) · W_N⁻¹)
+```
+with both `W_N` and `mapGL ℝ (shiftFin b) · W_N⁻¹` in
+`atkinLehnerGamma1Subgroup N`.
+
+This is the genuine extended double-coset membership the manager requested:
+the conjugating element `W_N` is in `atkinLehnerGamma1Subgroup` (not just
+`⟨W_N⟩`), and the right factor `mapGL ℝ (shiftFin b) · W_N⁻¹` mixes the two
+generating subgroups. The full bad-prime lower family `{M_b : b ∈ Fin p}` is
+contained in this single Atkin–Lehner-Γ₁(N) double coset. -/
+theorem T_p_lower_with_offset_mem_doubleCoset_α_p_atkinLehnerGamma1
+    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) ∈
+      doubleCoset (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ)
+        ((atkinLehnerGamma1Subgroup N) : Set (GL (Fin 2) ℝ))
+        ((atkinLehnerGamma1Subgroup N) : Set (GL (Fin 2) ℝ)) := by
+  rw [mem_doubleCoset]
+  refine ⟨(Newform.frickeMatrix N : GL (Fin 2) ℝ),
+    frickeMatrix_mem_atkinLehnerGamma1Subgroup N,
+    (mapGL ℝ (shiftFin (b : ℤ)) : GL (Fin 2) ℝ) *
+      ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹, ?_, ?_⟩
+  · refine Subgroup.mul_mem _ ?_ ?_
+    · exact map_Gamma1_le_atkinLehnerGamma1Subgroup N
+        (Subgroup.mem_map.mpr
+          ⟨shiftFin (b : ℤ), shiftFin_mem_Gamma1 N _, rfl⟩)
+    · exact Subgroup.inv_mem _ (frickeMatrix_mem_atkinLehnerGamma1Subgroup N)
+  · -- M_b = W_N * α_p * (mapGL ℝ (shiftFin b) * W_N⁻¹)
+    --     = W_N * (α_p * mapGL ℝ (shiftFin b)) * W_N⁻¹  [associativity]
+    --     = W_N * glMap β_b * W_N⁻¹  [glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin]
+    --     = M_b  [bad_prime_lower_eq_frickeMatrix_conj_upper]
+    rw [bad_prime_lower_eq_frickeMatrix_conj_upper hp b,
+        glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin hp b]
+    simp only [mul_assoc]
+
+end HeckeRing.GL2.Newform

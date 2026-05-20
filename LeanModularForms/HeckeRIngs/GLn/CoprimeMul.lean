@@ -794,7 +794,9 @@ private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : �
     have h_lhs_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
         (i₁.out : GL (Fin n) ℚ) * δ_a' =
         h₂a⁻¹ * ((diagMat n a)⁻¹ * (σ' : GL (Fin n) ℚ) * diagMat n a) * h₂a := by
-      sorry -- group algebra: unfold set bindings and rewrite
+      have hδa_sub : δ_a' = h₁a * diagMat n a * h₂a := hδ_a_def.trans hδa_eq
+      rw [hσ']; conv_lhs => rw [hδa_sub]
+      group
     obtain ⟨F_pre, hF_pre⟩ := show (j₂.out : GL (Fin n) ℚ) * h₁b ∈ SLnZ_subgroup n from
       show _ ∈ H from H.mul_mem (SetLike.coe_mem j₂.out) hh₁b
     obtain ⟨G_pre, hG_pre⟩ := show h₂b * κ * h₂b⁻¹ ∈ SLnZ_subgroup n from
@@ -805,7 +807,9 @@ private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : �
         (j₁.out : GL (Fin n) ℚ)⁻¹ =
         (F_pre : GL (Fin n) ℚ) * diagMat n b * (G_pre : GL (Fin n) ℚ) *
           (diagMat n b)⁻¹ * (E_pre : GL (Fin n) ℚ) := by
-      sorry -- group algebra: unfold set bindings and rewrite
+      have hδb_sub : δ_b' = h₁b * diagMat n b * h₂b := hδ_b_def.trans hδb_eq
+      rw [hF_pre, hG_pre, hE_pre]; conv_lhs => rw [hδb_sub]
+      group
     obtain ⟨FF, hFF⟩ := show h₂a * (F_pre : GL (Fin n) ℚ) ∈ SLnZ_subgroup n from
       show _ ∈ H from H.mul_mem hh₂a (coe_mem_SLnZ n F_pre)
     obtain ⟨EE, hEE⟩ := show (E_pre : GL (Fin n) ℚ) * h₂a⁻¹ ∈ SLnZ_subgroup n from

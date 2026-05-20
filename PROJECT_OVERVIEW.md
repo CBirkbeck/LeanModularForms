@@ -1,256 +1,409 @@
-# Project Overview: HeckeRIngs
+# Project Overview: LeanModularForms-hecke
 
-Generated: 2026-03-23 | Branch: `hecke-ring` | Mathlib: v4.28.0
+Generated: 2026-05-20
 
-## Summary
-- **Files**: 21 (+ 1 re-export module file)
-- **Total declarations**: ~578
-- **Sorries**: 2 (both in `GLn/PolynomialRing.lean`)
-- **maxHeartbeats annotations**: 3 (all in `GL2/HeckeModularForm.lean`: 400k, 400k, 6.4M)
-- **Lines of code**: ~8,400
+## Executive Summary
 
-## Architecture
+LeanModularForms-hecke is a large Lean 4 / mathlib formalization of the Hecke
+algebra and Atkin–Lehner / newform theory for modular forms on `Γ₁(N)`. It
+covers (a) an **abstract Hecke ring construction** (`HeckeRIngs/AbstractHeckeRing/`)
+following Shimura's Chapter 3, (b) **`GL₂`-specific Hecke operators** with the
+multiplicative structure on `T_p`, `T_n`, the diamond action, the σ_p adjoint, the
+Petersson inner product, and the conductor / new‐ vs. old‐form decomposition, plus
+(c) a **`GL_n`-flavoured polynomial-ring scaffold**. The capstone is the recent
+**strong multiplicity one theorem** (axiom-clean, only `propext, Classical.choice,
+Quot.sound`), packaged in `Eigenforms/Newforms.lean` and re-exported with a
+`Γ₀(N)+χ`-style transport layer in `Unified/Downstream.lean`.
+
+Across 144 `.lean` files and ~141K LOC, the project is structurally sound and
+modern in style (no `sorry`s outside ~16 deferred tickets, no manual ε-δ, slash
+actions via mathlib's `SlashAction` etc.). The main improvement axes are
+**ergonomic**: there is a large amount of duplication produced by the Γ₁ / Γ₀ /
+GL-pair surface layering, several `_general` / `_strong` strict generalisations
+that obsolete their predecessors, and a 13 000-line bypassed σ_p Q-permutation
+chain in `AdjointTheory.lean` (T024 DSDoubleCosetTileBridge) that has been
+superseded by the symmetric-form chain.
+
+Top priorities (in descending value/risk ratio):
+**(1)** archive `Prototype.lean`, `uniformcts.lean`, and trim the σ_p T024 dead
+branch (≈ 13 K LOC removed); **(2)** add a `ModularForm.cast` API and `Gamma0MapUnits`
+simp closure to land ~100 line savings in `MainLemma.lean` / `SMOObligations.lean`;
+**(3)** generalise `𝕋 P ℤ` away from `ℤ` to any `CommSemiring`, which cascades
+through `Ring.lean`, `Module.lean`, `Degree.lean`, `Commutativity.lean`,
+`DiagonalCosets.lean`; **(4)** upstream the four `MeasureTheory.IsFundamentalDomain`
+quartet, the four `charDecomp_*` joint-eigenvector lemmas, and the
+`ForMathlib_*` files to mathlib.
+
+## Statistics
+
+- Files: **144** `.lean` files
+- Lines: **~141 000** total LOC
+- Top files by size:
+  - `HeckeRIngs/GL2/AdjointTheory.lean` — 24 608 LOC (≈ 13 K of which is the
+    T024 dead branch)
+  - `HeckeRIngs/GL2/Newforms.lean` — 19 087 LOC
+  - `SMOObligations.lean` — 11 530 LOC
+  - `HeckeRIngs/GL2/BlockBijection.lean` — 9 800 LOC
+  - `HeckeRIngs/GLn/CongruenceHecke.lean` — 6 500 LOC
+- Sorries: **16** (1 in `BlockBijection`, 2 in `Newforms`, 2 in `AdjointTheory`, 3
+  in `FG`, 1 in `Derivative`, 4 in `Projection`, 2 in `PolynomialRing`, 8 in
+  orphan `AbstractHeckeRing/Prototype.lean`, 1 misc — note the Prototype 8 will
+  vanish on deletion, taking the visible count down to ~8)
+- Duplications: **31+ pairs** identified (across 18 sections)
+- Generalization opportunities: **25**
+- API gaps: **72** (17 missing lemmas + 15 missing `@[simp]` + 10 missing
+  instances + 15 API completeness gaps + 15 awkward workarounds)
+- Junk candidates: ~50 declarations + 3 file-level + 1 13 K-line dead branch,
+  total estimated reduction **~14 500 LOC** (≈ 10 % of bulk)
+- Axiom-clean theorems: `strongMultiplicityOne_axiom_clean` ✓
+  (`propext, Classical.choice, Quot.sound`)
+
+## Part 1: Declaration Inventory (Cross-Reference)
+
+Inventory reports live in `/tmp/overview_reports/` (one per file). The 144
+project files break down by directory as:
+
+- **`Modularforms/`** — 69 files. Eisenstein-series, Δ, FG, Petersson, L-function,
+  q-expansion, MLDE, dimension formulas. See `Modularforms_*.md`.
+- **`HeckeRIngs/`** — 69 files split into:
+  - `AbstractHeckeRing/` (9 files) — the polymorphic Hecke ring API
+    (`Basic`, `Multiplication`, `Ring`, `Module`, `Associativity`, `Commutativity`,
+    `Degree`, plus the orphan `Prototype.lean`).
+  - `GL2/` (45 files) — `T_p`, `T_n`, diamond, character spaces, Atkin–Lehner,
+    `AdjointTheory`, `Newforms`, `Unified/` transport layer, `BlockBijection`.
+    See `HeckeRIngs_GL2_*.md`.
+  - `GLn/` (15 files) — diagonal cosets, coprime multiplicativity, congruence Hecke,
+    polynomial ring, projection. See `HeckeRIngs_GLn_*.md`.
+- **`Eigenforms/`** — 6 files (`AtkinLehner`, `AtkinLehnerProjection`,
+  `ConductorTheorem`, `HeckeLemma`, `MainLemma`, `TraceOperator`).
+- **`SMOObligations.lean`** — 1 file (project root); a long M1-…-M8 ticket
+  decomposition of Miyake §4.6's strong multiplicity one descent.
+
+Note: `/tmp/overview_reports/` contains a benign duplicate: both
+`HeckeRIngs_AbstractHeckeRing.md` and `HeckeRIngs_AbstractHeckeRing_root.md`
+inventory the same `LeanModularForms/HeckeRIngs/AbstractHeckeRing.lean` root facade.
+Drop one to bring the count to 144.
+
+## Part 2: Cross-File Dependencies
+
+High-level import graph (top→bottom = high-level → foundation):
 
 ```
-AbstractHeckeRing/   -- Generic Hecke ring for any arithmetic group pair (H, Delta)
-       |
-    GLn/             -- GL_n(Q) with H = SL_n(Z), Delta = pos-det integer matrices
-       |
-    GL2/             -- n=2: multiplication table, Hecke operators on modular forms
+SMOObligations.lean
+   │   (Miyake §4.6 ticket-decomposed multipass)
+   ▼
+Eigenforms/{Newforms, MainLemma, AtkinLehner, ConductorTheorem,
+            HeckeLemma, TraceOperator, AtkinLehnerProjection}
+   │
+   ▼
+HeckeRIngs/GL2/{Unified/Downstream, Newforms (canonical),
+                 AdjointTheory, BlockBijection, LFunction (under Modularforms)}
+   │
+   ▼
+HeckeRIngs/GL2/{HeckeT_p, HeckeT_n, HeckeT_p_Gamma0, HeckeT_p_Gamma1,
+                HeckeT_p_GLpair, HeckeT_p_CharSpace_Comm,
+                HeckeModularForm, HeckeModularForm_Gamma0,
+                FourierHecke, LevelRaise, CharacterDecomp,
+                CharSpaceIso, Gamma1Pair, BadPrimeDoubleCoset,
+                HeckeAction, HeckeActionGeneral, HeckeSlashExplicit,
+                CongruenceIndex, DeltaEigenform}
+   │
+   ▼
+HeckeRIngs/AbstractHeckeRing/{Basic, Multiplication, Ring, Module,
+                              Associativity, Commutativity, Degree}
+   │
+   ▼
+HeckeRIngs/GLn/{Basic, DiagonalCosets, CoprimeMul, PolynomialRing,
+                CongruenceHecke, ...}
+   │
+   ▼
+Modularforms/{PeterssonLevelN, PeterssonInner, LFunction,
+              CharacterDecomp, ConductorTheorem, qExpansion_lems,
+              Delta, EisensteinBase, Derivative, FG, DimensionFormulas,
+              SerreDerivativeSlash, AtImInfty, ForMathlib_*,
+              upperhalfplane, eta, summable_lems, tendstolems}
+   │
+   ▼
+mathlib (Modular forms, GL₂, Slash, Fundamental domain, Periodic, qParam,
+         Module.End.maxGenEigenspace, …)
 ```
 
-## Import Graph
+Highest-fan-in consumer relationships:
 
-```
-AbstractHeckeRing/Basic
-  <- Multiplication <- Module <- Associativity <- Ring <- {Commutativity, Degree}
+- `HeckeT_p_Gamma0_Bridge.lean` re-exports private helpers from
+  `HeckeT_p_Gamma0.lean` for `AdjointTheory.lean` (three "identical" private
+  lemmas — see Part 4 row §2).
+- `Eigenforms/Newforms.lean` is the canonical entry point for strong
+  multiplicity one; `Unified/Downstream.lean` re-exports it via the
+  `Γ₀(N), χ`-style submodule. Both shapes are needed by downstream proofs.
+- `AdjointTheory.lean` is the largest cross-file fan-out hub: consumed by
+  `Newforms.lean` (σ_p adjoint), `PeterssonLevelN.lean`, `LFunction.lean`,
+  `BlockBijection.lean`.
 
-GLn/Basic <- DiagonalCosets <- {CosetDecomposition, CoprimeMul, TransposeAntiInvolution}
-  CoprimeMul <- {Degree (via CosetDecomposition + CongruenceIndex), PrimeDecomposition}
-  PrimeDecomposition <- PolynomialRing
-  TransposeAntiInvolution uses AbstractHeckeRing/Commutativity
+## Part 3: Mathlib API Audit
 
-GL2/Basic <- GLn/PrimeDecomposition
-  GL2/Basic <- {MultiplicationTable, HeckeAction} <- HeckeModularForm
-```
+Source: `/tmp/overview_reports/PHASE2_mathlib_audit.md`.
+
+**Top issues**
+
+- 9 ergonomic duplicates of mathlib (e.g. `pnat_div_upper`, the seven `ForMathlib_*`
+  + `AtImInfty.lean` + `tendstolems.lean` + `upperhalfplane.lean` + commented-out
+  `uniformcts.lean` cluster, `HeckeCoset_ext_toSet` reduplicated in
+  `Multiplication.lean`, `smulOrbit_map_inj` reduplicated in `Degree.lean`).
+- 6 generalization opportunities (the abstract Hecke ring `𝕋 P ℤ` should be
+  `𝕋 P Z` for any `CommSemiring Z`, `HasDetOne` should be `HasDetPlusMinusOne`,
+  the four `MeasureTheory.IsFundamentalDomain.*` quartet, the four `charDecomp_*`
+  joint-eigenvector lemmas, the `qKerBelow` Artinian stabilisation, the
+  `monoidHomSlashAction` over `GL₂(F) → GL₂(ℝ)` for arbitrary subring `F ≤ ℝ`).
+- 8 hand-rolled patterns with mathlib analogues (`summable_lems.lean`,
+  `tendstolems.lean`, `D₂` cocycle aliases, q-expansion convergence at the cusp,
+  `IsBoundedAtImInfty.neg`, `mapGL_injective` chain, `ZMod.unitOfCoprime` character
+  multiplicativity, `heckeT_p_preserves_cuspFormCharSpace` placeholder stub).
+
+**Top 5 recommendations** (from the audit)
+
+1. Inline / delete the seven scratch / for-mathlib small files
+   (`ForMathlib_UpperHalfPlane`, `ForMathlib_SlashActions`,
+   `ForMathlib_FunctionsBoundedAtInfty`, `AtImInfty`, `tendstolems`,
+   `upperhalfplane`, `uniformcts`) plus `AbstractHeckeRing/Prototype.lean`. Low
+   risk, removes a `sorry`-bearing file.
+2. Replace `IsSupportedOnDvd` by `PowerSeries.expand` (the standard mathlib
+   formalisation of "supported on multiples of `d`"). Medium risk: pervasive in
+   `Newforms.lean`, `MainLemma.lean`, `LevelRaise.lean`.
+3. Upstream the abstract `charDecomp_*` joint-eigenvector lemmas
+   (`CharacterDecomp.lean` lines 76–149). Low risk, pure mathlib PR.
+4. Tag the `MeasureTheory.IsFundamentalDomain.*` quartet for upstream
+   (`PeterssonLevelN.lean` lines 304–490; 60+ references in
+   `AdjointTheory.lean`). Low risk.
+5. Generalise `𝕋 P Z` away from `ℤ`. Medium-to-high risk but mechanical —
+   `(Z : Type*) [CommSemiring Z]` in place of `ℤ` throughout `AbstractHeckeRing`.
+
+## Part 4: Moral Duplications
+
+Source: `/tmp/overview_reports/PHASE2_duplication.md`. 31+ pairs identified across
+18 sections; top 15 verdict rows:
+
+| Pair | Verdict |
+|------|---------|
+| `pnat_div_upper` (`upperhalfplane.lean:13`) vs (`SummableLemmas/Basic.lean:54`) | UNIFY |
+| `pos_nat_div_upper` (same two files) | UNIFY |
+| `smulOrbit_map_inj` (`Degree.lean:37`, private) vs `smulOrbit_map_injective` (`Associativity.lean:13`, private) | UNIFY — promote to non-private once |
+| `pSupportedProjection` (new `AtkinLehnerProjection.lean:15`) vs older copies in `AtkinLehner.lean:1040` and `TraceOperator.lean:447` | DELETE_OLDER |
+| `miyake_V_p_descend_identity` vs `_with_char` (SMOObligations) | DELETE_OLDER |
+| `miyake_4_6_7_squarefree_decomp` vs `_with_lower_level` (SMOObligations) | DELETE_OLDER — 692 LOC |
+| `descendExtraGamma_spec'` vs `descendExtraGamma_spec` (private, both in SMOObligations) | UNIFY |
+| `cuspForm_restrictSubgroup_mem_cuspFormCharSpace` (SMOObligations, private) vs `restrictSubgroup_mem_modFormCharSpace` (MainLemma) | DELETE_WRAPPER |
+| `adj_diag_1p_eq_T_p_lower_bridge` (`HeckeT_p_Gamma0_Bridge.lean`) vs `adj_diag_1p_eq_T_p_lower` (`HeckeT_p_Gamma0.lean`, private) | UNIFY — promote private |
+| `adj_rep_mem_D_p_Gamma0_bridge` vs `adj_rep_mem_D_p_Gamma0` (same files, both private) | UNIFY |
+| `GL_adjugate_mem_D_p_Gamma0_bridge` vs `GL_adjugate_mem_toSet_Gamma0` (same files, private) | UNIFY |
+| `doubleCoset_eq_of_mem'` (`GL2/Basic.lean:75`, private) vs (`GLn/CoprimeMul.lean:80`, private) vs `HeckeCoset.doubleCoset_eq_of_mem` (`AbstractHeckeRing/Basic.lean:161`) | UNIFY — both private should call abstract |
+| `pSupportedProjection_apply` / `_zero` (older vs newer copies) | DELETE_OLDER |
+| `Prototype.lean` entire file vs corresponding `Basic.lean`/`Ring.lean` decls | DELETE — design draft, 273 LOC, 8 sorries |
+| Inventory metadata: `HeckeRIngs_AbstractHeckeRing.md` vs `HeckeRIngs_AbstractHeckeRing_root.md` are byte-identical | DELETE_OLDER (one of the reports) |
+
+**KEEP_BOTH** pairs (Γ₀ / Γ₁ / GL-pair surface layering) make up the rest of the
+duplication report; these are by design (callers need the subgroup-specific
+surface) and are candidates for a future polymorphic-over-`H ≤ GL_pair` refactor,
+not for deletion.
+
+## Part 5: Generalization Opportunities
+
+Source: `/tmp/overview_reports/PHASE2_generalization.md`. 25 candidates. Top 10
+ordered by payoff / risk:
+
+| # | Candidate | Difficulty |
+|---|-----------|-----------|
+| 1 | `𝕋 P Z` for any `CommSemiring Z` (cascades into 2, 3, 17, 22) | Medium |
+| 6 | `FiniteTileFundamentalDomain` — promote to mathlib | Low |
+| 7 | `IsFundamentalDomain.subgroup_iUnion_out_smul` quartet — promote to mathlib | Low |
+| 11 | `charSpace_directSum` over any finite-group representation (the abstract section is already polymorphic) | Low |
+| 2 | `deg : 𝕋 P R →+* R` for any `CommRing R` (falls out of #1) | Low |
+| 3 | `T_single_*` API over any `CommSemiring` | Low |
+| 17 | `T_diag_span` over `CommSemiring` (after #1) | Low |
+| 22 | `AntiInvolution`-derived `CommRing` over any coefficient ring (after #1) | Low |
+| 13 | `lCoeff`/`lSeries`/abscissa bounds over arbitrary `[Γ.IsArithmetic]` | Low |
+| 4 | `peterssonInner` for any `[Γ.IsArithmetic]` (`SL(2,ℤ)` specialisation removable) | Medium |
+
+Higher-difficulty candidates (not in the top 10):
+- `levelRaise` over arbitrary `GL₂⁺(ℝ)` commensurator elements — High;
+- `Eigenform` over arbitrary `Γ` with a `HeckeAction` typeclass — High;
+- Level-`N` closed-form dimension formulas — High (open development).
+
+## Part 6: API Improvements
+
+Source: `/tmp/overview_reports/PHASE2_api_improvements.md`. 72 distinct items.
+Top 15:
+
+**Missing lemmas (8)**
+
+1. `ModularForm.cast` API to replace the 8 private cast lemmas in
+   `MainLemma.lean:1455-1965` (affects 25+ proofs in `MainLemma`,
+   `SMOObligations`).
+2. `Gamma0MapUnits_{one,mul,inv,val}` as `@[simp]` (30+ inline `Units.ext`
+   rituals across `HeckeT_n`, `AdjointTheory`, `MainLemma`, `SMOObligations`).
+3. `qExpansion_{add,sub,neg,smul}_Gamma1` wrappers that elide the
+   `strictPeriods_Gamma1` witness boilerplate (30+ sites).
+4. `heckeT_p_divN_apply` and `heckeT_p_all_apply_{coprime,not_coprime}`
+   one-shot apply lemmas (30+ unfolding sites).
+5. `coe_diamondOpCusp_eq_of_Gamma0MapUnits` abstract bridge — the 4 σ_p
+   slash-as-diamond variants in `AdjointTheory.lean:429-582` become 1-liners
+   (≈ 80 lines saved).
+6. `IsCusp.smul_glMap` — recurring 20-line proof in `HeckeT_n.lean:131`,
+   `AdjointTheory.lean:74-93`, `SMOObligations.lean:4360`.
+7. `qExpansion_restrictSubgroup` as `@[simp]` (6 inline `change … ; rfl` in
+   `MainLemma`).
+8. `slash_neg_one_odd` companion for odd weights (`ForMathlib_SlashActions`).
+
+**Missing `@[simp]` tags (4)**
+
+9. `mapGL_coe_matrix` / `glMap_coe_matrix` (used inline 50+ times across all
+   GL2 files).
+10. `IsSupportedOnDvd.{add,sub,neg,smul,one}` (only `.zero` is tagged).
+11. `peterssonAdj_peterssonAdj`, `peterssonAdj_det`, `peterssonAdj_coe`
+    (involution + matrix-level equations).
+12. `descendCosetCount_{pos, of_p_sq_dvd, of_not_p_sq_dvd}` (unfolded inline
+    30+ times in `SMOObligations.lean`).
+
+**Missing instances (3)**
+
+13. `@[fun_prop]` on `MDifferentiable_D₂`, `F_holo`, `G_holo`, `L₁₀_holo`,
+    `MDifferentiable_div` (composition friendliness).
+14. `(Gamma1 N).map (mapGL ℝ)).IsArithmetic` — verify it is inferrable;
+    otherwise expose explicitly.
+15. `sum_slash` (`HeckeT_p.lean:163`) vs `sum_slash'` (`HeckeT_n.lean:86`,
+    private): consolidate to the canonical public form.
+
+## Part 7: Junk / Removable
+
+Source: `/tmp/overview_reports/PHASE2_junk.md`. ~50 declarations + 3 file-level
++ 1 13 K-line dead branch. Total estimated reduction: ~14 500 LOC.
+
+**Top items by category:**
+
+- **A. Unused private/public helpers (~280 LOC)**
+  - `T_p_lower_mul_upper`, `T_p_upper_mul_lower`, `crt_sum_swap`
+    (`HeckeT_n.lean:622-700`)
+  - `multipass_{int_castRingHom_unique, d_succ_eq_descendCosetCount,
+    moebius_fin_p_well_defined, alpha_integer_entries_p_sq_dvd_N,
+    descendExtraGamma_inverse, slash_eq_of_diamond_eq, slashSumOp,
+    coprime_filter_extends_dvd}` (SMOObligations, 11 declarations)
+  - `descendCosetList_orbit_identity` (SMOObligations:4386, 33 LOC)
+  - `descendCosetList_moebius_inj` (SMOObligations:2644, 44 LOC)
+  - `T_pp_eq_T_ad`, `T_ad_one_one`, `T_pp_comm_T_elem` (GL2/Basic, INVESTIGATE)
+  - 5 unused public lemmas in `HeckeRingHomCharSpace_General.lean` (~70 LOC)
+
+- **B. Wrappers around a single mathlib call**
+  - `multipass_int_castRingHom_unique` is `Subsingleton.elim`
+  - `mem_coprimeToN` is `Iff.rfl`
+  - `heckeRingHomCharSpaceOne_apply` is `rfl`
+
+- **D. Superseded by newer versions (~840 LOC)**
+  - `miyake_4_6_7_squarefree_decomp` (692 LOC, superseded by `_with_lower_level`)
+  - `miyake_V_p_descend_identity` (146 LOC, superseded by `_with_char`)
+
+- **E. T024 dead branch (~13 000 LOC)**
+  - `AdjointTheory.lean:9913-22929` — DSDoubleCosetTileBridge: the 14-layer
+    scaffold (TileFormIntegralResidual / SigmaQPermResidual blocker
+    abstractions, branch-by-branch reductions, FD-shift exchange variants,
+    HeckeFD-swap residual chain, iUnion residuals, two-tile-shift residuals,
+    two-FD-slash-exchanges, per-tile-balances, per-q-fd-balances) is now
+    **bypassed by the symmetric-form chain** which short-circuits through
+    `petN_heckeT_p_adjoint_standard_form_from_petN_symmetric_form`. Largest
+    single LOC reduction in the project.
+
+- **F. Commented-out / dead-variable cleanup (~150 LOC)**
+  - `uniformcts.lean` — entire file commented out (79 LOC), DELETE FILE.
+  - `logDeriv_lems.lean:27-93` — 67-line commented-out block, REMOVE.
+  - `EisensteinBase.lean:82, 667-670` — dead `variable` declarations.
+  - `ResToImagAxis.lean` — unused `_hc`, `_hn₀` hypotheses.
+  - `SMOObligations.lean` — 11 `linter.unusedSimpArgs false in` opt-outs to
+    audit.
+
+- **H. Whole files for full deletion (~620 LOC)**
+  - `AbstractHeckeRing/Prototype.lean` (273 LOC, 8 sorries, not imported)
+  - `uniformcts.lean` (79 LOC, commented out)
+  - `HeckeSlashExplicit.lean` (240 LOC, INVESTIGATE — interface/checkpoint?)
 
 ---
 
-## AbstractHeckeRing/ (7 files, ~218 decls, ~2,872 lines)
-
-### Basic.lean (291 lines, 46 decls)
-
-Core structures and double-coset infrastructure.
-
-- `struct ArithmeticGroupPair` -- Hecke pair (H, Delta) with H <= Delta <= commensurator(H)
-- `struct T'` -- A double coset HgH with g in Delta
-- `struct M` -- A left coset gH with g in Delta
-- `def T'_rep` -- Chosen Delta-representative
-- `def T_mk / M_mk` -- Constructors
-- `def T_one / M_one` -- Identity cosets
-- `def T / M_type` -- Hecke ring/module types (Finsupp to Z)
-- `abbrev decompQuot` -- H/(H cap gHg^-1) indexing left cosets in a double coset
-- Key API: `T'_ext`, `doubleCoset_eq_iUnion_leftCosets`, `doubleCoset_mul_eq_iUnion_doubleCoset`
-
-### Multiplication.lean (501 lines, 36 decls)
-
-Hecke multiplication via structure constants.
-
-- `def mulMap` -- Maps (i,j) pair to product double coset
-- `def m'` -- Shimura's multiplicity: Nat.card of pairs giving target coset
-- `def mulSupport` -- Finset of double cosets in D1*D2
-- `def m` -- Multiplication Finsupp
-- `instance Mul (T P Z)` -- Convolution multiplication
-- `abbrev T_single / M_single` -- Basis elements
-- Key API: `m'_pos_of_mem`, `m'_eq_zero_of_nmem_mulSupport`, `m'_eq_one_of_le_one_and_pos`, `decompQuot_coset_diff`
-
-### Module.lean (619 lines, 38 decls)
-
-Left-coset module action and faithfulness.
-
-- `def smulOrbit` -- Orbit of a left coset under double coset action
-- `instance SMul (T P Z) (M P Z)` -- Module action
-- `instance FaithfulSMul` -- Distinct ring elements act differently
-- Key API: `smul_eq_sum`, `single_smul_single`, `smulOrbit_disjoint_of_ne`
-
-### Associativity.lean (697 lines, ~15 decls)
-
-Proves the module action is associative (Shimura Prop 3.4).
-
-- `lemma m'_uniform` -- Multiplicity is uniform across coset reps (115 lines)
-- `instance IsScalarTower` -- x . (y . z) = (y * x) . z
-
-### Ring.lean (158 lines, 31 decls)
-
-Ring structure and public API.
-
-- `lemma T_mul_assoc` -- Via faithfulness + IsScalarTower
-- `instance Ring (T P Z)` -- Full ring structure
-- API: `T_single_zero/add/neg/sub/smul`, `T_single_mul_T_single`, `T.induction_on/linear`
-
-### Degree.lean (195 lines, 24 decls)
-
-Degree ring homomorphism (Shimura Prop 3.3).
-
-- `def T'_deg` -- [H : H cap gHg^-1]
-- `def deg` -- Ring hom T P Z ->+* Z
-- Key: `T'_deg_pos`, `smulOrbit_card`, `deg_fun_mul`
-
-### Commutativity.lean (411 lines, 29 decls)
-
-Commutativity via anti-involutions (Shimura Prop 3.8).
-
-- `struct AntiInvolution` -- Anti-automorphism preserving H, Delta, involutive
-- `def bar / onT'` -- Underlying function and induced action on T'
-- `theorem mul_comm_of_antiInvolution` -- CommRing when iota fixes all double cosets
-- `def instCommRing_of_antiInvolution` -- CommRing instance
-
----
-
-## GLn/ (9 files, ~243 decls, ~5,045 lines)
-
-### Basic.lean (410 lines, 25 decls)
-
-Concrete arithmetic group pair for GL_n(Q).
-
-- `abbrev SLnZ_subgroup` -- SL_n(Z) as subgroup of GL_n(Q)
-- `def HasIntEntries / posDetInt_submonoid` -- Integer entries + positive det
-- `lemma posDetInt_le_commensurator` -- **Shimura Lemma 3.10** (53 lines)
-- `def GL_pair` -- Standard Hecke pair
-- `abbrev HeckeAlgebra` -- T'(GL_pair n) Z
-
-### DiagonalCosets.lean (1,272 lines, 53 decls)
-
-Smith normal form and diagonal representatives.
-
-- `def diagMat / DivChain / T_diag / T_elem` -- Core definitions
-- `theorem exists_diagonal_of_posdet` -- Smith normal form (171 lines)
-- `theorem exists_diagonal_representative` -- Every Delta element has diagonal rep with DivChain
-- `theorem diagonal_representative_unique` -- Elementary divisors are unique
-- `theorem T_diag_span` -- Hecke algebra spanned by T_diag elements
-
-### CosetDecomposition.lean (376 lines, 23 decls)
-
-Upper-triangular coset representatives (Shimura Prop 3.22).
-
-- `def UpperTriRep / upperTriMat / upperTriGL` -- Bounded upper-tri assignments
-- `theorem upperTriGL_mem_doubleCoset` -- Each rep in correct double coset
-- `theorem upperTriMat_distinct_cosets` -- Distinct entries -> distinct cosets (50 lines)
-
-### CongruenceIndex.lean (271 lines, 21 decls)
-
-- `theorem Gamma0_prime_index` -- [SL_2(Z) : Gamma_0(p)] = p + 1
-- `theorem Gamma0_prime_power_index` -- [SL_2(Z) : Gamma_0(p^k)] = p^{k-1}(p+1)
-
-### Degree.lean (565 lines, 24 decls)
-
-- `def gaussianBinom` -- Gaussian binomial (currently unused)
-- `theorem T'_deg_T_diag_two_prime` -- deg(T(p^i,p^{i+k})) = p^{k-1}(p+1) for n=2
-- `theorem T'_deg_T_diag_two_scalar` -- deg(T(c,c)) = 1
-
-### CoprimeMul.lean (1,584 lines, 53 decls) -- Largest file
-
-- `theorem SLnZ_transvec_gen` -- SL_n(Z) = product of transvections
-- `lemma SLnZ_CRT_decomposition` -- CRT for SL_n
-- `theorem T_diag_mul_coprime` -- **Shimura Prop 3.16** (156 lines)
-- `theorem T_diag_scalar_mul` -- **Shimura Prop 3.17**
-
-### TransposeAntiInvolution.lean (121 lines, 11 decls)
-
-- `def GL_transposeEquiv / GL_pair_antiInvolution`
-- `lemma GL_pair_onT'_eq` -- Transpose fixes every double coset
-- `instance instCommRing_HeckeAlgebra` -- **Shimura Prop 3.8 for GL_n**
-
-### PrimeDecomposition.lean (292 lines, 20 decls)
-
-- `def ppowDiag / pComponent / removePrime / R_p`
-- `theorem T_elem_split_prime` -- Factor into p-power and p-free parts
-- `theorem HeckeAlgebra_generated_by_R_p` -- Full algebra = join of all R_p
-
-### PolynomialRing.lean (154 lines, 13 decls) -- **2 SORRIES**
-
-- `def T_gen / evalHom` -- Generators and evaluation map
-- `theorem T_gen_generates_R_p` -- **SORRY** (surjectivity)
-- `def R_p_isPolynomialRing` -- **SORRY** (Shimura Thm 3.20: R_p ~ Z[X_1,...,X_n])
-
----
-
-## GL2/ (4 files, ~117 decls, ~2,692 lines)
-
-### Basic.lean (419 lines, 22 decls)
-
-- `def T_ad / T_pp / T_sum` -- GL_2 Hecke notation
-- `theorem T_elem_mul_scalar` -- T(b) * T(c,...,c) = T(bc)
-- `lemma T_pp_comm_T_elem / T_pp_pow` -- Diamond operator algebra
-
-### MultiplicationTable.lean (1,540 lines, 48 decls)
-
-Shimura 3.24 theorems:
-
-- `theorem thm324_2` -- T(1,p^k) = T(p^k) - diamond*T(p^{k-2})
-- `theorem thm324_5` -- T(p)*T(1,p^k) = T(1,p^{k+1}) + c*T(p,p^k) (62 lines)
-- `theorem T_sum_ppow_recurrence` -- Three-term recurrence (40 lines)
-- `theorem thm324_4` -- **General prime-power product** (92 lines)
-- `theorem T_sum_mul_coprime` -- **Coprime multiplicativity** (41 lines)
-- `theorem thm324_3` -- **General product formula** (46 lines)
-- `theorem thm324_7` -- **deg(T(m)) = sigma_1(m)**
-
-### HeckeAction.lean (386 lines, 34 decls)
-
-- `def heckeSlash` -- Sum over left coset reps of f|[k] tRep(D,i)
-- `lemma heckeSlash_slash_invariant` -- Preserves Gamma-invariance
-- `def heckeSlashInvariant` -- Produces SlashInvariantForm
-
-### HeckeModularForm.lean (347 lines, 13 decls)
-
-- `def heckeOperator` -- T(D) : ModularForm -> ModularForm
-- `def heckeOperatorLinear` -- T(D) as C-linear map
-- `theorem heckeSlash_comp` -- **T(D1)(T(D2)(f)) = (D2*D1)(f)** (54 lines)
-- Note: `set_option maxHeartbeats 6400000` on `heckeSlash_fiber_sum`
-
----
-
-## Consolidation Analysis
-
-### Sorries (blocking completeness)
-
-| Sorry | Location | Description |
-|-------|----------|-------------|
-| `T_gen_generates_R_p` | PolynomialRing:144 | Surjectivity of evaluation hom (hard) |
-| `R_p_isPolynomialRing` | PolynomialRing:150 | R_p ~ Z[X_1,...,X_n] (Shimura Thm 3.20) |
-
-### Duplicate Code
-
-- `intMat_det_cast` appears privately in GLn/Basic:83, CosetDecomposition:150, DiagonalCosets:177 -- extract to shared utility
-
-### Unused Declarations
-
-- `gaussianBinom` (Degree.lean:51) -- defined but never used
-- `T_ad'` (GL2/Basic:84) -- deprecated alias
-
-### Large Proofs (decomposition candidates)
-
-| Proof | File | Lines |
-|-------|------|-------|
-| `exists_diagonal_of_posdet` | DiagonalCosets | 171 |
-| `T_diag_mul_coprime` | CoprimeMul | 156 |
-| `m'_uniform` | Associativity | 115 |
-| `gcd_step_general` | DiagonalCosets | 105 |
-| `T_sum_mul_peel_prime_aux` | MultiplicationTable | 95 |
-| `thm324_4` | MultiplicationTable | 92 |
-
-### Shimura Coverage
-
-| Reference | Status | Location |
-|-----------|--------|----------|
-| Prop 3.3 (degree hom) | Done | AbstractHeckeRing/Degree |
-| Prop 3.4 (associativity) | Done | AbstractHeckeRing/Associativity |
-| Prop 3.8 (commutativity) | Done | Commutativity + GLn/TransposeAntiInvolution |
-| Lemma 3.10 (commensurator) | Done | GLn/Basic |
-| Prop 3.16 (coprime product) | Done | GLn/CoprimeMul |
-| Prop 3.17 (scalar product) | Done | GLn/CoprimeMul |
-| Prop 3.22 (coset decomposition) | Done | GLn/CosetDecomposition |
-| **Thm 3.20 (R_p ~ Z[X_1,...,X_n])** | **SORRY** | GLn/PolynomialRing |
-| Thm 3.24(2-7) | Done | GL2/MultiplicationTable |
-| Hecke operators on modular forms | Done | GL2/HeckeAction + HeckeModularForm |
-| Composition = algebra mult | Done | GL2/HeckeModularForm |
+## Recommended Action Plan
+
+### Priority 1: Quick Wins (can do now, low risk)
+
+1. **Delete `AbstractHeckeRing/Prototype.lean`** (273 LOC, 8 sorries) — design
+   draft superseded by `Basic.lean`/`Ring.lean`, not imported. Removes the
+   only `sorry`-bearing file in the Hecke-ring core.
+2. **Delete `Modularforms/uniformcts.lean`** (79 LOC) — entire file commented
+   out, mathlib has the API.
+3. **Delete superseded `miyake_4_6_7_squarefree_decomp` and
+   `miyake_V_p_descend_identity`** (~840 LOC together, both explicitly marked
+   "unused, superseded by `_with_lower_level`/`_with_char`").
+4. **Delete the 11 unused `multipass_*` helpers and 3 unused `HeckeT_n` lemmas**
+   (~150 LOC). These are explicitly flagged "unused in file".
+5. **Unify the three `_bridge` private re-statements** in
+   `HeckeT_p_Gamma0_Bridge.lean` by promoting the originals in
+   `HeckeT_p_Gamma0.lean` to scoped/public (~30 LOC, eliminates 3 confusing
+   identical pairs).
+6. **Tag missing `@[simp]` lemmas**: `mapGL_coe_matrix`, `Gamma0MapUnits_val`,
+   `IsSupportedOnDvd.{add,sub,neg,smul,one}`, `peterssonAdj_*` (15 simp tags
+   to add).
+7. **Remove the commented-out 67-line block in `logDeriv_lems.lean`** and the
+   dead `variable` declarations in `EisensteinBase.lean` / `ResToImagAxis.lean`.
+
+### Priority 2: API Improvements (significant impact)
+
+1. **`ModularForm.cast` API** — extract the 8 private cast lemmas in
+   `MainLemma.lean:1455-1965` into a public `CastLinearEquiv` + `_apply`,
+   `_add`, `_smul`, `_sum`, `_neg`, `_zero`, `_qExpansion_coeff`,
+   `_mem_modFormCharSpace` (mirrors the existing `castCuspFormLinearEquiv`).
+   Affects 25+ proofs.
+2. **`Gamma0MapUnits` simp closure** — add `_one`, `_mul`, `_inv`, `_val` as
+   `@[simp]`. Removes inline `Units.ext` rituals in 30+ sites.
+3. **`qExpansion_*_Gamma1` wrappers** — wrap the period-1 q-expansion arithmetic
+   to elide the `strictPeriods_Gamma1`-witness boilerplate (5 lines per call ×
+   30 sites = 150 LOC).
+4. **`heckeT_p_divN_apply` and `heckeT_p_all_apply_*` one-shot lemmas** —
+   collapses the recurring 2-step unfolding (30+ sites in `Newforms`,
+   `MainLemma`, `SMOObligations`).
+5. **Tag `@[fun_prop]` on `MDifferentiable_D₂`, `F_holo`, `G_holo`,
+   `L₁₀_holo`, `MDifferentiable_div`** — composition friendliness.
+6. **`coe_diamondOpCusp_eq_of_Gamma0MapUnits`** abstract bridge — the 4 σ_p
+   slash-as-diamond variants in `AdjointTheory.lean:429-582` become 1-liners
+   (~80 LOC saved).
+7. **`IsCusp.smul_glMap` lemma** — promotes a recurring 20-line proof in
+   `HeckeT_n.lean:131`, `AdjointTheory.lean:74-93`, `SMOObligations.lean:4360`
+   to a public 1-liner.
+
+### Priority 3: Generalizations (requires mathematical thought)
+
+1. **`𝕋 P Z` over any `CommSemiring Z`** (cand. #1) — `(Z : Type*)
+   [CommSemiring Z]` in place of `ℤ` throughout `AbstractHeckeRing/{Basic,
+   Multiplication, Ring, Module, Associativity, Commutativity, Degree}.lean`.
+   Cascades into candidates 2, 3, 17, 22 automatically. Mechanical but
+   pervasive. Medium difficulty.
+2. **`peterssonInner` over arbitrary `[Γ.IsArithmetic]`** (cand. #4) — the
+   level-1 specialisation `peterssonInner_definite_levelOne` is the only piece
+   that hardcodes `SL(2,ℤ)`. Removing it via `exists_smul_mem_fd` gives the
+   natural setup for the Atkin–Lehner trace machinery. Medium.
+3. **`charSpace_directSum` over any finite-group representation** (cand. #11)
+   — no proof work needed; just reorganise. The abstract section
+   `CharacterDecomp.lean:67-163` is already polymorphic. Low.
+4. **`IsSupportedOnDvd` over any `Field`** (cand. #19) — purely module-
+   theoretic; opens the door to `PowerSeries.expand` integration (Rec 2 of
+   the mathlib audit). Low.
+
+### Priority 4: Structural Changes (major refactoring)
+
+1. **Excise the T024 dead branch** (`AdjointTheory.lean:9913-22929`,
+   ~13 000 LOC) — the 14-layer DSDoubleCosetTileBridge scaffold is now
+   bypassed by the symmetric-form chain. Largest single LOC reduction in the
+   project, but requires confirming the symmetric-form chain is fully
+   validated (currently 2 open sorries at lines 22929-23334).
+2. **Upstream the four `MeasureTheory.IsFundamentalDomain.*` quartet** + the
+   four `charDecomp_*` joint-eigenvector lemmas + the
+   `FiniteTileFundamentalDomain` structure + the four `ForMathlib_*` files
+   to mathlib. Pure migration with no proof work.
+3. **Replace `IsSupportedOnDvd` by `PowerSeries.expand`** (mathlib audit
+   Rec 2) — substantial rewrite across `AtkinLehner.lean`,
+   `Newforms.lean`, `MainLemma.lean`, `LevelRaise.lean`; unlocks
+   `expand_mul_eq_comp` and other ring-hom rules.

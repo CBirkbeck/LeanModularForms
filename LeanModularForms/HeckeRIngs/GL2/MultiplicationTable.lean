@@ -174,7 +174,7 @@ private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (F
       rw [show u * t * ↑(a 0) = u * (↑(a 0) * t) from by ring, ← ht]; exact huv⟩
     : IsCoprime (↑(a 0) : ℤ) (S_ℤ 1 0)).dvd_of_dvd_mul_right h2
 
-private lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i)
+lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i)
     (g₁ g₂ g₃ g₄ : GL (Fin 2) ℚ) (h1 : g₁.val.det = 1) (h2 : g₂.val.det = (p : ℚ))
     (h3 : g₃.val.det = 1) (h4 : g₄.val.det = (p : ℚ) ^ k)
     (SL_La SL_Ra : Matrix.SpecialLinearGroup (Fin 2) ℤ)
@@ -212,7 +212,7 @@ private lemma mulSupport_pp_dvd_p_aux
   exact first_invariant_dvd_p_of_product p S_mid a ha_pos hdiv L' R' k _hk h_int_5
 
 include hp in
-private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
+lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
     (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a) (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
     (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
       Matrix.SpecialLinearGroup (Fin 2) ℤ)
@@ -244,7 +244,7 @@ private lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
   convert this using 1; group
 
 include hp in
-private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
+lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
     (_ha_pos : ∀ i, 0 < a i) (_hdiv : DivChain 2 a)
     (h_det_prod : a 0 * a 1 = p ^ (k + 1)) (h_dvd_p : a 0 ∣ p) :
     T_diag a = T_diag (![1, p ^ (k + 1)]) ∨
@@ -260,7 +260,7 @@ private lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k) (a : Fin 2 → �
       exact Nat.eq_of_mul_eq_mul_left hp.pos (by rw [h1, pow_succ]; ring)
 
 include hp in
-private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_pair 2))
+lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_pair 2))
     (hA : A ∈ HeckeRing.mulSupport (GL_pair 2) (HeckeCoset.rep (T_diag (![1, p])))
       (HeckeCoset.rep (T_diag (![1, p ^ k])))) :
     A = T_diag (![1, p ^ (k + 1)]) ∨ A = T_diag (![p, p ^ k]) := by
@@ -313,7 +313,7 @@ private lemma D_out1_group_aux {G : Type*} [Group G] (L₁ D₁ R₁ L₂ D₂ R
     1 * (D₁ * D₂) * (R₂ * ((L₂ * D₂ * R₂)⁻¹ * κ₂ * (L₂ * D₂ * R₂))) := by group
 
 include hp in
-private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
+lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag (![1, p ^ (k + 1)]) ∈ HeckeRing.mulSupport (GL_pair 2)
       (HeckeCoset.rep (T_diag (![1, p]))) (HeckeCoset.rep (T_diag (![1, p ^ k]))) := by
   -- Use h₁ = L₁⁻¹, h₂ = R₁⁻¹ * L₂⁻¹ to cancel the SL factors
@@ -340,7 +340,7 @@ private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     (by intro i; fin_cases i <;> simp [pow_pos hp.pos k])]
   congr 2; ext i; fin_cases i <;> simp [Pi.mul_apply, pow_succ, mul_comm]
 
-private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
+lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
     (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
       HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
         (HeckeCoset.rep A) = 0) :

@@ -4,6 +4,10 @@ public import Mathlib.Data.Rat.Star
 public import Mathlib.LinearAlgebra.Dimension.Localization
 public import Mathlib.NumberTheory.ModularForms.LevelOne
 public import LeanModularForms.Modularforms.Eisenstein
+public import LeanModularForms.Modularforms.DimGenCongLevels.Basic
+public import LeanModularForms.Modularforms.DimGenCongLevels.NormReduction
+public import LeanModularForms.Modularforms.DimGenCongLevels.FiniteDimensional
+public import LeanModularForms.Modularforms.DimGenCongLevels.NormTransfer
 
 @[expose] public section
 
@@ -554,6 +558,169 @@ lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Ev
     Nat.floor ((k : ℚ)/ 12) else Nat.floor ((k : ℚ) / 12) + 1 := by
   apply dim_modforms_lvl_one k hk hk2
 
+lemma finiteDimensional_of_subsingleton_aux (V : Type*) [AddCommGroup V] [Module ℂ V]
+    [Subsingleton V] : FiniteDimensional ℂ V := by
+  refine (Module.finite_def).2 ?_
+  simpa [Submodule.eq_bot_of_subsingleton (p := (⊤ : Submodule ℂ V))] using
+    (Submodule.fg_bot : (⊥ : Submodule ℂ V).FG)
+
+lemma finiteDimensional_of_rank_lt_aleph0_aux (V : Type*) [AddCommGroup V] [Module ℂ V]
+    (h : Module.rank ℂ V < Cardinal.aleph0) : FiniteDimensional ℂ V := by
+  haveI : Module.Free ℂ V := by infer_instance
+  simpa using (Module.rank_lt_aleph0_iff (R := ℂ) (M := V)).1 h
+
+/-- Level-one modular forms of odd weight are identically zero, via invariance under `-I`. -/
+lemma ModularForm.levelOne_eq_zero_of_odd_weight {k : ℤ} (hk : Odd k)
+    (f : ModularForm Γ(1) k) : f = 0 := by
+  ext z
+  have h' : f z = -f z := by
+    have h : f z = (-1 : ℂ) ^ k * f z := by
+      simpa [denom, show (-1 : SL(2, ℤ)) • z = z by simp] using
+        (SlashInvariantForm.slash_action_eqn_SL'' (f := f) (γ := (-1 : SL(2, ℤ)))
+          (hγ := CongruenceSubgroup.mem_Gamma_one (-1 : SL(2, ℤ))) z)
+    simpa [hk.neg_one_zpow, neg_one_mul] using h
+  simpa using (CharZero.eq_neg_self_iff (a := f z)).1 h'
+
+lemma finiteDimensional_modularForm_level_one (k : ℤ) :
+    FiniteDimensional ℂ (ModularForm Γ(1) k) := by
+  by_cases hkneg : k < 0
+  · have hr : Module.rank ℂ (ModularForm Γ(1) k) = 0 :=
+      ModularForm.levelOne_neg_weight_rank_zero (k := k) hkneg
+    exact Module.finite_of_rank_eq_zero hr
+  · have hk0le : 0 ≤ k := le_of_not_gt hkneg
+    by_cases hk0 : k = 0
+    · subst hk0
+      refine finiteDimensional_of_rank_lt_aleph0_aux (V := ModularForm Γ(1) (0 : ℤ)) ?_
+      simp [ModularForm.levelOne_weight_zero_rank_one, Cardinal.one_lt_aleph0]
+    · have hkpos : 0 < k := lt_of_le_of_ne hk0le (Ne.symm hk0)
+      rcases Int.even_or_odd k with hk2 | hk2
+      · set kN : ℕ := Int.toNat k
+        have hkNat : (kN : ℤ) = k := by
+          simpa [kN] using (Int.toNat_of_nonneg hk0le)
+        have hk2Nat : Even (Int.toNat k) := by
+          have : Even (kN : ℤ) := by simpa [hkNat, kN] using hk2
+          simpa [kN] using (Int.even_coe_nat kN).1 this
+        by_cases hk2' : k = 2
+        · subst hk2'
+          have hr : Module.rank ℂ (ModularForm Γ(1) (2 : ℤ)) = 0 := by
+            simpa using dim_weight_two
+          refine finiteDimensional_of_rank_lt_aleph0_aux (V := ModularForm Γ(1) (2 : ℤ)) ?_
+          simpa [hr] using (Cardinal.natCast_lt_aleph0 (n := 0))
+        · have hkNat_ge3 : (3 : ℤ) ≤ (Int.toNat k : ℤ) := by
+            grind only [= Int.even_iff]
+          have hr :
+              Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) kN) =
+                if 12 ∣ ((kN : ℤ) - 2) then Nat.floor ((kN : ℚ) / 12) else
+                  Nat.floor ((kN : ℚ) / 12) + 1 := by
+            simpa [kN] using ModularForm.dimension_level_one (k := kN) hkNat_ge3 hk2Nat
+          have hr' :
+              Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) kN) < Cardinal.aleph0 := by
+            by_cases hdiv : 12 ∣ ((kN : ℤ) - 2)
+            · simp [hr, hdiv]
+            · simpa [hr, hdiv] using
+                (Cardinal.add_lt_aleph0
+                  (Cardinal.natCast_lt_aleph0 (n := Nat.floor ((kN : ℚ) / 12)))
+                  Cardinal.one_lt_aleph0)
+          haveI : FiniteDimensional ℂ (ModularForm (CongruenceSubgroup.Gamma 1) (kN : ℤ)) :=
+            finiteDimensional_of_rank_lt_aleph0_aux
+              (V := ModularForm (CongruenceSubgroup.Gamma 1) (kN : ℤ)) hr'
+          haveI : FiniteDimensional ℂ (ModularForm Γ(1) (kN : ℤ)) := by infer_instance
+          exact hkNat ▸ (show FiniteDimensional ℂ (ModularForm Γ(1) (kN : ℤ)) by infer_instance)
+      · have hz : ∀ f : ModularForm Γ(1) k, f = 0 := fun f =>
+          ModularForm.levelOne_eq_zero_of_odd_weight (k := k) hk2 f
+        haveI : Subsingleton (ModularForm Γ(1) k) := subsingleton_of_forall_eq 0 hz
+        exact finiteDimensional_of_subsingleton_aux (V := ModularForm Γ(1) k)
+
+lemma finiteDimensional_modularForm_congr {k : ℤ} {H K : Subgroup (GL (Fin 2) ℝ)}
+    (h : H = K) [H.HasDetOne] [K.HasDetOne]
+    (hH : FiniteDimensional ℂ (ModularForm H k)) :
+    FiniteDimensional ℂ (ModularForm K k) := by
+  cases h; simpa using hH
+
+lemma finiteDimensional_modularForm_SL2Z (k : ℤ) :
+    FiniteDimensional ℂ (ModularForm 𝒮ℒ k) := by
+  let f : SL(2, ℤ) →* GL (Fin 2) ℝ := Matrix.SpecialLinearGroup.mapGL ℝ
+  change FiniteDimensional ℂ (ModularForm f.range k)
+  have hΓ1 : FiniteDimensional ℂ (ModularForm (Subgroup.map f (Γ(1) : Subgroup SL(2, ℤ))) k) := by
+    simpa [f] using (finiteDimensional_modularForm_level_one (k := k))
+  have htop : FiniteDimensional ℂ (ModularForm (Subgroup.map f (⊤ : Subgroup SL(2, ℤ))) k) := by
+    have hΓ : (Γ(1) : Subgroup SL(2, ℤ)) = ⊤ := by
+      simpa using (CongruenceSubgroup.Gamma_one_top : CongruenceSubgroup.Gamma 1 = ⊤)
+    exact finiteDimensional_modularForm_congr (congrArg (Subgroup.map f) hΓ) hΓ1
+  have hrange : f.range = Subgroup.map f (⊤ : Subgroup SL(2, ℤ)) := by
+    simpa [f] using (MonoidHom.range_eq_map f)
+  exact finiteDimensional_modularForm_congr (k := k) hrange.symm htop
+
+open SpherePacking.ModularForms.NormReduction in
 lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.index Γ ≠ 0) :
-    FiniteDimensional ℂ (ModularForm Γ k) := by sorry
---use the norm to turn it into a level one question.
+    FiniteDimensional ℂ (ModularForm Γ k) := by
+  by_cases hkneg : k < 0
+  · exact SpherePacking.ModularForms.finiteDimensional_modularForm_neg_weight Γ hΓ k hkneg
+  · have hk0le : 0 ≤ k := le_of_not_gt hkneg
+    by_cases hk0 : k = 0
+    · subst hk0
+      exact SpherePacking.ModularForms.finiteDimensional_modularForm_weight_zero Γ hΓ
+    · haveI : Γ.FiniteIndex := ⟨hΓ⟩
+      let GΓ : Subgroup (GL (Fin 2) ℝ) := SpherePacking.ModularForms.NormReduction.G Γ
+      let h : ℝ := SpherePacking.ModularForms.NormReduction.cuspWidth (Γ := Γ)
+      have hh : 0 < h := SpherePacking.ModularForms.NormReduction.cuspWidth_pos (Γ := Γ) hΓ
+      have hperΓ : h ∈ GΓ.strictPeriods := by
+        simpa [h] using
+          SpherePacking.ModularForms.NormReduction.cuspWidth_mem_strictPeriods (Γ := Γ)
+      have hperSL : h ∈ (𝒮ℒ : Subgroup (GL (Fin 2) ℝ)).strictPeriods := by
+        simpa [h] using
+          SpherePacking.ModularForms.NormReduction.cuspWidth_mem_strictPeriods_levelOne (Γ := Γ)
+      haveI : GΓ.IsArithmetic :=
+        SpherePacking.ModularForms.NormReduction.instIsArithmetic (Γ := Γ) hΓ
+      haveI : GΓ.IsFiniteRelIndex 𝒮ℒ :=
+        Subgroup.IsArithmetic.isFiniteRelIndexSL
+          (𝒢 := GΓ)
+      let w : ℤ := k * Nat.card (SpherePacking.ModularForms.NormReduction.Q Γ)
+      haveI : FiniteDimensional ℂ (ModularForm 𝒮ℒ w) := by
+        simpa [w] using (finiteDimensional_modularForm_SL2Z (k := w))
+      obtain ⟨N, hNinj⟩ :=
+        SpherePacking.ModularForms.exists_qCoeff_injective
+          (Γ := (𝒮ℒ : Subgroup (GL (Fin 2) ℝ))) (k := w) (h := h) hh hperSL
+      let trunc : ModularForm GΓ k →ₗ[ℂ] (Fin N → ℂ) :=
+      { toFun := fun f => fun n => (qExpansion h f).coeff n
+        map_add' := by
+          intro f g
+          ext n
+          simp [qExpansion_add hh hperΓ f g]
+        map_smul' := by
+          intro a f
+          ext n
+          simp [qExpansion_smul hh hperΓ a f] }
+      have htrunc_inj : Function.Injective trunc := by
+        intro f g hfg
+        have hcoeff : ∀ m < N, (qExpansion h (f - g)).coeff m = 0 := by
+          intro m hm
+          have hsub : trunc (f - g) = 0 := by
+            have hmap : trunc (f - g) = trunc f - trunc g := trunc.map_sub f g
+            have hdiff : trunc f - trunc g = 0 := by simp [hfg]
+            simp [hmap, hdiff]
+          have := congrArg (fun t : Fin N → ℂ => t ⟨m, hm⟩) hsub
+          simpa [trunc] using this
+        have hcoeff_norm : ∀ m < N,
+            (qExpansion h (ModularForm.norm 𝒮ℒ (f - g))).coeff m = 0 := by
+          have qCoeffNorm :=
+            SpherePacking.ModularForms.NormReduction.qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
+              (Γ := Γ) (k := k)
+          intro m hm
+          exact qCoeffNorm (f := (f - g)) (N := N) (n := m) hm hcoeff
+        have hfun :
+            (fun n : Fin N => (qExpansion h (ModularForm.norm 𝒮ℒ (f - g))).coeff n) =
+          fun n : Fin N => (qExpansion h (0 : ModularForm 𝒮ℒ w)).coeff n := by
+          ext n
+          simpa [qExpansion_zero h] using hcoeff_norm (n : ℕ) n.isLt
+        have hnorm : ModularForm.norm 𝒮ℒ (f - g) = (0 : ModularForm 𝒮ℒ w) :=
+          hNinj hfun
+        have : (f - g : ModularForm GΓ k) = 0 := by
+          have := (ModularForm.norm_eq_zero_iff (ℋ := 𝒮ℒ) (f := (f - g)) (k := k))
+          have hf0 :
+              ((f - g : ModularForm GΓ k) : ℍ → ℂ) = 0 :=
+            this.1 (by simpa using hnorm)
+          exact (coe_eq_zero_iff (f - g)).mp hf0
+        simpa [sub_eq_zero] using this
+      haveI : FiniteDimensional ℂ (Fin N → ℂ) := by infer_instance
+      simpa using (FiniteDimensional.of_injective trunc htrunc_inj)
