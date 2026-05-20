@@ -10,18 +10,18 @@ import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.Ste
 /-!
 # PV Infrastructure: Annulus Bounds
 
-Measure-theoretic and analytic bounds on annular regions around
-crossing points, used in the dyadic PV convergence proof.
+Measure-theoretic and analytic bounds on annular regions around crossing points, used in
+the dyadic PV convergence proof.
 
 ## Main Results
 
-* `annulus_t_measure_bound` — t-measure of gamma-annulus
-* `remainder_integral_bound_on_annulus` — remainder integral
-    over annulus is O(epsilon)
-* `annulus_symmDiff_measure_bound` — symmetric difference
-    between gamma-annulus and linear-model annulus
-* `singular_annulus_bound_explicit` — epsilon-independent
-    bound on singular annulus integral
+* `annulus_t_measure_bound`: the parameter `|t - t₀|` is controlled by `ε₁ / ‖L‖` on the
+  gamma-annulus.
+* `remainder_integral_bound_on_annulus`: the remainder integral over the gamma-annulus is
+  `O(ε)`.
+* `shell_vol_le`: volume of a shell where `‖L‖ * |t - t₀|` is `Δ`-close to a threshold `ε`.
+* `annulus_symmDiff_measure_bound`: symmetric difference between the gamma-annulus and the
+  linear-model annulus has measure `O(ε₁²)`.
 -/
 
 open Complex MeasureTheory Set Filter Topology
@@ -60,10 +60,10 @@ private lemma remainder_annulus_zero_of_far {γ : ℝ → ℂ} {a b t₀ : ℝ} 
       exact absurd hcond.1 (not_lt.mpr hε₂_pos.le)
     exact not_lt.mpr
       (annulus_t_measure_bound hL hε₁_pos h_lower
-        (fun s hs hγs => by simp only [min_self]
-                            exact lt_of_lt_of_le (h_localize s hs hγs) (min_le_right _ _))
+        (fun s hs hγs => by
+          simpa only [min_self] using (h_localize s hs hγs).trans_le (min_le_right _ _))
         t ht_in_Icc ht_eq hcond.1 hcond.2) h_far
-  · simp only [hcond, ↓reduceIte]
+  · simp [hcond]
 
 private lemma remainder_annulus_pw_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {C δ₀ δ₁ ε₁ ε₂ : ℝ}
     (hε₂_pos : 0 < ε₂)
@@ -84,11 +84,9 @@ private lemma remainder_annulus_pw_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {C 
     by_cases ht_eq : t = t₀
     · simp only [ht_eq, sub_self, norm_zero] at hcond
       exact absurd hcond.1 (not_lt.mpr hε₂_pos.le)
-    have ht_pos : 0 < |t - t₀| := abs_pos.mpr (sub_ne_zero.mpr ht_eq)
-    exact le_trans (hr_bounded t ht_pos
-      (lt_of_lt_of_le (h_localize t ht_in_Icc hcond.2) (min_le_left _ _)))
-      (le_max_right 0 C)
-  · simp only [hcond, ↓reduceIte, norm_zero, le_max_iff, le_refl, true_or]
+    exact (hr_bounded t (abs_pos.mpr (sub_ne_zero.mpr ht_eq))
+      ((h_localize t ht_in_Icc hcond.2).trans_le (min_le_left _ _))).trans (le_max_right 0 C)
+  · simp [hcond]
 
 lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C δ₀ δ₁ ε₁ ε₂ : ℝ} {L : ℂ}
     (hL : L ≠ 0) (hε₁_pos : 0 < ε₁) (hε₂_pos : 0 < ε₂)
@@ -103,10 +101,8 @@ lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C
   intro r
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
   have hab : a < b := (Set.mem_Ioo.mp hat₀).1.trans_le (Set.mem_Ioo.mp hat₀).2.le
-  have h_loc_δ₁ : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁ := by
-    intro s hs hγs
-    simp only [min_self]
-    exact lt_of_lt_of_le (h_localize s hs hγs) (min_le_right _ _)
+  have h_loc_δ₁ : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < min δ₁ δ₁ := fun s hs hγs => by
+    simpa only [min_self] using (h_localize s hs hγs).trans_le (min_le_right _ _)
   set R := 2 * ε₁ / ‖L‖
   have hR_pos : 0 < R := by positivity
   set Icontain := Set.Icc (t₀ - R) (t₀ + R)
@@ -118,8 +114,7 @@ lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C
   have h_pw_le : ∀ᵐ t ∂volume, t ∈ Set.Ioc a b →
       ‖if ε₂ < ‖γ t - γ t₀‖ ∧ ‖γ t - γ t₀‖ ≤ ε₁
         then r t else 0‖ ≤ g_comp t := by
-    apply Filter.Eventually.of_forall
-    intro t ht
+    refine Filter.Eventually.of_forall fun t ht => ?_
     simp only [g_comp, Set.indicator]
     by_cases ht_in : t ∈ Icontain
     · simp only [ht_in, ↓reduceIte]
@@ -129,10 +124,8 @@ lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C
       have h_far : R < |t - t₀| := by
         simp only [Icontain, Set.mem_Icc, not_and_or, not_le] at ht_in
         rcases ht_in with h | h
-        · rw [abs_of_neg (by linarith)]
-          linarith
-        · rw [abs_of_pos (by linarith)]
-          linarith
+        · rw [abs_of_neg (by linarith)]; linarith
+        · rw [abs_of_pos (by linarith)]; linarith
       rw [remainder_annulus_zero_of_far hL hε₁_pos hε₂_pos h_lower h_loc_δ₁ hab
         t (Set.uIoc_of_le hab.le ▸ ht) h_far, norm_zero]
   calc ‖∫ t in a..b,
@@ -144,53 +137,44 @@ lemma remainder_integral_bound_on_annulus {γ : ℝ → ℂ} {a b t₀ : ℝ} {C
         rw [intervalIntegral.integral_of_le hab.le,
           MeasureTheory.integral_indicator measurableSet_Icc,
           MeasureTheory.setIntegral_const, smul_eq_mul, mul_comm]
-        apply mul_le_mul_of_nonneg_left _ (le_max_left 0 C)
+        refine mul_le_mul_of_nonneg_left ?_ (le_max_left 0 C)
         unfold MeasureTheory.Measure.real
-        apply ENNReal.toReal_le_of_le_ofReal (by positivity)
+        refine ENNReal.toReal_le_of_le_ofReal (by positivity) ?_
         calc (volume.restrict (Set.Ioc a b)) Icontain
             ≤ volume Icontain := MeasureTheory.Measure.restrict_apply_le _ _
           _ = ENNReal.ofReal ((t₀ + R) - (t₀ - R)) := Real.volume_Icc
-          _ = ENNReal.ofReal (4 * ε₁ / ‖L‖) := by
-              simp only [R]
-              ring_nf
+          _ = ENNReal.ofReal (4 * ε₁ / ‖L‖) := by simp only [R]; ring_nf
 
-lemma norm_linear_approx_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} {K₀ δ₀ : ℝ}
+private lemma norm_linear_approx_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} {K₀ δ₀ : ℝ}
     (h_quad : ∀ t, |t - t₀| < δ₀ → ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ K₀ * |t - t₀|^2)
     {t : ℝ} (ht : |t - t₀| < δ₀) :
     abs (‖γ t - γ t₀‖ - ‖L‖ * |t - t₀|) ≤ K₀ * |t - t₀|^2 := by
-  have h2 : |‖γ t - γ t₀‖ - ‖(t - t₀) • L‖| ≤ ‖γ t - γ t₀ - (t - t₀) • L‖ :=
-    abs_norm_sub_norm_le _ _
+  have h2 := abs_norm_sub_norm_le (γ t - γ t₀) ((t - t₀) • L)
   rw [norm_smul (t - t₀) L, mul_comm] at h2
-  exact le_trans h2 (h_quad t ht)
+  exact h2.trans (h_quad t ht)
 
-lemma volume_shell_le {t₀ r₁ r₂ : ℝ} (hr : r₁ ≤ r₂) :
+private lemma volume_shell_le {t₀ r₁ r₂ : ℝ} (hr : r₁ ≤ r₂) :
     volume {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ≤ ENNReal.ofReal (2 * (r₂ - r₁)) := by
   have h_sub : {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂} ⊆
       Set.Ico (t₀ - r₂) (t₀ - r₁) ∪ Set.Ioc (t₀ + r₁) (t₀ + r₂) := by
     intro t ⟨h_lower, h_upper⟩
     by_cases ht : t ≥ t₀
-    · right
-      have habs : |t - t₀| = t - t₀ := abs_of_nonneg (sub_nonneg.mpr ht)
-      rw [habs] at h_lower h_upper
-      exact ⟨by linarith, by linarith⟩
-    · left
-      push Not at ht
-      have habs : |t - t₀| = -(t - t₀) := abs_of_neg (sub_neg.mpr ht)
-      rw [habs] at h_lower h_upper
-      exact ⟨by linarith, by linarith⟩
+    · rw [abs_of_nonneg (sub_nonneg.mpr ht)] at h_lower h_upper
+      exact Or.inr ⟨by linarith, by linarith⟩
+    · push Not at ht
+      rw [abs_of_neg (sub_neg.mpr ht)] at h_lower h_upper
+      exact Or.inl ⟨by linarith, by linarith⟩
   calc volume {t : ℝ | r₁ < |t - t₀| ∧ |t - t₀| ≤ r₂}
       ≤ volume (Set.Ico (t₀ - r₂) (t₀ - r₁) ∪ Set.Ioc (t₀ + r₁) (t₀ + r₂)) :=
         MeasureTheory.measure_mono h_sub
     _ ≤ volume (Set.Ico (t₀ - r₂) (t₀ - r₁)) + volume (Set.Ioc (t₀ + r₁) (t₀ + r₂)) :=
         MeasureTheory.measure_union_le _ _
     _ = ENNReal.ofReal (r₂ - r₁) + ENNReal.ofReal (r₂ - r₁) := by
-        simp only [Real.volume_Ico, Real.volume_Ioc]
-        ring_nf
+        simp only [Real.volume_Ico, Real.volume_Ioc]; ring_nf
     _ = ENNReal.ofReal (2 * (r₂ - r₁)) := by
-        rw [← ENNReal.ofReal_add (by linarith) (by linarith)]
-        ring_nf
+        rw [← ENNReal.ofReal_add (by linarith) (by linarith)]; ring_nf
 
-lemma symmDiff_subset_boundaryLayers {g x e ε₁ ε₂ : ℝ} (h_approx : |g - x| ≤ e)
+private lemma symmDiff_subset_boundaryLayers {g x e ε₁ ε₂ : ℝ} (h_approx : |g - x| ≤ e)
     (h_xor : Xor' (ε₂ < g ∧ g ≤ ε₁) (ε₂ < x ∧ x ≤ ε₁)) :
     |x - ε₂| ≤ e ∨ |x - ε₁| ≤ e := by
   have h_abs := abs_le.mp h_approx
@@ -198,32 +182,13 @@ lemma symmDiff_subset_boundaryLayers {g x e ε₁ ε₂ : ℝ} (h_approx : |g - 
   · by_cases hx_le_ε₂ : x ≤ ε₂
     · exact Or.inl (abs_le.mpr ⟨by linarith, by linarith⟩)
     · push Not at hx_le_ε₂
-      have hx_gt_ε₁ : ε₁ < x := lt_of_not_ge fun h => hnotB ⟨hx_le_ε₂, h⟩
+      have : ε₁ < x := lt_of_not_ge fun h => hnotB ⟨hx_le_ε₂, h⟩
       exact Or.inr (abs_le.mpr ⟨by linarith, by linarith⟩)
   · by_cases hg_le_ε₂ : g ≤ ε₂
     · exact Or.inl (abs_le.mpr ⟨by linarith, by linarith⟩)
     · push Not at hg_le_ε₂
-      have hg_gt_ε₁ : ε₁ < g := lt_of_not_ge fun h => hnotA ⟨hg_le_ε₂, h⟩
+      have : ε₁ < g := lt_of_not_ge fun h => hnotA ⟨hg_le_ε₂, h⟩
       exact Or.inr (abs_le.mpr ⟨by linarith, by linarith⟩)
-
-private lemma tAnnLin_implies_r_le {L_norm r ε₁ : ℝ} (hL_pos : 0 < L_norm)
-    (h_in : L_norm * r ≤ ε₁) :
-    r ≤ ε₁ / L_norm := by
-  rw [le_div_iff₀ hL_pos, mul_comm]
-  exact h_in
-
-private lemma near_threshold_implies_r_in_shell {L_norm r ε K₀ R_max : ℝ} (hL_pos : 0 < L_norm)
-    (hK₀_nonneg : 0 ≤ K₀) (hR_max_nonneg : 0 ≤ R_max) (hr_le : r ≤ R_max) (hr_nonneg : 0 ≤ r)
-    (h_near : |L_norm * r - ε| ≤ K₀ * r^2) :
-    (ε - K₀ * R_max^2) / L_norm ≤ r ∧ r ≤ (ε + K₀ * R_max^2) / L_norm := by
-  have h_abs := abs_le.mp h_near
-  have hr2_le : r^2 ≤ R_max^2 := sq_le_sq' (by linarith) hr_le
-  have hK_r2_le : K₀ * r^2 ≤ K₀ * R_max^2 := mul_le_mul_of_nonneg_left hr2_le hK₀_nonneg
-  refine ⟨?_, ?_⟩
-  · rw [div_le_iff₀ hL_pos]
-    linarith [h_abs.1, mul_comm L_norm r]
-  · rw [le_div_iff₀ hL_pos]
-    linarith [h_abs.2, mul_comm L_norm r]
 
 private lemma shell_vol_le_of_small_eps {t₀ ε Δ L_norm : ℝ}
     (hL_pos : 0 < L_norm) (_hΔ_nonneg : 0 ≤ Δ) (h : ε ≤ Δ) :
@@ -243,12 +208,10 @@ private lemma shell_vol_le_of_small_eps {t₀ ε Δ L_norm : ℝ}
         congr 1
         ext t
         simp only [Set.mem_setOf_eq, Set.mem_Icc, abs_le]
-        constructor <;> intro ⟨h1, h2⟩ <;> constructor <;> linarith
-    _ = ENNReal.ofReal (2 * (ε + Δ) / L_norm) := by
-        rw [Real.volume_Icc]
-        ring_nf
+        constructor <;> intro ⟨h1, h2⟩ <;> exact ⟨by linarith, by linarith⟩
+    _ = ENNReal.ofReal (2 * (ε + Δ) / L_norm) := by rw [Real.volume_Icc]; ring_nf
     _ ≤ ENNReal.ofReal (4 * Δ / L_norm) := by
-        apply ENNReal.ofReal_le_ofReal
+        refine ENNReal.ofReal_le_ofReal ?_
         calc 2 * (ε + Δ) / L_norm ≤ 2 * (2 * Δ) / L_norm :=
               div_le_div_of_nonneg_right (by linarith) hL_pos.le
           _ = 4 * Δ / L_norm := by ring
@@ -260,8 +223,7 @@ private lemma volume_abs_eq_null {t₀ r₁ : ℝ} (hr₁_pos : 0 < r₁) :
     rcases (abs_eq hr₁_pos.le).mp ht with h1 | h1
     · exact Or.inr (by simp; linarith)
     · exact Or.inl (by linarith)
-  exact le_antisymm (le_of_le_of_eq (MeasureTheory.measure_mono h_sub)
-    ((Set.toFinite _).measure_zero volume)) (zero_le _)
+  exact measure_mono_null h_sub ((Set.toFinite _).measure_zero volume)
 
 private lemma shell_vol_le_of_large_eps {t₀ ε Δ L_norm : ℝ}
     (hL_pos : 0 < L_norm) (hΔ_nonneg : 0 ≤ Δ) (h : Δ < ε) :
@@ -300,9 +262,7 @@ private lemma shell_vol_le_of_large_eps {t₀ ε Δ L_norm : ℝ}
     _ = ENNReal.ofReal (4 * Δ / L_norm) := by
         congr 1
         change 2 * (r₂ - r₁) = 4 * Δ / L_norm
-        simp only [r₁, r₂]
-        field_simp
-        ring
+        simp only [r₁, r₂]; field_simp; ring
 
 lemma shell_vol_le {t₀ ε Δ L_norm : ℝ} (hL_pos : 0 < L_norm) (hΔ_nonneg : 0 ≤ Δ)
     (_hε_pos : 0 < ε) :
@@ -328,21 +288,19 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
   have hδ₁_le_δ₀ : δ₁ ≤ δ₀ := min_le_left _ _
   have hδ₁_le_L_over_2K : δ₁ ≤ ‖L‖ / (2 * K₀) :=
     (min_le_right _ _).trans <| by
-      apply div_le_div_of_nonneg_left hL_norm_pos.le (by linarith)
+      refine div_le_div_of_nonneg_left hL_norm_pos.le (by linarith) ?_
       linarith
   let δ := ‖L‖ * δ₁ / 2
-  have hδ_pos : 0 < δ := by
-    simp only [δ]
-    positivity
-  use 32 * K₀, by linarith, δ₁, hδ₁_pos, δ, hδ_pos
+  have hδ_pos : 0 < δ := by simp only [δ]; positivity
+  refine ⟨32 * K₀, by linarith, δ₁, hδ₁_pos, δ, hδ_pos, ?_⟩
   intro ε₁ ε₂ hε₂_pos hε₂_le hε₁_lt γAnn tAnnLin
-  have hε₁_pos : 0 < ε₁ := lt_of_lt_of_le hε₂_pos hε₂_le
+  have hε₁_pos : 0 < ε₁ := hε₂_pos.trans_le hε₂_le
   have hK₀_nonneg : 0 ≤ K₀ := hK₀_pos.le
   have h_lower_bound : ∀ t, |t - t₀| < δ₁ → ‖γ t - γ t₀‖ ≥ ‖L‖ / 2 * |t - t₀| := by
     intro t ht_lt
     have ht_lt_L_over_2K : |t - t₀| < ‖L‖ / (2 * K₀) :=
-      lt_of_lt_of_le ht_lt hδ₁_le_L_over_2K
-    have h_approx := h_quad t (lt_of_lt_of_le ht_lt hδ₁_le_δ₀)
+      ht_lt.trans_le hδ₁_le_L_over_2K
+    have h_approx := h_quad t (ht_lt.trans_le hδ₁_le_δ₀)
     have h_smul_norm : ‖(t - t₀) • L‖ = |t - t₀| * ‖L‖ := norm_smul (t - t₀) L
     have h_tri := abs_le.mp (abs_norm_sub_norm_le (γ t - γ t₀) ((t - t₀) • L))
     have hKt_lt : K₀ * |t - t₀| < ‖L‖ / 2 := by
@@ -361,8 +319,7 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
   let e : ℝ → ℝ := fun t => K₀ * |t - t₀|^2
   let shell₁ := {t : ℝ | |x t - ε₁| ≤ Δ}
   let shell₂ := {t : ℝ | |x t - ε₂| ≤ Δ}
-  have h_subset :
-      symmDiff γAnn tAnnLin ⊆ shell₁ ∪ shell₂ := by
+  have h_subset : symmDiff γAnn tAnnLin ⊆ shell₁ ∪ shell₂ := by
     intro t ht
     rw [Set.mem_symmDiff] at ht
     have hxor : Xor' (t ∈ γAnn) (t ∈ tAnnLin) := ht
@@ -370,15 +327,11 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
       rcases hxor with ⟨ht_γAnn, _⟩ | ⟨ht_tAnn, _⟩
       · exact h_localize_γAnn t ht_γAnn
       · exact h_localize_tAnnLin t ht_tAnn
-    have ht_lt_δ₀ : |t - t₀| < δ₀ :=
-      lt_of_lt_of_le ht_localized (min_le_left _ _)
+    have ht_lt_δ₀ : |t - t₀| < δ₀ := ht_localized.trans_le (min_le_left _ _)
     have h_gx_bound : |g t - x t| ≤ e t := by
       convert norm_linear_approx_bound h_quad ht_lt_δ₀ using 2
     have ht_Icc : t ∈ Set.Icc a b := by
-      rcases hxor with
-        ⟨⟨ht_Icc, _, _, _⟩, _⟩ |
-        ⟨⟨ht_Icc, _, _, _⟩, _⟩ <;>
-        exact ht_Icc
+      rcases hxor with ⟨⟨ht_Icc, _, _, _⟩, _⟩ | ⟨⟨ht_Icc, _, _, _⟩, _⟩ <;> exact ht_Icc
     have hxor' : Xor' (ε₂ < g t ∧ g t ≤ ε₁) (ε₂ < x t ∧ x t ≤ ε₁) := by
       rcases hxor with ⟨⟨_, _, hγ_lo, hγ_hi⟩, hnotB⟩ | ⟨⟨_, _, ht_lo, ht_hi⟩, hnotA⟩
       · exact Or.inl ⟨⟨hγ_lo, hγ_hi⟩,
@@ -390,7 +343,7 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
       rcases hxor with ⟨ht_γAnn, _⟩ | ⟨ht_tAnn, _⟩
       · have h_lb := h_lower_bound t ht_localized
         have ⟨_, _, _, ht_upper⟩ := ht_γAnn
-        have h1 : ‖L‖ / 2 * |t - t₀| ≤ ε₁ := le_trans h_lb ht_upper
+        have h1 : ‖L‖ / 2 * |t - t₀| ≤ ε₁ := h_lb.trans ht_upper
         rw [le_div_iff₀ hL_norm_pos]
         nlinarith [abs_nonneg (t - t₀)]
       · have ⟨_, _, _, ht_upper⟩ := ht_tAnn
@@ -398,12 +351,11 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
         nlinarith [hL_norm_pos.le, abs_nonneg (t - t₀)]
     have he_le_Δ : e t ≤ Δ := by
       simp only [e, Δ, R_max]
-      apply mul_le_mul_of_nonneg_left _ hK₀_nonneg
-      exact sq_le_sq'
-        (by linarith [abs_nonneg (t - t₀)]) hR_bound
+      exact mul_le_mul_of_nonneg_left
+        (sq_le_sq' (by linarith [abs_nonneg (t - t₀)]) hR_bound) hK₀_nonneg
     rcases symmDiff_subset_boundaryLayers h_gx_bound hxor' with h_near₂ | h_near₁
-    · exact Or.inr (le_trans h_near₂ he_le_Δ)
-    · exact Or.inl (le_trans h_near₁ he_le_Δ)
+    · exact Or.inr (h_near₂.trans he_le_Δ)
+    · exact Or.inl (h_near₁.trans he_le_Δ)
   have h_shell₁_vol : volume shell₁ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) :=
     shell_vol_le hL_norm_pos hΔ_nonneg hε₁_pos
   have h_shell₂_vol : volume shell₂ ≤ ENNReal.ofReal (4 * Δ / ‖L‖) :=
@@ -417,8 +369,6 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
         rw [← ENNReal.ofReal_add] <;> positivity
     _ = ENNReal.ofReal (32 * K₀ * ε₁^2 / ‖L‖^3) := by
         congr 1
-        simp only [Δ, R_max]
-        field_simp
-        ring
+        simp only [Δ, R_max]; field_simp; ring
 
 end
