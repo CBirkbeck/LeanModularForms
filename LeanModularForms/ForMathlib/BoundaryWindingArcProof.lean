@@ -28,8 +28,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ### Parameters for the arc -/
-
 /-- Crossing parameter on the arc for the angle `θ₀`:
 `arcT₀(θ₀) = (6·θ₀ - π) / (5π)`. -/
 def arcT₀ (θ₀ : ℝ) : ℝ := (6 * θ₀ - Real.pi) / (5 * Real.pi)
@@ -53,40 +51,35 @@ theorem fdArcAngle_arcT₀ (θ₀ : ℝ) : fdArcAngle (arcT₀ θ₀) = θ₀ :=
   field_simp
   ring
 
-/-! ### Distance formula -/
-
 /-- For `z₀ = exp(i·θ₀)` and `t ∈ (1/5, 3/5]`, the distance is
 `2|sin(5π/12 · (t - arcT₀ θ₀))|`. -/
 theorem arc_dist_eq (H : ℝ) (θ₀ t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ =
       2 * |Real.sin (5 * (t - arcT₀ θ₀) * Real.pi / 12)| := by
-  have h_angle : (fdArcAngle t - θ₀) / 2 = 5 * (t - arcT₀ θ₀) * Real.pi / 12 := by
-    rw [fdArcAngle, arcT₀]
-    field_simp
-    ring
-  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, norm_exp_sub_exp, h_angle]
-
-/-! ### Near bound -/
+  rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, norm_exp_sub_exp,
+    show (fdArcAngle t - θ₀) / 2 = 5 * (t - arcT₀ θ₀) * Real.pi / 12 by
+      rw [fdArcAngle, arcT₀]
+      field_simp
+      ring]
 
 /-- The half-angle absolute value, written in factored form. -/
 private theorem arc_half_angle_abs (θ₀ t : ℝ) :
     |5 * (t - arcT₀ θ₀) * Real.pi / 12| =
       5 * Real.pi / 12 * |t - arcT₀ θ₀| := by
-  have h : 5 * (t - arcT₀ θ₀) * Real.pi / 12 = 5 * Real.pi / 12 * (t - arcT₀ θ₀) := by ring
-  rw [h, abs_mul, abs_of_pos (by positivity)]
+  rw [show 5 * (t - arcT₀ θ₀) * Real.pi / 12 = 5 * Real.pi / 12 * (t - arcT₀ θ₀) by ring,
+    abs_mul, abs_of_pos (by positivity)]
 
 /-- Near bound on the arc: for `|t - t₀| ≤ arcsinDelta(ε)` and `t ∈ (1/5, 3/5]`,
 the distance is `≤ ε`. -/
 theorem arc_near_generic (H : ℝ) {θ₀ ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     {t : ℝ} (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) (ht : |t - arcT₀ θ₀| ≤ arcsinDelta ε) :
     ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ ≤ ε := by
-  have hpi := Real.pi_pos
   rw [arc_dist_eq H θ₀ t ht1 ht2]
   have hα_le_asin : |5 * (t - arcT₀ θ₀) * Real.pi / 12| ≤ Real.arcsin (ε / 2) := by
     rw [arc_half_angle_abs, ← half_angle_arcsinDelta]
     exact mul_le_mul_of_nonneg_left ht (by positivity)
   have hα_le_pi : |5 * (t - arcT₀ θ₀) * Real.pi / 12| ≤ Real.pi := by
-    linarith [Real.arcsin_le_pi_div_two (ε / 2)]
+    linarith [Real.arcsin_le_pi_div_two (ε / 2), Real.pi_pos]
   rw [Real.abs_sin_eq_sin_abs_of_abs_le_pi hα_le_pi]
   have h_sin_le : Real.sin |5 * (t - arcT₀ θ₀) * Real.pi / 12| ≤ ε / 2 := by
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith)
@@ -95,8 +88,6 @@ theorem arc_near_generic (H : ℝ) {θ₀ ε : ℝ} (hε : 0 < ε) (hε_lt : ε 
       (by linarith [abs_nonneg (5 * (t - arcT₀ θ₀) * Real.pi / 12)])
       (Real.arcsin_le_pi_div_two _) hα_le_asin
   linarith
-
-/-! ### Arc far bound -/
 
 /-- Far bound on the arc: for `t ∈ (1/5, 3/5]` with `arcsinDelta(ε) < |t - t₀|`,
 and assuming `|t - t₀| ≤ 2/5` (which follows from `t, t₀ ∈ [1/5, 3/5]`),
@@ -125,8 +116,6 @@ theorem arc_far_on_arc {H θ₀ ε t : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     exact Real.sin_lt_sin_of_lt_of_le_pi_div_two (by linarith) (by linarith) hα_gt_asin
   linarith
 
-/-! ### Off-arc distance bounds -/
-
 /-- `(exp (↑θ₀ * I)).re = Real.cos θ₀`. -/
 theorem arcZ₀_re_eq (θ₀ : ℝ) : (exp (↑θ₀ * I)).re = Real.cos θ₀ :=
   Complex.exp_ofReal_mul_I_re θ₀
@@ -140,52 +129,22 @@ theorem arcZ₀_abs_re_lt {θ₀ : ℝ} (h_lo : Real.pi / 3 < θ₀) (h_hi : θ�
     |(exp (↑θ₀ * I)).re| < 1/2 := by
   have hpi := Real.pi_pos
   rw [arcZ₀_re_eq, abs_lt]
-  have hθ₀ : θ₀ ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have hpi3 : (Real.pi / 3) ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
-  have h2pi3 : (2 * Real.pi / 3) ∈ Icc (0 : ℝ) Real.pi := ⟨by linarith, by linarith⟩
   refine ⟨?_, ?_⟩
   · have h_cos_lt : Real.cos (2 * Real.pi / 3) < Real.cos θ₀ :=
-      Real.strictAntiOn_cos hθ₀ h2pi3 h_hi
+      Real.cos_lt_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h_hi
     have h_cos_2pi3 : Real.cos (2 * Real.pi / 3) = -1/2 := by
       rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
           Real.cos_pi_sub, Real.cos_pi_div_three]
       norm_num
     linarith
   · have h_cos_lt : Real.cos θ₀ < Real.cos (Real.pi / 3) :=
-      Real.strictAntiOn_cos hpi3 hθ₀ h_lo
+      Real.cos_lt_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h_lo
     rw [Real.cos_pi_div_three] at h_cos_lt
     linarith
 
 /-- For `z₀ = exp(iθ₀)`, `z₀.im ≤ 1`. -/
 theorem arcZ₀_im_le_one (θ₀ : ℝ) : (exp (↑θ₀ * I)).im ≤ 1 := by
   simpa [arcZ₀_im_eq] using Real.sin_le_one θ₀
-
-theorem arcZ₀_im_pos {θ₀ : ℝ} (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3) :
-    0 < (exp (↑θ₀ * I)).im := by
-  rw [arcZ₀_im_eq]
-  have hpi := Real.pi_pos
-  exact Real.sin_pos_of_pos_of_lt_pi (by linarith) (by linarith)
-
-/-- Distance from an arc point `exp(iθ₀)` to seg1 (right vertical). -/
-theorem arc_dist_seg1 {θ₀ : ℝ} (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)
-    {H t : ℝ} (ht : t ≤ 1/5) :
-    1/2 - |(exp (↑θ₀ * I)).re| ≤ ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ :=
-  fdBoundaryFun_seg1_re_dist (arcZ₀_abs_re_lt h_lo h_hi) ht
-
-/-- Distance from an arc point `exp(iθ₀)` to seg4 (left vertical). -/
-theorem arc_dist_seg4 {θ₀ : ℝ} (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)
-    {H t : ℝ} (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
-    1/2 - |(exp (↑θ₀ * I)).re| ≤ ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ :=
-  fdBoundaryFun_seg4_re_dist (arcZ₀_abs_re_lt h_lo h_hi) ht3 ht4
-
-/-- Distance from an arc point `exp(iθ₀)` to seg5 (horizontal). -/
-theorem arc_dist_seg5 {H θ₀ : ℝ} (hH : 1 < H) {t : ℝ} (ht : 4/5 < t) :
-    H - 1 ≤ ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ := by
-  have him := arcZ₀_im_le_one θ₀
-  exact (by linarith : H - 1 ≤ H - (exp (↑θ₀ * I)).im).trans
-    (fdBoundaryFun_seg5_im_dist (by linarith) ht)
-
-/-! ### Arc gap and `arcsinDelta` bound -/
 
 /-- Gap from `t₀` to the arc boundaries `1/5` and `3/5`. Positive when
 `t₀ ∈ (1/5, 3/5) \ {2/5}` (but also at `2/5`). -/
@@ -204,7 +163,6 @@ theorem arcsinDelta_le_three_fifths_eps {ε : ℝ} (hε : 0 < ε) (hε_le : ε �
   unfold arcsinDelta
   have h_jordan : Real.arcsin (ε / 2) ≤ Real.pi / 2 * (ε / 2) :=
     arcsin_le_pi_half_mul (by linarith) (by linarith)
-  have hpi : (0 : ℝ) < Real.pi := Real.pi_pos
   calc 12 / (5 * Real.pi) * Real.arcsin (ε / 2)
       ≤ 12 / (5 * Real.pi) * (Real.pi / 2 * (ε / 2)) :=
         mul_le_mul_of_nonneg_left h_jordan (by positivity)
@@ -220,8 +178,6 @@ theorem arcsinDelta_lt_of_gap {g ε : ℝ} (hg_pos : 0 < g) (hg_le : g ≤ 1/5)
   calc arcsinDelta ε ≤ 3 * ε / 5 := arcsinDelta_le_three_fifths_eps hε hε_le
     _ < 3 * (5 * g / 3) / 5 := by linarith
     _ = g := by ring
-
-/-! ### Threshold -/
 
 /-- Threshold for the arc constructor:
 `min(1/2 - |z₀.re|, H - 1, 1/3, 5*arcGap/3)`. All positive when `θ₀ ∈ (π/3, 2π/3)`
@@ -258,14 +214,9 @@ theorem arcThreshold_lt_gap {H θ₀ ε : ℝ} (h : ε < arcThreshold H θ₀) :
 /-- `arcGap ≤ 1/5` always — the maximum is at `t₀ = 2/5`. -/
 theorem arcGap_le_one_fifth (θ₀ : ℝ) : arcGap θ₀ ≤ 1/5 := by
   unfold arcGap
-  by_cases h : arcT₀ θ₀ ≤ 2/5
-  · calc min (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀)
-        ≤ arcT₀ θ₀ - 1/5 := min_le_left _ _
-      _ ≤ 1/5 := by linarith
-  · push Not at h
-    calc min (arcT₀ θ₀ - 1/5) (3/5 - arcT₀ θ₀)
-        ≤ 3/5 - arcT₀ θ₀ := min_le_right _ _
-      _ ≤ 1/5 := by linarith
+  rcases le_total (arcT₀ θ₀) (2/5) with h | h
+  · exact (min_le_left _ _).trans (by linarith)
+  · exact (min_le_right _ _).trans (by linarith)
 
 /-- For `ε` below the threshold, `arcsinDelta(ε) < arcGap θ₀`. -/
 theorem arcsinDelta_lt_arcGap {H θ₀ ε : ℝ} (h_lo : Real.pi / 3 < θ₀)
@@ -274,31 +225,34 @@ theorem arcsinDelta_lt_arcGap {H θ₀ ε : ℝ} (h_lo : Real.pi / 3 < θ₀)
   arcsinDelta_lt_of_gap (arcGap_pos h_lo h_hi) (arcGap_le_one_fifth θ₀)
     hε (arcThreshold_lt_gap hε_thr)
 
+/-- Both gap bounds: `arcsinDelta ε < arcT₀ θ₀ - 1/5` and `arcsinDelta ε < 3/5 - arcT₀ θ₀`. -/
+theorem arcsinDelta_lt_arcT₀_bounds {H θ₀ ε : ℝ} (h_lo : Real.pi / 3 < θ₀)
+    (h_hi : θ₀ < 2 * Real.pi / 3) (hε : 0 < ε) (hε_thr : ε < arcThreshold H θ₀) :
+    arcsinDelta ε < arcT₀ θ₀ - 1/5 ∧ arcsinDelta ε < 3/5 - arcT₀ θ₀ :=
+  have h := arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr
+  ⟨h.trans_le (min_le_left _ _), h.trans_le (min_le_right _ _)⟩
+
 /-- Combined far bound dispatching over segments. -/
 theorem arc_far_bound {H : ℝ} (hH : 1 < H) {θ₀ : ℝ} (h_lo : Real.pi / 3 < θ₀)
     (h_hi : θ₀ < 2 * Real.pi / 3) {ε : ℝ} (hε_pos : 0 < ε)
     (hε_lt : ε < arcThreshold H θ₀) {t : ℝ} (_ht_mem : t ∈ Icc (0 : ℝ) 1)
     (hδt : arcsinDelta ε < |t - arcT₀ θ₀|) :
     ε < ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ := by
-  have h_eps_lt_third : ε < 1/3 := arcThreshold_lt_third hε_lt
   have h_eps_re : ε < 1/2 - |(exp (↑θ₀ * I)).re| := arcThreshold_lt_re hε_lt
-  have h_eps_top : ε < H - 1 := arcThreshold_lt_top hε_lt
+  have hre := arcZ₀_abs_re_lt h_lo h_hi
   by_cases h1 : t ≤ 1/5
-  · calc ε < 1/2 - |(exp (↑θ₀ * I)).re| := h_eps_re
-      _ ≤ ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ := arc_dist_seg1 h_lo h_hi h1
+  · exact h_eps_re.trans_le (fdBoundaryFun_seg1_re_dist hre h1)
   push Not at h1
   by_cases h2 : t ≤ 3/5
-  · exact arc_far_on_arc hε_pos h_eps_lt_third h1 h2 (arcT₀_gt_one_fifth h_lo).le
-      (arcT₀_lt_three_fifths h_hi).le hδt
+  · exact arc_far_on_arc hε_pos (arcThreshold_lt_third hε_lt) h1 h2
+      (arcT₀_gt_one_fifth h_lo).le (arcT₀_lt_three_fifths h_hi).le hδt
   push Not at h2
   by_cases h3 : t ≤ 4/5
-  · calc ε < 1/2 - |(exp (↑θ₀ * I)).re| := h_eps_re
-      _ ≤ ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ := arc_dist_seg4 h_lo h_hi h2 h3
+  · exact h_eps_re.trans_le (fdBoundaryFun_seg4_re_dist hre h2 h3)
   push Not at h3
-  calc ε < H - 1 := h_eps_top
-    _ ≤ ‖fdBoundaryFun H t - exp (↑θ₀ * I)‖ := arc_dist_seg5 hH h3
-
-/-! ### Main constructor: SmoothBoundaryWindingData on the arc -/
+  have him := arcZ₀_im_le_one θ₀
+  have := fdBoundaryFun_seg5_im_dist (H := H) (z := exp (↑θ₀ * I)) (by linarith) h3
+  linarith [arcThreshold_lt_top hε_lt]
 
 /-- For a smooth arc point `z₀ = exp(iθ₀)` with `θ₀ ∈ (π/3, 2π/3) \ {π/2}`,
 construct `SmoothBoundaryWindingData` from an external `ArcFTCHyp`. -/
@@ -316,33 +270,18 @@ def smoothBoundaryData_arc_of_ftcHyp {H : ℝ} (hH : 1 < H)
   hthresh := arcThreshold_pos hH h_lo h_hi
   hδ_pos := fun ε hε _ => arcsinDelta_pos hε
   hδ_small := fun ε hε hε_thr => by
-    have h_lt_gap : arcsinDelta ε < arcGap θ₀ :=
-      arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr
-    have h_gap_lo : arcGap θ₀ ≤ arcT₀ θ₀ - 1/5 := min_le_left _ _
-    have h_gap_hi : arcGap θ₀ ≤ 3/5 - arcT₀ θ₀ := min_le_right _ _
-    have h_t₀_lo : (1/5 : ℝ) < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
-    have h_t₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
+    obtain ⟨hδ_lo, hδ_hi⟩ := arcsinDelta_lt_arcT₀_bounds h_lo h_hi hε hε_thr
     refine lt_min ?_ ?_
-    · linarith
-    · linarith
+    · linarith [arcT₀_gt_one_fifth h_lo]
+    · linarith [arcT₀_lt_three_fifths h_hi]
   h_far := fun ε hε hε_thr t ht hδt => by
     rw [hγ t ht]
     exact arc_far_bound hH h_lo h_hi hε hε_thr ht hδt
   h_near := fun ε hε hε_thr t ht => by
-    have h_eps_lt_third : ε < 1/3 := arcThreshold_lt_third hε_thr
-    have h_lt_gap : arcsinDelta ε < arcGap θ₀ :=
-      arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr
-    have h_gap_lo : arcGap θ₀ ≤ arcT₀ θ₀ - 1/5 := min_le_left _ _
-    have h_gap_hi : arcGap θ₀ ≤ 3/5 - arcT₀ θ₀ := min_le_right _ _
-    have h_t₀_lo : (1/5 : ℝ) < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
-    have h_t₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
+    obtain ⟨hδ_lo, hδ_hi⟩ := arcsinDelta_lt_arcT₀_bounds h_lo h_hi hε hε_thr
     obtain ⟨h_lo_bound, h_hi_bound⟩ := abs_le.mp ht
-    have h_t_arc_lo : 1/5 < t := by linarith
-    have h_t_arc_hi : t ≤ 3/5 := by linarith
-    have h_t_lo : 0 ≤ t := by linarith
-    have h_t_hi : t ≤ 1 := by linarith
-    rw [hγ t ⟨h_t_lo, h_t_hi⟩]
-    exact arc_near_generic H hε h_eps_lt_third h_t_arc_lo h_t_arc_hi ht
+    rw [hγ t ⟨by linarith, by linarith⟩]
+    exact arc_near_generic H hε (arcThreshold_lt_third hε_thr) (by linarith) (by linarith) ht
   ftcHyp := ftcHyp
 
 end
