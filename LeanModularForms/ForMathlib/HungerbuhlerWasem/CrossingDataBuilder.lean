@@ -1003,7 +1003,7 @@ def AsymmetricSingleCrossingData.ofClosedImmersion_flat_one
     (ftcHyp : AsymmetricArcFTCHyp γ.toPwC1Immersion.toPiecewiseC1Path s t₀
       δ_left δ_right threshold L) :
     AsymmetricSingleCrossingData γ.toPwC1Immersion.toPiecewiseC1Path s :=
-  AsymmetricSingleCrossingData.mk_from_bounds ht₀_Ioo hthresh
+  AsymmetricSingleCrossingData.mkFromBounds ht₀_Ioo hthresh
     hδ_left_pos hδ_right_pos hδ_left_small hδ_right_small
     h_far_left h_far_right h_near_left h_near_right ftcHyp
 
