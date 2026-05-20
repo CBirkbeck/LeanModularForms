@@ -40,27 +40,22 @@ private lemma fd_point_mem_fdBox (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, 
     linarith [(abs_le.mp h_fd.2).1]
   · rw [UpperHalfPlane.coe_re]
     linarith [(abs_le.mp h_fd.2).2]
-  · by_contra h_le
-    have h_le' : (↑p : ℂ).im ≤ 1/2 := le_of_not_gt h_le
-    rw [UpperHalfPlane.coe_im] at h_le'
-    have h_nsq :
-        1 ≤ p.re * p.re + p.im * p.im := by
+  · by_contra! h_le
+    rw [UpperHalfPlane.coe_im] at h_le
+    have h_nsq : 1 ≤ p.re * p.re + p.im * p.im := by
       have := Complex.normSq_apply (↑p : ℂ)
       rw [UpperHalfPlane.coe_re, UpperHalfPlane.coe_im] at this
       linarith [h_fd.1]
     nlinarith [(abs_le.mp h_fd.2).1, (abs_le.mp h_fd.2).2, p.im_pos]
-  · have h_mfcc_eq : modularFormCompOfComplex f (↑p : ℂ) = f p := by
-      simp only [modularFormCompOfComplex, Function.comp_apply]
-      congr 1
-      exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
-    exact h_mfcc_eq ▸ hp_zero
+  · simp only [modularFormCompOfComplex, Function.comp_apply,
+      UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos, hp_zero]
 
 omit f hf in
 private lemma exists_height_above_sqrt3_and_S (S : Finset UpperHalfPlane) :
     ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ 1 ≤ H₀ ∧ ∀ s ∈ S, (s : ℂ).im < H₀ := by
   rcases S.eq_empty_or_nonempty with rfl | hne
   · exact ⟨1, by nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)],
-      le_refl _, fun s hs => absurd hs (Finset.notMem_empty s)⟩
+      le_rfl, fun s hs => absurd hs (Finset.notMem_empty s)⟩
   · refine ⟨max 1 (S.sup' hne (fun s => (s : ℂ).im) + 1), ?_, ?_, ?_⟩
     · calc Real.sqrt 3 / 2 < 1 := by
             nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
@@ -77,16 +72,12 @@ private lemma cpv_residue_side_simplePoles (S : Finset UpperHalfPlane)
     (S_on : Finset ℂ) (hS_on : S_on = sArcOfS S ∪ sVertOfS S) :
     ∀ s ∈ Sbox ∪ S_on, HasSimplePoleAt (logDeriv (modularFormCompOfComplex f)) s := by
   intro s hs
-  rw [Finset.mem_union] at hs
-  rcases hs with h_box | h_on
-  · exact hasSimplePoleAt_logDeriv_at_point f hf s
-      (fdBox_im_pos ((mem_allZerosInFdBox_iff f hf hM_half).mp (hSbox ▸ h_box)).1)
-  · have h_im : 0 < s.im := by
-      rw [hS_on] at h_on
-      rcases Finset.mem_union.mp h_on with h | h
-      · exact sArcOfS_im_pos S s h
-      · exact sVertOfS_im_pos S s h
-    exact hasSimplePoleAt_logDeriv_at_point f hf s h_im
+  refine hasSimplePoleAt_logDeriv_at_point f hf s ?_
+  rcases Finset.mem_union.mp hs with h_box | h_on
+  · exact fdBox_im_pos ((mem_allZerosInFdBox_iff f hf hM_half).mp (hSbox ▸ h_box)).1
+  · rcases Finset.mem_union.mp (hS_on ▸ h_on) with h | h
+    · exact sArcOfS_im_pos S s h
+    · exact sVertOfS_im_pos S s h
 
 include hf in
 private lemma cpv_residue_side_Fp_diffOn (_S : Finset UpperHalfPlane)
@@ -98,19 +89,15 @@ private lemma cpv_residue_side_Fp_diffOn (_S : Finset UpperHalfPlane)
     let Fp := logDerivPatched F S0 hSimplePoles
     DifferentiableOn ℂ Fp (fdBox M \ ↑S0) := by
   intro F Fp z hz
-  have hz_not_S0 : z ∉ (S0 : Finset ℂ) :=
-    fun h => hz.2 (Finset.mem_coe.mpr h)
+  have hz_not_S0 : z ∉ (S0 : Finset ℂ) := fun h => hz.2 (Finset.mem_coe.mpr h)
   have h_ev : Fp =ᶠ[𝓝 z] F := by
-    filter_upwards [S0.finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_S0]
-      with w hw
+    filter_upwards [S0.finite_toSet.isClosed.isOpen_compl.mem_nhds hz_not_S0] with w hw
     exact logDerivPatched_eq_raw_off F S0 hSimplePoles hw
-  have hz_not_zero : modularFormCompOfComplex f z ≠ 0 := by
-    intro h_zero
-    exact hz_not_S0 (hS0 ▸ Finset.mem_union_left S_on
+  have hz_not_zero : modularFormCompOfComplex f z ≠ 0 := fun h_zero =>
+    hz_not_S0 (hS0 ▸ Finset.mem_union_left S_on
       (hSbox ▸ (mem_allZerosInFdBox_iff f hf hM_half).mpr ⟨hz.1, h_zero⟩))
-  exact (h_ev.differentiableAt_iff.mpr
-    (analyticAt_logDeriv_off_zeros' f z (fdBox_im_pos hz.1)
-      hz_not_zero).differentiableAt).differentiableWithinAt
+  exact (h_ev.differentiableAt_iff.mpr (analyticAt_logDeriv_off_zeros' f z
+    (fdBox_im_pos hz.1) hz_not_zero).differentiableAt).differentiableWithinAt
 
 private lemma cpv_residue_side_cpvExists (_S : Finset UpperHalfPlane)
     {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H) (S0 : Finset ℂ)
@@ -123,10 +110,7 @@ private lemma cpv_residue_side_cpvExists (_S : Finset UpperHalfPlane)
       (fun z => residueSimplePole Fp s / (z - s))
       γ_imm.toFun γ_imm.a γ_imm.b s := by
   intro F γ Fp γ_imm s hs
-  rw [show γ_imm.toFun = γ from rfl,
-      show γ_imm.a = (0:ℝ) from rfl,
-      show γ_imm.b = (5:ℝ) from rfl,
-      residue_logDerivPatched_eq_raw F S0 hSimplePoles s hs]
+  rw [residue_logDerivPatched_eq_raw F S0 hSimplePoles s hs]
   by_cases h_on_curve : ∃ t ∈ Icc (0:ℝ) 5, γ t = s
   · exact cpvExists_scale γ 0 5 s _
       (fdBoundary_H_cpv_exists_of_onCurve H hH_sqrt3 s h_on_curve)
