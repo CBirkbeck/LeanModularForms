@@ -57,9 +57,7 @@ theorem finset_discrete_min_sep (S : Finset ℂ) (hS_nonempty : S.Nonempty)
     ∃ δ > 0, ∀ s ∈ S, ∀ s' ∈ S, s ≠ s' → δ ≤ ‖s' - s‖ := by
   by_cases h_singleton : S.card ≤ 1
   · refine ⟨1, one_pos, fun s hs s' hs' hne => ?_⟩
-    have h_card_eq : S.card = 1 := by
-      have := hS_nonempty.card_pos
-      omega
+    have h_card_eq : S.card = 1 := le_antisymm h_singleton hS_nonempty.card_pos
     obtain ⟨a, hS_eq⟩ := Finset.card_eq_one.mp h_card_eq
     rw [hS_eq, Finset.mem_singleton] at hs hs'
     exact absurd (hs.trans hs'.symm) hne
@@ -78,8 +76,7 @@ theorem finset_discrete_min_sep (S : Finset ℂ) (hS_nonempty : S.Nonempty)
       have h_mem := Finset.min'_mem dists h_nonempty
       simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter] at h_mem
       obtain ⟨s, hs, s', ⟨hs', hne⟩, heq⟩ := h_mem
-      have h_pos : 0 < ‖s' - s‖ := hS_discrete s hs s' hs' hne.symm
-      linarith [heq.symm]
+      linarith [hS_discrete s hs s' hs' hne.symm, heq.symm]
     refine ⟨δ, hδ_pos, fun s hs s' hs' hne => ?_⟩
     have h_in : ‖s' - s‖ ∈ dists := by
       simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]
@@ -104,12 +101,9 @@ theorem disjoint_balls_of_small_epsilon (S : Finset ℂ) (ε : ℝ) (δ : ℝ)
     ∀ s ∈ S, ∀ s' ∈ S, s ≠ s' →
       Disjoint (Metric.ball s ε) (Metric.ball s' ε) := by
   intro s hs s' hs' hne
-  apply Metric.ball_disjoint_ball
-  have h_sep' := h_sep s hs s' hs' hne
-  have h2 : δ ≤ dist s s' := by
-    rw [dist_eq_norm, norm_sub_rev]
-    exact h_sep'
-  linarith
+  refine Metric.ball_disjoint_ball ?_
+  rw [dist_comm, dist_eq_norm]
+  linarith [h_sep s hs s' hs' hne]
 
 /-- The multi-point CPV integrand distributes over subtraction pointwise. -/
 theorem cpvIntegrandOn_sub (S : Finset ℂ) (f g : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
@@ -146,9 +140,7 @@ theorem cpvIntegrandOn_const_mul (S : Finset ℂ) (c : ℂ) (f : ℂ → ℂ) (�
     cpvIntegrandOn S (fun z => c * f z) γ ε t =
       c * cpvIntegrandOn S f γ ε t := by
   simp only [cpvIntegrandOn]
-  split_ifs with h
-  · simp
-  · ring
+  split_ifs <;> [simp; ring]
 
 /-- Subtraction of multi-point CPV limits: if `HasCauchyPVOn S f γ L₁` and
 `HasCauchyPVOn S g γ L₂`, then `HasCauchyPVOn S (f - g) γ (L₁ - L₂)`.
@@ -169,13 +161,9 @@ theorem HasCauchyPVOn.sub {S : Finset ℂ} {f g : ℂ → ℂ}
       (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) -
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    have h_pt : (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) =
-        (fun t => cpvIntegrandOn S f γ.toPath.extend ε t -
-          cpvIntegrandOn S g γ.toPath.extend ε t) := by
-      funext t
-      exact cpvIntegrandOn_sub S f g γ.toPath.extend ε t
-    rw [h_pt]
-    exact intervalIntegral.integral_sub (hfi ε hε) (hgi ε hε)
+    rw [← intervalIntegral.integral_sub (hfi ε hε) (hgi ε hε)]
+    exact intervalIntegral.integral_congr
+      (fun t _ => cpvIntegrandOn_sub S f g γ.toPath.extend ε t)
   exact (hf.sub hg).congr' heq.symm
 
 /-- Addition of multi-point CPV limits: if `HasCauchyPVOn S f γ L₁` and
@@ -194,13 +182,9 @@ theorem HasCauchyPVOn.add {S : Finset ℂ} {f g : ℂ → ℂ}
       (fun ε => (∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) +
         (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
     filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    have h_pt : (fun t => cpvIntegrandOn S (fun z => f z + g z) γ.toPath.extend ε t) =
-        (fun t => cpvIntegrandOn S f γ.toPath.extend ε t +
-          cpvIntegrandOn S g γ.toPath.extend ε t) := by
-      funext t
-      exact cpvIntegrandOn_add S f g γ.toPath.extend ε t
-    rw [h_pt]
-    exact intervalIntegral.integral_add (hfi ε hε) (hgi ε hε)
+    rw [← intervalIntegral.integral_add (hfi ε hε) (hgi ε hε)]
+    exact intervalIntegral.integral_congr
+      (fun t _ => cpvIntegrandOn_add S f g γ.toPath.extend ε t)
   exact (hf.add hg).congr' heq.symm
 
 /-- Transfer via vanishing difference: if the multi-point CPV of `f - g` tends to `0`
@@ -219,64 +203,39 @@ theorem hasCauchyPVOn_of_tendsto_sub {S : Finset ℂ} {f g : ℂ → ℂ}
     (hgi : ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrandOn S g γ.toPath.extend ε t) volume 0 1) :
     HasCauchyPVOn S f γ L := by
-  simp only [HasCauchyPVOn] at hfg hg ⊢
-  have heq : (fun ε => ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t) =ᶠ[𝓝[>] 0]
-      (fun ε =>
-        (∫ t in (0 : ℝ)..1,
-          cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) +
-        (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t)) := by
-    filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε)
-    have h_pt : (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) =
-        (fun t => cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t +
-          cpvIntegrandOn S g γ.toPath.extend ε t) := by
-      funext t
-      rw [cpvIntegrandOn_sub]
-      ring
-    rw [h_pt]
-    exact intervalIntegral.integral_add (hfgi ε hε) (hgi ε hε)
-  have h_sum : Tendsto
-      (fun ε =>
-        (∫ t in (0 : ℝ)..1,
-          cpvIntegrandOn S (fun z => f z - g z) γ.toPath.extend ε t) +
-        (∫ t in (0 : ℝ)..1, cpvIntegrandOn S g γ.toPath.extend ε t))
-      (𝓝[>] 0) (𝓝 L) := by
-    convert hfg.add hg using 1
-    simp only [zero_add]
-  exact h_sum.congr' heq.symm
+  have h_combined := HasCauchyPVOn.add hfg hg hfgi hgi
+  simp only [HasCauchyPVOn, zero_add] at h_combined ⊢
+  refine h_combined.congr' ?_
+  filter_upwards with ε
+  refine intervalIntegral.integral_congr fun t _ => ?_
+  simp only [cpvIntegrandOn]
+  split_ifs <;> ring
 
 /-- A `HasCauchyPV` at a single point implies `HasCauchyPVOn` for the singleton set. -/
 theorem hasCauchyPVOn_singleton_of_hasCauchyPV {f : ℂ → ℂ}
     {γ : PiecewiseC1Path x y} {z₀ : ℂ} {L : ℂ}
     (h : HasCauchyPV f γ z₀ L) : HasCauchyPVOn {z₀} f γ L := by
   simp only [HasCauchyPV, HasCauchyPVOn] at h ⊢
-  refine h.congr (fun ε => ?_)
-  apply intervalIntegral.integral_congr
-  intro t _
-  rw [← cpvIntegrand_eq_cpvIntegrandOn_singleton]
+  exact h.congr fun ε => intervalIntegral.integral_congr fun t _ =>
+    cpvIntegrand_eq_cpvIntegrandOn_singleton
 
 /-- A `HasCauchyPVOn` for a singleton set implies `HasCauchyPV` at that point. -/
 theorem hasCauchyPV_of_hasCauchyPVOn_singleton {f : ℂ → ℂ}
     {γ : PiecewiseC1Path x y} {z₀ : ℂ} {L : ℂ}
     (h : HasCauchyPVOn {z₀} f γ L) : HasCauchyPV f γ z₀ L := by
   simp only [HasCauchyPV, HasCauchyPVOn] at h ⊢
-  refine h.congr (fun ε => ?_)
-  apply intervalIntegral.integral_congr
-  intro t _
-  exact cpvIntegrand_eq_cpvIntegrandOn_singleton.symm
+  exact h.congr fun ε => intervalIntegral.integral_congr fun t _ =>
+    cpvIntegrand_eq_cpvIntegrandOn_singleton.symm
 
 /-- The multi-point CPV of the zero function is zero. -/
 theorem HasCauchyPVOn.zero_fun {S : Finset ℂ} {γ : PiecewiseC1Path x y} :
     HasCauchyPVOn S (fun _ => (0 : ℂ)) γ 0 := by
   simp only [HasCauchyPVOn]
-  refine Tendsto.congr (f₁ := fun _ => (0 : ℂ)) ?_ tendsto_const_nhds
-  intro ε
-  have h_zero : (fun t => cpvIntegrandOn S (fun _ : ℂ => (0 : ℂ))
-      γ.toPath.extend ε t) = fun _ => (0 : ℂ) := by
-    funext t
-    simp only [cpvIntegrandOn]
-    split_ifs <;> simp
-  rw [h_zero]
-  exact intervalIntegral.integral_zero.symm
+  refine Tendsto.congr (f₁ := fun _ => (0 : ℂ)) (fun ε => ?_) tendsto_const_nhds
+  rw [← intervalIntegral.integral_zero (a := (0 : ℝ)) (b := 1) (μ := volume) (E := ℂ)]
+  refine intervalIntegral.integral_congr fun t _ => ?_
+  simp only [cpvIntegrandOn]
+  split_ifs <;> simp
 
 /-- Finite sum of `HasCauchyPVOn`: if each `f i` has multi-point CPV `L i` along `γ`
 on `S` (with cutoff integrability), the sum `∑ i ∈ T, f i` has CPV `∑ i ∈ T, L i`. -/
@@ -290,40 +249,20 @@ theorem HasCauchyPVOn.finset_sum {ι : Type*} [DecidableEq ι] (T : Finset ι)
   | empty =>
     simpa [Finset.sum_empty] using HasCauchyPVOn.zero_fun (S := S) (γ := γ)
   | @insert a T' hia ih =>
-    have h_a : HasCauchyPVOn S (f a) γ (L a) := hf a (Finset.mem_insert_self a T')
-    have h_T' : HasCauchyPVOn S (fun z => ∑ i ∈ T', f i z) γ (∑ i ∈ T', L i) :=
-      ih (fun i hi => hf i (Finset.mem_insert_of_mem hi))
-        (fun i hi => hfi i (Finset.mem_insert_of_mem hi))
-    have h_a_int : ∀ ε > 0, IntervalIntegrable
-        (fun t => cpvIntegrandOn S (f a) γ.toPath.extend ε t) volume 0 1 :=
-      hfi a (Finset.mem_insert_self a T')
     have h_T'_int : ∀ ε > 0, IntervalIntegrable
         (fun t => cpvIntegrandOn S (fun z => ∑ i ∈ T', f i z) γ.toPath.extend ε t)
-        volume 0 1 := by
-      intro ε hε
-      have h_pt : (fun t => cpvIntegrandOn S (fun z => ∑ i ∈ T', f i z)
-          γ.toPath.extend ε t) =
-          (fun t => ∑ i ∈ T', cpvIntegrandOn S (f i) γ.toPath.extend ε t) := by
-        funext t
-        simp only [cpvIntegrandOn]
-        split_ifs with h
-        · exact Finset.sum_const_zero.symm
-        · rw [Finset.sum_mul]
-      rw [h_pt]
-      have h_sum_int := IntervalIntegrable.sum T'
+        volume 0 1 := fun ε hε => by
+      refine (IntervalIntegrable.sum T'
         (f := fun i t => cpvIntegrandOn S (f i) γ.toPath.extend ε t)
-        (fun i hi => hfi i (Finset.mem_insert_of_mem hi) ε hε)
-      have h_fn_eq : (∑ i ∈ T', fun t => cpvIntegrandOn S (f i) γ.toPath.extend ε t) =
-          fun t => ∑ i ∈ T', cpvIntegrandOn S (f i) γ.toPath.extend ε t :=
-        funext fun _ => Finset.sum_apply _ _ _
-      rwa [h_fn_eq] at h_sum_int
-    have h_sum : HasCauchyPVOn S (fun z => f a z + ∑ i ∈ T', f i z) γ
-        (L a + ∑ i ∈ T', L i) :=
-      HasCauchyPVOn.add h_a h_T' h_a_int h_T'_int
-    have h_eq : (fun z => ∑ i ∈ insert a T', f i z) =
-        (fun z => f a z + ∑ i ∈ T', f i z) :=
-      funext fun _ => Finset.sum_insert hia
-    rw [h_eq, Finset.sum_insert hia]
-    exact h_sum
+        (fun i hi => hfi i (Finset.mem_insert_of_mem hi) ε hε)).congr fun t _ => ?_
+      simp only [Finset.sum_apply, cpvIntegrandOn]
+      split_ifs with h
+      · exact Finset.sum_const_zero
+      · rw [Finset.sum_mul]
+    simp_rw [Finset.sum_insert hia]
+    refine HasCauchyPVOn.add (hf a (Finset.mem_insert_self a T'))
+      (ih (fun i hi => hf i (Finset.mem_insert_of_mem hi))
+        (fun i hi => hfi i (Finset.mem_insert_of_mem hi)))
+      (hfi a (Finset.mem_insert_self a T')) h_T'_int
 
 end
