@@ -72,8 +72,6 @@ namespace LeanModularForms
 
 variable {x : ℂ}
 
-/-! ## Per-pole CPV witness — singleton-to-multi-pole lift under avoidance -/
-
 /-- **Per-pole CPV from singleton plus avoidance of other poles.** If `s ∈ S`,
 γ has generalized winding number `w` at `s`, and γ avoids the other poles
 `S \ {s}` with positive margin `δ`, then the CPV of `c / (z - s)` over the full
@@ -86,15 +84,12 @@ theorem hasCauchyPVOn_div_sub_of_singleton_and_avoid_others
     (hw : HasGeneralizedWindingNumber γ s w)
     {δ : ℝ} (hδ_pos : 0 < δ)
     (h_avoid : ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s'‖) :
-    HasCauchyPVOn S (fun z => c / (z - s)) γ (2 * ↑Real.pi * I * w * c) := by
-  refine hasCauchyPVOn_extend_of_avoid {s} S
-    (Finset.singleton_subset_iff.mpr hs) _ γ hδ_pos ?_
+    HasCauchyPVOn S (fun z => c / (z - s)) γ (2 * ↑Real.pi * I * w * c) :=
+  hasCauchyPVOn_extend_of_avoid {s} S (Finset.singleton_subset_iff.mpr hs) _ γ hδ_pos
+    (fun s' hs' t ht =>
+      have h := Finset.mem_sdiff.mp hs'
+      h_avoid s' h.1 (Finset.mem_singleton.not.mp h.2) t ht)
     (hasCauchyPVOn_singleton_div_sub hw)
-  intro s' hs' t ht
-  rw [Finset.mem_sdiff, Finset.mem_singleton] at hs'
-  exact h_avoid s' hs'.1 hs'.2 t ht
-
-/-! ## Multi-pole assembly: principal-part-sum CPV -/
 
 /-- **Discharge of `hPV_sing` from per-pole CPV witnesses.** Given for each pole
 `s ∈ S` a per-pole CPV witness (with respect to the full pole set `S`) and
@@ -167,17 +162,22 @@ theorem hPV_sing_of_conditionB
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
           residue f s) :=
-  hPV_sing_of_winding_and_avoid_others S (fun s => residue f s)
-    (fun s => generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s)
+  hPV_sing_of_winding_and_avoid_others S (residue f)
+    (generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path)
     hw hδ_pos h_avoid_pairs h_int
 
-/-! ## Phase 5b — full discharge of residuals under avoidance
+/-- **Bridge: `HasGeneralizedWindingNumber` to its canonical form.** If
+`hw : HasGeneralizedWindingNumber γ s w`, then it also realizes the
+`HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s)` form
+needed by `hPV_sing_of_conditionB`.
 
-For γ that **avoids every pole** in `S`, the three residual hypotheses of
-`hPV_sing_of_conditionB` (`hw`, `h_avoid_pairs`, `h_int`) all discharge
-automatically from the paper structure (`ClosedPwC1Immersion` + avoidance),
-yielding a clean paper-faithful form.
--/
+This bridge is used by both the Phase 5b discharge (avoidance case) and the
+Phase 6.1 discharge (crossing case via `SingleCrossingData`) to canonicalise
+the winding-number value before invoking `hPV_sing_of_conditionB`. -/
+theorem hasGeneralizedWindingNumber_canonical_of_value
+    {γ : PiecewiseC1Path x x} {s w : ℂ} (hw : HasGeneralizedWindingNumber γ s w) :
+    HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s) :=
+  hw.eq ▸ hw
 
 /-- **Integrability of the CPV integrand for a single simple-pole term under
 avoidance.** For `γ` a `ClosedPwC1Immersion` avoiding a single pole `s ∈ S`
@@ -186,7 +186,12 @@ is interval-integrable on `[0, 1]` for every `ε > 0`.
 
 The proof bounds the CPV integrand pointwise by the contour integrand
 `c / (γ(t) - s) · γ'(t)`, which is integrable by
-`intervalIntegrable_pow_inv_mul_deriv_of_avoids` (with `k = 1`). -/
+`intervalIntegrable_pow_inv_mul_deriv_of_avoids` (with `k = 1`).
+
+This is the integrability building block for the full Phase 5b discharge
+(`hPV_sing_of_conditionB_avoids`), where γ avoids every pole in `S` and all
+three residual hypotheses of `hPV_sing_of_conditionB` (`hw`, `h_avoid_pairs`,
+`h_int`) follow from the paper structure alone. -/
 theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids
     (γ : ClosedPwC1Immersion x) (S : Finset ℂ) (s : ℂ) (c : ℂ) {δ : ℝ}
     (hδ_pos : 0 < δ)
@@ -199,11 +204,6 @@ theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids
       (fun t => cpvIntegrandOn S (fun z => c / (z - s))
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend ε t) volume 0 1 := by
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
-  have h_const_mul : IntervalIntegrable
-      (fun t => c *
-        (1 / (γP.toPath.extend t - s) ^ 1 * deriv γP.toPath.extend t))
-      volume 0 1 :=
-    (intervalIntegrable_pow_inv_mul_deriv_of_avoids γP s 1 hδ_pos hδ_bd hLip).const_mul c
   have h_contour_eq :
       (fun t => c *
         (1 / (γP.toPath.extend t - s) ^ 1 * deriv γP.toPath.extend t)) =
@@ -213,7 +213,8 @@ theorem cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids
       pow_one, one_div]
     ring
   exact cpvIntegrandOn_intervalIntegrable_of_contourIntegrand S _ γP ε
-    (h_contour_eq ▸ h_const_mul)
+    (h_contour_eq ▸ (intervalIntegrable_pow_inv_mul_deriv_of_avoids γP s 1
+      hδ_pos hδ_bd hLip).const_mul c)
 
 /-- **Phase 5b — full discharge of `hPV_sing` residuals under avoidance.**
 
@@ -256,50 +257,13 @@ theorem hPV_sing_of_conditionB_avoids
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
   obtain ⟨δ, hδ_pos, hδ_bd⟩ := avoids_finset_delta_bound γP S hγ_avoids
-  have hw : ∀ s ∈ S, HasGeneralizedWindingNumber γP s
-      (generalizedWindingNumber γP s) := fun s hs => by
-    have hgw := hasGeneralizedWindingNumber_of_avoids
-      ⟨δ, hδ_pos, fun t ht => hδ_bd s hs t ht⟩
-    exact hgw.eq ▸ hgw
-  have h_avoid_pairs : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s →
-      ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γP t - s'‖ :=
-    fun _ _ s' hs' _ t ht => hδ_bd s' hs' t ht
-  have h_int : ∀ s ∈ S, ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S (fun z => residue f s / (z - s))
-        γP.toPath.extend ε t) volume 0 1 := fun s hs ε _ =>
-    cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids γ S s (residue f s) hδ_pos
-      (fun t ht => PiecewiseC1Path.extendedPath_eq (γ := γP) ▸ hδ_bd s hs t ht) hLip ε
-  exact hPV_sing_of_winding_and_avoid_others S (fun s => residue f s)
-    (fun s => generalizedWindingNumber γP s) hw hδ_pos h_avoid_pairs h_int
-
-/-! ## Phase 6.1 — `hPV_sing` from `SingleCrossingData` (per-pole crossing CPV)
-
-When γ **crosses** a pole `s ∈ S` at a unique parameter `t₀ ∈ (0, 1)`, the
-generalized winding number `HasGeneralizedWindingNumber γ s w` at the crossing is
-not derivable from avoidance. Instead, it is derived from a `SingleCrossingData γ s`
-witness (in `ForMathlib/SingleCrossing.lean`), which packages:
-
-* the unique crossing parameter `t₀`;
-* far/near bounds (curve is ε-far / ε-close outside / inside a δ-window);
-* integrability of `(γ t - s)⁻¹ * γ'(t)` on each outer segment;
-* a closed-form FTC expression `E(ε)` for the sum of the outer-segment integrals;
-* a limit `E(ε) → L` as `ε → 0⁺`.
-
-The framework lemma `SingleCrossingData.hasWindingNumber` lifts this to
-`HasGeneralizedWindingNumber γ s (L / (2πi))`.
-
-This file's contribution is the **composition with `hPV_sing_of_conditionB`**: given
-per-pole `SingleCrossingData` witnesses, discharge the `hw` hypothesis automatically
-and produce the full `HasCauchyPVOn` conclusion. -/
-
-/-- **Bridge: `HasGeneralizedWindingNumber` to its canonical form.** If
-`hw : HasGeneralizedWindingNumber γ s w`, then it also realizes the
-`HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s)` form
-needed by `hPV_sing_of_conditionB`. -/
-theorem hasGeneralizedWindingNumber_canonical_of_value
-    {γ : PiecewiseC1Path x x} {s w : ℂ} (hw : HasGeneralizedWindingNumber γ s w) :
-    HasGeneralizedWindingNumber γ s (generalizedWindingNumber γ s) :=
-  hw.eq ▸ hw
+  exact hPV_sing_of_winding_and_avoid_others S (residue f) (generalizedWindingNumber γP)
+    (fun s hs => hasGeneralizedWindingNumber_canonical_of_value
+      (hasGeneralizedWindingNumber_of_avoids ⟨δ, hδ_pos, hδ_bd s hs⟩))
+    hδ_pos (fun _ _ s' hs' _ => hδ_bd s' hs')
+    (fun s hs ε _ => cpvIntegrandOn_div_sub_intervalIntegrable_of_avoids γ S s
+      (residue f s) hδ_pos
+      (fun t ht => PiecewiseC1Path.extendedPath_eq (γ := γP) ▸ hδ_bd s hs t ht) hLip ε)
 
 /-- **Bridge: `SingleCrossingData` to the canonical-value form.** If
 `D : SingleCrossingData γ s`, the generalized winding number `w := D.L / (2πi)` is
