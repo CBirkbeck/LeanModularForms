@@ -21,6 +21,8 @@ attribute [local instance] Classical.propDecidable
 
 noncomputable section
 
+/-- The principal value cutoff integral converges as `ε ↘ 0` for a `C²` curve with
+non-vanishing derivative at an interior point `t₀`, using a dyadic Cauchy argument. -/
 lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
     (hat₀ : t₀ ∈ Set.Ioo a b) (hL : L ≠ 0)
     (hγ_C2 : ContDiffAt ℝ 2 γ t₀) (hγ_deriv : deriv γ t₀ = L)
@@ -98,8 +100,7 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
         (div_le_self hδ_pos.le (one_le_pow₀ (by norm_num : (1 : ℝ) ≤ 2)))
       obtain ⟨M, hM_lower, hM_upper⟩ := exists_dyadic_bracket hδ_pos hε_pos' hε_le_δ
       have hM_ge_N : M ≥ N := by
-        by_contra h_lt
-        push Not at h_lt
+        by_contra! h_lt
         have h_div_ge : δ / 2 ^ (M + 1) ≥ δ / 2 ^ N :=
           div_le_div_of_nonneg_left hδ_pos.le (by positivity)
             (pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 2) h_lt)
@@ -116,26 +117,17 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
           _ = K * δ / 2 ^ M := by ring
       by_cases hMN : M = N
       · subst hMN
-        have hKδN_nonneg : 0 ≤ K * δ / 2 ^ N := by positivity
         calc ‖I ε - I (δ / 2 ^ N)‖
             ≤ K * δ / 2 ^ N := h_first_piece
-          _ ≤ K * δ / 2 ^ N + K * δ / 2 ^ N := by linarith
+          _ ≤ K * δ / 2 ^ N + K * δ / 2 ^ N := by linarith [show (0:ℝ) ≤ K * δ / 2 ^ N from by positivity]
           _ = 2 * K * δ / 2 ^ N := by ring
       · have hM_gt_N : M > N := Nat.lt_of_le_of_ne hM_ge_N (Ne.symm hMN)
         have h_tri_inner : ‖I ε - I (δ / 2 ^ N)‖ ≤
-            ‖I ε - I (δ / 2 ^ M)‖ + ‖I (δ / 2 ^ M) - I (δ / 2 ^ N)‖ := by
-          rw [show I ε - I (δ / 2 ^ N) =
-            (I ε - I (δ / 2 ^ M)) + (I (δ / 2 ^ M) - I (δ / 2 ^ N)) from by ring]
-          exact norm_add_le _ _
-        let J : ℕ → ℂ := fun n => I (δ / 2 ^ n)
-        have h_step_J : ∀ n, ‖J (n + 1) - J n‖ ≤ K * δ / 2 ^ n := fun n => by
-          simp only [J]
-          exact h_step n
+            ‖I ε - I (δ / 2 ^ M)‖ + ‖I (δ / 2 ^ M) - I (δ / 2 ^ N)‖ :=
+          norm_sub_le_norm_sub_add_norm_sub _ _ _
         have h_sum_bound : ‖I (δ / 2 ^ M) - I (δ / 2 ^ N)‖ ≤
-            2 * K * δ / 2 ^ N - 2 * K * δ / 2 ^ M := by
-          have h_bound := telescoping_sum_bound hK_pos hδ_pos h_step_J N M hM_gt_N
-          simp only [J] at h_bound
-          exact h_bound
+            2 * K * δ / 2 ^ N - 2 * K * δ / 2 ^ M :=
+          telescoping_sum_bound (I := fun n => I (δ / 2 ^ n)) hK_pos hδ_pos h_step N M hM_gt_N
         calc ‖I ε - I (δ / 2 ^ N)‖
             ≤ ‖I ε - I (δ / 2 ^ M)‖ + ‖I (δ / 2 ^ M) - I (δ / 2 ^ N)‖ := h_tri_inner
           _ ≤ K * δ / 2 ^ M + (2 * K * δ / 2 ^ N - 2 * K * δ / 2 ^ M) := by
@@ -155,11 +147,11 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       exact mul_lt_mul_of_pos_left h_Kδ_bound (by norm_num : (0 : ℝ) < 2)
     calc dist (I ε) limit_dyadic
         ≤ dist (I ε) (I (δ / 2 ^ N)) + dist (I (δ / 2 ^ N)) limit_dyadic := h_tri
-      _ ≤ 2 * K * δ / 2 ^ N + dist (I (δ / 2 ^ N)) limit_dyadic := by linarith
-      _ < 2 * K * δ / 2 ^ N + η / 2 := by linarith
       _ < η / 2 + η / 2 := by linarith
       _ = η := by ring
 
+/-- The set where a complex-valued continuous-on function exceeds `ε` in norm,
+intersected with the (measurable) domain, is measurable. -/
 lemma measurableSet_norm_gt_of_continuousOn {f : ℝ → ℂ} {s : Set ℝ}
     (ε : ℝ) (hf : ContinuousOn f s) (hs : MeasurableSet s) :
     MeasurableSet ({t | ε < ‖f t‖} ∩ s) := by
@@ -170,28 +162,23 @@ lemma measurableSet_norm_gt_of_continuousOn {f : ℝ → ℂ} {s : Set ℝ}
   obtain ⟨U, hU_open, hU_eq⟩ := h_open_sub
   have h_eq : {t | ε < ‖f t‖} ∩ s = U ∩ s := by
     ext x
-    constructor
-    · intro ⟨hx_far, hx_s⟩
-      refine ⟨?_, hx_s⟩
-      have h1 : (⟨x, hx_s⟩ : ↑s) ∈ (s.restrict (fun t => ‖f t‖)) ⁻¹' Ioi ε := by
-        simp only [mem_preimage, restrict_apply, mem_Ioi]
-        exact hx_far
-      rw [← hU_eq] at h1
-      exact h1
-    · intro ⟨hx_U, hx_s⟩
-      refine ⟨?_, hx_s⟩
-      have h1 : (⟨x, hx_s⟩ : ↑s) ∈ Subtype.val ⁻¹' U := hx_U
-      rw [hU_eq] at h1
-      simp only [mem_preimage, restrict_apply, mem_Ioi] at h1
-      exact h1
+    refine ⟨fun ⟨hx_far, hx_s⟩ => ⟨?_, hx_s⟩, fun ⟨hx_U, hx_s⟩ => ⟨?_, hx_s⟩⟩
+    · have : (⟨x, hx_s⟩ : ↑s) ∈ Subtype.val ⁻¹' U := by rw [hU_eq]; exact hx_far
+      exact this
+    · have : (⟨x, hx_s⟩ : ↑s) ∈ (s.restrict fun t => ‖f t‖) ⁻¹' Ioi ε := by
+        rw [← hU_eq]; exact hx_U
+      exact this
   rw [h_eq]
   exact hU_open.measurableSet.inter hs
 
+/-- Specialisation of `measurableSet_norm_gt_of_continuousOn` to closed intervals. -/
 lemma measurableSet_norm_gt_Icc {f : ℝ → ℂ} {a b : ℝ}
     (ε : ℝ) (hf : ContinuousOn f (Icc a b)) :
     MeasurableSet ({t | ε < ‖f t‖} ∩ Icc a b) :=
   measurableSet_norm_gt_of_continuousOn ε hf isClosed_Icc.measurableSet
 
+/-- AE strong measurability of the principal-value integrand on `[a, b]` for a piecewise
+`C¹` curve, with derivative continuous off a finite exceptional set `P`. -/
 theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
     {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {ε : ℝ} {P : Finset ℝ}
     (hf : ContinuousOn f (γ '' Icc a b \ Metric.ball z₀ ε))
@@ -202,22 +189,15 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
   let S := {t | ε < ‖γ t - z₀‖}
   have hS_meas : MeasurableSet (S ∩ Icc a b) :=
     measurableSet_norm_gt_Icc ε (hγ.sub continuousOn_const)
+  have h_notBall : ∀ {s}, ε < ‖γ s - z₀‖ → γ s ∉ Metric.ball z₀ ε := fun hs => by
+    simp only [Metric.mem_ball, not_lt, dist_eq_norm]; exact hs.le
   have h_cont : ContinuousOn (fun t => f (γ t) * deriv γ t)
       ((S ∩ Icc a b) \ P) := by
     intro t ⟨⟨ht_S, ht_Icc⟩, ht_nP⟩
-    have hγt_not_ball : γ t ∉ Metric.ball z₀ ε := by
-      simp only [S, mem_setOf_eq] at ht_S
-      simp only [Metric.mem_ball, not_lt, dist_eq_norm]
-      exact le_of_lt ht_S
     have hγt_in : γ t ∈ γ '' Icc a b \ Metric.ball z₀ ε :=
-      ⟨mem_image_of_mem γ ht_Icc, hγt_not_ball⟩
-    have h_maps : MapsTo γ ((S ∩ Icc a b) \ P)
-        (γ '' Icc a b \ Metric.ball z₀ ε) := by
-      intro s ⟨⟨hs_S, hs_Icc⟩, _⟩
-      refine ⟨mem_image_of_mem γ hs_Icc, ?_⟩
-      simp only [S, mem_setOf_eq] at hs_S
-      simp only [Metric.mem_ball, not_lt, dist_eq_norm]
-      exact le_of_lt hs_S
+      ⟨mem_image_of_mem γ ht_Icc, h_notBall ht_S⟩
+    have h_maps : MapsTo γ ((S ∩ Icc a b) \ P) (γ '' Icc a b \ Metric.ball z₀ ε) :=
+      fun _ ⟨⟨hs_S, hs_Icc⟩, _⟩ => ⟨mem_image_of_mem γ hs_Icc, h_notBall hs_S⟩
     exact ((hf (γ t) hγt_in).comp
       ((hγ t ht_Icc).mono (diff_subset.trans inter_subset_right)) h_maps).mul
       ((hγ'_off_P t ⟨ht_Icc, ht_nP⟩).mono
@@ -230,18 +210,14 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       (P.finite_toSet.inter_of_left _).measure_zero volume
     have hP_inter_meas : MeasurableSet (↑P ∩ (S ∩ Icc a b)) :=
       P.finite_toSet.measurableSet.inter hS_meas
-    have h_disj : Disjoint ((S ∩ Icc a b) \ P) (↑P ∩ (S ∩ Icc a b)) := by
-      rw [disjoint_left]
-      intro x ⟨_, hx_nP⟩ ⟨hx_P, _⟩
-      exact hx_nP hx_P
+    have h_disj : Disjoint ((S ∩ Icc a b) \ P) (↑P ∩ (S ∩ Icc a b)) :=
+      disjoint_left.mpr fun _ ⟨_, hx_nP⟩ ⟨hx_P, _⟩ => hx_nP hx_P
     have h_eq : volume.restrict (S ∩ Icc a b) =
         volume.restrict ((S ∩ Icc a b) \ P) +
           volume.restrict (↑P ∩ (S ∩ Icc a b)) := by
       rw [← Measure.restrict_union h_disj hP_inter_meas]
       congr 1
-      ext x
-      simp only [mem_union, mem_diff, mem_inter_iff]
-      tauto
+      ext x; simp [mem_union, mem_diff, mem_inter_iff]; tauto
     rw [h_eq]
     apply AEStronglyMeasurable.add_measure (h_cont.aestronglyMeasurable (μ := volume) h_diff_meas)
     simp only [Measure.restrict_eq_zero.mpr hP_meas_zero]
@@ -253,27 +229,23 @@ theorem aEStronglyMeasurable_pv_integrand_piecewiseC1
       =ᵐ[volume.restrict (Icc a b)]
       (S ∩ Icc a b).piecewise (fun t => f (γ t) * deriv γ t) (fun _ => 0) := by
     filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
-    simp only [piecewise]
     by_cases ht_S : t ∈ S
-    · simp only [show t ∈ S ∩ Icc a b from ⟨ht_S, ht⟩, ↓reduceIte,
-        show ε < ‖γ t - z₀‖ from ht_S, ↓reduceIte]
-    · simp only [show t ∉ S ∩ Icc a b from fun h => ht_S h.1, ↓reduceIte, S,
-        mem_setOf_eq, not_lt] at ht_S ⊢
-      simp only [not_lt.mpr ht_S, ↓reduceIte]
+    · simp [piecewise, show t ∈ S ∩ Icc a b from ⟨ht_S, ht⟩, show ε < ‖γ t - z₀‖ from ht_S]
+    · simp only [S, mem_setOf_eq, not_lt] at ht_S
+      simp [piecewise, show ¬t ∈ S ∩ Icc a b from fun h => not_lt.mpr ht_S h.1,
+        not_lt.mpr ht_S]
   exact (h_piecewise.mono_measure Measure.restrict_le_self).congr h_eq.symm
 
-lemma indicator_integrand_deriv_eq (γ : ℝ → ℂ) (c : ℂ) (ε : ℝ) (t : ℝ) :
-    (if ‖γ t - c‖ > ε then (γ t - c)⁻¹ * deriv (fun s => γ s - c) t else 0) =
-    (if ‖γ t - c‖ > ε then (γ t - c)⁻¹ * deriv γ t else 0) := by
-  simp [deriv_sub_const]
-
+/-- If the principal-value cutoff integral for the shifted curve `γ - c` converges to `L`,
+then the Cauchy principal value of `1 / (z - c)` along `γ` exists. -/
 lemma cpv_exists_from_shifted_tendsto (γ : ℝ → ℂ) (a b : ℝ) (c : ℂ) (L : ℂ)
     (h : Tendsto (fun ε => ∫ t in a..b, if ‖γ t - c‖ > ε
       then (γ t - c)⁻¹ * deriv (fun s => γ s - c) t else 0) (𝓝[>] 0) (𝓝 L)) :
     CauchyPrincipalValueExists' (fun z => (z - c)⁻¹) γ a b c := by
-  refine ⟨L, h.congr (fun ε => intervalIntegral.integral_congr (fun t _ => ?_))⟩
-  simp only [deriv_sub_const]
+  refine ⟨L, h.congr fun ε => intervalIntegral.integral_congr fun t _ => ?_⟩
+  simp [deriv_sub_const]
 
+/-- The map `t ↦ exp (π (1 + t) / 6 · i)` is injective on the open interval `(1, 3)`. -/
 lemma arc_angle_injective {t t' : ℝ}
     (ht : t ∈ Set.Ioo (1:ℝ) 3) (ht' : t' ∈ Set.Ioo (1:ℝ) 3)
     (h_eq : Complex.exp (↑(Real.pi * (1 + t) / 6) * I) =
@@ -296,11 +268,9 @@ lemma arc_angle_injective {t t' : ℝ}
   have hn0 : n = 0 := by
     by_contra h_ne
     have h1 : |(n : ℝ)| ≥ 1 := by exact_mod_cast Int.one_le_abs h_ne
-    have h2 : 2 * Real.pi ≤ |2 * Real.pi * (n : ℝ)| := by
-      rw [abs_mul, abs_of_pos (by positivity : 0 < 2 * Real.pi)]
-      exact le_mul_of_one_le_right (by positivity) h1
     have h3 : |2 * Real.pi * (n : ℝ)| < Real.pi := by rwa [h_vals] at h_diff_small
-    linarith [Real.pi_pos]
+    rw [abs_mul, abs_of_pos (by positivity : 0 < 2 * Real.pi)] at h3
+    nlinarith [Real.pi_pos]
   rw [hn0] at h_vals
   simp only [Int.cast_zero, mul_zero] at h_vals
   nlinarith [Real.pi_ne_zero, Real.pi_pos]
@@ -318,10 +288,9 @@ lemma cpv_avoidance (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ
   rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
   refine ⟨Set.Ioo 0 ‖γ t₀ - z₀‖,
     Ioo_mem_nhdsGT (norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t₀ ht₀))), fun ε hε => ?_⟩
-  simp only [Set.mem_Ioo] at hε
-  exact intervalIntegral.integral_congr (fun t ht => by
+  exact intervalIntegral.integral_congr fun t ht => by
     rw [Set.uIcc_of_le hab] at ht
-    exact (if_pos (lt_of_lt_of_le hε.2 (ht₀_min ht))).symm)
+    exact (if_pos (lt_of_lt_of_le hε.2 (ht₀_min ht))).symm
 
 /-- CPV on adjacent intervals can be concatenated (when `a ≤ b ≤ c`). -/
 lemma cpv_concat (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
@@ -337,15 +306,12 @@ lemma cpv_concat (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
   apply Tendsto.congr' _ (hL₁.add hL₂)
   rw [Filter.EventuallyEq]
   filter_upwards [self_mem_nhdsWithin] with ε hε
-  simp only [Set.mem_Ioi] at hε
   have hII := h_int ε hε
   have hac := hab.trans hbc
   exact intervalIntegral.integral_add_adjacent_intervals
-    (hII.mono_set (by
-      rw [Set.uIcc_of_le hab, Set.uIcc_of_le hac]
-      exact Set.Icc_subset_Icc_right hbc))
-    (hII.mono_set (by
-      rw [Set.uIcc_of_le hbc, Set.uIcc_of_le hac]
-      exact Set.Icc_subset_Icc_left hab))
+    (hII.mono_set <| by rw [Set.uIcc_of_le hab, Set.uIcc_of_le hac]
+                        exact Set.Icc_subset_Icc_right hbc)
+    (hII.mono_set <| by rw [Set.uIcc_of_le hbc, Set.uIcc_of_le hac]
+                        exact Set.Icc_subset_Icc_left hab)
 
 end
