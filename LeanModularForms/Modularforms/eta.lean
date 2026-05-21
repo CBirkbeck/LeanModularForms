@@ -7,6 +7,26 @@ public import Mathlib.NumberTheory.ModularForms.DedekindEta
 
 @[expose] public section
 
+/-!
+# The Dedekind eta function under the modular `S` involution
+
+This file proves the transformation law for the Dedekind eta function `η` under
+`z ↦ -1/z`. We work from the equality of logarithmic derivatives of
+`η ∘ (z ↦ -1/z)` and `csqrt · η`, lift it to an equality of functions up to a
+constant on the upper half-plane, and identify the constant by specialising at
+`z = i`.
+
+Lean 4.29+ no longer allows `η` as an identifier name. We rely on mathlib's
+`scoped[ModularForm] notation "η" => eta`, brought into scope by `open ModularForm`.
+
+## Main results
+
+* `eta_logDeriv_eql`, `eta_logderivs`: equality of `logDeriv (η ∘ (· ↦ -1/·))` and
+  `logDeriv (csqrt · η)` on the upper half-plane.
+* `eta_logderivs_const`: the two functions agree on the upper half-plane up to a
+  multiplicative constant.
+* `eta_equality`: the modular transformation `η(-1/z) = (csqrt i)⁻¹ · csqrt(z) · η(z)`.
+-/
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex
@@ -14,11 +34,6 @@ open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureThe
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
 
 open scoped ArithmeticFunction.sigma
-
-
-/- The eta function. Lean 4.29+ no longer allows η as an identifier name.
-   We rely on mathlib's `scoped[ModularForm] notation "η" => eta`, brought into
-   scope by `open ModularForm` above. -/
 
 lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   (logDeriv ((csqrt) * η)) z := by
@@ -49,8 +64,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   rw [h0, show ((csqrt) * η) = (fun x => (csqrt) x * η x) by rfl, logDeriv_mul]
   · nth_rw 2 [logDeriv_apply]
     unfold csqrt
-    have := csqrt_deriv z
-    rw [this]
+    rw [csqrt_deriv z]
     simp only [one_div, neg_mul, smul_eq_mul]
     nth_rw 2 [div_eq_mul_inv]
     · rw [← Complex.exp_neg,
@@ -67,21 +81,18 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
             (ModularForm.logDeriv_eta_eq_E2 (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ))
         rw [Rb]
         have E := E₂_transform z
-        simp only [one_div, neg_mul, smul_eq_mul, SL_slash_def, modular_S_smul,
-                   ModularGroup.denom_S, Int.reduceNeg, zpow_neg] at *
+        simp only [SL_slash_def, modular_S_smul, ModularGroup.denom_S, Int.reduceNeg,
+                   zpow_neg] at *
         have h00 : UpperHalfPlane.mk (-z : ℂ)⁻¹ z.im_inv_neg_coe_pos =
                    (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ) := by
           simp
           ring_nf
         rw [h00] at E
-        rw [← mul_assoc, mul_comm, ← mul_assoc]
-        rw [E, add_mul, add_comm]
+        rw [← mul_assoc, mul_comm, ← mul_assoc, E, add_mul, add_comm]
         congr 1
         · have hzne := ne_zero z
           have hI : Complex.I ≠ 0 := I_ne_zero
-          have hpi : (π : ℂ) ≠ 0 := by
-            simp only [ne_eq, ofReal_eq_zero]
-            exact Real.pi_ne_zero
+          have hpi : (π : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
           field_simp
           ring
         rw [mul_comm]
@@ -93,16 +104,13 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
       (ModularForm.differentiableAt_eta_of_mem_upperHalfPlaneSet (z := (z : ℂ)) z.2)
 
 lemma eta_logderivs : {z : ℂ | 0 < z.im}.EqOn (logDeriv (η ∘ (fun z : ℂ => -1/z)))
-  (logDeriv ((csqrt) * η)) := by
-  intro z hz
-  have := eta_logDeriv_eql ⟨z, hz⟩
-  exact this
+    (logDeriv ((csqrt) * η)) :=
+  fun z hz => eta_logDeriv_eql ⟨z, hz⟩
 
 lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
-  (z • ((csqrt) * η)) := by
-  have h := eta_logderivs
-  rw [logDeriv_eqOn_iff] at h
-  · exact h
+    (z • ((csqrt) * η)) := by
+  rw [← logDeriv_eqOn_iff]
+  · exact eta_logderivs
   · apply DifferentiableOn.comp
     pick_goal 4
     · use ({z : ℂ | 0 < z.im})
@@ -151,22 +159,17 @@ lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn (
     simpa only [ne_eq] using this
 
 lemma eta_equality : {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
-   ((csqrt (Complex.I))⁻¹ • ((csqrt) * η)) := by
-  have h := eta_logderivs_const
-  obtain ⟨z, hz, h⟩ := h
+    ((csqrt (Complex.I))⁻¹ • ((csqrt) * η)) := by
+  obtain ⟨z, hz, h⟩ := eta_logderivs_const
   intro x hx
-  have h2 := h hx
   have hI : (Complex.I) ∈ {z : ℂ | 0 < z.im} := by
     simp only [mem_setOf_eq, Complex.I_im, zero_lt_one]
   have h3 := h hI
   simp at h3
-  conv at h3 =>
-    enter [2]
-    rw [← mul_assoc]
+  conv at h3 => enter [2]; rw [← mul_assoc]
   have he : η Complex.I ≠ 0 := by
     simpa [ModularForm.eta] using (ModularForm.eta_ne_zero (z := (Complex.I : ℂ)) (by simp))
   have hcd := (mul_eq_right₀ he).mp (_root_.id (Eq.symm h3))
-  rw [mul_eq_one_iff_inv_eq₀ hz] at hcd
-  rw [@inv_eq_iff_eq_inv] at hcd
-  rw [hcd] at h2
-  exact h2
+  rw [mul_eq_one_iff_inv_eq₀ hz, inv_eq_iff_eq_inv] at hcd
+  rw [hcd] at h
+  exact h hx
