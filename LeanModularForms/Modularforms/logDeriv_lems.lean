@@ -23,8 +23,6 @@ the eta and related modular functions.
   infinite product is the sum of the logarithmic derivatives.
 * `logDeriv_one_sub_exp`: closed form for the logarithmic derivative of `1 - r * exp`.
 * `logDeriv_q_expo_summable`: summability of the series `n * r^n / (1 - r^n)`.
-* `logDeriv_eqOn_iff2`: two nonvanishing holomorphic functions with equal logarithmic
-  derivative on a connected open convex set differ by a nonzero constant.
 -/
 
 open TopologicalSpace Set MeasureTheory intervalIntegral
@@ -37,39 +35,31 @@ theorem logDeriv_tprod_eq_tsum2 {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
     (hd : ∀ i : ℕ, DifferentiableOn ℂ (f i) s) (hm : Summable fun i ↦ logDeriv (f i) ↑x)
     (htend : MultipliableLocallyUniformlyOn f s) (hnez : ∏' (i : ℕ), f i ↑x ≠ 0) :
     logDeriv (∏' i : ℕ, f i ·) x = ∑' i : ℕ, logDeriv (f i) x := by
-  have h2 := Summable.hasSum hm
-  rw [Summable.hasSum_iff_tendsto_nat hm] at h2
-  apply symm
+  symm
   rw [← Summable.hasSum_iff hm, Summable.hasSum_iff_tendsto_nat hm]
   let g := (∏' i : ℕ, f i ·)
-  have h_tlu : TendstoLocallyUniformlyOn (fun n z ↦ ∏ i ∈ Finset.range n, f i z) g atTop s := by
-    have := htend.hasProdLocallyUniformlyOn.tendstoLocallyUniformlyOn_finsetRange
-    exact this.congr (fun n => by intro z _; rfl)
+  have h_tlu : TendstoLocallyUniformlyOn (fun n z ↦ ∏ i ∈ Finset.range n, f i z) g atTop s :=
+    htend.hasProdLocallyUniformlyOn.tendstoLocallyUniformlyOn_finsetRange.congr fun _ _ _ => rfl
   have h_diff : ∀ᶠ (n : ℕ) in atTop,
       DifferentiableOn ℂ (fun z => ∏ i ∈ Finset.range n, f i z) s := by
     simp only [eventually_atTop, ge_iff_le]
-    use 0
-    intro b _ z hz
-    have := DifferentiableAt.finset_prod (fun i (_ : i ∈ Finset.range b) =>
-      (hd i z hz).differentiableAt (IsOpen.mem_nhds hs hz))
-    exact this.differentiableWithinAt.congr (fun w hw => (Finset.prod_apply ..).symm)
-      (Finset.prod_apply ..).symm
-  have HT := logDeriv_tendsto (f := fun (n : ℕ) z ↦ ∏ i ∈ Finset.range n, f i z) (g := g)
-    (s := s) hs (x.2) (p := atTop) h_tlu h_diff hnez
+    refine ⟨0, fun b _ z hz => ?_⟩
+    exact (DifferentiableAt.finset_prod (fun i (_ : i ∈ Finset.range b) =>
+      (hd i z hz).differentiableAt (IsOpen.mem_nhds hs hz))).differentiableWithinAt.congr
+      (fun _ _ => (Finset.prod_apply ..).symm) (Finset.prod_apply ..).symm
   conv =>
     enter [1]
     ext n
-    rw [← logDeriv_prod (by intro i hi; apply hf i)
-      (by intro i hi; apply (hd i x x.2).differentiableAt; exact IsOpen.mem_nhds hs x.2)]
-  exact HT
+    rw [← logDeriv_prod (by intro i _; exact hf i)
+      (by intro i _; exact (hd i x x.2).differentiableAt (IsOpen.mem_nhds hs x.2))]
+  exact logDeriv_tendsto (f := fun (n : ℕ) z ↦ ∏ i ∈ Finset.range n, f i z) (g := g)
+    (s := s) hs x.2 (p := atTop) h_tlu h_diff hnez
 
 lemma logDeriv_one_sub_exp (r : ℂ) : logDeriv (fun z => 1 - r * cexp (z)) =
     fun z => -r * cexp z / (1 - r * cexp (z)) := by
   ext z
   rw [logDeriv]
-  simp only [Pi.div_apply, differentiableAt_const, differentiableAt_exp, DifferentiableAt.fun_mul,
-    deriv_fun_sub, deriv_const', deriv_fun_mul, zero_mul, Complex.deriv_exp, zero_add, zero_sub,
-    neg_mul]
+  simp
 
 lemma logDeriv_q_expo_summable (r : ℂ) (hr : ‖r‖ < 1) :
     Summable fun n : ℕ => (n * r^n / (1 - r^n)) := by
