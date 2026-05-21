@@ -112,27 +112,15 @@ theorem seg4_far_on_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
 
 /-- For `z₀` on seg4 with `z₀.im > √3/2`, the norm `‖z₀‖` exceeds 1. -/
 theorem norm_gt_one_of_seg4_interior {z₀ : ℂ} (hz_re : z₀.re = -1/2)
-    (hc_lo : Real.sqrt 3 / 2 < z₀.im) : 1 < ‖z₀‖ := by
-  have h_sq3 : Real.sqrt 3 * Real.sqrt 3 = 3 := Real.mul_self_sqrt (by norm_num)
-  have h_nsq : 1 < Complex.normSq z₀ := by
-    rw [Complex.normSq_apply, hz_re]; nlinarith [h_sq3, hc_lo, Real.sqrt_nonneg 3]
-  nlinarith [Complex.normSq_eq_norm_sq z₀, norm_nonneg z₀]
+    (hc_lo : Real.sqrt 3 / 2 < z₀.im) : 1 < ‖z₀‖ :=
+  norm_gt_one_of_re_sq_quarter (by rw [hz_re]; norm_num) hc_lo
 
 /-- Seg4 version of `norm_sub_one_le_im_sub_sqrt3` (the proof is identical
-since it only depends on `|z₀.re| = 1/2`). -/
+since it only depends on `z₀.re ^ 2 = 1/4`). -/
 theorem norm_sub_one_le_im_sub_sqrt3_seg4 {z₀ : ℂ} (hz_re : z₀.re = -1/2)
     (hc_lo : Real.sqrt 3 / 2 ≤ z₀.im) :
-    ‖z₀‖ - 1 ≤ z₀.im - Real.sqrt 3 / 2 := by
-  have h_sqrt3_sq : Real.sqrt 3 * Real.sqrt 3 = 3 := Real.mul_self_sqrt (by norm_num)
-  have h_nn_rhs : 0 ≤ z₀.im + 1 - Real.sqrt 3 / 2 := by
-    nlinarith [h_sqrt3_sq, hc_lo, Real.sqrt_nonneg 3]
-  have h_sq_ineq : ‖z₀‖ ^ 2 ≤ (z₀.im + 1 - Real.sqrt 3 / 2) ^ 2 := by
-    have h_norm_sq : ‖z₀‖ ^ 2 = 1/4 + z₀.im ^ 2 := by
-      rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hz_re]; ring
-    rw [h_norm_sq]; nlinarith [h_sqrt3_sq, hc_lo]
-  have h_target := Real.sqrt_le_sqrt h_sq_ineq
-  rw [Real.sqrt_sq (norm_nonneg z₀), Real.sqrt_sq h_nn_rhs] at h_target
-  linarith
+    ‖z₀‖ - 1 ≤ z₀.im - Real.sqrt 3 / 2 :=
+  norm_sub_one_le_im_sub_sqrt3_of_re_sq (by rw [hz_re]; norm_num) hc_lo
 
 /-- Distance from a seg4 interior point to seg2/seg3 (arcs): at least `‖z₀‖ - 1`. -/
 theorem seg4_dist_arc {z₀ : ℂ} (hz_re : z₀.re = -1/2)
@@ -154,9 +142,8 @@ theorem seg4_dist_seg5 {z₀ : ℂ} (hz_hi : z₀.im < H) {t : ℝ}
     (ht : 4/5 < t) : H - z₀.im ≤ ‖fdBoundaryFun H t - z₀‖ :=
   fdBoundaryFun_seg5_im_dist hz_hi ht
 
-/-- Seg4 threshold, same shape as seg1. -/
-def seg4Threshold (H : ℝ) (z₀ : ℂ) : ℝ :=
-  min (min (‖z₀‖ - 1) 1) (H - z₀.im)
+/-- Seg4 threshold, definitionally equal to `seg1Threshold` (same shape). -/
+def seg4Threshold (H : ℝ) (z₀ : ℂ) : ℝ := seg1Threshold H z₀
 
 theorem seg4Threshold_pos {H : ℝ} {z₀ : ℂ}
     (hz_re : z₀.re = -1/2) (hc_lo : Real.sqrt 3 / 2 < z₀.im) (hc_hi : z₀.im < H) :
