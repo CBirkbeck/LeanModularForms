@@ -4227,65 +4227,6 @@ reparametrization-lift hypothesis is auto-discharged.
 For users with `x ∈ S`, the reparametrization-lift hypothesis is exposed as
 a single named target for a future ticket. -/
 
-/-- **HW3.3 — full-spec form, reparametrization-shim (T-BR-Y9g-continue).**
-
-Drops `hx_notin_S` from `residueTheorem_crossing_full_spec` by accepting the
-reparametrization-lift as an explicit hypothesis.
-
-The hypothesis `h_reparam_lift` packages the mathematical fact that the CPV
-conclusion is invariant under cyclic reparametrization of γ: given a CPV
-conclusion for ANY auxiliary closed immersion `γ' : ClosedPwC1Immersion x'`
-with `x' ∉ S` satisfying the per-pole spec hypotheses, the CPV for γ follows.
-
-The lift is parameterized by `(x', γ', hx'_notin_S)` and the per-pole
-hypotheses on γ' (null-homology, conditions A'/B, corners). The caller is
-responsible for producing the lift.
-
-For typical callers (`x ∉ S`), see `_basepoint_off` for an auto-discharged
-variant. -/
-theorem residueTheorem_crossing_full_spec_reparam
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    /- Reparametrization-lift hypothesis: a CPV witness for ANY auxiliary
-       reparametrization `γ' : ClosedPwC1Immersion x'` with `x' ∉ S` whose
-       per-pole spec-hypotheses hold lifts to a CPV witness for `γ`.
-
-       This packages the standard fact that closed-contour CPV integrals are
-       independent of the starting point. -/
-    (h_reparam_lift :
-      (∀ (x' : ℂ) (γ' : ClosedPwC1Immersion x')
-        (_hx'_notin_S : x' ∉ (↑S : Set ℂ))
-        (_h_null' : IsNullHomologous γ'.toPwC1Immersion U)
-        (hCondB' : SatisfiesConditionB γ'.toPwC1Immersion f S)
-        (_hCondA' : SatisfiesConditionA' γ'.toPwC1Immersion f S
-          (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-            (γ := γ'.toPwC1Immersion) hMero hCondB').order s))
-        (_h_corners' : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-          γ'.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-          t₀ ∉ γ'.toPwC1Immersion.toPiecewiseC1Path.partition),
-        HasCauchyPVOn S f γ'.toPwC1Immersion.toPiecewiseC1Path
-          (∑ s ∈ S, 2 * ↑Real.pi * I *
-            generalizedWindingNumber γ'.toPwC1Immersion.toPiecewiseC1Path s *
-              residue f s)) →
-      HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-        (∑ s ∈ S, 2 * ↑Real.pi * I *
-          generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-            residue f s)) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-  classical
-  -- For any γ' with x' ∉ S satisfying the per-pole spec, the existing
-  -- `_full_spec` theorem applies directly.
-  refine h_reparam_lift
-    (fun x' γ' hx'_notin_S h_null' hCondB' hCondA' h_corners' => ?_)
-  exact residueTheorem_crossing_full_spec hU_open hU_ne hS_in_U hf γ'
-    h_null' hMero hCondB' hCondA' hx'_notin_S h_corners'
-
 /-! ### `_general` form (T-BR-Y9g-continue)
 
 Drops `hx_notin_S` while keeping all other hypotheses, by case-splitting on
@@ -4314,7 +4255,7 @@ Drops `hx_notin_S` from `_full_spec` by case-splitting on `x ∈ S`. The genuine
 reparametrization case (`x ∈ S`) is exposed as a clearly named hypothesis
 `h_reparam_lift_at_pole_basepoint`, which packages the cyclic-shift invariance
 fact. For `x ∉ S`, the hypothesis is auto-discharged (its premise is false). -/
-theorem residueTheorem_crossing_full_spec_general
+private theorem residueTheorem_crossing_full_spec_general
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
     {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -4378,7 +4319,7 @@ into the spec hypotheses. -/
 For callers with `x ∉ S`, the cyclic-shift lift is vacuous (its premise
 `x ∈ S` is false). This corollary auto-discharges the lift, exposing a clean
 spec form matching `_full_spec`. -/
-theorem residueTheorem_crossing_full_spec_basepoint_off
+private theorem residueTheorem_crossing_full_spec_basepoint_off
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
     {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -4451,7 +4392,7 @@ basepoint lies on a pole.
   parameter `τ` with `γ(τ) ∉ S` together with a CPV witness for the
   cyclic-shifted path `γ.cyclicShift hτ`. The CPV is transported back via
   `hasCauchyPVOn_cyclicShift` and `generalizedWindingNumber_cyclicShift`. -/
-theorem residueTheorem_crossing_full_spec_no_basepoint
+private theorem residueTheorem_crossing_full_spec_no_basepoint
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
     {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -4517,128 +4458,6 @@ theorem residueTheorem_crossing_full_spec_no_basepoint
     exact residueTheorem_crossing_full_spec_basepoint_off hU_open hU_ne hS_in_U hf γ
       h_null hMero hCondB hCondA hx h_no_corner_crossings
 
-/-- **HW3.3 full-spec form, no-basepoint with explicit cyclic-shift transports
-(T-BR-Y9h-C variant).**
-
-A variant of `_no_basepoint` that internally invokes the cyclic-shift
-transports `satisfiesConditionA'_cyclicShift` + `satisfiesConditionB_cyclicShift`
-to derive the shifted spec conditions from γ's spec + breakpoint witnesses.
-
-The caller supplies:
-* `τ, hτ`: a shift parameter with `γ(τ) ∉ S` (typically chosen via
-  `exists_basepoint_shift_param`).
-* `h_basepoint_ord, h_basepoint_angleB, h_basepoint_laurentB`: the basepoint
-  hypotheses required by the cyclic-shift transports for A'/B.
-* `h_cpv_shift_from_specs`: a CPV witness for the shifted path, given the
-  shifted spec hypotheses. This is the deepest residual because γ' has a
-  corner crossing at the breakpoint `1-τ` that prevents `_basepoint_off`
-  from being applied directly.
-
-The transports for null-homology, A', and B are applied internally to lift
-`(h_null, hCondA, hCondB)` to `(h_null', hCondA', hCondB')` on
-`γ.cyclicShift hτ`. -/
-theorem residueTheorem_crossing_full_spec_no_basepoint_with_transports
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition)
-    (h_pole_basepoint_with_transports : x ∈ (↑S : Set ℂ) →
-      ∃ τ : ℝ, ∃ hτ : τ ∈ Set.Ioo (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path τ ∉ (↑S : Set ℂ) ∧
-        -- Basepoint hypotheses for `satisfiesConditionA'_cyclicShift`.
-        (∀ s ∈ S, γ.toPath.extend 1 = s →
-          (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-            (γ := γ.toPwC1Immersion) hMero hCondB).order s ≤ 1) ∧
-        -- Basepoint angle witness for `satisfiesConditionB_cyclicShift`.
-        (∀ s ∈ S, γ.toPath.extend 1 = s →
-          ∀ ht_oneSubTau : (1 - τ) ∈ Ioo (0 : ℝ) 1,
-            ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-              angleAtCrossing (γ.cyclicShift hτ).toPwC1Immersion (1 - τ) ht_oneSubTau =
-                ↑p * Real.pi / ↑q) ∧
-        -- Basepoint Laurent witness for `satisfiesConditionB_cyclicShift`.
-        (∀ s ∈ S, γ.toPath.extend 1 = s →
-          ∀ ht_oneSubTau : (1 - τ) ∈ Ioo (0 : ℝ) 1,
-            ∃ (N : ℕ) (a : Fin N → ℂ) (g : ℂ → ℂ),
-              AnalyticAt ℂ g s ∧
-              (∀ᶠ z in 𝓝[≠] s, f z = g z +
-                ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) ∧
-              (∀ k : Fin N, a k ≠ 0 → k.val ≥ 1 →
-                ∃ m : ℤ, (↑k.val : ℝ) *
-                  angleAtCrossing (γ.cyclicShift hτ).toPwC1Immersion (1 - τ) ht_oneSubTau =
-                  ↑m * (2 * Real.pi))) ∧
-        -- Caller-provided CPV witness for the shifted path, given the
-        -- transported spec hypotheses.
-        (IsNullHomologous (γ.cyclicShift hτ).toPwC1Immersion U →
-          SatisfiesConditionB (γ.cyclicShift hτ).toPwC1Immersion f S →
-          SatisfiesConditionA' (γ.cyclicShift hτ).toPwC1Immersion f S
-            (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-              (γ := γ.toPwC1Immersion) hMero hCondB).order s) →
-          HasCauchyPVOn S f (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path
-            (∑ s ∈ S, 2 * ↑Real.pi * I *
-              generalizedWindingNumber
-                (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path s *
-                residue f s))) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-  classical
-  refine residueTheorem_crossing_full_spec_no_basepoint hU_open hU_ne hS_in_U hf γ
-    h_null hMero hCondB hCondA h_no_corner_crossings (fun hx => ?_)
-  obtain ⟨τ, hτ, hγτ_notin, h_basepoint_ord, h_basepoint_angleB,
-    h_basepoint_laurentB, h_get_cpv⟩ := h_pole_basepoint_with_transports hx
-  refine ⟨τ, hτ, hγτ_notin, ?_⟩
-  -- Use the cyclic-shift transports to lift the spec hypotheses.
-  have h_null' : IsNullHomologous (γ.cyclicShift hτ).toPwC1Immersion U :=
-    ClosedPwC1Immersion.isNullHomologous_cyclicShift hτ h_null
-  have hCondB' : SatisfiesConditionB (γ.cyclicShift hτ).toPwC1Immersion f S :=
-    ClosedPwC1Immersion.satisfiesConditionB_cyclicShift hτ
-      h_basepoint_angleB h_basepoint_laurentB hCondB
-  have hCondA' : SatisfiesConditionA' (γ.cyclicShift hτ).toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s) :=
-    ClosedPwC1Immersion.satisfiesConditionA'_cyclicShift hτ
-      h_basepoint_ord hCondA
-  exact h_get_cpv h_null' hCondB' hCondA'
-
-/-- **HW3.3 full-spec form, `_no_basepoint` convenience corollary for `x ∉ S`
-(T-BR-Y9h-C).**
-
-When `x ∉ S`, the pole-basepoint data is vacuous (its premise is false).
-This corollary auto-discharges the data, matching the signature of
-`_basepoint_off`. -/
-theorem residueTheorem_crossing_full_spec_no_basepoint_basepoint_off
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (hx_notin_S : x ∉ (↑S : Set ℂ))
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_crossing_full_spec_no_basepoint hU_open hU_ne hS_in_U hf γ
-    h_null hMero hCondB hCondA h_no_corner_crossings
-    (fun hx => absurd hx hx_notin_S)
-
 /-! ### T-BR-Y11 — Paper-faithful spec form
 
 This is the headline 8-spec-hypothesis form of Hungerbühler–Wasem Theorem 3.3,
@@ -4696,7 +4515,7 @@ The two branches cover all configurations that the current infrastructure can
 discharge. A truly 8-hypothesis form (eliminating the disjunction) requires a
 corner-friendly multi-crossing higher-order CPV theorem (the only remaining
 structural gap; see `_paper_faithful` docstring for details). -/
-theorem residueTheorem_crossing_paper_faithful
+private theorem residueTheorem_crossing_paper_faithful
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
     {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
@@ -4740,57 +4559,6 @@ hypothesis list. These are the recommended entry points for typical callers:
 * `_paper_faithful_unique` — for callers with transverse single-crossing
   contours (typical for polygonal contours visiting each pole at most once).
 -/
-
-/-- **`_paper_faithful` smooth corollary.** Specialization to the smooth
-branch: each pole may be crossed multiply but never at a partition point. -/
-theorem residueTheorem_crossing_paper_faithful_smooth
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (hx_notin_S : x ∉ (↑S : Set ℂ))
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_crossing_paper_faithful hU_open hU_ne hS_in_U hf γ
-    h_null hMero hCondB hCondA (Or.inl ⟨hx_notin_S, h_no_corner_crossings⟩)
-
-/-- **`_paper_faithful` unique-crossing corollary.** Specialization to the
-corner branch: each pole crossed at most once (may be a corner crossing).
-`hx_notin_S` is auto-derived from `h_unique_cross` applied at `s := x`,
-`t₁ := 0`, `t₂ := 1`. -/
-theorem residueTheorem_crossing_paper_faithful_unique
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (h_unique_cross : ∀ s ∈ S, ∀ t₁ ∈ Set.Icc (0 : ℝ) 1,
-      ∀ t₂ ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t₁ = s →
-        γ.toPwC1Immersion.toPiecewiseC1Path t₂ = s →
-        t₁ = t₂) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_crossing_paper_faithful hU_open hU_ne hS_in_U hf γ
-    h_null hMero hCondB hCondA (Or.inr h_unique_cross)
 
 /-! ### T-BR-Y11c — Corner-friendly clean spec form (`h_simple_cpv_per_pole`
 eliminated)
