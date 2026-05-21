@@ -293,22 +293,6 @@ theorem exists_isolated_crossing_interval (γ : PiecewiseC1Immersion) (z₀ : �
        le_trans (Ioo_subset_Icc_self ht).2 hb'_le_b⟩
     exact γ.smooth_off_partition t ht_Icc ht_part
 
-/-- At any crossing point of a PiecewiseC1Immersion that has ContDiffAt ℝ 2,
-the derivative is nonzero.
-
-At smooth points (off partition), the immersion condition gives this directly.
-At partition points, ContDiffAt ℝ 2 implies continuity of the derivative,
-so the derivative must agree with the nonzero one-sided limits. -/
-private lemma continuousAt_deriv_of_contDiffAt_two
-    {f : ℝ → ℂ} {x : ℝ} (h : ContDiffAt ℝ 2 f x) :
-    ContinuousAt (deriv f) x := by
-  have h1 : ContDiffAt ℝ 1 f x := h.of_le (by norm_num)
-  obtain ⟨U, hU_nhd, hU_cd⟩ := h1.contDiffOn le_rfl (by
-    simp only [WithTop.one_eq_coe, ENat.top_ne_one, WithTop.one_ne_top, imp_self])
-  obtain ⟨V, hVU, hV_open, hxV⟩ := mem_nhds_iff.mp hU_nhd
-  exact ((hU_cd.mono hVU).continuousOn_deriv_of_isOpen hV_open le_rfl).continuousAt
-    (hV_open.mem_nhds hxV)
-
 theorem PiecewiseC1Immersion.deriv_ne_zero_of_C2 (γ : PiecewiseC1Immersion) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hγ_C2 : ContDiffAt ℝ 2 γ.toFun t₀) :
     deriv γ.toFun t₀ ≠ 0 := by

@@ -204,7 +204,7 @@ lemma exists_eta_delta {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} (hL : L ≠ 0)
     (η : ℝ) (hη : 0 < η) :
     ∃ δ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ →
       ‖(γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹‖ ≤ η / |t - t₀| :=
-  integrand_asymptotic γ t₀ L hL hγ_hasderiv hγ_cont_deriv
+  integrand_asymptotic γ t₀
     (integrand_times_t_tendsto_one γ t₀ L hL hγ_hasderiv hγ_cont_deriv) η hη
 
 /-- Dyadic step [ε/2, ε] contributes ≤ 2η*log(2). -/

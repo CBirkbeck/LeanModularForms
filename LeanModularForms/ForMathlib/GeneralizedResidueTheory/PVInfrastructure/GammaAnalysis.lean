@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import Mathlib.Analysis.Calculus.ContDiff.Basic
+import Mathlib.Analysis.Calculus.ContDiff.Comp
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.Analysis.Complex.Basic
@@ -38,21 +39,10 @@ private lemma hasDerivAt_remainder_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : �
   obtain ⟨s, hs_mem, hs⟩ := (hγ hε).exists_mem
   obtain ⟨δ, hδ_pos, hδ_ball⟩ := Metric.mem_nhds_iff.mp hs_mem
   refine ⟨δ, hδ_pos, fun t _ ht_lt => ?_⟩
-  have h_bound := hs t (hδ_ball (by simp [Metric.mem_ball, Real.dist_eq, ht_lt]))
-  simpa only [Real.norm_eq_abs] using h_bound
+  simpa only [Real.norm_eq_abs] using
+    hs t (hδ_ball (by simp [Metric.mem_ball, Real.dist_eq, ht_lt]))
 
-private lemma norm_real_smul (x : ℝ) (L : ℂ) : ‖x • L‖ = |x| * ‖L‖ := by
-  simp [Complex.real_smul]
-
-private lemma norm_add_lower_bound (a b : ℂ) : ‖a + b‖ ≥ ‖a‖ - ‖b‖ := by
-  have h := norm_sub_norm_le a (-b)
-  simp only [sub_neg_eq_add, norm_neg] at h
-  linarith
-
-private lemma farSet_isCompact (a b t₀ δ : ℝ) (_hab : a < b) (_hδ : 0 < δ) :
-    IsCompact {t | t ∈ Set.Icc a b ∧ δ ≤ |t - t₀|} := by
-  refine IsCompact.inter_right isCompact_Icc ?_
-  exact isClosed_le continuous_const (continuous_abs.comp (continuous_sub_right t₀))
+private lemma norm_real_smul (x : ℝ) (L : ℂ) : ‖x • L‖ = |x| * ‖L‖ := by simp
 
 /-- The integrand times (t-t₀) tends to 1.
 This is the key estimate:
@@ -60,10 +50,8 @@ This is the key estimate:
 lemma integrand_times_t_tendsto_one (γ : ℝ → ℂ) (t₀ : ℝ) (L : ℂ) (hL : L ≠ 0)
     (hγ_hasderiv : HasDerivAt γ L t₀) (hγ_cont_at : ContinuousAt (deriv γ) t₀) :
     Tendsto (fun t => (↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ * deriv γ t) (𝓝[≠] t₀) (𝓝 1) := by
-  have h_deriv_eq : deriv γ t₀ = L := hγ_hasderiv.deriv
-  have h_deriv_tendsto : Tendsto (deriv γ) (𝓝 t₀) (𝓝 L) := by
-    rw [← h_deriv_eq]
-    exact hγ_cont_at
+  have h_deriv_tendsto : Tendsto (deriv γ) (𝓝 t₀) (𝓝 L) :=
+    hγ_hasderiv.deriv ▸ hγ_cont_at
   have h_ratio_tendsto :
       Tendsto (fun t => (↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹) (𝓝[≠] t₀) (𝓝 L⁻¹) := by
     have h_slope :
@@ -75,13 +63,12 @@ lemma integrand_times_t_tendsto_one (γ : ℝ → ℂ) (t₀ : ℝ) (L : ℂ) (h
         simp [add_sub_cancel]
       rw [h_comp]
       apply Tendsto.comp hγ_hasderiv
-      apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within
+      refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ ?_ ?_
       · have h1 : Tendsto (fun t => t - t₀) (𝓝 t₀) (𝓝 (t₀ - t₀)) := tendsto_id.sub_const t₀
         simp only [sub_self] at h1
         exact h1.mono_left nhdsWithin_le_nhds
       · filter_upwards [self_mem_nhdsWithin] with t ht
-        simp only [Set.mem_compl_iff, Set.mem_singleton_iff, sub_ne_zero]
-        exact ht
+        simpa [sub_ne_zero] using ht
     have h_smul_eq : ∀ t : ℝ,
         (t - t₀)⁻¹ • (γ t - γ t₀) = (γ t - γ t₀) * (↑(t - t₀) : ℂ)⁻¹ := by
       intro t
@@ -90,28 +77,20 @@ lemma integrand_times_t_tendsto_one (γ : ℝ → ℂ) (t₀ : ℝ) (L : ℂ) (h
     have h_slope' :
         Tendsto (fun t => (γ t - γ t₀) * (↑(t - t₀) : ℂ)⁻¹) (𝓝[≠] t₀) (𝓝 L) := by
       simpa only [← h_smul_eq] using h_slope
-    have h_recip :
-        Tendsto (fun t => ((γ t - γ t₀) * (↑(t - t₀) : ℂ)⁻¹)⁻¹) (𝓝[≠] t₀) (𝓝 L⁻¹) :=
-      h_slope'.inv₀ hL
     have h_inv_eq : ∀ t : ℝ,
-        ((γ t - γ t₀) * (↑(t - t₀) : ℂ)⁻¹)⁻¹ = (↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ := by
-      intro t
+        ((γ t - γ t₀) * (↑(t - t₀) : ℂ)⁻¹)⁻¹ = (↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ := fun t => by
       by_cases h : γ t - γ t₀ = 0
       · simp [h]
       · by_cases ht : (t : ℂ) - t₀ = 0
         · simp [ht]
         · field_simp
-    simpa only [h_inv_eq] using h_recip
-  have h_prod :
-      Tendsto (fun t => (↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ * deriv γ t)
-        (𝓝[≠] t₀) (𝓝 (L⁻¹ * L)) :=
-    Tendsto.mul h_ratio_tendsto (h_deriv_tendsto.mono_left nhdsWithin_le_nhds)
-  simpa only [inv_mul_cancel₀ hL] using h_prod
+    simpa only [h_inv_eq] using h_slope'.inv₀ hL
+  simpa only [inv_mul_cancel₀ hL] using
+    h_ratio_tendsto.mul (h_deriv_tendsto.mono_left nhdsWithin_le_nhds)
 
 /-- Asymptotic control:
 ‖(γ-γ₀)⁻¹ * γ' - (t-t₀)⁻¹‖ ≤ ε / |t-t₀|. -/
-lemma integrand_asymptotic (γ : ℝ → ℂ) (t₀ : ℝ) (L : ℂ) (_hL : L ≠ 0)
-    (_hγ_hasderiv : HasDerivAt γ L t₀) (_hγ_cont_at : ContinuousAt (deriv γ) t₀)
+lemma integrand_asymptotic (γ : ℝ → ℂ) (t₀ : ℝ)
     (h_tendsto : Tendsto (fun t => (↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ * deriv γ t)
       (𝓝[≠] t₀) (𝓝 1)) :
     ∀ ε > 0, ∃ δ > 0, ∀ t, 0 < |t - t₀| → |t - t₀| < δ →
@@ -123,12 +102,9 @@ lemma integrand_asymptotic (γ : ℝ → ℂ) (t₀ : ℝ) (L : ℂ) (_hL : L �
   have h_ne : t ≠ t₀ := fun h => by simp [h] at ht_pos
   have h_bound := hδ h_ne (by rwa [Real.dist_eq])
   rw [Complex.dist_eq] at h_bound
-  have h_ne_c : (↑(t - t₀) : ℂ) ≠ 0 := by
-    simp only [ne_eq, ofReal_eq_zero, sub_eq_zero]
-    exact h_ne
+  have h_ne_c : (↑(t - t₀) : ℂ) ≠ 0 := by simpa [sub_eq_zero] using h_ne
   have h_key : (γ t - γ t₀)⁻¹ * deriv γ t - (↑(t - t₀))⁻¹ =
-      ((↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ * deriv γ t - 1) * (↑(t - t₀))⁻¹ := by
-    field_simp
+      ((↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ * deriv γ t - 1) * (↑(t - t₀))⁻¹ := by field_simp
   rw [h_key]
   calc ‖((↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ * deriv γ t - 1) * (↑(t - t₀))⁻¹‖
       = ‖(↑(t - t₀) : ℂ) * (γ t - γ t₀)⁻¹ * deriv γ t - 1‖ * ‖(↑(t - t₀) : ℂ)⁻¹‖ :=
@@ -151,16 +127,13 @@ lemma gamma_lower_bound_of_hasDerivAt {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} 
   have h_rem : ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ (‖L‖ / 2) * |t - t₀| :=
     hδ_bound t ht_pos ht_lt
   have h_tri : ‖γ t - γ t₀‖ ≥ ‖(t - t₀) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := by
-    have h1 : ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by
-      congr 1
-      ring
+    have h1 : ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by ring_nf
     rw [h1]
-    exact norm_add_lower_bound _ _
-  have h_smul : ‖(t - t₀) • L‖ = |t - t₀| * ‖L‖ := norm_real_smul (t - t₀) L
+    exact norm_sub_le_norm_add _ _
   calc ‖γ t - γ t₀‖
       ≥ ‖(t - t₀) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := h_tri
     _ ≥ |t - t₀| * ‖L‖ - (‖L‖ / 2) * |t - t₀| := by
-        rw [h_smul]
+        rw [norm_real_smul]
         linarith
     _ = (‖L‖ / 2) * |t - t₀| := by ring
 
@@ -176,16 +149,13 @@ lemma gamma_upper_bound_of_hasDerivAt {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} 
   refine ⟨δ, hδ_pos, fun t ht_pos ht_lt => ?_⟩
   have h_rem : ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ * |t - t₀| := hδ_bound t ht_pos ht_lt
   have h_tri : ‖γ t - γ t₀‖ ≤ ‖(t - t₀) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := by
-    have h1 : ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by
-      congr 1
-      ring
+    have h1 : ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by ring_nf
     rw [h1]
     exact norm_add_le _ _
-  have h_smul : ‖(t - t₀) • L‖ = |t - t₀| * ‖L‖ := norm_real_smul (t - t₀) L
   calc ‖γ t - γ t₀‖
       ≤ ‖(t - t₀) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := h_tri
     _ ≤ |t - t₀| * ‖L‖ + ‖L‖ * |t - t₀| := by
-        rw [h_smul]
+        rw [norm_real_smul]
         linarith
     _ = 2 * ‖L‖ * |t - t₀| := by ring
 
@@ -215,7 +185,7 @@ lemma no_return_of_inj_continuous {γ : ℝ → ℂ} {a b t₀ : ℝ} {c : ℝ} 
 /-- From γ-space upper bound to t-space upper bound: if `‖γ t - γ t₀‖ ≤ εC` and
 the lower bound holds, then `|t - t₀| ≤ 2*εC/‖L‖`. -/
 lemma t_bound_from_gamma_bound {γ : ℝ → ℂ} {t₀ t : ℝ} {L : ℂ} {εC δ : ℝ} (hL : L ≠ 0)
-    (_hδ_pos : 0 < δ) (ht_pos : 0 < |t - t₀|) (ht_lt : |t - t₀| < δ)
+    (ht_pos : 0 < |t - t₀|) (ht_lt : |t - t₀| < δ)
     (h_lower : ∀ s, 0 < |s - t₀| → |s - t₀| < δ →
       ‖γ s - γ t₀‖ ≥ (‖L‖ / 2) * |s - t₀|)
     (h_gamma_bound : ‖γ t - γ t₀‖ ≤ εC) : |t - t₀| ≤ 2 * εC / ‖L‖ := by
@@ -230,7 +200,7 @@ lemma t_bound_from_gamma_bound {γ : ℝ → ℂ} {t₀ t : ℝ} {L : ℂ} {εC 
 /-- From γ-space lower bound to t-space lower bound: if `εC < ‖γ t - γ t₀‖` and
 the upper bound holds, then `εC/(2*‖L‖) < |t - t₀|`. -/
 lemma t_lower_from_gamma_lower {γ : ℝ → ℂ} {t₀ t : ℝ} {L : ℂ} {εC δ : ℝ} (hL : L ≠ 0)
-    (_hδ_pos : 0 < δ) (ht_pos : 0 < |t - t₀|) (ht_lt : |t - t₀| < δ)
+    (ht_pos : 0 < |t - t₀|) (ht_lt : |t - t₀| < δ)
     (h_upper : ∀ s, 0 < |s - t₀| → |s - t₀| < δ →
       ‖γ s - γ t₀‖ ≤ 2 * ‖L‖ * |s - t₀|)
     (h_gamma_lower : εC < ‖γ t - γ t₀‖) : εC / (2 * ‖L‖) < |t - t₀| := by
@@ -242,22 +212,11 @@ lemma t_lower_from_gamma_lower {γ : ℝ → ℂ} {t₀ t : ℝ} {L : ℂ} {εC 
     _ = |t - t₀| := by field_simp
 
 /-- If γ is C² at t₀, then `deriv γ` is continuous at t₀. -/
-lemma contAt_deriv_of_contDiffAt_two {γ : ℝ → ℂ} {t₀ : ℝ}
+lemma continuousAt_deriv_of_contDiffAt_two {γ : ℝ → ℂ} {t₀ : ℝ}
     (hγ_C2 : ContDiffAt ℝ 2 γ t₀) : ContinuousAt (deriv γ) t₀ := by
-  obtain ⟨u, hu_mem, hγ_on⟩ := hγ_C2.contDiffOn (m := 2) le_rfl (by norm_cast)
-  obtain ⟨ε, hε_pos, hball_sub⟩ := Metric.mem_nhds_iff.mp hu_mem
-  have hγ_ball : ContDiffOn ℝ 2 γ (Metric.ball t₀ ε) := hγ_on.mono hball_sub
-  have h_fderiv_cont : ContinuousOn (fderiv ℝ γ) (Metric.ball t₀ ε) :=
-    hγ_ball.continuousOn_fderiv_of_isOpen Metric.isOpen_ball (by norm_cast)
-  have h_mem_ball : t₀ ∈ Metric.ball t₀ ε := Metric.mem_ball_self hε_pos
-  have h_cont_at_fderiv : ContinuousAt (fderiv ℝ γ) t₀ :=
-    h_fderiv_cont.continuousAt (Metric.isOpen_ball.mem_nhds h_mem_ball)
-  have h_deriv_eq : deriv γ = (fun t => fderiv ℝ γ t 1) := by
-    ext t
-    by_cases h : DifferentiableAt ℝ γ t
-    · rw [fderiv_apply_one_eq_deriv]
-    · simp [deriv_zero_of_not_differentiableAt h, fderiv_zero_of_not_differentiableAt h]
+  have h_deriv_eq : deriv γ = (fun t => fderiv ℝ γ t 1) :=
+    funext fun _ => (fderiv_apply_one_eq_deriv).symm
   rw [h_deriv_eq]
-  exact h_cont_at_fderiv.clm_apply continuousAt_const
+  exact (ContDiffAt.continuousAt_fderiv hγ_C2 (by norm_cast)).clm_apply continuousAt_const
 
 end
