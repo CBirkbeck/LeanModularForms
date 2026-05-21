@@ -34,8 +34,6 @@ noncomputable section
 
 variable {x y : ℂ}
 
-/-! ### Simple pole predicate -/
-
 /-- Simple pole decomposition: `f(z) = c/(z-z₀) + g(z)` near `z₀`, where `g` is analytic
 at `z₀` and `c` is the residue. -/
 def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=
@@ -66,27 +64,18 @@ theorem hasSimplePoleAt_of_decomposition {f : ℂ → ℂ} {z₀ c : ℂ} {g : �
     HasSimplePoleAt f z₀ :=
   ⟨c, g, hg, hf⟩
 
-/-! ### Residue via circle integral -/
-
 /-- The residue of `f` at `z₀`, defined as the limit of normalized circle integrals:
 `Res(f, z₀) = lim_{r→0⁺} (2πi)⁻¹ ∮_{|z-z₀|=r} f(z) dz`. -/
 def residue (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
   limUnder (𝓝[>] (0 : ℝ)) fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(z₀, r), f z
 
-/-! ### CPV of simple pole = winding × coefficient -/
-
 /-- The Cauchy principal value of `c/(z - s)` along a path `γ` equals `2πi · w · c`,
 where `w` is the generalized winding number. This is the key computation linking
-residues to winding numbers.
-
-The proof factors out the constant `c` from the CPV integrand and uses the
-definition of the generalized winding number. -/
+residues to winding numbers. -/
 theorem hasCauchyPV_simple_pole {s c : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
     (hw : HasGeneralizedWindingNumber γ s w) :
     HasCauchyPV (fun z => c / (z - s)) γ s (2 * ↑Real.pi * I * w * c) := by
-  simp only [div_eq_mul_inv]
-  rw [show 2 * ↑Real.pi * I * w * c = c * (2 * ↑Real.pi * I * w) from by ring]
-  exact hw.const_mul c
+  simpa [div_eq_mul_inv, mul_comm, mul_left_comm] using hw.const_mul c
 
 /-- Variant with zero coefficient: `HasCauchyPV` of `0/(z-s)` is trivially 0. -/
 theorem hasCauchyPV_simple_pole_zero {s : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
