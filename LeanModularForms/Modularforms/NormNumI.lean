@@ -7,6 +7,30 @@ module
 
 public import Mathlib.Data.Complex.Basic
 
+/-!
+# `norm_numI`: a `norm_num`-style tactic for complex arithmetic
+
+This file provides the `norm_numI` `conv` tactic and `norm_num` extensions for
+deciding equalities, real parts, and imaginary parts of explicit complex
+expressions built from numerals, `Complex.I`, the field operations, negation,
+and complex conjugation.
+
+## Main definitions
+
+* `Mathlib.Meta.NormNumI.parse`: recursive parser turning a `Q(ℂ)` expression
+  into a pair of real-part / imaginary-part terms together with a proof of
+  equality.
+* `Mathlib.Meta.NormNumI.normalize`: post-`parse` step that runs `norm_num` on
+  both components to put them in canonical form.
+
+## Main results
+
+* `norm_numI` (conv tactic): rewrites a complex expression into the canonical
+  `⟨re, im⟩` form with both components reduced by `norm_num`.
+* `Mathlib.Meta.NormNum.evalComplexEq`, `evalRe`, `evalIm`: `norm_num`
+  extensions handling `=`, `Complex.re`, and `Complex.im` on complex numerals.
+-/
+
 @[expose] public section
 
 open Lean Meta Elab Qq Tactic Complex Mathlib.Tactic
@@ -24,13 +48,11 @@ theorem split_one : (1 : ℂ) = ⟨1, 0⟩ := rfl
 theorem split_add {z₁ z₂ : ℂ} {a₁ a₂ b₁ b₂ : ℝ}
     (h₁ : z₁ = ⟨a₁, b₁⟩) (h₂ : z₂ = ⟨a₂, b₂⟩) :
     z₁ + z₂ = ⟨(a₁ + a₂), (b₁ + b₂)⟩ := by
-  substs h₁ h₂
-  rfl
+  substs h₁ h₂; rfl
 
 theorem split_mul {z₁ z₂ : ℂ} {a₁ a₂ b₁ b₂ : ℝ} (h₁ : z₁ = ⟨a₁, b₁⟩) (h₂ : z₂ = ⟨a₂, b₂⟩) :
     z₁ * z₂ = ⟨(a₁ * a₂ - b₁ * b₂), (a₁ * b₂ + b₁ * a₂)⟩ := by
-  substs h₁ h₂
-  exact Complex.mk_mul_mk ..
+  substs h₁ h₂; exact Complex.mk_mul_mk ..
 
 theorem split_inv {z : ℂ} {x y : ℝ} (h : z = ⟨x, y⟩) :
     z⁻¹ = ⟨x / (x * x + y * y), - y / (x * x + y * y)⟩ := by
@@ -40,13 +62,11 @@ theorem split_inv {z : ℂ} {x y : ℝ} (h : z = ⟨x, y⟩) :
 
 theorem split_neg {z : ℂ} {a b : ℝ} (h : z = ⟨a, b⟩) :
     -z = ⟨-a, -b⟩ := by
-  subst h
-  rfl
+  subst h; rfl
 
 theorem split_conj {w : ℂ} {a b : ℝ} (hw : w = ⟨a, b⟩) :
     conj w = ⟨a, -b⟩ := by
-  rw [hw]
-  rfl
+  subst hw; rfl
 
 theorem split_num (n : ℕ) [n.AtLeastTwo] :
     OfNat.ofNat (α := ℂ) n = ⟨OfNat.ofNat n, 0⟩ := rfl
@@ -124,9 +144,6 @@ meta partial def parse (z : Q(ℂ)) :
       return ⟨q(OfNat.ofNat $n), q(0), (q(split_num $n):)⟩
   | ~q(OfScientific.ofScientific $m $x $exp) =>
     return ⟨q(OfScientific.ofScientific $m $x $exp), q(0), q(split_scientific _ _ _)⟩
-  -- /- parse a constructor type -/
-  -- |~q(Complex.mk $a $b) =>
-  -- pure ⟨a, b, q(rfl)⟩
   | _ => throwError "found the atom {z} which is not a numeral"
 
 meta def normalize (z : Q(ℂ)) : MetaM (Σ a b : Q(ℝ), Q($z = ⟨$a, $b⟩)) := do
