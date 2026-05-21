@@ -22,8 +22,9 @@ and the piecewise C¹ contour integration framework. The main results are:
 * `DifferentiableOn.hasPrimitive_of_convex` — if `f` is holomorphic on a convex open set `U`,
   then there exists `F` with `HasDerivAt F (f z) z` for all `z ∈ U`.
 * `DifferentiableOn.isExactOn_convex` — same result using mathlib's `Complex.IsExactOn`.
-* `contourIntegral_eq_zero_of_differentiableOn_convex` — Cauchy's theorem: the contour integral
-  of a holomorphic function along a closed piecewise C¹ path in a convex open set is zero.
+* `contourIntegral_eq_zero_of_differentiableOn_convex_aux` — Cauchy's theorem: the contour
+  integral of a holomorphic function along a closed piecewise C¹ path in a convex open set is
+  zero, assuming integrability of the integrand.
 
 ## References
 
@@ -76,9 +77,7 @@ variable {x y : ℂ}
 If `f` is holomorphic on a convex open nonempty set `U` and `γ` is a closed piecewise C¹
 path whose image lies in `U`, then the contour integral of `f` along `γ` is zero.
 
-This version requires the integrability of the contour integrand as a hypothesis.
-See `contourIntegral_eq_zero_of_differentiableOn_convex` for a version that
-automatically discharges integrability when the path is closed. -/
+This version requires the integrability of the contour integrand as a hypothesis. -/
 theorem contourIntegral_eq_zero_of_differentiableOn_convex_aux {f : ℂ → ℂ}
     {U : Set ℂ} (γ : PiecewiseC1Path x y) (hclosed : x = y)
     (hU : Convex ℝ U) (hUo : IsOpen U) (hUne : U.Nonempty)
