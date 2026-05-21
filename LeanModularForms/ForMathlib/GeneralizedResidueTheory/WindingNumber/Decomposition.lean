@@ -31,12 +31,9 @@ noncomputable section
 private lemma no_endpoint_crossing_of_unique_interior (γ : PiecewiseC1Immersion) (z₀ : ℂ)
     (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo γ.a γ.b)
     (honly : ∀ t ∈ Icc γ.a γ.b, γ.toFun t = z₀ → t = t₀) :
-    γ.toFun γ.a ≠ z₀ ∧ γ.toFun γ.b ≠ z₀ := by
-  refine ⟨fun h => ?_, fun h => ?_⟩
-  · have := honly γ.a (left_mem_Icc.mpr γ.hab.le) h
-    linarith [ht₀.1]
-  · have := honly γ.b (right_mem_Icc.mpr γ.hab.le) h
-    linarith [ht₀.2]
+    γ.toFun γ.a ≠ z₀ ∧ γ.toFun γ.b ≠ z₀ :=
+  ⟨fun h => ht₀.1.ne (honly γ.a (left_mem_Icc.mpr γ.hab.le) h),
+   fun h => ht₀.2.ne' (honly γ.b (right_mem_Icc.mpr γ.hab.le) h)⟩
 
 /-- CPV of `(z - z₀)⁻¹` exists when there is a unique crossing at `t₀`. -/
 private lemma cpv_exists_of_unique_crossing (γ : PiecewiseC1Immersion) (z₀ : ℂ) (t₀ : ℝ)
@@ -48,12 +45,8 @@ private lemma cpv_exists_of_unique_crossing (γ : PiecewiseC1Immersion) (z₀ : 
     CauchyPrincipalValueExists' (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ :=
   cpv_exists_inv_sub γ z₀ hγ_meas
     (no_endpoint_crossing_of_unique_interior γ z₀ t₀ ht₀ honly)
-    (fun t ht hγt => by
-      rw [honly t (Ioo_subset_Icc_self ht) hγt]
-      exact hC2)
-    (fun t ht hγt => by
-      rw [honly t (Ioo_subset_Icc_self ht) hγt]
-      exact h_cont_deriv)
+    (fun t ht hγt => honly t (Ioo_subset_Icc_self ht) hγt ▸ hC2)
+    (fun t ht hγt => honly t (Ioo_subset_Icc_self ht) hγt ▸ h_cont_deriv)
 
 /-- The Cauchy PV in canonical form equals the limit of the cutoff integrals. -/
 private lemma cpv_inv_sub_eq_limit (γ : PiecewiseC1Immersion) (z₀ : ℂ) (L : ℂ)
@@ -61,15 +54,10 @@ private lemma cpv_inv_sub_eq_limit (γ : PiecewiseC1Immersion) (z₀ : ℂ) (L :
       then (fun z => (z - z₀)⁻¹) (γ.toFun t) * deriv γ.toFun t else 0)
       (𝓝[>] 0) (𝓝 L)) :
     cauchyPrincipalValue' (·⁻¹) (fun t => γ.toFun t - z₀) γ.a γ.b 0 = L := by
-  have hL' : Tendsto (fun ε => ∫ t in γ.a..γ.b,
-      if ‖(fun t => γ.toFun t - z₀) t - 0‖ > ε
-      then (·⁻¹) ((fun t => γ.toFun t - z₀) t) * deriv (fun t => γ.toFun t - z₀) t
-      else 0) (𝓝[>] 0) (𝓝 L) :=
-    hL.congr fun ε => by
-      congr 1 with t
-      simp only [sub_zero, deriv_sub_const]
   unfold cauchyPrincipalValue'
-  exact hL'.limUnder_eq
+  refine Tendsto.limUnder_eq (hL.congr fun ε => ?_)
+  congr 1 with t
+  simp only [sub_zero, deriv_sub_const]
 
 /-- **FTC + direction limit**: For a closed piecewise C¹ immersion with unique crossing
 at t₀ through z₀, the exponential of the Cauchy PV integral equals `exp(-i · α)` where
@@ -91,11 +79,9 @@ theorem exp_pv_eq_exp_neg_crossing_angle (γ : PiecewiseC1Immersion)
       Complex.exp (-(I * angleAtCrossing γ t₀ ht₀)) := by
   obtain ⟨L, hL⟩ :=
     cpv_exists_of_unique_crossing γ z₀ t₀ ht₀ honly hγ_meas hC2 h_cont_deriv
-  have h_exp_target :=
-    tendsto_exp_cutoff_integral_crossing γ hclosed z₀ t₀ ht₀ hcross honly
   rw [cpv_inv_sub_eq_limit γ z₀ L hL]
-  exact tendsto_nhds_unique
-    (Complex.continuous_exp.continuousAt.tendsto.comp hL) h_exp_target
+  exact tendsto_nhds_unique (Complex.continuous_exp.continuousAt.tendsto.comp hL)
+    (tendsto_exp_cutoff_integral_crossing γ hclosed z₀ t₀ ht₀ hcross honly)
 
 /-- The external winding contribution equals an integer when `exp(L) = exp(-iα)`.
 Given that the CPV equals `L` and `L = -iα + n·(2πi)`, the external winding is `n`. -/
@@ -106,8 +92,7 @@ private lemma externalWindingContribution_eq_int_of_cpv_eq (γ : PiecewiseC1Imme
     externalWindingContribution γ z₀ t₀ ht₀ = n := by
   unfold externalWindingContribution generalizedWindingNumber'
   rw [hPV_eq, hn]
-  have : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp
+  field_simp [Complex.ofReal_ne_zero.mpr Real.pi_ne_zero]
   ring
 
 /-- The external winding contribution is always an integer.
@@ -132,8 +117,7 @@ theorem externalWindingContribution_isInt (γ : PiecewiseC1Immersion)
   have hPV_eq := cpv_inv_sub_eq_limit γ z₀ L hL
   have h_exp := exp_pv_eq_exp_neg_crossing_angle γ hclosed z₀ t₀ ht₀
     hcross honly hγ_meas hC2 h_cont_deriv
-  rw [hPV_eq] at h_exp
-  rw [Complex.exp_eq_exp_iff_exists_int] at h_exp
+  rw [hPV_eq, Complex.exp_eq_exp_iff_exists_int] at h_exp
   obtain ⟨n, hn⟩ := h_exp
   exact ⟨n, externalWindingContribution_eq_int_of_cpv_eq γ z₀ t₀ ht₀ L n hPV_eq hn⟩
 
@@ -157,9 +141,7 @@ theorem generalizedWindingNumber_eq_neg_angleContribution_single (γ : Piecewise
     (h_external : externalWindingContribution γ z₀ t₀ ht₀ = 0) :
     generalizedWindingNumber' γ.toFun γ.a γ.b z₀ =
       -((angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * Real.pi)) := by
-  have := generalizedWindingNumber_eq_external_sub_angle γ z₀ t₀ ht₀
-  rw [h_external, zero_sub] at this
-  exact this
+  rw [generalizedWindingNumber_eq_external_sub_angle γ z₀ t₀ ht₀, h_external, zero_sub]
 
 /-- At a smooth crossing with zero external winding, contribution is -1/2. -/
 theorem generalizedWindingNumber_eq_neg_half_smooth_crossing (γ : PiecewiseC1Immersion)
@@ -172,8 +154,7 @@ theorem generalizedWindingNumber_eq_neg_half_smooth_crossing (γ : PiecewiseC1Im
   rw [generalizedWindingNumber_eq_neg_angleContribution_single
     γ hclosed z₀ t₀ ht₀ hcross honly h_external,
     angleAtCrossing_smooth γ t₀ ht₀ hsmooth]
-  have : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  field_simp [this]
+  field_simp [Complex.ofReal_ne_zero.mpr Real.pi_ne_zero]
 
 /-- At a corner crossing with angle α and zero external winding,
 contribution is -α/(2π). -/
@@ -203,20 +184,10 @@ theorem externalWindingContribution_translate (γ : PiecewiseC1Immersion) (c : �
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) (z₀ : ℂ) :
     externalWindingContribution (γ.translate c) (z₀ + c) t₀ ht₀ =
       externalWindingContribution γ z₀ t₀ ht₀ := by
-  simp only [externalWindingContribution, angleAtCrossing_translate]
-  congr 1
-  change generalizedWindingNumber' (γ.translate c).toFun γ.a γ.b (z₀ + c) =
-    generalizedWindingNumber' γ.toFun γ.a γ.b z₀
-  unfold generalizedWindingNumber'
-  congr 1
-  change cauchyPrincipalValue' (·⁻¹)
-      (fun t => (γ.translate c).toFun t - (z₀ + c)) γ.a γ.b 0 =
-    cauchyPrincipalValue' (·⁻¹) (fun t => γ.toFun t - z₀) γ.a γ.b 0
+  simp only [externalWindingContribution, angleAtCrossing_translate, generalizedWindingNumber']
   have h_eq : (fun t => (γ.translate c).toFun t - (z₀ + c)) = (fun t => γ.toFun t - z₀) := by
-    ext t
-    simp only [PiecewiseC1Immersion.translate]
-    ring
-  rw [h_eq]
+    ext t; simp only [PiecewiseC1Immersion.translate]; ring
+  rw [show (γ.translate c).a = γ.a from rfl, show (γ.translate c).b = γ.b from rfl, h_eq]
 
 /-- Winding number with angles is additive over disjoint crossing sets. -/
 theorem windingNumberWithAngles_union (γ : PiecewiseC1Immersion) (z₀ : ℂ) (S T : Finset ℝ)
@@ -224,12 +195,8 @@ theorem windingNumberWithAngles_union (γ : PiecewiseC1Immersion) (z₀ : ℂ) (
     (hT_in : ∀ t ∈ T, t ∈ Ioo γ.a γ.b) (hS_at : ∀ t ∈ S, γ.toFun t = z₀)
     (hT_at : ∀ t ∈ T, γ.toFun t = z₀) :
     windingNumberWithAngles' γ z₀ (S ∪ T)
-      (fun t ht => by
-        simp only [Finset.mem_union] at ht
-        exact ht.elim (hS_in t) (hT_in t))
-      (fun t ht => by
-        simp only [Finset.mem_union] at ht
-        exact ht.elim (hS_at t) (hT_at t)) =
+      (fun t ht => (Finset.mem_union.mp ht).elim (hS_in t) (hT_in t))
+      (fun t ht => (Finset.mem_union.mp ht).elim (hS_at t) (hT_at t)) =
       windingNumberWithAngles' γ z₀ S hS_in hS_at +
         windingNumberWithAngles' γ z₀ T hT_in hT_at := by
   simp only [windingNumberWithAngles']
