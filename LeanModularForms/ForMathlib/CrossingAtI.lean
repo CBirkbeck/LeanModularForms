@@ -29,8 +29,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ## Part 1: The arcsin-based cutoff -/
-
 /-- Exact cutoff for the crossing at `i`: `δ(ε) = (12/(5π)) · arcsin(ε/2)`. -/
 def arcsinDelta (ε : ℝ) : ℝ := 12 / (5 * Real.pi) * Real.arcsin (ε / 2)
 
@@ -67,8 +65,6 @@ theorem arcsinDelta_lt_one_fifth {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3) :
     _ = 3 * ε / 5 := by field_simp; ring
     _ < 1 / 5 := by linarith
 
-/-! ## Part 2: Half-angle setup -/
-
 private theorem halfAngle_eq (t : ℝ) :
     (fdArcAngle t - Real.pi / 2) / 2 = 5 * (t - 2/5) * Real.pi / 12 := by
   simp only [fdArcAngle]; ring
@@ -87,8 +83,6 @@ private theorem abs_halfAngle_le_pi12 {t : ℝ}
   calc 5 * Real.pi / 12 * |t - 2/5|
       ≤ 5 * Real.pi / 12 * (1/5) := by gcongr
     _ = Real.pi / 12 := by ring
-
-/-! ## Part 3: Near bound -/
 
 /-- Near bound: `|t - 2/5| ≤ arcsinDelta(ε)` implies `‖γ(t) - i‖ ≤ ε`. -/
 theorem arc_near_at_I_arcsin (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
@@ -114,8 +108,6 @@ theorem arc_near_at_I_arcsin (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 
       (by linarith [abs_nonneg α]) harc_le hα_le_asin
   linarith
 
-/-! ## Part 4: Far bound -/
-
 /-- Far bound on arc: `|t - 2/5| > arcsinDelta(ε)` implies `ε < ‖γ(t) - i‖`. -/
 theorem arc_far_at_I_arcsin (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3)
     {t : ℝ} (ht_arc : t ∈ Icc (1/5 : ℝ) (3/5)) (hδt : arcsinDelta ε < |t - 2/5|) :
@@ -138,8 +130,6 @@ theorem arc_far_at_I_arcsin (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1
     rw [← Real.sin_arcsin (show (-1 : ℝ) ≤ ε / 2 by linarith) (show ε / 2 ≤ 1 by linarith)]
     exact Real.sin_lt_sin_of_lt_of_le_pi_div_two (by linarith) (by linarith) hα_gt_asin
   linarith
-
-/-! ## Part 5: Full SingleCrossingData construction -/
 
 /-- Construct `SingleCrossingData` at `i` from `ArcFTCHyp`.
 
