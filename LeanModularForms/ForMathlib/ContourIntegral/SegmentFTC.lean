@@ -1,10 +1,10 @@
 /-
 Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors:
+Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.SegmentFTC
 import Mathlib
+import LeanModularForms.ForMathlib.SegmentFTC
 
 /-!
 # Telescoping FTC for Log-Derivative on Piecewise Segments
@@ -34,8 +34,7 @@ theorem ftc_telescope_two {f : ℝ → ℂ} {a b c : ℝ}
     (h_ab : ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a))
     (h_bc : ∫ t in b..c, deriv f t / f t = Complex.log (f c) - Complex.log (f b)) :
     ∫ t in a..c, deriv f t / f t = Complex.log (f c) - Complex.log (f a) := by
-  rw [← intervalIntegral.integral_add_adjacent_intervals hint_ab hint_bc, h_ab, h_bc]
-  ring
+  simp [← intervalIntegral.integral_add_adjacent_intervals hint_ab hint_bc, h_ab, h_bc]
 
 /-- For a closed curve (f a = f b), the integral from a to (t₀ - δ) plus from
 (t₀ + δ) to b telescopes to log(f(t₀ - δ)) - log(f(t₀ + δ)), because the log
@@ -47,8 +46,7 @@ theorem ftc_telescope_closed_split {f : ℝ → ℂ} {a b t₀ δ : ℝ} (h_clos
       Complex.log (f b) - Complex.log (f (t₀ + δ))) :
     (∫ t in a..(t₀ - δ), deriv f t / f t) + (∫ t in (t₀ + δ)..b, deriv f t / f t) =
     Complex.log (f (t₀ - δ)) - Complex.log (f (t₀ + δ)) := by
-  rw [h_left, h_right, ← h_closed]
-  ring
+  simp [h_left, h_right, ← h_closed]
 
 /-- FTC on three consecutive segments telescopes: the integral over [a,d] is
 log(f d) - log(f a) if each sub-interval satisfies the FTC-for-log. -/
@@ -60,9 +58,8 @@ theorem ftc_telescope_three {f : ℝ → ℂ} {a b c d : ℝ}
     (h_bc : ∫ t in b..c, deriv f t / f t = Complex.log (f c) - Complex.log (f b))
     (h_cd : ∫ t in c..d, deriv f t / f t = Complex.log (f d) - Complex.log (f c)) :
     ∫ t in a..d, deriv f t / f t = Complex.log (f d) - Complex.log (f a) := by
-  rw [← intervalIntegral.integral_add_adjacent_intervals (hint_ab.trans hint_bc) hint_cd,
+  simp [← intervalIntegral.integral_add_adjacent_intervals (hint_ab.trans hint_bc) hint_cd,
     ← intervalIntegral.integral_add_adjacent_intervals hint_ab hint_bc, h_ab, h_bc, h_cd]
-  ring
 
 /-- Transfer integrability from a local function `h` to `g` given that their
 log-derivatives agree almost everywhere on the interval.  The `h_ae` hypothesis
@@ -190,16 +187,13 @@ theorem ftc_telescope_closed_split_five
     hint_g₄.trans hint_g₅
   have h_left_sum : ∫ t in a..tₗ, deriv g t / g t =
       Complex.log (g tₗ) - Complex.log (g a) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals (hint_g₁.trans hint_g₂) hint_g₃,
+    simp [← intervalIntegral.integral_add_adjacent_intervals (hint_g₁.trans hint_g₂) hint_g₃,
       ← intervalIntegral.integral_add_adjacent_intervals hint_g₁ hint_g₂, h_eq₁, h_eq₂, h_eq₃]
-    ring
   have h_right_sum : ∫ t in tᵣ..b, deriv g t / g t =
       Complex.log (g b) - Complex.log (g tᵣ) := by
-    rw [← intervalIntegral.integral_add_adjacent_intervals hint_g₄ hint_g₅, h_eq₄, h_eq₅]
-    ring
+    simp [← intervalIntegral.integral_add_adjacent_intervals hint_g₄ hint_g₅, h_eq₄, h_eq₅]
   have h_closed_g : g a = g b := by rw [h_ga, h_gb, h_closed]
   refine ⟨hint_left, hint_right, ?_⟩
-  rw [h_left_sum, h_right_sum, ← h_closed_g]
-  ring
+  simp [h_left_sum, h_right_sum, ← h_closed_g]
 
 end ContourIntegral
