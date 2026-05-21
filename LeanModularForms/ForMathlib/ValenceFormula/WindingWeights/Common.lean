@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
+import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.SegmentFTC
 import LeanModularForms.ForMathlib.TrigLemmas
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Smooth
@@ -20,10 +21,6 @@ open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
 
 attribute [local instance] Classical.propDecidable
-
-/-- Work around mathlib 4.29-rc8 instance synthesis issue for `ℝ`-scalar-on-`ℂ`. -/
-noncomputable instance instNormSMulClassRealComplex' : NormSMulClass ℝ ℂ :=
-  @NormedSpace.toNormSMulClass ℝ ℂ _ _ _
 
 noncomputable section
 
@@ -53,28 +50,28 @@ theorem fdBoundary_H_at_three_eq_rho (H : ℝ) :
   push_cast
   ring
 
-theorem fdBoundary_H_seg0 (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
+theorem fdBoundary_H_seg1 (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
     fdBoundary_H H t = 1/2 + (↑H - ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I := by
   simp only [fdBoundary_H, ht, ↓reduceIte]
 
-theorem fdBoundary_H_seg1 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : t ≤ 2) :
+theorem fdBoundary_H_seg2 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : t ≤ 2) :
     fdBoundary_H H t = exp ((↑(Real.pi : ℝ) / 3 + (↑t - 1) *
       (↑(Real.pi : ℝ) / 2 - ↑(Real.pi : ℝ) / 3)) * I) := by
   simp only [fdBoundary_H, ht1, ht2, ↓reduceIte]
 
-theorem fdBoundary_H_seg2 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : ¬(t ≤ 2))
+theorem fdBoundary_H_seg3 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : ¬(t ≤ 2))
     (ht3 : t ≤ 3) :
     fdBoundary_H H t = exp ((↑(Real.pi : ℝ) / 2 + (↑t - 2) *
       (2 * ↑(Real.pi : ℝ) / 3 - ↑(Real.pi : ℝ) / 2)) * I) := by
   simp only [fdBoundary_H, ht1, ht2, ht3, ↓reduceIte]
 
-theorem fdBoundary_H_seg3 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : ¬(t ≤ 2))
+theorem fdBoundary_H_seg4 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : ¬(t ≤ 2))
     (ht3 : ¬(t ≤ 3)) (ht4 : t ≤ 4) :
     fdBoundary_H H t = -1/2 + (↑(Real.sqrt 3) / 2 + (↑t - 3) *
       (↑H - ↑(Real.sqrt 3) / 2)) * I := by
   simp only [fdBoundary_H, ht1, ht2, ht3, ht4, ↓reduceIte]
 
-theorem fdBoundary_H_seg4 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : ¬(t ≤ 2))
+theorem fdBoundary_H_seg5 (H : ℝ) {t : ℝ} (ht1 : ¬(t ≤ 1)) (ht2 : ¬(t ≤ 2))
     (ht3 : ¬(t ≤ 3)) (ht4 : ¬(t ≤ 4)) :
     fdBoundary_H H t = (↑t - 9/2) + ↑H * I := by
   simp only [fdBoundary_H, ht1, ht2, ht3, ht4, ↓reduceIte]

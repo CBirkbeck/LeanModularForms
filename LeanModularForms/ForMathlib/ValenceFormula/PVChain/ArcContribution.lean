@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ForMathlib.ValenceFormula.PVChain.Helpers
+import LeanModularForms.ForMathlib.ValenceFormula.PVChain.ResidueSideInfra
 import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Smooth
 
@@ -41,13 +42,6 @@ private lemma deriv_fdBoundary_H_arc (H : ℝ) {t : ℝ} (h1 : 1 < t) (h3 : t < 
   erw [(fdBoundary_H_hasDerivAt_arc H h1 h3).deriv]
   push_cast
   ring
-
-private lemma analyticAt_logDeriv_off_zeros (z : ℂ) (hz : 0 < z.im)
-    (hfz : modularFormCompOfComplex f z ≠ 0) :
-    AnalyticAt ℂ (logDeriv (modularFormCompOfComplex f)) z :=
-  have h := (UpperHalfPlane.mdifferentiable_iff.mp f.holo').analyticAt
-    (UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hz)
-  h.deriv.fun_div h hfz
 
 omit hf in
 lemma logDeriv_modform_S_transform (z : ℂ) (hz : 0 < z.im) (hz_ne : z ≠ 0)
@@ -191,7 +185,7 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
               Complex.exp_ofReal_mul_I_im]
           exact Real.sin_pos_of_pos_of_lt_pi
             (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-        exact (analyticAt_logDeriv_off_zeros f (γ t) h_im h_ne).continuousAt
+        exact (analyticAt_logDeriv_off_zeros' f (γ t) h_im h_ne).continuousAt
       · exact (fdBoundary_H_continuous H).continuousAt
     · have h_deriv_eq : deriv γ =ᶠ[𝓝 t] fun s => ↑(Real.pi / 6) * I * γ s := by
         filter_upwards [Ioo_mem_nhds ht_ioo.1 ht_ioo.2] with s hs
