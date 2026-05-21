@@ -98,23 +98,18 @@ namespace SingleCrossingData
 
 variable {γ : PiecewiseC1Path x y} {z₀ : ℂ}
 
-/-- The cpvIntegrand is zero on the middle segment `(t₀ - δ, t₀ + δ)`,
-because the curve is ε-close to `z₀` there (by `h_near`). -/
 private theorem cpvIntegrand_zero_on_middle (D : SingleCrossingData γ z₀)
     {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold)
     (h_mid_lt : D.t₀ - D.δ ε < D.t₀ + D.δ ε) :
     ∀ t ∈ Set.uIoc (D.t₀ - D.δ ε) (D.t₀ + D.δ ε),
       cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t = 0 := by
   intro t ht
-  rw [Set.uIoc_of_le (le_of_lt h_mid_lt)] at ht
+  rw [Set.uIoc_of_le h_mid_lt.le] at ht
   simp only [cpvIntegrand]
   rw [if_neg (not_lt.mpr _)]
-  refine D.h_near ε hε_pos hε_lt t ?_
-  rw [abs_le]
-  refine ⟨by linarith [ht.1], by linarith [ht.2]⟩
+  exact D.h_near ε hε_pos hε_lt t
+    (abs_le.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩)
 
-/-- The cpvIntegrand agrees a.e. with the full integrand on `[0, t₀ - δ]`,
-because the curve is ε-far from `z₀` there (by `h_far`). -/
 private theorem cpvIntegrand_eq_full_left_ae (D : SingleCrossingData γ z₀)
     {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold)
     (h_left_lt : (0 : ℝ) < D.t₀ - D.δ ε) :
@@ -122,21 +117,18 @@ private theorem cpvIntegrand_eq_full_left_ae (D : SingleCrossingData γ z₀)
       cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t =
         (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t := by
   have h_sing : ({D.t₀ - D.δ ε} : Set ℝ)ᶜ ∈ ae volume :=
-    compl_mem_ae_iff.mpr (by exact (Set.finite_singleton _).measure_zero volume)
+    compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
   filter_upwards [h_sing] with t ht_ne ht_mem
-  rw [Set.uIoc_of_le (le_of_lt h_left_lt)] at ht_mem
+  rw [Set.uIoc_of_le h_left_lt.le] at ht_mem
   have ht_lt : t < D.t₀ - D.δ ε :=
-    lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+    ht_mem.2.lt_of_ne (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
+  have hδ_pos := D.hδ_pos ε hε_pos hε_lt
   simp only [cpvIntegrand]
   rw [if_pos]
-  have hδ_pos := D.hδ_pos ε hε_pos hε_lt
   apply D.h_far ε hε_pos hε_lt t
-  · exact ⟨le_of_lt ht_mem.1, le_of_lt (by linarith [D.ht₀.2])⟩
-  · rw [abs_of_nonpos (by linarith)]
-    linarith
+  · exact ⟨ht_mem.1.le, by linarith [D.ht₀.2]⟩
+  · rw [abs_of_nonpos (by linarith)]; linarith
 
-/-- The cpvIntegrand agrees a.e. with the full integrand on `[t₀ + δ, 1]`,
-because the curve is ε-far from `z₀` there (by `h_far`). -/
 private theorem cpvIntegrand_eq_full_right_ae (D : SingleCrossingData γ z₀)
     {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold)
     (h_right_lt : D.t₀ + D.δ ε < 1) :
@@ -144,19 +136,16 @@ private theorem cpvIntegrand_eq_full_right_ae (D : SingleCrossingData γ z₀)
       cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t =
         (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t := by
   have h_sing : ({D.t₀ + D.δ ε} : Set ℝ)ᶜ ∈ ae volume :=
-    compl_mem_ae_iff.mpr (by exact (Set.finite_singleton _).measure_zero volume)
+    compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
   filter_upwards [h_sing] with t ht_ne ht_mem
-  rw [Set.uIoc_of_le (le_of_lt h_right_lt)] at ht_mem
+  rw [Set.uIoc_of_le h_right_lt.le] at ht_mem
   have hδ_pos := D.hδ_pos ε hε_pos hε_lt
   simp only [cpvIntegrand]
   rw [if_pos]
   apply D.h_far ε hε_pos hε_lt t
   · exact ⟨by linarith [D.ht₀.1, ht_mem.1], ht_mem.2⟩
-  · rw [abs_of_pos (by linarith [ht_mem.1])]
-    linarith [ht_mem.1]
+  · rw [abs_of_pos (by linarith [ht_mem.1])]; linarith [ht_mem.1]
 
-/-- The cutoff integral over `[0, 1]` equals `D.E ε` for valid `ε`:
-the middle piece vanishes, and the two outer pieces match the FTC expression. -/
 private theorem cutoff_integral_eq_E (D : SingleCrossingData γ z₀)
     {ε : ℝ} (hε_pos : 0 < ε) (hε_lt : ε < D.threshold) :
     ∫ t in (0 : ℝ)..1, cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t =
@@ -164,36 +153,33 @@ private theorem cutoff_integral_eq_E (D : SingleCrossingData γ z₀)
   have hδ_pos := D.hδ_pos ε hε_pos hε_lt
   have hδ_small := D.hδ_small ε hε_pos hε_lt
   have h_left_lt : (0 : ℝ) < D.t₀ - D.δ ε := by
-    linarith [lt_of_lt_of_le hδ_small (min_le_left _ _)]
+    linarith [hδ_small.trans_le (min_le_left _ _)]
   have h_mid_lt : D.t₀ - D.δ ε < D.t₀ + D.δ ε := by linarith
   have h_right_lt : D.t₀ + D.δ ε < 1 := by
-    linarith [lt_of_lt_of_le hδ_small (min_le_right _ _)]
+    linarith [hδ_small.trans_le (min_le_right _ _)]
   set F := fun t => cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t
   have hF_mid := D.cpvIntegrand_zero_on_middle hε_pos hε_lt h_mid_lt
   have hF_left := D.cpvIntegrand_eq_full_left_ae hε_pos hε_lt h_left_lt
   have hF_right := D.cpvIntegrand_eq_full_right_ae hε_pos hε_lt h_right_lt
-  -- Integrability of F on each piece
   have hF_int_left : IntervalIntegrable F volume 0 (D.t₀ - D.δ ε) :=
     (D.hint_left ε hε_pos hε_lt).congr_ae
       ((ae_restrict_iff' measurableSet_uIoc).mpr
-        (hF_left.mono (fun t ht hm => (ht hm).symm)))
+        (hF_left.mono (fun _ ht hm => (ht hm).symm)))
   have hF_int_mid : IntervalIntegrable F volume (D.t₀ - D.δ ε) (D.t₀ + D.δ ε) :=
     (IntervalIntegrable.zero (μ := volume)
-      (a := D.t₀ - D.δ ε) (b := D.t₀ + D.δ ε)).congr
-      (fun t ht => (hF_mid t ht).symm)
+      (a := D.t₀ - D.δ ε) (b := D.t₀ + D.δ ε)).congr (fun t ht => (hF_mid t ht).symm)
   have hF_int_right : IntervalIntegrable F volume (D.t₀ + D.δ ε) 1 :=
     (D.hint_right ε hε_pos hε_lt).congr_ae
       ((ae_restrict_iff' measurableSet_uIoc).mpr
-        (hF_right.mono (fun t ht hm => (ht hm).symm)))
-  -- Split, zero middle, congr left/right, apply FTC
+        (hF_right.mono (fun _ ht hm => (ht hm).symm)))
   rw [show ∫ t in (0 : ℝ)..1, F t =
       (∫ t in (0 : ℝ)..(D.t₀ - D.δ ε), F t) +
       (∫ t in (D.t₀ - D.δ ε)..(D.t₀ + D.δ ε), F t) +
-      (∫ t in (D.t₀ + D.δ ε)..1, F t) from by
+      (∫ t in (D.t₀ + D.δ ε)..1, F t) by
     rw [← intervalIntegral.integral_add_adjacent_intervals
           (hF_int_left.trans hF_int_mid) hF_int_right,
         ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid],
-    intervalIntegral.integral_zero_ae (ae_of_all _ (fun t ht => hF_mid t ht)),
+    intervalIntegral.integral_zero_ae (ae_of_all _ hF_mid),
     intervalIntegral.integral_congr_ae hF_left,
     intervalIntegral.integral_congr_ae hF_right, add_zero]
   exact D.h_ftc ε hε_pos hε_lt
@@ -207,18 +193,14 @@ The proof splits the cutoff integral into three pieces at `t₀ ± δ(ε)`:
 The sum of the two outer pieces equals `E(ε)` (by `h_ftc`), which tends to `L`. -/
 theorem hasCauchyPV (D : SingleCrossingData γ z₀) :
     HasCauchyPV (fun z => (z - z₀)⁻¹) γ z₀ D.L := by
-  simp only [HasCauchyPV]
-  have h_ev : (fun ε => ∫ t in (0 : ℝ)..1,
-      cpvIntegrand (fun z => (z - z₀)⁻¹) γ.toPath.extend z₀ ε t)
-      =ᶠ[𝓝[>] 0] D.E := by
-    filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
-    exact D.cutoff_integral_eq_E hε.1 hε.2
-  exact D.h_limit.congr' h_ev.symm
+  refine D.h_limit.congr' ?_
+  filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
+  exact (D.cutoff_integral_eq_E hε.1 hε.2).symm
 
 /-- The generalized winding number at `z₀` equals `L / (2πi)`. -/
 theorem hasWindingNumber (D : SingleCrossingData γ z₀) :
     HasGeneralizedWindingNumber γ z₀ (D.L / (2 * ↑Real.pi * I)) := by
-  rw [show D.L / (2 * ↑Real.pi * I) = (2 * ↑Real.pi * I)⁻¹ * D.L from by ring]
+  rw [div_eq_inv_mul]
   exact hasGeneralizedWindingNumber_of_hasCauchyPV D.hasCauchyPV
 
 /-- The generalized winding number equals the concrete value determined by `L`. -/
@@ -232,8 +214,6 @@ theorem windingNumber_neg_half (D : SingleCrossingData γ z₀)
     (hL : D.L = -(↑Real.pi * I)) :
     generalizedWindingNumber γ z₀ = -1 / 2 := by
   rw [D.windingNumber_eq, hL]
-  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  have hI : (I : ℂ) ≠ 0 := I_ne_zero
   field_simp
 
 /-- If `L = -(π / 3 * I)`, then the generalized winding number is `-1/6`.
@@ -242,10 +222,7 @@ theorem windingNumber_neg_sixth (D : SingleCrossingData γ z₀)
     (hL : D.L = -(↑Real.pi / 3 * I)) :
     generalizedWindingNumber γ z₀ = -1 / 6 := by
   rw [D.windingNumber_eq, hL]
-  have hpi : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-  have hI : (I : ℂ) ≠ 0 := I_ne_zero
-  field_simp
-  ring
+  field_simp; ring
 
 end SingleCrossingData
 
