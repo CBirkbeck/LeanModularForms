@@ -25,11 +25,9 @@ The key insight is that under the slash action:
 -/
 
 open UpperHalfPlane hiding I
-open Real Complex CongruenceSubgroup SlashAction SlashInvariantForm ContinuousMap
-open ModularForm EisensteinSeries TopologicalSpace Set MeasureTheory
-open Metric Filter Function Complex MatrixGroups SlashInvariantFormClass ModularFormClass
+open Real Complex SlashAction ModularForm EisensteinSeries Function
 
-open scoped ModularForm MatrixGroups Manifold Interval Real NNReal ENNReal Topology BigOperators
+open scoped ModularForm MatrixGroups Manifold Topology
 
 noncomputable section
 
@@ -49,14 +47,19 @@ lemma D_D₂ (γ : SL(2, ℤ)) (z : ℍ) :
   simp only [D, hderiv, div_eq_mul_inv, ← zpow_neg_one]
   rw [deriv_const_mul _ (.zpow (differentiableAt_denom γ z) (.inl hz_ne)),
       deriv_denom_zpow γ 1 z]
-  simp only [Int.reduceNeg, Int.reduceSub, zpow_neg_one]; field_simp; ring
+  simp only [Int.reduceNeg, Int.reduceSub, zpow_neg_one]
+  field_simp
+  ring
 
 /-! ## MDifferentiable infrastructure for D₂ -/
 
 /-- D₂ γ is MDifferentiable: it's a constant divided by a linear polynomial. -/
 lemma MDifferentiable_D₂ (γ : SL(2, ℤ)) : MDiff (D₂ γ) := fun z => by
-  have heq : D₂ γ = (fun w => (2 * π * I * (γ 1 0 : ℂ)) / denom γ w) ∘ (↑) := by ext; rfl
-  rw [heq]; exact DifferentiableAt_MDifferentiableAt <|
+  have heq : D₂ γ = (fun w => (2 * π * I * (γ 1 0 : ℂ)) / denom γ w) ∘ (↑) := by
+    ext
+    rfl
+  rw [heq]
+  exact DifferentiableAt_MDifferentiableAt <|
     .div (differentiableAt_const _) (differentiableAt_denom γ z) (denom_ne_zero γ z)
 
 /-! ## Slash invariance of serre_D 1 E₂
@@ -80,7 +83,9 @@ After expansion, the anomaly terms involving D₂ γ and D(D₂ γ) cancel using
 lemma serre_DE₂_slash_invariant (γ : SL(2, ℤ)) :
     (serre_D 1 E₂) ∣[(4 : ℤ)] γ = serre_D 1 E₂ := by
   have hserre12 : serre_D 1 E₂ = serre_D 2 E₂ + (1 / 12 : ℂ) • (E₂ * E₂) := by
-    ext z; simp only [serre_D, Pi.add_apply, Pi.smul_apply, Pi.mul_apply, smul_eq_mul]; ring
+    ext z
+    simp only [serre_D, Pi.add_apply, Pi.smul_apply, Pi.mul_apply, smul_eq_mul]
+    ring
   have hequiv := serre_D_slash_equivariant 2 E₂ E₂_holo' γ
   have hE₂slash := E₂_slash_transform γ
   have hprod := ModularForm.mul_slash_SL2 (2 : ℤ) (2 : ℤ) γ E₂ E₂
@@ -94,7 +99,8 @@ lemma serre_DE₂_slash_invariant (γ : SL(2, ℤ)) :
         simpa using congrFun hprod z]
   set α := (1 : ℂ) / (2 * riemannZeta 2) with hα_def
   have hE₂slash_fun : (E₂ ∣[(2 : ℤ)] γ) = E₂ - α • D₂ γ := by
-    ext w; simpa using congrFun hE₂slash w
+    ext w
+    simpa using congrFun hE₂slash w
   rw [hE₂slash_fun]
   simp only [Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
   have hD_lin : D (E₂ - α • D₂ γ) z = D E₂ z - α * D (D₂ γ) z := by
@@ -103,7 +109,10 @@ lemma serre_DE₂_slash_invariant (γ : SL(2, ℤ)) :
                Pi.sub_apply, Pi.smul_apply, smul_eq_mul]
   simp only [serre_D, Pi.sub_apply, Pi.mul_apply, Pi.smul_apply, smul_eq_mul]
   rw [hD_lin, D_D₂ γ z]
-  have hα_val : α = 3 / π^2 := by simp only [hα_def, riemannZeta_two]; field_simp; ring
+  have hα_val : α = 3 / π^2 := by
+    simp only [hα_def, riemannZeta_two]
+    field_simp
+    ring
   have hpi_ne : (π : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
   rw [show D₂ γ z = (2 * π * I * (γ 1 0 : ℂ)) / denom γ z from rfl, hα_val]
   field_simp [UpperHalfPlane.denom_ne_zero γ z, hpi_ne]
