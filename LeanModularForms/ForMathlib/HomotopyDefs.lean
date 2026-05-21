@@ -3,8 +3,8 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.PiecewiseC1Path
 import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+import LeanModularForms.ForMathlib.PiecewiseC1Path
 
 /-!
 # Homotopy Definitions on [0,1]
@@ -39,8 +39,6 @@ open Set Filter Topology Complex
 open scoped Real
 
 noncomputable section
-
-/-! ### Definitions -/
 
 /-- Piecewise C¹ homotopy between **closed** curves on `[0, 1]` avoiding `z₀`.
 
@@ -87,8 +85,6 @@ def ClosedCurvesHomotopicAvoiding (γ₀ γ₁ : ℝ → ℂ) (z₀ : ℂ) : Pro
     (∃ M : ℝ, ∀ t ∈ Icc (0 : ℝ) 1, ∀ s ∈ Icc (0 : ℝ) 1,
       ‖deriv (fun t' => H (t', s)) t‖ ≤ M)
 
-/-! ### Conversion: smooth implies piecewise -/
-
 /-- A smooth closed homotopy is a piecewise homotopy with empty partition.
 
 Differentiability holds everywhere in `(0, 1)` (the partition condition is vacuous),
@@ -98,13 +94,9 @@ theorem ClosedCurvesHomotopicAvoiding.toPiecewise
     (h : ClosedCurvesHomotopicAvoiding γ₀ γ₁ z₀) :
     PiecewiseCurvesHomotopicAvoiding γ₀ γ₁ z₀ ∅ := by
   obtain ⟨H, hcont, hH0, hH1, hclosed, havoid, hdiff, hderiv_cont, hbound⟩ := h
-  refine ⟨H, hcont, hH0, hH1, hclosed, havoid, ?_, ?_, hbound⟩
-  · intro t ht _ s hs
-    exact hdiff t ht s hs
-  · intro p₁ p₂ _ _ hI
-    exact hderiv_cont.mono (prod_mono hI Subset.rfl)
-
-/-! ### Reflexivity -/
+  exact ⟨H, hcont, hH0, hH1, hclosed, havoid,
+    fun t ht _ s hs => hdiff t ht s hs,
+    fun _ _ _ _ hI => hderiv_cont.mono (prod_mono hI Subset.rfl), hbound⟩
 
 /-- Reflexivity: every piecewise C¹ closed curve avoiding `z₀` is homotopic to itself.
 
@@ -133,11 +125,6 @@ theorem PiecewiseCurvesHomotopicAvoiding.refl
   · obtain ⟨M, hM⟩ := hγ_bound
     exact ⟨M, fun t ht _ _ => hM t ht⟩
 
-/-! ### Symmetry -/
-
-private lemma one_sub_mem_Icc {s : ℝ} (hs : s ∈ Icc (0 : ℝ) 1) : 1 - s ∈ Icc (0 : ℝ) 1 :=
-  ⟨by linarith [hs.2], by linarith [hs.1]⟩
-
 /-- Symmetry: if `γ₀` is homotopic to `γ₁` avoiding `z₀`, then `γ₁` is homotopic
 to `γ₀`. The reversed homotopy is `H'(t, s) = H(t, 1 - s)`. -/
 theorem PiecewiseCurvesHomotopicAvoiding.symm
@@ -148,24 +135,22 @@ theorem PiecewiseCurvesHomotopicAvoiding.symm
   refine ⟨fun p => H (p.1, 1 - p.2), ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact hcont.comp (continuous_fst.prodMk (continuous_const.sub continuous_snd))
   · intro t ht
-    simp only [sub_zero]
-    exact hH1 t ht
+    simpa using hH1 t ht
   · intro t ht
-    simp only [sub_self]
-    exact hH0 t ht
+    simpa using hH0 t ht
   · intro s hs
-    exact hclosed (1 - s) (one_sub_mem_Icc hs)
+    exact hclosed (1 - s) (Icc.one_sub_mem hs)
   · intro t ht s hs
-    exact havoid t ht (1 - s) (one_sub_mem_Icc hs)
+    exact havoid t ht (1 - s) (Icc.one_sub_mem hs)
   · intro t ht htp s hs
-    exact hdiff t ht htp (1 - s) (one_sub_mem_Icc hs)
+    exact hdiff t ht htp (1 - s) (Icc.one_sub_mem hs)
   · intro p₁ p₂ hp hvac hI
     let φ : ℝ × ℝ → ℝ × ℝ := fun q => (q.1, 1 - q.2)
     have hφ_cont : Continuous φ :=
       continuous_fst.prodMk (continuous_const.sub continuous_snd)
     have hφ_maps : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1,
         φ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1 :=
-      fun ⟨_, _⟩ ⟨ht, hs⟩ => ⟨ht, one_sub_mem_Icc hs⟩
+      fun ⟨_, _⟩ ⟨ht, hs⟩ => ⟨ht, Icc.one_sub_mem hs⟩
     have h_eq : ∀ q ∈ Ioo p₁ p₂ ×ˢ Icc (0 : ℝ) 1,
         deriv (fun t' => H (t', 1 - q.2)) q.1 =
         (fun q => deriv (fun t' => H (t', q.2)) q.1) (φ q) :=
@@ -173,9 +158,7 @@ theorem PiecewiseCurvesHomotopicAvoiding.symm
     exact ContinuousOn.congr
       ((hderiv_cont p₁ p₂ hp hvac hI).comp hφ_cont.continuousOn hφ_maps)
       (fun q hq => (h_eq q hq).symm)
-  · exact ⟨M, fun t ht s hs => hbound t ht (1 - s) (one_sub_mem_Icc hs)⟩
-
-/-! ### Uniform avoidance from compactness -/
+  · exact ⟨M, fun t ht s hs => hbound t ht (1 - s) (Icc.one_sub_mem hs)⟩
 
 /-- Compactness gives a uniform positive distance from `z₀`.
 
