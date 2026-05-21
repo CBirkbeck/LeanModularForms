@@ -34,7 +34,7 @@ lemma DiscriminantProductFormula (z : ℍ) : Δ z = cexp (2 * π * Complex.I * z
 
 lemma Delta_eq_eta_pow (z : ℍ) : Δ z = (η z) ^ 24 := by
   have hm : Multipliable (fun n : ℕ => 1 - ModularForm.eta_q n z) :=
-    (MultipliableEtaProductExpansion z).congr fun n => by simp [ModularForm.eta_q_eq_cexp]
+    (multipliableEtaProductExpansion z).congr fun n => by simp [ModularForm.eta_q_eq_cexp]
   rw [ModularForm.eta, Δ, mul_pow, tprod_pow (f := fun n : ℕ => 1 - ModularForm.eta_q n z) hm 24]
   congr
   · rw [Periodic.qParam, ← Complex.exp_nat_mul]
@@ -433,7 +433,7 @@ lemma Delta_imag_axis_real : ResToImagAxis.Real Δ := by
   let z : ℍ := ⟨Complex.I * t, by simp [ht]⟩
   have hmul : Multipliable g := by
     have hz : (z : ℂ) = Complex.I * t := rfl
-    simpa [g, hz] using Multipliable_pow _ (by simpa using MultipliableEtaProductExpansion z) 24
+    simpa [g, hz] using multipliable_pow _ (by simpa using multipliableEtaProductExpansion z) 24
   have htprod_im : (∏' n : ℕ, g n).im = 0 :=
     Complex.im_tprod_eq_zero_of_im_eq_zero g hmul him_g
   have him_pref : (cexp (2 * π * Complex.I * (Complex.I * t))).im = 0 := by
