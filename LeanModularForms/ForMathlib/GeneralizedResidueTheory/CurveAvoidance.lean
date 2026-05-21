@@ -34,8 +34,6 @@ def CurveAvoids (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : Prop :=
 noncomputable def curveInfDist (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℝ :=
   Metric.infDist z₀ (γ '' Icc a b)
 
-/-! ### Basic avoidance criteria -/
-
 /-- Trivial wrapper: CurveAvoids follows from pointwise inequality. -/
 theorem curveAvoids_of_ne_on_Icc {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
     (h : ∀ t ∈ Icc a b, γ t ≠ z₀) : CurveAvoids γ a b z₀ :=
@@ -59,8 +57,6 @@ theorem curveAvoids_of_norm_ne {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
     (h : ∀ t ∈ Icc a b, ‖γ t‖ ≠ ‖z₀‖) : CurveAvoids γ a b z₀ :=
   fun t ht heq => h t ht (by rw [heq])
 
-/-! ### Positive inf-distance -/
-
 /-- If a continuous curve on `[a, b]` with `a ≤ b` avoids `z₀`, then the infimum
 distance from `z₀` to the curve image is positive. -/
 theorem curveInfDist_pos_of_avoids {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
@@ -74,8 +70,6 @@ theorem curveInfDist_pos_of_avoids {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
   rw [← h_closed.notMem_iff_infDist_pos h_nonempty]
   rintro ⟨t, ht, heq⟩
   exact hav t ht heq
-
-/-! ### slitPlane membership -/
 
 /-- If a continuous curve avoids `z₀` and every shifted value `γ t - z₀` has positive
 imaginary part or positive real part, then every shifted value lies in the slit plane. -/
