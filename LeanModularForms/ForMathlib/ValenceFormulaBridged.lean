@@ -33,10 +33,10 @@ noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
-/-- The integrand we use to combine residue and modular sides:
-  `F_int H ε = ∫ t in 0..1, cpvIntegrandOn (sArcOfS S ∪ sVertOfS S) (logDeriv f) γ.extend ε t`
-where `γ = (fdWindingDataFull_unconditional hH).boundary`. -/
-private noncomputable def F_int_FM (S : Finset UpperHalfPlane) (H : ℝ) (ε : ℝ) : ℂ :=
+/-- The integrand combining residue and modular sides:
+`F_int_FM f S H ε = ∫ t in 0..1, cpvIntegrandOn (sArcOfS S ∪ sVertOfS S) (logDeriv f) γ.extend ε t`
+where `γ = (fdWindingDataFull_unconditional hH).boundary`, or `0` when `H ≤ 1`. -/
+private def F_int_FM (S : Finset UpperHalfPlane) (H : ℝ) (ε : ℝ) : ℂ :=
   if hH : 1 < H then
     ∫ t in (0 : ℝ)..1,
       cpvIntegrandOn (sArcOfS S ∪ sVertOfS S)
