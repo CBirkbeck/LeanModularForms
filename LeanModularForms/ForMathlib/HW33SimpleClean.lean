@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.ForMathlib.HW33Paper
 import LeanModularForms.ForMathlib.HW33HoloCancel
 import LeanModularForms.ForMathlib.HW33PVSing
-import LeanModularForms.ForMathlib.HW33HigherOrderC3
+import LeanModularForms.ForMathlib.HW33HigherOrder
 import LeanModularForms.ForMathlib.MeromorphicBridge
 
 /-!
