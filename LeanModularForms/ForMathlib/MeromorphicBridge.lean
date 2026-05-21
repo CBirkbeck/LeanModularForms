@@ -42,7 +42,7 @@ at `z_0`, then `g(z) - g(z_0) = (z - z_0) * h(z)` for some analytic `h`, giving
 
 open Complex Set Filter Topology
 
-noncomputable section
+section
 
 /-! ### Forward direction: `HasSimplePoleAt` to `MeromorphicAt` -/
 
@@ -96,6 +96,28 @@ theorem meromorphicOrderAt_nonneg_of_hasSimplePoleAt_coeff_zero {f : ℂ → ℂ
 
 /-! ### Converse: `MeromorphicAt` with order `-1` to `HasSimplePoleAt` -/
 
+/-- Internal: from `f =ᶠ (z - z_0)^(-1) * g(z)` with `g` analytic, factor
+`g z = g z₀ + (z - z₀) * h(z)` and rewrite as `f =ᶠ g(z_0)/(z - z_0) + h(z)`. -/
+private lemma simplePoleDecomp_of_eventuallyEq_zpow_neg_one
+    {f g : ℂ → ℂ} {z₀ : ℂ} (hg_an : AnalyticAt ℂ g z₀)
+    (hg_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = (z - z₀) ^ (-1 : ℤ) • g z) :
+    ∃ h_fn : ℂ → ℂ, AnalyticAt ℂ h_fn z₀ ∧
+      ∀ᶠ z in 𝓝[≠] z₀, f z = g z₀ / (z - z₀) + h_fn z := by
+  have h_an_diff : AnalyticAt ℂ (fun z => g z - g z₀) z₀ := hg_an.sub analyticAt_const
+  have h_ord : 1 ≤ analyticOrderAt (fun z => g z - g z₀) z₀ := by
+    rw [← not_lt, ENat.lt_one_iff_eq_zero]
+    exact h_an_diff.analyticOrderAt_ne_zero.mpr (by simp)
+  obtain ⟨h_fn, hh_an, hh_eq⟩ := (natCast_le_analyticOrderAt h_an_diff).mp h_ord
+  refine ⟨h_fn, hh_an, ?_⟩
+  filter_upwards [hg_eq, hh_eq.filter_mono nhdsWithin_le_nhds, self_mem_nhdsWithin]
+    with z hz hh hne
+  have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
+  rw [hz]
+  simp only [zpow_neg_one, smul_eq_mul, pow_one] at hh ⊢
+  have hg_val : g z = g z₀ + (z - z₀) * h_fn z := by linear_combination hh
+  rw [hg_val]
+  field_simp
+
 /-- If `f` is meromorphic at `z_0` with order exactly `-1`, then `f` has a simple pole
 at `z_0`.
 
@@ -106,21 +128,8 @@ theorem hasSimplePoleAt_of_meromorphicAt_order_neg_one {f : ℂ → ℂ} {z₀ :
     (hf : MeromorphicAt f z₀) (hord : meromorphicOrderAt f z₀ = (-1 : ℤ)) :
     HasSimplePoleAt f z₀ := by
   obtain ⟨g, hg_an, _, hg_eq⟩ := (meromorphicOrderAt_eq_int_iff hf).mp hord
-  -- Factor: g z - g z₀ = (z - z₀) * h(z) with h analytic
-  have h_an_diff : AnalyticAt ℂ (fun z => g z - g z₀) z₀ := hg_an.sub analyticAt_const
-  have h_ord : 1 ≤ analyticOrderAt (fun z => g z - g z₀) z₀ := by
-    rw [← not_lt, ENat.lt_one_iff_eq_zero]
-    exact h_an_diff.analyticOrderAt_ne_zero.mpr (by simp)
-  obtain ⟨h_fn, hh_an, hh_eq⟩ := (natCast_le_analyticOrderAt h_an_diff).mp h_ord
-  refine ⟨g z₀, h_fn, hh_an, ?_⟩
-  filter_upwards [hg_eq, hh_eq.filter_mono nhdsWithin_le_nhds, self_mem_nhdsWithin]
-    with z hz hh hne
-  have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-  rw [hz]
-  simp only [zpow_neg_one, smul_eq_mul, pow_one] at *
-  have hg_val : g z = g z₀ + (z - z₀) * h_fn z := by linear_combination hh
-  rw [hg_val]
-  field_simp
+  obtain ⟨h_fn, hh_an, hf_decomp⟩ := simplePoleDecomp_of_eventuallyEq_zpow_neg_one hg_an hg_eq
+  exact ⟨g z₀, h_fn, hh_an, hf_decomp⟩
 
 /-! ### Residue bridge -/
 
@@ -134,22 +143,7 @@ theorem residue_eq_leadingCoeff_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
     {g : ℂ → ℂ} (hg_an : AnalyticAt ℂ g z₀) (_hg_ne : g z₀ ≠ 0)
     (hg_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = (z - z₀) ^ (-1 : ℤ) • g z) :
     residue f z₀ = g z₀ := by
-  -- Decompose g z = g z₀ + (z - z₀) * h(z) using analytic order factorization
-  have h_an_diff : AnalyticAt ℂ (fun z => g z - g z₀) z₀ := hg_an.sub analyticAt_const
-  have h_ord : 1 ≤ analyticOrderAt (fun z => g z - g z₀) z₀ := by
-    rw [← not_lt, ENat.lt_one_iff_eq_zero]
-    exact h_an_diff.analyticOrderAt_ne_zero.mpr (by simp)
-  obtain ⟨h_fn, hh_an, hh_eq⟩ := (natCast_le_analyticOrderAt h_an_diff).mp h_ord
-  -- Build the simple pole decomposition f = g(z₀)/(z-z₀) + h_fn
-  have hf_decomp : ∀ᶠ z in 𝓝[≠] z₀, f z = g z₀ / (z - z₀) + h_fn z := by
-    filter_upwards [hg_eq, hh_eq.filter_mono nhdsWithin_le_nhds, self_mem_nhdsWithin]
-      with z hz hh hne
-    have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-    rw [hz]
-    simp only [zpow_neg_one, smul_eq_mul, pow_one] at *
-    have hg_val : g z = g z₀ + (z - z₀) * h_fn z := by linear_combination hh
-    rw [hg_val]
-    field_simp
+  obtain ⟨_, hh_an, hf_decomp⟩ := simplePoleDecomp_of_eventuallyEq_zpow_neg_one hg_an hg_eq
   exact residue_eq_of_simple_pole_decomp hh_an hf_decomp
 
 /-- The residue of a simple pole equals the meromorphic leading coefficient.
