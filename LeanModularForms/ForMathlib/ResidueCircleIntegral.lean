@@ -36,25 +36,12 @@ open scoped Interval Real
 
 noncomputable section
 
-/-! ### Helpers -/
-
 /-- Two `limUnder`s agree when the functions are eventually equal. -/
 private lemma limUnder_eq_of_eventuallyEq {α β : Type*}
     [TopologicalSpace β] [Nonempty β]
     {l : Filter α} {f g : α → β} (h : f =ᶠ[l] g) :
     l.limUnder f = l.limUnder g := by
-  unfold Filter.limUnder
-  congr 1
-  ext s
-  change f ⁻¹' s ∈ l ↔ g ⁻¹' s ∈ l
-  refine ⟨fun hs => mem_of_superset (inter_mem hs h) fun x hx => ?_,
-    fun hs => mem_of_superset (inter_mem hs h.symm) fun x hx => ?_⟩
-  · change g x ∈ s
-    rw [← hx.2]
-    exact hx.1
-  · change f x ∈ s
-    rw [← hx.2]
-    exact hx.1
+  grind [Filter.limUnder, Filter.map_congr]
 
 /-- The circle integral of `f` vanishes when `f` is analytic on an open ball strictly
 containing the circle. -/
@@ -65,18 +52,13 @@ private lemma circleIntegral_eq_zero_of_analyticOnNhd_ball {f : ℂ → ℂ} {z�
     (hf.continuousOn.mono (closedBall_subset_ball hrR))
     (fun z ⟨hz, _⟩ => (hf z (ball_subset_ball hrR.le hz)).differentiableAt)
 
-/-! ### Holomorphic / analytic functions have zero residue -/
-
 /-- A function that is analytic at `z₀` has residue zero. -/
 theorem residue_eq_zero_of_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
     (hf : AnalyticAt ℂ f z₀) : residue f z₀ = 0 := by
-  unfold residue
-  apply Filter.Tendsto.limUnder_eq
   obtain ⟨R, hR_pos, hR_an⟩ := hf.exists_ball_analyticOnNhd
-  apply tendsto_nhds_of_eventually_eq
+  refine (tendsto_nhds_of_eventually_eq ?_).limUnder_eq
   rw [eventually_nhdsWithin_iff]
   filter_upwards [Iio_mem_nhds hR_pos] with r hr_lt hr_pos
-  simp only [mem_Ioi, mem_Iio] at hr_pos hr_lt
   rw [circleIntegral_eq_zero_of_analyticOnNhd_ball hr_pos hr_lt hR_an, mul_zero]
 
 /-- A function that is differentiable on a neighborhood of `z₀` has residue zero. -/
@@ -84,8 +66,6 @@ theorem residue_eq_zero_of_eventually_differentiableAt {f : ℂ → ℂ} {z₀ :
     (hf : ∀ᶠ z in 𝓝 z₀, DifferentiableAt ℂ f z) : residue f z₀ = 0 :=
   residue_eq_zero_of_analyticAt
     (Complex.analyticAt_iff_eventually_differentiableAt.mpr hf)
-
-/-! ### Circle integral for simple poles -/
 
 /-- `f` agrees with `c * (z-z₀)⁻¹ + g` on any sphere contained in the punctured
 neighborhood where the decomposition holds. -/
@@ -95,18 +75,12 @@ private lemma simple_pole_eqOn_sphere {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ 
       z ∈ {z | f z = c / (z - z₀) + g z}) :
     EqOn f (fun z => c * (z - z₀)⁻¹ + g z) (sphere z₀ r) := by
   intro z hz
-  have h_ne : z ≠ z₀ := by
-    intro heq
-    rw [heq, mem_sphere, dist_self] at hz
-    linarith
-  have h_mem_ball : z ∈ ball z₀ rf := by
-    rw [mem_ball, mem_sphere.mp hz]
-    exact hr_lt_rf
+  have h_ne : z ≠ z₀ := fun heq => by
+    rw [heq, mem_sphere, dist_self] at hz; linarith
   have h_mem : z ∈ ball z₀ rf ∩ {z₀}ᶜ :=
-    ⟨h_mem_ball, mem_compl_singleton_iff.mpr h_ne⟩
-  have := hrf_eq _ h_mem
-  simp only [mem_setOf_eq] at this
-  rw [this, div_eq_mul_inv]
+    ⟨mem_ball.mpr (mem_sphere.mp hz ▸ hr_lt_rf), mem_compl_singleton_iff.mpr h_ne⟩
+  change f z = c * (z - z₀)⁻¹ + g z
+  rw [hrf_eq _ h_mem, div_eq_mul_inv]
 
 /-- For small enough `r > 0`, the normalized circle integral of `f` around a simple pole
 `z₀` equals the pole coefficient `c`. The `c/(z-z₀)` term contributes `c` via
@@ -122,11 +96,9 @@ theorem circleIntegral_simple_pole_eq {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ 
   obtain ⟨rf, hrf_pos, hrf_eq⟩ := hf_eq
   rw [eventually_nhdsWithin_iff]
   filter_upwards [Iio_mem_nhds (lt_min hrg_pos hrf_pos)] with r hr_lt hr_pos
-  simp only [mem_Ioi, mem_Iio] at hr_pos hr_lt
   have hr_lt_rg : r < rg := lt_of_lt_of_le hr_lt (min_le_left _ _)
   have hr_lt_rf : r < rf := lt_of_lt_of_le hr_lt (min_le_right _ _)
   have hr_ne : r ≠ 0 := ne_of_gt hr_pos
-  have h_eq_on := simple_pole_eqOn_sphere hr_pos hr_lt_rf hrf_eq
   have h_ci_g : CircleIntegrable g z₀ r :=
     ((hg_ball.continuousOn.mono (closedBall_subset_ball hr_lt_rg)).mono
       sphere_subset_closedBall).circleIntegrable hr_pos.le
@@ -134,14 +106,12 @@ theorem circleIntegral_simple_pole_eq {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ 
     (circleIntegrable_sub_inv_iff.mpr (Or.inr (by
       rw [mem_sphere, dist_self, abs_of_pos hr_pos]
       exact hr_ne.symm))).const_fun_smul
-  rw [circleIntegral.integral_congr hr_pos.le h_eq_on,
+  rw [circleIntegral.integral_congr hr_pos.le (simple_pole_eqOn_sphere hr_pos hr_lt_rf hrf_eq),
     circleIntegral.integral_add h_ci_cinv h_ci_g,
     circleIntegral.integral_const_mul,
     circleIntegral.integral_sub_center_inv z₀ hr_ne,
     circleIntegral_eq_zero_of_analyticOnNhd_ball hr_pos hr_lt_rg hg_ball, add_zero]
   field_simp
-
-/-! ### Residue of simple poles -/
 
 /-- For a function with a simple pole decomposition `f(z) = c/(z-z₀) + g(z)`, the
 residue equals the pole coefficient `c`. For small `r`, the normalized integral
@@ -149,24 +119,19 @@ equals `c` exactly by `circleIntegral_simple_pole_eq`, so the `limUnder` is `c`.
 theorem residue_eq_of_simple_pole_decomp {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ → ℂ}
     (hg : AnalyticAt ℂ g z₀)
     (hf_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    residue f z₀ = c := by
-  unfold residue
-  exact (tendsto_nhds_of_eventually_eq
-    (circleIntegral_simple_pole_eq hg hf_eq)).limUnder_eq
+    residue f z₀ = c :=
+  (tendsto_nhds_of_eventually_eq (circleIntegral_simple_pole_eq hg hf_eq)).limUnder_eq
 
 /-- For a function with a simple pole at `z₀`, the residue equals `h.coeff`. -/
 theorem residue_eq_coeff {f : ℂ → ℂ} {z₀ : ℂ}
     (h : HasSimplePoleAt f z₀) : residue f z₀ = h.coeff :=
   residue_eq_of_simple_pole_decomp h.regularPart_analyticAt h.eventually_eq
 
-/-! ### Residue is determined by local behavior -/
-
 /-- If `f` and `g` agree in a punctured neighborhood of `z₀`, they have the same
 residue. The proof shows that the circle integrals agree for all sufficiently small
 radii, so the `limUnder`s coincide. -/
 theorem residue_congr {f g : ℂ → ℂ} {z₀ : ℂ}
     (h : ∀ᶠ z in 𝓝[≠] z₀, f z = g z) : residue f z₀ = residue g z₀ := by
-  unfold residue
   apply limUnder_eq_of_eventuallyEq
   rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at h
   obtain ⟨ε, hε_pos, hε⟩ := h
@@ -174,18 +139,10 @@ theorem residue_congr {f g : ℂ → ℂ} {z₀ : ℂ}
   filter_upwards [Iio_mem_nhds hε_pos] with r hr_lt hr_pos
   simp only [mem_Ioi, mem_Iio] at hr_pos hr_lt
   congr 1
-  apply circleIntegral.integral_congr hr_pos.le
-  intro z hz
-  have h_ne : z ≠ z₀ := by
-    intro heq
-    rw [heq, mem_sphere, dist_self] at hz
-    linarith
-  have h_dist : dist z z₀ < ε := by
-    rw [mem_sphere.mp hz]
-    linarith
-  exact hε ⟨mem_ball.mpr h_dist, mem_compl_singleton_iff.mpr h_ne⟩
-
-/-! ### Circle integral norm bound -/
+  refine circleIntegral.integral_congr hr_pos.le fun z hz => ?_
+  have h_ne : z ≠ z₀ := fun heq => by
+    rw [heq, mem_sphere, dist_self] at hz; linarith
+  exact hε ⟨mem_ball.mpr (mem_sphere.mp hz ▸ hr_lt), mem_compl_singleton_iff.mpr h_ne⟩
 
 /-- The normalized circle integral of a continuous function tends to zero as `r → 0⁺`.
 Uses the bound `‖(2πi)⁻¹ · ∮ g‖ ≤ r · C` from
@@ -202,23 +159,14 @@ theorem norm_two_pi_i_inv_circleIntegral_tendsto_zero {g : ℂ → ℂ} {z₀ : 
   have hM_pos : 0 < M := by positivity
   have hδM : 0 < δ / M := div_pos hδ hM_pos
   refine ⟨min R (δ / M), lt_min hR_pos hδM, fun r hr_pos hr_lt => ?_⟩
-  simp only [mem_Ioi] at hr_pos
-  simp only [Real.dist_eq, sub_zero] at hr_lt
-  have hr_abs : |r| = r := abs_of_pos hr_pos
-  have hr_lt_R : r < R := by
-    linarith [hr_abs.symm.trans_lt (hr_lt.trans_le (min_le_left R (δ / M)))]
-  have hr_lt_δM : r < δ / M := by
-    linarith [hr_abs.symm.trans_lt (hr_lt.trans_le (min_le_right R (δ / M)))]
-  have h_bound : ∀ z ∈ sphere z₀ r, ‖g z‖ ≤ M := by
-    intro z hz
-    have h_dist : dist z z₀ < R := by
-      rw [mem_sphere.mp hz]
-      linarith
-    have h_near := hR_bound h_dist
-    rw [dist_eq_norm] at h_near
-    calc ‖g z‖ = ‖g z₀ + (g z - g z₀)‖ := by ring_nf
-    _ ≤ ‖g z₀‖ + ‖g z - g z₀‖ := norm_add_le _ _
-    _ ≤ ‖g z₀‖ + 1 := by linarith
+  rw [Real.dist_eq, sub_zero, abs_of_pos hr_pos] at hr_lt
+  have hr_lt_R : r < R := hr_lt.trans_le (min_le_left _ _)
+  have hr_lt_δM : r < δ / M := hr_lt.trans_le (min_le_right _ _)
+  have h_bound : ∀ z ∈ sphere z₀ r, ‖g z‖ ≤ M := fun z hz => by
+    have h_near : ‖g z - g z₀‖ < 1 := by
+      rw [← dist_eq_norm]; exact hR_bound (by rw [mem_sphere.mp hz]; linarith)
+    change ‖g z‖ ≤ ‖g z₀‖ + 1
+    linarith [norm_le_norm_add_norm_sub (g z₀) (g z), norm_sub_rev (g z₀) (g z)]
   rw [dist_eq_norm, sub_zero, ← smul_eq_mul]
   calc ‖(2 * ↑Real.pi * I)⁻¹ • ∮ z in C(z₀, r), g z‖
       ≤ r * M := circleIntegral.norm_two_pi_i_inv_smul_integral_le_of_norm_le_const
