@@ -84,8 +84,7 @@ lemma cpv_exists_on_smooth_subinterval (H : ℝ) (_hH : Real.sqrt 3 / 2 < H)
   have hγ_meas : Measurable (fdBoundary_H H) := (fdBoundary_H_continuous H).measurable
   have hγ_cont : ContinuousOn (fdBoundary_H H) (Set.Icc a' b') :=
     (fdBoundary_H_continuous H).continuousOn
-  obtain ⟨limit, h_limit⟩ := pv_limit_via_dyadic hat₀ hL_ne hγ_C2
-    (show deriv (fdBoundary_H H) t₀ = deriv (fdBoundary_H H) t₀ from rfl)
+  obtain ⟨limit, h_limit⟩ := pv_limit_via_dyadic hat₀ hL_ne hγ_C2 rfl
     hγ_cont_deriv hγ_meas hγ_cont h_inj
   exact ⟨limit, h_limit.congr (fun ε => intervalIntegral.integral_congr
     (fun t _ => by rw [hs]))⟩
@@ -115,7 +114,7 @@ private lemma fdBoundary_H_cutout_bound (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
       _ ≤ ε⁻¹ * M := by
         apply mul_le_mul
         · rw [norm_inv]
-          exact inv_anti₀ hε (le_of_lt h)
+          exact inv_anti₀ hε h.le
         · by_cases htp : t ∈ fdBoundary_H_partition
           · simp only [fdBoundary_H_partition, Finset.mem_insert, Finset.mem_singleton] at htp
             have : ¬DifferentiableAt ℝ (fdBoundary_H H) t := by
@@ -123,13 +122,14 @@ private lemma fdBoundary_H_cutout_bound (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
               · exact fdBoundary_H_not_differentiableAt_1 hH
               · exact fdBoundary_H_not_differentiableAt_3 hH
               · exact fdBoundary_H_not_differentiableAt_4 hH
-            erw [deriv_zero_of_not_differentiableAt this]
-            simp [le_of_lt hM_pos]
+            rw [show deriv (fdBoundary_H H) t = 0 from
+              deriv_zero_of_not_differentiableAt this]
+            simp [hM_pos.le]
           · exact hM_bound t htp
         · exact norm_nonneg _
-        · exact le_of_lt (inv_pos_of_pos hε)
+        · exact inv_nonneg.mpr hε.le
   · simp only [norm_zero]
-    exact mul_nonneg (le_of_lt (inv_pos_of_pos hε)) (le_of_lt hM_pos)
+    exact mul_nonneg (inv_nonneg.mpr hε.le) hM_pos.le
 
 private lemma fdBoundary_H_cutout_meas (H : ℝ) (s : ℂ) (ε : ℝ) (hε : 0 < ε) :
     AEStronglyMeasurable (fun t => if ε < ‖fdBoundary_H H t - s‖ then
@@ -144,8 +144,8 @@ private lemma fdBoundary_H_cutout_meas (H : ℝ) (s : ℂ) (ε : ℝ) (hε : 0 <
 on `[0, 5]`. Uses ae-measurability from piecewise C1 structure + uniform bound. -/
 lemma fdBoundary_H_cutout_ii (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     (s : ℂ) (ε : ℝ) (hε : 0 < ε) :
-    IntervalIntegrable (fun t => if ε < ‖fdBoundary_H H t - s‖ then (fdBoundary_H H t - s)⁻¹ *
-        deriv (fdBoundary_H H) t else 0)
+    IntervalIntegrable (fun t => if ε < ‖fdBoundary_H H t - s‖ then
+        (fdBoundary_H H t - s)⁻¹ * deriv (fdBoundary_H H) t else 0)
       volume 0 5 := by
   obtain ⟨C, hC⟩ := fdBoundary_H_cutout_bound H hH s ε hε
   rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num : (0:ℝ) ≤ 5)]
@@ -169,22 +169,21 @@ lemma cpv_extend_to_full_interval (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     (fdBoundary_H_continuous H).continuousOn
   have h_cpv_left : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) 0 a' s :=
-    cpv_avoidance _ _ _ _ _ (hγ_cont.mono (Set.Icc_subset_Icc_right
-        (le_trans (le_of_lt hab') hb')))
+    cpv_avoidance _ _ _ _ _ (hγ_cont.mono (Set.Icc_subset_Icc_right (hab'.le.trans hb')))
       ha' h_avoid_left
   have h_cpv_right : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) b' 5 s :=
-    cpv_avoidance _ _ _ _ _ (hγ_cont.mono (Set.Icc_subset_Icc_left (le_trans ha' (le_of_lt hab'))))
+    cpv_avoidance _ _ _ _ _ (hγ_cont.mono (Set.Icc_subset_Icc_left (ha'.trans hab'.le)))
       hb' h_avoid_right
   have h_cpv_0b' : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹)
       (fdBoundary_H H) 0 b' s := by
-    apply cpv_concat _ _ 0 a' b' s h_cpv_left h_sub ha' (le_of_lt hab')
+    apply cpv_concat _ _ 0 a' b' s h_cpv_left h_sub ha' hab'.le
     intro ε hε
     exact (fdBoundary_H_cutout_ii H hH s ε hε).mono_set (by
-      rw [Set.uIcc_of_le (by linarith : (0:ℝ) ≤ b'),
+      rw [Set.uIcc_of_le (ha'.trans hab'.le),
         Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)]
       exact Set.Icc_subset_Icc_right hb')
-  apply cpv_concat _ _ 0 b' 5 s h_cpv_0b' h_cpv_right (le_trans ha' (le_of_lt hab')) hb'
+  apply cpv_concat _ _ 0 b' 5 s h_cpv_0b' h_cpv_right (ha'.trans hab'.le) hb'
   intro ε hε
   exact fdBoundary_H_cutout_ii H hH s ε hε
 
