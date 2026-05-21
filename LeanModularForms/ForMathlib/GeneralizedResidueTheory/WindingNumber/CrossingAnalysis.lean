@@ -634,7 +634,7 @@ lemma exp_cutoff_integral_eq_ratio
     · intro t ht; rw [show t = u from le_antisymm ht.2 ht.1]
     have hGsub := hG_cont.mono (Icc_subset_Icc hua hvb)
     exact constant_of_has_deriv_right_zero hGsub
-      (hasDerivWithinAt_zero_of_deriv_zero_off_finite G u v P hlt hGsub
+      (hasDerivWithinAt_zero_of_deriv_zero_off_finite G u v P hGsub
         (fun t ht htP => by
           have ht_ab : t ∈ Ioo γ.a γ.b :=
             ⟨lt_of_le_of_lt hua ht.1, lt_of_lt_of_le ht.2 hvb⟩
