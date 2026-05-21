@@ -26,19 +26,14 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ### Path.extend agrees with fdBoundaryFun on Icc 0 1 -/
-
 private lemma fdBoundaryPath_extend_eq (H : ℝ) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
-    (fdBoundaryPath H).extend t = fdBoundaryFun H t := by
-  rw [Path.extend_apply _ ht]
-  rfl
+    (fdBoundaryPath H).extend t = fdBoundaryFun H t :=
+  Path.extend_apply _ ht
 
 private lemma fdBoundaryPath_extend_eventuallyEq (H : ℝ) (t : ℝ) (ht : t ∈ Ioo (0 : ℝ) 1) :
     (fdBoundaryPath H).extend =ᶠ[𝓝 t] fdBoundaryFun H :=
   Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun s hs =>
     fdBoundaryPath_extend_eq H s (Ioo_subset_Icc_self hs)
-
-/-! ### Segment functions -/
 
 private def seg1Fun (H : ℝ) : ℝ → ℂ := fun t =>
   1/2 + (↑H - 5 * ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I
@@ -54,46 +49,6 @@ private def seg4Fun (H : ℝ) : ℝ → ℂ := fun t =>
 
 private def seg5Fun (H : ℝ) : ℝ → ℂ := fun t =>
   (5 * ↑t - 9/2) + ↑H * I
-
-/-! ### Segment differentiability -/
-
-private lemma seg1Fun_differentiableAt (H : ℝ) (t : ℝ) :
-    DifferentiableAt ℝ (seg1Fun H) t :=
-  (differentiableAt_const _).add
-    (((differentiableAt_const _).sub
-      (((differentiableAt_const _).mul Complex.ofRealCLM.differentiable.differentiableAt).mul
-        (differentiableAt_const _))).mul (differentiableAt_const _))
-
-private lemma seg2Fun_differentiableAt (t : ℝ) :
-    DifferentiableAt ℝ seg2Fun t :=
-  Complex.differentiable_exp.differentiableAt.comp t
-    (((differentiableAt_const _).add
-      ((((differentiableAt_const _).mul Complex.ofRealCLM.differentiable.differentiableAt).sub
-        (differentiableAt_const _)).mul (differentiableAt_const _))).mul
-      (differentiableAt_const _))
-
-private lemma seg3Fun_differentiableAt (t : ℝ) :
-    DifferentiableAt ℝ seg3Fun t :=
-  Complex.differentiable_exp.differentiableAt.comp t
-    (((differentiableAt_const _).add
-      ((((differentiableAt_const _).mul Complex.ofRealCLM.differentiable.differentiableAt).sub
-        (differentiableAt_const _)).mul (differentiableAt_const _))).mul
-      (differentiableAt_const _))
-
-private lemma seg4Fun_differentiableAt (H : ℝ) (t : ℝ) :
-    DifferentiableAt ℝ (seg4Fun H) t :=
-  (differentiableAt_const _).add
-    (((differentiableAt_const _).add
-      ((((differentiableAt_const _).mul Complex.ofRealCLM.differentiable.differentiableAt).sub
-        (differentiableAt_const _)).mul (differentiableAt_const _))).mul
-      (differentiableAt_const _))
-
-private lemma seg5Fun_differentiableAt (H : ℝ) (t : ℝ) :
-    DifferentiableAt ℝ (seg5Fun H) t :=
-  (((differentiableAt_const _).mul Complex.ofRealCLM.differentiable.differentiableAt).sub
-    (differentiableAt_const _)).add (differentiableAt_const _)
-
-/-! ### Segment ContDiff -/
 
 private lemma seg1Fun_contDiff (H : ℝ) : ContDiff ℝ ⊤ (seg1Fun H) :=
   contDiff_const.add
@@ -121,8 +76,6 @@ private lemma seg4Fun_contDiff (H : ℝ) : ContDiff ℝ ⊤ (seg4Fun H) :=
 
 private lemma seg5Fun_contDiff (H : ℝ) : ContDiff ℝ ⊤ (seg5Fun H) :=
   ((contDiff_const.mul Complex.ofRealCLM.contDiff).sub contDiff_const).add contDiff_const
-
-/-! ### fdBoundaryFun agrees with segment functions on neighborhoods -/
 
 private lemma fdBoundaryFun_eventuallyEq_seg1 (H : ℝ) (t : ℝ)
     (ht1 : t < 1/5) :
@@ -173,34 +126,27 @@ private lemma fdBoundaryFun_eventuallyEq_seg5 (H : ℝ) (t : ℝ)
       show ¬s ≤ 3/5 from not_le.mpr (lt_trans (by norm_num : (3:ℝ)/5 < 4/5) hs4),
       show ¬s ≤ 4/5 from not_le.mpr hs4, ite_false]
 
-/-! ### Differentiability of fdBoundaryFun -/
-
 private lemma fdBoundaryFun_differentiableAt_off (H : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
     DifferentiableAt ℝ (fdBoundaryFun H) t := by
   simp only [fdBoundaryPartition, Finset.mem_insert, Finset.mem_singleton] at htp
   push Not at htp
   obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
-  by_cases h1 : t < 1/5
-  · exact (seg1Fun_differentiableAt H t).congr_of_eventuallyEq
+  have hT : (⊤ : WithTop ℕ∞) ≠ 0 := WithTop.top_ne_zero
+  rcases lt_or_gt_of_ne ht1 with h1 | h1
+  · exact ((seg1Fun_contDiff H).differentiable hT).differentiableAt.congr_of_eventuallyEq
       (fdBoundaryFun_eventuallyEq_seg1 H t h1)
-  · push Not at h1
-    by_cases h2 : t < 2/5
-    · exact (seg2Fun_differentiableAt t).congr_of_eventuallyEq
-        (fdBoundaryFun_eventuallyEq_seg2 H t (lt_of_le_of_ne h1 (Ne.symm ht1)) h2)
-    · push Not at h2
-      by_cases h3 : t < 3/5
-      · exact (seg3Fun_differentiableAt t).congr_of_eventuallyEq
-          (fdBoundaryFun_eventuallyEq_seg3 H t (lt_of_le_of_ne h2 (Ne.symm ht2)) h3)
-      · push Not at h3
-        by_cases h4 : t < 4/5
-        · exact (seg4Fun_differentiableAt H t).congr_of_eventuallyEq
-            (fdBoundaryFun_eventuallyEq_seg4 H t (lt_of_le_of_ne h3 (Ne.symm ht3)) h4)
-        · push Not at h4
-          exact (seg5Fun_differentiableAt H t).congr_of_eventuallyEq
-            (fdBoundaryFun_eventuallyEq_seg5 H t (lt_of_le_of_ne h4 (Ne.symm ht4)))
-
-/-! ### Derivative continuity of fdBoundaryFun -/
+  rcases lt_or_gt_of_ne ht2 with h2 | h2
+  · exact (seg2Fun_contDiff.differentiable hT).differentiableAt.congr_of_eventuallyEq
+      (fdBoundaryFun_eventuallyEq_seg2 H t h1 h2)
+  rcases lt_or_gt_of_ne ht3 with h3 | h3
+  · exact (seg3Fun_contDiff.differentiable hT).differentiableAt.congr_of_eventuallyEq
+      (fdBoundaryFun_eventuallyEq_seg3 H t h2 h3)
+  rcases lt_or_gt_of_ne ht4 with h4 | h4
+  · exact ((seg4Fun_contDiff H).differentiable hT).differentiableAt.congr_of_eventuallyEq
+      (fdBoundaryFun_eventuallyEq_seg4 H t h3 h4)
+  exact ((seg5Fun_contDiff H).differentiable hT).differentiableAt.congr_of_eventuallyEq
+    (fdBoundaryFun_eventuallyEq_seg5 H t h4)
 
 private lemma fdBoundaryFun_deriv_continuousAt_off (H : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
@@ -208,30 +154,20 @@ private lemma fdBoundaryFun_deriv_continuousAt_off (H : ℝ) (t : ℝ)
   simp only [fdBoundaryPartition, Finset.mem_insert, Finset.mem_singleton] at htp
   push Not at htp
   obtain ⟨ht1, ht2, ht3, ht4⟩ := htp
-  by_cases h1 : t < 1/5
+  rcases lt_or_gt_of_ne ht1 with h1 | h1
   · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg1 H t h1).deriv).mpr
       ((seg1Fun_contDiff H).continuous_deriv le_top).continuousAt
-  · push Not at h1
-    by_cases h2 : t < 2/5
-    · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg2 H t
-          (lt_of_le_of_ne h1 (Ne.symm ht1)) h2).deriv).mpr
-        (seg2Fun_contDiff.continuous_deriv le_top).continuousAt
-    · push Not at h2
-      by_cases h3 : t < 3/5
-      · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg3 H t
-            (lt_of_le_of_ne h2 (Ne.symm ht2)) h3).deriv).mpr
-          (seg3Fun_contDiff.continuous_deriv le_top).continuousAt
-      · push Not at h3
-        by_cases h4 : t < 4/5
-        · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg4 H t
-              (lt_of_le_of_ne h3 (Ne.symm ht3)) h4).deriv).mpr
-            ((seg4Fun_contDiff H).continuous_deriv le_top).continuousAt
-        · push Not at h4
-          exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg5 H t
-              (lt_of_le_of_ne h4 (Ne.symm ht4))).deriv).mpr
-            ((seg5Fun_contDiff H).continuous_deriv le_top).continuousAt
-
-/-! ### Transfer from fdBoundaryFun to Path.extend -/
+  rcases lt_or_gt_of_ne ht2 with h2 | h2
+  · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg2 H t h1 h2).deriv).mpr
+      (seg2Fun_contDiff.continuous_deriv le_top).continuousAt
+  rcases lt_or_gt_of_ne ht3 with h3 | h3
+  · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg3 H t h2 h3).deriv).mpr
+      (seg3Fun_contDiff.continuous_deriv le_top).continuousAt
+  rcases lt_or_gt_of_ne ht4 with h4 | h4
+  · exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg4 H t h3 h4).deriv).mpr
+      ((seg4Fun_contDiff H).continuous_deriv le_top).continuousAt
+  exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg5 H t h4).deriv).mpr
+    ((seg5Fun_contDiff H).continuous_deriv le_top).continuousAt
 
 private lemma fdBoundaryPath_differentiableAt_off (H : ℝ) (t : ℝ)
     (ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
@@ -244,8 +180,6 @@ private lemma fdBoundaryPath_deriv_continuousAt_off (H : ℝ) (t : ℝ)
     ContinuousAt (deriv (fdBoundaryPath H).extend) t :=
   (continuousAt_congr (fdBoundaryPath_extend_eventuallyEq H t ht).deriv).mpr
     (fdBoundaryFun_deriv_continuousAt_off H t ht htp)
-
-/-! ### The PiecewiseC1Path construction -/
 
 /-- The fundamental domain boundary as a `PiecewiseC1Path`. -/
 def fdBoundaryPC1Path (H : ℝ) (_hH : H > Real.sqrt 3 / 2) :
