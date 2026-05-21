@@ -38,8 +38,7 @@ noncomputable section
 /-- **Norm of the circle-map derivative.** `‖d/dθ (circleMap c R θ)‖ = |R|`. -/
 theorem norm_deriv_circleMap (c : ℂ) (R : ℝ) (θ : ℝ) :
     ‖deriv (circleMap c R) θ‖ = |R| := by
-  rw [deriv_circleMap]
-  simp [mul_one]
+  simp
 
 /-- **Partial-arc integral bound.** For `f : ℂ → ℂ` with `‖f(z)‖ ≤ C` on the arc
 `circleMap c R '' uIcc θ₁ θ₂`, the partial-arc integral
@@ -52,13 +51,10 @@ theorem norm_subarc_integral_le {f : ℂ → ℂ} {c : ℂ} {R : ℝ} {θ₁ θ�
     ‖∫ θ in θ₁..θ₂, f (circleMap c R θ) * deriv (circleMap c R) θ‖ ≤
       |R| * C * |θ₂ - θ₁| := by
   have h_bound : ∀ θ ∈ Set.uIoc θ₁ θ₂,
-      ‖f (circleMap c R θ) * deriv (circleMap c R) θ‖ ≤ |R| * C := by
-    intro θ hθ
-    rw [norm_mul, norm_deriv_circleMap]
-    calc ‖f (circleMap c R θ)‖ * |R| ≤ C * |R| := by gcongr; exact hf θ (uIoc_subset_uIcc hθ)
-      _ = |R| * C := by ring
-  calc ‖∫ θ in θ₁..θ₂, f (circleMap c R θ) * deriv (circleMap c R) θ‖
-      ≤ |R| * C * |θ₂ - θ₁| :=
-        intervalIntegral.norm_integral_le_of_norm_le_const h_bound
+      ‖f (circleMap c R θ) * deriv (circleMap c R) θ‖ ≤ |R| * C := fun θ hθ => by
+    rw [norm_mul, norm_deriv_circleMap, mul_comm]
+    gcongr
+    exact hf θ (uIoc_subset_uIcc hθ)
+  exact intervalIntegral.norm_integral_le_of_norm_le_const h_bound
 
 end
