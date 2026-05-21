@@ -272,4 +272,132 @@ def reparamUnit (γ : PiecewiseC1PathOn a b hab x y) :
         (continuous_affineToFree a b).continuousAt).const_smul (b - a)
     exact h_rhs_cont.congr h_eventually.symm
 
+/-! ### Inverse direction: `reparamFree`
+
+Given a path on `[0, 1]`, embed it onto a free interval `[a, b]` via the inverse
+affine map `s ↦ (s - a) / (b - a)`.
+-/
+
+/-- The affine map sending `[a, b]` onto `[0, 1]`. Inverse of `affineToFree`. -/
+private def affineToUnit (a b : ℝ) : ℝ → ℝ := fun s => (s - a) / (b - a)
+
+private theorem affineToUnit_left (a b : ℝ) : affineToUnit a b a = 0 := by
+  simp [affineToUnit]
+
+private theorem affineToUnit_right (a b : ℝ) (hab : a < b) : affineToUnit a b b = 1 := by
+  have hba_ne : b - a ≠ 0 := sub_ne_zero.mpr hab.ne'
+  unfold affineToUnit
+  exact div_self hba_ne
+
+private theorem continuous_affineToUnit (a b : ℝ) (hab : a < b) : Continuous (affineToUnit a b) := by
+  unfold affineToUnit
+  have hba_ne : b - a ≠ 0 := by linarith
+  fun_prop
+
+private theorem affineToUnit_mapsTo_Icc (a b : ℝ) (hab : a < b) :
+    MapsTo (affineToUnit a b) (Icc a b) (Icc 0 1) := by
+  intro s hs
+  simp only [affineToUnit, mem_Icc] at hs ⊢
+  have hba : 0 < b - a := by linarith
+  refine ⟨div_nonneg (by linarith [hs.1]) hba.le, ?_⟩
+  rw [div_le_one hba]; linarith [hs.2]
+
+private theorem affineToUnit_mapsTo_Ioo (a b : ℝ) (_hab : a < b) :
+    MapsTo (affineToUnit a b) (Ioo a b) (Ioo 0 1) := by
+  intro s hs
+  simp only [affineToUnit, mem_Ioo] at hs ⊢
+  have hba : 0 < b - a := by linarith
+  refine ⟨div_pos (by linarith [hs.1]) hba, ?_⟩
+  rw [div_lt_one hba]; linarith [hs.2]
+
+private theorem hasDerivAt_affineToUnit (a b : ℝ) (hab : a < b) (s : ℝ) :
+    HasDerivAt (affineToUnit a b) ((b - a)⁻¹) s := by
+  unfold affineToUnit
+  have hba_ne : b - a ≠ 0 := by linarith
+  have h_sub : HasDerivAt (fun u => u - a) (1 : ℝ) s :=
+    (hasDerivAt_id s).sub_const a
+  have h : HasDerivAt (fun u => (u - a) / (b - a)) ((1 : ℝ) / (b - a)) s :=
+    h_sub.div_const (b - a)
+  simpa [one_div] using h
+
+private theorem deriv_affineToUnit (a b : ℝ) (hab : a < b) (s : ℝ) :
+    deriv (affineToUnit a b) s = (b - a)⁻¹ :=
+  (hasDerivAt_affineToUnit a b hab s).deriv
+
+private theorem partition_image_back_unit {a b : ℝ} (hab : a < b)
+    {x y : E} (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) (s : ℝ)
+    (h_in_part : affineToUnit a b s ∈ γ.partition) :
+    s ∈ γ.partition.image (fun t => a + t * (b - a)) := by
+  simp only [Finset.mem_image]
+  refine ⟨affineToUnit a b s, h_in_part, ?_⟩
+  show a + affineToUnit a b s * (b - a) = s
+  unfold affineToUnit
+  have hba_ne : b - a ≠ 0 := sub_ne_zero.mpr hab.ne'
+  rw [div_mul_cancel₀ _ hba_ne]; ring
+
+/-- Affine reparametrization of a `[0, 1]` path onto a free interval `[a, b]`.
+
+The new path on `[a, b]` has `toFun s = γ.toFun ((s - a) / (b - a))`. The breakpoints
+are pulled back: each `t ∈ γ.partition` (with `t ∈ Ioo 0 1`) maps to
+`a + t * (b - a) ∈ Ioo a b`. -/
+def reparamFree (a b : ℝ) (hab : a < b) {x y : E}
+    (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
+    PiecewiseC1PathOn a b hab x y where
+  toFun s := γ.toFun (affineToUnit a b s)
+  source := by
+    show γ.toFun (affineToUnit a b a) = x
+    rw [affineToUnit_left a b]; exact γ.source
+  target := by
+    show γ.toFun (affineToUnit a b b) = y
+    rw [affineToUnit_right a b hab]; exact γ.target
+  continuous_toFun :=
+    γ.continuous_toFun.comp (continuous_affineToUnit a b hab).continuousOn
+      (affineToUnit_mapsTo_Icc a b hab)
+  partition := γ.partition.image (fun t => a + t * (b - a))
+  partition_subset := by
+    intro s hs
+    simp only [Finset.coe_image, mem_image, Finset.mem_coe] at hs
+    obtain ⟨t, ht_mem, hts⟩ := hs
+    have ht_in_Ioo := γ.partition_subset ht_mem
+    simp only [mem_Ioo] at ht_in_Ioo
+    have hba : 0 < b - a := by linarith
+    subst hts
+    simp only [mem_Ioo]
+    refine ⟨?_, ?_⟩
+    · nlinarith [ht_in_Ioo.1]
+    · nlinarith [ht_in_Ioo.2]
+  differentiable_off := by
+    intro s hs hsn
+    have h_aff_s_in_Ioo : affineToUnit a b s ∈ Ioo 0 1 := affineToUnit_mapsTo_Ioo a b hab hs
+    have h_aff_s_notin : affineToUnit a b s ∉ γ.partition := by
+      intro h; exact hsn (partition_image_back_unit hab γ s h)
+    have h_at_g : HasDerivAt γ.toFun (deriv γ.toFun (affineToUnit a b s)) (affineToUnit a b s) :=
+      (γ.differentiable_off (affineToUnit a b s) h_aff_s_in_Ioo h_aff_s_notin).hasDerivAt
+    exact (HasDerivAt.scomp s h_at_g (hasDerivAt_affineToUnit a b hab s)).differentiableAt
+  deriv_continuous_off := by
+    intro s hs hsn
+    have h_aff_s_in_Ioo : affineToUnit a b s ∈ Ioo 0 1 := affineToUnit_mapsTo_Ioo a b hab hs
+    have h_aff_s_notin : affineToUnit a b s ∉ γ.partition := by
+      intro h; exact hsn (partition_image_back_unit hab γ s h)
+    have h_open_set : IsOpen ((Ioo 0 1 : Set ℝ) \ ↑γ.partition) :=
+      isOpen_Ioo.sdiff γ.partition.finite_toSet.isClosed
+    have h_pre_open : IsOpen (affineToUnit a b ⁻¹' ((Ioo 0 1 : Set ℝ) \ ↑γ.partition)) :=
+      h_open_set.preimage (continuous_affineToUnit a b hab)
+    have h_s_in_pre : s ∈ affineToUnit a b ⁻¹' ((Ioo 0 1 : Set ℝ) \ ↑γ.partition) :=
+      ⟨h_aff_s_in_Ioo, h_aff_s_notin⟩
+    have h_deriv_eq : ∀ u ∈ affineToUnit a b ⁻¹' ((Ioo 0 1 : Set ℝ) \ ↑γ.partition),
+        deriv (fun v => γ.toFun (affineToUnit a b v)) u
+          = (b - a)⁻¹ • deriv γ.toFun (affineToUnit a b u) := by
+      intro u hu
+      have h_at_g : HasDerivAt γ.toFun (deriv γ.toFun (affineToUnit a b u)) (affineToUnit a b u) :=
+        (γ.differentiable_off (affineToUnit a b u) hu.1 hu.2).hasDerivAt
+      exact (HasDerivAt.scomp u h_at_g (hasDerivAt_affineToUnit a b hab u)).deriv
+    have h_eventually : deriv (fun v => γ.toFun (affineToUnit a b v)) =ᶠ[𝓝 s]
+        (fun u => (b - a)⁻¹ • deriv γ.toFun (affineToUnit a b u)) := by
+      filter_upwards [h_pre_open.mem_nhds h_s_in_pre] with u hu using h_deriv_eq u hu
+    have h_rhs_cont : ContinuousAt (fun u => (b - a)⁻¹ • deriv γ.toFun (affineToUnit a b u)) s :=
+      ((γ.deriv_continuous_off (affineToUnit a b s) h_aff_s_in_Ioo h_aff_s_notin).comp
+        (continuous_affineToUnit a b hab).continuousAt).const_smul ((b - a)⁻¹)
+    exact h_rhs_cont.congr h_eventually.symm
+
 end PiecewiseC1PathOn
