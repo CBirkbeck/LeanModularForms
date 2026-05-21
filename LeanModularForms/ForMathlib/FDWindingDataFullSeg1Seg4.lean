@@ -62,14 +62,8 @@ def mkFDWindingDataFull_seg1seg4_unconditional {H : ℝ} (hH : 1 < H)
 All three FTC providers (seg1, seg4, arc) are supplied unconditionally. -/
 def mkFDWindingDataFull_unconditional {H : ℝ} (hH : 1 < H) (D : FDWindingData H) :
     FDWindingDataFull H :=
-  let hH_sqrt3 := sqrt_three_div_two_lt_of_one_lt hH
-  mkFDWindingDataFull_of_ftcProviders hH D
-    (fun _ hz_re hi_lo hi_hi =>
-      arcFTCHyp_seg1 hH_sqrt3 D.boundary D.boundary_eq hz_re hi_lo hi_hi)
-    (fun _ hz_re hi_lo hi_hi =>
-      arcFTCHyp_seg4 hH_sqrt3 D.boundary D.boundary_eq hz_re hi_lo hi_hi)
-    (fun _ h_lo h_hi =>
-      arcFTCHyp_arc_generic hH D.boundary D.boundary_eq h_lo h_hi)
+  mkFDWindingDataFull_seg1seg4_unconditional hH D
+    (fun _ h_lo h_hi => arcFTCHyp_arc_generic hH D.boundary D.boundary_eq h_lo h_hi)
 
 /-! ### Fully unconditional FDWindingData from the FD boundary path -/
 
