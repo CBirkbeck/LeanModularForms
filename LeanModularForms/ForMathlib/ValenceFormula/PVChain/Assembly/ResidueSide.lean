@@ -120,7 +120,6 @@ private lemma cpv_residue_side_cpvExists (_S : Finset UpperHalfPlane)
 
 include hf in
 private lemma cpv_residue_side_off_curve_min_dist (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H) (hH_ge1 : 1 ≤ H)
     (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
@@ -134,7 +133,7 @@ private lemma cpv_residue_side_off_curve_min_dist (S : Finset UpperHalfPlane)
   have h_capture_S_on : ∀ t ∈ Icc (0:ℝ) 5,
       modularFormCompOfComplex f (γ t) = 0 →
       γ t ∈ (↑(sArcOfS S ∪ sVertOfS S) : Set ℂ) :=
-    oncurve_full_capture f hf S hS hS_complete hH_ge1 hH_sqrt3 hH_bound
+    oncurve_full_capture f hf S hS_complete hH_ge1 hH_sqrt3 hH_bound
   have h_off : ∀ t ∈ Icc (0:ℝ) 5, γ t ≠ s := by
     intro t ht heq
     obtain ⟨h_box, h_narc⟩ := Finset.mem_sdiff.mp hs
@@ -152,7 +151,6 @@ private lemma cpv_residue_side_off_curve_min_dist (S : Finset UpperHalfPlane)
 
 include hf in
 private lemma cpv_residue_side_eventually_eq (S : Finset UpperHalfPlane)
-    (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     {H : ℝ} (hH_sqrt3 : Real.sqrt 3 / 2 < H) (hH_ge1 : 1 ≤ H)
     (hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
@@ -173,7 +171,7 @@ private lemma cpv_residue_side_eventually_eq (S : Finset UpperHalfPlane)
         ∀ t ∈ Icc (0:ℝ) 5, ε < ‖γ t - s‖ := by
       intro s hs
       obtain ⟨δ, hδ_pos, hδ_bound⟩ := cpv_residue_side_off_curve_min_dist
-        f hf S hS hS_complete hH_sqrt3 hH_ge1 hH_bound hM_half hHM
+        f hf S hS_complete hH_sqrt3 hH_ge1 hH_bound hM_half hHM
         Sbox hSbox S_on hS_on s hs
       filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
       intro t ht
@@ -357,7 +355,7 @@ theorem cpv_residue_side_tendsto (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, 
   have hL_tendsto_S_on : Tendsto (fun ε =>
       ∫ t in (0:ℝ)..5, cauchyPrincipalValueIntegrandOn S_on F γ ε t)
       (𝓝[>] 0) (𝓝 L) :=
-    hL_tendsto_F.congr' ((cpv_residue_side_eventually_eq f hf S hS
+    hL_tendsto_F.congr' ((cpv_residue_side_eventually_eq f hf S
       hS_complete hH_sqrt3 hH_ge1 hH_bound hM_half hHM
       Sbox hSbox_def S_on hS_on_def S0 hS0_def).mono fun ε hε =>
       intervalIntegral.integral_congr (fun t ht => hε t ht))
