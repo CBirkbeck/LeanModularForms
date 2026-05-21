@@ -110,13 +110,8 @@ private theorem fullPartitionFinset_nonempty (γ : PiecewiseC1Path x y) :
 
 /-- The full partition list is nonempty. -/
 theorem fullPartition_ne_nil (γ : PiecewiseC1Path x y) :
-    γ.fullPartition ≠ [] := by
-  intro h
-  have h0 : (0 : ℝ) ∈ γ.fullPartitionFinset := γ.zero_mem_fullPartitionFinset
-  rw [← Finset.mem_sort (· ≤ ·)] at h0
-  change (0 : ℝ) ∈ γ.fullPartition at h0
-  rw [h] at h0
-  exact List.not_mem_nil h0
+    γ.fullPartition ≠ [] :=
+  List.ne_nil_of_mem ((Finset.mem_sort _).mpr γ.zero_mem_fullPartitionFinset)
 
 /-- The full partition is sorted with respect to `≤`. -/
 theorem fullPartition_sorted (γ : PiecewiseC1Path x y) :
@@ -133,17 +128,12 @@ theorem mem_fullPartition (γ : PiecewiseC1Path x y) (t : ℝ) :
 /-- `0` is in the full partition. -/
 theorem zero_mem_fullPartition (γ : PiecewiseC1Path x y) :
     (0 : ℝ) ∈ γ.fullPartition := by
-  rw [mem_fullPartition]
-  left
-  rfl
+  simp [mem_fullPartition]
 
 /-- `1` is in the full partition. -/
 theorem one_mem_fullPartition (γ : PiecewiseC1Path x y) :
     (1 : ℝ) ∈ γ.fullPartition := by
-  rw [mem_fullPartition]
-  right
-  left
-  rfl
+  simp [mem_fullPartition]
 
 /-- Every element of the full partition lies in `[0, 1]`. -/
 theorem fullPartition_mem_Icc (γ : PiecewiseC1Path x y) (t : ℝ)
