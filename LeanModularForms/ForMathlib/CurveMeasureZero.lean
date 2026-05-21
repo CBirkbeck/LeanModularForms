@@ -53,7 +53,7 @@ Hausdorff 2-measure implies vanishing of volume. -/
 theorem volume_image_lipschitz_real_zero {K : NNReal} {f : ℝ → ℂ}
     (hf : LipschitzWith K f) (s : Set ℝ) : volume (f '' s) = 0 := by
   have h_finrank : ((Module.finrank ℝ ℂ : ℕ) : ℝ) = 2 := by
-    simp [Complex.finrank_real_complex]
+    exact_mod_cast Complex.finrank_real_complex
   have h_haar : (μH[2] : Measure ℂ).IsAddHaarMeasure := by
     rw [show (2 : ℝ) = ((Module.finrank ℝ ℂ : ℕ) : ℝ) from h_finrank.symm]
     exact isAddHaarMeasure_hausdorffMeasure
@@ -69,10 +69,9 @@ theorem exists_mem_not_mem_image_of_isOpen_of_lipschitz {U : Set ℂ} (hU_open :
     ∃ w₀ ∈ U, w₀ ∉ f '' s := by
   by_contra h
   push Not at h
-  have h_sub : U ⊆ f '' s := fun w hw => h w hw
   have h_zero : volume U ≤ 0 := by
     rw [← volume_image_lipschitz_real_zero hf s]
-    exact measure_mono h_sub
+    exact measure_mono h
   exact (h_zero.trans_lt (hU_open.measure_pos _ hU_ne)).false
 
 /-! ### Lipschitz from bounded derivative on a convex set -/
