@@ -89,7 +89,6 @@ theorem continuous (γ : PiecewiseC1Path x y) : Continuous (γ : ℝ → E) :=
   γ.toPath.continuous_extend
 
 omit [NormedSpace ℝ E] in
-/-- Helper: the translation of a `Path` by a constant. -/
 private def translatePath (γ : Path x y) (c : E) : Path (x + c) (y + c) where
   toFun t := γ t + c
   continuous_toFun := γ.continuous.add continuous_const
@@ -98,9 +97,7 @@ private def translatePath (γ : Path x y) (c : E) : Path (x + c) (y + c) where
 
 omit [NormedSpace ℝ E] in
 private theorem translatePath_extend (γ : Path x y) (c : E) :
-    (translatePath γ c).extend = fun t => γ.extend t + c := by
-  ext t
-  rfl
+    (translatePath γ c).extend = fun t => γ.extend t + c := rfl
 
 /-- Translate a piecewise C¹ path by a constant. The partition is unchanged. -/
 def translate (γ : PiecewiseC1Path x y) (c : E) : PiecewiseC1Path (x + c) (y + c) where
