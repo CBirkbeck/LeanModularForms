@@ -51,19 +51,16 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ t�
   obtain ⟨ha_lt, hlt_b⟩ := ht₀
   have h_left_lt : a < t₀ - δ := by linarith
   have h_right_lt : t₀ + δ < b := by linarith
-  -- F = 0 on the middle segment.
   have hF_mid : ∀ t ∈ uIoc (t₀ - δ) (t₀ + δ), F t = 0 := by
     intro t ht
     rw [uIoc_of_le (by linarith)] at ht
     simp only [hF_def]
-    rw [if_neg (not_lt.mpr <| h_near _ ?_)]
-    rw [abs_le]
-    exact ⟨by linarith [ht.1], by linarith [ht.2]⟩
-  -- F = (γ t - s)⁻¹ * deriv γ t a.e. on [a, t₀ - δ]: the boundary point is null.
+    rw [if_neg (not_lt.mpr <| h_near _ <|
+      abs_le.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩)]
   have hF_left : ∀ᵐ t ∂volume, t ∈ uIoc a (t₀ - δ) →
       F t = (γ t - s)⁻¹ * deriv γ t := by
     have h_ne : ({t₀ - δ} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
+      compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
     filter_upwards [h_ne] with t ht_ne ht
     rw [uIoc_of_le h_left_lt.le] at ht
     have ht_lt : t < t₀ - δ :=
@@ -73,11 +70,10 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ t�
     refine h_far t ⟨ht.1.le, ht.2.trans (by linarith)⟩ ?_
     rw [abs_of_nonpos (by linarith)]
     linarith
-  -- F = (γ t - s)⁻¹ * deriv γ t a.e. on [t₀ + δ, b].
   have hF_right : ∀ᵐ t ∂volume, t ∈ uIoc (t₀ + δ) b →
       F t = (γ t - s)⁻¹ * deriv γ t := by
     have h_ne : ({t₀ + δ} : Set ℝ)ᶜ ∈ ae volume :=
-      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
+      compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
     filter_upwards [h_ne] with t ht_ne ht
     rw [uIoc_of_le h_right_lt.le] at ht
     simp only [hF_def]
@@ -85,7 +81,6 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ t�
     refine h_far t ⟨by linarith [ht.1], ht.2⟩ ?_
     rw [abs_of_nonneg (by linarith [ht.1])]
     linarith [ht.1]
-  -- Integrability of F on each piece.
   have hF_int_left : IntervalIntegrable F volume a (t₀ - δ) :=
     hint_left.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       (hF_left.mono (fun _ ht hm => (ht hm).symm)))
@@ -95,7 +90,6 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ t�
   have hF_int_right : IntervalIntegrable F volume (t₀ + δ) b :=
     hint_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       (hF_right.mono (fun _ ht hm => (ht hm).symm)))
-  -- Split the full integral and discharge each piece.
   have h_split : ∫ t in a..b, F t =
       (∫ t in a..(t₀ - δ), F t) + (∫ t in (t₀ - δ)..(t₀ + δ), F t) +
         (∫ t in (t₀ + δ)..b, F t) := by
