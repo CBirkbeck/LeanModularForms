@@ -283,7 +283,7 @@ private lemma gFunc_constant_piecewise
     field_simp
     ring
   exact constant_of_has_deriv_right_zero hG_cont
-    (hasDerivWithinAt_zero_of_deriv_zero_off_finite G a b P hab hG_cont hG_diff hG_deriv)
+    (hasDerivWithinAt_zero_of_deriv_zero_off_finite G a b P hG_cont hG_diff hG_deriv)
 
 private lemma pv_eq_integral_of_bound_away
     {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {δ : ℝ}
