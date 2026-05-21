@@ -36,8 +36,6 @@ namespace LeanModularForms
 
 variable {x : ℂ}
 
-/-! ## Closure under adding higher-order polar terms (avoidance) -/
-
 /-- **Adding a single higher-order polar term preserves `HasCauchyPVOn`.**
 If `f` has CPV `L` along `γ` avoiding `S`, and we add a higher-order polar term
 `∑ s ∈ S, c s / (z - s)^k` with `k ≥ 2`, the CPV stays `L`.
@@ -64,8 +62,6 @@ theorem hasCauchyPVOn_add_higherOrderPolar_of_avoids
   simpa only [add_zero] using HasCauchyPVOn.add h_f
     (hasCauchyPVOn_finset_pow_inv_of_avoids S k hk c γ hδ h_int_HO) h_f_int h_HO_int
 
-/-! ## Closure under adding multi-power higher-order polar terms -/
-
 /-- **Adding a sum of higher-order polar terms over a power range.** Iterates
 `hasCauchyPVOn_add_higherOrderPolar_of_avoids` over `k ∈ Finset.Ico 2 (M + 1)`. -/
 theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids
@@ -89,22 +85,15 @@ theorem hasCauchyPVOn_add_higherOrderPolarSum_of_avoids
       HasCauchyPVOn S
         (fun z => ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k)
         γ 0 := by
-    have h_each_k : ∀ k ∈ Finset.Ico 2 (M + 1),
-        HasCauchyPVOn S (fun z => ∑ s ∈ S, c_HO k s / (z - s) ^ k) γ 0 :=
-      fun k hk_mem => hasCauchyPVOn_finset_pow_inv_of_avoids S k
-        (Finset.mem_Ico.mp hk_mem).left (c_HO k) γ hδ (h_int_HO k hk_mem)
     simpa only [Finset.sum_const_zero] using
-      HasCauchyPVOn.finset_sum (Finset.Ico 2 (M + 1)) h_each_k h_HO_int
-  have h_HOsum_int : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S
-        (fun z => ∑ k ∈ Finset.Ico 2 (M + 1), ∑ s ∈ S, c_HO k s / (z - s) ^ k)
-        γ.toPath.extend ε t) volume 0 1 :=
-    fun ε hε => cpvIntegrandOn_finset_sum_intervalIntegrable
-      (Finset.Ico 2 (M + 1)) S (h_HO_int · · ε hε)
+      HasCauchyPVOn.finset_sum (Finset.Ico 2 (M + 1))
+        (fun k hk_mem => hasCauchyPVOn_finset_pow_inv_of_avoids S k
+          (Finset.mem_Ico.mp hk_mem).left (c_HO k) γ hδ (h_int_HO k hk_mem))
+        h_HO_int
   simpa only [add_zero] using
-    HasCauchyPVOn.add h_f h_HOsum h_f_int h_HOsum_int
-
-/-! ## C-4: closed-form higher-order residue theorem (avoidance) -/
+    HasCauchyPVOn.add h_f h_HOsum h_f_int
+      (fun ε hε => cpvIntegrandOn_finset_sum_intervalIntegrable
+        (Finset.Ico 2 (M + 1)) S (h_HO_int · · ε hε))
 
 /-- **C-4 closure (avoidance).** Given:
 
