@@ -9,6 +9,25 @@ public import Mathlib.NumberTheory.ArithmeticFunction.Moebius
 public import Mathlib.NumberTheory.ModularForms.Basic
 public import Mathlib.NumberTheory.ModularForms.EisensteinSeries.Defs
 
+/-!
+# A complex square-root via the principal logarithm
+
+This file defines `csqrt`, the complex square-root branch obtained by composing the
+principal branch of the complex logarithm with `(1/2) • ·` and then `cexp`. We record
+its derivative on the upper half-plane and the identities `csqrt I ^ 24 = 1` and
+`csqrt z ^ 24 = z ^ 12` (for `z ≠ 0`).
+
+## Main definitions
+
+* `csqrt`: the complex square-root branch `z ↦ exp ((log z) / 2)`.
+
+## Main results
+
+* `csqrt_deriv`: derivative of `csqrt` at a point of the upper half-plane.
+* `csqrt_differentiableAt`: differentiability of `csqrt` at points of `ℍ`.
+* `csqrt_pow_24`: `(csqrt z) ^ 24 = z ^ 12` whenever `z ≠ 0`.
+-/
+
 @[expose] public section
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
@@ -18,8 +37,9 @@ open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
 
 open ArithmeticFunction
 
-
-noncomputable def csqrt : ℂ → ℂ := (fun a : ℂ => cexp ((1 / (2 : ℂ))* (log a)))
+/-- The complex square-root branch defined via the principal logarithm:
+`csqrt z = exp ((log z) / 2)`. -/
+noncomputable def csqrt : ℂ → ℂ := fun a : ℂ => cexp ((1 / (2 : ℂ)) * log a)
 
 lemma csqrt_deriv (z : ℍ) : deriv (fun a : ℂ => cexp ((1 / (2 : ℂ))* (log a))) z =
     (2 : ℂ)⁻¹ • (fun a : ℂ => cexp (-(1 / (2 : ℂ)) * (log a))) z:= by
