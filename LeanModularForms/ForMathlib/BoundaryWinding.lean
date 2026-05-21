@@ -175,8 +175,7 @@ theorem linDelta_pos {C ε : ℝ} (hC : 0 < C) (hε : 0 < ε) : 0 < linDelta C �
   div_pos hε hC
 
 theorem linDelta_small {C ε bound : ℝ} (hC : 0 < C) (hε_lt : ε < C * bound) :
-    linDelta C ε < bound := by
-  rw [linDelta, div_lt_iff₀ hC]
-  linarith
+    linDelta C ε < bound :=
+  (div_lt_iff₀ hC).mpr (by linarith)
 
 end
