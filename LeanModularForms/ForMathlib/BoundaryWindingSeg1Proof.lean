@@ -109,12 +109,18 @@ theorem seg1_near_of_linDelta {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   rw [fdBoundaryFun_seg1_dist_eq hH hz_re t h_t_hi, mul_comm]
   exact (le_div_iff₀ (seg1Speed_pos hH)).mp ht
 
-/-- For `z₀` on seg1 with `z₀.im > √3/2`, the norm `‖z₀‖` exceeds 1. -/
-theorem norm_gt_one_of_seg1_interior {z₀ : ℂ} (hz_re : z₀.re = 1/2)
+/-- Generic vertical-side norm bound: when `z₀.re ^ 2 = 1/4` and
+`z₀.im > √3/2`, the norm `‖z₀‖` exceeds 1. -/
+theorem norm_gt_one_of_re_sq_quarter {z₀ : ℂ} (hz_re_sq : z₀.re ^ 2 = 1/4)
     (hc_lo : Real.sqrt 3 / 2 < z₀.im) : 1 < ‖z₀‖ := by
   nlinarith [Complex.normSq_eq_norm_sq z₀, norm_nonneg z₀,
     Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num), hc_lo, Real.sqrt_nonneg 3,
-    Complex.normSq_apply z₀, hz_re, sq_nonneg z₀.im]
+    Complex.normSq_apply z₀, hz_re_sq, sq z₀.re, sq_nonneg z₀.im]
+
+/-- For `z₀` on seg1 with `z₀.im > √3/2`, the norm `‖z₀‖` exceeds 1. -/
+theorem norm_gt_one_of_seg1_interior {z₀ : ℂ} (hz_re : z₀.re = 1/2)
+    (hc_lo : Real.sqrt 3 / 2 < z₀.im) : 1 < ‖z₀‖ :=
+  norm_gt_one_of_re_sq_quarter (by rw [hz_re]; norm_num) hc_lo
 
 /-- Distance from a seg1 interior point to seg2/seg3 (unit-circle arcs):
 at least `‖z₀‖ - 1 > 0`. -/
@@ -146,10 +152,12 @@ theorem seg1_far_on_seg1 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   rw [fdBoundaryFun_seg1_dist_eq hH hz_re t ht, mul_comm]
   exact (div_lt_iff₀ (seg1Speed_pos hH)).mp hδt
 
-/-- For `z₀` on seg1 with `z₀.im > √3/2`, the arc-distance bound `‖z₀‖ - 1`
-is at most the vertical-width bound `z₀.im - √3/2`. This lets us drop one of
-the constraints in the threshold computation. -/
-theorem norm_sub_one_le_im_sub_sqrt3 {z₀ : ℂ} (hz_re : z₀.re = 1/2)
+/-- Generic vertical-side norm bound: when `z₀.re^2 = 1/4` and `z₀.im ≥ √3/2`,
+the arc bound `‖z₀‖ - 1` is at most the vertical-width bound `z₀.im - √3/2`.
+This lets us drop one of the constraints in the threshold computation.
+Used for both the right vertical (`z₀.re = 1/2`) and the left vertical
+(`z₀.re = -1/2`). -/
+theorem norm_sub_one_le_im_sub_sqrt3_of_re_sq {z₀ : ℂ} (hz_re_sq : z₀.re ^ 2 = 1/4)
     (hc_lo : Real.sqrt 3 / 2 ≤ z₀.im) :
     ‖z₀‖ - 1 ≤ z₀.im - Real.sqrt 3 / 2 := by
   have h_sqrt3_sq : Real.sqrt 3 * Real.sqrt 3 = 3 :=
@@ -158,12 +166,20 @@ theorem norm_sub_one_le_im_sub_sqrt3 {z₀ : ℂ} (hz_re : z₀.re = 1/2)
     nlinarith [h_sqrt3_sq, hc_lo, Real.sqrt_nonneg 3]
   have h_sq_ineq : ‖z₀‖ ^ 2 ≤ (z₀.im + 1 - Real.sqrt 3 / 2) ^ 2 := by
     have h_norm_sq : ‖z₀‖ ^ 2 = 1/4 + z₀.im ^ 2 := by
-      rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hz_re]; ring
+      rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, ← sq, hz_re_sq]; ring
     rw [h_norm_sq]
     nlinarith [h_sqrt3_sq, hc_lo]
   have h_target := Real.sqrt_le_sqrt h_sq_ineq
   rw [Real.sqrt_sq (norm_nonneg z₀), Real.sqrt_sq h_nn_rhs] at h_target
   linarith
+
+/-- For `z₀` on seg1 with `z₀.im > √3/2`, the arc-distance bound `‖z₀‖ - 1`
+is at most the vertical-width bound `z₀.im - √3/2`. This lets us drop one of
+the constraints in the threshold computation. -/
+theorem norm_sub_one_le_im_sub_sqrt3 {z₀ : ℂ} (hz_re : z₀.re = 1/2)
+    (hc_lo : Real.sqrt 3 / 2 ≤ z₀.im) :
+    ‖z₀‖ - 1 ≤ z₀.im - Real.sqrt 3 / 2 :=
+  norm_sub_one_le_im_sub_sqrt3_of_re_sq (by rw [hz_re]; norm_num) hc_lo
 
 /-- The threshold below which `ε` must lie for every near/far bound to hold
 at a seg1 interior point `z₀`:
