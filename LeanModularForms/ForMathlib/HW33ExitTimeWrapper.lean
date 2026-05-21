@@ -58,8 +58,7 @@ theorem hw_theorem_3_3_odd_transverse_bundled
       (∫ t in a..(data.tMinus ε), γ' t / (γ t - s) ^ k) +
         (∫ t in (data.tPlus ε)..b, γ' t / (γ t - s) ^ k))
       (𝓝[>] (0 : ℝ)) (𝓝 0) :=
-  hw_theorem_3_3_odd_transverse_parametric (γ := γ) (γ' := γ') (s := s) (L := L)
-    (n := n) (k := k)
+  hw_theorem_3_3_odd_transverse_parametric
     h_close h_flat hL h_deriv_right h_deriv_left hL_right hL_left
     h_s hk hk_odd hkn hn1
     data.tPlus data.tMinus
