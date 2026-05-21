@@ -35,20 +35,20 @@ open scoped Real Interval
 noncomputable section
 
 /-- The angle at a crossing point where γ passes through z₀.
-`arg(L_out) - arg(-L_in)` where L_in and L_out are one-sided derivative
+`arg(L_out) - arg(-L_in)` where `L_in` and `L_out` are one-sided derivative
 limits. At smooth points (not in partition), returns π. -/
 def angleAtCrossing (γ : PiecewiseC1Immersion) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) : ℝ :=
   if h : t₀ ∈ γ.toPiecewiseC1Curve.partition then
-    let L_left := Classical.choose (γ.left_deriv_limit t₀ h ht₀.1)
-    let L_right := Classical.choose (γ.right_deriv_limit t₀ h ht₀.2)
-    arg L_right - arg (-L_left)
+    let lLeft := Classical.choose (γ.left_deriv_limit t₀ h ht₀.1)
+    let lRight := Classical.choose (γ.right_deriv_limit t₀ h ht₀.2)
+    arg lRight - arg (-lLeft)
   else Real.pi
 
 theorem angleAtCrossing_smooth (γ : PiecewiseC1Immersion) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hsmooth : t₀ ∉ γ.toPiecewiseC1Curve.partition) :
     angleAtCrossing γ t₀ ht₀ = Real.pi := by
-  simp only [angleAtCrossing, hsmooth, ↓reduceDIte]
+  simp [angleAtCrossing, hsmooth]
 
 /-- Winding number via explicit angle sum at crossings. -/
 def windingNumberWithAngles' (γ : PiecewiseC1Immersion) (_z₀ : ℂ) (crossings : Finset ℝ)
@@ -59,21 +59,19 @@ def windingNumberWithAngles' (γ : PiecewiseC1Immersion) (_z₀ : ℂ) (crossing
 theorem singleton_mem_Ioo (t₀ : ℝ) (a b : ℝ) (ht₀ : t₀ ∈ Ioo a b) :
     ∀ t ∈ ({t₀} : Finset ℝ), t ∈ Ioo a b := by
   intro t ht
-  rw [Finset.mem_singleton.mp ht]
-  exact ht₀
+  rwa [Finset.mem_singleton.mp ht]
 
 theorem singleton_at_crossing (γ : PiecewiseC1Immersion) (t₀ : ℝ) (z₀ : ℂ)
     (hcross : γ.toFun t₀ = z₀) : ∀ t ∈ ({t₀} : Finset ℝ), γ.toFun t = z₀ := by
   intro t ht
-  rw [Finset.mem_singleton.mp ht]
-  exact hcross
+  rwa [Finset.mem_singleton.mp ht]
 
 /-- A single smooth crossing contributes 1/2 to the winding number. -/
 theorem windingNumber_smooth_crossing (γ : PiecewiseC1Immersion) (z₀ : ℂ) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hcross : γ.toFun t₀ = z₀)
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Curve.partition) :
     windingNumberWithAngles' γ z₀ {t₀} (singleton_mem_Ioo t₀ γ.a γ.b ht₀)
-      (singleton_at_crossing γ t₀ z₀ hcross) = 1/2 := by
+      (singleton_at_crossing γ t₀ z₀ hcross) = 1 / 2 := by
   simp only [windingNumberWithAngles']
   rw [Fintype.sum_unique]
   simp only [Finset.default_singleton]
@@ -98,11 +96,10 @@ theorem cauchyPrincipalValue_eq_classical_off_curve' (γ : PiecewiseC1Curve) (z�
   have h_dist_pos : 0 < Metric.infDist z₀ (γ.toFun '' Icc γ.a γ.b) := by
     rw [← Metric.infDist_pos_iff_notMem_closure
       ⟨γ.toFun γ.a, mem_image_of_mem _ (left_mem_Icc.mpr γ.hab.le)⟩,
-      (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed.closure_eq]
-    rw [mem_image]
+      (isCompact_Icc.image_of_continuousOn γ.continuous_toFun).isClosed.closure_eq,
+      mem_image]
     push Not
-    intro t ht
-    exact hoff t ht
+    exact hoff
   exact ⟨_, h_dist_pos, fun ε hε t ht => by
     calc ‖γ.toFun t - z₀‖
         = dist (γ.toFun t) z₀ := (dist_eq_norm _ _).symm
@@ -114,10 +111,9 @@ theorem cauchyPrincipalValue_eq_classical_off_curve' (γ : PiecewiseC1Curve) (z�
 theorem integral_inv_real_axis (r ε : ℝ) (hr : 0 < r) (hε : 0 < ε) :
     ∫ t in ε..r, (t : ℂ)⁻¹ = Complex.log r - Complex.log ε := by
   simp_rw [← Complex.ofReal_inv]
-  have h_real : ∫ t in ε..r, (t : ℝ)⁻¹ = Real.log r - Real.log ε := by
-    rw [integral_inv_of_pos hε hr, Real.log_div hr.ne' hε.ne']
-  rw [intervalIntegral.integral_ofReal, h_real]
-  simp only [Complex.ofReal_sub, Complex.ofReal_log hr.le, Complex.ofReal_log hε.le]
+  rw [intervalIntegral.integral_ofReal, integral_inv_of_pos hε hr,
+    Real.log_div hr.ne' hε.ne']
+  simp [Complex.ofReal_log hr.le, Complex.ofReal_log hε.le]
 
 /-- Translate a piecewise C¹ immersion by a constant. -/
 def PiecewiseC1Immersion.translate (γ : PiecewiseC1Immersion) (c : ℂ) :
@@ -134,9 +130,8 @@ def PiecewiseC1Immersion.translate (γ : PiecewiseC1Immersion) (c : ℂ) :
     (γ.smooth_off_partition t ht ht').add (differentiableAt_const _)
   deriv_continuous_off_partition := by
     intro t ht hnp
-    have := γ.deriv_continuous_off_partition t ht hnp
-    convert this using 1
-    exact funext fun x => by rw [deriv_add_const]
+    convert γ.deriv_continuous_off_partition t ht hnp using 1
+    exact funext fun _ => by rw [deriv_add_const]
   deriv_ne_zero := by
     intro t ht ht'
     rw [deriv_add_const]
@@ -145,16 +140,14 @@ def PiecewiseC1Immersion.translate (γ : PiecewiseC1Immersion) (c : ℂ) :
     intro p hp hp'
     obtain ⟨L, hL_ne, hL⟩ := γ.left_deriv_limit p hp hp'
     refine ⟨L, hL_ne, ?_⟩
-    have h : deriv (fun t => γ.toFun t + c) = deriv γ.toFun :=
-      funext fun _ => deriv_add_const c
-    rwa [h]
+    rwa [show deriv (fun t => γ.toFun t + c) = deriv γ.toFun from
+      funext fun _ => deriv_add_const c]
   right_deriv_limit := by
     intro p hp hp'
     obtain ⟨L, hL_ne, hL⟩ := γ.right_deriv_limit p hp hp'
     refine ⟨L, hL_ne, ?_⟩
-    have h : deriv (fun t => γ.toFun t + c) = deriv γ.toFun :=
-      funext fun _ => deriv_add_const c
-    rwa [h]
+    rwa [show deriv (fun t => γ.toFun t + c) = deriv γ.toFun from
+      funext fun _ => deriv_add_const c]
 
 /-- The angle at a crossing is invariant under translation. -/
 theorem angleAtCrossing_translate (γ : PiecewiseC1Immersion) (c : ℂ) (t₀ : ℝ)
