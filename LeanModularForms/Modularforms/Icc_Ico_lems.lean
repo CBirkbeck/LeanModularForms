@@ -5,13 +5,18 @@ public import Mathlib.Analysis.CStarAlgebra.Classes
 public import Mathlib.Data.Int.Star
 public import Mathlib.Tactic.Cases
 
+/-!
+# Auxiliary lemmas on symmetric integer intervals
+
+Small utility lemmas relating `Finset.Icc (-N) N` and `Finset.Ico (-N) N` to smaller
+intervals, used in the modular forms development for manipulating symmetric sums.
+-/
+
 @[expose] public section
 
-open TopologicalSpace Set
-  Metric Filter Function Complex
+open TopologicalSpace Set Metric Filter Function Complex
 
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
-
 
 lemma Icc_succ (n : ℕ) : Finset.Icc (-(n + 1) : ℤ) (n + 1) = Finset.Icc (-n : ℤ) n ∪
   {(-(n+1) : ℤ), (n + 1 : ℤ)} := by
@@ -28,8 +33,7 @@ lemma trex (f : ℤ → ℂ) (N : ℕ) (hn : 1 ≤ N) : ∑ m ∈ Finset.Icc (-N
   | zero => aesop
   | succ N ih =>
     zify
-    rw [Icc_succ]
-    rw [Finset.sum_union]
+    rw [Icc_succ, Finset.sum_union]
     · ring_nf
       rw [add_assoc]
       congr
@@ -37,7 +41,6 @@ lemma trex (f : ℤ → ℂ) (N : ℕ) (hn : 1 ≤ N) : ∑ m ∈ Finset.Icc (-N
       · ring
       omega
     simp
-
 
 lemma Icc_sum_even (f : ℤ → ℂ) (hf : ∀ n, f n = f (-n)) (N : ℕ) :
     ∑ m ∈ Finset.Icc (-N : ℤ) N, f m = 2 * ∑ m ∈ Finset.range (N + 1), f m - f 0 := by
@@ -61,19 +64,16 @@ lemma Icc_sum_even (f : ℤ → ℂ) (hf : ∀ n, f n = f (-n)) (N : ℕ) :
       Left.nonneg_neg_iff, Int.reduceLE, add_neg_le_iff_le_add, false_and, not_false_eq_true,
       Finset.disjoint_singleton_right, add_le_iff_nonpos_right, and_false, and_self]
 
-
-
 lemma verga2 : Tendsto (fun N : ℕ => Finset.Icc (-N : ℤ) N) atTop atTop :=
   tendsto_atTop_finset_of_monotone (fun _ _ _ ↦ Finset.Icc_subset_Icc (by gcongr) (by gcongr))
   (fun x ↦ ⟨x.natAbs, by simp [le_abs, neg_le]⟩)
 
 lemma int_add_abs_self_nonneg (n : ℤ) : 0 ≤ n + |n| := by
   by_cases h : 0 ≤ n
-  · apply add_nonneg h
-    exact abs_nonneg n
-  simp at *
+  · exact add_nonneg h (abs_nonneg n)
+  rw [not_le] at h
   rw [abs_of_neg h]
-  simp
+  omega
 
 lemma verga : Tendsto (fun N : ℕ => Finset.Ico (-N : ℤ) N) atTop atTop := by
   apply tendsto_atTop_finset_of_monotone (fun _ _ _ ↦ Finset.Ico_subset_Ico (by omega) (by gcongr))
@@ -90,5 +90,7 @@ lemma verga : Tendsto (fun N : ℕ => Finset.Ico (-N : ℤ) N) atTop atTop := by
 lemma fsb (b : ℕ) : Finset.Ico (-(b+1) : ℤ) (b+1) = Finset.Ico (-(b : ℤ)) (b) ∪
     {-((b+1) : ℤ), (b : ℤ)} := by
   ext n
-  simp
+  simp only [neg_add_rev, Int.reduceNeg, Finset.mem_Ico, add_neg_le_iff_le_add,
+    Finset.union_insert, Finset.union_singleton, neg_le_self_iff, Nat.cast_nonneg,
+    Finset.Ico_insert_right, Finset.mem_insert, Finset.mem_Icc]
   omega
