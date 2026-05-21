@@ -60,19 +60,15 @@ open Complex Set
 
 noncomputable section
 
-/-! ## Part 1: Auxiliary lemmas -/
-
 /-- The argument of `exp(iθ)` is `θ` for `θ ∈ (-π, π]`. -/
 theorem arg_exp_mul_I (θ : ℝ) (hθ : θ ∈ Ioc (-Real.pi) Real.pi) :
     arg (exp (↑θ * I)) = θ := by
-  rw [exp_mul_I]; exact Complex.arg_cos_add_sin_mul_I hθ
+  simpa [exp_mul_I] using Complex.arg_cos_add_sin_mul_I hθ
 
 /-- The argument of `r * I` is `π/2` for `r > 0`. -/
 theorem arg_ofReal_mul_I (r : ℝ) (hr : 0 < r) :
     arg (↑r * I) = Real.pi / 2 := by
   rw [Complex.arg_real_mul _ hr, Complex.arg_I]
-
-/-! ## Part 2: Arc tangent directions -/
 
 /-- The derivative of the arc parametrization.
 `d/dt exp(i·θ(t)) = (5π/6) · i · exp(i·θ(t))`. -/
@@ -82,9 +78,9 @@ theorem fdBoundary_arc_deriv_eq (t : ℝ) :
   simp only [fdArcAngle]
   have hd : HasDerivAt (fun s : ℝ =>
       Real.pi / 3 + (5 * s - 1) * (Real.pi / 6)) (5 * Real.pi / 6) t := by
-    have := ((hasDerivAt_id t).const_mul 5).sub_const 1 |>.mul_const (Real.pi / 6)
-      |>.const_add (Real.pi / 3)
-    convert this using 1; ring
+    convert (((hasDerivAt_id t).const_mul 5).sub_const 1).mul_const (Real.pi / 6)
+      |>.const_add (Real.pi / 3) using 1
+    ring
   rw [(hd.ofReal_comp.mul_const I).cexp.deriv]; push_cast; ring
 
 /-- Arc tangent at `t = 2/5`: `γ'(2/5) = -(5π/6)` (leftward at `i`). -/
@@ -107,8 +103,6 @@ theorem fdBoundary_arc_deriv_at_three_fifths :
       ↑(5 * Real.pi / 6) * I * exp (↑(2 * Real.pi / 3) * I) := by
   rw [fdBoundary_arc_deriv_eq, fdArcAngle_at_three_fifths]
 
-/-! ### Vertical segment tangent directions -/
-
 /-- Right vertical (segment 1) tangent: downward. -/
 theorem fdBoundary_seg1_deriv (H t : ℝ) :
     deriv (fun s => (1 : ℂ) / 2 +
@@ -117,8 +111,7 @@ theorem fdBoundary_seg1_deriv (H t : ℝ) :
   have h1 : HasDerivAt (fun s : ℝ => (s : ℂ)) 1 t := Complex.ofRealCLM.hasDerivAt
   have h2 : HasDerivAt (fun s : ℝ => (H : ℂ) - 5 * ↑s * (↑H - ↑(Real.sqrt 3) / 2))
       (-(5 * (↑H - ↑(Real.sqrt 3) / 2))) t := by
-    have := (h1.const_mul ((5 : ℂ) * (↑H - ↑(Real.sqrt 3) / 2))).const_sub (H : ℂ)
-    convert this using 1
+    convert (h1.const_mul ((5 : ℂ) * (↑H - ↑(Real.sqrt 3) / 2))).const_sub (H : ℂ) using 1
     · funext s; ring
     · ring
   exact ((hasDerivAt_const t ((1 : ℂ) / 2)).add (h2.mul_const I)).deriv.trans (by ring)
@@ -132,12 +125,10 @@ theorem fdBoundary_seg4_deriv (H t : ℝ) :
   have h2 : HasDerivAt (fun s : ℝ =>
       (↑(Real.sqrt 3) / 2 : ℂ) + (5 * ↑s - 3) * (↑H - ↑(Real.sqrt 3) / 2))
       (5 * (↑H - ↑(Real.sqrt 3) / 2)) t := by
-    have hd := ((h1.const_mul (5 : ℂ)).sub_const (3 : ℂ)).mul_const (↑H - ↑(Real.sqrt 3) / 2)
-      |>.const_add (↑(Real.sqrt 3) / 2 : ℂ)
-    convert hd using 1; ring
+    convert ((h1.const_mul (5 : ℂ)).sub_const (3 : ℂ)).mul_const (↑H - ↑(Real.sqrt 3) / 2)
+      |>.const_add (↑(Real.sqrt 3) / 2 : ℂ) using 1
+    ring
   exact ((hasDerivAt_const t ((-1 : ℂ) / 2)).add (h2.mul_const I)).deriv.trans (by ring)
-
-/-! ## Part 3: Crossing angle computations -/
 
 /-- `i · exp(iπ/3) = exp(i·5π/6)`. -/
 theorem I_mul_exp_pi_third :
@@ -186,11 +177,10 @@ theorem arg_neg_left_tangent_rho :
   · rw [arg_left_tangent_rho]; ring
   · rw [I_mul_exp_two_pi_third, exp_mul_I, ← ofReal_cos, ← ofReal_sin]
     simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im]
-    rw [show (-5 * Real.pi / 6 : ℝ) = -(Real.pi - Real.pi / 6) from by ring, Real.sin_neg]
-    have : 0 < Real.sin (Real.pi - Real.pi / 6) := by
-      rw [Real.sin_pi_sub]
-      exact Real.sin_pos_of_pos_of_lt_pi (by linarith [Real.pi_pos]) (by linarith [Real.pi_pos])
-    linarith
+    rw [show (-5 * Real.pi / 6 : ℝ) = -(Real.pi - Real.pi / 6) from by ring, Real.sin_neg,
+      Real.sin_pi_sub]
+    linarith [Real.sin_pos_of_pos_of_lt_pi (show (0:ℝ) < Real.pi / 6 by linarith [Real.pi_pos])
+      (show Real.pi / 6 < Real.pi by linarith [Real.pi_pos])]
 
 /-- The arg of the right tangent at `ρ` (upward vertical): `π/2`. -/
 theorem arg_right_tangent_rho (H : ℝ) (hH : fdHeightValid H) :
@@ -212,17 +202,15 @@ theorem fdBoundary_angle_at_I_partition :
   rw [neg_neg, ← ofReal_neg, Complex.arg_ofReal_of_neg (by linarith [Real.pi_pos]),
     Complex.arg_ofReal_of_nonneg (by positivity)]; ring
 
-/-! ## Part 4: ArcFTCHyp limit target values -/
-
 /-- `-(πi)/(2πi) = -1/2`. -/
 theorem arcFTC_limit_target_I :
     -(↑Real.pi * I) / (2 * ↑Real.pi * I) = (-1 / 2 : ℂ) := by
-  field_simp [Real.pi_ne_zero]
+  field_simp
 
 /-- `-(πi/3)/(2πi) = -1/6`. -/
 theorem arcFTC_limit_target_rho :
     -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 / 6 : ℂ) := by
-  field_simp [Real.pi_ne_zero]; ring
+  field_simp; ring
 
 /-- `2πi · (-1/2) = -πi`. -/
 theorem arcFTC_pv_target_I :
@@ -231,8 +219,6 @@ theorem arcFTC_pv_target_I :
 /-- `2πi · (-1/6) = -πi/3`. -/
 theorem arcFTC_pv_target_rho :
     2 * ↑Real.pi * I * (-1 / 6 : ℂ) = -(↑Real.pi / 3 * I) := by ring
-
-/-! ## Part 5: Verified membership proofs -/
 
 /-- `2/5 ∈ (0, 1)`. -/
 theorem two_fifths_mem_Ioo : (2 : ℝ)/5 ∈ Ioo (0 : ℝ) 1 := by constructor <;> norm_num
