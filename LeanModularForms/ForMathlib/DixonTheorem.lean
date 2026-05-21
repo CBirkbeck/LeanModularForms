@@ -20,9 +20,11 @@ This file proves the Dixon theorem: for a null-homologous curve in an open set `
 
 * `dixonH2_norm_le` -- norm bound: `‖dixonH2 f γ w‖ ≤ M_f · M_d / (‖w‖ - R)`
 * `dixonH2_tendsto_zero` -- `dixonH2 f γ` tends to 0 along `cocompact ℂ`
-* `dixonFunction_eq_zero` -- the Dixon function is identically zero
-* `cauchyIntegralFormula_nullHomologous` -- Cauchy integral formula for null-homologous
-  curves: `∮_γ f(z)/(z-w) dz = 2πi · n(γ,w) · f(w)`
+* `dixonFunction_eq_zero_of_nullHomologous_convex_full` -- the Dixon function is zero
+  for null-homologous curves in convex bounded open `U` (canonical statement)
+* `dixonFunction_eq_zero_of_nullHomologous_open_full` -- same for general bounded open `U`
+* `dixonFunction_eq_zero_of_nullHomologous_open_full_unbounded` -- same for general open `U`
+  with Lipschitz `γ` (no boundedness requirement on `U`)
 
 ## Proof strategy
 
@@ -139,7 +141,7 @@ theorem dixonFunction_tendsto_zero {f : ℂ → ℂ} {U : Set ℂ}
 
 If the Dixon function is entire and tends to 0 at infinity, then it is identically zero.
 This is a direct application of `Differentiable.apply_eq_of_tendsto_cocompact`. -/
-theorem dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
+private theorem dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
     {γ : PiecewiseC1Path x x}
     (h_entire : Differentiable ℂ (dixonFunction f U γ))
     (h_tendsto : Tendsto (dixonFunction f U γ) (Filter.cocompact ℂ) (nhds 0)) :
@@ -148,7 +150,7 @@ theorem dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
 
 /-- **Assembled version**: the Dixon function is zero when given entireness, eventual
 agreement with `h2`, and curve bounds. -/
-theorem dixonFunction_eq_zero_of_bounds {f : ℂ → ℂ} {U : Set ℂ}
+private theorem dixonFunction_eq_zero_of_bounds {f : ℂ → ℂ} {U : Set ℂ}
     {γ : PiecewiseC1Path x x}
     (h_entire : Differentiable ℂ (dixonFunction f U γ))
     (h_evt : ∀ᶠ w in Filter.cocompact ℂ,
@@ -213,7 +215,7 @@ theorem dixonFunction_eventually_eq_dixonH2_of_nullHomologous
 /-- **Cauchy integral formula from pointwise Dixon-zero.** Weakened version of
 `cauchyIntegralFormula_nullHomologous` requiring only `dixonFunction f U γ w = 0`
 at the specific point `w` (not globally). -/
-theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : Set ℂ}
+private theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : Set ℂ}
     {γ : PiecewiseC1Path x x}
     {w : ℂ} (h_zero_at : dixonFunction f U γ w = 0)
     (hw : w ∈ U) (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
@@ -238,7 +240,7 @@ for `w ∈ U` off the curve, provided `dixonFunction f U γ ≡ 0`.
 
 Proof: `h_zero` gives `dixonFunction(w) = h1(w) = 0`. The `h1/h2` identity then gives
 `0 = h2(w) - 2πi · n(γ,w) · f(w)`. -/
-theorem cauchyIntegralFormula_nullHomologous {f : ℂ → ℂ} {U : Set ℂ}
+private theorem cauchyIntegralFormula_nullHomologous {f : ℂ → ℂ} {U : Set ℂ}
     {γ : PiecewiseC1Path x x}
     (h_zero : ∀ w, dixonFunction f U γ w = 0)
     (w : ℂ) (hw : w ∈ U)
@@ -266,23 +268,6 @@ theorem dixonH2_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
     (w : ℂ) (hw : w ∉ U) :
     dixonH2 f γ w = 0 := by
   simp [← dixonFunction_eq_dixonH2 hw, h_zero w]
-
-/-- **Cauchy integral formula, contour integral form.**
-
-The contour integral `∮_γ f(z)/(z - w) · γ'(t) dt` equals `2πi · n(γ,w) · f(w)`
-for `w ∈ U` off the curve. -/
-theorem cauchyIntegralFormula_contourIntegral {f : ℂ → ℂ} {U : Set ℂ}
-    {γ : PiecewiseC1Path x x}
-    (h_zero : ∀ w, dixonFunction f U γ w = 0)
-    (w : ℂ) (hw : w ∈ U)
-    (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
-    (h_cauchy_int : IntervalIntegrable
-      (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1)
-    (h_base_int : IntervalIntegrable
-      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
-    ∫ t in (0 : ℝ)..1, f (γ t) / (γ t - w) * deriv γ.toPath.extend t =
-      2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w :=
-  cauchyIntegralFormula_nullHomologous h_zero w hw hoff h_cauchy_int h_base_int
 
 /-! ## Cauchy's theorem for null-homologous curves: `∮_γ f = 0` -/
 
@@ -347,7 +332,7 @@ Conclusion: `∀ w, dixonFunction f U γ w = 0`.
 
 Downstream: `contourIntegral_eq_zero_of_nullHomologous` applied to the twisted function
 `(z - w₀) · f` gives Cauchy's theorem. -/
-theorem dixonFunction_eq_zero_of_nullHomologous
+private theorem dixonFunction_eq_zero_of_nullHomologous
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
@@ -389,7 +374,7 @@ theorem dixonFunction_eq_zero_of_nullHomologous
 /-- **B-5 variant for bounded U**: `dixonFunction_eq_zero_of_nullHomologous` specialized
 to bounded open sets. The cocompact-winding-zero hypothesis is discharged automatically
 via B-4 / `IsNullHomologous.winding_eventually_zero_cocompact_of_bounded`. -/
-theorem dixonFunction_eq_zero_of_nullHomologous_bounded
+private theorem dixonFunction_eq_zero_of_nullHomologous_bounded
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
@@ -429,7 +414,7 @@ restriction in Dixon-based theorems. -/
 `dixonFunction_eq_zero_of_nullHomologous` specialized to the case where U
 need not be bounded but γ is Lipschitz. The cocompact-winding-zero hypothesis
 is discharged via `winding_eventually_zero_cocompact_of_lipschitz`. -/
-theorem dixonFunction_eq_zero_of_nullHomologous_unbounded
+private theorem dixonFunction_eq_zero_of_nullHomologous_unbounded
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
@@ -462,7 +447,7 @@ theorem dixonFunction_eq_zero_of_nullHomologous_unbounded
 /-- **B-5 variant auto-discharging `h2_diff` via B-3**: Given a Lipschitz PwC1Immersion
 γ and `f` differentiable on bounded open U, the `h2_diff` hypothesis is discharged
 automatically via `dixonH2_differentiableAt_of_regular` (B-3). -/
-theorem dixonFunction_eq_zero_of_nullHomologous_autoH2
+private theorem dixonFunction_eq_zero_of_nullHomologous_autoH2
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
@@ -548,7 +533,7 @@ conditions are discharged automatically. Only the two deep oracles remain:
 * `h1_diff` — `dixonH1 f γ` differentiable on `U` (B-2)
 * `h_winding_zero_near` — local winding-zero for `w ∉ U` (B-1 full, boundary case).
 -/
-theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
+private theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
@@ -587,55 +572,6 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
     (fun _ hoff => cauchy_integrand_intervalIntegrable hLip h_fγ_cont h_γ_cont hoff)
     (fun _ hoff => base_integrand_intervalIntegrable hLip h_γ_cont hoff)
     h_winding_zero_near hM_f_nn hR hM_f hM_d
-
-/-- **B-5 variant with B-2 partial auto-discharge**: Discharges `h1_diff` via B-2's
-`dixonH1_differentiableOn_of_regular`. Remaining oracles:
-* `h_F'_meas`, `h_dslope_deriv_bound` — second-order structure of `dslope`
-* `h_winding_zero_near` — B-1 full (boundary case)
--/
-theorem dixonFunction_eq_zero_of_nullHomologous_autoH1 {f : ℂ → ℂ} {U : Set ℂ}
-    (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
-    (hf : DifferentiableOn ℂ f U)
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
-    (h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
-      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
-        deriv γ.toPiecewiseC1Path.toPath.extend t)
-      (volume.restrict (Set.uIoc 0 1)))
-    (h_dslope_deriv_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
-      ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
-        ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C)
-    (h_winding_zero_near : ∀ w, w ∉ U →
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
-        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
-    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
-  dixonFunction_eq_zero_of_nullHomologous_autoBounds hU hU_bounded hf γ h_null
-    hLip (dixonH1_differentiableOn_of_regular hU hf γ h_null.image_subset hLip
-      h_F'_meas h_dslope_deriv_bound) h_winding_zero_near
-
-/-- **B-5 fully automatic for convex U (except h_F'_meas + h_winding_zero_near)**:
-combines B-5 autoBounds with B-2 convex variant (which discharges
-`h_dslope_deriv_bound` via D-1c). Only `h_F'_meas` (needing D-1d) and
-`h_winding_zero_near` (needing B-1 full) remain as oracles. -/
-theorem dixonFunction_eq_zero_of_nullHomologous_convex
-    {f : ℂ → ℂ} {U : Set ℂ} (hU_convex : Convex ℝ U) (hU : IsOpen U)
-    (hU_bounded : Bornology.IsBounded U)
-    (hf : DifferentiableOn ℂ f U)
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
-    (h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
-      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
-        deriv γ.toPiecewiseC1Path.toPath.extend t)
-      (volume.restrict (Set.uIoc 0 1)))
-    (h_winding_zero_near : ∀ w, w ∉ U →
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
-        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
-    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 :=
-  dixonFunction_eq_zero_of_nullHomologous_autoBounds hU hU_bounded hf γ h_null
-    hLip (dixonH1_differentiableOn_of_regular_convex hU_convex hU hf γ
-      h_null.image_subset hLip h_F'_meas) h_winding_zero_near
 
 /-- **B-5 fully automatic for convex U (only h_winding_zero_near remains)**:
 the maximum auto-discharge variant — combines all of D-1a/b/c/d, B-2 convex full,
@@ -681,7 +617,7 @@ theorem dixonFunction_eq_zero_of_nullHomologous_open_full
 /-! ## Unbounded U full chain (TIGHT-12) -/
 
 /-- **B-5 autoH2 variant for unbounded U with Lipschitz γ.** -/
-theorem dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded
+private theorem dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
@@ -716,7 +652,7 @@ theorem dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded
     hM_f_nn hR hM_f hM_d
 
 /-- **B-5 autoBounds variant for unbounded U with Lipschitz γ.** -/
-theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded
+private theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)
     (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
