@@ -2,9 +2,9 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 
 /-!
@@ -39,8 +39,6 @@ noncomputable section
 
 namespace LeanModularForms
 
-/-! ## Strict monotonicity from transverse data -/
-
 /-- **Strict monotonicity of `‖γ - s‖²` to the right of `t₀`.** -/
 theorem exists_strictMonoOn_normSq_right_of_transverse
     {γ : ℝ → ℂ} {s : ℂ} {t₀ : ℝ} {L : ℂ} (hL : L ≠ 0)
@@ -71,13 +69,10 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
   refine ⟨δ / 2, by linarith, ?_⟩
   apply strictMonoOn_of_hasDerivWithinAt_pos (convex_Icc _ _)
     (f' := fun t => 2 * @inner ℝ ℂ _ (γ t - s) (deriv γ t))
-  · apply ContinuousOn.pow
-    apply ContinuousOn.norm
-    refine ContinuousOn.sub ?_ continuousOn_const
+  · refine (ContinuousOn.sub ?_ continuousOn_const).norm.pow 2
     intro t ht
-    rcases eq_or_lt_of_le ht.1 with ht_eq | ht_lt
-    · rw [← ht_eq]
-      exact hγ_cont.continuousWithinAt
+    obtain rfl | ht_lt := eq_or_lt_of_le ht.1
+    · exact hγ_cont.continuousWithinAt
     · have ht_in_ball : dist t t₀ < δ := by
         rw [Real.dist_eq, abs_of_pos (sub_pos.mpr ht_lt)]
         linarith [ht.2]
@@ -97,12 +92,9 @@ theorem exists_strictMonoOn_normSq_right_of_transverse
     have ht_pos : (0 : ℝ) < t - t₀ := sub_pos.mpr ht.1
     simp only [slope_def_module, h_s] at h_inner_gt
     rw [real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹] at h_inner_gt
-    have h_pos : 0 < @inner ℝ ℂ _ (γ t - s) (deriv γ t) := by
-      have h := mul_lt_mul_of_pos_left h_inner_gt ht_pos
-      rw [← mul_assoc, mul_inv_cancel₀ ht_pos.ne', one_mul] at h
-      have : 0 < (t - t₀) * (‖L‖ ^ 2 / 2) := by positivity
-      linarith
-    linarith
+    have h := mul_lt_mul_of_pos_left h_inner_gt ht_pos
+    rw [← mul_assoc, mul_inv_cancel₀ ht_pos.ne', one_mul] at h
+    nlinarith [hL_normSq_pos, ht_pos]
 
 /-- **Strict monotonicity of `‖γ - s‖` to the right of `t₀`** (from `‖γ - s‖²`).
 Since `‖γ - s‖ ≥ 0` and `· ↦ ·²` is strictly monotone on `[0, ∞)`, strict
@@ -118,10 +110,8 @@ theorem exists_strictMonoOn_norm_right_of_transverse
       StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + δ)) := by
   obtain ⟨δ, hδ_pos, h_mono_sq⟩ := exists_strictMonoOn_normSq_right_of_transverse
     hL h_s h_deriv_right hL_right h_smooth hγ_cont
-  refine ⟨δ, hδ_pos, fun a ha b hb hab => ?_⟩
-  exact (sq_lt_sq₀ (norm_nonneg _) (norm_nonneg _)).mp (h_mono_sq ha hb hab)
-
-/-! ## Symmetric left-side versions -/
+  exact ⟨δ, hδ_pos, fun _ ha _ hb hab =>
+    (sq_lt_sq₀ (norm_nonneg _) (norm_nonneg _)).mp (h_mono_sq ha hb hab)⟩
 
 /-- **Strict anti-monotonicity of `‖γ - s‖²` to the left of `t₀`** (symmetric of
 `exists_strictMonoOn_normSq_right_of_transverse`). -/
@@ -154,13 +144,10 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
   refine ⟨δ / 2, by linarith, ?_⟩
   apply strictAntiOn_of_hasDerivWithinAt_neg (convex_Icc _ _)
     (f' := fun t => 2 * @inner ℝ ℂ _ (γ t - s) (deriv γ t))
-  · apply ContinuousOn.pow
-    apply ContinuousOn.norm
-    refine ContinuousOn.sub ?_ continuousOn_const
+  · refine (ContinuousOn.sub ?_ continuousOn_const).norm.pow 2
     intro t ht
-    rcases eq_or_lt_of_le ht.2 with ht_eq | ht_lt
-    · rw [ht_eq]
-      exact hγ_cont.continuousWithinAt
+    obtain rfl | ht_lt := eq_or_lt_of_le ht.2
+    · exact hγ_cont.continuousWithinAt
     · have ht_in_ball : dist t t₀ < δ := by
         rw [Real.dist_eq, abs_of_neg (sub_neg.mpr ht_lt)]
         linarith [ht.1]
@@ -180,14 +167,9 @@ theorem exists_strictAntiOn_normSq_left_of_transverse
     have ht_neg : t - t₀ < 0 := sub_neg.mpr ht.2
     simp only [slope_def_module, h_s] at h_inner_gt
     rw [real_inner_smul_left (γ t - s) (deriv γ t) (t - t₀)⁻¹] at h_inner_gt
-    have h_neg_inner : @inner ℝ ℂ _ (γ t - s) (deriv γ t) < 0 := by
-      have h := mul_lt_mul_of_neg_left h_inner_gt ht_neg
-      rw [← mul_assoc, mul_inv_cancel₀ ht_neg.ne, one_mul] at h
-      have h_lhs_neg : (t - t₀) * (‖L‖ ^ 2 / 2) < 0 := by
-        have : ‖L‖ ^ 2 / 2 > 0 := by linarith
-        nlinarith
-      linarith
-    linarith
+    have h := mul_lt_mul_of_neg_left h_inner_gt ht_neg
+    rw [← mul_assoc, mul_inv_cancel₀ ht_neg.ne, one_mul] at h
+    nlinarith [hL_normSq_pos, ht_neg]
 
 /-- **Strict anti-monotonicity of `‖γ - s‖` to the left of `t₀`** (from
 `‖γ - s‖²`). -/
@@ -202,8 +184,8 @@ theorem exists_strictAntiOn_norm_left_of_transverse
       StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - δ) t₀) := by
   obtain ⟨δ, hδ_pos, h_anti_sq⟩ := exists_strictAntiOn_normSq_left_of_transverse
     hL h_s h_deriv_left hL_left h_smooth hγ_cont
-  refine ⟨δ, hδ_pos, fun a ha b hb hab => ?_⟩
-  exact (sq_lt_sq₀ (norm_nonneg _) (norm_nonneg _)).mp (h_anti_sq ha hb hab)
+  exact ⟨δ, hδ_pos, fun _ ha _ hb hab =>
+    (sq_lt_sq₀ (norm_nonneg _) (norm_nonneg _)).mp (h_anti_sq ha hb hab)⟩
 
 end LeanModularForms
 
