@@ -37,7 +37,7 @@ theorem unitArc_norm (θ₁ θ₂ a b t : ℝ) : ‖unitArc θ₁ θ₂ a b t‖
 /-- The arc starts at exp(iθ₁). -/
 theorem unitArc_at_start (θ₁ θ₂ a b : ℝ) :
     unitArc θ₁ θ₂ a b a = exp (↑θ₁ * I) := by
-  simp only [unitArc, sub_self, zero_div, zero_mul, add_zero]
+  simp [unitArc]
 
 /-- The arc ends at exp(iθ₂). -/
 theorem unitArc_at_end (θ₁ θ₂ a b : ℝ) (hab : a ≠ b) :
@@ -46,7 +46,7 @@ theorem unitArc_at_end (θ₁ θ₂ a b : ℝ) (hab : a ≠ b) :
   simp only [unitArc]
   congr 1
   push_cast
-  rw [div_self (by exact_mod_cast hba), one_mul]
+  rw [div_self (mod_cast hba), one_mul]
   ring
 
 /-- The unit arc is continuous. -/
@@ -57,14 +57,13 @@ theorem unitArc_continuous (θ₁ θ₂ a b : ℝ) : Continuous (unitArc θ₁ �
 private lemma unitArc_angle_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : b - a ≠ 0) :
     HasDerivAt (fun s => θ₁ + (s - a) / (b - a) * (θ₂ - θ₁))
       ((θ₂ - θ₁) / (b - a)) t := by
-  have hd : HasDerivAt (fun s => (s - a) / (b - a)) (1 / (b - a)) t := by
-    simpa using ((hasDerivAt_id t).sub_const a).div_const (b - a)
+  have hd : HasDerivAt (fun s => (s - a) / (b - a)) (1 / (b - a)) t :=
+    ((hasDerivAt_id t).sub_const a).div_const (b - a)
   have h1 : HasDerivAt (fun s => (s - a) / (b - a) * (θ₂ - θ₁))
       ((θ₂ - θ₁) / (b - a)) t := by
-    have hmul := hd.mul_const (θ₂ - θ₁)
-    convert hmul using 1
+    convert hd.mul_const (θ₂ - θ₁) using 1
     field_simp
-  simpa using h1.const_add θ₁
+  exact h1.const_add θ₁
 
 /-- Derivative of the unit arc. -/
 theorem unitArc_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : a < b) :
@@ -74,9 +73,8 @@ theorem unitArc_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : a < b) :
   have hangle := unitArc_angle_hasDerivAt θ₁ θ₂ a b t hba
   have hlift : HasDerivAt (fun s => (↑(θ₁ + (s - a) / (b - a) * (θ₂ - θ₁)) : ℂ))
       (↑((θ₂ - θ₁) / (b - a))) t := hangle.ofReal_comp
-  have hexp := (hlift.mul_const I).cexp
   simp only [unitArc]
-  convert hexp using 1
+  exact (hlift.mul_const I).cexp
 
 /-- Key distance formula: squared norm of difference of two points on the unit circle. -/
 theorem exp_sub_norm_sq (θ₁ θ₂ : ℝ) :
@@ -104,7 +102,7 @@ theorem abs_cos_le_half_of_mem_Icc {θ : ℝ} (hθ : θ ∈ Icc (π / 3) (2 * π
   refine ⟨?_, ?_⟩
   · have hle : Real.cos (2 * π / 3) ≤ Real.cos θ :=
       Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h2
-    rw [show (2 * π / 3 : ℝ) = π - π / 3 from by ring, Real.cos_pi_sub,
+    rw [show (2 * π / 3 : ℝ) = π - π / 3 by ring, Real.cos_pi_sub,
       Real.cos_pi_div_three] at hle
     linarith
   · have hle : Real.cos θ ≤ Real.cos (π / 3) :=
