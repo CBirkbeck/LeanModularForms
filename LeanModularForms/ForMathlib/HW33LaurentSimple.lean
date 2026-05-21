@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import Mathlib.Analysis.Complex.RemovableSingularity
-import LeanModularForms.ForMathlib.HW33HigherOrderAuto
+import LeanModularForms.ForMathlib.HW33HigherOrder
 import LeanModularForms.ForMathlib.HW33HoloCancel
 import LeanModularForms.ForMathlib.HW33LaurentPolarPart
 import LeanModularForms.ForMathlib.HW33SimpleClean

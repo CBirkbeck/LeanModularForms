@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.HW33LaurentPolarPart
 import LeanModularForms.ForMathlib.HW33HoloCancel
-import LeanModularForms.ForMathlib.HW33HigherOrderAuto
+import LeanModularForms.ForMathlib.HW33HigherOrder
 import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.SimplePoleIntegral
 import LeanModularForms.ForMathlib.SingleCrossing
