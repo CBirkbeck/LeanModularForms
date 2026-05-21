@@ -64,30 +64,22 @@ variable {x : ℂ}
 private theorem min_pairwise_distance_pos
     {crossings : Finset ℝ} (h_card_ge_two : 2 ≤ crossings.card) :
     ∃ d > 0, ∀ t₁ ∈ crossings, ∀ t₂ ∈ crossings, t₁ ≠ t₂ → d ≤ |t₁ - t₂| := by
-  classical
-  let pairs : Finset (ℝ × ℝ) :=
-    (crossings ×ˢ crossings).filter (fun p => p.1 ≠ p.2)
-  have hpairs_nonempty : pairs.Nonempty := by
-    obtain ⟨a, ha, b, hb, hab⟩ := Finset.one_lt_card.mp h_card_ge_two
-    refine ⟨(a, b), ?_⟩
-    simp only [pairs, Finset.mem_filter, Finset.mem_product]
-    exact ⟨⟨ha, hb⟩, hab⟩
+  obtain ⟨a, ha, b, hb, hab⟩ := Finset.one_lt_card.mp h_card_ge_two
   obtain ⟨p_min, hp_min_mem, hp_min⟩ :=
-    Finset.exists_min_image pairs (fun p => |p.1 - p.2|) hpairs_nonempty
+    Finset.exists_min_image ((crossings ×ˢ crossings).filter (fun p ↦ p.1 ≠ p.2))
+      (fun p ↦ |p.1 - p.2|)
+      ⟨(a, b), Finset.mem_filter.mpr ⟨Finset.mem_product.mpr ⟨ha, hb⟩, hab⟩⟩
   rw [Finset.mem_filter, Finset.mem_product] at hp_min_mem
   refine ⟨|p_min.1 - p_min.2|, abs_pos.mpr (sub_ne_zero.mpr hp_min_mem.2), ?_⟩
-  intro t₁ ht₁ t₂ ht₂ ht_ne
-  refine hp_min (t₁, t₂) ?_
-  simp only [pairs, Finset.mem_filter, Finset.mem_product]
-  exact ⟨⟨ht₁, ht₂⟩, ht_ne⟩
+  exact fun t₁ ht₁ t₂ ht₂ ht_ne ↦
+    hp_min (t₁, t₂) <| Finset.mem_filter.mpr ⟨Finset.mem_product.mpr ⟨ht₁, ht₂⟩, ht_ne⟩
 
 private theorem crossings_bounded_from_endpoints_finset
     {crossings : Finset ℝ} (h_nonempty : crossings.Nonempty)
     (h_Ioo : ∀ t ∈ crossings, t ∈ Set.Ioo (0 : ℝ) 1) :
     ∃ a > 0, ∀ t ∈ crossings, a ≤ t ∧ t ≤ 1 - a := by
-  classical
   obtain ⟨t_min, ht_min_mem, ht_min⟩ :=
-    Finset.exists_min_image crossings (fun t => min t (1 - t)) h_nonempty
+    Finset.exists_min_image crossings (fun t ↦ min t (1 - t)) h_nonempty
   have h_t_min_Ioo := h_Ioo t_min ht_min_mem
   refine ⟨min t_min (1 - t_min),
     lt_min h_t_min_Ioo.1 (by linarith [h_t_min_Ioo.2]), ?_⟩
@@ -100,29 +92,17 @@ private theorem crossings_bounded_from_partition_finset
     {crossings partition : Finset ℝ} (h_nonempty : crossings.Nonempty)
     (h_off : ∀ t ∈ crossings, t ∉ partition) :
     ∃ b > 0, ∀ t ∈ crossings, ∀ p ∈ partition, b ≤ |t - p| := by
-  classical
   by_cases hP_empty : partition = ∅
-  · refine ⟨1, one_pos, ?_⟩
-    intro t _ p hp
-    rw [hP_empty] at hp
-    exact absurd hp (Finset.notMem_empty p)
-  · have hP_nonempty : partition.Nonempty := Finset.nonempty_iff_ne_empty.mpr hP_empty
-    obtain ⟨p₀, hp₀⟩ := hP_nonempty
+  · exact ⟨1, one_pos, fun _ _ p hp ↦ absurd (hP_empty ▸ hp) (Finset.notMem_empty p)⟩
+  · obtain ⟨p₀, hp₀⟩ := Finset.nonempty_iff_ne_empty.mpr hP_empty
     obtain ⟨t₀, ht₀⟩ := h_nonempty
-    let pairs : Finset (ℝ × ℝ) := crossings ×ˢ partition
-    have hpairs_nonempty : pairs.Nonempty :=
-      ⟨(t₀, p₀), Finset.mem_product.mpr ⟨ht₀, hp₀⟩⟩
     obtain ⟨q_min, hq_min_mem, hq_min⟩ :=
-      Finset.exists_min_image pairs (fun q => |q.1 - q.2|) hpairs_nonempty
+      Finset.exists_min_image (crossings ×ˢ partition) (fun q ↦ |q.1 - q.2|)
+        ⟨(t₀, p₀), Finset.mem_product.mpr ⟨ht₀, hp₀⟩⟩
     rw [Finset.mem_product] at hq_min_mem
-    have hb_pos : 0 < |q_min.1 - q_min.2| := by
-      refine abs_pos.mpr fun h_eq => ?_
-      have h_t_off := h_off q_min.1 hq_min_mem.1
-      rw [sub_eq_zero.mp h_eq] at h_t_off
-      exact h_t_off hq_min_mem.2
-    refine ⟨|q_min.1 - q_min.2|, hb_pos, ?_⟩
-    intro t ht p hp
-    exact hq_min (t, p) (Finset.mem_product.mpr ⟨ht, hp⟩)
+    refine ⟨|q_min.1 - q_min.2|, abs_pos.mpr fun h_eq ↦
+      h_off q_min.1 hq_min_mem.1 (sub_eq_zero.mp h_eq ▸ hq_min_mem.2), ?_⟩
+    exact fun t ht p hp ↦ hq_min (t, p) (Finset.mem_product.mpr ⟨ht, hp⟩)
 
 /-- **Common local-uniqueness radius** for a multi-crossing setup. Returns
 `r > 0` such that for every `t_i ∈ crossings`:
@@ -141,7 +121,6 @@ theorem multi_pole_common_radius
       (∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t →
         2 * r < |t - t'|) ∧
       (∀ t ∈ crossings, ∀ p ∈ partition, r < |t - p|) := by
-  classical
   obtain ⟨a, ha_pos, h_endpts⟩ :=
     crossings_bounded_from_endpoints_finset h_nonempty h_Ioo
   obtain ⟨b, hb_pos, h_part⟩ :=
@@ -149,16 +128,14 @@ theorem multi_pole_common_radius
   by_cases h_card_one : crossings.card = 1
   · refine ⟨min a (b / 2), lt_min ha_pos (by linarith), ?_, ?_, ?_⟩
     · intro t ht
-      have ⟨h1, h2⟩ := h_endpts t ht
-      have hr_le_a : min a (b / 2) ≤ a := min_le_left _ _
-      exact ⟨hr_le_a.trans h1, by linarith⟩
+      obtain ⟨h1, h2⟩ := h_endpts t ht
+      exact ⟨(min_le_left _ _).trans h1, by linarith [min_le_left a (b / 2)]⟩
     · intro t ht t' ht' ht_ne
       obtain ⟨c, hc⟩ := Finset.card_eq_one.mp h_card_one
       rw [hc, Finset.mem_singleton] at ht ht'
       exact absurd (ht'.trans ht.symm) ht_ne
     · intro t ht p hp
-      have hr_le : min a (b / 2) ≤ b / 2 := min_le_right _ _
-      linarith [h_part t ht p hp]
+      linarith [h_part t ht p hp, min_le_right a (b / 2)]
   · have h_card_ge_two : 2 ≤ crossings.card := by
       have := Finset.card_pos.mpr h_nonempty
       omega
@@ -166,19 +143,16 @@ theorem multi_pole_common_radius
     refine ⟨min a (min (b / 2) (d / 4)),
       lt_min ha_pos (lt_min (by linarith) (by linarith)), ?_, ?_, ?_⟩
     · intro t ht
-      have ⟨h1, h2⟩ := h_endpts t ht
-      have hr_le_a : min a (min (b / 2) (d / 4)) ≤ a := min_le_left _ _
-      exact ⟨hr_le_a.trans h1, by linarith⟩
+      obtain ⟨h1, h2⟩ := h_endpts t ht
+      exact ⟨(min_le_left _ _).trans h1,
+        by linarith [min_le_left a (min (b / 2) (d / 4))]⟩
     · intro t ht t' ht' ht_ne
       have h_d := h_dist t' ht' t ht ht_ne
       rw [abs_sub_comm] at h_d
-      have hr_le_d_quart : min a (min (b / 2) (d / 4)) ≤ d / 4 :=
-        (min_le_right _ _).trans (min_le_right _ _)
-      linarith
+      linarith [(min_le_right a (min (b / 2) (d / 4))).trans (min_le_right (b / 2) (d / 4))]
     · intro t ht p hp
-      have hr_le_b_half : min a (min (b / 2) (d / 4)) ≤ b / 2 :=
-        (min_le_right _ _).trans (min_le_left _ _)
-      linarith [h_part t ht p hp]
+      linarith [h_part t ht p hp,
+        (min_le_right a (min (b / 2) (d / 4))).trans (min_le_left (b / 2) (d / 4))]
 
 /-- **Per-crossing local uniqueness.** Given a common radius `r` from
 `multi_pole_common_radius` (in particular satisfying interiority of windows
@@ -198,17 +172,15 @@ theorem multi_pole_local_uniqueness
     {t : ℝ} (ht_in : t ∈ Set.Icc (t_i - r) (t_i + r))
     (h_eq : γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s) :
     t = t_i := by
-  classical
-  have ⟨h_t_i_ge, h_t_i_le⟩ := h_endpts t_i ht_i_mem
-  have h_t_in_01 : t ∈ Set.Icc (0 : ℝ) 1 :=
-    ⟨by linarith [ht_in.1], by linarith [ht_in.2]⟩
-  have h_t_cross : t ∈ crossings := h_complete t h_t_in_01 h_eq
+  obtain ⟨h_t_i_ge, h_t_i_le⟩ := h_endpts t_i ht_i_mem
+  have h_t_cross : t ∈ crossings :=
+    h_complete t ⟨by linarith [ht_in.1], by linarith [ht_in.2]⟩ h_eq
   by_contra h_ne
   have h_dist := h_pairwise t_i ht_i_mem t h_t_cross h_ne
-  have h_dist_le_r : |t_i - t| ≤ r := by
+  have : |t_i - t| ≤ r := by
     rw [abs_sub_comm, abs_le]
     exact ⟨by linarith [ht_in.1], by linarith [ht_in.2]⟩
-  linarith [hr_pos]
+  linarith
 
 /-- **Localized far-bound from local uniqueness.** On the window `[t_i - r, t_i + r]`,
 since the only parameter where γ = s is `t_i`, the distance `‖γ(t) - s‖` has a positive
@@ -226,36 +198,26 @@ theorem multi_pole_local_far_bound
       (∀ t ∈ Set.Icc (t_i + r') (t_i + r),
         m ≤ ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖) := by
   set γf : ℝ → ℂ := (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ)
-  have h_norm_cont : ContinuousOn (fun t => ‖γf t - s‖) (Set.univ : Set ℝ) :=
-    (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousOn.sub
-      continuousOn_const).norm
-  have h_left_nonempty : (Set.Icc (t_i - r) (t_i - r')).Nonempty :=
-    ⟨t_i - r, le_rfl, by linarith⟩
-  obtain ⟨t_l, ht_l_mem, ht_l_min⟩ :=
-    isCompact_Icc.exists_isMinOn h_left_nonempty (h_norm_cont.mono (Set.subset_univ _))
-  have h_t_l_in_window : t_l ∈ Set.Icc (t_i - r) (t_i + r) :=
-    ⟨ht_l_mem.1, by linarith [ht_l_mem.2]⟩
-  have h_t_l_ne_t_i : t_l ≠ t_i := fun h_eq => by
-    have : t_i ≤ t_i - r' := h_eq ▸ ht_l_mem.2
-    linarith
+  have h_norm_cont : Continuous (fun t ↦ ‖γf t - s‖) :=
+    (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.sub
+      continuous_const).norm
+  obtain ⟨t_l, ht_l_mem, ht_l_min⟩ := isCompact_Icc.exists_isMinOn
+    (s := Set.Icc (t_i - r) (t_i - r')) ⟨t_i - r, le_rfl, by linarith⟩
+    h_norm_cont.continuousOn
   have hm_l_pos : 0 < ‖γf t_l - s‖ :=
-    norm_pos_iff.mpr <| sub_ne_zero.mpr fun h_eq =>
-      h_t_l_ne_t_i (h_local_unique t_l h_t_l_in_window h_eq)
-  have h_right_nonempty : (Set.Icc (t_i + r') (t_i + r)).Nonempty :=
-    ⟨t_i + r, by linarith, le_rfl⟩
-  obtain ⟨t_r, ht_r_mem, ht_r_min⟩ :=
-    isCompact_Icc.exists_isMinOn h_right_nonempty (h_norm_cont.mono (Set.subset_univ _))
-  have h_t_r_in_window : t_r ∈ Set.Icc (t_i - r) (t_i + r) :=
-    ⟨by linarith [ht_r_mem.1], ht_r_mem.2⟩
-  have h_t_r_ne_t_i : t_r ≠ t_i := fun h_eq => by
-    have : t_i + r' ≤ t_i := h_eq ▸ ht_r_mem.1
-    linarith
+    norm_pos_iff.mpr <| sub_ne_zero.mpr fun h_eq ↦
+      absurd (h_local_unique t_l ⟨ht_l_mem.1, by linarith [ht_l_mem.2]⟩ h_eq)
+        (fun h ↦ by linarith [h ▸ ht_l_mem.2])
+  obtain ⟨t_r, ht_r_mem, ht_r_min⟩ := isCompact_Icc.exists_isMinOn
+    (s := Set.Icc (t_i + r') (t_i + r)) ⟨t_i + r, by linarith, le_rfl⟩
+    h_norm_cont.continuousOn
   have hm_r_pos : 0 < ‖γf t_r - s‖ :=
-    norm_pos_iff.mpr <| sub_ne_zero.mpr fun h_eq =>
-      h_t_r_ne_t_i (h_local_unique t_r h_t_r_in_window h_eq)
+    norm_pos_iff.mpr <| sub_ne_zero.mpr fun h_eq ↦
+      absurd (h_local_unique t_r ⟨by linarith [ht_r_mem.1], ht_r_mem.2⟩ h_eq)
+        (fun h ↦ by linarith [h ▸ ht_r_mem.1])
   refine ⟨min ‖γf t_l - s‖ ‖γf t_r - s‖, lt_min hm_l_pos hm_r_pos, ?_, ?_⟩
-  · exact fun t ht => (min_le_left _ _).trans (ht_l_min ht)
-  · exact fun t ht => (min_le_right _ _).trans (ht_r_min ht)
+  · exact fun t ht ↦ (min_le_left _ _).trans (ht_l_min ht)
+  · exact fun t ht ↦ (min_le_right _ _).trans (ht_r_min ht)
 
 /-- **Window membership of a crossing.** Each crossing lies strictly inside its window. -/
 theorem multi_pole_crossing_mem_window
