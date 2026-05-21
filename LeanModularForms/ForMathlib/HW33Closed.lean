@@ -37,8 +37,6 @@ namespace LeanModularForms
 
 variable {x : ℂ}
 
-/-! ## hCancel discharge under condition (B) -/
-
 /-- **Discharge `hCancel` from Laurent decomposition + (B)-closure.**
 
 If the remainder `f - principalPartSum` decomposes as
@@ -65,8 +63,6 @@ theorem hCancel_of_higherOrder_decomposition_under_B
   hCancel_of_decomposition S f γ h_holo h_polar
     (fun z => (h_decomp z).trans (add_comm _ _))
     h_holo_cancel h_polar_cancel hI_holo hI_polar
-
-/-! ## End-of-line: full closure under condition (B) -/
 
 /-- **HW Theorem 3.3 — fully closed under condition (B).**
 
@@ -119,9 +115,7 @@ theorem generalizedResidueTheorem_higherOrder_under_B_closed
     refine ((hI_polar ε hε).add (hI_holo ε hε)).congr ?_
     intro t _
     simp only [cpvIntegrandOn]
-    by_cases h : ∃ s ∈ S, ‖γ.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
-    · simp only [if_pos h, add_zero]
-    · simp only [if_neg h, h_decomp, add_mul]
+    split_ifs with h <;> simp [h_decomp, add_mul]
   exact generalizedResidueTheorem hU S hS_in_U f hf γ h_null hMero hCondA hCondB
     (hCancel_of_higherOrder_decomposition_under_B S f γ.toPiecewiseC1Path
       h_polar h_holo h_decomp h_polar_cancel h_holo_cancel hI_polar hI_holo)
