@@ -47,9 +47,8 @@ theorem hasCauchyPVOn_extend_of_avoid
     (h_avoid : ∀ s ∈ T \ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
     (h_S : HasCauchyPVOn S f γ L) :
     HasCauchyPVOn T f γ L := by
-  refine h_S.congr' ?_
-  rw [Filter.eventuallyEq_iff_exists_mem]
-  refine ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, ?_⟩
+  refine h_S.congr' (Filter.eventuallyEq_iff_exists_mem.mpr
+    ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, ?_⟩)
   intro ε hε
   apply intervalIntegral.integral_congr
   intro t ht
@@ -60,11 +59,8 @@ theorem hasCauchyPVOn_extend_of_avoid
     rintro ⟨s, hs, hs_le⟩
     by_cases h_in_S : s ∈ S
     · exact ⟨s, h_in_S, hs_le⟩
-    · exfalso
-      have h_far : δ ≤ ‖γ.extend t - s‖ := by
-        simpa [PiecewiseC1Path.extendedPath_eq] using
-          h_avoid s (Finset.mem_sdiff.mpr ⟨hs, h_in_S⟩) t ht
-      linarith [hε.2]
+    · exact absurd (h_avoid s (Finset.mem_sdiff.mpr ⟨hs, h_in_S⟩) t ht)
+        (by simp [PiecewiseC1Path.extendedPath_eq]; linarith [hε.2])
 
 /-- **Multi-pole extension for `1/(z-s)^k` terms.** Given:
 
@@ -119,8 +115,6 @@ theorem hasCauchyPVOn_multipole_sum_pow_inv
       mul_zero] at h
   simpa only [Finset.sum_const_zero] using
     HasCauchyPVOn.finset_sum S h_each_scaled h_int_each
-
-/-! ## Multi-pole transverse composition (high-level corollary) -/
 
 /-- **Multi-pole transverse closure (high-level form).** Combines the
 single-pole transverse closure `hasCauchyPVOn_singleton_pow_of_transverse_assembled`
