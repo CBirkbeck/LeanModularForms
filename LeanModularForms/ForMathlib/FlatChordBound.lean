@@ -49,12 +49,8 @@ theorem orthogonal_deviation_at_radius_right
     (hL : L ≠ 0) (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L)) (h_s : γ t₀ = s) :
     (fun t : ℝ => ‖tangentDeviation (γ t - s) L‖) =o[𝓝[>] t₀]
       (fun t => ‖γ t - s‖ ^ n) := by
-  have h := h_flat.right_flat L hL hL_right
-  have h_eq : ∀ t, γ t - γ t₀ = γ t - s := by
-    intro t
-    rw [h_s]
-  simp only [h_eq] at h
-  exact h
+  subst h_s
+  exact h_flat.right_flat L hL hL_right
 
 /-- **Orthogonal deviation at exit-radius (left side).** Symmetric version. -/
 theorem orthogonal_deviation_at_radius_left
@@ -62,14 +58,8 @@ theorem orthogonal_deviation_at_radius_left
     (hL : L ≠ 0) (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L)) (h_s : γ t₀ = s) :
     (fun t : ℝ => ‖tangentDeviation (γ t - s) L‖) =o[𝓝[<] t₀]
       (fun t => ‖γ t - s‖ ^ n) := by
-  have h := h_flat.left_flat L hL hL_left
-  have h_eq : ∀ t, γ t - γ t₀ = γ t - s := by
-    intro t
-    rw [h_s]
-  simp only [h_eq] at h
-  exact h
-
-/-! ### Pythagoras for the orthogonal decomposition -/
+  subst h_s
+  exact h_flat.left_flat L hL hL_left
 
 /-- **Pythagoras for `orthogonalProjectionComplex` and `tangentDeviation`.**
 The squared norm of `w` decomposes into the squared norms of its parallel
@@ -82,17 +72,17 @@ theorem orthogonal_pythagoras (w L : ℂ) :
   rw [Complex.sq_norm, Complex.sq_norm, Complex.sq_norm]
   unfold tangentDeviation orthogonalProjectionComplex
   simp only [Complex.real_smul]
-  have hL_sq : Complex.normSq L ≠ 0 := (Complex.normSq_pos.mpr hL).ne'
   set u := (w * starRingEnd ℂ L).re with hu
-  set N := Complex.normSq L with hN
+  set N := Complex.normSq L
+  have hN_ne : N ≠ 0 := (Complex.normSq_pos.mpr hL).ne'
   have h1 : Complex.normSq ((↑(u / N) : ℂ) * L) = (u / N) ^ 2 * N := by
     rw [Complex.normSq_mul, Complex.normSq_ofReal]
     ring
   have h2 : (w * starRingEnd ℂ ((↑(u / N) : ℂ) * L)).re = (u / N) * u := by
-    rw [map_mul, Complex.conj_ofReal]
-    rw [show w * ((↑(u / N) : ℂ) * starRingEnd ℂ L) =
-      (↑(u / N) : ℂ) * (w * starRingEnd ℂ L) from by ring]
-    rw [Complex.mul_re]
+    rw [map_mul, Complex.conj_ofReal,
+      show w * ((↑(u / N) : ℂ) * starRingEnd ℂ L) =
+        (↑(u / N) : ℂ) * (w * starRingEnd ℂ L) by ring,
+      Complex.mul_re]
     simp [hu]
   rw [Complex.normSq_sub, h1, h2]
   field_simp
@@ -102,15 +92,7 @@ theorem orthogonal_pythagoras (w L : ℂ) :
 `‖orthogonalProjection w L‖² = ‖w‖² − ‖tangentDeviation w L‖²`. -/
 theorem norm_sq_orthogonalProjection (w L : ℂ) :
     ‖orthogonalProjectionComplex w L‖ ^ 2 = ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 := by
-  have := orthogonal_pythagoras w L
-  linarith
-
-/-! ### sqrt asymptotic: `ε − √(ε² − δ²) ≤ δ²/ε`
-
-This is the key arithmetic estimate behind the parallel-projection-to-target
-distance bound: when γ(t) is at radius ε from s with orthogonal deviation δ,
-the parallel-component magnitude is `√(ε² − δ²)`, which is close to ε. The
-shortfall `ε − √(ε² − δ²)` is bounded by `δ²/ε` (rationalization). -/
+  linarith [orthogonal_pythagoras w L]
 
 /-- **Sqrt shortfall bound.** For `0 ≤ δ ≤ ε` with `ε > 0`:
 `ε − √(ε² − δ²) ≤ δ²/ε`.
@@ -119,23 +101,13 @@ Proof: rationalize `ε − √(ε² − δ²) = δ² / (ε + √(ε² − δ²))
 `√(ε² − δ²) ≥ 0`. -/
 theorem real_sqrt_shortfall_le {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) (hle : δ ≤ ε) :
     ε - Real.sqrt (ε ^ 2 - δ ^ 2) ≤ δ ^ 2 / ε := by
-  have h_sq_nonneg : 0 ≤ ε ^ 2 - δ ^ 2 := by nlinarith
-  have h_sqrt_nonneg : 0 ≤ Real.sqrt (ε ^ 2 - δ ^ 2) := Real.sqrt_nonneg _
   have h_sqrt_sq : Real.sqrt (ε ^ 2 - δ ^ 2) ^ 2 = ε ^ 2 - δ ^ 2 :=
-    Real.sq_sqrt h_sq_nonneg
-  have h_eq :
-      (ε - Real.sqrt (ε ^ 2 - δ ^ 2)) * (ε + Real.sqrt (ε ^ 2 - δ ^ 2)) = δ ^ 2 := by
-    have : ε ^ 2 - Real.sqrt (ε ^ 2 - δ ^ 2) ^ 2 = δ ^ 2 := by
-      rw [h_sqrt_sq]
-      ring
-    linarith [this, sq_nonneg ε, sq_nonneg (Real.sqrt (ε ^ 2 - δ ^ 2))]
-  have h_pos : 0 < ε + Real.sqrt (ε ^ 2 - δ ^ 2) := by linarith
-  have h_diff_eq :
-      ε - Real.sqrt (ε ^ 2 - δ ^ 2) = δ ^ 2 / (ε + Real.sqrt (ε ^ 2 - δ ^ 2)) := by
-    field_simp
-    linarith [h_eq]
-  rw [h_diff_eq]
-  apply div_le_div_of_nonneg_left (by positivity) hε (by linarith)
+    Real.sq_sqrt (by nlinarith)
+  have h_sqrt_nn : 0 ≤ Real.sqrt (ε ^ 2 - δ ^ 2) := Real.sqrt_nonneg _
+  rw [show ε - Real.sqrt (ε ^ 2 - δ ^ 2) =
+      δ ^ 2 / (ε + Real.sqrt (ε ^ 2 - δ ^ 2)) by
+    field_simp; nlinarith [h_sqrt_sq]]
+  exact div_le_div_of_nonneg_left (by positivity) hε (by linarith)
 
 /-- **Norm shortfall from Pythagoras.** When `‖w‖ > 0`, the norm of the
 parallel projection `‖orthogonalProj w L‖` is at most `‖w‖`, with shortfall
@@ -147,31 +119,15 @@ Proof: From Pythagoras, `‖proj‖² = ‖w‖² − ‖tangentDev‖²`, so
 `‖proj‖ = √(‖w‖² − ‖tangentDev‖²)`. Apply `real_sqrt_shortfall_le`. -/
 theorem norm_orthogonalProjection_shortfall_le {w : ℂ} (L : ℂ) (hw : 0 < ‖w‖) :
     ‖w‖ - ‖orthogonalProjectionComplex w L‖ ≤ ‖tangentDeviation w L‖ ^ 2 / ‖w‖ := by
-  have h_pyth := orthogonal_pythagoras w L
-  have h_proj_sq :
-      ‖orthogonalProjectionComplex w L‖ ^ 2 = ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 := by
-    linarith
-  have h_proj_nonneg : 0 ≤ ‖orthogonalProjectionComplex w L‖ := norm_nonneg _
-  have h_dev_nonneg : 0 ≤ ‖tangentDeviation w L‖ := norm_nonneg _
-  have h_sq_diff_nonneg : 0 ≤ ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 :=
-    h_proj_sq ▸ sq_nonneg _
+  have h_proj_sq : ‖orthogonalProjectionComplex w L‖ ^ 2 =
+      ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 := by linarith [orthogonal_pythagoras w L]
   have h_dev_le : ‖tangentDeviation w L‖ ≤ ‖w‖ := by
-    nlinarith [h_sq_diff_nonneg, sq_nonneg ‖w‖]
-  have h_sqrt := real_sqrt_shortfall_le hw h_dev_nonneg h_dev_le
-  have h_sqrt_eq :
-      Real.sqrt (‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2) =
-        ‖orthogonalProjectionComplex w L‖ := by
-    rw [← h_proj_sq]
-    exact Real.sqrt_sq h_proj_nonneg
-  rw [h_sqrt_eq] at h_sqrt
-  exact h_sqrt
-
-/-! ### Geometric identity: `‖proj − target‖ = ‖w‖ − ‖proj‖`
-
-When `w` is in the `+L` hemisphere (i.e., `Re(w · conj L) ≥ 0`), the
-parallel projection `proj = c·L` has `c ≥ 0`, so `proj` and the target
-`(‖w‖/‖L‖)·L` lie on the same ray from `0`. Their difference's norm is
-the difference of magnitudes. -/
+    nlinarith [h_proj_sq ▸ sq_nonneg (‖orthogonalProjectionComplex w L‖), sq_nonneg ‖w‖]
+  have h_sqrt_eq : Real.sqrt (‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2) =
+      ‖orthogonalProjectionComplex w L‖ := by
+    rw [← h_proj_sq]; exact Real.sqrt_sq (norm_nonneg _)
+  rw [← h_sqrt_eq]
+  exact real_sqrt_shortfall_le hw (norm_nonneg _) h_dev_le
 
 /-- **Same-direction shortfall.** If `Re(w · conj L) ≥ 0`, then the parallel
 projection's distance to the same-magnitude target on the +L ray equals the
@@ -182,32 +138,24 @@ theorem norm_orthogonalProjection_minus_target_eq {w L : ℂ} (hL : L ≠ 0)
     (h_pos : 0 ≤ (w * starRingEnd ℂ L).re) :
     ‖orthogonalProjectionComplex w L - (‖w‖ / ‖L‖ : ℝ) • L‖ =
       ‖w‖ - ‖orthogonalProjectionComplex w L‖ := by
-  set c := (w * starRingEnd ℂ L).re / Complex.normSq L with hc_def
-  have hN_pos : 0 < Complex.normSq L := Complex.normSq_pos.mpr hL
-  have hc_nonneg : 0 ≤ c := div_nonneg h_pos hN_pos.le
+  set c := (w * starRingEnd ℂ L).re / Complex.normSq L
+  have hc_nonneg : 0 ≤ c := div_nonneg h_pos (Complex.normSq_pos.mpr hL).le
   have hL_norm_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-  have h_proj_le_w : ‖orthogonalProjectionComplex w L‖ ≤ ‖w‖ := by
-    have h_pyth := orthogonal_pythagoras w L
-    have h_proj_sq : ‖orthogonalProjectionComplex w L‖ ^ 2 ≤ ‖w‖ ^ 2 := by
-      linarith [sq_nonneg (‖tangentDeviation w L‖)]
-    exact (abs_le_of_sq_le_sq' h_proj_sq (norm_nonneg w)).2
   have h_proj_norm : ‖orthogonalProjectionComplex w L‖ = c * ‖L‖ := by
     change ‖(c : ℝ) • L‖ = c * ‖L‖
     rw [norm_smul]
     simp [abs_of_nonneg hc_nonneg]
+  have h_proj_le_w : ‖orthogonalProjectionComplex w L‖ ≤ ‖w‖ := by
+    have h_sq : ‖orthogonalProjectionComplex w L‖ ^ 2 ≤ ‖w‖ ^ 2 := by
+      linarith [orthogonal_pythagoras w L, sq_nonneg ‖tangentDeviation w L‖]
+    exact (abs_le_of_sq_le_sq' h_sq (norm_nonneg w)).2
   have h_c_le_div : c ≤ ‖w‖ / ‖L‖ := by
-    rw [le_div_iff₀ hL_norm_pos, ← h_proj_norm]
-    exact h_proj_le_w
-  have h_factor :
-      (c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L = (c - ‖w‖ / ‖L‖ : ℝ) • L := by
-    module
+    rw [le_div_iff₀ hL_norm_pos, ← h_proj_norm]; exact h_proj_le_w
   change ‖(c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L‖ = ‖w‖ - ‖orthogonalProjectionComplex w L‖
-  rw [h_factor, norm_smul, Real.norm_eq_abs]
-  rw [abs_of_nonpos (sub_nonpos.mpr h_c_le_div), h_proj_norm]
+  rw [show (c : ℝ) • L - (‖w‖ / ‖L‖ : ℝ) • L = (c - ‖w‖ / ‖L‖ : ℝ) • L by module,
+    norm_smul, Real.norm_eq_abs, abs_of_nonpos (sub_nonpos.mpr h_c_le_div), h_proj_norm]
   field_simp
   ring
-
-/-! ### The full chord-to-tangent bound -/
 
 /-- **Chord-to-tangent bound.** When `w` is in the `+L` hemisphere
 (`Re(w · conj L) ≥ 0`) and `‖w‖ > 0`, the chord from `w` to the
@@ -221,15 +169,11 @@ theorem norm_chord_to_tangent_target_le {w L : ℂ} (hL : L ≠ 0) (hw : 0 < ‖
     (h_pos : 0 ≤ (w * starRingEnd ℂ L).re) :
     ‖w - (‖w‖ / ‖L‖ : ℝ) • L‖ ≤
       ‖tangentDeviation w L‖ + ‖tangentDeviation w L‖ ^ 2 / ‖w‖ := by
-  have h_decomp : w - (‖w‖ / ‖L‖ : ℝ) • L =
+  rw [show w - (‖w‖ / ‖L‖ : ℝ) • L =
       (orthogonalProjectionComplex w L - (‖w‖ / ‖L‖ : ℝ) • L) +
-        tangentDeviation w L := by
-    unfold tangentDeviation
-    ring
-  rw [h_decomp]
+        tangentDeviation w L by unfold tangentDeviation; ring]
   refine (norm_add_le _ _).trans ?_
   rw [norm_orthogonalProjection_minus_target_eq hL h_pos]
-  have h_short := norm_orthogonalProjection_shortfall_le L hw
-  linarith
+  linarith [norm_orthogonalProjection_shortfall_le L hw]
 
 end LeanModularForms
