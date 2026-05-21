@@ -59,22 +59,18 @@ noncomputable section
 
 variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 
-/-! ### Residue side
+include hf in
+/-- **Residue side**: the ε-truncated integral of `logDeriv(f)` around the FD
+boundary at height `H` converges to `2πi · Σ gWN(γ, s) · ord(f, s)`.
 
-The CPV integral of `logDeriv(f)` converges to `2πi · Σ gWN · ord`.
+For `H ≥ H₀` (where `H₀` depends on the zeros of `f` in `𝒟`), the limit
+exists and equals the winding-number-weighted sum of orders.
 
 This delegates to `cpv_residue_side_tendsto` from
 `ValenceFormula.PVChain.Assembly.ResidueSide`, which constructs the
 holomorphic remainder via the generalized residue theorem, proves the CPV
 exists at each singular point, and shows the integrand eventually agrees
 with the restriction to on-curve singularities. -/
-
-include hf in
-/-- **Residue side**: the ε-truncated integral of `logDeriv(f)` around the FD
-boundary at height `H` converges to `2πi · Σ gWN(γ, s) · ord(f, s)`.
-
-For `H ≥ H₀` (where `H₀` depends on the zeros of `f` in `𝒟`), the limit
-exists and equals the winding-number-weighted sum of orders. -/
 theorem cpv_residue_side_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
     ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
@@ -84,11 +80,6 @@ theorem cpv_residue_side_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ 
         (𝓝 (2 * ↑Real.pi * I * ∑ s ∈ S, generalizedWindingNumber'
           (fdBoundary_H H) 0 5 (↑s : ℂ) * (orderOfVanishingAt' (⇑f) s : ℂ))) :=
   cpv_residue_side_tendsto f hf S hS hS_complete
-
-/-! ### Modular side
-
-The same CPV integral is computed using modular invariance, yielding
-`-(2πi)(k/12 - ord_∞)`. -/
 
 include hf in
 /-- **Modular side**: the ε-truncated integral of `logDeriv(f)` around the FD
@@ -107,10 +98,6 @@ theorem cpv_modular_side_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ 
         (𝓝 (-(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))))) :=
   cpv_modular_side_tendsto f hf S hS hS_complete
 
-/-! ### The PV chain identity
-
-Equate residue and modular sides by uniqueness of limits, then cancel `2πi`. -/
-
 include hf in
 /-- **The PV chain identity**: equating the residue and modular sides via
 uniqueness of limits (both are limits of the same ε-truncated integral),
@@ -128,10 +115,6 @@ theorem pv_chain_identity_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈
         (orderOfVanishingAt' (⇑f) s : ℂ) = -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) :=
   pv_chain_identity f hf S hS hS_complete
 
-/-! ### Algebraic rearrangement helpers
-
-These pure-algebra lemmas convert between different forms of the identity. -/
-
 /-- Rearrangement: from `Σ wt = -(k/12 - ord_∞)` derive `ord_∞ + (-Σ wt) = k/12`. -/
 theorem residue_side_rearrange (ord_inf weighted_sum : ℂ)
     (h : weighted_sum = -((k : ℂ) / 12 - ord_inf)) :
@@ -145,9 +128,6 @@ theorem cancel_two_pi_I {L R : ℂ}
     L = -R := by
   have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
     norm_num [Real.pi_ne_zero, I_ne_zero]
-  have h' : 2 * ↑Real.pi * I * L = 2 * ↑Real.pi * I * (-R) := by
-    rw [h]
-    ring
-  exact mul_left_cancel₀ hpi h'
+  exact mul_left_cancel₀ hpi (by rw [h]; ring)
 
 end
