@@ -2,9 +2,9 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
+import Mathlib.Analysis.Real.Pi.Bounds
 import LeanModularForms.ForMathlib.ArcFTCLimit
 import LeanModularForms.ForMathlib.WindingWeightProofs
-import Mathlib.Analysis.Real.Pi.Bounds
 
 /-!
 # Unconditional Winding Weights Assembly
@@ -32,8 +32,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ## Part 1: Cutoff function for smooth crossing at `i` -/
-
 /-- Arc cutoff: `δ(ε) = 6ε/(5π)`. Inverts the half-angle formula
 `‖γ(t) - i‖ = 2|sin(5(t-2/5)π/12)|` via `|sin x| ≤ |x|`.
 
@@ -59,8 +57,6 @@ theorem half_angle_factor (ε : ℝ) :
   unfold arcDelta
   field_simp
   ring
-
-/-! ## Part 2: Arc near bound for `i` -/
 
 /-- On the unit circle arc, when `|t - 2/5| ≤ arcDelta ε`, the distance to `i`
 is at most `ε`. Uses `|sin x| ≤ |x|` and the half-angle distance formula. -/
@@ -88,8 +84,6 @@ theorem arc_near_at_I (H : ℝ) {ε : ℝ} (hε_lt : ε < 1/2)
         apply mul_le_mul_of_nonneg_left Real.abs_sin_le_abs (by norm_num)
     _ ≤ 2 * (ε / 2) := by linarith
     _ = ε := by ring
-
-/-! ## Part 3: Winding number from SingleCrossingData -/
 
 /-- Winding number at `i` is `-1/2` from `SingleCrossingData` with limit `-(πi)`. -/
 theorem hasWindingNumber_atI_of_scd
@@ -119,8 +113,6 @@ theorem hasWindingNumber_atRhoPlusOne_of_scd
   rw [hL]
   field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
   ring
-
-/-! ## Part 4: Full FDWindingData assembly -/
 
 /-- Full `FDWindingData` from `SingleCrossingData` at each crossing point and
 interior winding. This is the top-level assembler.
