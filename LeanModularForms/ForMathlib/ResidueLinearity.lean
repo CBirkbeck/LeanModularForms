@@ -37,8 +37,6 @@ namespace HasSimplePoleAt
 
 variable {f g : ℂ → ℂ} {z₀ : ℂ}
 
-/-! ### Closure under addition / subtraction / scalar multiplication -/
-
 /-- The sum of two functions with simple poles at `z₀` has a simple pole at `z₀`
 with coefficient `hf.coeff + hg.coeff`. -/
 theorem add (hf : HasSimplePoleAt f z₀) (hg : HasSimplePoleAt g z₀) :
@@ -46,8 +44,7 @@ theorem add (hf : HasSimplePoleAt f z₀) (hg : HasSimplePoleAt g z₀) :
   refine ⟨hf.coeff + hg.coeff, fun z => hf.regularPart z + hg.regularPart z,
     hf.regularPart_analyticAt.add hg.regularPart_analyticAt, ?_⟩
   filter_upwards [hf.eventually_eq, hg.eventually_eq] with z hfe hge
-  rw [hfe, hge]
-  ring
+  rw [hfe, hge]; ring
 
 /-- The difference of two functions with simple poles at `z₀` has a simple pole at `z₀`
 with coefficient `hf.coeff - hg.coeff`. -/
@@ -56,8 +53,7 @@ theorem sub (hf : HasSimplePoleAt f z₀) (hg : HasSimplePoleAt g z₀) :
   refine ⟨hf.coeff - hg.coeff, fun z => hf.regularPart z - hg.regularPart z,
     hf.regularPart_analyticAt.sub hg.regularPart_analyticAt, ?_⟩
   filter_upwards [hf.eventually_eq, hg.eventually_eq] with z hfe hge
-  rw [hfe, hge]
-  ring
+  rw [hfe, hge]; ring
 
 /-- Multiplication by a constant preserves simple-pole structure: `c · f` has a
 simple pole at `z₀` with coefficient `c * hf.coeff`. -/
@@ -66,8 +62,7 @@ theorem const_mul (c : ℂ) (hf : HasSimplePoleAt f z₀) :
   refine ⟨c * hf.coeff, fun z => c * hf.regularPart z,
     analyticAt_const.mul hf.regularPart_analyticAt, ?_⟩
   filter_upwards [hf.eventually_eq] with z hfe
-  rw [hfe]
-  ring
+  rw [hfe]; ring
 
 /-- A finite sum of functions, each with a simple pole at `z₀`, has a simple pole
 at `z₀`. -/
@@ -84,15 +79,13 @@ theorem finset_sum {ι : Type*} [DecidableEq ι] (s : Finset ι) (F : ι → ℂ
     have hi_simple : HasSimplePoleAt (F i) z₀ := hF i (Finset.mem_insert_self _ _)
     have hs_simple : HasSimplePoleAt (fun z => ∑ j ∈ s, F j z) z₀ :=
       ih (fun j hj => hF j (Finset.mem_insert_of_mem hj))
-    have h_add := hi_simple.add hs_simple
-    refine ⟨h_add.choose, h_add.choose_spec.choose, h_add.choose_spec.choose_spec.1, ?_⟩
-    filter_upwards [h_add.choose_spec.choose_spec.2] with z hz
+    obtain ⟨c, g, hg_analytic, hg_eq⟩ := hi_simple.add hs_simple
+    refine ⟨c, g, hg_analytic, ?_⟩
+    filter_upwards [hg_eq] with z hz
     rw [Finset.sum_insert hi_notin]
     exact hz
 
 end HasSimplePoleAt
-
-/-! ### Residue linearity -/
 
 /-- The residue of a sum equals the sum of residues, for functions with simple poles. -/
 theorem residue_add {f g : ℂ → ℂ} {z₀ : ℂ}
