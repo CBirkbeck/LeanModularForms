@@ -186,7 +186,7 @@ private lemma pvIntegrand_seg4_eq_neg_seg1 (_S : Finset UpperHalfPlane) (Sx : Fi
   · rw [if_neg h_trunc_u, if_neg (mt h_trunc.mp h_trunc_u)]
     have h_shift : fdBoundary_H H (4 - u) = fdBoundary_H H u - 1 := by
       rw [fdBoundary_H_eq_seg4_H h4u_gt3 (by linarith [hu.1]),
-        seg4_eq_seg1_minus_one_H H u ⟨hu.1.le, hu_le1⟩,
+        seg4_eq_seg1_minus_one_H H u,
         fdBoundary_H_eq_seg1_H hu_le1]
     have h_logDeriv : logDeriv (modularFormCompOfComplex f) (fdBoundary_H H (4 - u)) =
         logDeriv (modularFormCompOfComplex f) (fdBoundary_H H u) := by
@@ -232,7 +232,7 @@ private theorem pvIntegral_vertical_cancel_union (S : Finset UpperHalfPlane)
     have h_shift : fdBoundary_H H (4 - u) = fdBoundary_H H u - 1 := by
       rw [fdBoundary_H_eq_seg4_H (H := H) (show (3:ℝ) < 4 - u from by linarith [hu.2])
         (show 4 - u ≤ 4 from by linarith [hu.1]),
-        seg4_eq_seg1_minus_one_H H u ⟨hu.1.le, hu.2.le⟩, h_seg1]
+        seg4_eq_seg1_minus_one_H H u, h_seg1]
     have h_re_u : (fdBoundary_H H u).re = 1/2 := by
       rw [h_seg1]
       simp [fdBoundary_seg1_H, add_re, ofReal_re, mul_re, I_re, I_im, ofReal_im]
@@ -601,7 +601,6 @@ private lemma modular_side_h_capture
           have ht_seg4 : fdBoundary_H H t = fdBoundary_H H (4 - t) - 1 := by
             rw [fdBoundary_H_eq_seg4_H h3 h4]
             have h4_u := seg4_eq_seg1_minus_one_H H (4 - t)
-              ⟨by linarith, by linarith⟩
             simp only [show (4:ℝ) - (4 - t) = t from by ring] at h4_u
             rw [h4_u, fdBoundary_H_eq_seg1_H (by linarith : 4 - t ≤ 1)]
           have h_F_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
