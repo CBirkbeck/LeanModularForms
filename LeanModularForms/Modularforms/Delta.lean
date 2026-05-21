@@ -8,8 +8,6 @@ public import LeanModularForms.Modularforms.ResToImagAxis
 public import Mathlib.NumberTheory.ModularForms.QExpansion
 public import LeanModularForms.Modularforms.NormNumI
 
-public import LeanModularForms.Modularforms.ForMathlib_Cusps
-
 @[expose] public section
 
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
