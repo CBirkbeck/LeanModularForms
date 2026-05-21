@@ -1,9 +1,10 @@
 /-
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.SimplePoleIntegral
 import Mathlib.Analysis.Calculus.DSlope
+import LeanModularForms.ForMathlib.SimplePoleIntegral
 
 /-!
 # Dixon Function Definitions and the h1/h2 Identity
@@ -48,8 +49,6 @@ noncomputable section
 
 variable {x : ℂ}
 
-/-! ## Definitions -/
-
 /-- The Dixon h1 function: `∮_γ dslope(f, w, γ(t)) · γ'(t) dt`.
 
 This is well-defined for all `w` including points on the curve, because
@@ -72,12 +71,6 @@ def dixonFunction (f : ℂ → ℂ) (U : Set ℂ)
     (γ : PiecewiseC1Path x x) (w : ℂ) : ℂ :=
   if w ∈ U then dixonH1 f γ w else dixonH2 f γ w
 
-/-! ## The h1/h2 Identity -/
-
-/-- Pointwise identity: when `γ(t) ≠ w`, the dslope integrand equals the difference of
-the Cauchy integrand and the winding integrand.
-
-Uses `dslope f w (γ t) = slope f w (γ t) = (f(γ t) - f(w)) / (γ t - w)`. -/
 private lemma dslope_integrand_eq {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {w : ℂ}
     (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
     ∀ t ∈ Set.uIcc (0 : ℝ) 1,
@@ -85,58 +78,45 @@ private lemma dslope_integrand_eq {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {
         f (γ t) / (γ t - w) * deriv γ.toPath.extend t -
           f w / (γ t - w) * deriv γ.toPath.extend t := by
   intro t ht
-  have ht_Icc : t ∈ Icc (0 : ℝ) 1 := by rwa [Set.uIcc_of_le zero_le_one] at ht
-  have hne : γ t ≠ w := hoff t ht_Icc
-  rw [dslope_of_ne _ hne, slope_def_field]
+  rw [Set.uIcc_of_le zero_le_one] at ht
+  rw [dslope_of_ne _ (hoff t ht), slope_def_field]
   ring
 
-/-- The winding integrand `f(w)/(γ(t) - w) · γ'(t)` equals
-`f(w) · (γ(t) - w)⁻¹ · γ'(t)`. -/
 private lemma winding_integrand_eq_const_mul (f : ℂ → ℂ)
     (γ : PiecewiseC1Path x x) (w : ℂ) :
     (fun t => f w / (γ t - w) * deriv γ.toPath.extend t) =
       (fun t => f w * ((γ t - w)⁻¹ * deriv γ.toPath.extend t)) := by
-  ext t
-  rw [div_eq_mul_inv]
-  ring
+  funext t
+  field_simp
 
-/-- The contour integral of `f(w)/(z - w)` equals `f(w)` times the contour integral
-of `(z - w)⁻¹`. -/
 private lemma contourIntegral_fw_div_eq (f : ℂ → ℂ)
     (γ : PiecewiseC1Path x x) (w : ℂ) :
     ∫ t in (0 : ℝ)..1, f w / (γ t - w) * deriv γ.toPath.extend t =
       f w * γ.contourIntegral (fun z => (z - w)⁻¹) := by
-  simp only [PiecewiseC1Path.contourIntegral]
-  rw [winding_integrand_eq_const_mul f γ w]
+  simp only [PiecewiseC1Path.contourIntegral, winding_integrand_eq_const_mul]
   exact intervalIntegral.integral_const_mul _ _
 
-/-- When the path avoids `w`, the winding integrand `f(w)/(γ(t) - w) · γ'(t)` is
-interval integrable provided the base integrand `(γ(t) - w)⁻¹ · γ'(t)` is. -/
 private lemma winding_integrand_intervalIntegrable (f : ℂ → ℂ)
     (γ : PiecewiseC1Path x x) (w : ℂ)
     (h_base : IntervalIntegrable
       (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
     IntervalIntegrable
-      (fun t => f w / (γ t - w) * deriv γ.toPath.extend t) volume 0 1 := by
-  rw [winding_integrand_eq_const_mul f γ w]
-  exact h_base.const_mul _
+      (fun t => f w / (γ t - w) * deriv γ.toPath.extend t) volume 0 1 :=
+  winding_integrand_eq_const_mul f γ w ▸ h_base.const_mul _
 
-/-- If a piecewise C^1 path avoids a point, there is a positive distance lower bound. -/
 private theorem avoids_delta_bound (γ : PiecewiseC1Path x x) (w : ℂ)
     (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
     ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - w‖ := by
   have h_compact : IsCompact (γ.toPath.extend '' Icc (0 : ℝ) 1) :=
     isCompact_Icc.image γ.toPath.continuous_extend
-  have h_nonempty : (γ.toPath.extend '' Icc (0 : ℝ) 1).Nonempty :=
-    ⟨γ.toPath.extend 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩
-  have h_not_mem : w ∉ γ.toPath.extend '' Icc (0 : ℝ) 1 :=
-    fun ⟨t, ht, heq⟩ => hoff t ht heq
   have h_pos : 0 < Metric.infDist w (γ.toPath.extend '' Icc (0 : ℝ) 1) :=
-    (h_compact.isClosed.notMem_iff_infDist_pos h_nonempty).mp h_not_mem
-  exact ⟨_, h_pos, fun t ht => by
-    calc Metric.infDist w _ ≤ dist w (γ.toPath.extend t) :=
-          Metric.infDist_le_dist_of_mem (mem_image_of_mem _ ht)
-      _ = ‖γ.toPath.extend t - w‖ := by rw [Complex.dist_eq, norm_sub_rev]⟩
+    (h_compact.isClosed.notMem_iff_infDist_pos
+      ⟨γ.toPath.extend 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩).mp
+      (fun ⟨t, ht, heq⟩ => hoff t ht heq)
+  refine ⟨_, h_pos, fun t ht => ?_⟩
+  calc Metric.infDist w _ ≤ dist w (γ.toPath.extend t) :=
+        Metric.infDist_le_dist_of_mem (mem_image_of_mem _ ht)
+    _ = ‖γ.toPath.extend t - w‖ := by rw [Complex.dist_eq, norm_sub_rev]
 
 /-- **The fundamental h1/h2 identity.**
 
@@ -149,9 +129,8 @@ where `n(γ, w)` is the generalized winding number.
 The proof expands `dslope f w (γ t) = (f(γ t) - f(w)) / (γ t - w)` (since `γ t ≠ w`),
 splits into `f(γ t)/(γ t - w) - f(w)/(γ t - w)`, and identifies the second term as
 `f(w) · ∮ (z - w)⁻¹ dz = 2πi · n(γ, w) · f(w)`. -/
-theorem dixonH1_eq_dixonH2_sub_winding_f {f : ℂ → ℂ}
-    {γ : PiecewiseC1Path x x}
-    (w : ℂ) (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
+theorem dixonH1_eq_dixonH2_sub_winding_f {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} (w : ℂ)
+    (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
     (h_cauchy_int : IntervalIntegrable
       (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1)
     (h_base_int : IntervalIntegrable
@@ -163,25 +142,20 @@ theorem dixonH1_eq_dixonH2_sub_winding_f {f : ℂ → ℂ}
     intervalIntegral.integral_sub h_cauchy_int
       (winding_integrand_intervalIntegrable f γ w h_base_int)]
   congr 1
-  rw [contourIntegral_fw_div_eq f γ w]
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ := avoids_delta_bound γ w hoff
-  rw [integral_inv_sub_eq_winding ⟨δ, hδ_pos, hδ_bound⟩]
+  rw [contourIntegral_fw_div_eq f γ w,
+    integral_inv_sub_eq_winding (avoids_delta_bound γ w hoff)]
   ring
 
 /-- Variant of the h1/h2 identity with the winding number on the other side. -/
-theorem dixonH2_eq_dixonH1_add_winding_f {f : ℂ → ℂ}
-    {γ : PiecewiseC1Path x x}
-    (w : ℂ) (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
+theorem dixonH2_eq_dixonH1_add_winding_f {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} (w : ℂ)
+    (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
     (h_cauchy_int : IntervalIntegrable
       (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1)
     (h_base_int : IntervalIntegrable
       (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
     dixonH2 f γ w =
       dixonH1 f γ w + 2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w := by
-  have h := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
-  linear_combination -h
-
-/-! ## Dixon function agreement lemmas -/
+  linear_combination -dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
 
 /-- On `U`, the Dixon function equals `h1`. -/
 theorem dixonFunction_eq_dixonH1 {f : ℂ → ℂ} {U : Set ℂ}
@@ -195,18 +169,16 @@ theorem dixonFunction_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ}
     dixonFunction f U γ w = dixonH2 f γ w :=
   if_neg hw
 
-/-! ## Reformulations using contourIntegral -/
-
 /-- `dixonH2` expressed using the contour integral notation. -/
 theorem dixonH2_eq_contourIntegral' {f : ℂ → ℂ}
     {γ : PiecewiseC1Path x x} {w : ℂ} :
-    dixonH2 f γ w = γ.contourIntegral (fun z => f z / (z - w)) := by
-  simp only [dixonH2, PiecewiseC1Path.contourIntegral]
+    dixonH2 f γ w = γ.contourIntegral (fun z => f z / (z - w)) :=
+  rfl
 
 /-- `dixonH1` expressed using the contour integral notation. -/
 theorem dixonH1_eq_contourIntegral' {f : ℂ → ℂ}
     {γ : PiecewiseC1Path x x} {w : ℂ} :
-    dixonH1 f γ w = γ.contourIntegral (fun z => dslope f w z) := by
-  simp only [dixonH1, PiecewiseC1Path.contourIntegral]
+    dixonH1 f γ w = γ.contourIntegral (fun z => dslope f w z) :=
+  rfl
 
 end
