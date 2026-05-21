@@ -28,7 +28,7 @@ noncomputable section
 
 theorem fdBoundary_H_sub_rho_seg0_re (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
     (fdBoundary_H H t - ellipticPointRho).re = 1 := by
-  rw [fdBoundary_H_seg0 H ht]; simp [ellipticPointRho, ellipticPointRho']; ring
+  rw [fdBoundary_H_seg1 H ht]; simp [ellipticPointRho, ellipticPointRho']; ring
 
 theorem fdBoundary_H_sub_rho_seg0_slitPlane (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
     fdBoundary_H H t - ellipticPointRho ∈ slitPlane :=
@@ -39,7 +39,7 @@ theorem fdBoundary_H_sub_rho_seg0_slitPlane (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
     so `cos(θ) ∈ [0, 1/2]` and `re ∈ [1/2, 1] > 0`. -/
 theorem fdBoundary_H_sub_rho_seg1_re (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht2 : t ≤ 2) :
     (fdBoundary_H H t - ellipticPointRho).re > 0 := by
-  rw [fdBoundary_H_seg1 H (not_le.mpr ht1) ht2]
+  rw [fdBoundary_H_seg2 H (not_le.mpr ht1) ht2]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   set θ : ℝ := Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) with hθ_def
   rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
@@ -56,7 +56,7 @@ theorem fdBoundary_H_sub_rho_seg1_re (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht2 : t 
     `θ ∈ (π/2, 2π/3)` gives `cos ∈ (-1/2, 0)` hence `re ∈ (0, 1/2)`. -/
 theorem fdBoundary_H_sub_rho_seg2_re (H : ℝ) {t : ℝ} (ht2 : 2 < t) (ht3 : t < 3) :
     (fdBoundary_H H t - ellipticPointRho).re > 0 := by
-  rw [fdBoundary_H_seg2 H (by linarith) (by linarith) (le_of_lt ht3)]
+  rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (le_of_lt ht3)]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   set θ : ℝ := Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2) with hθ_def
   rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
@@ -80,7 +80,7 @@ theorem fdBoundary_H_sub_rho_seg3_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     fdBoundary_H H t - ellipticPointRho ∈ slitPlane := by
   have h_diff : fdBoundary_H H t - (ellipticPointRho : ℂ) =
       ↑((t - 3) * (H - Real.sqrt 3 / 2)) * I := by
-    rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith) ht4]
+    rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) ht4]
     simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]; push_cast; ring
   rw [h_diff, Complex.mem_slitPlane_iff]; right
   simp only [Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im]
@@ -92,7 +92,7 @@ theorem fdBoundary_H_sub_rho_seg4_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     fdBoundary_H H t - ellipticPointRho ∈ slitPlane := by
   have h_diff : fdBoundary_H H t - (ellipticPointRho : ℂ) =
       ↑(t - 4) + ↑(H - Real.sqrt 3 / 2) * I := by
-    rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
+    rw [fdBoundary_H_seg5 H (by linarith) (by linarith) (by linarith) (by linarith)]
     simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]; push_cast; ring
   rw [h_diff, Complex.mem_slitPlane_iff]; right
   simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re, Complex.I_im,
@@ -183,7 +183,7 @@ private lemma rho_arc_factor (δ : ℝ) :
 
 private lemma arg_approach_rho_left_helper (hδ : 0 < δ) (hδ_small : δ < 1) :
     (fdBoundary_H H (3 - δ) - ellipticPointRho).arg = Real.pi / 6 - δ * Real.pi / 12 := by
-  rw [fdBoundary_H_seg2 H (by linarith) (by linarith) (by linarith : 3 - δ ≤ 3)]
+  rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith : 3 - δ ≤ 3)]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   rw [show (↑(Real.pi : ℝ) / 2 + (↑(3 - δ : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
       (↑(2 * Real.pi / 3 - δ * Real.pi / 6) : ℂ) * I from by push_cast; ring,
@@ -211,7 +211,7 @@ theorem arg_approach_rho_left :
 
 private lemma g_seg3_value (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
     fdBoundary_H H (3 + δ) - ellipticPointRho = ↑(δ * (H - Real.sqrt 3 / 2)) * I := by
-  rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith) (by linarith : 3 + δ ≤ 4)]
+  rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith : 3 + δ ≤ 4)]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]; push_cast; ring
 
 /-- The `arg` of the approach direction from the right (seg 3 side) at `ρ`.
@@ -232,7 +232,7 @@ private lemma g_norm_seg3 (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
 
 private lemma g_norm_seg2 {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     ‖fdBoundary_H H (3 - δ) - ellipticPointRho‖ = 2 * Real.sin (δ * Real.pi / 12) := by
-  rw [fdBoundary_H_seg2 H (by linarith) (by linarith) (by linarith : 3 - δ ≤ 3)]
+  rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith : 3 - δ ≤ 3)]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   rw [show (↑Real.pi / 2 + (↑(3 - δ : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
       (↑(2 * Real.pi / 3 - δ * Real.pi / 6) : ℂ) * I from by push_cast; ring,
@@ -272,7 +272,7 @@ private lemma g_norm_ge_seg4 (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
         mul_comm, Complex.I_mul_im, Complex.ofReal_re]
     · rw [show fdBoundary_H H t - (ellipticPointRho : ℂ) =
             ↑(t - 4) + ↑(H - Real.sqrt 3 / 2) * I from by
-          rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
+          rw [fdBoundary_H_seg5 H (by linarith) (by linarith) (by linarith) (by linarith)]
           simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]; push_cast; ring,
         Complex.add_im, Complex.ofReal_im, zero_add, mul_comm, Complex.I_mul_im, Complex.ofReal_re]
   calc H - Real.sqrt 3 / 2 = |(H - Real.sqrt 3 / 2 : ℝ)| := (abs_of_pos (by linarith)).symm
@@ -295,18 +295,18 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   set h₃ : ℝ → ℂ := fun t => ↑(t - 4) + ↑(H - Real.sqrt 3 / 2) * I
   have hg_eq_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := fun t ht => by
     change fdBoundary_H H t - ρ = h₀ t
-    rw [fdBoundary_H_seg0 H ht]
+    rw [fdBoundary_H_seg1 H ht]
     simp only [hρ_def, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk, h₀]; ring
   have hg_eq_h₁ : ∀ t, 1 < t → t < 3 → g t = h₁ t := fun t ht1 ht3 => by
     change fdBoundary_H H t - ρ = h₁ t; rw [fdBoundary_H_eq_arc ht1 ht3]
   have hg_eq_h₂ : ∀ t, 3 < t → t ≤ 4 → g t = h₂ t := fun t ht3 ht4 => by
     change fdBoundary_H H t - ρ = h₂ t
-    rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith) ht4]
+    rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) ht4]
     simp only [hρ_def, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk, h₂]
     push_cast; ring
   have hg_eq_h₃ : ∀ t, 4 < t → g t = h₃ t := fun t ht4 => by
     change fdBoundary_H H t - ρ = h₃ t
-    rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
+    rw [fdBoundary_H_seg5 H (by linarith) (by linarith) (by linarith) (by linarith)]
     simp only [hρ_def, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk, h₃]
     push_cast; ring
   have hg0 : g 0 = h₀ 0 := hg_eq_h₀ 0 (by norm_num)

@@ -164,7 +164,7 @@ private lemma g_i_norm_right {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
 private lemma g_i_norm_ge_seg0 {t : ℝ} (ht1 : t ≤ 1) :
     1 / 2 ≤ ‖fdBoundary_H H t - I‖ := by
   have hre : (fdBoundary_H H t - I).re = 1 / 2 := by
-    rw [fdBoundary_H_seg0 H ht1]
+    rw [fdBoundary_H_seg1 H ht1]
     simp only [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
       Complex.ofReal_im, Complex.I_re, Complex.I_im, Complex.one_re, Complex.div_ofNat_re,
       mul_zero, sub_zero, zero_mul, mul_one]
@@ -181,7 +181,7 @@ private lemma g_i_norm_ge_seg4 (H : ℝ) (hH : 1 < H) {t : ℝ} (ht4 : 4 ≤ t) 
         Complex.ofReal_im, Complex.mul_im, Complex.I_re, Complex.I_im, Complex.sub_im,
         Complex.ofReal_re]
       ring
-    · rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
+    · rw [fdBoundary_H_seg5 H (by linarith) (by linarith) (by linarith) (by linarith)]
       simp only [Complex.add_im, Complex.sub_im, Complex.ofReal_im, Complex.mul_im,
         Complex.I_re, Complex.I_im, Complex.ofReal_re, Complex.div_ofNat_im, Complex.im_ofNat]
       ring
@@ -192,12 +192,12 @@ private lemma g_i_slitPlane_left {t : ℝ} (ht2 : t < 2) :
     fdBoundary_H H t - I ∈ slitPlane := by
   rw [Complex.mem_slitPlane_iff]; left
   rcases le_or_gt t 1 with ht1 | ht1
-  · rw [fdBoundary_H_seg0 H ht1]
+  · rw [fdBoundary_H_seg1 H ht1]
     simp only [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
       Complex.ofReal_im, Complex.I_re, Complex.I_im, Complex.one_re, Complex.div_ofNat_re,
       mul_zero, sub_zero, zero_mul, mul_one]
     norm_num
-  · rw [fdBoundary_H_seg1 H (by linarith) (by linarith)]
+  · rw [fdBoundary_H_seg2 H (by linarith) (by linarith)]
     set θ := Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) with hθ_def
     rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
       (↑θ : ℂ) * I from by simp only [hθ_def]; push_cast; ring, exp_real_angle_I]
@@ -210,12 +210,12 @@ private lemma g_i_slitPlane_left {t : ℝ} (ht2 : t < 2) :
 private lemma g_i_seg3_value {t : ℝ} (ht3 : 3 < t) (ht4 : t ≤ 4) :
     fdBoundary_H H t - I =
       -1/2 + ↑(Real.sqrt 3 / 2 - 1 + (t - 3) * (H - Real.sqrt 3 / 2)) * I := by
-  rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith) ht4]
+  rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) ht4]
   push_cast; ring
 
 private lemma g_i_seg4_value {t : ℝ} (ht4 : 4 < t) :
     fdBoundary_H H t - I = ↑(t - 9/2) + ↑(H - 1) * I := by
-  rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
+  rw [fdBoundary_H_seg5 H (by linarith) (by linarith) (by linarith) (by linarith)]
   push_cast; ring
 
 private lemma g_i_norm_ge_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) :
@@ -362,7 +362,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hg_eq_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := by
     intro t ht
     change fdBoundary_H H t - I = h₀ t
-    rw [fdBoundary_H_seg0 H ht]
+    rw [fdBoundary_H_seg1 H ht]
     simp only [h₀]
     ring
   have hg_eq_h₁ : ∀ t, 1 < t → t < 3 → g t = h₁ t := by

@@ -3,6 +3,7 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
+import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Bounds
 
 /-!
@@ -23,10 +24,6 @@ open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
 
 noncomputable section
-
-private instance : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
-private instance : IsBoundedSMul ℝ ℂ := NormSMulClass.toIsBoundedSMul
-private instance : ContinuousSMul ℝ ℂ := IsBoundedSMul.continuousSMul
 
 -- The arc on t ∈ (1,3) is ArcCalculus.unitArc (π/3) (2π/3) 1 3.
 private lemma arc_hasDerivAt (s : ℝ) :

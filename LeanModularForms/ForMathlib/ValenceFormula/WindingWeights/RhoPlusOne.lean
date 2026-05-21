@@ -29,7 +29,7 @@ noncomputable section
 private lemma g_rho'_seg0_value {t : ℝ} (ht : t ≤ 1) :
     fdBoundary_H H t - ellipticPointRhoPlusOne =
     ↑((1 - t) * (H - Real.sqrt 3 / 2)) * I := by
-  rw [fdBoundary_H_seg0 H ht]
+  rw [fdBoundary_H_seg1 H ht]
   simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   push_cast; ring
 
@@ -48,14 +48,14 @@ private lemma g_rho'_arc_value {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
 private lemma g_rho'_seg3_value {t : ℝ} (ht3 : 3 < t) (ht4 : t ≤ 4) :
     fdBoundary_H H t - ellipticPointRhoPlusOne =
     -1 + ↑((t - 3) * (H - Real.sqrt 3 / 2)) * I := by
-  rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (by linarith) ht4]
+  rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) ht4]
   simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   push_cast; ring
 
 private lemma g_rho'_seg4_value {t : ℝ} (ht4 : 4 < t) :
     fdBoundary_H H t - ellipticPointRhoPlusOne =
     ↑(t - 5) + ↑(H - Real.sqrt 3 / 2) * I := by
-  rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) (by linarith)]
+  rw [fdBoundary_H_seg5 H (by linarith) (by linarith) (by linarith) (by linarith)]
   simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
   push_cast; ring
 

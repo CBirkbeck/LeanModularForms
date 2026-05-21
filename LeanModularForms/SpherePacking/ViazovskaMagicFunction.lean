@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CauchyPrimitive
+import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.Modularforms.Eisenstein
 import LeanModularForms.SpherePacking.PhiHolomorphic
 import LeanModularForms.SpherePacking.CuspDecay
@@ -85,8 +86,6 @@ singularities directly:
 
 open Complex Set Filter Topology MeasureTheory
 open scoped Interval
-
-instance instIsScalarTowerRealComplexComplex : IsScalarTower ℝ ℂ ℂ := IsScalarTower.right
 
 noncomputable section
 
