@@ -1,6 +1,7 @@
 /-
-Copyright (c) 2026. All rights reserved.
+Copyright (c) 2026 LeanModularForms contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: LeanModularForms contributors
 -/
 import LeanModularForms.ForMathlib.HungerbuhlerWasem
 import LeanModularForms.ForMathlib.SingleCrossing
@@ -46,8 +47,6 @@ noncomputable section
 
 variable {x y : ℂ}
 
-/-! ## Simple-pole CPV via `HasCauchyPV.smul` -/
-
 /-- **From inverse-CPV to simple-pole CPV.** If the CPV of `(z - s)⁻¹` along `γ`
 exists with limit `L`, then the CPV of `c / (z - s)` exists with limit `c * L`.
 
@@ -76,18 +75,15 @@ theorem hasCauchyPV_simplePole_eq_two_pi_I_mul
     {γ : PiecewiseC1Path x y} {s : ℂ} (D : SingleCrossingData γ s) (c : ℂ) :
     HasCauchyPV (fun z => c / (z - s)) γ s
       (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) := by
+  have hpi : (2 * ↑Real.pi * I : ℂ) ≠ 0 := Complex.two_pi_I_ne_zero
   have h_eq : c * D.L =
       2 * ↑Real.pi * I * generalizedWindingNumber γ s * c := by
-    rw [D.windingNumber_eq]
-    have hpi : (2 * ↑Real.pi * I : ℂ) ≠ 0 := Complex.two_pi_I_ne_zero
-    field_simp
+    rw [D.windingNumber_eq]; field_simp
   exact h_eq ▸ D.hasCauchyPV_simplePole c
 
 end SingleCrossingData
 
 namespace HungerbuhlerWasem
-
-/-! ## Bridge: `HasCauchyPV` ↔ `HasCauchyPVOn {z₀}` -/
 
 /-- **`HasCauchyPV` upgrades to `HasCauchyPVOn {z₀}`.** The single-point CPV
 predicate is equivalent to the multi-point CPV predicate on the singleton
@@ -98,8 +94,6 @@ theorem HasCauchyPV.to_singletonOn
     (h : HasCauchyPV f γ z₀ L) : HasCauchyPVOn {z₀} f γ L :=
   h.congr fun _ => intervalIntegral.integral_congr fun _ _ =>
     cpvIntegrand_eq_cpvIntegrandOn_singleton
-
-/-! ## Headline T-CC-01 -/
 
 /-- **T-CC-01 — single-pole CPV at a transverse crossing.**
 
@@ -127,8 +121,6 @@ theorem cpv_simplePole_at_crossing_singleton
     HasCauchyPVOn {s} (fun z => c / (z - s)) γ
       (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) :=
   HasCauchyPV.to_singletonOn (cpv_simplePole_at_crossing D c)
-
-/-! ## T-BR-Y3 — asymmetric variants -/
 
 /-- **Asymmetric variant of T-CC-01.** Given an `AsymmetricSingleCrossingData γ s`
 (separate left/right cutoffs), the simple-pole contribution `c / (z − s)` has a
