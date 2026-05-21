@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.PiecewiseC1Path
+import Mathlib.Analysis.Calculus.Deriv.Comp
+import Mathlib.Analysis.Calculus.Deriv.Mul
 
 /-!
 # Piecewise C¹ Paths on Arbitrary Intervals
@@ -20,6 +22,10 @@ P4 unification plan (see `P4_PLAN.md`).
 
 * `PiecewiseC1Path.toPiecewiseC1PathOn` — embed the unit-interval form into the
   free-interval form at `a = 0, b = 1`.
+
+* `PiecewiseC1PathOn.reparamUnit` — affine reparametrization `[a, b] → [0, 1]` via
+  `t ↦ γ ((b - a) * t + a)`. The chain rule applies because the off-partition set
+  is open and the affine map is smooth.
 
 ## Design notes
 
@@ -126,3 +132,144 @@ theorem toPiecewiseC1PathOn_partition (γ : PiecewiseC1Path x y) :
     γ.toPiecewiseC1PathOn.partition = γ.partition := rfl
 
 end PiecewiseC1Path
+
+/-! ## Affine reparametrization between free intervals and `[0, 1]`
+
+Given `γ : PiecewiseC1PathOn a b hab x y`, the affine map `t ↦ (b - a) * t + a`
+sends `[0, 1]` onto `[a, b]`. Composing `γ.toFun` with this map yields a path on
+`[0, 1]`. The chain rule for the derivative requires a local-neighborhood argument
+because `γ.differentiable_off` only gives pointwise differentiability — but the
+off-partition set is open, so on a neighborhood of any off-partition point the
+composition is differentiable everywhere and `deriv_comp` applies.
+-/
+
+namespace PiecewiseC1PathOn
+
+variable {a b : ℝ} {hab : a < b} {x y : E}
+
+/-- The affine map sending `[0, 1]` onto `[a, b]`. Used by `reparamUnit`. -/
+private def affineToFree (a b : ℝ) : ℝ → ℝ := fun t => (b - a) * t + a
+
+private theorem affineToFree_zero (a b : ℝ) : affineToFree a b 0 = a := by
+  simp [affineToFree]
+
+private theorem affineToFree_one (a b : ℝ) : affineToFree a b 1 = b := by
+  simp [affineToFree]
+
+private theorem continuous_affineToFree (a b : ℝ) : Continuous (affineToFree a b) := by
+  unfold affineToFree; fun_prop
+
+private theorem affineToFree_mapsTo_Icc (a b : ℝ) (hab : a < b) :
+    MapsTo (affineToFree a b) (Icc 0 1) (Icc a b) := by
+  intro t ht
+  simp only [affineToFree, mem_Icc] at ht ⊢
+  have hba : 0 ≤ b - a := by linarith
+  refine ⟨?_, ?_⟩
+  · nlinarith [ht.1]
+  · nlinarith [ht.2]
+
+private theorem affineToFree_mapsTo_Ioo (a b : ℝ) (hab : a < b) :
+    MapsTo (affineToFree a b) (Ioo 0 1) (Ioo a b) := by
+  intro t ht
+  simp only [affineToFree, mem_Ioo] at ht ⊢
+  have hba : 0 < b - a := by linarith
+  refine ⟨?_, ?_⟩
+  · nlinarith [ht.1]
+  · nlinarith [ht.2]
+
+private theorem hasDerivAt_affineToFree (a b t : ℝ) :
+    HasDerivAt (affineToFree a b) (b - a) t := by
+  unfold affineToFree
+  have h1 : HasDerivAt (fun u : ℝ => (b - a) * u) ((b - a) * 1) t :=
+    HasDerivAt.const_mul (b - a) (hasDerivAt_id t)
+  have h2 : HasDerivAt (fun u : ℝ => (b - a) * u + a) ((b - a) * 1) t := h1.add_const a
+  simpa using h2
+
+private theorem differentiableAt_affineToFree (a b t : ℝ) :
+    DifferentiableAt ℝ (affineToFree a b) t :=
+  (hasDerivAt_affineToFree a b t).differentiableAt
+
+private theorem deriv_affineToFree (a b t : ℝ) :
+    deriv (affineToFree a b) t = b - a :=
+  (hasDerivAt_affineToFree a b t).deriv
+
+private theorem partition_image_back (γ : PiecewiseC1PathOn a b hab x y) (t : ℝ)
+    (h_in_part : affineToFree a b t ∈ γ.partition) :
+    t ∈ γ.partition.image (fun s => (s - a) / (b - a)) := by
+  simp only [Finset.mem_image]
+  refine ⟨affineToFree a b t, h_in_part, ?_⟩
+  simp only [affineToFree]
+  have hba_ne : b - a ≠ 0 := by linarith
+  field_simp
+  ring
+
+/-- Affine reparametrization of a free-interval path to `[0, 1]`.
+
+The new path on `[0, 1]` has `toFun t = γ.toFun ((b - a) * t + a)`. The breakpoints
+are pulled back: each `s ∈ γ.partition` maps to `(s - a) / (b - a) ∈ Ioo 0 1`. -/
+def reparamUnit (γ : PiecewiseC1PathOn a b hab x y) :
+    PiecewiseC1PathOn 0 1 zero_lt_one x y where
+  toFun t := γ.toFun (affineToFree a b t)
+  source := by
+    show γ.toFun (affineToFree a b 0) = x
+    rw [affineToFree_zero]; exact γ.source
+  target := by
+    show γ.toFun (affineToFree a b 1) = y
+    rw [affineToFree_one]; exact γ.target
+  continuous_toFun :=
+    γ.continuous_toFun.comp (continuous_affineToFree a b).continuousOn
+      (affineToFree_mapsTo_Icc a b hab)
+  partition := γ.partition.image (fun s => (s - a) / (b - a))
+  partition_subset := by
+    intro t ht
+    simp only [Finset.coe_image, mem_image, Finset.mem_coe] at ht
+    obtain ⟨s, hs_mem, hst⟩ := ht
+    have hs_in_Ioo := γ.partition_subset hs_mem
+    simp only [mem_Ioo] at hs_in_Ioo
+    have hba : 0 < b - a := by linarith
+    subst hst
+    simp only [mem_Ioo]
+    refine ⟨?_, ?_⟩
+    · exact div_pos (sub_pos.mpr hs_in_Ioo.1) hba
+    · rw [div_lt_one hba]; linarith [hs_in_Ioo.2]
+  differentiable_off := by
+    intro t ht htn
+    have h_aff_t_in_Ioo : affineToFree a b t ∈ Ioo a b := affineToFree_mapsTo_Ioo a b hab ht
+    have h_aff_t_notin : affineToFree a b t ∉ γ.partition := by
+      intro h; exact htn (partition_image_back γ t h)
+    have h_at_g : HasDerivAt γ.toFun (deriv γ.toFun (affineToFree a b t)) (affineToFree a b t) :=
+      (γ.differentiable_off (affineToFree a b t) h_aff_t_in_Ioo h_aff_t_notin).hasDerivAt
+    exact (HasDerivAt.scomp t h_at_g (hasDerivAt_affineToFree a b t)).differentiableAt
+  deriv_continuous_off := by
+    intro t ht htn
+    have h_aff_t_in_Ioo : affineToFree a b t ∈ Ioo a b := affineToFree_mapsTo_Ioo a b hab ht
+    have h_aff_t_notin : affineToFree a b t ∉ γ.partition := by
+      intro h; exact htn (partition_image_back γ t h)
+    -- The off-partition set is open: Ioo a b minus a finite set.
+    have h_open_set : IsOpen ((Ioo a b : Set ℝ) \ ↑γ.partition) :=
+      isOpen_Ioo.sdiff γ.partition.finite_toSet.isClosed
+    -- The preimage of this open set under the continuous affine map is also open.
+    have h_pre_open : IsOpen (affineToFree a b ⁻¹' ((Ioo a b : Set ℝ) \ ↑γ.partition)) :=
+      h_open_set.preimage (continuous_affineToFree a b)
+    have h_t_in_pre : t ∈ affineToFree a b ⁻¹' ((Ioo a b : Set ℝ) \ ↑γ.partition) :=
+      ⟨h_aff_t_in_Ioo, h_aff_t_notin⟩
+    -- On the open preimage, `deriv (γ ∘ affineToFree) s = (b - a) * deriv γ (affineToFree s)`.
+    have h_deriv_eq : ∀ s ∈ affineToFree a b ⁻¹' ((Ioo a b : Set ℝ) \ ↑γ.partition),
+        deriv (fun u => γ.toFun (affineToFree a b u)) s
+          = (b - a) • deriv γ.toFun (affineToFree a b s) := by
+      intro s hs
+      have h_at_g : HasDerivAt γ.toFun (deriv γ.toFun (affineToFree a b s)) (affineToFree a b s) :=
+        (γ.differentiable_off (affineToFree a b s) hs.1 hs.2).hasDerivAt
+      exact (HasDerivAt.scomp s h_at_g (hasDerivAt_affineToFree a b s)).deriv
+    -- Derivatives agree eventually in a neighborhood of `t`.
+    have h_eventually : deriv (fun u => γ.toFun (affineToFree a b u)) =ᶠ[𝓝 t]
+        (fun s => (b - a) • deriv γ.toFun (affineToFree a b s)) := by
+      filter_upwards [h_pre_open.mem_nhds h_t_in_pre] with s hs using h_deriv_eq s hs
+    -- The RHS is continuous at `t`, since `deriv γ` is continuous off the partition and the
+    -- affine map is continuous, and we multiply by a constant.
+    have h_rhs_cont : ContinuousAt (fun s => (b - a) • deriv γ.toFun (affineToFree a b s)) t :=
+      ((γ.deriv_continuous_off (affineToFree a b t) h_aff_t_in_Ioo h_aff_t_notin).comp
+        (continuous_affineToFree a b).continuousAt).const_smul (b - a)
+    exact h_rhs_cont.congr h_eventually.symm
+
+end PiecewiseC1PathOn
