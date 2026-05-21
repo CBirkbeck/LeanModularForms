@@ -12,8 +12,8 @@ import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 /-!
 # Congruence subgroups
 
-This defines congruence subgroups of `SL(2, ℤ)` such as `Γ(N)`, `Γ₀(N)` and `Γ₁(N)` for `N` a
-natural number.
+This defines congruence subgroups of `SL(2, ℤ)` such as `Γ(N)`, `Γ₀(N)` and `Γ₁(N)` for
+`N` a natural number.
 
 It also contains basic results about congruence subgroups.
 
