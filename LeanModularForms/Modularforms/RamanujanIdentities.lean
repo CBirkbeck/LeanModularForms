@@ -39,11 +39,6 @@ open scoped ModularForm MatrixGroups Manifold Interval Real NNReal ENNReal Topol
 
 noncomputable section
 
-/-! ## The Ramanujan Identities
-
-These are the main theorems. The primed versions are in terms of serre_D,
-the non-primed versions are in terms of D. -/
-
 /-- Determine scalar coefficient from limits: if `f = c * g` pointwise,
 `f → L` at i∞, and `g → 1` at i∞, then `c = L`.
 
@@ -122,8 +117,6 @@ theorem ramanujan_E₆' : serre_D 6 E₆.toFun = - 2⁻¹ * E₄.toFun * E₄.to
   ring_nf
   norm_num
 
-/-! ## Derived Ramanujan identities (D instead of serre_D) -/
-
 /-- Relationship between D and serre_D: `D f = serre_D k f + k/12 * E₂ * f`. -/
 lemma D_eq_serre_D_add (k : ℂ) (f : ℍ → ℂ) (z : ℍ) :
     D f z = serre_D k f z + k * 12⁻¹ * E₂ z * f z := by
@@ -132,23 +125,17 @@ lemma D_eq_serre_D_add (k : ℂ) (f : ℍ → ℂ) (z : ℍ) :
 @[simp]
 theorem ramanujan_E₂ : D E₂ = 12⁻¹ * (E₂ * E₂ - E₄.toFun) := by
   ext z
-  rw [D_eq_serre_D_add 1 E₂ z]
-  simp only [congrFun ramanujan_E₂' z, Pi.mul_apply, Pi.sub_apply,
-    show (-12⁻¹ : ℍ → ℂ) z = -12⁻¹ from rfl, show (12⁻¹ : ℍ → ℂ) z = 12⁻¹ from rfl]
-  ring
+  rw [D_eq_serre_D_add 1 E₂ z, congrFun ramanujan_E₂' z]
+  simp [Pi.mul_apply]; ring
 
 @[simp]
 theorem ramanujan_E₄ : D E₄.toFun = 3⁻¹ * (E₂ * E₄.toFun - E₆.toFun) := by
   ext z
-  rw [D_eq_serre_D_add 4 E₄.toFun z]
-  simp only [congrFun ramanujan_E₄' z, Pi.mul_apply, Pi.sub_apply,
-    show (-3⁻¹ : ℍ → ℂ) z = -3⁻¹ from rfl, show (3⁻¹ : ℍ → ℂ) z = 3⁻¹ from rfl]
-  ring
+  rw [D_eq_serre_D_add 4 E₄.toFun z, congrFun ramanujan_E₄' z]
+  simp [Pi.mul_apply]; ring
 
 @[simp]
 theorem ramanujan_E₆ : D E₆.toFun = 2⁻¹ * (E₂ * E₆.toFun - E₄.toFun * E₄.toFun) := by
   ext z
-  rw [D_eq_serre_D_add 6 E₆.toFun z]
-  simp only [congrFun ramanujan_E₆' z, Pi.mul_apply, Pi.sub_apply,
-    show (-2⁻¹ : ℍ → ℂ) z = -2⁻¹ from rfl, show (2⁻¹ : ℍ → ℂ) z = 2⁻¹ from rfl]
-  ring
+  rw [D_eq_serre_D_add 6 E₆.toFun z, congrFun ramanujan_E₆' z]
+  simp [Pi.mul_apply]; ring
