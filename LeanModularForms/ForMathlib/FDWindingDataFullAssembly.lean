@@ -26,16 +26,12 @@ open scoped Real Interval
 
 noncomputable section
 
-/-! ### Converting between arc angle and complex point -/
-
 /-- For `z` on the unit circle in the upper half-plane with `|z.re| < 1/2`,
 the argument `arg z` lies in `(π/3, 2π/3)`. -/
 theorem arg_mem_arc_range {z : ℂ} (hz_norm : ‖z‖ = 1) (hz_im : 0 < z.im)
     (hz_re : |z.re| < 1/2) :
     Real.pi / 3 < z.arg ∧ z.arg < 2 * Real.pi / 3 := by
-  have hz_ne : z ≠ 0 := by
-    rintro rfl
-    simp at hz_im
+  have hz_ne : z ≠ 0 := fun h => by simp [h] at hz_im
   have h_cos : Real.cos z.arg = z.re := by rw [Complex.cos_arg hz_ne, hz_norm, div_one]
   have h_sin : Real.sin z.arg = z.im := by rw [Complex.sin_arg, hz_norm, div_one]
   have h_arg_pos : 0 < z.arg := (Complex.arg_nonneg_iff.mpr hz_im.le).lt_of_ne fun h => by
@@ -45,7 +41,7 @@ theorem arg_mem_arc_range {z : ℂ} (hz_norm : ‖z‖ = 1) (hz_im : 0 < z.im)
     have := h_sin.symm.trans (h ▸ Real.sin_pi)
     linarith
   have h_cos_2pi3 : Real.cos (2 * Real.pi / 3) = -(1/2) := by
-    rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
+    rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
       Real.cos_pi_sub, Real.cos_pi_div_three]
   have hpi := Real.pi_pos
   refine ⟨?_, ?_⟩
@@ -61,9 +57,7 @@ theorem arg_mem_arc_range {z : ℂ} (hz_norm : ‖z‖ = 1) (hz_im : 0 < z.im)
 /-- For `z` on the unit circle, `z = exp(i * arg z)`. -/
 theorem eq_exp_arg_mul_I {z : ℂ} (hz_norm : ‖z‖ = 1) :
     z = exp (↑z.arg * I) := by
-  conv_lhs => rw [← Complex.norm_mul_exp_arg_mul_I z, hz_norm, ofReal_one, one_mul]
-
-/-! ### Main assembler -/
+  simpa [hz_norm] using (Complex.norm_mul_exp_arg_mul_I z).symm
 
 /-- Given `FDWindingData H` and FTC providers for seg1, seg4, and the arc,
 construct `FDWindingDataFull H` unconditionally. -/
