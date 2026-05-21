@@ -1,9 +1,9 @@
 module
 
-public import LeanModularForms.Modularforms.ForMathlib_FunctionsBoundedAtInfty
+public import LeanModularForms.ForMathlib.FunctionsBoundedAtInfty
 public import LeanModularForms.Modularforms.MDifferentiableFunProp
-public import LeanModularForms.Modularforms.ForMathlib_SlashActions
-public import LeanModularForms.Modularforms.ForMathlib_UpperHalfPlane
+public import LeanModularForms.ForMathlib.SlashActions
+public import LeanModularForms.ForMathlib.UpperHalfPlane
 public import LeanModularForms.Modularforms.DimensionFormulas
 
 @[expose] public section

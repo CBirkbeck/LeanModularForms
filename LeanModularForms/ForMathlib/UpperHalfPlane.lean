@@ -1,6 +1,9 @@
-import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
-import Mathlib.Data.Fintype.Parity
+module
 
+public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
+public import Mathlib.Data.Fintype.Parity
+
+@[expose] public section
 
 /- This is from the Sphere Pack project, so might not actually be for mathlib.-/
 

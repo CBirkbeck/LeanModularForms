@@ -51,10 +51,6 @@ import LeanModularForms.Modularforms.Eisenstein
 import LeanModularForms.Modularforms.EisensteinAsymptotics
 import LeanModularForms.Modularforms.Eisensteinqexpansions
 import LeanModularForms.Modularforms.FG
-import LeanModularForms.Modularforms.ForMathlib_Cusps
-import LeanModularForms.Modularforms.ForMathlib_FunctionsBoundedAtInfty
-import LeanModularForms.Modularforms.ForMathlib_SlashActions
-import LeanModularForms.Modularforms.ForMathlib_UpperHalfPlane
 import LeanModularForms.Modularforms.Generators
 import LeanModularForms.Modularforms.Generators.Defs
 import LeanModularForms.Modularforms.Generators.Injectivity
@@ -72,7 +68,6 @@ import LeanModularForms.Modularforms.SerreDerivativeSlash
 import LeanModularForms.Modularforms.SlashActionAuxil
 import LeanModularForms.Modularforms.ThetaDerivIdentities
 import LeanModularForms.Modularforms.clog_arg_lems
-import LeanModularForms.Modularforms.cotangent
 import LeanModularForms.Modularforms.csqrt
 import LeanModularForms.Modularforms.equivs
 import LeanModularForms.Modularforms.eta
@@ -86,7 +81,6 @@ import LeanModularForms.Modularforms.qExpansion_lems
 import LeanModularForms.Modularforms.riemannZetalems
 import LeanModularForms.Modularforms.summable_lems
 import LeanModularForms.Modularforms.tendstolems
-import LeanModularForms.Modularforms.test
 import LeanModularForms.Modularforms.tsumderivWithin
 import LeanModularForms.Modularforms.uniformcts
 import LeanModularForms.Modularforms.upperhalfplane
