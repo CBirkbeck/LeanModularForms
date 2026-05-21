@@ -38,8 +38,6 @@ namespace LeanModularForms
 
 variable {x : ℂ}
 
-/-! ## Finset.sum closure for contour integrals -/
-
 /-- **Finset sum linearity for contour integrals.** When each integrand
 `contourIntegrand (f i) γ` is interval-integrable on `[0, 1]`,
 
@@ -64,21 +62,11 @@ theorem contourIntegral_finset_sum {ι : Type*} (s : Finset ι) (f : ι → ℂ 
     have h_t_int : IntervalIntegrable
         (PiecewiseC1Path.contourIntegrand
           (fun z => ∑ i ∈ t, f i z) γ) volume 0 1 := by
-      have heq : (fun u : ℝ =>
-          (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u) =
-          fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
-        funext u
-        rw [Finset.sum_mul]
-      change IntervalIntegrable
-        (fun u => (∑ i ∈ t, f i (γ.toPath.extend u)) * deriv γ.toPath.extend u)
-        volume 0 1
-      rw [heq]
       have h_sum := IntervalIntegrable.sum t h_t
       have hfun : (∑ i ∈ t, PiecewiseC1Path.contourIntegrand (f i) γ) =
-          fun u => ∑ i ∈ t, f i (γ.toPath.extend u) * deriv γ.toPath.extend u := by
+          PiecewiseC1Path.contourIntegrand (fun z => ∑ i ∈ t, f i z) γ := by
         funext u
-        rw [Finset.sum_apply]
-        rfl
+        simp [PiecewiseC1Path.contourIntegrand, Finset.sum_apply, Finset.sum_mul]
       rwa [hfun] at h_sum
     rw [Finset.sum_insert hi,
         show (fun z => ∑ i ∈ insert j t, f i z) =
@@ -87,8 +75,6 @@ theorem contourIntegral_finset_sum {ι : Type*} (s : Finset ι) (f : ι → ℂ 
         PiecewiseC1Path.contourIntegral_add (f j) (fun z => ∑ i ∈ t, f i z) γ
           h_j h_t_int,
         ih h_t]
-
-/-! ## Finset.sum closure for HasCauchyPVOn -/
 
 /-- **Sum-closure preliminary**: integrability of the CPV integrand transfers
 through finite sums when each term is integrable. -/
@@ -146,16 +132,12 @@ theorem HasCauchyPVOn.finset_sum {ι : Type*} (ι_set : Finset ι)
       fun i him => hf_int i (Finset.mem_insert_of_mem him)
     have hf_int_sum : ∀ ε > 0, IntervalIntegrable
         (fun u => cpvIntegrandOn S
-          (fun z => ∑ i ∈ t, f i z) γ.toPath.extend ε u) volume 0 1 := by
-      intro ε hε
-      exact cpvIntegrandOn_finset_sum_intervalIntegrable t S
+          (fun z => ∑ i ∈ t, f i z) γ.toPath.extend ε u) volume 0 1 := fun ε hε =>
+      cpvIntegrandOn_finset_sum_intervalIntegrable t S
         (fun i him => hf_int_t i him ε hε)
-    have ih_app := ih hf_t hf_int_t
     rw [Finset.sum_insert j_t_disj, show (fun z => ∑ i ∈ insert j t, f i z) =
         (fun z => f j z + ∑ i ∈ t, f i z) from funext (fun z => Finset.sum_insert j_t_disj)]
-    exact hf_j.add ih_app hf_int_j hf_int_sum
-
-/-! ## Higher-order polar cancellation: avoidance case -/
+    exact hf_j.add (ih hf_t hf_int_t) hf_int_j hf_int_sum
 
 /-- **Higher-order polar single-power avoidance.** For `k ≥ 2`, the CPV of
 `∑ s ∈ S, c s / (z - s)^k` along a closed curve avoiding `S` vanishes.
@@ -175,34 +157,25 @@ theorem hasCauchyPVOn_finset_pow_inv_of_avoids
       volume 0 1) :
     HasCauchyPVOn S
       (fun z => ∑ s ∈ S, c s / (z - s) ^ k) γ 0 := by
-  have h_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s := by
+  have h_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s := fun s hs t ht hγt => by
     obtain ⟨δ, hδ_pos, hδ_bd⟩ := hδ
-    intro s hs t ht hγt
-    have : δ ≤ ‖γ t - s‖ := hδ_bd s hs t ht
+    have := hδ_bd s hs t ht
     rw [hγt, sub_self, norm_zero] at this
     linarith
   have h_term_int : ∀ s ∈ S, IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
-        (fun z => c s / (z - s) ^ k) γ) volume 0 1 := by
-    intro s hs
-    change IntervalIntegrable
-      (fun t => c s / (γ.toPath.extend t - s) ^ k * deriv γ.toPath.extend t)
-      volume 0 1
+        (fun z => c s / (z - s) ^ k) γ) volume 0 1 := fun s hs => by
     convert (h_int s hs).const_mul (c s) using 1
     funext t
-    ring
+    simp [PiecewiseC1Path.contourIntegrand]; ring
   have h_zero_each : ∀ s ∈ S, γ.contourIntegral
-      (fun z => c s / (z - s) ^ k) = 0 := by
-    intro s hs
-    have h_zero : γ.contourIntegral (fun z => 1 / (z - s) ^ k) = 0 :=
-      γ.contourIntegral_pow_inv_eq_zero hk (h_avoids s hs) (h_int s hs)
+      (fun z => c s / (z - s) ^ k) = 0 := fun s hs => by
     rw [show (fun z => c s / (z - s) ^ k) = (fun z => c s * (1 / (z - s) ^ k)) from
-      funext fun z => by ring, PiecewiseC1Path.contourIntegral_smul, h_zero, mul_zero]
-  have h_sum_zero : γ.contourIntegral
-      (fun z => ∑ s ∈ S, c s / (z - s) ^ k) = 0 := by
-    rw [contourIntegral_finset_sum S (fun s z => c s / (z - s) ^ k) γ h_term_int]
-    exact Finset.sum_eq_zero h_zero_each
-  exact hCancel_of_contourIntegral_zero S _ γ hδ h_sum_zero
+      funext fun z => by ring, PiecewiseC1Path.contourIntegral_smul,
+      γ.contourIntegral_pow_inv_eq_zero hk (h_avoids s hs) (h_int s hs), mul_zero]
+  refine hCancel_of_contourIntegral_zero S _ γ hδ ?_
+  rw [contourIntegral_finset_sum S (fun s z => c s / (z - s) ^ k) γ h_term_int]
+  exact Finset.sum_eq_zero h_zero_each
 
 end LeanModularForms
 
