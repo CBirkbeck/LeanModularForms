@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
 
 public import Mathlib.Analysis.CStarAlgebra.Classes
@@ -8,22 +13,35 @@ public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public import Mathlib.Tactic.Cases
 
+/-!
+# Iterated derivatives on the upper half-plane
+
+This file collects iterated-derivative computations for elementary functions on the
+complex upper half-plane that are used in the development of the Eisenstein series and
+modular forms theory. The lemmas express iterated derivatives within the upper half-plane
+of `1 / (z + d)`, `1 / (z - d)`, their sum, and `exp (2π i m s)` in closed form.
+
+## Main results
+
+* `aut_iter_deriv` / `aut_iter_deriv'`: closed form for `iteratedDerivWithin k` of
+  `1 / (z ± d)` on the upper half-plane.
+* `iter_div_aut_add`: the corresponding formula for the sum `1 / (z - d) + 1 / (z + d)`.
+* `exp_iter_deriv_within`: closed form for `iteratedDerivWithin n` of
+  `z ↦ exp (2π i m z)` on the upper half-plane.
+-/
+
 @[expose] public section
 
-open  UpperHalfPlane TopologicalSpace Set
-  Metric Filter Function Complex
+open UpperHalfPlane TopologicalSpace Set Metric Filter Function Complex
 
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
 
-
-theorem upper_ne_int (x : ℍ) (d : ℤ) : (x : ℂ) + d ≠ 0 :=
-  by
+theorem upper_ne_int (x : ℍ) (d : ℤ) : (x : ℂ) + d ≠ 0 := by
   by_contra h
   rw [add_eq_zero_iff_eq_neg] at h
-  have h1 : 0 < (x : ℂ).im := by simp; exact im_pos x
+  have h1 : 0 < (x : ℂ).im := by simpa using im_pos x
   rw [h] at h1
   simp at h1
-
 
 theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
     EqOn (iteratedDerivWithin k (fun z : ℂ => 1 / (z + d)) {z : ℂ | 0 < z.im})
@@ -36,25 +54,23 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
   | succ k IH =>
     rw [iteratedDerivWithin_succ]
     simp only [one_div, Nat.cast_succ, Nat.factorial, Nat.cast_mul]
-    have := (IH hx)
-    have H : derivWithin (fun (z : ℂ) => (-1: ℂ) ^ k * ↑k ! * ((z + ↑d) ^ (k + 1))⁻¹)
-               {z : ℂ | 0 < z.im} x =
-             (-1) ^ (↑k + 1) * ((↑k + 1) * ↑k !) * ((x + ↑d) ^ (↑k + 1 + 1))⁻¹ := by
+    have := IH hx
+    have H : derivWithin (fun (z : ℂ) => (-1 : ℂ) ^ k * ↑k ! * ((z + ↑d) ^ (k + 1))⁻¹)
+        {z : ℂ | 0 < z.im} x =
+        (-1) ^ (↑k + 1) * ((↑k + 1) * ↑k !) * ((x + ↑d) ^ (↑k + 1 + 1))⁻¹ := by
       rw [DifferentiableAt.derivWithin]
       · simp only [deriv_const_mul_field']
-        have h0 : (fun z : ℂ => ((z + d) ^ (k + 1))⁻¹) = (fun z : ℂ => (z + d) ^ (k + 1))⁻¹ := by
-          rfl
+        have h0 : (fun z : ℂ => ((z + d) ^ (k + 1))⁻¹) =
+            (fun z : ℂ => (z + d) ^ (k + 1))⁻¹ := rfl
         rw [h0]
-        have h1 : (fun z : ℂ => ((z + d) ^ (k + 1))) = (fun z : ℂ => (z + d)) ^ (k + 1) := by
-          rfl
-        rw [h1]
-        rw [deriv_inv'', deriv_pow, deriv_add_const', deriv_id'']
+        have h1 : (fun z : ℂ => ((z + d) ^ (k + 1))) =
+            (fun z : ℂ => (z + d)) ^ (k + 1) := rfl
+        rw [h1, deriv_inv'', deriv_pow, deriv_add_const', deriv_id'']
         · simp only [Nat.cast_add, Nat.cast_one, add_tsub_cancel_right, mul_one]
           rw [pow_add]
           simp [pow_one]
           have Hw : (-(((k : ℂ) + 1) * (x + ↑d) ^ k) / ((x + ↑d) ^ k * (x + ↑d)) ^ 2) =
-                    -(↑k + 1) / (x + ↑d) ^ (k + 2) :=
-            by
+              -(↑k + 1) / (x + ↑d) ^ (k + 2) := by
             rw [div_eq_div_iff]
             · norm_cast
               simp
@@ -81,7 +97,7 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
         refine isOpen_lt ?_ ?_
         · fun_prop
         · fun_prop
-    rw [←H]
+    rw [← H]
     apply derivWithin_congr
     · norm_cast at *
       simp at *
@@ -93,17 +109,16 @@ theorem aut_iter_deriv (d : ℤ) (k : ℕ) :
 
 theorem aut_iter_deriv' (d : ℤ) (k : ℕ) :
     EqOn (iteratedDerivWithin k (fun z : ℂ => 1 / (z - d)) {z : ℂ | 0 < z.im})
-      (fun t : ℂ => (-1) ^ k * k ! * (1 / (t - d) ^ (k + 1))) {z : ℂ | 0 < z.im} :=
-  by
+      (fun t : ℂ => (-1) ^ k * k ! * (1 / (t - d) ^ (k + 1))) {z : ℂ | 0 < z.im} := by
   intro x hx
-  have h1 : (fun z : ℂ => 1 / (z - d)) = fun z : ℂ => 1 / (z + -d) := by rfl
+  have h1 : (fun z : ℂ => 1 / (z - d)) = fun z : ℂ => 1 / (z + -d) := rfl
   rw [h1]
-  have h2 : x - d = x + -d := by rfl
+  have h2 : x - d = x + -d := rfl
   simp_rw [h2]
   simpa using aut_iter_deriv (-d : ℤ) k hx
 
-theorem aut_contDiffOn (d : ℤ) (k : ℕ) : ContDiffOn ℂ k (fun z : ℂ => 1 / (z - d))
-    {z : ℂ | 0 < z.im} := by
+theorem aut_contDiffOn (d : ℤ) (k : ℕ) :
+    ContDiffOn ℂ k (fun z : ℂ => 1 / (z - d)) {z : ℂ | 0 < z.im} := by
   simp only [one_div]
   apply ContDiffOn.inv
   · apply ContDiffOn.sub
@@ -117,17 +132,13 @@ theorem aut_contDiffOn (d : ℤ) (k : ℕ) : ContDiffOn ℂ k (fun z : ℂ => 1 
   rw [sub_eq_zero]
   convert this
 
-
 theorem iter_div_aut_add (d : ℤ) (k : ℕ) :
     EqOn (iteratedDerivWithin k (fun z : ℂ => 1 / (z - d) + 1 / (z + d)) {z : ℂ | 0 < z.im})
       ((fun t : ℂ => (-1) ^ k * k ! * (1 / (t - d) ^ (k + 1))) + fun t : ℂ =>
         (-1) ^ k * k ! * (1 / (t + d) ^ (k + 1))) {z : ℂ | 0 < z.im} := by
   intro x hx
-  have h1 :
-    (fun z : ℂ => 1 / (z - d) + 1 / (z + d)) =
-      (fun z : ℂ => 1 / (z - d)) + fun z : ℂ => 1 / (z + d) :=
-    by
-    rfl
+  have h1 : (fun z : ℂ => 1 / (z - d) + 1 / (z + d)) =
+      (fun z : ℂ => 1 / (z - d)) + fun z : ℂ => 1 / (z + d) := rfl
   rw [h1]
   simp only [one_div, Pi.add_apply] at *
   rw [iteratedDerivWithin_add hx ?_]
@@ -151,15 +162,11 @@ theorem iter_div_aut_add (d : ℤ) (k : ℕ) :
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] {F : Type*}
   [NormedAddCommGroup F] [NormedSpace 𝕜 F] (n : ℕ) (f : 𝕜 → F) (s : Set 𝕜) (x : 𝕜)
 
-
-
-
 theorem exp_iter_deriv_within (n m : ℕ) :
     EqOn (iteratedDerivWithin n (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * m * s))
-           {z : ℂ | 0 < z.im})
+        {z : ℂ | 0 < z.im})
       (fun t => (2 * ↑π * Complex.I * m) ^ n * Complex.exp (2 * ↑π * Complex.I * m * t))
-      {z : ℂ | 0 < z.im} :=
-  by
+      {z : ℂ | 0 < z.im} := by
   apply EqOn.trans (iteratedDerivWithin_of_isOpen ?_)
   · rw [EqOn]
     intro x _
