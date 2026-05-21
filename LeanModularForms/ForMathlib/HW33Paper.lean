@@ -83,14 +83,6 @@ theorem hw_3_3_paper
   hw_3_3_tight hU S hS_in_U f hf γ.toPwC1Immersion h_null hMero hCondA hCondB
     h_polar_cancel h_holo_cancel hI_polar hI_holo hPV_sing hI_sing
 
-/-! ## Simple-pole avoidance specialization (clean, no oracle hypotheses)
-
-Specialization to **simple poles** with `γ` *avoiding* every pole. In this case
-conditions (A) and (B) of the paper are vacuously satisfied — there are no
-crossings — and the theorem reduces to the classical residue formula. Cancellation
-and integrability hypotheses are fully discharged via the B-6 / null-homologous
-closure machinery. -/
-
 /-- **HW Theorem 3.3 — simple-pole avoidance, paper-faithful curve, fully closed.**
 
 For a paper-faithful closed piecewise `C¹` immersion `γ` null-homologous in
@@ -115,11 +107,10 @@ theorem hw_3_3_simple_avoidance_paper
     HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
       (∑ s ∈ S, 2 * ↑Real.pi * I *
         generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-  obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
-  exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids_unbounded
+          residue f s) :=
+  hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids_unbounded
     hU_open hU_ne S hS_in_U f hf γ.toPwC1Immersion h_null hSimplePoles
-    hγ_avoids hLip
+    hγ_avoids (ClosedPwC1Immersion.lipschitzWith_extend γ).choose_spec
 
 end LeanModularForms
 
