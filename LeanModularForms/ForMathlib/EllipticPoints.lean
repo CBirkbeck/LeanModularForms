@@ -57,29 +57,19 @@ theorem ellipticPointRho_add_one_eq :
 private lemma rho_normSq_eq_one : Complex.normSq (ellipticPointRho' : ℂ) = 1 := by
   change Complex.normSq (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
   have h1 : (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
-      ((-1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by
-    push_cast
-    ring
-  rw [h1, Complex.normSq_add_mul_I]
+      ((-1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
   have h3 : (Real.sqrt 3 / 2) ^ 2 = 3 / 4 := by
-    rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]
-    norm_num
-  rw [h3]
-  ring
+    rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]; norm_num
+  rw [h1, Complex.normSq_add_mul_I, h3]; ring
 
 private lemma rho_plus_one_normSq_eq_one :
     Complex.normSq (ellipticPointRhoPlusOne' : ℂ) = 1 := by
   change Complex.normSq (1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
   have h1 : (1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
-      ((1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by
-    push_cast
-    ring
-  rw [h1, Complex.normSq_add_mul_I]
+      ((1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
   have h3 : (Real.sqrt 3 / 2) ^ 2 = 3 / 4 := by
-    rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]
-    norm_num
-  rw [h3]
-  ring
+    rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]; norm_num
+  rw [h1, Complex.normSq_add_mul_I, h3]; ring
 
 theorem ellipticPointRhoPlusOne_norm : ‖ellipticPointRhoPlusOne‖ = 1 := by
   change Real.sqrt (Complex.normSq _) = 1
@@ -92,13 +82,11 @@ theorem ellipticPointRho_norm : ‖ellipticPointRho‖ = 1 := by
 theorem ellipticPointI_mem_fd : ellipticPointI' ∈ 𝒟 := by
   refine ⟨?_, ?_⟩
   · simp [ellipticPointI', Complex.normSq_I]
-  · simp only [ellipticPointI', UpperHalfPlane.re]
-    norm_num
+  · simp only [ellipticPointI', UpperHalfPlane.re]; norm_num
 
 theorem ellipticPointRho_mem_fd : ellipticPointRho' ∈ 𝒟 := by
   refine ⟨rho_normSq_eq_one.ge, ?_⟩
-  simp only [ellipticPointRho', UpperHalfPlane.re]
-  norm_num
+  simp only [ellipticPointRho', UpperHalfPlane.re]; norm_num
 
 lemma ellipticPointI_ne_rho : ellipticPointI' ≠ ellipticPointRho' := by
   intro h
