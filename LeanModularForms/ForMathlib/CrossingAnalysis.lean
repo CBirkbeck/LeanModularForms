@@ -127,11 +127,10 @@ theorem crossing_isolated_left (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
   have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, map_zero]
   have hp_Ioo := γ.toPiecewiseC1Path.partition_subset hp_part
   have h_ev_smooth := eventually_not_in_partition_left γ p
-  have h_ev_Ioo : ∀ᶠ t in 𝓝[<] p, t ∈ Ioo (0 : ℝ) 1 := by
-    have h1 : ∀ᶠ t in 𝓝[<] p, 0 < t :=
-      eventually_nhdsWithin_of_eventually_nhds (Ioi_mem_nhds hp_pos)
-    have h2 : ∀ᶠ t in 𝓝[<] p, t < p := eventually_nhdsWithin_of_forall fun t ht => ht
-    exact (h1.and h2).mono fun t ⟨h0t, htp⟩ => ⟨h0t, lt_trans htp hp_Ioo.2⟩
+  have h_ev_Ioo : ∀ᶠ t in 𝓝[<] p, t ∈ Ioo (0 : ℝ) 1 :=
+    (eventually_nhdsWithin_of_eventually_nhds (Ioi_mem_nhds hp_pos) |>.and
+      (eventually_nhdsWithin_of_forall fun _ ht => ht)).mono
+      fun _ ⟨h0t, htp⟩ => ⟨h0t, lt_trans htp hp_Ioo.2⟩
   have h_ev_deriv_pos : ∀ᶠ t in 𝓝[<] p, f (deriv (γ : ℝ → E) t) > 0 :=
     (f.continuous.continuousAt.tendsto.comp hL_tendsto).eventually (Ioi_mem_nhds hfL_pos)
   have h_all : ∀ᶠ t in 𝓝[<] p,
@@ -176,11 +175,10 @@ theorem crossing_isolated_right (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
   have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, map_zero]
   have hp_Ioo := γ.toPiecewiseC1Path.partition_subset hp_part
   have h_ev_smooth := eventually_not_in_partition_right γ p
-  have h_ev_Ioo : ∀ᶠ t in 𝓝[>] p, t ∈ Ioo (0 : ℝ) 1 := by
-    have h1 : ∀ᶠ t in 𝓝[>] p, t < 1 :=
-      eventually_nhdsWithin_of_eventually_nhds (Iio_mem_nhds hp_lt_one)
-    have h2 : ∀ᶠ t in 𝓝[>] p, p < t := eventually_nhdsWithin_of_forall fun t ht => ht
-    exact (h1.and h2).mono fun t ⟨ht1, htp⟩ => ⟨lt_trans hp_Ioo.1 htp, ht1⟩
+  have h_ev_Ioo : ∀ᶠ t in 𝓝[>] p, t ∈ Ioo (0 : ℝ) 1 :=
+    (eventually_nhdsWithin_of_eventually_nhds (Iio_mem_nhds hp_lt_one) |>.and
+      (eventually_nhdsWithin_of_forall fun _ ht => ht)).mono
+      fun _ ⟨ht1, htp⟩ => ⟨lt_trans hp_Ioo.1 htp, ht1⟩
   have h_ev_deriv_pos : ∀ᶠ t in 𝓝[>] p, f (deriv (γ : ℝ → E) t) > 0 :=
     (f.continuous.continuousAt.tendsto.comp hL_tendsto).eventually (Ioi_mem_nhds hfL_pos)
   have h_all : ∀ᶠ t in 𝓝[>] p,
