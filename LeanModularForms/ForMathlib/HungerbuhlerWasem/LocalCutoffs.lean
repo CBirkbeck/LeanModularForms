@@ -1021,13 +1021,11 @@ theorem perCrossing_window_integral_tendsto_exact
   have hδR_lt_r : ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_right ε < r := by
     filter_upwards [(hδR_tendsto.mono_right nhdsWithin_le_nhds).eventually
       (Metric.ball_mem_nhds (0 : ℝ) hr_pos)] with ε hε
-    rw [Real.dist_eq, sub_zero] at hε
-    linarith [le_abs_self (D.δ_right ε)]
+    rw [Real.dist_eq, sub_zero] at hε; linarith [le_abs_self (D.δ_right ε)]
   have hδL_lt_r : ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_left ε < r := by
     filter_upwards [(hδL_tendsto.mono_right nhdsWithin_le_nhds).eventually
       (Metric.ball_mem_nhds (0 : ℝ) hr_pos)] with ε hε
-    rw [Real.dist_eq, sub_zero] at hε
-    linarith [le_abs_self (D.δ_left ε)]
+    rw [Real.dist_eq, sub_zero] at hε; linarith [le_abs_self (D.δ_left ε)]
   have hδR_pos_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < D.δ_right ε := by
     filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
     exact D.hδ_right_pos ε hε.1 hε.2
@@ -1110,20 +1108,14 @@ theorem perCrossing_window_integral_tendsto_exact
       exact ⟨by linarith [hu.1, ht₀.1], by linarith [hu.2]⟩
     have h_int_left :
         IntervalIntegrable integrand MeasureTheory.volume (t₀ - r) (t₀ - D.δ_left ε) := by
-      have h_ne_left : ∀ t ∈ Set.Icc (t₀ - r) (t₀ - D.δ_left ε), γf t ≠ s := by
-        intro t ht h_eq
-        have h_in_window : t ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-          ⟨ht.1, by linarith [ht.2]⟩
-        linarith [ht.2, h_local_unique_r t h_in_window h_eq]
+      have h_ne_left : ∀ t ∈ Set.Icc (t₀ - r) (t₀ - D.δ_left ε), γf t ≠ s := fun t ht h_eq =>
+        absurd (h_local_unique_r t ⟨ht.1, by linarith [ht.2]⟩ h_eq) (by linarith [ht.2])
       exact (inv_sub_mul_deriv_intervalIntegrable γ h_left_lt.le
         h_in_window_left h_ne_left).congr (fun t _ => by ring)
     have h_int_right :
         IntervalIntegrable integrand MeasureTheory.volume (t₀ + D.δ_right ε) (t₀ + r) := by
-      have h_ne_right : ∀ t ∈ Set.Icc (t₀ + D.δ_right ε) (t₀ + r), γf t ≠ s := by
-        intro t ht h_eq
-        have h_in_window : t ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-          ⟨by linarith [ht.1], ht.2⟩
-        linarith [ht.1, h_local_unique_r t h_in_window h_eq]
+      have h_ne_right : ∀ t ∈ Set.Icc (t₀ + D.δ_right ε) (t₀ + r), γf t ≠ s := fun t ht h_eq =>
+        absurd (h_local_unique_r t ⟨by linarith [ht.1], ht.2⟩ h_eq) (by linarith [ht.1])
       exact (inv_sub_mul_deriv_intervalIntegrable γ h_right_lt.le
         h_in_window_right h_ne_right).congr (fun t _ => by ring)
     have hF_int_left : IntervalIntegrable F MeasureTheory.volume
@@ -1179,42 +1171,37 @@ theorem perCrossing_window_integral_tendsto_exact
       D.h_exit_right ε hε_pos hε_lt_thresh
     have h_eq_L : ‖γf (t₀ - D.δ_left ε) - s‖ = ε :=
       D.h_exit_left ε hε_pos hε_lt_thresh
-    have h_γPlus_ne : γf (t₀ + r) - s ≠ 0 := fun h_eq => by
-      have h_mem : (t₀ + r) ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-        Set.right_mem_Icc.mpr (by linarith)
-      linarith [h_local_unique_r _ h_mem (sub_eq_zero.mp h_eq)]
-    have h_γMinus_ne : γf (t₀ - r) - s ≠ 0 := fun h_eq => by
-      have h_mem : (t₀ - r) ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-        Set.left_mem_Icc.mpr (by linarith)
-      linarith [h_local_unique_r _ h_mem (sub_eq_zero.mp h_eq)]
+    have h_γPlus_ne : γf (t₀ + r) - s ≠ 0 := fun h_eq =>
+      absurd (h_local_unique_r _ (Set.right_mem_Icc.mpr (by linarith))
+        (sub_eq_zero.mp h_eq)) (by linarith)
+    have h_γMinus_ne : γf (t₀ - r) - s ≠ 0 := fun h_eq =>
+      absurd (h_local_unique_r _ (Set.left_mem_Icc.mpr (by linarith))
+        (sub_eq_zero.mp h_eq)) (by linarith)
     have h_γR_ne : γf (t₀ + D.δ_right ε) - s ≠ 0 := by
       rw [← norm_pos_iff, h_eq_R]; exact hε_pos
     have h_γL_ne : γf (t₀ - D.δ_left ε) - s ≠ 0 := by
       rw [← norm_pos_iff, h_eq_L]; exact hε_pos
+    -- Helper: decompose Complex.log (a/b) into log_norm + arg·I.
+    have h_log_decomp : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 →
+        Complex.log (a / b) =
+          ((Real.log ‖a‖ - Real.log ‖b‖ : ℝ) : ℂ) + ((a / b).arg : ℂ) * Complex.I := by
+      intro a b ha hb
+      refine Complex.ext ?_ ?_
+      · simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+          Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, sub_zero, add_zero]
+        rw [Complex.log_re, norm_div,
+          Real.log_div (norm_ne_zero_iff.mpr ha) (norm_ne_zero_iff.mpr hb)]
+      · simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
+          Complex.I_im, mul_one, Complex.ofReal_re, zero_add]
+        rw [Complex.log_im]; ring
     have h_log_R_decomp : Λ_R ε =
         ((Real.log ‖γf (t₀ + r) - s‖ - Real.log ‖γf (t₀ + D.δ_right ε) - s‖ : ℝ) : ℂ) +
-        (((γf (t₀ + r) - s) / (γf (t₀ + D.δ_right ε) - s)).arg : ℂ) * Complex.I := by
-      rw [hΛR_def]
-      refine Complex.ext ?_ ?_
-      · simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
-          Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, sub_zero, add_zero]
-        rw [Complex.log_re, norm_div,
-          Real.log_div (norm_ne_zero_iff.mpr h_γPlus_ne) (norm_ne_zero_iff.mpr h_γR_ne)]
-      · simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
-          Complex.I_im, mul_one, Complex.ofReal_re, zero_add]
-        rw [Complex.log_im]; ring
+        (((γf (t₀ + r) - s) / (γf (t₀ + D.δ_right ε) - s)).arg : ℂ) * Complex.I :=
+      h_log_decomp _ _ h_γPlus_ne h_γR_ne
     have h_log_L_decomp : Λ_L ε =
         ((Real.log ‖γf (t₀ - D.δ_left ε) - s‖ - Real.log ‖γf (t₀ - r) - s‖ : ℝ) : ℂ) +
-        (((γf (t₀ - D.δ_left ε) - s) / (γf (t₀ - r) - s)).arg : ℂ) * Complex.I := by
-      rw [hΛL_def]
-      refine Complex.ext ?_ ?_
-      · simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
-          Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, sub_zero, add_zero]
-        rw [Complex.log_re, norm_div,
-          Real.log_div (norm_ne_zero_iff.mpr h_γL_ne) (norm_ne_zero_iff.mpr h_γMinus_ne)]
-      · simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
-          Complex.I_im, mul_one, Complex.ofReal_re, zero_add]
-        rw [Complex.log_im]; ring
+        (((γf (t₀ - D.δ_left ε) - s) / (γf (t₀ - r) - s)).arg : ℂ) * Complex.I :=
+      h_log_decomp _ _ h_γL_ne h_γMinus_ne
     rw [h_log_L_decomp, h_log_R_decomp, h_eq_R, h_eq_L]
     simp only [hlogND_def]; push_cast; ring
   have h_decomp' : (fun ε : ℝ => ((logNorm_diff : ℝ) : ℂ) +
