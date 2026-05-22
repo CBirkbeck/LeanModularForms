@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
 import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusSpace
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheory
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
 
 /-!
 # Experimental cusp-space `Γ₀(N), χ` model
