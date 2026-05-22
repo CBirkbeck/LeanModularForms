@@ -1851,8 +1851,109 @@ private lemma descendCosetList_per_v_witness
       rw [hγ_p_10, hγ_p_11, h_β_10_mod, hγ_p_01] at h_zmod
       linear_combination h_zmod
 
-/-- Injectivity of the σ-function from `descendCosetList_per_v_witness`: distinct
-indices `v₁ ≠ v₂` map to distinct targets. -/
+private lemma descendCosetList_cross_regular_extra_aux
+    {N : ℕ} [NeZero N] (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
+    {va vb : Fin (descendCosetCount p N)} (hva : va.val < p) (hvb : ¬ vb.val < p)
+    (α : Matrix.SpecialLinearGroup (Fin 2) ℤ) :
+    (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) ≠
+      (mapGL ℝ α : GL (Fin 2) ℝ) * descendCosetList p N hp vb := by
+  intro heq_cross
+  have hp_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt hvb
+  have hpExtra : p < descendCosetCount p N := p_lt_descendCosetCount_of_not_p_sq_dvd hp_sq
+  have h_γp_spec := (descendExtraGamma_spec hp hpN hp_sq).2.1
+  have h_γp_00 : ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
+    simpa [Matrix.map_apply] using congr_fun (congr_fun h_γp_spec 0) 0
+  have h_vb_eq_fin : vb = ⟨p, hpExtra⟩ := Fin.ext (descendCosetCount_val_eq_p vb hvb)
+  have hLHS_00 : (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) 0 0 = 1 := by
+    rw [descendCosetList_lt_matrix hp hva]
+    simp
+  have hdcl_extra_00 : (descendCosetList p N hp ⟨p, hpExtra⟩ : Matrix (Fin 2) (Fin 2) ℝ) 0 0 =
+      ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) := by
+    rw [descendCosetList_extra_matrix_entry hp (lt_irrefl p) 0 0]
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have hdcl_extra_10 : (descendCosetList p N hp ⟨p, hpExtra⟩ : Matrix (Fin 2) (Fin 2) ℝ) 1 0 =
+      (p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) := by
+    rw [descendCosetList_extra_matrix_entry hp (lt_irrefl p) 1 0]
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have hRHS_00 := congr_fun (congr_fun heq_cross 0) 0
+  rw [hLHS_00, h_vb_eq_fin, Matrix.mul_apply, Fin.sum_univ_two,
+    hdcl_extra_00, hdcl_extra_10,
+    mapGL_coe_matrix_apply _ 0 0, mapGL_coe_matrix_apply _ 0 1] at hRHS_00
+  have h1_int : (1 : ℤ) =
+      (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 *
+        (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
+      (α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 *
+        (p * (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0) := by
+    have : (1 : ℝ) =
+        ((α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) *
+          ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) +
+        ((α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℝ) *
+          ((p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ)) := by
+      linarith
+    exact_mod_cast this
+  have h_γp_00_dvd : (p : ℤ) ∣ (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
+  have hp_dvd_one : (p : ℤ) ∣ 1 := by
+    rw [h1_int]
+    exact dvd_add (dvd_mul_of_dvd_right h_γp_00_dvd _)
+      ⟨(α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 *
+        (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0, by ring⟩
+  linarith [Int.le_of_dvd one_pos hp_dvd_one, show (2 : ℤ) ≤ p by exact_mod_cast hp.two_le]
+
+private lemma descendCosetList_cross_extra_regular_aux
+    {N : ℕ} [NeZero N] (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
+    {va vb : Fin (descendCosetCount p N)} (hva : ¬ va.val < p) (hvb : vb.val < p)
+    (α : Matrix.SpecialLinearGroup (Fin 2) ℤ) :
+    (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) ≠
+      (mapGL ℝ α : GL (Fin 2) ℝ) * descendCosetList p N hp vb := by
+  intro h_mat
+  have hp_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt hva
+  have hpExtra : p < descendCosetCount p N := p_lt_descendCosetCount_of_not_p_sq_dvd hp_sq
+  have hva_extra : va = ⟨p, hpExtra⟩ := Fin.ext (descendCosetCount_val_eq_p va hva)
+  have h_γp_spec := (descendExtraGamma_spec hp hpN hp_sq).2.1
+  have h_γp_00 : ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
+    simpa [Matrix.map_apply] using congr_fun (congr_fun h_γp_spec 0) 0
+  have hdcl_va_00 : (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) 0 0 =
+      ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) := by
+    rw [hva_extra, descendCosetList_extra_matrix_entry hp (lt_irrefl p) 0 0]
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have hdcl_va_10 : (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) 1 0 =
+      (p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) := by
+    rw [hva_extra, descendCosetList_extra_matrix_entry hp (lt_irrefl p) 1 0]
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have h00 := congr_fun (congr_fun h_mat 0) 0
+  have h10 := congr_fun (congr_fun h_mat 1) 0
+  rw [hdcl_va_00, descendCosetList_lt_matrix hp hvb] at h00
+  rw [hdcl_va_10, descendCosetList_lt_matrix hp hvb] at h10
+  simp only [Matrix.mul_apply, Fin.sum_univ_two,
+    mapGL_coe_matrix_apply _ 0 0, mapGL_coe_matrix_apply _ 0 1,
+    mapGL_coe_matrix_apply _ 1 0, mapGL_coe_matrix_apply _ 1 1,
+    Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one] at h00 h10
+  have hα00_eq : (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 =
+      (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 := by
+    have : (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 =
+        (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * 1 +
+        (α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * 0 := by exact_mod_cast h00
+    lia
+  have hα10_eq : (p : ℤ) * (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 =
+      (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := by
+    have h10' : (p : ℤ) * (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 =
+        (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 * 1 +
+        (α : Matrix (Fin 2) (Fin 2) ℤ) 1 1 * 0 := by exact_mod_cast h10
+    lia
+  have hα00_dvd : (p : ℤ) ∣ (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 := by
+    rw [hα00_eq]
+    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
+  have hα10_dvd : (p : ℤ) ∣ (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := ⟨_, hα10_eq.symm⟩
+  have hdet : (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (α : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
+      (α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
+    rw [← Matrix.det_fin_two]
+    exact α.property
+  have hp_dvd_one : (p : ℤ) ∣ 1 := by
+    rw [← hdet]
+    exact dvd_sub (dvd_mul_of_dvd_left hα00_dvd _) (dvd_mul_of_dvd_right hα10_dvd _)
+  linarith [Int.le_of_dvd one_pos hp_dvd_one, show (2 : ℤ) ≤ p by exact_mod_cast hp.two_le]
+
 private lemma descendCosetList_sigma_aux_injective
     {N : ℕ} [NeZero N]
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
@@ -1862,67 +1963,18 @@ private lemma descendCosetList_sigma_aux_injective
     (h_eq_fn : ∀ v, descendCosetList p N hp v * mapGL ℝ γ' =
       mapGL ℝ (α_fn v) * descendCosetList p N hp (σ_fn v)) :
     Function.Injective σ_fn := by
-  haveI : Fact p.Prime := ⟨hp⟩
   intro v₁ v₂ h_σ
   have heq₁ := h_eq_fn v₁
   have heq₂ := h_eq_fn v₂
   rw [h_σ] at heq₁
   have h_gl : descendCosetList p N hp v₁ =
-      mapGL ℝ (α_fn v₁ * (α_fn v₂)⁻¹) * descendCosetList p N hp v₂ := by
-    apply mul_right_cancel (b := mapGL ℝ γ')
-    rw [mul_assoc, heq₂, ← mul_assoc, show mapGL ℝ (α_fn v₁ * (α_fn v₂)⁻¹) *
-      mapGL ℝ (α_fn v₂) = mapGL ℝ (α_fn v₁) by rw [← map_mul]; simp, heq₁]
+      mapGL ℝ (α_fn v₁ * (α_fn v₂)⁻¹) * descendCosetList p N hp v₂ :=
+    mul_right_cancel (b := mapGL ℝ γ') <| by
+      rw [mul_assoc, heq₂, ← mul_assoc, ← map_mul]
+      simp [heq₁]
   have h_mat : (descendCosetList p N hp v₁ : Matrix (Fin 2) (Fin 2) ℝ) =
       (mapGL ℝ (α_fn v₁ * (α_fn v₂)⁻¹) : GL (Fin 2) ℝ) *
       descendCosetList p N hp v₂ := congr_arg Units.val h_gl
-  have cross_impossible : ∀ (va vb : Fin (descendCosetCount p N)),
-      va.val < p → ¬ vb.val < p →
-      (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) ≠
-      (mapGL ℝ (α_fn va * (α_fn vb)⁻¹) : GL (Fin 2) ℝ) *
-        descendCosetList p N hp vb := by
-    intro va vb hva hvb_ne heq_cross
-    have hp_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt hvb_ne
-    have hpExtra : p < descendCosetCount p N :=
-      p_lt_descendCosetCount_of_not_p_sq_dvd hp_sq
-    have h_γp_spec := (descendExtraGamma_spec hp hpN hp_sq).2.1
-    have h_γp_00 : ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
-      simpa [Matrix.map_apply] using congr_fun (congr_fun h_γp_spec 0) 0
-    have h_vb_eq_fin : vb = ⟨p, hpExtra⟩ :=
-      Fin.ext (descendCosetCount_val_eq_p vb hvb_ne)
-    have hLHS_00 : (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) 0 0 = 1 := by
-      rw [descendCosetList_lt_matrix hp hva]; simp
-    have hdcl_extra_00 : (descendCosetList p N hp ⟨p, hpExtra⟩ : Matrix (Fin 2) (Fin 2) ℝ) 0 0 =
-        ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) := by
-      rw [descendCosetList_extra_matrix_entry hp (lt_irrefl p) 0 0]
-      simp [Matrix.mul_apply, Fin.sum_univ_two]
-    have hdcl_extra_10 : (descendCosetList p N hp ⟨p, hpExtra⟩ : Matrix (Fin 2) (Fin 2) ℝ) 1 0 =
-        (p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) := by
-      rw [descendCosetList_extra_matrix_entry hp (lt_irrefl p) 1 0]
-      simp [Matrix.mul_apply, Fin.sum_univ_two]
-    have hRHS_00 := congr_fun (congr_fun heq_cross 0) 0
-    rw [hLHS_00, h_vb_eq_fin, Matrix.mul_apply, Fin.sum_univ_two,
-      hdcl_extra_00, hdcl_extra_10,
-      mapGL_coe_matrix_apply _ 0 0, mapGL_coe_matrix_apply _ 0 1] at hRHS_00
-    have h1_int : (1 : ℤ) =
-        (α_fn va * (α_fn ⟨p, hpExtra⟩)⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ) 0 0 *
-        (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
-        (α_fn va * (α_fn ⟨p, hpExtra⟩)⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ) 0 1 *
-        (p * (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0) := by
-      have : (1 : ℝ) =
-          ((α_fn va * (α_fn ⟨p, hpExtra⟩)⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ) 0 0 : ℝ) *
-          ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) +
-          ((α_fn va * (α_fn ⟨p, hpExtra⟩)⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ) 0 1 : ℝ) *
-          ((p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ)) := by
-        linarith
-      exact_mod_cast this
-    have h_γp_00_dvd : (p : ℤ) ∣ (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 :=
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
-    have hp_dvd_one : (p : ℤ) ∣ 1 := by
-      rw [h1_int]
-      exact dvd_add (dvd_mul_of_dvd_right h_γp_00_dvd _)
-        ⟨(α_fn va * (α_fn ⟨p, hpExtra⟩)⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ) 0 1 *
-          (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0, by ring⟩
-    linarith [Int.le_of_dvd one_pos hp_dvd_one, show (2 : ℤ) ≤ p by exact_mod_cast hp.two_le]
   by_cases hv₁ : v₁.val < p
   · by_cases hv₂ : v₂.val < p
     · set ξ := (α_fn v₁ * (α_fn v₂)⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
@@ -1938,81 +1990,22 @@ private lemma descendCosetList_sigma_aux_injective
           (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * p := by exact_mod_cast h01
       have hξ00 : (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 = 1 := by lia
       rw [hξ00, one_mul] at hcast01
-      have hp_pos : (0 : ℤ) < p := by exact_mod_cast hp.pos
-      have hξ01 : (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 = 0 := by
-        have hlt : (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 < 1 :=
-          Int.lt_of_mul_lt_mul_right
-            (show (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * p < 1 * p by
-              have : (v₁.val : ℤ) < p := by exact_mod_cast hv₁
-              have : (0 : ℤ) ≤ v₂.val := Int.natCast_nonneg v₂.val
-              lia)
-            hp_pos.le
-        have hgt : -(1 : ℤ) < (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 :=
-          Int.lt_of_mul_lt_mul_right
-            (show -(1 : ℤ) * p < (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * p by
-              have : (v₂.val : ℤ) < p := by exact_mod_cast hv₂
-              have : (0 : ℤ) ≤ v₁.val := Int.natCast_nonneg v₁.val
-              lia)
-            hp_pos.le
-        lia
-      have : (v₁.val : ℤ) = v₂.val := by simp [hξ01] at hcast01; lia
-      exact Fin.ext (by exact_mod_cast this)
-    · exact absurd h_mat (cross_impossible v₁ v₂ hv₁ hv₂)
-  · have hv₁_eq : v₁.val = p := descendCosetCount_val_eq_p v₁ hv₁
-    by_cases hv₂ : v₂.val < p
-    · exfalso
-      have hp_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt hv₁
-      have hpExtra : p < descendCosetCount p N :=
-        p_lt_descendCosetCount_of_not_p_sq_dvd hp_sq
-      have hv₁_extra : v₁ = ⟨p, hpExtra⟩ := Fin.ext hv₁_eq
-      have h_γp_spec := (descendExtraGamma_spec hp hpN hp_sq).2.1
-      have h_γp_00 : ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
-        simpa [Matrix.map_apply] using congr_fun (congr_fun h_γp_spec 0) 0
-      have hdcl_v₁_00 : (descendCosetList p N hp v₁ : Matrix (Fin 2) (Fin 2) ℝ) 0 0 =
-          ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) := by
-        rw [hv₁_extra, descendCosetList_extra_matrix_entry hp (lt_irrefl p) 0 0]
-        simp [Matrix.mul_apply, Fin.sum_univ_two]
-      have hdcl_v₁_10 : (descendCosetList p N hp v₁ : Matrix (Fin 2) (Fin 2) ℝ) 1 0 =
-          (p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) := by
-        rw [hv₁_extra, descendCosetList_extra_matrix_entry hp (lt_irrefl p) 1 0]
-        simp [Matrix.mul_apply, Fin.sum_univ_two]
-      have h00 := congr_fun (congr_fun h_mat 0) 0
-      have h10 := congr_fun (congr_fun h_mat 1) 0
-      rw [hdcl_v₁_00, descendCosetList_lt_matrix hp hv₂] at h00
-      rw [hdcl_v₁_10, descendCosetList_lt_matrix hp hv₂] at h10
-      simp only [Matrix.mul_apply, Fin.sum_univ_two,
-        mapGL_coe_matrix_apply _ 0 0, mapGL_coe_matrix_apply _ 0 1,
-        mapGL_coe_matrix_apply _ 1 0, mapGL_coe_matrix_apply _ 1 1,
-        Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one] at h00 h10
-      set ξ := (α_fn v₁ * (α_fn v₂)⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
-      have hξ00_eq : (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 =
-          (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 := by
-        have : (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 =
-            (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * 1 +
-            (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * 0 := by exact_mod_cast h00
-        lia
-      have hξ10_eq : (p : ℤ) * (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 =
-          (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := by
-        have h10' : (p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) =
-            (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 * 1 +
-            (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 * 0 := h10
-        have h10'' : (p : ℤ) * (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 =
-            (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 * 1 +
-            (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 * 0 := by exact_mod_cast h10'
-        lia
-      have hξ00_dvd : (p : ℤ) ∣ (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 := by
-        rw [hξ00_eq]
-        exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
-      have hξ10_dvd : (p : ℤ) ∣ (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := ⟨_, hξ10_eq.symm⟩
-      have hmod : (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
-          (ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (ξ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
-        rw [← Matrix.det_fin_two]; exact ξ.property
-      have hp_dvd_one : (p : ℤ) ∣ 1 := by
-        rw [← hmod]
-        exact dvd_sub (dvd_mul_of_dvd_left hξ00_dvd _) (dvd_mul_of_dvd_right hξ10_dvd _)
-      linarith [Int.le_of_dvd one_pos hp_dvd_one,
-        show (2 : ℤ) ≤ p by exact_mod_cast hp.two_le]
-    · exact Fin.ext (by have := descendCosetCount_val_eq_p v₂ hv₂; lia)
+      have hv1z : (v₁.val : ℤ) < p := by exact_mod_cast hv₁
+      have hv2z : (v₂.val : ℤ) < p := by exact_mod_cast hv₂
+      have hdvd : (p : ℤ) ∣ ((v₁.val : ℤ) - v₂.val) :=
+        ⟨(ξ : Matrix (Fin 2) (Fin 2) ℤ) 0 1, by linarith⟩
+      have habs : |((v₁.val : ℤ) - v₂.val)| < p := abs_lt.mpr
+        ⟨by linarith [Int.natCast_nonneg v₂.val],
+          by linarith [Int.natCast_nonneg v₁.val]⟩
+      exact Fin.ext <| by
+        exact_mod_cast (sub_eq_zero.mp (Int.eq_zero_of_abs_lt_dvd hdvd habs))
+    · exact absurd h_mat (descendCosetList_cross_regular_extra_aux p hp hpN hv₁ hv₂ _)
+  · by_cases hv₂ : v₂.val < p
+    · exact absurd h_mat (descendCosetList_cross_extra_regular_aux p hp hpN hv₁ hv₂ _)
+    · exact Fin.ext (by
+        have := descendCosetCount_val_eq_p v₁ hv₁
+        have := descendCosetCount_val_eq_p v₂ hv₂
+        lia)
 
 /-- **T5a-3: Action property of the descent cosets at Γ_0(N/p) → Γ_0(N)**.
 
