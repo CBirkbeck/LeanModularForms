@@ -209,7 +209,8 @@ theorem volume_preimage_finset_in_Icc01_zero
     htP (Finset.mem_insert_of_mem (Finset.mem_insert_of_mem h_part))
   exact preimage_finset_measure_zero_of_deriv_ne_zero S
     γP.toPath.continuous_extend.continuousOn
-    (fun t ht htP => γP.differentiable_off t (h_in_Ioo t ht htP) (h_not_part t ht htP))
+    (fun t ht htP => γP.differentiable_off_extend t (h_in_Ioo t ht htP)
+      (h_not_part t ht htP))
     (fun t ht htP => γ.toPwC1Immersion.deriv_ne_zero t (h_in_Ioo t ht htP)
       (h_not_part t ht htP))
 

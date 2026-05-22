@@ -625,7 +625,7 @@ theorem right_annular_log_diff
   have hγ_diff : ∀ t ∈ Ioo (t₀ + δ_R) (t₀ + r) \
       (↑γ.toPwC1Immersion.toPiecewiseC1Path.partition : Set ℝ),
       HasDerivAt γf (deriv γf t) t := fun t ht =>
-    (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t
+    (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t
       ⟨by linarith [ht.1.1, ht₀_pos, hδ_R_pos], by linarith [ht.1.2, hr_le_one_sub]⟩
       ht.2).hasDerivAt
   have h_int : IntervalIntegrable
@@ -742,7 +742,7 @@ theorem left_annular_log_diff
   have hγ_diff : ∀ t ∈ Ioo (t₀ - r) (t₀ - δ_L) \
       (↑γ.toPwC1Immersion.toPiecewiseC1Path.partition : Set ℝ),
       HasDerivAt γf (deriv γf t) t := fun t ht =>
-    (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t
+    (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t
       ⟨by linarith [ht.1.1, hr_le_t₀], by linarith [ht.1.2, hδ_L_pos]⟩
       ht.2).hasDerivAt
   have h_int : IntervalIntegrable

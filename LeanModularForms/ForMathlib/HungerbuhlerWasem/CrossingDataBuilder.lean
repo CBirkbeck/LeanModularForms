@@ -134,7 +134,7 @@ theorem exists_right_deriv_limit
   · exact γ.toPwC1Immersion.right_deriv_limit t₀ h_part
   · refine ⟨deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀,
       γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_part,
-      (γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀
+      (γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off_extend t₀ ht₀
         h_part).tendsto.mono_left nhdsWithin_le_nhds⟩
 
 /-- At any `t₀ ∈ Ioo 0 1`, the left derivative limit `L_-` exists and is nonzero. -/
@@ -147,7 +147,7 @@ theorem exists_left_deriv_limit
   · exact γ.toPwC1Immersion.left_deriv_limit t₀ h_part
   · refine ⟨deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀,
       γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_part,
-      (γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀
+      (γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off_extend t₀ ht₀
         h_part).tendsto.mono_left nhdsWithin_le_nhds⟩
 
 /-- Differentiability is eventual on `𝓝[>] t₀` for an immersion at interior `t₀`. -/
@@ -163,7 +163,7 @@ theorem eventually_differentiable_right
     nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl fun h => h.2 rfl)),
     nhdsWithin_le_nhds (Ioo_mem_nhds ht₀.1 ht₀.2),
     self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
-  exact γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t ht₂
+  exact γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ht₂
     fun hm => ht₁ ⟨hm, ne_of_gt (mem_Ioi.mp ht₃)⟩
 
 /-- Differentiability is eventual on `𝓝[<] t₀` for an immersion at interior `t₀`. -/
@@ -179,7 +179,7 @@ theorem eventually_differentiable_left
     nhdsWithin_le_nhds (hcl.isOpen_compl.mem_nhds (mem_compl fun h => h.2 rfl)),
     nhdsWithin_le_nhds (Ioo_mem_nhds ht₀.1 ht₀.2),
     self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
-  exact γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t ht₂
+  exact γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ht₂
     fun hm => ht₁ ⟨hm, ne_of_lt (mem_Iio.mp ht₃)⟩
 
 /-- **Right-side chord-to-tangent eventual lower bound**: eventually on
