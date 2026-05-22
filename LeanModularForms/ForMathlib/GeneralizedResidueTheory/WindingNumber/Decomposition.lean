@@ -185,8 +185,9 @@ theorem externalWindingContribution_translate (γ : PiecewiseC1Immersion) (c : �
     externalWindingContribution (γ.translate c) (z₀ + c) t₀ ht₀ =
       externalWindingContribution γ z₀ t₀ ht₀ := by
   simp only [externalWindingContribution, angleAtCrossing_translate, generalizedWindingNumber']
+  have h_toFun : ∀ t, (γ.translate c).toFun t = γ.toFun t + c := fun _ => rfl
   have h_eq : (fun t => (γ.translate c).toFun t - (z₀ + c)) = (fun t => γ.toFun t - z₀) := by
-    ext t; simp only [PiecewiseC1Immersion.translate]; ring
+    ext t; rw [h_toFun]; ring
   rw [show (γ.translate c).a = γ.a from rfl, show (γ.translate c).b = γ.b from rfl, h_eq]
 
 /-- Winding number with angles is additive over disjoint crossing sets. -/

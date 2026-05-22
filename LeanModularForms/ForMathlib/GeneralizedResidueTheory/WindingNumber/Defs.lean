@@ -48,7 +48,8 @@ def angleAtCrossing (γ : PiecewiseC1Immersion) (t₀ : ℝ)
 theorem angleAtCrossing_smooth (γ : PiecewiseC1Immersion) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hsmooth : t₀ ∉ γ.toPiecewiseC1Curve.partition) :
     angleAtCrossing γ t₀ ht₀ = Real.pi := by
-  simp [angleAtCrossing, hsmooth]
+  unfold angleAtCrossing
+  rw [dif_neg hsmooth]
 
 /-- Winding number via explicit angle sum at crossings. -/
 def windingNumberWithAngles' (γ : PiecewiseC1Immersion) (_z₀ : ℂ) (crossings : Finset ℝ)
@@ -118,34 +119,42 @@ theorem integral_inv_real_axis (r ε : ℝ) (hr : 0 < r) (hε : 0 < ε) :
 /-- Translate a piecewise C¹ immersion by a constant. -/
 def PiecewiseC1Immersion.translate (γ : PiecewiseC1Immersion) (c : ℂ) :
     PiecewiseC1Immersion where
-  toFun := fun t => γ.toFun t + c
   a := γ.a
   b := γ.b
+  x := γ.x + c
+  y := γ.y + c
   hab := γ.hab
+  toPiecewiseC1PathOn :=
+    { toFun := fun t => γ.toFun t + c
+      source := by show γ.toPiecewiseC1PathOn.toFun γ.a + c = _; rw [γ.toPiecewiseC1PathOn.source]
+      target := by show γ.toPiecewiseC1PathOn.toFun γ.b + c = _; rw [γ.toPiecewiseC1PathOn.target]
+      continuous_toFun := γ.continuous_toFun.add continuousOn_const
+      partition := γ.toPiecewiseC1PathOn.partition
+      partition_subset := γ.toPiecewiseC1PathOn.partition_subset
+      differentiable_off := fun t ht ht' =>
+        (γ.toPiecewiseC1PathOn.differentiable_off t ht ht').add (differentiableAt_const _)
+      deriv_continuous_off := fun t ht hnp => by
+        convert γ.toPiecewiseC1PathOn.deriv_continuous_off t ht hnp using 1
+        exact funext fun _ => by
+          show deriv (fun s => γ.toPiecewiseC1PathOn.toFun s + c) _ = _
+          rw [deriv_add_const] }
   partition := γ.partition
   partition_subset := γ.partition_subset
   endpoints_in_partition := γ.endpoints_in_partition
-  continuous_toFun := γ.continuous_toFun.add continuousOn_const
-  smooth_off_partition := fun t ht ht' =>
-    (γ.smooth_off_partition t ht ht').add (differentiableAt_const _)
-  deriv_continuous_off_partition := by
-    intro t ht hnp
-    convert γ.deriv_continuous_off_partition t ht hnp using 1
-    exact funext fun _ => by rw [deriv_add_const]
-  deriv_ne_zero := by
-    intro t ht ht'
-    rw [deriv_add_const]
-    exact γ.deriv_ne_zero t ht ht'
-  left_deriv_limit := by
-    intro p hp hp'
+  partition_eq := γ.partition_eq
+  deriv_ne_zero := fun t ht ht' => by
+    show deriv (fun s => γ.toFun s + c) t ≠ 0
+    rw [deriv_add_const]; exact γ.deriv_ne_zero t ht ht'
+  left_deriv_limit := fun p hp hp' => by
     obtain ⟨L, hL_ne, hL⟩ := γ.left_deriv_limit p hp hp'
     refine ⟨L, hL_ne, ?_⟩
+    show Tendsto (deriv fun s => γ.toFun s + c) (𝓝[<] p) (𝓝 L)
     rwa [show deriv (fun t => γ.toFun t + c) = deriv γ.toFun from
       funext fun _ => deriv_add_const c]
-  right_deriv_limit := by
-    intro p hp hp'
+  right_deriv_limit := fun p hp hp' => by
     obtain ⟨L, hL_ne, hL⟩ := γ.right_deriv_limit p hp hp'
     refine ⟨L, hL_ne, ?_⟩
+    show Tendsto (deriv fun s => γ.toFun s + c) (𝓝[>] p) (𝓝 L)
     rwa [show deriv (fun t => γ.toFun t + c) = deriv γ.toFun from
       funext fun _ => deriv_add_const c]
 
@@ -154,9 +163,20 @@ theorem angleAtCrossing_translate (γ : PiecewiseC1Immersion) (c : ℂ) (t₀ : 
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) :
     angleAtCrossing (γ.translate c) t₀ ht₀ = angleAtCrossing γ t₀ ht₀ := by
   unfold angleAtCrossing
-  generalize_proofs at *
-  unfold PiecewiseC1Immersion.translate
-  aesop
+  have h_part : (γ.translate c).partition = γ.partition := rfl
+  have h_deriv : ∀ s, deriv (γ.translate c).toFun s = deriv γ.toFun s := fun s => by
+    show deriv (fun u => γ.toFun u + c) s = _; rw [deriv_add_const]
+  by_cases h_mem : t₀ ∈ γ.partition
+  · have h_mem' : t₀ ∈ (γ.translate c).partition := h_part ▸ h_mem
+    simp only [dif_pos h_mem, dif_pos h_mem']
+    rw [tendsto_nhds_unique
+        ((Classical.choose_spec ((γ.translate c).left_deriv_limit t₀ h_mem' ht₀.1)).2.congr h_deriv)
+        (Classical.choose_spec (γ.left_deriv_limit t₀ h_mem ht₀.1)).2,
+      tendsto_nhds_unique
+        ((Classical.choose_spec ((γ.translate c).right_deriv_limit t₀ h_mem' ht₀.2)).2.congr h_deriv)
+        (Classical.choose_spec (γ.right_deriv_limit t₀ h_mem ht₀.2)).2]
+  · have h_mem' : t₀ ∉ (γ.translate c).partition := h_part ▸ h_mem
+    simp only [dif_neg h_mem, dif_neg h_mem']
 
 /-- The external winding contribution at a single crossing point.
 For a closed piecewise C¹ immersion passing through z₀ exactly once,

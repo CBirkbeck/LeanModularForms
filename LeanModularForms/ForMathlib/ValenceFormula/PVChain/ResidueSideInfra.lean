@@ -553,7 +553,8 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
   have hH_sqrt3 : Real.sqrt 3 / 2 < H := by
     nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
   have h_classical := generalizedWindingNumber_eq_classical_away (fdBoundary_HCurve H) z₀ h_off
-  simp only [fdBoundary_HCurve] at h_classical
+  simp only [fdBoundary_HCurve, PiecewiseC1Curve.ofIccPartition_toFun,
+    PiecewiseC1Curve.ofIccPartition_a, PiecewiseC1Curve.ofIccPartition_b] at h_classical
   rw [h_classical]
   suffices h_int : ∫ t in (0:ℝ)..5, (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t = 0 by
     erw [h_int]; simp
