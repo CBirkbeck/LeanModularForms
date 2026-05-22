@@ -298,14 +298,12 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
   have hK₀_nonneg : 0 ≤ K₀ := hK₀_pos.le
   have h_lower_bound : ∀ t, |t - t₀| < δ₁ → ‖γ t - γ t₀‖ ≥ ‖L‖ / 2 * |t - t₀| := by
     intro t ht_lt
-    have ht_lt_L_over_2K : |t - t₀| < ‖L‖ / (2 * K₀) :=
-      ht_lt.trans_le hδ₁_le_L_over_2K
     have h_approx := h_quad t (ht_lt.trans_le hδ₁_le_δ₀)
     have h_smul_norm : ‖(t - t₀) • L‖ = |t - t₀| * ‖L‖ := norm_smul (t - t₀) L
     have h_tri := abs_le.mp (abs_norm_sub_norm_le (γ t - γ t₀) ((t - t₀) • L))
     have hKt_lt : K₀ * |t - t₀| < ‖L‖ / 2 := by
       have h4b : K₀ * |t - t₀| < K₀ * (‖L‖ / (2 * K₀)) :=
-        mul_lt_mul_of_pos_left ht_lt_L_over_2K hK₀_pos
+        mul_lt_mul_of_pos_left (ht_lt.trans_le hδ₁_le_L_over_2K) hK₀_pos
       have h4c : K₀ * (‖L‖ / (2 * K₀)) = ‖L‖ / 2 := by field_simp
       linarith
     nlinarith [abs_nonneg (t - t₀), sq_abs (t - t₀), sq_nonneg (t - t₀)]

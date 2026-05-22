@@ -968,7 +968,6 @@ theorem angle_compat_of_condB_anywhere
   set hOther : ℂ → ℂ := fun z =>
     g z - decomp.analyticRemainder z -
       ∑ s' ∈ S.erase s, decomp.polarPart s' z with hOther_def
-  have hg_an : AnalyticAt ℂ g s := hg
   have h_arem_an : AnalyticAt ℂ decomp.analyticRemainder s :=
     decomp.analyticRemainder_diff.analyticAt
       (hU_open.mem_nhds (hS_in_U (Finset.mem_coe.mpr hs)))
@@ -980,52 +979,34 @@ theorem angle_compat_of_condB_anywhere
     have h_polar_eq : ∀ᶠ z in 𝓝 s,
         decomp.polarPart s' z = ∑ k : Fin (decomp.order s'),
           decomp.coeff s' k / (z - s') ^ (k.val + 1) := by
-      have h_open_ne : IsOpen ({s'}ᶜ : Set ℂ) := isOpen_compl_singleton
-      have h_s_in : s ∈ ({s'}ᶜ : Set ℂ) := by
-        rw [Set.mem_compl_iff, Set.mem_singleton_iff]
-        intro h_eq
-        exact hne h_eq.symm
-      filter_upwards [h_open_ne.mem_nhds h_s_in] with z hz
-      have hz_ne : z ≠ s' := by
-        rw [Set.mem_compl_iff, Set.mem_singleton_iff] at hz
-        exact hz
-      exact decomp.polarPart_eq s' hs'_in z hz_ne
+      filter_upwards [isOpen_compl_singleton.mem_nhds
+        (show s ∈ ({s'}ᶜ : Set ℂ) from fun h_eq => hne h_eq.symm)] with z hz
+      exact decomp.polarPart_eq s' hs'_in z hz
     have h_sum_an : AnalyticAt ℂ
         (fun z => ∑ k : Fin (decomp.order s'),
-          decomp.coeff s' k / (z - s') ^ (k.val + 1)) s := by
-      refine Finset.analyticAt_fun_sum _ fun k _ => ?_
-      have h_pow_ne : ((s : ℂ) - s') ^ (k.val + 1) ≠ 0 :=
-        pow_ne_zero _ (sub_ne_zero.mpr hne.symm)
-      exact analyticAt_const.div ((analyticAt_id.sub analyticAt_const).pow _) h_pow_ne
-    have h_polar_eq_symm : (fun z => ∑ k : Fin (decomp.order s'),
-        decomp.coeff s' k / (z - s') ^ (k.val + 1)) =ᶠ[𝓝 s] decomp.polarPart s' := by
-      filter_upwards [h_polar_eq] with z hz
-      exact hz.symm
-    exact h_sum_an.congr h_polar_eq_symm
-  have hOther_an : AnalyticAt ℂ hOther s := by
-    rw [hOther_def]
-    exact (hg_an.sub h_arem_an).sub h_otherPolar_an
+          decomp.coeff s' k / (z - s') ^ (k.val + 1)) s :=
+      Finset.analyticAt_fun_sum _ fun k _ =>
+        analyticAt_const.div ((analyticAt_id.sub analyticAt_const).pow _)
+          (pow_ne_zero _ (sub_ne_zero.mpr hne.symm))
+    exact h_sum_an.congr (h_polar_eq.mono fun _ hz => hz.symm)
+  have hOther_an : AnalyticAt ℂ hOther s :=
+    (hg.sub h_arem_an).sub h_otherPolar_an
   have h_diff : (fun z => (∑ k : Fin (decomp.order s),
         decomp.coeff s k / (z - s) ^ (k.val + 1)) -
       (∑ k : Fin N, a k / (z - s) ^ (k.val + 1))) =ᶠ[𝓝[≠] s] hOther := by
-    have h_S_finite : (↑S : Set ℂ).Finite := S.finite_toSet
-    have h_S_closed : IsClosed (↑S : Set ℂ) := h_S_finite.isClosed
-    have h_open : IsOpen (U \ ↑S) := hU_open.sdiff h_S_closed
-    have h_s_not_in_other : s ∉ (↑(S.erase s) : Set ℂ) := fun h_mem =>
-      (Finset.mem_erase.mp (Finset.mem_coe.mp h_mem)).1 rfl
     have h_other_S_closed : IsClosed (↑(S.erase s) : Set ℂ) :=
       (S.erase s).finite_toSet.isClosed
     filter_upwards [hf_eq, self_mem_nhdsWithin,
       nhdsWithin_le_nhds (hU_open.mem_nhds (hS_in_U (Finset.mem_coe.mpr hs))),
-      nhdsWithin_le_nhds (h_other_S_closed.isOpen_compl.mem_nhds h_s_not_in_other)]
+      nhdsWithin_le_nhds (h_other_S_closed.isOpen_compl.mem_nhds
+        (show s ∉ (↑(S.erase s) : Set ℂ) from fun h_mem =>
+          (Finset.mem_erase.mp (Finset.mem_coe.mp h_mem)).1 rfl))]
       with z hz hz_ne hz_U hz_not_other
-    have hz_sub : z ≠ s := hz_ne
-    have hz_not_S : z ∉ (↑S : Set ℂ) := by
-      intro h_mem
-      have h_mem' : z ∈ S := Finset.mem_coe.mp h_mem
+    have hz_not_S : z ∉ (↑S : Set ℂ) := fun h_mem => by
       by_cases h_eq : z = s
-      · exact hz_sub h_eq
-      · exact hz_not_other (Finset.mem_coe.mpr (Finset.mem_erase.mpr ⟨h_eq, h_mem'⟩))
+      · exact hz_ne h_eq
+      · exact hz_not_other (Finset.mem_coe.mpr
+          (Finset.mem_erase.mpr ⟨h_eq, Finset.mem_coe.mp h_mem⟩))
     have h_decomp_z : f z = decomp.analyticRemainder z +
         ∑ s' ∈ S, decomp.polarPart s' z := decomp.decomp z ⟨hz_U, hz_not_S⟩
     have h_split : ∑ s' ∈ S, decomp.polarPart s' z =
@@ -1033,7 +1014,7 @@ theorem angle_compat_of_condB_anywhere
       rw [← Finset.add_sum_erase _ _ hs]
     have h_pp_eq : decomp.polarPart s z =
         ∑ k : Fin (decomp.order s), decomp.coeff s k / (z - s) ^ (k.val + 1) :=
-      decomp.polarPart_eq s hs z hz_sub
+      decomp.polarPart_eq s hs z hz_ne
     show (∑ k : Fin (decomp.order s), decomp.coeff s k / (z - s) ^ (k.val + 1)) -
         (∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) =
       g z - decomp.analyticRemainder z -
@@ -1048,20 +1029,14 @@ theorem angle_compat_of_condB_anywhere
       rw [← h_pp_eq]
       linear_combination -h_full + hz
     linear_combination h_combined
-  have h_bridge : ∀ j : ℕ,
-      (if hj : j < decomp.order s then decomp.coeff s ⟨j, hj⟩ else (0 : ℂ)) =
-      (if hj : j < N then a ⟨j, hj⟩ else (0 : ℂ)) :=
-    laurent_extended_coeff_eq_of_diff_analytic (decomp.coeff s) a hOther_an h_diff
-  have h_k_eq := h_bridge k.val
+  have h_k_eq :=
+    laurent_extended_coeff_eq_of_diff_analytic (decomp.coeff s) a hOther_an h_diff k.val
   rw [dif_pos k.isLt] at h_k_eq
+  have h_eq : decomp.coeff s ⟨k.val, k.isLt⟩ = decomp.coeff s k := by congr
   by_cases hk_N : k.val < N
   · rw [dif_pos hk_N] at h_k_eq
-    have h_eq : decomp.coeff s ⟨k.val, k.isLt⟩ = decomp.coeff s k := by congr
-    have h_a_ne : a ⟨k.val, hk_N⟩ ≠ 0 := by rw [← h_k_eq, h_eq]; exact hk_ne
-    exact h_angles ⟨k.val, hk_N⟩ h_a_ne hk
-  · rw [dif_neg hk_N] at h_k_eq
-    have h_eq : decomp.coeff s ⟨k.val, k.isLt⟩ = decomp.coeff s k := by congr
-    rw [h_eq] at h_k_eq
+    exact h_angles ⟨k.val, hk_N⟩ (by rw [← h_k_eq, h_eq]; exact hk_ne) hk
+  · rw [dif_neg hk_N, h_eq] at h_k_eq
     exact absurd h_k_eq hk_ne
 
 /-- **T-BR-Y1 helper.** Angle compatibility for `decomp.coeff` at a smooth crossing,
@@ -1949,29 +1924,25 @@ theorem residueTheorem_crossing_truly_full_spec
   refine residueTheorem_crossing_compositional hU_open hU_ne S hS_in_U f hf γ
     h_null decomp ?_
   intro s hs
-  have h0_ne : (γ.toPwC1Immersion : ℝ → ℂ) 0 ≠ s := by
-    simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 0 =
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 from rfl,
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_zero]
-    exact fun h_eq => hx_notin_S (h_eq ▸ hs)
-  have h1_ne : (γ.toPwC1Immersion : ℝ → ℂ) 1 ≠ s := by
-    simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 1 =
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 from rfl,
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_one]
-    exact fun h_eq => hx_notin_S (h_eq ▸ hs)
   by_cases h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1,
       γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s
   · exact cpv_polarPart_at_uncrossed_pole hU_open hU_ne hS_in_U γ h_null decomp s hs
       h_avoid
   · push Not at h_avoid
     obtain ⟨t₀, ht₀_Icc, h_at_t₀⟩ := h_avoid
+    have h0_ne : (γ.toPwC1Immersion : ℝ → ℂ) 0 ≠ s := by
+      simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 0 =
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 from rfl,
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_zero]
+      exact fun h_eq => hx_notin_S (h_eq ▸ hs)
+    have h1_ne : (γ.toPwC1Immersion : ℝ → ℂ) 1 ≠ s := by
+      simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 1 =
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 from rfl,
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_one]
+      exact fun h_eq => hx_notin_S (h_eq ▸ hs)
     have ht₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 :=
-      ⟨lt_of_le_of_ne ht₀_Icc.1 fun h_eq => h0_ne (by
-        show γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 = s
-        rw [← h_eq] at h_at_t₀; exact h_at_t₀),
-       lt_of_le_of_ne ht₀_Icc.2 fun h_eq => h1_ne (by
-        show γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 = s
-        rw [h_eq] at h_at_t₀; exact h_at_t₀)⟩
+      ⟨lt_of_le_of_ne ht₀_Icc.1 fun h_eq => h0_ne (h_eq ▸ h_at_t₀),
+       lt_of_le_of_ne ht₀_Icc.2 fun h_eq => h1_ne (h_eq.symm ▸ h_at_t₀)⟩
     have h_unique : ∀ t ∈ Set.Icc (0 : ℝ) 1,
         γ.toPwC1Immersion.toPiecewiseC1Path t = s → t = t₀ :=
       fun t ht h_eq => h_unique_cross s hs t ht t₀ ht₀_Icc h_eq h_at_t₀
@@ -1982,14 +1953,10 @@ theorem residueTheorem_crossing_truly_full_spec
       h_flat_n.of_le hn1 γ.toPwC1Immersion.continuous.continuousAt
     have h_cpv_exists := hasCauchyPV_inv_sub_of_flat_one_full γ ht₀_Ioo h_at_t₀
       h_unique h_flat_one
-    let geom : Σ' (L : ℂ),
-        HasCauchyPV (fun z => (z - s)⁻¹)
-          γ.toPwC1Immersion.toPiecewiseC1Path s L :=
-      ⟨h_cpv_exists.choose, h_cpv_exists.choose_spec⟩
     let D : AsymmetricSingleCrossingData
         γ.toPwC1Immersion.toPiecewiseC1Path s :=
       HungerbuhlerWasem.AsymmetricSingleCrossingData.ofClosedImmersion_hasCauchyPV_anywhere
-        γ ht₀_Ioo h_at_t₀ h_unique geom.2
+        γ ht₀_Ioo h_at_t₀ h_unique h_cpv_exists.choose_spec
     by_cases h_part : t₀ ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
     · set L_minus : ℂ :=
         Classical.choose (γ.toPwC1Immersion.left_deriv_limit t₀ h_part)
@@ -2001,51 +1968,29 @@ theorem residueTheorem_crossing_truly_full_spec
         (γ.toPwC1Immersion.left_deriv_limit t₀ h_part)
       have hL_plus_spec := Classical.choose_spec
         (γ.toPwC1Immersion.right_deriv_limit t₀ h_part)
-      have hL_minus_ne : L_minus ≠ 0 := hL_minus_spec.1
-      have hL_plus_ne : L_plus ≠ 0 := hL_plus_spec.1
-      have hL_left : Tendsto
-          (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
-          (𝓝[<] t₀) (𝓝 L_minus) := hL_minus_spec.2
-      have hL_right : Tendsto
-          (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
-          (𝓝[>] t₀) (𝓝 L_plus) := hL_plus_spec.2
-      have h_angle_anywhere : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
-          decomp.coeff s k ≠ 0 →
-          ∃ m : ℤ, ((k.val : ℝ)) * angleAtCrossing γ.toPwC1Immersion t₀ ht₀_Ioo =
-            (m : ℝ) * (2 * Real.pi) :=
-        angle_compat_of_condB_anywhere hU_open hS_in_U γ decomp hCondB hs ht₀_Ioo
-          h_at_t₀
+      have h_angle_anywhere :=
+        angle_compat_of_condB_anywhere hU_open hS_in_U γ decomp hCondB hs ht₀_Ioo h_at_t₀
       have h_B : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val → decomp.coeff s k ≠ 0 →
           (L_plus / (↑‖L_plus‖ : ℂ)) ^ k.val =
-          ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ k.val := by
-        intro k hk hne
-        have hk_two : 2 ≤ k.val + 1 := by omega
-        have h_angle_pwr : ∃ m : ℤ,
-            (((k.val + 1) - 1 : ℕ) : ℝ) *
-              angleAtCrossing γ.toPwC1Immersion t₀ ht₀_Ioo =
-            (m : ℝ) * (2 * Real.pi) := by
-          rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
-          exact h_angle_anywhere k hk hne
+          ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ k.val := fun k hk hne => by
         have h_result :=
-          corner_angle_compat_to_h_B γ ht₀_Ioo h_part hL_minus_ne hL_plus_ne
-            hL_minus_def hL_plus_def hk_two h_angle_pwr
-        rw [show k.val + 1 - 1 = k.val from by omega] at h_result
-        exact h_result
-      have h_HasCauchyPV := cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric_corner
-        hS_in_U γ h_null decomp s hs ht₀_Ioo h_at_t₀ h_unique
-        hL_minus_ne hL_plus_ne hL_right hL_left D n h_flat_n
-        hn1 h_order_le_n h_B
+          corner_angle_compat_to_h_B γ ht₀_Ioo h_part hL_minus_spec.1 hL_plus_spec.1
+            hL_minus_def hL_plus_def (by omega : 2 ≤ k.val + 1)
+            (by rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
+                exact h_angle_anywhere k hk hne)
+        rwa [show k.val + 1 - 1 = k.val from by omega] at h_result
       exact MultiPoleDCT.hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
-        hS_in_U decomp γ hs h_null h_HasCauchyPV
-    · have h_angle_compat : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
-          decomp.coeff s k ≠ 0 →
-          ∃ m : ℤ, ((k.val : ℝ)) * Real.pi = (m : ℝ) * (2 * Real.pi) :=
-        angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs ht₀_Ioo h_at_t₀ h_part
-      have h_HasCauchyPV := cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
-        hS_in_U γ h_null decomp s hs ht₀_Ioo h_at_t₀ h_unique h_part D n h_flat_n
-        hn1 h_order_le_n h_angle_compat
-      exact MultiPoleDCT.hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
-        hS_in_U decomp γ hs h_null h_HasCauchyPV
+        hS_in_U decomp γ hs h_null
+        (cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric_corner
+          hS_in_U γ h_null decomp s hs ht₀_Ioo h_at_t₀ h_unique
+          hL_minus_spec.1 hL_plus_spec.1 hL_plus_spec.2 hL_minus_spec.2 D n h_flat_n
+          hn1 h_order_le_n h_B)
+    · exact MultiPoleDCT.hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
+        hS_in_U decomp γ hs h_null
+        (cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
+          hS_in_U γ h_null decomp s hs ht₀_Ioo h_at_t₀ h_unique h_part D n h_flat_n
+          hn1 h_order_le_n
+          (angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs ht₀_Ioo h_at_t₀ h_part))
 
 end HungerbuhlerWasem
 

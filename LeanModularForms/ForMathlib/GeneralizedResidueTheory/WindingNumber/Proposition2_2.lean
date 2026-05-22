@@ -343,15 +343,13 @@ theorem cpv_integrand_intervalIntegrable (γ : PiecewiseC1Immersion) (z₀ : ℂ
   have hD_nn : 0 ≤ D := (norm_nonneg _).trans (hD γ.a (left_mem_Icc.mpr γ.hab.le))
   set g : ℝ → ℂ := fun t => if ε < ‖γ.toFun t - z₀‖
       then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0 with hg_def
-  have h_bound : ∀ t ∈ Icc c d, ‖g t‖ ≤ ε⁻¹ * D := by
-    intro t ht
+  have h_bound : ∀ t ∈ Icc c d, ‖g t‖ ≤ ε⁻¹ * D := fun t ht => by
     simp only [hg_def]
     split_ifs with h
     · rw [norm_mul, norm_inv]
       exact mul_le_mul (inv_anti₀ hε h.le) (hD t (h_sub ht))
         (norm_nonneg _) (inv_nonneg.mpr hε.le)
-    · simp only [norm_zero]
-      exact mul_nonneg (inv_nonneg.mpr hε.le) hD_nn
+    · simp only [norm_zero]; exact mul_nonneg (inv_nonneg.mpr hε.le) hD_nn
   have hγ_cont_cd : ContinuousOn γ.toFun (Icc c d) := γ.continuous_toFun.mono h_sub
   have hS_meas : MeasurableSet ({t | ε < ‖γ.toFun t - z₀‖} ∩ Icc c d) :=
     measurableSet_norm_gt_Icc ε (hγ_cont_cd.sub continuousOn_const)
@@ -360,71 +358,49 @@ theorem cpv_integrand_intervalIntegrable (γ : PiecewiseC1Immersion) (z₀ : ℂ
     have h_pw : AEStronglyMeasurable
         (S.piecewise (fun t => (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t) (fun _ => (0 : ℂ)))
         volume := by
-      apply AEStronglyMeasurable.piecewise hS_meas
-      · have h_cont_on_S : ContinuousOn (fun t => (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t)
-            (S \ γ.partition) := by
-          intro t ⟨⟨ht_far, ht_Icc⟩, ht_notP⟩
-          have h_ne : γ.toFun t - z₀ ≠ 0 := by
-            intro heq
-            simp only [Set.mem_setOf_eq, heq, norm_zero] at ht_far
-            linarith
-          apply ContinuousWithinAt.mul
-          · have hγ_sub : ContinuousWithinAt (fun t => γ.toFun t - z₀)
-                (S \ γ.partition) t :=
-              (hγ_cont_cd.continuousWithinAt ht_Icc).sub continuousWithinAt_const
-                |>.mono (fun x hx => hx.1.2)
-            exact hγ_sub.inv₀ h_ne
-          · by_cases ht_Ioo : t ∈ Ioo γ.a γ.b
-            · exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
-                  t ht_Ioo ht_notP).continuousWithinAt
-            · have ht_ab := h_sub ht_Icc
-              have : t = γ.a ∨ t = γ.b := by
-                simp only [Set.mem_Ioo, not_and, not_lt] at ht_Ioo
-                rcases ht_ab.1.lt_or_eq with h | h
-                · right
-                  exact le_antisymm ht_ab.2 (ht_Ioo h)
-                · left
-                  exact h.symm
-              rcases this with rfl | rfl
-              · exact absurd γ.toPiecewiseC1Curve.endpoints_in_partition.1 ht_notP
-              · exact absurd γ.toPiecewiseC1Curve.endpoints_in_partition.2 ht_notP
-        have h_diff_meas : MeasurableSet (S \ γ.partition) :=
-          hS_meas.diff γ.partition.finite_toSet.measurableSet
-        have h_P_null : volume (↑γ.partition ∩ S) = 0 :=
-          (γ.partition.finite_toSet.inter_of_left S).measure_zero volume
-        have h_eq_S : S = (S \ γ.partition) ∪ (↑γ.partition ∩ S) := by
-          ext x
-          simp only [S, Set.mem_union, Set.mem_diff, Set.mem_inter_iff]
-          tauto
-        have h_restrict_eq : volume.restrict S =
-            volume.restrict ((S \ γ.partition) ∪ (↑γ.partition ∩ S)) := by
-          rw [← h_eq_S]
-        rw [h_restrict_eq, aestronglyMeasurable_union_iff]
-        exact ⟨h_cont_on_S.aestronglyMeasurable h_diff_meas,
-          (Measure.restrict_zero_set h_P_null).symm ▸ aestronglyMeasurable_zero_measure _⟩
-      · exact aestronglyMeasurable_const
-    have h_eq_ae : g =ᵐ[volume.restrict (Icc c d)]
-        S.piecewise (fun t => (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t) (fun _ => 0) := by
-      filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
-      simp only [hg_def, piecewise]
-      split_ifs with h1 h2 h2
-      · rfl
-      · exfalso
-        exact h2 ⟨h1, ht⟩
-      · exfalso
-        exact h1 h2.1
-      · rfl
-    exact (h_pw.mono_measure Measure.restrict_le_self).congr h_eq_ae.symm
-  have hf_int : IntegrableOn g (Icc c d) volume :=
-    IntegrableOn.of_bound
-      (by
-        rw [Real.volume_Icc]
-        exact ENNReal.ofReal_lt_top)
-      h_meas (ε⁻¹ * D)
-      (by
-        filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
-        exact h_bound t ht)
-  exact (uIcc_of_le hcd ▸ hf_int).intervalIntegrable
+      refine AEStronglyMeasurable.piecewise hS_meas ?_ aestronglyMeasurable_const
+      have h_cont_on_S : ContinuousOn (fun t => (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t)
+          (S \ γ.partition) := by
+        intro t ⟨⟨ht_far, ht_Icc⟩, ht_notP⟩
+        have h_ne : γ.toFun t - z₀ ≠ 0 := fun heq => by
+          simp only [Set.mem_setOf_eq, heq, norm_zero] at ht_far; linarith
+        refine ContinuousWithinAt.mul
+          (((hγ_cont_cd.continuousWithinAt ht_Icc).sub continuousWithinAt_const
+            |>.mono (fun x hx => hx.1.2)).inv₀ h_ne) ?_
+        by_cases ht_Ioo : t ∈ Ioo γ.a γ.b
+        · exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
+              t ht_Ioo ht_notP).continuousWithinAt
+        · have ht_ab := h_sub ht_Icc
+          simp only [Set.mem_Ioo, not_and, not_lt] at ht_Ioo
+          have : t = γ.a ∨ t = γ.b := by
+            rcases ht_ab.1.lt_or_eq with h | h
+            · exact Or.inr (le_antisymm ht_ab.2 (ht_Ioo h))
+            · exact Or.inl h.symm
+          rcases this with rfl | rfl
+          · exact absurd γ.toPiecewiseC1Curve.endpoints_in_partition.1 ht_notP
+          · exact absurd γ.toPiecewiseC1Curve.endpoints_in_partition.2 ht_notP
+      have h_P_null : volume (↑γ.partition ∩ S) = 0 :=
+        (γ.partition.finite_toSet.inter_of_left S).measure_zero volume
+      have h_eq_S : S = (S \ γ.partition) ∪ (↑γ.partition ∩ S) := by
+        ext x; simp only [S, Set.mem_union, Set.mem_diff, Set.mem_inter_iff]; tauto
+      rw [show volume.restrict S =
+          volume.restrict ((S \ γ.partition) ∪ (↑γ.partition ∩ S)) from by rw [← h_eq_S],
+        aestronglyMeasurable_union_iff]
+      exact ⟨h_cont_on_S.aestronglyMeasurable
+        (hS_meas.diff γ.partition.finite_toSet.measurableSet),
+        (Measure.restrict_zero_set h_P_null).symm ▸ aestronglyMeasurable_zero_measure _⟩
+    refine (h_pw.mono_measure Measure.restrict_le_self).congr ?_
+    filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
+    symm; simp only [hg_def, piecewise]
+    split_ifs with h1 h2 h2
+    · rfl
+    · exact absurd ⟨h1, ht⟩ h2
+    · exact absurd h2.1 h1
+    · rfl
+  exact (uIcc_of_le hcd ▸
+    IntegrableOn.of_bound (Real.volume_Icc ▸ ENNReal.ofReal_lt_top) h_meas (ε⁻¹ * D)
+      (by filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
+          exact h_bound t ht)).intervalIntegrable
 
 /-- Helper: CPV of `(z - z₀)⁻¹` exists on any sub-interval `[c, d] ⊆ [a, b]`
 where there are no crossings. This follows directly from `cpv_avoidance`. -/

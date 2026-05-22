@@ -282,12 +282,9 @@ theorem residue_of_laurent_expansion {f g : ℂ → ℂ} {s : ℂ} (N : ℕ) (a 
           · simp
         · refine Finset.sum_congr rfl fun k _ => ?_
           by_cases hk : k.val = 0
-          · have heq : k = ⟨0, hN_pos⟩ := Fin.ext hk
-            simp [heq]
-          · have hk1 : k.val ≥ 1 := by omega
-            simp [hk, hk1]
-      rw [hsplit]
-      ring
+          · simp [show k = ⟨0, hN_pos⟩ from Fin.ext hk]
+          · simp [hk, show k.val ≥ 1 from by omega]
+      rw [hsplit]; ring
     unfold residue
     apply Filter.Tendsto.limUnder_eq
     apply tendsto_nhds_of_eventually_eq
@@ -297,89 +294,66 @@ theorem residue_of_laurent_expansion {f g : ℂ → ℂ} {s : ℂ} (N : ℕ) (a 
     rw [eventually_nhdsWithin_iff]
     filter_upwards [Iio_mem_nhds (lt_min hrg_pos hrf_pos)] with r hr_lt hr_pos
     simp only [mem_Ioi, mem_Iio] at hr_pos hr_lt
-    have hr_lt_rg : r < rg := lt_of_lt_of_le hr_lt (min_le_left _ _)
-    have hr_lt_rf : r < rf := lt_of_lt_of_le hr_lt (min_le_right _ _)
+    have hr_lt_rg : r < rg := hr_lt.trans_le (min_le_left _ _)
+    have hr_lt_rf : r < rf := hr_lt.trans_le (min_le_right _ _)
     have hr_ne : r ≠ 0 := ne_of_gt hr_pos
+    have hs_notin : s ∉ sphere s |r| := by
+      rw [mem_sphere, dist_self, abs_of_pos hr_pos]; exact hr_ne.symm
     have h_eq_on : EqOn f (fun z => a ⟨0, hN_pos⟩ * (z - s)⁻¹ + rest z) (sphere s r) := by
       intro z hz
-      have h_ne : z ≠ s := by
-        intro heq
-        rw [heq, mem_sphere, dist_self] at hz
-        linarith
-      have h_mem_ball : z ∈ ball s rf := by
-        rw [mem_ball, mem_sphere.mp hz]
-        exact hr_lt_rf
-      have h_mem : z ∈ ball s rf ∩ {s}ᶜ :=
-        ⟨h_mem_ball, mem_compl_singleton_iff.mpr h_ne⟩
-      have := hrf_eq h_mem
+      have h_ne : z ≠ s := fun heq => by
+        rw [heq, mem_sphere, dist_self] at hz; linarith
+      have := hrf_eq ⟨by rw [mem_ball, mem_sphere.mp hz]; exact hr_lt_rf,
+        mem_compl_singleton_iff.mpr h_ne⟩
       simp only [mem_setOf_eq] at this
       rw [this, div_eq_mul_inv]
     have h_ci_g : CircleIntegrable g s r :=
       ((hg_ball.continuousOn.mono (closedBall_subset_ball hr_lt_rg)).mono
         sphere_subset_closedBall).circleIntegrable hr_pos.le
-    have hs_notin : s ∉ sphere s |r| := by
-      rw [mem_sphere, dist_self, abs_of_pos hr_pos]
-      exact hr_ne.symm
     have h_ci_higher_each : ∀ k : Fin N, CircleIntegrable
         (fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0) s r := by
       intro k
       by_cases hk : k.val ≥ 1
       · simp only [hk, ↓reduceIte]
-        have h_eq : (fun z => a k / (z - s) ^ (k.val + 1)) =
-            fun z => a k * (z - s) ^ (-((k.val + 1 : ℕ) : ℤ)) := by
-          funext z
-          rw [div_eq_mul_inv, zpow_neg, zpow_natCast]
-        rw [h_eq]
-        apply CircleIntegrable.const_smul
-        change CircleIntegrable (fun z => (z - s) ^ (-((k.val + 1 : ℕ) : ℤ))) s r
+        rw [show (fun z => a k / (z - s) ^ (k.val + 1)) =
+            fun z => a k * (z - s) ^ (-((k.val + 1 : ℕ) : ℤ)) by
+          funext z; rw [div_eq_mul_inv, zpow_neg, zpow_natCast]]
+        refine CircleIntegrable.const_smul ?_
+        show CircleIntegrable (fun z => (z - s) ^ (-((k.val + 1 : ℕ) : ℤ))) s r
         rw [circleIntegrable_sub_zpow_iff]
         exact Or.inr (Or.inr hs_notin)
-      · simp only [hk, ↓reduceIte]
-        exact circleIntegrable_const _ _ _
+      · simp only [hk, ↓reduceIte]; exact circleIntegrable_const _ _ _
     have h_ci_higher_sum : CircleIntegrable
         (fun z => ∑ k : Fin N, if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0)
         s r := by
-      change CircleIntegrable
-        (fun z => ∑ k ∈ Finset.univ,
-          if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0) s r
-      have h_eq : (fun z => ∑ k ∈ Finset.univ,
+      rw [show (fun z => ∑ k : Fin N,
           (if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0 : ℂ)) =
           ∑ k ∈ (Finset.univ : Finset (Fin N)),
-            fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0 := by
-        funext z
-        rw [Finset.sum_apply]
-      rw [h_eq]
+            fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0 from by
+        funext z; rw [Finset.sum_apply]]
       exact CircleIntegrable.sum _ (fun k _ => h_ci_higher_each k)
-    have h_ci_rest : CircleIntegrable rest s r := by
-      simp only [hrest_def]
-      exact h_ci_g.add h_ci_higher_sum
+    have h_ci_rest : CircleIntegrable rest s r := h_ci_g.add h_ci_higher_sum
     have h_ci_a0_inv : CircleIntegrable (fun z => a ⟨0, hN_pos⟩ * (z - s)⁻¹) s r :=
-      (circleIntegrable_sub_inv_iff.mpr (Or.inr (by
-        rw [mem_sphere, dist_self, abs_of_pos hr_pos]
-        exact hr_ne.symm))).const_fun_smul
+      (circleIntegrable_sub_inv_iff.mpr (Or.inr hs_notin)).const_fun_smul
     rw [circleIntegral.integral_congr hr_pos.le h_eq_on,
       circleIntegral.integral_add h_ci_a0_inv h_ci_rest,
       circleIntegral.integral_const_mul,
       circleIntegral.integral_sub_center_inv s hr_ne]
     have h_int_g : ∮ z in C(s, r), g z = 0 := by
-      apply circleIntegral_eq_zero_of_differentiable_on_off_countable hr_pos.le
+      refine circleIntegral_eq_zero_of_differentiable_on_off_countable hr_pos.le
         countable_empty
         (hg_ball.continuousOn.mono (closedBall_subset_ball hr_lt_rg))
-      intro z ⟨hz, _⟩
+        (fun z ⟨hz, _⟩ => ?_)
       exact (hg_ball z (ball_subset_ball hr_lt_rg.le hz)).differentiableAt
     have h_int_rest : ∮ z in C(s, r), rest z = 0 := by
-      simp only [hrest_def]
-      rw [circleIntegral.integral_add h_ci_g h_ci_higher_sum, h_int_g, zero_add]
+      rw [show rest = fun z => g z + _ from rfl,
+        circleIntegral.integral_add h_ci_g h_ci_higher_sum, h_int_g, zero_add]
       exact circleIntegral_higherOrder_sum_eq_zero hr_pos a
-    rw [h_int_rest, add_zero]
-    field_simp
-  · have hN_zero : N = 0 := by omega
-    subst hN_zero
+    rw [h_int_rest, add_zero]; field_simp
+  · obtain rfl : N = 0 := by omega
     rw [dif_neg (by omega)]
     have hf_eq_g : ∀ᶠ z in 𝓝[≠] s, f z = g z := by
-      filter_upwards [hf_eq] with z hz
-      rw [hz]
-      simp
+      filter_upwards [hf_eq] with z hz; rw [hz]; simp
     rw [residue_congr hf_eq_g]
     exact residue_eq_zero_of_analyticAt hg
 

@@ -96,38 +96,31 @@ private theorem exists_right_cutoff_local
         ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε) := by
   classical
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-  have h_t₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 := by
-    have h_minus_in_01 :=
-      h_window_Icc (⟨le_rfl, by linarith⟩ : (t₀ - r) ∈ Set.Icc (t₀ - r) (t₀ + r))
-    have h_plus_in_01 :=
-      h_window_Icc (⟨by linarith, le_rfl⟩ : (t₀ + r) ∈ Set.Icc (t₀ - r) (t₀ + r))
-    exact ⟨by linarith [h_minus_in_01.1], by linarith [h_plus_in_01.2]⟩
+  have h_t₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 :=
+    ⟨by linarith [(h_window_Icc ⟨le_rfl, by linarith⟩ :
+        (t₀ - r) ∈ Set.Icc (0 : ℝ) 1).1],
+     by linarith [(h_window_Icc ⟨by linarith, le_rfl⟩ :
+        (t₀ + r) ∈ Set.Icc (0 : ℝ) 1).2]⟩
   obtain ⟨L, hL_ne, hL_right⟩ := exists_right_deriv_limit γ h_t₀_Ioo
-  have hγf_cont : ContinuousAt γf t₀ :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousAt
-  have hγf_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γf t :=
-    eventually_differentiable_right γ h_t₀_Ioo
-  obtain ⟨r₀, hr₀_pos, hmono⟩ :=
-    norm_sub_strictMonoOn_right h_at hL_ne hL_right hγf_cont hγf_diff
-  set r_eff_mono : ℝ := min r₀ (r / 2)
-  have hr_eff_pos : 0 < r_eff_mono := lt_min hr₀_pos (by linarith)
-  have hr_eff_le_r₀ : r_eff_mono ≤ r₀ := min_le_left _ _
-  have hr_eff_le_r_half : r_eff_mono ≤ r / 2 := min_le_right _ _
-  have hr_eff_lt_r : r_eff_mono < r := by linarith
-  have hmono_r : StrictMonoOn (fun t => ‖γf t - s‖) (Set.Icc t₀ (t₀ + r_eff_mono)) :=
-    hmono.mono (Set.Icc_subset_Icc le_rfl (by linarith))
-  set f : ℝ → ℝ := fun τ => ‖γf (t₀ + τ) - s‖
-  have hf₀ : f 0 = 0 := by
-    change ‖γf (t₀ + 0) - s‖ = 0
-    rw [add_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
   have hγ_cont_all : Continuous γf :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+  obtain ⟨r₀, hr₀_pos, hmono⟩ :=
+    norm_sub_strictMonoOn_right h_at hL_ne hL_right hγ_cont_all.continuousAt
+      (eventually_differentiable_right γ h_t₀_Ioo)
+  set r_eff_mono : ℝ := min r₀ (r / 2)
+  have hr_eff_pos : 0 < r_eff_mono := lt_min hr₀_pos (by linarith)
+  have hr_eff_lt_r : r_eff_mono < r := (min_le_right _ _).trans_lt (by linarith)
+  have hmono_r : StrictMonoOn (fun t => ‖γf t - s‖) (Set.Icc t₀ (t₀ + r_eff_mono)) :=
+    hmono.mono (Set.Icc_subset_Icc le_rfl (by linarith [min_le_left r₀ (r/2)]))
+  set f : ℝ → ℝ := fun τ => ‖γf (t₀ + τ) - s‖
+  have hf₀ : f 0 = 0 := by
+    show ‖γf (t₀ + 0) - s‖ = 0
+    rw [add_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
   have hf_cont : ContinuousOn f (Set.Icc 0 r_eff_mono) :=
     (((hγ_cont_all.comp (continuous_const.add continuous_id)).sub
       continuous_const).norm).continuousOn
-  have hf_strict : StrictMonoOn f (Set.Icc 0 r_eff_mono) := by
-    intro a ha b hb hab
-    exact hmono_r ⟨by linarith [ha.1], by linarith [ha.2]⟩
+  have hf_strict : StrictMonoOn f (Set.Icc 0 r_eff_mono) := fun a ha b hb hab =>
+    hmono_r ⟨by linarith [ha.1], by linarith [ha.2]⟩
       ⟨by linarith [hb.1], by linarith [hb.2]⟩ (by linarith)
   have hf_r_pos : 0 < f r_eff_mono := by
     rw [show (0 : ℝ) = f 0 from hf₀.symm]
@@ -145,12 +138,14 @@ private theorem exists_right_cutoff_local
       (strict_mono_inverse_exists_local f hr_eff_pos hf₀ hf_strict hf_cont ε h).choose
     else r_eff_mono / 2 with hδ_def
   have hδ_spec : ∀ ε, 0 < ε → ε < f r_eff_mono →
-      δ_right ε ∈ Set.Ioo (0 : ℝ) r_eff_mono ∧ f (δ_right ε) = ε := by
-    intro ε hε_pos hε_lt
+      δ_right ε ∈ Set.Ioo (0 : ℝ) r_eff_mono ∧ f (δ_right ε) = ε := fun ε hε_pos hε_lt => by
     have hε_in : ε ∈ Set.Ioo (0 : ℝ) (f r_eff_mono) := ⟨hε_pos, hε_lt⟩
     simp only [hδ_def, dif_pos hε_in]
-    exact
-      (strict_mono_inverse_exists_local f hr_eff_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
+    exact (strict_mono_inverse_exists_local f hr_eff_pos hf₀ hf_strict hf_cont
+      ε hε_in).choose_spec.1
+  have h_eq_t : ∀ t, f (t - t₀) = ‖γf t - s‖ := fun t => by
+    show ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
+    rw [show t₀ + (t - t₀) = t by ring]
   refine ⟨δ_right, threshold, hthresh_pos, ?_, ?_, ?_, ?_, ?_⟩
   · exact fun ε hε_pos hε_lt =>
       (hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).1.1
@@ -159,8 +154,7 @@ private theorem exists_right_cutoff_local
   · exact fun ε hε_pos hε_lt =>
       (hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).2
   · intro ε hε_pos hε_lt t ht_gt ht_le
-    have hε_lt_fr : ε < f r_eff_mono := hε_lt.trans_le hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
     by_cases ht_le_eff : t ≤ t₀ + r_eff_mono
     · have ht_τ_mem : t - t₀ ∈ Set.Icc (0 : ℝ) r_eff_mono :=
         ⟨by linarith [hδ_in.1], by linarith⟩
@@ -168,39 +162,22 @@ private theorem exists_right_cutoff_local
         ⟨hδ_in.1.le, hδ_in.2.le⟩
       have h_lt : f (δ_right ε) < f (t - t₀) :=
         hf_strict hδ_τ_mem ht_τ_mem (by linarith)
-      rw [hfδ] at h_lt
-      have h_eq : f (t - t₀) = ‖γf t - s‖ := by
-        change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
-        rw [show t₀ + (t - t₀) = t by ring]
-      rwa [h_eq] at h_lt
+      rw [hfδ, h_eq_t] at h_lt; exact h_lt
     · push Not at ht_le_eff
-      have h_ge_m : m ≤ ‖γf t - s‖ :=
-        h_far_right t ⟨ht_le_eff.le, ht_le⟩
-      linarith [hε_lt.trans_le hthresh_le_m]
+      linarith [h_far_right t ⟨ht_le_eff.le, ht_le⟩, hε_lt.trans_le hthresh_le_m]
   · intro ε hε_pos hε_lt t ht_ge hgap
-    have hε_lt_fr : ε < f r_eff_mono := hε_lt.trans_le hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
-    have ht_τ_mem : t - t₀ ∈ Set.Icc (0 : ℝ) r_eff_mono := by
-      refine ⟨by linarith, ?_⟩
-      linarith [hδ_in.2]
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
+    have ht_τ_mem : t - t₀ ∈ Set.Icc (0 : ℝ) r_eff_mono :=
+      ⟨by linarith, by linarith [hδ_in.2]⟩
     have hδ_τ_mem : δ_right ε ∈ Set.Icc (0 : ℝ) r_eff_mono :=
       ⟨hδ_in.1.le, hδ_in.2.le⟩
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]
-      exact hε_pos.le
-    · have ht_τ_pos : (0 : ℝ) < t - t₀ := by
-        rcases lt_or_eq_of_le ht_ge with h | h
-        · linarith
-        · exact absurd h.symm h_t_eq
-      have h_le : f (t - t₀) ≤ f (δ_right ε) := by
+    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact hε_pos.le
+    · have h_le : f (t - t₀) ≤ f (δ_right ε) := by
         rcases lt_or_eq_of_le hgap with h_lt | h_eq
         · exact (hf_strict ht_τ_mem hδ_τ_mem h_lt).le
         · rw [show t - t₀ = δ_right ε from h_eq]
-      rw [hfδ] at h_le
-      have h_eq : f (t - t₀) = ‖γf t - s‖ := by
-        change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
-        rw [show t₀ + (t - t₀) = t by ring]
-      rwa [h_eq] at h_le
+      rw [hfδ, h_eq_t] at h_le; exact h_le
 
 /-- **Localized left cutoff existence (corner-friendly).** Symmetric
 counterpart of `exists_right_cutoff_local`. -/
@@ -225,38 +202,31 @@ private theorem exists_left_cutoff_local
         ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε) := by
   classical
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-  have h_t₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 := by
-    have h_minus_in_01 :=
-      h_window_Icc (⟨le_rfl, by linarith⟩ : (t₀ - r) ∈ Set.Icc (t₀ - r) (t₀ + r))
-    have h_plus_in_01 :=
-      h_window_Icc (⟨by linarith, le_rfl⟩ : (t₀ + r) ∈ Set.Icc (t₀ - r) (t₀ + r))
-    exact ⟨by linarith [h_minus_in_01.1], by linarith [h_plus_in_01.2]⟩
+  have h_t₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 :=
+    ⟨by linarith [(h_window_Icc ⟨le_rfl, by linarith⟩ :
+        (t₀ - r) ∈ Set.Icc (0 : ℝ) 1).1],
+     by linarith [(h_window_Icc ⟨by linarith, le_rfl⟩ :
+        (t₀ + r) ∈ Set.Icc (0 : ℝ) 1).2]⟩
   obtain ⟨L, hL_ne, hL_left⟩ := exists_left_deriv_limit γ h_t₀_Ioo
-  have hγf_cont : ContinuousAt γf t₀ :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousAt
-  have hγf_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γf t :=
-    eventually_differentiable_left γ h_t₀_Ioo
-  obtain ⟨r₀, hr₀_pos, hanti⟩ :=
-    norm_sub_strictAntiOn_left h_at hL_ne hL_left hγf_cont hγf_diff
-  set r_eff_mono : ℝ := min r₀ (r / 2)
-  have hr_eff_pos : 0 < r_eff_mono := lt_min hr₀_pos (by linarith)
-  have hr_eff_le_r₀ : r_eff_mono ≤ r₀ := min_le_left _ _
-  have hr_eff_le_r_half : r_eff_mono ≤ r / 2 := min_le_right _ _
-  have hr_eff_lt_r : r_eff_mono < r := by linarith
-  have hanti_r : StrictAntiOn (fun t => ‖γf t - s‖) (Set.Icc (t₀ - r_eff_mono) t₀) :=
-    hanti.mono (Set.Icc_subset_Icc (by linarith) le_rfl)
-  set f : ℝ → ℝ := fun τ => ‖γf (t₀ - τ) - s‖
-  have hf₀ : f 0 = 0 := by
-    change ‖γf (t₀ - 0) - s‖ = 0
-    rw [sub_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
   have hγ_cont_all : Continuous γf :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+  obtain ⟨r₀, hr₀_pos, hanti⟩ :=
+    norm_sub_strictAntiOn_left h_at hL_ne hL_left hγ_cont_all.continuousAt
+      (eventually_differentiable_left γ h_t₀_Ioo)
+  set r_eff_mono : ℝ := min r₀ (r / 2)
+  have hr_eff_pos : 0 < r_eff_mono := lt_min hr₀_pos (by linarith)
+  have hr_eff_lt_r : r_eff_mono < r := (min_le_right _ _).trans_lt (by linarith)
+  have hanti_r : StrictAntiOn (fun t => ‖γf t - s‖) (Set.Icc (t₀ - r_eff_mono) t₀) :=
+    hanti.mono (Set.Icc_subset_Icc (by linarith [min_le_left r₀ (r/2)]) le_rfl)
+  set f : ℝ → ℝ := fun τ => ‖γf (t₀ - τ) - s‖
+  have hf₀ : f 0 = 0 := by
+    show ‖γf (t₀ - 0) - s‖ = 0
+    rw [sub_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
   have hf_cont : ContinuousOn f (Set.Icc 0 r_eff_mono) :=
     (((hγ_cont_all.comp (continuous_const.sub continuous_id)).sub
       continuous_const).norm).continuousOn
-  have hf_strict : StrictMonoOn f (Set.Icc 0 r_eff_mono) := by
-    intro a ha b hb hab
-    exact hanti_r ⟨by linarith [hb.2], by linarith [hb.1]⟩
+  have hf_strict : StrictMonoOn f (Set.Icc 0 r_eff_mono) := fun a ha b hb hab =>
+    hanti_r ⟨by linarith [hb.2], by linarith [hb.1]⟩
       ⟨by linarith [ha.2], by linarith [ha.1]⟩ (by linarith)
   have hf_r_pos : 0 < f r_eff_mono := by
     rw [show (0 : ℝ) = f 0 from hf₀.symm]
@@ -274,12 +244,14 @@ private theorem exists_left_cutoff_local
       (strict_mono_inverse_exists_local f hr_eff_pos hf₀ hf_strict hf_cont ε h).choose
     else r_eff_mono / 2 with hδ_def
   have hδ_spec : ∀ ε, 0 < ε → ε < f r_eff_mono →
-      δ_left ε ∈ Set.Ioo (0 : ℝ) r_eff_mono ∧ f (δ_left ε) = ε := by
-    intro ε hε_pos hε_lt
+      δ_left ε ∈ Set.Ioo (0 : ℝ) r_eff_mono ∧ f (δ_left ε) = ε := fun ε hε_pos hε_lt => by
     have hε_in : ε ∈ Set.Ioo (0 : ℝ) (f r_eff_mono) := ⟨hε_pos, hε_lt⟩
     simp only [hδ_def, dif_pos hε_in]
-    exact
-      (strict_mono_inverse_exists_local f hr_eff_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
+    exact (strict_mono_inverse_exists_local f hr_eff_pos hf₀ hf_strict hf_cont
+      ε hε_in).choose_spec.1
+  have h_eq_t : ∀ t, f (t₀ - t) = ‖γf t - s‖ := fun t => by
+    show ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
+    rw [show t₀ - (t₀ - t) = t by ring]
   refine ⟨δ_left, threshold, hthresh_pos, ?_, ?_, ?_, ?_, ?_⟩
   · exact fun ε hε_pos hε_lt =>
       (hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).1.1
@@ -288,8 +260,7 @@ private theorem exists_left_cutoff_local
   · exact fun ε hε_pos hε_lt =>
       (hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).2
   · intro ε hε_pos hε_lt t ht_ge ht_lt
-    have hε_lt_fr : ε < f r_eff_mono := hε_lt.trans_le hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
     by_cases ht_ge_eff : t₀ - r_eff_mono ≤ t
     · have ht_τ_mem : t₀ - t ∈ Set.Icc (0 : ℝ) r_eff_mono :=
         ⟨by linarith [hδ_in.1], by linarith⟩
@@ -297,40 +268,23 @@ private theorem exists_left_cutoff_local
         ⟨hδ_in.1.le, hδ_in.2.le⟩
       have h_lt : f (δ_left ε) < f (t₀ - t) :=
         hf_strict hδ_τ_mem ht_τ_mem (by linarith)
-      rw [hfδ] at h_lt
-      have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
-        change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
-        rw [show t₀ - (t₀ - t) = t by ring]
-      rwa [h_eq] at h_lt
+      rw [hfδ, h_eq_t] at h_lt; exact h_lt
     · push Not at ht_ge_eff
-      have h_ge_m : m ≤ ‖γf t - s‖ :=
-        h_far_left t ⟨ht_ge, ht_ge_eff.le⟩
-      linarith [hε_lt.trans_le hthresh_le_m]
+      linarith [h_far_left t ⟨ht_ge, ht_ge_eff.le⟩, hε_lt.trans_le hthresh_le_m]
   · intro ε hε_pos hε_lt t ht_ge ht_le
-    have hε_lt_fr : ε < f r_eff_mono := hε_lt.trans_le hthresh_le_fr
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos hε_lt_fr
-    have ht_τ_mem : t₀ - t ∈ Set.Icc (0 : ℝ) r_eff_mono := by
-      refine ⟨by linarith, ?_⟩
-      linarith [hδ_in.2]
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
+    have ht_τ_mem : t₀ - t ∈ Set.Icc (0 : ℝ) r_eff_mono :=
+      ⟨by linarith, by linarith [hδ_in.2]⟩
     have hδ_τ_mem : δ_left ε ∈ Set.Icc (0 : ℝ) r_eff_mono :=
       ⟨hδ_in.1.le, hδ_in.2.le⟩
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]
-      exact hε_pos.le
-    · have ht_τ_pos : (0 : ℝ) < t₀ - t := by
-        rcases lt_or_eq_of_le ht_le with h | h
-        · linarith
-        · exact absurd h h_t_eq
-      have h_le : f (t₀ - t) ≤ f (δ_left ε) := by
+    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact hε_pos.le
+    · have h_le : f (t₀ - t) ≤ f (δ_left ε) := by
         rcases lt_or_eq_of_le ht_ge with h_lt | h_eq
         · exact (hf_strict ht_τ_mem hδ_τ_mem (by linarith)).le
         · have : t₀ - t = δ_left ε := by linarith [h_eq]
           rw [this]
-      rw [hfδ] at h_le
-      have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
-        change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
-        rw [show t₀ - (t₀ - t) = t by ring]
-      rwa [h_eq] at h_le
+      rw [hfδ, h_eq_t] at h_le; exact h_le
 
 /-- **Per-crossing local cutoffs** for a multi-crossing scenario. Each
 crossing parameter `t₀` is equipped with its own asymmetric cutoffs

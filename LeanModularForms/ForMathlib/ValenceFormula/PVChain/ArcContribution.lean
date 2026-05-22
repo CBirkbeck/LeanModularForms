@@ -139,20 +139,16 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
   set K' := {t ∈ Set.Icc (1:ℝ) 3 | ∀ s ∈ S_arc, ε ≤ ‖γ t - (s : ℂ)‖}
   have hK'_compact : IsCompact K' := by
     refine IsCompact.of_isClosed_subset isCompact_Icc ?_ (fun _t ⟨ht, _⟩ => ht)
-    apply IsClosed.inter isClosed_Icc
-    have : IsClosed (⋂ (s : ℂ) (_ : s ∈ S_arc), {t : ℝ | ε ≤ ‖γ t - s‖}) :=
-      isClosed_iInter fun s => isClosed_iInter fun _ =>
-        isClosed_le (f := fun _ => ε) (g := fun t => ‖γ t - s‖) continuous_const
-          (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
-    convert this using 1
-    ext t
-    simp only [Set.mem_iInter, Set.mem_setOf]
-    exact Iff.rfl
+    refine IsClosed.inter isClosed_Icc ?_
+    convert (isClosed_iInter fun s => isClosed_iInter fun _ =>
+      isClosed_le (f := fun _ => ε) (g := fun t => ‖γ t - s‖) continuous_const
+        (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
+      : IsClosed (⋂ (s : ℂ) (_ : s ∈ S_arc), {t : ℝ | ε ≤ ‖γ t - s‖})) using 1
+    ext t; simp only [Set.mem_iInter, Set.mem_setOf]; exact Iff.rfl
   set K := {t ∈ Set.uIoc (1:ℝ) 3 | ¬∃ s ∈ (↑S_arc : Set ℂ), ‖γ t - s‖ ≤ ε}
-  have hK_subset_K' : K ⊆ K' := by
-    intro t ⟨ht_uioc, h_not_near⟩
+  have hK_subset_K' : K ⊆ K' := fun t ⟨ht_uioc, h_not_near⟩ => by
     have ht_Ioc : t ∈ Set.Ioc 1 3 := by rwa [Set.uIoc_of_le (by norm_num)] at ht_uioc
-    refine ⟨⟨le_of_lt ht_Ioc.1, ht_Ioc.2⟩, fun s hs => ?_⟩
+    refine ⟨⟨ht_Ioc.1.le, ht_Ioc.2⟩, fun s hs => ?_⟩
     by_contra! h_contra
     exact h_not_near ⟨s, Finset.mem_coe.mpr hs, h_contra.le⟩
   have h_cont : ContinuousOn (fun t => logDeriv g (γ t) * deriv γ t) K' := by
@@ -161,35 +157,28 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
       rintro rfl
       have h1 := h_far _ (sArcOfS_rho_plus_one_in S)
       rw [show γ 1 = ellipticPointRhoPlusOne from fdBoundary_H_at_one H,
-          sub_self, norm_zero] at h1
-      linarith
+          sub_self, norm_zero] at h1; linarith
     have ht_not_3 : t ≠ 3 := by
       rintro rfl
       have h3 := h_far _ (sArcOfS_rho_in S)
       rw [show γ 3 = ellipticPointRho from fdBoundary_H_at_three H,
-          sub_self, norm_zero] at h3
-      linarith
+          sub_self, norm_zero] at h3; linarith
     have ht_ioo : t ∈ Set.Ioo (1:ℝ) 3 :=
       ⟨lt_of_le_of_ne ht1 (Ne.symm ht_not_1), lt_of_le_of_ne ht3 ht_not_3⟩
     have h_ne : g (γ t) ≠ 0 := fun h_zero => by
-      have h_in := h_oncurve t ht_ioo h_zero
-      rw [Finset.mem_coe] at h_in
-      have h_dist := h_far _ h_in
-      rw [sub_self, norm_zero] at h_dist
-      linarith
+      have h_dist := h_far _ (Finset.mem_coe.mp (h_oncurve t ht_ioo h_zero))
+      rw [sub_self, norm_zero] at h_dist; linarith
     apply ContinuousAt.continuousWithinAt
-    apply ContinuousAt.mul
-    · apply ContinuousAt.comp
-      · have h_im : 0 < (γ t).im := by
-          rw [show γ t = _ from fdBoundary_H_eq_arc ht_ioo.1 ht_ioo.2,
-              Complex.exp_ofReal_mul_I_im]
-          exact Real.sin_pos_of_pos_of_lt_pi
-            (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-        exact (analyticAt_logDeriv_off_zeros' f (γ t) h_im h_ne).continuousAt
-      · exact (fdBoundary_H_continuous H).continuousAt
+    refine ContinuousAt.mul ?_ ?_
+    · refine ContinuousAt.comp ?_ (fdBoundary_H_continuous H).continuousAt
+      have h_im : 0 < (γ t).im := by
+        rw [show γ t = _ from fdBoundary_H_eq_arc ht_ioo.1 ht_ioo.2,
+            Complex.exp_ofReal_mul_I_im]
+        exact Real.sin_pos_of_pos_of_lt_pi
+          (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+      exact (analyticAt_logDeriv_off_zeros' f (γ t) h_im h_ne).continuousAt
     · have h_deriv_eq : deriv γ =ᶠ[𝓝 t] fun s => ↑(Real.pi / 6) * I * γ s := by
         filter_upwards [Ioo_mem_nhds ht_ioo.1 ht_ioo.2] with s hs
-        change deriv (fdBoundary_H H) s = ↑(Real.pi / 6) * I * fdBoundary_H H s
         exact deriv_fdBoundary_H_arc H hs.1 hs.2
       exact ((continuousAt_const.mul continuousAt_const).mul
         (fdBoundary_H_continuous H).continuousAt).congr h_deriv_eq.symm
@@ -281,33 +270,27 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
   have h_ind_1 : ind 1 :=
     ⟨_, sArcOfS_rho_plus_one_in S, by
       rw [show γ 1 = ellipticPointRhoPlusOne from fdBoundary_H_at_one H,
-          sub_self, norm_zero]
-      linarith⟩
+          sub_self, norm_zero]; linarith⟩
   have h_ind_3 : ind 3 :=
     ⟨_, sArcOfS_rho_in S, by
       rw [show γ 3 = ellipticPointRho from fdBoundary_H_at_three H,
-          sub_self, norm_zero]
-      linarith⟩
+          sub_self, norm_zero]; linarith⟩
   have h_cov : ∫ t in (1:ℝ)..3, F (4 - t) = ∫ t in (1:ℝ)..3, F t := by
     simpa only [show (4:ℝ) - 3 = 1 by norm_num, show (4:ℝ) - 1 = 3 by norm_num]
       using @intervalIntegral.integral_comp_sub_left ℂ _ _ 1 3 F 4
   have h_ind_sym : ∀ t ∈ Set.Ioo (1:ℝ) 3, (ind (4 - t) ↔ ind t) :=
     fun t ht => arc_indicator_symmetric_of_sArcOfS S H ε t ht
-  have h_arc_ne_zero : ∀ t, t ∈ Set.Ioo (1:ℝ) 3 → γ t ≠ 0 := by
-    intro t ht
-    rw [show γ t = _ from fdBoundary_H_eq_arc ht.1 ht.2]
-    exact exp_ne_zero _
-  have h_arc_im_pos : ∀ t, t ∈ Set.Ioo (1:ℝ) 3 → 0 < (γ t).im := by
-    intro t ht
+  have h_arc_ne_zero : ∀ t, t ∈ Set.Ioo (1:ℝ) 3 → γ t ≠ 0 := fun t ht => by
+    rw [show γ t = _ from fdBoundary_H_eq_arc ht.1 ht.2]; exact exp_ne_zero _
+  have h_arc_im_pos : ∀ t, t ∈ Set.Ioo (1:ℝ) 3 → 0 < (γ t).im := fun t ht => by
     rw [show γ t = _ from fdBoundary_H_eq_arc ht.1 ht.2, Complex.exp_ofReal_mul_I_im]
     exact Real.sin_pos_of_pos_of_lt_pi (by nlinarith [ht.1, Real.pi_pos])
       (by nlinarith [ht.2, Real.pi_pos])
   have h_4mt_ioo : ∀ t, t ∈ Set.Ioo (1:ℝ) 3 → (4 - t) ∈ Set.Ioo (1:ℝ) 3 :=
     fun t ht => ⟨by linarith [ht.2], by linarith [ht.1]⟩
   have h_deriv_arc : ∀ t, t ∈ Set.Ioo (1:ℝ) 3 →
-      deriv γ t = ↑(Real.pi / 6) * I * γ t := by
-    intro t ht
-    exact deriv_fdBoundary_H_arc H ht.1 ht.2
+      deriv γ t = ↑(Real.pi / 6) * I * γ t :=
+    fun t ht => deriv_fdBoundary_H_arc H ht.1 ht.2
   have h_pw : ∀ t ∈ Set.uIcc (1:ℝ) 3,
       F (4 - t) + F t = -(↑k * (↑Real.pi / 6 * I)) *
         ↑(if ind t then (0:ℝ) else 1) := by
@@ -315,7 +298,7 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
     rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht
     by_cases h_near : ind t
     · have h_F_t : F t = 0 := by
-        change cauchyPrincipalValueIntegrandOn _ _ _ _ _ = 0
+        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = 0
         rw [cauchyPrincipalValueIntegrandOn, if_pos h_near]
       have h_ind_4mt : ind (4 - t) := by
         by_cases h1 : 1 < t ∧ t < 3
@@ -327,7 +310,7 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
             subst this
             exact (show (4:ℝ) - 3 = 1 by norm_num) ▸ h_ind_1
       have h_F_4mt : F (4 - t) = 0 := by
-        change cauchyPrincipalValueIntegrandOn _ _ _ _ _ = 0
+        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = 0
         rw [cauchyPrincipalValueIntegrandOn, if_pos h_ind_4mt]
       rw [h_F_4mt, h_F_t]
       simp [h_near]
@@ -336,58 +319,48 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
          lt_of_le_of_ne ht.2 (fun h => h_near (h ▸ h_ind_3))⟩
       have h_not_ind_4mt : ¬ind (4 - t) := fun h => h_near ((h_ind_sym t ht_ioo).mp h)
       have h_F_t : F t = logDeriv g (γ t) * deriv γ t := by
-        change cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        unfold cauchyPrincipalValueIntegrandOn
-        rw [if_neg h_near]
-        rfl
+        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
+        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_near]; rfl
       have h_F_4mt : F (4 - t) = logDeriv g (γ (4 - t)) * deriv γ (4 - t) := by
-        change cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        unfold cauchyPrincipalValueIntegrandOn
-        rw [if_neg h_not_ind_4mt]
-        rfl
+        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
+        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_not_ind_4mt]; rfl
       rw [h_F_4mt, h_F_t, if_neg h_near]
       simp only [Complex.ofReal_one, mul_one]
       have h_rev : γ (4 - t) = -(1:ℂ) / γ t := fdBoundary_arc_S_reverse H t ht_ioo
       have h_d_4mt := h_deriv_arc (4-t) (h_4mt_ioo t ht_ioo)
-      have hg_ne : g (γ t) ≠ 0 := fun h_zero => by
-        have h_in := h_oncurve t ht_ioo h_zero
-        rw [Finset.mem_coe] at h_in
-        exact h_near ⟨γ t, h_in, by rw [sub_self, norm_zero]; linarith⟩
+      have hg_ne : g (γ t) ≠ 0 := fun h_zero => h_near
+        ⟨γ t, by rw [← Finset.mem_coe]; exact h_oncurve t ht_ioo h_zero,
+         by rw [sub_self, norm_zero]; linarith⟩
       have h_logD := logDeriv_modform_S_transform f (γ t) (h_arc_im_pos t ht_ioo)
         (h_arc_ne_zero t ht_ioo) hg_ne
       simp only [← hg_def] at h_logD
       rw [h_rev] at h_d_4mt ⊢
       rw [h_d_4mt, h_deriv_arc t ht_ioo, h_logD]
       field_simp [h_arc_ne_zero t ht_ioo]
-      push_cast
-      ring
+      push_cast; ring
   have hF_int : IntervalIntegrable F volume 1 3 :=
     cpv_integrand_intervalIntegrable_arc f S H ε hε h_oncurve
   set I_val := ∫ t in (1:ℝ)..3, F t
   set m_val := ∫ t in (1:ℝ)..3, if ind t then (0:ℝ) else 1
   have h_sum_int : ∫ t in (1:ℝ)..3, (F (4 - t) + F t) =
       -(↑k * (↑Real.pi / 6 * I)) * ↑m_val := by
-    calc ∫ t in (1:ℝ)..3, (F (4 - t) + F t) = ∫ t in (1:ℝ)..3, -(↑k * (↑Real.pi / 6 * I)) *
+    calc ∫ t in (1:ℝ)..3, (F (4 - t) + F t)
+        = ∫ t in (1:ℝ)..3, -(↑k * (↑Real.pi / 6 * I)) *
             ↑(if ind t then (0:ℝ) else 1) :=
           intervalIntegral.integral_congr h_pw
       _ = -(↑k * (↑Real.pi / 6 * I)) *
             ∫ t in (1:ℝ)..3, (↑(if ind t then (0:ℝ) else 1) : ℂ) :=
           intervalIntegral.integral_const_mul _ _
       _ = -(↑k * (↑Real.pi / 6 * I)) * ↑m_val := by
-          congr 1
-          exact intervalIntegral.integral_ofReal
+          congr 1; exact intervalIntegral.integral_ofReal
   have h_cov_int : IntervalIntegrable (fun t => F (4 - t)) volume 1 3 := by
     convert (hF_int.comp_sub_left 4).symm using 2 <;> norm_num
-  have h_sum_split : ∫ t in (1:ℝ)..3, (F (4 - t) + F t) =
-      (∫ t in (1:ℝ)..3, F (4 - t)) + ∫ t in (1:ℝ)..3, F t :=
-    intervalIntegral.integral_add h_cov_int hF_int
   have h_2I : I_val + I_val = -(↑k * (↑Real.pi / 6 * I)) * ↑m_val := by
-    have : (∫ t in (1:ℝ)..3, F (4 - t)) + I_val =
-        -(↑k * (↑Real.pi / 6 * I)) * ↑m_val := h_sum_split ▸ h_sum_int
-    rwa [h_cov] at this
+    have h_split := intervalIntegral.integral_add h_cov_int hF_int
+    rw [h_cov] at h_split
+    exact h_split ▸ h_sum_int
   apply mul_left_cancel₀ (two_ne_zero (α := ℂ))
-  rw [show (2 : ℂ) * I_val = I_val + I_val by ring, h_2I]
-  ring
+  rw [show (2 : ℂ) * I_val = I_val + I_val by ring, h_2I]; ring
 
 omit f hf in
 lemma arc_non_excluded_measure_tendsto (S : Finset UpperHalfPlane) (H : ℝ) :
