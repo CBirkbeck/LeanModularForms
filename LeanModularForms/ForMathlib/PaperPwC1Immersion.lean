@@ -11,6 +11,7 @@ import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.Topology.Path
 import LeanModularForms.ForMathlib.PiecewiseC1Path
+import LeanModularForms.ForMathlib.PiecewiseC1PathOn
 
 /-!
 # Paper-faithful piecewise C¹ immersions (Hungerbühler–Wasem)
@@ -265,9 +266,14 @@ private lemma legacy_mem_unpack (γ : ClosedPwC1Curve x) {p : ℝ}
   exact ⟨lt_of_le_of_ne hp_in_Icc.1 (Ne.symm hp_ne_0),
          lt_of_le_of_ne hp_in_Icc.2 hp_ne_1, hp_in⟩
 
-/-- A `ClosedPwC1Curve` produces a legacy `PiecewiseC1Path`. -/
-def toPiecewiseC1Path (γ : ClosedPwC1Curve x) : PiecewiseC1Path x x where
-  toPath := γ.toPath
+/-- A `ClosedPwC1Curve` produces a free-interval `PiecewiseC1PathOn 0 1 zero_lt_one`.
+The carrier is `γ.toPath.extend`; the partition drops the endpoints `0` and `1`. -/
+def toPiecewiseC1PathOn (γ : ClosedPwC1Curve x) :
+    PiecewiseC1PathOn 0 1 zero_lt_one x x where
+  toFun := γ.toPath.extend
+  source := γ.toPath.extend_zero
+  target := γ.toPath.extend_one
+  continuous_toFun := γ.toPath.continuous_extend.continuousOn
   partition := (γ.partition.erase 0).erase 1
   partition_subset := γ.legacy_partition_subset_Ioo
   differentiable_off := by
@@ -286,6 +292,14 @@ def toPiecewiseC1Path (γ : ClosedPwC1Curve x) : PiecewiseC1Path x x where
     refine ((h_dw_cont t (Ioo_subset_Icc_self ht_Ioo)).continuousAt
       (Icc_mem_nhds ht_Ioo.1 ht_Ioo.2)).congr (Filter.eventuallyEq_of_mem
         (Ioo_mem_nhds ht_Ioo.1 ht_Ioo.2) fun _ hu => derivWithin_eq_deriv_on_Ioo _ hu)
+
+/-- A `ClosedPwC1Curve` produces a legacy `PiecewiseC1Path`. -/
+def toPiecewiseC1Path (γ : ClosedPwC1Curve x) : PiecewiseC1Path x x where
+  toPath := γ.toPath
+  partition := γ.toPiecewiseC1PathOn.partition
+  partition_subset := γ.toPiecewiseC1PathOn.partition_subset
+  differentiable_off := γ.toPiecewiseC1PathOn.differentiable_off
+  deriv_continuous_off := γ.toPiecewiseC1PathOn.deriv_continuous_off
 
 end ClosedPwC1Curve
 
