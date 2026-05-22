@@ -251,6 +251,181 @@ private lemma Gamma0_AL_in_DC_bad (N : ℕ) [NeZero N]
     (Gamma0_AL_bar_det N g ▸ hdet)
   rw [DoubleCoset.doubleCoset_eq_of_mem h_g_dc]; exact h_bar_dc
 
+/-- If `d` divides every entry of a 2×2 integer matrix `M` and `L * M * R = diag(dvec)`
+with `L, R ∈ SL₂(ℤ)`, then `d ∣ dvec 0` (read off the `(0,0)` entry of `L * M * R`). -/
+private lemma dvd_snf_first_of_dvd_entries (M : Matrix (Fin 2) (Fin 2) ℤ) (d : ℤ)
+    (dvec : Fin 2 → ℤ) (L R : SpecialLinearGroup (Fin 2) ℤ)
+    (hSNF : (L : Matrix (Fin 2) (Fin 2) ℤ) * M * (R : Matrix _ _ ℤ) = Matrix.diagonal dvec)
+    (hd : ∀ i j, d ∣ M i j) : d ∣ dvec 0 := by
+  have h := congr_fun₂ hSNF 0 0
+  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply, ite_true] at h
+  rw [← h]
+  exact dvd_add
+    (dvd_mul_of_dvd_left (dvd_add (dvd_mul_of_dvd_right (hd 0 0) _)
+      (dvd_mul_of_dvd_right (hd 1 0) _)) _)
+    (dvd_mul_of_dvd_left (dvd_add (dvd_mul_of_dvd_right (hd 0 1) _)
+      (dvd_mul_of_dvd_right (hd 1 1) _)) _)
+
+/-- **Same Smith normal form from mutual content divisibility**: if two 2×2 integer matrices
+`A`, `B` have equal determinants and SNF decompositions `LA·A·RA = diag dA`, `LB·B·RB = diag dB`,
+and the first divisor of each divides every entry of the other (`dA 0 ∣ B`, `dB 0 ∣ A`), then
+`dA = dB` as diagonals, so `(LB⁻¹·LA)·A·(RA·RB⁻¹) = B` exhibits `A ∼ B` over `SL₂(ℤ)`. -/
+private lemma snf_mutual_dvd_eq (A B : Matrix (Fin 2) (Fin 2) ℤ)
+    (dA dB : Fin 2 → ℤ) (hdA_pos : ∀ i, 0 < dA i) (hdB_pos : ∀ i, 0 < dB i)
+    (LA RA LB RB : SpecialLinearGroup (Fin 2) ℤ)
+    (hSNF_A : (LA : Matrix (Fin 2) (Fin 2) ℤ) * A * (RA : Matrix _ _ ℤ) = Matrix.diagonal dA)
+    (hSNF_B : (LB : Matrix (Fin 2) (Fin 2) ℤ) * B * (RB : Matrix _ _ ℤ) = Matrix.diagonal dB)
+    (hB_det : B.det = A.det)
+    (hdA_B : ∀ i j, dA 0 ∣ B i j) (hdB_A : ∀ i j, dB 0 ∣ A i j) :
+    ((LB⁻¹ : SpecialLinearGroup (Fin 2) ℤ) : Matrix _ _ ℤ) * (LA : Matrix _ _ ℤ) * A *
+      ((RA : Matrix _ _ ℤ) * ((RB⁻¹ : SpecialLinearGroup (Fin 2) ℤ) : Matrix _ _ ℤ)) = B := by
+  have h_d0 : dA 0 = dB 0 :=
+    le_antisymm
+      (Int.le_of_dvd (hdB_pos 0) (dvd_snf_first_of_dvd_entries B (dA 0) dB LB RB hSNF_B hdA_B))
+      (Int.le_of_dvd (hdA_pos 0) (dvd_snf_first_of_dvd_entries A (dB 0) dA LA RA hSNF_A hdB_A))
+  have hprod_A : dA 0 * dA 1 = A.det := by
+    have h := congr_arg Matrix.det hSNF_A
+    simp only [Matrix.det_mul, LA.prop, RA.prop, one_mul, mul_one,
+      Matrix.det_diagonal, Fin.prod_univ_two] at h; linarith
+  have hprod_B : dB 0 * dB 1 = B.det := by
+    have h := congr_arg Matrix.det hSNF_B
+    simp only [Matrix.det_mul, LB.prop, RB.prop, one_mul, mul_one,
+      Matrix.det_diagonal, Fin.prod_univ_two] at h; linarith
+  have h_d1 : dA 1 = dB 1 :=
+    mul_left_cancel₀ (ne_of_gt (hdA_pos 0))
+      (show dA 0 * dA 1 = dA 0 * dB 1 by rw [hprod_A, h_d0, hprod_B, hB_det])
+  have h_diag : Matrix.diagonal dA = Matrix.diagonal dB := by
+    congr 1; ext k; fin_cases k <;> assumption
+  have hLL : (LB⁻¹ : SpecialLinearGroup (Fin 2) ℤ).val * LB.val = 1 := by
+    rw [← SpecialLinearGroup.coe_mul, inv_mul_cancel]; simp
+  have hRR : RB.val * (RB⁻¹ : SpecialLinearGroup (Fin 2) ℤ).val = 1 := by
+    rw [← SpecialLinearGroup.coe_mul, mul_inv_cancel]; simp
+  calc (LB⁻¹ : SpecialLinearGroup (Fin 2) ℤ).val * LA.val * A * (RA.val * (RB⁻¹).val)
+      = (LB⁻¹).val * (LA.val * A * RA.val) * (RB⁻¹).val := by simp only [Matrix.mul_assoc]
+    _ = (LB⁻¹).val * Matrix.diagonal dB * (RB⁻¹).val := by rw [hSNF_A, h_diag]
+    _ = (LB⁻¹).val * (LB.val * B * RB.val) * (RB⁻¹).val := by rw [hSNF_B]
+    _ = B := by
+        simp only [Matrix.mul_assoc]
+        rw [show (LB⁻¹).val * (LB.val * (B * (RB.val * (RB⁻¹).val))) =
+            (LB⁻¹).val * (LB.val * (B * 1)) from by rw [hRR]]
+        rw [Matrix.mul_one, ← Matrix.mul_assoc (LB⁻¹).val, hLL, Matrix.one_mul]
+
+/-- The AL image `bar(g)` of `g` with integer matrix `A` (and `A 1 0 = N·c₀`) has integer
+matrix `[[A 0 0, c₀], [N·A 0 1, A 1 1]]`: the swap exchanging the off-diagonal `N`-factor. -/
+private lemma bar_val_eq_swap (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
+    (A : Matrix (Fin 2) (Fin 2) ℤ) (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (c₀ : ℤ) (hc₀ : A 1 0 = ↑N * c₀) :
+    (↑((Gamma0_antiInvolution N).bar g) : Matrix (Fin 2) (Fin 2) ℚ) =
+      (Matrix.of ![![A 0 0, c₀], ![↑N * A 0 1, A 1 1]]).map (Int.cast : ℤ → ℚ) := by
+  set B : Matrix (Fin 2) (Fin 2) ℤ :=
+    Matrix.of ![![A 0 0, c₀], ![↑N * A 0 1, A 1 1]] with hB_def
+  have hB_det : B.det = A.det := by
+    simp only [B, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
+    have : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
+    linarith [show c₀ * (↑N * A 0 1) = A 0 1 * A 1 0 from by rw [hc₀]; ring]
+  have hA_det_ne : A.det ≠ 0 := by
+    have hg_ne : (g : Matrix (Fin 2) (Fin 2) ℚ).det ≠ 0 := Matrix.GeneralLinearGroup.det_ne_zero g
+    rw [hA, det_intMat_cast] at hg_ne; exact_mod_cast hg_ne
+  have hB_ne : (B.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
+    rw [det_intMat_cast]; exact_mod_cast hB_det ▸ hA_det_ne
+  set g' : GL (Fin 2) ℚ := GeneralLinearGroup.mkOfDetNeZero _ hB_ne with hg'_def
+  have hg'_eq : (Gamma0_antiInvolution N).bar g = g' := by
+    show (Gamma0_AL_hom N g).unop = g'
+    simp only [Gamma0_AL_hom, MonoidHom.coe_mk, OneHom.coe_mk, MulOpposite.unop_op]
+    suffices h : g' * wN N = wN N * MulOpposite.unop ((GL_transposeEquiv 2) g) by
+      rw [← h]; group
+    apply Units.ext; ext i j
+    simp only [GeneralLinearGroup.coe_mul, GL_transposeEquiv_val, wN_val,
+      Matrix.map_apply, Matrix.mul_apply, Matrix.diagonal, Matrix.transpose_apply,
+      Fin.sum_univ_two, hA, g', GeneralLinearGroup.mkOfDetNeZero]
+    fin_cases i <;> fin_cases j <;>
+      simp [B, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.head_cons, Matrix.head_fin_const, Matrix.map_apply]
+    · exact_mod_cast show c₀ * ↑N = A 1 0 from by rw [hc₀]; ring
+    · ring
+  rw [hg'_eq]; rfl
+
+/-- A divisor `e` of every entry of `A`, coprime to `N`, also divides every entry of the swap
+`[[A 0 0, c₀], [N·A 0 1, A 1 1]]` (where `A 1 0 = N·c₀`): the new off-diagonal `c₀` is divisible
+because `e ∣ A 1 0 = N·c₀` and `gcd(e, N) = 1`; the `N·A 0 1` entry inherits `e ∣ A 0 1`. -/
+private lemma dvd_swap_entries (A : Matrix (Fin 2) (Fin 2) ℤ) (N e c₀ : ℤ)
+    (hc₀ : A 1 0 = N * c₀) (he : ∀ i j, e ∣ A i j) (heN : IsCoprime e N) :
+    ∀ i j, e ∣ (Matrix.of ![![A 0 0, c₀], ![N * A 0 1, A 1 1]] : Matrix (Fin 2) (Fin 2) ℤ) i j := by
+  intro i j; fin_cases i <;> fin_cases j
+  · simpa using he 0 0
+  · simpa using heN.dvd_of_dvd_mul_left (hc₀ ▸ he 1 0)
+  · simpa using dvd_mul_of_dvd_right (he 0 1) _
+  · simpa using he 1 1
+
+/-- **GL equation from an integer-matrix equation**: if `P·A·Q = B` over `ℤ` (`P, Q ∈ SL₂(ℤ)`)
+and `g`, `h` have integer matrices `A`, `B`, then `h = mapGL P · g · mapGL Q`. -/
+private lemma gl_eq_of_intMat_eq (g h : GL (Fin 2) ℚ)
+    (A B : Matrix (Fin 2) (Fin 2) ℤ)
+    (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (hB : (h : Matrix (Fin 2) (Fin 2) ℚ) = B.map (Int.cast : ℤ → ℚ))
+    (P Q : SpecialLinearGroup (Fin 2) ℤ)
+    (hPQ : (P : Matrix (Fin 2) (Fin 2) ℤ) * A * (Q : Matrix _ _ ℤ) = B) :
+    h = mapGL ℚ P * g * mapGL ℚ Q := by
+  apply Units.ext; ext i j
+  simp only [Units.val_mul, Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, hA,
+    mapGL_coe_matrix, algebraMap_int_eq]
+  have hcast := congr_fun₂
+    (congr_arg (fun M : Matrix _ _ ℤ => M.map (Int.cast : ℤ → ℚ)) hPQ) i j
+  simp only [Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, Int.cast_add,
+    Int.cast_mul] at hcast
+  simp only [SpecialLinearGroup.map, MonoidHom.coe_mk,
+    OneHom.coe_mk, RingHom.mapMatrix_apply, Int.coe_castRingHom, Matrix.map_apply]
+  rw [hB] at *; simp only [Matrix.map_apply] at hcast ⊢
+  linarith
+
+/-- **AL image is an `SL₂(ℤ)`-conjugate**: for `g ∈ Δ₀(N)` with integer matrix `A`, `N ∣ A 1 0`
+and `gcd(A 0 0, N) = 1`, there are `P, Q ∈ SL₂(ℤ)` with `bar(g) = mapGL P · g · mapGL Q`.
+Both `A` and the swap matrix `B = [[A 0 0, c₀],[N·A 0 1, A 1 1]]` of `bar(g)` share their
+determinant and (by coprimality) their first SNF divisor divides the other, so `snf_mutual_dvd_eq`
+makes `A` and `B` `SL₂(ℤ)`-equivalent on both sides. -/
+private lemma bar_eq_SL2_conj (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
+    (A : Matrix (Fin 2) (Fin 2) ℤ)
+    (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (hAN : (N : ℤ) ∣ A 1 0) (hAco : Int.gcd (A 0 0) N = 1) :
+    ∃ P Q : SpecialLinearGroup (Fin 2) ℤ,
+      (Gamma0_antiInvolution N).bar g = mapGL ℚ P * g * mapGL ℚ Q := by
+  obtain ⟨c₀, hc₀⟩ := hAN
+  set B : Matrix (Fin 2) (Fin 2) ℤ :=
+    Matrix.of ![![A 0 0, c₀], ![↑N * A 0 1, A 1 1]] with hB_def
+  have hB_det : B.det = A.det := by
+    simp only [B, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
+    have : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
+    linarith [show c₀ * (↑N * A 0 1) = A 0 1 * A 1 0 from by rw [hc₀]; ring]
+  have hA_det_pos : 0 < A.det := by
+    rw [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]; exact hg.2.1
+  have hbar_val : (↑((Gamma0_antiInvolution N).bar g) : Matrix (Fin 2) (Fin 2) ℚ) =
+      B.map (Int.cast : ℤ → ℚ) := bar_val_eq_swap N g A hA c₀ hc₀
+  obtain ⟨dA, hdA_pos, hdA_div, LA, RA, hSNF_A⟩ :=
+    exists_divchain_diagonal_of_posdet 2 A hA_det_pos
+  obtain ⟨dB, hdB_pos, hdB_div, LB, RB, hSNF_B⟩ :=
+    exists_divchain_diagonal_of_posdet 2 B (hB_det ▸ hA_det_pos)
+  have hdA_A : ∀ i j, dA 0 ∣ A i j := snf_first_dvd_entry₂ A dA (hdA_div 0 (by omega)) LA RA hSNF_A
+  have hdB_B : ∀ i j, dB 0 ∣ B i j := snf_first_dvd_entry₂ B dB (hdB_div 0 (by omega)) LB RB hSNF_B
+  have hAco_isCop : IsCoprime (A 0 0) (↑N : ℤ) := Int.isCoprime_iff_gcd_eq_one.mpr hAco
+  have hdA_cop : IsCoprime (dA 0) (↑N : ℤ) := hAco_isCop.of_isCoprime_of_dvd_left (hdA_A 0 0)
+  have hB00 : B 0 0 = A 0 0 := by simp [B, Matrix.of_apply, Matrix.cons_val_zero]
+  have hdB_cop : IsCoprime (dB 0) (↑N : ℤ) :=
+    hAco_isCop.of_isCoprime_of_dvd_left (hB00 ▸ hdB_B 0 0)
+  have hdA_B : ∀ i j, dA 0 ∣ B i j := by
+    rw [hB_def]; exact dvd_swap_entries A ↑N (dA 0) c₀ hc₀ hdA_A hdA_cop
+  have hcB : B 1 0 = ↑N * A 0 1 := by simp [B, Matrix.of_apply, Matrix.cons_val_one]
+  have hswap : (Matrix.of ![![B 0 0, A 0 1], ![↑N * B 0 1, B 1 1]] :
+      Matrix (Fin 2) (Fin 2) ℤ) = A := by
+    ext i j; fin_cases i <;> fin_cases j <;>
+      simp [B, hc₀, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
+  have hdB_A : ∀ i j, dB 0 ∣ A i j := fun i j => by
+    have h := dvd_swap_entries B ↑N (dB 0) (A 0 1) hcB hdB_B hdB_cop i j; rwa [hswap] at h
+  have h_int := snf_mutual_dvd_eq A B dA dB hdA_pos hdB_pos LA RA LB RB hSNF_A hSNF_B
+    hB_det hdA_B hdB_A
+  rw [← SpecialLinearGroup.coe_mul, ← SpecialLinearGroup.coe_mul] at h_int
+  exact ⟨LB⁻¹ * LA, RA * RB⁻¹, gl_eq_of_intMat_eq g ((Gamma0_antiInvolution N).bar g) A B
+    hA hbar_val (LB⁻¹ * LA) (RA * RB⁻¹) h_int⟩
+
 /-- **Coprime-det branch**: for `g ∈ Δ₀(N)` with `gcd(det(g), N) = 1`,
 `bar(g) ∈ DC(g)` by `doubleCoset_eq_of_Gamma0_coprimeDet` + same SL₂-DC
 (same elementary divisors, since `gcd(a₀, N) = 1` makes `gcd` of entries
@@ -278,152 +453,12 @@ private lemma Gamma0_AL_in_DC_coprime (N : ℕ) [NeZero N]
       exact_mod_cast h1.symm
     rw [hBdet]; exact hdet_coprime
   have h_coset_eq : cosetMap N ⟦a_sub⟧ = cosetMap N ⟦b_sub⟧ := by
+    obtain ⟨P, Q, hPQ⟩ := bar_eq_SL2_conj N g hg A hA hAN hAco
     change (⟦Delta0_inclusion N a_sub⟧ : HeckeCoset (GL_pair 2)) = ⟦Delta0_inclusion N b_sub⟧
     rw [HeckeCoset.eq_iff]
     symm; apply DoubleCoset.doubleCoset_eq_of_mem
-    obtain ⟨c₀, hc₀⟩ := hAN
-    set B : Matrix (Fin 2) (Fin 2) ℤ :=
-      Matrix.of ![![A 0 0, c₀], ![↑N * A 0 1, A 1 1]] with hB_def
-    have hB_det : B.det = A.det := by
-      simp only [B, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-        Matrix.cons_val_one]
-      have : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
-      linarith [show c₀ * (↑N * A 0 1) = A 0 1 * A 1 0 from by rw [hc₀]; ring]
-    have hA_det_pos : 0 < A.det := by
-      rw [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]; exact hg.2.1
-    have hB_ne : (B.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
-      rw [det_intMat_cast]; exact_mod_cast (hB_det ▸ hA_det_pos).ne'
-    set g' : GL (Fin 2) ℚ := GeneralLinearGroup.mkOfDetNeZero _ hB_ne
-    have hg'_eq : (Gamma0_antiInvolution N).bar g = g' := by
-      show (Gamma0_AL_hom N g).unop = g'
-      simp only [Gamma0_AL_hom, MonoidHom.coe_mk, OneHom.coe_mk, MulOpposite.unop_op]
-      suffices h : g' * wN N = wN N * MulOpposite.unop ((GL_transposeEquiv 2) g) by
-        rw [← h]; group
-      apply Units.ext; ext i j
-      simp only [GeneralLinearGroup.coe_mul, GL_transposeEquiv_val, wN_val,
-        Matrix.map_apply, Matrix.mul_apply, Matrix.diagonal, Matrix.transpose_apply,
-        Fin.sum_univ_two, hA, g', GeneralLinearGroup.mkOfDetNeZero]
-      fin_cases i <;> fin_cases j <;>
-        simp [B, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
-          Matrix.head_cons, Matrix.head_fin_const, Matrix.map_apply]
-      · exact_mod_cast show c₀ * ↑N = A 1 0 from by rw [hc₀]; ring
-      · ring
-    have hbar_val : (↑((Gamma0_antiInvolution N).bar g) : Matrix (Fin 2) (Fin 2) ℚ) =
-        B.map (Int.cast : ℤ → ℚ) := by rw [hg'_eq]; rfl
-    -- Step 4: SNF for A and B
-    obtain ⟨dA, hdA_pos, hdA_div, LA, RA, hSNF_A⟩ :=
-      exists_divchain_diagonal_of_posdet 2 A hA_det_pos
-    obtain ⟨dB, hdB_pos, hdB_div, LB, RB, hSNF_B⟩ :=
-      exists_divchain_diagonal_of_posdet 2 B (hB_det ▸ hA_det_pos)
-    have hdA01 : dA 0 ∣ dA 1 := hdA_div 0 (by omega)
-    have hdB01 : dB 0 ∣ dB 1 := hdB_div 0 (by omega)
-    have hdA_A : ∀ i j, dA 0 ∣ A i j := snf_first_dvd_entry₂ A dA hdA01 LA RA hSNF_A
-    have hdB_B : ∀ i j, dB 0 ∣ B i j := snf_first_dvd_entry₂ B dB hdB01 LB RB hSNF_B
-    have hAco_isCop : IsCoprime (A 0 0) (↑N : ℤ) := Int.isCoprime_iff_gcd_eq_one.mpr hAco
-    have hdA_cop : Int.gcd (dA 0) N = 1 :=
-      Int.isCoprime_iff_gcd_eq_one.mp (hAco_isCop.of_isCoprime_of_dvd_left (hdA_A 0 0))
-    have hdB_cop : Int.gcd (dB 0) N = 1 := by
-      have hB00 : B 0 0 = A 0 0 := by simp [B, Matrix.of_apply, Matrix.cons_val_zero]
-      exact Int.isCoprime_iff_gcd_eq_one.mp
-        (hAco_isCop.of_isCoprime_of_dvd_left (hB00 ▸ hdB_B 0 0))
-    -- dA 0 | B entries: diagonal is A 0 0 and A 1 1, off-diag uses coprimality
-    have hdA_B : ∀ i j, dA 0 ∣ B i j := by
-      intro i j; fin_cases i <;> fin_cases j
-      · show dA 0 ∣ B 0 0; simp only [B, Matrix.of_apply, Matrix.cons_val_zero]; exact hdA_A 0 0
-      · show dA 0 ∣ B 0 1; simp only [B, Matrix.of_apply, Matrix.cons_val_zero,
-          Matrix.cons_val_one, Matrix.head_fin_const]
-        exact IsCoprime.dvd_of_dvd_mul_left
-          (Int.isCoprime_iff_gcd_eq_one.mpr hdA_cop) (hc₀ ▸ hdA_A 1 0)
-      · show dA 0 ∣ B 1 0; simp only [B, Matrix.of_apply, Matrix.cons_val_one,
-          Matrix.head_cons]; exact dvd_mul_of_dvd_right (hdA_A 0 1) _
-      · show dA 0 ∣ B 1 1; simp only [B, Matrix.of_apply, Matrix.cons_val_one,
-          Matrix.head_fin_const]; exact hdA_A 1 1
-    -- dB 0 | A entries (symmetric argument)
-    have hdB_A : ∀ i j, dB 0 ∣ A i j := by
-      intro i j; fin_cases i <;> fin_cases j
-      · show dB 0 ∣ A 0 0
-        have : B 0 0 = A 0 0 := by simp [B, Matrix.of_apply, Matrix.cons_val_zero]
-        exact this ▸ hdB_B 0 0
-      · show dB 0 ∣ A 0 1
-        have hB10 : B 1 0 = ↑N * A 0 1 := by
-          simp [B, Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons]
-        exact IsCoprime.dvd_of_dvd_mul_left
-          (Int.isCoprime_iff_gcd_eq_one.mpr hdB_cop) (hB10 ▸ hdB_B 1 0)
-      · show dB 0 ∣ A 1 0
-        have hB01 : B 0 1 = c₀ := by
-          simp [B, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_fin_const]
-        rw [hc₀]; exact dvd_mul_of_dvd_right (hB01 ▸ hdB_B 0 1) _
-      · show dB 0 ∣ A 1 1
-        have : B 1 1 = A 1 1 := by
-          simp [B, Matrix.of_apply, Matrix.cons_val_one, Matrix.head_fin_const]
-        exact this ▸ hdB_B 1 1
-    have hdA_dvd_dB : dA 0 ∣ dB 0 := by
-      have h := congr_fun₂ hSNF_B 0 0
-      simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply, ite_true] at h
-      rw [← h]
-      exact dvd_add
-        (dvd_mul_of_dvd_left (dvd_add (dvd_mul_of_dvd_right (hdA_B 0 0) _)
-          (dvd_mul_of_dvd_right (hdA_B 1 0) _)) _)
-        (dvd_mul_of_dvd_left (dvd_add (dvd_mul_of_dvd_right (hdA_B 0 1) _)
-          (dvd_mul_of_dvd_right (hdA_B 1 1) _)) _)
-    have hdB_dvd_dA : dB 0 ∣ dA 0 := by
-      have h := congr_fun₂ hSNF_A 0 0
-      simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply, ite_true] at h
-      rw [← h]
-      exact dvd_add
-        (dvd_mul_of_dvd_left (dvd_add (dvd_mul_of_dvd_right (hdB_A 0 0) _)
-          (dvd_mul_of_dvd_right (hdB_A 1 0) _)) _)
-        (dvd_mul_of_dvd_left (dvd_add (dvd_mul_of_dvd_right (hdB_A 0 1) _)
-          (dvd_mul_of_dvd_right (hdB_A 1 1) _)) _)
-    have h_d0 : dA 0 = dB 0 :=
-      le_antisymm (Int.le_of_dvd (hdB_pos 0) hdA_dvd_dB) (Int.le_of_dvd (hdA_pos 0) hdB_dvd_dA)
-    have hprod_A : dA 0 * dA 1 = A.det := by
-      have h := congr_arg Matrix.det hSNF_A
-      simp only [Matrix.det_mul, LA.prop, RA.prop, one_mul, mul_one,
-        Matrix.det_diagonal, Fin.prod_univ_two] at h; linarith
-    have hprod_B : dB 0 * dB 1 = B.det := by
-      have h := congr_arg Matrix.det hSNF_B
-      simp only [Matrix.det_mul, LB.prop, RB.prop, one_mul, mul_one,
-        Matrix.det_diagonal, Fin.prod_univ_two] at h; linarith
-    have h_d1 : dA 1 = dB 1 :=
-      mul_left_cancel₀ (ne_of_gt (hdA_pos 0))
-        (show dA 0 * dA 1 = dA 0 * dB 1 by rw [hprod_A, h_d0, hprod_B, hB_det])
-    have h_diag : Matrix.diagonal dA = Matrix.diagonal dB := by
-      congr 1; ext k; fin_cases k <;> assumption
     rw [DoubleCoset.mem_doubleCoset]
-    refine ⟨mapGL ℚ (LB⁻¹ * LA), coe_mem_SLnZ 2 _, mapGL ℚ (RA * RB⁻¹),
-      coe_mem_SLnZ 2 _, ?_⟩
-    show (b_sub : (Gamma0_pair N).Δ).1 =
-      mapGL ℚ (LB⁻¹ * LA) * (a_sub : (Gamma0_pair N).Δ).1 * mapGL ℚ (RA * RB⁻¹)
-    have hLL : (LB⁻¹).val * LB.val = 1 := by
-      rw [← SpecialLinearGroup.coe_mul, inv_mul_cancel]; simp
-    have hRR : RB.val * (RB⁻¹).val = 1 := by
-      rw [← SpecialLinearGroup.coe_mul, mul_inv_cancel]; simp
-    have h_int : (LB⁻¹).val * LA.val * A * (RA.val * (RB⁻¹).val) = B := by
-      calc (LB⁻¹).val * LA.val * A * (RA.val * (RB⁻¹).val)
-          = (LB⁻¹).val * (LA.val * A * RA.val) * (RB⁻¹).val := by
-            simp only [Matrix.mul_assoc]
-        _ = (LB⁻¹).val * Matrix.diagonal dB * (RB⁻¹).val := by rw [hSNF_A, h_diag]
-        _ = (LB⁻¹).val * (LB.val * B * RB.val) * (RB⁻¹).val := by rw [hSNF_B]
-        _ = B := by
-            simp only [Matrix.mul_assoc]
-            rw [show (LB⁻¹).val * (LB.val * (B * (RB.val * (RB⁻¹).val))) =
-                (LB⁻¹).val * (LB.val * (B * 1)) from by rw [hRR]]
-            rw [Matrix.mul_one, ← Matrix.mul_assoc (LB⁻¹).val, hLL, Matrix.one_mul]
-    rw [show (b_sub : (Gamma0_pair N).Δ).1 = g' from hg'_eq]
-    apply Units.ext; ext i j
-    simp only [g', GeneralLinearGroup.mkOfDetNeZero, Units.val_mul, Matrix.mul_apply,
-      Matrix.map_apply, Fin.sum_univ_two, hA, mapGL_coe_matrix, algebraMap_int_eq]
-    have h := congr_fun₂ (congr_arg (fun M : Matrix _ _ ℤ => M.map (Int.cast : ℤ → ℚ)) h_int) i j
-    simp only [Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, Int.cast_add,
-      Int.cast_mul] at h
-    simp only [SpecialLinearGroup.map, MonoidHom.coe_comp, MonoidHom.coe_mk,
-      OneHom.coe_mk, Function.comp_apply, Units.val_mk, RingHom.mapMatrix_apply,
-      Matrix.map_apply, Int.coe_castRingHom, Matrix.unitOfDetInvertible,
-      SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]
-    change (B.map (Int.cast : ℤ → ℚ)) i j = _
-    rw [hA] at *; simp only [Matrix.map_apply] at h ⊢
-    push_cast at h ⊢; linarith
+    exact ⟨mapGL ℚ P, coe_mem_SLnZ 2 _, mapGL ℚ Q, coe_mem_SLnZ 2 _, hPQ⟩
   have h_Gamma0_eq := shimura_prop_3_31 N a_sub b_sub ha_cop hb_cop h_coset_eq
   rw [HeckeCoset.eq_iff] at h_Gamma0_eq
   rw [DoubleCoset.doubleCoset_eq_of_mem (show g ∈ DoubleCoset.doubleCoset g _ _ from
@@ -531,6 +566,16 @@ lemma Gamma0_content_quotient (N : ℕ) [NeZero N]
     have : q ≤ 1 := Nat.le_of_mul_le_mul_right (by linarith) hd_pos
     exact absurd hq.two_le (by omega)
 
+/-- From `n ≡ (x mod p).toNat [MOD p]` deduce `p ∣ (n : ℤ) - x`: combine the `Nat.ModEq`
+witness with `(x mod p).toNat ≡ x` (`p ≠ 0`). Used to transfer a CRT solution back to `ℤ`. -/
+private lemma int_dvd_sub_of_modEq_toNat (n p : ℕ) (x : ℤ) (hp_ne : (p : ℤ) ≠ 0)
+    (h : Nat.ModEq p n (x % (p : ℤ)).toNat) : (p : ℤ) ∣ ((n : ℤ) - x) := by
+  obtain ⟨a', ha'⟩ := Nat.modEq_iff_dvd.mp h
+  obtain ⟨b', hb'⟩ : (p : ℤ) ∣ ((x % (p : ℤ)).toNat : ℤ) - x := by
+    rw [Int.toNat_of_nonneg (Int.emod_nonneg _ hp_ne)]
+    exact ⟨-(x / p), by rw [Int.emod_def]; ring⟩
+  exact ⟨-a' + b', by linear_combination -ha' + hb'⟩
+
 /-- **CRT assembly**: given per-prime avoidance for each prime factor of `c`,
 produce a single `(l, t)` making the affine expression coprime to `c`.
 Uses `entry_clear_prime` to produce per-prime witnesses, then swaps quantifiers
@@ -576,22 +621,10 @@ private lemma exists_coprime_entry (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
   have hl_crt : Nat.ModEq p l₀ (aL p) := by simpa using hl₀ p hp_mem
   have ht_crt : Nat.ModEq p t₀ (aT p) := by simpa using ht₀ p hp_mem
   have hp_ne : (p : ℤ) ≠ 0 := Int.natCast_ne_zero.mpr hp.ne_zero
-  have hl_dvd : (p : ℤ) ∣ ((l₀ : ℤ) - (wit p).1) := by
-    have h_aL : aL p = ((wit p).1 % (p : ℤ)).toNat := rfl
-    rw [h_aL] at hl_crt
-    obtain ⟨a', ha'⟩ := Nat.modEq_iff_dvd.mp hl_crt
-    obtain ⟨b', hb'⟩ : (p : ℤ) ∣ (((wit p).1 % (p : ℤ)).toNat : ℤ) - (wit p).1 := by
-      rw [Int.toNat_of_nonneg (Int.emod_nonneg _ hp_ne)]
-      exact ⟨-((wit p).1 / p), by rw [Int.emod_def]; ring⟩
-    exact ⟨-a' + b', by linear_combination -ha' + hb'⟩
-  have ht_dvd : (p : ℤ) ∣ ((t₀ : ℤ) - (wit p).2) := by
-    have h_aT : aT p = ((wit p).2 % (p : ℤ)).toNat := rfl
-    rw [h_aT] at ht_crt
-    obtain ⟨a', ha'⟩ := Nat.modEq_iff_dvd.mp ht_crt
-    obtain ⟨b', hb'⟩ : (p : ℤ) ∣ (((wit p).2 % (p : ℤ)).toNat : ℤ) - (wit p).2 := by
-      rw [Int.toNat_of_nonneg (Int.emod_nonneg _ hp_ne)]
-      exact ⟨-((wit p).2 / p), by rw [Int.emod_def]; ring⟩
-    exact ⟨-a' + b', by linear_combination -ha' + hb'⟩
+  have hl_dvd : (p : ℤ) ∣ ((l₀ : ℤ) - (wit p).1) :=
+    int_dvd_sub_of_modEq_toNat l₀ p (wit p).1 hp_ne hl_crt
+  have ht_dvd : (p : ℤ) ∣ ((t₀ : ℤ) - (wit p).2) :=
+    int_dvd_sub_of_modEq_toNat t₀ p (wit p).2 hp_ne ht_crt
   have hcongr := f_congr_mod p ↑l₀ (wit p).1 ↑t₀ (wit p).2
     (A 0 0) (A 0 1) (A 1 0) (A 1 1) N hl_dvd ht_dvd
   rw [show (wit p).1 = (havoid p hp hpc).choose from by rw [hwit],
@@ -599,6 +632,28 @@ private lemma exists_coprime_entry (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
   apply havw
   obtain ⟨k, hk⟩ := hcongr; obtain ⟨m, hm⟩ := hpf
   exact ⟨m - k, by linear_combination hm - hk⟩
+
+/-- Conjugating `g` (integer matrix `A`) by `mapGL P`, `mapGL Q` (`P, Q ∈ SL₂(ℤ)`) gives a GL
+element with integer matrix `P · A · Q`. -/
+private lemma mapGL_conj_val (g : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) ℤ)
+    (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (P Q : SpecialLinearGroup (Fin 2) ℤ) :
+    ((mapGL ℚ P) * g * (mapGL ℚ Q) : GL (Fin 2) ℚ).val =
+      ((P : Matrix (Fin 2) (Fin 2) ℤ) * A * (Q : Matrix _ _ ℤ)).map (Int.cast : ℤ → ℚ) := by
+  rw [Units.val_mul, Units.val_mul, mapGL_coe_matrix, mapGL_coe_matrix, hA]
+  simp only [SpecialLinearGroup.map, MonoidHom.coe_mk, OneHom.coe_mk, RingHom.mapMatrix_apply,
+    algebraMap_int_eq, Int.coe_castRingHom, SpecialLinearGroup.coe_mk]
+  ext i j
+  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply, Int.cast_add, Int.cast_mul]
+
+/-- A prime dividing `c` (coprime to `N`) cannot divide `N`, stated over `ℤ`. -/
+private lemma not_intCast_dvd_of_coprime (c N p : ℕ) (hp : p.Prime)
+    (hc_cop : Nat.Coprime c N) (hpc : (p : ℤ) ∣ ↑c) : ¬((p : ℤ) ∣ ↑N) := by
+  intro hpN
+  have hp_c : p ∣ c := Int.natCast_dvd_natCast.mp hpc
+  have hp_N : p ∣ N := Int.natCast_dvd_natCast.mp hpN
+  have h1 := (hc_cop.coprime_dvd_right hp_N).coprime_dvd_left hp_c
+  rw [Nat.Coprime, Nat.gcd_self] at h1; exact absurd h1 hp.one_lt.ne'
 
 /-- Two-sided Γ₀(N) clearing for **primitive** matrices: given `g ∈ Δ₀(N)` with
 `gcd(entries of A) = 1` and coprime-to-N target `c | det`, find `γL, γR ∈ Γ₀(N)` such that
@@ -620,15 +675,8 @@ lemma Gamma0_two_sided_coprime_rep_prim (N : ℕ) [NeZero N]
       ∃ (A' : Matrix (Fin 2) (Fin 2) ℤ),
         (g' : Matrix (Fin 2) (Fin 2) ℚ) = A'.map (Int.cast : ℤ → ℚ) ∧
         (N : ℤ) ∣ A' 1 0 ∧ Int.gcd (A' 0 0) N = 1 ∧ Int.gcd (A' 0 0) c = 1 := by
-  have hcN : ∀ p : ℕ, p.Prime → (p : ℤ) ∣ ↑c → ¬((p : ℤ) ∣ ↑N) := by
-    intro p hp hpc hpN
-    have : p ∣ c := Int.natCast_dvd_natCast.mp hpc
-    have : p ∣ N := Int.natCast_dvd_natCast.mp hpN
-    have hgcd : Nat.gcd p p = p := Nat.gcd_self p
-    have hle := Nat.gcd_dvd_left p p
-    have h1 := Nat.Coprime.coprime_dvd_left ‹p ∣ c›
-      (Nat.Coprime.coprime_dvd_right ‹p ∣ N› hc_cop)
-    rw [Nat.Coprime, hgcd] at h1; exact absurd h1 hp.one_lt.ne'
+  have hcN : ∀ p : ℕ, p.Prime → (p : ℤ) ∣ ↑c → ¬((p : ℤ) ∣ ↑N) :=
+    fun p hp hpc => not_intCast_dvd_of_coprime c N p hp hc_cop hpc
   obtain ⟨l₀, t₀, hlt⟩ := exists_coprime_entry A ↑N c hc_pos hprim hcN
   set L : Matrix (Fin 2) (Fin 2) ℤ := Matrix.of ![![1, l₀], ![0, 1]] with hL_def
   have hL_det : L.det = 1 := by
@@ -660,14 +708,7 @@ lemma Gamma0_two_sided_coprime_rep_prim (N : ℕ) [NeZero N]
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const]
     ring
   refine ⟨A', ?_, ?_, ?_, ?_⟩
-  · show ((mapGL ℚ L_sl) * g * (mapGL ℚ R_sl) : GL (Fin 2) ℚ).val = A'.map (Int.cast : ℤ → ℚ)
-    rw [Units.val_mul, Units.val_mul, mapGL_coe_matrix, mapGL_coe_matrix, hA, Matrix.mul_assoc]
-    simp only [SpecialLinearGroup.map, MonoidHom.coe_mk, OneHom.coe_mk, RingHom.mapMatrix_apply,
-      algebraMap_int_eq, Int.coe_castRingHom, L_sl, R_sl, SpecialLinearGroup.coe_mk]
-    ext i j; simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply]
-    fin_cases i <;> fin_cases j <;>
-      simp [L, R, A', Matrix.mul_apply, Matrix.vecMul, Matrix.of_apply,
-        Matrix.cons_val_zero, Matrix.cons_val_one, vecHead, vecTail, Finset.sum]
+  · exact mapGL_conj_val g A hA L_sl R_sl
   · rw [h10, show A 1 0 + A 1 1 * (↑N * t₀) = A 1 0 + ↑N * (A 1 1 * t₀) from by ring]
     exact dvd_add hAN (dvd_mul_right _ _)
   · obtain ⟨k, hk⟩ := hAN
@@ -717,337 +758,251 @@ private lemma Gamma0_AL_preserves_00 (N : ℕ) [NeZero N]
     (by rw [show (A 0 0 : ℚ) = (A.map (Int.cast : ℤ → ℚ)) 0 0 from by
         simp [Matrix.map_apply], ← hA] : g.val 0 0 = (A 0 0 : ℚ))
 
-/-- The Atkin-Lehner anti-involution fixes every double coset of `Gamma0_pair N`. -/
-private lemma Gamma0_AL_in_doubleCoset (N : ℕ) [NeZero N]
-    (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ) :
+/-- **`gcd(A₀₀, m) = 1` branch**: when `g ∈ Δ₀(N)` has `det = m` and `gcd(A 0 0, m) = 1`,
+both `g` and `bar(g)` lie in `DC(diag(1, m))` by `shimura_prop_3_33_gen`
+(`bar(g)` keeps the `(0,0)` entry and the determinant), so `bar(g) ∈ DC(g)`. -/
+private lemma Gamma0_AL_in_DC_of_gcd_a00_m_coprime (N : ℕ) [NeZero N]
+    (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ) (m : ℕ) (hm_pos : 0 < m)
+    (A : Matrix (Fin 2) (Fin 2) ℤ)
+    (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (hAN : (N : ℤ) ∣ A 1 0)
+    (hdet_m : (g : Matrix (Fin 2) (Fin 2) ℚ).det = (m : ℚ))
+    (ham : Int.gcd (A 0 0) (m : ℤ) = 1) :
     ((Gamma0_antiInvolution N).bar g) ∈
-      DoubleCoset.doubleCoset (g : GL (Fin 2) ℚ)
-        ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
-  have h_bar_delta := Gamma0_AL_map_Δ N g hg
-  have h_det_eq : ((Gamma0_antiInvolution N).bar g : Matrix (Fin 2) (Fin 2) ℚ).det =
-      (g : Matrix (Fin 2) (Fin 2) ℚ).det := by
-    show ((Gamma0_AL_hom N g).unop : GL (Fin 2) ℚ).val.det = g.val.det
-    simp only [Gamma0_AL_hom, MonoidHom.coe_mk, OneHom.coe_mk, MulOpposite.unop_op,
-      Units.val_mul, Matrix.det_mul, GL_transposeEquiv_val, MulOpposite.unop_op,
-      Matrix.det_transpose]
-    have h1 : (wN N : GL (Fin 2) ℚ).val.det * ((wN N)⁻¹ : GL (Fin 2) ℚ).val.det = 1 := by
-      rw [← Matrix.det_mul, ← Units.val_mul, mul_inv_cancel]; simp
-    have h2 : (wN N : GL (Fin 2) ℚ).val.det * g.val.det *
-        ((wN N)⁻¹ : GL (Fin 2) ℚ).val.det =
-      g.val.det * ((wN N : GL (Fin 2) ℚ).val.det * ((wN N)⁻¹ : GL (Fin 2) ℚ).val.det) := by ring
-    rw [h2, h1, mul_one]
-  obtain ⟨hint, hdet_pos_g, A, hA, hAN, hAco⟩ := hg
-  have hg : g ∈ (Gamma0_pair N).Δ := ⟨hint, hdet_pos_g, A, hA, hAN, hAco⟩
+      DoubleCoset.doubleCoset g ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
+  have h_g_dc := shimura_prop_3_33_gen N m hm_pos g hg A hA hAN hdet_m ham
+  obtain ⟨_, _, B, hB, hBN, _⟩ := Gamma0_AL_map_Δ N g hg
+  have hB00 : B 0 0 = A 0 0 := Gamma0_AL_preserves_00 N g A hA B hB
+  have hbar_det : (↑((Gamma0_antiInvolution N).bar g) : Matrix (Fin 2) (Fin 2) ℚ).det =
+      (m : ℚ) := by rw [Gamma0_AL_bar_det, hdet_m]
+  have h_bar_dc := shimura_prop_3_33_gen N m hm_pos ((Gamma0_antiInvolution N).bar g)
+    (Gamma0_AL_map_Δ N g hg) B hB hBN hbar_det (hB00 ▸ ham)
+  rw [DoubleCoset.doubleCoset_eq_of_mem h_g_dc]; exact h_bar_dc
+
+/-- Elements of `Γ₀(N) ⊆ GL₂(ℚ)` have determinant `1` (they come from `SL₂(ℤ)`). -/
+private lemma det_H_elem_eq_one (N : ℕ) [NeZero N] (γ : (Gamma0_pair N).H) :
+    (γ : GL (Fin 2) ℚ).val.det = 1 := by
+  obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γ.2
+  rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
+
+/-- Conjugating `g` by `Γ₀(N)` elements preserves the determinant. -/
+private lemma det_conj_H_eq (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
+    (γL γR : (Gamma0_pair N).H) :
+    ((γL : GL (Fin 2) ℚ) * g * (γR : GL (Fin 2) ℚ)).val.det = g.val.det := by
+  simp only [Units.val_mul, Matrix.det_mul, det_H_elem_eq_one, one_mul, mul_one]
+
+/-- **Conjugation transport**: if the AL image of a `Γ₀(N)`-conjugate `γL g γR` lands in `DC(g)`,
+then so does `bar(g)` itself (undo the conjugation with the AL images of `γL`, `γR`,
+which are again in `Γ₀(N)` by `Gamma0_AL_map_H`). -/
+private lemma bar_mem_DC_of_bar_conj_mem (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
+    (γL γR : (Gamma0_pair N).H)
+    (h : ((Gamma0_antiInvolution N).bar ((γL : GL (Fin 2) ℚ) * g * (γR : GL (Fin 2) ℚ))) ∈
+      DoubleCoset.doubleCoset g ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _)) :
+    ((Gamma0_antiInvolution N).bar g) ∈
+      DoubleCoset.doubleCoset g ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
+  rw [show (Gamma0_antiInvolution N).bar ((γL : GL _ ℚ) * g * (γR : GL _ ℚ)) =
+      (Gamma0_antiInvolution N).bar (γR : GL _ ℚ) *
+      (Gamma0_antiInvolution N).bar g *
+      (Gamma0_antiInvolution N).bar (γL : GL _ ℚ) from by
+    simp only [AntiInvolution.bar_mul]; group,
+    DoubleCoset.mem_doubleCoset] at h
+  obtain ⟨δ₁, hδ₁, δ₂, hδ₂, h_eq⟩ := h
+  rw [DoubleCoset.mem_doubleCoset]
+  exact ⟨((Gamma0_antiInvolution N).bar (γR : GL _ ℚ))⁻¹ * δ₁,
+    (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem
+      (Gamma0_AL_map_H N _ γR.2)) hδ₁,
+    δ₂ * ((Gamma0_antiInvolution N).bar (γL : GL _ ℚ))⁻¹,
+    (Gamma0_pair N).H.mul_mem hδ₂ ((Gamma0_pair N).H.inv_mem
+      (Gamma0_AL_map_H N _ γL.2)),
+    by calc (Gamma0_antiInvolution N).bar g
+        = ((Gamma0_antiInvolution N).bar (γR : GL _ ℚ))⁻¹ *
+          ((Gamma0_antiInvolution N).bar (γR : GL _ ℚ) *
+            (Gamma0_antiInvolution N).bar g *
+            (Gamma0_antiInvolution N).bar (γL : GL _ ℚ)) *
+          ((Gamma0_antiInvolution N).bar (γL : GL _ ℚ))⁻¹ := by group
+      _ = _ := by rw [h_eq]; group⟩
+
+/-- If `gcd(x, N) = 1`, `gcd(x, c) = 1`, `m = b * c`, and `b ∣ N ^ m`, then `gcd(x, m) = 1`:
+`x` is coprime to `N ^ m ⊇ b` and to `c`, hence to `b * c = m`. -/
+private lemma gcd_eq_one_of_factor_split (x : ℤ) (N m b c : ℕ)
+    (hbc : m = b * c) (hb_dvd : b ∣ N ^ m)
+    (hxN : Int.gcd x N = 1) (hxc : Int.gcd x c = 1) :
+    Int.gcd x m = 1 := by
+  rw [show (m : ℤ) = ↑b * ↑c from by exact_mod_cast hbc]
+  exact Int.isCoprime_iff_gcd_eq_one.mp (IsCoprime.mul_right
+    (IsCoprime.of_isCoprime_of_dvd_right
+      ((Int.isCoprime_iff_gcd_eq_one.mpr hxN).pow_right (n := m))
+      (by exact_mod_cast hb_dvd))
+    (Int.isCoprime_iff_gcd_eq_one.mpr hxc))
+
+/-- The quotient `m / gcd(m, N ^ m)` is coprime to `N`: any prime `p ∣ gcd(·, N)` would
+have `p ^ k ∣ m` for all `k` (since `p ^ k ∣ N ^ m ⊇ gcd(m, N ^ m)` once `k ≤ m`), absurd. -/
+private lemma coprime_div_gcd_npow (N m : ℕ) (hm_pos : 0 < m) :
+    Nat.Coprime (m / Nat.gcd m (N ^ m)) N := by
+  set b := Nat.gcd m (N ^ m) with hb_def
+  have hb_dvd_m : b ∣ m := Nat.gcd_dvd_left m _
+  have hb_pos : 0 < b := Nat.pos_of_ne_zero (by
+    intro h; rw [hb_def, Nat.gcd_eq_zero_iff] at h; omega)
+  set c := m / b with hc_def
+  have hbc : m = b * c := (Nat.mul_div_cancel' hb_dvd_m).symm
+  rw [Nat.coprime_comm]; by_contra h_nc
+  obtain ⟨p, hp, hpg⟩ := Nat.exists_prime_and_dvd h_nc
+  have hpN : p ∣ N := (Nat.dvd_gcd_iff.mp hpg).1
+  have hpc : p ∣ c := (Nat.dvd_gcd_iff.mp hpg).2
+  have hpow : ∀ k, p ^ k ∣ m := by
+    intro k; induction k with
+    | zero => simp
+    | succ k ih =>
+      have hpk_Nm : p ^ k ∣ N ^ m :=
+        (pow_dvd_pow_of_dvd hpN k).trans
+          (Nat.pow_dvd_pow N (by
+            by_cases hk : k = 0; · simp [hk]
+            · exact le_of_lt (lt_of_lt_of_le
+                (Nat.lt_pow_self hp.one_lt) (Nat.le_of_dvd hm_pos ih))))
+      rw [hbc]; exact mul_dvd_mul (Nat.dvd_gcd ih hpk_Nm) hpc
+  exact absurd (Nat.le_of_dvd hm_pos (hpow (m + 1)))
+    (not_le.mpr (lt_of_lt_of_le (Nat.lt_pow_self hp.one_lt)
+      (Nat.pow_le_pow_right hp.pos (Nat.le_succ m))))
+
+/-- **Primitive case of double-coset stability**: for `g ∈ Δ₀(N)` whose integer matrix `A`
+is primitive (no prime divides all four entries), `bar(g) ∈ DC(g)`. The four sub-cases on the
+determinant `m`: coprime-to-`N` (`Gamma0_AL_in_DC_coprime`), `m ∣ N ^ m` (`Gamma0_AL_in_DC_bad`),
+`gcd(A 0 0, m) = 1` (`Gamma0_AL_in_DC_of_gcd_a00_m_coprime`), and otherwise a two-sided
+`Γ₀(N)`-clearing (`Gamma0_two_sided_coprime_rep_prim`) reducing to the third case. -/
+private lemma Gamma0_AL_in_DC_primitive (N : ℕ) [NeZero N]
+    (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
+    (A : Matrix (Fin 2) (Fin 2) ℤ)
+    (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (hAN : (N : ℤ) ∣ A 1 0) (hAco : Int.gcd (A 0 0) N = 1)
+    (hprim : ∀ (p : ℕ), p.Prime → ¬((p : ℤ) ∣ A 0 0 ∧ (p : ℤ) ∣ A 0 1 ∧
+      (p : ℤ) ∣ A 1 0 ∧ (p : ℤ) ∣ A 1 1)) :
+    ((Gamma0_antiInvolution N).bar g) ∈
+      DoubleCoset.doubleCoset g ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
   have hA_det_pos : 0 < A.det := by
-    rwa [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]
-  set m := A.det.natAbs
+    rw [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]; exact hg.2.1
+  set m := A.det.natAbs with hm_def
   have hm_pos : 0 < m := Int.natAbs_pos.mpr (ne_of_gt hA_det_pos)
   have hdet_m : (g : Matrix (Fin 2) (Fin 2) ℚ).det = (m : ℚ) := by
     rw [hA, det_intMat_cast]
-    exact_mod_cast show A.det = (m : ℤ) from (Int.natAbs_of_nonneg (le_of_lt hA_det_pos)).symm
+    exact_mod_cast show A.det = (m : ℤ) from
+      (Int.natAbs_of_nonneg (le_of_lt hA_det_pos)).symm
   by_cases h_cop : Int.gcd A.det N = 1
   · exact Gamma0_AL_in_DC_coprime N g hg A hA hAN hAco h_cop
   · set b := Nat.gcd m (N ^ m) with hb_def
     have hb_dvd_Npow : b ∣ N ^ m := Nat.gcd_dvd_right m _
     by_cases hbm : b = m
     · exact Gamma0_AL_in_DC_bad N g hg m hm_pos m (hbm ▸ hb_dvd_Npow) hdet_m
-    · by_cases ham : Int.gcd (A 0 0) (m : ℤ) = 1
-      · have h_g_dc := shimura_prop_3_33_gen N m hm_pos g hg A hA hAN hdet_m ham
-        obtain ⟨_, _, B, hB, hBN, hBco⟩ := h_bar_delta
-        have hB00 : B 0 0 = A 0 0 :=
-          Gamma0_AL_preserves_00 N g A hA B hB
-        have hbar_det' : (↑((Gamma0_antiInvolution N).bar g) : Matrix (Fin 2) (Fin 2) ℚ).det =
-            (m : ℚ) := by rw [h_det_eq, hdet_m]
-        have h_bar_delta' : ((Gamma0_antiInvolution N).bar g) ∈ Delta0_submonoid N :=
-          Gamma0_AL_map_Δ N g hg
-        have h_bar_dc := shimura_prop_3_33_gen N m hm_pos
-          ((Gamma0_antiInvolution N).bar g) h_bar_delta' B hB hBN hbar_det' (hB00 ▸ ham)
-        rw [DoubleCoset.doubleCoset_eq_of_mem h_g_dc]; exact h_bar_dc
-      · have hb_dvd_m : b ∣ m := Nat.gcd_dvd_left m _
-        have hb_pos : 0 < b := Nat.pos_of_ne_zero (by
-          intro h; rw [show b = Nat.gcd m (N ^ m) from rfl, Nat.gcd_eq_zero_iff] at h; omega)
-        set c := m / b with hc_def
-        have hbc : m = b * c := (Nat.mul_div_cancel' hb_dvd_m).symm
-        have hc_pos : 0 < c := Nat.div_pos (Nat.le_of_dvd hm_pos hb_dvd_m) hb_pos
-        have hA_det_eq_m : A.det = (m : ℤ) :=
-          (Int.natAbs_of_nonneg (le_of_lt hA_det_pos)).symm
-        have hc_dvd : (c : ℤ) ∣ A.det := by
-          rw [hA_det_eq_m]; exact_mod_cast show c ∣ m from ⟨b, by linarith [hbc]⟩
-        have hc_cop : Nat.Coprime c N := by
-          rw [Nat.coprime_comm]; by_contra h_nc
-          obtain ⟨p, hp, hpg⟩ := Nat.exists_prime_and_dvd h_nc
-          have hpN : p ∣ N := (Nat.dvd_gcd_iff.mp hpg).1
-          have hpc : p ∣ c := (Nat.dvd_gcd_iff.mp hpg).2
-          have : ∀ k, p ^ k ∣ m := by
-            intro k; induction k with
-            | zero => simp
-            | succ k ih =>
-              have hpk_Nm : p ^ k ∣ N ^ m :=
-                (pow_dvd_pow_of_dvd hpN k).trans
-                  (Nat.pow_dvd_pow N (by
-                    by_cases hk : k = 0; · simp [hk]
-                    · exact le_of_lt (lt_of_lt_of_le
-                        (Nat.lt_pow_self hp.one_lt) (Nat.le_of_dvd hm_pos ih))))
-              rw [hbc]; exact mul_dvd_mul (Nat.dvd_gcd ih hpk_Nm) hpc
-          exact absurd (Nat.le_of_dvd hm_pos (this (m + 1)))
-            (not_le.mpr (lt_of_lt_of_le (Nat.lt_pow_self hp.one_lt)
-              (Nat.pow_le_pow_right hp.pos (Nat.le_succ m))))
-        by_cases hprim : ∀ (p : ℕ), p.Prime → ¬((p : ℤ) ∣ A 0 0 ∧ (p : ℤ) ∣ A 0 1 ∧
-            (p : ℤ) ∣ A 1 0 ∧ (p : ℤ) ∣ A 1 1)
-        · obtain ⟨γL, γR, A', hA', hA'N, hA'Nco, hA'c⟩ :=
-            Gamma0_two_sided_coprime_rep_prim N g hg A hA hAN hAco hprim c hc_pos hc_cop hc_dvd
-          set g' := (γL : GL (Fin 2) ℚ) * g * (γR : GL (Fin 2) ℚ)
-          have hA'm : Int.gcd (A' 0 0) (m : ℤ) = 1 := by
-            rw [show (m : ℤ) = ↑b * ↑c from by exact_mod_cast hbc]
-            exact Int.isCoprime_iff_gcd_eq_one.mp (IsCoprime.mul_right
-              (IsCoprime.of_isCoprime_of_dvd_right
-                ((Int.isCoprime_iff_gcd_eq_one.mpr hA'Nco).pow_right (n := m))
-                (by exact_mod_cast hb_dvd_Npow))
-              (Int.isCoprime_iff_gcd_eq_one.mpr hA'c))
-          have hg'_dc : g' ∈ DoubleCoset.doubleCoset g
-              ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) :=
-            DoubleCoset.mem_doubleCoset.mpr ⟨γL, γL.2, γR, γR.2, rfl⟩
-          have hg' : g' ∈ (Gamma0_pair N).Δ :=
-            (Gamma0_pair N).Δ.mul_mem
-              ((Gamma0_pair N).Δ.mul_mem ((Gamma0_pair N).h₀ γL.2) hg)
-              ((Gamma0_pair N).h₀ γR.2)
-          have hdet_g' : (g' : GL _ ℚ).val.det = (m : ℚ) := by
-            have hdetL : (γL.1 : GL _ ℚ).val.det = 1 := by
-              obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γL.2
-              rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
-            have hdetR : (γR.1 : GL _ ℚ).val.det = 1 := by
-              obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γR.2
-              rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
-            show ((γL : GL _ ℚ) * g * (γR : GL _ ℚ)).val.det = ↑m
-            simp only [Units.val_mul, Matrix.det_mul, hdetL, hdetR, one_mul, mul_one]
-            exact hdet_m
-          have h_g'_diag := shimura_prop_3_33_gen N m hm_pos g' hg' A' hA' hA'N hdet_g' hA'm
-          have h_bar_g'_delta := Gamma0_AL_map_Δ N g' hg'
-          obtain ⟨_, _, B', hB', hB'N, _⟩ := h_bar_g'_delta
-          have hbar_g'_00 : B' 0 0 = A' 0 0 :=
-            Gamma0_AL_preserves_00 N g' A' hA' B' hB'
-          have hbar_g'_det : (↑((Gamma0_antiInvolution N).bar g') :
-              Matrix (Fin 2) (Fin 2) ℚ).det = ↑m := by
-            rw [Gamma0_AL_bar_det]; exact hdet_g'
-          have h_bar_g'_diag := shimura_prop_3_33_gen N m hm_pos
-            ((Gamma0_antiInvolution N).bar g') (Gamma0_AL_map_Δ N g' hg') B' hB' hB'N
-            hbar_g'_det (hbar_g'_00 ▸ hA'm)
-          have h_bar_g'_in_DC_g : ((Gamma0_antiInvolution N).bar g') ∈
-              DoubleCoset.doubleCoset g ((Gamma0_pair N).H : Set _)
-                ((Gamma0_pair N).H : Set _) := by
-            rw [← DoubleCoset.doubleCoset_eq_of_mem hg'_dc,
-              DoubleCoset.doubleCoset_eq_of_mem h_g'_diag]; exact h_bar_g'_diag
-          rw [show (Gamma0_antiInvolution N).bar g' =
-              (Gamma0_antiInvolution N).bar (γR : GL _ ℚ) *
-              (Gamma0_antiInvolution N).bar g *
-              (Gamma0_antiInvolution N).bar (γL : GL _ ℚ) from by
-            show _ = _; simp only [g', AntiInvolution.bar_mul]; group,
-            DoubleCoset.mem_doubleCoset] at h_bar_g'_in_DC_g
-          obtain ⟨δ₁, hδ₁, δ₂, hδ₂, h_eq⟩ := h_bar_g'_in_DC_g
-          rw [DoubleCoset.mem_doubleCoset]
-          exact ⟨((Gamma0_antiInvolution N).bar (γR : GL _ ℚ))⁻¹ * δ₁,
-            (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem
-              (Gamma0_AL_map_H N _ γR.2)) hδ₁,
-            δ₂ * ((Gamma0_antiInvolution N).bar (γL : GL _ ℚ))⁻¹,
-            (Gamma0_pair N).H.mul_mem hδ₂ ((Gamma0_pair N).H.inv_mem
-              (Gamma0_AL_map_H N _ γL.2)),
-            by calc (Gamma0_antiInvolution N).bar g
-                = ((Gamma0_antiInvolution N).bar (γR : GL _ ℚ))⁻¹ *
-                  ((Gamma0_antiInvolution N).bar (γR : GL _ ℚ) *
-                    (Gamma0_antiInvolution N).bar g *
-                    (Gamma0_antiInvolution N).bar (γL : GL _ ℚ)) *
-                  ((Gamma0_antiInvolution N).bar (γL : GL _ ℚ))⁻¹ := by group
-              _ = _ := by rw [h_eq]; group⟩
-        · push_neg at hprim
-          obtain ⟨p, hp, hpA00, hpA01, hpA10, hpA11⟩ := hprim
-          set d := Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
-                    (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs) with hd_def
-          have hd_dvd : ∀ i j : Fin 2, (d : ℤ) ∣ A i j := by
-            intro i j; exact Int.natAbs_dvd_natAbs.mp (by
-              fin_cases i <;> fin_cases j <;> simp only [d] <;> (
-                exact Nat.dvd_trans (by first
-                  | exact Nat.dvd_trans (Nat.gcd_dvd_left _ _) (Nat.gcd_dvd_left _ _)
-                  | exact Nat.dvd_trans (Nat.gcd_dvd_right _ _) (Nat.gcd_dvd_left _ _)
-                  | exact Nat.dvd_trans (Nat.gcd_dvd_left _ _) (Nat.gcd_dvd_right _ _)
-                  | exact Nat.dvd_trans (Nat.gcd_dvd_right _ _) (Nat.gcd_dvd_right _ _))
-                  (dvd_refl _)))
-          have hp_dvd_natAbs : ∀ i j : Fin 2, p ∣ (A i j).natAbs := by
-            intro i j
-            have h : (↑p : ℤ) ∣ A i j := by fin_cases i <;> fin_cases j <;> assumption
-            exact Int.natAbs_natCast p ▸ Int.natAbs_dvd_natAbs.mpr h
-          have hp_dvd_d : p ∣ d := Nat.dvd_gcd
-            (Nat.dvd_gcd (hp_dvd_natAbs 0 0) (hp_dvd_natAbs 0 1))
-            (Nat.dvd_gcd (hp_dvd_natAbs 1 0) (hp_dvd_natAbs 1 1))
-          have hd_pos : 0 < d := Nat.pos_of_ne_zero (fun h => by
-            have h00 := hd_dvd 0 0; have h01 := hd_dvd 0 1
-            have h10 := hd_dvd 1 0; have h11 := hd_dvd 1 1
-            simp [h] at h00 h01 h10 h11
-            have hdet0 : A.det = 0 := by rw [Matrix.det_fin_two]; simp [h00, h01, h10, h11]
-            linarith)
-          have hd_ge2 : 2 ≤ d := le_trans hp.two_le (Nat.le_of_dvd hd_pos hp_dvd_d)
-          obtain ⟨A₀, hA₀_eq, hA₀_det_pos, hA₀N, hA₀co, hA₀_prim⟩ :=
-            Gamma0_content_quotient N A hA_det_pos hAN hAco d hd_pos hd_dvd hd_def
-          have hA₀_det_ne : (A₀.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
-            rw [det_intMat_cast]; exact_mod_cast hA₀_det_pos.ne'
-          set g₀ := GeneralLinearGroup.mkOfDetNeZero (A₀.map (Int.cast : ℤ → ℚ)) hA₀_det_ne
-          have hA₀_val : (g₀ : Matrix _ _ ℚ) = A₀.map (Int.cast : ℤ → ℚ) := rfl
-          have hg₀ : g₀ ∈ (Gamma0_pair N).Δ :=
-            ⟨⟨A₀, rfl⟩, by rw [hA₀_val, det_intMat_cast]; exact_mod_cast hA₀_det_pos,
-             A₀, rfl, hA₀N, hA₀co⟩
-          have hg_scalar : g.val = (d : ℚ) • g₀.val := by
-            ext i j; rw [hA, Matrix.smul_apply, hA₀_val, Matrix.map_apply, Matrix.map_apply]
-            simp only [smul_eq_mul]; push_cast [hA₀_eq i j]; ring
-          set s : GL (Fin 2) ℚ := GeneralLinearGroup.mkOfDetNeZero
-            ((d : ℚ) • (1 : Matrix (Fin 2) (Fin 2) ℚ))
-            (by simp [Matrix.det_smul, Fintype.card_fin]; positivity)
-          have hg_eq : g = s * g₀ := by
-            apply Units.ext; show g.val = s.val * g₀.val
-            rw [hg_scalar]; ext i j
-            simp only [s, GeneralLinearGroup.mkOfDetNeZero, Units.val_mul,
-              Matrix.smul_apply, Matrix.mul_apply, Fin.sum_univ_two,
-              Matrix.one_apply, smul_eq_mul]
-            fin_cases i <;> fin_cases j <;> simp <;> ring
-          have hs_central : ∀ h : GL (Fin 2) ℚ, s * h = h * s := by
-            intro h; apply Units.ext
-            show s.val * h.val = h.val * s.val
-            ext i j; simp only [s, GeneralLinearGroup.mkOfDetNeZero, Matrix.mul_apply,
-              Fin.sum_univ_two, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
-            fin_cases i <;> fin_cases j <;> simp <;> ring
-          have hs_bar : (Gamma0_antiInvolution N).bar s = s := by
-            show (Gamma0_AL_hom N s).unop = s
-            simp only [Gamma0_AL_hom, MonoidHom.coe_mk, OneHom.coe_mk, MulOpposite.unop_op]
-            suffices h : s * wN N = wN N * MulOpposite.unop ((GL_transposeEquiv 2) s) by
-              rw [← h]; group
-            apply Units.ext; ext i j
-            simp only [s, GeneralLinearGroup.mkOfDetNeZero, GeneralLinearGroup.coe_mul,
-              GL_transposeEquiv_val, wN_val, Matrix.mul_apply, Matrix.transpose_apply,
-              Matrix.smul_apply, Matrix.one_apply, Matrix.diagonal, smul_eq_mul,
-              Fin.sum_univ_two]
-            fin_cases i <;> fin_cases j <;> simp <;> ring
-          have h_bar_g₀ : ((Gamma0_antiInvolution N).bar g₀) ∈
-              DoubleCoset.doubleCoset g₀ ((Gamma0_pair N).H : Set _)
-                ((Gamma0_pair N).H : Set _) := by
-            set m₀ := A₀.det.natAbs
-            have hm₀_pos : 0 < m₀ := Int.natAbs_pos.mpr (ne_of_gt hA₀_det_pos)
-            have hdet_g₀ : (g₀ : GL _ ℚ).val.det = (m₀ : ℚ) := by
-              show (A₀.map (Int.cast : ℤ → ℚ)).det = ↑m₀
-              rw [det_intMat_cast]; push_cast
-              exact_mod_cast show A₀.det = (m₀ : ℤ) from
-                (abs_of_pos hA₀_det_pos ▸ Int.natCast_natAbs A₀.det).symm
-            have h_bar_g₀_delta := Gamma0_AL_map_Δ N g₀ hg₀
-            have h_det_eq_g₀ : (↑((Gamma0_antiInvolution N).bar g₀) :
-                Matrix (Fin 2) (Fin 2) ℚ).det = g₀.val.det := Gamma0_AL_bar_det N g₀
-            by_cases h₀_cop : Int.gcd A₀.det N = 1
-            · exact Gamma0_AL_in_DC_coprime N g₀ hg₀ A₀ hA₀_val hA₀N hA₀co h₀_cop
-            · set b₀ := Nat.gcd m₀ (N ^ m₀)
-              have hb₀_dvd : b₀ ∣ N ^ m₀ := Nat.gcd_dvd_right m₀ _
-              by_cases hb₀m : b₀ = m₀
-              · exact Gamma0_AL_in_DC_bad N g₀ hg₀ m₀ hm₀_pos m₀ (hb₀m ▸ hb₀_dvd) hdet_g₀
-              · by_cases ham₀ : Int.gcd (A₀ 0 0) (m₀ : ℤ) = 1
-                · have h1 := shimura_prop_3_33_gen N m₀ hm₀_pos g₀ hg₀ A₀ hA₀_val hA₀N
-                    hdet_g₀ ham₀
-                  obtain ⟨_, _, B₀, hB₀, hB₀N, _⟩ := h_bar_g₀_delta
-                  have h00 : B₀ 0 0 = A₀ 0 0 :=
-                    Gamma0_AL_preserves_00 N g₀ A₀ hA₀_val B₀ hB₀
-                  rw [DoubleCoset.doubleCoset_eq_of_mem h1]
-                  exact shimura_prop_3_33_gen N m₀ hm₀_pos _ (Gamma0_AL_map_Δ N g₀ hg₀) B₀
-                    hB₀ hB₀N (by rw [Gamma0_AL_bar_det]; exact hdet_g₀) (h00 ▸ ham₀)
-                · have hb₀_dvd_m : b₀ ∣ m₀ := Nat.gcd_dvd_left m₀ _
-                  have hb₀_pos : 0 < b₀ := Nat.pos_of_ne_zero (by
-                    intro h; rw [show b₀ = Nat.gcd m₀ (N ^ m₀) from rfl,
-                      Nat.gcd_eq_zero_iff] at h; omega)
-                  set c₀ := m₀ / b₀
-                  have hbc₀ : m₀ = b₀ * c₀ := (Nat.mul_div_cancel' hb₀_dvd_m).symm
-                  have hc₀_pos : 0 < c₀ := Nat.div_pos
-                    (Nat.le_of_dvd hm₀_pos hb₀_dvd_m) hb₀_pos
-                  have hA₀_det_eq_m₀ : A₀.det = (m₀ : ℤ) :=
-                    (abs_of_pos hA₀_det_pos ▸ Int.natCast_natAbs A₀.det).symm
-                  have hc₀_dvd : (c₀ : ℤ) ∣ A₀.det := by
-                    rw [hA₀_det_eq_m₀]
-                    exact_mod_cast show c₀ ∣ m₀ from ⟨b₀, by linarith [hbc₀]⟩
-                  have hc₀_cop : Nat.Coprime c₀ N := by
-                    rw [Nat.coprime_comm]; by_contra h_nc
-                    obtain ⟨p₀, hp₀, hpg⟩ := Nat.exists_prime_and_dvd h_nc
-                    have hp₀N := (Nat.dvd_gcd_iff.mp hpg).1
-                    have hp₀c := (Nat.dvd_gcd_iff.mp hpg).2
-                    suffices ∀ k, p₀ ^ k ∣ m₀ by
-                      exact absurd (Nat.le_of_dvd hm₀_pos (this (m₀ + 1)))
-                        (not_le.mpr (lt_of_lt_of_le (Nat.lt_pow_self hp₀.one_lt)
-                          (Nat.pow_le_pow_right hp₀.pos (Nat.le_succ m₀))))
-                    intro k; induction k with
-                    | zero => simp
-                    | succ k ih =>
-                      rw [hbc₀, pow_succ]
-                      exact mul_dvd_mul
-                        (Nat.dvd_gcd ih ((pow_dvd_pow_of_dvd hp₀N k).trans
-                          (Nat.pow_dvd_pow N (le_trans (Nat.lt_pow_self hp₀.one_lt).le
-                            (Nat.le_of_dvd hm₀_pos ih))))) hp₀c
-                  obtain ⟨γL, γR, A', hA', hA'N, hA'Nco, hA'c⟩ :=
-                    Gamma0_two_sided_coprime_rep_prim N g₀ hg₀ A₀ hA₀_val hA₀N hA₀co
-                      hA₀_prim c₀ hc₀_pos hc₀_cop hc₀_dvd
-                  set g₀' := (γL : GL _ ℚ) * g₀ * (γR : GL _ ℚ)
-                  have hA'm₀ : Int.gcd (A' 0 0) (m₀ : ℤ) = 1 := by
-                    rw [show (m₀ : ℤ) = ↑b₀ * ↑c₀ from by exact_mod_cast hbc₀]
-                    exact Int.isCoprime_iff_gcd_eq_one.mp (IsCoprime.mul_right
-                      (IsCoprime.of_isCoprime_of_dvd_right
-                        ((Int.isCoprime_iff_gcd_eq_one.mpr hA'Nco).pow_right (n := m₀))
-                        (by exact_mod_cast hb₀_dvd))
-                      (Int.isCoprime_iff_gcd_eq_one.mpr hA'c))
-                  have hg₀'_dc : g₀' ∈ DoubleCoset.doubleCoset g₀
-                      ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) :=
-                    DoubleCoset.mem_doubleCoset.mpr ⟨γL, γL.2, γR, γR.2, rfl⟩
-                  have hg₀' : g₀' ∈ (Gamma0_pair N).Δ := (Gamma0_pair N).Δ.mul_mem
-                    ((Gamma0_pair N).Δ.mul_mem ((Gamma0_pair N).h₀ γL.2) hg₀)
-                    ((Gamma0_pair N).h₀ γR.2)
-                  have hdet_g₀' : (g₀' : GL _ ℚ).val.det = (m₀ : ℚ) := by
-                    have hL : (γL.1 : GL _ ℚ).val.det = 1 := by
-                      obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γL.2
-                      rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast,
-                        σ.prop]
-                    have hR : (γR.1 : GL _ ℚ).val.det = 1 := by
-                      obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γR.2
-                      rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast,
-                        σ.prop]
-                    show ((γL : GL _ ℚ) * g₀ * (γR : GL _ ℚ)).val.det = ↑m₀
-                    simp only [Units.val_mul, Matrix.det_mul, hL, hR, one_mul, mul_one, hdet_g₀]
-                  have hD := shimura_prop_3_33_gen N m₀ hm₀_pos g₀' hg₀' A' hA' hA'N
-                    hdet_g₀' hA'm₀
-                  obtain ⟨_, _, B', hB', hB'N, _⟩ := Gamma0_AL_map_Δ N g₀' hg₀'
-                  have h00' : B' 0 0 = A' 0 0 := Gamma0_AL_preserves_00 N g₀' A' hA' B' hB'
-                  have hbar_g₀'_det : (↑((Gamma0_antiInvolution N).bar g₀') :
-                      Matrix (Fin 2) (Fin 2) ℚ).det = ↑m₀ := by
-                    rw [Gamma0_AL_bar_det]; exact hdet_g₀'
-                  have hbD := shimura_prop_3_33_gen N m₀ hm₀_pos _
-                    (Gamma0_AL_map_Δ N g₀' hg₀') B' hB' hB'N
-                    hbar_g₀'_det (h00' ▸ hA'm₀)
-                  have h_in : ((Gamma0_antiInvolution N).bar g₀') ∈
-                      DoubleCoset.doubleCoset g₀ ((Gamma0_pair N).H : Set _)
-                        ((Gamma0_pair N).H : Set _) := by
-                    rw [← DoubleCoset.doubleCoset_eq_of_mem hg₀'_dc,
-                      DoubleCoset.doubleCoset_eq_of_mem hD]; exact hbD
-                  rw [show (Gamma0_antiInvolution N).bar g₀' =
-                      (Gamma0_antiInvolution N).bar (γR : GL _ ℚ) *
-                      (Gamma0_antiInvolution N).bar g₀ *
-                      (Gamma0_antiInvolution N).bar (γL : GL _ ℚ) from by
-                    show _ = _; simp only [g₀', AntiInvolution.bar_mul]; group,
-                    DoubleCoset.mem_doubleCoset] at h_in
-                  obtain ⟨δ₁, hδ₁, δ₂, hδ₂, h_eq⟩ := h_in
-                  rw [DoubleCoset.mem_doubleCoset]
-                  exact ⟨((Gamma0_antiInvolution N).bar (γR : GL _ ℚ))⁻¹ * δ₁,
-                    (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem
-                      (Gamma0_AL_map_H N _ γR.2)) hδ₁,
-                    δ₂ * ((Gamma0_antiInvolution N).bar (γL : GL _ ℚ))⁻¹,
-                    (Gamma0_pair N).H.mul_mem hδ₂ ((Gamma0_pair N).H.inv_mem
-                      (Gamma0_AL_map_H N _ γL.2)),
-                    by calc (Gamma0_antiInvolution N).bar g₀
-                        = ((Gamma0_antiInvolution N).bar (γR : GL _ ℚ))⁻¹ *
-                          ((Gamma0_antiInvolution N).bar (γR : GL _ ℚ) *
-                            (Gamma0_antiInvolution N).bar g₀ *
-                            (Gamma0_antiInvolution N).bar (γL : GL _ ℚ)) *
-                          ((Gamma0_antiInvolution N).bar (γL : GL _ ℚ))⁻¹ := by group
-                      _ = _ := by rw [h_eq]; group⟩
-          rw [hg_eq]
-          exact Gamma0_AL_scalar_reduce N g₀ s hs_central hs_bar h_bar_g₀
+    by_cases ham : Int.gcd (A 0 0) (m : ℤ) = 1
+    · exact Gamma0_AL_in_DC_of_gcd_a00_m_coprime N g hg m hm_pos A hA hAN hdet_m ham
+    -- Two-sided clearing: `c := m / b` is coprime to `N` and divides `det`
+    set c := m / b with hc_def
+    have hbc : m = b * c := (Nat.mul_div_cancel' (Nat.gcd_dvd_left m _)).symm
+    have hc_pos : 0 < c :=
+      Nat.div_pos (Nat.le_of_dvd hm_pos (Nat.gcd_dvd_left m _))
+        (Nat.pos_of_ne_zero (by intro h; rw [hb_def, Nat.gcd_eq_zero_iff] at h; omega))
+    have hc_cop : Nat.Coprime c N := coprime_div_gcd_npow N m hm_pos
+    have hc_dvd : (c : ℤ) ∣ A.det := by
+      rw [show A.det = (m : ℤ) from (Int.natAbs_of_nonneg (le_of_lt hA_det_pos)).symm]
+      exact_mod_cast show c ∣ m from ⟨b, by linarith [hbc]⟩
+    obtain ⟨γL, γR, A', hA', hA'N, hA'Nco, hA'c⟩ :=
+      Gamma0_two_sided_coprime_rep_prim N g hg A hA hAN hAco hprim c hc_pos hc_cop hc_dvd
+    set g' := (γL : GL (Fin 2) ℚ) * g * (γR : GL (Fin 2) ℚ) with hg'_def
+    have hg'_dc : g' ∈ DoubleCoset.doubleCoset g
+        ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) :=
+      DoubleCoset.mem_doubleCoset.mpr ⟨γL, γL.2, γR, γR.2, rfl⟩
+    have hg' : g' ∈ (Gamma0_pair N).Δ :=
+      (Gamma0_pair N).Δ.mul_mem
+        ((Gamma0_pair N).Δ.mul_mem ((Gamma0_pair N).h₀ γL.2) hg)
+        ((Gamma0_pair N).h₀ γR.2)
+    have hdet_g' : (g' : GL _ ℚ).val.det = (m : ℚ) := (det_conj_H_eq N g γL γR).trans hdet_m
+    have hA'm : Int.gcd (A' 0 0) (m : ℤ) = 1 :=
+      gcd_eq_one_of_factor_split _ N m b c hbc hb_dvd_Npow hA'Nco hA'c
+    have h_bar_g'_dc := Gamma0_AL_in_DC_of_gcd_a00_m_coprime N g' hg' m hm_pos A' hA' hA'N
+      hdet_g' hA'm
+    apply bar_mem_DC_of_bar_conj_mem N g γL γR
+    rw [← hg'_def, ← DoubleCoset.doubleCoset_eq_of_mem hg'_dc]; exact h_bar_g'_dc
+
+/-- **Scalar reduction**: if `g = d • g₀` (`d > 0`) and `bar(g₀) ∈ DC(g₀)`, then `bar(g) ∈ DC(g)`.
+Writing `g = s · g₀` with `s = d • 1` central and AL-fixed, apply `Gamma0_AL_scalar_reduce`. -/
+private lemma Gamma0_AL_in_DC_of_smul (N : ℕ) [NeZero N] (g g₀ : GL (Fin 2) ℚ) (d : ℚ)
+    (hd_pos : 0 < d) (hg_smul : g.val = d • g₀.val)
+    (h_bar_g₀ : ((Gamma0_antiInvolution N).bar g₀) ∈
+      DoubleCoset.doubleCoset g₀ ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _)) :
+    ((Gamma0_antiInvolution N).bar g) ∈
+      DoubleCoset.doubleCoset g ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
+  set s : GL (Fin 2) ℚ := GeneralLinearGroup.mkOfDetNeZero
+    (d • (1 : Matrix (Fin 2) (Fin 2) ℚ))
+    (by simp [Matrix.det_smul, Fintype.card_fin]; positivity) with hs_def
+  have hg_eq : g = s * g₀ := by
+    apply Units.ext; show g.val = s.val * g₀.val
+    rw [hg_smul]; ext i j
+    simp only [s, GeneralLinearGroup.mkOfDetNeZero, Units.val_mul,
+      Matrix.smul_apply, Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.one_apply, smul_eq_mul]
+    fin_cases i <;> fin_cases j <;> simp <;> ring
+  have hs_central : ∀ h : GL (Fin 2) ℚ, s * h = h * s := by
+    intro h; apply Units.ext
+    show s.val * h.val = h.val * s.val
+    ext i j; simp only [s, GeneralLinearGroup.mkOfDetNeZero, Matrix.mul_apply,
+      Fin.sum_univ_two, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
+    fin_cases i <;> fin_cases j <;> simp <;> ring
+  have hs_bar : (Gamma0_antiInvolution N).bar s = s := by
+    show (Gamma0_AL_hom N s).unop = s
+    simp only [Gamma0_AL_hom, MonoidHom.coe_mk, OneHom.coe_mk, MulOpposite.unop_op]
+    suffices h : s * wN N = wN N * MulOpposite.unop ((GL_transposeEquiv 2) s) by
+      rw [← h]; group
+    apply Units.ext; ext i j
+    simp only [s, GeneralLinearGroup.mkOfDetNeZero, GeneralLinearGroup.coe_mul,
+      GL_transposeEquiv_val, wN_val, Matrix.mul_apply, Matrix.transpose_apply,
+      Matrix.smul_apply, Matrix.one_apply, Matrix.diagonal, smul_eq_mul,
+      Fin.sum_univ_two]
+    fin_cases i <;> fin_cases j <;> simp <;> ring
+  rw [hg_eq]
+  exact Gamma0_AL_scalar_reduce N g₀ s hs_central hs_bar h_bar_g₀
+
+/-- The Atkin-Lehner anti-involution fixes every double coset of `Gamma0_pair N`. -/
+private lemma Gamma0_AL_in_doubleCoset (N : ℕ) [NeZero N]
+    (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ) :
+    ((Gamma0_antiInvolution N).bar g) ∈
+      DoubleCoset.doubleCoset (g : GL (Fin 2) ℚ)
+        ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
+  obtain ⟨hint, hdet_pos_g, A, hA, hAN, hAco⟩ := hg
+  have hg : g ∈ (Gamma0_pair N).Δ := ⟨hint, hdet_pos_g, A, hA, hAN, hAco⟩
+  have hA_det_pos : 0 < A.det := by
+    rwa [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]
+  -- Extract the content `d = gcd of all entries`; the quotient `A₀ = A / d` is primitive.
+  set d := Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
+            (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs) with hd_def
+  have hd_dvd : ∀ i j : Fin 2, (d : ℤ) ∣ A i j := by
+    intro i j; exact Int.natAbs_dvd_natAbs.mp (by
+      fin_cases i <;> fin_cases j <;> simp only [d] <;> (
+        exact Nat.dvd_trans (by first
+          | exact Nat.dvd_trans (Nat.gcd_dvd_left _ _) (Nat.gcd_dvd_left _ _)
+          | exact Nat.dvd_trans (Nat.gcd_dvd_right _ _) (Nat.gcd_dvd_left _ _)
+          | exact Nat.dvd_trans (Nat.gcd_dvd_left _ _) (Nat.gcd_dvd_right _ _)
+          | exact Nat.dvd_trans (Nat.gcd_dvd_right _ _) (Nat.gcd_dvd_right _ _))
+          (dvd_refl _)))
+  have hd_pos : 0 < d := Nat.pos_of_ne_zero (fun h => by
+    have h00 := hd_dvd 0 0; have h01 := hd_dvd 0 1
+    have h10 := hd_dvd 1 0; have h11 := hd_dvd 1 1
+    simp [h] at h00 h01 h10 h11
+    have hdet0 : A.det = 0 := by rw [Matrix.det_fin_two]; simp [h00, h01, h10, h11]
+    linarith)
+  obtain ⟨A₀, hA₀_eq, hA₀_det_pos, hA₀N, hA₀co, hA₀_prim⟩ :=
+    Gamma0_content_quotient N A hA_det_pos hAN hAco d hd_pos hd_dvd hd_def
+  have hA₀_det_ne : (A₀.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
+    rw [det_intMat_cast]; exact_mod_cast hA₀_det_pos.ne'
+  set g₀ := GeneralLinearGroup.mkOfDetNeZero (A₀.map (Int.cast : ℤ → ℚ)) hA₀_det_ne
+  have hA₀_val : (g₀ : Matrix _ _ ℚ) = A₀.map (Int.cast : ℤ → ℚ) := rfl
+  have hg₀ : g₀ ∈ (Gamma0_pair N).Δ :=
+    ⟨⟨A₀, rfl⟩, by rw [hA₀_val, det_intMat_cast]; exact_mod_cast hA₀_det_pos,
+     A₀, rfl, hA₀N, hA₀co⟩
+  have hg_scalar : g.val = (d : ℚ) • g₀.val := by
+    ext i j; rw [hA, Matrix.smul_apply, hA₀_val, Matrix.map_apply, Matrix.map_apply]
+    simp only [smul_eq_mul]; push_cast [hA₀_eq i j]; ring
+  -- The primitive part is handled by `Gamma0_AL_in_DC_primitive`; scalar `d` is recovered.
+  exact Gamma0_AL_in_DC_of_smul N g g₀ d (by exact_mod_cast hd_pos) hg_scalar
+    (Gamma0_AL_in_DC_primitive N g₀ hg₀ A₀ hA₀_val hA₀N hA₀co hA₀_prim)
 private lemma Gamma0_onHeckeCoset_eq (N : ℕ) [NeZero N]
     (D : HeckeCoset (Gamma0_pair N)) :
     (Gamma0_antiInvolution N).onHeckeCoset D = D := by
