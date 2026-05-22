@@ -508,7 +508,6 @@ theorem F_diff_at_tangent_target_tendsto_zero_right
           (((s + (‖γ t - s‖ / ‖L‖ : ℝ) • L) - s) ^ (k - 1))⁻¹)‖ ≤
       2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ / ‖γ t - s‖ ^ k) := by
     filter_upwards [eventually_ne_right hL h_deriv h_s, h_chord_le_d] with t h_ne hcd
-    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr h_ne)
     have hcd' : ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ ≤ ‖γ t - s‖ := by
       rw [show γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L) =
             γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L by ring]
@@ -567,7 +566,6 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
           (((s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)) - s) ^ (k - 1))⁻¹)‖ ≤
       2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ / ‖γ t - s‖ ^ k) := by
     filter_upwards [eventually_ne_left hL h_deriv h_s, h_chord_le_d] with t h_ne hcd
-    have hw_pos : 0 < ‖γ t - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr h_ne)
     have hcd' : ‖γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L))‖ ≤ ‖γ t - s‖ := by
       rw [show γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)) =
             γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L) by ring]

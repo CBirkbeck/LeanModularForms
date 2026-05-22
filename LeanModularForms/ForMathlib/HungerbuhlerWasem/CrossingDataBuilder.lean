@@ -385,10 +385,8 @@ theorem norm_sub_strictMonoOn_right
     (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t) :
     ∃ r > 0, StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + r)) := by
   have h_combined : ∀ᶠ t in 𝓝[>] t₀,
-      DifferentiableAt ℝ γ t ∧ (t - t₀) * ‖L‖^2 / 2 ≤ reInner (γ t - s) (deriv γ t) := by
-    filter_upwards [hγ_diff,
-      reInner_lower_bound_right_eventually h_at hL hL_right hγ_cont hγ_diff] with t h1 h2
-    exact ⟨h1, h2⟩
+      DifferentiableAt ℝ γ t ∧ (t - t₀) * ‖L‖^2 / 2 ≤ reInner (γ t - s) (deriv γ t) :=
+    hγ_diff.and (reInner_lower_bound_right_eventually h_at hL hL_right hγ_cont hγ_diff)
   rw [eventually_nhdsWithin_iff] at h_combined
   obtain ⟨r₀, hr₀_pos, hr₀_sub⟩ := Metric.eventually_nhds_iff_ball.mp h_combined
   set r := r₀ / 2 with hr_def
@@ -422,10 +420,8 @@ theorem norm_sub_strictMonoOn_right
       exact h_d_normSq.hasDerivWithinAt
     · intro t ht
       rw [h_int] at ht
-      have h_t_pos : 0 < t - t₀ := sub_pos.mpr ht.1
-      have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
-      have h_pos_inner : 0 < (t - t₀) * ‖L‖^2 / 2 := by positivity
-      linarith [(hr_data t ⟨ht.1, le_of_lt ht.2⟩).2]
+      have hL_sq_pos : 0 < ‖L‖^2 := by positivity
+      linarith [(hr_data t ⟨ht.1, le_of_lt ht.2⟩).2, sub_pos.mpr ht.1, mul_pos (sub_pos.mpr ht.1) hL_sq_pos]
   intro a ha b hb hab
   exact lt_of_pow_lt_pow_left₀ 2 (norm_nonneg _) (h_f_strictMono ha hb hab)
 
@@ -486,10 +482,8 @@ theorem norm_sub_strictAntiOn_left
     (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t) :
     ∃ r > 0, StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - r) t₀) := by
   have h_combined : ∀ᶠ t in 𝓝[<] t₀,
-      DifferentiableAt ℝ γ t ∧ reInner (γ t - s) (deriv γ t) ≤ (t - t₀) * ‖L‖^2 / 2 := by
-    filter_upwards [hγ_diff,
-      reInner_upper_bound_left_eventually h_at hL hL_left hγ_cont hγ_diff] with t h1 h2
-    exact ⟨h1, h2⟩
+      DifferentiableAt ℝ γ t ∧ reInner (γ t - s) (deriv γ t) ≤ (t - t₀) * ‖L‖^2 / 2 :=
+    hγ_diff.and (reInner_upper_bound_left_eventually h_at hL hL_left hγ_cont hγ_diff)
   rw [eventually_nhdsWithin_iff] at h_combined
   obtain ⟨r₀, hr₀_pos, hr₀_sub⟩ := Metric.eventually_nhds_iff_ball.mp h_combined
   set r := r₀ / 2 with hr_def

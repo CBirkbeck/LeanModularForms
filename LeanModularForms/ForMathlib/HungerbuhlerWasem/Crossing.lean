@@ -122,44 +122,30 @@ theorem HasCauchyPV.finset_sum {ι : Type*} [DecidableEq ι] (T : Finset ι)
       (fun t => cpvIntegrand (f i) γ.toPath.extend z₀ ε t) volume 0 1) :
     HasCauchyPV (fun z => ∑ i ∈ T, f i z) γ z₀ (∑ i ∈ T, L i) := by
   induction T using Finset.induction_on with
-  | empty =>
-    simpa [Finset.sum_empty] using HasCauchyPV.zero_fun (γ := γ) (z₀ := z₀)
+  | empty => simpa [Finset.sum_empty] using HasCauchyPV.zero_fun (γ := γ) (z₀ := z₀)
   | @insert a T' hia ih =>
-    have h_a : HasCauchyPV (f a) γ z₀ (L a) := hf a (Finset.mem_insert_self a T')
-    have h_T' : HasCauchyPV (fun z => ∑ i ∈ T', f i z) γ z₀ (∑ i ∈ T', L i) :=
-      ih (fun i hi => hf i (Finset.mem_insert_of_mem hi))
-        (fun i hi => hfi i (Finset.mem_insert_of_mem hi))
-    have h_a_int : ∀ ε > 0, IntervalIntegrable
-        (fun t => cpvIntegrand (f a) γ.toPath.extend z₀ ε t) volume 0 1 :=
-      hfi a (Finset.mem_insert_self a T')
     have h_T'_int : ∀ ε > 0, IntervalIntegrable
         (fun t => cpvIntegrand (fun z => ∑ i ∈ T', f i z) γ.toPath.extend z₀ ε t)
-        volume 0 1 := by
-      intro ε hε
+        volume 0 1 := fun ε hε => by
       have h_pt : (fun t => cpvIntegrand (fun z => ∑ i ∈ T', f i z)
           γ.toPath.extend z₀ ε t) =
           (fun t => ∑ i ∈ T', cpvIntegrand (f i) γ.toPath.extend z₀ ε t) := by
         funext t
         simp only [cpvIntegrand]
-        split_ifs with h
+        split_ifs
         · rw [Finset.sum_mul]
         · exact Finset.sum_const_zero.symm
-      rw [h_pt]
-      have h_sum_int := IntervalIntegrable.sum T'
-        (f := fun i t => cpvIntegrand (f i) γ.toPath.extend z₀ ε t)
+      rw [h_pt, show (fun t => ∑ i ∈ T', cpvIntegrand (f i) γ.toPath.extend z₀ ε t) =
+          ∑ i ∈ T', fun t => cpvIntegrand (f i) γ.toPath.extend z₀ ε t from
+          funext fun _ => (Finset.sum_apply _ _ _).symm]
+      exact IntervalIntegrable.sum T'
         (fun i hi => hfi i (Finset.mem_insert_of_mem hi) ε hε)
-      have h_fn_eq : (∑ i ∈ T', fun t => cpvIntegrand (f i) γ.toPath.extend z₀ ε t) =
-          fun t => ∑ i ∈ T', cpvIntegrand (f i) γ.toPath.extend z₀ ε t :=
-        funext fun _ => Finset.sum_apply _ _ _
-      rwa [h_fn_eq] at h_sum_int
-    have h_sum : HasCauchyPV (fun z => f a z + ∑ i ∈ T', f i z) γ z₀
-        (L a + ∑ i ∈ T', L i) :=
-      HasCauchyPV.add h_a h_T' h_a_int h_T'_int
-    have h_eq : (fun z => ∑ i ∈ insert a T', f i z) =
-        (fun z => f a z + ∑ i ∈ T', f i z) :=
-      funext fun _ => Finset.sum_insert hia
-    rw [h_eq, Finset.sum_insert hia]
-    exact h_sum
+    rw [show (fun z => ∑ i ∈ insert a T', f i z) = (fun z => f a z + ∑ i ∈ T', f i z) from
+        funext fun _ => Finset.sum_insert hia, Finset.sum_insert hia]
+    exact HasCauchyPV.add (hf a (Finset.mem_insert_self a T'))
+      (ih (fun i hi => hf i (Finset.mem_insert_of_mem hi))
+        (fun i hi => hfi i (Finset.mem_insert_of_mem hi)))
+      (hfi a (Finset.mem_insert_self a T')) h_T'_int
 
 /-- **Asymmetric variant of T-GL-01.** Per-pole CPV at a transverse crossing
 using `AsymmetricSingleCrossingData`. This admits curves with `‖L_-‖ ≠ ‖L_+‖`
@@ -183,21 +169,14 @@ theorem cpv_polarPart_at_pole_under_conditions_asymmetric
   set term : Fin N → ℂ → ℂ := fun k z => a k / (z - s) ^ (k.val + 1)
   set L : Fin N → ℂ := fun k =>
     if k.val = 0 then 2 * ↑Real.pi * I * w * a k else 0
-  have h_each : ∀ k : Fin N, HasCauchyPV (term k) γ s (L k) := by
-    intro k
+  have h_each : ∀ k : Fin N, HasCauchyPV (term k) γ s (L k) := fun k => by
     by_cases hk : k.val = 0
-    · have h_pow_one : (k.val + 1 : ℕ) = 1 := by omega
-      have h_term_eq : term k = fun z => a k / (z - s) := by
-        funext z
-        change a k / (z - s) ^ (k.val + 1) = a k / (z - s)
-        rw [h_pow_one, pow_one]
-      have h_L_eq : L k = 2 * ↑Real.pi * I * w * a k := by simp [L, hk]
-      rw [h_term_eq, h_L_eq]
+    · have h_term_eq : term k = fun z => a k / (z - s) := by
+        funext z; simp only [term, show (k.val + 1 : ℕ) = 1 from by omega, pow_one]
+      rw [h_term_eq, show L k = 2 * ↑Real.pi * I * w * a k from by simp [L, hk]]
       exact cpv_simplePole_at_crossing_asymmetric D (a k)
-    · have hk_ge : k.val ≥ 1 := by omega
-      have h_L_eq : L k = (0 : ℂ) := by simp [L, hk]
-      rw [h_L_eq]
-      exact h_higher k hk_ge
+    · rw [show L k = (0 : ℂ) from by simp [L, hk]]
+      exact h_higher k (by omega)
   have h_sum := HasCauchyPV.finset_sum (Finset.univ : Finset (Fin N))
     (γ := γ) (z₀ := s) (f := term) (L := L)
     (fun k _ => h_each k) (fun k _ => h_term_int k)
@@ -213,15 +192,12 @@ theorem cpv_polarPart_at_pole_under_conditions_asymmetric
         have hk_ne : k.val ≠ 0 := fun h_eq => hk (Fin.ext h_eq)
         change (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
         rw [if_neg hk_ne]
-      · intro h
-        exact absurd (Finset.mem_univ _) h
+      · exact fun h => absurd (Finset.mem_univ _) h
     · rw [dif_neg h_pos, mul_zero]
-      refine Finset.sum_eq_zero fun k _ => ?_
-      exact absurd k.isLt (by omega)
-  have h_pp_eq : ∀ z, z ≠ s → (∑ k : Fin N, term k z) = decomp.polarPart s z :=
-    fun z hz => (decomp.polarPart_eq s hs z hz).symm
+      exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
   rw [← h_sum_eq]
-  exact HasCauchyPV.congr_pointwise h_sum h_pp_eq
+  exact HasCauchyPV.congr_pointwise h_sum
+    fun z hz => (decomp.polarPart_eq s hs z hz).symm
 
 /-- Per-pole CPV at a transverse crossing: for a pole `s ∈ S` with Laurent decomposition
 recorded in `decomp`, given a `SingleCrossingData γ s` plus per-term CPV vanishing of the
@@ -1212,18 +1188,10 @@ private theorem residueTheorem_crossing_asymmetric
   set decomp : PolarPartDecomposition f S U :=
     PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
       (γ := γ.toPwC1Immersion) hMero hCondB
-  have h_polar_cpv : ∀ s ∈ S, HasCauchyPVOn S (decomp.polarPart s)
-      γ.toPwC1Immersion.toPiecewiseC1Path
-      (2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-    intro s hs
-    exact cpv_polarPart_at_pole_from_conditions_asymmetric hU_open hU_ne hS_in_U hf γ
-      h_null decomp hCondA hCondB h_geometry h_unique_cross
-      h_no_corner_crossings
-      h_avoid_others_per_pole s hs
   exact residueTheorem_crossing_compositional hU_open hU_ne S hS_in_U f hf γ
-    h_null decomp h_polar_cpv
+    h_null decomp fun s hs => cpv_polarPart_at_pole_from_conditions_asymmetric
+      hU_open hU_ne hS_in_U hf γ h_null decomp hCondA hCondB h_geometry h_unique_cross
+      h_no_corner_crossings h_avoid_others_per_pole s hs
 
 /-- **Crossing scenario** for `γ` relative to a finite pole set `S`.
 
@@ -1375,46 +1343,27 @@ theorem hasCauchyPV_inv_sub_multiCrossing_card_le_one
   classical
   by_cases h_empty : D.crossings = ∅
   · have h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s := by
-      have h_eq : D.crossings = ∅ := h_empty
-      exact D.avoids_of_crossings_empty h_eq
-    have hγ_cont : Continuous γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s := D.avoids_of_crossings_empty h_empty
     have h_norm_cont : ContinuousOn
         (fun t => ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖)
         (Set.Icc (0 : ℝ) 1) :=
-      ((hγ_cont.continuousOn).sub continuousOn_const).norm
-    have h_compact : IsCompact (Set.Icc (0 : ℝ) 1) := isCompact_Icc
-    have h_nonempty : (Set.Icc (0 : ℝ) 1).Nonempty := ⟨0, ⟨le_rfl, zero_le_one⟩⟩
+      ((γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousOn).sub
+        continuousOn_const).norm
     obtain ⟨t_min, ht_min_mem, ht_min⟩ :=
-      h_compact.exists_isMinOn h_nonempty h_norm_cont
-    set δ : ℝ := ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t_min - s‖
-    have hδ_pos : 0 < δ :=
-      norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t_min ht_min_mem))
-    refine ⟨_, hasCauchyPV_of_avoids (f := fun z => (z - s)⁻¹) ⟨δ, hδ_pos, ?_⟩⟩
-    intro t ht
-    exact ht_min ht
+      isCompact_Icc.exists_isMinOn ⟨0, ⟨le_rfl, zero_le_one⟩⟩ h_norm_cont
+    refine ⟨_, hasCauchyPV_of_avoids (f := fun z => (z - s)⁻¹)
+      ⟨_, norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t_min ht_min_mem)), fun t ht => ht_min ht⟩⟩
   · have h_nonempty : D.crossings.Nonempty := Finset.nonempty_iff_ne_empty.mpr h_empty
     have h_card_eq_one : D.crossings.card = 1 := by
-      have h_pos : 0 < D.crossings.card := Finset.card_pos.mpr h_nonempty
-      omega
+      have := Finset.card_pos.mpr h_nonempty; omega
     obtain ⟨t₀, ht₀_eq⟩ := Finset.card_eq_one.mp h_card_eq_one
-    have ht₀_mem : t₀ ∈ D.crossings := by
-      rw [ht₀_eq]; exact Finset.mem_singleton_self _
-    have ht₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 := D.h_Ioo t₀ ht₀_mem
-    have h_at_t₀ : γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s :=
-      D.h_at t₀ ht₀_mem
-    have h_off_t₀ : t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition :=
-      D.h_off t₀ ht₀_mem
-    have h_unique_t₀ : ∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t = s → t = t₀ := by
-      intro t ht h_eq
-      have h_mem := D.h_complete t ht h_eq
-      rw [ht₀_eq, Finset.mem_singleton] at h_mem
-      exact h_mem
-    have h_flat_t₀ := h_flat_at_each t₀ ht₀_mem
-    exact hasCauchyPV_inv_sub_of_flat_one_full γ ht₀_Ioo h_at_t₀
-      h_unique_t₀ h_flat_t₀
+    have ht₀_mem : t₀ ∈ D.crossings := by rw [ht₀_eq]; exact Finset.mem_singleton_self _
+    refine hasCauchyPV_inv_sub_of_flat_one_full γ (D.h_Ioo t₀ ht₀_mem) (D.h_at t₀ ht₀_mem)
+      ?_ (h_flat_at_each t₀ ht₀_mem)
+    intro t ht h_eq
+    have h_mem := D.h_complete t ht h_eq
+    rw [ht₀_eq, Finset.mem_singleton] at h_mem
+    exact h_mem
 
 /-- **Multi-crossing scenario for `γ` relative to a finite pole set `S`**.
 
@@ -1496,30 +1445,25 @@ private theorem residueTheorem_crossing_asymmetric_multiPole
       h_avoid
   by_cases h_card_one : M.crossings.card = 1
   · let P : PerPoleCrossData γ s := M.toPerPole_of_card_one h_card_one
-    have ht₀_Ioo : P.t₀ ∈ Ioo (0 : ℝ) 1 := P.ht₀_Ioo
-    have h_at : γ.toPwC1Immersion.toPiecewiseC1Path P.t₀ = s := P.h_at
-    have h_off : P.t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition := P.h_off
-    have h_unique : ∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t = s → t = P.t₀ := P.h_unique
     have h_flat_data :=
-      flat_data_of_condA_at_crossing (γ := γ) decomp hCondA hs ht₀_Ioo h_at
+      flat_data_of_condA_at_crossing (γ := γ) decomp hCondA hs P.ht₀_Ioo P.h_at
     have h_flat : IsFlatOfOrder
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend P.t₀ 1 :=
       h_flat_data.choose_spec.2.2.of_le h_flat_data.choose_spec.1
         γ.toPwC1Immersion.continuous.continuousAt
-    have h_cpv_exists := hasCauchyPV_inv_sub_of_flat_one_full γ ht₀_Ioo h_at
-      h_unique h_flat
+    have h_cpv_exists := hasCauchyPV_inv_sub_of_flat_one_full γ P.ht₀_Ioo P.h_at
+      P.h_unique h_flat
     let D : AsymmetricSingleCrossingData
         γ.toPwC1Immersion.toPiecewiseC1Path s :=
       HungerbuhlerWasem.AsymmetricSingleCrossingData.ofClosedImmersion_hasCauchyPV
-        γ ht₀_Ioo h_at h_unique h_off h_cpv_exists.choose_spec
+        γ P.ht₀_Ioo P.h_at P.h_unique P.h_off h_cpv_exists.choose_spec
     obtain ⟨n, hn1, h_order_le_n, h_flat_n⟩ :=
-      flat_data_of_condA_at_crossing decomp hCondA hs ht₀_Ioo h_at
+      flat_data_of_condA_at_crossing decomp hCondA hs P.ht₀_Ioo P.h_at
     exact MultiPoleDCT.hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
       hS_in_U decomp γ hs h_null (cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
-        hS_in_U γ h_null decomp s hs ht₀_Ioo h_at h_unique h_off D n h_flat_n
+        hS_in_U γ h_null decomp s hs P.ht₀_Ioo P.h_at P.h_unique P.h_off D n h_flat_n
         hn1 h_order_le_n
-        (angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs ht₀_Ioo h_at h_off))
+        (angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs P.ht₀_Ioo P.h_at P.h_off))
   have h_ge_two : M.crossings.card ≥ 2 := by
     have : 0 < M.crossings.card := Nat.pos_of_ne_zero h_card_zero
     omega
@@ -1574,40 +1518,26 @@ noncomputable def MultiPoleCrossScenario.ofImmersion
       simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 0 =
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 from rfl,
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_zero]
-      intro h_eq
-      exact hx_notin_S (h_eq ▸ hs)
+      exact fun h_eq => hx_notin_S (h_eq ▸ hs)
     have h1_ne : (γ.toPwC1Immersion : ℝ → ℂ) 1 ≠ s := by
       simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 1 =
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 from rfl,
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_one]
-      intro h_eq
-      exact hx_notin_S (h_eq ▸ hs)
+      exact fun h_eq => hx_notin_S (h_eq ▸ hs)
     have hfin : Set.Finite (γ.toPwC1Immersion.crossingSet s) :=
       PwC1Immersion.crossingSet_finite γ.toPwC1Immersion s h0_ne h1_ne
     have h_to_Ioo : ∀ t ∈ Icc (0 : ℝ) 1, (γ.toPwC1Immersion : ℝ → ℂ) t = s →
-        t ∈ Ioo (0 : ℝ) 1 := by
-      intro t h_in_Icc h_at_t
-      refine ⟨lt_of_le_of_ne h_in_Icc.1 ?_, lt_of_le_of_ne h_in_Icc.2 ?_⟩
-      · intro h_eq; apply h0_ne; rw [← h_eq] at h_at_t; exact h_at_t
-      · intro h_eq; apply h1_ne; rw [h_eq] at h_at_t; exact h_at_t
+        t ∈ Ioo (0 : ℝ) 1 := fun t h_in_Icc h_at_t =>
+      ⟨lt_of_le_of_ne h_in_Icc.1 fun h_eq => h0_ne (h_eq ▸ h_at_t),
+       lt_of_le_of_ne h_in_Icc.2 fun h_eq => h1_ne (h_eq.symm ▸ h_at_t)⟩
     refine
       { crossings := hfin.toFinset
-        h_Ioo := ?_
-        h_at := ?_
-        h_off := ?_
-        h_complete := ?_ }
-    · intro t ht
-      rw [Set.Finite.mem_toFinset] at ht
-      exact h_to_Ioo t ht.1 ht.2
-    · intro t ht
-      rw [Set.Finite.mem_toFinset] at ht
-      exact ht.2
-    · intro t ht
-      rw [Set.Finite.mem_toFinset] at ht
-      exact h_no_corner_crossings s hs t (h_to_Ioo t ht.1 ht.2) ht.2
-    · intro t ht h_eq
-      rw [Set.Finite.mem_toFinset]
-      exact ⟨ht, h_eq⟩
+        h_Ioo := fun t ht => h_to_Ioo t (hfin.mem_toFinset.mp ht).1 (hfin.mem_toFinset.mp ht).2
+        h_at := fun t ht => (hfin.mem_toFinset.mp ht).2
+        h_off := fun t ht =>
+          let ht' := hfin.mem_toFinset.mp ht
+          h_no_corner_crossings s hs t (h_to_Ioo t ht'.1 ht'.2) ht'.2
+        h_complete := fun t ht h_eq => hfin.mem_toFinset.mpr ⟨ht, h_eq⟩ }
 
 /-- **Existence of a non-pole basepoint via measure-zero preimage.**
 
