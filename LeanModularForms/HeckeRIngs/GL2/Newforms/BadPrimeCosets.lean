@@ -267,6 +267,49 @@ lemma Newform.badPrime_lowerOffset_bsum_slash_Gamma1_right
 
 /-! ### T186 — Bad-prime upper-family left-coset injectivity / pairwise disjointness -/
 
+/-- **Real-matrix entries of the bad-prime upper coset rep `β_b` (T186 helper).**
+
+The underlying `Matrix (Fin 2) (Fin 2) ℝ` of `glMap (T_p_upper p hp b)` is the
+integer matrix `!![1, b; 0, p]` cast to `ℝ` via `algebraMap ℤ ℝ`. Used to
+identify the `(0, *)` row entries in the left-coset injectivity argument and to
+combine the integer-level double-coset identity through `Matrix.map_mul`. -/
+private lemma Newform.glMap_T_p_upper_coe_real_intMap
+    {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      (!![(1 : ℤ), (b : ℤ); 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ).map
+        (algebraMap ℤ ℝ) := by
+  show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
+      (!![(1 : ℤ), (b : ℤ); 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ).map
+        (algebraMap ℤ ℝ)
+  rw [T_p_upper_coe]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
+
+/-- **Coset-index rigidity from a `mod p` shear (T186 helper).**
+
+If `m * p = b₂ - b₁` for two indices `b₁ b₂ : Fin p` and some integer `m`, then
+`b₁ = b₂`. The shear coefficient `m` must vanish: `|m * p| = |b₂ - b₁| < p` and
+`p > 0` force `m = 0`, hence `b₂ - b₁ = 0`. This is the arithmetic core of the
+left-coset injectivity for the bad-prime upper family. -/
+private lemma Newform.fin_eq_of_mul_eq_sub
+    {p : ℕ} (hp : 0 < p) (b1 b2 : Fin p) (m : ℤ)
+    (h : m * (p : ℤ) = (b2.val : ℤ) - (b1.val : ℤ)) : b1 = b2 := by
+  have hb1_lt : (b1.val : ℤ) < (p : ℤ) := by exact_mod_cast b1.isLt
+  have hb2_lt : (b2.val : ℤ) < (p : ℤ) := by exact_mod_cast b2.isLt
+  have hb1_nn : (0 : ℤ) ≤ (b1.val : ℤ) := Int.natCast_nonneg _
+  have hb2_nn : (0 : ℤ) ≤ (b2.val : ℤ) := Int.natCast_nonneg _
+  have hp_pos_int : (0 : ℤ) < (p : ℤ) := by exact_mod_cast hp
+  have h_abs2 : |m * (p : ℤ)| < (p : ℤ) := by
+    rw [h, abs_lt]; constructor <;> linarith
+  have hm : m = 0 := by
+    by_contra h_ne
+    have h_abs_m : 1 ≤ |m| := Int.one_le_abs h_ne
+    rw [abs_mul, abs_of_pos hp_pos_int] at h_abs2
+    have : (p : ℤ) ≤ |m| * (p : ℤ) := by nlinarith
+    linarith
+  rw [hm, zero_mul] at h
+  exact Fin.ext (by exact_mod_cast (by linarith : (b1.val : ℤ) = (b2.val : ℤ)))
+
 /-- **T186 left-coset injectivity for the bad-prime upper family at level `Γ₁(N)`.**
 
 For p > 0 and any `γ ∈ Γ₁(N)` (in fact any `γ ∈ SL(2, ℤ)`), if
@@ -334,24 +377,7 @@ theorem Newform.T_p_upper_left_coset_injective_Gamma1
   push_cast at h01
   have h_real : (γ.val 0 1 : ℝ) * (p : ℝ) = (b2.val : ℝ) - (b1.val : ℝ) := by linarith
   have h_diff : γ.val 0 1 * (p : ℤ) = (b2.val : ℤ) - (b1.val : ℤ) := by exact_mod_cast h_real
-  have hb1_lt : (b1.val : ℤ) < (p : ℤ) := by exact_mod_cast b1.isLt
-  have hb2_lt : (b2.val : ℤ) < (p : ℤ) := by exact_mod_cast b2.isLt
-  have hb1_nn : (0 : ℤ) ≤ (b1.val : ℤ) := Int.natCast_nonneg _
-  have hb2_nn : (0 : ℤ) ≤ (b2.val : ℤ) := Int.natCast_nonneg _
-  have h_abs : |(b2.val : ℤ) - (b1.val : ℤ)| < (p : ℤ) := by
-    rw [abs_lt]; refine ⟨?_, ?_⟩ <;> linarith
-  have hp_pos_int : (0 : ℤ) < (p : ℤ) := by exact_mod_cast hp
-  have h_abs2 : |γ.val 0 1 * (p : ℤ)| < (p : ℤ) := by rw [h_diff]; exact h_abs
-  have hg01 : γ.val 0 1 = 0 := by
-    by_contra h_ne
-    have h_abs_g : 1 ≤ |γ.val 0 1| := Int.one_le_abs h_ne
-    rw [abs_mul, abs_of_pos hp_pos_int] at h_abs2
-    have : (p : ℤ) ≤ |γ.val 0 1| * (p : ℤ) := by nlinarith
-    linarith
-  rw [hg01, zero_mul] at h_diff
-  have h_eq : (b1.val : ℤ) = (b2.val : ℤ) := by linarith
-  ext
-  exact_mod_cast h_eq
+  exact Newform.fin_eq_of_mul_eq_sub hp b1 b2 _ h_diff
 
 open scoped Pointwise in
 /-- **T186 left-coset pairwise disjointness for the bad-prime upper family.**
@@ -382,6 +408,149 @@ theorem Newform.T_p_upper_left_cosets_pairwiseDisjoint_Gamma1
   apply Newform.T_p_upper_left_coset_injective_Gamma1 N hp b1 b2 (γ2⁻¹ * γ1)
     (Subgroup.mul_mem _ (Subgroup.inv_mem _ hγ2) hγ1)
   rw [map_mul, map_inv, mul_assoc, hx_eq1, ← mul_assoc, inv_mul_cancel, one_mul]
+
+/-- **Integer double-coset matrix identity for the bad-prime upper family
+(T186 helper).**
+
+The explicit `M₂(ℤ)` factorization underlying DS Lemma 5.5.2(a): with the shear
+relation `B · p = b' - a · bb`,
+```
+!![1, 0; 0, p] · !![a, b'; c, d] = !![a, B; p·c, d - c·bb] · !![1, bb; 0, p].
+```
+Entry-by-entry: `(0,0) a=a`, `(0,1) b' = a·bb + B·p`, `(1,0) p·c = p·c`,
+`(1,1) p·d = (p·c)·bb + (d - c·bb)·p`. -/
+private lemma Newform.alpha_p_mul_eq_M_mul_T_p_upper_int
+    (p a b' c d B bb : ℤ) (hB : B * p = b' - a * bb) :
+    (!![(1 : ℤ), 0; 0, p] : Matrix (Fin 2) (Fin 2) ℤ) * !![a, b'; c, d] =
+      !![a, B; p * c, d - c * bb] * !![(1 : ℤ), bb; 0, p] := by
+  rw [Matrix.mul_fin_two, Matrix.mul_fin_two]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp <;> linarith
+
+/-- **Mod-`p` reduction of a `mod N` unit congruence (T186 helper).**
+
+If `a ≡ 1 (mod N)` and `p ∣ N`, then `a ≡ 1 (mod p)`. Used to descend the
+`Γ₁(N)` diagonal congruence `a ≡ 1 (mod N)` to the residue ring `ZMod p` so the
+bad-prime shear coefficient `B := (b' - a·b)/p` is integral. -/
+private lemma Newform.intCast_eq_one_of_dvd_of_eq_one
+    {N p : ℕ} (hpN : p ∣ N) {a : ℤ} (ha : (a : ZMod N) = 1) :
+    (a : ZMod p) = 1 := by
+  have hN_int_dvd : (N : ℤ) ∣ (a - 1) := by
+    rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; push_cast; rw [ha]; ring
+  have hp_dvd : (p : ℤ) ∣ (a - 1) :=
+    dvd_trans (Int.natCast_dvd_natCast.mpr hpN) hN_int_dvd
+  rw [show (a : ZMod p) = ((a - 1 : ℤ) : ZMod p) + 1 by push_cast; ring]
+  rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hp_dvd, zero_add]
+
+/-- **Determinant of the bad-prime upper factor `M` is 1 (T186 helper).**
+
+The constructed `M := !![a, B; p·c, d - c·bb]` has determinant `1`: expand via
+`det_fin_two_of`, substitute the shear relation `B·p = b' - a·bb`, and reduce to
+`a·d - b'·c = det γ = 1`. This is what places `γ' := ⟨M, _⟩` in `SL(2, ℤ)`. -/
+private lemma Newform.det_alpha_p_factor_eq_one
+    (p a b' c d B bb : ℤ) (hBp : B * p = b' - a * bb) (h_det : a * d - b' * c = 1) :
+    (!![a, B; p * c, d - c * bb] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+  rw [Matrix.det_fin_two_of]
+  have step1 : a * (d - c * bb) - B * (p * c) = a * d - c * (a * bb + B * p) := by ring
+  rw [step1, hBp]
+  linarith [h_det]
+
+/-- **GL-lift of the integer double-coset identity (T186 helper).**
+
+Promote the `M₂(ℤ)`-level factorization `!![1,0;0,p] · γ = γ' · !![1,b;0,p]` to the
+`GL (Fin 2) ℝ`-level identity `α_p · γ = γ' · β_b`, where
+`α_p := glMap (T_p_upper p hp 0)` and `β_b := glMap (T_p_upper p hp b)`. All four
+real matrices are `algebraMap ℤ ℝ`-images of integer matrices
+(`glMap_T_p_upper_coe_real_intMap`, `mapGL_coe_matrix`), so the identity follows
+from the integer one through `Matrix.map_mul`. -/
+private lemma Newform.glMap_T_p_upper_zero_mul_mapGL_eq_of_int
+    {p : ℕ} (hp : 0 < p) (γ γ' : SL(2, ℤ)) (b : ℕ)
+    (h_int : (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val =
+      γ'.val * !![(1 : ℤ), (b : ℤ); 0, (p : ℤ)]) :
+    (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * (mapGL ℝ γ : GL (Fin 2) ℝ) =
+      (mapGL ℝ γ' : GL (Fin 2) ℝ) * (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) := by
+  apply Units.ext
+  show ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
+        ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      ((mapGL ℝ γ' : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
+        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ)
+  have hα := Newform.glMap_T_p_upper_coe_real_intMap hp 0
+  rw [Nat.cast_zero] at hα
+  have hβ := Newform.glMap_T_p_upper_coe_real_intMap hp b
+  have hγ_mat : ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      γ.val.map (algebraMap ℤ ℝ) := mapGL_coe_matrix γ
+  have hγ'_mat : ((mapGL ℝ γ' : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      γ'.val.map (algebraMap ℤ ℝ) := mapGL_coe_matrix γ'
+  rw [hα, hβ, hγ_mat, hγ'_mat, ← Matrix.map_mul, ← Matrix.map_mul, h_int]
+
+/-- **Integer-level bad-prime double-coset decomposition (T186 core).**
+
+For a prime `p ∣ N` and `γ ∈ Γ₁(N)`, there are `γ' ∈ Γ₁(N)` and `b ∈ Fin p` with
+the explicit `M₂(ℤ)` factorization
+`!![1,0;0,p] · γ.val = γ'.val · !![1, b; 0, p]`.
+
+**Construction.** Write `γ.val = !![a, b'; c, d]`. As `p ∣ N` forces `a ≡ 1 (mod p)`
+(`intCast_eq_one_of_dvd_of_eq_one`), the residue `b := (b' : ZMod p).val` satisfies
+`a·b ≡ b' (mod p)`, so `B := (b' - a·b)/p ∈ ℤ`. Then
+`γ' := ⟨!![a, B; p·c, d - c·b], _⟩` has determinant `1`
+(`det_alpha_p_factor_eq_one`) and lies in `Γ₁(N)` (entry congruences mod `N`); the
+matrix identity is `alpha_p_mul_eq_M_mul_T_p_upper_int`. -/
+private lemma Newform.exists_Gamma1_mul_T_p_upper_int
+    {N : ℕ} [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 N) :
+    ∃ (γ' : SL(2, ℤ)) (b : Fin p), γ' ∈ Gamma1 N ∧
+      (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val =
+        γ'.val * !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  have hp_dvd_N : (p : ℕ) ∣ N := by
+    by_contra h_ndvd
+    exact hpN (hp.coprime_iff_not_dvd.mpr h_ndvd)
+  -- Integer entries and Γ₁(N) congruences; `p ∣ N` descends `a ≡ 1` to `mod p`.
+  set a : ℤ := γ.val 0 0 with ha_def
+  set b' : ℤ := γ.val 0 1 with hb'_def
+  set c : ℤ := γ.val 1 0 with hc_def
+  set d : ℤ := γ.val 1 1 with hd_def
+  have hg := (Gamma1_mem N γ).mp hγ
+  have ha_mod_N : (a : ZMod N) = 1 := by exact_mod_cast hg.1
+  have hd_mod_N : (d : ZMod N) = 1 := by exact_mod_cast hg.2.1
+  have hc_mod_N : (c : ZMod N) = 0 := by exact_mod_cast hg.2.2
+  have ha_mod_p : (a : ZMod p) = 1 :=
+    Newform.intCast_eq_one_of_dvd_of_eq_one hp_dvd_N ha_mod_N
+  have h_det_γ : a * d - b' * c = 1 := by
+    have := γ.property
+    show γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1
+    rw [Matrix.det_fin_two] at this; exact this
+  -- Choose `b` as the canonical residue of `b'` mod `p`; then `p ∣ b' - a·b`.
+  set b : Fin p := ⟨((b' : ZMod p)).val, ZMod.val_lt _⟩ with hb_def
+  have hbval_zmod : ((b.val : ℕ) : ZMod p) = (b' : ZMod p) := by
+    show (((b' : ZMod p).val : ℕ) : ZMod p) = (b' : ZMod p)
+    rw [ZMod.natCast_val, ZMod.cast_id]
+  have hp_dvd_diff : (p : ℤ) ∣ (b' - a * (b.val : ℤ)) := by
+    refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp ?_
+    push_cast
+    rw [ha_mod_p, hbval_zmod]
+    ring
+  obtain ⟨B, hB_eq⟩ := hp_dvd_diff
+  have hBp_int : B * (p : ℤ) = b' - a * (b.val : ℤ) := by linarith
+  have hM_det : (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] :
+      Matrix (Fin 2) (Fin 2) ℤ).det = 1 :=
+    Newform.det_alpha_p_factor_eq_one (p : ℤ) a b' c d B (b.val : ℤ) hBp_int h_det_γ
+  refine ⟨⟨_, hM_det⟩, b, ?_, ?_⟩
+  · rw [Gamma1_mem]
+    refine ⟨?_, ?_, ?_⟩
+    · show ((a : ℤ) : ZMod N) = 1
+      exact_mod_cast ha_mod_N
+    · show ((d - c * (b.val : ℤ) : ℤ) : ZMod N) = 1
+      push_cast; rw [hd_mod_N, hc_mod_N]; ring
+    · show (((p : ℤ) * c : ℤ) : ZMod N) = 0
+      push_cast; rw [hc_mod_N]; ring
+  · -- Integer matrix identity: η-expand `γ.val`, then the explicit factorization.
+    show (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val =
+        !![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
+          !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)]
+    rw [Matrix.eta_fin_two γ.val, ← ha_def, ← hb'_def, ← hc_def, ← hd_def]
+    exact Newform.alpha_p_mul_eq_M_mul_T_p_upper_int (p : ℤ) a b' c d B (b.val : ℤ) hBp_int
 
 /-- **T186 per-γ Hecke double-coset decomposition at level Γ₁(N) for bad primes
 (DS Lemma 5.5.2(a) variant).**
@@ -420,156 +589,33 @@ theorem Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b
           (mapGL ℝ γ : GL (Fin 2) ℝ) =
         (mapGL ℝ γ' : GL (Fin 2) ℝ) *
           (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) := by
-  haveI : Fact p.Prime := ⟨hp⟩
-  haveI : NeZero p := ⟨hp.ne_zero⟩
-  -- Step 1: p | N.
-  have hp_dvd_N : (p : ℕ) ∣ N := by
-    by_contra h_ndvd
-    exact hpN (hp.coprime_iff_not_dvd.mpr h_ndvd)
-  -- Step 2: Extract integer entries and Γ₁(N) congruences.
-  set a : ℤ := γ.val 0 0 with ha_def
-  set b' : ℤ := γ.val 0 1 with hb'_def
-  set c : ℤ := γ.val 1 0 with hc_def
-  set d : ℤ := γ.val 1 1 with hd_def
-  have hg := (Gamma1_mem N γ).mp hγ
-  have ha_mod_N : (a : ZMod N) = 1 := by exact_mod_cast hg.1
-  have hd_mod_N : (d : ZMod N) = 1 := by exact_mod_cast hg.2.1
-  have hc_mod_N : (c : ZMod N) = 0 := by exact_mod_cast hg.2.2
-  -- p | N implies a ≡ 1 (mod p).
-  have hN_int_dvd : (N : ℤ) ∣ (a - 1) := by
-    rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; push_cast; rw [ha_mod_N]; ring
-  have hp_dvd_a_sub_one : (p : ℤ) ∣ (a - 1) :=
-    dvd_trans (Int.natCast_dvd_natCast.mpr hp_dvd_N) hN_int_dvd
-  have ha_mod_p : (a : ZMod p) = 1 := by
-    rw [show (a : ZMod p) = ((a - 1 : ℤ) : ZMod p) + 1 by push_cast; ring]
-    rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hp_dvd_a_sub_one, zero_add]
-  -- Step 3: det γ = 1.
-  have h_det_γ : a * d - b' * c = 1 := by
-    have := γ.property
-    show γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1
-    rw [Matrix.det_fin_two] at this; exact this
-  -- Step 4: Choose b ∈ Fin p as the canonical residue of b' mod p.
-  set b : Fin p := ⟨((b' : ZMod p)).val, ZMod.val_lt _⟩ with hb_def
-  -- (b.val : ZMod p) = (b' : ZMod p).
-  have hbval_zmod : ((b.val : ℕ) : ZMod p) = (b' : ZMod p) := by
-    show (((b' : ZMod p).val : ℕ) : ZMod p) = (b' : ZMod p)
-    rw [ZMod.natCast_val, ZMod.cast_id]
-  -- p ∣ (b' - a * b.val).
-  have hp_dvd_diff : (p : ℤ) ∣ (b' - a * (b.val : ℤ)) := by
-    refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp ?_
-    push_cast
-    rw [ha_mod_p, hbval_zmod]
-    ring
-  -- Define B := (b' - a * b.val) / p.
-  obtain ⟨B, hB_eq⟩ := hp_dvd_diff
-  -- hB_eq : b' - a * b.val = p * B.
-  have hBp_int : B * (p : ℤ) = b' - a * (b.val : ℤ) := by linarith
-  -- Step 5: Construct γ' as an SL(2, ℤ) matrix.
-  set M : Matrix (Fin 2) (Fin 2) ℤ := !![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)]
-    with hM_def
-  have hM_00 : M 0 0 = a := rfl
-  have hM_01 : M 0 1 = B := rfl
-  have hM_10 : M 1 0 = (p : ℤ) * c := rfl
-  have hM_11 : M 1 1 = d - c * (b.val : ℤ) := rfl
-  have hM_det : M.det = 1 := by
-    rw [Matrix.det_fin_two, hM_00, hM_01, hM_10, hM_11]
-    have step1 : a * (d - c * (b.val : ℤ)) - B * ((p : ℤ) * c) =
-        a * d - c * (a * (b.val : ℤ) + B * (p : ℤ)) := by ring
-    rw [step1, hBp_int]
-    have step2 : a * d - c * (a * (b.val : ℤ) + (b' - a * (b.val : ℤ))) = a * d - c * b' := by
-      ring
-    rw [step2]
-    linarith
-  -- Integer-level matrix equality (DS 5.5.2(a) at the matrix level, bad prime case).
-  -- We compute each entry equality with literal Fin indices `0`, `1` (so simp
-  -- can reduce `vecCons _ _ 0` / `vecCons _ _ 1`), then assemble via `Matrix.ext`.
-  have e00 : ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val) 0 0 =
-      (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
-        !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)]) 0 0 := by
-    simp only [Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      mul_one, mul_zero, one_mul, zero_mul, add_zero]
-    exact ha_def.symm
-  have e01 : ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val) 0 1 =
-      (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
-        !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)]) 0 1 := by
-    simp only [Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      one_mul, zero_mul, add_zero]
-    rw [← hb'_def]; linarith
-  have e10 : ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val) 1 0 =
-      (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
-        !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)]) 1 0 := by
-    simp only [Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      mul_one, mul_zero, zero_mul, add_zero, zero_add]
-    rw [← hc_def]
-  have e11 : ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val) 1 1 =
-      (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
-        !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)]) 1 1 := by
-    simp only [Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      zero_mul, zero_add]
-    rw [← hd_def]; ring
-  have h_int_eq : (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val =
-      M * !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] := by
-    rw [hM_def]
-    ext i j
-    fin_cases i <;> fin_cases j
-    · exact e00
-    · exact e01
-    · exact e10
-    · exact e11
-  let γ' : SL(2, ℤ) := ⟨M, hM_det⟩
-  refine ⟨γ', b, ?_, ?_⟩
-  · -- γ' ∈ Γ₁(N).
-    rw [Gamma1_mem]
-    refine ⟨?_, ?_, ?_⟩
-    · show ((M 0 0 : ℤ) : ZMod N) = 1
-      rw [hM_00]; exact_mod_cast ha_mod_N
-    · show ((M 1 1 : ℤ) : ZMod N) = 1
-      rw [hM_11]; push_cast; rw [hd_mod_N, hc_mod_N]; ring
-    · show ((M 1 0 : ℤ) : ZMod N) = 0
-      rw [hM_10]; push_cast; rw [hc_mod_N]; ring
-  · -- Matrix equality at GL(2, ℝ): lift h_int_eq via Matrix.map.
-    apply Units.ext
-    show ((glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ) :
-            Matrix (Fin 2) (Fin 2) ℝ) *
-        ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-      ((mapGL ℝ γ' : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
-        ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ)
-    -- Express the four ℝ matrices as `_.map (algebraMap ℤ ℝ)` of ℤ matrices.
-    have hα : ((glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-        ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ).map
-          (algebraMap ℤ ℝ)) := by
-      show (T_p_upper p hp.pos 0 : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-          (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ)
-      rw [T_p_upper_coe]; ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
-    have hβ : ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-        ((!![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] :
-          Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ)) := by
-      show (T_p_upper p hp.pos b.val : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-          (!![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] :
-            Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ)
-      rw [T_p_upper_coe]; ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
-    have hγ_mat : ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        γ.val.map (algebraMap ℤ ℝ) := mapGL_coe_matrix γ
-    have hγ'_mat : ((mapGL ℝ γ' : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        M.map (algebraMap ℤ ℝ) := mapGL_coe_matrix γ'
-    rw [hα, hβ, hγ_mat, hγ'_mat]
-    -- All four matrices are now `_.map (algebraMap ℤ ℝ)`. Combine via map_mul.
-    rw [← Matrix.map_mul, ← Matrix.map_mul]
-    -- Goal: ((α_p_int * γ.val).map = (M * β_b_int).map). Use h_int_eq.
-    rw [h_int_eq]
+  obtain ⟨γ', b, hγ'_mem, h_int⟩ :=
+    Newform.exists_Gamma1_mul_T_p_upper_int hp hpN γ hγ
+  exact ⟨γ', b, hγ'_mem,
+    Newform.glMap_T_p_upper_zero_mul_mapGL_eq_of_int hp.pos γ γ' b.val h_int⟩
+
+/-- **Bad-prime upper coset rep as `α_p` times a unipotent shear (T186 helper).**
+
+`β_b = α_p · mapGL ℝ (shiftSL b)`, i.e.
+`glMap (T_p_upper p hp b) = glMap (T_p_upper p hp 0) · mapGL ℝ (shiftSL b)`. Used
+for the reverse inclusion of the double-coset decomposition, embedding each
+`β_b`-left-coset into `Γ₁(N) · α_p · Γ₁(N)` via `shiftSL b ∈ Γ₁(N)`. -/
+private lemma Newform.glMap_T_p_upper_eq_glMap_zero_mul_shiftSL
+    {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) =
+      (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
+        (mapGL ℝ (shiftSL (b : ℤ)) : GL (Fin 2) ℝ) := by
+  apply Units.ext
+  ext i j
+  show ((T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) i j =
+      ((((T_p_upper p hp 0 : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) *
+        ((shiftSL (b : ℤ) : SL(2, ℤ)).val.map (algebraMap ℤ ℝ))) i j)
+  simp only [T_p_upper_coe, shiftSL, Matrix.map_apply, Matrix.mul_apply,
+    Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
+    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
+    Matrix.SpecialLinearGroup.coe_mk]
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.cons_val_zero, Matrix.cons_val_one]
 
 open scoped Pointwise in
 /-- **T186 Γ₁(N) double-coset decomposition for the bad-prime upper family.**
@@ -595,23 +641,6 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_eq_iUnion_T_p_upper_left_cosets
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)} :
           Set (GL (Fin 2) ℝ))) := by
-  -- Auxiliary matrix identity for the reverse inclusion: β_b = α_p · mapGL ℝ (shiftSL b).
-  have h_shift_unfold : ∀ (b : ℕ),
-      (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) =
-        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ) *
-          (mapGL ℝ (shiftSL (b : ℤ)) : GL (Fin 2) ℝ) := by
-    intro b
-    apply Units.ext
-    ext i j
-    show ((T_p_upper p hp.pos b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) i j =
-        ((((T_p_upper p hp.pos 0 : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) *
-          ((shiftSL (b : ℤ) : SL(2, ℤ)).val.map (algebraMap ℤ ℝ))) i j)
-    simp only [T_p_upper_coe, shiftSL, Matrix.map_apply, Matrix.mul_apply,
-      Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      Matrix.SpecialLinearGroup.coe_mk]
-    fin_cases i <;> fin_cases j <;>
-      simp [Matrix.cons_val_zero, Matrix.cons_val_one]
   ext x
   constructor
   · -- Forward: x ∈ Γ * {α_p} * Γ ⟹ x ∈ ⋃ b, Γ * {β_b}.
@@ -653,7 +682,7 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_eq_iUnion_T_p_upper_left_cosets
       show (g * (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) *
           (mapGL ℝ (shiftSL (b.val : ℤ)) : GL (Fin 2) ℝ) =
         g * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)
-      rw [mul_assoc, ← h_shift_unfold]
+      rw [mul_assoc, ← Newform.glMap_T_p_upper_eq_glMap_zero_mul_shiftSL hp.pos b.val]
 
 open scoped Pointwise in
 /-- **T186 Γ₁(N) double-coset partition for the bad-prime upper family.**
@@ -1622,6 +1651,32 @@ def Newform.HasBadPrimeFrickePerCosetSumTransport
               (Newform.T_p_lower_with_offset_adjugate N hp.pos b :
                 GL (Fin 2) ℝ)))
 
+/-- **Positive determinant of an `SL(2, ℤ)` element under `mapGL ℝ` (T157 helper).**
+
+`0 < (mapGL ℝ σ).det.val` for any `σ : SL(2, ℤ)`: the underlying real matrix is
+the `algebraMap ℤ ℝ`-image of `σ.val`, whose determinant is `1` (as `σ ∈ SL`).
+Supplies the positive-determinant hypothesis of `peterssonInner_slash_adjoint`. -/
+private lemma Newform.mapGL_SL_det_val_pos (σ : SL(2, ℤ)) :
+    (0 : ℝ) < ((mapGL ℝ σ : GL (Fin 2) ℝ)).det.val := by
+  show 0 < (((mapGL ℝ σ : GL (Fin 2) ℝ)) : Matrix (Fin 2) (Fin 2) ℝ).det
+  rw [show ((mapGL ℝ σ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      ((Int.castRingHom ℝ).mapMatrix (σ.val)) from by rw [mapGL_coe_matrix]; rfl]
+  rw [← RingHom.map_det, σ.property]
+  norm_num
+
+/-- **Realness of `frickeSquareScalar⁻¹` (T157 helper).**
+
+`conj ((frickeSquareScalar N k)⁻¹) = (frickeSquareScalar N k)⁻¹`: the Fricke-square
+scalar `(-1)^k · N^(-k)` is real, so it is fixed by complex conjugation. Used to
+drop the outer `conj` after pulling the scalar out of `peterssonInner`'s left slot. -/
+private lemma Newform.conj_frickeSquareScalar_inv (N : ℕ) [NeZero N] (k : ℤ) :
+    (starRingEnd ℂ) ((Newform.frickeSquareScalar N k)⁻¹) =
+      (Newform.frickeSquareScalar N k)⁻¹ := by
+  rw [map_inv₀, Newform.frickeSquareScalar, map_mul, map_zpow₀, map_zpow₀,
+    Complex.conj_natCast]
+  congr 1
+  norm_num
+
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- **T157: bad-prime SumTransport bridge residual proven directly.**
 
@@ -1654,32 +1709,19 @@ theorem Newform.hasBadPrimeFrickePerCosetSumTransport
     (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) :
     Newform.HasBadPrimeFrickePerCosetSumTransport N k p hp hpN := by
   intro f g q
-  -- Step 1+2: distribute outer slash + peterssonInner over the b-sum.
+  -- Steps 1+2: distribute outer slash + `peterssonInner` over the b-sum.
   have h_int : ∀ b ∈ Finset.range p,
       IntegrableOn (fun τ => UpperHalfPlane.petersson k
         (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))
         ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
-          ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp := by
-    intro b _
-    exact integrableOn_petersson_cuspform_mixed_slash_on_fd g f
+          ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp :=
+    fun b _ => integrableOn_petersson_cuspform_mixed_slash_on_fd g f
       (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
   rw [SlashAction.sum_slash, peterssonInner_sum_left _ _ _ _ h_int]
-  -- Step 3: pull `(frickeSquareScalar)⁻¹` out of the RHS sum.
   rw [Finset.mul_sum]
-  -- Step 4: reduce to per-b equality.
   refine Finset.sum_congr rfl (fun b _ => ?_)
-  -- Per-b: positivity of `mapGL ℝ q.out⁻¹` determinant (= 1).
-  have h_det_pos : (0 : ℝ) <
-      ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ)).det.val := by
-    show 0 < (((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ)) :
-        Matrix (Fin 2) (Fin 2) ℝ).det
-    rw [show ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-        ((Int.castRingHom ℝ).mapMatrix (((q.out : SL(2, ℤ))⁻¹).val)) from by
-      rw [mapGL_coe_matrix]; rfl]
-    rw [← RingHom.map_det, ((q.out : SL(2, ℤ))⁻¹).property]
-    norm_num
-  -- Step 5: T145 (`peterssonInner_slash_adjoint`) absorbs `q.out⁻¹` into the domain.
+  have h_det_pos := Newform.mapGL_SL_det_val_pos ((q.out : SL(2, ℤ))⁻¹)
+  -- Step 5: T145 absorbs `q.out⁻¹` into the domain; recover ⇑g in the right slot.
   rw [show ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
         ((q.out : SL(2, ℤ))⁻¹) : UpperHalfPlane → ℂ) =
       ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
@@ -1688,25 +1730,22 @@ theorem Newform.hasBadPrimeFrickePerCosetSumTransport
       (mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) h_det_pos
       (⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ))
       (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))]
-  -- Simplify right slot to ⇑g via peterssonAdj_mapGL_SL_eq_inv + slash_mul + slash_one.
   rw [peterssonAdj_mapGL_SL_eq_inv,
     show ((⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹) : UpperHalfPlane → ℂ)) =
       (⇑g ∣[k] (mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ)) from rfl,
     ← SlashAction.slash_mul,
     mul_inv_cancel (mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ),
     SlashAction.slash_one]
-  -- Step 6: Insert Fricke-square in the f-slot via `fricke_square_inv_smul`.
+  -- Step 6: insert the Fricke-square in the f-slot (`fricke_square_inv_smul`).
   conv_lhs => rw [show (⇑f : UpperHalfPlane → ℂ) =
     (Newform.frickeSquareScalar N k)⁻¹ •
       ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
         (Newform.frickeMatrix N : GL (Fin 2) ℝ)) from
       (Newform.fricke_square_inv_smul ⇑f).symm]
-  -- Step 7: Pull scalar through β_b-slash (positive det).
   rw [smul_slash_pos_det k (Newform.frickeSquareScalar N k)⁻¹ _
       (T_p_upper p hp.pos b) (T_p_upper_det_pos p hp.pos b)]
-  -- Step 8: Pull scalar out via `peterssonInner_conj_smul_left`.
   rw [UpperHalfPlane.peterssonInner_conj_smul_left]
-  -- Bridge to T155 combined lemma form (GL ℚ → GL ℝ via glMap; def-eq).
+  -- Step 9 (bridge): T151+T152 combined (GL ℚ → GL ℝ via glMap; def-eq).
   rw [show (((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
         (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
         (T_p_upper p hp.pos b : GL (Fin 2) ℚ) : UpperHalfPlane → ℂ) =
@@ -1717,12 +1756,8 @@ theorem Newform.hasBadPrimeFrickePerCosetSumTransport
       ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
         (fd : Set UpperHalfPlane))
       N hp.pos b (⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ⇑g]
-  -- Step 9: drop `conj` since `frickeSquareScalar` is real.
   congr 1
-  rw [map_inv₀, Newform.frickeSquareScalar, map_mul, map_zpow₀, map_zpow₀,
-    Complex.conj_natCast]
-  congr 1
-  norm_num
+  exact Newform.conj_frickeSquareScalar_inv N k
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- **T156 bridge: T155 shifted residual ⟹ T154 b-sum residual.**

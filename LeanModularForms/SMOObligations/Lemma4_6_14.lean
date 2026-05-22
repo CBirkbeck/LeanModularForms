@@ -150,6 +150,46 @@ private lemma cuspForm_finsetSum_toModularForm' {α : Type*} [DecidableEq α]
     rw [Finset.sum_insert hqs, Finset.sum_insert hqs, ← ih]
     rfl
 
+/-- A `descendCosetList` slash-sum at a level divisible by `p ^ 2` (so that the coset
+count is `p`) collapses to the slash-sum over the upper-triangular representatives
+`T_p_upper`. -/
+private lemma descendCosetList_slash_sum_eq_T_p_upper_range_slash_sum
+    {L : ℕ} {k : ℤ} (p : ℕ) (hp : p.Prime) (h_cnt : descendCosetCount p L = p)
+    (g : UpperHalfPlane → ℂ) :
+    (fun z : UpperHalfPlane ↦
+        ∑ v : Fin (descendCosetCount p L), (g ∣[k] descendCosetList p L hp v) z) =
+      (fun z : UpperHalfPlane ↦
+        ∑ v ∈ Finset.range p, (g ∣[k] (T_p_upper p hp.pos v : GL (Fin 2) ℚ)) z) := by
+  funext z
+  have h_each_eq : ∀ v : Fin p,
+      (g ∣[k] descendCosetList p L hp (Fin.cast h_cnt.symm v)) z =
+      (g ∣[k] (T_p_upper p hp.pos v.val : GL (Fin 2) ℚ)) z := by
+    intro v
+    have h_v_lt : (Fin.cast h_cnt.symm v).val < p := v.isLt
+    have h_mat : descendCosetList p L hp (Fin.cast h_cnt.symm v) =
+        glMap (T_p_upper p hp.pos v.val) := by
+      unfold descendCosetList
+      rw [dif_pos h_v_lt]
+      apply Units.ext
+      show (Matrix.GeneralLinearGroup.mkOfDetNeZero _ _).val = (glMap _).val
+      rw [Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
+      show !![(1 : ℝ), (v.val : ℝ); 0, (p : ℝ)] =
+          (T_p_upper p hp.pos v.val).val.map (algebraMap ℚ ℝ)
+      rw [T_p_upper_coe]
+      ext i j; fin_cases i <;> fin_cases j <;>
+        simp [Matrix.map_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
+    rw [h_mat]
+    rfl
+  rw [show ∑ v : Fin (descendCosetCount p L),
+          (g ∣[k] descendCosetList p L hp v) z =
+        ∑ v : Fin p, (g ∣[k] descendCosetList p L hp (Fin.cast h_cnt.symm v)) z from
+    (Fintype.sum_equiv (finCongr h_cnt.symm) _ _ (fun _ => rfl)).symm]
+  rw [show ∑ v : Fin p, (g ∣[k] descendCosetList p L hp (Fin.cast h_cnt.symm v)) z =
+        ∑ v : Fin p, (g ∣[k] (T_p_upper p hp.pos v.val : GL (Fin 2) ℚ)) z from
+    Finset.sum_congr rfl (fun v _ ↦ h_each_eq v)]
+  exact Fin.sum_univ_eq_sum_range
+    (f := fun n ↦ (g ∣[k] (T_p_upper p hp.pos n : GL (Fin 2) ℚ)) z) p
+
 private lemma delta_slash_sum_coeff_zero_sq_case
     {L : ℕ} [NeZero L] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpL : p ∣ L) (hp_sq : p ^ 2 ∣ L)
@@ -160,52 +200,8 @@ private lemma delta_slash_sum_coeff_zero_sq_case
         ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p L hp v) z)).coeff m = 0 := by
   have h_cnt : descendCosetCount p L = p := by simp [descendCosetCount, hp_sq]
-  have h_slash_eq_ut : (fun z : UpperHalfPlane ↦
-      ∑ v : Fin (descendCosetCount p L),
-        ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k] descendCosetList p L hp v) z) =
-      (fun z : UpperHalfPlane ↦
-        ∑ v ∈ Finset.range p,
-          ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
-            (T_p_upper p hp.pos v : GL (Fin 2) ℚ)) z) := by
-    funext z
-    have h_each_eq : ∀ v : Fin p,
-        ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
-          descendCosetList p L hp (Fin.cast h_cnt.symm v)) z =
-        ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
-          (T_p_upper p hp.pos v.val : GL (Fin 2) ℚ)) z := by
-      intro v
-      have h_v_lt : (Fin.cast h_cnt.symm v).val < p := v.isLt
-      have h_mat : descendCosetList p L hp (Fin.cast h_cnt.symm v) =
-          glMap (T_p_upper p hp.pos v.val) := by
-        unfold descendCosetList
-        rw [dif_pos h_v_lt]
-        apply Units.ext
-        show (Matrix.GeneralLinearGroup.mkOfDetNeZero _ _).val = (glMap _).val
-        rw [Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
-        show !![(1 : ℝ), (v.val : ℝ); 0, (p : ℝ)] =
-            (T_p_upper p hp.pos v.val).val.map (algebraMap ℚ ℝ)
-        rw [T_p_upper_coe]
-        ext i j; fin_cases i <;> fin_cases j <;>
-          simp [Matrix.map_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
-      rw [h_mat]
-      rfl
-    rw [show ∑ v : Fin (descendCosetCount p L),
-            ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k] descendCosetList p L hp v) z =
-          ∑ v : Fin p,
-            ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
-              descendCosetList p L hp (Fin.cast h_cnt.symm v)) z from
-      (Fintype.sum_equiv (finCongr h_cnt.symm) _ _ (fun _ => rfl)).symm]
-    rw [show ∑ v : Fin p,
-          ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
-            descendCosetList p L hp (Fin.cast h_cnt.symm v)) z =
-        ∑ v : Fin p,
-          ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
-            (T_p_upper p hp.pos v.val : GL (Fin 2) ℚ)) z from
-      Finset.sum_congr rfl (fun v _ ↦ h_each_eq v)]
-    exact Fin.sum_univ_eq_sum_range
-      (f := fun n ↦ ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
-        (T_p_upper p hp.pos n : GL (Fin 2) ℚ)) z) p
-  rw [h_slash_eq_ut]
+  rw [descendCosetList_slash_sum_eq_T_p_upper_range_slash_sum p hp h_cnt
+    (⇑Δ_form : UpperHalfPlane → ℂ)]
   have h_to_mod_eq : (⇑Δ_form : UpperHalfPlane → ℂ) =
       (⇑Δ_form.toModularForm' : UpperHalfPlane → ℂ) := rfl
   rw [show (fun z : UpperHalfPlane ↦ ∑ v ∈ Finset.range p,
@@ -661,6 +657,25 @@ private lemma slash_sum_qExp_split_via_cuspForm
     qExpansion_ext2 Φ_Δ.toModularForm' (Δ_form_slash : UpperHalfPlane → ℂ) hΦ_Δ_eq]
   rfl
 
+/-- If `F = Vp + g` pointwise, the `descendCosetList` slash-sum of `F` splits as the sum
+of the slash-sums of `Vp` and `g`. -/
+private lemma descendCosetList_slash_sum_eq_add_of_sub
+    {M : ℕ} {k : ℤ} (p : ℕ) (hp : p.Prime)
+    (F Vp g : UpperHalfPlane → ℂ) (h_g_eq : ∀ w, g w = F w - Vp w) :
+    (fun z : UpperHalfPlane ↦
+        ∑ v : Fin (descendCosetCount p M), (F ∣[k] descendCosetList p M hp v) z) =
+      ((fun z ↦ ∑ v : Fin (descendCosetCount p M),
+          (Vp ∣[k] descendCosetList p M hp v) z) +
+        fun z ↦ ∑ v : Fin (descendCosetCount p M),
+          (g ∣[k] descendCosetList p M hp v) z) := by
+  have h_F_eq : F = Vp + g := by
+    funext w
+    simp [Pi.add_apply, h_g_eq w]
+  simp_rw [h_F_eq]
+  funext z
+  simp only [SlashAction.add_slash, Finset.sum_add_distrib, Pi.add_apply]
+  rfl
+
 private lemma miyake_descent_l_prime_gt_one_helper
     {N : ℕ} [NeZero N] {k : ℤ} (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -730,22 +745,13 @@ private lemma miyake_descent_l_prime_gt_one_helper
     funext fun z ↦
       (slash_sum_V_p_pointwise_eq_smul_g_low p hp hp_dvd_lN
         g_low_cast.toModularForm' z).symm
-  have h_f_eq : (⇑f.toModularForm' : UpperHalfPlane → ℂ) =
-      V_p_g_low_fun + (⇑Δ_form : UpperHalfPlane → ℂ) := by
-    funext w
-    have hΔw : (⇑Δ_form : UpperHalfPlane → ℂ) w =
-        (⇑f.toModularForm' : UpperHalfPlane → ℂ) w - V_p_g_low_fun w :=
-      congr_fun hΔ_form_fun_eq w
-    simp [Pi.add_apply, hΔw]
   have h_LHS_fun_eq : (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
       (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z) =
       ((fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (V_p_g_low_fun ∣[k] descendCosetList p (l' * N) hp v) z) +
-        Δ_form_slash : UpperHalfPlane → ℂ) := by
-    simp_rw [h_f_eq]
-    funext z
-    simp only [SlashAction.add_slash, Finset.sum_add_distrib, Pi.add_apply]
-    rfl
+        Δ_form_slash : UpperHalfPlane → ℂ) :=
+    descendCosetList_slash_sum_eq_add_of_sub p hp (⇑f.toModularForm')
+      V_p_g_low_fun (⇑Δ_form) (fun w ↦ congr_fun hΔ_form_fun_eq w)
   rw [h_LHS_fun_eq,
     slash_sum_qExp_split_via_cuspForm p hp Φ_RHS_cusp Φ_Δ V_p_g_low_fun
       Δ_form_slash hΦ_RHS_cusp_fun_eq rfl m,
@@ -786,6 +792,25 @@ lemma qExpansion_smul_cuspForm_coeff_aux
       (one_mem_strictPeriods_Gamma1_map M) c f.toModularForm',
     PowerSeries.coeff_smul, smul_eq_mul]
   rfl
+
+/-- The `q`-expansion coefficients of a difference of cusp forms are the difference of
+the coefficients. -/
+private lemma qExpansion_sub_cuspForm_coeff
+    {M : ℕ} [NeZero M] {k : ℤ}
+    (a b : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (n : ℕ) :
+    (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑(a - b)) =
+    (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑a) -
+    (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑b) := by
+  have h1 := one_mem_strictPeriods_Gamma1_map M
+  have h_sub_qexp :
+      ModularFormClass.qExpansion (1 : ℝ) (a - b) =
+        ModularFormClass.qExpansion (1 : ℝ) a -
+        ModularFormClass.qExpansion (1 : ℝ) b := by
+    rw [sub_eq_add_neg, sub_eq_add_neg, ← qExpansion_neg one_pos h1 b]
+    exact qExpansion_add (Γ := (Gamma1 M).map (mapGL ℝ))
+      (h := (1 : ℝ)) (a := k) (b := k) one_pos h1 a (- b)
+  rw [show ModularFormClass.qExpansion (1 : ℝ) (⇑(a - b) : UpperHalfPlane → ℂ) =
+    ModularFormClass.qExpansion (1 : ℝ) (a - b) from rfl, h_sub_qexp, map_sub]
 
 private lemma f_qExp_eq_levelRaise_qExp_at_coprime
     {N : ℕ} [NeZero N] {k : ℤ}
@@ -951,27 +976,13 @@ private lemma descent_l_prime_gt_one_apply
     f_restricted - g_bundled
   have hΔ_form_χ : Δ_form ∈ cuspFormCharSpace k χ_M_unit :=
     Submodule.sub_mem _ hf_restricted_χ hg_bundled_χ
-  have h1_period_lN := one_mem_strictPeriods_Gamma1_map (l' * N)
   have hp_dvd_lN : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
   have hpM_eq : p * ((l' * N) / p) = l' * N := Nat.mul_div_cancel' hp_dvd_lN
   have h_Δ_form_sub_qexp : ∀ n : ℕ,
       (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form) =
       (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f_restricted) -
-      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑g_bundled) := by
-    intro n
-    have h_sub_qexp :
-        ModularFormClass.qExpansion (1 : ℝ) (f_restricted - g_bundled) =
-          ModularFormClass.qExpansion (1 : ℝ) f_restricted -
-          ModularFormClass.qExpansion (1 : ℝ) g_bundled := by
-      rw [sub_eq_add_neg, sub_eq_add_neg,
-        ← qExpansion_neg one_pos h1_period_lN g_bundled]
-      exact qExpansion_add (Γ := (Gamma1 (l' * N)).map (mapGL ℝ))
-        (h := (1 : ℝ)) (a := k) (b := k) one_pos h1_period_lN f_restricted (- g_bundled)
-    show (PowerSeries.coeff n)
-        (ModularFormClass.qExpansion (1 : ℝ) (⇑Δ_form)) = _
-    rw [show ModularFormClass.qExpansion (1 : ℝ) (⇑Δ_form : UpperHalfPlane → ℂ) =
-      ModularFormClass.qExpansion (1 : ℝ) (f_restricted - g_bundled) from rfl,
-      h_sub_qexp, map_sub]
+      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑g_bundled) :=
+    fun n ↦ qExpansion_sub_cuspForm_coeff f_restricted g_bundled n
   have hΔ_form_vanish : ∀ n : ℕ, Nat.Coprime n l' →
       (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0 := fun n hn ↦ by
     rw [h_Δ_form_sub_qexp n,
@@ -995,6 +1006,42 @@ private lemma descent_l_prime_gt_one_apply
     hl1_gt hl'_sqfree hpl' hl'_dvd hp_not_in h_vanish g_low_cast
     h_delta_Fourier_vanish χ_M_unit rfl Δ_form hΔ_form_χ
     hΔ_form_vanish hΔ_form_fun_eq m hm_cop
+
+/-- When `l' = 1`, the level-raised form `Vp` agrees with `f` itself, so their
+`descendCosetList` slash-sums have identical `q`-expansion coefficients. -/
+private lemma descent_slashSum_qExp_coeff_eq_of_l_eq_one
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    {p : ℕ} [NeZero p] (hp : p.Prime)
+    {l' : ℕ} [NeZero l'] (hl'_le : 1 ≥ l')
+    [NeZero (l' * N)] [NeZero ((l' * N) / p)]
+    (g_low_cast : CuspForm ((Gamma1 ((l' * N) / p)).map (mapGL ℝ)) k)
+    (hp_dvd_lN : p ∣ l' * N)
+    (h_delta_Fourier_vanish : ∀ n : ℕ, Nat.Coprime n l' →
+      (ModularFormClass.qExpansion (1 : ℝ) ⇑f).coeff n =
+      (ModularFormClass.qExpansion (1 : ℝ)
+        ⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
+          g_low_cast.toModularForm')).coeff n)
+    (m : ℕ) :
+    (ModularFormClass.qExpansion (1 : ℝ)
+      (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
+        (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z)).coeff m =
+    (ModularFormClass.qExpansion (1 : ℝ)
+      (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
+        (⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
+          g_low_cast.toModularForm') ∣[k] descendCosetList p (l' * N) hp v) z)).coeff m := by
+  have hl'_pos : 0 < l' := NeZero.pos l'
+  have hl'_eq_1 : l' = 1 := by lia
+  have h_all_cop : ∀ n : ℕ, Nat.Coprime n l' := fun n ↦
+    hl'_eq_1 ▸ Nat.coprime_one_right n
+  have hp_M_eq_N : p * ((l' * N) / p) = N := by
+    rw [Nat.mul_div_cancel' hp_dvd_lN, hl'_eq_1, one_mul]
+  have h_fun_eq : (⇑f.toModularForm' : UpperHalfPlane → ℂ) =
+      ⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
+        g_low_cast.toModularForm') :=
+    miyake_descent_l_prime_eq_one_helper f g_low_cast hp_M_eq_N
+      (fun n ↦ h_delta_Fourier_vanish n (h_all_cop n))
+  rw [h_fun_eq]
 
 private lemma descent_slashSum_qExp_coeff_eq_Dp_g_low_coeff
     {N : ℕ} [NeZero N] {k : ℤ}
@@ -1066,24 +1113,8 @@ private lemma descent_slashSum_qExp_coeff_eq_Dp_g_low_coeff
     · exact descent_l_prime_gt_one_apply χ f hfχ p hp hpN χ' hχ_eq
         hl1_gt hl'_sqfree hpl' hl'_dvd hp_not_in h_vanish g_low g_low_cast
         h_cast_fun hg_low_full_qexp h_delta_Fourier_vanish m hm_cop
-    · have hl'_eq_1 : l' = 1 := by lia
-      have h_all_cop : ∀ n : ℕ, Nat.Coprime n l' := fun n ↦
-        hl'_eq_1 ▸ Nat.coprime_one_right n
-      have hp_M_eq_N : p * ((l' * N) / p) = N := by
-        rw [Nat.mul_div_cancel' hp_dvd_lN, hl'_eq_1, one_mul]
-      have h_fun_eq : (⇑f.toModularForm' : UpperHalfPlane → ℂ) =
-          ⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
-            g_low_cast.toModularForm') :=
-        miyake_descent_l_prime_eq_one_helper f g_low_cast hp_M_eq_N
-          (fun n ↦ h_delta_Fourier_vanish n (h_all_cop n))
-      have h_Psi_eq_Vp_fun : Ψ_fun = Vp_slash_lifted_fun := by
-        funext z
-        simp only [hΨ_fun_def, hVp_slash_lifted_fun_def]
-        exact Finset.sum_congr rfl fun v _ ↦ by rw [h_fun_eq]
-      have h_qe_eq : ModularFormClass.qExpansion (1 : ℝ) Ψ_fun =
-          ModularFormClass.qExpansion (1 : ℝ) Vp_slash_lifted_fun :=
-        qExpansion_ext2 Ψ_fun Vp_slash_lifted_fun h_Psi_eq_Vp_fun
-      rw [h_qe_eq]
+    · exact descent_slashSum_qExp_coeff_eq_of_l_eq_one f hp hl1_le g_low_cast
+        hp_dvd_lN h_delta_Fourier_vanish m
   rw [h_Psi_eq_Vp_coeff, h_Vp_qexp_eq, h_Dp_g_low_qexp]
 
 lemma Φ_qExp_coeff_eq_count_div_p_mul_g_low_coeff

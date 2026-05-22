@@ -692,6 +692,156 @@ private lemma adjLowerΔ_weight (p : ℕ) (hp : Nat.Prime p) :
     ext i j; fin_cases i <;> fin_cases j <;> simp
   rw [hwit]; simp
 
+/-- Adjugate factorisation of the upper representative `T_p_upper b` through the prime
+double-coset representative, packaged as the existence statement used to index the
+`decompQuot` permutation. -/
+private lemma adj_T_p_upper_factorisation (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (b : ℕ) :
+    ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
+      (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
+        h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
+  adj_factorisation p hp hpN _ (T_p_upper_mem_D_p_Gamma0 N p hp b)
+
+/-- Adjugate factorisation of the lower representative `T_p_lower` through the prime
+double-coset representative. -/
+private lemma adj_T_p_lower_factorisation (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) :
+    ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
+      (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
+        h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
+  adj_factorisation p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
+
+/-- The index map `Fin (p+1) → decompQuot` sending each classical `T_p` representative to
+the `⟦h₁⟧`-class of its adjugate factorisation through the prime double-coset rep. -/
+private noncomputable def twistedTpPsi (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) :
+    Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) :=
+  fun j =>
+    if _h : j.val < p then
+      ⟦⟨(adj_T_p_upper_factorisation (N := N) p hp hpN j.val).choose,
+        (adj_T_p_upper_factorisation (N := N) p hp hpN j.val).choose_spec.choose⟩⟧
+    else
+      ⟦⟨(adj_T_p_lower_factorisation (N := N) p hp hpN).choose,
+        (adj_T_p_lower_factorisation (N := N) p hp hpN).choose_spec.choose⟩⟧
+
+/-- A quotient equality of `⟦h₁⟧`-classes for two factorisations `adj gᵢ = aᵢ·rep·cᵢ`
+forces the adjugate ratio `(adj g₁)⁻¹·adj g₂` into `H`. -/
+private lemma adj_quot_eq_imp_inv_mul_mem_H (g : (Gamma0_pair N).Δ)
+    (a₁ : GL (Fin 2) ℚ) (ha₁ : a₁ ∈ (Gamma0_pair N).H)
+    (c₁ : GL (Fin 2) ℚ) (hc₁ : c₁ ∈ (Gamma0_pair N).H)
+    (a₂ : GL (Fin 2) ℚ) (ha₂ : a₂ ∈ (Gamma0_pair N).H)
+    (c₂ : GL (Fin 2) ℚ) (hc₂ : c₂ ∈ (Gamma0_pair N).H)
+    (g₁ g₂ : GL (Fin 2) ℚ)
+    (heq₁ : GL_adjugate g₁ = a₁ * (g : GL (Fin 2) ℚ) * c₁)
+    (heq₂ : GL_adjugate g₂ = a₂ * (g : GL (Fin 2) ℚ) * c₂)
+    (hquot : (⟦(⟨a₁, ha₁⟩ : (Gamma0_pair N).H)⟧ :
+        decompQuot (Gamma0_pair N) g) = ⟦⟨a₂, ha₂⟩⟧) :
+    (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (Gamma0_pair N).H := by
+  rw [heq₁, heq₂]
+  have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
+  rw [Subgroup.mem_subgroupOf] at hrel
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
+  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
+  simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
+  have h_prod : (a₁ * (g : GL (Fin 2) ℚ) * c₁)⁻¹ * (a₂ * (g : GL (Fin 2) ℚ) * c₂) =
+      c₁⁻¹ * (((g : GL (Fin 2) ℚ))⁻¹ * (a₁⁻¹ * a₂) * (g : GL (Fin 2) ℚ)) * c₂ := by group
+  rw [h_prod]
+  exact (Gamma0_pair N).H.mul_mem
+    ((Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
+
+/-- Accessor wrapper for `adj_quot_eq_imp_inv_mul_mem_H`: feeds the four components of two
+factorisation existence witnesses and the `⟦·⟧`-class equality of their chosen `h₁`'s. -/
+private lemma adj_inv_mul_mem_H_of_factorisations (g : (Gamma0_pair N).Δ)
+    (g₁ g₂ : GL (Fin 2) ℚ)
+    (e₁ : ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ)
+        (_ : h₂ ∈ (Gamma0_pair N).H), GL_adjugate g₁ = h₁ * (g : GL (Fin 2) ℚ) * h₂)
+    (e₂ : ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ)
+        (_ : h₂ ∈ (Gamma0_pair N).H), GL_adjugate g₂ = h₁ * (g : GL (Fin 2) ℚ) * h₂)
+    (hquot : (⟦⟨e₁.choose, e₁.choose_spec.choose⟩⟧ : decompQuot (Gamma0_pair N) g)
+        = ⟦⟨e₂.choose, e₂.choose_spec.choose⟩⟧) :
+    (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (Gamma0_pair N).H :=
+  adj_quot_eq_imp_inv_mul_mem_H g
+    e₁.choose e₁.choose_spec.choose e₁.choose_spec.choose_spec.choose
+      e₁.choose_spec.choose_spec.choose_spec.choose
+    e₂.choose e₂.choose_spec.choose e₂.choose_spec.choose_spec.choose
+      e₂.choose_spec.choose_spec.choose_spec.choose
+    g₁ g₂ e₁.choose_spec.choose_spec.choose_spec.choose_spec
+    e₂.choose_spec.choose_spec.choose_spec.choose_spec hquot
+
+/-- The index map `twistedTpPsi` is injective: distinct classical `T_p` representatives land
+in distinct `decompQuot` classes, by the `Γ₀(N)` distinctness of the adjugate ratios. -/
+private lemma twistedTpPsi_injective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    Function.Injective (twistedTpPsi (N := N) p hp hpN) := by
+  intro j₁ j₂ heq
+  by_contra hne
+  simp only [twistedTpPsi] at heq
+  by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
+  · simp only [h₁, h₂, dite_true] at heq
+    exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂
+      (fun h => hne (Fin.ext h))
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations
+        (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
+        (adj_T_p_upper_factorisation (N := N) p hp hpN j₁.val)
+        (adj_T_p_upper_factorisation (N := N) p hp hpN j₂.val) heq))
+  · simp only [h₁, dite_true, h₂, dite_false] at heq
+    exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations
+        (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
+        (adj_T_p_upper_factorisation (N := N) p hp hpN j₁.val)
+        (adj_T_p_lower_factorisation (N := N) p hp hpN) heq))
+  · simp only [h₁, dite_false, h₂, dite_true] at heq
+    exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations
+        (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
+        (adj_T_p_lower_factorisation (N := N) p hp hpN)
+        (adj_T_p_upper_factorisation (N := N) p hp hpN j₂.val) heq))
+  · have := j₁.isLt; have := j₂.isLt; omega
+
+/-- The index map `twistedTpPsi` is bijective (injective into a set of matching cardinality
+`p + 1 = deg D`). -/
+private lemma twistedTpPsi_bijective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    Function.Bijective (twistedTpPsi (N := N) p hp hpN) := by
+  rw [Fintype.bijective_iff_injective_and_card]
+  refine ⟨twistedTpPsi_injective p hp hpN, ?_⟩
+  rw [Fintype.card_fin]
+  have h := HeckeCoset_deg_D_p_Gamma0 N p hp hpN
+  rw [Nat.card_eq_fintype_card] at h; rw [h]
+
+/-- Per-index weighted-value equality: the classical `T_p` summand (upper carries weight
+`χ(p)⁻¹`, lower weight `1`) equals the `δ₀`-weighted `tRep_gen` summand at `twistedTpPsi j`. -/
+private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    {f : ℍ → ℂ} (hf : IsGamma0TwistedInvariant (N := N) k χ f) (j : Fin (p + 1)) :
+    (if _h : j.val < p then
+      (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ • (f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ))
+    else
+      f ∣[k] (T_p_lower p hp.pos : GL _ ℚ)) =
+    ((↑(delta0NebentypusWeight (N := N) χ (D_p_Gamma0 N p hp.pos)
+        (twistedTpPsi (N := N) p hp hpN j)) : ℂ)⁻¹) •
+      (f ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos)
+        (twistedTpPsi (N := N) p hp hpN j)) := by
+  simp only [twistedTpPsi]
+  split_ifs with h
+  · set e := adj_T_p_upper_factorisation (N := N) p hp hpN j.val with he
+    have hval := weighted_value_eq p hp (χ := χ) hf
+      (T_p_upper p hp.pos j.val) (adjUpperΔ (N := N) p hp hpN j.val)
+      e.choose e.choose_spec.choose
+      e.choose_spec.choose_spec.choose
+      e.choose_spec.choose_spec.choose_spec.choose
+      e.choose_spec.choose_spec.choose_spec.choose_spec rfl
+    rw [adjUpperΔ_weight (χ := χ) p hp hpN j.val] at hval
+    exact hval
+  · set e := adj_T_p_lower_factorisation (N := N) p hp hpN with he
+    have hval := weighted_value_eq p hp (χ := χ) hf
+      (T_p_lower p hp.pos) (adjLowerΔ (N := N) p hp)
+      e.choose e.choose_spec.choose
+      e.choose_spec.choose_spec.choose
+      e.choose_spec.choose_spec.choose_spec.choose
+      e.choose_spec.choose_spec.choose_spec.choose_spec rfl
+    rw [adjLowerΔ_weight (χ := χ) p hp, Units.val_one, inv_one, one_smul] at hval
+    exact hval
+
 set_option maxHeartbeats 6400000 in
 /-- **Twisted matching theorem.** For a `Γ₀(N),χ`-twisted-invariant function `f`, the
 abstract χ-weighted Hecke slash `twistedHeckeSlash_gen` at the prime double coset
@@ -705,141 +855,10 @@ theorem twisted_matches_T_p (p : ℕ) (hp : Nat.Prime p)
       (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
           (∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) +
         f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-  set D := D_p_Gamma0 N p hp.pos with hD_def
-  -- The factorisations produced by `adj_factorisation` for the classical reps.
-  have fU : ∀ b : ℕ, ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
-      (h₂ : GL _ ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
-      GL_adjugate (T_p_upper p hp.pos b : GL _ ℚ) =
-        h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ := fun b =>
-    adj_factorisation p hp hpN _ (T_p_upper_mem_D_p_Gamma0 N p hp b)
-  have fL : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
-      (h₂ : GL _ ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
-      GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
-        h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ :=
-    adj_factorisation p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
-  -- The decompQuot index map: send each classical rep to the `⟦h₁⟧`-class of its
-  -- factorisation.
-  let ψ : Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := fun j =>
-    if h : j.val < p then ⟦⟨(fU j.val).choose, (fU j.val).choose_spec.choose⟩⟧
-    else ⟦⟨fL.choose, fL.choose_spec.choose⟩⟧
-  -- Weighted value equality at each index.
-  have h_val : ∀ j : Fin (p + 1),
-      (if h : j.val < p then
-        (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
-          (f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ))
-      else
-        f ∣[k] (T_p_lower p hp.pos : GL _ ℚ)) =
-      ((↑(delta0NebentypusWeight (N := N) χ D (ψ j)) : ℂ)⁻¹) •
-        (f ∣[k] tRep_gen (Gamma0_pair N) D (ψ j)) := by
-    intro j
-    simp only [ψ]
-    split_ifs with h
-    · -- Upper representative: weight `χ(p)⁻¹`.
-      set e := fU j.val with he
-      have hval := weighted_value_eq p hp (χ := χ) hf
-        (T_p_upper p hp.pos j.val) (adjUpperΔ (N := N) p hp hpN j.val)
-        e.choose e.choose_spec.choose
-        e.choose_spec.choose_spec.choose
-        e.choose_spec.choose_spec.choose_spec.choose
-        e.choose_spec.choose_spec.choose_spec.choose_spec rfl
-      rw [adjUpperΔ_weight (χ := χ) p hp hpN j.val] at hval
-      exact hval
-    · -- Lower representative: weight `1`.
-      have hval := weighted_value_eq p hp (χ := χ) hf
-        (T_p_lower p hp.pos) (adjLowerΔ (N := N) p hp)
-        fL.choose fL.choose_spec.choose
-        fL.choose_spec.choose_spec.choose
-        fL.choose_spec.choose_spec.choose_spec.choose
-        fL.choose_spec.choose_spec.choose_spec.choose_spec rfl
-      rw [adjLowerΔ_weight (χ := χ) p hp, Units.val_one, inv_one, one_smul] at hval
-      exact hval
-  -- Injectivity of ψ: reuse the public distinctness lemmas via the adjugate factorisations.
-  -- Helper: a quotient equality of `⟦h₁⟧`-classes yields an `H`-membership of the
-  -- adjugate ratio of the underlying classical reps.
-  have h_quot_imp_adj_mem :
-      ∀ (a₁ : GL _ ℚ) (ha₁ : a₁ ∈ (Gamma0_pair N).H)
-        (c₁ : GL _ ℚ) (hc₁ : c₁ ∈ (Gamma0_pair N).H)
-        (a₂ : GL _ ℚ) (ha₂ : a₂ ∈ (Gamma0_pair N).H)
-        (c₂ : GL _ ℚ) (_hc₂ : c₂ ∈ (Gamma0_pair N).H)
-        (g₁ g₂ : GL _ ℚ)
-        (heq₁ : GL_adjugate g₁ = a₁ * (HeckeCoset.rep D : GL _ ℚ) * c₁)
-        (heq₂ : GL_adjugate g₂ = a₂ * (HeckeCoset.rep D : GL _ ℚ) * c₂),
-        (⟦(⟨a₁, ha₁⟩ : (Gamma0_pair N).H)⟧ :
-            decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = ⟦⟨a₂, ha₂⟩⟧ →
-        (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (Gamma0_pair N).H := by
-    intro a₁ ha₁ c₁ hc₁ a₂ ha₂ c₂ hc₂ g₁ g₂ heq₁ heq₂ hquot
-    rw [heq₁, heq₂]
-    have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
-    rw [Subgroup.mem_subgroupOf] at hrel
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
-    simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
-    simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
-    have h_prod : (a₁ * ↑(HeckeCoset.rep D) * c₁)⁻¹ *
-        (a₂ * ↑(HeckeCoset.rep D) * c₂) =
-        c₁⁻¹ * ((↑(HeckeCoset.rep D))⁻¹ * (a₁⁻¹ * a₂) *
-          ↑(HeckeCoset.rep D)) * c₂ := by group
-    rw [h_prod]
-    exact (Gamma0_pair N).H.mul_mem
-      ((Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
-  have h_inj : Function.Injective ψ := by
-    intro j₁ j₂ heq
-    by_contra hne
-    simp only [ψ] at heq
-    by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
-    · simp only [h₁, h₂, dite_true] at heq
-      have hne_val : j₁.val ≠ j₂.val := fun h => hne (Fin.ext h)
-      set e₁ := fU j₁.val
-      set e₂ := fU j₂.val
-      have hmem := h_quot_imp_adj_mem
-        e₁.choose e₁.choose_spec.choose
-        e₁.choose_spec.choose_spec.choose
-          e₁.choose_spec.choose_spec.choose_spec.choose
-        e₂.choose e₂.choose_spec.choose
-        e₂.choose_spec.choose_spec.choose
-          e₂.choose_spec.choose_spec.choose_spec.choose
-        (T_p_upper p hp.pos j₁.val) (T_p_upper p hp.pos j₂.val)
-        e₁.choose_spec.choose_spec.choose_spec.choose_spec
-        e₂.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂ hne_val
-        (Gamma0_pair_H_le_GL_pair_H N hmem)
-    · simp only [h₁, dite_true, h₂, dite_false] at heq
-      set e₁ := fU j₁.val
-      have hmem := h_quot_imp_adj_mem
-        e₁.choose e₁.choose_spec.choose
-        e₁.choose_spec.choose_spec.choose
-          e₁.choose_spec.choose_spec.choose_spec.choose
-        fL.choose fL.choose_spec.choose
-        fL.choose_spec.choose_spec.choose
-          fL.choose_spec.choose_spec.choose_spec.choose
-        (T_p_upper p hp.pos j₁.val) (T_p_lower p hp.pos)
-        e₁.choose_spec.choose_spec.choose_spec.choose_spec
-        fL.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
-        (Gamma0_pair_H_le_GL_pair_H N hmem)
-    · simp only [h₁, dite_false, h₂, dite_true] at heq
-      set e₂ := fU j₂.val
-      have hmem := h_quot_imp_adj_mem
-        fL.choose fL.choose_spec.choose
-        fL.choose_spec.choose_spec.choose
-          fL.choose_spec.choose_spec.choose_spec.choose
-        e₂.choose e₂.choose_spec.choose
-        e₂.choose_spec.choose_spec.choose
-          e₂.choose_spec.choose_spec.choose_spec.choose
-        (T_p_lower p hp.pos) (T_p_upper p hp.pos j₂.val)
-        fL.choose_spec.choose_spec.choose_spec.choose_spec
-        e₂.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
-        (Gamma0_pair_H_le_GL_pair_H N hmem)
-    · have := j₁.isLt; have := j₂.isLt; omega
-  have h_bij : Function.Bijective ψ := by
-    rw [Fintype.bijective_iff_injective_and_card]
-    refine ⟨h_inj, ?_⟩
-    rw [Fintype.card_fin]
-    have h := HeckeCoset_deg_D_p_Gamma0 N p hp hpN
-    rw [Nat.card_eq_fintype_card] at h; rw [h]
+  -- The index permutation `twistedTpPsi`, its per-index weighted-value equality, and its
+  -- bijectivity are isolated above (`twistedTpPsi_val_eq`/`twistedTpPsi_bijective`).
+  have h_val := twistedTpPsi_val_eq (N := N) (k := k) (χ := χ) p hp hpN hf
+  have h_bij := twistedTpPsi_bijective (N := N) p hp hpN
   -- Assemble: rewrite the explicit weighted T_p sum over `Fin (p+1)` and transport via `ψ`.
   rw [twistedHeckeSlash_gen]
   symm
@@ -856,8 +875,8 @@ theorem twisted_matches_T_p (p : ℕ) (hp : Nat.Prime p)
     · simp]
   rw [Finset.sum_congr rfl (fun j _ => h_val j)]
   exact h_bij.sum_comp
-    (fun i => (↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ •
-      (f ∣[k] tRep_gen (Gamma0_pair N) D i))
+    (fun i => (↑(delta0NebentypusWeight (N := N) χ (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
+      (f ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i))
 
 /-- The concrete operator `heckeT_p_all`, applied to a `χ`-eigenform and read as a function,
 equals the χ-weighted explicit `T_p` coset sum with the **classical** normalization: the upper
@@ -1097,6 +1116,47 @@ private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0
     ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.diagonal, Matrix.map_apply]
   rw [hwit]; simp [Matrix.diagonal]
 
+/-- Adjugate factorisation of the central scalar `diag(p,p)` through the scalar double-coset
+representative: `adj(diag(p,p)) = diag(p,p) = h₁ · rep · h₂` with `h₁,h₂ ∈ Γ₀(N)`. -/
+private lemma adj_diagScalar_factorisation (p : ℕ) (hp : Nat.Prime p)
+    (hgcd : Int.gcd (p : ℤ) (N : ℤ) = 1) :
+    ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
+      (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) =
+        h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd)
+          : GL _ ℚ) * h₂ := by
+  set D := T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd with hD
+  -- `rep D ∈ DC(diag(p,p))`, so `rep = a · diag(p,p) · c` with `a, c ∈ H`.
+  have hrep := HeckeCoset.rep_mem D
+  rw [hD, T_diag_Gamma0, HeckeCoset.toSet_mk, DoubleCoset.mem_doubleCoset] at hrep
+  obtain ⟨a, ha, c, hc, hrep_eq⟩ := hrep
+  -- So `diag(p,p) = a⁻¹ · rep · c⁻¹`, and `adj(diag(p,p)) = diag(p,p)`.
+  refine ⟨a⁻¹, (Gamma0_pair N).H.inv_mem ha, c⁻¹, (Gamma0_pair N).H.inv_mem hc, ?_⟩
+  rw [adj_diag_scalar p hp.pos]
+  rw [show (HeckeCoset.rep D : GL _ ℚ) =
+    a * (diagMat 2 (fun _ : Fin 2 => p) : GL _ ℚ) * c from hrep_eq]
+  group
+
+/-- The `δ₀`-weight of the scalar triple `gamma0TripleDelta D h₁ h₂` (with `D` the scalar
+double coset and `h₁·rep·h₂ = adj(diag(p,p)) = diag(p,p)`) equals `χ(p mod N)`. -/
+private lemma diagScalar_triple_weight (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (hgcd : Int.gcd (p : ℤ) (N : ℤ) = 1)
+    (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
+    (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
+    (hfact : GL_adjugate (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) =
+      h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd)
+        : GL _ ℚ) * h₂) :
+    delta0NebentypusDeltaChar (N := N) χ
+      (gamma0TripleDelta (N := N)
+        (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd) h₁ hh₁ h₂ hh₂) =
+      χ (ZMod.unitOfCoprime p hpN) := by
+  rw [← diagScalarΔ_weight (N := N) χ p hp.pos hgcd hpN]
+  apply delta0Char_congr
+  -- Both `Δ`-elements have matrix `h₁·rep·h₂ = adj(diag(p,p)) = diag(p,p)`.
+  change h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd)
+      : GL _ ℚ) * h₂ = diagMat 2 (fun _ : Fin 2 => p)
+  rw [← hfact, adj_diag_scalar p hp.pos]
+
 set_option maxHeartbeats 1600000 in
 /-- **The scalar/diamond coset `T(p,p)`, good prime `p ∤ N`.**
 
@@ -1141,24 +1201,9 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
   -- `decompQuot` for `D` is a singleton.
   haveI hsub : Subsingleton (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :=
     subsingleton_decompQuot_scalar (N := N) p hp.pos hgcd
-  -- Factorise `adj(diag(p,p)) = h₁ · rep · h₂` (since `diag(p,p) ∈ DC(rep)` and
-  -- `adj(diag(p,p)) = diag(p,p)`).
-  obtain ⟨h₁, hh₁, h₂, hh₂, hfact⟩ :
-      ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
-        (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
-        GL_adjugate (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ := by
-    -- `rep D ∈ DC(diag(p,p))`, so `rep = a · diag(p,p) · c` with `a, c ∈ H`.
-    have hrep := HeckeCoset.rep_mem D
-    rw [hD, T_diag_Gamma0, HeckeCoset.toSet_mk, DoubleCoset.mem_doubleCoset] at hrep
-    obtain ⟨a, ha, c, hc, hrep_eq⟩ := hrep
-    -- So `diag(p,p) = a⁻¹ · rep · c⁻¹`, and `adj(diag(p,p)) = diag(p,p)`.
-    refine ⟨a⁻¹, (Gamma0_pair N).H.inv_mem ha, c⁻¹,
-      (Gamma0_pair N).H.inv_mem hc, ?_⟩
-    rw [adj_diag_scalar p hp.pos]
-    rw [show (HeckeCoset.rep D : GL _ ℚ) =
-      a * (diagMat 2 (fun _ : Fin 2 => p) : GL _ ℚ) * c from hrep_eq]
-    group
+  -- Factorise `adj(diag(p,p)) = h₁ · rep · h₂` (isolated as `adj_diagScalar_factorisation`).
+  obtain ⟨h₁, hh₁, h₂, hh₂, hfact⟩ := adj_diagScalar_factorisation (N := N) p hp hgcd
+  rw [← hD] at hfact
   -- The unique index of the decomposition.
   set q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧ with hq
   -- The single summand of `twistedHeckeSlash_gen` equals the weighted slash by `diag(p,p)`.
@@ -1172,15 +1217,10 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
     ← hmatch]
   -- `adj(h₁·rep·h₂) = adj(adj(diag(p,p))) = diag(p,p)`.
   rw [← hfact, GL_adjugate_involutive]
-  -- The `δ₀`-weight on the triple equals `δ₀(diag(p,p)) = χ(p)`.
-  have hwgt : delta0NebentypusDeltaChar (N := N) χ
-      (gamma0TripleDelta (N := N) D h₁ hh₁ h₂ hh₂) =
-        χ (ZMod.unitOfCoprime p hpN) := by
-    rw [← diagScalarΔ_weight (N := N) χ p hp.pos hgcd hpN]
-    apply delta0Char_congr
-    -- Both `Δ`-elements have matrix `h₁·rep·h₂ = adj(diag(p,p)) = diag(p,p)`.
-    change h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ = diagMat 2 (fun _ : Fin 2 => p)
-    rw [← hfact, adj_diag_scalar p hp.pos]
+  -- The `δ₀`-weight on the triple equals `δ₀(diag(p,p)) = χ(p)` (`diagScalar_triple_weight`).
+  have hwgt := diagScalar_triple_weight (N := N) (χ := χ) p hp hpN hgcd
+    h₁ hh₁ h₂ hh₂ (hD ▸ hfact)
+  rw [← hD] at hwgt
   rw [hwgt, slash_diag_scalar k p hp.pos (⇑f0), smul_smul]
 
 /-! ### The bad-prime obstruction: `U_p`, `p ∣ N`
@@ -1684,6 +1724,32 @@ theorem chi_unitOfCoprime_mul (χ : (ZMod N)ˣ →* ℂˣ) {m n : ℕ}
   push_cast [ZMod.coe_unitOfCoprime]
   ring
 
+/-- The χ-character on a prime power: `χ(unitOfCoprime (p^v)) = χ(unitOfCoprime p)^v`. -/
+private lemma chi_unitOfCoprime_pow (χ : (ZMod N)ˣ →* ℂˣ) {p : ℕ} (v : ℕ)
+    (hpN : Nat.Coprime p N) :
+    (↑(χ (ZMod.unitOfCoprime (p ^ v) (hpN.pow_left v))) : ℂ) =
+      (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) ^ v := by
+  rw [← Units.val_pow_eq_pow_val, ← map_pow]
+  congr 2
+  ext
+  push_cast [ZMod.coe_unitOfCoprime]
+  ring
+
+/-- The χ-character splits over the prime-power / coprime-part decomposition `n = p^{v_p(n)}
+· (n / p^{v_p(n)})`: `χ(unitOfCoprime n) = χ(unitOfCoprime p^{v_p(n)}) · χ(unitOfCoprime
+(n/p^{v_p(n)}))`. -/
+private lemma chi_eq_ordProj_mul_ordCompl (χ : (ZMod N)ˣ →* ℂˣ) {n : ℕ}
+    (hn : Nat.Coprime n N) (p : ℕ)
+    (hpvN : Nat.Coprime (p ^ n.factorization p) N)
+    (hquotN : Nat.Coprime (n / p ^ n.factorization p) N) :
+    (↑(χ (ZMod.unitOfCoprime n hn)) : ℂ) =
+      (↑(χ (ZMod.unitOfCoprime (p ^ n.factorization p) hpvN)) : ℂ) *
+        (↑(χ (ZMod.unitOfCoprime (n / p ^ n.factorization p) hquotN)) : ℂ) := by
+  rw [← chi_unitOfCoprime_mul χ hpvN hquotN]
+  congr 2
+  refine Units.ext ?_
+  rw [ZMod.coe_unitOfCoprime, ZMod.coe_unitOfCoprime, Nat.ordProj_mul_ordCompl_eq_self n p]
+
 /-- The ring-side element `D_n` for general `n`, assembled by the same `minFac`-peeling
 recursion as `heckeT_n` (`heckeT_n_aux`): `D_1 = 1`, and for `m > 1`,
 `D_m = D_{p^v} · D_{m / p^v}` where `p = minFac m`, `v = v_p(m)`. -/
@@ -1705,6 +1771,65 @@ decreasing_by
 
 @[simp] theorem heckeRingD_n_one : heckeRingD_n (N := N) 1 = 1 := by
   rw [heckeRingD_n]; simp
+
+/-- The `minFac`-peeling step for `heckeRingD_n` at a good smallest prime: for `n > 1` with
+`p = minFac n` (coprime to `N`) and `v = v_p(n)`, `D_n = D_{p^v} · D_{n / p^v}`. -/
+private lemma heckeRingD_n_peel (n p v : ℕ) (hn2 : 1 < n) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (hpe : p = n.minFac) (hve : v = n.factorization p) :
+    heckeRingD_n (N := N) n = heckeRingD_ppow p hp hpN v * heckeRingD_n (n / p ^ v) := by
+  subst hpe hve
+  conv_lhs => rw [heckeRingD_n]
+  rw [dif_neg (by omega : ¬ n ≤ 1)]
+  simp only [dif_pos hpN]
+
+/-- The inductive step (`n > 1`) of the composite-`n` bridge: peel off the smallest prime
+power `p^v` (`p = minFac n`, `v = v_p(n)`), apply the prime-power bridge and the strong
+inductive hypothesis on `n / p^v`, then collect scalars via `χ(p^v) = χ(p)^v` and
+`χ(n) = χ(p^v)·χ(n/p^v)`. -/
+private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 : n ≠ 1)
+    (hn : Nat.Coprime n N)
+    (ih : ∀ m, m < n → (hm0 : NeZero m) → ∀ hm : Nat.Coprime m N,
+      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n m) =
+        ((↑(χ (ZMod.unitOfCoprime m hm)) : ℂ))⁻¹ • heckeT_n_charRestrict k m hm χ) :
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n) =
+      ((↑(χ (ZMod.unitOfCoprime n hn)) : ℂ))⁻¹ • heckeT_n_charRestrict k n hn χ := by
+  have hnpos : 0 < n := Nat.pos_of_ne_zero (NeZero.ne n)
+  set p := n.minFac with hp_def
+  have hp : Nat.Prime p := Nat.minFac_prime hn1
+  set v := n.factorization p with hv_def
+  have hvpos : 0 < v := hp.factorization_pos_of_dvd hnpos.ne' (Nat.minFac_dvd n)
+  have hpN : Nat.Coprime p N := hn.coprime_dvd_left (Nat.minFac_dvd n)
+  have hpvN : Nat.Coprime (p ^ v) N := hpN.pow_left v
+  have hquot_pos : 0 < n / p ^ v := Nat.div_pos
+    (Nat.ordProj_le p hnpos.ne') (pow_pos hp.pos v)
+  haveI : NeZero (n / p ^ v) := ⟨hquot_pos.ne'⟩
+  haveI : NeZero (p ^ v) := ⟨(pow_pos hp.pos v).ne'⟩
+  have hquotN : Nat.Coprime (n / p ^ v) N :=
+    hn.coprime_dvd_left (Nat.div_dvd_of_dvd (Nat.ordProj_dvd n p))
+  -- The two factors are coprime (the quotient drops all factors of `p`).
+  have hcop : Nat.Coprime (p ^ v) (n / p ^ v) :=
+    Nat.Coprime.pow_left v
+      (hp.coprime_iff_not_dvd.mpr (hv_def ▸ Nat.not_dvd_ordCompl hp (NeZero.ne n)))
+  -- Decompose the concrete operator the same way as `heckeRingD_n_peel`.
+  have hTn : heckeT_n_charRestrict k n hn χ =
+      heckeT_n_charRestrict k (p ^ v) hpvN χ *
+        heckeT_n_charRestrict k (n / p ^ v) hquotN χ := by
+    rw [← heckeT_n_charRestrict_mul_coprime (k := k) (χ := χ) (p ^ v) (n / p ^ v)
+      hpvN hquotN hcop]
+    congr 1
+    exact (Nat.ordProj_mul_ordCompl_eq_self n p).symm
+  -- Apply the prime-power bridge and the inductive hypothesis.
+  rw [heckeRingD_n_peel n p v (by omega) hp hpN hp_def hv_def, map_mul,
+    heckeRingHomCharSpace_heckeRingD_ppow p hp hpN v,
+    ih (n / p ^ v) (Nat.div_lt_self (by omega)
+        (Nat.one_lt_pow hvpos.ne' hp.one_lt)) ⟨hquot_pos.ne'⟩ hquotN,
+    ← heckeT_n_charRestrict_ppow p hp hpN v hvpos]
+  -- Collect scalars: `(χ(p)⁻¹)^v = χ(p^v)⁻¹` and `χ(n) = χ(p^v)·χ(n/p^v)`.
+  rw [show (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ ^ v =
+      (↑(χ (ZMod.unitOfCoprime (p ^ v) hpvN)) : ℂ)⁻¹ from by
+    rw [inv_pow, ← chi_unitOfCoprime_pow χ v hpN], smul_mul_smul_comm, hTn]
+  congr 1
+  rw [chi_eq_ordProj_mul_ordCompl χ hn p hpvN hquotN, mul_inv]
 
 /-- **Composite-`n` bridge (endomorphism form).** For `n` coprime to `N`,
 `heckeRingHomCharSpace (D_n) = χ(n)⁻¹ • heckeT_n_charRestrict k n hn χ`. Proven by
@@ -1734,65 +1859,8 @@ theorem heckeRingHomCharSpace_heckeRingD_n (n : ℕ) [NeZero n] (hn : Nat.Coprim
         heckeT_n_charRestrict_coe, heckeT_n_one]
       rw [show (ZMod.unitOfCoprime 1 hn) = 1 from by ext; simp [ZMod.coe_unitOfCoprime]]
       simp
-    · -- n > 1: peel off the smallest prime power.
-      have hnpos : 0 < n := Nat.pos_of_ne_zero (NeZero.ne n)
-      set p := n.minFac with hp_def
-      have hp : Nat.Prime p := Nat.minFac_prime hn1
-      set v := n.factorization p with hv_def
-      have hvpos : 0 < v := hp.factorization_pos_of_dvd hnpos.ne' (Nat.minFac_dvd n)
-      have hpN : Nat.Coprime p N := hn.coprime_dvd_left (Nat.minFac_dvd n)
-      have hpvN : Nat.Coprime (p ^ v) N := hpN.pow_left v
-      have hquot_pos : 0 < n / p ^ v := Nat.div_pos
-        (Nat.ordProj_le p hnpos.ne') (pow_pos hp.pos v)
-      haveI : NeZero (n / p ^ v) := ⟨hquot_pos.ne'⟩
-      haveI : NeZero (p ^ v) := ⟨(pow_pos hp.pos v).ne'⟩
-      have hquotN : Nat.Coprime (n / p ^ v) N :=
-        hn.coprime_dvd_left (Nat.div_dvd_of_dvd (Nat.ordProj_dvd n p))
-      -- The two factors are coprime (the quotient drops all factors of `p`).
-      have hcop : Nat.Coprime (p ^ v) (n / p ^ v) :=
-        Nat.Coprime.pow_left v
-          (hp.coprime_iff_not_dvd.mpr (hv_def ▸ Nat.not_dvd_ordCompl hp (NeZero.ne n)))
-      -- Unfold `heckeRingD_n n` to its peeled product (with the good-prime branch).
-      have hDn : heckeRingD_n (N := N) n =
-          heckeRingD_ppow p hp hpN v * heckeRingD_n (n / p ^ v) := by
-        conv_lhs => rw [heckeRingD_n]
-        rw [dif_neg (by omega : ¬ n ≤ 1)]
-        simp only [← hp_def, ← hv_def, dif_pos hpN]
-      -- Decompose the concrete operator the same way.
-      have hTn : heckeT_n_charRestrict k n hn χ =
-          heckeT_n_charRestrict k (p ^ v) hpvN χ *
-            heckeT_n_charRestrict k (n / p ^ v) hquotN χ := by
-        rw [← heckeT_n_charRestrict_mul_coprime (k := k) (χ := χ) (p ^ v) (n / p ^ v)
-          hpvN hquotN hcop]
-        congr 1
-        exact (Nat.ordProj_mul_ordCompl_eq_self n p).symm
-      -- Apply the prime-power bridge and the inductive hypothesis.
-      rw [hDn, map_mul, heckeRingHomCharSpace_heckeRingD_ppow p hp hpN v,
-        ih (n / p ^ v) (Nat.div_lt_self (by omega)
-            (Nat.one_lt_pow hvpos.ne' hp.one_lt)) ⟨hquot_pos.ne'⟩ hquotN,
-        ← heckeT_n_charRestrict_ppow p hp hpN v hvpos]
-      -- `(χ(p)⁻¹)^v = χ(p^v)⁻¹` (the prime-power scalar collapses to one χ-value).
-      have hpow : (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ ^ v =
-          (↑(χ (ZMod.unitOfCoprime (p ^ v) hpvN)) : ℂ)⁻¹ := by
-        rw [inv_pow]
-        congr 1
-        rw [← Units.val_pow_eq_pow_val, ← map_pow]
-        congr 2
-        ext
-        push_cast [ZMod.coe_unitOfCoprime]
-        ring
-      -- Reassemble: scalars multiply, operators compose; relate χ(n)⁻¹ to the factors.
-      rw [hpow, smul_mul_smul_comm, hTn]
-      congr 1
-      -- Scalar identity: `χ(p^v)⁻¹ · χ(n/p^v)⁻¹ = χ(n)⁻¹`, using `n = p^v · (n/p^v)`.
-      have hchi : (↑(χ (ZMod.unitOfCoprime n hn)) : ℂ) =
-          (↑(χ (ZMod.unitOfCoprime (p ^ v) hpvN)) : ℂ) *
-            (↑(χ (ZMod.unitOfCoprime (n / p ^ v) hquotN)) : ℂ) := by
-        rw [← chi_unitOfCoprime_mul χ hpvN hquotN]
-        congr 2
-        refine Units.ext ?_
-        rw [ZMod.coe_unitOfCoprime, ZMod.coe_unitOfCoprime, Nat.ordProj_mul_ordCompl_eq_self n p]
-      rw [hchi, mul_inv]
+    · -- n > 1: peel off the smallest prime power (isolated as the `_step` lemma).
+      exact heckeRingHomCharSpace_heckeRingD_n_step (k := k) (χ := χ) n hn1 hn ih
 
 /-! ### Cusp connection: `cuspFormCharSpace ↪ modFormCharSpace`
 

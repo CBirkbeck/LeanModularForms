@@ -1666,6 +1666,68 @@ structure Newform.CompletedMellinData {N : ℕ} [NeZero N] {k : ℤ}
   stripping_bridge : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
     LSeries f.lCoeff_stripped s = stripping s * LSeries f.lCoeff s
 
+/-- Cancellation of the completion factors `p ^ s · g⁻¹` against the inverse
+factors `p ^ (-s) · g` appearing in the completed Mellin identity (with
+`p := (2π : ℂ)`, `g := Γ s`): `a · p^s · g⁻¹ · (p^{-s} · g · L) = a · L`. -/
+private lemma stripping_completion_factors_cancel {p : ℂ} (hp : p ≠ 0)
+    {g : ℂ} (hg : g ≠ 0) (a L s : ℂ) :
+    a * p ^ s * g⁻¹ * (p ^ (-s) * g * L) = a * L := by
+  have h1 : p ^ s * p ^ (-s) = 1 := by
+    rw [← Complex.cpow_add _ _ hp, add_neg_cancel, Complex.cpow_zero]
+  have h2 : g⁻¹ * g = 1 := inv_mul_cancel₀ hg
+  calc a * p ^ s * g⁻¹ * (p ^ (-s) * g * L)
+      = a * (p ^ s * p ^ (-s)) * (g⁻¹ * g) * L := by ring
+    _ = a * L := by rw [h1, h2]; ring
+
+/-- Analytic-continuation upgrade for L-series: an entire function `Λ` that
+agrees with `LSeries c` on a right half-plane `{Re > b}` agrees with it on the
+whole convergence half-plane `{Re > abscissaOfAbsConv c}`.  Proved by the
+analytic identity principle on the convex (preconnected) half-plane. -/
+private lemma eqOn_LSeries_of_entire_of_eqOn_halfPlane {c : ℕ → ℂ} {Λ : ℂ → ℂ}
+    {b : ℝ} (hΛ : Differentiable ℂ Λ)
+    (h_direct : ∀ {s : ℂ}, b < s.re → Λ s = LSeries c s)
+    {s₀ : ℂ} (hs₀ : LSeries.abscissaOfAbsConv c < (s₀.re : EReal)) :
+    Λ s₀ = LSeries c s₀ := by
+  -- Pick a real σ strictly between abscissa(c) and s₀.re.
+  obtain ⟨σ, hσ_abs, hσ_s⟩ := EReal.exists_between_coe_real hs₀
+  -- The open half-plane U := {s | σ < s.re} is convex (preconnected).
+  let U : Set ℂ := {s | (σ : ℝ) < s.re}
+  have hU_pre : IsPreconnected U := (convex_halfSpace_re_gt σ).isPreconnected
+  have hs₀_in_U : s₀ ∈ U := by
+    show (σ : ℝ) < s₀.re
+    exact_mod_cast hσ_s
+  -- Both Λ and LSeries c are analytic on U.
+  have hΛ_an : AnalyticOnNhd ℂ Λ U := fun z _ =>
+    (Complex.analyticOnNhd_univ_iff_differentiable.mpr hΛ) z (Set.mem_univ _)
+  have hL_an : AnalyticOnNhd ℂ (LSeries c) U := by
+    intro z hz
+    apply LSeries_analyticOnNhd c
+    show LSeries.abscissaOfAbsConv c < (z.re : EReal)
+    refine lt_trans hσ_abs ?_
+    exact_mod_cast (hz : (σ : ℝ) < z.re)
+  -- Witness z₀ ∈ U with Re z₀ > max(σ, b) so direct agreement applies.
+  let zRe : ℝ := max σ b + 1
+  let z₀ : ℂ := (zRe : ℝ)
+  have hz₀_re : z₀.re = zRe := Complex.ofReal_re _
+  have hzRe_gt_σ : σ < zRe := by
+    have := le_max_left σ b; linarith
+  have hzRe_gt_b : b < zRe := by
+    have := le_max_right σ b; linarith
+  have hz₀_in_U : z₀ ∈ U := by
+    show (σ : ℝ) < z₀.re
+    rw [hz₀_re]; exact hzRe_gt_σ
+  have h_eq_nhds : Λ =ᶠ[nhds z₀] (LSeries c) := by
+    let V : Set ℂ := {s | b < s.re}
+    have hV_open : IsOpen V := isOpen_lt continuous_const Complex.continuous_re
+    have hz₀_in_V : z₀ ∈ V := by
+      show b < z₀.re
+      rw [hz₀_re]; exact hzRe_gt_b
+    refine Filter.eventuallyEq_iff_exists_mem.mpr ⟨V, hV_open.mem_nhds hz₀_in_V, ?_⟩
+    intro w hw
+    exact h_direct hw
+  exact (hΛ_an.eqOn_of_preconnected_of_eventuallyEq hL_an hU_pre hz₀_in_U h_eq_nhds)
+    hs₀_in_U
+
 /-- **`HeckeEntireExtension` from per-newform `CompletedMellinData` (T133).**
 
 Consumer theorem: given per-newform `Newform.CompletedMellinData` (the
@@ -1702,94 +1764,30 @@ theorem Newform.HeckeEntireExtension_of_CompletedMellinData
   intro N _ k f
   obtain ⟨pair, hk_pos, h_completed, stripping, h_strip_diff, h_strip_bridge⟩ := h f
   -- (2π : ℂ) ≠ 0
-  have h2π : (2 * Real.pi : ℂ) ≠ 0 := by
-    have h2 : (2 : ℂ) ≠ 0 := two_ne_zero
-    have hπ_ℂ : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-    have hmul : (2 * Real.pi : ℂ) = (2 : ℂ) * (Real.pi : ℂ) := by ring
-    rw [hmul]; exact mul_ne_zero h2 hπ_ℂ
+  have h2π : (2 * Real.pi : ℂ) ≠ 0 :=
+    mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero)
   haveI : NeZero (2 * Real.pi : ℂ) := ⟨h2π⟩
-  have h_2pi_diff : Differentiable ℂ (fun s : ℂ => (2 * Real.pi : ℂ) ^ s) :=
-    differentiable_const_cpow_of_neZero (2 * Real.pi : ℂ)
-  -- The candidate entire extension function
+  -- The candidate entire extension function and its differentiability.
   let Λ : ℂ → ℂ := fun s =>
     stripping s * ((2 * Real.pi : ℂ) ^ s) * (Complex.Gamma s)⁻¹ * pair.Λ s
   have h_Λ_diff : Differentiable ℂ Λ :=
-    ((h_strip_diff.mul h_2pi_diff).mul Complex.differentiable_one_div_Gamma).mul
-      pair.differentiable_Λ
-  -- Direct agreement on `Re s > k/2 + 1`.
+    ((h_strip_diff.mul (differentiable_const_cpow_of_neZero (2 * Real.pi : ℂ))).mul
+      Complex.differentiable_one_div_Gamma).mul pair.differentiable_Λ
+  -- Direct agreement on `Re s > k/2 + 1`: the completion factors cancel.
   have h_direct :
       ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
         Λ s = LSeries f.lCoeff_stripped s := by
     intro s hs
-    -- For `Re s > k/2 + 1 > 0`, `Γ s ≠ 0` (positive real part).
-    have hs_re_pos : 0 < s.re := by
-      have h_kbound_pos : (0 : ℝ) < (k : ℝ) / 2 + 1 := by linarith
-      linarith
+    have hs_re_pos : 0 < s.re := by linarith
     have hΓ_ne : Complex.Gamma s ≠ 0 := Complex.Gamma_ne_zero_of_re_pos hs_re_pos
-    have h_2pi_cancel :
-        ((2 * Real.pi : ℂ) ^ s) * ((2 * Real.pi : ℂ) ^ (-s)) = 1 := by
-      rw [← Complex.cpow_add _ _ h2π, add_neg_cancel, Complex.cpow_zero]
-    have hΓ_cancel : (Complex.Gamma s)⁻¹ * Complex.Gamma s = 1 :=
-      inv_mul_cancel₀ hΓ_ne
-    have h_pair := h_completed hs
-    have h_strip := h_strip_bridge hs
     show stripping s * ((2 * Real.pi : ℂ) ^ s) * (Complex.Gamma s)⁻¹ * pair.Λ s
         = LSeries f.lCoeff_stripped s
-    rw [h_pair, h_strip]
-    have hRHS_rewrite :
-        stripping s * ((2 * Real.pi : ℂ) ^ s) * (Complex.Gamma s)⁻¹ *
-          ((2 * Real.pi : ℂ) ^ (-s) * Complex.Gamma s * LSeries f.lCoeff s) =
-        stripping s *
-          (((2 * Real.pi : ℂ) ^ s) * ((2 * Real.pi : ℂ) ^ (-s))) *
-          ((Complex.Gamma s)⁻¹ * Complex.Gamma s) * LSeries f.lCoeff s := by
-      ring
-    rw [hRHS_rewrite, h_2pi_cancel, hΓ_cancel]
-    ring
-  -- Promote agreement to `Re s > abscissaOfAbsConv f.lCoeff_stripped` via the
-  -- analytic identity principle on a half-plane.
-  refine ⟨Λ, h_Λ_diff, ?_⟩
-  intro s₀ hs₀
-  -- Pick a real σ strictly between abscissa(lCoeff_stripped) and s₀.re.
-  obtain ⟨σ, hσ_abs, hσ_s⟩ :=
-    EReal.exists_between_coe_real (show (LSeries.abscissaOfAbsConv f.lCoeff_stripped)
-      < ((s₀.re : ℝ) : EReal) by exact_mod_cast hs₀)
-  -- The open half-plane U := {s | σ < s.re} is convex (preconnected).
-  let U : Set ℂ := {s | (σ : ℝ) < s.re}
-  have hU_pre : IsPreconnected U := (convex_halfSpace_re_gt σ).isPreconnected
-  have hs₀_in_U : s₀ ∈ U := by
-    show (σ : ℝ) < s₀.re
-    exact_mod_cast hσ_s
-  -- Both Λ and LSeries f.lCoeff_stripped are analytic on U.
-  have hΛ_an : AnalyticOnNhd ℂ Λ U := fun z _ =>
-    (Complex.analyticOnNhd_univ_iff_differentiable.mpr h_Λ_diff) z (Set.mem_univ _)
-  have hL_an : AnalyticOnNhd ℂ (LSeries f.lCoeff_stripped) U := by
-    intro z hz
-    apply LSeries_analyticOnNhd f.lCoeff_stripped
-    show LSeries.abscissaOfAbsConv f.lCoeff_stripped < (z.re : EReal)
-    refine lt_trans hσ_abs ?_
-    exact_mod_cast (hz : (σ : ℝ) < z.re)
-  -- Witness z₀ ∈ U with Re z₀ > max(σ, k/2 + 1) so direct agreement applies.
-  let zRe : ℝ := max σ ((k : ℝ) / 2 + 1) + 1
-  let z₀ : ℂ := (zRe : ℝ)
-  have hz₀_re : z₀.re = zRe := Complex.ofReal_re _
-  have hzRe_gt_σ : σ < zRe := by
-    have := le_max_left σ ((k : ℝ) / 2 + 1); linarith
-  have hzRe_gt_kbound : ((k : ℝ) / 2 + 1) < zRe := by
-    have := le_max_right σ ((k : ℝ) / 2 + 1); linarith
-  have hz₀_in_U : z₀ ∈ U := by
-    show (σ : ℝ) < z₀.re
-    rw [hz₀_re]; exact hzRe_gt_σ
-  have h_eq_nhds : Λ =ᶠ[nhds z₀] (LSeries f.lCoeff_stripped) := by
-    let V : Set ℂ := {s | ((k : ℝ) / 2 + 1 : ℝ) < s.re}
-    have hV_open : IsOpen V := isOpen_lt continuous_const Complex.continuous_re
-    have hz₀_in_V : z₀ ∈ V := by
-      show ((k : ℝ) / 2 + 1 : ℝ) < z₀.re
-      rw [hz₀_re]; exact hzRe_gt_kbound
-    refine Filter.eventuallyEq_iff_exists_mem.mpr ⟨V, hV_open.mem_nhds hz₀_in_V, ?_⟩
-    intro w hw
-    exact h_direct hw
-  exact (hΛ_an.eqOn_of_preconnected_of_eventuallyEq hL_an hU_pre hz₀_in_U h_eq_nhds)
-    hs₀_in_U
+    rw [h_completed hs, h_strip_bridge hs]
+    exact stripping_completion_factors_cancel h2π hΓ_ne (stripping s)
+      (LSeries f.lCoeff s) s
+  -- Promote agreement to the full convergence half-plane (identity principle).
+  exact ⟨Λ, h_Λ_diff, fun {_} hs₀ =>
+    eqOn_LSeries_of_entire_of_eqOn_halfPlane h_Λ_diff (fun {_} hs => h_direct hs) hs₀⟩
 
 /-! ### End of corrected completed Mellin–Dirichlet bridge (T133) -/
 
@@ -1868,6 +1866,70 @@ structure Newform.CompletedFrickeData {N : ℕ} [NeZero N] {k : ℤ}
   stripping_bridge : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
     LSeries f.lCoeff_stripped s = stripping s * LSeries f.lCoeff s
 
+/-- The scaled imaginary-axis function `t ↦ imAxis twist (t / N)` is locally
+integrable on `Ioi 0` (continuity of `imAxis twist` composed with division by
+the positive constant `N`). -/
+private lemma imAxis_scaled_locallyIntegrableOn {N : ℕ} [NeZero N] {k : ℤ}
+    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    MeasureTheory.LocallyIntegrableOn
+      (fun t : ℝ => _root_.ModularForms.imAxis twist (t / (N : ℝ)))
+      (Set.Ioi (0 : ℝ)) := by
+  have hN_pos : (0 : ℝ) < (N : ℝ) :=
+    Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
+  have hG_continuousOn : ContinuousOn
+      (fun t : ℝ => _root_.ModularForms.imAxis twist (t / (N : ℝ)))
+      (Set.Ioi (0 : ℝ)) := by
+    have h_div_cts : ContinuousOn
+        (fun t : ℝ => t / (N : ℝ)) (Set.Ioi (0 : ℝ)) :=
+      Continuous.continuousOn (by fun_prop)
+    have h_maps : Set.MapsTo (fun t : ℝ => t / (N : ℝ))
+        (Set.Ioi 0) (Set.Ioi 0) := fun t ht => div_pos ht hN_pos
+    exact (_root_.ModularForms.continuousOn_imAxis twist).comp h_div_cts h_maps
+  exact hG_continuousOn.locallyIntegrableOn measurableSet_Ioi
+
+/-- Rapid decay of the scaled imaginary-axis function `t ↦ imAxis twist (t / N)`:
+for every exponent `r`, `imAxis twist (·/N)` is `O(x ^ r)` at `atTop`.  Follows
+from the cusp-form exponential decay of `imAxis twist` and the scaling
+`Tendsto (·/N) atTop atTop`. -/
+private lemma imAxis_scaled_rapidDecay {N : ℕ} [NeZero N] {k : ℤ}
+    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (r : ℝ) :
+    Asymptotics.IsBigO Filter.atTop
+      (fun x : ℝ => _root_.ModularForms.imAxis twist (x / (N : ℝ)) - 0)
+      (fun x : ℝ => x ^ r) := by
+  have hN_pos : (0 : ℝ) < (N : ℝ) :=
+    Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
+  have h_twist_decay :=
+    (_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
+      twist (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay twist)) r
+  have h_tendsto : Filter.Tendsto (fun t : ℝ => t / (N : ℝ))
+      Filter.atTop Filter.atTop :=
+    Filter.tendsto_id.atTop_div_const hN_pos
+  refine (h_twist_decay.comp_tendsto h_tendsto).trans ?_
+  refine Asymptotics.IsBigO.of_bound (((N : ℝ) ^ (-r))) ?_
+  filter_upwards [Filter.eventually_gt_atTop (0 : ℝ)] with t ht
+  simp only [Function.comp_apply]
+  have h_div_rpow : (t / (N : ℝ)) ^ r = (N : ℝ) ^ (-r) * t ^ r := by
+    rw [Real.div_rpow ht.le hN_pos.le, Real.rpow_neg hN_pos.le, div_eq_mul_inv]
+    ring
+  rw [h_div_rpow, Real.norm_eq_abs, Real.norm_eq_abs, abs_mul,
+    abs_of_pos (Real.rpow_pos_of_pos hN_pos (-r))]
+
+/-- Functional equation for the scaled imaginary-axis pair under the Fricke
+slash equality: `imAxis f (1/x) = (ε · x^k) • imAxis twist (x / N)` on `Ioi 0`,
+where `ε := N^{1-k} · I^k`.  Derived from `Newform.imAxis_feq_of_slashEq`. -/
+private lemma imAxis_scaled_feq {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
+    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (slash_eq : (⇑twist : UpperHalfPlane → ℂ) =
+      ⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N)
+    {x : ℝ} (hx : x ∈ Set.Ioi (0 : ℝ)) :
+    Newform.imAxis f (1 / x) =
+      (((N : ℂ) ^ (1 - k) * Complex.I ^ k) * ((x ^ (k : ℝ) : ℝ) : ℂ)) •
+        _root_.ModularForms.imAxis twist (x / (N : ℝ)) := by
+  have h := Newform.imAxis_feq_of_slashEq f twist slash_eq hx
+  have h_cast : ((x ^ (k : ℝ) : ℝ) : ℂ) = ((x : ℝ) : ℂ) ^ k := by
+    rw [Real.rpow_intCast x k, Complex.ofReal_zpow]
+  rw [h, h_cast, smul_eq_mul]
+
 /-- **`Newform.CompletedFrickeData` from a CuspForm-supplied Atkin-Lehner
 twist plus an Euler-stripping multiplier (T136 substantial reduction).**
 
@@ -1937,54 +1999,14 @@ noncomputable def Newform.CompletedFrickeData.ofSlashEqWithStripping
   have hN_ne : (N : ℂ) ≠ 0 := by
     have : (N : ℝ) ≠ 0 := hN_pos.ne'
     exact_mod_cast this
-  have hI_ne : (Complex.I : ℂ) ≠ 0 := Complex.I_ne_zero
   -- The scaled twist function `G(t) := imAxis twist (t / N)`.
   let G : ℝ → ℂ := fun t => _root_.ModularForms.imAxis twist (t / (N : ℝ))
   -- Root number `ε := (N : ℂ)^{1-k} * I^k`.
   let ε : ℂ := (N : ℂ) ^ (1 - k) * Complex.I ^ k
   have hε_ne : ε ≠ 0 :=
-    mul_ne_zero (zpow_ne_zero _ hN_ne) (zpow_ne_zero _ hI_ne)
-  -- Local integrability of `G` on `Ioi 0`.
-  have hG_continuousOn : ContinuousOn G (Set.Ioi (0 : ℝ)) := by
-    have h_div_cts : ContinuousOn
-        (fun t : ℝ => t / (N : ℝ)) (Set.Ioi (0 : ℝ)) :=
-      Continuous.continuousOn (by fun_prop)
-    have h_maps : Set.MapsTo (fun t : ℝ => t / (N : ℝ))
-        (Set.Ioi 0) (Set.Ioi 0) := fun t ht => div_pos ht hN_pos
-    exact (_root_.ModularForms.continuousOn_imAxis twist).comp h_div_cts h_maps
-  have hG_int : MeasureTheory.LocallyIntegrableOn G (Set.Ioi (0 : ℝ)) :=
-    hG_continuousOn.locallyIntegrableOn measurableSet_Ioi
-  -- Rapid decay of `G` via composition with `t / N`.
-  have hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r) := by
-    intro r
-    have h_twist_decay :=
-      (_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
-        twist (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay twist)) r
-    have h_tendsto : Filter.Tendsto (fun t : ℝ => t / (N : ℝ))
-        Filter.atTop Filter.atTop :=
-      Filter.tendsto_id.atTop_div_const hN_pos
-    refine (h_twist_decay.comp_tendsto h_tendsto).trans ?_
-    refine Asymptotics.IsBigO.of_bound (((N : ℝ) ^ (-r))) ?_
-    filter_upwards [Filter.eventually_gt_atTop (0 : ℝ)] with t ht
-    simp only [Function.comp_apply]
-    have h_div_rpow : (t / (N : ℝ)) ^ r = (N : ℝ) ^ (-r) * t ^ r := by
-      rw [Real.div_rpow ht.le hN_pos.le, Real.rpow_neg hN_pos.le, div_eq_mul_inv]
-      ring
-    rw [h_div_rpow, Real.norm_eq_abs, Real.norm_eq_abs, abs_mul,
-      abs_of_pos (Real.rpow_pos_of_pos hN_pos (-r))]
-  -- Functional equation, derived from `imAxis_feq_of_slashEq`.
-  have h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
-      Newform.imAxis f (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x := by
-    intro x hx
-    have h := Newform.imAxis_feq_of_slashEq f twist slash_eq hx
-    have h_cast : ((x ^ (k : ℝ) : ℝ) : ℂ) = ((x : ℝ) : ℂ) ^ k := by
-      rw [Real.rpow_intCast x k, Complex.ofReal_zpow]
-    show Newform.imAxis f (1 / x) =
-      (((N : ℂ) ^ (1 - k) * Complex.I ^ k) * ((x ^ (k : ℝ) : ℝ) : ℂ)) •
-        _root_.ModularForms.imAxis twist (x / (N : ℝ))
-    rw [h, h_cast, smul_eq_mul]
-  -- Build the StrongFEPair.
+    mul_ne_zero (zpow_ne_zero _ hN_ne) (zpow_ne_zero _ Complex.I_ne_zero)
+  -- Build the StrongFEPair from the scaled-imAxis local integrability, rapid
+  -- decay and Fricke functional equation (extracted helpers).
   let pair : StrongFEPair ℂ :=
     { f := Newform.imAxis f
       g := G
@@ -1993,12 +2015,12 @@ noncomputable def Newform.CompletedFrickeData.ofSlashEqWithStripping
       f₀ := 0
       g₀ := 0
       hf_int := Newform.locallyIntegrableOn_imAxis f
-      hg_int := hG_int
+      hg_int := imAxis_scaled_locallyIntegrableOn twist
       hk := hk_pos
       hε := hε_ne
-      h_feq := h_feq
+      h_feq := fun x hx => imAxis_scaled_feq f twist slash_eq hx
       hf_top := Newform.imAxis_rapidDecay f
-      hg_top := hG_top
+      hg_top := imAxis_scaled_rapidDecay twist
       hf₀ := rfl
       hg₀ := rfl }
   -- Now build the CompletedFrickeData.  The completed_bridge is discharged
