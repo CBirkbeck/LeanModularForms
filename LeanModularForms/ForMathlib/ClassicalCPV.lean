@@ -11,7 +11,6 @@ import Mathlib.Analysis.SpecialFunctions.Complex.Log
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import Mathlib.RingTheory.LaurentSeries
-import Mathlib.Topology.Homotopy.Basic
 import LeanModularForms.ForMathlib.PiecewiseC1PathOn
 
 /-!
@@ -30,8 +29,6 @@ and generalized winding numbers following Hungerbühler–Wasem.
   `ε`-neighbourhoods of a singularity `z₀`.
 * `generalizedWindingNumber'`: the winding number of `γ` around `z₀` defined via the
   Cauchy principal value.
-* `CurvesHomotopic` / `CurvesHomotopicAvoiding`: homotopy of curves relative to endpoints,
-  optionally avoiding a singularity.
 
 ## Main results
 
@@ -206,23 +203,6 @@ def CauchyPrincipalValueExists' (f : ℂ → ℂ) (γ : ℝ → ℂ)
 `n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
 def generalizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   (2 * Real.pi * I)⁻¹ * cauchyPrincipalValue' (·⁻¹) (fun t ↦ γ t - z₀) a b 0
-
-/-- Two curves are homotopic relative to endpoints. -/
-def CurvesHomotopic (Γ γ : ℝ → ℂ) (a b : ℝ) : Prop :=
-  ∃ H : ℝ × ℝ → ℂ,
-    Continuous H ∧
-    (∀ t ∈ Icc a b, H (t, 0) = Γ t) ∧
-    (∀ t ∈ Icc a b, H (t, 1) = γ t) ∧
-    (∀ s ∈ Icc (0 : ℝ) 1, H (a, s) = H (a, 0) ∧ H (b, s) = H (b, 0))
-
-/-- Homotopy avoiding a point z₀. -/
-def CurvesHomotopicAvoiding (Γ γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : Prop :=
-  ∃ H : ℝ × ℝ → ℂ,
-    Continuous H ∧
-    (∀ t ∈ Icc a b, H (t, 0) = Γ t) ∧
-    (∀ t ∈ Icc a b, H (t, 1) = γ t) ∧
-    (∀ s ∈ Icc (0 : ℝ) 1, H (a, s) = z₀ ∧ H (b, s) = z₀) ∧
-    (∀ t ∈ Ioo a b, ∀ s ∈ Icc (0 : ℝ) 1, H (t, s) ≠ z₀)
 
 private theorem aestronglyMeasurable_of_continuousOn_off_finite
     {f : ℝ → ℂ} {a b : ℝ} {P : Finset ℝ}

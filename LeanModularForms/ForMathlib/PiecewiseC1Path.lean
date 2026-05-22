@@ -105,50 +105,6 @@ def IsClosed (_γ : PiecewiseC1Path x y) : Prop := x = y
 theorem continuous (γ : PiecewiseC1Path x y) : Continuous (γ : ℝ → E) :=
   γ.toPath.continuous_extend
 
-omit [NormedSpace ℝ E] in
-private def translatePath (γ : Path x y) (c : E) : Path (x + c) (y + c) where
-  toFun t := γ t + c
-  continuous_toFun := γ.continuous.add continuous_const
-  source' := by simp
-  target' := by simp
-
-omit [NormedSpace ℝ E] in
-private theorem translatePath_extend (γ : Path x y) (c : E) :
-    (translatePath γ c).extend = fun t => γ.extend t + c := rfl
-
-/-- Translate a piecewise C¹ path by a constant. The partition is unchanged. -/
-def translate (γ : PiecewiseC1Path x y) (c : E) : PiecewiseC1Path (x + c) (y + c) where
-  toFun := (translatePath γ.toPath c).extend
-  source := (translatePath γ.toPath c).extend_zero
-  target := (translatePath γ.toPath c).extend_one
-  continuous_toFun := (translatePath γ.toPath c).continuous_extend.continuousOn
-  partition := γ.partition
-  partition_subset := γ.partition_subset
-  differentiable_off := fun t ht htp => by
-    -- Goal: `DifferentiableAt ℝ (translatePath γ.toPath c).extend t`
-    -- = `DifferentiableAt ℝ (fun u => γ.toPath.extend u + c) t`
-    rw [translatePath_extend]
-    -- Use `γ.differentiable_off`, which gives differentiability of `γ.toFun`. Bridge to
-    -- `γ.toPath.extend` via the equality on `Icc 0 1`.
-    have h_eq : γ.toPath.extend =ᶠ[𝓝 t] γ.toFun :=
-      Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
-        fun u hu => γ.toPath_extend_eq_toFun u (Ioo_subset_Icc_self hu)
-    exact ((γ.differentiable_off t ht htp).congr_of_eventuallyEq h_eq).add
-      (differentiableAt_const c)
-  deriv_continuous_off := fun t ht htp => by
-    have h_eq : γ.toPath.extend =ᶠ[𝓝 t] γ.toFun :=
-      Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
-        fun u hu => γ.toPath_extend_eq_toFun u (Ioo_subset_Icc_self hu)
-    have h_deriv_eq : deriv γ.toFun =ᶠ[𝓝 t] deriv (translatePath γ.toPath c).extend := by
-      rw [translatePath_extend]
-      have h_add : deriv (fun u => γ.toPath.extend u + c) =ᶠ[𝓝 t]
-          deriv γ.toPath.extend :=
-        Filter.Eventually.of_forall fun u => by rw [deriv_add_const']
-      exact h_eq.symm.deriv.trans h_add.symm
-    exact (γ.deriv_continuous_off t ht htp).congr h_deriv_eq
-  toPath := translatePath γ.toPath c
-  toPath_extend_eq_toFun := fun _ _ => rfl
-
 end PiecewiseC1Path
 
 /-- A piecewise C¹ immersion from `x` to `y` in a normed space.
@@ -172,59 +128,10 @@ namespace PwC1Immersion
 instance : CoeFun (PwC1Immersion x y) fun _ => ℝ → E where
   coe γ := γ.toPiecewiseC1Path.extendedPath
 
-/-- A piecewise C¹ immersion is closed if its endpoints coincide. -/
-def IsClosed (_γ : PwC1Immersion x y) : Prop := x = y
-
 /-- The underlying extended path is continuous. -/
 theorem continuous (γ : PwC1Immersion x y) : Continuous (γ : ℝ → E) :=
   γ.toPiecewiseC1Path.continuous
 
 end PwC1Immersion
-
-/-! ## Bridge: free-interval `[0, 1]` → unit-interval form
-
-Given `γ : PiecewiseC1PathOn 0 1 zero_lt_one x y`, build a `Path x y` via
-`Path.ofLine γ.continuous_toFun γ.source γ.target`. On any point `t ∈ Ioo 0 1`,
-`Path.extend` of this path agrees with `γ.toFun` on the open neighborhood `Ioo 0 1`,
-so differentiability and derivative continuity transfer via `EventuallyEq`. -/
-
-namespace PiecewiseC1PathOn
-
-variable {x y : E}
-
-/-- The unit-interval `Path` underlying a free-interval path on `[0, 1]`. -/
-private def toPath01 (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) : Path x y :=
-  Path.ofLine γ.continuous_toFun γ.source γ.target
-
-/-- On `Icc 0 1`, the extended path agrees pointwise with `γ.toFun`. -/
-private theorem toPath01_extend_eqOn_Icc (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
-    EqOn γ.toPath01.extend γ.toFun (Icc 0 1) := by
-  intro t ht
-  show (γ.toPath01).extend t = γ.toFun t
-  rw [Path.extend_apply _ ht]
-  rfl
-
-/-- On the open interval `Ioo 0 1`, the extended path is eventually equal to
-`γ.toFun` in any neighborhood. -/
-private theorem toPath01_extend_eventuallyEq (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y)
-    {t : ℝ} (ht : t ∈ Ioo (0 : ℝ) 1) :
-    γ.toPath01.extend =ᶠ[𝓝 t] γ.toFun :=
-  eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
-    (fun _ hu => γ.toPath01_extend_eqOn_Icc (Ioo_subset_Icc_self hu))
-
-/-- Convert a free-interval `PiecewiseC1PathOn 0 1` to a unit-interval `PiecewiseC1Path`.
-Inverse-of-restriction to `Path.ofLine` at the carrier level; differentiability and derivative
-continuity transfer via the `EventuallyEq` of `Path.extend` and `γ.toFun` on `Ioo 0 1`. -/
-def toPiecewiseC1Path (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
-    PiecewiseC1Path x y where
-  toPiecewiseC1PathOn := γ
-  toPath := γ.toPath01
-  toPath_extend_eq_toFun := fun _ ht => γ.toPath01_extend_eqOn_Icc ht
-
-@[simp]
-theorem toPiecewiseC1Path_partition (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
-    γ.toPiecewiseC1Path.partition = γ.partition := rfl
-
-end PiecewiseC1PathOn
 
 end
