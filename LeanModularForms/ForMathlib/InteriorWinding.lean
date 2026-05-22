@@ -206,19 +206,6 @@ def FDWindingData.mk_of_interior_contourIntegral {H : ℝ}
       boundary hbdy h_int)
     D_i hL_i D_rho hL_rho D_rho1 hL_rho1
 
-/-- The FD boundary function at any parameter in `[0, 1]` is different from any
-strict interior point. This is the raw function-level avoidance. -/
-theorem fdBoundaryFun_ne_of_strictInterior {z : ℂ} {H : ℝ}
-    (hz : FDStrictInterior z H) :
-    ∀ t ∈ Icc (0 : ℝ) 1, fdBoundaryFun H t ≠ z :=
-  fdBoundaryFun_avoids_interior hz.norm_gt hz.re_abs_lt hz.im_lt
-
-/-- The positive minimum distance from a strict interior point to the FD boundary. -/
-theorem fdBoundaryFun_minDist_of_strictInterior {z : ℂ} {H : ℝ}
-    (hz : FDStrictInterior z H) :
-    ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖fdBoundaryFun H t - z‖ :=
-  fdBoundaryFun_minDist_interior_pos hz.norm_gt hz.re_abs_lt hz.im_lt
-
 /-- On segment 1, the distance to `z` is at least `1/2 - |z.re|`, which is positive
 for strict interior points. -/
 theorem fdBoundaryFun_seg1_re_dist {z : ℂ} (_hz_re : |z.re| < 1/2)
@@ -260,46 +247,5 @@ theorem fdBoundaryFun_seg5_im_dist {z : ℂ} (hz_im : z.im < H)
   calc H - z.im = |(fdBoundaryFun H t - z).im| := by
         rw [sub_im, fdBoundaryFun_seg5_im H t ht, abs_of_pos (by linarith)]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_im_le_norm _
-
-/-- An explicit positive lower bound on the minimum distance from a strict interior
-point to the FD boundary: `min(1/2 - |z.re|, ‖z‖ - 1, H - z.im)`. -/
-theorem fdBoundaryFun_minDist_explicit {z : ℂ} {H : ℝ}
-    (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H) :
-    ∀ t ∈ Icc (0 : ℝ) 1,
-      min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im) ≤
-        ‖fdBoundaryFun H t - z‖ := by
-  intro t _
-  by_cases h1 : t ≤ 1/5
-  · exact ((min_le_left _ _).trans (min_le_left _ _)).trans
-      (fdBoundaryFun_seg1_re_dist hz_re h1)
-  push Not at h1
-  by_cases h2 : t ≤ 3/5
-  · exact ((min_le_left _ _).trans (min_le_right _ _)).trans
-      (fdBoundaryFun_arc_dist hz_norm h1 h2)
-  push Not at h2
-  by_cases h3 : t ≤ 4/5
-  · exact ((min_le_left _ _).trans (min_le_left _ _)).trans
-      (fdBoundaryFun_seg4_re_dist hz_re h2 h3)
-  push Not at h3
-  exact (min_le_right _ _).trans (fdBoundaryFun_seg5_im_dist hz_im h3)
-
-/-- The explicit minimum distance is positive for strict interior points. -/
-theorem fdBoundaryFun_minDist_explicit_pos {z : ℂ} {H : ℝ}
-    (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H) :
-    0 < min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im) :=
-  lt_min (lt_min (by linarith) (by linarith)) (by linarith)
-
-/-- The explicit minimum distance formulation as an existential, directly usable
-by `hasGeneralizedWindingNumber_of_avoids`. -/
-theorem fdBoundaryFun_avoids_with_explicit_bound {z : ℂ} {H : ℝ}
-    (hz_norm : 1 < ‖z‖) (hz_re : |z.re| < 1/2) (hz_im : z.im < H)
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t) :
-    ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - z‖ := by
-  refine ⟨min (min (1/2 - |z.re|) (‖z‖ - 1)) (H - z.im),
-    fdBoundaryFun_minDist_explicit_pos hz_norm hz_re hz_im, fun t ht => ?_⟩
-  change _ ≤ ‖γ.toPath.extend t - z‖
-  rw [hγ t ht]
-  exact fdBoundaryFun_minDist_explicit hz_norm hz_re hz_im t ht
 
 end
