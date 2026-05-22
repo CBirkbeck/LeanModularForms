@@ -1713,8 +1713,6 @@ private lemma descendCosetList_extra_matrix_entry
   simp [Matrix.GeneralLinearGroup.val_mkOfDetNeZero, mapGL, toGL, map_apply_coe,
     RingHom.mapMatrix_apply]
 
-/-- Pointwise witness for `descendCosetList_action`: for each index `v`, a target
-index `t`, a matrix `β ∈ Γ_0(N)`, the matrix equation, and the diamond compatibility. -/
 private lemma descendCosetList_per_v_witness
     {N : ℕ} [NeZero N]
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
@@ -1728,25 +1726,25 @@ private lemma descendCosetList_per_v_witness
         ((γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N / p))) := by
   by_cases hv : v.val < p
   · by_cases hp_sq : p ^ 2 ∣ N
-    · obtain ⟨m', β, hβ, _h_canon, heq⟩ :=
+    · obtain ⟨m', β, hβ, _, heq⟩ :=
         descendCosetList_action_upper_tri_clean p hp hpN hp_sq γ' h_γ' ⟨v.val, hv⟩
       have h_dcc_eq : descendCosetCount p N = p := by simp [descendCosetCount, hp_sq]
       have h_m'lt : m'.val < descendCosetCount p N := h_dcc_eq.symm ▸ m'.isLt
       have h_m'lt_p : (⟨m'.val, h_m'lt⟩ : Fin (descendCosetCount p N)).val < p := m'.isLt
       refine ⟨⟨m'.val, h_m'lt⟩, β, hβ, ?_, ?_⟩
-      · rw [descendCosetList_apply_lt hp hv, descendCosetList_apply_lt hp h_m'lt_p]
-        exact heq
+      · rwa [descendCosetList_apply_lt hp hv, descendCosetList_apply_lt hp h_m'lt_p]
       · refine descend_diamond_compat_upper_target hp hpN hβ m'.val ?_
         have h_ℝ := congr_arg Units.val heq
         simp only [Units.val_mul, Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
           Matrix.SpecialLinearGroup.mapGL_coe_matrix,
           Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply] at h_ℝ
         have h_11r := congr_fun (congr_fun h_ℝ 1) 1
-        simp [Matrix.mul_apply, Fin.sum_univ_two] at h_11r
+        simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply] at h_11r
+        norm_num [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons] at h_11r
         exact_mod_cast h_11r
-    · obtain ⟨t, β, hβ, _h_canon, heq⟩ :=
+    · obtain ⟨t, β, hβ, _, heq⟩ :=
         descendCosetList_action_upper_tri_extra p hp hpN hp_sq γ' h_γ' ⟨v.val, hv⟩
-      refine ⟨t, β, hβ, by rw [descendCosetList_apply_lt hp hv]; exact heq, ?_⟩
+      refine ⟨t, β, hβ, by rwa [descendCosetList_apply_lt hp hv], ?_⟩
       by_cases ht : t.val < p
       · refine descend_diamond_compat_upper_target hp hpN hβ t.val ?_
         have h_ℝ := congr_arg Units.val heq
@@ -1755,9 +1753,12 @@ private lemma descendCosetList_per_v_witness
           Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply] at h_ℝ
         have h_11r := congr_fun (congr_fun h_ℝ 1) 1
         have hdcl_t11 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 1 1 = p := by
-          rw [descendCosetList_lt_matrix hp ht]; simp
+          rw [descendCosetList_lt_matrix hp ht]
+          simp
         have hdcl_t01 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 0 1 =
-            (t.val : ℝ) := by rw [descendCosetList_lt_matrix hp ht]; simp
+            (t.val : ℝ) := by
+          rw [descendCosetList_lt_matrix hp ht]
+          simp
         simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply,
           hdcl_t01, hdcl_t11, algebraMap_int_eq] at h_11r
         norm_num [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons] at h_11r
@@ -1794,7 +1795,7 @@ private lemma descendCosetList_per_v_witness
         ¬ (⟨p, hpExtra⟩ : Fin (descendCosetCount p N)).val < p := lt_irrefl p
     obtain ⟨t, β, hβ, heq⟩ :=
       descendCosetList_action_extra p hp hpN hp_sq γ' h_γ'
-    refine ⟨t, β, hβ, by rw [hv_extra]; exact heq, ?_⟩
+    refine ⟨t, β, hβ, by rwa [hv_extra], ?_⟩
     refine descend_diamond_compat_from_zmod hp hpN hp_sq ?_
     set γ_p := descendExtraGamma p N
     have h_γ_p_spec := (descendExtraGamma_spec hp hpN hp_sq).2.2
@@ -1808,9 +1809,12 @@ private lemma descendCosetList_per_v_witness
     have h_β_10_mod := beta_10_zmod_eq_zero (p := p) hpN hβ
     by_cases ht : t.val < p
     · have hdcl_t11 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 1 1 = p := by
-        rw [descendCosetList_lt_matrix hp ht]; simp
+        rw [descendCosetList_lt_matrix hp ht]
+        simp
       have hdcl_t01 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 0 1 =
-          (t.val : ℝ) := by rw [descendCosetList_lt_matrix hp ht]; simp
+          (t.val : ℝ) := by
+        rw [descendCosetList_lt_matrix hp ht]
+        simp
       have h_ℝ := congr_arg Units.val heq
       simp only [Units.val_mul, Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
         Matrix.SpecialLinearGroup.mapGL_coe_matrix,
