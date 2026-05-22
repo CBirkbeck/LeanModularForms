@@ -1335,12 +1335,6 @@ theorem preimage_finite (γ : ClosedPwC1Immersion x) (S : Finset E) :
   refine (pairs.finite_toSet.biUnion fun p hp =>
     γ.preimage_finite_piece_of_finset (Finset.mem_filter.mp hp).2 S).subset h_subset
 
-/-- Corollary: the preimage of a finite set is countable. -/
-theorem preimage_countable (γ : ClosedPwC1Immersion x) (S : Finset E) :
-    Set.Countable {t ∈ Icc (0 : ℝ) 1 |
-      γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set E)} :=
-  (γ.preimage_finite S).countable
-
 end ClosedPwC1Immersion
 
 

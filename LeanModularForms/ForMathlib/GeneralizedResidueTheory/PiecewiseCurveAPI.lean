@@ -46,11 +46,6 @@ theorem sortedPartition_sorted (γ : PiecewiseC1Curve) :
     γ.sortedPartition.Pairwise (· ≤ ·) :=
   Finset.pairwise_sort γ.partition (· ≤ ·)
 
-/-- The `sortedPartition` has no duplicates. -/
-theorem sortedPartition_nodup (γ : PiecewiseC1Curve) :
-    γ.sortedPartition.Nodup :=
-  Finset.sort_nodup _ _
-
 /-- The `sortedPartition` is nonempty (contains at least `a` and `b`). -/
 theorem sortedPartition_nonempty (γ : PiecewiseC1Curve) :
     γ.sortedPartition ≠ [] := fun h => by
@@ -131,32 +126,6 @@ theorem consecutivePairs_cover (γ : PiecewiseC1Curve) :
     (sortedPartition_tail_nonempty γ)
     γ.a γ.b (sortedPartition_head γ) (sortedPartition_last γ)
 
-private theorem sorted_zip_tail_le {l : List ℝ} (hl : l.Pairwise (· ≤ ·))
-    {p : ℝ × ℝ} (hp : p ∈ l.zip l.tail) : p.1 ≤ p.2 := by
-  induction l with
-  | nil => simp at hp
-  | cons x xs ih =>
-    cases xs with
-    | nil => simp at hp
-    | cons y ys =>
-      simp only [List.zip_cons_cons, List.tail_cons, List.mem_cons] at hp
-      obtain rfl | h := hp
-      · exact (List.pairwise_cons.mp hl).1 y List.mem_cons_self
-      · exact ih (List.pairwise_cons.mp hl).2 h
-
-/-- For each consecutive pair `(p, q)`, we have `p ≤ q`. -/
-theorem consecutivePairs_le (γ : PiecewiseC1Curve) (p : ℝ × ℝ)
-    (hp : p ∈ γ.consecutivePairs) : p.1 ≤ p.2 :=
-  sorted_zip_tail_le (sortedPartition_sorted γ) hp
-
-/-- Both components of a consecutive pair lie in `[a, b]`. -/
-theorem consecutivePairs_subset (γ : PiecewiseC1Curve) (p : ℝ × ℝ)
-    (hp : p ∈ γ.consecutivePairs) :
-    p.1 ∈ Icc γ.a γ.b ∧ p.2 ∈ Icc γ.a γ.b :=
-  let h12 := List.of_mem_zip hp
-  ⟨sortedPartition_mem_Icc γ _ h12.1,
-    sortedPartition_mem_Icc γ _ (List.mem_of_mem_tail h12.2)⟩
-
 /-- **Main theorem**: to prove a property `P` on `[a, b]`, it suffices to prove `P` on each
     consecutive segment `[pᵢ, pᵢ₊₁]` of the partition. -/
 theorem forall_Icc_of_forall_consecutive {P : ℝ → Prop}
@@ -165,14 +134,5 @@ theorem forall_Icc_of_forall_consecutive {P : ℝ → Prop}
     ∀ t ∈ Icc γ.a γ.b, P t := fun t ht => by
   obtain ⟨p, hp_mem, hp_t⟩ := Set.mem_iUnion₂.mp (consecutivePairs_cover γ ht)
   exact h p hp_mem t hp_t
-
-/-- **Image variant**: if the image of each consecutive segment lies in `S`,
-    then the image of `[a, b]` lies in `S`. -/
-theorem image_subset_of_consecutive_images {S : Set ℂ}
-    (γ : PiecewiseC1Curve)
-    (h : ∀ p ∈ γ.consecutivePairs, γ.toFun '' Icc p.1 p.2 ⊆ S) :
-    γ.toFun '' Icc γ.a γ.b ⊆ S := fun z ⟨t, ht, hz⟩ => by
-  obtain ⟨p, hp_mem, hp_t⟩ := Set.mem_iUnion₂.mp (consecutivePairs_cover γ ht)
-  exact h p hp_mem ⟨t, hp_t, hz⟩
 
 end PiecewiseC1Curve

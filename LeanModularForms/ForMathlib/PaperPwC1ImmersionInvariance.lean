@@ -173,18 +173,6 @@ private lemma limUnder_congr_eventually_local {α β : Type*} [Nonempty β] [Top
   congr 1
   exact Filter.map_congr h
 
-/-- The Cauchy principal value (extracted as a value, not a Tendsto witness) is
-invariant under cyclic shift. -/
-theorem cauchyPVOn_cyclicShift {γ : ClosedPwC1Immersion x} {τ : ℝ}
-    (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) (S : Finset ℂ) (f : ℂ → ℂ) :
-    cauchyPVOn S f (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path =
-      cauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path := by
-  unfold cauchyPVOn
-  apply limUnder_congr_eventually_local
-  rw [Filter.eventuallyEq_iff_exists_mem]
-  refine ⟨Set.univ, univ_mem, fun ε _ => ?_⟩
-  exact γ.cpvIntegrandOn_cyclicShift_integral_eq hτ S f ε
-
 private lemma cauchyPV_cyclicShift {γ : ClosedPwC1Immersion x} {τ : ℝ}
     (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) (z₀ : ℂ) (f : ℂ → ℂ) :
     cauchyPV f (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path z₀ =

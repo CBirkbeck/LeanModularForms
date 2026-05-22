@@ -76,15 +76,6 @@ theorem exists_mem_not_mem_image_of_isOpen_of_lipschitz {U : Set ℂ} (hU_open :
 
 /-! ### Lipschitz from bounded derivative on a convex set -/
 
-/-- A differentiable `f : ℝ → ℂ` with bounded derivative on a convex set `s` is
-`LipschitzOnWith C f s`. Specialization of
-`Convex.lipschitzOnWith_of_nnnorm_hasDerivWithin_le` to `ℝ → ℂ`. -/
-theorem lipschitzOnWith_of_nnnorm_deriv_le {f : ℝ → ℂ} {s : Set ℝ} (hs : Convex ℝ s)
-    {C : NNReal} (hf : ∀ x ∈ s, DifferentiableAt ℝ f x) (hbd : ∀ x ∈ s, ‖deriv f x‖₊ ≤ C) :
-    LipschitzOnWith C f s :=
-  hs.lipschitzOnWith_of_nnnorm_hasDerivWithin_le
-    (fun x hx => ((hf x hx).hasDerivAt).hasDerivWithinAt) hbd
-
 /-! ### Specialized to `PiecewiseC1Path` -/
 
 /-- If `γ.toPath.extend` is Lipschitz and `U` is open nonempty, there exists

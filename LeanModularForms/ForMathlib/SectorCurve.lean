@@ -61,10 +61,6 @@ theorem lineCurve_neg (r : ℝ) (α : ℝ) (t : ℝ) :
     lineCurve r α (-t) = -lineCurve r α t := by
   simp [lineCurve, mul_neg]
 
-theorem lineCurve_norm (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) :
-    ‖lineCurve r α t‖ = r * |t| := by
-  simp [lineCurve, Real.norm_eq_abs, abs_of_pos hr]
-
 theorem lineCurve_ne_zero (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) (ht : t ≠ 0) :
     lineCurve r α t ≠ 0 :=
   mul_ne_zero (Complex.ofReal_ne_zero.mpr (mul_ne_zero hr.ne' ht)) (exp_ne_zero _)
@@ -77,10 +73,6 @@ theorem lineCurve_hasDerivAt (r : ℝ) (α : ℝ) (t : ℝ) :
   have h1 : HasDerivAt (fun s : ℝ => (↑(r * s) : ℂ)) (↑r) t := by
     simpa using ((hasDerivAt_id t).const_mul r).ofReal_comp
   exact h1.mul_const _
-
-theorem lineCurve_differentiableAt (r : ℝ) (α : ℝ) (t : ℝ) :
-    DifferentiableAt ℝ (lineCurve r α) t :=
-  (lineCurve_hasDerivAt r α t).differentiableAt
 
 theorem lineCurve_deriv (r : ℝ) (α : ℝ) (t : ℝ) :
     deriv (lineCurve r α) t = ↑r * exp (↑α * I) :=
@@ -123,12 +115,6 @@ theorem exp_factor_eq_one_of_angle_condition (k : ℕ) (α : ℝ)
   rw [show -(↑k : ℂ) * (↑α * I) = ↑(-m) * (2 * ↑Real.pi * I) by
         push_cast; linear_combination -hcast * I]
   exact exp_int_mul_two_pi_mul_I (-m)
-
-/-- The higher-order factor simplifies when the angle condition holds. -/
-theorem higherOrderFactor_eq_of_angle_condition (r : ℝ) (α : ℝ) (k : ℕ)
-    (h : ∃ m : ℤ, (↑k : ℝ) * α = ↑m * (2 * Real.pi)) :
-    higherOrderFactor r α k = ↑(r⁻¹ ^ k) := by
-  rw [higherOrderFactor, exp_factor_eq_one_of_angle_condition k α h, mul_one]
 
 /-! ### Odd-power PV vanishes by symmetry
 
@@ -173,48 +159,5 @@ theorem higherOrder_terms_odd_vanish (r : ℝ) (_hr : 0 < r) (α : ℝ)
     rw [lineCurve_neg, inv_neg, neg_pow, hk_odd.neg_one_pow, neg_one_mul,
         lineCurve_deriv, lineCurve_deriv, neg_mul])]
   exact tendsto_const_nhds
-
-/-- For odd `k ≥ 2`, the CPV of `z⁻ᵏ dz` along the line curve is zero (variant
-weakening `3 ≤ k` to `2 ≤ k`, since odd `k ≥ 2` forces `k ≥ 3`). -/
-theorem cpv_lineCurve_inv_pow_odd (r : ℝ) (hr : 0 < r) (α : ℝ) (k : ℕ)
-    (_hk : 2 ≤ k) (hk_odd : Odd k) :
-    Tendsto (fun ε =>
-      (∫ t in (-1 : ℝ)..(-ε),
-        (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t) +
-      ∫ t in ε..(1 : ℝ),
-        (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t)
-      (𝓝[>] (0 : ℝ)) (𝓝 0) :=
-  higherOrder_terms_odd_vanish r hr α k (by obtain ⟨m, hm⟩ := hk_odd; omega) hk_odd
-
-/-! ### Integrability of line-curve integrand -/
-
-/-- The integrand `(lineCurve r α)⁻ᵏ · deriv (lineCurve r α)` is interval-integrable
-on any interval `[a, b]` that avoids `0`. -/
-theorem lineCurve_integrand_intervalIntegrable_of_ne_zero (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (k : ℕ) (a b : ℝ) (hab : a ≤ b) (h0 : ∀ t ∈ Set.Icc a b, t ≠ 0) :
-    IntervalIntegrable (fun t => (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t)
-      volume a b := by
-  apply ContinuousOn.intervalIntegrable
-  rw [Set.uIcc_of_le hab]
-  refine .mul (.pow (fun t ht => ?_) _) ?_
-  · exact ((lineCurve_continuous r α).continuousAt.inv₀
-      (lineCurve_ne_zero r hr α t (h0 t ht))).continuousWithinAt
-  · rw [lineCurve_deriv_const]; exact continuousOn_const
-
-/-- The integrand is interval-integrable on `[ε, 1]` for `ε > 0`. -/
-theorem lineCurve_integrand_intervalIntegrable (r : ℝ) (hr : 0 < r) (α : ℝ) (k : ℕ)
-    (ε : ℝ) (hε : 0 < ε) (hε1 : ε ≤ 1) :
-    IntervalIntegrable (fun t => (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t)
-      volume ε 1 :=
-  lineCurve_integrand_intervalIntegrable_of_ne_zero r hr α k ε 1 hε1
-    fun _ ht => (lt_of_lt_of_le hε ht.1).ne'
-
-/-- The integrand is interval-integrable on `[-1, -ε]` for `ε > 0`. -/
-theorem lineCurve_integrand_intervalIntegrable_neg (r : ℝ) (hr : 0 < r) (α : ℝ) (k : ℕ)
-    (ε : ℝ) (hε : 0 < ε) (hε1 : ε ≤ 1) :
-    IntervalIntegrable (fun t => (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t)
-      volume (-1) (-ε) :=
-  lineCurve_integrand_intervalIntegrable_of_ne_zero r hr α k (-1) (-ε) (by linarith)
-    fun _ ht => by linarith [ht.2]
 
 end SectorCurve

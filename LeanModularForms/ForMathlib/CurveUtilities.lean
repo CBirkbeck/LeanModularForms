@@ -100,14 +100,6 @@ private theorem zero_mem_fullPartitionFinset (γ : PiecewiseC1Path x y) :
     (0 : ℝ) ∈ γ.fullPartitionFinset := by
   simp [fullPartitionFinset]
 
-private theorem one_mem_fullPartitionFinset (γ : PiecewiseC1Path x y) :
-    (1 : ℝ) ∈ γ.fullPartitionFinset := by
-  simp [fullPartitionFinset]
-
-private theorem fullPartitionFinset_nonempty (γ : PiecewiseC1Path x y) :
-    γ.fullPartitionFinset.Nonempty :=
-  ⟨0, γ.zero_mem_fullPartitionFinset⟩
-
 /-- The full partition list is nonempty. -/
 theorem fullPartition_ne_nil (γ : PiecewiseC1Path x y) :
     γ.fullPartition ≠ [] :=
@@ -157,18 +149,6 @@ theorem fullPartition_last_eq_one (γ : PiecewiseC1Path x y) :
   have h_mem := List.getLast_mem γ.fullPartition_ne_nil
   have h_ge := γ.fullPartition_sorted.rel_getLast γ.one_mem_fullPartition
   linarith [(γ.fullPartition_mem_Icc _ h_mem).2]
-
-/-- The full partition has at least two elements (it contains both 0 and 1). -/
-theorem fullPartition_length_ge_two (γ : PiecewiseC1Path x y) :
-    2 ≤ γ.fullPartition.length := by
-  simp only [fullPartition, Finset.length_sort]
-  exact Finset.one_lt_card.mpr
-    ⟨0, γ.zero_mem_fullPartitionFinset, 1, γ.one_mem_fullPartitionFinset, zero_ne_one⟩
-
-/-- The full partition has no duplicate elements. -/
-theorem fullPartition_nodup (γ : PiecewiseC1Path x y) :
-    γ.fullPartition.Nodup :=
-  Finset.sort_nodup _ _
 
 end PiecewiseC1Path
 
