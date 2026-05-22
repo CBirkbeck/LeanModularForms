@@ -4558,11 +4558,7 @@ private lemma function_identity_Δ_eq_sum_V_q_F
          UpperHalfPlane → ℂ) z) := by
   haveI hLl2_NeZero : NeZero (L * l ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne L) (pow_ne_zero 2 (NeZero.ne l))⟩
-  have h1_period_Ll2 : (1 : ℝ) ∈ ((Gamma1 (L * l ^ 2)).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 (L * l ^ 2)).map (mapGL ℝ) =
-        (Gamma1 (L * l ^ 2) : Subgroup (GL (Fin 2) ℝ)) from rfl,
-      strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
+  have h1_period_Ll2 := m7_one_mem_strictPeriods_Gamma1_map (L * l ^ 2)
   let φ : (q : l.primeFactors) → ModularForm ((Gamma1 (L * l ^ 2)).map (mapGL ℝ)) k :=
     fun q =>
       haveI : NeZero ((L * l ^ 2) / q.val) := h_q_NeZero q.val q.property
@@ -4596,10 +4592,7 @@ private lemma function_identity_Δ_eq_sum_V_q_F
         (f₀ : ModularForm ((Gamma1 A).map (mapGL ℝ)) k) (z₀ : UpperHalfPlane),
         ((h ▸ f₀ : ModularForm ((Gamma1 B).map (mapGL ℝ)) k) :
           UpperHalfPlane → ℂ) z₀ =
-        (f₀ : UpperHalfPlane → ℂ) z₀ := by
-      intro A B _ _ h f₀ z₀
-      cases h
-      rfl
+        (f₀ : UpperHalfPlane → ℂ) z₀ := by intros; subst_vars; rfl
     exact h_gen h_eq _ z
   have h_φ_qexp : ∀ q : l.primeFactors, ∀ n : ℕ,
       (ModularFormClass.qExpansion (1 : ℝ) (φ q)).coeff n =
@@ -4620,58 +4613,43 @@ private lemma function_identity_Δ_eq_sum_V_q_F
         (f₀ : ModularForm ((Gamma1 A).map (mapGL ℝ)) k),
         ModularFormClass.qExpansion (1 : ℝ)
           (h ▸ f₀ : ModularForm ((Gamma1 B).map (mapGL ℝ)) k) =
-        ModularFormClass.qExpansion (1 : ℝ) f₀ := by
-      intro A B _ _ h f₀
-      cases h
-      rfl
-    rw [h_gen_qe h_eq _]
-    rw [HeckeRing.GL2.qExpansion_one_modularFormLevelRaise_coeff
-      (F_q_fam q.val q.property).toModularForm' n]
-    have h_F_g_qe : ModularFormClass.qExpansion (1 : ℝ)
-        (F_q_fam q.val q.property).toModularForm' =
-        ModularFormClass.qExpansion (1 : ℝ) (g_q_fam q.val) :=
-      qExpansion_ext2 _ _ (hF_eq_g q.val q.property)
-    rw [h_F_g_qe]
-  have h_coe_sum : ∀ (s : Finset l.primeFactors)
-      (z' : UpperHalfPlane),
-      ((∑ q ∈ s, φ q : ModularForm ((Gamma1 (L * l ^ 2)).map (mapGL ℝ)) k) :
-        UpperHalfPlane → ℂ) z' =
-      ∑ q ∈ s, (⇑(φ q) : UpperHalfPlane → ℂ) z' := by
-    intro s z'
-    refine Finset.induction_on s ?_ ?_
-    · simp
-    · intro q s hqs ih
-      rw [Finset.sum_insert hqs, Finset.sum_insert hqs,
-        ModularForm.coe_add, Pi.add_apply, ih]
+        ModularFormClass.qExpansion (1 : ℝ) f₀ := by intros; subst_vars; rfl
+    rw [h_gen_qe h_eq _,
+      HeckeRing.GL2.qExpansion_one_modularFormLevelRaise_coeff
+        (F_q_fam q.val q.property).toModularForm' n,
+      qExpansion_ext2 (F_q_fam q.val q.property).toModularForm' (g_q_fam q.val)
+        (hF_eq_g q.val q.property)]
   suffices h_main : (⇑Δ_lifted : UpperHalfPlane → ℂ) = ⇑RHS_sum by
-    rw [show (⇑(CuspForm.restrictSubgroup
-        (Gamma1_map_le_Gamma1_map_of_dvd hL_dvd) Δ) : UpperHalfPlane → ℂ) =
-        (⇑Δ_lifted : UpperHalfPlane → ℂ) from rfl, h_main]
+    change (⇑Δ_lifted : UpperHalfPlane → ℂ) = _
+    rw [h_main]
     funext z
-    change (⇑(∑ q ∈ l.primeFactors.attach, φ q) : UpperHalfPlane → ℂ) z = _
-    rw [h_coe_sum l.primeFactors.attach z]
-    refine Finset.sum_congr rfl ?_
-    intro q _
-    exact h_φ_fun q z
+    have h_coe_sum : ∀ s : Finset l.primeFactors,
+        ((∑ q ∈ s, φ q : ModularForm ((Gamma1 (L * l ^ 2)).map (mapGL ℝ)) k) :
+          UpperHalfPlane → ℂ) z =
+        ∑ q ∈ s, (⇑(φ q) : UpperHalfPlane → ℂ) z := by
+      intro s
+      refine Finset.induction_on s ?_ fun q s hqs ih => ?_
+      · simp
+      · rw [Finset.sum_insert hqs, Finset.sum_insert hqs,
+          ModularForm.coe_add, Pi.add_apply, ih]
+    rw [show (⇑RHS_sum : UpperHalfPlane → ℂ) z = _ from h_coe_sum l.primeFactors.attach]
+    exact Finset.sum_congr rfl fun q _ => h_φ_fun q z
   apply modularForm_fun_eq_of_qExp_eq_at_period_one h1_period_Ll2
   intro n
-  rw [show (ModularFormClass.qExpansion (1 : ℝ) Δ_lifted).coeff n =
-      (ModularFormClass.qExpansion (1 : ℝ) Δ).coeff n from rfl, h_qexp_eq n]
-  have h_RHS_qe : ModularFormClass.qExpansion (1 : ℝ) RHS_sum =
-      ∑ q ∈ l.primeFactors.attach, ModularFormClass.qExpansion (1 : ℝ) (φ q) := by
-    change ModularFormClass.qExpansion (1 : ℝ)
-        (∑ q ∈ l.primeFactors.attach, φ q : ModularForm _ _) = _
-    exact map_sum
-      (qExpansionAddHom (Γ := (Gamma1 (L * l ^ 2)).map (mapGL ℝ))
-        (h := (1 : ℝ)) one_pos h1_period_Ll2 k) φ l.primeFactors.attach
-  rw [h_RHS_qe, map_sum (PowerSeries.coeff (R := ℂ) n) _ l.primeFactors.attach]
-  rw [show ∑ q ∈ l.primeFactors.attach,
-        (ModularFormClass.qExpansion (1 : ℝ) (φ q)).coeff n =
-      ∑ q ∈ l.primeFactors.attach,
-        (if q.val ∣ n then
-          (ModularFormClass.qExpansion (1 : ℝ) (g_q_fam q.val)).coeff (n / q.val)
-         else 0) from
-      Finset.sum_congr rfl (fun q _ => h_φ_qexp q n)]
+  change (PowerSeries.coeff (R := ℂ) n) (ModularFormClass.qExpansion 1 ⇑Δ) = _
+  rw [h_qexp_eq n,
+    show ModularFormClass.qExpansion (1 : ℝ) RHS_sum =
+        ∑ q ∈ l.primeFactors.attach, ModularFormClass.qExpansion (1 : ℝ) (φ q) from
+      map_sum (qExpansionAddHom (Γ := (Gamma1 (L * l ^ 2)).map (mapGL ℝ))
+        (h := (1 : ℝ)) one_pos h1_period_Ll2 k) φ l.primeFactors.attach,
+    map_sum (PowerSeries.coeff (R := ℂ) n) _ l.primeFactors.attach,
+    show ∑ q ∈ l.primeFactors.attach,
+          (ModularFormClass.qExpansion (1 : ℝ) (φ q)).coeff n =
+        ∑ q ∈ l.primeFactors.attach,
+          (if q.val ∣ n then
+            (ModularFormClass.qExpansion (1 : ℝ) (g_q_fam q.val)).coeff (n / q.val)
+           else 0) from
+      Finset.sum_congr rfl fun q _ => h_φ_qexp q n]
   exact (Finset.sum_attach l.primeFactors
     (fun q => if q ∣ n then
         (ModularFormClass.qExpansion (1 : ℝ) (g_q_fam q)).coeff (n / q)
