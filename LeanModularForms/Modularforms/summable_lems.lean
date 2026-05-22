@@ -52,18 +52,6 @@ theorem int_sum_neg {α : Type*} [AddCommMonoid α] [TopologicalSpace α] [T2Spa
   rw [h]
   exact (negEquiv.tsum_eq _).symm
 
-theorem summable_neg {α : Type*} [TopologicalSpace α] [AddCommMonoid α] (f : ℤ → α)
-    (hf : Summable f) : Summable fun d => f (-d) := by
-  have h : (fun d => f (-d)) = (fun d => f d) ∘ negEquiv.toFun := by
-    funext; simp; rfl
-  rw [h]
-  exact negEquiv.summable_iff.mpr hf
-
-lemma aux33 (f : ℕ → ℂ) (hf : Summable f) : ∑' n, f (n) =
-    limUnder atTop (fun N : ℕ => ∑ n ∈ Finset.range N, f (n)) := by
-  rw [Filter.Tendsto.limUnder_eq]
-  exact hf.hasSum.comp tendsto_finset_range
-
 /- this is being Pr'd-/
 lemma tsum_pnat_eq_tsum_succ3 {α : Type*} [TopologicalSpace α] [AddCommMonoid α] [T2Space α]
     (f : ℕ → α) : ∑' (n : ℕ+), f ↑n = ∑' (n : ℕ), f (n + 1) :=
@@ -89,13 +77,6 @@ theorem tsum_pNat {α : Type _} [AddCommGroup α] [UniformSpace α] [IsUniformAd
   rw [← nat_pos_tsum2 f hf] at hf2
   have h2 := tsum_eq_zero_of_not_summable hf2
   simp [h1, h2]
-
-lemma tsum_pnat_eq_tsum_succ4 {α : Type*} [TopologicalSpace α] [AddCommGroup α]
-    [IsTopologicalAddGroup α] [T2Space α]
-    (f : ℕ → α) (hf : Summable f) : f 0 + ∑' (n : ℕ+), f ↑n = ∑' (n : ℕ), f n := by
-  rw [Summable.tsum_eq_zero_add hf]
-  simp only [add_right_inj]
-  exact tsum_pnat_eq_tsum_succ
 
 /-- Closed form for ∑ n·rⁿ over ℕ+ when ‖r‖ < 1. -/
 lemma tsum_pnat_coe_mul_geometric {r : ℝ} (hr : ‖r‖ < 1) :
@@ -130,7 +111,6 @@ theorem HasSum.nonneg_add_neg {α : Type*} [TopologicalSpace α] [AddCommGroup �
     (hneg : HasSum (fun n : ℕ => f (-n.succ)) b) : HasSum f (a + b) := by
   convert hnonneg.int_rec hneg using 1
   ext (i | j) <;> rfl
-
 
 theorem HasSum.pos_add_zero_add_neg {α : Type*} [TopologicalSpace α] [AddCommGroup α]
     [IsTopologicalAddGroup α] [T2Space α] {a b : α} {f : ℤ → α} (hpos : HasSum (fun n : ℕ => f (n +
@@ -284,70 +264,6 @@ theorem summable_diff (z : ℍ) (d : ℤ) :
   refine this.congr fun b => ?_
   field_simp
   congr 1 <;> grind
-
-lemma arg1 (a b c d e f g h : ℂ) :
-    e / f + g / h - a / b - c / d = e / f + g / h + a / -b + c / -d := by ring
-
-lemma sum_int_pnat3 (z : ℍ) (d : ℤ) :
-    ∑' m : ℕ+, ((1 / ((m : ℂ) * ↑z - d) + 1 / (-↑m * ↑z + -d)) -
-      (1 / ((m : ℂ) * ↑z + d)) - 1 / (-↑m * ↑z + d)) =
-    (2 / z) * ∑' m : ℕ+, ((1 / (-(d : ℂ)/↑z - m) + 1 / (-d/↑z + m))) := by
-  rw [← Summable.tsum_mul_left]
-  · congr
-    funext m
-    rw [arg1]
-    ring_nf
-    rw [add_comm]
-    have : (z : ℂ) ≠ (0 : ℂ) := ne_zero z
-    field_simp
-  · exact summable_diff _ _
-
-lemma pow_max (x y : ℕ) : (max x y)^2 = max (x^2) (y ^ 2) := by
-  by_cases h : max x y = x
-  · rw [h]; simp at *; nlinarith
-  have hh : max x y = y := by
-    simp only [sup_eq_left, not_le, sup_eq_right] at *
-    exact h.le
-  rw [hh]; simp at *; nlinarith
-
-theorem extracted_abs_norm_summable (z : ℍ) (i : ℤ) :
-    Summable fun m ↦ 1 / (r z ^ 2 * 2⁻¹ * ‖![m, i]‖ ^ 2) := by
-  have hS : Summable fun m : ℤ => 1 / (r z ^ 2 * 2⁻¹ * m ^ 2) := by
-    simp only [one_div, mul_inv_rev, inv_inv]
-    apply Summable.mul_right
-    norm_cast
-    have := (Real.summable_one_div_int_pow (p := 2)).mpr (by norm_num)
-    simpa only [Int.cast_pow, one_div] using this
-  apply hS.of_norm_bounded_eventually
-  rw [Filter.eventually_iff_exists_mem]
-  use (Finset.Icc (-|i|) (|i|))ᶜ
-  simp only [Nat.succ_eq_add_one, Nat.reduceAdd, mem_cofinite, compl_compl,
-    mem_compl_iff, one_div, mul_inv_rev, norm_mul, norm_inv, norm_pow]
-  simp only [Finset.coe_Icc, Real.norm_ofNat, inv_inv,
-    Real.norm_eq_abs, _root_.sq_abs]
-  refine ⟨finite_Icc .., ?_⟩
-  intro y hy
-  apply le_of_eq
-  simp only [mul_eq_mul_right_iff, inv_inj, mul_eq_zero, OfNat.ofNat_ne_zero,
-    inv_eq_zero, ne_eq, not_false_eq_true, pow_eq_zero_iff, false_or]
-  left
-  simp only [norm_eq_max_natAbs, Fin.isValue, Matrix.cons_val_zero, Matrix.cons_val_one,
-    Matrix.cons_val_fin_one, Nat.cast_max, Nat.cast_natAbs, Int.cast_abs]
-  have hg : ((y.natAbs : ℝ) ⊔ ↑i.natAbs) ^ 2 = y.natAbs ^ 2 ⊔ i.natAbs ^ 2 := by
-    zify; norm_cast; rw [pow_max]
-  have hg2 : y.natAbs ^ 2 ⊔ i.natAbs ^ 2 = y.natAbs ^ 2 := by
-    simp only [sup_eq_left]
-    have hii : i ^ 2 ≤ y ^ 2 := by
-      rw [sq_le_sq]
-      simp only [mem_Icc, not_and, not_le] at hy
-      rw [le_abs']
-      by_cases hh : -|i| ≤ y
-      · exact Or.inr (hy hh).le
-      · exact Or.inl (not_le.mp hh).le
-    zify
-    aesop
-  aesop
-
 
 private lemma aux (a b c : ℝ) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c) :
     a⁻¹ ≤ c * b⁻¹ ↔ b ≤ c * a := by

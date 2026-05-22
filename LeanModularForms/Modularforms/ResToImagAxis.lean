@@ -266,14 +266,6 @@ theorem ResToImagAxis.EventuallyPos.smul {F : ℍ → ℂ} {c : ℝ} (hF : ResTo
   simp only [Function.resToImagAxis, ResToImagAxis, htpos, ↓reduceDIte] at hFpos_t
   simp [ResToImagAxis, htpos, mul_pos hc hFpos_t]
 
-/-- If `F` is real-valued, then `F` is equal to the real part of itself on imaginary axis. -/
-theorem ResToImagAxis.Real.eq_real_part {F : ℍ → ℂ} (hF : ResToImagAxis.Real F) (t : ℝ) :
-    F.resToImagAxis t = (F.resToImagAxis t).re := by
-  simp only [Function.resToImagAxis, ResToImagAxis]
-  split_ifs with ht
-  · exact Complex.ext rfl (by simpa [Function.resToImagAxis, ResToImagAxis, ht] using hF t ht)
-  · rfl
-
 /--
 If `F : ℍ → ℂ` is `O(exp(-c * im τ))` at `atImInfty` for some `c > 0`, then
 the restriction to the imaginary axis `t ↦ F(it)` is `O(exp(-c * t))` at `atTop`.
@@ -412,20 +404,6 @@ theorem tendsto_rpow_mul_resToImagAxis_of_fourier_shift
     Tendsto (fun t : ℝ => t ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
   tendsto_rpow_mul_resToImagAxis_of_isBigO_exp (by positivity)
     (isBigO_atImInfty_of_fourier_shift hn₀ hc hF ha) s
-
-/-- Extract the imaginary part condition at a specific point from `ResToImagAxis.Real`. -/
-lemma ResToImagAxis.Real.im_eq_zero_at {F : ℍ → ℂ} (hF : ResToImagAxis.Real F)
-    {t : ℝ} (ht : 0 < t) (z : ℍ) (hz : z = ⟨Complex.I * t, by simp [ht]⟩) :
-    (F z).im = 0 := by
-  subst hz
-  simpa [Function.resToImagAxis, ResToImagAxis, ht] using hF t ht
-
-/-- Extract the positivity condition at a specific point from `ResToImagAxis.Pos`. -/
-lemma ResToImagAxis.Pos.re_pos_at {F : ℍ → ℂ} (hF : ResToImagAxis.Pos F)
-    {t : ℝ} (ht : 0 < t) (z : ℍ) (hz : z = ⟨Complex.I * t, by simp [ht]⟩) :
-    0 < (F z).re := by
-  subst hz
-  simpa [Function.resToImagAxis, ResToImagAxis, ht] using hF.2 t ht
 
 /-- Tendsto conversion: if F tends to c at atImInfty, then F.resToImagAxis tends to c at atTop. -/
 lemma tendsto_resToImagAxis_of_tendsto_atImInfty {F : ℍ → ℂ} {c : ℂ}

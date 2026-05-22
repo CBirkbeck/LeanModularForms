@@ -32,11 +32,6 @@ simple poles, and states the full version for higher-order poles with conditions
 * `generalizedResidueTheorem` -- the most general version with conditions (A')+(B):
   the higher-order cancellation is stated as a hypothesis (honest modular design).
 
-### Automatic conditions
-
-* `conditions_automatic_for_simplePoles` -- conditions (A') and (B) are automatic
-  for simple poles.
-
 ## Proof strategy (simple poles, structural version)
 
 1. **Decompose** `f = g + principalPartSum S c` where `c s = Res(f,s)` and
@@ -185,41 +180,6 @@ theorem generalizedResidueTheorem_simplePoles_convex
     hSimplePoles hγ_in_U hγ_avoids hδ g hg_diff hg_agree hg_zero
     h_rem_int h_pp_int hI
 
-/-! ## Equivalence with `contourIntegral_eq_sum_winding_coefficients_convex` -/
-
-/-- The convex simple-poles theorem is equivalent to the existing
-`contourIntegral_eq_sum_winding_coefficients_convex` from MeromorphicCauchy,
-with the residue coefficient specialization. -/
-theorem generalizedResidueTheorem_simplePoles_convex_alt
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
-      volume 0 1)
-    (h_pp_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
-    (hI : ∀ s ∈ S, IntervalIntegrable
-      (fun t => (residue f s / (γ.toPath.extend t - s)) *
-        deriv γ.toPath.extend t) volume 0 1) :
-    γ.contourIntegral f =
-      ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
-        residue f s := by
-  set c := fun s => residue f s
-  have h_coeff : ∀ (s : ℂ) (hs : s ∈ S),
-      (hSimplePoles s hs).coeff = c s :=
-    fun s hs => (residue_eq_coeff_of_hasSimplePoleAt (hSimplePoles s hs)).symm
-  have h_res_eq : ∀ s ∈ S, residue f s = c s := fun _ _ => rfl
-  exact contourIntegral_eq_sum_winding_residues_convex γ hU_convex hU_open hU_ne
-    hf hS_in_U hSimplePoles h_coeff h_res_eq hγ_in_U hγ_avoids hδ h_rem_int h_pp_int hI
-
 /-! ## Full version with conditions (A') and (B) -/
 
 /-- **Generalized Residue Theorem** (Hungerbuhler-Wasem, Theorem 3.3, full version).
@@ -305,106 +265,5 @@ theorem generalizedResidueTheorem
     exact Finset.sum_congr rfl fun s _ => by ring
   rw [h_target_eq]
   exact hasCauchyPVOn_of_tendsto_sub hCancel hPV_sing hI_rem hI_sing
-
-/-! ## CPV version (avoidance case) -/
-
-/-- **Generalized Residue Theorem, CPV form (simple poles, convex domain, avoidance).**
-
-When `γ` avoids all poles `S`, the multi-point Cauchy principal value coincides with
-the ordinary contour integral, and the classical residue theorem on a convex domain
-gives the winding-number-weighted residue sum as the value.
-
-This is the `HasCauchyPVOn` variant of `generalizedResidueTheorem_simplePoles_convex`,
-suitable for applications where the CPV predicate is the desired output. -/
-theorem generalizedResidueTheorem_simplePoles_convex_CPV
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
-      volume 0 1)
-    (h_pp_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
-    (hI : ∀ s ∈ S, IntervalIntegrable
-      (fun t => (residue f s / (γ.toPath.extend t - s)) *
-        deriv γ.toPath.extend t) volume 0 1) :
-    HasCauchyPVOn S f γ
-      (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
-        residue f s) := by
-  have h_contour := generalizedResidueTheorem_simplePoles_convex
-    hU_convex hU_open hU_ne S hS_in_U f hf γ hSimplePoles
-    hγ_in_U hγ_avoids hδ h_rem_int h_pp_int hI
-  exact h_contour ▸ hasCauchyPVOn_of_avoids hδ
-
-/-- **Generalized Residue Theorem, CPV form (simple poles, avoidance,
-abstract Cauchy-vanishing).**
-
-Factored form of the residue theorem that takes the holomorphic remainder's
-contour-integral vanishing as a hypothesis. Callers supply this from the
-ambient topology (convex, null-homologous via Dixon, etc.).
-
-This is the CPV analogue of `generalizedResidueTheorem_simplePoles_structural`. -/
-theorem generalizedResidueTheorem_simplePoles_CPV_structural
-    {U : Set ℂ} (hU : IsOpen U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (g : ℂ → ℂ) (hg_diff : DifferentiableOn ℂ g U)
-    (hg_agree : ∀ z ∈ U \ (↑S : Set ℂ),
-      g z = f z - principalPartSum S (fun s => residue f s) z)
-    (hg_zero : γ.contourIntegral g = 0)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
-      volume 0 1)
-    (h_pp_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
-    (hI : ∀ s ∈ S, IntervalIntegrable
-      (fun t => (residue f s / (γ.toPath.extend t - s)) *
-        deriv γ.toPath.extend t) volume 0 1) :
-    HasCauchyPVOn S f γ
-      (∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
-        residue f s) := by
-  have h_contour := generalizedResidueTheorem_simplePoles_structural hU S hS_in_U f hf γ
-    hSimplePoles hγ_in_U hγ_avoids hδ g hg_diff hg_agree hg_zero h_rem_int h_pp_int hI
-  exact h_contour ▸ hasCauchyPVOn_of_avoids hδ
-
-/-! ## Automatic conditions for simple poles -/
-
-/-- **Conditions (A') and (B) are automatic for simple poles.**
-
-For simple poles, flatness of order 1 suffices for condition (A'), and the
-Laurent compatibility in condition (B) is vacuously satisfied. This bundles
-the results from `FlatnessConditions.lean`. -/
-theorem conditions_automatic_for_simplePoles
-    (γ : PwC1Immersion x x) (f : ℂ → ℂ) (S : Finset ℂ)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hAngles : ∀ s ∈ S, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
-      ∀ ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1,
-        t₀ ∈ γ.toPiecewiseC1Path.partition →
-          ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q) :
-    SatisfiesConditionA' γ f S (fun _ => 1) ∧ SatisfiesConditionB γ f S :=
-  conditions_automatic_simple_poles γ f S hSimplePoles hAngles
-
-/-- Condition (A') is automatic for simple poles: every piecewise C^1 immersion
-is flat of order 1 at interior crossings. -/
-theorem conditionA'_automatic_for_simplePoles
-    (γ : PwC1Immersion x x) (f : ℂ → ℂ) (S : Finset ℂ)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s) :
-    SatisfiesConditionA' γ f S (fun _ => 1) :=
-  satisfiesConditionA'_of_simplePoles γ f S hSimplePoles
 
 end

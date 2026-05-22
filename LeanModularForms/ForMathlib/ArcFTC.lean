@@ -91,18 +91,6 @@ theorem fdBoundary_arc_deriv_at_two_fifths :
     Real.cos_pi_div_two, Real.sin_pi_div_two]
   simp [mul_assoc]
 
-/-- Arc tangent at `t = 1/5` (right tangent at `ρ+1`). -/
-theorem fdBoundary_arc_deriv_at_one_fifth :
-    deriv (fun s => exp (↑(fdArcAngle s) * I)) (1/5 : ℝ) =
-      ↑(5 * Real.pi / 6) * I * exp (↑(Real.pi / 3) * I) := by
-  rw [fdBoundary_arc_deriv_eq, fdArcAngle_at_one_fifth]
-
-/-- Arc tangent at `t = 3/5` (left tangent at `ρ`). -/
-theorem fdBoundary_arc_deriv_at_three_fifths :
-    deriv (fun s => exp (↑(fdArcAngle s) * I)) (3/5 : ℝ) =
-      ↑(5 * Real.pi / 6) * I * exp (↑(2 * Real.pi / 3) * I) := by
-  rw [fdBoundary_arc_deriv_eq, fdArcAngle_at_three_fifths]
-
 /-- Right vertical (segment 1) tangent: downward. -/
 theorem fdBoundary_seg1_deriv (H t : ℝ) :
     deriv (fun s => (1 : ℂ) / 2 +
@@ -211,22 +199,5 @@ theorem arcFTC_limit_target_I :
 theorem arcFTC_limit_target_rho :
     -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 / 6 : ℂ) := by
   field_simp; ring
-
-/-- `2πi · (-1/2) = -πi`. -/
-theorem arcFTC_pv_target_I :
-    2 * ↑Real.pi * I * (-1 / 2 : ℂ) = -(↑Real.pi * I) := by ring
-
-/-- `2πi · (-1/6) = -πi/3`. -/
-theorem arcFTC_pv_target_rho :
-    2 * ↑Real.pi * I * (-1 / 6 : ℂ) = -(↑Real.pi / 3 * I) := by ring
-
-/-- `2/5 ∈ (0, 1)`. -/
-theorem two_fifths_mem_Ioo : (2 : ℝ)/5 ∈ Ioo (0 : ℝ) 1 := by constructor <;> norm_num
-
-/-- `1/5 ∈ (0, 1)`. -/
-theorem one_fifth_mem_Ioo : (1 : ℝ)/5 ∈ Ioo (0 : ℝ) 1 := by constructor <;> norm_num
-
-/-- `3/5 ∈ (0, 1)`. -/
-theorem three_fifths_mem_Ioo : (3 : ℝ)/5 ∈ Ioo (0 : ℝ) 1 := by constructor <;> norm_num
 
 end

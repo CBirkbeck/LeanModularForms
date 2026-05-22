@@ -36,9 +36,8 @@ Prove Ramanujan's formulas on derivatives of Eisenstein series.
 noncomputable def D (F : ℍ → ℂ) : ℍ → ℂ :=
   fun (z : ℍ) => (2 * π * I)⁻¹ * ((deriv (F ∘ ofComplex)) z)
 
-/--
-TODO: Remove this or move this to somewhere more appropriate.
--/
+/-- `MDifferentiableAt` for `F : ℍ → ℂ` gives `DifferentiableAt` for
+`F ∘ ofComplex : ℂ → ℂ` at the same point. -/
 lemma MDifferentiableAt_DifferentiableAt {F : ℍ → ℂ} {z : ℍ}
     (h : MDifferentiableAt 𝓘(ℂ) 𝓘(ℂ) F z) :
     DifferentiableAt ℂ (F ∘ ofComplex) ↑z :=
@@ -71,9 +70,7 @@ theorem D_differentiable {F : ℍ → ℂ} (hF : MDiff F) : MDiff (D F) := fun z
     (hDiffOn.deriv isOpen_upperHalfPlaneSet).differentiableAt
       (isOpen_upperHalfPlaneSet.mem_nhds z.im_pos)
 
-/--
-TODO: Move this to E2.lean.
--/
+/-- The Eisenstein series `E₂` is `MDifferentiable` on `ℍ`. -/
 @[fun_prop]
 theorem E₂_holo' : MDiff E₂ := by
   rw [UpperHalfPlane.mdifferentiable_iff]
@@ -194,24 +191,6 @@ private lemma derivWithin_qexp (a c : ℂ) (w : ℂ) (hw : 0 < w.im) :
       {z : ℂ | 0 < z.im} w = a * (2 * π * I * c) * cexp (2 * π * I * c * w) :=
   ((hasDerivAt_qexp a c w).hasDerivWithinAt).derivWithin
     (isOpen_upperHalfPlaneSet.uniqueDiffWithinAt hw)
-
-/--
-**Lemma 6.45 (Blueprint)**: The normalized derivative $D$ acts as $q \frac{d}{dq}$ on $q$-series.
-For a single q-power term: D(a·qⁿ) = n·a·qⁿ where q = exp(2πiz) and n ∈ ℤ.
-
-The key calculation:
-- d/dz(exp(2πinz)) = 2πin·exp(2πinz)
-- D(exp(2πinz)) = (2πi)⁻¹·(2πin·exp(2πinz)) = n·exp(2πinz)
--/
-theorem D_qexp_term (n : ℤ) (a : ℂ) (z : ℍ) :
-    D (fun w => a * cexp (2 * π * I * n * w)) z =
-      n * a * cexp (2 * π * I * n * z) := by
-  have h_agree : ((fun w : ℍ => a * cexp (2 * π * I * n * w)) ∘ ofComplex) =ᶠ[nhds (z : ℂ)]
-      (fun w : ℂ => a * cexp (2 * π * I * n * w)) := by
-    filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds z.2] with w hw
-    simp only [Function.comp_apply, ofComplex_apply_of_im_pos hw, UpperHalfPlane.coe_mk]
-  simp only [D, h_agree.deriv_eq, (hasDerivAt_qexp a n z).deriv]
-  field_simp [two_pi_I_ne_zero]
 
 /--
 **Lemma 6.45 (Blueprint)**: $D$ commutes with tsum for $q$-series.
@@ -608,52 +587,6 @@ lemma hasDerivAt_resToImagAxis_re {F : ℍ → ℂ} (hdiff : MDiff F) {t : ℝ} 
   have hderivC := (ResToImagAxis.Differentiable F hdiff t ht).hasDerivAt.congr_deriv
     (deriv_resToImagAxis_eq F hdiff ht)
   simpa using (hasDerivAt_const t (Complex.reCLM : ℂ →L[ℝ] ℝ)).clm_apply hderivC
-
-/-- If F is MDifferentiable and antitone on the imaginary axis,
-then D F has non-negative real part on the imaginary axis. -/
-theorem D_nonneg_from_antitone {F : ℍ → ℂ} (hdiff : MDiff F)
-    (hanti : AntitoneOn (fun t => (F.resToImagAxis t).re) (Set.Ioi 0)) :
-    ∀ t, 0 < t → 0 ≤ ((D F).resToImagAxis t).re := fun t ht => by
-  have hderiv_nonpos : deriv (fun s => (F.resToImagAxis s).re) t ≤ 0 :=
-    (derivWithin_of_isOpen isOpen_Ioi ht).symm.trans_le hanti.derivWithin_nonpos
-  rw [(hasDerivAt_resToImagAxis_re hdiff ht).deriv] at hderiv_nonpos
-  nlinarith [Real.pi_pos]
-
-/-- If F is real on the imaginary axis, MDifferentiable, and has strictly negative derivative
-on the imaginary axis, then D F is positive on the imaginary axis.
-
-Note: `StrictAntiOn` is NOT sufficient - a strictly decreasing function can have deriv = 0
-at isolated points (e.g., -x³ at x=0). Use this theorem when you can prove the derivative
-is strictly negative, typically from q-expansion analysis. -/
-theorem D_pos_from_deriv_neg {F : ℍ → ℂ} (hreal : ResToImagAxis.Real F) (hdiff : MDiff F)
-    (hderiv_neg : ∀ t, 0 < t → deriv (fun s => (F.resToImagAxis s).re) t < 0) :
-    ResToImagAxis.Pos (D F) := by
-  refine ⟨D_real_of_real hreal hdiff, fun t ht => ?_⟩
-  have hderiv := hderiv_neg t ht
-  rw [(hasDerivAt_resToImagAxis_re hdiff ht).deriv] at hderiv
-  nlinarith [Real.pi_pos]
-
-/--
-If $F$ is a modular form where $F(it)$ is positive for sufficiently large $t$ (i.e. constant term
-is positive) and the derivative is positive, then $F$ is also positive.
--/
-theorem antiDerPos {F : ℍ → ℂ} (hFderiv : MDiff F)
-    (hFepos : ResToImagAxis.EventuallyPos F) (hDF : ResToImagAxis.Pos (D F)) :
-    ResToImagAxis.Pos F := by
-  obtain ⟨hF_real, t₀, ht₀_pos, hF_pos⟩ := hFepos
-  obtain ⟨-, hDF_pos⟩ := hDF
-  let g := fun t => (F.resToImagAxis t).re
-  have hg : ∀ t, 0 < t → HasDerivAt g (-2 * π * (ResToImagAxis (D F) t).re) t :=
-    fun t ht => hasDerivAt_resToImagAxis_re hFderiv ht
-  have hn : ∀ t ∈ Set.Ioi (0 : ℝ), deriv g t < 0 := fun t (ht : 0 < t) => by
-    rw [(hg t ht).deriv]
-    have ht' : 0 < (ResToImagAxis (D F) t).re := hDF_pos t ht
-    nlinarith [Real.pi_pos]
-  have gpos := fun t ht =>
-    StrictAntiOn.eventuallyPos_Ioi (strictAntiOn_of_deriv_neg (convex_Ioi 0)
-    (fun x hx => (hg x hx).continuousAt.continuousWithinAt)
-      (by simpa [interior_Ioi] using hn)) ht₀_pos hF_pos t ht
-  exact ⟨hF_real, gpos⟩
 
 /--
 Let $F : \mathbb{H} \to \mathbb{C}$ be a holomorphic function where $F(it)$ is real for all $t > 0$.

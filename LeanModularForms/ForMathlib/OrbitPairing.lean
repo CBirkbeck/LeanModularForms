@@ -55,23 +55,9 @@ private lemma normSq_eq_one_of_norm_eq_oneFM {z : ℂ} (h : ‖z‖ = 1) :
 lemma vAdd_one_coeFM (p : ℍ) : ((1 : ℝ) +ᵥ p : ℂ) = (p : ℂ) + 1 := by
   simp [add_comm]
 
-/-- T-translation shifts real part by 1. -/
-lemma vAdd_one_reFM (p : ℍ) : ((1 : ℝ) +ᵥ p : ℍ).re = p.re + 1 := by
-  simp [add_comm]
-
-/-- T-translation preserves imaginary part. -/
-lemma vAdd_one_im_eqFM (p : ℍ) : ((1 : ℝ) +ᵥ p : ℍ).im = p.im := by simp
-
 /-- T⁻¹-translation coercion: `((-1:ℝ) +ᵥ p : ℂ) = (p : ℂ) - 1`. -/
 lemma vAdd_neg_one_coeFM (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℂ) = (p : ℂ) - 1 := by
   simp [sub_eq_add_neg, add_comm]
-
-/-- T⁻¹-translation shifts real part by -1. -/
-lemma vAdd_neg_one_reFM (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℍ).re = p.re - 1 := by
-  simp [sub_eq_add_neg, add_comm]
-
-/-- T⁻¹-translation preserves imaginary part. -/
-lemma vAdd_neg_one_im_eqFM (p : ℍ) : ((-1 : ℝ) +ᵥ p : ℍ).im = p.im := by simp
 
 /-- T-translation preserves norm for left-vertical points (`re = -1/2`). -/
 lemma norm_add_one_eq_of_re_neg_halfFM (z : ℂ) (hre : z.re = -1/2) :
@@ -119,13 +105,6 @@ theorem vAdd_neg_one_mem_fd_of_right_vertFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hre 
 theorem vAdd_one_rho_eq_rho_plus_oneFM :
     (1 : ℝ) +ᵥ ellipticPointRho' = ellipticPointRhoPlusOne' :=
   UpperHalfPlane.ext <| vAdd_one_coeFM _ ▸ ellipticPointRho_add_one_eq
-
-/-- `(-1:ℝ) +ᵥ (ρ'+1) = ρ'` as UpperHalfPlane elements. -/
-theorem vAdd_neg_one_rho_plus_one_eq_rhoFM :
-    (-1 : ℝ) +ᵥ ellipticPointRhoPlusOne' = ellipticPointRho' := by
-  refine UpperHalfPlane.ext ?_
-  rw [vAdd_neg_one_coeFM, sub_eq_iff_eq_add]
-  exact ellipticPointRho_add_one_eq.symm
 
 /-- ρ+1 is in the standard fundamental domain 𝒟. -/
 theorem ellipticPointRhoPlusOne_mem_fdFM : ellipticPointRhoPlusOne' ∈ 𝒟 := by
@@ -189,13 +168,6 @@ lemma orb_vAdd_neg_one_eq (p : ℍ) :
   rw [Quotient.eq'', MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
   exact ⟨ModularGroup.T⁻¹, by simpa using UpperHalfPlane.modular_T_zpow_smul p (-1)⟩
 
-/-- T-translation preserves orbits: `orbFM((1)+ᵥp) = orbFM(p)`. -/
-lemma orb_vAdd_one_eq (p : ℍ) :
-    orbFM ((1 : ℝ) +ᵥ p) = orbFM p := by
-  change Quotient.mk'' ((1 : ℝ) +ᵥ p) = Quotient.mk'' p
-  rw [Quotient.eq'', MulAction.orbitRel_apply, MulAction.mem_orbit_iff]
-  exact ⟨ModularGroup.T, by rw [UpperHalfPlane.modular_T_smul]⟩
-
 /-- S-action preserves orbits: `orbFM(S • p) = orbFM(p)`. -/
 lemma orb_S_smul_eq (p : ℍ) :
     orbFM (ModularGroup.S • p) = orbFM p := by
@@ -227,34 +199,6 @@ lemma ord_vAdd_neg_one_eqFM (p : ℍ) :
 private lemma ord_ne_zero_of_cast_ne_zeroFM {p : ℍ} {g : ℍ → ℂ}
     (h : (orderOfVanishingAt' g p : ℂ) ≠ 0) : orderOfVanishingAt' g p ≠ 0 :=
   mod_cast h
-
-/-- T-translation maps `sLeftVertFM S` into `sRightVertFM S`. -/
-theorem vAdd_one_leftVert_subset_rightVertFM (S : Finset ℍ)
-    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∀ p ∈ sLeftVertFM S,
-      orderOfVanishingAt' (⇑f) p ≠ 0 → (1 : ℝ) +ᵥ p ∈ sRightVertFM S := by
-  intro p hp hord
-  simp only [sLeftVertFM, Finset.mem_filter] at hp
-  obtain ⟨_, hre, hnorm⟩ := hp
-  have hp_fd : p ∈ 𝒟 := by
-    refine ⟨one_le_normSq_of_norm_gt_oneFM hnorm, ?_⟩
-    rw [show p.re = (p : ℂ).re from rfl, hre]
-    norm_num
-  simp only [sRightVertFM, Finset.mem_filter]
-  refine ⟨hS_complete _ (vAdd_one_mem_fd_of_left_vertFM p hp_fd hre)
-    (by rwa [ord_add_one_eq f p]), ?_, ?_⟩
-  · change ((1 : ℝ) +ᵥ p : ℂ).re = 1 / 2
-    rw [vAdd_one_coeFM, add_re, one_re]
-    linarith [hre]
-  · change ‖((1 : ℝ) +ᵥ p : ℂ)‖ > 1
-    rw [vAdd_one_norm_eq_of_re_neg_halfFM p hre]
-    exact hnorm
-
-/-- Left-vertical sum equals sum of T-translated orders. -/
-theorem sum_ord_leftVert_eq_sum_T_imageFM (S : Finset ℍ) :
-    ∑ p ∈ sLeftVertFM S, (orderOfVanishingAt' (⇑f) p : ℂ) =
-    ∑ p ∈ sLeftVertFM S, (orderOfVanishingAt' (⇑f) ((1 : ℝ) +ᵥ p) : ℂ) :=
-  Finset.sum_congr rfl fun p _ => by rw [ord_add_one_eq f p]
 
 /-- Orders on right vertical edge equal orders on left vertical edge. -/
 theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)

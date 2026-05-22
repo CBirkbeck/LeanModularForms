@@ -51,16 +51,6 @@ noncomputable def poleOrderAt (f : ℂ → ℂ) (z₀ : ℂ) : ℕ :=
     (-(meromorphicOrderAt f z₀).untop₀).toNat
   else 0
 
-theorem poleOrderAt_eq_zero_of_not_meromorphicAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : ¬MeromorphicAt f z₀) : poleOrderAt f z₀ = 0 :=
-  dif_neg h
-
-theorem poleOrderAt_eq_zero_of_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : AnalyticAt ℂ f z₀) : poleOrderAt f z₀ = 0 := by
-  rw [poleOrderAt, dif_pos h.meromorphicAt]
-  exact Int.toNat_eq_zero.mpr
-    (neg_nonpos_of_nonneg (WithTop.untop₀_nonneg.mpr h.meromorphicOrderAt_nonneg))
-
 theorem poleOrderAt_eq_one_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
     (hf : MeromorphicAt f z₀) (hord : meromorphicOrderAt f z₀ = (-1 : ℤ)) :
     poleOrderAt f z₀ = 1 := by
@@ -79,18 +69,6 @@ this is the rational function that captures the singular part of a meromorphic f
 with simple poles at the points of `S`. -/
 noncomputable def principalPartSum (S : Finset ℂ) (c : ℂ → ℂ) (z : ℂ) : ℂ :=
   ∑ s ∈ S, c s / (z - s)
-
-theorem principalPartSum_empty (c : ℂ → ℂ) (z : ℂ) :
-    principalPartSum ∅ c z = 0 := by
-  simp [principalPartSum]
-
-theorem principalPartSum_singleton (s : ℂ) (c : ℂ → ℂ) (z : ℂ) :
-    principalPartSum {s} c z = c s / (z - s) := by
-  simp [principalPartSum]
-
-theorem principalPartSum_insert {S : Finset ℂ} {s : ℂ} (hs : s ∉ S) (c : ℂ → ℂ) (z : ℂ) :
-    principalPartSum (insert s S) c z = c s / (z - s) + principalPartSum S c z := by
-  simp [principalPartSum, Finset.sum_insert hs]
 
 /-- A single term `c / (z - s)` is differentiable at any `z ≠ s`. -/
 theorem differentiableAt_div_sub {s : ℂ} {c : ℂ} {z : ℂ} (hz : z ≠ s) :
@@ -123,21 +101,6 @@ theorem sub_simplePole_analyticAt {f : ℂ → ℂ} {z₀ : ℂ} {c : ℂ} {g : 
     ∃ h : ℂ → ℂ, AnalyticAt ℂ h z₀ ∧
       ∀ᶠ z in 𝓝[≠] z₀, f z - c / (z - z₀) = h z :=
   ⟨g, hg, hev.mono fun z hz => by rw [hz]; ring⟩
-
-/-- If `f` has a simple pole at `z₀`, then `f(z) - h.coeff/(z - z₀)` extends analytically
-to `z₀`. -/
-theorem HasSimplePoleAt.sub_pole_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) :
-    ∃ g : ℂ → ℂ, AnalyticAt ℂ g z₀ ∧
-      ∀ᶠ z in 𝓝[≠] z₀, f z - h.coeff / (z - z₀) = g z :=
-  sub_simplePole_analyticAt h.regularPart_analyticAt h.eventually_eq
-
-/-- `f(z) - coeff/(z - z₀)` is meromorphic at `z₀` when `f` has a simple pole there. -/
-theorem HasSimplePoleAt.sub_pole_term_meromorphicAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) :
-    MeromorphicAt (fun z => f z - h.coeff / (z - z₀)) z₀ :=
-  let ⟨_, hg_an, hg_eq⟩ := h.sub_pole_analyticAt
-  hg_an.meromorphicAt.congr (hg_eq.mono fun _ hz => hz.symm)
 
 private theorem principalPartSum_rest_analyticAt
     (S : Finset ℂ) (s : ℂ) (c : ℂ → ℂ) :
@@ -174,17 +137,6 @@ theorem sub_principalPartSum_analyticAt {f : ℂ → ℂ} {S : Finset ℂ} {c : 
   rw [principalPartSum_eq_term_add_rest hs c z, hf_eq, h_coeff]
   ring
 
-/-- If `f` has simple poles at every point of `S` with matching coefficients, then
-`f - principalPartSum S c` has non-negative meromorphic order at each `s ∈ S`. -/
-theorem sub_principalPartSum_meromorphicOrderAt_nonneg {f : ℂ → ℂ} {S : Finset ℂ}
-    {c : ℂ → ℂ} {s : ℂ} (hs : s ∈ S)
-    (h_pole : HasSimplePoleAt f s)
-    (h_coeff : h_pole.coeff = c s) :
-    (0 : ℤ) ≤ meromorphicOrderAt (fun z => f z - principalPartSum S c z) s := by
-  obtain ⟨g, hg_an, hg_eq⟩ := sub_principalPartSum_analyticAt hs h_pole h_coeff
-  rw [meromorphicOrderAt_congr hg_eq]
-  exact hg_an.meromorphicOrderAt_nonneg
-
 /-- The residue of `principalPartSum S c` at `s ∈ S` equals `c s`. -/
 theorem residue_principalPartSum {S : Finset ℂ} {c : ℂ → ℂ} {s : ℂ} (hs : s ∈ S) :
     residue (principalPartSum S c) s = c s :=
@@ -196,17 +148,6 @@ theorem residue_eq_coeff_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
     (h : HasSimplePoleAt f z₀) :
     residue f z₀ = h.coeff :=
   residue_eq_coeff h
-
-/-- A function with a simple pole has pole order 1 when the coefficient is nonzero,
-and pole order 0 when the coefficient vanishes. -/
-theorem poleOrderAt_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) :
-    poleOrderAt f z₀ = if h.coeff = 0 then 0 else 1 := by
-  split_ifs with hc
-  · rw [poleOrderAt, dif_pos h.meromorphicAt]
-    exact Int.toNat_eq_zero.mpr (neg_nonpos_of_nonneg (WithTop.untop₀_nonneg.mpr
-      (meromorphicOrderAt_nonneg_of_hasSimplePoleAt_coeff_zero h hc)))
-  · exact poleOrderAt_eq_one_of_hasSimplePoleAt h hc
 
 /-- The principal part sum is analytic at any point not in `S`. -/
 theorem principalPartSum_analyticAt {S : Finset ℂ} {c : ℂ → ℂ} {z : ℂ}
@@ -229,13 +170,5 @@ theorem principalPartSum_meromorphicAt (S : Finset ℂ) (c : ℂ → ℂ) (z : �
     MeromorphicAt (principalPartSum S c) z :=
   MeromorphicAt.fun_sum fun _ _ =>
     analyticAt_const.meromorphicAt.div (analyticAt_id.sub analyticAt_const).meromorphicAt
-
-/-- The principal part sum has a simple pole at `s ∈ S` when `c s ≠ 0`. -/
-theorem principalPartSum_hasSimplePoleAt {S : Finset ℂ} {c : ℂ → ℂ} {s : ℂ}
-    (hs : s ∈ S) :
-    HasSimplePoleAt (principalPartSum S c) s :=
-  ⟨c s, fun z => ∑ t ∈ S.erase s, c t / (z - t),
-    principalPartSum_rest_analyticAt S s c,
-    .of_forall fun z => principalPartSum_eq_term_add_rest hs c z⟩
 
 end

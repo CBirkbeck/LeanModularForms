@@ -2,7 +2,6 @@ import LeanModularForms.ForMathlib.ContourIntegral.CrossingLimit
 import LeanModularForms.ForMathlib.ContourIntegral.PVSplit
 import LeanModularForms.ForMathlib.ContourIntegral.SegmentFTC
 import LeanModularForms.ForMathlib.ContourIntegral.WindingNumber
-import LeanModularForms.ForMathlib.AtImInfty
 import LeanModularForms.ForMathlib.CongruenceSubgrps
 import LeanModularForms.ForMathlib.FunctionsBoundedAtInfty
 import LeanModularForms.ForMathlib.ClassicalCPV
@@ -12,7 +11,6 @@ import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.SlashActions
 import LeanModularForms.ForMathlib.UpperHalfPlane
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.ArcCalculus
-import LeanModularForms.ForMathlib.ClassicalCPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CurveAvoidance
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Homotopy.Integrality
@@ -35,7 +33,6 @@ import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV.DominatedConvergence
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.SectorCurve
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.SectorCurveLemma
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber.CrossingAnalysis
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber.Decomposition
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber.Defs
@@ -71,26 +68,20 @@ import LeanModularForms.Modularforms.clog_arg_lems
 import LeanModularForms.Modularforms.csqrt
 import LeanModularForms.Modularforms.equivs
 import LeanModularForms.Modularforms.eta
-import LeanModularForms.Modularforms.eta_cleanup
 import LeanModularForms.Modularforms.exp_lems
 import LeanModularForms.Modularforms.iteratedderivs
-import LeanModularForms.Modularforms.limunder_lems
-import LeanModularForms.Modularforms.logDeriv_lems
 import LeanModularForms.Modularforms.multipliable_lems
 import LeanModularForms.Modularforms.qExpansion_lems
 import LeanModularForms.Modularforms.riemannZetalems
 import LeanModularForms.Modularforms.summable_lems
-import LeanModularForms.Modularforms.tendstolems
 import LeanModularForms.Modularforms.tsumderivWithin
 import LeanModularForms.Modularforms.uniformcts
 import LeanModularForms.Modularforms.upperhalfplane
 -- import LeanModularForms.SpherePacking.CuspDecay  -- name collision with EisensteinAsymptotics
 import LeanModularForms.SpherePacking.PhiHolomorphic
 -- import LeanModularForms.SpherePacking.ViazovskaMagicFunction  -- transitively imports CuspDecay (name collision)
-import LeanModularForms.ForMathlib.FDBoundaryH
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Bounds
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Smooth
-import LeanModularForms.ForMathlib.EllipticPoints
 import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.ValenceFormula.OnCurvePV.Basic
 import LeanModularForms.ForMathlib.ValenceFormula.OnCurvePV.EndpointCorner

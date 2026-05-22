@@ -586,10 +586,6 @@ lemma jacobi_f_T_action : (jacobi_f ∣[(4 : ℤ)] T) = jacobi_f := by
   simp only [jacobi_f_eq_mul, show (4 : ℤ) = 2 + 2 by norm_num,
     mul_slash_SL2 2 2 T _ _, jacobi_g_T_action, neg_mul_neg]
 
-/-- Full SL₂(ℤ) invariance of f with weight 4 -/
-lemma jacobi_f_SL2Z_invariant : ∀ γ : SL(2, ℤ), jacobi_f ∣[(4 : ℤ)] γ = jacobi_f :=
-  slashaction_generators_SL2Z jacobi_f 4 jacobi_f_S_action jacobi_f_T_action
-
 /-- jacobi_f as a SlashInvariantForm of weight 4 and level Γ(1) -/
 noncomputable def jacobi_f_SIF : SlashInvariantForm (CongruenceSubgroup.Gamma 1) 4 where
   toFun := jacobi_f
@@ -819,11 +815,6 @@ private lemma theta_prod_sq_S_action : (theta_prod_sq ∣[(12 : ℤ)] S) = theta
 private lemma theta_prod_sq_T_action : (theta_prod_sq ∣[(12 : ℤ)] T) = theta_prod_sq := by
   rw [theta_prod_sq_eq_mul, show (12 : ℤ) = 6 + 6 by norm_num,
     mul_slash_SL2 6 6 T _ _, theta_prod_T_action, neg_mul_neg]
-
-private lemma theta_prod_sq_SL2Z_invariant :
-    ∀ γ : SL(2, ℤ), theta_prod_sq ∣[(12 : ℤ)] γ = theta_prod_sq :=
-  slashaction_generators_SL2Z theta_prod_sq 12
-    theta_prod_sq_S_action theta_prod_sq_T_action
 
 private lemma theta_prod_sq_MDifferentiable : MDiff theta_prod_sq := by
   change MDiff (fun z => (H₂ z * H₃ z * H₄ z) ^ 2)
