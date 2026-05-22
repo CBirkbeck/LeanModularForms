@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
 
 public import Mathlib.Analysis.CStarAlgebra.Classes
@@ -5,23 +10,30 @@ public import Mathlib.NumberTheory.ModularForms.SlashActions
 
 @[expose] public section
 
--- Maybe this belongs in NumberTheory/ModularForms/SlashActions.lean, next to ModularForm.mul_slash
+/-!
+# Slash actions under negation
+
+Negation lemmas for the modular-forms slash action under `GL(2, ℝ)⁺` and `SL(2, ℤ)`
+matrices, for even weight `k`. Candidate for upstreaming to
+`Mathlib.NumberTheory.ModularForms.SlashActions` next to `ModularForm.mul_slash`.
+
+## Main results
+
+* `ModularForm.slash_neg_one` / `ModularForm.slash_neg_one'`: `f ∣[k] (-1) = f ∣[k] 1` in
+  `GL(2, ℝ)⁺` / `SL(2, ℤ)` respectively (for even `k`).
+* `ModularForm.slash_neg` / `ModularForm.slash_neg'`: `f ∣[k] (-g) = f ∣[k] g` in
+  `GL(2, ℝ)⁺` / `SL(2, ℤ)` respectively (for even `k`).
+-/
 
 local notation "GL(" n ", " R ")" "⁺" => @Matrix.GLPos (Fin n) R (instDecidableEqFin n)
   (Fin.fintype n) Real.linearOrderedCommRing
 
 open ModularForm MatrixGroups UpperHalfPlane
 
-/- Looks like the way to fix the errors is to replace each GL(n, ℝ)⁺ with
-  `@Matrix.GLPos (Fin 2) ℝ (instDecidableEqFin 2) (Fin.fintype 2) Real.linearOrderedCommRing :
-  Subgroup (GL (Fin 2) ℝ)`... but it's just so ugly!
--/
-
 /-- Slash action under -I₂ as a GL(n, ℝ)⁺ matrix. See `ModularForm.slash_neg_one'` for the SL(2, ℤ)
 version. -/
 theorem ModularForm.slash_neg_one {k : ℤ} (f : ℍ → ℂ) (hk : Even k) :
-    f ∣[k] (-1 : (GL (Fin 2) ℝ)) =
-    f ∣[k] (1 : (GL (Fin 2) ℝ)) := by
+    f ∣[k] (-1 : (GL (Fin 2) ℝ)) = f ∣[k] (1 : (GL (Fin 2) ℝ)) := by
   simp [slash_def, denom, hk.neg_one_zpow, Matrix.det_neg, σ]
 
 /-- Slash action under -I₂ as a SL(2, ℤ) matrix. See `ModularForm.slash_neg_one` for the GL(n, ℝ)⁺
@@ -38,6 +50,4 @@ theorem ModularForm.slash_neg {k : ℤ} (g : GL (Fin 2) ℝ) (f : ℍ → ℂ) (
 /-- See `ModularForm.slash_neg` for the version where `g` is a GL(n, ℝ)⁺ matrix. -/
 theorem ModularForm.slash_neg' {k : ℤ} (g : SL(2, ℤ)) (f : ℍ → ℂ) (hk : Even k) :
     f ∣[k] (-g) = f ∣[k] g := by
-  rw [SL_slash, ← slash_neg _ _ hk]
-  congr
-  aesop
+  rw [SL_slash, ← slash_neg _ _ hk]; congr; aesop

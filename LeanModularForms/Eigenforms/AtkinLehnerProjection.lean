@@ -155,8 +155,6 @@ open scoped MatrixGroups ModularForm Manifold
 
 namespace HeckeRing.GL2.AtkinLehner
 
-/-! ### Same-level `p`-supported projection -/
-
 /-- **Same-level `p`-supported projection** on `M_k(Γ₁(N))`, for a
 prime `p ∣ N`.  Defined as the composition
 
@@ -261,19 +259,11 @@ theorem traceGamma1_mem_modFormCharSpace_of_commute
     HeckeRing.GL2.TraceOperator.traceGamma1 h k f ∈ modFormCharSpace k χ := by
   rw [mem_modFormCharSpace_iff]
   intro d
-  -- Pick a representative β ∈ Γ₀(M) lifting d via ZMod.unitsMap.
   obtain ⟨β, hβ⟩ := HeckeRing.GL2.Prop334.exists_Gamma0_lift_of_dvd h d
-  -- d_M := Gamma0MapUnits β at level M; by construction, unitsMap h d_M = d.
   set d_M : (ZMod M)ˣ := Gamma0MapUnits β
   have hd_eq : ZMod.unitsMap h d_M = d := hβ
-  -- Rewrite the level-N diamond index through unitsMap d_M, then use commutation.
-  rw [← hd_eq, h_commute d_M]
-  -- Apply `f`'s level-M character hypothesis.
-  have hfd : diamondOpHom k d_M f =
-      (↑((χ.comp (ZMod.unitsMap h)) d_M) : ℂ) • f :=
-    ((mem_modFormCharSpace_iff k (χ.comp (ZMod.unitsMap h)) f).mp hf) d_M
-  rw [hfd, map_smul]
-  -- Scalar is (χ ∘ unitsMap) d_M = χ (unitsMap d_M) = χ d (via hd_eq).
+  rw [← hd_eq, h_commute d_M, ((mem_modFormCharSpace_iff k (χ.comp (ZMod.unitsMap h)) f).mp hf) d_M,
+    map_smul]
   congr 1
 
 /-- **Character compatibility for `pSupportedProjection`** (conditional
@@ -306,12 +296,9 @@ theorem pSupportedProjection_mem_modFormCharSpace_of_commute
               (Nat.dvd_mul_left N p) k
             (diamondOpHom k d_M (pSupportedRaise k p hp hpN f))) :
     pSupportedProjection k p hp hpN f ∈ modFormCharSpace k χ := by
-  -- `pSupportedRaise f` lives in the level-p·N character space for
-  -- `χ.comp (ZMod.unitsMap (N ∣ p · N))`.
   have hf_raise : pSupportedRaise k p hp hpN f ∈
       modFormCharSpace k (χ.comp (ZMod.unitsMap (Nat.dvd_mul_left N p))) :=
     pSupportedRaise_mem_modFormCharSpace hp hpN χ hf
-  -- Unfold pSupportedProjection = traceGamma1 (pSupportedRaise f).
   rw [pSupportedProjection_eq_trace_pSupportedRaise]
   exact traceGamma1_mem_modFormCharSpace_of_commute
     (Nat.dvd_mul_left N p) χ hf_raise h_commute
@@ -380,7 +367,6 @@ private lemma conjℋEquiv_leftRel
         (conjℋEquiv h β a₁) (conjℋEquiv h β a₂) := by
   simp only [QuotientGroup.leftRel_apply, Subgroup.mem_subgroupOf]
   set β_gl : GL (Fin 2) ℝ := mapGL ℝ (β : SL(2, ℤ)) with hβ_gl
-  -- (a₁⁻¹ a₂).val ∈ Γ₁(M).map ↔ β_gl (a₁⁻¹ a₂).val β_gl⁻¹ ∈ Γ₁(M).map
   have hconj_eq :
       ((conjℋEquiv h β a₁)⁻¹ * conjℋEquiv h β a₂).val =
         β_gl * (a₁⁻¹ * a₂).val * β_gl⁻¹ := by
@@ -394,8 +380,6 @@ private lemma conjℋEquiv_leftRel
   · intro h₂
     have hinv := conjBy_beta_mem_Gamma1M_map (β⁻¹ : ↥(Gamma0 M)) h₂
     simp only [InvMemClass.coe_inv, map_inv] at hinv
-    -- hinv: β_gl⁻¹ * (β_gl * (a₁⁻¹ * a₂).val * β_gl⁻¹) * (β_gl⁻¹)⁻¹ ∈ Γ₁(M).map
-    -- Simplify: β_gl⁻¹ β_gl = 1, (β_gl⁻¹)⁻¹ = β_gl.
     have : β_gl⁻¹ * (β_gl * (a₁⁻¹ * a₂).val * β_gl⁻¹) * β_gl = (a₁⁻¹ * a₂).val := by
       group
     rw [← this]
@@ -430,7 +414,6 @@ private lemma quotientFunc_slash_beta_eq
     show (⇑f ∣[k] r.val⁻¹) ∣[k] mapGL ℝ (β : SL(2, ℤ)) =
       (⇑(diamondOpAux k β f)) ∣[k]
         ((conjℋEquiv h β).symm r).val⁻¹
-    -- RHS: (f ∣[k] β_gl) ∣[k] (β_gl⁻¹ r β_gl)⁻¹ = f ∣[k] (β_gl · (β_gl⁻¹ r β_gl)⁻¹) = f ∣[k] (r⁻¹ · β_gl)
     show (⇑f ∣[k] r.val⁻¹) ∣[k] mapGL ℝ (β : SL(2, ℤ)) =
       (⇑f ∣[k] mapGL ℝ (β : SL(2, ℤ))) ∣[k]
         ((mapGL ℝ (β : SL(2, ℤ)))⁻¹ * r.val * mapGL ℝ (β : SL(2, ℤ)))⁻¹
@@ -457,14 +440,11 @@ theorem traceGamma1_slash_mapGL_commute
     Fintype.ofFinite _
   rw [TraceOperator.traceGamma1_apply, TraceOperator.traceGamma1_apply,
     ModularForm.coe_trace, ModularForm.coe_trace, SlashAction.sum_slash]
-  -- Goal: ∑ q, (quotientFunc f q) ∣[k] β_gl = ∑ q, quotientFunc (diamondOpAux β f) q.
-  -- Both sums elaborate with `Fintype.ofFinite _`; reindex via the coset
-  -- conjugation equivalence and apply `quotientFunc_slash_beta_eq` per term.
-  refine Finset.sum_bij (fun q _ => (conjCosetEquiv h β).symm q)
-    (fun _ _ => Finset.mem_univ _)
-    (fun _ _ _ _ H => (conjCosetEquiv h β).symm.injective H)
-    (fun q _ => ⟨conjCosetEquiv h β q, Finset.mem_univ _, by simp⟩)
-    (fun q _ => quotientFunc_slash_beta_eq h f β q)
+  refine Finset.sum_bij (fun q _ ↦ (conjCosetEquiv h β).symm q)
+    (fun _ _ ↦ Finset.mem_univ _)
+    (fun _ _ _ _ H ↦ (conjCosetEquiv h β).symm.injective H)
+    (fun q _ ↦ ⟨conjCosetEquiv h β q, Finset.mem_univ _, by simp⟩)
+    (fun q _ ↦ quotientFunc_slash_beta_eq h f β q)
 
 /-- Inline compatibility: `Gamma0MapUnits` of a Γ₀(N)-embedding of
 `β ∈ Γ₀(M)` equals the `unitsMap`-image of `Gamma0MapUnits β`, for
@@ -489,22 +469,18 @@ theorem traceGamma1_diamondOpHom_commute
     diamondOpHom k (ZMod.unitsMap h d_M)
         (HeckeRing.GL2.TraceOperator.traceGamma1 h k f) =
       HeckeRing.GL2.TraceOperator.traceGamma1 h k (diamondOpHom k d_M f) := by
-  -- Pick β ∈ Γ₀(M) with Gamma0MapUnits β = d_M.
   obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective d_M
-  -- β lifted to Γ₀(N).
   set β_N : ↥(Gamma0 N) := ⟨(β : SL(2, ℤ)),
     Gamma0_le_of_dvd h β.property⟩ with hβ_N_def
   have hβN : Gamma0MapUnits β_N = ZMod.unitsMap h d_M := by
     rw [hβ_N_def]
     rw [Gamma0MapUnits_unitsMap_of_dvd h (β : SL(2, ℤ)) β.property
       (Gamma0_le_of_dvd h β.property), hβ]
-  -- Rewrite both diamonds using β and β_N.
   show diamondOp k (ZMod.unitsMap h d_M)
       (HeckeRing.GL2.TraceOperator.traceGamma1 h k f) =
     HeckeRing.GL2.TraceOperator.traceGamma1 h k (diamondOp k d_M f)
   rw [diamondOp_eq_diamondOpAux k (ZMod.unitsMap h d_M) β_N hβN,
     diamondOp_eq_diamondOpAux k d_M β hβ]
-  -- Now: diamondOpAux β_N (trace f) = trace (diamondOpAux β f)
   apply DFunLike.coe_injective
   show (⇑(HeckeRing.GL2.TraceOperator.traceGamma1 h k f)) ∣[k]
         mapGL ℝ ((β_N : ↥(Gamma0 N)) : SL(2, ℤ)) =
@@ -512,8 +488,6 @@ theorem traceGamma1_diamondOpHom_commute
   exact traceGamma1_slash_mapGL_commute h f β
 
 end TraceCommute
-
-/-! ### Unconditional character compatibility (T123) -/
 
 /-- **Unconditional character compatibility for `traceGamma1`.**  If
 `f ∈ modFormCharSpace k (χ.comp (ZMod.unitsMap h))` at the deeper level
@@ -527,7 +501,7 @@ theorem traceGamma1_mem_modFormCharSpace
     (hf : f ∈ modFormCharSpace k (χ.comp (ZMod.unitsMap h))) :
     HeckeRing.GL2.TraceOperator.traceGamma1 h k f ∈ modFormCharSpace k χ :=
   traceGamma1_mem_modFormCharSpace_of_commute h χ hf
-    (fun d_M => traceGamma1_diamondOpHom_commute h f d_M)
+    (traceGamma1_diamondOpHom_commute h f)
 
 /-- **Unconditional character compatibility for `pSupportedProjection`.**
 If `f ∈ modFormCharSpace k χ` at level `N`, then
@@ -542,8 +516,8 @@ theorem pSupportedProjection_mem_modFormCharSpace
     (hf : f ∈ modFormCharSpace k χ) :
     pSupportedProjection k p hp hpN f ∈ modFormCharSpace k χ :=
   pSupportedProjection_mem_modFormCharSpace_of_commute p hp hpN χ hf
-    (fun d_M => traceGamma1_diamondOpHom_commute
-      (Nat.dvd_mul_left N p) (pSupportedRaise k p hp hpN f) d_M)
+    (traceGamma1_diamondOpHom_commute
+      (Nat.dvd_mul_left N p) (pSupportedRaise k p hp hpN f))
 
 /-! ### Decomposition → iSup-submodule membership (T127)
 
@@ -587,7 +561,7 @@ theorem mem_iSup_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_of_decomposition
     f ∈ ⨆ p ∈ N.primeFactors,
         qSupportedOnDvdSubmodule N k p ⊓ cuspFormCharSpace k χ.toUnitHom := by
   rw [h_decomp]
-  refine Submodule.sum_mem _ (fun p hp => ?_)
+  refine Submodule.sum_mem _ (fun p hp ↦ ?_)
   refine Submodule.mem_iSup_of_mem p (Submodule.mem_iSup_of_mem hp ?_)
   exact ⟨h_supp p hp, h_char p hp⟩
 
@@ -731,18 +705,10 @@ noncomputable def PartialTraceCorrection.toTraceCorrectionPrime
     TraceCorrectionPrime N k p where
   core := P.core
   correction := P.nonFixingCorrection + P.remainingFixingCorrection
-  core_minus_correction_supp := fun f => by
-    have h := P.combined_supp f
-    have heq : (P.core - (P.nonFixingCorrection + P.remainingFixingCorrection)) f =
-        (P.core - P.nonFixingCorrection - P.remainingFixingCorrection) f := by
-      simp only [LinearMap.sub_apply, LinearMap.add_apply]; abel
-    rw [heq]; exact h
-  core_minus_correction_char := fun χ f hf => by
-    have h := P.combined_char χ f hf
-    have heq : (P.core - (P.nonFixingCorrection + P.remainingFixingCorrection)) f =
-        (P.core - P.nonFixingCorrection - P.remainingFixingCorrection) f := by
-      simp only [LinearMap.sub_apply, LinearMap.add_apply]; abel
-    rw [heq]; exact h
+  core_minus_correction_supp := fun f ↦ by
+    convert P.combined_supp f using 2; simp [sub_add_eq_sub_sub]
+  core_minus_correction_char := fun χ f hf ↦ by
+    convert P.combined_char χ f hf using 2; simp [sub_add_eq_sub_sub]
 
 /-- The `core - correction` `P`-field of the assembled
 `TraceCorrectionPrime` from a `PartialTraceCorrection` is exactly the
@@ -771,12 +737,8 @@ noncomputable def PartialTraceCorrection.zero
   core := 0
   nonFixingCorrection := 0
   remainingFixingCorrection := 0
-  combined_supp := fun _ => by
-    simp only [sub_self, zero_sub, neg_zero, LinearMap.zero_apply]
-    exact (qSupportedOnDvdSubmodule N k p).zero_mem
-  combined_char := fun χ _ _ => by
-    simp only [sub_self, zero_sub, neg_zero, LinearMap.zero_apply]
-    exact (cuspFormCharSpace k χ).zero_mem
+  combined_supp := fun _ ↦ by simp
+  combined_char := fun χ _ _ ↦ by simp
 
 /-- **End-to-end consumer:
 `PartialTraceCorrection` family ⇒ composite-`N` `mainLemma`.**
@@ -808,7 +770,7 @@ theorem mainLemma_charSpace_of_partialTraceCorrections
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
     f ∈ cuspFormsOld N k :=
   mainLemma_charSpace_of_traceCorrections
-    (fun d hd => (P d hd).toTraceCorrectionPrime) mobius χ f hfχ h_vanish
+    (fun d hd ↦ (P d hd).toTraceCorrectionPrime) mobius χ f hfχ h_vanish
 
 /-! ### Structured blocker: the precise missing theorem (Outcome 3 minimal artifact)
 
@@ -953,7 +915,6 @@ theorem traceGamma1_cuspForm_diamondOpCusp_commute
         (HeckeRing.GL2.TraceOperator.traceGamma1_cuspForm h k f) =
       HeckeRing.GL2.TraceOperator.traceGamma1_cuspForm h k
         (HeckeRing.GL2.diamondOpCusp k d_M f) := by
-  -- Pick β ∈ Γ₀(M) representing d_M, and let β_N ∈ Γ₀(N) be its lift via N ∣ M.
   obtain ⟨β, hβ⟩ := HeckeRing.GL2.Gamma0MapUnits_surjective d_M
   set β_N : ↥(Gamma0 N) := ⟨(β : SL(2, ℤ)),
     HeckeRing.GL2.Gamma0_le_of_dvd h β.property⟩ with hβ_N_def
@@ -963,25 +924,19 @@ theorem traceGamma1_cuspForm_diamondOpCusp_commute
       (β : SL(2, ℤ)) β.property
       (HeckeRing.GL2.Gamma0_le_of_dvd h β.property), hβ]
   apply DFunLike.coe_injective
-  -- Unfold the `(fun f => ⇑f)` introduced by `coe_injective` to `⇑`.
   change (⇑(HeckeRing.GL2.diamondOpCusp k (ZMod.unitsMap h d_M)
         (HeckeRing.GL2.TraceOperator.traceGamma1_cuspForm h k f)) : UpperHalfPlane → ℂ) =
       ⇑(HeckeRing.GL2.TraceOperator.traceGamma1_cuspForm h k
         (HeckeRing.GL2.diamondOpCusp k d_M f))
-  -- LHS: rewrite diamondOpCusp via β_N (representative for unitsMap h d_M at level N).
   have hLHS : ⇑(HeckeRing.GL2.diamondOpCusp k (ZMod.unitsMap h d_M)
         (HeckeRing.GL2.TraceOperator.traceGamma1_cuspForm h k f)) =
       ⇑(HeckeRing.GL2.TraceOperator.traceGamma1_cuspForm h k f) ∣[k]
         mapGL ℝ ((β_N : ↥(Gamma0 N)) : SL(2, ℤ)) := by
     rw [HeckeRing.GL2.diamondOpCusp_eq k _ β_N hβN]; rfl
   rw [hLHS, traceGamma1_cuspForm_eq_mf]
-  -- LHS: ⇑(traceGamma1 h k (cuspToMF f)) ∣[k] mapGL ℝ ((β_N).val).
-  -- But (β_N : SL(2, ℤ)).val = (β : SL(2, ℤ)).val by construction.
   have hβ_eq : ((β_N : ↥(Gamma0 N)) : SL(2, ℤ)) = (β : SL(2, ℤ)) := rfl
   rw [hβ_eq]
-  -- Now: ⇑(traceGamma1 h k (cuspToMF f)) ∣[k] mapGL ℝ β.
   rw [HeckeRing.GL2.AtkinLehner.traceGamma1_slash_mapGL_commute h (cuspToMF f) β]
-  -- LHS is now: ⇑(traceGamma1 h k (diamondOpAux k β (cuspToMF f))).
   rw [traceGamma1_cuspForm_eq_mf]
   haveI := HeckeRing.GL2.TraceOperator.Gamma1_mapGL_isFiniteRelIndex_of_dvd h
   show (⇑(ModularForm.trace _ (HeckeRing.GL2.diamondOpAux k β (cuspToMF f))) :
@@ -1114,14 +1069,8 @@ noncomputable def PartialTraceCorrection.ofTraceLevelRaiseCore
   core := traceLevelRaiseCore N p k
   nonFixingCorrection := traceLevelRaiseCore N p k
   remainingFixingCorrection := 0
-  combined_supp := fun f => by
-    have heq : (traceLevelRaiseCore N p k - traceLevelRaiseCore N p k - 0) f = 0 := by
-      simp only [sub_self, LinearMap.zero_apply]
-    rw [heq]; exact (qSupportedOnDvdSubmodule N k p).zero_mem
-  combined_char := fun χ f _ => by
-    have heq : (traceLevelRaiseCore N p k - traceLevelRaiseCore N p k - 0) f = 0 := by
-      simp only [sub_self, LinearMap.zero_apply]
-    rw [heq]; exact (HeckeRing.GL2.cuspFormCharSpace k χ).zero_mem
+  combined_supp := fun _ ↦ by simp
+  combined_char := fun _ _ _ ↦ by simp
 
 /-! ### Structured residual obligation (Outcome 3 minimal artifact)
 
@@ -1263,8 +1212,6 @@ lemma IsGammaStableCosetFinset.compl
   rw [Finset.mem_sdiff] at hh ⊢
   refine ⟨Finset.mem_univ _, ?_⟩
   intro hmem
-  -- If ⟦γ * h⟧ ∈ T then translating back by γ⁻¹ gives ⟦h⟧ ∈ T,
-  -- contradicting hh.2.
   have hback := hT γ⁻¹ (γ * h) hmem
   have heq : (⟦γ⁻¹ * (γ * h)⟧ : ℋ ⧸ (𝒢.subgroupOf ℋ)) = ⟦h⟧ := by
     congr 1; group
@@ -1302,47 +1249,47 @@ noncomputable def cuspFormOfGammaStableCosetSum
     (hT : IsGammaStableCosetFinset (𝒢 := 𝒢) (ℋ := ℋ) T)
     (f : CuspForm 𝒢 k) :
     CuspForm ℋ k where
-  toFun := fun τ => ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ
+  toFun := fun τ ↦ ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ
   slash_action_eq' h hh := by
     have hstable : ∀ (γ : ℋ) (q : ℋ ⧸ (𝒢.subgroupOf ℋ)), q ∈ T → γ • q ∈ T := by
       intro γ q hq
-      refine Quotient.inductionOn q (fun r hq' => ?_) hq
+      refine Quotient.inductionOn q (fun r hq' ↦ ?_) hq
       exact hT γ r hq'
     ext τ
-    have hfun : ((fun τ => ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ)
+    have hfun : ((fun τ ↦ ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ)
         = ∑ q ∈ T, SlashInvariantForm.quotientFunc f q :=
-      funext fun _ => (Finset.sum_apply _ _ _).symm
+      funext fun _ ↦ (Finset.sum_apply _ _ _).symm
     rw [hfun, SlashAction.sum_slash, Finset.sum_fn]
-    refine Finset.sum_nbij' (i := fun q => (⟨h, hh⟩ : ℋ)⁻¹ • q)
-      (j := fun q => (⟨h, hh⟩ : ℋ) • q) ?_ ?_ ?_ ?_ ?_
-    · exact fun q hq => hstable _ q hq
-    · exact fun q hq => hstable _ q hq
+    refine Finset.sum_nbij' (i := fun q ↦ (⟨h, hh⟩ : ℋ)⁻¹ • q)
+      (j := fun q ↦ (⟨h, hh⟩ : ℋ) • q) ?_ ?_ ?_ ?_ ?_
+    · exact fun q hq ↦ hstable _ q hq
+    · exact fun q hq ↦ hstable _ q hq
     · intro q _; simp
     · intro q _; simp
     · intro q _
       rw [SlashInvariantForm.quotientFunc_smul (f := f) hh q]
   holo' := by
-    have hfun : ((fun τ => ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ)
+    have hfun : ((fun τ ↦ ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ)
         = ∑ q ∈ T, SlashInvariantForm.quotientFunc f q :=
-      funext fun _ => (Finset.sum_apply _ _ _).symm
+      funext fun _ ↦ (Finset.sum_apply _ _ _).symm
     show MDifferentiable 𝓘(ℂ) 𝓘(ℂ)
-      (fun τ => ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ)
+      (fun τ ↦ ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ)
     rw [hfun]
-    refine MDifferentiable.sum (fun q _ => ?_)
-    refine Quotient.inductionOn q (fun r => ?_)
+    refine MDifferentiable.sum (fun q _ ↦ ?_)
+    refine Quotient.inductionOn q (fun r ↦ ?_)
     show MDifferentiable 𝓘(ℂ) 𝓘(ℂ) ((f : ℍ → ℂ) ∣[k] r.val⁻¹)
     exact (CuspForm.translate (f := f) (r.val : GL (Fin 2) ℝ)⁻¹).holo'
   zero_at_cusps' {c} hc γ hγ := by
     show IsZeroAtImInfty
-      (((fun τ => ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ) ∣[k] γ)
-    have hfun : ((fun τ => ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ)
+      (((fun τ ↦ ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ) ∣[k] γ)
+    have hfun : ((fun τ ↦ ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ) : ℍ → ℂ)
         = ∑ q ∈ T, SlashInvariantForm.quotientFunc f q :=
-      funext fun _ => (Finset.sum_apply _ _ _).symm
+      funext fun _ ↦ (Finset.sum_apply _ _ _).symm
     rw [hfun, SlashAction.sum_slash, IsZeroAtImInfty, Filter.ZeroAtFilter,
       Finset.sum_fn]
     rw [show (0 : ℂ) = ∑ q ∈ T, (0 : ℂ) by simp]
-    refine tendsto_finset_sum _ (fun q _ => ?_)
-    refine Quotient.inductionOn q (fun r => ?_)
+    refine tendsto_finset_sum _ (fun q _ ↦ ?_)
+    refine Quotient.inductionOn q (fun r ↦ ?_)
     have hr : r.val ∈ ℋ := r.2
     refine (CuspForm.translate (f := f) (r.val : GL (Fin 2) ℝ)⁻¹).zero_at_cusps' ?_ γ hγ
     simpa using hc.of_isFiniteRelIndex_conj hr
@@ -1370,24 +1317,22 @@ noncomputable def cuspFormOfGammaStableCosetSumLinear
     CuspForm 𝒢 k →ₗ[ℂ] CuspForm ℋ k where
   toFun f := cuspFormOfGammaStableCosetSum T hT f
   map_add' f g := by
-    refine DFunLike.ext _ _ fun τ => ?_
+    refine DFunLike.ext _ _ fun τ ↦ ?_
     simp only [CuspForm.coe_add, cuspFormOfGammaStableCosetSum_apply, Pi.add_apply,
       ← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl fun q _ => ?_
-    refine Quotient.inductionOn q (fun r => ?_)
+    refine Finset.sum_congr rfl fun q _ ↦ ?_
+    refine Quotient.inductionOn q (fun r ↦ ?_)
     simp only [SlashInvariantForm.quotientFunc_mk, CuspForm.coe_add,
       SlashAction.add_slash, Pi.add_apply]
   map_smul' c f := by
-    refine DFunLike.ext _ _ fun τ => ?_
+    refine DFunLike.ext _ _ fun τ ↦ ?_
     simp only [RingHom.id_apply, cuspFormOfGammaStableCosetSum_apply,
-      CuspForm.IsGLPos.smul_apply, Finset.sum_apply]
+      CuspForm.IsGLPos.smul_apply]
     rw [Finset.smul_sum]
-    refine Finset.sum_congr rfl fun q _ => ?_
-    refine Quotient.inductionOn q (fun r => ?_)
+    refine Finset.sum_congr rfl fun q _ ↦ ?_
+    refine Quotient.inductionOn q (fun r ↦ ?_)
     simp only [SlashInvariantForm.quotientFunc_mk, CuspForm.IsGLPos.coe_smul,
       ModularForm.smul_slash, Pi.smul_apply]
-    -- inline σ_apply_of_mem (private in TraceOperator): with `r.val⁻¹ ∈ ℋ` and
-    -- `[ℋ.HasDetOne]`, `σ r.val⁻¹ c = c`.
     have hrinv : (r.val : GL (Fin 2) ℝ)⁻¹ ∈ ℋ := inv_mem r.prop
     have hσ : UpperHalfPlane.σ (r.val : GL (Fin 2) ℝ)⁻¹ c = c := by
       show (if 0 < ((r.val : GL (Fin 2) ℝ)⁻¹.det.val) then RingHom.id ℂ
@@ -1427,7 +1372,7 @@ structure TraceLevelRaiseStableSaturationData
         ((Gamma1 N).map (mapGL ℝ)) :=
       HeckeRing.GL2.TraceOperator.Gamma1_mapGL_isFiniteRelIndex_of_dvd
         (Nat.dvd_mul_left N p)
-    haveI hFin : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
+    haveI : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
         ((Gamma1 (p * N)).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))) :=
       Fintype.ofFinite _
     Finset ((Gamma1 N).map (mapGL ℝ) ⧸
@@ -1522,7 +1467,7 @@ lemma IsGammaStableCosetFinset.eq_univ_of_one_mem
     T = Finset.univ := by
   refine Finset.eq_univ_iff_forall.mpr ?_
   intro q
-  refine Quotient.inductionOn q (fun h => ?_)
+  refine Quotient.inductionOn q (fun h ↦ ?_)
   have hstab := hT h 1 h_id
   have heq : (⟦h * 1⟧ : ℋ ⧸ (𝒢.subgroupOf ℋ)) = ⟦h⟧ := by
     congr 1; exact mul_one h
@@ -1545,19 +1490,17 @@ lemma not_isGammaStableCosetFinset_erase_one
     ¬ IsGammaStableCosetFinset (𝒢 := 𝒢) (ℋ := ℋ) (T.erase ⟦1⟧) := by
   obtain ⟨q, hq⟩ := hne
   intro hStable
-  -- Pick a representative h with ⟦h⟧ = q.  Then ⟦h⟧ ∈ T (since T = univ).
-  refine Quotient.inductionOn q (motive := fun q => q ≠ ⟦1⟧ → False) ?_ hq
+  refine Quotient.inductionOn q (motive := fun q ↦ q ≠ ⟦1⟧ → False) ?_ hq
   intro h hh
   have hT_univ : T = Finset.univ := hT.eq_univ_of_one_mem h_id
   have h_in_erase : (⟦h⟧ : ℋ ⧸ (𝒢.subgroupOf ℋ)) ∈ T.erase ⟦1⟧ := by
     rw [Finset.mem_erase]
     exact ⟨hh, by rw [hT_univ]; exact Finset.mem_univ _⟩
-  -- Apply h⁻¹: ⟦h⁻¹ * h⟧ = ⟦1⟧ must be in T.erase ⟦1⟧, contradiction.
   have hback := hStable h⁻¹ h h_in_erase
   have heq : (⟦h⁻¹ * h⟧ : ℋ ⧸ (𝒢.subgroupOf ℋ)) = ⟦(1 : ℋ)⟧ := by
     congr 1; exact inv_mul_cancel h
   rw [heq] at hback
-  exact (Finset.not_mem_erase _ _) hback
+  simp at hback
 
 /-- **No-go for `TraceLevelRaiseStableSaturationData`.**  Any inhabitant
 forces `D.saturated = Finset.univ`, since the `ℋ`-action on the quotient
@@ -1572,7 +1515,7 @@ lemma TraceLevelRaiseStableSaturationData.saturated_eq_univ
         ((Gamma1 N).map (mapGL ℝ)) :=
       HeckeRing.GL2.TraceOperator.Gamma1_mapGL_isFiniteRelIndex_of_dvd
         (Nat.dvd_mul_left N p)
-    haveI hFin : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
+    haveI : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
         ((Gamma1 (p * N)).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))) :=
       Fintype.ofFinite _
     D.saturated = Finset.univ := by
@@ -1580,10 +1523,10 @@ lemma TraceLevelRaiseStableSaturationData.saturated_eq_univ
       ((Gamma1 N).map (mapGL ℝ)) :=
     HeckeRing.GL2.TraceOperator.Gamma1_mapGL_isFiniteRelIndex_of_dvd
       (Nat.dvd_mul_left N p)
-  haveI hFin : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
+  haveI : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
       ((Gamma1 (p * N)).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))) :=
     Fintype.ofFinite _
   classical
-  exact D.saturated_stable.eq_univ_of_one_mem D.identity_mem
+  convert D.saturated_stable.eq_univ_of_one_mem D.identity_mem using 2
 
 end HeckeRing.GL2.AtkinLehner

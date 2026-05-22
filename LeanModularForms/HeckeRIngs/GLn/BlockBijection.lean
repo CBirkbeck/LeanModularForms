@@ -125,36 +125,34 @@ noncomputable def decompQuot_mul_left_equiv (g : P.Δ) (h : P.H)
     decompQuot P ⟨(h : G) * g, hm⟩ ≃ decompQuot P g := by
   set K := (ConjAct.toConjAct (g : G) • P.H).subgroupOf P.H
   set K' := K.map (MulAut.conj h).toMonoidHom
-  -- Transport along the stabilizer equality Stab(h*g) = conj(h)(Stab(g))
   refine (Subgroup.quotientEquivOfEq (stab_mul_left_eq_map_conj P g h)).trans ?_
-  -- Build H ⧸ K' ≃ H ⧸ K via σ ↦ h⁻¹·σ·h
   have h_wd : ∀ a b : P.H, QuotientGroup.leftRel K' a b →
       QuotientGroup.leftRel K ((MulAut.conj h⁻¹) a) ((MulAut.conj h⁻¹) b) := by
     intro a b hab
     rw [QuotientGroup.leftRel_apply] at hab ⊢
     rw [show ((MulAut.conj h⁻¹) a)⁻¹ * (MulAut.conj h⁻¹) b =
-      (MulAut.conj h⁻¹) (a⁻¹ * b) from by simp [map_inv, map_mul]]
+      (MulAut.conj h⁻¹) (a⁻¹ * b) by simp [map_inv, map_mul]]
     rw [Subgroup.mem_map] at hab; obtain ⟨k, hk, hkeq⟩ := hab
     show (MulAut.conj h⁻¹) (a⁻¹ * b) ∈ K
     have : a⁻¹ * b = (MulAut.conj h) k := hkeq.symm
     rw [this]; convert hk using 1; ext; simp [MulAut.conj_apply, mul_assoc]
   exact Equiv.ofBijective
     (Quotient.map' (MulAut.conj h⁻¹) h_wd)
-    ⟨fun x y hxy => by
-      revert x y; exact Quotient.ind₂ fun a b hxy => by
+    ⟨fun x y hxy ↦ by
+      revert x y; exact Quotient.ind₂ fun a b hxy ↦ by
         simp only [Quotient.map'_mk''] at hxy
         rw [Quotient.eq''] at hxy ⊢
         rw [QuotientGroup.leftRel_apply] at hxy ⊢
         rw [show ((MulAut.conj h⁻¹) a)⁻¹ * (MulAut.conj h⁻¹) b =
-          (MulAut.conj h⁻¹) (a⁻¹ * b) from by simp [map_inv, map_mul]] at hxy
+          (MulAut.conj h⁻¹) (a⁻¹ * b) by simp [map_inv, map_mul]] at hxy
         rw [Subgroup.mem_map]
         exact ⟨(MulAut.conj h⁻¹) (a⁻¹ * b), hxy, by
           ext; simp [MulAut.conj_apply, mul_assoc]⟩,
-    fun x => by
-      revert x; exact Quotient.ind fun b => ⟨Quotient.mk'' ((MulAut.conj h) b), by
+    fun x ↦ by
+      revert x; exact Quotient.ind fun b ↦ ⟨Quotient.mk'' ((MulAut.conj h) b), by
         simp only [Quotient.map'_mk'']; rw [Quotient.eq'', QuotientGroup.leftRel_apply]
         rw [show ((MulAut.conj h⁻¹) ((MulAut.conj h) b))⁻¹ * b =
-          1 from by ext; simp [MulAut.conj_apply, mul_assoc]]
+          1 by ext; simp [MulAut.conj_apply, mul_assoc]]
         exact K.one_mem⟩⟩
 
 /-- Combined left-right invariance: `decompQuot(h·g·k) ≃ decompQuot(g)` for `h, k ∈ H`.
@@ -312,7 +310,7 @@ private lemma mapGL_injective (n : ℕ) :
   intro a b h
   have h_mat : (a : Matrix (Fin n) (Fin n) ℤ) = (b : Matrix (Fin n) (Fin n) ℤ) := by
     ext i j
-    have hij := congr_arg (fun g => (g : Matrix (Fin n) (Fin n) ℚ) i j)
+    have hij := congr_arg (fun g ↦ (g : Matrix (Fin n) (Fin n) ℚ) i j)
       (show (mapGL ℚ a : Matrix _ _ ℚ) = (mapGL ℚ b : Matrix _ _ ℚ) from
         congr_arg Units.val h)
     simp only [mapGL_coe_matrix, algebraMap_int_eq] at hij
@@ -368,10 +366,9 @@ private lemma slSuccEmbed_injective {k : ℕ} :
       |>.toEquiv.trans finSumFinEquiv.symm)
   have hSub : (slSuccEmbed A).1 = (slSuccEmbed B).1 := congr_arg Subtype.val h
   rw [slSuccEmbed_val_eq, slSuccEmbed_val_eq] at hSub
-  -- Apply the inverse submatrix to recover the fromBlocks equation.
   have hFromBlocks :
       (fromBlocks (1 : Matrix (Fin 1) (Fin 1) ℤ) 0 0 A.1) = fromBlocks 1 0 0 B.1 := by
-    have hSub' := congr_arg (fun M : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ =>
+    have hSub' := congr_arg (fun M : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ ↦
       M.submatrix e.symm e.symm) hSub
     simp only at hSub'
     have h1 : (fromBlocks (1 : Matrix (Fin 1) (Fin 1) ℤ) 0 0 A.1) =
@@ -398,7 +395,7 @@ private lemma slSuccEmbed_H_injective {k : ℕ} :
   intro σ₁ σ₂ h
   have hval : (slSuccEmbed_H σ₁ : GL (Fin (k + 2)) ℚ) =
       (slSuccEmbed_H σ₂ : GL (Fin (k + 2)) ℚ) :=
-    congr_arg (fun x : (GL_pair (k + 2)).H => (x : GL (Fin (k + 2)) ℚ)) h
+    congr_arg (fun x : (GL_pair (k + 2)).H ↦ (x : GL (Fin (k + 2)) ℚ)) h
   rw [slSuccEmbed_H_val, slSuccEmbed_H_val] at hval
   have hSL : slSuccEmbed (toSL σ₁) = slSuccEmbed (toSL σ₂) :=
     mapGL_injective (k + 2) hval
@@ -430,37 +427,26 @@ private lemma block_conj_identity {k : ℕ}
     (diagMat (k + 2) (Fin.cons 1 d))⁻¹ * mapGL ℚ (slSuccEmbed M) *
       diagMat (k + 2) (Fin.cons 1 d) = mapGL ℚ (slSuccEmbed N) := by
   have hcons_pos : ∀ i : Fin (k + 2), 0 < (Fin.cons 1 d : Fin (k + 2) → ℕ) i := by
-    intro i; refine Fin.cases ?_ (fun j => ?_) i
+    intro i; refine Fin.cases ?_ (fun j ↦ ?_) i
     · simp [Fin.cons_zero]
     · rw [Fin.cons_succ]; exact hd j
-  -- Reduce D⁻¹*g*D = h to g*D = D*h (avoids GL-inverse matrix entries)
   set D' := diagMat (k + 2) (Fin.cons 1 d) with hD'_def
   set D := diagMat (k + 1) d with hD_def
-  -- From hMN derive the equivalent: mapGL M * D = D * mapGL N
   have hMN_mul : mapGL ℚ M * D = D * mapGL ℚ N := by
     have h1 := congr_arg (D * ·) hMN
     simp only [← mul_assoc, mul_inv_cancel, one_mul] at h1
     exact h1
-  -- The goal D'⁻¹ * embed(M) * D' = embed(N) follows from embed(M) * D' = D' * embed(N)
   suffices hmul : mapGL ℚ (slSuccEmbed M) * D' = D' * mapGL ℚ (slSuccEmbed N) by
     have h1 := congr_arg (D'⁻¹ * ·) hmul
     simp only [← mul_assoc, inv_mul_cancel, one_mul] at h1
     exact h1
-  -- Prove embed(M) * D' = D' * embed(N) entry-by-entry.
-  -- After simplification, the goal becomes embed(M)_{ij} * (cons 1 d)_j = (cons 1 d)_i * embed(N)_{ij}.
-  -- Split i, j via Fin.cases into 4 block cases:
-  --   (0,0): 1*1 = 1*1, (0,j+1): 0*d_j = 1*0, (i+1,0): 0*1 = d_i*0
-  --   (i+1,j+1): M_{i'j'}*d_{j'} = d_{i'}*N_{i'j'} from hMN_mul
   apply Units.ext; ext i j
   simp only [Units.val_mul, mul_apply, hD'_def, diagMat_val _ _ hcons_pos, diagonal_apply,
     mul_ite, mul_zero, ite_mul, zero_mul, Finset.sum_ite_eq', Finset.sum_ite_eq,
     Finset.mem_univ, ite_true]
-  refine Fin.cases ?_ (fun i' => ?_) i <;> refine Fin.cases ?_ (fun j' => ?_) j
+  refine Fin.cases ?_ (fun i' ↦ ?_) i <;> refine Fin.cases ?_ (fun j' ↦ ?_) j
   all_goals simp only [mapGL_coe_matrix, algebraMap_int_eq, Fin.cons_zero, Fin.cons_succ,
     Nat.cast_one]
-  -- Cases (0,0), (0,j+1), (i+1,0): the block structure of slSuccEmbed gives 1 or 0.
-  -- In each case, the slSuccEmbed entry is 1 (diagonal) or 0 (off-diagonal), so both
-  -- sides reduce to trivial arithmetic.
   · simp [SpecialLinearGroup.map, RingHom.mapMatrix_apply, slSuccEmbed_val_eq,
       submatrix_apply, fromBlocks, Matrix.of_apply, Fin.castOrderIso, finSumFinEquiv,
       Fin.addCases]
@@ -470,8 +456,6 @@ private lemma block_conj_identity {k : ℕ}
   · simp [SpecialLinearGroup.map, RingHom.mapMatrix_apply, slSuccEmbed_val_eq,
       submatrix_apply, fromBlocks, Matrix.of_apply, Fin.castOrderIso, finSumFinEquiv,
       Fin.addCases]
-  -- Case (i+1,j+1): the lower-right block entries satisfy
-  -- embed(X)_{i'+1,j'+1} = X_{i',j'}, so the goal reduces to hMN_mul at entry (i',j').
   · have h4 := congr_arg Units.val hMN_mul
     simp only [Units.val_mul] at h4
     have h4_entry := congr_fun (congr_fun h4 i') j'
@@ -509,7 +493,7 @@ private lemma slSuccEmbed_H_stab_diagMat {k : ℕ}
 `(Fin.cons 1 a) i`. Local helper for diagonal block embedding. -/
 private lemma cons_one_pos {k : ℕ} {a : Fin (k + 1) → ℕ} (ha : ∀ i, 0 < a i) :
     ∀ i : Fin (k + 2), 0 < (Fin.cons 1 a : Fin (k + 2) → ℕ) i := by
-  intro i; refine Fin.cases ?_ (fun j => ?_) i
+  intro i; refine Fin.cases ?_ (fun j ↦ ?_) i
   · simp [Fin.cons_zero]
   · rw [Fin.cons_succ]; exact ha j
 
@@ -536,14 +520,10 @@ private lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
   have hc_ne : ∀ i, ((c i : ℤ) : ℚ) ≠ 0 := by
     intro i
     exact_mod_cast (hc_pos i).ne'
-  have hc_int_ne : ∀ i, (c i : ℤ) ≠ 0 := fun i => by exact_mod_cast (hc_pos i).ne'
-  -- Define the candidate integer matrix.
+  have hc_int_ne : ∀ i, (c i : ℤ) ≠ 0 := fun i ↦ by exact_mod_cast (hc_pos i).ne'
   let Mraw : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    fun i j => (N.1 i j * (c j : ℤ)) / (c i : ℤ)
-  -- Entry equation: cast_to_ℚ Mraw = D⁻¹ * mapGL N * D.
-  -- We instead prove: mapGL N * D = D * cast_to_ℚ Mraw, then transform.
+    fun i j ↦ (N.1 i j * (c j : ℤ)) / (c i : ℤ)
   set D : GL (Fin (k + 2)) ℚ := diagMat (k + 2) c with hD_def
-  -- Helper: cast equality at each entry from divisibility
   have h_entry_cast : ∀ i j,
       (Mraw i j : ℚ) * (c i : ℤ) = (N.1 i j : ℚ) * (c j : ℤ) := by
     intro i j
@@ -551,10 +531,9 @@ private lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
     have hmul : (Mraw i j) * (c i : ℤ) = N.1 i j * (c j : ℤ) := by
       simp only [Mraw]
       rw [Int.ediv_mul_cancel hdvd]
-    have := congr_arg (fun z : ℤ => (z : ℚ)) hmul
+    have := congr_arg (fun z : ℤ ↦ (z : ℚ)) hmul
     push_cast at this
     convert this using 1
-  -- Show `(mapGL ℚ N).1 * D.1 = D.1 * Mraw.cast` as ℚ-matrices.
   have h_mat_eq :
       (mapGL ℚ N : Matrix _ _ ℚ) * (D : Matrix _ _ ℚ) =
         (D : Matrix _ _ ℚ) * (Mraw.map (Int.cast : ℤ → ℚ)) := by
@@ -562,33 +541,26 @@ private lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
     simp only [hD_def, diagMat_val _ _ hc_pos, mul_apply, diagonal_apply, mul_ite,
       mul_zero, ite_mul, zero_mul, Finset.sum_ite_eq', Finset.sum_ite_eq,
       Finset.mem_univ, ite_true, mapGL_coe_matrix, algebraMap_int_eq]
-    -- Goal: ((SpecialLinearGroup.map (Int.castRingHom ℚ)) N) i j * (c j : ℚ) =
-    --       (c i : ℚ) * Matrix.map Mraw Int.cast i j
-    -- Reduce both sides to plain coerced entries.
     show ((N.1 i j : ℤ) : ℚ) * (c j : ℚ) = (c i : ℚ) * ((Mraw i j : ℤ) : ℚ)
     have he := h_entry_cast i j
     have hci : (((c i : ℤ) : ℚ)) = (c i : ℚ) := by push_cast; ring
     have hcj : (((c j : ℤ) : ℚ)) = (c j : ℚ) := by push_cast; ring
     rw [hci, hcj] at he
     linarith [he]
-  -- Compute det of Mraw.cast as a ℚ-matrix.
   have hD_det_ne : (D.val).det ≠ 0 := by
     have : (D.val).det = ∏ i, (c i : ℚ) := by
       simp [hD_def, diagMat_det _ _ hc_pos]
     rw [this]
-    exact Finset.prod_ne_zero_iff.mpr (fun i _ => hc_ne i)
+    exact Finset.prod_ne_zero_iff.mpr (fun i _ ↦ hc_ne i)
   have h_detM_cast : (Mraw.map (Int.cast : ℤ → ℚ)).det = 1 := by
-    -- From h_mat_eq, take determinants.
     have hdet := congr_arg Matrix.det h_mat_eq
     rw [Matrix.det_mul, Matrix.det_mul] at hdet
-    -- det (mapGL N) = 1
     have hN1 : ((mapGL ℚ N).val).det = 1 := by
       have h1 : ((mapGL ℚ N).val).det = (N.val.map (Int.cast : ℤ → ℚ)).det := by
         rw [mapGL_coe_matrix]
         simp [algebraMap_int_eq]
       rw [h1, ← Int.cast_det, N.2]; simp
     rw [hN1, one_mul] at hdet
-    -- hdet : (D.val).det = (D.val).det * (Mraw.map Int.cast).det
     have hdet' : (D.val).det * (Mraw.map (Int.cast : ℤ → ℚ)).det = (D.val).det * 1 := by
       rw [mul_one]; linarith [hdet]
     exact mul_left_cancel₀ hD_det_ne hdet'
@@ -597,20 +569,14 @@ private lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
       Int.cast_det Mraw
     have : ((Mraw.det : ℤ) : ℚ) = (1 : ℚ) := by rw [hcast]; exact h_detM_cast
     exact_mod_cast this
-  -- Build SL element.
   let M : SpecialLinearGroup (Fin (k + 2)) ℤ := ⟨Mraw, h_detM_int⟩
-  -- Show membership in SLnZ_subgroup.
   refine ⟨M, ?_⟩
-  -- Goal: mapGL ℚ M = D⁻¹ * mapGL ℚ N * D
-  -- From h_mat_eq we have mapGL N * D = D * mapGL M (as matrices).
   have h_mapGL_M_mat : ((mapGL ℚ M : Matrix _ _ ℚ)) = Mraw.map (Int.cast : ℤ → ℚ) := by
     rw [mapGL_coe_matrix]; rfl
-  -- Lift to GL.
   have h_units : (mapGL ℚ N : GL (Fin (k + 2)) ℚ) * D = D * mapGL ℚ M := by
     apply Units.ext
     rw [Units.val_mul, Units.val_mul, h_mapGL_M_mat]
     exact h_mat_eq
-  -- Transform to D⁻¹ * mapGL N * D = mapGL M.
   have h_target : D⁻¹ * (mapGL ℚ N : GL (Fin (k + 2)) ℚ) * D = mapGL ℚ M := by
     have h1 := congr_arg (D⁻¹ * ·) h_units
     simp only [← mul_assoc, inv_mul_cancel, one_mul] at h1
@@ -631,22 +597,18 @@ private noncomputable def decompQuot_slSuccEmbed_diagMat {k : ℕ}
   refine Quotient.map' slSuccEmbed_H ?_
   intro σ₁ σ₂ h_rel
   rw [QuotientGroup.leftRel_apply] at h_rel ⊢
-  -- Collect the new difference to a single `slSuccEmbed_H` application.
   have h_mul : (slSuccEmbed_H σ₁)⁻¹ * slSuccEmbed_H σ₂ =
       slSuccEmbed_H (σ₁⁻¹ * σ₂) := by
     rw [← slSuccEmbed_H_inv, ← slSuccEmbed_H_mul]
   rw [h_mul]
-  -- Unfold the subgroupOf stabilizer form on both sides to the `d⁻¹ · _ · d ∈ H` form.
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def] at h_rel ⊢
   simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at h_rel ⊢
-  -- Rewrite `diagMat_delta` to `diagMat` on both sides.
   rw [show ((diagMat_delta (k + 1) a : (GL_pair (k + 1)).Δ) : GL (Fin (k + 1)) ℚ) =
         diagMat (k + 1) a from diagMat_delta_val (k + 1) a ha] at h_rel
   rw [show ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
         GL (Fin (k + 2)) ℚ) = diagMat (k + 2) (Fin.cons 1 a) from
       diagMat_delta_val (k + 2) (Fin.cons 1 a) (cons_one_pos ha)]
-  -- Apply the stabilizer preservation lemma.
   exact slSuccEmbed_H_stab_diagMat a ha (σ₁⁻¹ * σ₂) h_rel
 
 /-! ### Block entry extraction lemmas for `slSuccEmbed`
@@ -709,7 +671,7 @@ private lemma slSuccEmbed_conj_entry {k : ℕ}
     ((slSuccEmbed (toSL σ)).val i j : ℚ) * ((Fin.cons 1 a : Fin (k + 2) → ℕ) j : ℚ) =
       ((Fin.cons 1 a : Fin (k + 2) → ℕ) i : ℚ) * (ν.val i j : ℚ) := by
   have hcons_pos := cons_one_pos ha
-  have h := congr_arg (fun (x : GL (Fin (k + 2)) ℚ) => (x : Matrix _ _ ℚ) i j) hflip
+  have h := congr_arg (fun (x : GL (Fin (k + 2)) ℚ) ↦ (x : Matrix _ _ ℚ) i j) hflip
   simp only [Units.val_mul, Matrix.mul_apply, slSuccEmbed_H_val,
              mapGL_coe_matrix, algebraMap_int_eq, diagMat_val _ _ hcons_pos,
              Matrix.diagonal_apply, mul_ite, mul_zero, ite_mul, zero_mul,
@@ -785,13 +747,13 @@ private lemma ν_bottomBlock_det {k : ℕ}
     (ν : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (hflip : (slSuccEmbed_H σ : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) =
       diagMat (k + 2) (Fin.cons 1 a) * mapGL ℚ ν) :
-    Matrix.det (M := (fun i j : Fin (k + 1) => ν.val i.succ j.succ :
+    Matrix.det (M := (fun i j : Fin (k + 1) ↦ ν.val i.succ j.succ :
       Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ)) = 1 := by
   set ν'_mat : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
-    fun i j => ν.val i.succ j.succ with hν'_mat_def
+    fun i j ↦ ν.val i.succ j.succ with hν'_mat_def
   have h00 := slSuccEmbed_conj_ν_zero_zero a ha σ ν hflip
   have h_col : ∀ i : Fin (k + 1), ν.val i.succ 0 = 0 :=
-    fun i => slSuccEmbed_conj_ν_succ_zero a ha σ ν hflip i
+    fun i ↦ slSuccEmbed_conj_ν_succ_zero a ha σ ν hflip i
   have h_expand := Matrix.det_succ_column ν.val 0
   rw [Fin.sum_univ_succ] at h_expand
   simp only [Fin.val_zero, add_zero, pow_zero, one_mul, h00] at h_expand
@@ -817,7 +779,7 @@ private noncomputable def ν_bottomBlock {k : ℕ}
     (hflip : (slSuccEmbed_H σ : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) =
       diagMat (k + 2) (Fin.cons 1 a) * mapGL ℚ ν) :
     SpecialLinearGroup (Fin (k + 1)) ℤ :=
-  ⟨fun i j => ν.val i.succ j.succ, ν_bottomBlock_det a ha σ ν hflip⟩
+  ⟨fun i j ↦ ν.val i.succ j.succ, ν_bottomBlock_det a ha σ ν hflip⟩
 
 /-- The bottom-right block, mapped into `GL_{k+1}(ℚ)`, is the target of the conjugation
 at dim `k + 1`: `mapGL ν_bottomBlock = (diagMat a)⁻¹ · σ · diagMat a`. Proof by
@@ -831,7 +793,6 @@ private lemma ν_bottomBlock_mapGL_eq {k : ℕ}
       diagMat (k + 2) (Fin.cons 1 a) * mapGL ℚ ν) :
     (diagMat (k + 1) a)⁻¹ * (σ : GL (Fin (k + 1)) ℚ) * diagMat (k + 1) a =
       mapGL ℚ (ν_bottomBlock a ha σ ν hflip) := by
-  -- Flipped form: σ * diagMat a = diagMat a * mapGL ν_bottomBlock
   have h_flip_k1 : (σ : GL (Fin (k + 1)) ℚ) * diagMat (k + 1) a =
       diagMat (k + 1) a * mapGL ℚ (ν_bottomBlock a ha σ ν hflip) := by
     apply Units.ext
@@ -842,18 +803,15 @@ private lemma ν_bottomBlock_mapGL_eq {k : ℕ}
                mapGL_coe_matrix, algebraMap_int_eq,
                SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
                Matrix.map_apply]
-    -- Goal: σ.val i j * a j = a i * (ν_bottomBlock i j : ℚ)
-    -- The LHS uses σ directly, which equals mapGL (toSL σ). Bridge via toSL_spec.
     have h_σ : (σ : GL (Fin (k + 1)) ℚ).val i j = ((toSL σ).val i j : ℚ) := by
       have : mapGL ℚ (toSL σ) = σ := toSL_spec σ
-      have h' := congr_arg (fun (x : GL _ ℚ) => x.val i j) this
+      have h' := congr_arg (fun (x : GL _ ℚ) ↦ x.val i j) this
       simp only [mapGL_coe_matrix, algebraMap_int_eq,
                  SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
                  Matrix.map_apply] at h'
       exact h'.symm
     rw [h_σ]
     exact slSuccEmbed_conj_ν_succ_succ a ha σ ν hflip i j
-  -- Derive the inverse form from the flipped form
   have : (diagMat (k + 1) a)⁻¹ * ((σ : GL _ ℚ) * diagMat (k + 1) a) =
       (diagMat (k + 1) a)⁻¹ * (diagMat (k + 1) a * mapGL ℚ (ν_bottomBlock a ha σ ν hflip)) :=
     congr_arg ((diagMat (k + 1) a)⁻¹ * ·) h_flip_k1
@@ -979,7 +937,7 @@ private lemma blockEmbedGL_one {k : ℕ} :
   rw [show ((1 : GL (Fin (k + 1)) ℚ).val) = (1 : Matrix (Fin (k + 1)) (Fin (k + 1)) ℚ) from rfl,
       Matrix.fromBlocks_one]
   ext i j
-  simp [Matrix.submatrix_apply, Matrix.one_apply, Equiv.apply_eq_iff_eq]
+  simp [Matrix.submatrix_apply, Matrix.one_apply]
 
 /-- `blockEmbedGL` preserves inverses. -/
 private lemma blockEmbedGL_inv {k : ℕ} (X : GL (Fin (k + 1)) ℚ) :
@@ -995,7 +953,7 @@ private lemma blockEmbedGL_diagMat {k : ℕ} (a : Fin (k + 1) → ℕ) (ha : ∀
   rw [blockEmbedGL_val_eq]
   rw [diagMat_val _ _ ha, diagMat_val _ _ (cons_one_pos ha)]
   ext i j
-  refine Fin.cases ?_ (fun i' => ?_) i <;> refine Fin.cases ?_ (fun j' => ?_) j <;>
+  refine Fin.cases ?_ (fun i' ↦ ?_) i <;> refine Fin.cases ?_ (fun j' ↦ ?_) j <;>
     simp [Matrix.submatrix_apply, Matrix.diagonal_apply, Matrix.fromBlocks,
           Matrix.of_apply, Fin.castOrderIso, finSumFinEquiv, Fin.addCases,
           Fin.subNat, Fin.succ_inj, Fin.cons_succ,
@@ -1010,7 +968,7 @@ private lemma blockEmbedGL_mapGL_eq {k : ℕ} (ν : SpecialLinearGroup (Fin (k +
   ext i j
   simp only [Matrix.submatrix_apply, mapGL_coe_matrix, algebraMap_int_eq,
              SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply]
-  refine Fin.cases ?_ (fun i' => ?_) i <;> refine Fin.cases ?_ (fun j' => ?_) j
+  refine Fin.cases ?_ (fun i' ↦ ?_) i <;> refine Fin.cases ?_ (fun j' ↦ ?_) j
   · rw [slSuccEmbed_val_zero_zero]
     simp [Fin.castOrderIso, finSumFinEquiv, Fin.addCases, Matrix.fromBlocks,
           Matrix.of_apply]
@@ -1090,7 +1048,7 @@ hypotheses are automatically satisfied by `slSuccEmbed M`, witnessed by
 private lemma slPredEmbed_slSuccEmbed_eq {k : ℕ}
     (M : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     slPredEmbed (slSuccEmbed M) (slSuccEmbed_val_zero_zero M)
-      (fun i => slSuccEmbed_val_succ_zero M i) = M := by
+      (fun i ↦ slSuccEmbed_val_succ_zero M i) = M := by
   apply Subtype.ext
   ext i j
   rw [slPredEmbed_val_apply]
@@ -1107,7 +1065,7 @@ private lemma slSuccEmbed_slPredEmbed_eq {k : ℕ}
     slSuccEmbed (slPredEmbed M h_diag h_col) = M := by
   apply Subtype.ext
   ext i j
-  refine Fin.cases ?_ (fun i' => ?_) i <;> refine Fin.cases ?_ (fun j' => ?_) j
+  refine Fin.cases ?_ (fun i' ↦ ?_) i <;> refine Fin.cases ?_ (fun j' ↦ ?_) j
   · rw [slSuccEmbed_val_zero_zero, h_diag]
   · rw [slSuccEmbed_val_zero_succ, h_row j']
   · rw [slSuccEmbed_val_succ_zero, h_col i']
@@ -1168,7 +1126,6 @@ private lemma slPredEmbed_H_stab_diagMat {k : ℕ}
     (diagMat (k + 1) a)⁻¹ *
         (slPredEmbed_H σ h_diag h_col : GL (Fin (k + 1)) ℚ) *
         diagMat (k + 1) a ∈ (GL_pair (k + 1)).H := by
-  -- Using the section, σ = slSuccEmbed_H (slPredEmbed_H σ).
   have h_eq : (σ : GL (Fin (k + 2)) ℚ) =
       (slSuccEmbed_H (slPredEmbed_H σ h_diag h_col) : GL (Fin (k + 2)) ℚ) := by
     rw [slSuccEmbed_H_slPredEmbed_H_eq σ h_diag h_col h_row]
@@ -1184,7 +1141,7 @@ private lemma blockEmbedGL_injective {k : ℕ} :
   apply Units.ext
   ext i j
   have h_val : (blockEmbedGL X).val i.succ j.succ = (blockEmbedGL Y).val i.succ j.succ :=
-    congr_arg (fun (u : GL (Fin (k + 2)) ℚ) => u.val i.succ j.succ) h
+    congr_arg (fun (u : GL (Fin (k + 2)) ℚ) ↦ u.val i.succ j.succ) h
   have h_X_unfold : (blockEmbedGL X).val i.succ j.succ = X.val i j := by
     rw [blockEmbedGL_val_eq]
     simp [Matrix.submatrix_apply, Matrix.fromBlocks, Matrix.of_apply,
@@ -1204,12 +1161,10 @@ private lemma blockEmbedGL_mem_H_imp {k : ℕ} (h : GL (Fin (k + 1)) ℚ)
     (hh : blockEmbedGL h ∈ (GL_pair (k + 2)).H) :
     h ∈ (GL_pair (k + 1)).H := by
   obtain ⟨ν, hν⟩ := hh
-  -- hν : mapGL ℚ ν = blockEmbedGL h
-  -- Show ν has block form by reading off the (0, 0), (i.succ, 0), (0, j.succ) entries.
   have hν_val : ∀ p q : Fin (k + 2),
       ((ν.1 p q : ℤ) : ℚ) = (blockEmbedGL h).val p q := by
     intro p q
-    have := congr_arg (fun (u : GL (Fin (k + 2)) ℚ) => u.val p q) hν
+    have := congr_arg (fun (u : GL (Fin (k + 2)) ℚ) ↦ u.val p q) hν
     simpa [mapGL_coe_matrix, algebraMap_int_eq, Matrix.map_apply] using this
   have h_ν_diag : ν.1 0 0 = 1 := by
     have h0 := hν_val 0 0
@@ -1224,8 +1179,6 @@ private lemma blockEmbedGL_mem_H_imp {k : ℕ} (h : GL (Fin (k + 1)) ℚ)
     simp [Matrix.submatrix_apply, Matrix.fromBlocks, Matrix.of_apply,
       Fin.castOrderIso, finSumFinEquiv, Fin.addCases, Fin.subNat] at hi
     exact_mod_cast hi
-  -- Now ν has the required block-form hypothesis for slPredEmbed.
-  -- Set ν_m := slPredEmbed ν; by section + blockEmbedGL_injective, mapGL ν_m = h.
   have h_ν_row : ∀ j : Fin (k + 1), ν.1 0 j.succ = 0 := by
     intro j
     have hj := hν_val 0 j.succ
@@ -1235,10 +1188,7 @@ private lemma blockEmbedGL_mem_H_imp {k : ℕ} (h : GL (Fin (k + 1)) ℚ)
     exact_mod_cast hj
   set ν_m := slPredEmbed ν h_ν_diag h_ν_col with hν_m_def
   refine ⟨ν_m, ?_⟩
-  -- Need: mapGL ℚ ν_m = h
-  -- Strategy: show blockEmbedGL (mapGL ν_m) = blockEmbedGL h, then use injectivity.
   apply blockEmbedGL_injective
-  -- Goal: blockEmbedGL (mapGL ν_m) = blockEmbedGL h
   have h_section : slSuccEmbed ν_m = ν :=
     slSuccEmbed_slPredEmbed_eq ν h_ν_diag h_ν_col h_ν_row
   rw [blockEmbedGL_mapGL_eq, h_section, hν]
@@ -1259,7 +1209,6 @@ private lemma slSuccEmbed_H_fiber_transfer_converse {k : ℕ}
          diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H) :
     (diagMat (k + 1) c)⁻¹ * (σ_m : GL (Fin (k + 1)) ℚ) * diagMat (k + 1) a *
       (τ_m : GL (Fin (k + 1)) ℚ) * diagMat (k + 1) b ∈ (GL_pair (k + 1)).H := by
-  -- The k+2 expression equals blockEmbedGL (k+1 expression).
   have h_eq : (diagMat (k + 2) (Fin.cons 1 c))⁻¹ *
       (slSuccEmbed_H σ_m : GL (Fin (k + 2)) ℚ) *
       diagMat (k + 2) (Fin.cons 1 a) *
@@ -1294,7 +1243,6 @@ private lemma slSuccEmbed_H_fiber_transfer {k : ℕ}
       diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
   obtain ⟨ν, hν⟩ := h
   refine ⟨slSuccEmbed ν, ?_⟩
-  -- Apply blockEmbedGL to hν and rewrite each factor into its dim-(k+2) form.
   have h_img := congr_arg (blockEmbedGL (k := k)) hν
   rw [blockEmbedGL_mapGL_eq] at h_img
   rw [blockEmbedGL_mul, blockEmbedGL_mul, blockEmbedGL_mul, blockEmbedGL_mul,
@@ -1309,7 +1257,7 @@ is logically equivalent to the H-membership condition fed to
 `slSuccEmbed_H_fiber_transfer`. This makes the block-embedding fiber transfer
 applicable directly to fiber-counting arguments at the diagMat-delta level. -/
 private lemma fiber_diagMat_iff_mem_H {n : ℕ} [NeZero n]
-    (a b c : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) (hc : ∀ i, 0 < c i)
+    (a b c : Fin n → ℕ) (_ : ∀ i, 0 < a i) (_ : ∀ i, 0 < b i) (_ : ∀ i, 0 < c i)
     (σ τ : (GL_pair n).H) :
     (({(σ : GL (Fin n) ℚ) * diagMat n a} : Set _) *
         {(τ : GL (Fin n) ℚ) * diagMat n b} *
@@ -1336,7 +1284,7 @@ private lemma fiber_diagMat_iff_mem_H {n : ℕ} [NeZero n]
     rw [show (diagMat n c)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a *
           (τ : GL (Fin n) ℚ) * diagMat n b =
         (diagMat n c)⁻¹ * ((σ : GL (Fin n) ℚ) * diagMat n a *
-          ((τ : GL (Fin n) ℚ) * diagMat n b)) from by group, h_eq_factor]
+          ((τ : GL (Fin n) ℚ) * diagMat n b)) by group, h_eq_factor]
     exact hh
   · intro h_mem
     set h_elt := (diagMat n c)⁻¹ * (σ : GL (Fin n) ℚ) * diagMat n a *
@@ -1345,10 +1293,10 @@ private lemma fiber_diagMat_iff_mem_H {n : ℕ} [NeZero n]
     constructor
     · rintro ⟨_, rfl, k, hk, rfl⟩
       refine ⟨_, rfl, h_elt * k, (GL_pair n).H.mul_mem h_mem hk, ?_⟩
-      simp only [smul_eq_mul, h_elt]; group
+      simp only [h_elt]; group
     · rintro ⟨_, rfl, k, hk, rfl⟩
       refine ⟨_, rfl, h_elt⁻¹ * k, (GL_pair n).H.mul_mem ((GL_pair n).H.inv_mem h_mem) hk, ?_⟩
-      simp only [smul_eq_mul, h_elt]; group
+      simp only [h_elt]; group
 
 /-- `decompQuot` is invariant under changing the Δ-element when the underlying GL-values agree.
 This gives an `Equiv` via `Subgroup.quotientEquivOfEq` (the stabilizer depends only on the
@@ -1394,12 +1342,9 @@ a bijection with `m`-dimensional intermediate lattices. -/
 /-- A Z-lattice in `ℚ^n` is represented as `σ · diagMat(d) · ℤ^n` for `σ ∈ SL_n(ℤ)`.
 Two elements `(σ₁, d)` and `(σ₂, d)` give the same lattice iff `σ₁ ~ σ₂` in `decompQuot`.
 This is Shimura's lattice model (§3.2). -/
-private def IntLattice (n : ℕ) [NeZero n] (d : Fin n → ℕ) (hd : ∀ i, 0 < d i) :=
+private def IntLattice (n : ℕ) [NeZero n] (d : Fin n → ℕ) (_ : ∀ i, 0 < d i) :=
   decompQuot (GL_pair n) (diagMat_delta n d)
 
--- Shimura Prop 3.15: heckeMultiplicity = # intermediate lattices M with
--- N ⊂ M ⊂ L, {L:M} = b, {M:N} = a. We prove the block embedding equality
--- directly at the fiber level using the lattice decomposition argument.
 
 /-! ### Compensated rep-shift helpers for the diagMat-level ≥ direction
 
@@ -1478,7 +1423,7 @@ private lemma decompQuot_left_mul_cancel {n : ℕ} [NeZero n]
     (⟦x⟧ : decompQuot (GL_pair n) g) = ⟦y⟧ := by
   rw [Quotient.eq, QuotientGroup.leftRel_apply] at heq ⊢
   convert heq using 1
-  rw [show (h * x)⁻¹ * (h * y) = x⁻¹ * y from by group]
+  rw [show (h * x)⁻¹ * (h * y) = x⁻¹ * y by group]
 
 /-- Narrowly typed `Quotient.out_eq` for `decompQuot`: avoids the motive-correctness
 trap that `rw [← Quotient.out_eq …]` falls into because `decompQuot` is mentioned
@@ -1519,13 +1464,13 @@ private lemma heckeMultiplicity_block_embed_ge_diagMat {k : ℕ}
   let getN₁ : (GL_pair (k + 2)).H →
       (ConjAct.toConjAct ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
         GL (Fin (k + 2)) ℚ) • (GL_pair (k + 2)).H).subgroupOf (GL_pair (k + 2)).H :=
-    fun σ => (QuotientGroup.mk_out_eq_mul _ σ).choose
+    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose
   have hgetN₁_spec : ∀ σ : (GL_pair (k + 2)).H,
       (⟦σ⟧ : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 a))).out =
       σ * getN₁ σ :=
-    fun σ => (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
+    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
   let mkYbase : (GL_pair (k + 2)).H → (GL_pair (k + 2)).H → (GL_pair (k + 2)).H :=
-    fun σ τ => ⟨_, conjAct_inv_mem_of_subgroupOf
+    fun σ τ ↦ ⟨_, conjAct_inv_mem_of_subgroupOf
       ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) : GL (Fin (k + 2)) ℚ)
       (getN₁ σ)⟩ * τ
   let SrcType : Type := {p : decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) a) ×
@@ -1546,14 +1491,13 @@ private lemma heckeMultiplicity_block_embed_ge_diagMat {k : ℕ}
             ((GL_pair (k + 2)).H : Set _) =
             {(diagMat_delta (k + 2) (Fin.cons 1 c) : GL (Fin (k + 2)) ℚ)} *
               ((GL_pair (k + 2)).H : Set _)}
-  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ =>
+  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ ↦
     ⟨(⟦slSuccEmbed_H i.out⟧,
       ⟦mkYbase (slSuccEmbed_H i.out) (slSuccEmbed_H j.out)⟧),
       by
         have h_iff := fiber_diagMat_iff_mem_H a b c ha hb hc i.out j.out
         rw [← h_dval_a1, ← h_dval_b1, ← h_dval_c1] at h_iff
         have h_mem_pre := h_iff.mp hcond
-        -- Convert h_mem_pre from `↑(diagMat_delta)` form to `diagMat` form by congr.
         have h_mem : (diagMat (k + 1) c)⁻¹ * (i.out : GL (Fin (k + 1)) ℚ) *
             diagMat (k + 1) a * (j.out : GL (Fin (k + 1)) ℚ) * diagMat (k + 1) b ∈
               (GL_pair (k + 1)).H := by
@@ -1696,7 +1640,7 @@ rep-level and diag-level stabilizers is absorbed by the asymmetric shift. -/
 Proof uses H-conjugation by `Ra` to strip the outer Ra factors after substituting
 `rep T(a) = La · D_a · Ra`. -/
 private lemma rep_stab_iff_diag_stab {n : ℕ} [NeZero n]
-    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
+    (a : Fin n → ℕ) (_ : ∀ i, 0 < a i)
     (La Ra : (GL_pair n).H)
     (hLR : (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) =
       (La : GL (Fin n) ℚ) * diagMat n a * (Ra : GL (Fin n) ℚ))
@@ -1770,8 +1714,6 @@ private lemma decompQuot_asymm_first_wd_rev {n : ℕ} [NeZero n]
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hrel ⊢
   rw [hLR]
-  -- hrel : (diagMat a)⁻¹ · ↑(σ'₁⁻¹·σ'₂) · diagMat a ∈ H   (at GL level)
-  -- Goal: (La·D_a·Ra)⁻¹ · ↑((Lc·σ'₁·La⁻¹)⁻¹·(Lc·σ'₂·La⁻¹)) · (La·D_a·Ra) ∈ H
   have := (GL_pair n).H.mul_mem
     ((GL_pair n).H.mul_mem ((GL_pair n).H.inv_mem Ra.2) hrel) Ra.2
   convert this using 1
@@ -1827,13 +1769,9 @@ private lemma decompQuot_asymm_first_wd {n : ℕ} [NeZero n]
         (GL_pair n).H).subgroupOf (GL_pair n).H)
       (Lc⁻¹ * σ₁ * La) (Lc⁻¹ * σ₂ * La) := by
   rw [QuotientGroup.leftRel_apply] at hrel ⊢
-  -- hrel : σ₁⁻¹ * σ₂ ∈ Stab(rep T(a))
-  -- Goal: (Lc⁻¹ σ₁ La)⁻¹ * (Lc⁻¹ σ₂ La) ∈ Stab(diagMat_delta a)
   rw [diagMat_delta_val n a ha]
-  -- Simplify the inverse product.
   have hsimp : (Lc⁻¹ * σ₁ * La)⁻¹ * (Lc⁻¹ * σ₂ * La) = La⁻¹ * (σ₁⁻¹ * σ₂) * La := by group
   rw [hsimp]
-  -- Apply the bridging iff.
   have := (rep_stab_iff_diag_stab a ha La Ra hLR (σ₁⁻¹ * σ₂)).mp hrel
   convert this using 1
 
@@ -1934,7 +1872,7 @@ private lemma fiber_rep_iff_mem_H {n : ℕ} [NeZero n]
         (HeckeCoset.rep (T_diag c) : GL (Fin n) ℚ)⁻¹ *
           ((σ : GL (Fin n) ℚ) * (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) *
             ((τ : GL (Fin n) ℚ) *
-              (HeckeCoset.rep (T_diag b) : GL (Fin n) ℚ))) from by group, h_eq_factor]
+              (HeckeCoset.rep (T_diag b) : GL (Fin n) ℚ))) by group, h_eq_factor]
     exact hh
   · intro h_mem
     set h_elt := (HeckeCoset.rep (T_diag c) : GL (Fin n) ℚ)⁻¹ * (σ : GL (Fin n) ℚ) *
@@ -1980,12 +1918,12 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
   let getN₁ : (GL_pair n).H →
       (ConjAct.toConjAct ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ) •
         (GL_pair n).H).subgroupOf (GL_pair n).H :=
-    fun σ => (QuotientGroup.mk_out_eq_mul _ σ).choose
+    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose
   have hgetN₁_spec : ∀ σ : (GL_pair n).H,
       (⟦σ⟧ : decompQuot (GL_pair n) (diagMat_delta n a)).out = σ * getN₁ σ :=
-    fun σ => (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
+    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
   let mkYbase : (GL_pair n).H → (GL_pair n).H → (GL_pair n).H :=
-    fun σ_bar τ_bar => ⟨_, conjAct_inv_mem_of_subgroupOf
+    fun σ_bar τ_bar ↦ ⟨_, conjAct_inv_mem_of_subgroupOf
       ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ) (getN₁ σ_bar)⟩ * τ_bar
   let SrcType : Type := {p : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a)) ×
             decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b)) |
@@ -2005,16 +1943,13 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
             ((GL_pair n).H : Set _) =
             {(diagMat_delta n c : GL (Fin n) ℚ)} *
               ((GL_pair n).H : Set _)}
-  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ =>
+  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ ↦
     ⟨(⟦Lc⁻¹ * i.out * La⟧,
       ⟦mkYbase (Lc⁻¹ * i.out * La) (Ra * j.out * Lb)⟧),
       by
-        -- Convert hcond (rep fiber) to rep mem_H
         have h_rep_mem := (fiber_rep_iff_mem_H a b c i.out j.out).mp hcond
-        -- Transport to compensated diag mem_H
         have h_diag_mem := (rep_mem_H_iff_compensated_diag_mem_H a b c
           La Ra Lb Rb Lc Rc hDecA hDecB hDecC i.out j.out).mp h_rep_mem
-        -- Convert back to fiber form (compensated representatives)
         have h_iff_lift := fiber_diagMat_iff_mem_H a b c ha hb hc
           (Lc⁻¹ * i.out * La) (Ra * j.out * Lb)
         have h_rc_lift := h_iff_lift.mpr h_diag_mem
@@ -2093,7 +2028,6 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
       decompQuot (GL_pair n) (diagMat_delta n b)) =
       ⟦mkYbase (Lc⁻¹ * i₂.out * La) (Ra * j₂.out * Lb)⟧ :=
     (Prod.mk.injEq _ _ _ _).mp heq_pair |>.2
-  -- i₁ = i₂: use decompQuot_asymm_first_wd_rev injectivity
   have h_i_final : i₁ = i₂ := by
     rw [Quotient.eq] at h_i_eq
     change QuotientGroup.leftRel _ (Lc⁻¹ * i₁.out * La) (Lc⁻¹ * i₂.out * La) at h_i_eq
@@ -2114,7 +2048,6 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
       _ = ⟦i₂.out⟧ := h_out
       _ = i₂ := decompQuot_out_eq i₂
   subst h_i_final
-  -- j₁ = j₂: use left-mul cancellation for the first-component-dependent Y-base
   have h_j_cancel := decompQuot_left_mul_cancel
     (diagMat_delta n b)
     ⟨_, conjAct_inv_mem_of_subgroupOf
@@ -2169,18 +2102,15 @@ private lemma heckeMultiplicity_diagMat_le_rep_delta {n : ℕ} [NeZero n]
     diagMat_delta_val n b hb
   have h_dval_c : ((diagMat_delta n c : (GL_pair n).Δ) : GL (Fin n) ℚ) = diagMat n c :=
     diagMat_delta_val n c hc
-  -- getN₁ for the rep side
   let getN₁ : (GL_pair n).H →
       (ConjAct.toConjAct (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) •
         (GL_pair n).H).subgroupOf (GL_pair n).H :=
-    fun σ => (QuotientGroup.mk_out_eq_mul _ σ).choose
+    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose
   have hgetN₁_spec : ∀ σ : (GL_pair n).H,
       (⟦σ⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a))).out = σ * getN₁ σ :=
-    fun σ => (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
-  -- mkYbase_rev compensates the 2nd component for the 1st-component stabilizer shift,
-  -- on the rep side.
+    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
   let mkYbase : (GL_pair n).H → (GL_pair n).H → (GL_pair n).H :=
-    fun σ_bar τ_bar => ⟨_, conjAct_inv_mem_of_subgroupOf
+    fun σ_bar τ_bar ↦ ⟨_, conjAct_inv_mem_of_subgroupOf
       (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) (getN₁ σ_bar)⟩ * τ_bar
   let SrcType : Type := {p : decompQuot (GL_pair n) (diagMat_delta n a) ×
             decompQuot (GL_pair n) (diagMat_delta n b) |
@@ -2200,18 +2130,16 @@ private lemma heckeMultiplicity_diagMat_le_rep_delta {n : ℕ} [NeZero n]
             ((GL_pair n).H : Set _) =
             {((HeckeCoset.rep (T_diag c) : (GL_pair n).Δ) : GL (Fin n) ℚ)} *
               ((GL_pair n).H : Set _)}
-  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ =>
+  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ ↦
     ⟨(⟦Lc * i.out * La⁻¹⟧,
       ⟦mkYbase (Lc * i.out * La⁻¹) (Ra⁻¹ * j.out * Lb⁻¹)⟧),
       by
-        -- Convert hcond (diag fiber) to diag mem_H
         have h_iff := fiber_diagMat_iff_mem_H a b c ha hb hc i.out j.out
         rw [← h_dval_a, ← h_dval_b, ← h_dval_c] at h_iff
         have h_diag_mem_pre := h_iff.mp hcond
         have h_diag_mem : (diagMat n c)⁻¹ * (i.out : GL (Fin n) ℚ) * diagMat n a *
             (j.out : GL (Fin n) ℚ) * diagMat n b ∈ (GL_pair n).H := by
           convert h_diag_mem_pre using 2 <;> simp [h_dval_a, h_dval_b, h_dval_c]
-        -- Transport diag mem_H → rep mem_H via the compensated iff helper.
         have h_rep_mem : (HeckeCoset.rep (T_diag c) : GL (Fin n) ℚ)⁻¹ *
             ((Lc * i.out * La⁻¹ : (GL_pair n).H) : GL (Fin n) ℚ) *
             (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) *
@@ -2225,7 +2153,6 @@ private lemma heckeMultiplicity_diagMat_le_rep_delta {n : ℕ} [NeZero n]
             group
           rw [h_simp_i, h_simp_j]
           exact h_diag_mem
-        -- Convert back to rep fiber form
         have h_iff_lift := fiber_rep_iff_mem_H a b c
           (Lc * i.out * La⁻¹) (Ra⁻¹ * j.out * Lb⁻¹)
         have h_rc_lift := h_iff_lift.mpr h_rep_mem
@@ -2390,7 +2317,7 @@ private lemma sl_first_col_primitive {n : ℕ} [NeZero n]
   obtain ⟨n', rfl⟩ : ∃ n', n = n' + 1 := Nat.exists_eq_succ_of_ne_zero (NeZero.ne n)
   have h_dvd_det : d ∣ N.1.det := by
     rw [Matrix.det_succ_column_zero]
-    refine Finset.dvd_sum fun i _ => ?_
+    refine Finset.dvd_sum fun i _ ↦ ?_
     exact ((hd i).mul_left _).mul_right _
   rw [show N.1.det = 1 from N.2] at h_dvd_det
   exact isUnit_of_dvd_one h_dvd_det
@@ -2402,7 +2329,7 @@ private lemma sl_row_primitive {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) �
     (r : Fin n.succ) (d : ℤ) (hd : ∀ k : Fin n.succ, d ∣ N.1 r k) : IsUnit d := by
   have h_dvd_det : d ∣ N.1.det := by
     rw [Matrix.det_succ_row N.1 r]
-    refine Finset.dvd_sum fun j _ => ?_
+    refine Finset.dvd_sum fun j _ ↦ ?_
     exact ((hd j).mul_left _).mul_right _
   rw [show N.1.det = 1 from N.2] at h_dvd_det
   exact isUnit_of_dvd_one h_dvd_det
@@ -2441,7 +2368,7 @@ the sum is exactly the Laplace expansion of `det N = 1` along row `r`. -/
 private lemma sl_row_bezout {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) ℤ)
     (r : Fin n.succ) :
     ∃ c : Fin n.succ → ℤ, ∑ k, c k * N.1 r k = 1 := by
-  refine ⟨fun k => (-1) ^ ((r : ℕ) + (k : ℕ)) *
+  refine ⟨fun k ↦ (-1) ^ ((r : ℕ) + (k : ℕ)) *
     (N.1.submatrix r.succAbove k.succAbove).det, ?_⟩
   have hdet : N.1.det = 1 := N.2
   rw [Matrix.det_succ_row N.1 r] at hdet
@@ -2449,7 +2376,7 @@ private lemma sl_row_bezout {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) ℤ)
       (N.1.submatrix r.succAbove k.succAbove).det) * N.1 r k =
       ∑ j : Fin n.succ, (-1) ^ ((r : ℕ) + (j : ℕ)) * N.1 r j *
         (N.1.submatrix r.succAbove j.succAbove).det :=
-    Finset.sum_congr rfl fun j _ => by ring
+    Finset.sum_congr rfl fun j _ ↦ by ring
   rw [h_eq, hdet]
 
 /-- **Row clearing modulo `m`.** From `sl_row_bezout`, for any target value
@@ -2461,11 +2388,11 @@ private lemma sl_row_clear_mod {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) �
     (r : Fin n.succ) (x m : ℤ) :
     ∃ c : Fin n.succ → ℤ, m ∣ x + ∑ k, c k * N.1 r k := by
   obtain ⟨c₀, hc₀⟩ := sl_row_bezout N r
-  refine ⟨fun k => -x * c₀ k, ?_⟩
+  refine ⟨fun k ↦ -x * c₀ k, ?_⟩
   have h_sum : ∑ k, (-x * c₀ k) * N.1 r k = -x := by
     have : ∑ k, (-x * c₀ k) * N.1 r k = -x * ∑ k, c₀ k * N.1 r k := by
       rw [Finset.mul_sum]
-      refine Finset.sum_congr rfl fun k _ => ?_
+      refine Finset.sum_congr rfl fun k _ ↦ ?_
       ring
     rw [this, hc₀, mul_one]
   rw [h_sum, add_neg_cancel]
@@ -2484,11 +2411,11 @@ private lemma sl_row_clear_mod_avoiding {n : ℕ}
     (x m : ℤ) :
     ∃ c : Fin n.succ → ℤ, c k₀ = 0 ∧ m ∣ x + ∑ k, c k * N.1 r k := by
   obtain ⟨c₀, hc₀_zero, hc₀_sum⟩ := h_redundant
-  refine ⟨fun k => -x * c₀ k, by simp [hc₀_zero], ?_⟩
+  refine ⟨fun k ↦ -x * c₀ k, by simp [hc₀_zero], ?_⟩
   have h_sum : ∑ k, (-x * c₀ k) * N.1 r k = -x := by
     have : ∑ k, (-x * c₀ k) * N.1 r k = -x * ∑ k, c₀ k * N.1 r k := by
       rw [Finset.mul_sum]
-      refine Finset.sum_congr rfl fun k _ => ?_
+      refine Finset.sum_congr rfl fun k _ ↦ ?_
       ring
     rw [this, hc₀_sum, mul_one]
   rw [h_sum, add_neg_cancel]
@@ -2623,7 +2550,7 @@ private lemma sl2_row_embed_01_mulVec {n : ℕ} (B : SpecialLinearGroup (Fin 2) 
   by_cases h : i.val < 2
   · simp only [h, dite_true, Function.comp_apply]
     rw [sl2_row_embed_01_equiv_lt_2 i h, Matrix.fromBlocks_mulVec]
-    simp only [Sum.elim_inl, Matrix.zero_mulVec, Pi.add_apply, Pi.zero_apply, add_zero]
+    simp only [Sum.elim_inl, Matrix.zero_mulVec, add_zero]
     have h_restrict : ((v ∘ ((Fin.castOrderIso (show n + 3 = 2 + (n + 1) by omega)).toEquiv.trans
         finSumFinEquiv.symm).symm) ∘ Sum.inl : Fin 2 → ℤ) = ![v 0, v 1] := by
       funext j
@@ -2635,7 +2562,7 @@ private lemma sl2_row_embed_01_mulVec {n : ℕ} (B : SpecialLinearGroup (Fin 2) 
   · simp only [h, dite_false, Function.comp_apply]
     have h' : 2 ≤ i.val := Nat.not_lt.mp h
     rw [sl2_row_embed_01_equiv_ge_2 i h', Matrix.fromBlocks_mulVec]
-    simp only [Sum.elim_inr, Matrix.zero_mulVec, Pi.add_apply, Pi.zero_apply, zero_add,
+    simp only [Sum.elim_inr, Matrix.zero_mulVec, zero_add,
       Matrix.one_mulVec, Function.comp_apply]
     rw [sl2_row_embed_01_equiv_symm_inr]
     apply congr_arg
@@ -2689,7 +2616,7 @@ private lemma sl_dvd_of_mulVec_dvd {m : ℕ} (M : SpecialLinearGroup (Fin m) ℤ
     rw [Matrix.mulVec_mulVec, h_inv_mul, Matrix.one_mulVec]
   rw [hv_eq]
   simp only [Matrix.mulVec, dotProduct]
-  exact Finset.dvd_sum (fun k _ => (h k).mul_left _)
+  exact Finset.dvd_sum (fun k _ ↦ (h k).mul_left _)
 
 /-- **Extension helper**: lift `M : SL(Fin (n + 2), ℤ)` to `SL(Fin (n + 3), ℤ)`
 by inserting an identity row and column at index 1. Built from `slSuccEmbed M`
@@ -2802,12 +2729,10 @@ private lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → �
     ∃ N : SpecialLinearGroup (Fin (n + 2)) ℤ, ∀ i, N.1 i 0 = w i
   | 0, w, hw => sl_exists_col_of_primitive_fin_2 w hw
   | n + 1, w, hw => by
-    -- Step 1: produce (T, w_ok) with w_ok = T.1 *ᵥ w, w_ok primitive,
-    -- and (w_ok 0 ≠ 0 ∨ w_ok 1 ≠ 0).
     have h_has_ne : ∃ j : Fin (n + 3), w j ≠ 0 := by
       by_contra h_all_zero
       push_neg at h_all_zero
-      have : IsUnit (2 : ℤ) := hw 2 (fun i => by rw [h_all_zero i]; exact dvd_zero _)
+      have : IsUnit (2 : ℤ) := hw 2 (fun i ↦ by rw [h_all_zero i]; exact dvd_zero _)
       rw [Int.isUnit_iff] at this; omega
     obtain ⟨T, hT_ne⟩ : ∃ T : SpecialLinearGroup (Fin (n + 3)) ℤ,
         (T.1 *ᵥ w) 0 ≠ 0 ∨ (T.1 *ᵥ w) 1 ≠ 0 := by
@@ -2841,11 +2766,10 @@ private lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → �
           Matrix.single_mulVec, Pi.add_apply, Function.update_self]
         rw [hw1]; simpa using hj_ne
     set w_ok := T.1 *ᵥ w with hw_ok_def
-    have hw_ok_prim : ∀ d : ℤ, (∀ i, d ∣ w_ok i) → IsUnit d := fun d hd =>
+    have hw_ok_prim : ∀ d : ℤ, (∀ i, d ∣ w_ok i) → IsUnit d := fun d hd ↦
       hw d (sl_dvd_of_mulVec_dvd T w d hd)
     obtain ⟨E, hE0, hE1, hErest⟩ := sl_bezout_reduce_dim w_ok hT_ne
-    -- Step 2: define w' and show primitivity.
-    let w' : Fin (n + 2) → ℤ := fun i =>
+    let w' : Fin (n + 2) → ℤ := fun i ↦
       if i.val = 0 then (Int.gcd (w_ok 0) (w_ok 1) : ℤ)
       else w_ok ⟨i.val + 1, by omega⟩
     have hw'_0 : w' 0 = (Int.gcd (w_ok 0) (w_ok 1) : ℤ) := by simp [w']
@@ -2873,12 +2797,9 @@ private lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → �
             Fin.ext (by show k.val = k.val - 2 + 2; omega)]
           rw [← hw'_succ k']
           exact hd ⟨k'.val + 1, by omega⟩
-    -- Step 3: apply IH.
     obtain ⟨N', hN'⟩ := sl_exists_col_of_primitive w' hw'_prim
-    -- Step 4: combine via N := T⁻¹ * (E⁻¹ * sl_extend_at_1 N').
     refine ⟨T⁻¹ * (E⁻¹ * sl_extend_at_1 N'), ?_⟩
     intro i
-    -- Prove (N.1 i 0) = w i via col-0 computation and mulVec_mulVec.
     have h_col0_eq : ∀ (j : Fin (n + 3)),
         (sl_extend_at_1 N').1 j 0 = (E.1 *ᵥ w_ok) j :=
       sl_extend_at_1_col_0_matches_reduce w_ok w' N' hN' hw'_0 hw'_succ E hE0 hE1 hErest
@@ -2892,7 +2813,6 @@ private lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → �
       funext k
       rw [Matrix.mulVec_single_one]
       exact h_col0_eq k
-    -- N.col 0 at i = (T⁻¹ * (E⁻¹ * sl_extend_at_1 N')).1 *ᵥ Pi.single 0 1 at i.
     have h_N_col0 : (T⁻¹ * (E⁻¹ * sl_extend_at_1 N')).1 *ᵥ (Pi.single 0 (1 : ℤ)) = w := by
       show (T⁻¹.1 * (E⁻¹.1 * (sl_extend_at_1 N').1)) *ᵥ (Pi.single 0 (1 : ℤ)) = w
       rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, h_col_inner]
@@ -2944,10 +2864,10 @@ private lemma h_int_conj_GL_of_int_mat {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (M_i N_i : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) :
     diagMat (k + 2) (Fin.cons 1 a) * (mapGL ℚ N_i : GL (Fin (k + 2)) ℚ) =
       (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) := by
@@ -2957,9 +2877,8 @@ private lemma h_int_conj_GL_of_int_mat {k : ℕ}
         Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ) =
       ((mapGL ℚ M_i : GL _ ℚ) * diagMat (k + 2) (Fin.cons 1 a)).val
   simp only [Units.val_mul]
-  -- Express each factor as `Matrix.map (algebraMap ℤ ℚ)` of an integer matrix.
   have h_Da : ((diagMat (k + 2) (Fin.cons 1 a) : GL _ ℚ).val : Matrix _ _ ℚ) =
-      (Matrix.diagonal (fun r : Fin (k + 2) =>
+      (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
     rw [diagMat_val (k + 2) _ hcons_pos,
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
@@ -2970,7 +2889,7 @@ private lemma h_int_conj_GL_of_int_mat {k : ℕ}
       M_i.val.map (algebraMap ℤ ℚ) := rfl
   rw [h_Da, h_N, h_M]
   rw [← Matrix.map_mul, ← Matrix.map_mul]
-  exact congr_arg (fun M : Matrix _ _ ℤ => M.map (algebraMap ℤ ℚ)) h_int_conj
+  exact congr_arg (fun M : Matrix _ _ ℤ ↦ M.map (algebraMap ℤ ℚ)) h_int_conj
 
 /-- **GL-level fiber equation from the fiber condition (T193 bridge).**
 GL ℚ form of `hfib_int_mat_eq`: directly produces
@@ -2995,8 +2914,6 @@ private lemma hfib_GL_eq {k : ℕ}
   have hcons_b := cons_one_pos hb
   have hcons_c := cons_one_pos hc
   obtain ⟨ν, hν⟩ := hfib_to_mem_H a b c ha hb hc i j hfib
-  -- `hν` packages the H-membership of `D_c⁻¹ · i_g · D_a · j_g · D_b`; rearrange
-  -- to the equation form expected by `jout_conj_N_i_stab_of_iMi_c_stab`.
   refine ⟨ν, ?_⟩
   have h_eq : diagMat (k + 2) (Fin.cons 1 c) *
       (mapGL ℚ ν : GL (Fin (k + 2)) ℚ) =
@@ -3025,12 +2942,12 @@ private lemma hfib_int_mat_eq {k : ℕ}
           ((GL_pair (k + 2)).H : Set _)) :
     ∃ ν : SpecialLinearGroup (Fin (k + 2)) ℤ,
       (toSL i.out).1 *
-          Matrix.diagonal (fun r : Fin (k + 2) =>
+          Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
           (toSL j.out).1 *
-          Matrix.diagonal (fun r : Fin (k + 2) =>
+          Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) =
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * ν.1 := by
   have hcons_a := cons_one_pos ha
   have hcons_b := cons_one_pos hb
@@ -3038,18 +2955,14 @@ private lemma hfib_int_mat_eq {k : ℕ}
   have h_mem := hfib_to_mem_H a b c ha hb hc i j hfib
   obtain ⟨ν, hν⟩ := h_mem
   refine ⟨ν, ?_⟩
-  -- Move `(diagMat c)⁻¹` to the other side: `diagMat c * mapGL ν = i.out * D_a * j.out * D_b`.
   have hmul : diagMat (k + 2) (Fin.cons 1 c) *
       (mapGL ℚ ν : GL (Fin (k + 2)) ℚ) =
       (i.out : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) *
           (j.out : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 b) := by
     rw [hν]; group
-  -- Pass to underlying matrices.
   have hmat := congr_arg
-    (fun g : GL (Fin (k + 2)) ℚ => (g : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ)) hmul
+    (fun g : GL (Fin (k + 2)) ℚ ↦ (g : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ)) hmul
   simp only [Units.val_mul] at hmat
-  -- Express each factor as `Matrix.map (algebraMap ℤ ℚ)` of an integer matrix.
-  -- Using `algebraMap ℤ ℚ` (not bare `Int.cast`) so `Matrix.map_mul` applies directly.
   have h_i : ((i.out : GL (Fin (k + 2)) ℚ) : Matrix _ _ ℚ) =
       (toSL i.out).1.map (algebraMap ℤ ℚ) := by
     rw [← toSL_spec i.out]; rfl
@@ -3058,19 +2971,19 @@ private lemma hfib_int_mat_eq {k : ℕ}
     rw [← toSL_spec j.out]; rfl
   have h_ν : ((mapGL ℚ ν : GL _ ℚ) : Matrix _ _ ℚ) = ν.1.map (algebraMap ℤ ℚ) := rfl
   have h_Da : ((diagMat (k + 2) (Fin.cons 1 a) : GL _ ℚ) : Matrix _ _ ℚ) =
-      (Matrix.diagonal (fun r : Fin (k + 2) =>
+      (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
     rw [diagMat_val (k + 2) _ hcons_a,
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
     congr 1
   have h_Db : ((diagMat (k + 2) (Fin.cons 1 b) : GL _ ℚ) : Matrix _ _ ℚ) =
-      (Matrix.diagonal (fun r : Fin (k + 2) =>
+      (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
     rw [diagMat_val (k + 2) _ hcons_b,
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
     congr 1
   have h_Dc : ((diagMat (k + 2) (Fin.cons 1 c) : GL _ ℚ) : Matrix _ _ ℚ) =
-      (Matrix.diagonal (fun r : Fin (k + 2) =>
+      (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
     rw [diagMat_val (k + 2) _ hcons_c,
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
@@ -3099,28 +3012,24 @@ private lemma hfib_col_div_a {k : ℕ}
     ∀ r : Fin (k + 1),
       (a r : ℤ) ∣ ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r.succ 0 := by
   obtain ⟨ν, hν⟩ := hfib_int_mat_eq a b c ha hb hc i j hfib
-  -- Premultiply hν by `adjugate A_i` and postmultiply by `adjugate ν`.
-  -- Key identities: `adjugate A * A = 1` (A ∈ SL), `ν * adjugate ν = 1` (ν ∈ SL).
   set A_i := (toSL i.out).1 with hA_i
   set A_j := (toSL j.out).1 with hA_j
   set D_a : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_a
   set D_b : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_b
   set D_c : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_c
   have hdetA : A_i.det = 1 := (toSL i.out).2
   have hdetν : ν.1.det = 1 := ν.2
-  -- Rearrange to `D_a * A_j * D_b * adjugate ν = adjugate A_i * D_c`.
   have h_rearr : D_a * A_j * D_b * Matrix.adjugate ν.1 =
       Matrix.adjugate A_i * D_c := by
     have h1 : Matrix.adjugate A_i * (A_i * D_a * A_j * D_b) * Matrix.adjugate ν.1 =
         Matrix.adjugate A_i * (D_c * ν.1) * Matrix.adjugate ν.1 := by
       rw [hν]
-    -- LHS: `(adjugate A_i * A_i) * D_a * A_j * D_b * adjugate ν = D_a * A_j * D_b * adjugate ν`.
     have hAA : Matrix.adjugate A_i * A_i = 1 := by
       rw [Matrix.adjugate_mul, hdetA, one_smul]
     have hνν : ν.1 * Matrix.adjugate ν.1 = 1 := by
@@ -3135,12 +3044,9 @@ private lemma hfib_col_div_a {k : ℕ}
     rw [hνν, Matrix.mul_one] at h1
     exact h1
   intro r
-  -- Apply mulVec (Pi.single 0 1) to both sides of h_rearr and compare at index r.succ.
   have h_mul : ((D_a * A_j * D_b * Matrix.adjugate ν.1).mulVec (Pi.single 0 (1 : ℤ))) r.succ =
       ((Matrix.adjugate A_i * D_c).mulVec (Pi.single 0 (1 : ℤ))) r.succ := by
     rw [h_rearr]
-  -- RHS: ((adjugate A_i * D_c).mulVec e_0) r.succ = (adjugate A_i).mulVec e_0 r.succ
-  -- = adjugate A_i r.succ 0 = ((toSL i.out)⁻¹).1 r.succ 0.
   have hDc_mulVec : D_c.mulVec (Pi.single 0 (1 : ℤ)) = Pi.single 0 (1 : ℤ) := by
     rw [hD_c, Matrix.diagonal_mulVec_single]
     simp [Fin.cons_zero]
@@ -3148,7 +3054,6 @@ private lemma hfib_col_div_a {k : ℕ}
       Matrix.adjugate A_i r.succ 0 := by
     rw [← Matrix.mulVec_mulVec, hDc_mulVec, Matrix.mulVec_single_one]
     rfl
-  -- LHS: factor `D_a` via mulVec_mulVec and compute.
   have hLHS : ((D_a * A_j * D_b * Matrix.adjugate ν.1).mulVec
       (Pi.single 0 (1 : ℤ))) r.succ =
       (a r : ℤ) *
@@ -3159,7 +3064,6 @@ private lemma hfib_col_div_a {k : ℕ}
     rw [hassoc, ← Matrix.mulVec_mulVec]
     rw [hD_a, Matrix.mulVec_diagonal]
     simp [Fin.cons_succ]
-  -- Combine and package divisibility.
   refine ⟨((A_j * D_b * Matrix.adjugate ν.1).mulVec (Pi.single 0 (1 : ℤ))) r.succ, ?_⟩
   rw [hLHS, hRHS] at h_mul
   have : ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r.succ 0 =
@@ -3200,39 +3104,35 @@ private lemma hfib_row_div_b_nu_top_row {k : ℕ}
       ∃ ν : SpecialLinearGroup (Fin (k + 2)) ℤ,
         (b r : ℤ) ∣ ν.1 0 r.succ := by
   obtain ⟨ν, hν⟩ := hfib_int_mat_eq a b c ha hb hc i j hfib
-  refine fun r => ⟨ν, ?_⟩
-  -- Take entry (0, r.succ) of both sides of hν.
+  refine fun r ↦ ⟨ν, ?_⟩
   have h_entry : ((toSL i.out).1 *
-      Matrix.diagonal (fun s : Fin (k + 2) =>
+      Matrix.diagonal (fun s : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) s : ℕ) : ℤ)) *
       (toSL j.out).1 *
-      Matrix.diagonal (fun s : Fin (k + 2) =>
+      Matrix.diagonal (fun s : Fin (k + 2) ↦
         (((Fin.cons 1 b : Fin (k + 2) → ℕ) s : ℕ) : ℤ))) 0 r.succ =
-      (Matrix.diagonal (fun s : Fin (k + 2) =>
+      (Matrix.diagonal (fun s : Fin (k + 2) ↦
         (((Fin.cons 1 c : Fin (k + 2) → ℕ) s : ℕ) : ℤ)) * ν.1) 0 r.succ :=
     congr_fun (congr_fun hν 0) r.succ
-  -- RHS at (0, r.succ): c_0 * ν.1 0 r.succ = ν.1 0 r.succ (since c_0 = 1).
-  have h_RHS : (Matrix.diagonal (fun s : Fin (k + 2) =>
+  have h_RHS : (Matrix.diagonal (fun s : Fin (k + 2) ↦
       (((Fin.cons 1 c : Fin (k + 2) → ℕ) s : ℕ) : ℤ)) * ν.1) 0 r.succ =
       ν.1 0 r.succ := by
     rw [Matrix.mul_apply]
-    simp only [Matrix.diagonal_apply, Finset.sum_ite_eq', Finset.mem_univ, if_true]
+    simp only [Matrix.diagonal_apply]
     simp [Fin.cons_zero]
-  -- LHS at (0, r.succ): factor D_b from the right.
-  -- (M * D_b)_{0, r.succ} = M_{0, r.succ} * (D_b)_{r.succ, r.succ} = M_{0, r.succ} * b_r.
   have h_LHS : ((toSL i.out).1 *
-      Matrix.diagonal (fun s : Fin (k + 2) =>
+      Matrix.diagonal (fun s : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) s : ℕ) : ℤ)) *
       (toSL j.out).1 *
-      Matrix.diagonal (fun s : Fin (k + 2) =>
+      Matrix.diagonal (fun s : Fin (k + 2) ↦
         (((Fin.cons 1 b : Fin (k + 2) → ℕ) s : ℕ) : ℤ))) 0 r.succ =
       (b r : ℤ) *
         ((toSL i.out).1 *
-          Matrix.diagonal (fun s : Fin (k + 2) =>
+          Matrix.diagonal (fun s : Fin (k + 2) ↦
             (((Fin.cons 1 a : Fin (k + 2) → ℕ) s : ℕ) : ℤ)) *
           (toSL j.out).1) 0 r.succ := by
     rw [Matrix.mul_apply]
-    simp only [Matrix.diagonal_apply, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+    simp only [Matrix.diagonal_apply]
     simp [Fin.cons_succ, mul_comm]
   rw [h_LHS, h_RHS] at h_entry
   exact ⟨_, h_entry.symm⟩
@@ -3283,7 +3183,7 @@ private lemma sl_addCol_finset_target_aux {n : ℕ}
       have hk_ne_k₀ : k ≠ k₀ := by
         intro h; apply hS; rw [h]; exact Finset.mem_insert_self _ _
       have hT_no_k₀ : k₀ ∉ T :=
-        fun h => hS (Finset.mem_insert_of_mem h)
+        fun h ↦ hS (Finset.mem_insert_of_mem h)
       obtain ⟨U, hU_pres, hU_target⟩ := ih hT_no_k₀
       refine ⟨U * slTransvecG k k₀ hk_ne_k₀ (c k), ?_, ?_⟩
       · intro a k' hk'
@@ -3312,7 +3212,6 @@ private lemma sl_addCol_finset_target {n : ℕ}
   intro a
   rw [hU_target a]
   congr 1
-  -- ∑ k ∈ erase univ k₀, c k * N a k = ∑ k, c k * N a k
   rw [← Finset.sum_erase_add _ _ (Finset.mem_univ k₀)]
   rw [h_zero, zero_mul, add_zero]
 
@@ -3358,9 +3257,7 @@ private lemma sl_addCol_emod_step {m : ℕ} (i j : Fin m) (hij : i ≠ j)
   · intro a k hk
     exact sl_addCol_preserves_col i j hij _ M a hk
   · rw [sl_addCol_target_col i j hij _ M r]
-    -- Goal: M r j + (-(M r j / M r i)) * M r i = M r j % M r i
     have := Int.emod_def (M.1 r j) (M.1 r i)
-    -- Int.emod_def : a % b = a - b * (a / b)
     linarith [this]
 
 /-- **Bezout column reduction making `d` divide the entry**: given a matrix
@@ -3375,9 +3272,6 @@ private lemma sl_addCol_make_dvd {m : ℕ} (i j : Fin m) (hij : i ≠ j)
       (∀ a (k : Fin m), k ≠ j → (M * U).1 a k = M.1 a k) ∧
       d ∣ (M * U).1 r j := by
   obtain ⟨s, t, hst⟩ := h_cop
-  -- s * (M.1 r i) + t * d = 1, so multiplying by -(M.1 r j):
-  --   (-(M.1 r j) * s) * (M.1 r i) = -(M.1 r j) - (-(M.1 r j) * t) * d
-  -- Hence M.1 r j + (-(M.1 r j) * s) * (M.1 r i) = (M.1 r j * t) * d.
   refine ⟨slTransvecG i j hij (-(M.1 r j) * s), ?_, ?_⟩
   · intro a k hk
     exact sl_addCol_preserves_col i j hij _ M a hk
@@ -3409,26 +3303,17 @@ private lemma sl_addCol_make_dvd_two_coprime {m : ℕ} (i j : Fin m) (hij : i �
   obtain ⟨s₁, t₁, hst₁⟩ := h_cop₁
   obtain ⟨s₂, t₂, hst₂⟩ := h_cop₂
   obtain ⟨u, v, huv⟩ := h_cop_d
-  -- Per-row Bezout coefficients solving each congruence:
   set c₁ : ℤ := -(M.1 r₁ j) * s₁ with hc₁_def
   set c₂ : ℤ := -(M.1 r₂ j) * s₂ with hc₂_def
-  -- CRT lift: c ≡ c₁ [d₁] and c ≡ c₂ [d₂].
   set c : ℤ := v * d₂ * c₁ + u * d₁ * c₂ with hc_def
   refine ⟨slTransvecG i j hij c, ?_, ?_, ?_⟩
   · intro a k hk
     exact sl_addCol_preserves_col i j hij _ M a hk
   · -- Show d₁ ∣ M.1 r₁ j + c * M.1 r₁ i.
     rw [sl_addCol_target_col i j hij _ M r₁]
-    -- c = c₁ + d₁ * (u * c₂ - u * c₁)  (since v*d₂ = 1 - u*d₁).
-    -- So M.1 r₁ j + c * M.1 r₁ i =
-    --    (M.1 r₁ j + c₁ * M.1 r₁ i) + d₁ * (u*c₂ - u*c₁) * M.1 r₁ i
-    -- and the first summand equals (M.1 r₁ j) * t₁ * d₁ from Bezout (as in
-    -- `sl_addCol_make_dvd`).
     refine ⟨M.1 r₁ j * t₁ + (u * c₂ - u * c₁) * M.1 r₁ i, ?_⟩
-    -- Algebraic identity: expand using huv : u*d₁ + v*d₂ = 1, hst₁.
     have key : M.1 r₁ j * (s₁ * M.1 r₁ i + t₁ * d₁) = M.1 r₁ j * 1 := by rw [hst₁]
     have hvd₂ : v * d₂ = 1 - u * d₁ := by linarith [huv]
-    -- Rearrange goal step by step.
     have : M.1 r₁ j + c * M.1 r₁ i =
         (M.1 r₁ j + c₁ * M.1 r₁ i) + (c - c₁) * M.1 r₁ i := by ring
     rw [this]
@@ -3518,7 +3403,6 @@ private lemma sl_addCol_make_dvd_two_compat {m : ℕ} (i j : Fin m) (hij : i ≠
     have hsplit : M.1 r₂ j + c * M.1 r₂ i =
         (M.1 r₂ j + c₂ * M.1 r₂ i) + (c - c₂) * M.1 r₂ i := by ring
     rw [hsplit]
-    -- c - c₂ = (c₁ - c₂) - u*d₁*δ = g*δ - u*d₁*δ = (g - u*d₁)*δ = v*d₂*δ
     have hcc₂ : c - c₂ = v * d₂ * δ := by
       have hkey : c - c₂ = (c₁ - c₂) - u * d₁ * δ := by rw [hc_def]; ring
       rw [hkey, hδ, hbezout]
@@ -3555,31 +3439,25 @@ private lemma sl_addCol_make_dvd_finset
       · intro a k _; simp
       · intro r hr; exact absurd hr (Finset.notMem_empty r)
   | insert r₀ R hr₀ IH =>
-      -- Specialize IH to the surviving hypotheses on `R`.
-      have h_cop_R : ∀ r ∈ R, IsCoprime (M.1 r i) (d r) := fun r hr =>
+      have h_cop_R : ∀ r ∈ R, IsCoprime (M.1 r i) (d r) := fun r hr ↦
         h_cop r (Finset.mem_insert_of_mem hr)
       have h_pairwise_R : ∀ r₁ ∈ R, ∀ r₂ ∈ R, r₁ ≠ r₂ → IsCoprime (d r₁) (d r₂) :=
-        fun r₁ hr₁ r₂ hr₂ hne =>
+        fun r₁ hr₁ r₂ hr₂ hne ↦
           h_pairwise r₁ (Finset.mem_insert_of_mem hr₁) r₂
             (Finset.mem_insert_of_mem hr₂) hne
       obtain ⟨U_R, hU_R_pres, hU_R_div⟩ := IH h_cop_R h_pairwise_R
-      -- Coprimality of the product `∏ R d` with `d r₀`, using pairwise coprimality.
       have h_cop_prod : IsCoprime (∏ r ∈ R, d r) (d r₀) := by
-        refine (IsCoprime.prod_right (fun r hr => ?_)).symm
+        refine (IsCoprime.prod_right (fun r hr ↦ ?_)).symm
         have hr_ne : r₀ ≠ r := by
           intro h; exact hr₀ (h ▸ hr)
         exact h_pairwise r₀ (Finset.mem_insert_self _ _) r
           (Finset.mem_insert_of_mem hr) hr_ne
-      -- Coprimality of `(∏ R d) * (M.1 r₀ i)` with `d r₀`.
       have h_cop_r₀ : IsCoprime (M.1 r₀ i) (d r₀) :=
         h_cop r₀ (Finset.mem_insert_self _ _)
       have h_cop_combined :
           IsCoprime ((∏ r ∈ R, d r) * M.1 r₀ i) (d r₀) :=
         h_cop_prod.mul_left h_cop_r₀
       obtain ⟨s, t, hst⟩ := h_cop_combined
-      -- Solve `(∏ R d) * k * M.1 r₀ i ≡ -(M*U_R).1 r₀ j  [MOD d r₀]`.
-      -- Using s * ((∏ R d) * M.1 r₀ i) + t * d r₀ = 1, take
-      -- k := -(M*U_R).1 r₀ j * s, c' := (∏ R d) * k.
       set D : ℤ := ∏ r ∈ R, d r with hD_def
       set v : ℤ := -((M * U_R).1 r₀ j) * s with hv_def
       set c' : ℤ := D * v with hc'_def
@@ -3595,9 +3473,6 @@ private lemma sl_addCol_make_dvd_finset
           subst hr_eq
           rw [← mul_assoc, sl_addCol_target_col i j hij c' (M * U_R) r]
           rw [hU_R_pres r i hij]
-          -- Show: d r ∣ (M*U_R).1 r j + c' * M.1 r i.
-          -- Column `i ≠ j` is preserved by `U_R` so we don't need that here;
-          -- the goal already references `M.1 r i` (the original), good.
           refine ⟨(M * U_R).1 r j * t, ?_⟩
           have hkey : (M * U_R).1 r j *
               (s * (D * M.1 r i) + t * d r) = (M * U_R).1 r j * 1 := by
@@ -3607,7 +3482,6 @@ private lemma sl_addCol_make_dvd_finset
             have hv_expand : c' * M.1 r i = (M * U_R).1 r j *
                 (s * (D * M.1 r i)) * (-1) := by
               rw [hc'_def, hv_def]; ring
-            -- Use hkey to rewrite.
             have hkey' : (M * U_R).1 r j * (s * (D * M.1 r i)) +
                 (M * U_R).1 r j * (t * d r) = (M * U_R).1 r j := by
               have := hkey
@@ -3615,7 +3489,6 @@ private lemma sl_addCol_make_dvd_finset
             linarith [hkey']
           linarith [hexpand]
         · -- Case r ∈ R: previous divisibility preserved because
-          -- `c'` is divisible by `D = ∏ R d`, hence by `d r`.
           rw [← mul_assoc, sl_addCol_target_col i j hij c' (M * U_R) r]
           rw [hU_R_pres r i hij]
           have h_dr_div_D : d r ∣ D := by
@@ -3658,22 +3531,18 @@ private lemma sl_addCol_make_dvd_chain_top
     (M : SpecialLinearGroup (Fin m) ℤ)
     (R : Finset (Fin m)) (d : Fin m → ℤ) (c : Fin m → ℤ)
     (h_dvd : ∀ r ∈ R, d r ∣ M.1 r j + c r * M.1 r i)
-    {r_top : Fin m} (h_top : r_top ∈ R)
-    (h_top_max : ∀ r ∈ R, d r ∣ d r_top)
+    {r_top : Fin m} (_ : r_top ∈ R)
+    (_ : ∀ r ∈ R, d r ∣ d r_top)
     (h_chain : ∀ r ∈ R, d r ∣ c r_top - c r) :
     ∃ U : SpecialLinearGroup (Fin m) ℤ,
       (∀ a (k : Fin m), k ≠ j → (M * U).1 a k = M.1 a k) ∧
       (∀ r ∈ R, d r ∣ (M * U).1 r j) := by
-  -- Reduce to the common-residue version with `c := c r_top`.
   refine sl_addCol_make_dvd_common i j hij M R d (c r_top) ?_
   intro r hr
-  -- We have `d r ∣ M r j + c r * M r i` and `d r ∣ (c r_top - c r) * M r i`.
-  -- Adding gives `d r ∣ M r j + c r_top * M r i`.
   have h_diff : d r ∣ (c r_top - c r) * M.1 r i :=
     Dvd.dvd.mul_right (h_chain r hr) _
   have h_sum : d r ∣ (M.1 r j + c r * M.1 r i) + (c r_top - c r) * M.1 r i :=
     dvd_add (h_dvd r hr) h_diff
-  -- Rewrite the sum to the desired form.
   have h_eq :
       (M.1 r j + c r * M.1 r i) + (c r_top - c r) * M.1 r i
         = M.1 r j + c r_top * M.1 r i := by ring
@@ -3701,7 +3570,6 @@ private lemma sl_exists_col_stab_divChain_of_lower_clearance {k : ℕ}
   refine ⟨N, hcol, ?_⟩
   apply diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd a ha N
   intro i j
-  -- Goal: ((Fin.cons 1 a) i : ℤ) ∣ N.1 i j * ((Fin.cons 1 a) j : ℤ)
   refine Fin.cases ?_ ?_ i
   · -- i = 0: LHS = 1
     simp
@@ -3713,25 +3581,20 @@ private lemma sl_exists_col_stab_divChain_of_lower_clearance {k : ℕ}
       rw [hcol_i]
       exact hw_col_div i'
     · intro j'
-      -- i = i'.succ, j = j'.succ
       simp only [Fin.cons_succ]
-      -- Two cases: i' ≤ j' (use divChain_dvd) or j' < i' (use h_lower).
       by_cases hij : j' < i'
       · -- Use h_lower i' j' hij
         have hdvd_q : ((a i' / a j' : ℕ) : ℤ) ∣ N.1 i'.succ j'.succ :=
           h_lower i' j' hij
-        -- a j' ∣ a i' from divChain
         have hji_le : j' ≤ i' := le_of_lt hij
         have ha_dvd : a j' ∣ a i' := divChain_dvd (n := k + 1) hda hji_le
-        -- Multiply: ((a i' / a j') * a j' : ℤ) ∣ N · a j'
         have hmul : (((a i' / a j' : ℕ) : ℤ) * (a j' : ℤ)) ∣
             N.1 i'.succ j'.succ * (a j' : ℤ) :=
           mul_dvd_mul_right hdvd_q _
-        -- (a i' / a j') * a j' = a i' at Nat level
         have hcancel : (a i' / a j') * a j' = a i' :=
           Nat.div_mul_cancel ha_dvd
         have hcancel_int : ((a i' / a j' : ℕ) : ℤ) * (a j' : ℤ) = (a i' : ℤ) := by
-          have := congr_arg (fun n : ℕ => (n : ℤ)) hcancel
+          have := congr_arg (fun n : ℕ ↦ (n : ℤ)) hcancel
           push_cast at this
           exact this
         rw [hcancel_int] at hmul
@@ -3765,14 +3628,10 @@ private lemma sl_clear_one_column_lower_divChain_of_donor_coprime_and_residue
       (∀ a (k' : Fin (k + 2)), k' ≠ j.succ → (N * U).1 a k' = N.1 a k') ∧
       (∀ i : Fin (k + 1), j < i →
         (((a i / a j : ℕ) : ℤ) ∣ (N * U).1 i.succ j.succ)) := by
-  -- Build the row set R as the image of `{i : j < i}` under `Fin.succ`.
   let R : Finset (Fin (k + 2)) :=
-    (Finset.univ.filter (fun i : Fin (k + 1) => j < i)).image Fin.succ
-  -- Modulus function on `Fin (k+2)`: 0 on row 0, `(a i / a j : ℤ)` on `i.succ`
-  -- when `j < i`, and 0 otherwise (won't be queried).
-  let d : Fin (k + 2) → ℤ := fun r =>
-    Fin.cases (0 : ℤ) (fun i' => if j < i' then ((a i' / a j : ℕ) : ℤ) else 0) r
-  -- Apply the common-residue CRT wrapper.
+    (Finset.univ.filter (fun i : Fin (k + 1) ↦ j < i)).image Fin.succ
+  let d : Fin (k + 2) → ℤ := fun r ↦
+    Fin.cases (0 : ℤ) (fun i' ↦ if j < i' then ((a i' / a j : ℕ) : ℤ) else 0) r
   obtain ⟨U, hU_pres, hU_div⟩ :=
     sl_addCol_make_dvd_common (m := k + 2) i_don j.succ h_don_ne N R d c
       (by
@@ -3780,14 +3639,12 @@ private lemma sl_clear_one_column_lower_divChain_of_donor_coprime_and_residue
         rcases Finset.mem_image.mp hr with ⟨i, hi_mem, hi_eq⟩
         rcases Finset.mem_filter.mp hi_mem with ⟨_, hi_lt⟩
         subst hi_eq
-        -- Reduce `d i.succ` to the if-branch.
         have hd_eq : d i.succ = ((a i / a j : ℕ) : ℤ) := by
           simp [d, Fin.cases_succ, hi_lt]
         rw [hd_eq]
         exact h_clear i hi_lt)
   refine ⟨U, hU_pres, ?_⟩
   intro i hi_lt
-  -- Translate the membership-form conclusion to the `i, hi_lt`-indexed form.
   have hi_mem : i.succ ∈ R := by
     refine Finset.mem_image.mpr ⟨i, ?_, rfl⟩
     exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hi_lt⟩
@@ -3836,7 +3693,7 @@ private lemma exists_chain_solution_iff_compatible
         (∀ i j : Fin n, i ≤ j → d i ∣ c_per j - c_per i)) := by
   refine ⟨?_, ?_⟩
   · rintro ⟨c, hc⟩
-    refine ⟨fun _ => c, hc, ?_⟩
+    refine ⟨fun _ ↦ c, hc, ?_⟩
     intro i j _hij
     simp
   · rintro ⟨c_per, h_row, h_compat⟩
@@ -3886,18 +3743,12 @@ private lemma sl_clear_one_column_lower_divChain_of_chain_residues
   refine sl_clear_one_column_lower_divChain_of_donor_coprime_and_residue
     a ha hda j N i_don h_don_ne (c (Fin.last k)) ?_
   intro i hi_lt
-  -- Goal: (a i / a j) ∣ N.1 i.succ j.succ + c (Fin.last k) * N.1 i.succ i_don.
-  -- Write c (Fin.last k) = c i + (c (Fin.last k) - c i).
   have hrow := h_per_row i hi_lt
   have hcompat := h_chain_compat i (Fin.last k) hi_lt (Fin.le_last _)
-  -- The difference times N.1 i.succ i_don is divisible by (a i / a j).
   have hdiff : (((a i / a j : ℕ) : ℤ)) ∣
       (c (Fin.last k) - c i) * N.1 i.succ i_don :=
     hcompat.mul_right _
-  -- Add to the per-row hypothesis.
   have hsum := hrow.add hdiff
-  -- Algebraically: N.1 i.succ j.succ + c i * X + (c last - c i) * X
-  --              = N.1 i.succ j.succ + c last * X.
   have heq : N.1 i.succ j.succ + c i * N.1 i.succ i_don +
       (c (Fin.last k) - c i) * N.1 i.succ i_don =
       N.1 i.succ j.succ + c (Fin.last k) * N.1 i.succ i_don := by ring
@@ -4024,7 +3875,6 @@ private lemma sl_clear_all_columns_of_donor_supply
       (∀ i, N.1 i 0 = w i) ∧
       (∀ i j : Fin (k + 1), j < i →
         (((a i / a j : ℕ) : ℤ) ∣ N.1 i.succ j.succ)) := by
-  -- Inductive statement: partial clearance up through (but not including) column j_max.
   suffices h : ∀ j_max : ℕ, j_max ≤ k + 1 →
       ∃ N : SpecialLinearGroup (Fin (k + 2)) ℤ,
         (∀ i, N.1 i 0 = w i) ∧
@@ -4045,24 +3895,19 @@ private lemma sl_clear_all_columns_of_donor_supply
     intro hj_max_le
     have hj_max_lt : j_max < k + 1 := Nat.lt_of_succ_le hj_max_le
     obtain ⟨N, hcolN, hclear_prev⟩ := ih (Nat.le_of_succ_le hj_max_le)
-    -- The current target column is j := ⟨j_max, hj_max_lt⟩.
     set j : Fin (k + 1) := ⟨j_max, hj_max_lt⟩ with hj_def
-    -- Translate the inductive hypothesis to the form expected by h_supply.
     have h_prev : ∀ i j' : Fin (k + 1), j' < j → j' < i →
         (((a i / a j' : ℕ) : ℤ) ∣ N.1 i.succ j'.succ) := by
       intro i j' hj'_lt_j hj'_lt_i
       have : j'.val < j_max := hj'_lt_j
       exact hclear_prev i j' this hj'_lt_i
-    -- Pull donor and residues from h_supply.
     obtain ⟨i_don, h_don_ne, c, h_per_row, h_chain_compat⟩ :=
       h_supply j N hcolN h_prev
-    -- Apply the one-column step.
     obtain ⟨N', hcolN', hclear_new⟩ :=
       sl_clear_one_column_step a ha hda w j N hcolN h_prev
         i_don h_don_ne c h_per_row h_chain_compat
     refine ⟨N', hcolN', ?_⟩
     intro i j' hj'_lt_succ hj'_lt_i
-    -- hj'_lt_succ : j'.val < j_max + 1, i.e. j'.val ≤ j_max, i.e. j' ≤ j.
     have hj'_le_j : j' ≤ j := by
       show j'.val ≤ j.val
       exact Nat.lt_succ_iff.mp hj'_lt_succ
@@ -4134,7 +3979,7 @@ private lemma h_supply_of_common_c {k : ℕ}
           (((a i / a j : ℕ) : ℤ) ∣ c i' - c i)) := by
   intro j N hcol h_prev
   obtain ⟨i_don, h_don_ne, c0, h_clear⟩ := h_common j N hcol h_prev
-  refine ⟨i_don, h_don_ne, fun _ => c0, h_clear, ?_⟩
+  refine ⟨i_don, h_don_ne, fun _ ↦ c0, h_clear, ?_⟩
   intro _ _ _ _
   simp
 
@@ -4348,7 +4193,7 @@ private lemma exists_vector_chain_solution
       d a ∣ c_per b k - c_per a k) :
     ∃ c : Fin n' → ℤ, ∀ a : Fin (n + 1), ∀ k : Fin n',
       d a ∣ c k - c_per a k := by
-  refine ⟨fun k => c_per (Fin.last n) k, ?_⟩
+  refine ⟨fun k ↦ c_per (Fin.last n) k, ?_⟩
   intro a k
   exact h_compat a (Fin.last n) (Fin.le_last _) k
 
@@ -4364,11 +4209,11 @@ private lemma row_clear_avoiding_of_bezout
     (u : Fin n → ℤ) (h_zero : u j = 0) (h_bez : ∑ k, u k * x k = 1)
     (xj d : ℤ) :
     ∃ c : Fin n → ℤ, c j = 0 ∧ d ∣ xj + ∑ k, c k * x k := by
-  refine ⟨fun k => -xj * u k, by simp [h_zero], ?_⟩
+  refine ⟨fun k ↦ -xj * u k, by simp [h_zero], ?_⟩
   have h_sum : ∑ k, (-xj * u k) * x k = -xj := by
     have h1 : ∑ k, (-xj * u k) * x k = -xj * ∑ k, u k * x k := by
       rw [Finset.mul_sum]
-      refine Finset.sum_congr rfl fun k _ => ?_
+      refine Finset.sum_congr rfl fun k _ ↦ ?_
       ring
     rw [h1, h_bez, mul_one]
   rw [h_sum, add_neg_cancel]
@@ -4415,17 +4260,16 @@ private lemma h_per_row_via_avoiding_bezout {k : ℕ}
   intro j N hcol h_prev
   obtain ⟨u, hu_zero, hu_bez, hu_compat⟩ :=
     h_avoiding_compat j N hcol h_prev
-  refine ⟨fun i k' => -(N.1 i.succ j.succ) * u i k', ?_, ?_, ?_⟩
+  refine ⟨fun i k' ↦ -(N.1 i.succ j.succ) * u i k', ?_, ?_, ?_⟩
   · intro i
     simp [hu_zero i]
   · intro i hi_lt
-    -- `-(N i.succ j.succ) * u i k' * N i.succ k'` summed equals `-N i.succ j.succ`
     have h_sum : ∑ k', (-(N.1 i.succ j.succ) * u i k') * N.1 i.succ k' =
         -(N.1 i.succ j.succ) := by
       have h1 : ∑ k', (-(N.1 i.succ j.succ) * u i k') * N.1 i.succ k' =
           -(N.1 i.succ j.succ) * ∑ k', u i k' * N.1 i.succ k' := by
         rw [Finset.mul_sum]
-        refine Finset.sum_congr rfl fun k' _ => ?_
+        refine Finset.sum_congr rfl fun k' _ ↦ ?_
         ring
       rw [h1, hu_bez i hi_lt, mul_one]
     rw [h_sum, add_neg_cancel]
@@ -4468,23 +4312,17 @@ private lemma h_supply_of_row_residues {k : ℕ}
   intro j N hcol h_prev
   obtain ⟨c_per, h_zero_per, h_clear_per, h_compat⟩ :=
     h_per_row j N hcol h_prev
-  -- Take c := c_per (Fin.last k) coordinatewise.
-  refine ⟨fun k' => c_per (Fin.last k) k', h_zero_per (Fin.last k), ?_⟩
+  refine ⟨fun k' ↦ c_per (Fin.last k) k', h_zero_per (Fin.last k), ?_⟩
   intro i hi_lt
-  -- Per-row clearance at row i, with c_per i.
   have hrow := h_clear_per i hi_lt
-  -- Coordinatewise compatibility against the top row.
   have hcompat_k : ∀ k' : Fin (k + 2),
       (((a i / a j : ℕ) : ℤ) ∣ c_per (Fin.last k) k' - c_per i k') := by
     intro k'
     exact h_compat i (Fin.last k) hi_lt (Fin.le_last _) k'
-  -- Sum the corrections termwise.
   have hdiff_sum : (((a i / a j : ℕ) : ℤ)) ∣
       ∑ k', (c_per (Fin.last k) k' - c_per i k') * N.1 i.succ k' :=
-    Finset.dvd_sum (fun k' _ => (hcompat_k k').mul_right _)
-  -- Add to per-row clearance.
+    Finset.dvd_sum (fun k' _ ↦ (hcompat_k k').mul_right _)
   have hsum := hrow.add hdiff_sum
-  -- Algebraic rearrangement.
   have heq : N.1 i.succ j.succ + ∑ k', c_per i k' * N.1 i.succ k' +
       ∑ k', (c_per (Fin.last k) k' - c_per i k') * N.1 i.succ k' =
       N.1 i.succ j.succ +
@@ -4564,12 +4402,10 @@ private lemma h_avoiding_compat_of_common_nu {k : ℕ}
               (-(N.1 i.succ j.succ) * u i k'))) := by
   intro j N hcol h_prev
   obtain ⟨ν, hν_zero, hν_bez, hν_col⟩ := h_common j N hcol h_prev
-  refine ⟨fun _ k' => ν k', ?_, ?_, ?_⟩
+  refine ⟨fun _ k' ↦ ν k', ?_, ?_, ?_⟩
   · intro _; exact hν_zero
   · intro i hi_lt; exact hν_bez i hi_lt
   · intro i i' hi_lt hi_le k'
-    -- The difference simplifies to `(N i.succ j.succ - N i'.succ j.succ) * ν k'`,
-    -- equivalently `-(N i'.succ j.succ - N i.succ j.succ) * ν k'`.
     have hdvd : (((a i / a j : ℕ) : ℤ)) ∣
         N.1 i'.succ j.succ - N.1 i.succ j.succ := hν_col i i' hi_lt hi_le
     have heq : (-(N.1 i'.succ j.succ) * ν k') - (-(N.1 i.succ j.succ) * ν k')
@@ -4745,10 +4581,9 @@ private lemma sl_exists_col_stab_divChain_zero
   refine sl_exists_col_stab_divChain_of_lower_clearance a ha hda w hw_col_div
     N₀ hcol₀ ?_
   intro i j hji
-  -- `Fin 1` has only `0`, so `j < i` is impossible.
   have hi : i.val = 0 := Nat.lt_one_iff.mp i.isLt
   have hj : j.val = 0 := Nat.lt_one_iff.mp j.isLt
-  exact absurd hji (by simp [Fin.lt_iff_val_lt_val, hi, hj])
+  simp only [Fin.lt_def, hj, hi, lt_irrefl] at hji
 
 /-- **Strengthened completion target.**  An `N ∈ SL_{k+2}(ℤ)` with prescribed
 first column `w` AND with strictly-lower-triangular entries (below the leading
@@ -4817,7 +4652,6 @@ private lemma slSuccEmbed_preserves_col_zero {k : ℕ}
     (N₀ : SpecialLinearGroup (Fin (k + 2)) ℤ) (i : Fin (k + 2)) :
     (N₀ * slSuccEmbed R).1 i 0 = N₀.1 i 0 := by
   simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-  -- Sum over Fin (k + 2) splits at index 0 vs i.succ; only the 0-term is non-zero.
   rw [Fin.sum_univ_succ]
   rw [slSuccEmbed_val_zero_zero, mul_one]
   have hzero : ∀ j : Fin (k + 1),
@@ -4851,11 +4685,10 @@ private lemma bezout2_action_col0 (x y : ℤ) :
   by_cases hg : (Int.gcd x y : ℤ) = 0
   · rw [if_pos hg]
     rw [Int.natCast_eq_zero, Int.gcd_eq_zero_iff] at hg
-    simp [hg.1, hg.2, Matrix.one_apply]
+    simp [hg.1, hg.2]
   · rw [if_neg hg]
     simp only [Matrix.cons_val', Matrix.cons_val_zero, Matrix.empty_val',
-      Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const,
-      Matrix.of_apply]
+      Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.of_apply]
     have := Int.gcd_eq_gcd_ab x y
     linarith
 
@@ -4866,17 +4699,16 @@ private lemma bezout2_action_col1 (x y : ℤ) :
   by_cases hg : (Int.gcd x y : ℤ) = 0
   · rw [if_pos hg]
     rw [Int.natCast_eq_zero, Int.gcd_eq_zero_iff] at hg
-    simp [hg.1, hg.2, Matrix.one_apply]
+    simp [hg.1, hg.2]
   · rw [if_neg hg]
     simp only [Matrix.cons_val', Matrix.cons_val_zero, Matrix.empty_val',
-      Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const,
-      Matrix.of_apply]
+      Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.of_apply]
     have hxg : (Int.gcd x y : ℤ) ∣ x := Int.gcd_dvd_left x y
     have hyg : (Int.gcd x y : ℤ) ∣ y := Int.gcd_dvd_right x y
     set g : ℤ := (Int.gcd x y : ℤ) with hg_def
     obtain ⟨a, ha⟩ := hxg
     obtain ⟨b, hb⟩ := hyg
-    rw [ha, hb, show -(g * b) = g * (-b) from by ring,
+    rw [ha, hb, show -(g * b) = g * (-b) by ring,
         Int.mul_ediv_cancel_left _ hg, Int.mul_ediv_cancel_left _ hg]
     ring
 
@@ -4887,8 +4719,7 @@ private lemma bezout2_det (x y : ℤ) (hg : (Int.gcd x y : ℤ) ≠ 0) :
   unfold bezout2
   rw [if_neg hg, Matrix.det_fin_two]
   simp only [Matrix.cons_val', Matrix.cons_val_zero, Matrix.empty_val',
-    Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const,
-    Matrix.of_apply]
+    Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.of_apply]
   have hxg : (Int.gcd x y : ℤ) ∣ x := Int.gcd_dvd_left x y
   have hyg : (Int.gcd x y : ℤ) ∣ y := Int.gcd_dvd_right x y
   have hbez := Int.gcd_eq_gcd_ab x y
@@ -4902,7 +4733,7 @@ private lemma bezout2_det (x y : ℤ) (hg : (Int.gcd x y : ℤ) ≠ 0) :
       _ = x * Int.gcdA x y + y * Int.gcdB x y := by rw [← ha, ← hb]
       _ = g := by linarith [hbez]
   have h1 : Int.gcdA x y * a + Int.gcdB x y * b = 1 := mul_left_cancel₀ hg hbez'
-  rw [ha, hb, show -(g * b) = g * (-b) from by ring,
+  rw [ha, hb, show -(g * b) = g * (-b) by ring,
       Int.mul_ediv_cancel_left _ hg, Int.mul_ediv_cancel_left _ hg]
   rw [← ha, ← hb]
   linarith
@@ -5068,14 +4899,12 @@ private lemma row_mul_bezout2TrailingSL_natAdd_zero {n r : ℕ} (x y : ℤ)
     (M * (bezout2TrailingSL r x y hg).val) i (Fin.natAdd r 0) =
       (Int.gcd x y : ℤ) := by
   rw [Matrix.mul_apply, Fin.sum_univ_add]
-  -- Cast block: TR zero, all summands vanish.
   have hcast : ∑ k : Fin r,
       M i (Fin.castAdd 2 k) *
         (bezout2TrailingSL r x y hg).val (Fin.castAdd 2 k) (Fin.natAdd r 0) = 0 := by
     apply Finset.sum_eq_zero
     intro k _
     rw [bezout2TrailingSL_val_castAdd_natAdd, mul_zero]
-  -- Nat block: only the two trailing entries contribute.
   have hnat : ∑ k : Fin 2,
       M i (Fin.natAdd r k) *
         (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.natAdd r 0) =
@@ -5118,7 +4947,6 @@ private lemma col_mul_bezout2TrailingSL_castAdd {n r : ℕ} (x y : ℤ)
     (M * (bezout2TrailingSL r x y hg).val) i (Fin.castAdd 2 j) =
       M i (Fin.castAdd 2 j) := by
   rw [Matrix.mul_apply, Fin.sum_univ_add]
-  -- Cast block: TL identity, only k = j contributes.
   have hcast : ∑ k : Fin r,
       M i (Fin.castAdd 2 k) *
         (bezout2TrailingSL r x y hg).val (Fin.castAdd 2 k) (Fin.castAdd 2 j) =
@@ -5129,7 +4957,6 @@ private lemma col_mul_bezout2TrailingSL_castAdd {n r : ℕ} (x y : ℤ)
       rw [bezout2TrailingSL_val_castAdd, if_neg hk, mul_zero]
     · intro hj
       exact (hj (Finset.mem_univ _)).elim
-  -- Nat block: BL zero, all summands vanish.
   have hnat : ∑ k : Fin 2,
       M i (Fin.natAdd r k) *
         (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.castAdd 2 j) = 0 := by
@@ -5169,7 +4996,6 @@ private lemma strengthenedCompletionTarget_of_trailing_hnf_data {k : ℕ}
     rw [slSuccEmbed_preserves_col_zero R N₀ i]
     exact hcol₀ i
   · intro i j hji
-    -- Compute the (i.succ, j.succ) entry of N₀ * slSuccEmbed R.
     have hentry :
         (N₀ * slSuccEmbed R).1 i.succ j.succ =
           ∑ k' : Fin (k + 1), N₀.1 i.succ k'.succ * R.1 k' j := by
@@ -5318,7 +5144,7 @@ private lemma matrix_mul_bezout2TrailingSL_apply {n r : ℕ}
         M i (Fin.natAdd r 1) * (bezout2 x y) 1 1) := by
   refine ⟨row_mul_bezout2TrailingSL_natAdd_zero x y hg M i_target hxx hyy,
           row_mul_bezout2TrailingSL_natAdd_one  x y hg M i_target hxx hyy,
-          fun i j => col_mul_bezout2TrailingSL_castAdd x y hg M i j,
+          fun i j ↦ col_mul_bezout2TrailingSL_castAdd x y hg M i j,
           ?_, ?_⟩
   · -- Trailing column 0, arbitrary row: linear combination via bezout2.
     intro i
@@ -5404,17 +5230,14 @@ private lemma sl_mul_slSuccEmbed_bezout2TrailingSL_apply {r : ℕ}
       N₁.1 i.succ (Fin.natAdd r 1).succ =
         N₀.1 i.succ (Fin.natAdd r 0).succ * (bezout2 x y) 0 1 +
         N₀.1 i.succ (Fin.natAdd r 1).succ * (bezout2 x y) 1 1) := by
-  -- Trailing block of `N₀`.
   set M : Matrix (Fin (r + 2)) (Fin (r + 2)) ℤ :=
-    Matrix.of (fun i j => N₀.1 i.succ j.succ) with hM_def
-  -- Bridge: every entry of `N₁` at `(i.succ, j.succ)` equals `(M * U.val) i j`.
+    Matrix.of (fun i j ↦ N₀.1 i.succ j.succ) with hM_def
   have hbridge : ∀ i j : Fin (r + 2),
       (N₀ * slSuccEmbed (bezout2TrailingSL r x y hg)).1 i.succ j.succ =
         (M * (bezout2TrailingSL r x y hg).val) i j := by
     intro i j
     rw [N₀_mul_slSuccEmbed_apply_succ_succ]
     simp [Matrix.mul_apply, hM_def]
-  -- Apply the matrix-level Bezout one-step to `M`.
   have hxx' : M i_target (Fin.natAdd r 0) = x := by simpa [hM_def] using hxx
   have hyy' : M i_target (Fin.natAdd r 1) = y := by simpa [hM_def] using hyy
   obtain ⟨h1, h2, h3, h4, h5⟩ :=
@@ -5458,13 +5281,11 @@ private lemma exists_sl2_first_col_orthogonal (x y : ℤ) :
     obtain ⟨hx, hy⟩ := hxy
     rw [hx, hy]; ring
   · push_neg at hxy
-    -- Show 0 < Int.gcd x y by contrapositive.
     have hg_pos_nat : 0 < Int.gcd x y := by
       rcases Nat.eq_zero_or_pos (Int.gcd x y) with h0 | hpos
       · rw [Int.gcd_eq_zero_iff] at h0
         exact absurd h0.2 (hxy h0.1)
       · exact hpos
-    -- Fold `g` so subsequent rewrites do not recurse into `Int.gcd x y`.
     set g : ℤ := (Int.gcd x y : ℤ) with hg_def
     have hg_ne : g ≠ 0 := by
       show (Int.gcd x y : ℤ) ≠ 0
@@ -5473,23 +5294,16 @@ private lemma exists_sl2_first_col_orthogonal (x y : ℤ) :
     have hg_dvd_y : g ∣ y := Int.gcd_dvd_right _ _
     obtain ⟨p, hxp⟩ := hg_dvd_x
     obtain ⟨q, hyq⟩ := hg_dvd_y
-    -- After `set g`, both `hxp : x = g * p` and `hyq : y = g * q` use `g`
-    -- (opaque w.r.t. `x`, `y`), so subsequent `rw [hxp]` / `rw [hyq]` do not
-    -- recurse into the defining `Int.gcd x y` expression.
     have hpq_cop : Int.gcd p q = 1 := by
       have h1 : x / g = p := by rw [hxp]; exact Int.mul_ediv_cancel_left _ hg_ne
       have h2 : y / g = q := by rw [hyq]; exact Int.mul_ediv_cancel_left _ hg_ne
       have hkey := Int.gcd_div_gcd_div_gcd hg_pos_nat
-      -- `hkey : Int.gcd (x / (Int.gcd x y : ℤ)) (y / (Int.gcd x y : ℤ)) = 1`
-      -- folds to `Int.gcd (x / g) (y / g) = 1` via the `set`.
       rw [h1, h2] at hkey
       exact hkey
-    -- IsCoprime q (-p): commutative + neg_right.
     have hcop_pq : IsCoprime p q := Int.isCoprime_iff_gcd_eq_one.mpr hpq_cop
     have hcop : IsCoprime q (-p) := hcop_pq.symm.neg_right
     obtain ⟨R, hR0, hR1⟩ := IsCoprime.exists_SL2_col hcop 0
     refine ⟨R, ?_⟩
-    -- Substitute `R.1 0 0 = q`, `R.1 1 0 = -p`, then `x = g * p`, `y = g * q`.
     have h_R0 : R.1 0 0 = q := hR0
     have h_R1 : R.1 1 0 = -p := hR1
     rw [h_R0, h_R1, hxp, hyq]; ring
@@ -5518,7 +5332,6 @@ private lemma sl_exists_col_stab_divChain_one
     exists_sl2_first_col_orthogonal (N₀.1 2 1) (N₀.1 2 2)
   refine ⟨N₀, R, hcol₀, ?_⟩
   intro i j hji
-  -- Only (i, j) = (1, 0) ∈ Fin 2 × Fin 2 has j < i.
   have hi_one : i = 1 := by
     fin_cases i
     · exact absurd hji (Fin.not_lt_zero _)
@@ -5529,8 +5342,6 @@ private lemma sl_exists_col_stab_divChain_one
     · rfl
     · exact absurd hji (lt_irrefl _)
   subst hj_zero
-  -- Sum collapses to N₀.1 2 1 * R.1 0 0 + N₀.1 2 2 * R.1 1 0, which equals 0
-  -- by `hR_eq`; 0 is divisible by anything.
   have h_sum : ∑ k' : Fin 2, N₀.1 ((1 : Fin 2).succ) k'.succ * R.1 k' 0 =
       N₀.1 2 1 * R.1 0 0 + N₀.1 2 2 * R.1 1 0 := by
     rw [Fin.sum_univ_two]; rfl
@@ -5565,8 +5376,6 @@ private lemma exists_nonzero_kernel_vec {m : ℕ}
   obtain ⟨v, hv_mem, hv_ne⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hker_ne
   refine ⟨v, hv_ne, ?_⟩
   intro i
-  -- `v ∈ ker L` means `L v = 0`; the `i`-th component of this vector equation
-  -- is `∑ j, N i j * v j = 0`.
   have h_Lv : L v = 0 := LinearMap.mem_ker.mp hv_mem
   have h_app : (N *ᵥ v) i = (0 : Fin (m + 1) → ℤ) i := by
     show (L v) i = (0 : Fin (m + 1) → ℤ) i
@@ -5585,10 +5394,8 @@ private lemma exists_primitive_kernel_vec {m : ℕ}
       (∀ d : ℤ, (∀ i, d ∣ v i) → IsUnit d) ∧
       (∀ i : Fin (m + 1), ∑ j, N i j * v j = 0) := by
   obtain ⟨v, hv_ne, hv_kernel⟩ := exists_nonzero_kernel_vec N
-  -- `g` is the gcd of `v`'s entries (a non-negative integer).
   set g : ℤ := Finset.univ.gcd v with hg_def
-  have hg_dvd : ∀ j, g ∣ v j := fun j => Finset.gcd_dvd (Finset.mem_univ j)
-  -- `g ≠ 0`:  if `g = 0`, every entry of `v` is `0`, contradicting `v ≠ 0`.
+  have hg_dvd : ∀ j, g ∣ v j := fun j ↦ Finset.gcd_dvd (Finset.mem_univ j)
   have hg_ne_zero : g ≠ 0 := by
     intro hg0
     apply hv_ne
@@ -5596,9 +5403,8 @@ private lemma exists_primitive_kernel_vec {m : ℕ}
     have hgvj : g ∣ v j := hg_dvd j
     rw [hg0] at hgvj
     exact zero_dvd_iff.mp hgvj
-  refine ⟨fun j => v j / g, ?_, ?_⟩
+  refine ⟨fun j ↦ v j / g, ?_, ?_⟩
   · -- Primitivity:  any common divisor `d` of `v j / g` satisfies `d * g ∣ g`,
-    -- hence `d ∣ 1` and `d` is a unit.
     intro d hd
     have hdg_dvd_v : ∀ j, d * g ∣ v j := by
       intro j
@@ -5606,7 +5412,7 @@ private lemma exists_primitive_kernel_vec {m : ℕ}
       rw [hvj_eq, mul_comm d g]
       exact mul_dvd_mul_left g (hd j)
     have hdg_dvd_g : d * g ∣ g :=
-      Finset.dvd_gcd (fun j _ => hdg_dvd_v j)
+      Finset.dvd_gcd (fun j _ ↦ hdg_dvd_v j)
     have hd_dvd_one : d ∣ 1 := by
       have hone : d * g ∣ 1 * g := by rwa [one_mul]
       exact (mul_dvd_mul_iff_right hg_ne_zero).mp hone
@@ -5626,7 +5432,6 @@ private lemma exists_primitive_kernel_vec {m : ℕ}
           _ = N i j * v j := by rw [h_cancel]
       rw [Finset.sum_congr rfl h_term]
       exact hv_kernel i
-    -- Cancel `g ≠ 0` from `g * (∑ …) = 0 = g * 0` to conclude `∑ … = 0`.
     have h_eq : g * (∑ j, N i j * (v j / g)) = g * 0 := by rw [mul_zero]; exact hLHS_g
     exact mul_left_cancel₀ hg_ne_zero h_eq
 
@@ -5645,12 +5450,11 @@ private lemma exists_sl_clear_col_zero {n : ℕ}
     ∃ R : SpecialLinearGroup (Fin (n + 2)) ℤ,
       ∀ i : Fin (n + 1), (M * R.val) i.succ 0 = 0 := by
   obtain ⟨v, hv_prim, hv_kernel⟩ :=
-    exists_primitive_kernel_vec (fun (i : Fin (n + 1)) (j : Fin (n + 2)) => M i.succ j)
+    exists_primitive_kernel_vec (fun (i : Fin (n + 1)) (j : Fin (n + 2)) ↦ M i.succ j)
   obtain ⟨R, hR⟩ := sl_exists_col_of_primitive v hv_prim
   refine ⟨R, ?_⟩
   intro i
   rw [Matrix.mul_apply]
-  -- Goal: `∑ k, M i.succ k * R.val k 0 = 0`. Substitute `R.val k 0 = v k` via `hR`.
   have h_sum_eq :
       ∑ k : Fin (n + 2), M i.succ k * R.val k 0 =
       ∑ k : Fin (n + 2), M i.succ k * v k := by
@@ -5675,7 +5479,7 @@ single-column clearer is itself proven from the strictly-smaller
 private lemma sl_upperTri_for_matrix : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n) ℤ),
     ∃ R : SpecialLinearGroup (Fin n) ℤ,
       ∀ i j : Fin n, j < i → (M * R.val) i j = 0
-  | 0, _M => ⟨1, fun i _ _ => i.elim0⟩
+  | 0, _M => ⟨1, fun i _ _ ↦ i.elim0⟩
   | 1, _M => ⟨1, by
       intro i j hji
       have hi : i.val = 0 := Nat.lt_one_iff.mp i.isLt
@@ -5684,11 +5488,9 @@ private lemma sl_upperTri_for_matrix : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n)
         rw [Fin.lt_def, hi, hj]; exact lt_irrefl _
       exact absurd hji this⟩
   | 2, M => by
-      -- Dim-2 base case: orthogonalize the unique strict-lower entry `(1, 0)`.
       obtain ⟨R, hR⟩ := exists_sl2_first_col_orthogonal (M 1 0) (M 1 1)
       refine ⟨R, ?_⟩
       intro i j hji
-      -- Only `(i, j) = (1, 0)` survives `j < i` in `Fin 2`.
       have hi : i = 1 := by
         fin_cases i
         · exact absurd hji (Fin.not_lt_zero _)
@@ -5699,24 +5501,17 @@ private lemma sl_upperTri_for_matrix : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n)
         · rfl
         · exact absurd hji (lt_irrefl _)
       subst hj
-      -- Goal: `(M * R.val) 1 0 = 0`, i.e., `M 1 0 * R.val 0 0 + M 1 1 * R.val 1 0 = 0`.
       rw [Matrix.mul_apply, Fin.sum_univ_two]
       exact hR
   | n + 3, M => by
-      -- Inductive step: clear col 0 (via `exists_sl_clear_col_zero`), then recurse
-      -- via the IH on the `(n + 2) × (n + 2)` trailing submatrix below row 0 / col 0.
       obtain ⟨R₁, hR₁⟩ := exists_sl_clear_col_zero M
-      -- Name the trailing submatrix as a `Matrix` (avoids `HMul` issues with bare
-      -- functions when forming `Mtail * R'.val`).
       let Mtail : Matrix (Fin (n + 2)) (Fin (n + 2)) ℤ :=
-        fun i k' => (M * R₁.val) i.succ k'.succ
+        fun i k' ↦ (M * R₁.val) i.succ k'.succ
       obtain ⟨R', hR'⟩ := sl_upperTri_for_matrix Mtail
       refine ⟨R₁ * slSuccEmbed R', ?_⟩
       intro i j hji
-      -- Goal: `(M * (R₁ * slSuccEmbed R').val) i j = 0` for `j < i`.
       show (M * (R₁ * slSuccEmbed R').val) i j = 0
       rw [SpecialLinearGroup.coe_mul, ← Matrix.mul_assoc, Matrix.mul_apply, Fin.sum_univ_succ]
-      -- Sum split:  k = 0 contribution + ∑ k' (k = k'.succ contribution).
       rcases Fin.eq_zero_or_eq_succ i with hi | ⟨i', hi⟩
       · -- `i = 0`:  vacuous (`j < 0` impossible).
         subst hi; exact absurd hji (Fin.not_lt_zero _)
@@ -5762,24 +5557,17 @@ private lemma sl_exists_col_stab_divChain {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ N : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
-  -- Dispatch on `k`:  k = 0 (`sl_exists_col_stab_divChain_zero`),  k = 1
-  -- (`sl_exists_col_stab_divChain_one`),  k ≥ 2 (column-HNF via
-  -- `sl_upperTri_for_matrix`, whose `n ≤ 2` cases are fully proven and whose
-  -- `n + 3` case is the remaining gap).
   rcases k with _ | _ | k
   · exact sl_exists_col_stab_divChain_zero a ha hda w hw_primitive hw_col_div
   · exact sl_exists_col_stab_divChain_one a ha hda w hw_primitive hw_col_div
   · -- k + 2 case: build a TrailingBlockHNFData via `sl_upperTri_for_matrix`.
     refine sl_exists_col_stab_divChain_of_trailing_hnf_data a ha hda w hw_col_div ?_
     obtain ⟨N₀, hcol₀⟩ := sl_exists_col_of_primitive w hw_primitive
-    -- Name the trailing block of `N₀` as a `Matrix` so `Mtail * R.val` typechecks.
     let Mtail : Matrix (Fin (k + 3)) (Fin (k + 3)) ℤ :=
-      fun i k' => N₀.1 i.succ k'.succ
+      fun i k' ↦ N₀.1 i.succ k'.succ
     obtain ⟨R, hR⟩ := sl_upperTri_for_matrix Mtail
     refine ⟨N₀, R, hcol₀, ?_⟩
     intro i j hji
-    -- The trailing-block sum at `(i, j)` equals `(Mtail * R.val) i j`, which
-    -- `hR` shows is `0` for `j < i`.
     have h_sum :
         ∑ k' : Fin (k + 3), N₀.1 i.succ k'.succ * R.val k' j =
         (Mtail * R.val) i j := by
@@ -5837,28 +5625,24 @@ private lemma exists_stab_int_conjugate_diagMat_cons_one {k : ℕ}
       (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
       diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H) :
     ∃ N : SpecialLinearGroup (Fin (k + 2)) ℤ,
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           ((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℤ)) * N.val =
         M.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           ((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℤ)) := by
-  -- Extract the integer SL preimage from H membership (`H = (mapGL ℚ).range`).
   obtain ⟨N, hN⟩ := hM_stab
   refine ⟨N, ?_⟩
-  -- `hN : mapGL ℚ N = D⁻¹ * mapGL ℚ M * D`; rearrange to `D * mapGL ℚ N = mapGL ℚ M * D`.
   have hcons_pos : ∀ j, 0 < (Fin.cons 1 a : Fin (k + 2) → ℕ) j := cons_one_pos ha
   have h_GL_eq : diagMat (k + 2) (Fin.cons 1 a) * (mapGL ℚ N : GL (Fin (k + 2)) ℚ) =
       (mapGL ℚ M : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) := by
     rw [hN]; group
-  -- Pass to underlying matrices.
   have h_mat := congr_arg
-    (fun g : GL (Fin (k + 2)) ℚ => (g : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ)) h_GL_eq
+    (fun g : GL (Fin (k + 2)) ℚ ↦ (g : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ)) h_GL_eq
   simp only [Units.val_mul] at h_mat
-  -- Express each factor as `Matrix.map (algebraMap ℤ ℚ)` of an integer matrix.
   have h_N : ((mapGL ℚ N : GL _ ℚ) : Matrix _ _ ℚ) = N.1.map (algebraMap ℤ ℚ) := rfl
   have h_M : ((mapGL ℚ M : GL _ ℚ) : Matrix _ _ ℚ) = M.1.map (algebraMap ℤ ℚ) := rfl
   have h_D : ((diagMat (k + 2) (Fin.cons 1 a) : GL _ ℚ) : Matrix _ _ ℚ) =
-      (Matrix.diagonal (fun r : Fin (k + 2) =>
+      (Matrix.diagonal (fun r : Fin (k + 2) ↦
         ((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℤ))).map (algebraMap ℤ ℚ) := by
     rw [diagMat_val (k + 2) _ hcons_pos,
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
@@ -5894,16 +5678,13 @@ private lemma stabilizer_implies_first_col_div_chain {k : ℕ}
     ∀ i : Fin (k + 1), (a i : ℤ) ∣ (toSL σ).val i.succ 0 := by
   rw [mem_diagMat_cons_stabilizer_subgroupOf_iff a ha] at hσ_stab
   obtain ⟨N, hN⟩ := hσ_stab
-  -- `hN : (mapGL ℚ N : GL (Fin (k+2)) ℚ) = D⁻¹ * σ * D`.
   intro i
   refine ⟨N.val i.succ 0, ?_⟩
   have hcons_pos : ∀ j, 0 < (Fin.cons 1 a : Fin (k + 2) → ℕ) j := cons_one_pos ha
-  -- Multiply `hN` by `D` on the left to get `D * mapGL N = σ * D` in `GL`.
   have h_GL_eq :
       diagMat (k + 2) (Fin.cons 1 a) * (mapGL ℚ N) =
       (σ : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) := by
     rw [hN]; group
-  -- Take the `(i.succ, 0)` entry of the underlying `Matrix` equation.
   have h_entry :
       ((diagMat (k + 2) (Fin.cons 1 a)).val *
         (mapGL ℚ N).val : Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ) i.succ 0 =
@@ -5913,9 +5694,7 @@ private lemma stabilizer_implies_first_col_div_chain {k : ℕ}
     have h_units := congr_arg Units.val h_GL_eq
     simp only [Units.val_mul] at h_units
     exact congrFun (congrFun h_units i.succ) 0
-  -- Simplify both sides using the diagonal structure of `D`.
   rw [diagMat_val _ _ hcons_pos, Matrix.diagonal_mul, Matrix.mul_diagonal] at h_entry
-  -- Rewrite `(Fin.cons 1 a) i.succ = a i` and `(Fin.cons 1 a) 0 = 1`.
   have hcons_succ : ((Fin.cons 1 a : Fin (k + 2) → ℕ) i.succ : ℚ) = (a i : ℚ) := by
     simp [Fin.cons_succ]
   have hcons_zero : ((Fin.cons 1 a : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℚ) = 1 := by
@@ -5923,8 +5702,6 @@ private lemma stabilizer_implies_first_col_div_chain {k : ℕ}
   rw [hcons_succ, hcons_zero, mul_one, mapGL_coe_matrix] at h_entry
   simp only [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
     Matrix.map_apply, algebraMap_int_eq, eq_intCast] at h_entry
-  -- `h_entry : (a i : ℚ) * ((N.val i.succ 0 : ℤ) : ℚ) = (σ.val) i.succ 0`.
-  -- Bridge `σ.val i.succ 0 = ((toSL σ).val i.succ 0 : ℚ)` via `toSL_spec`.
   have h_toSL_val :
       ((toSL σ).val i.succ 0 : ℚ) = (σ : GL (Fin (k + 2)) ℚ).val i.succ 0 := by
     have h_units := congr_arg Units.val (toSL_spec σ)
@@ -5934,7 +5711,6 @@ private lemma stabilizer_implies_first_col_div_chain {k : ℕ}
       Matrix.map_apply, algebraMap_int_eq, eq_intCast] at this
     exact this
   rw [← h_toSL_val] at h_entry
-  -- `h_entry : (a i : ℚ) * ((N.val i.succ 0 : ℤ) : ℚ) = ((toSL σ).val i.succ 0 : ℚ)`.
   exact_mod_cast h_entry.symm
 
 /-- **Sorry-free `i`-side stabilizer SL matrix from the fiber relation.**
@@ -5970,18 +5746,12 @@ private lemma exists_stab_with_inv_first_col_of_fiber {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
-  -- Chain divisibility on `(toSL i.out)⁻¹`'s first column from the fiber
-  -- equation.
   have h_div := hfib_col_div_a a b c ha hb hc i j hfib
-  -- The first column of `(toSL i.out)⁻¹`, viewed as a primitive integer vector
-  -- in `Fin (k + 2) → ℤ`.
   set w : Fin (k + 2) → ℤ :=
-    fun r => ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r 0 with hw_def
+    fun r ↦ ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r 0 with hw_def
   have hw_primitive : ∀ d : ℤ, (∀ r, d ∣ w r) → IsUnit d :=
-    fun d hd => sl_first_col_primitive (toSL i.out)⁻¹ d hd
-  -- The chain divisibility translates `(a r : ℤ) ∣ w r.succ` directly.
+    fun d hd ↦ sl_first_col_primitive (toSL i.out)⁻¹ d hd
   have hw_col_div : ∀ i' : Fin (k + 1), (a i' : ℤ) ∣ w i'.succ := h_div
-  -- Apply the now-closed `sl_exists_col_stab_divChain`.
   exact sl_exists_col_stab_divChain a ha hda w hw_primitive hw_col_div
 
 /-- **First-column-`e_0` reduction of `i.out` from the fiber relation.**  Given
@@ -6022,14 +5792,11 @@ private lemma exists_stab_with_first_col_e0_of_fiber {k : ℕ}
     exists_stab_with_inv_first_col_of_fiber a b c ha hb hc hda i j hfib
   refine ⟨M, ?_, hM_stab⟩
   intro r
-  -- The first column of `toSL i.out * M` equals the first column of
-  -- `toSL i.out * (toSL i.out)⁻¹ = 1` because `M`'s first column matches
-  -- `(toSL i.out)⁻¹`'s first column.
   have h_to_inv :
       (toSL i.out * M : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r 0 =
       (toSL i.out * (toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r 0 := by
     simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-    refine Finset.sum_congr rfl (fun k _ => ?_)
+    refine Finset.sum_congr rfl (fun k _ ↦ ?_)
     rw [hM_col k]
   rw [h_to_inv, mul_inv_cancel, SpecialLinearGroup.coe_one]
 
@@ -6055,12 +5822,12 @@ private lemma slTransvec_zero_succ_stab {k : ℕ}
     show ((Fin.cons 1 a : Fin (k + 2) → ℕ) 0 : ℤ) ∣ _
     simp
   · -- i' ≠ 0: the c contribution at entry (i', j') vanishes (it requires `0 = i'`).
-    have h_no_c : ¬ (0 = i' ∧ l.succ = j') := fun ⟨h0, _⟩ => hi h0.symm
+    have h_no_c : ¬ (0 = i' ∧ l.succ = j') := fun ⟨h0, _⟩ ↦ hi h0.symm
     have h_entry :
         (slTransvecG (0 : Fin (k + 2)) l.succ (Fin.succ_ne_zero l).symm c).1 i' j' =
           if i' = j' then 1 else 0 := by
       show (Matrix.transvection (0 : Fin (k + 2)) l.succ c) i' j' = _
-      simp [Matrix.transvection, Matrix.one_apply, Matrix.single_apply, h_no_c]
+      simp [Matrix.transvection, Matrix.one_apply, h_no_c]
     rw [h_entry]
     by_cases h_diag : i' = j'
     · subst h_diag
@@ -6113,9 +5880,7 @@ private lemma sl_first_row_clear_with_col0_e0 {k : ℕ}
         exact one_mem _
   | insert l₀ S' hl₀_notin ih =>
       obtain ⟨T', hT'_col0, hT'_S, hT'_outside, hT'_block, hT'_stab⟩ := ih
-      -- Coefficient for the transvection at (0, l₀.succ).
       set c_l₀ : ℤ := -(W.1 0 l₀.succ) with hc_l₀_def
-      -- The transvection itself (no `let`, so `rw` patterns can match it).
       set T_l₀ : SpecialLinearGroup (Fin (k + 2)) ℤ :=
         slTransvecG (0 : Fin (k + 2)) l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ with hT_l₀_def
       have h_WT'_00 : (W * T').1 0 0 = 1 := by rw [hT'_col0 0]; exact h_col0_zero
@@ -6136,16 +5901,16 @@ private lemma sl_first_row_clear_with_col0_e0 {k : ℕ}
             hT'_outside l hl₀_notin, h_WT'_00]
           show W.1 0 l.succ + c_l₀ * 1 = 0
           rw [hc_l₀_def]; ring
-        · have hl_ne_l₀ : l ≠ l₀ := fun h => hl₀_notin (h ▸ hl_S')
-          have hsucc_ne : l.succ ≠ l₀.succ := fun h => hl_ne_l₀ (Fin.succ_injective _ h)
+        · have hl_ne_l₀ : l ≠ l₀ := fun h ↦ hl₀_notin (h ▸ hl_S')
+          have hsucc_ne : l.succ ≠ l₀.succ := fun h ↦ hl_ne_l₀ (Fin.succ_injective _ h)
           rw [sl_addCol_preserves_col 0 l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ (W * T') 0
               hsucc_ne]
           exact hT'_S l hl_S'
       · intro l hl_notin
         rw [show W * (T' * T_l₀) = (W * T') * T_l₀ from (mul_assoc _ _ _).symm, hT_l₀_def]
-        have hl_ne_l₀ : l ≠ l₀ := fun h => hl_notin (h ▸ Finset.mem_insert_self _ _)
-        have hl_notin_S' : l ∉ S' := fun h => hl_notin (Finset.mem_insert_of_mem h)
-        have hsucc_ne : l.succ ≠ l₀.succ := fun h => hl_ne_l₀ (Fin.succ_injective _ h)
+        have hl_ne_l₀ : l ≠ l₀ := fun h ↦ hl_notin (h ▸ Finset.mem_insert_self _ _)
+        have hl_notin_S' : l ∉ S' := fun h ↦ hl_notin (Finset.mem_insert_of_mem h)
+        have hsucc_ne : l.succ ≠ l₀.succ := fun h ↦ hl_ne_l₀ (Fin.succ_injective _ h)
         rw [sl_addCol_preserves_col 0 l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ (W * T') 0
             hsucc_ne]
         exact hT'_outside l hl_notin_S'
@@ -6206,13 +5971,10 @@ private lemma exists_stab_with_block_form_of_fiber {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
-  -- Step 1: column 0 = e₀.
   obtain ⟨M_0, hM_0_col, hM_0_stab⟩ :=
     exists_stab_with_first_col_e0_of_fiber a b c ha hb hc hda i j hfib
-  -- Step 2: clear the first row.
   obtain ⟨T_clear, hT_col0, hT_S, _, _, hT_stab⟩ :=
     sl_first_row_clear_with_col0_e0 a ha (toSL i.out * M_0) hM_0_col Finset.univ
-  -- Step 3: combined witness.
   set M : SpecialLinearGroup (Fin (k + 2)) ℤ := M_0 * T_clear with hM_def
   set N : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ := (toSL i.out * M).1 with hN_def
   have hM_assoc : toSL i.out * M = (toSL i.out * M_0) * T_clear := by
@@ -6237,10 +5999,8 @@ private lemma exists_stab_with_block_form_of_fiber {k : ℕ}
     have h := hN_col0 I.succ
     rw [Matrix.one_apply_ne (Fin.succ_ne_zero I)] at h
     exact h
-  -- The bottom-right block.
   set σ_m_raw : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
-    fun I J => N I.succ J.succ with hσ_raw_def
-  -- Det of σ_m_raw = 1, via Laplace expansion along row 0 of `N`.
+    fun I J ↦ N I.succ J.succ with hσ_raw_def
   have h_det : σ_m_raw.det = 1 := by
     have h_det_N : N.det = 1 := by
       rw [hN_def]; exact (toSL i.out * M).2
@@ -6252,21 +6012,15 @@ private lemma exists_stab_with_block_form_of_fiber {k : ℕ}
             (N.submatrix Fin.succ j.succ.succAbove).det = 0 := by
       intro j
       rw [hN_row0 j]; ring
-    rw [Finset.sum_eq_zero (fun j _ => h_zero_terms j), add_zero, hN_00] at h_det_N
-    -- Goal: (-1) ^ ↑(0 : Fin (k+2)) * 1 * (N.submatrix Fin.succ (0).succAbove).det = 1
-    -- Simplify the (-1)^0 factor and the submatrix.
+    rw [Finset.sum_eq_zero (fun j _ ↦ h_zero_terms j), add_zero, hN_00] at h_det_N
     simp only [Fin.val_zero, pow_zero, one_mul, mul_one] at h_det_N
-    -- The submatrix N.submatrix Fin.succ (0).succAbove i j = N i.succ ((0 : Fin _).succAbove j)
-    --   = N i.succ j.succ = σ_m_raw i j.
     have h_submat : N.submatrix Fin.succ (0 : Fin (k + 2)).succAbove = σ_m_raw := by
       ext I J
       show N I.succ ((0 : Fin (k + 2)).succAbove J) = σ_m_raw I J
       rw [Fin.succAbove_zero]
     rw [h_submat] at h_det_N
     exact h_det_N
-  -- Build σ_m.
   set σ_m : SpecialLinearGroup (Fin (k + 1)) ℤ := ⟨σ_m_raw, h_det⟩ with hσ_def
-  -- Show toSL i.out * M = slSuccEmbed σ_m, entry-wise.
   refine ⟨M, σ_m, ?_, ?_⟩
   · apply Subtype.ext
     ext I J
@@ -6331,10 +6085,10 @@ private lemma fiber_int_mat_eq_via_i_block_explicit {k : ℕ}
     (h_block_i : toSL i.out * M_i = slSuccEmbed σ_i)
     (N_i : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)))
     (j : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)))
     (hfib : ({(i.out : GL (Fin (k + 2)) ℚ) *
@@ -6346,23 +6100,21 @@ private lemma fiber_int_mat_eq_via_i_block_explicit {k : ℕ}
           ((GL_pair (k + 2)).H : Set _)) :
     ∃ ν : SpecialLinearGroup (Fin (k + 2)) ℤ,
       (slSuccEmbed σ_i).val *
-          Matrix.diagonal (fun r : Fin (k + 2) =>
+          Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
           (N_i⁻¹ * toSL j.out).val *
-          Matrix.diagonal (fun r : Fin (k + 2) =>
+          Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) =
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * ν.val := by
   obtain ⟨ν, hν⟩ := hfib_int_mat_eq a b c ha hb hc i j hfib
   refine ⟨ν, ?_⟩
-  -- Local diagonal abbreviations to match `hν`'s shape.
   set D_a : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_a_def
   set D_b : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_b_def
-  -- Step 1: integer-matrix cancellations from SL group structure.
   have h_M_inv_M_val :
       (M_i⁻¹).val * M_i.val = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) := by
     show ((M_i⁻¹) * M_i).val = (1 : SpecialLinearGroup (Fin (k + 2)) ℤ).val
@@ -6371,7 +6123,6 @@ private lemma fiber_int_mat_eq_via_i_block_explicit {k : ℕ}
       N_i.val * (N_i⁻¹).val = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) := by
     show (N_i * N_i⁻¹).val = (1 : SpecialLinearGroup (Fin (k + 2)) ℤ).val
     rw [mul_inv_cancel]
-  -- Step 2: derive (M_i⁻¹).val * D_a = D_a * (N_i⁻¹).val from `h_int_conj`.
   have h_inv_conj : (M_i⁻¹).val * D_a = D_a * (N_i⁻¹).val := by
     have step1 : (M_i⁻¹).val * D_a * N_i.val = D_a := by
       rw [Matrix.mul_assoc, h_int_conj, ← Matrix.mul_assoc, h_M_inv_M_val,
@@ -6381,7 +6132,6 @@ private lemma fiber_int_mat_eq_via_i_block_explicit {k : ℕ}
       rw [step1]
     rw [Matrix.mul_assoc, h_N_N_inv_val, Matrix.mul_one] at step2
     exact step2
-  -- Step 3: i-side block form rewritten with M_i⁻¹.
   have h_block_i_inv : toSL i.out = slSuccEmbed σ_i * M_i⁻¹ := by
     rw [← h_block_i, mul_inv_cancel_right]
   have h_block_i_inv_val : (toSL i.out).val =
@@ -6390,7 +6140,6 @@ private lemma fiber_int_mat_eq_via_i_block_explicit {k : ℕ}
     rw [← h_block_i_inv]
   have h_unfold_prod : (N_i⁻¹ * toSL j.out).val =
       (N_i⁻¹).val * (toSL j.out).val := rfl
-  -- Step 4: chain the substitution into the integer matrix equation `hν`.
   rw [h_unfold_prod]
   rw [show (slSuccEmbed σ_i).val * D_a * ((N_i⁻¹).val * (toSL j.out).val) * D_b =
       ((slSuccEmbed σ_i).val * (D_a * (N_i⁻¹).val)) * (toSL j.out).val * D_b from by
@@ -6452,18 +6201,18 @@ private lemma fiber_int_mat_eq_via_i_block {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
       (slSuccEmbed σ_i).val *
-          Matrix.diagonal (fun r : Fin (k + 2) =>
+          Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
           (N_i⁻¹ * toSL j.out).val *
-          Matrix.diagonal (fun r : Fin (k + 2) =>
+          Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) =
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * ν.val := by
   obtain ⟨M_i, σ_i, h_block_i, h_stab_i⟩ :=
     exists_stab_with_block_form_of_fiber a b c ha hb hc hda i j hfib
@@ -6499,10 +6248,10 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_explicit {k : ℕ}
     (h_block_i : toSL i.out * M_i = slSuccEmbed σ_i)
     (N_i : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)))
     (j : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)))
     (hfib : ({(i.out : GL (Fin (k + 2)) ℚ) *
@@ -6513,32 +6262,30 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_explicit {k : ℕ}
         {(diagMat_delta (k + 2) (Fin.cons 1 c) : GL (Fin (k + 2)) ℚ)} *
           ((GL_pair (k + 2)).H : Set _)) :
     ∃ ν : SpecialLinearGroup (Fin (k + 2)) ℤ,
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         (N_i⁻¹ * toSL j.out).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) := by
   obtain ⟨ν, h_subst⟩ :=
     fiber_int_mat_eq_via_i_block_explicit a b c ha hb hc i M_i σ_i h_block_i
       N_i h_int_conj j hfib
   refine ⟨ν, ?_⟩
-  -- Local matrix abbreviations matching `h_subst`'s shape.
   set D_a : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_a_def
   set D_b : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_b_def
   set D_c : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_c_def
   set X : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ := (N_i⁻¹ * toSL j.out).val
     with hX_def
-  -- Adjugate-cancel identities for SL elements.
   have h_adj_block_block :
       Matrix.adjugate (slSuccEmbed σ_i).val * (slSuccEmbed σ_i).val =
         (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) := by
@@ -6548,7 +6295,6 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_explicit {k : ℕ}
       ν.val * Matrix.adjugate ν.val =
         (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) := by
     rw [Matrix.mul_adjugate, show ν.val.det = 1 from ν.2, one_smul]
-  -- Premultiply `h_subst` by `adjugate(slSuccEmbed σ_i).val`.
   have h_premul :
       D_a * X * D_b =
         Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) := by
@@ -6563,7 +6309,6 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_explicit {k : ℕ}
         simp only [Matrix.mul_assoc]] at h
     rw [h_adj_block_block, Matrix.one_mul] at h
     exact h
-  -- Postmultiply by `adjugate ν.val`.
   have h : D_a * X * D_b * Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) *
         Matrix.adjugate ν.val := by
@@ -6571,7 +6316,7 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_explicit {k : ℕ}
   rw [show Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) *
         Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val * D_c * (ν.val * Matrix.adjugate ν.val)
-      from by simp only [Matrix.mul_assoc]] at h
+      by simp only [Matrix.mul_assoc]] at h
   rw [h_ν_adj_ν, Matrix.mul_one] at h
   exact h
 
@@ -6597,19 +6342,19 @@ private lemma fiber_int_mat_eq_via_i_block_rearr {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         (N_i⁻¹ * toSL j.out).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) := by
   obtain ⟨M_i, σ_i, h_block_i, h_stab_i⟩ :=
     exists_stab_with_block_form_of_fiber a b c ha hb hc hda i j hfib
@@ -6643,10 +6388,10 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_adj_explicit {k : ℕ}
     (h_block_i : toSL i.out * M_i = slSuccEmbed σ_i)
     (N_i : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)))
     (j : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)))
     (hfib : ({(i.out : GL (Fin (k + 2)) ℚ) *
@@ -6657,37 +6402,36 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_adj_explicit {k : ℕ}
         {(diagMat_delta (k + 2) (Fin.cons 1 c) : GL (Fin (k + 2)) ℚ)} *
           ((GL_pair (k + 2)).H : Set _)) :
     ∃ ν : SpecialLinearGroup (Fin (k + 2)) ℤ,
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         (N_i⁻¹ * toSL j.out).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
-      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         Matrix.adjugate (N_i⁻¹ * toSL j.out).val *
-        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) =
       Matrix.adjugate ν.val *
-        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         (slSuccEmbed σ_i).val) := by
   obtain ⟨ν, h_rearr⟩ :=
     fiber_int_mat_eq_via_i_block_rearr_explicit a b c ha hb hc i M_i σ_i
       h_block_i N_i h_int_conj j hfib
   refine ⟨ν, h_rearr, ?_⟩
-  -- Local matrix abbreviations.
   set D_a : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_a_def
   set D_b : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_b_def
   set D_c : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_c_def
   have hdet_block : (slSuccEmbed σ_i).val.det = 1 := (slSuccEmbed σ_i).2
   have hdet_ν : ν.val.det = 1 := ν.2
@@ -6764,27 +6508,27 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_adj {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         (N_i⁻¹ * toSL j.out).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
-      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         Matrix.adjugate (N_i⁻¹ * toSL j.out).val *
-        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) =
       Matrix.adjugate ν.val *
-        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         (slSuccEmbed σ_i).val) := by
   obtain ⟨M_i, σ_i, h_block_i, h_stab_i⟩ :=
@@ -6817,10 +6561,10 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
     (h_block_i : toSL i.out * M_i = slSuccEmbed σ_i)
     (N_i : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)))
     (j : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)))
     (hfib : ({(i.out : GL (Fin (k + 2)) ℚ) *
@@ -6831,22 +6575,22 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
         {(diagMat_delta (k + 2) (Fin.cons 1 c) : GL (Fin (k + 2)) ℚ)} *
           ((GL_pair (k + 2)).H : Set _)) :
     ∃ ν : SpecialLinearGroup (Fin (k + 2)) ℤ,
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         (N_i⁻¹ * toSL j.out).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
-      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         Matrix.adjugate (N_i⁻¹ * toSL j.out).val *
-        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) =
       Matrix.adjugate ν.val *
-        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         (slSuccEmbed σ_i).val) ∧
       ∀ r : Fin (k + 1),
@@ -6857,17 +6601,15 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
       h_block_i N_i h_int_conj j hfib
   refine ⟨ν, h_rearr, h_adj, ?_⟩
   intro r
-  -- Local matrix abbreviations.
   set D_a : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_a_def
   set D_b : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_b_def
   set D_c : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_c_def
-  -- Determinants and product identity.
   have hdet_block : (slSuccEmbed σ_i).val.det = 1 := (slSuccEmbed σ_i).2
   have hdet_X : (N_i⁻¹ * toSL j.out).val.det = 1 := (N_i⁻¹ * toSL j.out).2
   have hdet_ν : ν.val.det = 1 := ν.2
@@ -6909,7 +6651,7 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
     rw [show Matrix.adjugate D_b * Matrix.adjugate (N_i⁻¹ * toSL j.out).val *
             Matrix.adjugate D_a * D_a =
           Matrix.adjugate D_b * Matrix.adjugate (N_i⁻¹ * toSL j.out).val *
-            (Matrix.adjugate D_a * D_a) from by simp only [Matrix.mul_assoc]] at h
+            (Matrix.adjugate D_a * D_a) by simp only [Matrix.mul_assoc]] at h
     rw [Matrix.adjugate_mul, hdet_D_a, Matrix.mul_smul, Matrix.mul_one] at h
     exact h
   have h_entry := congrFun (congrFun h_postmul r.succ) 0
@@ -6926,7 +6668,7 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
       _
     rw [hD_b_def, Matrix.adjugate_diagonal]
     rw [show
-        (Matrix.diagonal (fun i : Fin (k + 2) =>
+        (Matrix.diagonal (fun i : Fin (k + 2) ↦
           ∏ x ∈ Finset.univ.erase i,
             (((Fin.cons 1 b : Fin (k + 2) → ℕ) x : ℕ) : ℤ)) *
           Matrix.adjugate (N_i⁻¹ * toSL j.out).val) r.succ 0 =
@@ -6967,9 +6709,9 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
       intro f hf
       rw [show (∑ p, f p) = f 0 + ∑ p ∈ Finset.univ.erase 0, f p from
             (Finset.add_sum_erase _ _ (Finset.mem_univ _)).symm]
-      rw [Finset.sum_eq_zero (fun p hp => hf p (Finset.ne_of_mem_erase hp))]
+      rw [Finset.sum_eq_zero (fun p hp ↦ hf p (Finset.ne_of_mem_erase hp))]
       ring
-    rw [hsum (fun p => Matrix.adjugate ν.val r.succ p *
+    rw [hsum (fun p ↦ Matrix.adjugate ν.val r.succ p *
         (Matrix.adjugate D_c * (slSuccEmbed σ_i).val) p 0)]
     · rw [hadjDc_block_p0 0, if_pos rfl]
     · intro p hp
@@ -6983,7 +6725,7 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
       ((b r : ℤ)) =
       ∏ q : Fin (k + 1), (b q : ℤ) := by
     have h := Finset.mul_prod_erase (Finset.univ : Finset (Fin (k + 2)))
-      (fun x : Fin (k + 2) =>
+      (fun x : Fin (k + 2) ↦
         (((Fin.cons 1 b : Fin (k + 2) → ℕ) x : ℕ) : ℤ)) h_b_in_set
     simp only at h
     have hfb_succ :
@@ -6997,7 +6739,7 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℕ) : ℤ) = 1 := by
         simp [Fin.cons_zero]
       rw [h0, one_mul]
-      refine Finset.prod_congr rfl (fun i _ => ?_)
+      refine Finset.prod_congr rfl (fun i _ ↦ ?_)
       simp [Fin.cons_succ]
     rw [hfb_succ, h_full] at h
     linarith [h]
@@ -7017,7 +6759,7 @@ private lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
           (∏ q : Fin (k + 1), (a q : ℤ)) *
             (((∏ x ∈ Finset.univ.erase r.succ,
               (((Fin.cons 1 b : Fin (k + 2) → ℕ) x : ℕ) : ℤ)) * (b r : ℤ)) *
-              Matrix.adjugate (N_i⁻¹ * toSL j.out).val r.succ 0) from by ring]
+              Matrix.adjugate (N_i⁻¹ * toSL j.out).val r.succ 0) by ring]
     rw [h_prod_b_fold, ← mul_assoc, hprod_eq]
   have h_RHS_b :
       Matrix.adjugate ν.val r.succ 0 * (∏ q : Fin (k + 1), (c q : ℤ)) * (b r : ℤ) =
@@ -7058,27 +6800,27 @@ private lemma hfib_col_div_b_via_i_block {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         (N_i⁻¹ * toSL j.out).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) *
         Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
-      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         Matrix.adjugate (N_i⁻¹ * toSL j.out).val *
-        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) =
       Matrix.adjugate ν.val *
-        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) =>
+        (Matrix.adjugate (Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) *
         (slSuccEmbed σ_i).val) ∧
       ∀ r : Fin (k + 1),
@@ -7137,29 +6879,26 @@ private lemma exists_stab_with_block_form_of_X_fiber {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
       (N_i⁻¹ * toSL j.out) * M_X = slSuccEmbed τ_X ∧
       (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
         (mapGL ℚ M_X : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
-  -- Step 0: extract i-side block-form companions and X-side col-divisibility.
   obtain ⟨σ_i, M_i, N_i, ν, h_block_i, h_stab_i, h_int_conj, h_subst, h_rearr_adj, h_div⟩ :=
     hfib_col_div_b_via_i_block a b c ha hb hc hda i j hfib
-  -- Step 1: Build M_0_X ∈ stab(D_b) with first column = X⁻¹.first_col.
   set X : SpecialLinearGroup (Fin (k + 2)) ℤ := N_i⁻¹ * toSL j.out with hX_def
   have hw_primitive :
       ∀ d : ℤ, (∀ r : Fin (k + 2), d ∣ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0) →
         IsUnit d :=
-    fun d hd => sl_first_col_primitive (X⁻¹) d hd
+    fun d hd ↦ sl_first_col_primitive (X⁻¹) d hd
   obtain ⟨M_0_X, hM_0_X_col, hM_0_X_stab⟩ :=
     sl_exists_col_stab_divChain b hb hdb
-      (fun r => (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
+      (fun r ↦ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
       hw_primitive h_div
-  -- Step 2: (X * M_0_X).first_col = e_0.
   have h_col_e0 : ∀ r : Fin (k + 2),
       (X * M_0_X).val r 0 =
         (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) r 0 := by
@@ -7167,13 +6906,11 @@ private lemma exists_stab_with_block_form_of_X_fiber {k : ℕ}
     have h_to_inv :
         (X * M_0_X).val r 0 = (X * X⁻¹ : SpecialLinearGroup _ ℤ).val r 0 := by
       simp only [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-      refine Finset.sum_congr rfl (fun p _ => ?_)
+      refine Finset.sum_congr rfl (fun p _ ↦ ?_)
       rw [hM_0_X_col p]
     rw [h_to_inv, mul_inv_cancel, Matrix.SpecialLinearGroup.coe_one]
-  -- Step 3: clear first row via sl_first_row_clear_with_col0_e0.
   obtain ⟨T_clear, hT_col0, hT_S, _, _, hT_stab⟩ :=
     sl_first_row_clear_with_col0_e0 b hb (X * M_0_X) h_col_e0 Finset.univ
-  -- Step 4: combined witness.
   set M_X : SpecialLinearGroup (Fin (k + 2)) ℤ := M_0_X * T_clear with hM_X_def
   set N : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ := (X * M_X).val with hN_def
   have hM_X_assoc : X * M_X = (X * M_0_X) * T_clear := by
@@ -7198,9 +6935,8 @@ private lemma exists_stab_with_block_form_of_X_fiber {k : ℕ}
     have h := hN_col0 I.succ
     rw [Matrix.one_apply_ne (Fin.succ_ne_zero I)] at h
     exact h
-  -- Step 5: bottom-right block as τ_X_raw.
   set τ_X_raw : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
-    fun I J => N I.succ J.succ with hτ_raw_def
+    fun I J ↦ N I.succ J.succ with hτ_raw_def
   have h_det : τ_X_raw.det = 1 := by
     have h_det_N : N.det = 1 := by
       rw [hN_def]; exact (X * M_X).2
@@ -7212,7 +6948,7 @@ private lemma exists_stab_with_block_form_of_X_fiber {k : ℕ}
             (N.submatrix Fin.succ j.succ.succAbove).det = 0 := by
       intro j
       rw [hN_row0 j]; ring
-    rw [Finset.sum_eq_zero (fun j _ => h_zero_terms j), add_zero, hN_00] at h_det_N
+    rw [Finset.sum_eq_zero (fun j _ ↦ h_zero_terms j), add_zero, hN_00] at h_det_N
     simp only [Fin.val_zero, pow_zero, one_mul, mul_one] at h_det_N
     have h_submat : N.submatrix Fin.succ (0 : Fin (k + 2)).succAbove = τ_X_raw := by
       ext I J
@@ -7221,7 +6957,6 @@ private lemma exists_stab_with_block_form_of_X_fiber {k : ℕ}
     rw [h_submat] at h_det_N
     exact h_det_N
   set τ_X : SpecialLinearGroup (Fin (k + 1)) ℤ := ⟨τ_X_raw, h_det⟩ with hτ_X_def
-  -- Step 6: refine with all data; discharge propositional conditions.
   refine ⟨M_i, N_i, M_X, τ_X, h_stab_i, h_int_conj, ?_, ?_⟩
   · -- (X * M_X) = slSuccEmbed τ_X.
     apply Subtype.ext
@@ -7297,10 +7032,10 @@ private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
       decompQuot_slSuccEmbed_diagMat b hb j_m =
         (⟦(⟨mapGL ℚ N_i⁻¹, coe_mem_SLnZ (k + 2) N_i⁻¹⟩ : (GL_pair (k + 2)).H) *
@@ -7308,10 +7043,8 @@ private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
           decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b))) := by
   obtain ⟨M_i, N_i, M_X, τ_X, h_stab_i, h_int_conj, h_X_block, h_M_X_stab⟩ :=
     exists_stab_with_block_form_of_X_fiber a b c ha hb hc hda hdb i j hfib
-  -- Lift τ_X to (GL_pair (k + 1)).H.
   set τ_X_H : (GL_pair (k + 1)).H := ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩
     with hτ_X_H_def
-  -- Define j_corrected (an element of (GL_pair (k + 2)).H).
   set N_i_inv_H : (GL_pair (k + 2)).H :=
     ⟨mapGL ℚ N_i⁻¹, coe_mem_SLnZ (k + 2) N_i⁻¹⟩ with hN_i_inv_H_def
   set j_corrected : (GL_pair (k + 2)).H := N_i_inv_H * j.out with hj_corr_def
@@ -7323,8 +7056,6 @@ private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
   change QuotientGroup.leftRel _ (slSuccEmbed_H τ_X_H) j_corrected
   rw [QuotientGroup.leftRel_apply]
   rw [mem_diagMat_cons_stabilizer_subgroupOf_iff b hb]
-  -- Goal: D_b⁻¹ * ((slSuccEmbed_H τ_X_H)⁻¹ * j_corrected : H) * D_b ∈ H_(k+2).
-  -- Compute the GL value: (slSuccEmbed_H τ_X_H)⁻¹ * j_corrected = (mapGL ℚ M_X)⁻¹.
   have h_toSL : toSL τ_X_H = τ_X := by
     apply mapGL_injective (k + 1)
     rw [toSL_spec]
@@ -7332,9 +7063,6 @@ private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
       (((slSuccEmbed_H τ_X_H)⁻¹ * j_corrected : (GL_pair (k + 2)).H) :
         GL (Fin (k + 2)) ℚ) =
       (mapGL ℚ M_X)⁻¹ := by
-    -- (slSuccEmbed_H τ_X_H : GL _) = mapGL ℚ (slSuccEmbed (toSL τ_X_H))
-    --   = mapGL ℚ (slSuccEmbed τ_X) = mapGL ℚ ((N_i⁻¹ * toSL j.out) * M_X)
-    --   = (mapGL ℚ N_i⁻¹) * (j.out : GL) * mapGL ℚ M_X.
     have h_slSuccEmbed_GL : (slSuccEmbed_H τ_X_H : GL (Fin (k + 2)) ℚ) =
         (mapGL ℚ N_i⁻¹) * (j.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_X := by
       show mapGL ℚ (slSuccEmbed (toSL τ_X_H)) = _
@@ -7345,8 +7073,6 @@ private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
       (mapGL ℚ N_i⁻¹ * (j.out : GL (Fin (k + 2)) ℚ)) = _
     group
   rw [h_GL_val]
-  -- Goal: D_b⁻¹ * (mapGL ℚ M_X)⁻¹ * D_b ∈ H_(k+2).
-  -- This equals (D_b⁻¹ * mapGL ℚ M_X * D_b)⁻¹, which is in H by inv_mem.
   have h_inv_form : (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
       (mapGL ℚ M_X : GL (Fin (k + 2)) ℚ)⁻¹ * diagMat (k + 2) (Fin.cons 1 b) =
       ((diagMat (k + 2) (Fin.cons 1 b))⁻¹ * (mapGL ℚ M_X : GL (Fin (k + 2)) ℚ) *
@@ -7386,10 +7112,10 @@ private lemma fiber_block_form_preimage_corrected_j_explicit {k : ℕ}
       diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H)
     (N_i : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)))
     (j : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)))
     (hfib : ({(i.out : GL (Fin (k + 2)) ℚ) *
@@ -7411,20 +7137,17 @@ private lemma fiber_block_form_preimage_corrected_j_explicit {k : ℕ}
         diagMat (k + 1) a *
         (τ_X_H : GL (Fin (k + 1)) ℚ) *
         diagMat (k + 1) b ∈ (GL_pair (k + 1)).H := by
-  -- Step 0: get h_div from the explicit col-divisibility chain.
   obtain ⟨_ν, _, _, h_div⟩ :=
     hfib_col_div_b_via_i_block_explicit a b c ha hb hc i M_i σ_i h_block_i
       N_i h_int_conj j hfib
-  -- Step 1: build M_X and τ_X via the X-side chain (mirror of the original
-  -- `fiber_block_form_preimage_corrected_j` body, lines marked Step 1+ there).
   set X : SpecialLinearGroup (Fin (k + 2)) ℤ := N_i⁻¹ * toSL j.out with hX_def
   have hw_primitive :
       ∀ d : ℤ, (∀ r : Fin (k + 2), d ∣ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0) →
         IsUnit d :=
-    fun d hd => sl_first_col_primitive (X⁻¹) d hd
+    fun d hd ↦ sl_first_col_primitive (X⁻¹) d hd
   obtain ⟨M_0_X, hM_0_X_col, hM_0_X_stab⟩ :=
     sl_exists_col_stab_divChain b hb hdb
-      (fun r => (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
+      (fun r ↦ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
       hw_primitive h_div
   have h_col_e0 : ∀ r : Fin (k + 2),
       (X * M_0_X).val r 0 =
@@ -7433,7 +7156,7 @@ private lemma fiber_block_form_preimage_corrected_j_explicit {k : ℕ}
     have h_to_inv :
         (X * M_0_X).val r 0 = (X * X⁻¹ : SpecialLinearGroup _ ℤ).val r 0 := by
       simp only [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-      refine Finset.sum_congr rfl (fun p _ => ?_)
+      refine Finset.sum_congr rfl (fun p _ ↦ ?_)
       rw [hM_0_X_col p]
     rw [h_to_inv, mul_inv_cancel, Matrix.SpecialLinearGroup.coe_one]
   obtain ⟨T_clear, hT_col0, hT_S, _, _, hT_stab⟩ :=
@@ -7463,7 +7186,7 @@ private lemma fiber_block_form_preimage_corrected_j_explicit {k : ℕ}
     rw [Matrix.one_apply_ne (Fin.succ_ne_zero I)] at h
     exact h
   set τ_X_raw : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
-    fun I J => N_full I.succ J.succ with hτ_raw_def
+    fun I J ↦ N_full I.succ J.succ with hτ_raw_def
   have h_det : τ_X_raw.det = 1 := by
     have h_det_N : N_full.det = 1 := by
       rw [hN_def]; exact (X * M_X).2
@@ -7475,7 +7198,7 @@ private lemma fiber_block_form_preimage_corrected_j_explicit {k : ℕ}
             (N_full.submatrix Fin.succ j.succ.succAbove).det = 0 := by
       intro j
       rw [hN_row0 j]; ring
-    rw [Finset.sum_eq_zero (fun j _ => h_zero_terms j), add_zero, hN_00] at h_det_N
+    rw [Finset.sum_eq_zero (fun j _ ↦ h_zero_terms j), add_zero, hN_00] at h_det_N
     simp only [Fin.val_zero, pow_zero, one_mul, mul_one] at h_det_N
     have h_submat : N_full.submatrix Fin.succ (0 : Fin (k + 2)).succAbove = τ_X_raw := by
       ext I J
@@ -7610,16 +7333,16 @@ private lemma fiber_block_form_preimage_corrected_j_explicit {k : ℕ}
         have hcons_pos : ∀ q, 0 < (Fin.cons 1 a : Fin (k + 2) → ℕ) q :=
           cons_one_pos ha
         have h := congr_arg
-          (fun M : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ =>
+          (fun M : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ ↦
             M.map (algebraMap ℤ ℚ)) h_int_conj
         simp only [Matrix.map_mul] at h
         apply Units.ext
         simp only [Units.val_mul, mapGL_coe_matrix,
           diagMat_val (k + 2) _ hcons_pos]
-        rw [show (Matrix.diagonal (fun r : Fin (k + 2) =>
+        rw [show (Matrix.diagonal (fun r : Fin (k + 2) ↦
               (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) =
             Matrix.diagonal
-              (fun r : Fin (k + 2) =>
+              (fun r : Fin (k + 2) ↦
                 (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℚ)) from by
           rw [Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
           congr 1] at h
@@ -7719,10 +7442,10 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) ∧
       decompQuot_slSuccEmbed_diagMat a ha
         (⟦σ_i_H⟧ : decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) a)) = i ∧
@@ -7735,24 +7458,16 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
         diagMat (k + 1) a *
         (τ_X_H : GL (Fin (k + 1)) ℚ) *
         diagMat (k + 1) b ∈ (GL_pair (k + 1)).H := by
-  -- Step 0: extract i-side and X-side block witnesses TOGETHER from
-  -- `hfib_col_div_b_via_i_block`. This gives consistent M_i (i-side) and
-  -- N_i (its integer conjugate), plus σ_i (i-side block element). We then
-  -- re-derive the X-side helper output to get M_X and τ_X consistent with
-  -- the same N_i.
   obtain ⟨σ_i, M_i, N_i, _, h_block_i, h_stab_i, h_int_conj, _, _, h_div⟩ :=
     hfib_col_div_b_via_i_block a b c ha hb hc hda i j hfib
-  -- Step 1: build M_X and τ_X via the X-side chain mirroring
-  -- `exists_stab_with_block_form_of_X_fiber`'s internals (so that M_X uses
-  -- the SAME N_i extracted above).
   set X : SpecialLinearGroup (Fin (k + 2)) ℤ := N_i⁻¹ * toSL j.out with hX_def
   have hw_primitive :
       ∀ d : ℤ, (∀ r : Fin (k + 2), d ∣ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0) →
         IsUnit d :=
-    fun d hd => sl_first_col_primitive (X⁻¹) d hd
+    fun d hd ↦ sl_first_col_primitive (X⁻¹) d hd
   obtain ⟨M_0_X, hM_0_X_col, hM_0_X_stab⟩ :=
     sl_exists_col_stab_divChain b hb hdb
-      (fun r => (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
+      (fun r ↦ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
       hw_primitive h_div
   have h_col_e0 : ∀ r : Fin (k + 2),
       (X * M_0_X).val r 0 =
@@ -7761,7 +7476,7 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
     have h_to_inv :
         (X * M_0_X).val r 0 = (X * X⁻¹ : SpecialLinearGroup _ ℤ).val r 0 := by
       simp only [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-      refine Finset.sum_congr rfl (fun p _ => ?_)
+      refine Finset.sum_congr rfl (fun p _ ↦ ?_)
       rw [hM_0_X_col p]
     rw [h_to_inv, mul_inv_cancel, Matrix.SpecialLinearGroup.coe_one]
   obtain ⟨T_clear, hT_col0, hT_S, _, _, hT_stab⟩ :=
@@ -7791,7 +7506,7 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
     rw [Matrix.one_apply_ne (Fin.succ_ne_zero I)] at h
     exact h
   set τ_X_raw : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
-    fun I J => N_full I.succ J.succ with hτ_raw_def
+    fun I J ↦ N_full I.succ J.succ with hτ_raw_def
   have h_det : τ_X_raw.det = 1 := by
     have h_det_N : N_full.det = 1 := by
       rw [hN_def]; exact (X * M_X).2
@@ -7803,7 +7518,7 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
             (N_full.submatrix Fin.succ j.succ.succAbove).det = 0 := by
       intro j
       rw [hN_row0 j]; ring
-    rw [Finset.sum_eq_zero (fun j _ => h_zero_terms j), add_zero, hN_00] at h_det_N
+    rw [Finset.sum_eq_zero (fun j _ ↦ h_zero_terms j), add_zero, hN_00] at h_det_N
     simp only [Fin.val_zero, pow_zero, one_mul, mul_one] at h_det_N
     have h_submat : N_full.submatrix Fin.succ (0 : Fin (k + 2)).succAbove = τ_X_raw := by
       ext I J
@@ -7812,7 +7527,6 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
     rw [h_submat] at h_det_N
     exact h_det_N
   set τ_X : SpecialLinearGroup (Fin (k + 1)) ℤ := ⟨τ_X_raw, h_det⟩ with hτ_X_def
-  -- X-side block form: (X * M_X) = slSuccEmbed τ_X.
   have h_X_block : X * M_X = slSuccEmbed τ_X := by
     apply Subtype.ext
     ext I J
@@ -7827,7 +7541,6 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
       · rw [hN_succ0 I', slSuccEmbed_val_succ_zero]
       · intro J'
         rw [slSuccEmbed_val_succ_succ]
-  -- M_X stab condition.
   have h_M_X_stab : (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
       (mapGL ℚ M_X : GL (Fin (k + 2)) ℚ) *
       diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
@@ -7846,7 +7559,6 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
   refine ⟨M_i, N_i, ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩,
     ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩,
     h_stab_i, h_int_conj, ?_, ?_, ?_⟩
-  -- Conjunct 3: i-side class equality.
   · rw [show i = ⟦i.out⟧ from (Quotient.out_eq i).symm]
     change ⟦slSuccEmbed_H ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩⟧ =
       (⟦i.out⟧ : decompQuot _ _)
@@ -7876,7 +7588,6 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
           (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
           diagMat (k + 2) (Fin.cons 1 a))⁻¹ := by group
     rw [h_inv_form]; exact inv_mem h_stab_i
-  -- Conjunct 4: corrected j-side class equality.
   · set τ_X_H : (GL_pair (k + 1)).H :=
       ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩ with hτ_X_H_def
     set j_corr : (GL_pair (k + 2)).H :=
@@ -7911,22 +7622,16 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
           (mapGL ℚ M_X : GL (Fin (k + 2)) ℚ) *
           diagMat (k + 2) (Fin.cons 1 b))⁻¹ := by group
     rw [h_inv_form]; exact inv_mem h_M_X_stab
-  -- Conjunct 5: dim-(k+1) fiber mem_H for (σ_i_H, τ_X_H).
-  -- Strategy: lift to dim-(k+2) mem_H for (slSuccEmbed_H σ_i_H, slSuccEmbed_H τ_X_H),
-  -- then descend via `slSuccEmbed_H_fiber_transfer_converse`.
   · set σ_i_H : (GL_pair (k + 1)).H :=
       ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩ with hσ_i_H_def
     set τ_X_H : (GL_pair (k + 1)).H :=
       ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩ with hτ_X_H_def
-    -- Dim-(k+2) lifted mem_H goal:
-    -- (D_c')⁻¹ * slSuccEmbed_H σ_i_H * D_a' * slSuccEmbed_H τ_X_H * D_b' ∈ H.
     have h_lifted_mem_H :
         (diagMat (k + 2) (Fin.cons 1 c))⁻¹ *
           (slSuccEmbed_H σ_i_H : GL (Fin (k + 2)) ℚ) *
           diagMat (k + 2) (Fin.cons 1 a) *
           (slSuccEmbed_H τ_X_H : GL (Fin (k + 2)) ℚ) *
           diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
-      -- Compute slSuccEmbed_H values at GL.
       have h_toSL_σ : toSL σ_i_H = σ_i := by
         apply mapGL_injective (k + 1); rw [toSL_spec]
       have h_toSL_τ : toSL τ_X_H = τ_X := by
@@ -7939,8 +7644,6 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
           (mapGL ℚ N_i⁻¹) * (j.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_X := by
         show mapGL ℚ (slSuccEmbed (toSL τ_X_H)) = _
         rw [h_toSL_τ, ← h_X_block, map_mul, map_mul, toSL_spec]
-      -- GL-lift of integer conjugation: D_a^GL · mapGL N_i = mapGL M_i · D_a^GL.
-      -- From h_int_conj: D_a · N_i.val = M_i.val · D_a (integer matrices).
       have h_int_conj_GL :
           diagMat (k + 2) (Fin.cons 1 a) * (mapGL ℚ N_i : GL (Fin (k + 2)) ℚ) =
           (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
@@ -7948,24 +7651,22 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
         have hcons_pos : ∀ q, 0 < (Fin.cons 1 a : Fin (k + 2) → ℕ) q :=
           cons_one_pos ha
         have h := congr_arg
-          (fun M : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ =>
+          (fun M : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ ↦
             M.map (algebraMap ℤ ℚ)) h_int_conj
         simp only [Matrix.map_mul] at h
         apply Units.ext
         simp only [Units.val_mul, mapGL_coe_matrix,
           diagMat_val (k + 2) _ hcons_pos]
-        rw [show (Matrix.diagonal (fun r : Fin (k + 2) =>
+        rw [show (Matrix.diagonal (fun r : Fin (k + 2) ↦
               (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) =
             Matrix.diagonal
-              (fun r : Fin (k + 2) =>
+              (fun r : Fin (k + 2) ↦
                 (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℚ)) from by
           rw [Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
           congr 1] at h
         convert h using 1
-      -- Now substitute and simplify the dim-(k+2) mem_H expression.
       have h_invN : (mapGL ℚ N_i⁻¹ : GL (Fin (k + 2)) ℚ) = (mapGL ℚ N_i)⁻¹ := by
         rw [← map_inv]
-      -- Cancellation: mapGL M_i · D_a · mapGL N_i⁻¹ = D_a.
       have h_cancel :
           (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) *
             diagMat (k + 2) (Fin.cons 1 a) *
@@ -7987,10 +7688,6 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
           ((diagMat (k + 2) (Fin.cons 1 b))⁻¹ * (mapGL ℚ M_X) *
             diagMat (k + 2) (Fin.cons 1 b)) := by
         rw [h_slSucc_σ_GL, h_slSucc_τ_GL]
-        -- LHS = (D_c')⁻¹ * (i.out * mapGL M_i) * D_a' *
-        --       ((mapGL N_i⁻¹) * j.out * mapGL M_X) * D_b'
-        -- Re-bracket so that `mapGL M_i * D_a' * mapGL N_i⁻¹` appears contiguously,
-        -- then apply h_cancel.
         have h_rebracket :
             (diagMat (k + 2) (Fin.cons 1 c))⁻¹ *
               ((i.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_i) *
@@ -8012,7 +7709,6 @@ private lemma fiber_block_form_preimage_corrected_j {k : ℕ}
         exact hfib_to_mem_H a b c ha hb hc i j hfib
       · -- M_X ∈ stab(D_b) at GL level.
         exact h_M_X_stab
-    -- Apply slSuccEmbed_H_fiber_transfer_converse.
     exact slSuccEmbed_H_fiber_transfer_converse a b c ha hb hc σ_i_H τ_X_H
       h_lifted_mem_H
 
@@ -8039,7 +7735,6 @@ private lemma mulMap_eq_of_setForm_specific_reps {n : ℕ} [NeZero n]
           ((GL_pair n).H : Set (GL (Fin n) ℚ))) :
     HeckeRing.mulMap (GL_pair n) g₁ g₂ ⟨⟦σ⟧, ⟦τ⟧⟩ =
       (⟦d⟧ : HeckeRing.HeckeCoset (GL_pair n)) := by
-  -- Step 1: derive product membership in doubleCoset(d) from the set-form.
   have h_prod_mem : (σ : GL (Fin n) ℚ) * g₁ *
       ((τ : GL (Fin n) ℚ) * g₂) ∈
       DoubleCoset.doubleCoset ((d : GL (Fin n) ℚ))
@@ -8057,12 +7752,10 @@ private lemma mulMap_eq_of_setForm_specific_reps {n : ℕ} [NeZero n]
     refine ⟨1, (GL_pair n).H.one_mem, h, hh, ?_⟩
     simp only [one_mul]
     exact hprod.symm
-  -- Step 2: reduce mulMap-equality to doubleCoset-membership for the .out reps.
   unfold HeckeRing.mulMap
   rw [HeckeRing.HeckeCoset.eq_iff]
   dsimp only
   apply HeckeRing.HeckeCoset.doubleCoset_eq_of_mem
-  -- Step 3: relate (⟦σ⟧).out, (⟦τ⟧).out to σ, τ via mk_out_eq_mul.
   obtain ⟨n_a, hn_a⟩ := QuotientGroup.mk_out_eq_mul
     ((ConjAct.toConjAct (g₁ : GL (Fin n) ℚ) • (GL_pair n).H).subgroupOf
       (GL_pair n).H) σ
@@ -8079,7 +7772,6 @@ private lemma mulMap_eq_of_setForm_specific_reps {n : ℕ} [NeZero n]
         (τ : GL (Fin n) ℚ) * (n_b : GL (Fin n) ℚ) := by
     have := congr_arg (Subtype.val : (GL_pair n).H → GL (Fin n) ℚ) hn_b
     simpa [Subgroup.coe_mul]
-  -- Stab/conjugation relations for n_a, n_b.
   have hn_a_conj :
       (g₁ : GL (Fin n) ℚ)⁻¹ * (n_a : GL (Fin n) ℚ) * g₁ ∈ (GL_pair n).H := by
     have := n_a.2
@@ -8095,12 +7787,9 @@ private lemma mulMap_eq_of_setForm_specific_reps {n : ℕ} [NeZero n]
       ConjAct.smul_def] at this
     simpa [ConjAct.ofConjAct_toConjAct]
   rw [hi_out, hj_out]
-  -- Step 4: produce the doubleCoset(d) membership for `(σ * n_a) * g₁ * ((τ * n_b) * g₂)`.
   rw [DoubleCoset.mem_doubleCoset] at h_prod_mem
   obtain ⟨a', ha', b', hb', habp⟩ := h_prod_mem
-  -- habp : a' * d * b' = σ * g₁ * (τ * g₂).
   rw [DoubleCoset.mem_doubleCoset]
-  -- Witnesses: a'' := (σ * n_a * σ⁻¹) * a', b'' := b' * (g₂⁻¹ * n_b * g₂).
   refine ⟨(σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) *
       (σ : GL (Fin n) ℚ)⁻¹ * a',
     (GL_pair n).H.mul_mem
@@ -8110,8 +7799,6 @@ private lemma mulMap_eq_of_setForm_specific_reps {n : ℕ} [NeZero n]
       ha',
     b' * ((g₂ : GL (Fin n) ℚ)⁻¹ * (n_b : GL (Fin n) ℚ) * g₂),
     (GL_pair n).H.mul_mem hb' hn_b_conj, ?_⟩
-  -- Equation: ((σ n_a σ⁻¹) * a') * d * (b' * (g₂⁻¹ * n_b * g₂)) =
-  --   (σ * n_a) * g₁ * ((τ * n_b) * g₂).
   have h_eq : ((σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) *
         (σ : GL (Fin n) ℚ)⁻¹ * a') * (d : GL (Fin n) ℚ) *
         (b' * ((g₂ : GL (Fin n) ℚ)⁻¹ * (n_b : GL (Fin n) ℚ) * g₂)) =
@@ -8154,10 +7841,10 @@ private lemma fiber_block_form_preimage_corrected_j_mulMap_explicit {k : ℕ}
       diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H)
     (N_i : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)))
     (j : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)))
     (hfib : ({(i.out : GL (Fin (k + 2)) ℚ) *
@@ -8281,8 +7968,6 @@ private lemma jout_conj_N_i_stab_of_iMi_c_stab {k : ℕ}
         ((j.out : GL (Fin (k + 2)) ℚ)⁻¹ * (mapGL ℚ N_i : GL (Fin (k + 2)) ℚ) *
           (j.out : GL (Fin (k + 2)) ℚ)) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
-  -- Unused positivity parameters retained for signature symmetry with the
-  -- consumer in `fiber_block_form_preimage_canonical_j_from_existential_witness`.
   let _ := ha; let _ := hb; let _ := hc
   set i_g : GL (Fin (k + 2)) ℚ := (i.out : GL (Fin (k + 2)) ℚ)
   set j_g : GL (Fin (k + 2)) ℚ := (j.out : GL (Fin (k + 2)) ℚ)
@@ -8292,7 +7977,6 @@ private lemma jout_conj_N_i_stab_of_iMi_c_stab {k : ℕ}
   set N_g : GL (Fin (k + 2)) ℚ := (mapGL ℚ N_i : GL (Fin (k + 2)) ℚ)
   set M_g : GL (Fin (k + 2)) ℚ := (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ)
   set ν_g : GL (Fin (k + 2)) ℚ := (mapGL ℚ ν : GL (Fin (k + 2)) ℚ)
-  -- Step 1: from `h_fib_GL`, derive `j_g · D_b = D_a⁻¹ · i_g⁻¹ · D_c · ν_g`.
   have h_fwd : j_g * D_b = D_a⁻¹ * i_g⁻¹ * D_c * ν_g := by
     have hcong :
         (D_a⁻¹ * i_g⁻¹) * (i_g * D_a * j_g * D_b) =
@@ -8302,21 +7986,17 @@ private lemma jout_conj_N_i_stab_of_iMi_c_stab {k : ℕ}
         = (D_a⁻¹ * i_g⁻¹) * (i_g * D_a * j_g * D_b) := by group
       _ = (D_a⁻¹ * i_g⁻¹) * (D_c * ν_g) := hcong
       _ = D_a⁻¹ * i_g⁻¹ * D_c * ν_g := by group
-  -- Step 2: invert to derive `D_b⁻¹ · j_g⁻¹ = ν_g⁻¹ · D_c⁻¹ · i_g · D_a`.
   have h_inv : D_b⁻¹ * j_g⁻¹ = ν_g⁻¹ * D_c⁻¹ * i_g * D_a := by
     have hinv_eq : (j_g * D_b)⁻¹ = (D_a⁻¹ * i_g⁻¹ * D_c * ν_g)⁻¹ :=
       congr_arg (·⁻¹) h_fwd
-    rw [show (j_g * D_b)⁻¹ = D_b⁻¹ * j_g⁻¹ from by group,
+    rw [show (j_g * D_b)⁻¹ = D_b⁻¹ * j_g⁻¹ by group,
         show (D_a⁻¹ * i_g⁻¹ * D_c * ν_g)⁻¹ = ν_g⁻¹ * D_c⁻¹ * i_g * D_a from
           by group] at hinv_eq
     exact hinv_eq
-  -- Step 3: from `h_int_conj_GL`, derive `D_a · N_g · D_a⁻¹ = M_g`.
   have h_int : D_a * N_g * D_a⁻¹ = M_g := by
     calc D_a * N_g * D_a⁻¹
         = (M_g * D_a) * D_a⁻¹ := by rw [h_int_conj_GL]
       _ = M_g := by group
-  -- Step 4: rewrite the goal expression to `ν_g⁻¹ · X · ν_g` where
-  -- `X = D_c⁻¹ · (i_g · M_g · i_g⁻¹) · D_c`.
   have h_goal_eq :
       D_b⁻¹ * (j_g⁻¹ * N_g * j_g) * D_b =
         ν_g⁻¹ * (D_c⁻¹ * (i_g * M_g * i_g⁻¹) * D_c) * ν_g := by
@@ -8329,8 +8009,6 @@ private lemma jout_conj_N_i_stab_of_iMi_c_stab {k : ℕ}
       _ = ν_g⁻¹ * D_c⁻¹ * i_g * M_g * i_g⁻¹ * D_c * ν_g := by rw [h_int]
       _ = ν_g⁻¹ * (D_c⁻¹ * (i_g * M_g * i_g⁻¹) * D_c) * ν_g := by group
   rw [h_goal_eq]
-  -- Step 5: close using `h_iMi_c_stab` plus subgroup closure
-  -- (`ν_g ∈ H` from `coe_mem_SLnZ`).
   have h_ν_in_H : ν_g ∈ (GL_pair (k + 2)).H := coe_mem_SLnZ (k + 2) ν
   have h_ν_inv_in_H : ν_g⁻¹ ∈ (GL_pair (k + 2)).H :=
     (GL_pair (k + 2)).H.inv_mem h_ν_in_H
@@ -8382,16 +8060,11 @@ private lemma jout_conj_N_i_stab_for_X_fiber_of_iMi_c_stab {k : ℕ}
           (mapGL ℚ N_i : GL (Fin (k + 2)) ℚ) *
           (j.out : GL (Fin (k + 2)) ℚ)) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
-  -- Step 1: Extract M_i, N_i, M_X from `exists_stab_with_block_form_of_X_fiber`.
   obtain ⟨M_i, N_i, _M_X, _τ_X, _h_M_i_stab, h_int_conj, _h_block, _h_M_X_stab⟩ :=
     exists_stab_with_block_form_of_X_fiber a b c ha hb hc hda hdb i j hfib
   refine ⟨N_i, ?_⟩
-  -- Step 2: Build h_fib_GL via `hfib_GL_eq`.
   obtain ⟨ν, h_fib_GL⟩ := hfib_GL_eq a b c ha hb hc i j hfib
-  -- Step 3: Build h_int_conj_GL via `h_int_conj_GL_of_int_mat`.
   have h_int_conj_GL := h_int_conj_GL_of_int_mat a ha M_i N_i h_int_conj
-  -- Step 4: Apply `jout_conj_N_i_stab_of_iMi_c_stab` (T192) using the
-  -- c-stab hypothesis instantiated at our extracted M_i.
   exact jout_conj_N_i_stab_of_iMi_c_stab a b c ha hb hc i j M_i N_i ν
     h_fib_GL h_int_conj_GL (h_iMi_c_stab M_i)
 
@@ -8438,8 +8111,6 @@ private lemma fiber_block_form_preimage_canonical_j_witness_specific {k : ℕ}
           (j.out : GL (Fin (k + 2)) ℚ)) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H) :
     decompQuot_slSuccEmbed_diagMat b hb j_m = j := by
-  -- The unused `a, ha` parameters keep the signature symmetric with the
-  -- companion i-side helper for downstream consumers; suppress the linter.
   let _ := a
   let _ := ha
   rw [h_j_m_corrected]
@@ -8491,7 +8162,7 @@ The hypothesis form `∃ N_i, (the corrected_j_mulMap output package for THAT N_
 form** for the ≤ direction. -/
 private lemma fiber_block_form_preimage_canonical_j_from_existential_witness {k : ℕ}
     (a b c : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
-    (hc : ∀ i, 0 < c i) (hda : DivChain (k + 1) a) (hdb : DivChain (k + 1) b)
+    (hc : ∀ i, 0 < c i) (hda : DivChain (k + 1) a) (_ : DivChain (k + 1) b)
     (i : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 a)))
     (j : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)))
     (hfib : ({(i.out : GL (Fin (k + 2)) ℚ) *
@@ -8527,8 +8198,6 @@ private lemma fiber_block_form_preimage_canonical_j_from_existential_witness {k 
           (diagMat_delta (k + 1) a) (diagMat_delta (k + 1) b) ⟨i_m, j_m⟩ =
         (⟦diagMat_delta (k + 1) c⟧ :
           HeckeRing.HeckeCoset (GL_pair (k + 1))) := by
-  -- The `hfib`/`hc`/`hda` parameters are bookkeeping for the consumer signature;
-  -- the actual content comes from the existential witness.
   let _ := hfib; let _ := hc; let _ := hda
   obtain ⟨N_i, i_m, j_m, h_i_m_canon, h_j_m_corrected, h_mulMap, h_stab⟩ :=
     h_witness_jout_conj_stab
@@ -8560,7 +8229,6 @@ private lemma exists_i_m_block_class_eq_of_fiber {k : ℕ}
       decompQuot_slSuccEmbed_diagMat a ha i_m = i := by
   obtain ⟨M, σ_m, h_eq, h_M_stab⟩ :=
     exists_stab_with_block_form_of_fiber a b c ha hb hc hda i j hfib
-  -- Lift σ_m to (GL_pair (k + 1)).H.
   set σ_m_H : (GL_pair (k + 1)).H := ⟨mapGL ℚ σ_m, coe_mem_SLnZ (k + 1) σ_m⟩
     with hσ_m_H_def
   refine ⟨⟦σ_m_H⟧, ?_⟩
@@ -8570,8 +8238,6 @@ private lemma exists_i_m_block_class_eq_of_fiber {k : ℕ}
   change QuotientGroup.leftRel _ (slSuccEmbed_H σ_m_H) i.out
   rw [QuotientGroup.leftRel_apply]
   rw [mem_diagMat_cons_stabilizer_subgroupOf_iff a ha]
-  -- Goal: diag⁻¹ * (((slSuccEmbed_H σ_m_H)⁻¹ * i.out : H) : GL _) * diag ∈ H_(k+2).
-  -- Compute the GL value: it equals mapGL ℚ M⁻¹.
   have h_toSL : toSL σ_m_H = σ_m := by
     apply mapGL_injective (k + 1)
     rw [toSL_spec]
@@ -8579,8 +8245,6 @@ private lemma exists_i_m_block_class_eq_of_fiber {k : ℕ}
       (((slSuccEmbed_H σ_m_H)⁻¹ * i.out : (GL_pair (k + 2)).H) :
         GL (Fin (k + 2)) ℚ) =
       (mapGL ℚ M)⁻¹ := by
-    -- (slSuccEmbed_H σ_m_H : GL _) = mapGL ℚ (slSuccEmbed (toSL σ_m_H)) = mapGL ℚ (slSuccEmbed σ_m)
-    --   = mapGL ℚ (toSL i.out * M) = (i.out : GL _) * mapGL ℚ M.
     have h_slSuccEmbed_GL : (slSuccEmbed_H σ_m_H : GL (Fin (k + 2)) ℚ) =
         (i.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M := by
       show mapGL ℚ (slSuccEmbed (toSL σ_m_H)) = _
@@ -8589,8 +8253,6 @@ private lemma exists_i_m_block_class_eq_of_fiber {k : ℕ}
     rw [h_slSuccEmbed_GL]
     group
   rw [h_GL_val]
-  -- Goal: diag⁻¹ * (mapGL ℚ M)⁻¹ * diag ∈ H_(k+2).
-  -- This equals (diag⁻¹ * mapGL ℚ M * diag)⁻¹, which is in H by inv_mem.
   have h_inv_form : (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
       (mapGL ℚ M : GL (Fin (k + 2)) ℚ)⁻¹ * diagMat (k + 2) (Fin.cons 1 a) =
       ((diagMat (k + 2) (Fin.cons 1 a))⁻¹ * (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
@@ -8753,9 +8415,6 @@ private lemma fiber_has_block_form_preimages_existential_reps {k : ℕ}
     with hσ_m_H_def
   set τ_m_H : (GL_pair (k + 1)).H := ⟨mapGL ℚ τ_m, coe_mem_SLnZ (k + 1) τ_m⟩
     with hτ_m_H_def
-  -- Construct i_m, j_m directly as ⟦σ_m_H⟧, ⟦τ_m_H⟧ so the rep witnesses
-  -- match definitionally. Then prove the two class equalities inline,
-  -- mirroring `exists_i_m_block_class_eq_of_fiber`'s argument.
   refine ⟨⟦σ_m_H⟧, ⟦τ_m_H⟧, σ_m_H, τ_m_H, rfl, rfl, ?_, ?_, ?_⟩
   · -- i-side class equality.
     rw [show i = ⟦i.out⟧ from (Quotient.out_eq i).symm]
@@ -8808,7 +8467,6 @@ private lemma fiber_has_block_form_preimages_existential_reps {k : ℕ}
           diagMat (k + 2) (Fin.cons 1 b))⁻¹ := by group
     rw [h_inv_form]; exact inv_mem h_stab_j
   · -- The lifted dim-(k+2) mem_H for (slSuccEmbed_H σ_m_H, slSuccEmbed_H τ_m_H)
-    -- follows directly from `slSuccEmbed_H_fiber_transfer` applied to h_joint.
     exact slSuccEmbed_H_fiber_transfer a b c ha hb hc σ_m_H τ_m_H h_joint
 
 /-- **Combinatorial core of Shimura L.3.19**: every fiber pair at dim `k+2` with
@@ -8881,7 +8539,6 @@ private lemma fiber_block_form_preimage {k : ℕ} (hk : 1 ≤ k)
   obtain ⟨i_m, j_m, h1, h2, h_lifted⟩ :=
     fiber_has_block_form_preimages hk a b c ha hb hc hda hdb hdc i j hfib
   refine ⟨i_m, j_m, h1, h2, ?_⟩
-  -- Descend the lifted k+2 mem_H to a k+1 mem_H on (i_m.out, j_m.out).
   have h_k1_mem := slSuccEmbed_H_fiber_transfer_converse a b c ha hb hc
     i_m.out j_m.out h_lifted
   have h_dval_a : ((diagMat_delta (k + 1) a : (GL_pair (k + 1)).Δ) :
@@ -8890,8 +8547,6 @@ private lemma fiber_block_form_preimage {k : ℕ} (hk : 1 ≤ k)
       GL (Fin (k + 1)) ℚ) = diagMat (k + 1) b := diagMat_delta_val (k + 1) b hb
   have h_dval_c : ((diagMat_delta (k + 1) c : (GL_pair (k + 1)).Δ) :
       GL (Fin (k + 1)) ℚ) = diagMat (k + 1) c := diagMat_delta_val (k + 1) c hc
-  -- Use `simpa` to package: re-express the fiber set-form via
-  -- `fiber_diagMat_iff_mem_H`, then align `diagMat` and `diagMat_delta` coercions.
   simpa only [h_dval_a, h_dval_b, h_dval_c] using
     (fiber_diagMat_iff_mem_H a b c ha hb hc i_m.out j_m.out).mpr h_k1_mem
 
@@ -8927,8 +8582,7 @@ private lemma heckeMultiplicity_block_embed_le_diagMat {k : ℕ} (hk : 1 ≤ k)
             ((GL_pair (k + 1)).H : Set _) =
             {(diagMat_delta (k + 1) c : GL (Fin (k + 1)) ℚ)} *
               ((GL_pair (k + 1)).H : Set _)}
-  -- Build the injection f : SrcType → TgtType via Classical.choose on the normalization.
-  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hfib⟩ =>
+  let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hfib⟩ ↦
     let spec := fiber_block_form_preimage hk a b c ha hb hc hda hdb hdc i j hfib
     let i_m := spec.choose
     let spec' := spec.choose_spec
@@ -9132,11 +8786,7 @@ private lemma heckeMultiplicity_block_embed_le_diagMat_target_mulMap_via_iFuncti
     HeckeRing.heckeMultiplicityMulMap (GL_pair (k + 1))
         (diagMat_delta (k + 1) a) (diagMat_delta (k + 1) b)
         (diagMat_delta (k + 1) c) := by
-  -- Bookkeeping: hda, hdb, hc enter only through the chain that produces
-  -- `h_iFunctional`'s witnesses; they are retained in the signature for
-  -- symmetry with `_le_diagMat`/`_ge_diagMat_target_mulMap` consumers.
   let _ := hda; let _ := hdb; let _ := hc
-  -- Source type: dim-(k+2) fiber set in set-form.
   let SrcType : Type := { p : decompQuot (GL_pair (k + 2))
             (diagMat_delta (k + 2) (Fin.cons 1 a)) ×
             decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)) |
@@ -9147,25 +8797,21 @@ private lemma heckeMultiplicity_block_embed_le_diagMat_target_mulMap_via_iFuncti
             ((GL_pair (k + 2)).H : Set _) =
             {(diagMat_delta (k + 2) (Fin.cons 1 c) : GL (Fin (k + 2)) ℚ)} *
               ((GL_pair (k + 2)).H : Set _) }
-  -- Target type: dim-(k+1) mulMap fiber set.
   let MulMapTgtType : Type := { p : decompQuot (GL_pair (k + 1))
             (diagMat_delta (k + 1) a) ×
             decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) b) |
             HeckeRing.mulMap (GL_pair (k + 1))
                 (diagMat_delta (k + 1) a) (diagMat_delta (k + 1) b) ⟨p.1, p.2⟩ =
               (⟦diagMat_delta (k + 1) c⟧ : HeckeRing.HeckeCoset (GL_pair (k + 1))) }
-  -- Build the injection f : SrcType → MulMapTgtType via h_iFunctional + Classical.choose.
-  let f : SrcType → MulMapTgtType := fun ⟨⟨i, j⟩, hfib⟩ =>
+  let f : SrcType → MulMapTgtType := fun ⟨⟨i, j⟩, hfib⟩ ↦
     let spec := h_iFunctional i j hfib
     let i_m := spec.choose
     let spec' := spec.choose_spec
     let j_m := spec'.choose
     ⟨(i_m, j_m), spec'.choose_spec.2.2⟩
-  -- Reduce the inequality to Nat.card_le_card_of_injective f.
   simp only [HeckeRing.heckeMultiplicity, HeckeRing.heckeMultiplicityMulMap]
   norm_cast
   refine Nat.card_le_card_of_injective f ?_
-  -- Injectivity argument.
   rintro ⟨⟨i₁, j₁⟩, hfib₁⟩ ⟨⟨i₂, j₂⟩, hfib₂⟩ heq
   set spec₁ := h_iFunctional i₁ j₁ hfib₁ with hspec₁
   set spec₂ := h_iFunctional i₂ j₂ hfib₂ with hspec₂
@@ -9190,10 +8836,8 @@ private lemma heckeMultiplicity_block_embed_le_diagMat_target_mulMap_via_iFuncti
             (GL_pair (k + 2)).H) * j₂.out⟧ :
           decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b))) :=
     spec₂.choose_spec.choose_spec.2.1
-  -- i recovery: canonical i-side class equality + i_m equality.
   have h_i_final : i₁ = i₂ := by
     rw [← h_i_canon₁, ← h_i_canon₂, h_i_m_eq]
-  -- j recovery: corrected j-side class equality + i-functional N_of_i + group cancellation.
   have h_j_final : j₁ = j₂ := by
     have h_class_eq :
         (⟦(⟨mapGL ℚ (N_of_i i₁)⁻¹, coe_mem_SLnZ (k + 2) (N_of_i i₁)⁻¹⟩ :
@@ -9244,10 +8888,10 @@ private def IBlockWitnessExists {k : ℕ}
     (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
       (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
       diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H ∧
-    Matrix.diagonal (fun r : Fin (k + 2) =>
+    Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N.val =
       M.val *
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))
 
 /-- **`IBlockWitnessExists` is provable from any fiber pair `(j, hfib)`.**
@@ -9341,17 +8985,14 @@ private lemma heckeMultiplicity_block_embed_le_diagMat_target_mulMap_direct
   refine heckeMultiplicity_block_embed_le_diagMat_target_mulMap_via_iFunctional
     a b c ha hb hc hda hdb (N_of_i_default a ha) ?_
   intro i j hfib
-  -- Establish the i-only existential from the fiber pair.
   have h_iF : IBlockWitnessExists a ha i :=
     iBlockWitnessExists_of_fiber a b c ha hb hc hda i j hfib
-  -- Unfold N_of_i_default at i to the corresponding Classical.choose value.
   have h_N_def :
       N_of_i_default a ha i = h_iF.choose_spec.choose_spec.choose := by
     classical
     show (if h : IBlockWitnessExists a ha i
           then h.choose_spec.choose_spec.choose else 1) = _
     rw [dif_pos h_iF]
-  -- Extract the i-functional witnesses.
   set M_i : SpecialLinearGroup (Fin (k + 2)) ℤ := h_iF.choose with hM_i_def
   set σ_i : SpecialLinearGroup (Fin (k + 1)) ℤ :=
     h_iF.choose_spec.choose with hσ_i_def
@@ -9364,15 +9005,13 @@ private lemma heckeMultiplicity_block_embed_le_diagMat_target_mulMap_direct
       diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H :=
     h_iF.choose_spec.choose_spec.choose_spec.2.1
   have h_int_conj :
-      Matrix.diagonal (fun r : Fin (k + 2) =>
+      Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * N_i.val =
         M_i.val *
-        Matrix.diagonal (fun r : Fin (k + 2) =>
+        Matrix.diagonal (fun r : Fin (k + 2) ↦
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) :=
     h_iF.choose_spec.choose_spec.choose_spec.2.2
-  -- N_of_i_default a ha i = N_i (combining h_N_def and the set abbreviation).
   have h_N_eq : N_of_i_default a ha i = N_i := h_N_def.trans hN_i_def.symm
-  -- Substitute and apply the explicit chain.
   rw [h_N_eq]
   exact fiber_block_form_preimage_corrected_j_mulMap_explicit a b c ha hb hc
     hdb i M_i σ_i h_block_i h_stab_i N_i h_int_conj j hfib
@@ -9480,17 +9119,14 @@ private lemma exists_stab_block_form_of_col_div {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
         (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
-  -- Step 1: build M_0 with first column = (Y⁻¹).val _ 0, in stab(D_b).
   have hw_primitive :
       ∀ d : ℤ, (∀ r : Fin (k + 2),
           d ∣ (Y⁻¹ : SpecialLinearGroup _ ℤ).val r 0) → IsUnit d :=
-    fun d hd => sl_first_col_primitive (Y⁻¹) d hd
+    fun d hd ↦ sl_first_col_primitive (Y⁻¹) d hd
   obtain ⟨M_0, hM_0_col, hM_0_stab⟩ :=
     sl_exists_col_stab_divChain b hb hdb
-      (fun r => (Y⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
+      (fun r ↦ (Y⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
       hw_primitive h_col_div_b
-  -- Step 2: (Y * M_0) has first column = e_0 because M_0's first column matches
-  -- Y⁻¹'s first column.
   have h_col_e0 : ∀ r : Fin (k + 2),
       (Y * M_0).val r 0 =
         (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) r 0 := by
@@ -9499,13 +9135,11 @@ private lemma exists_stab_block_form_of_col_div {k : ℕ}
         (Y * M_0).val r 0 =
           (Y * Y⁻¹ : SpecialLinearGroup _ ℤ).val r 0 := by
       simp only [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-      refine Finset.sum_congr rfl (fun p _ => ?_)
+      refine Finset.sum_congr rfl (fun p _ ↦ ?_)
       rw [hM_0_col p]
     rw [h_to_inv, mul_inv_cancel, Matrix.SpecialLinearGroup.coe_one]
-  -- Step 3: clear the first row, keeping column 0 = e_0.
   obtain ⟨T_clear, hT_col0, hT_S, _, _, hT_stab⟩ :=
     sl_first_row_clear_with_col0_e0 b hb (Y * M_0) h_col_e0 Finset.univ
-  -- Step 4: assemble M = M_0 * T_clear and the bottom-right τ block.
   set M : SpecialLinearGroup (Fin (k + 2)) ℤ := M_0 * T_clear with hM_def
   set N_full : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ := (Y * M).val with hN_def
   have hM_assoc : Y * M = (Y * M_0) * T_clear := by
@@ -9531,7 +9165,7 @@ private lemma exists_stab_block_form_of_col_div {k : ℕ}
     rw [Matrix.one_apply_ne (Fin.succ_ne_zero I)] at h
     exact h
   set τ_raw : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
-    fun I J => N_full I.succ J.succ with hτ_raw_def
+    fun I J ↦ N_full I.succ J.succ with hτ_raw_def
   have h_det : τ_raw.det = 1 := by
     have h_det_N : N_full.det = 1 := by
       rw [hN_def]; exact (Y * M).2
@@ -9543,7 +9177,7 @@ private lemma exists_stab_block_form_of_col_div {k : ℕ}
             (N_full.submatrix Fin.succ j.succ.succAbove).det = 0 := by
       intro j
       rw [hN_row0 j]; ring
-    rw [Finset.sum_eq_zero (fun j _ => h_zero_terms j), add_zero,
+    rw [Finset.sum_eq_zero (fun j _ ↦ h_zero_terms j), add_zero,
       hN_00] at h_det_N
     simp only [Fin.val_zero, pow_zero, one_mul, mul_one] at h_det_N
     have h_submat :
@@ -9748,20 +9382,15 @@ lemma heckeMultiplicity_block_embed [NeZero (m + 1)]
       (HeckeCoset.rep (T_diag a))
       (HeckeCoset.rep (T_diag b))
       (HeckeCoset.rep (T_diag c)) := by
-  -- Shimura Lemma 3.19 (p.59): lattice bijection M' ↔ M = M' ∩ L.
   obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-  -- The k = 0 case (m = 1) is excluded at the private-helper level; `hm : 2 ≤ m`
-  -- with `m = k + 1` gives `hk : 1 ≤ k` for the `le`-direction helper chain.
   have hk : 1 ≤ k := by omega
   have hcons_a := cons_one_pos ha
   have hcons_b := cons_one_pos hb
   have hcons_c := cons_one_pos hc
-  -- Bridge: `heckeMultiplicity` at `rep T_diag` equals at `diagMat_delta`.
   have bridge_m := heckeMultiplicity_rep_eq_diagMat_delta (n := k + 1) a b c ha hb hc
   have bridge_m1 := heckeMultiplicity_rep_eq_diagMat_delta (n := k + 2)
     (Fin.cons 1 a) (Fin.cons 1 b) (Fin.cons 1 c) hcons_a hcons_b hcons_c
   rw [bridge_m1, bridge_m]
-  -- At diagMat level, combine the ≤ and ≥ directions.
   exact le_antisymm
     (heckeMultiplicity_block_embed_le_diagMat (k := k) hk a b c ha hb hc hda hdb hdc)
     (heckeMultiplicity_block_embed_ge_diagMat (k := k) a b c ha hb hc)

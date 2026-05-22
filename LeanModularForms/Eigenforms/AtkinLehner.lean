@@ -3,13 +3,13 @@ Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.HeckeT_n
-import LeanModularForms.HeckeRIngs.GL2.Newforms
+import Mathlib.NumberTheory.ModularForms.QExpansion
 import LeanModularForms.Eigenforms.ConductorTheorem
 import LeanModularForms.Eigenforms.MainLemma
+import LeanModularForms.HeckeRIngs.GL2.HeckeT_n
+import LeanModularForms.HeckeRIngs.GL2.LevelRaise
+import LeanModularForms.HeckeRIngs.GL2.Newforms
 import LeanModularForms.Modularforms.QExpansionSlash
-import Mathlib.NumberTheory.ModularForms.QExpansion
 
 /-!
 # Atkin-Lehner same-level `p`-supported projection API (POST-4e / T117)
@@ -84,8 +84,6 @@ open ModularFormClass CongruenceSubgroup Matrix.SpecialLinearGroup
 
 namespace HeckeRing.GL2.AtkinLehner
 
-/-! ### Power-series predicate `IsSupportedOnDvd` -/
-
 /-- A power series is **supported on multiples of `d`** if its
 coefficient at every index not divisible by `d` is zero. -/
 def IsSupportedOnDvd (d : ℕ) (P : PowerSeries ℂ) : Prop :=
@@ -106,10 +104,8 @@ lemma add {d : ℕ} {P Q : PowerSeries ℂ}
 lemma smul {d : ℕ} (c : ℂ) {P : PowerSeries ℂ} (hP : IsSupportedOnDvd d P) :
     IsSupportedOnDvd d (c • P) := by
   intro n hn
-  rw [show (c • P) = (c : ℂ) • P from rfl]
-  rw [show (PowerSeries.coeff n) ((c : ℂ) • P) = c * (PowerSeries.coeff n) P from by
-    simp [smul_eq_mul]]
-  rw [hP n hn, mul_zero]
+  rw [show (PowerSeries.coeff n) (c • P) = c * (PowerSeries.coeff n) P by
+    simp [smul_eq_mul], hP n hn, mul_zero]
 
 lemma neg {d : ℕ} {P : PowerSeries ℂ} (hP : IsSupportedOnDvd d P) :
     IsSupportedOnDvd d (-P) := by
@@ -127,16 +123,11 @@ multiples of any `d ≥ 1`, since its only non-zero coefficient is at
 index `0` and every natural divides `0`.  Recorded as a sanity check. -/
 lemma one (d : ℕ) : IsSupportedOnDvd d (1 : PowerSeries ℂ) := by
   intro n hn
-  -- `coeff n 1 = 0` for `n ≠ 0`; the support condition forces `n ≠ 0`.
   rcases Nat.eq_zero_or_pos n with rfl | hpos
-  · -- `n = 0` impossible: `d ∣ 0` always holds.
-    exact absurd (dvd_zero d) hn
-  · -- `n > 0`: `(PowerSeries.coeff n) 1 = 0`.
-    rw [PowerSeries.coeff_one, if_neg hpos.ne']
+  · exact absurd (dvd_zero d) hn
+  · rw [PowerSeries.coeff_one, if_neg hpos.ne']
 
 end IsSupportedOnDvd
-
-/-! ### Cusp-form predicate and submodule -/
 
 variable {N : ℕ} [NeZero N] {k : ℤ} {d : ℕ}
 
@@ -147,8 +138,7 @@ def QExpansionSupportedOnDvd (d : ℕ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   IsSupportedOnDvd d (qExpansion (1 : ℝ) f)
 
-/-- The "strict period 1" hypothesis on `Γ₁(N)`-cusp forms, used by
-`qExpansion_add` / `qExpansion_smul` from Mathlib. -/
+omit [NeZero N] in
 private lemma h1_period_Gamma1 :
     (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
   rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
@@ -165,18 +155,9 @@ Closed under addition, scalar multiplication, and the zero form, via
 noncomputable def qSupportedOnDvdSubmodule (N : ℕ) [NeZero N] (k : ℤ) (d : ℕ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   carrier := {f | QExpansionSupportedOnDvd d f}
-  zero_mem' := by
-    intro n _
-    -- ⇑(0 : CuspForm) = 0 (function), so qExpansion 1 0 = 0 (PowerSeries).
-    show (PowerSeries.coeff n) (qExpansion (1 : ℝ)
-        ⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0
-    rw [show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
-        (0 : UpperHalfPlane → ℂ) from rfl,
-      qExpansion_zero (1 : ℝ)]
-    simp
+  zero_mem' := by intro n _; simp [qExpansion_zero]
   add_mem' {f g} hf hg := by
     intro n hn
-    -- ⇑(f + g) = ⇑f + ⇑g by CuspForm.coe_add; qExpansion is additive at this level.
     have h_eq : qExpansion (1 : ℝ) (⇑(f + g) : UpperHalfPlane → ℂ) =
         qExpansion (1 : ℝ) ⇑f + qExpansion (1 : ℝ) ⇑g := by
       have := qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
@@ -192,17 +173,15 @@ noncomputable def qSupportedOnDvdSubmodule (N : ℕ) [NeZero N] (k : ℤ) (d : �
         h1_period_Gamma1 c f
       convert this using 2
     show (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑(c • f)) = 0
-    rw [h_eq]
-    rw [show (PowerSeries.coeff n) (c • qExpansion (1 : ℝ) ⇑f) =
-      c * (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑f) from by simp [smul_eq_mul]]
-    rw [hf n hn, mul_zero]
+    rw [h_eq, show (PowerSeries.coeff n) (c • qExpansion (1 : ℝ) ⇑f) =
+      c * (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑f) by simp [smul_eq_mul],
+      hf n hn, mul_zero]
 
 @[simp] lemma mem_qSupportedOnDvdSubmodule
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ qSupportedOnDvdSubmodule N k d ↔ QExpansionSupportedOnDvd d f :=
   Iff.rfl
 
-/-! ### Forward direction: `levelRaise` image is supported on multiples of `d` -/
 
 /-- **Level-raise q-expansion forward direction (modular form).**  For
 `g : ModularForm Γ₁(M) k`, the image `modularFormLevelRaise M d k g`
@@ -231,14 +210,7 @@ lemma qExpansion_levelRaise_isSupportedOnDvd
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] {k : ℤ}
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     IsSupportedOnDvd d (qExpansion (1 : ℝ) (levelRaise M d k g)) := by
-  -- The cusp-form-level `levelRaise M d k g` agrees as a function on ℍ
-  -- with the modular-form-level `modularFormLevelRaise` of any underlying
-  -- modular-form lift; both equal `levelRaiseFun d k ⇑g` (by the
-  -- `coe_modularFormLevelRaise` simp lemma).  Therefore their
-  -- `qExpansion`s agree.  We use the cusp form's
-  -- `ModularFormClass`-induced q-expansion API directly.
   intro n hn
-  -- Construct the modular-form lift of `g` and use its forward lemma.
   let g_mf : ModularForm ((Gamma1 M).map (mapGL ℝ)) k :=
     { toSlashInvariantForm := g.toSlashInvariantForm
       holo' := g.holo'
@@ -264,73 +236,10 @@ theorem levelRaise_mem_qSupportedOnDvdSubmodule
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d]
     (heq : d * M = N) (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     (heq ▸ levelRaise M d k g) ∈ qSupportedOnDvdSubmodule N k d := by
-  -- Goal at level Γ₁(d * M) = Γ₁(N) (after `heq`).
   subst heq
   show QExpansionSupportedOnDvd d (levelRaise M d k g)
   exact qExpansion_levelRaise_isSupportedOnDvd g
 
-/-! ### Precise statement of the missing reverse direction (Atkin-Lehner gap)
-
-The reverse direction of the Atkin–Lehner correspondence — that every
-cusp form `f ∈ qSupportedOnDvdSubmodule N k d` (with `d ∣ N`) equals
-`heq ▸ levelRaise (N/d) d k g` for some cusp form `g` at the lower
-level `Γ₁(N/d)` — is the **central structural gap** for
-`Newforms.mainLemma`.
-
-The classical proof requires either:
-
-* **The trace operator** `Tr_d : S_k(Γ₁(N)) → S_k(Γ₁(N/d))` defined by
-  averaging over coset representatives of `Γ₁(N/d) / Γ₁(N)`; the
-  composition `levelRaise (N/d) d k ∘ Tr_d` then identifies, on the
-  q-expansion-supported subspace, with the identity (modulo a constant
-  factor depending on the index `[Γ₁(N/d) : Γ₁(N)]` and `d^{k-1}`).
-* **The Hecke `U_d / V_d` framework** at level `Γ₀(N)` with `d ∣ N`:
-  `U_d ∘ V_d = id` on `S_k(Γ₁(N))`, and the composition `V_d ∘ U_d`
-  acts as the identity on the `d`-supported subspace.
-
-Either route requires non-trivial coset-averaging or Hecke-operator
-infrastructure not yet present in the repository.  The exact missing
-theorem signature is:
-
-```
-theorem isSupportedOnDvd_iff_in_levelRaise_image
-    {N : ℕ} [NeZero N] {d : ℕ} [NeZero d] (hd : 1 < d) (hdN : d ∣ N)
-    {k : ℤ} (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ qSupportedOnDvdSubmodule N k d ↔
-      ∃ (g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k),
-        f = (Nat.div_mul_cancel hdN).symm ▸ levelRaise (N / d) d k g
-```
-
-Once that statement lands, `Newforms.mainLemma` follows by combining:
-
-1. The multi-prime sieve
-   `MainLemma.miyake_main_lemma_4_6_8_level_L` (at `L = N`) showing
-   that `(qExpansion 1 f).coeff n = if Coprime n N then a_n else 0` on
-   the support side; combined with the mainLemma hypothesis
-   `a_n = 0` for `Coprime n N`, this gives a vanishing sieve.
-2. The Möbius decomposition
-   `f = Σ_{p ∣ N} f_p` into pieces `f_p` each in
-   `qSupportedOnDvdSubmodule N k p`; via the missing reverse
-   direction, each `f_p` is a `levelRaise` image, hence in
-   `cuspFormsOld N k`. -/
-
-/-! ### Reverse Atkin-Lehner bridge via the conductor theorem (T117 pivot)
-
-The "reverse direction" gap above can be **partially closed** without
-the trace operator or `U_d / V_d` framework, by routing through the
-existing `Newforms.exists_levelRaise_preimage_of_coeff_support_multiples`
-(T116) and `ConductorTheorem.conductor_theorem_dichotomy_cuspForm_strong`.
-
-This route requires a Nebentypus character `χ : DirichletCharacter ℂ N`
-(so `f ∈ cuspFormCharSpace k χ.toUnitHom`); without one, the conductor
-dichotomy does not apply directly.  For pure-`Γ₁(N)` cusp forms (no
-character data), one would still need the trace / `U_d V_d` route. -/
-
-/-- **Cast-coe transparency lemma.**  For arbitrary `M, N : ℕ` and an
-equality `h : M = N`, the function coercion of a CuspForm cast across
-`h ▸` agrees with the coercion before the cast.  Proved by `cases h` —
-which works because `M` and `N` are fully generic free variables (no
-dependent-elimination obstruction). -/
 private lemma cuspForm_coe_eq_of_cast {M N : ℕ} {k : ℤ} (h : M = N)
     (x : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     (⇑(h ▸ x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
@@ -338,12 +247,6 @@ private lemma cuspForm_coe_eq_of_cast {M N : ℕ} {k : ℤ} (h : M = N)
   cases h
   rfl
 
-/-- **Generator-witness helper.**  Given the function-level equality
-`⇑(levelRaise (N/d) d k F) = ⇑f`, construct the `IsOldformGenerator`
-witness for `f`.  The type-level cast `▸` is discharged by the
-`cuspForm_coe_eq_of_cast` lemma (which works because the cast equation
-is between fresh variables `M, N` rather than the dependent
-`d * (N/d), N` pair). -/
 private lemma isOldformGenerator_of_funeq
     {N d : ℕ} [NeZero d] (hd : 1 < d) (hdN : d ∣ N) [NeZero N] [NeZero (N / d)]
     {k : ℤ}
@@ -353,7 +256,6 @@ private lemma isOldformGenerator_of_funeq
     IsOldformGenerator f := by
   have h_dvd_eq : d * (N / d) = N := Nat.mul_div_cancel' hdN
   refine ⟨N / d, d, ⟨NeZero.ne (N / d)⟩, ‹_›, hd, h_dvd_eq, F, ?_⟩
-  -- Goal: `h_dvd_eq ▸ levelRaise (N / d) d k F = f`.
   apply DFunLike.coe_injective
   show (⇑(h_dvd_eq ▸ levelRaise (N / d) d k F :
       CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) = ⇑f
@@ -387,57 +289,24 @@ theorem qSupportedOnDvd_mem_cuspFormsOld_of_char
     (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom)
     (hfsupp : f ∈ qSupportedOnDvdSubmodule N k d) :
     f ∈ cuspFormsOld N k := by
-  -- Step 1: T116 gives a level-raise preimage `φ` plus T-periodicity.
   obtain ⟨φ, h_eq, h_period⟩ :=
     HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
       hd hdN f (fun n hn => hfsupp n hn)
-  -- Step 2: Apply the conductor theorem dichotomy.
   rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
       d N hdN k χ φ f hfχ h_eq h_period with
     ⟨_h_fac, F, _hF_char, hF_eq⟩ | h_zero
-  · -- Case A: f equals the level-raise of F.  Show IsOldformGenerator f.
-    -- Prove via a helper that consumes the type-level cast `▸` upfront.
-    -- The helper `IsOldformGenerator_of_eq_levelRaise` (below) packages
-    -- the witness construction so the cast becomes `rfl` after `subst`.
-    apply Submodule.subset_span
+  · apply Submodule.subset_span
     have h_funeq : (⇑(levelRaise (N / d) d k F) : UpperHalfPlane → ℂ) = ⇑f := by
       show levelRaiseFun d k ⇑F = ⇑f
       rw [hF_eq, ← h_eq]
     exact isOldformGenerator_of_funeq hd hdN F f h_funeq
-  · -- Case B: φ = 0, so ⇑f = levelRaiseFun d k 0 = 0; hence f = 0.
-    have h_f_zero : f = 0 := by
+  · have h_f_zero : f = 0 := by
       apply DFunLike.coe_injective
       show (⇑f : UpperHalfPlane → ℂ) = 0
       rw [h_eq, h_zero]
-      ext τ
-      show levelRaiseFun d k 0 τ = 0
-      rw [levelRaiseFun]
-      simp
+      simp [levelRaiseFun]
     rw [h_f_zero]
     exact Submodule.zero_mem _
-
-/-! ### Reverse Atkin-Lehner bridge: explicit preimage (T130)
-
-T117 (`qSupportedOnDvd_mem_cuspFormsOld_of_char`) routes through the
-conductor-theorem dichotomy to land `f ∈ cuspFormsOld N k`, but throws
-away the explicit lower-level witness produced in Case A.  T130
-surfaces that witness: for a character-space cusp form
-`f ∈ qSupportedOnDvdSubmodule N k d`, either `f = 0` or there exists
-an explicit cusp form `g : CuspForm Γ₁(N/d) k` whose level-raise
-`levelRaise (N/d) d k g` agrees with `f` as a function on `ℍ`.
-
-This is the **character-space half** of the missing
-`isSupportedOnDvd_iff_in_levelRaise_image` reverse direction, landed
-sorry-free by reusing the T117 proof internals.  The pure-`Γ₁(N)`
-reverse direction (no character data) still requires the trace /
-`U_d V_d` framework.
-
-**Why this is reducing.**  T117 only gives `f ∈ cuspFormsOld N k`
-(submodule membership), leaving downstream consumers to re-derive the
-generator.  T130 exposes the generator explicitly, so any downstream
-argument needing the lower-level preimage (e.g. inductive descent on
-`N`, tracking the character along a conductor chain) can consume it
-directly. -/
 
 /-- **Reverse Atkin-Lehner explicit preimage (character-space, T130).**
 For a cusp form `f ∈ cuspFormCharSpace k χ.toUnitHom` at level `Γ₁(N)`
@@ -474,10 +343,7 @@ theorem qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
     apply DFunLike.coe_injective
     show (⇑f : UpperHalfPlane → ℂ) = 0
     rw [h_eq, h_zero]
-    ext τ
-    show levelRaiseFun d k 0 τ = 0
-    rw [levelRaiseFun]
-    simp
+    simp [levelRaiseFun]
 
 /-- **Reverse Atkin-Lehner character-space iff (T130 full iff).**  For a
 cusp form `f ∈ cuspFormCharSpace k χ.toUnitHom` at level `Γ₁(N)` and a
@@ -551,17 +417,7 @@ theorem qSupportedOnDvdSubmodule_mem_iff_exists_levelRaise_preimage_of_char
       hd hdN χ f hfχ]
   refine ⟨?_, fun ⟨g, hg⟩ => Or.inr ⟨g, hg⟩⟩
   rintro (rfl | ⟨g, hg⟩)
-  · refine ⟨0, ?_⟩
-    ext τ
-    show levelRaiseFun d k
-        (⇑(0 : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k)) τ =
-      ⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) τ
-    rw [show (⇑(0 : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k) :
-          UpperHalfPlane → ℂ) = 0 from rfl,
-      show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-          UpperHalfPlane → ℂ) = 0 from rfl,
-      levelRaiseFun]
-    simp
+  · exact ⟨0, by simp⟩
   · exact ⟨g, hg⟩
 
 /-- **Reverse Atkin-Lehner character-space iff, CuspForm-transported
@@ -777,44 +633,16 @@ theorem exists_cuspForm_levelRaise_preimage_of_qSupported_of_char_decomposition
   have h_per_χ : ∀ χ ∈ S, ∃ g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k,
       f_χ χ = castLevelRaise N d hdN k g := by
     intro χ hχ
-    have hmem_χ := h_mem χ hχ
-    rw [Submodule.mem_inf] at hmem_χ
-    obtain ⟨hsupp, hchar⟩ := hmem_χ
+    obtain ⟨hsupp, hchar⟩ := Submodule.mem_inf.mp (h_mem χ hχ)
     obtain ⟨g, hg⟩ :=
       (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
         hd hdN χ (f_χ χ) hchar).mp hsupp
-    refine ⟨g, ?_⟩
-    rw [castLevelRaise_apply]
-    exact hg
+    exact ⟨g, by rw [castLevelRaise_apply]; exact hg⟩
   choose g_χ hg_χ using h_per_χ
   refine ⟨∑ χ ∈ S.attach, g_χ χ.val χ.property, ?_⟩
   rw [map_sum, h_decomp, ← Finset.sum_attach S (fun χ => f_χ χ)]
   exact Finset.sum_congr rfl (fun χ _ => hg_χ χ.val χ.property)
 
-/-! ### Character-space mainLemma at prime-power level (T118)
-
-The character-space mainLemma for prime-power level `N = p^r`
-follows directly from `qSupportedOnDvd_mem_cuspFormsOld_of_char`
-because the hypothesis `Coprime n p^r` is equivalent to `¬ p ∣ n`
-(for `p` prime and `r ≥ 1`).  Specifically:
-
-* `Coprime n p^r ↔ Coprime n p` (powers don't add new prime
-  divisors), and
-* `Coprime n p ↔ ¬ p ∣ n` (`Nat.Prime.coprime_iff_not_dvd`).
-
-Combining: `mainLemma`'s hypothesis `∀ n, Coprime n p^r → coeff = 0`
-is the same as `∀ n, ¬ p ∣ n → coeff = 0`, i.e., the
-`qSupportedOnDvdSubmodule (p^r) k p` membership.  Apply T117 with
-`d = p` (`1 < p` from primality, `p ∣ p^r` from `r ≥ 1`).
-
-For composite `N` with multiple distinct prime divisors, this direct
-route fails: `Coprime n N` is **strictly stronger** than `¬ p ∣ n`
-for any single prime `p ∣ N` (a counterexample: take `N = 6, p = 2,
-n = 3` — then `¬ 2 ∣ 3` but `¬ Coprime 3 6`).  The general case
-requires a **cusp-form-level** decomposition `f = Σ_p f_p` into
-prime-supported pieces, each at the same level Γ₁(N).  See the
-docstring of `mainLemma_charSpace_general_gap` below for the precise
-missing operator. -/
 
 /-- **Character-space mainLemma at prime-power level (T118).**  For
 `N = p^r` with `p` prime and `r ≥ 1`, a cusp form `f ∈ S_k(Γ₁(p^r), χ)`
@@ -837,8 +665,6 @@ theorem mainLemma_charSpace_primePower
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
     f ∈ cuspFormsOld (p ^ r) k := by
   have hp_prime : p.Prime := hp.out
-  -- `NeZero p` and `NeZero (p^r)` chain automatically from `Fact p.Prime`.
-  -- Derive `NeZero (p^r / p)` from the identity `p^r / p = p^(r-1)`.
   have h_pr : p ^ r = p ^ (r - 1) * p := by
     conv_lhs => rw [show r = (r - 1) + 1 from (Nat.sub_add_cancel hr).symm]
     rw [pow_succ]
@@ -846,42 +672,13 @@ theorem mainLemma_charSpace_primePower
     rw [h_pr, Nat.mul_div_cancel _ hp_prime.pos]
   haveI : NeZero (p ^ r / p) := by
     rw [h_div_eq]; exact ⟨pow_ne_zero _ hp_prime.ne_zero⟩
-  -- p ∣ p^r since r ≥ 1.
   have hp_dvd : p ∣ p ^ r := dvd_pow_self p hr.ne'
-  -- Coprime n (p^r) ↔ ¬ p ∣ n (for prime power).
   have h_supp : f ∈ qSupportedOnDvdSubmodule (p ^ r) k p := by
     intro n hn
-    -- Goal: (qExpansion 1 ⇑f).coeff n = 0 from `¬ p ∣ n`.
-    -- Bridge: ¬ p ∣ n → Coprime n (p^r), then apply h.
     apply h
-    -- Coprime n (p^r) ↔ Coprime n p (powers don't add prime divisors).
     rw [Nat.coprime_pow_right_iff hr]
     exact ((hp_prime.coprime_iff_not_dvd).mpr hn).symm
-  -- Apply T117 with d = p.
   exact qSupportedOnDvd_mem_cuspFormsOld_of_char hp_prime.one_lt hp_dvd χ f hfχ h_supp
-
-/-! ### Composite-level mainLemma from a prime-supported decomposition (T125)
-
-For composite `N`, the mainLemma hypothesis `∀ n, Coprime n N → coeff_n = 0`
-is **strictly weaker** than `∀ n, ¬ p ∣ n → coeff_n = 0` for any single
-prime divisor `p`, so T117 cannot be applied directly to `f`.  However,
-once `f` is available as a **finite sum of prime-supported pieces** —
-each `f_p ∈ cuspFormCharSpace k χ` lying in
-`qSupportedOnDvdSubmodule N k p` — the composite case follows at once
-from T117 applied prime-by-prime plus `Submodule.sum_mem`.
-
-This theorem packages that reduction.  The remaining open obligation is
-the construction of the decomposition itself: producing
-`f_p : ℕ → CuspForm Γ₁(N) k` with
-`f = Σ_{p ∣ N} f_p p` and each `f_p p` in the character space and
-`p`-supported.  T119–T124 explored the `pSupportedProjection` route
-(`traceGamma1 ∘ pSupportedRaise`) as a candidate operator; T124 recorded
-that the naive q-expansion formula for that composition is false for
-cusp-geometry reasons, and directed the next step toward the
-Atkin–Lehner–Li / Petersson orthogonality or `U_p`-eigenbasis routes
-(see `AtkinLehnerProjection.lean` file docstring).  This T125 theorem is
-independent of those routes: it lets any downstream caller who can
-supply the decomposition close the composite mainLemma immediately. -/
 
 /-- **Composite-level mainLemma from a prime-supported decomposition.**
 
@@ -913,9 +710,8 @@ theorem mainLemma_charSpace_of_prime_decomposition
   have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp_pf
   have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors hp_pf
   haveI : NeZero p := ⟨hp_prime.ne_zero⟩
-  haveI : NeZero (N / p) := ⟨by
-    have hN_pos : 0 < N := Nat.pos_of_neZero N
-    exact (Nat.div_pos (Nat.le_of_dvd hN_pos hpN) hp_prime.pos).ne'⟩
+  haveI : NeZero (N / p) :=
+    ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) hpN) hp_prime.pos).ne'⟩
   exact qSupportedOnDvd_mem_cuspFormsOld_of_char hp_prime.one_lt hpN χ
     (f_p p) (h_char p hp) (h_supp p hp)
 
@@ -936,28 +732,6 @@ theorem mainLemma_charSpace_of_primeFactors_decomposition
   mainLemma_charSpace_of_prime_decomposition χ f N.primeFactors subset_rfl
     f_p h_decomp h_char h_supp
 
-/-! ### Higher-level `p`-supported projection (T119)
-
-For a modular form `f ∈ M_k(Γ₁(N))` and a prime `p ∣ N`, we construct
-the **higher-level `p`-supported projection** as the composition
-
-  `pSupportedRaise k p hp hpN f := V_p (U_p f)`,
-
-where `U_p = heckeT_p_divN` is the same-level upper-triangular Hecke
-operator at `Γ₁(N)` and `V_p = modularFormLevelRaise N p k` is the
-level-raising operator from `Γ₁(N)` to `Γ₁(p · N)`.  The result is a
-modular form at the **higher** level `Γ₁(p · N)` whose period-1
-`q`-expansion equals the `p`-supported part of `f`'s `q`-expansion:
-
-  `(qExpansion 1 (pSupportedRaise f)).coeff n =
-     if p ∣ n then (qExpansion 1 f).coeff n else 0`.
-
-This is the strongest projection that exists at the modular-form level
-without a trace operator (see `pSupportedProjection_same_level_gap`
-docstring below for the precise obstruction).
-
-It also preserves the Nebentypus character through the natural lift
-`χ.comp (ZMod.unitsMap (Nat.dvd_mul_left N p))`. -/
 
 /-- **Higher-level `p`-supported projection.**  The composition
 `V_p ∘ U_p` at modular-form level, mapping
@@ -1008,92 +782,6 @@ theorem pSupportedRaise_mem_modFormCharSpace {N : ℕ} [NeZero N] {k : ℤ}
   HeckeRing.GL2.MainLemma.modularFormLevelRaise_mem_modFormCharSpace N p k χ
     (HeckeRing.GL2.MainLemma.heckeT_p_divN_preserves_modFormCharSpace hp hpN χ hf)
 
-/-! ### Same-level projection gap and the trace operator (T119 doc)
-
-The `pSupportedRaise` operator above lives at the **higher** level
-`Γ₁(p · N)`, not the same level `Γ₁(N)`.  This is mathematically
-unavoidable: the level-raising operator `V_p f(τ) = f(p · τ)` is
-invariant only under the **smaller** subgroup `Γ_0(p · N) ⊂ Γ_0(N)`,
-because conjugating a matrix `[[a,b],[c,d]] ∈ Γ_0(N)` by `diag(p,1)`
-yields `[[a, p·b], [c/p, d]]`, requiring `p · N ∣ c` rather than just
-`N ∣ c`.  Consequently, the composition `V_p ∘ U_p` of a Γ₁(N)-form
-lives at level `Γ₁(N) ∩ Γ_0(p · N) = Γ₁(p · N)` (or a slightly larger
-group), but never at `Γ₁(N)` itself unless `Γ₁(p · N) = Γ₁(N)`, which
-is impossible for `p > 1`.
-
-**Consequence for the general character-space mainLemma.**  Closing
-the composite-`N` mainLemma via inclusion–exclusion over the prime
-factors of `N` requires same-level pieces in `M_k(Γ₁(N), χ)`, which
-the `V_p ∘ U_p` route alone cannot provide.  The missing piece is a
-
-  **trace operator**  `Tr_{p · N → N} : M_k(Γ₁(p · N)) →ₗ[ℂ] M_k(Γ₁(N))`
-
-(averaging over coset representatives of the inclusion
-`Γ₁(p · N) ⊂ Γ₁(N) · ?`), or equivalently the symmetric Atkin–Lehner
-inner-product semisimplicity argument.  Neither is currently in the
-repository.
-
-**Precise missing theorem signature.**  Once a trace operator is
-available, the same-level `p`-projection follows as
-
-```lean
-noncomputable def pSupportedProjection {N : ℕ} [NeZero N] (k : ℤ)
-    (p : ℕ) [NeZero p] (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
-    ModularForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
-    ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
-  (Tr (p * N) N k hpN_dvd).comp (pSupportedRaise k p hp hpN)
-```
-
-with q-expansion
-
-  `(qExpansion 1 (pSupportedProjection f)).coeff n =
-     if p ∣ n then [Γ₁(N) : Γ₁(p · N)] · a_n(f) else 0`
-
-(up to the trace normalization), and character preservation
-inherited from `pSupportedRaise_mem_modFormCharSpace` plus the trace
-operator's character compatibility.
-
-**Alternative routes** (also not in the repo):
-
-* **Petersson inner product / Atkin–Lehner–Li**: use
-  `S_k(Γ₁(N))^new ⊥ S_k(Γ₁(N))^old` (orthogonal complement) to deduce
-  that any form orthogonal to all newforms is an oldform.  Requires the
-  inner-product machinery in `PeterssonInner.lean` plus the
-  newform/oldform dichotomy.
-* **Miyake §4.6.8 minimal-level descent**: combine `pSupportedRaise`
-  with the existing `miyake_main_lemma_4_6_8_radical` to descend back
-  to level `Γ₁(N)` via Möbius inversion in the Hecke algebra.  The
-  Hecke-algebra descent itself is not yet packaged.
-
-**Status for `Newforms.mainLemma`.**  The prime-power case is closed
-by `mainLemma_charSpace_primePower` (T118).  The general composite-`N`
-case is reduced to the trace-operator availability above.  T119
-delivers the strongest landable supporting lemma — the higher-level
-projection `pSupportedRaise` with its full coefficient and character
-preservation API. -/
-
-/-! ### Composite-`N` submodule bridge (T126)
-
-Packaging of T117/T118/T125 as a single `Submodule` containment on the
-character space.  For any Nebentypus character `χ` at level `N`, the
-supremum over prime divisors `p ∣ N` of the prime-supported character
-submodules
-
-  `⨆ p ∈ N.primeFactors,
-      qSupportedOnDvdSubmodule N k p ⊓ cuspFormCharSpace k χ.toUnitHom`
-
-sits inside `cuspFormsOld N k`.  Any cusp form lying in this supremum —
-in particular any *sum* of elements, each in some prime-supported
-character piece — is automatically an oldform.
-
-This is the clean reusable form of T125 at `Submodule` level: callers
-no longer need to produce an explicit finite decomposition witness
-`f_p : ℕ → CuspForm`; membership in the supremum suffices.  The
-composite-`N` `mainLemma` consumer is therefore reduced to establishing
-membership in this single supremum, which is the honest next gap
-(requires `U_p`-eigenspace / Atkin–Lehner–Li orthogonality, not
-in scope for this file — see `AtkinLehnerProjection.lean` docstring). -/
-
 /-- **Prime-supported character submodule is contained in oldforms.**
 For any prime divisor `p ∣ N`, the intersection
 `qSupportedOnDvdSubmodule N k p ⊓ cuspFormCharSpace k χ.toUnitHom` lies
@@ -1106,9 +794,8 @@ theorem qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_le_cuspFormsOld
     qSupportedOnDvdSubmodule N k p ⊓ cuspFormCharSpace k χ.toUnitHom ≤
       cuspFormsOld N k := by
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  haveI : NeZero (N / p) := ⟨by
-    have hN_pos : 0 < N := Nat.pos_of_neZero N
-    exact (Nat.div_pos (Nat.le_of_dvd hN_pos hpN) hp.pos).ne'⟩
+  haveI : NeZero (N / p) :=
+    ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) hpN) hp.pos).ne'⟩
   intro f hf
   exact qSupportedOnDvd_mem_cuspFormsOld_of_char hp.one_lt hpN χ f hf.2 hf.1
 
@@ -1140,36 +827,6 @@ theorem mainLemma_charSpace_of_mem_iSup_qSupportedOnDvdSubmodule
     f ∈ cuspFormsOld N k :=
   iSup_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_le_cuspFormsOld χ hf
 
-/-! ### Reverse Atkin–Lehner bridge at general proper divisors (T130)
-
-T126 packages the reverse support-to-oldform bridge at character-space
-level for **prime** divisors `p ∣ N`.  The same argument (T117,
-`qSupportedOnDvd_mem_cuspFormsOld_of_char`) applies verbatim at *any*
-proper divisor `d ∣ N` with `1 < d`: primality is not used in T117, only
-`NeZero d` and `NeZero (N / d)`.  The theorems below repackage T117 at
-general `d` and extend T126's iSup bridge from the prime-divisor indexing
-to the full divisor indexing.
-
-**Why the generalisation matters.**  Several routes toward the composite-
-`N` `mainLemma` (the Miyake §4.6 sieve combined with
-`miyake_main_lemma_4_6_8_level_L`; the Atkin–Lehner–Li orthogonality
-route) produce support witnesses at **non-prime** divisors `d ∣ N`
-(e.g. prime-power `d = p^a` for the `p^r`-sieve, or radical divisors
-`d = ∏_{p ∈ S} p`).  The T126 prime-divisor iSup does not directly
-absorb such witnesses; the divisor iSup below does.
-
-Together with the forward inclusion
-`cuspFormsOld_le_iSup_qSupportedOnDvdSubmodule_divisors` (below), these
-theorems reduce the reverse Atkin–Lehner bridge at character-space level
-to the *single* obligation of producing a divisor-support decomposition
-of `f` — precisely the "honest remaining gap" noted in T126's docstring,
-but with a strictly larger admissible index set.
-
-The full general iff `isSupportedOnDvd_iff_in_levelRaise_image` remains
-open: it requires the trace operator or `U_p / V_p` framework to descend
-from the higher-level Miyake output back to `Γ₁(N)`, neither of which is
-in scope for this file (see `AtkinLehnerProjection.lean`). -/
-
 /-- **General-`d` character-space support-to-oldform reverse bridge
 (T130).**  For any proper divisor `d ∣ N` with `1 < d`, the intersection
 `qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom` lies
@@ -1187,10 +844,9 @@ theorem qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_le_cuspFormsOld_of_dvd
     {d : ℕ} (hd : 1 < d) (hdN : d ∣ N) :
     qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom ≤
       cuspFormsOld N k := by
-  haveI : NeZero d := ⟨by omega⟩
-  haveI : NeZero (N / d) := ⟨by
-    have hN_pos : 0 < N := Nat.pos_of_neZero N
-    exact (Nat.div_pos (Nat.le_of_dvd hN_pos hdN) (by omega : 0 < d)).ne'⟩
+  haveI : NeZero d := ⟨by lia⟩
+  haveI : NeZero (N / d) :=
+    ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) hdN) (by lia : 0 < d)).ne'⟩
   intro f hf
   exact qSupportedOnDvd_mem_cuspFormsOld_of_char hd hdN χ f hf.2 hf.1
 
@@ -1259,42 +915,11 @@ theorem cuspFormsOld_le_iSup_qSupportedOnDvdSubmodule_divisors
   haveI := hM_ne
   haveI := hd_ne
   have hdN : d ∣ N := ⟨M, heq.symm⟩
-  have hN_ne : N ≠ 0 := NeZero.ne N
   have hd_mem : d ∈ N.divisors.filter (1 < ·) := by
     rw [Finset.mem_filter, Nat.mem_divisors]
-    exact ⟨⟨hdN, hN_ne⟩, hd_gt⟩
+    exact ⟨⟨hdN, NeZero.ne N⟩, hd_gt⟩
   refine Submodule.mem_iSup_of_mem d (Submodule.mem_iSup_of_mem hd_mem ?_)
   exact levelRaise_mem_qSupportedOnDvdSubmodule heq g
-
-/-! ### T131 — From coprime-vanishing to divisor-iSup membership
-
-The T130 bridge reduces the composite-`N` character-space `mainLemma` to
-the single obligation of showing that `f ∈ cuspFormCharSpace k χ` with
-the coprime-to-`N` Fourier vanishing hypothesis lies in
-
-```
-⨆ d ∈ N.divisors.filter (1 < ·),
-    qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom.
-```
-
-For **composite** `N` this membership requires a same-level
-`d`-supported decomposition of `f`, which in turn requires a trace
-operator / `U_d / V_d` descent from the higher-level Miyake witness
-(not in this repository; tracked in `AtkinLehnerProjection.lean`).
-
-For **prime-power** `N = p^r`, however, the membership is immediate: the
-coprime-vanishing hypothesis is equivalent to `p`-support of `f` (since
-`Coprime n (p^r) ↔ ¬ p ∣ n` by `Nat.coprime_pow_right_iff` and
-`Nat.Prime.coprime_iff_not_dvd`), so `f` lies in
-`qSupportedOnDvdSubmodule (p^r) k p` directly, and `p ∈ (p^r).divisors`
-with `1 < p` gives the single-`d` membership in the divisor iSup.
-
-Composed with
-`mainLemma_charSpace_of_mem_iSup_qSupportedOnDvdSubmodule_divisors`
-(T130), the prime-power bridge below gives an alternative proof of T118
-(`mainLemma_charSpace_primePower`) routed through the T130 divisor-iSup
-reduction, validating the T130 consumer as a sound reduction target for
-prime-power levels. -/
 
 /-- **T131 prime-power bridge: coprime-vanishing ⇒ divisor-iSup
 membership.**  For `N = p^r` with `p` prime and `r ≥ 1`, any cusp form
@@ -1323,18 +948,14 @@ theorem mem_iSup_divisor_qSupportedOnDvdSubmodule_inf_charSpace_of_coprime_vanis
           cuspFormCharSpace k χ.toUnitHom := by
   have hp_prime : p.Prime := hp.out
   have hp_dvd : p ∣ p ^ r := dvd_pow_self p hr.ne'
-  have hN_ne : (p ^ r : ℕ) ≠ 0 := pow_ne_zero r hp_prime.ne_zero
-  -- Step 1: coprime-to-`p^r` vanishing ⇒ `p`-support of `f`.
   have hf_supp : f ∈ qSupportedOnDvdSubmodule (p ^ r) k p := by
     intro n hn
     apply h_vanish
     rw [Nat.coprime_pow_right_iff hr]
     exact ((hp_prime.coprime_iff_not_dvd).mpr hn).symm
-  -- Step 2: `p ∈ (p^r).divisors.filter (1 < ·)`.
   have hp_mem : p ∈ (p ^ r).divisors.filter (1 < ·) := by
     rw [Finset.mem_filter, Nat.mem_divisors]
-    exact ⟨⟨hp_dvd, hN_ne⟩, hp_prime.one_lt⟩
-  -- Step 3: combine into divisor-iSup membership at `d = p`.
+    exact ⟨⟨hp_dvd, pow_ne_zero r hp_prime.ne_zero⟩, hp_prime.one_lt⟩
   refine Submodule.mem_iSup_of_mem p (Submodule.mem_iSup_of_mem hp_mem ?_)
   exact ⟨hf_supp, hfχ⟩
 
@@ -1403,51 +1024,6 @@ theorem mainLemma_charSpace_primePower_via_divisor_iSup
   mainLemma_charSpace_of_mem_iSup_qSupportedOnDvdSubmodule_divisors χ
     (mem_iSup_divisor_qSupportedOnDvdSubmodule_inf_charSpace_of_coprime_vanishing_primePower
       hr χ f hfχ h_vanish)
-
-/-! ### T133 — Trace-descent bridge from the Miyake higher-level sieve
-
-The T130 divisor-iSup consumer plus the T131 sum-decomposition aggregator
-reduce the composite-`N` character-space `mainLemma` to producing a
-same-level finite-sum decomposition
-
-```
-f = ∑ d ∈ S, f_d   with   f_d ∈ qSupportedOnDvdSubmodule N k d
-                                  ⊓ cuspFormCharSpace k χ.toUnitHom.
-```
-
-at level `Γ₁(N)`.  The natural source of such a decomposition is a
-**trace / coset-average** operator applied to the output of
-`miyake_main_lemma_4_6_8_level_L` (`MainLemma.lean`), which lives at the
-higher level `Γ₁(N · L)`.  The trace operator `traceGamma1`
-(`TraceOperator.lean`, T120) is available, and its Nebentypus character
-preservation is proved unconditionally in `AtkinLehnerProjection.lean`
-(T123).  However, as the T124 note in `AtkinLehnerProjection.lean`
-records, the **coefficient-support** side of the naive
-`traceGamma1 ∘ pSupportedRaise` composition fails at ∞ because of a
-cusp-geometry obstruction: the trace sum picks up contributions from
-non-∞-stabilising cosets whose expansions at ∞ do not inherit the input's
-Fourier support.  Closing the composite-`N` `mainLemma` therefore needs
-either (a) a refined trace construction with an auxiliary cusp-stabiliser
-decomposition, (b) the Atkin–Lehner–Li orthogonality route via the
-Petersson inner product, or (c) a `U_p`-eigenspace reformulation — none
-of which is in the current repository.
-
-To give downstream workers a concrete, non-tautological handoff that does
-not depend on resolving that obstruction here, we package the
-trace-descent interface abstractly as a `TraceDescent` structure,
-capturing the four concrete properties a real trace operator's output
-would supply: same-level target, character preservation, coefficient
-support, and finite-sum reconstruction.  Any worker who can construct a
-`TraceDescent` (from any source — a refined trace, AL-Li orthogonality,
-or a direct `U_p`-eigenspace argument) obtains the composite-`N`
-character-space `mainLemma` via `mainLemma_charSpace_of_TraceDescent`.
-
-The abstract `TraceDescent` is **non-tautological** w.r.t. the oldform
-conclusion: its fields encode Fourier-support data at named divisors
-together with an explicit finite-sum identity, not direct oldform /
-divisor-iSup membership of `f`.  In particular, a user who only knows
-`f ∈ cuspFormsOld N k` cannot trivially construct a `TraceDescent`
-without actually producing the pointwise `d`-supported pieces. -/
 
 /-- **T133 abstract trace-descent witness for the Miyake sieve.**
 Captures the same-level descent pieces that a real trace operator
@@ -1536,19 +1112,10 @@ noncomputable def TraceDescent.ofSingleDivisor
     (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom) :
     TraceDescent χ f where
   divisors := {d}
-  divisors_subset := by
-    intro e he
-    rw [Finset.mem_singleton] at he
-    rw [he]
-    exact hd
+  divisors_subset := by simpa using hd
   piece := fun _ => f
-  reconstructs := by
-    rw [Finset.sum_singleton]
-  piece_supp := by
-    intro e he
-    rw [Finset.mem_singleton] at he
-    rw [he]
-    exact hf_supp
+  reconstructs := by simp
+  piece_supp := fun _ he => by obtain rfl := Finset.mem_singleton.mp he; exact hf_supp
   piece_char := fun _ _ => hfχ
 
 /-- **T133 prime-power constructor: `TraceDescent` from coprime-vanishing
@@ -1626,46 +1193,6 @@ theorem mainLemma_charSpace_of_singleDivisorSupport
     f ∈ cuspFormsOld N k :=
   mainLemma_charSpace_of_TraceDescent χ
     (TraceDescent.ofSingleDivisor hd hf_supp hfχ)
-
-/-! ### T134 — Operator-level `SameLevelDivisorProjections` interface
-
-The `TraceDescent` structure (T133) takes a specific `f` and provides a
-decomposition witness.  A strictly stronger interface is a family of
-**linear endomorphisms** of `CuspForm (Γ₁ N) k`, one per proper divisor
-`d ∣ N` with `1 < d`, that simultaneously:
-
-* (`P_supp`) maps any cusp form to a `d`-supported one,
-* (`P_char`) preserves every Nebentypus character space, and
-* (`mobius_reconstruction`) reassembles any coprime-vanishing cusp form
-  `f` as `f = ∑_{d} P d f`, a **Möbius-type finite-sum identity** at
-  the level of named operators.
-
-A single `SameLevelDivisorProjections` datum produces a `TraceDescent`
-for every `f ∈ cuspFormCharSpace k χ.toUnitHom` satisfying the
-coprime-to-`N` Fourier vanishing hypothesis, hence the composite-`N`
-character-space `mainLemma` (via `mainLemma_charSpace_of_TraceDescent`).
-This is a genuine strengthening: the hypotheses are on **named linear
-maps** with three concrete, downstream-checkable properties, not on an
-existential ad-hoc decomposition of a particular `f`.
-
-**Why this is the right handoff.**  Producing a
-`SameLevelDivisorProjections` is exactly what a true `U_p / V_p` Möbius
-sieve, an Atkin–Lehner–Li Petersson-orthogonality argument, or a
-refined trace construction with cusp-stabiliser correction would
-provide: each of those routes yields linear operators on
-`CuspForm (Γ₁ N) k` obeying the three properties.  The T124
-cusp-geometry obstruction for the naive `traceGamma1 ∘ pSupportedRaise`
-composition does **not** prevent a more refined operator from meeting
-the `P_supp` specification — it only shows the specific naive
-composition fails.
-
-**Non-tautological.**  The `P d` fields are concrete linear maps
-`CuspForm (Γ₁ N) k →ₗ[ℂ] CuspForm (Γ₁ N) k`, and `P_supp` / `P_char`
-must hold **unconditionally** on every cusp form (not just those with
-coprime vanishing).  `mobius_reconstruction` is the only conditional
-axiom, and it asserts a Möbius-type finite-sum identity between named
-operator outputs — not membership of `f` in `cuspFormsOld` or in any
-supremum. -/
 
 /-- **T134 operator-level interface: same-level divisor projections.**
 A family of `ℂ`-linear endomorphisms
@@ -1754,26 +1281,6 @@ theorem mainLemma_charSpace_of_SameLevelDivisorProjections
   mainLemma_charSpace_of_TraceDescent χ
     (TraceDescent.ofSameLevelDivisorProjections Op hfχ h_vanish)
 
-/-! ### T131 bridge — same-level divisor decomposition ⇒ `cuspFormsOld`
-
-This bridge converts the **output shape** of
-`MainLemma.same_level_collapse_of_deep_oldform_image_of_projections`
-(a same-level divisor decomposition `f = ∑ d, samePiece d` with per-divisor
-`q`-support and Nebentypus character-space membership) into the
-`cuspFormsOld N k` conclusion, by packaging it as a `TraceDescent` and
-applying `mainLemma_charSpace_of_TraceDescent`.
-
-The bridge is stated at the **`CuspForm` level**: `mainLemma_charSpace_of_TraceDescent`
-consumes `CuspForm`-typed pieces, while the MainLemma collapse output
-is `ModularForm`-typed.  Composing them therefore requires a worker who
-already has a `CuspForm` instance for `f` and `CuspForm`-typed pieces with
-the same `q`-support / character-space data.  The conversion of a
-`ModularForm`-typed family of pieces into a `CuspForm`-typed family is the
-one ingredient not provided here, and is the only blocker for a fully
-`ModularForm`-input version of this bridge (see the structured blocker note
-in the docstring of `mainLemma_charSpace_of_sameLevelDivisorDecomposition`
-below). -/
-
 /-- **T131 same-level divisor decomposition consumer.**  Given a cusp form
 `f ∈ cuspFormCharSpace k χ.toUnitHom` together with a same-level divisor
 decomposition into pieces with per-divisor `q`-support and character-space
@@ -1803,22 +1310,7 @@ theorem mainLemma_charSpace_of_sameLevelDivisorDecomposition
       piece_supp := fun d hd => (h_pieces d hd).1
       piece_char := fun d hd => (h_pieces d hd).2 }
 
-/-! ### T131 bridge — `ModularForm`-shaped collapse output ⇒ `cuspFormsOld`
 
-This consumer accepts the **`ModularForm`-shaped same-level decomposition output**
-of `MainLemma.same_level_collapse_of_deep_oldform_image_of_projections`
-(a same-level divisor decomposition `f.toModularForm' = ∑ d, samePiece d` with
-per-divisor `q`-support and `modFormCharSpace` membership), together with a
-per-piece cusp-vanishing hypothesis, and produces the cusp-space conclusion
-`f ∈ cuspFormsOld N k` via `mainLemma_charSpace_of_sameLevelDivisorDecomposition`.
-
-The `h_cusp` hypothesis is supplied explicitly because the MainLemma collapse
-output is `ModularForm`-typed and cusp vanishing is the one ingredient lost when
-moving from the `CuspForm` input `f` to the `ModularForm`-typed pieces. -/
-
-/-- Local cusp-form lifter used by the bridge below: builds a `CuspForm Γ k`
-from a `ModularForm Γ k` plus a per-cusp vanishing witness, with the same
-underlying function. -/
 private def cuspFormOfModularForm
     {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     (g : ModularForm Γ k)
@@ -1866,17 +1358,10 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
         c.IsZeroAt (samePiece d).toFun k) :
     f ∈ cuspFormsOld N k := by
   classical
-  -- Lift each `samePiece d` to a `CuspForm` with the same underlying function.
-  -- For divisors `d` outside the filter we lift using a vacuous cusp witness via
-  -- the zero modular form, but we only ever consume `lifted d` for `d` in the
-  -- filter, so the choice is irrelevant.
   let lifted : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k := fun d =>
     if hd : d ∈ N.divisors.filter (1 < ·) then
       cuspFormOfModularForm (samePiece d) (h_cusp d hd)
     else 0
-  -- Sum equation lifts: ⇑f.toModularForm' = ∑ d, ⇑(samePiece d) at the function
-  -- level, and ⇑(lifted d) = ⇑(samePiece d) for d in the filter, so the
-  -- CuspForm sum reconstructs f.
   have h_sum_lifted : f = ∑ d ∈ N.divisors.filter (1 < ·), lifted d := by
     apply DFunLike.ext
     intro z
@@ -1898,7 +1383,6 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
         h_sum_fun]
     refine Finset.sum_congr rfl (fun d hd => ?_)
     simp only [lifted, dif_pos hd, cuspFormOfModularForm_coe]
-  -- q-support transfers via coe equality.
   have h_pieces_lifted : ∀ d ∈ N.divisors.filter (1 < ·),
       lifted d ∈ qSupportedOnDvdSubmodule N k d ∧
       lifted d ∈ cuspFormCharSpace k χ.toUnitHom := by
@@ -1906,22 +1390,17 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
     have h_coe : (⇑(lifted d) : UpperHalfPlane → ℂ) = ⇑(samePiece d) := by
       simp only [lifted, dif_pos hd, cuspFormOfModularForm_coe]
     refine ⟨?_, ?_⟩
-    · -- q-support
-      intro n hn
+    · intro n hn
       show (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑(lifted d)) = 0
       rw [show (qExpansion (1 : ℝ) ⇑(lifted d)) =
-          qExpansion (1 : ℝ) ⇑(samePiece d) from by rw [h_coe]]
+          qExpansion (1 : ℝ) ⇑(samePiece d) by rw [h_coe]]
       exact h_pieces_qsupp d hd n hn
-    · -- character space membership: lift modFormCharSpace ⇒ cuspFormCharSpace.
-      rw [mem_cuspFormCharSpace_iff]
+    · rw [mem_cuspFormCharSpace_iff]
       intro u
       have h_mf := (mem_modFormCharSpace_iff k χ.toUnitHom (samePiece d)).mp
         (h_pieces_char d hd) u
-      -- Both sides are determined by their underlying functions on UpperHalfPlane.
       apply DFunLike.ext
       intro z
-      -- Pick a Gamma0 representative γ for u so diamondOpCusp/diamondOp both
-      -- reduce to slash by mapGL γ at the function level.
       obtain ⟨γ, hγ⟩ := Gamma0MapUnits_surjective (N := N) u
       have h_cusp_diamond : (⇑(diamondOpCuspHom k u (lifted d))
             : UpperHalfPlane → ℂ) z =
@@ -1954,7 +1433,7 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
               : UpperHalfPlane → ℂ) z =
             ((↑(χ.toUnitHom u) : ℂ) • (⇑(samePiece d)
               : UpperHalfPlane → ℂ)) z := by
-          simp [ModularForm.coe_smul, Pi.smul_apply]
+          simp [Pi.smul_apply]
         calc ((⇑(samePiece d) : UpperHalfPlane → ℂ) ∣[k]
               (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z
             = (⇑(diamondOpHom k u (samePiece d))
@@ -1966,8 +1445,7 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
             : UpperHalfPlane → ℂ)) z =
           (⇑((↑(χ.toUnitHom u) : ℂ) • (lifted d) : CuspForm _ k)
             : UpperHalfPlane → ℂ) z := by
-        simp [CuspForm.coe_smul, Pi.smul_apply]
-      -- Combine: diamondOpCusp lifted = (slash) = (smul samePiece) = (smul lifted).
+        simp [Pi.smul_apply]
       have h_slash_lift : ((⇑(lifted d) : UpperHalfPlane → ℂ) ∣[k]
             (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z =
           ((⇑(samePiece d) : UpperHalfPlane → ℂ) ∣[k]
@@ -1985,22 +1463,6 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
             h_lift_smul.symm
   exact mainLemma_charSpace_of_sameLevelDivisorDecomposition χ f lifted
     h_sum_lifted h_pieces_lifted
-
-/-! ### T131 bridge — `ModularFormSameLevelDivisorProjections` ⇒ `cuspFormsOld`
-
-This composer combines, in one step:
-
-1. `MainLemma.same_level_collapse_of_deep_oldform_image_of_projections` —
-   extracts a same-level divisor decomposition `samePiece : ℕ → ModularForm …`
-   together with per-piece cusp-vanishing certificates from a
-   `ModularFormSameLevelDivisorProjections` bundle for `f.toModularForm'`;
-2. `mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition` — feeds
-   the `ModularForm`-shaped decomposition together with its `q`-support /
-   character-space / cusp data to obtain `f ∈ cuspFormsOld N k`.
-
-The β-strengthening of `ModularFormSameLevelDivisorProjections` (cusp
-field embedded in `collapse`) eliminates the previous caller-side
-`h_cusp` callback hypothesis. -/
 
 /-- **T131 / SMO bridge composer (Projections-input).**  Given a
 `ModularFormSameLevelDivisorProjections` bundle for `f.toModularForm'`,
@@ -2033,34 +1495,6 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorProjections
   · intro d hd; exact (h_pieces d hd).2
   · intro d hd; exact (h_pieces d hd).1
 
-/-! ### T134-local — Per-divisor local field of `SameLevelDivisorProjections`
-
-The full `SameLevelDivisorProjections N k` datum bundles three obligations
-into a single structure.  In practice, the three classical routes to
-constructing it (refined trace + cusp-stabiliser correction, Atkin–Lehner–
-Li orthogonality, `U_p`-Möbius sieve) naturally produce **per-divisor**
-data first: a single `d ∣ N` with `1 < d` is fixed, an operator `P_d` is
-defined, and the local properties `P_supp d` and `P_char d` are verified
-**one divisor at a time**.  Only afterwards is the Möbius reconstruction
-identity assembled by summing across all divisors.
-
-To match this workflow and to expose a strictly narrower obligation, we
-package the per-divisor data as a mini-structure
-`SameLevelDivisorProjectionsLocalField N k d`, together with a constructor
-`SameLevelDivisorProjections.ofLocalFields` that assembles a family of
-local fields plus a single global Möbius reconstruction hypothesis into a
-full `SameLevelDivisorProjections` datum.
-
-This narrows the global 3-axiom obligation to:
-
-* **N − 1 local fields** (one per `d ∈ N.divisors.filter (1 < ·)`), each
-  carrying just `P_supp` and `P_char`;
-* **one global Möbius reconstruction hypothesis** at the assembled-`P`
-  level.
-
-A real, sorry-free zero-instance `SameLevelDivisorProjectionsLocalField.zero`
-is provided to demonstrate the structure is genuinely inhabitable for any
-`(N, k, d)`. -/
 
 /-- **T134-local: per-divisor local field of `SameLevelDivisorProjections`.**
 A single linear endomorphism `P : CuspForm Γ₁(N) k →ₗ CuspForm Γ₁(N) k`
@@ -2104,13 +1538,8 @@ noncomputable def SameLevelDivisorProjectionsLocalField.zero
     (N : ℕ) [NeZero N] (k : ℤ) (d : ℕ) :
     SameLevelDivisorProjectionsLocalField N k d where
   P := 0
-  P_supp := fun _ => by
-    -- `(0 : CuspForm →ₗ CuspForm) f = 0`, and `0 ∈ qSupportedOnDvdSubmodule`.
-    simp only [LinearMap.zero_apply]
-    exact (qSupportedOnDvdSubmodule N k d).zero_mem
-  P_char := fun χ _ _ => by
-    simp only [LinearMap.zero_apply]
-    exact (cuspFormCharSpace k χ).zero_mem
+  P_supp := fun _ => by simpa only [LinearMap.zero_apply] using (qSupportedOnDvdSubmodule N k d).zero_mem
+  P_char := fun χ _ _ => by simpa only [LinearMap.zero_apply] using (cuspFormCharSpace k χ).zero_mem
 
 /-- **Assemble local fields + global Möbius into a full
 `SameLevelDivisorProjections`.**  Given a family of per-divisor local
@@ -2139,12 +1568,8 @@ noncomputable def SameLevelDivisorProjections.ofLocalFields
     SameLevelDivisorProjections N k where
   P := fun d =>
     if hd : d ∈ N.divisors.filter (1 < ·) then (loc d hd).P else 0
-  P_supp := fun d hd f => by
-    simp only [dif_pos hd]
-    exact (loc d hd).P_supp f
-  P_char := fun d hd χ f hfχ => by
-    simp only [dif_pos hd]
-    exact (loc d hd).P_char χ f hfχ
+  P_supp := fun d hd f => by simpa only [dif_pos hd] using (loc d hd).P_supp f
+  P_char := fun d hd χ f hfχ => by simpa only [dif_pos hd] using (loc d hd).P_char χ f hfχ
   mobius_reconstruction := mobius
 
 /-- **Zero `SameLevelDivisorProjections.ofLocalFields` corollary.**
@@ -2167,60 +1592,10 @@ noncomputable def SameLevelDivisorProjections.ofZeroLocalFields
     (fun d _ => SameLevelDivisorProjectionsLocalField.zero N k d)
     (fun f hf => by
       have h := mobius f hf
-      -- Rewrite the summand to match the `ofLocalFields` shape.
       convert h using 1
       refine Finset.sum_congr rfl (fun d hd => ?_)
       simp only [dif_pos hd, SameLevelDivisorProjectionsLocalField.zero,
         LinearMap.zero_apply])
-
-/-! ### T131 — `TraceCorrection` structured blocker (Outcome 2)
-
-The T124 cusp-geometry obstruction (see `AtkinLehnerProjection.lean` lines
-49–109) shows that the naive composition `traceGamma1 ∘ pSupportedRaise`
-does **not** produce a `p`-supported cusp form at level `Γ₁(N)` because the
-non-`∞`-fixing cosets in `Γ₁(N) ⧸ Γ₁(p · N)` contribute other-cusp Fourier
-expansions at `∞` that are unrelated to the input's `p`-supported expansion.
-
-The structure `TraceCorrectionPrime N k p` below packages the **exact
-data** that an honest cusp-stabilizer correction must supply in order to
-upgrade a candidate same-level operator (`core`) into one whose output is
-genuinely `p`-supported.  The corrector `correction` plays the role of
-"subtract off the non-`∞`-fixing trace contribution"; the two axioms
-`core_minus_correction_supp` and `core_minus_correction_char` are exactly
-the obligations that the per-coset cusp-stabilizer calculation must
-discharge.
-
-A `TraceCorrectionPrime N k p` produces a
-`SameLevelDivisorProjectionsLocalField N k p` directly via
-`TraceCorrectionPrime.toLocalField`, slotting into the
-`SameLevelDivisorProjections.ofLocalFields` assembly pipeline.  Combined
-with a Möbius reconstruction hypothesis at the assembled-`P` level, this
-yields a full `SameLevelDivisorProjections N k` and (via
-`mainLemma_charSpace_of_SameLevelDivisorProjections`) the composite-`N`
-character-space `mainLemma`.
-
-**Structured blocker for downstream T132 / cusp-stabilizer ticket.**  The
-remaining open obligation is precisely:
-
-```lean
-∀ (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) (hp : p.Prime) (hpN : p ∣ N),
-  TraceCorrectionPrime N k p
-```
-
-— a typed declaration with no further mathematical hypotheses, into which
-a refined trace + cusp-stabilizer calculation, an Atkin–Lehner W_p
-construction, or a `U_p`-eigenspace projection at level `Γ₁(N)` may be
-slotted.  The interface is non-tautological because:
-
-* `core` and `correction` are concrete `ℂ`-linear endomorphisms — not
-  existentially quantified.
-* The two axioms `core_minus_correction_supp` / `core_minus_correction_char`
-  must hold **unconditionally** on every cusp form, not just on those
-  with coprime-to-`N` Fourier vanishing.
-
-A real, sorry-free zero-witness `TraceCorrectionPrime.zero` is provided
-to demonstrate inhabitability; it does not come with the global Möbius
-reconstruction needed for a non-trivial assembly. -/
 
 /-- **T131 / Outcome 2: per-prime trace correction structure.**
 Bundles the exact data needed to upgrade a candidate same-level operator
@@ -2296,11 +1671,9 @@ noncomputable def TraceCorrectionPrime.zero
   core := 0
   correction := 0
   core_minus_correction_supp := fun _ => by
-    simp only [sub_self, LinearMap.zero_apply]
-    exact (qSupportedOnDvdSubmodule N k p).zero_mem
+    simpa only [sub_self, LinearMap.zero_apply] using (qSupportedOnDvdSubmodule N k p).zero_mem
   core_minus_correction_char := fun χ _ _ => by
-    simp only [sub_self, LinearMap.zero_apply]
-    exact (cuspFormCharSpace k χ).zero_mem
+    simpa only [sub_self, LinearMap.zero_apply] using (cuspFormCharSpace k χ).zero_mem
 
 /-- The `P` field of the local-field produced by
 `TraceCorrectionPrime.zero` is the zero linear map, by definitional
@@ -2312,24 +1685,6 @@ theorem TraceCorrectionPrime.toLocalField_zero_P
   show (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k) - 0 = 0
   rw [sub_zero]
-
-/-! ### T131 — Compositional API on `TraceCorrectionPrime` (Outcome 1)
-
-The structure `TraceCorrectionPrime N k p` is a `ℂ`-vector space in a
-natural way: addition, negation, scalar multiplication, and subtraction
-all preserve the two `Submodule`-membership axioms (because
-`qSupportedOnDvdSubmodule` and `cuspFormCharSpace` are submodules).
-The constructors below build the genuinely useful compositional API,
-turning `TraceCorrectionPrime.zero` from an isolated witness into one
-end of a full additive / scalar‐multiplicative module of witnesses.
-
-This is non-tautological compositional content: a downstream worker
-who supplies, say, two partial trace corrections (one absorbing the
-`∞`-fixing tail, another absorbing the non-`∞`-fixing tail) can combine
-them by `add` to obtain a single witness, without re-running the
-underlying coset analysis.  It also lets us directly upgrade any
-**unconditional p-supporting / character-preserving operator** into a
-`TraceCorrectionPrime` via `ofCore` (taking `correction = 0`). -/
 
 /-- **Direct upgrade: a `p`-supporting / character-preserving operator
   is a `TraceCorrectionPrime` with zero correction.**
@@ -2386,18 +1741,12 @@ noncomputable def TraceCorrectionPrime.add
   core_minus_correction_supp := fun f => by
     have h₁ := T₁.core_minus_correction_supp f
     have h₂ := T₂.core_minus_correction_supp f
-    have hsum : ((T₁.core + T₂.core) - (T₁.correction + T₂.correction)) f =
-        (T₁.core - T₁.correction) f + (T₂.core - T₂.correction) f := by
-      simp only [LinearMap.sub_apply, LinearMap.add_apply]; abel
-    rw [hsum]
+    simp only [LinearMap.sub_apply, LinearMap.add_apply, add_sub_add_comm]
     exact (qSupportedOnDvdSubmodule N k p).add_mem h₁ h₂
   core_minus_correction_char := fun χ f hf => by
     have h₁ := T₁.core_minus_correction_char χ f hf
     have h₂ := T₂.core_minus_correction_char χ f hf
-    have hsum : ((T₁.core + T₂.core) - (T₁.correction + T₂.correction)) f =
-        (T₁.core - T₁.correction) f + (T₂.core - T₂.correction) f := by
-      simp only [LinearMap.sub_apply, LinearMap.add_apply]; abel
-    rw [hsum]
+    simp only [LinearMap.sub_apply, LinearMap.add_apply, add_sub_add_comm]
     exact (cuspFormCharSpace k χ).add_mem h₁ h₂
 
 /-- **Pointwise negation of trace corrections.**  The negation has

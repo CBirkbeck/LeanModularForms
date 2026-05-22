@@ -1,5 +1,11 @@
+/-
+Copyright (c) 2024 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
-public import SpherePacking.ModularForms.PhiTransform
+
+public import LeanModularForms.Modularforms.PhiTransform
 
 /-!
 # Lemmas about the transformation of `φ₀`
@@ -23,27 +29,27 @@ noncomputable section
 
 /-- `φ₂'` is 1-periodic: `φ₂' ((1 : ℝ) +ᵥ z) = φ₂' z`. -/
 public theorem φ₂'_periodic (z : ℍ) : φ₂' ((1 : ℝ) +ᵥ z) = φ₂' z := by
-  simp [φ₂', E₂_periodic, E₄_periodic, E₆_periodic, Δ_periodic, -E4_apply, -E6_apply]
+  simp [φ₂', E₂_periodic, E₄_periodic, E₆_periodic, Δ_periodic]
 
 /-- `φ₄'` is 1-periodic: `φ₄' ((1 : ℝ) +ᵥ z) = φ₄' z`. -/
 public theorem φ₄'_periodic (z : ℍ) : φ₄' ((1 : ℝ) +ᵥ z) = φ₄' z := by
-  simp [φ₄', E₄_periodic, Δ_periodic, -E4_apply]
+  simp [φ₄', E₄_periodic, Δ_periodic]
 
-private theorem periodic_neg_one {α : Type*} (F : ℍ → α)
+private theorem periodic_neg_one_aux {α : Type*} (F : ℍ → α)
     (hper : ∀ z : ℍ, F ((1 : ℝ) +ᵥ z) = F z) (z : ℍ) : F ((-1 : ℝ) +ᵥ z) = F z := by
   simpa [add_vadd] using (hper ((-1 : ℝ) +ᵥ z)).symm
 
 /-- `φ₂'` is also `(-1)`-periodic. -/
 public theorem φ₂'_periodic_neg_one (z : ℍ) : φ₂' ((-1 : ℝ) +ᵥ z) = φ₂' z :=
-  periodic_neg_one φ₂' φ₂'_periodic z
+  periodic_neg_one_aux φ₂' φ₂'_periodic z
 
 /-- `φ₄'` is also `(-1)`-periodic. -/
 public theorem φ₄'_periodic_neg_one (z : ℍ) : φ₄' ((-1 : ℝ) +ᵥ z) = φ₄' z :=
-  periodic_neg_one φ₄' φ₄'_periodic z
+  periodic_neg_one_aux φ₄' φ₄'_periodic z
 
 /-- `φ₀` is also `(-1)`-periodic. -/
 public theorem φ₀_periodic_neg_one (z : ℍ) : φ₀ ((-1 : ℝ) +ᵥ z) = φ₀ z :=
-  periodic_neg_one φ₀ φ₀_periodic z
+  periodic_neg_one_aux φ₀ φ₀_periodic z
 
 /-- A convenient form of `φ₀_S_transform`, clearing the denominators by multiplying by `z^2`. -/
 public theorem φ₀_S_transform_mul_sq (z : ℍ) :

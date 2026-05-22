@@ -258,6 +258,7 @@ def cuspFormToModularFormLin :
   map_add' f g := by ext z; rfl
   map_smul' c f := by ext z; rfl
 
+omit [NeZero N] in
 lemma cuspFormToModularFormLin_injective :
     Function.Injective (cuspFormToModularFormLin (N := N) (k := k)) := by
   intro f g hfg
@@ -354,8 +355,7 @@ lemma petN_realBilin_orthogonal_cuspFormsOld_eq :
     -- Re(-i * z) = Im(z), so Im(petN g f) = 0
     have h_im : (petN g f).im = 0 := by
       have := higf_re
-      simp [Complex.mul_re, Complex.conj_re, Complex.conj_im, Complex.I_re,
-        Complex.I_im] at this
+      simp [Complex.mul_re, Complex.I_re, Complex.I_im] at this
       linarith
     -- Combined: petN g f = 0
     have hgf : petN g f = 0 := by
@@ -367,9 +367,7 @@ lemma petN_realBilin_orthogonal_cuspFormsOld_eq :
     rw [hgf] at this
     simp at this
     exact this.symm
-  · intro hf
-    -- hf : f ∈ cuspFormsNew (as ℝ-restricted), want: f in ℝ-orthogonal of cuspFormsOld
-    intro g hg
+  · intro hf g hg
     -- Need: petN_realBilin g f = 0, i.e., (petN g f).re = 0
     show (petN_realBilin g) f = 0
     rw [petN_realBilin_apply]
@@ -725,14 +723,13 @@ private lemma T_p_upper_mod (p : ℕ) (hp : 0 < p) (a : ℕ) :
   apply Units.ext
   ext i j
   simp only [T_p_upper, shiftSL, mapGL_coe_matrix, Matrix.GeneralLinearGroup.mkOfDetNeZero,
-    Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
-    Units.val_mk, Units.val_mul]
+    Matrix.mul_apply, Fin.sum_univ_two, Units.val_mul]
   fin_cases i <;> fin_cases j <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
   -- Remaining: (0,1) entry, goal ↑a = ↑(a%p) + ↑(↑a/↑p) * ↑p in ℚ
   rw [← Int.natCast_ediv]
   simp only [Int.cast_natCast]
   exact_mod_cast show (a : ℤ) = (a % p : ℤ) + (a / p : ℤ) * (p : ℤ) from by
-    have := Int.emod_add_ediv (a : ℤ) (p : ℤ); linarith
+    have := Int.emod_add_mul_ediv (a : ℤ) (p : ℤ); linarith
 
 /-- Γ₁-periodicity: `g ∣[k] T_p_upper(a) = g ∣[k] T_p_upper(a % p)` for level-`M` forms. -/
 private lemma slash_T_p_upper_mod (M : ℕ) [NeZero M] (k : ℤ) (p : ℕ) (hp : 0 < p) (a : ℕ)
@@ -750,10 +747,10 @@ private lemma levelRaise_mul_T_p_upper (d : ℕ) [NeZero d] (p : ℕ) (hp : 0 < 
       glMap (T_p_upper p hp (d * b)) * levelRaiseMatrix d := by
   apply Matrix.GeneralLinearGroup.ext; intro i j
   simp only [Matrix.GeneralLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two,
-    T_p_upper_coe, levelRaiseMatrix, glMap, Matrix.GeneralLinearGroup.map,
+    levelRaiseMatrix, glMap, Matrix.GeneralLinearGroup.map,
     Matrix.GeneralLinearGroup.mkOfDetNeZero]
   fin_cases i <;> fin_cases j <;>
-    simp [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.vecHead, Matrix.vecTail] <;> ring
+    simp [Matrix.cons_val_zero, Matrix.cons_val_one]
 
 open Matrix in
 /-- Diagonal matrices commute: `α_d * glMap(β_∞) = glMap(β_∞) * α_d` in `GL(2, ℝ)`. -/
@@ -762,10 +759,10 @@ private lemma levelRaise_mul_T_p_lower (d : ℕ) [NeZero d] (p : ℕ) (hp : 0 < 
       glMap (T_p_lower p hp) * levelRaiseMatrix d := by
   apply Matrix.GeneralLinearGroup.ext; intro i j
   simp only [Matrix.GeneralLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two,
-    T_p_lower_coe, levelRaiseMatrix, glMap, Matrix.GeneralLinearGroup.map,
+    levelRaiseMatrix, glMap, Matrix.GeneralLinearGroup.map,
     Matrix.GeneralLinearGroup.mkOfDetNeZero]
   fin_cases i <;> fin_cases j <;>
-    simp [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.vecHead, Matrix.vecTail] <;> ring
+    (simp [Matrix.cons_val_zero, Matrix.cons_val_one]; try ring)
 
 /-- Reindexing: `Σ_{b < p} f(d*b % p) = Σ_{b < p} f(b)` when `gcd(d, p) = 1`.
 The map `b ↦ d*b mod p` is a bijection on `{0,...,p-1}` since `d` is a unit mod `p`. -/
@@ -1078,7 +1075,7 @@ private lemma heckeT_p_all_levelRaise_comm_divN
   show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z =
     (((d : ℂ) ^ (1 - k)) • (heckeT_p_ut k p hp.pos (⇑g.toModularForm') ∣[k]
       levelRaiseMatrix d)) z
-  simp only [heckeT_p_ut, Pi.add_apply]
+  simp only [heckeT_p_ut]
   simp_rw [hLR, smul_slash_pos_det k _ _ _ (T_p_upper_det_pos p hp.pos _)]
   simp_rw [show ∀ b, (⇑g ∣[k] levelRaiseMatrix d) ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
     ⇑g ∣[k] (levelRaiseMatrix d * glMap (T_p_upper p hp.pos b)) from
@@ -2338,6 +2335,7 @@ The proof is a direct `Submodule.span_induction` on `cuspFormsOld N k`:
 * **Linearity.** `Submodule.span_induction` extends vanishing from
   generators to arbitrary elements via `qExpansion_add` / `_smul`. -/
 
+omit [NeZero N] in
 /-- The period-1 strict-period hypothesis for `Γ₁(N)`, packaged for
 reuse in the oldform vanishing proof below. -/
 private lemma h1_period_Gamma1_local :
@@ -3468,10 +3466,10 @@ theorem Newform.lSeries_stripped_hasProd_eulerFactor
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
       q ∉ S → f.lCoeff q = 0)
     {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re)
-    (h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_geom : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
         ((q : ℂ) ^ (-s)) ^ 2‖ < 1) :
@@ -3510,11 +3508,13 @@ Used to apply Mathlib's Dirichlet L-function API
 noncomputable def Newform.dirichletLift (χ : (ZMod N)ˣ →* ℂˣ) :
     DirichletCharacter ℂ N := MulChar.ofUnitHom χ
 
+omit [NeZero N] in
 @[simp]
 lemma Newform.dirichletLift_apply_unit (χ : (ZMod N)ˣ →* ℂˣ) (a : (ZMod N)ˣ) :
     (Newform.dirichletLift χ) (a : ZMod N) = (χ a : ℂ) :=
   MulChar.ofUnitHom_coe χ a
 
+omit [NeZero N] in
 /-- **Norm of a character value at a unit equals 1.**  Since `(ZMod N)ˣ`
 is finite, every element has finite order; therefore the image
 `χ a : ℂˣ` is a finite-order unit in ℂ — i.e. a root of unity — and so
@@ -3532,6 +3532,7 @@ lemma Newform.norm_chi_unit_eq_one [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ)
     rw [this, h_pow, Units.val_one]
   exact Complex.norm_eq_one_of_pow_eq_one h_pow_C h_card_pos.ne'
 
+omit [NeZero N] in
 /-- **Geometric convergence of the good-prime Euler factor argument.**  For
 any prime `q ≥ 2` coprime to `N` and `s ∈ ℂ` with `Re s > (k-1)/2`, the
 geometric ratio `χ(q) · q^{k-1} · (q^{-s})²` has norm `< 1`.  In
@@ -3699,11 +3700,11 @@ theorem Newform.lSeries_stripped_mul_dirichlet_hasProd
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
       q ∉ S → f.lCoeff q = 0)
     {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re)
     (hs' : 1 < (2 * s - k + 1).re)
-    (h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_geom : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
         ((q : ℂ) ^ (-s)) ^ 2‖ < 1) :
@@ -3733,9 +3734,9 @@ quotient form `(1 - x) · (1 - x²)⁻¹`) with the algebraic collapse
 i.e. `(1 + x)⁻¹ · (1 - x)⁻¹ = (1 - x²)⁻¹`. -/
 theorem Newform.eulerFactor_stripped_mul_dirichlet_at_good_prime
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    (_hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (_h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
       q ∉ S → f.lCoeff q = 0)
     {q : ℕ} (hq : q.Prime) (hqN : Nat.Coprime q N) (hqS : q ∉ S)
     (s : ℂ)
@@ -3803,6 +3804,7 @@ theorem Newform.eulerFactor_stripped_mul_dirichlet_at_dvd (f : Newform N k)
     exact (hp.coprime_iff_not_dvd.mp h_cop) hp_dvd
   rw [h_chi_zero, zero_mul, sub_zero, inv_one, mul_one]
 
+omit [NeZero N] in
 /-- **Pointwise factor identification at primes dividing the level
 (squared character).**  For a prime `p ∣ N`, the squared Mathlib
 χ̃² Euler factor `(1 - χ̃²(p) · p^{-2s'})⁻¹` equals `1`. -/
@@ -3858,19 +3860,19 @@ theorem Newform.lSeries_stripped_value_identity
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
       q ∉ S → f.lCoeff q = 0)
     {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re)
     (hs' : 1 < (2 * s - k + 1).re)
     (hs'' : 1 < (2 * (2 * s - k + 1)).re)
-    (h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_geom : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
         ((q : ℂ) ^ (-s)) ^ 2‖ < 1)
     (T : Finset Nat.Primes)
     (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
       (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N)
-    (h_pos_neg : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_pos_neg : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
         (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 ∧
@@ -4067,19 +4069,19 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
       q ∉ S → f.lCoeff q = 0)
     {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re)
     (hs' : 1 < (2 * s - k + 1).re)
     (hs'' : 1 < (2 * (2 * s - k + 1)).re)
-    (h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_geom : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
         ((q : ℂ) ^ (-s)) ^ 2‖ < 1)
     (T : Finset Nat.Primes)
     (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
       (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N)
-    (h_pos_neg : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_pos_neg : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
         (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 ∧
@@ -4162,6 +4164,7 @@ lemma Newform.two_two_specialPoint_sub_k_add_one_re (k : ℤ) :
       rw [Complex.mul_re]; simp]
   rw [Newform.two_specialPoint_sub_k_add_one_re]; norm_num
 
+omit [NeZero N] in
 /-- **Geometric convergence at the special point.**  For any prime `q ≥ 2`
 coprime to `N`, the argument `χ(q) · q^{-(2·s₀-k+1)} = χ(q) · q^{-5}` has
 norm `q^{-5} ≤ 2^{-5} = 1/32 < 1`. -/
@@ -4222,7 +4225,7 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value_at_special_point
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
       q ∉ S → f.lCoeff q = 0)
     (T : Finset Nat.Primes)
     (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
@@ -5410,7 +5413,7 @@ lemma Newform.frickeMatrix_sq_matrix (N : ℕ) [NeZero N] :
   rw [Newform.frickeMatrix_coe]
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.one_apply]
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
 
 /-- **Fricke matrix involution at the GL level: `W_N * W_N = (-N) • 1`.**
 
@@ -5494,22 +5497,19 @@ lemma Newform.frickeConj_mem_Gamma1 (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
   · -- δ 0 0 = γ 1 1, mod N = 1.
     show ((Newform.frickeConjMat N γ) 0 0 : ZMod N) = 1
     simp only [Newform.frickeConjMat, Matrix.cons_val_zero, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.of_apply]
+      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
     exact hγ.2.1
   · -- δ 1 1 = γ 0 0, mod N = 1.
     show ((Newform.frickeConjMat N γ) 1 1 : ZMod N) = 1
-    simp only [Newform.frickeConjMat, Matrix.cons_val_zero, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.of_apply]
+    simp only [Newform.frickeConjMat, Matrix.cons_val',
+      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
     exact hγ.1
   · -- δ 1 0 = -(N : ℤ) * γ 0 1, mod N = 0.
     show ((Newform.frickeConjMat N γ) 1 0 : ZMod N) = 0
     simp only [Newform.frickeConjMat, Matrix.cons_val_zero, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.of_apply]
+      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.of_apply]
     push_cast
-    simp [ZMod.natCast_self]
+    simp
 
 /-- **T182 involution property of `Newform.frickeConj` on `Γ₁(N)`.**
 
@@ -5538,8 +5538,7 @@ lemma Newform.frickeConj_frickeConj (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
   ext i j
   simp only [Newform.frickeConjMat, Newform.frickeConj,
     Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.head_cons,
-    Matrix.head_fin_const, Matrix.of_apply]
+    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
   fin_cases i
   · fin_cases j
     · -- (0, 0): output of inner is γ 1 1, frickeConjMat takes its 1 1 → γ 0 0
@@ -6081,8 +6080,7 @@ lemma Newform.peterssonAdj_frickeMatrix_smul (N : ℕ) [NeZero N] (τ : UpperHal
   have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
   have hτ_ne : (τ : ℂ) ≠ 0 := UpperHalfPlane.ne_zero τ
   simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.head_cons,
-    Matrix.head_fin_const, Matrix.of_apply]
+    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
   push_cast
   field_simp
   ring
@@ -6122,8 +6120,7 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
         -((N : ℂ) * (τ : ℂ))
     rw [Newform.peterssonAdj_frickeMatrix_coe]
     simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.head_cons,
-      Matrix.head_fin_const, Matrix.of_apply]
+      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
     push_cast
     ring
   -- Apply the slash formula on the RHS via frickeMatrix_slash_apply.
@@ -6593,7 +6590,7 @@ lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
     -- Goal: (-1) • (1 : Matrix _) = scalar (-1)
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [Matrix.smul_apply, Matrix.one_apply, Matrix.scalar]
+      simp [Matrix.smul_apply, Matrix.scalar]
 
 /-- **Inverse of `frickeMatrix_PSL_R N` is itself (T147 corollary).** -/
 lemma Newform.frickeMatrix_PSL_R_inv (N : ℕ) [NeZero N] :
@@ -6861,7 +6858,7 @@ theorem Newform.imAxis_eq_frickeSlash
   have hI_cancel : Complex.I ^ k * Complex.I ^ (-k) = 1 := by
     rw [← zpow_add₀ hI_ne]; simp
   have hx_cancel : ((x : ℝ) : ℂ) ^ k * ((x : ℝ) : ℂ) ^ (-k) = 1 := by
-    rw [show ((x : ℝ) : ℂ) = (x : ℂ) by push_cast; rfl,
+    rw [show ((x : ℝ) : ℂ) = (x : ℂ) by rfl,
       ← zpow_add₀ hx_ne]; simp
   -- Group the scalar factors and cancel via the three multiplicative
   -- identities `N^{1-k} · N^{k-1} = 1`, `I^k · I^{-k} = 1`, `x^k · x^{-k} = 1`.
@@ -7351,15 +7348,15 @@ theorem Newform.dirichletQuotient_pole_witness_of_dirichletZero
   set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ) with hs'_def
   -- Auxiliary: Re(2 s' - k + 1) = 5 > 1.
   have h_re_arg : (2 * s' - (k : ℂ) + 1).re = 5 := by
-    simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
-      Complex.ofReal_im, Complex.intCast_re, Complex.intCast_im]
+    simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
+      Complex.intCast_re, Complex.intCast_im]
     ring
   have h_re_gt_one : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by rw [h_re_arg]; norm_num
   -- Re(2 (2 s' - k + 1)) = 10 > 1.
   have h_re_arg_sq : (2 * (2 * s' - (k : ℂ) + 1)).re = 10 := by
     rw [Complex.mul_re, h_re_arg]
-    simp [Complex.add_im, Complex.sub_im, Complex.mul_im, Complex.ofReal_re,
-      Complex.ofReal_im, s', Complex.intCast_re, Complex.intCast_im]
+    simp [Complex.add_im, Complex.sub_im, Complex.mul_im, s', Complex.intCast_re,
+      Complex.intCast_im]
     ring
   have h_re_sq_gt_one : (1 : ℝ) < (2 * (2 * s' - (k : ℂ) + 1)).re := by
     rw [h_re_arg_sq]; norm_num
@@ -8123,7 +8120,7 @@ theorem Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity
   have h_re_gt_one : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by
     have h_re : (2 * s' - (k : ℂ) + 1).re = 5 := by
       simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
-        Complex.ofReal_im, Complex.intCast_re, Complex.intCast_im]
+        Complex.intCast_re, Complex.intCast_im]
       ring
     rw [h_re]; norm_num
   have h_den_s' : den s' ≠ 0 := by
@@ -8487,7 +8484,7 @@ theorem Newform.FullDirichletQuotientUniversalFClause_of_halfPlane_multIdentity
   have h_re_gt_one : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by
     have h_re : (2 * s' - (k : ℂ) + 1).re = 5 := by
       simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
-        Complex.ofReal_im, Complex.intCast_re, Complex.intCast_im]
+        Complex.intCast_re, Complex.intCast_im]
       ring
     rw [h_re]; norm_num
   have h_LF_chi_at_s' : DirichletCharacter.LFunction
@@ -9652,8 +9649,8 @@ noncomputable def Newform.PerNewformFullDirichletData_T_empty_of_classicalInputs
       Complex.analyticOnNhd_univ_iff_differentiable.mpr h_diff
     set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ) with hs'_def
     have h_re : (2 * s' - (k : ℂ) + 1).re = 5 := by
-      simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.ofReal_re,
-        Complex.ofReal_im, Complex.intCast_re, Complex.intCast_im]
+      simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
+        Complex.intCast_re, Complex.intCast_im]
       ring
     have h_re_gt_one : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by rw [h_re]; norm_num
     have h_value_ne_at_s' : den_fn s' ≠ 0 := by
@@ -11103,7 +11100,7 @@ theorem Newform.HeckeEntireExtension_of_CompletedMellinData
   have h2π : (2 * Real.pi : ℂ) ≠ 0 := by
     have h2 : (2 : ℂ) ≠ 0 := two_ne_zero
     have hπ_ℂ : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
-    have hmul : (2 * Real.pi : ℂ) = (2 : ℂ) * (Real.pi : ℂ) := by push_cast; ring
+    have hmul : (2 * Real.pi : ℂ) = (2 : ℂ) * (Real.pi : ℂ) := by ring
     rw [hmul]; exact mul_ne_zero h2 hπ_ℂ
   haveI : NeZero (2 * Real.pi : ℂ) := ⟨h2π⟩
   have h_2pi_diff : Differentiable ℂ (fun s : ℂ => (2 * Real.pi : ℂ) ^ s) :=
@@ -11843,8 +11840,8 @@ Mathematical references: Diamond–Shurman §5.5 Prop 5.5.1 (Atkin–Lehner
 involutions), §5.6 Prop 5.6.2 (T_p preserves new/old subspaces); Miyake
 §4.6.5 (Atkin–Lehner) and §4.6.6 (Hecke operators on the new subspace). -/
 theorem heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_petersson_adjoint
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (_hp : p.Prime)
+    (_hpN : ¬ Nat.Coprime p N)
     (T_adj : CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
              CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_adj : ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
@@ -13690,7 +13687,7 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val
         !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
     rw [T_p_upper_coe]
     ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply] <;> push_cast <;> ring]
+    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.smul_apply,
@@ -13782,13 +13779,12 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
           !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
       rw [T_p_upper_coe]
       ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply] <;> push_cast <;> ring]
+      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
     ext i j
     fin_cases i <;> fin_cases j <;>
       simp [Matrix.mul_apply, Fin.sum_univ_two,
         Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-        Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply] <;>
-      ring]
+        Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]]
   rw [Matrix.mul_assoc, hW_inv_mul, Matrix.mul_one]
 
 /-! ### Lower-triangular GL coset rep with offset (T150) -/
@@ -13844,13 +13840,12 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix
         !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
     rw [T_p_upper_coe]
     ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply] <;> push_cast <;> ring]
+    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply] <;>
-    ring
+      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
 
 /-- **Slash-action Fricke / bad-prime upper coset rewrite (T150 slash form).**
 
@@ -14062,7 +14057,7 @@ theorem Newform.T_p_upper_left_coset_injective_Gamma1
         !![(1 : ℝ), (b1.val : ℝ); 0, (p : ℝ)]
     rw [T_p_upper_coe]
     ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply] <;> push_cast <;> ring
+    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
   have hβ2 : ((glMap (T_p_upper p hp b2.val) : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ) =
       !![(1 : ℝ), (b2.val : ℝ); 0, (p : ℝ)] := by
@@ -14070,7 +14065,7 @@ theorem Newform.T_p_upper_left_coset_injective_Gamma1
         !![(1 : ℝ), (b2.val : ℝ); 0, (p : ℝ)]
     rw [T_p_upper_coe]
     ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply] <;> push_cast <;> ring
+    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
   have hγ_mat : ((mapGL ℝ γ : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ) =
       γ.val.map (algebraMap ℤ ℝ) := mapGL_coe_matrix γ
@@ -14080,7 +14075,7 @@ theorem Newform.T_p_upper_left_coset_injective_Gamma1
   simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply, algebraMap_int_eq,
     Int.coe_castRingHom, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
     Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-    mul_one, mul_zero, add_zero, zero_add] at h00 h01
+    mul_one, mul_zero, add_zero] at h00 h01
   have h00_int : γ.val 0 0 = 1 := by exact_mod_cast h00
   rw [h00_int] at h01
   push_cast at h01
@@ -14241,8 +14236,7 @@ theorem Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b
     simp only [Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      Matrix.head_cons, Matrix.head_fin_const,
-      mul_one, mul_zero, one_mul, zero_mul, add_zero, zero_add]
+      mul_one, mul_zero, one_mul, zero_mul, add_zero]
     exact ha_def.symm
   have e01 : ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val) 0 1 =
       (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
@@ -14250,8 +14244,7 @@ theorem Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b
     simp only [Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      Matrix.head_cons, Matrix.head_fin_const,
-      mul_one, mul_zero, one_mul, zero_mul, add_zero, zero_add]
+      one_mul, zero_mul, add_zero]
     rw [← hb'_def]; linarith
   have e10 : ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val) 1 0 =
       (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
@@ -14259,8 +14252,7 @@ theorem Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b
     simp only [Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      Matrix.head_cons, Matrix.head_fin_const,
-      mul_one, mul_zero, one_mul, zero_mul, add_zero, zero_add]
+      mul_one, mul_zero, zero_mul, add_zero, zero_add]
     rw [← hc_def]
   have e11 : ((!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val) 1 1 =
       (!![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
@@ -14268,8 +14260,7 @@ theorem Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b
     simp only [Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
-      Matrix.head_cons, Matrix.head_fin_const,
-      mul_one, mul_zero, one_mul, zero_mul, add_zero, zero_add]
+      zero_mul, zero_add]
     rw [← hd_def]; ring
   have h_int_eq : (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val =
       M * !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] := by
@@ -14307,7 +14298,7 @@ theorem Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b
       show (T_p_upper p hp.pos 0 : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
           (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ)
       rw [T_p_upper_coe]; ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply] <;> push_cast <;> ring
+      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
     have hβ : ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ) =
         ((!![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] :
@@ -14316,7 +14307,7 @@ theorem Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b
           (!![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] :
             Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ)
       rw [T_p_upper_coe]; ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply] <;> push_cast <;> ring
+      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
     have hγ_mat : ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
         γ.val.map (algebraMap ℤ ℝ) := mapGL_coe_matrix γ
     have hγ'_mat : ((mapGL ℝ γ' : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
@@ -14367,7 +14358,7 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_eq_iUnion_T_p_upper_left_cosets
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply,
       Matrix.SpecialLinearGroup.coe_mk]
     fin_cases i <;> fin_cases j <;>
-      simp [Matrix.cons_val_zero, Matrix.cons_val_one] <;> push_cast <;> ring
+      simp [Matrix.cons_val_zero, Matrix.cons_val_one]
   ext x
   constructor
   · -- Forward: x ∈ Γ * {α_p} * Γ ⟹ x ∈ ⋃ b, Γ * {β_b}.
@@ -15009,7 +15000,7 @@ lemma Newform.peterssonAdj_T_p_lower_with_offset_eq
   rw [peterssonAdj_coe, Newform.T_p_lower_with_offset_coe,
       Newform.T_p_lower_with_offset_adjugate_coe, Matrix.adjugate_fin_two]
   ext i j
-  fin_cases i <;> fin_cases j <;> simp <;> ring
+  fin_cases i <;> fin_cases j <;> simp
 
 /-- **Slash by `peterssonAdj (T_p_lower_with_offset N hp b)` reduces to slash
 by the explicit adjugate `T_p_lower_with_offset_adjugate N hp b` (T152 main
@@ -15140,7 +15131,7 @@ States the bad-prime Fricke petN adjoint as the unscaled scaled identity
 with whichever scalar form is convenient. -/
 theorem Newform.hasBadPrimeFrickePetNAdjoint_of_fricke_upper_aggregate
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (_hp : p.Prime) (_hpN : ¬ Nat.Coprime p N)
     (h_aggregate : ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
       Newform.frickeSquareScalar N k * petN (heckeT_n_cusp k p f) g =
         petN f (Newform.frickeBadAdjointCandidate k p g)) :

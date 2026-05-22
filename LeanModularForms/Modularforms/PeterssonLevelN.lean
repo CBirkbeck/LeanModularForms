@@ -109,16 +109,16 @@ theorem integrableOn_petersson_slash
     {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic]
     [CuspFormClass F Γ k] [ModularFormClass F' Γ k]
     (f : F) (f' : F') (δ : SL(2, ℤ)) :
-    IntegrableOn (fun τ => petersson k (⇑f ∣[k] δ) (⇑f' ∣[k] δ) τ) fd μ_hyp := by
+    IntegrableOn (fun τ ↦ petersson k (⇑f ∣[k] δ) (⇑f' ∣[k] δ) τ) fd μ_hyp := by
   obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k Γ f f'
-  rw [show (fun τ => petersson k (⇑f ∣[k] δ) (⇑f' ∣[k] δ) τ) =
-      fun τ => petersson k (⇑f) (⇑f') (δ • τ) from
-    funext fun τ => petersson_slash_SL k _ _ δ τ]
+  rw [show (fun τ ↦ petersson k (⇑f ∣[k] δ) (⇑f' ∣[k] δ) τ) =
+      fun τ ↦ petersson k (⇑f) (⇑f') (δ • τ) from
+    funext fun τ ↦ petersson_slash_SL k _ _ δ τ]
   exact IntegrableOn.of_bound hyperbolicMeasure_fd_lt_top
     ((petersson_continuous k (ModularFormClass.continuous f)
       (ModularFormClass.continuous f')).comp (continuous_const_smul δ)
     |>.aestronglyMeasurable.restrict)
-    C (ae_of_all _ fun τ => hC (δ • τ))
+    C (ae_of_all _ fun τ ↦ hC (δ • τ))
 
 /-! ### Positive definiteness -/
 
@@ -174,7 +174,7 @@ theorem petN_summand_nonneg
       peterssonInner k fd (⇑f ∣[k] (q.out)⁻¹) (⇑f ∣[k] (q.out)⁻¹) = ↑r := by
   set h := ⇑f ∣[k] (q.out)⁻¹
   refine ⟨∫ τ in fd, Complex.normSq (h τ) * τ.im ^ k ∂hyperbolicMeasure,
-    setIntegral_nonneg measurableSet_fd' fun τ _ =>
+    setIntegral_nonneg measurableSet_fd' fun τ _ ↦
       mul_nonneg (Complex.normSq_nonneg _) (zpow_nonneg (UpperHalfPlane.im_pos τ).le _),
     peterssonInner_self_real h⟩
 
@@ -188,22 +188,17 @@ theorem petN_definite
     (hpet : petN f f = 0) : f = 0 := by
   apply CuspForm.pet_definite f
   rw [← identity_coset_eq_pet f f]
-  -- Each summand is a non-negative real; extract this data.
   have hsumm : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       ∃ r : ℝ, 0 ≤ r ∧
         peterssonInner k fd (⇑f ∣[k] (q.out)⁻¹) (⇑f ∣[k] (q.out)⁻¹) = ↑r :=
     petN_summand_nonneg f
-  -- Choose the real values
   choose r hr_nonneg hr_eq using hsumm
-  -- petN f f = Σ ↑(r q) = ↑(Σ r q) = 0
   have hsum : (↑(∑ q, r q) : ℂ) = 0 := by
     rw [Complex.ofReal_sum]; simp_rw [← hr_eq]; exact hpet
   have hsum_real : ∑ q, r q = 0 := Complex.ofReal_eq_zero.mp hsum
-  -- Each r q = 0 (non-negative reals summing to 0)
   have hzero : ∀ q, r q = 0 := by
-    have := (Finset.sum_eq_zero_iff_of_nonneg (fun q _ => hr_nonneg q)).mp hsum_real
-    exact fun q => this q (Finset.mem_univ q)
-  -- The identity coset term is ↑(r [1]) = ↑0 = 0
+    have := (Finset.sum_eq_zero_iff_of_nonneg (fun q _ ↦ hr_nonneg q)).mp hsum_real
+    exact fun q ↦ this q (Finset.mem_univ q)
   rw [hr_eq ⟦1⟧, hzero ⟦1⟧, Complex.ofReal_zero]
 
 /-! ### Sesquilinearity -/
@@ -239,7 +234,7 @@ theorem petN_add_right
 private lemma smul_slash_SL (c : ℂ) (f : ℍ → ℂ) (δ : SL(2, ℤ)) :
     (c • f) ∣[k] δ = c • (f ∣[k] δ) := by
   rw [ModularForm.SL_slash (c • f) δ, ModularForm.SL_slash f δ, ModularForm.smul_slash]
-  simp [UpperHalfPlane.σ, Matrix.SpecialLinearGroup.mapGL, Matrix.SpecialLinearGroup.map]
+  simp [UpperHalfPlane.σ, Matrix.SpecialLinearGroup.map]
 
 /-- Complex scalar in the second argument: `petN f (c • g) = c * petN f g`. -/
 theorem petN_smul_right (c : ℂ)
@@ -248,7 +243,7 @@ theorem petN_smul_right (c : ℂ)
   simp only [petN]
   simp_rw [show ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑(c • g) ∣[k] q.out⁻¹) =
-      c * peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹) from fun q => by
+      c * peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹) from fun q ↦ by
     rw [show ⇑(c • g) ∣[k] q.out⁻¹ = c • (⇑g ∣[k] q.out⁻¹) from by
       change (c • ⇑g) ∣[k] q.out⁻¹ = c • (⇑g ∣[k] q.out⁻¹)
       exact smul_slash_SL c _ _]
@@ -309,13 +304,10 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
     IsFundamentalDomain H (⋃ q : G ⧸ H, ((q.out : G))⁻¹ • s) μ := by
   set T : Set α := ⋃ q : G ⧸ H, ((q.out : G))⁻¹ • s with hT_def
   have hT_meas : NullMeasurableSet T μ :=
-    .iUnion fun q => hs.nullMeasurableSet_smul _
+    .iUnion fun q ↦ hs.nullMeasurableSet_smul _
   refine ⟨hT_meas, ?_, ?_⟩
-  · -- ae_covers: for a.e. τ, ∃ h ∈ H with h • τ ∈ T.
-    filter_upwards [hs.ae_covers] with τ hτ
+  · filter_upwards [hs.ae_covers] with τ hτ
     obtain ⟨g, hg⟩ := hτ
-    -- Take q := ⟦g⟧ ∈ G ⧸ H; then q.out and g are in the same left coset, so
-    -- q.out⁻¹ * g ∈ H. Applying this H-element to τ lands in q.out⁻¹ • s ⊆ T.
     set q : G ⧸ H := QuotientGroup.mk g with hq_def
     have hmem : q.out⁻¹ * g ∈ H := by
       rw [← QuotientGroup.leftRel_apply]
@@ -325,8 +317,7 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
     rw [mul_smul]
     refine Set.mem_iUnion.mpr ⟨q, ?_⟩
     exact Set.smul_mem_smul_set hg
-  · -- aedisjoint: distinct H-translates of T are a.e. disjoint.
-    intro h₁ h₂ hne
+  · intro h₁ h₂ hne
     show AEDisjoint μ ((h₁ : G) • T) ((h₂ : G) • T)
     rw [hT_def]
     simp only [Set.smul_set_iUnion]
@@ -334,15 +325,12 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
     intro q₁
     rw [AEDisjoint.iUnion_right_iff]
     intro q₂
-    -- (h_i : G) • (q_i.out⁻¹ • s) = ((h_i : G) * q_i.out⁻¹) • s; apply hs.aedisjoint.
     rw [show ((h₁ : G) • ((q₁.out : G))⁻¹ • s : Set α) =
           (((h₁ : G) * (q₁.out : G)⁻¹) • s : Set α) from (mul_smul _ _ _).symm,
         show ((h₂ : G) • ((q₂.out : G))⁻¹ • s : Set α) =
           (((h₂ : G) * (q₂.out : G)⁻¹) • s : Set α) from (mul_smul _ _ _).symm]
     apply hs.aedisjoint
     intro heq
-    -- heq : (h₁ : G) * q₁.out⁻¹ = (h₂ : G) * q₂.out⁻¹ in G.
-    -- Rearrange to (h₂ : G)⁻¹ * h₁ = q₂.out⁻¹ * q₁.out. LHS ∈ H, so RHS ∈ H, so q₁ = q₂.
     apply hne
     have hmem : (q₂.out : G)⁻¹ * q₁.out ∈ H := by
       have : (h₂ : G)⁻¹ * (h₁ : G) = (q₂.out : G)⁻¹ * (q₁.out : G) := by
@@ -356,17 +344,13 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
           _ = (q₂.out : G)⁻¹ * (q₁.out : G) := by group
       rw [← this]
       exact H.mul_mem (H.inv_mem h₂.2) h₁.2
-    -- Use hmem to conclude q₁ = q₂ (same coset).
     have hq : q₁ = q₂ := by
       have h_mk : (QuotientGroup.mk q₁.out : G ⧸ H) = QuotientGroup.mk q₂.out := by
         rw [QuotientGroup.eq]
-        -- need: q₁.out⁻¹ * q₂.out ∈ H, derived from hmem via inversion
         have := H.inv_mem hmem
         simpa [mul_inv_rev] using this
       simpa using h_mk
-    -- Contradiction: hne says h₁ ≠ h₂, but q₁ = q₂ and heq give h₁ = h₂.
     subst hq
-    -- heq : h₁ * q₁.out⁻¹ = h₂ * q₁.out⁻¹; cancel to get h₁ = h₂
     have : (h₁ : G) = (h₂ : G) := by
       have := heq
       exact mul_right_cancel this
@@ -391,13 +375,13 @@ theorem IsFundamentalDomain.smul_of_mem_normalizer
     IsFundamentalDomain H (g • s) μ :=
   hs.image_of_equiv (MulAction.toPerm g)
     (measurePreserving_smul _ _).quasiMeasurePreserving
-    { toFun := fun h' => ⟨g⁻¹ * (h' : G_outer) * g,
+    { toFun := fun h' ↦ ⟨g⁻¹ * (h' : G_outer) * g,
         (Subgroup.mem_normalizer_iff''.mp hg _).mp h'.2⟩
-      invFun := fun h' => ⟨g * (h' : G_outer) * g⁻¹,
+      invFun := fun h' ↦ ⟨g * (h' : G_outer) * g⁻¹,
         (Subgroup.mem_normalizer_iff.mp hg _).mp h'.2⟩
-      left_inv := fun _ => Subtype.ext (by group)
-      right_inv := fun _ => Subtype.ext (by group) }
-    fun h' x => by
+      left_inv := fun _ ↦ Subtype.ext (by group)
+      right_inv := fun _ ↦ Subtype.ext (by group) }
+    fun h' x ↦ by
       show g • ((g⁻¹ * (h' : G_outer) * g) • x) = (h' : G_outer) • (g • x)
       simp only [smul_smul, mul_inv_cancel_left, mul_assoc]
 
@@ -431,27 +415,24 @@ theorem IsFundamentalDomain.smul_of_eq_conjAct
     {H₁ H₂ : Subgroup G_outer} {s : Set α} (hs : IsFundamentalDomain H₁ s μ)
     {g : G_outer} (hgH : H₂ = ConjAct.toConjAct g • H₁) :
     IsFundamentalDomain H₂ (g • s) μ := by
-  -- Substitute `H₂` with the conjugate so the subtype types stay rigid;
-  -- this avoids the dependent-motive failure of `rw [hgH] at h_mem` when
-  -- `H₂` appears in the type of the bound subtype element `h₂ : H₂`.
   subst hgH
   exact hs.image_of_equiv (MulAction.toPerm g)
     (measurePreserving_smul _ _).quasiMeasurePreserving
-    { toFun := fun h₂ => ⟨g⁻¹ * (h₂ : G_outer) * g, by
+    { toFun := fun h₂ ↦ ⟨g⁻¹ * (h₂ : G_outer) * g, by
         have h_mem : (h₂ : G_outer) ∈ ConjAct.toConjAct g • H₁ := h₂.2
         rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
           ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at h_mem
         exact h_mem⟩
-      invFun := fun h₁ => ⟨g * (h₁ : G_outer) * g⁻¹, by
+      invFun := fun h₁ ↦ ⟨g * (h₁ : G_outer) * g⁻¹, by
         rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
           ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
         have h_simp : g⁻¹ * (g * (h₁ : G_outer) * g⁻¹) * g = (h₁ : G_outer) := by
           group
         rw [h_simp]
         exact h₁.2⟩
-      left_inv := fun _ => Subtype.ext (by group)
-      right_inv := fun _ => Subtype.ext (by group) }
-    fun h₂ x => by
+      left_inv := fun _ ↦ Subtype.ext (by group)
+      right_inv := fun _ ↦ Subtype.ext (by group) }
+    fun h₂ x ↦ by
       show g • ((g⁻¹ * (h₂ : G_outer) * g) • x) = (h₂ : G_outer) • (g • x)
       simp only [smul_smul, mul_inv_cancel_left, mul_assoc]
 
@@ -482,7 +463,6 @@ theorem IsFundamentalDomain.aedisjoint_smul_of_mul_inv_mem
   have h_smul_coe :
       ((⟨g₁⁻¹ * g₂, h_mem⟩ : H) • D : Set α) = (g₁⁻¹ * g₂) • D := rfl
   rw [h_one_smul, h_smul_coe] at h_core
-  -- h_core : AEDisjoint μ D ((g₁⁻¹ * g₂) • D). Translate both sides by g₁.
   have h_inter : (g₁ • D) ∩ (g₂ • D) = g₁ • (D ∩ ((g₁⁻¹ * g₂) • D)) := by
     rw [Set.smul_set_inter, ← mul_smul, mul_inv_cancel_left]
   show μ ((g₁ • D) ∩ (g₂ • D)) = 0
@@ -510,7 +490,7 @@ noncomputable def imageGamma1_PSL (N : ℕ) [NeZero N] : Subgroup PSL(2, ℤ) :=
 
 /-- Image of a finite-index subgroup under a surjection has finite index. -/
 instance imageGamma1_PSL_finiteIndex : (imageGamma1_PSL N).FiniteIndex := by
-  refine ⟨fun h => ?_⟩
+  refine ⟨fun h ↦ ?_⟩
   have h_dvd : (imageGamma1_PSL N).index ∣ (Gamma1 N).index := by
     apply Subgroup.index_map_dvd
     exact QuotientGroup.mk_surjective
@@ -547,7 +527,7 @@ Inherited from the `aedisjoint` field of `isFundamentalDomain_fdo_PSL`: distinct
 PSL elements give a.e.-disjoint translates of `fdo`. Distinct cosets `q ≠ q'` have
 distinct `q.out ≠ q'.out`, hence distinct inverses. -/
 theorem aedisjoint_PSL_coset_tiles :
-    Pairwise (fun q₁ q₂ : PSL(2, ℤ) ⧸ imageGamma1_PSL N =>
+    Pairwise (fun q₁ q₂ : PSL(2, ℤ) ⧸ imageGamma1_PSL N ↦
       AEDisjoint μ_hyp ((q₁.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))
         ((q₂.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))) := by
   intro q₁ q₂ hne
@@ -591,7 +571,7 @@ theorem hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top :
   rw [Gamma1_fundDomain_PSL]
   refine lt_of_le_of_lt (measure_iUnion_le _) ?_
   rw [tsum_fintype]
-  refine ENNReal.sum_lt_top.mpr fun q' _ => ?_
+  refine ENNReal.sum_lt_top.mpr fun q' _ ↦ ?_
   have hmeas : μ_hyp ((q'.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ)) =
       μ_hyp (fdo : Set ℍ) :=
     (isFundamentalDomain_fdo_PSL.smul _).measure_eq isFundamentalDomain_fdo_PSL
@@ -606,14 +586,14 @@ the domain has finite hyperbolic measure
 (`hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top`). -/
 theorem integrableOn_petersson_Gamma1_fundDomain_PSL
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    IntegrableOn (fun τ => petersson k ⇑f ⇑g τ)
+    IntegrableOn (fun τ ↦ petersson k ⇑f ⇑g τ)
       (Gamma1_fundDomain_PSL N) μ_hyp := by
   obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
     ((Gamma1 N).map (mapGL ℝ)) f g
   exact IntegrableOn.of_bound hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top
     ((petersson_continuous k (ModularFormClass.continuous f)
       (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
-    C (ae_of_all _ fun τ => hC τ)
+    C (ae_of_all _ fun τ ↦ hC τ)
 
 /-! ### Γ₁(N) coset-tiling fundamental-domain API (T201)
 
@@ -742,7 +722,6 @@ theorem isFundamentalDomain_Gamma1_PSL_R :
     IsFundamentalDomain (imageGamma1_PSL_R N) (Gamma1_fundDomain_PSL N) μ_hyp := by
   have h_base : IsFundamentalDomain (imageGamma1_PSL N) (Gamma1_fundDomain_PSL N) μ_hyp :=
     isFundamentalDomain_Gamma1_PSL
-  -- `f := Equiv.refl ℍ` ⇒ the image set is unchanged.
   have h_image_eq : (Equiv.refl ℍ) '' (Gamma1_fundDomain_PSL N) = Gamma1_fundDomain_PSL N := by
     simp
   rw [← h_image_eq]
@@ -750,15 +729,11 @@ theorem isFundamentalDomain_Gamma1_PSL_R :
     (MeasureTheory.Measure.QuasiMeasurePreserving.id μ_hyp)
     ((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
       PSL2Z_to_PSL2R_injective).toEquiv.symm) ?_
-  -- Semiconj: ∀ g, Semiconj (Equiv.refl ℍ) (e g • ·) (g • ·).
-  -- With f = refl, this becomes (e g) • τ = g • τ.
   intro g τ
   show (Equiv.refl ℍ) (((Subgroup.equivMapOfInjective (imageGamma1_PSL N)
         PSL2Z_to_PSL2R PSL2Z_to_PSL2R_injective).toEquiv.symm g : imageGamma1_PSL N) • τ) =
       ((g : imageGamma1_PSL_R N) : PSL(2, ℝ)) • (Equiv.refl ℍ) τ
   simp only [Equiv.refl_apply]
-  -- Let g' := e g : imageGamma1_PSL N.  By equivMapOfInjective.symm:
-  -- equivMapOfInjective .. g' = g, hence (g : PSL(2, ℝ)) = PSL2Z_to_PSL2R (g' : PSL(2, ℤ)).
   set g' : imageGamma1_PSL N := (Subgroup.equivMapOfInjective (imageGamma1_PSL N)
     PSL2Z_to_PSL2R PSL2Z_to_PSL2R_injective).toEquiv.symm g with hg'_def
   have h_g_coe :
@@ -801,13 +776,10 @@ theorem isFundamentalDomain_imageGamma1_PSL_of_PSL_R
         PSL2Z_to_PSL2R PSL2Z_to_PSL2R_injective).toEquiv g : imageGamma1_PSL_R N) • τ) =
       ((g : imageGamma1_PSL N) : PSL(2, ℤ)) • (Equiv.refl ℍ) τ
   simp only [Equiv.refl_apply]
-  -- Reduce the imageGamma1_PSL_R action to the PSL(2, ℝ) action of the underlying
-  -- coerced element.
   show (((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
         PSL2Z_to_PSL2R_injective).toEquiv g : imageGamma1_PSL_R N) :
         PSL(2, ℝ)) • τ =
       ((g : imageGamma1_PSL N) : PSL(2, ℤ)) • τ
-  -- The forward direction sends g ∈ imageGamma1_PSL N to its PSL_R image.
   have h_g_coe :
       ((((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
         PSL2Z_to_PSL2R_injective).toEquiv g) : imageGamma1_PSL_R N) : PSL(2, ℝ)) =
@@ -853,7 +825,7 @@ sending each `Γ₁(N)`-coset `[g]` to its `imageGamma1_PSL N`-coset `[PSL.mk g]
 noncomputable def slToPslQuot :
     SL(2, ℤ) ⧸ Gamma1 N → PSL(2, ℤ) ⧸ imageGamma1_PSL N :=
   Quotient.lift
-    (fun g : SL(2, ℤ) =>
+    (fun g : SL(2, ℤ) ↦
       (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
         PSL(2, ℤ) ⧸ imageGamma1_PSL N))
     (by
@@ -861,7 +833,6 @@ noncomputable def slToPslQuot :
       change (QuotientGroup.leftRel _).r _ _ at hab
       rw [QuotientGroup.leftRel_apply] at hab
       apply (QuotientGroup.eq).mpr
-      -- need: (PSL.mk a)⁻¹ * PSL.mk b ∈ imageGamma1_PSL N
       have h_psl : (QuotientGroup.mk a : PSL(2, ℤ))⁻¹ * QuotientGroup.mk b =
           QuotientGroup.mk (a⁻¹ * b) := by
         rw [← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
@@ -877,7 +848,6 @@ theorem slToPslQuot_mk (g : SL(2, ℤ)) :
 /-- The natural map `SL(2,ℤ) ⧸ Gamma1 N → PSL(2,ℤ) ⧸ imageGamma1_PSL N` is surjective. -/
 theorem slToPslQuot_surjective : Function.Surjective (slToPslQuot (N := N)) := by
   intro q'
-  -- q' has a representative in PSL, lift to SL
   obtain ⟨g_psl, hg_psl⟩ := QuotientGroup.mk_surjective q'
   obtain ⟨g_sl, hg_sl⟩ := QuotientGroup.mk_surjective g_psl
   refine ⟨QuotientGroup.mk g_sl, ?_⟩
@@ -893,13 +863,12 @@ and thereby establish uniform fiber size. -/
 /-- Left multiplication by `h : SL(2, ℤ)` is a well-defined map on `SL(2, ℤ) ⧸ Gamma1 N`. -/
 noncomputable def slLeftMul (h : SL(2, ℤ)) :
     SL(2, ℤ) ⧸ Gamma1 N → SL(2, ℤ) ⧸ Gamma1 N :=
-  Quotient.lift (fun g : SL(2, ℤ) => (QuotientGroup.mk (h * g) : SL(2, ℤ) ⧸ Gamma1 N))
+  Quotient.lift (fun g : SL(2, ℤ) ↦ (QuotientGroup.mk (h * g) : SL(2, ℤ) ⧸ Gamma1 N))
     (by
       intro a b hab
       change (QuotientGroup.leftRel _).r _ _ at hab
       rw [QuotientGroup.leftRel_apply] at hab
       apply QuotientGroup.eq.mpr
-      -- Need: (h*a)⁻¹ * (h*b) ∈ Γ₁(N), which equals a⁻¹ * b ∈ Γ₁(N).
       have : (h * a)⁻¹ * (h * b) = a⁻¹ * b := by group
       rw [this]; exact hab)
 
@@ -932,7 +901,7 @@ PSL-action on `PSL(2,ℤ) ⧸ imageGamma1_PSL N`. We phrase it here via
 `QuotientGroup.mk` for convenience. -/
 theorem slToPslQuot_slLeftMul (h : SL(2, ℤ)) (q : SL(2, ℤ) ⧸ Gamma1 N) :
     slToPslQuot (slLeftMul h q) =
-      Quotient.map' (fun x : PSL(2, ℤ) => (QuotientGroup.mk h : PSL(2, ℤ)) * x)
+      Quotient.map' (fun x : PSL(2, ℤ) ↦ (QuotientGroup.mk h : PSL(2, ℤ)) * x)
         (by
           intro a b hab
           change (QuotientGroup.leftRel _).r _ _ at hab
@@ -963,75 +932,53 @@ suitable `h : SL(2,ℤ)` gives a bijection between any two fibers. -/
 theorem slToPslQuot_fiber_card_uniform
     (q₁' q₂' : PSL(2, ℤ) ⧸ imageGamma1_PSL N) :
     haveI : DecidableEq (PSL(2, ℤ) ⧸ imageGamma1_PSL N) := Classical.decEq _
-    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
         slToPslQuot q = q₁')).card =
-      (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+      (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
         slToPslQuot q = q₂')).card := by
   haveI : DecidableEq (PSL(2, ℤ) ⧸ imageGamma1_PSL N) := Classical.decEq _
-  -- Pick h ∈ SL with slToPslQuot (h · [1]) = q₂' / q₁' pattern; more directly:
-  -- obtain representatives for q₁', q₂' via surjectivity and construct h.
   obtain ⟨q₁, hq₁⟩ := slToPslQuot_surjective q₁'
   obtain ⟨q₂, hq₂⟩ := slToPslQuot_surjective q₂'
   induction q₁ using QuotientGroup.induction_on with | _ g₁ => ?_
   induction q₂ using QuotientGroup.induction_on with | _ g₂ => ?_
-  -- Let h := g₂ * g₁⁻¹. Then slToPslQuot (slLeftMul h [g₁]) = q₂'.
   set h := g₂ * g₁⁻¹ with hh_def
-  -- Define the bijection on the full quotient, which preserves fibers up to shift.
   refine Finset.card_bij'
-    (fun q _ => slLeftMul h q)
-    (fun q _ => slLeftMul h⁻¹ q)
-    (fun q hq => ?_)
-    (fun q hq => ?_)
-    (fun q _ => by
+    (fun q _ ↦ slLeftMul h q)
+    (fun q _ ↦ slLeftMul h⁻¹ q)
+    (fun q hq ↦ ?_)
+    (fun q hq ↦ ?_)
+    (fun q _ ↦ by
       show slLeftMul h⁻¹ (slLeftMul h q) = q
       rw [slLeftMul_comp, inv_mul_cancel, slLeftMul_one])
-    (fun q _ => by
+    (fun q _ ↦ by
       show slLeftMul h (slLeftMul h⁻¹ q) = q
       rw [slLeftMul_comp, mul_inv_cancel, slLeftMul_one])
-  · -- forward map stays in the target filter
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    -- hq : slToPslQuot q = q₁'; need: slToPslQuot (slLeftMul h q) = q₂'
+  · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
     induction q using QuotientGroup.induction_on with | _ g => ?_
     show slToPslQuot (QuotientGroup.mk (h * g)) = q₂'
     rw [slToPslQuot_mk]
-    -- slToPslQuot ⟦g⟧ = q₁', so ⟦⟦g⟧⟧ = q₁' in PSL ⧸ imageGamma1_PSL.
     have hq_psl : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
         PSL(2, ℤ) ⧸ imageGamma1_PSL N) = q₁' := hq
-    -- Compute target: want ⟦PSL.mk(h*g)⟧ = q₂'.
     have h_psl : (QuotientGroup.mk (h * g) : PSL(2, ℤ)) =
         (QuotientGroup.mk h : PSL(2, ℤ)) * (QuotientGroup.mk g : PSL(2, ℤ)) :=
       (QuotientGroup.mk_mul _ _ _).symm
     rw [h_psl]
-    -- PSL.mk h = PSL.mk (g₂ * g₁⁻¹) = PSL.mk g₂ * (PSL.mk g₁)⁻¹
     have h_h_psl : (QuotientGroup.mk h : PSL(2, ℤ)) =
         QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ := by
       rw [hh_def, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
     rw [h_h_psl]
-    -- Goal now: ⟦PSL.mk g₂ · (PSL.mk g₁)⁻¹ · PSL.mk g⟧ = q₂'
-    -- Use QuotientGroup.eq: equivalent to PSL.mk g₂⁻¹·(PSL.mk g₁)·PSL.mk g⁻¹·q₂'.out ∈ image.
-    -- Alternative: just rewrite using hq_psl.
-    -- We have ⟦⟦g⟧⟧ = q₁' in PSL ⧸ imageGamma1_PSL and ⟦⟦g₁⟧⟧ = q₁' (from hq₁).
-    -- So ⟦⟦g⟧⟧ = ⟦⟦g₁⟧⟧, i.e., (PSL.mk g)·(PSL.mk g₁)⁻¹ ∈ imageGamma1_PSL → hmm wait other direction.
-    -- leftRel: ⟦x⟧ = ⟦y⟧ iff x⁻¹·y ∈ H, i.e., (PSL.mk g)⁻¹·(PSL.mk g₁)? Let's see.
     have hq_eq_g₁ : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
         PSL(2, ℤ) ⧸ imageGamma1_PSL N) =
         QuotientGroup.mk (QuotientGroup.mk g₁ : PSL(2, ℤ)) := by
       rw [hq_psl]; exact hq₁.symm
     rw [QuotientGroup.eq] at hq_eq_g₁
-    -- hq_eq_g₁ : (PSL.mk g)⁻¹ * (PSL.mk g₁) ∈ imageGamma1_PSL N
-    -- Goal: ⟦PSL.mk g₂ · (PSL.mk g₁)⁻¹ · PSL.mk g⟧ = q₂' (and q₂' = ⟦PSL.mk g₂⟧ by hq₂).
     rw [show q₂' = QuotientGroup.mk (QuotientGroup.mk g₂ : PSL(2, ℤ)) from hq₂.symm,
       QuotientGroup.eq]
-    -- need: (PSL.mk g₂ * (PSL.mk g₁)⁻¹ * PSL.mk g)⁻¹ * PSL.mk g₂ ∈ imageGamma1_PSL
-    -- = (PSL.mk g)⁻¹ * (PSL.mk g₁) * (PSL.mk g₂)⁻¹ * PSL.mk g₂
-    -- = (PSL.mk g)⁻¹ * (PSL.mk g₁)  ∈ imageGamma1_PSL
     have : (QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ *
           (QuotientGroup.mk g : PSL(2, ℤ)))⁻¹ * QuotientGroup.mk g₂ =
         (QuotientGroup.mk g : PSL(2, ℤ))⁻¹ * QuotientGroup.mk g₁ := by group
     rw [this]; exact hq_eq_g₁
-  · -- backward map stays in the source filter
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    -- hq : slToPslQuot q = q₂'; need: slToPslQuot (slLeftMul h⁻¹ q) = q₁'
+  · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
     induction q using QuotientGroup.induction_on with | _ g => ?_
     show slToPslQuot (QuotientGroup.mk (h⁻¹ * g)) = q₁'
     rw [slToPslQuot_mk]
@@ -1088,8 +1035,6 @@ theorem setIntegral_SL_tile_eq_PSL_tile (h : ℍ → ℂ)
     (q : SL(2, ℤ) ⧸ Gamma1 N) :
     ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp =
       ∫ τ in ((slToPslQuot q).out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp := by
-  -- Step 1: extract γ ∈ Γ₁(N) realizing the difference between PSL.mk q.out and
-  -- (slToPslQuot q).out as PSL elements.
   have h_quot_eq :
       (QuotientGroup.mk (QuotientGroup.mk q.out : PSL(2, ℤ)) :
         PSL(2, ℤ) ⧸ imageGamma1_PSL N) =
@@ -1100,10 +1045,7 @@ theorem setIntegral_SL_tile_eq_PSL_tile (h : ℍ → ℂ)
       rfl
     exact h1.symm.trans (slToPslQuot q).out_eq.symm
   rw [QuotientGroup.eq] at h_quot_eq
-  -- h_quot_eq : (PSL.mk q.out)⁻¹ * (slToPslQuot q).out ∈ imageGamma1_PSL N
   obtain ⟨γ, hγ_mem, hγ_eq⟩ := h_quot_eq
-  -- hγ_eq : QuotientGroup.mk γ = (PSL.mk q.out)⁻¹ * (slToPslQuot q).out
-  -- Step 2: rewrite the PSL set as an SL-translate of the SL set.
   have h_eq_PSL : ((slToPslQuot q).out : PSL(2, ℤ)) =
       QuotientGroup.mk q.out * QuotientGroup.mk γ := by
     have h_mul : (QuotientGroup.mk q.out : PSL(2, ℤ)) *
@@ -1111,19 +1053,14 @@ theorem setIntegral_SL_tile_eq_PSL_tile (h : ℍ → ℂ)
         (slToPslQuot q).out := by group
     rw [← h_mul, ← hγ_eq]
     rfl
-  -- (slToPslQuot q).out⁻¹ • fdo
-  --   = (PSL.mk γ)⁻¹ • (PSL.mk q.out)⁻¹ • fdo  (using h_eq_PSL)
-  --   = γ⁻¹ • q.out⁻¹ • fdo  (using PSL_inv_smul_set_eq_SL twice)
   rw [show ((slToPslQuot q).out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ) =
       ((QuotientGroup.mk γ : PSL(2, ℤ))⁻¹ •
         ((QuotientGroup.mk q.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))) from by
       rw [h_eq_PSL, mul_inv_rev, mul_smul]]
   rw [PSL_inv_smul_set_eq_SL q.out fdo, PSL_inv_smul_set_eq_SL γ _]
-  -- Goal: ∫ τ in q.out⁻¹•fdo, h τ dμ = ∫ τ in γ⁻¹•(q.out⁻¹•fdo), h τ dμ
   symm
-  -- Change of variables τ ↦ γ⁻¹ • τ on the LHS, then h(γ⁻¹•τ) = h τ by Γ₁-invariance.
   rw [show ((γ⁻¹ : SL(2, ℤ)) • ((q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ)) : Set ℍ) =
-      (fun τ => (γ⁻¹ : SL(2, ℤ)) • τ) '' ((q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ)) from rfl,
+      (fun τ ↦ (γ⁻¹ : SL(2, ℤ)) • τ) '' ((q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ)) from rfl,
     (measurePreserving_smul (γ⁻¹ : SL(2, ℤ)) μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul _)]
   congr 1; ext τ
@@ -1143,25 +1080,25 @@ theorem sum_SL_tile_eq_fiberwise_PSL_tile (h : ℍ → ℂ)
     ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
         ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp =
       ∑ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-        (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+        (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
           slToPslQuot q = q')).card •
             ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp := by
   calc ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
           ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp
       = ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
           ∫ τ in ((slToPslQuot q).out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp :=
-        Finset.sum_congr rfl fun q _ => setIntegral_SL_tile_eq_PSL_tile h h_inv q
+        Finset.sum_congr rfl fun q _ ↦ setIntegral_SL_tile_eq_PSL_tile h h_inv q
     _ = ∑ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
             slToPslQuot q = q'),
             ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp :=
         (Finset.sum_fiberwise' Finset.univ (slToPslQuot (N := N))
-          (fun q' => ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp)).symm
+          (fun q' ↦ ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp)).symm
     _ = ∑ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
             slToPslQuot q = q')).card •
               ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp := by
-        refine Finset.sum_congr rfl fun q' _ => ?_
+        refine Finset.sum_congr rfl fun q' _ ↦ ?_
         exact Finset.sum_const _
 
 /-! ### Right-translate reindexing of `SL(2, ℤ) ⧸ Γ₁(N)` by `Γ₀(N)` elements
@@ -1195,9 +1132,9 @@ noncomputable def Gamma1QuotEquivOfGamma0
     convert HeckeRing.GL2.Gamma0_normalizes_Gamma1
       ⟨γ⁻¹, (Gamma0 N).inv_mem hγ⟩ _ hab using 1
     simp [mul_assoc])
-  left_inv := fun q => by induction q using Quotient.inductionOn with
+  left_inv := fun q ↦ by induction q using Quotient.inductionOn with
     | h δ => simp [Quotient.map_mk, mul_assoc]
-  right_inv := fun q => by induction q using Quotient.inductionOn with
+  right_inv := fun q ↦ by induction q using Quotient.inductionOn with
     | h δ => simp [Quotient.map_mk, mul_assoc]
 
 @[simp]
@@ -1254,10 +1191,10 @@ any set `S`, `∫_{η • S} h dμ = ∫_S h dμ` when `h(η • τ) = h(τ)`.
 The proof combines `measurePreserving_smul` (the change of variables) with the
 pointwise invariance `h(η • τ) = h(τ)`. -/
 theorem setIntegral_Gamma1_smul_eq
-    (h : UpperHalfPlane → ℂ) (η : SL(2, ℤ)) (hη : η ∈ Gamma1 N)
+    (h : UpperHalfPlane → ℂ) (η : SL(2, ℤ)) (_hη : η ∈ Gamma1 N)
     (h_inv : ∀ τ, h (η • τ) = h τ) (S : Set UpperHalfPlane) :
     ∫ τ in η • S, h τ ∂μ_hyp = ∫ τ in S, h τ ∂μ_hyp := by
-  rw [show (η • S : Set ℍ) = (fun τ => η • τ) '' S from rfl,
+  rw [show (η • S : Set ℍ) = (fun τ ↦ η • τ) '' S from rfl,
     (measurePreserving_smul η μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul η)]
   congr 1; ext τ; exact h_inv τ
@@ -1275,7 +1212,7 @@ theorem setIntegral_Gamma1_smul_petersson
     ∫ τ in η • S, petersson k ⇑f ⇑g τ ∂μ_hyp =
       ∫ τ in S, petersson k ⇑f ⇑g τ ∂μ_hyp :=
   setIntegral_Gamma1_smul_eq _ η hη
-    (fun τ => petersson_Gamma1_invariant f g η hη τ) S
+    (fun τ ↦ petersson_Gamma1_invariant f g η hη τ) S
 
 /-- The integral over the SL₂(ℤ)-translate `δ • S` of a `Γ₁(N)`-invariant function
 can be reduced to an integral over `S`:
@@ -1285,7 +1222,7 @@ This is just `measurePreserving_smul` spelled out for the petersson context. -/
 theorem setIntegral_smul_eq
     (h : UpperHalfPlane → ℂ) (δ : SL(2, ℤ)) (S : Set UpperHalfPlane) :
     ∫ τ in δ • S, h τ ∂μ_hyp = ∫ τ in S, h (δ • τ) ∂μ_hyp := by
-  rw [show (δ • S : Set ℍ) = (fun τ => δ • τ) '' S from rfl,
+  rw [show (δ • S : Set ℍ) = (fun τ ↦ δ • τ) '' S from rfl,
     (measurePreserving_smul δ μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul δ)]
 
@@ -1318,44 +1255,36 @@ cusp forms for `Γ₁(N)`, and `petN (f∣γ) (g∣γ) = petN f g`. -/
 theorem petN_slash_invariant
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (γ : SL(2, ℤ)) (hγ : γ ∈ CongruenceSubgroup.Gamma0 N)
-    (hf : ∀ η ∈ Gamma1 N, ⇑f ∣[k] η = ⇑f)
-    (hg : ∀ η ∈ Gamma1 N, ⇑g ∣[k] η = ⇑g)
+    (_hf : ∀ η ∈ Gamma1 N, ⇑f ∣[k] η = ⇑f)
+    (_hg : ∀ η ∈ Gamma1 N, ⇑g ∣[k] η = ⇑g)
     -- The slashed functions are cusp forms (provided externally)
     (f' g' : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hf' : ⇑f' = ⇑f ∣[k] γ) (hg' : ⇑g' = ⇑g ∣[k] γ) :
     petN f' g' = petN f g := by
-  -- Unfold petN and substitute f' = f∣γ, g' = g∣γ.
   simp only [petN]
-  -- Each summand: peterssonInner k fd (f'∣(q.out)⁻¹) (g'∣(q.out)⁻¹).
-  -- With hf': ⇑f' = ⇑f ∣[k] γ. So (f'∣δ) = f∣(γδ) by slash_mul.
-  -- Coset permutation σ(q) = ⟦q.out * γ⁻¹⟧
   set σ : SL(2, ℤ) ⧸ Gamma1 N ≃ SL(2, ℤ) ⧸ Gamma1 N :=
     Gamma1QuotEquivOfGamma0 γ hγ
-  -- Helper: ⟦δ⟧.out⁻¹ * δ ∈ Γ₁(N)
   have out_mem : ∀ δ : SL(2, ℤ), (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ * δ ∈ Gamma1 N :=
-    fun δ => by have h := Quotient.exact ((⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out_eq)
-                change (QuotientGroup.leftRel _).r _ _ at h
-                rwa [QuotientGroup.leftRel_apply] at h
-  -- Helper: ∫_{η•S} petersson k f g = ∫_S petersson k f g for η ∈ Γ₁(N)
+    fun δ ↦ by
+      have h := Quotient.exact ((⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out_eq)
+      change (QuotientGroup.leftRel _).r _ _ at h
+      rwa [QuotientGroup.leftRel_apply] at h
   have G1_tile : ∀ (η : SL(2, ℤ)), η ∈ Gamma1 N → ∀ S : Set ℍ,
       ∫ τ in η • S, petersson k (⇑f) (⇑g) τ ∂μ_hyp =
-      ∫ τ in S, petersson k (⇑f) (⇑g) τ ∂μ_hyp := fun η hη S => by
-    rw [show (η • S : Set ℍ) = (fun τ => η • τ) '' S from rfl,
+      ∫ τ in S, petersson k (⇑f) (⇑g) τ ∂μ_hyp := fun η hη S ↦ by
+    rw [show (η • S : Set ℍ) = (fun τ ↦ η • τ) '' S from rfl,
       (measurePreserving_smul η μ_hyp).setIntegral_image_emb (measurableEmbedding_const_smul η)]
     congr 1; ext τ; rw [← petersson_slash_SL, slash_Gamma1_eq f η hη, slash_Gamma1_eq g η hη]
-  -- Each LHS summand at q equals the RHS summand at σ(q). Reindex by Equiv.sum_comp.
   suffices key : ∀ q, peterssonInner k fd (⇑f' ∣[k] q.out⁻¹) (⇑g' ∣[k] q.out⁻¹) =
       peterssonInner k fd (⇑f ∣[k] (σ q).out⁻¹) (⇑g ∣[k] (σ q).out⁻¹) by
     simp_rw [key]
-    exact σ.sum_comp (fun q => peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹))
+    exact σ.sum_comp (fun q ↦ peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹))
   intro q; induction q using Quotient.inductionOn with | h δ => ?_
-  -- f'∣δ⁻¹ = f∣(γ*δ⁻¹) by hf' + slash_mul. Then petersson_slash_SL + SMulInvariantMeasure.
-  -- Factor: γ*δ⁻¹ = η*(σ(δ).out)⁻¹ with η ∈ Γ₁(N). Use G1_tile.
   rw [show peterssonInner k fd (⇑f' ∣[k] (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹)
       (⇑g' ∣[k] (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹) =
     peterssonInner k fd (⇑f ∣[k] (γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹))
       (⇑g ∣[k] (γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹)) from by
-    congr 1 <;> [rw [hf']; rw [hg']] <;> rw [← SlashAction.slash_mul] <;> rfl]
+    congr 1 <;> [rw [hf']; rw [hg']] <;> rw [← SlashAction.slash_mul]]
   simp only [peterssonInner]; simp_rw [petersson_slash_SL]
   rw [← MeasurePreserving.setIntegral_image_emb (measurePreserving_smul
         (γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹) μ_hyp)
@@ -1385,13 +1314,12 @@ theorem setIntegral_SL_tile_fd_eq_fdo
     (h : UpperHalfPlane → ℂ) (q : SL(2, ℤ) ⧸ Gamma1 N) :
     ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp =
       ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp := by
-  -- Change of variables τ ↦ q.out⁻¹ • τ, apply setIntegral_fd_eq_fdo, change back.
   rw [show ((q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ) : Set ℍ) =
-        (fun τ => (q.out : SL(2, ℤ))⁻¹ • τ) '' (fd : Set ℍ) from rfl,
+        (fun τ ↦ (q.out : SL(2, ℤ))⁻¹ • τ) '' (fd : Set ℍ) from rfl,
     (measurePreserving_smul (q.out : SL(2, ℤ))⁻¹ μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul _),
     show ((q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ) : Set ℍ) =
-        (fun τ => (q.out : SL(2, ℤ))⁻¹ • τ) '' (fdo : Set ℍ) from rfl,
+        (fun τ ↦ (q.out : SL(2, ℤ))⁻¹ • τ) '' (fdo : Set ℍ) from rfl,
     (measurePreserving_smul (q.out : SL(2, ℤ))⁻¹ μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul _),
     setIntegral_fd_eq_fdo]
@@ -1415,7 +1343,7 @@ theorem petN_eq_weighted_sum_setIntegral_PSL_tile
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN f g =
       ∑ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-        (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+        (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
           slToPslQuot q = q')).card •
             ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ),
               petersson k ⇑f ⇑g τ ∂μ_hyp := by
@@ -1425,19 +1353,19 @@ theorem petN_eq_weighted_sum_setIntegral_PSL_tile
     _ = ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
           ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
             petersson k ⇑f ⇑g τ ∂μ_hyp :=
-        Finset.sum_congr rfl fun q _ => petN_summand_eq_setIntegral f g q
+        Finset.sum_congr rfl fun q _ ↦ petN_summand_eq_setIntegral f g q
     _ = ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
           ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ),
             petersson k ⇑f ⇑g τ ∂μ_hyp :=
-        Finset.sum_congr rfl fun q _ =>
+        Finset.sum_congr rfl fun q _ ↦
           setIntegral_SL_tile_fd_eq_fdo (petersson k ⇑f ⇑g) q
     _ = ∑ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
             slToPslQuot q = q')).card •
               ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ),
                 petersson k ⇑f ⇑g τ ∂μ_hyp :=
         sum_SL_tile_eq_fiberwise_PSL_tile (petersson k ⇑f ⇑g)
-          (fun γ hγ τ => petersson_Gamma1_invariant f g γ hγ τ)
+          (fun γ hγ τ ↦ petersson_Gamma1_invariant f g γ hγ τ)
 
 /-! ### Uniform fiber count and factored T202 -/
 
@@ -1445,14 +1373,14 @@ theorem petN_eq_weighted_sum_setIntegral_PSL_tile
 coset `⟦1⟧`. Uniform by `slToPslQuot_fiber_card_uniform`. -/
 noncomputable def slToPslQuot_fiberCard (N : ℕ) [NeZero N] : ℕ :=
   haveI : DecidableEq (PSL(2, ℤ) ⧸ imageGamma1_PSL N) := Classical.decEq _
-  (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+  (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
     slToPslQuot q =
       (QuotientGroup.mk (1 : PSL(2, ℤ)) : PSL(2, ℤ) ⧸ imageGamma1_PSL N))).card
 
 /-- Every fiber of `slToPslQuot` has cardinality equal to `slToPslQuot_fiberCard N`. -/
 theorem slToPslQuot_fiberCard_eq (q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N) :
     haveI : DecidableEq (PSL(2, ℤ) ⧸ imageGamma1_PSL N) := Classical.decEq _
-    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
       slToPslQuot q = q')).card = slToPslQuot_fiberCard N := by
   rw [slToPslQuot_fiberCard]
   exact slToPslQuot_fiber_card_uniform q' _
@@ -1472,8 +1400,7 @@ theorem petN_eq_nsmul_sum_PSL_tile
         ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ),
           petersson k ⇑f ⇑g τ ∂μ_hyp := by
   rw [petN_eq_weighted_sum_setIntegral_PSL_tile f g, Finset.smul_sum]
-  -- Rewrite each summand's weight to the uniform value.
-  refine Finset.sum_congr rfl fun q' _ => ?_
+  refine Finset.sum_congr rfl fun q' _ ↦ ?_
   congr 1
   convert slToPslQuot_fiberCard_eq q' using 2
   congr
@@ -1572,7 +1499,7 @@ theorem petN_eq_of_per_tile_integral_eq
     petN f₁ g₁ = petN f₂ g₂ := by
   rw [petN_eq_nsmul_sum_PSL_tile f₁ g₁, petN_eq_nsmul_sum_PSL_tile f₂ g₂]
   congr 1
-  exact Finset.sum_congr rfl fun q' _ => h_per_tile q'
+  exact Finset.sum_congr rfl fun q' _ ↦ h_per_tile q'
 
 /-! ### T024 finite-family integration additivity for AE-disjoint covers
 
@@ -1594,7 +1521,7 @@ verified pairwise AE-disjointness for the `α_i • D` family. -/
 theorem setIntegral_iUnion_finite_aedisjoint
     {ι : Type*} [Fintype ι] (s : ι → Set ℍ)
     (hm : ∀ i, NullMeasurableSet (s i) μ_hyp)
-    (hd : Pairwise (fun i j : ι => AEDisjoint μ_hyp (s i) (s j)))
+    (hd : Pairwise (fun i j : ι ↦ AEDisjoint μ_hyp (s i) (s j)))
     (h : ℍ → ℂ) (hint : IntegrableOn h (⋃ i, s i) μ_hyp) :
     ∫ τ in ⋃ i : ι, s i, h τ ∂μ_hyp = ∑ i : ι, ∫ τ in s i, h τ ∂μ_hyp := by
   rw [integral_iUnion_ae hm hd hint, tsum_fintype]
@@ -1606,9 +1533,9 @@ AE-disjoint cover decomposes as the sum of inner products over each piece. -/
 theorem peterssonInner_iUnion_finite_aedisjoint
     {ι : Type*} [Fintype ι] (s : ι → Set ℍ)
     (hm : ∀ i, NullMeasurableSet (s i) μ_hyp)
-    (hd : Pairwise (fun i j : ι => AEDisjoint μ_hyp (s i) (s j)))
+    (hd : Pairwise (fun i j : ι ↦ AEDisjoint μ_hyp (s i) (s j)))
     (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ => petersson k f g τ) (⋃ i, s i) μ_hyp) :
+    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) (⋃ i, s i) μ_hyp) :
     peterssonInner k (⋃ i : ι, s i) f g =
       ∑ i : ι, peterssonInner k (s i) f g :=
   setIntegral_iUnion_finite_aedisjoint s hm hd _ hint
@@ -1662,7 +1589,7 @@ structure FiniteTileFundamentalDomain
   aeCover : T =ᵐ[μ] ⋃ i, tile i
   /-- Tiles are pairwise AE-disjoint. -/
   pairwiseAEDisjoint :
-    Pairwise (fun i j : ι => AEDisjoint μ (tile i) (tile j))
+    Pairwise (fun i j : ι ↦ AEDisjoint μ (tile i) (tile j))
 
 namespace FiniteTileFundamentalDomain
 
@@ -1715,7 +1642,7 @@ theorem FiniteTileFundamentalDomain.peterssonInner_eq_sum
     {ι : Type*} [Fintype ι] {T : Set ℍ}
     (F : FiniteTileFundamentalDomain μ_hyp ι T)
     (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ => petersson k f g τ) F.union μ_hyp) :
+    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) F.union μ_hyp) :
     peterssonInner k T f g = ∑ i : ι, peterssonInner k (F.tile i) f g :=
   F.setIntegral_eq_sum hint
 
@@ -1752,8 +1679,8 @@ theorem peterssonInner_smul_set_eq_slash
     peterssonInner k ((γ : SL(2, ℤ)) • S) f g =
     peterssonInner k S (f ∣[k] (γ : SL(2, ℤ))) (g ∣[k] (γ : SL(2, ℤ))) := by
   unfold peterssonInner
-  rw [setIntegral_smul_eq (fun τ => petersson k f g τ) γ S]
-  refine congrArg (fun (h : ℍ → ℂ) => ∫ τ in S, h τ ∂μ_hyp) ?_
+  rw [setIntegral_smul_eq (fun τ ↦ petersson k f g τ) γ S]
+  refine congrArg (fun (h : ℍ → ℂ) ↦ ∫ τ in S, h τ ∂μ_hyp) ?_
   funext τ
   exact (petersson_slash_SL k f g γ τ).symm
 
@@ -1764,8 +1691,8 @@ Petersson kernel on one transfers to the other. Direct corollary of
 theorem integrableOn_petersson_congr_set_ae
     {S T : Set ℍ} (hST : S =ᵐ[μ_hyp] T)
     (f g : ℍ → ℂ) :
-    IntegrableOn (fun τ => petersson k f g τ) S μ_hyp ↔
-    IntegrableOn (fun τ => petersson k f g τ) T μ_hyp := by
+    IntegrableOn (fun τ ↦ petersson k f g τ) S μ_hyp ↔
+    IntegrableOn (fun τ ↦ petersson k f g τ) T μ_hyp := by
   unfold IntegrableOn
   rw [Measure.restrict_congr_set hST]
 
@@ -1791,14 +1718,14 @@ theorem peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq
     {ι₂ : Type*} [Fintype ι₂] (S₂ : ι₂ → Set ℍ)
     (hm₁ : ∀ i, NullMeasurableSet (S₁ i) μ_hyp)
     (hm₂ : ∀ j, NullMeasurableSet (S₂ j) μ_hyp)
-    (hd₁ : Pairwise (fun i j : ι₁ => AEDisjoint μ_hyp (S₁ i) (S₁ j)))
-    (hd₂ : Pairwise (fun i j : ι₂ => AEDisjoint μ_hyp (S₂ i) (S₂ j)))
+    (hd₁ : Pairwise (fun i j : ι₁ ↦ AEDisjoint μ_hyp (S₁ i) (S₁ j)))
+    (hd₂ : Pairwise (fun i j : ι₂ ↦ AEDisjoint μ_hyp (S₂ i) (S₂ j)))
     (h_union_eq : (⋃ i, S₁ i) =ᵐ[μ_hyp] (⋃ j, S₂ j))
     (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ => petersson k f g τ) (⋃ i, S₁ i) μ_hyp) :
+    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) (⋃ i, S₁ i) μ_hyp) :
     ∑ i : ι₁, peterssonInner k (S₁ i) f g =
     ∑ j : ι₂, peterssonInner k (S₂ j) f g := by
-  have hint₂ : IntegrableOn (fun τ => petersson k f g τ) (⋃ j, S₂ j) μ_hyp :=
+  have hint₂ : IntegrableOn (fun τ ↦ petersson k f g τ) (⋃ j, S₂ j) μ_hyp :=
     (integrableOn_petersson_congr_set_ae h_union_eq f g).mp hint
   rw [← peterssonInner_iUnion_finite_aedisjoint S₁ hm₁ hd₁ f g hint,
       ← peterssonInner_iUnion_finite_aedisjoint S₂ hm₂ hd₂ f g hint₂]
@@ -1824,7 +1751,7 @@ theorem FiniteTileFundamentalDomain.peterssonInner_sum_eq_of_target_aeEq
     (F₂ : FiniteTileFundamentalDomain μ_hyp ι₂ T₂)
     (hT : T₁ =ᵐ[μ_hyp] T₂)
     (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ => petersson k f g τ) F₁.union μ_hyp) :
+    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) F₁.union μ_hyp) :
     ∑ i : ι₁, peterssonInner k (F₁.tile i) f g =
     ∑ j : ι₂, peterssonInner k (F₂.tile j) f g := by
   have h_union_eq : F₁.union =ᵐ[μ_hyp] F₂.union :=
