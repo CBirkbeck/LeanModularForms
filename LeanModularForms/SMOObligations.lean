@@ -2410,6 +2410,47 @@ private lemma m6_2_extra_rep_levelRaise_bridge
     multipass_modFormCharSpace_slash_apply χ hfχ β hβ_mem]
   simp [h_chi_β]
 
+private lemma multipass_V_p_slash_upper_aux
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) [NeZero (N / p)]
+    (g_low : ModularForm ((Gamma1 (N / p)).map (mapGL ℝ)) k)
+    (j : ℕ) (w : UpperHalfPlane) :
+    (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low) ∣[k]
+      (Matrix.GeneralLinearGroup.mkOfDetNeZero
+          !![(1 : ℝ), (j : ℝ); 0, (p : ℝ)]
+          (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
+        : GL (Fin 2) ℝ)) w = (p : ℂ)⁻¹ * g_low w := by
+  have h_glMap_eq : (Matrix.GeneralLinearGroup.mkOfDetNeZero
+          !![(1 : ℝ), (j : ℝ); 0, (p : ℝ)]
+          (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
+      : GL (Fin 2) ℝ) = glMap (T_p_upper p hp.pos j) := by
+    apply Units.ext
+    ext i k'
+    fin_cases i <;> fin_cases k' <;>
+      simp [glMap, T_p_upper, Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
+        Matrix.GeneralLinearGroup.map, Matrix.map_apply]
+  rw [h_glMap_eq]
+  change ((⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) ∣[k]
+      (T_p_upper p hp.pos j : GL (Fin 2) ℚ)) w = _
+  rw [HeckeRing.GL2.slash_T_p_upper_eval k p hp j _ w]
+  congr 1
+  rw [HeckeRing.GL2.modularFormLevelRaise_apply (N / p) p k g_low]
+  have h_uhp_eq :
+      (HeckeRing.GL2.levelRaiseMatrix p • (⟨(↑w + ↑j) / ↑p,
+        by simpa using div_pos (by linarith [w.im_pos]) (Nat.cast_pos.mpr hp.pos)⟩
+          : UpperHalfPlane)) =
+        (j : ℝ) +ᵥ w := by
+    apply UpperHalfPlane.ext
+    rw [HeckeRing.GL2.coe_levelRaiseMatrix_smul, UpperHalfPlane.coe_vadd]
+    push_cast
+    field_simp [Nat.cast_ne_zero.mpr hp.ne_zero]
+    ring
+  rw [h_uhp_eq]
+  apply SlashInvariantForm.vAdd_apply_of_mem_strictPeriods
+  rw [show (Gamma1 (N / p)).map (mapGL ℝ) = (Gamma1 (N / p) : Subgroup (GL (Fin 2) ℝ)) from rfl,
+    strictPeriods_Gamma1]
+  exact ⟨(j : ℤ), by simp⟩
+
 /-- For each `v` in the descent coset list, the slash of `V_p g_low` by the corresponding
 coset matrix equals `p⁻¹ * g_low(z)` pointwise. -/
 lemma multipass_V_p_slash_descendCoset
@@ -2419,150 +2460,31 @@ lemma multipass_V_p_slash_descendCoset
     (v : Fin (descendCosetCount p N)) (z : UpperHalfPlane) :
     (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low) ∣[k]
       (descendCosetList p N hp v)) z = (p : ℂ)⁻¹ * g_low z := by
-  have h_period : ∀ (m : ℕ) (w : UpperHalfPlane), g_low ((m : ℝ) +ᵥ w) = g_low w := by
-    intros m w
-    apply SlashInvariantForm.vAdd_apply_of_mem_strictPeriods
-    show (m : ℝ) ∈ ((Gamma1 (N / p)).map (mapGL ℝ)).strictPeriods
-    rw [(rfl : (Gamma1 (N / p)).map (mapGL ℝ) = (Gamma1 (N / p) : Subgroup (GL (Fin 2) ℝ))),
-      strictPeriods_Gamma1]
-    exact ⟨(m : ℤ), by simp⟩
-  have h_lift : ∀ (w : UpperHalfPlane),
-      (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) w =
-        g_low (HeckeRing.GL2.levelRaiseMatrix p • w) := by
-    intro w
-    show modularFormLevelRaise (N / p) p k g_low w = _
-    exact modularFormLevelRaise_apply (N / p) p k g_low w
   unfold descendCosetList
   split_ifs with h_v
-  · have h_glMap_eq : (Matrix.GeneralLinearGroup.mkOfDetNeZero
-            !![(1 : ℝ), (v.val : ℝ); 0, (p : ℝ)]
-            (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
-        : GL (Fin 2) ℝ) = glMap (T_p_upper p hp.pos v.val) := by
-      apply Units.ext
-      show (Matrix.GeneralLinearGroup.mkOfDetNeZero _ _).val = (glMap _).val
-      rw [Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
-      show !![(1 : ℝ), (v.val : ℝ); 0, (p : ℝ)] =
-          (T_p_upper p hp.pos v.val).val.map (algebraMap ℚ ℝ)
-      rw [T_p_upper_coe]
-      ext i j
-      fin_cases i <;> fin_cases j <;>
-        simp [Matrix.map_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
-    rw [h_glMap_eq]
-    have h_slash :=
-      HeckeRing.GL2.slash_T_p_upper_eval k p hp v.val
-        (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) z
-    have : ((⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) ∣[k]
-        glMap (T_p_upper p hp.pos v.val)) z =
-        ((⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) ∣[k]
-        (T_p_upper p hp.pos v.val : GL (Fin 2) ℚ)) z := rfl
-    rw [this, h_slash]
-    congr 1
-    rw [h_lift]
-    have h_uhp_eq :
-        (HeckeRing.GL2.levelRaiseMatrix p • (⟨(↑z + ↑v.val) / ↑p, by
-            simp; exact div_pos (by linarith [z.im_pos])
-              (Nat.cast_pos.mpr hp.pos)⟩ : UpperHalfPlane)) =
-          (v.val : ℝ) +ᵥ z := by
-      apply UpperHalfPlane.ext
-      rw [HeckeRing.GL2.coe_levelRaiseMatrix_smul]
-      show (p : ℂ) * (((↑z + ↑v.val) / ↑p)) = (((v.val : ℝ) +ᵥ z : UpperHalfPlane) : ℂ)
-      have hp_ne : (p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-      rw [UpperHalfPlane.coe_vadd]
-      push_cast
-      field_simp
-      ring
-    rw [h_uhp_eq]
-    exact h_period v.val z
-  · push Not at h_v
-    have h_p_sq : ¬ p ^ 2 ∣ N := by
-      intro hp_sq
-      have hcnt : descendCosetCount p N = p := by
-        unfold descendCosetCount; rw [if_pos hp_sq]
-      have h_isLt : v.val < descendCosetCount p N := v.isLt
-      lia
+  · exact multipass_V_p_slash_upper_aux p hp g_low v.val z
+  · have h_p_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt h_v
     rw [SlashAction.slash_mul]
-    have h_inner : ∀ w : UpperHalfPlane,
-        (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low) ∣[k]
-          (Matrix.GeneralLinearGroup.mkOfDetNeZero
-              !![(1 : ℝ), 0; 0, (p : ℝ)]
-              (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
-            : GL (Fin 2) ℝ)) w =
-          (p : ℂ)⁻¹ * g_low w := by
-      intro w
-      have h_glMap_eq0 : (Matrix.GeneralLinearGroup.mkOfDetNeZero
-              !![(1 : ℝ), 0; 0, (p : ℝ)]
-              (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
-          : GL (Fin 2) ℝ) = glMap (T_p_upper p hp.pos 0) := by
-        apply Units.ext
-        show (Matrix.GeneralLinearGroup.mkOfDetNeZero _ _).val = (glMap _).val
-        rw [Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
-        show !![(1 : ℝ), 0; 0, (p : ℝ)] =
-            (T_p_upper p hp.pos 0).val.map (algebraMap ℚ ℝ)
-        rw [T_p_upper_coe]
-        ext i j
-        fin_cases i <;> fin_cases j <;>
-          simp [Matrix.map_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
-      rw [h_glMap_eq0]
-      have h_slash0 :=
-        HeckeRing.GL2.slash_T_p_upper_eval k p hp 0
-          (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) w
-      have : ((⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) ∣[k]
-          glMap (T_p_upper p hp.pos 0)) w =
-          ((⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) ∣[k]
-          (T_p_upper p hp.pos 0 : GL (Fin 2) ℚ)) w := rfl
-      rw [this, h_slash0]
-      congr 1
-      rw [h_lift]
-      have h_uhp_eq0 :
-          (HeckeRing.GL2.levelRaiseMatrix p • (⟨(↑w + ↑(0 : ℕ)) / ↑p, by
-              simp; exact div_pos (by linarith [w.im_pos])
-                (Nat.cast_pos.mpr hp.pos)⟩ : UpperHalfPlane)) =
-            ((0 : ℕ) : ℝ) +ᵥ w := by
-        apply UpperHalfPlane.ext
-        rw [HeckeRing.GL2.coe_levelRaiseMatrix_smul]
-        show (p : ℂ) * (((↑w + ((0 : ℕ) : ℂ)) / ↑p)) =
-            (((0 : ℕ) : ℝ) +ᵥ w : UpperHalfPlane).1
-        have hp_ne : (p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-        rw [UpperHalfPlane.coe_vadd]
-        push_cast
-        field_simp
-        ring
-      rw [h_uhp_eq0]
-      exact h_period 0 w
-    have h_γ_in_Γ1 : descendExtraGamma p N ∈ Gamma1 (N / p) := by
-      rw [Gamma1_mem]
-      have h_mod : ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ).map
-          (Int.cast : ℤ → ZMod (N / p)) = 1) :=
-        (descendExtraGamma_spec hp hpN h_p_sq).2.2
-      have h00 := congr_fun (congr_fun h_mod 0) 0
-      have h11 := congr_fun (congr_fun h_mod 1) 1
-      have h10 := congr_fun (congr_fun h_mod 1) 0
-      simp only [Matrix.map_apply, Matrix.one_apply_eq,
-        Matrix.one_apply_ne (show (1 : Fin 2) ≠ 0 from by decide)] at h00 h11 h10
-      exact ⟨h00, h11, h10⟩
-    have h_g_low_inv : (⇑g_low : UpperHalfPlane → ℂ) ∣[k]
-        (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ) = ⇑g_low := by
-      exact g_low.slash_action_eq' _ ⟨descendExtraGamma p N, h_γ_in_Γ1, rfl⟩
     have h_inner_fun : ((⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) ∣[k]
         (Matrix.GeneralLinearGroup.mkOfDetNeZero
             !![(1 : ℝ), 0; 0, (p : ℝ)]
             (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
           : GL (Fin 2) ℝ)) = ((p : ℂ)⁻¹ • ⇑g_low : UpperHalfPlane → ℂ) := by
       ext w
-      exact h_inner w
-    rw [h_inner_fun]
-    rw [ModularForm.smul_slash]
+      simpa using multipass_V_p_slash_upper_aux p hp g_low 0 w
+    have h_γ_in_Γ1 : descendExtraGamma p N ∈ Gamma1 (N / p) := by
+      have h_mod := (descendExtraGamma_spec hp hpN h_p_sq).2.2
+      rw [Gamma1_mem]
+      refine ⟨?_, ?_, ?_⟩ <;>
+        · simpa [Matrix.map_apply, Matrix.one_apply_ne (show (1 : Fin 2) ≠ 0 by decide)]
+            using congr_fun (congr_fun h_mod _) _
+    have h_g_low_inv : (⇑g_low : UpperHalfPlane → ℂ) ∣[k]
+        (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ) = ⇑g_low :=
+      g_low.slash_action_eq' _ ⟨descendExtraGamma p N, h_γ_in_Γ1, rfl⟩
     have h_σ : UpperHalfPlane.σ (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ) =
-        RingHom.id ℂ := by
-      apply multipass_sigma_eq_id_of_det_pos
-      rw [Matrix.GeneralLinearGroup.val_det_apply,
-        Matrix.SpecialLinearGroup.mapGL_coe_matrix,
-        Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply]
-      rw [show ((descendExtraGamma p N).val.map (algebraMap ℤ ℝ)) =
-          (descendExtraGamma p N).val.map (fun x : ℤ ↦ (x : ℝ)) from rfl,
-          ← Int.cast_det, (descendExtraGamma p N).property, Int.cast_one]
-      exact one_pos
-    rw [h_σ, RingHom.id_apply, h_g_low_inv]
+        RingHom.id ℂ :=
+      multipass_sigma_eq_id_of_det_pos _ (by simp)
+    rw [h_inner_fun, ModularForm.smul_slash, h_σ, RingHom.id_apply, h_g_low_inv]
     simp [Pi.smul_apply, smul_eq_mul]
 
 /-- **H31 (audit-multipass descendCosetList_lift_eq_glMap)**: every coset
