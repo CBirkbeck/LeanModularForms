@@ -219,18 +219,6 @@ theorem multi_pole_local_far_bound
   · exact fun t ht ↦ (min_le_left _ _).trans (ht_l_min ht)
   · exact fun t ht ↦ (min_le_right _ _).trans (ht_r_min ht)
 
-/-- **Window membership of a crossing.** Each crossing lies strictly inside its window. -/
-theorem multi_pole_crossing_mem_window
-    {t_i : ℝ} {r : ℝ} (hr_pos : 0 < r) :
-    t_i ∈ Set.Ioo (t_i - r) (t_i + r) :=
-  ⟨by linarith, by linarith⟩
-
-/-- **Crossing parameter is in `Ioo 0 1` from window constraints.** -/
-theorem multi_pole_crossing_in_Ioo
-    {t_i : ℝ} {r : ℝ} (hr_pos : 0 < r) (h_ge : r ≤ t_i) (h_le : t_i ≤ 1 - r) :
-    t_i ∈ Set.Ioo (0 : ℝ) 1 :=
-  ⟨by linarith, by linarith⟩
-
 end HungerbuhlerWasem
 
 end

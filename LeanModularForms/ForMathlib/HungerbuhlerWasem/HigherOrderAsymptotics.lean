@@ -42,60 +42,6 @@ noncomputable section
 
 namespace HungerbuhlerWasem
 
-/-- Under right-side flatness of order `n`, the tangent deviation is `o(|t - t₀|^n)`
-from the right. -/
-theorem tangentApproximation_of_isFlatOfOrder_right
-    {γ : ℝ → ℂ} {t₀ : ℝ} {n : ℕ}
-    (h_flat : IsFlatOfOrder γ t₀ n)
-    {L : ℂ} (hL : L ≠ 0)
-    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L))
-    (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
-    (hγ_cont : ContinuousAt γ t₀) :
-    (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[𝓝[>] t₀]
-      (fun t => |t - t₀| ^ n) := by
-  obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Ioi t₀) t₀ :=
-    hasDerivWithinAt_Ioi_iff_Ici.mpr
-      (hasDerivWithinAt_Ici_of_tendsto_deriv
-        (fun t ht => (hs_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hs_mem hL_right)
-  have h_lhs : (fun t : ℝ => ‖(γ t - γ t₀) ^ n‖) = (fun t => ‖γ t - γ t₀‖ ^ n) :=
-    funext fun t => norm_pow _ _
-  have h_rhs : (fun t : ℝ => ‖(t - t₀) ^ n‖) = (fun t => |t - t₀| ^ n) :=
-    funext fun t => by rw [norm_pow, Real.norm_eq_abs]
-  have h_pow_norm : (fun t => ‖γ t - γ t₀‖ ^ n) =O[𝓝[>] t₀]
-      (fun t => |t - t₀| ^ n) := by
-    rw [← h_lhs, ← h_rhs]
-    exact (hderiv.differentiableWithinAt.isBigO_sub.pow n).norm_left.norm_right
-  exact (h_flat.right_flat L hL hL_right).trans_isBigO h_pow_norm
-
-/-- Under left-side flatness of order `n`, the tangent deviation is `o(|t - t₀|^n)`
-from the left. -/
-theorem tangentApproximation_of_isFlatOfOrder_left
-    {γ : ℝ → ℂ} {t₀ : ℝ} {n : ℕ}
-    (h_flat : IsFlatOfOrder γ t₀ n)
-    {L : ℂ} (hL : L ≠ 0)
-    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L))
-    (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
-    (hγ_cont : ContinuousAt γ t₀) :
-    (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[𝓝[<] t₀]
-      (fun t => |t - t₀| ^ n) := by
-  obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
-  have hderiv : HasDerivWithinAt γ L (Iio t₀) t₀ :=
-    hasDerivWithinAt_Iio_iff_Iic.mpr
-      (hasDerivWithinAt_Iic_of_tendsto_deriv
-        (fun t ht => (hs_diff t ht).differentiableWithinAt)
-        hγ_cont.continuousWithinAt hs_mem hL_left)
-  have h_lhs : (fun t : ℝ => ‖(γ t - γ t₀) ^ n‖) = (fun t => ‖γ t - γ t₀‖ ^ n) :=
-    funext fun t => norm_pow _ _
-  have h_rhs : (fun t : ℝ => ‖(t - t₀) ^ n‖) = (fun t => |t - t₀| ^ n) :=
-    funext fun t => by rw [norm_pow, Real.norm_eq_abs]
-  have h_pow_norm : (fun t => ‖γ t - γ t₀‖ ^ n) =O[𝓝[<] t₀]
-      (fun t => |t - t₀| ^ n) := by
-    rw [← h_lhs, ← h_rhs]
-    exact (hderiv.differentiableWithinAt.isBigO_sub.pow n).norm_left.norm_right
-  exact (h_flat.left_flat L hL hL_left).trans_isBigO h_pow_norm
-
 /-- When `γ` is differentiable at `t` with derivative `γ'` and `γ(t) ≠ s`, the function
 `u ↦ -1/[(k-1)(γ(u)-s)^{k-1}]` has derivative `γ'/(γ(t)-s)^k` at `t`. -/
 theorem hasDerivAt_antiderivative_pow_inv

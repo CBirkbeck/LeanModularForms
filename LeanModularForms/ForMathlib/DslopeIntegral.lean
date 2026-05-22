@@ -243,25 +243,6 @@ theorem deriv_dslope_bounded_on_compact_open {U : Set ℂ} (hU_open : IsOpen U)
   linarith [Complex.norm_deriv_le_of_forall_mem_sphere_norm_le (by positivity : (0:ℝ) < ρ / 2)
     h_DC h_sphere_bound]
 
-/-- **Joint local bound on `deriv (dslope f c) w`** (non-convex `U`): for `f`
-differentiable on an open set `U` and `(c₀, w₀) ∈ U × U`, there exist `C, δ > 0`
-such that `‖deriv (dslope f c) w‖ ≤ C` for all `(c, w) ∈ ball c₀ δ × ball w₀ δ`.
-Specialization of `deriv_dslope_bounded_on_compact_open` to `K_c = closedBall c₀ ε`
-for `ε` small enough that the closed ball is contained in `U`. -/
-theorem deriv_dslope_bounded_locally_open {U : Set ℂ} (hU_open : IsOpen U)
-    (hf : DifferentiableOn ℂ f U) {c₀ w₀ : ℂ} (hc₀ : c₀ ∈ U) (hw₀ : w₀ ∈ U) :
-    ∃ C > 0, ∃ δ > 0, ∀ c ∈ Metric.ball c₀ δ, ∀ w ∈ Metric.ball w₀ δ,
-      ‖deriv (dslope f c) w‖ ≤ C := by
-  obtain ⟨ρ_c, hρ_c_pos, hρ_c_sub⟩ := Metric.isOpen_iff.mp hU_open c₀ hc₀
-  have h_cB_c_sub : Metric.closedBall c₀ (ρ_c / 2) ⊆ U := fun z hz =>
-    hρ_c_sub (by rw [Metric.mem_closedBall] at hz; rw [Metric.mem_ball]; linarith)
-  obtain ⟨C, hC_pos, δ, hδ_pos, hbound⟩ := deriv_dslope_bounded_on_compact_open hU_open hf
-    (isCompact_closedBall c₀ (ρ_c / 2)) h_cB_c_sub hw₀
-  refine ⟨C, hC_pos, min δ (ρ_c / 2), lt_min hδ_pos (by linarith), fun c hc w hw => ?_⟩
-  refine hbound c ?_ w (Metric.ball_subset_ball (min_le_left _ _) hw)
-  rw [Metric.mem_closedBall]
-  exact (Metric.mem_ball.mp (Metric.ball_subset_ball (min_le_right _ _) hc)).le
-
 /-- **Convex specialization of `deriv_dslope_bounded_on_compact_open`**: kept for
 convenience when a convex hypothesis is naturally available. -/
 theorem deriv_dslope_bounded_on_compact {U : Set ℂ} (_hU : Convex ℝ U) (hU_open : IsOpen U)
@@ -270,52 +251,6 @@ theorem deriv_dslope_bounded_on_compact {U : Set ℂ} (_hU : Convex ℝ U) (hU_o
     ∃ C > 0, ∃ δ > 0, ∀ c ∈ K_c, ∀ w ∈ Metric.ball w₀ δ,
       ‖deriv (dslope f c) w‖ ≤ C :=
   deriv_dslope_bounded_on_compact_open hU_open hf hK_compact hK_sub hw₀
-
-/-- For `f` differentiable on an open set `U` and `w₀ ∈ U`, the function
-`c ↦ deriv (dslope f c) w₀` is AE strongly measurable on the restriction of any
-measure to `U`. Proof: pointwise limit of continuous difference quotients (each
-continuous by `continuousOn_dslope_first_arg_open`) using the sequence
-`h_n = (ρ/2)/(n+1)` so that `w₀ + h_n ∈ U` for all `n`. -/
-theorem aestronglyMeasurable_deriv_dslope {U : Set ℂ} (hU_open : IsOpen U)
-    (hf : DifferentiableOn ℂ f U) {w₀ : ℂ} (hw₀ : w₀ ∈ U) (μ : Measure ℂ) :
-    AEStronglyMeasurable (fun c => deriv (dslope f c) w₀) (μ.restrict U) := by
-  obtain ⟨ρ, hρ_pos, hρ_sub⟩ := Metric.isOpen_iff.mp hU_open w₀ hw₀
-  set h_seq : ℕ → ℂ := fun n => ((ρ / 2 / ((n : ℝ) + 1) : ℝ) : ℂ)
-  have h_seq_real_pos : ∀ n : ℕ, 0 < ρ / 2 / ((n : ℝ) + 1) := fun _ => by positivity
-  have h_seq_ne : ∀ n : ℕ, h_seq n ≠ 0 := fun n => by
-    simp only [h_seq, ne_eq, Complex.ofReal_eq_zero]
-    exact (h_seq_real_pos n).ne'
-  have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
-    simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
-    linarith [div_le_self (by linarith : (0:ℝ) ≤ ρ / 2)
-      (le_add_of_nonneg_left (Nat.cast_nonneg (α := ℝ) n))]
-  have h_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
-    rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]
-    exact h_seq_norm_lt n
-  have h_seq_tendsto : Tendsto h_seq atTop (𝓝 0) := by
-    have h_real : Tendsto (fun n : ℕ => ρ / 2 / ((n : ℝ) + 1)) atTop (𝓝 0) := by
-      have h_inv : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
-        (tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds).inv_tendsto_atTop
-      simpa [div_eq_mul_inv] using h_inv.const_mul (ρ / 2)
-    rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
-    exact (Complex.continuous_ofReal.tendsto _).comp h_real
-  set q : ℕ → ℂ → ℂ := fun n c => (dslope f c (w₀ + h_seq n) - dslope f c w₀) / h_seq n
-  have h_q_aemeas : ∀ n : ℕ, AEStronglyMeasurable (q n) (μ.restrict U) := fun n =>
-    (((continuousOn_dslope_first_arg_open hU_open hf (h_in_U n)).sub
-      (continuousOn_dslope_first_arg_open hU_open hf hw₀)).div_const _).aestronglyMeasurable
-      hU_open.measurableSet
-  refine aestronglyMeasurable_of_tendsto_ae atTop h_q_aemeas ?_
-  filter_upwards [ae_restrict_mem hU_open.measurableSet] with c hc
-  have h_diff : DifferentiableAt ℂ (dslope f c) w₀ :=
-    ((Complex.differentiableOn_dslope (hU_open.mem_nhds hc)).mpr hf w₀ hw₀).differentiableAt
-      (hU_open.mem_nhds hw₀)
-  have hy_within : Tendsto (fun n => w₀ + h_seq n) atTop (𝓝[≠] w₀) :=
-    tendsto_nhdsWithin_iff.mpr ⟨by simpa using h_seq_tendsto.const_add w₀,
-      .of_forall fun n h => h_seq_ne n (add_left_cancel (h.trans (add_zero w₀).symm))⟩
-  convert h_diff.hasDerivAt.tendsto_slope.comp hy_within using 1
-  ext n
-  simp only [slope_def_field, Function.comp_apply, q]
-  rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul, mul_comm]
 
 end Complex
 

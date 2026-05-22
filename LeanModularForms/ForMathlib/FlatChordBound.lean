@@ -88,12 +88,6 @@ theorem orthogonal_pythagoras (w L : ℂ) :
   field_simp
   ring
 
-/-- **Norm of the parallel projection.** From Pythagoras:
-`‖orthogonalProjection w L‖² = ‖w‖² − ‖tangentDeviation w L‖²`. -/
-theorem norm_sq_orthogonalProjection (w L : ℂ) :
-    ‖orthogonalProjectionComplex w L‖ ^ 2 = ‖w‖ ^ 2 - ‖tangentDeviation w L‖ ^ 2 := by
-  linarith [orthogonal_pythagoras w L]
-
 /-- **Sqrt shortfall bound.** For `0 ≤ δ ≤ ε` with `ε > 0`:
 `ε − √(ε² − δ²) ≤ δ²/ε`.
 

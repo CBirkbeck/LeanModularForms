@@ -537,47 +537,6 @@ theorem exists_slitPlane_chord_quotient_left_forward
   rw [h_ratio]
   exact ofReal_pos_mul_mem_slitPlane (div_pos_of_neg_of_neg hb_neg ha_neg) h_zw
 
-/-- **Slit-plane on small left interval (backward direction).** There exists
-`r > 0` such that for all `a, b` with `t₀ - r ≤ a ≤ b < t₀`, the chord quotient
-`(γ(a) - s) / (γ(b) - s) ∈ Complex.slitPlane`.
-
-(Note the ORDER: on the left, the FTC-relevant quotient is "later relative to
-the curve direction" over "earlier", i.e., closer to `t₀` over further.) -/
-theorem exists_slitPlane_chord_quotient_left
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_at : γ t₀ = s) (hL : L ≠ 0) :
-    ∃ r > 0, ∀ a b, t₀ - r ≤ a → a ≤ b → b < t₀ →
-      (γ a - s) / (γ b - s) ∈ Complex.slitPlane := by
-  obtain ⟨r, hr_pos, hr_close⟩ :=
-    exists_normalized_chord_left h_deriv h_at hL (ρ := 1 / 4) (by norm_num)
-  refine ⟨r, hr_pos, fun a b ha_ge hab hb_lt => ?_⟩
-  have ha_lt : a < t₀ := lt_of_le_of_lt hab hb_lt
-  have hb_ge : t₀ - r ≤ b := le_trans ha_ge hab
-  have ha_in : a ∈ Ico (t₀ - r) t₀ := ⟨ha_ge, ha_lt⟩
-  have hb_in : b ∈ Ico (t₀ - r) t₀ := ⟨hb_ge, hb_lt⟩
-  have ha_neg : a - t₀ < 0 := sub_neg_of_lt ha_lt
-  have hb_neg : b - t₀ < 0 := sub_neg_of_lt hb_lt
-  have ha_neg_C : ((a - t₀ : ℝ) : ℂ) ≠ 0 :=
-    Complex.ofReal_ne_zero.mpr (ne_of_lt ha_neg)
-  have hb_neg_C : ((b - t₀ : ℝ) : ℂ) ≠ 0 :=
-    Complex.ofReal_ne_zero.mpr (ne_of_lt hb_neg)
-  set z := (γ a - s) / (L * ((a - t₀ : ℝ) : ℂ))
-  set w := (γ b - s) / (L * ((b - t₀ : ℝ) : ℂ))
-  have h_zw : z / w ∈ Complex.slitPlane :=
-    div_mem_slitPlane_of_close_to_one (hr_close a ha_in) (hr_close b hb_in)
-  have h_ratio : (γ a - s) / (γ b - s) =
-      (((a - t₀) / (b - t₀) : ℝ) : ℂ) * (z / w) := by
-    have hL_aa : L * ((a - t₀ : ℝ) : ℂ) ≠ 0 := mul_ne_zero hL ha_neg_C
-    have hL_bb : L * ((b - t₀ : ℝ) : ℂ) ≠ 0 := mul_ne_zero hL hb_neg_C
-    rw [show (γ a - s) / (γ b - s) =
-        (z * (L * ((a - t₀ : ℝ) : ℂ))) / (w * (L * ((b - t₀ : ℝ) : ℂ))) from by
-      congr 1
-      · simp only [z]; exact (div_mul_cancel₀ _ hL_aa).symm
-      · simp only [w]; exact (div_mul_cancel₀ _ hL_bb).symm]
-    push_cast; field_simp
-  rw [h_ratio]
-  exact ofReal_pos_mul_mem_slitPlane (div_pos_of_neg_of_neg ha_neg hb_neg) h_zw
-
 /-- **Right annular log-difference via FTC.** For `γ` with right derivative
 `L_right ≠ 0` at `t₀` (in slit-plane), and for `0 < δ_R < r` such that
 the slit-plane radius `r_R` and the integrability conditions hold, the
