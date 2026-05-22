@@ -222,9 +222,51 @@ After each phase's commit, before declaring the phase complete:
 | P4a.1 (session) | 2026-05-21 | Add affine-reparam projection to `PiecewiseC1Path 0 1` | 198 refs, ~12K GRT proof lines use `γ.a/γ.b/∫γ.a..γ.b`; projection layer adds 100–150 lines for zero downstream simplification. Aborted clean. |
 | P4c (session) | 2026-05-21 | Replace `fdBoundaryFun` with `Path.trans₅` assembly | `Path.trans` is dyadic (1/2 breakpoint), project uses 1/5. Custom 5-fold adds ~85 vs ~99 removable. Aborted clean. |
 | P4a.2 (session) | 2026-05-21 | Restructure `ClosedPwC1Curve` to contain a `PiecewiseC1Path x x` | Agent stalled investigating `derivWithin_eq_deriv_on_Ioo` reuse. Working tree clean. |
+| Phase 2 round 1 | 2026-05-22 | `ClosedPwC1Curve extends PiecewiseC1PathOn` (without prior Option B) | Bridge code saves -50/-80 but each of ~50 downstream proofs needs +5/+8 lines for `toPath.extend ↔ toFun` `EventuallyEq`. Net +200 to +400. Aborted clean. |
+| Phase 4 round 2 | 2026-05-22 | FD segments via `PiecewiseC1PathOn` assembly | Needs (i) `PiecewiseC1PathOn.concat` infrastructure (100-200 new lines) AND (ii) migration of 14 callers off their `simp only [fdBoundaryFun, show ¬t ≤ k/5 ...]` lock-in pattern. Multi-session. Aborted clean. |
 
-All three were honest aborts. The common root cause: trying to do the unification
-*without* first generalizing `PiecewiseC1Path` to accept arbitrary intervals.
+## 5b. What landed
+
+Phases 1, Option A, Option B (β), Phase 2 proper, and Phase 3 all landed across
+2026-05-21 and 2026-05-22. The unification of the six curve types onto
+`PiecewiseC1PathOn` is **structurally complete**:
+
+- `PiecewiseC1PathOn (a b : ℝ) (hab : a < b) (x y : E)` — free-interval foundation
+- `PiecewiseC1Path x y extends PiecewiseC1PathOn 0 1 zero_lt_one x y`
+- `PwC1Immersion x y extends PiecewiseC1Path x y` (unchanged)
+- `ClosedPwC1Curve x extends PiecewiseC1Path x x` (with `closedPartition` Icc-style layered)
+- `ClosedPwC1Immersion x extends ClosedPwC1Curve x` (auto-updated)
+- `PiecewiseC1Curve` (free `[a, b]`, no endpoints) composes `PiecewiseC1PathOn` as a field
+
+All 9 protected theorems retain `[propext, Classical.choice, Quot.sound]`.
+All signatures are byte-identical to pre-P4 baseline.
+
+Net line count across all P4 work: **+611** lines of infrastructure (foundation +
+two bridging lemmas + smart constructors + Icc/Ioo partition shims). The OVERVIEW's
+optimistic -500/-900 estimate did not materialize: the conversion machinery
+**didn't disappear** when types were unified; it **moved** into smart
+constructors (`ofClosedPartition`, `ofIccPartition`) that now wire up the
+inherited PathOn fields from the closed/free Icc-style legacy field set.
+
+## 5c. Phase 4 — what would unlock it
+
+For Phase 4 (FD segments) to be feasible, two prerequisites must be built first
+(NOT in scope of any future session-scale P4 effort; each is its own multi-session
+ticket):
+
+1. **`PiecewiseC1PathOn.concat`** — adjacent-interval gluing operator. Given
+   `γ₁ : PiecewiseC1PathOn a b _ x y` and `γ₂ : PiecewiseC1PathOn b c _ y z`,
+   produce `concat γ₁ γ₂ : PiecewiseC1PathOn a c _ x z`. Estimate: 100-200 lines
+   of new infrastructure, including the boundary-matching continuity proof at
+   `t = b`.
+
+2. **Callsite-migration of 14 `fdBoundaryFun` consumers** off the
+   `simp only [fdBoundaryFun, show ¬t ≤ k/5 from ...]` pattern, onto a stable
+   `fdBoundaryFun_on_seg{i}_eq` per-segment API. Without this migration,
+   `fdBoundaryFun`'s nested-if shape is load-bearing and cannot be replaced.
+
+Only after BOTH prerequisites are in place can `fdBoundaryFun` be re-expressed as
+a 5-piece assembly. Multi-session work; deferred indefinitely.
 
 ---
 
