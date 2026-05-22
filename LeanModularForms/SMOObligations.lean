@@ -384,65 +384,47 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
         else 0 := by
     intro n
     have h1_period : (1 : ℝ) ∈ ((Gamma1 (p * (p * N))).map (mapGL ℝ)).strictPeriods := by
-      rw [show (Gamma1 (p * (p * N))).map (mapGL ℝ) =
-          (Gamma1 (p * (p * N)) : Subgroup (GL (Fin 2) ℝ)) from rfl, strictPeriods_Gamma1]
-      exact ⟨1, by simp⟩
+      simp [strictPeriods_Gamma1]
     have h_VUp_fun :
         (⇑V_p_U_p_f_pN : UpperHalfPlane → ℂ) =
           ⇑(HeckeRing.GL2.AtkinLehner.pSupportedRaise k p hp hp_not_coprime_pN
               f_pN.toModularForm') := by
       change (HeckeRing.GL2.modularFormLevelRaise (p * N) p k
-          (heckeT_n_cusp k p f_pN).toModularForm').toFun = _
-      have h_HN : heckeT_n k p f_pN.toModularForm' =
-          HeckeRing.GL2.heckeT_p_divN k p hp hp_not_coprime_pN f_pN.toModularForm' := by
-        rw [heckeT_n_prime k hp]
-        change (if h : Nat.Coprime p (p * N) then
-                HeckeRing.GL2.heckeT_p k p hp h
-              else
-                HeckeRing.GL2.heckeT_p_divN k p hp h) f_pN.toModularForm' =
-            HeckeRing.GL2.heckeT_p_divN k p hp hp_not_coprime_pN f_pN.toModularForm'
-        exact (dif_neg hp_not_coprime_pN ▸ rfl)
-      change (HeckeRing.GL2.modularFormLevelRaise (p * N) p k
           (heckeT_n k p f_pN.toModularForm')).toFun =
         (HeckeRing.GL2.modularFormLevelRaise (p * N) p k
           (HeckeRing.GL2.heckeT_p_divN k p hp hp_not_coprime_pN f_pN.toModularForm')).toFun
-      rw [h_HN]
-    change (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) (⇑g_ppN)) = _
+      rw [heckeT_n_prime k hp, heckeT_p_all, dif_neg hp_not_coprime_pN]
     have h_coe_sub : (⇑g_ppN : UpperHalfPlane → ℂ) =
         ⇑f -
           ⇑(HeckeRing.GL2.AtkinLehner.pSupportedRaise k p hp hp_not_coprime_pN
             f_pN.toModularForm') := by
       change (⇑f_ppN - ⇑V_p_U_p_f_pN : UpperHalfPlane → ℂ) = _
-      rw [h_VUp_fun]; rfl
+      rw [h_VUp_fun]
+      rfl
     rw [h_coe_sub]
-    set raised' : ModularForm ((Gamma1 (p * (p * N))).map (mapGL ℝ)) k :=
-      HeckeRing.GL2.AtkinLehner.pSupportedRaise k p hp hp_not_coprime_pN
-        f_pN.toModularForm'
     set f_ppN_mod : ModularForm ((Gamma1 (p * (p * N))).map (mapGL ℝ)) k :=
       ModularForm.restrictSubgroup (HeckeRing.GL2.MainLemma.Gamma1_mapGL_le_of_dvd hN_dvd_ppN)
         f.toModularForm'
-    rw [show (⇑f - ⇑raised' : UpperHalfPlane → ℂ) = ⇑(f_ppN_mod - raised') from rfl,
-      show ModularFormClass.qExpansion (1 : ℝ) (⇑(f_ppN_mod - raised')) =
-        ModularFormClass.qExpansion (1 : ℝ) (f_ppN_mod - raised') from rfl,
-      qExpansion_sub one_pos h1_period f_ppN_mod raised', map_sub,
+    rw [show (⇑f - ⇑raised : UpperHalfPlane → ℂ) = ⇑(f_ppN_mod - raised) from rfl,
+      show ModularFormClass.qExpansion (1 : ℝ) (⇑(f_ppN_mod - raised)) =
+        ModularFormClass.qExpansion (1 : ℝ) (f_ppN_mod - raised) from rfl,
+      qExpansion_sub one_pos h1_period f_ppN_mod raised, map_sub,
       show (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) f_ppN_mod) =
         (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f) from rfl,
-      show (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) raised') =
-        (ModularFormClass.qExpansion (1 : ℝ) raised').coeff n from rfl,
+      show (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) raised) =
+        (ModularFormClass.qExpansion (1 : ℝ) raised).coeff n from rfl,
       HeckeRing.GL2.AtkinLehner.qExpansion_one_pSupportedRaise_coeff hp hp_not_coprime_pN
         f_pN.toModularForm' n,
       show (ModularFormClass.qExpansion (1 : ℝ) f_pN.toModularForm').coeff n =
         (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f) from rfl]
-    by_cases hpn : p ∣ n <;> simp [hpn]
+    split_ifs <;> simp
   clear_value g_ppN f_ppN V_p_U_p_f_pN U_p_f_pN raised
-  clear h_V_p_U_p_f_pN_χ' h_f_ppN_χ h_dvd_comp
-  clear V_p_U_p_f_pN f_ppN raised
+  clear h_V_p_U_p_f_pN_χ' h_f_ppN_χ h_dvd_comp V_p_U_p_f_pN f_ppN raised
   revert g_ppN h_g_ppN_χ h_g_ppN_qexp hN_dvd_ppN hppN_NeZero
-  generalize hM_alt : p * (p * N) = M_alt at hM_eq'
+  generalize p * (p * N) = M_alt at hM_eq'
   intro hppN_NeZero hN_dvd_ppN g_ppN h_g_ppN_χ h_g_ppN_qexp
   subst hM_eq'
-  refine ⟨g_ppN, ?_, h_g_ppN_qexp⟩
-  convert h_g_ppN_χ using 2
+  exact ⟨g_ppN, by convert h_g_ppN_χ using 2, h_g_ppN_qexp⟩
 
 private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
     ∀ {N : ℕ} [NeZero N] {k : ℤ}
