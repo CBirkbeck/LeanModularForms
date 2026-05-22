@@ -79,7 +79,7 @@ theorem contourIntegral_inv_eq_sum_log_segRatio
   rw [Finset.mem_range] at hj
   have hγ_diff : ∀ t ∈ Ioo (s j) (s (j + 1)) \ (γ.partition : Set ℝ),
       HasDerivAt γ.toPath.extend (deriv γ.toPath.extend t) t := fun t ht =>
-    (γ.differentiable_off t
+    (γ.differentiable_off_extend t
       ⟨lt_of_le_of_lt (hs_in j hj.le).1 ht.1.1,
        lt_of_lt_of_le ht.1.2 (hs_in (j + 1) hj).2⟩ ht.2).hasDerivAt
   exact segment_log_FTC (hs_mono (Nat.le_succ j)) γ.partition.countable_toSet

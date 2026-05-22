@@ -3,16 +3,17 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.PiecewiseC1Path
+import Mathlib.Analysis.Calculus.Deriv.Add
 import Mathlib.Analysis.Calculus.Deriv.Comp
 import Mathlib.Analysis.Calculus.Deriv.Mul
 
 /-!
 # Piecewise C¹ Paths on Arbitrary Intervals
 
-This file generalizes `PiecewiseC1Path` (defined on the unit interval `[0, 1]` via
-mathlib's `Path`) to a free interval `[a, b]` with `a < b`. This is Phase 1 of the
-P4 unification plan (see `P4_PLAN.md`).
+This file defines `PiecewiseC1PathOn a b hab x y`, the free-interval form of a
+piecewise C¹ path. The unit-interval form `PiecewiseC1Path` (defined in
+`PiecewiseC1Path.lean`) is built on top of this by extending and bundling a
+mathlib `Path x y`.
 
 ## Main definitions
 
@@ -20,23 +21,22 @@ P4 unification plan (see `P4_PLAN.md`).
   `f b = y`, continuous on `[a, b]`, that is `C¹` away from a finite set of breakpoints
   in `(a, b)`. The partition lives in the open interval `Ioo a b`.
 
-* `PiecewiseC1Path.toPiecewiseC1PathOn` — embed the unit-interval form into the
-  free-interval form at `a = 0, b = 1`.
-
 * `PiecewiseC1PathOn.reparamUnit` — affine reparametrization `[a, b] → [0, 1]` via
   `t ↦ γ ((b - a) * t + a)`. The chain rule applies because the off-partition set
   is open and the affine map is smooth.
 
+* `PiecewiseC1PathOn.reparamFree` — affine reparametrization `[0, 1] → [a, b]`,
+  the inverse direction.
+
 ## Design notes
 
-This is a parallel structure to `PiecewiseC1Path`. Existing call sites keep using
-`PiecewiseC1Path`; new infrastructure (Phases 2–4) can build directly on
-`PiecewiseC1PathOn`. Affine reparametrization between the two forms is established
-in a follow-up file.
+This file deliberately does not depend on `Mathlib.Topology.Path`. The unit-interval
+form `PiecewiseC1Path` extends this structure and adds a bundled `Path x y` together
+with an equality witness `toPath.extend t = toFun t` on `Icc 0 1`.
 
-We deliberately do not require the underlying carrier to be a mathlib `Path`,
-because `Path` is fixed to `[0, 1]` via `unitInterval`. A free-interval generalization
-needs a raw `ℝ → E` with continuity on `Icc a b`.
+We do not require the underlying carrier to be a mathlib `Path` because `Path` is
+fixed to `[0, 1]` via `unitInterval`. A free-interval generalization needs a raw
+`ℝ → E` with continuity on `Icc a b`.
 
 ## References
 
@@ -97,91 +97,6 @@ theorem apply_right (γ : PiecewiseC1PathOn a b hab x y) : γ b = y := γ.target
 
 /-- A piecewise C¹ path on `[a, b]` is closed if its endpoints coincide. -/
 def IsClosed (_γ : PiecewiseC1PathOn a b hab x y) : Prop := x = y
-
-end PiecewiseC1PathOn
-
-/-! ## Embedding the unit-interval form
-
-A `PiecewiseC1Path x y` (defined on `[0, 1]` via `Path.extend`) yields a
-`PiecewiseC1PathOn 0 1 zero_lt_one x y` by taking `toFun = γ.toPath.extend`.
--/
-
-namespace PiecewiseC1Path
-
-variable {x y : E}
-
-/-- Convert a `PiecewiseC1Path` (on `[0, 1]` via `Path`) to a free-interval
-`PiecewiseC1PathOn 0 1 zero_lt_one`. -/
-def toPiecewiseC1PathOn (γ : PiecewiseC1Path x y) :
-    PiecewiseC1PathOn 0 1 zero_lt_one x y where
-  toFun := γ.toPath.extend
-  source := γ.toPath.extend_zero
-  target := γ.toPath.extend_one
-  continuous_toFun := γ.toPath.continuous_extend.continuousOn
-  partition := γ.partition
-  partition_subset := γ.partition_subset
-  differentiable_off := γ.differentiable_off
-  deriv_continuous_off := γ.deriv_continuous_off
-
-@[simp]
-theorem toPiecewiseC1PathOn_toFun (γ : PiecewiseC1Path x y) :
-    (γ.toPiecewiseC1PathOn : ℝ → E) = γ.toPath.extend := rfl
-
-@[simp]
-theorem toPiecewiseC1PathOn_partition (γ : PiecewiseC1Path x y) :
-    γ.toPiecewiseC1PathOn.partition = γ.partition := rfl
-
-end PiecewiseC1Path
-
-/-! ## Reverse direction: free-interval form `[0, 1]` → unit-interval form
-
-Given `γ : PiecewiseC1PathOn 0 1 zero_lt_one x y`, build a `Path x y` via
-`Path.ofLine γ.continuous_toFun γ.source γ.target`. On any point `t ∈ Ioo 0 1`,
-`Path.extend` of this path agrees with `γ.toFun` on the open neighborhood `Ioo 0 1`,
-so differentiability and derivative continuity transfer via `EventuallyEq`. -/
-
-namespace PiecewiseC1PathOn
-
-variable {x y : E}
-
-/-- The unit-interval `Path` underlying a free-interval path on `[0, 1]`. -/
-private def toPath01 (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) : Path x y :=
-  Path.ofLine γ.continuous_toFun γ.source γ.target
-
-/-- On `Icc 0 1`, the extended path agrees pointwise with `γ.toFun`. -/
-private theorem toPath01_extend_eqOn_Icc (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
-    EqOn γ.toPath01.extend γ.toFun (Icc 0 1) := by
-  intro t ht
-  show (γ.toPath01).extend t = γ.toFun t
-  rw [Path.extend_apply _ ht]
-  rfl
-
-/-- On the open interval `Ioo 0 1`, the extended path is eventually equal to
-`γ.toFun` in any neighborhood. -/
-private theorem toPath01_extend_eventuallyEq (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y)
-    {t : ℝ} (ht : t ∈ Ioo (0 : ℝ) 1) :
-    γ.toPath01.extend =ᶠ[𝓝 t] γ.toFun :=
-  eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
-    (fun _ hu => γ.toPath01_extend_eqOn_Icc (Ioo_subset_Icc_self hu))
-
-/-- Convert a free-interval `PiecewiseC1PathOn 0 1` to a unit-interval `PiecewiseC1Path`.
-Inverse-of-restriction to `Path.ofLine` at the carrier level; differentiability and derivative
-continuity transfer via the `EventuallyEq` of `Path.extend` and `γ.toFun` on `Ioo 0 1`. -/
-def toPiecewiseC1Path (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
-    PiecewiseC1Path x y where
-  toPath := γ.toPath01
-  partition := γ.partition
-  partition_subset := γ.partition_subset
-  differentiable_off t ht htn :=
-    (γ.toPath01_extend_eventuallyEq ht).differentiableAt_iff.mpr
-      (γ.differentiable_off t ht htn)
-  deriv_continuous_off t ht htn :=
-    (γ.deriv_continuous_off t ht htn).congr
-      (γ.toPath01_extend_eventuallyEq ht).deriv.symm
-
-@[simp]
-theorem toPiecewiseC1Path_partition (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
-    γ.toPiecewiseC1Path.partition = γ.partition := rfl
 
 end PiecewiseC1PathOn
 
@@ -453,3 +368,5 @@ def reparamFree (a b : ℝ) (hab : a < b) {x y : E}
     exact h_rhs_cont.congr h_eventually.symm
 
 end PiecewiseC1PathOn
+
+end
