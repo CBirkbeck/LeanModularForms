@@ -1126,84 +1126,65 @@ theorem descendCosetList_action_upper_tri_clean
           (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
         : GL (Fin 2) ℝ)) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  set A := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 0 0 with hA
-  set B := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 0 1 with hB
-  set C := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 0 with hC
-  set D := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 with hD
+  set A := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 0 0
+  set B := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 0 1
+  set C := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 0
+  set D := (γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1
   have h_C_dvd_Np : ((N / p : ℕ) : ℤ) ∣ C := by
     have h := CongruenceSubgroup.Gamma0_mem.mp h_γ'
     rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at h
-  obtain ⟨k_int, hk⟩ := hp_sq
-  have hNp_eq : (N / p : ℕ) = p * k_int := by
-    have h3 : p * (N / p) = p * (p * k_int) := by rw [Nat.mul_div_cancel' hpN, hk, sq, mul_assoc]
-    exact Nat.eq_of_mul_eq_mul_left hp.pos h3
-  have hp_dvd_C : (p : ℤ) ∣ C := by
-    have hp_dvd_Np_int : (p : ℤ) ∣ ((N / p : ℕ) : ℤ) := by exact_mod_cast (⟨k_int, hNp_eq⟩ : (p : ℕ) ∣ (N / p : ℕ))
-    exact dvd_trans hp_dvd_Np_int h_C_dvd_Np
+  have hp_dvd_C : (p : ℤ) ∣ C := dvd_trans
+    (by exact_mod_cast (Nat.dvd_div_iff_mul_dvd hpN).mpr (by rwa [← sq])) h_C_dvd_Np
   have h_C_mod_p : (C : ZMod p) = 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hp_dvd_C
   have hdet : A * D - B * C = 1 := by
-    have h := γ'.property; rwa [Matrix.det_fin_two] at h
+    have h := γ'.property
+    rwa [Matrix.det_fin_two] at h
   have h_AD_mod_p : (A : ZMod p) * (D : ZMod p) = 1 := by
     have h := congr_arg (Int.cast : ℤ → ZMod p) hdet
-    push_cast at h
-    rwa [h_C_mod_p, mul_zero, sub_zero] at h
+    push_cast [h_C_mod_p] at h
+    simpa using h
   have h_A_unit : IsUnit ((A : ZMod p)) :=
-    ⟨⟨(A : ZMod p), (D : ZMod p), h_AD_mod_p,
-      by rw [mul_comm]; exact h_AD_mod_p⟩, rfl⟩
-  set u_A : (ZMod p)ˣ := h_A_unit.unit with hu_A_def
+    ⟨⟨(A : ZMod p), (D : ZMod p), h_AD_mod_p, by rw [mul_comm]; exact h_AD_mod_p⟩, rfl⟩
+  set u_A : (ZMod p)ˣ := h_A_unit.unit
   let m'_zmod : ZMod p := (u_A⁻¹ : (ZMod p)ˣ).val *
     ((B : ZMod p) + (m.val : ZMod p) * (D : ZMod p))
   let m' : Fin p := ⟨m'_zmod.val, ZMod.val_lt _⟩
   have h_moebius : (A : ZMod p) * (m'.val : ZMod p) =
       (B : ZMod p) + (m.val : ZMod p) * (D : ZMod p) := by
-    change (A : ZMod p) * ((m'_zmod.val : ℕ) : ZMod p) = _
-    rw [ZMod.natCast_zmod_val m'_zmod]
-    change (A : ZMod p) * ((u_A⁻¹ : (ZMod p)ˣ).val *
-        ((B : ZMod p) + (m.val : ZMod p) * (D : ZMod p))) = _
-    rw [← mul_assoc, ← IsUnit.unit_spec h_A_unit, ← Units.val_mul, mul_inv_cancel, Units.val_one, one_mul]
-  have h_int_div : (p : ℤ) ∣
+    show (A : ZMod p) * (m'_zmod.val : ZMod p) = _
+    rw [ZMod.natCast_zmod_val m'_zmod, ← mul_assoc, ← IsUnit.unit_spec h_A_unit,
+      ← Units.val_mul, mul_inv_cancel, Units.val_one, one_mul]
+  obtain ⟨α01_int, hα01⟩ : (p : ℤ) ∣
       (B + (m.val : ℤ) * D - (A + (m.val : ℤ) * C) * (m'.val : ℤ)) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
     push_cast
     rw [h_C_mod_p]
     linear_combination -h_moebius
-  obtain ⟨α01_int, hα01⟩ := h_int_div
   let α_mat : Matrix (Fin 2) (Fin 2) ℤ :=
     !![A + (m.val : ℤ) * C, α01_int; (p : ℤ) * C, D - C * (m'.val : ℤ)]
-  have hα01' : (p : ℤ) * α01_int = B + (m.val : ℤ) * D - (A + (m.val : ℤ) * C) *
-      (m'.val : ℤ) := by linarith
+  have hα01' : (p : ℤ) * α01_int =
+      B + (m.val : ℤ) * D - (A + (m.val : ℤ) * C) * (m'.val : ℤ) := by linarith
   have h_det_α : α_mat.det = 1 := by
-    change !![A + (m.val : ℤ) * C, α01_int; (p : ℤ) * C,
-      D - C * (m'.val : ℤ)].det = 1
-    rw [Matrix.det_fin_two_of]
-    have h_factor : (A + (m.val : ℤ) * C) * (D - C * (m'.val : ℤ)) -
-        α01_int * ((p : ℤ) * C) = A * D - B * C := by
-      have : α01_int * ((p : ℤ) * C) = ((p : ℤ) * α01_int) * C := by ring
-      rw [this, hα01']; ring
-    rw [h_factor, hdet]
+    rw [show α_mat.det = (A + (m.val : ℤ) * C) * (D - C * (m'.val : ℤ)) -
+      α01_int * ((p : ℤ) * C) from Matrix.det_fin_two_of _ _ _ _]
+    linear_combination hdet - C * hα01'
   let α : Matrix.SpecialLinearGroup (Fin 2) ℤ := ⟨α_mat, h_det_α⟩
   have h_α_in_Γ0 : α ∈ Gamma0 N := by
-    rw [CongruenceSubgroup.Gamma0_mem]
-    have hα_10 : ((α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℤ) = (p : ℤ) * C := by
-      change α_mat 1 0 = (p : ℤ) * C
-      simp [α_mat]
-    rw [hα_10]
+    rw [CongruenceSubgroup.Gamma0_mem, show ((α : Matrix (Fin 2) (Fin 2) ℤ) 1 0) = (p : ℤ) * C
+      from by simp [α, α_mat]]
     obtain ⟨c_int, hC_eq⟩ := h_C_dvd_Np
-    rw [hC_eq]
     have hpNp_eq_N : (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by
       exact_mod_cast Nat.mul_div_cancel' hpN
-    rw [show ((p : ℤ) * (((N / p : ℕ) : ℤ) * c_int)) =
-        ((p : ℤ) * ((N / p : ℕ) : ℤ)) * c_int by ring, hpNp_eq_N,
-      Int.cast_mul]
+    rw [hC_eq, show ((p : ℤ) * (((N / p : ℕ) : ℤ) * c_int)) =
+      ((p : ℤ) * ((N / p : ℕ) : ℤ)) * c_int from by ring, hpNp_eq_N, Int.cast_mul]
     simp
   refine ⟨m', α, h_α_in_Γ0, h_moebius, ?_⟩
-  have h_γ'_eq : (γ' : Matrix (Fin 2) (Fin 2) ℤ) = !![A, B; C, D] := by
-    ext i j; fin_cases i <;> fin_cases j <;> rfl
   have h_raw : (!![(1 : ℤ), (m.val : ℤ); 0, (p : ℤ)] *
       (γ' : Matrix (Fin 2) (Fin 2) ℤ) : Matrix (Fin 2) (Fin 2) ℤ) =
       α_mat * !![(1 : ℤ), (m'.val : ℤ); 0, (p : ℤ)] := by
-    rw [h_γ'_eq]
+    rw [show (γ' : Matrix (Fin 2) (Fin 2) ℤ) = !![A, B; C, D] from by
+      ext i j; fin_cases i <;> fin_cases j <;> rfl]
     exact descend_upper_tri_raw_matrix_identity p A B C D
       (m.val : ℤ) (m'.val : ℤ) α01_int hα01'
   refine Units.ext ?_
@@ -1211,17 +1192,12 @@ theorem descendCosetList_action_upper_tri_clean
       (γ' : Matrix _ _ ℤ).map (algebraMap ℤ ℝ) : Matrix _ _ ℝ) =
       ((α : Matrix _ _ ℤ).map (algebraMap ℤ ℝ) *
         !![(1 : ℝ), (m'.val : ℝ); 0, (p : ℝ)] : Matrix _ _ ℝ)
-  have hL_lit : (!![(1 : ℝ), (m.val : ℝ); 0, (p : ℝ)] :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      (!![(1 : ℤ), (m.val : ℤ); 0, (p : ℤ)] :
+  have hlit (v : ℕ) :
+      (!![(1 : ℝ), (v : ℝ); 0, (p : ℝ)] : Matrix (Fin 2) (Fin 2) ℝ) =
+      (!![(1 : ℤ), (v : ℤ); 0, (p : ℤ)] :
         Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ) := by
     ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
-  have hR_lit : (!![(1 : ℝ), (m'.val : ℝ); 0, (p : ℝ)] :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      (!![(1 : ℤ), (m'.val : ℤ); 0, (p : ℤ)] :
-        Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ) := by
-    ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
-  rw [hL_lit, hR_lit, ← Matrix.map_mul, ← Matrix.map_mul]
+  rw [hlit m.val, hlit m'.val, ← Matrix.map_mul, ← Matrix.map_mul]
   exact congr_arg (·.map (algebraMap ℤ ℝ)) h_raw
 
 private lemma descendExtraGamma_spec
