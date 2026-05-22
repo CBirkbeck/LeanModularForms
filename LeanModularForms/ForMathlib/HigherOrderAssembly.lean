@@ -321,21 +321,6 @@ theorem hasCauchyPVOn_simplePoles_convex
 
 /-! ## Discharging CPV integrability from contour integrability -/
 
-/-- In the avoidance case, CPV-integrand integrability can be derived from contour
-integrand integrability for any `epsilon` in `(0, delta)`. This helper shows
-that the `hI_cpv_rem` and `hI_cpv_sing` hypotheses in the fully assembled
-theorem are automatically satisfiable in the avoidance case. -/
-theorem cpvIntegrandOn_integrableOn_eventually_of_avoids
-    {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
-    {δ : ℝ} (hδ_pos : 0 < δ)
-    (hδ_bound : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (hint : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand f γ) volume 0 1) :
-    ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
-      (fun t => cpvIntegrandOn S f γ.toPath.extend ε t) volume 0 1 := by
-  filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
-  exact cpvIntegrandOn_integrableOn_of_avoids hδ_pos hδ_bound hε.1 hε.2 hint
-
 /-- **Version with automatic CPV integrability derivation.**
 
 When `gamma` avoids `S` with margin `delta`, the CPV integrand integrability
@@ -424,43 +409,6 @@ theorem hasCauchyPVOn_simplePoles_convex_auto
       hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩ h_rem_int)
     (hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI)
 
-/-! ## Bridge to the full generalized residue theorem -/
-
-/-- **Bridge to `generalizedResidueTheorem`.**
-
-Given conditions (A')+(B), a cancellation oracle, and the structural hypotheses
-of `generalizedResidueTheorem`, this constructs all required inputs and applies
-the main theorem. The cancellation oracle is the only piece that requires
-analytic work; the rest is pure assembly. -/
-theorem generalizedResidueTheorem_of_cancel_oracle
-    {U : Set ℂ} (hU : IsOpen U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondA : SatisfiesConditionA' γ f S (fun s => poleOrderAt f s))
-    (hCondB : SatisfiesConditionB γ f S)
-    (hCancel : HasCauchyPVOn S
-      (fun z => f z - principalPartSum S (fun s => residue f s) z)
-      γ.toPiecewiseC1Path 0)
-    (hPV_sing : HasCauchyPVOn S
-      (principalPartSum S (fun s => residue f s))
-      γ.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s))
-    (hI_sing : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S (principalPartSum S (fun s => residue f s))
-        γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1)
-    (hI_rem : ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrandOn S (fun z => f z -
-        principalPartSum S (fun s => residue f s) z)
-        γ.toPiecewiseC1Path.toPath.extend ε t) volume 0 1) :
-    HasCauchyPVOn S f γ.toPiecewiseC1Path
-      (2 * ↑Real.pi * I * ∑ s ∈ S,
-        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
-  generalizedResidueTheorem hU S hS_in_U f hf γ h_null hMero hCondA hCondB
-    hCancel hPV_sing hI_sing hI_rem
-
 /-! ## Equivalence: ordinary contour integral vs CPV for avoidance -/
 
 /-- When `gamma` avoids `S`, the ordinary contour integral of `f` and the CPV of `f`
@@ -528,25 +476,6 @@ theorem hasCauchyPVOn_simplePoles_convex_closed
   exact hasCauchyPVOn_simplePoles_convex_auto hU_convex hU_open hU_ne S hS_in_U f hf γ
     hSimplePoles hγ_in_U hγ_avoids hδ h_rem_int h_pp_int hI
 
-/-- **Item 1 + 4 combined**: contour-integral-form HW 3.3 for simple poles in convex
-domains with only minimal hypotheses. -/
-theorem contourIntegral_simplePoles_convex_closed
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend) volume 0 1) :
-    γ.contourIntegral f =
-      ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
-        residue f s :=
-  contourIntegral_eq_of_hasCauchyPVOn_avoids hδ
-    (hasCauchyPVOn_simplePoles_convex_closed hU_convex hU_open hU_ne S hS_in_U
-      f hf γ hSimplePoles hγ_in_U hγ_avoids hδ h_deriv_int)
-
 /-! ## Null-homologous closed form (Dixon-zero supplied as one oracle) -/
 
 /-- **HW 3.3 closed form for simple poles in null-homologous null-homologous domains.**
@@ -595,56 +524,6 @@ theorem hasCauchyPVOn_simplePoles_nullHomologous_closed
       hSimplePoles hγ_in_U hγ_avoids ⟨δ, hδ_pos, hδ_bound⟩
       w₀ hw₀_in_U hw₀_off h_dixon_zero h_cauchy_int h_base_int)
     (hPV_sing_of_avoids S f γ ⟨δ, hδ_pos, hδ_bound⟩ hI)
-
-/-! ## Null-homologous closed form with automatic w₀ from Lipschitz -/
-
-/-- **Variant of `hasCauchyPVOn_simplePoles_nullHomologous_closed` auto-deriving w₀.**
-
-If `γ.toPath.extend` is Lipschitz, the w₀ hypothesis is automatic via A-2's
-`exists_mem_not_mem_image_of_isOpen_of_lipschitz`. The existence is packaged
-as a classical choice so the returned theorem uses only the same Lipschitz
-hypothesis plus the Dixon-zero oracle (plus integrability). -/
-theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_of_lipschitz
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend)
-    (dixon_zero_for :
-      ∀ w₀ ∈ U, (∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w₀) →
-        (∀ w, dixonFunction
-          (fun z => (z - w₀) *
-            (f z - principalPartSum S (fun s => residue f s) z)) U γ w = 0) ∧
-        IntervalIntegrable
-          (fun t => (γ t - w₀) *
-            (f (γ t) - principalPartSum S (fun s => residue f s) (γ t))
-            / (γ t - w₀) * deriv γ.toPath.extend t) volume 0 1 ∧
-        IntervalIntegrable
-          (fun t => (γ t - w₀)⁻¹ * deriv γ.toPath.extend t) volume 0 1)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
-      volume 0 1)
-    (h_pp_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
-    (hI : ∀ s ∈ S, IntervalIntegrable
-      (fun t => (residue f s / (γ.toPath.extend t - s)) *
-        deriv γ.toPath.extend t) volume 0 1) :
-    HasCauchyPVOn S f γ
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ s * residue f s) := by
-  obtain ⟨w₀, hw₀_in_U, hw₀_off⟩ :=
-    ForMathlib.exists_mem_not_mem_path_image_of_isOpen γ hU_open hU_ne hLip
-  obtain ⟨h_dixon_zero, h_cauchy_int, h_base_int⟩ :=
-    dixon_zero_for w₀ hw₀_in_U hw₀_off
-  exact hasCauchyPVOn_simplePoles_nullHomologous_closed hU_open S hS_in_U f hf γ
-    hSimplePoles hγ_in_U hγ_avoids hδ w₀ hw₀_in_U hw₀_off h_dixon_zero
-    h_cauchy_int h_base_int h_rem_int h_pp_int hI
 
 /-! ## B-6: fully-closed null-homologous simple-pole HW 3.3
 
@@ -846,96 +725,7 @@ theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed
   exact hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_open
     hU_ne hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids hδ hLip
 
-/-! ## δ-free wrappers (deriving the distance bound from pointwise avoidance) -/
-
-/-- δ-free variant of `hasCauchyPVOn_simplePoles_nullHomologous_closed_full`:
-the positive-distance hypothesis `hδ` is auto-derived from pointwise avoidance
-and finite `S` via `avoids_finset_delta_bound`. -/
-theorem hasCauchyPVOn_simplePoles_nullHomologous_closed_full_avoids
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (hU_bounded : Bornology.IsBounded U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
-    HasCauchyPVOn S f γ.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
-  hasCauchyPVOn_simplePoles_nullHomologous_closed_full hU_open hU_ne
-    hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
-    (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
-
-/-- δ-free variant of `contourIntegral_simplePoles_nullHomologous_closed_full`. -/
-theorem contourIntegral_simplePoles_nullHomologous_closed_full_avoids
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (hU_bounded : Bornology.IsBounded U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
-    γ.toPiecewiseC1Path.contourIntegral f =
-      ∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s :=
-  contourIntegral_simplePoles_nullHomologous_closed_full hU_open hU_ne
-    hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
-    (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
-
-/-- δ-free variant of `generalizedResidueTheorem_simplePoles_nullHomologous_closed`. -/
-theorem generalizedResidueTheorem_simplePoles_nullHomologous_closed_avoids
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (hU_bounded : Bornology.IsBounded U)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ s)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPath.extend) :
-    HasCauchyPVOn S f γ.toPiecewiseC1Path
-      (2 * ↑Real.pi * I * ∑ s ∈ S,
-        generalizedWindingNumber γ.toPiecewiseC1Path s * residue f s) :=
-  generalizedResidueTheorem_simplePoles_nullHomologous_closed hU_open hU_ne
-    hU_bounded S hS_in_U f hf γ h_null hSimplePoles hγ_avoids
-    (avoids_finset_delta_bound γ.toPiecewiseC1Path S hγ_avoids) hLip
-
 /-! ## Convex corollary derived as specialization of the general theorem -/
-
-/-- **Generalized Residue Theorem for simple poles in convex domains (via general
-theorem).**
-
-Same statement as `generalizedResidueTheorem_simplePoles_convex` but derived as a
-specialization of the CPV-form generalized residue theorem
-(`hasCauchyPVOn_simplePoles_convex_auto`) + avoidance equivalence
-(`contourIntegral_eq_of_hasCauchyPVOn_avoids`). This makes the convex corollary
-a bona-fide corollary of the general HW 3.3 machinery rather than a parallel proof. -/
-theorem generalizedResidueTheorem_simplePoles_convex_fromGeneral
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : PiecewiseC1Path x x)
-    (hSimplePoles : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (fun z => f z - principalPartSum S (fun s => residue f s) z) γ)
-      volume 0 1)
-    (h_pp_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand
-        (principalPartSum S (fun s => residue f s)) γ) volume 0 1)
-    (hI : ∀ s ∈ S, IntervalIntegrable
-      (fun t => (residue f s / (γ.toPath.extend t - s)) *
-        deriv γ.toPath.extend t) volume 0 1) :
-    γ.contourIntegral f =
-      ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s *
-        residue f s :=
-  contourIntegral_eq_of_hasCauchyPVOn_avoids hδ
-    (hasCauchyPVOn_simplePoles_convex_auto hU_convex hU_open hU_ne S hS_in_U
-      f hf γ hSimplePoles hγ_in_U hγ_avoids hδ h_rem_int h_pp_int hI)
 
 /-! ## Unbounded U variants (TIGHT-12)
 

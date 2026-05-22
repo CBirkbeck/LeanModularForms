@@ -12,9 +12,6 @@ public import LeanModularForms.Modularforms.AtImInfty
 
 In this file we establishes basic results about q-expansions. The results are put under the `QExp`
 namespace.
-
-TODO:
-* Are any of these results in Mathlib, perhaps phrased in some other way?
 -/
 
 open scoped Real

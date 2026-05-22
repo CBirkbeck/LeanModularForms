@@ -23,9 +23,7 @@ import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpe
 -- (`residueTheorem_simplePoles_convex`) and corollary 4
 -- (`residueTheorem_simplePoles_convex_transverse`) wrap the existing
 -- `generalizedResidueTheorem'` in `GeneralizedResidueTheory.Residue.GeneralizedTheoremBase`,
--- which uses the GRT chain. Until the two trees are unified (out of scope here),
--- those two thin wrappers live in a sibling file
--- `HungerbuhlerWasemConvex.lean` (TODO).
+-- which uses the GRT chain.
 
 /-!
 # Hungerbühler–Wasem residue theorem

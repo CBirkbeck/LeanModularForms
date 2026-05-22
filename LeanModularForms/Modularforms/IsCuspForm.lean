@@ -47,13 +47,6 @@ def ModForm_mk (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : CuspForm Γ k) : Modula
   holo' := f.holo'
   bdd_at_cusps' := fun hc ↦ bdd_at_cusps f hc
 
-lemma ModForm_mk_inj (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : CuspForm Γ k) (hf : f ≠ 0) :
-    ModForm_mk _ _ f ≠ 0 := by
-  rw [DFunLike.ne_iff] at *
-  obtain ⟨x, hx⟩ := hf
-  refine ⟨x, ?_⟩
-  simpa [ModForm_mk] using hx
-
 def CuspForm_to_ModularForm (Γ : Subgroup SL(2, ℤ)) (k : ℤ) : CuspForm Γ k →ₗ[ℂ] ModularForm Γ k
   where
   toFun f := ModForm_mk Γ k f
@@ -78,12 +71,6 @@ def CuspForm_iso_CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) :
   ext z
   have := congr_fun (congr_arg (fun x => x.toFun) hf) z
   simpa using this
-
-lemma mem_CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k)
-    (hf : f ∈ CuspFormSubmodule Γ k) :
-    ∃ g : CuspForm Γ k, f = CuspForm_to_ModularForm Γ k g := by
-  obtain ⟨g, hg⟩ := hf
-  exact ⟨g, hg.symm⟩
 
 instance (priority := 100) CuspFormSubmodule.funLike : FunLike (CuspFormSubmodule Γ k) ℍ ℂ where
   coe f := f.1.toFun

@@ -219,39 +219,9 @@ lemma fdBoundary_H_re_abs_le_half (H : ℝ) :
   rw [fdBoundary_H_eq_seg5_H h4, seg5_H_re, abs_le]
   constructor <;> linarith
 
-lemma fdBoundary_eq_seg1 {t : ℝ} (ht : t ≤ 1) :
-    fdBoundary t = fdBoundary_seg1 t := by
-  simp only [fdBoundary, ht, ite_true, fdBoundary_seg1]
-
-lemma fdBoundary_eq_seg2 {t : ℝ} (ht1 : 1 < t) (ht2 : t ≤ 2) :
-    fdBoundary t = fdBoundary_seg2 t := by
-  simp only [fdBoundary, not_le.mpr ht1, ht2, ite_true, ite_false, fdBoundary_seg2]
-
-lemma fdBoundary_eq_seg3 {t : ℝ} (ht2 : 2 < t) (ht3 : t ≤ 3) :
-    fdBoundary t = fdBoundary_seg3 t := by
-  simp only [fdBoundary, not_le.mpr (show (1:ℝ) < t by linarith),
-    not_le.mpr ht2, ht3, ite_true, ite_false, fdBoundary_seg3]
-
-lemma fdBoundary_eq_seg4 {t : ℝ} (ht3 : 3 < t) (ht4 : t ≤ 4) :
-    fdBoundary t = fdBoundary_seg4 t := by
-  simp only [fdBoundary, not_le.mpr (show (1:ℝ) < t by linarith),
-    not_le.mpr (show (2:ℝ) < t by linarith), not_le.mpr ht3,
-    ht4, ite_true, ite_false, fdBoundary_seg4]
-
-lemma fdBoundary_eq_seg5 {t : ℝ} (ht4 : 4 < t) :
-    fdBoundary t = fdBoundary_seg5 t := by
-  simp only [fdBoundary, not_le.mpr (show (1:ℝ) < t by linarith),
-    not_le.mpr (show (2:ℝ) < t by linarith), not_le.mpr (show (3:ℝ) < t by linarith),
-    not_le.mpr ht4, ite_false, fdBoundary_seg5]
-
 theorem fdBoundary_continuous : Continuous fdBoundary := by
   rw [fdBoundary_eq_fdBoundary_H]
   exact fdBoundary_H_continuous heightCutoff
-
-lemma fdBoundary_im_pos :
-    ∀ t ∈ Icc (0 : ℝ) 5, 0 < (fdBoundary t).im := by
-  rw [fdBoundary_eq_fdBoundary_H]
-  exact fdBoundary_H_im_pos heightCutoff sqrt3_div2_lt_heightCutoff
 
 lemma fdBoundary_H_im_le_H {H : ℝ} (hH : 1 ≤ H) :
     ∀ t ∈ Icc (0 : ℝ) 5, (fdBoundary_H H t).im ≤ H := by
@@ -273,48 +243,5 @@ lemma fdBoundary_H_im_le_H {H : ℝ} (hH : 1 ≤ H) :
   · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]; nlinarith
   push Not at h4
   rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]
-
-lemma fdBoundary_im_le_heightCutoff :
-    ∀ t ∈ Icc (0 : ℝ) 5, (fdBoundary t).im ≤ heightCutoff := by
-  rw [fdBoundary_eq_fdBoundary_H]
-  intro t ⟨ht0, ht5⟩
-  have hH := sqrt3_div2_lt_heightCutoff
-  by_cases h1 : t ≤ 1
-  · rw [fdBoundary_H_eq_seg1_H h1, seg1_H_im]; nlinarith
-  push Not at h1
-  by_cases h2 : t ≤ 2
-  · rw [fdBoundary_H_eq_seg2_H heightCutoff h1 h2, fdBoundary_seg2_H, seg2_im]
-    exact (Real.sin_le_one _).trans one_lt_heightCutoff.le
-  push Not at h2
-  by_cases h3 : t ≤ 3
-  · rw [fdBoundary_H_eq_seg3_H heightCutoff h2 h3, fdBoundary_seg3_H, seg3_im]
-    exact (Real.sin_le_one _).trans one_lt_heightCutoff.le
-  push Not at h3
-  by_cases h4 : t ≤ 4
-  · rw [fdBoundary_H_eq_seg4_H h3 h4, seg4_H_im]; nlinarith
-  push Not at h4
-  rw [fdBoundary_H_eq_seg5_H h4, seg5_H_im]
-
-lemma fdBoundary_re_abs_le_half :
-    ∀ t ∈ Icc (0 : ℝ) 5, |Complex.re (fdBoundary t)| ≤ 1 / 2 := by
-  rw [fdBoundary_eq_fdBoundary_H]
-  exact fdBoundary_H_re_abs_le_half heightCutoff
-
-lemma fdBoundary_im_ge_sqrt3_div_2 :
-    ∀ t ∈ Icc (0 : ℝ) 5, Real.sqrt 3 / 2 ≤ (fdBoundary t).im := by
-  rw [fdBoundary_eq_fdBoundary_H]
-  exact fdBoundary_H_im_ge_sqrt3_div_2 heightCutoff sqrt3_div2_lt_heightCutoff.le
-
-lemma fdBoundary_passes_through_i :
-    ∃ t ∈ Icc (0 : ℝ) 5, fdBoundary t = ellipticPointI :=
-  ⟨2, by norm_num, fdBoundary_at_two⟩
-
-lemma fdBoundary_passes_through_rho :
-    ∃ t ∈ Icc (0 : ℝ) 5, fdBoundary t = ellipticPointRho :=
-  ⟨3, by norm_num, fdBoundary_at_three⟩
-
-lemma fdBoundary_passes_through_rho_plus_one :
-    ∃ t ∈ Icc (0 : ℝ) 5, fdBoundary t = ellipticPointRhoPlusOne :=
-  ⟨1, by norm_num, fdBoundary_at_one⟩
 
 end
