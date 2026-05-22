@@ -249,7 +249,7 @@ theorem isFlatOfOrder_one (γ : PwC1Immersion x y) (t₀ : ℝ)
       ∀ᶠ t in 𝓝[u] t₀, DifferentiableAt ℝ (γ : ℝ → ℂ) t := fun {u} hne => by
     filter_upwards [nhdsWithin_le_nhds hmem, nhdsWithin_le_nhds hIoo,
       self_mem_nhdsWithin] with t ht₁ ht₂ ht₃
-    exact γ.toPiecewiseC1Path.differentiable_off t ht₂ fun hm => ht₁ ⟨hm, hne t ht₃⟩
+    exact γ.toPiecewiseC1Path.differentiable_off_extend t ht₂ fun hm => ht₁ ⟨hm, hne t ht₃⟩
   refine ⟨fun L hL hL_right => ?_, fun L hL hL_left => ?_⟩
   · exact tangentDeviation_isLittleO_right (γ : ℝ → ℂ) t₀ L hL hL_right hcont
       (hdiff_aux fun _ ht => ne_of_gt (mem_Ioi.mp ht))

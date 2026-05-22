@@ -295,7 +295,12 @@ def toPiecewiseC1PathOn (γ : ClosedPwC1Curve x) :
 
 /-- A `ClosedPwC1Curve` produces a legacy `PiecewiseC1Path`. -/
 def toPiecewiseC1Path (γ : ClosedPwC1Curve x) : PiecewiseC1Path x x where
+  toFun := γ.toPath.extend
+  source := γ.toPath.extend_zero
+  target := γ.toPath.extend_one
+  continuous_toFun := γ.toPath.continuous_extend.continuousOn
   toPath := γ.toPath
+  toPath_extend_eq_toFun := fun _ _ => rfl
   partition := γ.toPiecewiseC1PathOn.partition
   partition_subset := γ.toPiecewiseC1PathOn.partition_subset
   differentiable_off := γ.toPiecewiseC1PathOn.differentiable_off

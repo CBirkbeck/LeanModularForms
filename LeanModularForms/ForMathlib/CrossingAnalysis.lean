@@ -107,7 +107,7 @@ theorem crossing_isolated_smooth (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition) :
     ∀ᶠ t in 𝓝[≠] t₀, (γ : ℝ → E) t ≠ z₀ := by
   rw [← hcross]
-  exact (γ.toPiecewiseC1Path.differentiable_off t₀ ht₀ hsmooth).hasDerivAt.eventually_ne
+  exact (γ.toPiecewiseC1Path.differentiable_off_extend t₀ ht₀ hsmooth).hasDerivAt.eventually_ne
     (γ.deriv_ne_zero t₀ ht₀ hsmooth)
 
 /-! ### Isolation at partition points -/
@@ -150,7 +150,7 @@ theorem crossing_isolated_left (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
     intro s hs
     obtain ⟨hs_smooth, hs_Ioo, hs_dpos⟩ := hq_cond hs
     have h_sub : HasDerivAt (fun t => (γ : ℝ → E) t - z₀) (deriv (γ : ℝ → E) s - 0) s :=
-      (γ.toPiecewiseC1Path.differentiable_off s hs_Ioo hs_smooth).hasDerivAt.sub
+      (γ.toPiecewiseC1Path.differentiable_off_extend s hs_Ioo hs_smooth).hasDerivAt.sub
         (hasDerivAt_const s z₀)
     simp only [sub_zero] at h_sub
     exact (f.hasFDerivAt.comp_hasDerivAt s h_sub).deriv ▸ hs_dpos
@@ -199,7 +199,7 @@ theorem crossing_isolated_right (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
     intro s hs
     obtain ⟨hs_smooth, hs_Ioo, hs_dpos⟩ := hr_cond hs
     have h_sub : HasDerivAt (fun t => (γ : ℝ → E) t - z₀) (deriv (γ : ℝ → E) s - 0) s :=
-      (γ.toPiecewiseC1Path.differentiable_off s hs_Ioo hs_smooth).hasDerivAt.sub
+      (γ.toPiecewiseC1Path.differentiable_off_extend s hs_Ioo hs_smooth).hasDerivAt.sub
         (hasDerivAt_const s z₀)
     simp only [sub_zero] at h_sub
     exact (f.hasFDerivAt.comp_hasDerivAt s h_sub).deriv ▸ hs_dpos

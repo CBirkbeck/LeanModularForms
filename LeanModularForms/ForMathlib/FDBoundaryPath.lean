@@ -184,7 +184,12 @@ private lemma fdBoundaryPath_deriv_continuousAt_off (H : ℝ) (t : ℝ)
 /-- The fundamental domain boundary as a `PiecewiseC1Path`. -/
 def fdBoundaryPC1Path (H : ℝ) (_hH : H > Real.sqrt 3 / 2) :
     PiecewiseC1Path (fdStart H) (fdStart H) where
+  toFun := (fdBoundaryPath H).extend
+  source := (fdBoundaryPath H).extend_zero
+  target := (fdBoundaryPath H).extend_one
+  continuous_toFun := (fdBoundaryPath H).continuous_extend.continuousOn
   toPath := fdBoundaryPath H
+  toPath_extend_eq_toFun := fun _ _ => rfl
   partition := fdBoundaryPartition
   partition_subset := fdBoundaryPartition_subset_Ioo
   differentiable_off := fdBoundaryPath_differentiableAt_off H

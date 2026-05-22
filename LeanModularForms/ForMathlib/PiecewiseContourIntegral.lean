@@ -229,7 +229,7 @@ theorem contourIntegral_eq_sub_of_hasDerivAt {F f : ℂ → ℂ}
       HasDerivAt (F ∘ γ.toPath.extend) (f (γ t) * deriv γ.toPath.extend t) t :=
     fun t ht htp =>
       (hF (γ t) (hU t (Ioo_subset_Icc_self ht))).comp_of_eq t
-        (γ.differentiable_off t ht htp).hasDerivAt rfl
+        (γ.differentiable_off_extend t ht htp).hasDerivAt rfl
   have h := ftc_induction γ _ 0 1 hFγ_cont hFγ_deriv h_int le_rfl zero_le_one subset_rfl
   rwa [γ.apply_one, γ.apply_zero] at h
 

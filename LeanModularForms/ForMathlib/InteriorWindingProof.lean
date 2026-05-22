@@ -266,7 +266,7 @@ theorem ftc_inv_sub_on_slitPlane {x : ℂ} {z : ℂ}
       ⟨lt_of_le_of_lt (hsub (left_mem_Icc.mpr hab)).1 ht.1,
        lt_of_lt_of_le ht.2 (hsub (right_mem_Icc.mpr hab)).2⟩
     rw [inv_mul_eq_div]
-    exact ((γ.differentiable_off t ht_01 (fun hp => h_no_part t hp ht)).hasDerivAt.sub_const
+    exact ((γ.differentiable_off_extend t ht_01 (fun hp => h_no_part t hp ht)).hasDerivAt.sub_const
       z).clog_real (hγ_slit t (Ioo_subset_Icc_self ht))
   exact intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab hFγ_cont hFγ_deriv h_int
 
