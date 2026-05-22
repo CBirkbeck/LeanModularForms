@@ -381,38 +381,31 @@ theorem hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB_corner
   set δMinus : ℝ := min r_L t₀ / 2
   have hδPlus_pos : 0 < δPlus := half_pos (lt_min hr_R_pos (sub_pos.mpr ht₀.2))
   have hδMinus_pos : 0 < δMinus := half_pos (lt_min hr_L_pos ht₀.1)
-  have hδPlus_le_1mt₀ : δPlus ≤ 1 - t₀ :=
-    (half_le_self (lt_min hr_R_pos (sub_pos.mpr ht₀.2)).le).trans (min_le_right _ _)
-  have hδMinus_le_t₀ : δMinus ≤ t₀ :=
-    (half_le_self (lt_min hr_L_pos ht₀.1).le).trans (min_le_right _ _)
+  have hδPlus_le_min : δPlus ≤ min r_R (1 - t₀) :=
+    half_le_self (lt_min hr_R_pos (sub_pos.mpr ht₀.2)).le
+  have hδMinus_le_min : δMinus ≤ min r_L t₀ :=
+    half_le_self (lt_min hr_L_pos ht₀.1).le
+  have hδPlus_le_1mt₀ : δPlus ≤ 1 - t₀ := hδPlus_le_min.trans (min_le_right _ _)
+  have hδMinus_le_t₀ : δMinus ≤ t₀ := hδMinus_le_min.trans (min_le_right _ _)
   have hδPlus_in_one : t₀ + δPlus ≤ 1 := by linarith
   have hδMinus_in_zero : 0 ≤ t₀ - δMinus := by linarith
   have hγ_mono : StrictMonoOn (fun t => ‖f t - s‖) (Icc t₀ (t₀ + δPlus)) :=
-    hγ_mono_at_radius.mono (Icc_subset_Icc le_rfl (by
-      have : δPlus ≤ r_R :=
-        (half_le_self (lt_min hr_R_pos (sub_pos.mpr ht₀.2)).le).trans (min_le_left _ _)
-      linarith))
+    hγ_mono_at_radius.mono (Icc_subset_Icc le_rfl
+      (by linarith [hδPlus_le_min.trans (min_le_left _ _)]))
   have hγ_anti : StrictAntiOn (fun t => ‖f t - s‖) (Icc (t₀ - δMinus) t₀) :=
-    hγ_anti_at_radius.mono (Icc_subset_Icc (by
-      have : δMinus ≤ r_L :=
-        (half_le_self (lt_min hr_L_pos ht₀.1).le).trans (min_le_left _ _)
-      linarith) le_rfl)
+    hγ_anti_at_radius.mono (Icc_subset_Icc
+      (by linarith [hδMinus_le_min.trans (min_le_left _ _)]) le_rfl)
   have hγ_cont_right_delta : ContinuousOn f (Icc t₀ (t₀ + δPlus)) :=
     hγ_continuous.continuousOn
   have hγ_cont_left_delta : ContinuousOn f (Icc (t₀ - δMinus) t₀) :=
     hγ_continuous.continuousOn
-  have h_leave_right : ∀ t ∈ Ioc t₀ (t₀ + δPlus), f t ≠ s := by
-    intro t ht heq
-    have h_strict := hγ_mono ⟨le_rfl, by linarith [hδPlus_pos]⟩
-      ⟨ht.1.le, ht.2⟩ ht.1
-    simp only [show f t₀ = s from h_at, heq] at h_strict
-    exact lt_irrefl _ h_strict
-  have h_leave_left : ∀ t ∈ Ico (t₀ - δMinus) t₀, f t ≠ s := by
-    intro t ht heq
-    have h_strict := hγ_anti ⟨ht.1, ht.2.le⟩
-      ⟨by linarith [hδMinus_pos], le_rfl⟩ ht.2
-    simp only [show f t₀ = s from h_at, heq] at h_strict
-    exact lt_irrefl _ h_strict
+  have h_ft₀ : f t₀ = s := h_at
+  have h_leave_right : ∀ t ∈ Ioc t₀ (t₀ + δPlus), f t ≠ s := fun t ht heq => by
+    have h_strict := hγ_mono ⟨le_rfl, by linarith [hδPlus_pos]⟩ ⟨ht.1.le, ht.2⟩ ht.1
+    simp only [h_ft₀, heq] at h_strict; exact lt_irrefl _ h_strict
+  have h_leave_left : ∀ t ∈ Ico (t₀ - δMinus) t₀, f t ≠ s := fun t ht heq => by
+    have h_strict := hγ_anti ⟨ht.1, ht.2.le⟩ ⟨by linarith [hδMinus_pos], le_rfl⟩ ht.2
+    simp only [h_ft₀, heq] at h_strict; exact lt_irrefl _ h_strict
   obtain ⟨δ_avoid, h_avoid_pos, h_avoid_left_raw, h_avoid_right_raw⟩ :=
     exists_far_bound_compact f hγ_continuous s t₀ h_unique
       (lt_min hδMinus_pos hδPlus_pos) ((min_le_left _ _).trans hδMinus_le_t₀)

@@ -369,10 +369,10 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     intro t ht1 ht3
     change fdBoundary_H H t - I = h₁ t
     rw [fdBoundary_H_eq_arc ht1 ht3]
-  have hg_eq_h₂ : ∀ t, 3 < t → t ≤ 4 → g t = h₂ t := by
-    intro t ht3 ht4; exact g_i_seg3_value ht3 ht4
-  have hg_eq_h₃ : ∀ t, 4 < t → g t = h₃ t := by
-    intro t ht4; exact g_i_seg4_value ht4
+  have hg_eq_h₂ : ∀ t, 3 < t → t ≤ 4 → g t = h₂ t :=
+    fun t ht3 ht4 => g_i_seg3_value ht3 ht4
+  have hg_eq_h₃ : ∀ t, 4 < t → g t = h₃ t :=
+    fun t ht4 => g_i_seg4_value ht4
   have hg0 : g 0 = h₀ 0 := hg_eq_h₀ 0 (by norm_num)
   have hg1_0 : g 1 = h₀ 1 := hg_eq_h₀ 1 (le_refl 1)
   have hg1_1 : g 1 = h₁ 1 := by
@@ -544,28 +544,24 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
   have hh₂_im_np_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, (h₂ t).im ≤ 0 := by
     intro t ⟨ht3, ht_t0⟩
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
-    · change (h₂ 3).im ≤ 0
-      simp only [h₂, Complex.add_im, Complex.neg_im, Complex.div_ofNat_im,
+    · simp only [h₂, Complex.add_im, Complex.neg_im, Complex.div_ofNat_im,
         Complex.one_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
         Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one]
       nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
                 sq_nonneg (2 - Real.sqrt 3)]
-    · rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
-      · change (h₂ t₀).im ≤ 0
-        rw [← hg_eq_h₂ t₀ (by linarith [t₀_i_gt_three hH]) (by linarith [t₀_i_lt_four hH]),
-          hgt₀_val]
-        norm_num
-      · change (h₂ t).im ≤ 0
-        rw [← hg_eq_h₂ t ht3' (by linarith)]
-        exact le_of_lt (g_i_seg3_im_neg ht3' ht_t0' hH)
+    rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
+    · rw [← hg_eq_h₂ t₀ (by linarith [t₀_i_gt_three hH]) (by linarith [t₀_i_lt_four hH]),
+        hgt₀_val]
+      norm_num
+    · rw [← hg_eq_h₂ t ht3' (by linarith)]
+      exact (g_i_seg3_im_neg ht3' ht_t0' hH).le
   have hh₂_ne_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, h₂ t ≠ 0 := by
     intro t ⟨ht3, ht_t0⟩
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
-    · rw [← hg3_2]; exact g_i_ne_zero_seg3 (le_refl 3) (by linarith)
+    · rw [← hg3_2]; exact g_i_ne_zero_seg3 le_rfl (by linarith)
     · rw [← hg_eq_h₂ t ht3' (by linarith)]
       exact g_i_ne_zero_seg3 (by linarith) (by linarith)
-  have hh₂_im_neg_int_3t₀ : ∀ t ∈ Ioo (3:ℝ) t₀, (h₂ t).im < 0 := by
-    intro t ⟨ht3, ht_t0⟩
+  have hh₂_im_neg_int_3t₀ : ∀ t ∈ Ioo (3:ℝ) t₀, (h₂ t).im < 0 := fun t ⟨ht3, ht_t0⟩ => by
     rw [← hg_eq_h₂ t ht3 (by linarith)]
     exact g_i_seg3_im_neg ht3 ht_t0 hH
   have piece₃ := ftc_log_piece_lower (by linarith : (3:ℝ) ≤ t₀)
@@ -576,34 +572,25 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
     · rw [← hgt₀_2, hgt₀_val]; norm_num
     · rw [← hg_eq_h₂ t (by linarith) ht4]
-      exact le_of_lt (g_i_seg3_im_pos ht_t0' ht4 hH)
+      exact (g_i_seg3_im_pos ht_t0' ht4 hH).le
   have hh₂_ne_t₀4 : ∀ t ∈ Icc t₀ (4:ℝ), h₂ t ≠ 0 := by
     intro t ⟨ht_t0, ht4⟩
     rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
     · rw [← hgt₀_2]; exact g_i_ne_zero_seg3 (by linarith) (by linarith)
     · rw [← hg_eq_h₂ t (by linarith) ht4]
       exact g_i_ne_zero_seg3 (by linarith) ht4
-  have hh₂_slit_int_t₀4 : ∀ t ∈ Ioo t₀ (4:ℝ), h₂ t ∈ slitPlane := by
-    intro t ⟨ht_t0, ht4⟩
-    rw [← hg_eq_h₂ t (by linarith) (le_of_lt ht4)]
-    rw [Complex.mem_slitPlane_iff]; right
-    exact ne_of_gt (g_i_seg3_im_pos ht_t0 (le_of_lt ht4) hH)
+  have hh₂_slit_int_t₀4 : ∀ t ∈ Ioo t₀ (4:ℝ), h₂ t ∈ slitPlane := fun t ⟨ht_t0, ht4⟩ => by
+    rw [← hg_eq_h₂ t (by linarith) ht4.le, Complex.mem_slitPlane_iff]
+    exact .inr (ne_of_gt (g_i_seg3_im_pos ht_t0 ht4.le hH))
   have piece₄ := ftc_log_piece_upper (by linarith : t₀ ≤ 4)
     hh₂_cont_t₀4 hh₂_diff_t₀4 (hh₂_deriv_cont t₀ 4)
     hh₂_im_nn_t₀4 hh₂_ne_t₀4 hh₂_slit_int_t₀4 heq_t₀_4 hgt₀_2 hg4_2
   have hh₃_slit : ∀ t ∈ Icc (4:ℝ) 5, h₃ t ∈ slitPlane := by
-    intro t ⟨ht4, ht5⟩
-    rcases eq_or_lt_of_le ht4 with rfl | ht4'
-    · rw [Complex.mem_slitPlane_iff]; right
-      simp only [h₃, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.ofReal_re,
-        Complex.I_re, Complex.I_im, mul_zero, mul_one, add_zero]
-      linarith
-    · rw [show h₃ t = g t from (hg_eq_h₃ t ht4').symm, Complex.mem_slitPlane_iff]
-      right
-      change (g t).im ≠ 0
-      simp only [show g t = h₃ t from hg_eq_h₃ t ht4', h₃, Complex.add_im, Complex.ofReal_im,
-        Complex.mul_im, Complex.ofReal_re, Complex.I_re, Complex.I_im, mul_zero, mul_one, add_zero]
-      linarith
+    intro t ⟨ht4, _⟩
+    rw [Complex.mem_slitPlane_iff]; right
+    simp only [h₃, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.ofReal_re,
+      Complex.I_re, Complex.I_im, mul_zero, mul_one, add_zero]
+    linarith
   have piece₅ := ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5) hh₃_cont hh₃_diff
     hh₃_deriv_cont hh₃_slit heq_45 hg4_3 hg5
   have hint_left : IntervalIntegrable (fun t => deriv g t / g t) volume 0 (2 - δ) :=
@@ -635,7 +622,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
         ← Complex.ofReal_log (show (0:ℝ) ≤ 1/2 from by norm_num)]
     ring
   have hg_closed : g 0 = g 5 := by
-    change fdBoundary_H H 0 - I = fdBoundary_H H 5 - I
+    show fdBoundary_H H 0 - I = fdBoundary_H H 5 - I
     rw [fdBoundary_H_closed H]
   have h_branch_t₀' : Complex.log (-(g t₀)) = Complex.log (g t₀) - ↑Real.pi * I := by
     linear_combination h_branch_t₀
