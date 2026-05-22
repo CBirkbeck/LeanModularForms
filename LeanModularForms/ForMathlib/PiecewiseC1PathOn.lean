@@ -228,6 +228,22 @@ noncomputable def concat {a b c : ℝ} {x y z : E}
         (concatFun_eventuallyEq_right hgt).deriv
       exact hderiv.congr_of_eventuallyEq heq
 
+/-- On the left half `[a, b]`, the concatenation agrees with the first path. -/
+theorem concat_apply_of_le {a b c : ℝ} {x y z : E}
+    (hab : a < b) (hbc : b < c)
+    (γ₁ : PiecewiseC1PathOn a b hab x y) (γ₂ : PiecewiseC1PathOn b c hbc y z)
+    {t : ℝ} (ht : t ≤ b) :
+    (γ₁.concat hab hbc γ₂).toFun t = γ₁.toFun t :=
+  concatFun_of_le ht
+
+/-- On the right half `(b, c]`, the concatenation agrees with the second path. -/
+theorem concat_apply_of_lt {a b c : ℝ} {x y z : E}
+    (hab : a < b) (hbc : b < c)
+    (γ₁ : PiecewiseC1PathOn a b hab x y) (γ₂ : PiecewiseC1PathOn b c hbc y z)
+    {t : ℝ} (ht : b < t) :
+    (γ₁.concat hab hbc γ₂).toFun t = γ₂.toFun t :=
+  concatFun_of_lt ht
+
 /-- The five-fold concatenation of adjacent piecewise C¹ paths, used to assemble
 boundary curves built from five smooth segments. -/
 noncomputable def concat₅ {a₀ a₁ a₂ a₃ a₄ a₅ : ℝ} {x₀ x₁ x₂ x₃ x₄ x₅ : E}
