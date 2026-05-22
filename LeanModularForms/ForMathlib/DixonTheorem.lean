@@ -189,32 +189,10 @@ theorem dixonFunction_eventually_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ}
   · simp [h_identity w hoff, hwn]
   · rfl
 
-/-- **B-4 bundle**: `dixonFunction_eventually_eq_dixonH2` for null-homologous curves
-in bounded open sets. The `h_winding_evt` premise is discharged automatically via
-`IsNullHomologous.winding_eventually_zero_cocompact_of_bounded`.
-
-Takes the `h_identity` hypothesis (which follows from the integrability and
-`dixonH1_eq_dixonH2_sub_winding_f`) and null-homologous + bounded U, producing
-the eventual equality in `cocompact ℂ`. -/
-theorem dixonFunction_eventually_eq_dixonH2_of_nullHomologous
-    {f : ℂ → ℂ} {U : Set ℂ}
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    (hU_bounded : Bornology.IsBounded U)
-    (h_identity : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      dixonH1 f γ.toPiecewiseC1Path w =
-        dixonH2 f γ.toPiecewiseC1Path w -
-          2 * ↑Real.pi * I * generalizedWindingNumber γ.toPiecewiseC1Path w * f w) :
-    ∀ᶠ w in Filter.cocompact ℂ,
-      dixonFunction f U γ.toPiecewiseC1Path w =
-        dixonH2 f γ.toPiecewiseC1Path w :=
-  dixonFunction_eventually_eq_dixonH2 γ h_identity
-    (h_null.winding_eventually_zero_cocompact_of_bounded hU_bounded)
-
 /-! ## Cauchy integral formula -/
 
-/-- **Cauchy integral formula from pointwise Dixon-zero.** Weakened version of
-`cauchyIntegralFormula_nullHomologous` requiring only `dixonFunction f U γ w = 0`
-at the specific point `w` (not globally). -/
+/-- **Cauchy integral formula from pointwise Dixon-zero.** Requires only
+`dixonFunction f U γ w = 0` at the specific point `w` (not globally). -/
 private theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : Set ℂ}
     {γ : PiecewiseC1Path x x}
     {w : ℂ} (h_zero_at : dixonFunction f U γ w = 0)
@@ -229,45 +207,6 @@ private theorem cauchyIntegralFormula_nullHomologous_at {f : ℂ → ℂ} {U : S
   have h_identity := dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
   rw [h_zero_at] at h_identity
   exact sub_eq_zero.mp h_identity.symm
-
-/-- **Cauchy integral formula for null-homologous curves.**
-
-For a closed piecewise C^1 path `γ` with `f` holomorphic on `U`:
-
-  `dixonH2 f γ w = 2πi · n(γ, w) · f(w)`
-
-for `w ∈ U` off the curve, provided `dixonFunction f U γ ≡ 0`.
-
-Proof: `h_zero` gives `dixonFunction(w) = h1(w) = 0`. The `h1/h2` identity then gives
-`0 = h2(w) - 2πi · n(γ,w) · f(w)`. -/
-private theorem cauchyIntegralFormula_nullHomologous {f : ℂ → ℂ} {U : Set ℂ}
-    {γ : PiecewiseC1Path x x}
-    (h_zero : ∀ w, dixonFunction f U γ w = 0)
-    (w : ℂ) (hw : w ∈ U)
-    (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
-    (h_cauchy_int : IntervalIntegrable
-      (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1)
-    (h_base_int : IntervalIntegrable
-      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
-    dixonH2 f γ w =
-      2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w :=
-  cauchyIntegralFormula_nullHomologous_at (h_zero w) hw hoff h_cauchy_int h_base_int
-
-/-- `dixonH1 f γ w = 0` when the Dixon function is identically zero and `w ∈ U`. -/
-theorem dixonH1_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
-    {γ : PiecewiseC1Path x x}
-    (h_zero : ∀ w, dixonFunction f U γ w = 0)
-    (w : ℂ) (hw : w ∈ U) :
-    dixonH1 f γ w = 0 := by
-  simp [← dixonFunction_eq_dixonH1 hw, h_zero w]
-
-/-- `dixonH2 f γ w = 0` when the Dixon function is identically zero and `w ∉ U`. -/
-theorem dixonH2_eq_zero_of_dixonFunction_eq_zero {f : ℂ → ℂ} {U : Set ℂ}
-    {γ : PiecewiseC1Path x x}
-    (h_zero : ∀ w, dixonFunction f U γ w = 0)
-    (w : ℂ) (hw : w ∉ U) :
-    dixonH2 f γ w = 0 := by
-  simp [← dixonFunction_eq_dixonH2 hw, h_zero w]
 
 /-! ## Cauchy's theorem for null-homologous curves: `∮_γ f = 0` -/
 
