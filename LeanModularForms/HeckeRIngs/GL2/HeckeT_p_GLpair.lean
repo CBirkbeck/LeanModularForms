@@ -506,6 +506,95 @@ lemma adj_lower_inv_mul_upper_not_mem_H (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
   have h_le := Int.le_of_dvd one_pos this
   linarith [show (1 : ℤ) < ↑p from Int.ofNat_lt.mpr hp.one_lt]
 
+/-- If two `H`-elements `a₁, a₂` represent the same class in `decompQuot D` and provide
+double-coset factorisations `adj(gᵢ) = aᵢ · rep · cᵢ`, then `adj(g₁)⁻¹ · adj(g₂) ∈ H`.
+The quotient equality gives `rep⁻¹ · (a₁⁻¹ · a₂) · rep ∈ H`, which conjugates into the
+goal `c₁⁻¹ · (rep⁻¹ · a₁⁻¹ · a₂ · rep) · c₂ ∈ H`. -/
+private lemma adj_inv_mul_mem_H_of_decompQuot_eq (D : HeckeCoset (GL_pair 2))
+    (a₁ : GL _ ℚ) (ha₁ : a₁ ∈ (GL_pair 2).H) (c₁ : GL _ ℚ) (hc₁ : c₁ ∈ (GL_pair 2).H)
+    (a₂ : GL _ ℚ) (ha₂ : a₂ ∈ (GL_pair 2).H) (c₂ : GL _ ℚ) (hc₂ : c₂ ∈ (GL_pair 2).H)
+    (g₁ g₂ : GL _ ℚ)
+    (heq₁ : GL_adjugate g₁ = a₁ * (HeckeCoset.rep D : GL _ ℚ) * c₁)
+    (heq₂ : GL_adjugate g₂ = a₂ * (HeckeCoset.rep D : GL _ ℚ) * c₂)
+    (hquot : (⟦(⟨a₁, ha₁⟩ : (GL_pair 2).H)⟧ : decompQuot (GL_pair 2) (HeckeCoset.rep D)) =
+      ⟦⟨a₂, ha₂⟩⟧) :
+    (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (GL_pair 2).H := by
+  rw [heq₁, heq₂]
+  have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
+  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv,
+    Subgroup.coe_mul, Subgroup.coe_inv] at hrel
+  -- hrel: rep⁻¹ * (a₁⁻¹ * a₂) * rep ∈ H
+  rw [show (a₁ * ↑(HeckeCoset.rep D) * c₁)⁻¹ * (a₂ * ↑(HeckeCoset.rep D) * c₂) =
+      c₁⁻¹ * ((↑(HeckeCoset.rep D))⁻¹ * (a₁⁻¹ * a₂) * ↑(HeckeCoset.rep D)) * c₂ from by group]
+  exact (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hc₁) hrel) hc₂
+
+/-- Reindex the explicit `T_p` coset sum `(∑_{j < p} F j) + G` as a single sum over
+`Fin (p + 1)` with a `dite` selecting the upper terms `F` for `j < p` and the lower term
+`G` for `j = p`. -/
+private lemma sum_range_add_eq_sum_fin_succ_dite {M : Type*} [AddCommMonoid M]
+    (p : ℕ) (F : ℕ → M) (G : M) :
+    (∑ j ∈ Finset.range p, F j) + G =
+    ∑ j : Fin (p + 1), if _h : (j : ℕ) < p then F (j : ℕ) else G := by
+  rw [← Fin.sum_univ_eq_sum_range, Fin.sum_univ_castSucc]; congr 1
+  · congr 1; ext j; simp [j.isLt]
+  · simp
+
+/-- The `p + 1` adjugated `T_p` representatives lie in distinct left `H`-cosets:
+for `j₁ ≠ j₂` the product `adj(gⱼ₁)⁻¹ · adj(gⱼ₂) ∉ H`, where `gⱼ` is `T_p_upper j`
+for `j < p` and `T_p_lower` for `j = p`. Dispatches to the three matrix-entry lemmas. -/
+private lemma adj_Tp_rep_inv_mul_not_mem_H (p : ℕ) (hp : Nat.Prime p)
+    (j₁ j₂ : Fin (p + 1)) (hne : j₁ ≠ j₂) :
+    (GL_adjugate (if (j₁ : ℕ) < p then T_p_upper p hp.pos (j₁ : ℕ)
+        else T_p_lower p hp.pos : GL (Fin 2) ℚ))⁻¹ *
+     GL_adjugate (if (j₂ : ℕ) < p then T_p_upper p hp.pos (j₂ : ℕ)
+        else T_p_lower p hp.pos : GL (Fin 2) ℚ) ∉ (GL_pair 2).H := by
+  split_ifs
+  · exact adj_upper_inv_mul_not_mem_H p hp (j₁ : ℕ) (j₂ : ℕ) ‹(j₁ : ℕ) < p› ‹(j₂ : ℕ) < p›
+      (fun h => hne (Fin.ext h))
+  · exact adj_upper_inv_mul_lower_not_mem_H p hp (j₁ : ℕ)
+  · exact adj_lower_inv_mul_upper_not_mem_H p hp (j₂ : ℕ)
+  · exact absurd (Fin.ext (show (j₁ : ℕ) = (j₂ : ℕ) by
+      have := j₁.isLt; have := j₂.isLt; omega)) hne
+
+/-- Abstract coset-sum equality. Given representatives `g j` of the double coset `D`
+whose adjugates factor as `adj(g j) = h₁ · rep · h₂` (so each `g j` matches some
+`tRep_gen` class), with the index set equinumerous to `decompQuot D` and the classes
+pairwise distinct (`adj(g j₁)⁻¹ · adj(g j₂) ∉ H` for `j₁ ≠ j₂`), the abstract sum
+`∑_σ f ∣[k] tRep_gen σ` equals the explicit sum `∑_j f ∣[k] g j`. -/
+private lemma sum_tRep_gen_eq_sum_of_adj_factored {ι : Type*} [Fintype ι] (k : ℤ) (f : ℍ → ℂ)
+    (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) (D : HeckeCoset (GL_pair 2)) (g : ι → GL (Fin 2) ℚ)
+    (hcard : Fintype.card ι = Fintype.card (decompQuot (GL_pair 2) (HeckeCoset.rep D)))
+    (hfac : ∀ j, ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (GL_pair 2).H)
+        (h₂ : GL _ ℚ) (_ : h₂ ∈ (GL_pair 2).H),
+        GL_adjugate (g j) = h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
+    (hdist : ∀ j₁ j₂, j₁ ≠ j₂ →
+        (GL_adjugate (g j₁))⁻¹ * GL_adjugate (g j₂) ∉ (GL_pair 2).H) :
+    ∑ σ : decompQuot (GL_pair 2) (HeckeCoset.rep D), f ∣[k] tRep_gen (GL_pair 2) D σ =
+    ∑ j, f ∣[k] g j := by
+  classical
+  let φ : ι → decompQuot (GL_pair 2) (HeckeCoset.rep D) := fun j =>
+    ⟦⟨(hfac j).choose, (hfac j).choose_spec.choose⟩⟧
+  have h_val : ∀ j, f ∣[k] g j = f ∣[k] tRep_gen (GL_pair 2) D (φ j) := fun j =>
+    slash_eq_tRep_gen_of_adj_mem k f hf D _ _ _ (hfac j).choose_spec.choose
+      (hfac j).choose_spec.choose_spec.choose_spec.choose
+      (hfac j).choose_spec.choose_spec.choose_spec.choose_spec
+  have h_inj : Function.Injective φ := by
+    intro j₁ j₂ heq
+    by_contra hne
+    refine hdist j₁ j₂ hne (adj_inv_mul_mem_H_of_decompQuot_eq D
+      (hfac j₁).choose (hfac j₁).choose_spec.choose
+      (hfac j₁).choose_spec.choose_spec.choose
+      (hfac j₁).choose_spec.choose_spec.choose_spec.choose
+      (hfac j₂).choose (hfac j₂).choose_spec.choose
+      (hfac j₂).choose_spec.choose_spec.choose
+      (hfac j₂).choose_spec.choose_spec.choose_spec.choose
+      (g j₁) (g j₂) (hfac j₁).choose_spec.choose_spec.choose_spec.choose_spec
+      (hfac j₂).choose_spec.choose_spec.choose_spec.choose_spec heq)
+  have h_bij : Function.Bijective φ := by
+    rw [Fintype.bijective_iff_injective_and_card]; exact ⟨h_inj, hcard⟩
+  exact (Fintype.sum_bijective φ h_bij _ _ h_val).symm
+
 set_option maxHeartbeats 6400000 in
 theorem tRep_gen_D_p_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime p) (f : ℍ → ℂ)
     (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
@@ -515,169 +604,28 @@ theorem tRep_gen_D_p_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime p) (f 
       f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   set D := D_p p hp.pos
   have hadj_rep := adj_rep_mem_D_p p hp
-  -- Each T_p rep g ∈ D gives ∃ σ, f|g = f|tRep_gen D σ (from exists_tRep_gen_eq_slash)
-  -- The p+1 reps map to p+1 DISTINCT decompQuot elements (from adj_*_not_mem_H).
-  -- Since |decompQuot| = p+1, this gives a bijection and the sums match.
-  -- Use exists_tRep_gen_eq_slash which gives ∃ σ with slash equality
-  have h_upper : ∀ b : Fin p,
-      ∃ σ : decompQuot (GL_pair 2) (HeckeCoset.rep D),
-        f ∣[k] (T_p_upper p hp.pos b.val : GL _ ℚ) =
-        f ∣[k] tRep_gen (GL_pair 2) D σ := fun b =>
-    exists_tRep_gen_eq_slash k f hf D _ (T_p_upper_mem_D_p p hp b.val b.isLt) hadj_rep
-  have h_lower :
-      ∃ σ : decompQuot (GL_pair 2) (HeckeCoset.rep D),
-        f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) =
-        f ∣[k] tRep_gen (GL_pair 2) D σ :=
-    exists_tRep_gen_eq_slash k f hf D _ (T_p_lower_mem_D_p p hp) hadj_rep
-  -- Get adj factorisations for all T_p reps (from adj_mem_dc)
-  have h_upper_dc : ∀ b : Fin p,
-      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (GL_pair 2).H) (h₂ : GL _ ℚ) (_ : h₂ ∈ (GL_pair 2).H),
-        GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ := fun b =>
-    adj_mem_dc D _ (T_p_upper_mem_D_p p hp b.val b.isLt) hadj_rep
-  have h_lower_dc :
-      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (GL_pair 2).H) (h₂ : GL _ ℚ) (_ : h₂ ∈ (GL_pair 2).H),
-        GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ :=
-    adj_mem_dc D _ (T_p_lower_mem_D_p p hp) hadj_rep
-  -- Define φ : Fin(p+1) → decompQuot using h₁ from adj factorisations
-  let φ : Fin (p + 1) → decompQuot (GL_pair 2) (HeckeCoset.rep D) := fun j =>
-    if h : j.val < p then
-      ⟦⟨(h_upper_dc ⟨j.val, h⟩).choose,
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose⟩⟧
-    else
-      ⟦⟨h_lower_dc.choose, h_lower_dc.choose_spec.choose⟩⟧
-  -- Value equality: f ∣[k] g_j = f ∣[k] tRep_gen D (φ j)
-  have h_val : ∀ j : Fin (p + 1),
-      (if h : j.val < p then
-        f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
-      else
-        f ∣[k] (T_p_lower p hp.pos : GL _ ℚ)) =
-      f ∣[k] tRep_gen (GL_pair 2) D (φ j) := by
-    intro j; simp only [φ]; split_ifs with h
-    · exact slash_eq_tRep_gen_of_adj_mem k f hf D _ _ _
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose_spec
-    · exact slash_eq_tRep_gen_of_adj_mem k f hf D _ _ _
-        h_lower_dc.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
-  -- Injectivity of φ: if φ(j₁) = φ(j₂), then adj(g₁)⁻¹ * adj(g₂) ∈ H,
-  -- contradicting the adj_*_not_mem_H lemmas.
-  -- Helper: extract adj(g₁)⁻¹ * adj(g₂) ∈ H from φ(j₁) = φ(j₂)
-  -- If ⟦⟨a₁,ha₁⟩⟧ = ⟦⟨a₂,ha₂⟩⟧ in decompQuot = H / conjSub(rep), then
-  -- a₁⁻¹ * a₂ ∈ conjSub = (ConjAct rep) • H, i.e. rep⁻¹ * a₁⁻¹ * a₂ * rep ∈ H.
-  -- From adj(g₁) = a₁ * rep * c₁ and adj(g₂) = a₂ * rep * c₂:
-  -- adj(g₁)⁻¹ * adj(g₂) = c₁⁻¹ * rep⁻¹ * a₁⁻¹ * a₂ * rep * c₂ ∈ H.
-  have h_quot_imp_adj_mem :
-      ∀ (a₁ : GL _ ℚ) (ha₁ : a₁ ∈ (GL_pair 2).H)
-        (c₁ : GL _ ℚ) (hc₁ : c₁ ∈ (GL_pair 2).H)
-        (a₂ : GL _ ℚ) (ha₂ : a₂ ∈ (GL_pair 2).H)
-        (c₂ : GL _ ℚ) (hc₂ : c₂ ∈ (GL_pair 2).H)
-        (g₁ g₂ : GL _ ℚ)
-        (heq₁ : GL_adjugate g₁ = a₁ * (HeckeCoset.rep D : GL _ ℚ) * c₁)
-        (heq₂ : GL_adjugate g₂ = a₂ * (HeckeCoset.rep D : GL _ ℚ) * c₂),
-        (⟦(⟨a₁, ha₁⟩ : (GL_pair 2).H)⟧ : decompQuot (GL_pair 2) (HeckeCoset.rep D)) =
-          ⟦⟨a₂, ha₂⟩⟧ →
-        (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (GL_pair 2).H := by
-    intro a₁ ha₁ c₁ hc₁ a₂ ha₂ c₂ hc₂ g₁ g₂ heq₁ heq₂ hquot
-    rw [heq₁, heq₂]
-    -- Goal: (a₁ * rep * c₁)⁻¹ * (a₂ * rep * c₂) ∈ H
-    -- Extract: ⟨a₁,ha₁⟩⁻¹ * ⟨a₂,ha₂⟩ ∈ conjSub from quotient equality
-    have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
-    rw [Subgroup.mem_subgroupOf] at hrel
-    -- hrel: ↑(⟨a₁,ha₁⟩⁻¹ * ⟨a₂,ha₂⟩) ∈ ConjAct.toConjAct rep • H
-    -- This means ∃ h ∈ H, a₁⁻¹ * a₂ = rep * h * rep⁻¹
-    -- So rep⁻¹ * (a₁⁻¹ * a₂) * rep ∈ H
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
-    simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
-    -- hrel: rep⁻¹ * ↑(⟨a₁,ha₁⟩⁻¹ * ⟨a₂,ha₂⟩) * rep ∈ H
-    -- Simplify the subtype coercion: ↑(⟨a₁,ha₁⟩⁻¹ * ⟨a₂,ha₂⟩) = a₁⁻¹ * a₂
-    simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
-    -- hrel: rep⁻¹ * (a₁⁻¹ * a₂) * rep ∈ H
-    -- Goal: (a₁ * rep * c₁)⁻¹ * (a₂ * rep * c₂) ∈ H
-    -- = c₁⁻¹ * (rep⁻¹ * (a₁⁻¹ * a₂) * rep) * c₂
-    have h_prod : (a₁ * ↑(HeckeCoset.rep D) * c₁)⁻¹ * (a₂ * ↑(HeckeCoset.rep D) * c₂) =
-        c₁⁻¹ * ((↑(HeckeCoset.rep D))⁻¹ * (a₁⁻¹ * a₂) *
-          ↑(HeckeCoset.rep D)) * c₂ := by group
-    rw [h_prod]
-    exact (GL_pair 2).H.mul_mem ((GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hc₁) hrel) hc₂
-  -- Injectivity of φ
-  have h_inj : Function.Injective φ := by
-    intro j₁ j₂ heq
-    by_contra hne
-    simp only [φ] at heq
-    -- Case analysis on upper/lower
-    by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
-    · -- Both upper: b₁ ≠ b₂
-      simp only [h₁, h₂, dite_true] at heq
-      have hne_val : j₁.val ≠ j₂.val := fun h => hne (Fin.ext h)
-      -- Extract adj factorisations
-      set e₁ := h_upper_dc ⟨j₁.val, h₁⟩
-      set e₂ := h_upper_dc ⟨j₂.val, h₂⟩
-      -- From heq and h_quot_imp_adj_mem: adj(g₁)⁻¹ * adj(g₂) ∈ H
-      have hmem := h_quot_imp_adj_mem
-        e₁.choose e₁.choose_spec.choose
-        e₁.choose_spec.choose_spec.choose e₁.choose_spec.choose_spec.choose_spec.choose
-        e₂.choose e₂.choose_spec.choose
-        e₂.choose_spec.choose_spec.choose e₂.choose_spec.choose_spec.choose_spec.choose
-        (T_p_upper p hp.pos j₁.val) (T_p_upper p hp.pos j₂.val)
-        e₁.choose_spec.choose_spec.choose_spec.choose_spec
-        e₂.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂ hne_val hmem
-    · -- j₁ upper, j₂ lower
-      simp only [h₁, dite_true, h₂, dite_false] at heq
-      set e₁ := h_upper_dc ⟨j₁.val, h₁⟩
-      have hmem := h_quot_imp_adj_mem
-        e₁.choose e₁.choose_spec.choose
-        e₁.choose_spec.choose_spec.choose e₁.choose_spec.choose_spec.choose_spec.choose
-        h_lower_dc.choose h_lower_dc.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose
-          h_lower_dc.choose_spec.choose_spec.choose_spec.choose
-        (T_p_upper p hp.pos j₁.val) (T_p_lower p hp.pos)
-        e₁.choose_spec.choose_spec.choose_spec.choose_spec
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact adj_upper_inv_mul_lower_not_mem_H p hp j₁.val hmem
-    · -- j₁ lower, j₂ upper
-      simp only [h₁, dite_false, h₂, dite_true] at heq
-      set e₂ := h_upper_dc ⟨j₂.val, h₂⟩
-      have hmem := h_quot_imp_adj_mem
-        h_lower_dc.choose h_lower_dc.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose
-          h_lower_dc.choose_spec.choose_spec.choose_spec.choose
-        e₂.choose e₂.choose_spec.choose
-        e₂.choose_spec.choose_spec.choose e₂.choose_spec.choose_spec.choose_spec.choose
-        (T_p_lower p hp.pos) (T_p_upper p hp.pos j₂.val)
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
-        e₂.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact adj_lower_inv_mul_upper_not_mem_H p hp j₂.val hmem
-    · -- Both lower: j₁.val ≥ p and j₂.val ≥ p with j₁, j₂ : Fin (p+1)
-      -- So j₁.val = p = j₂.val, contradiction
-      have := j₁.isLt; have := j₂.isLt; omega
-  -- φ is bijective (injective + matching cardinalities)
-  have h_bij : Function.Bijective φ := by
-    rw [Fintype.bijective_iff_injective_and_card]
-    exact ⟨h_inj, by rw [Fintype.card_fin, card_decompQuot_D_p p hp]⟩
-  -- Rewrite: ∑_σ f|tRep_gen σ = ∑_j f|tRep_gen (φ j) = ∑_j f|g_j
-  symm
-  -- Goal: RHS = LHS, i.e., (∑ range p upper + lower) = ∑_σ tRep_gen σ
-  -- First rewrite the RHS as ∑ over Fin(p+1)
-  rw [← Fin.sum_univ_eq_sum_range]
-  -- Goal: (∑ j : Fin p, f|upper(j) + f|lower) = ∑_σ f|tRep_gen σ
-  -- Rewrite as single sum over Fin(p+1) using Fin.sum_univ_castSucc
-  rw [show (∑ j : Fin p, f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)) +
-      f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) =
-    ∑ j : Fin (p + 1),
-      if h : j.val < p then f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
-      else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) from by
-    rw [Fin.sum_univ_castSucc]; congr 1
-    · congr 1; ext j; simp [j.isLt]
-    · simp]
-  exact Fintype.sum_bijective φ h_bij _ _ h_val
+  -- The `p + 1` explicit representatives, indexed by `Fin (p + 1)`: `T_p_upper b` for
+  -- `b < p` and `T_p_lower` for the last index.
+  set g : Fin (p + 1) → GL (Fin 2) ℚ := fun j =>
+    if (j : ℕ) < p then T_p_upper p hp.pos (j : ℕ) else T_p_lower p hp.pos with hg
+  -- Each `g j` lies in the double coset `D`, so `adj(g j)` factors through `rep`.
+  have hmem : ∀ j, g j ∈ HeckeCoset.toSet D := by
+    intro j; simp only [hg]; split_ifs with h
+    · exact T_p_upper_mem_D_p p hp (j : ℕ) h
+    · exact T_p_lower_mem_D_p p hp
+  have hfac := fun j => adj_mem_dc D (g j) (hmem j) hadj_rep
+  -- The representatives lie in pairwise distinct left `H`-cosets.
+  have hdist : ∀ j₁ j₂ : Fin (p + 1), j₁ ≠ j₂ →
+      (GL_adjugate (g j₁))⁻¹ * GL_adjugate (g j₂) ∉ (GL_pair 2).H := by
+    intro j₁ j₂ hne; simp only [hg]; exact adj_Tp_rep_inv_mul_not_mem_H p hp j₁ j₂ hne
+  -- Reduce the abstract sum to `∑_j f ∣[k] g j`, then reindex `g` to the explicit form.
+  rw [sum_tRep_gen_eq_sum_of_adj_factored k f hf D g
+      (by rw [Fintype.card_fin]; exact (card_decompQuot_D_p p hp).symm) hfac hdist,
+    sum_range_add_eq_sum_fin_succ_dite p
+      (fun n => f ∣[k] (T_p_upper p hp.pos n : GL (Fin 2) ℚ))
+      (f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ))]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  simp only [hg]; split_ifs <;> rfl
 
 /-! ### Main theorem: diamond triviality and heckeT_p_fun = heckeSlash_gen -/
 

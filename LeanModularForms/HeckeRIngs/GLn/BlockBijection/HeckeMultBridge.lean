@@ -128,6 +128,98 @@ private lemma decompQuot_out_eq {n : ℕ} [NeZero n] {g : (GL_pair n).Δ}
     (q : decompQuot (GL_pair n) g) :
     (⟦q.out⟧ : decompQuot (GL_pair n) g) = q := Quotient.out_eq q
 
+/-- Cancel `.out` from a `decompQuot` equality: if the classes of the chosen
+representatives agree, the original quotient elements agree. -/
+private lemma decompQuot_eq_of_out_eq {n : ℕ} [NeZero n] {g : (GL_pair n).Δ}
+    {q₁ q₂ : decompQuot (GL_pair n) g}
+    (h : (⟦q₁.out⟧ : decompQuot (GL_pair n) g) = ⟦q₂.out⟧) : q₁ = q₂ := by
+  rw [decompQuot_out_eq, decompQuot_out_eq] at h; exact h
+
+/-- Two `decompQuot` elements coincide once their representatives are equivalent
+modulo the stabilizer, i.e. `q₁.out⁻¹ · q₂.out` lies in the conjugate stabilizer. -/
+private lemma decompQuot_eq_of_inv_out_mul_mem {n : ℕ} [NeZero n] {g : (GL_pair n).Δ}
+    {q₁ q₂ : decompQuot (GL_pair n) g}
+    (h : (q₁.out)⁻¹ * q₂.out ∈
+      (ConjAct.toConjAct (g : GL (Fin n) ℚ) • (GL_pair n).H).subgroupOf (GL_pair n).H) :
+    q₁ = q₂ :=
+  decompQuot_eq_of_out_eq (Quotient.sound ((QuotientGroup.leftRel_apply).mpr h))
+
+/-- Lift the `H`-level relation `⟦h⟧.out = h · m` (from `QuotientGroup.mk_out_eq_mul`)
+to the underlying `GL ℚ` element, for an arbitrary `decompQuot` over `δ`. -/
+private lemma decompQuot_out_coe_eq_mul {n : ℕ} [NeZero n] {δ : (GL_pair n).Δ}
+    {h : (GL_pair n).H}
+    {m : (ConjAct.toConjAct (δ : GL (Fin n) ℚ) • (GL_pair n).H).subgroupOf (GL_pair n).H}
+    (hm : (⟦h⟧ : decompQuot (GL_pair n) δ).out = h * m) :
+    ((⟦h⟧ : decompQuot (GL_pair n) δ).out : GL (Fin n) ℚ) =
+      (h : GL (Fin n) ℚ) * (m : GL (Fin n) ℚ) := by
+  have := congr_arg (Subtype.val : ↥(GL_pair n).H → GL (Fin n) ℚ) hm
+  simpa [Subgroup.coe_mul] using this
+
+/-- The `mk_out_eq_mul` stabilizer shift for `decompQuot δ`: `⟦σ⟧.out = σ · outShift δ σ`. -/
+private noncomputable def outShift {n : ℕ} [NeZero n] (δ : (GL_pair n).Δ)
+    (σ : (GL_pair n).H) :
+    (ConjAct.toConjAct (δ : GL (Fin n) ℚ) • (GL_pair n).H).subgroupOf (GL_pair n).H :=
+  (QuotientGroup.mk_out_eq_mul _ σ).choose
+
+/-- Defining property of `outShift`: `⟦σ⟧.out = σ · outShift δ σ` in `decompQuot δ`. -/
+private lemma out_eq_mul_outShift {n : ℕ} [NeZero n] (δ : (GL_pair n).Δ) (σ : (GL_pair n).H) :
+    (⟦σ⟧ : decompQuot (GL_pair n) δ).out = σ * outShift δ σ :=
+  (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
+
+/-- The compensated second-component representative
+`δ⁻¹·(outShift δ σ)⁻¹·δ · τ`, used to absorb the `outShift`-shift of the first
+component into the second coset of the compensated injection. -/
+private noncomputable def compensatedYbase {n : ℕ} [NeZero n] (δ : (GL_pair n).Δ)
+    (σ τ : (GL_pair n).H) : (GL_pair n).H :=
+  ⟨_, conjAct_inv_mem_of_subgroupOf (δ : GL (Fin n) ℚ) (outShift δ σ)⟩ * τ
+
+/-- Underlying `GL ℚ` form of `compensatedYbase`. -/
+private lemma compensatedYbase_coe {n : ℕ} [NeZero n] (δ : (GL_pair n).Δ)
+    (σ τ : (GL_pair n).H) :
+    ((compensatedYbase δ σ τ : (GL_pair n).H) : GL (Fin n) ℚ) =
+      (δ : GL (Fin n) ℚ)⁻¹ * ((outShift δ σ : (GL_pair n).H) : GL (Fin n) ℚ)⁻¹ *
+        (δ : GL (Fin n) ℚ) * (τ : GL (Fin n) ℚ) := by
+  simp [compensatedYbase, Subgroup.coe_mul]
+
+/-- **Out-side of the compensated injection.** From the merged right-coset condition
+for the compensated representatives `σ_bar, τ_bar` at the `δA`/`δB` level, the pair
+`(⟦σ_bar⟧, ⟦compensatedYbase δA σ_bar τ_bar⟧)` of `.out`-representatives satisfies the
+target right-coset condition. Shared core of the three compensated multiplicity
+bounds, discharged through `coset_shift_fwd_q1`. -/
+private lemma coset_cond_of_compensated_out {n : ℕ} [NeZero n] (δA δB δC : (GL_pair n).Δ)
+    (σ_bar τ_bar : (GL_pair n).H)
+    (h_rc_lift_merged :
+        ({(σ_bar : GL (Fin n) ℚ) * (δA : GL (Fin n) ℚ) *
+            ((τ_bar : GL (Fin n) ℚ) * (δB : GL (Fin n) ℚ))} : Set _) *
+          ((GL_pair n).H : Set _) =
+        {(δC : GL (Fin n) ℚ)} * ((GL_pair n).H : Set _)) :
+    ({((⟦σ_bar⟧ : decompQuot (GL_pair n) δA).out : GL (Fin n) ℚ) * (δA : GL (Fin n) ℚ)} :
+        Set _) *
+      {((⟦compensatedYbase δA σ_bar τ_bar⟧ : decompQuot (GL_pair n) δB).out :
+          GL (Fin n) ℚ) * (δB : GL (Fin n) ℚ)} *
+      ((GL_pair n).H : Set _) =
+      {(δC : GL (Fin n) ℚ)} * ((GL_pair n).H : Set _) := by
+  set n₁ := outShift δA σ_bar
+  obtain ⟨n₂, hn₂_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (δB : GL (Fin n) ℚ) • (GL_pair n).H).subgroupOf (GL_pair n).H)
+    (compensatedYbase δA σ_bar τ_bar)
+  have hj_form : ((⟦compensatedYbase δA σ_bar τ_bar⟧ :
+        decompQuot (GL_pair n) δB).out : GL (Fin n) ℚ) =
+      (δA : GL (Fin n) ℚ)⁻¹ * (n₁ : GL (Fin n) ℚ)⁻¹ * (δA : GL (Fin n) ℚ) *
+        (τ_bar : GL (Fin n) ℚ) * (n₂ : GL (Fin n) ℚ) := by
+    rw [decompQuot_out_coe_eq_mul hn₂_eq, compensatedYbase_coe]
+  have hn₂_conj : (δB : GL (Fin n) ℚ)⁻¹ * (n₂ : GL (Fin n) ℚ) * (δB : GL (Fin n) ℚ) ∈
+      (GL_pair n).H := conjAct_mem_of_subgroupOf _ n₂
+  have h_target := coset_shift_fwd_q1 (σ_bar : GL (Fin n) ℚ) (τ_bar : GL (Fin n) ℚ)
+    ((⟦σ_bar⟧ : decompQuot (GL_pair n) δA).out : GL (Fin n) ℚ)
+    ((⟦compensatedYbase δA σ_bar τ_bar⟧ : decompQuot (GL_pair n) δB).out : GL (Fin n) ℚ)
+    (δA : GL (Fin n) ℚ) (δB : GL (Fin n) ℚ) (δC : GL (Fin n) ℚ)
+    (n₁ : GL (Fin n) ℚ) (n₂ : GL (Fin n) ℚ)
+    h_rc_lift_merged (decompQuot_out_coe_eq_mul (out_eq_mul_outShift δA σ_bar)) hj_form
+    hn₂_conj
+  rw [← Set.singleton_mul_singleton] at h_target
+  exact h_target
+
 set_option maxHeartbeats 1200000 in
 /-- **Diagonal-level ≥ direction of `heckeMultiplicity_block_embed`.** Compensated
 injection via `coset_shift_fwd_q1`. -/
@@ -157,18 +249,7 @@ lemma heckeMultiplicity_block_embed_ge_diagMat {k : ℕ}
       GL (Fin (k + 1)) ℚ) = diagMat (k + 1) b := diagMat_delta_val (k + 1) b hb
   have h_dval_c1 : ((diagMat_delta (k + 1) c : (GL_pair (k + 1)).Δ) :
       GL (Fin (k + 1)) ℚ) = diagMat (k + 1) c := diagMat_delta_val (k + 1) c hc
-  let getN₁ : (GL_pair (k + 2)).H →
-      (ConjAct.toConjAct ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-        GL (Fin (k + 2)) ℚ) • (GL_pair (k + 2)).H).subgroupOf (GL_pair (k + 2)).H :=
-    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose
-  have hgetN₁_spec : ∀ σ : (GL_pair (k + 2)).H,
-      (⟦σ⟧ : decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 a))).out =
-      σ * getN₁ σ :=
-    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
-  let mkYbase : (GL_pair (k + 2)).H → (GL_pair (k + 2)).H → (GL_pair (k + 2)).H :=
-    fun σ τ ↦ ⟨_, conjAct_inv_mem_of_subgroupOf
-      ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) : GL (Fin (k + 2)) ℚ)
-      (getN₁ σ)⟩ * τ
+  let dA : (GL_pair (k + 2)).Δ := diagMat_delta (k + 2) (Fin.cons 1 a)
   let SrcType : Type := {p : decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) a) ×
             decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) b) |
             ({(p.1.out : GL (Fin (k + 1)) ℚ) *
@@ -189,7 +270,7 @@ lemma heckeMultiplicity_block_embed_ge_diagMat {k : ℕ}
               ((GL_pair (k + 2)).H : Set _)}
   let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ ↦
     ⟨(⟦slSuccEmbed_H i.out⟧,
-      ⟦mkYbase (slSuccEmbed_H i.out) (slSuccEmbed_H j.out)⟧),
+      ⟦compensatedYbase dA (slSuccEmbed_H i.out) (slSuccEmbed_H j.out)⟧),
       by
         have h_iff := fiber_diagMat_iff_mem_H a b c ha hb hc i.out j.out
         rw [← h_dval_a1, ← h_dval_b1, ← h_dval_c1] at h_iff
@@ -204,79 +285,9 @@ lemma heckeMultiplicity_block_embed_ge_diagMat {k : ℕ}
           (slSuccEmbed_H i.out) (slSuccEmbed_H j.out)
         have h_rc_lift := h_iff_lift.mpr h_mem'
         rw [← h_dval_a, ← h_dval_b, ← h_dval_c] at h_rc_lift
-        set n₁ := getN₁ (slSuccEmbed_H i.out) with hn₁_def
-        set Yval := mkYbase (slSuccEmbed_H i.out) (slSuccEmbed_H j.out) with hY_def
-        have hi₂_out_eq :
-            ((⟦slSuccEmbed_H i.out⟧ : decompQuot (GL_pair (k + 2))
-              (diagMat_delta (k + 2) (Fin.cons 1 a))).out : GL (Fin (k + 2)) ℚ) =
-            (slSuccEmbed_H i.out : GL (Fin (k + 2)) ℚ) *
-              (n₁ : GL (Fin (k + 2)) ℚ) := by
-          have h := hgetN₁_spec (slSuccEmbed_H i.out)
-          have := congr_arg (Subtype.val : ↥(GL_pair (k + 2)).H → GL (Fin (k + 2)) ℚ) h
-          simpa [Subgroup.coe_mul] using this
-        obtain ⟨n₂, hn₂_eq⟩ := QuotientGroup.mk_out_eq_mul
-          ((ConjAct.toConjAct ((diagMat_delta (k + 2) (Fin.cons 1 b) :
-              (GL_pair (k + 2)).Δ) : GL (Fin (k + 2)) ℚ) •
-            (GL_pair (k + 2)).H).subgroupOf (GL_pair (k + 2)).H) Yval
-        have hj₂_out_eq : ((⟦Yval⟧ : decompQuot (GL_pair (k + 2))
-            (diagMat_delta (k + 2) (Fin.cons 1 b))).out :
-            GL (Fin (k + 2)) ℚ) = (Yval : GL (Fin (k + 2)) ℚ) *
-              (n₂ : GL (Fin (k + 2)) ℚ) := by
-          have := congr_arg (Subtype.val :
-            ↥(GL_pair (k + 2)).H → GL (Fin (k + 2)) ℚ) hn₂_eq
-          simpa [Subgroup.coe_mul] using this
-        have hYval_coe : (Yval : GL (Fin (k + 2)) ℚ) =
-            ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-              GL (Fin (k + 2)) ℚ)⁻¹ * (n₁ : GL (Fin (k + 2)) ℚ)⁻¹ *
-            ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-              GL (Fin (k + 2)) ℚ) *
-            (slSuccEmbed_H j.out : GL (Fin (k + 2)) ℚ) := by
-          show ((mkYbase (slSuccEmbed_H i.out) (slSuccEmbed_H j.out) :
-            (GL_pair (k + 2)).H) : GL (Fin (k + 2)) ℚ) = _
-          simp [mkYbase, Subgroup.coe_mul, hn₁_def]
-        have hj₂_form : ((⟦Yval⟧ : decompQuot (GL_pair (k + 2))
-            (diagMat_delta (k + 2) (Fin.cons 1 b))).out : GL (Fin (k + 2)) ℚ) =
-            ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-              GL (Fin (k + 2)) ℚ)⁻¹ * (n₁ : GL (Fin (k + 2)) ℚ)⁻¹ *
-            ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-              GL (Fin (k + 2)) ℚ) *
-            (slSuccEmbed_H j.out : GL (Fin (k + 2)) ℚ) *
-            (n₂ : GL (Fin (k + 2)) ℚ) := by
-          rw [hj₂_out_eq, hYval_coe]
-        have hn₂_conj :
-            ((diagMat_delta (k + 2) (Fin.cons 1 b) : (GL_pair (k + 2)).Δ) :
-              GL (Fin (k + 2)) ℚ)⁻¹ * (n₂ : GL (Fin (k + 2)) ℚ) *
-            ((diagMat_delta (k + 2) (Fin.cons 1 b) : (GL_pair (k + 2)).Δ) :
-              GL (Fin (k + 2)) ℚ) ∈ (GL_pair (k + 2)).H :=
-          conjAct_mem_of_subgroupOf _ n₂
-        have h_rc_lift_merged :
-            ({(slSuccEmbed_H i.out : GL (Fin (k + 2)) ℚ) *
-                ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-                  GL (Fin (k + 2)) ℚ) *
-                ((slSuccEmbed_H j.out : GL (Fin (k + 2)) ℚ) *
-                  ((diagMat_delta (k + 2) (Fin.cons 1 b) : (GL_pair (k + 2)).Δ) :
-                    GL (Fin (k + 2)) ℚ))} : Set _) *
-            ((GL_pair (k + 2)).H : Set _) =
-            {((diagMat_delta (k + 2) (Fin.cons 1 c) : (GL_pair (k + 2)).Δ) :
-              GL (Fin (k + 2)) ℚ)} * ((GL_pair (k + 2)).H : Set _) := by
-          rw [← Set.singleton_mul_singleton]; exact h_rc_lift
-        have h_target := coset_shift_fwd_q1
-          (slSuccEmbed_H i.out : GL (Fin (k + 2)) ℚ)
-          (slSuccEmbed_H j.out : GL (Fin (k + 2)) ℚ)
-          ((⟦slSuccEmbed_H i.out⟧ : decompQuot (GL_pair (k + 2))
-            (diagMat_delta (k + 2) (Fin.cons 1 a))).out : GL (Fin (k + 2)) ℚ)
-          ((⟦Yval⟧ : decompQuot (GL_pair (k + 2))
-            (diagMat_delta (k + 2) (Fin.cons 1 b))).out : GL (Fin (k + 2)) ℚ)
-          ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-            GL (Fin (k + 2)) ℚ)
-          ((diagMat_delta (k + 2) (Fin.cons 1 b) : (GL_pair (k + 2)).Δ) :
-            GL (Fin (k + 2)) ℚ)
-          ((diagMat_delta (k + 2) (Fin.cons 1 c) : (GL_pair (k + 2)).Δ) :
-            GL (Fin (k + 2)) ℚ)
-          (n₁ : GL (Fin (k + 2)) ℚ) (n₂ : GL (Fin (k + 2)) ℚ)
-          h_rc_lift_merged hi₂_out_eq hj₂_form hn₂_conj
-        rw [← Set.singleton_mul_singleton] at h_target
-        exact h_target⟩
+        exact coset_cond_of_compensated_out dA (diagMat_delta (k + 2) (Fin.cons 1 b))
+          (diagMat_delta (k + 2) (Fin.cons 1 c)) (slSuccEmbed_H i.out) (slSuccEmbed_H j.out)
+          (by rw [← Set.singleton_mul_singleton]; exact h_rc_lift)⟩
   simp only [HeckeRing.heckeMultiplicity]
   norm_cast
   refine Nat.card_le_card_of_injective f ?_
@@ -285,39 +296,20 @@ lemma heckeMultiplicity_block_embed_ge_diagMat {k : ℕ}
   have h_i_eq : (⟦slSuccEmbed_H i₁.out⟧ :
       decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 a))) =
       ⟦slSuccEmbed_H i₂.out⟧ := (Prod.mk.injEq _ _ _ _).mp heq_pair |>.1
-  have h_j_eq : (⟦mkYbase (slSuccEmbed_H i₁.out) (slSuccEmbed_H j₁.out)⟧ :
+  have h_j_eq : (⟦compensatedYbase dA (slSuccEmbed_H i₁.out) (slSuccEmbed_H j₁.out)⟧ :
       decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b))) =
-      ⟦mkYbase (slSuccEmbed_H i₂.out) (slSuccEmbed_H j₂.out)⟧ :=
+      ⟦compensatedYbase dA (slSuccEmbed_H i₂.out) (slSuccEmbed_H j₂.out)⟧ :=
     (Prod.mk.injEq _ _ _ _).mp heq_pair |>.2
-  have h_i_final : i₁ = i₂ := by
-    calc i₁
-        = (⟦i₁.out⟧ : decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) a)) :=
-          (decompQuot_out_eq i₁).symm
-      _ = ⟦i₂.out⟧ := by
-          apply decompQuot_slSuccEmbed_diagMat_injective a ha
-          show (⟦slSuccEmbed_H i₁.out⟧ :
-            decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 a))) =
-            ⟦slSuccEmbed_H i₂.out⟧
-          exact h_i_eq
-      _ = i₂ := decompQuot_out_eq i₂
+  have h_i_final : i₁ = i₂ :=
+    decompQuot_eq_of_out_eq (decompQuot_slSuccEmbed_diagMat_injective a ha h_i_eq)
   subst h_i_final
   have h_j_cancel := decompQuot_left_mul_cancel
     (diagMat_delta (k + 2) (Fin.cons 1 b))
-    ⟨_, conjAct_inv_mem_of_subgroupOf
-      ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) : GL (Fin (k + 2)) ℚ)
-      (getN₁ (slSuccEmbed_H i₁.out))⟩
+    ⟨_, conjAct_inv_mem_of_subgroupOf (dA : GL (Fin (k + 2)) ℚ)
+      (outShift dA (slSuccEmbed_H i₁.out))⟩
     (slSuccEmbed_H j₁.out) (slSuccEmbed_H j₂.out) h_j_eq
-  have h_j_final : j₁ = j₂ := by
-    calc j₁
-        = (⟦j₁.out⟧ : decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) b)) :=
-          (decompQuot_out_eq j₁).symm
-      _ = ⟦j₂.out⟧ := by
-          apply decompQuot_slSuccEmbed_diagMat_injective b hb
-          show (⟦slSuccEmbed_H j₁.out⟧ :
-            decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b))) =
-            ⟦slSuccEmbed_H j₂.out⟧
-          exact h_j_cancel
-      _ = j₂ := decompQuot_out_eq j₂
+  have h_j_final : j₁ = j₂ :=
+    decompQuot_eq_of_out_eq (decompQuot_slSuccEmbed_diagMat_injective b hb h_j_cancel)
   subst h_j_final
   rfl
 
@@ -611,16 +603,7 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
     diagMat_delta_val n b hb
   have h_dval_c : ((diagMat_delta n c : (GL_pair n).Δ) : GL (Fin n) ℚ) = diagMat n c :=
     diagMat_delta_val n c hc
-  let getN₁ : (GL_pair n).H →
-      (ConjAct.toConjAct ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ) •
-        (GL_pair n).H).subgroupOf (GL_pair n).H :=
-    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose
-  have hgetN₁_spec : ∀ σ : (GL_pair n).H,
-      (⟦σ⟧ : decompQuot (GL_pair n) (diagMat_delta n a)).out = σ * getN₁ σ :=
-    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
-  let mkYbase : (GL_pair n).H → (GL_pair n).H → (GL_pair n).H :=
-    fun σ_bar τ_bar ↦ ⟨_, conjAct_inv_mem_of_subgroupOf
-      ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ) (getN₁ σ_bar)⟩ * τ_bar
+  let dA : (GL_pair n).Δ := diagMat_delta n a
   let SrcType : Type := {p : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a)) ×
             decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b)) |
             ({(p.1.out : GL (Fin n) ℚ) *
@@ -641,7 +624,7 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
               ((GL_pair n).H : Set _)}
   let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ ↦
     ⟨(⟦Lc⁻¹ * i.out * La⟧,
-      ⟦mkYbase (Lc⁻¹ * i.out * La) (Ra * j.out * Lb)⟧),
+      ⟦compensatedYbase dA (Lc⁻¹ * i.out * La) (Ra * j.out * Lb)⟧),
       by
         have h_rep_mem := (fiber_rep_iff_mem_H a b c i.out j.out).mp hcond
         have h_diag_mem := (rep_mem_H_iff_compensated_diag_mem_H a b c
@@ -650,68 +633,9 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
           (Lc⁻¹ * i.out * La) (Ra * j.out * Lb)
         have h_rc_lift := h_iff_lift.mpr h_diag_mem
         rw [← h_dval_a, ← h_dval_b, ← h_dval_c] at h_rc_lift
-        set σ_bar : (GL_pair n).H := Lc⁻¹ * i.out * La with σ_bar_def
-        set τ_bar : (GL_pair n).H := Ra * j.out * Lb with τ_bar_def
-        set n₁ := getN₁ σ_bar with hn₁_def
-        set Yval := mkYbase σ_bar τ_bar with hY_def
-        have hi_out_eq :
-            ((⟦σ_bar⟧ : decompQuot (GL_pair n) (diagMat_delta n a)).out :
-              GL (Fin n) ℚ) =
-            (σ_bar : GL (Fin n) ℚ) * (n₁ : GL (Fin n) ℚ) := by
-          have h := hgetN₁_spec σ_bar
-          have := congr_arg (Subtype.val : ↥(GL_pair n).H → GL (Fin n) ℚ) h
-          simpa [Subgroup.coe_mul] using this
-        obtain ⟨n₂, hn₂_eq⟩ := QuotientGroup.mk_out_eq_mul
-          ((ConjAct.toConjAct ((diagMat_delta n b : (GL_pair n).Δ) : GL (Fin n) ℚ) •
-            (GL_pair n).H).subgroupOf (GL_pair n).H) Yval
-        have hj_out_eq :
-            ((⟦Yval⟧ : decompQuot (GL_pair n) (diagMat_delta n b)).out :
-              GL (Fin n) ℚ) =
-            (Yval : GL (Fin n) ℚ) * (n₂ : GL (Fin n) ℚ) := by
-          have := congr_arg (Subtype.val :
-            ↥(GL_pair n).H → GL (Fin n) ℚ) hn₂_eq
-          simpa [Subgroup.coe_mul] using this
-        have hYval_coe : (Yval : GL (Fin n) ℚ) =
-            ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ)⁻¹ *
-            (n₁ : GL (Fin n) ℚ)⁻¹ *
-            ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ) *
-            (τ_bar : GL (Fin n) ℚ) := by
-          show ((mkYbase σ_bar τ_bar : (GL_pair n).H) : GL (Fin n) ℚ) = _
-          simp [mkYbase, Subgroup.coe_mul, hn₁_def]
-        have hj_form :
-            ((⟦Yval⟧ : decompQuot (GL_pair n) (diagMat_delta n b)).out :
-              GL (Fin n) ℚ) =
-            ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ)⁻¹ *
-            (n₁ : GL (Fin n) ℚ)⁻¹ *
-            ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ) *
-            (τ_bar : GL (Fin n) ℚ) * (n₂ : GL (Fin n) ℚ) := by
-          rw [hj_out_eq, hYval_coe]
-        have hn₂_conj :
-            ((diagMat_delta n b : (GL_pair n).Δ) : GL (Fin n) ℚ)⁻¹ *
-              (n₂ : GL (Fin n) ℚ) *
-              ((diagMat_delta n b : (GL_pair n).Δ) : GL (Fin n) ℚ) ∈ (GL_pair n).H :=
-          conjAct_mem_of_subgroupOf _ n₂
-        have h_rc_lift_merged :
-            ({(σ_bar : GL (Fin n) ℚ) *
-                ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ) *
-                ((τ_bar : GL (Fin n) ℚ) *
-                  ((diagMat_delta n b : (GL_pair n).Δ) : GL (Fin n) ℚ))} : Set _) *
-            ((GL_pair n).H : Set _) =
-            {((diagMat_delta n c : (GL_pair n).Δ) : GL (Fin n) ℚ)} *
-              ((GL_pair n).H : Set _) := by
-          rw [← Set.singleton_mul_singleton]; exact h_rc_lift
-        have h_target := coset_shift_fwd_q1
-          (σ_bar : GL (Fin n) ℚ)
-          (τ_bar : GL (Fin n) ℚ)
-          ((⟦σ_bar⟧ : decompQuot (GL_pair n) (diagMat_delta n a)).out : GL (Fin n) ℚ)
-          ((⟦Yval⟧ : decompQuot (GL_pair n) (diagMat_delta n b)).out : GL (Fin n) ℚ)
-          ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ)
-          ((diagMat_delta n b : (GL_pair n).Δ) : GL (Fin n) ℚ)
-          ((diagMat_delta n c : (GL_pair n).Δ) : GL (Fin n) ℚ)
-          (n₁ : GL (Fin n) ℚ) (n₂ : GL (Fin n) ℚ)
-          h_rc_lift_merged hi_out_eq hj_form hn₂_conj
-        rw [← Set.singleton_mul_singleton] at h_target
-        exact h_target⟩
+        exact coset_cond_of_compensated_out dA (diagMat_delta n b) (diagMat_delta n c)
+          (Lc⁻¹ * i.out * La) (Ra * j.out * Lb)
+          (by rw [← Set.singleton_mul_singleton]; exact h_rc_lift)⟩
   simp only [HeckeRing.heckeMultiplicity]
   norm_cast
   refine Nat.card_le_card_of_injective f ?_
@@ -720,55 +644,36 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
   have h_i_eq : (⟦Lc⁻¹ * i₁.out * La⟧ :
       decompQuot (GL_pair n) (diagMat_delta n a)) =
       ⟦Lc⁻¹ * i₂.out * La⟧ := (Prod.mk.injEq _ _ _ _).mp heq_pair |>.1
-  have h_j_eq : (⟦mkYbase (Lc⁻¹ * i₁.out * La) (Ra * j₁.out * Lb)⟧ :
+  have h_j_eq : (⟦compensatedYbase dA (Lc⁻¹ * i₁.out * La) (Ra * j₁.out * Lb)⟧ :
       decompQuot (GL_pair n) (diagMat_delta n b)) =
-      ⟦mkYbase (Lc⁻¹ * i₂.out * La) (Ra * j₂.out * Lb)⟧ :=
+      ⟦compensatedYbase dA (Lc⁻¹ * i₂.out * La) (Ra * j₂.out * Lb)⟧ :=
     (Prod.mk.injEq _ _ _ _).mp heq_pair |>.2
   have h_i_final : i₁ = i₂ := by
     rw [Quotient.eq] at h_i_eq
     change QuotientGroup.leftRel _ (Lc⁻¹ * i₁.out * La) (Lc⁻¹ * i₂.out * La) at h_i_eq
-    have h_out : (⟦i₁.out⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a))) =
-        ⟦i₂.out⟧ := by
-      apply Quotient.sound
-      change QuotientGroup.leftRel _ i₁.out i₂.out
-      rw [QuotientGroup.leftRel_apply]
-      have h_rev := decompQuot_asymm_first_wd_rev (n := n) a ha La Ra Lc hDecA
-        (Lc⁻¹ * i₁.out * La) (Lc⁻¹ * i₂.out * La) h_i_eq
-      rw [QuotientGroup.leftRel_apply] at h_rev
-      have h_simp : (Lc * (Lc⁻¹ * i₁.out * La) * La⁻¹)⁻¹ *
-          (Lc * (Lc⁻¹ * i₂.out * La) * La⁻¹) = i₁.out⁻¹ * i₂.out := by group
-      rw [h_simp] at h_rev
-      exact h_rev
-    calc i₁ = (⟦i₁.out⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a))) :=
-          (decompQuot_out_eq i₁).symm
-      _ = ⟦i₂.out⟧ := h_out
-      _ = i₂ := decompQuot_out_eq i₂
+    refine decompQuot_eq_of_inv_out_mul_mem (g := HeckeCoset.rep (T_diag a)) ?_
+    have h_rev := decompQuot_asymm_first_wd_rev (n := n) a ha La Ra Lc hDecA
+      (Lc⁻¹ * i₁.out * La) (Lc⁻¹ * i₂.out * La) h_i_eq
+    rw [QuotientGroup.leftRel_apply] at h_rev
+    have h_simp : (Lc * (Lc⁻¹ * i₁.out * La) * La⁻¹)⁻¹ *
+        (Lc * (Lc⁻¹ * i₂.out * La) * La⁻¹) = i₁.out⁻¹ * i₂.out := by group
+    rwa [h_simp] at h_rev
   subst h_i_final
   have h_j_cancel := decompQuot_left_mul_cancel
     (diagMat_delta n b)
-    ⟨_, conjAct_inv_mem_of_subgroupOf
-      ((diagMat_delta n a : (GL_pair n).Δ) : GL (Fin n) ℚ)
-      (getN₁ (Lc⁻¹ * i₁.out * La))⟩
+    ⟨_, conjAct_inv_mem_of_subgroupOf (dA : GL (Fin n) ℚ)
+      (outShift dA (Lc⁻¹ * i₁.out * La))⟩
     (Ra * j₁.out * Lb) (Ra * j₂.out * Lb) h_j_eq
   have h_j_final : j₁ = j₂ := by
     rw [Quotient.eq] at h_j_cancel
     change QuotientGroup.leftRel _ (Ra * j₁.out * Lb) (Ra * j₂.out * Lb) at h_j_cancel
-    have h_out : (⟦j₁.out⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b))) =
-        ⟦j₂.out⟧ := by
-      apply Quotient.sound
-      change QuotientGroup.leftRel _ j₁.out j₂.out
-      rw [QuotientGroup.leftRel_apply]
-      have h_rev := decompQuot_asymm_second_wd_rev (n := n) b hb Lb Rb Ra hDecB
-        (Ra * j₁.out * Lb) (Ra * j₂.out * Lb) h_j_cancel
-      rw [QuotientGroup.leftRel_apply] at h_rev
-      have h_simp : (Ra⁻¹ * (Ra * j₁.out * Lb) * Lb⁻¹)⁻¹ *
-          (Ra⁻¹ * (Ra * j₂.out * Lb) * Lb⁻¹) = j₁.out⁻¹ * j₂.out := by group
-      rw [h_simp] at h_rev
-      exact h_rev
-    calc j₁ = (⟦j₁.out⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b))) :=
-          (decompQuot_out_eq j₁).symm
-      _ = ⟦j₂.out⟧ := h_out
-      _ = j₂ := decompQuot_out_eq j₂
+    refine decompQuot_eq_of_inv_out_mul_mem (g := HeckeCoset.rep (T_diag b)) ?_
+    have h_rev := decompQuot_asymm_second_wd_rev (n := n) b hb Lb Rb Ra hDecB
+      (Ra * j₁.out * Lb) (Ra * j₂.out * Lb) h_j_cancel
+    rw [QuotientGroup.leftRel_apply] at h_rev
+    have h_simp : (Ra⁻¹ * (Ra * j₁.out * Lb) * Lb⁻¹)⁻¹ *
+        (Ra⁻¹ * (Ra * j₂.out * Lb) * Lb⁻¹) = j₁.out⁻¹ * j₂.out := by group
+    rwa [h_simp] at h_rev
   subst h_j_final
   rfl
 
@@ -798,16 +703,7 @@ private lemma heckeMultiplicity_diagMat_le_rep_delta {n : ℕ} [NeZero n]
     diagMat_delta_val n b hb
   have h_dval_c : ((diagMat_delta n c : (GL_pair n).Δ) : GL (Fin n) ℚ) = diagMat n c :=
     diagMat_delta_val n c hc
-  let getN₁ : (GL_pair n).H →
-      (ConjAct.toConjAct (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) •
-        (GL_pair n).H).subgroupOf (GL_pair n).H :=
-    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose
-  have hgetN₁_spec : ∀ σ : (GL_pair n).H,
-      (⟦σ⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a))).out = σ * getN₁ σ :=
-    fun σ ↦ (QuotientGroup.mk_out_eq_mul _ σ).choose_spec
-  let mkYbase : (GL_pair n).H → (GL_pair n).H → (GL_pair n).H :=
-    fun σ_bar τ_bar ↦ ⟨_, conjAct_inv_mem_of_subgroupOf
-      (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) (getN₁ σ_bar)⟩ * τ_bar
+  let dA : (GL_pair n).Δ := HeckeCoset.rep (T_diag a)
   let SrcType : Type := {p : decompQuot (GL_pair n) (diagMat_delta n a) ×
             decompQuot (GL_pair n) (diagMat_delta n b) |
             ({(p.1.out : GL (Fin n) ℚ) *
@@ -828,7 +724,7 @@ private lemma heckeMultiplicity_diagMat_le_rep_delta {n : ℕ} [NeZero n]
               ((GL_pair n).H : Set _)}
   let f : SrcType → TgtType := fun ⟨⟨i, j⟩, hcond⟩ ↦
     ⟨(⟦Lc * i.out * La⁻¹⟧,
-      ⟦mkYbase (Lc * i.out * La⁻¹) (Ra⁻¹ * j.out * Lb⁻¹)⟧),
+      ⟦compensatedYbase dA (Lc * i.out * La⁻¹) (Ra⁻¹ * j.out * Lb⁻¹)⟧),
       by
         have h_iff := fiber_diagMat_iff_mem_H a b c ha hb hc i.out j.out
         rw [← h_dval_a, ← h_dval_b, ← h_dval_c] at h_iff
@@ -852,70 +748,9 @@ private lemma heckeMultiplicity_diagMat_le_rep_delta {n : ℕ} [NeZero n]
         have h_iff_lift := fiber_rep_iff_mem_H a b c
           (Lc * i.out * La⁻¹) (Ra⁻¹ * j.out * Lb⁻¹)
         have h_rc_lift := h_iff_lift.mpr h_rep_mem
-        set σ_bar : (GL_pair n).H := Lc * i.out * La⁻¹ with σ_bar_def
-        set τ_bar : (GL_pair n).H := Ra⁻¹ * j.out * Lb⁻¹ with τ_bar_def
-        set n₁ := getN₁ σ_bar with hn₁_def
-        set Yval := mkYbase σ_bar τ_bar with hY_def
-        have hi_out_eq :
-            ((⟦σ_bar⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a))).out :
-              GL (Fin n) ℚ) =
-            (σ_bar : GL (Fin n) ℚ) * (n₁ : GL (Fin n) ℚ) := by
-          have h := hgetN₁_spec σ_bar
-          have := congr_arg (Subtype.val : ↥(GL_pair n).H → GL (Fin n) ℚ) h
-          simpa [Subgroup.coe_mul] using this
-        obtain ⟨n₂, hn₂_eq⟩ := QuotientGroup.mk_out_eq_mul
-          ((ConjAct.toConjAct (HeckeCoset.rep (T_diag b) : GL (Fin n) ℚ) •
-            (GL_pair n).H).subgroupOf (GL_pair n).H) Yval
-        have hj_out_eq :
-            ((⟦Yval⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b))).out :
-              GL (Fin n) ℚ) =
-            (Yval : GL (Fin n) ℚ) * (n₂ : GL (Fin n) ℚ) := by
-          have := congr_arg (Subtype.val :
-            ↥(GL_pair n).H → GL (Fin n) ℚ) hn₂_eq
-          simpa [Subgroup.coe_mul] using this
-        have hYval_coe : (Yval : GL (Fin n) ℚ) =
-            (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ)⁻¹ *
-            (n₁ : GL (Fin n) ℚ)⁻¹ *
-            (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) *
-            (τ_bar : GL (Fin n) ℚ) := by
-          show ((mkYbase σ_bar τ_bar : (GL_pair n).H) : GL (Fin n) ℚ) = _
-          simp [mkYbase, Subgroup.coe_mul, hn₁_def]
-        have hj_form :
-            ((⟦Yval⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b))).out :
-              GL (Fin n) ℚ) =
-            (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ)⁻¹ *
-            (n₁ : GL (Fin n) ℚ)⁻¹ *
-            (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) *
-            (τ_bar : GL (Fin n) ℚ) * (n₂ : GL (Fin n) ℚ) := by
-          rw [hj_out_eq, hYval_coe]
-        have hn₂_conj :
-            (HeckeCoset.rep (T_diag b) : GL (Fin n) ℚ)⁻¹ *
-              (n₂ : GL (Fin n) ℚ) *
-              (HeckeCoset.rep (T_diag b) : GL (Fin n) ℚ) ∈ (GL_pair n).H :=
-          conjAct_mem_of_subgroupOf _ n₂
-        have h_rc_lift_merged :
-            ({(σ_bar : GL (Fin n) ℚ) *
-                (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) *
-                ((τ_bar : GL (Fin n) ℚ) *
-                  (HeckeCoset.rep (T_diag b) : GL (Fin n) ℚ))} : Set _) *
-            ((GL_pair n).H : Set _) =
-            {(HeckeCoset.rep (T_diag c) : GL (Fin n) ℚ)} *
-              ((GL_pair n).H : Set _) := by
-          rw [← Set.singleton_mul_singleton]; exact h_rc_lift
-        have h_target := coset_shift_fwd_q1
-          (σ_bar : GL (Fin n) ℚ)
-          (τ_bar : GL (Fin n) ℚ)
-          ((⟦σ_bar⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a))).out :
-            GL (Fin n) ℚ)
-          ((⟦Yval⟧ : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b))).out :
-            GL (Fin n) ℚ)
-          (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ)
-          (HeckeCoset.rep (T_diag b) : GL (Fin n) ℚ)
-          (HeckeCoset.rep (T_diag c) : GL (Fin n) ℚ)
-          (n₁ : GL (Fin n) ℚ) (n₂ : GL (Fin n) ℚ)
-          h_rc_lift_merged hi_out_eq hj_form hn₂_conj
-        rw [← Set.singleton_mul_singleton] at h_target
-        exact h_target⟩
+        exact coset_cond_of_compensated_out dA (HeckeCoset.rep (T_diag b))
+          (HeckeCoset.rep (T_diag c)) (Lc * i.out * La⁻¹) (Ra⁻¹ * j.out * Lb⁻¹)
+          (by rw [← Set.singleton_mul_singleton]; exact h_rc_lift)⟩
   simp only [HeckeRing.heckeMultiplicity]
   norm_cast
   refine Nat.card_le_card_of_injective f ?_
@@ -924,56 +759,37 @@ private lemma heckeMultiplicity_diagMat_le_rep_delta {n : ℕ} [NeZero n]
   have h_i_eq : (⟦Lc * i₁.out * La⁻¹⟧ :
       decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a))) =
       ⟦Lc * i₂.out * La⁻¹⟧ := (Prod.mk.injEq _ _ _ _).mp heq_pair |>.1
-  have h_j_eq : (⟦mkYbase (Lc * i₁.out * La⁻¹) (Ra⁻¹ * j₁.out * Lb⁻¹)⟧ :
+  have h_j_eq : (⟦compensatedYbase dA (Lc * i₁.out * La⁻¹) (Ra⁻¹ * j₁.out * Lb⁻¹)⟧ :
       decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b))) =
-      ⟦mkYbase (Lc * i₂.out * La⁻¹) (Ra⁻¹ * j₂.out * Lb⁻¹)⟧ :=
+      ⟦compensatedYbase dA (Lc * i₂.out * La⁻¹) (Ra⁻¹ * j₂.out * Lb⁻¹)⟧ :=
     (Prod.mk.injEq _ _ _ _).mp heq_pair |>.2
   have h_i_final : i₁ = i₂ := by
     rw [Quotient.eq] at h_i_eq
     change QuotientGroup.leftRel _ (Lc * i₁.out * La⁻¹) (Lc * i₂.out * La⁻¹) at h_i_eq
-    have h_out : (⟦i₁.out⟧ : decompQuot (GL_pair n) (diagMat_delta n a)) =
-        ⟦i₂.out⟧ := by
-      apply Quotient.sound
-      change QuotientGroup.leftRel _ i₁.out i₂.out
-      rw [QuotientGroup.leftRel_apply]
-      have h_fwd := decompQuot_asymm_first_wd (n := n) a ha La Ra Lc hDecA
-        (Lc * i₁.out * La⁻¹) (Lc * i₂.out * La⁻¹) h_i_eq
-      rw [QuotientGroup.leftRel_apply] at h_fwd
-      have h_simp : (Lc⁻¹ * (Lc * i₁.out * La⁻¹) * La)⁻¹ *
-          (Lc⁻¹ * (Lc * i₂.out * La⁻¹) * La) = i₁.out⁻¹ * i₂.out := by group
-      rw [h_simp] at h_fwd
-      exact h_fwd
-    calc i₁ = (⟦i₁.out⟧ : decompQuot (GL_pair n) (diagMat_delta n a)) :=
-          (decompQuot_out_eq i₁).symm
-      _ = ⟦i₂.out⟧ := h_out
-      _ = i₂ := decompQuot_out_eq i₂
+    refine decompQuot_eq_of_inv_out_mul_mem (g := diagMat_delta n a) ?_
+    have h_fwd := decompQuot_asymm_first_wd (n := n) a ha La Ra Lc hDecA
+      (Lc * i₁.out * La⁻¹) (Lc * i₂.out * La⁻¹) h_i_eq
+    rw [QuotientGroup.leftRel_apply] at h_fwd
+    have h_simp : (Lc⁻¹ * (Lc * i₁.out * La⁻¹) * La)⁻¹ *
+        (Lc⁻¹ * (Lc * i₂.out * La⁻¹) * La) = i₁.out⁻¹ * i₂.out := by group
+    rwa [h_simp] at h_fwd
   subst h_i_final
   have h_j_cancel := decompQuot_left_mul_cancel
     (HeckeCoset.rep (T_diag b))
-    ⟨_, conjAct_inv_mem_of_subgroupOf
-      (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ)
-      (getN₁ (Lc * i₁.out * La⁻¹))⟩
+    ⟨_, conjAct_inv_mem_of_subgroupOf (dA : GL (Fin n) ℚ)
+      (outShift dA (Lc * i₁.out * La⁻¹))⟩
     (Ra⁻¹ * j₁.out * Lb⁻¹) (Ra⁻¹ * j₂.out * Lb⁻¹) h_j_eq
   have h_j_final : j₁ = j₂ := by
     rw [Quotient.eq] at h_j_cancel
     change QuotientGroup.leftRel _ (Ra⁻¹ * j₁.out * Lb⁻¹) (Ra⁻¹ * j₂.out * Lb⁻¹)
       at h_j_cancel
-    have h_out : (⟦j₁.out⟧ : decompQuot (GL_pair n) (diagMat_delta n b)) =
-        ⟦j₂.out⟧ := by
-      apply Quotient.sound
-      change QuotientGroup.leftRel _ j₁.out j₂.out
-      rw [QuotientGroup.leftRel_apply]
-      have h_fwd := decompQuot_asymm_second_wd (n := n) b hb Lb Rb Ra hDecB
-        (Ra⁻¹ * j₁.out * Lb⁻¹) (Ra⁻¹ * j₂.out * Lb⁻¹) h_j_cancel
-      rw [QuotientGroup.leftRel_apply] at h_fwd
-      have h_simp : (Ra * (Ra⁻¹ * j₁.out * Lb⁻¹) * Lb)⁻¹ *
-          (Ra * (Ra⁻¹ * j₂.out * Lb⁻¹) * Lb) = j₁.out⁻¹ * j₂.out := by group
-      rw [h_simp] at h_fwd
-      exact h_fwd
-    calc j₁ = (⟦j₁.out⟧ : decompQuot (GL_pair n) (diagMat_delta n b)) :=
-          (decompQuot_out_eq j₁).symm
-      _ = ⟦j₂.out⟧ := h_out
-      _ = j₂ := decompQuot_out_eq j₂
+    refine decompQuot_eq_of_inv_out_mul_mem (g := diagMat_delta n b) ?_
+    have h_fwd := decompQuot_asymm_second_wd (n := n) b hb Lb Rb Ra hDecB
+      (Ra⁻¹ * j₁.out * Lb⁻¹) (Ra⁻¹ * j₂.out * Lb⁻¹) h_j_cancel
+    rw [QuotientGroup.leftRel_apply] at h_fwd
+    have h_simp : (Ra * (Ra⁻¹ * j₁.out * Lb⁻¹) * Lb)⁻¹ *
+        (Ra * (Ra⁻¹ * j₂.out * Lb⁻¹) * Lb) = j₁.out⁻¹ * j₂.out := by group
+    rwa [h_simp] at h_fwd
   subst h_j_final
   rfl
 
