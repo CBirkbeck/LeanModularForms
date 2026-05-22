@@ -832,6 +832,15 @@ theorem miyake_4_6_4_dichotomy_strong
   · left
     exact DFunLike.ext _ _ (fun τ ↦ by simp [h_eq, hφ_zero, HeckeRing.GL2.levelRaiseFun])
 
+private lemma matrix_int_cast_factor_aux {n : Type*} {a m : ℕ} (hm : a ∣ m)
+    (M : Matrix n n ℤ) :
+    M.map (Int.cast : ℤ → ZMod a) =
+      (M.map (Int.cast : ℤ → ZMod m)).map (ZMod.castHom hm (ZMod a)) := by
+  rw [Matrix.map_map]
+  congr 1
+  ext x
+  simp
+
 /-- **T5a-0: Existence of the extra coset representative `γ_p^(p)`
 in Miyake's Lemma 4.5.11 (p. 143-144).**
 
@@ -847,13 +856,8 @@ theorem descendExtraGamma_exists
       ((γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p)
         = !![(0 : ZMod p), -1; 1, 0]) ∧
       ((γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1) := by
-  have hcop : Nat.Coprime p (N / p) := by
-    rw [hp.coprime_iff_not_dvd]
-    intro h
-    apply hp_sq
-    have : p * p ∣ N := calc p * p ∣ p * (N / p) := Nat.mul_dvd_mul_left p h
-      _ = N := Nat.mul_div_cancel' hpN
-    simpa [sq] using this
+  have hcop : Nat.Coprime p (N / p) := hp.coprime_iff_not_dvd.mpr fun h => hp_sq <| by
+    simpa [sq] using (Nat.mul_div_cancel' hpN) ▸ Nat.mul_dvd_mul_left p h
   obtain ⟨u, v, h_bez⟩ := hcop.isCoprime
   let a : ℤ := (p : ℤ)
   let b : ℤ := ((N / p : ℕ) : ℤ)
@@ -861,20 +865,17 @@ theorem descendExtraGamma_exists
     change (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ)
     exact_mod_cast Nat.mul_div_cancel' hpN
   let γ_mat : Matrix (Fin 2) (Fin 2) ℤ := !![u * a, -(v * b); v * b, u * a]
+  have h_ua_p : ((u * a : ℤ) : ZMod p) = 0 := by simp [a]
   have h_vb_p : ((v * b : ℤ) : ZMod p) = 1 := by
-    have h_ua : ((u * a : ℤ) : ZMod p) = 0 := by
-      simp [a, Int.cast_mul, Int.cast_natCast]
     have h' : ((u * a + v * b : ℤ) : ZMod p) = 1 := by
       rw [h_bez]
       simp
-    rwa [Int.cast_add, h_ua, zero_add] at h'
-  have h_ua_p : ((u * a : ℤ) : ZMod p) = 0 := by
-    simp [a, Int.cast_mul, Int.cast_natCast]
+    rwa [Int.cast_add, h_ua_p, zero_add] at h'
   have h_vb_Np : ((v * b : ℤ) : ZMod (N / p)) = 0 := by
-    rw [Int.cast_mul]
-    suffices ((b : ℤ) : ZMod (N / p)) = 0 by rw [this, mul_zero]
-    rw [show (b : ℤ) = ((N / p : ℕ) : ℤ) from rfl, Int.cast_natCast]
-    exact ZMod.natCast_self (N / p)
+    have hb : ((b : ℤ) : ZMod (N / p)) = 0 := by
+      show (((N / p : ℕ) : ℤ) : ZMod (N / p)) = 0
+      exact_mod_cast ZMod.natCast_self (N / p)
+    rw [Int.cast_mul, hb, mul_zero]
   have h_ua_Np : ((u * a : ℤ) : ZMod (N / p)) = 1 := by
     have h' : ((u * a + v * b : ℤ) : ZMod (N / p)) = 1 := by
       rw [h_bez]
@@ -882,12 +883,10 @@ theorem descendExtraGamma_exists
     rwa [Int.cast_add, h_vb_Np, add_zero] at h'
   have h_mat_p : γ_mat.map (Int.cast : ℤ → ZMod p) = !![(0 : ZMod p), -1; 1, 0] := by
     ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [γ_mat, Matrix.map_apply, h_vb_p, h_ua_p, Int.cast_neg]
+    fin_cases i <;> fin_cases j <;> simp [γ_mat, h_vb_p, h_ua_p]
   have h_mat_Np : γ_mat.map (Int.cast : ℤ → ZMod (N / p)) = 1 := by
     ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [γ_mat, Matrix.map_apply, h_vb_Np, h_ua_Np, Int.cast_neg]
+    fin_cases i <;> fin_cases j <;> simp [γ_mat, h_vb_Np, h_ua_Np]
   have hdet_N : (γ_mat.map (Int.cast : ℤ → ZMod N)).det = 1 := by
     have hmap_eq : γ_mat.map (Int.cast : ℤ → ZMod N) =
         (Int.castRingHom (ZMod N)).mapMatrix γ_mat := by
@@ -895,9 +894,7 @@ theorem descendExtraGamma_exists
       simp [γ_mat, RingHom.mapMatrix_apply, Matrix.map_apply]
     rw [hmap_eq, ← RingHom.map_det]
     have hdet : γ_mat.det = (u * a) ^ 2 + (v * b) ^ 2 := by
-      simp only [γ_mat, Matrix.det_fin_two]
-      norm_num [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
-        Matrix.head_fin_const, Matrix.cons_val']
+      simp only [γ_mat, Matrix.det_fin_two_of]
       ring
     rw [hdet, map_add, map_pow, map_pow]
     set x := (Int.castRingHom (ZMod N)) (u * a)
@@ -910,38 +907,19 @@ theorem descendExtraGamma_exists
         map_mul, map_natCast, ZMod.natCast_self, mul_zero]
     rw [show x ^ 2 + y ^ 2 = (x + y) ^ 2 - 2 * (x * y) by ring, h_sum, h_prd]
     ring
-  let M_N : Matrix.SpecialLinearGroup (Fin 2) (ZMod N) :=
+  obtain ⟨γ, hγ⟩ := SL2Reduction.SL2_reduction_surjective N
     ⟨γ_mat.map (Int.cast : ℤ → ZMod N), hdet_N⟩
-  obtain ⟨γ, hγ⟩ := SL2Reduction.SL2_reduction_surjective N M_N
   have h_γ_mat_N : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod N) =
-      γ_mat.map (Int.cast : ℤ → ZMod N) := by
-    have h := coe_matrix_coe (R := ZMod N) γ
-    rw [hγ] at h
-    exact h.symm
-  have hfact_p : ∀ (M : Matrix (Fin 2) (Fin 2) ℤ),
-      M.map (Int.cast : ℤ → ZMod p) =
-        (M.map (Int.cast : ℤ → ZMod N)).map (ZMod.castHom hpN (ZMod p)) := fun M ↦ by
-    conv_lhs => rw [show (Int.cast : ℤ → ZMod p) =
-        (ZMod.castHom hpN (ZMod p)) ∘ (Int.cast : ℤ → ZMod N) by ext; simp]
-    rw [Matrix.map_map]
-  have hfact_Np : ∀ (M : Matrix (Fin 2) (Fin 2) ℤ),
-      M.map (Int.cast : ℤ → ZMod (N / p)) =
-        (M.map (Int.cast : ℤ → ZMod N)).map
-          (ZMod.castHom (Nat.div_dvd_of_dvd hpN) (ZMod (N / p))) := fun M ↦ by
-    conv_lhs => rw [show (Int.cast : ℤ → ZMod (N / p)) =
-        (ZMod.castHom (Nat.div_dvd_of_dvd hpN) (ZMod (N / p))) ∘
-          (Int.cast : ℤ → ZMod N) by ext; simp]
-    rw [Matrix.map_map]
+      γ_mat.map (Int.cast : ℤ → ZMod N) := (hγ ▸ coe_matrix_coe (R := ZMod N) γ).symm
   have h_mod_p : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) =
       !![(0 : ZMod p), -1; 1, 0] := by
-    rw [hfact_p, h_γ_mat_N, ← hfact_p, h_mat_p]
+    rw [matrix_int_cast_factor_aux hpN, h_γ_mat_N, ← matrix_int_cast_factor_aux hpN, h_mat_p]
   have h_mod_Np : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 := by
-    rw [hfact_Np, h_γ_mat_N, ← hfact_Np, h_mat_Np]
+    rw [matrix_int_cast_factor_aux (Nat.div_dvd_of_dvd hpN), h_γ_mat_N,
+        ← matrix_int_cast_factor_aux (Nat.div_dvd_of_dvd hpN), h_mat_Np]
   have h_mem : γ ∈ Gamma0 (N / p) := by
     rw [Gamma0_mem]
-    have h10 := congr_fun (congr_fun h_mod_Np 1) 0
-    simp only [Matrix.map_apply] at h10
-    exact_mod_cast h10
+    simpa using congr_fun (congr_fun h_mod_Np 1) 0
   exact ⟨γ, h_mem, h_mod_p, h_mod_Np⟩
 
 /-- **T5a-0a-coprime-adjust**: number-theoretic adjustment lemma.
