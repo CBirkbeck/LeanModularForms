@@ -411,11 +411,9 @@ theorem hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB_corner
       (lt_min hδMinus_pos hδPlus_pos) ((min_le_left _ _).trans hδMinus_le_t₀)
       ((min_le_right _ _).trans hδPlus_le_1mt₀)
   have h_avoid_left : ∀ t ∈ Set.Icc (0 : ℝ) (t₀ - δMinus), δ_avoid ≤ ‖f t - s‖ :=
-    fun t ht => h_avoid_left_raw t ⟨ht.1, by
-      have := min_le_left δMinus δPlus; linarith [ht.2]⟩
+    fun t ht => h_avoid_left_raw t ⟨ht.1, by linarith [min_le_left δMinus δPlus, ht.2]⟩
   have h_avoid_right : ∀ t ∈ Set.Icc (t₀ + δPlus) (1 : ℝ), δ_avoid ≤ ‖f t - s‖ :=
-    fun t ht => h_avoid_right_raw t ⟨by
-      have := min_le_right δMinus δPlus; linarith [ht.1], ht.2⟩
+    fun t ht => h_avoid_right_raw t ⟨by linarith [min_le_right δMinus δPlus, ht.1], ht.2⟩
   have h_deriv_right : HasDerivWithinAt f L_plus (Set.Ioi t₀) t₀ :=
     hasDerivWithinAt_Ioi_of_tendsto hγ_cont_t₀ hγ_diff_right hL_right
   have h_deriv_left : HasDerivWithinAt f L_minus (Set.Iio t₀) t₀ :=
@@ -446,10 +444,10 @@ theorem hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB_corner
     h_t_plus_in_Ioo.mono fun _ hε => by linarith [hε.2, hδPlus_in_one]
   have h_minus_cont : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ContinuousOn f (Icc (0 : ℝ) (t_eps_minus ε)) :=
-    Filter.Eventually.of_forall fun _ => hγ_continuous.continuousOn
+    .of_forall fun _ => hγ_continuous.continuousOn
   have h_plus_cont : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ContinuousOn f (Icc (t_eps_plus ε) (1 : ℝ)) :=
-    Filter.Eventually.of_forall fun _ => hγ_continuous.continuousOn
+    .of_forall fun _ => hγ_continuous.continuousOn
   set partSet : Set ℝ :=
     (γ.toPwC1Immersion.toPiecewiseC1Path.partition : Set ℝ)
   have h_partSet_countable : partSet.Countable :=
@@ -469,13 +467,13 @@ theorem hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB_corner
   have h_minus_avoids : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ∀ t ∈ Icc (0 : ℝ) (t_eps_minus ε), f t ≠ s := by
     filter_upwards [h_t_minus_in_Ioo] with ε htme t ht heq
-    have h_t_lt_t₀ : t < t₀ := lt_of_le_of_lt ht.2 htme.2
-    exact h_t_lt_t₀.ne (h_unique t ⟨ht.1, by linarith [ht.2, htme.2, ht₀.2]⟩ heq)
+    exact (ht.2.trans_lt htme.2).ne
+      (h_unique t ⟨ht.1, by linarith [ht.2, htme.2, ht₀.2]⟩ heq)
   have h_plus_avoids : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ∀ t ∈ Icc (t_eps_plus ε) (1 : ℝ), f t ≠ s := by
     filter_upwards [h_t_plus_in_Ioo] with ε htpe t ht heq
-    have h_t₀_lt_t : t₀ < t := lt_of_lt_of_le htpe.1 ht.1
-    exact h_t₀_lt_t.ne' (h_unique t ⟨by linarith [ht.1, htpe.1, ht₀.1], ht.2⟩ heq)
+    exact (htpe.1.trans_le ht.1).ne'
+      (h_unique t ⟨by linarith [ht.1, htpe.1, ht₀.1], ht.2⟩ heq)
   have h_deriv_int_full : IntervalIntegrable (deriv f) volume 0 1 :=
     γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable
   have h_eq_int : (fun t => deriv f t / (f t - s) ^ k) =

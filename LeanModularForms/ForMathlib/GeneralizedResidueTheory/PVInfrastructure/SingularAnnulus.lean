@@ -298,9 +298,8 @@ lemma singular_annulus_bound_explicit {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
   have hδ₁_pos : 0 < δ₁ := lt_min hδ₀'_pos (lt_min hδ_lo_pos hδ_up_pos)
   obtain ⟨ρ, hρ_pos, h_far_bound⟩ :=
     no_return_of_inj_continuous hδ₁_pos hγ_cont h_inj
-  have ht₀_mem := Set.mem_Ioo.mp hat₀
-  have h_dist_pos : 0 < min (t₀ - a) (b - t₀) := by
-    simp only [lt_min_iff]; constructor <;> linarith
+  have h_dist_pos : 0 < min (t₀ - a) (b - t₀) :=
+    lt_min (sub_pos.mpr hat₀.1) (sub_pos.mpr hat₀.2)
   let δ := min (min δ_meas ρ) (min (‖L‖ * min (t₀ - a) (b - t₀)) (‖L‖ * δ₀'))
   have hδ_pos : 0 < δ :=
     lt_min (lt_min hδ_meas_pos hρ_pos)
@@ -316,8 +315,7 @@ lemma singular_annulus_bound_explicit {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
     (hε₁_lt.trans_le (min_le_right _ _)).trans_le (min_le_left _ _)
   have hε₁_lt_Lδ₀' : ε₁ < ‖L‖ * δ₀' :=
     (hε₁_lt.trans_le (min_le_right _ _)).trans_le (min_le_right _ _)
-  have h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < δ₁ := by
-    intro t ht hγt
+  have h_localize : ∀ t ∈ Set.Icc a b, ‖γ t - γ t₀‖ ≤ ε₁ → |t - t₀| < δ₁ := fun t ht hγt => by
     by_contra h_not_lt
     push Not at h_not_lt
     linarith [h_far_bound t ht h_not_lt]

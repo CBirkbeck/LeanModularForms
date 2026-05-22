@@ -232,10 +232,9 @@ theorem hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
     refine h.congr fun ε => intervalIntegral.integral_congr fun t _ => ?_
     unfold cpvIntegrand cpvIntegrandOn
     by_cases h_far : ε < ‖γP.toPath.extend t - s‖
-    · rw [if_pos h_far, if_neg]
-      rintro ⟨s', hs', h_le⟩
-      rw [hS_eq, Finset.mem_singleton] at hs'
-      exact absurd h_far (not_lt.mpr (hs' ▸ h_le))
+    · rw [if_pos h_far, if_neg fun ⟨s', hs', h_le⟩ => by
+        rw [hS_eq, Finset.mem_singleton] at hs'
+        exact absurd h_far (not_lt.mpr (hs' ▸ h_le))]
     · rw [if_neg h_far, if_pos ⟨s, by rw [hS_eq, Finset.mem_singleton], not_lt.mp h_far⟩]
   obtain ⟨s'_min, hs'_min_mem, hs'_min⟩ := Finset.exists_min_image T
     (fun s' => ‖s - s'‖) hT_ne

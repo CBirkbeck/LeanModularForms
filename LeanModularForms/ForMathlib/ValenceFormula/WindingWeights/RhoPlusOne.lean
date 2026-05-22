@@ -347,7 +347,6 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     push_cast; ring
   have hg5 : g 5 = h₃ 5 := hg_eq_h₃ 5 (by norm_num)
   have hd_h₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := fun t => by
-    rw [show h₀ = fun (s : ℝ) => (↑((1 - s) * (H - Real.sqrt 3 / 2)) : ℂ) * I from rfl]
     have := ((hasDerivAt_const t (1:ℝ)).sub (hasDerivAt_id t)).mul_const
       (H - Real.sqrt 3 / 2) |>.ofReal_comp.mul_const I
     convert this using 1; push_cast; ring
