@@ -322,6 +322,56 @@ theorem Newform.isNormalisedEigenform (f : Newform N k) :
         ⇑f.toCuspForm from rfl]
     exact f.isNorm
 
+/-- **Hecke recurrence for the newform coefficient sequence.**  At a prime
+`p` coprime to the level, `f.lCoeff` satisfies the standard three-term
+recurrence
+`a_{p^{r+2}} = a_p · a_{p^{r+1}} − χ(p) · p^{k-1} · a_{p^r}`.
+
+Specialise the period-1 multiplicativity
+`HeckeRing.GL2.eigenform_coeff_multiplicative_one` at `(p^{r+1}, p)` and
+collapse the divisor sum `∑_{d ∣ gcd(p^{r+1}, p)}` over `gcd = p`,
+i.e. over `p.divisors = {1, p}`. -/
+private lemma Newform.lCoeff_recur (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    {p : ℕ} (hp : p.Prime) (hpN : Nat.Coprime p N) (r : ℕ) :
+    f.lCoeff (p ^ (r + 2)) = f.lCoeff p * f.lCoeff (p ^ (r + 1)) -
+      (χ (ZMod.unitOfCoprime p hpN) : ℂ) * (p : ℂ) ^ (k - 1) * f.lCoeff (p ^ r) := by
+  have hp_pos : 0 < p := hp.pos
+  haveI : NeZero p := ⟨hp_pos.ne'⟩
+  have hpow_pos : 0 < p ^ (r + 1) := pow_pos hp_pos _
+  haveI : NeZero (p ^ (r + 1)) := ⟨hpow_pos.ne'⟩
+  have h := eigenform_coeff_multiplicative_one (N := N) k
+    ⟨p ^ (r + 1), hpow_pos⟩ ⟨p, hp_pos⟩ (hpN.pow_left _) hpN χ hfχ
+    f.isNormalisedEigenform
+  -- Normalise the `ℕ+` coercions on the left so subsequent rewrites match.
+  simp only [PNat.mk_coe] at h
+  have h_mn : p ^ (r + 1) * p = p ^ (r + 2) := by ring
+  -- `gcd(p^{r+1}, p) = p`; split `p.divisors = {1, p}`.
+  rw [Nat.gcd_eq_right (dvd_pow_self p (Nat.succ_ne_zero r)), hp.divisors,
+      Finset.sum_insert (by simp only [Finset.mem_singleton]; exact hp.ne_one.symm),
+      Finset.sum_singleton] at h
+  -- Simplify the `d = 1` term: `χ(1) = 1`, `1^{k-1} = 1`, `div 1 = id`.
+  have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
+    ext; simp [ZMod.coe_unitOfCoprime]
+  simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
+    h_unit_one, map_one, Units.val_one, one_mul, Nat.div_one] at h
+  rw [dif_pos hpN] at h
+  -- `p^{r+1} * p / (p * p) = p^r`.
+  have h_div : p ^ (r + 1) * p / (p * p) = p ^ r := by
+    rw [show p ^ (r + 1) * p = p ^ r * (p * p) by ring]
+    exact Nat.mul_div_cancel _ (by positivity)
+  rw [h_div, h_mn] at h
+  -- Align the CuspForm-level and ModularForm-level period-1 `qExpansion` terms.
+  simp only [Newform.lCoeff_apply]
+  show (ModularFormClass.qExpansion (1 : ℝ)
+        f.toCuspForm.toModularForm').coeff (p ^ (r + 2)) =
+      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff p *
+      (ModularFormClass.qExpansion (1 : ℝ)
+        f.toCuspForm.toModularForm').coeff (p ^ (r + 1)) -
+      (χ (ZMod.unitOfCoprime p hpN) : ℂ) * (p : ℂ) ^ (k - 1) *
+      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff (p ^ r)
+  linear_combination -h
+
 /-- **Bridge**: the Fourier coefficient sequence of a `Newform` living in a
 character eigenspace `modFormCharSpace k χ` satisfies
 `IsHeckeCoefficientSequence`, i.e. the four arithmetic axioms required by the
@@ -333,9 +383,9 @@ The four fields collect:
 * `mul_coprime` from `Newform.lCoeff_mul_of_coprime` (with trivial
   handling of the degenerate `m = 0` / `n = 0` corners forced by
   coprimality);
-* `recur` from `HeckeRing.GL2.eigenform_coeff_multiplicative_one`
-  (FourierHecke.lean, T082) specialised at `(p^{r+1}, p)` and the
-  collapse of the period-1 divisor sum over `gcd(p^{r+1}, p) = p`. -/
+* `recur` from `Newform.lCoeff_recur`, the three-term Hecke recurrence
+  (itself specialising `HeckeRing.GL2.eigenform_coeff_multiplicative_one`
+  at `(p^{r+1}, p)`). -/
 theorem Newform.lCoeff_isHeckeCoefficientSequence (f : Newform N k)
     (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ) :
@@ -357,55 +407,7 @@ theorem Newform.lCoeff_isHeckeCoefficientSequence (f : Newform N k)
         change f.lCoeff (1 * 0) = f.lCoeff 1 * f.lCoeff 0
         rw [Nat.mul_zero, f.lCoeff_zero, mul_zero]
       · exact f.lCoeff_mul_of_coprime m n hm hn hmN hnN hmn χ hfχ
-  recur := by
-    intro p hp hpN r
-    -- Specialise the period-1 `eigenform_coeff_multiplicative_one` at
-    -- `(p^{r+1}, p)` and collapse the divisor sum over `gcd(p^{r+1}, p) = p`.
-    have hp_pos : 0 < p := hp.pos
-    haveI : NeZero p := ⟨hp_pos.ne'⟩
-    have hpow_pos : 0 < p ^ (r + 1) := pow_pos hp_pos _
-    haveI : NeZero (p ^ (r + 1)) := ⟨hpow_pos.ne'⟩
-    have hpow_cop : Nat.Coprime (p ^ (r + 1)) N := hpN.pow_left _
-    have hf_eigen : IsNormalisedEigenform_one k f.toCuspForm.toModularForm' :=
-      f.isNormalisedEigenform
-    have h := eigenform_coeff_multiplicative_one (N := N) k
-      ⟨p ^ (r + 1), hpow_pos⟩ ⟨p, hp_pos⟩ hpow_cop hpN χ hfχ hf_eigen
-    -- Normalise the `ℕ+` coercions on the left so subsequent rewrites match.
-    simp only [PNat.mk_coe] at h
-    -- `m * n = p^{r+2}`.
-    have h_mn : p ^ (r + 1) * p = p ^ (r + 2) := by ring
-    -- `gcd(p^{r+1}, p) = p` (since `p` is prime and `r + 1 ≥ 1`).
-    have h_gcd : Nat.gcd (p ^ (r + 1)) p = p :=
-      Nat.gcd_eq_right (dvd_pow_self p (Nat.succ_ne_zero r))
-    -- `p.divisors = {1, p}`; split the sum.
-    rw [h_gcd, hp.divisors,
-        Finset.sum_insert (by
-          simp only [Finset.mem_singleton]; exact hp.ne_one.symm),
-        Finset.sum_singleton] at h
-    -- Simplify the `d = 1` term: `χ(1) = 1`, `1^{k-1} = 1`, `div 1 = id`.
-    have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
-      ext; simp [ZMod.coe_unitOfCoprime]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
-      h_unit_one, map_one, Units.val_one, one_mul, Nat.div_one] at h
-    -- Resolve the `dite` at `d = p` via `hpN`.
-    rw [dif_pos hpN] at h
-    -- `p^{r+1} * p / (p * p) = p^r`.
-    have h_div : p ^ (r + 1) * p / (p * p) = p ^ r := by
-      rw [show p ^ (r + 1) * p = p ^ r * (p * p) by ring]
-      exact Nat.mul_div_cancel _ (by positivity)
-    rw [h_div, h_mn] at h
-    -- `h : lCoeff (p^{r+1}) * lCoeff p = lCoeff (p^{r+2}) + p^{k-1} * χ(p) * lCoeff (p^r)`
-    -- (all coefficients at period 1; defeq through `toModularForm'`).
-    simp only [Newform.lCoeff_apply]
-    -- Align the CuspForm-level and ModularForm-level period-1 `qExpansion` terms.
-    show (ModularFormClass.qExpansion (1 : ℝ)
-          f.toCuspForm.toModularForm').coeff (p ^ (r + 2)) =
-        (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff p *
-        (ModularFormClass.qExpansion (1 : ℝ)
-          f.toCuspForm.toModularForm').coeff (p ^ (r + 1)) -
-        (χ (ZMod.unitOfCoprime p hpN) : ℂ) * (p : ℂ) ^ (k - 1) *
-        (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff (p ^ r)
-    linear_combination -h
+  recur := fun hp hpN r => f.lCoeff_recur χ hfχ hp hpN r
 
 /-! ### L-series of a newform
 
@@ -1182,6 +1184,101 @@ theorem Newform.dirichletLift_sq_euler_factor_at_dvd (χ : (ZMod N)ˣ →* ℂˣ
 
 /-! ### T108 final value identity -/
 
+/-- **HasProd cross-multiplication off a finite set.**  If two convergent
+products `HasProd g₁ a` and `HasProd g₂ b` have factors agreeing outside a
+finite set `T`, then the targets cross-multiply against the finite products
+over `T`:  `a · ∏_{T} g₂ = b · ∏_{T} g₁`.
+
+Proof: multiply each product by the `T`-supported correction `corr p =
+if p ∈ T then (other factor) else 1` (whose `HasProd` is the finite product
+via `hasProd_prod_of_ne_finset_one`); the two corrected products agree
+pointwise, so `HasProd.unique` identifies their targets. -/
+private lemma hasProd_mul_finset_prod_comm {ι : Type*} {g₁ g₂ : ι → ℂ} {a b : ℂ}
+    (h₁ : HasProd g₁ a) (h₂ : HasProd g₂ b) (T : Finset ι)
+    (h_eq : ∀ p ∉ T, g₁ p = g₂ p) :
+    a * ∏ p ∈ T, g₂ p = b * ∏ p ∈ T, g₁ p := by
+  classical
+  let corr₁ : ι → ℂ := fun p => if p ∈ T then g₂ p else 1
+  let corr₂ : ι → ℂ := fun p => if p ∈ T then g₁ p else 1
+  have h_corr₁_prod : HasProd corr₁ (∏ p ∈ T, corr₁ p) :=
+    hasProd_prod_of_ne_finset_one fun p hp => if_neg hp
+  have h_corr₂_prod : HasProd corr₂ (∏ p ∈ T, corr₂ p) :=
+    hasProd_prod_of_ne_finset_one fun p hp => if_neg hp
+  have h_corr₁_eq : (∏ p ∈ T, corr₁ p) = ∏ p ∈ T, g₂ p :=
+    Finset.prod_congr rfl fun p hp => if_pos hp
+  have h_corr₂_eq : (∏ p ∈ T, corr₂ p) = ∏ p ∈ T, g₁ p :=
+    Finset.prod_congr rfl fun p hp => if_pos hp
+  have h_left : HasProd (fun p => g₁ p * corr₁ p) (a * ∏ p ∈ T, corr₁ p) :=
+    h₁.mul h_corr₁_prod
+  have h_right : HasProd (fun p => g₂ p * corr₂ p) (b * ∏ p ∈ T, corr₂ p) :=
+    h₂.mul h_corr₂_prod
+  have h_pointwise : (fun p => g₁ p * corr₁ p) = (fun p => g₂ p * corr₂ p) := by
+    funext p
+    by_cases hp : p ∈ T
+    · show g₁ p * (if p ∈ T then g₂ p else 1) = g₂ p * (if p ∈ T then g₁ p else 1)
+      rw [if_pos hp, if_pos hp]; ring
+    · show g₁ p * (if p ∈ T then g₂ p else 1) = g₂ p * (if p ∈ T then g₁ p else 1)
+      rw [if_neg hp, if_neg hp, mul_one, mul_one]
+      exact h_eq p hp
+  rw [h_pointwise] at h_left
+  have h_unique := h_left.unique h_right
+  rwa [h_corr₁_eq, h_corr₂_eq] at h_unique
+
+/-- **Compound factor equals χ̃² factor off the `S`-primes.**  For a prime
+`p ∉ T` (i.e. either `p ∣ N`, or `p` is coprime to `N` and `p ∉ S`), the
+compound factor `eulerFactor_stripped p · (1 - χ̃(p) · p^{-s'})⁻¹` equals the
+Mathlib χ̃² Euler factor `(1 - χ̃²(p) · p^{-2s'})⁻¹` at `s' = 2s - k + 1`.
+
+This is the pointwise input to `hasProd_mul_finset_prod_comm` in
+`Newform.lSeries_stripped_value_identity`, dispatching to
+`Newform.eulerFactor_stripped_mul_dirichlet_at_dvd` /
+`Newform.dirichletLift_sq_euler_factor_at_dvd` (the `p ∣ N` branch) and
+`Newform.eulerFactor_stripped_mul_dirichlet_at_good_prime` (the good
+branch). -/
+private lemma Newform.eulerFactor_stripped_mul_dirichlet_eq_chiSq_factor_of_not_mem
+    (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    (S : Finset ℕ)
+    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
+      q ∉ S → f.lCoeff q = 0)
+    {s : ℂ} (T : Finset Nat.Primes)
+    (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
+      (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N)
+    (h_pos_neg : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (hqN : Nat.Coprime q N),
+      q ∉ S →
+      (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
+        (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 ∧
+      (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
+        (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0)
+    {p : Nat.Primes} (hp_notT : p ∉ T) :
+    Newform.eulerFactor_stripped f χ S s p *
+        (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
+          ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹ =
+      (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
+          DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
+          ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹ := by
+  have h_p_eq : (⟨(p : ℕ), p.prop⟩ : Nat.Primes) = p := Subtype.eta _ _
+  by_cases h_dvd : (p : ℕ) ∣ N
+  · -- `p ∣ N`: both sides are `1`.
+    rw [show Newform.eulerFactor_stripped f χ S s p =
+        Newform.eulerFactor_stripped f χ S s ⟨(p : ℕ), p.prop⟩ from by rw [h_p_eq]]
+    rw [Newform.eulerFactor_stripped_mul_dirichlet_at_dvd f χ S p.prop h_dvd s,
+      Newform.dirichletLift_sq_euler_factor_at_dvd χ p.prop h_dvd s]
+  · -- `p` coprime to `N`; `p ∉ T` forces `p ∉ S`, the good-prime branch.
+    have hpN : Nat.Coprime (p : ℕ) N :=
+      (Nat.Prime.coprime_iff_not_dvd p.prop).mpr h_dvd
+    have hp_notS : (p : ℕ) ∉ S := fun hpS => hp_notT ((hT_iff p).mpr ⟨hpS, hpN⟩)
+    have ⟨h_pos, h_neg⟩ := h_pos_neg (p : ℕ) p.prop hpN hp_notS
+    have h_good := f.eulerFactor_stripped_mul_dirichlet_at_good_prime χ hfχ S h_bad
+      p.prop hpN hp_notS s h_pos h_neg
+    rw [show Newform.eulerFactor_stripped f χ S s p =
+        Newform.eulerFactor_stripped f χ S s ⟨(p : ℕ), p.prop⟩ from by rw [h_p_eq]]
+    rw [h_good,
+      show ((Newform.dirichletLift χ * Newform.dirichletLift χ :
+          DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) =
+        (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) ^ 2 from by
+          rw [pow_two]; exact MulChar.mul_apply _ _ _]
+
 /-- **T108 — final value identity.**  Under the bad-prime-zero hypothesis
 (`f.lCoeff q = 0` for every prime `q.Coprime N` with `q ∉ S`), the
 T103 compound HasProd identifies via `HasProd.unique` against the Mathlib
@@ -1244,95 +1341,16 @@ theorem Newform.lSeries_stripped_value_identity
             (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 ((p : ℕ) : ZMod N) *
               ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) := by
-  classical
-  -- Unpack the two HasProds.
+  -- The compound HasProd (T103) and the Mathlib χ̃² Euler product agree off
+  -- the finite `S`-prime set `T`; cross-multiply against the `T`-products.
   have h_compound :=
     f.lSeries_stripped_mul_dirichlet_hasProd χ hfχ S h_bad hs hs' h_geom
   have h_chi_sq := DirichletCharacter.LSeries_eulerProduct_hasProd
     ((Newform.dirichletLift χ * Newform.dirichletLift χ :
         DirichletCharacter ℂ N)) hs''
-  -- Define the two correction functions, supported on T.
-  set g₁ : Nat.Primes → ℂ := fun p =>
-    Newform.eulerFactor_stripped f χ S s p *
-      (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹ with hg₁_def
-  set g₂ : Nat.Primes → ℂ := fun p =>
-    (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-        DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-      ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹ with hg₂_def
-  -- g₁ = g₂ outside T.
-  have h_eq_outside_T : ∀ p ∉ T, g₁ p = g₂ p := by
-    intro p hp_notT
-    -- Convert p to ⟨↑p, p.prop⟩ for compatibility with helper lemmas.
-    have h_p_eq : (⟨(p : ℕ), p.prop⟩ : Nat.Primes) = p := Subtype.eta _ _
-    -- Either p ∣ N or p ∉ S coprime to N.
-    by_cases h_dvd : (p : ℕ) ∣ N
-    · -- p ∣ N case: both = 1.
-      rw [hg₁_def, hg₂_def]
-      simp only
-      rw [show Newform.eulerFactor_stripped f χ S s p =
-          Newform.eulerFactor_stripped f χ S s ⟨(p : ℕ), p.prop⟩ from by rw [h_p_eq]]
-      rw [Newform.eulerFactor_stripped_mul_dirichlet_at_dvd f χ S p.prop h_dvd s,
-        Newform.dirichletLift_sq_euler_factor_at_dvd χ p.prop h_dvd s]
-    · -- p coprime to N: p ∉ S (else p ∈ T contradiction).
-      have hpN : Nat.Coprime (p : ℕ) N :=
-        (Nat.Prime.coprime_iff_not_dvd p.prop).mpr h_dvd
-      have hp_notS : (p : ℕ) ∉ S := by
-        intro hpS
-        exact hp_notT ((hT_iff p).mpr ⟨hpS, hpN⟩)
-      have ⟨h_pos, h_neg⟩ := h_pos_neg (p : ℕ) p.prop hpN hp_notS
-      rw [hg₁_def, hg₂_def]
-      simp only
-      have h_good := f.eulerFactor_stripped_mul_dirichlet_at_good_prime χ hfχ S h_bad
-        p.prop hpN hp_notS s h_pos h_neg
-      -- Translate from ⟨↑p, p.prop⟩ form to p form using Subtype.eta.
-      rw [show Newform.eulerFactor_stripped f χ S s p =
-          Newform.eulerFactor_stripped f χ S s ⟨(p : ℕ), p.prop⟩ from by rw [h_p_eq]]
-      rw [h_good]
-      -- Now: (1 - (dirichletLift χ) ↑↑p ^ 2 * ...)⁻¹
-      --    = (1 - (dirichletLift χ * dirichletLift χ) ↑↑p * ...)⁻¹
-      rw [show ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-          DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) =
-        (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) ^ 2 from by
-          rw [pow_two]; exact MulChar.mul_apply _ _ _]
-  -- Define the two corrections (each supported on T).
-  let corr₁ : Nat.Primes → ℂ := fun p => if p ∈ T then g₂ p else 1
-  let corr₂ : Nat.Primes → ℂ := fun p => if p ∈ T then g₁ p else 1
-  have h_corr₁_supp : ∀ p ∉ T, corr₁ p = 1 := fun p hp => if_neg hp
-  have h_corr₂_supp : ∀ p ∉ T, corr₂ p = 1 := fun p hp => if_neg hp
-  have h_corr₁_prod : HasProd corr₁ (∏ p ∈ T, corr₁ p) :=
-    hasProd_prod_of_ne_finset_one h_corr₁_supp
-  have h_corr₂_prod : HasProd corr₂ (∏ p ∈ T, corr₂ p) :=
-    hasProd_prod_of_ne_finset_one h_corr₂_supp
-  have h_corr₁_eq : (∏ p ∈ T, corr₁ p) = ∏ p ∈ T, g₂ p :=
-    Finset.prod_congr rfl (fun p hp => if_pos hp)
-  have h_corr₂_eq : (∏ p ∈ T, corr₂ p) = ∏ p ∈ T, g₁ p :=
-    Finset.prod_congr rfl (fun p hp => if_pos hp)
-  -- Combine via HasProd.mul.
-  have h_left : HasProd (fun p => g₁ p * corr₁ p)
-      (LSeries f.lCoeff_stripped s *
-        LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
-          (2 * s - k + 1) *
-        (∏ p ∈ T, corr₁ p)) := h_compound.mul h_corr₁_prod
-  have h_right : HasProd (fun p => g₂ p * corr₂ p)
-      (LSeries (fun n => ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-        DirichletCharacter ℂ N)) n) (2 * (2 * s - k + 1)) *
-        (∏ p ∈ T, corr₂ p)) := h_chi_sq.mul h_corr₂_prod
-  -- Pointwise equality of the corrected functions.
-  have h_pointwise : (fun p => g₁ p * corr₁ p) = (fun p => g₂ p * corr₂ p) := by
-    funext p
-    by_cases hp : p ∈ T
-    · show g₁ p * (if p ∈ T then g₂ p else 1) =
-        g₂ p * (if p ∈ T then g₁ p else 1)
-      rw [if_pos hp, if_pos hp]; ring
-    · show g₁ p * (if p ∈ T then g₂ p else 1) =
-        g₂ p * (if p ∈ T then g₁ p else 1)
-      rw [if_neg hp, if_neg hp, mul_one, mul_one]
-      exact h_eq_outside_T p hp
-  rw [h_pointwise] at h_left
-  have h_unique := h_left.unique h_right
-  rw [h_corr₁_eq, h_corr₂_eq] at h_unique
-  exact h_unique
+  exact hasProd_mul_finset_prod_comm h_compound h_chi_sq T fun p hp_notT =>
+    f.eulerFactor_stripped_mul_dirichlet_eq_chiSq_factor_of_not_mem χ hfχ S h_bad T
+      hT_iff h_pos_neg hp_notT
 
 /-! ### T111 non-vanishing helpers and divided value identity -/
 

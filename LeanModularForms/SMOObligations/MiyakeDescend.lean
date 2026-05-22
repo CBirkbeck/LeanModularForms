@@ -151,161 +151,175 @@ lemma multipass_mul_mod_p_perm_exists {p l : ℕ} [NeZero p] (hp : p.Prime) (hpl
         mul_left_cancel₀ hl_ne h_zmod])
   exact ⟨Equiv.ofBijective f (Finite.injective_iff_bijective.mp hf_inj), fun _ ↦ rfl⟩
 
-lemma m6_2_extra_rep_levelRaise_bridge
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N)
-    [NeZero (N / p)]
-    (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l) (hlNp : l ∣ N / p)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (χ' : (ZMod (N / p))ˣ →* ℂˣ)
-    (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ modFormCharSpace k χ)
-    [NeZero (l * N)] [NeZero ((l * N) / p)] (hpN_lN : p ∣ l * N)
-    (hp_sq_lN : ¬ p ^ 2 ∣ l * N)
-    (hdvd_lN : (l : ℤ) ∣ (descendExtraGamma p (l * N) : Matrix (Fin 2) (Fin 2) ℤ) 1 0) :
-    ∀ z : UpperHalfPlane,
-      ((⇑f ∣[k] (Matrix.GeneralLinearGroup.mkOfDetNeZero
-          !![(1 : ℝ), 0; 0, (p : ℝ)]
-          (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) : GL (Fin 2) ℝ)) ∣[k]
-          (mapGL ℝ (HeckeRing.GL2.levelRaiseConjOfDvd l (descendExtraGamma p (l * N)) hdvd_lN)
-            : GL (Fin 2) ℝ)) z =
-      ((⇑f ∣[k] (Matrix.GeneralLinearGroup.mkOfDetNeZero
-          !![(1 : ℝ), 0; 0, (p : ℝ)]
-          (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) : GL (Fin 2) ℝ)) ∣[k]
-          (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ)) z := by
-  intro z
-  set γ_lN := descendExtraGamma p (l * N) with hγ_lN_def
-  set γtilde : Matrix.SpecialLinearGroup (Fin 2) ℤ :=
-    HeckeRing.GL2.levelRaiseConjOfDvd l γ_lN hdvd_lN with hγtilde_def
-  set γ_N := descendExtraGamma p N with hγ_N_def
-  have h_γ_N_spec := descendExtraGamma_spec hp hpN hp_sq
-  have h_γ_lN_spec := descendExtraGamma_spec (p := p) (N := l * N) hp hpN_lN hp_sq_lN
-  have h_Np_dvd_lNp : N / p ∣ (l * N) / p := by
-    rcases hpN with ⟨c, hc⟩
-    refine ⟨l, ?_⟩
-    rw [hc, show l * (p * c) = p * (l * c) by ring,
-        Nat.mul_div_cancel_left _ hp.pos,
-        Nat.mul_div_cancel_left _ hp.pos, mul_comm]
-  have h_γ_lN_mod_Np :
-      ((γ_lN : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1) := by
-    have h_stronger := h_γ_lN_spec.2.2
-    have h_factor : ∀ a : ℤ, ((a : ZMod (N / p))) =
-        (ZMod.castHom h_Np_dvd_lNp (ZMod (N / p))) ((a : ZMod ((l * N) / p))) := by
-      intro a
-      have hh : (Int.castRingHom (ZMod (N / p)) : ℤ →+* ZMod (N / p)) =
-          (ZMod.castHom h_Np_dvd_lNp (ZMod (N / p))).comp
-            (Int.castRingHom (ZMod ((l * N) / p))) :=
-        Subsingleton.elim _ _
-      exact congr_fun (congr_arg DFunLike.coe hh) a
-    ext i j
-    have h_entry : ((((γ_lN : Matrix (Fin 2) (Fin 2) ℤ) i j : ℤ) :
-                      ZMod ((l * N) / p))) =
-        ((1 : Matrix (Fin 2) (Fin 2) (ZMod ((l * N) / p))) i j) := by
-      have := congr_fun (congr_fun h_stronger i) j
-      simpa [Matrix.map_apply] using this
-    simp only [Matrix.map_apply]
-    rw [h_factor, h_entry]
-    by_cases hij : i = j
-    · subst hij
-      rw [Matrix.one_apply_eq, Matrix.one_apply_eq, map_one]
-    · rw [Matrix.one_apply_ne hij, Matrix.one_apply_ne hij, map_zero]
-  have hl_ne : (l : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne l)
-  have h_γ_lN_10_eq : (γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 1 0 =
-      (l : ℤ) * ((γtilde : Matrix (Fin 2) (Fin 2) ℤ) 1 0) := by
-    show _ = (l : ℤ) * ((γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 1 0 / (l : ℤ))
-    rw [mul_comm, Int.ediv_mul_cancel hdvd_lN]
+/-- Reducing an integer matrix modulo a divisor: if `M ≡ 1 (mod m)` and `d ∣ m`, then
+`M ≡ 1 (mod d)`. -/
+private lemma matrix_intCast_map_eq_one_of_dvd {ι : Type*} [DecidableEq ι]
+    {d m : ℕ} (hdm : d ∣ m) {M : Matrix ι ι ℤ}
+    (hM : M.map (Int.cast : ℤ → ZMod m) = 1) :
+    M.map (Int.cast : ℤ → ZMod d) = 1 := by
+  have h_factor : ∀ a : ℤ, ((a : ZMod d)) =
+      (ZMod.castHom hdm (ZMod d)) ((a : ZMod m)) := by
+    intro a
+    have hh : (Int.castRingHom (ZMod d) : ℤ →+* ZMod d) =
+        (ZMod.castHom hdm (ZMod d)).comp (Int.castRingHom (ZMod m)) :=
+      Subsingleton.elim _ _
+    exact congr_fun (congr_arg DFunLike.coe hh) a
+  ext i j
+  have h_entry : (((M i j : ℤ) : ZMod m)) = ((1 : Matrix ι ι (ZMod m)) i j) := by
+    simpa [Matrix.map_apply] using congr_fun (congr_fun hM i) j
+  simp only [Matrix.map_apply]
+  rw [h_factor, h_entry]
+  by_cases hij : i = j
+  · subst hij; rw [Matrix.one_apply_eq, Matrix.one_apply_eq, map_one]
+  · rw [Matrix.one_apply_ne hij, Matrix.one_apply_ne hij, map_zero]
+
+/-- The lower-left entry `γ.val 1 0 / l` of `levelRaiseConjOfDvd l γ` is divisible by `d`
+whenever the original entry is divisible by `l * d`. -/
+private lemma levelRaiseConjOfDvd_lower_left_dvd
+    {p N l : ℕ} [NeZero l] (hp : p.Prime) (hpN : p ∣ N) (hl : (l : ℤ) ≠ 0)
+    (γ : SL(2, ℤ)) (hdvd : (l : ℤ) ∣ γ.val 1 0)
+    (h : (((l * N) / p : ℕ) : ℤ) ∣ γ.val 1 0) :
+    ((N / p : ℕ) : ℤ) ∣ (HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd).val 1 0 := by
   have h_lNp_eq : (l * N) / p = l * (N / p) := by
     rcases hpN with ⟨c, hc⟩
     rw [hc, show l * (p * c) = p * (l * c) by ring,
         Nat.mul_div_cancel_left _ hp.pos, Nat.mul_div_cancel_left _ hp.pos]
-  have h_γ_lN_10_dvd_lNp : ((l * (N / p) : ℕ) : ℤ) ∣
-      (γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := by
-    have := h_γ_lN_spec.1
-    have hh := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp this)
-    have hLN : (((l * N) / p : ℕ) : ℤ) = ((l * (N / p) : ℕ) : ℤ) := by
-      exact_mod_cast h_lNp_eq
-    exact hLN ▸ hh
-  have h_γtilde_10_dvd_Np : ((N / p : ℕ) : ℤ) ∣ ((γtilde : Matrix (Fin 2) (Fin 2) ℤ) 1 0) := by
-    obtain ⟨j, hj⟩ := h_γ_lN_10_dvd_lNp
-    refine ⟨j, mul_left_cancel₀ hl_ne ?_⟩
-    rw [← h_γ_lN_10_eq, hj]
+  have h10_eq : γ.val 1 0 =
+      (l : ℤ) * (HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd).val 1 0 := by
+    show _ = (l : ℤ) * (γ.val 1 0 / (l : ℤ))
+    rw [mul_comm, Int.ediv_mul_cancel hdvd]
+  have h_dvd_lNp : ((l * (N / p) : ℕ) : ℤ) ∣ γ.val 1 0 := by
+    have hcast : (((l * N) / p : ℕ) : ℤ) = ((l * (N / p) : ℕ) : ℤ) := by exact_mod_cast h_lNp_eq
+    exact hcast ▸ h
+  obtain ⟨j, hj⟩ := h_dvd_lNp
+  refine ⟨j, mul_left_cancel₀ hl ?_⟩
+  rw [← h10_eq, hj]
+  push_cast
+  ring
+
+/-- If `γ ≡ 1 (mod d)` and `d ∣ (γ.val 1 0 / l)`, then `levelRaiseConjOfDvd l γ ≡ 1 (mod d)`. -/
+private lemma levelRaiseConjOfDvd_intCast_map_eq_one
+    {d l : ℕ} [NeZero l] (γ : SL(2, ℤ)) (hdvd : (l : ℤ) ∣ γ.val 1 0)
+    (hγ : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod d) = 1)
+    (h10 : (d : ℤ) ∣ (HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd).val 1 0) :
+    (HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd : Matrix (Fin 2) (Fin 2) ℤ).map
+      (Int.cast : ℤ → ZMod d) = 1 := by
+  ext i j
+  have h00 := congr_fun (congr_fun hγ 0) 0
+  have h01 := congr_fun (congr_fun hγ 0) 1
+  have h11 := congr_fun (congr_fun hγ 1) 1
+  simp only [Matrix.map_apply, Matrix.one_apply_eq,
+    Matrix.one_apply_ne (show (0 : Fin 2) ≠ 1 by decide)] at h00 h01 h11
+  have h_val : ∀ a b : Fin 2,
+      (HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd : Matrix (Fin 2) (Fin 2) ℤ) a b =
+      !![γ.val 0 0, l * γ.val 0 1; γ.val 1 0 / l, γ.val 1 1] a b := fun _ _ ↦ rfl
+  fin_cases i <;> fin_cases j <;>
+    simp only [Matrix.map_apply, Matrix.one_apply, Fin.zero_eta, Fin.mk_one,
+      h_val, ite_true, Fin.isValue]
+  · show ((γ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod d) = 1
+    exact h00
+  · show (((l : ℤ) * (γ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℤ) : ZMod d) = 0
     push_cast
-    ring
-  have h_γtilde_mod_Np :
-      ((γtilde : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1) := by
+    rw [h01, mul_zero]
+  · show (((HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd :
+        Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℤ) : ZMod d) = 0
+    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
+    exact h10
+  · show ((γ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod d) = 1
+    exact h11
+
+/-- If `a ≡ 1` and `b ≡ 1 (mod d)` in `SL(2, ℤ)`, then `a * b⁻¹ ≡ 1 (mod d)`. -/
+private lemma specialLinearGroup_map_intCast_mul_inv_eq_one
+    {d : ℕ} (a b : SL(2, ℤ))
+    (ha : (a : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod d) = 1)
+    (hb : (b : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod d) = 1) :
+    ((a * b⁻¹ : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod d) = 1 := by
+  let φ : SL(2, ℤ) →* Matrix.SpecialLinearGroup (Fin 2) (ZMod d) :=
+    Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod d))
+  have h_φ_def : ∀ γ : SL(2, ℤ),
+      (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod d) = (φ γ).val := by
+    intro γ
     ext i j
-    have h_γ_lN_00 := congr_fun (congr_fun h_γ_lN_mod_Np 0) 0
-    have h_γ_lN_01 := congr_fun (congr_fun h_γ_lN_mod_Np 0) 1
-    have h_γ_lN_11 := congr_fun (congr_fun h_γ_lN_mod_Np 1) 1
-    simp only [Matrix.map_apply, Matrix.one_apply_eq,
-      Matrix.one_apply_ne (show (0 : Fin 2) ≠ 1 by decide)] at h_γ_lN_00 h_γ_lN_01 h_γ_lN_11
-    have h_γtilde_val : ∀ a b : Fin 2,
-        (γtilde : Matrix (Fin 2) (Fin 2) ℤ) a b =
-        !![γ_lN.val 0 0, l * γ_lN.val 0 1;
-           γ_lN.val 1 0 / l, γ_lN.val 1 1] a b := fun _ _ ↦ rfl
-    fin_cases i <;> fin_cases j <;>
-      simp only [Matrix.map_apply, Matrix.one_apply, Fin.zero_eta, Fin.mk_one,
-        h_γtilde_val, ite_true, Fin.isValue]
-    · show ((γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod (N / p)) = 1
-      exact h_γ_lN_00
-    · show (((l : ℤ) * (γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℤ) : ZMod (N / p)) = 0
-      push_cast
-      rw [h_γ_lN_01, mul_zero]
-    · show (((γtilde : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℤ) : ZMod (N / p)) = 0
-      rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-      exact h_γtilde_10_dvd_Np
-    · show ((γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N / p)) = 1
-      exact h_γ_lN_11
-  set δ : Matrix.SpecialLinearGroup (Fin 2) ℤ := γtilde * γ_N⁻¹ with hδ_def
-  have h_γ_N_mod_Np :
-      ((γ_N : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1) :=
-    h_γ_N_spec.2.2
-  have hδ_mod_Np : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 := by
-    let φ : Matrix.SpecialLinearGroup (Fin 2) ℤ →*
-        Matrix.SpecialLinearGroup (Fin 2) (ZMod (N / p)) :=
-      Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod (N / p)))
-    have h_φ_def : ∀ γ : Matrix.SpecialLinearGroup (Fin 2) ℤ,
-        (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = (φ γ).val := by
-      intro γ
-      ext i j
-      rw [map_apply_coe]
-      simp [RingHom.mapMatrix_apply]
-    rw [h_φ_def, show φ δ = φ γtilde * (φ γ_N)⁻¹ from by rw [hδ_def, map_mul, map_inv]]
-    have hEq : φ γtilde = φ γ_N := by
-      apply Matrix.SpecialLinearGroup.ext
-      intros i j
-      simp only [← h_φ_def]
-      exact congr_fun (congr_fun (h_γtilde_mod_Np.trans h_γ_N_mod_Np.symm) i) j
-    rw [hEq, mul_inv_cancel]
-    rfl
-  have h_γ_lN_mod_p := h_γ_lN_spec.2.1
-  have h_γtilde_00_p : ((γtilde : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
-    simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_lN_mod_p 0) 0
-  have h_γtilde_01_p : ((γtilde : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ZMod p) = -(l : ZMod p) := by
-    have h := congr_fun (congr_fun h_γ_lN_mod_p 0) 1
+    rw [map_apply_coe]
+    simp [RingHom.mapMatrix_apply]
+  rw [h_φ_def, show φ (a * b⁻¹) = φ a * (φ b)⁻¹ from by rw [map_mul, map_inv]]
+  have hEq : φ a = φ b := by
+    apply Matrix.SpecialLinearGroup.ext
+    intro i j
+    simp only [← h_φ_def]
+    exact congr_fun (congr_fun (ha.trans hb.symm) i) j
+  rw [hEq, mul_inv_cancel]
+  rfl
+
+/-- For `δ = levelRaiseConjOfDvd l γ * γ'⁻¹` with `γ, γ'` both reducing to `!![0,-1;1,0]`
+modulo `p`, the entry `δ 0 1` is divisible by `p`. -/
+private lemma levelRaiseConj_mul_inv_zero_one_dvd_p
+    {p l : ℕ} [NeZero l] (γ γ' : SL(2, ℤ)) (hdvd : (l : ℤ) ∣ γ.val 1 0)
+    (hγ_p : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = !![0, -1; 1, 0])
+    (hγ'_p : (γ' : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = !![0, -1; 1, 0]) :
+    (p : ℤ) ∣ ((HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd * γ'⁻¹ : SL(2, ℤ))
+                : Matrix (Fin 2) (Fin 2) ℤ) 0 1 := by
+  set γt := HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd with hγt
+  have h_γt_00 : ((γt : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
+    simpa [Matrix.map_apply] using congr_fun (congr_fun hγ_p 0) 0
+  have h_γt_01 : ((γt : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ZMod p) = -(l : ZMod p) := by
+    have h := congr_fun (congr_fun hγ_p 0) 1
     simp [Matrix.map_apply] at h
-    show (((l : ℤ) * (γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℤ) : ZMod p) = -(l : ZMod p)
+    show (((l : ℤ) * (γ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℤ) : ZMod p) = -(l : ZMod p)
     push_cast
     rw [h]
     ring
-  have h_γ_N_inv_p_11 : ((γ_N⁻¹).val 1 1 : ZMod p) = 0 := by
-    rw [show ((γ_N⁻¹).val 1 1 : ℤ) =
-        ((γ_N : Matrix (Fin 2) (Fin 2) ℤ).adjugate 1 1) from
-      congr_fun (congr_fun (Matrix.SpecialLinearGroup.coe_inv γ_N) 1) 1,
+  have h_inv_11 : ((γ'⁻¹).val 1 1 : ZMod p) = 0 := by
+    rw [show ((γ'⁻¹).val 1 1 : ℤ) =
+        ((γ' : Matrix (Fin 2) (Fin 2) ℤ).adjugate 1 1) from
+      congr_fun (congr_fun (Matrix.SpecialLinearGroup.coe_inv γ') 1) 1,
       Matrix.adjugate_fin_two]
-    simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_N_spec.2.1 0) 0
-  have hδ_01_p : (p : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 := by
-    rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-    have h_mul_apply : (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 =
-        (γtilde : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (γ_N⁻¹).val 0 1 +
-        (γtilde : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (γ_N⁻¹).val 1 1 := by
-      show (γtilde.val * γ_N⁻¹.val) 0 1 = _
-      simp [Matrix.mul_apply, Fin.sum_univ_two]
-    rw [h_mul_apply]
-    push_cast
-    rw [h_γtilde_00_p, h_γtilde_01_p, h_γ_N_inv_p_11]
-    ring
+    simpa [Matrix.map_apply] using congr_fun (congr_fun hγ'_p 0) 0
+  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+  have h_mul_apply : ((γt * γ'⁻¹ : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) 0 1 =
+      (γt : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (γ'⁻¹).val 0 1 +
+      (γt : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (γ'⁻¹).val 1 1 := by
+    show (γt.val * γ'⁻¹.val) 0 1 = _
+    simp [Matrix.mul_apply, Fin.sum_univ_two]
+  rw [h_mul_apply]
+  push_cast
+  rw [h_γt_00, h_γt_01, h_inv_11]
+  ring
+
+/-- The diagonal conjugation identity `D · δ = β · D` for `D = diag(1, p)`, where `β` is `δ`
+with its `(0,1)` entry replaced by `k'` (with `δ 0 1 = p · k'`) and its `(1,0)` entry scaled
+by `p`. -/
+private lemma diag_p_mapGL_conj_eq
+    {p : ℕ} (δ β : SL(2, ℤ)) (k' : ℤ)
+    (hk' : (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 = (p : ℤ) * k')
+    (hβval : (β : Matrix (Fin 2) (Fin 2) ℤ) =
+      !![(δ : Matrix (Fin 2) (Fin 2) ℤ) 0 0, k';
+         (p : ℤ) * (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0, (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 1])
+    (D : GL (Fin 2) ℝ) (hD : (D : Matrix (Fin 2) (Fin 2) ℝ) = !![1, 0; 0, (p : ℝ)]) :
+    D * mapGL ℝ δ = mapGL ℝ β * D := by
+  apply Units.ext
+  simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply]
+  rw [hD]
+  simp only [hβval]
+  apply Matrix.ext
+  intro i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply] <;>
+    linarith [hk', mul_comm (p : ℝ) (k' : ℝ),
+              show ((δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℝ) = (p : ℝ) * k' by exact_mod_cast hk']
+
+/-- Conjugating `δ ≡ 1 (mod N/p)` with `p ∣ δ 0 1` by `D = diag(1, p)` yields a matrix
+`β ∈ Γ₀(N)` with trivial character and `D · δ = β · D`. -/
+private lemma exists_Gamma0_conj_of_delta_mod
+    {N p : ℕ} [NeZero N] (hpN : p ∣ N)
+    (χ : (ZMod N)ˣ →* ℂˣ) (χ' : (ZMod (N / p))ˣ →* ℂˣ)
+    (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
+    (δ : SL(2, ℤ))
+    (hδ_mod_Np : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1)
+    (hδ_01_p : (p : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1)
+    (D : GL (Fin 2) ℝ) (hD : (D : Matrix (Fin 2) (Fin 2) ℝ) = !![1, 0; 0, (p : ℝ)]) :
+    ∃ (β : Matrix.SpecialLinearGroup (Fin 2) ℤ) (hβ : β ∈ Gamma0 N),
+      χ (Gamma0MapUnits ⟨β, hβ⟩) = 1 ∧ D * mapGL ℝ δ = mapGL ℝ β * D := by
   obtain ⟨k', hk'⟩ := hδ_01_p
   let a := (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 0
   let c := (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0
@@ -344,25 +358,65 @@ lemma m6_2_extra_rep_levelRaise_bridge
     show (χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN))) (Gamma0MapUnits ⟨β, hβ_mem⟩) = 1
     simp only [MonoidHom.comp_apply]
     rw [h_unitsMap_β, map_one]
+  exact ⟨β, hβ_mem, h_chi_β, diag_p_mapGL_conj_eq δ β k' hk' rfl D hD⟩
+
+lemma m6_2_extra_rep_levelRaise_bridge
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N)
+    [NeZero (N / p)]
+    (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l) (hlNp : l ∣ N / p)
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (χ' : (ZMod (N / p))ˣ →* ℂˣ)
+    (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hfχ : f ∈ modFormCharSpace k χ)
+    [NeZero (l * N)] [NeZero ((l * N) / p)] (hpN_lN : p ∣ l * N)
+    (hp_sq_lN : ¬ p ^ 2 ∣ l * N)
+    (hdvd_lN : (l : ℤ) ∣ (descendExtraGamma p (l * N) : Matrix (Fin 2) (Fin 2) ℤ) 1 0) :
+    ∀ z : UpperHalfPlane,
+      ((⇑f ∣[k] (Matrix.GeneralLinearGroup.mkOfDetNeZero
+          !![(1 : ℝ), 0; 0, (p : ℝ)]
+          (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) : GL (Fin 2) ℝ)) ∣[k]
+          (mapGL ℝ (HeckeRing.GL2.levelRaiseConjOfDvd l (descendExtraGamma p (l * N)) hdvd_lN)
+            : GL (Fin 2) ℝ)) z =
+      ((⇑f ∣[k] (Matrix.GeneralLinearGroup.mkOfDetNeZero
+          !![(1 : ℝ), 0; 0, (p : ℝ)]
+          (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) : GL (Fin 2) ℝ)) ∣[k]
+          (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ)) z := by
+  intro z
+  set γ_lN := descendExtraGamma p (l * N) with hγ_lN_def
+  set γtilde : Matrix.SpecialLinearGroup (Fin 2) ℤ :=
+    HeckeRing.GL2.levelRaiseConjOfDvd l γ_lN hdvd_lN with hγtilde_def
+  set γ_N := descendExtraGamma p N with hγ_N_def
+  have h_γ_N_spec := descendExtraGamma_spec hp hpN hp_sq
+  have h_γ_lN_spec := descendExtraGamma_spec (p := p) (N := l * N) hp hpN_lN hp_sq_lN
+  -- `δ := γtilde · γ_N⁻¹` reduces to the identity modulo `N/p`.
+  have h_Np_dvd_lNp : N / p ∣ (l * N) / p := by
+    rcases hpN with ⟨c, hc⟩
+    exact ⟨l, by rw [hc, show l * (p * c) = p * (l * c) by ring,
+      Nat.mul_div_cancel_left _ hp.pos, Nat.mul_div_cancel_left _ hp.pos, mul_comm]⟩
+  have h_γ_lN_mod_Np :
+      (γ_lN : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 :=
+    matrix_intCast_map_eq_one_of_dvd h_Np_dvd_lNp h_γ_lN_spec.2.2
+  have h_γ_lN_10_dvd_lNp : (((l * N) / p : ℕ) : ℤ) ∣ (γ_lN : Matrix (Fin 2) (Fin 2) ℤ) 1 0 :=
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp h_γ_lN_spec.1)
+  have h_γtilde_mod_Np :
+      (γtilde : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 :=
+    levelRaiseConjOfDvd_intCast_map_eq_one γ_lN hdvd_lN h_γ_lN_mod_Np
+      (levelRaiseConjOfDvd_lower_left_dvd hp hpN (Nat.cast_ne_zero.mpr (NeZero.ne l))
+        γ_lN hdvd_lN h_γ_lN_10_dvd_lNp)
+  set δ : Matrix.SpecialLinearGroup (Fin 2) ℤ := γtilde * γ_N⁻¹ with hδ_def
+  have hδ_mod_Np : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 :=
+    specialLinearGroup_map_intCast_mul_inv_eq_one γtilde γ_N h_γtilde_mod_Np h_γ_N_spec.2.2
+  -- `δ 0 1` is divisible by `p`, from the mod-`p` reductions of `γ_lN` and `γ_N`.
+  have hδ_01_p : (p : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 :=
+    levelRaiseConj_mul_inv_zero_one_dvd_p γ_lN γ_N hdvd_lN h_γ_lN_spec.2.1 h_γ_N_spec.2.1
+  -- Conjugating `δ` by `D = diag(1, p)` lands in `Γ₀(N)` with trivial character.
   let D : GL (Fin 2) ℝ := Matrix.GeneralLinearGroup.mkOfDetNeZero
       !![(1 : ℝ), 0; 0, (p : ℝ)]
       (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
-  have hD_δ : D * mapGL ℝ δ = mapGL ℝ β * D := by
-    apply Units.ext
-    simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply]
-    have hDval : (D : Matrix (Fin 2) (Fin 2) ℝ) = !![1, 0; 0, (p : ℝ)] := rfl
-    have hβval : (β : Matrix (Fin 2) (Fin 2) ℤ) = !![a, k'; (p : ℤ) * c, d] := rfl
-    rw [hDval]
-    simp only [hβval]
-    apply Matrix.ext
-    intro i j
-    fin_cases i <;> fin_cases j <;>
-      simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply,
-            show a = (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 from rfl,
-            show c = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 from rfl,
-            show d = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 from rfl] <;>
-      linarith [hk', mul_comm (p : ℝ) (k' : ℝ),
-                show ((δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℝ) = (p : ℝ) * k' by exact_mod_cast hk']
+  obtain ⟨β, hβ_mem, h_chi_β, hD_δ⟩ :=
+    exists_Gamma0_conj_of_delta_mod hpN χ χ' hχ_eq δ hδ_mod_Np hδ_01_p D rfl
   change ((⇑f ∣[k] D) ∣[k] (mapGL ℝ γtilde : GL (Fin 2) ℝ)) z =
       ((⇑f ∣[k] D) ∣[k] (mapGL ℝ γ_N : GL (Fin 2) ℝ)) z
   have h_γtilde_eq : mapGL ℝ γtilde = mapGL ℝ δ * mapGL ℝ γ_N := by
