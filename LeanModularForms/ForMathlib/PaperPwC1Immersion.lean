@@ -650,20 +650,6 @@ theorem cyclicShiftFun_one (f : ℝ → E) {τ : ℝ}
   rw [if_neg (by linarith [hτ.1] : ¬ (1 + τ ≤ 1))]
   congr 1; ring
 
-omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
-/-- Value of `cyclicShiftFun` at `t = 1 - τ`: both pieces agree and equal `f(1)`. -/
-theorem cyclicShiftFun_at_breakpoint (f : ℝ → E) (τ : ℝ) :
-    cyclicShiftFun f τ (1 - τ) = f 1 := by
-  unfold cyclicShiftFun
-  rw [if_pos (by linarith : (1 - τ) + τ ≤ 1)]
-  congr 1; ring
-
-omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
-/-- The `else`-branch limit at `1 - τ`: gives `f 0`. -/
-theorem cyclicShiftFun_at_breakpoint_else (f : ℝ → E) (τ : ℝ) :
-    f ((1 - τ) + τ - 1) = f 0 := by
-  congr 1; ring
-
 omit [NormedSpace ℝ E] in
 /-- Continuity of `cyclicShiftFun` for a continuous closed loop. -/
 theorem Continuous.cyclicShiftFun {f : ℝ → E} (hf : Continuous f) {τ : ℝ}
@@ -675,13 +661,6 @@ theorem Continuous.cyclicShiftFun {f : ℝ → E} (hf : Continuous f) {τ : ℝ}
   intro t ht_eq
   rw [ht_eq, show (1 : ℝ) - 1 = 0 by ring]
   exact hclosed.symm
-
-omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
-/-- The cyclic-shift function preserves "closedness": `g(0) = g(1) = f(τ)`. -/
-theorem cyclicShiftFun_closed (f : ℝ → E) {τ : ℝ}
-    (hτ : τ ∈ Ioo (0 : ℝ) 1) (hclosed : f 0 = f 1) :
-    cyclicShiftFun f τ 0 = cyclicShiftFun f τ 1 := by
-  rw [cyclicShiftFun_zero f hτ, cyclicShiftFun_one f hτ hclosed]
 
 /-! ### `cyclicShiftPath` — building a `Path` -/
 
