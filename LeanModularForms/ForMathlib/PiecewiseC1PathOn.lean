@@ -133,6 +133,58 @@ theorem toPiecewiseC1PathOn_partition (γ : PiecewiseC1Path x y) :
 
 end PiecewiseC1Path
 
+/-! ## Reverse direction: free-interval form `[0, 1]` → unit-interval form
+
+Given `γ : PiecewiseC1PathOn 0 1 zero_lt_one x y`, build a `Path x y` via
+`Path.ofLine γ.continuous_toFun γ.source γ.target`. On any point `t ∈ Ioo 0 1`,
+`Path.extend` of this path agrees with `γ.toFun` on the open neighborhood `Ioo 0 1`,
+so differentiability and derivative continuity transfer via `EventuallyEq`. -/
+
+namespace PiecewiseC1PathOn
+
+variable {x y : E}
+
+/-- The unit-interval `Path` underlying a free-interval path on `[0, 1]`. -/
+private def toPath01 (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) : Path x y :=
+  Path.ofLine γ.continuous_toFun γ.source γ.target
+
+/-- On `Icc 0 1`, the extended path agrees pointwise with `γ.toFun`. -/
+private theorem toPath01_extend_eqOn_Icc (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
+    EqOn γ.toPath01.extend γ.toFun (Icc 0 1) := by
+  intro t ht
+  show (γ.toPath01).extend t = γ.toFun t
+  rw [Path.extend_apply _ ht]
+  rfl
+
+/-- On the open interval `Ioo 0 1`, the extended path is eventually equal to
+`γ.toFun` in any neighborhood. -/
+private theorem toPath01_extend_eventuallyEq (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y)
+    {t : ℝ} (ht : t ∈ Ioo (0 : ℝ) 1) :
+    γ.toPath01.extend =ᶠ[𝓝 t] γ.toFun :=
+  eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
+    (fun _ hu => γ.toPath01_extend_eqOn_Icc (Ioo_subset_Icc_self hu))
+
+/-- Convert a free-interval `PiecewiseC1PathOn 0 1` to a unit-interval `PiecewiseC1Path`.
+Inverse-of-restriction to `Path.ofLine` at the carrier level; differentiability and derivative
+continuity transfer via the `EventuallyEq` of `Path.extend` and `γ.toFun` on `Ioo 0 1`. -/
+def toPiecewiseC1Path (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
+    PiecewiseC1Path x y where
+  toPath := γ.toPath01
+  partition := γ.partition
+  partition_subset := γ.partition_subset
+  differentiable_off t ht htn :=
+    (γ.toPath01_extend_eventuallyEq ht).differentiableAt_iff.mpr
+      (γ.differentiable_off t ht htn)
+  deriv_continuous_off t ht htn :=
+    (γ.deriv_continuous_off t ht htn).congr
+      (γ.toPath01_extend_eventuallyEq ht).deriv.symm
+
+@[simp]
+theorem toPiecewiseC1Path_partition (γ : PiecewiseC1PathOn 0 1 zero_lt_one x y) :
+    γ.toPiecewiseC1Path.partition = γ.partition := rfl
+
+end PiecewiseC1PathOn
+
 /-! ## Affine reparametrization between free intervals and `[0, 1]`
 
 Given `γ : PiecewiseC1PathOn a b hab x y`, the affine map `t ↦ (b - a) * t + a`
