@@ -2704,7 +2704,9 @@ private lemma π_comp_embed (p : ℕ) (hp : p.Prime) :
 private lemma ppow_mem_π_range (p : ℕ) (hp : p.Prime)
     (e : Fin 2 → ℕ) (he : Monotone e) :
     T_elem (ppowDiag 2 p e) ∈ π_hom.range := by
-  obtain ⟨poly, hpoly⟩ := T_gen_generates_R_p 2 p hp
+  -- Use the clean n=2 surjectivity block directly (not the bundled all-`n`
+  -- `T_gen_generates_R_p`, whose general-`n` case carries a `sorry`).
+  obtain ⟨poly, hpoly⟩ := Surj.T_gen_generates_R_p_two p hp
     (T_elem (ppowDiag 2 p e)) (T_elem_ppow_mem_R_p 2 p hp e he)
   rw [show evalHom 2 p = π_hom.comp (embedPoly p hp) from
     (π_comp_embed p hp).symm] at hpoly

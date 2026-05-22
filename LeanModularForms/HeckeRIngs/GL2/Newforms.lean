@@ -7,6 +7,7 @@ import LeanModularForms.HeckeRIngs.GL2.AdjointTheory
 import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
 import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
 import LeanModularForms.HeckeRIngs.GL2.LevelRaise
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
 import LeanModularForms.Modularforms.LFunction
 import LeanModularForms.Modularforms.PeterssonLevelN
 import LeanModularForms.Modularforms.DimensionFormulas
@@ -72,6 +73,7 @@ noncomputable section
 namespace HeckeRing.GL2
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup CuspForm
+open HeckeRing.GL2.Unified
 open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
@@ -84,19 +86,70 @@ eigenfunction of all Hecke operators `T_n` for `(n, N) = 1`.
 We package this as a structure extending `CuspForm`, with the eigenvalues
 recorded as data. -/
 
-/-- An **eigenform** of level Γ₁(N) and weight k: a cusp form `f` together with
-a function `eigenvalue : ℕ+ → ℂ` such that `T_n f = (eigenvalue n) • f` for all
-`n` with `(n, N) = 1`.
+/-- An **eigenform** of level Γ₁(N) and weight k: a cusp form `f` carrying a Nebentypus
+character `χ` (so `↑f ∈ modFormCharSpace k χ`) that is a simultaneous eigenvector of the
+canonical `Γ₀(N)` Hecke **ring** action `heckeRingHomCharSpace`.
+
+The eigen-condition is recorded directly in terms of the ring map (`isRingEigen`): for every
+`n` coprime to `N`, the explicit ring element `heckeRingD_n n` acts on `↑f` by the scalar
+`ringEigenvalue n`.  The classical eigenvalue `T_n f = (eigenvalue n) • f` is then a
+*derived* fact (`Eigenform.eigenvalue`, `Eigenform.isEigen`), where the classical and ring
+eigenvalues differ by the diamond normalisation `χ(n)`
+(`heckeT_n_cusp_eq_heckeRingHom`).
 
 DS Definition 5.5.4 / Miyake §4.5. -/
 structure Eigenform (N : ℕ) [NeZero N] (k : ℤ)
     extends CuspForm ((Gamma1 N).map (mapGL ℝ)) k where
-  /-- The Hecke eigenvalues. -/
-  eigenvalue : ℕ+ → ℂ
-  /-- For n coprime to N, T_n acts by the eigenvalue. -/
-  isEigen : ∀ n : ℕ+, Nat.Coprime n.val N →
+  /-- The Nebentypus character of the eigenform. -/
+  χ : (ZMod N)ˣ →* ℂˣ
+  /-- The coercion of the cusp form lies in the `χ`-eigenspace `modFormCharSpace k χ`. -/
+  mem_charSpace : toCuspForm.toModularForm' ∈ modFormCharSpace k χ
+  /-- The eigenvalues for the canonical `Γ₀(N)` Hecke **ring** action. -/
+  ringEigenvalue : ℕ+ → ℂ
+  /-- For `n` coprime to `N`, the explicit ring element `heckeRingD_n n` acts on the
+  coercion `↑f ∈ modFormCharSpace k χ` by the scalar `ringEigenvalue n`. -/
+  isRingEigen : ∀ n : ℕ+, Nat.Coprime n.val N →
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
-    heckeT_n_cusp k n.val toCuspForm = eigenvalue n • toCuspForm
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n.val)
+        ⟨toCuspForm.toModularForm', mem_charSpace⟩ =
+      ringEigenvalue n • (⟨toCuspForm.toModularForm', mem_charSpace⟩ : modFormCharSpace k χ)
+
+/-- The classical Hecke eigenvalue of an eigenform: the ring eigenvalue rescaled by the
+diamond factor `χ(n)`, so that `T_n f = (eigenvalue n) • f` (`Eigenform.isEigen`).  For
+`n` not coprime to `N` the value is `0` (the classical `T_n` is not packaged here). -/
+noncomputable def Eigenform.eigenvalue (f : Eigenform N k) (n : ℕ+) : ℂ :=
+  if h : Nat.Coprime n.val N then
+    (↑(f.χ (ZMod.unitOfCoprime n.val h)) : ℂ) * f.ringEigenvalue n
+  else 0
+
+/-- For `n` coprime to `N`, the concrete cusp Hecke operator `T_n` acts on an eigenform by
+its classical eigenvalue `eigenvalue n = χ(n) • ringEigenvalue n`.  This recovers the
+classical eigenform equation from the ring eigen-condition `isRingEigen`, via the
+ring-image identity `heckeT_n_cusp_eq_heckeRingHom`. -/
+theorem Eigenform.isEigen (f : Eigenform N k) (n : ℕ+) (hn : Nat.Coprime n.val N) :
+    haveI : NeZero n.val := ⟨n.pos.ne'⟩
+    heckeT_n_cusp k n.val f.toCuspForm = f.eigenvalue n • f.toCuspForm := by
+  haveI : NeZero n.val := ⟨n.pos.ne'⟩
+  -- The coercion of `f` lies in the cusp-form character space (reverse bridge).
+  have hf_mem : f.toCuspForm ∈ cuspFormCharSpace k f.χ :=
+    cuspFormCharSpace_of_toModularForm'_mem f.mem_charSpace
+  -- Prove the equation after coercing to modular forms (coercions agree pointwise).
+  have key : (heckeT_n_cusp k n.val f.toCuspForm).toModularForm' =
+      (f.eigenvalue n • f.toCuspForm).toModularForm' := by
+    -- LHS: rewrite the cusp operator as the ring image (up to the diamond factor `χ(n)`),
+    -- then replace the ring image by the eigen-scalar using `isRingEigen` (the membership
+    -- witness is irrelevant: subtype membership is a `Prop`, so the witnesses are defeq).
+    rw [heckeT_n_cusp_eq_heckeRingHom n.val hn hf_mem, f.isRingEigen n hn]
+    -- Normalise the nested smuls on the modular-form side.
+    simp only [SetLike.val_smul, smul_smul]
+    -- RHS: unfold `eigenvalue` and push the scalar through `toModularForm'`.
+    rw [Eigenform.eigenvalue, dif_pos hn]
+    rfl
+  -- Transfer the modular-form equality back to the cusp-form function level.
+  apply DFunLike.ext
+  intro τ
+  have := DFunLike.congr_fun key τ
+  simpa using this
 
 /-- A predicate version: a cusp form is an eigenform if it has eigenvalues. -/
 def IsEigenform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=

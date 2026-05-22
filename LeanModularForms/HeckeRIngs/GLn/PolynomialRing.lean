@@ -1211,4 +1211,15 @@ noncomputable def R_p_isPolynomialRing :
     ⟨Inj.evalHomR_injective n p hp (evalHom_injective n p hp),
      Inj.evalHomR_surjective n p hp (T_gen_generates_R_p n p hp)⟩
 
+/-- Shimura Theorem 3.20 at `n = 2`: `R_p^{(2)} ≅ ℤ[X₁, X₂]`. This is the clean,
+    axiom-free specialisation: it calls `Surj.T_gen_generates_R_p_two` and
+    `Inj.evalHom_injective_two` directly, bypassing the bundled all-`n`
+    `T_gen_generates_R_p` / `evalHom_injective` (whose general-`n` case is still a
+    `sorry`). Use this in the GL2 path instead of `R_p_isPolynomialRing 2 …`. -/
+noncomputable def R_p_isPolynomialRing_two (p : ℕ) (hp : p.Prime) :
+    MvPolynomial (Fin 2) ℤ ≃+* R_p 2 p hp :=
+  RingEquiv.ofBijective (Inj.evalHomR 2 p hp)
+    ⟨Inj.evalHomR_injective 2 p hp (Inj.evalHom_injective_two p hp),
+     Inj.evalHomR_surjective 2 p hp (Surj.T_gen_generates_R_p_two p hp)⟩
+
 end HeckeRing.GLn
