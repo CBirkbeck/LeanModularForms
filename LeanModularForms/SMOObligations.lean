@@ -1366,7 +1366,8 @@ private lemma descendCosetList_action_upper_tri_extra_zero_aux
     have h := CongruenceSubgroup.Gamma0_mem.mp h_γ'
     rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at h
   have hdet : Aint * Dint - Bint * Cint = 1 := by
-    have h := γ'.property; rwa [Matrix.det_fin_two] at h
+    have h := γ'.property
+    rwa [Matrix.det_fin_two] at h
   set γ_p := descendExtraGamma p N
   obtain ⟨h_γ_p_mem, h_γ_p_modp, _⟩ := descendExtraGamma_spec hp hpN hp_sq
   set aint := (γ_p : Matrix (Fin 2) (Fin 2) ℤ) 0 0
@@ -1381,7 +1382,8 @@ private lemma descendCosetList_action_upper_tri_extra_zero_aux
     have h := CongruenceSubgroup.Gamma0_mem.mp h_γ_p_mem
     rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at h
   have h_det_γp : aint * dint - bint * cint = 1 := by
-    have h := γ_p.property; rwa [Matrix.det_fin_two] at h
+    have h := γ_p.property
+    rwa [Matrix.det_fin_two] at h
   obtain ⟨α01_int, hα01⟩ : (p : ℤ) ∣
       aint * (Bint + (m.val : ℤ) * Dint) - bint * (Aint + (m.val : ℤ) * Cint) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
@@ -1398,19 +1400,17 @@ private lemma descendCosetList_action_upper_tri_extra_zero_aux
         (Dint * aint - Cint * bint) - α01_int * ((p : ℤ) * (Cint * dint - Dint * cint))
         from Matrix.det_fin_two_of _ _ _ _,
       show α01_int * ((p : ℤ) * (Cint * dint - Dint * cint)) =
-        (p : ℤ) * α01_int * (Cint * dint - Dint * cint) from by ring, hα01']
+        (p : ℤ) * α01_int * (Cint * dint - Dint * cint) by ring, hα01']
     nlinarith [hdet, h_det_γp, mul_comm Aint Dint, mul_comm Bint Cint,
       mul_comm aint dint, mul_comm bint cint]
   let α : Matrix.SpecialLinearGroup (Fin 2) ℤ := ⟨α_mat, h_det_α⟩
   have h_α_in_Γ0 : α ∈ Gamma0 N :=
     descend_aux_α_mat_in_Gamma0 (x := Cint * dint - Dint * cint) hpN
       (show α_mat 1 0 = (p : ℤ) * (Cint * dint - Dint * cint) by simp [α_mat])
-      (by obtain ⟨C', hC'⟩ := h_C_dvd_Np
-          obtain ⟨c', hc'⟩ := h_c_dvd_Np
-          exact ⟨C' * dint - Dint * c', by rw [hC', hc']; ring⟩)
+      ((h_C_dvd_Np.mul_right dint).sub (h_c_dvd_Np.mul_left Dint))
   have h_p_lt_dccn : p < descendCosetCount p N := by simp [descendCosetCount, hp_sq]
   refine ⟨⟨p, h_p_lt_dccn⟩, α, h_α_in_Γ0,
-    ⟨fun h_lt ↦ by simp at h_lt, fun _ ↦ h_A_ext_zero⟩, ?_⟩
+    ⟨fun h_lt ↦ (lt_irrefl _ h_lt).elim, fun _ ↦ h_A_ext_zero⟩, ?_⟩
   rw [show descendCosetList p N hp ⟨p, h_p_lt_dccn⟩ = _ from dif_neg (lt_irrefl p)]
   have h_γ'_eq : (γ' : Matrix (Fin 2) (Fin 2) ℤ) = !![Aint, Bint; Cint, Dint] := by
     ext i j; fin_cases i <;> fin_cases j <;> rfl
