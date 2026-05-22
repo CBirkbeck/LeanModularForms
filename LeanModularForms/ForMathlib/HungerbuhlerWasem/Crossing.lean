@@ -396,13 +396,10 @@ theorem cpv_polarPart_at_uncrossed_pole
         (fun _ => norm_deriv_le_of_lipschitz hLip)))
   have h_cont_inv_each : ∀ k : Fin (decomp.order s), ContinuousOn
       (fun t => decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1))
-      (Icc (0 : ℝ) 1) := by
-    intro k
-    apply ContinuousOn.div continuousOn_const
-    · exact (γP.toPath.continuous_extend.continuousOn.sub continuousOn_const).pow _
-    · intro t ht hzero
-      exact h_avoid t ht
-        (sub_eq_zero.mp (pow_eq_zero_iff (Nat.succ_pos _).ne' |>.mp hzero))
+      (Icc (0 : ℝ) 1) := fun k => ContinuousOn.div continuousOn_const
+      ((γP.toPath.continuous_extend.continuousOn.sub continuousOn_const).pow _)
+      fun t ht hzero =>
+        h_avoid t ht (sub_eq_zero.mp (pow_eq_zero_iff (Nat.succ_pos _).ne' |>.mp hzero))
   have h_pp_curve_cont : ContinuousOn
       (fun t => decomp.polarPart s (γP.toPath.extend t)) (uIcc (0 : ℝ) 1) := by
     rw [uIcc_of_le (zero_le_one' ℝ)]
@@ -411,8 +408,7 @@ theorem cpv_polarPart_at_uncrossed_pole
           decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1))
         (Icc (0 : ℝ) 1) :=
       continuousOn_finset_sum _ fun k _ => h_cont_inv_each k
-    refine h_sum_cont.congr ?_
-    intro t ht
+    refine h_sum_cont.congr fun t ht => ?_
     change decomp.polarPart s (γP.toPath.extend t) =
       ∑ k : Fin (decomp.order s),
         decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1)
@@ -434,15 +430,13 @@ theorem cpv_polarPart_at_uncrossed_pole
     have h_polarPart_curve : ∀ t ∈ Icc (0 : ℝ) 1,
         decomp.polarPart s (γP.toPath.extend t) =
           ∑ k : Fin (decomp.order s),
-            decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1) := by
-      intro t ht
-      exact decomp.polarPart_eq s hs (γP.toPath.extend t) (h_avoid t ht)
+            decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1) :=
+      fun t ht => decomp.polarPart_eq s hs (γP.toPath.extend t) (h_avoid t ht)
     have h_int_eq : γP.contourIntegral (decomp.polarPart s) =
         γP.contourIntegral (fun z => ∑ k : Fin (decomp.order s),
           decomp.coeff s k / (z - s) ^ (k.val + 1)) := by
       simp only [PiecewiseC1Path.contourIntegral]
-      apply intervalIntegral.integral_congr
-      intro t ht
+      refine intervalIntegral.integral_congr fun t ht => ?_
       rw [uIcc_of_le (zero_le_one' ℝ)] at ht
       change decomp.polarPart s (γP.toPath.extend t) * deriv γP.toPath.extend t =
         (∑ k : Fin (decomp.order s),
@@ -452,12 +446,8 @@ theorem cpv_polarPart_at_uncrossed_pole
     rw [h_int_eq]
     have h_int_each : ∀ k : Fin (decomp.order s), IntervalIntegrable
         (PiecewiseC1Path.contourIntegrand
-          (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP) volume 0 1 := by
-      intro k
-      change IntervalIntegrable
-        (fun t => decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1) *
-          deriv γP.toPath.extend t) volume 0 1
-      exact h_deriv_int.continuousOn_mul ((h_cont_inv_each k).mono
+          (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP) volume 0 1 := fun k =>
+      h_deriv_int.continuousOn_mul ((h_cont_inv_each k).mono
         (by rw [uIcc_of_le (zero_le_one' ℝ)]))
     rw [PiecewiseC1Path.contourIntegral_finset_sum Finset.univ _ γP
       (fun k _ => h_int_each k)]
@@ -498,9 +488,8 @@ theorem cpv_polarPart_at_uncrossed_pole
         exact PiecewiseC1Path.contourIntegral_smul (residue f s) _ γP
       rw [h_const_factor, h_winding_int_eq]
       ring
-    · have h_residue_zero : residue f s = 0 := by
-        have h := decomp.residue_eq s hs; rwa [dif_neg h_order_pos] at h
-      rw [h_residue_zero, mul_zero]
+    · rw [show residue f s = 0 by
+            have h := decomp.residue_eq s hs; rwa [dif_neg h_order_pos] at h, mul_zero]
       exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
   have h_meas : ∀ᶠ ε in 𝓝[>] (0 : ℝ), AEStronglyMeasurable
       (fun t => cpvIntegrandOn S (decomp.polarPart s)
@@ -520,9 +509,7 @@ theorem cpv_polarPart_at_uncrossed_pole
       (decomp.polarPart s) ε t]
     by_cases ht_in : t ∈ (HungerbuhlerWasem.cpv_badSet γP S ε)ᶜ
     · rw [Set.indicator_of_mem ht_in]
-    · rw [Set.indicator_of_notMem ht_in]
-      simp only [norm_zero]
-      exact norm_nonneg _
+    · rw [Set.indicator_of_notMem ht_in, norm_zero]; exact norm_nonneg _
   have h_pointwise_raw :=
     HungerbuhlerWasem.cpvIntegrandOn_tendsto_contourIntegrand_ae γ S
     (decomp.polarPart s)
@@ -1954,16 +1941,11 @@ theorem residueTheorem_crossing_truly_full_spec
   set decomp : PolarPartDecomposition f S U :=
     PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
       (γ := γ.toPwC1Immersion) hMero hCondB
-  have hx_notin_S : x ∉ (↑S : Set ℂ) := by
-    intro hx
-    have h0 : γ.toPwC1Immersion.toPiecewiseC1Path 0 = x :=
+  have hx_notin_S : x ∉ (↑S : Set ℂ) := fun hx => zero_ne_one
+    (h_unique_cross x hx 0 (Set.left_mem_Icc.mpr zero_le_one)
+      1 (Set.right_mem_Icc.mpr zero_le_one)
       γ.toPwC1Immersion.toPiecewiseC1Path.apply_zero
-    have h1 : γ.toPwC1Immersion.toPiecewiseC1Path 1 = x :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.apply_one
-    have h_zero_eq_one : (0 : ℝ) = 1 :=
-      h_unique_cross x hx 0 (Set.left_mem_Icc.mpr zero_le_one)
-        1 (Set.right_mem_Icc.mpr zero_le_one) h0 h1
-    exact zero_ne_one h_zero_eq_one
+      γ.toPwC1Immersion.toPiecewiseC1Path.apply_one)
   refine residueTheorem_crossing_compositional hU_open hU_ne S hS_in_U f hf γ
     h_null decomp ?_
   intro s hs
@@ -1971,28 +1953,25 @@ theorem residueTheorem_crossing_truly_full_spec
     simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 0 =
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 from rfl,
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_zero]
-    intro h_eq
-    exact hx_notin_S (h_eq ▸ hs)
+    exact fun h_eq => hx_notin_S (h_eq ▸ hs)
   have h1_ne : (γ.toPwC1Immersion : ℝ → ℂ) 1 ≠ s := by
     simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 1 =
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 from rfl,
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_one]
-    intro h_eq
-    exact hx_notin_S (h_eq ▸ hs)
+    exact fun h_eq => hx_notin_S (h_eq ▸ hs)
   by_cases h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1,
       γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s
   · exact cpv_polarPart_at_uncrossed_pole hU_open hU_ne hS_in_U γ h_null decomp s hs
       h_avoid
   · push Not at h_avoid
     obtain ⟨t₀, ht₀_Icc, h_at_t₀⟩ := h_avoid
-    have ht₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 := by
-      refine ⟨lt_of_le_of_ne ht₀_Icc.1 ?_, lt_of_le_of_ne ht₀_Icc.2 ?_⟩
-      · intro h_eq; apply h0_ne
+    have ht₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 :=
+      ⟨lt_of_le_of_ne ht₀_Icc.1 fun h_eq => h0_ne (by
         show γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 = s
-        rw [← h_eq] at h_at_t₀; exact h_at_t₀
-      · intro h_eq; apply h1_ne
+        rw [← h_eq] at h_at_t₀; exact h_at_t₀),
+       lt_of_le_of_ne ht₀_Icc.2 fun h_eq => h1_ne (by
         show γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 = s
-        rw [h_eq] at h_at_t₀; exact h_at_t₀
+        rw [h_eq] at h_at_t₀; exact h_at_t₀)⟩
     have h_unique : ∀ t ∈ Set.Icc (0 : ℝ) 1,
         γ.toPwC1Immersion.toPiecewiseC1Path t = s → t = t₀ :=
       fun t ht h_eq => h_unique_cross s hs t ht t₀ ht₀_Icc h_eq h_at_t₀
@@ -2040,15 +2019,13 @@ theorem residueTheorem_crossing_truly_full_spec
           (L_plus / (↑‖L_plus‖ : ℂ)) ^ k.val =
           ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ k.val := by
         intro k hk hne
-        have h_raw := h_angle_anywhere k hk hne
         have hk_two : 2 ≤ k.val + 1 := by omega
         have h_angle_pwr : ∃ m : ℤ,
             (((k.val + 1) - 1 : ℕ) : ℝ) *
               angleAtCrossing γ.toPwC1Immersion t₀ ht₀_Ioo =
             (m : ℝ) * (2 * Real.pi) := by
-          have h_eq : ((k.val + 1) - 1 : ℕ) = k.val := by omega
-          rw [h_eq]
-          exact h_raw
+          rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
+          exact h_angle_anywhere k hk hne
         have h_result :=
           corner_angle_compat_to_h_B γ ht₀_Ioo h_part hL_minus_ne hL_plus_ne
             hL_minus_def hL_plus_def hk_two h_angle_pwr

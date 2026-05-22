@@ -294,18 +294,18 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   set h₂ : ℝ → ℂ := fun t => ↑((t - 3) * (H - Real.sqrt 3 / 2)) * I
   set h₃ : ℝ → ℂ := fun t => ↑(t - 4) + ↑(H - Real.sqrt 3 / 2) * I
   have hg_eq_h₀ : ∀ t, t ≤ 1 → g t = h₀ t := fun t ht => by
-    change fdBoundary_H H t - ρ = h₀ t
+    show fdBoundary_H H t - ρ = h₀ t
     rw [fdBoundary_H_seg1 H ht]
     simp only [hρ_def, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk, h₀]; ring
-  have hg_eq_h₁ : ∀ t, 1 < t → t < 3 → g t = h₁ t := fun t ht1 ht3 => by
-    change fdBoundary_H H t - ρ = h₁ t; rw [fdBoundary_H_eq_arc ht1 ht3]
+  have hg_eq_h₁ : ∀ t, 1 < t → t < 3 → g t = h₁ t := fun t ht1 ht3 =>
+    show fdBoundary_H H t - ρ = h₁ t from by rw [fdBoundary_H_eq_arc ht1 ht3]
   have hg_eq_h₂ : ∀ t, 3 < t → t ≤ 4 → g t = h₂ t := fun t ht3 ht4 => by
-    change fdBoundary_H H t - ρ = h₂ t
+    show fdBoundary_H H t - ρ = h₂ t
     rw [fdBoundary_H_seg4 H (by linarith) (by linarith) (by linarith) ht4]
     simp only [hρ_def, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk, h₂]
     push_cast; ring
   have hg_eq_h₃ : ∀ t, 4 < t → g t = h₃ t := fun t ht4 => by
-    change fdBoundary_H H t - ρ = h₃ t
+    show fdBoundary_H H t - ρ = h₃ t
     rw [fdBoundary_H_seg5 H (by linarith) (by linarith) (by linarith) (by linarith)]
     simp only [hρ_def, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk, h₃]
     push_cast; ring
@@ -328,8 +328,7 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     simp only [hρ_def, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk, h₃]
     push_cast; ring
   have hg5 : g 5 = h₃ 5 := hg_eq_h₃ 5 (by norm_num)
-  have hd_h₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by
-    intro t
+  have hd_h₀ : ∀ t : ℝ, HasDerivAt h₀ (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := fun t => by
     set c : ℂ := ↑(H - Real.sqrt 3 / 2) * I
     have h_eq : h₀ = fun (s : ℝ) => (1 + c) + (-c) * ↑s := by
       ext s; simp only [h₀, c]; push_cast; ring
@@ -337,8 +336,7 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     exact ((Complex.ofRealCLM.hasDerivAt (x := t)).const_mul (-c)).const_add (1 + c)
       |>.congr_deriv (by simp [mul_one])
   have hd_h₁ : ∀ t : ℝ, HasDerivAt h₁
-      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t := by
-    intro t
+      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t := fun t => by
     have hf : HasDerivAt (fun s : ℝ => Real.pi * (1 + s) / 6) (Real.pi / 6) t :=
       ((hasDerivAt_id t).add_const (1:ℝ) |>.const_mul (Real.pi / 6)).congr_of_eventuallyEq
         (Eventually.of_forall fun s => show _ from by simp [id]; ring)
@@ -347,12 +345,10 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
         ((↑(Real.pi / 6) : ℂ) * I) t :=
       (hf.ofReal_comp.mul_const I).congr_deriv (by norm_num [smul_eq_mul])
     exact (hci.cexp.sub (hasDerivAt_const t ρ)).congr_deriv (by simp only [sub_zero]; ring)
-  have hd_h₂ : ∀ t : ℝ, HasDerivAt h₂ ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by
-    intro t
-    exact ((((hasDerivAt_id t).sub (hasDerivAt_const t 3)).mul_const
+  have hd_h₂ : ∀ t : ℝ, HasDerivAt h₂ ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := fun t =>
+    ((((hasDerivAt_id t).sub (hasDerivAt_const t 3)).mul_const
       (H - Real.sqrt 3 / 2)).ofReal_comp.mul_const I).congr_deriv (by norm_num [smul_eq_mul])
-  have hd_h₃ : ∀ t : ℝ, HasDerivAt h₃ 1 t := by
-    intro t
+  have hd_h₃ : ∀ t : ℝ, HasDerivAt h₃ 1 t := fun t => by
     have key := (((hasDerivAt_id t).sub (hasDerivAt_const t (4:ℝ))).ofReal_comp.add
       (hasDerivAt_const t (↑(H - Real.sqrt 3 / 2) * I)))
     convert key using 1; simp [sub_zero]
@@ -403,22 +399,18 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   have hh₃_deriv_cont : ContinuousOn (deriv h₃) (Icc 4 5) := by
     rw [show deriv h₃ = fun _ => (1 : ℂ) from
       funext fun t => (hd_h₃ t).deriv]; exact continuousOn_const
-  have hh₀_slit : ∀ t ∈ Icc (0:ℝ) 1, h₀ t ∈ slitPlane := by
-    intro t ht; rw [← hg_eq_h₀ t ht.2]
-    exact fdBoundary_H_sub_rho_seg0_slitPlane H ht.2
-  have hh₁_slit : ∀ t ∈ Icc (1:ℝ) (3 - δ_L), h₁ t ∈ slitPlane := by
-    intro t ⟨ht1, ht3⟩
+  have hh₀_slit : ∀ t ∈ Icc (0:ℝ) 1, h₀ t ∈ slitPlane := fun t ht => by
+    rw [← hg_eq_h₀ t ht.2]; exact fdBoundary_H_sub_rho_seg0_slitPlane H ht.2
+  have hh₁_slit : ∀ t ∈ Icc (1:ℝ) (3 - δ_L), h₁ t ∈ slitPlane := fun t ⟨ht1, ht3⟩ => by
     rcases eq_or_lt_of_le ht1 with rfl | ht1'
     · rw [← hg1_1]
       exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by norm_num, by linarith⟩ (by linarith)
     · rw [← hg_eq_h₁ t ht1' (by linarith)]
       exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by linarith, by linarith⟩ (by linarith)
-  have hh₂_slit : ∀ t ∈ Icc (3 + δ_R) (4:ℝ), h₂ t ∈ slitPlane := by
-    intro t ⟨ht3, ht4⟩
+  have hh₂_slit : ∀ t ∈ Icc (3 + δ_R) (4:ℝ), h₂ t ∈ slitPlane := fun t ⟨ht3, ht4⟩ => by
     rw [← hg_eq_h₂ t (by linarith) ht4]
     exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by linarith, by linarith⟩ (by linarith)
-  have hh₃_slit : ∀ t ∈ Icc (4:ℝ) 5, h₃ t ∈ slitPlane := by
-    intro t ⟨ht4, ht5⟩
+  have hh₃_slit : ∀ t ∈ Icc (4:ℝ) 5, h₃ t ∈ slitPlane := fun t ⟨ht4, ht5⟩ => by
     rcases eq_or_lt_of_le ht4 with rfl | ht4'
     · rw [← hg4_3]
       exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by norm_num, by norm_num⟩ (by norm_num)

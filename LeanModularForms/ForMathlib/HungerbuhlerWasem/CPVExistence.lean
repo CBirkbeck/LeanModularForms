@@ -966,8 +966,6 @@ private theorem cpvFullSetup
     (min_le_right _ _).trans <| (min_le_right _ _).trans (min_le_right _ _)
   have hr_le_t₀ : r ≤ t₀ := by linarith
   have hr_le_one_sub : r ≤ 1 - t₀ := by linarith
-  have hr_lt_one_sub : r < 1 - t₀ := by linarith
-  have hr_lt_t₀ : r < t₀ := by linarith
   have hr_C_ne : ((r : ℝ) : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hr_pos)
   have h_γPlus_div_LR : (γf (t₀ + r) - s) / L_R ∈ Complex.slitPlane := by
     have h_close : ‖(γf (t₀ + r) - s) / (L_R * ((r : ℝ) : ℂ)) - 1‖ ≤ 1/4 := by
@@ -983,10 +981,8 @@ private theorem cpvFullSetup
     simp at h1
     linarith [(abs_le.mp (h1.trans h_close)).1]
   have h_LL_neg_div_γMinus : (-L_L) / (γf (t₀ - r) - s) ∈ Complex.slitPlane := by
-    have h_γMinus_ne : γf (t₀ - r) - s ≠ 0 := by
-      intro h_eq
-      have h_in_01 : t₀ - r ∈ Icc (0 : ℝ) 1 := ⟨by linarith, by linarith [ht₀.2]⟩
-      linarith [h_unique _ h_in_01 (sub_eq_zero.mp h_eq)]
+    have h_γMinus_ne : γf (t₀ - r) - s ≠ 0 := fun h_eq => by
+      linarith [h_unique _ ⟨by linarith, by linarith [ht₀.2]⟩ (sub_eq_zero.mp h_eq)]
     have hLL_C_ne : L_L * ((r : ℝ) : ℂ) ≠ 0 := mul_ne_zero hL_L_ne hr_C_ne
     set q : ℂ := (γf (t₀ - r) - s) / (L_L * ((r : ℝ) : ℂ)) with hq_def
     have hq_close : ‖-q - 1‖ ≤ 1/4 := by
@@ -998,10 +994,8 @@ private theorem cpvFullSetup
       rw [norm_neg, norm_one, show ((-1 : ℂ) - q) = -(q + 1) from by ring, norm_neg,
         show q + 1 = -(-q - 1) from by ring, norm_neg] at h_rev
       linarith
-    have hq_ne : q ≠ 0 := by
-      intro h_eq
-      rw [h_eq, norm_zero] at hq_norm
-      linarith
+    have hq_ne : q ≠ 0 := fun h_eq => by
+      rw [h_eq, norm_zero] at hq_norm; linarith
     have h_neg_inv_q_close : ‖(-1 / q) - 1‖ ≤ 1/3 := by
       rw [show ((-1 : ℂ) / q) - 1 = -((1 + q) / q) from by field_simp; ring, norm_neg,
         norm_div, show (1 : ℂ) + q = -(-q - 1) from by ring, norm_neg,
@@ -1171,11 +1165,9 @@ theorem hasCauchyPV_inv_sub_of_flat_one_full
       have h_eq_R := exit_time_eq_right γ D ht₀ hε_pos hε_lt_thresh
       have h_eq_L := exit_time_eq_left γ D ht₀ hε_pos hε_lt_thresh
       have h_γPlus_ne : γf (t₀ + r) - s ≠ 0 := fun h_eq => by
-        have : t₀ + r ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ht₀.1], by linarith⟩
-        linarith [h_unique _ this (sub_eq_zero.mp h_eq)]
+        linarith [h_unique _ ⟨by linarith [ht₀.1], by linarith⟩ (sub_eq_zero.mp h_eq)]
       have h_γMinus_ne : γf (t₀ - r) - s ≠ 0 := fun h_eq => by
-        have : t₀ - r ∈ Icc (0 : ℝ) 1 := ⟨by linarith, by linarith [ht₀.2]⟩
-        linarith [h_unique _ this (sub_eq_zero.mp h_eq)]
+        linarith [h_unique _ ⟨by linarith, by linarith [ht₀.2]⟩ (sub_eq_zero.mp h_eq)]
       have h_γR_ne : γf (t₀ + D.δ_right ε) - s ≠ 0 := norm_pos_iff.mp (h_eq_R.symm ▸ hε_pos)
       have h_γL_ne : γf (t₀ - D.δ_left ε) - s ≠ 0 := norm_pos_iff.mp (h_eq_L.symm ▸ hε_pos)
       have h_log_R_decomp : Λ_R ε =

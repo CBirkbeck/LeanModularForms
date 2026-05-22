@@ -468,21 +468,17 @@ lemma cpv_at_corner (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       rw [h_norm_seg5 t ht4]; linarith [ht.1]
     have h_sub34 : (∫ t in (3:ℝ)..(4 - η / c), (↑(t - 4) : ℂ)⁻¹) =
         ∫ u in (-1:ℝ)..(-η / c), (↑u : ℂ)⁻¹ := by
-      simp_rw [← Complex.ofReal_inv]
-      rw [intervalIntegral.integral_ofReal, intervalIntegral.integral_ofReal,
+      simp_rw [← Complex.ofReal_inv, intervalIntegral.integral_ofReal,
         show (-η / c : ℝ) = -(η / c) by ring]
-      have key := intervalIntegral.integral_comp_sub_right (fun u : ℝ => u⁻¹) (4 : ℝ)
-        (a := (3:ℝ)) (b := 4 - η / c)
-      simp only [show (3:ℝ) - 4 = -1 by ring, show (4 - η / c) - 4 = -(η / c) by ring] at key
-      exact congr_arg _ key
+      simpa [show (3:ℝ) - 4 = -1 by ring, show (4 - η / c) - 4 = -(η / c) by ring] using
+        congr_arg ((↑·) : ℝ → ℂ) (intervalIntegral.integral_comp_sub_right
+          (fun u : ℝ => u⁻¹) (4 : ℝ) (a := (3:ℝ)) (b := 4 - η / c))
     have h_sub45 : (∫ t in (4 + η)..5, (↑(t - 4) : ℂ)⁻¹) =
         ∫ u in η..1, (↑u : ℂ)⁻¹ := by
-      simp_rw [← Complex.ofReal_inv]
-      rw [intervalIntegral.integral_ofReal, intervalIntegral.integral_ofReal]
-      have key := intervalIntegral.integral_comp_sub_right (fun u : ℝ => u⁻¹) (4 : ℝ)
-        (a := 4 + η) (b := (5:ℝ))
-      simp only [show (4 + η) - 4 = η by ring, show (5:ℝ) - 4 = 1 by ring] at key
-      exact congr_arg _ key
+      simp_rw [← Complex.ofReal_inv, intervalIntegral.integral_ofReal]
+      simpa [show (4 + η) - 4 = η by ring, show (5:ℝ) - 4 = 1 by ring] using
+        congr_arg ((↑·) : ℝ → ℂ) (intervalIntegral.integral_comp_sub_right
+          (fun u : ℝ => u⁻¹) (4 : ℝ) (a := 4 + η) (b := (5:ℝ)))
     have h_neg_axis : (∫ u in (-1:ℝ)..(-η / c), (↑u : ℂ)⁻¹) =
         -(∫ u in (η / c)..1, (↑u : ℂ)⁻¹) := by
       simp_rw [← Complex.ofReal_inv]

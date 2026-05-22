@@ -517,11 +517,9 @@ theorem residueTheorem_avoidance
         (f := fun k : Fin (decomp.order s) =>
           γP.contourIntegral (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)))
         (Finset.mem_univ _)
-        (fun k _ hk_ne => by
-          have hk_succ_ge_2 : 2 ≤ k.val + 1 := by
-            have : k.val ≠ 0 := fun h => hk_ne (Fin.ext h); omega
-          exact contourIntegral_higherOrder_eq_zero_of_avoids γP h_avoid_s hk_succ_ge_2
-            _ (h_term_int s hs k.val (decomp.coeff s k)))
+        (fun k _ hk_ne => contourIntegral_higherOrder_eq_zero_of_avoids γP h_avoid_s
+          (by have : k.val ≠ 0 := fun h => hk_ne (Fin.ext h); omega)
+          _ (h_term_int s hs k.val (decomp.coeff s k)))
       rw [h_split]
       simp only [zero_add, pow_one]
       rw [((decomp.residue_eq s hs).trans (dif_pos h_order_pos)).symm]
@@ -532,10 +530,8 @@ theorem residueTheorem_avoidance
           ⟨δ, hδ_pos, fun t ht => hδ_bound s hs t ht⟩
         unfold generalizedWindingNumber at hw_def
         rw [h1.cauchyPV_eq] at hw_def
-        have h2pi_ne : (2 * (↑Real.pi : ℂ) * I) ≠ 0 :=
-          mul_ne_zero (mul_ne_zero two_ne_zero
-            (by exact_mod_cast Real.pi_ne_zero)) Complex.I_ne_zero
-        rw [hw_def, mul_inv_cancel_left₀ h2pi_ne]
+        rw [hw_def, mul_inv_cancel_left₀ (mul_ne_zero (mul_ne_zero two_ne_zero
+          (by exact_mod_cast Real.pi_ne_zero)) Complex.I_ne_zero)]
       rw [show (fun z => residue f s / (z - s)) =
             (fun z => residue f s * (z - s)⁻¹) from funext fun z => div_eq_mul_inv _ _,
         PiecewiseC1Path.contourIntegral_smul (residue f s) _ γP, h_winding_int_eq]
@@ -544,8 +540,7 @@ theorem residueTheorem_avoidance
         have h := decomp.residue_eq s hs
         rwa [dif_neg h_order_pos] at h
       rw [h_residue_zero, mul_zero]
-      refine Finset.sum_eq_zero fun k _ => ?_
-      exfalso; have := k.isLt; omega
+      exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
   have hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1, γP t ∈ U := h_null.image_subset
   have h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand decomp.analyticRemainder γP)
