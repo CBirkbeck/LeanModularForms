@@ -1680,7 +1680,7 @@ private theorem perCrossing_higherOrder_window_integral_tendsto
       have h_u_lt_1 : u < 1 := by linarith [ht_i_r_le_1, h_u_lt_t_i, ht_i_Ioo.2, hr_pos]
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_lt_1⟩
       have h_diff_at : DifferentiableAt ℝ f u :=
-        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off u h_u_in_Ioo01 h_u_off
+        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend u h_u_in_Ioo01 h_u_off
       exact h_diff_at.hasDerivAt
     have h_diff_right : ∀ u ∈ Set.Ioo (t_eps_plus ε) (t_i + r) \ partSet,
         HasDerivAt f (deriv f u) u := by
@@ -1691,7 +1691,7 @@ private theorem perCrossing_higherOrder_window_integral_tendsto
       have h_u_lt_1 : u < 1 := lt_of_lt_of_le h_u_in.2 ht_i_r_le_1
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_lt_1⟩
       have h_diff_at : DifferentiableAt ℝ f u :=
-        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off u h_u_in_Ioo01 h_u_off
+        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend u h_u_in_Ioo01 h_u_off
       exact h_diff_at.hasDerivAt
     have hγ_cont_window : ContinuousOn f
         (Set.Icc (t_i - r) (t_eps_minus ε)) := hγ_continuous.continuousOn
@@ -1876,7 +1876,7 @@ private theorem cpv_higherOrder_tendsto_along_sorted
       have h_u_pos : 0 < u := by
         linarith [(h_a_in_unit_self ⟨le_rfl, h_a_le_1⟩).1, h_u_in.1]
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_in.2⟩
-      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off
+      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
         u h_u_in_Ioo01 h_u_off).hasDerivAt
     have hγ_continuous : Continuous γf :=
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
@@ -2040,7 +2040,7 @@ private theorem cpv_higherOrder_tendsto_along_sorted
         linarith [(h_a_in_unit ⟨le_rfl, h_a_le_1⟩).1, h_u_in.1]
       have h_u_lt_1 : u < 1 := by linarith [h_u_in.2, h_t_le_1mr_t, hr_pos]
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_lt_1⟩
-      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off
+      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
         u h_u_in_Ioo01 h_u_off).hasDerivAt
     have hγ_continuous : Continuous γf :=
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
@@ -2207,7 +2207,7 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder
     have h_diff : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet, HasDerivAt γf (deriv γf u) u := by
       intro u hu
       obtain ⟨h_u_in, h_u_off⟩ := hu
-      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off
+      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
         u h_u_in h_u_off).hasDerivAt
     have h_a_le_1 : (0 : ℝ) ≤ 1 := zero_le_one
     have h_unit_self : Set.Icc (0 : ℝ) 1 ⊆ Set.Icc (0 : ℝ) 1 := subset_refl _
@@ -2509,7 +2509,7 @@ private theorem cpv_higherOrder_tendsto_along_sorted_corner
       have h_u_pos : 0 < u := by
         linarith [(h_a_in_unit_self ⟨le_rfl, h_a_le_1⟩).1, h_u_in.1]
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_in.2⟩
-      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off
+      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
         u h_u_in_Ioo01 h_u_off).hasDerivAt
     have hγ_continuous : Continuous γf :=
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
@@ -2665,7 +2665,7 @@ private theorem cpv_higherOrder_tendsto_along_sorted_corner
         linarith [(h_a_in_unit ⟨le_rfl, h_a_le_1⟩).1, h_u_in.1]
       have h_u_lt_1 : u < 1 := by linarith [h_u_in.2, h_t_le_1mr_t, hr_pos]
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_lt_1⟩
-      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off
+      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
         u h_u_in_Ioo01 h_u_off).hasDerivAt
     have hγ_continuous : Continuous γf :=
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
@@ -3165,7 +3165,7 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
       have h_u_lt_1 : u < 1 := by linarith [ht_i_r_le_1, h_u_lt_t_i, ht_i_Ioo.2, hr_pos]
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_lt_1⟩
       have h_diff_at : DifferentiableAt ℝ f u :=
-        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off u h_u_in_Ioo01 h_u_off
+        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend u h_u_in_Ioo01 h_u_off
       exact h_diff_at.hasDerivAt
     have h_diff_right : ∀ u ∈ Set.Ioo (t_eps_plus ε) (t_i + r) \ partSet,
         HasDerivAt f (deriv f u) u := by
@@ -3176,7 +3176,7 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
       have h_u_lt_1 : u < 1 := lt_of_lt_of_le h_u_in.2 ht_i_r_le_1
       have h_u_in_Ioo01 : u ∈ Set.Ioo (0 : ℝ) 1 := ⟨h_u_pos, h_u_lt_1⟩
       have h_diff_at : DifferentiableAt ℝ f u :=
-        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off u h_u_in_Ioo01 h_u_off
+        γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend u h_u_in_Ioo01 h_u_off
       exact h_diff_at.hasDerivAt
     have hγ_cont_window : ContinuousOn f
         (Set.Icc (t_i - r) (t_eps_minus ε)) := hγ_continuous.continuousOn
@@ -3384,7 +3384,7 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
     have h_diff : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet, HasDerivAt γf (deriv γf u) u := by
       intro u hu
       obtain ⟨h_u_in, h_u_off⟩ := hu
-      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off
+      exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
         u h_u_in h_u_off).hasDerivAt
     have h_a_le_1 : (0 : ℝ) ≤ 1 := zero_le_one
     have h_unit_self : Set.Icc (0 : ℝ) 1 ⊆ Set.Icc (0 : ℝ) 1 := subset_refl _

@@ -66,7 +66,7 @@ theorem deriv_limit_eq_at_off_partition
     Tendsto (deriv f) (𝓝[>] t₀) (𝓝 (deriv f t₀)) ∧
     Tendsto (deriv f) (𝓝[<] t₀) (𝓝 (deriv f t₀)) := by
   have h_cont :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off t₀ ht₀ h_off
+    γ.toPwC1Immersion.toPiecewiseC1Path.deriv_continuous_off_extend t₀ ht₀ h_off
   exact ⟨γ.toPwC1Immersion.deriv_ne_zero t₀ ht₀ h_off,
     h_cont.tendsto.mono_left nhdsWithin_le_nhds,
     h_cont.tendsto.mono_left nhdsWithin_le_nhds⟩
@@ -465,13 +465,13 @@ theorem hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB_corner
       ∀ t ∈ Ioo (0 : ℝ) (t_eps_minus ε) \ partSet,
         HasDerivAt f (deriv f t) t := by
     filter_upwards [h_t_minus_in_Ioo] with ε htme t ⟨ht_in, ht_off⟩
-    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t
+    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t
       ⟨ht_in.1, by linarith [ht_in.2, htme.2, ht₀.2]⟩ ht_off).hasDerivAt
   have h_plus_diff : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ∀ t ∈ Ioo (t_eps_plus ε) (1 : ℝ) \ partSet,
         HasDerivAt f (deriv f t) t := by
     filter_upwards [h_t_plus_in_Ioo] with ε htpe t ⟨ht_in, ht_off⟩
-    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t
+    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t
       ⟨by linarith [htpe.1, ht_in.1, ht₀.1], ht_in.2⟩ ht_off).hasDerivAt
   have h_minus_avoids : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
       ∀ t ∈ Icc (0 : ℝ) (t_eps_minus ε), f t ≠ s := by

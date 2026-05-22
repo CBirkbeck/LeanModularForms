@@ -792,7 +792,7 @@ private theorem right_annular_log_diff_local
         have := (h_window_in_unit (Set.left_mem_Icc.mpr (by linarith))).1
         have : 0 < a := by simp only [a]; linarith
         linarith
-    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t ht_in_Ioo
+    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ht_in_Ioo
       ht.2).hasDerivAt
   have h_int : IntervalIntegrable
       (fun t => deriv γf t / (γf t - s)) MeasureTheory.volume a b := by
@@ -866,7 +866,7 @@ private theorem left_annular_log_diff_local
       rcases lt_or_eq_of_le ha_in_01.1 with h | h
       · linarith [ht.1.1]
       · linarith [ht.1.1]
-    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off t ht_in_Ioo
+    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ht_in_Ioo
       ht.2).hasDerivAt
   have h_int : IntervalIntegrable
       (fun t => deriv γf t / (γf t - s)) MeasureTheory.volume a b := by
