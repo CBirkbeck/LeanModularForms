@@ -281,10 +281,9 @@ def ofClosedPartition (toPath : Path x x) (closedPartition : Finset ℝ)
     · simp [h1, one_mem]
     simp [partition, Finset.mem_insert, Finset.mem_erase, h0, h1]
   have partition_subset_Ioo : (partition : Set ℝ) ⊆ Ioo (0 : ℝ) 1 := fun t ht => by
-    have h_ne_1 : t ≠ 1 := (Finset.mem_erase.mp ht).1
-    have h_in_e0 := (Finset.mem_erase.mp ht).2
-    have h_ne_0 : t ≠ 0 := (Finset.mem_erase.mp h_in_e0).1
-    have h_in_Icc := subset (Finset.mem_erase.mp h_in_e0).2
+    obtain ⟨h_ne_1, ht'⟩ := Finset.mem_erase.mp ht
+    obtain ⟨h_ne_0, h_in⟩ := Finset.mem_erase.mp ht'
+    have h_in_Icc := subset h_in
     exact ⟨lt_of_le_of_ne h_in_Icc.1 (Ne.symm h_ne_0),
            lt_of_le_of_ne h_in_Icc.2 h_ne_1⟩
   have not_in_closed_of_not_in_part : ∀ {t : ℝ}, t ∈ Ioo (0 : ℝ) 1 → t ∉ partition →

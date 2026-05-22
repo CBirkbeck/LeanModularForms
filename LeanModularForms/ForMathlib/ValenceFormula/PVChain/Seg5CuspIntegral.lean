@@ -189,8 +189,7 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
   set F := SlashInvariantFormClass.cuspFunction (1 : ℝ) f with hF_def
   set m := (orderAtCusp' f).toNat
   obtain ⟨g, hg_diff, hg_ne, hFg⟩ := cuspFunction_factored f hf
-  have hg_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R, g q ≠ 0 := by
-    intro q hq
+  have hg_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R, g q ≠ 0 := fun q hq => by
     by_cases hq0 : q = 0
     · exact hq0 ▸ hg_ne
     · have hF_ne := hcusp_nonvan q hq hq0

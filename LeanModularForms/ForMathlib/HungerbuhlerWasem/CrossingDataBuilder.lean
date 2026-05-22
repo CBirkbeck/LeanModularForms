@@ -602,9 +602,8 @@ private theorem exists_right_cutoff
     norm_sub_strictMonoOn_right h_at hL_ne hL_right hγ_cont_all.continuousAt
       (eventually_differentiable_right γ ht₀_Ioo)
   set r : ℝ := min r₀ (min ((1 - t₀) / 2) (t₀ / 2)) with hr_def
-  have hr_pos : 0 < r := by
-    rw [hr_def]
-    exact lt_min hr₀_pos (lt_min (by linarith [ht₀_Ioo.2]) (by linarith [ht₀_Ioo.1]))
+  have hr_pos : 0 < r :=
+    hr_def ▸ lt_min hr₀_pos (lt_min (by linarith [ht₀_Ioo.2]) (by linarith [ht₀_Ioo.1]))
   have hr_lt_one_sub : r < 1 - t₀ :=
     ((min_le_right _ _).trans (min_le_left _ _)).trans_lt (by linarith [ht₀_Ioo.2])
   have hr_le_t₀ : r ≤ t₀ :=
@@ -634,9 +633,8 @@ private theorem exists_right_cutoff
     else r / 2 with hδ_def
   have hδ_spec : ∀ ε, 0 < ε → ε < f r →
       δ_right ε ∈ Ioo (0 : ℝ) r ∧ f (δ_right ε) = ε := fun ε hε_pos hε_lt => by
-    have hε_in : ε ∈ Ioo (0 : ℝ) (f r) := ⟨hε_pos, hε_lt⟩
-    simp only [hδ_def, dif_pos hε_in]
-    exact (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
+    simp only [hδ_def, dif_pos (show ε ∈ Ioo (0 : ℝ) (f r) from ⟨hε_pos, hε_lt⟩)]
+    exact (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε ⟨hε_pos, hε_lt⟩).choose_spec.1
   have h_eq_t : ∀ t, f (t - t₀) = ‖γf t - s‖ := fun t => by
     show ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
     rw [show t₀ + (t - t₀) = t from by ring]
@@ -661,7 +659,7 @@ private theorem exists_right_cutoff
       rcases lt_or_eq_of_le hgap with h_lt | h_eq
       · exact (hf_strict ⟨by linarith [lt_of_le_of_ne ht_ge (Ne.symm h_t_eq)],
           by linarith [hδ_in.2]⟩ ⟨hδ_in.1.le, hδ_in.2.le⟩ h_lt).le
-      · rw [h_eq]
+      · exact h_eq ▸ le_rfl
     rw [hfδ, h_eq_t] at h_le; exact h_le
 
 private theorem exists_left_cutoff

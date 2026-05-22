@@ -394,8 +394,7 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
   set h_curve : ℝ → ℂ := fun t =>
     laurentSum (γP.toPath.extend t) * deriv γP.toPath.extend t
   have h_far_of : ∀ t ∈ (cpv_badSet γP S ε)ᶜ, ∀ s' ∈ S,
-      ε < ‖γP.toPath.extend t - s'‖ := by
-    intro t ht_in s' hs'
+      ε < ‖γP.toPath.extend t - s'‖ := fun t ht_in s' hs' => by
     simp only [cpv_badSet, Set.mem_compl_iff, Set.mem_setOf_eq, not_exists, not_and,
       not_le] at ht_in
     exact ht_in s' hs'
@@ -407,11 +406,9 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
     rw [cpvIntegrandOn_eq_indicator_compl γP S (decomp.polarPart s) ε t]
     by_cases ht_in : t ∈ (cpv_badSet γP S ε)ᶜ
     · rw [Set.indicator_of_mem ht_in, Set.indicator_of_mem ht_in]
-      have h_ne : γP.toPath.extend t ≠ s := by
-        intro heq
+      have h_ne : γP.toPath.extend t ≠ s := fun heq => by
         have := h_far_of t ht_in s hs
-        rw [heq, sub_self, norm_zero] at this
-        linarith
+        rw [heq, sub_self, norm_zero] at this; linarith
       change decomp.polarPart s (γP.toPath.extend t) *
         deriv γP.toPath.extend t =
         laurentSum (γP.toPath.extend t) * deriv γP.toPath.extend t
@@ -422,31 +419,26 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
   have h_M_polar_nonneg : 0 ≤ M_polar :=
     Finset.sum_nonneg (fun k _ => div_nonneg (norm_nonneg _) (pow_nonneg hε.le _))
   have h_M_nonneg : 0 ≤ M := mul_nonneg h_M_polar_nonneg (NNReal.coe_nonneg K)
-  have h_bound_on_compl : ∀ t ∈ (cpv_badSet γP S ε)ᶜ, ‖h_curve t‖ ≤ M := by
-    intro t ht_in
-    have h_far_s : ε < ‖γP.toPath.extend t - s‖ := h_far_of t ht_in s hs
-    have h_lap_bound : ‖laurentSum (γP.toPath.extend t)‖ ≤ M_polar := by
-      refine (norm_sum_le _ _).trans <| Finset.sum_le_sum fun k _ => ?_
-      rw [norm_div, norm_pow]
-      exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
-        (pow_le_pow_left₀ hε.le h_far_s.le _)
+  have h_bound_on_compl : ∀ t ∈ (cpv_badSet γP S ε)ᶜ, ‖h_curve t‖ ≤ M := fun t ht_in =>
     calc ‖h_curve t‖ = ‖laurentSum (γP.toPath.extend t)‖ *
           ‖deriv γP.toPath.extend t‖ := norm_mul _ _
-      _ ≤ M_polar * K := mul_le_mul h_lap_bound (norm_deriv_le_of_lipschitz hLip)
-          (norm_nonneg _) h_M_polar_nonneg
-  have h_curve_meas : Measurable h_curve := by
-    refine (Finset.measurable_sum (Finset.univ : Finset (Fin N)) fun k _ =>
-      (Measurable.const_div (Measurable.pow_const ?_ _) _)).mul (measurable_deriv _)
-    exact γP.toPath.continuous_extend.measurable.sub_const s
+      _ ≤ M_polar * K := mul_le_mul
+          ((norm_sum_le _ _).trans <| Finset.sum_le_sum fun k _ => by
+            rw [norm_div, norm_pow]
+            exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
+              (pow_le_pow_left₀ hε.le (h_far_of t ht_in s hs).le _))
+          (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _) h_M_polar_nonneg
+  have h_curve_meas : Measurable h_curve :=
+    (Finset.measurable_sum (Finset.univ : Finset (Fin N)) fun k _ =>
+      Measurable.const_div ((γP.toPath.continuous_extend.measurable.sub_const s).pow_const _) _)
+      |>.mul (measurable_deriv _)
   rw [intervalIntegrable_iff, h_indicator_eq']
   refine MeasureTheory.IntegrableOn.of_bound measure_Ioc_lt_top
     (h_curve_meas.aestronglyMeasurable.indicator (cpv_badSet_measurableSet γP S ε).compl) M ?_
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t _
   by_cases ht_in : t ∈ (cpv_badSet γP S ε)ᶜ
-  · rw [Set.indicator_of_mem ht_in]
-    exact h_bound_on_compl t ht_in
-  · rw [Set.indicator_of_notMem ht_in, norm_zero]
-    exact h_M_nonneg
+  · rw [Set.indicator_of_mem ht_in]; exact h_bound_on_compl t ht_in
+  · rw [Set.indicator_of_notMem ht_in, norm_zero]; exact h_M_nonneg
 
 /-- **Hungerbühler–Wasem Theorem 3.3 — avoidance form (central A).**
 

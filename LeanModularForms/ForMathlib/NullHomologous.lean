@@ -249,47 +249,26 @@ theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
     generalizedWindingNumber γ.toPiecewiseC1Path w = 0 := by
   set R : ℝ := ‖γ.toPath.extend 0‖ + (K : ℝ) with hR_def
   have h_2pi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
-  have h_K_div_2pi_nn : (0 : ℝ) ≤ (K : ℝ) / (2 * Real.pi) :=
-    div_nonneg (NNReal.coe_nonneg _) h_2pi_pos.le
-  have hR_w : R < ‖w‖ := by linarith
+  have hR_w : R < ‖w‖ := by
+    have : (0 : ℝ) ≤ (K : ℝ) / (2 * Real.pi) :=
+      div_nonneg (NNReal.coe_nonneg _) h_2pi_pos.le
+    linarith
   have hpos : 0 < ‖w‖ - R := by linarith
-  -- γ stays in ball of radius R.
   have hR_bound : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPath.extend t‖ ≤ R :=
     lipschitzWith_norm_bound_on_Icc01 hLip
-  -- γ's derivative bounded by K.
-  have hM_d : ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv γ.toPath.extend t‖ ≤ (K : ℝ) :=
-    fun _ _ => norm_deriv_le_of_lipschitz hLip
-  -- Distance lower bound for γ - w.
   have h_dist_lb : ∀ t ∈ Icc (0 : ℝ) 1,
       (‖w‖ - R) ≤ ‖γ.toPath.extend t - w‖ := fun t ht => by
     have := norm_sub_norm_le w (γ.toPath.extend t)
     rw [norm_sub_rev] at this
     linarith [hR_bound t ht]
-  -- δ-bound: γ avoids w with positive distance.
   have hδ : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1,
       δ ≤ ‖γ.toPiecewiseC1Path t - w‖ := ⟨‖w‖ - R, hpos, h_dist_lb⟩
-  -- Integrability of γ'/(γ - w).
-  have h_int : IntervalIntegrable
-      (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - w))
-      MeasureTheory.volume 0 1 :=
-    intervalIntegrable_div_lipschitz γ.toPiecewiseC1Path hpos h_dist_lb hLip
-  -- Get integer winding number.
   obtain ⟨n, hn⟩ :=
-    hasGeneralizedWindingNumber_integer_of_closed γ.toPiecewiseC1Path hδ h_int
-  have h_winding_eq : generalizedWindingNumber γ.toPiecewiseC1Path w = (n : ℂ) := hn.eq
-  -- HasCauchyPV by avoidance: contour integral form.
-  have h_avoid_pv : HasCauchyPV (fun z => (z - w)⁻¹) γ.toPiecewiseC1Path w
-      (γ.toPiecewiseC1Path.contourIntegral (fun z => (z - w)⁻¹)) :=
-    hasCauchyPV_of_avoids hδ
-  -- Uniqueness of Tendsto: contour integral = 2πi · n.
+    hasGeneralizedWindingNumber_integer_of_closed γ.toPiecewiseC1Path hδ
+      (intervalIntegrable_div_lipschitz γ.toPiecewiseC1Path hpos h_dist_lb hLip)
   have h_eq_int : γ.toPiecewiseC1Path.contourIntegral (fun z => (z - w)⁻¹) =
       2 * ↑Real.pi * I * (n : ℂ) :=
-    tendsto_nhds_unique h_avoid_pv hn
-  -- Bound on contour integral.
-  have h_bound : ‖γ.toPiecewiseC1Path.contourIntegral (fun z => (z - w)⁻¹)‖
-      ≤ (K : ℝ) / (‖w‖ - R) :=
-    contourIntegral_inv_norm_le_of_far hR_bound hM_d hR_w
-  -- Translate to bound on |n|.
+    tendsto_nhds_unique (hasCauchyPV_of_avoids hδ) hn
   have h_norm_2piIn : ‖(2 : ℂ) * (↑Real.pi : ℂ) * I * (n : ℂ)‖ =
       2 * Real.pi * (|n| : ℝ) := by
     rw [show (2 : ℂ) * (↑Real.pi : ℂ) * I * (n : ℂ) =
@@ -297,17 +276,16 @@ theorem generalizedWindingNumber_eq_zero_of_far_lipschitz
       norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs,
       abs_of_pos h_2pi_pos, Complex.norm_I, one_mul, Complex.norm_intCast]
   have hL : 2 * Real.pi * (|n| : ℝ) ≤ (K : ℝ) / (‖w‖ - R) := by
-    rw [← h_norm_2piIn, ← h_eq_int]; exact h_bound
-  -- Hence 2π · |n| ≤ K/(‖w‖ - R) < 2π (since ‖w‖ - R > K/(2π)).
+    rw [← h_norm_2piIn, ← h_eq_int]
+    exact contourIntegral_inv_norm_le_of_far hR_bound
+      (fun _ _ => norm_deriv_le_of_lipschitz hLip) hR_w
   have h_div_lt : (K : ℝ) / (‖w‖ - R) < 2 * Real.pi := by
-    have h_K_lt : (K : ℝ) / (2 * Real.pi) < ‖w‖ - R := by linarith
-    rw [div_lt_iff₀ h_2pi_pos] at h_K_lt
     rw [div_lt_iff₀ hpos]
-    nlinarith
+    have h_K_lt : (K : ℝ) / (2 * Real.pi) < ‖w‖ - R := by linarith
+    rw [div_lt_iff₀ h_2pi_pos] at h_K_lt; nlinarith
   have h_n_abs_lt_1 : (|n| : ℝ) < 1 :=
     lt_of_mul_lt_mul_left (by simpa using hL.trans_lt h_div_lt) h_2pi_pos.le
-  have h_n_zero : n = 0 := Int.abs_lt_one_iff.mp (mod_cast h_n_abs_lt_1)
-  rw [h_winding_eq, h_n_zero, Int.cast_zero]
+  rw [hn.eq, show n = 0 from Int.abs_lt_one_iff.mp (mod_cast h_n_abs_lt_1), Int.cast_zero]
 
 /-! ### Cocompact form: winding eventually zero from Lipschitz γ -/
 

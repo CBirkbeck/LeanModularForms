@@ -168,32 +168,25 @@ theorem cpvIntegrand_polarPart_intervalIntegrable
     Finset.sum_nonneg fun k _ => div_nonneg (norm_nonneg _) (pow_nonneg hε.le _)
   have h_M_nonneg : 0 ≤ M := mul_nonneg h_M_polar_nonneg K.coe_nonneg
   have h_bound_on_set : ∀ t ∈ {t : ℝ | ε < ‖γP.toPath.extend t - s‖},
-      ‖h_curve t‖ ≤ M := by
-    intro t h_far_s
-    have h_lap_bound : ‖laurentSum (γP.toPath.extend t)‖ ≤ M_polar :=
-      (norm_sum_le _ _).trans <| Finset.sum_le_sum fun k _ => by
-        rw [norm_div, norm_pow]
-        exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
-          (pow_le_pow_left₀ hε.le h_far_s.le _)
+      ‖h_curve t‖ ≤ M := fun t h_far_s => by
     rw [show ‖h_curve t‖ = ‖laurentSum (γP.toPath.extend t)‖ * ‖deriv γP.toPath.extend t‖
       from norm_mul _ _]
-    exact mul_le_mul h_lap_bound (norm_deriv_le_of_lipschitz hLip)
-      (norm_nonneg _) h_M_polar_nonneg
-  have h_bound_indicator : ∀ t,
-      ‖{t : ℝ | ε < ‖γP.toPath.extend t - s‖}.indicator h_curve t‖ ≤ M := by
-    intro t
-    by_cases ht_in : t ∈ {t : ℝ | ε < ‖γP.toPath.extend t - s‖}
-    · rw [Set.indicator_of_mem ht_in]; exact h_bound_on_set t ht_in
-    · rw [Set.indicator_of_notMem ht_in, norm_zero]; exact h_M_nonneg
-  have h_γ_meas : Measurable γP.toPath.extend := γP.toPath.continuous_extend.measurable
+    exact mul_le_mul ((norm_sum_le _ _).trans <| Finset.sum_le_sum fun k _ => by
+        rw [norm_div, norm_pow]
+        exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
+          (pow_le_pow_left₀ hε.le h_far_s.le _))
+      (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _) h_M_polar_nonneg
   have h_curve_meas : Measurable h_curve :=
-    (Finset.measurable_sum _ fun k _ => ((h_γ_meas.sub_const s).pow_const _).const_div _).mul
+    (Finset.measurable_sum _ fun k _ =>
+      (((γP.toPath.continuous_extend.measurable.sub_const s).pow_const _).const_div _)).mul
       (measurable_deriv _)
   rw [intervalIntegrable_iff, h_indicator_eq]
   refine MeasureTheory.IntegrableOn.of_bound measure_Ioc_lt_top
     (h_curve_meas.aestronglyMeasurable.indicator h_meas_set) M ?_
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t _
-  exact h_bound_indicator t
+  by_cases ht_in : t ∈ {t : ℝ | ε < ‖γP.toPath.extend t - s‖}
+  · rw [Set.indicator_of_mem ht_in]; exact h_bound_on_set t ht_in
+  · rw [Set.indicator_of_notMem ht_in, norm_zero]; exact h_M_nonneg
 
 variable {U : Set ℂ}
 

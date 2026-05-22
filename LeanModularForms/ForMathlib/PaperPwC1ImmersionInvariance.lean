@@ -641,14 +641,6 @@ private theorem angleAtCrossing_cyclicShift_wrap
         ⟨h_partγ, ne_of_gt (by linarith [ht₀'.1]),
           ne_of_lt (by linarith [ht₀'.2, hτ.2])⟩
     simp only [angleAtCrossing, h_part, h_partγ_legacy, dite_true]
-    set Lγ'_left := Classical.choose
-      ((γ.cyclicShift hτ).toPwC1Immersion.left_deriv_limit t₀' h_part)
-    set Lγ'_right := Classical.choose
-      ((γ.cyclicShift hτ).toPwC1Immersion.right_deriv_limit t₀' h_part)
-    set Lγ_left := Classical.choose
-      (γ.toPwC1Immersion.left_deriv_limit (t₀' + τ - 1) h_partγ_legacy)
-    set Lγ_right := Classical.choose
-      (γ.toPwC1Immersion.right_deriv_limit (t₀' + τ - 1) h_partγ_legacy)
     have hLγ'_left_spec := Classical.choose_spec
       ((γ.cyclicShift hτ).toPwC1Immersion.left_deriv_limit t₀' h_part)
     have hLγ'_right_spec := Classical.choose_spec
@@ -657,30 +649,24 @@ private theorem angleAtCrossing_cyclicShift_wrap
       (γ.toPwC1Immersion.left_deriv_limit (t₀' + τ - 1) h_partγ_legacy)
     have hLγ_right_spec := Classical.choose_spec
       (γ.toPwC1Immersion.right_deriv_limit (t₀' + τ - 1) h_partγ_legacy)
-    have h_tend_shifted_left : Tendsto (fun t => deriv γ.toPath.extend (t + τ - 1))
-        (𝓝[<] t₀') (𝓝 Lγ'_left) :=
-      hLγ'_left_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_left_wrap hτ ht₀')
-    have h_tend_shifted_right : Tendsto (fun t => deriv γ.toPath.extend (t + τ - 1))
-        (𝓝[>] t₀') (𝓝 Lγ'_right) :=
-      hLγ'_right_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_right_wrap hτ ht₀')
     have h_shift_back_left : Tendsto (fun u : ℝ => u - (τ - 1))
         (𝓝[<] (t₀' + τ - 1)) (𝓝[<] t₀') := by
-      have h_pt : (t₀' + (τ - 1)) = (t₀' + τ - 1) := by ring
-      rw [← h_pt]; exact tendsto_sub_const_nhdsLT t₀' (τ - 1)
+      rw [show (t₀' + τ - 1) = t₀' + (τ - 1) from by ring]
+      exact tendsto_sub_const_nhdsLT t₀' (τ - 1)
     have h_shift_back_right : Tendsto (fun u : ℝ => u - (τ - 1))
         (𝓝[>] (t₀' + τ - 1)) (𝓝[>] t₀') := by
-      have h_pt : (t₀' + (τ - 1)) = (t₀' + τ - 1) := by ring
-      rw [← h_pt]; exact tendsto_sub_const_nhdsGT t₀' (τ - 1)
-    have h_tend_γ_left' : Tendsto (deriv γ.toPath.extend)
-        (𝓝[<] (t₀' + τ - 1)) (𝓝 Lγ'_left) :=
-      (h_tend_shifted_left.comp h_shift_back_left).congr fun u => by
-        show deriv γ.toPath.extend ((u - (τ - 1)) + τ - 1) = deriv γ.toPath.extend u
-        congr 1; ring
-    have h_tend_γ_right' : Tendsto (deriv γ.toPath.extend)
-        (𝓝[>] (t₀' + τ - 1)) (𝓝 Lγ'_right) :=
-      (h_tend_shifted_right.comp h_shift_back_right).congr fun u => by
-        show deriv γ.toPath.extend ((u - (τ - 1)) + τ - 1) = deriv γ.toPath.extend u
-        congr 1; ring
+      rw [show (t₀' + τ - 1) = t₀' + (τ - 1) from by ring]
+      exact tendsto_sub_const_nhdsGT t₀' (τ - 1)
+    have h_tend_γ_left' :=
+      ((hLγ'_left_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_left_wrap hτ ht₀')).comp
+        h_shift_back_left).congr fun u => by
+          show deriv γ.toPath.extend ((u - (τ - 1)) + τ - 1) = deriv γ.toPath.extend u
+          congr 1; ring
+    have h_tend_γ_right' :=
+      ((hLγ'_right_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_right_wrap hτ ht₀')).comp
+        h_shift_back_right).congr fun u => by
+          show deriv γ.toPath.extend ((u - (τ - 1)) + τ - 1) = deriv γ.toPath.extend u
+          congr 1; ring
     rw [tendsto_nhds_unique h_tend_γ_left' hLγ_left_spec.2,
       tendsto_nhds_unique h_tend_γ_right' hLγ_right_spec.2]
   · have h_part_orig : t₀' ∉ (γ.cyclicShift hτ).closedPartition := fun h_in =>
@@ -734,8 +720,8 @@ theorem satisfiesConditionB_cyclicShift
         rw [← γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_lt.le⟩]; exact h_at
       obtain ⟨p, q, hq_ne, hpq_coprime, h_angle⟩ :=
         h.angle_rational s hs t₀ (Ioo_subset_Icc_self ht₀_Ioo) h_γt₀_eq_s ht₀_Ioo
-      refine ⟨p, q, hq_ne, hpq_coprime, ?_⟩
-      rw [γ.angleAtCrossing_cyclicShift_no_wrap hτ ht_Ioo_nw ht_Ioo ht₀_Ioo, h_angle]
+      exact ⟨p, q, hq_ne, hpq_coprime, by
+        rw [γ.angleAtCrossing_cyclicShift_no_wrap hτ ht_Ioo_nw ht_Ioo ht₀_Ioo, h_angle]⟩
     · have h_s_eq : γ.toPath.extend 1 = s := by
         have h_step : (γ.cyclicShift hτ).toPath.extend t₀' = γ.toPath.extend 1 := by
           rw [γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_eq.le⟩]
@@ -752,8 +738,8 @@ theorem satisfiesConditionB_cyclicShift
         rw [← γ.cyclicShift_extend_eq_wrap hτ ⟨ht_gt.le, ht_Ioo.2.le⟩]; exact h_at
       obtain ⟨p, q, hq_ne, hpq_coprime, h_angle⟩ :=
         h.angle_rational s hs t₀ (Ioo_subset_Icc_self ht₀_Ioo) h_γt₀_eq_s ht₀_Ioo
-      refine ⟨p, q, hq_ne, hpq_coprime, ?_⟩
-      rw [γ.angleAtCrossing_cyclicShift_wrap hτ ht_Ioo_w ht_Ioo ht₀_Ioo, h_angle]
+      exact ⟨p, q, hq_ne, hpq_coprime, by
+        rw [γ.angleAtCrossing_cyclicShift_wrap hτ ht_Ioo_w ht_Ioo ht₀_Ioo, h_angle]⟩
   · intro s hs t₀' ht_Icc h_at ht_Ioo
     rcases lt_trichotomy t₀' (1 - τ) with ht_lt | ht_eq | ht_gt
     · have ht_Ioo_nw : t₀' ∈ Ioo (0 : ℝ) (1 - τ) := ⟨ht_Ioo.1, ht_lt⟩
