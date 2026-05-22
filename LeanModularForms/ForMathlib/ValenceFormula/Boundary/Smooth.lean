@@ -480,24 +480,21 @@ private lemma fdBoundaryFullPartition_endpoints :
   ⟨by simp [fdBoundaryFullPartition], by simp [fdBoundaryFullPartition]⟩
 
 /-- The H-parameterized boundary as a `PiecewiseC1Curve`. -/
-noncomputable def fdBoundary_HCurve (H : ℝ) : PiecewiseC1Curve where
-  toFun := fdBoundary_H H
-  a := 0
-  b := 5
-  hab := by norm_num
-  partition := fdBoundaryFullPartition
-  partition_subset := fdBoundaryFullPartition_subset
-  endpoints_in_partition := fdBoundaryFullPartition_endpoints
-  continuous_toFun := (fdBoundary_H_continuous H).continuousOn
-  smooth_off_partition := by
-    intro t _ htp
-    have htP : t ∉ fdBoundary_H_partition := by
-      simp only [fdBoundary_H_partition, fdBoundaryFullPartition, Finset.mem_insert,
-        Finset.mem_singleton] at htp ⊢
-      push Not at htp ⊢
-      exact ⟨htp.2.1, htp.2.2.2.1, htp.2.2.2.2.1⟩
-    exact fdBoundary_H_differentiableAt_off_partition H t htP
-  deriv_continuous_off_partition := fdBoundary_H_deriv_continuousAt_off_fullPartition H
+noncomputable def fdBoundary_HCurve (H : ℝ) : PiecewiseC1Curve :=
+  PiecewiseC1Curve.ofIccPartition (fdBoundary_H H) 0 5 (by norm_num)
+    fdBoundaryFullPartition
+    fdBoundaryFullPartition_subset
+    fdBoundaryFullPartition_endpoints
+    (fdBoundary_H_continuous H).continuousOn
+    (by
+      intro t _ htp
+      have htP : t ∉ fdBoundary_H_partition := by
+        simp only [fdBoundary_H_partition, fdBoundaryFullPartition, Finset.mem_insert,
+          Finset.mem_singleton] at htp ⊢
+        push Not at htp ⊢
+        exact ⟨htp.2.1, htp.2.2.2.1, htp.2.2.2.2.1⟩
+      exact fdBoundary_H_differentiableAt_off_partition H t htP)
+    (fdBoundary_H_deriv_continuousAt_off_fullPartition H)
 
 /-- The H-parameterized boundary as a `PiecewiseC1Immersion`.
 Requires H > √3/2 for nonzero derivative. -/
@@ -544,24 +541,21 @@ lemma fdBoundary_right_deriv_limit (p : ℝ) (hp : p ∈ fdBoundaryFullPartition
     fdBoundary_H_right_deriv_limit heightCutoff sqrt3_div2_lt_heightCutoff p hp hp'
 
 /-- The boundary of the fundamental domain as a `PiecewiseC1Curve`. -/
-noncomputable def fdBoundaryCurve : PiecewiseC1Curve where
-  toFun := fdBoundary
-  a := 0
-  b := 5
-  hab := by norm_num
-  partition := fdBoundaryFullPartition
-  partition_subset := fdBoundaryFullPartition_subset
-  endpoints_in_partition := fdBoundaryFullPartition_endpoints
-  continuous_toFun := fdBoundary_continuous.continuousOn
-  smooth_off_partition := by
-    intro t _ htp
-    have htP : t ∉ fdPartition := by
-      simp only [fdPartition, fdBoundaryFullPartition,
-        Finset.mem_insert, Finset.mem_singleton] at htp ⊢
-      push Not at htp ⊢
-      exact ⟨htp.2.1, htp.2.2.1, htp.2.2.2.1, htp.2.2.2.2.1⟩
-    exact fdBoundary_differentiableAt_off_partition t htP
-  deriv_continuous_off_partition := fdBoundary_deriv_continuousAt_off_partition
+noncomputable def fdBoundaryCurve : PiecewiseC1Curve :=
+  PiecewiseC1Curve.ofIccPartition fdBoundary 0 5 (by norm_num)
+    fdBoundaryFullPartition
+    fdBoundaryFullPartition_subset
+    fdBoundaryFullPartition_endpoints
+    fdBoundary_continuous.continuousOn
+    (by
+      intro t _ htp
+      have htP : t ∉ fdPartition := by
+        simp only [fdPartition, fdBoundaryFullPartition,
+          Finset.mem_insert, Finset.mem_singleton] at htp ⊢
+        push Not at htp ⊢
+        exact ⟨htp.2.1, htp.2.2.1, htp.2.2.2.1, htp.2.2.2.2.1⟩
+      exact fdBoundary_differentiableAt_off_partition t htP)
+    fdBoundary_deriv_continuousAt_off_partition
 
 /-- The boundary of the fundamental domain as a
 `PiecewiseC1Immersion`. -/
