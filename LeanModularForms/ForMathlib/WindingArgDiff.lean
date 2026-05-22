@@ -164,14 +164,10 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
       ∑ j ∈ Finset.range N,
         (Complex.log (Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) 0)).im =
       Complex.arg (γ.toPath.extend 0 - w)
-    have h_each : ∀ j ∈ Finset.range N,
-        (Complex.log (Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) 0)).im = 0 := by
-      intro j hj
+    rw [Finset.sum_eq_zero fun j hj => by
       rw [Finset.mem_range] at hj
       rw [Complex.segRatio_eq_one_of_le (hs_mono (Nat.le_succ _)) (hs_in j hj.le).1
-            (hs_avoid j hj.le), Complex.log_one]
-      rfl
-    rw [Finset.sum_eq_zero h_each, add_zero]
+            (hs_avoid j hj.le), Complex.log_one]; rfl, add_zero]
   have h_θ_one : θ 1 = Complex.arg (γ.toPath.extend 0 - w) +
       ∑ j ∈ Finset.range N,
         (Complex.log ((γ.toPath.extend (s (j + 1)) - w) /
@@ -179,29 +175,24 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
     change Complex.arg (γ.toPath.extend 0 - w) +
       ∑ j ∈ Finset.range N,
         (Complex.log (Complex.segRatio γ.toPath.extend w (s j) (s (j + 1)) 1)).im = _
-    apply congrArg (Complex.arg (γ.toPath.extend 0 - w) + ·)
-    apply Finset.sum_congr rfl
-    intro j hj
-    rw [Finset.mem_range] at hj
-    have h_le : s (j + 1) ≤ 1 := hs_N ▸ hs_mono hj
-    rw [Complex.segRatio_eq_full (hs_mono (Nat.le_succ _)) h_le]
+    exact congrArg (Complex.arg (γ.toPath.extend 0 - w) + ·)
+      (Finset.sum_congr rfl fun j hj => by
+        rw [Finset.mem_range] at hj
+        rw [Complex.segRatio_eq_full (hs_mono (Nat.le_succ _)) (hs_N ▸ hs_mono hj)])
   have h_θ_diff : (θ 1 - θ 0 : ℝ) =
       ∑ j ∈ Finset.range N,
         (Complex.log ((γ.toPath.extend (s (j + 1)) - w) /
                       (γ.toPath.extend (s j) - w))).im := by
-    rw [h_θ_one, h_θ_zero]
-    ring
+    rw [h_θ_one, h_θ_zero]; ring
   have h_re_zero : Real.log ‖γ.toPath.extend 1 - w‖ -
       Real.log ‖γ.toPath.extend 0 - w‖ = 0 := by
-    rw [γ.toPath.extend_one, γ.toPath.extend_zero]
-    ring
+    rw [γ.toPath.extend_one, γ.toPath.extend_zero]; ring
   have h_w := hasGeneralizedWindingNumber_of_avoids (γ := γ) (z₀ := w) ⟨d, hd_pos, hd_bd⟩
   rw [h_contour, h_re_zero, Complex.ofReal_zero, zero_add, ← h_θ_diff] at h_w
-  have h_value_eq : ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) =
-      (2 * ↑Real.pi * Complex.I)⁻¹ * (Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ)) := by
+  rw [show ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) =
+      (2 * ↑Real.pi * Complex.I)⁻¹ * (Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ)) by
     have : (Real.pi : ℂ) ≠ 0 := mod_cast Real.pi_ne_zero
-    field_simp
-  rw [h_value_eq]
+    field_simp]
   exact h_w
 
 /-- **W-3 (Winding integer-valued).** For a closed piecewise C¹ path `γ` avoiding `w`

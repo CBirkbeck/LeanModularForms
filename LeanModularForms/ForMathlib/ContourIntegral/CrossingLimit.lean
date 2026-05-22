@@ -98,8 +98,7 @@ theorem pv_tendsto_of_crossing_limit_asymmetric {γ : ℝ → ℂ} {a b : ℝ} {
   have h_ev : (fun ε => ∫ t in a..b, if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0)
       =ᶠ[nhdsWithin 0 (Ioi 0)] E := by
     filter_upwards [Ioo_mem_nhdsGT hthresh] with ε hε
-    have hε_pos : 0 < ε := hε.1
-    have hε_lt : ε < threshold := hε.2
+    obtain ⟨hε_pos, hε_lt⟩ := hε
     have hδL := hδL_pos ε hε_pos hε_lt
     have hδR := hδR_pos ε hε_pos hε_lt
     have hδL_bd := hδL_small ε hε_pos hε_lt

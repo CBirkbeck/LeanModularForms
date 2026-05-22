@@ -60,62 +60,35 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
     continuous_const.add (continuous_ofReal.smul continuous_const)
   have hu_cont : ContinuousOn u (Set.uIcc 0 1) :=
     continuous_ofReal.continuousOn
-  have hv_cont : ContinuousOn v (Set.uIcc 0 1) := by
-    change ContinuousOn (f ∘ γ) (Set.uIcc 0 1)
-    apply hf.continuousOn.comp hγ_cont.continuousOn
-    intro t ht
-    rw [Set.uIcc_of_le zero_le_one] at ht
-    exact h_seg t ht
+  have hv_cont : ContinuousOn v (Set.uIcc 0 1) :=
+    hf.continuousOn.comp hγ_cont.continuousOn fun t ht => by
+      rw [Set.uIcc_of_le zero_le_one] at ht; exact h_seg t ht
   have hu_deriv : ∀ x ∈ Set.Ioo (min 0 1) (max 0 1),
-      HasDerivAt u (u' x) x := by
-    intro x _
-    simp only [u, u']
-    exact ofRealCLM.hasDerivAt
-  have hγ_deriv : ∀ t : ℝ, HasDerivAt γ (z - c) t := by
-    intro t
-    have h1 : HasDerivAt (fun t : ℝ => (t : ℂ)) 1 t :=
-      ofRealCLM.hasDerivAt
+      HasDerivAt u (u' x) x := fun _ _ => ofRealCLM.hasDerivAt
+  have hγ_deriv : ∀ t : ℝ, HasDerivAt γ (z - c) t := fun t => by
     have h2 : HasDerivAt (fun t : ℝ => (t : ℂ) • (z - c))
-        ((1 : ℂ) • (z - c)) t := h1.smul_const (z - c)
+        ((1 : ℂ) • (z - c)) t := ofRealCLM.hasDerivAt.smul_const (z - c)
     simp only [one_smul] at h2
-    have h3 : HasDerivAt (fun _ : ℝ => c) 0 t :=
-      hasDerivAt_const t c
-    convert h3.add h2 using 1
-    ring
+    convert (hasDerivAt_const t c).add h2 using 1; ring
   have hv_deriv : ∀ x ∈ Set.Ioo (min 0 1) (max 0 1),
-      HasDerivAt v (v' x) x := by
-    intro t ht
+      HasDerivAt v (v' x) x := fun t ht => by
     simp only [v, v']
-    simp only [min_eq_left, max_eq_right,
-      zero_le_one] at ht
-    have ht' : t ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht
-    have h_diff_at : DifferentiableAt ℂ f (γ t) :=
-      hf.differentiableAt (hS_open.mem_nhds (h_seg t ht'))
-    have h_chain : HasDerivAt (f ∘ γ)
-        ((z - c) • deriv f (γ t)) t :=
-      h_diff_at.hasDerivAt.scomp t (hγ_deriv t)
+    simp only [min_eq_left, max_eq_right, zero_le_one] at ht
+    have h_chain : HasDerivAt (f ∘ γ) ((z - c) • deriv f (γ t)) t :=
+      (hf.differentiableAt
+        (hS_open.mem_nhds (h_seg t (Ioo_subset_Icc_self ht)))).hasDerivAt.scomp t (hγ_deriv t)
     simp only [smul_eq_mul] at h_chain
-    convert h_chain using 1
-    ring
-  have hu'_int : IntervalIntegrable u' MeasureTheory.volume 0 1 :=
-    continuousOn_const.intervalIntegrable
+    convert h_chain using 1; ring
   have hv'_int : IntervalIntegrable v' MeasureTheory.volume 0 1 := by
     apply ContinuousOn.intervalIntegrable
     rw [Set.uIcc_of_le zero_le_one]
-    apply ContinuousOn.mul _ continuousOn_const
-    have hContDiff : ContDiffOn ℂ 1 f S :=
-      hf.contDiffOn hS_open
-    have hderiv_cont : ContinuousOn (deriv f) S :=
-      hContDiff.continuousOn_deriv_of_isOpen hS_open le_rfl
-    exact hderiv_cont.comp hγ_cont.continuousOn
-      (fun t ht => h_seg t ht)
+    exact ((hf.contDiffOn hS_open).continuousOn_deriv_of_isOpen hS_open le_rfl).comp
+      hγ_cont.continuousOn (fun t ht => h_seg t ht) |>.mul continuousOn_const
   have h_parts :=
     intervalIntegral.integral_mul_deriv_eq_deriv_mul_of_hasDerivAt
-      hu_cont hv_cont hu_deriv hv_deriv hu'_int hv'_int
-  simp only [u, v, u', v', ofReal_one, ofReal_zero, one_mul, zero_mul,
-    sub_zero] at h_parts
-  have hv1 : f (c + (1 : ℝ) • (z - c)) = f z := by simp
-  rw [hv1] at h_parts
+      hu_cont hv_cont hu_deriv hv_deriv continuousOn_const.intervalIntegrable hv'_int
+  simp only [u, v, u', v', ofReal_one, ofReal_zero, one_mul, zero_mul, sub_zero] at h_parts
+  rw [show f (c + (1 : ℝ) • (z - c)) = f z by simp] at h_parts
   exact h_parts
 
 private lemma continuous_segmentMap (c w : ℂ) :
@@ -274,17 +247,14 @@ private lemma hasDerivAt_segmentIntegral_aux {f : ℂ → ℂ}
       ∃ M > 0, ∀ w ∈ Metric.ball z ε',
         ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv f (c + t • (w - c))‖ ≤ M := by
     let segmentMap : ℂ × ℝ → ℂ := fun ⟨w, t⟩ => c + t • (w - c)
-    have hcont : Continuous segmentMap :=
-      continuous_const.add (continuous_snd.smul (continuous_fst.sub continuous_const))
     let K := segmentMap '' (Metric.closedBall z ε' ×ˢ Icc (0 : ℝ) 1)
     have hK_compact : IsCompact K :=
-      ((isCompact_closedBall z ε').prod isCompact_Icc).image hcont
-    have hclosedBall_in_S : Metric.closedBall z ε' ⊆ S :=
-      (Metric.closedBall_subset_ball hε'_lt_ε).trans hε_ball
-    have hK_in_S : K ⊆ S := by
-      intro p hp
+      ((isCompact_closedBall z ε').prod isCompact_Icc).image
+        (continuous_const.add (continuous_snd.smul (continuous_fst.sub continuous_const)))
+    have hK_in_S : K ⊆ S := fun p hp => by
       obtain ⟨⟨w, t⟩, ⟨hw, ht⟩, rfl⟩ := hp
-      exact segment_subset_convex hS_convex hc (hclosedBall_in_S hw) t ht
+      exact segment_subset_convex hS_convex hc
+        ((Metric.closedBall_subset_ball hε'_lt_ε).trans hε_ball hw) t ht
     obtain ⟨M', hM'⟩ := hK_compact.bddAbove_image (hf'_cont.norm.mono hK_in_S)
     exact ⟨max M' 1, by positivity, fun w hw t ht =>
       (hM' ⟨c + t • (w - c),

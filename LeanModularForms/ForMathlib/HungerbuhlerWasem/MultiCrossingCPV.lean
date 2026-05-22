@@ -1095,56 +1095,30 @@ private theorem cpvIntegrand_higherOrder_intervalIntegrable
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend s ε t)
       MeasureTheory.volume a b := by
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-    with hγf_def
-  have hγ_int_01 : IntervalIntegrable (deriv γf) MeasureTheory.volume 0 1 :=
-    γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable
   have hγ_int : IntervalIntegrable (deriv γf) MeasureTheory.volume a b := by
-    refine hγ_int_01.mono_set ?_
-    rw [Set.uIcc_of_le hab, Set.uIcc_of_le zero_le_one]
-    exact h_in_Icc
-  have hγ_cont : Continuous γf :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
-  have h_sm_γf : Measurable γf := hγ_cont.measurable
-  have h_sm_norm : Measurable (fun u => ‖γf u - s‖) :=
-    ((h_sm_γf.sub measurable_const).norm)
-  have h_meas_pred : MeasurableSet {u | ε < ‖γf u - s‖} :=
-    h_sm_norm measurableSet_Ioi
-  have h_sm_pow : Measurable (fun u => (γf u - s) ^ k) :=
-    (h_sm_γf.sub measurable_const).pow_const k
-  have h_sm_prod : Measurable
-      (fun u => c / (γf u - s) ^ k * deriv γf u) := by
-    apply Measurable.mul
-    · exact h_sm_pow.const_div c
-    · exact measurable_deriv γf
+    refine γ.toClosedPwC1Curve.deriv_extend_intervalIntegrable.mono_set ?_
+    rw [Set.uIcc_of_le hab, Set.uIcc_of_le zero_le_one]; exact h_in_Icc
+  have h_sm_γf : Measurable γf :=
+    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.measurable
   have h_sm : Measurable
       (fun u => cpvIntegrand (fun z => c / (z - s) ^ k) γf s ε u) := by
     unfold cpvIntegrand
-    exact Measurable.ite h_meas_pred h_sm_prod measurable_const
-  have h_meas : AEStronglyMeasurable
-      (fun u => cpvIntegrand (fun z => c / (z - s) ^ k) γf s ε u)
-      (MeasureTheory.volume.restrict (Set.uIoc a b)) :=
-    h_sm.aestronglyMeasurable
-  -- Bound: ‖cpvIntegrand‖ ≤ ‖c‖ / ε^k * ‖γ'‖.
+    exact Measurable.ite ((h_sm_γf.sub measurable_const).norm measurableSet_Ioi)
+      (((h_sm_γf.sub measurable_const).pow_const k).const_div c |>.mul (measurable_deriv γf))
+      measurable_const
   set M : ℝ := ‖c‖ / ε ^ k
-  have hM_nonneg : 0 ≤ M :=
-    div_nonneg (norm_nonneg c) (pow_nonneg hε_pos.le k)
   have h_bd : ∀ u,
       ‖cpvIntegrand (fun z => c / (z - s) ^ k) γf s ε u‖ ≤ M * ‖deriv γf u‖ := by
     intro u
     simp only [cpvIntegrand]
     split_ifs with h_gt
     · rw [norm_mul, norm_div, norm_pow]
-      have h_div_bound : ‖c‖ / ‖γf u - s‖ ^ k ≤ M := by
-        apply div_le_div_of_nonneg_left (norm_nonneg c) (pow_pos hε_pos k)
-        exact pow_le_pow_left₀ hε_pos.le h_gt.le k
-      exact mul_le_mul_of_nonneg_right h_div_bound (norm_nonneg _)
-    · simp only [norm_zero]
-      positivity
-  have h_int_dom : IntervalIntegrable (fun u => M * ‖deriv γf u‖)
-      MeasureTheory.volume a b :=
-    (hγ_int.norm).const_mul M
-  exact IntervalIntegrable.mono_fun' h_int_dom h_meas
-    (Filter.Eventually.of_forall fun u => h_bd u)
+      exact mul_le_mul_of_nonneg_right
+        (div_le_div_of_nonneg_left (norm_nonneg c) (pow_pos hε_pos k)
+          (pow_le_pow_left₀ hε_pos.le h_gt.le k)) (norm_nonneg _)
+    · simp only [norm_zero]; positivity
+  exact IntervalIntegrable.mono_fun' ((hγ_int.norm).const_mul M) h_sm.aestronglyMeasurable
+    (Filter.Eventually.of_forall h_bd)
 
 /-! ### Helper: per-crossing higher-order window vanishing
 

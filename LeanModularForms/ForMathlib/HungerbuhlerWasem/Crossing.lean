@@ -337,20 +337,13 @@ theorem residueTheorem_crossing_compositional
           γP.toPath.extend ε t) := by
       funext t
       simp only [cpvIntegrandOn]
-      split_ifs with h
+      split_ifs
       · exact Finset.sum_const_zero.symm
       · rw [Finset.sum_mul]
-    rw [h_pt]
-    have h_isum := IntervalIntegrable.sum S
-      (f := fun s t => cpvIntegrandOn S (decomp.polarPart s)
-        γP.toPath.extend ε t)
-      (fun s hs => h_polar_int s hs ε hε)
-    have h_fn_eq : (∑ s ∈ S, fun t => cpvIntegrandOn S (decomp.polarPart s)
-        γP.toPath.extend ε t) =
-        fun t => ∑ s ∈ S, cpvIntegrandOn S (decomp.polarPart s)
-          γP.toPath.extend ε t :=
-      funext fun _ => Finset.sum_apply _ _ _
-    rwa [h_fn_eq] at h_isum
+    rw [h_pt, show (fun t => ∑ s ∈ S, cpvIntegrandOn S (decomp.polarPart s)
+        γP.toPath.extend ε t) = ∑ s ∈ S, fun t => cpvIntegrandOn S (decomp.polarPart s)
+          γP.toPath.extend ε t from funext fun _ => (Finset.sum_apply _ _ _).symm]
+    exact IntervalIntegrable.sum S (fun s hs => h_polar_int s hs ε hε)
   have h_decomp : HasCauchyPVOn S
       (fun z => decomp.analyticRemainder z + ∑ s ∈ S, decomp.polarPart s z) γP
       (0 + ∑ s ∈ S, 2 * ↑Real.pi * I *
@@ -557,39 +550,31 @@ theorem cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   have h_term_int : ∀ k : Fin (decomp.order s), ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrand (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend s ε t) volume 0 1 := by
-    intro k ε hε
+        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε => by
     have h := HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
       γ (S := {s}) (Finset.mem_singleton.mpr rfl)
       (decomp.coeff s k) (k.val + 1) hε
-    have h_eq : (fun t => cpvIntegrandOn ({s} : Finset ℂ)
-        (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend ε t) =
-        (fun t => cpvIntegrand (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
-          γP.toPath.extend s ε t) :=
-      funext fun _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm
-    rwa [h_eq] at h
+    rwa [show (fun t => cpvIntegrandOn ({s} : Finset ℂ)
+        (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP.toPath.extend ε t) =
+      (fun t => cpvIntegrand (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
+        γP.toPath.extend s ε t) from
+      funext fun _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm] at h
   have h_higher : ∀ k : Fin (decomp.order s), k.val ≥ 1 →
-      HasCauchyPV (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP s 0 := by
-    intro k hk
+      HasCauchyPV (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP s 0 := fun k hk => by
     have hk_succ_ge_2 : 2 ≤ k.val + 1 := by omega
-    have hk_succ_le_n : k.val + 1 ≤ n := by
-      have : k.val + 1 ≤ decomp.order s := k.isLt
-      omega
+    have hk_succ_le_n : k.val + 1 ≤ n := by have := k.isLt; omega
     by_cases h_zero : decomp.coeff s k = 0
-    · have h_eq : (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) = fun _ => (0 : ℂ) := by
-        funext z; rw [h_zero, zero_div]
-      rw [h_eq]
+    · rw [show (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) = fun _ => (0 : ℂ) from
+        funext fun _ => by rw [h_zero, zero_div]]
       exact hasCauchyPV_of_hasCauchyPVOn_singleton (HasCauchyPVOn.zero_fun (γ := γP)
         (S := {s}))
-    · have h_angle_k : ∃ m : ℤ,
-          (((k.val + 1) - 1 : ℕ) : ℝ) * Real.pi = (m : ℝ) * (2 * Real.pi) := by
-        have h_eq : ((k.val + 1) - 1 : ℕ) = k.val := by omega
-        rw [h_eq]; exact h_angle k hk h_zero
-      have h_BR03 := HungerbuhlerWasem.hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB
-        γ ht₀ h_at h_unique h_t₀_off_partition
-        hk_succ_ge_2 hk_succ_le_n hn1 h_flat h_angle_k (decomp.coeff s k)
-      exact hasCauchyPV_of_hasCauchyPVOn_singleton h_BR03
+    · exact hasCauchyPV_of_hasCauchyPVOn_singleton
+        (HungerbuhlerWasem.hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB
+          γ ht₀ h_at h_unique h_t₀_off_partition
+          hk_succ_ge_2 hk_succ_le_n hn1 h_flat
+          (show ∃ m : ℤ, (((k.val + 1) - 1 : ℕ) : ℝ) * Real.pi = (m : ℝ) * (2 * Real.pi) by
+            rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]; exact h_angle k hk h_zero)
+          (decomp.coeff s k))
   exact cpv_polarPart_at_pole_under_conditions_asymmetric D hs decomp h_higher h_term_int
 
 /-- **Single-point CPV at a crossed pole, using condition (B).**
@@ -666,43 +651,32 @@ theorem cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric_corner
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   have h_term_int : ∀ k : Fin (decomp.order s), ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrand (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend s ε t) volume 0 1 := by
-    intro k ε hε
+        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε => by
     have h := HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
       γ (S := {s}) (Finset.mem_singleton.mpr rfl)
       (decomp.coeff s k) (k.val + 1) hε
-    have h_eq : (fun t => cpvIntegrandOn ({s} : Finset ℂ)
-        (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend ε t) =
-        (fun t => cpvIntegrand (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
-          γP.toPath.extend s ε t) := by
-      funext t
-      exact (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm
-    rwa [h_eq] at h
+    rwa [show (fun t => cpvIntegrandOn ({s} : Finset ℂ)
+        (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP.toPath.extend ε t) =
+      (fun t => cpvIntegrand (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
+        γP.toPath.extend s ε t) from
+      funext fun _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm] at h
   have h_higher : ∀ k : Fin (decomp.order s), k.val ≥ 1 →
-      HasCauchyPV (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP s 0 := by
-    intro k hk
+      HasCauchyPV (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP s 0 := fun k hk => by
     have hk_succ_ge_2 : 2 ≤ k.val + 1 := by omega
-    have hk_succ_le_n : k.val + 1 ≤ n := by
-      have hk_succ_le : k.val + 1 ≤ decomp.order s := k.isLt
-      omega
+    have hk_succ_le_n : k.val + 1 ≤ n := by have := k.isLt; omega
     by_cases h_zero : decomp.coeff s k = 0
-    · have h_eq : (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) = fun _ => (0 : ℂ) := by
-        funext z
-        rw [h_zero, zero_div]
-      rw [h_eq]
+    · rw [show (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) = fun _ => (0 : ℂ) from
+        funext fun _ => by rw [h_zero, zero_div]]
       exact hasCauchyPV_of_hasCauchyPVOn_singleton (HasCauchyPVOn.zero_fun (γ := γP)
         (S := {s}))
-    · have h_B_k : (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k.val + 1 - 1) =
-          ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k.val + 1 - 1) := by
-        have h_eq : k.val + 1 - 1 = k.val := by omega
-        rw [h_eq]
-        exact h_B k hk h_zero
-      have h_BR_Y10 :=
-        HungerbuhlerWasem.hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB_corner
+    · exact hasCauchyPV_of_hasCauchyPVOn_singleton
+        (HungerbuhlerWasem.hasCauchyPVOn_higherOrder_polar_at_crossing_under_conditionB_corner
           γ ht₀ h_at h_unique hL_minus_ne hL_plus_ne hL_right hL_left
-          hk_succ_ge_2 hk_succ_le_n hn1 h_flat h_B_k (decomp.coeff s k)
-      exact hasCauchyPV_of_hasCauchyPVOn_singleton h_BR_Y10
+          hk_succ_ge_2 hk_succ_le_n hn1 h_flat
+          (show (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k.val + 1 - 1) =
+              ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k.val + 1 - 1) by
+            rw [show k.val + 1 - 1 = k.val from by omega]; exact h_B k hk h_zero)
+          (decomp.coeff s k))
   exact cpv_polarPart_at_pole_under_conditions_asymmetric D hs decomp h_higher h_term_int
 
 /-- **Lift: from `HasCauchyPV` to `HasCauchyPVOn S`** when γ avoids every other
@@ -823,24 +797,19 @@ private theorem laurent_polynomial_zero_of_eventuallyEq_analytic :
     have hPs : P s = c ⟨N, Nat.lt_succ_self _⟩ := by
       show (∑ k : Fin (N + 1), c k * (s - s) ^ (N - k.val)) =
         c ⟨N, Nat.lt_succ_self _⟩
-      rw [sub_self]
-      have h_only_last : ∀ k : Fin (N + 1), k ≠ ⟨N, Nat.lt_succ_self _⟩ →
-          c k * (0 : ℂ) ^ (N - k.val) = 0 := by
-        intro k hk
-        have hk_lt : k.val < N := by
-          rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp k.isLt) with h | h
-          · exact h
-          · exact absurd (Fin.ext h) hk
-        have h_pos : 0 < N - k.val := Nat.sub_pos_of_lt hk_lt
-        rw [zero_pow (Nat.pos_iff_ne_zero.mp h_pos), mul_zero]
-      rw [Finset.sum_eq_single (⟨N, Nat.lt_succ_self _⟩ : Fin (N + 1))
-        (fun k _ hk => h_only_last k hk) (fun h => absurd (Finset.mem_univ _) h)]
+      rw [sub_self, Finset.sum_eq_single (⟨N, Nat.lt_succ_self _⟩ : Fin (N + 1))
+        (fun k _ hk => by
+          have hk_lt : k.val < N := by
+            rcases lt_or_eq_of_le (Nat.lt_succ_iff.mp k.isLt) with h | h
+            · exact h
+            · exact absurd (Fin.ext h) hk
+          rw [zero_pow (Nat.pos_iff_ne_zero.mp (Nat.sub_pos_of_lt hk_lt)), mul_zero])
+        (fun h => absurd (Finset.mem_univ _) h)]
       simp
-    have hQs : Q s = 0 := by
+    have hcN_zero : c ⟨N, Nat.lt_succ_self _⟩ = 0 := by
+      rw [← hPs, h_PQ_full.eq_of_nhds]
       show (s - s) ^ (N + 1) * g s = 0
       rw [sub_self, zero_pow (Nat.succ_ne_zero N), zero_mul]
-    have hcN_zero : c ⟨N, Nat.lt_succ_self _⟩ = 0 := by
-      rw [← hPs, h_PQ_full.eq_of_nhds, hQs]
     set c' : Fin N → ℂ := fun k => c k.castSucc
     have h_eq' : (fun z => ∑ k : Fin N, c' k / (z - s) ^ (k.val + 1)) =ᶠ[𝓝[≠] s] g := by
       filter_upwards [h_eq] with z hz
@@ -1540,25 +1509,17 @@ private theorem residueTheorem_crossing_asymmetric_multiPole
         γ.toPwC1Immersion.continuous.continuousAt
     have h_cpv_exists := hasCauchyPV_inv_sub_of_flat_one_full γ ht₀_Ioo h_at
       h_unique h_flat
-    let geom : Σ' (L : ℂ),
-        HasCauchyPV (fun z => (z - s)⁻¹)
-          γ.toPwC1Immersion.toPiecewiseC1Path s L :=
-      ⟨h_cpv_exists.choose, h_cpv_exists.choose_spec⟩
     let D : AsymmetricSingleCrossingData
         γ.toPwC1Immersion.toPiecewiseC1Path s :=
       HungerbuhlerWasem.AsymmetricSingleCrossingData.ofClosedImmersion_hasCauchyPV
-        γ ht₀_Ioo h_at h_unique h_off geom.2
+        γ ht₀_Ioo h_at h_unique h_off h_cpv_exists.choose_spec
     obtain ⟨n, hn1, h_order_le_n, h_flat_n⟩ :=
       flat_data_of_condA_at_crossing decomp hCondA hs ht₀_Ioo h_at
-    have h_angle_compat : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
-        decomp.coeff s k ≠ 0 →
-        ∃ m : ℤ, ((k.val : ℝ)) * Real.pi = (m : ℝ) * (2 * Real.pi) :=
-      angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs ht₀_Ioo h_at h_off
-    have h_HasCauchyPV := cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
-      hS_in_U γ h_null decomp s hs ht₀_Ioo h_at h_unique h_off D n h_flat_n
-      hn1 h_order_le_n h_angle_compat
     exact MultiPoleDCT.hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
-      hS_in_U decomp γ hs h_null h_HasCauchyPV
+      hS_in_U decomp γ hs h_null (cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
+        hS_in_U γ h_null decomp s hs ht₀_Ioo h_at h_unique h_off D n h_flat_n
+        hn1 h_order_le_n
+        (angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs ht₀_Ioo h_at h_off))
   have h_ge_two : M.crossings.card ≥ 2 := by
     have : 0 < M.crossings.card := Nat.pos_of_ne_zero h_card_zero
     omega

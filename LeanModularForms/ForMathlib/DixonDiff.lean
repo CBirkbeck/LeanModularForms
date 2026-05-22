@@ -511,20 +511,18 @@ private lemma dslope_deriv_mul_extend_aestronglyMeasurable
   set h_seq : ℕ → ℂ := fun n => ((ρ / 2 / ((n : ℝ) + 1) : ℝ) : ℂ)
   have h_seq_real_pos : ∀ n : ℕ, 0 < ρ / 2 / ((n : ℝ) + 1) := fun _ => by positivity
   have h_seq_ne : ∀ n : ℕ, h_seq n ≠ 0 := fun n => by
-    simp only [h_seq, ne_eq, Complex.ofReal_eq_zero]
-    exact (h_seq_real_pos n).ne'
+    simp only [h_seq, ne_eq, Complex.ofReal_eq_zero]; exact (h_seq_real_pos n).ne'
   have h_seq_norm_lt : ∀ n : ℕ, ‖h_seq n‖ < ρ := fun n => by
     simp only [h_seq, Complex.norm_real, Real.norm_eq_abs, abs_of_pos (h_seq_real_pos n)]
-    have hge1 : (1 : ℝ) ≤ (n : ℝ) + 1 := by linarith [Nat.cast_nonneg (α := ℝ) n]
-    linarith [div_le_self (a := ρ / 2) (by linarith) hge1]
+    linarith [div_le_self (a := ρ / 2) (by linarith) (by linarith [Nat.cast_nonneg (α := ℝ) n] :
+      (1 : ℝ) ≤ (n : ℝ) + 1)]
   have h_w_in_U : ∀ n : ℕ, w₀ + h_seq n ∈ U := fun n => hρ_sub <| by
-    rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]
-    exact h_seq_norm_lt n
+    rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left]; exact h_seq_norm_lt n
   have h_seq_tendsto : Tendsto h_seq atTop (𝓝 0) := by
-    have h_inv : Tendsto (fun n : ℕ => ((n : ℝ) + 1)⁻¹) atTop (𝓝 0) :=
-      (tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds).inv_tendsto_atTop
     have h_real : Tendsto (fun n : ℕ => ρ / 2 / ((n : ℝ) + 1)) atTop (𝓝 0) := by
-      simpa [div_eq_mul_inv] using h_inv.const_mul (ρ / 2)
+      simpa [div_eq_mul_inv] using
+        ((tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds).inv_tendsto_atTop).const_mul
+          (ρ / 2)
     rw [show (0 : ℂ) = ((0 : ℝ) : ℂ) from rfl]
     exact (Complex.continuous_ofReal.tendsto _).comp h_real
   set q : ℕ → ℝ → ℂ := fun n t =>

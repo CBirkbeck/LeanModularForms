@@ -150,47 +150,35 @@ theorem cpvIntegrandOn_singleMonomial_intervalIntegrable
   have h_M_polar_nonneg : 0 ≤ M_polar :=
     div_nonneg (norm_nonneg _) (pow_nonneg hε.le _)
   have h_M_nonneg : 0 ≤ M := mul_nonneg h_M_polar_nonneg (NNReal.coe_nonneg K)
-  have h_bound_on_compl : ∀ t ∈ badSetᶜ, ‖h_curve t‖ ≤ M := by
-    intro t ht_in
+  have h_bound_on_compl : ∀ t ∈ badSetᶜ, ‖h_curve t‖ ≤ M := fun t ht_in => by
     simp only [Set.mem_compl_iff, Set.mem_setOf_eq, not_exists, not_and,
       not_le, badSet_def] at ht_in
-    have h_far_s : ε < ‖γP.toPath.extend t - s‖ := ht_in s hs
-    have h_mono_bound : ‖monomial (γP.toPath.extend t)‖ ≤ M_polar := by
-      change ‖c / (γP.toPath.extend t - s) ^ k‖ ≤ M_polar
-      rw [norm_div, norm_pow]
-      exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
-        (pow_le_pow_left₀ hε.le h_far_s.le _)
     calc ‖h_curve t‖ = ‖monomial (γP.toPath.extend t)‖ *
           ‖deriv γP.toPath.extend t‖ := norm_mul _ _
       _ ≤ M_polar * K :=
-          mul_le_mul h_mono_bound (norm_deriv_le_of_lipschitz hLip)
-            (norm_nonneg _) h_M_polar_nonneg
-  have h_bound_indicator : ∀ t, ‖badSetᶜ.indicator h_curve t‖ ≤ M := by
-    intro t
-    by_cases ht_in : t ∈ badSetᶜ
-    · rw [Set.indicator_of_mem ht_in]
-      exact h_bound_on_compl t ht_in
-    · rw [Set.indicator_of_notMem ht_in, norm_zero]
-      exact h_M_nonneg
-  have h_γ_meas : Measurable γP.toPath.extend :=
-    γP.toPath.continuous_extend.measurable
+          mul_le_mul (by
+            change ‖c / (γP.toPath.extend t - s) ^ k‖ ≤ M_polar
+            rw [norm_div, norm_pow]
+            exact div_le_div_of_nonneg_left (norm_nonneg _) (pow_pos hε _)
+              (pow_le_pow_left₀ hε.le (ht_in s hs).le _))
+            (norm_deriv_le_of_lipschitz hLip) (norm_nonneg _) h_M_polar_nonneg
+  have h_γ_meas : Measurable γP.toPath.extend := γP.toPath.continuous_extend.measurable
   have h_curve_meas : Measurable h_curve :=
     (((h_γ_meas.sub_const s).pow_const _).const_div _).mul (measurable_deriv _)
   have h_badSet_meas : MeasurableSet badSet := by
     have h_eq : badSet = ⋃ s' ∈ (S : Set ℂ),
         {t : ℝ | ‖γP.toPath.extend t - s'‖ ≤ ε} := by
-      ext t
-      simp only [badSet_def, Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_coe,
-        exists_prop]
+      ext t; simp only [badSet_def, Set.mem_setOf_eq, Set.mem_iUnion, Finset.mem_coe, exists_prop]
     rw [h_eq]
-    refine MeasurableSet.biUnion S.countable_toSet fun s' _ =>
-      measurableSet_le ?_ measurable_const
-    exact (h_γ_meas.sub_const s').norm
+    exact MeasurableSet.biUnion S.countable_toSet fun s' _ =>
+      measurableSet_le (h_γ_meas.sub_const s').norm measurable_const
   rw [intervalIntegrable_iff, h_indicator_eq]
   refine MeasureTheory.IntegrableOn.of_bound measure_Ioc_lt_top
     (h_curve_meas.aestronglyMeasurable.indicator h_badSet_meas.compl) M ?_
   filter_upwards [MeasureTheory.ae_restrict_mem measurableSet_uIoc] with t _
-  exact h_bound_indicator t
+  by_cases ht_in : t ∈ badSetᶜ
+  · rw [Set.indicator_of_mem ht_in]; exact h_bound_on_compl t ht_in
+  · rw [Set.indicator_of_notMem ht_in, norm_zero]; exact h_M_nonneg
 
 private theorem integral_pow_inv_eq_FTC_of_le
     {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {s : ℂ} {k : ℕ} {a b : ℝ}

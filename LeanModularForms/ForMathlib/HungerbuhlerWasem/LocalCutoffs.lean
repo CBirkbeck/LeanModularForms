@@ -673,16 +673,11 @@ private theorem cpvFullSetup_local
   have hr_le_L₂ : r ≤ r_L₂ :=
     (min_le_right _ _).trans ((min_le_left _ _).trans (min_le_right _ _))
   have hr_le_r₀ : r ≤ r₀ := (min_le_right _ _).trans (min_le_right _ _)
-  have h_γMinus_ne : γf (t₀ - r) ≠ s := fun h_eq => by
-    have h_in_window : t₀ - r ∈ Set.Icc (t₀ - r₀) (t₀ + r₀) :=
-      ⟨by linarith [hr_le_r₀], by linarith⟩
-    linarith [h_local_unique _ h_in_window h_eq]
-  have h_γPlus_div_LR : (γf (t₀ + r) - s) / L_R ∈ Complex.slitPlane :=
-    hr_R₂_endpoint r hr_pos hr_le_R₂
-  have h_LL_neg_div_γMinus : (-L_L) / (γf (t₀ - r) - s) ∈ Complex.slitPlane :=
-    hr_L₂_endpoint r hr_pos hr_le_L₂ h_γMinus_ne
+  have h_γMinus_ne : γf (t₀ - r) ≠ s := fun h_eq =>
+    by linarith [h_local_unique _ ⟨by linarith [hr_le_r₀], by linarith⟩ h_eq]
   refine ⟨L_R, L_L, r, hL_R_ne, hL_L_ne, hr_pos, hr_le_r₀,
-    h_deriv_right, h_deriv_left, ?_, ?_, h_γPlus_div_LR, h_LL_neg_div_γMinus⟩
+    h_deriv_right, h_deriv_left, ?_, ?_, hr_R₂_endpoint r hr_pos hr_le_R₂,
+    hr_L₂_endpoint r hr_pos hr_le_L₂ h_γMinus_ne⟩
   · exact fun a b ha_gt hab hb_le =>
       hr_R₁_slit a b ha_gt hab (hb_le.trans (by linarith [hr_le_R₁]))
   · exact fun a b ha_ge hab hb_lt =>
@@ -717,52 +712,39 @@ private theorem right_annular_log_diff_local
   set b : ℝ := t₀ + r
   have hab : a ≤ b := by simp only [a, b]; linarith
   have ha_gt : t₀ < a := by simp only [a]; linarith
-  have hb_le : b ≤ t₀ + r := by simp only [b]; linarith
   have hb_in_01 : b ∈ Set.Icc (0 : ℝ) 1 :=
     h_window_in_unit ⟨by simp only [b]; linarith, le_rfl⟩
   have ha_in_01 : a ∈ Set.Icc (0 : ℝ) 1 :=
     h_window_in_unit ⟨by simp only [a]; linarith, by simp only [a]; linarith⟩
   have h_slit_ab : ∀ t ∈ Set.Icc a b, (γf t - s) / (γf a - s) ∈ Complex.slitPlane :=
-    fun t ht_in => h_slit_R a t ha_gt ht_in.1 (ht_in.2.trans hb_le)
+    fun t ht_in => h_slit_R a t ha_gt ht_in.1 ht_in.2
   have ha_ne : γf a - s ≠ 0 := fun h_eq => by
-    have h_in_window : a ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-      ⟨by simp only [a]; linarith, by simp only [a]; linarith⟩
-    have ht_eq : a = t₀ := h_local_unique a h_in_window (sub_eq_zero.mp h_eq)
-    simp only [a] at ht_eq
-    linarith
+    have ht_eq : a = t₀ := h_local_unique a
+      ⟨by simp only [a]; linarith, by simp only [a]; linarith⟩ (sub_eq_zero.mp h_eq)
+    simp only [a] at ht_eq; linarith
   have hγ_cont : ContinuousOn γf (Set.Icc a b) :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
   set P : Set ℝ := ↑γ.toPwC1Immersion.toPiecewiseC1Path.partition
   have hP_count : P.Countable :=
     γ.toPwC1Immersion.toPiecewiseC1Path.partition.finite_toSet.countable
-  have hγ_diff : ∀ t ∈ Set.Ioo a b \ P, HasDerivAt γf (deriv γf t) t := by
-    intro t ht
-    have h_t_in_Icc : t ∈ Set.Icc a b := Set.Ioo_subset_Icc_self ht.1
-    have ht_in_Ioo : t ∈ Set.Ioo (0 : ℝ) 1 := by
-      refine ⟨?_, by linarith [ht.1.2, hb_in_01.2]⟩
-      rcases lt_or_eq_of_le ha_in_01.1 with h | h
-      · linarith [ht.1.1]
-      · exfalso
-        have := (h_window_in_unit (Set.left_mem_Icc.mpr (by linarith))).1
-        have : 0 < a := by simp only [a]; linarith
-        linarith
-    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ht_in_Ioo
-      ht.2).hasDerivAt
+  have hγ_diff : ∀ t ∈ Set.Ioo a b \ P, HasDerivAt γf (deriv γf t) t := fun t ht => by
+    refine (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ?_ ht.2).hasDerivAt
+    refine ⟨?_, by linarith [ht.1.2, hb_in_01.2]⟩
+    rcases lt_or_eq_of_le ha_in_01.1 with h | h
+    · linarith [ht.1.1]
+    · exfalso
+      have := (h_window_in_unit (Set.left_mem_Icc.mpr (by linarith))).1
+      have : 0 < a := by simp only [a]; linarith
+      linarith
   have h_int : IntervalIntegrable
       (fun t => deriv γf t / (γf t - s)) MeasureTheory.volume a b := by
-    have h_in_01 : Set.Icc a b ⊆ Set.Icc (0 : ℝ) 1 := fun u hu =>
-      ⟨ha_in_01.1.trans hu.1, hu.2.trans hb_in_01.2⟩
-    have h_ne : ∀ t ∈ Set.Icc a b,
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t ≠ s := by
-      intro t ht h_eq
-      have h_in_window : t ∈ Set.Icc (t₀ - r) (t₀ + r) := by
-        refine ⟨?_, ht.2.trans hb_le⟩
-        have : a > t₀ - r := by simp only [a]; linarith
-        linarith [ht.1]
-      have h_t_eq : t = t₀ := h_local_unique t h_in_window h_eq
-      linarith [lt_of_lt_of_le ha_gt ht.1]
-    refine (inv_sub_mul_deriv_intervalIntegrable γ hab h_in_01 h_ne).congr
-      (fun t _ => ?_)
+    refine (inv_sub_mul_deriv_intervalIntegrable γ hab
+      (fun u hu => ⟨ha_in_01.1.trans hu.1, hu.2.trans hb_in_01.2⟩)
+      (fun t ht h_eq => by
+        have h_t_eq : t = t₀ := h_local_unique t ⟨by
+          have : a > t₀ - r := by simp only [a]; linarith
+          linarith [ht.1], ht.2.trans (by simp only [b]; linarith)⟩ h_eq
+        linarith [lt_of_lt_of_le ha_gt ht.1])).congr (fun t _ => ?_)
     simp only [hγf_def]; ring
   exact segment_log_FTC hab hP_count hγ_cont hγ_diff ha_ne h_slit_ab h_int
 
@@ -794,49 +776,37 @@ private theorem left_annular_log_diff_local
   set a : ℝ := t₀ - r
   set b : ℝ := t₀ - δ_L
   have hab : a ≤ b := by simp only [a, b]; linarith
-  have ha_ge : t₀ - r ≤ a := le_rfl
   have hb_lt : b < t₀ := by simp only [b]; linarith
   have ha_in_01 : a ∈ Set.Icc (0 : ℝ) 1 :=
     h_window_in_unit ⟨le_rfl, by simp only [a]; linarith⟩
   have hb_in_01 : b ∈ Set.Icc (0 : ℝ) 1 :=
     h_window_in_unit ⟨by simp only [b]; linarith, by simp only [b]; linarith⟩
   have h_slit_ab : ∀ t ∈ Set.Icc a b, (γf t - s) / (γf a - s) ∈ Complex.slitPlane :=
-    fun t ht_in => h_slit_L a t ha_ge ht_in.1 (ht_in.2.trans_lt hb_lt)
+    fun t ht_in => h_slit_L a t le_rfl ht_in.1 (ht_in.2.trans_lt hb_lt)
   have ha_ne : γf a - s ≠ 0 := fun h_eq => by
-    have h_in_window : a ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-      ⟨le_rfl, by simp only [a]; linarith⟩
-    have ht_eq : a = t₀ := h_local_unique a h_in_window (sub_eq_zero.mp h_eq)
-    simp only [a] at ht_eq
-    linarith
+    have ht_eq : a = t₀ := h_local_unique a
+      ⟨le_rfl, by simp only [a]; linarith⟩ (sub_eq_zero.mp h_eq)
+    simp only [a] at ht_eq; linarith
   have hγ_cont : ContinuousOn γf (Set.Icc a b) :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
   set P : Set ℝ := ↑γ.toPwC1Immersion.toPiecewiseC1Path.partition
   have hP_count : P.Countable :=
     γ.toPwC1Immersion.toPiecewiseC1Path.partition.finite_toSet.countable
-  have hγ_diff : ∀ t ∈ Set.Ioo a b \ P, HasDerivAt γf (deriv γf t) t := by
-    intro t ht
-    have ht_in_Ioo : t ∈ Set.Ioo (0 : ℝ) 1 := by
-      refine ⟨?_, by linarith [ht.1.2, hb_in_01.2]⟩
-      rcases lt_or_eq_of_le ha_in_01.1 with h | h
-      · linarith [ht.1.1]
-      · linarith [ht.1.1]
-    exact (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ht_in_Ioo
-      ht.2).hasDerivAt
+  have hγ_diff : ∀ t ∈ Set.Ioo a b \ P, HasDerivAt γf (deriv γf t) t := fun t ht => by
+    refine (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend t ?_ ht.2).hasDerivAt
+    refine ⟨?_, by linarith [ht.1.2, hb_in_01.2]⟩
+    rcases lt_or_eq_of_le ha_in_01.1 with h | h
+    · linarith [ht.1.1]
+    · linarith [ht.1.1]
   have h_int : IntervalIntegrable
       (fun t => deriv γf t / (γf t - s)) MeasureTheory.volume a b := by
-    have h_in_01 : Set.Icc a b ⊆ Set.Icc (0 : ℝ) 1 := fun u hu =>
-      ⟨ha_in_01.1.trans hu.1, hu.2.trans hb_in_01.2⟩
-    have h_ne : ∀ t ∈ Set.Icc a b,
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t ≠ s := by
-      intro t ht h_eq
-      have h_in_window : t ∈ Set.Icc (t₀ - r) (t₀ + r) := by
-        refine ⟨ha_ge.trans ht.1, ?_⟩
-        have : b < t₀ + r := by simp only [b]; linarith
-        linarith [ht.2]
-      have h_t_eq : t = t₀ := h_local_unique t h_in_window h_eq
-      linarith [lt_of_le_of_lt ht.2 hb_lt]
-    refine (inv_sub_mul_deriv_intervalIntegrable γ hab h_in_01 h_ne).congr
-      (fun t _ => ?_)
+    refine (inv_sub_mul_deriv_intervalIntegrable γ hab
+      (fun u hu => ⟨ha_in_01.1.trans hu.1, hu.2.trans hb_in_01.2⟩)
+      (fun t ht h_eq => by
+        have h_t_eq : t = t₀ := h_local_unique t ⟨ht.1, by
+          have : b < t₀ + r := by simp only [b]; linarith
+          linarith [ht.2]⟩ h_eq
+        linarith [lt_of_le_of_lt ht.2 hb_lt])).congr (fun t _ => ?_)
     simp only [hγf_def]; ring
   exact segment_log_FTC hab hP_count hγ_cont hγ_diff ha_ne h_slit_ab h_int
 
