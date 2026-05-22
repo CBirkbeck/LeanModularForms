@@ -108,31 +108,25 @@ theorem pv_tendsto_of_crossing_limit_asymmetric {γ : ℝ → ℂ} {a b : ℝ} {
     have h_right_lt : t₀ + δ_right ε < b := by linarith
     have h_mid_lt : t₀ - δ_left ε < t₀ + δ_right ε := by linarith
     set F := fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else (0 : ℂ) with hF_def
-    have hF_mid : ∀ t ∈ uIoc (t₀ - δ_left ε) (t₀ + δ_right ε), F t = 0 := by
-      intro t ht
+    have hF_mid : ∀ t ∈ uIoc (t₀ - δ_left ε) (t₀ + δ_right ε), F t = 0 := fun t ht => by
       rw [uIoc_of_le h_mid_lt.le] at ht
       simp only [hF_def]
-      rw [if_neg (not_lt.mpr ?_)]
-      exact h_near ε hε_pos hε_lt t ⟨ht.1.le, ht.2⟩
+      exact if_neg (not_lt.mpr (h_near ε hε_pos hε_lt t ⟨ht.1.le, ht.2⟩))
+    have h_finite_ae : ∀ x : ℝ, ({x} : Set ℝ)ᶜ ∈ ae volume := fun x =>
+      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
     have hF_left : ∀ᵐ t ∂volume, t ∈ uIoc a (t₀ - δ_left ε) →
         F t = (γ t - s)⁻¹ * deriv γ t := by
-      have h_ne : ({t₀ - δ_left ε} : Set ℝ)ᶜ ∈ ae volume :=
-        mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
-      filter_upwards [h_ne] with t ht_ne ht_mem
+      filter_upwards [h_finite_ae (t₀ - δ_left ε)] with t ht_ne ht_mem
       rw [uIoc_of_le h_left_lt.le] at ht_mem
       simp only [hF_def]
-      rw [if_pos]
-      apply h_far_left ε hε_pos hε_lt t
-      exact ⟨ht_mem.1.le, ht_mem.2.lt_of_ne fun h => ht_ne (Set.mem_singleton_iff.mpr h)⟩
+      exact if_pos (h_far_left ε hε_pos hε_lt t ⟨ht_mem.1.le,
+        ht_mem.2.lt_of_ne fun h => ht_ne (Set.mem_singleton_iff.mpr h)⟩)
     have hF_right : ∀ᵐ t ∂volume, t ∈ uIoc (t₀ + δ_right ε) b →
         F t = (γ t - s)⁻¹ * deriv γ t := by
-      have h_ne : ({t₀ + δ_right ε} : Set ℝ)ᶜ ∈ ae volume :=
-        mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
-      filter_upwards [h_ne] with t ht_ne ht_mem
+      filter_upwards [h_finite_ae (t₀ + δ_right ε)] with t _ht_ne ht_mem
       rw [uIoc_of_le h_right_lt.le] at ht_mem
       simp only [hF_def]
-      rw [if_pos]
-      exact h_far_right ε hε_pos hε_lt t ht_mem
+      exact if_pos (h_far_right ε hε_pos hε_lt t ht_mem)
     have hF_int_left : IntervalIntegrable F volume a (t₀ - δ_left ε) :=
       (hint_left ε hε_pos hε_lt).congr_ae
         ((ae_restrict_iff' measurableSet_uIoc).mpr
@@ -145,24 +139,13 @@ theorem pv_tendsto_of_crossing_limit_asymmetric {γ : ℝ → ℂ} {a b : ℝ} {
       (hint_right ε hε_pos hε_lt).congr_ae
         ((ae_restrict_iff' measurableSet_uIoc).mpr
           (hF_right.mono fun t ht hm => (ht hm).symm))
-    have h_split : ∫ t in a..b, F t =
-        (∫ t in a..(t₀ - δ_left ε), F t) +
-        (∫ t in (t₀ - δ_left ε)..(t₀ + δ_right ε), F t) +
-        (∫ t in (t₀ + δ_right ε)..b, F t) := by
-      rw [← intervalIntegral.integral_add_adjacent_intervals
-            (hF_int_left.trans hF_int_mid) hF_int_right,
-          ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid]
-    have h_mid_zero : ∫ t in (t₀ - δ_left ε)..(t₀ + δ_right ε), F t = 0 :=
-      intervalIntegral.integral_zero_ae (ae_of_all _ hF_mid)
-    have h_eq_left : ∫ t in a..(t₀ - δ_left ε), F t =
-        ∫ t in a..(t₀ - δ_left ε), (γ t - s)⁻¹ * deriv γ t :=
-      intervalIntegral.integral_congr_ae hF_left
-    have h_eq_right : ∫ t in (t₀ + δ_right ε)..b, F t =
-        ∫ t in (t₀ + δ_right ε)..b, (γ t - s)⁻¹ * deriv γ t :=
-      intervalIntegral.integral_congr_ae hF_right
-    change ∫ t in a..b, F t = E ε
-    rw [h_split, h_mid_zero, h_eq_left, h_eq_right]
-    simp only [add_zero]
+    show ∫ t in a..b, F t = E ε
+    rw [← intervalIntegral.integral_add_adjacent_intervals
+          (hF_int_left.trans hF_int_mid) hF_int_right,
+        ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid,
+        intervalIntegral.integral_zero_ae (ae_of_all _ hF_mid),
+        intervalIntegral.integral_congr_ae hF_left,
+        intervalIntegral.integral_congr_ae hF_right, add_zero]
     exact h_ftc ε hε_pos hε_lt
   exact h_limit.congr' h_ev.symm
 

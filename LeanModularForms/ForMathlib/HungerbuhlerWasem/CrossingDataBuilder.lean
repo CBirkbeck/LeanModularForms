@@ -596,30 +596,24 @@ private theorem exists_right_cutoff
   classical
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
   obtain ⟨L, hL_ne, hL_right⟩ := exists_right_deriv_limit γ ht₀_Ioo
-  have hγf_cont : ContinuousAt γf t₀ :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousAt
-  have hγf_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γf t :=
-    eventually_differentiable_right γ ht₀_Ioo
+  have hγ_cont_all : Continuous γf :=
+    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
   obtain ⟨r₀, hr₀_pos, hmono⟩ :=
-    norm_sub_strictMonoOn_right h_at hL_ne hL_right hγf_cont hγf_diff
+    norm_sub_strictMonoOn_right h_at hL_ne hL_right hγ_cont_all.continuousAt
+      (eventually_differentiable_right γ ht₀_Ioo)
   set r : ℝ := min r₀ (min ((1 - t₀) / 2) (t₀ / 2)) with hr_def
   have hr_pos : 0 < r := by
     rw [hr_def]
     exact lt_min hr₀_pos (lt_min (by linarith [ht₀_Ioo.2]) (by linarith [ht₀_Ioo.1]))
-  have hr_le_r₀ : r ≤ r₀ := by rw [hr_def]; exact min_le_left _ _
-  have hr_le_half : r ≤ (1 - t₀) / 2 :=
-    (min_le_right _ _).trans (min_le_left _ _)
-  have hr_le_t₀_half : r ≤ t₀ / 2 :=
-    (min_le_right _ _).trans (min_le_right _ _)
-  have hr_lt_one_sub : r < 1 - t₀ := by linarith [ht₀_Ioo.2]
-  have hr_le_t₀ : r ≤ t₀ := by linarith [ht₀_Ioo.1]
+  have hr_lt_one_sub : r < 1 - t₀ :=
+    ((min_le_right _ _).trans (min_le_left _ _)).trans_lt (by linarith [ht₀_Ioo.2])
+  have hr_le_t₀ : r ≤ t₀ :=
+    ((min_le_right _ _).trans (min_le_right _ _)).trans (by linarith [ht₀_Ioo.1])
   have hmono_r : StrictMonoOn (fun t => ‖γf t - s‖) (Icc t₀ (t₀ + r)) :=
-    hmono.mono (Icc_subset_Icc le_rfl (by linarith))
+    hmono.mono (Icc_subset_Icc le_rfl (by linarith [min_le_left r₀ (min ((1-t₀)/2) (t₀/2))]))
   set f : ℝ → ℝ := fun τ => ‖γf (t₀ + τ) - s‖ with hf_def
-  have hγ_cont_all : Continuous γf :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
   have hf₀ : f 0 = 0 := by
-    change ‖γf (t₀ + 0) - s‖ = 0
+    show ‖γf (t₀ + 0) - s‖ = 0
     rw [add_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
   have hf_cont : ContinuousOn f (Icc 0 r) :=
     (((hγ_cont_all.comp (continuous_const.add continuous_id)).sub
@@ -630,52 +624,45 @@ private theorem exists_right_cutoff
   have hf_r_pos : 0 < f r :=
     hf₀ ▸ hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le) hr_pos
   obtain ⟨m, hm_pos, _, h_right_far⟩ := exists_far_bound_compact γf hγ_cont_all s t₀
-    h_unique hr_pos hr_le_t₀ (le_of_lt hr_lt_one_sub)
-  set threshold : ℝ := min (f r) m with hthresh_def
-  have hthresh_le_fr : threshold ≤ f r := by rw [hthresh_def]; exact min_le_left _ _
-  have hthresh_le_m : threshold ≤ m := by rw [hthresh_def]; exact min_le_right _ _
+    h_unique hr_pos hr_le_t₀ hr_lt_one_sub.le
+  set threshold : ℝ := min (f r) m
+  have hthresh_le_fr : threshold ≤ f r := min_le_left _ _
+  have hthresh_le_m : threshold ≤ m := min_le_right _ _
   set δ_right : ℝ → ℝ := fun ε =>
     if h : ε ∈ Ioo (0 : ℝ) (f r) then
       (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε h).choose
     else r / 2 with hδ_def
   have hδ_spec : ∀ ε, 0 < ε → ε < f r →
-      δ_right ε ∈ Ioo (0 : ℝ) r ∧ f (δ_right ε) = ε := by
-    intro ε hε_pos hε_lt
+      δ_right ε ∈ Ioo (0 : ℝ) r ∧ f (δ_right ε) = ε := fun ε hε_pos hε_lt => by
     have hε_in : ε ∈ Ioo (0 : ℝ) (f r) := ⟨hε_pos, hε_lt⟩
     simp only [hδ_def, dif_pos hε_in]
     exact (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
+  have h_eq_t : ∀ t, f (t - t₀) = ‖γf t - s‖ := fun t => by
+    show ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
+    rw [show t₀ + (t - t₀) = t from by ring]
   refine ⟨δ_right, threshold, lt_min hf_r_pos hm_pos, ?_, ?_, ?_, ?_⟩
-  · intro ε hε_pos hε_lt
-    exact (hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.1
-  · intro ε hε_pos hε_lt
-    linarith [(hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.2]
+  · exact fun ε hε_pos hε_lt =>
+      (hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).1.1
+  · exact fun ε hε_pos hε_lt => by
+      linarith [(hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).1.2]
   · intro ε hε_pos hε_lt t ht_Icc ht_ge hgap
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
     by_cases ht_le_r : t ≤ t₀ + r
     · have h_lt : f (δ_right ε) < f (t - t₀) := hf_strict
-        ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩
-        ⟨by linarith, by linarith⟩ hgap
-      rw [hfδ] at h_lt
-      have h_eq : f (t - t₀) = ‖γf t - s‖ := by
-        change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
-        rw [show t₀ + (t - t₀) = t from by ring]
-      rwa [h_eq] at h_lt
+        ⟨hδ_in.1.le, hδ_in.2.le⟩ ⟨by linarith, by linarith⟩ hgap
+      rw [hfδ, h_eq_t] at h_lt; exact h_lt
     · push Not at ht_le_r
-      linarith [h_right_far t ⟨le_of_lt ht_le_r, ht_Icc.2⟩, lt_of_lt_of_le hε_lt hthresh_le_m]
+      linarith [h_right_far t ⟨ht_le_r.le, ht_Icc.2⟩, hε_lt.trans_le hthresh_le_m]
   · intro ε hε_pos hε_lt t ht_ge hgap
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact le_of_lt hε_pos
+    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact hε_pos.le
     have h_le : f (t - t₀) ≤ f (δ_right ε) := by
       rcases lt_or_eq_of_le hgap with h_lt | h_eq
-      · exact le_of_lt (hf_strict ⟨by linarith [lt_of_le_of_ne ht_ge (Ne.symm h_t_eq)],
-          by linarith [hδ_in.2]⟩ ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩ h_lt)
+      · exact (hf_strict ⟨by linarith [lt_of_le_of_ne ht_ge (Ne.symm h_t_eq)],
+          by linarith [hδ_in.2]⟩ ⟨hδ_in.1.le, hδ_in.2.le⟩ h_lt).le
       · rw [h_eq]
-    rw [hfδ] at h_le
-    have h_eq : f (t - t₀) = ‖γf t - s‖ := by
-      change ‖γf (t₀ + (t - t₀)) - s‖ = ‖γf t - s‖
-      rw [show t₀ + (t - t₀) = t from by ring]
-    rwa [h_eq] at h_le
+    rw [hfδ, h_eq_t] at h_le; exact h_le
 
 private theorem exists_left_cutoff
     (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ : ℝ}
@@ -695,30 +682,24 @@ private theorem exists_left_cutoff
   classical
   set γf : ℝ → ℂ := fun t => γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
   obtain ⟨L, hL_ne, hL_left⟩ := exists_left_deriv_limit γ ht₀_Ioo
-  have hγf_cont : ContinuousAt γf t₀ :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousAt
-  have hγf_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γf t :=
-    eventually_differentiable_left γ ht₀_Ioo
+  have hγ_cont_all : Continuous γf :=
+    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
   obtain ⟨r₀, hr₀_pos, hanti⟩ :=
-    norm_sub_strictAntiOn_left h_at hL_ne hL_left hγf_cont hγf_diff
+    norm_sub_strictAntiOn_left h_at hL_ne hL_left hγ_cont_all.continuousAt
+      (eventually_differentiable_left γ ht₀_Ioo)
   set r : ℝ := min r₀ (min (t₀ / 2) ((1 - t₀) / 2)) with hr_def
   have hr_pos : 0 < r := by
     rw [hr_def]
     exact lt_min hr₀_pos (lt_min (by linarith [ht₀_Ioo.1]) (by linarith [ht₀_Ioo.2]))
-  have hr_le_r₀ : r ≤ r₀ := by rw [hr_def]; exact min_le_left _ _
-  have hr_le_t₀_half : r ≤ t₀ / 2 :=
-    (min_le_right _ _).trans (min_le_left _ _)
-  have hr_le_one_sub_half : r ≤ (1 - t₀) / 2 :=
-    (min_le_right _ _).trans (min_le_right _ _)
-  have hr_lt_t₀ : r < t₀ := by linarith [ht₀_Ioo.1]
-  have hr_le_one_sub : r ≤ 1 - t₀ := by linarith [ht₀_Ioo.2]
+  have hr_lt_t₀ : r < t₀ :=
+    ((min_le_right _ _).trans (min_le_left _ _)).trans_lt (by linarith [ht₀_Ioo.1])
+  have hr_le_one_sub : r ≤ 1 - t₀ :=
+    ((min_le_right _ _).trans (min_le_right _ _)).trans (by linarith [ht₀_Ioo.2])
   have hanti_r : StrictAntiOn (fun t => ‖γf t - s‖) (Icc (t₀ - r) t₀) :=
-    hanti.mono (Icc_subset_Icc (by linarith) le_rfl)
+    hanti.mono (Icc_subset_Icc (by linarith [min_le_left r₀ (min (t₀/2) ((1-t₀)/2))]) le_rfl)
   set f : ℝ → ℝ := fun τ => ‖γf (t₀ - τ) - s‖ with hf_def
-  have hγ_cont_all : Continuous γf :=
-    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
   have hf₀ : f 0 = 0 := by
-    change ‖γf (t₀ - 0) - s‖ = 0
+    show ‖γf (t₀ - 0) - s‖ = 0
     rw [sub_zero, show γf t₀ = s from h_at, sub_self, norm_zero]
   have hf_cont : ContinuousOn f (Icc 0 r) :=
     (((hγ_cont_all.comp (continuous_const.sub continuous_id)).sub
@@ -729,52 +710,46 @@ private theorem exists_left_cutoff
   have hf_r_pos : 0 < f r :=
     hf₀ ▸ hf_strict (left_mem_Icc.mpr hr_pos.le) (right_mem_Icc.mpr hr_pos.le) hr_pos
   obtain ⟨m, hm_pos, h_left_far, _⟩ := exists_far_bound_compact γf hγ_cont_all s t₀
-    h_unique hr_pos (le_of_lt hr_lt_t₀) hr_le_one_sub
-  set threshold : ℝ := min (f r) m with hthresh_def
-  have hthresh_le_fr : threshold ≤ f r := by rw [hthresh_def]; exact min_le_left _ _
-  have hthresh_le_m : threshold ≤ m := by rw [hthresh_def]; exact min_le_right _ _
+    h_unique hr_pos hr_lt_t₀.le hr_le_one_sub
+  set threshold : ℝ := min (f r) m
+  have hthresh_le_fr : threshold ≤ f r := min_le_left _ _
+  have hthresh_le_m : threshold ≤ m := min_le_right _ _
   set δ_left : ℝ → ℝ := fun ε =>
     if h : ε ∈ Ioo (0 : ℝ) (f r) then
       (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε h).choose
     else r / 2 with hδ_def
   have hδ_spec : ∀ ε, 0 < ε → ε < f r →
-      δ_left ε ∈ Ioo (0 : ℝ) r ∧ f (δ_left ε) = ε := by
-    intro ε hε_pos hε_lt
+      δ_left ε ∈ Ioo (0 : ℝ) r ∧ f (δ_left ε) = ε := fun ε hε_pos hε_lt => by
     have hε_in : ε ∈ Ioo (0 : ℝ) (f r) := ⟨hε_pos, hε_lt⟩
     simp only [hδ_def, dif_pos hε_in]
     exact (strict_mono_inverse_exists f hr_pos hf₀ hf_strict hf_cont ε hε_in).choose_spec.1
+  have h_eq_t : ∀ t, f (t₀ - t) = ‖γf t - s‖ := fun t => by
+    show ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
+    rw [show t₀ - (t₀ - t) = t from by ring]
   refine ⟨δ_left, threshold, lt_min hf_r_pos hm_pos, ?_, ?_, ?_, ?_⟩
-  · intro ε hε_pos hε_lt
-    exact (hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.1
-  · intro ε hε_pos hε_lt
-    linarith [(hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)).1.2]
+  · exact fun ε hε_pos hε_lt =>
+      (hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).1.1
+  · exact fun ε hε_pos hε_lt => by
+      linarith [(hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)).1.2]
   · intro ε hε_pos hε_lt t ht_Icc ht_le hgap
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
     by_cases ht_ge_neg : t₀ - r ≤ t
     · have h_lt : f (δ_left ε) < f (t₀ - t) := hf_strict
-        ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩ ⟨by linarith, by linarith⟩ hgap
-      rw [hfδ] at h_lt
-      have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
-        change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
-        rw [show t₀ - (t₀ - t) = t from by ring]
-      rwa [h_eq] at h_lt
+        ⟨hδ_in.1.le, hδ_in.2.le⟩ ⟨by linarith, by linarith⟩ hgap
+      rw [hfδ, h_eq_t] at h_lt; exact h_lt
     · push Not at ht_ge_neg
-      linarith [h_left_far t ⟨ht_Icc.1, le_of_lt ht_ge_neg⟩, lt_of_lt_of_le hε_lt hthresh_le_m]
+      linarith [h_left_far t ⟨ht_Icc.1, ht_ge_neg.le⟩, hε_lt.trans_le hthresh_le_m]
   · intro ε hε_pos hε_lt t ht_le hgap
-    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (lt_of_lt_of_le hε_lt hthresh_le_fr)
+    obtain ⟨hδ_in, hfδ⟩ := hδ_spec ε hε_pos (hε_lt.trans_le hthresh_le_fr)
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact le_of_lt hε_pos
+    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact hε_pos.le
     have h_le : f (t₀ - t) ≤ f (δ_left ε) := by
       rcases lt_or_eq_of_le hgap with h_lt | h_eq
-      · exact le_of_lt (hf_strict
+      · exact (hf_strict
           ⟨by linarith [lt_of_le_of_ne ht_le h_t_eq], by linarith [hδ_in.2]⟩
-          ⟨le_of_lt hδ_in.1, le_of_lt hδ_in.2⟩ h_lt)
+          ⟨hδ_in.1.le, hδ_in.2.le⟩ h_lt).le
       · rw [h_eq]
-    rw [hfδ] at h_le
-    have h_eq : f (t₀ - t) = ‖γf t - s‖ := by
-      change ‖γf (t₀ - (t₀ - t)) - s‖ = ‖γf t - s‖
-      rw [show t₀ - (t₀ - t) = t from by ring]
-    rwa [h_eq] at h_le
+    rw [hfδ, h_eq_t] at h_le; exact h_le
 
 /-- **Derive the full geometric scaffolding bundle** from immersion data —
 **corner-friendly form**. This is the same as `deriveAsymmetricCutoffs` but

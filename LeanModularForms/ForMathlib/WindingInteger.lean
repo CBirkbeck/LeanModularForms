@@ -346,26 +346,19 @@ theorem exists_continuous_arg_lift_of_avoids
     exact_mod_cast (div_nonneg zero_le_one hδ'_pos.le).trans_lt hN
   have hN_real : (0 : ℝ) < N := Nat.cast_pos.mpr hN_pos
   have hN_mesh : (1 : ℝ) / N < δ' := by
-    rw [div_lt_iff₀ hN_real]
-    rw [div_lt_iff₀ hδ'_pos] at hN
-    linarith
+    rw [div_lt_iff₀ hN_real]; rw [div_lt_iff₀ hδ'_pos] at hN; linarith
   -- Step 3: define partition s : ℕ → ℝ
   set s : ℕ → ℝ := fun j => (j : ℝ) / N with hs_def
   have hs_zero : s 0 = 0 := by simp [hs_def]
   have hs_mono : Monotone s := fun a b hab =>
     div_le_div_of_nonneg_right (by exact_mod_cast hab) hN_real.le
-  have hs_in : ∀ j, j ≤ N → s j ∈ Icc (0 : ℝ) 1 := by
-    intro j hj
-    refine ⟨div_nonneg (by exact_mod_cast Nat.zero_le j) hN_real.le, ?_⟩
-    rw [div_le_one hN_real]
-    exact_mod_cast hj
+  have hs_in : ∀ j, j ≤ N → s j ∈ Icc (0 : ℝ) 1 := fun j hj =>
+    ⟨div_nonneg (by exact_mod_cast Nat.zero_le j) hN_real.le,
+     by rw [div_le_one hN_real]; exact_mod_cast hj⟩
   have hs_avoid : ∀ j ≤ N, γ (s j) - w ≠ 0 := fun j hj =>
     sub_ne_zero.mpr (h_avoid (s j) (hs_in j hj))
-  have hs_mesh : ∀ j, s (j + 1) - s j = 1 / N := by
-    intro j
-    simp only [hs_def]
-    push_cast
-    ring
+  have hs_mesh : ∀ j, s (j + 1) - s j = 1 / N := fun j => by
+    simp only [hs_def]; push_cast; ring
   have hs_le : ∀ j, s j ≤ s (j + 1) := fun j => hs_mono (Nat.le_succ _)
   -- Step 4: define θ(t)
   let θ : ℝ → ℝ := fun t =>
@@ -373,13 +366,10 @@ theorem exists_continuous_arg_lift_of_avoids
       ∑ j ∈ Finset.range N, (Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im
   refine ⟨θ, ?_, ?_⟩
   -- Step 5: continuity of θ
-  · refine ContinuousOn.add continuousOn_const ?_
-    refine continuousOn_finset_sum _ ?_
-    intro j hj
-    refine continuousOn_im_log_segRatio hγ hρ_pos h_dist_lb h_unif
-      (hs_in j (Finset.mem_range.mp hj).le) (hs_in (j + 1) (Finset.mem_range.mp hj)) (hs_le j) ?_
-    rw [hs_mesh j]
-    exact hN_mesh
+  · refine ContinuousOn.add continuousOn_const (continuousOn_finset_sum _ fun j hj => ?_)
+    exact continuousOn_im_log_segRatio hγ hρ_pos h_dist_lb h_unif
+      (hs_in j (Finset.mem_range.mp hj).le) (hs_in (j + 1) (Finset.mem_range.mp hj))
+      (hs_le j) (by rw [hs_mesh j]; exact hN_mesh)
   -- Step 6: lift property
   · intro t ht
     have h_avoid_t : γ t - w ≠ 0 := sub_ne_zero.mpr (h_avoid t ht)
@@ -387,62 +377,47 @@ theorem exists_continuous_arg_lift_of_avoids
       sub_ne_zero.mpr (h_avoid 0 ⟨le_refl _, zero_le_one⟩)
     -- Get segment index
     obtain ⟨k, hk_lt, hk_lo, hk_hi⟩ := partition_segment_exists hN_pos ht
-    -- Apply telescoping product (hk_lo is already s-form via hs_def)
-    have hk_hi' : t ≤ s (k + 1) := by
-      simp only [hs_def]
-      exact hk_hi
-    have h_telescope := prod_segRatio_telescope hs_zero hs_mono hs_avoid hk_lt hk_lo hk_hi'
+    have h_telescope := prod_segRatio_telescope hs_zero hs_mono hs_avoid hk_lt hk_lo
+      (by simp only [hs_def]; exact hk_hi)
     -- segRatio at each j is in slitPlane (hence ≠ 0)
     have h_ratio_ne : ∀ j ∈ Finset.range N,
         segRatio γ w (s j) (s (j + 1)) t ≠ 0 := fun j hj =>
-      have h_mesh_j : s (j + 1) - s j < δ' := by
-        rw [hs_mesh j]
-        exact hN_mesh
       Complex.slitPlane_ne_zero
         (segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
           (hs_in j (Finset.mem_range.mp hj).le)
           (hs_in (j + 1) (Finset.mem_range.mp hj))
-          (hs_le j) h_mesh_j t)
+          (hs_le j) (by rw [hs_mesh j]; exact hN_mesh) t)
     -- Multiply telescoping through: (γ 0 - w) * ∏ z_j = γ t - w
     have h_prod_eq : (γ 0 - w) *
         ∏ j ∈ Finset.range N, segRatio γ w (s j) (s (j + 1)) t = γ t - w := by
       rw [h_telescope, mul_div_cancel₀ _ h_avoid_0]
-    -- Cast θ t to ℂ
-    have h_theta_cast : ((θ t : ℝ) : ℂ) = (Complex.arg (γ 0 - w) : ℂ) +
-        ∑ j ∈ Finset.range N,
-          ((Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℂ) := by
-      simp only [θ, Complex.ofReal_add, Complex.ofReal_sum]
     -- exp(I · θ t) splits as exp(I · arg(γ 0 - w)) * ∏ exp(I · (log z_j).im)
     have h_exp_split : Complex.exp (Complex.I * ((θ t : ℝ) : ℂ)) =
         Complex.exp (Complex.I * (Complex.arg (γ 0 - w) : ℂ)) *
           ∏ j ∈ Finset.range N,
             Complex.exp (Complex.I *
               ((Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℂ)) := by
-      rw [h_theta_cast, mul_add, Complex.exp_add, Finset.mul_sum, Complex.exp_sum]
+      rw [show ((θ t : ℝ) : ℂ) = (Complex.arg (γ 0 - w) : ℂ) +
+            ∑ j ∈ Finset.range N,
+              ((Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℂ) by
+            simp only [θ, Complex.ofReal_add, Complex.ofReal_sum],
+          mul_add, Complex.exp_add, Finset.mul_sum, Complex.exp_sum]
     -- exp(I · arg(γ 0 - w)) = (γ 0 - w) / ↑‖γ 0 - w‖
     have h_arg : Complex.exp (Complex.I * (Complex.arg (γ 0 - w) : ℂ)) =
         (γ 0 - w) / ((‖γ 0 - w‖ : ℝ) : ℂ) := by
       rw [show (Complex.arg (γ 0 - w) : ℂ) = ((Complex.log (γ 0 - w)).im : ℂ) by
             rw [Complex.log_im]]
       exact exp_I_log_im_eq_div_norm h_avoid_0
-    -- Each summand: exp(I · ↑(log z_j).im) = z_j / ↑‖z_j‖
-    have h_z_eq : ∀ j ∈ Finset.range N,
-        Complex.exp (Complex.I *
-          ((Complex.log (segRatio γ w (s j) (s (j + 1)) t)).im : ℂ)) =
-          segRatio γ w (s j) (s (j + 1)) t /
-            ((‖segRatio γ w (s j) (s (j + 1)) t‖ : ℝ) : ℂ) :=
-      fun j hj => exp_I_log_im_eq_div_norm (h_ratio_ne j hj)
     -- Norm side: ‖γ 0 - w‖ * ∏ ‖z_j‖ = ‖γ t - w‖
     have h_norm_prod_real : (‖γ 0 - w‖ : ℝ) *
         (∏ j ∈ Finset.range N, ‖segRatio γ w (s j) (s (j + 1)) t‖) = ‖γ t - w‖ := by
       rw [← Complex.norm_prod, ← norm_mul, h_prod_eq]
-    -- ‖γ t - w‖ ≠ 0 in ℂ
-    have h_norm_t_ne : ((‖γ t - w‖ : ℝ) : ℂ) ≠ 0 :=
-      Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr h_avoid_t)
     -- Combine
-    rw [h_exp_split, h_arg, Finset.prod_congr rfl h_z_eq, Finset.prod_div_distrib,
-        div_mul_div_comm, ← Complex.ofReal_prod, ← Complex.ofReal_mul,
-        h_norm_prod_real, h_prod_eq, mul_div_cancel₀ _ h_norm_t_ne]
+    rw [h_exp_split, h_arg,
+        Finset.prod_congr rfl (fun j hj => exp_I_log_im_eq_div_norm (h_ratio_ne j hj)),
+        Finset.prod_div_distrib, div_mul_div_comm, ← Complex.ofReal_prod,
+        ← Complex.ofReal_mul, h_norm_prod_real, h_prod_eq,
+        mul_div_cancel₀ _ (Complex.ofReal_ne_zero.mpr (norm_ne_zero_iff.mpr h_avoid_t))]
 
 /-! ### Strengthened W-1: continuous arg lift with explicit partition data
 

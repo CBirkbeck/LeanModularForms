@@ -3281,29 +3281,22 @@ theorem cpv_polarPart_at_multiCrossed_pole
   set N : ℕ := decomp.order s with hN_def
   set a : Fin N → ℂ := decomp.coeff s
   set w : ℂ := generalizedWindingNumber γP s
-  -- Per-term integrability for `term k z := a k / (z - s)^(k.val + 1)`.
   have h_term_int : ∀ k : Fin N, ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrand (fun z => a k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε => by
-    refine (HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
+        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε =>
+    (HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
       γ (S := {s}) (Finset.mem_singleton.mpr rfl) (a k) (k.val + 1) hε).congr
-      (fun t _ => ?_)
-    exact (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm
-  -- Per-term CPV: case-split on whether `k.val = 0` or `k.val ≥ 1`.
+      (fun _ _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm)
   set L : Fin N → ℂ := fun k =>
     if k.val = 0 then 2 * ↑Real.pi * I * w * a k else 0 with hL_def
   have h_each : ∀ k : Fin N,
       HasCauchyPV (fun z => a k / (z - s) ^ (k.val + 1)) γP s (L k) := by
     intro k
     by_cases hk : k.val = 0
-    · -- Simple-pole case: `k.val = 0`, so the term is `a_0 / (z - s)`.
-      have h_pow_one : (k.val + 1 : ℕ) = 1 := by omega
-      have h_term_eq :
-          (fun z => a k / (z - s) ^ (k.val + 1)) = fun z => a k / (z - s) := by
-        funext z; rw [h_pow_one, pow_one]
+    · have h_term_eq : (fun z => a k / (z - s) ^ (k.val + 1)) = fun z => a k / (z - s) := by
+        funext z; rw [show (k.val + 1 : ℕ) = 1 from by omega, pow_one]
       have h_L_eq : L k = 2 * ↑Real.pi * I * w * a k := by simp [L, hk]
       rw [h_term_eq, h_L_eq]
-      -- Step: obtain `HasCauchyPV ((z - s)⁻¹) γ s L_inv` for some `L_inv`.
       have h_flat_one_at_each : ∀ t₀ ∈ D.crossings,
           IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ 1 :=
         fun t₀ ht₀ => (h_flat_at_each t₀ ht₀).of_le
@@ -3312,28 +3305,22 @@ theorem cpv_polarPart_at_multiCrossed_pole
         hasCauchyPV_inv_sub_multiCrossing D h_flat_one_at_each
       have h_w_eq : w = (2 * ↑Real.pi * I)⁻¹ * L_inv :=
         (hasGeneralizedWindingNumber_of_hasCauchyPV h_inv_cpv).eq
-      have h_L_inv_eq : L_inv = 2 * ↑Real.pi * I * w := by
-        rw [h_w_eq]; field_simp
-      have h_scaled : HasCauchyPV (fun z => a k / (z - s)) γP s (a k * L_inv) :=
-        HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv (a k) h_inv_cpv
+      have h_L_inv_eq : L_inv = 2 * ↑Real.pi * I * w := by rw [h_w_eq]; field_simp
       rw [show 2 * ↑Real.pi * I * w * a k = a k * L_inv by rw [h_L_inv_eq]; ring]
-      exact h_scaled
-    · -- Higher-order case: `k.val ≥ 1`, so the term contributes `0`.
-      have hk_ge_one : 1 ≤ k.val := by omega
-      have h_L_eq : L k = (0 : ℂ) := by simp [L, hk]
+      exact HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv (a k) h_inv_cpv
+    · have h_L_eq : L k = (0 : ℂ) := by simp [L, hk]
       rw [h_L_eq]
-      have hk_succ_ge_two : 2 ≤ k.val + 1 := by omega
+      have hk_ge_one : 1 ≤ k.val := by omega
       have hk_succ_le_N : k.val + 1 ≤ N := k.isLt
-      have hN_pos : 1 ≤ N := le_trans (by omega : 1 ≤ k.val + 1) hk_succ_le_N
-      have h_angle_succ : ∀ _t₀ ∈ D.crossings, ∃ m : ℤ,
-          (((k.val + 1) - 1 : ℕ) : ℝ) * Real.pi = (m : ℝ) * (2 * Real.pi) := fun t₀ ht₀ => by
-        rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
-        exact h_angle_at_each k hk_ge_one t₀ ht₀
       exact hasCauchyPV_of_hasCauchyPVOn_singleton
         (hasCauchyPVOn_multiCrossing_higherOrder (γ := γ) (s := s)
-          D (n := N) (k := k.val + 1) hk_succ_ge_two hk_succ_le_N hN_pos
-          h_flat_at_each h_angle_succ (a k))
-  -- Combine via `HasCauchyPV.finset_sum`.
+          D (n := N) (k := k.val + 1) (by omega) hk_succ_le_N
+          (le_trans (by omega : 1 ≤ k.val + 1) hk_succ_le_N)
+          h_flat_at_each
+          (fun t₀ ht₀ => by
+            rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
+            exact h_angle_at_each k hk_ge_one t₀ ht₀)
+          (a k))
   have h_sum_cpv : HasCauchyPV
       (fun z => ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) γP s
       (∑ k : Fin N, L k) :=
@@ -3341,32 +3328,23 @@ theorem cpv_polarPart_at_multiCrossed_pole
       (γ := γP) (z₀ := s)
       (f := fun k z => a k / (z - s) ^ (k.val + 1))
       (L := L) (fun k _ => h_each k) (fun k _ => h_term_int k)
-  -- Compute `∑ k, L k = 2πi · w · residue f s`.
   have h_sum_L_eq : (∑ k : Fin N, L k) =
       2 * ↑Real.pi * I * w * residue f s := by
     rw [decomp.residue_eq s hs]
     by_cases h_pos : 0 < N
     · rw [dif_pos h_pos, Finset.sum_eq_single (⟨0, h_pos⟩ : Fin N)]
-      · change (if ((⟨0, h_pos⟩ : Fin N) : ℕ) = 0 then
-          2 * ↑Real.pi * I * w * a ⟨0, h_pos⟩ else 0) =
-            2 * ↑Real.pi * I * w * decomp.coeff s ⟨0, h_pos⟩
+      · show (if ((⟨0, h_pos⟩ : Fin N) : ℕ) = 0 then _ else _) = _
         rw [if_pos rfl]
       · intro k _ hk
-        change (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
+        show (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
         rw [if_neg (fun h_eq => hk (Fin.ext h_eq))]
       · exact fun h => absurd (Finset.mem_univ _) h
     · rw [dif_neg h_pos, mul_zero]
       exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
-  -- Rewrite `∑ k, term k z` as `decomp.polarPart s z` off `s` via congruence.
-  have h_pp_eq : ∀ z, z ≠ s →
-      (∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) = decomp.polarPart s z :=
+  refine HasCauchyPV.to_singletonOn ?_
+  rw [← h_sum_L_eq]
+  exact HasCauchyPV.congr_pointwise h_sum_cpv
     fun z hz => (decomp.polarPart_eq s hs z hz).symm
-  have h_cpv_polar : HasCauchyPV (decomp.polarPart s) γP s
-      (2 * ↑Real.pi * I * w * residue f s) := by
-    rw [← h_sum_L_eq]
-    exact HasCauchyPV.congr_pointwise h_sum_cpv h_pp_eq
-  -- Convert from `HasCauchyPV` to `HasCauchyPVOn {s}`.
-  exact HasCauchyPV.to_singletonOn h_cpv_polar
 
 /-! ### Conditional-angle variant of polar-part multi-crossing CPV (T-BR-Y9g) -/
 
@@ -3402,11 +3380,10 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB
   -- Per-term integrability (identical to the unconditional form).
   have h_term_int : ∀ k : Fin N, ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrand (fun z => a k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε => by
-    refine (HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
+        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε =>
+    (HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
       γ (S := {s}) (Finset.mem_singleton.mpr rfl) (a k) (k.val + 1) hε).congr
-      (fun t _ => ?_)
-    exact (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm
+      (fun _ _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm)
   -- Per-term CPV.
   set L : Fin N → ℂ := fun k =>
     if k.val = 0 then 2 * ↑Real.pi * I * w * a k else 0 with hL_def
@@ -3415,10 +3392,8 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB
     intro k
     by_cases hk : k.val = 0
     · -- Simple-pole case (identical to unconditional form).
-      have h_pow_one : (k.val + 1 : ℕ) = 1 := by omega
-      have h_term_eq :
-          (fun z => a k / (z - s) ^ (k.val + 1)) = fun z => a k / (z - s) := by
-        funext z; rw [h_pow_one, pow_one]
+      have h_term_eq : (fun z => a k / (z - s) ^ (k.val + 1)) = fun z => a k / (z - s) := by
+        funext z; rw [show (k.val + 1 : ℕ) = 1 from by omega, pow_one]
       have h_L_eq : L k = 2 * ↑Real.pi * I * w * a k := by simp [L, hk]
       rw [h_term_eq, h_L_eq]
       have h_flat_one_at_each : ∀ t₀ ∈ D.crossings,
@@ -3429,35 +3404,29 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB
         hasCauchyPV_inv_sub_multiCrossing D h_flat_one_at_each
       have h_w_eq : w = (2 * ↑Real.pi * I)⁻¹ * L_inv :=
         (hasGeneralizedWindingNumber_of_hasCauchyPV h_inv_cpv).eq
-      have h_L_inv_eq : L_inv = 2 * ↑Real.pi * I * w := by
-        rw [h_w_eq]; field_simp
-      have h_scaled : HasCauchyPV (fun z => a k / (z - s)) γP s (a k * L_inv) :=
-        HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv (a k) h_inv_cpv
+      have h_L_inv_eq : L_inv = 2 * ↑Real.pi * I * w := by rw [h_w_eq]; field_simp
       rw [show 2 * ↑Real.pi * I * w * a k = a k * L_inv by rw [h_L_inv_eq]; ring]
-      exact h_scaled
+      exact HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv (a k) h_inv_cpv
     · -- Higher-order case: split on `a k = 0`.
-      have hk_ge_one : 1 ≤ k.val := by omega
       have h_L_eq : L k = (0 : ℂ) := by simp [L, hk]
       rw [h_L_eq]
       by_cases h_zero : a k = 0
-      · -- Coefficient is zero: term ≡ 0, CPV = 0.
-        have h_eq : (fun z => a k / (z - s) ^ (k.val + 1)) = fun _ => (0 : ℂ) := by
+      · have h_eq : (fun z => a k / (z - s) ^ (k.val + 1)) = fun _ => (0 : ℂ) := by
           funext z; rw [h_zero, zero_div]
         rw [h_eq]
         exact hasCauchyPV_of_hasCauchyPVOn_singleton
           (HasCauchyPVOn.zero_fun (γ := γP) (S := ({s} : Finset ℂ)))
-      · -- Coefficient nonzero: condition (B) supplies the angle.
-        have hk_succ_ge_two : 2 ≤ k.val + 1 := by omega
+      · have hk_ge_one : 1 ≤ k.val := by omega
         have hk_succ_le_N : k.val + 1 ≤ N := k.isLt
-        have hN_pos : 1 ≤ N := le_trans (by omega : 1 ≤ k.val + 1) hk_succ_le_N
         have h_angle_k := h_angle_cond k hk_ge_one h_zero
-        have h_angle_succ : ∀ _t₀ ∈ D.crossings, ∃ m : ℤ,
-            (((k.val + 1) - 1 : ℕ) : ℝ) * Real.pi = (m : ℝ) * (2 * Real.pi) :=
-          fun _ _ => by rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]; exact h_angle_k
         exact hasCauchyPV_of_hasCauchyPVOn_singleton
           (hasCauchyPVOn_multiCrossing_higherOrder (γ := γ) (s := s)
-            D (n := N) (k := k.val + 1) hk_succ_ge_two hk_succ_le_N hN_pos
-            h_flat_at_each h_angle_succ (a k))
+            D (n := N) (k := k.val + 1) (by omega) hk_succ_le_N
+            (le_trans (by omega : 1 ≤ k.val + 1) hk_succ_le_N)
+            h_flat_at_each
+            (fun _ _ => by
+              rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]; exact h_angle_k)
+            (a k))
   -- Combine via `HasCauchyPV.finset_sum` (identical to unconditional form).
   have h_sum_cpv : HasCauchyPV
       (fun z => ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) γP s
@@ -3471,24 +3440,18 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB
     rw [decomp.residue_eq s hs]
     by_cases h_pos : 0 < N
     · rw [dif_pos h_pos, Finset.sum_eq_single (⟨0, h_pos⟩ : Fin N)]
-      · change (if ((⟨0, h_pos⟩ : Fin N) : ℕ) = 0 then
-          2 * ↑Real.pi * I * w * a ⟨0, h_pos⟩ else 0) =
-            2 * ↑Real.pi * I * w * decomp.coeff s ⟨0, h_pos⟩
+      · show (if ((⟨0, h_pos⟩ : Fin N) : ℕ) = 0 then _ else _) = _
         rw [if_pos rfl]
       · intro k _ hk
-        change (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
+        show (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
         rw [if_neg (fun h_eq => hk (Fin.ext h_eq))]
       · exact fun h => absurd (Finset.mem_univ _) h
     · rw [dif_neg h_pos, mul_zero]
       exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
-  have h_pp_eq : ∀ z, z ≠ s →
-      (∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) = decomp.polarPart s z :=
+  refine HasCauchyPV.to_singletonOn ?_
+  rw [← h_sum_L_eq]
+  exact HasCauchyPV.congr_pointwise h_sum_cpv
     fun z hz => (decomp.polarPart_eq s hs z hz).symm
-  have h_cpv_polar : HasCauchyPV (decomp.polarPart s) γP s
-      (2 * ↑Real.pi * I * w * residue f s) := by
-    rw [← h_sum_L_eq]
-    exact HasCauchyPV.congr_pointwise h_sum_cpv h_pp_eq
-  exact HasCauchyPV.to_singletonOn h_cpv_polar
 
 /-! ### T-BR-Y11b — Corner-friendly polar-part multi-crossing CPV
 
@@ -3692,48 +3655,24 @@ theorem residueTheorem_crossing_full_spec
     hS_in_U hf γ h_null hMero hCondB hCondA hx_notin_S h_no_corner_crossings
     (fun s hs h_card_ge_two => ?_)
   -- Discharge the multi-crossing per-pole oracle internally.
-  set scenario := MultiPoleCrossScenario.ofImmersion (γ := γ) (S := S)
-    hx_notin_S h_no_corner_crossings
-  set D : MultiPoleCrossData γ s := scenario.data s hs with hD_def
+  set D : MultiPoleCrossData γ s :=
+    (MultiPoleCrossScenario.ofImmersion (γ := γ) (S := S)
+      hx_notin_S h_no_corner_crossings).data s hs
   -- Extract a crossing from the cardinality hypothesis.
   have hD_nonempty : D.crossings.Nonempty := by
     rw [Finset.nonempty_iff_ne_empty]
     intro h_empty
-    rw [h_empty] at h_card_ge_two
-    simp at h_card_ge_two
+    rw [h_empty] at h_card_ge_two; simp at h_card_ge_two
   obtain ⟨t_pick, ht_pick⟩ := hD_nonempty
-  have ht_pick_Ioo : t_pick ∈ Set.Ioo (0 : ℝ) 1 := D.h_Ioo t_pick ht_pick
-  have h_at_pick : γ.toPwC1Immersion.toPiecewiseC1Path t_pick = s :=
-    D.h_at t_pick ht_pick
-  have h_off_pick : t_pick ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition :=
-    D.h_off t_pick ht_pick
-  -- Build `h_flat_at_each` from `hCondA`.
-  have h_flat_at_each : ∀ t₀ ∈ D.crossings,
-      IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀
-        (decomp.order s) := by
-    intro t₀ ht₀
-    have ht₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1 := D.h_Ioo t₀ ht₀
-    have h_at : γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s := D.h_at t₀ ht₀
-    have ht_Icc : t₀ ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht₀_Ioo
-    exact hCondA s hs t₀ ht_Icc h_at ht₀_Ioo
-  -- Build `h_angle_cond` from `hCondB` via `angle_compat_of_condB`. The angle
-  -- relation in the conclusion is independent of which crossing `t₀` we use,
-  -- so we pick any crossing `t_pick ∈ D.crossings`.
-  have h_angle_cond : ∀ k : Fin (decomp.order s), k.val ≥ 1 →
-      decomp.coeff s k ≠ 0 →
-        ∃ m : ℤ, ((k.val : ℝ)) * Real.pi = (m : ℝ) * (2 * Real.pi) := by
-    intro k hk h_ne
-    exact angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs ht_pick_Ioo
-      h_at_pick h_off_pick k hk h_ne
   -- Apply the conditional-angle multi-crossing CPV theorem.
-  have h_cpv_polar_on : HasCauchyPVOn ({s} : Finset ℂ) (decomp.polarPart s)
-      γ.toPwC1Immersion.toPiecewiseC1Path
-      (2 * ↑Real.pi * Complex.I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-        residue f s) :=
-    cpv_polarPart_at_multiCrossed_pole_under_condB hs decomp D h_flat_at_each
-      h_angle_cond
-  exact hasCauchyPV_of_hasCauchyPVOn_singleton h_cpv_polar_on
+  exact hasCauchyPV_of_hasCauchyPVOn_singleton
+    (cpv_polarPart_at_multiCrossed_pole_under_condB hs decomp D
+      (fun t₀ ht₀ => hCondA s hs t₀ (Ioo_subset_Icc_self (D.h_Ioo t₀ ht₀))
+        (D.h_at t₀ ht₀) (D.h_Ioo t₀ ht₀))
+      (fun k hk h_ne =>
+        angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs
+          (D.h_Ioo t_pick ht_pick) (D.h_at t_pick ht_pick) (D.h_off t_pick ht_pick)
+          k hk h_ne))
 
 /-! ### Reparametrization shim form (T-BR-Y9g-continue)
 
@@ -3971,27 +3910,18 @@ private theorem residueTheorem_crossing_full_spec_no_basepoint
   by_cases hx : x ∈ (↑S : Set ℂ)
   · -- Genuine reparametrization case: apply the cyclic shift.
     obtain ⟨τ, hτ, _hγτ_notin, h_cpv'⟩ := h_pole_basepoint_data hx
-    -- Transport the CPV conclusion back from γ' to γ via
-    -- `hasCauchyPVOn_cyclicShift` and `generalizedWindingNumber_cyclicShift`.
-    have h_wn_eq : ∀ s ∈ S,
-        generalizedWindingNumber
-            (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path s =
-          generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s :=
-      fun s _ => ClosedPwC1Immersion.generalizedWindingNumber_cyclicShift hτ s
     have h_sum_eq : (∑ s ∈ S, 2 * ↑Real.pi * I *
           generalizedWindingNumber
             (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path s *
             residue f s) =
         ∑ s ∈ S, 2 * ↑Real.pi * I *
           generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-            residue f s := by
-      refine Finset.sum_congr rfl ?_
-      intro s hs
-      rw [h_wn_eq s hs]
+            residue f s :=
+      Finset.sum_congr rfl fun s _ => by
+        rw [ClosedPwC1Immersion.generalizedWindingNumber_cyclicShift hτ s]
     rw [← h_sum_eq]
     exact (ClosedPwC1Immersion.hasCauchyPVOn_cyclicShift hτ S f _).mp h_cpv'
-  · -- Easy case `x ∉ S`: direct dispatch to `_basepoint_off`.
-    exact residueTheorem_crossing_full_spec_basepoint_off hU_open hU_ne hS_in_U hf γ
+  · exact residueTheorem_crossing_full_spec_basepoint_off hU_open hU_ne hS_in_U hf γ
       h_null hMero hCondB hCondA hx h_no_corner_crossings
 
 /-! ### T-BR-Y11 — Paper-faithful spec form

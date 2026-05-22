@@ -559,7 +559,7 @@ private theorem hasCauchyPVOn_simplePoles_nullHomologous_of_dixon_G
   have h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend)
       MeasureTheory.volume 0 1 := by
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
+    exact MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
       (stronglyMeasurable_deriv _).aestronglyMeasurable
       (ae_restrict_of_ae (Filter.Eventually.of_forall
         (fun _ => norm_deriv_le_of_lipschitz hLip)))
@@ -568,9 +568,9 @@ private theorem hasCauchyPVOn_simplePoles_nullHomologous_of_dixon_G
       γ.toPiecewiseC1Path hU_open hU_ne hLip
   obtain ⟨g, hg_diff, hg_agree⟩ :=
     remainder_differentiableOn_of_simplePoles hU_open S hS_in_U f hf hSimplePoles
-  have h_dixon_G' : ∀ w,
-      dixonFunction (fun z => (z - w₀) * g z) U γ.toPiecewiseC1Path w = 0 :=
-    h_dixon_G w₀ hw₀_in_U g hg_diff
+  have h_img_off_S : ∀ t ∈ Icc (0 : ℝ) 1,
+      γ.toPiecewiseC1Path t ∈ (↑S : Set ℂ)ᶜ := fun t ht hmem =>
+    hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl
   have h_dixon_zero_at : dixonFunction
       (fun z => (z - w₀) *
         (f z - principalPartSum S (fun s => residue f s) z))
@@ -584,34 +584,27 @@ private theorem hasCauchyPVOn_simplePoles_nullHomologous_of_dixon_G
       refine intervalIntegral.integral_congr (fun t ht => ?_)
       rw [uIcc_of_le (zero_le_one' ℝ)] at ht
       have ht_off_w₀ : γ.toPiecewiseC1Path t ≠ w₀ := hw₀_off t ht
-      have ht_in_USmS : γ.toPiecewiseC1Path t ∈ U \ (↑S : Set ℂ) :=
-        ⟨hγ_in_U t ht, fun hmem => hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
       rw [dslope_of_ne _ ht_off_w₀, dslope_of_ne _ ht_off_w₀,
           slope_def_field, slope_def_field, sub_self, zero_mul, zero_mul,
-          sub_zero, sub_zero, hg_agree _ ht_in_USmS]
-    rw [h_eq, h_dixon_G' w₀]
+          sub_zero, sub_zero, hg_agree _ ⟨hγ_in_U t ht, h_img_off_S t ht⟩]
+    rw [h_eq, h_dixon_G w₀ hw₀_in_U g hg_diff w₀]
   obtain ⟨_, _, hδ'_bound⟩ := avoids_delta_bound γ.toPiecewiseC1Path w₀ hw₀_off
   have h_pp_cont : ContinuousOn (principalPartSum S (fun s => residue f s))
       (↑S : Set ℂ)ᶜ := (principalPartSum_differentiableOn S _).continuousOn
-  have h_img_off_S : ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPiecewiseC1Path t ∈ (↑S : Set ℂ)ᶜ := fun t ht hmem =>
-    hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl
   have h_pp_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
         (principalPartSum S (fun s => residue f s)) γ.toPiecewiseC1Path)
       MeasureTheory.volume 0 1 :=
     PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn _
       h_pp_cont h_img_off_S h_deriv_int
-  have h_rem_cont : ContinuousOn (fun z => f z -
-      principalPartSum S (fun s => residue f s) z) (U \ ↑S) :=
-    hf.continuousOn.sub (h_pp_cont.mono fun _ hz hmem =>
-      hz.2 (Finset.mem_coe.mpr (Finset.mem_coe.mp hmem)))
   have h_rem_int : IntervalIntegrable
       (PiecewiseC1Path.contourIntegrand
         (fun z => f z - principalPartSum S (fun s => residue f s) z)
         γ.toPiecewiseC1Path) MeasureTheory.volume 0 1 :=
     PiecewiseC1Path.contourIntegrand_intervalIntegrable_of_continuousOn _
-      h_rem_cont (fun t ht => ⟨hγ_in_U t ht, h_img_off_S t ht⟩) h_deriv_int
+      (hf.continuousOn.sub (h_pp_cont.mono fun _ hz hmem =>
+        hz.2 (Finset.mem_coe.mpr (Finset.mem_coe.mp hmem))))
+      (fun t ht => ⟨hγ_in_U t ht, h_img_off_S t ht⟩) h_deriv_int
   have hI : ∀ s ∈ S, IntervalIntegrable
       (fun t => (residue f s / (γ.toPiecewiseC1Path.toPath.extend t - s)) *
         deriv γ.toPiecewiseC1Path.toPath.extend t) MeasureTheory.volume 0 1 := fun s hs =>
@@ -619,20 +612,16 @@ private theorem hasCauchyPVOn_simplePoles_nullHomologous_of_dixon_G
       (f := fun z => residue f s / (z - s)) γ.toPiecewiseC1Path
       (differentiableOn_div_sub s (residue f s)).continuousOn
       (fun t ht hmem => hγ_avoids s hs t ht (mem_singleton_iff.mp hmem)) h_deriv_int
-  have h_inv_cont : ContinuousOn
-      (fun t => (γ.toPiecewiseC1Path t - w₀)⁻¹) (uIcc (0 : ℝ) 1) := by
-    rw [uIcc_of_le (zero_le_one' ℝ)]
-    refine ContinuousOn.inv₀
-      (γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn.sub continuousOn_const) ?_
-    intro t ht heq
-    have := hδ'_bound t ht
-    rw [heq, norm_zero] at this
-    linarith
   have h_base_int : IntervalIntegrable
       (fun t => (γ.toPiecewiseC1Path t - w₀)⁻¹ *
         deriv γ.toPiecewiseC1Path.toPath.extend t)
-      MeasureTheory.volume 0 1 :=
-    h_deriv_int.continuousOn_mul h_inv_cont
+      MeasureTheory.volume 0 1 := by
+    refine h_deriv_int.continuousOn_mul ?_
+    rw [uIcc_of_le (zero_le_one' ℝ)]
+    refine ContinuousOn.inv₀
+      (γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn.sub continuousOn_const)
+      (fun t ht heq => ?_)
+    have := hδ'_bound t ht; rw [heq, norm_zero] at this; linarith
   have h_cauchy_int : IntervalIntegrable
       (fun t => (γ.toPiecewiseC1Path t - w₀) *
         (f (γ.toPiecewiseC1Path t) -

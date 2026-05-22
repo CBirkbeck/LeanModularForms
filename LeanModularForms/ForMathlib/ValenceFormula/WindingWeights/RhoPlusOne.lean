@@ -652,15 +652,13 @@ theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
       rho'_pv_setup H hH hε_pos hε_lt
     have hε_lt_one : ε < 1 := by
       have hsin_bound : Real.sin (Real.pi / 12) < 1 / 2 :=
-        calc Real.sin (Real.pi / 12) < Real.sin (Real.pi / 6) :=
-              Real.sin_lt_sin_of_lt_of_le_pi_div_two (by nlinarith [Real.pi_pos])
-                (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-          _ = 1 / 2 := Real.sin_pi_div_six
+        (Real.sin_lt_sin_of_lt_of_le_pi_div_two (by nlinarith [Real.pi_pos])
+            (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])).trans_eq
+          Real.sin_pi_div_six
       linarith [lt_of_lt_of_le hε_lt (min_le_right _ _)]
     simp only [hδR_def] at ht_mem
     rcases eq_or_lt_of_le ht_mem.2 with rfl | ht_lt5
-    · calc ε < H - Real.sqrt 3 / 2 := hε_lt_gap
-        _ ≤ _ := g_rho'_norm_ge_seg4 hH (by norm_num) le_rfl
+    · exact hε_lt_gap.trans_le (g_rho'_norm_ge_seg4 hH (by norm_num) le_rfl)
     · exact rho'_norm_gt_right_of_arc H hH hε_lt_one hε_lt_gap hδR_pos hδR_lt_one h_norm_R
         t ⟨ht_mem.1, ht_lt5⟩
   · intro ε hε_pos hε_lt t ht_mem

@@ -260,10 +260,8 @@ private lemma hasDerivAt_segmentIntegral_aux {f : ℂ → ℂ}
   let F' : ℝ → ℂ := fun t => t • deriv f (c + t • (z - c))
   have h_seg : ∀ w ∈ Metric.ball z ε,
       ∀ t ∈ Icc (0 : ℝ) 1, c + t • (w - c) ∈ S :=
-    fun w hw t ht =>
-      segment_subset_convex hS_convex hc (hε_ball hw) t ht
-  have h_seg_z : ∀ t ∈ Icc (0 : ℝ) 1,
-      c + t • (z - c) ∈ S :=
+    fun w hw t ht => segment_subset_convex hS_convex hc (hε_ball hw) t ht
+  have h_seg_z : ∀ t ∈ Icc (0 : ℝ) 1, c + t • (z - c) ∈ S :=
     fun t ht => segment_subset_convex hS_convex hc hz t ht
   let ε' := ε / 2
   have hε'_pos : 0 < ε' := by positivity
@@ -271,77 +269,53 @@ private lemma hasDerivAt_segmentIntegral_aux {f : ℂ → ℂ}
   have hε'_ball : Metric.ball z ε' ⊆ Metric.ball z ε :=
     Metric.ball_subset_ball hε'_lt_ε.le
   have hf'_cont : ContinuousOn (deriv f) S :=
-    (hf.contDiffOn hS_open).continuousOn_deriv_of_isOpen
-      hS_open le_rfl
+    (hf.contDiffOn hS_open).continuousOn_deriv_of_isOpen hS_open le_rfl
   obtain ⟨M, hM_pos, hM_bound⟩ :
       ∃ M > 0, ∀ w ∈ Metric.ball z ε',
-        ∀ t ∈ Icc (0 : ℝ) 1,
-          ‖deriv f (c + t • (w - c))‖ ≤ M := by
-    let segmentMap : ℂ × ℝ → ℂ :=
-      fun ⟨w, t⟩ => c + t • (w - c)
-    have hcont : Continuous segmentMap := by
-      apply Continuous.add continuous_const
-      exact continuous_snd.smul
-        (continuous_fst.sub continuous_const)
-    let K := segmentMap ''
-      (Metric.closedBall z ε' ×ˢ Icc (0 : ℝ) 1)
+        ∀ t ∈ Icc (0 : ℝ) 1, ‖deriv f (c + t • (w - c))‖ ≤ M := by
+    let segmentMap : ℂ × ℝ → ℂ := fun ⟨w, t⟩ => c + t • (w - c)
+    have hcont : Continuous segmentMap :=
+      continuous_const.add (continuous_snd.smul (continuous_fst.sub continuous_const))
+    let K := segmentMap '' (Metric.closedBall z ε' ×ˢ Icc (0 : ℝ) 1)
     have hK_compact : IsCompact K :=
       ((isCompact_closedBall z ε').prod isCompact_Icc).image hcont
-    have hclosedBall_in_S :
-        Metric.closedBall z ε' ⊆ S :=
+    have hclosedBall_in_S : Metric.closedBall z ε' ⊆ S :=
       (Metric.closedBall_subset_ball hε'_lt_ε).trans hε_ball
     have hK_in_S : K ⊆ S := by
       intro p hp
       obtain ⟨⟨w, t⟩, ⟨hw, ht⟩, rfl⟩ := hp
-      exact segment_subset_convex hS_convex hc
-        (hclosedBall_in_S hw) t ht
-    obtain ⟨M', hM'⟩ :=
-      hK_compact.bddAbove_image (hf'_cont.norm.mono hK_in_S)
+      exact segment_subset_convex hS_convex hc (hclosedBall_in_S hw) t ht
+    obtain ⟨M', hM'⟩ := hK_compact.bddAbove_image (hf'_cont.norm.mono hK_in_S)
     exact ⟨max M' 1, by positivity, fun w hw t ht =>
       (hM' ⟨c + t • (w - c),
-        ⟨⟨w, t⟩, ⟨Metric.ball_subset_closedBall hw, ht⟩,
-          rfl⟩, rfl⟩).trans (le_max_left _ _)⟩
+        ⟨⟨w, t⟩, ⟨Metric.ball_subset_closedBall hw, ht⟩, rfl⟩, rfl⟩).trans (le_max_left _ _)⟩
   have hF_meas : ∀ᶠ w in 𝓝 z,
-      AEStronglyMeasurable (F w)
-        (volume.restrict (Set.uIoc 0 1)) := by
+      AEStronglyMeasurable (F w) (volume.restrict (Set.uIoc 0 1)) := by
     filter_upwards [Metric.ball_mem_nhds z hε'_pos] with w hw
     simp only [uIoc_of_le zero_le_one]
     exact segmentIntegrand_aestronglyMeasurable
       hf.continuousOn (fun t ht => h_seg w (hε'_ball hw) t ht)
   have hF_int : IntervalIntegrable (F z) volume 0 1 :=
     segmentIntegrand_intervalIntegrable hf.continuousOn h_seg_z
-  have hF'_meas : AEStronglyMeasurable F'
-      (volume.restrict (Set.uIoc 0 1)) := by
+  have hF'_meas : AEStronglyMeasurable F' (volume.restrict (Set.uIoc 0 1)) := by
     simp only [uIoc_of_le zero_le_one]
-    exact segmentDerivIntegrand_aestronglyMeasurable
-      hS_open hf h_seg_z
+    exact segmentDerivIntegrand_aestronglyMeasurable hS_open hf h_seg_z
   have h_lip : ∀ᵐ t ∂volume, t ∈ Set.uIoc 0 1 →
       LipschitzOnWith (Real.nnabs (|t| * M))
-        (fun w => F w t) (Metric.ball z ε') := by
-    apply MeasureTheory.ae_of_all
-    intro t ht_mem
+        (fun w => F w t) (Metric.ball z ε') := MeasureTheory.ae_of_all _ fun t ht_mem => by
     simp only [uIoc_of_le zero_le_one] at ht_mem
-    have ht : t ∈ Icc (0 : ℝ) 1 :=
-      ⟨le_of_lt ht_mem.1, ht_mem.2⟩
-    have h_nonneg : 0 ≤ |t| * M :=
-      mul_nonneg (abs_nonneg t) (le_of_lt hM_pos)
-    rw [Real.nnabs_of_nonneg h_nonneg]
+    have ht : t ∈ Icc (0 : ℝ) 1 := ⟨ht_mem.1.le, ht_mem.2⟩
+    rw [Real.nnabs_of_nonneg (mul_nonneg (abs_nonneg t) hM_pos.le)]
     exact segmentIntegrand_lipschitzOnWith hS_open hS_convex hf hc
       (fun w hw => hε_ball (hε'_ball hw)) ht
       (fun w hw => hM_bound w hw t ht)
-  have bound_int :
-      IntervalIntegrable (fun t => |t| * M) volume 0 1 :=
-    (continuous_abs.intervalIntegrable 0 1).mul_const M
   have h_diff : ∀ᵐ t ∂volume, t ∈ Set.uIoc 0 1 →
-      HasDerivAt (fun w => F w t) (F' t) z := by
-    apply MeasureTheory.ae_of_all
-    intro t ht_mem
+      HasDerivAt (fun w => F w t) (F' t) z := MeasureTheory.ae_of_all _ fun t ht_mem => by
     simp only [uIoc_of_le zero_le_one] at ht_mem
-    have ht : t ∈ Icc (0 : ℝ) 1 :=
-      ⟨le_of_lt ht_mem.1, ht_mem.2⟩
-    exact hasDerivAt_segmentIntegrand hS_open hf (h_seg_z t ht)
+    exact hasDerivAt_segmentIntegrand hS_open hf (h_seg_z t ⟨ht_mem.1.le, ht_mem.2⟩)
   exact (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_lip
-    (Metric.ball_mem_nhds z hε'_pos) hF_meas hF_int hF'_meas h_lip bound_int h_diff).2
+    (Metric.ball_mem_nhds z hε'_pos) hF_meas hF_int hF'_meas h_lip
+    ((continuous_abs.intervalIntegrable 0 1).mul_const M) h_diff).2
 
 private lemma hasDerivAt_segmentIntegral {f : ℂ → ℂ}
     {S : Set ℂ} {c z : ℂ}

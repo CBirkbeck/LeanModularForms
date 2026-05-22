@@ -343,13 +343,11 @@ theorem fdBoundary_ftc_telescope_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   have h_int_seg1 :
       ∫ t in (0:ℝ)..(1/5), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       Complex.log (seg4_h₀ H z₀ (1/5)) - Complex.log (seg4_h₀ H z₀ 0) := by
-    rw [intervalIntegral.integral_congr_ae (seg4_ae_eq_h₀ H z₀)]
-    exact h_seg1.2
+    rw [intervalIntegral.integral_congr_ae (seg4_ae_eq_h₀ H z₀)]; exact h_seg1.2
   have h_int_arc :
       ∫ t in (1/5:ℝ)..(3/5), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       Complex.log (seg4_h_arc z₀ (3/5)) - Complex.log (seg4_h_arc z₀ (1/5)) := by
-    rw [intervalIntegral.integral_congr_ae (ae_eq_vertSeg_h_arc H z₀)]
-    exact h_arc.2
+    rw [intervalIntegral.integral_congr_ae (ae_eq_vertSeg_h_arc H z₀)]; exact h_arc.2
   have h_int_left :
       ∫ t in (3/5:ℝ)..(t₀ - δ), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       Complex.log (seg4_h₃ H z₀ (t₀ - δ)) - Complex.log (seg4_h₃ H z₀ (3/5)) := by
@@ -366,35 +364,34 @@ theorem fdBoundary_ftc_telescope_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       ∫ t in (4/5 : ℝ)..(1 : ℝ),
           (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       Complex.log (seg4_h₅ H z₀ 1) - Complex.log (seg4_h₅ H z₀ (4/5)) := by
-    rw [intervalIntegral.integral_congr_ae (ae_eq_vertSeg_h₅ H z₀)]
-    exact h_seg5.2
+    rw [intervalIntegral.integral_congr_ae (ae_eq_vertSeg_h₅ H z₀)]; exact h_seg5.2
   have hint_seg1 : IntervalIntegrable
       (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
       volume 0 (1/5) :=
     h_seg1.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((seg4_ae_eq_h₀ H z₀).mono (fun t ht hm => (ht hm).symm)))
+      ((seg4_ae_eq_h₀ H z₀).mono (fun _ ht hm => (ht hm).symm)))
   have hint_arc : IntervalIntegrable
       (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
       volume (1/5) (3/5) :=
     h_arc.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((ae_eq_vertSeg_h_arc H z₀).mono (fun t ht hm => (ht hm).symm)))
+      ((ae_eq_vertSeg_h_arc H z₀).mono (fun _ ht hm => (ht hm).symm)))
   have hint_left : IntervalIntegrable
       (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
       volume (3/5) (t₀ - δ) :=
     h_left.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       ((seg4_ae_eq_h₃ H z₀ (by linarith) le_rfl (by linarith)).mono
-        (fun t ht hm => (ht hm).symm)))
+        (fun _ ht hm => (ht hm).symm)))
   have hint_right : IntervalIntegrable
       (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
       volume (t₀ + δ) (4/5) :=
     h_right.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       ((seg4_ae_eq_h₃ H z₀ (by linarith) (by linarith) le_rfl).mono
-        (fun t ht hm => (ht hm).symm)))
+        (fun _ ht hm => (ht hm).symm)))
   have hint_seg5 : IntervalIntegrable
       (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
       volume (4/5) 1 :=
     h_seg5.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((ae_eq_vertSeg_h₅ H z₀).mono (fun t ht hm => (ht hm).symm)))
+      ((ae_eq_vertSeg_h₅ H z₀).mono (fun _ ht hm => (ht hm).symm)))
   have h_split_left :
       ∫ t in (0:ℝ)..(t₀ - δ), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       (∫ t in (0:ℝ)..(1/5),
