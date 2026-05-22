@@ -3021,32 +3021,80 @@ theorem descendCosetList_level_agree
   · exact h.mul_left l
   · exact (hpl.pow_left 2).dvd_of_dvd_mul_left h
 
-/-- **T6b-coset-invariance**: The slash sum is invariant under choice of
-extra coset representative `γ_p^(p)` (within the CRT congruence class),
-*provided* `f` is a `χ`-eigenform under `Γ_0(N)`.
+private lemma SL2_diff_map_eq_one_aux {R : Type*} [CommRing R]
+    (γ₁ γ₂ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
+    (h : (γ₁ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → R) =
+          (γ₂ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → R)) :
+    ((γ₁ * γ₂⁻¹ : Matrix.SpecialLinearGroup (Fin 2) ℤ) :
+        Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → R) = 1 := by
+  let φ : Matrix.SpecialLinearGroup (Fin 2) ℤ →*
+      Matrix.SpecialLinearGroup (Fin 2) R :=
+    Matrix.SpecialLinearGroup.map (Int.castRingHom R)
+  have h_φ_def : ∀ γ : Matrix.SpecialLinearGroup (Fin 2) ℤ,
+      (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → R) = (φ γ).val := fun γ => by
+    ext i j
+    rw [map_apply_coe]
+    simp [RingHom.mapMatrix_apply]
+  rw [h_φ_def,
+    show φ (γ₁ * γ₂⁻¹) = φ γ₁ * (φ γ₂)⁻¹ from map_mul_inv φ γ₁ γ₂]
+  have hEq : φ γ₁ = φ γ₂ :=
+    Matrix.SpecialLinearGroup.ext _ _ fun i j => by
+      simpa [← h_φ_def] using congr_fun (congr_fun h i) j
+  rw [hEq, mul_inv_cancel]
+  rfl
 
-**Why needed**: T6b compares two slash sums at different levels, but
-`descendExtraGamma p N` and `descendExtraGamma p (l·N)` are two
-**different** `Classical.choose` outputs (different CRT lifts).  They
-satisfy different congruence conditions: one is `≡ I (mod N/p)`, the other
-`≡ I (mod (lN)/p)` — the latter is stronger (since `(N/p) ∣ (lN)/p`).
-So both are valid choices for `γ_p^(p)` at level `N` (since "≡ I mod (lN)/p"
-implies "≡ I mod (N/p)" by divisibility).
+private lemma SL2_map_eq_one_of_mod_aux
+    {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] [NeZero (N / p)] (hpN : p ∣ N)
+    (hcop_int : IsCoprime ((p : ℕ) : ℤ) ((N / p : ℕ) : ℤ))
+    (δ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
+    (hp : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = 1)
+    (hNp : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1) :
+    (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod N) = 1 := by
+  have hpNp_eq : ((p : ℕ) : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by
+    exact_mod_cast Nat.mul_div_cancel' hpN
+  have hN_of_dvd : ∀ x : ℤ,
+      ((p : ℕ) : ℤ) ∣ x → ((N / p : ℕ) : ℤ) ∣ x → (N : ℤ) ∣ x :=
+    fun _ h₁ h₂ => hpNp_eq ▸ hcop_int.mul_dvd h₁ h₂
+  ext i j
+  simp only [Matrix.map_apply, Matrix.one_apply]
+  have h_ij_p : ((δ : Matrix (Fin 2) (Fin 2) ℤ) i j : ZMod p) = if i = j then 1 else 0 := by
+    simpa [Matrix.map_apply, Matrix.one_apply] using congr_fun (congr_fun hp i) j
+  have h_ij_Np : ((δ : Matrix (Fin 2) (Fin 2) ℤ) i j : ZMod (N / p)) =
+      if i = j then 1 else 0 := by
+    simpa [Matrix.map_apply, Matrix.one_apply] using congr_fun (congr_fun hNp i) j
+  split_ifs with h
+  · subst h
+    simp only [if_true] at h_ij_p h_ij_Np
+    have hp_dvd : ((p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1 := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      push_cast
+      simp [h_ij_p]
+    have hNp_dvd : ((N / p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1 := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      push_cast
+      simp [h_ij_Np]
+    have hN_dvd := hN_of_dvd _ hp_dvd hNp_dvd
+    have hmodeq : (δ : Matrix (Fin 2) (Fin 2) ℤ) i i ≡ 1 [ZMOD (N : ℤ)] := by
+      rw [Int.modEq_iff_dvd, show 1 - (δ : Matrix (Fin 2) (Fin 2) ℤ) i i =
+        -((δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1) by ring]
+      exact dvd_neg.mpr hN_dvd
+    simpa using (ZMod.intCast_eq_intCast_iff _ 1 N).mpr hmodeq
+  · simp only [if_neg h] at h_ij_p h_ij_Np
+    have hp_dvd : ((p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i j := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      exact_mod_cast h_ij_p
+    have hNp_dvd : ((N / p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i j := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      exact_mod_cast h_ij_Np
+    have hN_dvd := hN_of_dvd _ hp_dvd hNp_dvd
+    have hmodeq : (δ : Matrix (Fin 2) (Fin 2) ℤ) i j ≡ 0 [ZMOD (N : ℤ)] := by
+      rw [Int.modEq_iff_dvd]
+      simpa using hN_dvd
+    simpa using (ZMod.intCast_eq_intCast_iff _ 0 N).mpr hmodeq
 
-The two slash sums differ in the extra term only.  For two such choices
-`γ₁, γ₂` of `γ_p^(p)`, the matrices `[1,0;0,p]·γ₁` and `[1,0;0,p]·γ₂` are
-in the **same Γ_0(N)-left coset** (by Miyake Lemma 4.5.11's coset
-decomposition — both are in the "extra" Γ_0(N)-coset).  Hence there exists
-`α ∈ Γ_0(N)` with `[1,0;0,p]·γ₂ = α · [1,0;0,p]·γ₁`, so for a χ-eigenform
-`f`, `f|[1,0;0,p]·γ₂ = χ(α)·f|[1,0;0,p]·γ₁`.
-
-**Key**: When `γ₁, γ₂` BOTH satisfy `≡ I mod (lN)/p` (the stronger
-condition), `α ∈ Γ_1(N)` (since `α` is built from `γ₁⁻¹·γ₂ ≡ I mod (lN)/p`,
-which combined with `≡ [0,-1;1,0] mod p` cancels gives `≡ I mod N`).
-Then `χ(α) = 1` and the two slash sums agree.
-
-**Miyake**: implicit in 4.6.6(1)'s proof (page 158-159) — the operator
-depends only on the abstract Hecke double coset, not on specific reps. -/
+/-- **T6b-coset-invariance**: the slash sum is invariant under choice of extra coset
+representative `γ_p^(p)` (within the CRT congruence class), provided `f` is a
+`χ`-eigenform under `Γ_0(N)`. -/
 theorem descendCosetList_slash_sum_rep_invariance
     {N : ℕ} [NeZero N] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N)
@@ -3076,81 +3124,22 @@ theorem descendCosetList_slash_sum_rep_invariance
             (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
           : GL (Fin 2) ℝ) * mapGL ℝ γ₂)) z := by
   let δ := γ₁ * γ₂⁻¹
-  have hδ_mod_p : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = 1 := by
-    let φ : Matrix.SpecialLinearGroup (Fin 2) ℤ →*
-        Matrix.SpecialLinearGroup (Fin 2) (ZMod p) :=
-      Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod p))
-    have h_φ_def : ∀ γ : Matrix.SpecialLinearGroup (Fin 2) ℤ,
-        (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = (φ γ).val := by
-      intro γ; ext i j; rw [map_apply_coe]; simp [RingHom.mapMatrix_apply]
-    show (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = 1
-    rw [h_φ_def, show φ δ = φ γ₁ * (φ γ₂)⁻¹ from map_mul_inv φ γ₁ γ₂]
-    have hEq : φ γ₁ = φ γ₂ := by
-      apply Matrix.SpecialLinearGroup.ext; intros i j
-      simp only [← h_φ_def]; exact congr_fun (congr_fun (h₁_mod_p.trans h₂_mod_p.symm) i) j
-    rw [hEq, mul_inv_cancel]; rfl
-  have hδ_mod_Np : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 := by
-    let φ : Matrix.SpecialLinearGroup (Fin 2) ℤ →*
-        Matrix.SpecialLinearGroup (Fin 2) (ZMod (N / p)) :=
-      Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod (N / p)))
-    have h_φ_def : ∀ γ : Matrix.SpecialLinearGroup (Fin 2) ℤ,
-        (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = (φ γ).val := by
-      intro γ; ext i j; rw [map_apply_coe]; simp [RingHom.mapMatrix_apply]
-    show (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1
-    rw [h_φ_def, show φ δ = φ γ₁ * (φ γ₂)⁻¹ from map_mul_inv φ γ₁ γ₂]
-    have hEq : φ γ₁ = φ γ₂ := by
-      apply Matrix.SpecialLinearGroup.ext; intros i j
-      simp only [← h_φ_def]; exact congr_fun (congr_fun (h₁_mod_Np.trans h₂_mod_Np.symm) i) j
-    rw [hEq, mul_inv_cancel]; rfl
+  have hδ_mod_p : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = 1 :=
+    SL2_diff_map_eq_one_aux γ₁ γ₂ (h₁_mod_p.trans h₂_mod_p.symm)
+  have hδ_mod_Np : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 :=
+    SL2_diff_map_eq_one_aux γ₁ γ₂ (h₁_mod_Np.trans h₂_mod_Np.symm)
   have hcop : Nat.Coprime p (N / p) := by
-    rw [hp.coprime_iff_not_dvd]; intro h_dvd; apply hp_sq
-    have : p ^ 2 ∣ p * (N / p) := by rw [pow_two]; exact Nat.mul_dvd_mul_left p h_dvd
+    rw [hp.coprime_iff_not_dvd]
+    intro h_dvd
+    apply hp_sq
+    have : p ^ 2 ∣ p * (N / p) := by
+      rw [pow_two]
+      exact Nat.mul_dvd_mul_left p h_dvd
     rwa [Nat.mul_div_cancel' hpN] at this
   have hcop_int : IsCoprime ((p : ℕ) : ℤ) ((N / p : ℕ) : ℤ) := by
     exact_mod_cast hcop.isCoprime
-  have hδ_mod_N : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod N) = 1 := by
-    ext i j; simp only [Matrix.map_apply, Matrix.one_apply]
-    have h_ij_p : ((δ : Matrix (Fin 2) (Fin 2) ℤ) i j : ZMod p) = if i = j then 1 else 0 := by
-      have := congr_fun (congr_fun hδ_mod_p i) j
-      simpa [Matrix.map_apply, Matrix.one_apply] using this
-    have h_ij_Np : ((δ : Matrix (Fin 2) (Fin 2) ℤ) i j : ZMod (N / p)) = if i = j then 1 else 0 := by
-      have := congr_fun (congr_fun hδ_mod_Np i) j
-      simpa [Matrix.map_apply, Matrix.one_apply] using this
-    split_ifs with h
-    · subst h; simp only [if_true] at h_ij_p h_ij_Np
-      have hp_dvd : ((p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1 := by
-        have : (((δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1 : ℤ) : ZMod p) = 0 := by
-          push_cast; simp [h_ij_p]
-        rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at this
-      have hNp_dvd : ((N / p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1 := by
-        have : (((δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1 : ℤ) : ZMod (N / p)) = 0 := by
-          push_cast; simp [h_ij_Np]
-        rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at this
-      have hN_dvd : (N : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1 := by
-        have := hcop_int.mul_dvd hp_dvd hNp_dvd
-        rwa [show ((p : ℕ) : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) by
-          exact_mod_cast Nat.mul_div_cancel' hpN] at this
-      have hmodeq : (δ : Matrix (Fin 2) (Fin 2) ℤ) i i ≡ 1 [ZMOD (N : ℤ)] := by
-        rw [Int.modEq_iff_dvd, show 1 - (δ : Matrix (Fin 2) (Fin 2) ℤ) i i =
-          -((δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1) by ring]
-        exact dvd_neg.mpr hN_dvd
-      simpa using (ZMod.intCast_eq_intCast_iff _ 1 N).mpr hmodeq
-    · simp only [if_neg h] at h_ij_p h_ij_Np
-      have hp_dvd : ((p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i j := by
-        have : (((δ : Matrix (Fin 2) (Fin 2) ℤ) i j : ℤ) : ZMod p) = 0 := by
-          exact_mod_cast h_ij_p
-        rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at this
-      have hNp_dvd : ((N / p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i j := by
-        have : (((δ : Matrix (Fin 2) (Fin 2) ℤ) i j : ℤ) : ZMod (N / p)) = 0 := by
-          exact_mod_cast h_ij_Np
-        rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at this
-      have hN_dvd : (N : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i j := by
-        have := hcop_int.mul_dvd hp_dvd hNp_dvd
-        rwa [show ((p : ℕ) : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) by
-          exact_mod_cast Nat.mul_div_cancel' hpN] at this
-      have hmodeq : (δ : Matrix (Fin 2) (Fin 2) ℤ) i j ≡ 0 [ZMOD (N : ℤ)] := by
-        rw [Int.modEq_iff_dvd]; simp; exact hN_dvd
-      simpa using (ZMod.intCast_eq_intCast_iff _ 0 N).mpr hmodeq
+  have hδ_mod_N : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod N) = 1 :=
+    SL2_map_eq_one_of_mod_aux hpN hcop_int δ hδ_mod_p hδ_mod_Np
   have hδ_Gamma1 : δ ∈ Gamma1 N :=
     multipass_gamma1_conjugate_in_gamma1 δ hδ_mod_N
   have hδ_01_N : (N : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 := by
@@ -3169,46 +3158,43 @@ theorem descendCosetList_slash_sum_rep_invariance
     simp only [Matrix.det_fin_two] at hdet
     linarith [hk'.symm ▸ hdet]
   let α' : Matrix.SpecialLinearGroup (Fin 2) ℤ := ⟨!![a, k'; (p : ℤ) * c, d], h_det_α'⟩
+  rw [Gamma1_mem] at hδ_Gamma1
+  obtain ⟨_, h22, h10⟩ := hδ_Gamma1
   have hα'_mem : α' ∈ Gamma0 N := by
     rw [Gamma0_mem]
-    show ((!![a, k'; (p : ℤ) * c, d] : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ZMod N) = 0
-    simp [Matrix.cons_val_one]
-    rw [Gamma1_mem] at hδ_Gamma1; obtain ⟨_, _, h10⟩ := hδ_Gamma1
-    simp only [show c = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 from rfl]; rw [h10, mul_zero]
+    change ((!![a, k'; (p : ℤ) * c, d] : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ZMod N) = 0
+    simp [Matrix.cons_val_one, show c = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 from rfl, h10]
   have h_chi_α' : χ (Gamma0MapUnits ⟨α', hα'_mem⟩) = 1 := by
-    have hd : Gamma0MapUnits ⟨α', hα'_mem⟩ = 1 := by
-      ext
-      simp only [Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk, Units.val_one]
-      show ((α' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod N) = 1
-      rw [show ((α' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod N) =
-              ((δ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod N) from rfl]
-      rw [Gamma1_mem] at hδ_Gamma1; exact hδ_Gamma1.2.1
+    have hd : Gamma0MapUnits ⟨α', hα'_mem⟩ = 1 := Units.ext <| by
+      simpa [Gamma0MapUnits_val, Gamma0Map] using h22
     rw [hd, map_one]
   let D : GL (Fin 2) ℝ := Matrix.GeneralLinearGroup.mkOfDetNeZero
       !![(1 : ℝ), 0; 0, (p : ℝ)]
       (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
   have hD_δ : D * mapGL ℝ δ = mapGL ℝ α' * D := by
     apply Units.ext
-    simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply]
-    have hDval : (D : Matrix (Fin 2) (Fin 2) ℝ) = !![1, 0; 0, (p : ℝ)] := rfl
-    have hα'val : (α' : Matrix (Fin 2) (Fin 2) ℤ) = !![a, k'; (p : ℤ) * c, d] := rfl
-    rw [hDval]
-    simp only [hα'val]
-    apply Matrix.ext; intro i j; fin_cases i <;> fin_cases j <;>
+    simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
+      show (D : Matrix (Fin 2) (Fin 2) ℝ) = !![1, 0; 0, (p : ℝ)] from rfl,
+      show (α' : Matrix (Fin 2) (Fin 2) ℤ) = !![a, k'; (p : ℤ) * c, d] from rfl]
+    apply Matrix.ext
+    intro i j
+    fin_cases i <;> fin_cases j <;>
       simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply,
             show a = (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 from rfl,
             show c = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 from rfl,
             show d = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 from rfl] <;>
       linarith [hk', mul_comm (p : ℝ) (k' : ℝ),
-                show ((δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℝ) = (p : ℝ) * k' by exact_mod_cast hk']
+                show ((δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℝ) = (p : ℝ) * k' by
+                  exact_mod_cast hk']
+  have hγ₁_eq : mapGL ℝ γ₁ = mapGL ℝ δ * mapGL ℝ γ₂ := by
+    simp [δ]
+  have h_split : D * mapGL ℝ γ₁ = mapGL ℝ α' * (D * mapGL ℝ γ₂) := by
+    rw [hγ₁_eq, ← mul_assoc, ← mul_assoc, hD_δ, mul_assoc]
   intro z
-  conv_lhs =>
-    rw [show D * mapGL ℝ γ₁ = mapGL ℝ α' * (D * mapGL ℝ γ₂) by
-      rw [show mapGL ℝ γ₁ = mapGL ℝ δ * mapGL ℝ γ₂ by
-        simp [δ, map_mul, map_inv]; group]
-      rw [← mul_assoc, ← mul_assoc, hD_δ, mul_assoc]]
-  rw [SlashAction.slash_mul, multipass_modFormCharSpace_slash_apply χ hfχ α' hα'_mem]
-  simp [h_chi_α', one_smul]; rfl
+  rw [h_split, SlashAction.slash_mul,
+    multipass_modFormCharSpace_slash_apply χ hfχ α' hα'_mem]
+  simp [h_chi_α', one_smul]
+  rfl
 
 /-- **T6b: Function-level commutation of the slash sum across levels**
 (M6's main content).
