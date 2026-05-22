@@ -2764,6 +2764,88 @@ private lemma miyake_descend_slash_smul
     exact_mod_cast hp.pos
   rw [ModularForm.smul_slash, multipass_sigma_eq_id_of_det_pos _ h_det, RingHom.id_apply]
 
+private lemma miyake_hecke_descend_lifted_coe_eq
+    (k : ℤ) {M N : ℕ} (h : M = N)
+    (G : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    (⇑(h ▸ G : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) = ⇑G := by
+  subst h
+  rfl
+
+private lemma miyake_hecke_descend_slashSum_eq
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (fun z ↦ ∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v) z) =
+      ∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v) :=
+  funext fun _ ↦ (Finset.sum_apply _ _ _).symm
+
+private noncomputable def miyake_hecke_descend_modForm
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
+    (χ : (ZMod N)ˣ →* ℂˣ) (χ' : (ZMod (N / p))ˣ →* ℂˣ)
+    (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hfχ : f ∈ modFormCharSpace k χ) :
+    ModularForm ((Gamma1 (N / p)).map (mapGL ℝ)) k where
+  toFun := fun z ↦ ∑ v : Fin (descendCosetCount p N),
+    (⇑f ∣[k] descendCosetList p N hp v) z
+  slash_action_eq' γ hγ := by
+    obtain ⟨γ', h_γ'_Gamma1, rfl⟩ := Subgroup.mem_map.mp hγ
+    exact miyake_hecke_descend_Gamma1_inv p hp hpN χ χ' hχ_eq hfχ γ' h_γ'_Gamma1
+  holo' := by
+    simp only [SlashInvariantForm.coe_mk, miyake_hecke_descend_slashSum_eq]
+    exact miyake_descend_slash_holo p hp f
+  bdd_at_cusps' {_} hc := by
+    rw [miyake_hecke_descend_slashSum_eq p hp f]
+    exact miyake_descend_slash_bddCusps p hp f hc
+
+private lemma miyake_hecke_descend_modForm_mem
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
+    (χ : (ZMod N)ˣ →* ℂˣ) (χ' : (ZMod (N / p))ˣ →* ℂˣ)
+    (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hfχ : f ∈ modFormCharSpace k χ) :
+    miyake_hecke_descend_modForm p hp hpN χ χ' hχ_eq f hfχ ∈ modFormCharSpace k χ' := by
+  rw [mem_modFormCharSpace_iff]
+  intro d
+  obtain ⟨g_rep, h_g_rep⟩ := HeckeRing.GL2.Gamma0MapUnits_surjective (N := N / p) d
+  have h_g_eq : HeckeRing.GL2.Gamma0MapUnits
+      ⟨(g_rep : Matrix.SpecialLinearGroup (Fin 2) ℤ), g_rep.property⟩ = d := by
+    simpa [HeckeRing.GL2.Gamma0MapUnits] using h_g_rep
+  have h_char := miyake_hecke_descend_char p hp hpN χ χ' hχ_eq hfχ ⟨g_rep, g_rep.property⟩
+  rw [h_g_eq] at h_char
+  rw [show HeckeRing.GL2.diamondOpHom (N := N / p) k d _ =
+      HeckeRing.GL2.diamondOpAux (N := N / p) k g_rep _ from
+    congrFun (congrArg _ (HeckeRing.GL2.diamondOp_eq_diamondOpAux (N := N / p) k d g_rep h_g_rep))
+      _]
+  exact ModularForm.ext fun z ↦ congrFun h_char z
+
+private noncomputable def miyake_hecke_descend_linearMap
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
+    (χ : (ZMod N)ˣ →* ℂˣ) (χ' : (ZMod (N / p))ˣ →* ℂˣ)
+    (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN))) :
+    modFormCharSpace k χ →ₗ[ℂ] modFormCharSpace k χ' where
+  toFun := fun ⟨f, hfχ⟩ ↦
+    ⟨miyake_hecke_descend_modForm p hp hpN χ χ' hχ_eq f hfχ,
+     miyake_hecke_descend_modForm_mem p hp hpN χ χ' hχ_eq f hfχ⟩
+  map_add' := fun ⟨f, _⟩ ⟨g, _⟩ ↦ Subtype.val_injective <| by
+    ext z
+    simp only [Submodule.coe_add]
+    change ∑ v : Fin (descendCosetCount p N), (⇑(f + g) ∣[k] descendCosetList p N hp v) z =
+        ∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v) z +
+        ∑ v : Fin (descendCosetCount p N), (⇑g ∣[k] descendCosetList p N hp v) z
+    rw [← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun v _ ↦
+      congrFun (SlashAction.add_slash k (descendCosetList p N hp v) (⇑f) (⇑g)) z
+  map_smul' := fun s ⟨f, _⟩ ↦ Subtype.val_injective <| by
+    ext z
+    simp only [Submodule.coe_smul, RingHom.id_apply]
+    change ∑ v : Fin (descendCosetCount p N), (⇑(s • f) ∣[k] descendCosetList p N hp v) z =
+        s • ∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v) z
+    rw [Finset.smul_sum]
+    exact Finset.sum_congr rfl fun v _ ↦
+      congrFun (miyake_descend_slash_smul p hp s (⇑f) v) z
+
 /-- Existence of the Hecke descent linear map `Φ : modFormCharSpace k χ →ₗ[ℂ] modFormCharSpace k χ'`
 (Miyake §4.6), together with cusp-form preservation and the `Φ ∘ V_p = c · id` identity. -/
 theorem miyake_hecke_descend
@@ -2787,108 +2869,32 @@ theorem miyake_hecke_descend
                h_mem⟩).val).coeff n =
         c * (ModularFormClass.qExpansion (1 : ℝ) g_low.val).coeff n := by
   obtain ⟨c_qexp, hc_qexp_ne, h_qexp⟩ := miyake_hecke_descend_qexp (N := N) p hp hpN
-  have hΦ_slash_inv : ∀ (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-      (_ : f ∈ modFormCharSpace k χ)
-      (γ : GL (Fin 2) ℝ), γ ∈ (Gamma1 (N / p)).map (mapGL ℝ) →
-      (fun z ↦ ∑ v : Fin (descendCosetCount p N),
-        (⇑f ∣[k] descendCosetList p N hp v) z) ∣[k] γ =
-      fun z ↦ ∑ v : Fin (descendCosetCount p N),
-        (⇑f ∣[k] descendCosetList p N hp v) z :=
-      fun f hfχ _ hγ ↦ by
-    obtain ⟨γ', h_γ'_Gamma1, rfl⟩ := Subgroup.mem_map.mp hγ
-    exact miyake_hecke_descend_Gamma1_inv p hp hpN χ χ' hχ_eq hfχ γ' h_γ'_Gamma1
-  have h_sum_form : ∀ (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
-      (fun z ↦ ∑ v : Fin (descendCosetCount p N),
-        (⇑f ∣[k] descendCosetList p N hp v) z) =
-      ∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v) :=
-    fun _ ↦ funext fun _ ↦ (Finset.sum_apply _ _ _).symm
-  let hΦ_mkMF : ∀ (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-      (hfχ : f ∈ modFormCharSpace k χ),
-      ModularForm ((Gamma1 (N / p)).map (mapGL ℝ)) k := fun f hfχ ↦
-    { toSlashInvariantForm :=
-      { toFun := fun z ↦ ∑ v : Fin (descendCosetCount p N),
-            (⇑f ∣[k] descendCosetList p N hp v) z
-        slash_action_eq' := hΦ_slash_inv f hfχ }
-      holo' := by
-        simp only [SlashInvariantForm.coe_mk, h_sum_form]
-        exact miyake_descend_slash_holo p hp f
-      bdd_at_cusps' := fun {_} hc ↦ by
-        rw [h_sum_form]
-        exact miyake_descend_slash_bddCusps p hp f hc }
-  have hΦ_char : ∀ (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-      (hfχ : f ∈ modFormCharSpace k χ),
-      hΦ_mkMF f hfχ ∈ modFormCharSpace k χ' := fun f hfχ ↦ by
-    rw [mem_modFormCharSpace_iff]
-    intro d
-    obtain ⟨g_rep, h_g_rep⟩ := HeckeRing.GL2.Gamma0MapUnits_surjective (N := N / p) d
-    have h_char := miyake_hecke_descend_char p hp hpN χ χ' hχ_eq hfχ ⟨g_rep, g_rep.property⟩
-    have h_char_g_rep : HeckeRing.GL2.Gamma0MapUnits
-        ⟨(g_rep : Matrix.SpecialLinearGroup (Fin 2) ℤ), g_rep.property⟩ = d := by
-      simpa [HeckeRing.GL2.Gamma0MapUnits] using h_g_rep
-    rw [show HeckeRing.GL2.diamondOpHom (N := N / p) k d (hΦ_mkMF f hfχ) =
-        HeckeRing.GL2.diamondOpAux (N := N / p) k g_rep (hΦ_mkMF f hfχ) by
-      congr 1
-      exact HeckeRing.GL2.diamondOp_eq_diamondOpAux (N := N / p) k d g_rep h_g_rep]
-    rw [h_char_g_rep] at h_char
-    ext z
-    exact congrFun h_char z
-  let Φ : modFormCharSpace k χ →ₗ[ℂ] modFormCharSpace k χ' :=
-  { toFun := fun ⟨f, hfχ⟩ ↦ ⟨hΦ_mkMF f hfχ, hΦ_char f hfχ⟩
-    map_add' := fun ⟨f, _⟩ ⟨g, _⟩ ↦ by
-      apply Subtype.val_injective
-      ext z
-      simp only [Submodule.coe_add]
-      change ∑ v : Fin (descendCosetCount p N), (⇑(f + g) ∣[k] descendCosetList p N hp v) z =
-          ∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v) z +
-          ∑ v : Fin (descendCosetCount p N), (⇑g ∣[k] descendCosetList p N hp v) z
-      rw [← Finset.sum_add_distrib]
-      refine Finset.sum_congr rfl fun v _ ↦ ?_
-      exact congrFun (SlashAction.add_slash k (descendCosetList p N hp v) (⇑f) (⇑g)) z
-    map_smul' := fun s ⟨f, _⟩ ↦ by
-      apply Subtype.val_injective
-      ext z
-      simp only [Submodule.coe_smul, RingHom.id_apply]
-      change ∑ v : Fin (descendCosetCount p N), (⇑(s • f) ∣[k] descendCosetList p N hp v) z =
-          s • ∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v) z
-      rw [Finset.smul_sum]
-      refine Finset.sum_congr rfl fun v _ ↦ ?_
-      exact congrFun (miyake_descend_slash_smul p hp s (⇑f) v) z }
-  refine ⟨Φ, c_qexp⁻¹,
+  refine ⟨miyake_hecke_descend_linearMap p hp hpN χ χ' hχ_eq, c_qexp⁻¹,
     fun f _ {_} hc ↦ miyake_hecke_descend_cusp p hp hpN f hc,
     inv_ne_zero hc_qexp_ne, ?_⟩
-  · intro ⟨g_low, _⟩ n h_lift_eq h_mem
-    set G := HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low
-    set g_lifted := h_lift_eq ▸ G with hg_lifted_def
-    set S : UpperHalfPlane → ℂ :=
-      fun z ↦ ∑ v : Fin (descendCosetCount p N), (⇑G ∣[k] descendCosetList p N hp v) z
-    have hcoe : (⇑g_lifted : UpperHalfPlane → ℂ) = ⇑G := by
-      funext z
-      simp only [hg_lifted_def]
-      congr 1
-      · exact congrArg (fun n ↦ ModularForm ((Gamma1 n).map (mapGL ℝ)) k) h_lift_eq.symm
-      · exact congr_arg_heq (fun n ↦ ModularForm.funLike ((Gamma1 n).map (mapGL ℝ)) k)
-          h_lift_eq.symm
-      · exact eqRec_heq (φ := fun n ↦ ModularForm ((Gamma1 n).map (mapGL ℝ)) k) h_lift_eq G
-    have hRHS : S = ⇑(Φ ⟨g_lifted, h_mem⟩).val := by
-      change (fun z ↦ ∑ v, (⇑G ∣[k] descendCosetList p N hp v) z) =
-        fun z ↦ ∑ v, (⇑g_lifted ∣[k] descendCosetList p N hp v) z
-      simp only [hcoe]
+  intro ⟨g_low, _⟩ n h_lift_eq h_mem
+  set G := HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low
+  set g_lifted := h_lift_eq ▸ G
+  set S : UpperHalfPlane → ℂ :=
+    fun z ↦ ∑ v : Fin (descendCosetCount p N), (⇑G ∣[k] descendCosetList p N hp v) z
+  have hcoe : (⇑g_lifted : UpperHalfPlane → ℂ) = ⇑G :=
+    miyake_hecke_descend_lifted_coe_eq k h_lift_eq G
+  have hRHS : S =
+      ⇑(miyake_hecke_descend_linearMap p hp hpN χ χ' hχ_eq ⟨g_lifted, h_mem⟩).val :=
+    funext fun z ↦ by
+      show _ = ∑ v : Fin (descendCosetCount p N), (⇑g_lifted ∣[k] descendCosetList p N hp v) z
+      simp [hcoe, S]
+  have h_factor : (PowerSeries.coeff n)
+      (ModularFormClass.qExpansion 1 (c_qexp • S)) =
+      c_qexp * (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 S) := by
     have h1_period : (1 : ℝ) ∈ ((Gamma1 (N / p)).map (mapGL ℝ)).strictPeriods := by
       rw [show (Gamma1 (N / p)).map (mapGL ℝ) =
           (Gamma1 (N / p) : Subgroup (GL (Fin 2) ℝ)) from rfl, strictPeriods_Gamma1]
       exact ⟨1, by simp⟩
-    have h_factor : (PowerSeries.coeff n)
-        (ModularFormClass.qExpansion 1 (c_qexp • S)) =
-        c_qexp * (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 S) := by
-      rw [hRHS, qExpansion_smul one_pos h1_period, PowerSeries.coeff_smul, smul_eq_mul]
-    have h_key : c_qexp * (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 S) =
-        (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑g_low) :=
-      h_factor.symm.trans (h_qexp g_low n)
-    change (PowerSeries.coeff n)
-        (ModularFormClass.qExpansion 1 ⇑(Φ ⟨g_lifted, h_mem⟩).val) = _
-    rw [← hRHS]
-    field_simp [hc_qexp_ne]
-    linear_combination h_key
+    rw [hRHS, qExpansion_smul one_pos h1_period, PowerSeries.coeff_smul, smul_eq_mul]
+  rw [← hRHS]
+  field_simp [hc_qexp_ne]
+  linear_combination h_factor.symm.trans (h_qexp g_low n)
 
 /-- **T6a: Coset agreement across levels** (M6's combinatorial input).
 
