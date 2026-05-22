@@ -444,19 +444,6 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
   refine ⟨g_ppN, ?_, h_g_ppN_qexp⟩
   convert h_g_ppN_χ using 2
 
-/-- **T1a-general: Generalized inductive helper for the level-agnostic
-`miyake_4_6_5_iterated_L_general`.**
-
-Inducts on `S.card` where `S : Finset ℕ` is the set of primes still to
-peel.  At each step picks `q ∈ S`, applies either
-`miyake_4_6_5_single_prime_dvd_N` (if `q ∣ N`, landing at level `q · N`)
-or `miyake_4_6_5_single_prime_coprime_to_N` (if `q ∤ N`, landing at
-level `N · q²`), then recurses with `(N_new, S.erase q)` where `N_new`
-is the appropriate stepped level.
-
-The `h_pf_dvd` hypothesis (each prime of `S` accommodated by `M`) is
-preserved through the recursive step using squarefreeness of `S.prod`
-to ensure distinct primes' factors are coprime. -/
 private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
     ∀ {N : ℕ} [NeZero N] {k : ℤ}
       (χ : (ZMod N)ˣ →* ℂˣ)
@@ -480,7 +467,7 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
     have hS_empty : S = ∅ := Finset.card_eq_zero.mp hS_card
     subst hS_empty
     refine ⟨CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd hNM) f,
-      cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hNM hfχ, fun n => ?_⟩
+      cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hNM hfχ, fun n ↦ ?_⟩
     simp only [Finset.prod_empty, Nat.coprime_one_right_eq_true, if_true]
     rfl
   | succ k ih =>
@@ -488,28 +475,27 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
     have hS_nonempty : S.Nonempty := Finset.card_pos.mp (hS_card ▸ Nat.succ_pos k)
     obtain ⟨q, hq_in⟩ := hS_nonempty
     have hq_prime : q.Prime := hS_prime q hq_in
-    haveI hq_NeZero : NeZero q := ⟨hq_prime.ne_zero⟩
-    have h_S_prod_split : S.prod id = q * (S.erase q).prod id := by
-      rw [← Finset.mul_prod_erase _ _ hq_in]; rfl
+    haveI : NeZero q := ⟨hq_prime.ne_zero⟩
+    have h_S_prod_split : S.prod id = q * (S.erase q).prod id :=
+      (Finset.mul_prod_erase _ _ hq_in).symm
     have hS_erase_prime : ∀ p ∈ S.erase q, p.Prime :=
-      fun p hp => hS_prime p (Finset.mem_of_mem_erase hp)
+      fun p hp ↦ hS_prime p (Finset.mem_of_mem_erase hp)
     have hS_erase_card : (S.erase q).card = k := by
-      rw [Finset.card_erase_of_mem hq_in, hS_card]; lia
+      rw [Finset.card_erase_of_mem hq_in, hS_card]
+      lia
     have hS_erase_sqfree : Squarefree ((S.erase q).prod id) := by
       rw [h_S_prod_split] at hS_sqfree
       exact hS_sqfree.of_mul_right
-    have h_S_erase_prod_dvd_M : (S.erase q).prod id ∣ M := by
-      have : (S.erase q).prod id ∣ S.prod id := by
-        rw [h_S_prod_split]; exact Dvd.intro_left _ rfl
-      exact this.trans hSM
+    have h_S_erase_prod_dvd_M : (S.erase q).prod id ∣ M :=
+      (h_S_prod_split ▸ Dvd.intro_left _ rfl).trans hSM
     obtain ⟨hq_pf_not_dvd, hq_pf_dvd⟩ := h_pf_dvd q hq_in
     have h_cop_distinct : ∀ r ∈ S, ∀ s ∈ S, r ≠ s → Nat.Coprime r s :=
-      fun r hr s hs hrs => (Nat.coprime_primes (hS_prime r hr) (hS_prime s hs)).mpr hrs
+      fun r hr s hs hrs ↦ (Nat.coprime_primes (hS_prime r hr) (hS_prime s hs)).mpr hrs
     by_cases hqN : q ∣ N
     · obtain ⟨g_int, hg_int_χ, hg_int_qexp⟩ :=
         miyake_4_6_5_single_prime_dvd_N χ f hfχ q hq_prime
-          (fun h => hq_prime.coprime_iff_not_dvd.mp h hqN)
-      haveI hqN_NeZero : NeZero (q * N) :=
+          (fun h ↦ hq_prime.coprime_iff_not_dvd.mp h hqN)
+      haveI : NeZero (q * N) :=
         ⟨Nat.mul_ne_zero hq_prime.ne_zero (NeZero.ne N)⟩
       have hN_dvd_qN : N ∣ q * N := Nat.dvd_mul_left N q
       have hqN_dvd_M : q * N ∣ M := by
@@ -525,7 +511,7 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
         obtain ⟨hr_pf_not_dvd, hr_pf_dvd⟩ := h_pf_dvd r hr_in_S
         refine ⟨?_, ?_⟩
         · intro hr_ndvd_qN
-          exact hr_pf_not_dvd fun hrN => hr_ndvd_qN (hrN.mul_left q)
+          exact hr_pf_not_dvd fun hrN ↦ hr_ndvd_qN (hrN.mul_left q)
         · intro hr_dvd_qN
           have hr_dvd_N : r ∣ N := by
             rcases hr_prime.dvd_mul.mp hr_dvd_qN with h | h
@@ -553,21 +539,21 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
         have h_cop_split : Nat.Coprime n (q * (S.erase q).prod id) ↔
             (¬ q ∣ n) ∧ Nat.Coprime n ((S.erase q).prod id) := by
           rw [Nat.coprime_mul_iff_right]
-          exact and_congr_left fun _ =>
-            ⟨fun h => hq_prime.coprime_iff_not_dvd.mp h.symm,
-             fun h => (hq_prime.coprime_iff_not_dvd.mpr h).symm⟩
+          exact and_congr_left fun _ ↦
+            ⟨fun h ↦ hq_prime.coprime_iff_not_dvd.mp h.symm,
+             fun h ↦ (hq_prime.coprime_iff_not_dvd.mpr h).symm⟩
         by_cases h_rest : Nat.Coprime n ((S.erase q).prod id)
         · by_cases h_q_div : q ∣ n
           · rw [if_pos h_rest, if_neg (not_not_intro h_q_div),
-                if_neg fun h => (h_cop_split.mp h).1 h_q_div]
+                if_neg fun h ↦ (h_cop_split.mp h).1 h_q_div]
           · rw [if_pos h_rest, if_pos h_q_div,
                 if_pos (h_cop_split.mpr ⟨h_q_div, h_rest⟩)]
-        · rw [if_neg h_rest, if_neg fun h => h_rest (h_cop_split.mp h).2]
+        · rw [if_neg h_rest, if_neg fun h ↦ h_rest (h_cop_split.mp h).2]
     · have hqN_coprime : Nat.Coprime q N :=
         hq_prime.coprime_iff_not_dvd.mpr hqN
       obtain ⟨g_int, hg_int_χ, hg_int_qexp⟩ :=
         miyake_4_6_5_single_prime_coprime_to_N χ f hfχ q hq_prime
-      haveI hNq2_NeZero : NeZero (N * q ^ 2) :=
+      haveI : NeZero (N * q ^ 2) :=
         ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 hq_prime.ne_zero)⟩
       have hN_dvd_Nq2 : N ∣ N * q ^ 2 := Nat.dvd_mul_right N (q ^ 2)
       have hNq2_dvd_M : N * q ^ 2 ∣ M :=
@@ -582,7 +568,7 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
         obtain ⟨hr_pf_not_dvd, hr_pf_dvd⟩ := h_pf_dvd r hr_in_S
         refine ⟨?_, ?_⟩
         · intro hr_ndvd_Nq2
-          exact hr_pf_not_dvd fun hrN => hr_ndvd_Nq2 (hrN.mul_right (q ^ 2))
+          exact hr_pf_not_dvd fun hrN ↦ hr_ndvd_Nq2 (hrN.mul_right (q ^ 2))
         · intro hr_dvd_Nq2
           have hr_dvd_N : r ∣ N := by
             rcases hr_prime.dvd_mul.mp hr_dvd_Nq2 with h | h
@@ -615,16 +601,16 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
         have h_cop_split : Nat.Coprime n (q * (S.erase q).prod id) ↔
             (¬ q ∣ n) ∧ Nat.Coprime n ((S.erase q).prod id) := by
           rw [Nat.coprime_mul_iff_right]
-          exact and_congr_left fun _ =>
-            ⟨fun h => hq_prime.coprime_iff_not_dvd.mp h.symm,
-             fun h => (hq_prime.coprime_iff_not_dvd.mpr h).symm⟩
+          exact and_congr_left fun _ ↦
+            ⟨fun h ↦ hq_prime.coprime_iff_not_dvd.mp h.symm,
+             fun h ↦ (hq_prime.coprime_iff_not_dvd.mpr h).symm⟩
         by_cases h_rest : Nat.Coprime n ((S.erase q).prod id)
         · by_cases h_q_div : q ∣ n
           · rw [if_pos h_rest, if_neg (not_not_intro h_q_div),
-                if_neg fun h => (h_cop_split.mp h).1 h_q_div]
+                if_neg fun h ↦ (h_cop_split.mp h).1 h_q_div]
           · rw [if_pos h_rest, if_pos h_q_div,
                 if_pos (h_cop_split.mpr ⟨h_q_div, h_rest⟩)]
-        · rw [if_neg h_rest, if_neg fun h => h_rest (h_cop_split.mp h).2]
+        · rw [if_neg h_rest, if_neg fun h ↦ h_rest (h_cop_split.mp h).2]
 
 /-- **Generalized iterated single-prime peeling** (no `L ⊆ N.primeFactors`
 hypothesis).
