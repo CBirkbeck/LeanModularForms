@@ -5,7 +5,6 @@ Authors:
 -/
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV.DominatedConvergence
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.SectorCurveLemma
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber.Proposition2_2
 import Mathlib.Analysis.Meromorphic.Order
 
