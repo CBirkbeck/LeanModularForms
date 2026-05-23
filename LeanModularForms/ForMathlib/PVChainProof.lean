@@ -119,24 +119,6 @@ theorem pvChainIdentity
   refine mul_left_cancel₀ pvChain_two_pi_I_ne_zero ?_
   linear_combination tendsto_nhds_unique data.h_res data.h_mod
 
-/-- **Discharge `h_pvChain`**: given `PVChainData` for some `H`, produce
-the existential hypothesis needed by `valence_formula_orbit_sum_of_pvChain`
-in `CoreIdentityProof.lean`.
-
-This wraps `pvChainIdentity` with the height and `FDWindingDataFull`
-existentials. -/
-theorem discharge_pvChain
-    (S : Finset UpperHalfPlane) (_hS : ∀ p ∈ S, p ∈ 𝒟)
-    (_hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    {H : ℝ} (data : PVChainData f S H) :
-    ∃ H' : ℝ, ∃ D : FDWindingDataFull H',
-      (∀ s ∈ S, (s : ℂ).im < H') ∧
-      ∑ s ∈ S,
-        generalizedWindingNumber D.boundary (↑s : ℂ) *
-          (orderOfVanishingAt' (⇑f) s : ℂ) =
-      -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) :=
-  ⟨H, data.D, data.hH_above, pvChainIdentity f S data⟩
-
 /-- **Full discharge of `h_pvChain`** from residue and modular side existentials.
 
 Given:
@@ -200,45 +182,6 @@ Given:
 - Residue-side and modular-side `Tendsto` results with existential height bounds
 
 Produces the full orbit-sum valence formula. No sorry. -/
-theorem valence_formula_of_two_sides
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    -- FDWindingDataFull construction
-    (mkD : ∀ H : ℝ, Real.sqrt 3 / 2 < H → FDWindingDataFull H)
-    -- Height bound on S
-    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S)
-    -- Common integrand
-    (F : ℝ → ℝ → ℂ)
-    -- Residue side
-    (H_res : ℝ) (hH_res_gt : Real.sqrt 3 / 2 < H_res)
-    (h_res : ∀ (H : ℝ), H_res ≤ H → (hH : Real.sqrt 3 / 2 < H) →
-      Tendsto (F H) (𝓝[>] 0)
-        (𝓝 (2 * ↑Real.pi * I *
-          ∑ s ∈ S,
-            generalizedWindingNumber (mkD H hH).boundary (↑s : ℂ) *
-              (orderOfVanishingAt' (⇑f) s : ℂ))))
-    -- Modular side
-    (H_mod : ℝ) (hH_mod_gt : Real.sqrt 3 / 2 < H_mod)
-    (h_mod : ∀ (H : ℝ), H_mod ≤ H → (hH : Real.sqrt 3 / 2 < H) →
-      Tendsto (F H) (𝓝[>] 0)
-        (𝓝 (-(2 * ↑Real.pi * I *
-          ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))))) :
-    (orderAtCusp' f : ℂ) +
-    (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +
-    (1/3 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointRho') +
-    ∑ s ∈ S.filter (fun p =>
-        p ≠ ellipticPointI' ∧ p ≠ ellipticPointRho' ∧ p ≠ ellipticPointRhoPlusOne' ∧
-        ‖(p : ℂ)‖ > 1 ∧ |(p : ℂ).re| < 1/2),
-      ↑(orderOfVanishingAt' (⇑f) s) +
-    ∑ s ∈ sLeftVertFM S, ↑(orderOfVanishingAt' (⇑f) s) +
-    ∑ s ∈ S.filter (fun p =>
-        p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
-      ↑(orderOfVanishingAt' (⇑f) s) =
-    (k : ℂ) / 12 :=
-  valence_formula_orbit_sum_of_pvChain f S hS hS_complete
-    (discharge_pvChain_full f S hS hS_complete mkD H_S hH_S
-      F H_res hH_res_gt h_res H_mod hH_mod_gt h_mod)
-
 /-- Variant of `valence_formula_of_two_sides` with `mkD` over `H > 1` instead
 of `H > √3/2`. Useful when the `FDWindingDataFull` constructor only works
 for `H > 1` (e.g. the unconditional `mkFDWindingDataFull_unconditional`). -/

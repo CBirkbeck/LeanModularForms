@@ -148,10 +148,6 @@ theorem cpvIntegrandOn_of_exists_le {S : Finset ℂ} {f : ℂ → ℂ} {γ : ℝ
     cpvIntegrandOn S f γ ε t = 0 :=
   if_pos h
 
-theorem cpvIntegrandOn_empty {f : ℂ → ℂ} {γ : ℝ → ℂ} {ε : ℝ} {t : ℝ} :
-    cpvIntegrandOn ∅ f γ ε t = f (γ t) * deriv γ t :=
-  if_neg (by simp)
-
 /-- Single-point CPV integrand agrees with multi-point CPV integrand for a singleton. -/
 theorem cpvIntegrand_eq_cpvIntegrandOn_singleton {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ}
     {ε : ℝ} {t : ℝ} :
