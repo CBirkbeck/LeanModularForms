@@ -22,7 +22,6 @@ The Hungerbuhler--Wasem decomposition gives winding = `angle / (2π) = -1/2`.
 
 * `hasGeneralizedWindingNumber_neg_half_of_scd` -- if `SingleCrossingData`
   has `L = -(π * I)`, then `HasGeneralizedWindingNumber γ z₀ (-1/2)`.
-* `generalizedWindingNumber_neg_half_of_scd` -- the corresponding equality.
 * `SmoothBoundaryWindingData` -- a structure bundling a crossing parameter,
   cutoff, geometric bounds, and an `ArcFTCHyp` with limit `-(π * I)`.
 * `SmoothBoundaryWindingData.hasWindingNumber` -- extracts
@@ -61,13 +60,6 @@ theorem hasGeneralizedWindingNumber_neg_half_of_scd {γ : PiecewiseC1Path x y} {
   convert D.hasWindingNumber using 1
   rw [hL]
   field_simp [Complex.ofReal_ne_zero.mpr Real.pi_ne_zero]
-
-/-- The `generalizedWindingNumber` value version: if `SingleCrossingData` has
-limit `L = -(π * I)`, then `generalizedWindingNumber γ z₀ = -1/2`. -/
-theorem generalizedWindingNumber_neg_half_of_scd {γ : PiecewiseC1Path x y} {z₀ : ℂ}
-    (D : SingleCrossingData γ z₀) (hL : D.L = -(↑Real.pi * I)) :
-    generalizedWindingNumber γ z₀ = -1 / 2 :=
-  D.windingNumber_neg_half hL
 
 /-! ### Generic smooth crossing — SingleCrossingData construction
 
@@ -173,9 +165,5 @@ def linDelta (C : ℝ) (ε : ℝ) : ℝ := ε / C
 
 theorem linDelta_pos {C ε : ℝ} (hC : 0 < C) (hε : 0 < ε) : 0 < linDelta C ε :=
   div_pos hε hC
-
-theorem linDelta_small {C ε bound : ℝ} (hC : 0 < C) (hε_lt : ε < C * bound) :
-    linDelta C ε < bound :=
-  (div_lt_iff₀ hC).mpr (by linarith)
 
 end
