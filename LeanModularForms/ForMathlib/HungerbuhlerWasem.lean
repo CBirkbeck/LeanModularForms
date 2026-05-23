@@ -43,8 +43,7 @@ equals `2πi · Σ winding(γ, s) · residue(f, s)` over the singular set `S ⊆
   simple poles only on a convex domain. γ may cross poles, but two CPV
   oracles must be supplied.
 * Four corollaries specializing one or the other central theorem:
-  `residueTheorem_simplePoles_avoidance`, `residueTheorem_convex_avoidance`,
-  `residueTheorem_simplePoles_convex_avoidance`,
+  `residueTheorem_convex_avoidance`,
   `residueTheorem_simplePoles_convex_transverse`.
 * `HungerbuhlerWasem.residueTheorem_crossing` — unifying form (higher-order
   + crossings); lives in
@@ -619,27 +618,6 @@ noncomputable def PolarPartDecomposition.ofSimplePoles
   rw [h_pps] at h_g
   linear_combination -h_g
 
-/-- **Hungerbühler–Wasem — simple-pole avoidance form (corollary).**
-
-Specialization of `residueTheorem_avoidance` to simple poles. The
-`PolarPartDecomposition` is constructed automatically from the
-`HasSimplePoleAt` hypothesis. -/
-theorem residueTheorem_simplePoles_avoidance
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (h_simple : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_avoidance hU_open hU_ne S hS_in_U f hf γ h_null hγ_avoids
-    (PolarPartDecomposition.ofSimplePoles hU_open hS_in_U hf h_simple)
-
 /-- **Hungerbühler–Wasem — convex-domain avoidance form (corollary).**
 
 When `U` is convex, null-homologous becomes automatic. Higher-order poles
@@ -661,27 +639,6 @@ theorem residueTheorem_convex_avoidance
   residueTheorem_avoidance hU_open hU_ne S hS_in_U f hf γ
     (isNullHomologous_of_convex hU_convex hU_open hU_ne γ.toPwC1Immersion hγ_in_U)
     hγ_avoids decomp
-
-/-- **Classical residue theorem (corollary).**
-
-Convex `U`, simple poles only, γ avoids the poles. The textbook form. -/
-theorem residueTheorem_simplePoles_convex_avoidance
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t ∈ U)
-    (h_simple : ∀ s ∈ S, HasSimplePoleAt f s)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_convex_avoidance hU_convex hU_open hU_ne S hS_in_U f hf γ
-    hγ_in_U hγ_avoids
-    (PolarPartDecomposition.ofSimplePoles hU_open hS_in_U hf h_simple)
 
 end HungerbuhlerWasem
 

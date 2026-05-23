@@ -11,7 +11,6 @@ import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistenceMulti
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.LocalCutoffs
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.MultiPoleDCT
 import LeanModularForms.ForMathlib.CrossingAnalysis
-import LeanModularForms.ForMathlib.PaperPwC1ImmersionInvariance
 
 /-!
 # Per-pole CPV composition (T-GL-01)
@@ -952,63 +951,6 @@ theorem angle_compat_of_condB
   intro k hk hk_ne
   have := h k hk hk_ne
   rwa [h_angle_α] at this
-
-/-- **Asymmetric variant** of `cpv_polarPart_at_pole_from_conditions`. The
-per-pole CPV witness when `h_geometry` supplies an
-`AsymmetricSingleCrossingData`, admitting curves with `‖L_-‖ ≠ ‖L_+‖`. -/
-theorem cpv_polarPart_at_pole_from_conditions_asymmetric
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (_hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (decomp : PolarPartDecomposition f S U)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => decomp.order s))
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (h_geometry : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition →
-      AsymmetricSingleCrossingData γ.toPwC1Immersion.toPiecewiseC1Path s)
-    (h_unique_cross : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t = s →
-      ∃ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s ∧
-        ∀ t' ∈ Icc (0 : ℝ) 1,
-          γ.toPwC1Immersion.toPiecewiseC1Path t' = s → t' = t₀)
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition)
-    (h_avoid_others_per_pole : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s →
-      ∀ t ∈ Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s')
-    (s : ℂ) (hs : s ∈ S) :
-    HasCauchyPVOn S (decomp.polarPart s)
-      γ.toPwC1Immersion.toPiecewiseC1Path
-      (2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-  classical
-  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
-  by_cases h_crossed : ∃ t ∈ Icc (0 : ℝ) 1, γP t = s
-  · obtain ⟨t, ht, h_at⟩ := h_crossed
-    obtain ⟨t₀, ht₀, h_at₀, h_unique_t₀⟩ := h_unique_cross s hs t ht h_at
-    have h_t₀_off := h_no_corner_crossings s hs t₀ ht₀ h_at₀
-    have D := h_geometry s hs t₀ ht₀ h_at₀ h_t₀_off
-    obtain ⟨n, hn1, h_order_le_n, h_flat⟩ :=
-      flat_data_of_condA_at_crossing decomp hCondA hs ht₀ h_at₀
-    have h_angle_compat : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
-        decomp.coeff s k ≠ 0 →
-        ∃ m : ℤ, ((k.val : ℝ)) * Real.pi = (m : ℝ) * (2 * Real.pi) :=
-      angle_compat_of_condB hU_open hS_in_U γ decomp hCondB hs ht₀ h_at₀ h_t₀_off
-    have h_HasCauchyPV := cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
-      hS_in_U γ h_null decomp s hs ht₀ h_at₀ h_unique_t₀ h_t₀_off D n h_flat
-      hn1 h_order_le_n h_angle_compat
-    exact hasCauchyPVOn_of_hasCauchyPV_of_avoid_other_poles hs h_HasCauchyPV
-      (h_avoid_others_per_pole s hs)
-  · push Not at h_crossed
-    exact cpv_polarPart_at_uncrossed_pole hU_open hU_ne hS_in_U γ h_null decomp s hs
-      h_crossed
 
 /-- **Crossing scenario** for `γ` relative to a finite pole set `S`.
 

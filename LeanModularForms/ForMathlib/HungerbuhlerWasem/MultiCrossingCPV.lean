@@ -3234,92 +3234,6 @@ simple-pole part `a_0 / (z - s)` has CPV `2πi · w · a_0` (deriving the value 
 higher-order term `a_k / (z - s)^(k+1)` for `k ≥ 1` contributes `0` (T-BR-Y9e).
 Sum: `2πi · w · a_0 + 0 = 2πi · w · residue f s`, using
 `decomp.residue_eq` to identify `a_0` with `residue f s`. -/
-theorem cpv_polarPart_at_multiCrossed_pole
-    {γ : ClosedPwC1Immersion x} {s : ℂ} {S : Finset ℂ} (hs : s ∈ S)
-    {f : ℂ → ℂ} {U : Set ℂ}
-    (decomp : PolarPartDecomposition f S U)
-    (D : MultiPoleCrossData γ s)
-    (h_flat_at_each : ∀ t₀ ∈ D.crossings,
-      IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀
-        (decomp.order s))
-    (h_angle_at_each : ∀ k : Fin (decomp.order s), k.val ≥ 1 →
-      ∀ t₀ ∈ D.crossings,
-        ∃ m : ℤ, ((k.val : ℝ)) * Real.pi = (m : ℝ) * (2 * Real.pi)) :
-    HasCauchyPVOn {s} (decomp.polarPart s)
-      γ.toPwC1Immersion.toPiecewiseC1Path
-      (2 * ↑Real.pi * Complex.I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-        residue f s) := by
-  classical
-  set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path with hγP_def
-  set N : ℕ := decomp.order s with hN_def
-  set a : Fin N → ℂ := decomp.coeff s
-  set w : ℂ := generalizedWindingNumber γP s
-  have h_term_int : ∀ k : Fin N, ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrand (fun z => a k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε =>
-    (HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
-      γ (S := {s}) (Finset.mem_singleton.mpr rfl) (a k) (k.val + 1) hε).congr
-      (fun _ _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm)
-  set L : Fin N → ℂ := fun k =>
-    if k.val = 0 then 2 * ↑Real.pi * I * w * a k else 0 with hL_def
-  have h_each : ∀ k : Fin N,
-      HasCauchyPV (fun z => a k / (z - s) ^ (k.val + 1)) γP s (L k) := by
-    intro k
-    by_cases hk : k.val = 0
-    · have h_term_eq : (fun z => a k / (z - s) ^ (k.val + 1)) = fun z => a k / (z - s) := by
-        funext z; rw [show (k.val + 1 : ℕ) = 1 from by omega, pow_one]
-      have h_L_eq : L k = 2 * ↑Real.pi * I * w * a k := by simp [L, hk]
-      rw [h_term_eq, h_L_eq]
-      have h_flat_one_at_each : ∀ t₀ ∈ D.crossings,
-          IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ 1 :=
-        fun t₀ ht₀ => (h_flat_at_each t₀ ht₀).of_le
-          (by have := k.isLt; omega) γ.toPwC1Immersion.continuous.continuousAt
-      obtain ⟨L_inv, h_inv_cpv⟩ :=
-        hasCauchyPV_inv_sub_multiCrossing D h_flat_one_at_each
-      have h_w_eq : w = (2 * ↑Real.pi * I)⁻¹ * L_inv :=
-        (hasGeneralizedWindingNumber_of_hasCauchyPV h_inv_cpv).eq
-      have h_L_inv_eq : L_inv = 2 * ↑Real.pi * I * w := by rw [h_w_eq]; field_simp
-      rw [show 2 * ↑Real.pi * I * w * a k = a k * L_inv by rw [h_L_inv_eq]; ring]
-      exact HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv (a k) h_inv_cpv
-    · have h_L_eq : L k = (0 : ℂ) := by simp [L, hk]
-      rw [h_L_eq]
-      have hk_ge_one : 1 ≤ k.val := by omega
-      have hk_succ_le_N : k.val + 1 ≤ N := k.isLt
-      exact hasCauchyPV_of_hasCauchyPVOn_singleton
-        (hasCauchyPVOn_multiCrossing_higherOrder (γ := γ) (s := s)
-          D (n := N) (k := k.val + 1) (by omega) hk_succ_le_N
-          (le_trans (by omega : 1 ≤ k.val + 1) hk_succ_le_N)
-          h_flat_at_each
-          (fun t₀ ht₀ => by
-            rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
-            exact h_angle_at_each k hk_ge_one t₀ ht₀)
-          (a k))
-  have h_sum_cpv : HasCauchyPV
-      (fun z => ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) γP s
-      (∑ k : Fin N, L k) :=
-    HasCauchyPV.finset_sum (Finset.univ : Finset (Fin N))
-      (γ := γP) (z₀ := s)
-      (f := fun k z => a k / (z - s) ^ (k.val + 1))
-      (L := L) (fun k _ => h_each k) (fun k _ => h_term_int k)
-  have h_sum_L_eq : (∑ k : Fin N, L k) =
-      2 * ↑Real.pi * I * w * residue f s := by
-    rw [decomp.residue_eq s hs]
-    by_cases h_pos : 0 < N
-    · rw [dif_pos h_pos, Finset.sum_eq_single (⟨0, h_pos⟩ : Fin N)]
-      · show (if ((⟨0, h_pos⟩ : Fin N) : ℕ) = 0 then _ else _) = _
-        rw [if_pos rfl]
-      · intro k _ hk
-        show (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
-        rw [if_neg (fun h_eq => hk (Fin.ext h_eq))]
-      · exact fun h => absurd (Finset.mem_univ _) h
-    · rw [dif_neg h_pos, mul_zero]
-      exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
-  refine HasCauchyPV.to_singletonOn ?_
-  rw [← h_sum_L_eq]
-  exact HasCauchyPV.congr_pointwise h_sum_cpv
-    fun z hz => (decomp.polarPart_eq s hs z hz).symm
-
 /-! ### Conditional-angle variant of polar-part multi-crossing CPV (T-BR-Y9g) -/
 
 /-- **Per-pole polar-part CPV for the multi-crossing case, conditional-angle form
@@ -3763,34 +3677,6 @@ vacuous. This corollary auto-discharges the lift, exposing a clean
 `(hCondA, hCondB, h_no_corner_crossings)` theorem with `hx_notin_S` packaged
 into the spec hypotheses. -/
 
-/-- **HW3.3 full-spec form, common case `x ∉ S` (T-BR-Y9g-continue).**
-
-For callers with `x ∉ S`, the cyclic-shift lift is vacuous (its premise
-`x ∈ S` is false). This corollary auto-discharges the lift, exposing a clean
-spec form matching `_full_spec`. -/
-private theorem residueTheorem_crossing_full_spec_basepoint_off
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (hx_notin_S : x ∉ (↑S : Set ℂ))
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_crossing_full_spec_general hU_open hU_ne hS_in_U hf γ
-    h_null hMero hCondB hCondA h_no_corner_crossings
-    (fun hx _lift => absurd hx hx_notin_S)
-
 /-! ### T-BR-Y11 — Paper-faithful spec form
 
 This is the headline 8-spec-hypothesis form of Hungerbühler–Wasem Theorem 3.3,
@@ -3831,56 +3717,6 @@ theorem manually.
 `hx_notin_S` is auto-discharged via the corner branch's `h_unique_cross`
 contradiction (cf. `_truly_full_spec`) or via direct verification in the smooth
 branch. -/
-
-/-- **HW3.3 — Paper-faithful spec form (T-BR-Y11).**
-
-The headline form of Hungerbühler–Wasem Theorem 3.3 with the eight spec
-hypotheses plus a single structural residual `h_geom_residual` admitting one
-of two configurations:
-
-* **Smooth branch** (`Sum.inl`): `(hx_notin_S, h_no_corner_crossings)` —
-  γ's basepoint avoids the pole set, and γ never crosses a pole at a partition
-  (corner) point. Each pole may still be crossed multiply.
-* **Corner branch** (`Sum.inr`): `h_unique_cross` — γ crosses each pole at most
-  once. The single crossing per pole may occur at a partition point.
-
-The two branches cover all configurations that the current infrastructure can
-discharge. A truly 8-hypothesis form (eliminating the disjunction) requires a
-corner-friendly multi-crossing higher-order CPV theorem (the only remaining
-structural gap; see `_paper_faithful` docstring for details). -/
-private theorem residueTheorem_crossing_paper_faithful
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (h_geom_residual :
-      (x ∉ (↑S : Set ℂ) ∧ ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-        t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) ∨
-      (∀ s ∈ S, ∀ t₁ ∈ Set.Icc (0 : ℝ) 1,
-        ∀ t₂ ∈ Set.Icc (0 : ℝ) 1,
-          γ.toPwC1Immersion.toPiecewiseC1Path t₁ = s →
-          γ.toPwC1Immersion.toPiecewiseC1Path t₂ = s →
-          t₁ = t₂)) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-  classical
-  rcases h_geom_residual with ⟨hx_notin_S, h_no_corner_crossings⟩ | h_unique_cross
-  · -- Smooth branch: delegate to `_full_spec`.
-    exact residueTheorem_crossing_full_spec hU_open hU_ne hS_in_U hf γ
-      h_null hMero hCondB hCondA hx_notin_S h_no_corner_crossings
-  · -- Corner branch: delegate to `_truly_full_spec` (handles corners,
-    -- auto-derives `hx_notin_S` via uniqueness).
-    exact residueTheorem_crossing_truly_full_spec hU_open hU_ne hS_in_U hf γ
-      h_null hMero hCondB hCondA h_unique_cross
 
 /-! ### Convenience corollaries for `_paper_faithful`
 
