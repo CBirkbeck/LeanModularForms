@@ -22,7 +22,6 @@ case-split on `z.re`: when `z.re ≤ 0`, `γ(t) - z ∈ slitPlane`; when `z.re >
 ## Main results
 
 * `fdBoundary_contourIntegral_interior_eq`
-* `fdBoundaryPC1Path_contourIntegral_interior_eq`
 * `fdBoundary_interior_winding_complete`
 -/
 
@@ -472,13 +471,6 @@ theorem fdBoundary_contourIntegral_interior_eq {H : ℝ}
     γ.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I) := by
   rw [xfer hγ]
   exact ftc_full hz.norm_gt hz.re_abs_lt hz.im_pos hz.im_lt
-
-/-- The interior contour integral for the canonical `fdBoundaryPC1Path`. -/
-theorem fdBoundaryPC1Path_contourIntegral_interior_eq {H : ℝ} (hH : H > Real.sqrt 3 / 2)
-    {z : ℂ} (hz : FDStrictInterior z H) :
-    (fdBoundaryPC1Path H hH).contourIntegral (fun w => (w - z)⁻¹) =
-      -(2 * ↑Real.pi * I) :=
-  fdBoundary_contourIntegral_interior_eq hH hz (fdBoundaryPC1Path_eq H hH)
 
 /-- **Interior winding number = -1**. -/
 theorem fdBoundary_interior_winding_complete {H : ℝ}
