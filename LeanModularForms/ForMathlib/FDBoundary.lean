@@ -67,17 +67,6 @@ theorem fdBoundaryFun_at_one_fifth (H : ℝ) :
     fdBoundaryFun H (1/5) = ellipticPointRhoPlusOne := by
   simp [fdBoundaryFun, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne']
 
-/-- At `t = 2/5` the boundary function equals the elliptic point `i`. -/
-theorem fdBoundaryFun_at_two_fifths (H : ℝ) :
-    fdBoundaryFun H (2/5) = ellipticPointI := by
-  simp only [fdBoundaryFun, show ¬(2/5 : ℝ) ≤ 1/5 from by norm_num, le_refl,
-    ite_true, ite_false]
-  rw [show ((↑Real.pi / 3 + (5 * (↑(2/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ) =
-      ↑(Real.pi / 2) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-    Real.cos_pi_div_two, Real.sin_pi_div_two]
-  simp only [ellipticPointI, ellipticPointI']
-  norm_num
-
 /-- At `t = 3/5` the boundary function equals the elliptic point `ρ`. -/
 theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
     fdBoundaryFun H (3/5) = ellipticPointRho := by

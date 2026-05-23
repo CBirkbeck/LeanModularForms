@@ -22,11 +22,7 @@ non-interior point on the FD boundary, the generalized winding number is `-1/2`.
 `mkFDWindingDataFull` takes a `FDWindingData` and the boundary condition as a
 hypothesis, producing `FDWindingDataFull`.
 
-### Pathway 2: From SmoothBoundaryWindingData
-`mkFDWindingDataFull_of_smoothData` constructs `FDWindingDataFull` from
-`SmoothBoundaryWindingData` at each smooth boundary point.
-
-### Pathway 3: Geometric classification
+### Pathway 2: Geometric classification
 `smooth_boundary_classification` shows smooth boundary points fall into
 two cases (vertical edge or non-elliptic arc), enabling case-by-case
 construction of `SmoothBoundaryWindingData`.
@@ -34,11 +30,7 @@ construction of `SmoothBoundaryWindingData`.
 ## Main results
 
 * `mkFDWindingDataFull` — assembler from `FDWindingData` + boundary hypothesis
-* `boundaryWindingHyp_of_smoothData` — from `SmoothBoundaryWindingData` oracle
-* `mkFDWindingDataFull_of_smoothData` — full assembler via smooth data
 * `smooth_boundary_classification` — geometric dichotomy for boundary points
-* `boundary_point_on_vert_edge`, `boundary_point_on_arc_range` — geometric
-  descriptions of the two cases
 
 ## References
 
@@ -84,30 +76,6 @@ def mkFDWindingDataFull {H : ℝ} (D : FDWindingData H)
   toFDWindingData := D
   boundary_winding := h_bdy
 
-/-- Construct `BoundaryWindingHyp` from `SmoothBoundaryWindingData` at each
-smooth boundary point. -/
-theorem boundaryWindingHyp_of_smoothData {H : ℝ}
-    {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
-    (h_data : ∀ z : ℂ, z.im > 0 → z.im < H →
-      z ≠ I → z ≠ ellipticPointRho → z ≠ ellipticPointRhoPlusOne →
-      ¬(‖z‖ > 1 ∧ |z.re| < 1/2) →
-      Complex.normSq z ≥ 1 → |z.re| ≤ 1/2 →
-      SmoothBoundaryWindingData γ z) :
-    BoundaryWindingHyp γ :=
-  fun z h1 h2 h3 h4 h5 h6 h7 h8 =>
-    (h_data z h1 h2 h3 h4 h5 h6 h7 h8).hasWindingNumber
-
-/-- Full assembler: from `FDWindingData` and `SmoothBoundaryWindingData` oracle,
-construct `FDWindingDataFull`. -/
-def mkFDWindingDataFull_of_smoothData {H : ℝ} (D : FDWindingData H)
-    (h_data : ∀ z : ℂ, z.im > 0 → z.im < H →
-      z ≠ I → z ≠ ellipticPointRho → z ≠ ellipticPointRhoPlusOne →
-      ¬(‖z‖ > 1 ∧ |z.re| < 1/2) →
-      Complex.normSq z ≥ 1 → |z.re| ≤ 1/2 →
-      SmoothBoundaryWindingData D.boundary z) :
-    FDWindingDataFull H :=
-  mkFDWindingDataFull D (boundaryWindingHyp_of_smoothData h_data)
-
 private lemma im_eq_sqrt3_half_of_normSq_one_of_absRe_half
     {z : ℂ} (h_nsq : Complex.normSq z = 1)
     (hz_im : z.im > 0) (h_re_sq : z.re * z.re = 1/4) :
@@ -152,42 +120,5 @@ theorem smooth_boundary_classification (z : ℂ)
   · refine Or.inl ⟨le_antisymm hz_re ?_, h_gt⟩
     by_contra! h
     exact hz_not_int ⟨h_gt, h⟩
-
-/-- A smooth boundary point with `|re| = 1/2` and `‖z‖ > 1` satisfies
-`z.im > √3 / 2`: such points lie above the elliptic corners on a vertical edge. -/
-theorem boundary_point_on_vert_edge {z : ℂ}
-    (hz_im : 0 < z.im) (hz_re_half : |z.re| = 1/2) (hz_norm_gt : 1 < ‖z‖) :
-    Real.sqrt 3 / 2 < z.im := by
-  nlinarith [Complex.normSq_apply z, Complex.normSq_eq_norm_sq (z := z),
-    sq_abs z.re, hz_re_half, hz_im, hz_norm_gt, sq_nonneg (‖z‖ - 1),
-    Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-    mul_self_nonneg (z.im - Real.sqrt 3 / 2)]
-
-/-- A smooth boundary point on the unit circle arc with `re ≠ 0` and
-`|re| ≠ 1/2` has `z.re²` in `(0, 1/4) ∪ (1/4, ∞)`: either strictly between the
-imaginary axis and the vertical edge, or beyond. -/
-theorem boundary_point_on_arc_range {z : ℂ}
-    (hz_re_ne : z.re ≠ 0) (hz_re_half : |z.re| ≠ 1/2) :
-    0 < z.re * z.re ∧ z.re * z.re < 1/4 ∨
-    0 < z.re * z.re ∧ 1/4 < z.re * z.re := by
-  have h_pos : 0 < z.re * z.re := mul_self_pos.mpr hz_re_ne
-  refine (lt_or_gt_of_ne fun h => hz_re_half ?_).imp (⟨h_pos, ·⟩) (⟨h_pos, ·⟩)
-  have habs : |z.re| ^ 2 = (1/2 : ℝ) ^ 2 := by rw [sq_abs]; linarith
-  exact (sq_eq_sq₀ (abs_nonneg _) (by norm_num)).mp habs
-
-/-- `BoundaryWindingHyp` is the sole condition needed to extend `FDWindingData`
-to `FDWindingDataFull`. This theorem provides the converse: given
-`FDWindingDataFull`, extract `BoundaryWindingHyp`. -/
-theorem boundaryWindingHyp_of_fdWindingDataFull {H : ℝ}
-    (D : FDWindingDataFull H) : BoundaryWindingHyp D.boundary :=
-  D.boundary_winding
-
-/-- The `BoundaryWindingHyp` condition and `FDWindingData` are equivalent to
-`FDWindingDataFull`: they carry exactly the same data. -/
-theorem fdWindingDataFull_iff_windingData_and_boundary {H : ℝ} :
-    (∃ _ : FDWindingDataFull H, True) ↔
-      ∃ D : FDWindingData H, BoundaryWindingHyp D.boundary :=
-  ⟨fun ⟨D, _⟩ => ⟨D.toFDWindingData, D.boundary_winding⟩,
-    fun ⟨D, h⟩ => ⟨mkFDWindingDataFull D h, trivial⟩⟩
 
 end
