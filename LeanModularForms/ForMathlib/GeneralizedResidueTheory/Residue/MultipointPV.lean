@@ -16,14 +16,16 @@ sums of single-point PVs.
 
 ## Main Results
 
-* `finset_discrete_min_sep` — positive minimum separation in a
-  finite set
-* `disjoint_balls_of_small_epsilon` — disjoint balls for small ε
 * `dominated_convergence_multipoint_helper` — dominated convergence
   for multi-point PV decomposition
 * `multipointPV_diff_tendsto` — difference integrand converges
 * `multipointPV_eq_sum_of_integral_zero` — multi-point PV equals
   sum of single-point PVs when regular integral vanishes
+
+Note: `finset_discrete_min_sep` and `disjoint_balls_of_small_epsilon`
+were duplicated here and in `LeanModularForms.ForMathlib.MultipointPV`;
+the duplicates are removed and the canonical versions live in
+`LeanModularForms.ForMathlib.MultipointPV`.
 -/
 
 open Complex MeasureTheory Set Filter Topology Metric
@@ -247,51 +249,6 @@ theorem tendsto_integral_of_dominated' {a b : ℝ} {F : ℝ → ℝ → ℂ} {f 
     (by filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε); exact hF_meas ε hε)
     (by filter_upwards [self_mem_nhdsWithin] with ε (hε : 0 < ε); exact hF_le ε hε)
     hg_int hF_lim
-
-/-- Positive minimum separation in a finite set. -/
-lemma finset_discrete_min_sep (S0 : Finset ℂ) (hS0_nonempty : S0.Nonempty)
-    (hS0_discrete : ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → 0 < ‖s' - s‖) :
-    ∃ δ > 0, ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ ≤ ‖s' - s‖ := by
-  by_cases h_singleton : S0.card ≤ 1
-  · refine ⟨1, one_pos, fun s hs s' hs' hne => ?_⟩
-    have h_card_eq : S0.card = 1 := by have := hS0_nonempty.card_pos; omega
-    obtain ⟨x, hS0_eq⟩ := Finset.card_eq_one.mp h_card_eq
-    rw [hS0_eq, Finset.mem_singleton] at hs hs'
-    exact (hne (hs.trans hs'.symm)).elim
-  · push Not at h_singleton
-    classical
-    let dists : Finset ℝ := S0.biUnion (fun s =>
-      S0.filter (· ≠ s) |>.image (fun s' => ‖s' - s‖))
-    have h_nonempty : dists.Nonempty := by
-      obtain ⟨x, hx⟩ := hS0_nonempty
-      obtain ⟨y, hy, hne⟩ : ∃ y ∈ S0, y ≠ x := by
-        by_contra h_all
-        push Not at h_all
-        have : S0.card ≤ ({x} : Finset ℂ).card :=
-          Finset.card_le_card fun z hz => Finset.mem_singleton.mpr (h_all z hz)
-        simp at this; omega
-      exact ⟨‖y - x‖, by
-        simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]
-        exact ⟨x, hx, y, ⟨hy, hne⟩, rfl⟩⟩
-    refine ⟨dists.min' h_nonempty, ?_, fun s hs s' hs' hne =>
-      Finset.min'_le dists _ <| by
-        simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]
-        exact ⟨s, hs, s', ⟨hs', hne.symm⟩, rfl⟩⟩
-    have h_mem := Finset.min'_mem dists h_nonempty
-    simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter] at h_mem
-    obtain ⟨s, hs, s', ⟨hs', hne⟩, heq⟩ := h_mem
-    exact heq ▸ hS0_discrete s hs s' hs' hne.symm
-
-/-- Disjoint balls for small epsilon. -/
-lemma disjoint_balls_of_small_epsilon (S0 : Finset ℂ) (ε : ℝ) (_hε : 0 < ε) (δ : ℝ)
-    (_hδ : 0 < δ) (hε_small : ε < δ / 2)
-    (h_sep : ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ ≤ ‖s' - s‖) :
-    ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' →
-      Disjoint (Metric.ball s ε) (Metric.ball s' ε) := fun s hs s' hs' hne => by
-  refine Metric.ball_disjoint_ball ?_
-  have : δ ≤ dist s s' := by
-    rw [dist_eq_norm, norm_sub_rev]; exact h_sep s hs s' hs' hne
-  linarith
 
 /-- Continuous functions on a compact image are bounded. -/
 lemma continuousOn_image_bounded {g : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ}
