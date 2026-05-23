@@ -249,38 +249,6 @@ namespace SingleCrossingData
 
 variable {γ : PiecewiseC1Path x y} {z₀ : ℂ}
 
-/-- A symmetric `SingleCrossingData` lifts to an `AsymmetricSingleCrossingData`
-by taking `δ_left = δ_right = δ`. This makes all existing FD-curve constructors
-(`mkSingleCrossingData_atI`, etc.) automatically usable in the asymmetric
-framework. -/
-def toAsymmetric (D : SingleCrossingData γ z₀) :
-    AsymmetricSingleCrossingData γ z₀ where
-  L := D.L
-  t₀ := D.t₀
-  ht₀ := D.ht₀
-  δ_left := D.δ
-  δ_right := D.δ
-  threshold := D.threshold
-  hthresh := D.hthresh
-  hδ_left_pos := D.hδ_pos
-  hδ_right_pos := D.hδ_pos
-  hδ_left_small := fun ε hε hεt => (D.hδ_small ε hε hεt).trans_le (min_le_left _ _)
-  hδ_right_small :=
-    fun ε hε hεt => (D.hδ_small ε hε hεt).trans_le (min_le_right _ _)
-  h_far_left := fun ε hε hεt t ht h_le h_gap =>
-    D.h_far ε hε hεt t ht (by rw [abs_of_nonpos (by linarith)]; linarith)
-  h_far_right := fun ε hε hεt t ht h_ge h_gap =>
-    D.h_far ε hε hεt t ht (by rw [abs_of_nonneg (by linarith)]; linarith)
-  h_near_left := fun ε hε hεt t h_le h_gap =>
-    D.h_near ε hε hεt t (by rw [abs_of_nonpos (by linarith)]; linarith)
-  h_near_right := fun ε hε hεt t h_ge h_gap =>
-    D.h_near ε hε hεt t (by rw [abs_of_nonneg (by linarith)]; linarith)
-  E := D.E
-  h_ftc := D.h_ftc
-  hint_left := D.hint_left
-  hint_right := D.hint_right
-  h_limit := D.h_limit
-
 end SingleCrossingData
 
 /-- Bundled analytic content for an asymmetric crossing: integrability on the
