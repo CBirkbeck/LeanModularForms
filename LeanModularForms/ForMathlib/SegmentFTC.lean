@@ -33,7 +33,6 @@ and log-derivative FTC. These are the building blocks for computing integrals of
 * `integral_logDeriv_eq_log_sub` — `∫ f'/f = log f(b) - log f(a)` in slitPlane
 * `ftc_log_on_segment` — combined integrability + FTC for a single C^1 function
 * `ftc_log_neg_on_segment` — same when `-f` stays in slitPlane
-* `integral_logDeriv_eq_neg_log_sub` — bare FTC when `-f` stays in slitPlane
 * `ftc_log_pieceFM` — combined integrability + FTC when `f` and `g` agree a.e.
 
 ## References
@@ -209,16 +208,6 @@ theorem ftc_log_neg_on_segment {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
       fun t ht => neg_ne_zero.mp (Complex.slitPlane_ne_zero (hf_slit t ht))).intervalIntegrable
   exact ⟨hint, intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab
     (hf_cont.neg.clog hf_slit) hF_deriv hint⟩
-
-/-- FTC for log-derivative when the negated function stays in slitPlane:
-`∫ f'/f = log(-f(b)) - log(-f(a))` when `-f ∈ slitPlane` on `[a,b]`. -/
-theorem integral_logDeriv_eq_neg_log_sub {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
-    (hf_cont : ContinuousOn f (Icc a b))
-    (hf_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ f t)
-    (hf_deriv_cont : ContinuousOn (deriv f) (Icc a b))
-    (hf_neg_slit : ∀ t ∈ Icc a b, -f t ∈ Complex.slitPlane) :
-    ∫ t in a..b, deriv f t / f t = Complex.log (-f b) - Complex.log (-f a) :=
-  (ftc_log_neg_on_segment hab hf_cont hf_diff hf_deriv_cont hf_neg_slit).2
 
 /-- Combined integrability and FTC for log-derivative integrals.
 

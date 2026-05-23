@@ -111,13 +111,6 @@ theorem hasGeneralizedWindingNumber_of_hasCauchyPV {γ : PiecewiseC1Path x y} {z
   rw [HasGeneralizedWindingNumber, mul_inv_cancel_left₀ Complex.two_pi_I_ne_zero]
   exact h
 
-/-- `generalizedWindingNumber` agrees with any `HasGeneralizedWindingNumber` witness.
-This is the converse direction of `HasGeneralizedWindingNumber.eq`. -/
-theorem generalizedWindingNumber_eq_of_hasGeneralizedWindingNumber
-    {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
-    (h : HasGeneralizedWindingNumber γ z₀ w) : generalizedWindingNumber γ z₀ = w :=
-  h.eq
-
 /-- Scalar multiplication compatibility: if the winding number is `w`, then scaling the
 integrand by `c` gives `c * w`. -/
 theorem HasGeneralizedWindingNumber.const_mul {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
