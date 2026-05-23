@@ -115,19 +115,6 @@ theorem pv_chain_identity_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈
         (orderOfVanishingAt' (⇑f) s : ℂ) = -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) :=
   pv_chain_identity f hf S hS hS_complete
 
-/-- Rearrangement: from `Σ wt = -(k/12 - ord_∞)` derive `ord_∞ + (-Σ wt) = k/12`. -/
-theorem residue_side_rearrange (ord_inf weighted_sum : ℂ)
-    (h : weighted_sum = -((k : ℂ) / 12 - ord_inf)) :
-    ord_inf + (-weighted_sum) = (k : ℂ) / 12 := by
-  rw [h]
-  ring
 
-/-- Cancel `2πi` from both sides: if `2πi · L = -(2πi · R)` then `L = -R`. -/
-theorem cancel_two_pi_I {L R : ℂ}
-    (h : 2 * ↑Real.pi * I * L = -(2 * ↑Real.pi * I * R)) :
-    L = -R := by
-  have hpi : (2 : ℂ) * ↑Real.pi * I ≠ 0 := by
-    norm_num [Real.pi_ne_zero, I_ne_zero]
-  exact mul_left_cancel₀ hpi (by rw [h]; ring)
 
 end

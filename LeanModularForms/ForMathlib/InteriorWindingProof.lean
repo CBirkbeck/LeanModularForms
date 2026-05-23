@@ -61,12 +61,6 @@ theorem fdBoundary_seg5_in_slitPlane {z : ℂ} {H : ℝ}
     rw [sub_im, fdBoundaryFun_seg5_im H t ht]
     linarith
 
-/-- On segment 4 (left vertical, re = -1/2), `γ(t) - z` is in the slit plane
-when `(γ(t) - z).im ≠ 0`. -/
-theorem fdBoundary_seg4_in_slitPlane_of_im_ne {z : ℂ} {H : ℝ} (t : ℝ)
-    (him_ne : (fdBoundaryFun H t - z).im ≠ 0) :
-    fdBoundaryFun H t - z ∈ Complex.slitPlane :=
-  Complex.mem_slitPlane_iff.mpr (Or.inr him_ne)
 
 /-- Extract segment integrability from full `[0, 1]` integrability. -/
 private lemma segment_integrability {f : ℝ → ℂ} (hint : IntervalIntegrable f volume 0 1)
@@ -155,19 +149,6 @@ theorem closed_path_log_telescope_eq_zero {z : ℂ} {H : ℝ}
     Complex.log (γ 1 - z) - Complex.log (γ 0 - z) = 0 := by
   rw [closed_path_sub_eq γ hγ, sub_self]
 
-/-- The five log differences for a closed path telescope to zero (using the standard
-branch everywhere). This means the `-2πi` correction must come from using a different
-branch on at least one segment. -/
-theorem closed_path_log_telescope_five {z : ℂ} {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t) :
-    (Complex.log (γ (1/5 : ℝ) - z) - Complex.log (γ 0 - z)) +
-    (Complex.log (γ (2/5 : ℝ) - z) - Complex.log (γ (1/5 : ℝ) - z)) +
-    (Complex.log (γ (3/5 : ℝ) - z) - Complex.log (γ (2/5 : ℝ) - z)) +
-    (Complex.log (γ (4/5 : ℝ) - z) - Complex.log (γ (3/5 : ℝ) - z)) +
-    (Complex.log (γ 1 - z) - Complex.log (γ (4/5 : ℝ) - z)) =
-    0 := by
-  rw [log_telescope_five, closed_path_log_telescope_eq_zero γ hγ]
 
 /-- **Interior winding number = -1** for the FD boundary, given the contour integral
 identity as a hypothesis. -/
@@ -179,18 +160,6 @@ theorem fdBoundary_interior_winding_neg_one {H : ℝ} (hH : H > Real.sqrt 3 / 2)
   hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral (fdBoundaryPC1Path H hH)
     (fdBoundaryPC1Path_eq H hH) hz.norm_gt hz.re_abs_lt hz.im_pos hz.im_lt h_integral
 
-/-- If the contour integral is an integer multiple of `2πi` and the integer is `-1`,
-then the integral equals `-(2πi)`. -/
-theorem contourIntegral_inv_sub_of_winding_neg_one
-    {x : ℂ} (γ : PiecewiseC1Path x x) {z : ℂ}
-    (h_val : ∃ n : ℤ, γ.contourIntegral (fun w => (w - z)⁻¹) =
-      n * (2 * ↑Real.pi * I))
-    (hn : ∀ n : ℤ, γ.contourIntegral (fun w => (w - z)⁻¹) =
-      n * (2 * ↑Real.pi * I) → n = -1) :
-    γ.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I) := by
-  obtain ⟨n, hn_eq⟩ := h_val
-  rw [hn_eq, hn n hn_eq]
-  simp
 
 /-- FTC on segment 1: the integral of `(γ(t) - z)⁻¹ γ'(t)` over `[0, 1/5]` equals
 the log difference, because `γ(t) - z` has positive real part on this segment. -/
@@ -242,32 +211,5 @@ def fdWindingData_of_interior_integral {H : ℝ} (hH : H > Real.sqrt 3 / 2)
   FDWindingData.mk_of_interior_contourIntegral (fdBoundaryPC1Path H hH)
     (fdBoundaryPC1Path_eq H hH) h_int D_i hL_i D_rho hL_rho D_rho1 hL_rho1
 
-/-- FTC for `(w - z)⁻¹` on a sub-interval `[a, b]` of a piecewise C¹ path, when
-`γ(t) - z` stays in the slit plane and the open interval `(a, b)` contains no
-partition points. -/
-theorem ftc_inv_sub_on_slitPlane {x : ℂ} {z : ℂ}
-    (γ : PiecewiseC1Path x x) {a b : ℝ} (hab : a ≤ b)
-    (hsub : Icc a b ⊆ Icc (0 : ℝ) 1)
-    (hγ_slit : ∀ t ∈ Icc a b, γ t - z ∈ Complex.slitPlane)
-    (h_no_part : ∀ p ∈ γ.partition, p ∉ Ioo a b)
-    (h_int : IntervalIntegrable
-      (fun t => (γ t - z)⁻¹ * deriv γ.toPath.extend t) volume a b) :
-    ∫ t in a..b, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ b - z) - Complex.log (γ a - z) := by
-  have hFγ_cont : ContinuousOn
-      (fun t => Complex.log (γ.toPath.extend t - z)) (Icc a b) :=
-    ContinuousOn.clog
-      ((γ.toPath.continuous_extend.continuousOn.mono hsub).sub continuousOn_const) hγ_slit
-  have hFγ_deriv : ∀ t ∈ Ioo a b,
-      HasDerivAt (fun s => Complex.log (γ.toPath.extend s - z))
-        ((γ t - z)⁻¹ * deriv γ.toPath.extend t) t := by
-    intro t ht
-    have ht_01 : t ∈ Ioo (0 : ℝ) 1 :=
-      ⟨lt_of_le_of_lt (hsub (left_mem_Icc.mpr hab)).1 ht.1,
-       lt_of_lt_of_le ht.2 (hsub (right_mem_Icc.mpr hab)).2⟩
-    rw [inv_mul_eq_div]
-    exact ((γ.differentiable_off_extend t ht_01 (fun hp => h_no_part t hp ht)).hasDerivAt.sub_const
-      z).clog_real (hγ_slit t (Ioo_subset_Icc_self ht))
-  exact intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab hFγ_cont hFγ_deriv h_int
 
 end

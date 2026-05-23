@@ -95,13 +95,6 @@ theorem hasGeneralizedWindingNumber_of_avoids {γ : PiecewiseC1Path x y} {z₀ :
   rw [HasGeneralizedWindingNumber, mul_inv_cancel_left₀ Complex.two_pi_I_ne_zero]
   exact hasCauchyPV_of_avoids hδ
 
-/-- If `HasGeneralizedWindingNumber γ z₀ w`, then the `cauchyPV` value satisfies the
-expected equation. -/
-theorem HasGeneralizedWindingNumber.cauchyPV_eq_two_pi_I_mul
-    {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
-    (h : HasGeneralizedWindingNumber γ z₀ w) :
-    cauchyPV (fun z => (z - z₀)⁻¹) γ z₀ = 2 * ↑Real.pi * I * w :=
-  h.cauchyPV_eq
 
 /-- If the CPV exists with some limit, then `HasGeneralizedWindingNumber` holds for the
 corresponding winding number value. -/
@@ -111,12 +104,6 @@ theorem hasGeneralizedWindingNumber_of_hasCauchyPV {γ : PiecewiseC1Path x y} {z
   rw [HasGeneralizedWindingNumber, mul_inv_cancel_left₀ Complex.two_pi_I_ne_zero]
   exact h
 
-/-- `generalizedWindingNumber` agrees with any `HasGeneralizedWindingNumber` witness.
-This is the converse direction of `HasGeneralizedWindingNumber.eq`. -/
-theorem generalizedWindingNumber_eq_of_hasGeneralizedWindingNumber
-    {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
-    (h : HasGeneralizedWindingNumber γ z₀ w) : generalizedWindingNumber γ z₀ = w :=
-  h.eq
 
 /-- Scalar multiplication compatibility: if the winding number is `w`, then scaling the
 integrand by `c` gives `c * w`. -/

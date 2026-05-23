@@ -146,16 +146,6 @@ theorem dixonH1_eq_dixonH2_sub_winding_f {f : ℂ → ℂ} {γ : PiecewiseC1Path
     integral_inv_sub_eq_winding (avoids_delta_bound γ w hoff)]
   ring
 
-/-- Variant of the h1/h2 identity with the winding number on the other side. -/
-theorem dixonH2_eq_dixonH1_add_winding_f {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} (w : ℂ)
-    (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w)
-    (h_cauchy_int : IntervalIntegrable
-      (fun t => f (γ t) / (γ t - w) * deriv γ.toPath.extend t) volume 0 1)
-    (h_base_int : IntervalIntegrable
-      (fun t => (γ t - w)⁻¹ * deriv γ.toPath.extend t) volume 0 1) :
-    dixonH2 f γ w =
-      dixonH1 f γ w + 2 * ↑Real.pi * I * generalizedWindingNumber γ w * f w := by
-  linear_combination -dixonH1_eq_dixonH2_sub_winding_f w hoff h_cauchy_int h_base_int
 
 /-- On `U`, the Dixon function equals `h1`. -/
 theorem dixonFunction_eq_dixonH1 {f : ℂ → ℂ} {U : Set ℂ}
@@ -163,22 +153,7 @@ theorem dixonFunction_eq_dixonH1 {f : ℂ → ℂ} {U : Set ℂ}
     dixonFunction f U γ w = dixonH1 f γ w :=
   if_pos hw
 
-/-- Off `U`, the Dixon function equals `h2`. -/
-theorem dixonFunction_eq_dixonH2 {f : ℂ → ℂ} {U : Set ℂ}
-    {γ : PiecewiseC1Path x x} {w : ℂ} (hw : w ∉ U) :
-    dixonFunction f U γ w = dixonH2 f γ w :=
-  if_neg hw
 
-/-- `dixonH2` expressed using the contour integral notation. -/
-theorem dixonH2_eq_contourIntegral' {f : ℂ → ℂ}
-    {γ : PiecewiseC1Path x x} {w : ℂ} :
-    dixonH2 f γ w = γ.contourIntegral (fun z => f z / (z - w)) :=
-  rfl
 
-/-- `dixonH1` expressed using the contour integral notation. -/
-theorem dixonH1_eq_contourIntegral' {f : ℂ → ℂ}
-    {γ : PiecewiseC1Path x x} {w : ℂ} :
-    dixonH1 f γ w = γ.contourIntegral (fun z => dslope f w z) :=
-  rfl
 
 end

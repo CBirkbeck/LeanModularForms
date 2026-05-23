@@ -3763,33 +3763,6 @@ vacuous. This corollary auto-discharges the lift, exposing a clean
 `(hCondA, hCondB, h_no_corner_crossings)` theorem with `hx_notin_S` packaged
 into the spec hypotheses. -/
 
-/-- **HW3.3 full-spec form, common case `x ∉ S` (T-BR-Y9g-continue).**
-
-For callers with `x ∉ S`, the cyclic-shift lift is vacuous (its premise
-`x ∈ S` is false). This corollary auto-discharges the lift, exposing a clean
-spec form matching `_full_spec`. -/
-private theorem residueTheorem_crossing_full_spec_basepoint_off
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (hx_notin_S : x ∉ (↑S : Set ℂ))
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_crossing_full_spec_general hU_open hU_ne hS_in_U hf γ
-    h_null hMero hCondB hCondA h_no_corner_crossings
-    (fun hx _lift => absurd hx hx_notin_S)
 
 /-! ### T-BR-Y11 — Paper-faithful spec form
 

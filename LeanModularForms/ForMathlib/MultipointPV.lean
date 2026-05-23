@@ -125,22 +125,7 @@ theorem cpvIntegrandOn_neg (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
   simp only [cpvIntegrandOn]
   split_ifs <;> ring
 
-/-- If there are no singularities near `γ(t)` for the larger set `T ⊇ S`,
-then there are none for `S` either, so both integrands equal the full integrand. -/
-theorem cpvIntegrandOn_subset_eq {S T : Finset ℂ} (hST : S ⊆ T) (f : ℂ → ℂ)
-    (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ)
-    (h_far : ∀ s ∈ T, ε < ‖γ t - s‖) :
-    cpvIntegrandOn S f γ ε t = cpvIntegrandOn T f γ ε t := by
-  have h_far_S : ∀ s ∈ S, ε < ‖γ t - s‖ := fun s hs => h_far s (hST hs)
-  simp [cpvIntegrandOn_of_forall_gt h_far_S, cpvIntegrandOn_of_forall_gt h_far]
 
-/-- Scalar multiplication distributes through the multi-point CPV integrand. -/
-theorem cpvIntegrandOn_const_mul (S : Finset ℂ) (c : ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
-    (ε : ℝ) (t : ℝ) :
-    cpvIntegrandOn S (fun z => c * f z) γ ε t =
-      c * cpvIntegrandOn S f γ ε t := by
-  simp only [cpvIntegrandOn]
-  split_ifs <;> [simp; ring]
 
 /-- Subtraction of multi-point CPV limits: if `HasCauchyPVOn S f γ L₁` and
 `HasCauchyPVOn S g γ L₂`, then `HasCauchyPVOn S (f - g) γ (L₁ - L₂)`.

@@ -115,18 +115,6 @@ theorem fdBoundary_H_sub_rho_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
           · exact fdBoundary_H_sub_rho_seg3_slitPlane H hH h3lt h4
           · exact fdBoundary_H_sub_rho_seg4_slitPlane H hH h4 ht.2
 
-/-- `ρ` is only hit at `t = 3`. -/
-theorem fdBoundary_H_eq_rho_iff (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
-    {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 5) :
-    fdBoundary_H H t = ellipticPointRho ↔ t = 3 := by
-  constructor
-  · intro heq
-    by_contra hne
-    have := fdBoundary_H_sub_rho_slitPlane H hH ht hne
-    rw [heq, sub_self] at this
-    exact Complex.zero_notMem_slitPlane this
-  · rintro rfl
-    exact fdBoundary_H_at_three_eq_rho H
 
 private lemma rho_re_identity (δ : ℝ) :
     -Real.sin (Real.pi / 6 - δ * Real.pi / 6) + 1 / 2 =
@@ -192,22 +180,6 @@ private lemma arg_approach_rho_left_helper (hδ : 0 < δ) (hδ_small : δ < 1) :
       (ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])))
     ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
 
-/-- The `arg` of the approach direction from the left (seg 2 side) at `ρ`.
-    `γ(3-δ) - ρ ≈ δ·(π/6)·exp(iπ/6)`, so `arg → π/6`. -/
-theorem arg_approach_rho_left :
-    Tendsto (fun δ => (fdBoundary_H H (3 - δ) - ellipticPointRho).arg)
-      (𝓝[>] 0) (𝓝 (Real.pi / 6)) := by
-  rw [Metric.tendsto_nhdsWithin_nhds]
-  intro ε hε
-  refine ⟨min 1 ε, by positivity, ?_⟩
-  intro x hx_mem hx_dist
-  simp only [Real.dist_eq, Set.mem_Ioi] at hx_mem hx_dist ⊢
-  rw [sub_zero, abs_of_pos hx_mem] at hx_dist
-  rw [arg_approach_rho_left_helper (H := H) hx_mem
-        (lt_of_lt_of_le hx_dist (min_le_left 1 ε)),
-      show Real.pi / 6 - x * Real.pi / 12 - Real.pi / 6 = -(x * Real.pi / 12) from by ring,
-      abs_neg, abs_of_pos (by positivity)]
-  nlinarith [Real.pi_le_four, lt_of_lt_of_le hx_dist (min_le_right 1 ε)]
 
 private lemma g_seg3_value (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
     fdBoundary_H H (3 + δ) - ellipticPointRho = ↑(δ * (H - Real.sqrt 3 / 2)) * I := by

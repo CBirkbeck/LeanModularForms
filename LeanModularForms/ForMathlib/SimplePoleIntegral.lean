@@ -71,24 +71,8 @@ theorem hasCauchyPV_div_sub {s c : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
   intro t _
   exact cpvIntegrand_div_eq_mul_inv c s γ.toPath.extend ε t
 
-/-- PV integral of `c * (z - s)⁻¹` equals `2πi · w · c` (variant form). -/
-theorem hasCauchyPV_mul_inv_sub {s c : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
-    (hw : HasGeneralizedWindingNumber γ s w) :
-    HasCauchyPV (fun z => c * (z - s)⁻¹) γ s (2 * ↑Real.pi * I * w * c) := by
-  rw [show (2 : ℂ) * ↑Real.pi * I * w * c = c * (2 * ↑Real.pi * I * w) by ring]
-  exact hw.const_mul c
 
-/-- `cauchyPV` value for `c / (z - s)`. -/
-theorem cauchyPV_div_sub_eq {s c : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
-    (hw : HasGeneralizedWindingNumber γ s w) :
-    cauchyPV (fun z => c / (z - s)) γ s = 2 * ↑Real.pi * I * w * c :=
-  (hasCauchyPV_div_sub hw).cauchyPV_eq
 
-/-- `cauchyPV` value for `(z - s)⁻¹`. -/
-theorem cauchyPV_inv_sub_eq {s : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
-    (hw : HasGeneralizedWindingNumber γ s w) :
-    cauchyPV (fun z => (z - s)⁻¹) γ s = 2 * ↑Real.pi * I * w :=
-  hw.cauchyPV_eq
 
 /-- When `γ` avoids `s` with positive minimum distance, the ordinary contour integral
 of `(z - s)⁻¹` equals `2πi · generalizedWindingNumber γ s`. -/
@@ -114,11 +98,6 @@ theorem hasCauchyPVOn_singleton_div_sub {s c : ℂ} {γ : PiecewiseC1Path x y} {
     HasCauchyPVOn {s} (fun z => c / (z - s)) γ (2 * ↑Real.pi * I * w * c) :=
   hasCauchyPVOn_singleton_of_hasCauchyPV (hasCauchyPV_div_sub hw)
 
-/-- The singleton case: PV of `(z - s)⁻¹` as a `HasCauchyPVOn` statement. -/
-theorem hasCauchyPVOn_singleton_inv_sub {s : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
-    (hw : HasGeneralizedWindingNumber γ s w) :
-    HasCauchyPVOn {s} (fun z => (z - s)⁻¹) γ (2 * ↑Real.pi * I * w) :=
-  hasCauchyPVOn_singleton_of_hasCauchyPV hw
 
 /-- When `γ` avoids all points in `S`, the multi-point CPV of `∑ s ∈ S, c s / (z - s)`
 equals the ordinary contour integral. -/

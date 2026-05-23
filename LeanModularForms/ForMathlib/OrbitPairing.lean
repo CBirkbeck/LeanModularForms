@@ -44,8 +44,6 @@ private lemma norm_eq_of_normSq_eqFM {z w : ℂ}
   (sq_eq_sq₀ (norm_nonneg z) (norm_nonneg w)).mp <| by
     linarith [normSq_eq_norm_sq z, normSq_eq_norm_sq w]
 
-private lemma one_le_normSq_of_norm_gt_oneFM {z : ℂ} (h : ‖z‖ > 1) :
-    1 ≤ Complex.normSq z := Complex.one_le_normSq_iff.mpr h.le
 
 private lemma normSq_eq_one_of_norm_eq_oneFM {z : ℂ} (h : ‖z‖ = 1) :
     Complex.normSq z = 1 := by

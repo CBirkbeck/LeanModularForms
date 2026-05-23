@@ -356,24 +356,5 @@ structure HW33ExitData (γ : ℝ → ℂ) (t₀ : ℝ) (s : ℂ) where
   /-- Eventually, `‖γ(tMinus ε) - s‖ = ε`. -/
   minus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (tMinus ε) - s‖ = ε
 
-/-- **Build `HW33ExitData` from `firstExitTimeRight` and `firstExitTimeLeft`.**
-This is the canonical construction: given continuity of `γ` near `t₀` and the
-"γ leaves `s` away from `t₀`" hypothesis on each side, the first-exit-time
-functions provide all four asymptotic conditions. -/
-noncomputable def HW33ExitData.ofExitTimes
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s : ℂ}
-    {δPlus δMinus : ℝ} (hδPlus : 0 < δPlus) (hδMinus : 0 < δMinus)
-    (hγ_cont_right : ContinuousOn γ (Icc t₀ (t₀ + δPlus)))
-    (hγ_cont_left : ContinuousOn γ (Icc (t₀ - δMinus) t₀))
-    (h_s : γ t₀ = s)
-    (h_leave_right : ∀ t ∈ Ioc t₀ (t₀ + δPlus), γ t ≠ s)
-    (h_leave_left : ∀ t ∈ Ico (t₀ - δMinus) t₀, γ t ≠ s) :
-    HW33ExitData γ t₀ s where
-  tPlus := firstExitTimeRight γ t₀ δPlus s
-  tMinus := firstExitTimeLeft γ t₀ δMinus s
-  plus_to := firstExitTimeRight_tendsto_t₀ hδPlus hγ_cont_right h_s h_leave_right
-  plus_radius := firstExitTimeRight_radius_eventually hδPlus hγ_cont_right h_s h_leave_right
-  minus_to := firstExitTimeLeft_tendsto_t₀ hδMinus hγ_cont_left h_s h_leave_left
-  minus_radius := firstExitTimeLeft_radius_eventually hδMinus hγ_cont_left h_s h_leave_left
 
 end LeanModularForms

@@ -240,14 +240,8 @@ lemma fdBoundary_H_hasDerivAt_seg4 (H : ℝ) {t : ℝ} (h3 : 3 < t) (h4 : t < 4)
     HasDerivAt (fdBoundary_H H) ((H - Real.sqrt 3 / 2) * I) t :=
   fdBoundary_H_hasDerivAt_seg4' H t ⟨h3, h4⟩
 
-theorem continuous_fdBoundary_seg1_H (H : ℝ) : Continuous (fdBoundary_seg1_H H) := by
-  unfold fdBoundary_seg1_H; fun_prop
 
-theorem continuous_fdBoundary_seg4_H (H : ℝ) : Continuous (fdBoundary_seg4_H H) := by
-  unfold fdBoundary_seg4_H; fun_prop
 
-theorem continuous_fdBoundary_seg5_H (H : ℝ) : Continuous (fdBoundary_seg5_H H) := by
-  unfold fdBoundary_seg5_H; fun_prop
 
 lemma hasDerivAt_fdBoundary_seg1_H (H t : ℝ) :
     HasDerivAt (fdBoundary_seg1_H H) (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by
@@ -565,9 +559,6 @@ noncomputable def fdBoundaryImmersion : PiecewiseC1Immersion where
   left_deriv_limit := fdBoundary_left_deriv_limit
   right_deriv_limit := fdBoundary_right_deriv_limit
 
-lemma fdBoundaryImmersion_closed :
-    fdBoundaryCurve.IsClosed :=
-  fdBoundary_closed
 
 lemma fdBoundary_H_hasDerivAt_arc (H : ℝ) {t : ℝ} (h1 : 1 < t) (h3 : t < 3) :
     HasDerivAt (fdBoundary_H H)

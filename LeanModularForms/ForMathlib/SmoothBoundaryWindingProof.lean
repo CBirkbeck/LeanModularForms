@@ -175,19 +175,6 @@ theorem boundary_point_on_arc_range {z : ℂ}
   have habs : |z.re| ^ 2 = (1/2 : ℝ) ^ 2 := by rw [sq_abs]; linarith
   exact (sq_eq_sq₀ (abs_nonneg _) (by norm_num)).mp habs
 
-/-- `BoundaryWindingHyp` is the sole condition needed to extend `FDWindingData`
-to `FDWindingDataFull`. This theorem provides the converse: given
-`FDWindingDataFull`, extract `BoundaryWindingHyp`. -/
-theorem boundaryWindingHyp_of_fdWindingDataFull {H : ℝ}
-    (D : FDWindingDataFull H) : BoundaryWindingHyp D.boundary :=
-  D.boundary_winding
 
-/-- The `BoundaryWindingHyp` condition and `FDWindingData` are equivalent to
-`FDWindingDataFull`: they carry exactly the same data. -/
-theorem fdWindingDataFull_iff_windingData_and_boundary {H : ℝ} :
-    (∃ _ : FDWindingDataFull H, True) ↔
-      ∃ D : FDWindingData H, BoundaryWindingHyp D.boundary :=
-  ⟨fun ⟨D, _⟩ => ⟨D.toFDWindingData, D.boundary_winding⟩,
-    fun ⟨D, h⟩ => ⟨mkFDWindingDataFull D h, trivial⟩⟩
 
 end

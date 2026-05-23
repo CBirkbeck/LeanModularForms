@@ -34,25 +34,8 @@ noncomputable def unitArc (θ₁ θ₂ a b : ℝ) (t : ℝ) : ℂ :=
 theorem unitArc_norm (θ₁ θ₂ a b t : ℝ) : ‖unitArc θ₁ θ₂ a b t‖ = 1 := by
   simp only [unitArc, Complex.norm_exp_ofReal_mul_I]
 
-/-- The arc starts at exp(iθ₁). -/
-theorem unitArc_at_start (θ₁ θ₂ a b : ℝ) :
-    unitArc θ₁ θ₂ a b a = exp (↑θ₁ * I) := by
-  simp [unitArc]
 
-/-- The arc ends at exp(iθ₂). -/
-theorem unitArc_at_end (θ₁ θ₂ a b : ℝ) (hab : a ≠ b) :
-    unitArc θ₁ θ₂ a b b = exp (↑θ₂ * I) := by
-  have hba : b - a ≠ 0 := sub_ne_zero.mpr hab.symm
-  simp only [unitArc]
-  congr 1
-  push_cast
-  rw [div_self (mod_cast hba), one_mul]
-  ring
 
-/-- The unit arc is continuous. -/
-theorem unitArc_continuous (θ₁ θ₂ a b : ℝ) : Continuous (unitArc θ₁ θ₂ a b) := by
-  unfold unitArc
-  fun_prop
 
 private lemma unitArc_angle_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : b - a ≠ 0) :
     HasDerivAt (fun s => θ₁ + (s - a) / (b - a) * (θ₂ - θ₁))

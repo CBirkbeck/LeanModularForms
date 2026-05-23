@@ -56,11 +56,6 @@ theorem poleOrderAt_eq_one_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
     poleOrderAt f z₀ = 1 := by
   rw [poleOrderAt, dif_pos hf, hord]; rfl
 
-theorem poleOrderAt_eq_one_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) (hc : h.coeff ≠ 0) :
-    poleOrderAt f z₀ = 1 :=
-  poleOrderAt_eq_one_of_order_neg_one h.meromorphicAt
-    (meromorphicOrderAt_eq_neg_one_of_hasSimplePoleAt h hc)
 
 /-- Principal part sum for simple poles: `∑ s ∈ S, c(s) / (z - s)`.
 
@@ -76,10 +71,6 @@ theorem differentiableAt_div_sub {s : ℂ} {c : ℂ} {z : ℂ} (hz : z ≠ s) :
   differentiableAt_const c |>.div (differentiableAt_id.sub (differentiableAt_const s))
     (sub_ne_zero.mpr hz)
 
-/-- A single term `c / (z - s)` is differentiable on `{s}ᶜ`. -/
-theorem differentiableOn_div_sub (s : ℂ) (c : ℂ) :
-    DifferentiableOn ℂ (fun z => c / (z - s)) {s}ᶜ :=
-  fun _z hz => (differentiableAt_div_sub (mem_compl_singleton_iff.mp hz)).differentiableWithinAt
 
 /-- The principal part sum `∑ s ∈ S, c(s) / (z - s)` is differentiable on `(↑S)ᶜ`. -/
 theorem principalPartSum_differentiableOn (S : Finset ℂ) (c : ℂ → ℂ) :
@@ -90,17 +81,6 @@ theorem principalPartSum_differentiableOn (S : Finset ℂ) (c : ℂ → ℂ) :
   intro s hs
   exact differentiableAt_div_sub (fun heq => hz (Finset.mem_coe.mpr (heq ▸ hs)))
 
-/-- If `f` has a simple pole at `z₀` with coefficient `c`, then `f(z) - c/(z - z₀)` extends
-analytically to `z₀`.
-
-This is the fundamental fact: the principal part captures exactly the singular behavior,
-so subtracting it leaves an analytic function. -/
-theorem sub_simplePole_analyticAt {f : ℂ → ℂ} {z₀ : ℂ} {c : ℂ} {g : ℂ → ℂ}
-    (hg : AnalyticAt ℂ g z₀)
-    (hev : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    ∃ h : ℂ → ℂ, AnalyticAt ℂ h z₀ ∧
-      ∀ᶠ z in 𝓝[≠] z₀, f z - c / (z - z₀) = h z :=
-  ⟨g, hg, hev.mono fun z hz => by rw [hz]; ring⟩
 
 private theorem principalPartSum_rest_analyticAt
     (S : Finset ℂ) (s : ℂ) (c : ℂ → ℂ) :
