@@ -78,13 +78,6 @@ theorem cpvIntegrand_of_le {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε
     cpvIntegrand f γ z₀ ε t = 0 :=
   if_neg h.not_gt
 
-theorem cpvIntegrand_nonneg_eps {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε₁ ε₂ : ℝ} {t : ℝ}
-    (hε : ε₂ ≤ ε₁) (h : cpvIntegrand f γ z₀ ε₁ t ≠ 0) :
-    cpvIntegrand f γ z₀ ε₂ t = cpvIntegrand f γ z₀ ε₁ t := by
-  have h₁ : ε₁ < ‖γ t - z₀‖ :=
-    lt_of_not_ge fun h₂ => h (cpvIntegrand_of_le h₂)
-  rw [cpvIntegrand_of_gt h₁, cpvIntegrand_of_gt (hε.trans_lt h₁)]
-
 /-- The Cauchy principal value of `∮_γ f(z) dz` exists and equals `L`, where the integral
 is computed by excluding ε-neighborhoods of `z₀` and taking the limit as `ε → 0⁺`.
 
