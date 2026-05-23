@@ -28,9 +28,6 @@ noncomputable section
 /-- The elliptic point `i` as an element of ℍ. -/
 def ellipticPointI' : UpperHalfPlane := ⟨I, by simp [Complex.I_im]⟩
 
-/-- The elliptic point `i` as a complex number. -/
-abbrev ellipticPointI : ℂ := (ellipticPointI' : ℂ)
-
 /-- The elliptic point `ρ = e^{2πi/3} = -1/2 + (√3/2)i` as an element of ℍ. -/
 def ellipticPointRho' : UpperHalfPlane :=
   ⟨-1/2 + (Real.sqrt 3 / 2) * I, by
@@ -48,11 +45,6 @@ def ellipticPointRhoPlusOne' : UpperHalfPlane :=
 
 /-- The T-translate `ρ + 1` as a complex number. -/
 abbrev ellipticPointRhoPlusOne : ℂ := (ellipticPointRhoPlusOne' : ℂ)
-
-theorem ellipticPointRho_add_one_eq :
-    ellipticPointRho + 1 = ellipticPointRhoPlusOne := by
-  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) + 1 = 1/2 + (Real.sqrt 3 / 2) * I
-  ring
 
 private lemma rho_normSq_eq_one : Complex.normSq (ellipticPointRho' : ℂ) = 1 := by
   change Complex.normSq (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
@@ -78,21 +70,6 @@ theorem ellipticPointRhoPlusOne_norm : ‖ellipticPointRhoPlusOne‖ = 1 := by
 theorem ellipticPointRho_norm : ‖ellipticPointRho‖ = 1 := by
   change Real.sqrt (Complex.normSq _) = 1
   rw [rho_normSq_eq_one, Real.sqrt_one]
-
-theorem ellipticPointI_mem_fd : ellipticPointI' ∈ 𝒟 := by
-  refine ⟨?_, ?_⟩
-  · simp [ellipticPointI', Complex.normSq_I]
-  · simp only [ellipticPointI', UpperHalfPlane.re]; norm_num
-
-theorem ellipticPointRho_mem_fd : ellipticPointRho' ∈ 𝒟 := by
-  refine ⟨rho_normSq_eq_one.ge, ?_⟩
-  simp only [ellipticPointRho', UpperHalfPlane.re]; norm_num
-
-lemma ellipticPointI_ne_rho : ellipticPointI' ≠ ellipticPointRho' := by
-  intro h
-  have h1 : (ellipticPointI' : ℂ).re = (ellipticPointRho' : ℂ).re := by rw [h]
-  simp only [ellipticPointI', ellipticPointRho'] at h1
-  norm_num at h1
 
 /-- Order of vanishing of `f` at a point in ℍ. -/
 def orderOfVanishingAt' (f : UpperHalfPlane → ℂ) (z : UpperHalfPlane) : ℤ :=

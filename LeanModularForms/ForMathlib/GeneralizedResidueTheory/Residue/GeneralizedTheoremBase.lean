@@ -5,7 +5,6 @@ Authors:
 -/
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV.DominatedConvergence
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber.Proposition2_2
 import Mathlib.Analysis.Meromorphic.Order
 
 /-!
@@ -342,84 +341,5 @@ lemma CauchyPrincipalValueExists'.const_mul
   erw [← intervalIntegral.integral_const_mul]
   refine intervalIntegral.integral_congr fun _ _ => ?_
   split_ifs <;> ring
-
-/-- Residue of `f` at `z₀` via contour integral:
-`Res(f, z₀) = lim_{r→0⁺} (2πi)⁻¹ ∮_{|z-z₀|=r} f(z) dz`.
-
-This is well-defined for meromorphic functions and agrees with
-`residueSimplePole` when `f` has a simple pole at `z₀`. -/
-def residueAt (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
-  limUnder (𝓝[>] (0 : ℝ)) fun r =>
-    (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(z₀, r), f z
-
-/-- If `f` has a simple pole at `z₀` with decomposition `c / (z - z₀) + g`,
-then `residueSimplePole f z₀ = c`. -/
-theorem residueSimplePole_eq_of_decomposition (f : ℂ → ℂ) (z₀ c : ℂ) (g : ℂ → ℂ)
-    (hg : AnalyticAt ℂ g z₀)
-    (hf_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    residueSimplePole f z₀ = c := by
-  unfold residueSimplePole
-  refine Tendsto.limUnder_eq ?_
-  have h_sub : Tendsto (fun z => z - z₀) (𝓝[≠] z₀) (𝓝 0) := by
-    rw [← sub_self z₀]
-    exact tendsto_nhdsWithin_of_tendsto_nhds
-      (continuous_id.sub continuous_const).continuousAt.tendsto
-  have h_prod : Tendsto (fun z => (z - z₀) * g z) (𝓝[≠] z₀) (𝓝 0) := by
-    simpa using h_sub.mul (hg.continuousAt.tendsto.mono_left nhdsWithin_le_nhds)
-  have h_ev : ∀ᶠ z in 𝓝[≠] z₀, (z - z₀) * f z = c + (z - z₀) * g z := by
-    filter_upwards [hf_eq, self_mem_nhdsWithin] with z hz hne
-    rw [hz, mul_add, mul_div_cancel₀ _ (sub_ne_zero.mpr hne)]
-  refine (?_ : Tendsto _ _ (𝓝 c)).congr' (h_ev.mono fun _ hz => hz.symm)
-  simpa using (tendsto_const_nhds (x := c)).add h_prod
-
-/-- The contour integral `(2πi)⁻¹ ∮_{|z-z₀|=r} f(z)dz = c` for small `r`,
-when `f` has decomposition `c/(z-z₀) + g` with `g` analytic. -/
-private lemma residueAt_eq_of_simple_pole_decomp (f : ℂ → ℂ) (z₀ c : ℂ) (g : ℂ → ℂ)
-    (hg_analytic : AnalyticAt ℂ g z₀)
-    (hf_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    residueAt f z₀ = c := by
-  unfold residueAt
-  refine Tendsto.limUnder_eq ?_
-  obtain ⟨rg, hrg_pos, hg_ball⟩ := hg_analytic.exists_ball_analyticOnNhd
-  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hf_eq
-  obtain ⟨rf, hrf_pos, hrf_eq⟩ := hf_eq
-  refine tendsto_nhds_of_eventually_eq ?_
-  rw [eventually_nhdsWithin_iff]
-  filter_upwards [Iio_mem_nhds (lt_min hrg_pos hrf_pos)] with r hr_lt hr_pos
-  simp only [Set.mem_Ioi] at hr_pos
-  simp only [Set.mem_Iio] at hr_lt
-  have hr_lt_rg : r < rg := hr_lt.trans_le (min_le_left _ _)
-  have hr_lt_rf : r < rf := hr_lt.trans_le (min_le_right _ _)
-  have hr_ne : r ≠ 0 := hr_pos.ne'
-  have h_eq_on : Set.EqOn f (fun z => c * (z - z₀)⁻¹ + g z) (Metric.sphere z₀ r) := by
-    intro z hz
-    have h_ne : z ≠ z₀ := fun heq => by
-      rw [heq, Metric.mem_sphere, dist_self] at hz; linarith
-    have := hrf_eq ⟨Metric.mem_ball.mpr (Metric.mem_sphere.mp hz ▸ hr_lt_rf),
-      Set.mem_compl_singleton_iff.mpr h_ne⟩
-    simp only [Set.mem_setOf_eq] at this
-    rw [this, div_eq_mul_inv]
-  have h_g_cont : ContinuousOn g (Metric.closedBall z₀ r) :=
-    hg_ball.continuousOn.mono (Metric.closedBall_subset_ball hr_lt_rg)
-  have h_ci_g : CircleIntegrable g z₀ r :=
-    (h_g_cont.mono Metric.sphere_subset_closedBall).circleIntegrable hr_pos.le
-  have h_ci_inv : CircleIntegrable (fun z => (z - z₀)⁻¹) z₀ r :=
-    circleIntegrable_sub_inv_iff.mpr (Or.inr (by
-      rw [Metric.mem_sphere, dist_self, abs_of_pos hr_pos]; exact hr_ne.symm))
-  have h_ci_cinv : CircleIntegrable (fun z => c * (z - z₀)⁻¹) z₀ r :=
-    h_ci_inv.const_fun_smul
-  rw [show (∮ z in C(z₀, r), f z) =
-        c * (∮ z in C(z₀, r), (z - z₀)⁻¹) + (∮ z in C(z₀, r), g z) by
-      rw [circleIntegral.integral_congr hr_pos.le h_eq_on,
-        circleIntegral.integral_add h_ci_cinv h_ci_g,
-        circleIntegral.integral_const_mul],
-    circleIntegral.integral_sub_center_inv z₀ hr_ne,
-    circleIntegral_eq_zero_of_differentiable_on_off_countable hr_pos.le
-      Set.countable_empty h_g_cont
-      (fun z ⟨hz, _⟩ => (hg_ball z (Metric.ball_subset_ball hr_lt_rg.le hz)).differentiableAt),
-    add_zero]
-  have h2pi_ne : (2 : ℂ) * ↑Real.pi * I ≠ 0 :=
-    mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero)) I_ne_zero
-  field_simp
 
 end
