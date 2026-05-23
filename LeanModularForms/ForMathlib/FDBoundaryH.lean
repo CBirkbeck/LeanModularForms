@@ -31,18 +31,12 @@ noncomputable section
 /-- Height cutoff for the finite-height fundamental domain boundary. -/
 def heightCutoff : ℝ := Real.sqrt 3 / 2 + 1
 
-lemma one_lt_heightCutoff : 1 < heightCutoff := by
-  unfold heightCutoff
-  linarith [Real.sqrt_pos_of_pos (show (3 : ℝ) > 0 by norm_num)]
 
 lemma sqrt3_div2_lt_heightCutoff :
     Real.sqrt 3 / 2 < heightCutoff := by
   unfold heightCutoff
   linarith
 
-/-- Segment 1: right vertical from (1/2 + H·i) down to ρ+1. -/
-def fdBoundary_seg1 : ℝ → ℂ := fun t =>
-  1 / 2 + (heightCutoff - t * (heightCutoff - Real.sqrt 3 / 2)) * I
 
 /-- Segment 2: arc from ρ+1 to i (angle π/3 → π/2). -/
 def fdBoundary_seg2 : ℝ → ℂ := fun t =>
@@ -52,13 +46,7 @@ def fdBoundary_seg2 : ℝ → ℂ := fun t =>
 def fdBoundary_seg3 : ℝ → ℂ := fun t =>
   Complex.exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
 
-/-- Segment 4: left vertical from ρ up to (-1/2 + H·i). -/
-def fdBoundary_seg4 : ℝ → ℂ := fun t =>
-  -1 / 2 + (Real.sqrt 3 / 2 + (t - 3) * (heightCutoff - Real.sqrt 3 / 2)) * I
 
-/-- Segment 5: horizontal from (-1/2 + H·i) to (1/2 + H·i). -/
-def fdBoundary_seg5 : ℝ → ℂ := fun t =>
-  (t - 9 / 2) + heightCutoff * I
 
 /-- Boundary of the standard fundamental domain at fixed
 height `heightCutoff`, parameterized over [0, 5]. -/
@@ -91,18 +79,7 @@ lemma fdBoundary_at_zero :
     fdBoundary 0 = 1 / 2 + heightCutoff * I := by
   simp [fdBoundary]
 
-lemma fdBoundary_at_one :
-    fdBoundary 1 = ellipticPointRhoPlusOne := by
-  simp [fdBoundary, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', heightCutoff]
 
-lemma fdBoundary_at_two :
-    fdBoundary 2 = ellipticPointI := by
-  simp only [fdBoundary, show ¬(2 : ℝ) ≤ 1 by norm_num,
-    le_refl (2 : ℝ), ite_true, ite_false]
-  rw [show (↑Real.pi / 3 + (↑(2 : ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      ↑(Real.pi / 2) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-    Real.cos_pi_div_two, Real.sin_pi_div_two]
-  simp [ellipticPointI, ellipticPointI']
 
 lemma fdBoundary_at_three :
     fdBoundary 3 = ellipticPointRho := by
@@ -116,13 +93,6 @@ lemma fdBoundary_at_three :
   simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   ring
 
-lemma fdBoundary_at_four :
-    fdBoundary 4 = -1 / 2 + heightCutoff * I := by
-  simp only [fdBoundary, show ¬(4 : ℝ) ≤ 1 by norm_num,
-    show ¬(4 : ℝ) ≤ 2 by norm_num, show ¬(4 : ℝ) ≤ 3 by norm_num,
-    le_refl (4 : ℝ), ite_true, ite_false, heightCutoff]
-  push_cast
-  ring
 
 lemma fdBoundary_at_five :
     fdBoundary 5 = 1 / 2 + heightCutoff * I := by
@@ -193,14 +163,6 @@ lemma fdBoundary_H_at_one (H : ℝ) :
     fdBoundary_H H 1 = ellipticPointRhoPlusOne := by
   simp [fdBoundary_H, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne']
 
-lemma fdBoundary_H_at_two (H : ℝ) :
-    fdBoundary_H H 2 = ellipticPointI := by
-  simp only [fdBoundary_H, show ¬(2 : ℝ) ≤ 1 by norm_num,
-    le_refl (2 : ℝ), ite_true, ite_false]
-  rw [show (↑Real.pi / 3 + (↑(2 : ℝ) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      ↑(Real.pi / 2) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-    Real.cos_pi_div_two, Real.sin_pi_div_two]
-  simp [ellipticPointI, ellipticPointI']
 
 lemma fdBoundary_H_at_three (H : ℝ) :
     fdBoundary_H H 3 = ellipticPointRho := by
