@@ -5,7 +5,6 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.GeneralizedWindingNumber
 import LeanModularForms.ForMathlib.PoincareBridge
-import LeanModularForms.ForMathlib.CurveUtilities
 import LeanModularForms.ForMathlib.WindingArgDiff
 
 /-!
