@@ -22,11 +22,8 @@ holomorphic remainder.
 
 ## Main results
 
-* `principalPartSum_differentiableOn` — `principalPartSum S c` is differentiable on `(↑S)ᶜ`.
 * `sub_principalPartSum_analyticAt` — for a function with simple poles at every point of `S`
   whose coefficients match, `f - principalPartSum S c` is analytic at each `s ∈ S`.
-* `residue_principalPartSum` — the residue of the principal part sum at `s ∈ S` is `c s`.
-* `principalPartSum_meromorphicAt` — the principal part sum is meromorphic everywhere.
 
 ## Design note
 
@@ -56,12 +53,6 @@ theorem poleOrderAt_eq_one_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
     poleOrderAt f z₀ = 1 := by
   rw [poleOrderAt, dif_pos hf, hord]; rfl
 
-theorem poleOrderAt_eq_one_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) (hc : h.coeff ≠ 0) :
-    poleOrderAt f z₀ = 1 :=
-  poleOrderAt_eq_one_of_order_neg_one h.meromorphicAt
-    (meromorphicOrderAt_eq_neg_one_of_hasSimplePoleAt h hc)
-
 /-- Principal part sum for simple poles: `∑ s ∈ S, c(s) / (z - s)`.
 
 Given a finite set `S` of pole locations and a coefficient function `c : ℂ → ℂ`,
@@ -75,32 +66,6 @@ theorem differentiableAt_div_sub {s : ℂ} {c : ℂ} {z : ℂ} (hz : z ≠ s) :
     DifferentiableAt ℂ (fun w => c / (w - s)) z :=
   differentiableAt_const c |>.div (differentiableAt_id.sub (differentiableAt_const s))
     (sub_ne_zero.mpr hz)
-
-/-- A single term `c / (z - s)` is differentiable on `{s}ᶜ`. -/
-theorem differentiableOn_div_sub (s : ℂ) (c : ℂ) :
-    DifferentiableOn ℂ (fun z => c / (z - s)) {s}ᶜ :=
-  fun _z hz => (differentiableAt_div_sub (mem_compl_singleton_iff.mp hz)).differentiableWithinAt
-
-/-- The principal part sum `∑ s ∈ S, c(s) / (z - s)` is differentiable on `(↑S)ᶜ`. -/
-theorem principalPartSum_differentiableOn (S : Finset ℂ) (c : ℂ → ℂ) :
-    DifferentiableOn ℂ (principalPartSum S c) (↑S : Set ℂ)ᶜ := by
-  intro z hz
-  apply DifferentiableAt.differentiableWithinAt
-  apply DifferentiableAt.fun_sum
-  intro s hs
-  exact differentiableAt_div_sub (fun heq => hz (Finset.mem_coe.mpr (heq ▸ hs)))
-
-/-- If `f` has a simple pole at `z₀` with coefficient `c`, then `f(z) - c/(z - z₀)` extends
-analytically to `z₀`.
-
-This is the fundamental fact: the principal part captures exactly the singular behavior,
-so subtracting it leaves an analytic function. -/
-theorem sub_simplePole_analyticAt {f : ℂ → ℂ} {z₀ : ℂ} {c : ℂ} {g : ℂ → ℂ}
-    (hg : AnalyticAt ℂ g z₀)
-    (hev : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    ∃ h : ℂ → ℂ, AnalyticAt ℂ h z₀ ∧
-      ∀ᶠ z in 𝓝[≠] z₀, f z - c / (z - z₀) = h z :=
-  ⟨g, hg, hev.mono fun z hz => by rw [hz]; ring⟩
 
 private theorem principalPartSum_rest_analyticAt
     (S : Finset ℂ) (s : ℂ) (c : ℂ → ℂ) :
@@ -137,12 +102,6 @@ theorem sub_principalPartSum_analyticAt {f : ℂ → ℂ} {S : Finset ℂ} {c : 
   rw [principalPartSum_eq_term_add_rest hs c z, hf_eq, h_coeff]
   ring
 
-/-- The residue of `principalPartSum S c` at `s ∈ S` equals `c s`. -/
-theorem residue_principalPartSum {S : Finset ℂ} {c : ℂ → ℂ} {s : ℂ} (hs : s ∈ S) :
-    residue (principalPartSum S c) s = c s :=
-  residue_eq_of_simple_pole_decomp (principalPartSum_rest_analyticAt S s c)
-    (.of_forall fun z => principalPartSum_eq_term_add_rest hs c z)
-
 /-- The residue of `f` at a simple pole equals its coefficient. -/
 theorem residue_eq_coeff_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
     (h : HasSimplePoleAt f z₀) :
@@ -164,11 +123,5 @@ theorem principalPartSum_differentiableAt {S : Finset ℂ} {c : ℂ → ℂ} {z 
     (hz : z ∉ S) :
     DifferentiableAt ℂ (principalPartSum S c) z :=
   (principalPartSum_analyticAt hz).differentiableAt
-
-/-- The principal part sum is meromorphic at every point of `ℂ`. -/
-theorem principalPartSum_meromorphicAt (S : Finset ℂ) (c : ℂ → ℂ) (z : ℂ) :
-    MeromorphicAt (principalPartSum S c) z :=
-  MeromorphicAt.fun_sum fun _ _ =>
-    analyticAt_const.meromorphicAt.div (analyticAt_id.sub analyticAt_const).meromorphicAt
 
 end
