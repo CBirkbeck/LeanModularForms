@@ -61,12 +61,6 @@ theorem residue_eq_zero_of_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
   filter_upwards [Iio_mem_nhds hR_pos] with r hr_lt hr_pos
   rw [circleIntegral_eq_zero_of_analyticOnNhd_ball hr_pos hr_lt hR_an, mul_zero]
 
-/-- A function that is differentiable on a neighborhood of `z₀` has residue zero. -/
-theorem residue_eq_zero_of_eventually_differentiableAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (hf : ∀ᶠ z in 𝓝 z₀, DifferentiableAt ℂ f z) : residue f z₀ = 0 :=
-  residue_eq_zero_of_analyticAt
-    (Complex.analyticAt_iff_eventually_differentiableAt.mpr hf)
-
 /-- `f` agrees with `c * (z-z₀)⁻¹ + g` on any sphere contained in the punctured
 neighborhood where the decomposition holds. -/
 private lemma simple_pole_eqOn_sphere {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ → ℂ}
@@ -143,35 +137,5 @@ theorem residue_congr {f g : ℂ → ℂ} {z₀ : ℂ}
   have h_ne : z ≠ z₀ := fun heq => by
     rw [heq, mem_sphere, dist_self] at hz; linarith
   exact hε ⟨mem_ball.mpr (mem_sphere.mp hz ▸ hr_lt), mem_compl_singleton_iff.mpr h_ne⟩
-
-/-- The normalized circle integral of a continuous function tends to zero as `r → 0⁺`.
-Uses the bound `‖(2πi)⁻¹ · ∮ g‖ ≤ r · C` from
-`circleIntegral.norm_two_pi_i_inv_smul_integral_le_of_norm_le_const`. -/
-theorem norm_two_pi_i_inv_circleIntegral_tendsto_zero {g : ℂ → ℂ} {z₀ : ℂ}
-    (hg : ContinuousAt g z₀) :
-    Tendsto (fun r => (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(z₀, r), g z)
-      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  rw [Metric.tendsto_nhdsWithin_nhds]
-  intro δ hδ
-  rw [Metric.continuousAt_iff] at hg
-  obtain ⟨R, hR_pos, hR_bound⟩ := hg 1 one_pos
-  set M := ‖g z₀‖ + 1
-  have hM_pos : 0 < M := by positivity
-  have hδM : 0 < δ / M := div_pos hδ hM_pos
-  refine ⟨min R (δ / M), lt_min hR_pos hδM, fun r hr_pos hr_lt => ?_⟩
-  rw [Real.dist_eq, sub_zero, abs_of_pos hr_pos] at hr_lt
-  have hr_lt_R : r < R := hr_lt.trans_le (min_le_left _ _)
-  have hr_lt_δM : r < δ / M := hr_lt.trans_le (min_le_right _ _)
-  have h_bound : ∀ z ∈ sphere z₀ r, ‖g z‖ ≤ M := fun z hz => by
-    have h_near : ‖g z - g z₀‖ < 1 := by
-      rw [← dist_eq_norm]; exact hR_bound (by rw [mem_sphere.mp hz]; linarith)
-    change ‖g z‖ ≤ ‖g z₀‖ + 1
-    linarith [norm_le_norm_add_norm_sub (g z₀) (g z), norm_sub_rev (g z₀) (g z)]
-  rw [dist_eq_norm, sub_zero, ← smul_eq_mul]
-  calc ‖(2 * ↑Real.pi * I)⁻¹ • ∮ z in C(z₀, r), g z‖
-      ≤ r * M := circleIntegral.norm_two_pi_i_inv_smul_integral_le_of_norm_le_const
-        hr_pos.le h_bound
-    _ < (δ / M) * M := mul_lt_mul_of_pos_right hr_lt_δM hM_pos
-    _ = δ := div_mul_cancel₀ δ hM_pos.ne'
 
 end

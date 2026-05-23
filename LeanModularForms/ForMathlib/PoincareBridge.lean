@@ -95,19 +95,6 @@ If `f` is holomorphic on a convex open nonempty set `U` and `γ` is a piecewise 
 path whose image lies in `U`, then the contour integral of `f` along `γ` equals
 `F(y) - F(x)` for any primitive `F` of `f` on `U`.
 
-This version requires the integrability of the contour integrand as a hypothesis. -/
-theorem contourIntegral_eq_sub_of_differentiableOn_convex {f : ℂ → ℂ}
-    {U : Set ℂ} (γ : PiecewiseC1Path x y)
-    (hU : Convex ℝ U) (hUo : IsOpen U) (hUne : U.Nonempty)
-    (hf : DifferentiableOn ℂ f U)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (h_int : IntervalIntegrable
-      (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1) :
-    ∃ F : ℂ → ℂ, γ.contourIntegral f = F y - F x ∧
-      ∀ z ∈ U, HasDerivAt F (f z) z := by
-  obtain ⟨F, hF⟩ := hf.hasPrimitive_of_convex hU hUo hUne
-  exact ⟨F, contourIntegral_eq_sub_of_hasDerivAt γ hγ hF h_int, hF⟩
-
 end PiecewiseC1Path
 
 /-! ### Path-free formulation using `Complex.IsExactOn` -/
