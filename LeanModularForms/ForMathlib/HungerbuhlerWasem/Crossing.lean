@@ -199,25 +199,6 @@ theorem cpv_polarPart_at_pole_under_conditions_asymmetric
   exact HasCauchyPV.congr_pointwise h_sum
     fun z hz => (decomp.polarPart_eq s hs z hz).symm
 
-/-- Per-pole CPV at a transverse crossing: for a pole `s ∈ S` with Laurent decomposition
-recorded in `decomp`, given a `SingleCrossingData γ s` plus per-term CPV vanishing of the
-higher-order Laurent terms (which holds under condition (B) via T-SC-01), the polar
-part `decomp.polarPart s` has Cauchy principal value `2πi · w · residue f s` along `γ`
-at `s`. Derived from the asymmetric variant via `SingleCrossingData.toAsymmetric`. -/
-theorem cpv_polarPart_at_pole_under_conditions
-    {γ : PiecewiseC1Path x y} {s : ℂ} (D : SingleCrossingData γ s)
-    {f : ℂ → ℂ} {U : Set ℂ} {S : Finset ℂ} (hs : s ∈ S)
-    (decomp : PolarPartDecomposition f S U)
-    (h_higher : ∀ k : Fin (decomp.order s), k.val ≥ 1 →
-      HasCauchyPV (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γ s 0)
-    (h_term_int : ∀ k : Fin (decomp.order s), ∀ ε > 0, IntervalIntegrable
-      (fun t => cpvIntegrand (fun z => decomp.coeff s k / (z - s) ^ (k.val + 1))
-        γ.toPath.extend s ε t) volume 0 1) :
-    HasCauchyPV (decomp.polarPart s) γ s
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ s * residue f s) :=
-  cpv_polarPart_at_pole_under_conditions_asymmetric D.toAsymmetric hs decomp
-    h_higher h_term_int
-
 /-- Pointwise equality of `cpvIntegrandOn S f` with the cutoff integrand of
 the polar-part decomposition `analyticRemainder + ∑ polarPart s`. The cutoff
 zeroes both sides when `∃ s ∈ S, ‖γ(t) - s‖ ≤ ε`; otherwise `γ(t) ∈ U \ S`
@@ -552,38 +533,6 @@ theorem cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric
             rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]; exact h_angle k hk h_zero)
           (decomp.coeff s k))
   exact cpv_polarPart_at_pole_under_conditions_asymmetric D hs decomp h_higher h_term_int
-
-/-- **Single-point CPV at a crossed pole, using condition (B).**
-
-Given a `SingleCrossingData` for `γ` at the pole `s` (the residual oracle from
-`h_geometry`) plus condition (B) at the crossing parameter, produce the
-single-point CPV `HasCauchyPV (decomp.polarPart s) γ s value`. Derived from the
-asymmetric variant via `SingleCrossingData.toAsymmetric`. -/
-theorem cpv_polarPart_at_crossed_pole_hasCauchyPV
-    {U : Set ℂ} {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (decomp : PolarPartDecomposition f S U)
-    (s : ℂ) (hs : s ∈ S)
-    {t₀ : ℝ} (ht₀ : t₀ ∈ Set.Ioo (0 : ℝ) 1)
-    (h_at : γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s)
-    (h_unique : ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t = s → t = t₀)
-    (h_t₀_off_partition :
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition)
-    (D : SingleCrossingData γ.toPwC1Immersion.toPiecewiseC1Path s)
-    (n : ℕ) (h_flat : IsFlatOfOrder
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ n)
-    (hn1 : 1 ≤ n) (h_order_le_n : decomp.order s ≤ n)
-    (h_angle : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val → decomp.coeff s k ≠ 0 →
-      ∃ m : ℤ, ((k.val : ℝ)) * Real.pi = (m : ℝ) * (2 * Real.pi)) :
-    HasCauchyPV (decomp.polarPart s) γ.toPwC1Immersion.toPiecewiseC1Path s
-      (2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric hS_in_U γ h_null decomp s hs
-    ht₀ h_at h_unique h_t₀_off_partition D.toAsymmetric n h_flat hn1 h_order_le_n
-    h_angle
 
 /-- **Corner-friendly variant** of `cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric`
 (T-BR-Y10b). Drops `h_t₀_off_partition` in exchange for explicit one-sided
@@ -1061,49 +1010,6 @@ theorem cpv_polarPart_at_pole_from_conditions_asymmetric
     exact cpv_polarPart_at_uncrossed_pole hU_open hU_ne hS_in_U γ h_null decomp s hs
       h_crossed
 
-/-- **Per-pole CPV at any pole, paper-faithful form (T-BR-04).**
-
-For each pole `s ∈ S`, this theorem produces the per-pole CPV witness
-`HasCauchyPVOn S (decomp.polarPart s) γ.toPiecewiseC1Path value`, the input
-to the `h_polar_cpv` parameter of `residueTheorem_crossing_compositional`.
-Derived from the asymmetric variant via `SingleCrossingData.toAsymmetric`. -/
-theorem cpv_polarPart_at_pole_from_conditions
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (decomp : PolarPartDecomposition f S U)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => decomp.order s))
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (h_geometry : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition →
-      SingleCrossingData γ.toPwC1Immersion.toPiecewiseC1Path s)
-    (h_unique_cross : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t = s →
-      ∃ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s ∧
-        ∀ t' ∈ Icc (0 : ℝ) 1,
-          γ.toPwC1Immersion.toPiecewiseC1Path t' = s → t' = t₀)
-    (h_no_corner_crossings : ∀ s ∈ S, ∀ t₀ ∈ Set.Ioo (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition)
-    (h_avoid_others_per_pole : ∀ s ∈ S, ∀ s' ∈ S, s' ≠ s →
-      ∀ t ∈ Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s')
-    (s : ℂ) (hs : s ∈ S) :
-    HasCauchyPVOn S (decomp.polarPart s)
-      γ.toPwC1Immersion.toPiecewiseC1Path
-      (2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  cpv_polarPart_at_pole_from_conditions_asymmetric hU_open hU_ne hS_in_U hf γ
-    h_null decomp hCondA hCondB
-    (fun s hs t₀ ht₀ h_at₀ h_off => (h_geometry s hs t₀ ht₀ h_at₀ h_off).toAsymmetric)
-    h_unique_cross h_no_corner_crossings h_avoid_others_per_pole s hs
-
 /-- **Crossing scenario** for `γ` relative to a finite pole set `S`.
 
 The two constructors capture the natural cases:
@@ -1243,38 +1149,6 @@ The proof case-splits:
 This is the existence-only form of the multi-crossing CPV theorem,
 discharging the simple-pole case of the `h_multi_cpv` oracle in
 `residueTheorem_crossing_asymmetric_multiPole` (when `card ≤ 1`). -/
-theorem hasCauchyPV_inv_sub_multiCrossing_card_le_one
-    {γ : ClosedPwC1Immersion x} {s : ℂ}
-    (D : MultiPoleCrossData γ s)
-    (h_card_le_one : D.crossings.card ≤ 1)
-    (h_flat_at_each : ∀ t₀ ∈ D.crossings,
-      IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ 1) :
-    ∃ L : ℂ, HasCauchyPV (fun z => (z - s)⁻¹)
-      γ.toPwC1Immersion.toPiecewiseC1Path s L := by
-  classical
-  by_cases h_empty : D.crossings = ∅
-  · have h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s := D.avoids_of_crossings_empty h_empty
-    have h_norm_cont : ContinuousOn
-        (fun t => ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖)
-        (Set.Icc (0 : ℝ) 1) :=
-      ((γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousOn).sub
-        continuousOn_const).norm
-    obtain ⟨t_min, ht_min_mem, ht_min⟩ :=
-      isCompact_Icc.exists_isMinOn ⟨0, ⟨le_rfl, zero_le_one⟩⟩ h_norm_cont
-    refine ⟨_, hasCauchyPV_of_avoids (f := fun z => (z - s)⁻¹)
-      ⟨_, norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t_min ht_min_mem)), fun t ht => ht_min ht⟩⟩
-  · have h_nonempty : D.crossings.Nonempty := Finset.nonempty_iff_ne_empty.mpr h_empty
-    have h_card_eq_one : D.crossings.card = 1 := by
-      have := Finset.card_pos.mpr h_nonempty; omega
-    obtain ⟨t₀, ht₀_eq⟩ := Finset.card_eq_one.mp h_card_eq_one
-    have ht₀_mem : t₀ ∈ D.crossings := by rw [ht₀_eq]; exact Finset.mem_singleton_self _
-    refine hasCauchyPV_inv_sub_of_flat_one_full γ (D.h_Ioo t₀ ht₀_mem) (D.h_at t₀ ht₀_mem)
-      ?_ (h_flat_at_each t₀ ht₀_mem)
-    intro t ht h_eq
-    have h_mem := D.h_complete t ht h_eq
-    rw [ht₀_eq, Finset.mem_singleton] at h_mem
-    exact h_mem
 
 /-- **Multi-crossing scenario for `γ` relative to a finite pole set `S`**.
 
@@ -1381,32 +1255,6 @@ private theorem residueTheorem_crossing_asymmetric_multiPole
   exact MultiPoleDCT.hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
     hS_in_U decomp γ hs h_null (h_multi_cpv s hs h_ge_two)
 
-/-- **Convenience corollary**: when every pole has at most 1 crossing, the
-multi-pole CPV oracle is automatically discharged using existing single-
-crossing infrastructure. -/
-private theorem residueTheorem_crossing_asymmetric_multiPole_card_le_one
-    {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (h_null : IsNullHomologous γ.toPwC1Immersion U)
-    (hMero : ∀ s ∈ S, MeromorphicAt f s)
-    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
-    (hCondA : SatisfiesConditionA' γ.toPwC1Immersion f S
-      (fun s => (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf
-        (γ := γ.toPwC1Immersion) hMero hCondB).order s))
-    (scenario : MultiPoleCrossScenario γ S)
-    (h_card_le_one : ∀ (s : ℂ) (hs : s ∈ S),
-      (scenario.data s hs).crossings.card ≤ 1) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) := by
-  classical
-  exact residueTheorem_crossing_asymmetric_multiPole hU_open hU_ne hS_in_U hf γ
-    h_null hMero hCondB hCondA scenario
-    (fun s hs h_ge => absurd (h_card_le_one s hs) (by omega))
-
 /-- **Auto-derived multi-pole crossing scenario** (T-BR-Y7).
 
 Given a `ClosedPwC1Immersion γ` and a finite pole set `S` such that:
@@ -1449,41 +1297,6 @@ noncomputable def MultiPoleCrossScenario.ofImmersion
           let ht' := hfin.mem_toFinset.mp ht
           h_no_corner_crossings s hs t (h_to_Ioo t ht'.1 ht'.2) ht'.2
         h_complete := fun t ht h_eq => hfin.mem_toFinset.mpr ⟨ht, h_eq⟩ }
-
-/-- **Existence of a non-pole basepoint via measure-zero preimage.**
-
-For any `ClosedPwC1Immersion γ` and finite pole set `S`, the set of
-parameters `t ∈ Icc 0 1` with `γ(t) ∈ S` has Lebesgue measure zero (by
-`volume_preimage_finset_in_Icc01_zero`). Since `Ioo 0 1` has positive
-measure, there exists `τ ∈ Ioo 0 1` with `γ(τ) ∉ S`.
-
-This is the **first step** of the cyclic-shift construction in T-BR-Y8c:
-the shift parameter `τ` is chosen so that `γ_τ(0) = γ(τ) ∉ S`,
-unlocking the application of `_full_spec` to the shifted curve.
-
-The lemma is reusable for any task requiring a non-pole point along the
-contour. -/
-theorem exists_basepoint_shift_param
-    (γ : ClosedPwC1Immersion x) (S : Finset ℂ) :
-    ∃ τ ∈ Set.Ioo (0 : ℝ) 1, γ.toPwC1Immersion.toPiecewiseC1Path τ ∉
-      (↑S : Set ℂ) := by
-  classical
-  set badSet : Set ℝ := {t ∈ Set.Icc (0 : ℝ) 1 |
-    γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set ℂ)}
-  have h_bad_zero : MeasureTheory.volume badSet = 0 :=
-    volume_preimage_finset_in_Icc01_zero γ S
-  have h_Ioo_pos : 0 < MeasureTheory.volume (Set.Ioo (0 : ℝ) 1) := by
-    rw [Real.volume_Ioo]
-    simp
-  by_contra h_no
-  push Not at h_no
-  have h_subset : Set.Ioo (0 : ℝ) 1 ⊆ badSet := by
-    intro t ht
-    refine ⟨Set.Ioo_subset_Icc_self ht, h_no t ht⟩
-  have h_le : MeasureTheory.volume (Set.Ioo (0 : ℝ) 1) ≤
-      MeasureTheory.volume badSet := MeasureTheory.measure_mono h_subset
-  rw [h_bad_zero] at h_le
-  exact absurd h_le (not_le.mpr h_Ioo_pos)
 
 /-- **HW3.3 — `no_unique_constraint` form (T-BR-Y9).**
 
