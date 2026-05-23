@@ -31,11 +31,6 @@ noncomputable section
 /-- Height cutoff for the finite-height fundamental domain boundary. -/
 def heightCutoff : ℝ := Real.sqrt 3 / 2 + 1
 
-lemma sqrt3_div2_lt_heightCutoff :
-    Real.sqrt 3 / 2 < heightCutoff := by
-  unfold heightCutoff
-  linarith
-
 /-- Segment 2: arc from ρ+1 to i (angle π/3 → π/2). -/
 def fdBoundary_seg2 : ℝ → ℂ := fun t =>
   Complex.exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)
@@ -65,15 +60,8 @@ def fdBoundary : ℝ → ℂ := fun t =>
   else
     (t - 9 / 2) + heightCutoff * I
 
-/-- Interior partition points of fdBoundary. -/
-def fdPartition : Finset ℝ := {1, 2, 3, 4}
-
 /-- Full partition including endpoints. -/
 def fdBoundaryFullPartition : Finset ℝ := {0, 1, 2, 3, 4, 5}
-
-lemma fdBoundary_at_zero :
-    fdBoundary 0 = 1 / 2 + heightCutoff * I := by
-  simp [fdBoundary]
 
 lemma fdBoundary_at_three :
     fdBoundary 3 = ellipticPointRho := by
@@ -86,17 +74,6 @@ lemma fdBoundary_at_three :
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
   simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   ring
-
-lemma fdBoundary_at_five :
-    fdBoundary 5 = 1 / 2 + heightCutoff * I := by
-  simp only [fdBoundary, show ¬(5 : ℝ) ≤ 1 by norm_num,
-    show ¬(5 : ℝ) ≤ 2 by norm_num, show ¬(5 : ℝ) ≤ 3 by norm_num,
-    show ¬(5 : ℝ) ≤ 4 by norm_num, ite_false]
-  push_cast
-  ring
-
-lemma fdBoundary_closed : fdBoundary 0 = fdBoundary 5 := by
-  rw [fdBoundary_at_zero, fdBoundary_at_five]
 
 /-- Segment 1 at height H: right vertical from (1/2 + H·i) down
 to ρ+1. -/
@@ -142,11 +119,6 @@ def fdBoundary_H_partition : Finset ℝ := {1, 3, 4}
 
 /-- The q-expansion radius at height H: e^(-2πH). -/
 def seg5_q_radius_H (H : ℝ) : ℝ := Real.exp (-2 * Real.pi * H)
-
-theorem fdBoundary_eq_fdBoundary_H :
-    fdBoundary = fdBoundary_H heightCutoff := by
-  ext t
-  simp only [fdBoundary, fdBoundary_H, heightCutoff]
 
 lemma fdBoundary_H_at_zero (H : ℝ) :
     fdBoundary_H H 0 = 1 / 2 + H * I := by

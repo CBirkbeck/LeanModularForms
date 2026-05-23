@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import LeanModularForms.ForMathlib.ValenceFormula.WindingWeights.Common
-import LeanModularForms.ForMathlib.ContourIntegral.WindingNumber
 import LeanModularForms.ForMathlib.ContourIntegral.CrossingLimit
 
 /-!

@@ -106,39 +106,6 @@ private lemma measurableSet_multipoint_goodset {γ : ℝ → ℂ} {a b ε : ℝ}
   rw [h_eq]
   exact isClosed_Icc.measurableSet.diff (measurableSet_multipoint_condition S hγ)
 
-private lemma goodset_piecewise_ae_eq_multipoint {g : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ}
-    (S : Finset ℂ) :
-    (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then (0 : ℂ) else g (γ t) * deriv γ t)
-      =ᵐ[volume.restrict (Icc a b)]
-    ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b).piecewise
-      (fun t => g (γ t) * deriv γ t) (fun _ => 0) := by
-  filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
-  simp only [Set.piecewise, Set.mem_inter_iff, Set.mem_setOf_eq]
-  by_cases ht_good : (∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b
-  · have : ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by push Not; exact ht_good.1
-    rw [if_pos ht_good]; simp only [this, ↓reduceIte]
-  · have : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
-      by_contra h_not; push Not at h_not; exact ht_good ⟨h_not, ht⟩
-    rw [if_neg ht_good]; simp only [this, ↓reduceIte]
-
-private theorem aEStronglyMeasurable_pv_integrand_multipoint {g : ℂ → ℂ} {γ : ℝ → ℂ}
-    {a b ε : ℝ} {P : Finset ℝ} (S : Finset ℂ) (hg : ContinuousOn g (γ '' Icc a b))
-    (hγ : ContinuousOn γ (Icc a b)) (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :
-    AEStronglyMeasurable (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0
-      else g (γ t) * deriv γ t) (volume.restrict (Icc a b)) := by
-  have h_base_meas : AEStronglyMeasurable (fun t => g (γ t) * deriv γ t)
-      (volume.restrict (Icc a b)) :=
-    ((hg.comp hγ fun _ => Set.mem_image_of_mem _).aestronglyMeasurable
-      isClosed_Icc.measurableSet).mul
-      (aEStronglyMeasurable_of_continuousOn_off_finite hγ'_off_P)
-  have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
-      (volume.restrict ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b)ᶜ) :=
-    aestronglyMeasurable_const
-  exact ((AEStronglyMeasurable.piecewise (measurableSet_multipoint_goodset S hγ)
-    (h_base_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
-    h_zero_meas).mono_measure Measure.restrict_le_self).congr
-    (goodset_piecewise_ae_eq_multipoint S).symm
-
 private lemma aEStronglyMeasurable_residueProd_on_goodset {γ : ℝ → ℂ} {a b ε : ℝ}
     {P : Finset ℝ} {s c : ℂ} (hε : 0 < ε) (hγ : ContinuousOn γ (Icc a b))
     (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :
@@ -311,35 +278,6 @@ private lemma piecewiseC1Immersion_deriv_continuousOn_off_partition (γ : Piecew
         γ.toPiecewiseC1Curve.endpoints_in_partition.2) ht_notP
     · exact absurd (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1) ht_notP
 
-/-- Multi-point PV integrand is interval integrable. -/
-lemma intervalIntegrable_cauchyPrincipalValueIntegrandOn {S0 : Finset ℂ} {f : ℂ → ℂ}
-    {γ : PiecewiseC1Immersion} {ε : ℝ} (_hε : 0 < ε)
-    (hf_cont : ContinuousOn f (γ.toFun '' Icc γ.a γ.b)) :
-    IntervalIntegrable (cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε) volume γ.a γ.b := by
-  have hγ_cont := γ.toPiecewiseC1Curve.continuous_toFun
-  obtain ⟨Mf, hMf⟩ := continuousOn_image_bounded hγ_cont hf_cont
-  obtain ⟨Mγ', hMγ'⟩ := piecewiseC1Immersion_deriv_bounded γ
-  have h_bound : ∀ t ∈ Icc γ.a γ.b,
-      ‖cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t‖ ≤ |Mf| * |Mγ'| + 1 := by
-    intro t ht
-    simp only [cauchyPrincipalValueIntegrandOn]
-    split_ifs with h
-    · simp only [norm_zero]; positivity
-    · calc ‖f (γ.toFun t) * deriv γ.toFun t‖
-          = ‖f (γ.toFun t)‖ * ‖deriv γ.toFun t‖ := norm_mul _ _
-        _ ≤ |Mf| * |Mγ'| := mul_le_mul
-              ((hMf _ (Set.mem_image_of_mem _ ht)).trans (le_abs_self _))
-              ((hMγ' t ht).trans (le_abs_self _)) (norm_nonneg _) (by positivity)
-        _ ≤ |Mf| * |Mγ'| + 1 := by linarith
-  let M := |Mf| * |Mγ'| + 1
-  have h_meas : AEStronglyMeasurable
-      (cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε)
-      (volume.restrict (Icc γ.a γ.b)) :=
-    aEStronglyMeasurable_pv_integrand_multipoint S0 hf_cont hγ_cont
-      (piecewiseC1Immersion_deriv_continuousOn_off_partition γ)
-  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le γ.hab.le]
-  exact (integrableOn_of_bounded_aeMeasurable M h_meas h_bound).mono_set Ioc_subset_Icc_self
-
 /-- Residue term integrand is interval integrable. -/
 lemma intervalIntegrable_residueTerm {γ : PiecewiseC1Immersion} {s c : ℂ} {ε : ℝ}
     (hε : 0 < ε) :
@@ -382,33 +320,5 @@ lemma aEStronglyMeasurable_pv_sum_residue (S : Finset ℂ) (f : ℂ → ℂ) (γ
       (s := x) (c := residueSimplePole f x) hε hγ_cont hγ'_off_P) ih).congr ?_
     refine ae_of_all _ (fun t => ?_)
     simp only [Pi.add_apply, Finset.sum_insert hx]
-
-lemma aEStronglyMeasurable_multipointPV_diff (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
-    (ε : ℝ) (hε : 0 < ε) (a b : ℝ) {P : Finset ℝ}
-    (hf_cont : ContinuousOn f (γ '' Set.uIcc a b))
-    (hγ_cont : ContinuousOn γ (Set.uIcc a b))
-    (hγ'_off_P : ContinuousOn (deriv γ) (Set.uIcc a b \ P)) :
-    AEStronglyMeasurable
-      (fun t => cauchyPrincipalValueIntegrandOn S0 f γ ε t -
-        ∑ s ∈ S0, if ‖γ t - s‖ > ε
-          then residueSimplePole f s / (γ t - s) * deriv γ t else 0)
-      (volume.restrict (Ι a b)) := by
-  have aux : ∀ {x y : ℝ}, x ≤ y → ContinuousOn f (γ '' Icc x y) →
-      ContinuousOn γ (Icc x y) → ContinuousOn (deriv γ) (Icc x y \ P) →
-      Ι a b ⊆ Icc x y →
-      AEStronglyMeasurable
-        (fun t => cauchyPrincipalValueIntegrandOn S0 f γ ε t -
-          ∑ s ∈ S0, if ‖γ t - s‖ > ε
-            then residueSimplePole f s / (γ t - s) * deriv γ t else 0)
-        (volume.restrict (Ι a b)) := fun _ hfc hγc hγ'c hsub =>
-    ((aEStronglyMeasurable_pv_integrand_multipoint (ε := ε) S0 hfc hγc hγ'c).sub
-      (aEStronglyMeasurable_pv_sum_residue S0 f γ ε hε _ _ hγc hγ'c)).mono_measure
-      (Measure.restrict_mono hsub le_rfl)
-  rcases le_or_gt a b with hab | hab
-  · rw [Set.uIcc_of_le hab] at hf_cont hγ_cont hγ'_off_P
-    exact aux hab hf_cont hγ_cont hγ'_off_P (Set.uIoc_of_le hab ▸ Set.Ioc_subset_Icc_self)
-  · rw [Set.uIcc_of_ge hab.le] at hf_cont hγ_cont hγ'_off_P
-    exact aux hab.le hf_cont hγ_cont hγ'_off_P
-      (Set.uIoc_comm a b ▸ Set.uIoc_of_le hab.le ▸ Set.Ioc_subset_Icc_self)
 
 end
