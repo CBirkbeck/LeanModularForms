@@ -450,19 +450,6 @@ lemma cauchyPrincipalValueIntegrandOn_empty
   push Not
   exact fun s hs => absurd hs (Finset.notMem_empty s)
 
-lemma cauchyPrincipalValueIntegrandOn_singleton
-    (f : ℂ → ℂ) (γ : ℝ → ℂ) (z₀ : ℂ) (ε : ℝ) (t : ℝ) :
-    cauchyPrincipalValueIntegrandOn {z₀} f γ ε t =
-      if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0 := by
-  unfold cauchyPrincipalValueIntegrandOn
-  by_cases h : ‖γ t - z₀‖ ≤ ε
-  · rw [if_pos ⟨z₀, Finset.mem_singleton_self z₀, h⟩, if_neg (not_lt.mpr h)]
-  · push Not at h
-    rw [if_neg, if_pos h]
-    push Not
-    intro s hs
-    simp only [Finset.mem_singleton] at hs
-    rw [hs]; linarith
 
 lemma cauchyPrincipalValueOn_empty
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :

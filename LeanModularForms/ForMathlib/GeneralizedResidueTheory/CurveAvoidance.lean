@@ -34,10 +34,6 @@ def CurveAvoids (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : Prop :=
 noncomputable def curveInfDist (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℝ :=
   Metric.infDist z₀ (γ '' Icc a b)
 
-/-- Trivial wrapper: CurveAvoids follows from pointwise inequality. -/
-theorem curveAvoids_of_ne_on_Icc {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (h : ∀ t ∈ Icc a b, γ t ≠ z₀) : CurveAvoids γ a b z₀ :=
-  h
 
 /-- If every point on the curve has imaginary part strictly greater than `z₀.im`,
 then the curve avoids `z₀`. -/
@@ -45,17 +41,7 @@ theorem curveAvoids_of_im_lt {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
     (h : ∀ t ∈ Icc a b, z₀.im < (γ t).im) : CurveAvoids γ a b z₀ :=
   fun t ht heq => (h t ht).ne (heq ▸ rfl)
 
-/-- If every point on the curve has real part different from `z₀.re`,
-then the curve avoids `z₀`. -/
-theorem curveAvoids_of_re_ne {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (h : ∀ t ∈ Icc a b, (γ t).re ≠ z₀.re) : CurveAvoids γ a b z₀ :=
-  fun t ht heq => h t ht (by rw [heq])
 
-/-- If every point on the curve has norm different from `‖z₀‖`, then the curve avoids `z₀`.
-Useful for curves on circles. -/
-theorem curveAvoids_of_norm_ne {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (h : ∀ t ∈ Icc a b, ‖γ t‖ ≠ ‖z₀‖) : CurveAvoids γ a b z₀ :=
-  fun t ht heq => h t ht (by rw [heq])
 
 /-- If a continuous curve on `[a, b]` with `a ≤ b` avoids `z₀`, then the infimum
 distance from `z₀` to the curve image is positive. -/

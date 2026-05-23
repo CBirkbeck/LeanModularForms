@@ -50,22 +50,9 @@ def orthogonalProjectionComplex (w L : ℂ) : ℂ :=
 def tangentDeviation (w L : ℂ) : ℂ :=
   w - orthogonalProjectionComplex w L
 
-theorem orthogonalProjectionComplex_zero_left (L : ℂ) :
-    orthogonalProjectionComplex 0 L = 0 := by
-  simp [orthogonalProjectionComplex]
 
-theorem tangentDeviation_zero_left (L : ℂ) :
-    tangentDeviation 0 L = 0 := by
-  simp [tangentDeviation, orthogonalProjectionComplex]
 
-theorem tangentDeviation_zero_right (w : ℂ) :
-    tangentDeviation w 0 = w := by
-  simp [tangentDeviation, orthogonalProjectionComplex]
 
-/-- Projection onto a nonzero direction `L` gives a real multiple of `L`. -/
-theorem orthogonalProjectionComplex_smul (w L : ℂ) :
-    ∃ c : ℝ, orthogonalProjectionComplex w L = c • L :=
-  ⟨(w * starRingEnd ℂ L).re / Complex.normSq L, rfl⟩
 
 /-- Projection of a real scalar multiple of `L` onto `L` is itself. -/
 theorem orthogonalProjectionComplex_real_smul_self (c : ℝ) (L : ℂ) (hL : L ≠ 0) :
@@ -163,18 +150,6 @@ private theorem tangentDeviation_isLittleO_one_of_continuousAt
     _ < 2 * (ε / 2) := by linarith
     _ = ε := by ring
 
-/-- Flatness of order 0 is trivially satisfied: the tangent deviation is bounded
-by `2 * ‖γ(t) - γ(t₀)‖`, which is `O(‖γ(t) - γ(t₀)‖⁰) = O(1)` times something
-that tends to 0. More precisely, it is `o(1)` because `γ` is continuous. -/
-theorem isFlatOfOrder_zero (γ : ℝ → ℂ) (t₀ : ℝ)
-    (hγ_cont : ContinuousAt γ t₀) :
-    IsFlatOfOrder γ t₀ 0 where
-  right_flat L hL _ := by
-    simpa only [pow_zero] using
-      tangentDeviation_isLittleO_one_of_continuousAt hγ_cont nhdsWithin_le_nhds L hL
-  left_flat L hL _ := by
-    simpa only [pow_zero] using
-      tangentDeviation_isLittleO_one_of_continuousAt hγ_cont nhdsWithin_le_nhds L hL
 
 /-- Flatness of order 1 from a derivative limit on either side, packaged as a
 common helper for the left and right variants. The set `u` is the open ray
@@ -340,13 +315,5 @@ theorem conditions_automatic_simple_poles
   ⟨satisfiesConditionA'_of_simplePoles γ f S0 hSimplePoles,
    satisfiesConditionB_of_simplePoles γ f S0 hSimplePoles hAngles⟩
 
-/-- Condition (A') with pole order `p` is implied by condition (A') with any
-larger pole order `q ≥ p`, provided `γ` is continuous. -/
-theorem SatisfiesConditionA'.of_le_poleOrder
-    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
-    {p q : ℂ → ℕ} (hpq : ∀ s ∈ S0, p s ≤ q s)
-    (hA : SatisfiesConditionA' γ f S0 q) :
-    SatisfiesConditionA' γ f S0 p := fun s hs t₀ ht₀ hcross ht₀_Ioo =>
-  (hA s hs t₀ ht₀ hcross ht₀_Ioo).of_le (hpq s hs) γ.continuous.continuousAt
 
 end

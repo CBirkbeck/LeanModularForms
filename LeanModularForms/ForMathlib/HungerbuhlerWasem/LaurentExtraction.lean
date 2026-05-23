@@ -53,9 +53,6 @@ with `γ(t₀) = s` if any exists, or `0` (default) otherwise. -/
 noncomputable def crossingParam (γ : PwC1Immersion x x) (s : ℂ) : ℝ :=
   open Classical in if h : IsCrossed γ s then Classical.choose h else 0
 
-theorem crossingParam_mem_Ioo {γ : PwC1Immersion x x} {s : ℂ} (h : IsCrossed γ s) :
-    crossingParam γ s ∈ Set.Ioo (0 : ℝ) 1 := by
-  simpa [crossingParam, h] using (Classical.choose_spec h).1
 
 theorem γ_at_crossingParam {γ : PwC1Immersion x x} {s : ℂ} (h : IsCrossed γ s) :
     (γ : ℝ → ℂ) (crossingParam γ s) = s := by

@@ -561,19 +561,5 @@ theorem cpv_exists_inv_sub (γ : PiecewiseC1Immersion) (z₀ : ℂ)
   exact cpv_exists_on_subinterval γ z₀ hγ_meas h_fin.toFinset.card
     γ.a γ.b γ.hab.le le_rfl h_no_endpt h_fin le_rfl hC2 h_cont_deriv_cross
 
-/-- CPV of `(z - z₀)⁻¹` exists along a piecewise C¹ immersion, for the
-common case where the curve is globally C² and measurable.
-
-This is a simplified version of the general theorem where C² regularity
-holds everywhere (not just at crossings), which is the typical case for
-smooth curves like the fundamental domain boundary. -/
-theorem cpv_exists_inv_sub_of_C2 (γ : PiecewiseC1Immersion) (z₀ : ℂ)
-    (hγ_meas : Measurable γ.toFun) (h_no_endpt : γ.toFun γ.a ≠ z₀ ∧ γ.toFun γ.b ≠ z₀)
-    (hC2 : ∀ t ∈ Icc γ.a γ.b, ContDiffAt ℝ 2 γ.toFun t)
-    (h_cont_deriv : ContinuousOn (deriv γ.toFun) (Icc γ.a γ.b)) :
-    CauchyPrincipalValueExists' (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ :=
-  cpv_exists_inv_sub γ z₀ hγ_meas h_no_endpt
-    (fun t ht _ => hC2 t (Ioo_subset_Icc_self ht))
-    (fun _ ht _ => ⟨γ.a, γ.b, ht, le_rfl, h_cont_deriv⟩)
 
 end

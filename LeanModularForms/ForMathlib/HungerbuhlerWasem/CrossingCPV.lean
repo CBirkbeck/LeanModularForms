@@ -112,15 +112,6 @@ theorem cpv_simplePole_at_crossing
       (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) :=
   D.hasCauchyPV_simplePole_eq_two_pi_I_mul c
 
-/-- **`HasCauchyPVOn {s}` form of T-CC-01.** Given a `SingleCrossingData γ s`,
-the multi-point CPV on the singleton `{s}` of `c / (z - s)` exists with value
-`2πi · w · c`. This is the form expected for composition into multi-pole CPVs
-via `HasCauchyPVOn.add` and friends. -/
-theorem cpv_simplePole_at_crossing_singleton
-    {γ : PiecewiseC1Path x y} {s : ℂ} (D : SingleCrossingData γ s) (c : ℂ) :
-    HasCauchyPVOn {s} (fun z => c / (z - s)) γ
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) :=
-  HasCauchyPV.to_singletonOn (cpv_simplePole_at_crossing D c)
 
 /-- **Asymmetric variant of T-CC-01.** Given an `AsymmetricSingleCrossingData γ s`
 (separate left/right cutoffs), the simple-pole contribution `c / (z − s)` has a
@@ -134,15 +125,6 @@ theorem cpv_simplePole_at_crossing_asymmetric
       (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) :=
   D.hasCauchyPV_simplePole_eq_two_pi_I_mul c
 
-/-- **`HasCauchyPVOn {s}` form of the asymmetric variant of T-CC-01.** Given an
-`AsymmetricSingleCrossingData γ s`, the multi-point CPV on the singleton `{s}`
-of `c / (z - s)` exists with value `2πi · w · c`. -/
-theorem cpv_simplePole_at_crossing_singleton_asymmetric
-    {γ : PiecewiseC1Path x y} {s : ℂ} (D : AsymmetricSingleCrossingData γ s)
-    (c : ℂ) :
-    HasCauchyPVOn {s} (fun z => c / (z - s)) γ
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) :=
-  HasCauchyPV.to_singletonOn (cpv_simplePole_at_crossing_asymmetric D c)
 
 end HungerbuhlerWasem
 

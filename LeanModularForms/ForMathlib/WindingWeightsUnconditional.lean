@@ -41,9 +41,6 @@ slightly larger. The near bound via `arcDelta` is used in the `ArcFTCHyp`
 construction. -/
 def arcDelta (ε : ℝ) : ℝ := 6 * ε / (5 * Real.pi)
 
-theorem arcDelta_pos {ε : ℝ} (hε : 0 < ε) : 0 < arcDelta ε := by
-  unfold arcDelta
-  positivity
 
 theorem arcDelta_lt_one_fifth {ε : ℝ} (hε_lt : ε < 1/2) :
     arcDelta ε < 1/5 := by
@@ -58,32 +55,6 @@ theorem half_angle_factor (ε : ℝ) :
   field_simp
   ring
 
-/-- On the unit circle arc, when `|t - 2/5| ≤ arcDelta ε`, the distance to `i`
-is at most `ε`. Uses `|sin x| ≤ |x|` and the half-angle distance formula. -/
-theorem arc_near_at_I (H : ℝ) {ε : ℝ} (hε_lt : ε < 1/2)
-    {t : ℝ} (ht : |t - 2/5| ≤ arcDelta ε) :
-    ‖fdBoundaryFun H t - I‖ ≤ ε := by
-  have hpi := Real.pi_pos
-  have hpi3 := Real.pi_gt_three
-  have hδ := arcDelta_lt_one_fifth hε_lt
-  have hle := abs_le.mp (le_trans ht hδ.le)
-  have hle' := abs_le.mp ht
-  rw [fdBoundaryFun_arc_dist_I H t (by nlinarith [hle'.1, hδ]) (by linarith [hle.2]),
-    show (fdArcAngle t - Real.pi / 2) / 2 = 5 * (t - 2/5) * Real.pi / 12 from by
-      simp only [fdArcAngle]
-      ring]
-  set α := 5 * (t - 2/5) * Real.pi / 12
-  have hα_abs : |α| = 5 * Real.pi / 12 * |t - 2/5| := by
-    rw [show α = 5 * Real.pi / 12 * (t - 2/5) from by ring, abs_mul, abs_of_pos (by positivity)]
-  have hα_bound : |α| ≤ ε / 2 := by
-    rw [hα_abs]
-    calc 5 * Real.pi / 12 * |t - 2/5| ≤ 5 * Real.pi / 12 * arcDelta ε := by gcongr
-      _ = ε / 2 := half_angle_factor ε
-  calc 2 * |Real.sin α|
-      ≤ 2 * |α| := by
-        apply mul_le_mul_of_nonneg_left Real.abs_sin_le_abs (by norm_num)
-    _ ≤ 2 * (ε / 2) := by linarith
-    _ = ε := by ring
 
 /-- Winding number at `i` is `-1/2` from `SingleCrossingData` with limit `-(πi)`. -/
 theorem hasWindingNumber_atI_of_scd

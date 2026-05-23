@@ -61,12 +61,7 @@ theorem lineCurve_neg (r : ℝ) (α : ℝ) (t : ℝ) :
     lineCurve r α (-t) = -lineCurve r α t := by
   simp [lineCurve, mul_neg]
 
-theorem lineCurve_ne_zero (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) (ht : t ≠ 0) :
-    lineCurve r α t ≠ 0 :=
-  mul_ne_zero (Complex.ofReal_ne_zero.mpr (mul_ne_zero hr.ne' ht)) (exp_ne_zero _)
 
-theorem lineCurve_continuous (r : ℝ) (α : ℝ) : Continuous (lineCurve r α) := by
-  unfold lineCurve; fun_prop
 
 theorem lineCurve_hasDerivAt (r : ℝ) (α : ℝ) (t : ℝ) :
     HasDerivAt (lineCurve r α) (↑r * exp (↑α * I)) t := by
@@ -78,9 +73,6 @@ theorem lineCurve_deriv (r : ℝ) (α : ℝ) (t : ℝ) :
     deriv (lineCurve r α) t = ↑r * exp (↑α * I) :=
   (lineCurve_hasDerivAt r α t).deriv
 
-theorem lineCurve_deriv_const (r : ℝ) (α : ℝ) :
-    deriv (lineCurve r α) = fun _ => ↑r * exp (↑α * I) :=
-  funext (lineCurve_deriv r α)
 
 /-! ### Integrand computation -/
 

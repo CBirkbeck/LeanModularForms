@@ -228,35 +228,8 @@ noncomputable def concat {a b c : ℝ} {x y z : E}
         (concatFun_eventuallyEq_right hgt).deriv
       exact hderiv.congr_of_eventuallyEq heq
 
-/-- On the left half `[a, b]`, the concatenation agrees with the first path. -/
-theorem concat_apply_of_le {a b c : ℝ} {x y z : E}
-    (hab : a < b) (hbc : b < c)
-    (γ₁ : PiecewiseC1PathOn a b hab x y) (γ₂ : PiecewiseC1PathOn b c hbc y z)
-    {t : ℝ} (ht : t ≤ b) :
-    (γ₁.concat hab hbc γ₂).toFun t = γ₁.toFun t :=
-  concatFun_of_le ht
 
-/-- On the right half `(b, c]`, the concatenation agrees with the second path. -/
-theorem concat_apply_of_lt {a b c : ℝ} {x y z : E}
-    (hab : a < b) (hbc : b < c)
-    (γ₁ : PiecewiseC1PathOn a b hab x y) (γ₂ : PiecewiseC1PathOn b c hbc y z)
-    {t : ℝ} (ht : b < t) :
-    (γ₁.concat hab hbc γ₂).toFun t = γ₂.toFun t :=
-  concatFun_of_lt ht
 
-/-- The five-fold concatenation of adjacent piecewise C¹ paths, used to assemble
-boundary curves built from five smooth segments. -/
-noncomputable def concat₅ {a₀ a₁ a₂ a₃ a₄ a₅ : ℝ} {x₀ x₁ x₂ x₃ x₄ x₅ : E}
-    (h₀₁ : a₀ < a₁) (h₁₂ : a₁ < a₂) (h₂₃ : a₂ < a₃) (h₃₄ : a₃ < a₄) (h₄₅ : a₄ < a₅)
-    (γ₀ : PiecewiseC1PathOn a₀ a₁ h₀₁ x₀ x₁)
-    (γ₁ : PiecewiseC1PathOn a₁ a₂ h₁₂ x₁ x₂)
-    (γ₂ : PiecewiseC1PathOn a₂ a₃ h₂₃ x₂ x₃)
-    (γ₃ : PiecewiseC1PathOn a₃ a₄ h₃₄ x₃ x₄)
-    (γ₄ : PiecewiseC1PathOn a₄ a₅ h₄₅ x₄ x₅) :
-    PiecewiseC1PathOn a₀ a₅ (h₀₁.trans (h₁₂.trans (h₂₃.trans (h₃₄.trans h₄₅)))) x₀ x₅ :=
-  (γ₀.concat h₀₁ h₁₂ γ₁ |>.concat (h₀₁.trans h₁₂) h₂₃ γ₂
-    |>.concat (h₀₁.trans (h₁₂.trans h₂₃)) h₃₄ γ₃
-    |>.concat (h₀₁.trans (h₁₂.trans (h₂₃.trans h₃₄))) h₄₅ γ₄)
 
 end PiecewiseC1PathOn
 

@@ -92,20 +92,6 @@ private theorem aEStronglyMeasurable_pv_integrand {f : ℂ → ℂ} {γ : ℝ �
   by_cases ht_S : ε < ‖γ t - z₀‖ <;>
     simp [Set.piecewise, hS, ht, ht_S]
 
-/-- The Cauchy principal value integrand is interval-integrable on `[a, b]`. -/
-theorem cauchyPrincipalValueIntegrand_integrable (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (ε : ℝ) (hε : 0 < ε) (hab : a < b)
-    (hf_cont : ContinuousOn f (γ '' Icc a b \ Metric.ball z₀ ε))
-    (hγ_cont : ContinuousOn γ (Icc a b)) (hγ'_cont : ContinuousOn (deriv γ) (Icc a b)) :
-    IntervalIntegrable (cauchyPrincipalValueIntegrand' f γ z₀ ε) volume a b := by
-  obtain ⟨M, hM⟩ :=
-    cauchyPrincipalValueIntegrand_bounded f γ a b z₀ ε hε hf_cont hγ_cont hγ'_cont
-  rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hab.le]
-  refine (IntegrableOn.of_bound measure_Icc_lt_top
-    (aEStronglyMeasurable_pv_integrand hf_cont hγ_cont hγ'_cont) (max M 0) ?_).mono_set
-    Ioc_subset_Icc_self
-  filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with x hx
-  exact (hM x hx).trans (le_max_left M 0)
 
 /-- Dominated convergence for principal value integrals. -/
 theorem cauchyPrincipalValue_of_dominated (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
@@ -157,58 +143,7 @@ private theorem pv_uniform_bound_of_continuous_aux (g : ℂ → ℂ) (γ : ℝ �
   · simp only [norm_zero]
     linarith [mul_nonneg hMg_nn hMγ_nn]
 
-/-- PV exists for continuous integrands on C¹ curves. -/
-theorem cauchyPrincipalValueExists_of_continuous (g : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
-    (hab : a < b) (hg : ContinuousOn g (γ '' Icc a b)) (hγ : ContinuousOn γ (Icc a b))
-    (hγ' : ContinuousOn (deriv γ) (Icc a b)) : CauchyPrincipalValueExists' g γ a b z₀ := by
-  obtain ⟨M, hM_pos, h_bound⟩ :=
-    pv_uniform_bound_of_continuous_aux g γ a b z₀ hab hg hγ hγ'
-  refine cauchyPrincipalValue_of_dominated g γ a b z₀ hab M hM_pos h_bound ?_ ?_
-  · refine Eventually.of_forall fun t => ?_
-    by_cases h : γ t = z₀
-    · exact ⟨0, Tendsto.congr' (Filter.eventuallyEq_iff_exists_mem.mpr
-        ⟨Ioi 0, self_mem_nhdsWithin, fun ε hε => by
-          simp [cauchyPrincipalValueIntegrand', h, not_lt.mpr (mem_Ioi.mp hε).le]⟩)
-        tendsto_const_nhds⟩
-    · exact ⟨g (γ t) * deriv γ t, Tendsto.congr' (Filter.eventuallyEq_iff_exists_mem.mpr
-        ⟨Ioo 0 ‖γ t - z₀‖, Ioo_mem_nhdsGT (norm_pos_iff.mpr (sub_ne_zero.mpr h)),
-          fun ε hε => by simp [cauchyPrincipalValueIntegrand', hε.2]⟩)
-        tendsto_const_nhds⟩
-  · filter_upwards [self_mem_nhdsWithin] with ε _
-    exact (aEStronglyMeasurable_pv_integrand (hg.mono diff_subset) hγ hγ').mono_measure
-      (Measure.restrict_mono (by rw [uIoc_of_le hab.le]; exact Ioc_subset_Icc_self) le_rfl)
 
-/-- PV exists for singular 1/(z-z₀) integrands on C¹ immersions. -/
-theorem cauchyPrincipalValueExists_of_singular_inv (γ : PiecewiseC1Immersion) (z₀ : ℂ)
-    (h_crossing_cauchy : (∃ t ∈ Icc γ.a γ.b, γ.toFun t = z₀) →
-      Cauchy (Filter.map (fun ε => ∫ t in γ.a..γ.b,
-        if ε < ‖γ.toFun t - z₀‖ then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0)
-        (𝓝[>] 0))) :
-    CauchyPrincipalValueExists' (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ := by
-  by_cases h_cross : ∃ t ∈ Icc γ.a γ.b, γ.toFun t = z₀
-  · exact CompleteSpace.complete (h_crossing_cauchy h_cross)
-  · push Not at h_cross
-    have h_cont : ContinuousOn (fun t => ‖γ.toFun t - z₀‖) (Icc γ.a γ.b) :=
-      (γ.continuous_toFun.sub continuousOn_const).norm
-    obtain ⟨t₀, ht₀, ht₀_min⟩ :=
-      isCompact_Icc.exists_isMinOn ⟨γ.a, left_mem_Icc.mpr γ.hab.le⟩ h_cont
-    have hδ : 0 < ‖γ.toFun t₀ - z₀‖ :=
-      norm_pos_iff.mpr (sub_ne_zero.mpr (h_cross t₀ ht₀))
-    refine ⟨∫ t in γ.a..γ.b, (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t,
-      tendsto_const_nhds.congr' ?_⟩
-    filter_upwards [Ioo_mem_nhdsGT hδ] with ε hε
-    refine (intervalIntegral.integral_congr fun t ht => ?_).symm
-    rw [uIcc_of_le γ.hab.le] at ht
-    simp only [show ε < ‖γ.toFun t - z₀‖ from
-      hε.2.trans_le (Filter.eventually_principal.mp ht₀_min t ht), ite_true]
 
-/-- Uniform avoidance on compact sets. -/
-theorem uniform_avoidance_on_compact (γ : ℝ → ℂ) (K : Set ℝ) (z₀ : ℂ) (hK_compact : IsCompact K)
-    (hK_nonempty : K.Nonempty) (hγ_cont : ContinuousOn γ K) (h_avoid : ∀ t ∈ K, γ t ≠ z₀) :
-    ∃ δ > 0, ∀ t ∈ K, δ ≤ ‖γ t - z₀‖ := by
-  obtain ⟨t₀, ht₀, h_min⟩ :=
-    hK_compact.exists_isMinOn hK_nonempty (hγ_cont.sub continuousOn_const).norm
-  exact ⟨‖γ t₀ - z₀‖, norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t₀ ht₀)),
-    Filter.eventually_principal.mp h_min⟩
 
 end

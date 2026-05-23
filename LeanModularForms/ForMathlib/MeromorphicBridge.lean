@@ -146,13 +146,6 @@ theorem residue_eq_leadingCoeff_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
   obtain ⟨_, hh_an, hf_decomp⟩ := simplePoleDecomp_of_eventuallyEq_zpow_neg_one hg_an hg_eq
   exact residue_eq_of_simple_pole_decomp hh_an hf_decomp
 
-/-- The residue of a simple pole equals the meromorphic leading coefficient.
-
-This is a version of `residue_eq_leadingCoeff_of_order_neg_one` that extracts the
-factorization data automatically from the order hypothesis. -/
-theorem HasSimplePoleAt.residue_eq_coeff_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) :
-    residue f z₀ = h.coeff := residue_eq_coeff h
 
 /-! ### Analytic functions as trivial simple poles -/
 
@@ -165,23 +158,5 @@ theorem hasSimplePoleAt_of_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
 
 /-! ### Equivalence for order -1 -/
 
-/-- The meromorphic order is exactly `-1` if and only if the function has a simple pole
-with nonzero coefficient.
-
-This packages the forward and converse directions into an iff. -/
-theorem meromorphicOrderAt_eq_neg_one_iff_hasSimplePoleAt_nonzero {f : ℂ → ℂ} {z₀ : ℂ}
-    (hf : MeromorphicAt f z₀) :
-    meromorphicOrderAt f z₀ = (-1 : ℤ) ↔
-      ∃ h : HasSimplePoleAt f z₀, h.coeff ≠ 0 := by
-  constructor
-  · intro hord
-    have hsimple := hasSimplePoleAt_of_meromorphicAt_order_neg_one hf hord
-    refine ⟨hsimple, ?_⟩
-    intro hc
-    have hge := meromorphicOrderAt_nonneg_of_hasSimplePoleAt_coeff_zero hsimple hc
-    rw [hord] at hge
-    exact absurd hge (by decide)
-  · rintro ⟨h, hc⟩
-    exact meromorphicOrderAt_eq_neg_one_of_hasSimplePoleAt h hc
 
 end

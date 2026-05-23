@@ -423,13 +423,6 @@ private lemma residueAt_eq_of_simple_pole_decomp (f : ℂ → ℂ) (z₀ c : ℂ
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero)) I_ne_zero
   field_simp
 
-/-- For simple poles, `residueAt` agrees with `residueSimplePole`. -/
-theorem residueAt_eq_residueSimplePole (f : ℂ → ℂ) (z₀ : ℂ)
-    (hf : HasSimplePoleAt f z₀) :
-    residueAt f z₀ = residueSimplePole f z₀ := by
-  obtain ⟨c, g, hg_analytic, hf_eq⟩ := hf
-  rw [residueSimplePole_eq_of_decomposition f z₀ c g hg_analytic hf_eq,
-    residueAt_eq_of_simple_pole_decomp f z₀ c g hg_analytic hf_eq]
 
 private lemma analyticAt_sum_erase_div_sub (S0 : Finset ℂ) (c : ℂ → ℂ) (s : ℂ) :
     AnalyticAt ℂ (fun z => ∑ s' ∈ S0.erase s, c s' / (z - s')) s :=
@@ -471,30 +464,6 @@ lemma continuousAt_sum_remainder (S0 : Finset ℂ) (c : ℂ → ℂ) (s : ℂ) (
       funext fun z => by rw [← Finset.add_sum_erase S0 (fun s' => c s' / (z - s')) hs]; ring]
   exact (analyticAt_sum_erase_div_sub S0 c s).continuousAt
 
-/-- CPV(f) = CPV(f_res) when the PV difference `M_f(ε) - M_res(ε)` tends to 0 and
-the PV of f_res exists. This is the limit-arithmetic core of the higher-order reduction. -/
-lemma cpv_eq_of_cancel_and_exists
-    (S0 : Finset ℂ) (f f_res : ℂ → ℂ) (γ : PiecewiseC1Immersion)
-    (hCancel : Tendsto
-      (fun ε =>
-        (∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) -
-        (∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f_res γ.toFun ε t))
-      (𝓝[>] 0) (𝓝 0))
-    (h_res_exists : CauchyPrincipalValueExistsOn S0 f_res γ.toFun γ.a γ.b) :
-    cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
-      cauchyPrincipalValueOn S0 f_res γ.toFun γ.a γ.b := by
-  obtain ⟨L_res, hL_res⟩ := h_res_exists
-  have h_f_tendsto : Tendsto
-      (fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
-      (𝓝[>] 0) (𝓝 L_res) := by
-    rw [show (fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) =
-        fun ε => ((∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) -
-          (∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f_res γ.toFun ε t)) +
-        (∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f_res γ.toFun ε t)
-      from by ext; ring, ← zero_add L_res]
-    exact hCancel.add hL_res
-  simp only [cauchyPrincipalValueOn]
-  rw [h_f_tendsto.limUnder_eq, hL_res.limUnder_eq]
 
 /-- **Theorem (Higher-order, Tendsto formulation)**: Variant of
 `generalizedResidueTheorem_higher_order` with a `Tendsto` conclusion, taking PV

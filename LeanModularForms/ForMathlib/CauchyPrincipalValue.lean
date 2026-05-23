@@ -212,12 +212,6 @@ theorem hasCauchyPVOn_of_avoids {S : Finset ℂ} {f : ℂ → ℂ} {γ : Piecewi
   rw [Set.uIcc_of_le zero_le_one] at ht
   exact (cpvIntegrandOn_of_forall_gt fun s hs => hε.2.trans_le (hδ_bound s hs t ht)).symm
 
-/-- The multi-point CPV for an empty set equals the ordinary contour integral. -/
-theorem hasCauchyPVOn_empty {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} :
-    HasCauchyPVOn ∅ f γ (γ.contourIntegral f) := by
-  simp only [HasCauchyPVOn, PiecewiseC1Path.contourIntegral]
-  refine tendsto_const_nhds.congr fun ε =>
-    intervalIntegral.integral_congr fun t _ => cpvIntegrandOn_empty.symm
 
 /-- The limit in `HasCauchyPV` is unique. -/
 theorem HasCauchyPV.unique {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : ℂ}

@@ -58,13 +58,6 @@ theorem DifferentiableOn.isExactOn_convex {f : ℂ → ℂ} {U : Set ℂ}
     Complex.IsExactOn f U :=
   hf.hasPrimitive_of_convex hU hUo hUne
 
-/-- The primitive from `hasPrimitive_of_convex` is itself differentiable on `U`. -/
-theorem DifferentiableOn.primitive_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
-    (hf : DifferentiableOn ℂ f U) (hU : Convex ℝ U) (hUo : IsOpen U)
-    (hUne : U.Nonempty) :
-    ∃ F : ℂ → ℂ, DifferentiableOn ℂ F U ∧ ∀ z ∈ U, HasDerivAt F (f z) z := by
-  obtain ⟨F, hF⟩ := hf.hasPrimitive_of_convex hU hUo hUne
-  exact ⟨F, fun z hz ↦ (hF z hz).differentiableAt.differentiableWithinAt, hF⟩
 
 /-! ### Cauchy's theorem for convex domains -/
 
@@ -89,52 +82,11 @@ theorem contourIntegral_eq_zero_of_differentiableOn_convex_aux {f : ℂ → ℂ}
   obtain ⟨F, hF⟩ := hf.hasPrimitive_of_convex hU hUo hUne
   exact contourIntegral_eq_zero_of_hasDerivAt_of_closed γ hclosed hγ hF h_int
 
-/-- **Cauchy's theorem for convex domains (FTC formulation).**
-
-If `f` is holomorphic on a convex open nonempty set `U` and `γ` is a piecewise C¹
-path whose image lies in `U`, then the contour integral of `f` along `γ` equals
-`F(y) - F(x)` for any primitive `F` of `f` on `U`.
-
-This version requires the integrability of the contour integrand as a hypothesis. -/
-theorem contourIntegral_eq_sub_of_differentiableOn_convex {f : ℂ → ℂ}
-    {U : Set ℂ} (γ : PiecewiseC1Path x y)
-    (hU : Convex ℝ U) (hUo : IsOpen U) (hUne : U.Nonempty)
-    (hf : DifferentiableOn ℂ f U)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (h_int : IntervalIntegrable
-      (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1) :
-    ∃ F : ℂ → ℂ, γ.contourIntegral f = F y - F x ∧
-      ∀ z ∈ U, HasDerivAt F (f z) z := by
-  obtain ⟨F, hF⟩ := hf.hasPrimitive_of_convex hU hUo hUne
-  exact ⟨F, contourIntegral_eq_sub_of_hasDerivAt γ hγ hF h_int, hF⟩
 
 end PiecewiseC1Path
 
 /-! ### Path-free formulation using `Complex.IsExactOn` -/
 
-/-- If `f` is exact (has a primitive) on `U`, then the contour integral of `f` along any
-piecewise C¹ path in `U` equals the difference of the primitive at the endpoints. -/
-theorem Complex.IsExactOn.contourIntegral_eq_sub {f : ℂ → ℂ} {U : Set ℂ}
-    {x y : ℂ} (hf : Complex.IsExactOn f U)
-    (γ : PiecewiseC1Path x y)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (h_int : IntervalIntegrable
-      (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1) :
-    ∃ F : ℂ → ℂ, γ.contourIntegral f = F y - F x ∧
-      ∀ z ∈ U, HasDerivAt F (f z) z := by
-  obtain ⟨F, hF⟩ := hf
-  exact ⟨F, γ.contourIntegral_eq_sub_of_hasDerivAt hγ hF h_int, hF⟩
 
-/-- If `f` is exact (has a primitive) on `U`, then the contour integral of `f` along any
-closed piecewise C¹ path in `U` is zero. -/
-theorem Complex.IsExactOn.contourIntegral_eq_zero_of_closed {f : ℂ → ℂ} {U : Set ℂ}
-    {x : ℂ} (hf : Complex.IsExactOn f U)
-    (γ : PiecewiseC1Path x x)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (h_int : IntervalIntegrable
-      (fun t => f (γ t) * deriv γ.toPath.extend t) volume 0 1) :
-    γ.contourIntegral f = 0 := by
-  obtain ⟨F, hF⟩ := hf
-  exact γ.contourIntegral_eq_zero_of_hasDerivAt_of_closed rfl hγ hF h_int
 
 end

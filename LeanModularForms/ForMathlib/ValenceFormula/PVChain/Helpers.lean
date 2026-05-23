@@ -64,10 +64,6 @@ def onCurvePVProvider (S : Finset UpperHalfPlane) : Prop :=
       CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s
 
 omit f hf in
-/-- CPV exists at every on-curve singular point. -/
-theorem fdBoundary_H_onCurvePVProvider (S : Finset UpperHalfPlane) :
-    onCurvePVProvider S :=
-  fun H hH s _ => fdBoundary_H_cpv_exists_of_onCurve H hH s
 
 omit f hf in
 lemma sArcOfS_rho_in (S : Finset UpperHalfPlane) :
@@ -226,13 +222,6 @@ lemma sVertOfS_im_lt_height_bound (S : Finset UpperHalfPlane) (s : ℂ)
     first | exact h_bound p hp_mem | simpa using h_bound p hp_mem
 
 include hf in
-/-- Zeros in `S` are complete: every zero of `f` in `𝒟` is in `S.filter zeros`. -/
-private theorem zeros_complete_of_hS_complete (S : Finset UpperHalfPlane)
-    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∀ s, s ∈ 𝒟 → f s = 0 → s ∈ S.filter (fun p => f p = 0) := by
-  intro s hs_fd hs_zero
-  exact Finset.mem_filter.mpr
-    ⟨hS_complete s hs_fd (orderOfVanishingAt'_ne_zero_of_eq_zeroFM f hf s hs_zero), hs_zero⟩
 
 omit hf in
 /-- Summing `gWN · ord` over all of `S` equals summing over just zeros. -/

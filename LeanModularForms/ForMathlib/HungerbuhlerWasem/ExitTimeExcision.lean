@@ -72,19 +72,6 @@ theorem cpvIntegrandOn_singleton_eq_zero_of_close
     cpvIntegrandOn {s} f γ.toPath.extend ε t = 0 :=
   cpvIntegrandOn_of_exists_le ⟨s, Finset.mem_singleton_self s, h_close⟩
 
-/-- The CPV integrand for a singleton equals the indicator of the "far from `s`" set
-applied to the contour integrand: pointwise,
-`cpvIntegrandOn {s} f γ ε t = ({t | ε < ‖γ(t) - s‖}).indicator (f(γ t) · γ'(t)) t`. -/
-theorem cpvIntegrandOn_singleton_eq_indicator
-    (γ : PiecewiseC1Path x x) (s : ℂ) (f : ℂ → ℂ) (ε : ℝ) (t : ℝ) :
-    cpvIntegrandOn {s} f γ.toPath.extend ε t =
-      ({t | ε < ‖γ.toPath.extend t - s‖}.indicator
-        (fun t => f (γ.toPath.extend t) * deriv γ.toPath.extend t)) t := by
-  by_cases h : ε < ‖γ.toPath.extend t - s‖
-  · rw [Set.indicator_of_mem (h : t ∈ _)]
-    exact cpvIntegrandOn_singleton_eq_contour_of_far γ h
-  · rw [Set.indicator_of_notMem (h : t ∉ _)]
-    exact cpvIntegrandOn_singleton_eq_zero_of_close γ (not_lt.mp h)
 
 /-- The CPV integrand integral on `[0, α]` equals the contour integrand integral when
 `ε < ‖γ(t) - s‖` on `(0, α)`. Boundary points are measure-zero, so the equality goes
