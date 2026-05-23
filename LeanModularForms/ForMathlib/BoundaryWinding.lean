@@ -174,8 +174,4 @@ def linDelta (C : ℝ) (ε : ℝ) : ℝ := ε / C
 theorem linDelta_pos {C ε : ℝ} (hC : 0 < C) (hε : 0 < ε) : 0 < linDelta C ε :=
   div_pos hε hC
 
-theorem linDelta_small {C ε bound : ℝ} (hC : 0 < C) (hε_lt : ε < C * bound) :
-    linDelta C ε < bound :=
-  (div_lt_iff₀ hC).mpr (by linarith)
-
 end
