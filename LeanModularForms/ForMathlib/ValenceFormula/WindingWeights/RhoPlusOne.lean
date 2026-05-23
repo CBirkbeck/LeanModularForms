@@ -16,7 +16,6 @@ around the elliptic point ρ+1 = e^{πi/3}.
 ## Main Results
 
 * `pv_integral_at_rho_plus_one_tendsto` — PV integral converges to -iπ/3
-* `gWN_fdBoundary_H_at_rho_plus_one` — gWN = -1/6 at ρ+1
 -/
 
 open Complex MeasureTheory Set Filter Topology
@@ -706,13 +705,5 @@ theorem pv_integral_at_rho_plus_one_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
       Real.norm_eq_abs, abs_neg, abs_of_pos (by positivity)]
     exact lt_trans (arc_angle_lt_epsilon hδR_pos hδR_lt_one h_norm_R)
       (lt_of_lt_of_le hε_dist (min_le_right _ _))
-
-/-- `generalizedWindingNumber' (fdBoundary_H H) 0 5 ρ' = -1/6`. -/
-theorem gWN_fdBoundary_H_at_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
-    generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRhoPlusOne = -1/6 := by
-  apply ContourIntegral.gWN_eq_neg_sixth_of_pv_tendsto
-  convert pv_integral_at_rho_plus_one_tendsto H hH using 2
-  · simp [sub_zero, gt_iff_lt]
-  · ring
 
 end
