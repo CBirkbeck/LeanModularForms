@@ -49,3 +49,5 @@ import LeanModularForms.ForMathlib.ValenceFormula.WindingWeights.Common
 import LeanModularForms.ForMathlib.ValenceFormula.WindingWeights.I
 import LeanModularForms.ForMathlib.ValenceFormula.WindingWeights.Rho
 import LeanModularForms.ForMathlib.ValenceFormula.WindingWeights.RhoPlusOne
+import LeanModularForms.ForMathlib.ValenceFormulaFinal
+import LeanModularForms.ForMathlib.HW33Clean

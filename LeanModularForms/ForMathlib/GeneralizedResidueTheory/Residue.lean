@@ -6,6 +6,7 @@ Authors:
 import LeanModularForms.ForMathlib.ClassicalCPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Homotopy.Invariance
+import LeanModularForms.ForMathlib.Residue
 import Mathlib.Topology.Order.ExtendFrom
 
 /-!
@@ -20,7 +21,7 @@ generalized residue theorem for piecewise C¹ immersions.
 * `cauchyPrincipalValueOn` — multi-point CPV integral
 * `CauchyPrincipalValueExistsOn` — existence of multi-point CPV
 * `residueSimplePole` — residue at a simple pole via limit
-* `HasSimplePoleAt` — simple pole decomposition predicate
+* `HasSimplePoleAt` (re-exported from `ForMathlib.Residue`) — simple pole decomposition
 
 ## Main Results
 
@@ -61,12 +62,6 @@ def CauchyPrincipalValueExistsOn
 `lim_{z → z₀} (z - z₀) · f(z)`. -/
 def residueSimplePole (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
   limUnder (𝓝[≠] z₀) fun z => (z - z₀) * f z
-
-/-- Simple pole decomposition: f(z) = c/(z-z₀) + g(z) near z₀
-with g analytic. -/
-def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=
-  ∃ c : ℂ, ∃ g : ℂ → ℂ, AnalyticAt ℂ g z₀ ∧
-    ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z
 
 private lemma bounded_on_Ioo_of_continuousOn_with_limits
     {f : ℝ → ℂ} {a b : ℝ} (_hab : a < b) (hf_cont : ContinuousOn f (Ioo a b))
