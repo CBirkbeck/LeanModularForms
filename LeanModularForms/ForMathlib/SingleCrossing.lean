@@ -29,7 +29,6 @@ This file provides:
 - `SingleCrossingData.hasCauchyPV`: the CPV integral has limit `L`
 - `SingleCrossingData.hasWindingNumber`: the generalized winding number is `L / (2πi)`
 - `SingleCrossingData.windingNumber_neg_half`: specialized for `L = -πi` giving `-1/2`
-- `SingleCrossingData.windingNumber_neg_sixth`: specialized for `L = -πi/3` giving `-1/6`
 
 ## Design
 
@@ -215,14 +214,6 @@ theorem windingNumber_neg_half (D : SingleCrossingData γ z₀)
     generalizedWindingNumber γ z₀ = -1 / 2 := by
   rw [D.windingNumber_eq, hL]
   field_simp
-
-/-- If `L = -(π / 3 * I)`, then the generalized winding number is `-1/6`.
-Used for elliptic point winding number computations. -/
-theorem windingNumber_neg_sixth (D : SingleCrossingData γ z₀)
-    (hL : D.L = -(↑Real.pi / 3 * I)) :
-    generalizedWindingNumber γ z₀ = -1 / 6 := by
-  rw [D.windingNumber_eq, hL]
-  field_simp; ring
 
 end SingleCrossingData
 

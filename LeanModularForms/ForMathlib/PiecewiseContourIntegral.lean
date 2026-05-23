@@ -19,7 +19,6 @@ path and proves basic properties including linearity and the fundamental theorem
 
 ## Main results
 
-* `contourIntegral_neg` — `∮_γ (-f) = -∮_γ f`
 * `contourIntegral_add` — `∮_γ (f + g) = ∮_γ f + ∮_γ g` (under integrability)
 * `contourIntegral_smul` — `∮_γ (c • f) = c • ∮_γ f`
 * `contourIntegral_eq_sub_of_hasDerivAt` — if `F' = f` along the path, then
@@ -58,14 +57,6 @@ def contourIntegral (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) : ℂ :=
 def contourIntegrand (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (t : ℝ) : ℂ :=
   f (γ t) * deriv γ.toPath.extend t
 
-theorem contourIntegral_def (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) :
-    contourIntegral f γ = ∫ t in (0 : ℝ)..1, contourIntegrand f γ t := rfl
-
-/-- Negation: `∮_γ (-f) = -∮_γ f`. -/
-theorem contourIntegral_neg (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) :
-    contourIntegral (fun z => -f z) γ = -contourIntegral f γ := by
-  simp [contourIntegral]
-
 /-- Addition: `∮_γ (f + g) = ∮_γ f + ∮_γ g` when both integrands are integrable. -/
 theorem contourIntegral_add (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
     (hf : IntervalIntegrable (contourIntegrand f γ) volume 0 1)
@@ -85,15 +76,6 @@ theorem contourIntegral_smul (c : ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x
 theorem contourIntegral_zero (γ : PiecewiseC1Path x y) :
     contourIntegral (fun _ => 0) γ = 0 := by
   simp [contourIntegral]
-
-/-- Subtraction: `∮_γ (f - g) = ∮_γ f - ∮_γ g` when both integrands are integrable. -/
-theorem contourIntegral_sub (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
-    (hf : IntervalIntegrable (contourIntegrand f γ) volume 0 1)
-    (hg : IntervalIntegrable (contourIntegrand g γ) volume 0 1) :
-    contourIntegral (fun z => f z - g z) γ =
-      contourIntegral f γ - contourIntegral g γ := by
-  simp only [contourIntegral, sub_mul]
-  exact intervalIntegral.integral_sub hf hg
 
 /-- **Finset sum linearity for contour integrals.** When each integrand
 `contourIntegrand (f i) γ` is interval-integrable on `[0, 1]`,
@@ -232,25 +214,6 @@ theorem contourIntegral_eq_sub_of_hasDerivAt {F f : ℂ → ℂ}
         (γ.differentiable_off_extend t ht htp).hasDerivAt rfl
   have h := ftc_induction γ _ 0 1 hFγ_cont hFγ_deriv h_int le_rfl zero_le_one subset_rfl
   rwa [γ.apply_one, γ.apply_zero] at h
-
-/-- If `f` is continuous on the image of `γ` restricted to `[0,1]`, and the derivative of
-`γ.toPath.extend` is `IntervalIntegrable` on `[0,1]`, then the contour integrand
-`f(γ(t)) · γ'(t)` is `IntervalIntegrable` on `[0,1]`.
-
-The derivative integrability hypothesis is the minimal requirement: for `PwC1Immersion`
-with one-sided derivative limits, it is automatic via `IntervalIntegrable` of a piecewise
-continuous bounded function, but stated here as a hypothesis to cover general
-`PiecewiseC1Path`. -/
-theorem contourIntegrand_intervalIntegrable_of_continuousOn
-    {f : ℂ → ℂ} (γ : PiecewiseC1Path x y) {K : Set ℂ}
-    (hf_cont : ContinuousOn f K)
-    (h_img : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ K)
-    (h_deriv_int : IntervalIntegrable (deriv γ.toPath.extend) volume 0 1) :
-    IntervalIntegrable (contourIntegrand f γ) volume 0 1 := by
-  change IntervalIntegrable (fun t => f (γ.toPath.extend t) * deriv γ.toPath.extend t) volume 0 1
-  refine h_deriv_int.continuousOn_mul ?_
-  rw [uIcc_of_le (zero_le_one' ℝ)]
-  exact hf_cont.comp γ.toPath.continuous_extend.continuousOn h_img
 
 /-- **FTC for closed piecewise C¹ paths.** If `F' = f` along a closed path, then `∮_γ f = 0`. -/
 theorem contourIntegral_eq_zero_of_hasDerivAt_of_closed {F f : ℂ → ℂ}

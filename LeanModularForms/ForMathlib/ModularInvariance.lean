@@ -162,17 +162,6 @@ lemma ord_add_one_eq (p : ℍ) :
     exact h_period
   rw [meromorphicOrderAt_congr hG_eq_near, meromorphicOrderAt_comp_sub_const]
 
-/-- T-invariance at ρ: `ord(f, ρ+1) = ord(f, ρ)`. -/
-lemma ord_rho_plus_one_eq_ord_rho :
-    orderOfVanishingAt' f ellipticPointRhoPlusOne' =
-    orderOfVanishingAt' f ellipticPointRho' := by
-  have h : (1 : ℝ) +ᵥ ellipticPointRho' = ellipticPointRhoPlusOne' :=
-    UpperHalfPlane.ext (by
-      rw [UpperHalfPlane.coe_vadd, add_comm]
-      exact_mod_cast ellipticPointRho_add_one_eq)
-  rw [← h]
-  exact ord_add_one_eq f ellipticPointRho'
-
 /-- S-identity for modular forms: `f(-1/z) = z^k · f(z)`. -/
 lemma modform_comp_ofComplex_S_identity (z : ℂ) (hz : 0 < z.im) :
     f (UpperHalfPlane.ofComplex (-(1:ℂ)/z)) = (z : ℂ) ^ k * f (UpperHalfPlane.ofComplex z) := by
@@ -336,14 +325,5 @@ lemma cusp_nonvanishing_height_mono {H₁ H₂ : ℝ} (hH : H₁ ≤ H₂)
       SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 :=
   fun q hq hq_ne => h q (Metric.closedBall_subset_closedBall
     (Real.exp_le_exp.mpr (by nlinarith [Real.pi_pos])) hq) hq_ne
-
-/-- Cusp nonvanishing above any floor height. -/
-theorem exists_height_cusp_nonvanishing_above (hf : f ≠ 0) (Hmin : ℝ) :
-    ∃ H : ℝ, Hmin ≤ H ∧ Real.sqrt 3 / 2 < H ∧
-      ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H)) →
-        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
-  obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
-  exact ⟨max H₀ Hmin, le_max_right _ _, lt_of_lt_of_le hH₀_gt (le_max_left _ _),
-    cusp_nonvanishing_height_mono f (le_max_left _ _) hH₀_nonvan⟩
 
 end
