@@ -119,60 +119,6 @@ theorem pvChainIdentity
   refine mul_left_cancel₀ pvChain_two_pi_I_ne_zero ?_
   linear_combination tendsto_nhds_unique data.h_res data.h_mod
 
-/-- **Full discharge of `h_pvChain`** from residue and modular side existentials.
-
-Given:
-1. A constructor for `FDWindingDataFull H` at any height `H > sqrt(3)/2`
-2. Height bounds on S
-3. Residue side: for `H >= H_res`, the CPV integral tends to the winding sum
-4. Modular side: for `H >= H_mod`, the CPV integral tends to the modular expression
-
-Produces the `h_pvChain` existential needed by
-`valence_formula_orbit_sum_of_pvChain`.
-
-The proof picks `H = max(max(H_res, H_mod), H_S) + 1`, constructs
-`PVChainData` at that height, and applies `pvChainIdentity`. -/
-theorem discharge_pvChain_full
-    (S : Finset UpperHalfPlane) (_hS : ∀ p ∈ S, p ∈ 𝒟)
-    (_hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
-    -- FDWindingDataFull construction
-    (mkD : ∀ H : ℝ, Real.sqrt 3 / 2 < H → FDWindingDataFull H)
-    -- Height bound on S
-    (H_S : ℝ) (hH_S : ∀ s ∈ S, (s : ℂ).im < H_S)
-    -- Common integrand
-    (F : ℝ → ℝ → ℂ)
-    -- Residue side
-    (H_res : ℝ) (hH_res_gt : Real.sqrt 3 / 2 < H_res)
-    (h_res : ∀ (H : ℝ), H_res ≤ H → (hH : Real.sqrt 3 / 2 < H) →
-      Tendsto (F H) (𝓝[>] 0)
-        (𝓝 (2 * ↑Real.pi * I *
-          ∑ s ∈ S,
-            generalizedWindingNumber (mkD H hH).boundary (↑s : ℂ) *
-              (orderOfVanishingAt' (⇑f) s : ℂ))))
-    -- Modular side
-    (H_mod : ℝ) (_hH_mod_gt : Real.sqrt 3 / 2 < H_mod)
-    (h_mod : ∀ (H : ℝ), H_mod ≤ H → (hH : Real.sqrt 3 / 2 < H) →
-      Tendsto (F H) (𝓝[>] 0)
-        (𝓝 (-(2 * ↑Real.pi * I *
-          ((k : ℂ) / 12 - (orderAtCusp' f : ℂ)))))) :
-    ∃ H' : ℝ, ∃ D : FDWindingDataFull H',
-      (∀ s ∈ S, (s : ℂ).im < H') ∧
-      ∑ s ∈ S,
-        generalizedWindingNumber D.boundary (↑s : ℂ) *
-          (orderOfVanishingAt' (⇑f) s : ℂ) =
-      -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) := by
-  set H := max (max H_res H_mod) H_S + 1
-  have hH_ge_res : H_res ≤ H :=
-    ((le_max_left _ _).trans (le_max_left _ _)).trans (lt_add_one _).le
-  have hH_ge_mod : H_mod ≤ H :=
-    ((le_max_right _ _).trans (le_max_left _ _)).trans (lt_add_one _).le
-  have hH_gt_sqrt3 : Real.sqrt 3 / 2 < H := hH_res_gt.trans_le hH_ge_res
-  have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
-    (hH_S s hs).trans_le ((le_max_right _ _).trans (lt_add_one _).le)
-  exact ⟨H, mkD H hH_gt_sqrt3, hH_above, pvChainIdentity f S
-    ⟨mkD H hH_gt_sqrt3, hH_above, F H,
-      h_res H hH_ge_res hH_gt_sqrt3, h_mod H hH_ge_mod hH_gt_sqrt3⟩⟩
-
 omit hf in
 /-- **Complete interface for discharging `h_pvChain`**.
 
