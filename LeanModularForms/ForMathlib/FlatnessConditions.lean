@@ -26,7 +26,6 @@ Hungerbuhler-Wasem ensuring Cauchy principal value convergence at higher-order p
 * `isFlatOfOrder_one` -- every piecewise C¹ immersion is flat of order 1
 * `satisfiesConditionA'_of_simplePoles` -- condition A' automatic for simple poles
 * `satisfiesConditionB_of_simplePoles` -- condition B automatic for simple poles
-* `conditions_automatic_simple_poles` -- both conditions automatic for simple poles
 
 ## References
 
@@ -49,23 +48,6 @@ def orthogonalProjectionComplex (w L : ℂ) : ℂ :=
 /-- The tangent deviation: the component of `w` orthogonal to direction `L`. -/
 def tangentDeviation (w L : ℂ) : ℂ :=
   w - orthogonalProjectionComplex w L
-
-theorem orthogonalProjectionComplex_zero_left (L : ℂ) :
-    orthogonalProjectionComplex 0 L = 0 := by
-  simp [orthogonalProjectionComplex]
-
-theorem tangentDeviation_zero_left (L : ℂ) :
-    tangentDeviation 0 L = 0 := by
-  simp [tangentDeviation, orthogonalProjectionComplex]
-
-theorem tangentDeviation_zero_right (w : ℂ) :
-    tangentDeviation w 0 = w := by
-  simp [tangentDeviation, orthogonalProjectionComplex]
-
-/-- Projection onto a nonzero direction `L` gives a real multiple of `L`. -/
-theorem orthogonalProjectionComplex_smul (w L : ℂ) :
-    ∃ c : ℝ, orthogonalProjectionComplex w L = c • L :=
-  ⟨(w * starRingEnd ℂ L).re / Complex.normSq L, rfl⟩
 
 /-- Projection of a real scalar multiple of `L` onto `L` is itself. -/
 theorem orthogonalProjectionComplex_real_smul_self (c : ℝ) (L : ℂ) (hL : L ≠ 0) :
@@ -162,19 +144,6 @@ private theorem tangentDeviation_isLittleO_one_of_continuousAt
       ≤ 2 * ‖γ t - γ t₀‖ := norm_tangentDeviation_le _ _ hL
     _ < 2 * (ε / 2) := by linarith
     _ = ε := by ring
-
-/-- Flatness of order 0 is trivially satisfied: the tangent deviation is bounded
-by `2 * ‖γ(t) - γ(t₀)‖`, which is `O(‖γ(t) - γ(t₀)‖⁰) = O(1)` times something
-that tends to 0. More precisely, it is `o(1)` because `γ` is continuous. -/
-theorem isFlatOfOrder_zero (γ : ℝ → ℂ) (t₀ : ℝ)
-    (hγ_cont : ContinuousAt γ t₀) :
-    IsFlatOfOrder γ t₀ 0 where
-  right_flat L hL _ := by
-    simpa only [pow_zero] using
-      tangentDeviation_isLittleO_one_of_continuousAt hγ_cont nhdsWithin_le_nhds L hL
-  left_flat L hL _ := by
-    simpa only [pow_zero] using
-      tangentDeviation_isLittleO_one_of_continuousAt hγ_cont nhdsWithin_le_nhds L hL
 
 /-- Flatness of order 1 from a derivative limit on either side, packaged as a
 common helper for the left and right variants. The set `u` is the open ray
@@ -324,21 +293,6 @@ theorem satisfiesConditionB_of_simplePoles
     · filter_upwards [hf_eq] with z hz
       simp [hz, pow_one, add_comm]
     · exact fun ⟨_, hk⟩ _ hk1 => absurd hk1 (by lia)
-
-/-- Both conditions (A') and (B) are satisfied for simple poles, provided
-corner crossing angles are rational multiples of `π`. Condition (A') is fully
-automatic; condition (B) requires the angle hypothesis only at corners. -/
-theorem conditions_automatic_simple_poles
-    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
-    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
-    (hAngles : ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
-      ∀ ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1,
-        t₀ ∈ γ.toPiecewiseC1Path.partition →
-          ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q) :
-    SatisfiesConditionA' γ f S0 (fun _ => 1) ∧ SatisfiesConditionB γ f S0 :=
-  ⟨satisfiesConditionA'_of_simplePoles γ f S0 hSimplePoles,
-   satisfiesConditionB_of_simplePoles γ f S0 hSimplePoles hAngles⟩
 
 /-- Condition (A') with pole order `p` is implied by condition (A') with any
 larger pole order `q ≥ p`, provided `γ` is continuous. -/
