@@ -575,17 +575,6 @@ private lemma dslope_deriv_mul_extend_aestronglyMeasurable
   simp_rw [h_q_eq]
   exact (h_diff.hasDerivAt.tendsto_slope.comp hy_within).mul_const _
 
-/-- **B-2 fully closed for convex U**: `dixonH1 f γ` is differentiable on `U` for
-convex open `U`, `f` differentiable on `U`, γ a Lipschitz `PwC1Immersion` with image
-in `U`. All oracle hypotheses are auto-discharged via D-1a/c/d. -/
-theorem dixonH1_differentiableOn_of_regular_convex_full {f : ℂ → ℂ} {U : Set ℂ}
-    (hU_convex : Convex ℝ U) (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (γ : PwC1Immersion x x) (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend) :
-    DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U :=
-  dixonH1_differentiableOn_of_regular_convex hU_convex hU hf γ hγ hLip
-    (fun _ hw₀ => dslope_deriv_mul_extend_aestronglyMeasurable hU hf γ hγ hw₀)
-
 /-- **B-2 fully closed for general open U** (no `Convex` hypothesis): same conclusion
 as `dixonH1_differentiableOn_of_regular_convex_full` but on any open `U`. -/
 theorem dixonH1_differentiableOn_of_regular_open_full {f : ℂ → ℂ} {U : Set ℂ}

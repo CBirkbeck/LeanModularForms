@@ -450,52 +450,6 @@ private lemma base_integrand_intervalIntegrable
     continuousOn_const h_γ_cont hoff
   simpa [one_div] using this
 
-/-- **B-5 fully automatic except h1_diff + h_winding_zero_near**: With γ Lipschitz,
-f differentiable on bounded open U, and γ null-hom in U, all bounds and integrability
-conditions are discharged automatically. Only the two deep oracles remain:
-* `h1_diff` — `dixonH1 f γ` differentiable on `U` (B-2)
-* `h_winding_zero_near` — local winding-zero for `w ∉ U` (B-1 full, boundary case).
--/
-private theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds
-    {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hU_bounded : Bornology.IsBounded U)
-    (hf : DifferentiableOn ℂ f U)
-    (γ : PwC1Immersion x x) (h_null : IsNullHomologous γ U)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
-    (h1_diff : DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U)
-    (h_winding_zero_near : ∀ w, w ∉ U →
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
-      ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
-        generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
-    ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
-  have hf_cont : ContinuousOn f
-      (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
-    hf.continuousOn.mono
-      (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)
-  have h_fγ_cont : ContinuousOn
-      (fun t => f (γ.toPiecewiseC1Path t)) (Icc (0 : ℝ) 1) :=
-    hf_cont.comp γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
-      (fun t ht => ⟨t, ht, rfl⟩)
-  have h_γ_cont : ContinuousOn (γ.toPiecewiseC1Path : ℝ → ℂ) (Icc (0 : ℝ) 1) :=
-    γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn
-  obtain ⟨R, hR_bd⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
-    h_γ_cont.norm
-  obtain ⟨M_f, hM_f_bd⟩ := (isCompact_Icc (a := (0 : ℝ)) (b := 1)).bddAbove_image
-    h_fγ_cont.norm
-  have hR : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ.toPiecewiseC1Path t‖ ≤ R :=
-    fun t ht => hR_bd ⟨t, ht, rfl⟩
-  have hM_f : ∀ t ∈ Icc (0 : ℝ) 1,
-      ‖f (γ.toPiecewiseC1Path t)‖ ≤ max M_f 0 :=
-    fun t ht => le_max_of_le_left (hM_f_bd ⟨t, ht, rfl⟩)
-  have hM_f_nn : (0 : ℝ) ≤ max M_f 0 := le_max_right _ _
-  have hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
-      ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ K :=
-    fun _ _ => norm_deriv_le_of_lipschitz hLip
-  exact dixonFunction_eq_zero_of_nullHomologous_autoH2 hU hU_bounded hf γ h_null
-    hLip h1_diff
-    (fun _ hoff => cauchy_integrand_intervalIntegrable hLip h_fγ_cont h_γ_cont hoff)
-    (fun _ hoff => base_integrand_intervalIntegrable hLip h_γ_cont hoff)
-    h_winding_zero_near hM_f_nn hR hM_f hM_d
-
 /-- **B-5 autoH2 variant for unbounded U with Lipschitz γ.** -/
 private theorem dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U)

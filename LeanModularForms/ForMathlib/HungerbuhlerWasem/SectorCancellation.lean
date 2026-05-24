@@ -65,18 +65,6 @@ theorem exp_neg_I_eq_one_of_conditionB (n : ℕ) (α : ℝ)
     rw [hk']; push_cast; ring
   rw [heq, Complex.exp_int_mul, Complex.exp_two_pi_mul_I, one_zpow]
 
-/-- **The HW Theorem 3.3 (eq. 3.4) sector-PV formula vanishes under condition (B).**
-Under condition (B) `(n-1)α ∈ 2πℤ`, `e^(-i(n-1)α) = 1`, so the numerator is
-identically zero and the formula evaluates to zero for every `ε > 0`. -/
-theorem sector_pv_formula_vanishes_under_conditionB
-    (n : ℕ) (_hn : 2 ≤ n) (α : ℝ)
-    (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
-    ∀ ε > (0 : ℝ),
-      (1 - Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I)) /
-        ((↑(n - 1) : ℂ) * (↑ε : ℂ) ^ (n - 1)) = 0 := by
-  intro ε _
-  rw [exp_neg_I_eq_one_of_conditionB n α h_angle, sub_self, zero_div]
-
 /-- **Real ray integral closed form.** For `n ≥ 2` and `0 < a ≤ b`:
 
   `∫_a^b 1/t^n dt = (1/(n-1)) · (1/a^(n-1) - 1/b^(n-1))`.
@@ -199,27 +187,6 @@ theorem sector_inv_pow_integral_combined
     Complex.ofReal_ne_zero.mpr hε.ne', Complex.ofReal_ne_zero.mpr hr.ne']
   ring
 
-/-- **Sector PV vanishing under condition (B).** Combining the explicit formula
-`sector_inv_pow_integral_combined` with the algebraic vanishing
-`exp_neg_I_eq_one_of_conditionB`, the sector PV is **identically zero** for
-every `ε > 0` under condition (B). -/
-theorem sector_inv_pow_integral_vanishes_under_conditionB
-    (r : ℝ) (hr : 0 < r) (ε : ℝ) (hε : 0 < ε) (hεr : ε ≤ r) (α : ℝ) (n : ℕ)
-    (hn : 2 ≤ n)
-    (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
-    (∫ t in ε..r, (1 : ℂ) / (↑t : ℂ) ^ n) +
-    (∫ t in (0 : ℝ)..α,
-      ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
-        ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n) -
-    (∫ t in ε..r,
-      Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I)) /
-        (↑t : ℂ) ^ n) = 0 := by
-  rw [sector_inv_pow_integral_combined r hr ε hε hεr α n hn,
-    show (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I) : ℂ) =
-        (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ)) * Complex.I by push_cast; ring,
-    exp_neg_I_eq_one_of_conditionB n α h_angle]
-  simp
-
 /-- **F-line difference vanishing under condition (B), general angle.**
 For pole `s`, two tangent directions `L_plus` (right) and `L_minus` (left, used
 inward as `-L_minus`), and `k ≥ 2`, the antiderivative
@@ -330,54 +297,6 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
   calc ‖A - B‖ = ‖(A - TR) - (B - TR)‖ := by rw [sub_sub_sub_cancel_right]
     _ ≤ ‖A - TR‖ + ‖B - TR‖ := norm_sub_le _ _
     _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
-
-/-- **HW Theorem 3.3 — general angle parametric form.** The general-angle
-analog of `hw_theorem_3_3_odd_transverse_parametric`.
-
-For closed γ with single crossing at t₀ where γ has TWO different tangent
-directions `L_minus` (entering) and `L_plus` (leaving), and condition (B) holds:
-the symmetric-excision PV vanishes as `ε → 0⁺`. -/
-theorem hw_theorem_3_3_under_conditionB_parametric
-    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {a b t₀ : ℝ} {s L_minus L_plus : ℂ} {n k : ℕ}
-    (h_close : γ a = γ b)
-    (h_flat : IsFlatOfOrder γ t₀ n)
-    (hL_minus : L_minus ≠ 0) (hL_plus : L_plus ≠ 0)
-    (h_deriv_right : HasDerivWithinAt γ L_plus (Set.Ioi t₀) t₀)
-    (h_deriv_left : HasDerivWithinAt γ L_minus (Set.Iio t₀) t₀)
-    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L_plus))
-    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L_minus))
-    (h_s : γ t₀ = s) (hk : 2 ≤ k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
-    (h_B :
-      (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1) =
-      ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1))
-    (t_eps_plus t_eps_minus : ℝ → ℝ)
-    (h_plus_to : Tendsto t_eps_plus (𝓝[>] (0 : ℝ)) (𝓝[>] t₀))
-    (h_plus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (t_eps_plus ε) - s‖ = ε)
-    (h_minus_to : Tendsto t_eps_minus (𝓝[>] (0 : ℝ)) (𝓝[<] t₀))
-    (h_minus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖γ (t_eps_minus ε) - s‖ = ε)
-    (h_minus_smooth : ∀ ε > 0, ∀ t ∈ Set.uIcc a (t_eps_minus ε),
-      HasDerivAt γ (γ' t) t)
-    (h_minus_avoids : ∀ ε > 0, ∀ t ∈ Set.uIcc a (t_eps_minus ε), γ t ≠ s)
-    (h_minus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k)
-        MeasureTheory.volume a (t_eps_minus ε))
-    (h_plus_smooth : ∀ ε > 0, ∀ t ∈ Set.uIcc (t_eps_plus ε) b,
-      HasDerivAt γ (γ' t) t)
-    (h_plus_avoids : ∀ ε > 0, ∀ t ∈ Set.uIcc (t_eps_plus ε) b, γ t ≠ s)
-    (h_plus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k)
-        MeasureTheory.volume (t_eps_plus ε) b) :
-    Tendsto (fun ε =>
-      (∫ t in a..(t_eps_minus ε), γ' t / (γ t - s) ^ k) +
-        (∫ t in (t_eps_plus ε)..b, γ' t / (γ t - s) ^ k))
-      (𝓝[>] (0 : ℝ)) (𝓝 0) :=
-  cpv_excised_tendsto_zero_of_F_diff_zero h_close hk
-    t_eps_plus t_eps_minus
-    h_minus_smooth h_minus_avoids h_minus_int
-    h_plus_smooth h_plus_avoids h_plus_int
-    (F_curve_diff_tendsto_zero_under_conditionB h_flat hL_minus hL_plus
-      h_deriv_right h_deriv_left hL_right hL_left h_s hk hkn hn1 h_B
-      t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius)
 
 end HungerbuhlerWasem
 

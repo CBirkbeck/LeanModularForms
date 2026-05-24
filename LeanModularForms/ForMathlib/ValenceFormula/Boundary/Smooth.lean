@@ -551,15 +551,6 @@ noncomputable def fdBoundaryCurve : PiecewiseC1Curve :=
       exact fdBoundary_differentiableAt_off_partition t htP)
     fdBoundary_deriv_continuousAt_off_partition
 
-/-- The boundary of the fundamental domain as a
-`PiecewiseC1Immersion`. -/
-noncomputable def fdBoundaryImmersion : PiecewiseC1Immersion where
-  toPiecewiseC1Curve := fdBoundaryCurve
-  deriv_ne_zero := fdBoundary_deriv_ne_zero_off_partition
-  left_deriv_limit := fdBoundary_left_deriv_limit
-  right_deriv_limit := fdBoundary_right_deriv_limit
-
-
 lemma fdBoundary_H_hasDerivAt_arc (H : ℝ) {t : ℝ} (h1 : 1 < t) (h3 : t < 3) :
     HasDerivAt (fdBoundary_H H)
       (exp ((↑Real.pi * (↑t + 1) / 6) * I) * (↑Real.pi / 6 * I)) t :=

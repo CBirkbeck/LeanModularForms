@@ -46,45 +46,4 @@ section
 
 /-! ### Forward direction: `HasSimplePoleAt` to `MeromorphicAt` -/
 
-/-- A function with a simple pole at `z_0` is meromorphic at `z_0`.
-
-The proof rewrites the additive decomposition `f(z) = c/(z-z_0) + g(z)` into
-`f(z) = (z-z_0)^(-1) * (c + (z-z_0) * g(z))` and checks that
-`z |-> c + (z-z_0) * g(z)` is analytic. -/
-theorem HasSimplePoleAt.meromorphicAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) : MeromorphicAt f z₀ := by
-  obtain ⟨c, g, hg_an, hf_eq⟩ := h
-  rw [MeromorphicAt.iff_eventuallyEq_zpow_smul_analyticAt]
-  refine ⟨-1, fun z => c + (z - z₀) * g z,
-    analyticAt_const.add (analyticAt_id.sub analyticAt_const |>.mul hg_an), ?_⟩
-  filter_upwards [hf_eq, self_mem_nhdsWithin] with z hz hne
-  have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-  rw [hz]
-  simp only [zpow_neg_one, smul_eq_mul]
-  field_simp
-
-/-! ### Meromorphic order of simple poles -/
-
-/-- Internal: from `f =ᶠ (z - z_0)^(-1) * g(z)` with `g` analytic, factor
-`g z = g z₀ + (z - z₀) * h(z)` and rewrite as `f =ᶠ g(z_0)/(z - z_0) + h(z)`. -/
-private lemma simplePoleDecomp_of_eventuallyEq_zpow_neg_one
-    {f g : ℂ → ℂ} {z₀ : ℂ} (hg_an : AnalyticAt ℂ g z₀)
-    (hg_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = (z - z₀) ^ (-1 : ℤ) • g z) :
-    ∃ h_fn : ℂ → ℂ, AnalyticAt ℂ h_fn z₀ ∧
-      ∀ᶠ z in 𝓝[≠] z₀, f z = g z₀ / (z - z₀) + h_fn z := by
-  have h_an_diff : AnalyticAt ℂ (fun z => g z - g z₀) z₀ := hg_an.sub analyticAt_const
-  have h_ord : 1 ≤ analyticOrderAt (fun z => g z - g z₀) z₀ := by
-    rw [← not_lt, ENat.lt_one_iff_eq_zero]
-    exact h_an_diff.analyticOrderAt_ne_zero.mpr (by simp)
-  obtain ⟨h_fn, hh_an, hh_eq⟩ := (natCast_le_analyticOrderAt h_an_diff).mp h_ord
-  refine ⟨h_fn, hh_an, ?_⟩
-  filter_upwards [hg_eq, hh_eq.filter_mono nhdsWithin_le_nhds, self_mem_nhdsWithin]
-    with z hz hh hne
-  have hzsub : z - z₀ ≠ 0 := sub_ne_zero.mpr hne
-  rw [hz]
-  simp only [zpow_neg_one, smul_eq_mul, pow_one] at hh ⊢
-  have hg_val : g z = g z₀ + (z - z₀) * h_fn z := by linear_combination hh
-  rw [hg_val]
-  field_simp
-
 end

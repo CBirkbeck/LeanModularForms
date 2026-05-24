@@ -61,9 +61,6 @@ def fdArcAngle (t : ℝ) : ℝ := Real.pi / 3 + (5 * t - 1) * (Real.pi / 6)
 theorem fdArcAngle_at_one_fifth : fdArcAngle (1/5) = Real.pi / 3 := by
   unfold fdArcAngle; ring
 
-theorem fdArcAngle_at_two_fifths : fdArcAngle (2/5) = Real.pi / 2 := by
-  unfold fdArcAngle; ring
-
 theorem fdArcAngle_at_three_fifths : fdArcAngle (3/5) = 2 * Real.pi / 3 := by
   unfold fdArcAngle; ring
 

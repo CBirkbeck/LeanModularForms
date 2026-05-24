@@ -84,19 +84,6 @@ def mkFDWindingDataFull {H : ℝ} (D : FDWindingData H)
   toFDWindingData := D
   boundary_winding := h_bdy
 
-/-- Construct `BoundaryWindingHyp` from `SmoothBoundaryWindingData` at each
-smooth boundary point. -/
-theorem boundaryWindingHyp_of_smoothData {H : ℝ}
-    {γ : PiecewiseC1Path (fdStart H) (fdStart H)}
-    (h_data : ∀ z : ℂ, z.im > 0 → z.im < H →
-      z ≠ I → z ≠ ellipticPointRho → z ≠ ellipticPointRhoPlusOne →
-      ¬(‖z‖ > 1 ∧ |z.re| < 1/2) →
-      Complex.normSq z ≥ 1 → |z.re| ≤ 1/2 →
-      SmoothBoundaryWindingData γ z) :
-    BoundaryWindingHyp γ :=
-  fun z h1 h2 h3 h4 h5 h6 h7 h8 =>
-    (h_data z h1 h2 h3 h4 h5 h6 h7 h8).hasWindingNumber
-
 private lemma im_eq_sqrt3_half_of_normSq_one_of_absRe_half
     {z : ℂ} (h_nsq : Complex.normSq z = 1)
     (hz_im : z.im > 0) (h_re_sq : z.re * z.re = 1/4) :

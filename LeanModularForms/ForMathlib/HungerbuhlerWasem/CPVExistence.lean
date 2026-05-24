@@ -227,62 +227,6 @@ theorem exit_arg_tendsto_left
     exact Complex.arg_real_mul _ (inv_pos.mpr hε)
   exact ((Complex.continuousAt_arg hnegL_slit).tendsto.comp h_quot').congr' h_arg_eq
 
-/-- **Log convergence on the right at the exit time.** If `‖γ(t₀ + δ_right(ε)) - s‖ = ε`
-(exit-time property) and `L_+ ∈ Complex.slitPlane`, then
-`Complex.log(γ(t₀ + δ_right(ε)) - s) - Real.log ε → (Complex.I * L_+.arg)` as `ε → 0⁺`.
-
-Decompose `Complex.log z = Real.log ‖z‖ + I·arg(z)`. The norm term equals
-`Real.log ε` (using the exit-time property), so it cancels. The arg term tends
-to `arg L_+` by `exit_arg_tendsto_right`. -/
-theorem exit_log_tendsto_right
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_at : γ t₀ = s)
-    (hL_slit : L ∈ Complex.slitPlane)
-    {δ_right : ℝ → ℝ}
-    (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ_right ε)
-    (hδ_to_zero : Tendsto δ_right (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)))
-    (h_exit : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      ‖γ (t₀ + δ_right ε) - s‖ = ε) :
-    Tendsto (fun ε : ℝ =>
-      Complex.log (γ (t₀ + δ_right ε) - s) - ((Real.log ε : ℝ) : ℂ))
-      (𝓝[>] (0 : ℝ)) (𝓝 (L.arg * Complex.I)) := by
-  have h_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      Complex.log (γ (t₀ + δ_right ε) - s) - ((Real.log ε : ℝ) : ℂ) =
-        ((γ (t₀ + δ_right ε) - s).arg : ℂ) * Complex.I := by
-    filter_upwards [h_exit] with ε h_exit_ε
-    rw [complex_log_eq, h_exit_ε]; ring
-  have h_arg := exit_arg_tendsto_right h_deriv h_at hL_slit hδ_pos hδ_to_zero
-  have h_mul_I : Tendsto (fun ε : ℝ =>
-      ((γ (t₀ + δ_right ε) - s).arg : ℂ) * Complex.I)
-      (𝓝[>] (0 : ℝ)) (𝓝 (L.arg * Complex.I)) :=
-    (Complex.continuous_ofReal.continuousAt.tendsto.comp h_arg).mul tendsto_const_nhds
-  exact h_mul_I.congr' (h_eq.mono (fun _ h => h.symm))
-
-/-- **Log convergence on the left at the exit time.** Symmetric to the right side. -/
-theorem exit_log_tendsto_left
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_at : γ t₀ = s)
-    (hnegL_slit : -L ∈ Complex.slitPlane)
-    {δ_left : ℝ → ℝ}
-    (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ_left ε)
-    (hδ_to_zero : Tendsto δ_left (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)))
-    (h_exit : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      ‖γ (t₀ - δ_left ε) - s‖ = ε) :
-    Tendsto (fun ε : ℝ =>
-      Complex.log (γ (t₀ - δ_left ε) - s) - ((Real.log ε : ℝ) : ℂ))
-      (𝓝[>] (0 : ℝ)) (𝓝 ((-L).arg * Complex.I)) := by
-  have h_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      Complex.log (γ (t₀ - δ_left ε) - s) - ((Real.log ε : ℝ) : ℂ) =
-        ((γ (t₀ - δ_left ε) - s).arg : ℂ) * Complex.I := by
-    filter_upwards [h_exit] with ε h_exit_ε
-    rw [complex_log_eq, h_exit_ε]; ring
-  have h_arg := exit_arg_tendsto_left h_deriv h_at hnegL_slit hδ_pos hδ_to_zero
-  have h_mul_I : Tendsto (fun ε : ℝ =>
-      ((γ (t₀ - δ_left ε) - s).arg : ℂ) * Complex.I)
-      (𝓝[>] (0 : ℝ)) (𝓝 ((-L).arg * Complex.I)) :=
-    (Complex.continuous_ofReal.continuousAt.tendsto.comp h_arg).mul tendsto_const_nhds
-  exact h_mul_I.congr' (h_eq.mono (fun _ h => h.symm))
-
 /-- **Normalized chord close to 1 (right side).** For any `ρ > 0`, eventually
 on `𝓝[>] t₀`, `‖(γ(t) - s) / (L · (t - t₀)) - 1‖ ≤ ρ`.
 

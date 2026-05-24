@@ -49,40 +49,6 @@ noncomputable section
 
 variable {x y : ℂ}
 
-/-- Positive minimum separation in a finite set of distinct complex numbers. Given a
-nonempty finite set `S` where all distinct pairs have positive distance, there exists
-a uniform lower bound `δ > 0` on pairwise distances. -/
-theorem finset_discrete_min_sep (S : Finset ℂ) (hS_nonempty : S.Nonempty)
-    (hS_discrete : ∀ s ∈ S, ∀ s' ∈ S, s ≠ s' → 0 < ‖s' - s‖) :
-    ∃ δ > 0, ∀ s ∈ S, ∀ s' ∈ S, s ≠ s' → δ ≤ ‖s' - s‖ := by
-  by_cases h_singleton : S.card ≤ 1
-  · refine ⟨1, one_pos, fun s hs s' hs' hne => ?_⟩
-    have h_card_eq : S.card = 1 := le_antisymm h_singleton hS_nonempty.card_pos
-    obtain ⟨a, hS_eq⟩ := Finset.card_eq_one.mp h_card_eq
-    rw [hS_eq, Finset.mem_singleton] at hs hs'
-    exact absurd (hs.trans hs'.symm) hne
-  · push Not at h_singleton
-    classical
-    let dists : Finset ℝ := S.biUnion (fun s =>
-      S.filter (· ≠ s) |>.image (fun s' => ‖s' - s‖))
-    have h_nonempty : dists.Nonempty := by
-      obtain ⟨a, ha⟩ := hS_nonempty
-      obtain ⟨b, hb, hne⟩ := Finset.exists_mem_ne h_singleton a
-      refine ⟨‖b - a‖, ?_⟩
-      simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]
-      exact ⟨a, ha, b, ⟨hb, hne⟩, rfl⟩
-    let δ := dists.min' h_nonempty
-    have hδ_pos : 0 < δ := by
-      have h_mem := Finset.min'_mem dists h_nonempty
-      simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter] at h_mem
-      obtain ⟨s, hs, s', ⟨hs', hne⟩, heq⟩ := h_mem
-      linarith [hS_discrete s hs s' hs' hne.symm, heq.symm]
-    refine ⟨δ, hδ_pos, fun s hs s' hs' hne => ?_⟩
-    have h_in : ‖s' - s‖ ∈ dists := by
-      simp only [dists, Finset.mem_biUnion, Finset.mem_image, Finset.mem_filter]
-      exact ⟨s, hs, s', ⟨hs', hne.symm⟩, rfl⟩
-    exact Finset.min'_le dists _ h_in
-
 /-- The multi-point CPV integrand distributes over subtraction pointwise. -/
 theorem cpvIntegrandOn_sub (S : Finset ℂ) (f g : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn S (fun z => f z - g z) γ ε t =
@@ -141,14 +107,6 @@ theorem HasCauchyPVOn.add {S : Finset ℂ} {f g : ℂ → ℂ}
     exact intervalIntegral.integral_congr
       (fun t _ => cpvIntegrandOn_add S f g γ.toPath.extend ε t)
   exact (hf.add hg).congr' heq.symm
-
-/-- A `HasCauchyPV` at a single point implies `HasCauchyPVOn` for the singleton set. -/
-theorem hasCauchyPVOn_singleton_of_hasCauchyPV {f : ℂ → ℂ}
-    {γ : PiecewiseC1Path x y} {z₀ : ℂ} {L : ℂ}
-    (h : HasCauchyPV f γ z₀ L) : HasCauchyPVOn {z₀} f γ L := by
-  simp only [HasCauchyPV, HasCauchyPVOn] at h ⊢
-  exact h.congr fun ε => intervalIntegral.integral_congr fun t _ =>
-    cpvIntegrand_eq_cpvIntegrandOn_singleton
 
 /-- A `HasCauchyPVOn` for a singleton set implies `HasCauchyPV` at that point. -/
 theorem hasCauchyPV_of_hasCauchyPVOn_singleton {f : ℂ → ℂ}

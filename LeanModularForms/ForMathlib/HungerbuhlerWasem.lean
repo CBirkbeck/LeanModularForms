@@ -586,61 +586,6 @@ theorem residueTheorem_avoidance
   rw [← h_total]
   exact hasCauchyPVOn_of_avoids ⟨δ, hδ_pos, hδ_bound⟩
 
-/-- Build a `PolarPartDecomposition` from the hypothesis that every pole is
-simple. The simple-pole coefficient is the residue, and the analytic
-remainder is the corrected `f - ∑ residue(f, s) / (z - s)`. -/
-noncomputable def PolarPartDecomposition.ofSimplePoles
-    {U : Set ℂ} (hU_open : IsOpen U) {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
-    {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (h_simple : ∀ s ∈ S, HasSimplePoleAt f s) :
-    PolarPartDecomposition f S U := by
-  classical
-  set c : ℂ → ℂ := fun s => if h : s ∈ S then (h_simple s h).coeff else 0
-  have hc_eq : ∀ (s : ℂ) (hs : s ∈ S), (h_simple s hs).coeff = c s := fun s hs => by
-    simp [c, hs]
-  have hc_residue : ∀ s ∈ S, c s = residue f s := fun s hs => by
-    simp only [c, dif_pos hs]
-    exact (residue_eq_coeff_of_hasSimplePoleAt (h_simple s hs)).symm
-  set h_ext :=
-    sub_principalPartSum_corrected_differentiableOn hU_open hf hS_in_U h_simple hc_eq
-  let g : ℂ → ℂ := h_ext.choose
-  have hg_spec := h_ext.choose_spec
-  refine
-    { polarPart := fun s z => c s / (z - s)
-      order := fun _ => 1
-      coeff := fun s _ => c s
-      polarPart_eq := fun s _hs z _hz => by simp
-      residue_eq := fun s hs => by simp [hc_residue s hs]
-      analyticRemainder := g
-      analyticRemainder_diff := hg_spec.1
-      decomp := fun z hz => ?_ }
-  have h_g := hg_spec.2 z hz
-  have h_pps : principalPartSum S c z = ∑ s ∈ S, c s / (z - s) := rfl
-  rw [h_pps] at h_g
-  linear_combination -h_g
-
-/-- **Hungerbühler–Wasem — convex-domain avoidance form (corollary).**
-
-When `U` is convex, null-homologous becomes automatic. Higher-order poles
-allowed via `PolarPartDecomposition`. -/
-theorem residueTheorem_convex_avoidance
-    {U : Set ℂ} (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (S : Finset ℂ) (hS_in_U : ↑S ⊆ U)
-    (f : ℂ → ℂ) (hf : DifferentiableOn ℂ f (U \ ↑S))
-    (γ : ClosedPwC1Immersion x)
-    (hγ_in_U : ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s)
-    (decomp : PolarPartDecomposition f S U) :
-    HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path
-      (∑ s ∈ S, 2 * ↑Real.pi * I *
-        generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s *
-          residue f s) :=
-  residueTheorem_avoidance hU_open hU_ne S hS_in_U f hf γ
-    (isNullHomologous_of_convex hU_convex hU_open hU_ne γ.toPwC1Immersion hγ_in_U)
-    hγ_avoids decomp
-
 end HungerbuhlerWasem
 
 end

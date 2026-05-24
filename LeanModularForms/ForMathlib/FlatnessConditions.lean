@@ -132,25 +132,6 @@ theorem IsFlatOfOrder.of_le {γ : ℝ → ℂ} {t₀ : ℝ} {m n : ℕ}
   exact ⟨fun L hL hR => (h.right_flat L hL hR).trans_isBigO (h_big_O _ nhdsWithin_le_nhds),
     fun L hL hL' => (h.left_flat L hL hL').trans_isBigO (h_big_O _ nhdsWithin_le_nhds)⟩
 
-private theorem tangentDeviation_isLittleO_one_of_continuousAt
-    {γ : ℝ → ℂ} {t₀ : ℝ} (hγ_cont : ContinuousAt γ t₀)
-    {l : Filter ℝ} (hl : l ≤ 𝓝 t₀) (L : ℂ) (hL : L ≠ 0) :
-    (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[l] (fun _ => (1 : ℝ)) := by
-  rw [Asymptotics.isLittleO_one_iff]
-  have h_tend : Tendsto (fun t => ‖γ t - γ t₀‖) l (𝓝 0) := by
-    rw [← norm_zero (E := ℂ), ← sub_self (γ t₀)]
-    exact ((hγ_cont.sub continuousAt_const).mono_left hl).norm
-  rw [Metric.tendsto_nhds]
-  intro ε hε
-  have h_ev : ∀ᶠ t in l, ‖γ t - γ t₀‖ < ε / 2 := h_tend (Iio_mem_nhds (half_pos hε))
-  filter_upwards [h_ev] with t ht
-  simp only [dist_zero_right, Real.norm_of_nonneg (norm_nonneg _)]
-  calc ‖tangentDeviation (γ t - γ t₀) L‖
-      ≤ 2 * ‖γ t - γ t₀‖ := norm_tangentDeviation_le _ _ hL
-    _ < 2 * (ε / 2) := by linarith
-    _ = ε := by ring
-
-
 /-- Flatness of order 1 from a derivative limit on either side, packaged as a
 common helper for the left and right variants. The set `u` is the open ray
 `Ioi t₀` or `Iio t₀`. -/
@@ -299,21 +280,5 @@ theorem satisfiesConditionB_of_simplePoles
     · filter_upwards [hf_eq] with z hz
       simp [hz, pow_one, add_comm]
     · exact fun ⟨_, hk⟩ _ hk1 => absurd hk1 (by lia)
-
-/-- Both conditions (A') and (B) are satisfied for simple poles, provided
-corner crossing angles are rational multiples of `π`. Condition (A') is fully
-automatic; condition (B) requires the angle hypothesis only at corners. -/
-theorem conditions_automatic_simple_poles
-    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
-    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
-    (hAngles : ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
-      ∀ ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1,
-        t₀ ∈ γ.toPiecewiseC1Path.partition →
-          ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q) :
-    SatisfiesConditionA' γ f S0 (fun _ => 1) ∧ SatisfiesConditionB γ f S0 :=
-  ⟨satisfiesConditionA'_of_simplePoles γ f S0 hSimplePoles,
-   satisfiesConditionB_of_simplePoles γ f S0 hSimplePoles hAngles⟩
-
 
 end

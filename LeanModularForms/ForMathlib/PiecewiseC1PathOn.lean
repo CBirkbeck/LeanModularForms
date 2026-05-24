@@ -107,22 +107,6 @@ omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
 private lemma concatFun_of_lt {γ₁ γ₂ : ℝ → E} {b t : ℝ} (h : b < t) :
     concatFun γ₁ γ₂ b t = γ₂ t := if_neg (not_le.mpr h)
 
-omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
-/-- For `t < b`, `concatFun γ₁ γ₂ b` agrees with `γ₁` on the open neighborhood
-`Iio b` of `t`. -/
-private lemma concatFun_eventuallyEq_left {γ₁ γ₂ : ℝ → E} {b t : ℝ} (h : t < b) :
-    concatFun γ₁ γ₂ b =ᶠ[𝓝 t] γ₁ := by
-  filter_upwards [Iio_mem_nhds h] with s hs
-  exact concatFun_of_le hs.le
-
-omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
-/-- For `b < t`, `concatFun γ₁ γ₂ b` agrees with `γ₂` on the open neighborhood
-`Ioi b` of `t`. -/
-private lemma concatFun_eventuallyEq_right {γ₁ γ₂ : ℝ → E} {b t : ℝ} (h : b < t) :
-    concatFun γ₁ γ₂ b =ᶠ[𝓝 t] γ₂ := by
-  filter_upwards [Ioi_mem_nhds h] with s hs
-  exact concatFun_of_lt hs
-
 end PiecewiseC1PathOn
 
 end

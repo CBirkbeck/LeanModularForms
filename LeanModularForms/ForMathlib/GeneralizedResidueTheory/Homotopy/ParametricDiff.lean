@@ -36,27 +36,6 @@ private noncomputable instance : ContinuousSMul ℝ ℂ where
   continuous_smul := by
     convert (Complex.continuous_ofReal.comp continuous_fst).mul continuous_snd using 1
 
-/-- Continuity of a parametric interval integral. -/
-theorem intervalIntegral_continuous_on_param (f : ℝ → ℝ → ℂ) (a b : ℝ) (S : Set ℝ)
-    (hab : a ≤ b) (hf_cont : Continuous (fun p : ℝ × ℝ => f p.1 p.2))
-    (_hf_int : ∀ s ∈ S, IntervalIntegrable (f · s) volume a b) :
-    ContinuousOn (fun s => ∫ t in a..b, f t s) S := by
-  intro s₀ _hs₀
-  apply ContinuousAt.continuousWithinAt
-  obtain ⟨M, hM⟩ := (isCompact_Icc.prod isCompact_Icc : IsCompact
-    (Icc a b ×ˢ Icc (s₀ - 1) (s₀ + 1))).exists_bound_of_continuousOn hf_cont.continuousOn
-  apply intervalIntegral.continuousAt_of_dominated_interval
-  · filter_upwards with s
-    exact (hf_cont.comp (continuous_id.prodMk continuous_const)).aestronglyMeasurable
-  · filter_upwards [Ioo_mem_nhds (show s₀ - 1 < s₀ by linarith) (show s₀ < s₀ + 1 by linarith)]
-      with s hs
-    filter_upwards with t ht
-    rw [Set.uIoc_of_le hab] at ht
-    exact hM (t, s) ⟨Ioc_subset_Icc_self ht, hs.1.le, hs.2.le⟩
-  · exact intervalIntegrable_const
-  · filter_upwards with t _
-    exact (hf_cont.comp (continuous_const.prodMk continuous_id)).continuousAt
-
 /-- The s-partial of a C² function is C¹. -/
 lemma contDiff_partialDeriv_snd_of_contDiff_two (H : ℝ × ℝ → ℂ) (hH : ContDiff ℝ 2 H) :
     ContDiff ℝ 1 (fun p : ℝ × ℝ => deriv (fun s => H (p.1, s)) p.2) := by
@@ -342,29 +321,5 @@ private lemma homotopy_J_deriv_continuousOn (f : ℂ → ℂ) (H : ℝ × ℝ �
   refine ContinuousOn.congr ?_ fun t _ => homotopy_chain_rule_t f H hH t s hf
   exact ((((hf.contDiff (n := ⊤) |>.continuous_deriv le_top).comp hH.continuous).comp h_embed).mul
     ((contDiff_partialDeriv_fst_of_contDiff_two H hH).continuous.comp h_embed)).continuousOn
-
-/-- Derivative of the homotopy integral vanishes. -/
-theorem hasDerivAt_homotopy_integral_zero (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (a b s : ℝ) (hab : a < b)
-    (hH_smooth : ContDiff ℝ 2 H)
-    (hf_diff : ∀ t ∈ Icc a b, ∀ s' ∈ Icc (0:ℝ) 1, DifferentiableAt ℂ f (H (t, s')))
-    (hfH_cont : Continuous (f ∘ H)) (hs : s ∈ Set.Icc 0 1)
-    (hderiv_a : deriv (fun s' => H (a, s')) s = 0)
-    (hderiv_b : deriv (fun s' => H (b, s')) s = 0) (hf_differentiable : Differentiable ℂ f) :
-    HasDerivAt (fun s' => ∫ t in a..b, f (H (t, s')) * deriv (fun t' => H (t', s')) t) 0 s := by
-  let J : ℝ → ℝ → ℂ := fun t s' => f (H (t, s')) * deriv (fun s'' => H (t, s'')) s'
-  have h_ftc : ∫ t in a..b, deriv (fun t' => J t' s) t = J b s - J a s := by
-    apply intervalIntegral.integral_eq_sub_of_hasDerivAt _
-      (ContinuousOn.intervalIntegrable_of_Icc hab.le
-        (homotopy_J_deriv_continuousOn f H a b s hH_smooth hfH_cont hf_diff hs hf_differentiable))
-    intro t ht
-    have ht' : t ∈ Icc a b :=
-      Set.uIcc_subset_Icc ⟨le_refl a, hab.le⟩ ⟨hab.le, le_refl b⟩ ht
-    exact ((homotopy_fH_differentiableAt_t f H hH_smooth t s (hf_diff t ht' s hs)).mul
-      (homotopy_partialS_differentiableAt_t H hH_smooth t s)).hasDerivAt
-  have h_boundary : J b s - J a s = 0 := by simp only [J, hderiv_a, hderiv_b, mul_zero, sub_zero]
-  rw [← h_boundary, ← h_ftc]
-  exact hasDerivAt_homotopy_param f H a b s hab hH_smooth hf_diff hfH_cont hs hf_differentiable
-    fun t ht => homotopy_schwarz_product_rule f H hH_smooth t s
-      (hf_diff t (Ioo_subset_Icc_self ht) s hs) hf_differentiable
 
 end

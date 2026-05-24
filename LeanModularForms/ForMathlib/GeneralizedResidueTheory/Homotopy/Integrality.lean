@@ -36,58 +36,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-- Piecewise C¹ homotopy between **closed** curves (i.e. `γ₀ a = γ₀ b` and
-`γ₁ a = γ₁ b`) avoiding `z₀`, where `P` is the finite partition set of points
-at which the derivative of the homotopy may be discontinuous or undefined.
-
-Use this when working with closed piecewise-smooth curves; it is strictly
-stronger than `CurvesHomotopicAvoiding` (which handles open-endpoint curves
-fixed at `z₀`) but weaker than `ClosedCurvesHomotopicAvoiding` (which requires
-a globally continuous derivative without a partition). -/
-def PiecewiseCurvesHomotopicAvoiding (γ₀ γ₁ : ℝ → ℂ)
-    (a b : ℝ) (z₀ : ℂ) (P : Finset ℝ) : Prop :=
-  ∃ H : ℝ × ℝ → ℂ,
-    Continuous H ∧
-    (∀ t ∈ Icc a b, H (t, 0) = γ₀ t) ∧
-    (∀ t ∈ Icc a b, H (t, 1) = γ₁ t) ∧
-    (∀ s ∈ Icc (0:ℝ) 1, H (a, s) = H (b, s)) ∧
-    (∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      H (t, s) ≠ z₀) ∧
-    (∀ t ∈ Ioo a b, t ∉ P →
-      ∀ s ∈ Icc (0:ℝ) 1,
-        DifferentiableAt ℝ (fun t' => H (t', s)) t) ∧
-    (∀ p₁ p₂ : ℝ, p₁ < p₂ →
-      (∀ t ∈ Ioo p₁ p₂, t ∉ P) →
-        Ioo p₁ p₂ ⊆ Ioo a b →
-          ContinuousOn
-            (fun (p : ℝ × ℝ) =>
-              deriv (fun t' => H (t', p.2)) p.1)
-            (Ioo p₁ p₂ ×ˢ Icc 0 1)) ∧
-    (∃ M : ℝ, ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      ‖deriv (fun t' => H (t', s)) t‖ ≤ M)
-
-/-- Smooth closed homotopy between **closed** curves avoiding `z₀`.
-
-This is the strongest of the four homotopy notions: the homotopy `H` is
-everywhere continuously differentiable (no partition needed). Use this when
-the curves and homotopy are genuinely smooth; it implies
-`PiecewiseCurvesHomotopicAvoiding` (via `ClosedCurvesHomotopicAvoiding.toPiecewise`)
-but does **not** directly imply `CurvesHomotopicAvoiding`, which has a different
-endpoint condition (endpoints fixed at `z₀` rather than identified). -/
-def ClosedCurvesHomotopicAvoiding (γ₀ γ₁ : ℝ → ℂ)
-    (a b : ℝ) (z₀ : ℂ) : Prop :=
-  ∃ H : ℝ × ℝ → ℂ,
-    Continuous H ∧
-    (∀ t ∈ Icc a b, H (t, 0) = γ₀ t) ∧
-    (∀ t ∈ Icc a b, H (t, 1) = γ₁ t) ∧
-    (∀ s ∈ Icc (0:ℝ) 1, H (a, s) = H (b, s)) ∧
-    (∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      H (t, s) ≠ z₀) ∧
-    (∀ t ∈ Ioo a b, ∀ s ∈ Icc (0:ℝ) 1,
-      DifferentiableAt ℝ (fun t' => H (t', s)) t) ∧
-    (Continuous (fun p : ℝ × ℝ =>
-      deriv (fun t' => H (t', p.2)) p.1))
-
 /-- If f is eventually equal to a constant, `limUnder` equals that constant. -/
 theorem limUnder_eventually_eq_const {α : Type*} [TopologicalSpace α] {f : α → ℂ}
     {l : Filter α} {c : ℂ} [l.NeBot] (hf : ∀ᶠ x in l, f x = c) : limUnder l f = c :=
@@ -315,32 +263,6 @@ theorem exp_integral_eq_endpoint_ratio_piecewise
       (Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))))⁻¹ from by
     rw [Complex.exp_neg, inv_inv], h_neg, inv_div]
 
-/-- The winding number of a piecewise C¹ closed curve avoiding `z₀` is an integer. -/
-lemma windingNumber_integer_of_piecewise_closed_avoiding
-    (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (P : Finset ℝ) (hab : a < b)
-    (hγ_closed : γ a = γ b)
-    (hγ_cont : ContinuousOn γ (Icc a b))
-    (hγ_diff : ∀ t ∈ Ioo a b, t ∉ P → DifferentiableAt ℝ γ t)
-    (hγ_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ →
-      (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo a b →
-      ContinuousOn (deriv γ) (Ioo p₁ p₂))
-    (hγ_avoids : ∀ t ∈ Icc a b, γ t ≠ z₀)
-    (hγ_deriv_bound : ∃ M, ∀ t ∈ Icc a b, ‖deriv γ t‖ ≤ M) :
-    ∃ n : ℤ, generalizedWindingNumber' γ a b z₀ = n := by
-  have hexp : Complex.exp (∫ t in a..b, deriv γ t / (γ t - z₀)) = 1 := by
-    rw [exp_integral_eq_endpoint_ratio_piecewise γ a b z₀ P hab hγ_cont hγ_diff hγ_deriv_cont
-      hγ_avoids hγ_deriv_bound, hγ_closed]
-    exact div_self (sub_ne_zero.mpr (hγ_avoids b (right_mem_Icc.mpr hab.le)))
-  rw [Complex.exp_eq_one_iff] at hexp
-  obtain ⟨n, hn⟩ := hexp
-  refine ⟨n, ?_⟩
-  unfold generalizedWindingNumber'
-  obtain ⟨δ, hδ, hδ_bd⟩ := bound_away_from_z₀ γ a b z₀ hab hγ_cont hγ_avoids
-  rw [pv_eq_integral_of_bound_away hab hδ hδ_bd,
-    show (fun t => (γ t - z₀)⁻¹ * deriv γ t) = (fun t => deriv γ t / (γ t - z₀)) from
-      funext fun t => by rw [mul_comm, div_eq_mul_inv], hn]
-  field_simp
-
 /-- Uniform bound for winding number integrand from homotopy avoidance. -/
 theorem winding_integrand_bounded_of_uniform_avoidance
     {H : ℝ × ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {δ M : ℝ}
@@ -437,30 +359,5 @@ theorem exp_integral_eq_endpoint_ratio
   rw [show Complex.exp (∫ t in a..b, deriv γ t / (γ t - z₀)) =
       (Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))))⁻¹ from by
     rw [Complex.exp_neg, inv_inv], h_neg, inv_div]
-
-/-- The winding number of a smooth closed curve avoiding z₀
-is an integer. -/
-theorem windingNumber_integer_of_closed_avoiding
-    (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
-    (hγ_closed : γ a = γ b)
-    (hγ_cont : ContinuousOn γ (Icc a b))
-    (hγ_diff : ∀ t ∈ Ioo a b,
-      DifferentiableAt ℝ γ t)
-    (hγ'_cont : ContinuousOn (deriv γ) (Icc a b))
-    (hγ_avoid : ∀ t ∈ Icc a b, γ t ≠ z₀) :
-    ∃ n : ℤ,
-    generalizedWindingNumber' γ a b z₀ = n := by
-  have hexp : Complex.exp (∫ t in a..b, deriv γ t / (γ t - z₀)) = 1 := by
-    rw [exp_integral_eq_endpoint_ratio γ a b z₀ hab hγ_cont hγ_diff hγ_avoid hγ'_cont, hγ_closed]
-    exact div_self (sub_ne_zero.mpr (hγ_avoid b (right_mem_Icc.mpr hab.le)))
-  rw [Complex.exp_eq_one_iff] at hexp
-  obtain ⟨n, hn⟩ := hexp
-  refine ⟨n, ?_⟩
-  unfold generalizedWindingNumber'
-  obtain ⟨δ, hδ, hδ_bd⟩ := bound_away_from_z₀ γ a b z₀ hab hγ_cont hγ_avoid
-  rw [pv_eq_integral_of_bound_away hab hδ hδ_bd,
-    show (fun t => (γ t - z₀)⁻¹ * deriv γ t) = (fun t => deriv γ t / (γ t - z₀)) from
-      funext fun t => by rw [mul_comm, div_eq_mul_inv], hn]
-  field_simp
 
 end

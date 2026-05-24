@@ -1274,24 +1274,6 @@ private theorem preimage_finite_piece (γ : ClosedPwC1Immersion x) {a b : ℝ}
   have : CompactSpace T := isCompact_iff_compactSpace.mp hT_compact
   exact Set.finite_coe_iff.mp finite_of_compact_of_discrete
 
-/-- **Per-piece finite preimage of a finite set.** On a closed piece `Icc a b`
-between consecutive partition members, the preimage of any finite set `S ⊆ E`
-under the extended path is finite. -/
-private theorem preimage_finite_piece_of_finset (γ : ClosedPwC1Immersion x) {a b : ℝ}
-    (h : γ.closedPartition.IsConsecutive a b) (S : Finset E) :
-    Set.Finite {t ∈ Icc a b | γ.toPath.extend t ∈ (↑S : Set E)} := by
-  classical
-  have h_union :
-      {t ∈ Icc a b | γ.toPath.extend t ∈ (↑S : Set E)} =
-        ⋃ s ∈ S, {t ∈ Icc a b | γ.toPath.extend t = s} := by
-    ext t
-    refine ⟨fun ⟨htI, hts⟩ => Set.mem_iUnion₂.mpr ⟨γ.toPath.extend t,
-      by simpa using hts, htI, rfl⟩, fun ht => ?_⟩
-    obtain ⟨s, hs, htI, hts⟩ := Set.mem_iUnion₂.mp ht
-    exact ⟨htI, by simp only [hts, Finset.mem_coe]; exact hs⟩
-  rw [h_union]
-  exact S.finite_toSet.biUnion fun s _ => γ.preimage_finite_piece h s
-
 end ClosedPwC1Immersion
 
 

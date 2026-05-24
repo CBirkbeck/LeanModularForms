@@ -216,13 +216,6 @@ theorem windingNumber_eq (D : AsymmetricSingleCrossingData γ z₀) :
     generalizedWindingNumber γ z₀ = D.L / (2 * ↑Real.pi * I) :=
   D.hasWindingNumber.eq
 
-/-- If `L = -(π * I)`, then the generalized winding number is `-1/2`. -/
-theorem windingNumber_neg_half (D : AsymmetricSingleCrossingData γ z₀)
-    (hL : D.L = -(↑Real.pi * I)) :
-    generalizedWindingNumber γ z₀ = -1 / 2 := by
-  rw [D.windingNumber_eq, hL]
-  field_simp
-
 /-- **Simple-pole CPV from `AsymmetricSingleCrossingData`.** Given an
 `AsymmetricSingleCrossingData γ z₀` witnessing a (possibly asymmetric) single
 crossing, the CPV of `c / (z - z₀)` along `γ` exists with value `c · D.L`. -/
@@ -248,38 +241,6 @@ end AsymmetricSingleCrossingData
 namespace SingleCrossingData
 
 variable {γ : PiecewiseC1Path x y} {z₀ : ℂ}
-
-/-- A symmetric `SingleCrossingData` lifts to an `AsymmetricSingleCrossingData`
-by taking `δ_left = δ_right = δ`. This makes all existing FD-curve constructors
-(`mkSingleCrossingData_atI`, etc.) automatically usable in the asymmetric
-framework. -/
-def toAsymmetric (D : SingleCrossingData γ z₀) :
-    AsymmetricSingleCrossingData γ z₀ where
-  L := D.L
-  t₀ := D.t₀
-  ht₀ := D.ht₀
-  δ_left := D.δ
-  δ_right := D.δ
-  threshold := D.threshold
-  hthresh := D.hthresh
-  hδ_left_pos := D.hδ_pos
-  hδ_right_pos := D.hδ_pos
-  hδ_left_small := fun ε hε hεt => (D.hδ_small ε hε hεt).trans_le (min_le_left _ _)
-  hδ_right_small :=
-    fun ε hε hεt => (D.hδ_small ε hε hεt).trans_le (min_le_right _ _)
-  h_far_left := fun ε hε hεt t ht h_le h_gap =>
-    D.h_far ε hε hεt t ht (by rw [abs_of_nonpos (by linarith)]; linarith)
-  h_far_right := fun ε hε hεt t ht h_ge h_gap =>
-    D.h_far ε hε hεt t ht (by rw [abs_of_nonneg (by linarith)]; linarith)
-  h_near_left := fun ε hε hεt t h_le h_gap =>
-    D.h_near ε hε hεt t (by rw [abs_of_nonpos (by linarith)]; linarith)
-  h_near_right := fun ε hε hεt t h_ge h_gap =>
-    D.h_near ε hε hεt t (by rw [abs_of_nonneg (by linarith)]; linarith)
-  E := D.E
-  h_ftc := D.h_ftc
-  hint_left := D.hint_left
-  hint_right := D.hint_right
-  h_limit := D.h_limit
 
 end SingleCrossingData
 
@@ -308,57 +269,5 @@ structure AsymmetricArcFTCHyp {x y : ℂ} (γ : PiecewiseC1Path x y) (z₀ : ℂ
       volume (t₀ + δ_right ε) 1
   /-- `E(ε) → L` as `ε → 0⁺`. -/
   h_limit : Tendsto E (𝓝[>] 0) (𝓝 L)
-
-/-- **Package builder for `AsymmetricSingleCrossingData`.** Given all the geometric
-ingredients (cutoffs, far/near bounds with independent left/right radii) together
-with the analytic content (FTC equality + integrability + limit), bundle them
-into an `AsymmetricSingleCrossingData`.
-
-The user is expected to supply `δ_left, δ_right` and the corresponding
-`h_far_left, h_far_right, h_near_left, h_near_right` bounds (e.g., constructed
-via IVT exit-time inversion on `‖γ(t) - z₀‖` using strict monotonicity on each
-side). The asymmetric form allows `δ_left ≠ δ_right` at every `ε`, accommodating
-crossings where the chord-to-tangent constants `‖L_-‖, ‖L_+‖` differ. -/
-def AsymmetricSingleCrossingData.mkFromBounds
-    {x y : ℂ} {γ : PiecewiseC1Path x y} {z₀ : ℂ}
-    {t₀ : ℝ} (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    {δ_left δ_right : ℝ → ℝ} {threshold : ℝ} (hthresh : 0 < threshold)
-    (hδ_left_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_left ε)
-    (hδ_right_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_right ε)
-    (hδ_left_small : ∀ ε, 0 < ε → ε < threshold → δ_left ε < t₀)
-    (hδ_right_small : ∀ ε, 0 < ε → ε < threshold → δ_right ε < 1 - t₀)
-    (h_far_left : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t ∈ Icc (0 : ℝ) 1, t ≤ t₀ → δ_left ε < t₀ - t →
-        ε < ‖γ.toPath.extend t - z₀‖)
-    (h_far_right : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t ∈ Icc (0 : ℝ) 1, t₀ ≤ t → δ_right ε < t - t₀ →
-        ε < ‖γ.toPath.extend t - z₀‖)
-    (h_near_left : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t, t ≤ t₀ → t₀ - t ≤ δ_left ε → ‖γ.toPath.extend t - z₀‖ ≤ ε)
-    (h_near_right : ∀ ε, 0 < ε → ε < threshold →
-      ∀ t, t₀ ≤ t → t - t₀ ≤ δ_right ε → ‖γ.toPath.extend t - z₀‖ ≤ ε)
-    {L : ℂ}
-    (ftcHyp : AsymmetricArcFTCHyp γ z₀ t₀ δ_left δ_right threshold L) :
-    AsymmetricSingleCrossingData γ z₀ where
-  L := L
-  t₀ := t₀
-  ht₀ := ht₀
-  δ_left := δ_left
-  δ_right := δ_right
-  threshold := threshold
-  hthresh := hthresh
-  hδ_left_pos := hδ_left_pos
-  hδ_right_pos := hδ_right_pos
-  hδ_left_small := hδ_left_small
-  hδ_right_small := hδ_right_small
-  h_far_left := h_far_left
-  h_far_right := h_far_right
-  h_near_left := h_near_left
-  h_near_right := h_near_right
-  E := ftcHyp.E
-  h_ftc := ftcHyp.h_ftc
-  hint_left := ftcHyp.hint_left
-  hint_right := ftcHyp.hint_right
-  h_limit := ftcHyp.h_limit
 
 end

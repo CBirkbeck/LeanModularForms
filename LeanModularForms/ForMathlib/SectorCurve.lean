@@ -54,27 +54,11 @@ def lineCurve (r : ℝ) (α : ℝ) (t : ℝ) : ℂ :=
 theorem lineCurve_zero (r : ℝ) (α : ℝ) : lineCurve r α 0 = 0 := by
   simp [lineCurve]
 
-theorem lineCurve_eq (r : ℝ) (α : ℝ) (t : ℝ) :
-    lineCurve r α t = ↑(r * t) * exp (↑α * I) := rfl
-
-theorem lineCurve_neg (r : ℝ) (α : ℝ) (t : ℝ) :
-    lineCurve r α (-t) = -lineCurve r α t := by
-  simp [lineCurve, mul_neg]
-
-
-
 theorem lineCurve_hasDerivAt (r : ℝ) (α : ℝ) (t : ℝ) :
     HasDerivAt (lineCurve r α) (↑r * exp (↑α * I)) t := by
   have h1 : HasDerivAt (fun s : ℝ => (↑(r * s) : ℂ)) (↑r) t := by
     simpa using ((hasDerivAt_id t).const_mul r).ofReal_comp
   exact h1.mul_const _
-
-theorem lineCurve_deriv (r : ℝ) (α : ℝ) (t : ℝ) :
-    deriv (lineCurve r α) t = ↑r * exp (↑α * I) :=
-  (lineCurve_hasDerivAt r α t).deriv
-
-
-/-! ### Integrand computation -/
 
 /-- The constant factor `r⁻ᵏ · exp(-ikα)` in the higher-order integrand. -/
 def higherOrderFactor (r : ℝ) (α : ℝ) (k : ℕ) : ℂ :=
@@ -83,18 +67,5 @@ def higherOrderFactor (r : ℝ) (α : ℝ) (k : ℕ) : ℂ :=
 @[simp]
 theorem higherOrderFactor_zero (r : ℝ) (α : ℝ) : higherOrderFactor r α 0 = 1 := by
   simp [higherOrderFactor]
-
-/-- Helper: the odd-symmetry cancellation pattern. Given `f(-t) = -f(t)`,
-the function `ε ↦ ∫_{-1}^{-ε} f + ∫_{ε}^{1} f` is identically zero. -/
-private theorem pv_odd_cancel_aux {f : ℝ → ℂ} (hodd : ∀ t, f (-t) = -f t) :
-    (fun ε => (∫ t in (-1 : ℝ)..(-ε), f t) + ∫ t in ε..(1 : ℝ), f t) =
-    (fun _ => (0 : ℂ)) := by
-  funext ε
-  have key : ∫ t in (-1 : ℝ)..(-ε), f t = -(∫ t in ε..(1 : ℝ), f t) := by
-    calc ∫ t in (-1 : ℝ)..(-ε), f t
-        = ∫ t in ε..1, f (-t) := (intervalIntegral.integral_comp_neg f).symm
-      _ = ∫ t in ε..1, -f t := by simp_rw [hodd]
-      _ = -(∫ t in ε..1, f t) := intervalIntegral.integral_neg
-  rw [key, neg_add_cancel]
 
 end SectorCurve

@@ -42,15 +42,6 @@ noncomputable section
 
 open scoped Classical
 
-/-- The pole order of `f` at `z₀` as a natural number.
-
-If `f` is meromorphic at `z₀` with `meromorphicOrderAt f z₀ = -n` for some `n > 0`,
-returns `n`. Returns `0` if `f` is analytic at `z₀`, not meromorphic, or has a zero. -/
-noncomputable def poleOrderAt (f : ℂ → ℂ) (z₀ : ℂ) : ℕ :=
-  if _h : MeromorphicAt f z₀ then
-    (-(meromorphicOrderAt f z₀).untop₀).toNat
-  else 0
-
 /-- Principal part sum for simple poles: `∑ s ∈ S, c(s) / (z - s)`.
 
 Given a finite set `S` of pole locations and a coefficient function `c : ℂ → ℂ`,
@@ -58,13 +49,6 @@ this is the rational function that captures the singular part of a meromorphic f
 with simple poles at the points of `S`. -/
 noncomputable def principalPartSum (S : Finset ℂ) (c : ℂ → ℂ) (z : ℂ) : ℂ :=
   ∑ s ∈ S, c s / (z - s)
-
-/-- A single term `c / (z - s)` is differentiable at any `z ≠ s`. -/
-theorem differentiableAt_div_sub {s : ℂ} {c : ℂ} {z : ℂ} (hz : z ≠ s) :
-    DifferentiableAt ℂ (fun w => c / (w - s)) z :=
-  differentiableAt_const c |>.div (differentiableAt_id.sub (differentiableAt_const s))
-    (sub_ne_zero.mpr hz)
-
 
 private theorem principalPartSum_rest_analyticAt
     (S : Finset ℂ) (s : ℂ) (c : ℂ → ℂ) :
