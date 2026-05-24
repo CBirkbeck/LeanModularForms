@@ -31,37 +31,8 @@ open scoped Real Interval
 
 noncomputable section
 
-private def seg4_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
-  ((1/2 - z₀.re : ℝ) : ℂ) +
-  ((H - 5 * t * (H - Real.sqrt 3 / 2) - z₀.im : ℝ) : ℂ) * I
-
-private lemma fdBoundary_sub_eq_seg4_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) (ht : t ≤ 1/5) :
-    fdBoundaryFun H t - z₀ = seg4_h₀ H z₀ t := by
-  simp only [fdBoundaryFun, ht, ite_true, seg4_h₀]
-  apply Complex.ext <;> simp
-
-private lemma seg4_h₀_continuous (H : ℝ) (z₀ : ℂ) : Continuous (seg4_h₀ H z₀) := by
-  unfold seg4_h₀; fun_prop
-
-private lemma hasDerivAt_seg4_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
-    HasDerivAt (seg4_h₀ H z₀) (-(seg1Speed H : ℂ) * I) t := by
-  have h_real : HasDerivAt (fun s : ℝ => H - 5 * s * (H - Real.sqrt 3 / 2) - z₀.im)
-      (-seg1Speed H) t := by
-    have hd : HasDerivAt (fun s : ℝ => 5 * s * (H - Real.sqrt 3 / 2))
-        (5 * (H - Real.sqrt 3 / 2)) t :=
-      (((hasDerivAt_id t).const_mul (5 : ℝ)).mul_const (H - Real.sqrt 3 / 2)).congr_deriv (by ring)
-    exact (((hasDerivAt_const t H).sub hd).sub_const z₀.im).congr_deriv
-      (by unfold seg1Speed; ring)
-  have h1 : HasDerivAt
-      (fun s : ℝ => ((H - 5 * s * (H - Real.sqrt 3 / 2) - z₀.im : ℝ) : ℂ))
-      (-(seg1Speed H : ℂ)) t :=
-    (h_real.ofReal_comp).congr_deriv (by push_cast; ring)
-  exact ((hasDerivAt_const t (((1/2 - z₀.re : ℝ) : ℂ))).add (h1.mul_const I)).congr_deriv
-    (by ring)
-
-private lemma deriv_seg4_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) :
-    deriv (seg4_h₀ H z₀) t = -(seg1Speed H : ℂ) * I :=
-  (hasDerivAt_seg4_h₀ H z₀ t).deriv
+/-- Local alias: the `t ≤ 1/5` piece reference is the shared `vertSeg_h₀`. -/
+private abbrev seg4_h₀ := vertSeg_h₀
 
 /-- Local alias: the arc reference is the shared `vertSeg_h_arc`. -/
 private abbrev seg4_h_arc := vertSeg_h_arc
@@ -114,7 +85,7 @@ private lemma seg4_h₀_slitPlane {H : ℝ} {z₀ : ℂ} (hz_re : z₀.re = -1/2
     seg4_h₀ H z₀ t ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff]
   left
-  unfold seg4_h₀
+  unfold seg4_h₀ vertSeg_h₀
   norm_num [Complex.add_re, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im,
     Complex.I_re, Complex.I_im, hz_re]
 
@@ -171,9 +142,9 @@ private lemma seg4_seg1_ftc (H : ℝ) {z₀ : ℂ} (hz_re : z₀.re = -1/2) :
         deriv (seg4_h₀ H z₀) t / seg4_h₀ H z₀ t =
       Complex.log (seg4_h₀ H z₀ (1/5)) - Complex.log (seg4_h₀ H z₀ 0) := by
   apply LogDerivFTC.ftc_log_on_segment (by norm_num : (0 : ℝ) ≤ 1/5)
-    (seg4_h₀_continuous H z₀).continuousOn
-    (fun t _ => (hasDerivAt_seg4_h₀ H z₀ t).differentiableAt)
-    (funext (deriv_seg4_h₀ H z₀) ▸ continuousOn_const)
+    (vertSeg_h₀_continuous H z₀).continuousOn
+    (fun t _ => (hasDerivAt_vertSeg_h₀ H z₀ t).differentiableAt)
+    (funext (deriv_vertSeg_h₀ H z₀) ▸ continuousOn_const)
   intro t _
   exact seg4_h₀_slitPlane hz_re t
 
@@ -187,8 +158,7 @@ private lemma seg4_arc_ftc {z₀ : ℂ} (hz_re : z₀.re = -1/2)
   apply LogDerivFTC.ftc_log_on_segment (by norm_num : (1/5 : ℝ) ≤ 3/5)
     (vertSeg_h_arc_continuous z₀).continuousOn
     (fun t _ => (hasDerivAt_vertSeg_h_arc z₀ t).differentiableAt)
-    (funext (deriv_vertSeg_h_arc z₀) ▸ (continuous_const.mul (Complex.continuous_exp.comp
-      ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const))).continuousOn)
+    (vertSeg_h_arc_deriv_continuousOn z₀ _)
   intro t ⟨ht1, ht3⟩
   exact seg4_h_arc_slitPlane hz_re hc_lo ht1 ht3
 
@@ -224,30 +194,20 @@ private lemma seg4_right_ftc {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   intro t ⟨htd, _⟩
   exact seg4_h₃_right_slitPlane hH hz_re hδ_pos htd
 
-private lemma seg4_seg5_ftc (H : ℝ) {z₀ : ℂ} (hc_hi : z₀.im < H) :
-    IntervalIntegrable
-      (fun t => deriv (seg4_h₅ H z₀) t / seg4_h₅ H z₀ t) volume (4/5) 1 ∧
-    ∫ t in (4/5 : ℝ)..(1 : ℝ),
-        deriv (seg4_h₅ H z₀) t / seg4_h₅ H z₀ t =
-      Complex.log (seg4_h₅ H z₀ 1) - Complex.log (seg4_h₅ H z₀ (4/5)) := by
-  apply LogDerivFTC.ftc_log_on_segment (by norm_num : (4/5 : ℝ) ≤ 1)
-    (vertSeg_h₅_continuous H z₀).continuousOn
-    (fun t _ => (hasDerivAt_vertSeg_h₅ H z₀ t).differentiableAt)
-    (funext (deriv_vertSeg_h₅ H z₀) ▸ continuousOn_const)
-  intro t _
-  exact vertSeg_h₅_slitPlane hc_hi t
+/-- Local alias for the shared seg5 FTC. -/
+private alias seg4_seg5_ftc := vertSeg_h₅_ftc
 
 private lemma seg4_junction_15 (H : ℝ) (z₀ : ℂ) :
     seg4_h₀ H z₀ (1/5) = seg4_h_arc z₀ (1/5) := by
-  unfold seg4_h₀ seg4_h_arc vertSeg_h_arc
+  unfold seg4_h₀ vertSeg_h₀ seg4_h_arc vertSeg_h_arc
   have hθ : (fdArcAngle (1/5) : ℝ) = Real.pi / 3 := by unfold fdArcAngle; ring
   rw [hθ, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_three, Real.sin_pi_div_three]
-  apply Complex.ext <;> simp <;> ring
+  apply Complex.ext <;> simp
 
 private lemma seg4_closed (H : ℝ) (z₀ : ℂ) :
     seg4_h₀ H z₀ 0 = seg4_h₅ H z₀ 1 := by
-  unfold seg4_h₀ seg4_h₅ vertSeg_h₅
+  unfold seg4_h₀ vertSeg_h₀ seg4_h₅ vertSeg_h₅
   apply Complex.ext <;> simp <;> ring
 
 private lemma seg4_log_diff_eq_neg_pi_I {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
@@ -278,48 +238,19 @@ private lemma seg4_log_diff_eq_neg_pi_I {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
         unfold seg1Speed; ring
       linarith [this, hK_eq_seg4]
     exact_mod_cast this
-  rw [h_minus, h_plus]
-  rw [show (((-(seg1Speed H * δ) : ℝ) : ℂ) * I) = ((seg1Speed H * δ : ℝ) : ℂ) * (-I) from by
-        push_cast; ring]
-  rw [Complex.log_ofReal_mul hKδ (show (-I : ℂ) ≠ 0 from neg_ne_zero.mpr I_ne_zero),
-      Complex.log_ofReal_mul hKδ I_ne_zero]
-  rw [Complex.log_neg_I, Complex.log_I]
-  ring
+  rw [h_minus, h_plus,
+    show (((-(seg1Speed H * δ) : ℝ) : ℂ) * I) = ((seg1Speed H * δ : ℝ) : ℂ) * (-I) from by
+      push_cast; ring]
+  exact vertSeg_log_diff_neg_I_pi hKδ
 
 private lemma seg4_ae_eq_h₀ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (0 : ℝ) (1/5) →
       (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      deriv (seg4_h₀ H z₀) t / seg4_h₀ H z₀ t := by
-  have h_excl : ({1/5} : Set ℝ)ᶜ ∈ ae volume :=
-    compl_mem_ae_iff.mpr (measure_singleton _)
-  filter_upwards [h_excl] with t ht_ne ht_mem
-  rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1/5)] at ht_mem
-  have ht_lt : t < 1/5 :=
-    lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-  have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] seg4_h₀ H z₀ :=
-    Filter.eventually_of_mem (Iio_mem_nhds ht_lt)
-      (fun s hs => fdBoundary_sub_eq_seg4_h₀ H z₀ s (le_of_lt hs))
-  rw [fdBoundary_sub_eq_seg4_h₀ H z₀ t ht_lt.le,
-    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
+      deriv (seg4_h₀ H z₀) t / seg4_h₀ H z₀ t :=
+  ae_eq_vertSeg_h₀ H z₀ (by norm_num) le_rfl
 
-private lemma seg4_ae_eq_h₃ (H : ℝ) (z₀ : ℂ) {a b : ℝ} (hab : a ≤ b)
-    (ha_ge : 3/5 ≤ a) (hb_le : b ≤ 4/5) :
-    ∀ᵐ t ∂volume, t ∈ Set.uIoc a b →
-      (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      deriv (seg4_h₃ H z₀) t / seg4_h₃ H z₀ t := by
-  have h_excl : ({a, b} : Set ℝ)ᶜ ∈ ae volume :=
-    compl_mem_ae_iff.mpr ((Set.toFinite ({a, b} : Set ℝ)).measure_zero volume)
-  filter_upwards [h_excl] with t ht_ne ht_mem
-  rw [uIoc_of_le hab] at ht_mem
-  have ht_lt_b : t < b :=
-    lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_insert_iff.mpr (Or.inr h)))
-  have ht3_lt : 3/5 < t := lt_of_le_of_lt ha_ge ht_mem.1
-  have ht4_lt : t < 4/5 := lt_of_lt_of_le ht_lt_b hb_le
-  have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] seg4_h₃ H z₀ :=
-    Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht3_lt) (Iio_mem_nhds ht4_lt))
-      fun s ⟨hs3, hs4⟩ => fdBoundary_sub_eq_vertSeg_h₃ H z₀ hs3 (le_of_lt hs4)
-  rw [fdBoundary_sub_eq_vertSeg_h₃ H z₀ ht3_lt ht4_lt.le,
-    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
+/-- Local alias for the shared ae-equality. -/
+private alias seg4_ae_eq_h₃ := ae_eq_vertSeg_h₃
 
 /-- The full FTC telescope for the seg4 crossing. -/
 theorem fdBoundary_ftc_telescope_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
@@ -335,63 +266,18 @@ theorem fdBoundary_ftc_telescope_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
   set t₀ := seg4T₀ H z₀.im
   have ht₀_lo : 3/5 < t₀ := seg4T₀_gt_three_fifths hH hc_lo
   have ht₀_hi : t₀ < 4/5 := seg4T₀_lt_four_fifths hH hc_hi
-  have h_seg1 := seg4_seg1_ftc H hz_re
-  have h_arc := seg4_arc_ftc hz_re hc_lo
-  have h_left := seg4_left_ftc hH hz_re hδ_pos hδ_lt_lo
-  have h_right := seg4_right_ftc hH hz_re hδ_pos hδ_lt_hi
-  have h_seg5 := seg4_seg5_ftc H hc_hi
-  have h_int_seg1 :
-      ∫ t in (0:ℝ)..(1/5), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (seg4_h₀ H z₀ (1/5)) - Complex.log (seg4_h₀ H z₀ 0) := by
-    rw [intervalIntegral.integral_congr_ae (seg4_ae_eq_h₀ H z₀)]; exact h_seg1.2
-  have h_int_arc :
-      ∫ t in (1/5:ℝ)..(3/5), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (seg4_h_arc z₀ (3/5)) - Complex.log (seg4_h_arc z₀ (1/5)) := by
-    rw [intervalIntegral.integral_congr_ae (ae_eq_vertSeg_h_arc H z₀)]; exact h_arc.2
-  have h_int_left :
-      ∫ t in (3/5:ℝ)..(t₀ - δ), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (seg4_h₃ H z₀ (t₀ - δ)) - Complex.log (seg4_h₃ H z₀ (3/5)) := by
-    rw [intervalIntegral.integral_congr_ae
-      (seg4_ae_eq_h₃ H z₀ (by linarith) le_rfl (by linarith))]
-    exact h_left.2
-  have h_int_right :
-      ∫ t in (t₀ + δ)..(4/5:ℝ), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (seg4_h₃ H z₀ (4/5)) - Complex.log (seg4_h₃ H z₀ (t₀ + δ)) := by
-    rw [intervalIntegral.integral_congr_ae
-      (seg4_ae_eq_h₃ H z₀ (by linarith) (by linarith) le_rfl)]
-    exact h_right.2
-  have h_int_seg5 :
-      ∫ t in (4/5 : ℝ)..(1 : ℝ),
-          (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (seg4_h₅ H z₀ 1) - Complex.log (seg4_h₅ H z₀ (4/5)) := by
-    rw [intervalIntegral.integral_congr_ae (ae_eq_vertSeg_h₅ H z₀)]; exact h_seg5.2
-  have hint_seg1 : IntervalIntegrable
-      (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-      volume 0 (1/5) :=
-    h_seg1.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((seg4_ae_eq_h₀ H z₀).mono (fun _ ht hm => (ht hm).symm)))
-  have hint_arc : IntervalIntegrable
-      (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-      volume (1/5) (3/5) :=
-    h_arc.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((ae_eq_vertSeg_h_arc H z₀).mono (fun _ ht hm => (ht hm).symm)))
-  have hint_left : IntervalIntegrable
-      (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-      volume (3/5) (t₀ - δ) :=
-    h_left.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((seg4_ae_eq_h₃ H z₀ (by linarith) le_rfl (by linarith)).mono
-        (fun _ ht hm => (ht hm).symm)))
-  have hint_right : IntervalIntegrable
-      (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-      volume (t₀ + δ) (4/5) :=
-    h_right.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((seg4_ae_eq_h₃ H z₀ (by linarith) (by linarith) le_rfl).mono
-        (fun _ ht hm => (ht hm).symm)))
-  have hint_seg5 : IntervalIntegrable
-      (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-      volume (4/5) 1 :=
-    h_seg5.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      ((ae_eq_vertSeg_h₅ H z₀).mono (fun _ ht hm => (ht hm).symm)))
+  have ⟨hint_seg1, h_int_seg1⟩ := vertSeg_ftc_transfer (seg4_seg1_ftc H hz_re)
+    (seg4_ae_eq_h₀ H z₀)
+  have ⟨hint_arc, h_int_arc⟩ := vertSeg_ftc_transfer (seg4_arc_ftc hz_re hc_lo)
+    (ae_eq_vertSeg_h_arc H z₀)
+  have ⟨hint_left, h_int_left⟩ := vertSeg_ftc_transfer
+    (seg4_left_ftc hH hz_re hδ_pos hδ_lt_lo)
+    (seg4_ae_eq_h₃ H z₀ (by linarith) le_rfl (by linarith))
+  have ⟨hint_right, h_int_right⟩ := vertSeg_ftc_transfer
+    (seg4_right_ftc hH hz_re hδ_pos hδ_lt_hi)
+    (seg4_ae_eq_h₃ H z₀ (by linarith) (by linarith) le_rfl)
+  have ⟨hint_seg5, h_int_seg5⟩ := vertSeg_ftc_transfer (seg4_seg5_ftc H hc_hi)
+    (ae_eq_vertSeg_h₅ H z₀)
   have h_split_left :
       ∫ t in (0:ℝ)..(t₀ - δ), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       (∫ t in (0:ℝ)..(1/5),
@@ -478,23 +364,13 @@ def arcFTCHyp_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       arcFTCHyp_seg4_bounds hH hz_re hc_lo hc_hi hε hε_thr
     have h1 : seg4T₀ H z₀.im - linDelta (seg1Speed H) ε ≤ 1 := by linarith
     apply transfer_integrability z₀ (by linarith) le_rfl h1 hγ
-    have hint_seg1 : IntervalIntegrable
-        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-        volume 0 (1/5) :=
-      (seg4_seg1_ftc H hz_re).1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-        ((seg4_ae_eq_h₀ H z₀).mono (fun t ht hm => (ht hm).symm)))
-    have hint_arc : IntervalIntegrable
-        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-        volume (1/5) (3/5) :=
-      (seg4_arc_ftc hz_re hc_lo).1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-        ((ae_eq_vertSeg_h_arc H z₀).mono (fun t ht hm => (ht hm).symm)))
-    have hint_left : IntervalIntegrable
-        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-        volume (3/5) (seg4T₀ H z₀.im - linDelta (seg1Speed H) ε) :=
-      (seg4_left_ftc hH hz_re h_lin_pos h_lin_lt_lo).1.congr_ae
-        ((ae_restrict_iff' measurableSet_uIoc).mpr
-          ((seg4_ae_eq_h₃ H z₀ (by linarith) le_rfl (by linarith)).mono
-            (fun t ht hm => (ht hm).symm)))
+    have hint_seg1 := vertSeg_integrable_transfer (seg4_seg1_ftc H hz_re).1
+      (seg4_ae_eq_h₀ H z₀)
+    have hint_arc := vertSeg_integrable_transfer (seg4_arc_ftc hz_re hc_lo).1
+      (ae_eq_vertSeg_h_arc H z₀)
+    have hint_left := vertSeg_integrable_transfer
+      (seg4_left_ftc hH hz_re h_lin_pos h_lin_lt_lo).1
+      (seg4_ae_eq_h₃ H z₀ (by linarith) le_rfl (by linarith))
     exact (hint_seg1.trans hint_arc).trans hint_left
   hint_right := by
     intro ε hε hε_thr
@@ -502,18 +378,11 @@ def arcFTCHyp_seg4 {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
       arcFTCHyp_seg4_bounds hH hz_re hc_lo hc_hi hε hε_thr
     have h2 : 0 ≤ seg4T₀ H z₀.im + linDelta (seg1Speed H) ε := by linarith
     apply transfer_integrability z₀ (by linarith) h2 le_rfl hγ
-    have hint_right : IntervalIntegrable
-        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-        volume (seg4T₀ H z₀.im + linDelta (seg1Speed H) ε) (4/5) :=
-      (seg4_right_ftc hH hz_re h_lin_pos h_lin_lt_hi).1.congr_ae
-        ((ae_restrict_iff' measurableSet_uIoc).mpr
-          ((seg4_ae_eq_h₃ H z₀ (by linarith) (by linarith) le_rfl).mono
-            (fun t ht hm => (ht hm).symm)))
-    have hint_seg5 : IntervalIntegrable
-        (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t)
-        volume (4/5) 1 :=
-      (seg4_seg5_ftc H hc_hi).1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-        ((ae_eq_vertSeg_h₅ H z₀).mono (fun t ht hm => (ht hm).symm)))
+    have hint_right := vertSeg_integrable_transfer
+      (seg4_right_ftc hH hz_re h_lin_pos h_lin_lt_hi).1
+      (seg4_ae_eq_h₃ H z₀ (by linarith) (by linarith) le_rfl)
+    have hint_seg5 := vertSeg_integrable_transfer (seg4_seg5_ftc H hc_hi).1
+      (ae_eq_vertSeg_h₅ H z₀)
     exact hint_right.trans hint_seg5
   h_limit := tendsto_const_nhds
 
