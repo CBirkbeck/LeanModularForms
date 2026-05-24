@@ -56,12 +56,10 @@ vanishing under condition (B), and corner-crossing avoidance are discharged
 internally via `HungerbuhlerWasem.residueTheorem_crossing_paper_faithful_clean`.
 
 The formal elimination of `hx_notin_S` is provided by the `cyclicShift`
-infrastructure in `PaperPwC1Immersion.lean` and `PaperPwC1ImmersionInvariance.lean`
-(specifically `hasCauchyPVOn_cyclicShift`, `generalizedWindingNumber_cyclicShift`,
-`isNullHomologous_cyclicShift`, `satisfiesConditionA'_cyclicShift`,
-`satisfiesConditionB_cyclicShift`): if `x ∈ S`, pick `τ ∈ Ioo 0 1` with
-`γ(τ) ∉ S` (exists by `preimage_finite`), apply the theorem to `γ.cyclicShift τ`
-whose basepoint is `γ(τ) ∉ S`, and lift back via invariance. -/
+infrastructure in `PaperPwC1Immersion.lean`: if `x ∈ S`, pick `τ ∈ Ioo 0 1`
+with `γ(τ) ∉ S` (exists by `preimage_finite`), apply the theorem to
+`γ.cyclicShift τ` whose basepoint is `γ(τ) ∉ S`, and lift back via
+the corresponding invariance lemmas. -/
 theorem hw_3_3_clean_full_mero
     {U : Set ℂ} (hU_open : IsOpen U) (hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)
