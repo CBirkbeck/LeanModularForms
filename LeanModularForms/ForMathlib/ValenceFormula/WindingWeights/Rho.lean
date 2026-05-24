@@ -177,7 +177,7 @@ private lemma arg_approach_rho_left_helper (hδ : 0 < δ) (hδ_small : δ < 1) :
       (↑(2 * Real.pi / 3 - δ * Real.pi / 6) : ℂ) * I from by push_cast; ring,
     exp_real_angle_I, rho_arc_factor δ, Complex.ofReal_cos, Complex.ofReal_sin]
   exact Complex.arg_mul_cos_add_sin_mul_I (mul_pos (by norm_num : (0:ℝ) < 2)
-      (ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])))
+      (sin_delta_pi_div_twelve_pos hδ (by linarith)))
     ⟨by nlinarith [Real.pi_pos], by nlinarith [Real.pi_pos]⟩
 
 
@@ -191,10 +191,7 @@ private lemma g_seg3_value (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1)
 theorem arg_approach_rho_right (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {δ : ℝ} (hδ : 0 < δ) (hδ4 : δ ≤ 1) :
     (fdBoundary_H H (3 + δ) - ellipticPointRho).arg = Real.pi / 2 := by
-  rw [g_seg3_value H hδ hδ4, Complex.arg_eq_pi_div_two_iff]
-  refine ⟨by simp [Complex.mul_re], ?_⟩
-  simp only [Complex.mul_im, Complex.ofReal_re, Complex.I_im, Complex.ofReal_im, Complex.I_re]
-  nlinarith
+  rw [g_seg3_value H hδ hδ4]; exact arg_ofReal_mul_I (by nlinarith)
 
 private lemma g_norm_seg3 (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
@@ -210,7 +207,7 @@ private lemma g_norm_seg2 {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
       (↑(2 * Real.pi / 3 - δ * Real.pi / 6) : ℂ) * I from by push_cast; ring,
     exp_real_angle_I, rho_arc_factor δ, ← exp_real_angle_I]
   have h_sin_nn : 0 ≤ Real.sin (δ * Real.pi / 12) :=
-    (ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])).le
+    (sin_delta_pi_div_twelve_pos hδ (by linarith)).le
   rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (mul_nonneg (by norm_num) h_sin_nn),
     Complex.norm_exp_ofReal_mul_I, mul_one]
 
@@ -223,7 +220,7 @@ private lemma g_norm_arc {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
   rw [show Real.pi * (1 + t) / 6 = 2 * Real.pi / 3 - δ * Real.pi / 6 from by
       simp only [hδ_def]; ring, exp_real_angle_I, rho_arc_factor δ, ← exp_real_angle_I]
   have h_sin_nn : 0 ≤ Real.sin (δ * Real.pi / 12) :=
-    (ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])).le
+    (sin_delta_pi_div_twelve_pos hδ (by linarith)).le
   rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (mul_nonneg (by norm_num) h_sin_nn),
     Complex.norm_exp_ofReal_mul_I, mul_one]
 
@@ -308,38 +305,28 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     exact ((Complex.ofRealCLM.hasDerivAt (x := t)).const_mul (-c)).const_add (1 + c)
       |>.congr_deriv (by simp [mul_one])
   have hd_h₁ : ∀ t : ℝ, HasDerivAt h₁
-      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t := fun t => by
-    have hf : HasDerivAt (fun s : ℝ => Real.pi * (1 + s) / 6) (Real.pi / 6) t :=
-      ((hasDerivAt_id t).add_const (1:ℝ) |>.const_mul (Real.pi / 6)).congr_of_eventuallyEq
-        (Eventually.of_forall fun s => show _ from by simp [id]; ring)
-        |>.congr_deriv (by ring)
-    have hci : HasDerivAt (fun s : ℝ => (↑(Real.pi * (1 + s) / 6) : ℂ) * I)
-        ((↑(Real.pi / 6) : ℂ) * I) t :=
-      (hf.ofReal_comp.mul_const I).congr_deriv (by norm_num [smul_eq_mul])
-    exact (hci.cexp.sub (hasDerivAt_const t ρ)).congr_deriv (by simp only [sub_zero]; ring)
-  have hd_h₂ : ∀ t : ℝ, HasDerivAt h₂ ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := fun t =>
-    ((((hasDerivAt_id t).sub (hasDerivAt_const t 3)).mul_const
-      (H - Real.sqrt 3 / 2)).ofReal_comp.mul_const I).congr_deriv (by norm_num [smul_eq_mul])
-  have hd_h₃ : ∀ t : ℝ, HasDerivAt h₃ 1 t := fun t => by
-    have key := (((hasDerivAt_id t).sub (hasDerivAt_const t (4:ℝ))).ofReal_comp.add
-      (hasDerivAt_const t (↑(H - Real.sqrt 3 / 2) * I)))
-    convert key using 1; simp [sub_zero]
-  have heq_01 : ∀ t ∈ Ioo (0:ℝ) 1, g t = h₀ t ∧ deriv g t = deriv h₀ t := fun t ⟨_, ht1⟩ =>
-    ⟨hg_eq_h₀ t ht1.le, Filter.EventuallyEq.deriv_eq <|
-      Filter.eventually_of_mem (Iio_mem_nhds ht1) (fun s hs => hg_eq_h₀ s hs.le)⟩
+      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t :=
+    fun t => hasDerivAt_arc_sub_const ρ t
+  have hd_h₂ : ∀ t : ℝ, HasDerivAt h₂ ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) t :=
+    hasDerivAt_aff_imI_pos (H - Real.sqrt 3 / 2) 3
+  have hd_h₃ : ∀ t : ℝ, HasDerivAt h₃ 1 t :=
+    hasDerivAt_seg5_line 4 (↑(H - Real.sqrt 3 / 2) * I)
+  have heq_01 : ∀ t ∈ Ioo (0:ℝ) 1, g t = h₀ t ∧ deriv g t = deriv h₀ t :=
+    heq_deriv_of_eq_on_nhds (U := Iio (1:ℝ)) (fun _ ht => Iio_mem_nhds ht.2)
+      (fun s hs => hg_eq_h₀ s hs.le)
   have heq_1_3mδ : ∀ t ∈ Ioo (1:ℝ) (3 - δ_L),
-      g t = h₁ t ∧ deriv g t = deriv h₁ t := fun t ⟨ht1, ht3mδ⟩ =>
-    ⟨hg_eq_h₁ t ht1 (by linarith), Filter.EventuallyEq.deriv_eq <|
-      Filter.eventually_of_mem (Ioo_mem_nhds ht1 (by linarith))
-        (fun s hs => hg_eq_h₁ s hs.1 hs.2)⟩
+      g t = h₁ t ∧ deriv g t = deriv h₁ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioo (1:ℝ) 3)
+      (fun _ ht => Ioo_mem_nhds ht.1 (by linarith [ht.2]))
+      (fun s hs => hg_eq_h₁ s hs.1 hs.2)
   have heq_3pδ_4 : ∀ t ∈ Ioo (3 + δ_R) (4:ℝ),
-      g t = h₂ t ∧ deriv g t = deriv h₂ t := fun t ⟨ht3, ht4⟩ =>
-    ⟨hg_eq_h₂ t (by linarith) ht4.le, Filter.EventuallyEq.deriv_eq <|
-      Filter.eventually_of_mem (Ioo_mem_nhds (by linarith : 3 < t) ht4)
-        (fun s hs => hg_eq_h₂ s (by linarith [hs.1]) hs.2.le)⟩
-  have heq_45 : ∀ t ∈ Ioo (4:ℝ) 5, g t = h₃ t ∧ deriv g t = deriv h₃ t := fun t ⟨ht4, _⟩ =>
-    ⟨hg_eq_h₃ t ht4, Filter.EventuallyEq.deriv_eq <|
-      Filter.eventually_of_mem (Ioi_mem_nhds ht4) (fun s hs => hg_eq_h₃ s hs)⟩
+      g t = h₂ t ∧ deriv g t = deriv h₂ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioo (3:ℝ) 4)
+      (fun _ ht => Ioo_mem_nhds (by linarith [ht.1]) ht.2)
+      (fun s hs => hg_eq_h₂ s hs.1 hs.2.le)
+  have heq_45 : ∀ t ∈ Ioo (4:ℝ) 5, g t = h₃ t ∧ deriv g t = deriv h₃ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioi (4:ℝ))
+      (fun _ ht => Ioi_mem_nhds ht.1) (fun s hs => hg_eq_h₃ s hs)
   have hh₀_cont : ContinuousOn h₀ (Icc 0 1) :=
     fun t _ => (hd_h₀ t).continuousAt.continuousWithinAt
   have hh₁_cont : ContinuousOn h₁ (Icc 1 (3 - δ_L)) :=
@@ -356,21 +343,14 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     fun t _ => (hd_h₂ t).differentiableAt
   have hh₃_diff : ∀ t ∈ Ioo (4:ℝ) 5, DifferentiableAt ℝ h₃ t :=
     fun t _ => (hd_h₃ t).differentiableAt
-  have hh₀_deriv_cont : ContinuousOn (deriv h₀) (Icc 0 1) := by
-    rw [show deriv h₀ = fun _ => -(↑(H - Real.sqrt 3 / 2) : ℂ) * I from
-      funext fun t => (hd_h₀ t).deriv]; exact continuousOn_const
-  have hh₁_deriv_cont : ContinuousOn (deriv h₁) (Icc 1 (3 - δ_L)) := by
-    rw [show deriv h₁ = fun t => ↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I) from
-      funext fun t => (hd_h₁ t).deriv]
-    exact (Continuous.mul continuous_const (Continuous.cexp (Continuous.mul
-      (continuous_ofReal.comp (by fun_prop : Continuous fun s => Real.pi * (1 + s) / 6))
-      continuous_const))).continuousOn
-  have hh₂_deriv_cont : ContinuousOn (deriv h₂) (Icc (3 + δ_R) 4) := by
-    rw [show deriv h₂ = fun _ => (↑(H - Real.sqrt 3 / 2) : ℂ) * I from
-      funext fun t => (hd_h₂ t).deriv]; exact continuousOn_const
-  have hh₃_deriv_cont : ContinuousOn (deriv h₃) (Icc 4 5) := by
-    rw [show deriv h₃ = fun _ => (1 : ℂ) from
-      funext fun t => (hd_h₃ t).deriv]; exact continuousOn_const
+  have hh₀_deriv_cont : ContinuousOn (deriv h₀) (Icc 0 1) :=
+    continuousOn_deriv_of_const _ hd_h₀ 0 1
+  have hh₁_deriv_cont : ContinuousOn (deriv h₁) (Icc 1 (3 - δ_L)) :=
+    continuousOn_deriv_of_arc_form hd_h₁ 1 (3 - δ_L)
+  have hh₂_deriv_cont : ContinuousOn (deriv h₂) (Icc (3 + δ_R) 4) :=
+    continuousOn_deriv_of_const _ hd_h₂ (3 + δ_R) 4
+  have hh₃_deriv_cont : ContinuousOn (deriv h₃) (Icc 4 5) :=
+    continuousOn_deriv_of_const _ hd_h₃ 4 5
   have hh₀_slit : ∀ t ∈ Icc (0:ℝ) 1, h₀ t ∈ slitPlane := fun t ht => by
     rw [← hg_eq_h₀ t ht.2]; exact fdBoundary_H_sub_rho_seg0_slitPlane H ht.2
   have hh₁_slit : ∀ t ∈ Icc (1:ℝ) (3 - δ_L), h₁ t ∈ slitPlane := fun t ⟨ht1, ht3⟩ => by
@@ -402,9 +382,7 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   rw [(intervalIntegral.integral_add_adjacent_intervals piece₀.1 piece₁.1).symm,
       (intervalIntegral.integral_add_adjacent_intervals piece₂.1 piece₃.1).symm,
       piece₀.2, piece₁.2, piece₂.2, piece₃.2]
-  have hg_closed : g 0 = g 5 := by
-    change fdBoundary_H H 0 - ρ = fdBoundary_H H 5 - ρ
-    rw [fdBoundary_H_closed H]
+  have hg_closed : g 0 = g 5 := fdBoundary_H_sub_closed H ρ
   rw [hg_closed]
   ring
 
@@ -451,14 +429,9 @@ private lemma δ_rho_props (H : ℝ) {ε : ℝ} (hε_pos : 0 < ε)
   have hsin_le : Real.sin (Real.pi / 12) ≤ 1 := Real.sin_le_one _
   have harcsin_pos : 0 < Real.arcsin (ε / 2) := Real.arcsin_pos.mpr (by linarith)
   have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
-    (Real.arcsin_lt_arcsin (by linarith) hε_lt_sin (Real.sin_le_one _)).trans_eq
-      (Real.arcsin_sin (by nlinarith) (by nlinarith))
-  have hδL_lt : δ_L_rho ε < 1 := by
-    change 12 / Real.pi * Real.arcsin (ε / 2) < 1
-    calc 12 / Real.pi * Real.arcsin (ε / 2)
-        < 12 / Real.pi * (Real.pi / 12) :=
-          mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) hpi_pos)
-      _ = 1 := by field_simp
+    arcsin_half_lt_pi_div_twelve (by linarith) hε_lt_2sin
+  have hδL_lt : δ_L_rho ε < 1 :=
+    twelve_div_pi_arcsin_half_lt_one (by linarith) hε_lt_2sin
   have hδL_angle : δ_L_rho ε * Real.pi / 12 = Real.arcsin (ε / 2) := by
     change 12 / Real.pi * Real.arcsin (ε / 2) * Real.pi / 12 = Real.arcsin (ε / 2); field_simp
   exact ⟨mul_pos (div_pos (by norm_num) hpi_pos) harcsin_pos, hδL_lt,
@@ -560,10 +533,7 @@ private lemma pv_log_limit_at_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       (nhdsWithin 0 (Ioi 0)) (nhds (-(I * ↑Real.pi / 3))) := by
   intro g δ_L δ_R
   have hH_gap : 0 < H - Real.sqrt 3 / 2 := by linarith
-  have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by
-    have hsin_pos : 0 < Real.sin (Real.pi / 12) :=
-      ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
-    positivity
+  have h2sin_pos := two_sin_pi_div_twelve_pos
   set threshold := min (H - Real.sqrt 3 / 2) (2 * Real.sin (Real.pi / 12))
   have hthresh : 0 < threshold := lt_min hH_gap h2sin_pos
   rw [Metric.tendsto_nhdsWithin_nhds]
@@ -600,13 +570,9 @@ private lemma pv_log_limit_at_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       ↑(-(δ_L ε * Real.pi / 12)) * I := by push_cast; ring
   rw [h_simp, norm_mul, Complex.norm_real, Complex.norm_I, mul_one,
       Real.norm_eq_abs, abs_neg, abs_of_pos (by positivity)]
-  have h_angle_bound : δ_L ε * Real.pi / 12 < ε := by
-    have h_sin_eq : Real.sin (δ_L ε * Real.pi / 12) = ε / 2 := by
-      linarith [h_norm_L ▸ g_norm_seg2 (H := H) hδL_p hδL_lt_one]
-    set x := δ_L ε * Real.pi / 12
-    have hx_pos : 0 < x := by positivity
-    have hx_le_one : x ≤ 1 := by nlinarith [Real.pi_le_four]
-    nlinarith [Real.sin_gt_sub_cube hx_pos hx_le_one, sq_nonneg x, sq_nonneg (1 - x)]
+  have h_angle_bound : δ_L ε * Real.pi / 12 < ε :=
+    delta_pi_div_twelve_lt_eps hδL_p hδL_lt_one.le
+      (by linarith [h_norm_L ▸ g_norm_seg2 (H := H) hδL_p hδL_lt_one])
   linarith
 
 /-- The PV integral of `(γ-ρ)⁻¹ γ'` over `[0,5]` with ε-ball cutoff tends to `-iπ/3`. -/
@@ -617,10 +583,7 @@ theorem pv_integral_at_rho_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       else 0) (𝓝[>] 0) (𝓝 (-(I * ↑Real.pi / 3))) := by
   set g := fun t => fdBoundary_H H t - (ellipticPointRho : ℂ) with hg_def
   have hH_gap : 0 < H - Real.sqrt 3 / 2 := by linarith
-  have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by
-    have : 0 < Real.sin (Real.pi / 12) :=
-      ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
-    positivity
+  have h2sin_pos := two_sin_pi_div_twelve_pos
   let δ_L : ℝ → ℝ := δ_L_rho
   let δ_R : ℝ → ℝ := δ_R_rho H
   set threshold := min (H - Real.sqrt 3 / 2) (2 * Real.sin (Real.pi / 12))
