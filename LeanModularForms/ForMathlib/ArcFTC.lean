@@ -83,31 +83,4 @@ theorem fdBoundary_arc_deriv_eq (t : ℝ) :
     ring
   rw [(hd.ofReal_comp.mul_const I).cexp.deriv]; push_cast; ring
 
-/-- `i · exp(iπ/3) = exp(i·5π/6)`. -/
-theorem I_mul_exp_pi_third :
-    I * exp (↑(Real.pi / 3) * I) = exp (↑(5 * Real.pi / 6) * I) := by
-  rw [show ((5 * Real.pi / 6 : ℝ) : ℂ) * I = ↑Real.pi / 2 * I + ↑(Real.pi / 3) * I
-      from by push_cast; ring, exp_add, Complex.exp_pi_div_two_mul_I]
-
-/-- The arg of the negated left tangent at `ρ+1` is `π/2`. -/
-theorem arg_neg_left_tangent_rhoPlusOne (H : ℝ) (hH : fdHeightValid H) :
-    arg (5 * (↑H - ↑(Real.sqrt 3) / 2) * I) = Real.pi / 2 := by
-  unfold fdHeightValid at hH
-  rw [show (5 * (↑H - ↑(Real.sqrt 3) / 2) * I : ℂ) =
-      ↑(5 * (H - Real.sqrt 3 / 2)) * I from by push_cast; ring]
-  exact arg_ofReal_mul_I _ (by linarith)
-
-/-- `i · exp(i·2π/3) = exp(i·(-5π/6))`. -/
-theorem I_mul_exp_two_pi_third :
-    I * exp (↑(2 * Real.pi / 3) * I) = exp (↑(-5 * Real.pi / 6) * I) := by
-  rw [show (↑(-5 * Real.pi / 6) * I : ℂ) = ↑Real.pi / 2 * I + ↑(2 * Real.pi / 3) * I -
-      2 * Real.pi * I from by push_cast; ring,
-    exp_sub, exp_add, Complex.exp_two_pi_mul_I, div_one, Complex.exp_pi_div_two_mul_I]
-
-/-- The arg of the left tangent at `ρ`: `-5π/6`. -/
-theorem arg_left_tangent_rho :
-    arg (I * exp (↑(2 * Real.pi / 3) * I)) = -5 * Real.pi / 6 := by
-  rw [I_mul_exp_two_pi_third]
-  exact arg_exp_mul_I _ ⟨by nlinarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
-
 end

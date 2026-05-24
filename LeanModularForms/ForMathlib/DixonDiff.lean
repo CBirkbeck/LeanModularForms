@@ -440,34 +440,6 @@ theorem dixonH1_differentiableOn_of_regular {f : ℂ → ℂ} {U : Set ℂ}
     ⟨K, fun _ _ => norm_deriv_le_of_lipschitz hLip⟩ h_dslope_hasDerivAt h_F'_meas
     h_dslope_deriv_bound
 
-/-- **B-2 bundle with D-1c auto-discharge for convex U**: `dixonH1 f γ` is differentiable
-on `U` when `U` is convex open, `f` is differentiable on `U`, and γ has image in `U`
-with Lipschitz extension. Auto-discharges `h_dslope_deriv_bound` via D-1c
-(`deriv_dslope_bounded_on_compact`), leaving only `h_F'_meas` as remaining oracle. -/
-theorem dixonH1_differentiableOn_of_regular_convex {f : ℂ → ℂ} {U : Set ℂ}
-    (hU_convex : Convex ℝ U) (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
-    (γ : PwC1Immersion x x) (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
-    {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend)
-    (h_F'_meas : ∀ w₀ ∈ U, AEStronglyMeasurable
-      (fun t => deriv (dslope f (γ.toPiecewiseC1Path t)) w₀ *
-        deriv γ.toPiecewiseC1Path.toPath.extend t)
-      (volume.restrict (Set.uIoc 0 1))) :
-    DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U := by
-  have h_γ_compact : IsCompact (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
-    isCompact_Icc.image γ.toPiecewiseC1Path.toPath.continuous_extend
-  have h_γ_sub : γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1 ⊆ U := by
-    rintro _ ⟨t, ht, rfl⟩
-    exact hγ t ht
-  have h_dslope_deriv_bound : ∀ w₀ ∈ U, ∃ C > 0, ∃ δ > 0,
-      ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ,
-        ‖deriv (dslope f (γ.toPiecewiseC1Path t)) w‖ ≤ C := by
-    intro w₀ hw₀
-    obtain ⟨C, hC_pos, δ, hδ_pos, h_bd⟩ :=
-      Complex.deriv_dslope_bounded_on_compact hU_convex hU hf h_γ_compact h_γ_sub hw₀
-    exact ⟨C, hC_pos, δ, hδ_pos, fun t ht w hw =>
-      h_bd (γ.toPiecewiseC1Path t) ⟨t, ht, rfl⟩ w hw⟩
-  exact dixonH1_differentiableOn_of_regular hU hf γ hγ hLip h_F'_meas h_dslope_deriv_bound
-
 /-- **B-2 bundle with D-1c auto-discharge for general open U** (no `Convex`):
 auto-discharges `h_dslope_deriv_bound` via the non-convex
 `Complex.deriv_dslope_bounded_on_compact_open`, leaving only `h_F'_meas` as
