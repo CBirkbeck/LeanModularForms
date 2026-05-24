@@ -31,13 +31,6 @@ noncomputable section
 /-- Height cutoff for the finite-height fundamental domain boundary. -/
 def heightCutoff : ℝ := Real.sqrt 3 / 2 + 1
 
-
-lemma sqrt3_div2_lt_heightCutoff :
-    Real.sqrt 3 / 2 < heightCutoff := by
-  unfold heightCutoff
-  linarith
-
-
 /-- Segment 2: arc from ρ+1 to i (angle π/3 → π/2). -/
 def fdBoundary_seg2 : ℝ → ℂ := fun t =>
   Complex.exp ((Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3)) * I)

@@ -166,20 +166,6 @@ theorem hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral {H : ℝ}
   rw [h_integral]
   field_simp
 
-/-- **All-quantified interior winding**: if a `PiecewiseC1Path` agrees with `fdBoundaryFun`,
-and for every strict interior point the contour integral of `(w - z)⁻¹` equals `-2πi`,
-then the interior winding hypothesis of `FDWindingData` is satisfied. -/
-theorem hasGeneralizedWindingNumber_fdBoundary_interior_of_contourIntegral {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
-    (h_int : ∀ z : ℂ, 1 < ‖z‖ → |z.re| < 1/2 → 0 < z.im → z.im < H →
-      γ.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I)) :
-    ∀ z : ℂ, ‖z‖ > 1 → |z.re| < 1/2 → z.im > 0 → z.im < H →
-      HasGeneralizedWindingNumber γ z (-1) :=
-  fun z hz_norm hz_re hz_im_pos hz_im_lt =>
-    hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral γ hγ
-      hz_norm hz_re hz_im_pos hz_im_lt (h_int z hz_norm hz_re hz_im_pos hz_im_lt)
-
 /-- On segment 1, the distance to `z` is at least `1/2 - |z.re|`, which is positive
 for strict interior points. -/
 theorem fdBoundaryFun_seg1_re_dist {z : ℂ} (_hz_re : |z.re| < 1/2)
