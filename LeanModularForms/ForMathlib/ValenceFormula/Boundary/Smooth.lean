@@ -517,23 +517,6 @@ lemma fdBoundary_deriv_continuousAt_off_partition (t : ℝ) (ht : t ∈ Ioo (0 :
   congr_arg deriv fdBoundary_eq_fdBoundary_H ▸
     fdBoundary_H_deriv_continuousAt_off_fullPartition heightCutoff t ht htp
 
-lemma fdBoundary_deriv_ne_zero_off_partition (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 5)
-    (htp : t ∉ fdBoundaryFullPartition) : deriv fdBoundary t ≠ 0 :=
-  congr_arg deriv fdBoundary_eq_fdBoundary_H ▸
-    fdBoundary_H_deriv_ne_zero_off_fullPartition heightCutoff sqrt3_div2_lt_heightCutoff t ht htp
-
-lemma fdBoundary_left_deriv_limit (p : ℝ) (hp : p ∈ fdBoundaryFullPartition)
-    (hp' : (0 : ℝ) < p) :
-    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv fdBoundary) (𝓝[<] p) (𝓝 L) :=
-  congr_arg deriv fdBoundary_eq_fdBoundary_H ▸
-    fdBoundary_H_left_deriv_limit heightCutoff sqrt3_div2_lt_heightCutoff p hp hp'
-
-lemma fdBoundary_right_deriv_limit (p : ℝ) (hp : p ∈ fdBoundaryFullPartition)
-    (hp' : p < (5 : ℝ)) :
-    ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv fdBoundary) (𝓝[>] p) (𝓝 L) :=
-  congr_arg deriv fdBoundary_eq_fdBoundary_H ▸
-    fdBoundary_H_right_deriv_limit heightCutoff sqrt3_div2_lt_heightCutoff p hp hp'
-
 /-- The boundary of the fundamental domain as a `PiecewiseC1Curve`. -/
 noncomputable def fdBoundaryCurve : PiecewiseC1Curve :=
   PiecewiseC1Curve.ofIccPartition fdBoundary 0 5 (by norm_num)
