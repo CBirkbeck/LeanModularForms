@@ -300,41 +300,4 @@ theorem fdHeightValid_of_one_lt (H : ℝ) (hH : 1 < H) : fdHeightValid H := by
   unfold fdHeightValid
   linarith [(Real.sqrt_lt' (by norm_num : (0:ℝ) < 2)).mpr (by norm_num : (3:ℝ) < 2^2)]
 
-private lemma pi_div_two_pi : -(↑Real.pi * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 2 := by
-  field_simp
-
-private lemma pi_third_div_two_pi :
-    -(↑Real.pi / 3 * I) / (2 * ↑Real.pi * I) = (-1 : ℂ) / 6 := by
-  field_simp
-  ring
-
-/-- Build `FDWindingData` from individual `SingleCrossingData` instances.
-
-This constructor shows how the winding weight specifications follow from
-the single-crossing framework. Each winding weight (at `i`, `ρ`, `ρ+1`)
-is obtained by providing:
-1. A `SingleCrossingData` instance with the correct limit `L`
-2. The proof that `L / (2πi)` equals the target weight
-
-For interior points, the winding number follows from the contour integral
-(standard Cauchy winding number for a closed curve avoiding the point). -/
-def FDWindingData.mk_of_crossing {H : ℝ}
-    (boundary : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hbdy : ∀ t ∈ Icc (0 : ℝ) 1, boundary.toPath.extend t = fdBoundaryFun H t)
-    (h_int : ∀ z : ℂ, ‖z‖ > 1 → |z.re| < 1/2 → z.im > 0 → z.im < H →
-      HasGeneralizedWindingNumber boundary z (-1))
-    (D_i : SingleCrossingData boundary I)
-    (hL_i : D_i.L = -(↑Real.pi * I))
-    (D_rho : SingleCrossingData boundary ellipticPointRho)
-    (hL_rho : D_rho.L = -(↑Real.pi / 3 * I))
-    (D_rho1 : SingleCrossingData boundary ellipticPointRhoPlusOne)
-    (hL_rho1 : D_rho1.L = -(↑Real.pi / 3 * I)) :
-    FDWindingData H where
-  boundary := boundary
-  boundary_eq := hbdy
-  interior_winding := h_int
-  winding_at_i := pi_div_two_pi ▸ hL_i ▸ D_i.hasWindingNumber
-  winding_at_rho := pi_third_div_two_pi ▸ hL_rho ▸ D_rho.hasWindingNumber
-  winding_at_rho_plus_one := pi_third_div_two_pi ▸ hL_rho1 ▸ D_rho1.hasWindingNumber
-
 end

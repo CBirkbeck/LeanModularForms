@@ -203,10 +203,4 @@ theorem HasCauchyPV.unique {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : 
     L₁ = L₂ :=
   tendsto_nhds_unique h₁ h₂
 
-/-- The limit in `HasCauchyPVOn` is unique. -/
-theorem HasCauchyPVOn.unique {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x y}
-    {L₁ L₂ : ℂ} (h₁ : HasCauchyPVOn S f γ L₁) (h₂ : HasCauchyPVOn S f γ L₂) :
-    L₁ = L₂ :=
-  tendsto_nhds_unique h₁ h₂
-
 end

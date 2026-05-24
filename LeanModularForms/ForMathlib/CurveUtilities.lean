@@ -54,17 +54,6 @@ endpoints `{0, 1}`. -/
 noncomputable def fullPartition (γ : PiecewiseC1Path x y) : List ℝ :=
   γ.fullPartitionFinset.sort (· ≤ ·)
 
-private theorem zero_mem_fullPartitionFinset (γ : PiecewiseC1Path x y) :
-    (0 : ℝ) ∈ γ.fullPartitionFinset := by
-  simp [fullPartitionFinset]
-
-/-- Membership in `fullPartition` is equivalent to being `0`, `1`, or a partition point. -/
-theorem mem_fullPartition (γ : PiecewiseC1Path x y) (t : ℝ) :
-    t ∈ γ.fullPartition ↔ t = 0 ∨ t = 1 ∨ t ∈ γ.partition := by
-  change t ∈ γ.fullPartitionFinset.sort (· ≤ ·) ↔ _
-  rw [Finset.mem_sort]
-  simp [fullPartitionFinset]
-
 end PiecewiseC1Path
 
 end
