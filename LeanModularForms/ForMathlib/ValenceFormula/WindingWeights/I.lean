@@ -416,69 +416,35 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     exact ((hasDerivAt_const t ((1:ℂ)/2)).add (hinner.mul_const I)).congr_deriv
       (by push_cast; ring)
   have hd_h₁ : ∀ t : ℝ, HasDerivAt h₁
-      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t := by
-    intro t
-    have hf : HasDerivAt (fun s : ℝ => Real.pi * (1 + s) / 6) (Real.pi / 6) t :=
-      ((hasDerivAt_id t).add_const (1:ℝ) |>.const_mul (Real.pi / 6)).congr_of_eventuallyEq
-        (Eventually.of_forall fun s => by simp [id]; ring)
-        |>.congr_deriv (by ring)
-    have hci : HasDerivAt (fun s : ℝ => (↑(Real.pi * (1 + s) / 6) : ℂ) * I)
-        ((↑(Real.pi / 6) : ℂ) * I) t :=
-      (hf.ofReal_comp.mul_const I).congr_deriv (by norm_num [smul_eq_mul])
-    exact (hci.cexp.sub (hasDerivAt_const t I)).congr_deriv (by simp only [sub_zero]; ring)
-  have hd_h₂ : ∀ t : ℝ, HasDerivAt h₂ ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by
-    intro t; simp only [h₂]
-    have hf : HasDerivAt (fun s : ℝ => Real.sqrt 3 / 2 - 1 + (s - 3) * (H - Real.sqrt 3 / 2))
-        (H - Real.sqrt 3 / 2) t :=
-      ((hasDerivAt_id t).sub_const (3:ℝ) |>.mul_const (H - Real.sqrt 3 / 2)
-        |>.add_const (Real.sqrt 3 / 2 - 1)).congr_of_eventuallyEq
-        (Eventually.of_forall fun s => by simp [id]; ring)
-        |>.congr_deriv (by ring)
-    exact ((hasDerivAt_const t ((-1:ℂ)/2)).add
-      (hf.ofReal_comp.mul_const I)).congr_deriv (by push_cast; ring)
-  have hd_h₃ : ∀ t : ℝ, HasDerivAt h₃ 1 t := by
-    intro t
-    change HasDerivAt (fun s => ↑(s - 9/2) + ↑(H - 1) * I) (1 : ℂ) t
-    have h1 : HasDerivAt (fun s : ℝ => s - 9/2) (1 : ℝ) t := by
-      have := (hasDerivAt_id t).sub (hasDerivAt_const t (9/2:ℝ))
-      convert this using 1
-      ring
-    have h2 := h1.ofReal_comp.add (hasDerivAt_const t (↑(H - 1) * I))
-    exact h2.congr_deriv (by simp only [Complex.ofReal_one, add_zero])
-  have heq_01 : ∀ t ∈ Ioo (0:ℝ) 1, g t = h₀ t ∧ deriv g t = deriv h₀ t := by
-    intro t ⟨_, ht1⟩
-    refine ⟨hg_eq_h₀ t (le_of_lt ht1), ?_⟩
-    exact Filter.EventuallyEq.deriv_eq (Filter.eventually_of_mem (Iio_mem_nhds ht1)
-      (fun s hs => hg_eq_h₀ s (le_of_lt hs)))
-  have heq_1_2mδ : ∀ t ∈ Ioo (1:ℝ) (2 - δ), g t = h₁ t ∧ deriv g t = deriv h₁ t := by
-    intro t ⟨ht1, ht2⟩
-    refine ⟨hg_eq_h₁ t ht1 (by linarith), ?_⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Ioo_mem_nhds ht1 (show t < 3 by linarith))
-      (fun s hs => hg_eq_h₁ s hs.1 hs.2))
-  have heq_2pδ_3 : ∀ t ∈ Ioo (2 + δ) (3:ℝ), g t = h₁ t ∧ deriv g t = deriv h₁ t := by
-    intro t ⟨ht2, ht3⟩
-    refine ⟨hg_eq_h₁ t (by linarith) ht3, ?_⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Ioo_mem_nhds (show 1 < t by linarith) ht3)
-      (fun s hs => hg_eq_h₁ s hs.1 hs.2))
-  have heq_3_t₀ : ∀ t ∈ Ioo (3:ℝ) t₀, g t = h₂ t ∧ deriv g t = deriv h₂ t := by
-    intro t ⟨ht3, ht_t0⟩
-    refine ⟨hg_eq_h₂ t ht3 (by linarith), ?_⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Ioo_mem_nhds ht3 (show t < 4 by linarith))
-      (fun s hs => hg_eq_h₂ s hs.1 (le_of_lt hs.2)))
-  have heq_t₀_4 : ∀ t ∈ Ioo t₀ (4:ℝ), g t = h₂ t ∧ deriv g t = deriv h₂ t := by
-    intro t ⟨ht_t0, ht4⟩
-    refine ⟨hg_eq_h₂ t (by linarith) (le_of_lt ht4), ?_⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Ioo_mem_nhds (show 3 < t by linarith) ht4)
-      (fun s hs => hg_eq_h₂ s hs.1 (le_of_lt hs.2)))
-  have heq_45 : ∀ t ∈ Ioo (4:ℝ) 5, g t = h₃ t ∧ deriv g t = deriv h₃ t := by
-    intro t ⟨ht4, _⟩
-    refine ⟨hg_eq_h₃ t ht4, ?_⟩
-    exact Filter.EventuallyEq.deriv_eq
-      (Filter.eventually_of_mem (Ioi_mem_nhds ht4) (fun s hs => hg_eq_h₃ s hs))
+      (↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I)) t :=
+    fun t => hasDerivAt_arc_sub_const I t
+  have hd_h₂ : ∀ t : ℝ, HasDerivAt h₂ ((↑(H - Real.sqrt 3 / 2) : ℂ) * I) t :=
+    hasDerivAt_aff_imI_pos_shift (-1/2 : ℂ) (H - Real.sqrt 3 / 2)
+      (Real.sqrt 3 / 2 - 1) 3
+  have hd_h₃ : ∀ t : ℝ, HasDerivAt h₃ 1 t :=
+    hasDerivAt_seg5_line (9/2) (↑(H - 1) * I)
+  have heq_01 : ∀ t ∈ Ioo (0:ℝ) 1, g t = h₀ t ∧ deriv g t = deriv h₀ t :=
+    heq_deriv_of_eq_on_nhds (U := Iio (1:ℝ)) (fun _ ht => Iio_mem_nhds ht.2)
+      (fun s hs => hg_eq_h₀ s hs.le)
+  have heq_1_2mδ : ∀ t ∈ Ioo (1:ℝ) (2 - δ), g t = h₁ t ∧ deriv g t = deriv h₁ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioo (1:ℝ) 3)
+      (fun _ ht => Ioo_mem_nhds ht.1 (by linarith [ht.2]))
+      (fun s hs => hg_eq_h₁ s hs.1 hs.2)
+  have heq_2pδ_3 : ∀ t ∈ Ioo (2 + δ) (3:ℝ), g t = h₁ t ∧ deriv g t = deriv h₁ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioo (1:ℝ) 3)
+      (fun _ ht => Ioo_mem_nhds (by linarith [ht.1]) ht.2)
+      (fun s hs => hg_eq_h₁ s hs.1 hs.2)
+  have heq_3_t₀ : ∀ t ∈ Ioo (3:ℝ) t₀, g t = h₂ t ∧ deriv g t = deriv h₂ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioo (3:ℝ) 4)
+      (fun _ ht => Ioo_mem_nhds ht.1 (by linarith [ht.2, t₀_i_lt_four hH]))
+      (fun s hs => hg_eq_h₂ s hs.1 hs.2.le)
+  have heq_t₀_4 : ∀ t ∈ Ioo t₀ (4:ℝ), g t = h₂ t ∧ deriv g t = deriv h₂ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioo (3:ℝ) 4)
+      (fun _ ht => Ioo_mem_nhds (by linarith [ht.1, t₀_i_gt_three hH]) ht.2)
+      (fun s hs => hg_eq_h₂ s hs.1 hs.2.le)
+  have heq_45 : ∀ t ∈ Ioo (4:ℝ) 5, g t = h₃ t ∧ deriv g t = deriv h₃ t :=
+    heq_deriv_of_eq_on_nhds (U := Ioi (4:ℝ))
+      (fun _ ht => Ioi_mem_nhds ht.1) (fun s hs => hg_eq_h₃ s hs)
   have hh₀_cont : ContinuousOn h₀ (Icc 0 1) :=
     fun t _ => (hd_h₀ t).continuousAt.continuousWithinAt
   have hh₁_cont_12 : ContinuousOn h₁ (Icc 1 (2 - δ)) :=
@@ -503,23 +469,14 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     fun t _ => (hd_h₂ t).differentiableAt
   have hh₃_diff : ∀ t ∈ Ioo (4:ℝ) 5, DifferentiableAt ℝ h₃ t :=
     fun t _ => (hd_h₃ t).differentiableAt
-  have hh₀_deriv_cont : ContinuousOn (deriv h₀) (Icc 0 1) := by
-    rw [show deriv h₀ = fun _ => -(↑(H - Real.sqrt 3 / 2) : ℂ) * I from
-      funext fun t => (hd_h₀ t).deriv]; exact continuousOn_const
-  have hh₁_deriv_cont : ∀ (a b : ℝ), ContinuousOn (deriv h₁) (Icc a b) := by
-    intro a b
-    rw [show deriv h₁ = fun t => ↑(Real.pi / 6) * I * exp (↑(Real.pi * (1 + t) / 6) * I) from
-      funext fun t => (hd_h₁ t).deriv]
-    exact (Continuous.mul continuous_const (Continuous.cexp (Continuous.mul
-      (continuous_ofReal.comp (by fun_prop : Continuous fun s => Real.pi * (1 + s) / 6))
-      continuous_const))).continuousOn
-  have hh₂_deriv_cont : ∀ (a b : ℝ), ContinuousOn (deriv h₂) (Icc a b) := by
-    intro a b
-    rw [show deriv h₂ = fun _ => (↑(H - Real.sqrt 3 / 2) : ℂ) * I from
-      funext fun t => (hd_h₂ t).deriv]; exact continuousOn_const
-  have hh₃_deriv_cont : ContinuousOn (deriv h₃) (Icc 4 5) := by
-    rw [show deriv h₃ = fun _ => (1 : ℂ) from
-      funext fun t => (hd_h₃ t).deriv]; exact continuousOn_const
+  have hh₀_deriv_cont : ContinuousOn (deriv h₀) (Icc 0 1) :=
+    continuousOn_deriv_of_const _ hd_h₀ 0 1
+  have hh₁_deriv_cont : ∀ (a b : ℝ), ContinuousOn (deriv h₁) (Icc a b) :=
+    continuousOn_deriv_of_arc_form hd_h₁
+  have hh₂_deriv_cont : ∀ (a b : ℝ), ContinuousOn (deriv h₂) (Icc a b) :=
+    continuousOn_deriv_of_const _ hd_h₂
+  have hh₃_deriv_cont : ContinuousOn (deriv h₃) (Icc 4 5) :=
+    continuousOn_deriv_of_const _ hd_h₃ 4 5
   have hh₀_slit : ∀ t ∈ Icc (0:ℝ) 1, h₀ t ∈ slitPlane := by
     intro t ⟨_, ht1⟩; rw [← hg_eq_h₀ t ht1]
     exact g_i_slitPlane_left (by linarith)
@@ -621,9 +578,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
         show (1:ℂ)/2 = ↑((1:ℝ)/2) from by push_cast; ring,
         ← Complex.ofReal_log (show (0:ℝ) ≤ 1/2 from by norm_num)]
     ring
-  have hg_closed : g 0 = g 5 := by
-    show fdBoundary_H H 0 - I = fdBoundary_H H 5 - I
-    rw [fdBoundary_H_closed H]
+  have hg_closed : g 0 = g 5 := fdBoundary_H_sub_closed H I
   have h_branch_t₀' : Complex.log (-(g t₀)) = Complex.log (g t₀) - ↑Real.pi * I := by
     linear_combination h_branch_t₀
   rw [hg_closed, h_branch_3, h_branch_t₀']
@@ -631,17 +586,8 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
 
 private lemma i_delta_lt_one {ε : ℝ} (hε_pos : 0 < ε)
     (hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12)) :
-    12 / Real.pi * Real.arcsin (ε / 2) < 1 := by
-  have harcsin_lt : Real.arcsin (ε / 2) < Real.pi / 12 :=
-    calc Real.arcsin (ε / 2)
-        < Real.arcsin (Real.sin (Real.pi / 12)) :=
-          Real.arcsin_lt_arcsin (by linarith) (by linarith) (Real.sin_le_one _)
-      _ = Real.pi / 12 :=
-          Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
-  calc 12 / Real.pi * Real.arcsin (ε / 2)
-      < 12 / Real.pi * (Real.pi / 12) :=
-        mul_lt_mul_of_pos_left harcsin_lt (div_pos (by norm_num) Real.pi_pos)
-    _ = 1 := by field_simp
+    12 / Real.pi * Real.arcsin (ε / 2) < 1 :=
+  twelve_div_pi_arcsin_half_lt_one (by linarith) hε_lt_2sin
 
 private lemma i_h_far (H : ℝ) (hH : 1 < H) :
     let threshold := min (min (min (1/2 : ℝ) (H - 1)) (2 * Real.sin (Real.pi / 12))) 1
@@ -761,16 +707,9 @@ private lemma i_h_near (H : ℝ) :
 private lemma i_angle_bound {δ ε : ℝ} (H : ℝ)
     (hδ_pos : 0 < δ) (hδ_lt_one : δ < 1)
     (h_norm_L : ‖fdBoundary_H H (2 - δ) - I‖ = ε) :
-    δ * Real.pi / 12 < ε := by
-  set x := δ * Real.pi / 12 with hx_def
-  have hx_pos : 0 < x := by positivity
-  have hx_le_one : x ≤ 1 := by nlinarith [Real.pi_le_four]
-  have h_sin_lb := Real.sin_gt_sub_cube hx_pos hx_le_one
-  have h_lb : x - x ^ 3 / 4 > x / 2 := by nlinarith [sq_nonneg x, sq_nonneg (1 - x)]
-  have h_norm_is_2sin : 2 * Real.sin x = ε := by
-    rw [hx_def]
-    linarith [g_i_norm_left (H := H) hδ_pos hδ_lt_one]
-  linarith
+    δ * Real.pi / 12 < ε :=
+  delta_pi_div_twelve_lt_eps hδ_pos hδ_lt_one.le
+    (by linarith [g_i_norm_left (H := H) hδ_pos hδ_lt_one])
 
 private lemma i_ftc_integrability (H : ℝ) (hH : 1 < H) {ε : ℝ}
     (hε_pos : 0 < ε) (hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12)) :
@@ -788,11 +727,7 @@ private lemma i_ftc_integrability (H : ℝ) (hH : 1 < H) {ε : ℝ}
     (Real.arcsin_pos.mpr (by linarith))
   have hδ_lt_one : δ < 1 := i_delta_lt_one hε_pos hε_lt_2sin
   obtain ⟨hL, hR, hsum⟩ := ftc_logDeriv_telescope_i H hH hδ_pos hδ_lt_one
-  have h_congr : ∀ t, (fdBoundary_H H t - I)⁻¹ * deriv (fdBoundary_H H) t =
-      deriv (fun s => fdBoundary_H H s - I) t / (fdBoundary_H H t - I) := fun t => by
-    have hd : deriv (fun s => fdBoundary_H H s - I) t = deriv (fdBoundary_H H) t :=
-      deriv_sub_const (f := fdBoundary_H H) _
-    rw [hd, div_eq_mul_inv, mul_comm]
+  have h_congr := fun t => congr_fun (inv_mul_deriv_eq_logDeriv_sub H I) t
   refine ⟨(intervalIntegrable_congr (fun t _ => h_congr t)).mpr hL,
           (intervalIntegrable_congr (fun t _ => h_congr t)).mpr hR, ?_⟩
   simp_rw [h_congr]; exact hsum
@@ -869,10 +804,7 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
       then (fdBoundary_H H t - I)⁻¹ *
            deriv (fun s => fdBoundary_H H s - I) t
       else 0) (𝓝[>] 0) (𝓝 (-(I * ↑Real.pi))) := by
-  have h2sin_pos : 0 < 2 * Real.sin (Real.pi / 12) := by
-    have : 0 < Real.sin (Real.pi / 12) :=
-      ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
-    linarith
+  have h2sin_pos := two_sin_pi_div_twelve_pos
   set threshold := min (min (min (1/2 : ℝ) (H - 1)) (2 * Real.sin (Real.pi / 12))) 1
   have hthresh_pos : 0 < threshold :=
     lt_min (lt_min (lt_min (by norm_num) (by linarith)) h2sin_pos) one_pos

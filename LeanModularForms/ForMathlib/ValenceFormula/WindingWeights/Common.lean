@@ -190,11 +190,142 @@ lemma ftc_log_piece_lower {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
       _ = Complex.log (-(h b)) - Complex.log (-(h a)) := h_ftc
       _ = Complex.log (-(g b)) - Complex.log (-(g a)) := by rw [heq_a, heq_b]⟩
 
+/-! ### Shared derivative and trigonometric lemmas used by the i, ρ, ρ+1 proofs -/
 
+/-- Derivative of the parametric arc `exp(i·π(1+t)/6) - s`. -/
+lemma hasDerivAt_arc_sub_const (s : ℂ) (t : ℝ) :
+    HasDerivAt (fun t : ℝ => Complex.exp (↑(Real.pi * (1 + t) / 6) * I) - s)
+      (↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + t) / 6) * I)) t := by
+  have hf : HasDerivAt (fun s : ℝ => Real.pi * (1 + s) / 6) (Real.pi / 6) t :=
+    ((hasDerivAt_id t).add_const (1:ℝ) |>.const_mul (Real.pi / 6)).congr_of_eventuallyEq
+      (Eventually.of_forall fun s => by simp [id]; ring) |>.congr_deriv (by ring)
+  have hci : HasDerivAt (fun s : ℝ => (↑(Real.pi * (1 + s) / 6) : ℂ) * I)
+      ((↑(Real.pi / 6) : ℂ) * I) t :=
+    (hf.ofReal_comp.mul_const I).congr_deriv (by norm_num [smul_eq_mul])
+  exact (hci.cexp.sub (hasDerivAt_const t s)).congr_deriv (by simp only [sub_zero]; ring)
 
+/-- Closed-contour property: `fdBoundary_H H 0 - c = fdBoundary_H H 5 - c`. -/
+lemma fdBoundary_H_sub_closed (H : ℝ) (c : ℂ) :
+    fdBoundary_H H 0 - c = fdBoundary_H H 5 - c := by rw [fdBoundary_H_closed H]
 
+/-- Continuity of the arc-derivative expression `(π/6)·i·exp(i·π(1+t)/6)`. -/
+lemma continuous_arc_deriv :
+    Continuous fun t : ℝ => (↑(Real.pi / 6) : ℂ) * I *
+      Complex.exp (↑(Real.pi * (1 + t) / 6) * I) :=
+  Continuous.mul continuous_const (Continuous.cexp (Continuous.mul
+    (continuous_ofReal.comp (by fun_prop : Continuous fun s => Real.pi * (1 + s) / 6))
+    continuous_const))
 
+/-- Continuity of `deriv h` for any `h` with the canonical arc-derivative form. -/
+lemma continuousOn_deriv_of_arc_form {h : ℝ → ℂ}
+    (hd : ∀ t : ℝ, HasDerivAt h
+      (↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + t) / 6) * I)) t)
+    (a b : ℝ) : ContinuousOn (deriv h) (Icc a b) := by
+  rw [show deriv h =
+      fun t => ↑(Real.pi / 6) * I * Complex.exp (↑(Real.pi * (1 + t) / 6) * I) from
+    funext fun t => (hd t).deriv]
+  exact continuous_arc_deriv.continuousOn
 
+/-- Derivative of the final segment `t ↦ ↑(t - c) + d`, which equals `1`. -/
+lemma hasDerivAt_seg5_line (c : ℝ) (d : ℂ) (t : ℝ) :
+    HasDerivAt (fun s : ℝ => (↑(s - c) : ℂ) + d) 1 t :=
+  (((hasDerivAt_id t).sub_const c).ofReal_comp.add (hasDerivAt_const t d)).congr_deriv
+    (by simp only [Complex.ofReal_one, add_zero])
+
+/-- Derivative of `t ↦ ↑((c - t) · k) · I`: slope `−k · I`. -/
+lemma hasDerivAt_aff_imI_neg (k : ℝ) (c : ℝ) (t : ℝ) :
+    HasDerivAt (fun s : ℝ => (↑((c - s) * k) : ℂ) * I) (-(↑k : ℂ) * I) t := by
+  have h1 : HasDerivAt (fun s : ℝ => (c - s) * k) (-k) t :=
+    (((hasDerivAt_const t c).sub (hasDerivAt_id t)).mul_const k).congr_deriv (by ring)
+  exact (h1.ofReal_comp.mul_const I).congr_deriv (by push_cast; ring)
+
+/-- Derivative of `t ↦ ↑((t - c) · k) · I`: slope `k · I`. -/
+lemma hasDerivAt_aff_imI_pos (k : ℝ) (c : ℝ) (t : ℝ) :
+    HasDerivAt (fun s : ℝ => (↑((s - c) * k) : ℂ) * I) ((↑k : ℂ) * I) t :=
+  ((((hasDerivAt_id t).sub (hasDerivAt_const t c)).mul_const k).ofReal_comp.mul_const
+    I).congr_deriv (by norm_num [smul_eq_mul])
+
+/-- Derivative of `t ↦ d + ↑(c0 + (t - c) · k) · I`: slope `k · I`. -/
+lemma hasDerivAt_aff_imI_pos_shift (d : ℂ) (k c0 : ℝ) (c : ℝ) (t : ℝ) :
+    HasDerivAt (fun s : ℝ => d + (↑(c0 + (s - c) * k) : ℂ) * I) ((↑k : ℂ) * I) t := by
+  have hf : HasDerivAt (fun s : ℝ => c0 + (s - c) * k) k t :=
+    ((((hasDerivAt_id t).sub_const c).mul_const k).const_add c0).congr_deriv (by ring)
+  exact ((hasDerivAt_const t d).add (hf.ofReal_comp.mul_const I)).congr_deriv (by ring)
+
+/-- The derivative of a function with constant derivative `c` is continuous. -/
+lemma continuousOn_deriv_of_const {h : ℝ → ℂ} (c : ℂ) (hd : ∀ t : ℝ, HasDerivAt h c t)
+    (a b : ℝ) : ContinuousOn (deriv h) (Icc a b) := by
+  rw [show deriv h = fun _ => c from funext fun t => (hd t).deriv]; exact continuousOn_const
+
+/-- Build the bundled `(g t = h t ∧ deriv g t = deriv h t)` property over an open
+interval from a pointwise equality on a containing neighborhood. -/
+lemma heq_deriv_of_eq_on_nhds {g h : ℝ → ℂ} {a b : ℝ}
+    {U : Set ℝ} (hU : ∀ t ∈ Ioo a b, U ∈ 𝓝 t)
+    (hgh : ∀ s ∈ U, g s = h s) :
+    ∀ t ∈ Ioo a b, g t = h t ∧ deriv g t = deriv h t := fun t ht =>
+  ⟨hgh t (mem_of_mem_nhds (hU t ht)), Filter.EventuallyEq.deriv_eq
+    (Filter.eventually_of_mem (hU t ht) (fun s hs => hgh s hs))⟩
+
+/-- Swap the form `(γ t - c)⁻¹ * deriv γ t` to `deriv (· - c) γ t / (γ t - c)`. -/
+lemma inv_mul_deriv_eq_logDeriv_sub (H : ℝ) (c : ℂ) :
+    (fun t => (fdBoundary_H H t - c)⁻¹ * deriv (fdBoundary_H H) t) =
+    (fun t => deriv (fun s => fdBoundary_H H s - c) t / (fdBoundary_H H t - c)) := by
+  funext t
+  have : deriv (fun s => fdBoundary_H H s - c) t = deriv (fdBoundary_H H) t :=
+    deriv_sub_const (f := fdBoundary_H H) c
+  rw [this, div_eq_mul_inv, mul_comm]
+
+/-- `arg(↑r · I) = π/2` for `r > 0`. Used in the elliptic-point arg approach lemmas. -/
+lemma arg_ofReal_mul_I {r : ℝ} (hr : 0 < r) : ((↑r : ℂ) * I).arg = Real.pi / 2 := by
+  rw [Complex.arg_eq_pi_div_two_iff]
+  refine ⟨by simp [Complex.mul_re], ?_⟩
+  simp only [Complex.mul_im, Complex.ofReal_re, Complex.I_im, Complex.ofReal_im, Complex.I_re,
+    mul_zero, add_zero, mul_one]
+  exact hr
+
+/-- `0 < sin(π/12)`. -/
+lemma sin_pi_div_twelve_pos : 0 < Real.sin (Real.pi / 12) :=
+  ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
+
+/-- `0 < sin(δ · π / 12)` for `0 < δ < 2`, useful in arc factor lemmas. -/
+lemma sin_delta_pi_div_twelve_pos {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt : δ < 2) :
+    0 < Real.sin (δ * Real.pi / 12) :=
+  ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
+
+/-- `0 < 2 · sin(π/12)`. -/
+lemma two_sin_pi_div_twelve_pos : 0 < 2 * Real.sin (Real.pi / 12) := by
+  linarith [sin_pi_div_twelve_pos]
+
+/-- `arcsin(ε/2) < π/12` when `ε < 2 · sin(π/12)` and `−1 ≤ ε/2`. -/
+lemma arcsin_half_lt_pi_div_twelve {ε : ℝ} (hε_half_neg : -1 ≤ ε / 2)
+    (hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12)) :
+    Real.arcsin (ε / 2) < Real.pi / 12 :=
+  calc Real.arcsin (ε / 2)
+      < Real.arcsin (Real.sin (Real.pi / 12)) :=
+        Real.arcsin_lt_arcsin hε_half_neg (by linarith) (Real.sin_le_one _)
+    _ = Real.pi / 12 :=
+        Real.arcsin_sin (by nlinarith [Real.pi_pos]) (by nlinarith [Real.pi_pos])
+
+/-- `δ · π / 12 < ε` given `sin(δπ/12) = ε/2` and `δ ∈ (0, 1]`. -/
+lemma delta_pi_div_twelve_lt_eps {δ ε : ℝ} (hδ_pos : 0 < δ) (hδ_le_one : δ ≤ 1)
+    (h_sin_eq : Real.sin (δ * Real.pi / 12) = ε / 2) :
+    δ * Real.pi / 12 < ε := by
+  set x := δ * Real.pi / 12 with hx_def
+  have hx_pos : 0 < x := by positivity
+  have hx_le_one : x ≤ 1 := by nlinarith [Real.pi_le_four]
+  have h_sin_lb := Real.sin_gt_sub_cube hx_pos hx_le_one
+  have h_lb : x - x ^ 3 / 4 > x / 2 := by nlinarith [sq_nonneg x, sq_nonneg (1 - x)]
+  linarith
+
+/-- `12/π · arcsin(ε/2) < 1` for ε in the threshold range. -/
+lemma twelve_div_pi_arcsin_half_lt_one {ε : ℝ} (hε_half_neg : -1 ≤ ε / 2)
+    (hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12)) :
+    12 / Real.pi * Real.arcsin (ε / 2) < 1 :=
+  calc 12 / Real.pi * Real.arcsin (ε / 2)
+      < 12 / Real.pi * (Real.pi / 12) :=
+        mul_lt_mul_of_pos_left (arcsin_half_lt_pi_div_twelve hε_half_neg hε_lt_2sin)
+          (div_pos (by norm_num) Real.pi_pos)
+    _ = 1 := by field_simp
 
 
 end
