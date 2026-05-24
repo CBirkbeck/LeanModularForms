@@ -137,24 +137,6 @@ private theorem contourIntegral_inv_eq_zero_of_convex {U : Set ℂ}
 
 /-! ### Winding vanishes in neighborhoods of exterior points -/
 
-/-- **B-1 cocompact form**: For `γ` null-homologous in a bounded `U`, winding vanishes
-(and γ avoids the point) eventually in `cocompact ℂ`.
-
-Proof: for bounded `U`, `Uᶜ` is cobounded = cocompact. For `w ∉ U`, γ.image ⊆ U gives
-γ avoids `w`, and null-hom gives `winding γ w = 0`. -/
-theorem IsNullHomologous.winding_eventually_zero_cocompact_of_bounded
-    {γ : PwC1Immersion x x} {U : Set ℂ} (h_null : IsNullHomologous γ U)
-    (hU_bounded : Bornology.IsBounded U) :
-    ∀ᶠ w in Filter.cocompact ℂ,
-      (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) ∧
-        generalizedWindingNumber γ.toPiecewiseC1Path w = 0 := by
-  have h_compl : Uᶜ ∈ Filter.cocompact ℂ := by
-    rw [← Metric.cobounded_eq_cocompact]
-    exact Bornology.isBounded_def.mp hU_bounded
-  filter_upwards [h_compl] with w hw_notin
-  exact ⟨fun t ht heq => hw_notin (heq ▸ h_null.image_subset t ht),
-    h_null.winding_zero w hw_notin⟩
-
 /-! ### Lipschitz implies bounded image -/
 
 /-- Lipschitz `γ.toPath.extend` on `[0, 1]` has norm bounded by

@@ -116,12 +116,4 @@ lemma no_return_of_inj_continuous {γ : ℝ → ℂ} {a b t₀ : ℝ} {c : ℝ} 
 
 
 
-/-- If γ is C² at t₀, then `deriv γ` is continuous at t₀. -/
-lemma continuousAt_deriv_of_contDiffAt_two {γ : ℝ → ℂ} {t₀ : ℝ}
-    (hγ_C2 : ContDiffAt ℝ 2 γ t₀) : ContinuousAt (deriv γ) t₀ := by
-  have h_deriv_eq : deriv γ = (fun t => fderiv ℝ γ t 1) :=
-    funext fun _ => (fderiv_apply_one_eq_deriv).symm
-  rw [h_deriv_eq]
-  exact (ContDiffAt.continuousAt_fderiv hγ_C2 (by norm_cast)).clm_apply continuousAt_const
-
 end
