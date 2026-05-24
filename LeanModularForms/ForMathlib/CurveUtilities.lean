@@ -55,37 +55,6 @@ theorem image_compact (γ : PiecewiseC1Path x y) :
 
 /-! ### Positive inf-distance -/
 
-/-- If a piecewise C^1 path avoids `z_0`, then the infimum distance from `z_0` to the
-path image is positive. -/
-theorem infDist_pos_of_avoids (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (hav : γ.Avoids z₀) : 0 < γ.infDist z₀ := by
-  rw [infDist, ← γ.image_compact.isClosed.notMem_iff_infDist_pos
-    ⟨γ.toPath.extend 0, mem_image_of_mem _ (left_mem_Icc.mpr zero_le_one)⟩]
-  rintro ⟨t, ht, heq⟩
-  exact hav t ht heq
-
-/-! ### Avoidance criteria -/
-
-/-- If every point on the path has imaginary part strictly greater than `z_0.im`,
-then the path avoids `z_0`. -/
-theorem avoids_of_im_lt (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (h : ∀ t ∈ Icc (0 : ℝ) 1, z₀.im < (γ t).im) : γ.Avoids z₀ :=
-  fun t ht heq => (h t ht).ne' (by rw [heq])
-
-/-- If every point on the path has real part different from `z_0.re`,
-then the path avoids `z_0`. -/
-theorem avoids_of_re_ne (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (h : ∀ t ∈ Icc (0 : ℝ) 1, (γ t).re ≠ z₀.re) : γ.Avoids z₀ :=
-  fun t ht heq => h t ht (by rw [heq])
-
-/-- If every point on the path has norm different from `‖z_0‖`,
-then the path avoids `z_0`. Useful for curves on circles. -/
-theorem avoids_of_norm_ne (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (h : ∀ t ∈ Icc (0 : ℝ) 1, ‖γ t‖ ≠ ‖z₀‖) : γ.Avoids z₀ :=
-  fun t ht heq => h t ht (by rw [heq])
-
-/-! ### Full partition -/
-
 /-- The underlying finset for the full partition: `{0, 1} ∪ partition`. -/
 private def fullPartitionFinset (γ : PiecewiseC1Path x y) : Finset ℝ :=
   ({0, 1} : Finset ℝ) ∪ γ.partition
@@ -135,20 +104,6 @@ theorem fullPartition_mem_Icc (γ : PiecewiseC1Path x y) (t : ℝ)
   · exact ⟨le_refl _, zero_le_one⟩
   · exact ⟨zero_le_one, le_refl _⟩
   · exact ⟨(γ.partition_subset hpart).1.le, (γ.partition_subset hpart).2.le⟩
-
-/-- The first element of the full partition is `0`. -/
-theorem fullPartition_head_eq_zero (γ : PiecewiseC1Path x y) :
-    γ.fullPartition.head γ.fullPartition_ne_nil = 0 := by
-  have h_mem := List.head_mem γ.fullPartition_ne_nil
-  have h_le := γ.fullPartition_sorted.rel_head γ.zero_mem_fullPartition
-  linarith [(γ.fullPartition_mem_Icc _ h_mem).1]
-
-/-- The last element of the full partition is `1`. -/
-theorem fullPartition_last_eq_one (γ : PiecewiseC1Path x y) :
-    γ.fullPartition.getLast γ.fullPartition_ne_nil = 1 := by
-  have h_mem := List.getLast_mem γ.fullPartition_ne_nil
-  have h_ge := γ.fullPartition_sorted.rel_getLast γ.one_mem_fullPartition
-  linarith [(γ.fullPartition_mem_Icc _ h_mem).2]
 
 end PiecewiseC1Path
 

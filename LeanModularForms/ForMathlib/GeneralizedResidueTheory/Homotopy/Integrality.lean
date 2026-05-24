@@ -88,25 +88,6 @@ def ClosedCurvesHomotopicAvoiding (γ₀ γ₁ : ℝ → ℂ)
     (Continuous (fun p : ℝ × ℝ =>
       deriv (fun t' => H (t', p.2)) p.1))
 
-/-- A smooth closed homotopy is a piecewise homotopy with empty partition.
-
-The empty partition `∅` means no breakpoints are needed: differentiability
-holds everywhere in `Ioo a b` (vacuously, the partition condition is void),
-and the global continuity of the derivative supplies the required local
-continuity on every sub-interval. The bound on `‖deriv H‖` is obtained from
-compactness of `Icc a b × Icc 0 1` together with continuity of the derivative. -/
-theorem ClosedCurvesHomotopicAvoiding.toPiecewise
-    {γ₀ γ₁ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (h : ClosedCurvesHomotopicAvoiding γ₀ γ₁ a b z₀) :
-    PiecewiseCurvesHomotopicAvoiding γ₀ γ₁ a b z₀ ∅ := by
-  obtain ⟨H, hcont, hH0, hH1, hclosed, havoid, hdiff, hderiv_cont⟩ := h
-  refine ⟨H, hcont, hH0, hH1, hclosed, havoid, fun t ht _ s hs => hdiff t ht s hs,
-    fun _ _ _ _ _ => hderiv_cont.continuousOn.mono (Set.subset_univ _), ?_⟩
-  rcases (isCompact_Icc.prod isCompact_Icc).exists_bound_of_continuousOn
-    hderiv_cont.norm.continuousOn with ⟨M, hM⟩
-  simp only [norm_norm] at hM
-  exact ⟨M, fun t ht s hs => hM ⟨t, s⟩ ⟨ht, hs⟩⟩
-
 /-- If f is eventually equal to a constant, `limUnder` equals that constant. -/
 theorem limUnder_eventually_eq_const {α : Type*} [TopologicalSpace α] {f : α → ℂ}
     {l : Filter α} {c : ℂ} [l.NeBot] (hf : ∀ᶠ x in l, f x = c) : limUnder l f = c :=

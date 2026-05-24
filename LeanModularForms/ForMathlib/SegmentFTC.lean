@@ -71,20 +71,6 @@ theorem ftc_telescope_three {f : ℝ → ℂ} {a b c d : ℝ}
   ftc_telescope_two (hint_ab.trans hint_bc) hint_cd
     (ftc_telescope_two hint_ab hint_bc h_ab h_bc) h_cd
 
-/-- For a closed curve (`f a = f b`), the integral from `a` to `t₀ - δ` plus from
-`t₀ + δ` to `b` telescopes to `log(f(t₀ - δ)) - log(f(t₀ + δ))`, because the log
-terms at `a` and `b` cancel by closedness. -/
-theorem ftc_telescope_closed_split {f : ℝ → ℂ} {a b t₀ δ : ℝ}
-    (h_closed : f a = f b)
-    (h_left : ∫ t in a..(t₀ - δ), deriv f t / f t =
-      Complex.log (f (t₀ - δ)) - Complex.log (f a))
-    (h_right : ∫ t in (t₀ + δ)..b, deriv f t / f t =
-      Complex.log (f b) - Complex.log (f (t₀ + δ))) :
-    (∫ t in a..(t₀ - δ), deriv f t / f t) + (∫ t in (t₀ + δ)..b, deriv f t / f t) =
-    Complex.log (f (t₀ - δ)) - Complex.log (f (t₀ + δ)) := by
-  rw [h_left, h_right, ← h_closed]
-  ring
-
 /-- Transfer integrability from a local function `h` to `g` given that their
 log-derivatives agree almost everywhere on the interval. -/
 theorem ftc_telescope_integrability {g h : ℝ → ℂ} {a b : ℝ}
@@ -106,45 +92,6 @@ theorem ftc_telescope_transfer {g h : ℝ → ℂ} {a b : ℝ}
     ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) :=
   ⟨ftc_telescope_integrability hint_h h_ae, by
     rw [intervalIntegral.integral_congr_ae (h_ae.mono (fun _ => id)), h_ftc, h_ga, h_gb]⟩
-
-/-- General piecewise FTC telescope for a function `g` on `[a, b]` that is split at a
-single interior breakpoint `p`. Given FTC results on `[a, p]` and `[p, b]` for local
-functions `h₁` and `h₂` respectively, together with a.e. agreement of log-derivatives
-and matching endpoints, the combined integral telescopes to `log(g b) - log(g a)`. -/
-theorem ftc_telescope_piecewise_two {g h₁ h₂ : ℝ → ℂ} {a p b : ℝ}
-    (hint₁ : IntervalIntegrable (fun t => deriv h₁ t / h₁ t) volume a p)
-    (hint₂ : IntervalIntegrable (fun t => deriv h₂ t / h₂ t) volume p b)
-    (h_ftc₁ : ∫ t in a..p, deriv h₁ t / h₁ t = Complex.log (h₁ p) - Complex.log (h₁ a))
-    (h_ftc₂ : ∫ t in p..b, deriv h₂ t / h₂ t = Complex.log (h₂ b) - Complex.log (h₂ p))
-    (h_ae₁ : ∀ᵐ t ∂volume, t ∈ Ι a p → deriv g t / g t = deriv h₁ t / h₁ t)
-    (h_ae₂ : ∀ᵐ t ∂volume, t ∈ Ι p b → deriv g t / g t = deriv h₂ t / h₂ t)
-    (h_ga : g a = h₁ a) (h_gp_left : g p = h₁ p) (h_gp_right : g p = h₂ p)
-    (h_gb : g b = h₂ b) :
-    IntervalIntegrable (fun t => deriv g t / g t) volume a b ∧
-    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
-  obtain ⟨hg₁, h_eq₁⟩ := ftc_telescope_transfer hint₁ h_ftc₁ h_ae₁ h_ga h_gp_left
-  obtain ⟨hg₂, h_eq₂⟩ := ftc_telescope_transfer hint₂ h_ftc₂ h_ae₂ h_gp_right h_gb
-  exact ⟨hg₁.trans hg₂, ftc_telescope_two hg₁ hg₂ h_eq₁ h_eq₂⟩
-
-/-- Piecewise FTC telescope with three local functions (two interior breakpoints). -/
-theorem ftc_telescope_piecewise_three {g h₁ h₂ h₃ : ℝ → ℂ} {a p q b : ℝ}
-    (hint₁ : IntervalIntegrable (fun t => deriv h₁ t / h₁ t) volume a p)
-    (hint₂ : IntervalIntegrable (fun t => deriv h₂ t / h₂ t) volume p q)
-    (hint₃ : IntervalIntegrable (fun t => deriv h₃ t / h₃ t) volume q b)
-    (h_ftc₁ : ∫ t in a..p, deriv h₁ t / h₁ t = Complex.log (h₁ p) - Complex.log (h₁ a))
-    (h_ftc₂ : ∫ t in p..q, deriv h₂ t / h₂ t = Complex.log (h₂ q) - Complex.log (h₂ p))
-    (h_ftc₃ : ∫ t in q..b, deriv h₃ t / h₃ t = Complex.log (h₃ b) - Complex.log (h₃ q))
-    (h_ae₁ : ∀ᵐ t ∂volume, t ∈ Ι a p → deriv g t / g t = deriv h₁ t / h₁ t)
-    (h_ae₂ : ∀ᵐ t ∂volume, t ∈ Ι p q → deriv g t / g t = deriv h₂ t / h₂ t)
-    (h_ae₃ : ∀ᵐ t ∂volume, t ∈ Ι q b → deriv g t / g t = deriv h₃ t / h₃ t)
-    (h_ga : g a = h₁ a) (h_gp : g p = h₁ p) (h_gp' : g p = h₂ p)
-    (h_gq : g q = h₂ q) (h_gq' : g q = h₃ q) (h_gb : g b = h₃ b) :
-    IntervalIntegrable (fun t => deriv g t / g t) volume a b ∧
-    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) := by
-  obtain ⟨hg₁, h_eq₁⟩ := ftc_telescope_transfer hint₁ h_ftc₁ h_ae₁ h_ga h_gp
-  obtain ⟨hg₂, h_eq₂⟩ := ftc_telescope_transfer hint₂ h_ftc₂ h_ae₂ h_gp' h_gq
-  obtain ⟨hg₃, h_eq₃⟩ := ftc_telescope_transfer hint₃ h_ftc₃ h_ae₃ h_gq' h_gb
-  exact ⟨(hg₁.trans hg₂).trans hg₃, ftc_telescope_three hg₁ hg₂ hg₃ h_eq₁ h_eq₂ h_eq₃⟩
 
 end SegmentFTC
 
@@ -209,16 +156,6 @@ theorem ftc_log_neg_on_segment {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
       fun t ht => neg_ne_zero.mp (Complex.slitPlane_ne_zero (hf_slit t ht))).intervalIntegrable
   exact ⟨hint, intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab
     (hf_cont.neg.clog hf_slit) hF_deriv hint⟩
-
-/-- FTC for log-derivative when the negated function stays in slitPlane:
-`∫ f'/f = log(-f(b)) - log(-f(a))` when `-f ∈ slitPlane` on `[a,b]`. -/
-theorem integral_logDeriv_eq_neg_log_sub {f : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
-    (hf_cont : ContinuousOn f (Icc a b))
-    (hf_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ f t)
-    (hf_deriv_cont : ContinuousOn (deriv f) (Icc a b))
-    (hf_neg_slit : ∀ t ∈ Icc a b, -f t ∈ Complex.slitPlane) :
-    ∫ t in a..b, deriv f t / f t = Complex.log (-f b) - Complex.log (-f a) :=
-  (ftc_log_neg_on_segment hab hf_cont hf_diff hf_deriv_cont hf_neg_slit).2
 
 /-- Combined integrability and FTC for log-derivative integrals.
 

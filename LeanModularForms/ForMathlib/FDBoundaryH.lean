@@ -102,9 +102,6 @@ lemma fdBoundary_at_five :
   push_cast
   ring
 
-lemma fdBoundary_closed : fdBoundary 0 = fdBoundary 5 := by
-  rw [fdBoundary_at_zero, fdBoundary_at_five]
-
 /-- Segment 1 at height H: right vertical from (1/2 + H·i) down
 to ρ+1. -/
 def fdBoundary_seg1_H (H : ℝ) : ℝ → ℂ := fun t =>

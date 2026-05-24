@@ -51,12 +51,6 @@ noncomputable def poleOrderAt (f : ℂ → ℂ) (z₀ : ℂ) : ℕ :=
     (-(meromorphicOrderAt f z₀).untop₀).toNat
   else 0
 
-theorem poleOrderAt_eq_one_of_order_neg_one {f : ℂ → ℂ} {z₀ : ℂ}
-    (hf : MeromorphicAt f z₀) (hord : meromorphicOrderAt f z₀ = (-1 : ℤ)) :
-    poleOrderAt f z₀ = 1 := by
-  rw [poleOrderAt, dif_pos hf, hord]; rfl
-
-
 /-- Principal part sum for simple poles: `∑ s ∈ S, c(s) / (z - s)`.
 
 Given a finite set `S` of pole locations and a coefficient function `c : ℂ → ℂ`,
@@ -70,16 +64,6 @@ theorem differentiableAt_div_sub {s : ℂ} {c : ℂ} {z : ℂ} (hz : z ≠ s) :
     DifferentiableAt ℂ (fun w => c / (w - s)) z :=
   differentiableAt_const c |>.div (differentiableAt_id.sub (differentiableAt_const s))
     (sub_ne_zero.mpr hz)
-
-
-/-- The principal part sum `∑ s ∈ S, c(s) / (z - s)` is differentiable on `(↑S)ᶜ`. -/
-theorem principalPartSum_differentiableOn (S : Finset ℂ) (c : ℂ → ℂ) :
-    DifferentiableOn ℂ (principalPartSum S c) (↑S : Set ℂ)ᶜ := by
-  intro z hz
-  apply DifferentiableAt.differentiableWithinAt
-  apply DifferentiableAt.fun_sum
-  intro s hs
-  exact differentiableAt_div_sub (fun heq => hz (Finset.mem_coe.mpr (heq ▸ hs)))
 
 
 private theorem principalPartSum_rest_analyticAt
@@ -117,12 +101,6 @@ theorem sub_principalPartSum_analyticAt {f : ℂ → ℂ} {S : Finset ℂ} {c : 
   rw [principalPartSum_eq_term_add_rest hs c z, hf_eq, h_coeff]
   ring
 
-/-- The residue of `principalPartSum S c` at `s ∈ S` equals `c s`. -/
-theorem residue_principalPartSum {S : Finset ℂ} {c : ℂ → ℂ} {s : ℂ} (hs : s ∈ S) :
-    residue (principalPartSum S c) s = c s :=
-  residue_eq_of_simple_pole_decomp (principalPartSum_rest_analyticAt S s c)
-    (.of_forall fun z => principalPartSum_eq_term_add_rest hs c z)
-
 /-- The residue of `f` at a simple pole equals its coefficient. -/
 theorem residue_eq_coeff_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
     (h : HasSimplePoleAt f z₀) :
@@ -144,11 +122,5 @@ theorem principalPartSum_differentiableAt {S : Finset ℂ} {c : ℂ → ℂ} {z 
     (hz : z ∉ S) :
     DifferentiableAt ℂ (principalPartSum S c) z :=
   (principalPartSum_analyticAt hz).differentiableAt
-
-/-- The principal part sum is meromorphic at every point of `ℂ`. -/
-theorem principalPartSum_meromorphicAt (S : Finset ℂ) (c : ℂ → ℂ) (z : ℂ) :
-    MeromorphicAt (principalPartSum S c) z :=
-  MeromorphicAt.fun_sum fun _ _ =>
-    analyticAt_const.meromorphicAt.div (analyticAt_id.sub analyticAt_const).meromorphicAt
 
 end

@@ -1292,49 +1292,6 @@ private theorem preimage_finite_piece_of_finset (γ : ClosedPwC1Immersion x) {a 
   rw [h_union]
   exact S.finite_toSet.biUnion fun s _ => γ.preimage_finite_piece h s
 
-/-- **Finite preimage of a finite set under a closed paper-piecewise `C¹` immersion.**
-The set of parameters `t ∈ [0, 1]` at which `γ t ∈ S` is finite, for any finite
-target `S ⊆ E`.
-
-The proof decomposes `[0, 1]` along the partition into closed pieces, applies
-`preimage_finite_piece_of_finset` on each piece, and takes the finite union. -/
-theorem preimage_finite (γ : ClosedPwC1Immersion x) (S : Finset E) :
-    Set.Finite {t ∈ Icc (0 : ℝ) 1 |
-      γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set E)} := by
-  classical
-  set pairs : Finset (ℝ × ℝ) := (γ.closedPartition.product γ.closedPartition).filter
-    (fun p => γ.closedPartition.IsConsecutive p.1 p.2)
-  set f := γ.toPath.extend
-  have h_eq : ∀ t, γ.toPwC1Immersion.toPiecewiseC1Path t = f t := fun _ => rfl
-  have h_subset :
-      {t ∈ Icc (0 : ℝ) 1 |
-          γ.toPwC1Immersion.toPiecewiseC1Path t ∈ (↑S : Set E)} ⊆
-        ⋃ p ∈ pairs, {t ∈ Icc p.1 p.2 | f t ∈ (↑S : Set E)} := by
-    intro t ht
-    obtain ⟨ht_Icc, ht_S⟩ := ht
-    rw [h_eq] at ht_S
-    have mk_pair : ∀ {a b : ℝ}, γ.closedPartition.IsConsecutive a b → (a, b) ∈ pairs :=
-      fun hcons => Finset.mem_filter.mpr
-        ⟨Finset.mem_product.mpr ⟨hcons.1, hcons.2.1⟩, hcons⟩
-    by_cases htn : t ∈ γ.closedPartition
-    · by_cases ht1 : t = 1
-      · obtain ⟨a, hcons⟩ := γ.exists_predecessor γ.one_mem_closedPartition zero_lt_one
-        exact Set.mem_iUnion₂.mpr ⟨(a, 1), mk_pair hcons,
-          ⟨⟨ht1 ▸ hcons.2.2.1.le, ht1.le⟩, ht_S⟩⟩
-      · obtain ⟨b, hcons⟩ := γ.exists_successor htn (lt_of_le_of_ne ht_Icc.2 ht1)
-        exact Set.mem_iUnion₂.mpr ⟨(t, b), mk_pair hcons,
-          ⟨⟨le_refl t, hcons.2.2.1.le⟩, ht_S⟩⟩
-    · have ht_Ioo : t ∈ Ioo (0 : ℝ) 1 :=
-        ⟨lt_of_le_of_ne ht_Icc.1
-          (Ne.symm fun h => htn (h ▸ γ.zero_mem_closedPartition)),
-         lt_of_le_of_ne ht_Icc.2 fun h => htn (h ▸ γ.one_mem_closedPartition)⟩
-      obtain ⟨a, b, hcons, ht_Ioo'⟩ :=
-        γ.toClosedPwC1Curve.exists_consecutive_pair_containing ht_Ioo htn
-      exact Set.mem_iUnion₂.mpr ⟨(a, b), mk_pair hcons,
-        Ioo_subset_Icc_self ht_Ioo', ht_S⟩
-  refine (pairs.finite_toSet.biUnion fun p hp =>
-    γ.preimage_finite_piece_of_finset (Finset.mem_filter.mp hp).2 S).subset h_subset
-
 end ClosedPwC1Immersion
 
 

@@ -95,24 +95,6 @@ theorem HasCauchyPV.to_singletonOn
   h.congr fun _ => intervalIntegral.integral_congr fun _ _ =>
     cpvIntegrand_eq_cpvIntegrandOn_singleton
 
-/-- **T-CC-01 — single-pole CPV at a transverse crossing.**
-
-For a closed (or open) piecewise C¹ path `γ : PiecewiseC1Path x y` admitting a
-`SingleCrossingData γ s` (the standard data witnessing a single transverse
-crossing of `s`), the simple-pole contribution `c / (z − s)` has a Cauchy
-principal value equal to `2πi · w · c`, where
-`w = generalizedWindingNumber γ s` is the corner-corrected winding number.
-
-This is the simple-pole (`k = 1`) analogue of `T-SC-01`'s `k ≥ 2` cancellation
-result. The simple pole does **not** vanish — it contributes
-`2πi · w · residue` to the residue theorem at a crossing. -/
-theorem cpv_simplePole_at_crossing
-    {γ : PiecewiseC1Path x y} {s : ℂ} (D : SingleCrossingData γ s) (c : ℂ) :
-    HasCauchyPV (fun z => c / (z - s)) γ s
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) :=
-  D.hasCauchyPV_simplePole_eq_two_pi_I_mul c
-
-
 /-- **Asymmetric variant of T-CC-01.** Given an `AsymmetricSingleCrossingData γ s`
 (separate left/right cutoffs), the simple-pole contribution `c / (z − s)` has a
 Cauchy principal value equal to `2πi · w · c`. The asymmetric form admits curves

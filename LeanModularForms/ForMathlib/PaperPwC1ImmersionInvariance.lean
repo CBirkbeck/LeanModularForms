@@ -158,15 +158,6 @@ private lemma cpvIntegrandOn_cyclicShift_integral_eq (γ : ClosedPwC1Immersion x
       ⟨h_u_in.1.le, lt_of_le_of_ne h_u_in.2 h_u_ne⟩
   rw [h_step1, h_step2, h_step3, h_step4]
 
-/-- **Invariance of `HasCauchyPVOn` under cyclic shift.** -/
-theorem hasCauchyPVOn_cyclicShift {γ : ClosedPwC1Immersion x} {τ : ℝ}
-    (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) (S : Finset ℂ) (f : ℂ → ℂ) (L : ℂ) :
-    HasCauchyPVOn S f (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path L ↔
-      HasCauchyPVOn S f γ.toPwC1Immersion.toPiecewiseC1Path L := by
-  unfold HasCauchyPVOn
-  exact ⟨fun h => h.congr fun ε => γ.cpvIntegrandOn_cyclicShift_integral_eq hτ S f ε,
-    fun h => h.congr fun ε => (γ.cpvIntegrandOn_cyclicShift_integral_eq hτ S f ε).symm⟩
-
 private lemma limUnder_congr_eventually_local {α β : Type*} [Nonempty β] [TopologicalSpace β]
     {l : Filter α} {f g : α → β} (h : f =ᶠ[l] g) : limUnder l f = limUnder l g := by
   unfold limUnder
@@ -297,91 +288,6 @@ theorem cyclicShift_image_subset {γ : ClosedPwC1Immersion x} {τ : ℝ}
     · linarith
     · linarith [ht.2, hτ.2]
     · exact γ.cyclicShift_extend_eq_wrap hτ ⟨ht_le.le, ht.2⟩
-
-/-- **Invariance of `IsNullHomologous` under cyclic shift.** -/
-theorem isNullHomologous_cyclicShift {γ : ClosedPwC1Immersion x} {τ : ℝ}
-    (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) {U : Set ℂ}
-    (h : IsNullHomologous γ.toPwC1Immersion U) :
-    IsNullHomologous (γ.cyclicShift hτ).toPwC1Immersion U where
-  image_subset := by
-    intro t ht
-    obtain ⟨u, hu, heq⟩ := γ.cyclicShift_image_subset hτ t ht
-    rw [show (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path t =
-      (γ.cyclicShift hτ).toPath.extend t from rfl, heq]
-    exact h.image_subset u hu
-  winding_zero := by
-    intro z hz
-    rw [γ.generalizedWindingNumber_cyclicShift hτ z]
-    exact h.winding_zero z hz
-
-/-- **Cyclic-shift invariance of `SatisfiesConditionA'`** (T-BR-Y9h-A).
-
-The pole orders `ord s` for `s ∈ S` are transported along the cyclic shift via
-affine parameter substitution.  At the breakpoint `1 - τ` (corresponding to the
-old basepoint `x`), the conclusion is the automatic order-1 flatness of
-piecewise `C¹` curves; for callers with `ord s ≤ 1` at the breakpoint, the
-proof goes through directly via `IsFlatOfOrder.of_le`.
-
-**Hypothesis `h_basepoint_ord`**: for `s ∈ S` with `γ(0) = s` (i.e., `s` is the
-basepoint), the pole order `ord s` is at most 1.  This is satisfied in typical
-applications where the basepoint is either outside `S` (vacuous premise) or has
-a simple pole. -/
-theorem satisfiesConditionA'_cyclicShift
-    {γ : ClosedPwC1Immersion x} {τ : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1)
-    {S : Finset ℂ} {f : ℂ → ℂ} {ord : ℂ → ℕ}
-    (h_basepoint_ord : ∀ s ∈ S, γ.toPath.extend 1 = s → ord s ≤ 1)
-    (h : SatisfiesConditionA' γ.toPwC1Immersion f S ord) :
-    SatisfiesConditionA' (γ.cyclicShift hτ).toPwC1Immersion f S ord := by
-  intro s hs t₀' ht_Icc h_at ht_Ioo
-  rcases lt_trichotomy t₀' (1 - τ) with ht_lt | ht_eq | ht_gt
-  · have ht_Ioo_nw : t₀' ∈ Ioo (0 : ℝ) (1 - τ) := ⟨ht_Ioo.1, ht_lt⟩
-    set t₀ := t₀' + τ
-    have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
-      ⟨by linarith [hτ.1, ht_Ioo.1], by linarith [ht_lt]⟩
-    have ht₀_Icc : t₀ ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht₀_Ioo
-    have h_γt₀_eq_s : (γ.toPwC1Immersion : ℝ → ℂ) t₀ = s := by
-      show γ.toPath.extend t₀ = s
-      rw [← γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_lt.le⟩]
-      exact h_at
-    have h_flat_γ : IsFlatOfOrder (γ.toPwC1Immersion : ℝ → ℂ) t₀ (ord s) :=
-      h s hs t₀ ht₀_Icc h_γt₀_eq_s ht₀_Ioo
-    have h_eq_nbhd : ∀ᶠ t in 𝓝 t₀',
-        ((γ.cyclicShift hτ).toPwC1Immersion : ℝ → ℂ) t = γ.toPath.extend (t + τ) := by
-      filter_upwards [isOpen_Ioo.mem_nhds ht_Ioo_nw] with t ht
-      exact γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht.1.le, ht.2.le⟩
-    exact isFlatOfOrder_of_eventuallyEq_shift h_eq_nbhd (h_flat_γ : IsFlatOfOrder _ (t₀' + τ) _)
-  · have h_s_eq : γ.toPath.extend 1 = s := by
-      have h_step : (γ.cyclicShift hτ).toPath.extend t₀' = γ.toPath.extend 1 := by
-        rw [γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_eq.le⟩]
-        congr 1; linarith [ht_eq]
-      rw [← h_step]; exact h_at
-    have h_cont : ContinuousAt ((γ.cyclicShift hτ).toPwC1Immersion : ℝ → ℂ) t₀' :=
-      (γ.cyclicShift hτ).toPwC1Immersion.continuous.continuousAt
-    exact (isFlatOfOrder_one (γ.cyclicShift hτ).toPwC1Immersion t₀' ht_Ioo).of_le
-      (h_basepoint_ord s hs h_s_eq) h_cont
-  · have ht_Ioo_w : t₀' ∈ Ioo (1 - τ) 1 := ⟨ht_gt, ht_Ioo.2⟩
-    set t₀ := t₀' + τ - 1
-    have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
-      ⟨by linarith [ht_gt], by linarith [hτ.2, ht_Ioo.2]⟩
-    have ht₀_Icc : t₀ ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self ht₀_Ioo
-    have h_γt₀_eq_s : (γ.toPwC1Immersion : ℝ → ℂ) t₀ = s := by
-      show γ.toPath.extend t₀ = s
-      rw [← γ.cyclicShift_extend_eq_wrap hτ ⟨ht_gt.le, ht_Ioo.2.le⟩]
-      exact h_at
-    have h_flat_γ : IsFlatOfOrder (γ.toPwC1Immersion : ℝ → ℂ) t₀ (ord s) :=
-      h s hs t₀ ht₀_Icc h_γt₀_eq_s ht₀_Ioo
-    have h_eq_nbhd : ∀ᶠ t in 𝓝 t₀',
-        ((γ.cyclicShift hτ).toPwC1Immersion : ℝ → ℂ) t = γ.toPath.extend (t + (τ - 1)) := by
-      filter_upwards [isOpen_Ioo.mem_nhds ht_Ioo_w] with t ht
-      show (γ.cyclicShift hτ).toPath.extend t = γ.toPath.extend (t + (τ - 1))
-      have h_eq : γ.toPath.extend (t + τ - 1) = γ.toPath.extend (t + (τ - 1)) := by
-        congr 1; ring
-      rw [← h_eq]
-      exact γ.cyclicShift_extend_eq_wrap hτ ⟨ht.1.le, ht.2.le⟩
-    have h_flat_γ' : IsFlatOfOrder γ.toPath.extend (t₀' + (τ - 1)) (ord s) := by
-      have h_pt : t₀' + (τ - 1) = t₀ := by show t₀' + (τ - 1) = t₀' + τ - 1; ring
-      rw [h_pt]; exact h_flat_γ
-    exact isFlatOfOrder_of_eventuallyEq_shift h_eq_nbhd h_flat_γ'
 
 private theorem mem_cyclicShift_partition_no_wrap_iff
     (γ : ClosedPwC1Immersion x) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
@@ -666,101 +572,6 @@ private theorem angleAtCrossing_cyclicShift_wrap
       fun h_in => h_partγ_nope (γ.toClosedPwC1Curve.mem_partition_iff.mp h_in).1
     rw [angleAtCrossing_smooth _ _ ht₀'_Ioo h_part,
       angleAtCrossing_smooth _ _ ht₀_Ioo h_partγ_legacy]
-
-/-- **Cyclic-shift invariance of `SatisfiesConditionB`** (T-BR-Y9h-B).
-
-The angle rationality and Laurent compatibility conditions transport along the
-cyclic shift. For non-breakpoint crossings, this uses
-`angleAtCrossing_cyclicShift_{no_wrap,wrap}` for invariance of the crossing angle.
-
-At the breakpoint `1 - τ` (corresponding to the old basepoint `x`), the
-conclusion is supplied by the basepoint hypotheses, which are vacuous when
-`x ∉ S`. -/
-theorem satisfiesConditionB_cyclicShift
-    {γ : ClosedPwC1Immersion x} {τ : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1)
-    {S : Finset ℂ} {f : ℂ → ℂ}
-    (h_basepoint_angleB : ∀ s ∈ S, γ.toPath.extend 1 = s →
-      ∀ ht_oneSubTau : (1 - τ) ∈ Ioo (0 : ℝ) 1,
-        ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-          angleAtCrossing (γ.cyclicShift hτ).toPwC1Immersion (1 - τ) ht_oneSubTau =
-            ↑p * Real.pi / ↑q)
-    (h_basepoint_laurentB : ∀ s ∈ S, γ.toPath.extend 1 = s →
-      ∀ ht_oneSubTau : (1 - τ) ∈ Ioo (0 : ℝ) 1,
-        ∃ (N : ℕ) (a : Fin N → ℂ) (g : ℂ → ℂ),
-          AnalyticAt ℂ g s ∧
-          (∀ᶠ z in 𝓝[≠] s, f z = g z +
-            ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) ∧
-          (∀ k : Fin N, a k ≠ 0 → k.val ≥ 1 →
-            ∃ m : ℤ, (↑k.val : ℝ) *
-              angleAtCrossing (γ.cyclicShift hτ).toPwC1Immersion (1 - τ) ht_oneSubTau =
-              ↑m * (2 * Real.pi)))
-    (h : SatisfiesConditionB γ.toPwC1Immersion f S) :
-    SatisfiesConditionB (γ.cyclicShift hτ).toPwC1Immersion f S := by
-  refine ⟨?_, ?_⟩
-  · intro s hs t₀' ht_Icc h_at ht_Ioo
-    rcases lt_trichotomy t₀' (1 - τ) with ht_lt | ht_eq | ht_gt
-    · have ht_Ioo_nw : t₀' ∈ Ioo (0 : ℝ) (1 - τ) := ⟨ht_Ioo.1, ht_lt⟩
-      set t₀ := t₀' + τ
-      have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
-        ⟨by linarith [hτ.1, ht_Ioo.1], by linarith [ht_lt]⟩
-      have h_γt₀_eq_s : (γ.toPwC1Immersion : ℝ → ℂ) t₀ = s := by
-        show γ.toPath.extend t₀ = s
-        rw [← γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_lt.le⟩]; exact h_at
-      obtain ⟨p, q, hq_ne, hpq_coprime, h_angle⟩ :=
-        h.angle_rational s hs t₀ (Ioo_subset_Icc_self ht₀_Ioo) h_γt₀_eq_s ht₀_Ioo
-      exact ⟨p, q, hq_ne, hpq_coprime, by
-        rw [γ.angleAtCrossing_cyclicShift_no_wrap hτ ht_Ioo_nw ht_Ioo ht₀_Ioo, h_angle]⟩
-    · have h_s_eq : γ.toPath.extend 1 = s := by
-        have h_step : (γ.cyclicShift hτ).toPath.extend t₀' = γ.toPath.extend 1 := by
-          rw [γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_eq.le⟩]
-          congr 1; linarith [ht_eq]
-        rw [← h_step]; exact h_at
-      subst ht_eq
-      exact h_basepoint_angleB s hs h_s_eq ht_Ioo
-    · have ht_Ioo_w : t₀' ∈ Ioo (1 - τ) 1 := ⟨ht_gt, ht_Ioo.2⟩
-      set t₀ := t₀' + τ - 1
-      have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
-        ⟨by linarith [ht_gt], by linarith [hτ.2, ht_Ioo.2]⟩
-      have h_γt₀_eq_s : (γ.toPwC1Immersion : ℝ → ℂ) t₀ = s := by
-        show γ.toPath.extend t₀ = s
-        rw [← γ.cyclicShift_extend_eq_wrap hτ ⟨ht_gt.le, ht_Ioo.2.le⟩]; exact h_at
-      obtain ⟨p, q, hq_ne, hpq_coprime, h_angle⟩ :=
-        h.angle_rational s hs t₀ (Ioo_subset_Icc_self ht₀_Ioo) h_γt₀_eq_s ht₀_Ioo
-      exact ⟨p, q, hq_ne, hpq_coprime, by
-        rw [γ.angleAtCrossing_cyclicShift_wrap hτ ht_Ioo_w ht_Ioo ht₀_Ioo, h_angle]⟩
-  · intro s hs t₀' ht_Icc h_at ht_Ioo
-    rcases lt_trichotomy t₀' (1 - τ) with ht_lt | ht_eq | ht_gt
-    · have ht_Ioo_nw : t₀' ∈ Ioo (0 : ℝ) (1 - τ) := ⟨ht_Ioo.1, ht_lt⟩
-      set t₀ := t₀' + τ
-      have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
-        ⟨by linarith [hτ.1, ht_Ioo.1], by linarith [ht_lt]⟩
-      have h_γt₀_eq_s : (γ.toPwC1Immersion : ℝ → ℂ) t₀ = s := by
-        show γ.toPath.extend t₀ = s
-        rw [← γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_lt.le⟩]; exact h_at
-      obtain ⟨N, a, g, hg_analytic, hf_eq, h_angle_cond⟩ :=
-        h.laurent_compatible s hs t₀ (Ioo_subset_Icc_self ht₀_Ioo) h_γt₀_eq_s ht₀_Ioo
-      refine ⟨N, a, g, hg_analytic, hf_eq, fun k hk_ne hk_ge => ?_⟩
-      obtain ⟨m, hm⟩ := h_angle_cond k hk_ne hk_ge
-      exact ⟨m, by rw [γ.angleAtCrossing_cyclicShift_no_wrap hτ ht_Ioo_nw ht_Ioo ht₀_Ioo]; exact hm⟩
-    · have h_s_eq : γ.toPath.extend 1 = s := by
-        have h_step : (γ.cyclicShift hτ).toPath.extend t₀' = γ.toPath.extend 1 := by
-          rw [γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht_Ioo.1.le, ht_eq.le⟩]
-          congr 1; linarith [ht_eq]
-        rw [← h_step]; exact h_at
-      subst ht_eq
-      exact h_basepoint_laurentB s hs h_s_eq ht_Ioo
-    · have ht_Ioo_w : t₀' ∈ Ioo (1 - τ) 1 := ⟨ht_gt, ht_Ioo.2⟩
-      set t₀ := t₀' + τ - 1
-      have ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1 :=
-        ⟨by linarith [ht_gt], by linarith [hτ.2, ht_Ioo.2]⟩
-      have h_γt₀_eq_s : (γ.toPwC1Immersion : ℝ → ℂ) t₀ = s := by
-        show γ.toPath.extend t₀ = s
-        rw [← γ.cyclicShift_extend_eq_wrap hτ ⟨ht_gt.le, ht_Ioo.2.le⟩]; exact h_at
-      obtain ⟨N, a, g, hg_analytic, hf_eq, h_angle_cond⟩ :=
-        h.laurent_compatible s hs t₀ (Ioo_subset_Icc_self ht₀_Ioo) h_γt₀_eq_s ht₀_Ioo
-      refine ⟨N, a, g, hg_analytic, hf_eq, fun k hk_ne hk_ge => ?_⟩
-      obtain ⟨m, hm⟩ := h_angle_cond k hk_ne hk_ge
-      exact ⟨m, by rw [γ.angleAtCrossing_cyclicShift_wrap hτ ht_Ioo_w ht_Ioo ht₀_Ioo]; exact hm⟩
 
 end ClosedPwC1Immersion
 

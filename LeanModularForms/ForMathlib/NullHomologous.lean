@@ -63,11 +63,6 @@ structure IsNullHomologous (γ : PwC1Immersion x x) (U : Set ℂ) : Prop where
 
 /-! ### Basic properties -/
 
-/-- The underlying path of a null-homologous immersion is closed. -/
-theorem IsNullHomologous.closed {γ : PwC1Immersion x x} {U : Set ℂ}
-    (_h : IsNullHomologous γ U) : γ.toPiecewiseC1Path.IsClosed :=
-  rfl
-
 /-- Monotonicity: if `gamma` is null-homologous in `U` and `U ⊆ V`, then `gamma` is
 null-homologous in `V`. -/
 theorem IsNullHomologous.mono {γ : PwC1Immersion x x} {U V : Set ℂ}
@@ -141,27 +136,6 @@ private theorem contourIntegral_inv_eq_zero_of_convex {U : Set ℂ}
     exact intervalIntegral.integral_undef h_int
 
 /-! ### Winding vanishes in neighborhoods of exterior points -/
-
-/-- **B-1 (weaker form)**: For `γ` null-homologous in `U` and `w` strictly outside
-the closure of `U`, there exists `ε > 0` such that the generalized winding number
-vanishes throughout the ball `ball w ε`.
-
-This is the easy case of `h_winding_zero_near` used in `dixonFunction_differentiable`:
-when `w ∉ closure U`, a small ball around `w` stays in the complement of `U`, and
-null-hom gives winding 0 at every point of that ball.
-
-The stronger statement (for `w ∉ U`, possibly on the boundary) requires the
-additional fact that the winding number is locally constant on connected components
-of `ℂ \ γ.image`, which is deferred. -/
-theorem IsNullHomologous.winding_zero_nhds_of_not_mem_closure
-    {γ : PwC1Immersion x x} {U : Set ℂ} (h_null : IsNullHomologous γ U)
-    {w : ℂ} (hw : w ∉ closure U) :
-    ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
-      generalizedWindingNumber γ.toPiecewiseC1Path w' = 0 := by
-  obtain ⟨ε, hε_pos, hball_sub⟩ :=
-    Metric.isOpen_iff.mp isClosed_closure.isOpen_compl w hw
-  exact ⟨ε, hε_pos, fun w' hw' =>
-    h_null.winding_zero w' (fun hmem => hball_sub hw' (subset_closure hmem))⟩
 
 /-- **B-1 cocompact form**: For `γ` null-homologous in a bounded `U`, winding vanishes
 (and γ avoids the point) eventually in `cocompact ℂ`.

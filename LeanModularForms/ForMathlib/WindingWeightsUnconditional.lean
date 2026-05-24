@@ -42,20 +42,6 @@ construction. -/
 def arcDelta (ε : ℝ) : ℝ := 6 * ε / (5 * Real.pi)
 
 
-theorem arcDelta_lt_one_fifth {ε : ℝ} (hε_lt : ε < 1/2) :
-    arcDelta ε < 1/5 := by
-  unfold arcDelta
-  have hpi := Real.pi_gt_three
-  rw [show (1 : ℝ)/5 = Real.pi / (5 * Real.pi) from by field_simp]
-  exact div_lt_div_of_pos_right (by nlinarith) (by positivity)
-
-theorem half_angle_factor (ε : ℝ) :
-    5 * Real.pi / 12 * arcDelta ε = ε / 2 := by
-  unfold arcDelta
-  field_simp
-  ring
-
-
 /-- Winding number at `i` is `-1/2` from `SingleCrossingData` with limit `-(πi)`. -/
 theorem hasWindingNumber_atI_of_scd
     {γ : PiecewiseC1Path x y} (D : SingleCrossingData γ I)
@@ -84,27 +70,5 @@ theorem hasWindingNumber_atRhoPlusOne_of_scd
   rw [hL]
   field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
   ring
-
-/-- Full `FDWindingData` from `SingleCrossingData` at each crossing point and
-interior winding. This is the top-level assembler.
-
-The three `SingleCrossingData` instances bundle all geometric and analytic
-ingredients (cutoff functions, far/near bounds, FTC, integrability, and limits).
-The winding weights `-1/2` and `-1/6` follow from the limit values. -/
-def fdWindingData_of_singleCrossingData {H : ℝ} (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
-    (h_int : ∀ z : ℂ, ‖z‖ > 1 → |z.re| < 1/2 → z.im > 0 → z.im < H →
-      HasGeneralizedWindingNumber γ z (-1))
-    (D_i : SingleCrossingData γ I) (hL_i : D_i.L = -(↑Real.pi * I))
-    (D_rho : SingleCrossingData γ ellipticPointRho) (hL_rho : D_rho.L = -(↑Real.pi / 3 * I))
-    (D_rho1 : SingleCrossingData γ ellipticPointRhoPlusOne)
-    (hL_rho1 : D_rho1.L = -(↑Real.pi / 3 * I)) :
-    FDWindingData H where
-  boundary := γ
-  boundary_eq := hγ
-  interior_winding := h_int
-  winding_at_i := hasWindingNumber_atI_of_scd D_i hL_i
-  winding_at_rho := hasWindingNumber_atRho_of_scd D_rho hL_rho
-  winding_at_rho_plus_one := hasWindingNumber_atRhoPlusOne_of_scd D_rho1 hL_rho1
 
 end

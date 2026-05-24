@@ -123,24 +123,6 @@ private lemma goodset_piecewise_ae_eq_multipoint {g : ℂ → ℂ} {γ : ℝ →
       by_contra h_not; push Not at h_not; exact ht_good ⟨h_not, ht⟩
     rw [if_neg ht_good]; simp only [this, ↓reduceIte]
 
-private theorem aEStronglyMeasurable_pv_integrand_multipoint {g : ℂ → ℂ} {γ : ℝ → ℂ}
-    {a b ε : ℝ} {P : Finset ℝ} (S : Finset ℂ) (hg : ContinuousOn g (γ '' Icc a b))
-    (hγ : ContinuousOn γ (Icc a b)) (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :
-    AEStronglyMeasurable (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0
-      else g (γ t) * deriv γ t) (volume.restrict (Icc a b)) := by
-  have h_base_meas : AEStronglyMeasurable (fun t => g (γ t) * deriv γ t)
-      (volume.restrict (Icc a b)) :=
-    ((hg.comp hγ fun _ => Set.mem_image_of_mem _).aestronglyMeasurable
-      isClosed_Icc.measurableSet).mul
-      (aEStronglyMeasurable_of_continuousOn_off_finite hγ'_off_P)
-  have h_zero_meas : AEStronglyMeasurable (fun _ : ℝ => (0 : ℂ))
-      (volume.restrict ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b)ᶜ) :=
-    aestronglyMeasurable_const
-  exact ((AEStronglyMeasurable.piecewise (measurableSet_multipoint_goodset S hγ)
-    (h_base_meas.mono_measure (Measure.restrict_mono Set.inter_subset_right le_rfl))
-    h_zero_meas).mono_measure Measure.restrict_le_self).congr
-    (goodset_piecewise_ae_eq_multipoint S).symm
-
 private lemma aEStronglyMeasurable_residueProd_on_goodset {γ : ℝ → ℂ} {a b ε : ℝ}
     {P : Finset ℝ} {s c : ℂ} (hε : 0 < ε) (hγ : ContinuousOn γ (Icc a b))
     (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :

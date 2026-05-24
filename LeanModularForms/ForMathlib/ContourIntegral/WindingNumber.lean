@@ -18,17 +18,6 @@ open Complex
 
 namespace ContourIntegral
 
-/-- If the PV integral of (γ(t) - s)⁻¹ · deriv(γ - s)(t) tends to L as ε → 0⁺,
-then `generalizedWindingNumber' γ a b s = L / (2 * π * I)`. -/
-theorem gWN_eq_of_pv_tendsto (γ : ℝ → ℂ) (a b : ℝ) (s : ℂ) (L : ℂ)
-    (h : Filter.Tendsto
-      (fun ε => ∫ t in a..b,
-        if (ε < ‖(γ t - s : ℂ) - 0‖) then (γ t - s)⁻¹ * deriv (fun t => γ t - s) t else 0)
-      (nhdsWithin 0 (Set.Ioi 0)) (nhds L)) :
-    generalizedWindingNumber' γ a b s = L / (2 * Real.pi * I) := by
-  have key : cauchyPrincipalValue' (·⁻¹) (fun t => γ t - s) a b 0 = L := h.limUnder_eq
-  simp only [generalizedWindingNumber', key, mul_comm, div_eq_mul_inv]
-
 /-- Specialized version: if the PV integral tends to -(π * I), then gWN = -1/2. -/
 theorem gWN_eq_neg_half_of_pv_tendsto (γ : ℝ → ℂ) (a b : ℝ) (s : ℂ)
     (h : Filter.Tendsto

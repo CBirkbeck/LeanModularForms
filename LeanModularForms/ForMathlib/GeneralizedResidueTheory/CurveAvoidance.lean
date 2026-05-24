@@ -34,33 +34,3 @@ def CurveAvoids (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : Prop :=
 noncomputable def curveInfDist (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℝ :=
   Metric.infDist z₀ (γ '' Icc a b)
 
-
-/-- If every point on the curve has imaginary part strictly greater than `z₀.im`,
-then the curve avoids `z₀`. -/
-theorem curveAvoids_of_im_lt {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (h : ∀ t ∈ Icc a b, z₀.im < (γ t).im) : CurveAvoids γ a b z₀ :=
-  fun t ht heq => (h t ht).ne (heq ▸ rfl)
-
-
-
-/-- If a continuous curve on `[a, b]` with `a ≤ b` avoids `z₀`, then the infimum
-distance from `z₀` to the curve image is positive. -/
-theorem curveInfDist_pos_of_avoids {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (hγ : ContinuousOn γ (Icc a b)) (hab : a ≤ b)
-    (hav : CurveAvoids γ a b z₀) : 0 < curveInfDist γ a b z₀ := by
-  unfold curveInfDist
-  have h_closed : IsClosed (γ '' Icc a b) :=
-    (isCompact_Icc.image_of_continuousOn hγ).isClosed
-  have h_nonempty : (γ '' Icc a b).Nonempty :=
-    ⟨γ a, mem_image_of_mem γ (left_mem_Icc.mpr hab)⟩
-  rw [← h_closed.notMem_iff_infDist_pos h_nonempty]
-  rintro ⟨t, ht, heq⟩
-  exact hav t ht heq
-
-/-- If a continuous curve avoids `z₀` and every shifted value `γ t - z₀` has positive
-imaginary part or positive real part, then every shifted value lies in the slit plane. -/
-theorem curve_sub_in_slitPlane {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
-    (_hγ : ContinuousOn γ (Icc a b)) (_hav : CurveAvoids γ a b z₀)
-    (hpos : ∀ t ∈ Icc a b, 0 < (γ t - z₀).im ∨ 0 < (γ t - z₀).re) :
-    ∀ t ∈ Icc a b, γ t - z₀ ∈ slitPlane :=
-  fun t ht => Complex.mem_slitPlane_iff.mpr ((hpos t ht).symm.imp id LT.lt.ne')

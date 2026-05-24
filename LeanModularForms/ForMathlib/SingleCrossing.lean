@@ -216,14 +216,6 @@ theorem windingNumber_neg_half (D : SingleCrossingData γ z₀)
   rw [D.windingNumber_eq, hL]
   field_simp
 
-/-- If `L = -(π / 3 * I)`, then the generalized winding number is `-1/6`.
-Used for elliptic point winding number computations. -/
-theorem windingNumber_neg_sixth (D : SingleCrossingData γ z₀)
-    (hL : D.L = -(↑Real.pi / 3 * I)) :
-    generalizedWindingNumber γ z₀ = -1 / 6 := by
-  rw [D.windingNumber_eq, hL]
-  field_simp; ring
-
 end SingleCrossingData
 
 end

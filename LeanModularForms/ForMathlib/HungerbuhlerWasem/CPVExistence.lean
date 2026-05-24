@@ -283,42 +283,6 @@ theorem exit_log_tendsto_left
     (Complex.continuous_ofReal.continuousAt.tendsto.comp h_arg).mul tendsto_const_nhds
   exact h_mul_I.congr' (h_eq.mono (fun _ h => h.symm))
 
-/-- **Symmetric log difference at exit times.** This is the central
-T-BR-Y3e quantity:
-`Complex.log(γ(t₀ + δ_right(ε)) - s) - Complex.log(γ(t₀ - δ_left(ε)) - s)`
-tends to `(arg L_+ - arg(-L_-)) * I` as `ε → 0⁺`.
-
-The divergent `Real.log ε` terms cancel between the two sides. Only the arg
-parts contribute. This is the analytic core of the CPV existence proof: it
-shows that the boundary log values at the two exit points are bounded and
-convergent as `ε → 0⁺`. -/
-theorem exit_log_diff_tendsto
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L_right L_left : ℂ}
-    (h_deriv_right : HasDerivWithinAt γ L_right (Ioi t₀) t₀)
-    (h_deriv_left : HasDerivWithinAt γ L_left (Iio t₀) t₀)
-    (h_at : γ t₀ = s)
-    (hL_right_slit : L_right ∈ Complex.slitPlane)
-    (hnegL_left_slit : -L_left ∈ Complex.slitPlane)
-    {δ_left δ_right : ℝ → ℝ}
-    (hδ_left_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ_left ε)
-    (hδ_right_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ_right ε)
-    (hδ_left_to_zero : Tendsto δ_left (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)))
-    (hδ_right_to_zero : Tendsto δ_right (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)))
-    (h_exit_left : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      ‖γ (t₀ - δ_left ε) - s‖ = ε)
-    (h_exit_right : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      ‖γ (t₀ + δ_right ε) - s‖ = ε) :
-    Tendsto (fun ε : ℝ =>
-      Complex.log (γ (t₀ + δ_right ε) - s) -
-        Complex.log (γ (t₀ - δ_left ε) - s))
-      (𝓝[>] (0 : ℝ)) (𝓝 (L_right.arg * Complex.I - (-L_left).arg * Complex.I)) := by
-  have h_right := exit_log_tendsto_right h_deriv_right h_at hL_right_slit
-    hδ_right_pos hδ_right_to_zero h_exit_right
-  have h_left := exit_log_tendsto_left h_deriv_left h_at hnegL_left_slit
-    hδ_left_pos hδ_left_to_zero h_exit_left
-  refine (h_right.sub h_left).congr' (Eventually.of_forall fun ε => ?_)
-  ring
-
 /-- **Normalized chord close to 1 (right side).** For any `ρ > 0`, eventually
 on `𝓝[>] t₀`, `‖(γ(t) - s) / (L · (t - t₀)) - 1‖ ≤ ρ`.
 

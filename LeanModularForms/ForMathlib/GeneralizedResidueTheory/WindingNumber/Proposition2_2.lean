@@ -540,26 +540,4 @@ private theorem cpv_exists_on_subinterval (γ : PiecewiseC1Immersion) (z₀ : �
       exact cpv_concat _ γ.toFun c β d z₀ h_cpv_cβ h_cpv_right (hcα.trans hαβ_lt.le) hβd
         (fun ε hε => cpv_integrand_intervalIntegrable γ z₀ c d hcd h_sub ε hε)
 
-/-- CPV of `(z - z₀)⁻¹` exists along a piecewise C¹ immersion.
-
-Hypotheses:
-- `hγ_meas`: γ is (Borel) measurable (follows from global continuity)
-- `h_no_endpt`: γ doesn't cross z₀ at the endpoints a, b
-- `hC2`: γ is C² at each interior crossing point
-- `h_cont_deriv_cross`: the derivative is continuous near each crossing
-
-The proof uses `cpv_exists_on_subinterval` with the cardinality of the full
-crossing set as the induction bound. -/
-theorem cpv_exists_inv_sub (γ : PiecewiseC1Immersion) (z₀ : ℂ)
-    (hγ_meas : Measurable γ.toFun) (h_no_endpt : γ.toFun γ.a ≠ z₀ ∧ γ.toFun γ.b ≠ z₀)
-    (hC2 : ∀ t ∈ Ioo γ.a γ.b, γ.toFun t = z₀ → ContDiffAt ℝ 2 γ.toFun t)
-    (h_cont_deriv_cross : ∀ t ∈ Ioo γ.a γ.b, γ.toFun t = z₀ →
-      ∃ a' b', t ∈ Ioo a' b' ∧ Icc a' b' ⊆ Icc γ.a γ.b ∧
-        ContinuousOn (deriv γ.toFun) (Icc a' b')) :
-    CauchyPrincipalValueExists' (fun z => (z - z₀)⁻¹) γ.toFun γ.a γ.b z₀ := by
-  have h_fin := finite_crossings γ z₀
-  exact cpv_exists_on_subinterval γ z₀ hγ_meas h_fin.toFinset.card
-    γ.a γ.b γ.hab.le le_rfl h_no_endpt h_fin le_rfl hC2 h_cont_deriv_cross
-
-
 end

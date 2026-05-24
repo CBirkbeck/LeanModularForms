@@ -97,32 +97,6 @@ private theorem pow_integrableOn_23 (r α : ℝ) (n : ℕ) :
     simp only [sectorCurve_seg3 r α t ⟨ht.1.le, ht.2.le⟩,
       deriv_sectorCurve_seg3 r α t ht])
 
-/-- For `n >= 1`, the integral of `z^(n-1) dz` along the sector curve is 0
-when `n * alpha` is a multiple of `2 * pi`. -/
-theorem pv_sector_higher_power (r : ℝ) (_hr : 0 < r) (α : ℝ)
-    (_hα_nonneg : 0 ≤ α) (_hα_le : α ≤ 2 * Real.pi)
-    (n : ℕ) (hn : 1 ≤ n) (_h_angle : ∃ k : ℤ, n * α = k * (2 * Real.pi)) :
-    ∫ t in (0 : ℝ)..3,
-      (sectorCurve r α t) ^ (n - 1) * deriv (sectorCurve r α) t = 0 := by
-  set f : ℝ → ℂ := fun t =>
-    (sectorCurve r α t) ^ (n - 1) * deriv (sectorCurve r α) t
-  set F : ℝ → ℂ := fun t => (sectorCurve r α t) ^ n / (↑n : ℂ)
-  have hF_deriv : ∀ t ∈ Ioo (0:ℝ) 3 \ ({1, 2} ∩ Ioo (0:ℝ) 3),
-      HasDerivAt F (f t) t := by
-    intro t ⟨ht, ht_not⟩
-    have ht_not' : t ∉ ({1, 2} : Set ℝ) := fun h => ht_not ⟨h, ht⟩
-    change HasDerivAt F (sectorCurve r α t ^ (n - 1) * deriv (sectorCurve r α) t) t
-    convert ((sectorCurve_differentiableAt_off_knots r α t ht ht_not').hasDerivAt.pow n).div_const
-      (↑n : ℂ) using 1
-    rw [mul_assoc, mul_div_cancel_left₀ _ (Nat.cast_ne_zero.mpr (by omega) : (↑n : ℂ) ≠ 0)]
-  rw [MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-    F f (by norm_num : (0:ℝ) ≤ 3)
-    (Set.Finite.inter_of_left (Set.toFinite {1, 2}) _).countable
-    (((sectorCurve_continuousOn r α).pow n).div_const _) hF_deriv
-    ((pow_integrableOn_01 r α n).trans (pow_integrableOn_12 r α n) |>.trans
-      (pow_integrableOn_23 r α n))]
-  simp [F, sectorCurve_zero, sectorCurve_three, zero_pow (by omega : n ≠ 0)]
-
 private theorem sectorCurve_mem_ball (r : ℝ) (hr : 0 < r) (α : ℝ) :
     ∀ t ∈ Icc (0 : ℝ) 3, sectorCurve r α t ∈ Metric.ball (0 : ℂ) (↑r + 1) := by
   have norm_exp_I : ∀ x : ℝ, ‖Complex.exp (I * ↑x)‖ = 1 := fun x => by
@@ -497,44 +471,6 @@ theorem cauchyPV_sectorCurve_simplePole (r : ℝ) (hr : 0 < r) (α : ℝ)
       ((cauchyPV_simplePole_integral_split r hr α c g hg).mono (fun _ h => h.symm))
   exact ⟨⟨_, h_tendsto⟩, h_tendsto.limUnder_eq⟩
 
-/-- Variant of Lemma 3.1: for an arbitrary `f` equal to `c/z + g` at nonzero points,
-with `g` analytic on a ball containing the sector, the PV equals `I * α * c`. -/
-theorem cauchyPV_sectorCurve_eq_mul_residueSimplePole (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (hα_nonneg : 0 ≤ α) (hα_le : α ≤ 2 * Real.pi)
-    (f : ℂ → ℂ) (c : ℂ) (g : ℂ → ℂ)
-    (hg : AnalyticOnNhd ℂ g (Metric.ball 0 (↑r + 1)))
-    (hf_eq : ∀ z, z ≠ 0 → f z = c / z + g z)
-    (hc : c = residueSimplePole f 0) :
-    CauchyPrincipalValueExists' f (sectorCurve r α) 0 3 0 ∧
-    cauchyPrincipalValue' f (sectorCurve r α) 0 3 0 = I * ↑α * residueSimplePole f 0 := by
-  have h_eq : ∀ ε > 0, ∀ t,
-      (if ε < ‖sectorCurve r α t - 0‖
-        then f (sectorCurve r α t) * deriv (sectorCurve r α) t
-        else 0) =
-      (if ε < ‖sectorCurve r α t - 0‖
-        then (c / sectorCurve r α t + g (sectorCurve r α t)) *
-          deriv (sectorCurve r α) t
-        else 0) := fun ε hε t => by
-    split_ifs with h
-    · rw [hf_eq _ fun heq => by simp [heq] at h; linarith]
-    · rfl
-  have h_sp := cauchyPV_sectorCurve_simplePole r hr α hα_nonneg hα_le c g hg
-  have h_int_eq : ∀ᶠ ε in 𝓝[>] 0,
-      (∫ t in (0:ℝ)..3, cauchyPrincipalValueIntegrand' f (sectorCurve r α) 0 ε t) =
-      (∫ t in (0:ℝ)..3, cauchyPrincipalValueIntegrand' (fun z => c / z + g z)
-        (sectorCurve r α) 0 ε t) := by
-    filter_upwards [self_mem_nhdsWithin] with ε hε
-    congr 1
-    ext t
-    exact h_eq ε (mem_Ioi.mp hε) t
-  obtain ⟨L, hL⟩ := h_sp.1
-  have hL_f := hL.congr' (h_int_eq.mono (fun _ h => h.symm))
-  refine ⟨⟨L, hL_f⟩, ?_⟩
-  have hpv_f : cauchyPrincipalValue' f (sectorCurve r α) 0 3 0 = L := hL_f.limUnder_eq
-  have hpv_cg : cauchyPrincipalValue' (fun z => c / z + g z)
-      (sectorCurve r α) 0 3 0 = L := hL.limUnder_eq
-  rw [hpv_f, ← hpv_cg, h_sp.2, hc]
-
 private theorem sectorCurve_ne_zero_of_Icc_δ (r : ℝ) (hr : 0 < r) (α : ℝ)
     (δ : ℝ) (hδ_pos : 0 < δ) (_hδ_lt_1 : δ < 1) :
     ∀ t ∈ Icc δ (3 - δ), sectorCurve r α t ≠ 0 := by
@@ -750,63 +686,5 @@ private theorem pv_cutoff_integral_eq_mid (r : ℝ) (hr : 0 < r) (α : ℝ) (n :
   rw [← intervalIntegral.integral_add_adjacent_intervals hg_0δ (hg_δ3δ.trans hg_3δ3),
       ← intervalIntegral.integral_add_adjacent_intervals hg_δ3δ hg_3δ3,
       h_01, h_mid, h_3δ3, zero_add, add_zero]
-
-/-- **Equation (3.4)**: The PV of `z^{-n}` along the sector curve is 0 when
-`(n-1) * α` is a multiple of `2π`. The cutoff integral equals
-`ε^{1-n} * (exp(i(1-n)α) - 1) / (1-n)`, which vanishes identically under
-the angle condition. By FTC with primitive `F(t) = γ(t)^{1-n}/(1-n)`. -/
-theorem pv_sector_negative_power (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (_hα_nonneg : 0 ≤ α) (_hα_le : α ≤ 2 * Real.pi)
-    (n : ℕ) (hn : 2 ≤ n)
-    (h_angle : ∃ k : ℤ, (↑(n - 1) : ℤ) * α = k * (2 * Real.pi)) :
-    CauchyPrincipalValueExists' (fun z => z ^ (-(↑n : ℤ))) (sectorCurve r α) 0 3 0 ∧
-    cauchyPrincipalValue' (fun z => z ^ (-(↑n : ℤ))) (sectorCurve r α) 0 3 0 = 0 := by
-  obtain ⟨k, hk⟩ := h_angle
-  set γ := sectorCurve r α
-  set m : ℤ := 1 - ↑n
-  have h_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      ∫ t in (0 : ℝ)..3,
-        (if ‖γ t - 0‖ > ε then (γ t) ^ (-(↑n : ℤ)) * deriv γ t else 0) =
-      0 := by
-    rw [eventually_nhdsWithin_iff]
-    filter_upwards [Iio_mem_nhds hr] with ε hε hε_pos
-    simp only [mem_Ioi] at hε_pos
-    set δ := ε / r
-    have hδ_pos : 0 < δ := div_pos hε_pos hr
-    have hδ_lt_1 : δ < 1 := by rw [div_lt_one hr]; exact mem_Iio.mp hε
-    have hγ_ne := sectorCurve_ne_zero_of_Icc_δ r hr α δ hδ_pos hδ_lt_1
-    have hF_cont : ContinuousOn (fun t => (γ t) ^ m / (m : ℂ)) (Icc δ (3 - δ)) := by
-      apply ContinuousOn.div_const
-      apply ContinuousOn.zpow₀
-      · exact (sectorCurve_continuousOn r α).mono fun t ht => by
-          constructor <;> linarith [ht.1, ht.2, hδ_pos]
-      · exact fun t ht => Or.inl (hγ_ne t ht)
-    rw [pv_cutoff_integral_eq_mid r hr α n ε hε_pos (mem_Iio.mp hε),
-      MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-        _ _ (by linarith : δ ≤ 3 - δ)
-        ((Set.Finite.inter_of_left (Set.toFinite {1, 2}) _).countable) hF_cont
-        (zpow_primitive_hasDerivAt r hr α n hn δ hδ_pos hδ_lt_1)
-        ((zpow_integrableOn_δ1 r hr α n δ hδ_pos hδ_lt_1).trans
-          (zpow_integrableOn_12 r hr α n) |>.trans
-          (zpow_integrableOn_23δ r hr α n δ hδ_pos hδ_lt_1))]
-    exact zpow_ftc_vanishes r hr α n hn δ hδ_pos hδ_lt_1
-      (angle_condition_exp_eq_one n hn α k hk)
-  have h_tendsto : Tendsto (fun ε =>
-      ∫ t in (0 : ℝ)..3,
-        if ‖γ t - 0‖ > ε then (γ t) ^ (-(↑n : ℤ)) * deriv γ t else 0)
-      (𝓝[>] 0) (𝓝 0) :=
-    tendsto_const_nhds.congr' (h_ev.mono fun ε h => h.symm)
-  exact ⟨⟨0, h_tendsto⟩, h_tendsto.limUnder_eq⟩
-
-/-- The generalized winding number of the sector curve around 0
-equals `alpha / (2 * pi)`. -/
-theorem generalizedWindingNumber_sectorCurve (r : ℝ) (hr : 0 < r) (α : ℝ)
-    (hα_nonneg : 0 ≤ α) (hα_le : α ≤ 2 * Real.pi)
-    (_hPV : CauchyPrincipalValueExists' (fun z => z⁻¹) (sectorCurve r α) 0 3 0) :
-    generalizedWindingNumber' (sectorCurve r α) 0 3 0 = ↑α / (2 * ↑Real.pi) := by
-  unfold generalizedWindingNumber'
-  rw [show (fun t => sectorCurve r α t - 0) = sectorCurve r α from by ext; simp,
-    (pv_sector_dz_over_z r hr α hα_nonneg hα_le).2]
-  field_simp
 
 end

@@ -94,15 +94,4 @@ theorem generalizedWindingNumber_eq_neg_angleContribution_single (γ : PwC1Immer
       -((angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi)) := by
   simp [generalizedWindingNumber_eq_external_sub_angle γ z₀ t₀ ht₀, h_external]
 
-/-- At a smooth crossing with zero external winding, the generalized winding
-number is `-1/2`. This is the most common case: a simple curve passing through `z₀`
-transversally. -/
-theorem generalizedWindingNumber_eq_neg_half_smooth_crossing (γ : PwC1Immersion x y) (z₀ : ℂ)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition)
-    (h_external : externalWindingContribution γ z₀ t₀ ht₀ = 0) :
-    (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) = -(1 / 2) := by
-  rw [generalizedWindingNumber_eq_neg_angleContribution_single γ z₀ t₀ ht₀ h_external,
-      angleAtCrossing_smooth γ t₀ ht₀ hsmooth]
-  field_simp
-
 end

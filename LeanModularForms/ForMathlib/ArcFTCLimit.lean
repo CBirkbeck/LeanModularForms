@@ -32,11 +32,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-- On segment 1 (right vertical, `Re = 1/2`), `γ(t) - i ∈ slitPlane`. -/
-theorem fdBoundaryFun_sub_i_slitPlane_seg1 (H : ℝ) (t : ℝ) (ht : t ≤ 1/5) :
-    fdBoundaryFun H t - I ∈ Complex.slitPlane :=
-  Or.inl (by simp [fdBoundaryFun_seg1_re H t ht])
-
 /-- On segment 2 (arc before `i`, angle `< π/2`), `γ(t) - i ∈ slitPlane`. -/
 theorem fdBoundaryFun_sub_i_slitPlane_seg2 (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t < 2/5) :
     fdBoundaryFun H t - I ∈ Complex.slitPlane := by
@@ -58,23 +53,6 @@ theorem fdBoundaryFun_sub_i_ne_zero_seg3 (H : ℝ) (t : ℝ) (ht2 : 2/5 < t) (ht
   linarith [Real.cos_neg_of_pi_div_two_lt_of_lt (x := fdArcAngle t)
     (by unfold fdArcAngle; nlinarith [Real.pi_pos])
     (by unfold fdArcAngle; nlinarith [Real.pi_pos])]
-
-/-- On segment 3 (arc after `i`), `-(γ(t) - i) ∈ slitPlane`. -/
-theorem fdBoundaryFun_sub_i_neg_slitPlane_seg3 (H : ℝ) (t : ℝ) (ht2 : 2/5 < t)
-    (ht3 : t ≤ 3/5) : -(fdBoundaryFun H t - I) ∈ Complex.slitPlane := by
-  refine Or.inl ?_
-  rw [fdBoundaryFun_arc_eq_exp H t (by linarith) ht3,
-    exp_mul_I, ← ofReal_cos, ← ofReal_sin]
-  simp only [neg_sub, sub_re, I_re, add_re, ofReal_re, mul_re, ofReal_im, I_im,
-    mul_zero, sub_zero, add_zero, mul_one]
-  linarith [Real.cos_neg_of_pi_div_two_lt_of_lt (x := fdArcAngle t)
-    (by unfold fdArcAngle; nlinarith [Real.pi_pos])
-    (by unfold fdArcAngle; nlinarith [Real.pi_pos])]
-
-/-- On segment 5 (horizontal at height `H`), `γ(t) - i ∈ slitPlane` when `H > 1`. -/
-theorem fdBoundaryFun_sub_i_slitPlane_seg5 (H : ℝ) (hH : 1 < H) (t : ℝ) (ht : 4/5 < t) :
-    fdBoundaryFun H t - I ∈ Complex.slitPlane :=
-  Or.inr (by simp [fdBoundaryFun_seg5_im H t ht]; linarith)
 
 /-- Norm of `γ(2/5 - δ) - i` equals `2|sin(5δπ/12)|`. -/
 theorem fdBoundaryFun_sub_i_norm_left (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 1/5) :

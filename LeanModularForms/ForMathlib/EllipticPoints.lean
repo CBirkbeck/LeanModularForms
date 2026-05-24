@@ -28,9 +28,6 @@ noncomputable section
 /-- The elliptic point `i` as an element of ℍ. -/
 def ellipticPointI' : UpperHalfPlane := ⟨I, by simp [Complex.I_im]⟩
 
-/-- The elliptic point `i` as a complex number. -/
-abbrev ellipticPointI : ℂ := (ellipticPointI' : ℂ)
-
 /-- The elliptic point `ρ = e^{2πi/3} = -1/2 + (√3/2)i` as an element of ℍ. -/
 def ellipticPointRho' : UpperHalfPlane :=
   ⟨-1/2 + (Real.sqrt 3 / 2) * I, by

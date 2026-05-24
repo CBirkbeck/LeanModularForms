@@ -30,13 +30,6 @@ namespace ArcCalculus
 noncomputable def unitArc (θ₁ θ₂ a b : ℝ) (t : ℝ) : ℂ :=
   exp (↑(θ₁ + (t - a) / (b - a) * (θ₂ - θ₁)) * I)
 
-/-- Points on the unit arc have norm 1. -/
-theorem unitArc_norm (θ₁ θ₂ a b t : ℝ) : ‖unitArc θ₁ θ₂ a b t‖ = 1 := by
-  simp only [unitArc, Complex.norm_exp_ofReal_mul_I]
-
-
-
-
 private lemma unitArc_angle_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : b - a ≠ 0) :
     HasDerivAt (fun s => θ₁ + (s - a) / (b - a) * (θ₂ - θ₁))
       ((θ₂ - θ₁) / (b - a)) t := by
@@ -58,19 +51,6 @@ theorem unitArc_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : a < b) :
       (↑((θ₂ - θ₁) / (b - a))) t := hangle.ofReal_comp
   simp only [unitArc]
   exact (hlift.mul_const I).cexp
-
-/-- Key distance formula: squared norm of difference of two points on the unit circle. -/
-theorem exp_sub_norm_sq (θ₁ θ₂ : ℝ) :
-    ‖exp (↑θ₁ * I) - exp (↑θ₂ * I)‖ ^ 2 = 2 - 2 * Real.cos (θ₁ - θ₂) := by
-  rw [← Complex.normSq_eq_norm_sq]
-  simp only [Complex.normSq_apply, Complex.exp_mul_I, Complex.sub_re, Complex.sub_im,
-    Complex.add_re, Complex.mul_re, Complex.I_re, mul_zero, Complex.I_im, mul_one, sub_zero,
-    Complex.add_im, Complex.mul_im, zero_add, Complex.cos_ofReal_re, Complex.cos_ofReal_im,
-    Complex.sin_ofReal_re, Complex.sin_ofReal_im]
-  have hc1 := Real.sin_sq_add_cos_sq θ₁
-  have hc2 := Real.sin_sq_add_cos_sq θ₂
-  rw [Real.cos_sub]
-  nlinarith [sq_nonneg (Real.cos θ₁ - Real.cos θ₂), sq_nonneg (Real.sin θ₁ - Real.sin θ₂)]
 
 /-- sin is positive on the open interval (0, π). -/
 theorem sin_pos_of_mem_Ioo_zero_pi {θ : ℝ} (hθ : θ ∈ Ioo 0 π) : 0 < Real.sin θ :=

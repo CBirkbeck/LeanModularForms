@@ -76,20 +76,6 @@ theorem lineCurve_deriv (r : ℝ) (α : ℝ) (t : ℝ) :
 
 /-! ### Integrand computation -/
 
-/-- The integrand of `z⁻¹ · dz` along the line curve simplifies to `t⁻¹`. -/
-theorem lineCurve_integrand_inv (r : ℝ) (hr : 0 < r) (α : ℝ) (t : ℝ) (ht : t ≠ 0) :
-    (lineCurve r α t)⁻¹ * deriv (lineCurve r α) t = ↑t⁻¹ := by
-  rw [lineCurve_eq, lineCurve_deriv]
-  have hr' : (r : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hr.ne'
-  have ht' : (t : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr ht
-  have hexp : exp (↑α * I) ≠ 0 := exp_ne_zero _
-  simp only [mul_inv_rev, Complex.ofReal_mul]
-  field_simp
-  push_cast
-  field_simp
-
-/-! ### The higher-order factor -/
-
 /-- The constant factor `r⁻ᵏ · exp(-ikα)` in the higher-order integrand. -/
 def higherOrderFactor (r : ℝ) (α : ℝ) (k : ℕ) : ℂ :=
   ↑(r⁻¹ ^ k) * exp (-(↑k : ℂ) * (↑α * I))
@@ -97,21 +83,6 @@ def higherOrderFactor (r : ℝ) (α : ℝ) (k : ℕ) : ℂ :=
 @[simp]
 theorem higherOrderFactor_zero (r : ℝ) (α : ℝ) : higherOrderFactor r α 0 = 1 := by
   simp [higherOrderFactor]
-
-/-- When `k · α ∈ 2πℤ`, the exponential factor `exp(-ikα)` equals `1`. -/
-theorem exp_factor_eq_one_of_angle_condition (k : ℕ) (α : ℝ)
-    (h : ∃ m : ℤ, (↑k : ℝ) * α = ↑m * (2 * Real.pi)) :
-    exp (-(↑k : ℂ) * (↑α * I)) = 1 := by
-  obtain ⟨m, hm⟩ := h
-  have hcast : (↑k : ℂ) * ↑α = ↑m * (2 * ↑Real.pi) := by exact_mod_cast hm
-  rw [show -(↑k : ℂ) * (↑α * I) = ↑(-m) * (2 * ↑Real.pi * I) by
-        push_cast; linear_combination -hcast * I]
-  exact exp_int_mul_two_pi_mul_I (-m)
-
-/-! ### Odd-power PV vanishes by symmetry
-
-The key technique: rewrite `∫_{-1}^{-ε} f(t) dt` as `∫_{ε}^{1} f(-t) dt`
-using `integral_comp_neg`, then use the odd-symmetry `f(-t) = -f(t)` to cancel. -/
 
 /-- Helper: the odd-symmetry cancellation pattern. Given `f(-t) = -f(t)`,
 the function `ε ↦ ∫_{-1}^{-ε} f + ∫_{ε}^{1} f` is identically zero. -/
@@ -125,31 +96,5 @@ private theorem pv_odd_cancel_aux {f : ℝ → ℂ} (hodd : ∀ t, f (-t) = -f t
       _ = ∫ t in ε..1, -f t := by simp_rw [hodd]
       _ = -(∫ t in ε..1, f t) := intervalIntegral.integral_neg
   rw [key, neg_add_cancel]
-
-/-- For odd `k ≥ 1`, the PV integral of `(↑t)⁻¹ ^ k` on `[-1, 1]` is zero. -/
-theorem pv_odd_power_vanishes (k : ℕ) (_hk : 1 ≤ k) (hk_odd : Odd k) :
-    Tendsto (fun ε =>
-      (∫ t in (-1 : ℝ)..(-ε), (↑t : ℂ)⁻¹ ^ k) +
-      ∫ t in ε..(1 : ℝ), (↑t : ℂ)⁻¹ ^ k)
-      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  rw [pv_odd_cancel_aux (fun t => by
-    rw [Complex.ofReal_neg, inv_neg, neg_pow, hk_odd.neg_one_pow, neg_one_mul])]
-  exact tendsto_const_nhds
-
-/-! ### Line-curve integrand: odd symmetry -/
-
-/-- For odd `k ≥ 3`, the PV of `z⁻ᵏ dz` along the line curve vanishes. -/
-theorem higherOrder_terms_odd_vanish (r : ℝ) (_hr : 0 < r) (α : ℝ)
-    (k : ℕ) (_hk : 3 ≤ k) (hk_odd : Odd k) :
-    Tendsto (fun ε =>
-      (∫ t in (-1 : ℝ)..(-ε),
-        (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t) +
-      ∫ t in ε..(1 : ℝ),
-        (lineCurve r α t)⁻¹ ^ k * deriv (lineCurve r α) t)
-      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  rw [pv_odd_cancel_aux (fun t => by
-    rw [lineCurve_neg, inv_neg, neg_pow, hk_odd.neg_one_pow, neg_one_mul,
-        lineCurve_deriv, lineCurve_deriv, neg_mul])]
-  exact tendsto_const_nhds
 
 end SectorCurve

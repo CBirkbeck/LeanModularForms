@@ -57,15 +57,6 @@ noncomputable def sVertOfS (S : Finset UpperHalfPlane) : Finset ℂ :=
   (S.filter (fun p : ℍ => (↑p : ℂ).re = -1/2 ∧ ‖(↑p : ℂ)‖ > 1)).image
     (fun p : ℍ => (↑p : ℂ) + 1)
 
-/-- CPV existence at all on-curve singular points of `fdBoundary_H H`. -/
-def onCurvePVProvider (S : Finset UpperHalfPlane) : Prop :=
-  ∀ (H : ℝ), Real.sqrt 3 / 2 < H →
-    ∀ s ∈ sArcOfS S ∪ sVertOfS S, (∃ t ∈ Icc (0 : ℝ) 5, fdBoundary_H H t = s) →
-      CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) (fdBoundary_H H) 0 5 s
-
-omit f hf in
-
-omit f hf in
 lemma sArcOfS_rho_in (S : Finset UpperHalfPlane) :
     ellipticPointRho ∈ sArcOfS S := by
   simp [sArcOfS]

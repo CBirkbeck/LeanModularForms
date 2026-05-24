@@ -239,23 +239,6 @@ theorem seg1_ftc_I (H : ℝ) {a : ℝ} (ha : 0 ≤ a) (ha' : a ≤ 1/5) :
     (fdBoundary_sub_I_eq_ref_seg1 H 0 (by norm_num))
     (fdBoundary_sub_I_eq_ref_seg1 H a ha')
 
-/-- Integrability + FTC on seg5 `[b, 1]` for `4/5 < b`, shifted by `I`. -/
-theorem seg5_ftc_I (H : ℝ) (hH : 1 < H) {b : ℝ} (hb : 4/5 < b) (hb1 : b ≤ 1) :
-    IntervalIntegrable (fun t => deriv (fun s => fdBoundaryFun H s - I) t /
-      (fdBoundaryFun H t - I)) volume b 1 ∧
-    ∫ t in b..1, deriv (fun s => fdBoundaryFun H s - I) t /
-      (fdBoundaryFun H t - I) =
-      Complex.log (fdBoundaryFun H 1 - I) - Complex.log (fdBoundaryFun H b - I) :=
-  LogDerivFTC.ftc_log_pieceFM hb1
-    (ref_seg5_I_contDiff H).continuous.continuousOn
-    (fun t _ => ((ref_seg5_I_contDiff H).differentiable (by norm_num)).differentiableAt)
-    ((ref_seg5_I_contDiff H).continuous_deriv le_top).continuousOn
-    (fun t _ => ref_seg5_I_slitPlane H hH t)
-    (fun t ht => ⟨fdBoundary_sub_I_eq_ref_seg5 H t (by linarith [ht.1]),
-      (fdBoundary_sub_I_eventuallyEq_ref_seg5 H (by linarith [ht.1])).deriv_eq⟩)
-    (fdBoundary_sub_I_eq_ref_seg5 H b hb)
-    (fdBoundary_sub_I_eq_ref_seg5 H 1 (by norm_num))
-
 /-- Integrability in the standard form on seg1. -/
 theorem fdBoundary_seg1_intervalIntegrable_I (H : ℝ) {a : ℝ}
     (ha : 0 ≤ a) (ha' : a ≤ 1/5) :

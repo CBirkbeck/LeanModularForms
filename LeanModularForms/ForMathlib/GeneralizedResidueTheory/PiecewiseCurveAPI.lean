@@ -126,13 +126,4 @@ theorem consecutivePairs_cover (γ : PiecewiseC1Curve) :
     (sortedPartition_tail_nonempty γ)
     γ.a γ.b (sortedPartition_head γ) (sortedPartition_last γ)
 
-/-- **Main theorem**: to prove a property `P` on `[a, b]`, it suffices to prove `P` on each
-    consecutive segment `[pᵢ, pᵢ₊₁]` of the partition. -/
-theorem forall_Icc_of_forall_consecutive {P : ℝ → Prop}
-    (γ : PiecewiseC1Curve)
-    (h : ∀ p ∈ γ.consecutivePairs, ∀ t ∈ Icc p.1 p.2, P t) :
-    ∀ t ∈ Icc γ.a γ.b, P t := fun t ht => by
-  obtain ⟨p, hp_mem, hp_t⟩ := Set.mem_iUnion₂.mp (consecutivePairs_cover γ ht)
-  exact h p hp_mem t hp_t
-
 end PiecewiseC1Curve

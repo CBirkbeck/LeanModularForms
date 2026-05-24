@@ -59,11 +59,6 @@ def contourIntegrand (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (t : ℝ) : �
   f (γ t) * deriv γ.toPath.extend t
 
 
-/-- Negation: `∮_γ (-f) = -∮_γ f`. -/
-theorem contourIntegral_neg (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) :
-    contourIntegral (fun z => -f z) γ = -contourIntegral f γ := by
-  simp [contourIntegral]
-
 /-- Addition: `∮_γ (f + g) = ∮_γ f + ∮_γ g` when both integrands are integrable. -/
 theorem contourIntegral_add (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
     (hf : IntervalIntegrable (contourIntegrand f γ) volume 0 1)
