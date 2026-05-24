@@ -85,13 +85,4 @@ theorem generalizedWindingNumber_eq_external_sub_angle (γ : PwC1Immersion x y) 
         (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi) := by
   simp [externalWindingContribution]
 
-/-- When the external winding contribution is zero, the generalized winding number equals
-minus the crossing angle contribution. -/
-theorem generalizedWindingNumber_eq_neg_angleContribution_single (γ : PwC1Immersion x y)
-    (z₀ : ℂ) (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1)
-    (h_external : externalWindingContribution γ z₀ t₀ ht₀ = 0) :
-    (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
-      -((angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi)) := by
-  simp [generalizedWindingNumber_eq_external_sub_angle γ z₀ t₀ ht₀, h_external]
-
 end

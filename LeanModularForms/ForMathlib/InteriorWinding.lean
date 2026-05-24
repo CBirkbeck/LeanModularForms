@@ -180,32 +180,6 @@ theorem hasGeneralizedWindingNumber_fdBoundary_interior_of_contourIntegral {H : 
     hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral γ hγ
       hz_norm hz_re hz_im_pos hz_im_lt (h_int z hz_norm hz_re hz_im_pos hz_im_lt)
 
-/-- Build `FDWindingData` by providing the interior contour integral identity as a
-hypothesis, together with `SingleCrossingData` for the three elliptic points.
-
-This is the cleanest way to construct `FDWindingData` when the interior winding number
-is established via a contour integral computation (rather than homotopy). The caller
-provides:
-1. A `PiecewiseC1Path` agreeing with `fdBoundaryFun` on `[0, 1]`
-2. For each strict interior point `z`, a proof that `∮_γ (w - z)⁻¹ dw = -2πi`
-3. `SingleCrossingData` at `i`, `ρ`, and `ρ+1` with the correct CPV limits -/
-def FDWindingData.mk_of_interior_contourIntegral {H : ℝ}
-    (boundary : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hbdy : ∀ t ∈ Icc (0 : ℝ) 1, boundary.toPath.extend t = fdBoundaryFun H t)
-    (h_int : ∀ z : ℂ, 1 < ‖z‖ → |z.re| < 1/2 → 0 < z.im → z.im < H →
-      boundary.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I))
-    (D_i : SingleCrossingData boundary I)
-    (hL_i : D_i.L = -(↑Real.pi * I))
-    (D_rho : SingleCrossingData boundary ellipticPointRho)
-    (hL_rho : D_rho.L = -(↑Real.pi / 3 * I))
-    (D_rho1 : SingleCrossingData boundary ellipticPointRhoPlusOne)
-    (hL_rho1 : D_rho1.L = -(↑Real.pi / 3 * I)) :
-    FDWindingData H :=
-  FDWindingData.mk_of_crossing boundary hbdy
-    (hasGeneralizedWindingNumber_fdBoundary_interior_of_contourIntegral
-      boundary hbdy h_int)
-    D_i hL_i D_rho hL_rho D_rho1 hL_rho1
-
 /-- On segment 1, the distance to `z` is at least `1/2 - |z.re|`, which is positive
 for strict interior points. -/
 theorem fdBoundaryFun_seg1_re_dist {z : ℂ} (_hz_re : |z.re| < 1/2)

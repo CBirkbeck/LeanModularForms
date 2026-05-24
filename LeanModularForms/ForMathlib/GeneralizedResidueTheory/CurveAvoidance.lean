@@ -25,12 +25,3 @@ and establishing slitPlane membership for shifted curves.
 -/
 
 open Set Complex Metric
-
-/-- A continuous curve on [a,b] avoids a point z₀. -/
-def CurveAvoids (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : Prop :=
-  ∀ t ∈ Icc a b, γ t ≠ z₀
-
-/-- Infimum distance from z₀ to the curve image on [a,b]. -/
-noncomputable def curveInfDist (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℝ :=
-  Metric.infDist z₀ (γ '' Icc a b)
-

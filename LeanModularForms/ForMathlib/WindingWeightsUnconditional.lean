@@ -32,16 +32,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-- Arc cutoff: `δ(ε) = 6ε/(5π)`. Inverts the half-angle formula
-`‖γ(t) - i‖ = 2|sin(5(t-2/5)π/12)|` via `|sin x| ≤ |x|`.
-
-This is the appropriate delta for the near bound (upper bound on distance).
-For the far bound, the exact delta should be `12·arcsin(ε/2)/(5π)`, which is
-slightly larger. The near bound via `arcDelta` is used in the `ArcFTCHyp`
-construction. -/
-def arcDelta (ε : ℝ) : ℝ := 6 * ε / (5 * Real.pi)
-
-
 /-- Winding number at `i` is `-1/2` from `SingleCrossingData` with limit `-(πi)`. -/
 theorem hasWindingNumber_atI_of_scd
     {γ : PiecewiseC1Path x y} (D : SingleCrossingData γ I)
@@ -50,25 +40,5 @@ theorem hasWindingNumber_atI_of_scd
   convert D.hasWindingNumber using 1
   rw [hL]
   field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
-
-/-- Winding number at `ρ` is `-1/6` from `SingleCrossingData` with limit `-(πi/3)`. -/
-theorem hasWindingNumber_atRho_of_scd
-    {γ : PiecewiseC1Path x y} (D : SingleCrossingData γ ellipticPointRho)
-    (hL : D.L = -(↑Real.pi / 3 * I)) :
-    HasGeneralizedWindingNumber γ ellipticPointRho (-1/6) := by
-  convert D.hasWindingNumber using 1
-  rw [hL]
-  field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
-  ring
-
-/-- Winding number at `ρ+1` is `-1/6` from `SingleCrossingData` with limit `-(πi/3)`. -/
-theorem hasWindingNumber_atRhoPlusOne_of_scd
-    {γ : PiecewiseC1Path x y} (D : SingleCrossingData γ ellipticPointRhoPlusOne)
-    (hL : D.L = -(↑Real.pi / 3 * I)) :
-    HasGeneralizedWindingNumber γ ellipticPointRhoPlusOne (-1/6) := by
-  convert D.hasWindingNumber using 1
-  rw [hL]
-  field_simp [ofReal_ne_zero.mpr Real.pi_ne_zero]
-  ring
 
 end

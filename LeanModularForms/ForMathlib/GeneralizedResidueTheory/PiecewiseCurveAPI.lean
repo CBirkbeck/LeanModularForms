@@ -118,12 +118,4 @@ theorem sortedPartition_tail_nonempty (γ : PiecewiseC1Curve) :
   simp [List.length_tail] at hlen'
   omega
 
-/-- The union of `Icc p.1 p.2` over all `p ∈ consecutivePairs γ` covers `[a, b]`. -/
-theorem consecutivePairs_cover (γ : PiecewiseC1Curve) :
-    Icc γ.a γ.b ⊆ ⋃ p ∈ γ.consecutivePairs, Icc p.1 p.2 :=
-  sorted_consecutive_union γ.sortedPartition
-    (sortedPartition_sorted γ) (sortedPartition_nonempty γ)
-    (sortedPartition_tail_nonempty γ)
-    γ.a γ.b (sortedPartition_head γ) (sortedPartition_last γ)
-
 end PiecewiseC1Curve

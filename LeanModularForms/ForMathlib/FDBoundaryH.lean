@@ -75,12 +75,6 @@ def fdPartition : Finset ℝ := {1, 2, 3, 4}
 /-- Full partition including endpoints. -/
 def fdBoundaryFullPartition : Finset ℝ := {0, 1, 2, 3, 4, 5}
 
-lemma fdBoundary_at_zero :
-    fdBoundary 0 = 1 / 2 + heightCutoff * I := by
-  simp [fdBoundary]
-
-
-
 lemma fdBoundary_at_three :
     fdBoundary 3 = ellipticPointRho := by
   simp only [fdBoundary, show ¬(3 : ℝ) ≤ 1 by norm_num,
@@ -93,14 +87,6 @@ lemma fdBoundary_at_three :
   simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   ring
 
-
-lemma fdBoundary_at_five :
-    fdBoundary 5 = 1 / 2 + heightCutoff * I := by
-  simp only [fdBoundary, show ¬(5 : ℝ) ≤ 1 by norm_num,
-    show ¬(5 : ℝ) ≤ 2 by norm_num, show ¬(5 : ℝ) ≤ 3 by norm_num,
-    show ¬(5 : ℝ) ≤ 4 by norm_num, ite_false]
-  push_cast
-  ring
 
 /-- Segment 1 at height H: right vertical from (1/2 + H·i) down
 to ρ+1. -/

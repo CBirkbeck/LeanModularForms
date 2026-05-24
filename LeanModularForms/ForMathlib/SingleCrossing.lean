@@ -208,14 +208,6 @@ theorem windingNumber_eq (D : SingleCrossingData γ z₀) :
     generalizedWindingNumber γ z₀ = D.L / (2 * ↑Real.pi * I) :=
   D.hasWindingNumber.eq
 
-/-- If `L = -(π * I)`, then the generalized winding number is `-1/2`.
-This is the most common case, used for edges crossing through a non-elliptic point. -/
-theorem windingNumber_neg_half (D : SingleCrossingData γ z₀)
-    (hL : D.L = -(↑Real.pi * I)) :
-    generalizedWindingNumber γ z₀ = -1 / 2 := by
-  rw [D.windingNumber_eq, hL]
-  field_simp
-
 end SingleCrossingData
 
 end

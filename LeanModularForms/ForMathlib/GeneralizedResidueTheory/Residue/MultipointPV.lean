@@ -108,21 +108,6 @@ private lemma measurableSet_multipoint_goodset {γ : ℝ → ℂ} {a b ε : ℝ}
   rw [h_eq]
   exact isClosed_Icc.measurableSet.diff (measurableSet_multipoint_condition S hγ)
 
-private lemma goodset_piecewise_ae_eq_multipoint {g : ℂ → ℂ} {γ : ℝ → ℂ} {a b ε : ℝ}
-    (S : Finset ℂ) :
-    (fun t => if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then (0 : ℂ) else g (γ t) * deriv γ t)
-      =ᵐ[volume.restrict (Icc a b)]
-    ({t : ℝ | ∀ s ∈ S, ε < ‖γ t - s‖} ∩ Icc a b).piecewise
-      (fun t => g (γ t) * deriv γ t) (fun _ => 0) := by
-  filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
-  simp only [Set.piecewise, Set.mem_inter_iff, Set.mem_setOf_eq]
-  by_cases ht_good : (∀ s ∈ S, ε < ‖γ t - s‖) ∧ t ∈ Icc a b
-  · have : ¬∃ s ∈ S, ‖γ t - s‖ ≤ ε := by push Not; exact ht_good.1
-    rw [if_pos ht_good]; simp only [this, ↓reduceIte]
-  · have : ∃ s ∈ S, ‖γ t - s‖ ≤ ε := by
-      by_contra h_not; push Not at h_not; exact ht_good ⟨h_not, ht⟩
-    rw [if_neg ht_good]; simp only [this, ↓reduceIte]
-
 private lemma aEStronglyMeasurable_residueProd_on_goodset {γ : ℝ → ℂ} {a b ε : ℝ}
     {P : Finset ℝ} {s c : ℂ} (hε : 0 < ε) (hγ : ContinuousOn γ (Icc a b))
     (hγ'_off_P : ContinuousOn (deriv γ) (Icc a b \ P)) :

@@ -36,19 +36,6 @@ theorem ftc_telescope_two {f : ℝ → ℂ} {a b c : ℝ}
     ∫ t in a..c, deriv f t / f t = Complex.log (f c) - Complex.log (f a) := by
   simp [← intervalIntegral.integral_add_adjacent_intervals hint_ab hint_bc, h_ab, h_bc]
 
-/-- FTC on three consecutive segments telescopes: the integral over [a,d] is
-log(f d) - log(f a) if each sub-interval satisfies the FTC-for-log. -/
-theorem ftc_telescope_three {f : ℝ → ℂ} {a b c d : ℝ}
-    (hint_ab : IntervalIntegrable (fun t => deriv f t / f t) volume a b)
-    (hint_bc : IntervalIntegrable (fun t => deriv f t / f t) volume b c)
-    (hint_cd : IntervalIntegrable (fun t => deriv f t / f t) volume c d)
-    (h_ab : ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a))
-    (h_bc : ∫ t in b..c, deriv f t / f t = Complex.log (f c) - Complex.log (f b))
-    (h_cd : ∫ t in c..d, deriv f t / f t = Complex.log (f d) - Complex.log (f c)) :
-    ∫ t in a..d, deriv f t / f t = Complex.log (f d) - Complex.log (f a) := by
-  simp [← intervalIntegral.integral_add_adjacent_intervals (hint_ab.trans hint_bc) hint_cd,
-    ← intervalIntegral.integral_add_adjacent_intervals hint_ab hint_bc, h_ab, h_bc, h_cd]
-
 /-- Transfer integrability from a local function `h` to `g` given that their
 log-derivatives agree almost everywhere on the interval.  The `h_ae` hypothesis
 has the direction `deriv g / g = deriv h / h` pointwise a.e., which is reversed

@@ -189,43 +189,4 @@ private lemma corrected_remainder_integrable {f : ℂ → ℂ} {S : Finset ℂ} 
   rw [uIoc_of_le (zero_le_one' ℝ)] at ht
   simp only [PiecewiseC1Path.contourIntegrand, h_g_on_curve t (Ioc_subset_Icc_self ht)]
 
-/-- **Residue theorem for convex domains.**
-
-For a meromorphic function `f` with simple poles at `S ⊂ U` with coefficients `c`,
-where `U` is convex and open, the contour integral of `f` along a closed path
-in `U` avoiding `S` equals the sum of `2*pi*I * winding(gamma, s) * c(s)`. -/
-theorem contourIntegral_eq_sum_winding_coefficients_convex
-    {f : ℂ → ℂ} {U : Set ℂ} {S : Finset ℂ} {c : ℂ → ℂ}
-    (γ : PiecewiseC1Path x x)
-    (hU_convex : Convex ℝ U) (hU_open : IsOpen U) (hU_ne : U.Nonempty)
-    (hf_diff : DifferentiableOn ℂ f (U \ ↑S))
-    (hS_sub : ↑S ⊆ U)
-    (h_pole : ∀ s ∈ S, HasSimplePoleAt f s)
-    (h_coeff : ∀ (s : ℂ) (hs : s ∈ S), (h_pole s hs).coeff = c s)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
-    (hγ_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s)
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖)
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand (fun z => f z - principalPartSum S c z) γ)
-      volume 0 1)
-    (h_pp_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand (principalPartSum S c) γ) volume 0 1)
-    (hI : ∀ s ∈ S, IntervalIntegrable
-      (fun t => (c s / (γ.toPath.extend t - s)) * deriv γ.toPath.extend t)
-      volume 0 1) :
-    γ.contourIntegral f =
-      ∑ s ∈ S, 2 * ↑Real.pi * I * generalizedWindingNumber γ s * c s := by
-  obtain ⟨g, hg_diff, hg_agree⟩ :=
-    sub_principalPartSum_corrected_differentiableOn hU_open hf_diff hS_sub h_pole h_coeff
-  have h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
-      g (γ t) = f (γ t) - principalPartSum S c (γ t) :=
-    fun t ht => hg_agree (γ t) ⟨hγ t ht, fun hmem =>
-      hγ_avoids _ (Finset.mem_coe.mp hmem) t ht rfl⟩
-  have hg_zero : γ.contourIntegral g = 0 :=
-    γ.contourIntegral_eq_zero_of_differentiableOn_convex_aux rfl hU_convex hU_open hU_ne
-      hg_diff hγ (corrected_remainder_integrable h_g_on_curve h_rem_int)
-  rw [contourIntegral_decomp_of_simple_poles hδ h_rem_int h_pp_int hI,
-    show γ.contourIntegral (fun z => f z - principalPartSum S c z) = 0 from
-      (contourIntegral_corrected_eq_rem h_g_on_curve) ▸ hg_zero, zero_add]
-
 end

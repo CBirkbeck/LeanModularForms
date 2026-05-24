@@ -344,15 +344,6 @@ lemma CauchyPrincipalValueExists'.const_mul
   refine intervalIntegral.integral_congr fun _ _ => ?_
   split_ifs <;> ring
 
-/-- Residue of `f` at `z₀` via contour integral:
-`Res(f, z₀) = lim_{r→0⁺} (2πi)⁻¹ ∮_{|z-z₀|=r} f(z) dz`.
-
-This is well-defined for meromorphic functions and agrees with
-`residueSimplePole` when `f` has a simple pole at `z₀`. -/
-def residueAt (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=
-  limUnder (𝓝[>] (0 : ℝ)) fun r =>
-    (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(z₀, r), f z
-
 /-- If `f` has a simple pole at `z₀` with decomposition `c / (z - z₀) + g`,
 then `residueSimplePole f z₀ = c`. -/
 theorem residueSimplePole_eq_of_decomposition (f : ℂ → ℂ) (z₀ c : ℂ) (g : ℂ → ℂ)
@@ -378,13 +369,5 @@ private lemma analyticAt_sum_erase_div_sub (S0 : Finset ℂ) (c : ℂ → ℂ) (
   (S0.erase s).analyticAt_fun_sum fun _ hs' =>
     analyticAt_const.div (analyticAt_id.sub analyticAt_const)
       (sub_ne_zero.mpr (Ne.symm (Finset.ne_of_mem_erase hs')))
-
-/-- The residue of `∑ s ∈ S0, c(s) / (z - s)` at `s` equals `c(s)`.
-This follows from the HasSimplePoleAt decomposition. -/
-lemma residueSimplePole_sum_div_sub (S0 : Finset ℂ) (c : ℂ → ℂ) (s : ℂ) (hs : s ∈ S0) :
-    residueSimplePole (fun z => ∑ s' ∈ S0, c s' / (z - s')) s = c s :=
-  residueSimplePole_eq_of_decomposition _ s (c s) _ (analyticAt_sum_erase_div_sub S0 c s) <| by
-    filter_upwards [self_mem_nhdsWithin] with z _hz
-    exact (Finset.add_sum_erase S0 (fun s' => c s' / (z - s')) hs).symm
 
 end

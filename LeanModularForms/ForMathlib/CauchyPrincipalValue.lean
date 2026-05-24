@@ -162,12 +162,6 @@ def HasCauchyPVOn (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) 
   Tendsto (fun ε => ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t)
     (𝓝[>] 0) (𝓝 L)
 
-/-- The multi-point Cauchy principal value of `∮_γ f(z) dz`.
-Returns junk when the limit does not exist. -/
-def cauchyPVOn (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) : ℂ :=
-  limUnder (𝓝[>] (0 : ℝ)) fun ε =>
-    ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t
-
 /-- Negation for multi-point CPV. -/
 theorem HasCauchyPVOn.neg {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {L : ℂ}
     (h : HasCauchyPVOn S f γ L) : HasCauchyPVOn S (fun z => -f z) γ (-L) := by

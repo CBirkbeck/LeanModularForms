@@ -89,12 +89,6 @@ theorem I_mul_exp_pi_third :
   rw [show ((5 * Real.pi / 6 : ℝ) : ℂ) * I = ↑Real.pi / 2 * I + ↑(Real.pi / 3) * I
       from by push_cast; ring, exp_add, Complex.exp_pi_div_two_mul_I]
 
-/-- The arg of the right tangent at `ρ+1`: `5π/6`. -/
-theorem arg_right_tangent_rhoPlusOne :
-    arg (I * exp (↑(Real.pi / 3) * I)) = 5 * Real.pi / 6 := by
-  rw [I_mul_exp_pi_third]
-  exact arg_exp_mul_I _ ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
-
 /-- The arg of the negated left tangent at `ρ+1` is `π/2`. -/
 theorem arg_neg_left_tangent_rhoPlusOne (H : ℝ) (hH : fdHeightValid H) :
     arg (5 * (↑H - ↑(Real.sqrt 3) / 2) * I) = Real.pi / 2 := by
@@ -115,23 +109,5 @@ theorem arg_left_tangent_rho :
     arg (I * exp (↑(2 * Real.pi / 3) * I)) = -5 * Real.pi / 6 := by
   rw [I_mul_exp_two_pi_third]
   exact arg_exp_mul_I _ ⟨by nlinarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
-
-/-- The arg of `-(i · exp(i·2π/3))`: `π/6`.
-Since `im(i · exp(i·2π/3)) < 0`, we have `arg(-z) = arg(z) + π`. -/
-theorem arg_neg_left_tangent_rho :
-    arg (-(I * exp (↑(2 * Real.pi / 3) * I))) = Real.pi / 6 := by
-  rw [Complex.arg_neg_eq_arg_add_pi_of_im_neg]
-  · rw [arg_left_tangent_rho]; ring
-  · rw [I_mul_exp_two_pi_third, exp_mul_I, ← ofReal_cos, ← ofReal_sin]
-    simp only [add_im, ofReal_im, mul_im, ofReal_re, I_re, I_im]
-    rw [show (-5 * Real.pi / 6 : ℝ) = -(Real.pi - Real.pi / 6) from by ring, Real.sin_neg,
-      Real.sin_pi_sub]
-    linarith [Real.sin_pos_of_pos_of_lt_pi (show (0:ℝ) < Real.pi / 6 by linarith [Real.pi_pos])
-      (show Real.pi / 6 < Real.pi by linarith [Real.pi_pos])]
-
-/-- The arg of the right tangent at `ρ` (upward vertical): `π/2`. -/
-theorem arg_right_tangent_rho (H : ℝ) (hH : fdHeightValid H) :
-    arg (5 * (↑H - ↑(Real.sqrt 3) / 2) * I) = Real.pi / 2 :=
-  arg_neg_left_tangent_rhoPlusOne H hH
 
 end

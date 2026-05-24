@@ -189,14 +189,6 @@ private lemma cauchyPV_cyclicShift {γ : ClosedPwC1Immersion x} {τ : ℝ}
   rw [h_lhs, h_rhs]
   exact γ.cpvIntegrandOn_cyclicShift_integral_eq hτ {z₀} f ε
 
-/-- **Invariance of `generalizedWindingNumber` under cyclic shift.** -/
-theorem generalizedWindingNumber_cyclicShift {γ : ClosedPwC1Immersion x} {τ : ℝ}
-    (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) (s : ℂ) :
-    generalizedWindingNumber
-        (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path s =
-      generalizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path s := by
-  simp only [generalizedWindingNumber, cauchyPV_cyclicShift hτ s]
-
 private lemma deriv_eventuallyEq_of_shift {f g : ℝ → ℂ} {t₀ c : ℝ}
     (h_eq : ∀ᶠ t in 𝓝 t₀, f t = g (t + c)) :
     ∀ᶠ t in 𝓝 t₀, deriv f t = deriv g (t + c) := by
@@ -235,59 +227,6 @@ private lemma tendsto_sub_const_nhdsLT (t₀ c : ℝ) :
     simpa using h_cont.mono_left nhdsWithin_le_nhds
   · filter_upwards [self_mem_nhdsWithin] with t ht using by
       change t - c < t₀; linarith [show t < t₀ + c from ht]
-
-private lemma isFlatOfOrder_of_eventuallyEq_shift {f g : ℝ → ℂ} {t₀ c : ℝ} {n : ℕ}
-    (h_eq : ∀ᶠ t in 𝓝 t₀, f t = g (t + c))
-    (h_g : IsFlatOfOrder g (t₀ + c) n) :
-    IsFlatOfOrder f t₀ n := by
-  have h_val : f t₀ = g (t₀ + c) := h_eq.self_of_nhds
-  have h_eq_right : f =ᶠ[𝓝[>] t₀] (fun t => g (t + c)) := h_eq.filter_mono nhdsWithin_le_nhds
-  have h_eq_left : f =ᶠ[𝓝[<] t₀] (fun t => g (t + c)) := h_eq.filter_mono nhdsWithin_le_nhds
-  have h_deriv := deriv_eventuallyEq_of_shift h_eq
-  have h_deriv_right : (deriv f) =ᶠ[𝓝[>] t₀] (fun t => deriv g (t + c)) :=
-    h_deriv.filter_mono nhdsWithin_le_nhds
-  have h_deriv_left : (deriv f) =ᶠ[𝓝[<] t₀] (fun t => deriv g (t + c)) :=
-    h_deriv.filter_mono nhdsWithin_le_nhds
-  refine ⟨?_, ?_⟩
-  · intro L hL hL_lim
-    have h_shift_to_g : Tendsto (fun t => deriv g (t + c)) (𝓝[>] t₀) (𝓝 L) :=
-      hL_lim.congr' h_deriv_right
-    have hL_lim_g : Tendsto (deriv g) (𝓝[>] (t₀ + c)) (𝓝 L) :=
-      (h_shift_to_g.comp (tendsto_sub_const_nhdsGT t₀ c)).congr
-        fun t => by simp [sub_add_cancel]
-    have h_comp := (h_g.right_flat L hL hL_lim_g).comp_tendsto
-      (tendsto_add_const_nhdsGT t₀ c)
-    refine h_comp.congr' ?_ ?_ <;>
-      (filter_upwards [h_eq_right] with t ht; simp only [Function.comp_apply];
-        rw [← ht, ← h_val])
-  · intro L hL hL_lim
-    have h_shift_to_g : Tendsto (fun t => deriv g (t + c)) (𝓝[<] t₀) (𝓝 L) :=
-      hL_lim.congr' h_deriv_left
-    have hL_lim_g : Tendsto (deriv g) (𝓝[<] (t₀ + c)) (𝓝 L) :=
-      (h_shift_to_g.comp (tendsto_sub_const_nhdsLT t₀ c)).congr
-        fun t => by simp [sub_add_cancel]
-    have h_comp := (h_g.left_flat L hL hL_lim_g).comp_tendsto
-      (tendsto_add_const_nhdsLT t₀ c)
-    refine h_comp.congr' ?_ ?_ <;>
-      (filter_upwards [h_eq_left] with t ht; simp only [Function.comp_apply];
-        rw [← ht, ← h_val])
-
-/-- The image of the cyclic-shifted path is contained in the image of the original path. -/
-theorem cyclicShift_image_subset {γ : ClosedPwC1Immersion x} {τ : ℝ}
-    (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) :
-    ∀ t ∈ Icc (0 : ℝ) 1, ∃ u ∈ Icc (0 : ℝ) 1,
-      (γ.cyclicShift hτ).toPath.extend t = γ.toPath.extend u := by
-  intro t ht
-  by_cases ht_le : t ≤ 1 - τ
-  · refine ⟨t + τ, ⟨?_, ?_⟩, ?_⟩
-    · linarith [ht.1, hτ.1]
-    · linarith
-    · exact γ.cyclicShift_extend_eq_no_wrap hτ ⟨ht.1, ht_le⟩
-  · push Not at ht_le
-    refine ⟨t + τ - 1, ⟨?_, ?_⟩, ?_⟩
-    · linarith
-    · linarith [ht.2, hτ.2]
-    · exact γ.cyclicShift_extend_eq_wrap hτ ⟨ht_le.le, ht.2⟩
 
 private theorem mem_cyclicShift_partition_no_wrap_iff
     (γ : ClosedPwC1Immersion x) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
@@ -456,122 +395,6 @@ private lemma deriv_cyclicShift_eventuallyEq_right_wrap
   filter_upwards [inter_mem_nhdsWithin _ (Ioo_mem_nhds ha hb)] with t ⟨ht_gt, ht_Ioo⟩
   refine γ.cyclicShift_deriv_eq_wrap hτ (hab_sub ht_Ioo) fun h_in => ?_
   exact (ne_of_gt ht_gt) (mem_singleton_iff.mp (hP_iso ⟨h_in, ht_Ioo⟩))
-
-private theorem angleAtCrossing_cyclicShift_no_wrap
-    (γ : ClosedPwC1Immersion x) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
-    {t₀' : ℝ} (ht₀' : t₀' ∈ Ioo (0 : ℝ) (1 - τ))
-    (ht₀'_Ioo : t₀' ∈ Ioo (0 : ℝ) 1)
-    (ht₀_Ioo : t₀' + τ ∈ Ioo (0 : ℝ) 1) :
-    angleAtCrossing (γ.cyclicShift hτ).toPwC1Immersion t₀' ht₀'_Ioo =
-      angleAtCrossing γ.toPwC1Immersion (t₀' + τ) ht₀_Ioo := by
-  classical
-  by_cases h_part : t₀' ∈ (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path.partition
-  · have h_part_orig : t₀' ∈ (γ.cyclicShift hτ).closedPartition :=
-      ((γ.cyclicShift hτ).toClosedPwC1Curve.mem_partition_iff.mp h_part).1
-    have h_partγ : (t₀' + τ) ∈ γ.closedPartition :=
-      (γ.mem_cyclicShift_partition_no_wrap_iff hτ ht₀').mp h_part_orig
-    have h_partγ_legacy : (t₀' + τ) ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition := by
-      refine γ.toClosedPwC1Curve.mem_partition_iff.mpr
-        ⟨h_partγ, ne_of_gt (by linarith [ht₀'.1, hτ.1]),
-          ne_of_lt (by linarith [ht₀'.2])⟩
-    simp only [angleAtCrossing, h_part, h_partγ_legacy, dite_true]
-    set Lγ'_left := Classical.choose
-      ((γ.cyclicShift hτ).toPwC1Immersion.left_deriv_limit t₀' h_part)
-    set Lγ'_right := Classical.choose
-      ((γ.cyclicShift hτ).toPwC1Immersion.right_deriv_limit t₀' h_part)
-    set Lγ_left := Classical.choose
-      (γ.toPwC1Immersion.left_deriv_limit (t₀' + τ) h_partγ_legacy)
-    set Lγ_right := Classical.choose
-      (γ.toPwC1Immersion.right_deriv_limit (t₀' + τ) h_partγ_legacy)
-    have hLγ'_left_spec := Classical.choose_spec
-      ((γ.cyclicShift hτ).toPwC1Immersion.left_deriv_limit t₀' h_part)
-    have hLγ'_right_spec := Classical.choose_spec
-      ((γ.cyclicShift hτ).toPwC1Immersion.right_deriv_limit t₀' h_part)
-    have hLγ_left_spec := Classical.choose_spec
-      (γ.toPwC1Immersion.left_deriv_limit (t₀' + τ) h_partγ_legacy)
-    have hLγ_right_spec := Classical.choose_spec
-      (γ.toPwC1Immersion.right_deriv_limit (t₀' + τ) h_partγ_legacy)
-    have h_tend_shifted_left : Tendsto (fun t => deriv γ.toPath.extend (t + τ))
-        (𝓝[<] t₀') (𝓝 Lγ'_left) :=
-      hLγ'_left_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_left_no_wrap hτ ht₀')
-    have h_tend_shifted_right : Tendsto (fun t => deriv γ.toPath.extend (t + τ))
-        (𝓝[>] t₀') (𝓝 Lγ'_right) :=
-      hLγ'_right_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_right_no_wrap hτ ht₀')
-    have h_tend_γ_left' : Tendsto (deriv γ.toPath.extend)
-        (𝓝[<] (t₀' + τ)) (𝓝 Lγ'_left) :=
-      (h_tend_shifted_left.comp (tendsto_sub_const_nhdsLT t₀' τ)).congr
-        fun t => by simp [sub_add_cancel]
-    have h_tend_γ_right' : Tendsto (deriv γ.toPath.extend)
-        (𝓝[>] (t₀' + τ)) (𝓝 Lγ'_right) :=
-      (h_tend_shifted_right.comp (tendsto_sub_const_nhdsGT t₀' τ)).congr
-        fun t => by simp [sub_add_cancel]
-    rw [tendsto_nhds_unique h_tend_γ_left' hLγ_left_spec.2,
-      tendsto_nhds_unique h_tend_γ_right' hLγ_right_spec.2]
-  · have h_part_orig : t₀' ∉ (γ.cyclicShift hτ).closedPartition := fun h_in =>
-      h_part ((γ.cyclicShift hτ).toClosedPwC1Curve.mem_partition_iff.mpr
-        ⟨h_in, ne_of_gt ht₀'_Ioo.1, ne_of_lt ht₀'_Ioo.2⟩)
-    have h_partγ_nope : (t₀' + τ) ∉ γ.closedPartition := fun h =>
-      h_part_orig ((γ.mem_cyclicShift_partition_no_wrap_iff hτ ht₀').mpr h)
-    have h_partγ_legacy : (t₀' + τ) ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition :=
-      fun h_in => h_partγ_nope (γ.toClosedPwC1Curve.mem_partition_iff.mp h_in).1
-    rw [angleAtCrossing_smooth _ _ ht₀'_Ioo h_part,
-      angleAtCrossing_smooth _ _ ht₀_Ioo h_partγ_legacy]
-
-private theorem angleAtCrossing_cyclicShift_wrap
-    (γ : ClosedPwC1Immersion x) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
-    {t₀' : ℝ} (ht₀' : t₀' ∈ Ioo (1 - τ) 1)
-    (ht₀'_Ioo : t₀' ∈ Ioo (0 : ℝ) 1)
-    (ht₀_Ioo : t₀' + τ - 1 ∈ Ioo (0 : ℝ) 1) :
-    angleAtCrossing (γ.cyclicShift hτ).toPwC1Immersion t₀' ht₀'_Ioo =
-      angleAtCrossing γ.toPwC1Immersion (t₀' + τ - 1) ht₀_Ioo := by
-  classical
-  by_cases h_part : t₀' ∈ (γ.cyclicShift hτ).toPwC1Immersion.toPiecewiseC1Path.partition
-  · have h_part_orig : t₀' ∈ (γ.cyclicShift hτ).closedPartition :=
-      ((γ.cyclicShift hτ).toClosedPwC1Curve.mem_partition_iff.mp h_part).1
-    have h_partγ : (t₀' + τ - 1) ∈ γ.closedPartition :=
-      (γ.mem_cyclicShift_partition_wrap_iff hτ ht₀').mp h_part_orig
-    have h_partγ_legacy : (t₀' + τ - 1) ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition := by
-      refine γ.toClosedPwC1Curve.mem_partition_iff.mpr
-        ⟨h_partγ, ne_of_gt (by linarith [ht₀'.1]),
-          ne_of_lt (by linarith [ht₀'.2, hτ.2])⟩
-    simp only [angleAtCrossing, h_part, h_partγ_legacy, dite_true]
-    have hLγ'_left_spec := Classical.choose_spec
-      ((γ.cyclicShift hτ).toPwC1Immersion.left_deriv_limit t₀' h_part)
-    have hLγ'_right_spec := Classical.choose_spec
-      ((γ.cyclicShift hτ).toPwC1Immersion.right_deriv_limit t₀' h_part)
-    have hLγ_left_spec := Classical.choose_spec
-      (γ.toPwC1Immersion.left_deriv_limit (t₀' + τ - 1) h_partγ_legacy)
-    have hLγ_right_spec := Classical.choose_spec
-      (γ.toPwC1Immersion.right_deriv_limit (t₀' + τ - 1) h_partγ_legacy)
-    have h_shift_back_left : Tendsto (fun u : ℝ => u - (τ - 1))
-        (𝓝[<] (t₀' + τ - 1)) (𝓝[<] t₀') := by
-      rw [show (t₀' + τ - 1) = t₀' + (τ - 1) from by ring]
-      exact tendsto_sub_const_nhdsLT t₀' (τ - 1)
-    have h_shift_back_right : Tendsto (fun u : ℝ => u - (τ - 1))
-        (𝓝[>] (t₀' + τ - 1)) (𝓝[>] t₀') := by
-      rw [show (t₀' + τ - 1) = t₀' + (τ - 1) from by ring]
-      exact tendsto_sub_const_nhdsGT t₀' (τ - 1)
-    have h_tend_γ_left' :=
-      ((hLγ'_left_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_left_wrap hτ ht₀')).comp
-        h_shift_back_left).congr fun u => by
-          show deriv γ.toPath.extend ((u - (τ - 1)) + τ - 1) = deriv γ.toPath.extend u
-          congr 1; ring
-    have h_tend_γ_right' :=
-      ((hLγ'_right_spec.2.congr' (γ.deriv_cyclicShift_eventuallyEq_right_wrap hτ ht₀')).comp
-        h_shift_back_right).congr fun u => by
-          show deriv γ.toPath.extend ((u - (τ - 1)) + τ - 1) = deriv γ.toPath.extend u
-          congr 1; ring
-    rw [tendsto_nhds_unique h_tend_γ_left' hLγ_left_spec.2,
-      tendsto_nhds_unique h_tend_γ_right' hLγ_right_spec.2]
-  · have h_part_orig : t₀' ∉ (γ.cyclicShift hτ).closedPartition := fun h_in =>
-      h_part ((γ.cyclicShift hτ).toClosedPwC1Curve.mem_partition_iff.mpr
-        ⟨h_in, ne_of_gt ht₀'_Ioo.1, ne_of_lt ht₀'_Ioo.2⟩)
-    have h_partγ_nope : (t₀' + τ - 1) ∉ γ.closedPartition := fun h =>
-      h_part_orig ((γ.mem_cyclicShift_partition_wrap_iff hτ ht₀').mpr h)
-    have h_partγ_legacy : (t₀' + τ - 1) ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition :=
-      fun h_in => h_partγ_nope (γ.toClosedPwC1Curve.mem_partition_iff.mp h_in).1
-    rw [angleAtCrossing_smooth _ _ ht₀'_Ioo h_part,
-      angleAtCrossing_smooth _ _ ht₀_Ioo h_partγ_legacy]
 
 end ClosedPwC1Immersion
 

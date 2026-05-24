@@ -141,67 +141,6 @@ private lemma homotopy_piecewise_aestronglyMeasurable
     (((Finset.finite_toSet P').inter_of_left (Icc a b)).measure_zero volume)]
   exact aestronglyMeasurable_zero_measure _
 
-private theorem windingNumber_continuousOn_param_piecewise_with_bound
-    {H : ℝ × ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {P : Finset ℝ} {M : ℝ} (hab : a < b)
-    (hH_cont : Continuous H)
-    (hH_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, H (t, s) ≠ z₀)
-    (hH_deriv_cont : ∀ p₁ p₂ : ℝ, p₁ < p₂ →
-      (∀ t ∈ Ioo p₁ p₂, t ∉ P) → Ioo p₁ p₂ ⊆ Ioo a b →
-      ContinuousOn (fun (p : ℝ × ℝ) => deriv (fun t' => H (t', p.2)) p.1)
-        (Ioo p₁ p₂ ×ˢ Icc 0 1))
-    (hM_bound : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      ‖deriv (fun t' => H (t', s)) t‖ ≤ M) :
-    ContinuousOn (fun s => generalizedWindingNumber' (fun t => H (t, s)) a b z₀) (Icc 0 1) := by
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ := homotopy_uniform_avoidance H a b z₀ hab hH_cont hH_avoid
-  have h_pv := fun s hs => homotopy_pv_eq_integral hab hδ_pos hδ_bound s hs
-  intro s₀ hs₀
-  apply ContinuousWithinAt.congr_of_eventuallyEq _
-    (eventually_of_mem self_mem_nhdsWithin h_pv) (h_pv s₀ hs₀)
-  apply continuousWithinAt_const.mul
-  apply continuousWithinAt_integral_of_dominated_piecewise (M := M / δ) hab.le
-  · exact fun s hs => homotopy_piecewise_aestronglyMeasurable hH_cont hH_avoid hH_deriv_cont s hs
-  · exact fun s hs t ht =>
-      winding_integrand_bounded_of_uniform_avoidance hδ_pos hδ_bound hM_bound t ht s hs
-  · have h_ae_not_B : ∀ᵐ t ∂(volume.restrict (Icc a b)),
-        t ∉ (({a, b} ∪ (P : Set ℝ)) : Set ℝ) := by
-      rw [ae_restrict_iff' measurableSet_Icc, ae_iff]
-      simp only [Set.setOf_and, Classical.not_imp, not_not]
-      exact measure_mono_null Set.inter_subset_right
-        (((Set.finite_insert.mpr (Set.finite_singleton b)).union
-          (Finset.finite_toSet P)).measure_zero _)
-    filter_upwards [h_ae_not_B, ae_restrict_mem measurableSet_Icc] with t ht_notB ht_Icc
-    simp only [Set.mem_union, Set.mem_insert_iff, Set.mem_singleton_iff, not_or] at ht_notB
-    exact homotopy_integrand_continuousWithinAt_s hH_cont hH_avoid hH_deriv_cont hs₀ ht_Icc
-      ⟨lt_of_le_of_ne ht_Icc.1 (Ne.symm ht_notB.1.1),
-       lt_of_le_of_ne ht_Icc.2 ht_notB.1.2⟩ ht_notB.2
-
-private theorem continuous_integer_valued_constant
-    (f : ℝ → ℂ) (hf_cont : ContinuousOn f (Icc (0:ℝ) 1))
-    (hf_int : ∀ s ∈ Icc (0:ℝ) 1, ∃ n : ℤ, f s = n) :
-    f 0 = f 1 := by
-  let g : Icc (0:ℝ) 1 → ℂ := fun x => f x.val
-  have hg_loc : IsLocallyConstant g := by
-    rw [IsLocallyConstant.iff_isOpen_fiber]
-    intro y
-    by_cases hy : ∃ n : ℤ, y = n
-    · obtain ⟨n, rfl⟩ := hy
-      have heq : g ⁻¹' {↑n} = g ⁻¹' (Metric.ball (n : ℂ) 1) := by
-        ext ⟨x, hx⟩
-        simp only [g, mem_preimage, mem_singleton_iff, Metric.mem_ball]
-        refine ⟨fun h => h ▸ by simp, fun hdist => ?_⟩
-        obtain ⟨m, hm⟩ := hf_int x hx
-        rw [hm, Complex.dist_eq, ← Int.cast_sub, Complex.norm_intCast, ← Int.cast_abs] at hdist
-        rw [hm]
-        exact_mod_cast sub_eq_zero.mp (Int.abs_lt_one_iff.mp (by exact_mod_cast hdist))
-      rw [heq]
-      exact hf_cont.restrict.isOpen_preimage _ Metric.isOpen_ball
-    · convert isOpen_empty
-      ext ⟨x, hx⟩
-      simp only [g, mem_preimage, mem_singleton_iff, mem_empty_iff_false, iff_false]
-      exact fun heq => hy ⟨_, heq.symm.trans (hf_int x hx).choose_spec⟩
-  exact hg_loc.apply_eq_of_isPreconnected (x := ⟨0, by norm_num⟩) (y := ⟨1, by norm_num⟩)
-    isPreconnected_univ trivial trivial
-
 private theorem generalizedWindingNumber'_eq_of_eq_on
     (f g : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b)
     (heq_val : ∀ t ∈ Icc a b, f t = g t)
@@ -217,20 +156,6 @@ private theorem generalizedWindingNumber'_eq_of_eq_on
   rw [ae_restrict_iff' measurableSet_Ioc] at heq_deriv
   filter_upwards [heq_deriv] with t ht ht_mem
   simp only [ht ht_mem, heq_val t (Ioc_subset_Icc_self ht_mem)]
-
-/-- If `H (·, s₀) = γ` on `Icc a b`, then the generalized winding number along
-`(t ↦ H (t, s₀))` equals that along `γ`. -/
-private lemma generalizedWindingNumber'_eq_of_homotopy_slice
-    (H : ℝ × ℝ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (s₀ : ℝ) (hab : a < b)
-    (hHs : ∀ t ∈ Icc a b, H (t, s₀) = γ t) :
-    generalizedWindingNumber' (fun t => H (t, s₀)) a b z₀ =
-    generalizedWindingNumber' γ a b z₀ := by
-  apply generalizedWindingNumber'_eq_of_eq_on (fun t => H (t, s₀)) γ a b z₀ hab hHs
-  rw [Set.uIoc_of_le hab.le, ae_restrict_iff' measurableSet_Ioc]
-  have h_eq_on_Ioo : Set.EqOn (fun t => H (t, s₀)) γ (Ioo a b) :=
-    fun t' ht' => hHs t' (Ioo_subset_Icc_self ht')
-  filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
-  exact (h_eq_on_Ioo.deriv isOpen_Ioo) (ht.mpr ht_Ioc)
 
 private lemma smooth_winding_integral_continuousOn
     {γ : ℝ × ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {M : ℝ}
@@ -264,25 +189,6 @@ private lemma smooth_winding_integral_continuousOn
     rw [Set.uIoc_of_le hab.le] at ht
     exact sub_ne_zero.mpr (hγ_avoid t (Ioc_subset_Icc_self ht) s₁ hs₁)
 
-private theorem windingNumber_continuous_in_param
-    (γ : ℝ × ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (hab : a < b) (hγ_cont : Continuous γ)
-    (hγ_avoid : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, γ (t, s) ≠ z₀)
-    (hγ_deriv_cont : Continuous (fun p : ℝ × ℝ => deriv (fun t' => γ (t', p.2)) p.1)) :
-    ContinuousOn (fun s => generalizedWindingNumber' (fun t => γ (t, s)) a b z₀) (Icc 0 1) := by
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ := homotopy_uniform_avoidance γ a b z₀ hab hγ_cont hγ_avoid
-  obtain ⟨M, hM⟩ := (isCompact_Icc.prod isCompact_Icc).exists_bound_of_continuousOn <|
-    ContinuousOn.mul
-      (ContinuousOn.inv₀ (hγ_cont.sub continuous_const).continuousOn
-        (fun ⟨t, s⟩ ⟨ht, hs⟩ => sub_ne_zero.mpr (hγ_avoid t ht s hs)))
-      hγ_deriv_cont.continuousOn
-  have h_pv := fun s hs => homotopy_pv_eq_integral hab hδ_pos hδ_bound s hs
-  intro s₀ hs₀
-  apply ContinuousWithinAt.congr_of_eventuallyEq _
-    (eventually_of_mem self_mem_nhdsWithin h_pv) (h_pv s₀ hs₀)
-  exact continuousWithinAt_const.mul
-    ((smooth_winding_integral_continuousOn hab hγ_cont hγ_avoid hγ_deriv_cont
-      (fun t ht s hs => hM (t, s) ⟨ht, hs⟩)).continuousWithinAt hs₀)
-
 /-- When γ avoids z₀, the PV winding number equals the classical contour integral. -/
 theorem generalizedWindingNumber_eq_classical_away
     (γ : PiecewiseC1Curve) (z₀ : ℂ) (hoff : ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ z₀) :
@@ -307,19 +213,5 @@ theorem generalizedWindingNumber_eq_classical_away
             Metric.infDist_le_dist_of_mem (mem_image_of_mem γ.toFun ht')
       _ = ‖γ.toFun t - z₀‖ := by rw [Complex.dist_eq, norm_sub_rev]
   simp only [hbound, ↓reduceIte, deriv_sub_const]
-
-private lemma integral_congr_homotopy_endpoint
-    {f : ℂ → ℂ} {γ : ℝ → ℂ} {H : ℝ × ℝ → ℂ} {a b : ℝ} {s : ℝ}
-    (hab : a < b)
-    (hHs : ∀ t ∈ Icc a b, H (t, s) = γ t) :
-    ∫ t in a..b, f (γ t) * deriv γ t =
-    ∫ t in a..b, f (H (t, s)) * deriv (fun t => H (t, s)) t := by
-  apply intervalIntegral.integral_congr_ae
-  have h_eq : Set.EqOn (fun t => H (t, s)) γ (Ioo a b) :=
-    fun t' ht' => hHs t' (Ioo_subset_Icc_self ht')
-  simp only [Set.uIoc_of_le hab.le]
-  filter_upwards [Ioo_ae_eq_Ioc.mem_iff] with t ht ht_Ioc
-  have ht_Ioo : t ∈ Ioo a b := ht.mpr ht_Ioc
-  rw [hHs t (Ioo_subset_Icc_self ht_Ioo), (h_eq.deriv isOpen_Ioo) ht_Ioo]
 
 end
