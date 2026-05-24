@@ -243,15 +243,6 @@ theorem deriv_dslope_bounded_on_compact_open {U : Set ℂ} (hU_open : IsOpen U)
   linarith [Complex.norm_deriv_le_of_forall_mem_sphere_norm_le (by positivity : (0:ℝ) < ρ / 2)
     h_DC h_sphere_bound]
 
-/-- **Convex specialization of `deriv_dslope_bounded_on_compact_open`**: kept for
-convenience when a convex hypothesis is naturally available. -/
-theorem deriv_dslope_bounded_on_compact {U : Set ℂ} (_hU : Convex ℝ U) (hU_open : IsOpen U)
-    (hf : DifferentiableOn ℂ f U) {K_c : Set ℂ} (hK_compact : IsCompact K_c)
-    (hK_sub : K_c ⊆ U) {w₀ : ℂ} (hw₀ : w₀ ∈ U) :
-    ∃ C > 0, ∃ δ > 0, ∀ c ∈ K_c, ∀ w ∈ Metric.ball w₀ δ,
-      ‖deriv (dslope f c) w‖ ≤ C :=
-  deriv_dslope_bounded_on_compact_open hU_open hf hK_compact hK_sub hw₀
-
 end Complex
 
 end

@@ -11,7 +11,6 @@ import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistenceMulti
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.LocalCutoffs
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.MultiPoleDCT
 import LeanModularForms.ForMathlib.CrossingAnalysis
-import LeanModularForms.ForMathlib.PaperPwC1ImmersionInvariance
 
 /-!
 # Per-pole CPV composition (T-GL-01)
