@@ -275,17 +275,4 @@ theorem exists_isolated_crossing_interval (γ : PiecewiseC1Immersion) (z₀ : �
        le_trans (Ioo_subset_Icc_self ht).2 hb'_le_b⟩
     exact γ.smooth_off_partition t ht_Icc ht_part
 
-theorem PiecewiseC1Immersion.deriv_ne_zero_of_C2 (γ : PiecewiseC1Immersion) (t₀ : ℝ)
-    (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hγ_C2 : ContDiffAt ℝ 2 γ.toFun t₀) :
-    deriv γ.toFun t₀ ≠ 0 := by
-  by_cases hpart : t₀ ∈ γ.toPiecewiseC1Curve.partition
-  · have h_cont_at : ContinuousAt (deriv γ.toFun) t₀ :=
-      continuousAt_deriv_of_contDiffAt_two hγ_C2
-    obtain ⟨L, hL_ne, hL_tend⟩ := γ.right_deriv_limit t₀ hpart ht₀.2
-    have h_eq : deriv γ.toFun t₀ = L :=
-      tendsto_nhds_unique (h_cont_at.mono_left nhdsWithin_le_nhds) hL_tend
-    rw [h_eq]
-    exact hL_ne
-  · exact γ.deriv_ne_zero t₀ (Ioo_subset_Icc_self ht₀) hpart
-
 end

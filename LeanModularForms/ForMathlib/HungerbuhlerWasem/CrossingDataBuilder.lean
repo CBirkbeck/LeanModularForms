@@ -962,25 +962,6 @@ noncomputable def AsymmetricSingleCrossingData.ofClosedImmersion_hasCauchyPV
   AsymmetricSingleCrossingData.ofDerivedCutoffs D
     (AsymmetricArcFTCHyp.ofHasCauchyPV ht₀_Ioo D h_unique hCPV)
 
-/-- **Corner-friendly variant** of `AsymmetricSingleCrossingData.ofClosedImmersion_hasCauchyPV`
-that does **not** require `h_part_off`. The underlying geometric machinery
-(`deriveAsymmetricCutoffs_anywhere`) only needs one-sided derivative limits,
-which exist at every interior point of a `ClosedPwC1Immersion` (smooth or
-corner). (T-BR-Y10b) -/
-noncomputable def AsymmetricSingleCrossingData.ofClosedImmersion_hasCauchyPV_anywhere
-    (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ : ℝ}
-    (ht₀_Ioo : t₀ ∈ Set.Ioo (0 : ℝ) 1)
-    (h_at : γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ = s)
-    (h_unique : ∀ t ∈ Set.Icc (0 : ℝ) 1,
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s → t = t₀)
-    {L : ℂ}
-    (hCPV : HasCauchyPV (fun z => (z - s)⁻¹)
-      γ.toPwC1Immersion.toPiecewiseC1Path s L) :
-    AsymmetricSingleCrossingData γ.toPwC1Immersion.toPiecewiseC1Path s :=
-  let D := deriveAsymmetricCutoffs_anywhere γ ht₀_Ioo h_at h_unique
-  AsymmetricSingleCrossingData.ofDerivedCutoffs D
-    (AsymmetricArcFTCHyp.ofHasCauchyPV ht₀_Ioo D h_unique hCPV)
-
 end HungerbuhlerWasem
 
 end
