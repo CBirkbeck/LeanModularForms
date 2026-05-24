@@ -858,16 +858,4 @@ theorem pv_integral_at_i_tendsto (H : ℝ) (hH : 1 < H) :
     exact (i_ftc_integrability H hH hε_pos (lt_of_lt_of_le hε_lt hthresh_le_2sin)).2.1
   · exact i_E_tendsto H hH threshold hthresh_pos hthresh_le_2sin hthresh_le_one
 
-/-- `generalizedWindingNumber' (fdBoundary_H H) 0 5 I = -1/2`.
-
-Note: requires `1 < H` (not just `√3/2 < H`) because for `H > 1`, the point `I` is
-strictly inside the contour and the branch cut correction on seg 3 contributes `-2πi`.
-For `√3/2 < H < 1`, `I` would be outside the contour and the result would be `+1/2`. -/
-theorem gWN_fdBoundary_H_at_i (H : ℝ) (hH : 1 < H) :
-    generalizedWindingNumber' (fdBoundary_H H) 0 5 I = -1/2 := by
-  apply ContourIntegral.gWN_eq_neg_half_of_pv_tendsto
-  convert pv_integral_at_i_tendsto H hH using 2
-  · simp [sub_zero, gt_iff_lt]
-  · ring
-
 end

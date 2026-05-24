@@ -545,77 +545,6 @@ theorem oneSided_deriv_setup
         (fun t ht => (hS_L_diff t ht).differentiableWithinAt)
         hγf_cont.continuousWithinAt hS_L_mem hL_L_tendsto)⟩
 
-/-- **Local geometric setup at a crossing, exact-radius form.** Accepts the
-slit-plane chord-quotient bounds at an arbitrary user-chosen radius `r > 0`
-as hypotheses, rather than internally shrinking the radius to obtain them.
-
-This is the headline of T-BR-Y9c. Compared to the legacy `cpvFullSetup_local`
-(which returns an *output* radius `r ≤ r₀`), the exact form keeps the input
-radius `r` and exposes the slit-plane conditions as named hypotheses. This is
-essential for multi-crossing aggregation: take
-`r = min_i r_i` where each `r_i` is the threshold from
-`exists_chord_slitPlane_radius_right/left` and
-`exists_chord_div_endpoint_slitPlane_right/left` at the `i`-th crossing.
-
-The hypothesis `h_local_unique` is used only to derive `γ(t₀ - r) ≠ s` for the
-boundary slit-plane condition on the left side; for the right side, the chord
-quotient hypothesis already ensures `γ(t₀ + r) - s ≠ 0`.
-
-This is a pure repackaging theorem: it takes derivative-side and slit-plane
-data already in hand and bundles them in the same shape as the legacy
-`cpvFullSetup_local`. Most parameters (`ht₀`, `h_at`, `hr_pos`,
-`h_window_in_unit`, `h_local_unique`, `hL_R_ne`, `hL_L_ne`) are *contract*
-parameters — they document the setting in which the bundled output is to be
-used downstream, even though they are not directly consumed by the proof body.
-Underscored locally to silence the unused-variable linter. -/
-theorem cpvFullSetup_local_exact
-    (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ : ℝ}
-    (_ht₀ : t₀ ∈ Set.Ioo (0 : ℝ) 1)
-    (_h_at : γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ = s)
-    {r : ℝ} (_hr_pos : 0 < r)
-    (_h_window_in_unit : Set.Icc (t₀ - r) (t₀ + r) ⊆ Set.Icc (0 : ℝ) 1)
-    (_h_local_unique : ∀ t ∈ Set.Icc (t₀ - r) (t₀ + r),
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s → t = t₀)
-    {L_R L_L : ℂ} (_hL_R_ne : L_R ≠ 0) (_hL_L_ne : L_L ≠ 0)
-    (h_deriv_right : HasDerivWithinAt
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend L_R (Set.Ioi t₀) t₀)
-    (h_deriv_left : HasDerivWithinAt
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend L_L (Set.Iio t₀) t₀)
-    (h_slit_chord_R : ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
-      (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend b - s) /
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend a - s) ∈
-          Complex.slitPlane)
-    (h_slit_chord_L : ∀ a b, t₀ - r ≤ a → a ≤ b → b < t₀ →
-      (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend b - s) /
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend a - s) ∈
-          Complex.slitPlane)
-    (h_γPlus_div_LR :
-      (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend (t₀ + r) - s) / L_R ∈
-        Complex.slitPlane)
-    (h_LL_neg_div_γMinus :
-      (-L_L) /
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend (t₀ - r) - s) ∈
-        Complex.slitPlane) :
-    HasDerivWithinAt γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend L_R
-        (Set.Ioi t₀) t₀ ∧
-      HasDerivWithinAt γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend L_L
-        (Set.Iio t₀) t₀ ∧
-      (∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend b - s) /
-          (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend a - s) ∈
-            Complex.slitPlane) ∧
-      (∀ a b, t₀ - r ≤ a → a ≤ b → b < t₀ →
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend b - s) /
-          (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend a - s) ∈
-            Complex.slitPlane) ∧
-      (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend (t₀ + r) - s) / L_R ∈
-        Complex.slitPlane ∧
-      (-L_L) /
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend (t₀ - r) - s) ∈
-        Complex.slitPlane :=
-  ⟨h_deriv_right, h_deriv_left, h_slit_chord_R, h_slit_chord_L,
-    h_γPlus_div_LR, h_LL_neg_div_γMinus⟩
-
 /-- **Local geometric setup at a crossing.** Replicates `cpvFullSetup` but
 requires only local uniqueness on the window `[t₀ - r₀, t₀ + r₀] ⊆ [0, 1]`.
 
@@ -1143,49 +1072,6 @@ theorem perCrossing_window_integral_tendsto_exact
       ((argR_lim + argL_lim : ℝ) : ℂ) * Complex.I := by push_cast; ring
   rw [← h_target_eq]
   exact ((Complex.continuous_ofReal.tendsto _).comp h_arg_sum).mul tendsto_const_nhds
-
-/-- **Per-window cutoff integral converges**. Given local geometric data at
-crossing `t_i`, the per-window cutoff integral
-`∫_{[t_i - r, t_i + r]} cpvIntegrand (fun z => (z-s)⁻¹) γ s ε t dt`
-tends to a finite limit as `ε → 0⁺`.
-
-The limit is identified with
-`logNorm_diff + (argR_lim + argL_lim) · I`
-where `logNorm_diff = Real.log ‖γ(t_i + r) - s‖ - Real.log ‖γ(t_i - r) - s‖`
-and the args are derivative-side arg limits.
-
-This is a thin wrapper around `perCrossing_window_integral_tendsto_exact`:
-it derives the slit-plane chord-quotient hypotheses via
-`cpvFullSetup_local`, which produces a smaller output radius `r ≤ r₀`. For
-the multi-crossing aggregation use case where every crossing must share the
-SAME fixed radius, call `perCrossing_window_integral_tendsto_exact` directly. -/
-theorem perCrossing_window_integral_tendsto
-    (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ : ℝ}
-    (ht₀ : t₀ ∈ Set.Ioo (0 : ℝ) 1)
-    (h_at : γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ = s)
-    {r₀ : ℝ} (hr₀_pos : 0 < r₀)
-    (h_window_in_unit : Set.Icc (t₀ - r₀) (t₀ + r₀) ⊆ Set.Icc (0 : ℝ) 1)
-    (h_local_unique : ∀ t ∈ Set.Icc (t₀ - r₀) (t₀ + r₀),
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s → t = t₀) :
-    ∃ (r : ℝ) (_hr_pos : 0 < r) (_hr_le : r ≤ r₀) (L_i : ℂ),
-      Tendsto (fun ε : ℝ =>
-        ∫ t in (t₀ - r)..(t₀ + r),
-          cpvIntegrand (fun z => (z - s)⁻¹)
-            γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend s ε t)
-        (𝓝[>] (0 : ℝ)) (𝓝 L_i) := by
-  obtain ⟨L_R, L_L, r, hL_R_ne, hL_L_ne, hr_pos, hr_le_r₀,
-    h_deriv_right, h_deriv_left, h_slit_R, h_slit_L, h_γPlus_div_LR,
-    h_LL_neg_div_γMinus⟩ :=
-    cpvFullSetup_local γ ht₀ h_at hr₀_pos h_window_in_unit h_local_unique
-  have h_window_sub : Set.Icc (t₀ - r) (t₀ + r) ⊆ Set.Icc (t₀ - r₀) (t₀ + r₀) :=
-    Set.Icc_subset_Icc (by linarith) (by linarith)
-  obtain ⟨L_i, hL_i⟩ :=
-    perCrossing_window_integral_tendsto_exact γ ht₀ h_at hr_pos
-      (h_window_sub.trans h_window_in_unit)
-      (fun t ht heq => h_local_unique t (h_window_sub ht) heq)
-      hL_R_ne hL_L_ne h_deriv_right h_deriv_left
-      h_slit_R h_slit_L h_γPlus_div_LR h_LL_neg_div_γMinus
-  exact ⟨r, hr_pos, hr_le_r₀, L_i, hL_i⟩
 
 /-- **Smooth complement positive bound** for a multi-crossing setup.
 

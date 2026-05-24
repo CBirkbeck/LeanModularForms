@@ -153,13 +153,4 @@ def singleCrossingData_atI_of_ftcHyp {H : ℝ} (hH : 1 < H)
       arc_near_at_I_arcsin H hε (lt_of_lt_of_le hεt (min_le_left _ _)) ht)
     ftcHyp
 
-/-- The winding number at `i` is `-1/2`. -/
-theorem windingNumber_atI_of_ftcHyp {H : ℝ} (hH : 1 < H)
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t)
-    (ftcHyp : ArcFTCHyp γ I (2/5) arcsinDelta (min (1/3) (H - 1))
-      (-(↑Real.pi * I))) :
-    generalizedWindingNumber γ I = -1 / 2 :=
-  (singleCrossingData_atI_of_ftcHyp hH γ hγ ftcHyp).windingNumber_neg_half rfl
-
 end

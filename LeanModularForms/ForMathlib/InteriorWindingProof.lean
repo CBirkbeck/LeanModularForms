@@ -43,25 +43,6 @@ open scoped Real Interval
 
 noncomputable section
 
-/-- On segment 1 (right vertical, re = 1/2), `γ(t) - z` is in the slit plane
-when `z.re < 1/2`, because the real part is `1/2 - z.re > 0`. -/
-theorem fdBoundary_seg1_in_slitPlane {z : ℂ} {H : ℝ}
-    (hz_re : z.re < 1/2) (t : ℝ) (ht : t ≤ 1/5) :
-    fdBoundaryFun H t - z ∈ Complex.slitPlane :=
-  Complex.mem_slitPlane_iff.mpr <| Or.inl <| by
-    rw [sub_re, fdBoundaryFun_seg1_re H t ht]
-    linarith
-
-/-- On segment 5 (horizontal, im = H), `γ(t) - z` has positive imaginary part
-when `z.im < H`, because `(γ(t) - z).im = H - z.im > 0`. -/
-theorem fdBoundary_seg5_in_slitPlane {z : ℂ} {H : ℝ}
-    (hz_im : z.im < H) (t : ℝ) (ht : 4/5 < t) :
-    fdBoundaryFun H t - z ∈ Complex.slitPlane :=
-  Complex.mem_slitPlane_iff.mpr <| Or.inr <| by
-    rw [sub_im, fdBoundaryFun_seg5_im H t ht]
-    linarith
-
-
 /-- Extract segment integrability from full `[0, 1]` integrability. -/
 private lemma segment_integrability {f : ℝ → ℂ} (hint : IntervalIntegrable f volume 0 1)
     {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) (hb : b ≤ 1) :
@@ -100,39 +81,6 @@ theorem fdBoundary_contourIntegral_split {z : ℂ} {H : ℝ}
       ← intervalIntegral.integral_add_adjacent_intervals hint4 hint5]
   ring
 
-/-- The contour integral of `(w - z)⁻¹` along the FD boundary equals `-2πi`,
-given the FTC computation on each of the five segments and the total branch correction.
-
-Each `h_seg*` hypothesis gives the segment integral as a log difference. The `h_total`
-hypothesis gives the algebraic sum of these log differences as `-(2 * π * I)`. -/
-theorem fdBoundary_contourIntegral_inv_sub_eq_of_ftc {z : ℂ} {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hint : IntervalIntegrable
-      (fun t => (γ t - z)⁻¹ * deriv γ.toPath.extend t) volume 0 1)
-    (h_seg1 : ∫ t in (0 : ℝ)..1/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ (1/5 : ℝ) - z) - Complex.log (γ 0 - z))
-    (h_seg2 : ∫ t in (1/5 : ℝ)..2/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ (2/5 : ℝ) - z) - Complex.log (γ (1/5 : ℝ) - z))
-    (h_seg3 : ∫ t in (2/5 : ℝ)..3/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ (3/5 : ℝ) - z) - Complex.log (γ (2/5 : ℝ) - z))
-    (h_seg4 : ∫ t in (3/5 : ℝ)..4/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ (4/5 : ℝ) - z) - Complex.log (γ (3/5 : ℝ) - z))
-    (h_seg5 : ∫ t in (4/5 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ 1 - z) - Complex.log (γ (4/5 : ℝ) - z))
-    (h_total : Complex.log (γ (1/5 : ℝ) - z) - Complex.log (γ 0 - z) +
-      (Complex.log (γ (2/5 : ℝ) - z) - Complex.log (γ (1/5 : ℝ) - z)) +
-      (Complex.log (γ (3/5 : ℝ) - z) - Complex.log (γ (2/5 : ℝ) - z)) +
-      (Complex.log (γ (4/5 : ℝ) - z) - Complex.log (γ (3/5 : ℝ) - z)) +
-      (Complex.log (γ 1 - z) - Complex.log (γ (4/5 : ℝ) - z)) =
-      -(2 * ↑Real.pi * I)) :
-    γ.contourIntegral (fun w => (w - z)⁻¹) = -(2 * ↑Real.pi * I) := by
-  rw [fdBoundary_contourIntegral_split γ hint,
-      h_seg1, h_seg2, h_seg3, h_seg4, h_seg5, h_total]
-
-/-- The five log differences telescope to `log(f) - log(a)`. -/
-theorem log_telescope_five {a b c d e f : ℂ} :
-    (b - a) + (c - b) + (d - c) + (e - d) + (f - e) = f - a := by ring
-
 /-- For a closed path agreeing with `fdBoundaryFun`, `γ(1) - z = γ(0) - z`. -/
 theorem closed_path_sub_eq {z : ℂ} {H : ℝ}
     (γ : PiecewiseC1Path (fdStart H) (fdStart H))
@@ -141,75 +89,5 @@ theorem closed_path_sub_eq {z : ℂ} {H : ℝ}
   have h0 : (γ : ℝ → ℂ) 0 = fdBoundaryFun H 0 := hγ 0 ⟨le_refl _, zero_le_one⟩
   have h1 : (γ : ℝ → ℂ) 1 = fdBoundaryFun H 1 := hγ 1 ⟨zero_le_one, le_refl _⟩
   rw [h0, h1, fdBoundaryFun_closed]
-
-/-- For a closed path, `log(γ(1) - z) - log(γ(0) - z) = 0`. -/
-theorem closed_path_log_telescope_eq_zero {z : ℂ} {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t) :
-    Complex.log (γ 1 - z) - Complex.log (γ 0 - z) = 0 := by
-  rw [closed_path_sub_eq γ hγ, sub_self]
-
-
-/-- **Interior winding number = -1** for the FD boundary, given the contour integral
-identity as a hypothesis. -/
-theorem fdBoundary_interior_winding_neg_one {H : ℝ} (hH : H > Real.sqrt 3 / 2)
-    {z : ℂ} (hz : FDStrictInterior z H)
-    (h_integral : (fdBoundaryPC1Path H hH).contourIntegral (fun w => (w - z)⁻¹) =
-      -(2 * ↑Real.pi * I)) :
-    HasGeneralizedWindingNumber (fdBoundaryPC1Path H hH) z (-1) :=
-  hasGeneralizedWindingNumber_fdBoundary_of_contourIntegral (fdBoundaryPC1Path H hH)
-    (fdBoundaryPC1Path_eq H hH) hz.norm_gt hz.re_abs_lt hz.im_pos hz.im_lt h_integral
-
-
-/-- FTC on segment 1: the integral of `(γ(t) - z)⁻¹ γ'(t)` over `[0, 1/5]` equals
-the log difference, because `γ(t) - z` has positive real part on this segment. -/
-theorem fdBoundary_seg1_ftc {z : ℂ} {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (h_int : IntervalIntegrable
-      (fun t => (γ t - z)⁻¹ * deriv γ.toPath.extend t) volume 0 (1/5))
-    (hFγ_cont : ContinuousOn
-      (fun t => Complex.log (γ.toPath.extend t - z)) (Icc 0 (1/5)))
-    (hFγ_deriv : ∀ t ∈ Ioo (0 : ℝ) (1/5),
-      HasDerivAt (fun s => Complex.log (γ.toPath.extend s - z))
-        ((γ t - z)⁻¹ * deriv γ.toPath.extend t) t) :
-    ∫ t in (0 : ℝ)..1/5, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ (1/5 : ℝ) - z) - Complex.log (γ 0 - z) :=
-  intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le (by norm_num : (0 : ℝ) ≤ 1/5)
-    hFγ_cont hFγ_deriv h_int
-
-/-- FTC on segment 5: the integral of `(γ(t) - z)⁻¹ γ'(t)` over `[4/5, 1]` equals
-the log difference, because `γ(t) - z` has positive imaginary part on this segment. -/
-theorem fdBoundary_seg5_ftc {z : ℂ} {H : ℝ}
-    (γ : PiecewiseC1Path (fdStart H) (fdStart H))
-    (h_int : IntervalIntegrable
-      (fun t => (γ t - z)⁻¹ * deriv γ.toPath.extend t) volume (4/5) 1)
-    (hFγ_cont : ContinuousOn
-      (fun t => Complex.log (γ.toPath.extend t - z)) (Icc (4/5) 1))
-    (hFγ_deriv : ∀ t ∈ Ioo (4/5 : ℝ) 1,
-      HasDerivAt (fun s => Complex.log (γ.toPath.extend s - z))
-        ((γ t - z)⁻¹ * deriv γ.toPath.extend t) t) :
-    ∫ t in (4/5 : ℝ)..1, (γ t - z)⁻¹ * deriv γ.toPath.extend t =
-      Complex.log (γ 1 - z) - Complex.log (γ (4/5 : ℝ) - z) :=
-  intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le (by norm_num : (4 : ℝ)/5 ≤ 1)
-    hFγ_cont hFγ_deriv h_int
-
-/-- Construct `FDWindingData` from the interior contour integral identity.
-
-Given that `∮_γ (w - z)⁻¹ dw = -2πi` for every strict interior point `z`, together
-with the crossing data at the three elliptic points, we obtain `FDWindingData`. -/
-def fdWindingData_of_interior_integral {H : ℝ} (hH : H > Real.sqrt 3 / 2)
-    (h_int : ∀ z : ℂ, 1 < ‖z‖ → |z.re| < 1/2 → 0 < z.im → z.im < H →
-      (fdBoundaryPC1Path H hH).contourIntegral (fun w => (w - z)⁻¹) =
-        -(2 * ↑Real.pi * I))
-    (D_i : SingleCrossingData (fdBoundaryPC1Path H hH) I)
-    (hL_i : D_i.L = -(↑Real.pi * I))
-    (D_rho : SingleCrossingData (fdBoundaryPC1Path H hH) ellipticPointRho)
-    (hL_rho : D_rho.L = -(↑Real.pi / 3 * I))
-    (D_rho1 : SingleCrossingData (fdBoundaryPC1Path H hH) ellipticPointRhoPlusOne)
-    (hL_rho1 : D_rho1.L = -(↑Real.pi / 3 * I)) :
-    FDWindingData H :=
-  FDWindingData.mk_of_interior_contourIntegral (fdBoundaryPC1Path H hH)
-    (fdBoundaryPC1Path_eq H hH) h_int D_i hL_i D_rho hL_rho D_rho1 hL_rho1
-
 
 end

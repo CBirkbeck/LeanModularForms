@@ -148,10 +148,6 @@ theorem cpvIntegrandOn_of_exists_le {S : Finset ℂ} {f : ℂ → ℂ} {γ : ℝ
     cpvIntegrandOn S f γ ε t = 0 :=
   if_pos h
 
-theorem cpvIntegrandOn_empty {f : ℂ → ℂ} {γ : ℝ → ℂ} {ε : ℝ} {t : ℝ} :
-    cpvIntegrandOn ∅ f γ ε t = f (γ t) * deriv γ t :=
-  if_neg (by simp)
-
 /-- Single-point CPV integrand agrees with multi-point CPV integrand for a singleton. -/
 theorem cpvIntegrand_eq_cpvIntegrandOn_singleton {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ}
     {ε : ℝ} {t : ℝ} :
@@ -171,12 +167,6 @@ Returns junk when the limit does not exist. -/
 def cauchyPVOn (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) : ℂ :=
   limUnder (𝓝[>] (0 : ℝ)) fun ε =>
     ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t
-
-/-- Bridge theorem: if `HasCauchyPVOn S f γ L`, then `cauchyPVOn S f γ = L`. -/
-theorem HasCauchyPVOn.cauchyPVOn_eq {S : Finset ℂ} {f : ℂ → ℂ}
-    {γ : PiecewiseC1Path x y} {L : ℂ}
-    (h : HasCauchyPVOn S f γ L) : cauchyPVOn S f γ = L :=
-  h.limUnder_eq
 
 /-- Negation for multi-point CPV. -/
 theorem HasCauchyPVOn.neg {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {L : ℂ}

@@ -50,17 +50,6 @@ theorem DifferentiableOn.hasPrimitive_of_convex {f : ℂ → ℂ} {U : Set ℂ}
   obtain ⟨F, hF⟩ := hU.exists_forall_hasDerivWithinAt hf
   exact ⟨F, fun z hz ↦ (hF z hz).hasDerivAt (hUo.mem_nhds hz)⟩
 
-/-- A holomorphic function on a convex open set has a primitive, stated using
-mathlib's `Complex.IsExactOn`. -/
-theorem DifferentiableOn.isExactOn_convex {f : ℂ → ℂ} {U : Set ℂ}
-    (hf : DifferentiableOn ℂ f U) (hU : Convex ℝ U) (hUo : IsOpen U)
-    (hUne : U.Nonempty) :
-    Complex.IsExactOn f U :=
-  hf.hasPrimitive_of_convex hU hUo hUne
-
-
-/-! ### Cauchy's theorem for convex domains -/
-
 namespace PiecewiseC1Path
 
 variable {x y : ℂ}

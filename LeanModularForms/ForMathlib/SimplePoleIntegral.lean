@@ -54,13 +54,6 @@ private theorem cpvIntegrand_div_eq_mul_inv (c s : ℂ) (γ : ℝ → ℂ) (ε t
   simp only [cpvIntegrand]
   split_ifs <;> simp [div_eq_mul_inv]
 
-/-- PV of `(z - s)⁻¹` equals `2πi · w`: this is exactly the definition of
-`HasGeneralizedWindingNumber`. -/
-theorem hasCauchyPV_inv_sub {s : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
-    (hw : HasGeneralizedWindingNumber γ s w) :
-    HasCauchyPV (fun z => (z - s)⁻¹) γ s (2 * ↑Real.pi * I * w) :=
-  hw
-
 /-- PV integral of `c / (z - s)` equals `2πi · w · c`. -/
 theorem hasCauchyPV_div_sub {s c : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
     (hw : HasGeneralizedWindingNumber γ s w) :
@@ -91,22 +84,6 @@ theorem integral_simple_pole_eq_winding {s c : ℂ} {γ : PiecewiseC1Path x y}
       2 * ↑Real.pi * I * generalizedWindingNumber γ s * c := by
   have hw := hasGeneralizedWindingNumber_of_avoids hδ
   rw [HasCauchyPV.unique (hasCauchyPV_of_avoids hδ) (hasCauchyPV_div_sub hw), hw.eq]
-
-/-- The singleton case: PV of `c / (z - s)` as a `HasCauchyPVOn` statement. -/
-theorem hasCauchyPVOn_singleton_div_sub {s c : ℂ} {γ : PiecewiseC1Path x y} {w : ℂ}
-    (hw : HasGeneralizedWindingNumber γ s w) :
-    HasCauchyPVOn {s} (fun z => c / (z - s)) γ (2 * ↑Real.pi * I * w * c) :=
-  hasCauchyPVOn_singleton_of_hasCauchyPV (hasCauchyPV_div_sub hw)
-
-
-/-- When `γ` avoids all points in `S`, the multi-point CPV of `∑ s ∈ S, c s / (z - s)`
-equals the ordinary contour integral. -/
-theorem hasCauchyPVOn_sum_div_sub_of_avoids {S : Finset ℂ} {c : ℂ → ℂ}
-    {γ : PiecewiseC1Path x y}
-    (hδ : ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖) :
-    HasCauchyPVOn S (fun z => ∑ s ∈ S, c s / (z - s)) γ
-      (γ.contourIntegral (fun z => ∑ s ∈ S, c s / (z - s))) :=
-  hasCauchyPVOn_of_avoids hδ
 
 /-- Contour integral of a sum of simple pole terms equals the sum of
 `2πi · winding · coefficient` when `γ` avoids all poles.

@@ -609,12 +609,4 @@ theorem pv_integral_at_rho_tendsto (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     funext ε; congr 1; funext t; simp only [hg_def, sub_zero]
   rw [h_eq]; exact h_tendsto
 
-/-- `generalizedWindingNumber' (fdBoundary_H H) 0 5 ρ = -1/6`. -/
-theorem gWN_fdBoundary_H_at_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
-    generalizedWindingNumber' (fdBoundary_H H) 0 5 ellipticPointRho = -1/6 := by
-  apply ContourIntegral.gWN_eq_neg_sixth_of_pv_tendsto
-  convert pv_integral_at_rho_tendsto H hH using 2
-  · simp [sub_zero, gt_iff_lt]
-  · ring
-
 end

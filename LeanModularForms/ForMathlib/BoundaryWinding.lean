@@ -62,19 +62,6 @@ theorem hasGeneralizedWindingNumber_neg_half_of_scd {γ : PiecewiseC1Path x y} {
   rw [hL]
   field_simp [Complex.ofReal_ne_zero.mpr Real.pi_ne_zero]
 
-/-- The `generalizedWindingNumber` value version: if `SingleCrossingData` has
-limit `L = -(π * I)`, then `generalizedWindingNumber γ z₀ = -1/2`. -/
-theorem generalizedWindingNumber_neg_half_of_scd {γ : PiecewiseC1Path x y} {z₀ : ℂ}
-    (D : SingleCrossingData γ z₀) (hL : D.L = -(↑Real.pi * I)) :
-    generalizedWindingNumber γ z₀ = -1 / 2 :=
-  D.windingNumber_neg_half hL
-
-/-! ### Generic smooth crossing — SingleCrossingData construction
-
-For a smooth crossing at parameter `t₀ ∈ (0, 1)` (not a partition point),
-we construct `SingleCrossingData` from geometric bounds (`h_far`, `h_near`)
-and an analytical `ArcFTCHyp`. -/
-
 /-- Construct `SingleCrossingData` at an arbitrary smooth crossing parameter `t₀`.
 
 **Geometry parameters** (proved per-segment elsewhere):

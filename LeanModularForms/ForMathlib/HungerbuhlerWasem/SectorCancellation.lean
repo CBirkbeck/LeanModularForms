@@ -77,19 +77,6 @@ theorem sector_pv_formula_vanishes_under_conditionB
   intro ε _
   rw [exp_neg_I_eq_one_of_conditionB n α h_angle, sub_self, zero_div]
 
-/-- **Tendsto form**: the explicit formula tends to 0 as `ε → 0⁺`
-under condition (B). -/
-theorem sector_pv_formula_tendsto_zero_under_conditionB
-    (n : ℕ) (_hn : 2 ≤ n) (α : ℝ)
-    (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
-    Tendsto (fun ε : ℝ =>
-      (1 - Complex.exp (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ) * Complex.I)) /
-        ((↑(n - 1) : ℂ) * (↑ε : ℂ) ^ (n - 1)))
-      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  refine Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) ?_ tendsto_const_nhds
-  filter_upwards [self_mem_nhdsWithin] with ε hε
-  exact (sector_pv_formula_vanishes_under_conditionB n _hn α h_angle ε hε).symm
-
 /-- **Real ray integral closed form.** For `n ≥ 2` and `0 < a ≤ b`:
 
   `∫_a^b 1/t^n dt = (1/(n-1)) · (1/a^(n-1) - 1/b^(n-1))`.
@@ -232,26 +219,6 @@ theorem sector_inv_pow_integral_vanishes_under_conditionB
         (-(↑((n - 1 : ℕ) : ℝ) * α : ℂ)) * Complex.I by push_cast; ring,
     exp_neg_I_eq_one_of_conditionB n α h_angle]
   simp
-
-/-- **Sector PV Tendsto vanishing under condition (B).** The sector curve's
-excised integral tends to 0 as `ε → 0⁺` (and in fact equals 0 for all
-`0 < ε ≤ r`) under condition (B). -/
-theorem sector_inv_pow_integral_tendsto_zero_under_conditionB
-    (r : ℝ) (hr : 0 < r) (α : ℝ) (n : ℕ) (hn : 2 ≤ n)
-    (h_angle : ∃ k : ℤ, ((n - 1 : ℕ) : ℝ) * α = ↑k * (2 * Real.pi)) :
-    Tendsto (fun ε : ℝ =>
-      (∫ t in ε..r, (1 : ℂ) / (↑t : ℂ) ^ n) +
-      (∫ t in (0 : ℝ)..α,
-        ((↑r : ℂ) * Complex.I * Complex.exp ((↑t : ℂ) * Complex.I)) /
-          ((↑r : ℂ) * Complex.exp ((↑t : ℂ) * Complex.I)) ^ n) -
-      (∫ t in ε..r,
-        Complex.exp (-(↑(n - 1 : ℕ) : ℂ) * ((↑α : ℂ) * Complex.I)) /
-          (↑t : ℂ) ^ n))
-      (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-  refine Tendsto.congr' (f₁ := fun _ : ℝ => (0 : ℂ)) ?_ tendsto_const_nhds
-  filter_upwards [Ioo_mem_nhdsGT hr] with ε hε
-  exact (sector_inv_pow_integral_vanishes_under_conditionB r hr ε hε.1
-    hε.2.le α n hn h_angle).symm
 
 /-- **F-line difference vanishing under condition (B), general angle.**
 For pole `s`, two tangent directions `L_plus` (right) and `L_minus` (left, used
@@ -411,113 +378,6 @@ theorem hw_theorem_3_3_under_conditionB_parametric
     (F_curve_diff_tendsto_zero_under_conditionB h_flat hL_minus hL_plus
       h_deriv_right h_deriv_left hL_right hL_left h_s hk hkn hn1 h_B
       t_eps_plus t_eps_minus h_plus_to h_plus_radius h_minus_to h_minus_radius)
-
-/-- **HW Theorem 3.3 — fully assembled k-even/general angle case under (B).**
-The general-angle analog of `hasCauchyPVOn_singleton_pow_of_transverse_assembled`.
-
-For closed `γ : PiecewiseC1Path x x` with single corner crossing at
-`t₀ ∈ (0, 1)` of pole `s` with TWO tangent directions `L_minus` (left) and
-`L_plus` (right), condition (B), γ flat of order n ≥ k, plus strict
-(anti-)monotonicity of `‖γ - s‖` on each side and avoidance margins:
-
-  `HasCauchyPVOn {s} (fun z => 1/(z-s)^k) γ 0`. -/
-theorem hasCauchyPVOn_singleton_pow_of_conditionB_assembled
-    {x : ℂ} {γ : PiecewiseC1Path x x} {s L_minus L_plus : ℂ}
-    {t₀ δMinus δPlus : ℝ} {n k : ℕ}
-    (h_t₀_minus_pos : 0 ≤ t₀ - δMinus) (h_t₀_plus_le : t₀ + δPlus ≤ 1)
-    (hδMinus : 0 < δMinus) (hδPlus : 0 < δPlus)
-    (h_close : γ.toPath.extend 0 = γ.toPath.extend 1)
-    (h_flat : IsFlatOfOrder γ.toPath.extend t₀ n)
-    (hL_minus : L_minus ≠ 0) (hL_plus : L_plus ≠ 0)
-    (h_deriv_right : HasDerivWithinAt γ.toPath.extend L_plus (Set.Ioi t₀) t₀)
-    (h_deriv_left : HasDerivWithinAt γ.toPath.extend L_minus (Set.Iio t₀) t₀)
-    (hL_right : Tendsto (deriv γ.toPath.extend) (𝓝[>] t₀) (𝓝 L_plus))
-    (hL_left : Tendsto (deriv γ.toPath.extend) (𝓝[<] t₀) (𝓝 L_minus))
-    (h_s : γ.toPath.extend t₀ = s)
-    (hk : 2 ≤ k) (hkn : k ≤ n) (hn1 : 1 ≤ n)
-    (h_B :
-      (L_plus / (↑‖L_plus‖ : ℂ)) ^ (k - 1) =
-      ((-L_minus) / (↑‖L_minus‖ : ℂ)) ^ (k - 1))
-    (hγ_cont_right : ContinuousOn γ.toPath.extend (Set.Icc t₀ (t₀ + δPlus)))
-    (hγ_cont_left : ContinuousOn γ.toPath.extend (Set.Icc (t₀ - δMinus) t₀))
-    (h_leave_right : ∀ t ∈ Set.Ioc t₀ (t₀ + δPlus), γ.toPath.extend t ≠ s)
-    (h_leave_left : ∀ t ∈ Set.Ico (t₀ - δMinus) t₀, γ.toPath.extend t ≠ s)
-    (hγ_anti : StrictAntiOn (fun t => ‖γ.toPath.extend t - s‖)
-      (Set.Icc (t₀ - δMinus) t₀))
-    (hγ_mono : StrictMonoOn (fun t => ‖γ.toPath.extend t - s‖)
-      (Set.Icc t₀ (t₀ + δPlus)))
-    {δ_avoid_left δ_avoid_right : ℝ}
-    (h_avoid_left_pos : 0 < δ_avoid_left)
-    (h_avoid_right_pos : 0 < δ_avoid_right)
-    (h_avoid_left : ∀ t ∈ Set.Icc (0 : ℝ) (t₀ - δMinus),
-      δ_avoid_left ≤ ‖γ.toPath.extend t - s‖)
-    (h_avoid_right : ∀ t ∈ Set.Icc (t₀ + δPlus) (1 : ℝ),
-      δ_avoid_right ≤ ‖γ.toPath.extend t - s‖)
-    (h_minus_smooth : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc (0 : ℝ)
-        (LeanModularForms.firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
-      HasDerivAt γ.toPath.extend (deriv γ.toPath.extend t) t)
-    (h_minus_avoids : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc (0 : ℝ)
-        (LeanModularForms.firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
-      γ.toPath.extend t ≠ s)
-    (h_minus_int : ∀ ε > 0,
-      IntervalIntegrable
-        (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k)
-        MeasureTheory.volume 0
-        (LeanModularForms.firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε))
-    (h_plus_smooth : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc
-        (LeanModularForms.firstExitTimeRight γ.toPath.extend t₀ δPlus s ε)
-        (1 : ℝ),
-      HasDerivAt γ.toPath.extend (deriv γ.toPath.extend t) t)
-    (h_plus_avoids : ∀ ε > 0,
-      ∀ t ∈ Set.uIcc
-        (LeanModularForms.firstExitTimeRight γ.toPath.extend t₀ δPlus s ε)
-        (1 : ℝ),
-      γ.toPath.extend t ≠ s)
-    (h_plus_int : ∀ ε > 0,
-      IntervalIntegrable
-        (fun t => deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k)
-        MeasureTheory.volume
-        (LeanModularForms.firstExitTimeRight γ.toPath.extend t₀ δPlus s ε)
-        (1 : ℝ))
-    (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
-      (fun t => cpvIntegrandOn {s}
-        (fun z => (1 : ℂ) / (z - s) ^ k) γ.toPath.extend ε t)
-      MeasureTheory.volume 0 1) :
-    HasCauchyPVOn {s} (fun z => (1 : ℂ) / (z - s) ^ k) γ 0 := by
-  have h_parametric :=
-    hw_theorem_3_3_under_conditionB_parametric (γ := γ.toPath.extend)
-      (γ' := deriv γ.toPath.extend) (s := s) (L_minus := L_minus)
-      (L_plus := L_plus) (n := n) (k := k) (a := 0) (b := 1) (t₀ := t₀)
-      h_close h_flat hL_minus hL_plus h_deriv_right h_deriv_left
-      hL_right hL_left h_s hk hkn hn1 h_B
-      (LeanModularForms.firstExitTimeRight γ.toPath.extend t₀ δPlus s)
-      (LeanModularForms.firstExitTimeLeft γ.toPath.extend t₀ δMinus s)
-      (LeanModularForms.firstExitTimeRight_tendsto_t₀ hδPlus hγ_cont_right h_s
-        h_leave_right)
-      (LeanModularForms.firstExitTimeRight_radius_eventually hδPlus hγ_cont_right
-        h_s h_leave_right)
-      (LeanModularForms.firstExitTimeLeft_tendsto_t₀ hδMinus hγ_cont_left h_s
-        h_leave_left)
-      (LeanModularForms.firstExitTimeLeft_radius_eventually hδMinus hγ_cont_left
-        h_s h_leave_left)
-      h_minus_smooth h_minus_avoids h_minus_int
-      h_plus_smooth h_plus_avoids h_plus_int
-  refine hasCauchyPVOn_singleton_of_exitTime_excision γ s
-    (fun z => (1 : ℂ) / (z - s) ^ k)
-    (shape_eventually_of_strict_mono
-      h_t₀_minus_pos h_t₀_plus_le hδMinus hδPlus
-      hγ_cont_left hγ_cont_right hγ_anti hγ_mono h_s
-      h_avoid_left_pos h_avoid_right_pos h_avoid_left h_avoid_right)
-    h_int_full ?_
-  refine h_parametric.congr fun ε => ?_
-  congr 1 <;>
-  · refine intervalIntegral.integral_congr fun t _ => ?_
-    change deriv γ.toPath.extend t / (γ.toPath.extend t - s) ^ k =
-         (1 / (γ.toPath.extend t - s) ^ k) * deriv γ.toPath.extend t
-    ring
 
 end HungerbuhlerWasem
 

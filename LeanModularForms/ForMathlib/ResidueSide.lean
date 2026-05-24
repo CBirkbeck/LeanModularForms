@@ -99,22 +99,4 @@ theorem cpv_modular_side_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ 
   cpv_modular_side_tendsto f hf S hS hS_complete
 
 include hf in
-/-- **The PV chain identity**: equating the residue and modular sides via
-uniqueness of limits (both are limits of the same ε-truncated integral),
-then cancelling `2πi`.
-
-The result is:
-  `Σ gWN(γ, s) · ord(f, s) = -(k/12 - ord_∞(f))`
-
-This is the fundamental identity underlying the valence formula, before
-substituting explicit winding weights. -/
-theorem pv_chain_identity_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
-    (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S) :
-    ∃ H₀ : ℝ, Real.sqrt 3 / 2 < H₀ ∧ ∀ {H : ℝ}, H₀ ≤ H →
-      ∑ s ∈ S, generalizedWindingNumber' (fdBoundary_H H) 0 5 (↑s : ℂ) *
-        (orderOfVanishingAt' (⇑f) s : ℂ) = -((k : ℂ) / 12 - (orderAtCusp' f : ℂ)) :=
-  pv_chain_identity f hf S hS hS_complete
-
-
-
 end
