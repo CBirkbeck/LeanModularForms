@@ -237,12 +237,6 @@ theorem PiecewiseC1Immersion.crossing_not_accPt (γ : PiecewiseC1Immersion) (z�
       simp only [mem_setOf_eq] at ht_mem
       exact ht.elim (fun h => h ht_mem.2) (fun h => h ht_mem.1))
 
-/-- The crossing set is closed. -/
-theorem crossing_set_isClosed (γ : PiecewiseC1Immersion) (z₀ : ℂ) :
-    IsClosed {t ∈ Icc γ.a γ.b | γ.toFun t = z₀} := by
-  change IsClosed (Icc γ.a γ.b ∩ γ.toFun ⁻¹' {z₀})
-  exact γ.continuous_toFun.preimage_isClosed_of_isClosed isClosed_Icc isClosed_singleton
-
 /-- For each crossing, there exists an isolating sub-interval. -/
 theorem exists_isolated_crossing_interval (γ : PiecewiseC1Immersion) (z₀ : ℂ) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hcross : γ.toFun t₀ = z₀) :
@@ -293,109 +287,5 @@ theorem PiecewiseC1Immersion.deriv_ne_zero_of_C2 (γ : PiecewiseC1Immersion) (t�
     rw [h_eq]
     exact hL_ne
   · exact γ.deriv_ne_zero t₀ (Ioo_subset_Icc_self ht₀) hpart
-
-/-- CPV of `(z - z₀)⁻¹` exists on a sub-interval with a single crossing,
-given C² regularity at the crossing point.
-
-This combines `pv_limit_via_dyadic` with `cpv_exists_from_shifted_tendsto`
-to prove CPV existence on a sub-interval containing exactly one crossing. -/
-theorem cpv_exists_single_crossing (γ : PiecewiseC1Immersion) (z₀ : ℂ) (a' b' t₀ : ℝ)
-    (hat₀ : t₀ ∈ Ioo a' b') (hcross : γ.toFun t₀ = z₀) (h_sub : Icc a' b' ⊆ Icc γ.a γ.b)
-    (h_inj : ∀ t ∈ Icc a' b', γ.toFun t = z₀ → t = t₀) (hγ_C2 : ContDiffAt ℝ 2 γ.toFun t₀)
-    (h_cont_deriv : ContinuousOn (deriv γ.toFun) (Icc a' b')) (hγ_meas : Measurable γ.toFun) :
-    CauchyPrincipalValueExists' (fun z => (z - z₀)⁻¹) γ.toFun a' b' z₀ := by
-  have hab' : a' ≤ b' := (hat₀.1.trans hat₀.2).le
-  have ht₀_Ioo_ab : t₀ ∈ Ioo γ.a γ.b :=
-    ⟨(h_sub (left_mem_Icc.mpr hab')).1.trans_lt hat₀.1,
-     hat₀.2.trans_le (h_sub (right_mem_Icc.mpr hab')).2⟩
-  have hL_ne : deriv γ.toFun t₀ ≠ 0 := γ.deriv_ne_zero_of_C2 t₀ ht₀_Ioo_ab hγ_C2
-  have hγ_cont : ContinuousOn γ.toFun (Icc a' b') := γ.continuous_toFun.mono h_sub
-  have h_inj' : ∀ t ∈ Icc a' b', γ.toFun t = γ.toFun t₀ → t = t₀ :=
-    fun t ht hγt => h_inj t ht (hγt.trans hcross)
-  obtain ⟨limit, h_limit⟩ := pv_limit_via_dyadic hat₀ hL_ne hγ_C2
-    rfl h_cont_deriv hγ_meas hγ_cont h_inj'
-  exact ⟨limit, h_limit.congr (fun ε => intervalIntegral.integral_congr
-    (fun t _ => by rw [hcross]))⟩
-
-/-- The cutoff integrand for `(z - z₀)⁻¹` is interval-integrable along a
-piecewise C¹ curve. The integrand is bounded: `(γ(t) - z₀)⁻¹` is bounded by
-`1/ε` on the region `‖γ(t) - z₀‖ > ε`, and the derivative is locally bounded
-by continuity. -/
-theorem cpv_integrand_intervalIntegrable (γ : PiecewiseC1Immersion) (z₀ : ℂ) (c d : ℝ)
-    (hcd : c ≤ d) (h_sub : Icc c d ⊆ Icc γ.a γ.b) (ε : ℝ) (hε : 0 < ε) :
-    IntervalIntegrable
-      (fun t => if ε < ‖γ.toFun t - z₀‖
-        then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0)
-      volume c d := by
-  obtain ⟨D, hD⟩ := piecewiseC1Immersion_deriv_bounded γ
-  have hD_nn : 0 ≤ D := (norm_nonneg _).trans (hD γ.a (left_mem_Icc.mpr γ.hab.le))
-  set g : ℝ → ℂ := fun t => if ε < ‖γ.toFun t - z₀‖
-      then (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t else 0 with hg_def
-  have h_bound : ∀ t ∈ Icc c d, ‖g t‖ ≤ ε⁻¹ * D := fun t ht => by
-    simp only [hg_def]
-    split_ifs with h
-    · rw [norm_mul, norm_inv]
-      exact mul_le_mul (inv_anti₀ hε h.le) (hD t (h_sub ht))
-        (norm_nonneg _) (inv_nonneg.mpr hε.le)
-    · simp only [norm_zero]; exact mul_nonneg (inv_nonneg.mpr hε.le) hD_nn
-  have hγ_cont_cd : ContinuousOn γ.toFun (Icc c d) := γ.continuous_toFun.mono h_sub
-  have hS_meas : MeasurableSet ({t | ε < ‖γ.toFun t - z₀‖} ∩ Icc c d) :=
-    measurableSet_norm_gt_Icc ε (hγ_cont_cd.sub continuousOn_const)
-  have h_meas : AEStronglyMeasurable g (volume.restrict (Icc c d)) := by
-    let S := {t | ε < ‖γ.toFun t - z₀‖} ∩ Icc c d
-    have h_pw : AEStronglyMeasurable
-        (S.piecewise (fun t => (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t) (fun _ => (0 : ℂ)))
-        volume := by
-      refine AEStronglyMeasurable.piecewise hS_meas ?_ aestronglyMeasurable_const
-      have h_cont_on_S : ContinuousOn (fun t => (γ.toFun t - z₀)⁻¹ * deriv γ.toFun t)
-          (S \ γ.partition) := by
-        intro t ⟨⟨ht_far, ht_Icc⟩, ht_notP⟩
-        have h_ne : γ.toFun t - z₀ ≠ 0 := fun heq => by
-          simp only [Set.mem_setOf_eq, heq, norm_zero] at ht_far; linarith
-        refine ContinuousWithinAt.mul
-          (((hγ_cont_cd.continuousWithinAt ht_Icc).sub continuousWithinAt_const
-            |>.mono (fun x hx => hx.1.2)).inv₀ h_ne) ?_
-        by_cases ht_Ioo : t ∈ Ioo γ.a γ.b
-        · exact (γ.toPiecewiseC1Curve.deriv_continuous_off_partition
-              t ht_Ioo ht_notP).continuousWithinAt
-        · have ht_ab := h_sub ht_Icc
-          simp only [Set.mem_Ioo, not_and, not_lt] at ht_Ioo
-          have : t = γ.a ∨ t = γ.b := by
-            rcases ht_ab.1.lt_or_eq with h | h
-            · exact Or.inr (le_antisymm ht_ab.2 (ht_Ioo h))
-            · exact Or.inl h.symm
-          rcases this with rfl | rfl
-          · exact absurd γ.toPiecewiseC1Curve.endpoints_in_partition.1 ht_notP
-          · exact absurd γ.toPiecewiseC1Curve.endpoints_in_partition.2 ht_notP
-      have h_P_null : volume (↑γ.partition ∩ S) = 0 :=
-        (γ.partition.finite_toSet.inter_of_left S).measure_zero volume
-      have h_eq_S : S = (S \ γ.partition) ∪ (↑γ.partition ∩ S) := by
-        ext x; simp only [S, Set.mem_union, Set.mem_diff, Set.mem_inter_iff]; tauto
-      rw [show volume.restrict S =
-          volume.restrict ((S \ γ.partition) ∪ (↑γ.partition ∩ S)) from by rw [← h_eq_S],
-        aestronglyMeasurable_union_iff]
-      exact ⟨h_cont_on_S.aestronglyMeasurable
-        (hS_meas.diff γ.partition.finite_toSet.measurableSet),
-        (Measure.restrict_zero_set h_P_null).symm ▸ aestronglyMeasurable_zero_measure _⟩
-    refine (h_pw.mono_measure Measure.restrict_le_self).congr ?_
-    filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t ht
-    symm; simp only [hg_def, piecewise]
-    split_ifs with h1 h2 h2
-    · rfl
-    · exact absurd ⟨h1, ht⟩ h2
-    · exact absurd h2.1 h1
-    · rfl
-  exact (uIcc_of_le hcd ▸
-    IntegrableOn.of_bound (Real.volume_Icc ▸ ENNReal.ofReal_lt_top) h_meas (ε⁻¹ * D)
-      (by filter_upwards [ae_restrict_mem measurableSet_Icc] with t ht
-          exact h_bound t ht)).intervalIntegrable
-
-/-- Helper: CPV of `(z - z₀)⁻¹` exists on any sub-interval `[c, d] ⊆ [a, b]`
-where there are no crossings. This follows directly from `cpv_avoidance`. -/
-private theorem cpv_avoidance_sub (γ : PiecewiseC1Immersion) (z₀ : ℂ) (c d : ℝ)
-    (hcd : c ≤ d) (h_sub : Icc c d ⊆ Icc γ.a γ.b)
-    (h_avoid : ∀ t ∈ Icc c d, γ.toFun t ≠ z₀) :
-    CauchyPrincipalValueExists' (fun z => (z - z₀)⁻¹) γ.toFun c d z₀ :=
-  cpv_avoidance _ γ.toFun c d z₀ (γ.continuous_toFun.mono h_sub) hcd h_avoid
 
 end

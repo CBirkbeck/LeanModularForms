@@ -169,24 +169,6 @@ private lemma homotopy_chain_rule_t (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (
   simpa [smul_eq_mul, mul_comm] using
     deriv.scomp t (hf (H (t, s))) (homotopy_H_differentiableAt_t H hH t s)
 
-private lemma homotopy_schwarz_product_rule (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (hH : ContDiff ℝ 2 H)
-    (t s : ℝ) (hf_at : DifferentiableAt ℂ f (H (t, s))) (hf : Differentiable ℂ f) :
-    deriv (fun s' => f (H (t, s')) * deriv (fun t' => H (t', s')) t) s =
-      deriv (fun t' => f (H (t', s)) * deriv (fun s'' => H (t', s'')) s) t := by
-  have hLHS : deriv (fun s' => f (H (t, s')) * deriv (fun t' => H (t', s')) t) s =
-      deriv (fun s' => f (H (t, s'))) s * deriv (fun t' => H (t', s)) t +
-        f (H (t, s)) * deriv (fun s' => deriv (fun t' => H (t', s')) t) s :=
-    deriv_mul (homotopy_fH_differentiableAt_s f H hH t s hf_at)
-      (homotopy_partialT_differentiableAt_s H hH t s)
-  have hRHS : deriv (fun t' => f (H (t', s)) * deriv (fun s'' => H (t', s'')) s) t =
-      deriv (fun t' => f (H (t', s))) t * deriv (fun s' => H (t, s')) s +
-        f (H (t, s)) * deriv (fun t' => deriv (fun s' => H (t', s')) s) t :=
-    deriv_mul (homotopy_fH_differentiableAt_t f H hH t s hf_at)
-      (homotopy_partialS_differentiableAt_t H hH t s)
-  rw [hLHS, hRHS, homotopy_chain_rule_s f H hH t s hf, homotopy_chain_rule_t f H hH t s hf,
-    schwarz_partialDeriv_comm H hH t s]
-  ring
-
 private lemma homotopy_mixed_partial_continuous (H : ℝ × ℝ → ℂ) (hH : ContDiff ℝ 2 H) :
     Continuous (fun p : ℝ × ℝ => deriv (fun s' => deriv (fun t' => H (t', s')) p.1) p.2) := by
   have h_partialT := contDiff_partialDeriv_fst_of_contDiff_two H hH
@@ -236,27 +218,5 @@ private lemma homotopy_F'_continuous (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) 
     (contDiff_partialDeriv_snd_of_contDiff_two H hH).continuous).mul
     (contDiff_partialDeriv_fst_of_contDiff_two H hH).continuous).add
     (hfH_cont.mul (homotopy_mixed_partial_continuous H hH))
-
-private lemma homotopy_uniform_bound (f : ℂ → ℂ) (H : ℝ × ℝ → ℂ) (a b s : ℝ) (hab : a < b)
-    (hH : ContDiff ℝ 2 H) (hfH_cont : Continuous (f ∘ H)) (hf : Differentiable ℂ f) :
-    ∃ (ε : ℝ) (M : ℝ), 0 < ε ∧
-      (∀ᵐ t ∂volume, t ∈ Ι a b → ∀ s' ∈ Metric.ball s ε,
-        ‖deriv (fun s'' => f (H (t, s'')) * deriv (fun t' => H (t', s'')) t) s'‖ ≤ M) ∧
-      IntervalIntegrable (fun _ => M) volume a b ∧ Metric.ball s ε ∈ 𝓝 s := by
-  let ε : ℝ := 1 / 4
-  have hε_pos : (0 : ℝ) < ε := by norm_num
-  let K : Set (ℝ × ℝ) := Icc a b ×ˢ Icc (s - ε) (s + ε)
-  obtain ⟨M_pt, _, hM_pt_max⟩ := (isCompact_Icc.prod isCompact_Icc : IsCompact K).exists_isMaxOn
-    ⟨(a, s), left_mem_Icc.mpr hab.le, by constructor <;> linarith⟩
-    (continuous_norm.comp (homotopy_F'_continuous f H hH hfH_cont hf)).continuousOn
-  let M : ℝ := ‖deriv (fun s'' => f (H (M_pt.1, s'')) *
-    deriv (fun t' => H (t', s'')) M_pt.1) M_pt.2‖
-  have h_ball_subset : Metric.ball s ε ⊆ Icc (s - ε) (s + ε) := fun x hx => by
-    simp only [Metric.mem_ball, Real.dist_eq] at hx
-    constructor <;> linarith [abs_lt.mp hx]
-  refine ⟨ε, M, hε_pos, ?_, intervalIntegrable_const, Metric.ball_mem_nhds s hε_pos⟩
-  filter_upwards with t ht s' hs'
-  simpa using hM_pt_max (show (t, s') ∈ K from
-    ⟨Set.uIoc_subset_uIcc.trans (Set.uIcc_of_le hab.le).subset ht, h_ball_subset hs'⟩)
 
 end

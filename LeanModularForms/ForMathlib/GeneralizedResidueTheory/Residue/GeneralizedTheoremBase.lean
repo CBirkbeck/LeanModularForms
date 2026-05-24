@@ -343,30 +343,4 @@ lemma CauchyPrincipalValueExists'.const_mul
   refine intervalIntegral.integral_congr fun _ _ => ?_
   split_ifs <;> ring
 
-/-- If `f` has a simple pole at `z₀` with decomposition `c / (z - z₀) + g`,
-then `residueSimplePole f z₀ = c`. -/
-theorem residueSimplePole_eq_of_decomposition (f : ℂ → ℂ) (z₀ c : ℂ) (g : ℂ → ℂ)
-    (hg : AnalyticAt ℂ g z₀)
-    (hf_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    residueSimplePole f z₀ = c := by
-  unfold residueSimplePole
-  refine Tendsto.limUnder_eq ?_
-  have h_sub : Tendsto (fun z => z - z₀) (𝓝[≠] z₀) (𝓝 0) := by
-    rw [← sub_self z₀]
-    exact tendsto_nhdsWithin_of_tendsto_nhds
-      (continuous_id.sub continuous_const).continuousAt.tendsto
-  have h_prod : Tendsto (fun z => (z - z₀) * g z) (𝓝[≠] z₀) (𝓝 0) := by
-    simpa using h_sub.mul (hg.continuousAt.tendsto.mono_left nhdsWithin_le_nhds)
-  have h_ev : ∀ᶠ z in 𝓝[≠] z₀, (z - z₀) * f z = c + (z - z₀) * g z := by
-    filter_upwards [hf_eq, self_mem_nhdsWithin] with z hz hne
-    rw [hz, mul_add, mul_div_cancel₀ _ (sub_ne_zero.mpr hne)]
-  refine (?_ : Tendsto _ _ (𝓝 c)).congr' (h_ev.mono fun _ hz => hz.symm)
-  simpa using (tendsto_const_nhds (x := c)).add h_prod
-
-private lemma analyticAt_sum_erase_div_sub (S0 : Finset ℂ) (c : ℂ → ℂ) (s : ℂ) :
-    AnalyticAt ℂ (fun z => ∑ s' ∈ S0.erase s, c s' / (z - s')) s :=
-  (S0.erase s).analyticAt_fun_sum fun _ hs' =>
-    analyticAt_const.div (analyticAt_id.sub analyticAt_const)
-      (sub_ne_zero.mpr (Ne.symm (Finset.ne_of_mem_erase hs')))
-
 end
