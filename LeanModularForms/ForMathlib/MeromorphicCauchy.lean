@@ -165,28 +165,4 @@ theorem sub_principalPartSum_corrected_differentiableOn {f : ℂ → ℂ} {U : S
   · intro z ⟨_, hzS⟩
     exact if_neg hzS
 
-private lemma contourIntegral_corrected_eq_rem {f : ℂ → ℂ} {S : Finset ℂ} {c : ℂ → ℂ}
-    {γ : PiecewiseC1Path x x} {g : ℂ → ℂ}
-    (h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
-      g (γ t) = f (γ t) - principalPartSum S c (γ t)) :
-    γ.contourIntegral g =
-      γ.contourIntegral (fun z => f z - principalPartSum S c z) := by
-  simp only [PiecewiseC1Path.contourIntegral, PiecewiseC1Path.extendedPath_eq]
-  refine intervalIntegral.integral_congr fun t ht => ?_
-  rw [uIcc_of_le (zero_le_one' ℝ)] at ht
-  simp only [PiecewiseC1Path.extendedPath_eq] at h_g_on_curve
-  simp [h_g_on_curve t ht]
-
-private lemma corrected_remainder_integrable {f : ℂ → ℂ} {S : Finset ℂ} {c : ℂ → ℂ}
-    {γ : PiecewiseC1Path x x} {g : ℂ → ℂ}
-    (h_g_on_curve : ∀ t ∈ Icc (0 : ℝ) 1,
-      g (γ t) = f (γ t) - principalPartSum S c (γ t))
-    (h_rem_int : IntervalIntegrable
-      (PiecewiseC1Path.contourIntegrand (fun z => f z - principalPartSum S c z) γ)
-      volume 0 1) :
-    IntervalIntegrable (PiecewiseC1Path.contourIntegrand g γ) volume 0 1 := by
-  refine h_rem_int.congr fun t ht => ?_
-  rw [uIoc_of_le (zero_le_one' ℝ)] at ht
-  simp only [PiecewiseC1Path.contourIntegrand, h_g_on_curve t (Ioc_subset_Icc_self ht)]
-
 end

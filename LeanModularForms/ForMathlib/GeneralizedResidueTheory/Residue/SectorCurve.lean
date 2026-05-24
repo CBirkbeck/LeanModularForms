@@ -24,9 +24,6 @@ where `alpha` is the opening angle of the sector.
 
 * `pv_sector_dz_over_z` -- PV of `dz/z` along sector curve equals `I * alpha`
 
-See `SectorCurveLemma.lean` for higher-order results (`pv_sector_higher_power`,
-`cauchyPV_sectorCurve_simplePole`, etc.).
-
 ## Mathematical Overview
 
 The sector curve `sigma_{r,alpha}` is a closed curve from the origin, along the
