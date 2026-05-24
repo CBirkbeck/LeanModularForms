@@ -603,50 +603,6 @@ theorem cpv_polarPart_at_crossed_pole_hasCauchyPV_asymmetric_corner
           (decomp.coeff s k))
   exact cpv_polarPart_at_pole_under_conditions_asymmetric D hs decomp h_higher h_term_int
 
-/-- **Lift: from `HasCauchyPV` to `HasCauchyPVOn S`** when γ avoids every other
-pole in `S`. The cutoff sets `B_{s'}(ε)` for `s' ∈ S \ {s}` are eventually
-empty as `ε → 0` (γ stays a positive distance from each `s'`). Hence the
-multi-point cutoff integrand equals the singleton cutoff integrand for
-`ε` smaller than the avoidance distance. -/
-theorem hasCauchyPVOn_of_hasCauchyPV_of_avoid_other_poles
-    {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {s : ℂ} {S : Finset ℂ} (_hs : s ∈ S)
-    {L : ℂ} (h : HasCauchyPV f γ s L)
-    (h_avoid_others : ∀ s' ∈ S, s' ≠ s → ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s') :
-    HasCauchyPVOn S f γ L := by
-  classical
-  have h_S_erase_avoids : ∀ s' ∈ S.erase s, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s' := by
-    intro s' hs' t ht
-    have hne : s' ≠ s := Finset.ne_of_mem_erase hs'
-    have hin : s' ∈ S := Finset.mem_of_mem_erase hs'
-    exact h_avoid_others s' hin hne t ht
-  obtain ⟨δ, hδ_pos, hδ_bound⟩ :=
-    avoids_finset_delta_bound γ (S.erase s) h_S_erase_avoids
-  have h_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t =
-        ∫ t in (0 : ℝ)..1, cpvIntegrand f γ.toPath.extend s ε t := by
-    filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε_in
-    have hε_pos : 0 < ε := hε_in.1
-    have hε_lt : ε < δ := hε_in.2
-    apply intervalIntegral.integral_congr
-    intro t ht
-    rw [uIcc_of_le (zero_le_one' ℝ)] at ht
-    have h_far_others : ∀ s' ∈ S.erase s, ε < ‖γ.toPath.extend t - s'‖ := by
-      intro s' hs'
-      exact lt_of_lt_of_le hε_lt (hδ_bound s' hs' t ht)
-    by_cases h_near_s : ‖γ.toPath.extend t - s‖ ≤ ε
-    · have h_S : ∃ s'' ∈ S, ‖γ.toPath.extend t - s''‖ ≤ ε := ⟨s, _hs, h_near_s⟩
-      rw [cpvIntegrandOn_of_exists_le h_S, cpvIntegrand_of_le h_near_s]
-    · push Not at h_near_s
-      have h_far_S : ∀ s'' ∈ S, ε < ‖γ.toPath.extend t - s''‖ := by
-        intro s'' hs''
-        by_cases h_eq : s'' = s
-        · rw [h_eq]; exact h_near_s
-        · exact h_far_others s'' (Finset.mem_erase.mpr ⟨h_eq, hs''⟩)
-      rw [cpvIntegrandOn_of_forall_gt h_far_S, cpvIntegrand_of_gt h_near_s]
-  unfold HasCauchyPVOn
-  unfold HasCauchyPV at h
-  exact h.congr' (Filter.EventuallyEq.symm h_eq)
-
 /-- **T-BR-Y1 helper.** Given `hCondA : SatisfiesConditionA' γ f S (decomp.order)`
 and a crossing `γ t₀ = s` at an interior parameter, extract the data
 `⟨n, 1 ≤ n, decomp.order s ≤ n, IsFlatOfOrder γ t₀ n⟩` previously supplied as

@@ -214,21 +214,6 @@ private lemma gFunc_constant_piecewise
   exact constant_of_has_deriv_right_zero hG_cont
     (hasDerivWithinAt_zero_of_deriv_zero_off_finite G a b P hG_cont hG_diff hG_deriv)
 
-private lemma pv_eq_integral_of_bound_away
-    {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {δ : ℝ}
-    (hab : a < b) (hδ : 0 < δ)
-    (hδ_bd : ∀ t ∈ Icc a b, δ ≤ ‖γ t - z₀‖) :
-    cauchyPrincipalValue' (·⁻¹) (fun t => γ t - z₀) a b 0 =
-    ∫ t in a..b, (γ t - z₀)⁻¹ * deriv γ t := by
-  unfold cauchyPrincipalValue'
-  apply limUnder_eventually_eq_const
-  filter_upwards [Ioo_mem_nhdsGT hδ] with ε hε
-  apply intervalIntegral.integral_congr_ae
-  filter_upwards with t ht
-  simp only [sub_zero]
-  have ht' : t ∈ Icc a b := Ioc_subset_Icc_self (Set.uIoc_of_le hab.le ▸ ht)
-  simp only [(mem_Ioo.mp hε).2.trans_le (hδ_bd t ht'), ↓reduceIte, deriv_sub_const]
-
 /-- Piecewise generalization of `exp_integral_eq_endpoint_ratio`: for a piecewise C¹
 curve avoiding z₀ with bounded derivative, the exponential of the log-derivative
 integral equals the endpoint ratio. Uses the G-function technique. -/
@@ -262,24 +247,6 @@ theorem exp_integral_eq_endpoint_ratio_piecewise
   rw [show Complex.exp (∫ t in a..b, deriv γ t / (γ t - z₀)) =
       (Complex.exp (-(∫ t in a..b, deriv γ t / (γ t - z₀))))⁻¹ from by
     rw [Complex.exp_neg, inv_inv], h_neg, inv_div]
-
-/-- Uniform bound for winding number integrand from homotopy avoidance. -/
-theorem winding_integrand_bounded_of_uniform_avoidance
-    {H : ℝ × ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {δ M : ℝ}
-    (hδ_pos : 0 < δ)
-    (hδ_bound : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1, δ ≤ ‖H (t, s) - z₀‖)
-    (hM_bound : ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      ‖deriv (fun t' => H (t', s)) t‖ ≤ M) :
-    ∀ t ∈ Icc a b, ∀ s ∈ Icc (0:ℝ) 1,
-      ‖(H (t, s) - z₀)⁻¹ * deriv (fun t' => H (t', s)) t‖ ≤ M / δ := by
-  intro t ht s hs
-  have h_inv_bound : ‖(H (t, s) - z₀)⁻¹‖ ≤ δ⁻¹ := by
-    rw [norm_inv]; exact inv_anti₀ hδ_pos (hδ_bound t ht s hs)
-  calc ‖(H (t, s) - z₀)⁻¹ * deriv (fun t' => H (t', s)) t‖
-      ≤ ‖(H (t, s) - z₀)⁻¹‖ * ‖deriv (fun t' => H (t', s)) t‖ := norm_mul_le _ _
-    _ ≤ δ⁻¹ * M := mul_le_mul h_inv_bound (hM_bound t ht s hs)
-        (norm_nonneg _) (inv_pos.mpr hδ_pos).le
-    _ = M / δ := by ring
 
 private lemma gFunc_constant_smooth
     {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}

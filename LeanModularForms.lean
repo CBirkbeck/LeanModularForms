@@ -28,7 +28,6 @@ import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpe
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV.DominatedConvergence
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.SectorCurve
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.SectorCurveLemma
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber.Proposition2_2
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Bounds
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Smooth

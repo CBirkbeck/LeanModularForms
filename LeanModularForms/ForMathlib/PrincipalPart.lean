@@ -85,12 +85,6 @@ theorem sub_principalPartSum_analyticAt {f : ℂ → ℂ} {S : Finset ℂ} {c : 
   rw [principalPartSum_eq_term_add_rest hs c z, hf_eq, h_coeff]
   ring
 
-/-- The residue of `f` at a simple pole equals its coefficient. -/
-theorem residue_eq_coeff_of_hasSimplePoleAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) :
-    residue f z₀ = h.coeff :=
-  residue_eq_coeff h
-
 /-- The principal part sum is analytic at any point not in `S`. -/
 theorem principalPartSum_analyticAt {S : Finset ℂ} {c : ℂ → ℂ} {z : ℂ}
     (hz : z ∉ S) :

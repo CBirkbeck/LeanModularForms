@@ -54,12 +54,6 @@ def lineCurve (r : ℝ) (α : ℝ) (t : ℝ) : ℂ :=
 theorem lineCurve_zero (r : ℝ) (α : ℝ) : lineCurve r α 0 = 0 := by
   simp [lineCurve]
 
-theorem lineCurve_hasDerivAt (r : ℝ) (α : ℝ) (t : ℝ) :
-    HasDerivAt (lineCurve r α) (↑r * exp (↑α * I)) t := by
-  have h1 : HasDerivAt (fun s : ℝ => (↑(r * s) : ℂ)) (↑r) t := by
-    simpa using ((hasDerivAt_id t).const_mul r).ofReal_comp
-  exact h1.mul_const _
-
 /-- The constant factor `r⁻ᵏ · exp(-ikα)` in the higher-order integrand. -/
 def higherOrderFactor (r : ℝ) (α : ℝ) (k : ℕ) : ℂ :=
   ↑(r⁻¹ ^ k) * exp (-(↑k : ℂ) * (↑α * I))

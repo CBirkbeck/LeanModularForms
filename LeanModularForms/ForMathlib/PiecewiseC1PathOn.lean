@@ -89,24 +89,4 @@ theorem apply_right (γ : PiecewiseC1PathOn a b hab x y) : γ b = y := γ.target
 
 end PiecewiseC1PathOn
 
-/-! ### Concatenation of adjacent piecewise C¹ paths -/
-
-namespace PiecewiseC1PathOn
-
-variable {a b c : ℝ} {x y z : E}
-
-/-- The underlying piecewise function used to concatenate two adjacent paths. -/
-private noncomputable def concatFun (γ₁ : ℝ → E) (γ₂ : ℝ → E) (b : ℝ) : ℝ → E :=
-  fun t => if t ≤ b then γ₁ t else γ₂ t
-
-omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
-private lemma concatFun_of_le {γ₁ γ₂ : ℝ → E} {b t : ℝ} (h : t ≤ b) :
-    concatFun γ₁ γ₂ b t = γ₁ t := if_pos h
-
-omit [NormedAddCommGroup E] [NormedSpace ℝ E] in
-private lemma concatFun_of_lt {γ₁ γ₂ : ℝ → E} {b t : ℝ} (h : b < t) :
-    concatFun γ₁ γ₂ b t = γ₂ t := if_neg (not_le.mpr h)
-
-end PiecewiseC1PathOn
-
 end
