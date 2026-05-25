@@ -626,11 +626,11 @@ private lemma crt_sum_eq {α : Type*} [AddCommMonoid α]
     ∑ j ∈ Finset.range (p * q), f j := by
   rw [← Finset.sum_product']
   refine Finset.sum_nbij (fun bc ↦ bc.1 + bc.2 * p) ?_ ?_ ?_ ?_
-  · -- hi: maps into range (p * q)
+  ·
     intro ⟨b, c⟩ hbc
     simp only [Finset.mem_product, Finset.mem_range] at hbc ⊢
     nlinarith [hbc.1, hbc.2]
-  · -- i_inj: injective on product set
+  ·
     intro ⟨b₁, c₁⟩ hbc₁ ⟨b₂, c₂⟩ hbc₂ h
     simp only [Finset.mem_coe, Finset.mem_product, Finset.mem_range] at hbc₁ hbc₂
     simp only at h
@@ -644,14 +644,14 @@ private lemma crt_sum_eq {α : Type*} [AddCommMonoid α]
         nlinarith
     subst hbeq; simp only [Prod.mk.injEq, true_and]
     exact mul_right_cancel₀ (by omega : (p : ℕ) ≠ 0) (by omega : c₁ * p = c₂ * p)
-  · -- i_surj: surjective onto range (p * q)
+  ·
     intro j hj
     simp only [Set.mem_image, Finset.mem_coe, Finset.mem_product, Finset.mem_range] at hj ⊢
     refine ⟨(j % p, j / p), ⟨Nat.mod_lt j hp,
       Nat.div_lt_of_lt_mul (mul_comm p q ▸ hj)⟩, ?_⟩
     show j % p + j / p * p = j
     rw [mul_comm]; exact Nat.mod_add_div j p
-  · -- h: value agreement
+  ·
     intro _ _; rfl
 
 private lemma crt_sum_swap {α : Type*} [AddCommMonoid α]
@@ -847,14 +847,14 @@ private lemma heckeT_p_ut_slash_lower_comm [NeZero N] (k : ℤ) {p q : ℕ}
     (fun b₁ hb₁ b₂ hb₂ he ↦ ?_)
     (fun c hc ↦ ?_)
     (fun _ _ ↦ rfl)
-  · -- Injectivity: cancel q in ZMod p (unit since gcd(q,p) = 1),
+  ·
     simp only [Finset.mem_coe, Finset.mem_range] at hb₁ hb₂
     simp only at he
     have hmod : q * b₁ ≡ q * b₂ [MOD p] := by rwa [Nat.ModEq]
     have hbb : b₁ ≡ b₂ [MOD p] :=
       Nat.ModEq.cancel_left_of_coprime hpq_cop.symm hmod
     rwa [Nat.ModEq, Nat.mod_eq_of_lt hb₁, Nat.mod_eq_of_lt hb₂] at hbb
-  · -- Surjectivity: take b = q⁻¹ * c in ZMod p.
+  ·
     simp only [Finset.mem_coe, Finset.mem_range, Set.mem_image] at hc ⊢
     have hq_unit : IsUnit ((q : ZMod p)) := (ZMod.isUnit_iff_coprime q p).mpr hpq_cop
     obtain ⟨u, hu⟩ := hq_unit
@@ -885,8 +885,7 @@ private lemma diamondOp_unitOfCoprime_comm [NeZero N] (k : ℤ)
   rw [← diamondOp_mul, ← diamondOp_mul, mul_comm]
 
 /-- For `(p, N) = 1` and `q ∣ N`, applying the diamond `⟨p⟩` to `T_q f` equals the
-upper-triangular `T_q` applied to `⟨p⟩ f`.  The diamond acts as a `Γ₀(N)`-slash, which
-commutes past the pure upper sum by `heckeT_p_ut_orbit_comm_gamma0`. -/
+upper-triangular `T_q` applied to `⟨p⟩ f`. -/
 private lemma diamondOp_heckeT_p_all_eq_ut_of_divN [NeZero N] (k : ℤ) {p q : ℕ}
     (hpN : Nat.Coprime p N) (hq : Nat.Prime q) (hqN : ¬Nat.Coprime q N)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -915,8 +914,7 @@ private lemma heckeT_p_coe_eq_ut_add_lower [NeZero N] (k : ℤ) {r : ℕ}
           (T_p_lower r hr.pos : GL (Fin 2) ℚ) := rfl
 
 /-- The both-coprime case of `heckeT_p_all_comm_distinct`: when `(p, N) = (q, N) = 1`,
-`T_p (T_q f) = T_q (T_p f)` pointwise.  Decomposes each `T` into upper sum plus
-diamond-twisted lower term, then matches up upper-upper, lower-lower and cross terms. -/
+`T_p (T_q f) = T_q (T_p f)` pointwise. -/
 private lemma heckeT_p_comm_distinct_both_coprime [NeZero N] (k : ℤ) {p q : ℕ}
     (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q)
     (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N)
@@ -971,17 +969,7 @@ private lemma heckeT_p_comm_distinct_both_coprime [NeZero N] (k : ℤ) {p q : �
     rw [hDD, ← SlashAction.slash_mul, hLC, SlashAction.slash_mul]
   rw [hUU, hC2, hLL, ← hC1]; ring
 
-/-- `T_p` commutes with `T_q` for distinct primes `p ≠ q`.
-
-The proof case-splits on coprimality of `p` and `q` with `N`:
-- When both `p ∣ N` and `q ∣ N`: both operators are purely upper-triangular sums,
-  and commutativity follows from `heckeT_p_ut_comm` (CRT bijection).
-- When `(p,N)=1` and `q ∣ N` (or vice versa): the `q ∣ N` operator is purely
-  upper-triangular and commutes with the `Γ₀(N)` action arising from the
-  coprime operator's diamond term, by `heckeT_p_ut_orbit_comm_gamma0`.
-- When both `(p,N)=1` and `(q,N)=1`: decomposes into UU (upper-upper, by
-  `heckeT_p_ut_comm`), LL (lower-lower, diamonds commute + lower matrices commute),
-  and cross terms (`heckeT_p_ut_slash_lower_comm` + diamond commutativity). -/
+/-- `T_p` commutes with `T_q` for distinct primes `p ≠ q`. -/
 theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
     {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q) :
     heckeT_p_all (N := N) k p hp * heckeT_p_all k q hq =
@@ -990,10 +978,10 @@ theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
   show ((heckeT_p_all k p hp (heckeT_p_all k q hq f)) : UpperHalfPlane → ℂ) z =
     ((heckeT_p_all k q hq (heckeT_p_all k p hp f)) : UpperHalfPlane → ℂ) z
   by_cases hpN : Nat.Coprime p N <;> by_cases hqN : Nat.Coprime q N
-  · -- Case: both coprime to N.
+  ·
     rw [heckeT_p_all_coprime k hp hpN, heckeT_p_all_coprime k hq hqN]
     exact heckeT_p_comm_distinct_both_coprime k hp hq hpq hpN hqN f z
-  · -- Case: p coprime, q divides N.
+  ·
     rw [heckeT_p_all_coprime_apply k hp hpN (heckeT_p_all k q hq f),
         heckeT_p_all_not_coprime_apply k hq hqN (heckeT_p_all k p hp f),
         heckeT_p_all_coprime_apply k hp hpN f]
@@ -1009,7 +997,7 @@ theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
         (diamondOp k (ZMod.unitOfCoprime p hpN) f)) z
     simp only [heckeT_p_ut, SlashAction.sum_slash, Finset.sum_apply] at hC
     rw [hUU, hC]
-  · -- Case: p divides N, q coprime.
+  ·
     rw [heckeT_p_all_not_coprime_apply k hp hpN (heckeT_p_all k q hq f),
         heckeT_p_all_coprime_apply k hq hqN f,
         heckeT_p_all_coprime_apply k hq hqN (heckeT_p_all k p hp f)]
@@ -1025,7 +1013,7 @@ theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
         (diamondOp k (ZMod.unitOfCoprime q hqN) f)) z
     simp only [heckeT_p_ut, SlashAction.sum_slash, Finset.sum_apply] at hC
     rw [hUU, hC]
-  · -- Case: both divide N.
+  ·
     rw [heckeT_p_all_not_coprime_apply k hp hpN (heckeT_p_all k q hq f),
         heckeT_p_all_not_coprime_apply k hq hqN f,
         heckeT_p_all_not_coprime_apply k hq hqN (heckeT_p_all k p hp f),
@@ -1033,7 +1021,7 @@ theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
     exact congr_fun (heckeT_p_ut_comm k hp hq hpq (⇑f)) z
 
 /-- For `(p, N) = 1` and `q ∣ N`, the diamond `⟨p⟩` commutes with `T_q` (which is a pure
-upper sum), via `diamondOp_heckeT_p_all_eq_ut_of_divN`. -/
+upper sum). -/
 private lemma diamondOp_commute_heckeT_p_all_of_divN [NeZero N] (k : ℤ) {p q : ℕ}
     (hpN : Nat.Coprime p N) (hq : Nat.Prime q) (hqN : ¬Nat.Coprime q N) :
     Commute (diamondOp k (ZMod.unitOfCoprime p hpN)) (heckeT_p_all k q hq) := by
@@ -1042,22 +1030,16 @@ private lemma diamondOp_commute_heckeT_p_all_of_divN [NeZero N] (k : ℤ) {p q :
   rw [diamondOp_heckeT_p_all_eq_ut_of_divN k hpN hq hqN f,
       heckeT_p_all_not_coprime_apply k hq hqN (diamondOp k (ZMod.unitOfCoprime p hpN) f)]
 
-/-- `diamondOp_ext k p` commutes with `heckeT_ppow k q hq b` for any primes `p, q`.
-When `p ∣ N`, `diamondOp_ext = 0` and the result is trivial.
-When `(p, N) = 1` and `(q, N) = 1`, this follows from `heckeT_ppow_comm_diamondOp`
-(proved later in this file). The mixed case `(p, N) = 1, q ∣ N` requires
-`heckeT_p_divN` to commute with diamond operators, which follows from the
-abstract Hecke ring but whose transport is deferred with
-`heckeT_p_all_comm_distinct`. -/
+/-- `diamondOp_ext k p` commutes with `heckeT_ppow k q hq b` for any primes `p, q`. -/
 theorem diamondOp_ext_comm_heckeT_ppow [NeZero N] (k : ℤ)
     (p : ℕ) {q : ℕ} (hq : Nat.Prime q) (b : ℕ) :
     diamondOp_ext (N := N) k p * heckeT_ppow k q hq b =
       heckeT_ppow k q hq b * diamondOp_ext k p := by
   by_cases hpN : Nat.Coprime p N
-  · -- (p, N) = 1: diamondOp_ext k p = diamondOp k (unitOfCoprime p hpN)
+  ·
     rw [diamondOp_ext_coprime k hpN]
     by_cases hqN : Nat.Coprime q N
-    · -- (q, N) = 1: ⟨p⟩ commutes with T_{q^b} by induction on b.
+    ·
       have hbase : diamondOp k (ZMod.unitOfCoprime p hpN) * heckeT_p_all k q hq =
           heckeT_p_all k q hq * diamondOp k (ZMod.unitOfCoprime p hpN) := by
         rw [heckeT_p_all_coprime k hq hqN]
@@ -1084,10 +1066,10 @@ theorem diamondOp_ext_comm_heckeT_ppow [NeZero N] (k : ℤ)
             · rw [← mul_assoc, hbase, mul_assoc, ihb (n + 1) (by omega), ← mul_assoc]
             · rw [mul_smul_comm, smul_mul_assoc]; congr 1
               rw [← mul_assoc, hdd, mul_assoc, ihb n (by omega), ← mul_assoc]
-    · -- q ∣ N: T_{q^b} = T_q^b (pure upper sums), and ⟨p⟩ commutes with T_q.
+    ·
       rw [heckeT_ppow_eq_pow_of_not_coprime k hq hqN]
       exact (diamondOp_commute_heckeT_p_all_of_divN k hpN hq hqN).pow_right b
-  · -- ¬Coprime p N: diamondOp_ext = 0
+  ·
     rw [diamondOp_ext_not_coprime k hpN]; simp [zero_mul, mul_zero]
 
 private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
@@ -1105,7 +1087,7 @@ private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
     | (m + 2) =>
       rw [heckeT_ppow_succ_succ k q hq m, mul_sub, sub_mul, mul_smul_comm, smul_mul_assoc]
       congr 1
-      · -- T_p * (T_q * T_{q^{m+1}}) = (T_q * T_{q^{m+1}}) * T_p
+      ·
         conv_lhs => rw [show heckeT_p_all k q hq = heckeT_ppow k q hq 1 from
           (heckeT_ppow_one k q hq).symm]
         conv_rhs => rw [show heckeT_p_all k q hq = heckeT_ppow k q hq 1 from
@@ -1120,11 +1102,7 @@ private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
               exact (diamondOp_ext_comm_heckeT_ppow k q hp 1).symm,
             mul_assoc, ihb m (by omega), ← mul_assoc]
 
-/-- `T_{p^a}` and `T_{p^b}` commute (same prime).
-Since `T_{p^r}` is a polynomial in `T_p` and `⟨p⟩` (which commute with each other),
-all prime-power operators commute.
-Proved by strong induction on `a`, using the recurrence
-`T_{p^{a+2}} = T_p · T_{p^{a+1}} - p^{k-1} · ⟨p⟩ · T_{p^a}`. -/
+/-- `T_{p^a}` and `T_{p^b}` commute (same prime). -/
 theorem heckeT_ppow_comm_same [NeZero N] (k : ℤ)
     {p : ℕ} (hp : Nat.Prime p) (a b : ℕ) :
     heckeT_ppow (N := N) k p hp a * heckeT_ppow k p hp b =
@@ -1166,11 +1144,7 @@ theorem heckeT_ppow_comm_same [NeZero N] (k : ℤ)
         rw [mul_assoc, iha m (by omega), ← mul_assoc,
             hdia b, mul_assoc]
 
-/-- `T_{p^a}` commutes with `T_{q^b}` for distinct primes `p ≠ q`.
-Proved by strong induction on `a` using the recurrence
-`T_{p^{a+2}} = T_p · T_{p^{a+1}} - p^{1-k} · ⟨p⟩ · T_{p^a}`.
-The base case `a = 1` is `heckeT_p_all_comm_heckeT_ppow`;
-the diamond term uses `diamondOp_ext_comm_heckeT_ppow`. -/
+/-- `T_{p^a}` commutes with `T_{q^b}` for distinct primes `p ≠ q`. -/
 theorem heckeT_ppow_comm_heckeT_ppow [NeZero N] (k : ℤ)
     {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q)
     (a b : ℕ) :
@@ -1205,9 +1179,9 @@ private theorem heckeT_ppow_comm_heckeT_n_aux [NeZero N] (k : ℤ)
   | _ m ih =>
     rw [heckeT_n_aux]
     split_ifs with h
-    · -- m ≤ 1: heckeT_n_aux = 1
+    ·
       simp [mul_one, one_mul]
-    · -- m > 1: heckeT_n_aux m = heckeT_ppow q v * heckeT_n_aux (m / q^v)
+    ·
       push Not at h
       dsimp only
       set q := m.minFac with hq_def
@@ -1244,18 +1218,16 @@ private theorem heckeT_ppow_comm_heckeT_n_aux_all [NeZero N] (k : ℤ)
         Nat.div_lt_self (by omega) (Nat.one_lt_pow
           (hq.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd m)).ne' hq.one_lt)
       by_cases hpq : p = q
-      · -- Same prime: T_{p^r} * (T_{p^v} * T_{m/p^v}) = (T_{p^v} * T_{m/p^v}) * T_{p^r}
+      ·
         subst hpq
         have hp_not_dvd_div : ¬q ∣ m / q ^ v :=
           Nat.not_dvd_ordCompl hp (show m ≠ 0 by omega)
         rw [← mul_assoc, heckeT_ppow_comm_same k hp r v,
             mul_assoc, heckeT_ppow_comm_heckeT_n_aux k hp r _ hp_not_dvd_div, ← mul_assoc]
-      · -- Distinct primes: T_{p^r} * (T_{q^v} * T_{m/q^v})
+      ·
         rw [← mul_assoc, heckeT_ppow_comm_heckeT_ppow k hp hq hpq r v,
             mul_assoc, ih _ hm_div_lt, ← mul_assoc]
 
-/-- Coprime-multiplicativity step when `minFac(m*n) ∣ m`: peel `p^v ‖ m` off the left,
-where `p = minFac(m*n) = minFac m`, reducing to the (smaller-`m`) inductive hypothesis. -/
 private theorem heckeT_n_aux_mul_coprime_minFacL [NeZero N] (k : ℤ) {m n : ℕ}
     (hm1 : 1 < m) (hn : 0 < n) (hmn : Nat.Coprime m n) (hp₀_dvd_m : (m * n).minFac ∣ m)
     (ih : ∀ m', m' < m → 0 < m' → Nat.Coprime m' n →
@@ -1300,9 +1272,6 @@ private theorem heckeT_n_aux_mul_coprime_minFacL [NeZero N] (k : ℤ) {m n : ℕ
   congr 1
   exact ih m' hm'_lt hm'_pos hm'_cop_n
 
-/-- Coprime-multiplicativity step when `minFac(m*n) ∣ n` (and `∤ m`): peel `q^u ‖ n` off
-the right, reorder via `heckeT_ppow_comm_heckeT_n_aux`, and apply the (smaller-`n`)
-inductive hypothesis. -/
 private theorem heckeT_n_aux_mul_coprime_minFacR [NeZero N] (k : ℤ) {m n : ℕ}
     (hm : 0 < m) (hn1 : 1 < n) (hmn : Nat.Coprime m n) (hp₀_dvd_n : (m * n).minFac ∣ n)
     (ih : ∀ n', n' < n → 0 < n' → Nat.Coprime m n' →
@@ -1363,7 +1332,7 @@ private theorem heckeT_n_aux_mul_coprime [NeZero N] (k : ℤ) (m n : ℕ)
       have h1 : heckeT_n_aux (N := N) k 1 = 1 := by
         rw [heckeT_n_aux, dif_pos (le_refl 1)]
       rw [h1, mul_one]
-    · -- Both m > 1 and n > 1: peel the smallest prime factor off whichever side has it.
+    ·
       push Not at hm1 hn1
       have hmn_ne : m * n ≠ 1 := by nlinarith
       have hp₀ := Nat.minFac_prime hmn_ne
@@ -1374,8 +1343,6 @@ private theorem heckeT_n_aux_mul_coprime [NeZero N] (k : ℤ) (m n : ℕ)
           (fun n' hlt hn' hc ↦ ih (m + n') (by omega) m n' hm hn' hc rfl)
 
 /-- **Coprime multiplicativity**: `T_{mn} = T_m T_n` when `(m, n) = 1`.
-Follows from the abstract Hecke ring identity `T_sum_mul_coprime` transported
-through the level-N Hecke action (requires Shimura 3.35 bridge).
 
 Reference: [DS] §5.3, [Miy] Thm 4.5.13. -/
 theorem heckeT_n_mul_coprime [NeZero N] (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n]
@@ -1384,9 +1351,7 @@ theorem heckeT_n_mul_coprime [NeZero N] (k : ℤ) (m n : ℕ) [NeZero m] [NeZero
   show heckeT_n_aux k (m * n) = heckeT_n_aux k m * heckeT_n_aux k n
   exact heckeT_n_aux_mul_coprime k m n (NeZero.pos m) (NeZero.pos n) hmn
 
-/-- `T_m` and `T_n` commute for all `m, n`.
-For coprime `m, n` this is immediate from `heckeT_n_mul_coprime`.
-For prime powers of the same prime, it follows from the recurrence. -/
+/-- `T_m` and `T_n` commute for all `m, n`. -/
 theorem heckeT_n_comm [NeZero N] (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n] :
     heckeT_n (N := N) k m * heckeT_n k n = heckeT_n k n * heckeT_n k m := by
   show heckeT_n_aux k m * heckeT_n_aux k n = heckeT_n_aux k n * heckeT_n_aux k m
@@ -1397,9 +1362,9 @@ theorem heckeT_n_comm [NeZero N] (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n] :
   | _ m ih =>
     rw [heckeT_n_aux]
     split_ifs with h
-    · -- m ≤ 1: T_m = 1
+    ·
       simp [mul_one, one_mul]
-    · -- m > 1: T_m = T_{p^v} * T_{m/p^v}
+    ·
       push Not at h
       dsimp only
       set p := m.minFac with hp_def
@@ -1525,8 +1490,7 @@ private lemma heckeT_ppow_mul_boundary_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : N
             heckeT_ppow k p hp (b - a - 2)) := by rw [← mul_assoc, ← pow_succ]
 
 /-- The inductive step `a → a+2` of `heckeT_ppow_mul`: given the divisor-sum expansions
-of `T_{p^{a+1}}·T_{p^b}` and `T_{p^a}·T_{p^b}`, derive the one for `T_{p^{a+2}}·T_{p^b}`.
-Splits the new sum's top term off as a boundary, with the rest matched summand-by-summand. -/
+of `T_{p^{a+1}}·T_{p^b}` and `T_{p^a}·T_{p^b}`, derive the one for `T_{p^{a+2}}·T_{p^b}`. -/
 private lemma heckeT_ppow_mul_step [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (a b : ℕ) (hab : a + 2 ≤ b)
     (ih_succ : heckeT_ppow (N := N) k p hp (a + 1) * heckeT_ppow k p hp b =
@@ -1613,9 +1577,7 @@ private theorem heckeT_ppow_mul [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p
     exact heckeT_ppow_mul_step k hp a b hab
       (iha (a + 1) (by omega) (by omega)) (iha a (by omega) (by omega))
 
-/-- Diamond operators commute with `diamondOp_ext`: `⟨d⟩ · ⟨p⟩_ext = ⟨p⟩_ext · ⟨d⟩`.
-When `(p, N) = 1` this follows from commutativity of `(ZMod N)ˣ` via `diamondOp_mul`.
-When `p ∣ N`, `⟨p⟩_ext = 0` and the result is trivial. -/
+/-- Diamond operators commute with `diamondOp_ext`: `⟨d⟩ · ⟨p⟩_ext = ⟨p⟩_ext · ⟨d⟩`. -/
 theorem diamondOp_ext_comm_diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (p : ℕ) :
     diamondOp k d * diamondOp_ext (N := N) k p =
       diamondOp_ext k p * diamondOp k d := by
@@ -1624,8 +1586,7 @@ theorem diamondOp_ext_comm_diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (p : 
         Module.End.mul_eq_comp, ← diamondOp_mul, mul_comm]
   · simp [diamondOp_ext_not_coprime k hpN]
 
-/-- `T_{p^r}` commutes with all diamond operators `⟨d⟩`.
-Proved by strong induction on `r` using `heckeT_p_comm_diamondOp` as the base case. -/
+/-- `T_{p^r}` commutes with all diamond operators `⟨d⟩`. -/
 theorem heckeT_ppow_comm_diamondOp [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (r : ℕ) (d : (ZMod N)ˣ) :
     (diamondOp k d) * heckeT_ppow (N := N) k p hp r =
@@ -1656,7 +1617,7 @@ private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
     diamondOp_n (N := N) k (p ^ j * d) = diamondOp_ext k p ^ j * diamondOp_n k d := by
   by_cases hpN : Nat.Coprime p N
   · by_cases hdN : Nat.Coprime d N
-    · -- Both p and d coprime to N: induction on j
+    ·
       induction j with
       | zero => simp [pow_zero, one_mul]
       | succ j ih =>
@@ -1672,11 +1633,11 @@ private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
               congr 1; ext; simp [ZMod.coe_unitOfCoprime],
             ih]
         rw [← mul_assoc, (Commute.self_pow _ j).eq, mul_assoc]
-    · -- d not coprime to N: diamondOp_n k d = 0, p^j * d also not coprime
+    ·
       have hpjd_not : ¬Nat.Coprime (p ^ j * d) N := fun h ↦
         hdN (h.coprime_dvd_left (dvd_mul_left d (p ^ j)))
       simp [diamondOp_n, dif_neg hpjd_not, dif_neg hdN, mul_zero]
-  · -- p not coprime to N: diamondOp_ext k p = 0
+  ·
     rw [diamondOp_ext_not_coprime k hpN]
     rcases Nat.eq_zero_or_pos j with rfl | hj_pos
     · simp [pow_zero, one_mul]
@@ -1685,9 +1646,7 @@ private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
           (dvd_trans (dvd_pow_self p hj_pos.ne') (dvd_mul_right (p ^ j) d)))
       simp [diamondOp_n, dif_neg this, zero_pow hj_pos.ne', zero_mul]
 
-/-- `T_{p^r}` commutes with the general diamond `⟨d⟩` (for `d : ℕ`).  When `(d, N) = 1`
-this is `heckeT_ppow_comm_diamondOp` (resp. `diamondOp_ext_comm_heckeT_ppow` when `p ∣ N`);
-when `d ∣ N` the diamond is `0`. -/
+/-- `T_{p^r}` commutes with the general diamond `⟨d⟩` (for `d : ℕ`). -/
 private lemma heckeT_ppow_comm_diamondOp_n [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (r d : ℕ) :
     heckeT_ppow (N := N) k p hp r * diamondOp_n k d =
@@ -1936,10 +1895,7 @@ private lemma heckeT_ppow_mul_eq_min_mul_max [NeZero N] (k : ℤ) {p : ℕ} (hp 
   · rw [min_eq_right h.le, max_eq_left h.le]
     exact heckeT_ppow_comm_same (N := N) k hp va vb
 
-/-- The non-coprime inductive step of `heckeT_n_mul_aux`: with `p = minFac(gcd m n)`, peel the
-`p`-powers off `m` and `n`, fold them into `T_{p^{min}}·T_{p^{max}}` via `heckeT_ppow_mul`,
-apply the inductive hypothesis to the `p`-free parts `m'`, `n'`, and reassemble with
-`heckeT_n_mul_aux_divisor_sum`. -/
+/-- The non-coprime inductive step of `heckeT_n_mul_aux`. -/
 private theorem heckeT_n_mul_aux_noncoprime [NeZero N] (k : ℤ) (g : ℕ) (m n : ℕ)
     [NeZero m] [NeZero n] (hg : Nat.gcd m n = g) (hg1 : g ≠ 1)
     (ih : ∀ g', g' < g → ∀ (m' n' : ℕ), [NeZero m'] → [NeZero n'] → Nat.gcd m' n' = g' →
@@ -2015,7 +1971,7 @@ private theorem heckeT_n_mul_aux [NeZero N] (k : ℤ) (g : ℕ) (m n : ℕ) [NeZ
   induction g using Nat.strong_induction_on generalizing m n with
   | _ g ih =>
   by_cases hg1 : g = 1
-  · -- Coprime case: gcd(m,n) = 1
+  ·
     subst hg1
     have hmn_cop : Nat.Coprime m n := hg
     have h1_mem : 1 ∈ (Nat.gcd m n).divisors := by rw [hg]; exact Finset.mem_singleton_self 1
@@ -2031,7 +1987,7 @@ private theorem heckeT_n_mul_aux [NeZero N] (k : ℤ) (g : ℕ) (m n : ℕ) [NeZ
     rw [hattach, Finset.sum_singleton]
     simp only [Nat.cast_one, one_zpow, one_smul, Nat.one_mul, Nat.div_one]
     rw [diamondOp_n_one, one_mul, ← heckeT_n_mul_coprime k m n hmn_cop]
-  · -- Non-coprime case: gcd(m,n) > 1 — handled by the prime-power peeling step.
+  ·
     exact heckeT_n_mul_aux_noncoprime k g m n hg hg1 ih
 
 theorem heckeT_n_mul [NeZero N] (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n] :
@@ -2051,9 +2007,9 @@ private theorem heckeT_n_aux_comm_diamondOp [NeZero N] (k : ℤ) (m : ℕ)
   | _ m ih =>
     rw [heckeT_n_aux]
     split_ifs with h
-    · -- m ≤ 1: heckeT_n_aux = 1
+    ·
       simp [mul_one, one_mul]
-    · -- m > 1: heckeT_n_aux m = heckeT_ppow p v * heckeT_n_aux (m / p^v)
+    ·
       push Not at h
       dsimp only
       set p := m.minFac with hp_def

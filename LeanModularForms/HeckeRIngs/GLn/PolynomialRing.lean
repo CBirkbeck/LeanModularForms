@@ -137,8 +137,6 @@ variable [NeZero n] (p : ℕ) (hp : p.Prime)
 noncomputable def evalHom : MvPolynomial (Fin n) ℤ →+* HeckeAlgebra n :=
   MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra n)) (fun k => T_gen n p k)
 
-/-! #### Infrastructure for the isomorphism -/
-
 /-- `T(1,...,1)` is the multiplicative identity in the Hecke algebra, for any `n`. -/
 lemma T_elem_ones_eq_one : T_elem (fun _ : Fin n => 1) = 1 := by
   show HeckeRing.T_single (GL_pair n) ℤ (T_diag (fun _ : Fin n => 1)) 1 = 1
@@ -172,8 +170,6 @@ namespace HeckeRing.GLn.Surj
 
 open HeckeRing.GLn HeckeRing.GL2
 
-/-! #### Bridge lemmas: T_gen at n=2 matches GL2 definitions -/
-
 /-- `T_gen 2 p 0 = T_ad 1 p`: the first generator is `T(1,p)`. -/
 lemma T_gen_zero_eq_T_ad (p : ℕ) (hp : p.Prime) :
     T_gen 2 p (0 : Fin 2) = T_ad 1 p := by
@@ -195,8 +191,6 @@ lemma T_gen_one_eq_T_pp (p : ℕ) (hp : p.Prime) :
 lemma T_sum_p_eq_T_gen_zero (p : ℕ) (hp : p.Prime) :
     T_sum ⟨p, hp.pos⟩ = T_gen 2 p (0 : Fin 2) := by
   rw [T_gen_zero_eq_T_ad p hp, T_sum_prime p hp]
-
-/-! #### Step 3: T_sum(p^k) in evalHom range by strong induction -/
 
 private lemma X_zero_mem_range (p : ℕ) :
     T_gen 2 p (0 : Fin 2) ∈ (evalHom 2 p).range :=
@@ -237,8 +231,6 @@ lemma T_sum_ppow_in_range (p : ℕ) (hp : p.Prime) (k : ℕ) :
         ((evalHom 2 p).range.mul_mem (T_pp_mem_range p hp) (ih k (by omega)))
         (p : ℤ))
 
-/-! #### Step 4: T_ad(1, p^k) in evalHom range -/
-
 /-- `T_ad(1, p^k)` lies in the range of the evaluation homomorphism. -/
 lemma T_ad_one_ppow_in_range (p : ℕ) (hp : p.Prime) (k : ℕ) :
     T_ad 1 (p ^ k) ∈ (evalHom 2 p).range := by
@@ -254,22 +246,17 @@ lemma T_ad_one_ppow_in_range (p : ℕ) (hp : p.Prime) (k : ℕ) :
       ((evalHom 2 p).range.mul_mem (T_pp_mem_range p hp)
         (T_sum_ppow_in_range p hp k))
 
-/-! #### Step 5: General ppow element for n=2 -/
-
-/-- `T_elem (ppowDiag 2 p e)` is in the evalHom range when `e` is monotone.
-    Factor out `T(p^{e₀}, p^{e₀})` to reduce to `T(1, p^{e₁-e₀})`. -/
+/-- `T_elem (ppowDiag 2 p e)` is in the evalHom range when `e` is monotone. -/
 lemma T_elem_ppow_in_range (p : ℕ) (hp : p.Prime)
     (e : Fin 2 → ℕ) (hmono : Monotone e) :
     T_elem (ppowDiag 2 p e) ∈ (evalHom 2 p).range := by
   by_cases he0 : e 0 = 0
-  · -- e 0 = 0: ppowDiag = ![1, p^{e 1}]
-    have h_eq : ppowDiag 2 p e = ![1, p ^ (e 1)] := by
+  · have h_eq : ppowDiag 2 p e = ![1, p ^ (e 1)] := by
       funext i; simp only [ppowDiag]; fin_cases i <;> simp [he0]
     rw [T_elem_congr_diag (n := 2) h_eq,
       ← T_ad_of_pos 1 (p ^ (e 1)) Nat.one_pos (pow_pos hp.pos _) (one_dvd _)]
     exact T_ad_one_ppow_in_range p hp (e 1)
-  · -- e 0 > 0: ppowDiag = scalar(p^{e 0}) * ppowDiag(0, e 1 - e 0)
-    have h_le : e 0 ≤ e 1 := hmono (Fin.zero_le _)
+  · have h_le : e 0 ≤ e 1 := hmono (Fin.zero_le _)
     have h_eq : ppowDiag 2 p e =
         (fun _ => p ^ (e 0)) * ppowDiag 2 p ![0, e 1 - e 0] := by
       funext i; simp only [ppowDiag, Pi.mul_apply]
@@ -293,8 +280,6 @@ lemma T_elem_ppow_in_range (p : ℕ) (hp : p.Prime)
         ← T_ad_of_pos 1 (p ^ (e 1 - e 0)) Nat.one_pos
           (pow_pos hp.pos _) (one_dvd _)]
       exact T_ad_one_ppow_in_range p hp (e 1 - e 0)
-
-/-! #### Step 6: Assembly — every R_p element is in the image -/
 
 /-- Surjectivity of `evalHom` at n=2: every element of `R_p 2 p` is in the range
     of the evaluation homomorphism `ℤ[X₁, X₂] → HeckeAlgebra 2`. -/
@@ -326,7 +311,6 @@ theorem T_gen_generates_R_p_one (p : ℕ) (hp : p.Prime) :
   apply Subring.closure_le.mpr _ hf
   intro x hx
   obtain ⟨e, _hmono, rfl⟩ := hx
-  -- For Fin 1, ppowDiag is determined by e 0
   have he : ppowDiag 1 p e = fun _ => p ^ (e 0) := by
     funext i; simp [ppowDiag]; congr 1; exact congr_arg e (Subsingleton.elim i 0)
   rw [T_elem_congr_diag 1 he, ← T_scalar_pow 1 p hp.pos (e 0)]
@@ -341,8 +325,6 @@ end HeckeRing.GLn.SurjOne
 namespace HeckeRing.GLn.Inj
 
 open HeckeRing.GLn HeckeRing.GL2
-
-/-! #### evalHom maps into R_p -/
 
 /-- Every element in the image of `evalHom` belongs to `R_p`. -/
 lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
@@ -370,8 +352,6 @@ noncomputable def evalHomR (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) :
   map_one' := Subtype.ext (map_one _)
   map_add' x y := Subtype.ext (map_add _ x y)
   map_mul' x y := Subtype.ext (map_mul _ x y)
-
-/-! #### n=1 injectivity -/
 
 /-- For n=1, `T_gen(0)^k = T_elem(fun _ => p^k)`. -/
 private lemma T_gen_pow_one (p : ℕ) (hp : p.Prime) (k : ℕ) :
@@ -412,7 +392,6 @@ theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) :
   by_contra hne
   obtain ⟨s, hs⟩ := MvPolynomial.support_nonempty.mpr hne
   have hcoeff : R.coeff s ≠ 0 := MvPolynomial.mem_support_iff.mp hs
-  -- Extract the Finsupp coefficient at D = T_diag (fun _ => p^{s 0}); it equals R.coeff s.
   set D := T_diag (n := 1) (fun _ => p ^ (s 0))
   have h0 : (evalHom 1 p R).toFun D = 0 := by rw [hR]; rfl
   apply hcoeff
@@ -422,7 +401,6 @@ theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) :
   simp only [MvPolynomial.coe_eval₂Hom, MvPolynomial.eval₂_eq', Fin.prod_univ_one,
     T_gen_pow_one p hp]
   rw [Finset.sum_congr rfl (fun x _ => intCast_mul_T_elem_eq_single (fun _ => p ^ x 0) (R.coeff x))]
-  -- The sum of singles, evaluated at D, picks out the unique x = s term.
   show ((∑ x ∈ R.support,
       (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
         (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ))) D = MvPolynomial.coeff s R
@@ -433,16 +411,12 @@ theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) :
     (fun hns => absurd hs hns)]
   simp
 
-/-! #### n=2 injectivity -/
-
 /-- A two-entry diagonal `![a, b]` is a divisibility chain iff `a ∣ b`. -/
 private lemma divChain_two_of_dvd {a b : ℕ} (hab : a ∣ b) :
     DivChain 2 (![a, b] : Fin 2 → ℕ) := by
   intro j hj
   obtain rfl : j = 0 := by omega
   exact hab
-
-/-! ##### Det/support helpers -/
 
 /-- Determinant of an SL_n(ℤ) element embedded in GL_n(ℚ) is 1. -/
 lemma det_SLnZ_eq_one {g : GL (Fin 2) ℚ} (hg : g ∈ SLnZ_subgroup 2) :
@@ -481,13 +455,9 @@ lemma det_mulMap_eq (g₁ g₂ : (GL_pair 2).Δ)
       Matrix (Fin 2) (Fin 2) ℚ).det =
     (↑(↑g₁ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det *
     (↑(↑g₂ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
-  -- mulMap output = ⟦σ * g₁ * (τ * g₂)⟧ for σ, τ ∈ SL_n
-  -- rep is in the same double coset, so has the same det
   have h_eq : (⟦HeckeCoset.rep (HeckeRing.mulMap (GL_pair 2) g₁ g₂ p)⟧ :
       HeckeCoset (GL_pair 2)) = HeckeRing.mulMap (GL_pair 2) g₁ g₂ p := Quotient.out_eq _
   rw [det_doubleCoset_eq h_eq]
-  -- Now goal: det of the unfolded mulMap element = det(g₁) * det(g₂)
-  -- The mulMap element is ⟨p.1.out * g₁ * (p.2.out * g₂), _⟩ with coe into GL
   show (((p.1.out : GL (Fin 2) ℚ) * (g₁ : GL (Fin 2) ℚ) *
       ((p.2.out : GL (Fin 2) ℚ) * (g₂ : GL (Fin 2) ℚ)) :
       GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det = _
@@ -510,10 +480,8 @@ private lemma det_rep_eq_mul_of_m_ne_zero (D₁ D₂ D' : HeckeCoset (GL_pair 2)
   obtain ⟨p, _, hD'_eq⟩ := hD'_mem
   rw [← hD'_eq]; exact det_mulMap_eq (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) p
 
-/-- **Determinant tracking through `T(1,q)`-multiplication**: if `f` is supported on cosets
-of determinant `q^{a₀}`, then `T_gen(q,0)^{b₀} · f` is supported on cosets of determinant
-`q^{b₀ + a₀}`. Proved by induction on `b₀`, using that `T_gen(q,0) = T(1,q)` has determinant
-`q` and that determinants multiply through the Hecke product support. -/
+/-- Determinant tracking: if `f` is supported on cosets of determinant `q^{a₀}`, then
+`T_gen(q,0)^{b₀} · f` is supported on cosets of determinant `q^{b₀ + a₀}`. -/
 private lemma det_rep_T_gen_zero_pow_mul (q : {p : ℕ // p.Prime}) (a₀ b₀ : ℕ)
     (f : HeckeAlgebra 2) (D' : HeckeCoset (GL_pair 2))
     (hf_det : ∀ D'', f D'' ≠ 0 →
@@ -531,7 +499,6 @@ private lemma det_rep_T_gen_zero_pow_mul (q : {p : ℕ // p.Prime}) (a₀ b₀ :
     rw [show T_gen 2 q.1 0 = HeckeRing.T_single (GL_pair 2) ℤ (T_diag (![1, q.1])) 1 from by
         show T_elem (T_gen_diag 2 q.1 0) = _; congr 1
         funext i; fin_cases i <;> simp [T_gen_diag]] at hD'
-    -- Extract D₂ ∈ supp(g') contributing nonzero multiplicity at D'.
     obtain ⟨D₂, hD₂_mem, hD₂_ne⟩ := Finset.exists_ne_zero_of_sum_ne_zero (by
       rw [show (HeckeRing.T_single (GL_pair 2) ℤ (T_diag (![1, q.1])) 1 * g') D' =
           ∑ D₂ ∈ g'.support, g' D₂ * (HeckeRing.m (GL_pair 2)
@@ -543,7 +510,6 @@ private lemma det_rep_T_gen_zero_pow_mul (q : {p : ℕ // p.Prime}) (a₀ b₀ :
       exact hD')
     have hm_ne : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep (T_diag (![1, q.1])))
         (HeckeCoset.rep D₂)) D' ≠ 0 := fun h => hD₂_ne (by rw [h, mul_zero])
-    -- det(rep D') = det(rep T(1,q)) * det(rep D₂) = q * q^{n+a₀} = q^{n+1+a₀}.
     rw [det_rep_eq_mul_of_m_ne_zero _ _ _ hm_ne,
       show (↑(↑(HeckeCoset.rep (T_diag (![1, q.1]))) : GL (Fin 2) ℚ) :
           Matrix (Fin 2) (Fin 2) ℚ).det = (q.1 : ℚ) from by
@@ -557,12 +523,9 @@ lemma T_gen_pow_support_qpower (q : {p : ℕ // p.Prime})
     (hD : (T_gen 2 q.1 0 ^ (e 0) * T_gen 2 q.1 1 ^ (e 1)) D ≠ 0) :
     ∃ a : Fin 2 → ℕ, D = T_diag a ∧ (∀ i, 0 < a i) ∧ DivChain 2 a ∧
       (∏ i, a i) = q.1 ^ (e 0 + 2 * e 1) := by
-  -- D is a Hecke coset, so has a diagonal representative.
   obtain ⟨a, ha_pos, ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
   have hD_eq : D = T_diag a := by rw [← Quotient.out_eq D]; exact ha_eq
   refine ⟨a, hD_eq, ha_pos, ha_div, ?_⟩
-  -- Determinant tracking: T_gen(q,1)^{e 1} is supported on cosets of det q^{2·e 1};
-  -- multiplying by T_gen(q,0)^{e 0} adds e 0 to the exponent.
   have hf_det : ∀ D'', (T_gen 2 q.1 1 ^ (e 1)) D'' ≠ 0 →
       (↑(↑(HeckeCoset.rep D'') : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
       ↑(q.1 ^ (2 * e 1) : ℕ) := by
@@ -602,7 +565,6 @@ lemma support_mul_exists (f g : HeckeAlgebra 2) (D : HeckeCoset (GL_pair 2))
     (hD : (f * g) D ≠ 0) :
     ∃ D₁ D₂, f D₁ ≠ 0 ∧ g D₂ ≠ 0 ∧
       D ∈ HeckeRing.mulSupport (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) := by
-  -- Expand f * g using mul_def
   have h : (Finsupp.sum f (fun D₁ b₁ => Finsupp.sum g (fun D₂ b₂ =>
       b₁ • b₂ • HeckeRing.m (GL_pair 2) (HeckeCoset.rep D₁)
         (HeckeCoset.rep D₂)))) D ≠ 0 := hD
@@ -617,10 +579,7 @@ lemma support_mul_exists (f g : HeckeAlgebra 2) (D : HeckeCoset (GL_pair 2))
   rw [← HeckeRing.m_support]
   exact Finsupp.mem_support_iff.mpr hm_ne
 
-/-! ##### Kronecker delta infrastructure -/
-
-/-- Helper: `T_single(T_diag a, α) * T_elem(c,c) = T_single(T_diag(a * c), α)`.
-Immediate consequence of `T_elem_mul_scalar`. -/
+/-- `T_single(T_diag a, α) * T_elem(c,c) = T_single(T_diag(a * c), α)`. -/
 lemma T_single_diag_mul_T_scalar (c : ℕ) (hc : 0 < c)
     (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i) (ha_div : DivChain 2 a) (α : ℤ) :
     HeckeRing.T_single (GL_pair 2) ℤ (T_diag a) α * T_elem (fun _ : Fin 2 => c) =
@@ -634,12 +593,8 @@ lemma T_single_diag_mul_T_scalar (c : ℕ) (hc : 0 < c)
   show α • HeckeRing.T_single (GL_pair 2) ℤ (T_diag (a * fun _ => c)) 1 = _
   rw [HeckeRing.T_single_smul]; congr 1; ring
 
-/-- **Scalar shift identity (matching target)**: For any `f : HeckeAlgebra 2`, any scalar
-`c > 0`, and any positive divisibility-chain `b`, the evaluation of `f * T_elem(c,c)` at
-the scaled diagonal `T_diag(b * c)` equals `f(T_diag b)`.
-
-This is the key structural lemma: right-multiplication by a scalar-diagonal element
-shifts the support by the scalar, preserving coefficients. -/
+/-- Scalar shift identity: for any `f : HeckeAlgebra 2`, scalar `c > 0`, and positive
+divisibility-chain `b`, evaluating `f * T_elem(c,c)` at `T_diag(b * c)` equals `f(T_diag b)`. -/
 lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c)
     (f : HeckeAlgebra 2) (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i) (hb_div : DivChain 2 b) :
     (f * T_elem (fun _ : Fin 2 => c)) (T_diag (b * (fun _ : Fin 2 => c))) = f (T_diag b) := by
@@ -656,7 +611,6 @@ lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c)
              (T_diag (b * fun _ : Fin 2 => c)) =
            HeckeRing.T_single (GL_pair 2) ℤ D α (T_diag b)
     rw [hD_eq, T_single_diag_mul_T_scalar c hc a ha_pos ha_div α]
-    -- Goal: T_single(T_diag(a*c), α)(T_diag(b*c)) = T_single(T_diag a, α)(T_diag b)
     show Finsupp.single (T_diag (a * fun _ : Fin 2 => c)) α (T_diag (b * fun _ : Fin 2 => c)) =
          Finsupp.single (T_diag a) α (T_diag b)
     rw [Finsupp.single_apply, Finsupp.single_apply]
@@ -680,8 +634,7 @@ lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c)
         (diagonal_representative_unique 2 a b ha_pos hb_pos ha_div hb_div heq)
       rw [if_neg h_ne_1, if_neg h_ne_2]
 
-/-- **Scalar shift zero direction**: If `c ∤ d i` for some `i`, the evaluation of
-`f * T_elem(c,c)` at `T_diag d` is zero. -/
+/-- If `c ∤ d i` for some `i`, the evaluation of `f * T_elem(c,c)` at `T_diag d` is zero. -/
 lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c)
     (f : HeckeAlgebra 2) (d : Fin 2 → ℕ) (hd_pos : ∀ i, 0 < d i) (hd_div : DivChain 2 d)
     (i₀ : Fin 2) (hi₀ : ¬ c ∣ d i₀) :
@@ -711,8 +664,7 @@ lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c)
       exact ⟨a i₀, by linarith [this.symm]⟩
     rw [if_neg h_ne]
 
-/-- Helper: For `i ≥ 1`, evaluation of `f * T_pp(p)^i` at `T_diag ![1, k]` is zero
-(since `p^i ∤ 1`). -/
+/-- For `i ≥ 1`, evaluation of `f * T_pp(p)^i` at `T_diag ![1, k]` is zero (since `p^i ∤ 1`). -/
 lemma T_mul_T_pp_pow_eval_at_one_zero (p : ℕ) (hp : p.Prime) (i k : ℕ) (hi : 1 ≤ i)
     (hk : 0 < k) (f : HeckeAlgebra 2) :
     (f * T_pp p ^ i) (T_diag (![1, k] : Fin 2 → ℕ)) = 0 := by
@@ -729,8 +681,7 @@ lemma T_mul_T_pp_pow_eval_at_one_zero (p : ℕ) (hp : p.Prime) (i k : ℕ) (hi :
   have hp2 : 2 ≤ p := hp.two_le
   omega
 
-/-- Helper: `T_elem ![p^i, p^j] = T_ad(1, p^{j-i}) * T_pp(p)^i` for `i ≤ j` with `p` prime.
-Factors out the scalar `p^i` from both entries. -/
+/-- `T_elem ![p^i, p^j] = T_ad(1, p^{j-i}) * T_pp(p)^i` for `i ≤ j` with `p` prime. -/
 lemma T_elem_ppow_factor (p : ℕ) (hp : p.Prime) (i j : ℕ) (hij : i ≤ j) :
     T_elem (![p^i, p^j] : Fin 2 → ℕ) = T_ad 1 (p ^ (j - i)) * T_pp p ^ i := by
   rw [T_ad_of_pos 1 (p^(j-i)) Nat.one_pos (pow_pos hp.pos _) (one_dvd _),
@@ -749,8 +700,7 @@ lemma T_elem_ppow_factor (p : ℕ) (hp : p.Prime) (i j : ℕ) (hij : i ≤ j) :
   · simp [Pi.mul_apply]
   · simp [Pi.mul_apply, ← pow_add]; congr 1; omega
 
-/-- The element `T(p, pⁿ)` does not contribute at `T(1, p^{n+1})` (for `n ≥ 1`):
-the two diagonals differ in their first entry (`p` vs `1`), so as cosets they are distinct. -/
+/-- The element `T(p, pⁿ)` does not contribute at `T(1, p^{n+1})` (for `n ≥ 1`). -/
 private lemma T_elem_p_ppow_eval_at_one_ppow_succ_zero (p : ℕ) (hp : p.Prime) {n : ℕ}
     (hn : n ≠ 0) :
     (T_elem (![p, p ^ n] : Fin 2 → ℕ)) (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 0 := by
@@ -765,9 +715,7 @@ private lemma T_elem_p_ppow_eval_at_one_ppow_succ_zero (p : ℕ) (hp : p.Prime) 
   simp only [Matrix.cons_val_zero] at this
   have := hp.one_lt; omega
 
-/-- **Leading multiplicity step**: `(T(1,p) · T(1, pⁿ))` evaluated at the leading coset
-`T(1, p^{n+1})` equals `1`. By Shimura's recurrence `T(p)·T(1,pⁿ) = T(1,p^{n+1}) +
-mₙ·T(p,pⁿ)`, the `T(p,pⁿ)` term vanishes at `T(1,p^{n+1})`, leaving the coefficient `1`. -/
+/-- `(T(1,p) · T(1, pⁿ))` evaluated at the leading coset `T(1, p^{n+1})` equals `1`. -/
 private lemma T_ad_one_p_mul_T_ad_one_ppow_eval_leading (p : ℕ) (hp : p.Prime) (n : ℕ) :
     (T_ad 1 p * T_ad 1 (p ^ n)) (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 := by
   rcases eq_or_ne n 0 with hn | hn
@@ -790,9 +738,7 @@ private lemma T_ad_one_p_mul_T_ad_one_ppow_eval_leading (p : ℕ) (hp : p.Prime)
       smul_zero, add_zero]
 
 /-- A non-leading support element `D₂` of `(T(1,p))ⁿ` contributes `0` to the product
-`T(1,p) · (T(1,p))ⁿ` at the leading coset `T(1, p^{n+1})`. Such a `D₂` has the form
-`T(pⁱ, p^{n-i})` with `i ≥ 1`, so the product factors through `T(p,p)ⁱ`, which scales the
-first entry by `pⁱ ∤ 1`. -/
+`T(1,p) · (T(1,p))ⁿ` at the leading coset `T(1, p^{n+1})`. -/
 private lemma T_ad_one_p_mul_supp_ne_leading_eval_zero (p : ℕ) (hp : p.Prime) (n : ℕ)
     (D₂ : HeckeCoset (GL_pair 2)) (hD₂_ne_zero : ((T_ad 1 p) ^ n) D₂ ≠ 0)
     (hD₂_ne : D₂ ≠ T_diag (![1, p ^ n] : Fin 2 → ℕ)) :
@@ -803,7 +749,6 @@ private lemma T_ad_one_p_mul_supp_ne_leading_eval_zero (p : ℕ) (hp : p.Prime) 
   obtain ⟨a, hDa, ha_pos, ha_div, ha_det⟩ := T_gen_pow_support_qpower ⟨p, hp⟩
       ![n, 0] D₂ (hg_eq ▸ hD₂_ne_zero)
   simp only [Matrix.cons_val_zero, Matrix.cons_val_one, mul_zero, add_zero] at ha_det
-  -- Extract i with a 0 = pⁱ and a 1 = p^{n-i}.
   have ha_prod : a 0 * a 1 = p ^ n := Fin.prod_univ_two a ▸ ha_det
   obtain ⟨i, hi_le, hi_eq⟩ := (Nat.dvd_prime_pow hp).mp (ha_prod ▸ dvd_mul_right _ _)
   have ha1_eq : a 1 = p ^ (n - i) := by
@@ -814,12 +759,10 @@ private lemma T_ad_one_p_mul_supp_ne_leading_eval_zero (p : ℕ) (hp : p.Prime) 
     funext k; fin_cases k
     · exact hi_eq
     · exact ha1_eq
-  -- Since D₂ ≠ leading, i ≥ 1.
   have hi_ge : 1 ≤ i := by
     by_contra h_not
     obtain rfl : i = 0 := by omega
     exact hD₂_ne (by rw [hDa, ha_form]; simp [pow_zero])
-  -- DivChain forces i ≤ n - i, so we can factor out T(p,p)ⁱ.
   have hi_le_sub : i ≤ n - i := by
     have h_div := ha_form ▸ ha_div 0 (by omega : 0 + 1 < 2)
     exact (Nat.pow_dvd_pow_iff_le_right hp.one_lt).mp h_div
@@ -828,36 +771,25 @@ private lemma T_ad_one_p_mul_supp_ne_leading_eval_zero (p : ℕ) (hp : p.Prime) 
   rw [T_elem_ppow_factor p hp i (n - i) hi_le_sub, ← mul_assoc]
   exact T_mul_T_pp_pow_eval_at_one_zero p hp i (p ^ (n + 1)) hi_ge (pow_pos hp.pos _) _
 
-/-- **Leading coefficient of `T(1,p)^a`**: `(T_ad 1 p)^a` evaluated at the leading
-coset `T_diag ![1, p^a]` equals 1.
-
-**Proof by induction on `a`** using Shimura's recurrence `T(p) * T(1, p^k) = T(1, p^{k+1}) +
-m_k * T(p, p^k)`. The key fact is that for `i ≥ 1`, any support element `T(p^i, p^{a-i})` in
-`T(1,p)^a` contributes 0 at `T(1, p^{a+1})` since the product factors through `T_pp(p)^i`
-which scales entries by `p^i`, and `p^i ∤ 1`. Only the `i = 0` leading term `T(1, p^a)`
-contributes coefficient 1. -/
+/-- Leading coefficient of `T(1,p)^a`: `(T_ad 1 p)^a` evaluated at the leading coset
+`T_diag ![1, p^a]` equals 1. -/
 lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
     ((T_ad 1 p) ^ a) (T_diag (![1, p ^ a] : Fin 2 → ℕ)) = 1 := by
   induction a with
   | zero =>
-    -- (T_ad 1 p)^0 = 1 = T_elem(1,…,1), evaluated at T_diag ![1,1] gives 1.
     rw [pow_zero, pow_zero, show (![1, 1] : Fin 2 → ℕ) = (fun _ : Fin 2 => 1) from by
         funext i; fin_cases i <;> rfl, ← T_elem_ones_eq_one 2]
     exact Finsupp.single_eq_same
   | succ n ih =>
-    -- (T_ad 1 p)^(n+1) = T_ad(1,p) * (T_ad 1 p)^n. Expanding the product, only the leading
-    -- support element D_leading = T_diag ![1, p^n] contributes 1 at D_target; the rest give 0.
     rw [pow_succ']
     set g := (T_ad 1 p) ^ n
     set D_target : HeckeCoset (GL_pair 2) := T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)
     set D_leading : HeckeCoset (GL_pair 2) := T_diag (![1, p ^ n] : Fin 2 → ℕ)
-    -- Express the multiplication as a Finsupp sum over supp(g).
     rw [show T_ad 1 p = HeckeRing.T_single (GL_pair 2) ℤ (T_diag (![1, p] : Fin 2 → ℕ)) 1 from
         T_ad_of_pos 1 p Nat.one_pos hp.pos (one_dvd _),
       HeckeRing.mul_def, Finsupp.sum_single_index (by simp [Finsupp.sum])]
     simp only [one_smul]
     rw [Finsupp.sum_apply, Finsupp.sum]
-    -- Split off the leading term; it contributes 1, all others contribute 0.
     have h_leading_in_supp : D_leading ∈ g.support :=
       Finsupp.mem_support_iff.mpr (by rw [ih]; exact one_ne_zero)
     rw [← Finset.sum_erase_add _ _ h_leading_in_supp]
@@ -870,7 +802,6 @@ lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
       rw [T_ad_one_p_mul_supp_ne_leading_eval_zero p hp n D₂
         (Finsupp.mem_support_iff.mp hD₂.2) hD₂.1, mul_zero]
     rw [Finset.sum_eq_zero h_erased, zero_add, ih]
-    -- Leading term: g(D_leading) = 1, multiplicity is 1.
     simp only [Finsupp.smul_apply, smul_eq_mul, one_mul]
     rw [← HeckeRing.T_single_one_mul_T_single_one]
     change (T_elem (![1, p] : Fin 2 → ℕ) * T_elem (![1, p ^ n] : Fin 2 → ℕ)) D_target = 1
@@ -880,9 +811,7 @@ lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
         (T_ad_of_pos 1 (p ^ n) Nat.one_pos (pow_pos hp.pos n) (one_dvd _)).symm]
     exact T_ad_one_p_mul_T_ad_one_ppow_eval_leading p hp n
 
-/-- **Off-diagonal coefficient of `T(1,p)^a₁`**: for `a₁ ≠ a₂`, evaluating `(T_ad 1 p)^a₁`
-at the coset `T(1, p^{a₂})` gives `0`. By determinant tracking, any support coset of
-`(T_ad 1 p)^a₁` has determinant `p^{a₁}`, while `T(1, p^{a₂})` has determinant `p^{a₂}`. -/
+/-- For `a₁ ≠ a₂`, evaluating `(T_ad 1 p)^a₁` at the coset `T(1, p^{a₂})` gives `0`. -/
 private lemma T_ad_one_p_pow_eval_at_one_ppow_of_ne (p : ℕ) (hp : p.Prime) {a₁ a₂ : ℕ}
     (ha_ne : a₁ ≠ a₂) :
     ((T_ad 1 p) ^ a₁) (T_diag (![1, p ^ a₂] : Fin 2 → ℕ)) = 0 := by
@@ -900,9 +829,8 @@ private lemma T_ad_one_p_pow_eval_at_one_ppow_of_ne (p : ℕ) (hp : p.Prime) {a�
   simp only [Matrix.cons_val_zero, Matrix.cons_val_one, one_mul] at ha_det
   exact ha_ne (Nat.pow_right_injective hp.two_le ha_det.symm)
 
-/-- **Scalar-shift reduction**: `(T_ad 1 p)^a₁` times the scalar `T(p^b, p^b)`, evaluated at
-the shifted leading coset `T(p^b, p^{a₂+b})`, equals `(T_ad 1 p)^a₁` evaluated at `T(1, p^{a₂})`.
-This factors the common scalar `p^b` out of both entries. -/
+/-- `(T_ad 1 p)^a₁` times the scalar `T(p^b, p^b)`, evaluated at the shifted leading coset
+`T(p^b, p^{a₂+b})`, equals `(T_ad 1 p)^a₁` evaluated at `T(1, p^{a₂})`. -/
 private lemma T_ad_one_p_pow_mul_scalar_eval_at_one_ppow (p : ℕ) (hp : p.Prime) (a₁ a₂ b : ℕ) :
     ((T_ad 1 p) ^ a₁ * T_elem (fun _ : Fin 2 => p ^ b))
         (T_diag (![p ^ b, p ^ (a₂ + b)] : Fin 2 → ℕ)) =
@@ -915,38 +843,28 @@ private lemma T_ad_one_p_pow_mul_scalar_eval_at_one_ppow (p : ℕ) (hp : p.Prime
   exact T_mul_T_scalar_eval_shifted (p ^ b) (pow_pos hp.pos _) _ _
     (fun i => by fin_cases i <;> simp [pow_pos hp.pos]) (divChain_two_of_dvd (one_dvd _))
 
-/-- **Kronecker delta lemma**: Evaluating the monomial `T_gen(p,0)^a₁ * T_gen(p,1)^b₁` at
-the diagonal coset `T(p^b₂, p^(a₂+b₂))` gives 1 iff `(a₁, b₁) = (a₂, b₂)`, and 0 otherwise,
-under the hypothesis `b₂ ≤ b₁`.
-
-**Math (Shimura Th 3.24, n=2)**: Using `T_gen(p,1) = T(p,p)` and `T_pp^b₁ = T_elem(p^b₁)`,
-the scalar shift reduces the evaluation to `T(1,p)^a₁ (T(1, p^{a₂}))` when `b₁ = b₂`, which
-equals `δ_{a₁, a₂}` by the leading coefficient argument. When `b₂ < b₁`, the first entry
-`p^b₂` is not divisible by `p^b₁`, so the scalar shift gives 0. -/
+/-- Kronecker delta lemma: evaluating the monomial `T_gen(p,0)^a₁ * T_gen(p,1)^b₁` at the
+diagonal coset `T(p^b₂, p^(a₂+b₂))` gives 1 iff `(a₁, b₁) = (a₂, b₂)`, and 0 otherwise,
+under the hypothesis `b₂ ≤ b₁`. -/
 lemma monomial_eval_kronecker (p : ℕ) (hp : p.Prime)
     (a₁ b₁ a₂ b₂ : ℕ) (h : b₂ ≤ b₁) :
     (T_gen 2 p 0 ^ a₁ * T_gen 2 p 1 ^ b₁)
         (T_diag (ppowDiag 2 p ![b₂, a₂ + b₂])) =
     if a₁ = a₂ ∧ b₁ = b₂ then 1 else 0 := by
-  -- Simplify target to T_diag ![p^b₂, p^(a₂+b₂)] and substitute T_gen 0 = T_ad 1 p,
-  -- T_gen 1 = T_pp p, T_pp p ^ b₁ = T_elem (fun _ => p^b₁).
   rw [show (ppowDiag 2 p ![b₂, a₂ + b₂] : Fin 2 → ℕ) = (![p ^ b₂, p ^ (a₂ + b₂)] : Fin 2 → ℕ)
       from by funext i; fin_cases i <;> simp [ppowDiag],
     HeckeRing.GLn.Surj.T_gen_zero_eq_T_ad p hp, HeckeRing.GLn.Surj.T_gen_one_eq_T_pp p hp,
     HeckeRing.GL2.T_pp_pow p hp b₁]
   by_cases hmatch : a₁ = a₂ ∧ b₁ = b₂
-  · -- Matching: scalar shift reduces to the leading coefficient `= 1`.
-    obtain ⟨ha, hb⟩ := hmatch
+  · obtain ⟨ha, hb⟩ := hmatch
     rw [if_pos ⟨ha, hb⟩, ha, ← hb, T_ad_one_p_pow_mul_scalar_eval_at_one_ppow p hp,
       T_ad_one_p_pow_eval_leading p hp a₂]
   · rw [if_neg hmatch]
     by_cases hbeq : b₁ = b₂
-    · -- b₁ = b₂ but a₁ ≠ a₂: scalar shift reduces to the off-diagonal coefficient `= 0`.
-      subst hbeq
+    · subst hbeq
       rw [T_ad_one_p_pow_mul_scalar_eval_at_one_ppow p hp,
         T_ad_one_p_pow_eval_at_one_ppow_of_ne p hp (fun heq => hmatch ⟨heq, rfl⟩)]
-    · -- b₂ < b₁: the scalar `p^b₁ ∤ p^b₂`, so the shifted evaluation is `0`.
-      have h_not_dvd : ¬ p ^ b₁ ∣ (![p ^ b₂, p ^ (a₂ + b₂)] : Fin 2 → ℕ) 0 := by
+    · have h_not_dvd : ¬ p ^ b₁ ∣ (![p ^ b₂, p ^ (a₂ + b₂)] : Fin 2 → ℕ) 0 := by
         simp only [Matrix.cons_val_zero, Nat.pow_dvd_pow_iff_le_right hp.one_lt]
         omega
       exact T_mul_T_scalar_eval_zero_of_not_dvd (p ^ b₁) (pow_pos hp.pos _) _ _
@@ -960,8 +878,8 @@ private lemma prod_T_gen_pow_eq_two (p : ℕ) (d : Fin 2 →₀ ℕ) :
   rw [Finset.prod_subset (Finset.subset_univ d.support) (fun k _ hk => by
     rw [Finsupp.notMem_support_iff.mp hk, pow_zero]), Fin.prod_univ_two]
 
-/-- **Expansion of `evalHom` at a coset (n = 2)**: evaluating `evalHom 2 p R` at the coset `D`
-expands as `∑_{d ∈ supp R} (R.coeff d) · (T_gen(p,0)^{d 0} · T_gen(p,1)^{d 1}) D`. -/
+/-- Evaluating `evalHom 2 p R` at the coset `D` expands as
+`∑_{d ∈ supp R} (R.coeff d) · (T_gen(p,0)^{d 0} · T_gen(p,1)^{d 1}) D`. -/
 private lemma evalHom_apply_eq_sum_monomial (p : ℕ) (R : MvPolynomial (Fin 2) ℤ)
     (D : HeckeCoset (GL_pair 2)) :
     (evalHom 2 p R) D =
@@ -975,23 +893,18 @@ private lemma evalHom_apply_eq_sum_monomial (p : ℕ) (R : MvPolynomial (Fin 2) 
     (zsmul_one _).symm, smul_mul_assoc, one_mul, Finsupp.smul_apply, smul_eq_mul,
     prod_T_gen_pow_eq_two]
 
-/-- n=2: evalHom is injective. Uses the Kronecker delta property for `T_gen(0)^a`
-    coefficients at first-exponent-zero T_diags, and the scalar shift property
-    of `T_gen(1)^b = T(p,p)^b`. -/
+/-- n=2: evalHom is injective. -/
 theorem evalHom_injective_two (p : ℕ) (hp : p.Prime) :
     Function.Injective (evalHom 2 p) := by
   intro P Q hPQ
   rw [← sub_eq_zero]; set R := P - Q with hR_def
   have hR : evalHom 2 p R = 0 := by simp [R, map_sub, hPQ]
   by_contra hR_ne
-  -- R ≠ 0: pick s ∈ R.support minimising the second exponent `s 1`, and evaluate at the
-  -- leading coset D_s = T_diag ![p^(s 1), p^(s 0 + s 1)].
   obtain ⟨s, hs_mem, hs_min⟩ := Finset.exists_min_image R.support
     (fun d : Fin 2 →₀ ℕ => d 1) (MvPolynomial.support_nonempty.mpr hR_ne)
   have hs_coeff : R.coeff s ≠ 0 := MvPolynomial.mem_support_iff.mp hs_mem
   have h_zero : (evalHom 2 p R) (T_diag (ppowDiag 2 p ![s 1, s 0 + s 1])) = 0 := by rw [hR]; rfl
   rw [evalHom_apply_eq_sum_monomial] at h_zero
-  -- Each term collapses to a Kronecker delta `R.coeff d · [d = s]` (using `s 1 ≤ d 1`).
   have h_delta : ∀ d ∈ R.support,
       R.coeff d * (T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1))
           (T_diag (ppowDiag 2 p ![s 1, s 0 + s 1])) =
@@ -1004,8 +917,6 @@ theorem evalHom_injective_two (p : ℕ) (hp : p.Prime) :
         mul_zero]
   rw [Finset.sum_congr rfl h_delta, Finset.sum_ite_eq_of_mem' R.support s _ hs_mem] at h_zero
   exact hs_coeff h_zero
-
-/-! #### Surjectivity of restricted evalHom -/
 
 /-- Surjectivity of `evalHomR` follows from surjectivity onto `R_p`. -/
 lemma evalHomR_surjective (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
@@ -1031,8 +942,7 @@ namespace HeckeRing.GLn
 variable (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
 
 /-- Every element of R_p is in the image of evalHom (surjectivity).
-    Proved for n = 1 and n = 2; the general case requires the projection ψ
-    (Phase B/C of Shimura Theorem 3.20). -/
+    Proved for `n = 1` and `n = 2`; the general case is not yet formalised. -/
 theorem T_gen_generates_R_p :
     ∀ f ∈ R_p n p hp, f ∈ (evalHom n p).range := by
   by_cases h1 : n = 1
@@ -1042,8 +952,8 @@ theorem T_gen_generates_R_p :
     · sorry -- General n requires Phase B (projection ψ) and Phase C (induction)
 
 include hp in
-/-- evalHom is injective. Proved for n = 1 and n = 2;
-    general case requires Phase B (projection) and Phase C (induction on n). -/
+/-- evalHom is injective. Proved for `n = 1` and `n = 2`;
+    the general case is not yet formalised. -/
 theorem evalHom_injective :
     Function.Injective (evalHom n p) := by
   by_cases h1 : n = 1
@@ -1060,11 +970,8 @@ noncomputable def R_p_isPolynomialRing :
     ⟨Inj.evalHomR_injective n p hp (evalHom_injective n p hp),
      Inj.evalHomR_surjective n p hp (T_gen_generates_R_p n p hp)⟩
 
-/-- Shimura Theorem 3.20 at `n = 2`: `R_p^{(2)} ≅ ℤ[X₁, X₂]`. This is the clean,
-    axiom-free specialisation: it calls `Surj.T_gen_generates_R_p_two` and
-    `Inj.evalHom_injective_two` directly, bypassing the bundled all-`n`
-    `T_gen_generates_R_p` / `evalHom_injective` (whose general-`n` case is still a
-    `sorry`). Use this in the GL2 path instead of `R_p_isPolynomialRing 2 …`. -/
+/-- Shimura Theorem 3.20 at `n = 2`: `R_p^{(2)} ≅ ℤ[X₁, X₂]`. The axiom-free specialisation
+    that uses the `n = 2` surjectivity and injectivity results directly. -/
 noncomputable def R_p_isPolynomialRing_two (p : ℕ) (hp : p.Prime) :
     MvPolynomial (Fin 2) ℤ ≃+* R_p 2 p hp :=
   RingEquiv.ofBijective (Inj.evalHomR 2 p hp)

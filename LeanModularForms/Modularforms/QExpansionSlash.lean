@@ -19,26 +19,14 @@ period-`1` (canonical Fourier) conventions.
 
 ## Main results
 
-Algebraic helpers:
 * `rootOfUnity_sum_eq` — `Σ_{b<n} ζ^{kb} = n` if `n ∣ k`, else `0`.
 * `qParam_mul_nat`, `qParam_add` — q-parameter identities.
-
-Period-`N` prime `T_p` (original convention; sparse at non-multiples of
-`N`):
-* `HeckeRing.GL2.fourierCoeff_heckeT_p`
-  (DS Prop 5.2.2): `a_m(T_p f) = a_{pm} + χ(p) · p^{k-1} · [p ∣ m] · a_{m/p}`.
-
-Canonical period-`1` prime `T_p` (T078; the Miyake / Diamond–Shurman
-convention consumed by the period-`1` cascade in
-`FourierHecke.lean`):
-* `HeckeRing.GL2.fourierCoeff_heckeT_p_period_one` — same formula as
-  the period-`N` variant but with every `coeff` evaluated at the
-  canonical Fourier period.
-
-No-diamond prime `T_p` at a level divisible by `p` (T076, consumed by
-`Eigenforms/MainLemma.lean` for the Miyake 4.6.5 prime-sieve witness):
+* `HeckeRing.GL2.fourierCoeff_heckeT_p` — for `f ∈ M_k(Γ₁(N), χ)` and prime
+  `p ∤ N`, `a_m(T_p f) = a_{pm} + χ(p) · p^{k-1} · [p ∣ m] · a_{m/p}`.
+* `HeckeRing.GL2.fourierCoeff_heckeT_p_period_one` — the same formula with
+  every `coeff` evaluated at the canonical Fourier period `1`.
 * `HeckeRing.GL2.qExpansion_one_heckeT_p_divN_coeff` —
-  `a_m(T_p^{divN} f) = a_{pm}(f)` at period `1`.
+  `a_m(T_p^{divN} f) = a_{pm}(f)` at period `1` (no-diamond case, `p ∣ M`).
 
 ## References
 
@@ -50,8 +38,6 @@ No-diamond prime `T_p` at a level divisible by `p` (T076, consumed by
 noncomputable section
 
 open Complex Finset
-
-/-! ### Root-of-unity orthogonality -/
 
 /-- **Root-of-unity orthogonality**: for a primitive `n`-th root of unity `ζ`,
 `Σ_{b=0}^{n-1} ζ^{kb} = n` if `n ∣ k`, and `= 0` if `n ∤ k`. -/
@@ -72,8 +58,6 @@ theorem rootOfUnity_sum_eq' {n : ℕ} (hn : 1 < n) {ζ : ℂ} (hζ : IsPrimitive
     (k : ℕ) : ∑ b ∈ range n, ζ ^ (b * k) = if n ∣ k then (n : ℂ) else 0 := by
   simp_rw [mul_comm _ k]; exact rootOfUnity_sum_eq hn hζ k
 
-/-! ### Q-parameter identities -/
-
 /-- Scaling the argument by `p`: `qParam h (p · z) = (qParam h z) ^ p`.
 This is the key identity for computing q-expansions of `f(pτ)`. -/
 theorem qParam_mul_nat (h : ℝ) (p : ℕ) (z : ℂ) :
@@ -88,33 +72,6 @@ theorem qParam_add (h : ℝ) (z w : ℂ) :
     Function.Periodic.qParam h (z + w) =
       Function.Periodic.qParam h z * Function.Periodic.qParam h w := by
   simp only [Function.Periodic.qParam, add_div, mul_add, exp_add]
-
-/-! ### Fourier coefficients of T_p
-
-The Fourier coefficient formula `a_m(T_p f) = p^{1-k} a_{pm} + χ(p) a_{m/p}`
-requires two function-level computations:
-
-**Upper-triangular sum**: For `q = e^{2πiτ}` and `ζ_p = e^{2πi/p}`:
-```
-  Σ_{b<p} f((τ+b)/p)
-    = Σ_{b<p} Σ_n a_n ζ_p^{nb} q^{n/p}     [substitution]
-    = Σ_n a_n (Σ_b ζ_p^{nb}) q^{n/p}        [exchange sums]
-    = Σ_{p|n} p · a_n · q^{n/p}              [orthogonality]
-    = p · Σ_m a_{pm} · q^m                   [reindex n = pm]
-```
-Dividing by `p^k` (from the slash action denom `p^{-k}`):
-the m-th coefficient is `p^{1-k} · a_{pm}`.
-
-**Lower/diamond term**: For `f ∈ M_k(N,χ)`:
-```
-  (⟨p⟩f)(pτ) = χ(p) f(pτ) = χ(p) Σ_n a_n q^{pn}
-```
-So the m-th coefficient is `χ(p) a_{m/p}` if `p | m`, else `0`.
-
-The full formalization of these computations requires connecting
-`hasSum_qExpansion` with pointwise slash-action evaluation and
-sum exchange for absolutely convergent series. The key algebraic
-ingredient (`rootOfUnity_sum_eq`) is proved above. -/
 
 namespace HeckeRing.GL2
 
@@ -138,11 +95,10 @@ theorem qExpansion_coeff_eq_zero_of_not_dvd [NeZero N]
     (qExpansion (↑N) f).coeff n = 0 := by
   set ζ := Function.Periodic.qParam (↑N) (1 : ℂ) with hζ_def
   have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have hζ_prim : IsPrimitiveRoot ζ N := by -- ζ = exp(2πi/N) is a primitive N-th root
+  have hζ_prim : IsPrimitiveRoot ζ N := by
     rw [hζ_def, Function.Periodic.qParam]
     convert Complex.isPrimitiveRoot_exp N (NeZero.ne N) using 1; push_cast; ring
-  have hζn_ne : ζ ^ n ≠ 1 := mt (hζ_prim.pow_eq_one_iff_dvd n).mp hn -- ζ^n ≠ 1 since N ∤ n
-  -- Σ a_m (q*ζ)^m = f(τ+1) = f(τ) = Σ a_m q^m, so a_m * ζ^m = a_m by uniqueness
+  have hζn_ne : ζ ^ n ≠ 1 := mt (hζ_prim.pow_eq_one_iff_dvd n).mp hn
   have h_coeff_eq : ∀ m : ℕ, (qExpansion (↑N) f).coeff m * ζ ^ m =
       (qExpansion (↑N) f).coeff m := by
     intro m; suffices ∀ σ : ℍ, HasSum (fun m' => ((qExpansion (↑N) (⇑f)).coeff m' *
@@ -161,7 +117,6 @@ theorem qExpansion_coeff_eq_zero_of_not_dvd [NeZero N]
       · exact (UpperHalfPlane.ofComplex_apply σ).symm ▸ rfl
     rw [hq_shift, hf_eq] at h_shift; unfold HasSum at h_shift ⊢
     exact h_shift.congr fun s => by congr 1; ext n'; simp [smul_eq_mul, mul_pow]; ring
-  -- a_n * ζ^n = a_n with ζ^n ≠ 1 gives a_n * (ζ^n - 1) = 0, hence a_n = 0
   exact (mul_eq_zero.mp (by rw [mul_sub, mul_one, h_coeff_eq n, sub_self])).resolve_right
     (sub_ne_zero.mpr hζn_ne)
 
@@ -204,8 +159,6 @@ theorem slash_T_p_upper_eval (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
   convert halg (f (glMap (T_p_upper p hp.pos b) • τ)) using 2
   exact congr_arg f (by ext : 1; exact hmob.symm)
 
-/-- Möbius coordinate of the upper-triangular representative:
-`(glMap [[1,b],[0,p]] • τ) = (τ + b) / p`, written with `b/p` split off. -/
 private theorem coe_smul_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) (τ : ℍ) :
     (↑(glMap (T_p_upper p hp b) • τ) : ℂ) = ↑τ / ↑p + ↑b / ↑p := by
   simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom]
@@ -225,8 +178,6 @@ private theorem coe_smul_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) (τ : ℍ) :
       from by simp [glMap, T_p_upper, Matrix.cons_val_one]]
   push_cast; ring
 
-/-- `q`-parameter of the upper-triangular Möbius image factors as a power of the
-shrunk parameter `qParam h (τ/p)` times a root-of-unity power `qParam h (1/p) ^ (n·b)`. -/
 private theorem qParam_smul_T_p_upper_pow (h : ℝ) (p : ℕ) (hp : 0 < p) (b : ℕ)
     (τ : ℍ) (n : ℕ) :
     Function.Periodic.qParam h ↑(glMap (T_p_upper p hp b) • τ) ^ n =
@@ -237,8 +188,6 @@ private theorem qParam_smul_T_p_upper_pow (h : ℝ) (p : ℕ) (hp : 0 < p) (b : 
   rw [qParam_add, show (↑b : ℂ) / ↑p = ↑b * (1 / ↑p) from by ring, qParam_mul_nat,
     mul_pow, ← pow_mul, mul_comm b n]
 
-/-- The upper-triangular Hecke sum evaluates to `p⁻¹` times the sum of `f` over the
-Möbius images `(τ + b)/p`, `b < p`. -/
 private theorem heckeT_p_ut_eq_inv_mul_sum (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
     (f : ℍ → ℂ) (τ : ℍ) :
     heckeT_p_ut k p hp.pos f τ =
@@ -247,8 +196,6 @@ private theorem heckeT_p_ut_eq_inv_mul_sum (k : ℤ) (p : ℕ) (hp : Nat.Prime p
   simp only [heckeT_p_ut, Finset.sum_apply, Finset.mul_sum]
   congr 1; ext b; exact slash_T_p_upper_eval k p hp b f τ
 
-/-- The lower (diagonal) representative slashes a function `g` to `p^{k-1} · g(pτ)`:
-the `|det|^{k-1}` factor with trivial denominator and Möbius image `pτ`. -/
 private theorem slash_T_p_lower_eval (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
     (g : ℍ → ℂ) (τ : ℍ) (pτ : ℍ) (hpτ : (↑pτ : ℂ) = ↑p * ↑τ) :
     (g ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ)) τ = (↑p : ℂ) ^ (k - 1) * g pτ := by
@@ -282,8 +229,6 @@ private theorem slash_T_p_lower_eval (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
     hdet_val, abs_of_pos (Nat.cast_pos.mpr hp.pos)]
   push_cast; ring
 
-/-- Sum-value matching: `f` at the Möbius image of the upper-triangular
-representative equals `f` at the explicit point `(τ + b)/p`. -/
 private theorem f_smul_T_p_upper_eq (p : ℕ) (hp : Nat.Prime p) (f : ℍ → ℂ)
     (b : ℕ) (τ : ℍ) :
     f (glMap (T_p_upper p hp.pos b) • τ) =
@@ -291,10 +236,6 @@ private theorem f_smul_T_p_upper_eq (p : ℕ) (hp : Nat.Prime p) (f : ℍ → �
         simp; exact div_pos (by linarith [τ.im_pos]) (Nat.cast_pos.mpr hp.pos)⟩ : ℍ) := by
   congr 1; ext : 1; rw [coe_smul_T_p_upper p hp.pos b τ]; push_cast; ring
 
-/-- **Root-of-unity orthogonality over the `b`-sum at period `N`.**
-For `ζ = qParam N (1/p)` (a primitive `(p·N)`-th root of unity) and any `n`
-divisible by `N`, the character sum `Σ_{b<p} ζ^{nb}` collapses to `p` when
-`p ∣ n` and to `0` otherwise. -/
 private theorem sum_qParam_pow_period_N {N : ℕ} [NeZero N] {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) {n : ℕ} (hNn : (N : ℕ) ∣ n) :
     ∑ b ∈ Finset.range p, Function.Periodic.qParam (↑N) (1 / (↑p : ℂ)) ^ (n * b) =
@@ -322,10 +263,6 @@ private theorem sum_qParam_pow_period_N {N : ℕ} [NeZero N] {p : ℕ}
       rw [← pow_mul, hζ_pN.pow_eq_one_iff_dvd]; exact ⟨j, by ring⟩]
     simp
 
-/-- **Root-of-unity orthogonality over the `b`-sum at period `1`.**
-At the canonical period, `ζ = qParam 1 (1/p)` is a primitive `p`-th root of
-unity, so `Σ_{b<p} ζ^{nb}` collapses to `p` when `p ∣ n` and to `0` otherwise,
-with no divisibility hypothesis on `n`. -/
 private theorem sum_qParam_pow_period_one {p : ℕ} (hp : Nat.Prime p) (n : ℕ) :
     ∑ b ∈ Finset.range p, Function.Periodic.qParam (1 : ℝ) (1 / (↑p : ℂ)) ^ (n * b) =
       if p ∣ n then (↑p : ℂ) else 0 := by
@@ -342,10 +279,6 @@ private theorem sum_qParam_pow_period_one {p : ℕ} (hp : Nat.Prime p) (n : ℕ)
       rw [← pow_mul, mul_comm, pow_mul, hζ_prim.pow_eq_one, one_pow]]
     simp
 
-/-- **Upper-triangular HasSum at period `N`.**
-The upper-triangular Hecke sum has the `q`-expansion whose `n`-th coefficient is
-`a (p·n)`, given that `a` vanishes off multiples of `N` (the `Γ₁(N)`-periodicity
-constraint). This is the orthogonality core of the `T_p` Fourier formula. -/
 private theorem hasSum_heckeT_p_ut_period_N {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (f : ℍ → ℂ) (a : ℕ → ℂ) (τ : ℍ)
     (hf_hs : ∀ σ : ℍ, HasSum
@@ -360,7 +293,6 @@ private theorem hasSum_heckeT_p_ut_period_N {N : ℕ} [NeZero N] (k : ℤ) {p : 
   set ζ := Function.Periodic.qParam (↑N) (1 / (↑p : ℂ)) with hζ_def
   have hp_ne : (↑p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
   have hw_pow_p : w ^ p = q := by rw [hw_def, ← qParam_mul_nat]; congr 1; field_simp
-  -- Finite-infinite exchange, then factor each `qParam` via the root-of-unity power.
   have h_rewritten : HasSum
       (fun n => a n • w ^ n * ∑ b ∈ Finset.range p, ζ ^ (n * b))
       (∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ)) := by
@@ -369,7 +301,6 @@ private theorem hasSum_heckeT_p_ut_period_N {N : ℕ} [NeZero N] (k : ℤ) {p : 
     · rw [smul_eq_mul, ← Finset.mul_sum, ← Finset.mul_sum, mul_assoc]
     · exact Finset.sum_congr rfl fun b _ => by
         rw [qParam_smul_T_p_upper_pow (↑N) p hp.pos b τ n, smul_eq_mul]
-  -- Orthogonality collapses the inner sum to the `p ∣ n` indicator.
   have h_ind : HasSum (fun n' => (if p ∣ n' then a n' • w ^ n' else 0))
       ((↑p : ℂ)⁻¹ * ∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ)) := by
     rw [show (↑p : ℂ)⁻¹ * ∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ) =
@@ -386,7 +317,6 @@ private theorem hasSum_heckeT_p_ut_period_N {N : ℕ} [NeZero N] (k : ℤ) {p : 
       split_ifs with h
       · rw [mul_comm (a n * w ^ n), ← mul_assoc, inv_mul_cancel₀ hp_ne, one_mul]
       · ring
-  -- Reindex `n ↦ p·n` to drop the indicator, then match powers and sum values.
   rw [← hinj.hasSum_iff (fun x hx => by
     simp only [Set.mem_range, not_exists] at hx
     simp [show ¬p ∣ x from fun ⟨k, hk⟩ => hx k (by omega)])] at h_ind
@@ -395,11 +325,6 @@ private theorem hasSum_heckeT_p_ut_period_N {N : ℕ} [NeZero N] (k : ℤ) {p : 
   · rw [smul_eq_mul, smul_eq_mul, pow_mul, hw_pow_p]
   · exact Finset.sum_congr rfl fun b _ => (f_smul_T_p_upper_eq p hp f b τ).symm
 
-/-- **Upper-triangular HasSum at period `1`.**
-Period-`1` sibling of `hasSum_heckeT_p_ut_period_N`: at the canonical period,
-`ζ = qParam 1 (1/p)` is a primitive `p`-th root, so the orthogonality is direct
-and needs no vanishing hypothesis on the coefficients. Shared by the period-`1`
-`T_p` Fourier formula and its no-diamond (`p ∣ M`) specialisation. -/
 private theorem hasSum_heckeT_p_ut_period_one (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (f : ℍ → ℂ) (a : ℕ → ℂ) (τ : ℍ)
     (hf_hs : ∀ σ : ℍ, HasSum
@@ -413,7 +338,6 @@ private theorem hasSum_heckeT_p_ut_period_one (k : ℤ) {p : ℕ} (hp : Nat.Prim
   set ζ := Function.Periodic.qParam (1 : ℝ) (1 / (↑p : ℂ)) with hζ_def
   have hp_ne : (↑p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
   have hw_pow_p : w ^ p = q := by rw [hw_def, ← qParam_mul_nat]; congr 1; field_simp
-  -- Finite-infinite exchange, then factor each `qParam` via the root-of-unity power.
   have h_rewritten : HasSum
       (fun n => a n • w ^ n * ∑ b ∈ Finset.range p, ζ ^ (n * b))
       (∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ)) := by
@@ -422,7 +346,6 @@ private theorem hasSum_heckeT_p_ut_period_one (k : ℤ) {p : ℕ} (hp : Nat.Prim
     · rw [smul_eq_mul, ← Finset.mul_sum, ← Finset.mul_sum, mul_assoc]
     · exact Finset.sum_congr rfl fun b _ => by
         rw [qParam_smul_T_p_upper_pow (1 : ℝ) p hp.pos b τ n, smul_eq_mul]
-  -- `ζ` is a primitive `p`-th root, so orthogonality is unconditional.
   have h_ind : HasSum (fun n' => (if p ∣ n' then a n' • w ^ n' else 0))
       ((↑p : ℂ)⁻¹ * ∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ)) := by
     rw [show (↑p : ℂ)⁻¹ * ∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ) =
@@ -445,11 +368,6 @@ private theorem hasSum_heckeT_p_ut_period_one (k : ℤ) {p : ℕ} (hp : Nat.Prim
   · rw [smul_eq_mul, smul_eq_mul, pow_mul, hw_pow_p]
   · exact Finset.sum_congr rfl fun b _ => (f_smul_T_p_upper_eq p hp f b τ).symm
 
-/-- **Diamond-side assembly of the `T_p` Fourier formula** (period-generic).
-Given the upper-triangular `HasSum` `h_upper`, the diamond eigenvalue `⟨p⟩f = χ(p)f`
-adds the lower term: `(T_p f)(τ)` has the `q`-expansion whose `n`-th coefficient is
-`a(pn) + p^{k-1}·χ(p)·[p ∣ n]·a(n/p)`. The lower term comes from reindexing
-`f(pτ)`'s expansion and slashing through `T_p_lower`. -/
 private theorem hasSum_heckeT_p_of_ut {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ)
@@ -467,7 +385,6 @@ private theorem hasSum_heckeT_p_of_ut {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
     simp [Complex.mul_im]; exact mul_pos (Nat.cast_pos.mpr hp.pos) τ.im_pos
   set pτ : ℍ := ⟨(p : ℂ) * ↑τ, hpτ_im⟩
   have hinj : Function.Injective (p * · : ℕ → ℕ) := mul_right_injective₀ hp.ne_zero
-  -- Lower/diamond term: reindex `f(pτ)`'s expansion to a `p ∣ m` indicator sum.
   have h_lower_ind : HasSum
       (fun m => (if p ∣ m then a (m / p) else 0) • q ^ m) (f pτ) := by
     refine (hinj.hasSum_iff (fun x hx => ?_)).mp ?_
@@ -496,21 +413,10 @@ private theorem hasSum_heckeT_p_of_ut {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
   · show heckeT_p_fun k p hp hpN f τ = heckeT_p_ut k p hp.pos (⇑f) τ + pk * χp * f pτ
     simp only [heckeT_p_fun, Pi.add_apply, h_slash_lower]
 
-/-- **Fourier coefficient formula for T_p** (Diamond–Shurman Prop 5.2.2).
-
-For `f ∈ M_k(Γ₁(N), χ)` and prime `p` coprime to `N`:
-
-  `a_m(T_p f) = p^{1-k} · a_{pm}(f) + χ(p) · a_{m/p}(f)`
-
-where `a_{m/p} = 0` when `p ∤ m`.
-
-The proof uses:
-1. `rootOfUnity_sum_eq` for the upper-triangular sum (kills non-multiples of p)
-2. Diamond eigenvalue `⟨p⟩f = χ(p) f` for the lower term
-3. `qExpansion_coeff_unique` for coefficient identification
-
-Mathlib's slash action includes the `|det|^{k-1}` factor, so this matches the
-standard Diamond–Shurman normalisation. -/
+/-- **Fourier coefficient formula for `T_p`** (Diamond–Shurman Prop 5.2.2).
+For `f ∈ M_k(Γ₁(N), χ)` and prime `p` coprime to `N`,
+`a_m(T_p f) = a_{pm}(f) + χ(p) · p^{k-1} · a_{m/p}(f)`, where `a_{m/p} = 0` when
+`p ∤ m`. (Mathlib's slash action carries the `|det|^{k-1}` factor.) -/
 theorem fourierCoeff_heckeT_p [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
@@ -519,11 +425,6 @@ theorem fourierCoeff_heckeT_p [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
       (qExpansion N f).coeff (p * m) +
         (↑p : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime p hpN)) *
           (if p ∣ m then (qExpansion N f).coeff (m / p) else 0) := by
-  /- **Proof outline** (`qExpansion_coeff_unique`): for each `τ`, the candidate
-  coefficients give a `HasSum` of `(T_p f)(τ)`. The upper-triangular part is
-  `hasSum_heckeT_p_ut_period_N` (root-of-unity orthogonality, using that `Γ₁(N)`
-  coefficients vanish off multiples of `N`); the diamond/lower assembly is
-  `hasSum_heckeT_p_of_ut`. -/
   have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
   have hΓ : (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) := rfl
   have hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
@@ -543,29 +444,10 @@ theorem fourierCoeff_heckeT_p [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
       (fun n hn => qExpansion_coeff_eq_zero_of_not_dvd hN_period h1_period f hn))
 
 /-- **Fourier coefficient formula for `T_p` at period 1** (Diamond–Shurman
-Prop 5.2.2, canonical period).
-
-Period-1 sibling of `fourierCoeff_heckeT_p`.  Because
-`ModularGroup.T ∈ Γ₁(N)`, every `Γ₁(N)`-form is `1`-periodic, and the
-canonical `q`-expansion of `f ∈ M_k(Γ₁(N), χ)` uses period `1`.  The
-Fourier formula at this canonical period is
-
-  `a_m(T_p f) = a_{pm}(f) + p^{k-1} · χ(p) · a_{m/p}(f)   [if p ∣ m, else 0]`
-
-where `a_m = (qExpansion 1 f).coeff m` are the standard Fourier
-coefficients.
-
-Proof structure mirrors `fourierCoeff_heckeT_p` with period `(↑N : ℝ)`
-replaced by `(1 : ℝ)` throughout.  The only real simplification: at
-period `1`, `ζ := qParam 1 (1/p)` is a primitive **p-th** root of unity
-(not the primitive `(p·N)`-th root that appears at period `N`), so the
-case analysis in the root-of-unity orthogonality step becomes direct
-and does not require `qExpansion_coeff_eq_zero_of_not_dvd`.
-
-Consumed by the period-1 migration of `FourierHecke.lean`
-(`fourierCoeff_heckeT_ppow_period_one`, `fourierCoeff_heckeT_n_period_one`)
-and ultimately by `Newforms.lean`'s period-1 `Newform.lCoeff` / `isNorm`
-convention. -/
+Prop 5.2.2, canonical period). The period-`1` sibling of `fourierCoeff_heckeT_p`:
+since every `Γ₁(N)`-form is `1`-periodic, the canonical `q`-expansion uses
+period `1`, and `a_m(T_p f) = a_{pm}(f) + p^{k-1} · χ(p) · a_{m/p}(f)` (the last
+term present only when `p ∣ m`). -/
 theorem fourierCoeff_heckeT_p_period_one [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
@@ -574,9 +456,6 @@ theorem fourierCoeff_heckeT_p_period_one [NeZero N] (k : ℤ) {p : ℕ}
       (qExpansion (1 : ℝ) f).coeff (p * m) +
         (↑p : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime p hpN)) *
           (if p ∣ m then (qExpansion (1 : ℝ) f).coeff (m / p) else 0) := by
-  -- Period-`1` analogue of `fourierCoeff_heckeT_p`: upper-triangular part from
-  -- `hasSum_heckeT_p_ut_period_one` (primitive `p`-th root, no `N`-vanishing
-  -- hypothesis), diamond/lower assembly from `hasSum_heckeT_p_of_ut`.
   have h1_pos : (0 : ℝ) < 1 := one_pos
   have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
     rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
@@ -594,34 +473,16 @@ theorem fourierCoeff_heckeT_p_period_one [NeZero N] (k : ℤ) {p : ℕ}
     (hasSum_heckeT_p_ut_period_one k hp (⇑f) a τ hf_hs)
 
 /-- **Fourier coefficient formula for `T_p` on forms with `p ∣ M` at period 1**
-(Diamond–Shurman §5.2, no-diamond case).
-
-For `f ∈ M_k(Γ₁(M))` and prime `p` dividing `M`, the level-divisible Hecke
-operator `heckeT_p_divN` is the purely upper-triangular sum
-`Σ_{b=0}^{p-1} f ∣[k] [[1,b],[0,p]]` (no lower/diamond term, since the
-Nebentypus character is not well-defined at `p`).  At period `1`, its
-`m`-th Fourier coefficient collapses to `a_{pm}(f)`:
-
-  `a_m(T_p^{divN} f) = a_{pm}(f)`
-
-This is the "no-diamond" case of the `T_p` Fourier formula at period `1`.
-The proof is the upper-triangular / root-of-unity orthogonality argument
-from `fourierCoeff_heckeT_p_period_one` specialised by dropping the
-diamond branch: `heckeT_p_divN` is by definition the function
-`heckeT_p_ut k p hp.pos (⇑f)` bundled as a modular form.
-
-Consumed by `Eigenforms/MainLemma.lean` to instantiate the Miyake 4.6.5
-prime-sieve witness
-`miyake_4_6_5_prime_sieve_witness_at_pN_one` with the natural choice
-`heckeT_p_divN`. -/
+(Diamond–Shurman §5.2, no-diamond case). For `f ∈ M_k(Γ₁(M))` and a prime `p ∣ M`,
+the level-divisible operator `heckeT_p_divN` is the purely upper-triangular sum
+(no diamond term, the Nebentypus being undefined at `p`), so at period `1` its
+`m`-th Fourier coefficient is `a_{pm}(f)`. -/
 theorem qExpansion_one_heckeT_p_divN_coeff
     {M : ℕ} [NeZero M] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpM : ¬ Nat.Coprime p M)
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (m : ℕ) :
     (qExpansion (1 : ℝ) (heckeT_p_divN k p hp hpM f)).coeff m =
       (qExpansion (1 : ℝ) f).coeff (p * m) := by
-  -- `heckeT_p_divN` is the modular-form bundling of the purely upper-triangular
-  -- sum `heckeT_p_ut`, so the claim is exactly `hasSum_heckeT_p_ut_period_one`.
   have h1_pos : (0 : ℝ) < 1 := one_pos
   have h1_period : (1 : ℝ) ∈ ((Gamma1 M).map (mapGL ℝ)).strictPeriods := by
     rw [show (Gamma1 M).map (mapGL ℝ) = (Gamma1 M : Subgroup (GL (Fin 2) ℝ)) from rfl,

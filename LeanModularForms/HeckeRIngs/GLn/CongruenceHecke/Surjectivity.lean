@@ -8,12 +8,9 @@ import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke.DegreeCombinatorics
 /-!
 # Hecke Ring for Congruence Subgroups (Shimura §3.3) — Surjectivity (Theorem 3.35)
 
-The capstone of the chain: coprime/bad-prime multiplicativity
-(`T_coprime_mul`, `T_coprime_mul`-companions), algebraic independence of the
-generators (`T_gen_algebraicIndependent`, `π_injective`, `ker_π_le_ker_ψ`), the
-`ψ`-range computations (`T_diag_mem_ψ_range`, `ψ_surjective`), and the assembly
-of the surjective ring homomorphism `shimura_ring_hom` proving
-**Shimura Theorem 3.35**: `R(Γ, Δ) ↠ R(Γ₀(N), Δ₀(N))`.
+This file assembles the surjective ring homomorphism `R(Γ, Δ) ↠ R(Γ₀(N), Δ₀(N))`
+from coprime/bad-prime multiplicativity, algebraic independence of the generators,
+and the `ψ`-range computations.
 
 ## Main results
 
@@ -32,19 +29,12 @@ namespace HeckeRing.GLn
 
 variable (N : ℕ) [NeZero N]
 
-/-- Two `Γ₀(N)`-diagonal cosets with equal diagonal vectors are equal (the positivity
-and gcd side-conditions are propositions, so they do not affect the coset). -/
 private lemma T_diag_Gamma0_congr {a b : Fin 2 → ℕ}
     (ha : ∀ i, 0 < a i) (hga : Int.gcd (a 0) N = 1)
     (hb : ∀ i, 0 < b i) (hgb : Int.gcd (b 0) N = 1) (hab : a = b) :
     T_diag_Gamma0 N a ha hga = T_diag_Gamma0 N b hb hgb := by
   subst hab; rfl
 
-/-- **Coprime diagonal multiplication for Gamma0** (Shimura §3.2, Prop 3.16–17):
-`T'(1,m) * T'(1,n) = T'(1,mn)` when `gcd(m, n) = 1`.
-
-Partners `T_bad_mul` (for m, n ∣ N^∞). Together they give the full
-multiplicativity needed for `ker_π_le_ker_ψ`. -/
 private theorem T_coprime_mul (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n) (hcop : Nat.Coprime m n) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
@@ -99,10 +89,6 @@ private theorem T_coprime_mul (N : ℕ) [NeZero N]
     exact HeckeRing.heckeMultiplicity_eq_zero_of_mulMap_unique (Gamma0_pair N) _ _ _ A hA
       (mulMap_Gamma0_coprime_eq N m n hm_pos hn_pos hcop)
 
-/-- The `m`-multiplicity coefficient of two coprime diagonal cosets at `T_diag (d₁*d₂)`
-is the Kronecker indicator of `(D₁, D₂) = (T_diag d₁, T_diag d₂)`. Proved via
-`T_diag_mul_coprime` (giving `m = single (T_diag (a*b)) 1`) and
-`diagonal_representative_unique`. -/
 private lemma coprime_mul_m_coeff_indicator (f g : HeckeAlgebra 2) (d₁ d₂ : Fin 2 → ℕ)
     (hd₁_pos : ∀ i, 0 < d₁ i) (hd₂_pos : ∀ i, 0 < d₂ i)
     (hd₁_div : DivChain 2 d₁) (hd₂_div : DivChain 2 d₂)
@@ -136,15 +122,6 @@ private lemma coprime_mul_m_coeff_indicator (f g : HeckeAlgebra 2) (d₁ d₂ : 
       rw [diagonal_representative_unique 2 a d₁ ha_pos hd₁_pos ha_div hd₁_div ha,
           diagonal_representative_unique 2 b d₂ hb_pos hd₂_pos hb_div hd₂_div hb]⟩
 
-/-- **Coprime Finsupp coefficient factorisation**: for Hecke algebra elements
-`f, g` whose support cosets have pairwise coprime diagonal products, the
-Finsupp coefficient at `T_diag(d₁ * d₂)` factors as `f(d₁) * g(d₂)`.
-
-This is the inductive bridge for `multi_prime_kronecker`.
-Proof: expand `(f * g)(D)` via `mul_def` / `Finsupp.sum`, apply
-`T_diag_mul_coprime` to each coprime pair to get
-`m(rep D₁, rep D₂) = single(T_diag(a*b), 1)`, then `diagonal_representative_unique`
-collapses the double sum to the unique pair `(d₁, d₂)` via `huniq`. -/
 private lemma coprime_mul_coeff (f g : HeckeAlgebra 2)
     (d₁ d₂ : Fin 2 → ℕ)
     (hd₁_pos : ∀ i, 0 < d₁ i) (hd₂_pos : ∀ i, 0 < d₂ i)
@@ -202,23 +179,10 @@ private lemma coprime_mul_coeff (f g : HeckeAlgebra 2)
   · rfl
   · simp [Finsupp.notMem_support_iff.mp hm]
 
--- `det_SLnZ_eq_one`, `det_doubleCoset_eq`, `prod_rep_T_diag`, `det_mulMap_eq`,
--- `T_gen_pow_support_qpower`, `T_gen_pow_entries_qpower`, `support_mul_exists`
--- moved to `LeanModularForms.HeckeRIngs.GLn.PolynomialRing` (namespace
--- `HeckeRing.GLn.Inj`). Opened here for use in downstream lemmas.
 open HeckeRing.GLn.Inj
   (T_gen_pow_support_qpower T_gen_pow_entries_qpower support_mul_exists
    det_SLnZ_eq_one det_doubleCoset_eq prod_rep_T_diag det_mulMap_eq)
 
-/-- **Shimura Proposition 3.31 (Surjectivity)**: Every GL₂(ℤ)-double coset has a
-    `Γ₀(N)`-double coset preimage under `cosetMap`. Combined with `shimura_prop_3_31`
-    (injectivity on coprime-det cosets), this gives the bijection between coprime-det
-    cosets at the two levels — Shimura's full Prop 3.31.
-
-    **Proof**: Apply `exists_diagonal_representative` to get a diagonal form
-    `(a₀, a₁)` for the GL coset. The coprime-det condition gives `gcd(a₀, N) = 1`,
-    so `T_diag_Gamma0 N (![a₀, a₁])` is a valid `Γ₀(N)` coset whose `cosetMap`
-    image equals the original coset via `cosetMap_T_diag_Gamma0`. -/
 private theorem shimura_prop_3_31_surjective (N : ℕ) [NeZero N]
     (D : HeckeCoset (GL_pair 2))
     (hD_coprime : Int.gcd
@@ -250,9 +214,6 @@ private theorem shimura_prop_3_31_surjective (N : ℕ) [NeZero N]
   refine ⟨T_diag_Gamma0 N a ha_pos ha0_gcd, ?_⟩
   rw [cosetMap_T_diag_Gamma0, ← hD_eq]
 
-/-- Determinant multiplicativity for Hecke products: if all support cosets of `f`
-have `det = d₁` and all of `g` have `det = d₂`, then all support cosets of
-`f * g` have `det = d₁ * d₂`. Uses `support_mul_exists` + `det_mulMap_eq`. -/
 private lemma support_det_mul (f g : HeckeAlgebra 2) (d₁ d₂ : ℚ)
     (hf : ∀ D, f D ≠ 0 →
       (↑(↑(HeckeCoset.rep D) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det = d₁)
@@ -265,9 +226,6 @@ private lemma support_det_mul (f g : HeckeAlgebra 2) (d₁ d₂ : ℚ)
   obtain ⟨p, _, hD_eq⟩ := hD_mem
   rw [← hD_eq, det_mulMap_eq, hf D₁ hfD₁, hg D₂ hgD₂]
 
-/-- Multi-prime determinant tracking (det version): support of `∏_{S} T_gen(p)^{e_p}`
-has `det(rep D) = ∏_{S} p^{e_p 0 + 2*e_p 1}`. Proved by `Finset.induction` using
-`support_det_mul` + `T_gen_pow_support_qpower`. -/
 private lemma prod_gen_det_eq (S : Finset {p : ℕ // p.Prime})
     (e : {p : ℕ // p.Prime} → Fin 2 → ℕ) :
     ∀ D : HeckeCoset (GL_pair 2),
@@ -303,8 +261,6 @@ private lemma prod_gen_det_eq (S : Finset {p : ℕ // p.Prime})
       D hD
     rw [h]; push_cast [Finset.prod_insert hq'']; ring
 
-/-- Multi-prime support tracking: every coset in the support of
-`∏_{p ∈ S} T_gen(p)^{e_p}` has diagonal product `∏_{p ∈ S} p^{e_p 0 + 2*e_p 1}`. -/
 private lemma prod_gen_support_det (S : Finset {p : ℕ // p.Prime})
     (e : {p : ℕ // p.Prime} → Fin 2 → ℕ) (D : HeckeCoset (GL_pair 2))
     (hD : (∏ p ∈ S, (T_gen 2 p.1 0 ^ (e p 0) * T_gen 2 p.1 1 ^ (e p 1))) D ≠ 0) :
@@ -317,35 +273,27 @@ private lemma prod_gen_support_det (S : Finset {p : ℕ // p.Prime})
   rw [hD_eq, prod_rep_T_diag a ha_pos] at h_det
   exact_mod_cast h_det
 
-/-- A product of `p`-power diagonals over a prime set is entrywise positive. -/
 private lemma prod_ppowDiag_pos (S : Finset {p : ℕ // p.Prime})
     (v : {p : ℕ // p.Prime} → Fin 2 → ℕ) (i : Fin 2) :
     0 < (∏ p ∈ S, ppowDiag 2 p.1 (v p)) i := by
   simp only [Finset.prod_apply]
   exact Finset.prod_pos (fun (p : {p : ℕ // p.Prime}) _ => ppowDiag_pos 2 p.1 p.2 _ i)
 
-/-- A product of monotone `p`-power diagonals over a prime set satisfies the divisibility
-chain condition. -/
 private lemma prod_ppowDiag_divChain (S : Finset {p : ℕ // p.Prime})
     (v : {p : ℕ // p.Prime} → Fin 2 → ℕ) (hmono : ∀ p, Monotone (v p)) :
     DivChain 2 (∏ p ∈ S, ppowDiag 2 p.1 (v p)) :=
   Finset.prod_induction _ (DivChain 2) (fun a b ha hb => DivChain_mul 2 a b ha hb)
     (fun _ _ => dvd_refl 1) (fun (p : {p : ℕ // p.Prime}) _ => divChain_ppow 2 p.1 _ (hmono p))
 
-/-- Cross-coprimality cancellation: from `a * b = c * d` with `a` coprime to `d` and
-`c` coprime to `b`, deduce `a = c` (each divides the other). -/
 private lemma eq_of_mul_eq_mul_coprime_cross {a b c d : ℕ} (h : a * b = c * d)
     (hac : Nat.Coprime a d) (hcb : Nat.Coprime c b) : a = c :=
   Nat.dvd_antisymm
     (Nat.Coprime.dvd_of_dvd_mul_right hac (h ▸ dvd_mul_right _ _))
     (Nat.Coprime.dvd_of_dvd_mul_right hcb (h.symm ▸ dvd_mul_right _ _))
 
-/-- A two-element vector `![a, b]` with `a ≤ b` is monotone. -/
 private lemma monotone_cons_le {a b : ℕ} (h : a ≤ b) : Monotone (![a, b] : Fin 2 → ℕ) := by
   intro i j hij; fin_cases i <;> fin_cases j <;> simp_all [Fin.le_def] <;> omega
 
-/-- `coprime_mul_coeff`'s coprimality hypothesis for the `multi_prime` step: support cosets
-of the `q`-monomial and the `S'`-monomial have coprime diagonal products. -/
 private lemma multi_prime_step_coprime (q : {p : ℕ // p.Prime})
     (S' : Finset {p : ℕ // p.Prime}) (hq : q ∉ S') (e : {p : ℕ // p.Prime} → Fin 2 → ℕ)
     (D₁ D₂ : HeckeCoset (GL_pair 2)) (a b : Fin 2 → ℕ)
@@ -369,8 +317,6 @@ private lemma multi_prime_step_coprime (q : {p : ℕ // p.Prime})
   apply Nat.Coprime.pow_right
   exact (Nat.coprime_primes q.2 p.2).mpr (fun h => hq (by rw [Subtype.ext h]; exact hp))
 
-/-- `coprime_mul_coeff`'s uniqueness hypothesis for the `multi_prime` step: a coprime
-factorisation of `T_diag (d₁*d₂)` through these monomials forces `a = d₁`, `b = d₂`. -/
 private lemma multi_prime_step_uniq (q : {p : ℕ // p.Prime})
     (S' : Finset {p : ℕ // p.Prime}) (hq : q ∉ S') (e d : {p : ℕ // p.Prime} → Fin 2 → ℕ)
     (D₁ D₂ : HeckeCoset (GL_pair 2)) (a b : Fin 2 → ℕ)
@@ -431,8 +377,6 @@ private lemma multi_prime_step_uniq (q : {p : ℕ // p.Prime})
   exact ⟨funext entry_eq, funext fun i =>
     Nat.eq_of_mul_eq_mul_left (ha_pos i) (entry_eq i ▸ hi_all i)⟩
 
-/-- The inductive step of `multi_prime_coeff_factor`: peeling off the prime `q ∉ S'`,
-the coefficient at `T_diag (d₁ * d₂)` factors as `f (T_diag d₁) * g (T_diag d₂)`. -/
 private lemma multi_prime_factor_step (q : {p : ℕ // p.Prime})
     (S' : Finset {p : ℕ // p.Prime}) (hq : q ∉ S')
     (e d : {p : ℕ // p.Prime} → Fin 2 → ℕ) :
@@ -457,12 +401,6 @@ private lemma multi_prime_factor_step (q : {p : ℕ // p.Prime})
     (fun D₁ D₂ a b hfD₁ hgD₂ hD₁ hD₂ hap hbp had hbd _ h_eq =>
       multi_prime_step_uniq q S' hq e d D₁ D₂ a b hfD₁ hgD₂ hD₁ hD₂ hap hbp had hbd h_eq)
 
-/-- **Multi-prime coefficient factorisation**: the Finsupp coefficient of a product
-of per-prime generator monomials at a product of per-prime cosets factors as the
-product of per-prime coefficients.
-
-Proof by `Finset.induction` on `S`, using `coprime_mul_coeff` at each step
-to peel off one prime. -/
 private lemma multi_prime_coeff_factor (S : Finset {p : ℕ // p.Prime})
     (e d : {p : ℕ // p.Prime} → Fin 2 → ℕ) :
     (∏ p ∈ S, (T_gen 2 p.1 0 ^ (e p 0) * T_gen 2 p.1 1 ^ (e p 1)))
@@ -481,26 +419,12 @@ private lemma multi_prime_coeff_factor (S : Finset {p : ℕ // p.Prime})
     rw [Finset.prod_insert hq, Finset.prod_insert hq, Finset.prod_insert hq,
       multi_prime_factor_step q S' hq e d, ih]
 
-/-- **Algebraic independence of Hecke generators**: the generators `T_gen 2 p k`
-for all primes `p` and `k ∈ Fin 2` are algebraically independent over `ℤ`.
-Equivalently, the presentation map `π_hom` is injective.
-
-**Proof**: follows the same "minimum-support Kronecker extraction" pattern as
-`evalHom_injective_two` (PolynomialRing.lean), extended to multi-prime monomials
-via `multi_prime_kronecker`. For any nonzero `f`, pick the monomial `s` in `f.support`
-that minimises `(s(p₁,1), s(p₂,1), …)` lexicographically; evaluating `π_hom(f)`
-at the leading coset of `s` extracts `f.coeff s ≠ 0`. -/
--- Helper: convert a GenIdx →₀ ℕ exponent into per-prime exponents
 private noncomputable def toPrimeExp (d : GenIdx →₀ ℕ) : {p : ℕ // p.Prime} → Fin 2 → ℕ :=
   fun p k => d (p, k)
 
--- Helper: the set of primes appearing in a monomial
 private def primesOf (d : GenIdx →₀ ℕ) : Finset {p : ℕ // p.Prime} :=
   d.support.image Prod.fst
 
-/-- The monomial evaluation `∏ T_gen(i)^{d(i)}` equals the per-prime-grouped product
-`∏_{p ∈ primesOf d} (T_gen(p,0)^{d(p,0)} * T_gen(p,1)^{d(p,1)})`.
-This is a rearrangement of a commutative product. -/
 private lemma monomial_eval_eq_prod_primes (d : GenIdx →₀ ℕ) :
     (∏ i ∈ d.support, (fun j : GenIdx => T_gen 2 j.1.1 j.2) i ^ d i) =
     ∏ p ∈ primesOf d, (T_gen 2 p.1 0 ^ (toPrimeExp d p 0) *
@@ -530,7 +454,6 @@ private lemma monomial_eval_eq_prod_primes (d : GenIdx →₀ ℕ) :
       exact hi_not hne hi_fst
     rw [h_zero]; exact pow_zero _
 
-/-- The diagonal product of `∏ ppowDiag` equals the per-prime determinant product. -/
 private lemma prod_ppowDiag_eq (S : Finset {p : ℕ // p.Prime})
     (e : {p : ℕ // p.Prime} → Fin 2 → ℕ) :
     ∏ i, (∏ p ∈ S, ppowDiag 2 p.1 ![e p 1, e p 0 + e p 1]) i =
@@ -543,8 +466,6 @@ private lemma prod_ppowDiag_eq (S : Finset {p : ℕ // p.Prime})
     Matrix.head_cons, ← pow_add]
   congr 1; omega
 
-/-- For monomial d, if the per-prime determinant profile differs from s's,
-the evaluation at s's leading coset is 0.  Uses `prod_gen_support_det`. -/
 private lemma monomial_eval_zero_of_det_ne (d s : GenIdx →₀ ℕ)
     (h_det : ∏ p ∈ primesOf d, p.1 ^ (toPrimeExp d p 0 + 2 * toPrimeExp d p 1) ≠
              ∏ p ∈ primesOf s, p.1 ^ (toPrimeExp s p 0 + 2 * toPrimeExp s p 1)) :
@@ -572,7 +493,6 @@ private lemma monomial_eval_zero_of_det_ne (d s : GenIdx →₀ ℕ)
   have hac := diagonal_representative_unique 2 a c ha_pos hc_pos ha_div hc_div ha_eq.symm
   rw [hac] at ha_det; rw [← ha_det, ← hc_prod]
 
-/-- The exponent combination `e0 + 2 e1` is positive for any prime in the monomial. -/
 private lemma detCombo_pos_of_mem_primesOf (e : GenIdx →₀ ℕ) (p : {p : ℕ // p.Prime})
     (hp : p ∈ primesOf e) : 0 < toPrimeExp e p 0 + 2 * toPrimeExp e p 1 := by
   obtain ⟨⟨q, k⟩, hq_mem, hq_eq⟩ := Finset.mem_image.mp hp
@@ -581,8 +501,6 @@ private lemma detCombo_pos_of_mem_primesOf (e : GenIdx →₀ ℕ) (p : {p : ℕ
   have hq_ne_zero : e (q, k) ≠ 0 := Finsupp.mem_support_iff.mp hq_mem
   fin_cases k <;> simp [toPrimeExp] at hq_ne_zero ⊢ <;> omega
 
-/-- If the determinant-product of `d` divides that of `s`, every prime of `d` is a prime
-of `s` (prime-power factorisation). -/
 private lemma primesOf_subset_of_detProd_dvd (d s : GenIdx →₀ ℕ)
     (h_dvd : (∏ p ∈ primesOf d, p.1 ^ (toPrimeExp d p 0 + 2 * toPrimeExp d p 1)) ∣
              ∏ p ∈ primesOf s, p.1 ^ (toPrimeExp s p 0 + 2 * toPrimeExp s p 1)) :
@@ -596,8 +514,6 @@ private lemma primesOf_subset_of_detProd_dvd (d s : GenIdx →₀ ℕ)
   rwa [show p = q from Subtype.ext ((Nat.prime_dvd_prime_iff_eq p.2 q.2).mp
     (p.2.dvd_of_dvd_pow hpq))]
 
-/-- Equal determinant-products with the same prime set force the per-prime exponent
-combination `e0 + 2 e1` to agree at each prime. -/
 private lemma toPrimeExp_detCombo_eq_of_detProd_eq (d s : GenIdx →₀ ℕ)
     (h_same_primes : primesOf d = primesOf s)
     (h_det_eq : ∏ p ∈ primesOf d, p.1 ^ (toPrimeExp d p 0 + 2 * toPrimeExp d p 1) =
@@ -621,9 +537,6 @@ private lemma toPrimeExp_detCombo_eq_of_detProd_eq (d s : GenIdx →₀ ℕ)
   rw [Finset.sum_ite_eq_of_mem' _ p _ hp, Finset.sum_ite_eq_of_mem' _ p _ hp] at h_fact
   exact h_fact
 
-/-- Minimality of the weight `∑ exponents-at-(·,1)` over the support, together with equal
-determinant-products and prime sets, forces some prime where `s`'s second exponent is
-strictly below `d`'s (otherwise `d = s`). -/
 private lemma exists_primesOf_snd_exp_lt (d s : GenIdx →₀ ℕ) (hds : d ≠ s)
     (h_same_primes : primesOf d = primesOf s)
     (h_det_eq : ∏ p ∈ primesOf d, p.1 ^ (toPrimeExp d p 0 + 2 * toPrimeExp d p 1) =
@@ -676,9 +589,6 @@ private lemma exists_primesOf_snd_exp_lt (d s : GenIdx →₀ ℕ) (hds : d ≠ 
     simp [Finsupp.notMem_support_iff.mp ‹(p,k) ∉ d.support›,
           Finsupp.notMem_support_iff.mp ‹(p,k) ∉ s.support›]
 
-/-- The per-prime monomial product of `d`, evaluated at the leading coset `D_s` of `s`,
-is the Kronecker indicator `if d = s then 1 else 0` (given `s` minimises the weight,
-so the off-diagonal contributions vanish). -/
 private lemma monomial_prod_eval_at_Ds_eq_indicator (s d : GenIdx →₀ ℕ)
     (h_weight_le : (s.sum (fun i c => if i.2 = (1 : Fin 2) then c else 0)) ≤
                    (d.sum (fun i c => if i.2 = (1 : Fin 2) then c else 0))) :
@@ -759,21 +669,15 @@ private lemma T_gen_algebraicIndependent :
   rw [Finset.sum_ite_eq_of_mem' (P.support) s _ hs_mem] at h_zero
   exact hs_coeff h_zero
 
-/-- `π_hom` is injective: the Hecke algebra generators are algebraically independent,
-so the free polynomial ring `ℤ[X_{(p,k)}]` embeds faithfully into `HeckeAlgebra 2`. -/
 private lemma π_injective : Function.Injective π_hom := by
   have h := algebraicIndependent_iff_injective_aeval.mp T_gen_algebraicIndependent
   intro a b hab; exact h hab
 
-/-- **Kernel compatibility**: `ker π ≤ ker ψ`.
-Since `π_hom` is injective, `ker π_hom = ⊥ ≤ ker (ψ_hom N)`. -/
 private lemma ker_π_le_ker_ψ :
     RingHom.ker π_hom ≤ RingHom.ker (ψ_hom N) := by
   rw [(RingHom.injective_iff_ker_eq_bot π_hom).mp π_injective]
   exact bot_le
 
-/-- The product element in a scalar × diagonal mulMap lands in the GL DC of the product diagonal.
-Uses scalar centrality: `diag(c,c) * g = g * diag(c,c)` for all `g`. -/
 private lemma product_mem_GL_DC_scalar
     (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (hc_gcd : Int.gcd (↑c) ↑N = 1) (ha_gcd : Int.gcd (a 0) N = 1)
@@ -826,8 +730,6 @@ private lemma product_mem_GL_DC_scalar
     ⟨σp₁ * σL_c * σR_c * σp₂ * σL_a, rfl⟩,
     mapGL ℚ σR_a, ⟨σR_a, rfl⟩, hX_def⟩
 
-/-- Every mulMap output for scalar × arbitrary in the Gamma0 Hecke algebra
-equals `T_diag_Gamma0 N ((fun _ => c) * a)`. -/
 private lemma mulMap_Gamma0_scalar_eq
     (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (hc_gcd : Int.gcd (↑c) ↑N = 1) (ha_gcd : Int.gcd (a 0) N = 1)
@@ -875,8 +777,6 @@ private lemma mulMap_Gamma0_scalar_eq
     (by rw [← hGL, hGL_ca])
   subst hb_eq; exact hrep'
 
-/-- The degree of a scalar Gamma0 double coset `T'(c, c)` is `1`:
-`diag(c,c)` centralizes all of `GL₂(ℚ)`, hence the stabilizer is all of `Γ₀(N)`. -/
 private lemma Gamma0_HeckeCoset_deg_scalar (c : ℕ) (hc : 0 < c)
     (hc_gcd : Int.gcd (↑c) ↑N = 1) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
@@ -916,9 +816,6 @@ private lemma Gamma0_HeckeCoset_deg_scalar (c : ℕ) (hc : 0 < c)
     rw [this]; exact H.mul_mem (H.mul_mem (H.mul_mem hh₁ hh₂) hx) (H.inv_mem (H.mul_mem hh₁ hh₂))
   · intro hx; exact H.mul_mem (H.mul_mem (H.inv_mem (H.mul_mem hh₁ hh₂)) hx) (H.mul_mem hh₁ hh₂)
 
-/-- If the left factor `D_c` has degree `1` and every `mulMap` output of `(D_c, D_x)`
-equals a single coset `D_out`, then `T'(D_c) * T'(D_x) = T'(D_out)`: the unique
-double-coset decomposition forces multiplicity `1`. -/
 private lemma T_single_mul_eq_of_deg_one_left
     (D_c D_x D_out : HeckeCoset (Gamma0_pair N))
     (h_deg : HeckeRing.HeckeCoset_deg (Gamma0_pair N) D_c = 1)
@@ -958,9 +855,6 @@ private lemma T_single_mul_eq_of_deg_one_left
     exact HeckeRing.heckeMultiplicity_eq_zero_of_mulMap_unique (Gamma0_pair N) _ _ D_out A hA
       h_mulMap
 
-/-- **Generalized Gamma0-level scalar multiplication**: `T'(c,c) * T'(a₀,a₁) = T'(c*a₀, c*a₁)`.
-The scalar `diag(c,c)` centralizes `Γ₀(N)`, so its double coset has degree 1
-and the unique mulMap output is `T'(c*a₀, c*a₁)` with multiplicity 1. -/
 private lemma T_Gamma0_scalar_mul_gen (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ)
     (ha : ∀ i, 0 < a i) (hc_gcd : Int.gcd (↑c) ↑N = 1)
     (ha_gcd : Int.gcd (a 0) N = 1) (hdiv : a 0 ∣ a 1) :
@@ -991,10 +885,6 @@ private lemma T_Gamma0_scalar_mul_gen (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ)
   exact T_single_mul_eq_of_deg_one_left N D_c D_a D_out (Gamma0_HeckeCoset_deg_scalar N c hc hc_gcd)
     (mulMap_Gamma0_scalar_eq N c hc a ha hc_gcd ha_gcd hdiv hca_gcd')
 
-/-- **Gamma0-level scalar multiplication**: `T'(c,c) * T'(1,m) = T'(c, c*m)`.
-The scalar `diag(c,c)` centralizes `Γ₀(N)`, so its double coset has degree 1
-and the unique mulMap output is `T'(c, c*m)` with multiplicity 1.
-This is used for the `d₁ > 1` case of surjectivity (Shimura Thm 3.34). -/
 private lemma T_Gamma0_scalar_mul (c m : ℕ) (hc : 0 < c) (hm : 0 < m)
     (hc_gcd : Int.gcd (↑c) ↑N = 1) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
@@ -1022,7 +912,6 @@ private lemma T_Gamma0_scalar_mul (c m : ℕ) (hc : 0 < c) (hm : 0 < m)
   exact T_single_mul_eq_of_deg_one_left N D_c D_m D_out (Gamma0_HeckeCoset_deg_scalar N c hc hc_gcd)
     h_mulMap
 
-/-- **T'(1,p) ∈ range(ψ)** for any prime p: follows directly from ψ_hom definition. -/
 private lemma T_1p_mem_ψ_range (p : ℕ) (hp : p.Prime) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, p])
@@ -1032,8 +921,6 @@ private lemma T_1p_mem_ψ_range (p : ℕ) (hp : p.Prime) :
     show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (0 : Fin 2))) = _
     simp only [ψ_hom, MvPolynomial.eval₂Hom_X']; rfl⟩
 
-/-- **T'(p,p) ∈ range(ψ)** for prime p with p ∤ N: follows from ψ_hom definition
-since `X_{(p,1)} ↦ T'(p,p)` when p ∤ N. -/
 private lemma T_pp_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N = 1) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![p, p])
@@ -1047,8 +934,6 @@ private lemma T_pp_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N 
   simp only [ψ_hom, MvPolynomial.eval₂Hom_X']
   simp only [show (1 : Fin 2) ≠ 0 from by omega, ↓reduceIte, dif_neg hp_not_dvd_N]
 
-/-- **T'(p, p^j) ∈ range(ψ)** for prime p with p ∤ N, j ≥ 1, given that
-    T'(1, p^(j-1)) ∈ range. Uses T_Gamma0_scalar_mul to factor T'(p, p) * T'(1, p^(j-1)). -/
 private lemma T_p_ppow_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N = 1)
     (j : ℕ) (hj : 1 ≤ j)
     (h_IH : HeckeRing.T_single (Gamma0_pair N) ℤ
@@ -1084,8 +969,6 @@ private lemma T_p_ppow_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gc
   rw [← h_mul]
   exact (ψ_hom N).range.mul_mem h_Tpp h_IH
 
-/-- **Helper**: extract a Γ₀(N)-level decomposition of `rep(T_diag_Gamma0 N a)` in
-    `DC_{Γ₀(N)}(diagMat 2 a)`. -/
 private lemma Gamma0_T_diag_rep_decompose (a : Fin 2 → ℕ)
     (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (a 0) N = 1) :
     ∃ L ∈ (Gamma0_pair N).H, ∃ R ∈ (Gamma0_pair N).H,
@@ -1097,7 +980,6 @@ private lemma Gamma0_T_diag_rep_decompose (a : Fin 2 → ℕ)
   obtain ⟨L, hL, R, hR, hLR_eq⟩ := h_rep
   exact ⟨L, hL, R, hR, hLR_eq⟩
 
-/-- Determinant of `rep(T_diag_Gamma0 N a)` equals the product of entries of `a`. -/
 private lemma Gamma0_T_diag_rep_det (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (hgcd : Int.gcd (a 0) N = 1) :
     (HeckeCoset.rep (T_diag_Gamma0 N a ha hgcd) : GL (Fin 2) ℚ).val.det =
@@ -1115,8 +997,6 @@ private lemma Gamma0_T_diag_rep_det (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
       diagMat_det 2 a ha]
   push_cast; simp [Fin.prod_univ_two]
 
-/-- The cosets `T'(1, p^{k+1})` and `T'(p, p^k)` are distinct: their diagonal
-representatives differ in the first entry (`1` versus the prime `p`). -/
 private lemma T_diag_Gamma0_one_ppow_ne_p_ppow (p : ℕ) (hp : p.Prime) (k : ℕ) (hk : 1 ≤ k)
     (h1 : ∀ i, 0 < (![1, p^(k+1)] : Fin 2 → ℕ) i) (hg1 : Int.gcd ((![1, p^(k+1)] : Fin 2 → ℕ) 0) N = 1)
     (h2 : ∀ i, 0 < (![p, p^k] : Fin 2 → ℕ) i) (hg2 : Int.gcd ((![p, p^k] : Fin 2 → ℕ) 0) N = 1) :
@@ -1135,8 +1015,6 @@ private lemma T_diag_Gamma0_one_ppow_ne_p_ppow (p : ℕ) (hp : p.Prime) (k : ℕ
   simp only [Matrix.cons_val_zero] at this
   exact absurd this.symm (Nat.Prime.one_lt hp).ne'
 
-/-- **Witness lemma**: `T'(1, p^(k+1))` is in the Γ₀(N)-mulSupport of
-    `(rep T'(1, p), rep T'(1, p^k))`. Mirror of `D_out1_pp_in_mulSupport`. -/
 private lemma D_out1_Gamma0_pp_in_mulSupport (p : ℕ) (hp : p.Prime)
     (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
     (T_diag_Gamma0 N (![1, p^(k+1)])
@@ -1170,7 +1048,6 @@ private lemma D_out1_Gamma0_pp_in_mulSupport (p : ℕ) (hp : p.Prime)
       (H : Set _) (H : Set _)
   rw [hα_eq, hβ_eq, DoubleCoset.mem_doubleCoset]
   refine ⟨1, H.one_mem, R₂, hR₂, ?_⟩
-  -- L₁⁻¹ * (L₁ * D₁ * R₁) * ((R₁⁻¹ * L₂⁻¹) * (L₂ * D₂ * R₂)) = D₁ * D₂ * R₂
   have h_alg : (L₁⁻¹ : GL (Fin 2) ℚ) * (L₁ * diagMat 2 (![1, p]) * R₁) *
       ((R₁⁻¹ * L₂⁻¹ : GL (Fin 2) ℚ) * (L₂ * diagMat 2 (![1, p^k]) * R₂)) =
       diagMat 2 (![1, p]) * diagMat 2 (![1, p^k]) * R₂ := by group
@@ -1181,9 +1058,6 @@ private lemma D_out1_Gamma0_pp_in_mulSupport (p : ℕ) (hp : p.Prime)
   congr 2
   ext i; fin_cases i <;> simp [Pi.mul_apply, pow_succ, mul_comm]
 
-/-- A diagonal `Δ₀(N)` element has coprime determinant whenever the product of its
-entries is coprime to `N` (its integer representative necessarily has determinant
-`v 0 * v 1`). -/
 private lemma coprimeDet_diagMat (v : Fin 2 → ℕ) (hv : ∀ i, 0 < v i)
     (hmem : diagMat 2 v ∈ Delta0_submonoid N) (hcop : Nat.Coprime (v 0 * v 1) N) :
     CoprimeDet N ⟨diagMat 2 v, hmem⟩ := by
@@ -1195,8 +1069,6 @@ private lemma coprimeDet_diagMat (v : Fin 2 → ℕ) (hv : ∀ i, 0 < v i)
   have h_A'_det : A'.det = (v 0 * v 1 : ℕ) := by exact_mod_cast h_det_eq
   rw [h_A'_det, Int.gcd_natCast_natCast]; exact_mod_cast hcop
 
-/-- Two coprime-determinant `Γ₀(N)`-diagonal cosets with equal `GL`-double cosets are
-equal: `cosetMap` is injective on coprime-determinant cosets (Shimura Prop 3.31). -/
 private lemma T_diag_Gamma0_eq_of_GL_eq (a b : Fin 2 → ℕ)
     (ha : ∀ i, 0 < a i) (hga : Int.gcd (a 0) N = 1) (hcop_a : Nat.Coprime (a 0 * a 1) N)
     (hb : ∀ i, 0 < b i) (hgb : Int.gcd (b 0) N = 1) (hcop_b : Nat.Coprime (b 0 * b 1) N)
@@ -1208,11 +1080,6 @@ private lemma T_diag_Gamma0_eq_of_GL_eq (a b : Fin 2 → ℕ)
   show cosetMap N (T_diag_Gamma0 N a ha hga) = cosetMap N (T_diag_Gamma0 N b hb hgb)
   rw [cosetMap_T_diag_Gamma0, cosetMap_T_diag_Gamma0]; exact h_GL
 
-/-- The diagonal product `a` of a coset in `mulSupport(rep T'(1,p), rep T'(1,p^k))` has
-determinant `a 0 * a 1 = p^{k+1}` and satisfies the GL₂ case split
-`T_diag a = T'(1, p^{k+1})` or `T_diag a = T'(p, p^k)`. Transferred from the GL₂
-multiplication table (`mulSupport_pp_det_eq`, `mulSupport_pp_dvd_p`,
-`mulSupport_pp_case_split`). -/
 private lemma mulSupport_Gamma0_pp_GL_split (p : ℕ) (hp : p.Prime) (k : ℕ) (hk : 1 ≤ k)
     (A : HeckeCoset (Gamma0_pair N)) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i)
     (ha_gcd : Int.gcd (a 0) N = 1) (h_a_div : DivChain 2 a)
@@ -1280,8 +1147,6 @@ private lemma mulSupport_Gamma0_pp_GL_split (p : ℕ) (hp : p.Prime) (k : ℕ) (
     (by rw [hα_eq, hSL_L₁, hSL_R₁]) (by rw [hβ_eq, hSL_L₂, hSL_R₂]) hSL_i₀.symm hSL_j₀.symm h_prod_eq
   exact ⟨h_det, HeckeRing.GL2.mulSupport_pp_case_split p hp k hk a ha_pos h_a_div h_det h_dvd⟩
 
-/-- **Support inclusion at Γ₀(N) level**:
-    Any A in mulSupport(rep T'(1,p), rep T'(1,p^k)) at Γ₀(N) equals T'(1, p^(k+1)) or T'(p, p^k). -/
 private lemma mulSupport_Gamma0_pp_subset (p : ℕ) (hp : p.Prime)
     (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k)
     (A : HeckeCoset (Gamma0_pair N))
@@ -1311,23 +1176,18 @@ private lemma mulSupport_Gamma0_pp_subset (p : ℕ) (hp : p.Prime)
       (by show Int.gcd (↑p) ↑N = 1; exact hpN)
       (by simpa [pow_succ, mul_comm] using h_pN_cop.pow_left (k+1)) h
 
-/-- Solve the degree-sum equation for `(m1, m2)` when `k = 1`. -/
 private lemma heckeMult_k1_solve (p m1 m2 : ℤ) (hp2 : 2 ≤ p) (hm2_nn : 0 ≤ m2)
     (hm1_pos : 1 ≤ m1) (h : m1 * (p * (p + 1)) + m2 = (p + 1) * (p + 1)) :
     m1 = 1 ∧ m2 = p + 1 := by
   have h_m1 : m1 = 1 := by nlinarith [hm2_nn, mul_self_nonneg (p - 1)]
   exact ⟨h_m1, by rw [h_m1] at h; linarith⟩
 
-/-- Solve the degree-sum equation for `(m1, m2)` when `k ≥ 2`. -/
 private lemma heckeMult_kge2_solve (p m1 m2 : ℤ) (hp2 : 2 ≤ p) (hm2_nn : 0 ≤ m2)
     (hm1_pos : 1 ≤ m1) (h : m1 * p ^ 2 + m2 = p * (p + 1)) :
     m1 = 1 ∧ m2 = p := by
   have h_m1 : m1 = 1 := by nlinarith [show (p : ℤ) ^ 2 ≥ 4 by nlinarith]
   exact ⟨h_m1, by rw [h_m1] at h; linarith⟩
 
-/-- The Γ₀(N)-level degree-sum identity for the prime-power product, with the
-multiplicities `m1 = μ(D'_out1)`, `m2 = μ(D'_out2)` and the explicit degree formulas
-substituted, plus the bounds `1 ≤ m1`, `0 ≤ m2`. -/
 private lemma heckeMult_pp_deg_facts (p : ℕ) (hp : p.Prime)
     (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
     1 ≤ HeckeRing.heckeMultiplicity (Gamma0_pair N)
@@ -1396,8 +1256,6 @@ private lemma heckeMult_pp_deg_facts (p : ℕ) (hp : p.Prime)
   exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne
     (HeckeRing.heckeMultiplicity_nonneg (Gamma0_pair N) D1.rep D2.rep D_out1.rep) (Ne.symm hne))
 
-/-- **Multiplicity values at Γ₀(N) level**:
-    `μ(D'_out1) = 1` and `μ(D'_out2) = c_k` (where c_k = p+1 if k=1, else p). -/
 private lemma heckeMultiplicity_Gamma0_values (p : ℕ) (hp : p.Prime)
     (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
     HeckeRing.heckeMultiplicity (Gamma0_pair N)
@@ -1447,15 +1305,6 @@ private lemma heckeMultiplicity_Gamma0_values (p : ℕ) (hp : p.Prime)
     have key : (p : ℤ) ^ (k - 2) * ((p : ℤ) + 1) ≠ 0 := by positivity
     exact mul_right_cancel₀ key (by nlinarith [h_deg])
 
-/-- **Gamma0-level prime-power multiplication formula** (p ∤ N case).
-    For prime p coprime to N and k ≥ 1:
-    `T'(1,p) * T'(1, p^k) = T'(1, p^(k+1)) + c_k • T'(p, p^k)`
-    where c_k = p+1 if k=1, p if k ≥ 2.
-
-    This is the Gamma0-level analogue of `T_sum_prime_mul_T_ad` (Shimura 3.24(5)).
-    Per Shimura's *Introduction to the Arithmetic Theory of Automorphic Functions*
-    p. 71. Mirrors the GL proof, transferring degrees and multiplicities via
-    `cosetMap` + Proposition 3.31 injectivity. -/
 private lemma Gamma0_T1p_mul_T1ppow_coprime (p : ℕ) (hp : p.Prime)
     (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
@@ -1515,8 +1364,6 @@ private lemma Gamma0_T1p_mul_T1ppow_coprime (p : ℕ) (hp : p.Prime)
       intro hmem
       exact (mulSupport_Gamma0_pp_subset N p hp hpN k hk A hmem).elim h1 h2
 
-/-- A `Γ₀(N)`-diagonal coset whose representative diagonal is the identity matrix is
-the trivial coset `HeckeCoset.one`. -/
 private lemma T_diag_Gamma0_eq_one (v : Fin 2 → ℕ) (hv : ∀ i, 0 < v i)
     (hg : Int.gcd (v 0) N = 1) (h_one : (diagMat 2 v : GL (Fin 2) ℚ) = 1) :
     T_diag_Gamma0 N v hv hg = HeckeCoset.one (Gamma0_pair N) := by
@@ -1525,8 +1372,6 @@ private lemma T_diag_Gamma0_eq_one (v : Fin 2 → ℕ) (hv : ∀ i, 0 < v i)
   show DoubleCoset.doubleCoset (diagMat 2 v) _ _ = DoubleCoset.doubleCoset 1 _ _
   rw [h_one]
 
-/-- Coprime multiplicativity for the `ψ`-range: `T'(1,x), T'(1,y) ∈ range` and
-`gcd(x,y) = 1` give `T'(1, x*y) ∈ range`. -/
 private lemma T_1m_coprime_mem (x y : ℕ) (hx : 0 < x) (hy : 0 < y) (hcop : Nat.Coprime x y)
     (hX : HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, x]) (fun i => by fin_cases i <;> simp [hx]) (by simp)) 1 ∈
@@ -1540,10 +1385,6 @@ private lemma T_1m_coprime_mem (x y : ℕ) (hx : 0 < x) (hy : 0 < y) (hcop : Nat
   have h_combine := (ψ_hom N).range.mul_mem hX hY
   rwa [T_coprime_mul N x y hx hy hcop] at h_combine
 
-/-- Coprime prime-power multiplicativity (`p ∤ N`) for the `ψ`-range: from
-`T'(1,p), T'(1,p^{k-1}), T'(1,p^{k-2}) ∈ range` deduce `T'(1, p^k) ∈ range` by
-extracting `T'(1,p^k)` from `T'(1,p) * T'(1,p^{k-1})` via
-`Gamma0_T1p_mul_T1ppow_coprime`. -/
 private lemma T_1ppow_coprime_mem (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N = 1)
     (k : ℕ) (hk : 2 ≤ k)
     (hIHp : HeckeRing.T_single (Gamma0_pair N) ℤ
@@ -1570,8 +1411,6 @@ private lemma T_1ppow_coprime_mem (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd 
   exact (ψ_hom N).range.sub_mem ((ψ_hom N).range.mul_mem hIHp hIHpk1)
     ((ψ_hom N).range.zsmul_mem h_Tppk1 _)
 
-/-- Bad-prime prime-power multiplicativity (`p ∣ N`) for the `ψ`-range: from
-`T'(1,p), T'(1,p^{k-1}) ∈ range` deduce `T'(1, p^k) ∈ range` via `T_bad_mul`. -/
 private lemma T_1ppow_bad_mem (p : ℕ) (hp : p.Prime) (hp_dvd_N : p ∣ N) (k : ℕ) (hk : 2 ≤ k)
     (hIHp : HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, p]) (fun i => by fin_cases i <;> simp [hp.pos]) (by simp)) 1 ∈
@@ -1590,9 +1429,6 @@ private lemma T_1ppow_bad_mem (p : ℕ) (hp : p.Prime) (hp_dvd_N : p ∣ N) (k :
     (show (![1, p * p ^ (k - 1)] : Fin 2 → ℕ) = ![1, p ^ k] by
       rw [show p ^ k = p * p ^ (k - 1) from by rw [← pow_succ']; congr 1; omega])] at h_combine
 
-/-- Prime-power case of `T_1m_mem_ψ_range` (`m = p^k`, `k ≥ 2`): dispatch on whether `p ∤ N`
-(`T_1ppow_coprime_mem`) or `p ∣ N` (`T_1ppow_bad_mem`), feeding the inductive memberships for
-the smaller powers `p, p^{k-1}, p^{k-2}`. -/
 private lemma T_1ppow_mem (p : ℕ) (hp : p.Prime) (k : ℕ) (hk : 2 ≤ k)
     (hIH : ∀ x (hx : 0 < x), x < p ^ k → HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, x]) (fun i => by fin_cases i <;> simp [hx]) (by simp)) 1 ∈
@@ -1614,9 +1450,6 @@ private lemma T_1ppow_mem (p : ℕ) (hp : p.Prime) (k : ℕ) (hk : 2 ≤ k)
     exact T_1ppow_bad_mem N p hp hp_dvd_N k hk (hIH p hp.pos hp_lt)
       (hIH (p ^ (k - 1)) (pow_pos hp.pos _) hpk1_lt)
 
-/-- Non-prime-power composite case of `T_1m_mem_ψ_range`: split off the maximal `p`-power
-`a = p^{v_p(m)}` from `m`, giving a coprime factorisation `m = a * b` with `a, b < m`, then
-combine the inductive memberships via `T_1m_coprime_mem`. -/
 private lemma T_1m_composite_mem (m p : ℕ) (hp : p.Prime) (hp_dvd : p ∣ m) (hm : 0 < m)
     (hm_not_ppow : ¬∃ k, m = p ^ k)
     (hIH : ∀ x (hx : 0 < x), x < m → HeckeRing.T_single (Gamma0_pair N) ℤ
@@ -1648,11 +1481,6 @@ private lemma T_1m_composite_mem (m p : ℕ) (hp : p.Prime) (hp_dvd : p ∣ m) (
     (show (![1, m] : Fin 2 → ℕ) = ![1, a * b] by rw [hab])]
   exact T_1m_coprime_mem N a b ha_pos hb_pos hcop_ab (hIH a ha_pos ha_lt) (hIH b hb_pos hb_lt)
 
-/-- **T'(1,m) ∈ range(ψ)** by strong induction on m (Shimura Thm 3.34 core).
-Handles: m=1 (identity), m=p prime (generator), coprime products (T_coprime_mul),
-p|N prime powers (T_bad_mul), non-prime-power composites (factorization + coprime mul).
-The case p∤N, k≥2 uses `Gamma0_T1p_mul_T1ppow_coprime` to extract T'(1, p^k) from the
-product T'(1,p) * T'(1, p^{k-1}) by subtraction. -/
 private lemma T_1m_mem_ψ_range (m : ℕ) (hm : 0 < m) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, m])
@@ -1697,10 +1525,6 @@ private lemma T_1m_mem_ψ_range (m : ℕ) (hm : 0 < m) :
         exact T_1ppow_mem N p hp k hk (fun x hx hlt => ih x hlt hx)
       · exact T_1m_composite_mem N m p hp hp_dvd hm hm_ppow (fun x hx hlt => ih x hlt hx)
 
-/-- **Scalar diagonal cosets are in the `ψ`-range**: `T'(d,d) ∈ range` for any `d` coprime
-to `N`. By strong induction on `d`, peeling off a prime `p ∣ d` via the scalar product
-`T'(p,p) * T'(e,e) = T'(d,d)` (`T_Gamma0_scalar_mul_gen`); the base `d = 1` is the identity
-and `T'(p,p)` is the generator `X_{(p,1)}`. -/
 private lemma T_scalar_diag_mem (d : ℕ) (hd : 0 < d) (hd_gcd : Int.gcd (↑d) ↑N = 1) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (fun _ : Fin 2 => d) (fun _ => hd) hd_gcd) 1 ∈ (ψ_hom N).range := by
@@ -1749,16 +1573,12 @@ private lemma T_scalar_diag_mem (d : ℕ) (hd : 0 < d) (hd_gcd : Int.gcd (↑d) 
     rw [← h_prod]
     exact (ψ_hom N).range.mul_mem h_Tpp h_Te
 
-/-- **T'(d₁,d₂) ∈ range(ψ)** for `d₁ | d₂`, `gcd(d₁,N) = 1`.
-Reduces to `T_1m_mem_ψ_range` when `d₁ = 1`. The `d₁ > 1` case needs Gamma0-level scalar
-extraction: `T'(d₁,d₂) = T'(d₁,d₁) * T'(1,d₂/d₁)` (`T_scalar_diag_mem`). -/
 private lemma T_diag_mem_ψ_range (a : Fin 2 → ℕ)
     (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (a 0) N = 1) (hdiv : a 0 ∣ a 1) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N a ha hgcd) 1 ∈ (ψ_hom N).range := by
   by_cases ha1 : a 0 = 1
-  · -- d₁ = 1: direct from T_1m_mem_ψ_range
-    have ha_eq : a = ![1, a 1] := by ext i; fin_cases i <;> simp [ha1]
+  · have ha_eq : a = ![1, a 1] := by ext i; fin_cases i <;> simp [ha1]
     rw [T_diag_Gamma0_congr N ha hgcd (fun i => by fin_cases i <;> simp [ha 1]) (by simp) ha_eq]
     exact T_1m_mem_ψ_range N (a 1) (ha 1)
   · set q := a 1 / a 0 with hq_def
@@ -1778,8 +1598,6 @@ private lemma T_diag_mem_ψ_range (a : Fin 2 → ℕ)
     exact (ψ_hom N).range.mul_mem (T_scalar_diag_mem N (a 0) (ha 0) hgcd)
       (T_1m_mem_ψ_range N q hq_pos)
 
-/-- **Target surjectivity** (Shimura Thm 3.34): `𝕋 (Gamma0_pair N) ℤ` is generated
-    as a ring by the images of `ψ`. -/
 private lemma ψ_surjective :
     Function.Surjective (ψ_hom N) := by
   intro y
@@ -1802,14 +1620,12 @@ private lemma ψ_surjective :
     rw [hD]
     exact T_diag_mem_ψ_range N a ha hgcd hdiv
 
-/-- The surjective ring hom `R(Γ, Δ) →+* R(Γ₀(N), Δ₀(N))` via factorization. -/
 private noncomputable def shimura_ring_hom :
     HeckeAlgebra 2 →+* HeckeRing.𝕋 (Gamma0_pair N) ℤ :=
   (Ideal.Quotient.lift (RingHom.ker π_hom) (ψ_hom N)
     (fun a ha => (ker_π_le_ker_ψ N) ha)).comp
     (RingHom.quotientKerEquivOfSurjective π_surjective).symm.toRingHom
 
-/-- `shimura_ring_hom` is surjective. -/
 private theorem shimura_ring_hom_surjective :
     Function.Surjective (shimura_ring_hom N) := by
   show Function.Surjective ((Ideal.Quotient.lift (RingHom.ker π_hom) (ψ_hom N)

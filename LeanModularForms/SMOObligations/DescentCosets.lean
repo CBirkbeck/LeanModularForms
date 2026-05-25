@@ -10,8 +10,7 @@ import LeanModularForms.SMOObligations.Miyake465
 
 The forms `h`, `g`, Miyake's dichotomy 4.6.4, and the descent coset
 machinery: `descendExtraGamma`, `descendCosetList`, their determinant and
-action properties, culminating in `descendCosetList_action`. Part of a
-multi-file split of `SMOObligations.lean`.
+action properties, culminating in `descendCosetList_action`.
 -/
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup
@@ -21,10 +20,9 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-/-- **M2: The form `h(z) := Σ_{(n, l') ≠ 1} aₙ qⁿ`** (Miyake Eq. 4.6.10).
-
-For `f ∈ S_k(Γ_1(N), χ)` and `l' ∣ N` squarefree, the form `f − g` where
-`g` is from M1 (with `L := l'`) has `q`-expansion supported on `(n, l') ≠ 1`. -/
+/-- The form `h(z) := Σ_{(n, l') ≠ 1} aₙ qⁿ` (Miyake Eq. 4.6.10): for
+`f ∈ S_k(Γ_1(N), χ)` and `l' ∣ N` squarefree, `f − g` has `q`-expansion
+supported on `(n, l') ≠ 1`. -/
 theorem miyake_h_form
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -73,14 +71,9 @@ theorem miyake_h_form
   · rw [if_neg hcop, if_pos hcop]
     ring
 
-/-- **M3: The form `g := f − h` is `p`-supported when `f` has the
-coprime-vanishing hypothesis for `l = p · l'`** (Miyake Eq. 4.6.11).
-
-When `f` satisfies `aₙ(f) = 0` for `(n, p · l') = 1`, the form
-`g := f − h_form` at level `Γ_1(l' · N)` has
-`aₙ(g) = aₙ(f) · [Coprime n l']` (i.e., `g` is the coprime-to-`l'`
-filter of `f`).  In particular `g` is `p`-supported: when `(n, p) = 1`
-*and* `Coprime n l'`, `aₙ(g) = aₙ(f) = 0` by hypothesis. -/
+/-- The form `g := f − h` is `p`-supported when `f` satisfies the
+coprime-vanishing hypothesis for `l = p · l'` (Miyake Eq. 4.6.11): `g` is the
+coprime-to-`l'` filter of `f`, so `aₙ(g) = 0` whenever `(n, p) = 1`. -/
 theorem miyake_g_p_supported
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -110,11 +103,10 @@ theorem miyake_g_p_supported
     exact h_vanish n (Nat.Coprime.mul_right (hp.coprime_iff_not_dvd.mpr hn_no_p).symm hcop_l')
   · rw [hg_qexp n, if_neg hcop_l']
 
-/-- **M4: Miyake 4.6.4 dichotomy.**
-
-For `g ∈ qSupportedOnDvdSubmodule M k p ∩ cuspFormCharSpace`, with `p ∣ M`
-and `NeZero (M / p)`: either `g = 0`, or there is `g_p` at level `Γ_1(M/p)`
-in the lifted character space, such that `V_p g_p = g` as functions on `ℍ`. -/
+/-- Miyake 4.6.4 dichotomy: for `g ∈ qSupportedOnDvdSubmodule M k p ∩
+cuspFormCharSpace`, with `p ∣ M` and `NeZero (M / p)`, either `g = 0`, or there
+is `g_p` at level `Γ_1(M/p)` in the lifted character space with
+`V_p g_p = g` as functions on `ℍ`. -/
 theorem miyake_4_6_4_dichotomy
     {M : ℕ} [NeZero M] {k : ℤ}
     (χ_M : DirichletCharacter ℂ M)
@@ -128,11 +120,9 @@ theorem miyake_4_6_4_dichotomy
   HeckeRing.GL2.AtkinLehner.qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
     hp.one_lt hpM χ_M g hgχ hg_supp
 
-/-- **M4-strong: strengthened Miyake 4.6.4 dichotomy** (with character info).
-
-Identical to `miyake_4_6_4_dichotomy`, but in the non-zero case ALSO exposes:
-* The fact that `χ_M` factors through `(ZMod (M/p))ˣ` (`h_fac`).
-* The character `g_p ∈ cuspFormCharSpace k (loweredCharacter h_fac).toUnitHom`. -/
+/-- Strengthened Miyake 4.6.4 dichotomy: like `miyake_4_6_4_dichotomy`, but in
+the non-zero case also exposes that `χ_M` factors through `(ZMod (M/p))ˣ` and
+that `g_p ∈ cuspFormCharSpace k (loweredCharacter h_fac).toUnitHom`. -/
 theorem miyake_4_6_4_dichotomy_strong
     {M : ℕ} [NeZero M] {k : ℤ}
     (χ_M : DirichletCharacter ℂ M)
@@ -168,10 +158,6 @@ private lemma matrix_int_cast_factor_aux {n : Type*} {a m : ℕ} (hm : a ∣ m)
   ext x
   simp
 
-/-- The reduction mod `N` of the rotation-type matrix `!![u·a, -(v·b); v·b, u·a]`
-has determinant `1`, given the Bézout relation `u·a + v·b = 1` and `a·b = N`.
-(Its `ℤ`-determinant is `(u·a)² + (v·b)²`; mod `N` the cross term `(u·a)(v·b)`
-vanishes since `a·b = N ≡ 0`, leaving `(u·a + v·b)² = 1`.) -/
 private lemma descend_rotation_mat_det_map_eq_one
     {N : ℕ} {u v a b : ℤ} (h_bez : u * a + v * b = 1) (h_ab : a * b = (N : ℤ)) :
     ((!![u * a, -(v * b); v * b, u * a] : Matrix (Fin 2) (Fin 2) ℤ).map
@@ -192,13 +178,10 @@ private lemma descend_rotation_mat_det_map_eq_one
       map_mul, map_natCast, ZMod.natCast_self, mul_zero]
   rw [show x ^ 2 + y ^ 2 = (x + y) ^ 2 - 2 * (x * y) by ring, h_sum, h_prd]; ring
 
-/-- **T5a-0: Existence of the extra coset representative `γ_p^(p)`
-in Miyake's Lemma 4.5.11 (p. 143-144).**
-
-For prime `p` and positive integer `N` with `p ∣ N` and `p² ∤ N`
-(so `gcd(p, N/p) = 1`), there exists `γ ∈ Γ_0(N/p)` with
-* `γ ≡ [0, -1; 1, 0]  (mod p)` (matching Miyake's `[0, -a⁻¹; a, 0]` with `a = 1`),
-* `γ ≡ I  (mod N/p)`. -/
+/-- Existence of the extra coset representative `γ_p^(p)` in Miyake's
+Lemma 4.5.11 (pp. 143–144): for prime `p` and `N` with `p ∣ N` and `p² ∤ N`,
+there exists `γ ∈ Γ_0(N/p)` with `γ ≡ [0, -1; 1, 0] (mod p)` and
+`γ ≡ I (mod N/p)`. -/
 theorem descendExtraGamma_exists
     (p : ℕ) [NeZero p] (hp : p.Prime)
     (N : ℕ) [NeZero N] (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N) [NeZero (N / p)] :
@@ -255,32 +238,9 @@ theorem descendExtraGamma_exists
     simpa using congr_fun (congr_fun h_mod_Np 1) 0
   exact ⟨γ, h_mem, h_mod_p, h_mod_Np⟩
 
-/-- **T5a-0a-coprime-adjust**: number-theoretic adjustment lemma.
-
-For integers `c, d, N` with `d ≠ 0` and `Nat.gcd (Int.gcd c d) N.toNat = 1`
-(i.e., no prime divides all of `c, d, N`), there exists `t : ℤ` such that
-`gcd(c + tN, d) = 1`.
-
-**AUDIT NOTE (2026-05-17, pass 6)**: added `d ≠ 0` hypothesis.  The
-previous version was FALSE for `d = 0`: counterexample `c=3, d=0, N=5`:
-hypothesis `gcd(gcd(3,0), 5) = gcd(3, 5) = 1` holds, but the conclusion
-`∃ t, |3 + 5t| = 1` has no integer solution.  For `d = 0`, the
-conclusion `gcd(c + tN, 0) = 1` requires `c + tN = ±1`, which needs
-`c ≡ ±1 (mod N)` — not implied by `gcd(c, N) = 1` alone.  The consumer
-T5a-0a lifts `d̄ ∈ ZMod N` to `d ∈ ℤ`; the lift can always be chosen
-nonzero (lift `d̄ ≡ 0` as `d = N`, not `0`), so `d ≠ 0` is freely
-satisfiable downstream.
-
-**Proof recipe**: For each prime `q ∣ d.natAbs`:
-* If `q ∤ N.toNat`: since `N ≢ 0 mod q`, `N` is invertible mod `q`,
-  so we can pick `t mod q` with `c + tN ≢ 0 mod q` (any `t ≢ -c·N⁻¹ mod q`,
-  which is `q - 1 ≥ 1` residues).
-* If `q ∣ N.toNat`: then `c + tN ≡ c mod q`, so we need `c ≢ 0 mod q` —
-  forced by hypothesis: `q ∣ Int.gcd c d` (since `q ∣ c` and `q ∣ d`)
-  combined with `q ∣ N.toNat` would contradict `gcd(Int.gcd c d, N.toNat) = 1`.
-
-By CRT (the residue conditions are over pairwise coprime primes), combine
-the `t mod q` constraints (only for `q ∤ N`) into a single `t ∈ ℤ`. -/
+/-- Number-theoretic adjustment lemma: for integers `c, d, N` with `d ≠ 0` and
+`Nat.gcd (Int.gcd c d) N.toNat = 1` (no prime divides all of `c, d, N`), there
+exists `t : ℤ` with `gcd(c + tN, d) = 1`. -/
 theorem int_exists_coprime_adjust
     (c d N : ℤ) (hd_ne : d ≠ 0)
     (h_gcd : Nat.Coprime (Int.gcd c d) N.toNat) :
@@ -383,16 +343,6 @@ lemma descend_upper_tri_raw_matrix_identity
     simp [Matrix.mul_apply, Fin.sum_univ_two] <;>
     lia
 
-/-- Raw integer matrix identity for the extra-coset case.
-
-Given `had : a*d - b*c = 1` (det γ_p = 1) and the integrality condition
-`p * α01 = a*(B+v*D) - b*(A+v*C)`, we have
-`[1,v;0,p] * [A,B;C,D] = [[Ad-Bc+v(Cd-Dc), α01]; [p(Cd-Dc), Da-Cb]] * [a,b;pc,pd]`
-in `Matrix (Fin 2) (Fin 2) ℤ`.
-
-This is the integer-side core of the extra-coset branch of
-`descendCosetList_action_upper_tri_extra`.  The RHS multiplies α_mat by
-`[1,0;0,p] * [a,b;c,d]` (= `[a,b;pc,pd]`), which is `[1,0;0,p] * γ_p_mat`. -/
 private lemma descend_extra_raw_matrix_identity (p : ℕ) (A B C D a b c d : ℤ)
     (v α01 : ℤ) (had : a * d - b * c = 1)
     (h01 : (p : ℤ) * α01 = a * (B + v * D) - b * (A + v * C)) :
@@ -416,7 +366,7 @@ private lemma descend_extra_raw_matrix_identity (p : ℕ) (A B C D a b c d : ℤ
     · linear_combination (p : ℤ) * D * had
   rw [hL, hR]
 
-/-- **T5a-2:** Every matrix in `descendCosetList p N hp` has determinant `p`. -/
+/-- Every matrix in `descendCosetList p N hp` has determinant `p`. -/
 theorem descendCosetList_det (p N : ℕ) [NeZero p] [NeZero N] (hp : p.Prime) :
     ∀ v : Fin (descendCosetCount p N),
       (descendCosetList p N hp v : Matrix (Fin 2) (Fin 2) ℝ).det = (p : ℝ) := by
@@ -472,8 +422,6 @@ private lemma descend_aux_lift_int_eq_to_GL
   rw [hX, descend_aux_lit_real_eq_map_int p m, ← Matrix.map_mul, ← Matrix.map_mul]
   exact congr_arg (·.map (algebraMap ℤ ℝ)) h_int
 
-/-- Solve `a · m' = b` for `m' : Fin p` when the leading coefficient `a : ZMod p`
-is a unit (the Möbius target of the descent-coset action). -/
 private lemma descend_exists_fin_isUnit_mul_eq {p : ℕ} [NeZero p]
     {a : ZMod p} (ha : IsUnit a) (b : ZMod p) :
     ∃ m : Fin p, a * (m.val : ZMod p) = b := by
@@ -481,11 +429,6 @@ private lemma descend_exists_fin_isUnit_mul_eq {p : ℕ} [NeZero p]
   refine ⟨⟨((u⁻¹ : (ZMod p)ˣ).val * b).val, ZMod.val_lt _⟩, ?_⟩
   rw [ZMod.natCast_zmod_val, ← mul_assoc, ← Units.val_mul, mul_inv_cancel, Units.val_one, one_mul]
 
-/-- Upper-triangular descent witness: given `γ' ∈ Γ_0(N/p)` (so `(N/p) ∣ γ' 1 0`)
-and indices `m, m' : Fin p` satisfying the Möbius identity
-`(γ' 0 0 + m·γ' 1 0)·m' ≡ γ' 0 1 + m·γ' 1 1 (mod p)`, the upper-triangular
-representative `[1, m; 0, p]` is carried into `[1, m'; 0, p]` by some `α ∈ Γ_0(N)`:
-`[1, m; 0, p] · γ' = α · [1, m'; 0, p]`. -/
 private lemma descend_upper_tri_target_witness
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
     {γ' : Matrix.SpecialLinearGroup (Fin 2) ℤ}
@@ -638,9 +581,6 @@ private lemma descendCosetList_action_upper_tri_extra_unit_aux
   rwa [show descendCosetList p N hp ⟨m'.val, h_m_lt_dccn⟩ = _ from
     dif_pos (show (⟨m'.val, h_m_lt_dccn⟩ : Fin _).val < p from m'.isLt)]
 
-/-- Determinant of the witness matrix `α_mat` in `descend_extra_target_witness`
-equals `1`: a `Fin 2` determinant identity following from `det γ' = 1`,
-`det γ_p = 1` and the integrality relation `p·α01 = a(B+mD) - b(A+mC)`. -/
 private lemma descend_extra_alpha_det_eq_one (p A B C D a b c d m α01 : ℤ)
     (hdet : A * D - B * C = 1) (h_det_γp : a * d - b * c = 1)
     (hα01' : p * α01 = a * (B + m * D) - b * (A + m * C)) :
@@ -649,11 +589,6 @@ private lemma descend_extra_alpha_det_eq_one (p A B C D a b c d m α01 : ℤ)
   rw [show α01 * (p * (C * d - D * c)) = p * α01 * (C * d - D * c) by ring, hα01']
   nlinarith [hdet, h_det_γp, mul_comm A D, mul_comm B C, mul_comm a d, mul_comm b c]
 
-/-- Extra-coset descent witness: when the leading coefficient `γ' 0 0 + m·γ' 1 0`
-vanishes mod `p`, the upper-triangular representative `[1, m; 0, p]` is carried by
-some `α ∈ Γ_0(N)` into the extra representative `[1, 0; 0, p] · γ_p`, where `γ_p`
-reduces to `[0, -1; 1, 0] (mod p)` and lies in `Γ_0(N/p)`:
-`[1, m; 0, p] · γ' = α · ([1, 0; 0, p] · γ_p)`. -/
 private lemma descend_extra_target_witness
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
     {γ' : Matrix.SpecialLinearGroup (Fin 2) ℤ}
@@ -766,11 +701,11 @@ private lemma descendCosetList_action_upper_tri_extra_zero_aux
     ⟨fun h_lt ↦ (lt_irrefl _ h_lt).elim, fun _ ↦ h_A_ext_zero⟩, ?_⟩
   rwa [show descendCosetList p N hp ⟨p, h_p_lt_dccn⟩ = _ from dif_neg (lt_irrefl p)]
 
-/-- **T5a-3a-extra** (Miyake Lemma 4.5.11, p. 144, p∤M case): given `γ' ∈ Γ_0(N/p)` and
-`m : Fin p`, produces a target index in `Fin (descendCosetCount p N)` and `α ∈ Γ_0(N)`
-satisfying the double-coset factorisation `[1, m; 0, p] · γ' = α · descendCosetList p N hp target`.
-When `A := a + m·c ≠ 0 mod p` the target lies in `Fin p`; when `A = 0 mod p` the target is
-the extra coset `p`. -/
+/-- Miyake Lemma 4.5.11 (p. 144, `p² ∤ N` case): given `γ' ∈ Γ_0(N/p)` and
+`m : Fin p`, produces a target index in `Fin (descendCosetCount p N)` and
+`α ∈ Γ_0(N)` with `[1, m; 0, p] · γ' = α · descendCosetList p N hp target`. The
+target lies in `Fin p` when `A := a + m·c ≠ 0 mod p`, else it is the extra
+coset `p`. -/
 theorem descendCosetList_action_upper_tri_extra
     {N : ℕ} [NeZero N]
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N)
@@ -800,14 +735,9 @@ theorem descendCosetList_action_upper_tri_extra
   · exact descendCosetList_action_upper_tri_extra_zero_aux p hp hpN hp_sq γ' h_γ' m
       (by rwa [isUnit_iff_ne_zero, ne_eq, not_not] at h)
 
-/-- **T5a-3a: Matrix identity for the upper-triangular case**
-(`γ_v = [1, m; 0, p]` with `m < p`, i.e. `v ∈ Fin p ⊂ Fin (descendCosetCount p N)`).
-
-For `γ' = [a, b; c·(N/p), d] ∈ Γ_0(N/p)`:
-`[1, m; 0, p] · γ' = [a + m·c·(N/p), b + m·d; c·N, p·d]`.
-
-There exists a target index `target : Fin (descendCosetCount p N)` and an integer matrix
-`α ∈ Γ_0(N)` such that
+/-- Matrix identity for the upper-triangular case `γ_v = [1, m; 0, p]` with
+`m < p`: for `γ' ∈ Γ_0(N/p)` there exist a target index
+`target : Fin (descendCosetCount p N)` and `α ∈ Γ_0(N)` with
 `[1, m; 0, p] · mapGL γ' = mapGL α · descendCosetList p N hp target`. -/
 theorem descendCosetList_action_upper_tri
     {N : ℕ} [NeZero N]
@@ -835,15 +765,9 @@ theorem descendCosetList_action_upper_tri
       descendCosetList_action_upper_tri_extra p hp hpN hp_sq γ' h_γ' m
     exact ⟨target, α, h_mem, h_eq⟩
 
-/-- **T5a-3b: Matrix identity for the extra rep case** (only `p² ∤ N`).
-
-The extra rep is `descendCosetList p N hp ⟨p, hpExtra⟩` where
-`hpExtra : p < descendCosetCount p N` follows from `¬ p² ∣ N`.
-Concretely, this rep is `[1, 0; 0, p] · mapGL ℝ γ_p^(p)` (NOT `[p,0;0,1]`,
-which is outside the descent double coset).
-
-For `γ' ∈ Γ_0(N/p)`, there exist a target index in `Fin (descendCosetCount p N)`
-and `α ∈ Γ_0(N)` such that
+/-- Matrix identity for the extra rep case (only `p² ∤ N`), where the extra rep
+is `[1, 0; 0, p] · mapGL ℝ γ_p^(p)`: for `γ' ∈ Γ_0(N/p)` there exist a target
+index in `Fin (descendCosetCount p N)` and `α ∈ Γ_0(N)` with
 `(extra rep) · mapGL γ' = mapGL α · descendCosetList p N hp target`. -/
 theorem descendCosetList_action_extra
     {N : ℕ} [NeZero N]
@@ -862,17 +786,9 @@ theorem descendCosetList_action_extra
       (Subgroup.mul_mem _ (descendExtraGamma_spec hp hpN hp_sq).1 h_γ') ⟨0, hp.pos⟩
   exact ⟨target, α, hα_mem, by grind [descendCosetList]⟩
 
-/-- **T5a-3c: Möbius-type permutation is injective at level `Γ_0(N/p)`**.
-
-For `γ' = [a, b; c·(N/p), d] ∈ Γ_0(N/p)`, the map `m → m · d mod p` on
-`Fin p` is injective.  Reason: from `det γ' = 1`, we have
-`a·d − b·c·(N/p) = 1`, which forces `gcd(d, p) = 1` (else `p | 1`),
-hence `d` is invertible mod `p`.
-
-This is the building block for the permutation `σ` in `descendCosetList_action`
-(`m ↦ m·d mod p` extended to the proper Möbius via affine shift).
-Analogous to the existing project's `moebiusFin'_injective` at
-`HeckeT_n.lean:117`. -/
+/-- The Möbius-type map `m ↦ m · d mod p` on `Fin p` is injective for
+`γ' = [a, b; c·(N/p), d] ∈ Γ_0(N/p)`: from `det γ' = 1` we get
+`a·d − b·c·(N/p) = 1`, which forces `d` invertible mod `p`. -/
 theorem descendCosetList_moebius_inj
     {N : ℕ} [NeZero N]
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : p ^ 2 ∣ N)
@@ -951,8 +867,6 @@ private lemma isUnit_p_zmod_of_not_p_sq_dvd {p N : ℕ} [NeZero p]
   intro h_dvd
   exact hp_sq <| (Nat.mul_div_cancel' hpN).symm ▸ pow_two p ▸ Nat.mul_dvd_mul_left _ h_dvd
 
-/-- For `β ∈ Γ_0(N)` and target index `t.val < p`, if the GL₂(ℝ) equation
-`[1, v; 0, p] · γ' = β · [1, t; 0, p]` holds, then `β 1 1 ≡ γ' 1 1 (mod N/p)`. -/
 private lemma descend_diamond_compat_upper_target
     {N : ℕ} [NeZero N]
     {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
@@ -977,8 +891,6 @@ private lemma descend_diamond_compat_upper_target
   rw [← sub_eq_zero, ← Int.cast_sub, ZMod.intCast_zmod_eq_zero_iff_dvd, hβ11_sub]
   exact ⟨-(k * (t : ℤ)), by ring⟩
 
-/-- For β ∈ Γ_0(N), if `(p : ZMod (N/p)) * γ' 1 1 = β 1 1 * p` and p is invertible
-mod N/p (i.e. `¬ p² ∣ N`), then `β 1 1 ≡ γ' 1 1 (mod N/p)`. -/
 private lemma descend_diamond_compat_from_zmod
     {N p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N)
     {β γ' : Matrix.SpecialLinearGroup (Fin 2) ℤ}
@@ -1000,7 +912,6 @@ private lemma beta_10_zmod_eq_zero
   exact_mod_cast dvd_trans
     (by exact_mod_cast Nat.div_dvd_of_dvd hpN : ((N / p : ℕ) : ℤ) ∣ N) h_N_dvd
 
-/-- Matrix coercion equality from `mapGL` over ℤ to ℝ. -/
 private lemma mapGL_coe_matrix_apply (α : Matrix.SpecialLinearGroup (Fin 2) ℤ) (i j : Fin 2) :
     ((mapGL ℝ α : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) i j =
       ((α : Matrix (Fin 2) (Fin 2) ℤ) i j : ℝ) := by
@@ -1008,7 +919,6 @@ private lemma mapGL_coe_matrix_apply (α : Matrix.SpecialLinearGroup (Fin 2) ℤ
     Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
     Matrix.map_apply, algebraMap_int_eq, eq_intCast]
 
-/-- Matrix entries of `descendCosetList p N hp ⟨p, _⟩` (the extra rep). -/
 private lemma descendCosetList_extra_matrix_entry
     {p N : ℕ} [NeZero p] [NeZero N] (hp : p.Prime)
     {v : Fin (descendCosetCount p N)} (hv : ¬ v.val < p) (i j : Fin 2) :
@@ -1019,9 +929,6 @@ private lemma descendCosetList_extra_matrix_entry
   simp [Matrix.GeneralLinearGroup.val_mkOfDetNeZero, mapGL, toGL, map_apply_coe,
     RingHom.mapMatrix_apply]
 
-/-- Diamond compatibility when both `v` and the target `t` are regular reps
-(`< p`): from `[1,v;0,p]·γ' = β·[1,t;0,p]` extract the `(1,1)` entry
-`p·γ'₁₁ = β₁₀·t + β₁₁·p` and feed `descend_diamond_compat_upper_target`. -/
 private lemma descend_diamond_reg_lhs_reg_target
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
     {γ' β : Matrix.SpecialLinearGroup (Fin 2) ℤ} (hβ : β ∈ Gamma0 N)
@@ -1041,10 +948,6 @@ private lemma descend_diamond_reg_lhs_reg_target
   norm_num at h_11r
   exact_mod_cast h_11r
 
-/-- Diamond compatibility when `v` is a regular rep but the target `t` is the
-extra rep: from `[1,v;0,p]·γ' = β·([1,0;0,p]·γ_p)` extract the `(1,1)` entry,
-reduce mod `N/p` using the extra-rep spec, and feed
-`descend_diamond_compat_from_zmod`. -/
 private lemma descend_diamond_reg_lhs_extra_target
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] [NeZero (N / p)] (hp : p.Prime) (hpN : p ∣ N)
     (hp_sq : ¬ p ^ 2 ∣ N)
@@ -1082,9 +985,6 @@ private lemma descend_diamond_reg_lhs_extra_target
   rw [hγ_p_01, hγ_p_11, h_β_10_mod] at h_zmod
   linear_combination h_zmod
 
-/-- Diamond compatibility when `v` is the extra rep and the target `t` is a
-regular rep: from `([1,0;0,p]·γ_p)·γ' = β·[1,t;0,p]` extract the `(1,1)`
-entry and reduce mod `N/p`. -/
 private lemma descend_diamond_extra_lhs_reg_target
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] [NeZero (N / p)] (hp : p.Prime) (hpN : p ∣ N)
     (hp_sq : ¬ p ^ 2 ∣ N)
@@ -1128,9 +1028,6 @@ private lemma descend_diamond_extra_lhs_reg_target
   rw [hγ_p_10, hγ_p_11, h_β_10_mod] at h_zmod
   linear_combination h_zmod
 
-/-- Diamond compatibility when both `v` and the target `t` are the extra rep:
-from `([1,0;0,p]·γ_p)·γ' = β·([1,0;0,p]·γ_p)` extract the `(1,1)` entry and
-reduce mod `N/p`. -/
 private lemma descend_diamond_extra_lhs_extra_target
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] [NeZero (N / p)] (hp : p.Prime) (hpN : p ∣ N)
     (hp_sq : ¬ p ^ 2 ∣ N)
@@ -1370,13 +1267,11 @@ private lemma descendCosetList_sigma_aux_injective
         have := descendCosetCount_val_eq_p v₂ hv₂
         lia)
 
-/-- **T5a-3: Action property of the descent cosets at Γ_0(N/p) → Γ_0(N)**.
-
-For every `γ' ∈ Γ_0(N/p)`, there exist a permutation `σ` of the coset
-index set `Fin (descendCosetCount p N)` and matrices `α_v ∈ Γ_0(N)`
-such that
-`descendCosetList p N hp v · mapGL γ' = mapGL (α_v) · descendCosetList p N hp (σ v)`
-as products in `GL_2(ℝ)`, together with the diamond compatibility
+/-- Action property of the descent cosets `Γ_0(N/p) → Γ_0(N)`: for every
+`γ' ∈ Γ_0(N/p)` there exist a permutation `σ` of `Fin (descendCosetCount p N)`
+and matrices `α_v ∈ Γ_0(N)` with
+`descendCosetList p N hp v · mapGL γ' = mapGL (α_v) · descendCosetList p N hp (σ v)`,
+together with the diamond compatibility
 `ZMod.unitsMap (Gamma0MapUnits α_v) = Gamma0MapUnits γ'`. -/
 theorem descendCosetList_action
     {N : ℕ} [NeZero N]

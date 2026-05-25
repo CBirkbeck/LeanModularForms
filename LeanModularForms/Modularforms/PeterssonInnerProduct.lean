@@ -67,8 +67,6 @@ instance : BorelSpace UpperHalfPlane := ⟨rfl⟩
 open MeasureTheory Measure UpperHalfPlane ModularGroup Complex Set ENNReal
 open scoped ComplexConjugate MatrixGroups Pointwise
 
-/-! ### SL₂(ℤ) measurability instances -/
-
 /-- The SL₂(ℤ) action on `ℍ` is continuous (inherited from GL₂(ℝ) via `mapGL`). -/
 instance : ContinuousConstSMul SL(2, ℤ) ℍ where
   continuous_const_smul g :=
@@ -83,8 +81,6 @@ instance : Countable SL(2, ℤ) := Subtype.countable
 
 namespace UpperHalfPlane
 
-/-! ### Measurability infrastructure -/
-
 /-- The embedding `ℍ ↪ ℂ` is a measurable embedding. -/
 theorem measurableEmbedding_coe :
     MeasurableEmbedding (UpperHalfPlane.coe : ℍ → ℂ) :=
@@ -93,8 +89,6 @@ theorem measurableEmbedding_coe :
 /-- `UpperHalfPlane.im` is measurable. -/
 theorem measurable_im : Measurable (UpperHalfPlane.im : ℍ → ℝ) :=
   continuous_im.measurable
-
-/-! ### Hyperbolic measure -/
 
 /-- The hyperbolic area measure on the upper half-plane, defined as
 `dμ_hyp = (Im τ)⁻² dx dy` where `dx dy` is the Lebesgue measure on `ℂ`
@@ -144,16 +138,12 @@ instance instOPM_hyperbolicMeasure : IsOpenPosMeasure μ_hyp := by
         exact zpow_pos τ.im_pos _)
   exact this.isOpenPosMeasure
 
-/-- `y⁻²` is integrable on `(c, ∞)` for `c > 0` (bridge from `integrableOn_Ioi_rpow_of_lt`). -/
 private theorem integrableOn_zpow_neg_two_Ioi {c : ℝ} (hc : 0 < c) :
     IntegrableOn (· ^ (-2 : ℤ)) (Ioi c) (volume : Measure ℝ) := by
   have h := integrableOn_Ioi_rpow_of_lt (show (-2 : ℝ) < -1 by norm_num) hc
   rwa [show (· ^ (-2 : ℝ) : ℝ → ℝ) = (· ^ (-2 : ℤ)) from funext fun _ => by
     rw [show (-2 : ℝ) = ((-2 : ℤ) : ℝ) by norm_cast, Real.rpow_intCast]] at h
 
-/-- The integral of `y⁻²` over the product strip `[-½, ½] × (c, ∞)` is finite.
-Uses `volume_eq_prod`, `setLIntegral_prod_symm`, `Real.volume_Icc`, and
-`integrableOn_Ioi_rpow_of_lt`. -/
 private theorem strip_lintegral_lt_top {c : ℝ} (hc : 0 < c) :
     ∫⁻ p in Icc (-1/2 : ℝ) (1/2) ×ˢ Ioi c,
       ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) < ⊤ := by
@@ -168,14 +158,7 @@ private theorem strip_lintegral_lt_top {c : ℝ} (hc : 0 < c) :
         fun y _ => Real.ofReal_le_enorm _)
         (integrableOn_zpow_neg_two_Ioi hc).hasFiniteIntegral
 
-/-- The hyperbolic measure of the standard fundamental domain is finite. The proof
-transfers `∫_fd y⁻² dν` from `ℍ` to `ℂ` (via `MeasurePreserving.setLIntegral_comp_emb`),
-then to `ℝ × ℝ` (via `Complex.volume_preserving_equiv_real_prod`), bounds by the strip
-`[-½,½] × (√3/4, ∞)`, and applies `strip_lintegral_lt_top`.
-
-Reused: `MeasurableEmbedding.map_comap`, `lintegral_mono_set`,
-`setLIntegral_prod_symm`, `Real.volume_Icc`, `integrableOn_Ioi_rpow_of_lt`,
-`three_le_four_mul_im_sq_of_mem_fd`, `MeasurableEquiv.image_preimage`. -/
+/-- The hyperbolic measure of the standard fundamental domain is finite. -/
 theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
   have hfd : MeasurableSet (fd : Set ℍ) :=
     ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
@@ -183,13 +166,11 @@ theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
   simp only [hyperbolicMeasure, withDensity_apply _ hfd]
   set f : ℂ → ENNReal := fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))
   change ∫⁻ τ in fd, f ↑τ ∂comap UpperHalfPlane.coe volume < ⊤
-  -- Transfer ℍ → ℂ via MeasurePreserving for the open embedding
   rw [(⟨UpperHalfPlane.isOpenEmbedding_coe.measurableEmbedding.measurable,
        UpperHalfPlane.isOpenEmbedding_coe.measurableEmbedding.map_comap volume⟩ :
        MeasurePreserving UpperHalfPlane.coe _ _).setLIntegral_comp_emb
     UpperHalfPlane.isOpenEmbedding_coe.measurableEmbedding f fd]
   set T := Icc (-1/2 : ℝ) (1/2) ×ˢ Ioi (Real.sqrt 3 / 4)
-  -- Transfer ℂ → ℝ² via volume_preserving_equiv_real_prod
   have h_prod : ∫⁻ z in equivRealProd ⁻¹' T, f z ∂(volume : Measure ℂ) =
       ∫⁻ p in T, ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) := by
     have := volume_preserving_equiv_real_prod.setLIntegral_comp_emb
@@ -197,7 +178,6 @@ theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
       (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ)))
       (measurableEquivRealProd ⁻¹' T)
     simp only [MeasurableEquiv.image_preimage] at this; exact this
-  -- Chain: drop restrict, enlarge to strip, transfer, bound
   calc ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume.restrict (range UpperHalfPlane.coe)
       ≤ ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume :=
         lintegral_mono' (restrict_mono Subset.rfl restrict_le_self) le_rfl
@@ -215,8 +195,6 @@ theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
     _ = ∫⁻ p in T, ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂volume := h_prod
     _ < ⊤ := strip_lintegral_lt_top (by positivity)
 
-/-! ### Petersson inner product -/
-
 /-- The Petersson inner product of two functions `f, g : ℍ → ℂ` of weight `k`,
 integrated over a fundamental domain `D` with respect to the hyperbolic measure.
 
@@ -224,8 +202,6 @@ The integrand is `conj(f(τ)) · g(τ) · (Im τ)^k`, which equals
 `petersson k f g τ` from `Mathlib.NumberTheory.ModularForms.Petersson`. -/
 def peterssonInner (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) : ℂ :=
   ∫ τ in D, petersson k f g τ ∂μ_hyp
-
-/-! ### Algebraic properties -/
 
 /-- Hermitian symmetry: `conj ⟨g, f⟩ = ⟨f, g⟩`. -/
 theorem peterssonInner_conj_symm (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
@@ -265,8 +241,6 @@ theorem norm_peterssonInner_symm (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     ‖peterssonInner k D f g‖ = ‖peterssonInner k D g f‖ := by
   rw [← peterssonInner_conj_symm, RCLike.norm_conj]
 
-/-! ### SL₂-invariance of the integrand -/
-
 /-- For modular forms `f, g` of weight `k` for a subgroup `Γ` with determinant `±1`,
 the norm of the Petersson integrand is `Γ`-invariant. This is a restatement of
 `SlashInvariantFormClass.norm_petersson_smul` from mathlib. -/
@@ -277,8 +251,6 @@ theorem norm_petersson_SL_invariant {F F' : Type*} [FunLike F ℍ ℂ] [FunLike 
     {g : GL (Fin 2) ℝ} (hg : g ∈ Γ) (τ : ℍ) :
     ‖petersson k f f' (g • τ)‖ = ‖petersson k f f' τ‖ :=
   SlashInvariantFormClass.norm_petersson_smul hg
-
-/-! ### Integrability -/
 
 /-- The Petersson integrand is integrable on any compact subset of `ℍ`. -/
 theorem integrableOn_compact_petersson (k : ℤ) {f g : ℍ → ℂ}
@@ -293,11 +265,7 @@ theorem integrableOn_truncatedFundamentalDomain (k : ℤ) {f g : ℍ → ℂ}
   integrableOn_compact_petersson k hf hg (isCompact_truncatedFundamentalDomain y)
 
 /-- The Petersson integrand of cusp forms is integrable over the standard fundamental
-domain against the hyperbolic measure.
-
-The proof uses `CuspFormClass.petersson_bounded_left` (the Petersson integrand is
-globally bounded for cusp forms of an arithmetic subgroup) together with
-`hyperbolicMeasure_fd_lt_top` (the fundamental domain has finite hyperbolic area). -/
+domain against the hyperbolic measure. -/
 theorem peterssonInner_integrableOn {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
     (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
     [CuspFormClass F Γ k] [ModularFormClass F' Γ k]
@@ -308,8 +276,6 @@ theorem peterssonInner_integrableOn {F F' : Type*} [FunLike F ℍ ℂ] [FunLike 
     ((petersson_continuous k (ModularFormClass.continuous f)
       (ModularFormClass.continuous f')).aestronglyMeasurable.restrict) C
     (ae_of_all _ fun τ => hC τ)
-
-/-! ### Sesquilinearity (requires integrability) -/
 
 /-- Additivity in the second argument. -/
 theorem peterssonInner_add_right (k : ℤ) (D : Set ℍ) (f g₁ g₂ : ℍ → ℂ)
@@ -340,8 +306,6 @@ theorem peterssonInner_conj_smul_left (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : �
     ext τ; simp [petersson, Pi.smul_apply, smul_eq_mul, map_mul, mul_assoc]]
   exact integral_const_mul (conj c) _
 
-/-! ### Non-negativity -/
-
 /-- At `(f, f)`, the Petersson integrand is real and non-negative pointwise. -/
 theorem petersson_self_re_nonneg (k : ℤ) (f : ℍ → ℂ) (τ : ℍ) :
     0 ≤ (petersson k f f τ).re := by
@@ -363,9 +327,7 @@ theorem fdo_subset_fd : (fdo : Set ℍ) ⊆ fd :=
   fun _ ⟨h1, h2⟩ => ⟨le_of_lt h1, le_of_lt h2⟩
 
 /-- `𝒟 ⊆ closure 𝒟ᵒ`: every point of the closed fundamental domain is a limit of
-points in the open fundamental domain. The proof perturbs `z ∈ fd` to
-`((1−t) Re z, Im z + t)` for small `t > 0`, using the lower bound `Im z > 1/2`
-(from `three_le_four_mul_im_sq_of_mem_fd`) to ensure `normSq > 1`. -/
+points in the open fundamental domain. -/
 theorem fd_subset_closure_fdo : (fd : Set ℍ) ⊆ closure fdo := by
   intro z hz
   rw [isOpenEmbedding_coe.isInducing.closure_eq_preimage_closure_image fdo,
@@ -398,19 +360,7 @@ theorem fd_subset_closure_fdo : (fd : Set ℍ) ⊆ closure fdo := by
       _ ≤ (ε / 3) * (3 / 2) := by linarith [min_le_left (ε / 3) (1 / 2 : ℝ)]
       _ < ε := by linarith
 
-/-! ### Boundary measure zero
-
-The boundary `fd \ fdo` consists of arcs of the unit circle (`normSq = 1`)
-and vertical half-lines (`|Re| = 1/2`). These are 1-dimensional subsets of
-`ℂ ≅ ℝ²`, hence have 2-dimensional Lebesgue measure zero. Since `μ_hyp` is
-absolutely continuous w.r.t. the Lebesgue measure on `ℍ`, the boundary
-also has zero hyperbolic measure.
-
-This is a key ingredient for the fundamental domain theory: it implies that
-`fd` and `fdo` give the same integrals against `μ_hyp`. -/
-
-/-- A vertical line `{z : ℂ | z.re = c}` has zero Lebesgue measure in `ℂ`.
-Proof: transfer to `ℝ × ℝ`, where `{c} × ℝ` has product measure `0 · ∞ = 0`. -/
+/-- A vertical line `{z : ℂ | z.re = c}` has zero Lebesgue measure in `ℂ`. -/
 theorem volume_complex_re_eq (c : ℝ) : volume {z : ℂ | z.re = c} = 0 := by
   rw [show {z : ℂ | z.re = c} = measurableEquivRealProd ⁻¹' ({c} ×ˢ univ) from by
     ext z; simp [measurableEquivRealProd]]
@@ -418,7 +368,6 @@ theorem volume_complex_re_eq (c : ℝ) : volume {z : ℂ | z.re = c} = 0 := by
     ((measurableSet_singleton c).prod MeasurableSet.univ).nullMeasurableSet,
     volume_eq_prod, Measure.prod_prod, Real.volume_singleton, zero_mul]
 
-/-- `{y : ℝ | y² = d}` is finite (at most two elements). -/
 private theorem finite_sq_eq (d : ℝ) : Set.Finite {y : ℝ | y ^ 2 = d} := by
   by_cases hd : d < 0
   · convert Set.finite_empty; ext y; simp; intro h; linarith [sq_nonneg y]
@@ -428,9 +377,7 @@ private theorem finite_sq_eq (d : ℝ) : Set.Finite {y : ℝ | y ^ 2 = d} := by
       exact (sq_eq_sq_iff_eq_or_eq_neg.mp (by rw [hy, Real.sq_sqrt hd])).elim
         (fun h => Or.inl h) (fun h => Or.inr (mem_singleton_iff.mpr h)))
 
-/-- A level set `{z : ℂ | normSq z = c}` has zero Lebesgue measure in `ℂ`.
-Proof: transfer to `ℝ × ℝ` and use Fubini — for each `x`, the fiber
-`{y | y² = c - x²}` is finite (hence measure zero). -/
+/-- A level set `{z : ℂ | normSq z = c}` has zero Lebesgue measure in `ℂ`. -/
 theorem volume_complex_normSq_eq (c : ℝ) :
     volume {z : ℂ | Complex.normSq z = c} = 0 := by
   calc volume {z : ℂ | Complex.normSq z = c}
@@ -449,8 +396,7 @@ theorem volume_complex_normSq_eq (c : ℝ) :
         exact (finite_sq_eq _).measure_zero _
 
 /-- If a subset of `ℂ` has zero Lebesgue measure, its preimage in `ℍ` has
-zero hyperbolic measure. This follows from the chain of absolute continuity:
-`μ_hyp ≪ comap coe vol` (withDensity) and `comap coe vol ≪ vol` (embedding). -/
+zero hyperbolic measure. -/
 theorem hyperbolicMeasure_preimage_null {S : Set ℂ} (hS : volume S = 0) :
     μ_hyp (UpperHalfPlane.coe ⁻¹' S) = 0 :=
   (withDensity_absolutelyContinuous _ _) <| by
@@ -490,12 +436,6 @@ theorem setIntegral_fd_eq_fdo {E : Type*} [NormedAddCommGroup E] [NormedSpace �
     (f : ℍ → E) : ∫ τ in fd, f τ ∂μ_hyp = ∫ τ in fdo, f τ ∂μ_hyp :=
   setIntegral_congr_set fd_ae_eq_fdo
 
-/-- **Vanishing on `fd`**: if the Petersson self-pairing `⟨f, f⟩` over `fd`
-vanishes, then `f` vanishes on the entire closed fundamental domain `fd`.
-
-The proof first establishes vanishing on `fdo` using `eqOn_open_of_ae_eq` with
-`instOPM_hyperbolicMeasure`, then extends to `fd` by `fd_subset_closure_fdo`
-and continuity. -/
 private lemma petersson_self_re_eq (z : ℂ) (y : ℝ) (k : ℤ) :
     (starRingEnd ℂ z * z * (↑y : ℂ) ^ k).re = Complex.normSq z * y ^ k := by
   rw [show starRingEnd ℂ z * z = ↑(Complex.normSq z) from Complex.normSq_eq_conj_mul_self.symm,
@@ -508,19 +448,16 @@ theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {F : Type*} [FunLike F ℍ 
     {τ : ℍ} (hτ : τ ∈ fd) : f τ = 0 := by
   set g : ℍ → ℝ := fun z => (petersson k (⇑f) (⇑f) z).re
   have hint := peterssonInner_integrableOn k Γ f f
-  -- ∫_fd g = Re(∫_fd petersson) = Re(0) = 0
   have hg_zero : ∫ z in fd, g z ∂hyperbolicMeasure = 0 := by
     trans RCLike.re (∫ z in fd, petersson k (⇑f) (⇑f) z ∂hyperbolicMeasure)
     · exact integral_re hint
     · simp only [peterssonInner] at hpet; rw [hpet]; simp
-  -- g ≥ 0 ae → g = 0 ae on fd
   have hg_ae : g =ᶠ[ae (hyperbolicMeasure.restrict fd)] 0 := by
     rwa [← integral_eq_zero_iff_of_nonneg_ae
       (ae_of_all _ fun z => show 0 ≤ g z from by
         simp only [g, petersson]
         exact (petersson_self_re_eq (f z) z.im k).symm ▸
           mul_nonneg (Complex.normSq_nonneg _) (zpow_nonneg z.im_pos.le _)) hint.re]
-  -- g = 0 on fdo (open + IsOpenPosMeasure)
   have hg_cont : Continuous g :=
     Complex.continuous_re.comp (petersson_continuous k (ModularFormClass.continuous f)
       (ModularFormClass.continuous f))
@@ -528,25 +465,16 @@ theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {F : Type*} [FunLike F ℍ 
     Measure.eqOn_open_of_ae_eq
       (hg_ae.filter_mono (ae_mono (restrict_mono fdo_subset_fd le_rfl)))
       isOpen_fdo hg_cont.continuousOn continuousOn_const
-  -- g = 0 on fd via fd ⊆ closure fdo
   have hgτ : g τ = 0 :=
     (EqOn.of_subset_closure hg_fdo hg_cont.continuousOn continuousOn_const
       fdo_subset_fd fd_subset_closure_fdo) hτ
-  -- normSq(f τ) * im^k = 0, im^k > 0, so f τ = 0
   simp only [g, petersson] at hgτ
   rw [petersson_self_re_eq] at hgτ
   exact Complex.normSq_eq_zero.mp ((mul_eq_zero.mp hgτ).elim id
     (fun h => absurd h (ne_of_gt (zpow_pos τ.im_pos k))))
 
 /-- **Positive-definiteness (level one)**: for a cusp form `f` of weight `k` for
-`SL₂(ℤ)` (embedded via `mapGL`), if `⟨f, f⟩ = 0` then `f = 0`.
-
-The propagation uses `SlashInvariantFormClass.petersson_smul` (invariance under
-`(mapGL ℝ).range`, which has `HasDetOne`) + `exists_smul_mem_fd` (every `τ` has
-an `SL₂(ℤ)`-translate in `fd`) + vanishing on `fd` from the local theorem.
-
-Reused: `petersson_smul`, `exists_smul_mem_fd`, `ofReal_ne_zero`,
-`zpow_ne_zero`, `star_ne_zero`, `mul_ne_zero`. -/
+`SL₂(ℤ)` (embedded via `mapGL`), if `⟨f, f⟩ = 0` then `f = 0`. -/
 theorem peterssonInner_definite_levelOne
     (k : ℤ)
     {F : Type*} [FunLike F ℍ ℂ]
@@ -567,26 +495,11 @@ theorem peterssonInner_definite_levelOne
     (by rw [starRingEnd_apply]; exact mul_ne_zero (star_ne_zero.mpr hne) hne)
     (zpow_ne_zero _ (Complex.ofReal_ne_zero.mpr (ne_of_gt τ.im_pos))))
 
-/-! ### Volume of the fundamental domain
-
-We compute `μ_hyp(𝒟) = π/3`, the hyperbolic area of the standard fundamental domain
-for `SL₂(ℤ)`. The proof factors as:
-
-1. `arcsin(1/2) = π/6` (from `sin(π/6) = 1/2`)
-2. `∫_{-1/2}^{1/2} 1/√(1-x²) dx = π/3` (FTC with arcsin)
-3. Transfer `μ_hyp(𝒟)` through `ℍ → ℂ → ℝ²` and evaluate via Fubini.
-
-References: [Diamond–Shurman, §2.3], [Miyake, §1.9]. -/
-
-/-- `arcsin(1/2) = π/6`, since `sin(π/6) = 1/2` and `π/6 ∈ [-π/2, π/2]`. -/
 private lemma arcsin_one_half : Real.arcsin (1 / 2) = Real.pi / 6 :=
   Real.arcsin_eq_of_sin_eq Real.sin_pi_div_six
     ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
 
-/-- The integral `∫_{-1/2}^{1/2} 1/√(1-x²) dx = π/3`.
-
-Proof: FTC with `f = arcsin`, `f' = 1/√(1-x²)`, then
-`arcsin(1/2) - arcsin(-1/2) = π/6 - (-π/6) = π/3`. -/
+/-- The integral `∫_{-1/2}^{1/2} 1/√(1-x²) dx = π/3`. -/
 theorem integral_one_div_sqrt_one_sub_sq :
     ∫ x in (-1/2 : ℝ)..(1/2), 1 / Real.sqrt (1 - x ^ 2) = Real.pi / 3 := by
   have hab : (-1/2 : ℝ) ≤ 1/2 := by norm_num
@@ -614,7 +527,6 @@ theorem integral_one_div_sqrt_one_sub_sq :
 This is the Bochner-integral version of `integral_Ioi_rpow_of_lt` at exponent `-2`. -/
 theorem integral_zpow_neg_two_Ioi {c : ℝ} (hc : 0 < c) :
     ∫ y in Set.Ioi c, y ^ (-2 : ℤ) = 1 / c := by
-  -- Convert zpow to rpow
   have h_cast : ((-2 : ℤ) : ℝ) = (-2 : ℝ) := by norm_cast
   rw [show ∫ y in Set.Ioi c, y ^ (-2 : ℤ) = ∫ y in Set.Ioi c, y ^ (-2 : ℝ) from by
     congr 1; ext y; rw [← h_cast, Real.rpow_intCast]]
@@ -622,9 +534,6 @@ theorem integral_zpow_neg_two_Ioi {c : ℝ} (hc : 0 < c) :
   rw [show (-2 : ℝ) + 1 = -1 from by norm_num, Real.rpow_neg_one c]
   field_simp
 
-/-- Fubini computation on ℝ²: the lintegral of `y⁻²` over the fundamental domain region
-`{(x,y) | |x| ≤ 1/2 ∧ x²+y² ≥ 1 ∧ y > 0}` equals `π/3`. This is the core
-Tonelli section-decomposition step for the volume computation. -/
 private lemma mem_fd_image_iff (x y : ℝ) :
     (x, y) ∈ measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ)) ↔
     |x| ≤ 1 / 2 ∧ 1 ≤ x ^ 2 + y ^ 2 ∧ 0 < y := by
@@ -641,7 +550,6 @@ private lemma mem_fd_image_iff (x y : ℝ) :
     refine ⟨⟨x, y⟩, ⟨⟨⟨x, y⟩, hy⟩, ?_, rfl⟩, by simp [measurableEquivRealProd]⟩
     exact ⟨by simp [Complex.normSq_apply]; nlinarith, habs⟩
 
-/-- The image of the fundamental domain under `ℍ → ℂ → ℝ²` is measurable. -/
 private theorem measurableSet_fd_realProd_image :
     MeasurableSet (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))) := by
   rw [measurableEquivRealProd.measurableSet_image]
@@ -649,8 +557,6 @@ private theorem measurableSet_fd_realProd_image :
     ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
     (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
 
-/-- For `|x| ≤ 1/2`, the indicator of the fundamental-domain region at `(x, y)` equals,
-as a function of `y`, the indicator of the half-line `[√(1-x²), ∞)`. -/
 private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y : ℝ) :
     (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
         (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) =
@@ -669,8 +575,6 @@ private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y
         lt_of_lt_of_le hsc hy_mem⟩
     · rw [Set.indicator_of_notMem hy_mem]
 
-/-- The `x`-section of the fundamental-domain lintegral: integrating `y⁻²` over the
-fiber gives `1/√(1-x²)` for `|x| ≤ 1/2`, and `0` otherwise. -/
 private theorem fd_region_lintegral_section_eq (x : ℝ) :
     ∫⁻ y, (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
         (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) ∂volume =
@@ -695,7 +599,6 @@ private theorem fd_region_lintegral_section_eq (x : ℝ) :
     rw [Set.indicator_apply_eq_zero]
     exact fun h => absurd ((mem_fd_image_iff x y).mp h).1 (not_le.mpr hx)
 
-/-- `1/√(1-x²)` is integrable on `[-½, ½]`. -/
 private theorem integrableOn_one_div_sqrt_one_sub_sq_Icc :
     IntegrableOn (fun x => 1 / Real.sqrt (1 - x ^ 2)) (Icc (-1/2 : ℝ) (1/2)) volume := by
   rw [← intervalIntegrable_iff_integrableOn_Icc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)]
@@ -708,12 +611,9 @@ private theorem lintegral_fd_region_eq :
     ∫⁻ p in measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ)),
       ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) =
     ENNReal.ofReal (∫ x in (-1/2 : ℝ)..(1/2), 1 / Real.sqrt (1 - x ^ 2)) := by
-  -- Step 1: setLIntegral → indicator, then Tonelli over the product `ℝ × ℝ`.
   rw [← lintegral_indicator measurableSet_fd_realProd_image, volume_eq_prod ℝ ℝ,
     lintegral_prod _ (AEMeasurable.indicator (by fun_prop) measurableSet_fd_realProd_image)]
-  -- Step 2: evaluate the `x`-sections and reduce to the lintegral of the section function.
   simp_rw [fd_region_lintegral_section_eq, lintegral_indicator measurableSet_Icc]
-  -- Step 3: lintegral over `Icc` → `ofReal` of the Bochner interval integral.
   rw [← ofReal_integral_eq_lintegral_ofReal integrableOn_one_div_sqrt_one_sub_sq_Icc
     (ae_of_all _ fun x => by positivity)]
   congr 1
@@ -721,45 +621,30 @@ private theorem lintegral_fd_region_eq :
     if_pos (by norm_num : (-1/2 : ℝ) ≤ 1/2), one_smul,
     uIoc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2), integral_Icc_eq_integral_Ioc]
 
-/-- **Fubini transfer**: the lintegral of `y⁻²` over `𝒟` equals the iterated integral
-`∫_{-1/2}^{1/2} (∫_{√(1-x²)}^∞ y⁻² dy) dx`. The proof transfers `ℍ → ℂ → ℝ²` via
-`setLIntegral_comp_emb`, decomposes into sections, and evaluates the inner integral.
-
-This is the measure-theoretic plumbing connecting the hyperbolic measure to
-interval integrals. -/
 private theorem fd_lintegral_density_eq :
     ∫⁻ τ in fd, ENNReal.ofReal (τ.im ^ (-2 : ℤ)) ∂(comap UpperHalfPlane.coe volume) =
       ENNReal.ofReal (∫ x in (-1/2 : ℝ)..(1/2), 1 / Real.sqrt (1 - x ^ 2)) := by
   have hfd : MeasurableSet (fd : Set ℍ) :=
     ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
       (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
-  -- Step 1: Transfer ℍ → ℂ (as lintegral)
   set F : ℂ → ENNReal := fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))
   change ∫⁻ τ in fd, F ↑τ ∂comap UpperHalfPlane.coe volume = _
   rw [(⟨isOpenEmbedding_coe.measurableEmbedding.measurable,
        isOpenEmbedding_coe.measurableEmbedding.map_comap volume⟩ :
        MeasurePreserving UpperHalfPlane.coe _ _).setLIntegral_comp_emb
     isOpenEmbedding_coe.measurableEmbedding F fd]
-  -- Step 2: Drop restrict (coe '' fd ⊆ range coe)
   rw [show ∫⁻ z in UpperHalfPlane.coe '' fd, F z ∂volume.restrict (range UpperHalfPlane.coe) =
       ∫⁻ z in UpperHalfPlane.coe '' fd, F z ∂volume from by
     congr 1; exact Measure.restrict_restrict_of_subset (image_subset_range _ _)]
-  -- Step 3: Transfer ℂ → ℝ²
   set G : ℝ × ℝ → ENNReal := fun p => ENNReal.ofReal (p.2 ^ (-2 : ℤ))
   have hFG : ∀ z : ℂ, F z = G (measurableEquivRealProd z) := fun z => by
     simp [F, G, measurableEquivRealProd]
   simp_rw [hFG]
   rw [volume_preserving_equiv_real_prod.setLIntegral_comp_emb
     measurableEquivRealProd.measurableEmbedding G (UpperHalfPlane.coe '' fd)]
-  -- Now: ∫⁻ p in D, G p ∂vol = ENNReal.ofReal(π/3) — use the extracted helper
   exact lintegral_fd_region_eq
 
-/-- **Hyperbolic area of the fundamental domain**: `μ_hyp(𝒟) = π/3`.
-
-The proof factors as:
-1. `μ_hyp(𝒟)` is the lintegral of the density `y⁻²` over `𝒟` (`withDensity_apply`)
-2. Fubini transfer to an iterated interval integral (`fd_lintegral_density_eq`)
-3. The interval integral `∫_{-1/2}^{1/2} 1/√(1-x²) dx = π/3` via FTC + arcsin -/
+/-- **Hyperbolic area of the fundamental domain**: `μ_hyp(𝒟) = π/3`. -/
 theorem hyperbolicMeasure_fd_eq : μ_hyp fd = ENNReal.ofReal (Real.pi / 3) := by
   have hfd : MeasurableSet (fd : Set ℍ) :=
     ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
@@ -772,8 +657,6 @@ theorem hyperbolicMeasure_fd_toReal : (μ_hyp fd).toReal = Real.pi / 3 := by
   rw [hyperbolicMeasure_fd_eq, ENNReal.toReal_ofReal (by positivity)]
 
 end UpperHalfPlane
-
-/-! ### Cusp form specialization -/
 
 namespace CuspForm
 

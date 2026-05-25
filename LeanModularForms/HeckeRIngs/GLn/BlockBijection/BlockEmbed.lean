@@ -22,10 +22,7 @@ namespace HeckeRing.GLn
 
 variable {m : ℕ} [NeZero m]
 
-/-! ### Block embedding helpers for `slSuccEmbed`
-
-The block embedding `SL_{k+1}(Z) → SL_{k+2}(Z)` via `M ↦ 1 ⊕ M` is defined as
-`slSuccEmbed`. We prove it is a monoid homomorphism and preserves stabilizers. -/
+/-! ### Block embedding helpers for `slSuccEmbed` -/
 
 section SlSuccEmbedHelpers
 
@@ -38,9 +35,6 @@ noncomputable def slSuccEmbed {k : ℕ} (M : SpecialLinearGroup (Fin (k + 1)) �
     (M : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ)).submatrix e e, ?_⟩
   rw [det_submatrix_equiv_self, det_fromBlocks_zero₂₁, det_one, one_mul, M.prop]
 
-/-- The matrix underlying `slSuccEmbed M` equals `(fromBlocks 1 0 0 M).submatrix e e`
-for `e = castOrderIso ∘ finSumFinEquiv⁻¹`. This is definitionally true but useful
-as a rewrite lemma to unify different copies of the `let`-bound `fin1Sum`. -/
 private lemma slSuccEmbed_val_eq {k : ℕ} (M : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     (slSuccEmbed M).1 = (fromBlocks (1 : Matrix (Fin 1) (Fin 1) ℤ) 0 0
       (M : Matrix _ _ ℤ)).submatrix
@@ -49,7 +43,6 @@ private lemma slSuccEmbed_val_eq {k : ℕ} (M : SpecialLinearGroup (Fin (k + 1))
       (Fin.castOrderIso (show k + 1 + 1 = 1 + (k + 1) by omega)
         |>.toEquiv.trans finSumFinEquiv.symm) := rfl
 
-/-- `slSuccEmbed` is multiplicative: `(1 ⊕ A) · (1 ⊕ B) = 1 ⊕ (A · B)`. -/
 private lemma slSuccEmbed_mul {k : ℕ} (A B : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     slSuccEmbed (A * B) = slSuccEmbed A * slSuccEmbed B := by
   apply Subtype.ext
@@ -70,7 +63,6 @@ private lemma slSuccEmbed_mul {k : ℕ} (A B : SpecialLinearGroup (Fin (k + 1)) 
       rw [fromBlocks_multiply]; simp]
   exact (submatrix_mul_equiv _ _ e e e).symm
 
-/-- `slSuccEmbed 1 = 1`: the identity embeds as the identity. -/
 private lemma slSuccEmbed_one {k : ℕ} :
     slSuccEmbed (1 : SpecialLinearGroup (Fin (k + 1)) ℤ) = 1 := by
   apply Subtype.ext
@@ -80,7 +72,6 @@ private lemma slSuccEmbed_one {k : ℕ} :
   rw [slSuccEmbed_val_eq]; simp only [SpecialLinearGroup.coe_one, fromBlocks_one]
   ext i j; simp only [submatrix_apply, one_apply, Equiv.apply_eq_iff_eq]
 
-/-- `slSuccEmbed` preserves inverses. -/
 private lemma slSuccEmbed_inv {k : ℕ} (M : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     slSuccEmbed M⁻¹ = (slSuccEmbed M)⁻¹ := by
   apply mul_left_cancel (a := slSuccEmbed M)
@@ -95,7 +86,6 @@ lemma toSL_spec {n : ℕ} [NeZero n] (σ : (GL_pair n).H) :
     mapGL ℚ (toSL σ) = (σ : GL (Fin n) ℚ) :=
   (Classical.indefiniteDescription _ σ.2).prop
 
-/-- `mapGL ℚ` is injective on `SpecialLinearGroup`. -/
 private lemma mapGL_injective (n : ℕ) :
     Function.Injective
       (mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ) := by
@@ -109,11 +99,7 @@ private lemma mapGL_injective (n : ℕ) :
     exact Int.cast_injective hij
   exact Subtype.ext h_mat
 
-/-! ### H-level block embedding
-
-The block embedding `σ ↦ 1 ⊕ σ` lifted to the Hecke pair subgroups
-`(GL_pair (k+1)).H → (GL_pair (k+2)).H`. This is the main piece of reusable
-local API for the block-bijection proof. -/
+/-! ### H-level block embedding -/
 
 /-- Lift `slSuccEmbed` to the Hecke pair subgroup: `(GL_pair (k+1)).H → (GL_pair (k+2)).H`. -/
 noncomputable def slSuccEmbed_H {k : ℕ} (σ : (GL_pair (k + 1)).H) :
@@ -123,11 +109,9 @@ noncomputable def slSuccEmbed_H {k : ℕ} (σ : (GL_pair (k + 1)).H) :
   rw [MonoidHom.mem_range]
   exact ⟨slSuccEmbed (toSL σ), rfl⟩
 
-/-- The underlying `GL` value of `slSuccEmbed_H σ` equals `mapGL ℚ (slSuccEmbed (toSL σ))`. -/
 private lemma slSuccEmbed_H_val {k : ℕ} (σ : (GL_pair (k + 1)).H) :
     (slSuccEmbed_H σ : GL (Fin (k + 2)) ℚ) = mapGL ℚ (slSuccEmbed (toSL σ)) := rfl
 
-/-- `slSuccEmbed_H` is multiplicative on the H level. -/
 private lemma slSuccEmbed_H_mul {k : ℕ} (σ₁ σ₂ : (GL_pair (k + 1)).H) :
     slSuccEmbed_H (σ₁ * σ₂) = slSuccEmbed_H σ₁ * slSuccEmbed_H σ₂ := by
   apply Subtype.ext
@@ -139,7 +123,6 @@ private lemma slSuccEmbed_H_mul {k : ℕ} (σ₁ σ₂ : (GL_pair (k + 1)).H) :
     exact Subgroup.coe_mul _ _ _
   rw [htoSL, slSuccEmbed_mul, map_mul]
 
-/-- `slSuccEmbed_H` sends `1` to `1`. -/
 private lemma slSuccEmbed_H_one {k : ℕ} :
     slSuccEmbed_H (1 : (GL_pair (k + 1)).H) = 1 := by
   apply Subtype.ext
@@ -148,7 +131,6 @@ private lemma slSuccEmbed_H_one {k : ℕ} :
     mapGL_injective (k + 1) (by rw [toSL_spec]; simp [map_one])
   rw [htoSL, slSuccEmbed_one, map_one]
 
-/-- `slSuccEmbed` is injective as a map `SL(k+1) → SL(k+2)`. -/
 private lemma slSuccEmbed_injective {k : ℕ} :
     Function.Injective (slSuccEmbed : SpecialLinearGroup (Fin (k + 1)) ℤ →
       SpecialLinearGroup (Fin (k + 2)) ℤ) := by
@@ -175,13 +157,11 @@ private lemma slSuccEmbed_injective {k : ℕ} :
     simpa [toBlocks_fromBlocks₂₂] using this
   exact Subtype.ext hAB
 
-/-- `slSuccEmbed_H` preserves inverses: `slSuccEmbed_H σ⁻¹ = (slSuccEmbed_H σ)⁻¹`. -/
 private lemma slSuccEmbed_H_inv {k : ℕ} (σ : (GL_pair (k + 1)).H) :
     slSuccEmbed_H σ⁻¹ = (slSuccEmbed_H σ)⁻¹ := by
   apply mul_left_cancel (a := slSuccEmbed_H σ)
   rw [mul_inv_cancel, ← slSuccEmbed_H_mul, mul_inv_cancel, slSuccEmbed_H_one]
 
-/-- `slSuccEmbed_H` is injective. -/
 private lemma slSuccEmbed_H_injective {k : ℕ} :
     Function.Injective (slSuccEmbed_H : (GL_pair (k + 1)).H → (GL_pair (k + 2)).H) := by
   intro σ₁ σ₂ h
@@ -197,21 +177,9 @@ private lemma slSuccEmbed_H_injective {k : ℕ} :
 
 end SlSuccEmbedHelpers
 
-/-! ### Dimension reduction: decompQuot(m+1, rep(T(1,d))) ≃ decompQuot(m, rep(T(d)))
-
-The Equiv chains three steps:
-1. `decompQuot(rep(T(1,d))) ≃ decompQuot(diagMat(1,d))` via H-conjugation
-   (using `T_diag_rep_decompose` + `decompQuot_double_H_equiv`)
-2. `decompQuot(m+1, diagMat(1,d)) ≃ decompQuot(m, diagMat(d))` via block projection
-   (Shimura Prop 3.15: the stabilizer for diagonal matrices has block structure)
-3. `decompQuot(diagMat(d)) ≃ decompQuot(rep(T(d)))` via reverse H-conjugation
--/
+/-! ### Dimension reduction: `decompQuot(m+1, rep(T(1,d))) ≃ decompQuot(m, rep(T(d)))` -/
 
 omit [NeZero m] in
-/-- The block conjugation identity: conjugating a block-embedded matrix `1 ⊕ M` by
-`diag(1, d₁, ..., dₖ)` yields `1 ⊕ (diag(d)⁻¹ · M · diag(d))`.
-This gives: if `diag(d)⁻¹ * mapGL(M) * diag(d) = mapGL(N)`, then
-`diag(1,d)⁻¹ * mapGL(slSuccEmbed(M)) * diag(1,d) = mapGL(slSuccEmbed(N))`. -/
 private lemma block_conj_identity {k : ℕ}
     (d : Fin (k + 1) → ℕ) (hd : ∀ i, 0 < d i)
     (M N : SpecialLinearGroup (Fin (k + 1)) ℤ)
@@ -260,11 +228,9 @@ private lemma block_conj_identity {k : ℕ}
         submatrix_apply, fromBlocks, Matrix.of_apply, Fin.castOrderIso,
         finSumFinEquiv, Fin.addCases, Fin.subNat]
 
-/-- **Stabilizer preservation for `slSuccEmbed_H` at the diagMat level.**
-If `σ ∈ H_{k+1}` satisfies the conjugation stabilizer condition for `diagMat(a)`
-(i.e., `diagMat(a)⁻¹ σ diagMat(a) ∈ H_{k+1}`), then `slSuccEmbed_H σ ∈ H_{k+2}`
-satisfies the analogous condition for `diagMat(cons 1 a)`. This is the key
-tool for lifting `decompQuot` classes through the block embedding. -/
+/-- Stabilizer preservation for `slSuccEmbed_H` at the `diagMat` level: if `σ ∈ H_{k+1}`
+stabilizes `diagMat(a)` under conjugation, then `slSuccEmbed_H σ ∈ H_{k+2}` stabilizes
+`diagMat(cons 1 a)`. -/
 lemma slSuccEmbed_H_stab_diagMat {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -282,21 +248,17 @@ lemma slSuccEmbed_H_stab_diagMat {k : ℕ}
 
 
 /-- Positivity lifts through `Fin.cons 1`: if every `a i` is positive, so is every
-`(Fin.cons 1 a) i`. Local helper for diagonal block embedding. -/
+`(Fin.cons 1 a) i`. -/
 lemma cons_one_pos {k : ℕ} {a : Fin (k + 1) → ℕ} (ha : ∀ i, 0 < a i) :
     ∀ i : Fin (k + 2), 0 < (Fin.cons 1 a : Fin (k + 2) → ℕ) i := by
   intro i; refine Fin.cases ?_ (fun j ↦ ?_) i
   · simp [Fin.cons_zero]
   · rw [Fin.cons_succ]; exact ha j
 
-/-- The integer witness matrix `M i j = (N i j * c j) / c i` (integer division) used to
-realize the diagonal conjugation `diag(c)⁻¹ · mapGL N · diag(c)` as an `SL`-element. -/
 private def diagConjWitnessMat {n : ℕ} (c : Fin n → ℕ)
     (N : SpecialLinearGroup (Fin n) ℤ) : Matrix (Fin n) (Fin n) ℤ :=
   fun i j ↦ (N.1 i j * (c j : ℤ)) / (c i : ℤ)
 
-/-- Entry identity for the diagonal-conjugation witness: under the divisibility
-hypothesis, `M i j * c i = N i j * c j` over `ℚ` (the integer division is exact). -/
 private lemma diagConjWitnessMat_entry_cast {n : ℕ} (c : Fin n → ℕ)
     (N : SpecialLinearGroup (Fin n) ℤ)
     (h_dvd : ∀ i j, (c i : ℤ) ∣ N.1 i j * (c j : ℤ)) (i j : Fin n) :
@@ -305,8 +267,6 @@ private lemma diagConjWitnessMat_entry_cast {n : ℕ} (c : Fin n → ℕ)
     Int.ediv_mul_cancel (h_dvd i j)
   exact_mod_cast congr_arg (fun z : ℤ ↦ (z : ℚ)) hmul
 
-/-- Matrix conjugation identity: `mapGL N · diag(c) = diag(c) · M` over `ℚ`, where `M` is
-the integer witness matrix cast to `ℚ`. -/
 private lemma diagConjWitnessMat_mat_eq {n : ℕ} (c : Fin n → ℕ) (hc : ∀ i, 0 < c i)
     (N : SpecialLinearGroup (Fin n) ℤ)
     (h_dvd : ∀ i j, (c i : ℤ) ∣ N.1 i j * (c j : ℤ)) :
@@ -322,7 +282,6 @@ private lemma diagConjWitnessMat_mat_eq {n : ℕ} (c : Fin n → ℕ) (hc : ∀ 
   push_cast at he ⊢
   linarith [he]
 
-/-- The diagonal-conjugation witness matrix has determinant `1`, hence lies in `SL`. -/
 private lemma diagConjWitnessMat_det_one {n : ℕ} (c : Fin n → ℕ) (hc : ∀ i, 0 < c i)
     (N : SpecialLinearGroup (Fin n) ℤ)
     (h_dvd : ∀ i j, (c i : ℤ) ∣ N.1 i j * (c j : ℤ)) :
@@ -343,15 +302,9 @@ private lemma diagConjWitnessMat_det_one {n : ℕ} (c : Fin n → ℕ) (hc : ∀
     rw [hcast]; exact mul_left_cancel₀ hD_det_ne (by rw [mul_one]; linarith [hdet])
   exact_mod_cast this
 
-/-- **Sufficient direction for diag-conjugation membership.** If the integer matrix
-`N ∈ SL(k+2, ℤ)` satisfies the entry-wise divisibility
-`(Fin.cons 1 a) i ∣ N i j * (Fin.cons 1 a) j` for all `i j`, then the conjugate
-`D⁻¹ * mapGL ℚ N * D` lies in `SL_{k+2}(ℤ)` viewed as a subgroup of `GL_{k+2}(ℚ)`,
-where `D := diagMat (Fin.cons 1 a)`.
-
-The witness integer matrix `M ∈ SL(k+2, ℤ)` has entries
-`M i j = (N i j * (cons 1 a j)) / (cons 1 a i)` (integer division, exact by
-hypothesis). -/
+/-- Sufficient direction for diag-conjugation membership: if `N ∈ SL(k+2, ℤ)` satisfies the
+entry-wise divisibility `(Fin.cons 1 a) i ∣ N i j * (Fin.cons 1 a) j`, then the conjugate
+`D⁻¹ * mapGL ℚ N * D` lies in `(GL_pair (k+2)).H`, where `D := diagMat (Fin.cons 1 a)`. -/
 lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
     {k : ℕ} (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (N : SpecialLinearGroup (Fin (k + 2)) ℤ)
@@ -378,11 +331,9 @@ lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
 
 
 
-/-- **The block-embedding map on `decompQuot` at the `diagMat_delta` level.**
-Given a positive diagonal `a`, `slSuccEmbed_H` descends from `H_{k+1}` to a well-defined
-map between `decompQuot (GL_pair (k+1)) (diagMat_delta (k+1) a)` and
-`decompQuot (GL_pair (k+2)) (diagMat_delta (k+2) (Fin.cons 1 a))`. Well-definedness is
-provided by `slSuccEmbed_H_stab_diagMat` combined with `slSuccEmbed_H_mul/_inv`. -/
+/-- The block-embedding map on `decompQuot` at the `diagMat_delta` level: `slSuccEmbed_H`
+descends to a map `decompQuot (GL_pair (k+1)) (diagMat_delta (k+1) a) →
+decompQuot (GL_pair (k+2)) (diagMat_delta (k+2) (Fin.cons 1 a))`. -/
 noncomputable def decompQuot_slSuccEmbed_diagMat {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) :
     decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) a) →
@@ -404,11 +355,7 @@ noncomputable def decompQuot_slSuccEmbed_diagMat {k : ℕ}
       diagMat_delta_val (k + 2) (Fin.cons 1 a) (cons_one_pos ha)]
   exact slSuccEmbed_H_stab_diagMat a ha (σ₁⁻¹ * σ₂) h_rel
 
-/-! ### Block entry extraction lemmas for `slSuccEmbed`
-
-These four unfold `(slSuccEmbed τ).val` at the four block quadrants of
-`Fin (k + 2) = {0} ⊕ Fin (k + 1)`, matching the `1 ⊕ τ` structure. They are
-local simp-style helpers used in the converse stabilizer lemma. -/
+/-! ### Block entry extraction lemmas for `slSuccEmbed` -/
 
 lemma slSuccEmbed_val_zero_zero {k : ℕ}
     (τ : SpecialLinearGroup (Fin (k + 1)) ℤ) :
@@ -439,8 +386,6 @@ lemma slSuccEmbed_val_succ_succ {k : ℕ}
         Fin.castOrderIso, finSumFinEquiv, Fin.addCases]
   simp [Fin.subNat]
 
-/-- Flipped form of the conjugation equation: move `D₂` to the right-hand side to
-avoid dealing with its inverse during entry extraction. -/
 private lemma slSuccEmbed_conj_flip {k : ℕ}
     (a : Fin (k + 1) → ℕ)
     (σ : (GL_pair (k + 1)).H)
@@ -451,10 +396,6 @@ private lemma slSuccEmbed_conj_flip {k : ℕ}
       diagMat (k + 2) (Fin.cons 1 a) * mapGL ℚ ν := by
   rw [hν]; group
 
-/-- Entry-wise consequence of the flipped conjugation equation: for every pair of
-indices `i j : Fin (k + 2)`,
-`(slSuccEmbed (toSL σ)).val i j · (Fin.cons 1 a) j = (Fin.cons 1 a) i · ν.val i j`
-holds at the rational level. -/
 private lemma slSuccEmbed_conj_entry {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -473,7 +414,6 @@ private lemma slSuccEmbed_conj_entry {k : ℕ}
              Matrix.map_apply] at h
   exact h
 
-/-- From the entry equation, the top-left entry of `ν` is `1`. -/
 private lemma slSuccEmbed_conj_ν_zero_zero {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -486,7 +426,6 @@ private lemma slSuccEmbed_conj_ν_zero_zero {k : ℕ}
   simp only [Fin.cons_zero, Nat.cast_one, mul_one, one_mul] at h
   exact_mod_cast h.symm
 
-/-- From the entry equation, the first-row entries (beyond `0 0`) of `ν` are `0`. -/
 private lemma slSuccEmbed_conj_ν_zero_succ {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -499,7 +438,6 @@ private lemma slSuccEmbed_conj_ν_zero_succ {k : ℕ}
   simp only [Int.cast_zero, zero_mul, Fin.cons_zero, Nat.cast_one, one_mul] at h
   exact_mod_cast h.symm
 
-/-- From the entry equation, the first-column entries (beyond `0 0`) of `ν` are `0`. -/
 private lemma slSuccEmbed_conj_ν_succ_zero {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -516,9 +454,6 @@ private lemma slSuccEmbed_conj_ν_succ_zero {k : ℕ}
     exact (mul_eq_zero.mp h').resolve_left hai.ne'
   exact_mod_cast hν_zero
 
-/-- Entry relation for the bottom-right `(k+1) × (k+1)` block: at position
-`(i.succ, j.succ)`, the identity `(toSL σ).val i j · a j = a i · ν.val i.succ j.succ`
-holds at the rational level. -/
 private lemma slSuccEmbed_conj_ν_succ_succ {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -531,9 +466,6 @@ private lemma slSuccEmbed_conj_ν_succ_succ {k : ℕ}
   simp only [Fin.cons_succ] at h
   exact h
 
-/-- Determinant of the bottom-right block: with `ν.val 0 0 = 1` and zero first
-column (`ν.val i.succ 0 = 0`), cofactor expansion along column `0` collapses to
-the bottom-right `(k+1) × (k+1)` block's determinant, which equals `det ν = 1`. -/
 private lemma ν_bottomBlock_det {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -564,7 +496,6 @@ private lemma ν_bottomBlock_det {k : ℕ}
   rw [h_sub]
   exact h_expand.symm
 
-/-- Package the bottom-right block of `ν` as an element of `SL_{k+1}(ℤ)`. -/
 private noncomputable def ν_bottomBlock {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -574,10 +505,6 @@ private noncomputable def ν_bottomBlock {k : ℕ}
     SpecialLinearGroup (Fin (k + 1)) ℤ :=
   ⟨fun i j ↦ ν.val i.succ j.succ, ν_bottomBlock_det a ha σ ν hflip⟩
 
-/-- The bottom-right block, mapped into `GL_{k+1}(ℚ)`, is the target of the conjugation
-at dim `k + 1`: `mapGL ν_bottomBlock = (diagMat a)⁻¹ · σ · diagMat a`. Proof by
-the entry-wise equation at `(i, j)` obtained from the dim-`k + 2` equation at
-`(i.succ, j.succ)`. -/
 private lemma ν_bottomBlock_mapGL_eq {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -611,13 +538,6 @@ private lemma ν_bottomBlock_mapGL_eq {k : ℕ}
   rw [← mul_assoc, ← mul_assoc, inv_mul_cancel, one_mul] at this
   exact this
 
-/-- **Converse stabilizer preservation**: if `slSuccEmbed_H σ` lies in the conjugation
-stabilizer of `diagMat(cons 1 a)` at dim `k+2`, then `σ` already lies in the stabilizer
-of `diagMat(a)` at dim `k+1`. Proof extracts `ν : SL(k+2)` from the hypothesis,
-uses the block-structure entry lemmas (`slSuccEmbed_conj_ν_zero_zero`,
-`slSuccEmbed_conj_ν_zero_succ`, `slSuccEmbed_conj_ν_succ_zero`,
-`slSuccEmbed_conj_ν_succ_succ`) and column-zero cofactor expansion to build an
-`SL(k+1)` preimage `ν_bottomBlock` witnessing the dim-`k+1` stabilizer. -/
 private lemma slSuccEmbed_H_stab_diagMat_converse {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 1)).H)
@@ -631,10 +551,7 @@ private lemma slSuccEmbed_H_stab_diagMat_converse {k : ℕ}
   exact ⟨ν_bottomBlock a ha σ ν hflip,
     (ν_bottomBlock_mapGL_eq a ha σ ν hflip).symm⟩
 
-/-- The block-embedding map `decompQuot_slSuccEmbed_diagMat` is injective. Follows from
-`slSuccEmbed_H_stab_diagMat_converse`: equality of `slSuccEmbed_H σ₁` and `slSuccEmbed_H σ₂`
-modulo the dim-`k + 2` stabilizer forces `σ₁` and `σ₂` to be equal modulo the dim-`k + 1`
-stabilizer. -/
+/-- The block-embedding map `decompQuot_slSuccEmbed_diagMat` is injective. -/
 lemma decompQuot_slSuccEmbed_diagMat_injective {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) :
     Function.Injective (decompQuot_slSuccEmbed_diagMat a ha) := by
@@ -665,16 +582,8 @@ lemma decompQuot_slSuccEmbed_diagMat_injective {k : ℕ}
         diagMat (k + 1) a from diagMat_delta_val (k + 1) a ha]
   exact h_stab
 
-/-! ### GL-level block embedding
+/-! ### GL-level block embedding -/
 
-A general block embedding `blockEmbedGL : GL_{k+1}(ℚ) → GL_{k+2}(ℚ)` via
-`X ↦ fromBlocks 1 0 0 X` (with appropriate reindexing). This is multiplicative,
-sends `diagMat (k+1) a` to `diagMat (k+2) (cons 1 a)`, and agrees with
-`slSuccEmbed_H` on `H_{k+1}` as well as with `slSuccEmbed` on `SL_{k+1}(ℤ)` via
-`mapGL`. The fiber-condition block transfer comes immediately from these rules. -/
-
-/-- Block embedding of a GL element: `X ↦ (fromBlocks 1 0 0 X).submatrix e e`
-for the standard equiv `e : Fin (k+2) ≃ Fin 1 ⊕ Fin (k+1)`. -/
 private noncomputable def blockEmbedGL {k : ℕ} (X : GL (Fin (k + 1)) ℚ) :
     GL (Fin (k + 2)) ℚ := by
   refine GeneralLinearGroup.mkOfDetNeZero
@@ -690,7 +599,6 @@ private noncomputable def blockEmbedGL {k : ℕ} (X : GL (Fin (k + 1)) ℚ) :
     rw [h_mul]; exact Matrix.det_one
   intro h; rw [h, zero_mul] at h_det_prod; exact one_ne_zero h_det_prod.symm
 
-/-- Unfold `blockEmbedGL` to its underlying matrix. -/
 private lemma blockEmbedGL_val_eq {k : ℕ} (X : GL (Fin (k + 1)) ℚ) :
     (blockEmbedGL X).val = (Matrix.fromBlocks (1 : Matrix (Fin 1) (Fin 1) ℚ) 0 0 X.val).submatrix
       ((Fin.castOrderIso (show k + 1 + 1 = 1 + (k + 1) by omega)).toEquiv.trans
@@ -698,7 +606,6 @@ private lemma blockEmbedGL_val_eq {k : ℕ} (X : GL (Fin (k + 1)) ℚ) :
       ((Fin.castOrderIso (show k + 1 + 1 = 1 + (k + 1) by omega)).toEquiv.trans
         finSumFinEquiv.symm) := rfl
 
-/-- `blockEmbedGL` is multiplicative. -/
 private lemma blockEmbedGL_mul {k : ℕ} (X Y : GL (Fin (k + 1)) ℚ) :
     blockEmbedGL (X * Y) = blockEmbedGL X * blockEmbedGL Y := by
   apply Units.ext
@@ -718,7 +625,6 @@ private lemma blockEmbedGL_mul {k : ℕ} (X Y : GL (Fin (k + 1)) ℚ) :
       rw [Matrix.fromBlocks_multiply]; simp]
   exact (Matrix.submatrix_mul_equiv _ _ e e e).symm
 
-/-- `blockEmbedGL` sends `1` to `1`. -/
 private lemma blockEmbedGL_one {k : ℕ} :
     blockEmbedGL (1 : GL (Fin (k + 1)) ℚ) = 1 := by
   apply Units.ext
@@ -732,14 +638,11 @@ private lemma blockEmbedGL_one {k : ℕ} :
   ext i j
   simp [Matrix.submatrix_apply, Matrix.one_apply]
 
-/-- `blockEmbedGL` preserves inverses. -/
 private lemma blockEmbedGL_inv {k : ℕ} (X : GL (Fin (k + 1)) ℚ) :
     blockEmbedGL X⁻¹ = (blockEmbedGL X)⁻¹ := by
   apply mul_left_cancel (a := blockEmbedGL X)
   rw [mul_inv_cancel, ← blockEmbedGL_mul, mul_inv_cancel, blockEmbedGL_one]
 
-/-- `blockEmbedGL (diagMat (k+1) a) = diagMat (k+2) (Fin.cons 1 a)`: the block
-embedding of a diagonal matrix is the `cons 1`-prepended diagonal matrix. -/
 private lemma blockEmbedGL_diagMat {k : ℕ} (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) :
     blockEmbedGL (diagMat (k + 1) a) = diagMat (k + 2) (Fin.cons 1 a) := by
   apply Units.ext
@@ -752,8 +655,6 @@ private lemma blockEmbedGL_diagMat {k : ℕ} (a : Fin (k + 1) → ℕ) (ha : ∀
           Fin.subNat, Fin.succ_inj, Fin.cons_succ,
           (Fin.succ_ne_zero _).symm, Fin.succ_ne_zero]
 
-/-- For `ν : SL_{k+1}(ℤ)`, `blockEmbedGL (mapGL ν) = mapGL (slSuccEmbed ν)`: the GL
-block embedding agrees with `slSuccEmbed` at the SL level after `mapGL`-casting. -/
 private lemma blockEmbedGL_mapGL_eq {k : ℕ} (ν : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     blockEmbedGL (mapGL ℚ ν) = mapGL ℚ (slSuccEmbed ν) := by
   apply Units.ext
@@ -775,31 +676,13 @@ private lemma blockEmbedGL_mapGL_eq {k : ℕ} (ν : SpecialLinearGroup (Fin (k +
     simp [Fin.castOrderIso, finSumFinEquiv, Fin.addCases, Matrix.fromBlocks,
           Matrix.of_apply, Fin.subNat]
 
-/-- On the Hecke subgroup `H_{k+1}`, `blockEmbedGL` agrees with `slSuccEmbed_H`
-(viewed as GL elements). Both unfold to `fromBlocks 1 0 0 σ_mat` (up to submatrix
-reindexing) where `σ_mat` is the rational-valued matrix of the H element. The proof
-goes through the SL-level `blockEmbedGL_mapGL_eq` after writing `σ = mapGL ℚ (toSL σ)`. -/
 private lemma blockEmbedGL_slSuccEmbed_H_eq {k : ℕ} (σ : (GL_pair (k + 1)).H) :
     blockEmbedGL (σ : GL (Fin (k + 1)) ℚ) = (slSuccEmbed_H σ : GL (Fin (k + 2)) ℚ) := by
   rw [show (σ : GL (Fin (k + 1)) ℚ) = mapGL ℚ (toSL σ) from (toSL_spec σ).symm,
     blockEmbedGL_mapGL_eq, slSuccEmbed_H_val]
 
-/-! ### Block-form predecessor `slPredEmbed`
+/-! ### Block-form predecessor `slPredEmbed` -/
 
-Partial inverse to `slSuccEmbed`: given `M ∈ SL_{k+2}(ℤ)` satisfying block-form
-hypotheses (`M 0 0 = 1` and `M i.succ 0 = 0` for every `i`), extract the
-`(k+1) × (k+1)` bottom-right submatrix as an `SL_{k+1}(ℤ)` element.
-
-- `slPredEmbed M h_diag h_col : SpecialLinearGroup (Fin (k+1)) ℤ` — the
-  predecessor, with `det = 1` by Laplace expansion along column 0.
-- `slPredEmbed_slSuccEmbed_eq`: retraction `slPredEmbed ∘ slSuccEmbed = id`.
-- `slSuccEmbed_slPredEmbed_eq`: section `slSuccEmbed ∘ slPredEmbed = id` on
-  block-form matrices (also requires first row off `(0,0)` to be zero). -/
-
-/-- **Block-form predecessor.** Takes `M ∈ SL_{k+2}(ℤ)` with `M 0 0 = 1` and
-`M i.succ 0 = 0` for every `i`; returns the bottom-right `(k+1) × (k+1)`
-submatrix, viewed as an `SL_{k+1}(ℤ)` element. The `det = 1` property follows
-from Laplace expansion along column 0 (only one non-zero term). -/
 private noncomputable def slPredEmbed {k : ℕ}
     (M : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_diag : M.1 0 0 = 1)
@@ -820,14 +703,12 @@ private noncomputable def slPredEmbed {k : ℕ}
     rw [h_det_M] at h_laplace
     exact h_laplace.symm⟩
 
-/-- Unfolding the underlying matrix of `slPredEmbed`. -/
 private lemma slPredEmbed_val_eq {k : ℕ}
     (M : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_diag : M.1 0 0 = 1)
     (h_col : ∀ i : Fin (k + 1), M.1 i.succ 0 = 0) :
     (slPredEmbed M h_diag h_col).1 = M.1.submatrix Fin.succ Fin.succ := rfl
 
-/-- Entry-level unfolding: `(slPredEmbed M).1 i j = M.1 i.succ j.succ`. -/
 private lemma slPredEmbed_val_apply {k : ℕ}
     (M : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_diag : M.1 0 0 = 1)
@@ -835,9 +716,6 @@ private lemma slPredEmbed_val_apply {k : ℕ}
     (i j : Fin (k + 1)) :
     (slPredEmbed M h_diag h_col).1 i j = M.1 i.succ j.succ := rfl
 
-/-- **Retraction.** `slPredEmbed (slSuccEmbed M) _ _ = M`. The block-form
-hypotheses are automatically satisfied by `slSuccEmbed M`, witnessed by
-`slSuccEmbed_val_zero_zero` and `slSuccEmbed_val_succ_zero`. -/
 private lemma slPredEmbed_slSuccEmbed_eq {k : ℕ}
     (M : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     slPredEmbed (slSuccEmbed M) (slSuccEmbed_val_zero_zero M)
@@ -847,9 +725,6 @@ private lemma slPredEmbed_slSuccEmbed_eq {k : ℕ}
   rw [slPredEmbed_val_apply]
   exact slSuccEmbed_val_succ_succ M i j
 
-/-- **Section.** `slSuccEmbed (slPredEmbed M _ _) = M` for `M` satisfying the
-full block-form condition (first column and first row zero off the `(0, 0)`
-entry). -/
 private lemma slSuccEmbed_slPredEmbed_eq {k : ℕ}
     (M : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_diag : M.1 0 0 = 1)
@@ -864,9 +739,6 @@ private lemma slSuccEmbed_slPredEmbed_eq {k : ℕ}
   · rw [slSuccEmbed_val_succ_zero, h_col i']
   · rw [slSuccEmbed_val_succ_succ]; rfl
 
-/-- **H-level predecessor.** Given `σ ∈ H_{k+2}` whose underlying `SL_{k+2}(ℤ)`
-matrix satisfies the block-form hypotheses, extract `σ_m ∈ H_{k+1}`. Built by
-applying `slPredEmbed` at the SL level after `toSL`. -/
 private noncomputable def slPredEmbed_H {k : ℕ}
     (σ : (GL_pair (k + 2)).H)
     (h_diag : (toSL σ).1 0 0 = 1)
@@ -877,7 +749,6 @@ private noncomputable def slPredEmbed_H {k : ℕ}
     SLnZ_subgroup (k + 1)
   exact ⟨slPredEmbed (toSL σ) h_diag h_col, rfl⟩
 
-/-- Unfold `slPredEmbed_H σ` to its GL-level value. -/
 private lemma slPredEmbed_H_val {k : ℕ}
     (σ : (GL_pair (k + 2)).H)
     (h_diag : (toSL σ).1 0 0 = 1)
@@ -885,8 +756,6 @@ private lemma slPredEmbed_H_val {k : ℕ}
     (slPredEmbed_H σ h_diag h_col : GL (Fin (k + 1)) ℚ) =
       mapGL ℚ (slPredEmbed (toSL σ) h_diag h_col) := rfl
 
-/-- **Section at the H level.** When `σ ∈ H_{k+2}` satisfies the full block-form
-hypotheses, `slSuccEmbed_H (slPredEmbed_H σ) = σ` (at the H subtype level). -/
 private lemma slSuccEmbed_H_slPredEmbed_H_eq {k : ℕ}
     (σ : (GL_pair (k + 2)).H)
     (h_diag : (toSL σ).1 0 0 = 1)
@@ -903,11 +772,6 @@ private lemma slSuccEmbed_H_slPredEmbed_H_eq {k : ℕ}
   rw [h_toSL_eq, slSuccEmbed_slPredEmbed_eq _ h_diag h_col h_row]
   exact toSL_spec σ
 
-/-- **Stabilizer preservation for the predecessor.** If `σ ∈ H_{k+2}` satisfies
-the full block-form hypotheses and lies in the stabilizer of `diag(Fin.cons 1 a)`
-at dim `k+2`, then `slPredEmbed_H σ` lies in the stabilizer of `diag a` at
-dim `k+1`. Proved by converting `σ` to `slSuccEmbed_H (slPredEmbed_H σ)` via the
-section and invoking `slSuccEmbed_H_stab_diagMat_converse`. -/
 private lemma slPredEmbed_H_stab_diagMat {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
     (σ : (GL_pair (k + 2)).H)
@@ -925,9 +789,6 @@ private lemma slPredEmbed_H_stab_diagMat {k : ℕ}
   rw [h_eq] at hσ
   exact slSuccEmbed_H_stab_diagMat_converse a ha (slPredEmbed_H σ h_diag h_col) hσ
 
-/-- **`blockEmbedGL` is injective.** If the block embeddings of two GL elements
-agree at dim `k+2`, the original elements agree at dim `k+1`. Follows from
-entry-by-entry matrix equality at the bottom-right block. -/
 private lemma blockEmbedGL_injective {k : ℕ} :
     Function.Injective (blockEmbedGL : GL (Fin (k + 1)) ℚ → GL (Fin (k + 2)) ℚ) := by
   intro X Y h
@@ -946,10 +807,6 @@ private lemma blockEmbedGL_injective {k : ℕ} :
   rw [h_X_unfold, h_Y_unfold] at h_val
   exact h_val
 
-/-- **Membership descent through `blockEmbedGL`.** If the block embedding of `h`
-lies in `(GL_pair (k+2)).H = SLnZ_subgroup (k+2)`, then `h` itself lies in
-`SLnZ_subgroup (k+1)`. Proved by extracting the bottom-right block of the `SL`
-witness at dim `k+2` via `slPredEmbed`. -/
 private lemma blockEmbedGL_mem_H_imp {k : ℕ} (h : GL (Fin (k + 1)) ℚ)
     (hh : blockEmbedGL h ∈ (GL_pair (k + 2)).H) :
     h ∈ (GL_pair (k + 1)).H := by
@@ -986,12 +843,9 @@ private lemma blockEmbedGL_mem_H_imp {k : ℕ} (h : GL (Fin (k + 1)) ℚ)
     slSuccEmbed_slPredEmbed_eq ν h_ν_diag h_ν_col h_ν_row
   rw [blockEmbedGL_mapGL_eq, h_section, hν]
 
-/-- **Block-form fiber descent.** Given `σ_m, τ_m ∈ H_{k+1}`, if the lifted
-H-membership condition at dim `k+2` (with `Fin.cons 1 _` diagonals) holds for
-the `slSuccEmbed_H` images, then the corresponding dim-`k+1` H-membership
-condition holds for `σ_m, τ_m`. This is the "reverse fiber transfer" — converse
-of `slSuccEmbed_H_fiber_transfer`. Proved by rewriting both sides as
-`blockEmbedGL`-images and invoking `blockEmbedGL_mem_H_imp`. -/
+/-- Block-form fiber descent (converse of `slSuccEmbed_H_fiber_transfer`): if the lifted
+dim-`k+2` H-membership condition holds for the `slSuccEmbed_H` images of `σ_m, τ_m`, then
+the corresponding dim-`k+1` condition holds for `σ_m, τ_m`. -/
 lemma slSuccEmbed_H_fiber_transfer_converse {k : ℕ}
     (a b c : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) (hc : ∀ i, 0 < c i)
     (σ_m τ_m : (GL_pair (k + 1)).H)
@@ -1016,16 +870,10 @@ lemma slSuccEmbed_H_fiber_transfer_converse {k : ℕ}
   rw [h_eq] at h
   exact blockEmbedGL_mem_H_imp _ h
 
-/-- **Fiber-condition block transfer** (the five-factor key lemma for the ≥
-direction). If the dim-`k+1` "conjugation-like" expression
-`(diagMat c)⁻¹ · σ · diagMat a · τ · diagMat b` lies in `H_{k+1}`, then the
-analogous dim-`k+2` expression with `Fin.cons 1` diagonals and `slSuccEmbed_H`
-lifts of `σ, τ` lies in `H_{k+2}`. This is the core fiber-transfer for the
-block-embedding injection.
-
-Proof strategy: apply `blockEmbedGL` to both sides of the dim-`k+1` equation and
-use `blockEmbedGL_mul/_inv/_diagMat/_slSuccEmbed_H_eq/_mapGL_eq` to rewrite each
-factor into its dim-`k+2` counterpart. -/
+/-- Fiber-condition block transfer (the five-factor key lemma for the ≥ direction): if the
+dim-`k+1` expression `(diagMat c)⁻¹ · σ · diagMat a · τ · diagMat b` lies in `H_{k+1}`, then
+the analogous dim-`k+2` expression with `Fin.cons 1` diagonals and `slSuccEmbed_H` lifts of
+`σ, τ` lies in `H_{k+2}`. -/
 lemma slSuccEmbed_H_fiber_transfer {k : ℕ}
     (a b c : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) (hc : ∀ i, 0 < c i)
     (σ τ : (GL_pair (k + 1)).H)
@@ -1044,11 +892,9 @@ lemma slSuccEmbed_H_fiber_transfer {k : ℕ}
       blockEmbedGL_slSuccEmbed_H_eq τ] at h_img
   exact h_img
 
-/-- **Right-coset / H-membership pivot for the diagMat fiber.** The fiber-pair
-right-coset condition `{i.out · diagMat a} · {j.out · diagMat b} · H = {diagMat c} · H`
-is logically equivalent to the H-membership condition fed to
-`slSuccEmbed_H_fiber_transfer`. This makes the block-embedding fiber transfer
-applicable directly to fiber-counting arguments at the diagMat-delta level. -/
+/-- Right-coset / H-membership pivot for the `diagMat` fiber: the fiber-pair right-coset
+condition `{σ · diagMat a} · {τ · diagMat b} · H = {diagMat c} · H` is equivalent to the
+H-membership condition `(diagMat c)⁻¹ · σ · diagMat a · τ · diagMat b ∈ H`. -/
 lemma fiber_diagMat_iff_mem_H {n : ℕ} [NeZero n]
     (a b c : Fin n → ℕ) (_ : ∀ i, 0 < a i) (_ : ∀ i, 0 < b i) (_ : ∀ i, 0 < c i)
     (σ τ : (GL_pair n).H) :
@@ -1091,9 +937,8 @@ lemma fiber_diagMat_iff_mem_H {n : ℕ} [NeZero n]
       refine ⟨_, rfl, h_elt⁻¹ * k, (GL_pair n).H.mul_mem ((GL_pair n).H.inv_mem h_mem) hk, ?_⟩
       simp only [h_elt]; group
 
-/-- `decompQuot` is invariant under changing the Δ-element when the underlying GL-values agree.
-This gives an `Equiv` via `Subgroup.quotientEquivOfEq` (the stabilizer depends only on the
-GL-value, not on the Δ-membership proof). -/
+/-- `decompQuot` is invariant under changing the Δ-element when the underlying GL-values
+agree (the stabilizer depends only on the GL-value, not on the Δ-membership proof). -/
 noncomputable def decompQuot_val_equiv {n : ℕ} [NeZero n]
     (g₁ g₂ : (GL_pair n).Δ) (h : (g₁ : GL (Fin n) ℚ) = g₂) :
     decompQuot (GL_pair n) g₁ ≃ decompQuot (GL_pair n) g₂ :=

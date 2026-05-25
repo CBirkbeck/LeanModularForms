@@ -8,10 +8,9 @@ import LeanModularForms.HeckeRIngs.GL2.AdjointTheory.FDTransport
 /-!
 # Hecke adjoint theory: summand-level adjoint identity.
 
-Second module of the split of `AdjointTheoryPetersson`. Covers the SL₂(ℤ)
-continuity instance, the T_p adjoint via diamond unitarity, the GL₂⁺ coset
-adjoint lifted to `petN`, and the summand-level adjoint / finite-union
-bridge (T092/T094).
+This module covers the SL₂(ℤ) continuity instance, the `T_p` adjoint via diamond
+unitarity, the GL₂⁺ coset adjoint lifted to `petN`, and the summand-level adjoint /
+finite-union bridge.
 -/
 
 noncomputable section
@@ -27,20 +26,11 @@ open CuspForm
 
 variable {N : ℕ} [NeZero N]
 
-/-! ### SL₂(ℤ) continuity instance -/
-
 instance : ContinuousConstSMul SL(2, ℤ) UpperHalfPlane where
   continuous_const_smul c := by
     show Continuous fun τ ↦ (map (Int.castRingHom ℝ) c) • τ
     exact continuous_const_smul _
 
-/-! ### Shared determinant and `PSL` non-triviality helpers
-
-These bundle the recurring matrix-determinant positivity computations and the
-`QuotientGroup.mk _ ≠ 1` conjugation argument used throughout the AE-disjointness
-and Petersson-summand proofs below. -/
-
-/-- The image of an integral `SL(2, ℤ)` matrix under `mapGL ℝ` has determinant `1`. -/
 private lemma mapGL_det_matrix_eq_one (σ : SL(2, ℤ)) :
     (((mapGL ℝ : SL(2, ℤ) →* _) σ : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ).det = 1 := by
@@ -51,7 +41,6 @@ private lemma mapGL_det_matrix_eq_one (σ : SL(2, ℤ)) :
   rw [← RingHom.map_det, (σ : SL(2, ℤ)).property]
   simp
 
-/-- The `mapGL ℝ` image of `T_p_upper p hp b` has positive determinant. -/
 private lemma glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
     0 < (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ).det.val := by
   show 0 < ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
@@ -69,7 +58,6 @@ private lemma glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
   rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
   exact_mod_cast hp
 
-/-- The product `glMap (T_p_upper p hp b) * mapGL ℝ q⁻¹` has positive determinant. -/
 private lemma glMap_T_p_upper_mul_mapGL_det_pos
     (p : ℕ) (hp : 0 < p) (b : ℕ) (q : SL(2, ℤ)) :
     0 < ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
@@ -80,7 +68,6 @@ private lemma glMap_T_p_upper_mul_mapGL_det_pos
   rw [Matrix.det_mul, mapGL_det_matrix_eq_one, mul_one]
   exact glMap_T_p_upper_det_pos p hp b
 
-/-- If `α : GL (Fin 2) ℝ` has positive determinant, so does `α⁻¹`. -/
 private lemma det_val_inv_pos {α : GL (Fin 2) ℝ} (hα : 0 < α.det.val) :
     0 < (α⁻¹ : GL (Fin 2) ℝ).det.val := by
   show 0 < (((α⁻¹).det : ℝˣ) : ℝ)
@@ -88,7 +75,6 @@ private lemma det_val_inv_pos {α : GL (Fin 2) ℝ} (hα : 0 < α.det.val) :
     Units.val_inv_eq_inv_val]
   exact inv_pos.mpr hα
 
-/-- A `PSL(2, ℤ)` conjugate `q * x * q⁻¹` is non-trivial whenever `x` is. -/
 private lemma psl_mk_conj_ne_one (q x : SL(2, ℤ))
     (hx : (QuotientGroup.mk x : PSL(2, ℤ)) ≠ 1) :
     (QuotientGroup.mk (q * x * q⁻¹) : PSL(2, ℤ)) ≠ 1 := by
@@ -113,50 +99,7 @@ theorem diamondOp_petersson_unitary
     (fun η hη ↦ slash_Gamma1_eq f η hη) (fun η hη ↦ slash_Gamma1_eq g η hη)
     (diamondOp_cusp k d f) (diamondOp_cusp k d g) rfl rfl
 
-/-! ### T_p adjoint via diamond unitarity
-
-The symmetric Hecke adjoint `petN(T_p f, g) = petN(⟨p⟩f, T_p g)` is the hard
-analytic/combinatorial core of DS Theorem 5.5.3. It requires:
-- Stage A: Decomposing `petN(T_p f, g)` via linearity of `peterssonInner`
-- Stage B: Applying `peterssonInner_slash_adjoint` + coset reindexing
-- Stage C: Identifying adjugate reps with T_p reps via `adjointGamma0Rep`
-
-The main theorem `heckeT_p_adjoint` reduces to this via `diamondOp_petersson_unitary`:
-  `petN(T_p f, g) = petN(⟨p⟩f, T_p g) = petN(f, ⟨p⟩⁻¹ T_p g)`. -/
-
-/-! ### GL₂⁺ coset adjoint lifted to petN
-
-The symmetric Hecke adjoint (DS Theorem 5.5.3 core):
-`petN(T_p f, g) = petN(⟨p⟩f, T_p g)`.
-
-This is the symmetric form of the adjoint identity, equivalent to
-`petN_heckeT_p_adjoint_unsymm` via `diamondOp_petersson_unitary`.
-
-Proof sketch (DS §5.5): for each T_p coset representative `α_b ∈ GL₂⁺(ℚ)` and each
-`Γ₁(N)`-coset `[q]`, apply `peterssonInner_slash_adjoint` to get:
-```
-  ∫_fd petersson k ((f∣α_b)∣q⁻¹) (g∣q⁻¹) dμ
-    = ∫_{α_b•fd} petersson k (f∣q⁻¹) ((g∣q⁻¹)∣adj(α_b)) dμ
-```
-Then factor `adj(α_b) = γ₁ · α_{σ(b)} · γ₀` where `γ₁ ∈ Γ₁(N)`,
-`σ` permutes the indices, and `γ₀ = adjointGamma0Rep` represents `⟨p⟩⁻¹`.
-After `Γ₁(N)`-tile reindexing and the permutation `σ`, the sum reconstructs
-as `petN(⟨p⟩f, T_p g)`.
-
-GL₂⁺ coset adjoint lifted to petN (DS Proposition 5.5.2b):
-for `α ∈ GL₂⁺(ℝ)` whose slash preserves `Γ₁(N)`-cuspidality,
-`petN(f_α, g) = petN(f, g_{adj(α)})` where `f_α` has function `⇑f ∣[k] α`.
-
-This lifts `peterssonInner_slash_adjoint` (the single-domain identity) to the
-full `petN` coset sum. The proof requires showing that the shifted domains
-`{α • (q.out⁻¹ • fd)}_{q}` tile a `Γ₁(N)`-fundamental domain, which follows
-from `Gamma0_normalizes_Gamma1` and `measurePreserving_smul` but requires
-`IsFundamentalDomain` infrastructure for the quotient `Γ₁(N) \ ℍ`. -/
-
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- For a `Γ₁(N)`-invariant integrable `φ`, the sum over `SL(2, ℤ)/Γ₁(N)` of the
-`fd`-tile integrals equals `slToPslQuot_fiberCard N` copies of the integral over a
-`Γ₁(N)`-fundamental domain (collapsing `SL`-tiles fiberwise onto `PSL`-tiles). -/
 private lemma sum_SL_tile_setIntegral_eq_fiberCard_smul (φ : ℍ → ℂ)
     (φ_inv : ∀ (γ : SL(2, ℤ)), γ ∈ Gamma1 N → ∀ τ : UpperHalfPlane, φ (γ • τ) = φ τ)
     (φ_int : IntegrableOn φ (Gamma1_fundDomain_PSL N) μ_hyp) :
@@ -301,35 +244,6 @@ theorem petN_slash_adjoint_GL2
   ·
     simpa [hg_adj] using h_α_int
 
-/-! ### Summand-level adjoint identity
-
-The proof of `petN(T_p f, g) = petN(⟨p⟩f, T_p g)` works at the `peterssonInner` summand
-level. For each coset `[q]` in `SL₂(ℤ)/Γ₁(N)`, the `petN` summand decomposes:
-
-```
-peterssonInner k fd ((T_p f)∣q⁻¹) (g∣q⁻¹)
-= Σ_b peterssonInner k fd (f∣α_b∣q⁻¹) (g∣q⁻¹) + peterssonInner k fd ((⟨p⟩f)∣α_∞∣q⁻¹) (g∣q⁻¹)
-```
-
-by linearity of `peterssonInner` in the first argument. Then `peterssonInner_slash_adjoint`
-(fully proved, no sorry) gives for each term:
-
-```
-peterssonInner k fd (f∣(α_b * q⁻¹)) (g∣q⁻¹)
-= peterssonInner k ((α_b * q⁻¹) • fd) f ((g∣q⁻¹)∣adj(α_b * q⁻¹))
-```
-
-The key algebraic identities:
-* `adj(T_p_upper(b)) = [[p,-b],[0,1]] = [[1,-b],[0,1]] · [[p,0],[0,1]]`
-  where `[[1,-b],[0,1]] ∈ Γ₁(N)`, so for `g ∈ S_k(Γ₁(N))`:
-  `g∣adj(T_p_upper(b)) = g∣T_p_lower` (b-independent).
-* `adj(T_p_lower) = [[1,0],[0,p]] = T_p_upper(0)`.
-* From `adjointGamma0Rep`: `T_p_lower = γ₁⁻¹ · T_p_upper(0) · γ₀`
-  where `γ₁ ∈ Γ₁(N)` and `Gamma0MapUnits(γ₀) = ⟨p⟩⁻¹`.
-
-The domain tiling after change of variables reassembles the integrals into `petN` for
-the RHS. This tiling step requires `Γ₁(N)` fundamental domain infrastructure. -/
-
 private lemma peterssonAdj_glMap_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) :
     (peterssonAdj (glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) =
       !![(p : ℝ), -(b : ℝ); 0, 1] := by
@@ -350,11 +264,8 @@ private lemma peterssonAdj_glMap_T_p_lower (p : ℕ) (hp : 0 < p) :
   rw [hcoe, Matrix.adjugate_fin_two]
   ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.of_apply]
 
-/-- **T106 helper (GL₂(ℝ)-level)**: `peterssonAdj (glMap T_p_lower) = glMap T_p_upper(0)`.
-
-Both are `GL (Fin 2) ℝ` elements with matrix `[[1, 0], [0, p]]`. Provides the
-GL-level identity needed downstream when `adj(T_p_lower)` must be compared to
-`T_p_upper(0)` as group elements (not just as matrices). -/
+/-- `peterssonAdj (glMap T_p_lower) = glMap T_p_upper(0)` as elements of
+`GL (Fin 2) ℝ` (both have matrix `[[1, 0], [0, p]]`). -/
 theorem peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero
     (p : ℕ) (hp : 0 < p) :
     peterssonAdj (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) =
@@ -372,11 +283,8 @@ theorem peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero
     ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) : Matrix _ _ ℝ) i j
   rw [h_L, h_R]
 
-/-- **T106 helper**: `glMap (mapGL ℚ γ) = mapGL ℝ γ` for `γ : SL(2, ℤ)`.
-
-Composition of `SL(2, ℤ) → GL(2, ℚ) → GL(2, ℝ)` via `glMap ∘ mapGL ℚ` equals
-the direct `SL(2, ℤ) → GL(2, ℝ)` map `mapGL ℝ`. Follows from Mathlib's
-`map_mapGL` for `SpecialLinearGroup`. -/
+/-- `glMap (mapGL ℚ γ) = mapGL ℝ γ` for `γ : SL(2, ℤ)`: the composite
+`SL(2, ℤ) → GL(2, ℚ) → GL(2, ℝ)` equals the direct map `mapGL ℝ`. -/
 theorem glMap_mapGL_Q_eq_mapGL_R (γ : SL(2, ℤ)) :
     (glMap ((mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ) γ) : GL (Fin 2) ℝ) =
       (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ := by
@@ -401,8 +309,7 @@ lemma glMap_M_infty_eq_mapGL_sigma_p_mul_glMap_T_p_lower
       (M_infty_eq_sigma_mul_T_p_lower N p hp hpN)]
   rw [glMap_mapGL_Q_eq_mapGL_R]
 
-/-- **T106 M_∞ adjoint helper**: `peterssonAdj (glMap M_∞) =
-glMap T_p_upper(0) * mapGL ℝ σ_p⁻¹`. -/
+/-- `peterssonAdj (glMap M_∞) = glMap T_p_upper(0) * mapGL ℝ σ_p⁻¹`. -/
 theorem peterssonAdj_glMap_M_infty_eq
     (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     peterssonAdj (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
@@ -436,8 +343,6 @@ def shiftSL_loc (m : ℤ) : SL(2, ℤ) :=
 private lemma shiftSL_loc_mem_Gamma1 (m : ℤ) : shiftSL_loc m ∈ Gamma1 N := by
   rw [Gamma1_mem]; refine ⟨?_, ?_, ?_⟩ <;> simp [shiftSL_loc]
 
-/-- For a nonzero shift `m`, the unipotent matrix `shiftSL_loc m` is non-trivial in
-`PSL(2, ℤ)` (it does not commute with `S = !![0, -1; 1, 0]`). -/
 private lemma shiftSL_loc_psl_ne_one {m : ℤ} (hm : m ≠ 0) :
     (QuotientGroup.mk (shiftSL_loc m) : PSL(2, ℤ)) ≠ 1 := by
   intro heq
@@ -666,9 +571,7 @@ private lemma peterssonInner_slash_M_infty_eq_diamond_T_p_lower_cusp_g
           (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
   rw [slash_M_infty_eq_diamond_slash_T_p_lower_cusp_g p hp hpN g]
 
-/-- **T127 residual M_∞-term reducing helper**: the T205 post-simp-chain
-form `(⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀` equals the original `f ∣ M_∞` (reverse of
-the two-step simp normalization used in T205). -/
+/-- `(⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀` equals `f ∣ M_∞`. -/
 theorem slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -778,8 +681,7 @@ private lemma peterssonInner_add_left (D : Set ℍ) (f₁ f₂ g : ℍ → ℂ)
   rw [← h1, h2, map_add, h3a, h3b]
 
 open UpperHalfPlane ModularGroup MeasureTheory ConjAct Pointwise in
-/-- **T205 integrability helper (mixed SL/GL slash bridge).**
-For `Γ₁(N)` cusp forms `f, g`, a rational matrix `α : GL (Fin 2) ℚ`, and an
+/-- For `Γ₁(N)` cusp forms `f, g`, a rational matrix `α : GL (Fin 2) ℚ`, and an
 `SL(2, ℤ)` element `δ`, the petersson integrand
 `petersson k (⇑f ∣[k] δ) ((⇑g ∣[k] α) ∣[k] δ)` is integrable on the
 `SL(2, ℤ)`-fundamental domain `fd`. -/
@@ -833,18 +735,15 @@ theorem integrableOn_petersson_cuspform_mixed_slash_on_fd
     exact ModularFormClass.continuous g_tr
   · exact ae_of_all _ fun τ ↦ h_AM_GM (δ • τ)
 
-/-! ### T092 / T094: Finset-additivity, finite-union bridge, and T_p-specific
-AE-disjointness (DS Theorem 5.5.2(b) / T205 instantiation) -/
-
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T092 helper: `petersson` is linear in its second argument over finite sums.** -/
+/-- `petersson` is linear in its second argument over finite sums. -/
 theorem petersson_sum_right {ι : Type*} (s : Finset ι) (f : ℍ → ℂ)
     (g : ι → ℍ → ℂ) (τ : ℍ) :
     petersson k f (∑ i ∈ s, g i) τ = ∑ i ∈ s, petersson k f (g i) τ := by
   simp only [petersson, Finset.sum_apply, Finset.mul_sum, Finset.sum_mul]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T092 helper: Finset additivity of `peterssonInner` in the first arg.** -/
+/-- Finset additivity of `peterssonInner` in the first argument. -/
 theorem peterssonInner_sum_left
     {ι : Type*} [DecidableEq ι] (s : Finset ι) (F : ι → ℍ → ℂ)
     (g : ℍ → ℂ) (D : Set ℍ)
@@ -884,8 +783,8 @@ lemma peterssonInner_add_finset_sum_left
     peterssonInner_sum_left s F g D hF]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T128 helper**: Finset additivity of `peterssonInner` in the second argument
-(slot-2 analog of `peterssonInner_sum_left`). -/
+/-- Finset additivity of `peterssonInner` in the second argument
+(the slot-2 analogue of `peterssonInner_sum_left`). -/
 lemma peterssonInner_sum_right
     {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (f : ℍ → ℂ) (G : ι → ℍ → ℂ) (D : Set ℍ)
@@ -925,7 +824,7 @@ lemma peterssonInner_add_finset_sum_right
     peterssonInner_sum_right s f G D hG]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T092: sum-of-slashes adjoint (DS 5.5.2(b) slice).** -/
+/-- Sum-of-slashes adjoint identity (DS Theorem 5.5.2(b) slice). -/
 theorem peterssonInner_sum_slash_adjoint
     {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
@@ -939,7 +838,7 @@ theorem peterssonInner_sum_slash_adjoint
   exact peterssonInner_slash_adjoint D (α i) (hα i hi) f g
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T092 finite-union bridge (pure measure-theoretic form).** -/
+/-- Finite-union bridge (pure measure-theoretic form). -/
 theorem setIntegral_biUnion_finset_ae
     {X ι : Type*} [MeasurableSpace X] {μ : Measure X}
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -963,7 +862,7 @@ theorem setIntegral_biUnion_finset_ae
     Finset.sum_coe_sort s (fun i ↦ ∫ x in S i, f x ∂μ)]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T092 finite-union bridge (`peterssonInner` form).** -/
+/-- Finite-union bridge (`peterssonInner` form). -/
 theorem peterssonInner_biUnion_finset_ae
     {ι : Type*} (s : Finset ι) {D : ι → Set ℍ}
     (hm : ∀ i ∈ s, NullMeasurableSet (D i) μ_hyp)
@@ -974,7 +873,7 @@ theorem peterssonInner_biUnion_finset_ae
   setIntegral_biUnion_finset_ae s hm hd hfi
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T092: sum-of-slashes adjoint under constant-RHS hypothesis.** -/
+/-- Sum-of-slashes adjoint identity under a constant-RHS hypothesis. -/
 theorem peterssonInner_sum_slash_adjoint_constantRHS
     {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
@@ -994,9 +893,8 @@ theorem peterssonInner_sum_slash_adjoint_constantRHS
   exact Finset.sum_congr rfl fun i hi ↦ by rw [hadj i hi]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094 wrapper: AE-disjoint via PSL-coset `mul_inv_mem`.**  Direct
-instantiation of `IsFundamentalDomain.aedisjoint_smul_of_mul_inv_mem` for
-`Gamma1_fundDomain_PSL N`. -/
+/-- AE-disjointness of `Gamma1_fundDomain_PSL N` translates via a PSL-coset
+`mul_inv_mem` hypothesis. -/
 theorem aedisjoint_imageGamma1_PSL_smul_Gamma1_fundDomain
     {N : ℕ} [NeZero N] {q₁ q₂ : PSL(2, ℤ)}
     (h_mem : q₁⁻¹ * q₂ ∈ imageGamma1_PSL N) (h_ne : q₁⁻¹ * q₂ ≠ 1) :
@@ -1006,9 +904,8 @@ theorem aedisjoint_imageGamma1_PSL_smul_Gamma1_fundDomain
     h_mem h_ne
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094 helper: positive-det `GL (Fin 2) ℝ` elements are measure-preserving
-on `ℍ` w.r.t. `μ_hyp`.** Lifts to `GL(2, ℝ)⁺` (positivity) and invokes
-`measurePreserving_smul` with `instSMulInvMeasure_GLpos`. -/
+/-- Positive-determinant `GL (Fin 2) ℝ` elements act measure-preservingly on `ℍ`
+with respect to `μ_hyp`. -/
 theorem measurePreserving_glPos_smul (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) :
     MeasurePreserving ((α • ·) : ℍ → ℍ) μ_hyp μ_hyp :=
   measurePreserving_smul (⟨α, hα⟩ : GL(2, ℝ)⁺) μ_hyp
@@ -1067,9 +964,6 @@ private lemma integrableOn_petersson_slash_of_adj_image
     exact Subtype.ext (Complex.norm_conj _)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- For `q : PSL(2, ℤ)` non-trivial, the SL₂(ℤ)-fundamental domain `fd` and its
-translate `q • fd` are AE-disjoint. (The open domain `fdo` is genuinely disjoint
-from its translate; `fd` differs from `fdo` only on a null set.) -/
 private lemma aedisjoint_fd_smul_fd_of_psl_ne_one {q : PSL(2, ℤ)} (hq_ne : q ≠ 1) :
     AEDisjoint μ_hyp (ModularGroup.fd : Set UpperHalfPlane)
       (q • (ModularGroup.fd : Set UpperHalfPlane)) := by
@@ -1095,8 +989,8 @@ private lemma aedisjoint_fd_smul_fd_of_psl_ne_one {q : PSL(2, ℤ)} (hq_ne : q �
   exact h_fdo_aedisjoint.congr fd_ae_eq_fdo h_q_smul_aeeq
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T205/T128 bridge: GL-pair AE-disjoint on the SL(2, ℤ)-fundamental
-domain `ModularGroup.fd` via `mapGL ℝ σ`-factored inverse product**. -/
+/-- A `GL`-pair is AE-disjoint on the `SL(2, ℤ)`-fundamental domain
+`ModularGroup.fd` when its inverse product factors through `mapGL ℝ σ`. -/
 theorem aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne
     (α₁ α₂ : GL (Fin 2) ℝ)
     (h_mp_inv : MeasurePreserving ((α₁⁻¹ • ·) : ℍ → ℍ) μ_hyp μ_hyp)
@@ -1140,9 +1034,7 @@ theorem aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne
   exact h_pre_aedisjoint
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094 bridge: GL-pair AE-disjoint via `mapGL ℝ γ`-factored inverse product.**
-
-For `α₁, α₂ : GL (Fin 2) ℝ` with `α₁⁻¹` measure-preserving on ℍ, if
+/-- For `α₁, α₂ : GL (Fin 2) ℝ` with `α₁⁻¹` measure-preserving on ℍ, if
 `α₁⁻¹ * α₂ = mapGL ℝ γ` for some `γ ∈ Γ₁(N)` non-trivial in `PSL(2,ℤ)`,
 then `α₁ • D_N^PSL` and `α₂ • D_N^PSL` are AE-disjoint. -/
 theorem aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
@@ -1192,11 +1084,8 @@ theorem aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
   exact h_pre_aedisjoint
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094 matrix identity M1: `T_p_upper` inverse-product factors through
-`shiftSL_loc`.**
-
-`(glMap T_p_upper(b₁))⁻¹ * (glMap T_p_upper(b₂)) = mapGL ℝ (shiftSL_loc (b₂ - b₁))`
-in `GL (Fin 2) ℝ`. Proved via `A * (shift) = B` computation, inverted. -/
+/-- `(glMap T_p_upper(b₁))⁻¹ * (glMap T_p_upper(b₂)) = mapGL ℝ (shiftSL_loc (b₂ - b₁))`
+in `GL (Fin 2) ℝ`. -/
 theorem glMap_T_p_upper_inv_mul_eq_mapGL_shift
     {p : ℕ} (hp : 0 < p) (b₁ b₂ : ℕ) :
     (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹ *
@@ -1231,7 +1120,7 @@ theorem glMap_T_p_upper_inv_mul_eq_mapGL_shift
   rw [h_mul, ← mul_assoc, inv_mul_cancel, one_mul]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: AE-disjoint for two `T_p_upper`-translates.** -/
+/-- AE-disjointness for two `T_p_upper`-translates. -/
 theorem aedisjoint_glMap_T_p_upper_pair
     {N : ℕ} [NeZero N] {p : ℕ} (hp : 0 < p) {b₁ b₂ : ℕ}
     (hne : (b₂ : ℤ) - (b₁ : ℤ) ≠ 0) :
@@ -1248,8 +1137,7 @@ theorem aedisjoint_glMap_T_p_upper_pair
     (glMap_T_p_upper_inv_mul_eq_mapGL_shift hp b₁ b₂)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T205 per-`q` upper-family pairwise AE-disjoint on `fd`-tiles**:
-for fixed `q : SL(2, ℤ)` and `b₁ ≠ b₂`, the tiles
+/-- For fixed `q : SL(2, ℤ)` and `b₁ ≠ b₂`, the tiles
 `(glMap T_p_upper(p, b) * mapGL q⁻¹) • fd` are pairwise AE-disjoint. -/
 theorem aedisjoint_glMap_T_p_upper_pair_fd_per_q
     {p : ℕ} (hp : 0 < p) (q : SL(2, ℤ)) {b₁ b₂ : ℕ}
@@ -1294,7 +1182,7 @@ theorem aedisjoint_glMap_T_p_upper_pair_fd_per_q
     (psl_mk_conj_ne_one q _ (shiftSL_loc_psl_ne_one hne)) h_inv_mul
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T205 per-`q` upper-family union-collapse (peterssonInner form)**. -/
+/-- Per-`q` upper-family union-collapse (`peterssonInner` form). -/
 theorem peterssonInner_T_p_upper_family_union_collapse_per_q
     {p : ℕ} [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -1358,10 +1246,7 @@ theorem peterssonInner_T_p_upper_family_union_collapse_per_q
   exact (peterssonInner_biUnion_finset_ae (Finset.range p) hm hd ⇑f _ hfi).symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: `μ_hyp` is invariant under positive-det `GL (Fin 2) ℝ` translates.**
-
-Uses the `(α⁻¹ • ·)` preimage formula and `MeasurePreserving.measure_preimage` on
-the GL(2, ℝ)⁺ lift. -/
+/-- `μ_hyp` is invariant under positive-determinant `GL (Fin 2) ℝ` translates. -/
 theorem measure_glPos_smul_eq (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     {S : Set ℍ} (hS : NullMeasurableSet S μ_hyp) :
     μ_hyp (α • S) = μ_hyp S := by
@@ -1377,7 +1262,7 @@ theorem measure_glPos_smul_eq (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
   exact h_mp_inv.measure_preimage hS
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: finite hyperbolic measure of a `glMap`-translate of the Γ₁(N)-FD.** -/
+/-- A `glMap`-translate of the Γ₁(N)-fundamental domain has finite hyperbolic measure. -/
 theorem measure_glPos_smul_Gamma1_fundDomain_lt_top
     {N : ℕ} [NeZero N] (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) :
     μ_hyp (α • (Gamma1_fundDomain_PSL N : Set ℍ)) < ⊤ := by
@@ -1386,8 +1271,8 @@ theorem measure_glPos_smul_Gamma1_fundDomain_lt_top
   exact hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: Petersson integrand integrable on a single `glMap`-translate of
-`Gamma1_fundDomain_PSL N`.** -/
+/-- The Petersson integrand is integrable on a single `glMap`-translate of
+`Gamma1_fundDomain_PSL N`. -/
 theorem integrableOn_petersson_glMap_smul_Gamma1_fundDomain
     {N : ℕ} [NeZero N] (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -1401,8 +1286,8 @@ theorem integrableOn_petersson_glMap_smul_Gamma1_fundDomain
     C (ae_of_all _ fun τ ↦ hC τ)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: Petersson integrand integrable on a `Finset`-biUnion of
-positive-det `glMap`-translates.** -/
+/-- The Petersson integrand is integrable on a `Finset`-biUnion of
+positive-determinant `glMap`-translates. -/
 theorem integrableOn_petersson_biUnion_glMap_smul
     {N : ℕ} [NeZero N] {ι : Type*} (s : Finset ι) (α : ι → GL (Fin 2) ℝ)
     (hα : ∀ i ∈ s, 0 < (α i).det.val)
@@ -1421,8 +1306,7 @@ theorem integrableOn_petersson_biUnion_glMap_smul
     C (ae_of_all _ fun τ ↦ hC τ)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: pairwise AE-disjoint finite family, parametrized by per-pair
-hypotheses.** -/
+/-- A finite family is pairwise AE-disjoint, from per-pair hypotheses. -/
 theorem aedisjoint_pairwise_family_of_pair_ae_disjoint
     {ι : Type*} {D : Set ℍ} (s : Finset ι) (α : ι → GL (Fin 2) ℝ)
     (h_pair : ∀ i ∈ s, ∀ j ∈ s, i ≠ j →
@@ -1431,11 +1315,9 @@ theorem aedisjoint_pairwise_family_of_pair_ae_disjoint
   fun i hi j hj hij ↦ h_pair i (Finset.mem_coe.mp hi) j (Finset.mem_coe.mp hj) hij
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094 matrix identity M2 witness: explicit Γ₁(N) factor from
-`T_p_upper(b)⁻¹ · M_∞`.**
-
-SL(2, ℤ) element with matrix `!![ap − bNm, 1 − b; Nm, 1]`
-(where `a = aInvOfCoprime, m = mIdxOfCoprime`, so `ap − Nm = 1` by Bezout). -/
+/-- The explicit `Γ₁(N)` factor arising from `T_p_upper(b)⁻¹ · M_∞`: the
+`SL(2, ℤ)` element with matrix `!![ap − bNm, 1 − b; Nm, 1]`
+(where `a = aInvOfCoprime`, `m = mIdxOfCoprime`, so `ap − Nm = 1` by Bézout). -/
 noncomputable def M_infty_Gamma1_factor
     (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (b : ℕ) : SL(2, ℤ) :=
   ⟨!![(aInvOfCoprime N p hpN : ℤ) * p - (b : ℤ) * ((N : ℤ) * mIdxOfCoprime N p hpN),
@@ -1446,7 +1328,7 @@ noncomputable def M_infty_Gamma1_factor
       rw [Matrix.det_fin_two_of]; linarith⟩
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: `M_infty_Gamma1_factor` lies in `Γ₁(N)`.** -/
+/-- `M_infty_Gamma1_factor` lies in `Γ₁(N)`. -/
 theorem M_infty_Gamma1_factor_mem_Gamma1
     (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (b : ℕ) :
     M_infty_Gamma1_factor N p hpN b ∈ Gamma1 N := by
@@ -1470,7 +1352,7 @@ theorem M_infty_Gamma1_factor_mem_Gamma1
     rw [show (((N : ℕ) : ZMod N)) = 0 from ZMod.natCast_self N]; ring
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: `M_infty_Gamma1_factor` is non-trivial in `PSL(2, ℤ)` for `p` prime.** -/
+/-- `M_infty_Gamma1_factor` is non-trivial in `PSL(2, ℤ)` for `p` prime. -/
 theorem M_infty_Gamma1_factor_psl_ne_one
     (N p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
     (QuotientGroup.mk (M_infty_Gamma1_factor N p hpN b) : PSL(2, ℤ)) ≠ 1 := by
@@ -1508,8 +1390,7 @@ theorem M_infty_Gamma1_factor_psl_ne_one
   rcases hp_unit with h | h <;> omega
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094 matrix identity M2: `(T_p_upper(b))⁻¹ · M_∞ = mapGL ℝ
-(M_infty_Gamma1_factor)`.**  Verified via `M_∞ = T_p_upper(b) · γ'` computation. -/
+/-- `(T_p_upper(b))⁻¹ · M_∞ = mapGL ℝ (M_infty_Gamma1_factor)`. -/
 theorem glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1
     (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (b : ℕ) :
     (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ)⁻¹ *
@@ -1551,7 +1432,7 @@ theorem glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1
   rw [h_mul, ← mul_assoc, inv_mul_cancel, one_mul]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: AE-disjoint for `T_p_upper(b)` vs `M_∞` (p prime).** -/
+/-- AE-disjointness for `T_p_upper(b)` versus `M_∞` (`p` prime). -/
 theorem aedisjoint_glMap_M_infty_T_p_upper
     {N : ℕ} [NeZero N] {p : ℕ} (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
     AEDisjoint μ_hyp
@@ -1568,8 +1449,8 @@ theorem aedisjoint_glMap_M_infty_T_p_upper
     (glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1 N p hp.pos hpN b)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T094: T_p-double-coset family `{T_p_upper(b)}_{b<p} ∪ {M_∞}` — pairwise
-AE-disjoint translates of `Gamma1_fundDomain_PSL N`.** -/
+/-- The `T_p`-double-coset family `{T_p_upper(b)}_{b<p} ∪ {M_∞}` gives pairwise
+AE-disjoint translates of `Gamma1_fundDomain_PSL N`. -/
 theorem aedisjoint_pairwise_T_p_family
     {N : ℕ} [NeZero N] (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     (↑(Finset.univ : Finset (Option (Fin p))) : Set (Option (Fin p))).Pairwise
@@ -1598,8 +1479,8 @@ theorem aedisjoint_pairwise_T_p_family
     exact congr_arg some (Fin.ext h_val)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T090 / T205 reusable: Petersson sum-of-slashes ↔ aggregate Hecke-FD biUnion
-for a finite family of GL(2,ℝ)⁺ representatives with a common adjoint cusp form.** -/
+/-- Petersson sum-of-slashes equals the aggregate Hecke-FD biUnion, for a finite
+family of `GL(2,ℝ)⁺` representatives with a common adjoint cusp form. -/
 theorem peterssonInner_T_p_family_sum_slashes_eq_aggregate
     {N : ℕ} [NeZero N] {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
@@ -1623,9 +1504,9 @@ theorem peterssonInner_T_p_family_sum_slashes_eq_aggregate
     (integrableOn_petersson_biUnion_glMap_smul s α hα f g')
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T090 / T205 reusable: Petersson sum-of-slashes ↔ aggregate Hecke-FD biUnion
-with explicit union-integrability hypothesis (companion to
-`peterssonInner_T_p_family_sum_slashes_eq_aggregate`).** -/
+/-- Petersson sum-of-slashes equals the aggregate Hecke-FD biUnion, with an
+explicit union-integrability hypothesis (companion to
+`peterssonInner_T_p_family_sum_slashes_eq_aggregate`). -/
 theorem peterssonInner_T_p_family_sum_slashes_eq_aggregate_of_integrable
     {N : ℕ} [NeZero N] {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
@@ -1669,7 +1550,7 @@ lemma peterssonInner_slash_adjoint_coset_right
   rw [← h1, h2, h3]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T024 aggregate per-α slash-adjoint at the Γ₁(N)-FD level**. -/
+/-- Aggregate per-`α` slash-adjoint at the `Γ₁(N)`-fundamental-domain level. -/
 theorem peterssonInner_sum_slash_adjoint_coset_aggregate
     (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
     (F G : UpperHalfPlane → ℂ)
@@ -1706,7 +1587,7 @@ theorem peterssonInner_sum_slash_adjoint_coset_aggregate
     hm hd F (G ∣[k] peterssonAdj β) hint).symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T106 helper: `glMap M_∞` has positive determinant `p` in `GL (Fin 2) ℝ`.** -/
+/-- `glMap M_∞` has positive determinant `p` in `GL (Fin 2) ℝ`. -/
 theorem glMap_M_infty_det_pos
     (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     0 < (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ).det.val := by
@@ -1768,8 +1649,6 @@ private theorem nullMeasurableSet_M_infty_q_tile
     (measurePreserving_glPos_smul _ hα_inv_det).quasiMeasurePreserving
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- The `q`-conjugated inverse-product of the `M_∞`- and `T_p_upper(b)`-tile shifts
-factors through `mapGL ℝ` of the `q`-conjugate of `M_infty_Gamma1_factor⁻¹`. -/
 private lemma glMap_M_infty_mul_inv_mul_T_p_upper_mul_eq_mapGL_conj
     (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (b : ℕ) (q : SL(2, ℤ)) :
     ((glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) *
@@ -1801,7 +1680,7 @@ private lemma glMap_M_infty_mul_inv_mul_T_p_upper_mul_eq_mapGL_conj
     ← map_inv, ← map_mul, ← map_mul]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T128 per-`q` M_∞ vs T_p_upper(b) fd-AE-disjoint helper**. -/
+/-- Per-`q` `M_∞` versus `T_p_upper(b)` AE-disjointness on `fd`-tiles. -/
 theorem aedisjoint_glMap_M_infty_T_p_upper_fd_per_q
     {N : ℕ} [NeZero N] {p : ℕ} (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (q : SL(2, ℤ)) (b : ℕ) :
@@ -1843,8 +1722,7 @@ theorem aedisjoint_glMap_M_infty_T_p_upper_fd_per_q
     (psl_mk_conj_ne_one q _ h_psl_factor_inv_ne) h_inv_mul
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T106 right-slash M_∞ adjoint coset identity**: per-`q` M_∞-summand
-transformation for the Hecke adjoint. -/
+/-- Per-`q` `M_∞`-summand transformation for the Hecke adjoint (right-slash form). -/
 theorem peterssonInner_M_infty_slash_adjoint_coset
     (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
     (q : SL(2, ℤ)) (f g : ℍ → ℂ) :
@@ -1863,8 +1741,7 @@ theorem peterssonInner_M_infty_slash_adjoint_coset
   rw [peterssonAdj_glMap_M_infty_eq N p hp hpN]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T126 coset-reindex helper (cusp-form version)**: for a `Γ₁(N)`-cusp
-form `g` and `γ ∈ Γ₀(N)`, slashing by `(σ q).out⁻¹` where
+/-- For a `Γ₁(N)`-cusp form `g` and `γ ∈ Γ₀(N)`, slashing by `(σ q).out⁻¹` where
 `σ = Gamma1QuotEquivOfGamma0 γ` equals slashing by `q.out⁻¹` after applying
 the diamond operator `⟨Gamma0MapUnits γ⟩`. -/
 theorem slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv
@@ -1904,9 +1781,6 @@ theorem slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv
     rw [diamondOpCusp_eq k (Gamma0MapUnits γ) γ rfl]
     rfl]
 
-/-- The diamond operator commutes with `heckeT_p_cusp` at the function level:
-`⇑(⟨d⟩ (T_p g)) = ⇑(T_p (⟨d⟩ g))` for `d = Gamma0MapUnits γ`. This is the
-cuspform underlying-function form of `heckeT_p_comm_diamondOp`. -/
 private lemma diamondOp_cusp_heckeT_p_cusp_comm_coe
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (γ : ↥(Gamma0 N)) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -1957,8 +1831,7 @@ private lemma diamondOp_cusp_heckeT_p_cusp_comm_coe
     _ = ⇑(heckeT_p_cusp k p hp hpN (diamondOp_cusp k d g)) := rfl
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T128 Hecke-diamond whole-cusp-form coset-reindex helper**: for a
-`Γ₁(N)`-cusp form `g` and `γ ∈ Γ₀(N)`, slashing the full `T_p`-image
+/-- For a `Γ₁(N)`-cusp form `g` and `γ ∈ Γ₀(N)`, slashing the full `T_p`-image
 `heckeT_p_cusp k p hp hpN g` by `(σ q).out⁻¹` (where
 `σ = Gamma1QuotEquivOfGamma0 γ`) equals slashing
 `heckeT_p_cusp k p hp hpN (⟨Gamma0MapUnits γ⟩ g)` by `q.out⁻¹`. -/
@@ -1977,13 +1850,8 @@ theorem slash_heckeT_p_cusp_Gamma1QuotEquiv_out_inv_eq
     diamondOp_cusp_heckeT_p_cusp_comm_coe p hp hpN γ g]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **T128 petN-level q-reindex consumer**: applying the T128 pointwise
-identity across the full `∑_q : SL(2, ℤ) ⧸ Γ₁(N)` sum (via `Equiv.sum_comp`
-on `σ = Gamma1QuotEquivOfGamma0 γ`, combined with T128 on the first
-`peterssonInner` slot and T126 on the second) collapses to a `petN`
-identity:
-`petN (T_p f) g = petN (T_p (⟨Gamma0MapUnits γ⟩ f)) (⟨Gamma0MapUnits γ⟩ g)`
-for any `γ ∈ Γ₀(N)` and Γ₁(N)-cusp forms `f, g`. -/
+/-- `petN (T_p f) g = petN (T_p (⟨Gamma0MapUnits γ⟩ f)) (⟨Gamma0MapUnits γ⟩ g)`
+for any `γ ∈ Γ₀(N)` and `Γ₁(N)`-cusp forms `f, g`. -/
 theorem petN_heckeT_p_Gamma1QuotEquiv_reindex
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (γ : ↥(Gamma0 N)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
