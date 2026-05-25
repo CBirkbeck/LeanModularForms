@@ -300,6 +300,50 @@ private lemma conj_ker_mem_SLnZ_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fi
   rw [SLnZ_subgroup, MonoidHom.mem_range]
   exact ⟨delta, by rw [← h_unit_eq]; group⟩
 
+omit [NeZero n] in
+/-- The image in `GL_n(ℚ)` of the congruence kernel `Γ(d) = ker(SL_n(ℤ) → SL_n(ℤ/dℤ))`
+    has nonzero relative index in `SL_n(ℤ)`: it is a finite-index congruence subgroup. -/
+private lemma congruence_ker_image_relIndex_ne_zero (d : ℕ) [NeZero d] :
+    (Subgroup.map (mapGL ℚ) (SpecialLinearGroup.map (Int.castRingHom (ZMod d))).ker).relIndex
+      (SLnZ_subgroup n) ≠ 0 := by
+  set phi : SpecialLinearGroup (Fin n) ℤ →* SpecialLinearGroup (Fin n) (ZMod d) :=
+    SpecialLinearGroup.map (Int.castRingHom (ZMod d)) with hphi_def
+  have h1 : SLnZ_subgroup n =
+      Subgroup.map (mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ) ⊤ := by
+    simp [SLnZ_subgroup, MonoidHom.range_eq_map]
+  rw [h1, Subgroup.relIndex_map_map_of_injective _ _ (mapGL_injective n),
+    Subgroup.relIndex_top_right]
+  exact (Subgroup.finiteIndex_ker phi).index_ne_zero
+
+/-- The image of the congruence kernel lies inside `g • SL_n(ℤ)`: conjugating a kernel
+    element by `g⁻¹` keeps it integral (`conj_ker_mem_SLnZ`). -/
+private lemma congruence_ker_image_le_conj (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) (hAdet : A.det ≠ 0) :
+    Subgroup.map (mapGL ℚ) (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker ≤
+      ConjAct.toConjAct g • SLnZ_subgroup n := by
+  intro x hx
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
+  simp only [Subgroup.mem_map] at hx
+  obtain ⟨γ, hγ_ker, rfl⟩ := hx
+  show (ConjAct.toConjAct g)⁻¹ • (γ : GL (Fin n) ℚ) ∈ SLnZ_subgroup n
+  rw [ConjAct.smul_def, ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]
+  exact conj_ker_mem_SLnZ n g A hA hAdet γ hγ_ker
+
+/-- The image of the congruence kernel lies inside `g⁻¹ • SL_n(ℤ)`: conjugating a kernel
+    element by `g` keeps it integral (`conj_ker_mem_SLnZ_inv`). -/
+private lemma congruence_ker_image_le_conj_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
+    (hA : (↑g : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ)) (hAdet : A.det ≠ 0) :
+    Subgroup.map (mapGL ℚ) (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker ≤
+      ConjAct.toConjAct g⁻¹ • SLnZ_subgroup n := by
+  intro x hx
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
+  simp only [ConjAct.toConjAct_inv, inv_inv]
+  simp only [Subgroup.mem_map] at hx
+  obtain ⟨γ, hγ_ker, rfl⟩ := hx
+  show ConjAct.toConjAct g • (γ : GL (Fin n) ℚ) ∈ SLnZ_subgroup n
+  rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]
+  exact conj_ker_mem_SLnZ_inv n g A hA hAdet γ hγ_ker
+
 /-- `Δ ⊆ commensurator(SL_n(ℤ))`: for any integer matrix `α` with positive determinant,
     `SL_n(ℤ)` and `α · SL_n(ℤ) · α⁻¹` are commensurable.
 
@@ -312,42 +356,16 @@ lemma posDetInt_le_commensurator :
   intro g ⟨⟨A, hA⟩, hdet⟩
   rw [Subgroup.mem_toSubmonoid, commensurator_mem_iff]
   set H := SLnZ_subgroup n
-  have hAdet_pos : 0 < A.det := by
-    have h1 : (0 : ℚ) < (A.det : ℚ) := by
-      have h2 : (A.det : ℚ) = (A.map (Int.cast : ℤ → ℚ)).det := (det_intMat_cast n A).symm
-      rw [h2, ← hA]; exact hdet
-    exact Int.cast_pos.mp h1
-  have hAdet_ne : A.det ≠ 0 := ne_of_gt hAdet_pos
+  have hAdet_ne : A.det ≠ 0 := by
+    have : (0 : ℚ) < (A.det : ℚ) := by rw [← det_intMat_cast, ← hA]; exact hdet
+    exact (Int.cast_pos.mp this).ne'
   have hnatAbs_ne : NeZero A.det.natAbs := ⟨Int.natAbs_ne_zero.mpr hAdet_ne⟩
-  set phi : SpecialLinearGroup (Fin n) ℤ →* SpecialLinearGroup (Fin n) (ZMod A.det.natAbs) :=
-    SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs)) with hphi_def
-  set K := phi.ker.map ((mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ)) with hK_def
-  have hK_le_H : K ≤ H := by
-    intro x hx; simp only [K, Subgroup.mem_map] at hx
-    obtain ⟨γ, _, rfl⟩ := hx; exact ⟨γ, rfl⟩
-  have hK_relIndex : K.relIndex H ≠ 0 := by
-    have h1 : H = Subgroup.map ((mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ)) ⊤ := by
-      simp [H, MonoidHom.range_eq_map]
-    rw [hK_def, h1, Subgroup.relIndex_map_map_of_injective _ _ (mapGL_injective n),
-      Subgroup.relIndex_top_right]
-    exact (Subgroup.finiteIndex_ker phi).index_ne_zero
-  have hK_le_gH : K ≤ ConjAct.toConjAct g • H := by
-    intro x hx
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
-    simp only [K, Subgroup.mem_map] at hx
-    obtain ⟨γ, hγ_ker, rfl⟩ := hx
-    show (ConjAct.toConjAct g)⁻¹ • (γ : GL (Fin n) ℚ) ∈ H
-    rw [ConjAct.smul_def, ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]
-    exact conj_ker_mem_SLnZ n g A hA hAdet_ne γ hγ_ker
-  have hK_le_ginvH : K ≤ ConjAct.toConjAct g⁻¹ • H := by
-    intro x hx
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
-    simp only [ConjAct.toConjAct_inv, inv_inv]
-    simp only [K, Subgroup.mem_map] at hx
-    obtain ⟨γ, hγ_ker, rfl⟩ := hx
-    show ConjAct.toConjAct g • (γ : GL (Fin n) ℚ) ∈ H
-    rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]
-    exact conj_ker_mem_SLnZ_inv n g A hA hAdet_ne γ hγ_ker
+  set K := (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker.map
+    (mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ) with hK_def
+  have hK_relIndex : K.relIndex H ≠ 0 := congruence_ker_image_relIndex_ne_zero n A.det.natAbs
+  have hK_le_gH : K ≤ ConjAct.toConjAct g • H := congruence_ker_image_le_conj n g A hA hAdet_ne
+  have hK_le_ginvH : K ≤ ConjAct.toConjAct g⁻¹ • H :=
+    congruence_ker_image_le_conj_inv n g A hA hAdet_ne
   constructor
   · exact ne_zero_of_dvd_ne_zero hK_relIndex
       (Subgroup.relIndex_dvd_of_le_left H hK_le_gH)

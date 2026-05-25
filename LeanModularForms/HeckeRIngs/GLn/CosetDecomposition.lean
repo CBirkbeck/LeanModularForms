@@ -269,6 +269,33 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
   · rw [abs_of_nonpos (by omega)] at h_abs; omega
   · rw [abs_of_pos (by omega)] at h_abs; omega
 
+/-- Inductive step for column triviality: if every column `< j` of `σ` is identity-like,
+    then column `j` is too. Reads off `σ i j` from `M₁ = σ · M₂` via the entry equation
+    `coset_sum_eq`, splitting on `i < j`, `i = j`, `i > j`. -/
+private lemma coset_col_entry_eq {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
+    {hdiv : DivChain n a} {B₁ B₂ : UpperTriRep n a hdiv}
+    {σ : SpecialLinearGroup (Fin n) ℤ}
+    (hmat : upperTriMat n a hdiv B₁ = σ.val * upperTriMat n a hdiv B₂) {j : Fin n}
+    (ih' : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n),
+      σ.val i k = if i = k then 1 else 0) (i : Fin n) :
+    σ.val i j = if i = j then 1 else 0 := by
+  have h_eq : upperTriMat n a hdiv B₁ i j =
+      ∑ k : Fin n, σ.val i k * upperTriMat n a hdiv B₂ k j := by
+    rw [hmat]; simp [Matrix.mul_apply]
+  rw [@coset_sum_eq n a hdiv B₂ σ i j ih'] at h_eq
+  rcases lt_trichotomy i j with hij | rfl | hij
+  · rw [if_neg (Fin.ne_of_lt hij)]
+    exact @coset_entry_zero_of_lt n a hpos hdiv B₁ B₂ σ i j hij
+      (by simp only [hij, ↓reduceIte] at h_eq; exact h_eq)
+  · simp only [lt_irrefl, ↓reduceIte, upperTriMat_apply_diag] at h_eq ⊢
+    have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (hpos i).ne'
+    exact mul_right_cancel₀ h_ai_ne (by linarith)
+  · rw [if_neg (Fin.ne_of_gt hij)]
+    simp only [show ¬(i < j) from not_lt.mpr (le_of_lt hij), ↓reduceIte,
+      upperTriMat_apply_gt _ _ _ _ hij] at h_eq
+    have : (a j : ℤ) ≠ 0 := by exact_mod_cast (hpos j).ne'
+    exact (mul_eq_zero.mp (by linarith)).resolve_right this
+
 /-- Distinct entry assignments give distinct left cosets of `SL_n(ℤ)`. -/
 theorem upperTriMat_distinct_cosets (a : Fin n → ℕ)
     (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
@@ -301,25 +328,8 @@ theorem upperTriMat_distinct_cosets (a : Fin n → ℕ)
     intro j hj i
     rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hlt | hjeq
     · exact ih j hlt i
-    · have h_eq : M₁ i j = ∑ k : Fin n, σ.val i k * M₂ k j := by
-        rw [hmat]; simp [Matrix.mul_apply]
-      have ih' : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n),
-          σ.val i k = if i = k then 1 else 0 :=
-        fun k hk => ih k (hjeq ▸ hk)
-      have h_sum := @coset_sum_eq n a hdiv B₂ σ i j ih'
-      rw [h_sum] at h_eq
-      rcases lt_trichotomy i j with hij | rfl | hij
-      · rw [if_neg (Fin.ne_of_lt hij)]
-        exact @coset_entry_zero_of_lt n a hpos hdiv B₁ B₂ σ i j hij
-          (by simp only [hij, ↓reduceIte] at h_eq; exact h_eq)
-      · simp only [lt_irrefl, ↓reduceIte, M₁, upperTriMat_apply_diag] at h_eq ⊢
-        have h_ai_ne : (a i : ℤ) ≠ 0 := by exact_mod_cast (hpos i).ne'
-        exact mul_right_cancel₀ h_ai_ne (by linarith)
-      · rw [if_neg (Fin.ne_of_gt hij)]
-        simp only [show ¬(i < j) from not_lt.mpr (le_of_lt hij), ↓reduceIte,
-          M₁, upperTriMat_apply_gt _ _ _ _ hij] at h_eq
-        have : (a j : ℤ) ≠ 0 := by exact_mod_cast (hpos j).ne'
-        exact (mul_eq_zero.mp (by linarith)).resolve_right this
+    · exact @coset_col_entry_eq n a hpos hdiv B₁ B₂ σ hmat j
+        (fun k hk => ih k (hjeq ▸ hk)) i
 
 /-- The number of upper-triangular representatives equals `∏_{i<j} (a_j / a_i)`. -/
 lemma upperTriRep_card (a : Fin n → ℕ) (hdiv : DivChain n a) :

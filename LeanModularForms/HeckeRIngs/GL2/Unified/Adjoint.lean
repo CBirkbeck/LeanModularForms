@@ -97,6 +97,26 @@ noncomputable def cuspGamma0NebentypusPetPairing
   fun f g => petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
 
+/-- Shared computational core of the Petersson scalar-adjoint relation: on the
+character space, the Petersson adjoint of `heckeT_n_cusp` is `χ(n)⁻¹` times the
+operator itself. Both the `cuspFormCharSpace` and the transported `Γ₀(N), χ`
+packages reduce to this once the underlying cusp forms are exhibited. -/
+private lemma petN_heckeT_n_cusp_adjoint_scalar
+    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hg : g ∈ cuspFormCharSpace k χ) :
+    petN (heckeT_n_cusp k n f) g =
+      (↑(χ (ZMod.unitOfCoprime n hn))⁻¹ : ℂ) * petN f (heckeT_n_cusp k n g) := by
+  rw [heckeT_n_adjoint (N := N) (k := k) (n := n) hn (f := f) (g := g)]
+  have hTg : heckeT_n_cusp k n g ∈ cuspFormCharSpace k χ :=
+    heckeT_n_cusp_preserves_cuspFormCharSpace (N := N) k n hn χ hg
+  change petN f (diamondOpCusp k (ZMod.unitOfCoprime n hn)⁻¹ (heckeT_n_cusp k n g)) =
+    (↑(χ (ZMod.unitOfCoprime n hn))⁻¹ : ℂ) * petN f (heckeT_n_cusp k n g)
+  rw [show diamondOpCusp k (ZMod.unitOfCoprime n hn)⁻¹ (heckeT_n_cusp k n g) =
+        (↑(χ (ZMod.unitOfCoprime n hn)⁻¹) : ℂ) • heckeT_n_cusp k n g from
+      diamondOpCusp_apply_charSpace (N := N) k χ (ZMod.unitOfCoprime n hn)⁻¹ hTg]
+  simp only [map_inv, Units.val_inv_eq_inv_val]
+  exact petN_smul_right _ _ _
+
 /-- On `cuspFormCharSpace k χ`, the Petersson adjoint of the good Hecke operator
 indexed by `n` is the scalar `χ(n)⁻¹` times the operator itself. -/
 noncomputable def cuspFormCharSpaceScalarAdjoint
@@ -108,36 +128,9 @@ noncomputable def cuspFormCharSpaceScalarAdjoint
   adjointScalar n := (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2))⁻¹ : ℂ)
   adjoint' n f g := by
     letI : NeZero (n : ℕ) := ⟨Nat.pos_iff_ne_zero.mp n.property.1⟩
-    change petN (heckeT_n_cusp k (n : ℕ)
-        (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-        (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2))⁻¹ : ℂ) *
-        petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-          (heckeT_n_cusp k (n : ℕ)
-            (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-    rw [heckeT_n_adjoint (N := N) (k := k) (n := (n : ℕ)) n.property.2
-      (f := (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-      (g := (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))]
-    have hTg :
-        heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈
-          cuspFormCharSpace k χ :=
-      heckeT_n_cusp_preserves_cuspFormCharSpace
-        (N := N) k (n : ℕ) n.property.2 χ g.property
-    change petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-        (diamondOpCusp k (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹
-          (heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))) =
-      (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2))⁻¹ : ℂ) *
-        petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-          (heckeT_n_cusp k (n : ℕ)
-            (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-    rw [show diamondOpCusp k (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹
-          (heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-        (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹) : ℂ) •
-          heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) from
-      diamondOpCusp_apply_charSpace (N := N) k χ
-        (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹ hTg]
-    simp only [map_inv, Units.val_inv_eq_inv_val]
-    exact petN_smul_right _ _ _
+    exact petN_heckeT_n_cusp_adjoint_scalar (N := N) k χ (n : ℕ) n.property.2
+      (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+      (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) g.property
 
 /-- The transported Petersson scalar-adjoint package on the experimental
 `Γ₀(N), χ` cusp space. -/
@@ -150,52 +143,13 @@ noncomputable def cuspGamma0NebentypusScalarAdjoint
   adjointScalar n := (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2))⁻¹ : ℂ)
   adjoint' n f g := by
     letI : NeZero (n : ℕ) := ⟨Nat.pos_iff_ne_zero.mp n.property.1⟩
-    have hf_char :
-        (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈ cuspFormCharSpace k χ :=
-      (mem_cuspFormCharSpace_iff_mem_cuspGamma0NebentypusSubmodule
-        (N := N) k χ (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)).mpr f.property
     have hg_char :
         (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈ cuspFormCharSpace k χ :=
       (mem_cuspFormCharSpace_iff_mem_cuspGamma0NebentypusSubmodule
         (N := N) k χ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)).mpr g.property
-    change petN
-        (ambientCuspHeckeOfGoodIndex (N := N) k n
-          (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-        (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2))⁻¹ : ℂ) *
-        petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-          (ambientCuspHeckeOfGoodIndex (N := N) k n
-            (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-    change petN (heckeT_n_cusp k (n : ℕ)
-        (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-        (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2))⁻¹ : ℂ) *
-        petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-          (heckeT_n_cusp k (n : ℕ)
-            (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-    rw [heckeT_n_adjoint (N := N) (k := k) (n := (n : ℕ)) n.property.2
-      (f := (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-      (g := (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))]
-    have hTg :
-        heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈
-          cuspFormCharSpace k χ :=
-      heckeT_n_cusp_preserves_cuspFormCharSpace
-        (N := N) k (n : ℕ) n.property.2 χ hg_char
-    change petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-        (diamondOpCusp k (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹
-          (heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))) =
-      (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2))⁻¹ : ℂ) *
-        petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-          (heckeT_n_cusp k (n : ℕ)
-            (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
-    rw [show diamondOpCusp k (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹
-          (heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-        (↑(χ (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹) : ℂ) •
-          heckeT_n_cusp k (n : ℕ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) from
-      diamondOpCusp_apply_charSpace (N := N) k χ
-        (ZMod.unitOfCoprime (n : ℕ) n.property.2)⁻¹ hTg]
-    simp only [map_inv, Units.val_inv_eq_inv_val]
-    exact petN_smul_right _ _ _
+    exact petN_heckeT_n_cusp_adjoint_scalar (N := N) k χ (n : ℕ) n.property.2
+      (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+      (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) hg_char
 
 @[simp] lemma cuspGamma0NebentypusScalarAdjoint_adjointScalar
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (n : GoodIndex N) :

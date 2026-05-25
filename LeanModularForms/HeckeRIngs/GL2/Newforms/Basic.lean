@@ -332,6 +332,29 @@ lemma petN_realBilin_isRefl : (petN_realBilin (N := N) (k := k)).IsRefl := by
     rw [← h, Complex.conj_re]
   linarith
 
+/-- Vanishing of `petN` is symmetric in its two arguments: if `petN f g = 0` then
+`petN g f = 0`.  Immediate from Hermitian symmetry `petN_conj_symm` (conjugation fixes `0`). -/
+private lemma petN_swap_eq_zero
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (h : petN f g = 0) :
+    petN g f = 0 := by
+  have hc := petN_conj_symm f g
+  rw [h] at hc
+  simpa using congr_arg (starRingEnd ℂ) hc
+
+/-- If both `(petN g f).re = 0` and `(petN (i • g) f).re = 0`, then `petN g f = 0`.
+Conjugate-linearity in the first argument (`petN_conj_smul_left`) turns the second
+hypothesis into `Re(-i · petN g f) = (petN g f).im = 0`, which combines with the first
+to pin both real and imaginary parts. -/
+private lemma petN_eq_zero_of_re_eq_zero_of_I_smul_re_eq_zero
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hre : (petN g f).re = 0) (hIre : (petN (Complex.I • g) f).re = 0) :
+    petN g f = 0 := by
+  rw [petN_conj_smul_left] at hIre
+  have h_im : (petN g f).im = 0 := by
+    simp [Complex.mul_re, Complex.I_re, Complex.I_im] at hIre
+    linarith
+  exact Complex.ext (by simpa using hre) (by simpa using h_im)
+
 /-- The orthogonal complement of `(cuspFormsOld).restrictScalars ℝ` w.r.t. `petN_realBilin`
 equals `(cuspFormsNew).restrictScalars ℝ` as ℝ-submodules. The proof uses Hermitian
 symmetry and `cuspFormsOld` being closed under multiplication by `i`. -/
@@ -340,62 +363,23 @@ lemma petN_realBilin_orthogonal_cuspFormsOld_eq :
         ((cuspFormsOld N k).restrictScalars ℝ) =
       (cuspFormsNew N k).restrictScalars ℝ := by
   ext f
-  refine ⟨?_, ?_⟩
-  · intro hf
-    -- hf : ∀ g ∈ cuspFormsOld (as ℝ-submodule), petN_realBilin g f = 0
-    -- (Note: Mathlib's BilinForm orthogonal uses `B g f = 0`, with f in second arg)
-    -- We want: f ∈ cuspFormsNew, i.e., for all g ∈ cuspFormsOld, petN f g = 0
+  refine ⟨fun hf => ?_, fun hf g hg => ?_⟩
+  · -- `hf` gives `(petN g f).re = 0` for every `g ∈ cuspFormsOld` (Mathlib's orthogonal
+    -- uses `B g f = 0`, with `f` in the second argument).  Applying it both to `g` and to
+    -- `i • g ∈ cuspFormsOld` pins `petN g f = 0`, then Hermitian symmetry gives `petN f g = 0`.
     show f ∈ cuspFormsNew N k
     intro g hg
-    -- petN_realBilin g f = (petN g f).re = 0 by hf
-    have hg_mem : g ∈ Submodule.restrictScalars ℝ (cuspFormsOld N k) := hg
-    have hgf_re : (petN g f).re = 0 := by
-      have := hf g hg_mem
-      simp only [LinearMap.BilinForm.IsOrtho] at this
-      rw [petN_realBilin_apply] at this
-      exact this
-    -- Apply also for (i • g) which is in cuspFormsOld
-    have hig : (Complex.I • g) ∈ Submodule.restrictScalars ℝ (cuspFormsOld N k) :=
-      (cuspFormsOld N k).smul_mem Complex.I hg
-    have higf_re : (petN (Complex.I • g) f).re = 0 := by
-      have := hf (Complex.I • g) hig
-      simp only [LinearMap.BilinForm.IsOrtho] at this
-      rw [petN_realBilin_apply] at this
-      exact this
-    -- petN (i • g) f = (conj i) * petN g f = -i * petN g f (conj-linear in first arg)
-    have h_eq : petN (Complex.I • g) f = starRingEnd ℂ Complex.I * petN g f :=
-      petN_conj_smul_left _ _ _
-    rw [h_eq] at higf_re
-    -- Re(-i * z) = Im(z), so Im(petN g f) = 0
-    have h_im : (petN g f).im = 0 := by
-      have := higf_re
-      simp [Complex.mul_re, Complex.I_re, Complex.I_im] at this
-      linarith
-    -- Combined: petN g f = 0
-    have hgf : petN g f = 0 := by
-      apply Complex.ext
-      · simpa using hgf_re
-      · simpa using h_im
-    -- By Hermitian symmetry: petN f g = conj(petN g f) = 0
-    have : starRingEnd ℂ (petN g f) = petN f g := petN_conj_symm f g
-    rw [hgf] at this
-    simp at this
-    exact this.symm
-  · intro hf g hg
-    -- Need: petN_realBilin g f = 0, i.e., (petN g f).re = 0
+    have re_eq_zero : ∀ h ∈ Submodule.restrictScalars ℝ (cuspFormsOld N k),
+        (petN h f).re = 0 := fun h hh => by
+      have := hf h hh
+      simpa only [LinearMap.BilinForm.IsOrtho, petN_realBilin_apply] using this
+    have hgf : petN g f = 0 :=
+      petN_eq_zero_of_re_eq_zero_of_I_smul_re_eq_zero f g (re_eq_zero g hg)
+        (re_eq_zero (Complex.I • g) ((cuspFormsOld N k).smul_mem Complex.I hg))
+    exact petN_swap_eq_zero g f hgf
+  · -- `f ∈ cuspFormsNew` gives `petN f g = 0`; swap and take the real part.
     show (petN_realBilin g) f = 0
-    rw [petN_realBilin_apply]
-    -- f ∈ cuspFormsNew means petN f g = 0 for all g ∈ cuspFormsOld
-    have hg_mem : g ∈ cuspFormsOld N k := hg
-    have hpetN : petN f g = 0 := hf g hg_mem
-    -- petN g f = conj(petN f g) by Hermitian symmetry
-    have : starRingEnd ℂ (petN g f) = petN f g := petN_conj_symm f g
-    rw [hpetN] at this
-    have hgf : petN g f = 0 := by
-      have h2 := congr_arg (starRingEnd ℂ) this
-      simp at h2
-      exact h2
-    rw [hgf, Complex.zero_re]
+    rw [petN_realBilin_apply, petN_swap_eq_zero f g (hf g hg), Complex.zero_re]
 
 /-- DS (5.20): `S_k(Γ₁(N)) = S_k^old ⊕ S_k^new` as inner product spaces.
 
