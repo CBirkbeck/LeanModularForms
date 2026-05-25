@@ -307,72 +307,99 @@ private lemma fwd_pair_mem (g₁ : P.Δ) (g₂ g_D q₀_val : G)
         (((g₁ : G))⁻¹ * (n₁ : G) * ((g₁ : G))) := by rw [this]
     _ = j'_val * g₂ * ((c : G) * (n₁ : G) * ((g₁ : G))) := by group
 
-private lemma heckeMultiplicity_le_comm (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D)
-    (D₁ D₂ D : HeckeCoset P) :
-    heckeMultiplicity P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (HeckeCoset.rep D) ≤
-    heckeMultiplicity P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) (HeckeCoset.rep D) := by
+/-- For `q₀ = ⟦h1D⟧` with `bar(g_D) = h1D * g_D * h2D`, the representative product
+`q₀.out * g_D` differs from `bar(g_D)` by an element of `H` on the right. -/
+private lemma q₀_out_mul_eq_bar_mul (D : HeckeCoset P) (h1D h2D : P.H)
+    (hbarD : ι.bar (HeckeCoset.rep D : G) =
+      (h1D : G) * (HeckeCoset.rep D : G) * (h2D : G))
+    (q₀ : decompQuot P (HeckeCoset.rep D)) (hq₀ : q₀ = ⟦⟨(h1D : G), h1D.2⟩⟧) :
+    ∃ h' : P.H, (q₀.out : G) * (HeckeCoset.rep D : G) =
+      ι.bar (HeckeCoset.rep D : G) * (h' : G) := by
+  subst hq₀
+  obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (HeckeCoset.rep D : G) • P.H).subgroupOf P.H) ⟨(h1D : G), h1D.2⟩
+  have hn_coe : ((⟦⟨(h1D : G), h1D.2⟩⟧ : decompQuot P (HeckeCoset.rep D)).out : G) =
+      (h1D : G) * (n : G) := by
+    simpa [Subgroup.coe_mul] using congr_arg (Subtype.val : ↥P.H → G) hn_eq
+  have hn_conj : (HeckeCoset.rep D : G)⁻¹ * (n : G) * (HeckeCoset.rep D : G) ∈ P.H :=
+    conj_mem_of_stabilizer (HeckeCoset.rep D : G) n
+  exact ⟨⟨(h2D : G)⁻¹ * ((HeckeCoset.rep D : G)⁻¹ * (n : G) * (HeckeCoset.rep D : G)),
+    P.H.mul_mem (P.H.inv_mem h2D.2) hn_conj⟩, by rw [hn_coe, hbarD]; group⟩
+
+/-- The forward injection for multiplicity symmetry: a pair `(i, j)` of cosets witnessing a
+`(D₁, D₂)`-decomposition of `g_D` is sent, via the anti-involution `bar`, to a `(D₂, D₁)`-pair
+witnessing a decomposition of `q₀.out * g_D`. -/
+private noncomputable def heckeMultiplicity_le_comm_fwdMap
+    (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D) (D₁ D₂ D : HeckeCoset P)
+    (h1D h2D : P.H)
+    (hbarD : ι.bar (HeckeCoset.rep D : G) =
+      (h1D : G) * (HeckeCoset.rep D : G) * (h2D : G))
+    (h1₁ h2₁ : P.H)
+    (hbar₁ : ι.bar (HeckeCoset.rep D₁ : G) =
+      (h1₁ : G) * (HeckeCoset.rep D₁ : G) * (h2₁ : G))
+    (q₀ : decompQuot P (HeckeCoset.rep D)) (hq₀ : q₀ = ⟦⟨(h1D : G), h1D.2⟩⟧)
+    (p : {⟨i, j⟩ : decompQuot P (HeckeCoset.rep D₁) × decompQuot P (HeckeCoset.rep D₂) |
+      ({(i.out : G) * (HeckeCoset.rep D₁ : G)} : Set G) *
+        {(j.out : G) * (HeckeCoset.rep D₂ : G)} * P.H =
+      {(HeckeCoset.rep D : G)} * (P.H : Set G)}) :
+    {p : decompQuot P (HeckeCoset.rep D₂) × decompQuot P (HeckeCoset.rep D₁) |
+      ({(p.1.out : G) * (HeckeCoset.rep D₂ : G)} : Set G) *
+        {(p.2.out : G) * (HeckeCoset.rep D₁ : G)} * P.H =
+      {(q₀.out : G) * (HeckeCoset.rep D : G)} * (P.H : Set G)} :=
+  let i := p.1.1
+  let j := p.1.2
+  let hcond : ({(i.out : G) * (HeckeCoset.rep D₁ : G)} : Set G) *
+      {(j.out : G) * (HeckeCoset.rep D₂ : G)} * P.H =
+      {(HeckeCoset.rep D : G)} * (P.H : Set G) := p.2
+  let x : G := (HeckeCoset.rep D₁ : G)⁻¹ * (i.out : G)⁻¹ * (HeckeCoset.rep D : G)
+  have hbarx_dc : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
+      ι.bar x = h₁ * (HeckeCoset.rep D₂ : G) * h₂ := by
+    have := bar_mem_doubleCoset ι h_fix D₂ x
+      (inverse_product_mem_doubleCoset (HeckeCoset.rep D₁ : G) (HeckeCoset.rep D₂ : G)
+        (HeckeCoset.rep D : G) D₂ rfl i.out j.out hcond)
+    rwa [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at this
+  let a : P.H := ⟨hbarx_dc.choose, hbarx_dc.choose_spec.1⟩
+  let j' : decompQuot P (HeckeCoset.rep D₂) := ⟦a⟧
+  let b_val : G := hbarx_dc.choose_spec.2.choose
+  have hb : b_val ∈ (P.H : Set G) := hbarx_dc.choose_spec.2.choose_spec.1
+  have hy_mem_D₁ : (HeckeCoset.rep D₂ : G)⁻¹ * (j'.out : G)⁻¹ * (q₀.out : G) *
+      (HeckeCoset.rep D : G) ∈ HeckeCoset.toSet D₁ := by
+    rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset]
+    obtain ⟨h', hq₀_eq⟩ := q₀_out_mul_eq_bar_mul ι D h1D h2D hbarD q₀ hq₀
+    obtain ⟨n₂, hn₂_eq⟩ := QuotientGroup.mk_out_eq_mul
+      ((ConjAct.toConjAct (HeckeCoset.rep D₂ : G) • P.H).subgroupOf P.H) a
+    exact fwd_y_mem ι (HeckeCoset.rep D₁ : G) (HeckeCoset.rep D₂ : G)
+      (HeckeCoset.rep D : G) (i.out : G) i.out.2 (a : G) b_val hb
+      hbarx_dc.choose_spec.2.choose_spec.2 h1₁ h2₁ hbar₁
+      (j'.out : G) (q₀.out : G) (h' : G) hq₀_eq h'.2 (n₂ : G)
+      (conj_mem_of_stabilizer (HeckeCoset.rep D₂ : G) n₂)
+      (by simpa [Subgroup.coe_mul] using congr_arg (Subtype.val : ↥P.H → G) hn₂_eq)
+  have hy_dc : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
+      (HeckeCoset.rep D₂ : G)⁻¹ * (j'.out : G)⁻¹ * (q₀.out : G) * (HeckeCoset.rep D : G) =
+        h₁ * (HeckeCoset.rep D₁ : G) * h₂ := by
+    rwa [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hy_mem_D₁
+  let c : P.H := ⟨hy_dc.choose, hy_dc.choose_spec.1⟩
+  ⟨⟨j', ⟦c⟧⟩, fwd_pair_mem (HeckeCoset.rep D₁) (HeckeCoset.rep D₂ : G)
+    (HeckeCoset.rep D : G) (q₀.out : G) (j'.out : G) c
+    hy_dc.choose_spec.2.choose hy_dc.choose_spec.2.choose_spec.1
+    (hy_dc.choose_spec.2.choose_spec.2 ▸ rfl)⟩
+
+/-- The multiplicity-symmetry forward injection is injective: both coordinates of the source
+pair are recovered from the image via the anti-involution. -/
+private lemma heckeMultiplicity_le_comm_fwdMap_injective
+    (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D) (D₁ D₂ D : HeckeCoset P)
+    (h1D h2D : P.H)
+    (hbarD : ι.bar (HeckeCoset.rep D : G) =
+      (h1D : G) * (HeckeCoset.rep D : G) * (h2D : G))
+    (h1₁ h2₁ : P.H)
+    (hbar₁ : ι.bar (HeckeCoset.rep D₁ : G) =
+      (h1₁ : G) * (HeckeCoset.rep D₁ : G) * (h2₁ : G))
+    (q₀ : decompQuot P (HeckeCoset.rep D)) (hq₀ : q₀ = ⟦⟨(h1D : G), h1D.2⟩⟧) :
+    Function.Injective
+      (heckeMultiplicity_le_comm_fwdMap ι h_fix D₁ D₂ D h1D h2D hbarD h1₁ h2₁ hbar₁ q₀ hq₀) := by
   set g₁ := (HeckeCoset.rep D₁ : G)
   set g₂ := (HeckeCoset.rep D₂ : G)
   set g_D := (HeckeCoset.rep D : G)
-  obtain ⟨h1D, h2D, hbarD⟩ := bar_rep_mem_doubleCoset ι h_fix D
-  obtain ⟨h1₁, h2₁, hbar₁⟩ := bar_rep_mem_doubleCoset ι h_fix D₁
-  set q₀ : decompQuot P (HeckeCoset.rep D) := ⟦⟨(h1D : G), h1D.2⟩⟧
-  have hunif := heckeMultiplicity_uniform P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) D q₀
-  unfold heckeMultiplicity; push_cast; rw [← hunif]; norm_cast
-  have bar_mem_dc := bar_mem_doubleCoset ι h_fix
-  let fwd : {⟨i, j⟩ : decompQuot P (HeckeCoset.rep D₁) ×
-      decompQuot P (HeckeCoset.rep D₂) |
-      ({(i.out : G) * g₁} : Set G) * {(j.out : G) * g₂} * P.H =
-      {g_D} * (P.H : Set G)} →
-    {p : decompQuot P (HeckeCoset.rep D₂) ×
-      decompQuot P (HeckeCoset.rep D₁) |
-      ({(p.1.out : G) * g₂} : Set G) * {(p.2.out : G) * g₁} * P.H =
-      {(q₀.out : G) * g_D} * (P.H : Set G)} :=
-    fun ⟨⟨i, j⟩, (hcond : _ = _)⟩ =>
-    let x : G := g₁⁻¹ * (i.out : G)⁻¹ * g_D
-    have hbarx_dc : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
-        ι.bar x = h₁ * g₂ * h₂ := by
-      have := bar_mem_dc D₂ x (inverse_product_mem_doubleCoset g₁ g₂ g_D D₂ rfl
-        i.out j.out hcond)
-      rwa [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at this
-    let a : P.H := ⟨hbarx_dc.choose, hbarx_dc.choose_spec.1⟩
-    let j' : decompQuot P (HeckeCoset.rep D₂) := ⟦a⟧
-    let b_val : G := hbarx_dc.choose_spec.2.choose
-    have hb : b_val ∈ (P.H : Set G) := hbarx_dc.choose_spec.2.choose_spec.1
-    have hy_mem_D₁ : g₂⁻¹ * (j'.out : G)⁻¹ * (q₀.out : G) * g_D ∈
-        HeckeCoset.toSet D₁ := by
-      rw [HeckeCoset.toSet_eq_rep]; change _ ∈ DoubleCoset.doubleCoset g₁ _ _
-      rw [DoubleCoset.mem_doubleCoset]
-      obtain ⟨h', hq₀_eq⟩ : ∃ h' : P.H, (q₀.out : G) * g_D =
-          ι.bar g_D * (h' : G) := by
-        obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
-          ((ConjAct.toConjAct g_D • P.H).subgroupOf P.H) ⟨(h1D : G), h1D.2⟩
-        have hn_coe : (q₀.out : G) = (h1D : G) * (n : G) := by
-          simpa [Subgroup.coe_mul] using congr_arg (Subtype.val : ↥P.H → G) hn_eq
-        have hn_conj : g_D⁻¹ * (n : G) * g_D ∈ P.H := conj_mem_of_stabilizer g_D n
-        have hbarD' : ι.bar g_D = (h1D : G) * g_D * (h2D : G) := hbarD
-        exact ⟨⟨(h2D : G)⁻¹ * (g_D⁻¹ * (n : G) * g_D),
-          P.H.mul_mem (P.H.inv_mem h2D.2) hn_conj⟩, by rw [hn_coe, hbarD']; group⟩
-      obtain ⟨n₂, hn₂_eq⟩ := QuotientGroup.mk_out_eq_mul
-        ((ConjAct.toConjAct g₂ • P.H).subgroupOf P.H) a
-      exact fwd_y_mem ι g₁ g₂ g_D (i.out : G) i.out.2 (a : G) b_val hb
-        hbarx_dc.choose_spec.2.choose_spec.2 h1₁ h2₁ hbar₁
-        (j'.out : G) (q₀.out : G) (h' : G) hq₀_eq h'.2 (n₂ : G)
-        (conj_mem_of_stabilizer g₂ n₂)
-        (by simpa [Subgroup.coe_mul] using congr_arg (Subtype.val : ↥P.H → G) hn₂_eq)
-    have hy_dc : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
-        g₂⁻¹ * (j'.out : G)⁻¹ * (q₀.out : G) * g_D = h₁ * g₁ * h₂ := by
-      rwa [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hy_mem_D₁
-    let c : P.H := ⟨hy_dc.choose, hy_dc.choose_spec.1⟩
-    (⟨⟨j', ⟦c⟧⟩, fwd_pair_mem (HeckeCoset.rep D₁) g₂ g_D (q₀.out : G)
-      (j'.out : G) c
-      hy_dc.choose_spec.2.choose hy_dc.choose_spec.2.choose_spec.1
-      (hy_dc.choose_spec.2.choose_spec.2 ▸ rfl)⟩ :
-      {p : decompQuot P (HeckeCoset.rep D₂) ×
-        decompQuot P (HeckeCoset.rep D₁) |
-      ({(p.1.out : G) * g₂} : Set G) * {(p.2.out : G) * g₁} * P.H =
-      {(q₀.out : G) * g_D} * (P.H : Set G)})
-  apply Nat.card_le_card_of_injective fwd
   intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ heq
   have hj'_eq := congr_arg Prod.fst (congr_arg Subtype.val heq)
   have bar_dc (i' : decompQuot P (HeckeCoset.rep D₁))
@@ -380,8 +407,8 @@ private lemma heckeMultiplicity_le_comm (h_fix : ∀ D : HeckeCoset P, ι.onHeck
       (hc : ({(i'.out : G) * g₁} : Set G) * {(j'.out : G) * g₂} * ↑P.H =
         {g_D} * ↑P.H) : ∃ h₁ ∈ (P.H : Set G), ∃ h₂ ∈ (P.H : Set G),
       ι.bar (g₁⁻¹ * (i'.out : G)⁻¹ * g_D) = h₁ * g₂ * h₂ := by
-    have := bar_mem_dc D₂ _ (inverse_product_mem_doubleCoset g₁ g₂ g_D D₂ rfl
-      i'.out j'.out hc)
+    have := bar_mem_doubleCoset ι h_fix D₂ _
+      (inverse_product_mem_doubleCoset g₁ g₂ g_D D₂ rfl i'.out j'.out hc)
     rwa [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at this
   have hbarx₁_dc := bar_dc i₁ j₁ h₁; have hbarx₂_dc := bar_dc i₂ j₂ h₂
   change (⟦⟨hbarx₁_dc.choose, hbarx₁_dc.choose_spec.1⟩⟧ :
@@ -403,6 +430,20 @@ private lemma heckeMultiplicity_le_comm (h_fix : ∀ D : HeckeCoset P, ι.onHeck
       set_singleton_mul_left_cancel ((i₁.out : G) * g₁)
         (by have h12 := h₁.trans h₂.symm; rwa [mul_assoc, mul_assoc] at h12))
   subst hj₁₂; rfl
+
+private lemma heckeMultiplicity_le_comm (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D)
+    (D₁ D₂ D : HeckeCoset P) :
+    heckeMultiplicity P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (HeckeCoset.rep D) ≤
+    heckeMultiplicity P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) (HeckeCoset.rep D) := by
+  obtain ⟨h1D, h2D, hbarD⟩ := bar_rep_mem_doubleCoset ι h_fix D
+  obtain ⟨h1₁, h2₁, hbar₁⟩ := bar_rep_mem_doubleCoset ι h_fix D₁
+  set q₀ : decompQuot P (HeckeCoset.rep D) := ⟦⟨(h1D : G), h1D.2⟩⟧ with hq₀
+  have hunif := heckeMultiplicity_uniform P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) D q₀
+  unfold heckeMultiplicity; push_cast; rw [← hunif]; norm_cast
+  exact Nat.card_le_card_of_injective
+    (heckeMultiplicity_le_comm_fwdMap ι h_fix D₁ D₂ D h1D h2D hbarD h1₁ h2₁ hbar₁ q₀ hq₀)
+    (heckeMultiplicity_le_comm_fwdMap_injective ι h_fix D₁ D₂ D h1D h2D hbarD
+      h1₁ h2₁ hbar₁ q₀ hq₀)
 
 /-- When the anti-involution fixes all double cosets,
 the multiplicity is symmetric:

@@ -504,99 +504,94 @@ lemma adjointGamma1Rep_mem_Gamma1 (p N : ℕ) [NeZero N]
     show (((adjointGamma1Rep p N hpN).val 1 0 : ℤ) : ZMod N) = 0
     unfold adjointGamma1Rep; simp
 
+/-- `γ₀ · σ_p` has reduction `1` in its `(0,0)` entry mod `N`: a quick `Matrix.mul_apply`
+expansion plus `aInvOfCoprime · p ≡ 1`. -/
+private lemma adjointGamma0Rep_mul_sigma_p_entry_00
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val 0 0 : ℤ) : ZMod N) = 1 := by
+  have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val =
+      ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
+        (sigma_p_specific N p hp hpN).val := rfl
+  rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
+  have h_γ₀_00 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 0 0 : ℤ)
+      = (p : ℤ) := by simp [adjointGamma0Rep]
+  have h_γ₀_01 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 0 1 : ℤ)
+      = -(Int.gcdB p N) := by simp [adjointGamma0Rep]
+  have h_σp_00 : ((sigma_p_specific N p hp hpN).val 0 0 : ℤ) =
+      (aInvOfCoprime N p hpN : ℤ) := by simp [sigma_p_specific]
+  have h_σp_10 : ((sigma_p_specific N p hp hpN).val 1 0 : ℤ) =
+      (N : ℤ) * mIdxOfCoprime N p hpN := by simp [sigma_p_specific]
+  rw [h_γ₀_00, h_γ₀_01, h_σp_00, h_σp_10]
+  push_cast
+  rw [show (-(Int.gcdB ↑p ↑N : ZMod N)) * ((N : ZMod N) * (mIdxOfCoprime N p hpN : ZMod N))
+      = 0 by rw [ZMod.natCast_self]; ring]
+  rw [add_zero, mul_comm]
+  exact aInvOfCoprime_mul_eq_one N p hpN
+
+/-- `γ₀ · σ_p` has reduction `1` in its `(1,1)` entry mod `N`: the `N`-column drops out and
+Bézout gives `(gcdA p N) · p ≡ 1`. -/
+private lemma adjointGamma0Rep_mul_sigma_p_entry_11
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val 1 1 : ℤ) : ZMod N) = 1 := by
+  have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val =
+      ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
+        (sigma_p_specific N p hp hpN).val := rfl
+  rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
+  have h_γ₀_10 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 0 : ℤ)
+      = (N : ℤ) := by simp [adjointGamma0Rep]
+  have h_γ₀_11 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 1 : ℤ)
+      = Int.gcdA p N := by simp [adjointGamma0Rep]
+  have h_σp_01 : ((sigma_p_specific N p hp hpN).val 0 1 : ℤ) = 1 := by simp [sigma_p_specific]
+  have h_σp_11 : ((sigma_p_specific N p hp hpN).val 1 1 : ℤ) = (p : ℤ) := by simp [sigma_p_specific]
+  rw [h_γ₀_10, h_γ₀_11, h_σp_01, h_σp_11]
+  push_cast
+  rw [show (((N : ZMod N)) * 1) = 0 by rw [ZMod.natCast_self]; ring, zero_add]
+  have hbez := Int.gcd_eq_gcd_ab p N
+  rw [show (Int.gcd (↑p) (↑N) : ℤ) = 1 by exact_mod_cast hpN] at hbez
+  have := congr_arg (Int.cast : ℤ → ZMod N) hbez
+  simp only [Int.cast_one, Int.cast_add, Int.cast_mul, Int.cast_natCast,
+    ZMod.natCast_self] at this
+  linear_combination -this
+
+/-- `γ₀ · σ_p` has reduction `0` in its `(1,0)` entry mod `N`: every term carries a factor of
+`N`, so the entry vanishes mod `N`. -/
+private lemma adjointGamma0Rep_mul_sigma_p_entry_10
+    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val 1 0 : ℤ) : ZMod N) = 0 := by
+  have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
+      sigma_p_specific N p hp hpN).val =
+      ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
+        (sigma_p_specific N p hp hpN).val := rfl
+  rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
+  have h_γ₀_10 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 0 : ℤ)
+      = (N : ℤ) := by simp [adjointGamma0Rep]
+  have h_γ₀_11 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 1 : ℤ)
+      = Int.gcdA p N := by simp [adjointGamma0Rep]
+  have h_σp_00 : ((sigma_p_specific N p hp hpN).val 0 0 : ℤ) =
+      (aInvOfCoprime N p hpN : ℤ) := by simp [sigma_p_specific]
+  have h_σp_10 : ((sigma_p_specific N p hp hpN).val 1 0 : ℤ) =
+      (N : ℤ) * mIdxOfCoprime N p hpN := by simp [sigma_p_specific]
+  rw [h_γ₀_10, h_γ₀_11, h_σp_00, h_σp_10]
+  push_cast
+  rw [show ((N : ZMod N)) * (aInvOfCoprime N p hpN : ZMod N) = 0 by
+    rw [ZMod.natCast_self]; ring]
+  rw [show ((Int.gcdA ↑p ↑N : ZMod N)) * ((N : ZMod N) * (mIdxOfCoprime N p hpN : ZMod N)) = 0 by
+    rw [ZMod.natCast_self]; ring]
+  ring
+
 private lemma adjointGamma0Rep_mul_sigma_p_mem_Gamma1
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
       sigma_p_specific N p hp hpN ∈ Gamma1 N := by
   rw [Gamma1_mem]
-  have hbez := Int.gcd_eq_gcd_ab p N
-  rw [show (Int.gcd (↑p) (↑N) : ℤ) = 1 by exact_mod_cast hpN] at hbez
-  refine ⟨?_, ?_, ?_⟩
-  ·
-    show (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-      sigma_p_specific N p hp hpN).val 0 0 : ℤ) : ZMod N) = 1
-    have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-        sigma_p_specific N p hp hpN).val =
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
-          (sigma_p_specific N p hp hpN).val := by
-      rfl
-    rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
-    have h_γ₀_00 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 0 0 : ℤ)
-        = (p : ℤ) := by
-      simp [adjointGamma0Rep]
-    have h_γ₀_01 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 0 1 : ℤ)
-        = -(Int.gcdB p N) := by
-      simp [adjointGamma0Rep]
-    have h_σp_00 : ((sigma_p_specific N p hp hpN).val 0 0 : ℤ) =
-        (aInvOfCoprime N p hpN : ℤ) := by
-      simp [sigma_p_specific]
-    have h_σp_10 : ((sigma_p_specific N p hp hpN).val 1 0 : ℤ) =
-        (N : ℤ) * mIdxOfCoprime N p hpN := by
-      simp [sigma_p_specific]
-    rw [h_γ₀_00, h_γ₀_01, h_σp_00, h_σp_10]
-    push_cast
-    have h_ap : ((aInvOfCoprime N p hpN : ZMod N)) * (p : ZMod N) = 1 :=
-      aInvOfCoprime_mul_eq_one N p hpN
-    have h_N : (N : ZMod N) = 0 := ZMod.natCast_self N
-    rw [show (-(Int.gcdB ↑p ↑N : ZMod N)) * ((N : ZMod N) * (mIdxOfCoprime N p hpN : ZMod N))
-        = 0 by rw [h_N]; ring]
-    rw [add_zero, mul_comm]
-    exact h_ap
-  ·
-    show (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-      sigma_p_specific N p hp hpN).val 1 1 : ℤ) : ZMod N) = 1
-    have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-        sigma_p_specific N p hp hpN).val =
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
-          (sigma_p_specific N p hp hpN).val := rfl
-    rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
-    have h_γ₀_10 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 0 : ℤ)
-        = (N : ℤ) := by
-      simp [adjointGamma0Rep]
-    have h_γ₀_11 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 1 : ℤ)
-        = Int.gcdA p N := by
-      simp [adjointGamma0Rep]
-    have h_σp_01 : ((sigma_p_specific N p hp hpN).val 0 1 : ℤ) = 1 := by
-      simp [sigma_p_specific]
-    have h_σp_11 : ((sigma_p_specific N p hp hpN).val 1 1 : ℤ) = (p : ℤ) := by
-      simp [sigma_p_specific]
-    rw [h_γ₀_10, h_γ₀_11, h_σp_01, h_σp_11]
-    push_cast
-    rw [show (((N : ZMod N)) * 1) = 0 by rw [ZMod.natCast_self]; ring]
-    rw [zero_add]
-    have h_bez_mod : ((Int.gcdA p N : ZMod N)) * (p : ZMod N) = 1 := by
-      have := congr_arg (Int.cast : ℤ → ZMod N) hbez
-      simp only [Int.cast_one, Int.cast_add, Int.cast_mul, Int.cast_natCast,
-        ZMod.natCast_self] at this
-      linear_combination -this
-    exact h_bez_mod
-  ·
-    show (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-      sigma_p_specific N p hp hpN).val 1 0 : ℤ) : ZMod N) = 0
-    have h_mul : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-        sigma_p_specific N p hp hpN).val =
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val *
-          (sigma_p_specific N p hp hpN).val := rfl
-    rw [h_mul, Matrix.mul_apply, Fin.sum_univ_two]
-    have h_γ₀_10 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 0 : ℤ)
-        = (N : ℤ) := by
-      simp [adjointGamma0Rep]
-    have h_γ₀_11 : (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)).val 1 1 : ℤ)
-        = Int.gcdA p N := by
-      simp [adjointGamma0Rep]
-    have h_σp_00 : ((sigma_p_specific N p hp hpN).val 0 0 : ℤ) =
-        (aInvOfCoprime N p hpN : ℤ) := by
-      simp [sigma_p_specific]
-    have h_σp_10 : ((sigma_p_specific N p hp hpN).val 1 0 : ℤ) =
-        (N : ℤ) * mIdxOfCoprime N p hpN := by
-      simp [sigma_p_specific]
-    rw [h_γ₀_10, h_γ₀_11, h_σp_00, h_σp_10]
-    push_cast
-    rw [show ((N : ZMod N)) * (aInvOfCoprime N p hpN : ZMod N) = 0 by
-      rw [ZMod.natCast_self]; ring]
-    rw [show ((Int.gcdA ↑p ↑N : ZMod N)) * ((N : ZMod N) * (mIdxOfCoprime N p hpN : ZMod N)) = 0 by
-      rw [ZMod.natCast_self]; ring]
-    ring
+  exact ⟨adjointGamma0Rep_mul_sigma_p_entry_00 p N hp hpN,
+    adjointGamma0Rep_mul_sigma_p_entry_11 p N hp hpN,
+    adjointGamma0Rep_mul_sigma_p_entry_10 p N hp hpN⟩
 
 noncomputable def gamma1_of_gamma0_sigma_p
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :

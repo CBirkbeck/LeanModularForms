@@ -267,6 +267,56 @@ This is the CuspForm-level version of the period-1 bridge
 T082), consumed via the period-1 Fourier formula
 `HeckeRing.GL2.fourierCoeff_heckeT_n_period_one`. -/
 
+omit [NeZero N] in
+/-- The period-1 strict-period hypothesis for `Γ₁(N)`, packaged for
+reuse in the oldform vanishing proof below. -/
+private lemma h1_period_Gamma1_local :
+    (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
+  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
+    strictPeriods_Gamma1]
+  exact ⟨1, by simp⟩
+
+omit [NeZero N] in
+/-- The period-1 first Fourier coefficient of a scalar multiple `c • f` of a
+**normalised** cusp form (`a₁(f) = 1`) equals the scalar `c`.  Extracted from
+`Newform.eigenvalue_eq_coeff`; uses `qExpansion_smul` plus the normalisation
+hypothesis. -/
+private lemma qExpansion_one_coeff_one_smul_of_norm
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_norm : (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff 1 = 1)
+    (c : ℂ) :
+    (ModularFormClass.qExpansion (1 : ℝ) (c • f)).coeff 1 = c := by
+  show (ModularFormClass.qExpansion (1 : ℝ)
+      (⇑(c • f : CuspForm _ k))).coeff 1 = c
+  rw [show (⇑(c • f : CuspForm _ k) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
+    show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
+    qExpansion_smul one_pos h1_period_Gamma1_local, PowerSeries.coeff_smul,
+    smul_eq_mul, h_norm, mul_one]
+
+/-- The period-1 **first** Fourier coefficient of `T_n f` equals the **n-th**
+period-1 Fourier coefficient of `f`, for a cusp form `f` lying in a Nebentypus
+eigenspace and `n` coprime to `N`.  Extracted from `Newform.eigenvalue_eq_coeff`:
+bridges `heckeT_n_cusp` to `heckeT_n` via `heckeT_n_cusp_toModularForm'`, then
+applies `fourierCoeff_heckeT_n_period_one` at `m = 1`, where the divisor sum
+collapses to the single `d = 1` term. -/
+private lemma qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff
+    (n : ℕ) [NeZero n] (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hf_char : f.toModularForm' ∈ modFormCharSpace k χ) :
+    (ModularFormClass.qExpansion (1 : ℝ) (heckeT_n_cusp k n f)).coeff 1 =
+      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n := by
+  rw [show (⇑(heckeT_n_cusp k n f) : UpperHalfPlane → ℂ) =
+        ⇑(heckeT_n_cusp k n f).toModularForm' from rfl,
+    show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
+    heckeT_n_cusp_toModularForm']
+  have h := fourierCoeff_heckeT_n_period_one (N := N) k n hn χ hf_char 1
+  simp only [Nat.gcd_one_left, Nat.divisors_one, Finset.sum_singleton] at h
+  have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
+    ext; simp [ZMod.coe_unitOfCoprime]
+  simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
+    h_unit_one, map_one, Units.val_one, one_mul, Nat.div_one] at h
+  exact h
+
 /-- For a `Newform` f lying in a character eigenspace `modFormCharSpace k χ`,
 the eigenvalue at `n` (coprime to `N`) equals the `n`-th **canonical
 Fourier coefficient** of `f` (period `h = 1`).
@@ -290,12 +340,6 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
     f.eigenvalue n =
       (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  have h1_pos : (0 : ℝ) < 1 := one_pos
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-      strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
-  have h_eigen := f.isEigen n hn
   -- a_1(f) = 1 at the function level (CuspForm and ModularForm coerce identically)
   have h_norm :
       (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1 := by
@@ -303,49 +347,15 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
         (⇑f.toCuspForm.toModularForm')).coeff 1 = 1
     rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl]
     exact f.isNorm
-  -- coeff 1 of (c • f) = c, using normalisation a_1(f) = 1
-  have h_smul_coeff : ∀ (c : ℂ),
-      (ModularFormClass.qExpansion (1 : ℝ) (c • f.toCuspForm)).coeff 1 = c := by
-    intro c
-    show (ModularFormClass.qExpansion (1 : ℝ)
-        (⇑(c • f.toCuspForm : CuspForm _ k))).coeff 1 = c
-    rw [show (⇑(c • f.toCuspForm : CuspForm _ k) : UpperHalfPlane → ℂ) =
-        c • ⇑f.toCuspForm from rfl,
-      show (⇑f.toCuspForm : UpperHalfPlane → ℂ) =
-        ⇑f.toCuspForm.toModularForm' from rfl,
-      qExpansion_smul h1_pos h1_period, PowerSeries.coeff_smul, smul_eq_mul, h_norm,
-      mul_one]
-  -- T_n f = λ f, so coeff 1 of T_n f = λ
+  -- T_n f = λ f, so coeff 1 of T_n f = λ (via the normalised-smul helper)
   have h_lhs :
       (ModularFormClass.qExpansion (1 : ℝ)
         (heckeT_n_cusp k n.val f.toCuspForm)).coeff 1 = f.eigenvalue n := by
-    rw [h_eigen]; exact h_smul_coeff _
-  -- coeff 1 of T_n f = coeff n of f via `fourierCoeff_heckeT_n_period_one` at m=1.
-  -- Bridge: heckeT_n_cusp on CuspForm → heckeT_n on ModularForm via
-  -- `heckeT_n_cusp_toModularForm'`, then apply the period-1 Fourier formula.
-  have h_bridge :
-      (ModularFormClass.qExpansion (1 : ℝ)
-        (heckeT_n_cusp k n.val f.toCuspForm)).coeff 1 =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
-    -- Replace CuspForm coercions with ModularForm coercions and apply the
-    -- ModularForm-level period-1 Fourier formula via heckeT_n_cusp_toModularForm'.
-    change (ModularFormClass.qExpansion (1 : ℝ)
-        (⇑(heckeT_n_cusp k n.val f.toCuspForm))).coeff 1 =
-      (ModularFormClass.qExpansion (1 : ℝ) (⇑f.toCuspForm)).coeff n.val
-    rw [show (⇑(heckeT_n_cusp k n.val f.toCuspForm) : UpperHalfPlane → ℂ) =
-        ⇑(heckeT_n_cusp k n.val f.toCuspForm).toModularForm' from rfl,
-      show (⇑f.toCuspForm : UpperHalfPlane → ℂ) =
-        ⇑f.toCuspForm.toModularForm' from rfl,
-      heckeT_n_cusp_toModularForm']
-    -- Apply fourierCoeff_heckeT_n_period_one at m=1; collapse the divisor sum.
-    have h := fourierCoeff_heckeT_n_period_one (N := N) k n.val hn χ hf_char 1
-    simp only [Nat.gcd_one_left, Nat.divisors_one, Finset.sum_singleton] at h
-    have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
-      ext; simp [ZMod.coe_unitOfCoprime]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
-      h_unit_one, map_one, Units.val_one, one_mul, Nat.div_one] at h
-    exact h
-  rw [← h_bridge, h_lhs]
+    rw [f.isEigen n hn]
+    exact qExpansion_one_coeff_one_smul_of_norm f.toCuspForm h_norm _
+  -- coeff 1 of T_n f = coeff n of f (via the period-1 Hecke bridge helper).
+  rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
+    h_lhs]
 
 /-! ### Reverse/consumer direction of the Main Lemma (T125)
 
@@ -363,15 +373,6 @@ The proof is a direct `Submodule.span_induction` on `cuspFormsOld N k`:
   and `Coprime n N` together with `d ∣ N` and `1 < d` force `¬ d ∣ n`.
 * **Linearity.** `Submodule.span_induction` extends vanishing from
   generators to arbitrary elements via `qExpansion_add` / `_smul`. -/
-
-omit [NeZero N] in
-/-- The period-1 strict-period hypothesis for `Γ₁(N)`, packaged for
-reuse in the oldform vanishing proof below. -/
-private lemma h1_period_Gamma1_local :
-    (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
-  exact ⟨1, by simp⟩
 
 /-- The period-1 `q`-expansion of `levelRaise M d k g` vanishes at every
 index `n` with `¬ d ∣ n`.  The proof transports the underlying function

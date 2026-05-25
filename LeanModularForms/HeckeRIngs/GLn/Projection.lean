@@ -133,6 +133,52 @@ private lemma T_gen_diag_castSucc_eq_cons (p : ℕ) (k : Fin m) :
     simp only [Fin.val_succ, Fin.val_castSucc, Fin.cons_succ, T_gen_diag_val]
     split_ifs <;> omega
 
+/-- Prepending `1` to a divisibility chain `d` keeps it a divisibility chain:
+since `1` divides everything, the new first link `1 ∣ d 0` holds and the rest is `hd_div`. -/
+private lemma divChain_cons_one (d : Fin m → ℕ) (hd_div : DivChain m d) :
+    DivChain (m + 1) (Fin.cons 1 d : Fin (m + 1) → ℕ) := by
+  intro i hi
+  by_cases h0 : i = 0
+  · subst h0
+    show (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨0, _⟩ ∣
+         (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨0 + 1, hi⟩
+    simp only [show (⟨0, by omega⟩ : Fin (m + 1)) = 0 from rfl, Fin.cons_zero]
+    exact one_dvd _
+  · obtain ⟨j, rfl⟩ : ∃ j, i = j + 1 := ⟨i - 1, by omega⟩
+    show (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨j + 1, _⟩ ∣
+         (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨j + 1 + 1, hi⟩
+    rw [show (⟨j + 1, _⟩ : Fin (m + 1)) = (⟨j, by omega⟩ : Fin m).succ from rfl,
+        show (⟨j + 1 + 1, hi⟩ : Fin (m + 1)) = (⟨j + 1, by omega⟩ : Fin m).succ from rfl]
+    simp only [Fin.cons_succ]
+    exact hd_div j (by omega)
+
+/-- The scaled diagonal `c • a` (for `c ≥ 2`, positive divisibility chain `a`) never equals a
+first-entry-`1` diagonal `Fin.cons 1 d`. By uniqueness of elementary divisors the diagonals would
+coincide entry-wise, forcing `c · a 0 = 1`, impossible since `c ≥ 2` and `a 0 ≥ 1`. -/
+private lemma T_diag_scalar_mul_ne_cons_one [NeZero m] (c : ℕ) (hc : 2 ≤ c)
+    (a : Fin (m + 1) → ℕ) (ha_pos : ∀ i, 0 < a i) (ha_div : DivChain (m + 1) a)
+    (d : Fin m → ℕ) (hd_pos : ∀ i, 0 < d i) (hd_div : DivChain m d) :
+    T_diag ((fun _ : Fin (m + 1) => c) * a) ≠ T_diag (Fin.cons 1 d) := by
+  intro heq
+  have hc_pos : 0 < c := by omega
+  have hca_pos : ∀ i, 0 < ((fun _ : Fin (m + 1) => c) * a) i := fun i =>
+    Nat.mul_pos hc_pos (ha_pos i)
+  have hca_div : DivChain (m + 1) ((fun _ : Fin (m + 1) => c) * a) :=
+    DivChain_mul (m + 1) _ _ (divChain_const (m + 1) c) ha_div
+  have hcc_pos : ∀ i, 0 < (Fin.cons 1 d : Fin (m + 1) → ℕ) i := fun i => by
+    refine Fin.cases ?_ (fun j => ?_) i
+    · simp
+    · simp only [Fin.cons_succ]; exact hd_pos j
+  have h_eq : (fun _ : Fin (m + 1) => c) * a = Fin.cons 1 d :=
+    diagonal_representative_unique (m + 1) _ _ hca_pos hcc_pos hca_div
+      (divChain_cons_one d hd_div) heq
+  have h0 := congr_fun h_eq 0
+  simp only [Pi.mul_apply, Fin.cons_zero] at h0
+  have ha0 : 1 ≤ a 0 := ha_pos 0
+  have : 2 ≤ c * a 0 := by calc 2 = 2 * 1 := by ring
+                               _ ≤ c * a 0 := Nat.mul_le_mul hc ha0
+  omega
+
 /-- `T(c,...,c) * x` has zero coefficient at any first-entry-1 coset `T_diag(Fin.cons 1 d)`
 for any scalar `c ≥ 2`. The target's first entry 1 can't be a `c`-multiple.
 
@@ -172,40 +218,7 @@ private lemma scalar_mul_coeff_cons_one_eq_zero_general {m : ℕ} [NeZero m]
     rw [hm]
     rw [Finsupp.smul_apply, Finsupp.single_apply]
     simp only [smul_eq_mul]
-    have h_ne : T_diag ((fun _ : Fin (m + 1) => c) * a) ≠ T_diag (Fin.cons 1 d) := by
-      intro heq
-      have hca_pos : ∀ i, 0 < ((fun _ : Fin (m + 1) => c) * a) i := fun i =>
-        Nat.mul_pos hc_pos (ha_pos i)
-      have hca_div : DivChain (m + 1) ((fun _ : Fin (m + 1) => c) * a) :=
-        DivChain_mul (m + 1) _ _ (divChain_const (m + 1) c) ha_div
-      have hcc_pos : ∀ i, 0 < (Fin.cons 1 d : Fin (m + 1) → ℕ) i := fun i => by
-        refine Fin.cases ?_ (fun j => ?_) i
-        · simp
-        · simp only [Fin.cons_succ]; exact hd_pos j
-      have hcc_div : DivChain (m + 1) (Fin.cons 1 d : Fin (m + 1) → ℕ) := by
-        intro i hi
-        by_cases h0 : i = 0
-        · subst h0
-          show (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨0, _⟩ ∣
-               (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨0 + 1, hi⟩
-          simp only [show (⟨0, by omega⟩ : Fin (m + 1)) = 0 from rfl, Fin.cons_zero]
-          exact one_dvd _
-        · obtain ⟨j, rfl⟩ : ∃ j, i = j + 1 := ⟨i - 1, by omega⟩
-          show (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨j + 1, _⟩ ∣
-               (Fin.cons 1 d : Fin (m + 1) → ℕ) ⟨j + 1 + 1, hi⟩
-          rw [show (⟨j + 1, _⟩ : Fin (m + 1)) = (⟨j, by omega⟩ : Fin m).succ from rfl,
-              show (⟨j + 1 + 1, hi⟩ : Fin (m + 1)) = (⟨j + 1, by omega⟩ : Fin m).succ from rfl]
-          simp only [Fin.cons_succ]
-          exact hd_div j (by omega)
-      have h_eq : (fun _ : Fin (m + 1) => c) * a = Fin.cons 1 d :=
-        diagonal_representative_unique (m + 1) _ _ hca_pos hcc_pos hca_div hcc_div heq
-      have h0 := congr_fun h_eq 0
-      simp only [Pi.mul_apply, Fin.cons_zero] at h0
-      have ha0 : 1 ≤ a 0 := ha_pos 0
-      have : 2 ≤ c * a 0 := by calc 2 = 2 * 1 := by ring
-                                   _ ≤ c * a 0 := Nat.mul_le_mul hc ha0
-      omega
-    rw [if_neg h_ne]; ring
+    rw [if_neg (T_diag_scalar_mul_ne_cons_one c hc a ha_pos ha_div d hd_pos hd_div)]; ring
 
 /-- `T(p,...,p) * x` has zero coefficient at any first-entry-1 coset `T_diag(Fin.cons 1 d)`.
 This specialization of `scalar_mul_coeff_cons_one_eq_zero_general` to primes. -/
@@ -383,6 +396,39 @@ section MainInduction
 
 variable (p : ℕ) (hp : p.Prime)
 
+/-- The scalar element `T(p,...,p)` lies in the range of `evalHom`, since it equals the
+top generator `T_gen m`. -/
+private lemma T_scalar_mem_evalHom_range (m : ℕ) [NeZero m] :
+    (T_elem fun _ : Fin (m + 1) => p) ∈ (evalHom (m + 1) p).range := by
+  have h : T_elem (fun _ : Fin (m + 1) => p) = T_gen (m + 1) p ⟨m, by omega⟩ := by
+    unfold T_gen; apply T_elem_congr_diag
+    funext i; simp only [T_gen_diag_val]; split_ifs with h <;> omega
+  rw [h]; exact T_gen_mem_evalHom_range (m + 1) p _
+
+include hp in
+/-- Scalar-factoring step: if the exponent-reduced diagonal `(fun i => e i - e 0)` already
+lies in the range, then `T_elem (ppowDiag e)` does too (for monotone `e`).
+Factor `ppowDiag e = T(p^{e₀},...) · ppowDiag(e - e₀)`; the scalar part is a power of the
+top generator, and the remaining part is `h_reduced`. -/
+private lemma ppow_scalar_factor_mem_range (m : ℕ) [NeZero m]
+    (e : Fin (m + 1) → ℕ) (hmono : Monotone e)
+    (h_reduced : T_elem (ppowDiag (m + 1) p (fun i => e i - e 0)) ∈
+      (evalHom (m + 1) p).range) :
+    T_elem (ppowDiag (m + 1) p e) ∈ (evalHom (m + 1) p).range := by
+  have h_all_ge : ∀ i, e 0 ≤ e i := fun i => hmono (Fin.zero_le i)
+  set e' : Fin (m + 1) → ℕ := fun i => e i - e 0 with he'_def
+  have he'_mono : Monotone e' := fun i j hij => Nat.sub_le_sub_right (hmono hij) _
+  have h_split : ppowDiag (m + 1) p e = (fun _ => p ^ e 0) * ppowDiag (m + 1) p e' := by
+    funext i; simp only [ppowDiag, Pi.mul_apply]
+    rw [← pow_add, Nat.add_sub_cancel' (h_all_ge i)]
+  rw [T_elem_congr_diag (m + 1) h_split,
+    ← T_diag_scalar_mul (m + 1) (p ^ e 0) (pow_pos hp.pos _)
+      (ppowDiag (m + 1) p e') (ppowDiag_pos (m + 1) p hp _)
+      (divChain_ppow (m + 1) p _ he'_mono)]
+  refine (evalHom (m + 1) p).range.mul_mem ?_ h_reduced
+  rw [← T_scalar_pow (m + 1) p hp.pos (e 0)]
+  exact (evalHom (m + 1) p).range.pow_mem (T_scalar_mem_evalHom_range p m) _
+
 /-- When e₀ = 0, lift surjectivity from dimension m to m+1.
 
 The proof uses coefficient compatibility to identify the first-entry-1 part of
@@ -448,64 +494,25 @@ private theorem surj_step (m : ℕ) [NeZero m]
     exact (evalHom (m + 1) p).range.one_mem
   | succ k ihk =>
     intro e hmono hsum
+    -- The scalar-reduced exponent sum drops below `k`, feeding the induction hypothesis.
+    have reduced_sum : ∀ e' : Fin (m + 1) → ℕ, 0 < e' 0 → (∑ i, e' i) ≤ k + 1 →
+        (∑ i, (e' i - e' 0)) ≤ k := fun e' he'0 he'sum => by
+      have : ∑ i : Fin (m + 1), (e' i - e' 0) < ∑ i : Fin (m + 1), e' i :=
+        Finset.sum_lt_sum (fun i _ => Nat.sub_le (e' i) (e' 0))
+          ⟨0, Finset.mem_univ _, by omega⟩
+      omega
     by_cases he0 : e 0 = 0
-    · -- First exponent 0: dimensional lift (B.3)
+    · -- First exponent 0: dimensional lift (B.3); higher terms via scalar factoring.
       exact T_elem_firstZero_in_range p hp m e hmono he0 h_surj_m
-        (fun e' he'_mono he'_pos he'_sum => by
-          -- e' has e'_0 ≥ 1, so factor out scalar to get smaller exponent sum
-          have h_all_ge : ∀ i, e' 0 ≤ e' i := fun i => he'_mono (Fin.zero_le i)
-          set e'' : Fin (m + 1) → ℕ := fun i => e' i - e' 0
-          have he''_mono : Monotone e'' := fun i j hij => Nat.sub_le_sub_right (he'_mono hij) _
-          have he''_sum : (∑ i, e'' i) ≤ k := by
-            have : ∑ i : Fin (m + 1), e'' i < ∑ i : Fin (m + 1), e' i :=
-              Finset.sum_lt_sum (fun i _ => Nat.sub_le (e' i) (e' 0))
-                ⟨0, Finset.mem_univ _, by show e' 0 - e' 0 < e' 0; omega⟩
-            omega
-          have h_split : ppowDiag (m + 1) p e' =
-              (fun _ => p ^ e' 0) * ppowDiag (m + 1) p e'' := by
-            funext i; simp only [ppowDiag, Pi.mul_apply]
-            rw [← pow_add, Nat.add_sub_cancel' (h_all_ge i)]
-          rw [T_elem_congr_diag (m + 1) h_split,
-            ← T_diag_scalar_mul (m + 1) (p ^ e' 0) (pow_pos hp.pos _)
-              (ppowDiag (m + 1) p e'') (ppowDiag_pos (m + 1) p hp _)
-              (divChain_ppow (m + 1) p _ he''_mono)]
-          apply (evalHom (m + 1) p).range.mul_mem
-          · rw [← T_scalar_pow (m + 1) p hp.pos (e' 0)]
-            have : T_elem (fun _ : Fin (m + 1) => p) =
-                T_gen (m + 1) p ⟨m, by omega⟩ := by
-              unfold T_gen; apply T_elem_congr_diag
-              funext i; simp only [T_gen_diag_val]; split_ifs with h <;> omega
-            rw [this]
-            exact (evalHom (m + 1) p).range.pow_mem
-              (T_gen_mem_evalHom_range (m + 1) p _) _
-          · exact ihk e'' he''_mono he''_sum)
-    · -- First exponent > 0: factor out scalar
+        (fun e' he'_mono he'_pos he'_sum =>
+          ppow_scalar_factor_mem_range p hp m e' he'_mono
+            (ihk _ (fun i j hij => Nat.sub_le_sub_right (he'_mono hij) _)
+              (reduced_sum e' he'_pos (he'_sum.trans hsum))))
+    · -- First exponent > 0: factor out the scalar `T(p^{e₀},...)`.
       have he0_pos : 0 < e 0 := Nat.pos_of_ne_zero he0
-      have h_all_ge : ∀ i, e 0 ≤ e i := fun i => hmono (Fin.zero_le i)
-      set e' : Fin (m + 1) → ℕ := fun i => e i - e 0
-      have he'_mono : Monotone e' := fun i j hij => Nat.sub_le_sub_right (hmono hij) _
-      have he'_sum : (∑ i, e' i) ≤ k := by
-        have : ∑ i : Fin (m + 1), e' i < ∑ i : Fin (m + 1), e i :=
-          Finset.sum_lt_sum (fun i _ => Nat.sub_le (e i) (e 0))
-            ⟨0, Finset.mem_univ _, by show e 0 - e 0 < e 0; omega⟩
-        omega
-      have h_split : ppowDiag (m + 1) p e = (fun _ => p ^ e 0) * ppowDiag (m + 1) p e' := by
-        funext i; simp only [ppowDiag, Pi.mul_apply]
-        rw [← pow_add, Nat.add_sub_cancel' (h_all_ge i)]
-      rw [T_elem_congr_diag (m + 1) h_split,
-        ← T_diag_scalar_mul (m + 1) (p ^ e 0) (pow_pos hp.pos _)
-          (ppowDiag (m + 1) p e') (ppowDiag_pos (m + 1) p hp _)
-          (divChain_ppow (m + 1) p _ he'_mono)]
-      apply (evalHom (m + 1) p).range.mul_mem
-      · -- Scalar part: T_elem(p^{e₀}) = T_gen(m)^{e₀}
-        rw [← T_scalar_pow (m + 1) p hp.pos (e 0)]
-        have : T_elem (fun _ : Fin (m + 1) => p) =
-            T_gen (m + 1) p ⟨m, by omega⟩ := by
-          unfold T_gen; apply T_elem_congr_diag
-          funext i; simp only [T_gen_diag_val]; split_ifs with h <;> omega
-        rw [this]
-        exact (evalHom (m + 1) p).range.pow_mem (T_gen_mem_evalHom_range (m + 1) p _) _
-      · exact ihk e' he'_mono he'_sum
+      exact ppow_scalar_factor_mem_range p hp m e hmono
+        (ihk _ (fun i j hij => Nat.sub_le_sub_right (hmono hij) _)
+          (reduced_sum e he0_pos hsum))
 
 /-- The combined surjectivity + injectivity theorem for all n, by induction.
 

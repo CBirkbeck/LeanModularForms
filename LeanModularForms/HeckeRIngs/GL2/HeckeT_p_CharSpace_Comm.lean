@@ -82,6 +82,54 @@ The cleanest demonstration of the new Γ₀(N)-bridge: commutativity of the
 `heckeT_p_all` operators restricted to `modFormCharSpace k 1` reduces in one
 step to commutativity of the abstract Hecke ring `𝕋(Gamma0_pair N) ℤ`. -/
 
+/-- The two Γ₀(N)-Hecke operators `heckeOperator_Gamma0` for primes `p, q` commute
+pointwise on `g`. This is the analytic shadow of commutativity of the abstract Hecke
+ring `𝕋 (Gamma0_pair N) ℤ` (`Gamma0_pair_HeckeAlgebra_mul_comm`): both operators are
+single-`T` images, so their composites agree by `heckeSum_Gamma0_mul`. -/
+private lemma heckeOperator_Gamma0_comm_of_coprime (k : ℤ) {p q : ℕ}
+    (hp : 0 < p) (hq : 0 < q) (g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
+    heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp)
+      (heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq) g) =
+    heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq)
+      (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp) g) := by
+  have hpq_comm :
+      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp) *
+        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq) =
+      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq) *
+        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp) := by
+    have hp_one : heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp) =
+        heckeSum_Gamma0 N k (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp) 1) := by
+      rw [heckeSum_Gamma0_T_single, one_smul]
+    have hq_one : heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq) =
+        heckeSum_Gamma0 N k (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N q hq) 1) := by
+      rw [heckeSum_Gamma0_T_single, one_smul]
+    rw [hp_one, hq_one, ← heckeSum_Gamma0_mul, ← heckeSum_Gamma0_mul,
+      Gamma0_pair_HeckeAlgebra_mul_comm]
+  have := congr_fun (congr_arg DFunLike.coe hpq_comm) g
+  change (heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp) *
+      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq)) g =
+    (heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq) *
+      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp)) g at this
+  simpa [Module.End.mul_apply] using this
+
+/-- On the trivial-character eigenspace, the iso `modFormCharSpace_one_equiv_Gamma0`
+intertwines `heckeT_p_all k p hp` (for `p` coprime to `N`) with the Γ₀(N)-Hecke
+operator `heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)`. -/
+private lemma equiv_heckeT_p_all_eq_heckeOperator_Gamma0 (k : ℤ) (p : ℕ)
+    (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ))
+    (hpres : heckeT_p_all k p hp (f : ModularForm _ k) ∈
+      modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
+    modFormCharSpace_one_equiv_Gamma0 N k
+        ⟨heckeT_p_all k p hp (f : ModularForm _ k), hpres⟩ =
+      heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
+        (modFormCharSpace_one_equiv_Gamma0 N k f) := by
+  apply ModularForm.ext
+  intro z
+  rw [modFormCharSpace_one_equiv_Gamma0_apply, Subtype.coe_mk,
+    heckeT_p_all_eq_gamma0_on_charSpace_one k p hp hpN f,
+    modFormCharSpace_one_equiv_Gamma0_symm_apply]
+
 /-- On `modFormCharSpace k 1`, for two primes `p, q` both coprime to `N`,
 `heckeT_p_all k p hp (heckeT_p_all k q hq f) = heckeT_p_all k q hq (heckeT_p_all k p hp f)`
 — a direct corollary of `Gamma0_pair_HeckeAlgebra_mul_comm`. The proof goes through
@@ -101,34 +149,10 @@ theorem heckeT_p_all_comm_on_charSpace_one_coprime (k : ℤ)
   -- Build the image of f under the iso, and work on the Γ₀(N) side.
   set g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k :=
     modFormCharSpace_one_equiv_Gamma0 N k f with hg_def
-  -- Preserving charspace on the Γ₁(N)-side; needed to package heckeT_p_all q f.
-  have hf_pres_q : heckeT_p_all k q hq (f : ModularForm _ k) ∈
-      modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) :=
-    heckeT_p_all_preserves_charSpace_one_coprime k q hq hqN f.property
-  have hf_pres_p : heckeT_p_all k p hp (f : ModularForm _ k) ∈
-      modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) :=
-    heckeT_p_all_preserves_charSpace_one_coprime k p hp hpN f.property
-  -- The key identity used twice: on the iso, `equiv (Hecke f) = heckeOp (equiv f)`.
-  -- First for q:
-  have h_equiv_q :
-      modFormCharSpace_one_equiv_Gamma0 N k
-        ⟨heckeT_p_all k q hq (f : ModularForm _ k), hf_pres_q⟩ =
-      heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq.pos) g := by
-    apply ModularForm.ext
-    intro z
-    rw [modFormCharSpace_one_equiv_Gamma0_apply, Subtype.coe_mk,
-      heckeT_p_all_eq_gamma0_on_charSpace_one k q hq hqN f,
-      modFormCharSpace_one_equiv_Gamma0_symm_apply]
-  have h_equiv_p :
-      modFormCharSpace_one_equiv_Gamma0 N k
-        ⟨heckeT_p_all k p hp (f : ModularForm _ k), hf_pres_p⟩ =
-      heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos) g := by
-    apply ModularForm.ext
-    intro z
-    rw [modFormCharSpace_one_equiv_Gamma0_apply, Subtype.coe_mk,
-      heckeT_p_all_eq_gamma0_on_charSpace_one k p hp hpN f,
-      modFormCharSpace_one_equiv_Gamma0_symm_apply]
-  -- Compute LHS and RHS in terms of heckeOperator_Gamma0 on g.
+  -- Preserving charspace on the Γ₁(N)-side; needed to package heckeT_p_all on f.
+  have hf_pres_q := heckeT_p_all_preserves_charSpace_one_coprime k q hq hqN f.property
+  have hf_pres_p := heckeT_p_all_preserves_charSpace_one_coprime k p hp hpN f.property
+  -- Each composite is `symm (heckeOp (heckeOp (equiv f)))` via the intertwining lemma.
   have h_LHS : heckeT_p_all k p hp (heckeT_p_all k q hq (f : ModularForm _ k)) =
       ((modFormCharSpace_one_equiv_Gamma0 N k).symm
         (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
@@ -136,10 +160,8 @@ theorem heckeT_p_all_comm_on_charSpace_one_coprime (k : ℤ)
           ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
     have h_outer := heckeT_p_all_eq_gamma0_on_charSpace_one k p hp hpN
       ⟨heckeT_p_all k q hq (f : ModularForm _ k), hf_pres_q⟩
-    -- h_outer : heckeT_p_all k p hp (⟨...⟩ : M) = (symm (heckeOp p (equiv ⟨...⟩)) : M)
-    -- But (⟨heckeT_p_all k q hq f, _⟩ : Subtype) coerces to `heckeT_p_all k q hq f`.
     rw [Subtype.coe_mk] at h_outer
-    rw [h_outer, h_equiv_q]
+    rw [h_outer, equiv_heckeT_p_all_eq_heckeOperator_Gamma0 k q hq hqN f hf_pres_q]
   have h_RHS : heckeT_p_all k q hq (heckeT_p_all k p hp (f : ModularForm _ k)) =
       ((modFormCharSpace_one_equiv_Gamma0 N k).symm
         (heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq.pos)
@@ -148,39 +170,11 @@ theorem heckeT_p_all_comm_on_charSpace_one_coprime (k : ℤ)
     have h_outer := heckeT_p_all_eq_gamma0_on_charSpace_one k q hq hqN
       ⟨heckeT_p_all k p hp (f : ModularForm _ k), hf_pres_p⟩
     rw [Subtype.coe_mk] at h_outer
-    rw [h_outer, h_equiv_p]
-  -- Core: commutativity of heckeOperator_Gamma0 via Gamma0 Hecke ring commutativity.
+    rw [h_outer, equiv_heckeT_p_all_eq_heckeOperator_Gamma0 k p hp hpN f hf_pres_p]
+  -- Core: the two Γ₀(N)-Hecke operators commute via Gamma0 Hecke ring commutativity.
   rw [h_LHS, h_RHS]
   congr 2
-  have hpq_comm :
-      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp.pos) *
-        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq.pos) =
-      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq.pos) *
-        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp.pos) := by
-    have hp_one : heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp.pos) =
-        heckeSum_Gamma0 N k (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1) := by
-      rw [heckeSum_Gamma0_T_single, one_smul]
-    have hq_one : heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq.pos) =
-        heckeSum_Gamma0 N k (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N q hq.pos) 1) := by
-      rw [heckeSum_Gamma0_T_single, one_smul]
-    rw [hp_one, hq_one, ← heckeSum_Gamma0_mul, ← heckeSum_Gamma0_mul,
-      Gamma0_pair_HeckeAlgebra_mul_comm]
-  have h_comm_apply :
-      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-        (heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq.pos) g) =
-      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq.pos)
-        (heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp.pos) g) := by
-    have := congr_fun (congr_arg DFunLike.coe hpq_comm) g
-    change (heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp.pos) *
-        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq.pos)) g =
-      (heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq.pos) *
-        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp.pos)) g at this
-    simpa [Module.End.mul_apply] using this
-  show heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-      (heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq.pos) g) =
-    heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq.pos)
-      (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos) g)
-  exact h_comm_apply
+  exact heckeOperator_Gamma0_comm_of_coprime k hp.pos hq.pos g
 
 /-! ### Commutativity on an arbitrary χ-eigenspace
 

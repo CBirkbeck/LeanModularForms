@@ -633,6 +633,24 @@ theorem slLeftMul_Gamma_p_α_comp (α : GL (Fin 2) ℚ) (h₁ h₂ : SL(2, ℤ))
       slLeftMul_Gamma_p_α (N := N) α (h₁ * h₂) q := by
   induction q using QuotientGroup.induction_on with | _ g => simp [mul_assoc]
 
+/-- Left-transport of `slToPslQuot_Gamma_p_α` fibers: if `[g]` and `[b]` have the
+same image, then left-multiplying `g` by `a * b⁻¹` lands in the fiber of `[a]`.
+The single algebraic fact shared by both bijection branches of
+`slToPslQuot_Gamma_p_α_fiber_card_uniform`. -/
+private lemma slToPslQuot_mk_left_transport (α : GL (Fin 2) ℚ) (a b g : SL(2, ℤ))
+    (hg : slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk g) =
+        slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk b)) :
+    slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk (a * b⁻¹ * g)) =
+      slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk a) := by
+  rw [slToPslQuot_Gamma_p_α_mk, slToPslQuot_Gamma_p_α_mk] at hg ⊢
+  rw [QuotientGroup.eq] at hg ⊢
+  have key : ((QuotientGroup.mk (a * b⁻¹ * g) : PSL(2, ℤ)))⁻¹ * QuotientGroup.mk a =
+      (QuotientGroup.mk g : PSL(2, ℤ))⁻¹ * QuotientGroup.mk b := by
+    rw [← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul, ← QuotientGroup.mk_inv,
+      ← QuotientGroup.mk_mul]
+    exact congrArg QuotientGroup.mk (by group)
+  rw [key]; exact hg
+
 open CongruenceSubgroup Classical in
 /-- **Phase M (b) — uniform fiber size of `slToPslQuot_Gamma_p_α`.** -/
 theorem slToPslQuot_Gamma_p_α_fiber_card_uniform (α : GL (Fin 2) ℚ)
@@ -664,54 +682,13 @@ theorem slToPslQuot_Gamma_p_α_fiber_card_uniform (α : GL (Fin 2) ℚ)
   · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
     induction q using QuotientGroup.induction_on with | _ g => ?_
     show slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk (h * g)) = q₂'
-    rw [slToPslQuot_Gamma_p_α_mk]
-    have hq_psl : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) = q₁' := hq
-    have h_psl : (QuotientGroup.mk (h * g) : PSL(2, ℤ)) =
-        (QuotientGroup.mk h : PSL(2, ℤ)) * (QuotientGroup.mk g : PSL(2, ℤ)) :=
-      (QuotientGroup.mk_mul _ _ _).symm
-    rw [h_psl]
-    have h_h_psl : (QuotientGroup.mk h : PSL(2, ℤ)) =
-        QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ := by
-      rw [hh_def, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
-    rw [h_h_psl]
-    have hq_eq_g₁ : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) =
-        QuotientGroup.mk (QuotientGroup.mk g₁ : PSL(2, ℤ)) := by
-      rw [hq_psl]; exact hq₁.symm
-    rw [QuotientGroup.eq] at hq_eq_g₁
-    rw [show q₂' = QuotientGroup.mk (QuotientGroup.mk g₂ : PSL(2, ℤ)) from hq₂.symm,
-      QuotientGroup.eq]
-    have : (QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ *
-          (QuotientGroup.mk g : PSL(2, ℤ)))⁻¹ * QuotientGroup.mk g₂ =
-        (QuotientGroup.mk g : PSL(2, ℤ))⁻¹ * QuotientGroup.mk g₁ := by group
-    rw [this]; exact hq_eq_g₁
+    rw [hh_def, ← hq₂]
+    exact slToPslQuot_mk_left_transport α g₂ g₁ g (hq.trans hq₁.symm)
   · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
     induction q using QuotientGroup.induction_on with | _ g => ?_
     show slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk (h⁻¹ * g)) = q₁'
-    rw [slToPslQuot_Gamma_p_α_mk]
-    have hq_psl : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) = q₂' := hq
-    have h_psl : (QuotientGroup.mk (h⁻¹ * g) : PSL(2, ℤ)) =
-        (QuotientGroup.mk h : PSL(2, ℤ))⁻¹ * (QuotientGroup.mk g : PSL(2, ℤ)) := by
-      rw [show (h⁻¹ * g : SL(2, ℤ)) = h⁻¹ * g from rfl,
-        ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
-    rw [h_psl]
-    have h_h_psl : (QuotientGroup.mk h : PSL(2, ℤ)) =
-        QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ := by
-      rw [hh_def, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
-    rw [h_h_psl]
-    have hq_eq_g₂ : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) =
-        QuotientGroup.mk (QuotientGroup.mk g₂ : PSL(2, ℤ)) := by
-      rw [hq_psl]; exact hq₂.symm
-    rw [QuotientGroup.eq] at hq_eq_g₂
-    rw [show q₁' = QuotientGroup.mk (QuotientGroup.mk g₁ : PSL(2, ℤ)) from hq₁.symm,
-      QuotientGroup.eq]
-    have : ((QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹)⁻¹ *
-          (QuotientGroup.mk g : PSL(2, ℤ)))⁻¹ * QuotientGroup.mk g₁ =
-        (QuotientGroup.mk g : PSL(2, ℤ))⁻¹ * QuotientGroup.mk g₂ := by group
-    rw [this]; exact hq_eq_g₂
+    rw [hh_def, mul_inv_rev, inv_inv, ← hq₁]
+    exact slToPslQuot_mk_left_transport α g₁ g₂ g (hq.trans hq₂.symm)
 
 open CongruenceSubgroup Classical in
 /-- **Phase M (b) — uniform fiber cardinality of `slToPslQuot_Gamma_p_α`.**
