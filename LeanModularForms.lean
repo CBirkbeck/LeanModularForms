@@ -22,7 +22,6 @@ import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.GeneralizedT
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpers
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV.DominatedConvergence
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.WindingNumber.Proposition2_2
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Bounds
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Smooth
 import LeanModularForms.ForMathlib.ModularInvariance
