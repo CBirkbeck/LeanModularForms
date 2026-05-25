@@ -160,54 +160,61 @@ theorem deriv_intervalIntegrable_piece (γ : ClosedPwC1Curve x) {a b : ℝ}
 
 end ClosedPwC1Curve
 
-/-! ## Helper: gluing piece-wise interval-integrability over a finite partition -/
+/-! ## Helper: gluing piece-wise predicates over a finite partition -/
+
+/-- Generic "glue piece-wise predicates" induction over a finite partition:
+if `P` is reflexive (in the `a = b` sense) and transitive across a shared midpoint
+on consecutive pieces, then `P` holds on `[a, b]` once it holds on every consecutive
+pair of the partition. The two callers (`IntervalIntegrable` and `LipschitzOnWith`)
+fix `P` accordingly. -/
+private lemma consecutive_piece_induction {P : ℝ → ℝ → Prop}
+    (P_refl : ∀ x, P x x) (P_trans : ∀ {p q r : ℝ}, P p q → P q r → P p r) :
+    ∀ s : Finset ℝ, ∀ a b : ℝ, a ∈ s → b ∈ s → a ≤ b →
+      (∀ c ∈ s, a ≤ c ∧ c ≤ b) →
+      (∀ p q, s.IsConsecutive p q → P p q) → P a b := by
+  intro s
+  induction s using Finset.strongInduction with
+  | H s ih =>
+    intro a b ha hb hab hbds hpc
+    rcases eq_or_lt_of_le hab with hab_eq | hab_lt
+    · subst hab_eq; exact P_refl a
+    set t : Finset ℝ := s.filter (a < ·)
+    have hb_in_t : b ∈ t := Finset.mem_filter.mpr ⟨hb, hab_lt⟩
+    have ha'_in_t : t.min' ⟨b, hb_in_t⟩ ∈ t := t.min'_mem _
+    set a' := t.min' ⟨b, hb_in_t⟩
+    have ha'_in_s : a' ∈ s := (Finset.mem_filter.mp ha'_in_t).1
+    have ha_lt_a' : a < a' := (Finset.mem_filter.mp ha'_in_t).2
+    have hcons : s.IsConsecutive a a' :=
+      ⟨ha, ha'_in_s, ha_lt_a', fun c hc hc_Ioo =>
+        absurd (t.min'_le c (Finset.mem_filter.mpr ⟨hc, hc_Ioo.1⟩)) (by linarith [hc_Ioo.2])⟩
+    set s' : Finset ℝ := s.erase a
+    have ha'_in_s' : a' ∈ s' := Finset.mem_erase.mpr ⟨ne_of_gt ha_lt_a', ha'_in_s⟩
+    have hb_in_s' : b ∈ s' := Finset.mem_erase.mpr ⟨ne_of_gt hab_lt, hb⟩
+    have hbds' : ∀ c ∈ s', a' ≤ c ∧ c ≤ b := fun c hc => by
+      have hc_in : c ∈ s := (Finset.mem_erase.mp hc).2
+      refine ⟨t.min'_le _ (Finset.mem_filter.mpr ⟨hc_in, ?_⟩), (hbds c hc_in).2⟩
+      exact lt_of_le_of_ne (hbds c hc_in).1 (Ne.symm (Finset.mem_erase.mp hc).1)
+    have hpc' : ∀ p q, s'.IsConsecutive p q → P p q := fun p q hcons' =>
+      hpc p q ⟨(Finset.mem_erase.mp hcons'.1).2, (Finset.mem_erase.mp hcons'.2.1).2,
+        hcons'.2.2.1, fun c hc hc_Ioo => by
+          have hp_gt_a : a < p := lt_of_lt_of_le ha_lt_a' (hbds' p hcons'.1).1
+          exact hcons'.2.2.2 c (Finset.mem_erase.mpr
+            ⟨ne_of_gt (lt_of_lt_of_le hp_gt_a hc_Ioo.1.le), hc⟩) hc_Ioo⟩
+    exact P_trans (hpc _ _ hcons)
+      (ih s' (Finset.erase_ssubset ha) a' b ha'_in_s' hb_in_s' (hbds' b hb_in_s').1 hbds' hpc')
 
 /-- If `f` is interval-integrable on every consecutive pair of a finite partition
 of `[a, b]` containing both endpoints, then `f` is interval-integrable on `[a, b]`. -/
 private theorem intervalIntegrable_of_consecutive_pieces
     {α : Type*} [TopologicalSpace α] [ENormedAddMonoid α]
     [TopologicalSpace.PseudoMetrizableSpace α]
-    {f : ℝ → α} {μ : MeasureTheory.Measure ℝ} :
-    ∀ s : Finset ℝ, ∀ a b : ℝ, a ∈ s → b ∈ s → a ≤ b →
-      (∀ c ∈ s, a ≤ c ∧ c ≤ b) →
-      (∀ p q, s.IsConsecutive p q → IntervalIntegrable f μ p q) →
-      IntervalIntegrable f μ a b := by
-  intro s
-  induction s using Finset.strongInduction with
-  | H s ih =>
-    intro a b ha hb hab hbds hpc
-    rcases eq_or_lt_of_le hab with hab_eq | hab_lt
-    · subst hab_eq
-      exact IntervalIntegrable.refl
-    set t : Finset ℝ := s.filter (a < ·)
-    have hb_in_t : b ∈ t := Finset.mem_filter.mpr ⟨hb, hab_lt⟩
-    set a' := t.min' ⟨b, hb_in_t⟩
-    have ha'_in_t : a' ∈ t := t.min'_mem _
-    have ha'_in_s : a' ∈ s := (Finset.mem_filter.mp ha'_in_t).1
-    have ha_lt_a' : a < a' := (Finset.mem_filter.mp ha'_in_t).2
-    have hcons : s.IsConsecutive a a' := by
-      refine ⟨ha, ha'_in_s, ha_lt_a', fun c hc hc_Ioo => ?_⟩
-      exact absurd (t.min'_le c (Finset.mem_filter.mpr ⟨hc, hc_Ioo.1⟩))
-        (by linarith [hc_Ioo.2])
-    set s' : Finset ℝ := s.erase a
-    have ha'_in_s' : a' ∈ s' := Finset.mem_erase.mpr ⟨ne_of_gt ha_lt_a', ha'_in_s⟩
-    have hb_in_s' : b ∈ s' := Finset.mem_erase.mpr ⟨ne_of_gt hab_lt, hb⟩
-    have hbds' : ∀ c ∈ s', a' ≤ c ∧ c ≤ b := by
-      intro c hc
-      have hc_in : c ∈ s := (Finset.mem_erase.mp hc).2
-      have hc_ne : c ≠ a := (Finset.mem_erase.mp hc).1
-      refine ⟨?_, (hbds c hc_in).2⟩
-      have hac : a < c := lt_of_le_of_ne (hbds c hc_in).1 (Ne.symm hc_ne)
-      exact t.min'_le _ (Finset.mem_filter.mpr ⟨hc_in, hac⟩)
-    have hpc' : ∀ p q, s'.IsConsecutive p q → IntervalIntegrable f μ p q := by
-      intro p q hcons'
-      refine hpc p q ⟨(Finset.mem_erase.mp hcons'.1).2, (Finset.mem_erase.mp hcons'.2.1).2,
-        hcons'.2.2.1, fun c hc hc_Ioo => ?_⟩
-      have hp_gt_a : a < p := lt_of_lt_of_le ha_lt_a' (hbds' p hcons'.1).1
-      have hc_gt_a : a < c := lt_of_lt_of_le hp_gt_a hc_Ioo.1.le
-      exact hcons'.2.2.2 c (Finset.mem_erase.mpr ⟨ne_of_gt hc_gt_a, hc⟩) hc_Ioo
-    exact (hpc _ _ hcons).trans <|
-      ih s' (Finset.erase_ssubset ha) a' b ha'_in_s' hb_in_s' (hbds' b hb_in_s').1 hbds' hpc'
+    {f : ℝ → α} {μ : MeasureTheory.Measure ℝ} (s : Finset ℝ) (a b : ℝ)
+    (ha : a ∈ s) (hb : b ∈ s) (hab : a ≤ b)
+    (hbds : ∀ c ∈ s, a ≤ c ∧ c ≤ b)
+    (hpc : ∀ p q, s.IsConsecutive p q → IntervalIntegrable f μ p q) :
+    IntervalIntegrable f μ a b :=
+  consecutive_piece_induction (P := IntervalIntegrable f μ)
+    (fun _ => IntervalIntegrable.refl) (fun h1 h2 => h1.trans h2) s a b ha hb hab hbds hpc
 
 /-! ## Global interval-integrability of the derivative -/
 
@@ -425,20 +432,15 @@ private lemma lipschitzOnWith_Icc_trans {E : Type*} [NormedAddCommGroup E]
     intro x y hx hy hxb hby
     have h1 := hf₁ ⟨hx.1, hxb⟩ ⟨hab, le_refl b⟩
     have h2 := hf₂ ⟨le_refl b, hbc⟩ ⟨hby, hy.2⟩
-    have h_norm : ‖f x - f y‖ ≤ ‖f x - f b‖ + ‖f b - f y‖ := by
-      have : f x - f y = (f x - f b) + (f b - f y) := by abel
-      rw [this]; exact norm_add_le _ _
     have h_dist : ‖x - y‖ = ‖x - b‖ + ‖b - y‖ := by
-      rw [Real.norm_eq_abs, Real.norm_eq_abs, Real.norm_eq_abs,
-          abs_of_nonpos (by linarith : x - y ≤ 0),
-          abs_of_nonpos (by linarith : x - b ≤ 0),
-          abs_of_nonpos (by linarith : b - y ≤ 0)]
+      simp only [Real.norm_eq_abs, abs_of_nonpos (by linarith : x - y ≤ 0),
+        abs_of_nonpos (by linarith : x - b ≤ 0), abs_of_nonpos (by linarith : b - y ≤ 0)]
       ring
     calc ‖f x - f y‖
-        ≤ ‖f x - f b‖ + ‖f b - f y‖ := h_norm
+        = ‖(f x - f b) + (f b - f y)‖ := by congr 1; abel
+      _ ≤ ‖f x - f b‖ + ‖f b - f y‖ := norm_add_le _ _
       _ ≤ (C : ℝ) * ‖x - b‖ + (C : ℝ) * ‖b - y‖ := by gcongr
-      _ = (C : ℝ) * (‖x - b‖ + ‖b - y‖) := by ring
-      _ = (C : ℝ) * ‖x - y‖ := by rw [← h_dist]
+      _ = (C : ℝ) * ‖x - y‖ := by rw [← mul_add, ← h_dist]
   intro x hx y hy
   rcases le_total x y with hxy | hxy
   · rcases le_total y b with hyb | hby
@@ -456,50 +458,18 @@ private lemma lipschitzOnWith_Icc_trans {E : Type*} [NormedAddCommGroup E]
 /-- Inductive gluing: piecewise-`LipschitzOnWith` on consecutive pieces yields
 global `LipschitzOnWith` on `Icc a b` containing all pieces. -/
 private lemma lipschitzOnWith_of_consecutive_pieces {E : Type*}
-    [NormedAddCommGroup E] {f : ℝ → E} {C : NNReal} :
-    ∀ s : Finset ℝ, ∀ a b : ℝ, a ∈ s → b ∈ s → a ≤ b →
-      (∀ c ∈ s, a ≤ c ∧ c ≤ b) →
-      (∀ p q, s.IsConsecutive p q → LipschitzOnWith C f (Icc p q)) →
-      LipschitzOnWith C f (Icc a b) := by
-  intro s
-  induction s using Finset.strongInduction with
-  | H s ih =>
-    intro a b ha hb hab hbds hpc
-    rcases eq_or_lt_of_le hab with hab_eq | hab_lt
-    · subst hab_eq
-      rw [lipschitzOnWith_iff_norm_sub_le]
-      intro x hx y hy
-      simp [le_antisymm hx.2 hx.1, le_antisymm hy.2 hy.1]
-    set t : Finset ℝ := s.filter (a < ·)
-    have hb_in_t : b ∈ t := Finset.mem_filter.mpr ⟨hb, hab_lt⟩
-    set a' := t.min' ⟨b, hb_in_t⟩
-    have ha'_in_t : a' ∈ t := t.min'_mem _
-    have ha'_in_s : a' ∈ s := (Finset.mem_filter.mp ha'_in_t).1
-    have ha_lt_a' : a < a' := (Finset.mem_filter.mp ha'_in_t).2
-    have hcons : s.IsConsecutive a a' := by
-      refine ⟨ha, ha'_in_s, ha_lt_a', fun c hc hc_Ioo => ?_⟩
-      exact absurd (t.min'_le c (Finset.mem_filter.mpr ⟨hc, hc_Ioo.1⟩))
-        (by linarith [hc_Ioo.2])
-    set s' : Finset ℝ := s.erase a
-    have ha'_in_s' : a' ∈ s' := Finset.mem_erase.mpr ⟨ne_of_gt ha_lt_a', ha'_in_s⟩
-    have hb_in_s' : b ∈ s' := Finset.mem_erase.mpr ⟨ne_of_gt hab_lt, hb⟩
-    have ha'_le_b : a' ≤ b := t.min'_le b hb_in_t
-    have hbds' : ∀ c ∈ s', a' ≤ c ∧ c ≤ b := by
-      intro c hc
-      have hc_in : c ∈ s := (Finset.mem_erase.mp hc).2
-      have hc_ne : c ≠ a := (Finset.mem_erase.mp hc).1
-      refine ⟨?_, (hbds c hc_in).2⟩
-      have hac : a < c := lt_of_le_of_ne (hbds c hc_in).1 (Ne.symm hc_ne)
-      exact t.min'_le _ (Finset.mem_filter.mpr ⟨hc_in, hac⟩)
-    have hpc' : ∀ p q, s'.IsConsecutive p q → LipschitzOnWith C f (Icc p q) := by
-      intro p q hcons'
-      refine hpc p q ⟨(Finset.mem_erase.mp hcons'.1).2, (Finset.mem_erase.mp hcons'.2.1).2,
-        hcons'.2.2.1, fun c hc hc_Ioo => ?_⟩
-      have hp_gt_a : a < p := lt_of_lt_of_le ha_lt_a' (hbds' p hcons'.1).1
-      have hc_gt_a : a < c := lt_of_lt_of_le hp_gt_a hc_Ioo.1.le
-      exact hcons'.2.2.2 c (Finset.mem_erase.mpr ⟨ne_of_gt hc_gt_a, hc⟩) hc_Ioo
-    exact lipschitzOnWith_Icc_trans ha_lt_a'.le ha'_le_b (hpc _ _ hcons)
-      (ih s' (Finset.erase_ssubset ha) a' b ha'_in_s' hb_in_s' ha'_le_b hbds' hpc')
+    [NormedAddCommGroup E] {f : ℝ → E} {C : NNReal} (s : Finset ℝ) (a b : ℝ)
+    (ha : a ∈ s) (hb : b ∈ s) (hab : a ≤ b)
+    (hbds : ∀ c ∈ s, a ≤ c ∧ c ≤ b)
+    (hpc : ∀ p q, s.IsConsecutive p q → LipschitzOnWith C f (Icc p q)) :
+    LipschitzOnWith C f (Icc a b) := by
+  refine consecutive_piece_induction (P := fun p q => p ≤ q ∧ LipschitzOnWith C f (Icc p q))
+    (fun x => ⟨le_refl x, ?_⟩) (fun {p q r} h1 h2 => ⟨h1.1.trans h2.1,
+      lipschitzOnWith_Icc_trans h1.1 h2.1 h1.2 h2.2⟩) s a b ha hb hab hbds
+    (fun p q hcons => ⟨hcons.2.2.1.le, hpc p q hcons⟩) |>.2
+  rw [lipschitzOnWith_iff_norm_sub_le]
+  intro y hy z hz
+  simp [le_antisymm hy.2 hy.1, le_antisymm hz.2 hz.1]
 
 namespace ClosedPwC1Curve
 
@@ -553,30 +523,29 @@ theorem lipschitzWith_extend (γ : ClosedPwC1Curve x) :
   intro s t
   set s' : ℝ := max 0 (min s 1)
   set t' : ℝ := max 0 (min t 1)
-  have hs'_in : s' ∈ Icc (0 : ℝ) 1 :=
-    ⟨le_max_left _ _, max_le zero_le_one (min_le_right _ _)⟩
-  have ht'_in : t' ∈ Icc (0 : ℝ) 1 :=
+  have clamp_mem : ∀ u : ℝ, max 0 (min u 1) ∈ Icc (0 : ℝ) 1 := fun _ =>
     ⟨le_max_left _ _, max_le zero_le_one (min_le_right _ _)⟩
   have hclamp : ∀ u : ℝ, γ.toPath.extend u = γ.toPath.extend (max 0 (min u 1)) := by
     intro u
     rcases le_total u 0 with hu0 | hu0
-    · have : max 0 (min u 1) = 0 := by
-        simp [min_eq_left (hu0.trans zero_le_one), max_eq_left hu0]
-      rw [γ.toPath.extend_of_le_zero hu0, this, γ.toPath.extend_zero]
+    · rw [γ.toPath.extend_of_le_zero hu0,
+        show max 0 (min u 1) = 0 from by
+          simp [min_eq_left (hu0.trans zero_le_one), max_eq_left hu0],
+        γ.toPath.extend_zero]
     · rcases le_total u 1 with hu1 | hu1
       · simp [min_eq_left hu1, max_eq_right hu0]
-      · have : max 0 (min u 1) = 1 := by simp [min_eq_right hu1]
-        rw [γ.toPath.extend_of_one_le hu1, this, γ.toPath.extend_one]
+      · rw [γ.toPath.extend_of_one_le hu1,
+          show max 0 (min u 1) = 1 from by simp [min_eq_right hu1], γ.toPath.extend_one]
   have h_proj_lip : ‖s' - t'‖ ≤ ‖s - t‖ := by
     rw [Real.norm_eq_abs, Real.norm_eq_abs]
     calc |s' - t'|
-        = |max 0 (min s 1) - max 0 (min t 1)| := rfl
-      _ ≤ max |(0 : ℝ) - 0| |min s 1 - min t 1| := abs_max_sub_max_le_max _ _ _ _
+        ≤ max |(0 : ℝ) - 0| |min s 1 - min t 1| := abs_max_sub_max_le_max _ _ _ _
       _ = |min s 1 - min t 1| := by simp
       _ ≤ max |s - t| |(1 : ℝ) - 1| := abs_min_sub_min_le_max _ _ _ _
       _ = |s - t| := by simp
   rw [hclamp s, hclamp t]
-  exact (hK hs'_in ht'_in).trans (mul_le_mul_of_nonneg_left h_proj_lip (NNReal.coe_nonneg _))
+  exact (hK (clamp_mem s) (clamp_mem t)).trans
+    (mul_le_mul_of_nonneg_left h_proj_lip (NNReal.coe_nonneg _))
 
 end ClosedPwC1Curve
 
