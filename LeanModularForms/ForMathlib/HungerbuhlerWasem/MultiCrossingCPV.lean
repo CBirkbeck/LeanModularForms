@@ -833,14 +833,11 @@ finitely many corner points (handled via the countable exception set in the
 FTC). The recursive aggregation is the corner-friendly variant
 `cpv_tendsto_along_sorted_corner`. -/
 
-/-- **Corner-friendly common local-uniqueness radius** (T-BR-Y11c).
+/-- **Corner-friendly common local-uniqueness radius** (T-BR-Y11c / T-BR-Y11b).
 Returns `r > 0` such that for every `t_i ∈ crossings`:
 * `t_i - r ≥ 0`, `t_i + r ≤ 1`;
 * Windows are pairwise disjoint at width `2r`;
-* No partition point in `partition \ crossings` lies in `[t_i - r, t_i + r]`.
-
-(Duplicate of the later `multi_pole_common_radius_corner` lemma, placed
-here so it is available to `hasCauchyPV_inv_sub_multiCrossing_corner`.) -/
+* No partition point in `partition \ crossings` lies in `[t_i - r, t_i + r]`. -/
 private theorem multi_pole_common_radius_corner_simple
     {crossings partition : Finset ℝ}
     (h_nonempty : crossings.Nonempty)
@@ -2903,40 +2900,8 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
 /-! ### Corner-friendly multi-pole common radius
 
 The corner-friendly variant of `multi_pole_common_radius` admitting
-partition points THAT COINCIDE with crossing parameters. The window radius
-must avoid partition points OTHER than the crossings themselves; the
-crossing-coincident partition points are folded into the countable
-exception set in the FTC. -/
-
-/-- **Corner-friendly common local-uniqueness radius.** Returns `r > 0`
-such that for every `t_i ∈ crossings`:
-* `t_i - r ≥ 0`, `t_i + r ≤ 1`;
-* Windows are pairwise disjoint at width `2r`;
-* No partition point in `partition \ crossings` lies in `[t_i - r, t_i + r]`. -/
-private theorem multi_pole_common_radius_corner
-    {crossings partition : Finset ℝ}
-    (h_nonempty : crossings.Nonempty)
-    (h_Ioo : ∀ t ∈ crossings, t ∈ Set.Ioo (0 : ℝ) 1) :
-    ∃ r > 0,
-      (∀ t ∈ crossings, r ≤ t ∧ t ≤ 1 - r) ∧
-      (∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t →
-        2 * r < |t - t'|) ∧
-      (∀ t ∈ crossings, ∀ p ∈ partition, p ∉ crossings → r < |t - p|) := by
-  classical
-  -- Use the original lemma with `partition \ crossings`.
-  set P' : Finset ℝ := partition \ crossings with hP'_def
-  have h_off' : ∀ t ∈ crossings, t ∉ P' := by
-    intro t ht hP'
-    rw [hP'_def, Finset.mem_sdiff] at hP'
-    exact hP'.2 ht
-  obtain ⟨r, hr_pos, h_endpts, h_pair, h_part⟩ :=
-    multi_pole_common_radius (crossings := crossings) (partition := P')
-      h_nonempty h_Ioo h_off'
-  refine ⟨r, hr_pos, h_endpts, h_pair, ?_⟩
-  intro t ht p hp hp_notin
-  refine h_part t ht p ?_
-  rw [hP'_def, Finset.mem_sdiff]
-  exact ⟨hp, hp_notin⟩
+partition points THAT COINCIDE with crossing parameters is supplied above
+as `multi_pole_common_radius_corner_simple`. -/
 
 /-- **Corner-friendly multi-crossing higher-order CPV vanishing (T-BR-Y11b).**
 
@@ -3095,7 +3060,7 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
     obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ := h_min_r
     -- Step 2: corner-friendly common radius (avoid partition \ crossings).
     obtain ⟨r_geom, hr_geom_pos, hr_geom_endpts, hr_geom_pair, hr_geom_part⟩ :=
-      multi_pole_common_radius_corner (crossings := crossings)
+      multi_pole_common_radius_corner_simple (crossings := crossings)
         (partition := γ.toPwC1Immersion.toPiecewiseC1Path.partition)
         h_nonempty
         (fun t ht => h_Ioo t ht)
