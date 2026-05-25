@@ -167,6 +167,70 @@ lemma sum_slash (k : ℤ) {ι : Type*} (s : Finset ι)
   | empty => simp [SlashAction.zero_slash]
   | cons a s has ih => simp only [Finset.sum_cons, SlashAction.add_slash, ih]
 
+/-- In `ZMod p` for prime `p`: if `p ∣ a·b` (cast form) and `p ∤ b`, then `p ∣ a`. -/
+private lemma intCast_zmod_eq_zero_of_mul (p : ℕ) (hp : Nat.Prime p) {a b : ℤ}
+    (hab : ((a * b : ℤ) : ZMod p) = 0) (hb : ((b : ℤ) : ZMod p) ≠ 0) :
+    ((a : ℤ) : ZMod p) = 0 := by
+  rw [ZMod.intCast_zmod_eq_zero_iff_dvd] at hab ⊢
+  have hb' : ¬((p : ℤ) ∣ b) := fun h => hb ((ZMod.intCast_zmod_eq_zero_iff_dvd b p).mpr h)
+  exact (Int.Prime.dvd_mul' hp hab).resolve_right hb'
+
+/-- For `x y : Fin p`, `p ∣ (x.val - y.val)` (over `ℤ`) forces `x.val = y.val`. -/
+private lemma fin_val_eq_of_intCast_sub_dvd {p : ℕ} (hp : Nat.Prime p) (x y : Fin p)
+    (h : (p : ℤ) ∣ ((x.val : ℤ) - y.val)) : x.val = y.val := by
+  obtain ⟨c, hc⟩ := h
+  have h1 : (x.val : ℤ) < p := by exact_mod_cast x.prop
+  have h2 : (y.val : ℤ) < p := by exact_mod_cast y.prop
+  have h5 : (0 : ℤ) < p := by exact_mod_cast hp.pos
+  have hc0 : c = 0 := by nlinarith
+  subst hc0; omega
+
+/-- Cross-multiplication in `ZMod p`: `a·b⁻¹ = c·d⁻¹` with `b, d ≠ 0` gives `a·d = c·b`. -/
+private lemma zmod_mul_eq_of_mul_inv_eq {p : ℕ} [Fact p.Prime] [NeZero p]
+    {a b c d : ZMod p} (hb : b ≠ 0) (hd : d ≠ 0)
+    (h : a * b⁻¹ = c * d⁻¹) : a * d = c * b := by
+  have inv_mul {x : ZMod p} (hx : x ≠ 0) : x⁻¹ * x = 1 := by
+    rw [mul_comm]; exact zmod_mul_inv hx
+  have := congr_arg (· * (b * d)) h
+  simp only [mul_assoc] at this
+  rwa [show b⁻¹ * (b * d) = d from by rw [← mul_assoc, inv_mul hb, one_mul],
+       show d⁻¹ * (b * d) = b from by
+          rw [mul_comm b d, ← mul_assoc, inv_mul hd, one_mul]] at this
+
+/-- If `(σ₀₀ + c·σ₁₀) ≡ 0 (mod p)` for some `c`, then `σ₁₀ ≢ 0 (mod p)`:
+otherwise `det ≡ 0`, contradicting `det = 1`. -/
+private lemma botLeft_ne_zero_of_topLeft_add_eq_zero {p : ℕ} [Fact p.Prime]
+    (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1)
+    (c : ℤ) (hAc : ((M 0 0 + c * M 1 0 : ℤ) : ZMod p) = 0) :
+    ((M 1 0 : ℤ) : ZMod p) ≠ 0 := by
+  intro h10
+  have hdet_p : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet]
+  have h00 : ((M 0 0 : ℤ) : ZMod p) = 0 := by
+    have hsum : ((M 0 0 + c * M 1 0 : ℤ) : ZMod p) =
+      ((M 0 0 : ℤ) : ZMod p) + ((c : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) := by push_cast; ring
+    rw [h10, mul_zero, add_zero] at hsum; rw [← hsum]; exact hAc
+  have : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 0 := by push_cast; rw [h00, h10]; ring
+  rw [hdet_p] at this; exact one_ne_zero this
+
+/-- Contradiction when one index has `σ₀₀ + c·σ₁₀ ≡ 0` and another has it `≢ 0`, yet
+their `moebiusFin` values coincide: the resulting cross-relation contradicts `det = 1`. -/
+private lemma false_of_topLeft_zero_and_nonzero {p : ℕ} [Fact p.Prime] [NeZero p]
+    (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1)
+    (c d : ℤ) (hAc : ((M 0 0 + c * M 1 0 : ℤ) : ZMod p) = 0)
+    (hAd : ((M 0 0 + d * M 1 0 : ℤ) : ZMod p) ≠ 0)
+    (heq : ((M 1 1 : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹ =
+      ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p)⁻¹) :
+    False := by
+  have hdet_p : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet]
+  have h10_ne := botLeft_ne_zero_of_topLeft_add_eq_zero M hdet c hAc
+  have hcross := zmod_mul_eq_of_mul_inv_eq h10_ne hAd heq
+  have hdet_d : ((M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p) -
+      ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) = 1 := by
+    rw [show ((M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p) -
+      ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) =
+      ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) from by push_cast; ring, hdet_p]
+  exact one_ne_zero (hdet_d.symm.trans (by rw [hcross]; ring))
+
 /-- The Möbius function is injective on `Fin p` for any SL₂(ℤ) matrix
 (follows from det = 1 in ZMod p). -/
 private lemma moebiusFin_injective (p : ℕ) (hp : Nat.Prime p)
@@ -177,49 +241,6 @@ private lemma moebiusFin_injective (p : ℕ) (hp : Nat.Prime p)
   have hdet_eq : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
     rw [det_fin_two] at hdet; exact hdet
   have hdet_p : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet_eq]
-  -- Helper: if A = 0 then M₁₀ ≠ 0 (otherwise det ≡ 0 mod p)
-  have no_double_zero : ∀ c : Fin p,
-      ((M 0 0 + ↑c.val * M 1 0 : ℤ) : ZMod p) = 0 →
-      ((M 1 0 : ℤ) : ZMod p) ≠ 0 := by
-    intro c hAc h10
-    have h00 : ((M 0 0 : ℤ) : ZMod p) = 0 := by
-      have : ((M 0 0 + ↑c.val * M 1 0 : ℤ) : ZMod p) =
-        ((M 0 0 : ℤ) : ZMod p) + ((c.val : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) := by
-        push_cast; ring
-      rw [h10, mul_zero, add_zero] at this; rw [← this]; exact hAc
-    have : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 0 := by
-      push_cast; rw [h00, h10]; ring
-    rw [hdet_p] at this; exact one_ne_zero this
-  -- Helper: ZMod p divisibility implies ℕ equality for Fin p
-  have val_eq_of_dvd :
-      ∀ x y : Fin p, (p : ℤ) ∣ ((x.val : ℤ) - y.val) → x.val = y.val := by
-    intro x y ⟨k, hk⟩
-    have h1 : (x.val : ℤ) < p := by exact_mod_cast x.prop
-    have h2 : (y.val : ℤ) < p := by exact_mod_cast y.prop
-    have h5 : (0 : ℤ) < p := by exact_mod_cast hp.pos
-    have hk0 : k = 0 := by nlinarith
-    subst hk0; omega
-  -- In ZMod p for prime p: p | a*b ∧ ¬(p | b) → p | a (hence ↑a = 0)
-  have zmod_cancel {a b : ℤ} (hab : ((a * b : ℤ) : ZMod p) = 0)
-      (hb : ((b : ℤ) : ZMod p) ≠ 0) : ((a : ℤ) : ZMod p) = 0 := by
-    rw [ZMod.intCast_zmod_eq_zero_iff_dvd] at hab
-    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-    have hb' : ¬((p : ℤ) ∣ b) := fun h => hb ((ZMod.intCast_zmod_eq_zero_iff_dvd b p).mpr h)
-    have hab_abs : p ∣ a.natAbs * b.natAbs := by
-      rw [← Int.natAbs_mul]; exact Int.natCast_dvd_natCast.mp (Int.dvd_natAbs.mpr hab)
-    rcases hp.dvd_mul.mp hab_abs with h | h
-    · exact Int.dvd_natAbs.mp (Int.natCast_dvd_natCast.mpr h)
-    · exact absurd (Int.dvd_natAbs.mp (Int.natCast_dvd_natCast.mpr h)) hb'
-  -- Cross-multiply: a*b⁻¹ = c*d⁻¹ with b,d ≠ 0 implies a*d = c*b
-  have cross_mul {a b c d : ZMod p} (hb : b ≠ 0) (hd : d ≠ 0)
-      (h : a * b⁻¹ = c * d⁻¹) : a * d = c * b := by
-    have inv_mul {x : ZMod p} (hx : x ≠ 0) : x⁻¹ * x = 1 := by
-      rw [mul_comm]; exact zmod_mul_inv hx
-    have := congr_arg (· * (b * d)) h
-    simp only [mul_assoc] at this
-    rwa [show b⁻¹ * (b * d) = d from by rw [← mul_assoc, inv_mul hb, one_mul],
-         show d⁻¹ * (b * d) = b from by
-            rw [mul_comm b d, ← mul_assoc, inv_mul hd, one_mul]] at this
   intro b₁ b₂ heq
   have hv : (moebiusFin p hp M b₁).val = (moebiusFin p hp M b₂).val :=
     congr_arg Fin.val heq
@@ -229,59 +250,169 @@ private lemma moebiusFin_injective (p : ℕ) (hp : Nat.Prime p)
   set B₁ : ZMod p := ((M 0 1 + ↑b₁.val * M 1 1 : ℤ) : ZMod p) with hB₁_def
   set B₂ : ZMod p := ((M 0 1 + ↑b₂.val * M 1 1 : ℤ) : ZMod p) with hB₂_def
   suffices hsuff : b₁.val = b₂.val by ext; exact hsuff
-  -- det identity in ZMod p for each index
-  have det_eq (c : Fin p) :
-      ((M 1 1 : ℤ) : ZMod p) * ((M 0 0 + ↑c.val * M 1 0 : ℤ) : ZMod p) -
-      ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + ↑c.val * M 1 1 : ℤ) : ZMod p) =
-      ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) := by push_cast; ring
   by_cases hA₁ : A₁ = 0 <;> by_cases hA₂ : A₂ = 0
   · -- Both A = 0: (b₁ - b₂) * M₁₀ ≡ 0, and M₁₀ ≢ 0
     have h_ring : A₁ - A₂ =
-        ((↑b₁.val - ↑b₂.val : ℤ) : ZMod p) *
-        ((M 1 0 : ℤ) : ZMod p) := by
+        ((↑b₁.val - ↑b₂.val : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) := by
       simp only [hA₁_def, hA₂_def]; push_cast; ring
     rw [hA₁, hA₂, sub_self] at h_ring
-    have h10_ne := no_double_zero b₁ hA₁
+    have h10_ne := botLeft_ne_zero_of_topLeft_add_eq_zero M hdet_eq _ hA₁
     have hb_zero : ((↑b₁.val - ↑b₂.val : ℤ) : ZMod p) = 0 := by
-      have h := h_ring.symm; rw [← Int.cast_mul] at h; exact zmod_cancel h h10_ne
-    exact val_eq_of_dvd b₁ b₂ ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero)
+      have h := h_ring.symm; rw [← Int.cast_mul] at h
+      exact intCast_zmod_eq_zero_of_mul p hp h h10_ne
+    exact fin_val_eq_of_intCast_sub_dvd hp b₁ b₂
+      ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero)
   · -- A₁ = 0, A₂ ≠ 0: contradiction via det
-    exfalso
     rw [if_pos hA₁, if_neg hA₂] at hv
-    have hv_eq := ZMod.val_injective p hv
-    have h10_ne := no_double_zero b₁ hA₁
-    have hcross := cross_mul h10_ne hA₂ hv_eq
-    -- M₁₁*A₂ - M₁₀*B₂ = det = 1, but hcross gives
-    -- M₁₁*A₂ = B₂*M₁₀, so diff = 0
-    have hdet₂ : ((M 1 1 : ℤ) : ZMod p) * A₂ - ((M 1 0 : ℤ) : ZMod p) * B₂ = 1 := by
-      rw [show ((M 1 1 : ℤ) : ZMod p) * A₂ - ((M 1 0 : ℤ) : ZMod p) * B₂ =
-        ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) from by
-          simp only [hA₂_def, hB₂_def]; push_cast; ring, hdet_p]
-    exact one_ne_zero (hdet₂.symm.trans (by rw [hcross]; ring))
-  · -- A₁ ≠ 0, A₂ = 0: symmetric
-    exfalso
+    exact (false_of_topLeft_zero_and_nonzero M hdet_eq _ _ hA₁ hA₂
+      (ZMod.val_injective p hv)).elim
+  · -- A₁ ≠ 0, A₂ = 0: symmetric (swap roles of b₁, b₂)
     rw [if_neg hA₁, if_pos hA₂] at hv
-    have hv_eq := ZMod.val_injective p hv
-    have h10_ne := no_double_zero b₂ hA₂
-    have hcross := cross_mul hA₁ h10_ne hv_eq
-    have hdet₁ : ((M 1 1 : ℤ) : ZMod p) * A₁ - ((M 1 0 : ℤ) : ZMod p) * B₁ = 1 := by
-      rw [show ((M 1 1 : ℤ) : ZMod p) * A₁ - ((M 1 0 : ℤ) : ZMod p) * B₁ =
-        ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) from by
-          simp only [hA₁_def, hB₁_def]; push_cast; ring, hdet_p]
-    exact one_ne_zero (hdet₁.symm.trans (by rw [show ((M 1 1 : ℤ) : ZMod p) * A₁ =
-      B₁ * ((M 1 0 : ℤ) : ZMod p) from hcross.symm]; ring))
+    exact (false_of_topLeft_zero_and_nonzero M hdet_eq _ _ hA₂ hA₁
+      (ZMod.val_injective p hv).symm).elim
   · -- Both A ≠ 0: cross-multiply, use det to get b₁ = b₂
     rw [if_neg hA₁, if_neg hA₂] at hv
-    have hv_eq := ZMod.val_injective p hv
-    have hcross := cross_mul hA₁ hA₂ hv_eq
-    -- B₁*A₂ - B₂*A₁ = (b₁ - b₂) * det
+    have hcross := zmod_mul_eq_of_mul_inv_eq hA₁ hA₂ (ZMod.val_injective p hv)
     have h_cross_det : B₁ * A₂ - B₂ * A₁ =
         ((↑b₁.val - ↑b₂.val : ℤ) : ZMod p) *
         ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) := by
       simp only [hA₁_def, hA₂_def, hB₁_def, hB₂_def]; push_cast; ring
     have h0 : B₁ * A₂ - B₂ * A₁ = 0 := by rw [hcross]; ring
     rw [h0, hdet_p, mul_one] at h_cross_det
-    exact val_eq_of_dvd b₁ b₂ ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h_cross_det.symm)
+    exact fin_val_eq_of_intCast_sub_dvd hp b₁ b₂
+      ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h_cross_det.symm)
+
+/-! ### Shared algebra for the orbit lemmas -/
+
+/-- The `fin_two`-expanded determinant of an `SL₂(ℤ)` element equals `1`. -/
+private lemma sl2z_fin_two_det_eq_one (σ : SL(2, ℤ)) :
+    (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
+      (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
+  have := σ.prop; rw [Matrix.det_fin_two] at this; exact_mod_cast this
+
+/-- When `p ∣ σ₁₀` (so `σ₁₀ ≡ 0 mod p`), the entry `σ₀₀ + b·σ₁₀` is never divisible
+by `p`: otherwise `σ₀₀ ≡ 0` too and `det ≡ 0 ≠ 1 (mod p)`. -/
+private lemma not_dvd_topLeft_add_of_dvd_botLeft (p : ℕ) (hp : Nat.Prime p)
+    (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1)
+    (h10 : (p : ℤ) ∣ M 1 0) (b : ℤ) : ¬(p : ℤ) ∣ (M 0 0 + b * M 1 0) := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  intro hdvd
+  have h10' : ((M 1 0 : ℤ) : ZMod p) = 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr h10
+  have h00 : ((M 0 0 : ℤ) : ZMod p) = 0 := by
+    have := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hdvd
+    push_cast at this; rwa [h10', mul_zero, add_zero] at this
+  have hd : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet]
+  rw [show ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) =
+    (M 0 0 : ZMod p) * (M 1 1 : ZMod p) - (M 0 1 : ZMod p) * (M 1 0 : ZMod p) from by
+    push_cast; ring, h00, h10', zero_mul, mul_zero, sub_zero] at hd
+  exact zero_ne_one hd
+
+/-- The canonical index `b₀ = -σ₀₀·σ₁₀⁻¹ mod p` at which `p ∣ (σ₀₀ + b₀·σ₁₀)`
+(valid whenever `σ₁₀ ≢ 0 mod p`). -/
+private lemma dvd_topLeft_add_canonicalIndex (p : ℕ) (hp : Nat.Prime p)
+    (M : Matrix (Fin 2) (Fin 2) ℤ) (h10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0) :
+    (p : ℤ) ∣ (M 0 0 +
+      ↑((-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val) * M 1 0) := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  rw [show (p : ℤ) ∣ _ ↔ ((M 0 0 +
+      ↑((-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val) * M 1 0 : ℤ) : ZMod p) = 0 from
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).symm]; push_cast
+  show (M 0 0 : ZMod p) + ((-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val : ZMod p) *
+    ((M 1 0 : ℤ) : ZMod p) = 0
+  rw [ZMod.natCast_val, ZMod.cast_id]
+  have : (-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹) * ((M 1 0 : ℤ) : ZMod p) =
+      -(M 0 0 : ZMod p) := by
+    rw [mul_assoc, mul_comm ((M 1 0 : ℤ) : ZMod p)⁻¹ _, zmod_mul_inv h10_ne, mul_one]
+  rw [this, add_neg_cancel]
+
+/-- Bijection-with-one-swap sum identity: if `P i ↔ i = b₀` and `φ` is a bijection,
+the `if`-branched sum plus the swapped term equals the plain sum plus `lower'`.
+This is the assembly step shared by the two `p ∤ σ₁₀` cases. -/
+private lemma sum_ite_swap_eq {p : ℕ} {V : Type*} [AddCommGroup V]
+    (g : Fin p → V) (lower' : V) (φ : Fin p → Fin p) (hφ : Function.Bijective φ)
+    (b₀ : Fin p) (P : Fin p → Prop) [DecidablePred P]
+    (hP : ∀ i, P i ↔ i = b₀) :
+    (∑ x, if P x then lower' else g (φ x)) + g (φ b₀) = (∑ x, g x) + lower' := by
+  have h_ite_eq : ∀ i : Fin p,
+      (if P i then lower' else g (φ i)) =
+      g (φ i) + if i = b₀ then lower' - g (φ b₀) else 0 := by
+    intro i
+    simp only [hP]
+    split_ifs with h1
+    · subst h1; abel
+    · rw [add_zero]
+  simp_rw [h_ite_eq, Finset.sum_add_distrib]
+  rw [Finset.sum_ite_eq' Finset.univ b₀ (fun _ => lower' - g (φ b₀)),
+      if_pos (Finset.mem_univ _)]
+  have h_bij_sum : ∑ x : Fin p, g (φ x) = ∑ x, g x :=
+    Finset.sum_equiv (Equiv.ofBijective _ hφ)
+      (fun _ => ⟨fun _ => Finset.mem_univ _, fun _ => Finset.mem_univ _⟩)
+      (fun _ _ => rfl)
+  rw [h_bij_sum]; abel
+
+/-- The canonical index `b₀ = -σ₀₀·σ₁₀⁻¹` is the *unique* index with `p ∣ (σ₀₀ + b·σ₁₀)`
+(when `σ₁₀ ≢ 0`): uniqueness follows from injectivity of `moebiusFin`. -/
+private lemma dvd_topLeft_add_iff_eq_canonicalIndex (p : ℕ) (hp : Nat.Prime p)
+    (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M.det = 1) (b₀ : Fin p)
+    (hb₀ : (p : ℤ) ∣ (M 0 0 + ↑b₀.val * M 1 0)) (i : Fin p) :
+    (p : ℤ) ∣ (M 0 0 + ↑i.val * M 1 0) ↔ i = b₀ := by
+  refine ⟨fun hdvd => moebiusFin_injective p hp M hdet ?_, fun h => h ▸ hb₀⟩
+  simp only [moebiusFin,
+    show ((M 0 0 + ↑i.val * M 1 0 : ℤ) : ZMod p) = 0 from
+      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hdvd,
+    show ((M 0 0 + ↑b₀.val * M 1 0 : ℤ) : ZMod p) = 0 from
+      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hb₀, ↓reduceIte]
+
+/-- Divisibility quotient: `p ∣ (num - den·(num·den⁻¹ mod p).val)` when `den ≢ 0 mod p`.
+This is the integer identity underlying the exact division `B - A·j' = p·q` (and its
+lower-case analogue `σ₁₁ - σ₁₀·j' = p·q`). -/
+private lemma dvd_sub_mul_inv_val {p : ℕ} [Fact p.Prime] [NeZero p]
+    (num den : ℤ) (hden : (den : ZMod p) ≠ 0) :
+    (p : ℤ) ∣ (num - den * ↑((num : ZMod p) * (den : ZMod p)⁻¹).val) := by
+  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+  push_cast
+  rw [ZMod.natCast_val, ZMod.cast_id, sub_eq_zero, mul_comm (num : ZMod p) _, ← mul_assoc,
+    zmod_mul_inv hden, one_mul]
+
+/-! ### Determinant identities for the factorisation matrices `τ`
+
+Each of the four orbit factorisations builds an explicit `SL₂(ℤ)` matrix `τ` from the
+entries of `σ`; these lemmas verify `det τ = 1` from `det σ = 1` and the relevant
+divisibility quotient. -/
+
+/-- `det τ = 1` for the **upper → upper** factorisation matrix
+`τ = !![A, q; p·σ₁₀, σ₁₁ - σ₁₀·j']`, with `A = σ₀₀ + b·σ₁₀` and `B - A·j' = p·q`. -/
+private lemma upper_tau_det_eq_one {M : Matrix (Fin 2) (Fin 2) ℤ}
+    (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1) (p : ℕ) (b j' q : ℤ)
+    (hq : (M 0 1 + b * M 1 1) - (M 0 0 + b * M 1 0) * j' = ↑p * q) :
+    (!![M 0 0 + b * M 1 0, q; ↑p * M 1 0, M 1 1 - M 1 0 * j'] :
+      Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+  rw [det_fin_two_of]; linear_combination M 1 0 * hq + hdet
+
+/-- `det τ = 1` for the **upper → lower** factorisation matrix
+`τ = !![a, B; σ₁₀, p·σ₁₁]`, with `B = σ₀₁ + b·σ₁₁` and `σ₀₀ + b·σ₁₀ = a·p`. -/
+private lemma upper_div_tau_det_eq_one {M : Matrix (Fin 2) (Fin 2) ℤ}
+    (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1) (p : ℕ) (a b : ℤ)
+    (ha : M 0 0 + b * M 1 0 = a * ↑p) :
+    (!![a, M 0 1 + b * M 1 1; M 1 0, ↑p * M 1 1] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+  rw [det_fin_two_of]; linear_combination -M 1 1 * ha + hdet
+
+/-- `det τ = 1` for the **lower → upper** factorisation matrix
+`τ = !![p·σ₀₀, σ₀₁ - σ₀₀·j'; σ₁₀, q]`, with `σ₁₁ - σ₁₀·j' = p·q`. -/
+private lemma lower_tau_det_eq_one {M : Matrix (Fin 2) (Fin 2) ℤ}
+    (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1) (p : ℕ) (j' q : ℤ)
+    (hq : M 1 1 - M 1 0 * j' = ↑p * q) :
+    (!![↑p * M 0 0, M 0 1 - M 0 0 * j'; M 1 0, q] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+  rw [det_fin_two_of]; linear_combination -M 0 0 * hq + hdet
+
+/-- `det τ = 1` for the **lower → lower** factorisation matrix
+`τ = !![σ₀₀, p·σ₀₁; c, σ₁₁]`, with `σ₁₀ = p·c`. -/
+private lemma lower_div_tau_det_eq_one {M : Matrix (Fin 2) (Fin 2) ℤ}
+    (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1) (p : ℕ) (c : ℤ)
+    (hc : M 1 0 = ↑p * c) :
+    (!![M 0 0, ↑p * M 0 1; c, M 1 1] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+  rw [det_fin_two_of]; linear_combination M 0 1 * hc + hdet
 
 /-! ### Orbit factorisation (D-S Prop 5.2.1)
 
@@ -320,6 +451,45 @@ private lemma diamondOpAux_gamma1 [NeZero N] (k : ℤ)
   rw [(diamondOp_eq_diamondOpAux k 1 ⟨σ, Gamma1_in_Gamma0 N hσ⟩ h1).symm,
       diamondOp_one, LinearMap.id_apply]
 
+/-! ### Diamond-operator tracking through the factorisation
+
+When `β · σ = τ · β'`, the slash identity reduces to a relation between
+`diamondOpAux τ` and `diamondOpAux σ`, governed by `Gamma0MapUnits`. These three
+lemmas package the diamond-algebra used to conclude each `Γ₀(N)` orbit case. -/
+
+/-- **Upper → lower diamond step**: `⟨τ⟩f = ⟨d⟩(⟨σ⟩f)` when `Gamma0MapUnits τ = d · Gamma0MapUnits σ`. -/
+private lemma diamondOpAux_eq_diamondOp_mul [NeZero N] (k : ℤ) (d : (ZMod N)ˣ)
+    (τ σ : ↥(Gamma0 N)) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h : Gamma0MapUnits τ = d * Gamma0MapUnits σ) :
+    diamondOpAux k τ f = diamondOp k d (diamondOpAux k σ f) := by
+  rw [show diamondOpAux k τ = diamondOp k (Gamma0MapUnits τ) from
+        (diamondOp_eq_diamondOpAux k _ τ rfl).symm, h, diamondOp_mul, LinearMap.comp_apply,
+      diamondOp_eq_diamondOpAux k _ σ rfl]
+
+/-- **Lower → upper diamond step**: `⟨τ⟩(⟨d⟩f) = ⟨σ⟩f` when `Gamma0MapUnits τ · d = Gamma0MapUnits σ`. -/
+private lemma diamondOpAux_diamondOp_eq [NeZero N] (k : ℤ) (d : (ZMod N)ˣ)
+    (τ σ : ↥(Gamma0 N)) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h : Gamma0MapUnits τ * d = Gamma0MapUnits σ) :
+    diamondOpAux k τ (diamondOp k d f) = diamondOpAux k σ f := by
+  rw [show diamondOpAux k τ = diamondOp k (Gamma0MapUnits τ) from
+        (diamondOp_eq_diamondOpAux k _ τ rfl).symm,
+      show diamondOp k (Gamma0MapUnits τ) (diamondOp k d f) =
+        ((diamondOp k (Gamma0MapUnits τ)).comp (diamondOp k d)) f from rfl,
+      ← diamondOp_mul, h, diamondOp_eq_diamondOpAux k _ σ rfl]
+
+/-- **Lower → lower diamond step**: `⟨τ⟩(⟨d⟩f) = ⟨d⟩(⟨σ⟩f)` when `Gamma0MapUnits τ = Gamma0MapUnits σ`,
+using commutativity of `(ZMod N)ˣ`. -/
+private lemma diamondOpAux_diamondOp_comm [NeZero N] (k : ℤ) (d : (ZMod N)ˣ)
+    (τ σ : ↥(Gamma0 N)) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h : Gamma0MapUnits τ = Gamma0MapUnits σ) :
+    diamondOpAux k τ (diamondOp k d f) = diamondOp k d (diamondOpAux k σ f) := by
+  rw [show diamondOpAux k τ = diamondOp k (Gamma0MapUnits τ) from
+        (diamondOp_eq_diamondOpAux k _ τ rfl).symm, h,
+      show diamondOp k (Gamma0MapUnits σ) (diamondOp k d f) =
+        ((diamondOp k (Gamma0MapUnits σ)).comp (diamondOp k d)) f from rfl,
+      ← diamondOp_mul, mul_comm, diamondOp_mul, LinearMap.comp_apply,
+      diamondOp_eq_diamondOpAux k _ σ rfl]
+
 /-! ### Orbit factorisation for σ ∈ Γ₀(N)
 
 Matrix factorisations tracking the diamond operator through `Gamma0MapUnits`.
@@ -343,82 +513,41 @@ private theorem orbit_upper_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
   haveI : Fact p.Prime := ⟨hp⟩
   rw [← glMap_mapGL_eq, ← map_mul]
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
-  set A : ℤ := M 0 0 + ↑b.val * M 1 0 with hA_def
-  set B : ℤ := M 0 1 + ↑b.val * M 1 1 with hB_def
-  -- σ ∈ Gamma0 N yields N ∣ σ₁₀
-  rw [Gamma0_mem] at hσ
-  -- A is nonzero mod p
-  have hA_ne : (A : ZMod p) ≠ 0 := by
-    intro h; exact hA ((ZMod.intCast_zmod_eq_zero_iff_dvd A p).mp h)
-  -- j' = B * A⁻¹ mod p, which equals moebiusFin output
-  set j'_zmod : ZMod p := (B : ZMod p) * (A : ZMod p)⁻¹
-  set j' := j'_zmod.val
-  have hj'_lt : j' < p := ZMod.val_lt j'_zmod
-  -- Show moebiusFin gives j'
+  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
+  rw [Gamma0_mem] at hσ  -- N ∣ σ₁₀
+  have hA_ne : ((M 0 0 + ↑b.val * M 1 0 : ℤ) : ZMod p) ≠ 0 :=
+    fun h => hA ((ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mp h)
+  -- `j' = (B · A⁻¹).val` is the `moebiusFin` output, and `p ∣ (B - A·j')`.
+  set j' := (((M 0 1 + ↑b.val * M 1 1 : ℤ) : ZMod p) *
+    ((M 0 0 + ↑b.val * M 1 0 : ℤ) : ZMod p)⁻¹).val with hj'_def
   have hmoeb : (moebiusFin p hp M b).val = j' := by
-    simp only [moebiusFin, show (M 0 0 + ↑b.val * M 1 0 : ℤ) = A from rfl,
-      show (M 0 1 + ↑b.val * M 1 1 : ℤ) = B from rfl]
-    rw [if_neg hA_ne]
-  -- Key: A * j' ≡ B (mod p)
-  have hAj'_mod : (A : ZMod p) * (j' : ZMod p) = (B : ZMod p) := by
-    have key : (A : ZMod p) * ((B : ZMod p) * (A : ZMod p)⁻¹) = (B : ZMod p) := by
-      rw [mul_comm (B : ZMod p) _, ← mul_assoc, zmod_mul_inv hA_ne, one_mul]
-    rw [show (j' : ZMod p) = j'_zmod from by
-      show (j'_zmod.val : ZMod p) = j'_zmod; rw [ZMod.natCast_val, ZMod.cast_id]]
-    exact key
-  -- Therefore p ∣ (B - A * j')
-  have hpBAj : (p : ℤ) ∣ (B - A * ↑j') := by
-    have : ((B - A * ↑j' : ℤ) : ZMod p) = 0 := by
-      push_cast; rw [sub_eq_zero]; exact hAj'_mod.symm
-    rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at this
-  -- Exact division
-  obtain ⟨q, hq⟩ := hpBAj
-  have hq_eq : B - A * ↑j' = ↑p * q := hq
-  -- Construct τ ∈ SL₂(ℤ) ∩ Γ₀(N)
+    simp only [moebiusFin]; rw [if_neg hA_ne]
+  obtain ⟨q, hq_eq⟩ :=
+    dvd_sub_mul_inv_val (M 0 1 + ↑b.val * M 1 1) (M 0 0 + ↑b.val * M 1 0) hA_ne
+  rw [← hj'_def] at hq_eq
+  -- Construct `τ ∈ Γ₀(N)` with `Gamma0Map τ = Gamma0Map σ`.
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ :=
-    !![A, q; ↑p * M 1 0, M 1 1 - M 1 0 * ↑j'] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 := by
-    have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
-      have := σ.prop; rw [Matrix.det_fin_two] at this; exact_mod_cast this
-    simp only [τ_mat]; rw [det_fin_two_of]
-    have hstep : q * (↑p * M 1 0) = (B - A * ↑j') * M 1 0 := by
-      have hpq : (↑p : ℤ) * q = B - A * ↑j' := by linarith [hq_eq]
-      linarith [show q * (↑p * M 1 0) = (↑p * q) * M 1 0 from by ring,
-               show (↑p * q) * M 1 0 = (B - A * ↑j') * M 1 0 from by rw [hpq]]
-    have hAB : A * M 1 1 - B * M 1 0 = M 0 0 * M 1 1 - M 0 1 * M 1 0 := by
-      simp only [show A = M 0 0 + ↑↑b * M 1 0 from rfl,
-                 show B = M 0 1 + ↑↑b * M 1 1 from rfl]; ring
-    linarith [show A * (M 1 1 - M 1 0 * ↑j') - (B - A * ↑j') * M 1 0 =
-                  A * M 1 1 - B * M 1 0 from by ring]
+    !![M 0 0 + ↑b.val * M 1 0, q; ↑p * M 1 0, M 1 1 - M 1 0 * ↑j'] with hτ_mat_def
+  have hτ_det : τ_mat.det = 1 := upper_tau_det_eq_one hdet p b.val j' q hq_eq
   set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
-  -- τ ∈ Gamma0 N (uses N ∣ M₁₀ from hσ)
   have hτ_g0 : τ ∈ Gamma0 N := by
-    rw [Gamma0_mem]
-    show ((↑p * M 1 0 : ℤ) : ZMod N) = 0
-    push_cast; rw [hσ, mul_zero]
-  -- Gamma0Map(τ) = Gamma0Map(σ):
-  -- τ₁₁ = M₁₁ - M₁₀·j' ≡ M₁₁ (mod N) since N ∣ M₁₀
-  have hmap : Gamma0Map N ⟨τ, hτ_g0⟩ =
-      Gamma0Map N ⟨σ, (Gamma0_mem.mpr hσ)⟩ := by
+    rw [Gamma0_mem]; show ((↑p * M 1 0 : ℤ) : ZMod N) = 0; push_cast; rw [hσ, mul_zero]
+  have hmap : Gamma0Map N ⟨τ, hτ_g0⟩ = Gamma0Map N ⟨σ, Gamma0_mem.mpr hσ⟩ := by
     simp only [Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
     show ((M 1 1 - M 1 0 * ↑j' : ℤ) : ZMod N) = ((M 1 1 : ℤ) : ZMod N)
     push_cast; rw [hσ, zero_mul, sub_zero]
-  -- Matrix equation: T_p_upper b * mapGL ℚ σ = mapGL ℚ τ * T_p_upper j'
-  have hmatrix : T_p_upper p hp.pos b.val * mapGL ℚ σ =
-      mapGL ℚ τ * T_p_upper p hp.pos j' := by
+  have hmatrix : T_p_upper p hp.pos b.val * mapGL ℚ σ = mapGL ℚ τ * T_p_upper p hp.pos j' := by
     apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
       simp only [GeneralLinearGroup.coe_mul, mul_apply, T_p_upper_coe, Fin.isValue,
-        Matrix.SpecialLinearGroup.mapGL_coe_matrix, Fin.sum_univ_two,
-        algebraMap_int_eq, hτ_def, hτ_mat_def,
-        hA_def] <;>
-      norm_num [mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply,
-        Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons,
-        Matrix.head_fin_const] <;>
+        Matrix.SpecialLinearGroup.mapGL_coe_matrix, Fin.sum_univ_two, algebraMap_int_eq,
+        hτ_def, hτ_mat_def] <;>
+      norm_num [mapGL_coe_matrix, RingHom.mapMatrix_apply, map_apply, Matrix.cons_val_zero,
+        Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const] <;>
       simp only [show (↑σ : Matrix (Fin 2) (Fin 2) ℤ) = M from rfl] <;>
       first | rfl | simp |
-        (exact_mod_cast (show B = A * ↑j' + q * ↑p from by linarith [hq_eq])) |
-        ring
-  -- Conclude via slash_mul and slash-transport (Gamma0Map(τ) = Gamma0Map(σ))
+        exact_mod_cast (show M 0 1 + ↑b.val * M 1 1 = (M 0 0 + ↑b.val * M 1 0) * ↑j' + q * ↑p from by
+          linarith [hq_eq]) | ring
+  -- Conclude via slash_mul and slash-transport (Gamma0Map τ = Gamma0Map σ).
   rw [hmoeb]
   conv_lhs => rw [hmatrix, map_mul, glMap_mapGL_eq, SlashAction.slash_mul]
   exact congr_arg (· ∣[k] glMap (T_p_upper p hp.pos j'))
@@ -443,19 +572,13 @@ private theorem orbit_upper_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
   set A : ℤ := M 0 0 + ↑b.val * M 1 0 with hA_def
   set B : ℤ := M 0 1 + ↑b.val * M 1 1 with hB_def
+  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
   rw [Gamma0_mem] at hσ
   obtain ⟨a, ha⟩ := hA
   -- Construct τ = [[a, B], [σ₁₀, p·σ₁₁]]
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ := !![a, B; M 1 0, ↑p * M 1 1] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 := by
-    have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
-      have := σ.prop; rw [Matrix.det_fin_two] at this; exact_mod_cast this
-    simp only [τ_mat]; rw [det_fin_two_of]
-    have h1 : a * (↑p * M 1 1) = A * M 1 1 := by rw [ha]; ring
-    have h2 : A * M 1 1 - B * M 1 0 = M 0 0 * M 1 1 - M 0 1 * M 1 0 := by
-      simp only [show A = M 0 0 + ↑↑b * M 1 0 from rfl,
-        show B = M 0 1 + ↑↑b * M 1 1 from rfl]; ring
-    linarith
+  have hτ_det : τ_mat.det = 1 :=
+    upper_div_tau_det_eq_one hdet p a b.val (by rw [← hA_def, ha]; ring)
   set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
   -- τ ∈ Gamma0 N
   have hτ_g0 : τ ∈ Gamma0 N := by
@@ -485,14 +608,9 @@ private theorem orbit_upper_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
   conv_lhs => rw [hmatrix, map_mul, glMap_mapGL_eq, SlashAction.slash_mul]
   -- f|τ = ⟨τ⟩f = ⟨p·σ₁₁⟩f = ⟨p⟩(⟨σ⟩f) by factoring Gamma0MapUnits
   exact congr_arg (· ∣[k] glMap (T_p_lower p hp.pos))
-    (show ⇑f ∣[k] mapGL ℝ (τ : SL(2, ℤ)) =
-        ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f)) from by
-      change ⇑(diamondOpAux k ⟨τ, hτ_g0⟩ f) =
-        ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f))
-      rw [show diamondOpAux k ⟨τ, hτ_g0⟩ = diamondOp k (Gamma0MapUnits ⟨τ, hτ_g0⟩) from
-        (diamondOp_eq_diamondOpAux k _ ⟨τ, hτ_g0⟩ rfl).symm, hmap,
-        diamondOp_mul, LinearMap.comp_apply,
-        diamondOp_eq_diamondOpAux k _ ⟨σ, Gamma0_mem.mpr hσ⟩ rfl])
+    (congr_arg DFunLike.coe
+      (diamondOpAux_eq_diamondOp_mul k (ZMod.unitOfCoprime p hpN)
+        ⟨τ, hτ_g0⟩ ⟨σ, Gamma0_mem.mpr hσ⟩ f hmap))
 
 /-- **Lower → Upper for Γ₀(N)**:
 when `σ ∈ Γ₀(N)` and `p ∤ σ₁₀`, `β_∞ · σ` factors as `τ · β_{j'}` with
@@ -511,52 +629,32 @@ private theorem orbit_lower_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
   haveI : Fact p.Prime := ⟨hp⟩; haveI : NeZero p := ⟨hp.ne_zero⟩
   rw [← glMap_mapGL_eq, ← map_mul]
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
+  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
   rw [Gamma0_mem] at hσ
-  have hσ10_ne : (M 1 0 : ZMod p) ≠ 0 :=
+  have hσ10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 :=
     fun h => hσ10 ((ZMod.intCast_zmod_eq_zero_iff_dvd (M 1 0) p).mp h)
-  -- moebiusFin(b₀) at the p | A branch = (M 1 1 * (M 1 0)⁻¹).val
-  have hA₀ : ((M 0 0 + ↑b₀.val * M 1 0 : ℤ) : ZMod p) = 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hb₀
-  set j' := ((M 1 1 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val
+  -- `moebiusFin b₀` sits in the `p ∣ A` branch, giving `j' = (σ₁₁·σ₁₀⁻¹).val`.
+  set j' := (((M 1 1 : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val with hj'_def
   have hj'_eq : (moebiusFin p hp M b₀).val = j' := by
-    dsimp only [moebiusFin]; rw [if_pos hA₀]
+    dsimp only [moebiusFin]
+    rw [if_pos ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hb₀)]
   rw [hj'_eq]
-  -- Factor β_∞ · σ = τ · β_{j'}
-  have hmod : (M 1 0 : ZMod p) * (j' : ZMod p) = (M 1 1 : ZMod p) := by
-    rw [show (j' : ZMod p) = ((M 1 1 : ZMod p) * (M 1 0 : ZMod p)⁻¹ : ZMod p) from by
-      show (((M 1 1 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val : ZMod p) = _
-      rw [ZMod.natCast_val, ZMod.cast_id]]
-    rw [mul_comm (M 1 1 : ZMod p) _, ← mul_assoc, zmod_mul_inv hσ10_ne, one_mul]
-  have hp_div : (p : ℤ) ∣ (M 1 1 - M 1 0 * ↑j') := by
-    have : ((M 1 1 - M 1 0 * ↑j' : ℤ) : ZMod p) = 0 := by
-      push_cast; rw [sub_eq_zero]; exact hmod.symm
-    rwa [ZMod.intCast_zmod_eq_zero_iff_dvd] at this
-  obtain ⟨q, hq_eq⟩ := hp_div
+  obtain ⟨q, hq_eq⟩ := dvd_sub_mul_inv_val (M 1 1) (M 1 0) hσ10_ne
+  rw [← hj'_def] at hq_eq
+  -- Factor `β_∞ · σ = τ · β_{j'}` with `Gamma0MapUnits τ · ⟨p⟩ = Gamma0MapUnits σ`.
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ :=
     !![↑p * M 0 0, M 0 1 - M 0 0 * ↑j'; M 1 0, q] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 := by
-    have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
-      have := σ.prop; rw [Matrix.det_fin_two] at this; exact_mod_cast this
-    simp only [τ_mat]; rw [det_fin_two_of]
-    have hpq : (↑p : ℤ) * q = M 1 1 - M 1 0 * ↑j' := by linarith [hq_eq]
-    linarith [show ↑p * M 0 0 * q - (M 0 1 - M 0 0 * ↑j') * M 1 0 =
-      M 0 0 * M 1 1 - M 0 1 * M 1 0 from by rw [show ↑p * M 0 0 * q =
-        M 0 0 * (↑p * q) from by ring, hpq]; ring]
+  have hτ_det : τ_mat.det = 1 := lower_tau_det_eq_one hdet p j' q hq_eq
   set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
   have hτ_g0 : τ ∈ Gamma0 N := by
     rw [Gamma0_mem]; show ((M 1 0 : ℤ) : ZMod N) = 0; exact hσ
-  -- Gamma0MapUnits(τ) · unitOfCoprime(p) = Gamma0MapUnits(σ)
-  -- τ₁₁ = q and p·q = M₁₁ - M₁₀·j'. Since (M₁₀ : ZMod N) = 0, p·q ≡ M₁₁.
-  -- So q·p ≡ M₁₁, i.e., Gamma0Map(τ) * p = Gamma0Map(σ).
   have hunit_prod : Gamma0MapUnits ⟨τ, hτ_g0⟩ * ZMod.unitOfCoprime p hpN =
       Gamma0MapUnits ⟨σ, Gamma0_mem.mpr hσ⟩ := by
     ext; simp only [Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk,
       ZMod.coe_unitOfCoprime, Units.val_mul]
     show ((q : ℤ) : ZMod N) * ((p : ℕ) : ZMod N) = ((M 1 1 : ℤ) : ZMod N)
-    rw [mul_comm, ← Int.cast_natCast (R := ZMod N), ← Int.cast_mul]
-    have : ((↑p * q : ℤ) : ZMod N) = ((M 1 1 : ℤ) : ZMod N) := by
-      have h := hq_eq; rw [← h]; push_cast; rw [hσ, zero_mul, sub_zero]
-    exact this
+    rw [mul_comm, ← Int.cast_natCast (R := ZMod N), ← Int.cast_mul, ← hq_eq]
+    push_cast; rw [hσ, zero_mul, sub_zero]
   have hmatrix : T_p_lower p hp.pos * mapGL ℚ σ =
       mapGL ℚ τ * T_p_upper p hp.pos j' := by
     apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
@@ -570,22 +668,12 @@ private theorem orbit_lower_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
       first | rfl | simp |
         (exact_mod_cast (show M 1 1 = M 1 0 * ↑j' + q * ↑p from by linarith [hq_eq])) |
         ring
-  -- Conclude: (⟨p⟩f)|β_∞·σ = (⟨p⟩f)|τ|β_{j'} = ⟨τ⟩(⟨p⟩f)|β_{j'}
-  -- and ⟨τ⟩·⟨p⟩ = ⟨σ⟩, so ⟨τ⟩(⟨p⟩f) = ⟨σ⟩f
+  -- `(⟨p⟩f)|β_∞·σ = ⟨τ⟩(⟨p⟩f)|β_{j'} = ⟨σ⟩f|β_{j'}` since `Gamma0MapUnits τ · ⟨p⟩ = Gamma0MapUnits σ`.
   conv_lhs => rw [hmatrix, map_mul, glMap_mapGL_eq, SlashAction.slash_mul]
   exact congr_arg (· ∣[k] glMap (T_p_upper p hp.pos j'))
-    (show ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-        mapGL ℝ (τ : SL(2, ℤ)) = ⇑(diamondOpAux k ⟨σ, hσ⟩ f) from by
-      change ⇑(diamondOpAux k ⟨τ, hτ_g0⟩ (diamondOp k (ZMod.unitOfCoprime p hpN) f)) =
-        ⇑(diamondOpAux k ⟨σ, hσ⟩ f)
-      rw [show diamondOpAux k ⟨τ, hτ_g0⟩ = diamondOp k (Gamma0MapUnits ⟨τ, hτ_g0⟩) from
-        (diamondOp_eq_diamondOpAux k _ ⟨τ, hτ_g0⟩ rfl).symm,
-        show diamondOp k (Gamma0MapUnits ⟨τ, hτ_g0⟩)
-          (diamondOp k (ZMod.unitOfCoprime p hpN) f) =
-          ((diamondOp k (Gamma0MapUnits ⟨τ, hτ_g0⟩)).comp
-            (diamondOp k (ZMod.unitOfCoprime p hpN))) f from rfl,
-        ← diamondOp_mul, hunit_prod,
-        diamondOp_eq_diamondOpAux k _ ⟨σ, Gamma0_mem.mpr hσ⟩ rfl])
+    (congr_arg DFunLike.coe
+      (diamondOpAux_diamondOp_eq k (ZMod.unitOfCoprime p hpN)
+        ⟨τ, hτ_g0⟩ ⟨σ, Gamma0_mem.mpr hσ⟩ f hunit_prod))
 
 /-- **Lower → Lower for Γ₀(N)**:
 when `σ ∈ Γ₀(N)` and `p ∣ σ₁₀`, `β_∞ · σ` factors as `τ · β_∞` with
@@ -604,31 +692,24 @@ private theorem orbit_lower_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
       glMap (T_p_lower p hp.pos) := by
   rw [← glMap_mapGL_eq, ← map_mul]
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
+  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
   have hσ10_N : ((M 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hσ
   obtain ⟨c, hc⟩ := hσ10
-  -- Construct τ = [[σ₀₀, p·σ₀₁], [c, σ₁₁]] where σ₁₀ = p·c
+  -- Construct τ = [[σ₀₀, p·σ₀₁], [c, σ₁₁]] where σ₁₀ = p·c; here τ₁₁ = σ₁₁.
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ := !![M 0 0, ↑p * M 0 1; c, M 1 1] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 := by
-    have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
-      have := σ.prop; rw [Matrix.det_fin_two] at this; exact_mod_cast this
-    simp only [τ_mat]; rw [det_fin_two_of]
-    have h1 : M 0 1 * M 1 0 = ↑p * M 0 1 * c := by rw [hc]; ring
-    linarith
+  have hτ_det : τ_mat.det = 1 := lower_div_tau_det_eq_one hdet p c hc
   set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
-  -- τ ∈ Gamma0 N: τ₁₀ = c, N | c
-  -- (from gcd(p,N)=1 and N|σ₁₀, p|σ₁₀ ⟹ Np|σ₁₀)
-  have hc_N : ((c : ℤ) : ZMod N) = 0 := by
+  -- τ ∈ Gamma0 N: τ₁₀ = c with N ∣ c (from gcd(p,N)=1 and N∣σ₁₀=p·c).
+  have hτ_g0 : τ ∈ Gamma0 N := by
+    rw [Gamma0_mem]; show ((c : ℤ) : ZMod N) = 0
     have h1 : ((↑p * c : ℤ) : ZMod N) = 0 := by rw [← hc]; exact hσ10_N
     rw [Int.cast_mul, Int.cast_natCast] at h1
     exact (IsUnit.mul_right_eq_zero (ZMod.unitOfCoprime p hpN).isUnit).mp h1
-  have hτ_g0 : τ ∈ Gamma0 N := by
-    rw [Gamma0_mem]; show ((c : ℤ) : ZMod N) = 0; exact hc_N
-  -- Gamma0Map(τ) = Gamma0Map(σ): τ₁₁ = M 1 1 = σ₁₁
-  have hmap : Gamma0Map N ⟨τ, hτ_g0⟩ = Gamma0Map N ⟨σ, hσ⟩ := by
-    simp only [Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
+  -- Gamma0MapUnits τ = Gamma0MapUnits σ since τ₁₁ = σ₁₁.
+  have hmap_u : Gamma0MapUnits ⟨τ, hτ_g0⟩ = Gamma0MapUnits ⟨σ, hσ⟩ := by
+    ext; simp only [Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
     show ((τ_mat 1 1 : ℤ) : ZMod N) = ((M 1 1 : ℤ) : ZMod N)
     simp [τ_mat, Matrix.cons_val_one]
-  -- Matrix equation: β_∞ · σ = τ · β_∞
   have hmatrix : T_p_lower p hp.pos * mapGL ℚ σ =
       mapGL ℚ τ * T_p_lower p hp.pos := by
     apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
@@ -642,39 +723,113 @@ private theorem orbit_lower_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
       first | rfl | simp |
         (exact_mod_cast (show M 1 0 = c * ↑p from by linarith [hc])) |
         ring
+  -- (⟨p⟩f)|τ = ⟨τ⟩(⟨p⟩f) = ⟨σ⟩(⟨p⟩f) = ⟨p⟩(⟨σ⟩f) by diamond commutativity.
   conv_lhs => rw [hmatrix, map_mul, glMap_mapGL_eq, SlashAction.slash_mul]
-  -- (⟨p⟩f)|τ = ⟨τ⟩(⟨p⟩f) = ⟨σ⟩(⟨p⟩f) = ⟨p⟩(⟨σ⟩f)
-  -- (diamond commutativity)
   exact congr_arg (· ∣[k] glMap (T_p_lower p hp.pos))
-    (show ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k] mapGL ℝ (τ : SL(2, ℤ)) =
-        ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f)) from by
-      -- LHS = ⟨τ⟩(⟨p⟩f)
-      change ⇑(diamondOpAux k ⟨τ, hτ_g0⟩ (diamondOp k (ZMod.unitOfCoprime p hpN) f)) =
-        ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f))
-      -- Rewrite ⟨τ⟩ = ⟨Gamma0MapUnits(τ)⟩ = ⟨Gamma0MapUnits(σ)⟩ = ⟨σ⟩
-      rw [show diamondOpAux k ⟨τ, hτ_g0⟩ = diamondOp k (Gamma0MapUnits ⟨τ, hτ_g0⟩) from
-        (diamondOp_eq_diamondOpAux k _ ⟨τ, hτ_g0⟩ rfl).symm]
-      -- ⟨Gamma0MapUnits(τ)⟩ = ⟨Gamma0MapUnits(σ)⟩ by Gamma0Map equality
-      have hmap_u : Gamma0MapUnits ⟨τ, hτ_g0⟩ = Gamma0MapUnits ⟨σ, hσ⟩ := by
-        ext; simp [Gamma0MapUnits_val, hmap]
-      rw [hmap_u]
-      -- Now: ⟨σ_u⟩(⟨p⟩f) = ⟨p⟩(⟨σ_u⟩f) by commutativity of diamond operators
-      -- ⟨σ_u⟩ ∘ ⟨p⟩ = ⟨σ_u · p⟩ = ⟨p · σ_u⟩ = ⟨p⟩ ∘ ⟨σ_u⟩
-      have h_comm : (diamondOp k (Gamma0MapUnits ⟨σ, hσ⟩)).comp
-          (diamondOp k (ZMod.unitOfCoprime p hpN)) =
-          (diamondOp k (ZMod.unitOfCoprime p hpN)).comp
-          (diamondOp k (Gamma0MapUnits ⟨σ, hσ⟩)) := by
-        rw [← diamondOp_mul, ← diamondOp_mul, mul_comm]
-      change ⇑(diamondOp k (Gamma0MapUnits ⟨σ, hσ⟩)
-          (diamondOp k (ZMod.unitOfCoprime p hpN) f)) =
-        ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f))
-      rw [show diamondOp k (Gamma0MapUnits ⟨σ, hσ⟩)
-          (diamondOp k (ZMod.unitOfCoprime p hpN) f) =
-          ((diamondOp k (Gamma0MapUnits ⟨σ, hσ⟩)).comp
-            (diamondOp k (ZMod.unitOfCoprime p hpN))) f from rfl, h_comm]
-      show ⇑(((diamondOp k (ZMod.unitOfCoprime p hpN)).comp
-          (diamondOp k (Gamma0MapUnits ⟨σ, hσ⟩))) f) = _
-      rw [LinearMap.comp_apply, diamondOp_eq_diamondOpAux k _ ⟨σ, hσ⟩ rfl])
+    (congr_arg DFunLike.coe
+      (diamondOpAux_diamondOp_comm k (ZMod.unitOfCoprime p hpN) ⟨τ, hτ_g0⟩ ⟨σ, hσ⟩ f hmap_u))
+
+/-! ### Per-term slash identities under Γ₁(N)
+
+For `σ ∈ Γ₁(N)` the diamond operator is trivial (`diamondOpAux_gamma1`), so the
+orbit factorisation lemmas simplify: an upper term either maps to another upper
+term (`moebiusFin`) or to the lower term, and the lower term maps to an upper
+term. These three wrappers package the slash composition for the slash-invariance
+cases. -/
+
+/-- Upper → upper under Γ₁(N): `(f|β_b)|σ = f|β_{φ(b)}` when `p ∤ (σ₀₀ + b·σ₁₀)`. -/
+private lemma slash_upper_eq_under_gamma1 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (σ : SL(2, ℤ)) (hσ : σ ∈ Gamma1 N) (b : Fin p)
+    (hA : ¬(p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
+      ↑b.val * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0)) :
+    (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
+    ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp (σ : Matrix (Fin 2) (Fin 2) ℤ) b).val :
+      GL (Fin 2) ℚ) := by
+  change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ =
+    ⇑f ∣[k] glMap (T_p_upper p hp.pos (moebiusFin p hp _ b).val)
+  rw [← SlashAction.slash_mul,
+      orbit_upper_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) b hA,
+      show ⇑(diamondOpAux k ⟨σ, Gamma1_in_Gamma0 N hσ⟩ f) = ⇑f from
+        congr_arg _ (diamondOpAux_gamma1 k σ hσ f)]
+
+/-- Upper → lower under Γ₁(N): `(f|β_b)|σ = (⟨p⟩f)|β_∞` when `p ∣ (σ₀₀ + b·σ₁₀)`. -/
+private lemma slash_upper_div_eq_under_gamma1 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (σ : SL(2, ℤ)) (hσ : σ ∈ Gamma1 N) (b : Fin p)
+    (hA : (p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
+      ↑b.val * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0)) :
+    (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
+    ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
+  change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ = _
+  rw [← SlashAction.slash_mul,
+      orbit_upper_div_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) b hA,
+      diamondOpAux_gamma1 k σ hσ f]; rfl
+
+/-- Lower → upper under Γ₁(N): `((⟨p⟩f)|β_∞)|σ = f|β_{φ(b₀)}` when `p ∤ σ₁₀`. -/
+private lemma slash_lower_eq_under_gamma1 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (σ : SL(2, ℤ)) (hσ : σ ∈ Gamma1 N)
+    (hσ10p : ¬(p : ℤ) ∣ (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0) (b₀ : Fin p)
+    (hb₀ : (p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
+      ↑b₀.val * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0)) :
+    (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k]
+      mapGL ℝ σ =
+    ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp (σ : Matrix (Fin 2) (Fin 2) ℤ) b₀).val :
+      GL (Fin 2) ℚ) := by
+  change (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+    glMap (T_p_lower p hp.pos)) ∣[k] mapGL ℝ σ = _
+  rw [← SlashAction.slash_mul,
+      orbit_lower_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) hσ10p b₀ hb₀,
+      show ⇑(diamondOpAux k ⟨σ, Gamma1_in_Gamma0 N hσ⟩ f) = ⇑f from
+        congr_arg _ (diamondOpAux_gamma1 k σ hσ f)]; rfl
+
+/-! ### Per-term slash identities under Γ₀(N)
+
+The `Γ₀(N)` analogues of the `Γ₁(N)` wrappers above: the output term carries
+`⟨σ⟩f = diamondOpAux ⟨σ, hσ⟩ f` rather than bare `f`. Used in the `orbit_sum_comm`
+cases below. -/
+
+/-- Upper → upper under Γ₀(N): `(f|β_b)|σ = (⟨σ⟩f)|β_{φ(b)}` when `p ∤ (σ₀₀ + b·σ₁₀)`. -/
+private lemma slash_upper_eq_under_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (σ : SL(2, ℤ)) (hσ : σ ∈ Gamma0 N) (b : Fin p)
+    (hA : ¬(p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
+      ↑b.val * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0)) :
+    (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
+    ⇑(diamondOpAux k ⟨σ, hσ⟩ f) ∣[k]
+      (T_p_upper p hp.pos (moebiusFin p hp (σ : Matrix (Fin 2) (Fin 2) ℤ) b).val :
+        GL (Fin 2) ℚ) := by
+  change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ = _
+  rw [← SlashAction.slash_mul]; exact orbit_upper_gamma0 k p hp hpN f σ hσ b hA
+
+/-- Upper → lower under Γ₀(N): `(f|β_b)|σ = ⟨p⟩(⟨σ⟩f)|β_∞` when `p ∣ (σ₀₀ + b·σ₁₀)`. -/
+private lemma slash_upper_div_eq_under_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (σ : SL(2, ℤ)) (hσ : σ ∈ Gamma0 N) (b : Fin p)
+    (hA : (p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
+      ↑b.val * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0)) :
+    (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
+    ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f)) ∣[k]
+      (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
+  change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ = _
+  rw [← SlashAction.slash_mul]; exact orbit_upper_div_gamma0 k p hp hpN f σ hσ b hA
+
+/-- Lower → upper under Γ₀(N): `((⟨p⟩f)|β_∞)|σ = (⟨σ⟩f)|β_{φ(b₀)}` when `p ∤ σ₁₀`. -/
+private lemma slash_lower_eq_under_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (σ : SL(2, ℤ)) (hσ : σ ∈ Gamma0 N)
+    (hσ10p : ¬(p : ℤ) ∣ (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0) (b₀ : Fin p)
+    (hb₀ : (p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
+      ↑b₀.val * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0)) :
+    (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k]
+      mapGL ℝ σ =
+    ⇑(diamondOpAux k ⟨σ, hσ⟩ f) ∣[k]
+      (T_p_upper p hp.pos (moebiusFin p hp (σ : Matrix (Fin 2) (Fin 2) ℤ) b₀).val :
+        GL (Fin 2) ℚ) := by
+  change (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+    glMap (T_p_lower p hp.pos)) ∣[k] mapGL ℝ σ = _
+  rw [← SlashAction.slash_mul]; exact orbit_lower_gamma0 k p hp hpN f σ hσ hσ10p b₀ hb₀
 
 /-- Case 1 of slash invariance: `p ∣ σ₁₀`. The lower term is fixed and
 upper terms permute via moebiusFin. -/
@@ -696,33 +851,13 @@ private theorem heckeT_p_slash_invariant_case1 [NeZero N] (k : ℤ) (p : ℕ)
   have hdet_M : M.det = 1 := by
     change (σ : Matrix (Fin 2) (Fin 2) ℤ).det = 1; exact_mod_cast σ.prop
   -- p | σ₁₀ implies p ∤ (σ₀₀ + b·σ₁₀) for all b (det ≡ 1 mod p)
-  have hA_all : ∀ b : Fin p,
-      ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) := by
-    intro b hdvd
-    have h10 : ((M 1 0 : ℤ) : ZMod p) = 0 :=
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hσ10p
-    have h00 : ((M 0 0 : ℤ) : ZMod p) = 0 := by
-      have := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hdvd
-      push_cast at this; rwa [h10, mul_zero, add_zero] at this
-    have hd : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by
-      have h : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
-        rw [det_fin_two] at hdet_M; exact hdet_M
-      simp [h]
-    rw [show ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) =
-      (M 0 0 : ZMod p) * (M 1 1 : ZMod p) - (M 0 1 : ZMod p) * (M 1 0 : ZMod p) from by
-      push_cast; ring, h00, h10, zero_mul, mul_zero, sub_zero] at hd
-    exact zero_ne_one hd
+  have hA_all : ∀ b : Fin p, ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) := fun b =>
+    not_dvd_topLeft_add_of_dvd_botLeft p hp M (sl2z_fin_two_det_eq_one σ) hσ10p _
   -- Each upper term maps via moebiusFin
   have h_upper : ∀ b : Fin p,
       (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-      ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b).val : GL (Fin 2) ℚ) := by
-    intro b
-    change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ =
-      ⇑f ∣[k] glMap (T_p_upper p hp.pos (moebiusFin p hp M b).val)
-    rw [← SlashAction.slash_mul,
-        orbit_upper_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) b (hA_all b),
-        show ⇑(diamondOpAux k ⟨σ, Gamma1_in_Gamma0 N hσ⟩ f) = ⇑f from
-          congr_arg _ (diamondOpAux_gamma1 k σ hσ f)]
+      ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b).val : GL (Fin 2) ℚ) := fun b =>
+    slash_upper_eq_under_gamma1 k p hp hpN f σ hσ b (hA_all b)
   -- Lower term fixed by orbit_lower_div_gamma0
   have h_lower : (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
       (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
@@ -759,62 +894,23 @@ private theorem heckeT_p_slash_invariant_case2 [NeZero N] (k : ℤ) (p : ℕ)
         (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   haveI : Fact p.Prime := ⟨hp⟩
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ) with hM
+  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
   have hdet_M : M.det = 1 := by
     change (σ : Matrix (Fin 2) (Fin 2) ℤ).det = 1; exact_mod_cast σ.prop
-  -- Step 1: For b with p ∤ A, upper→upper via moebiusFin
-  have h_upper : ∀ b : Fin p,
-      ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) →
-      (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-      ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b).val : GL (Fin 2) ℚ) := by
-    intro b hA
-    change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ =
-      ⇑f ∣[k] glMap (T_p_upper p hp.pos (moebiusFin p hp M b).val)
-    rw [← SlashAction.slash_mul,
-        orbit_upper_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) b hA,
-        show ⇑(diamondOpAux k ⟨σ, Gamma1_in_Gamma0 N hσ⟩ f) = ⇑f from
-          congr_arg _ (diamondOpAux_gamma1 k σ hσ f)]
-  -- Step 2: For b₀ where p | A, upper→lower
-  have h_div : ∀ b : Fin p,
-      (p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) →
-      (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-      ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-        (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-    intro b hA
-    change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ = _
-    rw [← SlashAction.slash_mul,
-        orbit_upper_div_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) b hA,
-        diamondOpAux_gamma1 k σ hσ f]; rfl
-  -- Step 3: Lower→upper (deterministic via moebiusFin)
-  have h10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 := by
-    intro h; exact hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
-  -- Find b₀: the unique index where p | A
+  have h10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 :=
+    fun h => hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
+  -- `b₀` is the unique index with `p ∣ A`; off it, upper terms permute via `moebiusFin`.
   set b₀ : Fin p := ⟨(-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val, ZMod.val_lt _⟩
-  have hb₀_dvd : (p : ℤ) ∣ (M 0 0 + ↑b₀.val * M 1 0) := by
-    rw [show (p : ℤ) ∣ _ ↔ ((M 0 0 + ↑b₀.val * M 1 0 : ℤ) : ZMod p) = 0 from
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).symm]; push_cast
-    show (M 0 0 : ZMod p) + ((-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val : ZMod p) *
-      (M 1 0 : ZMod p) = 0
-    rw [ZMod.natCast_val, ZMod.cast_id]
-    have : (-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹) * (M 1 0 : ZMod p) =
-        -(M 0 0 : ZMod p) := by
-      rw [mul_assoc, mul_comm (M 1 0 : ZMod p)⁻¹ _, zmod_mul_inv h10_ne, mul_one]
-    rw [this, add_neg_cancel]
-  -- Lower orbit identity: output = g(moebiusFin(b₀))
+  have hb₀_dvd : (p : ℤ) ∣ (M 0 0 + ↑b₀.val * M 1 0) :=
+    dvd_topLeft_add_canonicalIndex p hp M h10_ne
   have h_lower : (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
       (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-    ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b₀).val : GL (Fin 2) ℚ) := by
-    change (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-      glMap (T_p_lower p hp.pos)) ∣[k] mapGL ℝ σ = _
-    rw [← SlashAction.slash_mul,
-        orbit_lower_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) hσ10p b₀ hb₀_dvd,
-        show ⇑(diamondOpAux k ⟨σ, Gamma1_in_Gamma0 N hσ⟩ f) = ⇑f from
-          congr_arg _ (diamondOpAux_gamma1 k σ hσ f)]; rfl
-  -- Step 4: moebiusFin is a bijection on Fin p
+    ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b₀).val : GL (Fin 2) ℚ) :=
+    slash_lower_eq_under_gamma1 k p hp hpN f σ hσ hσ10p b₀ hb₀_dvd
   have h_bij : Function.Bijective (moebiusFin p hp M) :=
     Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)
-  -- Step 5: Assembly
   rw [← Fin.sum_univ_eq_sum_range, ← Fin.sum_univ_eq_sum_range]
+  -- Each upper term goes to the lower term (at `b₀`) or to a permuted upper term.
   have h_all : ∀ b : Fin p,
       (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
       if (p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0)
@@ -822,42 +918,18 @@ private theorem heckeT_p_slash_invariant_case2 [NeZero N] (k : ℤ) (p : ℕ)
         (T_p_lower p hp.pos : GL (Fin 2) ℚ)
       else ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b).val : GL (Fin 2) ℚ) := by
     intro b; split_ifs with h
-    · exact h_div b h
-    · exact h_upper b h
+    · exact slash_upper_div_eq_under_gamma1 k p hp hpN f σ hσ b h
+    · exact slash_upper_eq_under_gamma1 k p hp hpN f σ hσ b h
   simp_rw [h_all]; rw [h_lower]
   set g : Fin p → UpperHalfPlane → ℂ :=
-    fun i => ⇑f ∣[k] (T_p_upper p hp.pos i.val : GL (Fin 2) ℚ) with hg_def
+    fun i => ⇑f ∣[k] (T_p_upper p hp.pos i.val : GL (Fin 2) ℚ)
   set lower' := ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
     (T_p_lower p hp.pos : GL (Fin 2) ℚ)
-  have h_ite_eq : ∀ i : Fin p,
-      (if (p : ℤ) ∣ (M 0 0 + ↑i.val * M 1 0) then lower' else g (moebiusFin p hp M i)) =
-      g (moebiusFin p hp M i) + if i = b₀ then lower' - g (moebiusFin p hp M b₀) else 0 := by
-    intro i
-    have h_iff : (p : ℤ) ∣ (M 0 0 + ↑i.val * M 1 0) ↔ i = b₀ := by
-      constructor
-      · intro hdvd
-        exact moebiusFin_injective p hp M hdet_M (by
-          simp only [moebiusFin,
-            show ((M 0 0 + ↑i.val * M 1 0 : ℤ) : ZMod p) = 0 from
-              (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hdvd,
-            show ((M 0 0 + ↑b₀.val * M 1 0 : ℤ) : ZMod p) = 0 from
-              (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hb₀_dvd, ↓reduceIte])
-      · rintro rfl; exact hb₀_dvd
-    simp only [h_iff]
-    split_ifs with h1
-    · subst h1; simp
-    · rw [add_zero]
   show (∑ x, if (p : ℤ) ∣ (M 0 0 + ↑x.val * M 1 0) then lower'
         else g (moebiusFin p hp M x)) + g (moebiusFin p hp M b₀) =
       Finset.univ.sum g + lower'
-  simp_rw [h_ite_eq, Finset.sum_add_distrib]
-  rw [Finset.sum_ite_eq' Finset.univ b₀ (fun _ => lower' - g (moebiusFin p hp M b₀)),
-      if_pos (Finset.mem_univ _)]
-  have h_bij_sum : ∑ x : Fin p, g (moebiusFin p hp M x) = Finset.univ.sum g :=
-    Finset.sum_equiv (Equiv.ofBijective _ h_bij)
-      (fun _ => ⟨fun _ => Finset.mem_univ _, fun _ => Finset.mem_univ _⟩)
-      (fun _ _ => rfl)
-  rw [h_bij_sum]; abel
+  exact sum_ite_swap_eq g lower' (moebiusFin p hp M) h_bij b₀ _
+    (dvd_topLeft_add_iff_eq_canonicalIndex p hp M hdet_M b₀ hb₀_dvd)
 
 /-- Slash invariance of T_p under Γ₁(N).
 
@@ -901,22 +973,9 @@ private theorem orbit_sum_comm_case1 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
   have hdet_M : M.det = 1 := by
     change (σ : Matrix (Fin 2) (Fin 2) ℤ).det = 1; exact_mod_cast σ.prop
   have h_coe : (⇑(diamondOpAux k g f) : UpperHalfPlane → ℂ) = ⇑f ∣[k] mapGL ℝ σ := rfl
-  have hA_all : ∀ b : Fin p,
-      ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) := by
-    intro b hdvd
-    have h10 : ((M 1 0 : ℤ) : ZMod p) = 0 :=
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hσ10p
-    have h00 : ((M 0 0 : ℤ) : ZMod p) = 0 := by
-      have := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hdvd
-      push_cast at this; rwa [h10, mul_zero, add_zero] at this
-    have hd : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by
-      have h : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := by
-        rw [det_fin_two] at hdet_M; exact hdet_M
-      simp [h]
-    rw [show ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) =
-      (M 0 0 : ZMod p) * (M 1 1 : ZMod p) - (M 0 1 : ZMod p) * (M 1 0 : ZMod p) from by
-      push_cast; ring, h00, h10, zero_mul, mul_zero, sub_zero] at hd
-    exact zero_ne_one hd
+  -- `p ∣ σ₁₀` forces `p ∤ A` for every index (else `det ≡ 0`).
+  have hA_all : ∀ b : Fin p, ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) := fun b =>
+    not_dvd_topLeft_add_of_dvd_botLeft p hp M (sl2z_fin_two_det_eq_one σ) hσ10p _
   -- Each upper term: f|β_b|σ = (⟨σ⟩f)|β_{φ(b)} via orbit_upper_gamma0
   have h_upper : ∀ b : Fin p,
       (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
@@ -971,105 +1030,37 @@ private theorem orbit_sum_comm_case2 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ) with hM
   have hdet_M : M.det = 1 := by
     change (σ : Matrix (Fin 2) (Fin 2) ℤ).det = 1; exact_mod_cast σ.prop
-  have h_coe : (⇑(diamondOpAux k g f) : UpperHalfPlane → ℂ) = ⇑f ∣[k] mapGL ℝ σ := rfl
-  -- Step 1: upper→upper when p ∤ A
-  have h_upper : ∀ b : Fin p,
-      ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) →
-      (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-      (⇑f ∣[k] mapGL ℝ σ) ∣[k]
-        (T_p_upper p hp.pos (moebiusFin p hp M b).val : GL (Fin 2) ℚ) := by
-    intro b hA
-    change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ =
-      (⇑f ∣[k] mapGL ℝ σ) ∣[k] glMap (T_p_upper p hp.pos (moebiusFin p hp M b).val)
-    rw [← SlashAction.slash_mul]
-    have := orbit_upper_gamma0 k p hp hpN f σ hσ b hA
-    rw [h_coe] at this; exact this
-  -- Step 2: upper→lower when p | A
-  have h_div : ∀ b : Fin p,
-      (p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) →
-      (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-      ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k g f)) ∣[k]
-        (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-    intro b hA
-    change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ = _
-    rw [← SlashAction.slash_mul]
-    exact orbit_upper_div_gamma0 k p hp hpN f σ hσ b hA
-  -- Step 3: Find b₀ and lower→upper
-  have h10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 := by
-    intro h; exact hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
+  have h10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 :=
+    fun h => hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
+  -- `b₀` is the unique index with `p ∣ A`; the lower term lands at `φ(b₀)`.
   set b₀ : Fin p := ⟨(-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val, ZMod.val_lt _⟩
-  have hb₀_dvd : (p : ℤ) ∣ (M 0 0 + ↑b₀.val * M 1 0) := by
-    rw [show (p : ℤ) ∣ _ ↔ ((M 0 0 + ↑b₀.val * M 1 0 : ℤ) : ZMod p) = 0 from
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).symm]; push_cast
-    show (M 0 0 : ZMod p) + ((-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val : ZMod p) *
-      (M 1 0 : ZMod p) = 0
-    rw [ZMod.natCast_val, ZMod.cast_id]
-    have : (-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹) * (M 1 0 : ZMod p) =
-        -(M 0 0 : ZMod p) := by
-      rw [mul_assoc, mul_comm (M 1 0 : ZMod p)⁻¹ _, zmod_mul_inv h10_ne, mul_one]
-    rw [this, add_neg_cancel]
-  -- Lower orbit identity: (⟨p⟩f)|β_∞|σ = (⟨σ⟩f)|β_{φ(b₀)}
-  have h_lower : (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-      (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-    (⇑f ∣[k] mapGL ℝ σ) ∣[k]
-      (T_p_upper p hp.pos (moebiusFin p hp M b₀).val : GL (Fin 2) ℚ) := by
-    change (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-      glMap (T_p_lower p hp.pos)) ∣[k] mapGL ℝ σ = _
-    rw [← SlashAction.slash_mul]
-    have := orbit_lower_gamma0 k p hp hpN f σ hσ hσ10p b₀ hb₀_dvd
-    rw [h_coe] at this; exact this
-  -- Step 4: moebiusFin bijection
+  have hb₀_dvd : (p : ℤ) ∣ (M 0 0 + ↑b₀.val * M 1 0) :=
+    dvd_topLeft_add_canonicalIndex p hp M h10_ne
+  have h_lower := slash_lower_eq_under_gamma0 k p hp hpN f σ hσ hσ10p b₀ hb₀_dvd
   have h_bij : Function.Bijective (moebiusFin p hp M) :=
     Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)
-  -- Step 5: Assembly
   rw [← Fin.sum_univ_eq_sum_range, ← Fin.sum_univ_eq_sum_range]
-  rw [h_coe]
+  -- Each upper term goes to the lower term (at `b₀`) or to a permuted upper term.
   have h_all : ∀ b : Fin p,
       (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
       if (p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0)
-      then ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k g f)) ∣[k]
+      then ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f)) ∣[k]
         (T_p_lower p hp.pos : GL (Fin 2) ℚ)
-      else (⇑f ∣[k] mapGL ℝ σ) ∣[k]
+      else ⇑(diamondOpAux k ⟨σ, hσ⟩ f) ∣[k]
         (T_p_upper p hp.pos (moebiusFin p hp M b).val : GL (Fin 2) ℚ) := by
     intro b; split_ifs with h
-    · exact h_div b h
-    · exact h_upper b h
+    · exact slash_upper_div_eq_under_gamma0 k p hp hpN f σ hσ b h
+    · exact slash_upper_eq_under_gamma0 k p hp hpN f σ hσ b h
   simp_rw [h_all]; rw [h_lower]
   set g' : Fin p → UpperHalfPlane → ℂ :=
-    fun i => (⇑f ∣[k] mapGL ℝ σ) ∣[k] (T_p_upper p hp.pos i.val : GL (Fin 2) ℚ)
-  set lower' := ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k g f)) ∣[k]
+    fun i => ⇑(diamondOpAux k ⟨σ, hσ⟩ f) ∣[k] (T_p_upper p hp.pos i.val : GL (Fin 2) ℚ)
+  set lower' := ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f)) ∣[k]
     (T_p_lower p hp.pos : GL (Fin 2) ℚ)
-  have h_ite_eq : ∀ i : Fin p,
-      (if (p : ℤ) ∣ (M 0 0 + ↑i.val * M 1 0) then lower'
-        else g' (moebiusFin p hp M i)) =
-      g' (moebiusFin p hp M i) +
-        if i = b₀ then lower' - g' (moebiusFin p hp M b₀) else 0 := by
-    intro i
-    have h_iff : (p : ℤ) ∣ (M 0 0 + ↑i.val * M 1 0) ↔ i = b₀ := by
-      constructor
-      · intro hdvd
-        exact moebiusFin_injective p hp M hdet_M (by
-          simp only [moebiusFin,
-            show ((M 0 0 + ↑i.val * M 1 0 : ℤ) : ZMod p) = 0 from
-              (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hdvd,
-            show ((M 0 0 + ↑b₀.val * M 1 0 : ℤ) : ZMod p) = 0 from
-              (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hb₀_dvd, ↓reduceIte])
-      · rintro rfl; exact hb₀_dvd
-    simp only [h_iff]
-    split_ifs with h1
-    · subst h1; simp
-    · rw [add_zero]
   show (∑ x, if (p : ℤ) ∣ (M 0 0 + ↑x.val * M 1 0) then lower'
         else g' (moebiusFin p hp M x)) + g' (moebiusFin p hp M b₀) =
       Finset.univ.sum g' + lower'
-  simp_rw [h_ite_eq, Finset.sum_add_distrib]
-  rw [Finset.sum_ite_eq' Finset.univ b₀ (fun _ => lower' - g' (moebiusFin p hp M b₀)),
-      if_pos (Finset.mem_univ _)]
-  have h_bij_sum : ∑ x : Fin p, g' (moebiusFin p hp M x) = Finset.univ.sum g' :=
-    Finset.sum_equiv (Equiv.ofBijective _ h_bij)
-      (fun _ => ⟨fun _ => Finset.mem_univ _, fun _ => Finset.mem_univ _⟩)
-      (fun _ _ => rfl)
-  rw [h_bij_sum]; abel
+  exact sum_ite_swap_eq g' lower' (moebiusFin p hp M) h_bij b₀ _
+    (dvd_topLeft_add_iff_eq_canonicalIndex p hp M hdet_M b₀ hb₀_dvd)
 
 /-- **Orbit sum comm** (Diamond–Shurman §5.2, p.170): for `g ∈ Γ₀(N)`,
 `(T_p f) ∣[k] g = T_p (f ∣[k] g)`, i.e., `T_p` commutes with the

@@ -441,6 +441,81 @@ private lemma sl_exists_col_of_primitive_fin_2 (w : Fin 2 → ℤ)
   · exact hg0
   · exact hg1
 
+/-- **Nonzero first-two-entry normalization**: a primitive vector `w` of dimension
+`≥ 3` can be moved by some `T ∈ SL` so that one of the first two coordinates of
+`T *ᵥ w` is nonzero. If `w 0` or `w 1` is already nonzero use `T = 1`; otherwise
+primitivity yields a nonzero entry `w j` with `j ≥ 2`, and the transvection adding
+row `j` into row `1` makes coordinate `1` nonzero. -/
+private lemma sl_exists_transvection_first_two_ne {n : ℕ} (w : Fin (n + 3) → ℤ)
+    (hw : ∀ d : ℤ, (∀ i, d ∣ w i) → IsUnit d) :
+    ∃ T : SpecialLinearGroup (Fin (n + 3)) ℤ,
+      (T.1 *ᵥ w) 0 ≠ 0 ∨ (T.1 *ᵥ w) 1 ≠ 0 := by
+  have h_has_ne : ∃ j : Fin (n + 3), w j ≠ 0 := by
+    by_contra h_all_zero
+    push_neg at h_all_zero
+    have : IsUnit (2 : ℤ) := hw 2 (fun i ↦ by rw [h_all_zero i]; exact dvd_zero _)
+    rw [Int.isUnit_iff] at this; omega
+  by_cases h_ne : w 0 ≠ 0 ∨ w 1 ≠ 0
+  · refine ⟨1, ?_⟩
+    rcases h_ne with h0 | h1
+    · left; rwa [Matrix.SpecialLinearGroup.coe_one, Matrix.one_mulVec]
+    · right; rwa [Matrix.SpecialLinearGroup.coe_one, Matrix.one_mulVec]
+  · push_neg at h_ne
+    obtain ⟨hw0, hw1⟩ := h_ne
+    obtain ⟨j, hj_ne⟩ := h_has_ne
+    have hj_ge : 2 ≤ j.val := by
+      by_contra hlt
+      push_neg at hlt
+      have h_01 : j.val = 0 ∨ j.val = 1 := by omega
+      rcases h_01 with h0 | h1
+      · apply hj_ne
+        have : j = 0 := Fin.ext h0
+        rw [this]; exact hw0
+      · apply hj_ne
+        have : j = 1 := Fin.ext h1
+        rw [this]; exact hw1
+    have hj_ne_1 : (1 : Fin (n + 3)) ≠ j := by
+      apply Fin.ne_of_val_ne; show 1 ≠ j.val; omega
+    have h_det : (Matrix.transvection (1 : Fin (n + 3)) j (1 : ℤ)).det = 1 :=
+      Matrix.det_transvection_of_ne (1 : Fin (n + 3)) j hj_ne_1 (1 : ℤ)
+    refine ⟨⟨Matrix.transvection (1 : Fin (n + 3)) j (1 : ℤ), h_det⟩, ?_⟩
+    right
+    show (Matrix.transvection (1 : Fin (n + 3)) j (1 : ℤ) *ᵥ w) 1 ≠ 0
+    simp only [Matrix.transvection, Matrix.add_mulVec, Matrix.one_mulVec,
+      Matrix.single_mulVec, Pi.add_apply, Function.update_self]
+    rw [hw1]; simpa using hj_ne
+
+/-- **Primitivity transfer to the Bezout-reduced vector**: the dimension-`n+2`
+vector `w'` built from `w_ok` (with `w' 0 = gcd(w_ok 0, w_ok 1)` and
+`w' ⟨i+1, _⟩ = w_ok ⟨i+2, _⟩`) is primitive whenever `w_ok` is. Any common divisor
+`d` of the `w'` entries divides `gcd(w_ok 0, w_ok 1)` (hence `w_ok 0` and `w_ok 1`)
+and every later entry of `w_ok`, so `d` is a unit. -/
+private lemma sl_reduced_vector_primitive {n : ℕ}
+    (w_ok : Fin (n + 3) → ℤ) (w' : Fin (n + 2) → ℤ)
+    (hw_ok_prim : ∀ d : ℤ, (∀ i, d ∣ w_ok i) → IsUnit d)
+    (hw'_0 : w' 0 = (Int.gcd (w_ok 0) (w_ok 1) : ℤ))
+    (hw'_succ : ∀ i : Fin (n + 1), w' ⟨i.val + 1, by omega⟩ =
+      w_ok ⟨i.val + 2, by omega⟩) :
+    ∀ d : ℤ, (∀ i, d ∣ w' i) → IsUnit d := by
+  intro d hd
+  apply hw_ok_prim
+  intro k
+  by_cases hk0 : k.val = 0
+  · rw [show k = (⟨0, by omega⟩ : Fin (n + 3)) from Fin.ext hk0]
+    have h_d_dvd_gcd : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ) := hw'_0 ▸ hd 0
+    exact h_d_dvd_gcd.trans (Int.gcd_dvd_left _ _)
+  · by_cases hk1 : k.val = 1
+    · rw [show k = (⟨1, by omega⟩ : Fin (n + 3)) from Fin.ext hk1]
+      have h_d_dvd_gcd : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ) := hw'_0 ▸ hd 0
+      exact h_d_dvd_gcd.trans (Int.gcd_dvd_right _ _)
+    · have h_ge : 2 ≤ k.val := by omega
+      have h_lt : k.val < n + 3 := k.isLt
+      let k' : Fin (n + 1) := ⟨k.val - 2, by omega⟩
+      rw [show k = ⟨k'.val + 2, by omega⟩ from
+        Fin.ext (by show k.val = k.val - 2 + 2; omega)]
+      rw [← hw'_succ k']
+      exact hd ⟨k'.val + 1, by omega⟩
+
 /-- **Primitive-column completion helper (general dim ≥ 2)**: Given a primitive
 integer vector `w : Fin (n + 2) → ℤ` (any common integer divisor of all entries
 is a unit), there exists `N ∈ SL(Fin (n + 2), ℤ)` whose first column equals `w`.
@@ -452,42 +527,7 @@ lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → ℤ)
     ∃ N : SpecialLinearGroup (Fin (n + 2)) ℤ, ∀ i, N.1 i 0 = w i
   | 0, w, hw => sl_exists_col_of_primitive_fin_2 w hw
   | n + 1, w, hw => by
-    have h_has_ne : ∃ j : Fin (n + 3), w j ≠ 0 := by
-      by_contra h_all_zero
-      push_neg at h_all_zero
-      have : IsUnit (2 : ℤ) := hw 2 (fun i ↦ by rw [h_all_zero i]; exact dvd_zero _)
-      rw [Int.isUnit_iff] at this; omega
-    obtain ⟨T, hT_ne⟩ : ∃ T : SpecialLinearGroup (Fin (n + 3)) ℤ,
-        (T.1 *ᵥ w) 0 ≠ 0 ∨ (T.1 *ᵥ w) 1 ≠ 0 := by
-      by_cases h_ne : w 0 ≠ 0 ∨ w 1 ≠ 0
-      · refine ⟨1, ?_⟩
-        rcases h_ne with h0 | h1
-        · left; rwa [Matrix.SpecialLinearGroup.coe_one, Matrix.one_mulVec]
-        · right; rwa [Matrix.SpecialLinearGroup.coe_one, Matrix.one_mulVec]
-      · push_neg at h_ne
-        obtain ⟨hw0, hw1⟩ := h_ne
-        obtain ⟨j, hj_ne⟩ := h_has_ne
-        have hj_ge : 2 ≤ j.val := by
-          by_contra hlt
-          push_neg at hlt
-          have h_01 : j.val = 0 ∨ j.val = 1 := by omega
-          rcases h_01 with h0 | h1
-          · apply hj_ne
-            have : j = 0 := Fin.ext h0
-            rw [this]; exact hw0
-          · apply hj_ne
-            have : j = 1 := Fin.ext h1
-            rw [this]; exact hw1
-        have hj_ne_1 : (1 : Fin (n + 3)) ≠ j := by
-          apply Fin.ne_of_val_ne; show 1 ≠ j.val; omega
-        have h_det : (Matrix.transvection (1 : Fin (n + 3)) j (1 : ℤ)).det = 1 :=
-          Matrix.det_transvection_of_ne (1 : Fin (n + 3)) j hj_ne_1 (1 : ℤ)
-        refine ⟨⟨Matrix.transvection (1 : Fin (n + 3)) j (1 : ℤ), h_det⟩, ?_⟩
-        right
-        show (Matrix.transvection (1 : Fin (n + 3)) j (1 : ℤ) *ᵥ w) 1 ≠ 0
-        simp only [Matrix.transvection, Matrix.add_mulVec, Matrix.one_mulVec,
-          Matrix.single_mulVec, Pi.add_apply, Function.update_self]
-        rw [hw1]; simpa using hj_ne
+    obtain ⟨T, hT_ne⟩ := sl_exists_transvection_first_two_ne w hw
     set w_ok := T.1 *ᵥ w with hw_ok_def
     have hw_ok_prim : ∀ d : ℤ, (∀ i, d ∣ w_ok i) → IsUnit d := fun d hd ↦
       hw d (sl_dvd_of_mulVec_dvd T w d hd)
@@ -501,25 +541,8 @@ lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → ℤ)
       intro i
       show (if ((⟨i.val + 1, by omega⟩ : Fin (n + 2)).val = 0) then _ else _) = _
       rw [if_neg (by show i.val + 1 ≠ 0; omega)]
-    have hw'_prim : ∀ d : ℤ, (∀ i, d ∣ w' i) → IsUnit d := by
-      intro d hd
-      apply hw_ok_prim
-      intro k
-      by_cases hk0 : k.val = 0
-      · rw [show k = (⟨0, by omega⟩ : Fin (n + 3)) from Fin.ext hk0]
-        have h_d_dvd_gcd : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ) := hw'_0 ▸ hd 0
-        exact h_d_dvd_gcd.trans (Int.gcd_dvd_left _ _)
-      · by_cases hk1 : k.val = 1
-        · rw [show k = (⟨1, by omega⟩ : Fin (n + 3)) from Fin.ext hk1]
-          have h_d_dvd_gcd : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ) := hw'_0 ▸ hd 0
-          exact h_d_dvd_gcd.trans (Int.gcd_dvd_right _ _)
-        · have h_ge : 2 ≤ k.val := by omega
-          have h_lt : k.val < n + 3 := k.isLt
-          let k' : Fin (n + 1) := ⟨k.val - 2, by omega⟩
-          rw [show k = ⟨k'.val + 2, by omega⟩ from
-            Fin.ext (by show k.val = k.val - 2 + 2; omega)]
-          rw [← hw'_succ k']
-          exact hd ⟨k'.val + 1, by omega⟩
+    have hw'_prim : ∀ d : ℤ, (∀ i, d ∣ w' i) → IsUnit d :=
+      sl_reduced_vector_primitive w_ok w' hw_ok_prim hw'_0 hw'_succ
     obtain ⟨N', hN'⟩ := sl_exists_col_of_primitive w' hw'_prim
     refine ⟨T⁻¹ * (E⁻¹ * sl_extend_at_1 N'), ?_⟩
     intro i
@@ -715,6 +738,52 @@ lemma hfib_int_mat_eq {k : ℕ}
   rw [← Matrix.map_mul, ← Matrix.map_mul, ← Matrix.map_mul, ← Matrix.map_mul] at hmat
   exact (Matrix.map_injective (algebraMap ℤ ℚ).injective_int hmat).symm
 
+/-- **Adjugate rearrangement of a determinant-one matrix equation.** From
+`A * Da * B * Db = Dc * ν` with `det A = det ν = 1`, premultiplying by
+`adjugate A` (which left-inverts `A`) and postmultiplying by `adjugate ν`
+(which right-inverts `ν`) yields `Da * B * Db * adjugate ν = adjugate A * Dc`. -/
+private lemma adjugate_rearrange_of_matrix_eq {p : ℕ}
+    (A B Da Db Dc ν : Matrix (Fin p) (Fin p) ℤ)
+    (hdetA : A.det = 1) (hdetν : ν.det = 1)
+    (heq : A * Da * B * Db = Dc * ν) :
+    Da * B * Db * Matrix.adjugate ν = Matrix.adjugate A * Dc := by
+  have h1 : Matrix.adjugate A * (A * Da * B * Db) * Matrix.adjugate ν =
+      Matrix.adjugate A * (Dc * ν) * Matrix.adjugate ν := by
+    rw [heq]
+  have hAA : Matrix.adjugate A * A = 1 := by
+    rw [Matrix.adjugate_mul, hdetA, one_smul]
+  have hνν : ν * Matrix.adjugate ν = 1 := by
+    rw [Matrix.mul_adjugate, hdetν, one_smul]
+  rw [show Matrix.adjugate A * (A * Da * B * Db) * Matrix.adjugate ν =
+          (Matrix.adjugate A * A) * Da * B * Db * Matrix.adjugate ν by
+        simp only [← Matrix.mul_assoc]] at h1
+  rw [hAA, Matrix.one_mul] at h1
+  rw [show Matrix.adjugate A * (Dc * ν) * Matrix.adjugate ν =
+          Matrix.adjugate A * Dc * (ν * Matrix.adjugate ν) by
+        simp only [← Matrix.mul_assoc]] at h1
+  rw [hνν, Matrix.mul_one] at h1
+  exact h1
+
+/-- **Diagonal-scaling divisibility on a column-zero entry.** If
+`diagonal da * R = Adj * diagonal dc` with `dc 0 = 1`, then `da s ∣ Adj s 0`
+for every `s`. Applying both sides to `e₀`: the right side reads off column `0`
+of `Adj` (since `dc 0 = 1`), while the left side scales the `s`-entry by `da s`. -/
+private lemma diagonal_dvd_adjugate_entry {p : ℕ}
+    (da dc : Fin (p + 1) → ℤ) (R Adj : Matrix (Fin (p + 1)) (Fin (p + 1)) ℤ)
+    (s : Fin (p + 1)) (hdc0 : dc 0 = 1)
+    (heq : Matrix.diagonal da * R = Adj * Matrix.diagonal dc) :
+    da s ∣ Adj s 0 := by
+  have h_mul : ((Matrix.diagonal da * R).mulVec (Pi.single 0 (1 : ℤ))) s =
+      ((Adj * Matrix.diagonal dc).mulVec (Pi.single 0 (1 : ℤ))) s := by rw [heq]
+  have hRHS : ((Adj * Matrix.diagonal dc).mulVec (Pi.single 0 (1 : ℤ))) s = Adj s 0 := by
+    rw [← Matrix.mulVec_mulVec, Matrix.diagonal_mulVec_single, hdc0, mul_one,
+      Matrix.mulVec_single_one, Matrix.col_apply]
+  have hLHS : ((Matrix.diagonal da * R).mulVec (Pi.single 0 (1 : ℤ))) s =
+      da s * ((R.mulVec (Pi.single 0 (1 : ℤ))) s) := by
+    rw [← Matrix.mulVec_mulVec, Matrix.mulVec_diagonal]
+  rw [hLHS, hRHS] at h_mul
+  exact ⟨_, h_mul.symm⟩
+
 /-- **Column-zero divisibility for `(toSL i.out)⁻¹`**. From the integer matrix
 equation `A · D_a · B · D_b = D_c · ν` supplied by `hfib_int_mat_eq`, the entry
 `((toSL i.out)⁻¹).1 r.succ 0` is divisible by `a r` for every `r : Fin (k+1)`.
@@ -749,50 +818,18 @@ lemma hfib_col_div_a {k : ℕ}
   have hdetA : A_i.det = 1 := (toSL i.out).2
   have hdetν : ν.1.det = 1 := ν.2
   have h_rearr : D_a * A_j * D_b * Matrix.adjugate ν.1 =
-      Matrix.adjugate A_i * D_c := by
-    have h1 : Matrix.adjugate A_i * (A_i * D_a * A_j * D_b) * Matrix.adjugate ν.1 =
-        Matrix.adjugate A_i * (D_c * ν.1) * Matrix.adjugate ν.1 := by
-      rw [hν]
-    have hAA : Matrix.adjugate A_i * A_i = 1 := by
-      rw [Matrix.adjugate_mul, hdetA, one_smul]
-    have hνν : ν.1 * Matrix.adjugate ν.1 = 1 := by
-      rw [Matrix.mul_adjugate, hdetν, one_smul]
-    rw [show Matrix.adjugate A_i * (A_i * D_a * A_j * D_b) * Matrix.adjugate ν.1 =
-            (Matrix.adjugate A_i * A_i) * D_a * A_j * D_b * Matrix.adjugate ν.1 by
-          simp only [← Matrix.mul_assoc]] at h1
-    rw [hAA, Matrix.one_mul] at h1
-    rw [show Matrix.adjugate A_i * (D_c * ν.1) * Matrix.adjugate ν.1 =
-            Matrix.adjugate A_i * D_c * (ν.1 * Matrix.adjugate ν.1) by
-          simp only [← Matrix.mul_assoc]] at h1
-    rw [hνν, Matrix.mul_one] at h1
-    exact h1
+      Matrix.adjugate A_i * D_c :=
+    adjugate_rearrange_of_matrix_eq A_i A_j D_a D_b D_c ν.1 hdetA hdetν hν
   intro r
-  have h_mul : ((D_a * A_j * D_b * Matrix.adjugate ν.1).mulVec (Pi.single 0 (1 : ℤ))) r.succ =
-      ((Matrix.adjugate A_i * D_c).mulVec (Pi.single 0 (1 : ℤ))) r.succ := by
-    rw [h_rearr]
-  have hDc_mulVec : D_c.mulVec (Pi.single 0 (1 : ℤ)) = Pi.single 0 (1 : ℤ) := by
-    rw [hD_c, Matrix.diagonal_mulVec_single]
-    simp [Fin.cons_zero]
-  have hRHS : ((Matrix.adjugate A_i * D_c).mulVec (Pi.single 0 (1 : ℤ))) r.succ =
-      Matrix.adjugate A_i r.succ 0 := by
-    rw [← Matrix.mulVec_mulVec, hDc_mulVec, Matrix.mulVec_single_one]
-    rfl
-  have hLHS : ((D_a * A_j * D_b * Matrix.adjugate ν.1).mulVec
-      (Pi.single 0 (1 : ℤ))) r.succ =
-      (a r : ℤ) *
-        (((A_j * D_b * Matrix.adjugate ν.1).mulVec (Pi.single 0 (1 : ℤ))) r.succ) := by
-    have hassoc : D_a * A_j * D_b * Matrix.adjugate ν.1 =
-        D_a * (A_j * D_b * Matrix.adjugate ν.1) := by
-      simp only [Matrix.mul_assoc]
-    rw [hassoc, ← Matrix.mulVec_mulVec]
-    rw [hD_a, Matrix.mulVec_diagonal]
-    simp [Fin.cons_succ]
-  refine ⟨((A_j * D_b * Matrix.adjugate ν.1).mulVec (Pi.single 0 (1 : ℤ))) r.succ, ?_⟩
-  rw [hLHS, hRHS] at h_mul
-  have : ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r.succ 0 =
-      Matrix.adjugate A_i r.succ 0 := by
-    rw [SpecialLinearGroup.coe_inv]
-  rw [this, ← h_mul]
+  rw [show ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r.succ 0
+        = Matrix.adjugate A_i r.succ 0 by rw [SpecialLinearGroup.coe_inv],
+    show (a r : ℤ) = (((Fin.cons 1 a : Fin (k + 2) → ℕ) r.succ : ℕ) : ℤ) by rw [Fin.cons_succ]]
+  refine diagonal_dvd_adjugate_entry
+    (fun s ↦ (((Fin.cons 1 a : Fin (k + 2) → ℕ) s : ℕ) : ℤ))
+    (fun s ↦ (((Fin.cons 1 c : Fin (k + 2) → ℕ) s : ℕ) : ℤ))
+    (A_j * D_b * Matrix.adjugate ν.1) (Matrix.adjugate A_i) r.succ (by simp [Fin.cons_zero]) ?_
+  rw [← hD_a, ← hD_c, ← Matrix.mul_assoc, ← Matrix.mul_assoc]
+  exact h_rearr
 
 /-- **Row-zero divisibility for `ν` (T001 Layer 1 precursor).** From the integer
 matrix equation `A_i · D_a · A_j · D_b = D_c · ν` (`hfib_int_mat_eq`), the
@@ -983,6 +1020,17 @@ private lemma sl_addCol_emod_step {m : ℕ} (i j : Fin m) (hij : i ≠ j)
     have := Int.emod_def (M.1 r j) (M.1 r i)
     linarith [this]
 
+/-- **Shift-invariance of the column-target divisibility.** If `d` divides the
+target entry `e + c₀ * p` for one coefficient `c₀`, and `d` divides the shift
+`c - c₀`, then `d` divides the target entry for the coefficient `c`. This is the
+core step shared by the simultaneous two-row column reductions: a transvection
+coefficient may be replaced by any other in the same residue class mod `d`. -/
+private lemma dvd_entry_add_mul_of_shift {d e c c₀ p : ℤ}
+    (h₀ : d ∣ e + c₀ * p) (hshift : d ∣ c - c₀) : d ∣ e + c * p := by
+  have : e + c * p = (e + c₀ * p) + (c - c₀) * p := by ring
+  rw [this]
+  exact dvd_add h₀ (hshift.mul_right p)
+
 /-- **Bezout column reduction making `d` divide the entry**: given a matrix
 `M`, two distinct columns `i ≠ j`, a row `r`, and a divisor `d`, if the pivot
 `M.1 r i` is coprime to `d`, there is an SL transvection adding a multiple of
@@ -1034,44 +1082,24 @@ private lemma sl_addCol_make_dvd_two_coprime {m : ℕ} (i j : Fin m) (hij : i �
     exact sl_addCol_preserves_col i j hij _ M a hk
   · -- Show d₁ ∣ M.1 r₁ j + c * M.1 r₁ i.
     rw [sl_addCol_target_col i j hij _ M r₁]
-    refine ⟨M.1 r₁ j * t₁ + (u * c₂ - u * c₁) * M.1 r₁ i, ?_⟩
-    have key : M.1 r₁ j * (s₁ * M.1 r₁ i + t₁ * d₁) = M.1 r₁ j * 1 := by rw [hst₁]
     have hvd₂ : v * d₂ = 1 - u * d₁ := by linarith [huv]
-    have : M.1 r₁ j + c * M.1 r₁ i =
-        (M.1 r₁ j + c₁ * M.1 r₁ i) + (c - c₁) * M.1 r₁ i := by ring
-    rw [this]
-    have hc_diff : c - c₁ = d₁ * (u * c₂ - u * c₁) := by
-      rw [hc_def]
-      have : v * d₂ * c₁ + u * d₁ * c₂ - c₁ =
-          (v * d₂ - 1) * c₁ + u * d₁ * c₂ := by ring
-      rw [this, hvd₂]
-      ring
-    rw [hc_diff]
-    have hfirst : M.1 r₁ j + c₁ * M.1 r₁ i = d₁ * (M.1 r₁ j * t₁) := by
-      rw [hc₁_def]
-      linarith [key]
-    rw [hfirst]
-    ring
+    have key : M.1 r₁ j * (s₁ * M.1 r₁ i + t₁ * d₁) = M.1 r₁ j * 1 := by rw [hst₁]
+    have hfirst : d₁ ∣ M.1 r₁ j + c₁ * M.1 r₁ i :=
+      ⟨M.1 r₁ j * t₁, by rw [hc₁_def]; linarith [key]⟩
+    have hshift : d₁ ∣ c - c₁ := ⟨u * c₂ - u * c₁, by
+      rw [hc_def, show v * d₂ * c₁ + u * d₁ * c₂ - c₁ =
+        (v * d₂ - 1) * c₁ + u * d₁ * c₂ from by ring, hvd₂]; ring⟩
+    exact dvd_entry_add_mul_of_shift hfirst hshift
   · -- Symmetric argument with d₂.
     rw [sl_addCol_target_col i j hij _ M r₂]
-    refine ⟨M.1 r₂ j * t₂ + (v * c₁ - v * c₂) * M.1 r₂ i, ?_⟩
-    have key : M.1 r₂ j * (s₂ * M.1 r₂ i + t₂ * d₂) = M.1 r₂ j * 1 := by rw [hst₂]
     have hud₁ : u * d₁ = 1 - v * d₂ := by linarith [huv]
-    have : M.1 r₂ j + c * M.1 r₂ i =
-        (M.1 r₂ j + c₂ * M.1 r₂ i) + (c - c₂) * M.1 r₂ i := by ring
-    rw [this]
-    have hc_diff : c - c₂ = d₂ * (v * c₁ - v * c₂) := by
-      rw [hc_def]
-      have : v * d₂ * c₁ + u * d₁ * c₂ - c₂ =
-          v * d₂ * c₁ + (u * d₁ - 1) * c₂ := by ring
-      rw [this, hud₁]
-      ring
-    rw [hc_diff]
-    have hfirst : M.1 r₂ j + c₂ * M.1 r₂ i = d₂ * (M.1 r₂ j * t₂) := by
-      rw [hc₂_def]
-      linarith [key]
-    rw [hfirst]
-    ring
+    have key : M.1 r₂ j * (s₂ * M.1 r₂ i + t₂ * d₂) = M.1 r₂ j * 1 := by rw [hst₂]
+    have hfirst : d₂ ∣ M.1 r₂ j + c₂ * M.1 r₂ i :=
+      ⟨M.1 r₂ j * t₂, by rw [hc₂_def]; linarith [key]⟩
+    have hshift : d₂ ∣ c - c₂ := ⟨v * c₁ - v * c₂, by
+      rw [hc_def, show v * d₂ * c₁ + u * d₁ * c₂ - c₂ =
+        v * d₂ * c₁ + (u * d₁ - 1) * c₂ from by ring, hud₁]; ring⟩
+    exact dvd_entry_add_mul_of_shift hfirst hshift
 
 /-- **Two-row simultaneous Bezout column reduction (CRT compatibility case)**:
 NOT requiring pairwise-coprime divisors. Given pre-supplied per-row Bezout
@@ -1111,29 +1139,65 @@ private lemma sl_addCol_make_dvd_two_compat {m : ℕ} (i j : Fin m) (hij : i ≠
     exact sl_addCol_preserves_col i j hij _ M a hk
   · -- Show d₁ ∣ M.1 r₁ j + c * M.1 r₁ i.
     rw [sl_addCol_target_col i j hij _ M r₁]
-    have hsplit : M.1 r₁ j + c * M.1 r₁ i =
-        (M.1 r₁ j + c₁ * M.1 r₁ i) + (c - c₁) * M.1 r₁ i := by ring
-    rw [hsplit]
-    have hcc₁ : c - c₁ = -(u * d₁ * δ) := by rw [hc_def]; ring
-    have hd₁_dvd_second : d₁ ∣ (c - c₁) * M.1 r₁ i := by
-      rw [hcc₁]
-      refine Dvd.dvd.mul_right ?_ _
-      refine (dvd_neg).mpr ?_
-      exact ⟨u * δ, by ring⟩
-    exact dvd_add h₁ hd₁_dvd_second
+    exact dvd_entry_add_mul_of_shift h₁ ⟨-(u * δ), by rw [hc_def]; ring⟩
   · -- Show d₂ ∣ M.1 r₂ j + c * M.1 r₂ i.
     rw [sl_addCol_target_col i j hij _ M r₂]
-    have hsplit : M.1 r₂ j + c * M.1 r₂ i =
-        (M.1 r₂ j + c₂ * M.1 r₂ i) + (c - c₂) * M.1 r₂ i := by ring
-    rw [hsplit]
-    have hcc₂ : c - c₂ = v * d₂ * δ := by
-      have hkey : c - c₂ = (c₁ - c₂) - u * d₁ * δ := by rw [hc_def]; ring
-      rw [hkey, hδ, hbezout]
-      ring
-    have hd₂_dvd_second : d₂ ∣ (c - c₂) * M.1 r₂ i := by
-      rw [hcc₂]
-      exact ⟨v * δ * M.1 r₂ i, by ring⟩
-    exact dvd_add h₂ hd₂_dvd_second
+    refine dvd_entry_add_mul_of_shift h₂ ⟨v * δ, ?_⟩
+    have hkey : c - c₂ = (c₁ - c₂) - u * d₁ * δ := by rw [hc_def]; ring
+    rw [hkey, hδ, hbezout]; ring
+
+/-- **Bezout target identity for the running-product coefficient.** With the
+coprimality witness `s·(D·p) + t·q = 1`, the transvection coefficient
+`c' = D·(-e·s)` solves the column-target congruence exactly: `e + c'·p = q·(e·t)`,
+so `q ∣ e + c'·p`. This is the inserted-row algebra of the finite-row CRT
+induction (`p` is the pivot, `e` the current `j`-entry, `q` the divisor). -/
+private lemma entry_add_prod_coeff_eq {D s t p q e : ℤ}
+    (hst : s * (D * p) + t * q = 1) :
+    e + D * (-e * s) * p = q * (e * t) := by
+  have key : e * (s * (D * p) + t * q) = e * 1 := by rw [hst]
+  linarith [key]
+
+/-- **Inductive step of the finite-row CRT column reduction.** Given a reduction
+`U_R` already solving the divisibilities over `R` (and preserving columns `≠ j`),
+adjoin the transvection with coefficient `c' = D · v`, `D = ∏_{r ∈ R} d r`,
+`v = -((M·U_R) r₀ j)·s`. Multiplying by `D` keeps every previous divisibility
+(`d r ∣ D` for `r ∈ R`), while the Bezout coefficient `s` (from coprimality of
+`D·(M r₀ i)` with `d r₀`) lands the inserted row `r₀`. -/
+private lemma sl_addCol_make_dvd_finset_insert_step {m : ℕ} (i j : Fin m) (hij : i ≠ j)
+    (M : SpecialLinearGroup (Fin m) ℤ) (r₀ : Fin m) (R : Finset (Fin m)) (d : Fin m → ℤ)
+    (hr₀ : r₀ ∉ R)
+    (h_cop : ∀ r ∈ insert r₀ R, IsCoprime (M.1 r i) (d r))
+    (h_pairwise : ∀ r₁ ∈ insert r₀ R, ∀ r₂ ∈ insert r₀ R,
+      r₁ ≠ r₂ → IsCoprime (d r₁) (d r₂))
+    (U_R : SpecialLinearGroup (Fin m) ℤ)
+    (hU_R_pres : ∀ a (k : Fin m), k ≠ j → (M * U_R).1 a k = M.1 a k)
+    (hU_R_div : ∀ r ∈ R, d r ∣ (M * U_R).1 r j) :
+    ∃ U : SpecialLinearGroup (Fin m) ℤ,
+      (∀ a (k : Fin m), k ≠ j → (M * U).1 a k = M.1 a k) ∧
+      (∀ r ∈ insert r₀ R, d r ∣ (M * U).1 r j) := by
+  have h_cop_prod : IsCoprime (∏ r ∈ R, d r) (d r₀) := by
+    refine (IsCoprime.prod_right (fun r hr ↦ ?_)).symm
+    have hr_ne : r₀ ≠ r := fun h ↦ hr₀ (h ▸ hr)
+    exact h_pairwise r₀ (Finset.mem_insert_self _ _) r
+      (Finset.mem_insert_of_mem hr) hr_ne
+  have h_cop_r₀ : IsCoprime (M.1 r₀ i) (d r₀) := h_cop r₀ (Finset.mem_insert_self _ _)
+  obtain ⟨s, t, hst⟩ := h_cop_prod.mul_left h_cop_r₀
+  set D : ℤ := ∏ r ∈ R, d r with hD_def
+  set v : ℤ := -((M * U_R).1 r₀ j) * s with hv_def
+  set c' : ℤ := D * v with hc'_def
+  refine ⟨U_R * slTransvecG i j hij c', ?_, ?_⟩
+  · intro a k hk
+    rw [← mul_assoc, sl_addCol_preserves_col i j hij c' (M * U_R) a hk]
+    exact hU_R_pres a k hk
+  · intro r hr
+    rcases Finset.mem_insert.mp hr with hr_eq | hr_mem
+    · subst hr_eq
+      rw [← mul_assoc, sl_addCol_target_col i j hij c' (M * U_R) r, hU_R_pres r i hij]
+      exact ⟨(M * U_R).1 r j * t, by rw [hc'_def, hv_def]; exact entry_add_prod_coeff_eq hst⟩
+    · rw [← mul_assoc, sl_addCol_target_col i j hij c' (M * U_R) r, hU_R_pres r i hij]
+      have h_dr_div_D : d r ∣ D := hD_def ▸ Finset.dvd_prod_of_mem d hr_mem
+      have h_dr_div_c' : d r ∣ c' := hc'_def ▸ h_dr_div_D.mul_right _
+      exact dvd_add (hU_R_div r hr_mem) (h_dr_div_c'.mul_right _)
 
 /-- **Finite-row simultaneous Bezout column reduction (CRT wrapper)**: given a
 matrix `M`, two distinct columns `i ≠ j`, a finite set of rows `R` with a
@@ -1142,10 +1206,8 @@ divisor `d r` for each `r ∈ R` such that the pivots `M.1 r i` are coprime to
 (product of transvections in column `j`, leaving every column `k ≠ j`
 unchanged) so that `d r ∣ (M * U).1 r j` for every `r ∈ R`.
 
-The proof is by induction on `R`: at each step we adjoin a transvection whose
-coefficient is a multiple of the running product `∏_{r ∈ R} d r` (so previous
-divisibilities are preserved) and that solves the new Bezout congruence for
-the inserted row (using coprimality between `M.1 r₀ i · D` and `d r₀`). -/
+The proof is by induction on `R`, dispatching the inductive step to
+`sl_addCol_make_dvd_finset_insert_step`. -/
 private lemma sl_addCol_make_dvd_finset
     {m : ℕ} (i j : Fin m) (hij : i ≠ j)
     (M : SpecialLinearGroup (Fin m) ℤ)
@@ -1162,65 +1224,12 @@ private lemma sl_addCol_make_dvd_finset
       · intro a k _; simp
       · intro r hr; exact absurd hr (Finset.notMem_empty r)
   | insert r₀ R hr₀ IH =>
-      have h_cop_R : ∀ r ∈ R, IsCoprime (M.1 r i) (d r) := fun r hr ↦
-        h_cop r (Finset.mem_insert_of_mem hr)
-      have h_pairwise_R : ∀ r₁ ∈ R, ∀ r₂ ∈ R, r₁ ≠ r₂ → IsCoprime (d r₁) (d r₂) :=
-        fun r₁ hr₁ r₂ hr₂ hne ↦
-          h_pairwise r₁ (Finset.mem_insert_of_mem hr₁) r₂
-            (Finset.mem_insert_of_mem hr₂) hne
-      obtain ⟨U_R, hU_R_pres, hU_R_div⟩ := IH h_cop_R h_pairwise_R
-      have h_cop_prod : IsCoprime (∏ r ∈ R, d r) (d r₀) := by
-        refine (IsCoprime.prod_right (fun r hr ↦ ?_)).symm
-        have hr_ne : r₀ ≠ r := by
-          intro h; exact hr₀ (h ▸ hr)
-        exact h_pairwise r₀ (Finset.mem_insert_self _ _) r
-          (Finset.mem_insert_of_mem hr) hr_ne
-      have h_cop_r₀ : IsCoprime (M.1 r₀ i) (d r₀) :=
-        h_cop r₀ (Finset.mem_insert_self _ _)
-      have h_cop_combined :
-          IsCoprime ((∏ r ∈ R, d r) * M.1 r₀ i) (d r₀) :=
-        h_cop_prod.mul_left h_cop_r₀
-      obtain ⟨s, t, hst⟩ := h_cop_combined
-      set D : ℤ := ∏ r ∈ R, d r with hD_def
-      set v : ℤ := -((M * U_R).1 r₀ j) * s with hv_def
-      set c' : ℤ := D * v with hc'_def
-      refine ⟨U_R * slTransvecG i j hij c', ?_, ?_⟩
-      · -- Preserve every column `k ≠ j`.
-        intro a k hk
-        rw [← mul_assoc]
-        rw [sl_addCol_preserves_col i j hij c' (M * U_R) a hk]
-        exact hU_R_pres a k hk
-      · intro r hr
-        rcases Finset.mem_insert.mp hr with hr_eq | hr_mem
-        · -- Case r = r₀: divisibility from the chosen `c'`.
-          subst hr_eq
-          rw [← mul_assoc, sl_addCol_target_col i j hij c' (M * U_R) r]
-          rw [hU_R_pres r i hij]
-          refine ⟨(M * U_R).1 r j * t, ?_⟩
-          have hkey : (M * U_R).1 r j *
-              (s * (D * M.1 r i) + t * d r) = (M * U_R).1 r j * 1 := by
-            rw [hst]
-          have hexpand : (M * U_R).1 r j +
-              c' * M.1 r i = d r * ((M * U_R).1 r j * t) := by
-            have hv_expand : c' * M.1 r i = (M * U_R).1 r j *
-                (s * (D * M.1 r i)) * (-1) := by
-              rw [hc'_def, hv_def]; ring
-            have hkey' : (M * U_R).1 r j * (s * (D * M.1 r i)) +
-                (M * U_R).1 r j * (t * d r) = (M * U_R).1 r j := by
-              have := hkey
-              linarith
-            linarith [hkey']
-          linarith [hexpand]
-        · -- Case r ∈ R: previous divisibility preserved because
-          rw [← mul_assoc, sl_addCol_target_col i j hij c' (M * U_R) r]
-          rw [hU_R_pres r i hij]
-          have h_dr_div_D : d r ∣ D := by
-            rw [hD_def]
-            exact Finset.dvd_prod_of_mem d hr_mem
-          have h_dr_div_c' : d r ∣ c' := by
-            rw [hc'_def]; exact Dvd.dvd.mul_right h_dr_div_D _
-          have h_div_first : d r ∣ (M * U_R).1 r j := hU_R_div r hr_mem
-          exact dvd_add h_div_first (h_dr_div_c'.mul_right _)
+      obtain ⟨U_R, hU_R_pres, hU_R_div⟩ := IH
+        (fun r hr ↦ h_cop r (Finset.mem_insert_of_mem hr))
+        (fun r₁ hr₁ r₂ hr₂ hne ↦ h_pairwise r₁ (Finset.mem_insert_of_mem hr₁) r₂
+          (Finset.mem_insert_of_mem hr₂) hne)
+      exact sl_addCol_make_dvd_finset_insert_step i j hij M r₀ R d hr₀ h_cop h_pairwise
+        U_R hU_R_pres hU_R_div
 
 /-- **Common-residue finite-row CRT wrapper.** When a SINGLE coefficient `c`
 already simultaneously solves the divisibility `d r ∣ M.1 r j + c * M.1 r i`
