@@ -599,6 +599,54 @@ private lemma mulMap_eq_of_rightCoset_gen (D₁ D₂ D : HeckeCoset P)
       rw [HeckeCoset.toSet_eq_rep] at hd
       exact ⟨_, hm, hd⟩))
 
+open scoped Classical in
+omit [HeckePairAction P] in
+/-- The fiber of `q_of` over `q` (within the `mulMap = D` selection set `S`) is in
+bijection with the pairs satisfying the right-coset condition for `q`, hence the
+cardinalities agree. Extracted from `heckeSlash_gen_fiber_sum`. -/
+private lemma fiber_card_eq_gen (D₁ D₂ D : HeckeCoset P)
+    (q_of : decompQuot P (HeckeCoset.rep D₁) ×
+        decompQuot P (HeckeCoset.rep D₂) → decompQuot P (HeckeCoset.rep D))
+    (S : Finset (decompQuot P (HeckeCoset.rep D₁) ×
+        decompQuot P (HeckeCoset.rep D₂)))
+    (hS : ∀ p, p ∈ S ↔
+      mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D)
+    (h_coset_eq : ∀ p,
+      mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D →
+      ({(p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ)} : Set _) *
+        {(p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)} *
+        (P.H : Set (GL (Fin 2) ℚ)) =
+      {((q_of p).out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} *
+        (P.H : Set (GL (Fin 2) ℚ)))
+    (h_unique : ∀ p (q : decompQuot P (HeckeCoset.rep D)),
+      mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D →
+      (({(p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ)} : Set _) *
+        {(p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)} *
+        (P.H : Set (GL (Fin 2) ℚ)) =
+      {(q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} *
+        (P.H : Set (GL (Fin 2) ℚ))) → q_of p = q)
+    (q : decompQuot P (HeckeCoset.rep D)) :
+    (S.filter (fun p => q_of p = q)).card = Nat.card
+      {p : decompQuot P (HeckeCoset.rep D₁) ×
+           decompQuot P (HeckeCoset.rep D₂) |
+        ({(p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ)} : Set _) *
+        {(p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)} *
+        (P.H : Set (GL (Fin 2) ℚ)) =
+        {(q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} *
+        (P.H : Set (GL (Fin 2) ℚ))} := by
+  rw [← Nat.card_eq_finsetCard]
+  apply Nat.card_congr
+  exact {
+    toFun := fun ⟨p, hp⟩ => ⟨p, by
+      simp only [Finset.mem_filter] at hp
+      rw [← hp.2]; exact h_coset_eq p ((hS p).mp hp.1)⟩
+    invFun := fun ⟨p, hp_rc⟩ => ⟨p, by
+      have hmap := mulMap_eq_of_rightCoset_gen D₁ D₂ D p q hp_rc
+      rw [Finset.mem_filter, hS]
+      exact ⟨hmap, h_unique p q hmap hp_rc⟩⟩
+    left_inv := fun ⟨_, _⟩ => rfl
+    right_inv := fun ⟨_, _⟩ => rfl }
+
 /-- The fiber sum lemma: pairs mapping to a fixed double coset D contribute
 `heckeMultiplicity · ∑ q, f ∣[k] tRep_gen D q` (generalized). -/
 private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
@@ -625,14 +673,6 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
       f ∣[k] (tRep_gen P D₂ p.2 * tRep_gen P D₁ p.1) =
         f ∣[k] tRep_gen P D (q_of p) := by
     intro p hp; simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.1
-  have h_coset_eq : ∀ p,
-      mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D →
-      ({(p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ)} : Set _) *
-      {(p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)} *
-      (P.H : Set (GL (Fin 2) ℚ)) =
-      {((q_of p).out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} *
-      (P.H : Set (GL (Fin 2) ℚ)) := by
-    intro p hp; simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.2
   set S := Finset.univ.filter (fun p : decompQuot P (HeckeCoset.rep D₁) ×
       decompQuot P (HeckeCoset.rep D₂) =>
       mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D)
@@ -645,29 +685,14 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
     rw [Finset.sum_congr rfl (fun p hp => by
       simp only [Finset.mem_filter] at hp; rw [hp.2])]
     rw [Finset.sum_const]
-  have h_fiber_eq : ∀ q : decompQuot P (HeckeCoset.rep D),
-      (S.filter (fun p => q_of p = q)).card = Nat.card
-        {p : decompQuot P (HeckeCoset.rep D₁) ×
-             decompQuot P (HeckeCoset.rep D₂) |
-          ({(p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ)} : Set _) *
-          {(p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)} *
-          (P.H : Set (GL (Fin 2) ℚ)) =
-          {(q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} *
-          (P.H : Set (GL (Fin 2) ℚ))} := by
-    intro q; rw [← Nat.card_eq_finsetCard]; apply Nat.card_congr
-    exact {
-      toFun := fun ⟨p, hp⟩ => ⟨p, by
-        simp only [S, Finset.mem_filter, Finset.mem_univ, true_and] at hp
-        rw [← hp.2]; exact h_coset_eq p hp.1⟩
-      invFun := fun ⟨p, hp_rc⟩ => ⟨p, by
-        simp only [S, Finset.mem_filter, Finset.mem_univ, true_and]
-        have hmap := mulMap_eq_of_rightCoset_gen D₁ D₂ D p q hp_rc
-        refine ⟨hmap, ?_⟩; simp only [q_of, hmap, dif_pos]
-        set q' := (h_main p hmap).choose; by_contra hne
-        exact decompQuot_coset_diff P (HeckeCoset.rep D) q' q hne
-          ((h_main p hmap).choose_spec.2.symm.trans hp_rc)⟩
-      left_inv := fun ⟨_, _⟩ => rfl
-      right_inv := fun ⟨_, _⟩ => rfl }
+  have h_fiber_eq := fiber_card_eq_gen D₁ D₂ D q_of S
+    (fun p => by simp only [S, Finset.mem_filter, Finset.mem_univ, true_and])
+    (fun p hp => by simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.2)
+    (fun p q hmap hp_rc => by
+      simp only [q_of, hmap, dif_pos]
+      set q' := (h_main p hmap).choose; by_contra hne
+      exact decompQuot_coset_diff P (HeckeCoset.rep D) q' q hne
+        ((h_main p hmap).choose_spec.2.symm.trans hp_rc))
   simp_rw [h_fiber_eq,
     heckeMultiplicity_uniform P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) D]
   set n := Nat.card

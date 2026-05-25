@@ -330,6 +330,36 @@ lemma decompQuot_fst_eq_of_snd_mem_H (g₁ g₂ d : P.Δ)
   simp only [mul_assoc, Subgroup.singleton_mul_subgroup hj] at h₁ h₂
   exact h₁.trans h₂.symm
 
+/-- When `dcRel P g₁ d`, some representative pair `(k, j₀)` realizes the set-form
+predicate for right multiplication by `HeckeCoset.one`: the left coset `dH` is hit. -/
+private lemma nonempty_mul_one_witness_of_dcRel (g₁ d : P.Δ) (hg₁d : dcRel P g₁ d) :
+    Nonempty ↑{x : decompQuot P g₁ × decompQuot P (HeckeCoset.one P).rep |
+      ({(↑x.1.out : G) * (↑g₁ : G)} : Set G) *
+        {(↑x.2.out : G) * (↑(HeckeCoset.one P).rep : G)} * P.H =
+        {(↑d : G)} * (P.H : Set G)} := by
+  -- d ∈ Hg₁H since dcRel P g₁ d, so some k ∈ decompQuot P g₁ maps d into its coset.
+  have hd_in_g₁ : (↑d : G) ∈ doubleCoset (↑g₁ : G) P.H P.H :=
+    hg₁d ▸ DoubleCoset.mem_doubleCoset_self P.H P.H _
+  rw [DoubleCoset.doubleCoset_eq_iUnion_leftCosets] at hd_in_g₁
+  simp only [Set.mem_iUnion] at hd_in_g₁
+  obtain ⟨k, hk⟩ := hd_in_g₁
+  rw [smul_eq_singleton_mul] at hk
+  obtain ⟨j₀⟩ := one_in_decompQuot_T_one P
+  refine ⟨⟨(k, j₀), ?_⟩⟩
+  simp only [Set.mem_setOf_eq]
+  have hmem : (j₀.out : G) * ((HeckeCoset.one P).rep : G) ∈ P.H :=
+    Subgroup.mul_mem _ (SetLike.coe_mem j₀.out) (HeckeCoset.one_rep_mem_H P)
+  rw [mul_assoc, Subgroup.singleton_mul_subgroup hmem]
+  -- Now goal is {k.out * g₁} * H = {d} * H
+  apply (leftCoset_eq_of_not_disjoint (H := P.H) _ _ _).symm
+  rw [not_disjoint_iff]
+  refine ⟨↑d, Set.mem_smul_set.mpr ⟨1, P.H.one_mem, by simp⟩, ?_⟩
+  rw [Set.mem_smul_set]
+  rw [singleton_mul] at hk
+  simp only [image_mul_left, mem_preimage, SetLike.mem_coe] at hk
+  exact ⟨(↑k.out * (↑g₁ : G))⁻¹ * ↑d, hk,
+    show (↑k.out * (↑g₁ : G)) * ((↑k.out * ↑g₁)⁻¹ * ↑d) = ↑d by group⟩
+
 /-- Right multiplication by `HeckeCoset.one` has multiplicity `1` on the diagonal
 and `0` elsewhere. -/
 lemma heckeMultiplicity_mul_one (g₁ d : P.Δ) :
@@ -341,39 +371,15 @@ lemma heckeMultiplicity_mul_one (g₁ d : P.Δ) :
     simp only [heckeMultiplicity]; norm_cast; rw [Nat.card_eq_one_iff_unique]
     haveI : Subsingleton (decompQuot P (HeckeCoset.one P).rep) :=
       subsingleton_decompQuot_T_one P
-    refine ⟨⟨?_⟩, ?_⟩
-    · intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
-      have hj : j₁ = j₂ := Subsingleton.elim j₁ j₂; subst hj
-      simp only [Set.mem_setOf_eq] at h₁ h₂
-      exact Subtype.ext (Prod.ext
-        (decompQuot_fst_eq_of_snd_mem_H P g₁ (HeckeCoset.one P).rep d i₁ i₂ j₁
-          (Subgroup.mul_mem _ (SetLike.coe_mem j₁.out)
-            (HeckeCoset.one_rep_mem_H P)) h₁ h₂)
-        rfl)
-    · -- Use d (the target representative) instead of g₁
-      -- d ∈ Hg₁H since dcRel P g₁ d, and g₁ ∈ HdH
-      -- So we can find an element of decompQuot P g₁ that maps d into the right coset
-      have hd_in_g₁ : (↑d : G) ∈ doubleCoset (↑g₁ : G) P.H P.H :=
-        hg₁d ▸ DoubleCoset.mem_doubleCoset_self P.H P.H _
-      rw [DoubleCoset.doubleCoset_eq_iUnion_leftCosets] at hd_in_g₁
-      simp only [Set.mem_iUnion] at hd_in_g₁
-      obtain ⟨k, hk⟩ := hd_in_g₁
-      rw [smul_eq_singleton_mul] at hk
-      obtain ⟨j₀⟩ := one_in_decompQuot_T_one P
-      refine ⟨⟨(k, j₀), ?_⟩⟩
-      simp only [Set.mem_setOf_eq]
-      have hmem : (j₀.out : G) * ((HeckeCoset.one P).rep : G) ∈ P.H :=
-        Subgroup.mul_mem _ (SetLike.coe_mem j₀.out) (HeckeCoset.one_rep_mem_H P)
-      rw [mul_assoc, Subgroup.singleton_mul_subgroup hmem]
-      -- Now goal is {k.out * g₁} * H = {d} * H
-      apply (leftCoset_eq_of_not_disjoint (H := P.H) _ _ _).symm
-      rw [not_disjoint_iff]
-      refine ⟨↑d, Set.mem_smul_set.mpr ⟨1, P.H.one_mem, by simp⟩, ?_⟩
-      rw [Set.mem_smul_set]
-      rw [singleton_mul] at hk
-      simp only [image_mul_left, mem_preimage, SetLike.mem_coe] at hk
-      exact ⟨(↑k.out * (↑g₁ : G))⁻¹ * ↑d, hk,
-        show (↑k.out * (↑g₁ : G)) * ((↑k.out * ↑g₁)⁻¹ * ↑d) = ↑d by group⟩
+    refine ⟨⟨?_⟩, nonempty_mul_one_witness_of_dcRel P g₁ d hg₁d⟩
+    intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
+    have hj : j₁ = j₂ := Subsingleton.elim j₁ j₂; subst hj
+    simp only [Set.mem_setOf_eq] at h₁ h₂
+    exact Subtype.ext (Prod.ext
+      (decompQuot_fst_eq_of_snd_mem_H P g₁ (HeckeCoset.one P).rep d i₁ i₂ j₁
+        (Subgroup.mul_mem _ (SetLike.coe_mem j₁.out)
+          (HeckeCoset.one_rep_mem_H P)) h₁ h₂)
+      rfl)
   · intro hm; by_contra hne
     have hg₁d_ne : ¬ dcRel P g₁ d := fun h => hne (Quotient.sound h)
     have : heckeMultiplicity P g₁ (HeckeCoset.one P).rep d = 0 := by
@@ -398,28 +404,17 @@ private lemma mulMap_one_T_eq (g₁ : P.Δ)
       ⟨(HeckeCoset.one P).rep, HeckeCoset.one_rep_mem_H P⟩,
     doset_mul_left_eq_self]
 
-/-- The multiplicity `heckeMultiplicity` is nonzero for double cosets in the
-multiplication support. -/
-lemma heckeMultiplicity_pos_of_mem_mulSupport (g₁ g₂ : P.Δ) (d : HeckeCoset P)
-    (hd : d ∈ mulSupport P g₁ g₂) :
-    heckeMultiplicity P g₁ g₂ (HeckeCoset.rep d) ≠ 0 := by
-  rw [heckeMultiplicity]; simp only [ne_eq, Nat.cast_eq_zero]
-  rw [Nat.card_eq_zero, not_or, not_isEmpty_iff]
-  refine ⟨?_, not_infinite_iff_finite.mpr inferInstance⟩
-  rw [mulSupport] at hd
-  simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and,
-    Prod.exists] at hd
-  obtain ⟨i₀, j₀, hmap⟩ := hd
-  -- hmap : mulMap P g₁ g₂ (i₀, j₀) = d
-  -- So ⟦⟨i₀.out * g₁ * (j₀.out * g₂), _⟩⟧ = d, i.e., same double coset as d
-  -- Which means: doubleCoset (i₀.out * g₁ * (j₀.out * g₂)) H H = doubleCoset (rep d) H H
-  have hset_eq : DoubleCoset.doubleCoset
+/-- From a witnessing double-coset equality `H(σᵢ τⱼ)H = HcH`, build a representative
+pair `(i', j')` whose set-form product realizes the left coset `cH`. -/
+private lemma nonempty_witness_of_doubleCoset_eq (g₁ g₂ : P.Δ) (c : G)
+    (i₀ : decompQuot P g₁) (j₀ : decompQuot P g₂)
+    (hset_eq : DoubleCoset.doubleCoset
       ((↑i₀.out : G) * (↑g₁ : G) * ((↑j₀.out : G) * (↑g₂ : G)))
       (P.H : Set G) (P.H : Set G) =
-      DoubleCoset.doubleCoset (HeckeCoset.rep d : G) P.H P.H := by
-    have h1 : mulMap P g₁ g₂ (i₀, j₀) = (⟦HeckeCoset.rep d⟧ : HeckeCoset P) :=
-      hmap.trans (Quotient.out_eq d).symm
-    exact (HeckeCoset.eq_iff _ _).mp h1
+      DoubleCoset.doubleCoset c P.H P.H) :
+    Nonempty ↑{x : decompQuot P g₁ × decompQuot P g₂ |
+      ({(↑x.1.out : G) * (↑g₁ : G)} : Set G) *
+        {(↑x.2.out : G) * (↑g₂ : G)} * P.H = {c} * (P.H : Set G)} := by
   obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := (DoubleCoset.eq P.H P.H _ _).mp
     (DoubleCoset.mk_eq_of_doubleCoset_eq hset_eq)
   set α := (↑g₁ : G) with hα_def
@@ -452,13 +447,32 @@ lemma heckeMultiplicity_pos_of_mem_mulSupport (g₁ g₂ : P.Δ) (d : HeckeCoset
   refine ⟨⟨(i', j'), ?_⟩⟩
   simp only [Set.mem_setOf_eq]
   have hprod_main : (↑i'.out : G) * α * ((↑j'.out : G) * β) =
-      (HeckeCoset.rep d : G) * (h₂⁻¹ * (β⁻¹ * (κ₂.val : G) * β)) := by
+      c * (h₂⁻¹ * (β⁻¹ * (κ₂.val : G) * β)) := by
     rw [hi'_coe, hj'_coe]
-    have hprod' : (HeckeCoset.rep d : G) =
-      h₁ * (↑i₀.out * α * (↑j₀.out * β)) * h₂ := hprod
+    have hprod' : c = h₁ * (↑i₀.out * α * (↑j₀.out * β)) * h₂ := hprod
     rw [hprod']; group
   rw [Set.singleton_mul_singleton, hprod_main, ← Set.singleton_mul_singleton, mul_assoc,
     Subgroup.singleton_mul_subgroup (P.H.mul_mem (P.H.inv_mem hh₂) hκ₂_conj)]
+
+/-- The multiplicity `heckeMultiplicity` is nonzero for double cosets in the
+multiplication support. -/
+lemma heckeMultiplicity_pos_of_mem_mulSupport (g₁ g₂ : P.Δ) (d : HeckeCoset P)
+    (hd : d ∈ mulSupport P g₁ g₂) :
+    heckeMultiplicity P g₁ g₂ (HeckeCoset.rep d) ≠ 0 := by
+  rw [heckeMultiplicity]; simp only [ne_eq, Nat.cast_eq_zero]
+  rw [Nat.card_eq_zero, not_or, not_isEmpty_iff]
+  refine ⟨?_, not_infinite_iff_finite.mpr inferInstance⟩
+  rw [mulSupport] at hd
+  simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and,
+    Prod.exists] at hd
+  obtain ⟨i₀, j₀, hmap⟩ := hd
+  -- `hmap : mulMap P g₁ g₂ (i₀, j₀) = d` gives a witnessing double-coset equality.
+  have hset_eq : DoubleCoset.doubleCoset
+      ((↑i₀.out : G) * (↑g₁ : G) * ((↑j₀.out : G) * (↑g₂ : G)))
+      (P.H : Set G) (P.H : Set G) =
+      DoubleCoset.doubleCoset (HeckeCoset.rep d : G) P.H P.H :=
+    (HeckeCoset.eq_iff _ _).mp (hmap.trans (Quotient.out_eq d).symm)
+  exact nonempty_witness_of_doubleCoset_eq P g₁ g₂ (HeckeCoset.rep d) i₀ j₀ hset_eq
 
 /-- The multiplicity `heckeMultiplicity` is zero for double cosets outside the
 multiplication support. -/
@@ -539,6 +553,58 @@ lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
             _ = (↑h₁ * ↑↑n₁) * ↑g₁ * ((↑h₂ * ↑↑n₂) * ↑g₂) := by group
       exact key.symm⟩
 
+/-- When `dcRel P g₁ d`, some representative pair `(i₀, j₀)` realizes the set-form
+predicate for left multiplication by `HeckeCoset.one`: the left coset `dH` is hit. -/
+private lemma nonempty_one_mul_witness_of_dcRel (g₁ d : P.Δ) (hg₁d : dcRel P g₁ d) :
+    Nonempty ↑{x : decompQuot P (HeckeCoset.one P).rep × decompQuot P g₁ |
+      ({(↑x.1.out : G) * (↑(HeckeCoset.one P).rep : G)} : Set G) *
+        {(↑x.2.out : G) * (↑g₁ : G)} * P.H = {(↑d : G)} * (P.H : Set G)} := by
+  -- d ∈ Hg₁H, find j' such that d ∈ {j'.out * g₁} * H
+  have hd_in : (↑d : G) ∈ doubleCoset (↑g₁ : G) P.H P.H :=
+    hg₁d ▸ DoubleCoset.mem_doubleCoset_self P.H P.H _
+  rw [DoubleCoset.doubleCoset_eq_iUnion_leftCosets] at hd_in
+  simp only [Set.mem_iUnion] at hd_in
+  obtain ⟨j', hj'⟩ := hd_in
+  rw [smul_eq_singleton_mul] at hj'
+  rw [singleton_mul] at hj'
+  simp only [image_mul_left, mem_preimage, SetLike.mem_coe] at hj'
+  -- hj' : (j'.out * g₁)⁻¹ * d ∈ P.H
+  -- Pick j₀ := ⟦⟨h₀⁻¹ * j'.out, _⟩⟧ where h₀ = i₀.out * one.rep ∈ H
+  obtain ⟨i₀⟩ := one_in_decompQuot_T_one P
+  have h₀_mem : (↑i₀.out : G) * ((HeckeCoset.one P).rep : G) ∈ P.H :=
+    Subgroup.mul_mem _ (SetLike.coe_mem i₀.out) (HeckeCoset.one_rep_mem_H P)
+  set h₀ := ↑i₀.out * ((HeckeCoset.one P).rep : G) with hh₀_def
+  set j₀ : decompQuot P g₁ :=
+    ⟦⟨h₀⁻¹ * ↑j'.out, P.H.mul_mem (P.H.inv_mem h₀_mem) j'.out.2⟩⟧
+  obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
+    ((ConjAct.toConjAct (↑g₁ : G) • P.H).subgroupOf P.H)
+    ⟨h₀⁻¹ * ↑j'.out, P.H.mul_mem (P.H.inv_mem h₀_mem) j'.out.2⟩
+  have hn_coe : (j₀.out : G) = h₀⁻¹ * ↑j'.out * (n : G) := by
+    have := congr_arg (Subtype.val : ↥P.H → G) hn_eq
+    simpa [Subgroup.coe_mul] using this
+  have hn_conj : (↑g₁ : G)⁻¹ * (n : G) * ↑g₁ ∈ P.H := by
+    have := n.2
+    rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at this
+    simpa [ConjAct.ofConjAct_toConjAct] using this
+  exact ⟨⟨(i₀, j₀), by
+    simp only [Set.mem_setOf_eq, Set.singleton_mul_singleton]
+    apply (leftCoset_eq_of_not_disjoint (H := P.H) _ _ _).symm
+    rw [not_disjoint_iff]
+    refine ⟨↑d, Set.mem_smul_set.mpr ⟨1, P.H.one_mem, by simp⟩, ?_⟩
+    rw [Set.mem_smul_set]
+    refine ⟨(h₀ * ↑j₀.out * (↑g₁ : G))⁻¹ * ↑d, ?_, by
+      show (↑i₀.out * (HeckeCoset.one P).rep * (↑j₀.out * (↑g₁ : G))) *
+        ((h₀ * ↑j₀.out * ↑g₁)⁻¹ * ↑d) = ↑d
+      simp only [hh₀_def]; group⟩
+    show (h₀ * ↑j₀.out * (↑g₁ : G))⁻¹ * ↑d ∈ P.H
+    have key : (h₀ * ↑j₀.out * (↑g₁ : G))⁻¹ * ↑d =
+        ((↑g₁ : G)⁻¹ * (↑n : G)⁻¹ * ↑g₁) *
+        ((↑j'.out * (↑g₁ : G))⁻¹ * ↑d) := by
+      rw [hn_coe]; group
+    rw [key]
+    exact P.H.mul_mem (by convert P.H.inv_mem hn_conj using 1; group) hj'⟩⟩
+
 /-- Left multiplication by `HeckeCoset.one` has multiplicity `1` on the diagonal
 and `0` elsewhere. -/
 lemma heckeMultiplicity_one_mul (g₁ d : P.Δ) :
@@ -550,57 +616,12 @@ lemma heckeMultiplicity_one_mul (g₁ d : P.Δ) :
     simp only [heckeMultiplicity]; norm_cast; rw [Nat.card_eq_one_iff_unique]
     haveI : Subsingleton (decompQuot P (HeckeCoset.one P).rep) :=
       subsingleton_decompQuot_T_one P
-    refine ⟨⟨?_⟩, ?_⟩
-    · intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
-      have hi : i₁ = i₂ := Subsingleton.elim i₁ i₂; subst hi
-      simp only [Set.mem_setOf_eq] at h₁ h₂
-      exact Subtype.ext (Prod.ext rfl
-        (decompQuot_snd_eq_of_fst_eq P (HeckeCoset.one P).rep g₁ d i₁ j₁ j₂ h₁ h₂))
-    · -- d ∈ Hg₁H, find j' such that d ∈ {j'.out * g₁} * H
-      have hd_in : (↑d : G) ∈ doubleCoset (↑g₁ : G) P.H P.H :=
-        hg₁d ▸ DoubleCoset.mem_doubleCoset_self P.H P.H _
-      rw [DoubleCoset.doubleCoset_eq_iUnion_leftCosets] at hd_in
-      simp only [Set.mem_iUnion] at hd_in
-      obtain ⟨j', hj'⟩ := hd_in
-      rw [smul_eq_singleton_mul] at hj'
-      rw [singleton_mul] at hj'
-      simp only [image_mul_left, mem_preimage, SetLike.mem_coe] at hj'
-      -- hj' : (j'.out * g₁)⁻¹ * d ∈ P.H
-      -- Pick j₀ := ⟦⟨h₀⁻¹ * j'.out, _⟩⟧ where h₀ = i₀.out * one.rep ∈ H
-      obtain ⟨i₀⟩ := one_in_decompQuot_T_one P
-      have h₀_mem : (↑i₀.out : G) * ((HeckeCoset.one P).rep : G) ∈ P.H :=
-        Subgroup.mul_mem _ (SetLike.coe_mem i₀.out) (HeckeCoset.one_rep_mem_H P)
-      set h₀ := ↑i₀.out * ((HeckeCoset.one P).rep : G) with hh₀_def
-      set j₀ : decompQuot P g₁ :=
-        ⟦⟨h₀⁻¹ * ↑j'.out, P.H.mul_mem (P.H.inv_mem h₀_mem) j'.out.2⟩⟧
-      obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
-        ((ConjAct.toConjAct (↑g₁ : G) • P.H).subgroupOf P.H)
-        ⟨h₀⁻¹ * ↑j'.out, P.H.mul_mem (P.H.inv_mem h₀_mem) j'.out.2⟩
-      have hn_coe : (j₀.out : G) = h₀⁻¹ * ↑j'.out * (n : G) := by
-        have := congr_arg (Subtype.val : ↥P.H → G) hn_eq
-        simpa [Subgroup.coe_mul] using this
-      have hn_conj : (↑g₁ : G)⁻¹ * (n : G) * ↑g₁ ∈ P.H := by
-        have := n.2
-        rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-          ConjAct.smul_def] at this
-        simpa [ConjAct.ofConjAct_toConjAct] using this
-      exact ⟨⟨(i₀, j₀), by
-        simp only [Set.mem_setOf_eq, Set.singleton_mul_singleton]
-        apply (leftCoset_eq_of_not_disjoint (H := P.H) _ _ _).symm
-        rw [not_disjoint_iff]
-        refine ⟨↑d, Set.mem_smul_set.mpr ⟨1, P.H.one_mem, by simp⟩, ?_⟩
-        rw [Set.mem_smul_set]
-        refine ⟨(h₀ * ↑j₀.out * (↑g₁ : G))⁻¹ * ↑d, ?_, by
-          show (↑i₀.out * (HeckeCoset.one P).rep * (↑j₀.out * (↑g₁ : G))) *
-            ((h₀ * ↑j₀.out * ↑g₁)⁻¹ * ↑d) = ↑d
-          simp only [hh₀_def]; group⟩
-        show (h₀ * ↑j₀.out * (↑g₁ : G))⁻¹ * ↑d ∈ P.H
-        have key : (h₀ * ↑j₀.out * (↑g₁ : G))⁻¹ * ↑d =
-            ((↑g₁ : G)⁻¹ * (↑n : G)⁻¹ * ↑g₁) *
-            ((↑j'.out * (↑g₁ : G))⁻¹ * ↑d) := by
-          rw [hn_coe]; group
-        rw [key]
-        exact P.H.mul_mem (by convert P.H.inv_mem hn_conj using 1; group) hj'⟩⟩
+    refine ⟨⟨?_⟩, nonempty_one_mul_witness_of_dcRel P g₁ d hg₁d⟩
+    intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
+    have hi : i₁ = i₂ := Subsingleton.elim i₁ i₂; subst hi
+    simp only [Set.mem_setOf_eq] at h₁ h₂
+    exact Subtype.ext (Prod.ext rfl
+      (decompQuot_snd_eq_of_fst_eq P (HeckeCoset.one P).rep g₁ d i₁ j₁ j₂ h₁ h₂))
   · intro hm; by_contra hne
     have : heckeMultiplicity P (HeckeCoset.one P).rep g₁ d = 0 := by
       simp only [heckeMultiplicity, Nat.cast_eq_zero, Nat.card_eq_zero,

@@ -855,16 +855,83 @@ private lemma exists_sl_clear_col_zero {n : ℕ}
   rw [h_sum_eq]
   exact hv_kernel i
 
+/-- **Upper-triangularization base case, `n = 2`.**  Right-multiplication by the
+trailing-pair orthogonalizer `exists_sl2_first_col_orthogonal (M 1 0) (M 1 1)`
+zeroes the unique strict-lower entry `(1, 0)`. -/
+private lemma exists_sl_upperTri_two (M : Matrix (Fin 2) (Fin 2) ℤ) :
+    ∃ R : SpecialLinearGroup (Fin 2) ℤ,
+      ∀ i j : Fin 2, j < i → (M * R.val) i j = 0 := by
+  obtain ⟨R, hR⟩ := exists_sl2_first_col_orthogonal (M 1 0) (M 1 1)
+  refine ⟨R, ?_⟩
+  intro i j hji
+  have hi : i = 1 := by
+    fin_cases i
+    · exact absurd hji (Fin.not_lt_zero _)
+    · rfl
+  subst hi
+  have hj : j = 0 := by
+    fin_cases j
+    · rfl
+    · exact absurd hji (lt_irrefl _)
+  subst hj
+  rw [Matrix.mul_apply, Fin.sum_univ_two]
+  exact hR
+
+/-- **Upper-triangularization inductive assembly.**  Combines a column-0 clearer
+`R₁` (zeroing entries below row 0 of `M * R₁`) with an upper-triangularizer `R'`
+for the trailing `(n + 2) × (n + 2)` block of `M * R₁` (rows/cols past index 0).
+Embedding `R'` via `slSuccEmbed`, the product `R₁ * slSuccEmbed R'` makes
+`M * (R₁ * slSuccEmbed R')` upper triangular.  Stated with the tail-solution
+hypothesis explicit so it is independent of the recursion in
+`sl_upperTri_for_matrix`. -/
+private lemma exists_sl_upperTri_succ_of_clear_tail {n : ℕ}
+    (M : Matrix (Fin (n + 3)) (Fin (n + 3)) ℤ)
+    (R₁ : SpecialLinearGroup (Fin (n + 3)) ℤ)
+    (hR₁ : ∀ i : Fin (n + 2), (M * R₁.val) i.succ 0 = 0)
+    (R' : SpecialLinearGroup (Fin (n + 2)) ℤ)
+    (hR' : ∀ i j : Fin (n + 2), j < i →
+      (Matrix.of (fun (i k' : Fin (n + 2)) ↦ (M * R₁.val) i.succ k'.succ) * R'.val) i j = 0) :
+    ∃ R : SpecialLinearGroup (Fin (n + 3)) ℤ,
+      ∀ i j : Fin (n + 3), j < i → (M * R.val) i j = 0 := by
+  refine ⟨R₁ * slSuccEmbed R', ?_⟩
+  intro i j hji
+  show (M * (R₁ * slSuccEmbed R').val) i j = 0
+  rw [SpecialLinearGroup.coe_mul, ← Matrix.mul_assoc, Matrix.mul_apply, Fin.sum_univ_succ]
+  rcases Fin.eq_zero_or_eq_succ i with hi | ⟨i', hi⟩
+  · -- `i = 0`:  vacuous (`j < 0` impossible).
+    subst hi; exact absurd hji (Fin.not_lt_zero _)
+  · subst hi
+    rcases Fin.eq_zero_or_eq_succ j with hj | ⟨j', hj⟩
+    · -- `j = 0`:  goal reduces to `(M * R₁.val) i'.succ 0 = 0`.
+      subst hj
+      simp only [slSuccEmbed_val_zero_zero, mul_one, slSuccEmbed_val_succ_zero,
+        mul_zero, Finset.sum_const_zero, add_zero]
+      exact hR₁ i'
+    · -- `j = j'.succ`:  goal reduces to `(Mtail * R'.val) i' j' = 0` via the tail solution.
+      subst hj
+      simp only [slSuccEmbed_val_zero_succ, mul_zero, zero_add,
+        slSuccEmbed_val_succ_succ]
+      have hji_sub : j' < i' := by
+        have h1 : j'.succ.val < i'.succ.val := hji
+        simp only [Fin.val_succ] at h1
+        exact Fin.lt_def.mpr (by omega)
+      have h_sum_eq :
+          ∑ k' : Fin (n + 2),
+            (M * R₁.val) i'.succ k'.succ * R'.val k' j' =
+          (Matrix.of (fun (i k' : Fin (n + 2)) ↦ (M * R₁.val) i.succ k'.succ) * R'.val) i' j' := by
+        simp only [Matrix.mul_apply, Matrix.of_apply]
+      rw [h_sum_eq, hR' i' j' hji_sub]
+
 /-- **Trailing-block column upper-triangularization (general dim).**  For any
 `n × n` integer matrix `M`, there exists `R ∈ SL_n(ℤ)` such that the
 strict-lower entries of `M * R` are zero (i.e., `M * R` is upper triangular).
 This is the column-HNF iteration for arbitrary square integer matrices.
 
 Fully proven via:  the trivial cases `n ≤ 1` (vacuous constraint), the
-`n = 2` base case (via `exists_sl2_first_col_orthogonal`), and an inductive
-step for `n + 3` that combines `exists_sl_clear_col_zero` (clears column 0
-below row 0) with the recursive IH applied to the `(n + 2) × (n + 2)` trailing
-submatrix below row 0 / column 0, embedded back via `slSuccEmbed`.  The
+`n = 2` base case (`exists_sl_upperTri_two`), and an inductive step for `n + 3`
+that combines `exists_sl_clear_col_zero` (clears column 0 below row 0) with the
+recursive IH applied to the `(n + 2) × (n + 2)` trailing submatrix below row 0 /
+column 0, assembled by `exists_sl_upperTri_succ_of_clear_tail`.  The
 single-column clearer is itself proven from the strictly-smaller
 `exists_primitive_kernel_vec`, which is the only remaining algebraic blocker. -/
 private lemma sl_upperTri_for_matrix : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n) ℤ),
@@ -878,55 +945,12 @@ private lemma sl_upperTri_for_matrix : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n)
       have : ¬ j < i := by
         rw [Fin.lt_def, hi, hj]; exact lt_irrefl _
       exact absurd hji this⟩
-  | 2, M => by
-      obtain ⟨R, hR⟩ := exists_sl2_first_col_orthogonal (M 1 0) (M 1 1)
-      refine ⟨R, ?_⟩
-      intro i j hji
-      have hi : i = 1 := by
-        fin_cases i
-        · exact absurd hji (Fin.not_lt_zero _)
-        · rfl
-      subst hi
-      have hj : j = 0 := by
-        fin_cases j
-        · rfl
-        · exact absurd hji (lt_irrefl _)
-      subst hj
-      rw [Matrix.mul_apply, Fin.sum_univ_two]
-      exact hR
+  | 2, M => exists_sl_upperTri_two M
   | n + 3, M => by
       obtain ⟨R₁, hR₁⟩ := exists_sl_clear_col_zero M
-      let Mtail : Matrix (Fin (n + 2)) (Fin (n + 2)) ℤ :=
-        fun i k' ↦ (M * R₁.val) i.succ k'.succ
-      obtain ⟨R', hR'⟩ := sl_upperTri_for_matrix Mtail
-      refine ⟨R₁ * slSuccEmbed R', ?_⟩
-      intro i j hji
-      show (M * (R₁ * slSuccEmbed R').val) i j = 0
-      rw [SpecialLinearGroup.coe_mul, ← Matrix.mul_assoc, Matrix.mul_apply, Fin.sum_univ_succ]
-      rcases Fin.eq_zero_or_eq_succ i with hi | ⟨i', hi⟩
-      · -- `i = 0`:  vacuous (`j < 0` impossible).
-        subst hi; exact absurd hji (Fin.not_lt_zero _)
-      · subst hi
-        rcases Fin.eq_zero_or_eq_succ j with hj | ⟨j', hj⟩
-        · -- `j = 0`:  goal reduces to `(M * R₁.val) i'.succ 0 = 0`.
-          subst hj
-          simp only [slSuccEmbed_val_zero_zero, mul_one, slSuccEmbed_val_succ_zero,
-            mul_zero, Finset.sum_const_zero, add_zero]
-          exact hR₁ i'
-        · -- `j = j'.succ`:  goal reduces to `(Mtail * R'.val) i' j' = 0` via IH.
-          subst hj
-          simp only [slSuccEmbed_val_zero_succ, mul_zero, zero_add,
-            slSuccEmbed_val_succ_succ]
-          have hji_sub : j' < i' := by
-            have h1 : j'.succ.val < i'.succ.val := hji
-            simp only [Fin.val_succ] at h1
-            exact Fin.lt_def.mpr (by omega)
-          have h_sum_eq :
-              ∑ k' : Fin (n + 2),
-                (M * R₁.val) i'.succ k'.succ * R'.val k' j' =
-              (Mtail * R'.val) i' j' := by
-            rw [Matrix.mul_apply]
-          rw [h_sum_eq, hR' i' j' hji_sub]
+      obtain ⟨R', hR'⟩ :=
+        sl_upperTri_for_matrix (Matrix.of (fun (i k' : Fin (n + 2)) ↦ (M * R₁.val) i.succ k'.succ))
+      exact exists_sl_upperTri_succ_of_clear_tail M R₁ hR₁ R' hR'
 
 /-- **Primitive vector completion with DivChain-respecting stabilizer
 membership** — the isolated combinatorial core behind

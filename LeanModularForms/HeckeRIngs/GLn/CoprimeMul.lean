@@ -748,6 +748,59 @@ private lemma coprime_coupling_mem_H (a b : Fin n → ℕ)
   exact GLnQ_mem_SLnZ_of_coprime_scaling n C (∏ i, a i) (∏ i, b i) hcop h_det
     h_scale_a h_scale_b
 
+/-- Group-theoretic core of `heckeMultiplicity_coprime_le_one`: given two coset
+representatives related by `hκ_eq` (the coset-overlap relation) and the diagonal
+`H`-sandwich decompositions of the two double-coset representatives, the conjugate
+`δa⁻¹ * p₂⁻¹ * p₁ * δa` lies in `H`. The coprimality hypothesis enters through
+`coprime_coupling_mem_H`. -/
+private lemma out_conj_diagA_mem_H (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i)
+    (hb_pos : ∀ i, 0 < b i) (ha : DivChain n a) (hb : DivChain n b)
+    (hcop : Nat.Coprime (∏ i, a i) (∏ i, b i))
+    (δa δb p₁ p₂ q₁ q₂ h₁a h₂a h₁b h₂b κ : GL (Fin n) ℚ)
+    (hh₂a : h₂a ∈ (GL_pair n).H)
+    (hh₁b : h₁b ∈ (GL_pair n).H) (hh₂b : h₂b ∈ (GL_pair n).H)
+    (hq₁ : q₁ ∈ (GL_pair n).H) (hq₂ : q₂ ∈ (GL_pair n).H) (hκ : κ ∈ (GL_pair n).H)
+    (hδa : δa = h₁a * diagMat n a * h₂a) (hδb : δb = h₁b * diagMat n b * h₂b)
+    (σ' : SpecialLinearGroup (Fin n) ℤ)
+    (hσ' : (mapGL ℚ) σ' = h₁a⁻¹ * (p₂⁻¹ * p₁) * h₁a)
+    (hκ_eq : p₂ * δa * (q₂ * δb) * κ = p₁ * δa * (q₁ * δb)) :
+    δa⁻¹ * p₂⁻¹ * p₁ * δa ∈ (GL_pair n).H := by
+  set H := (GL_pair n).H
+  have h_beta_eq : δa⁻¹ * p₂⁻¹ * p₁ * δa = q₂ * δb * κ * δb⁻¹ * q₁⁻¹ := by
+    apply mul_left_cancel (a := p₂ * δa)
+    apply mul_right_cancel (b := q₁ * δb)
+    simp only [mul_assoc, mul_inv_cancel_left, inv_mul_cancel_left, inv_mul_cancel, mul_one]
+    simp only [mul_assoc] at hκ_eq; exact hκ_eq.symm
+  have h_lhs_eq : δa⁻¹ * p₂⁻¹ * p₁ * δa =
+      h₂a⁻¹ * ((diagMat n a)⁻¹ * (σ' : GL (Fin n) ℚ) * diagMat n a) * h₂a := by
+    rw [hσ']; conv_lhs => rw [hδa]
+    group
+  obtain ⟨F_pre, hF_pre⟩ := show q₂ * h₁b ∈ SLnZ_subgroup n from
+    show _ ∈ H from H.mul_mem hq₂ hh₁b
+  obtain ⟨G_pre, hG_pre⟩ := show h₂b * κ * h₂b⁻¹ ∈ SLnZ_subgroup n from
+    show _ ∈ H from H.mul_mem (H.mul_mem hh₂b hκ) (H.inv_mem hh₂b)
+  obtain ⟨E_pre, hE_pre⟩ := show h₁b⁻¹ * q₁⁻¹ ∈ SLnZ_subgroup n from
+    show _ ∈ H from H.mul_mem (H.inv_mem hh₁b) (H.inv_mem hq₁)
+  have h_rhs_eq : q₂ * δb * κ * δb⁻¹ * q₁⁻¹ =
+      (F_pre : GL (Fin n) ℚ) * diagMat n b * (G_pre : GL (Fin n) ℚ) *
+        (diagMat n b)⁻¹ * (E_pre : GL (Fin n) ℚ) := by
+    rw [hF_pre, hG_pre, hE_pre]; conv_lhs => rw [hδb]
+    group
+  obtain ⟨FF, hFF⟩ := show h₂a * (F_pre : GL (Fin n) ℚ) ∈ SLnZ_subgroup n from
+    show _ ∈ H from H.mul_mem hh₂a (coe_mem_SLnZ n F_pre)
+  obtain ⟨EE, hEE⟩ := show (E_pre : GL (Fin n) ℚ) * h₂a⁻¹ ∈ SLnZ_subgroup n from
+    show _ ∈ H from H.mul_mem (coe_mem_SLnZ n E_pre) (H.inv_mem hh₂a)
+  have h_C_eq : (diagMat n a)⁻¹ * (σ' : GL (Fin n) ℚ) * diagMat n a =
+      (FF : GL (Fin n) ℚ) * diagMat n b * (G_pre : GL (Fin n) ℚ) *
+        (diagMat n b)⁻¹ * (EE : GL (Fin n) ℚ) := by
+    rw [h_lhs_eq, h_rhs_eq] at h_beta_eq
+    apply mul_left_cancel (a := h₂a⁻¹); apply mul_right_cancel (b := h₂a)
+    rw [hFF, hEE]; simp only [mul_assoc, inv_mul_cancel, mul_one, inv_mul_cancel_left]
+    simp only [mul_assoc] at h_beta_eq; exact h_beta_eq
+  rw [h_lhs_eq]
+  exact H.mul_mem (H.mul_mem (H.inv_mem hh₂a)
+    (coprime_coupling_mem_H n a b ha_pos hb_pos ha hb hcop σ' FF G_pre EE h_C_eq)) hh₂a
+
 private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i)
     (hb_pos : ∀ i, 0 < b i) (ha : DivChain n a) (hb : DivChain n b)
     (hcop : Nat.Coprime (∏ i, a i) (∏ i, b i)) :
@@ -783,49 +836,14 @@ private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : �
       rw [← h12']; exact ⟨_, Set.mem_singleton _, 1, H.one_mem, by simp⟩
     obtain ⟨_, h_sing, κ, hκ, hκ_eq⟩ := hmem12
     rw [Set.mem_singleton_iff] at h_sing; subst h_sing
-    have h_beta_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
-        (i₁.out : GL (Fin n) ℚ) * δ_a' =
-        (j₂.out : GL (Fin n) ℚ) * δ_b' * κ * δ_b'⁻¹ *
-          (j₁.out : GL (Fin n) ℚ)⁻¹ := by
-      apply mul_left_cancel (a := (i₂.out : GL (Fin n) ℚ) * δ_a')
-      apply mul_right_cancel (b := (j₁.out : GL (Fin n) ℚ) * δ_b')
-      simp only [mul_assoc, mul_inv_cancel_left, inv_mul_cancel_left, inv_mul_cancel, mul_one]
-      simp only [mul_assoc] at hκ_eq; exact hκ_eq.symm
-    have h_lhs_eq : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
-        (i₁.out : GL (Fin n) ℚ) * δ_a' =
-        h₂a⁻¹ * ((diagMat n a)⁻¹ * (σ' : GL (Fin n) ℚ) * diagMat n a) * h₂a := by
-      have hδa_sub : δ_a' = h₁a * diagMat n a * h₂a := hδ_a_def.trans hδa_eq
-      rw [hσ']; conv_lhs => rw [hδa_sub]
-      group
-    obtain ⟨F_pre, hF_pre⟩ := show (j₂.out : GL (Fin n) ℚ) * h₁b ∈ SLnZ_subgroup n from
-      show _ ∈ H from H.mul_mem (SetLike.coe_mem j₂.out) hh₁b
-    obtain ⟨G_pre, hG_pre⟩ := show h₂b * κ * h₂b⁻¹ ∈ SLnZ_subgroup n from
-      show _ ∈ H from H.mul_mem (H.mul_mem hh₂b hκ) (H.inv_mem hh₂b)
-    obtain ⟨E_pre, hE_pre⟩ := show h₁b⁻¹ * (j₁.out : GL (Fin n) ℚ)⁻¹ ∈ SLnZ_subgroup n from
-      show _ ∈ H from H.mul_mem (H.inv_mem hh₁b) (H.inv_mem (SetLike.coe_mem j₁.out))
-    have h_rhs_eq : (j₂.out : GL (Fin n) ℚ) * δ_b' * κ * δ_b'⁻¹ *
-        (j₁.out : GL (Fin n) ℚ)⁻¹ =
-        (F_pre : GL (Fin n) ℚ) * diagMat n b * (G_pre : GL (Fin n) ℚ) *
-          (diagMat n b)⁻¹ * (E_pre : GL (Fin n) ℚ) := by
-      have hδb_sub : δ_b' = h₁b * diagMat n b * h₂b := hδ_b_def.trans hδb_eq
-      rw [hF_pre, hG_pre, hE_pre]; conv_lhs => rw [hδb_sub]
-      group
-    obtain ⟨FF, hFF⟩ := show h₂a * (F_pre : GL (Fin n) ℚ) ∈ SLnZ_subgroup n from
-      show _ ∈ H from H.mul_mem hh₂a (coe_mem_SLnZ n F_pre)
-    obtain ⟨EE, hEE⟩ := show (E_pre : GL (Fin n) ℚ) * h₂a⁻¹ ∈ SLnZ_subgroup n from
-      show _ ∈ H from H.mul_mem (coe_mem_SLnZ n E_pre) (H.inv_mem hh₂a)
-    have h_C_eq : (diagMat n a)⁻¹ * (σ' : GL (Fin n) ℚ) * diagMat n a =
-        (FF : GL (Fin n) ℚ) * diagMat n b * (G_pre : GL (Fin n) ℚ) *
-          (diagMat n b)⁻¹ * (EE : GL (Fin n) ℚ) := by
-      rw [h_lhs_eq, h_rhs_eq] at h_beta_eq
-      apply mul_left_cancel (a := h₂a⁻¹); apply mul_right_cancel (b := h₂a)
-      rw [hFF, hEE]; simp only [mul_assoc, inv_mul_cancel, mul_one, inv_mul_cancel_left]
-      simp only [mul_assoc] at h_beta_eq; exact h_beta_eq
+    have hκ_eq' : (i₂.out : GL (Fin n) ℚ) * δ_a' * ((j₂.out : GL (Fin n) ℚ) * δ_b') * κ =
+        (i₁.out : GL (Fin n) ℚ) * δ_a' * ((j₁.out : GL (Fin n) ℚ) * δ_b') := hκ_eq
     have h_beta_in_H : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
-        (i₁.out : GL (Fin n) ℚ) * δ_a' ∈ H := by
-      rw [h_lhs_eq]
-      exact H.mul_mem (H.mul_mem (H.inv_mem hh₂a)
-        (coprime_coupling_mem_H n a b ha_pos hb_pos ha hb hcop σ' FF G_pre EE h_C_eq)) hh₂a
+        (i₁.out : GL (Fin n) ℚ) * δ_a' ∈ H :=
+      out_conj_diagA_mem_H n a b ha_pos hb_pos ha hb hcop δ_a' δ_b' i₁.out i₂.out
+        j₁.out j₂.out h₁a h₂a h₁b h₂b κ hh₂a hh₁b hh₂b
+        (SetLike.coe_mem j₁.out) (SetLike.coe_mem j₂.out) hκ
+        (hδ_a_def.trans hδa_eq) (hδ_b_def.trans hδb_eq) σ' hσ' hκ_eq'
     exact HeckeRing.leftCoset_eq_of_not_disjoint (H := (GL_pair n).H) _ _ (by
       rw [Set.not_disjoint_iff]
       exact ⟨(i₁.out : GL (Fin n) ℚ) * δ_a', ⟨1, H.one_mem, mul_one _⟩,

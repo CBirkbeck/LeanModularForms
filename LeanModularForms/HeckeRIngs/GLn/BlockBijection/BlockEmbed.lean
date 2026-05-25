@@ -289,6 +289,60 @@ lemma cons_one_pos {k : ℕ} {a : Fin (k + 1) → ℕ} (ha : ∀ i, 0 < a i) :
   · simp [Fin.cons_zero]
   · rw [Fin.cons_succ]; exact ha j
 
+/-- The integer witness matrix `M i j = (N i j * c j) / c i` (integer division) used to
+realize the diagonal conjugation `diag(c)⁻¹ · mapGL N · diag(c)` as an `SL`-element. -/
+private def diagConjWitnessMat {n : ℕ} (c : Fin n → ℕ)
+    (N : SpecialLinearGroup (Fin n) ℤ) : Matrix (Fin n) (Fin n) ℤ :=
+  fun i j ↦ (N.1 i j * (c j : ℤ)) / (c i : ℤ)
+
+/-- Entry identity for the diagonal-conjugation witness: under the divisibility
+hypothesis, `M i j * c i = N i j * c j` over `ℚ` (the integer division is exact). -/
+private lemma diagConjWitnessMat_entry_cast {n : ℕ} (c : Fin n → ℕ)
+    (N : SpecialLinearGroup (Fin n) ℤ)
+    (h_dvd : ∀ i j, (c i : ℤ) ∣ N.1 i j * (c j : ℤ)) (i j : Fin n) :
+    (diagConjWitnessMat c N i j : ℚ) * (c i : ℤ) = (N.1 i j : ℚ) * (c j : ℤ) := by
+  have hmul : diagConjWitnessMat c N i j * (c i : ℤ) = N.1 i j * (c j : ℤ) :=
+    Int.ediv_mul_cancel (h_dvd i j)
+  exact_mod_cast congr_arg (fun z : ℤ ↦ (z : ℚ)) hmul
+
+/-- Matrix conjugation identity: `mapGL N · diag(c) = diag(c) · M` over `ℚ`, where `M` is
+the integer witness matrix cast to `ℚ`. -/
+private lemma diagConjWitnessMat_mat_eq {n : ℕ} (c : Fin n → ℕ) (hc : ∀ i, 0 < c i)
+    (N : SpecialLinearGroup (Fin n) ℤ)
+    (h_dvd : ∀ i j, (c i : ℤ) ∣ N.1 i j * (c j : ℤ)) :
+    (mapGL ℚ N : Matrix _ _ ℚ) * (diagMat n c : Matrix _ _ ℚ) =
+      (diagMat n c : Matrix _ _ ℚ) *
+        ((diagConjWitnessMat c N).map (Int.cast : ℤ → ℚ)) := by
+  ext i j
+  simp only [diagMat_val _ _ hc, mul_apply, diagonal_apply, mul_ite, mul_zero, ite_mul,
+    zero_mul, Finset.sum_ite_eq', Finset.sum_ite_eq, Finset.mem_univ, ite_true,
+    mapGL_coe_matrix, algebraMap_int_eq]
+  show ((N.1 i j : ℤ) : ℚ) * (c j : ℚ) = (c i : ℚ) * ((diagConjWitnessMat c N i j : ℤ) : ℚ)
+  have he := diagConjWitnessMat_entry_cast c N h_dvd i j
+  push_cast at he ⊢
+  linarith [he]
+
+/-- The diagonal-conjugation witness matrix has determinant `1`, hence lies in `SL`. -/
+private lemma diagConjWitnessMat_det_one {n : ℕ} (c : Fin n → ℕ) (hc : ∀ i, 0 < c i)
+    (N : SpecialLinearGroup (Fin n) ℤ)
+    (h_dvd : ∀ i j, (c i : ℤ) ∣ N.1 i j * (c j : ℤ)) :
+    (diagConjWitnessMat c N).det = 1 := by
+  set D : GL (Fin n) ℚ := diagMat n c with hD_def
+  have hD_det_ne : (D.val).det ≠ 0 := by
+    rw [hD_def, diagMat_det _ _ hc]
+    exact Finset.prod_ne_zero_iff.mpr fun i _ ↦ by exact_mod_cast (hc i).ne'
+  have hdet := congr_arg Matrix.det (diagConjWitnessMat_mat_eq c hc N h_dvd)
+  rw [Matrix.det_mul, Matrix.det_mul] at hdet
+  have hN1 : ((mapGL ℚ N).val).det = 1 := by
+    rw [show ((mapGL ℚ N).val).det = (N.val.map (Int.cast : ℤ → ℚ)).det by
+      rw [mapGL_coe_matrix]; simp [algebraMap_int_eq], ← Int.cast_det, N.2]; simp
+  rw [hN1, one_mul] at hdet
+  have hcast : (((diagConjWitnessMat c N).det : ℤ) : ℚ) =
+      ((diagConjWitnessMat c N).map (Int.cast : ℤ → ℚ)).det := Int.cast_det _
+  have : (((diagConjWitnessMat c N).det : ℤ) : ℚ) = (1 : ℚ) := by
+    rw [hcast]; exact mul_left_cancel₀ hD_det_ne (by rw [mul_one]; linarith [hdet])
+  exact_mod_cast this
+
 /-- **Sufficient direction for diag-conjugation membership.** If the integer matrix
 `N ∈ SL(k+2, ℤ)` satisfies the entry-wise divisibility
 `(Fin.cons 1 a) i ∣ N i j * (Fin.cons 1 a) j` for all `i j`, then the conjugate
@@ -309,71 +363,18 @@ lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
       diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
   set c : Fin (k + 2) → ℕ := Fin.cons 1 a with hc_def
   have hc_pos : ∀ i, 0 < c i := cons_one_pos ha
-  have hc_ne : ∀ i, ((c i : ℤ) : ℚ) ≠ 0 := by
-    intro i
-    exact_mod_cast (hc_pos i).ne'
-  have hc_int_ne : ∀ i, (c i : ℤ) ≠ 0 := fun i ↦ by exact_mod_cast (hc_pos i).ne'
-  let Mraw : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    fun i j ↦ (N.1 i j * (c j : ℤ)) / (c i : ℤ)
   set D : GL (Fin (k + 2)) ℚ := diagMat (k + 2) c with hD_def
-  have h_entry_cast : ∀ i j,
-      (Mraw i j : ℚ) * (c i : ℤ) = (N.1 i j : ℚ) * (c j : ℤ) := by
-    intro i j
-    have hdvd := h_dvd i j
-    have hmul : (Mraw i j) * (c i : ℤ) = N.1 i j * (c j : ℤ) := by
-      simp only [Mraw]
-      rw [Int.ediv_mul_cancel hdvd]
-    have := congr_arg (fun z : ℤ ↦ (z : ℚ)) hmul
-    push_cast at this
-    convert this using 1
-  have h_mat_eq :
-      (mapGL ℚ N : Matrix _ _ ℚ) * (D : Matrix _ _ ℚ) =
-        (D : Matrix _ _ ℚ) * (Mraw.map (Int.cast : ℤ → ℚ)) := by
-    ext i j
-    simp only [hD_def, diagMat_val _ _ hc_pos, mul_apply, diagonal_apply, mul_ite,
-      mul_zero, ite_mul, zero_mul, Finset.sum_ite_eq', Finset.sum_ite_eq,
-      Finset.mem_univ, ite_true, mapGL_coe_matrix, algebraMap_int_eq]
-    show ((N.1 i j : ℤ) : ℚ) * (c j : ℚ) = (c i : ℚ) * ((Mraw i j : ℤ) : ℚ)
-    have he := h_entry_cast i j
-    have hci : (((c i : ℤ) : ℚ)) = (c i : ℚ) := by push_cast; ring
-    have hcj : (((c j : ℤ) : ℚ)) = (c j : ℚ) := by push_cast; ring
-    rw [hci, hcj] at he
-    linarith [he]
-  have hD_det_ne : (D.val).det ≠ 0 := by
-    have : (D.val).det = ∏ i, (c i : ℚ) := by
-      simp [hD_def, diagMat_det _ _ hc_pos]
-    rw [this]
-    exact Finset.prod_ne_zero_iff.mpr (fun i _ ↦ hc_ne i)
-  have h_detM_cast : (Mraw.map (Int.cast : ℤ → ℚ)).det = 1 := by
-    have hdet := congr_arg Matrix.det h_mat_eq
-    rw [Matrix.det_mul, Matrix.det_mul] at hdet
-    have hN1 : ((mapGL ℚ N).val).det = 1 := by
-      have h1 : ((mapGL ℚ N).val).det = (N.val.map (Int.cast : ℤ → ℚ)).det := by
-        rw [mapGL_coe_matrix]
-        simp [algebraMap_int_eq]
-      rw [h1, ← Int.cast_det, N.2]; simp
-    rw [hN1, one_mul] at hdet
-    have hdet' : (D.val).det * (Mraw.map (Int.cast : ℤ → ℚ)).det = (D.val).det * 1 := by
-      rw [mul_one]; linarith [hdet]
-    exact mul_left_cancel₀ hD_det_ne hdet'
-  have h_detM_int : Mraw.det = 1 := by
-    have hcast : ((Mraw.det : ℤ) : ℚ) = (Mraw.map (Int.cast : ℤ → ℚ)).det :=
-      Int.cast_det Mraw
-    have : ((Mraw.det : ℤ) : ℚ) = (1 : ℚ) := by rw [hcast]; exact h_detM_cast
-    exact_mod_cast this
-  let M : SpecialLinearGroup (Fin (k + 2)) ℤ := ⟨Mraw, h_detM_int⟩
+  set M : SpecialLinearGroup (Fin (k + 2)) ℤ :=
+    ⟨diagConjWitnessMat c N, diagConjWitnessMat_det_one c hc_pos N h_dvd⟩ with hM_def
   refine ⟨M, ?_⟩
-  have h_mapGL_M_mat : ((mapGL ℚ M : Matrix _ _ ℚ)) = Mraw.map (Int.cast : ℤ → ℚ) := by
-    rw [mapGL_coe_matrix]; rfl
   have h_units : (mapGL ℚ N : GL (Fin (k + 2)) ℚ) * D = D * mapGL ℚ M := by
     apply Units.ext
-    rw [Units.val_mul, Units.val_mul, h_mapGL_M_mat]
-    exact h_mat_eq
-  have h_target : D⁻¹ * (mapGL ℚ N : GL (Fin (k + 2)) ℚ) * D = mapGL ℚ M := by
-    have h1 := congr_arg (D⁻¹ * ·) h_units
-    simp only [← mul_assoc, inv_mul_cancel, one_mul] at h1
-    exact h1
-  exact h_target.symm
+    rw [Units.val_mul, Units.val_mul, show (mapGL ℚ M).val =
+      (diagConjWitnessMat c N).map (Int.cast : ℤ → ℚ) by rw [mapGL_coe_matrix]; rfl]
+    exact diagConjWitnessMat_mat_eq c hc_pos N h_dvd
+  have h1 := congr_arg (D⁻¹ * ·) h_units
+  simp only [← mul_assoc, inv_mul_cancel, one_mul] at h1
+  exact h1.symm
 
 
 
