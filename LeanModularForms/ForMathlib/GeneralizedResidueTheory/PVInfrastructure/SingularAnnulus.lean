@@ -20,8 +20,6 @@ bound used in the dyadic PV convergence proof.
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
 
-private instance : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
-
 noncomputable section
 
 private lemma norm_annulus_condition_iff {t₀ : ℝ} {L : ℂ} {ε₁ ε₂ : ℝ} (hL_pos : 0 < ‖L‖) (t : ℝ) :
